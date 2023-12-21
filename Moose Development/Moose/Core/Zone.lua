@@ -2020,7 +2020,7 @@ _ZONE_TRIANGLE = {
     Coords={},
     CenterVec2={x=0, y=0},
     SurfaceArea=0,
-    DrawIDs={}
+    DrawID={}
 }
 ---
 -- @param #_ZONE_TRIANGLE self
@@ -2100,15 +2100,35 @@ function _ZONE_TRIANGLE:Draw(Coalition, Color, Alpha, FillColor, FillAlpha, Line
     for i=1, #self.Coords do
         local c1 = self.Coords[i]
         local c2 = self.Coords[i % #self.Coords + 1]
-        table.add(self.DrawIDs, c1:LineToAll(c2, Coalition, Color, Alpha, LineType, ReadOnly))
+        local id = c1:LineToAll(c2, Coalition, Color, Alpha, LineType, ReadOnly)
+        self.DrawID[#self.DrawID+1] = id
     end
-    return self.DrawIDs
+    local newID = self.Coords[1]:MarkupToAllFreeForm({self.Coords[2],self.Coords[3]},Coalition,Color,Alpha,FillColor,FillAlpha,LineType,ReadOnly)
+    self.DrawID[#self.DrawID+1] = newID
+    return self.DrawID
+end
+
+--- Draw the triangle
+-- @param #_ZONE_TRIANGLE self
+-- @return #table of draw IDs
+function _ZONE_TRIANGLE:Fill(Coalition, FillColor, FillAlpha, ReadOnly)
+    Coalition=Coalition or -1
+    FillColor = FillColor
+    FillAlpha = FillAlpha
+    local newID = self.Coords[1]:MarkupToAllFreeForm({self.Coords[2],self.Coords[3]},Coalition,nil,nil,FillColor,FillAlpha,0,nil)
+    self.DrawID[#self.DrawID+1] = newID
+    return self.DrawID
 end
 
 
 ---
 -- @type ZONE_POLYGON_BASE
 -- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCS#Vec2}.
+-- @field #number SurfaceArea
+-- @field #table DrawID
+-- @field #table FillTriangles
+-- @field #table _Triangles
+-- @field #table Borderlines
 -- @extends #ZONE_BASE
 
 
@@ -2133,9 +2153,11 @@ end
 -- @field #ZONE_POLYGON_BASE
 ZONE_POLYGON_BASE = {
   ClassName="ZONE_POLYGON_BASE",
-  _Triangles={}, -- _ZONE_TRIANGLES
+  _Triangles={}, -- #table of #_ZONE_TRIANGLE
   SurfaceArea=0,
-  DrawID={} -- making a table out of the MarkID so its easier to draw an n-sided polygon, see ZONE_POLYGON_BASE:Draw()
+  DrawID={}, -- making a table out of the MarkID so its easier to draw an n-sided polygon, see ZONE_POLYGON_BASE:Draw()
+  FillTriangles = {},
+  Borderlines = {},
 }
 
 --- A 2D points array.
@@ -2172,7 +2194,7 @@ function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
     self._Triangles = self:_Triangulate()
     -- set the polygon's surface area
     self.SurfaceArea = self:_CalculateSurfaceArea()
-    
+
   end
 
   return self
@@ -2470,18 +2492,18 @@ end
 -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value. -- doesn't seem to work
 -- @param #number FillAlpha Transparency [0,1]. Default 0.15.                                                 -- doesn't seem to work
 -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
--- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+-- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.s
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, IncludeTriangles)
 
     local coords = self:GetVerticiesCoordinates()
-    
+
     local coord=coords[1] --Core.Point#COORDINATE
-    
+
     table.remove(coords, 1)
-    
+
     coord:MarkupToAllFreeForm(coords, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, "Drew Polygon")
-    
+
     if true then
       return
     end
@@ -2533,8 +2555,94 @@ function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlph
                 table.add(self.DrawID, c1:LineToAll(c2, Coalition, Color, Alpha, LineType, ReadOnly))
             end
         end
+
+  if self._.Polygon and #self._.Polygon >= 3 then
+    Coalition = Coalition or self:GetDrawCoalition()
+
+    -- Set draw coalition.
+    self:SetDrawCoalition(Coalition)
+
+    Color = Color or self:GetColorRGB()
+    Alpha = Alpha or self:GetColorAlpha()
+
+    FillColor = FillColor or self:GetFillColorRGB()
+    FillAlpha = FillAlpha or self:GetFillColorAlpha()
+
+    if FillColor then
+      self:ReFill(FillColor,FillAlpha)
     end
-    return self
+
+    if Color then
+        self:ReDrawBorderline(Color,Alpha,LineType)
+    end
+  end
+
+  return self
+end
+
+--- Change/Re-fill a Polygon Zone
+-- @param #ZONE_POLYGON_BASE self
+-- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
+-- @param #number Alpha Transparency [0,1]. Default 1.
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:ReFill(Color,Alpha)
+  local color = Color or self:GetFillColorRGB() or {1,0,0}
+  local alpha = Alpha or self:GetFillColorAlpha() or 1
+  local coalition = self:GetDrawCoalition() or -1
+  -- undraw if already filled
+  if #self.FillTriangles > 0 then
+    for _, triangle in pairs(self._Triangles) do
+      triangle:UndrawZone()
+    end
+    -- remove mark IDs
+    for _,_value in pairs(self.FillTriangles) do
+      table.remove_by_value(self.DrawID, _value)
+    end
+    self.FillTriangles = nil
+    self.FillTriangles = {}
+  end
+  -- refill
+  for _, triangle in pairs(self._Triangles) do
+      local draw_ids = triangle:Fill(coalition,color,alpha,nil)
+      self.FillTriangles = draw_ids
+      table.combine(self.DrawID, draw_ids)
+  end
+  return self
+end
+
+--- Change/Re-draw the border of a Polygon Zone
+-- @param #ZONE_POLYGON_BASE self
+-- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
+-- @param #number Alpha Transparency [0,1]. Default 1.
+-- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+-- @return #ZONE_POLYGON_BASE
+function ZONE_POLYGON_BASE:ReDrawBorderline(Color, Alpha, LineType)
+  local color = Color or self:GetFillColorRGB() or {1,0,0}
+  local alpha = Alpha or self:GetFillColorAlpha() or 1
+  local coalition = self:GetDrawCoalition() or -1
+  local linetype = LineType or 1
+    -- undraw if already drawn
+  if #self.Borderlines > 0 then
+    for _, MarkID in pairs(self.Borderlines) do
+      trigger.action.removeMark(MarkID)
+    end
+    -- remove mark IDs
+    for _,_value in pairs(self.Borderlines) do
+      table.remove_by_value(self.DrawID, _value)
+    end
+    self.Borderlines = nil
+    self.Borderlines = {}
+  end
+  -- Redraw border
+  local coords = self:GetVerticiesCoordinates()
+  for i = 1, #coords do
+      local c1 = coords[i]
+      local c2 = coords[i % #coords + 1]
+      local newID = c1:LineToAll(c2, coalition, color, alpha, linetype, nil)
+      self.DrawID[#self.DrawID+1]=newID
+      self.Borderlines[#self.Borderlines+1] = newID
+  end
+  return self
 end
 
 --- Get the surface area of this polygon
@@ -2870,6 +2978,7 @@ function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, C
     Alpha = Alpha or 1
     Segments = Segments or 10
     Closed = Closed or false
+    local Limit
     local i = 1
     local j = #self._.Polygon
     if (Closed) then
@@ -3068,18 +3177,18 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
   self.ScanData.Scenery = {}
   self.ScanData.SceneryTable = {}
   self.ScanData.Units = {}
-  
+
   local vectors = self:GetBoundingSquare()
-  
+
   local minVec3 = {x=vectors.x1, y=0, z=vectors.y1}
   local maxVec3 = {x=vectors.x2, y=0, z=vectors.y2}
-  
+
   local minmarkcoord = COORDINATE:NewFromVec3(minVec3)
   local maxmarkcoord = COORDINATE:NewFromVec3(maxVec3)
   local ZoneRadius = minmarkcoord:Get2DDistance(maxmarkcoord)/2
 --  self:I("Scan Radius:" ..ZoneRadius)
   local CenterVec3 = self:GetCoordinate():GetVec3()
-  
+
  --[[ this a bit shaky in functionality it seems
   local VolumeBox = {
    id = world.VolumeType.BOX,
@@ -3089,7 +3198,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
    }
   }
   --]]
-  
+
   local SphereSearch = {
   id = world.VolumeType.SPHERE,
     params = {
@@ -3097,13 +3206,13 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
     radius = ZoneRadius,
     }
   }
-    
+
   local function EvaluateZone( ZoneObject )
 
     if ZoneObject then
 
       local ObjectCategory = Object.getCategory(ZoneObject)
-      
+
       if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
 
         local CoalitionDCSUnit = ZoneObject:getCoalition()
@@ -3137,7 +3246,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
           self:F2( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
         end
       end
-      
+
       -- trying with box search
       if ObjectCategory == Object.Category.SCENERY and self:IsVec3InZone(ZoneObject:getPoint()) then
         local SceneryType = ZoneObject:getTypeName()
@@ -3156,7 +3265,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
   -- Search objects.
   local inzoneunits = SET_UNIT:New():FilterZones({self}):FilterOnce()
   local inzonestatics = SET_STATIC:New():FilterZones({self}):FilterOnce()
-  
+
   inzoneunits:ForEach(
     function(unit)
       local Unit = unit --Wrapper.Unit#UNIT
@@ -3164,7 +3273,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
       EvaluateZone(DCS)
     end
   )
-  
+
   inzonestatics:ForEach(
     function(static)
       local Static = static --Wrapper.Static#STATIC
@@ -3172,19 +3281,19 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
       EvaluateZone(DCS)
     end
   )
-  
+
   local searchscenery = false
   for _,_type in pairs(ObjectCategories) do
     if _type == Object.Category.SCENERY then
       searchscenery = true
     end
   end
-  
+
   if searchscenery then
     -- Search objects.
     world.searchObjects({Object.Category.SCENERY}, SphereSearch, EvaluateZone )
   end
-  
+
 end
 
 --- Count the number of different coalitions inside the zone.
@@ -3400,7 +3509,7 @@ end
 end
 
 do -- ZONE_ELASTIC
-  
+
   ---
   -- @type ZONE_ELASTIC
   -- @field #table points Points in 2D.
@@ -3427,14 +3536,14 @@ do -- ZONE_ELASTIC
   function ZONE_ELASTIC:New(ZoneName, Points)
 
     local self=BASE:Inherit(self, ZONE_POLYGON_BASE:New(ZoneName, Points)) --#ZONE_ELASTIC
-  
+
     -- Zone objects are added to the _DATABASE and SET_ZONE objects.
     _EVENTDISPATCHER:CreateEventNewZone( self )
-  
+
     if Points then
       self.points=Points
     end
-  
+
     return self
   end
 
@@ -3443,10 +3552,10 @@ do -- ZONE_ELASTIC
   -- @param DCS#Vec2 Vec2 Point in 2D (with x and y coordinates).
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:AddVertex2D(Vec2)
-  
+
     -- Add vec2 to points.
     table.insert(self.points, Vec2)
-  
+
     return self
   end
 
@@ -3456,10 +3565,10 @@ do -- ZONE_ELASTIC
   -- @param DCS#Vec3 Vec3 Point in 3D (with x, y and z coordinates). Only the x and z coordinates are used.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:AddVertex3D(Vec3)
-    
+
     -- Add vec2 from vec3 to points.
     table.insert(self.points, {x=Vec3.x, y=Vec3.z})
-  
+
     return self
   end
 
@@ -3469,10 +3578,10 @@ do -- ZONE_ELASTIC
   -- @param Core.Set#SET_GROUP GroupSet Set of groups.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:AddSetGroup(GroupSet)
-  
+
     -- Add set to table.
     table.insert(self.setGroups, GroupSet)
-    
+
     return self
   end
 
@@ -3484,13 +3593,13 @@ do -- ZONE_ELASTIC
   -- @param #boolean Draw Draw the zone. Default `nil`.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:Update(Delay, Draw)
-    
+
     -- Debug info.
     self:T(string.format("Updating ZONE_ELASTIC %s", tostring(self.ZoneName)))
-  
+
     -- Copy all points.
     local points=UTILS.DeepCopy(self.points or {})
-    
+
     if self.setGroups then
       for _,_setGroup in pairs(self.setGroups) do
         local setGroup=_setGroup --Core.Set#SET_GROUP
@@ -3505,7 +3614,7 @@ do -- ZONE_ELASTIC
 
     -- Update polygon verticies from points.
     self._.Polygon=self:_ConvexHull(points)
-    
+
     if Draw~=false then
       if self.DrawID or Draw==true then
         self:UndrawZone()
@@ -3515,7 +3624,7 @@ do -- ZONE_ELASTIC
 
     return self
   end
-  
+
   --- Start the updating scheduler.
   -- @param #ZONE_ELASTIC self
   -- @param #number Tstart Time in seconds before the updating starts.
@@ -3524,9 +3633,9 @@ do -- ZONE_ELASTIC
   -- @param #boolean Draw Draw the zone. Default `nil`.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:StartUpdate(Tstart, dT, Tstop, Draw)
-  
+
     self.updateID=self:ScheduleRepeat(Tstart, dT, 0, Tstop, ZONE_ELASTIC.Update, self, 0, Draw)
-  
+
     return self
   end
 
@@ -3535,46 +3644,46 @@ do -- ZONE_ELASTIC
   -- @param #number Delay Delay in seconds before the scheduler will be stopped. Default 0.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:StopUpdate(Delay)
-  
+
     if Delay and Delay>0 then
       self:ScheduleOnce(Delay, ZONE_ELASTIC.StopUpdate, self)
     else
-  
+
       if self.updateID then
-      
+
         self:ScheduleStop(self.updateID)
-        
+
         self.updateID=nil
-        
+
       end
-      
+
     end
-  
+
     return self
   end
-  
+
 
   --- Create a convec hull.
   -- @param #ZONE_ELASTIC self
   -- @param #table pl Points
   -- @return #table Points
   function ZONE_ELASTIC:_ConvexHull(pl)
-  
+
     if #pl == 0 then
       return {}
     end
-    
+
     table.sort(pl, function(left,right)
       return left.x < right.x
     end)
- 
+
     local h = {}
-    
+
     -- Function: ccw > 0 if three points make a counter-clockwise turn, clockwise if ccw < 0, and collinear if ccw = 0.
     local function ccw(a,b,c)
       return (b.x - a.x) * (c.y - a.y) > (b.y - a.y) * (c.x - a.x)
     end
- 
+
     -- lower hull
     for i,pt in pairs(pl) do
       while #h >= 2 and not ccw(h[#h-1], h[#h], pt) do
@@ -3582,7 +3691,7 @@ do -- ZONE_ELASTIC
       end
       table.insert(h,pt)
     end
- 
+
     -- upper hull
     local t = #h + 1
     for i=#pl, 1, -1 do
@@ -3592,12 +3701,12 @@ do -- ZONE_ELASTIC
       end
       table.insert(h, pt)
     end
- 
+
     table.remove(h, #h)
-    
+
     return h
-  end  
-  
+  end
+
 end
 
 
@@ -3634,7 +3743,7 @@ ZONE_OVAL = {
 function ZONE_OVAL:New(name, vec2, major_axis, minor_axis, angle)
 
     self = BASE:Inherit(self, ZONE_BASE:New())
-    
+
     self.ZoneName = name
     self.CenterVec2 = vec2
     self.MajorAxis = major_axis
@@ -3672,7 +3781,7 @@ function ZONE_OVAL:NewFromDrawing(DrawingName)
     return self
 end
 
---- Gets the major axis of the oval. 
+--- Gets the major axis of the oval.
 -- @param #ZONE_OVAL self
 -- @return #number The major axis of the oval
 function ZONE_OVAL:GetMajorAxis()
@@ -3868,7 +3977,7 @@ do -- ZONE_AIRBASE
 
     self._.ZoneAirbase = Airbase
     self._.ZoneVec2Cache = self._.ZoneAirbase:GetVec2()
-    
+
     if Airbase:IsShip() then
       self.isShip=true
       self.isHelipad=false
@@ -3876,11 +3985,11 @@ do -- ZONE_AIRBASE
     elseif Airbase:IsHelipad() then
       self.isShip=false
       self.isHelipad=true
-      self.isAirdrome=false    
+      self.isAirdrome=false
     elseif Airbase:IsAirdrome() then
       self.isShip=false
       self.isHelipad=false
-      self.isAirdrome=true    
+      self.isAirdrome=true
     end
 
     -- Zone objects are added to the _DATABASE and SET_ZONE objects.

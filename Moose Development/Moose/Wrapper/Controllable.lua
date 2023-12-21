@@ -3772,54 +3772,66 @@ function CONTROLLABLE:OptionProhibitAfterburner( Prohibit )
   return self
 end
 
---- Defines the usage of Electronic Counter Measures by airborne forces. Disables the ability for AI to use their ECM.
+--- [Air] Defines the usage of Electronic Counter Measures by airborne forces. 
 -- @param #CONTROLLABLE self
+-- @param #number ECMvalue Can be - 0=Never on, 1=if locked by radar, 2=if detected by radar, 3=always on, defaults to 1
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:OptionECM_Never()
+function CONTROLLABLE:OptionECM( ECMvalue )
   self:F2( { self.ControllableName } )
 
-  if self:IsAir() then
-    self:SetOption( AI.Option.Air.id.ECM_USING, 0 )
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption( AI.Option.Air.id.ECM_USING, ECMvalue or 1 )
+    end
+
   end
 
   return self
 end
 
---- Defines the usage of Electronic Counter Measures by airborne forces. If the AI is actively being locked by an enemy radar they will enable their ECM jammer.
+--- [Air] Defines the usage of Electronic Counter Measures by airborne forces. Disables the ability for AI to use their ECM.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionECM_Never()
+  self:F2( { self.ControllableName } )
+  
+  self:OptionECM(0)
+
+  return self
+end
+
+--- [Air] Defines the usage of Electronic Counter Measures by airborne forces. If the AI is actively being locked by an enemy radar they will enable their ECM jammer.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_OnlyLockByRadar()
   self:F2( { self.ControllableName } )
 
-  if self:IsAir() then
-    self:SetOption( AI.Option.Air.id.ECM_USING, 1 )
-  end
+  self:OptionECM(1)
 
   return self
 end
 
---- Defines the usage of Electronic Counter Measures by airborne forces. If the AI is being detected by a radar they will enable their ECM.
+--- [Air] Defines the usage of Electronic Counter Measures by airborne forces. If the AI is being detected by a radar they will enable their ECM.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_DetectedLockByRadar()
   self:F2( { self.ControllableName } )
 
-  if self:IsAir() then
-    self:SetOption( AI.Option.Air.id.ECM_USING, 2 )
-  end
+  self:OptionECM(2)
 
   return self
 end
 
---- Defines the usage of Electronic Counter Measures by airborne forces. AI will leave their ECM on all the time.
+--- [Air] Defines the usage of Electronic Counter Measures by airborne forces. AI will leave their ECM on all the time.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_AlwaysOn()
   self:F2( { self.ControllableName } )
 
-  if self:IsAir() then
-    self:SetOption( AI.Option.Air.id.ECM_USING, 3 )
-  end
+  self:OptionECM(3)
 
   return self
 end
