@@ -2496,6 +2496,30 @@ end
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, IncludeTriangles)
 
+  
+  if self._.Polygon and #self._.Polygon >= 3 then
+    Coalition = Coalition or self:GetDrawCoalition()
+  
+    -- Set draw coalition.
+    self:SetDrawCoalition(Coalition)
+  
+    Color = Color or self:GetColorRGB()
+    Alpha = Alpha or self:GetColorAlpha()
+  
+    FillColor = FillColor or self:GetFillColorRGB()
+    FillAlpha = FillAlpha or self:GetFillColorAlpha()
+  
+    if FillColor then
+      self:ReFill(FillColor,FillAlpha)  
+    end
+    
+    if Color then
+        self:ReDrawBorderline(Color,Alpha,LineType)
+    end
+  end
+
+
+  if false then
     local coords = self:GetVerticiesCoordinates()
 
     local coord=coords[1] --Core.Point#COORDINATE
@@ -2507,7 +2531,7 @@ function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlph
     if true then
       return
     end
-
+  end
 
   return self
 end
