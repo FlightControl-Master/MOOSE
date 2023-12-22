@@ -11196,7 +11196,7 @@ function AIRBOSS:_AttitudeMonitor( playerData )
   end
   text = text .. string.format( "\nPitch=%.1f° | Roll=%.1f° | Yaw=%.1f°", pitch, roll, yaw )
   text = text .. string.format( "\nClimb Angle=%.1f° | Rate=%d ft/min", unit:GetClimbAngle(), velo.y * 196.85 )
-  local dist = self:_GetOptLandingCoordinate():Get3DDistance( playerData.unit )
+  local dist = self:_GetOptLandingCoordinate():Get3DDistance( playerData.unit:GetVec3() )
   -- Get player velocity in km/h.
   local vplayer = playerData.unit:GetVelocityKMH()
   -- Get carrier velocity in km/h.
