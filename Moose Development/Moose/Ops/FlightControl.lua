@@ -4424,14 +4424,11 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Add parking guard in front of a parking aircraft.
+--- [INTERNAL] Add parking guard in front of a parking aircraft - delayed for MP.
 -- @param #FLIGHTCONTROL self
 -- @param Wrapper.Unit#UNIT unit The aircraft.
-function FLIGHTCONTROL:SpawnParkingGuard(unit)
-  
-  if unit and self.parkingGuard then
-  
-    -- Position of the unit.
+function FLIGHTCONTROL:_SpawnParkingGuard(unit)
+      -- Position of the unit.
     local coordinate=unit:GetCoordinate()
 
     -- Parking spot.
@@ -4478,6 +4475,17 @@ function FLIGHTCONTROL:SpawnParkingGuard(unit)
     else
       self:E(self.lid.."ERROR: Parking Guard already exists!")
     end
+end
+
+--- Add parking guard in front of a parking aircraft.
+-- @param #FLIGHTCONTROL self
+-- @param Wrapper.Unit#UNIT unit The aircraft.
+function FLIGHTCONTROL:SpawnParkingGuard(unit)
+  
+  if unit and self.parkingGuard then
+    
+    -- Schedule delay so in MP we get the heading of the client's plane
+    self:ScheduleOnce(1,FLIGHTCONTROL._SpawnParkingGuard,self,unit)
     
   end
     
