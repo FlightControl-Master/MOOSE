@@ -986,7 +986,7 @@ end
 -- @param #string Provider Provider. Default is as set via @{#MSRS.SetProvider}.
 -- @return #MSRS.ProviderOptions Provider options.
 function MSRS:GetProviderOptions(Provider)
-  return self.poptions[Provider or self.provider]
+  return self.poptions[Provider or self.provider] or {}
 end
 
 
