@@ -106,7 +106,7 @@ jobs:
         if: ${{ vars.SKIP_LUACHECK != true }}
         continue-on-error: true
         run: |
-          luacheck --std=lua51c --config=.luacheckrc -gurasqq "Moose Development/Moose"
+          luacheck --std=lua51c --config=.luacheckrc -guras "Moose Development/Moose"
 
       #########################################################################
       # Push to MOOSE_INCLUDE
