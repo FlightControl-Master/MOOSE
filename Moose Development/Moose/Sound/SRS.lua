@@ -162,14 +162,14 @@
 -- 
 -- ### Amazon Web Service [Only DCS-gRPC backend]
 -- 
--- In order to use Amazon Web Service (ASW) for TTS you need to use @{#MSRS.SetProvider} and @{MSRS.SetProviderOptionsAmazon} functions:
+-- In order to use Amazon Web Service (AWS) for TTS you need to use @{#MSRS.SetProvider} and @{MSRS.SetProviderOptionsAmazon} functions:
 -- 
 --     msrs:SetProvider(MSRS.Provider.AMAZON)
 --     msrs:SetProviderOptionsAmazon(AccessKey, SecretKey, Region)
 --     
--- The parameters `AccessKey` and `SecretKey` are your ASW access and secret keys, respectively. The parameter `Region` is your [ASW region](https://docs.aws.amazon.com/general/latest/gr/pol.html).
+-- The parameters `AccessKey` and `SecretKey` are your AWS access and secret keys, respectively. The parameter `Region` is your [AWS region](https://docs.aws.amazon.com/general/latest/gr/pol.html).
 -- 
--- You can set the voice to use with ASW via @{#MSRS.SetVoiceAmazon}.
+-- You can set the voice to use with AWS via @{#MSRS.SetVoiceAmazon}.
 -- 
 -- ### Microsoft Azure [Only DCS-gRPC backend]
 -- 
@@ -378,20 +378,20 @@ MSRS.Backend = {
 -- @field #string WINDOWS Microsoft windows (`win`).
 -- @field #string GOOGLE Google (`gcloud`).
 -- @field #string AZURE Microsoft Azure (`azure`). Only possible with DCS-gRPC backend.
--- @field #string AMAZON Amazon Web Service (`asw`). Only possible with DCS-gRPC backend.
+-- @field #string AMAZON Amazon Web Service (`aws`). Only possible with DCS-gRPC backend.
 MSRS.Provider = {
   WINDOWS = "win",
   GOOGLE  = "gcloud",
   AZURE   = "azure",
-  AMAZON  = "asw",
+  AMAZON  = "aws",
 }
 
 --- Provider options.
 -- @type MSRS.ProviderOptions
 -- @field #string provider Provider.
 -- @field #string credentials Google credentials JSON file (full path).
--- @field #string key Access key (DCS-gRPC with Google, ASW, AZURE as provider).
--- @field #string secret Secret key (DCS-gRPC with ASW as provider)
+-- @field #string key Access key (DCS-gRPC with Google, AWS, AZURE as provider).
+-- @field #string secret Secret key (DCS-gRPC with AWS as provider)
 -- @field #string region Region.
 -- @field #string defaultVoice Default voice (not used).
 -- @field #string voice Voice used.
@@ -795,7 +795,7 @@ end
 
 --- Set to use a specific voice if Amazon Web Service is use as provider (only DCS-gRPC backend). Note that this will override any gender and culture settings.
 -- @param #MSRS self
--- @param #string Voice [ASW Voice](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html). Default `"Brian"`.
+-- @param #string Voice [AWS Voice](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html). Default `"Brian"`.
 -- @return #MSRS self
 function MSRS:SetVoiceAmazon(Voice)
 
@@ -955,11 +955,11 @@ function MSRS:SetProviderOptionsGoogle(CredentialsFile, AccessKey)
   return self
 end
 
---- Set provider options and credentials for Amazon Web Service (ASW). Only supported in combination with DCS-gRPC as backend.
+--- Set provider options and credentials for Amazon Web Service (AWS). Only supported in combination with DCS-gRPC as backend.
 -- @param #MSRS self
 -- @param #string AccessKey Your API access key.
 -- @param #string SecretKey Your secret key.
--- @param #string Region Your ASW [region](https://docs.aws.amazon.com/general/latest/gr/pol.html).
+-- @param #string Region Your AWS [region](https://docs.aws.amazon.com/general/latest/gr/pol.html).
 -- @return #MSRS self
 function MSRS:SetProviderOptionsAmazon(AccessKey, SecretKey, Region)
 
@@ -1015,7 +1015,7 @@ function MSRS:SetTTSProviderAzure()
   return self
 end
 
---- Use Amazon Web Service (ASW) to provide text-to-speech. Only supported if used in combination with DCS-gRPC as backend.
+--- Use Amazon Web Service (AWS) to provide text-to-speech. Only supported if used in combination with DCS-gRPC as backend.
 -- @param #MSRS self
 -- @return #MSRS self
 function MSRS:SetTTSProviderAmazon()
@@ -1565,7 +1565,7 @@ end
 --       Gender = "male",
 --       Voice = "Microsoft Hazel Desktop", -- Voice that is used if no explicit provider voice is specified.
 --       Label = "MSRS",   
---       Provider = "win", --Provider for generating TTS (win, gcloud, azure, asw).
+--       Provider = "win", --Provider for generating TTS (win, gcloud, azure, aws).
 --       
 --       -- Windows
 --       win = {
