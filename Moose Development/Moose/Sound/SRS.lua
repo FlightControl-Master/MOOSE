@@ -1535,11 +1535,11 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
 
     local gender=""
     if self.gender then
-      gender=string.format(' gender=\"\%s\"', self.gender)
+      gender=string.format(' gender=\"%s\"', self.gender)
     end
     local language=""
     if self.culture then
-      language=string.format(' language=\"\%s\"', self.culture)
+      language=string.format(' language=\"%s\"', self.culture)
     end
 
     if self.gender or self.culture then

@@ -98,7 +98,7 @@ function MESSAGE:New( MessageText, MessageDuration, MessageCategory, ClearScreen
 
   self.MessageType = nil
 
-  -- When no MessageCategory is given, we don't show it as a title...	
+  -- When no MessageCategory is given, we don't show it as a title... 
   if MessageCategory and MessageCategory ~= "" then
     if MessageCategory:sub( -1 ) ~= "\n" then
       self.MessageCategory = MessageCategory .. ": "
@@ -498,7 +498,6 @@ function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,G
   _MESSAGESRS.Gender = Gender or "female"
 
   _MESSAGESRS.MSRS:SetGoogle(PathToCredentials)
-  _MESSAGESRS.google = PathToCredentials
 
   _MESSAGESRS.MSRS:SetLabel(Label or "MESSAGE")
   _MESSAGESRS.label = Label or "MESSAGE"
@@ -512,8 +511,6 @@ function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,G
   if Voice then _MESSAGESRS.MSRS:SetVoice(Voice) end
   
   _MESSAGESRS.voice = Voice --or MSRS.Voices.Microsoft.Hedda
-  --if _MESSAGESRS.google and not Voice then _MESSAGESRS.Voice = MSRS.Voices.Google.Standard.en_GB_Standard_A end
-  --_MESSAGESRS.MSRS:SetVoice(Voice or _MESSAGESRS.voice)
   
   _MESSAGESRS.SRSQ = MSRSQUEUE:New(Label or "MESSAGE")
 end
