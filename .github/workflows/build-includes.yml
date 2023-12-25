@@ -95,9 +95,9 @@ jobs:
           export COMMIT_TIME=$(git show -s --format=%cd ${{ github.sha }} --date=iso-strict)
           lua5.3 "./Moose Setup/Moose_Create.lua" D "$COMMIT_TIME-${{ github.sha }}" "./Moose Development/Moose" "./Moose Setup" "./build/result/Moose_Include_Dynamic"
 
-      - name: Run LuaSrcDiet
-        run: |
-          luasrcdiet ./build/result/Moose_Include_Static/Moose.lua -o ./build/result/Moose_Include_Static/Moose_.lua
+      #- name: Run LuaSrcDiet
+      #  run: |
+      #    luasrcdiet ./build/result/Moose_Include_Static/Moose.lua -o ./build/result/Moose_Include_Static/Moose_.lua
 
       #########################################################################
       # Run LuaCheck
