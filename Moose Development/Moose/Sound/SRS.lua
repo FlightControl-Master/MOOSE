@@ -38,7 +38,7 @@
 -- @field #table modulations Modulations used in the transmissions.
 -- @field #number coalition Coalition of the transmission.
 -- @field #number port Port. Default 5002.
--- @field #string name Name. Default "DCS-STTS".
+-- @field #string name Name. Default "MSRS".
 -- @field #number volume Volume between 0 (min) and 1 (max). Default 1.
 -- @field #string culture Culture. Default "en-GB".
 -- @field #string gender Gender. Default "female".
@@ -65,7 +65,7 @@
 -- ## Prerequisites
 --
 -- * This script needs SRS version >= 1.9.6
--- * You need to de-sanitize os, io and lfs in hte missionscripting.lua
+-- * You need to de-sanitize os, io and lfs in the missionscripting.lua
 -- * Optional: DCS-gRPC as backend to communicate with SRS (vide infra)
 --
 -- ## Knwon Issues
@@ -138,8 +138,8 @@
 -- ## TTS Providers
 --
 -- The default provider for generating speech from text is the native Windows TTS service. Note that you need to install the voices you want to use.
---
--- **Pro-Tip** - use the command line with power shell to call `DCS-SR-ExternalAudio.exe` - it will tell you what is missing,
+-- 
+-- **Pro-Tip** - use the command line with power shell to call `DCS-SR-ExternalAudio.exe` - it will tell you what is missing
 -- and also the Google Console error, in case you have missed a step in setting up your Google TTS.
 -- For example, `.\DCS-SR-ExternalAudio.exe -t "Text Message" -f 255 -m AM -c 2 -s 2 -z -G "Path_To_You_Google.Json"`
 -- plays a message on 255 MHz AM for the blue coalition in-game.
@@ -193,7 +193,7 @@
 -- In addition to Windows and Google cloud, it also offers Microsoft Azure and Amazon Web Service as providers for TTS.
 --
 -- Use @{#MSRS.SetDefaultBackendGRPC} to enable [DCS-gRPC](https://github.com/DCS-gRPC/rust-server) as an alternate backend for transmitting text-to-speech over SRS.
--- This can be useful if 'DCS-SR-ExternalAudio.exe' cannot be used in the environment, or to use Azure or AWS clouds for TTS.  Note that DCS-gRPC does not (yet?) support
+-- This can be useful if 'DCS-SR-ExternalAudio.exe' cannot be used in the environment or to use Azure or AWS clouds for TTS.  Note that DCS-gRPC does not (yet?) support
 -- all of the features and options available with 'DCS-SR-ExternalAudio.exe'. Of note, only text-to-speech is supported and it it cannot be used to transmit audio files.
 --
 -- DCS-gRPC must be installed and configured per the [DCS-gRPC documentation](https://github.com/DCS-gRPC/rust-server) and already running via either the 'autostart' mechanism
@@ -459,8 +459,8 @@ function MSRS:New(Path, Frequency, Modulation, Backend)
 
   else
 
-    -- Default wverwrites from :New()
-
+    -- Default overwrites from :New()
+    
     if Path then
       self:SetPath(Path)
     end
@@ -612,6 +612,7 @@ end
 -- @return #MSRS self
 function MSRS:SetPort(Port)
   self.port=Port or 5002
+  self:T(string.format("SRS port=%s", self:GetPort()))
   return self
 end
 
@@ -1024,7 +1025,7 @@ function MSRS:SetTTSProviderAmazon()
 end
 
 
---- Print SRS STTS help to DCS log file.
+--- Print SRS help to DCS log file.
 -- @param #MSRS self
 -- @return #MSRS self
 function MSRS:Help()
@@ -1045,7 +1046,7 @@ function MSRS:Help()
   f:close()
 
   -- Print to log file.
-  env.info("SRS STTS help output:")
+  env.info("SRS help output:")
   env.info("======================================================================")
   env.info(data)
   env.info("======================================================================")
@@ -1118,7 +1119,7 @@ function MSRS:PlaySoundText(SoundText, Delay)
   return self
 end
 
---- Play text message via STTS.
+--- Play text message via MSRS.
 -- @param #MSRS self
 -- @param #string Text Text message.
 -- @param #number Delay Delay in seconds, before the message is played.
@@ -1146,7 +1147,7 @@ function MSRS:PlayText(Text, Delay, Coordinate)
   return self
 end
 
---- Play text message via STTS with explicitly specified options.
+--- Play text message via MSRS with explicitly specified options.
 -- @param #MSRS self
 -- @param #string Text Text message.
 -- @param #number Delay Delay in seconds, before the message is played.
@@ -1191,7 +1192,7 @@ function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture
 end
 
 
---- Play text file via STTS.
+--- Play text file via MSRS.
 -- @param #MSRS self
 -- @param #string TextFile Full path to the file.
 -- @param #number Delay Delay in seconds, before the message is played.
@@ -1220,6 +1221,7 @@ function MSRS:PlayTextFile(TextFile, Delay)
 
     -- Count length of command.
     local l=string.len(command)
+    self:T(string.format("Command length=%d", l))
 
     -- Execute command.
     self:_ExecCommand(command)
