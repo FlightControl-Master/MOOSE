@@ -1923,7 +1923,7 @@ function CSAR:_DisplayToAllSAR(_message, _side, _messagetime)
   local messagetime = _messagetime or self.messageTime
   if self.msrs then
     local voice = self.CSARVoice or MSRS.Voices.Google.Standard.en_GB_Standard_F
-    if self.msrs.google == nil then
+    if self.msrs:GetProvider() == MSRS.Provider.WINDOWS then
       voice = self.CSARVoiceMS or MSRS.Voices.Microsoft.Hedda
     end
     self:I("Voice = "..voice)

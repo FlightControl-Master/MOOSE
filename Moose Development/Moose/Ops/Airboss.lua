@@ -14957,7 +14957,7 @@ function AIRBOSS:SetSRSPilotVoice( Voice, Gender, Culture )
   self.PilotRadio.gender = Gender or "male"
   self.PilotRadio.culture = Culture or "en-US"
   
-  if (not Voice) and self.SRS and self.SRS.google then
+  if (not Voice) and self.SRS and self.SRS:GetProvider() == MSRS.Provider.GOOGLE then
     self.PilotRadio.voice = MSRS.Voices.Google.Standard.en_US_Standard_J
   end
   
