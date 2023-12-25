@@ -1746,7 +1746,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.3.2"
+AIRBOSS.version = "1.3.3"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3071,6 +3071,7 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   self.SRS:SetPath(PathToSRS)
   self.SRS:SetPort(Port or 5002)
   self.SRS:SetLabel(self.AirbossRadio.alias or "AIRBOSS")
+  self.SRS:SetCoordinate(self.carrier:GetCoordinate())
   --self.SRS:SetModulations(Modulations)
   if GoogleCreds then
     self.SRS:SetGoogle(GoogleCreds)
@@ -10266,7 +10267,7 @@ function AIRBOSS:_GetSternCoord()
     elseif case==2 or case==1 then
     -- V/Stol: Translate 8 meters port.
     self.sterncoord:Translate(self.carrierparam.sterndist, hdg, true, true):Translate(8, FB-90, true, true)
-	end
+  end
   elseif self.carriertype==AIRBOSS.CarrierType.STENNIS then
     -- Stennis: translate 7 meters starboard wrt Final bearing.
     self.sterncoord:Translate( self.carrierparam.sterndist, hdg, true, true ):Translate( 7, FB + 90, true, true )
@@ -14881,6 +14882,7 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
     end
   
   else
+
     -- SRS transmission
     if call.subtitle ~= nil and string.len(call.subtitle) > 1  then
 
@@ -14955,7 +14957,7 @@ function AIRBOSS:SetSRSPilotVoice( Voice, Gender, Culture )
   self.PilotRadio.gender = Gender or "male"
   self.PilotRadio.culture = Culture or "en-US"
   
-  if (not Voice) and self.SRS and self.SRS.google then
+  if (not Voice) and self.SRS and self.SRS:GetProvider() == MSRS.Provider.GOOGLE then
     self.PilotRadio.voice = MSRS.Voices.Google.Standard.en_US_Standard_J
   end
   
