@@ -386,6 +386,16 @@ MSRS.Provider = {
   AMAZON  = "aws",
 }
 
+--- Function for UUID.
+function MSRS.uuid()
+  local random = math.random
+  local template = 'yxxx-xxxxxxxxxxxx'
+  return string.gsub( template, '[xy]', function( c )
+    local v = (c == 'x') and random( 0, 0xf ) or random( 8, 0xb )
+    return string.format( '%x', v )
+  end )
+end
+
 --- Provider options.
 -- @type MSRS.ProviderOptions
 -- @field #string provider Provider.
@@ -1031,11 +1041,11 @@ end
 function MSRS:Help()
 
   -- Path and exe.
-  local path=self:GetPath() or STTS.DIRECTORY
-  local exe=STTS.EXECUTABLE or "DCS-SR-ExternalAudio.exe"
+  local path=self:GetPath()
+  local exe="DCS-SR-ExternalAudio.exe"
 
   -- Text file for output.
-  local filename = os.getenv('TMP') .. "\\MSRS-help-"..STTS.uuid()..".txt"
+  local filename = os.getenv('TMP') .. "\\MSRS-help-"..MSRS.uuid()..".txt"
 
   -- Print help.
   local command=string.format("%s/%s --help > %s", path, exe, filename)
@@ -1275,9 +1285,9 @@ end
 -- @return #string Command.
 function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, speed, port, label, coordinate)
 
-  local path=self:GetPath() or STTS.DIRECTORY
-
-  local exe=STTS.EXECUTABLE or "DCS-SR-ExternalAudio.exe"
+  local path=self:GetPath()
+  local exe="DCS-SR-ExternalAudio.exe"
+  local fullPath = string.format("%s\\%s", path, exe)
 
   freqs=table.concat(freqs or self.frequencies, ",")
   modus=table.concat(modus or self.modulations, ",")
@@ -1330,8 +1340,13 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
     self:E("ERROR: SRS only supports WINWOWS and GOOGLE as TTS providers! Use DCS-gRPC backend for other providers such as ")
   end
 
+  if not UTILS.FileExists(fullPath) then
+    self:E("ERROR: MSRS SRS executable does not exist! FullPath="..fullPath)
+    command="CommandNotFound"
+  end
+
   -- Debug output.
-  self:T("MSRS command="..command)
+  self:T("MSRS command from _GetCommand="..command)
 
   return command
 end
@@ -1342,24 +1357,25 @@ end
 -- @return #number Return value of os.execute() command.
 function MSRS:_ExecCommand(command)
 
-    -- Debug info.
-    self:T("SRS TTS command="..command)
+    -- Skip this function if _GetCommand was not able to find the executable
+    if string.find(command, "CommandNotFound") then return 0 end
 
+    local batContent = command.." && exit"
     -- Create a tmp file.
-    local filename=os.getenv('TMP').."\\MSRS-"..STTS.uuid()..".bat"
+    local filename=os.getenv('TMP').."\\MSRS-"..MSRS.uuid()..".bat"
 
     local script=io.open(filename, "w+")
-    script:write(command.." && exit")
+    script:write(batContent)
     script:close()
 
-    -- Play command.
-    command=string.format('start /b "" "%s"', filename)
+    self:T("MSRS batch file created: "..filename)
+    self:T("MSRS batch content: "..batContent)
 
     local res=nil
     if true then
 
       -- Create a tmp file.
-      local filenvbs = os.getenv('TMP') .. "\\MSRS-"..STTS.uuid()..".vbs"
+      local filenvbs = os.getenv('TMP') .. "\\MSRS-"..MSRS.uuid()..".vbs"
 
       -- VBS script
       local script = io.open(filenvbs, "w+")
@@ -1368,12 +1384,12 @@ function MSRS:_ExecCommand(command)
       script:write(string.format('WinScriptHost.Run Chr(34) & "%s" & Chr(34), 0\n', filename))
       script:write(string.format('Set WinScriptHost = Nothing'))
       script:close()
+      self:T("MSRS vbs file created to start batch="..filenvbs)
 
       -- Run visual basic script. This still pops up a window but very briefly and does not put the DCS window out of focus.
       local runvbs=string.format('cscript.exe //Nologo //B "%s"', filenvbs)
 
       -- Debug output.
-      self:T("MSRS execute command="..command)
       self:T("MSRS execute VBS command="..runvbs)
 
       -- Play file in 0.01 seconds
@@ -1382,11 +1398,12 @@ function MSRS:_ExecCommand(command)
       -- Remove file in 1 second.
       timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
       timer.scheduleFunction(os.remove, filenvbs, timer.getTime()+1)
+      self:T("MSRS vbs and batch file removed")
 
     elseif false then
 
       -- Create a tmp file.
-      local filenvbs = os.getenv('TMP') .. "\\MSRS-"..STTS.uuid()..".vbs"
+      local filenvbs = os.getenv('TMP') .. "\\MSRS-"..MSRS.uuid()..".vbs"
 
       -- VBS script
       local script = io.open(filenvbs, "w+")
@@ -1402,6 +1419,8 @@ function MSRS:_ExecCommand(command)
       res=os.execute(runvbs)
 
     else
+      -- Play command.
+      command=string.format('start /b "" "%s"', filename)
 
       -- Debug output.
       self:T("MSRS execute command="..command)
@@ -1680,6 +1699,47 @@ function MSRS:LoadConfigFile(Path,Filename)
   return true
 end
 
+--- Function returns estimated speech time in seconds.
+-- Assumptions for time calc: 100 Words per min, average of 5 letters for english word so
+--
+--   * 5 chars * 100wpm = 500 characters per min = 8.3 chars per second
+--
+-- So length of msg / 8.3 = number of seconds needed to read it. rounded down to 8 chars per sec map function:
+--
+-- * (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
+--
+-- @param #number length can also be passed as #string
+-- @param #number speed Defaults to 1.0
+-- @param #boolean isGoogle We're using Google TTS
+function MSRS.getSpeechTime(length,speed,isGoogle)
+
+  local maxRateRatio = 3
+
+  speed = speed or 1.0
+  isGoogle = isGoogle or false
+
+  local speedFactor = 1.0
+  if isGoogle then
+    speedFactor = speed
+  else
+    if speed ~= 0 then
+      speedFactor = math.abs( speed ) * (maxRateRatio - 1) / 10 + 1
+    end
+    if speed < 0 then
+      speedFactor = 1 / speedFactor
+    end
+  end
+
+  local wpm = math.ceil( 100 * speedFactor )
+  local cps = math.floor( (wpm * 5) / 60 )
+
+  if type( length ) == "string" then
+    length = string.len( length )
+  end
+
+  return length/cps --math.ceil(length/cps)
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Manages radio transmissions.
@@ -1837,7 +1897,7 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   -- Create a new transmission object.
   local transmission={} --#MSRSQUEUE.Transmission
   transmission.text=text
-  transmission.duration=duration or STTS.getSpeechTime(text)
+  transmission.duration=duration or MSRS.getSpeechTime(text)
   transmission.msrs=msrs
   transmission.Tplay=tstart or timer.getAbsTime()
   transmission.subtitle=subtitle
