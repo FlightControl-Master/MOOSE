@@ -890,7 +890,7 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "0.10.4"
+ATIS.version = "1.0.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1528,12 +1528,12 @@ end
 
 --- Use SRS Simple-Text-To-Speech for transmissions. No sound files necessary.
 -- @param #ATIS self
--- @param #string PathToSRS Path to SRS directory.
+-- @param #string PathToSRS Path to SRS directory (only necessary if SRS exe backend is used).
 -- @param #string Gender Gender: "male" or "female" (default).
 -- @param #string Culture Culture, e.g. "en-GB" (default).
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
 -- @param #number Port SRS port. Default 5002.
--- @param #string GoogleKey Path to Google JSON-Key.
+-- @param #string GoogleKey Path to Google JSON-Key (SRS exe backend) or Google API key (DCS-gRPC backend).
 -- @return #ATIS self
 function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
   if PathToSRS or MSRS.path then
