@@ -97,7 +97,7 @@ jobs:
 
       - name: Run LuaSrcDiet
         run: |
-          luasrcdiet --basic --opt-srcequiv --opt-emptylines ./build/result/Moose_Include_Static/Moose.lua -o ./build/result/Moose_Include_Static/Moose_.lua
+          luasrcdiet --opt-binequiv ./build/result/Moose_Include_Static/Moose.lua -o ./build/result/Moose_Include_Static/Moose_.lua
 
       #########################################################################
       # Run LuaCheck
