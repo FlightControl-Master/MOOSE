@@ -106,7 +106,7 @@ jobs:
 
       - name: Run LuaSrcDiet
         run: |
-          luasrcdiet ./build/result/Moose_Include_Static/Moose.lua -o ./build/result/Moose_Include_Static/Moose_.lua
+          luasrcdiet --basic --opt-emptylines ./build/result/Moose_Include_Static/Moose.lua -o ./build/result/Moose_Include_Static/Moose_.lua
 
       #########################################################################
       # Push to MOOSE_INCLUDE
