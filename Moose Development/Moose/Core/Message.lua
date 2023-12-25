@@ -98,7 +98,7 @@ function MESSAGE:New( MessageText, MessageDuration, MessageCategory, ClearScreen
 
   self.MessageType = nil
 
-  -- When no MessageCategory is given, we don't show it as a title...	
+  -- When no MessageCategory is given, we don't show it as a title... 
   if MessageCategory and MessageCategory ~= "" then
     if MessageCategory:sub( -1 ) ~= "\n" then
       self.MessageCategory = MessageCategory .. ": "
