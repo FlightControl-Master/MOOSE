@@ -1529,6 +1529,7 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
     -- We use a specific voice
     options.provider[provider].voice = Voice
   else
+  
     -- DCS-gRPC doesn't directly support language/gender, but can use SSML
 
     local preTag, genderProp, langProp, postTag = '', '', '', ''
