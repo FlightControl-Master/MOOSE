@@ -501,7 +501,7 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
 
   else
     self:T("Spawning Static")        
-    self:T2({Template=Template})  
+    self:T2({Template=Template})
     Static=coalition.addStaticObject(CountryID, Template)
   end
     

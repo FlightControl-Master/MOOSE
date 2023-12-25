@@ -237,7 +237,7 @@ function STATIC:SpawnAt(Coordinate, Heading, Delay)
 end
 
 
---- Respawn the @{Wrapper.Unit} at the same location with the same properties.
+--- Respawn the @{Wrapper.Static} at the same location with the same properties.
 -- This is useful to respawn a cargo after it has been destroyed.
 -- @param #STATIC self
 -- @param DCS#country.id CountryID (Optional) The country ID used for spawning the new static. Default is same as currently.
@@ -249,7 +249,7 @@ function STATIC:ReSpawn(CountryID, Delay)
   else
 
     CountryID=CountryID or self:GetCountry()  
-
+   
     local SpawnStatic=SPAWNSTATIC:NewFromStatic(self.StaticName, CountryID)
     
     SpawnStatic:Spawn(nil, self.StaticName)
@@ -271,8 +271,8 @@ function STATIC:ReSpawnAt(Coordinate, Heading, Delay)
 
   if Delay and Delay>0 then
     SCHEDULER:New(nil, self.ReSpawnAt, {self, Coordinate, Heading}, Delay)
-  else
-  
+  else      
+      
     local SpawnStatic=SPAWNSTATIC:NewFromStatic(self.StaticName, self:GetCountry())
     
     SpawnStatic:SpawnFromCoordinate(Coordinate, Heading, self.StaticName)
