@@ -9,14 +9,14 @@ nav_order: 04
 1. Table of contents
 {:toc}
 
-The best way to get compftable with a Moose class is to try the demo missions of
-the class you want to learn. The Moose team created a lot of demo missions for
-most of the classes.
+The best way to get comfortable with a Moose class is to try the demo missions
+of the class you want to learn. The Moose team created a lot of demo missions
+for most of the classes.
 
 ## Download demo missions
 
 Go to the repository [MOOSE_MISSIONS]{:target="_blank"}, search the folder of
-the class, download the mission (`.miz`) and rum them.
+the class, download the mission (`.miz`) and run them.
 
 ## Read the mission script
 
@@ -49,7 +49,7 @@ If you want to use more functions combine them all up.
 
 ## Next step
 
-If the mission shows not the expected behaviour take a look at section
+If the mission does not show the expected behaviour take a look at section
 [problems].
 
 [MOOSE_MISSIONS]: https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop
