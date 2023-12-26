@@ -1228,7 +1228,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.44"
+CTLD.version="1.0.45"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2454,10 +2454,12 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
       realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass,nil,subcat)
       table.insert(droppedcargo,realcargo)
     else
-      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,false,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],false,cargotype.PerCrateMass,nil,subcat)
-      Cargo:RemoveStock()
+      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,false,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],false,cargotype.PerCrateMass,nil,subcat)    
     end
     table.insert(self.Spawned_Cargo, realcargo)
+  end
+  if not (drop or pack) then
+    Cargo:RemoveStock()
   end
   local text = string.format("Crates for %s have been positioned near you!",cratename)
   if drop then
@@ -3824,7 +3826,7 @@ end
 -- @param #CTLD_CARGO.Enum Type Type of cargo. I.e. VEHICLE or FOB. VEHICLE will move to destination zones when dropped/build, FOB stays put.
 -- @param #number NoCrates Number of crates needed to build this cargo.
 -- @param #number PerCrateMass Mass in kg of each crate
--- @param #number Stock Number of groups in stock. Nil for unlimited.
+-- @param #number Stock Number of buildable groups in stock. Nil for unlimited.
 -- @param #string SubCategory Name of sub-category (optional).
 function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock,SubCategory)
   self:T(self.lid .. " AddCratesCargo")
