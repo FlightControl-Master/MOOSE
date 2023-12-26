@@ -141,14 +141,14 @@
 --        -- **Note** If you need different tanker types, i.e. Boom and Drogue, set them up at different AirWings!
 --        -- Add a tanker point
 --        mywing:AddPatrolPointTanker(AIRBASE.Caucasus.Kutaisi,ZONE:FindByName("Blue Zone Tanker"):GetCoordinate(),20000,280,270,50)
---        -- Add an AWACS squad - Radio 251 AM, TACAN 51Y
+--        -- Add a tanker squad - Radio 251 AM, TACAN 51Y
 --        mywing:AddTankerSquadron("Blue Tanker","Tanker Ops Kutaisi",AIRBASE.Caucasus.Kutaisi,20,AI.Skill.EXCELLENT,602,nil,251,radio.modulation.AM,51)
 --        
 -- ### Add an AWACS (optional)
 --        
 --        -- Add an AWACS point
 --        mywing:AddPatrolPointAwacs(AIRBASE.Caucasus.Kutaisi,ZONE:FindByName("Blue Zone AWACS"):GetCoordinate(),25000,300,270,50)
---        -- Add a tanker squad - Radio 251 AM, TACAN 51Y
+--        -- Add an AWACS squad - Radio 251 AM, TACAN 51Y
 --        mywing:AddAWACSSquadron("Blue AWACS","AWACS Ops Kutaisi",AIRBASE.Caucasus.Kutaisi,20,AI.Skill.AVERAGE,702,nil,271,radio.modulation.AM)        
 --
 -- # Fine-Tuning
