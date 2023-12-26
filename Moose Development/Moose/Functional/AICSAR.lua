@@ -608,8 +608,8 @@ function AICSAR:SetPilotTTSVoice(Voice,Culture,Gender)
  self.SRSPilot:SetLabel("PILOT")
  if self.SRSGoogle then
   local poptions = self.SRS:GetProviderOptions(MSRS.Provider.GOOGLE) -- Sound.SRS#MSRS.ProviderOptions
-  self.SRSOperator:SetGoogle(poptions.credentials)
-  self.SRSOperator:SetGoogleAPIKey(poptions.key)
+  self.SRSPilot:SetGoogle(poptions.credentials)
+  self.SRSPilot:SetGoogleAPIKey(poptions.key)
  end
  return self
 end
@@ -629,7 +629,7 @@ function AICSAR:SetOperatorTTSVoice(Voice,Culture,Gender)
  self.SRSOperator:SetVoice(Voice)
  self.SRSOperator:SetCulture(Culture or "en-GB")
  self.SRSOperator:SetGender(Gender or "female")
- self.SRSPilot:SetLabel("RESCUE")
+ self.SRSOperator:SetLabel("RESCUE")
  if self.SRSGoogle then
   local poptions = self.SRS:GetProviderOptions(MSRS.Provider.GOOGLE) -- Sound.SRS#MSRS.ProviderOptions
   self.SRSOperator:SetGoogle(poptions.credentials)
