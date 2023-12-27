@@ -1012,6 +1012,7 @@ do
   --    * @{#SET_GROUP.FilterCategoryShip}: Builds the SET_GROUP from ships.
   --    * @{#SET_GROUP.FilterCategoryStructure}: Builds the SET_GROUP from structures.
   --    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Core.Zone#ZONE}.
+  --    * @{#SET_GROUP.FilterFunction}: Builds the SET_GROUP with a custom condition.
   --
   -- Once the filter criteria have been set for the SET_GROUP, you can start filtering using:
   --
@@ -2150,6 +2151,7 @@ do -- SET_UNIT
   -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --    * @{#SET_UNIT.FilterActive}: Builds the SET_UNIT with the units that are only active. Units that are inactive (late activation) won't be included in the set!
   --    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Core.Zone#ZONE}.
+  --    * @{#SET_UNIT.FilterFunction}: Builds the SET_UNIT with a custom condition.
   --    
   -- Once the filter criteria have been set for the SET_UNIT, you can start filtering using:
   --
@@ -3372,6 +3374,7 @@ do -- SET_STATIC
   --    * @{#SET_STATIC.FilterPrefixes}: Builds the SET_STATIC with the units containing the same string(s) in their name. **Attention!** LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
   -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --    * @{#SET_STATIC.FilterZones}: Builds the SET_STATIC with the units within a @{Core.Zone#ZONE}.
+  --    * @{#SET_STATIC.FilterFunction}: Builds the SET_STATIC with a custom condition.
   --    
   -- Once the filter criteria have been set for the SET_STATIC, you can start filtering using:
   --
@@ -4149,6 +4152,7 @@ do -- SET_CLIENT
   -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --    * @{#SET_CLIENT.FilterActive}: Builds the SET_CLIENT with the units that are only active. Units that are inactive (late activation) won't be included in the set!
   --    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Core.Zone#ZONE}.
+  --    * @{#SET_CLIENT.FilterFunction}: Builds the SET_CLIENT with a custom condition.
   --    
   -- Once the filter criteria have been set for the SET_CLIENT, you can start filtering using:
   --
