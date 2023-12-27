@@ -146,7 +146,52 @@ do -- SET_BASE
 
     return self
   end
-
+  
+  --- [Internal] Add a functional filter
+  -- @param #SET_BASE self
+  -- @param #function ConditionFunction If this function returns `true`, the object is added to the SET. The function needs to take a CONTROLLABLE object as first argument.
+  -- @param ... Condition function arguments, if any.
+  -- @return #boolean If true, at least one condition is true
+  function SET_BASE:FilterFunction(ConditionFunction, ...)
+  
+    local condition={}
+    condition.func=ConditionFunction
+    condition.arg={}
+    
+    if arg then
+      condition.arg=arg
+    end
+    
+    if not self.Filter.Functions then self.Filter.Functions = {} end
+    table.insert(self.Filter.Functions, condition)
+    
+    return self
+  end
+    
+  --- [Internal] Check if the condition functions returns true.
+  -- @param #SET_BASE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Object The object to filter for
+  -- @return #boolean If true, at least one condition is true.
+  function SET_BASE:_EvalFilterFunctions(Object)
+  
+    -- Any one condition must be true.
+    for _,_condition in pairs(self.Filter.Functions or {}) do
+      local condition=_condition
+  
+      -- Call function.
+      local istrue=condition.func(Object,unpack(condition.arg))
+  
+      -- Any true will return true.
+      if istrue then
+        return true
+      end
+  
+    end
+  
+    -- No condition was true.
+    return false
+  end
+  
   --- Clear the Objects in the Set.
   -- @param #SET_BASE self
   -- @param #boolean TriggerEvent If `true`, an event remove is triggered for each group that is removed from the set.
@@ -1040,6 +1085,7 @@ do
       Countries = nil,
       GroupPrefixes = nil,
       Zones = nil,
+      Functions = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -1253,7 +1299,26 @@ do
     
     return self
   end
+  
+  --- [User] Add a custom condition function.
+  -- @function [parent=#SET_GROUP] FilterFunction
+  -- @param #SET_GROUP self
+  -- @param #function ConditionFunction If this function returns `true`, the object is added to the SET. The function needs to take a GROUP object as first argument.
+  -- @param ... Condition function arguments if any.
+  -- @return #SET_GROUP self
+  -- @usage
+  --          -- Image you want to exclude a specific GROUP from a SET:
+  --          local groundset = SET_GROUP:New():FilterCoalitions("blue"):FilterCategoryGround():FilterFunction(
+  --          -- The function needs to take a GROUP object as first - and in this case, only - argument.
+  --          function(grp)
+  --              local isinclude = true
+  --              if grp:GetName() == "Exclude Me" then isinclude = false end
+  --              return isinclude
+  --          end
+  --          ):FilterOnce()
+  --          BASE:I(groundset:Flush())
 
+  
   --- Builds a set of groups of coalitions.
   -- Possible current coalitions are red, blue and neutral.
   -- @param #SET_GROUP self
@@ -1981,6 +2046,11 @@ do
       end
       MGroupInclude = MGroupInclude and MGroupZone
     end
+    
+    if self.Filter.Functions then
+      local MGroupFunc = self:_EvalFilterFunctions(MGroup)
+      MGroupInclude = MGroupInclude and MGroupFunc
+    end
      
     self:T2( MGroupInclude )
     return MGroupInclude
@@ -2158,6 +2228,7 @@ do -- SET_UNIT
       Countries = nil,
       UnitPrefixes = nil,
       Zones = nil,
+      Functions = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -2528,6 +2599,25 @@ do -- SET_UNIT
 
     return self
   end
+
+  --- [User] Add a custom condition function.
+  -- @function [parent=#SET_UNIT] FilterFunction
+  -- @param #SET_UNIT self
+  -- @param #function ConditionFunction If this function returns `true`, the object is added to the SET. The function needs to take a UNIT object as first argument.
+  -- @param ... Condition function arguments if any.
+  -- @return #SET_UNIT self
+  -- @usage
+  --          -- Image you want to exclude a specific UNIT from a SET:
+  --          local groundset = SET_UNIT:New():FilterCoalitions("blue"):FilterCategories("ground"):FilterFunction(
+  --          -- The function needs to take a UNIT object as first - and in this case, only - argument.
+  --          function(unit)
+  --              local isinclude = true
+  --              if unit:GetName() == "Exclude Me" then isinclude = false end
+  --              return isinclude
+  --          end
+  --          ):FilterOnce()
+  --          BASE:I(groundset:Flush())
+
 
   --- Handles the Database to check on an event (birth) that the Object was added in the Database.
   -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
@@ -3196,6 +3286,11 @@ do -- SET_UNIT
       MUnitInclude = MUnitInclude  and MGroupZone
     end
     
+    if self.Filter.Functions then
+      local MUnitFunc = self:_EvalFilterFunctions(MUnit)
+      MUnitInclude = MUnitInclude  and MUnitFunc
+    end
+    
     self:T2( MUnitInclude )
     return MUnitInclude
   end
@@ -3479,7 +3574,25 @@ do -- SET_STATIC
     end
     return self
   end
-
+  
+  --- [User] Add a custom condition function.
+  -- @function [parent=#SET_STATIC] FilterFunction
+  -- @param #SET_STATIC self
+  -- @param #function ConditionFunction If this function returns `true`, the object is added to the SET. The function needs to take a STATIC object as first argument.
+  -- @param ... Condition function arguments if any.
+  -- @return #SET_STATIC self
+  -- @usage
+  --          -- Image you want to exclude a specific CLIENT from a SET:
+  --          local groundset = SET_STATIC:New():FilterCoalitions("blue"):FilterActive(true):FilterFunction(
+  --          -- The function needs to take a STATIC object as first - and in this case, only - argument.
+  --          function(static)
+  --              local isinclude = true
+  --              if static:GetName() == "Exclude Me" then isinclude = false end
+  --              return isinclude
+  --          end
+  --          ):FilterOnce()
+  --          BASE:I(groundset:Flush())
+  
   --- Builds a set of units of defined countries.
   -- Possible current countries are those known within DCS world.
   -- @param #SET_STATIC self
@@ -4538,6 +4651,25 @@ do -- SET_CLIENT
     return AliveSet.Set or {}
   end
 
+  --- [User] Add a custom condition function.
+  -- @function [parent=#SET_CLIENT] FilterFunction
+  -- @param #SET_CLIENT self
+  -- @param #function ConditionFunction If this function returns `true`, the object is added to the SET. The function needs to take a CLIENT object as first argument.
+  -- @param ... Condition function arguments if any.
+  -- @return #SET_CLIENT self
+  -- @usage
+  --          -- Image you want to exclude a specific CLIENT from a SET:
+  --          local groundset = SET_CLIENT:New():FilterCoalitions("blue"):FilterActive(true):FilterFunction(
+  --          -- The function needs to take a UNIT object as first - and in this case, only - argument.
+  --          function(client)
+  --              local isinclude = true
+  --              if client:GetPlayerName() == "Exclude Me" then isinclude = false end
+  --              return isinclude
+  --          end
+  --          ):FilterOnce()
+  --          BASE:I(groundset:Flush())
+
+
   ---
   -- @param #SET_CLIENT self
   -- @param Wrapper.Client#CLIENT MClient
@@ -4658,6 +4790,11 @@ do -- SET_CLIENT
       end
       self:T( { "Evaluated Callsign", MClientCallsigns } )
       MClientInclude = MClientInclude and MClientCallsigns
+    end
+    
+    if self.Filter.Functions then
+      local MClientFunc = self:_EvalFilterFunctions(MClient)
+      MClientInclude = MClientInclude and MClientFunc
     end
     
   end
