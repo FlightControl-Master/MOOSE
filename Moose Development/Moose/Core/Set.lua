@@ -5394,7 +5394,7 @@ do -- SET_AIRBASE
   function SET_AIRBASE:GetRandomAirbase()
 
     local RandomAirbase = self:GetRandom()
-    self:F( { RandomAirbase = RandomAirbase:GetName() } )
+    --self:F( { RandomAirbase = RandomAirbase:GetName() } )
 
     return RandomAirbase
   end
