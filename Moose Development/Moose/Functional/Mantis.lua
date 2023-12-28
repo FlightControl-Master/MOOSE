@@ -94,7 +94,7 @@
 -- Known SAM types at the time of writing are:
 -- 
 -- * Avenger
--- * Chaparrel
+-- * Chaparral
 -- * Hawk
 -- * Linebacker
 -- * NASAMS
@@ -365,7 +365,7 @@ MANTIS.SamData = {
   ["SA-15"] = { Range=11, Blindspot=0, Height=6, Type="Short", Radar="Tor 9A331" },
   ["SA-13"] = { Range=5, Blindspot=0, Height=3, Type="Short", Radar="Strela" },
   ["Avenger"] = { Range=4, Blindspot=0, Height=3, Type="Short", Radar="Avenger" },
-  ["Chaparrel"] = { Range=8, Blindspot=0, Height=3, Type="Short", Radar="Chaparral" },
+  ["Chaparral"] = { Range=8, Blindspot=0, Height=3, Type="Short", Radar="Chaparral" },
   ["Linebacker"] = { Range=4, Blindspot=0, Height=3, Type="Short", Radar="Linebacker" },
   ["Silkworm"] = { Range=90, Blindspot=1, Height=0.2, Type="Long", Radar="Silkworm" },
   -- units from HDS Mod, multi launcher options is tricky
