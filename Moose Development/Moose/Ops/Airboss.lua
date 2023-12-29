@@ -8212,7 +8212,7 @@ function AIRBOSS:OnEventBirth( EventData )
     self:E( EventData )
     return
   end
-  if EventData.IniUnit == nil then
+  if EventData.IniUnit == nil and (not EventData.IniObjectCategory == Object.Category.STATIC) then
     self:E( self.lid .. "ERROR: EventData.IniUnit=nil in event BIRTH!" )
     self:E( EventData )
     return
