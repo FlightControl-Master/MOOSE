@@ -2937,7 +2937,7 @@ function CONTROLLABLE:CopyRoute( Begin, End, Randomize, Radius )
 end
 
 --- Return the detected targets of the controllable.
--- The optional parametes specify the detection methods that can be applied.
+-- The optional parameters specify the detection methods that can be applied.
 -- If no detection method is given, the detection will use all the available methods by default.
 -- @param #CONTROLLABLE self
 -- @param #boolean DetectVisual (optional)
@@ -4025,14 +4025,22 @@ end
 -- @param #boolean onroad If true, route on road (less problems with AI way finding), default true
 -- @param #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
 -- @param #string formation Formation string as in the mission editor, e.g. "Vee", "Diamond", "Line abreast", etc. Defaults to "Off Road"
+-- @param #boolean onland (optional) If true, try up to 50 times to get a coordinate on land.SurfaceType.LAND. Note - this descriptor value is not reliably implemented on all maps.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:RelocateGroundRandomInRadius( speed, radius, onroad, shortcut, formation )
+function CONTROLLABLE:RelocateGroundRandomInRadius( speed, radius, onroad, shortcut, formation, onland )
   self:F2( { self.ControllableName } )
 
   local _coord = self:GetCoordinate()
   local _radius = radius or 500
   local _speed = speed or 20
   local _tocoord = _coord:GetRandomCoordinateInRadius( _radius, 100 )
+  if onland then
+    for i=1,50 do
+      local island = _tocoord:GetSurfaceType() == land.SurfaceType.LAND and true or false
+      if island then break end
+      _tocoord = _coord:GetRandomCoordinateInRadius( _radius, 100 )
+    end
+  end
   local _onroad = onroad or true
   local _grptsk = {}
   local _candoroad = false
@@ -5349,9 +5357,10 @@ end
 -- @param #number Altitude (Optional) Altitude in meters. Defaults to the altitude of the coordinate.
 -- @param #number Speed (Optional) Speed in kph. Defaults to 500 kph.
 -- @param #number Formation (Optional) Formation to take, e.g. ENUMS.Formation.FixedWing.Trail.Close, also see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_option_formation).
+-- @param #boolean AGL (Optional) If true, set altitude to above ground level (AGL), not above sea level (ASL).
 -- @param #number Delay  (Optional) Set the task after delay seconds only.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:PatrolRaceTrack(Point1, Point2, Altitude, Speed, Formation, Delay)
+function CONTROLLABLE:PatrolRaceTrack(Point1, Point2, Altitude, Speed, Formation, AGL, Delay)
 
   local PatrolGroup = self -- Wrapper.Group#GROUP
   
@@ -5373,8 +5382,10 @@ function CONTROLLABLE:PatrolRaceTrack(Point1, Point2, Altitude, Speed, Formation
    
    -- Calculate the new Route
    if Altitude then
-     FromCoord:SetAltitude(Altitude)
-     ToCoord:SetAltitude(Altitude)
+     local asl = true
+     if AGL then asl = false end
+     FromCoord:SetAltitude(Altitude, asl)
+     ToCoord:SetAltitude(Altitude, asl)
    end
             
    -- Create a "air waypoint", which is a "point" structure that can be given as a parameter to a Task
