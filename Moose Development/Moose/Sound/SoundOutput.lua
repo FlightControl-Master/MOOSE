@@ -199,6 +199,8 @@ do -- Sound File
       else -- use internal path in miz file
         self.path="l10n/DEFAULT/"
       end
+    else
+      self.path = Path
     end
 
     -- Remove (back)slashes.
