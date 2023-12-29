@@ -17,9 +17,9 @@
 --
 -- ===
 --
--- ### Authors: **FlightControl**, **applevangelist**
+-- ### Authors: **applevangelist**, **FlightControl**
 --
--- Last Update: Oct 2023
+-- Last Update: Dec 2023
 --
 -- ===
 --
@@ -144,7 +144,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   self:AddTransition("*",             "ManageEvasion",                "*")
   self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  self:I("*** SEAD - Started Version 0.4.5")
+  self:I("*** SEAD - Started Version 0.4.6")
   return self
 end
 
@@ -401,7 +401,7 @@ function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADP
             grp:EnableEmission(false)
           end
           grp:OptionAlarmStateGreen() -- needed else we cannot move around
-          grp:RelocateGroundRandomInRadius(20,300,false,false,"Diamond")
+          grp:RelocateGroundRandomInRadius(20,300,false,false,"Diamond",true)
           if self.UseCallBack then
             local object = self.CallBack
             object:SeadSuppressionStart(grp,name,attacker)

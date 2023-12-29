@@ -4025,14 +4025,22 @@ end
 -- @param #boolean onroad If true, route on road (less problems with AI way finding), default true
 -- @param #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
 -- @param #string formation Formation string as in the mission editor, e.g. "Vee", "Diamond", "Line abreast", etc. Defaults to "Off Road"
+-- @param #boolean onland (optional) If true, try up to 50 times to get a coordinate on land.SurfaceType.LAND. Note - this descriptor value is not reliably implemented on all maps.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:RelocateGroundRandomInRadius( speed, radius, onroad, shortcut, formation )
+function CONTROLLABLE:RelocateGroundRandomInRadius( speed, radius, onroad, shortcut, formation, onland )
   self:F2( { self.ControllableName } )
 
   local _coord = self:GetCoordinate()
   local _radius = radius or 500
   local _speed = speed or 20
   local _tocoord = _coord:GetRandomCoordinateInRadius( _radius, 100 )
+  if onland then
+    for i=1,50 do
+      local island = _tocoord:GetSurfaceType() == land.SurfaceType.LAND and true or false
+      if island then break end
+      _tocoord = _coord:GetRandomCoordinateInRadius( _radius, 100 )
+    end
+  end
   local _onroad = onroad or true
   local _grptsk = {}
   local _candoroad = false
