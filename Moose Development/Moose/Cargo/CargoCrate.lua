@@ -59,7 +59,7 @@ do -- CARGO_CRATE
   -- @return #CARGO_CRATE
   function CARGO_CRATE:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
     local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoStatic, Type, Name, nil, LoadRadius, NearRadius ) ) -- #CARGO_CRATE
-    self:F( { Type, Name, NearRadius } )
+    self:T( { Type, Name, NearRadius } )
   
     self.CargoObject = CargoStatic -- Wrapper.Static#STATIC
  
@@ -116,7 +116,7 @@ do -- CARGO_CRATE
   -- @param #string To
   -- @param Core.Point#POINT_VEC2
   function CARGO_CRATE:onenterUnLoaded( From, Event, To, ToPointVec2 )
-    --self:F( { ToPointVec2, From, Event, To } )
+    --self:T( { ToPointVec2, From, Event, To } )
   
     local Angle = 180
     local Speed = 10
@@ -153,7 +153,7 @@ do -- CARGO_CRATE
   -- @param #string To
   -- @param Wrapper.Unit#UNIT CargoCarrier
   function CARGO_CRATE:onenterLoaded( From, Event, To, CargoCarrier )
-    --self:F( { From, Event, To, CargoCarrier } )
+    --self:T( { From, Event, To, CargoCarrier } )
   
     self.CargoCarrier = CargoCarrier
     
@@ -190,7 +190,7 @@ do -- CARGO_CRATE
   -- @param Core.Point#COORDINATE Coordinate
   -- @return #boolean true if the Cargo Crate is within the report radius.
   function CARGO_CRATE:IsInReportRadius( Coordinate )
-    --self:F( { Coordinate, LoadRadius = self.LoadRadius } )
+    --self:T( { Coordinate, LoadRadius = self.LoadRadius } )
   
     local Distance = 0
     if self:IsUnLoaded() then
@@ -210,7 +210,7 @@ do -- CARGO_CRATE
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the Cargo Crate is within the loading radius.
   function CARGO_CRATE:IsInLoadRadius( Coordinate )
-    --self:F( { Coordinate, LoadRadius = self.NearRadius } )
+    --self:T( { Coordinate, LoadRadius = self.NearRadius } )
   
     local Distance = 0
     if self:IsUnLoaded() then
@@ -231,7 +231,7 @@ do -- CARGO_CRATE
   -- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
   -- @return #nil There is no valid Cargo in the CargoGroup.
   function CARGO_CRATE:GetCoordinate()
-    --self:F()
+    --self:T()
     
     return self.CargoObject:GetCoordinate()
   end
@@ -261,7 +261,7 @@ do -- CARGO_CRATE
   -- @param #CARGO_CRATE self
   -- @param Core.Point#COORDINATE Coordinate
   function CARGO_CRATE:RouteTo( Coordinate )
-    self:F( {Coordinate = Coordinate } )
+    self:T( {Coordinate = Coordinate } )
     
   end
 
@@ -274,7 +274,7 @@ do -- CARGO_CRATE
   -- @return #boolean The Cargo is near to the Carrier.
   -- @return #nil The Cargo is not near to the Carrier.
   function CARGO_CRATE:IsNear( CargoCarrier, NearRadius )
-    self:F( {NearRadius = NearRadius } )
+    self:T( {NearRadius = NearRadius } )
     
     return self:IsNear( CargoCarrier:GetCoordinate(), NearRadius )
   end
@@ -283,7 +283,7 @@ do -- CARGO_CRATE
   -- @param #CARGO_CRATE self
   function CARGO_CRATE:Respawn()
 
-    self:F( { "Respawning crate " .. self:GetName() } )
+    self:T( { "Respawning crate " .. self:GetName() } )
 
 
     -- Respawn the group...
@@ -300,7 +300,7 @@ do -- CARGO_CRATE
   -- @param #CARGO_CRATE self
   function CARGO_CRATE:onafterReset()
 
-    self:F( { "Reset crate " .. self:GetName() } )
+    self:T( { "Reset crate " .. self:GetName() } )
 
 
     -- Respawn the group...
