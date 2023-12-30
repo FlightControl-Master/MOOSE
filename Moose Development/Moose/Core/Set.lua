@@ -171,25 +171,18 @@ do -- SET_BASE
   --- [Internal] Check if the condition functions returns true.
   -- @param #SET_BASE self
   -- @param Wrapper.Controllable#CONTROLLABLE Object The object to filter for
-  -- @return #boolean If true, at least one condition is true.
-  function SET_BASE:_EvalFilterFunctions(Object)
-  
-    -- Any one condition must be true.
+  -- @return #boolean If true, if **all** conditions are true
+  function SET_BASE:_EvalFilterFunctions(Object) 
+    -- All conditions must be true.
     for _,_condition in pairs(self.Filter.Functions or {}) do
       local condition=_condition
-  
       -- Call function.
-      local istrue=condition.func(Object,unpack(condition.arg))
-  
-      -- Any true will return true.
-      if istrue then
-        return true
+      if condition.func(Object,unpack(condition.arg)) == false then
+        return false
       end
-  
-    end
-  
+    end  
     -- No condition was true.
-    return false
+    return true
   end
   
   --- Clear the Objects in the Set.
@@ -2049,7 +2042,8 @@ do
     end
     
     if self.Filter.Functions then
-      local MGroupFunc = self:_EvalFilterFunctions(MGroup)
+      local MGroupFunc = false
+      MGroupFunc = self:_EvalFilterFunctions(MGroup)
       MGroupInclude = MGroupInclude and MGroupFunc
     end
      

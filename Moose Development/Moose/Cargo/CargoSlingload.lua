@@ -52,7 +52,7 @@ do -- CARGO_SLINGLOAD
   -- @return #CARGO_SLINGLOAD
   function CARGO_SLINGLOAD:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
     local self = BASE:Inherit( self, CARGO_REPRESENTABLE:New( CargoStatic, Type, Name, nil, LoadRadius, NearRadius ) ) -- #CARGO_SLINGLOAD
-    self:F( { Type, Name, NearRadius } )
+    self:T( { Type, Name, NearRadius } )
   
     self.CargoObject = CargoStatic
   
@@ -130,7 +130,7 @@ do -- CARGO_SLINGLOAD
   -- @param Core.Point#COORDINATE Coordinate
   -- @return #boolean true if the Cargo Crate is within the report radius.
   function CARGO_SLINGLOAD:IsInReportRadius( Coordinate )
-    --self:F( { Coordinate, LoadRadius = self.LoadRadius } )
+    --self:T( { Coordinate, LoadRadius = self.LoadRadius } )
   
     local Distance = 0
     if self:IsUnLoaded() then
@@ -149,7 +149,7 @@ do -- CARGO_SLINGLOAD
   -- @param Core.Point#COORDINATE Coordinate
   -- @return #boolean true if the Cargo Slingload is within the loading radius.
   function CARGO_SLINGLOAD:IsInLoadRadius( Coordinate )
-    --self:F( { Coordinate } )
+    --self:T( { Coordinate } )
   
     local Distance = 0
     if self:IsUnLoaded() then
@@ -169,7 +169,7 @@ do -- CARGO_SLINGLOAD
   -- @return Core.Point#COORDINATE The current Coordinate of the first Cargo of the CargoGroup.
   -- @return #nil There is no valid Cargo in the CargoGroup.
   function CARGO_SLINGLOAD:GetCoordinate()
-    --self:F()
+    --self:T()
     
     return self.CargoObject:GetCoordinate()
   end
@@ -199,7 +199,7 @@ do -- CARGO_SLINGLOAD
   -- @param #CARGO_SLINGLOAD self
   -- @param Core.Point#COORDINATE Coordinate
   function CARGO_SLINGLOAD:RouteTo( Coordinate )
-    --self:F( {Coordinate = Coordinate } )
+    --self:T( {Coordinate = Coordinate } )
     
   end
 
@@ -212,7 +212,7 @@ do -- CARGO_SLINGLOAD
   -- @return #boolean The Cargo is near to the Carrier.
   -- @return #nil The Cargo is not near to the Carrier.
   function CARGO_SLINGLOAD:IsNear( CargoCarrier, NearRadius )
-    --self:F( {NearRadius = NearRadius } )
+    --self:T( {NearRadius = NearRadius } )
     
     return self:IsNear( CargoCarrier:GetCoordinate(), NearRadius )
   end
@@ -222,7 +222,7 @@ do -- CARGO_SLINGLOAD
   -- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:Respawn()
 
-    --self:F( { "Respawning slingload " .. self:GetName() } )
+    --self:T( { "Respawning slingload " .. self:GetName() } )
 
 
     -- Respawn the group...
@@ -239,7 +239,7 @@ do -- CARGO_SLINGLOAD
   -- @param #CARGO_SLINGLOAD self
   function CARGO_SLINGLOAD:onafterReset()
 
-    --self:F( { "Reset slingload " .. self:GetName() } )
+    --self:T( { "Reset slingload " .. self:GetName() } )
 
 
     -- Respawn the group...
