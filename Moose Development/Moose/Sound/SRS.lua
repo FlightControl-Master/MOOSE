@@ -446,12 +446,14 @@ end
 -- @return #MSRS self
 function MSRS:New(Path, Frequency, Modulation, Backend)
 
+  -- Inherit everything from BASE class.
+  local self=BASE:Inherit(self, BASE:New()) -- #MSRS
+
+  self:F( {Path, Frequency, Modulation, Backend} )
+
   -- Defaults.
   Frequency = Frequency or 143
   Modulation = Modulation or radio.modulation.AM
-
-  -- Inherit everything from BASE class.
-  local self=BASE:Inherit(self, BASE:New()) -- #MSRS
 
   self.lid = string.format("%s-%s | ", "unknown", self.version)
 
@@ -466,6 +468,7 @@ function MSRS:New(Path, Frequency, Modulation, Backend)
     self:SetCoalition()
     self:SetLabel()
     self:SetVolume()
+    self:SetBackend(Backend)
 
   else
 
@@ -476,11 +479,15 @@ function MSRS:New(Path, Frequency, Modulation, Backend)
     end
 
     if Frequency then
-      self:SetFrequencies(Frequency)      
+      self:SetFrequencies(Frequency)
     end
-    
+
     if Modulation then
-      self:SetModulations(Modulation)    
+      self:SetModulations(Modulation)
+    end
+
+    if Backend then
+      self:SetBackend(Backend)
     end
 
   end
@@ -508,7 +515,7 @@ end
 -- @param #string Backend Backend used. Default is `MSRS.Backend.SRSEXE`.
 -- @return #MSRS self
 function MSRS:SetBackend(Backend)
-
+  self:F( {Backend=Backend} )
   self.backend=Backend or MSRS.Backend.SRSEXE
 
   return self
@@ -518,7 +525,7 @@ end
 -- @param #MSRS self
 -- @return #MSRS self
 function MSRS:SetBackendGRPC()
-
+  self:F()
   self:SetBackend(MSRS.Backend.GRPC)
 
   return self
@@ -527,8 +534,8 @@ end
 --- Set `DCS-SR-ExternalAudio.exe` as backend to communicate with SRS.
 -- @param #MSRS self
 -- @return #MSRS self
-function MSRS:SetBackendSRSEXE(Backend)
-
+function MSRS:SetBackendSRSEXE()
+  self:F()
   self:SetBackend(MSRS.Backend.SRSEXE)
 
   return self
@@ -537,12 +544,14 @@ end
 --- Set the default backend.
 -- @param #MSRS self
 function MSRS.SetDefaultBackend(Backend)
+  self:F( {Backend=Backend} )
   MSRS.backend=Backend or MSRS.Backend.SRSEXE
 end
 
 --- Set DCS-gRPC to be the default backend.
 -- @param #MSRS self
 function MSRS.SetDefaultBackendGRPC()
+  self:F()
   MSRS.backend=MSRS.Backend.GRPC
 end
 
@@ -558,6 +567,7 @@ end
 -- @param #string Path Path to the directory, where the sound file is located. Default is `C:\\Program Files\\DCS-SimpleRadio-Standalone`.
 -- @return #MSRS self
 function MSRS:SetPath(Path)
+  self:F( {Path=Path} )
 
   -- Set path.
   self.path=Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
@@ -570,7 +580,7 @@ function MSRS:SetPath(Path)
   end
 
   -- Debug output.
-  self:T(string.format("SRS path=%s", self:GetPath()))
+  self:F(string.format("SRS path=%s", self:GetPath()))
   
   return self
 end
@@ -587,6 +597,7 @@ end
 -- @param #number Volume Volume - 1.0 is max, 0.0 is silence
 -- @return #MSRS self
 function MSRS:SetVolume(Volume)
+  self:F( {Volume=Volume} )
   local volume = Volume or 1
   if volume > 1 then volume = 1 elseif volume < 0 then volume = 0 end
   self.volume = volume
@@ -605,6 +616,7 @@ end
 -- @param #number Label. Default "ROBOT"
 -- @return #MSRS self
 function MSRS:SetLabel(Label)
+  self:F( {Label=Label} )
   self.Label=Label or "ROBOT"
   return self
 end
@@ -621,6 +633,7 @@ end
 -- @param #number Port Port. Default 5002.
 -- @return #MSRS self
 function MSRS:SetPort(Port)
+  self:F( {Port=Port} )
   self.port=Port or 5002
   self:T(string.format("SRS port=%s", self:GetPort()))
   return self
@@ -638,6 +651,7 @@ end
 -- @param #number Coalition Coalition. Default 0.
 -- @return #MSRS self
 function MSRS:SetCoalition(Coalition)
+  self:F( {Coalition=Coalition} )
   self.coalition=Coalition or 0
   return self
 end
@@ -655,7 +669,7 @@ end
 -- @param #table Frequencies Frequencies in MHz. Can also be given as a #number if only one frequency should be used.
 -- @return #MSRS self
 function MSRS:SetFrequencies(Frequencies)
-
+  self:F( Frequencies )
   self.frequencies=UTILS.EnsureTable(Frequencies, false)
 
   return self
@@ -666,7 +680,7 @@ end
 -- @param #table Frequencies Frequencies in MHz. Can also be given as a #number if only one frequency should be used.
 -- @return #MSRS self
 function MSRS:AddFrequencies(Frequencies)
-
+  self:F( Frequencies )
   for _,_freq in pairs(UTILS.EnsureTable(Frequencies, false)) do
     self:T(self.lid..string.format("Adding frequency %s", tostring(_freq)))
     table.insert(self.frequencies,_freq)
@@ -688,7 +702,7 @@ end
 -- @param #table Modulations Modulations. Can also be given as a #number if only one modulation should be used.
 -- @return #MSRS self
 function MSRS:SetModulations(Modulations)
-
+  self:F( Modulations )
   self.modulations=UTILS.EnsureTable(Modulations, false)
 
   -- Debug info.
@@ -703,7 +717,7 @@ end
 -- @param #table Modulations Modulations. Can also be given as a #number if only one modulation should be used.
 -- @return #MSRS self
 function MSRS:AddModulations(Modulations)
-
+  self:F( Modulations )
    for _,_mod in pairs(UTILS.EnsureTable(Modulations, false)) do
     table.insert(self.modulations,_mod)
    end
@@ -723,7 +737,7 @@ end
 -- @param #string Gender Gender: "male" or "female" (default).
 -- @return #MSRS self
 function MSRS:SetGender(Gender)
-
+  self:F( {Gender=Gender} )
   Gender=Gender or "female"
 
   self.gender=Gender:lower()
@@ -739,7 +753,7 @@ end
 -- @param #string Culture Culture, *e.g.* "en-GB".
 -- @return #MSRS self
 function MSRS:SetCulture(Culture)
-
+  self:F( {Culture=Culture} )
   self.culture=Culture
 
   return self
@@ -750,7 +764,7 @@ end
 -- @param #string Voice Voice.
 -- @return #MSRS self
 function MSRS:SetVoice(Voice)
-
+  self:F( {Voice=Voice} )
   self.voice=Voice
 
   return self
@@ -762,7 +776,7 @@ end
 -- @param #string Provider Provider. Default is as set by @{#MSRS.SetProvider}, which itself defaults to `MSRS.Provider.WINDOWS` if not set.
 -- @return #MSRS self
 function MSRS:SetVoiceProvider(Voice, Provider)
-  
+  self:F( {Voice=Voice, Provider=Provider} )
   self.poptions=self.poptions or {}
   
   self.poptions[Provider or self:GetProvider()]=Voice
@@ -775,7 +789,7 @@ end
 -- @param #string Voice Voice. Default `"Microsoft Hazel Desktop"`.
 -- @return #MSRS self
 function MSRS:SetVoiceWindows(Voice)
-
+  self:F( {Voice=Voice} )
   self:SetVoiceProvider(Voice or "Microsoft Hazel Desktop", MSRS.Provider.WINDOWS)
 
   return self
@@ -786,7 +800,7 @@ end
 -- @param #string Voice Voice. Default `MSRS.Voices.Google.Standard.en_GB_Standard_A`.
 -- @return #MSRS self
 function MSRS:SetVoiceGoogle(Voice)
-
+  self:F( {Voice=Voice} )
   self:SetVoiceProvider(Voice or MSRS.Voices.Google.Standard.en_GB_Standard_A, MSRS.Provider.GOOGLE)
 
   return self
@@ -798,7 +812,7 @@ end
 -- @param #string Voice [Azure Voice](https://learn.microsoft.com/azure/cognitive-services/speech-service/language-support). Default `"en-US-AriaNeural"`.
 -- @return #MSRS self
 function MSRS:SetVoiceAzure(Voice)
-
+  self:F( {Voice=Voice} )
   self:SetVoiceProvider(Voice or "en-US-AriaNeural", MSRS.Provider.AZURE)
 
   return self
@@ -809,7 +823,7 @@ end
 -- @param #string Voice [AWS Voice](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html). Default `"Brian"`.
 -- @return #MSRS self
 function MSRS:SetVoiceAmazon(Voice)
-
+  self:F( {Voice=Voice} )
   self:SetVoiceProvider(Voice or "Brian", MSRS.Provider.AMAZON)
 
   return self
@@ -836,7 +850,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate Origin of the transmission.
 -- @return #MSRS self
 function MSRS:SetCoordinate(Coordinate)
-
+  self:F( Coordinate )
   self.coordinate=Coordinate
 
   return self
@@ -847,7 +861,7 @@ end
 -- @param #string PathToCredentials Full path to the google credentials JSON file, e.g. "C:\Users\username\Downloads\service-account-file.json". Can also be the Google API key.
 -- @return #MSRS self
 function MSRS:SetGoogle(PathToCredentials)
-
+  self:F( {PathToCredentials=PathToCredentials} )
   if PathToCredentials then
 
     self.provider = MSRS.Provider.GOOGLE
@@ -864,6 +878,7 @@ end
 -- @param #string APIKey API Key, usually a string of length 40 with characters and numbers.
 -- @return #MSRS self
 function MSRS:SetGoogleAPIKey(APIKey)
+  self:F( {APIKey=APIKey} )
   if APIKey then
   
     self.provider = MSRS.Provider.GOOGLE
@@ -893,6 +908,7 @@ end
 -- @param #string Provider
 -- @return #MSRS self
 function MSRS:SetProvider(Provider)
+  self:F( {Provider=Provider} )
   self.provider = Provider or MSRS.Provider.WINDOWS
   return self
 end
@@ -914,21 +930,15 @@ end
 -- @param #string Region Region to use.
 -- @return #MSRS.ProviderOptions Provider optionas table.
 function MSRS:SetProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
-  
+  self:F( {Provider, CredentialsFile, AccessKey, SecretKey, Region} )
   local option=MSRS._CreateProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
-  
+
   if self then
-  
     self.poptions=self.poptions or {}
-    
     self.poptions[Provider]=option
-    
   else
-  
     MSRS.poptions=MSRS.poptions or {}
-    
     MSRS.poptions[Provider]=option
-    
   end
 
   return option
@@ -942,9 +952,9 @@ end
 -- @param #string Region Region to use.
 -- @return #MSRS.ProviderOptions Provider optionas table.
 function MSRS._CreateProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
-
+  self:F( {Provider, CredentialsFile, AccessKey, SecretKey, Region} )
   local option={} --#MSRS.ProviderOptions
-  
+
   option.provider=Provider
   option.credentials=CredentialsFile
   option.key=AccessKey
@@ -960,9 +970,8 @@ end
 -- @param #string AccessKey Your API access key. This is necessary if DCS-gRPC is used as backend.
 -- @return #MSRS self
 function MSRS:SetProviderOptionsGoogle(CredentialsFile, AccessKey)
-
+  self:F( {CredentialsFile, AccessKey} )
   self:SetProviderOptions(MSRS.Provider.GOOGLE, CredentialsFile, AccessKey)
-  
   return self
 end
 
@@ -973,9 +982,8 @@ end
 -- @param #string Region Your AWS [region](https://docs.aws.amazon.com/general/latest/gr/pol.html).
 -- @return #MSRS self
 function MSRS:SetProviderOptionsAmazon(AccessKey, SecretKey, Region)
-
+  self:F( {AccessKey, SecretKey, Region} )
   self:SetProviderOptions(MSRS.Provider.AMAZON, nil, AccessKey, SecretKey, Region)
-  
   return self
 end
 
@@ -985,9 +993,8 @@ end
 -- @param #string Region Your Azure [region](https://learn.microsoft.com/en-us/azure/cognitive-services/speech-service/regions).
 -- @return #MSRS self
 function MSRS:SetProviderOptionsAzure(AccessKey, Region)
-
+  self:F( {AccessKey, Region} )
   self:SetProviderOptions(MSRS.Provider.AZURE, nil, AccessKey, nil, Region)
-  
   return self
 end
 
@@ -1005,6 +1012,7 @@ end
 -- @param #MSRS self
 -- @return #MSRS self
 function MSRS:SetTTSProviderGoogle()
+  self:F()
   self:SetProvider(MSRS.Provider.GOOGLE)
   return self
 end
@@ -1013,6 +1021,7 @@ end
 -- @param #MSRS self
 -- @return #MSRS self
 function MSRS:SetTTSProviderMicrosoft()
+  self:F()
   self:SetProvider(MSRS.Provider.WINDOWS)
   return self
 end
@@ -1022,6 +1031,7 @@ end
 -- @param #MSRS self
 -- @return #MSRS self
 function MSRS:SetTTSProviderAzure()
+  self:F()
   self:SetProvider(MSRS.Provider.AZURE)
   return self
 end
@@ -1030,6 +1040,7 @@ end
 -- @param #MSRS self
 -- @return #MSRS self
 function MSRS:SetTTSProviderAmazon()
+  self:F()
   self:SetProvider(MSRS.Provider.AMAZON)
   return self
 end
@@ -1039,7 +1050,7 @@ end
 -- @param #MSRS self
 -- @return #MSRS self
 function MSRS:Help()
-
+  self:F()
   -- Path and exe.
   local path=self:GetPath()
   local exe="DCS-SR-ExternalAudio.exe"
@@ -1074,13 +1085,21 @@ end
 -- @param #number Delay Delay in seconds, before the sound file is played.
 -- @return #MSRS self
 function MSRS:PlaySoundFile(Soundfile, Delay)
+  self:F( {Soundfile, Delay} )
+
+  -- Sound file name.
+  local soundfile=Soundfile:GetName()
+
+  -- First check if text file exists!
+  local exists=UTILS.FileExists(soundfile)
+  if not exists then
+    self:E("ERROR: MSRS sound file does not exist! File="..soundfile)
+    return self
+  end
 
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlaySoundFile, self, Soundfile, 0)
   else
-
-    -- Sound file name.
-    local soundfile=Soundfile:GetName()
 
     -- Get command.
     local command=self:_GetCommand()
@@ -1102,15 +1121,14 @@ end
 -- @param #number Delay Delay in seconds, before the sound file is played.
 -- @return #MSRS self
 function MSRS:PlaySoundText(SoundText, Delay)
+  self:F( {SoundText, Delay} )
 
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlaySoundText, self, SoundText, 0)
   else
   
     if self.backend==MSRS.Backend.GRPC then
-    
       self:_DCSgRPCtts(SoundText.text, nil, SoundText.gender, SoundText.culture, SoundText.voice, SoundText.volume, SoundText.label, SoundText.coordinate)
-    
     else
 
       -- Get command.
@@ -1136,21 +1154,18 @@ end
 -- @param Core.Point#COORDINATE Coordinate Coordinate.
 -- @return #MSRS self
 function MSRS:PlayText(Text, Delay, Coordinate)
+  self:F( {Text, Delay, Coordinate} )
 
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlayText, self, Text, nil, Coordinate)
   else
-  
+
     if self.backend==MSRS.Backend.GRPC then
-    
       self:T(self.lid.."Transmitting")
       self:_DCSgRPCtts(Text, nil, nil , nil, nil, nil, nil, Coordinate)
-      
     else
-    
       self:PlayTextExt(Text, Delay, nil, nil, nil, nil, nil, nil, nil, Coordinate)
-    
-    end      
+    end
 
   end
 
@@ -1171,6 +1186,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate Coordinate.
 -- @return #MSRS self
 function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
+  self:F( {Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate} )
 
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
@@ -1208,6 +1224,7 @@ end
 -- @param #number Delay Delay in seconds, before the message is played.
 -- @return #MSRS self
 function MSRS:PlayTextFile(TextFile, Delay)
+  self:F( {TextFile, Delay} )
 
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlayTextFile, self, TextFile, 0)
@@ -1253,6 +1270,7 @@ end
 -- @return #number Longitude (or 0 if no input coordinate was given). 
 -- @return #number Altitude (or 0 if no input coordinate was given).
 function MSRS:_GetLatLongAlt(Coordinate)
+  self:F( {Coordinate=Coordinate} )
 
   local lat=0.0
   local lon=0.0
@@ -1284,6 +1302,7 @@ end
 -- @param Core.Point#COORDINATE coordinate Coordinate.
 -- @return #string Command.
 function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, speed, port, label, coordinate)
+  self:F( {freqs, modus, coal, gender, voice, culture, volume, speed, port, label, coordinate} )
 
   local path=self:GetPath()
   local exe="DCS-SR-ExternalAudio.exe"
@@ -1356,82 +1375,83 @@ end
 -- @param #string command Command to executer
 -- @return #number Return value of os.execute() command.
 function MSRS:_ExecCommand(command)
+  self:F( {command=command} )
 
-    -- Skip this function if _GetCommand was not able to find the executable
-    if string.find(command, "CommandNotFound") then return 0 end
+  -- Skip this function if _GetCommand was not able to find the executable
+  if string.find(command, "CommandNotFound") then return 0 end
 
-    local batContent = command.." && exit"
+  local batContent = command.." && exit"
+  -- Create a tmp file.
+  local filename=os.getenv('TMP').."\\MSRS-"..MSRS.uuid()..".bat"
+
+  local script=io.open(filename, "w+")
+  script:write(batContent)
+  script:close()
+
+  self:T("MSRS batch file created: "..filename)
+  self:T("MSRS batch content: "..batContent)
+
+  local res=nil
+  if true then
+
     -- Create a tmp file.
-    local filename=os.getenv('TMP').."\\MSRS-"..MSRS.uuid()..".bat"
+    local filenvbs = os.getenv('TMP') .. "\\MSRS-"..MSRS.uuid()..".vbs"
 
-    local script=io.open(filename, "w+")
-    script:write(batContent)
+    -- VBS script
+    local script = io.open(filenvbs, "w+")
+    script:write(string.format('Dim WinScriptHost\n'))
+    script:write(string.format('Set WinScriptHost = CreateObject("WScript.Shell")\n'))
+    script:write(string.format('WinScriptHost.Run Chr(34) & "%s" & Chr(34), 0\n', filename))
+    script:write(string.format('Set WinScriptHost = Nothing'))
+    script:close()
+    self:T("MSRS vbs file created to start batch="..filenvbs)
+
+    -- Run visual basic script. This still pops up a window but very briefly and does not put the DCS window out of focus.
+    local runvbs=string.format('cscript.exe //Nologo //B "%s"', filenvbs)
+
+    -- Debug output.
+    self:T("MSRS execute VBS command="..runvbs)
+
+    -- Play file in 0.01 seconds
+    res=os.execute(runvbs)
+
+    -- Remove file in 1 second.
+    timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
+    timer.scheduleFunction(os.remove, filenvbs, timer.getTime()+1)
+    self:T("MSRS vbs and batch file removed")
+
+  elseif false then
+
+    -- Create a tmp file.
+    local filenvbs = os.getenv('TMP') .. "\\MSRS-"..MSRS.uuid()..".vbs"
+
+    -- VBS script
+    local script = io.open(filenvbs, "w+")
+    script:write(string.format('Set oShell = CreateObject ("Wscript.Shell")\n'))
+    script:write(string.format('Dim strArgs\n'))
+    script:write(string.format('strArgs = "cmd /c %s"\n', filename))
+    script:write(string.format('oShell.Run strArgs, 0, false'))
     script:close()
 
-    self:T("MSRS batch file created: "..filename)
-    self:T("MSRS batch content: "..batContent)
+    local runvbs=string.format('cscript.exe //Nologo //B "%s"', filenvbs)
 
-    local res=nil
-    if true then
+    -- Play file in 0.01 seconds
+    res=os.execute(runvbs)
 
-      -- Create a tmp file.
-      local filenvbs = os.getenv('TMP') .. "\\MSRS-"..MSRS.uuid()..".vbs"
+  else
+    -- Play command.
+    command=string.format('start /b "" "%s"', filename)
 
-      -- VBS script
-      local script = io.open(filenvbs, "w+")
-      script:write(string.format('Dim WinScriptHost\n'))
-      script:write(string.format('Set WinScriptHost = CreateObject("WScript.Shell")\n'))
-      script:write(string.format('WinScriptHost.Run Chr(34) & "%s" & Chr(34), 0\n', filename))
-      script:write(string.format('Set WinScriptHost = Nothing'))
-      script:close()
-      self:T("MSRS vbs file created to start batch="..filenvbs)
+    -- Debug output.
+    self:T("MSRS execute command="..command)
 
-      -- Run visual basic script. This still pops up a window but very briefly and does not put the DCS window out of focus.
-      local runvbs=string.format('cscript.exe //Nologo //B "%s"', filenvbs)
+    -- Execute command
+    res=os.execute(command)
 
-      -- Debug output.
-      self:T("MSRS execute VBS command="..runvbs)
+    -- Remove file in 1 second.
+    timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
 
-      -- Play file in 0.01 seconds
-      res=os.execute(runvbs)
-
-      -- Remove file in 1 second.
-      timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
-      timer.scheduleFunction(os.remove, filenvbs, timer.getTime()+1)
-      self:T("MSRS vbs and batch file removed")
-
-    elseif false then
-
-      -- Create a tmp file.
-      local filenvbs = os.getenv('TMP') .. "\\MSRS-"..MSRS.uuid()..".vbs"
-
-      -- VBS script
-      local script = io.open(filenvbs, "w+")
-      script:write(string.format('Set oShell = CreateObject ("Wscript.Shell")\n'))
-      script:write(string.format('Dim strArgs\n'))
-      script:write(string.format('strArgs = "cmd /c %s"\n', filename))
-      script:write(string.format('oShell.Run strArgs, 0, false'))
-      script:close()
-
-      local runvbs=string.format('cscript.exe //Nologo //B "%s"', filenvbs)
-
-      -- Play file in 0.01 seconds
-      res=os.execute(runvbs)
-
-    else
-      -- Play command.
-      command=string.format('start /b "" "%s"', filename)
-
-      -- Debug output.
-      self:T("MSRS execute command="..command)
-
-      -- Execute command
-      res=os.execute(command)
-
-      -- Remove file in 1 second.
-      timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
-
-    end
+  end
 
 
   return res
@@ -1489,9 +1509,9 @@ end
 -- @return #MSRS self
 function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate)
 
-  -- Debug info.  
-  self:T("MSRS_BACKEND_DCSGRPC:_DCSgRPCtts()")
-  self:T({Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate})
+  -- Debug info.
+  self:F("MSRS_BACKEND_DCSGRPC:_DCSgRPCtts()")
+  self:F({Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate})
 
   local options = {} -- #MSRS.GRPCOptions
   
@@ -1517,6 +1537,7 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
 
   -- Provider (win, gcloud, ...)
   local provider = self.provider or MSRS.Provider.WINDOWS
+  self:F({provider=provider})
 
   -- Provider options: voice, credentials
   options.provider = {}
@@ -1548,10 +1569,9 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
   end
   
   for _,freq in pairs(Frequencies) do
-    self:T("GRPC.tts")
-    self:T(ssml)
-    self:T(freq)
-    self:T(options)
+    self:F("Calling GRPC.tts with the following parameter:")
+    self:F({ssml=ssml, freq=freq, options=options})
+    self:F(options.provider[provider])
     GRPC.tts(ssml, freq*1e6, options)
   end
 
@@ -1647,7 +1667,7 @@ function MSRS:LoadConfigFile(Path,Filename)
     env.info("*****Note - lfs and os need to be desanitized for MSRS to work!")
     return false
   end
-  
+
   local path = Path or lfs.writedir()..MSRS.ConfigFilePath
   local file = Filename or MSRS.ConfigFileName or "Moose_MSRS.lua"
   local pathandfile = path..file
