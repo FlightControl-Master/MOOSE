@@ -75,7 +75,7 @@ do -- CARGO_UNIT
   -- @param Core.Point#POINT_VEC2 ToPointVec2
   -- @param #number NearRadius (optional) Defaut 25 m.
   function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
-    self:F( { From, Event, To, ToPointVec2, NearRadius } )
+    self:T( { From, Event, To, ToPointVec2, NearRadius } )
   
     local Angle = 180
     local Speed = 60
@@ -114,7 +114,7 @@ do -- CARGO_UNIT
             else
               self.CargoObject:ReSpawnAt( FromPointVec2, CargoDeployHeading )
             end
-            self:F( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
+            self:T( { "CargoUnits:", self.CargoObject:GetGroup():GetName() } )
             self.CargoCarrier = nil
       
             local Points = {}
@@ -148,7 +148,7 @@ do -- CARGO_UNIT
   -- @param Core.Point#POINT_VEC2 ToPointVec2
   -- @param #number NearRadius (optional) Defaut 100 m.
   function CARGO_UNIT:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius )
-    self:F( { From, Event, To, ToPointVec2, NearRadius } )
+    self:T( { From, Event, To, ToPointVec2, NearRadius } )
   
     local Angle = 180
     local Speed = 10
@@ -174,7 +174,7 @@ do -- CARGO_UNIT
   -- @param Core.Point#POINT_VEC2 ToPointVec2
   -- @param #number NearRadius (optional) Defaut 100 m.
   function CARGO_UNIT:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
-    self:F( { From, Event, To, ToPointVec2, NearRadius } )
+    self:T( { From, Event, To, ToPointVec2, NearRadius } )
   
     self.CargoInAir = self.CargoObject:InAir()
   
@@ -199,7 +199,7 @@ do -- CARGO_UNIT
   -- @param #string To
   -- @param Core.Point#POINT_VEC2
   function CARGO_UNIT:onenterUnLoaded( From, Event, To, ToPointVec2 )
-    self:F( { ToPointVec2, From, Event, To } )
+    self:T( { ToPointVec2, From, Event, To } )
   
     local Angle = 180
     local Speed = 10
@@ -236,7 +236,7 @@ do -- CARGO_UNIT
   -- @param Wrapper.Group#GROUP CargoCarrier
   -- @param #number NearRadius
   function CARGO_UNIT:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
-    self:F( { From, Event, To, CargoCarrier, NearRadius = NearRadius } )
+    self:T( { From, Event, To, CargoCarrier, NearRadius = NearRadius } )
   
     self.CargoInAir = self.CargoObject:InAir()
     
@@ -244,7 +244,7 @@ do -- CARGO_UNIT
     local MaxSpeed = Desc.speedMaxOffRoad
     local TypeName = Desc.typeName
     
-    --self:F({Unit=self.CargoObject:GetName()})
+    --self:T({Unit=self.CargoObject:GetName()})
     
     -- A cargo unit can only be boarded if it is not dead
     
@@ -298,9 +298,9 @@ do -- CARGO_UNIT
   -- @param Wrapper.Client#CLIENT CargoCarrier
   -- @param #number NearRadius Default 25 m.
   function CARGO_UNIT:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    self:F( { From, Event, To, CargoCarrier:GetName(), NearRadius = NearRadius } )
+    self:T( { From, Event, To, CargoCarrier:GetName(), NearRadius = NearRadius } )
     
-    self:F( { IsAlive=self.CargoObject:IsAlive() }  )
+    self:T( { IsAlive=self.CargoObject:IsAlive() }  )
     
       if CargoCarrier and CargoCarrier:IsAlive() then -- and self.CargoObject and self.CargoObject:IsAlive() then 
         if (CargoCarrier:IsAir() and not CargoCarrier:InAir()) or true then
@@ -321,7 +321,7 @@ do -- CARGO_UNIT
               local Angle = 180
               local Distance = 0
               
-              --self:F({Unit=self.CargoObject:GetName()})
+              --self:T({Unit=self.CargoObject:GetName()})
   
               local CargoCarrierPointVec2 = CargoCarrier:GetPointVec2()
               local CargoCarrierHeading = CargoCarrier:GetHeading() -- Get Heading of object in degrees.
@@ -348,7 +348,7 @@ do -- CARGO_UNIT
           self.CargoObject:SetCommand( self.CargoObject:CommandStopRoute( true ) )
         end
     else
-      self:E("Something is wrong")
+      self:T("Something is wrong")
     end
     
   end
@@ -361,11 +361,11 @@ do -- CARGO_UNIT
   -- @param #string To
   -- @param Wrapper.Unit#UNIT CargoCarrier
   function CARGO_UNIT:onenterLoaded( From, Event, To, CargoCarrier )
-    self:F( { From, Event, To, CargoCarrier } )
+    self:T( { From, Event, To, CargoCarrier } )
   
     self.CargoCarrier = CargoCarrier
     
-    --self:F({Unit=self.CargoObject:GetName()})
+    --self:T({Unit=self.CargoObject:GetName()})
     
     -- Only destroy the CargoObject if there is a CargoObject (packages don't have CargoObjects).
     if self.CargoObject then

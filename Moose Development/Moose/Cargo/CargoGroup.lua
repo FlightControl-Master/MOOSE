@@ -271,7 +271,7 @@ do -- CARGO_GROUP
   -- @param Core.Event#EVENTDATA EventData 
   function CARGO_GROUP:OnEventCargoDead( EventData )
   
-    self:E(EventData)
+    self:T(EventData)
 
     local Destroyed = false
   
@@ -296,7 +296,7 @@ do -- CARGO_GROUP
     
     if Destroyed then
       self:Destroyed()
-      self:E( { "Cargo group destroyed" } )
+      self:T( { "Cargo group destroyed" } )
     end
   
   end
