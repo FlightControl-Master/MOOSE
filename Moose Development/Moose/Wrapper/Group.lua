@@ -2763,7 +2763,7 @@ end
 
 --- Switch on/off invisible flag for the group.
 -- @param #GROUP self
--- @param #boolean switch If true, emission is enabled. If false, emission is disabled.
+-- @param #boolean switch If true, Invisible is enabled. If false, Invisible is disabled.
 -- @return #GROUP self 
 function GROUP:SetCommandInvisible(switch)
   self:F2( self.GroupName )
@@ -2777,7 +2777,7 @@ end
 
 --- Switch on/off immortal flag for the group.
 -- @param #GROUP self
--- @param #boolean switch If true, emission is enabled. If false, emission is disabled.
+-- @param #boolean switch If true, Immortal is enabled. If false, Immortal is disabled.
 -- @return #GROUP self 
 function GROUP:SetCommandImmortal(switch)
   self:F2( self.GroupName )
@@ -2981,4 +2981,38 @@ function GROUP:GetGroupSTN()
   report:Add("==================")
   local text = report:Text()
   return tSTN,text
+end
+
+--- [GROUND] Determine if a GROUP is a SAM unit, i.e. has radar or optical tracker and is no mobile AAA.
+-- @param #GROUP self
+-- @return #boolean IsSAM True if SAM, else false
+function GROUP:IsSAM()
+  local issam = false
+  local units = self:GetUnits()
+  for _,_unit in pairs(units or {}) do
+    local unit = _unit -- Wrapper.Unit#UNIT
+    if unit:HasSEAD() and unit:IsGround() and (not unit:HasAttribute("Mobile AAA")) then
+      issam = true
+      break
+    end
+  end
+  return issam
+end
+
+--- [GROUND] Determine if a GROUP is a AAA unit, i.e. has no radar or optical tracker but the AAA = true or the "Mobile AAA" = true attribute.
+-- @param #GROUP self
+-- @return #boolean IsSAM True if AAA, else false
+function GROUP:IsAAA()
+  local issam = true
+  local units = self:GetUnits()
+  for _,_unit in pairs(units or {}) do
+    local unit = _unit -- Wrapper.Unit#UNIT
+    if unit:HasSEAD() or (not unit:IsGround()) then
+      issam = false
+      if unit:HasAttribute("Mobile AAA") then
+        issam = true
+      end
+    end
+  end
+  return issam
 end
