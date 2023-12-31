@@ -296,7 +296,7 @@ do -- CARGO_GROUP
     
     if Destroyed then
       self:Destroyed()
-      self:E( { "Cargo group destroyed" } )
+      self:T( { "Cargo group destroyed" } )
     end
   
   end

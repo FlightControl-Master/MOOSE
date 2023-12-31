@@ -348,7 +348,7 @@ do -- CARGO_UNIT
           self.CargoObject:SetCommand( self.CargoObject:CommandStopRoute( true ) )
         end
     else
-      self:E("Something is wrong")
+      self:T("Something is wrong")
     end
     
   end
