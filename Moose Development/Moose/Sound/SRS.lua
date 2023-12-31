@@ -14,7 +14,7 @@
 --
 -- ===
 --
--- ## Missions: None yet
+-- ## Example Missions: [GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Sound/MSRS).
 --
 -- ===
 --
