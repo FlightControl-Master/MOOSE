@@ -972,7 +972,6 @@ end
 function MSRS:SetProviderOptionsGoogle(CredentialsFile, AccessKey)
   self:F( {CredentialsFile, AccessKey} )
   self:SetProviderOptions(MSRS.Provider.GOOGLE, CredentialsFile, AccessKey)
-
   return self
 end
 
@@ -985,7 +984,6 @@ end
 function MSRS:SetProviderOptionsAmazon(AccessKey, SecretKey, Region)
   self:F( {AccessKey, SecretKey, Region} )
   self:SetProviderOptions(MSRS.Provider.AMAZON, nil, AccessKey, SecretKey, Region)
-
   return self
 end
 
@@ -997,7 +995,6 @@ end
 function MSRS:SetProviderOptionsAzure(AccessKey, Region)
   self:F( {AccessKey, Region} )
   self:SetProviderOptions(MSRS.Provider.AZURE, nil, AccessKey, nil, Region)
-
   return self
 end
 
@@ -1164,14 +1161,10 @@ function MSRS:PlayText(Text, Delay, Coordinate)
   else
 
     if self.backend==MSRS.Backend.GRPC then
-
       self:T(self.lid.."Transmitting")
       self:_DCSgRPCtts(Text, nil, nil , nil, nil, nil, nil, Coordinate)
-
     else
-
       self:PlayTextExt(Text, Delay, nil, nil, nil, nil, nil, nil, nil, Coordinate)
-
     end
 
   end
