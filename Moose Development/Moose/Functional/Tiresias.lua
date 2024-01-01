@@ -1,10 +1,18 @@
---- **Functional** - TIRESIAS
+--- **Functional** - TIRESIAS - manages AI behaviour.
 --
 -- ===
---
+-- 
+-- The @{#TIRESIAS} class is working in the back to keep your large-scale ground units in check.
+-- 
 -- ## Features:
 --
---  * Tbd   
+--  * Designed to keep CPU and Network usage lower on missions with a lot of ground units.
+--  * Does not affect ships to keep the Navy guys happy.
+--  * Does not affect OpsGroup type groups.
+--  * Distinguishes between SAM groups, AAA groups and other ground groups.
+--  * Exceptions can be defined to keep certain actions going.
+--  * Works coalition-independent in the back
+--  * Easy setup.
 --
 -- ===
 --
@@ -34,6 +42,7 @@
 -- @field Core.Set#SET_GROUP AAASet
 -- @field Core.Set#SET_GROUP SAMSet
 -- @field Core.Set#SET_GROUP ExceptionSet
+-- @field Core.Set#SET_OPSGROUP OpsGroupSet
 -- @field #number AAARange
 -- @field #number HeloSwitchRange
 -- @field #number PlaneSwitchRange
@@ -50,17 +59,47 @@
 -- @field #boolean exception
 
 
----
--- # Documentation
+--- *Tiresias, Greek demi-god and shapeshifter, blinded by the Gods, works as oracle for you.* (Wiki)
+--
+-- ===
+--
+-- ## TIRESIAS Concept
 -- 
+--  * Designed to keep CPU and Network usage lower on missions with a lot of ground units.
+--  * Does not affect ships to keep the Navy guys happy.
+--  * Does not affect OpsGroup type groups.
+--  * Distinguishes between SAM groups, AAA groups and other ground groups.
+--  * Exceptions can be defined in SET_GROUP objects to keep certain actions going.
+--  * Works coalition-independent in the back
+--  * Easy setup.
+-- 
+-- ## Setup
+-- 
+-- Setup is a one-liner:
+-- 
+--          local blinder = TIRESIAS:New()
+--          
+-- Optionally you can set up exceptions, e.g. for convoys driving around
+-- 
+--          local exceptionset = SET_GROUP:New():FilterCoalitions("red"):FilterPrefixes("Convoy"):FilterStart()
+--          local blinder = TIRESIAS:New()
+--          blinder:AddExceptionSet(exceptionset)
+-- 
+-- Options 
+-- 
+--          -- Setup different radius for activation around helo and airplane groups (applies to AI and humans)
+--          blinder:SetActivationRanges(10,25) -- defaults are 10, and 25
+--
+--          -- Setup engagement ranges for AAA (non-advanced SAM units like Flaks etc) and if you want them to be AIOff
+--          blinder:SetAAARanges(60,true) -- defaults are 60, and true
+--
 -- @field #TIRESIAS
 TIRESIAS = {
   ClassName = "TIRESIAS",
   debug = false,
-  version = "0.0.2",
+  version = "0.0.4",
   Interval = 20,
   GroundSet = nil,
-  Coalition = coalition.side.BLUE,
   VehicleSet = nil,
   AAASet = nil,
   SAMSet = nil,
@@ -71,7 +110,7 @@ TIRESIAS = {
   SwitchAAA = true,
 }
 
----
+--- [USER] Create a new Tiresias object and start it up.
 -- @param #TIRESIAS self
 -- @return #TIRESIAS self 
 function TIRESIAS:New()
@@ -90,11 +129,31 @@ function TIRESIAS:New()
     self:AddTransition("*",             "Status",                  "*")           -- TIRESIAS status update.
     self:AddTransition("*",             "Stop",                    "Stopped")     -- Stop FSM.
     
+    self.ExceptionSet = SET_GROUP:New():Clear(false)
+    
     self:HandleEvent(EVENTS.PlayerEnterAircraft,self._EventHandler)
     
     self.lid = string.format("TIRESIAS %s | ",self.version)
     
     self:I(self.lid.."Managing ground groups!")
+    
+    --- Triggers the FSM event "Stop". Stops TIRESIAS and all its event handlers.
+    -- @function [parent=#TIRESIAS] Stop
+    -- @param #TIRESIAS self
+
+    --- Triggers the FSM event "Stop" after a delay. Stops TIRESIAS and all its event handlers.
+    -- @function [parent=#TIRESIAS] __Stop
+    -- @param #TIRESIAS self
+    -- @param #number delay Delay in seconds.
+    
+    --- Triggers the FSM event "Start". Starts TIRESIAS and all its event handlers. Note - `:New()` already starts the instance.
+    -- @function [parent=#TIRESIAS] Start
+    -- @param #TIRESIAS self
+
+    --- Triggers the FSM event "Start" after a delay. Starts TIRESIAS and all its event handlers. Note - `:New()` already starts the instance.
+    -- @function [parent=#TIRESIAS] __Start
+    -- @param #TIRESIAS self
+    -- @param #number delay Delay in seconds.  
     
     self:__Start(1)
   return self
@@ -106,14 +165,35 @@ end
 -- 
 -------------------------------------------------------------------------------------------------------------
 
----
+---[USER] Set activation radius for Helos and Planes in Nautical Miles.
 -- @param #TIRESIAS self
--- @param Core.Set#SET_GROUP Set
+-- @param #number HeloMiles Radius around a Helicopter in which AI ground units will be activated. Defaults to 10NM.
+-- @param #number PlaneMiles Radius around an Airplane in which AI ground units will be activated. Defaults to 25NM.
+-- @return #TIRESIAS self 
+function TIRESIAS:SetActivationRanges(HeloMiles,PlaneMiles)
+  self.HeloSwitchRange = HeloMiles or 10
+  self.PlaneSwitchRange = PlaneMiles or 25
+  return self
+end
+
+---[USER] Set AAA Ranges - AAA equals non-SAM systems which qualify as AAA in DCS world.
+-- @param #TIRESIAS self
+-- @param #number FiringRange The engagement range that AAA units will be set to. Can be 0 to 100 (percent). Defaults to 60.
+-- @param #boolean SwitchAAA Decide if these system will have their AI switched off, too. Defaults to true.
+-- @return #TIRESIAS self 
+function TIRESIAS:SetAAARanges(FiringRange,SwitchAAA)
+  self.AAARange = FiringRange or 60
+  self.SwitchAAA = (SwitchAAA == false) and false or true
+  return self
+end
+
+--- [USER] Add a SET_GROUP of GROUP objects as exceptions. Can be done multiple times.
+-- @param #TIRESIAS self
+-- @param Core.Set#SET_GROUP Set to add to the exception list.
 -- @return #TIRESIAS self
 function TIRESIAS:AddExceptionSet(Set)
   self:T(self.lid.."AddExceptionSet")
-  self.ExceptionSet = Set
-  
+  local exceptions = self.ExceptionSet
   Set:ForEachGroupAlive(
     function(grp)
       if not grp.Tiresias then
@@ -121,15 +201,15 @@ function TIRESIAS:AddExceptionSet(Set)
           type = "Exception",
           exception = true,
         }
+       exceptions:AddGroup(grp,true)
       end
       BASE:I("TIRESIAS: Added exception group: "..grp:GetName())
     end
-  )
-  
+  )  
   return self
 end
 
----
+--- [INTERNAL] Filter Function
 -- @param Wrapper.Group#GROUP Group
 -- @return #boolean isin
 function TIRESIAS._FilterNotAAA(Group)
@@ -142,7 +222,7 @@ function TIRESIAS._FilterNotAAA(Group)
   end
 end
 
----
+--- [INTERNAL] Filter Function
 -- @param Wrapper.Group#GROUP Group
 -- @return #boolean isin
 function TIRESIAS._FilterNotSAM(Group)
@@ -155,7 +235,7 @@ function TIRESIAS._FilterNotSAM(Group)
   end
 end
 
----
+--- [INTERNAL] Filter Function
 -- @param Wrapper.Group#GROUP Group
 -- @return #boolean isin
 function TIRESIAS._FilterAAA(Group)
@@ -168,7 +248,7 @@ function TIRESIAS._FilterAAA(Group)
   end
 end
 
----
+--- [INTERNAL] Filter Function
 -- @param Wrapper.Group#GROUP Group
 -- @return #boolean isin
 function TIRESIAS._FilterSAM(Group)
@@ -181,7 +261,7 @@ function TIRESIAS._FilterSAM(Group)
   end
 end
 
----
+--- [INTERNAL] Init Groups
 -- @param #TIRESIAS self
 -- @return #TIRESIAS self
 function TIRESIAS:_InitGroups()
@@ -267,7 +347,7 @@ function TIRESIAS:_InitGroups()
   return self
 end
 
---- (Internal) Event handler function
+--- [INTERNAL] Event handler function
 -- @param #TIRESIAS self
 -- @param Core.Event#EVENTDATA EventData
 -- @return #TIRESIAS self
@@ -275,10 +355,10 @@ function TIRESIAS:_EventHandler(EventData)
   self:T(string.format("%s Event = %d",self.lid, EventData.id))
   local event = EventData -- Core.Event#EVENTDATA
   if event.id == EVENTS.PlayerEnterAircraft or event.id == EVENTS.PlayerEnterUnit then
-    local _coalition = event.IniCoalition
-    if _coalition ~= self.Coalition then
-        return --ignore!
-    end
+    --local _coalition = event.IniCoalition
+    --if _coalition ~= self.Coalition then
+      --  return --ignore!
+    --end
     local unitname = event.IniUnitName or "none"
     local _unit = event.IniUnit
     local _group = event.IniGroup
@@ -293,7 +373,7 @@ function TIRESIAS:_EventHandler(EventData)
   return self
 end
 
----
+--- [INTERNAL] Switch Groups Behaviour
 -- @param #TIRESIAS self
 -- @param Wrapper.Group#GROUP group
 -- @param #number radius Radius in NM
@@ -341,7 +421,7 @@ end
 -- 
 -------------------------------------------------------------------------------------------------------------
 
----
+--- [INTERNAL] FSM Function
 -- @param #TIRESIAS self
 -- @param #string From
 -- @param #string Event
@@ -353,12 +433,13 @@ function TIRESIAS:onafterStart(From, Event, To)
   local VehicleSet = SET_GROUP:New():FilterCategoryGround():FilterFunction(TIRESIAS._FilterNotAAA):FilterFunction(TIRESIAS._FilterNotSAM):FilterStart()
   local AAASet = SET_GROUP:New():FilterCategoryGround():FilterFunction(TIRESIAS._FilterAAA):FilterStart()
   local SAMSet = SET_GROUP:New():FilterCategoryGround():FilterFunction(TIRESIAS._FilterSAM):FilterStart()
+  local OpsGroupSet = SET_OPSGROUP:New():FilterActive(true):FilterStart()
   self.FlightSet = SET_GROUP:New():FilterCategories({"plane","helicopter"}):FilterStart()
   
   local EngageRange = self.AAARange
   
-  if self.ExceptionSet then
-    local ExceptionSet = self.ExceptionSet
+  local ExceptionSet = self.ExceptionSet
+  if self.ExceptionSet then   
     function ExceptionSet:OnAfterAdded(From,Event,To,ObjectName,Object)
       BASE:I("TIRESIAS: EXCEPTION Object Added: "..Object:GetName())
       if Object and Object:IsAlive() then
@@ -370,6 +451,18 @@ function TIRESIAS:onafterStart(From, Event, To)
       Object:SetCommandInvisible(false)
       Object:EnableEmission(true)
       end
+    end
+  
+    local OGS = OpsGroupSet:GetAliveSet()
+    for _,_OG in pairs(OGS or {}) do
+      local OG = _OG -- Ops.OpsGroup#OPSGROUP
+      local grp = OG:GetGroup()
+      ExceptionSet:AddGroup(grp,true)
+    end
+    
+    function OpsGroupSet:OnAfterAdded(From,Event,To,ObjectName,Object)
+      local grp = Object:GetGroup()
+      ExceptionSet:AddGroup(grp,true)
     end
   end
   
@@ -423,6 +516,7 @@ function TIRESIAS:onafterStart(From, Event, To)
   self.VehicleSet = VehicleSet
   self.AAASet = AAASet
   self.SAMSet = SAMSet
+  self.OpsGroupSet = OpsGroupSet
   
   self:_InitGroups()
   
@@ -430,7 +524,7 @@ function TIRESIAS:onafterStart(From, Event, To)
   return self
 end
 
----
+--- [INTERNAL] FSM Function
 -- @param #TIRESIAS self
 -- @param #string From
 -- @param #string Event
@@ -444,7 +538,7 @@ function TIRESIAS:onbeforeStatus(From, Event, To)
   return self
 end
 
----
+--- [INTERNAL] FSM Function
 -- @param #TIRESIAS self
 -- @param #string From
 -- @param #string Event
@@ -477,7 +571,7 @@ function TIRESIAS:onafterStatus(From, Event, To)
   return self
 end
 
----
+--- [INTERNAL] FSM Function
 -- @param #TIRESIAS self
 -- @param #string From
 -- @param #string Event

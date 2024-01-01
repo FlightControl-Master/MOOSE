@@ -1433,7 +1433,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   --- Pseudo Functions ---
   ------------------------
   
-    --- Triggers the FSM event "Start". Starts the CTLD. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start". Starts the CTLD. Initializes parameters and starts event handlers.
   -- @function [parent=#CTLD] Start
   -- @param #CTLD self
 
@@ -1443,6 +1443,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #number delay Delay in seconds.
 
   --- Triggers the FSM event "Stop". Stops the CTLD and all its event handlers.
+  -- @function [parent=#CTLD] Stop
   -- @param #CTLD self
 
   --- Triggers the FSM event "Stop" after a delay. Stops the CTLD and all its event handlers.
