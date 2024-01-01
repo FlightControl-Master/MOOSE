@@ -145,9 +145,9 @@
 -- plays a message on 255 MHz AM for the blue coalition in-game.
 --
 -- ### Google
---
--- In order to use Google Cloud for TTS you need to use @{#MSRS.SetProvider} and @{MSRS.SetProviderOptionsGoogle} functions:
---
+-- 
+-- In order to use Google Cloud for TTS you need to use @{#MSRS.SetProvider} and @{#MSRS.SetProviderOptionsGoogle} functions:
+-- 
 --     msrs:SetProvider(MSRS.Provider.GOOGLE)
 --     msrs:SetProviderOptionsGoogle(CredentialsFile, AccessKey)
 --
@@ -162,7 +162,7 @@
 --
 -- ### Amazon Web Service [Only DCS-gRPC backend]
 -- 
--- In order to use Amazon Web Service (AWS) for TTS you need to use @{#MSRS.SetProvider} and @{MSRS.SetProviderOptionsAmazon} functions:
+-- In order to use Amazon Web Service (AWS) for TTS you need to use @{#MSRS.SetProvider} and @{#MSRS.SetProviderOptionsAmazon} functions:
 -- 
 --     msrs:SetProvider(MSRS.Provider.AMAZON)
 --     msrs:SetProviderOptionsAmazon(AccessKey, SecretKey, Region)
@@ -172,9 +172,9 @@
 -- You can set the voice to use with AWS via @{#MSRS.SetVoiceAmazon}.
 -- 
 -- ### Microsoft Azure [Only DCS-gRPC backend]
---
--- In order to use Microsoft Azure for TTS you need to use @{#MSRS.SetProvider} and @{MSRS.SetProviderOptionsAzure} functions:
---
+-- 
+-- In order to use Microsoft Azure for TTS you need to use @{#MSRS.SetProvider} and @{#MSRS.SetProviderOptionsAzure} functions:
+-- 
 --     msrs:SetProvider(MSRS.Provider.AZURE)
 --     msrs:SetProviderOptionsAmazon(AccessKey, Region)
 --
