@@ -1233,7 +1233,7 @@ do -- AI_A2A_DISPATCHER
   --
   -- **Use the method @{#AI_A2A_DISPATCHER.SetEngageRadius}() to modify the default Engage Radius for ALL squadrons.**
   --
-  -- Demonstration Mission: [AID-019 - AI_A2A - Engage Range Test](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching/AID-A2A%20-%20AI%20A2A%20Dispatching/AID-A2A-019%20-%20Engage%20Range%20Test)
+  -- Demonstration Mission: [AID-019 - AI_A2A - Engage Range Test](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AI/AI_A2A_Dispatcher/AID-A2A-019%20-%20Engage%20Range%20Test)
   --
   -- @param #AI_A2A_DISPATCHER self
   -- @param #number EngageRadius (Optional, Default = 100000) The radius to report friendlies near the target.
@@ -1283,7 +1283,7 @@ do -- AI_A2A_DISPATCHER
   -- Use the method @{#AI_A2A_DISPATCHER.SetGciRadius}() to set a specific controlled ground intercept radius.
   -- **The Ground Controlled Intercept radius is defined for ALL squadrons which are operational.**
   --
-  -- Demonstration Mission: [AID-013 - AI_A2A - Intercept Test](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching/AID-A2A%20-%20AI%20A2A%20Dispatching/AID-A2A-013%20-%20Intercept%20Test)
+  -- Demonstration Mission: [AID-013 - AI_A2A - Intercept Test](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AI/AI_A2A_Dispatcher/AID-A2A-013%20-%20Intercept%20Test)
   --
   -- @param #AI_A2A_DISPATCHER self
   -- @param #number GciRadius (Optional, Default = 200000) The radius to ground control intercept detected targets from the nearest airbase.
@@ -3962,7 +3962,7 @@ do
   --
   -- # Demo Missions
   --
-  -- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching/AID-A2A%20-%20AI%20A2A%20Dispatching)
+  -- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AI/AI_A2A_Dispatcher)
   --
   -- ===
   --
