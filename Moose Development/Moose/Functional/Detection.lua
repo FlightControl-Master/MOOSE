@@ -95,7 +95,7 @@ do -- DETECTION_BASE
   -- 
   -- ## Radar Blur - use to make the radar less exact, e.g. for WWII scenarios
   -- 
-  --  * @{DETECTION_BASE.SetRadarBlur}(): Set the radar blur to be used.
+  --  * @{#DETECTION_BASE.SetRadarBlur}(): Set the radar blur to be used.
   --  
   -- ## **DETECTION_ derived classes** group the detected units into a **DetectedItems[]** list
   --
