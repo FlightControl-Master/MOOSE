@@ -10,9 +10,7 @@
 -- 
 -- ===
 -- 
--- ## Missions:
--- 
--- [ABP - Airbase Police](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/ABP%20-%20Airbase%20Police)
+-- ## Missions: None
 --
 -- ===
 --
@@ -699,7 +697,8 @@ end
 function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
   self:I("_AirbaseMonitor")
   self.SetClient:ForEachClient(
-    --- @param Wrapper.Client#CLIENT Client
+    --- Nameless function
+    -- @param Wrapper.Client#CLIENT Client
     function( Client )
 
       if Client:IsAlive() then

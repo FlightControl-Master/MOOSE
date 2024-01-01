@@ -24,7 +24,7 @@
 -- 
 -- ## Missions:
 -- 
--- [AID-A2G - AI A2G Dispatching](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AID%20-%20AI%20Dispatching/AID-A2G%20-%20AI%20A2G%20Dispatching)
+-- [AID-A2G - AI A2G Dispatching](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AI/AI_A2G_Dispatcher)
 -- 
 -- ===
 -- 

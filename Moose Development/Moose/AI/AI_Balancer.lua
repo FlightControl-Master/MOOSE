@@ -9,7 +9,7 @@
 -- 
 -- ===
 -- 
--- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AIB%20-%20AI%20Balancing)
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AI/AI_Balancer)
 -- 
 -- ===
 -- 
@@ -168,7 +168,8 @@ function AI_BALANCER:ReturnToHomeAirbase( ReturnThresholdRange )
   self.ReturnThresholdRange = ReturnThresholdRange
 end
 
---- @param #AI_BALANCER self
+--- AI_BALANCER:onenterSpawning
+-- @param #AI_BALANCER self
 -- @param Core.Set#SET_GROUP SetGroup
 -- @param #string ClientName
 -- @param Wrapper.Group#GROUP AIGroup
@@ -190,7 +191,8 @@ function AI_BALANCER:onenterSpawning( SetGroup, From, Event, To, ClientName )
   end
 end
 
---- @param #AI_BALANCER self
+--- AI_BALANCER:onenterDestroying
+-- @param #AI_BALANCER self
 -- @param Core.Set#SET_GROUP SetGroup
 -- @param Wrapper.Group#GROUP AIGroup
 function AI_BALANCER:onenterDestroying( SetGroup, From, Event, To, ClientName, AIGroup )
@@ -233,15 +235,16 @@ function AI_BALANCER:onenterReturning( SetGroup, From, Event, To, AIGroup )
 
 end
 
-
---- @param #AI_BALANCER self
+--- AI_BALANCER:onenterMonitoring
+-- @param #AI_BALANCER self
 function AI_BALANCER:onenterMonitoring( SetGroup )
 
   self:T2( { self.SetClient:Count() } )
   --self.SetClient:Flush()
 
   self.SetClient:ForEachClient(
-    --- @param Wrapper.Client#CLIENT Client
+    --- SetClient:ForEachClient
+    -- @param Wrapper.Client#CLIENT Client
     function( Client )
       self:T3(Client.ClientName)
 
@@ -264,7 +267,8 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
             self:T2( RangeZone )
             
             _DATABASE:ForEachPlayerUnit(
-              --- @param Wrapper.Unit#UNIT RangeTestUnit
+              --- Nameless function
+              -- @param Wrapper.Unit#UNIT RangeTestUnit
               function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
                 self:T2( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
                 if RangeTestUnit:IsInZone( RangeZone ) == true then
@@ -276,7 +280,8 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
                 end
               end,
               
-              --- @param Core.Zone#ZONE_RADIUS RangeZone
+              --- Nameless function
+              -- @param Core.Zone#ZONE_RADIUS RangeZone
               -- @param Wrapper.Group#GROUP AIGroup
               function( RangeZone, AIGroup, PlayerInRange )
                 if PlayerInRange.Value == false then
@@ -307,6 +312,3 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
   
   self:__Monitor( 10 )
 end
-
-
-
