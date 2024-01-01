@@ -449,10 +449,10 @@ do -- Zones and Pathlines
 
       -- Loop over layers.
       for layerID, layerData in pairs(env.mission.drawings.layers or {}) do
-
+        
         -- Loop over objects in layers.
         for objectID, objectData in pairs(layerData.objects or {}) do
-
+          
           -- Check for polygon which has at least 4 points (we would need 3 but the origin seems to be there twice)
           if objectData.polygonMode and (objectData.polygonMode=="free") and objectData.points and #objectData.points>=4 then
 
@@ -488,10 +488,32 @@ do -- Zones and Pathlines
 
             -- Create new polygon zone.
             local Zone=ZONE_POLYGON:NewFromPointsArray(ZoneName, points)
-
+            
+            --Zone.DrawID = objectID
+            
             -- Set color.
             Zone:SetColor({1, 0, 0}, 0.15)
-
+            Zone:SetFillColor({1, 0, 0}, 0.15)
+            
+            if objectData.colorString then 
+              -- eg colorString = 0xff0000ff
+              local color = string.gsub(objectData.colorString,"^0x","")
+              local r = tonumber(string.sub(color,1,2),16)/255
+              local g = tonumber(string.sub(color,3,4),16)/255
+              local b = tonumber(string.sub(color,5,6),16)/255
+              local a = tonumber(string.sub(color,7,8),16)/255
+              Zone:SetColor({r, g, b}, a)
+            end
+            if objectData.fillColorString then 
+              -- eg fillColorString = 0xff00004b
+              local color = string.gsub(objectData.colorString,"^0x","")
+              local r = tonumber(string.sub(color,1,2),16)/255
+              local g = tonumber(string.sub(color,3,4),16)/255
+              local b = tonumber(string.sub(color,5,6),16)/255
+              local a = tonumber(string.sub(color,7,8),16)/255
+              Zone:SetFillColor({r, g, b}, a)
+            end
+            
             -- Store in DB.
             self.ZONENAMES[ZoneName] = ZoneName
 
@@ -532,7 +554,26 @@ do -- Zones and Pathlines
 
             -- Set color.
             Zone:SetColor({1, 0, 0}, 0.15)
-
+            
+           if objectData.colorString then 
+              -- eg colorString = 0xff0000ff
+              local color = string.gsub(objectData.colorString,"^0x","")
+              local r = tonumber(string.sub(color,1,2),16)/255
+              local g = tonumber(string.sub(color,3,4),16)/255
+              local b = tonumber(string.sub(color,5,6),16)/255
+              local a = tonumber(string.sub(color,7,8),16)/255
+              Zone:SetColor({r, g, b}, a)
+            end
+            if objectData.fillColorString then 
+              -- eg fillColorString = 0xff00004b
+              local color = string.gsub(objectData.colorString,"^0x","")
+              local r = tonumber(string.sub(color,1,2),16)/255
+              local g = tonumber(string.sub(color,3,4),16)/255
+              local b = tonumber(string.sub(color,5,6),16)/255
+              local a = tonumber(string.sub(color,7,8),16)/255
+              Zone:SetFillColor({r, g, b}, a)
+            end
+            
             -- Store in DB.
             self.ZONENAMES[ZoneName] = ZoneName
 
@@ -756,7 +797,7 @@ end -- cargo
 
 --- Finds a CLIENT based on the ClientName.
 -- @param #DATABASE self
--- @param #string ClientName
+-- @param #string ClientName - Note this is the UNIT name of the client!
 -- @return Wrapper.Client#CLIENT The found CLIENT.
 function DATABASE:FindClient( ClientName )
 

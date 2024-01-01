@@ -1207,18 +1207,18 @@ end
 -- @return #RANGE self
 function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume, PathToGoogleKey)
 
-  if PathToSRS then
+  if PathToSRS or MSRS.path then
   
     self.useSRS=true
     
-    self.controlmsrs=MSRS:New(PathToSRS, Frequency or 256, Modulation or radio.modulation.AM, Volume or 1.0)
-    self.controlmsrs:SetPort(Port)
+    self.controlmsrs=MSRS:New(PathToSRS or MSRS.path, Frequency or 256, Modulation or radio.modulation.AM, Volume or 1.0)
+    self.controlmsrs:SetPort(Port or MSRS.port)
     self.controlmsrs:SetCoalition(Coalition or coalition.side.BLUE)
     self.controlmsrs:SetLabel("RANGEC")
     self.controlsrsQ = MSRSQUEUE:New("CONTROL")
 
-    self.instructmsrs=MSRS:New(PathToSRS, Frequency or 305, Modulation or radio.modulation.AM, Volume or 1.0)
-    self.instructmsrs:SetPort(Port)
+    self.instructmsrs=MSRS:New(PathToSRS or MSRS.path, Frequency or 305, Modulation or radio.modulation.AM, Volume or 1.0)
+    self.instructmsrs:SetPort(Port or MSRS.port)
     self.instructmsrs:SetCoalition(Coalition or coalition.side.BLUE)
     self.instructmsrs:SetLabel("RANGEI")
     self.instructsrsQ = MSRSQUEUE:New("INSTRUCT")
@@ -1737,7 +1737,9 @@ end
 -- @param Core.Event#EVENTDATA EventData
 function RANGE:OnEventBirth( EventData )
   self:F( { eventbirth = EventData } )
-
+  
+  if not EventData.IniPlayerName then return end
+  
   local _unitName = EventData.IniUnitName
   local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
 
@@ -2187,7 +2189,7 @@ function RANGE:onafterExitRange( From, Event, To, player )
     
       local text = "You left the bombing range zone. "
       
-      local r=math.random(2)
+      local r=math.random(5)
       
       if r==1 then
         text=text.."Have a nice day!"

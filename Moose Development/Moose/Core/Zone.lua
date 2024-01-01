@@ -10,7 +10,7 @@
 --   * Create moving zones around a unit.
 --   * Create moving zones around a group.
 --   * Provide the zone behavior. Some zones are static, while others are moveable.
---   * Enquiry if a coordinate is within a zone.
+--   * Enquire if a coordinate is within a zone.
 --   * Smoke zones.
 --   * Set a zone probability to control zone selection.
 --   * Get zone coordinates.
@@ -42,7 +42,7 @@
 --   * @{#ZONE_UNIT}: The ZONE_UNIT class defines by a zone around a @{Wrapper.Unit#UNIT} with a radius.
 --   * @{#ZONE_GROUP}: The ZONE_GROUP class defines by a zone around a @{Wrapper.Group#GROUP} with a radius.
 --   * @{#ZONE_POLYGON}: The ZONE_POLYGON class defines by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon.
---   * @{#ZONE_OVAL}: The ZONE_OVAL class isdefined by a center point, major axis, minor axis, and angle.
+--   * @{#ZONE_OVAL}: The ZONE_OVAL class is defined by a center point, major axis, minor axis, and angle.
 --
 -- ===
 --
@@ -2015,249 +2015,33 @@ function ZONE_GROUP:GetRandomPointVec2( inner, outer )
 end
 
 
---- ZONE_OVAL created from a center point, major axis, minor axis, and angle.
--- Ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
--- @type ZONE_OVAL
--- @extends Core.Zone#ZONE_BASE
-
---- ## ZONE_OVAL class, extends @{#ZONE_BASE}
---
--- The ZONE_OVAL class is defined by a center point, major axis, minor axis, and angle.
--- This class implements the inherited functions from @{#ZONE_BASE} taking into account the own zone format and properties.
---
--- @field #ZONE_OVAL
-ZONE_OVAL = {
-    ClassName = "OVAL",
-    ZoneName="",
-    MajorAxis = nil,
-    MinorAxis = nil,
-    Angle = 0,
-    DrawPoly = nil -- let's just use a ZONE_POLYGON to draw the ZONE_OVAL on the map
-}
-
---- Creates a new ZONE_OVAL from a center point, major axis, minor axis, and angle.
---- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
--- @param #table vec2 The center point of the oval
--- @param #number major_axis The major axis of the oval
--- @param #number minor_axis The minor axis of the oval
--- @param #number angle The angle of the oval
--- @return #ZONE_OVAL The new oval
-function ZONE_OVAL:New(name, vec2, major_axis, minor_axis, angle)
-    self = BASE:Inherit(self, ZONE_BASE:New())
-    self.ZoneName = name
-    self.CenterVec2 = vec2
-    self.MajorAxis = major_axis
-    self.MinorAxis = minor_axis
-    self.Angle = angle or 0
-
-    _DATABASE:AddZone(name, self)
-
-    return self
-end
-
---- Constructor to create a ZONE_OVAL instance, taking the name of a drawing made with the draw tool in the Mission Editor.
---- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
--- @param #ZONE_OVAL self
--- @param #string DrawingName The name of the drawing in the Mission Editor
--- @return #ZONE_OVAL self
-function ZONE_OVAL:NewFromDrawing(DrawingName)
-    self = BASE:Inherit(self, ZONE_BASE:New(DrawingName))
-    for _, layer in pairs(env.mission.drawings.layers) do
-        for _, object in pairs(layer["objects"]) do
-            if string.find(object["name"], DrawingName, 1, true) then
-                if object["polygonMode"] == "oval" then
-                    self.CenterVec2 = { x = object["mapX"], y = object["mapY"] }
-                    self.MajorAxis = object["r1"]
-                    self.MinorAxis = object["r2"]
-                    self.Angle = object["angle"]
-
-                end
-            end
-        end
-    end
-
-    _DATABASE:AddZone(DrawingName, self)
-
-    return self
-end
-
---- Gets the major axis of the oval. 
--- @param #ZONE_OVAL self
--- @return #number The major axis of the oval
-function ZONE_OVAL:GetMajorAxis()
-    return self.MajorAxis
-end
-
---- Gets the minor axis of the oval.
--- @param #ZONE_OVAL self
--- @return #number The minor axis of the oval
-function ZONE_OVAL:GetMinorAxis()
-    return self.MinorAxis
-end
-
---- Gets the angle of the oval.
--- @param #ZONE_OVAL self
--- @return #number The angle of the oval
-function ZONE_OVAL:GetAngle()
-    return self.Angle
-end
-
---- Returns a the center point of the oval
--- @param #ZONE_OVAL self
--- @return #table The center Vec2
-function ZONE_OVAL:GetVec2()
-    return self.CenterVec2
-end
-
---- Checks if a point is contained within the oval.
--- @param #ZONE_OVAL self
--- @param #table point The point to check
--- @return #bool True if the point is contained, false otherwise
-function ZONE_OVAL:IsVec2InZone(vec2)
-    local cos, sin = math.cos, math.sin
-    local dx = vec2.x - self.CenterVec2.x
-    local dy = vec2.y - self.CenterVec2.y
-    local rx = dx * cos(self.Angle) + dy * sin(self.Angle)
-    local ry = -dx * sin(self.Angle) + dy * cos(self.Angle)
-    return rx * rx / (self.MajorAxis * self.MajorAxis) + ry * ry / (self.MinorAxis * self.MinorAxis) <= 1
-end
-
---- Calculates the bounding box of the oval. The bounding box is the smallest rectangle that contains the oval.
--- @param #ZONE_OVAL self
--- @return #table The bounding box of the oval
-function ZONE_OVAL:GetBoundingSquare()
-    local min_x = self.CenterVec2.x - self.MajorAxis
-    local min_y = self.CenterVec2.y - self.MinorAxis
-    local max_x = self.CenterVec2.x + self.MajorAxis
-    local max_y = self.CenterVec2.y + self.MinorAxis
-
-    return {
-        {x=min_x, y=min_x}, {x=max_x, y=min_y}, {x=max_x, y=max_y}, {x=min_x, y=max_y}
-    }
-end
-
---- Find points on the edge of the oval
--- @param #ZONE_OVAL self
--- @param #number num_points How many points should be found. More = smoother shape
--- @return #table Points on he edge
-function ZONE_OVAL:PointsOnEdge(num_points)
-    num_points = num_points or 40
-    local points = {}
-    local dtheta = 2 * math.pi / num_points
-
-    for i = 0, num_points - 1 do
-        local theta = i * dtheta
-        local x = self.CenterVec2.x + self.MajorAxis * math.cos(theta) * math.cos(self.Angle) - self.MinorAxis * math.sin(theta) * math.sin(self.Angle)
-        local y = self.CenterVec2.y + self.MajorAxis * math.cos(theta) * math.sin(self.Angle) + self.MinorAxis * math.sin(theta) * math.cos(self.Angle)
-        table.insert(points, {x = x, y = y})
-    end
-
-    return points
-end
-
---- Returns a random Vec2 within the oval.
--- @param #ZONE_OVAL self
--- @return #table The random Vec2
-function ZONE_OVAL:GetRandomVec2()
-    local theta = math.rad(self.Angle)
-
-    local random_point = math.sqrt(math.random())  --> uniformly
-    --local random_point = math.random()           --> more clumped around center
-    local phi = math.random() * 2 * math.pi
-    local x_c = random_point * math.cos(phi)
-    local y_c = random_point * math.sin(phi)
-    local x_e = x_c * self.MajorAxis
-    local y_e = y_c * self.MinorAxis
-    local rx = (x_e * math.cos(theta) - y_e * math.sin(theta)) + self.CenterVec2.x
-    local ry = (x_e * math.sin(theta) + y_e * math.cos(theta)) + self.CenterVec2.y
-
-    return {x=rx, y=ry}
-end
-
---- Define a random @{Core.Point#POINT_VEC2} within the zone.
--- @param #ZONE_OVAL self
--- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
-function ZONE_OVAL:GetRandomPointVec2()
-    return POINT_VEC2:NewFromVec2(self:GetRandomVec2())
-end
-
---- Define a random @{Core.Point#POINT_VEC2} within the zone.
--- @param #ZONE_OVAL self
--- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
-function ZONE_OVAL:GetRandomPointVec3()
-    return POINT_VEC2:NewFromVec3(self:GetRandomVec2())
-end
-
---- Draw the zone on the F10 map.
---- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
--- @param #ZONE_OVAL self
--- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
--- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
--- @param #number Alpha Transparency [0,1]. Default 1.
--- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value. -- doesn't seem to work
--- @param #number FillAlpha Transparency [0,1]. Default 0.15.                                                 -- doesn't seem to work
--- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
--- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
--- @return #ZONE_OVAL self
-function ZONE_OVAL:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType)
-    Coalition = Coalition or self:GetDrawCoalition()
-
-    -- Set draw coalition.
-    self:SetDrawCoalition(Coalition)
-
-    Color = Color or self:GetColorRGB()
-    Alpha = Alpha or 1
-
-    -- Set color.
-    self:SetColor(Color, Alpha)
-
-    FillColor = FillColor or self:GetFillColorRGB()
-    if not FillColor then
-        UTILS.DeepCopy(Color)
-    end
-    FillAlpha = FillAlpha or self:GetFillColorAlpha()
-    if not FillAlpha then
-        FillAlpha = 0.15
-    end
-
-    LineType = LineType or 1
-
-    -- Set fill color -----------> has fill color worked in recent versions of DCS?
-    -- doing something like
-    --
-    -- trigger.action.markupToAll(7, -1, 501, p.Coords[1]:GetVec3(), p.Coords[2]:GetVec3(),p.Coords[3]:GetVec3(),p.Coords[4]:GetVec3(),{1,0,0, 1}, {1,0,0, 1}, 4, false, Text or "")
-    --
-    -- doesn't seem to fill in the shape for an n-sided polygon
-    self:SetFillColor(FillColor, FillAlpha)
-
-    self.DrawPoly = ZONE_POLYGON:NewFromPointsArray(self.ZoneName, self:PointsOnEdge(80))
-    self.DrawPoly:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType)
-end
-
---- Remove drawing from F10 map
--- @param #ZONE_OVAL self
-function ZONE_OVAL:UndrawZone()
-    if self.DrawPoly then
-        self.DrawPoly:UndrawZone()
-    end
-end
-
-
 --- Ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Triangle.lua
 --- This triangle "zone" is not really to be used on its own, it only serves as building blocks for
 --- ZONE_POLYGON to accurately find a point inside a polygon; as well as getting the correct surface area of
 --- a polygon.
 -- @type _ZONE_TRIANGLE
--- @extends #BASE
+-- @extends Core.Zone#ZONE_BASE
+
+--- ## _ZONE_TRIANGLE class, extends @{#ZONE_BASE}
+--
+-- _ZONE_TRIANGLE class is a helper class for ZONE_POLYGON
+-- This class implements the inherited functions from @{#ZONE_BASE} taking into account the own zone format and properties.
+--
+-- @field #_ZONE_TRIANGLE
 _ZONE_TRIANGLE = {
     ClassName="ZONE_TRIANGLE",
     Points={},
     Coords={},
     CenterVec2={x=0, y=0},
     SurfaceArea=0,
-    DrawIDs={}
+    DrawID={}
 }
-
+---
+-- @param #_ZONE_TRIANGLE self
+-- @param DCS#Vec p1
+-- @param DCS#Vec p2
+-- @param DCS#Vec p3
+-- @return #_ZONE_TRIANGLE self
 function _ZONE_TRIANGLE:New(p1, p2, p3)
     local self = BASE:Inherit(self, ZONE_BASE:New())
     self.Points = {p1, p2, p3}
@@ -2276,6 +2060,7 @@ function _ZONE_TRIANGLE:New(p1, p2, p3)
 end
 
 --- Checks if a point is contained within the triangle.
+-- @param #_ZONE_TRIANGLE self
 -- @param #table pt The point to check
 -- @param #table points (optional) The points of the triangle, or 3 other points if you're just using the TRIANGLE class without an object of it
 -- @return #bool True if the point is contained, false otherwise
@@ -2297,6 +2082,7 @@ function _ZONE_TRIANGLE:ContainsPoint(pt, points)
 end
 
 --- Returns a random Vec2 within the triangle.
+-- @param #_ZONE_TRIANGLE self
 -- @param #table points The points of the triangle, or 3 other points if you're just using the TRIANGLE class without an object of it
 -- @return #table The random Vec2
 function _ZONE_TRIANGLE:GetRandomVec2(points)
@@ -2312,6 +2098,8 @@ function _ZONE_TRIANGLE:GetRandomVec2(points)
 end
 
 --- Draw the triangle
+-- @param #_ZONE_TRIANGLE self
+-- @return #table of draw IDs
 function _ZONE_TRIANGLE:Draw(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
     Coalition=Coalition or -1
 
@@ -2326,15 +2114,35 @@ function _ZONE_TRIANGLE:Draw(Coalition, Color, Alpha, FillColor, FillAlpha, Line
     for i=1, #self.Coords do
         local c1 = self.Coords[i]
         local c2 = self.Coords[i % #self.Coords + 1]
-        table.add(self.DrawIDs, c1:LineToAll(c2, Coalition, Color, Alpha, LineType, ReadOnly))
+        local id = c1:LineToAll(c2, Coalition, Color, Alpha, LineType, ReadOnly)
+        self.DrawID[#self.DrawID+1] = id
     end
-    return self.DrawIDs
+    local newID = self.Coords[1]:MarkupToAllFreeForm({self.Coords[2],self.Coords[3]},Coalition,Color,Alpha,FillColor,FillAlpha,LineType,ReadOnly)
+    self.DrawID[#self.DrawID+1] = newID
+    return self.DrawID
+end
+
+--- Draw the triangle
+-- @param #_ZONE_TRIANGLE self
+-- @return #table of draw IDs
+function _ZONE_TRIANGLE:Fill(Coalition, FillColor, FillAlpha, ReadOnly)
+    Coalition=Coalition or -1
+    FillColor = FillColor
+    FillAlpha = FillAlpha
+    local newID = self.Coords[1]:MarkupToAllFreeForm({self.Coords[2],self.Coords[3]},Coalition,nil,nil,FillColor,FillAlpha,0,nil)
+    self.DrawID[#self.DrawID+1] = newID
+    return self.DrawID
 end
 
 
 ---
 -- @type ZONE_POLYGON_BASE
 -- @field #ZONE_POLYGON_BASE.ListVec2 Polygon The polygon defined by an array of @{DCS#Vec2}.
+-- @field #number SurfaceArea
+-- @field #table DrawID
+-- @field #table FillTriangles
+-- @field #table _Triangles
+-- @field #table Borderlines
 -- @extends #ZONE_BASE
 
 
@@ -2359,9 +2167,11 @@ end
 -- @field #ZONE_POLYGON_BASE
 ZONE_POLYGON_BASE = {
   ClassName="ZONE_POLYGON_BASE",
-  _Triangles={}, -- _ZONE_TRIANGLES
+  _Triangles={}, -- #table of #_ZONE_TRIANGLE
   SurfaceArea=0,
-  DrawID={} -- making a table out of the MarkID so its easier to draw an n-sided polygon, see ZONE_POLYGON_BASE:Draw()
+  DrawID={}, -- making a table out of the MarkID so its easier to draw an n-sided polygon, see ZONE_POLYGON_BASE:Draw()
+  FillTriangles = {},
+  Borderlines = {},
 }
 
 --- A 2D points array.
@@ -2394,19 +2204,20 @@ function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
       self._.Polygon[i].y = PointsArray[i].y
     end
 
-  end
+    -- triangulate the polygon so we can work with it
+    self._Triangles = self:_Triangulate()
+    -- set the polygon's surface area
+    self.SurfaceArea = self:_CalculateSurfaceArea()
 
-  -- triangulate the polygon so we can work with it
-  self._Triangles = self:_Triangulate()
-  -- set the polygon's surface area
-  self.SurfaceArea = self:_CalculateSurfaceArea()
+  end
 
   return self
 end
 
 --- Triangulates the polygon.
 --- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Polygon.lua
--- @return #table The #_TRIANGLE list that make up
+-- @param #ZONE_POLYGON_BASE self
+-- @return #table The #_ZONE_TRIANGLE list that makes up the polygon
 function ZONE_POLYGON_BASE:_Triangulate()
     local points = self._.Polygon
     local triangles = {}
@@ -2535,6 +2346,7 @@ end
 
 --- Calculates the surface area of the polygon. The surface area is the sum of the areas of the triangles that make up the polygon.
 --- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Polygon.lua
+-- @param #ZONE_POLYGON_BASE self
 -- @return #number The surface area of the polygon
 function ZONE_POLYGON_BASE:_CalculateSurfaceArea()
     local area = 0
@@ -2694,57 +2506,113 @@ end
 -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value. -- doesn't seem to work
 -- @param #number FillAlpha Transparency [0,1]. Default 0.15.                                                 -- doesn't seem to work
 -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
--- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+-- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.s
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, IncludeTriangles)
-    if self._.Polygon and #self._.Polygon >= 3 then
-        Coalition = Coalition or self:GetDrawCoalition()
 
-        -- Set draw coalition.
-        self:SetDrawCoalition(Coalition)
-
-        Color = Color or self:GetColorRGB()
-        Alpha = Alpha or 1
-
-        -- Set color.
-        self:SetColor(Color, Alpha)
-
-        FillColor = FillColor or self:GetFillColorRGB()
-        if not FillColor then
-            UTILS.DeepCopy(Color)
-        end
-        FillAlpha = FillAlpha or self:GetFillColorAlpha()
-        if not FillAlpha then
-            FillAlpha = 0.15
-        end
-
-        -- Set fill color -----------> has fill color worked in recent versions of DCS?
-        -- doing something like
-        --
-        -- trigger.action.markupToAll(7, -1, 501, p.Coords[1]:GetVec3(), p.Coords[2]:GetVec3(),p.Coords[3]:GetVec3(),p.Coords[4]:GetVec3(),{1,0,0, 1}, {1,0,0, 1}, 4, false, Text or "")
-        --
-        -- doesn't seem to fill in the shape for an n-sided polygon
-        self:SetFillColor(FillColor, FillAlpha)
-
-        IncludeTriangles = IncludeTriangles or false
-
-        -- just draw the triangles, we get the outline for free
-        if IncludeTriangles then
-            for _, triangle in pairs(self._Triangles) do
-                local draw_ids = triangle:Draw()
-                table.combine(self.DrawID, draw_ids)
-            end
-        -- draw outline only
-        else
-            local coords = self:GetVerticiesCoordinates()
-            for i = 1, #coords do
-                local c1 = coords[i]
-                local c2 = coords[i % #coords + 1]
-                table.add(self.DrawID, c1:LineToAll(c2, Coalition, Color, Alpha, LineType, ReadOnly))
-            end
-        end
+  
+  if self._.Polygon and #self._.Polygon >= 3 then
+    Coalition = Coalition or self:GetDrawCoalition()
+  
+    -- Set draw coalition.
+    self:SetDrawCoalition(Coalition)
+  
+    Color = Color or self:GetColorRGB()
+    Alpha = Alpha or self:GetColorAlpha()
+  
+    FillColor = FillColor or self:GetFillColorRGB()
+    FillAlpha = FillAlpha or self:GetFillColorAlpha()
+  
+    if FillColor then
+      self:ReFill(FillColor,FillAlpha)  
     end
-    return self
+    
+    if Color then
+        self:ReDrawBorderline(Color,Alpha,LineType)
+    end
+  end
+
+
+  if false then
+    local coords = self:GetVerticiesCoordinates()
+
+    local coord=coords[1] --Core.Point#COORDINATE
+
+    table.remove(coords, 1)
+
+    coord:MarkupToAllFreeForm(coords, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, "Drew Polygon")
+
+    if true then
+      return
+    end
+  end
+
+  return self
+end
+
+--- Change/Re-fill a Polygon Zone
+-- @param #ZONE_POLYGON_BASE self
+-- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
+-- @param #number Alpha Transparency [0,1]. Default 1.
+-- @return #ZONE_POLYGON_BASE self
+function ZONE_POLYGON_BASE:ReFill(Color,Alpha)
+  local color = Color or self:GetFillColorRGB() or {1,0,0}
+  local alpha = Alpha or self:GetFillColorAlpha() or 1
+  local coalition = self:GetDrawCoalition() or -1
+  -- undraw if already filled
+  if #self.FillTriangles > 0 then
+    for _, triangle in pairs(self._Triangles) do
+      triangle:UndrawZone()
+    end
+    -- remove mark IDs
+    for _,_value in pairs(self.FillTriangles) do
+      table.remove_by_value(self.DrawID, _value)
+    end
+    self.FillTriangles = nil
+    self.FillTriangles = {}
+  end
+  -- refill
+  for _, triangle in pairs(self._Triangles) do
+      local draw_ids = triangle:Fill(coalition,color,alpha,nil)
+      self.FillTriangles = draw_ids
+      table.combine(self.DrawID, draw_ids)
+  end
+  return self
+end
+
+--- Change/Re-draw the border of a Polygon Zone
+-- @param #ZONE_POLYGON_BASE self
+-- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
+-- @param #number Alpha Transparency [0,1]. Default 1.
+-- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+-- @return #ZONE_POLYGON_BASE
+function ZONE_POLYGON_BASE:ReDrawBorderline(Color, Alpha, LineType)
+  local color = Color or self:GetFillColorRGB() or {1,0,0}
+  local alpha = Alpha or self:GetFillColorAlpha() or 1
+  local coalition = self:GetDrawCoalition() or -1
+  local linetype = LineType or 1
+    -- undraw if already drawn
+  if #self.Borderlines > 0 then
+    for _, MarkID in pairs(self.Borderlines) do
+      trigger.action.removeMark(MarkID)
+    end
+    -- remove mark IDs
+    for _,_value in pairs(self.Borderlines) do
+      table.remove_by_value(self.DrawID, _value)
+    end
+    self.Borderlines = nil
+    self.Borderlines = {}
+  end
+  -- Redraw border
+  local coords = self:GetVerticiesCoordinates()
+  for i = 1, #coords do
+      local c1 = coords[i]
+      local c2 = coords[i % #coords + 1]
+      local newID = c1:LineToAll(c2, coalition, color, alpha, linetype, nil)
+      self.DrawID[#self.DrawID+1]=newID
+      self.Borderlines[#self.Borderlines+1] = newID
+  end
+  return self
 end
 
 --- Get the surface area of this polygon
@@ -3080,6 +2948,7 @@ function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, C
     Alpha = Alpha or 1
     Segments = Segments or 10
     Closed = Closed or false
+    local Limit
     local i = 1
     local j = #self._.Polygon
     if (Closed) then
@@ -3104,9 +2973,13 @@ function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, C
     return self
 end
 
+do -- Zone_Polygon
+
+
 ---
 -- @type ZONE_POLYGON
 -- @extends #ZONE_POLYGON_BASE
+-- @extends #ZONE_BASE
 
 
 --- The ZONE_POLYGON class defined by a sequence of @{Wrapper.Group#GROUP} waypoints within the Mission Editor, forming a polygon, OR by drawings made with the Draw tool
@@ -3138,8 +3011,7 @@ end
 --
 -- This class has been updated to use a accurate way of generating random points inside the polygon without having to use trial and error guesses.
 -- You can also get the surface area of the polygon now, handy if you want measure which coalition has the largest captured area, for example.
-
-
+--
 -- @field #ZONE_POLYGON
 ZONE_POLYGON = {
   ClassName="ZONE_POLYGON",
@@ -3275,18 +3147,18 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
   self.ScanData.Scenery = {}
   self.ScanData.SceneryTable = {}
   self.ScanData.Units = {}
-  
+
   local vectors = self:GetBoundingSquare()
-  
+
   local minVec3 = {x=vectors.x1, y=0, z=vectors.y1}
   local maxVec3 = {x=vectors.x2, y=0, z=vectors.y2}
-  
+
   local minmarkcoord = COORDINATE:NewFromVec3(minVec3)
   local maxmarkcoord = COORDINATE:NewFromVec3(maxVec3)
   local ZoneRadius = minmarkcoord:Get2DDistance(maxmarkcoord)/2
 --  self:I("Scan Radius:" ..ZoneRadius)
   local CenterVec3 = self:GetCoordinate():GetVec3()
-  
+
  --[[ this a bit shaky in functionality it seems
   local VolumeBox = {
    id = world.VolumeType.BOX,
@@ -3296,7 +3168,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
    }
   }
   --]]
-  
+
   local SphereSearch = {
   id = world.VolumeType.SPHERE,
     params = {
@@ -3304,13 +3176,13 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
     radius = ZoneRadius,
     }
   }
-    
+
   local function EvaluateZone( ZoneObject )
 
     if ZoneObject then
 
       local ObjectCategory = Object.getCategory(ZoneObject)
-      
+
       if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
 
         local CoalitionDCSUnit = ZoneObject:getCoalition()
@@ -3344,7 +3216,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
           self:F2( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
         end
       end
-      
+
       -- trying with box search
       if ObjectCategory == Object.Category.SCENERY and self:IsVec3InZone(ZoneObject:getPoint()) then
         local SceneryType = ZoneObject:getTypeName()
@@ -3363,7 +3235,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
   -- Search objects.
   local inzoneunits = SET_UNIT:New():FilterZones({self}):FilterOnce()
   local inzonestatics = SET_STATIC:New():FilterZones({self}):FilterOnce()
-  
+
   inzoneunits:ForEach(
     function(unit)
       local Unit = unit --Wrapper.Unit#UNIT
@@ -3371,7 +3243,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
       EvaluateZone(DCS)
     end
   )
-  
+
   inzonestatics:ForEach(
     function(static)
       local Static = static --Wrapper.Static#STATIC
@@ -3379,19 +3251,19 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
       EvaluateZone(DCS)
     end
   )
-  
+
   local searchscenery = false
   for _,_type in pairs(ObjectCategories) do
     if _type == Object.Category.SCENERY then
       searchscenery = true
     end
   end
-  
+
   if searchscenery then
     -- Search objects.
     world.searchObjects({Object.Category.SCENERY}, SphereSearch, EvaluateZone )
   end
-  
+
 end
 
 --- Count the number of different coalitions inside the zone.
@@ -3604,9 +3476,11 @@ function ZONE_POLYGON:IsNoneInZone()
   return self:CountScannedCoalitions() == 0
 end
 
+end
 
 do -- ZONE_ELASTIC
 
+  ---
   -- @type ZONE_ELASTIC
   -- @field #table points Points in 2D.
   -- @field #table setGroups Set of GROUPs.
@@ -3632,14 +3506,14 @@ do -- ZONE_ELASTIC
   function ZONE_ELASTIC:New(ZoneName, Points)
 
     local self=BASE:Inherit(self, ZONE_POLYGON_BASE:New(ZoneName, Points)) --#ZONE_ELASTIC
-  
+
     -- Zone objects are added to the _DATABASE and SET_ZONE objects.
     _EVENTDISPATCHER:CreateEventNewZone( self )
-  
+
     if Points then
       self.points=Points
     end
-  
+
     return self
   end
 
@@ -3648,10 +3522,10 @@ do -- ZONE_ELASTIC
   -- @param DCS#Vec2 Vec2 Point in 2D (with x and y coordinates).
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:AddVertex2D(Vec2)
-  
+
     -- Add vec2 to points.
     table.insert(self.points, Vec2)
-  
+
     return self
   end
 
@@ -3661,10 +3535,10 @@ do -- ZONE_ELASTIC
   -- @param DCS#Vec3 Vec3 Point in 3D (with x, y and z coordinates). Only the x and z coordinates are used.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:AddVertex3D(Vec3)
-    
+
     -- Add vec2 from vec3 to points.
     table.insert(self.points, {x=Vec3.x, y=Vec3.z})
-  
+
     return self
   end
 
@@ -3674,10 +3548,10 @@ do -- ZONE_ELASTIC
   -- @param Core.Set#SET_GROUP GroupSet Set of groups.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:AddSetGroup(GroupSet)
-  
+
     -- Add set to table.
     table.insert(self.setGroups, GroupSet)
-    
+
     return self
   end
 
@@ -3689,13 +3563,13 @@ do -- ZONE_ELASTIC
   -- @param #boolean Draw Draw the zone. Default `nil`.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:Update(Delay, Draw)
-    
+
     -- Debug info.
     self:T(string.format("Updating ZONE_ELASTIC %s", tostring(self.ZoneName)))
-  
+
     -- Copy all points.
     local points=UTILS.DeepCopy(self.points or {})
-    
+
     if self.setGroups then
       for _,_setGroup in pairs(self.setGroups) do
         local setGroup=_setGroup --Core.Set#SET_GROUP
@@ -3710,7 +3584,7 @@ do -- ZONE_ELASTIC
 
     -- Update polygon verticies from points.
     self._.Polygon=self:_ConvexHull(points)
-    
+
     if Draw~=false then
       if self.DrawID or Draw==true then
         self:UndrawZone()
@@ -3720,7 +3594,7 @@ do -- ZONE_ELASTIC
 
     return self
   end
-  
+
   --- Start the updating scheduler.
   -- @param #ZONE_ELASTIC self
   -- @param #number Tstart Time in seconds before the updating starts.
@@ -3729,9 +3603,9 @@ do -- ZONE_ELASTIC
   -- @param #boolean Draw Draw the zone. Default `nil`.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:StartUpdate(Tstart, dT, Tstop, Draw)
-  
+
     self.updateID=self:ScheduleRepeat(Tstart, dT, 0, Tstop, ZONE_ELASTIC.Update, self, 0, Draw)
-  
+
     return self
   end
 
@@ -3740,46 +3614,46 @@ do -- ZONE_ELASTIC
   -- @param #number Delay Delay in seconds before the scheduler will be stopped. Default 0.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:StopUpdate(Delay)
-  
+
     if Delay and Delay>0 then
       self:ScheduleOnce(Delay, ZONE_ELASTIC.StopUpdate, self)
     else
-  
+
       if self.updateID then
-      
+
         self:ScheduleStop(self.updateID)
-        
+
         self.updateID=nil
-        
+
       end
-      
+
     end
-  
+
     return self
   end
-  
+
 
   --- Create a convec hull.
   -- @param #ZONE_ELASTIC self
   -- @param #table pl Points
   -- @return #table Points
   function ZONE_ELASTIC:_ConvexHull(pl)
-  
+
     if #pl == 0 then
       return {}
     end
-    
+
     table.sort(pl, function(left,right)
       return left.x < right.x
     end)
- 
+
     local h = {}
-    
+
     -- Function: ccw > 0 if three points make a counter-clockwise turn, clockwise if ccw < 0, and collinear if ccw = 0.
     local function ccw(a,b,c)
       return (b.x - a.x) * (c.y - a.y) > (b.y - a.y) * (c.x - a.x)
     end
- 
+
     -- lower hull
     for i,pt in pairs(pl) do
       while #h >= 2 and not ccw(h[#h-1], h[#h], pt) do
@@ -3787,7 +3661,7 @@ do -- ZONE_ELASTIC
       end
       table.insert(h,pt)
     end
- 
+
     -- upper hull
     local t = #h + 1
     for i=#pl, 1, -1 do
@@ -3797,16 +3671,250 @@ do -- ZONE_ELASTIC
       end
       table.insert(h, pt)
     end
- 
+
     table.remove(h, #h)
-    
+
     return h
-  end  
-  
+  end
+
+end
+
+
+
+--- ZONE_OVAL created from a center point, major axis, minor axis, and angle.
+-- Ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
+-- @type ZONE_OVAL
+-- @extends Core.Zone#ZONE_BASE
+
+--- ## ZONE_OVAL class, extends @{#ZONE_BASE}
+--
+-- The ZONE_OVAL class is defined by a center point, major axis, minor axis, and angle.
+-- This class implements the inherited functions from @{#ZONE_BASE} taking into account the own zone format and properties.
+--
+-- @field #ZONE_OVAL
+ZONE_OVAL = {
+    ClassName = "OVAL",
+    ZoneName="",
+    MajorAxis = nil,
+    MinorAxis = nil,
+    Angle = 0,
+    DrawPoly = nil -- let's just use a ZONE_POLYGON to draw the ZONE_OVAL on the map
+}
+
+--- Creates a new ZONE_OVAL from a center point, major axis, minor axis, and angle.
+--- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
+-- @param #ZONE_OVAL self
+-- @param #string name Name of the zone.
+-- @param #table vec2 The center point of the oval
+-- @param #number major_axis The major axis of the oval
+-- @param #number minor_axis The minor axis of the oval
+-- @param #number angle The angle of the oval
+-- @return #ZONE_OVAL The new oval
+function ZONE_OVAL:New(name, vec2, major_axis, minor_axis, angle)
+
+    self = BASE:Inherit(self, ZONE_BASE:New())
+
+    self.ZoneName = name
+    self.CenterVec2 = vec2
+    self.MajorAxis = major_axis
+    self.MinorAxis = minor_axis
+    self.Angle = angle or 0
+
+    _DATABASE:AddZone(name, self)
+
+    return self
+end
+
+--- Constructor to create a ZONE_OVAL instance, taking the name of a drawing made with the draw tool in the Mission Editor.
+--- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
+-- @param #ZONE_OVAL self
+-- @param #string DrawingName The name of the drawing in the Mission Editor
+-- @return #ZONE_OVAL self
+function ZONE_OVAL:NewFromDrawing(DrawingName)
+    self = BASE:Inherit(self, ZONE_BASE:New(DrawingName))
+    for _, layer in pairs(env.mission.drawings.layers) do
+        for _, object in pairs(layer["objects"]) do
+            if string.find(object["name"], DrawingName, 1, true) then
+                if object["polygonMode"] == "oval" then
+                    self.CenterVec2 = { x = object["mapX"], y = object["mapY"] }
+                    self.MajorAxis = object["r1"]
+                    self.MinorAxis = object["r2"]
+                    self.Angle = object["angle"]
+
+                end
+            end
+        end
+    end
+
+    _DATABASE:AddZone(DrawingName, self)
+
+    return self
+end
+
+--- Gets the major axis of the oval.
+-- @param #ZONE_OVAL self
+-- @return #number The major axis of the oval
+function ZONE_OVAL:GetMajorAxis()
+    return self.MajorAxis
+end
+
+--- Gets the minor axis of the oval.
+-- @param #ZONE_OVAL self
+-- @return #number The minor axis of the oval
+function ZONE_OVAL:GetMinorAxis()
+    return self.MinorAxis
+end
+
+--- Gets the angle of the oval.
+-- @param #ZONE_OVAL self
+-- @return #number The angle of the oval
+function ZONE_OVAL:GetAngle()
+    return self.Angle
+end
+
+--- Returns a the center point of the oval
+-- @param #ZONE_OVAL self
+-- @return #table The center Vec2
+function ZONE_OVAL:GetVec2()
+    return self.CenterVec2
+end
+
+--- Checks if a point is contained within the oval.
+-- @param #ZONE_OVAL self
+-- @param #table point The point to check
+-- @return #bool True if the point is contained, false otherwise
+function ZONE_OVAL:IsVec2InZone(vec2)
+    local cos, sin = math.cos, math.sin
+    local dx = vec2.x - self.CenterVec2.x
+    local dy = vec2.y - self.CenterVec2.y
+    local rx = dx * cos(self.Angle) + dy * sin(self.Angle)
+    local ry = -dx * sin(self.Angle) + dy * cos(self.Angle)
+    return rx * rx / (self.MajorAxis * self.MajorAxis) + ry * ry / (self.MinorAxis * self.MinorAxis) <= 1
+end
+
+--- Calculates the bounding box of the oval. The bounding box is the smallest rectangle that contains the oval.
+-- @param #ZONE_OVAL self
+-- @return #table The bounding box of the oval
+function ZONE_OVAL:GetBoundingSquare()
+    local min_x = self.CenterVec2.x - self.MajorAxis
+    local min_y = self.CenterVec2.y - self.MinorAxis
+    local max_x = self.CenterVec2.x + self.MajorAxis
+    local max_y = self.CenterVec2.y + self.MinorAxis
+
+    return {
+        {x=min_x, y=min_x}, {x=max_x, y=min_y}, {x=max_x, y=max_y}, {x=min_x, y=max_y}
+    }
+end
+
+--- Find points on the edge of the oval
+-- @param #ZONE_OVAL self
+-- @param #number num_points How many points should be found. More = smoother shape
+-- @return #table Points on he edge
+function ZONE_OVAL:PointsOnEdge(num_points)
+    num_points = num_points or 40
+    local points = {}
+    local dtheta = 2 * math.pi / num_points
+
+    for i = 0, num_points - 1 do
+        local theta = i * dtheta
+        local x = self.CenterVec2.x + self.MajorAxis * math.cos(theta) * math.cos(self.Angle) - self.MinorAxis * math.sin(theta) * math.sin(self.Angle)
+        local y = self.CenterVec2.y + self.MajorAxis * math.cos(theta) * math.sin(self.Angle) + self.MinorAxis * math.sin(theta) * math.cos(self.Angle)
+        table.insert(points, {x = x, y = y})
+    end
+
+    return points
+end
+
+--- Returns a random Vec2 within the oval.
+-- @param #ZONE_OVAL self
+-- @return #table The random Vec2
+function ZONE_OVAL:GetRandomVec2()
+    local theta = math.rad(self.Angle)
+
+    local random_point = math.sqrt(math.random())  --> uniformly
+    --local random_point = math.random()           --> more clumped around center
+    local phi = math.random() * 2 * math.pi
+    local x_c = random_point * math.cos(phi)
+    local y_c = random_point * math.sin(phi)
+    local x_e = x_c * self.MajorAxis
+    local y_e = y_c * self.MinorAxis
+    local rx = (x_e * math.cos(theta) - y_e * math.sin(theta)) + self.CenterVec2.x
+    local ry = (x_e * math.sin(theta) + y_e * math.cos(theta)) + self.CenterVec2.y
+
+    return {x=rx, y=ry}
+end
+
+--- Define a random @{Core.Point#POINT_VEC2} within the zone.
+-- @param #ZONE_OVAL self
+-- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
+function ZONE_OVAL:GetRandomPointVec2()
+    return POINT_VEC2:NewFromVec2(self:GetRandomVec2())
+end
+
+--- Define a random @{Core.Point#POINT_VEC2} within the zone.
+-- @param #ZONE_OVAL self
+-- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
+function ZONE_OVAL:GetRandomPointVec3()
+    return POINT_VEC2:NewFromVec3(self:GetRandomVec2())
+end
+
+--- Draw the zone on the F10 map.
+--- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
+-- @param #ZONE_OVAL self
+-- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+-- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
+-- @param #number Alpha Transparency [0,1]. Default 1.
+-- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value. -- doesn't seem to work
+-- @param #number FillAlpha Transparency [0,1]. Default 0.15.                                                 -- doesn't seem to work
+-- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+-- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+-- @return #ZONE_OVAL self
+function ZONE_OVAL:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType)
+    Coalition = Coalition or self:GetDrawCoalition()
+
+    -- Set draw coalition.
+    self:SetDrawCoalition(Coalition)
+
+    Color = Color or self:GetColorRGB()
+    Alpha = Alpha or 1
+
+    -- Set color.
+    self:SetColor(Color, Alpha)
+
+    FillColor = FillColor or self:GetFillColorRGB()
+    if not FillColor then
+        UTILS.DeepCopy(Color)
+    end
+    FillAlpha = FillAlpha or self:GetFillColorAlpha()
+    if not FillAlpha then
+        FillAlpha = 0.15
+    end
+
+    LineType = LineType or 1
+
+    -- Set fill color -----------> has fill color worked in recent versions of DCS?
+    -- doing something like
+    --
+    -- trigger.action.markupToAll(7, -1, 501, p.Coords[1]:GetVec3(), p.Coords[2]:GetVec3(),p.Coords[3]:GetVec3(),p.Coords[4]:GetVec3(),{1,0,0, 1}, {1,0,0, 1}, 4, false, Text or "")
+    --
+    -- doesn't seem to fill in the shape for an n-sided polygon
+    self:SetFillColor(FillColor, FillAlpha)
+
+    self.DrawPoly = ZONE_POLYGON:NewFromPointsArray(self.ZoneName, self:PointsOnEdge(80))
+    self.DrawPoly:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType)
+end
+
+--- Remove drawing from F10 map
+-- @param #ZONE_OVAL self
+function ZONE_OVAL:UndrawZone()
+    if self.DrawPoly then
+        self.DrawPoly:UndrawZone()
+    end
 end
 
 do -- ZONE_AIRBASE
 
+  ---
   -- @type ZONE_AIRBASE
   -- @field #boolean isShip If `true`, airbase is a ship.
   -- @field #boolean isHelipad If `true`, airbase is a helipad.
@@ -3839,7 +3947,7 @@ do -- ZONE_AIRBASE
 
     self._.ZoneAirbase = Airbase
     self._.ZoneVec2Cache = self._.ZoneAirbase:GetVec2()
-    
+
     if Airbase:IsShip() then
       self.isShip=true
       self.isHelipad=false
@@ -3847,11 +3955,11 @@ do -- ZONE_AIRBASE
     elseif Airbase:IsHelipad() then
       self.isShip=false
       self.isHelipad=true
-      self.isAirdrome=false    
+      self.isAirdrome=false
     elseif Airbase:IsAirdrome() then
       self.isShip=false
       self.isHelipad=false
-      self.isAirdrome=true    
+      self.isAirdrome=true
     end
 
     -- Zone objects are added to the _DATABASE and SET_ZONE objects.

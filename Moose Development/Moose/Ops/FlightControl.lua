@@ -4957,7 +4957,7 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Add parking guard in front of a parking aircraft.
+--- [INTERNAL] Add parking guard in front of a parking aircraft - delayed for MP.
 -- @param #FLIGHTCONTROL self
 -- @param Wrapper.Unit#UNIT unit The aircraft.
 function FLIGHTCONTROL:SpawnParkingGuard(unit)

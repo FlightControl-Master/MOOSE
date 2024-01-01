@@ -24,8 +24,9 @@
 
 
 do -- COORDINATE
-
-  --- @type COORDINATE
+  
+  ---
+  -- @type COORDINATE
   -- @field #string ClassName Name of the class
   -- @field #number x Component of the 3D vector.
   -- @field #number y Component of the 3D vector.
@@ -2472,14 +2473,17 @@ do -- COORDINATE
         -- Write command as string and execute that. Idea by Grimes https://forum.dcs.world/topic/324201-mark-to-all-function/#comment-5273793
         local s=string.format("trigger.action.markupToAll(7, %d, %d,", Coalition, MarkID)
         for _,vec in pairs(vecs) do
-          s=s..string.format("%s,", UTILS._OneLineSerialize(vec))
+          --s=s..string.format("%s,", UTILS._OneLineSerialize(vec))
+          s=s..string.format("{x=%.1f, y=%.1f, z=%.1f},", vec.x, vec.y, vec.z)
         end
-        s=s..string.format("%s, %s, %s, %s", UTILS._OneLineSerialize(Color), UTILS._OneLineSerialize(FillColor), tostring(LineType), tostring(ReadOnly))
-        if Text and Text~="" then
-          s=s..string.format(", \"%s\"", Text)
+        s=s..string.format("{%.3f, %.3f, %.3f, %.3f},", Color[1], Color[2], Color[3], Color[4])
+        s=s..string.format("{%.3f, %.3f, %.3f, %.3f},", FillColor[1], FillColor[2], FillColor[3], FillColor[4])
+        s=s..string.format("%d,", LineType or 1)
+        s=s..string.format("%s", tostring(ReadOnly))
+        if Text and type(Text)=="string" and string.len(Text)>0 then
+          s=s..string.format(", \"%s\"", tostring(Text))
         end
         s=s..")"
-        
         
         -- Execute string command
         local success=UTILS.DoString(s)
@@ -2568,7 +2572,7 @@ do -- COORDINATE
 
     Offset=Offset or 2
 
-    -- Measurement of visibility should not be from the ground, so Adding a hypotethical 2 meters to each Coordinate.
+    -- Measurement of visibility should not be from the ground, so Adding a hypothetical 2 meters to each Coordinate.
     local FromVec3 = self:GetVec3()
     FromVec3.y = FromVec3.y + Offset
 
@@ -2969,10 +2973,10 @@ do -- COORDINATE
     end
 
     -- corrected Track to be direction of travel of bogey (self in this case)
-   	local track = "Maneuver"
-	
-	if self.Heading then
-		track = UTILS.BearingToCardinal(self.Heading) or "North"
+    local track = "Maneuver"
+  
+  if self.Heading then
+    track = UTILS.BearingToCardinal(self.Heading) or "North"
     end
     
     if rangeNM > 3 then
@@ -3116,6 +3120,49 @@ do -- COORDINATE
     local lat, lon = coord.LOtoLL( self:GetVec3() )
     local MGRS = coord.LLtoMGRS( lat, lon )
     return "MGRS " .. UTILS.tostringMGRS( MGRS, MGRS_Accuracy )
+  end
+  
+  --- Provides a COORDINATE from an MGRS String
+  -- @param #COORDINATE self
+  -- @param #string MGRSString MGRS String, e.g. "MGRS 37T DK 12345 12345"
+  -- @return #COORDINATE self
+  function COORDINATE:NewFromMGRSString( MGRSString )
+    local myparts = UTILS.Split(MGRSString," ")
+    local northing = tostring(myparts[5]) or ""
+    local easting = tostring(myparts[4]) or ""
+    if string.len(easting) < 5 then easting = easting..string.rep("0",5-string.len(easting)) end  
+    if string.len(northing) < 5 then northing = northing..string.rep("0",5-string.len(northing)) end
+    local MGRS = {
+            UTMZone = myparts[2],
+            MGRSDigraph = myparts[3],
+            Easting = easting,
+            Northing = northing,
+          } 
+    local lat, lon = coord.MGRStoLL(MGRS)
+    local point = coord.LLtoLO(lat, lon, 0)
+    local coord = COORDINATE:NewFromVec2({x=point.x,y=point.z})
+    return coord
+  end
+  
+  --- Provides a COORDINATE from an MGRS Coordinate
+  -- @param #COORDINATE self
+  -- @param #string UTMZone UTM Zone, e.g. "37T"
+  -- @param #string MGRSDigraph Digraph, e.g. "DK"
+  -- @param #string Easting Meters easting - string in order to allow for leading zeros, e.g. "01234". Should be 5 digits.
+  -- @param #string Northing Meters northing - string in order to allow for leading zeros, e.g. "12340". Should be 5 digits.
+  -- @return #COORDINATE self
+  function COORDINATE:NewFromMGRS( UTMZone, MGRSDigraph, Easting, Northing )
+    if string.len(Easting) < 5 then Easting = Easting..string.rep("0",5-string.len(Easting) )end  
+    if string.len(Northing) < 5 then Northing = Northing..string.rep("0",5-string.len(Northing) )end
+    local MGRS = {
+            UTMZone = UTMZone,
+            MGRSDigraph = MGRSDigraph,
+            Easting = Easting,
+            Northing = Northing,
+          }
+    local lat, lon = coord.MGRStoLL(MGRS)
+    local point = coord.LLtoLO(lat, lon, 0)
+    local coord = COORDINATE:NewFromVec2({x=point.x,y=point.z})
   end
 
   --- Provides a coordinate string of the point, based on a coordinate format system:
@@ -3630,7 +3677,7 @@ end
 
 do -- POINT_VEC2
 
-  --- @type POINT_VEC2
+  -- @type POINT_VEC2
   -- @field DCS#Distance x The x coordinate in meters.
   -- @field DCS#Distance y the y coordinate in meters.
   -- @extends Core.Point#COORDINATE

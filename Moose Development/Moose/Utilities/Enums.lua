@@ -523,6 +523,7 @@ ENUMS.ReportingName =
     Hawkeye = "E-2D",
     Sentry = "E-3A",
     Stratotanker = "KC-135",
+    Gasstation = "KC-135MPRS",
     Extender = "KC-10",
     Orion = "P-3C",
     Viking = "S-3B",

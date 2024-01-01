@@ -443,22 +443,35 @@ end
 
 --- Print a table to log in a nice format
 -- @param #table table The table to print
--- @param #number indent Number of idents
+-- @param #number indent Number of indents
+-- @return #string text Text created on the fly of the log output
 function UTILS.PrintTableToLog(table, indent)
+  local text = "\n"
   if not table then
     env.warning("No table passed!")
-    return 
+    return nil
   end
   if not indent then indent = 0 end
   for k, v in pairs(table) do
+    if string.find(k," ") then k='"'..k..'"'end
     if type(v) == "table" then
       env.info(string.rep("  ", indent) .. tostring(k) .. " = {")
-      UTILS.PrintTableToLog(v, indent + 1)
-      env.info(string.rep("  ", indent) .. "}")
+      text = text ..string.rep("  ", indent) .. tostring(k) .. " = {\n"
+      text = text .. tostring(UTILS.PrintTableToLog(v, indent + 1)).."\n"
+      env.info(string.rep("  ", indent) .. "},")
+      text = text .. string.rep("  ", indent) .. "},\n"
     else
-      env.info(string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(v))
+      local value
+      if tostring(v) == "true" or tostring(v) == "false" or tonumber(v) ~= nil then
+        value=v
+      else
+        value = '"'..tostring(v)..'"'
+      end
+      env.info(string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(value)..",\n")
+      text = text .. string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(value)..",\n"
     end
   end
+  return text
 end
 
 --- Returns table in a easy readable string representation.
@@ -1078,9 +1091,9 @@ function UTILS.BeaufortScale(speed)
   return bn,bd
 end
 
---- Split string at seperators. C.f. [split-string-in-lua](http://stackoverflow.com/questions/1426954/split-string-in-lua).
+--- Split string at separators. C.f. [split-string-in-lua](http://stackoverflow.com/questions/1426954/split-string-in-lua).
 -- @param #string str Sting to split.
--- @param #string sep Speparator for split.
+-- @param #string sep Separator for split.
 -- @return #table Split text.
 function UTILS.Split(str, sep)
   local result = {}
@@ -2208,17 +2221,17 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           return true
       end
 
-      if string.find(type_name, "Bell-47") then -- bell aint got no doors so always ready to load injured soldiers
+      if type_name == "Bell-47" then -- bell aint got no doors so always ready to load injured soldiers
           BASE:T(unit_name .. " door is open")
           return true
       end
-      
-      if string.find(type_name, "UH-60L") and (unit:getDrawArgumentValue(401) == 1 or unit:getDrawArgumentValue(402) == 1) then
+     
+      if type_name == "UH-60L" and (unit:getDrawArgumentValue(401) == 1 or unit:getDrawArgumentValue(402) == 1) then
           BASE:T(unit_name .. " cargo door is open")
           return true
       end
 
-      if string.find(type_name, "UH-60L" ) and (unit:getDrawArgumentValue(38) == 1 or unit:getDrawArgumentValue(400) == 1 ) then
+      if type_name ==  "UH-60L" and (unit:getDrawArgumentValue(38) > 0 or unit:getDrawArgumentValue(400) == 1 ) then
           BASE:T(unit_name .. " front door(s) are open")
           return true
       end
