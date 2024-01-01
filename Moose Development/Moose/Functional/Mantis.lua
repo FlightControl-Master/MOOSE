@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: Nov 2023
+-- Last Update: Dec 2023
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -94,7 +94,7 @@
 -- Known SAM types at the time of writing are:
 -- 
 -- * Avenger
--- * Chaparrel
+-- * Chaparral
 -- * Hawk
 -- * Linebacker
 -- * NASAMS
@@ -365,7 +365,7 @@ MANTIS.SamData = {
   ["SA-15"] = { Range=11, Blindspot=0, Height=6, Type="Short", Radar="Tor 9A331" },
   ["SA-13"] = { Range=5, Blindspot=0, Height=3, Type="Short", Radar="Strela" },
   ["Avenger"] = { Range=4, Blindspot=0, Height=3, Type="Short", Radar="Avenger" },
-  ["Chaparrel"] = { Range=8, Blindspot=0, Height=3, Type="Short", Radar="Chaparral" },
+  ["Chaparral"] = { Range=8, Blindspot=0, Height=3, Type="Short", Radar="Chaparral" },
   ["Linebacker"] = { Range=4, Blindspot=0, Height=3, Type="Short", Radar="Linebacker" },
   ["Silkworm"] = { Range=90, Blindspot=1, Height=0.2, Type="Long", Radar="Silkworm" },
   -- units from HDS Mod, multi launcher options is tricky
@@ -631,7 +631,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.15"
+    self.version="0.8.16"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -1149,7 +1149,7 @@ do
         --self:T(self.lid.." Relocating HQ")
         local text = self.lid.." Relocating HQ"
         --local m= MESSAGE:New(text,10,"MANTIS"):ToAll()
-          _hqgrp:RelocateGroundRandomInRadius(20,500,true,true)
+          _hqgrp:RelocateGroundRandomInRadius(20,500,true,true,nil,true)
       end
       --relocate EWR
       -- TODO: maybe dependent on AlarmState? Observed: SA11 SR only relocates if no objects in reach
@@ -1163,7 +1163,7 @@ do
               local text = self.lid.." Relocating EWR ".._grp:GetName()
               local m= MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.debug)
               if self.verbose then self:I(text) end
-              _grp:RelocateGroundRandomInRadius(20,500,true,true)
+              _grp:RelocateGroundRandomInRadius(20,500,true,true,nil,true)
              end
          end
       end

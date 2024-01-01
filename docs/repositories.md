@@ -26,13 +26,29 @@ You only need to load **one** of those files at the beginning of your mission.
 
 This repository contains the generated documentation and pictures and other references.
 The generated documentation is reflected in html and is published at: 
-- Stable `master` branch: <https://flightcontrol-master.github.io/MOOSE_DOCS/>
+- `master`  branch: <https://flightcontrol-master.github.io/MOOSE_DOCS/>
 - `develop` branch: <https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/>
+
+## [MOOSE_GUIDES](https://github.com/FlightControl-Master/MOOSE_GUIDES) - For external documentation and help
+
+This repository will be removed in future.
+
+## [MOOSE_PRESENTATIONS](https://github.com/FlightControl-Master/MOOSE_PRESENTATIONS)
+
+A collection of presentations used in the videos on the youtube channel of FlightControl.
 
 ## [MOOSE_MISSIONS](https://github.com/FlightControl-Master/MOOSE_MISSIONS) - For users (provides demo missions)
 
 This repository contains all the demonstration missions in packed format (*.miz),
 and can be used without any further setup in DCS WORLD.
+
+## [Moose_Community_Scripts](https://github.com/FlightControl-Master/Moose_Community_Scripts)
+
+This repository is for Moose based helper scripts, snippets, functional demos.
+
+## [MOOSE_SOUND](https://github.com/FlightControl-Master/MOOSE_SOUND)
+
+Sound packs for different MOOSE framework classes.
 
 ## [MOOSE_MISSIONS_DYNAMIC](https://github.com/FlightControl-Master/MOOSE_MISSIONS_DYNAMIC) - Outdated
 
@@ -41,3 +57,11 @@ This repository will be removed in future.
 ## [MOOSE_MISSIONS_UNPACKED](https://github.com/FlightControl-Master/MOOSE_MISSIONS_UNPACKED) - Outdated
 
 This repository will be removed in future.
+
+## [MOOSE_COMMUNITY_MISSIONS](https://github.com/FlightControl-Master/MOOSE_COMMUNITY_MISSIONS) - Outdated
+
+A database of missions created by the community, using MOOSE.
+
+## [MOOSE_TOOLS](https://github.com/FlightControl-Master/MOOSE_TOOLS) - Outdated
+
+A collection of the required tools to develop and contribute in the MOOSE framework for DCS World.

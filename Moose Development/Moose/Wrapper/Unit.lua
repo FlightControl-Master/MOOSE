@@ -164,7 +164,7 @@ end
 
 --- Find the first(!) UNIT matching using patterns. Note that this is **a lot** slower than `:FindByName()`!
 -- @param #UNIT self
--- @param #string Pattern The pattern to look for. Refer to [LUA patterns](http://www.easyuo.com/openeuo/wiki/index.php/Lua_Patterns_and_Captures_(Regular_Expressions)) for regular expressions in LUA.
+-- @param #string Pattern The pattern to look for. Refer to [LUA patterns](http://www.easyuo.com/openeuo/wiki/index.php/Lua_Patterns_and_Captures_\(Regular_Expressions\)) for regular expressions in LUA.
 -- @return #UNIT The UNIT.
 -- @usage
 --          -- Find a group with a partial group name
@@ -189,7 +189,7 @@ end
 
 --- Find all UNIT objects matching using patterns. Note that this is **a lot** slower than `:FindByName()`!
 -- @param #UNIT self
--- @param #string Pattern The pattern to look for. Refer to [LUA patterns](http://www.easyuo.com/openeuo/wiki/index.php/Lua_Patterns_and_Captures_(Regular_Expressions)) for regular expressions in LUA.
+-- @param #string Pattern The pattern to look for. Refer to [LUA patterns](http://www.easyuo.com/openeuo/wiki/index.php/Lua_Patterns_and_Captures_\(Regular_Expressions\)) for regular expressions in LUA.
 -- @return #table Units Table of matching #UNIT objects found
 -- @usage
 --          -- Find all group with a partial group name

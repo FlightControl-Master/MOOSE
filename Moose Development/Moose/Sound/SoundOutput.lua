@@ -160,52 +160,63 @@ do -- Sound File
   -- @param #string FileName The name of the sound file, e.g. "Hello World.ogg".
   -- @param #string Path The path of the directory, where the sound file is located. Default is "l10n/DEFAULT/" within the miz file.
   -- @param #number Duration Duration in seconds, how long it takes to play the sound file. Default is 3 seconds.
+  -- @param #bolean UseSrs Set if SRS should be used to play this file. Default is false.
   -- @return #SOUNDFILE self
-  function SOUNDFILE:New(FileName, Path, Duration)
-  
+  function SOUNDFILE:New(FileName, Path, Duration, UseSrs)
+
     -- Inherit BASE.
     local self=BASE:Inherit(self, BASE:New()) -- #SOUNDFILE
 
+    -- Debug info:
+    self:F( {FileName, Path, Duration, UseSrs} )
+
     -- Set file name.
     self:SetFileName(FileName)
-    
+
+    -- Set if SRS should be used to play this file
+    self:SetPlayWithSRS(UseSrs or false)
+
     -- Set path.
     self:SetPath(Path)
-    
+
     -- Set duration.
     self:SetDuration(Duration)
-    
-    -- Debug info:
-    self:T(string.format("New SOUNDFILE: file name=%s, path=%s", self.filename, self.path))
 
     return self
   end
-  
+
   --- Set path, where the sound file is located.
   -- @param #SOUNDFILE self
   -- @param #string Path Path to the directory, where the sound file is located. In case this is nil, it defaults to the DCS mission temp directory.
   -- @return #SOUNDFILE self
   function SOUNDFILE:SetPath(Path)
-    
+    self:F( {Path} )
+
     -- Init path.
-    self.path=Path or "l10n/DEFAULT/"
-    
-    if not Path and self.useSRS then -- use path to mission temp dir
-      self.path = os.getenv('TMP') .. "\\DCS\\Mission\\l10n\\DEFAULT"
-    end    
-    
+    if not Path then
+      if self.useSRS then -- use path to mission temp dir
+        self.path = lfs.tempdir() .. "Mission\\l10n\\DEFAULT"
+      else -- use internal path in miz file
+        self.path="l10n/DEFAULT/"
+      end
+    else
+      self.path = Path
+    end
+
     -- Remove (back)slashes.
     local nmax=1000 ; local n=1
     while (self.path:sub(-1)=="/" or self.path:sub(-1)==[[\]]) and n<=nmax do
       self.path=self.path:sub(1,#self.path-1)
       n=n+1
     end
-    
+
     -- Append slash.
     self.path=self.path.."/"
-          
+
+    self:T("self.path=".. self.path)
+
     return self
-  end  
+  end
 
   --- Get path of the directory, where the sound file is located.
   -- @param #SOUNDFILE self
@@ -228,7 +239,7 @@ do -- Sound File
   --- Get the sound file name.
   -- @param #SOUNDFILE self
   -- @return #string Name of the soud file. This does *not* include its path.
-  function SOUNDFILE:GetFileName()    
+  function SOUNDFILE:GetFileName()
     return self.filename
   end
 
@@ -264,14 +275,16 @@ do -- Sound File
   -- @param #boolean Switch If true or nil, use SRS. If false, use DCS transmission.
   -- @return #SOUNDFILE self
   function SOUNDFILE:SetPlayWithSRS(Switch)
+    self:F( {Switch} )
     if Switch==true or Switch==nil then
       self.useSRS=true
     else
       self.useSRS=false
     end
+    self:T("self.useSRS=".. tostring(self.useSRS))
     return self
-  end  
-  
+  end
+
 end
 
 do -- Text-To-Speech

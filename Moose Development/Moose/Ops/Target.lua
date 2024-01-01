@@ -526,11 +526,11 @@ function TARGET:IsAlive()
 
   for _,_target in pairs(self.targets) do
     local target=_target --Ops.Target#TARGET.Object
-    if target.Status==TARGET.ObjectStatus.ALIVE then
+    if target.Status~=TARGET.ObjectStatus.DEAD then
       return true
     end
   end
-  
+
   return false
 end
 

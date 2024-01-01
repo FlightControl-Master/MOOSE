@@ -64,7 +64,7 @@ do -- CARGO_GROUP
   
     -- Inherit CAROG_REPORTABLE
     local self = BASE:Inherit( self, CARGO_REPORTABLE:New( Type, Name, 0, LoadRadius, NearRadius ) ) -- #CARGO_GROUP
-    self:F( { Type, Name, LoadRadius } )
+    self:T( { Type, Name, LoadRadius } )
   
     self.CargoSet = SET_CARGO:New()
     self.CargoGroup = CargoGroup
@@ -146,7 +146,7 @@ do -- CARGO_GROUP
   -- @param #CARGO_GROUP self
   function CARGO_GROUP:Respawn()
 
-    self:F( { "Respawning" } )
+    self:T( { "Respawning" } )
 
     for CargoID, CargoData in pairs( self.CargoSet:GetSet() ) do
       local Cargo = CargoData -- Cargo.Cargo#CARGO
@@ -227,7 +227,7 @@ do -- CARGO_GROUP
   -- @param #CARGO_GROUP self
   function CARGO_GROUP:Regroup()
   
-    self:F("Regroup")
+    self:T("Regroup")
 
     if self.Grouped == false then
     
@@ -241,7 +241,7 @@ do -- CARGO_GROUP
       for CargoUnitName, CargoUnit in pairs( self.CargoSet:GetSet() ) do
         local CargoUnit = CargoUnit -- Cargo.CargoUnit#CARGO_UNIT
 
-        self:F( { CargoUnit:GetName(), UnLoaded = CargoUnit:IsUnLoaded() } )
+        self:T( { CargoUnit:GetName(), UnLoaded = CargoUnit:IsUnLoaded() } )
 
         if CargoUnit:IsUnLoaded() then
     
@@ -258,7 +258,7 @@ do -- CARGO_GROUP
       -- Then we register the new group in the database
       self.CargoGroup = GROUP:NewTemplate( GroupTemplate, GroupTemplate.CoalitionID, GroupTemplate.CategoryID, GroupTemplate.CountryID )
 
-      self:F( { "Regroup", GroupTemplate } )
+      self:T( { "Regroup", GroupTemplate } )
         
       -- Now we spawn the new group based on the template created.
       self.CargoObject = _DATABASE:Spawn( GroupTemplate )
@@ -271,7 +271,7 @@ do -- CARGO_GROUP
   -- @param Core.Event#EVENTDATA EventData 
   function CARGO_GROUP:OnEventCargoDead( EventData )
   
-    self:E(EventData)
+    self:T(EventData)
 
     local Destroyed = false
   
@@ -296,7 +296,7 @@ do -- CARGO_GROUP
     
     if Destroyed then
       self:Destroyed()
-      self:E( { "Cargo group destroyed" } )
+      self:T( { "Cargo group destroyed" } )
     end
   
   end
@@ -309,14 +309,14 @@ do -- CARGO_GROUP
   -- @param Wrapper.Unit#UNIT CargoCarrier
   -- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
   function CARGO_GROUP:onafterBoard( From, Event, To, CargoCarrier, NearRadius, ... )
-    self:F( { CargoCarrier.UnitName, From, Event, To, NearRadius = NearRadius } )
+    self:T( { CargoCarrier.UnitName, From, Event, To, NearRadius = NearRadius } )
     
     NearRadius = NearRadius or self.NearRadius
     
     -- For each Cargo object within the CARGO_GROUPED, route each object to the CargoLoadPointVec2
     self.CargoSet:ForEach(
       function( Cargo, ... )
-        self:F( { "Board Unit", Cargo:GetName( ), Cargo:IsDestroyed(), Cargo.CargoObject:IsAlive() } )
+        self:T( { "Board Unit", Cargo:GetName( ), Cargo:IsDestroyed(), Cargo.CargoObject:IsAlive() } )
         local CargoGroup = Cargo.CargoObject --Wrapper.Group#GROUP
         CargoGroup:OptionAlarmStateGreen()
         Cargo:__Board( 1, CargoCarrier, NearRadius, ... )
@@ -334,7 +334,7 @@ do -- CARGO_GROUP
   -- @param #string To
   -- @param Wrapper.Unit#UNIT CargoCarrier
   function CARGO_GROUP:onafterLoad( From, Event, To, CargoCarrier, ... )
-    --self:F( { From, Event, To, CargoCarrier, ...} )
+    --self:T( { From, Event, To, CargoCarrier, ...} )
     
     if From == "UnLoaded" then
       -- For each Cargo object within the CARGO_GROUP, load each cargo to the CargoCarrier.
@@ -359,7 +359,7 @@ do -- CARGO_GROUP
   -- @param Wrapper.Unit#UNIT CargoCarrier
   -- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
   function CARGO_GROUP:onafterBoarding( From, Event, To, CargoCarrier, NearRadius, ... )
-    --self:F( { CargoCarrier.UnitName, From, Event, To } )
+    --self:T( { CargoCarrier.UnitName, From, Event, To } )
   
     local Boarded = true
     local Cancelled = false
@@ -393,7 +393,7 @@ do -- CARGO_GROUP
         if not Boarded then
           self:__Boarding( -5, CargoCarrier, NearRadius, ... )
         else
-          self:F("Group Cargo is loaded")
+          self:T("Group Cargo is loaded")
           self:__Load( 1, CargoCarrier, ... )
         end
       else
@@ -413,7 +413,7 @@ do -- CARGO_GROUP
   -- @param Core.Point#POINT_VEC2 ToPointVec2
   -- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
   function CARGO_GROUP:onafterUnBoard( From, Event, To, ToPointVec2, NearRadius, ... )
-    self:F( {From, Event, To, ToPointVec2, NearRadius } )
+    self:T( {From, Event, To, ToPointVec2, NearRadius } )
   
     NearRadius = NearRadius or 25
   
@@ -456,7 +456,7 @@ do -- CARGO_GROUP
   -- @param Core.Point#POINT_VEC2 ToPointVec2
   -- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
   function CARGO_GROUP:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
-    --self:F( { From, Event, To, ToPointVec2, NearRadius } )
+    --self:T( { From, Event, To, ToPointVec2, NearRadius } )
   
     --local NearRadius = NearRadius or 25
   
@@ -493,7 +493,7 @@ do -- CARGO_GROUP
   -- @param #string To
   -- @param Core.Point#POINT_VEC2 ToPointVec2
   function CARGO_GROUP:onafterUnLoad( From, Event, To, ToPointVec2, ... )
-    --self:F( { From, Event, To, ToPointVec2 } )
+    --self:T( { From, Event, To, ToPointVec2 } )
   
     if From == "Loaded" then
       
@@ -611,7 +611,7 @@ do -- CARGO_GROUP
   -- @param #CARGO_GROUP self
   -- @param Core.Point#COORDINATE Coordinate
   function CARGO_GROUP:RouteTo( Coordinate )
-    --self:F( {Coordinate = Coordinate } )
+    --self:T( {Coordinate = Coordinate } )
     
     -- For each Cargo within the CargoSet, route each object to the Coordinate
     self.CargoSet:ForEach(
@@ -629,13 +629,13 @@ do -- CARGO_GROUP
   -- @param #number NearRadius
   -- @return #boolean The Cargo is near to the Carrier or #nil if the Cargo is not near to the Carrier.
   function CARGO_GROUP:IsNear( CargoCarrier, NearRadius )
-    self:F( {NearRadius = NearRadius } )
+    self:T( {NearRadius = NearRadius } )
     
     for _, Cargo in pairs( self.CargoSet:GetSet() ) do
       local Cargo = Cargo -- Cargo.Cargo#CARGO
       if Cargo:IsAlive() then
         if Cargo:IsNear( CargoCarrier:GetCoordinate(), NearRadius ) then
-          self:F( "Near" )
+          self:T( "Near" )
           return true
         end
       end
@@ -649,7 +649,7 @@ do -- CARGO_GROUP
   -- @param Core.Point#COORDINATE Coordinate
   -- @return #boolean true if the Cargo Group is within the load radius.
   function CARGO_GROUP:IsInLoadRadius( Coordinate )
-    --self:F( { Coordinate } )
+    --self:T( { Coordinate } )
   
     local Cargo = self:GetFirstAlive() -- Cargo.Cargo#CARGO
 
@@ -669,7 +669,7 @@ do -- CARGO_GROUP
         return false
       end
       
-      self:F( { Distance = Distance, LoadRadius = self.LoadRadius } )
+      self:T( { Distance = Distance, LoadRadius = self.LoadRadius } )
       if Distance <= self.LoadRadius then
         return true
       else
@@ -687,12 +687,12 @@ do -- CARGO_GROUP
   -- @param Core.Point#Coordinate Coordinate
   -- @return #boolean true if the Cargo Group is within the report radius.
   function CARGO_GROUP:IsInReportRadius( Coordinate )
-    --self:F( { Coordinate } )
+    --self:T( { Coordinate } )
   
     local Cargo = self:GetFirstAlive() -- Cargo.Cargo#CARGO
 
     if Cargo then
-      self:F( { Cargo } )
+      self:T( { Cargo } )
       local Distance = 0
       if Cargo:IsUnLoaded() then
         Distance = Coordinate:Get2DDistance( Cargo.CargoObject:GetCoordinate() )
@@ -738,7 +738,7 @@ do -- CARGO_GROUP
   -- @return #boolean **true** if the first element of the CargoGroup is in the Zone
   -- @return #boolean **false** if there is no element of the CargoGroup in the Zone.
   function CARGO_GROUP:IsInZone( Zone )
-    --self:F( { Zone } )
+    --self:T( { Zone } )
   
     local Cargo = self.CargoSet:GetFirst() -- Cargo.Cargo#CARGO
 

@@ -2456,14 +2456,17 @@ do -- COORDINATE
         -- Write command as string and execute that. Idea by Grimes https://forum.dcs.world/topic/324201-mark-to-all-function/#comment-5273793
         local s=string.format("trigger.action.markupToAll(7, %d, %d,", Coalition, MarkID)
         for _,vec in pairs(vecs) do
-          s=s..string.format("%s,", UTILS._OneLineSerialize(vec))
+          --s=s..string.format("%s,", UTILS._OneLineSerialize(vec))
+          s=s..string.format("{x=%.1f, y=%.1f, z=%.1f},", vec.x, vec.y, vec.z)
         end
-        s=s..string.format("%s, %s, %s, %s", UTILS._OneLineSerialize(Color), UTILS._OneLineSerialize(FillColor), tostring(LineType), tostring(ReadOnly))
-        if Text and Text~="" then
-          s=s..string.format(", \"%s\"", Text)
+        s=s..string.format("{%.3f, %.3f, %.3f, %.3f},", Color[1], Color[2], Color[3], Color[4])
+        s=s..string.format("{%.3f, %.3f, %.3f, %.3f},", FillColor[1], FillColor[2], FillColor[3], FillColor[4])
+        s=s..string.format("%d,", LineType or 1)
+        s=s..string.format("%s", tostring(ReadOnly))
+        if Text and type(Text)=="string" and string.len(Text)>0 then
+          s=s..string.format(", \"%s\"", tostring(Text))
         end
         s=s..")"
-        
         
         -- Execute string command
         local success=UTILS.DoString(s)

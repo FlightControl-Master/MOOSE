@@ -2937,7 +2937,7 @@ function CONTROLLABLE:CopyRoute( Begin, End, Randomize, Radius )
 end
 
 --- Return the detected targets of the controllable.
--- The optional parametes specify the detection methods that can be applied.
+-- The optional parameters specify the detection methods that can be applied.
 -- If no detection method is given, the detection will use all the available methods by default.
 -- @param #CONTROLLABLE self
 -- @param #boolean DetectVisual (optional)
@@ -3772,54 +3772,66 @@ function CONTROLLABLE:OptionProhibitAfterburner( Prohibit )
   return self
 end
 
---- Defines the usage of Electronic Counter Measures by airborne forces. Disables the ability for AI to use their ECM.
+--- [Air] Defines the usage of Electronic Counter Measures by airborne forces. 
 -- @param #CONTROLLABLE self
+-- @param #number ECMvalue Can be - 0=Never on, 1=if locked by radar, 2=if detected by radar, 3=always on, defaults to 1
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:OptionECM_Never()
+function CONTROLLABLE:OptionECM( ECMvalue )
   self:F2( { self.ControllableName } )
 
-  if self:IsAir() then
-    self:SetOption( AI.Option.Air.id.ECM_USING, 0 )
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption( AI.Option.Air.id.ECM_USING, ECMvalue or 1 )
+    end
+
   end
 
   return self
 end
 
---- Defines the usage of Electronic Counter Measures by airborne forces. If the AI is actively being locked by an enemy radar they will enable their ECM jammer.
+--- [Air] Defines the usage of Electronic Counter Measures by airborne forces. Disables the ability for AI to use their ECM.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionECM_Never()
+  self:F2( { self.ControllableName } )
+  
+  self:OptionECM(0)
+
+  return self
+end
+
+--- [Air] Defines the usage of Electronic Counter Measures by airborne forces. If the AI is actively being locked by an enemy radar they will enable their ECM jammer.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_OnlyLockByRadar()
   self:F2( { self.ControllableName } )
 
-  if self:IsAir() then
-    self:SetOption( AI.Option.Air.id.ECM_USING, 1 )
-  end
+  self:OptionECM(1)
 
   return self
 end
 
---- Defines the usage of Electronic Counter Measures by airborne forces. If the AI is being detected by a radar they will enable their ECM.
+--- [Air] Defines the usage of Electronic Counter Measures by airborne forces. If the AI is being detected by a radar they will enable their ECM.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_DetectedLockByRadar()
   self:F2( { self.ControllableName } )
 
-  if self:IsAir() then
-    self:SetOption( AI.Option.Air.id.ECM_USING, 2 )
-  end
+  self:OptionECM(2)
 
   return self
 end
 
---- Defines the usage of Electronic Counter Measures by airborne forces. AI will leave their ECM on all the time.
+--- [Air] Defines the usage of Electronic Counter Measures by airborne forces. AI will leave their ECM on all the time.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM_AlwaysOn()
   self:F2( { self.ControllableName } )
 
-  if self:IsAir() then
-    self:SetOption( AI.Option.Air.id.ECM_USING, 3 )
-  end
+  self:OptionECM(3)
 
   return self
 end
@@ -4013,14 +4025,22 @@ end
 -- @param #boolean onroad If true, route on road (less problems with AI way finding), default true
 -- @param #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
 -- @param #string formation Formation string as in the mission editor, e.g. "Vee", "Diamond", "Line abreast", etc. Defaults to "Off Road"
+-- @param #boolean onland (optional) If true, try up to 50 times to get a coordinate on land.SurfaceType.LAND. Note - this descriptor value is not reliably implemented on all maps.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:RelocateGroundRandomInRadius( speed, radius, onroad, shortcut, formation )
+function CONTROLLABLE:RelocateGroundRandomInRadius( speed, radius, onroad, shortcut, formation, onland )
   self:F2( { self.ControllableName } )
 
   local _coord = self:GetCoordinate()
   local _radius = radius or 500
   local _speed = speed or 20
   local _tocoord = _coord:GetRandomCoordinateInRadius( _radius, 100 )
+  if onland then
+    for i=1,50 do
+      local island = _tocoord:GetSurfaceType() == land.SurfaceType.LAND and true or false
+      if island then break end
+      _tocoord = _coord:GetRandomCoordinateInRadius( _radius, 100 )
+    end
+  end
   local _onroad = onroad or true
   local _grptsk = {}
   local _candoroad = false

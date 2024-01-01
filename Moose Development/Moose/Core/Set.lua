@@ -146,7 +146,45 @@ do -- SET_BASE
 
     return self
   end
-
+  
+  --- [Internal] Add a functional filter
+  -- @param #SET_BASE self
+  -- @param #function ConditionFunction If this function returns `true`, the object is added to the SET. The function needs to take a CONTROLLABLE object as first argument.
+  -- @param ... Condition function arguments, if any.
+  -- @return #boolean If true, at least one condition is true
+  function SET_BASE:FilterFunction(ConditionFunction, ...)
+  
+    local condition={}
+    condition.func=ConditionFunction
+    condition.arg={}
+    
+    if arg then
+      condition.arg=arg
+    end
+    
+    if not self.Filter.Functions then self.Filter.Functions = {} end
+    table.insert(self.Filter.Functions, condition)
+    
+    return self
+  end
+    
+  --- [Internal] Check if the condition functions returns true.
+  -- @param #SET_BASE self
+  -- @param Wrapper.Controllable#CONTROLLABLE Object The object to filter for
+  -- @return #boolean If true, if **all** conditions are true
+  function SET_BASE:_EvalFilterFunctions(Object) 
+    -- All conditions must be true.
+    for _,_condition in pairs(self.Filter.Functions or {}) do
+      local condition=_condition
+      -- Call function.
+      if condition.func(Object,unpack(condition.arg)) == false then
+        return false
+      end
+    end  
+    -- No condition was true.
+    return true
+  end
+  
   --- Clear the Objects in the Set.
   -- @param #SET_BASE self
   -- @param #boolean TriggerEvent If `true`, an event remove is triggered for each group that is removed from the set.
@@ -967,6 +1005,7 @@ do
   --    * @{#SET_GROUP.FilterCategoryShip}: Builds the SET_GROUP from ships.
   --    * @{#SET_GROUP.FilterCategoryStructure}: Builds the SET_GROUP from structures.
   --    * @{#SET_GROUP.FilterZones}: Builds the SET_GROUP with the groups within a @{Core.Zone#ZONE}.
+  --    * @{#SET_GROUP.FilterFunction}: Builds the SET_GROUP with a custom condition.
   --
   -- Once the filter criteria have been set for the SET_GROUP, you can start filtering using:
   --
@@ -1040,6 +1079,7 @@ do
       Countries = nil,
       GroupPrefixes = nil,
       Zones = nil,
+      Functions = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -1253,7 +1293,26 @@ do
     
     return self
   end
+  
+  --- [User] Add a custom condition function.
+  -- @function [parent=#SET_GROUP] FilterFunction
+  -- @param #SET_GROUP self
+  -- @param #function ConditionFunction If this function returns `true`, the object is added to the SET. The function needs to take a GROUP object as first argument.
+  -- @param ... Condition function arguments if any.
+  -- @return #SET_GROUP self
+  -- @usage
+  --          -- Image you want to exclude a specific GROUP from a SET:
+  --          local groundset = SET_GROUP:New():FilterCoalitions("blue"):FilterCategoryGround():FilterFunction(
+  --          -- The function needs to take a GROUP object as first - and in this case, only - argument.
+  --          function(grp)
+  --              local isinclude = true
+  --              if grp:GetName() == "Exclude Me" then isinclude = false end
+  --              return isinclude
+  --          end
+  --          ):FilterOnce()
+  --          BASE:I(groundset:Flush())
 
+  
   --- Builds a set of groups of coalitions.
   -- Possible current coalitions are red, blue and neutral.
   -- @param #SET_GROUP self
@@ -1927,7 +1986,7 @@ do
       MGroupInclude = MGroupInclude and MGroupActive
     end
 
-    if self.Filter.Coalitions then
+    if self.Filter.Coalitions and MGroupInclude then
       local MGroupCoalition = false
       for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
         self:T3( { "Coalition:", MGroup:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
@@ -1938,7 +1997,7 @@ do
       MGroupInclude = MGroupInclude and MGroupCoalition
     end
 
-    if self.Filter.Categories then
+    if self.Filter.Categories and MGroupInclude then
       local MGroupCategory = false
       for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
         self:T3( { "Category:", MGroup:GetCategory(), self.FilterMeta.Categories[CategoryName], CategoryName } )
@@ -1949,7 +2008,7 @@ do
       MGroupInclude = MGroupInclude and MGroupCategory
     end
 
-    if self.Filter.Countries then
+    if self.Filter.Countries and MGroupInclude then
       local MGroupCountry = false
       for CountryID, CountryName in pairs( self.Filter.Countries ) do
         self:T3( { "Country:", MGroup:GetCountry(), CountryName } )
@@ -1960,7 +2019,7 @@ do
       MGroupInclude = MGroupInclude and MGroupCountry
     end
 
-    if self.Filter.GroupPrefixes then
+    if self.Filter.GroupPrefixes and MGroupInclude then
       local MGroupPrefix = false
       for GroupPrefixId, GroupPrefix in pairs( self.Filter.GroupPrefixes ) do
         self:T3( { "Prefix:", string.find( MGroup:GetName(), GroupPrefix, 1 ), GroupPrefix } )
@@ -1971,7 +2030,7 @@ do
       MGroupInclude = MGroupInclude and MGroupPrefix
     end
     
-    if self.Filter.Zones then
+    if self.Filter.Zones and MGroupInclude then
       local MGroupZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
         --self:T( "Zone:", ZoneName )
@@ -1980,6 +2039,12 @@ do
         end
       end
       MGroupInclude = MGroupInclude and MGroupZone
+    end
+    
+    if self.Filter.Functions and MGroupInclude then
+      local MGroupFunc = false
+      MGroupFunc = self:_EvalFilterFunctions(MGroup)
+      MGroupInclude = MGroupInclude and MGroupFunc
     end
      
     self:T2( MGroupInclude )
@@ -2080,6 +2145,7 @@ do -- SET_UNIT
   -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --    * @{#SET_UNIT.FilterActive}: Builds the SET_UNIT with the units that are only active. Units that are inactive (late activation) won't be included in the set!
   --    * @{#SET_UNIT.FilterZones}: Builds the SET_UNIT with the units within a @{Core.Zone#ZONE}.
+  --    * @{#SET_UNIT.FilterFunction}: Builds the SET_UNIT with a custom condition.
   --    
   -- Once the filter criteria have been set for the SET_UNIT, you can start filtering using:
   --
@@ -2158,6 +2224,7 @@ do -- SET_UNIT
       Countries = nil,
       UnitPrefixes = nil,
       Zones = nil,
+      Functions = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -2528,6 +2595,25 @@ do -- SET_UNIT
 
     return self
   end
+
+  --- [User] Add a custom condition function.
+  -- @function [parent=#SET_UNIT] FilterFunction
+  -- @param #SET_UNIT self
+  -- @param #function ConditionFunction If this function returns `true`, the object is added to the SET. The function needs to take a UNIT object as first argument.
+  -- @param ... Condition function arguments if any.
+  -- @return #SET_UNIT self
+  -- @usage
+  --          -- Image you want to exclude a specific UNIT from a SET:
+  --          local groundset = SET_UNIT:New():FilterCoalitions("blue"):FilterCategories("ground"):FilterFunction(
+  --          -- The function needs to take a UNIT object as first - and in this case, only - argument.
+  --          function(unit)
+  --              local isinclude = true
+  --              if unit:GetName() == "Exclude Me" then isinclude = false end
+  --              return isinclude
+  --          end
+  --          ):FilterOnce()
+  --          BASE:I(groundset:Flush())
+
 
   --- Handles the Database to check on an event (birth) that the Object was added in the Database.
   -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
@@ -3106,7 +3192,7 @@ do -- SET_UNIT
         MUnitInclude = MUnitInclude and MUnitActive
       end
 
-      if self.Filter.Coalitions then
+      if self.Filter.Coalitions and MUnitInclude then
         local MUnitCoalition = false
         for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
           self:F( { "Coalition:", MUnit:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
@@ -3117,7 +3203,7 @@ do -- SET_UNIT
         MUnitInclude = MUnitInclude and MUnitCoalition
       end
 
-      if self.Filter.Categories then
+      if self.Filter.Categories and MUnitInclude then
         local MUnitCategory = false
         for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
           self:T3( { "Category:", MUnit:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
@@ -3128,7 +3214,7 @@ do -- SET_UNIT
         MUnitInclude = MUnitInclude and MUnitCategory
       end
 
-      if self.Filter.Types then
+      if self.Filter.Types and MUnitInclude then
         local MUnitType = false
         for TypeID, TypeName in pairs( self.Filter.Types ) do
           self:T3( { "Type:", MUnit:GetTypeName(), TypeName } )
@@ -3139,7 +3225,7 @@ do -- SET_UNIT
         MUnitInclude = MUnitInclude and MUnitType
       end
 
-      if self.Filter.Countries then
+      if self.Filter.Countries and MUnitInclude then
         local MUnitCountry = false
         for CountryID, CountryName in pairs( self.Filter.Countries ) do
           self:T3( { "Country:", MUnit:GetCountry(), CountryName } )
@@ -3150,7 +3236,7 @@ do -- SET_UNIT
         MUnitInclude = MUnitInclude and MUnitCountry
       end
 
-      if self.Filter.UnitPrefixes then
+      if self.Filter.UnitPrefixes and MUnitInclude then
         local MUnitPrefix = false
         for UnitPrefixId, UnitPrefix in pairs( self.Filter.UnitPrefixes ) do
           self:T3( { "Prefix:", string.find( MUnit:GetName(), UnitPrefix, 1 ), UnitPrefix } )
@@ -3161,7 +3247,7 @@ do -- SET_UNIT
         MUnitInclude = MUnitInclude and MUnitPrefix
       end
 
-      if self.Filter.RadarTypes then
+      if self.Filter.RadarTypes and MUnitInclude then
         local MUnitRadar = false
         for RadarTypeID, RadarType in pairs( self.Filter.RadarTypes ) do
           self:T3( { "Radar:", RadarType } )
@@ -3175,7 +3261,7 @@ do -- SET_UNIT
         MUnitInclude = MUnitInclude and MUnitRadar
       end
 
-      if self.Filter.SEAD then
+      if self.Filter.SEAD and MUnitInclude then
         local MUnitSEAD = false
         if MUnit:HasSEAD() == true then
           self:T3( "SEAD Found" )
@@ -3185,7 +3271,7 @@ do -- SET_UNIT
       end
     end
     
-    if self.Filter.Zones then
+    if self.Filter.Zones and MUnitInclude then
       local MGroupZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
         self:T3( "Zone:", ZoneName )
@@ -3194,6 +3280,11 @@ do -- SET_UNIT
         end
       end
       MUnitInclude = MUnitInclude  and MGroupZone
+    end
+    
+    if self.Filter.Functions and MUnitInclude then
+      local MUnitFunc = self:_EvalFilterFunctions(MUnit)
+      MUnitInclude = MUnitInclude  and MUnitFunc
     end
     
     self:T2( MUnitInclude )
@@ -3277,6 +3368,7 @@ do -- SET_STATIC
   --    * @{#SET_STATIC.FilterPrefixes}: Builds the SET_STATIC with the units containing the same string(s) in their name. **Attention!** LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
   -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --    * @{#SET_STATIC.FilterZones}: Builds the SET_STATIC with the units within a @{Core.Zone#ZONE}.
+  --    * @{#SET_STATIC.FilterFunction}: Builds the SET_STATIC with a custom condition.
   --    
   -- Once the filter criteria have been set for the SET_STATIC, you can start filtering using:
   --
@@ -3479,7 +3571,25 @@ do -- SET_STATIC
     end
     return self
   end
-
+  
+  --- [User] Add a custom condition function.
+  -- @function [parent=#SET_STATIC] FilterFunction
+  -- @param #SET_STATIC self
+  -- @param #function ConditionFunction If this function returns `true`, the object is added to the SET. The function needs to take a STATIC object as first argument.
+  -- @param ... Condition function arguments if any.
+  -- @return #SET_STATIC self
+  -- @usage
+  --          -- Image you want to exclude a specific CLIENT from a SET:
+  --          local groundset = SET_STATIC:New():FilterCoalitions("blue"):FilterActive(true):FilterFunction(
+  --          -- The function needs to take a STATIC object as first - and in this case, only - argument.
+  --          function(static)
+  --              local isinclude = true
+  --              if static:GetName() == "Exclude Me" then isinclude = false end
+  --              return isinclude
+  --          end
+  --          ):FilterOnce()
+  --          BASE:I(groundset:Flush())
+  
   --- Builds a set of units of defined countries.
   -- Possible current countries are those known within DCS world.
   -- @param #SET_STATIC self
@@ -4036,6 +4146,7 @@ do -- SET_CLIENT
   -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
   --    * @{#SET_CLIENT.FilterActive}: Builds the SET_CLIENT with the units that are only active. Units that are inactive (late activation) won't be included in the set!
   --    * @{#SET_CLIENT.FilterZones}: Builds the SET_CLIENT with the clients within a @{Core.Zone#ZONE}.
+  --    * @{#SET_CLIENT.FilterFunction}: Builds the SET_CLIENT with a custom condition.
   --    
   -- Once the filter criteria have been set for the SET_CLIENT, you can start filtering using:
   --
@@ -4538,6 +4649,25 @@ do -- SET_CLIENT
     return AliveSet.Set or {}
   end
 
+  --- [User] Add a custom condition function.
+  -- @function [parent=#SET_CLIENT] FilterFunction
+  -- @param #SET_CLIENT self
+  -- @param #function ConditionFunction If this function returns `true`, the object is added to the SET. The function needs to take a CLIENT object as first argument.
+  -- @param ... Condition function arguments if any.
+  -- @return #SET_CLIENT self
+  -- @usage
+  --          -- Image you want to exclude a specific CLIENT from a SET:
+  --          local groundset = SET_CLIENT:New():FilterCoalitions("blue"):FilterActive(true):FilterFunction(
+  --          -- The function needs to take a UNIT object as first - and in this case, only - argument.
+  --          function(client)
+  --              local isinclude = true
+  --              if client:GetPlayerName() == "Exclude Me" then isinclude = false end
+  --              return isinclude
+  --          end
+  --          ):FilterOnce()
+  --          BASE:I(groundset:Flush())
+
+
   ---
   -- @param #SET_CLIENT self
   -- @param Wrapper.Client#CLIENT MClient
@@ -4559,7 +4689,7 @@ do -- SET_CLIENT
         MClientInclude = MClientInclude and MClientActive
       end
 
-      if self.Filter.Coalitions then
+      if self.Filter.Coalitions and MClientInclude then
         local MClientCoalition = false
         for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
           local ClientCoalitionID = _DATABASE:GetCoalitionFromClientTemplate( MClientName )
@@ -4572,7 +4702,7 @@ do -- SET_CLIENT
         MClientInclude = MClientInclude and MClientCoalition
       end
 
-      if self.Filter.Categories then
+      if self.Filter.Categories and MClientInclude then
         local MClientCategory = false
         for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
           local ClientCategoryID = _DATABASE:GetCategoryFromClientTemplate( MClientName )
@@ -4585,7 +4715,7 @@ do -- SET_CLIENT
         MClientInclude = MClientInclude and MClientCategory
       end
 
-      if self.Filter.Types then
+      if self.Filter.Types and MClientInclude then
         local MClientType = false
         for TypeID, TypeName in pairs( self.Filter.Types ) do
           self:T3( { "Type:", MClient:GetTypeName(), TypeName } )
@@ -4597,7 +4727,7 @@ do -- SET_CLIENT
         MClientInclude = MClientInclude and MClientType
       end
 
-      if self.Filter.Countries then
+      if self.Filter.Countries and MClientInclude then
         local MClientCountry = false
         for CountryID, CountryName in pairs( self.Filter.Countries ) do
           local ClientCountryID = _DATABASE:GetCountryFromClientTemplate( MClientName )
@@ -4610,7 +4740,7 @@ do -- SET_CLIENT
         MClientInclude = MClientInclude and MClientCountry
       end
 
-      if self.Filter.ClientPrefixes then
+      if self.Filter.ClientPrefixes and MClientInclude then
         local MClientPrefix = false
         for ClientPrefixId, ClientPrefix in pairs( self.Filter.ClientPrefixes ) do
           self:T3( { "Prefix:", string.find( MClient.UnitName, ClientPrefix, 1 ), ClientPrefix } )
@@ -4622,7 +4752,7 @@ do -- SET_CLIENT
         MClientInclude = MClientInclude and MClientPrefix
       end
 
-    if self.Filter.Zones then
+    if self.Filter.Zones and MClientInclude then
       local MClientZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
       self:T3( "Zone:", ZoneName )
@@ -4634,7 +4764,7 @@ do -- SET_CLIENT
       MClientInclude = MClientInclude and MClientZone
     end
     
-    if self.Filter.Playernames then
+    if self.Filter.Playernames and MClientInclude then
       local MClientPlayername = false
       local playername = MClient:GetPlayerName() or "Unknown"
       --self:T(playername)
@@ -4647,7 +4777,7 @@ do -- SET_CLIENT
       MClientInclude = MClientInclude and MClientPlayername
     end
     
-    if self.Filter.Callsigns then
+    if self.Filter.Callsigns and MClientInclude then
       local MClientCallsigns = false
       local callsign = MClient:GetCallsign()
       --self:I(callsign)
@@ -4658,6 +4788,11 @@ do -- SET_CLIENT
       end
       self:T( { "Evaluated Callsign", MClientCallsigns } )
       MClientInclude = MClientInclude and MClientCallsigns
+    end
+    
+    if self.Filter.Functions and MClientInclude then
+      local MClientFunc = self:_EvalFilterFunctions(MClient)
+      MClientInclude = MClientInclude and MClientFunc
     end
     
   end
@@ -5253,7 +5388,7 @@ do -- SET_AIRBASE
   function SET_AIRBASE:GetRandomAirbase()
 
     local RandomAirbase = self:GetRandom()
-    self:F( { RandomAirbase = RandomAirbase:GetName() } )
+    --self:F( { RandomAirbase = RandomAirbase:GetName() } )
 
     return RandomAirbase
   end
@@ -5419,7 +5554,7 @@ do -- SET_AIRBASE
         MAirbaseInclude = MAirbaseInclude and MAirbaseCoalition
       end
 
-      if self.Filter.Categories then
+      if self.Filter.Categories and MAirbaseInclude then
         local MAirbaseCategory = false
         for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
           local AirbaseCategoryID = _DATABASE:GetCategoryFromAirbase( MAirbaseName )
@@ -7765,7 +7900,7 @@ do -- SET_OPSGROUP
     end
 
     -- Filter coalitions.
-    if self.Filter.Coalitions then
+    if self.Filter.Coalitions and MGroupInclude then
     
       local MGroupCoalition = false
       
@@ -7779,7 +7914,7 @@ do -- SET_OPSGROUP
     end
 
     -- Filter categories.
-    if self.Filter.Categories then
+    if self.Filter.Categories and MGroupInclude then
     
       local MGroupCategory = false
       
@@ -7793,7 +7928,7 @@ do -- SET_OPSGROUP
     end
 
     -- Filter countries.
-    if self.Filter.Countries then
+    if self.Filter.Countries and MGroupInclude then
       local MGroupCountry = false
       for CountryID, CountryName in pairs( self.Filter.Countries ) do
         if country.id[CountryName] == MGroup:GetCountry() then
@@ -7804,12 +7939,12 @@ do -- SET_OPSGROUP
     end
 
     -- Filter "prefixes".
-    if self.Filter.GroupPrefixes then
+    if self.Filter.GroupPrefixes and MGroupInclude then
     
       local MGroupPrefix = false
       
       for GroupPrefixId, GroupPrefix in pairs( self.Filter.GroupPrefixes ) do
-        if string.find( MGroup:GetName(), GroupPrefix:gsub ("-", "%%-"), 1 ) then --Not sure why "-" is replaced by "%-" ?!
+        if string.find( MGroup:GetName(), GroupPrefix:gsub ("-", "%%-"), 1 ) then --Not sure why "-" is replaced by "%-" ?! - So we can still match group names with a dash in them
           MGroupPrefix = true
         end
       end

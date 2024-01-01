@@ -33,7 +33,9 @@ This folder can be found in your userprofile as subfolder of `Saved Games`.
 The easiest way to find it, is to open search and paste the text below into it
 and press Enter:
 
-```%userprofile%\Saved Games```
+```
+%userprofile%\Saved Games
+```
 
 {: .note }
 > The text will work even if your Windows is installed with another language,

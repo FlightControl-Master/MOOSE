@@ -1737,7 +1737,9 @@ end
 -- @param Core.Event#EVENTDATA EventData
 function RANGE:OnEventBirth( EventData )
   self:F( { eventbirth = EventData } )
-
+  
+  if not EventData.IniPlayerName then return end
+  
   local _unitName = EventData.IniUnitName
   local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
 

@@ -1861,6 +1861,7 @@ function ARMYGROUP:_UpdateEngageTarget()
     else
 
       -- Could not get position of target (not alive any more?) ==> Disengage.
+      self:T(self.lid.."Could not get position of target ==> Disengage!")
       self:Disengage()
     
     end
@@ -1868,6 +1869,7 @@ function ARMYGROUP:_UpdateEngageTarget()
   else
   
     -- Target not alive any more ==> Disengage.
+    self:T(self.lid.."Target not ALIVE ==> Disengage!")
     self:Disengage()
     
   end
