@@ -130,13 +130,12 @@ function TIRESIAS:AddExceptionSet(Set)
 end
 
 ---
--- @param #TIRESIAS self
 -- @param Wrapper.Group#GROUP Group
 -- @return #boolean isin
-function TIRESIAS._FilterAAA(Group)
+function TIRESIAS._FilterNotAAA(Group)
   local grp = Group -- Wrapper.Group#GROUP
   local isaaa = grp:IsAAA()
-  if isaaa == true and grp:IsGround() then 
+  if isaaa == true and grp:IsGround() and not grp:IsShip() then 
     return false -- remove from SET
   else
     return true -- keep in SET
@@ -144,16 +143,41 @@ function TIRESIAS._FilterAAA(Group)
 end
 
 ---
--- @param #TIRESIAS self
+-- @param Wrapper.Group#GROUP Group
+-- @return #boolean isin
+function TIRESIAS._FilterNotSAM(Group)
+  local grp = Group -- Wrapper.Group#GROUP
+  local issam = grp:IsSAM()
+  if issam == true and grp:IsGround() and not grp:IsShip()  then 
+    return false -- remove from SET
+  else
+    return true -- keep in SET
+  end
+end
+
+---
+-- @param Wrapper.Group#GROUP Group
+-- @return #boolean isin
+function TIRESIAS._FilterAAA(Group)
+  local grp = Group -- Wrapper.Group#GROUP
+  local isaaa = grp:IsAAA()
+  if isaaa == true and grp:IsGround() and not grp:IsShip() then 
+    return true -- remove from SET
+  else
+    return false -- keep in SET
+  end
+end
+
+---
 -- @param Wrapper.Group#GROUP Group
 -- @return #boolean isin
 function TIRESIAS._FilterSAM(Group)
   local grp = Group -- Wrapper.Group#GROUP
   local issam = grp:IsSAM()
-  if issam == true and grp:IsGround() then 
-    return false -- remove from SET
+  if issam == true and grp:IsGround() and not grp:IsShip()  then 
+    return true -- remove from SET
   else
-    return true -- keep in SET
+    return false -- keep in SET
   end
 end
 
@@ -326,9 +350,9 @@ end
 function TIRESIAS:onafterStart(From, Event, To)
   self:T({From, Event, To})
   
-  local VehicleSet = SET_GROUP:New():FilterCategoryGround():FilterFunction(TIRESIAS._FilterAAA):FilterFunction(TIRESIAS._FilterSAM):FilterStart()
-  local AAASet = SET_GROUP:New():FilterCategoryGround():FilterFunction(function(grp) return grp:IsAAA() end):FilterStart()
-  local SAMSet = SET_GROUP:New():FilterCategoryGround():FilterFunction(function(grp) return grp:IsSAM() end):FilterStart()
+  local VehicleSet = SET_GROUP:New():FilterCategoryGround():FilterFunction(TIRESIAS._FilterNotAAA):FilterFunction(TIRESIAS._FilterNotSAM):FilterStart()
+  local AAASet = SET_GROUP:New():FilterCategoryGround():FilterFunction(TIRESIAS._FilterAAA):FilterStart()
+  local SAMSet = SET_GROUP:New():FilterCategoryGround():FilterFunction(TIRESIAS._FilterSAM):FilterStart()
   self.FlightSet = SET_GROUP:New():FilterCategories({"plane","helicopter"}):FilterStart()
   
   local EngageRange = self.AAARange
