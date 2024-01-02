@@ -16,7 +16,7 @@
 -- 
 -- ## Missions:
 --
--- ### [CSAR - Combat Search & Rescue](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20CSAR)
+-- ### [CSAR - Combat Search & Rescue](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Ops/CSAR)
 -- 
 -- ===
 -- 
