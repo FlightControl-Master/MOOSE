@@ -13,7 +13,7 @@
 --
 -- ## Missions:
 --
--- [SEV - SEAD Evasion](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SEV%20-%20SEAD%20Evasion)
+-- [SEV - SEAD Evasion](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/Functional/Sead)
 --
 -- ===
 --

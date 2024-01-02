@@ -12,9 +12,11 @@
 --
 -- ===
 --
--- ## Example Missions:
+-- ## Additional Material:
 --
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/WRAPPER%20-%20Weapon).
+-- * **Demo Missions:** [GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Wrapper/Weapon)
+-- * **YouTube videos:** None
+-- * **Guides:** None
 --
 -- ===
 --

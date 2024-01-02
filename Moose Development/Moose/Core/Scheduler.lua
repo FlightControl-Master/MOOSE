@@ -14,17 +14,13 @@
 --
 -- # Demo Missions
 -- 
--- ### [SCHEDULER Demo Missions source code](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SCH%20-%20Scheduler)
--- 
--- ### [SCHEDULER Demo Missions, only for beta testers](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SCH%20-%20Scheduler)
---
--- ### [ALL Demo Missions pack of the last release](https://github.com/FlightControl-Master/MOOSE_MISSIONS/releases)
+-- ### [SCHEDULER Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/Core/Scheduler)
 --
 -- ===
 --
 -- # YouTube Channel
 --
--- ### [SCHEDULER YouTube Channel (none)]()
+-- ### None
 --
 -- ===
 --

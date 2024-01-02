@@ -14,7 +14,7 @@
 --
 -- ## Missions:
 --
--- [MIT - Missile Trainer](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/MIT%20-%20Missile%20Trainer)
+-- [MIT - Missile Trainer](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/Functional/MissileTrainer)
 --
 -- ===
 --
