@@ -544,14 +544,12 @@ end
 --- Set the default backend.
 -- @param #MSRS self
 function MSRS.SetDefaultBackend(Backend)
-  self:F( {Backend=Backend} )
   MSRS.backend=Backend or MSRS.Backend.SRSEXE
 end
 
 --- Set DCS-gRPC to be the default backend.
 -- @param #MSRS self
 function MSRS.SetDefaultBackendGRPC()
-  self:F()
   MSRS.backend=MSRS.Backend.GRPC
 end
 

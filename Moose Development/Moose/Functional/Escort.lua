@@ -16,11 +16,13 @@
 --   * Escort tactical situation reporting.
 -- 
 -- ===
--- 
--- ## Missions:
--- 
--- [ESC - Escorting](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/ESC%20-%20Escorting)
--- 
+--
+-- ## Additional Material:
+--
+-- * **Demo Missions:** [GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/Functional/Escort)
+-- * **YouTube videos:** None
+-- * **Guides:** None
+--
 -- ===
 -- 
 -- Allows you to interact with escorting AI on your flight and take the lead.

@@ -15,7 +15,7 @@
 --
 -- ## Missions:
 --
--- [DET - Detection](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/DET%20-%20Detection)
+-- [DET - Detection](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Functional/Detection)
 --
 -- ===
 --

@@ -12,7 +12,7 @@
 -- 
 -- ## Missions:
 -- 
--- [CAZ - Capture Zones](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CAZ%20-%20Capture%20Zones)
+-- [CAZ - Capture Zones](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/Functional/ZoneCaptureCoalition)
 -- 
 -- ===
 -- 
