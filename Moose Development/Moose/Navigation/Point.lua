@@ -132,6 +132,8 @@ function NAVFIX:NewFromVector(Name, Type, Vector)
   -- Type of the point.
   self.typePoint=Type or NAVFIX.Type.POINT
   
+  local coord=COORDINATE:NewFromVec3(self.vector)
+  
   -- Marker on F10.
   self.marker=MARKER:New(coord, self:_GetMarkerText())
   
