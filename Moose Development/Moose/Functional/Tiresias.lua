@@ -33,7 +33,7 @@
 --- **TIRESIAS** class, extends Core.Base#BASE
 -- @type TIRESIAS
 -- @field #string ClassName
--- @field #booelan debug
+-- @field #boolean debug
 -- @field #string version
 -- @field #number Interval
 -- @field Core.Set#SET_GROUP GroundSet
