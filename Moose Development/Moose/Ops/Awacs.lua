@@ -2075,7 +2075,7 @@ end
 -- @param #string Gender Defaults to "male"
 -- @param #string Culture Defaults to "en-US"
 -- @param #number Port Defaults to 5002
--- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+-- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS#SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
 -- @param #number Volume Volume - between 0.0 (silent) and 1.0 (loudest)
 -- @param #string PathToGoogleKey Path to your google key if you want to use google TTS
