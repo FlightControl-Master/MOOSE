@@ -7,9 +7,9 @@
 -- ===
 --
 -- ## Example Missions:
--- 
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Awacs/).
--- 
+--
+-- Demo missions can be found on [GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Ops/Awacs/).
+--
 -- ## Videos:
 -- 
 -- Demo videos can be found on [Youtube](https://www.youtube.com/watch?v=ocdy8QzTNN4&list=PLFxp425SeXnq-oS0DSjam1HtddywH8i_k)

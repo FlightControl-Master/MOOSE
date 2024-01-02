@@ -126,7 +126,7 @@
 -- When the chief detects a valid target, he will launch a certain number of selected assets. Only whole groups from SQUADRONs, PLATOONs or FLOTILLAs can be selected.
 -- In other words, it is not possible to specify the abount of individual *units*.
 -- 
--- By default, one group is selected for any detected target. This can, however, be customized with the @{CHIEF.SetResponseOnTarget}() function. The number of min and max
+-- By default, one group is selected for any detected target. This can, however, be customized with the @{#CHIEF.SetResponseOnTarget}() function. The number of min and max
 -- asset groups can be specified depending on threatlevel, category, mission type, number of units, defcon and strategy.
 -- 
 -- For example:
@@ -311,7 +311,7 @@ CHIEF.Strategy = {
 
 --- Resource list.
 -- @type CHIEF.Resources
--- @field <#CHIEF.Resource> List of resources.
+-- @field #CHIEF.Resource List of resources.
 
 --- Resource.
 -- @type CHIEF.Resource
