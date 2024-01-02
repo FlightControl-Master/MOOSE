@@ -181,7 +181,7 @@ do -- COORDINATE
   --   * @{#COORDINATE.ToStringBR}(): Generates a Bearing & Range text in the format of DDD for DI where DDD is degrees and DI is distance.
   --   * @{#COORDINATE.ToStringBRA}(): Generates a Bearing, Range & Altitude text.
   --   * @{#COORDINATE.ToStringBRAANATO}(): Generates a Generates a Bearing, Range, Aspect & Altitude text in NATOPS.
-  --   * @{#COORDINATE.ToStringLL}(): Generates a Latutide & Longitude text.
+  --   * @{#COORDINATE.ToStringLL}(): Generates a Latitude & Longitude text.
   --   * @{#COORDINATE.ToStringLLDMS}(): Generates a Lat, Lon, Degree, Minute, Second text.
   --   * @{#COORDINATE.ToStringLLDDM}(): Generates a Lat, Lon, Degree, decimal Minute text.
   --   * @{#COORDINATE.ToStringMGRS}(): Generates a MGRS grid coordinate text.
@@ -3071,6 +3071,18 @@ do -- COORDINATE
     return coord.LOtoLL( self:GetVec3() )
   end
 
+  --- Get Latitude & Longitude text.
+  -- @param #COORDINATE self
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @return #string LLText
+  function COORDINATE:ToStringLL( Settings )
+  
+    local LL_Accuracy = Settings and Settings.LL_Accuracy or _SETTINGS.LL_Accuracy
+    local lat, lon = coord.LOtoLL( self:GetVec3() )
+    return string.format('%f', lat) .. ' ' .. string.format('%f', lon)
+  end
+
+  
   --- Provides a Lat Lon string in Degree Minute Second format.
   -- @param #COORDINATE self
   -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
