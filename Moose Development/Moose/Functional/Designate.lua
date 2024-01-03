@@ -15,10 +15,12 @@
 --  
 -- ===
 -- 
--- ## Missions:
--- 
--- [DES - Designation](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/DES%20-%20Designation)
--- 
+-- ## Additional Material:
+--
+-- * **Demo Missions:** [GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/Functional/Designate)
+-- * **YouTube videos:** None
+-- * **Guides:** None
+--
 -- ===
 --
 -- Targets detected by recce will be communicated to a group of attacking players.  

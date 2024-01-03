@@ -9,7 +9,7 @@
 -- 
 -- ===
 -- 
--- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AIB%20-%20AI%20Balancing)
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AI/AI_Balancer)
 -- 
 -- ===
 -- 
@@ -168,6 +168,7 @@ function AI_BALANCER:ReturnToHomeAirbase( ReturnThresholdRange )
   self.ReturnThresholdRange = ReturnThresholdRange
 end
 
+--- AI_BALANCER:onenterSpawning
 -- @param #AI_BALANCER self
 -- @param Core.Set#SET_GROUP SetGroup
 -- @param #string ClientName
@@ -190,6 +191,7 @@ function AI_BALANCER:onenterSpawning( SetGroup, From, Event, To, ClientName )
   end
 end
 
+--- AI_BALANCER:onenterDestroying
 -- @param #AI_BALANCER self
 -- @param Core.Set#SET_GROUP SetGroup
 -- @param Wrapper.Group#GROUP AIGroup
@@ -233,7 +235,7 @@ function AI_BALANCER:onenterReturning( SetGroup, From, Event, To, AIGroup )
 
 end
 
-
+--- AI_BALANCER:onenterMonitoring
 -- @param #AI_BALANCER self
 function AI_BALANCER:onenterMonitoring( SetGroup )
 
@@ -241,6 +243,7 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
   --self.SetClient:Flush()
 
   self.SetClient:ForEachClient(
+    --- SetClient:ForEachClient
     -- @param Wrapper.Client#CLIENT Client
     function( Client )
       self:T3(Client.ClientName)
@@ -264,6 +267,7 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
             self:T2( RangeZone )
             
             _DATABASE:ForEachPlayerUnit(
+              --- Nameless function
               -- @param Wrapper.Unit#UNIT RangeTestUnit
               function( RangeTestUnit, RangeZone, AIGroup, PlayerInRange )
                 self:T2( { PlayerInRange, RangeTestUnit.UnitName, RangeZone.ZoneName } )
@@ -276,6 +280,7 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
                 end
               end,
               
+              --- Nameless function
               -- @param Core.Zone#ZONE_RADIUS RangeZone
               -- @param Wrapper.Group#GROUP AIGroup
               function( RangeZone, AIGroup, PlayerInRange )
@@ -307,6 +312,3 @@ function AI_BALANCER:onenterMonitoring( SetGroup )
   
   self:__Monitor( 10 )
 end
-
-
-

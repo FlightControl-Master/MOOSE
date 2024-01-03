@@ -7,13 +7,13 @@
 --   * Assign a group leader that will guide the large formation path.
 -- 
 -- ===
--- 
--- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/FOR%20-%20AI%20Group%20Formation)
--- 
--- ===
--- 
--- ### [YouTube Playlist](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0bFIJ9jIdYM22uaWmIN4oz)
--- 
+--
+-- ## Additional Material:
+--
+-- * **Demo Missions:** [GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AI/AI_Formation)
+-- * **YouTube videos:** [Playlist](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0bFIJ9jIdYM22uaWmIN4oz)
+-- * **Guides:** None
+--
 -- ===
 -- 
 -- ### Author: **FlightControl**

@@ -15,14 +15,14 @@
 -- 
 -- # Demo Missions
 -- 
--- ## [SPAWNSTATIC Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SPS%20-%20Spawning%20Statics)
+-- ## [SPAWNSTATIC Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/Core/SpawnStatic)
 --
 -- 
 -- ===
 -- 
 -- # YouTube Channel
 -- 
--- ## [SPAWNSTATIC YouTube Channel]() [No videos yet!]
+-- ## No videos yet!
 -- 
 -- ===
 -- 

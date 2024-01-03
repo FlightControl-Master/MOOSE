@@ -11,7 +11,7 @@
 --
 -- ===
 -- 
--- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/CAS%20-%20Close%20Air%20Support)
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AI/AI_CAS)
 -- 
 -- ===
 -- 

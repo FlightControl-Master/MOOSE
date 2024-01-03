@@ -14,7 +14,7 @@
 --
 -- ===
 --
--- ## Missions: None yet
+-- ## Example Missions: [GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Sound/MSRS).
 --
 -- ===
 --
@@ -146,7 +146,7 @@
 -- 
 -- ### Google
 -- 
--- In order to use Google Cloud for TTS you need to use @{#MSRS.SetProvider} and @{MSRS.SetProviderOptionsGoogle} functions:
+-- In order to use Google Cloud for TTS you need to use @{#MSRS.SetProvider} and @{#MSRS.SetProviderOptionsGoogle} functions:
 -- 
 --     msrs:SetProvider(MSRS.Provider.GOOGLE)
 --     msrs:SetProviderOptionsGoogle(CredentialsFile, AccessKey)
@@ -162,7 +162,7 @@
 -- 
 -- ### Amazon Web Service [Only DCS-gRPC backend]
 -- 
--- In order to use Amazon Web Service (AWS) for TTS you need to use @{#MSRS.SetProvider} and @{MSRS.SetProviderOptionsAmazon} functions:
+-- In order to use Amazon Web Service (AWS) for TTS you need to use @{#MSRS.SetProvider} and @{#MSRS.SetProviderOptionsAmazon} functions:
 -- 
 --     msrs:SetProvider(MSRS.Provider.AMAZON)
 --     msrs:SetProviderOptionsAmazon(AccessKey, SecretKey, Region)
@@ -173,7 +173,7 @@
 -- 
 -- ### Microsoft Azure [Only DCS-gRPC backend]
 -- 
--- In order to use Microsoft Azure for TTS you need to use @{#MSRS.SetProvider} and @{MSRS.SetProviderOptionsAzure} functions:
+-- In order to use Microsoft Azure for TTS you need to use @{#MSRS.SetProvider} and @{#MSRS.SetProviderOptionsAzure} functions:
 -- 
 --     msrs:SetProvider(MSRS.Provider.AZURE)
 --     msrs:SetProviderOptionsAmazon(AccessKey, Region)
@@ -544,14 +544,12 @@ end
 --- Set the default backend.
 -- @param #MSRS self
 function MSRS.SetDefaultBackend(Backend)
-  self:F( {Backend=Backend} )
   MSRS.backend=Backend or MSRS.Backend.SRSEXE
 end
 
 --- Set DCS-gRPC to be the default backend.
 -- @param #MSRS self
 function MSRS.SetDefaultBackendGRPC()
-  self:F()
   MSRS.backend=MSRS.Backend.GRPC
 end
 

@@ -8,7 +8,7 @@
 -- 
 -- ## Missions:
 --
--- ### [CTLD - Combat Troop & Logistics Deployment](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20CTLD)
+-- ### [CTLD - Combat Troop & Logistics Deployment](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Ops/CTLD)
 -- 
 -- ===
 -- 

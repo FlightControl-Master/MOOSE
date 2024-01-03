@@ -70,7 +70,7 @@
 --
 -- ## Example Missions
 --
--- Example missions can be found [here](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Airboss).
+-- Example missions can be found [here](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/Ops/Airboss).
 -- They contain the latest development Moose.lua file.
 --
 -- ## IMPORTANT

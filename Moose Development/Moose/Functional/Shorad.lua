@@ -11,7 +11,7 @@
 -- 
 -- ## Missions:
 --
--- ### [SHORAD - Short Range Air Defense](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SRD%20-%20SHORAD%20Defense)
+-- ### [SHORAD - Short Range Air Defense](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/Functional/Shorad)
 -- 
 -- ===
 -- 

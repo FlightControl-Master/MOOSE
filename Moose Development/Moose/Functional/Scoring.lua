@@ -19,7 +19,7 @@
 --
 -- ## Missions:
 --
--- [SCO - Scoring](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/SCO%20-%20Scoring)
+-- [SCO - Scoring](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/Functional/Scoring)
 --
 -- ===
 --
