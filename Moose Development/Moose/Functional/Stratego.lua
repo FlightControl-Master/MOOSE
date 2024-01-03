@@ -126,7 +126,7 @@
 --  @{#STRATEGO.GetBudget}(): Get the current budget points.   
 --  @{#STRATEGO.AddBudget}(): Add a number of budget points.   
 --  @{#STRATEGO.SubtractBudget}(): Subtract a number of budget points.   
---  @{#STRATEGO.SetNeutralBenefit Set neutral benefit, i.e. how many points it is cheaper to decide for a neutral vs an enemy knot when taking decisions.   
+--  @{#STRATEGO.SetNeutralBenefit}():  Set neutral benefit, i.e. how many points it is cheaper to decide for a neutral vs an enemy knot when taking decisions.   
 -- 
 --  
 -- ## Functions to query a knot's data
@@ -154,7 +154,7 @@
 --  @{#STRATEGO.SetDebug}(): Set debug and draw options.   
 --
 --
--- ## Visualisation example code for the Syria map:
+-- ## Visualisation example code for the Syria map:   
 -- 
 --            local Bluecher = STRATEGO:New("Bluecher",coalition.side.BLUE,100)
 --            Bluecher:SetDebug(true,true,true)
