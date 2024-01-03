@@ -8,7 +8,7 @@
 --
 -- ## Missions:
 --
--- ### [AmmoTruck](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/AMT%20-%20AmmoTruck/AmmoTruck%20100%20-%20NTTR%20-%20Basic)
+-- Demo missions can be found on [GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Functional/AmmoTruck)
 --
 -- ===
 --
@@ -20,7 +20,7 @@
 -- Last update: July 2023
 
 -------------------------------------------------------------------------
---- **AMMOTRUCK** class, extends Core.FSM#FSM
+--- **AMMOTRUCK** class, extends Core.Fsm#FSM
 -- @type AMMOTRUCK
 -- @field #string ClassName Class Name
 -- @field #string lid Lid for log entries
@@ -41,7 +41,7 @@
 -- @field #number waitingtime Max waiting time in seconds
 -- @field #boolean routeonroad Route truck on road if true (default)
 -- @field #number reloads Number of reloads a single truck can do before he must return home
--- @extends Core.FSM#FSM
+-- @extends Core.Fsm#FSM
 
 --- *Amateurs talk about tactics, but professionals study logistics.* - General Robert H Barrow, USMC
 --

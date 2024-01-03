@@ -100,7 +100,7 @@
 --
 -- @field #OPSGROUP.Radio radio Current radio settings.
 -- @field #OPSGROUP.Radio radioDefault Default radio settings.
--- @field Core.RadioQueue#RADIOQUEUE radioQueue Radio queue.
+-- @field Sound.Radio#RADIOQUEUE radioQueue Radio queue.
 --
 -- @field #OPSGROUP.Beacon tacan Current TACAN settings.
 -- @field #OPSGROUP.Beacon tacanDefault Default TACAN settings.

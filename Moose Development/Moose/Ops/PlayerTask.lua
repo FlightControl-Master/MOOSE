@@ -11,7 +11,7 @@
 --
 -- ## Example Missions:
 --
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20PlayerTask).
+-- Demo missions can be found on [GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Ops/PlayerTask).
 --
 -- ===
 --
@@ -974,7 +974,7 @@ do
 -- @field #string locale
 -- @field #boolean precisionbombing
 -- @field Ops.FlightGroup#FLIGHTGROUP LasingDrone
--- @field Core.MarkerOps_BASE#MARKEROPS_BASE MarkerOps
+-- @field Core.MarkerOps_Base#MARKEROPS_BASE MarkerOps
 -- @field #boolean taskinfomenu
 -- @field #boolean MarkerReadOnly
 -- @field #table FlashPlayer List of player who switched Flashing Direction Info on
@@ -1028,7 +1028,7 @@ do
 -- ## 1 Overview
 -- 
 -- PLAYERTASKCONTROLLER is used to auto-create (optional) and control tasks for players. It can be set up as Air-to-Ground (A2G, main focus), Air-to-Ship (A2S) or Air-to-Air (A2A) controller.
--- For the latter task type, also have a look at the @{Ops.Awacs#AWACS} class which allows for more complex scenarios.
+-- For the latter task type, also have a look at the @{Ops.AWACS#AWACS} class which allows for more complex scenarios.
 -- One task at a time can be joined by the player from the F10 menu. A task can be joined by multiple players. Once joined, task information is available via the F10 menu, the task location
 -- can be marked on the map and for A2G/S targets, the target can be marked with smoke and flares.
 -- 
@@ -4001,7 +4001,7 @@ end
 -- @param #string Gender (Optional) Defaults to "male"
 -- @param #string Culture (Optional) Defaults to "en-US"
 -- @param #number Port (Optional) Defaults to 5002
--- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+-- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS#SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
 -- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS

@@ -420,7 +420,7 @@ end
 
 --- Add an AIRWING to the commander.
 -- @param #COMMANDER self
--- @param Ops.AirWing#AIRWING Airwing The airwing to add.
+-- @param Ops.Airwing#AIRWING Airwing The airwing to add.
 -- @return #COMMANDER self
 function COMMANDER:AddAirwing(Airwing)
 
@@ -667,10 +667,10 @@ end
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+-- @return Ops.Airwing#AIRWING.PatrolZone The CAP zone data.
 function COMMANDER:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
 
-  local patrolzone={} --Ops.AirWing#AIRWING.PatrolZone
+  local patrolzone={} --Ops.Airwing#AIRWING.PatrolZone
   
   patrolzone.zone=Zone
   patrolzone.altitude=Altitude or 12000
@@ -692,10 +692,10 @@ end
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+-- @return Ops.Airwing#AIRWING.PatrolZone The CAP zone data.
 function COMMANDER:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
 
-  local patrolzone={} --Ops.AirWing#AIRWING.PatrolZone
+  local patrolzone={} --Ops.Airwing#AIRWING.PatrolZone
   
   patrolzone.zone=Zone
   patrolzone.altitude=Altitude or 12000
@@ -715,7 +715,7 @@ end
 -- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
 function COMMANDER:RemoveGciCapZone(Zone)
 
-  local patrolzone={} --Ops.AirWing#AIRWING.PatrolZone
+  local patrolzone={} --Ops.Airwing#AIRWING.PatrolZone
   
   patrolzone.zone=Zone
   for i,_patrolzone in pairs(self.gcicapZones) do
@@ -737,10 +737,10 @@ end
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.PatrolZone The AWACS zone data.
+-- @return Ops.Airwing#AIRWING.PatrolZone The AWACS zone data.
 function COMMANDER:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
 
-  local awacszone={} --Ops.AirWing#AIRWING.PatrolZone
+  local awacszone={} --Ops.Airwing#AIRWING.PatrolZone
   
   awacszone.zone=Zone
   awacszone.altitude=Altitude or 12000
@@ -760,7 +760,7 @@ end
 -- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
 function COMMANDER:RemoveAwacsZone(Zone)
 
-  local awacszone={} --Ops.AirWing#AIRWING.PatrolZone
+  local awacszone={} --Ops.Airwing#AIRWING.PatrolZone
   
   awacszone.zone=Zone
   for i,_awacszone in pairs(self.awacsZones) do
@@ -783,10 +783,10 @@ end
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
 -- @param #number RefuelSystem Refuelling system.
--- @return Ops.AirWing#AIRWING.TankerZone The tanker zone data.
+-- @return Ops.Airwing#AIRWING.TankerZone The tanker zone data.
 function COMMANDER:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSystem)
 
-  local tankerzone={} --Ops.AirWing#AIRWING.TankerZone
+  local tankerzone={} --Ops.Airwing#AIRWING.TankerZone
   
   tankerzone.zone=Zone
   tankerzone.altitude=Altitude or 12000
@@ -807,7 +807,7 @@ end
 -- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
 function COMMANDER:RemoveTankerZone(Zone)
 
-  local tankerzone={} --Ops.AirWing#AIRWING.PatrolZone
+  local tankerzone={} --Ops.Airwing#AIRWING.PatrolZone
   
   tankerzone.zone=Zone
   for i,_tankerzone in pairs(self.tankerZones) do
@@ -997,7 +997,7 @@ function COMMANDER:onafterStatus(From, Event, To)
 
   -- Check CAP zones.
   for _,_patrolzone in pairs(self.capZones) do
-    local patrolzone=_patrolzone --Ops.AirWing#AIRWING.PatrolZone
+    local patrolzone=_patrolzone --Ops.Airwing#AIRWING.PatrolZone
     -- Check if mission is nil or over.
     if (not patrolzone.mission) or patrolzone.mission:IsOver() then
       local Coordinate=patrolzone.zone:GetCoordinate()
@@ -1008,7 +1008,7 @@ function COMMANDER:onafterStatus(From, Event, To)
 
   -- Check GCICAP zones.
   for _,_patrolzone in pairs(self.gcicapZones) do
-    local patrolzone=_patrolzone --Ops.AirWing#AIRWING.PatrolZone
+    local patrolzone=_patrolzone --Ops.Airwing#AIRWING.PatrolZone
     -- Check if mission is nil or over.
     if (not patrolzone.mission) or patrolzone.mission:IsOver() then
       local Coordinate=patrolzone.zone:GetCoordinate()
@@ -1019,7 +1019,7 @@ function COMMANDER:onafterStatus(From, Event, To)
   
   -- Check AWACS zones.
   for _,_awacszone in pairs(self.awacsZones) do
-    local awacszone=_awacszone --Ops.AirWing#AIRWING.Patrol
+    local awacszone=_awacszone --Ops.Airwing#AIRWING.Patrol
     -- Check if mission is nil or over.
     if (not awacszone.mission) or awacszone.mission:IsOver() then
       local Coordinate=awacszone.zone:GetCoordinate()
@@ -1030,7 +1030,7 @@ function COMMANDER:onafterStatus(From, Event, To)
 
   -- Check Tanker zones.
   for _,_tankerzone in pairs(self.tankerZones) do
-    local tankerzone=_tankerzone --Ops.AirWing#AIRWING.TankerZone
+    local tankerzone=_tankerzone --Ops.Airwing#AIRWING.TankerZone
     -- Check if mission is nil or over.
     if (not tankerzone.mission) or tankerzone.mission:IsOver() then
       local Coordinate=tankerzone.zone:GetCoordinate()

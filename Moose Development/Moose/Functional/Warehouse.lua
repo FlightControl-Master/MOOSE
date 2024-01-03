@@ -87,7 +87,7 @@
 -- @field #number respawndelay Delay before respawn in seconds.
 -- @field #number runwaydestroyed Time stamp timer.getAbsTime() when the runway was destroyed.
 -- @field #number runwayrepairtime Time in seconds until runway will be repaired after it was destroyed. Default is 3600 sec (one hour).
--- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol Flight control of this warehouse.
+-- @field OPS.FlightControl#FLIGHTCONTROL flightcontrol Flight control of this warehouse.
 -- @extends Core.Fsm#FSM
 
 --- Have your assets at the right place at the right time - or not!
