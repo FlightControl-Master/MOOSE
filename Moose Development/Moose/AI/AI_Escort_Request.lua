@@ -19,7 +19,7 @@
 -- 
 -- ## Missions:
 -- 
--- [ESC - Escorting](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/ESC%20-%20Escorting)
+-- [ESC - Escorting](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AI/AI_Escort)
 -- 
 -- ===
 -- 

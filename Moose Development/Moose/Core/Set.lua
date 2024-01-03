@@ -455,7 +455,7 @@ do -- SET_BASE
 
   --- Gets a random object from the @{Core.Set#SET_BASE} and derived classes.
   -- @param #SET_BASE self
-  -- @return Core.Base#BASE
+  -- @return Core.Base#BASE or nil if none found or the SET is empty!
   function SET_BASE:GetRandom()
     local tablemax = 0
     for _,_ind in pairs(self.Index) do
@@ -463,6 +463,23 @@ do -- SET_BASE
     end
     --local tablemax = table.maxn(self.Index)
     local RandomItem = self.Set[self.Index[math.random(1,tablemax)]]
+    self:T3( { RandomItem } )
+    return RandomItem
+  end
+  
+  --- Gets a random object from the @{Core.Set#SET_BASE} and derived classes. A bit slower than @{#SET_BASE.GetRandom}() but tries to ensure you get an object back if the SET is not empty. 
+  -- @param #SET_BASE self
+  -- @return Core.Base#BASE or nil if  the SET is empty!
+  function SET_BASE:GetRandomSurely()
+    local tablemax = 0
+    local sorted = {}
+    for _,_obj in pairs(self.Set) do
+      tablemax = tablemax + 1
+      sorted[tablemax] = _obj
+    end
+    --local tablemax = table.maxn(self.Index)
+    --local RandomItem = self.Set[self.Index[math.random(1,tablemax)]]
+    local RandomItem = sorted[math.random(1,tablemax)]
     self:T3( { RandomItem } )
     return RandomItem
   end
@@ -8215,9 +8232,15 @@ do -- SET_SCENERY
   -- @param #SET_SCENERY self
   -- @return Core.Point#COORDINATE The center coordinate of all the objects in the set.
   function SET_SCENERY:GetCoordinate()
-
-    local Coordinate = self:GetRandom():GetCoordinate()
-
+    
+    local Coordinate = COORDINATE:New({0,0,0})
+    
+    local Item = self:GetRandomSurely()
+    
+    if Item then
+      Coordinate:GetCoordinate()
+    end
+    
     local x1 = Coordinate.x
     local x2 = Coordinate.x
     local y1 = Coordinate.y
