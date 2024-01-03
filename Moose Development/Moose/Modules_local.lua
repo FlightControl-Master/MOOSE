@@ -80,6 +80,7 @@ __Moose.Include( 'Functional\\Autolase.lua' )
 __Moose.Include( 'Functional\\AICSAR.lua' )
 __Moose.Include( 'Functional\\AmmoTruck.lua' )
 __Moose.Include( 'Functional\\Tiresias.lua' )
+__Moose.Include( 'Functional\\Stratego.lua' )
 
 __Moose.Include( 'Ops\\Airboss.lua' )
 __Moose.Include( 'Ops\\RecoveryTanker.lua' )
