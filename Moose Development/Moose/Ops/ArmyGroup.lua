@@ -15,9 +15,9 @@
 -- ===
 --
 -- ## Example Missions:
--- 
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Armygroup).
---    
+--
+-- Demo missions can be found on [GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Ops/Armygroup).
+--
 -- ===
 --
 -- ### Author: **funkyfranky**

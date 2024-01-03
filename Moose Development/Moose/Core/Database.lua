@@ -1893,7 +1893,7 @@ end
 
 --- Add a flight control to the data base.
 -- @param #DATABASE self
--- @param Ops.FlightControl#FLIGHTCONTROL flightcontrol
+-- @param OPS.FlightControl#FLIGHTCONTROL flightcontrol
 function DATABASE:AddFlightControl(flightcontrol)
   self:F2( { flightcontrol } )
   self.FLIGHTCONTROLS[flightcontrol.airbasename]=flightcontrol
@@ -1902,7 +1902,7 @@ end
 --- Get a flight control object from the data base.
 -- @param #DATABASE self
 -- @param #string airbasename Name of the associated airbase.
--- @return Ops.FlightControl#FLIGHTCONTROL The FLIGHTCONTROL object.s
+-- @return OPS.FlightControl#FLIGHTCONTROL The FLIGHTCONTROL object.s
 function DATABASE:GetFlightControl(airbasename)
   return self.FLIGHTCONTROLS[airbasename]
 end

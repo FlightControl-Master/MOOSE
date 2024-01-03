@@ -10,7 +10,7 @@
 --
 -- ## Example Missions:
 --
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20Airwing).
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Ops/Airwing).
 --
 -- ===
 --
@@ -1495,9 +1495,9 @@ function AIRWING:GetTankerForFlight(flightgroup)
   return nil
 end
 
---- Add the ability to call back an Ops.Awacs#AWACS object with an FSM call "FlightOnMission(FlightGroup, Mission)".
+--- Add the ability to call back an Ops.AWACS#AWACS object with an FSM call "FlightOnMission(FlightGroup, Mission)".
 -- @param #AIRWING self
--- @param Ops.Awacs#AWACS ConnectecdAwacs
+-- @param Ops.AWACS#AWACS ConnectecdAwacs
 -- @return #AIRWING self
 function AIRWING:SetUsingOpsAwacs(ConnectecdAwacs)
   self:I(self.lid .. "Added AWACS Object: "..ConnectecdAwacs:GetName() or "unknown")
@@ -1506,7 +1506,7 @@ function AIRWING:SetUsingOpsAwacs(ConnectecdAwacs)
   return self
 end
 
---- Remove the ability to call back an Ops.Awacs#AWACS object with an FSM call "FlightOnMission(FlightGroup, Mission)".
+--- Remove the ability to call back an Ops.AWACS#AWACS object with an FSM call "FlightOnMission(FlightGroup, Mission)".
 -- @param #AIRWING self
 -- @return #AIRWING self
 function AIRWING:RemoveUsingOpsAwacs()

@@ -71,8 +71,8 @@ Functional/Autolase.lua
 Functional/AICSAR.lua
 Functional/AmmoTruck.lua
 Functional/ZoneGoalCargo.lua
-Functional/Stratego.lua
 Functional/Tiresias.lua
+Functional/Stratego.lua
 
 Ops/Airboss.lua
 Ops/RecoveryTanker.lua

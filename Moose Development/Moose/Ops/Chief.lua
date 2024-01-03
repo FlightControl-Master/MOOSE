@@ -34,7 +34,7 @@
 -- @field Ops.Commander#COMMANDER commander Commander of assigned legions.
 -- @field #number Nsuccess Number of successful missions.
 -- @field #number Nfailure Number of failed mission.
--- @extends Ops.Intelligence#INTEL
+-- @extends Ops.Intel#INTEL
 
 --- *In preparing for battle I have always found that plans are useless, but planning is indispensable* -- Dwight D Eisenhower
 --
@@ -126,7 +126,7 @@
 -- When the chief detects a valid target, he will launch a certain number of selected assets. Only whole groups from SQUADRONs, PLATOONs or FLOTILLAs can be selected.
 -- In other words, it is not possible to specify the abount of individual *units*.
 -- 
--- By default, one group is selected for any detected target. This can, however, be customized with the @{CHIEF.SetResponseOnTarget}() function. The number of min and max
+-- By default, one group is selected for any detected target. This can, however, be customized with the @{#CHIEF.SetResponseOnTarget}() function. The number of min and max
 -- asset groups can be specified depending on threatlevel, category, mission type, number of units, defcon and strategy.
 -- 
 -- For example:
@@ -311,7 +311,7 @@ CHIEF.Strategy = {
 
 --- Resource list.
 -- @type CHIEF.Resources
--- @field <#CHIEF.Resource> List of resources.
+-- @field #CHIEF.Resource List of resources.
 
 --- Resource.
 -- @type CHIEF.Resource
@@ -1096,7 +1096,7 @@ end
 
 --- Add an AIRWING to the chief's commander.
 -- @param #CHIEF self
--- @param Ops.AirWing#AIRWING Airwing The airwing to add.
+-- @param Ops.Airwing#AIRWING Airwing The airwing to add.
 -- @return #CHIEF self
 function CHIEF:AddAirwing(Airwing)
 
@@ -1460,7 +1460,7 @@ end
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+-- @return Ops.Airwing#AIRWING.PatrolZone The CAP zone data.
 function CHIEF:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
 
   -- Hand over to commander.
@@ -1476,7 +1476,7 @@ end
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.PatrolZone The CAP zone data.
+-- @return Ops.Airwing#AIRWING.PatrolZone The CAP zone data.
 function CHIEF:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
 
   -- Hand over to commander.
@@ -1503,7 +1503,7 @@ end
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
--- @return Ops.AirWing#AIRWING.PatrolZone The AWACS zone data.
+-- @return Ops.Airwing#AIRWING.PatrolZone The AWACS zone data.
 function CHIEF:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
 
   -- Hand over to commander.
@@ -1531,7 +1531,7 @@ end
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
 -- @param #number RefuelSystem Refuelling system.
--- @return Ops.AirWing#AIRWING.TankerZone The tanker zone data.
+-- @return Ops.Airwing#AIRWING.TankerZone The tanker zone data.
 function CHIEF:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSystem)
 
   -- Hand over to commander.
@@ -1785,7 +1785,7 @@ function CHIEF:onafterStatus(From, Event, To)
 
   -- Clean up missions where the contact was lost.
   for _,_contact in pairs(self.ContactsLost) do
-    local contact=_contact --Ops.Intelligence#INTEL.Contact
+    local contact=_contact --Ops.Intel#INTEL.Contact
     
     if contact.mission and contact.mission:IsNotOver() then
     
@@ -1813,7 +1813,7 @@ function CHIEF:onafterStatus(From, Event, To)
   -- Create TARGETs for all new contacts.
   self.Nborder=0 ; self.Nconflict=0 ; self.Nattack=0
   for _,_contact in pairs(self.Contacts) do
-    local contact=_contact    --Ops.Intelligence#INTEL.Contact
+    local contact=_contact    --Ops.Intel#INTEL.Contact
     local group=contact.group --Wrapper.Group#GROUP
     
     -- Check if contact inside of our borders.
@@ -1964,7 +1964,7 @@ function CHIEF:onafterStatus(From, Event, To)
   if self.verbose>=2 and #self.Contacts>0 then
     local text="Contacts:"
     for i,_contact in pairs(self.Contacts) do
-      local contact=_contact --Ops.Intelligence#INTEL.Contact
+      local contact=_contact --Ops.Intel#INTEL.Contact
       
       local mtext="N/A"
       if contact.mission then
