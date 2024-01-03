@@ -120,13 +120,13 @@
 --          -- use budgets
 --          Bluecher:SetUsingBudget(true,500)
 --  
--- ## Helpers:
+-- ### Helpers:
 -- 
 --  
 --  @{#STRATEGO.GetBudget}(): Get the current budget points.   
 --  @{#STRATEGO.AddBudget}(): Add a number of budget points.   
 --  @{#STRATEGO.SubtractBudget}(): Subtract a number of budget points.   
---  @{#STRATEGO.SetNeutralBenefit Set neutral benefit, i.e. how many points it is cheaper to decide for a neutral vs an enemy knot when taking decisions.   
+--  @{#STRATEGO.SetNeutralBenefit}(): Set neutral benefit, i.e. how many points it is cheaper to decide for a neutral vs an enemy knot when taking decisions.   
 -- 
 --  
 -- ## Functions to query a knot's data
