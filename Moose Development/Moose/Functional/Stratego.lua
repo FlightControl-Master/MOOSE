@@ -14,7 +14,7 @@
 -- ### Author: **applevangelist**
 -- 
 -- @module Functional.Stratego
--- @image Stratego.png
+-- @image Functional.Stratego.png
 
 
 ---
