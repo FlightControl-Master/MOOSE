@@ -109,10 +109,10 @@
 --
 -- Use a specific voice with the @{#MSRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system.
--- 
+--
 -- Note that you can set voices for each provider via the @{#MSRS.SetVoiceProvider} function. Also shortcuts are available, *i.e.*
 -- @{#MSRS.SetVoiceWindows}, @{#MSRS.SetVoiceGoogle}, @{#MSRS.SetVoiceAzure} and @{#MSRS.SetVoiceAmazon}.
--- 
+--
 -- For voices there are enumerators in this class to help you out on voice names:
 --
 --     MSRS.Voices.Microsoft -- e.g. MSRS.Voices.Microsoft.Hedda - the Microsoft enumerator contains all voices known to work with SRS
@@ -134,32 +134,32 @@
 -- ## Config file for many variables, auto-loaded by Moose
 --
 -- See @{#MSRS.LoadConfigFile} for details on how to set this up.
--- 
+--
 -- ## TTS Providers
--- 
+--
 -- The default provider for generating speech from text is the native Windows TTS service. Note that you need to install the voices you want to use.
 -- 
 -- **Pro-Tip** - use the command line with power shell to call `DCS-SR-ExternalAudio.exe` - it will tell you what is missing
 -- and also the Google Console error, in case you have missed a step in setting up your Google TTS.
 -- For example, `.\DCS-SR-ExternalAudio.exe -t "Text Message" -f 255 -m AM -c 2 -s 2 -z -G "Path_To_You_Google.Json"`
 -- plays a message on 255 MHz AM for the blue coalition in-game.
--- 
+--
 -- ### Google
 -- 
 -- In order to use Google Cloud for TTS you need to use @{#MSRS.SetProvider} and @{#MSRS.SetProviderOptionsGoogle} functions:
 -- 
 --     msrs:SetProvider(MSRS.Provider.GOOGLE)
 --     msrs:SetProviderOptionsGoogle(CredentialsFile, AccessKey)
---     
+--
 -- The parameter `CredentialsFile` is used with the default 'DCS-SR-ExternalAudio.exe' backend and must be the full path to the credentials JSON file.
 -- The `AccessKey` parameter is used with the DCS-gRPC backend (see below).
--- 
+--
 -- You can set the voice to use with Google via @{#MSRS.SetVoiceGoogle}.
--- 
+--
 -- When using Google it also allows you to utilize SSML in your text for more flexibility.
 -- For more information on setting up a cloud account, visit: https://cloud.google.com/text-to-speech
 -- Google's supported SSML reference: https://cloud.google.com/text-to-speech/docs/ssml
--- 
+--
 -- ### Amazon Web Service [Only DCS-gRPC backend]
 -- 
 -- In order to use Amazon Web Service (AWS) for TTS you need to use @{#MSRS.SetProvider} and @{#MSRS.SetProviderOptionsAmazon} functions:
@@ -177,16 +177,16 @@
 -- 
 --     msrs:SetProvider(MSRS.Provider.AZURE)
 --     msrs:SetProviderOptionsAmazon(AccessKey, Region)
---     
+--
 -- The parameter `AccessKey` is your Azure access key. The parameter `Region` is your [Azure region](https://learn.microsoft.com/en-us/azure/cognitive-services/speech-service/regions).
--- 
+--
 -- You can set the voice to use with Azure via @{#MSRS.SetVoiceAzure}.
--- 
+--
 -- ## Backend
--- 
+--
 -- The default interface to SRS is via calling the 'DCS-SR-ExternalAudio.exe'. As noted above, this has the unavoidable drawback that a pop-up briefly appears
 -- and DCS might be put out of focus.
--- 
+--
 -- ## DCS-gRPC as an alternative to 'DCS-SR-ExternalAudio.exe' for TTS
 --
 -- Another interface to SRS is [DCS-gRPC](https://github.com/DCS-gRPC/rust-server). This does not call an exe file and therefore avoids the annoying pop-up window.
@@ -776,7 +776,7 @@ end
 function MSRS:SetVoiceProvider(Voice, Provider)
   self:F( {Voice=Voice, Provider=Provider} )
   self.poptions=self.poptions or {}
-  
+
   self.poptions[Provider or self:GetProvider()]=Voice
 
   return self
@@ -834,7 +834,7 @@ end
 function MSRS:GetVoice(Provider)
 
   Provider=Provider or self.provider
-  
+
   if Provider and self.poptions[Provider] and self.poptions[Provider].voice then
     return self.poptions[Provider].voice
   else
@@ -863,7 +863,7 @@ function MSRS:SetGoogle(PathToCredentials)
   if PathToCredentials then
 
     self.provider = MSRS.Provider.GOOGLE
-    
+
     self:SetProviderOptionsGoogle(PathToCredentials, PathToCredentials)
 
   end
@@ -878,15 +878,15 @@ end
 function MSRS:SetGoogleAPIKey(APIKey)
   self:F( {APIKey=APIKey} )
   if APIKey then
-  
+
     self.provider = MSRS.Provider.GOOGLE
-    
+
     if self.poptions[MSRS.Provider.GOOGLE] then
       self.poptions[MSRS.Provider.GOOGLE].key=APIKey
     else
       self:SetProviderOptionsGoogle(nil ,APIKey)
     end
-    
+
   end
   return self
 end
@@ -894,14 +894,14 @@ end
 
 --- Set provider used to generate text-to-speech.
 -- These options are available:
--- 
+--
 -- - `MSRS.Provider.WINDOWS`: Microsoft Windows (default)
 -- - `MSRS.Provider.GOOGLE`: Google Cloud
 -- - `MSRS.Provider.AZURE`: Microsoft Azure (only with DCS-gRPC backend)
 -- - `MSRS.Provier.AMAZON`: Amazone Web Service (only with DCS-gRPC backend)
--- 
+--
 -- Note that all providers except Microsoft Windows need as additonal information the credentials of your account.
--- 
+--
 -- @param #MSRS self
 -- @param #string Provider
 -- @return #MSRS self
@@ -950,7 +950,7 @@ end
 -- @param #string Region Region to use.
 -- @return #MSRS.ProviderOptions Provider optionas table.
 function MSRS._CreateProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
-  self:F( {Provider, CredentialsFile, AccessKey, SecretKey, Region} )
+  BASE:F( {Provider, CredentialsFile, AccessKey, SecretKey, Region} )
   local option={} --#MSRS.ProviderOptions
 
   option.provider=Provider
@@ -1124,20 +1124,20 @@ function MSRS:PlaySoundText(SoundText, Delay)
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlaySoundText, self, SoundText, 0)
   else
-  
+
     if self.backend==MSRS.Backend.GRPC then
       self:_DCSgRPCtts(SoundText.text, nil, SoundText.gender, SoundText.culture, SoundText.voice, SoundText.volume, SoundText.label, SoundText.coordinate)
     else
 
       -- Get command.
       local command=self:_GetCommand(nil, nil, nil, SoundText.gender, SoundText.voice, SoundText.culture, SoundText.volume, SoundText.speed)
-  
+
       -- Append text.
       command=command..string.format(" --text=\"%s\"", tostring(SoundText.text))
-  
+
       -- Execute command.
       self:_ExecCommand(command)
-      
+
     end
 
   end
@@ -1189,25 +1189,25 @@ function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
   else
-  
+
     Frequencies = Frequencies or self:GetFrequencies()
     Modulations = Modulations or self:GetModulations()
-  
+
     if self.backend==MSRS.Backend.SRSEXE then
 
       -- Get command line.
       local command=self:_GetCommand(UTILS.EnsureTable(Frequencies, false), UTILS.EnsureTable(Modulations, false), nil, Gender, Voice, Culture, Volume, nil, nil, Label, Coordinate)
-  
+
       -- Append text.
       command=command..string.format(" --text=\"%s\"", tostring(Text))
-  
+
       -- Execute command.
       self:_ExecCommand(command)
-      
+
     elseif self.backend==MSRS.Backend.GRPC then
-    
+
       self:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate)
-    
+
     end
 
   end
@@ -1264,8 +1264,8 @@ end
 --- Get lat, long and alt from coordinate.
 -- @param #MSRS self
 -- @param Core.Point#Coordinate Coordinate Coordinate. Can also be a DCS#Vec3.
--- @return #number Latitude (or 0 if no input coordinate was given). 
--- @return #number Longitude (or 0 if no input coordinate was given). 
+-- @return #number Latitude (or 0 if no input coordinate was given).
+-- @return #number Longitude (or 0 if no input coordinate was given).
 -- @return #number Altitude (or 0 if no input coordinate was given).
 function MSRS:_GetLatLongAlt(Coordinate)
   self:F( {Coordinate=Coordinate} )
@@ -1349,7 +1349,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
 
   -- Set provider options
   if self.provider==MSRS.Provider.GOOGLE then
-    local pops=self:GetProviderOptions()    
+    local pops=self:GetProviderOptions()
     command=command..string.format(' --ssml -G "%s"', pops.credentials)
   elseif self.provider==MSRS.Provider.WINDOWS then
     -- Nothing to do.
@@ -1512,15 +1512,15 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
   self:F({Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate})
 
   local options = {} -- #MSRS.GRPCOptions
-  
+
   local ssml = Text or ''
-  
+
   -- Get frequenceies.
   Frequencies = UTILS.EnsureTable(Frequencies, true) or self:GetFrequencies()
-  
+
   -- Plain text (not really used.
   options.plaintext=Text
-  
+
   -- Name shows as sender.
   options.srsClientName = Label or self.Label
 
@@ -1528,8 +1528,8 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
   if self.coordinate then
     options.position = {}
     options.position.lat, options.position.lon, options.position.alt = self:_GetLatLongAlt(self.coordinate)
-  end  
-    
+  end
+
   -- Coalition (gRPC expects lower case)
   options.coalition = UTILS.GetCoalitionName(self.coalition):lower()
 
@@ -1540,7 +1540,7 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
   -- Provider options: voice, credentials
   options.provider = {}
   options.provider[provider] = self:GetProviderOptions(provider)
-  
+
   -- Voice
   Voice=Voice or self:GetVoice(self.provider) or self.voice
 
@@ -1548,10 +1548,11 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
     -- We use a specific voice
     options.provider[provider].voice = Voice
   else
-    -- DCS-gRPC doesn't directly support language/gender, but can use SSML
-    
-    local preTag, genderProp, langProp, postTag = '', '', '', ''
   
+    -- DCS-gRPC doesn't directly support language/gender, but can use SSML
+
+    local preTag, genderProp, langProp, postTag = '', '', '', ''
+
     local gender=""
     if self.gender then
       gender=string.format(' gender=\"%s\"', self.gender)
@@ -1565,7 +1566,7 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
       ssml=string.format("<voice%s%s>%s</voice>", gender, language, Text)
     end
   end
-  
+
   for _,freq in pairs(Frequencies) do
     self:F("Calling GRPC.tts with the following parameter:")
     self:F({ssml=ssml, freq=freq, options=options})
@@ -1609,7 +1610,7 @@ end
 --       -- Windows
 --       win = {
 --         voice = "Microsoft Hazel Desktop",
---       },   
+--       },
 --       -- Google Cloud
 --       gcloud = {
 --         voice = "en-GB-Standard-A", -- The Google Cloud voice to use (see https://cloud.google.com/text-to-speech/docs/voices).
@@ -1625,7 +1626,7 @@ end
 --       },
 --       -- Microsoft Azure
 --       azure = {
---         voice="en-US-AriaNeural",  --The default Azure voice to use (see https://learn.microsoft.com/azure/cognitive-services/speech-service/language-support).   
+--         voice="en-US-AriaNeural",  --The default Azure voice to use (see https://learn.microsoft.com/azure/cognitive-services/speech-service/language-support).
 --         key="Your access key", -- Your Azure access key.
 --         region="westeurope", -- The Azure region to use (see https://learn.microsoft.com/en-us/azure/cognitive-services/speech-service/regions).
 --       },
@@ -1672,16 +1673,16 @@ function MSRS:LoadConfigFile(Path,Filename)
   local filexsists =  UTILS.FileExists(pathandfile)
 
   if filexsists and not MSRS.ConfigLoaded then
-  
+
     env.info("FF reading config file")
-  
+
     -- Load global MSRS_Config
     assert(loadfile(path..file))()
-    
+
     if MSRS_Config then
-    
+
       local Self = self or MSRS  --#MSRS
-      
+
       Self.path = MSRS_Config.Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
       Self.port = MSRS_Config.Port or 5002
       Self.backend = MSRS_Config.Backend or MSRS.Backend.SRSEXE
@@ -1702,13 +1703,13 @@ function MSRS:LoadConfigFile(Path,Filename)
           Self.poptions[provider]=MSRS_Config[provider]
         end
       end
-      
+
       Self.ConfigLoaded = true
-      
+
     end
     env.info("MSRS - Successfully loaded default configuration from disk!",false)
   end
-  
+
   if not filexsists then
     env.info("MSRS - Cannot find default configuration file!",false)
     return false
