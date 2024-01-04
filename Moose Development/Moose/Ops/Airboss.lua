@@ -15606,6 +15606,11 @@ function AIRBOSS:_Number2Radio( radio, number, delay, interval, pilotcall )
     Sender = "PilotCall"
   end
 
+  if Sender=="" then
+    self:E( self.lid .. string.format( "ERROR: Sender unknown!") )
+    return
+  end
+
   -- Split string into characters.
   local numbers = _split( number )
 
