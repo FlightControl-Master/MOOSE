@@ -2265,7 +2265,7 @@ function LEGION:RecruitAssetsForMission(Mission)
       end
     end
     
-    self:T(self.lid..string.format("Largest cargo bay available=%.1f", MaxWeight))
+    self:T(self.lid..string.format("Largest cargo bay available=%.1f", MaxWeight or 0))
   end
   
   
