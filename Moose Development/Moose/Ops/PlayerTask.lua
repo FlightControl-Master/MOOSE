@@ -45,8 +45,8 @@ do
 -- @field Wrapper.Marker#MARKER TargetMarker
 -- @field #number SmokeColor
 -- @field #number FlareColor
--- @field #table conditionSuccess   =   {},
--- @field #table conditionFailure   =   {},
+-- @field #table conditionSuccess
+-- @field #table conditionFailure
 -- @field Ops.PlayerTask#PLAYERTASKCONTROLLER TaskController
 -- @field #number timestamp
 -- @field #number lastsmoketime
