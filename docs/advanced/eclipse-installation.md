@@ -1,6 +1,6 @@
 ---
 parent: Advanced
-nav_order: 1
+nav_order: 97
 ---
 # Eclipse Installation
 {: .no_toc }
