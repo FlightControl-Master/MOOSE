@@ -394,6 +394,7 @@ function STRATEGO:AnalyseBases()
         zone = abzone,
         coord = coord,
         type = abtype,
+        opszone = opszone,
       }
       airbasetable[abname] = tbl
       nonconnectedab[abname] = true
@@ -494,10 +495,10 @@ end
 
 --- [USER] Manually add a route, for e.g. Island hopping or to connect isolated networks. Use **after** STRATEGO has been started!
 -- @param #STRATEGO self
--- @param #string Startpoint
--- @param #string Endpoint
+-- @param #string Startpoint Starting Point, e.g. AIRBASE.Syria.Hatay
+-- @param #string Endpoint End Point, e.g. AIRBASE.Syria.H4
 -- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Defaults to lila.
--- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 5.
+-- @param #number Linetype (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 5.
 -- @param #boolean Draw (Optional) If true, draw route on the F10 map. Defaukt false.
 -- @return #STRATEGO self
 function STRATEGO:AddRoutesManually(Startpoint,Endpoint,Color,Linetype,Draw)
@@ -1002,9 +1003,11 @@ end
 -- @param #string End The name of the end node.
 -- @param #number Hops Max iterations to find a route.
 -- @param #boolean Draw If true, draw the route on the map.
+-- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Defaults to black.
+-- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 6.
 -- @return #table Route Table of #string name entries of the route
 -- @return #boolean Complete If true, the route was found end-to-end.
-function STRATEGO:FindRoute(Start,End,Hops,Draw)
+function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType)
   self:I({Start,End,Hops})
   --local bases = UTILS.DeepCopy(self.airbasetable)
   local Route = {}  
@@ -1046,7 +1049,9 @@ function STRATEGO:FindRoute(Start,End,Hops,Draw)
       local p2=Route[i+1]
       local c1 = self.airbasetable[p1].coord -- Core.Point#COORDINATE
       local c2 = self.airbasetable[p2].coord -- Core.Point#COORDINATE
-      c1:LineToAll(c2,-1,{0,0,0},1,6)
+      local line = LineType or 6
+      local color = Color or {0,0,0}
+      c1:LineToAll(c2,-1,color,1,line)
     end
   end
   
@@ -1076,7 +1081,7 @@ function STRATEGO:FindRoute(Start,End,Hops,Draw)
       end
     end
   end
-  if self.debug or Draw then DrawRoute(Route) end 
+  if (self.debug or Draw) then DrawRoute(Route) end 
   return Route, routecomplete
 end
 
