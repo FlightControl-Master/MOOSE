@@ -12,7 +12,7 @@
 --
 -- ## Example Missions:
 --
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20FlightControl).
+-- Demo missions: None
 --
 -- ===
 --
@@ -207,9 +207,9 @@
 -- landing is `21L`.
 -- 
 -- By default, the runways for landing and takeoff are determined from the wind direction as described above. For cases where this gives wrong results, you can set the active runways manually. This is
--- done via @{Wrappper.Airbase#AIRBASE} class.
+-- done via @{Wrapper.Airbase#AIRBASE} class.
 -- 
--- More specifically, you can use the @{Wrappper.Airbase#AIRBASE.SetActiveRunwayLanding} function to set the landing runway and the @{Wrappper.Airbase#AIRBASE.SetActiveRunwayTakeoff} function to set
+-- More specifically, you can use the @{Wrapper.Airbase#AIRBASE.SetActiveRunwayLanding} function to set the landing runway and the @{Wrapper.Airbase#AIRBASE.SetActiveRunwayTakeoff} function to set
 -- the runway for takeoff.
 -- 
 -- ## Example for Nellis AFB
@@ -223,7 +223,7 @@
 -- 
 -- # DCS ATC
 -- 
--- You can disable the DCS ATC with the @{Wrappper.Airbase#AIRBASE.SetRadioSilentMode}(*true*). This does not remove the DCS ATC airbase from the F10 menu but makes the ATC unresponsive.
+-- You can disable the DCS ATC with the @{Wrapper.Airbase#AIRBASE.SetRadioSilentMode}(*true*). This does not remove the DCS ATC airbase from the F10 menu but makes the ATC unresponsive.
 -- 
 -- 
 -- # Examples
@@ -876,7 +876,7 @@ end
 
 --- Set ATIS.
 -- @param #FLIGHTCONTROL self
--- @param Ops.Atis#ATIS Atis ATIS.
+-- @param Ops.ATIS#ATIS ATIS ATIS.
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetATIS(Atis)
   self.atis=Atis
