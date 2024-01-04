@@ -4,7 +4,7 @@
 --
 --    * Helper class for mission designers to support classic capture-the-base scenarios.
 --    * Creates a network of possible connections between bases (airbases, FARPs, Ships), Ports (defined as zones) and POIs (defined as zones).
---    * Assigns a strategic value to each of the resulting knots.
+--    * Assigns a strategic value to each of the resulting nodes.
 --    * Can create a list of targets for your next mission move, both strategic and consolidation targets.
 --    * Can be used with budgets to limit the target selection.
 --    * Highly configureable.
@@ -51,16 +51,16 @@
 -- # The STRATEGO Concept
 --
 -- STRATEGO is a helper class for mission designers. 
--- The basic idea is to create a network of knots (bases) on the map, which each have a number of connections
--- to other knots. The base value of each knot is the number of runways of the base (the bigger the more important), or in the case of Ports and POIs, the assigned value points.
--- The strategic value of each base is determined by the number of routes going in and out of the knot, where connections between more strategic knots add a higher value to the
--- strategic value than connections to less valueable knots.
+-- The basic idea is to create a network of nodes (bases) on the map, which each have a number of connections
+-- to other nodes. The base value of each node is the number of runways of the base (the bigger the more important), or in the case of Ports and POIs, the assigned value points.
+-- The strategic value of each base is determined by the number of routes going in and out of the node, where connections between more strategic nodes add a higher value to the
+-- strategic value than connections to less valueable nodes.
 -- 
 -- ## Setup
 -- 
 -- Setup is map indepent and works automatically. All airbases, FARPS, and ships on the map are considered. **Note:** Later spawned objects are not considered at the moment.
 --          
---          -- Setup and start STRATGEO for the blue side, maximal knot distance is 100km
+--          -- Setup and start STRATGEO for the blue side, maximal node distance is 100km
 --          local Bluecher = STRATEGO:New("Bluecher",coalition.side.BLUE,100)
 --          -- use budgets
 --          Bluecher:SetUsingBudget(true,500)
@@ -71,15 +71,15 @@
 -- 
 -- ### Helper
 -- 
--- @{#STRATEGO.SetWeights}(): Set weights for knots and routes to determine their importance.
+-- @{#STRATEGO.SetWeights}(): Set weights for nodes and routes to determine their importance.
 -- 
 -- ### Hint
 --          
--- Each knot is its own @{Ops.OpsZone#OPSZONE} object to manage the coalition alignment of that knot and how it can be conquered.
+-- Each node is its own @{Ops.OpsZone#OPSZONE} object to manage the coalition alignment of that node and how it can be conquered.
 -- 
 -- ### Distance
 -- 
--- The knot distance factor determines how many connections are there on the map. The smaller the lighter is the resulting net. The higher the thicker it gets, with more strategic options.
+-- The node distance factor determines how many connections are there on the map. The smaller the lighter is the resulting net. The higher the thicker it gets, with more strategic options.
 -- Play around with the distance to get an optimal map for your scenario.
 -- 
 -- One some maps, e.g. Syria, lower distance factors can create "islands" of unconnected network parts on the map. FARPs and POIs can bridge those gaps, or you can add routes manually.
@@ -92,22 +92,22 @@
 --  
 -- ## Get next possible targets
 -- 
--- There are two types of possible target lists, strategic and consolidation. Targets closer to the start knot are chosen as possible targets. 
+-- There are two types of possible target lists, strategic and consolidation. Targets closer to the start node are chosen as possible targets. 
 -- 
 -- 
 --      * Strategic targets are of higher or equal base weight from a given start point. Can also be obtained for the whole net.
 --      * Consoliation targets are of smaller or equal base weight from a given start point. Can also be obtained for the whole net.  
 -- 
 -- 
---  @{#STRATEGO.UpdateKnotCoalitions}(): Update alls knot's coalition data before takign a decision.   
+--  @{#STRATEGO.UpdateNodeCoalitions}(): Update alls node's coalition data before takign a decision.   
 --  @{#STRATEGO.FindStrategicTargets}(): Find a list of possible strategic targets in the network of the enemy or neutral coalition.   
 --  @{#STRATEGO.FindConsolidationTargets}(): Find a list of possible strategic targets in the network of the enemy or neutral coalition.     
 --  @{#STRATEGO.FindAffordableStrategicTarget}(): When using budgets, find **one** strategic target you can afford.   
 --  @{#STRATEGO.FindAffordableConsolidationTarget}(): When using budgets, find **one** consolidation target you can afford.   
 --  @{#STRATEGO.FindClosestStrategicTarget}(): Find closest strategic target from a given start point.   
 --  @{#STRATEGO.FindClosestConsolidationTarget}(): Find closest consolidation target from a given start point.   
---  @{#STRATEGO.GetHighestWeightKnots}(): Get a list of the knots with the highest weight. Coalition independent.   
---  @{#STRATEGO.GetNextHighestWeightKnots}(): Get a list of the knots a weight less than the give parameter. Coalition independent.   
+--  @{#STRATEGO.GetHighestWeightNodes}(): Get a list of the nodes with the highest weight. Coalition independent.   
+--  @{#STRATEGO.GetNextHighestWeightNodes}(): Get a list of the nodes a weight less than the give parameter. Coalition independent.   
 -- 
 --  
 -- **How** you act on these suggestions is again totally up to your mission design.
@@ -120,41 +120,41 @@
 --          -- use budgets
 --          Bluecher:SetUsingBudget(true,500)
 --  
--- ## Helpers:
+-- ### Helpers:
 -- 
 --  
 --  @{#STRATEGO.GetBudget}(): Get the current budget points.   
 --  @{#STRATEGO.AddBudget}(): Add a number of budget points.   
 --  @{#STRATEGO.SubtractBudget}(): Subtract a number of budget points.   
---  @{#STRATEGO.SetNeutralBenefit}():  Set neutral benefit, i.e. how many points it is cheaper to decide for a neutral vs an enemy knot when taking decisions.   
+--  @{#STRATEGO.SetNeutralBenefit}(): Set neutral benefit, i.e. how many points it is cheaper to decide for a neutral vs an enemy node when taking decisions.   
 -- 
 --  
--- ## Functions to query a knot's data
+-- ## Functions to query a node's data
 --  
 --  
---  @{#STRATEGO.GetKnotBaseWeight}(): Get the base weight of a knot by its name.   
---  @{#STRATEGO.GetKnotCoalition}(): Get the COALITION of a knot by its name.   
---  @{#STRATEGO.GetKnotType}(): Get the TYPE of a knot by its name.   
---  @{#STRATEGO.GetKnotZone}(): Get the ZONE of a knot by its name.   
---  @{#STRATEGO.GetKnotOpsZone}(): Get the OPSZONE of a knot by its name.   
---  @{#STRATEGO.GetKnotCoordinate}(): Get the COORDINATE of a knot by its name.   
---  @{#STRATEGO.IsAirbase}(): Check if the TYPE of a knot is AIRBASE.   
---  @{#STRATEGO.IsPort}(): Check if the TYPE of a knot is PORT.   
---  @{#STRATEGO.IsPOI}(): Check if the TYPE of a knot is POI.   
---  @{#STRATEGO.IsFARP}(): Check if the TYPE of a knot is FARP.   
---  @{#STRATEGO.IsShip}(): Check if the TYPE of a knot is SHIP.   
+--  @{#STRATEGO.GetNodeBaseWeight}(): Get the base weight of a node by its name.   
+--  @{#STRATEGO.GetNodeCoalition}(): Get the COALITION of a node by its name.   
+--  @{#STRATEGO.GetNodeType}(): Get the TYPE of a node by its name.   
+--  @{#STRATEGO.GetNodeZone}(): Get the ZONE of a node by its name.   
+--  @{#STRATEGO.GetNodeOpsZone}(): Get the OPSZONE of a node by its name.   
+--  @{#STRATEGO.GetNodeCoordinate}(): Get the COORDINATE of a node by its name.   
+--  @{#STRATEGO.IsAirbase}(): Check if the TYPE of a node is AIRBASE.   
+--  @{#STRATEGO.IsPort}(): Check if the TYPE of a node is PORT.   
+--  @{#STRATEGO.IsPOI}(): Check if the TYPE of a node is POI.   
+--  @{#STRATEGO.IsFARP}(): Check if the TYPE of a node is FARP.   
+--  @{#STRATEGO.IsShip}(): Check if the TYPE of a node is SHIP.   
 --  
 --  
 -- ## Various
 --  
 --  
---  @{#STRATEGO.FindNeighborKnots}(): Get neighbor knots of a named knot.   
---  @{#STRATEGO.FindRoute}(): Find a route between two knots.   
---  @{#STRATEGO.SetCaptureOptions}(): Set how many units of which minimum threat level are needed to capture one knot (i.e. the underlying OpsZone).   
+--  @{#STRATEGO.FindNeighborNodes}(): Get neighbor nodes of a named node.   
+--  @{#STRATEGO.FindRoute}(): Find a route between two nodes.   
+--  @{#STRATEGO.SetCaptureOptions}(): Set how many units of which minimum threat level are needed to capture one node (i.e. the underlying OpsZone).   
 --  @{#STRATEGO.SetDebug}(): Set debug and draw options.   
 --
 --
--- ## Visualisation example code for the Syria map:   
+-- ## Visualisation example code for the Syria map:
 -- 
 --            local Bluecher = STRATEGO:New("Bluecher",coalition.side.BLUE,100)
 --            Bluecher:SetDebug(true,true,true)
@@ -175,7 +175,7 @@ STRATEGO = {
   debug = false,
   drawzone = false,
   markzone = false,
-  version = "0.1.0",
+  version = "0.2.1",
   portweight = 3,
   POIweight = 1,
   maxrunways = 3,
@@ -314,12 +314,12 @@ function STRATEGO:SetDebug(Debug,DrawZones,MarkZones)
   return self
 end
 
---- [USER] Set weights for knots and routes to determine their importance.
+--- [USER] Set weights for nodes and routes to determine their importance.
 -- @param #STRATEGO self
--- @param #number MaxRunways Set the maximum number of runways the big (equals strategic) airbases on the map have. Defaults to 3. The weight of an airbase knot hence equals the number of runways.
--- @param #number PortWeight Set what weight a port knot has. Defaults to 3.
--- @param #number POIWeight Set what weight a POI knot has. Defaults to 1.
--- @param #number RouteFactor Defines which weight each route between two defined knots gets: Weight * RouteFactor.
+-- @param #number MaxRunways Set the maximum number of runways the big (equals strategic) airbases on the map have. Defaults to 3. The weight of an airbase node hence equals the number of runways.
+-- @param #number PortWeight Set what weight a port node has. Defaults to 3.
+-- @param #number POIWeight Set what weight a POI node has. Defaults to 1.
+-- @param #number RouteFactor Defines which weight each route between two defined nodes gets: Weight * RouteFactor.
 -- @return #STRATEGO self
 function STRATEGO:SetWeights(MaxRunways,PortWeight,POIWeight,RouteFactor)
   self.portweight = PortWeight or 3
@@ -329,7 +329,7 @@ function STRATEGO:SetWeights(MaxRunways,PortWeight,POIWeight,RouteFactor)
   return self
 end
 
---- [USER] Set neutral benefit, i.e. how many points it is cheaper to decide for a neutral vs an enemy knot when taking decisions.
+--- [USER] Set neutral benefit, i.e. how many points it is cheaper to decide for a neutral vs an enemy node when taking decisions.
 -- @param #STRATEGO self
 -- @param #number NeutralBenefit Pointsm defaults to 100.
 -- @return #STRATEGO self
@@ -338,7 +338,7 @@ function STRATEGO:SetNeutralBenefit(NeutralBenefit)
   return self
 end
 
---- [USER] Set how many units of which minimum threat level are needed to capture one knot (i.e. the underlying OpsZone).
+--- [USER] Set how many units of which minimum threat level are needed to capture one node (i.e. the underlying OpsZone).
 -- @param #STRATEGO self
 -- @param #number CaptureUnits Number of units needed, defaults to three.
 -- @param #number CaptureThreatlevel Threat level needed, can be 0..10, defaults to one.
@@ -404,11 +404,11 @@ function STRATEGO:AnalyseBases()
   return self
 end
 
---- [INTERNAL] Update knot coalitions
+--- [INTERNAL] Update node coalitions
 -- @param #STRATEGO self
 -- @return #STRATEGO self
-function STRATEGO:UpdateKnotCoalitions()
-  self:T(self.lid.."UpdateKnotCoalitions")
+function STRATEGO:UpdateNodeCoalitions()
+  self:T(self.lid.."UpdateNodeCoalitions")
   local newtable = {}
   for _id,_data in pairs(self.airbasetable) do
     local data = _data -- #STRATEGO.Data
@@ -625,11 +625,11 @@ function STRATEGO:AnalyseUnconnected(Color)
   return self
 end
 
---- [USER] Get a list of the knots with the highest weight.
+--- [USER] Get a list of the nodes with the highest weight.
 -- @param #STRATEGO self
--- @return #table Table of knots.
--- @return #number Weight The consolidated weight associated with the knots.
-function STRATEGO:GetHighestWeightKnots()
+-- @return #table Table of nodes.
+-- @return #number Weight The consolidated weight associated with the nodes.
+function STRATEGO:GetHighestWeightNodes()
   self:T(self.lid.."GetHighestWeightBases")
   local weight = 0
   local airbases = {}
@@ -643,11 +643,11 @@ function STRATEGO:GetHighestWeightKnots()
   return airbases[weight],weight
 end
 
---- [USER] Get a list of the knots a weight less than the give parameter.
+--- [USER] Get a list of the nodes a weight less than the give parameter.
 -- @param #STRATEGO self
--- @return #table Table of knots.
--- @return #number Weight The consolidated weight associated with the knots.
-function STRATEGO:GetNextHighestWeightKnots(Weight)
+-- @return #table Table of nodes.
+-- @return #number Weight The consolidated weight associated with the nodes.
+function STRATEGO:GetNextHighestWeightNodes(Weight)
   self:T(self.lid.."GetNextHighestWeightBases")
   local weight = 0
   local airbases = {}
@@ -661,11 +661,11 @@ function STRATEGO:GetNextHighestWeightKnots(Weight)
   return airbases[weight],weight
 end
 
---- [USER] Get the aggregated weight of a knot by its name.
+--- [USER] Get the aggregated weight of a node by its name.
 -- @param #STRATEGO self
 -- @param #string Name.
 -- @return #number Weight The weight or 0 if not found.
-function STRATEGO:GetKnotWeight(Name)
+function STRATEGO:GetNodeWeight(Name)
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].weight or 0
   else
@@ -673,11 +673,11 @@ function STRATEGO:GetKnotWeight(Name)
   end
 end
 
---- [USER] Get the base weight of a knot by its name.
+--- [USER] Get the base weight of a node by its name.
 -- @param #STRATEGO self
 -- @param #string Name.
 -- @return #number Weight The base weight or 0 if not found.
-function STRATEGO:GetKnotBaseWeight(Name)
+function STRATEGO:GetNodeBaseWeight(Name)
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].baseweight or 0
   else
@@ -685,11 +685,11 @@ function STRATEGO:GetKnotBaseWeight(Name)
   end
 end
 
---- [USER] Get the COALITION of a knot by its name.
+--- [USER] Get the COALITION of a node by its name.
 -- @param #STRATEGO self
 -- @param #string Name.
 -- @return #number Coalition The coalition.
-function STRATEGO:GetKnotCoalition(Name)
+function STRATEGO:GetNodeCoalition(Name)
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].coalition or coalition.side.NEUTRAL
   else
@@ -697,11 +697,11 @@ function STRATEGO:GetKnotCoalition(Name)
   end
 end
 
---- [USER] Get the TYPE of a knot by its name.
+--- [USER] Get the TYPE of a node by its name.
 -- @param #STRATEGO self
 -- @param #string Name.
--- @return #string Type Type of the knot, e.g. STRATEGO.Type.AIRBASE or nil if not found.
-function STRATEGO:GetKnotType(Name)
+-- @return #string Type Type of the node, e.g. STRATEGO.Type.AIRBASE or nil if not found.
+function STRATEGO:GetNodeType(Name)
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].type
   else
@@ -709,11 +709,11 @@ function STRATEGO:GetKnotType(Name)
   end
 end
 
---- [USER] Get the ZONE of a knot by its name.
+--- [USER] Get the ZONE of a node by its name.
 -- @param #STRATEGO self
 -- @param #string Name.
--- @return Core.Zone#ZONE Zone The Zone of the knot or nil if not found.
-function STRATEGO:GetKnotZone(Name)
+-- @return Core.Zone#ZONE Zone The Zone of the node or nil if not found.
+function STRATEGO:GetNodeZone(Name)
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].zone
   else
@@ -721,11 +721,11 @@ function STRATEGO:GetKnotZone(Name)
   end
 end
 
---- [USER] Get the OPSZONE of a knot by its name.
+--- [USER] Get the OPSZONE of a node by its name.
 -- @param #STRATEGO self
 -- @param #string Name.
--- @return Ops.OpsZone#OPSZONE OpsZone The OpsZone of the knot or nil if not found.
-function STRATEGO:GetKnotOpsZone(Name)
+-- @return Ops.OpsZone#OPSZONE OpsZone The OpsZone of the node or nil if not found.
+function STRATEGO:GetNodeOpsZone(Name)
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].opszone
   else
@@ -733,11 +733,11 @@ function STRATEGO:GetKnotOpsZone(Name)
   end
 end
 
---- [USER] Get the COORDINATE of a knot by its name.
+--- [USER] Get the COORDINATE of a node by its name.
 -- @param #STRATEGO self
 -- @param #string Name.
--- @return Core.Point#COORDINATE Coordinate The Coordinate of the knot or nil if not found.
-function STRATEGO:GetKnotCoordinate(Name)
+-- @return Core.Point#COORDINATE Coordinate The Coordinate of the node or nil if not found.
+function STRATEGO:GetNodeCoordinate(Name)
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].coord
   else
@@ -745,7 +745,7 @@ function STRATEGO:GetKnotCoordinate(Name)
   end
 end
 
---- [USER] Check if the TYPE of a knot is AIRBASE.
+--- [USER] Check if the TYPE of a node is AIRBASE.
 -- @param #STRATEGO self
 -- @param #string Name.
 -- @return #boolean Outcome
@@ -757,7 +757,7 @@ function STRATEGO:IsAirbase(Name)
   end
 end
 
---- [USER] Check if the TYPE of a knot is PORT.
+--- [USER] Check if the TYPE of a node is PORT.
 -- @param #STRATEGO self
 -- @param #string Name.
 -- @return #boolean Outcome
@@ -769,7 +769,7 @@ function STRATEGO:IsPort(Name)
   end
 end
 
---- [USER] Check if the TYPE of a knot is POI.
+--- [USER] Check if the TYPE of a node is POI.
 -- @param #STRATEGO self
 -- @param #string Name.
 -- @return #boolean Outcome
@@ -781,7 +781,7 @@ function STRATEGO:IsPOI(Name)
   end
 end
 
---- [USER] Check if the TYPE of a knot is FARP.
+--- [USER] Check if the TYPE of a node is FARP.
 -- @param #STRATEGO self
 -- @param #string Name.
 -- @return #boolean Outcome
@@ -793,7 +793,7 @@ function STRATEGO:IsFARP(Name)
   end
 end
 
---- [USER] Check if the TYPE of a knot is SHIP.
+--- [USER] Check if the TYPE of a node is SHIP.
 -- @param #STRATEGO self
 -- @param #string Name.
 -- @return #boolean Outcome
@@ -805,13 +805,13 @@ function STRATEGO:IsShip(Name)
   end
 end
 
---- [USER] Get the next best consolidation target knot with a lower BaseWeight.
+--- [USER] Get the next best consolidation target node with a lower BaseWeight.
 -- @param #STRATEGO self
 -- @param #string Startpoint Name of start point.
--- @param #number BaseWeight Base weight of the knot, i.e. the number of runways of an airbase or the weight of ports or POIs.
+-- @param #number BaseWeight Base weight of the node, i.e. the number of runways of an airbase or the weight of ports or POIs.
 -- @return #number ShortestDist Shortest distance found.
--- @return #string Name Name of the target knot.
--- @return #number Weight Consolidated weight of the target knot, zero if none found.
+-- @return #string Name Name of the target node.
+-- @return #number Weight Consolidated weight of the target node, zero if none found.
 -- @return #number Coalition Coaltion of the target.
 function STRATEGO:FindClosestConsolidationTarget(Startpoint,BaseWeight)
   self:T(self.lid.."FindClosestConsolidationTarget for "..Startpoint.." Weight "..BaseWeight or 0)
@@ -842,13 +842,13 @@ function STRATEGO:FindClosestConsolidationTarget(Startpoint,BaseWeight)
   return shortest,target, weight, coa
 end
 
---- [USER] Get the next best strategic target knot with same or higher BaseWeight.
+--- [USER] Get the next best strategic target node with same or higher BaseWeight.
 -- @param #STRATEGO self
 -- @param #string Startpoint Name of start point.
--- @param #number BaseWeight Base weight of the knot, e.g. the number of runways of an airbase or the weight of ports or POIs.
+-- @param #number BaseWeight Base weight of the node, e.g. the number of runways of an airbase or the weight of ports or POIs.
 -- @return #number ShortestDist Shortest distance found.
--- @return #string Name Name of the target knot.
--- @return #number Weight Consolidated weight of the target knot, zero if none found.
+-- @return #string Name Name of the target node.
+-- @return #number Weight Consolidated weight of the target node, zero if none found.
 -- @return #number Coalition Coaltion of the target.
 function STRATEGO:FindClosestStrategicTarget(Startpoint,BaseWeight)
   self:T(self.lid.."FindClosestStrategicTarget")
@@ -876,7 +876,7 @@ function STRATEGO:FindClosestStrategicTarget(Startpoint,BaseWeight)
   return shortest,target,weight, coa
 end
 
---- [USER] Get the next best strategic target knots in the network.
+--- [USER] Get the next best strategic target nodes in the network.
 -- @param #STRATEGO self
 -- @return #table of #STRATEGO.Target data points
 function STRATEGO:FindStrategicTargets()
@@ -919,7 +919,7 @@ function STRATEGO:FindStrategicTargets()
   return targets
 end
 
---- [USER] Get the next best consolidation target knots in the network.
+--- [USER] Get the next best consolidation target nodes in the network.
 -- @param #STRATEGO self
 -- @return #table of #STRATEGO.Target data points
 function STRATEGO:FindConsolidationTargets()
@@ -964,13 +964,13 @@ function STRATEGO:FindConsolidationTargets()
   return targets
 end
 
---- [USER] Get neighbor knots of a named knot.
+--- [USER] Get neighbor nodes of a named node.
 -- @param #STRATEGO self
 -- @param #string Name The name to search the neighbors for.
 -- @param #boolean Enemies (optional) If true, find only enemy neighbors.
 -- @param #boolean Friends (optional) If true, find only friendly or neutral neighbors.
--- @return #table Neighbors Table of #STRATEGO.DistData entries indexed by neighbor knot names.
-function STRATEGO:FindNeighborKnots(Name,Enemies,Friends)
+-- @return #table Neighbors Table of #STRATEGO.DistData entries indexed by neighbor node names.
+function STRATEGO:FindNeighborNodes(Name,Enemies,Friends)
   local neighbors = {}
   local name = string.gsub(Name,"[%p%s]",".")
   for _route,_data in pairs(self.disttable) do
@@ -996,10 +996,10 @@ function STRATEGO:FindNeighborKnots(Name,Enemies,Friends)
   return neighbors
 end
 
---- [USER] Find a route between two knots.
+--- [USER] Find a route between two nodes.
 -- @param #STRATEGO self
--- @param #string Start The name of the start knot.
--- @param #string End The name of the end knot.
+-- @param #string Start The name of the start node.
+-- @param #string End The name of the end node.
 -- @param #number Hops Max iterations to find a route.
 -- @param #boolean Draw If true, draw the route on the map.
 -- @return #table Route Table of #string name entries of the route
@@ -1023,10 +1023,10 @@ function STRATEGO:FindRoute(Start,End,Hops,Draw)
   
   local function NextClosest(Start,End)
     local ecoord = self.airbasetable[End].coord
-    local knots = self:FindNeighborKnots(Start)
+    local nodes = self:FindNeighborNodes(Start)
     local closest = nil
     local closedist = 1000*1000
-    for _name,_dist in pairs(knots) do
+    for _name,_dist in pairs(nodes) do
       local kcoord = self.airbasetable[_name].coord
       local dist = math.floor((kcoord:Get2DDistance(ecoord)/1000)+0.5)
       if dist < closedist then
@@ -1052,8 +1052,8 @@ function STRATEGO:FindRoute(Start,End,Hops,Draw)
   
   -- One hop
   Route[#Route+1] = Start
-  local knots = self:FindNeighborKnots(Start)
-  local endpoint = Checker(knots)
+  local nodes = self:FindNeighborNodes(Start)
+  local endpoint = Checker(nodes)
   
   if endpoint then
     Route[#Route+1] = endpoint
@@ -1064,8 +1064,8 @@ function STRATEGO:FindRoute(Start,End,Hops,Draw)
       local Next = NextClosest(spoint,End)
       if Next then
         Route[#Route+1] = Next
-        local knots = self:FindNeighborKnots(Next)
-        local endpoint = Checker(knots)
+        local nodes = self:FindNeighborNodes(Next)
+        local endpoint = Checker(nodes)
         if endpoint then
           Route[#Route+1] = endpoint
           routecomplete = true
