@@ -85,6 +85,7 @@ __Moose.Include( 'Scripts/Moose/Functional/ZoneGoal.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/ZoneGoalCargo.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/ZoneGoalCoalition.lua' )
 __Moose.Include( 'Scripts/Moose/Functional/Tiresias.lua' )
+__Moose.Include( 'Scripts/Moose/Functional/Stratego.lua' )
 
 __Moose.Include( 'Scripts/Moose/Ops/Airboss.lua' )
 __Moose.Include( 'Scripts/Moose/Ops/AirWing.lua' )

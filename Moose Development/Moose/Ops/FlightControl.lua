@@ -12,7 +12,7 @@
 --
 -- ## Example Missions:
 --
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/OPS%20-%20FlightControl).
+-- Demo missions: None
 --
 -- ===
 --
@@ -949,7 +949,7 @@ end
 
 --- Set ATIS.
 -- @param #FLIGHTCONTROL self
--- @param Ops.Atis#ATIS Atis ATIS.
+-- @param Ops.ATIS#ATIS ATIS ATIS.
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetATIS(Atis)
   self.atis=Atis

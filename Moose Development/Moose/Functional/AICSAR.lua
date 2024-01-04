@@ -16,9 +16,9 @@
 -- ===
 --
 -- ## Example Missions:
--- 
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/CSR-001%20-%20Basics).
---       
+--
+-- Demo missions can be found on [GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Functional/AICSAR).
+--
 -- ===
 -- 
 -- ### Author: **Applevangelist**

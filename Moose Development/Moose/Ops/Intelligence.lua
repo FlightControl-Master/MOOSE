@@ -1106,7 +1106,7 @@ function INTEL:CreateDetectedItems(DetectedGroups, DetectedStatics, RecceDetecti
   return self
 end
 
---- (Internal) Return the detected target groups of the controllable as a @{SET_GROUP}.
+--- (Internal) Return the detected target groups of the controllable as a @{Core.Set#SET_GROUP}.
 -- The optional parameters specify the detection methods that can be applied.
 -- If no detection method is given, the detection will use all the available methods by default.
 -- @param #INTEL self

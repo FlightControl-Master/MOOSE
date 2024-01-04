@@ -950,7 +950,7 @@ end
 -- @param #string Region Region to use.
 -- @return #MSRS.ProviderOptions Provider optionas table.
 function MSRS._CreateProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
-  self:F( {Provider, CredentialsFile, AccessKey, SecretKey, Region} )
+  BASE:F( {Provider, CredentialsFile, AccessKey, SecretKey, Region} )
   local option={} --#MSRS.ProviderOptions
 
   option.provider=Provider
