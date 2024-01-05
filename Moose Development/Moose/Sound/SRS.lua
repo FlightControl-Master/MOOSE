@@ -1217,7 +1217,7 @@ function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture
       self:_ExecCommand(command)
 
     elseif self.backend==MSRS.Backend.GRPC then
-      BASE:I("MSRS.Backend.GRPC")
+      --BASE:I("MSRS.Backend.GRPC")
 
       self:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate)
 
