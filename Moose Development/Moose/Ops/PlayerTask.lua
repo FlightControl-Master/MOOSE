@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update Oct 2023
+-- @date Last Update Jan 2024
 
 
 do
@@ -1552,7 +1552,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.63"
+PLAYERTASKCONTROLLER.version="0.1.64"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -4005,9 +4005,10 @@ end
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
 -- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
+-- @param #string AccessKey Your Google API access key. This is necessary if DCS-gRPC is used as backend.
 -- @param Core.Point#COORDINATE Coordinate Coordinate from which the controller radio is sending
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,Coordinate)
+function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Coordinate)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
   self.Gender = Gender or "male" --
@@ -4015,6 +4016,7 @@ function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Cultu
   self.Port = Port or 5002 --
   self.Voice = Voice --
   self.PathToGoogleKey = PathToGoogleKey --
+  self.AccessKey = AccessKey
   self.Volume = Volume or 1.0 --
   self.UseSRS = true
   self.Frequency = Frequency or {127,251} --
@@ -4022,15 +4024,17 @@ function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Cultu
   self.Modulation = Modulation or {radio.modulation.FM,radio.modulation.AM} --
   self.BCModulation = self.Modulation
   -- set up SRS 
-  self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation,self.Volume)
+  self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation)
   self.SRS:SetCoalition(self.Coalition)
   self.SRS:SetLabel(self.MenuName or self.Name)
   self.SRS:SetGender(self.Gender)
   self.SRS:SetCulture(self.Culture)
   self.SRS:SetPort(self.Port)
   self.SRS:SetVoice(self.Voice)
+  self.SRS:SetVolume(self.Volume)
   if self.PathToGoogleKey then
-    self.SRS:SetGoogle(self.PathToGoogleKey)
+    --self.SRS:SetGoogle(self.PathToGoogleKey)
+    self.SRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
   end
   if Coordinate then
     self.SRS:SetCoordinate(Coordinate)
