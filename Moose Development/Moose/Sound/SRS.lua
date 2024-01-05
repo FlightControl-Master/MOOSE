@@ -1196,8 +1196,8 @@ end
 -- @param Core.Point#COORDINATE Coordinate Coordinate.
 -- @return #MSRS self
 function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
-  self:T(( {Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate} )
-  self:T((self.lid.."Backend "..self.backend)
+  self:T({Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate} )
+
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
   else
