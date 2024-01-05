@@ -516,8 +516,20 @@ end
 -- @return #MSRS self
 function MSRS:SetBackend(Backend)
   self:F( {Backend=Backend} )
-  self.backend=Backend or MSRS.Backend.SRSEXE
-
+  Backend = Backend or MSRS.Backend.SRSEXE -- avoid nil
+  local function Checker(back)
+    local ok = false
+    for _,_backend in pairs(MSRS.Backend) do
+      if tostring(back) == _backend then ok = true end
+    end
+    return ok
+  end
+  
+  if Checker(Backend) then  
+    self.backend=Backend or MSRS.Backend.SRSEXE  
+  else    
+    MESSAGE:New("ERROR: Backend "..tostring(Backend).." is not supported!",30,"MSRS",true):ToLog():ToAll()    
+  end 
   return self
 end
 
