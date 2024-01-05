@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update Nov 2023
+-- @date Last Update Jan 2024
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -507,7 +507,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.59", -- #string
+  version = "0.2.60", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -1405,15 +1405,17 @@ function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval,Number)
     self.TacticalFrequencies[freq] = freq
   end
   if self.AwacsSRS then
-    self.TacticalSRS = MSRS:New(self.PathToSRS,self.TacticalBaseFreq,self.TacticalModulation,self.Volume)
+    self.TacticalSRS = MSRS:New(self.PathToSRS,self.TacticalBaseFreq,self.TacticalModulation)
     self.TacticalSRS:SetCoalition(self.coalition)
     self.TacticalSRS:SetGender(self.Gender)
     self.TacticalSRS:SetCulture(self.Culture)
     self.TacticalSRS:SetVoice(self.Voice)
     self.TacticalSRS:SetPort(self.Port)
     self.TacticalSRS:SetLabel("AWACS")
+    self.TacticalSRS:SetVolume(self.Volume)
     if self.PathToGoogleKey then
-      self.TacticalSRS:SetGoogle(self.PathToGoogleKey)
+      --self.TacticalSRS:SetGoogle(self.PathToGoogleKey)
+      self.TacticalSRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
     end
     self.TacticalSRSQ = MSRSQUEUE:New("Tactical AWACS")
   end
@@ -2079,8 +2081,9 @@ end
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
 -- @param #number Volume Volume - between 0.0 (silent) and 1.0 (loudest)
 -- @param #string PathToGoogleKey Path to your google key if you want to use google TTS
+-- @param #string AccessKey Your Google API access key. This is necessary if DCS-gRPC is used as backend.
 -- @return #AWACS self
-function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
+function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
   self.Gender = Gender or "male"
@@ -2088,17 +2091,20 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey
   self.Port = Port or 5002
   self.Voice = Voice 
   self.PathToGoogleKey = PathToGoogleKey
+  self.AccessKey = AccessKey
   self.Volume = Volume or 1.0
   
-  self.AwacsSRS = MSRS:New(self.PathToSRS,self.MultiFrequency,self.MultiModulation,self.Volume)
+  self.AwacsSRS = MSRS:New(self.PathToSRS,self.MultiFrequency,self.MultiModulation)
   self.AwacsSRS:SetCoalition(self.coalition)
   self.AwacsSRS:SetGender(self.Gender)
   self.AwacsSRS:SetCulture(self.Culture)
   self.AwacsSRS:SetVoice(self.Voice)
   self.AwacsSRS:SetPort(self.Port)
   self.AwacsSRS:SetLabel("AWACS")
+  self.AwacsSRS:SetVolume(Volume)
   if self.PathToGoogleKey then
-    self.AwacsSRS:SetGoogle(self.PathToGoogleKey)
+    --self.AwacsSRS:SetGoogle(self.PathToGoogleKey)
+    self.AwacsSRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
   end
   
   return self
@@ -6595,7 +6601,7 @@ function AWACS:onafterCheckTacticalQueue(From,Event,To)
     if self.PathToGoogleKey then
       gtext = string.format("<speak><prosody rate='medium'>%s</prosody></speak>",gtext)
     end
-    self.TacticalSRSQ:NewTransmission(gtext,nil,self.TacticalSRS,nil,0.5,nil,nil,nil,frequency,self.TacticalModulation,nil,nil,nil,nil,nil)
+    self.TacticalSRSQ:NewTransmission(gtext,nil,self.TacticalSRS,nil,0.5,nil,nil,nil,frequency,self.TacticalModulation)
   
     self:T(RadioEntry.TextTTS)
     
