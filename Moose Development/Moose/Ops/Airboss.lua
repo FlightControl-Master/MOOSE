@@ -3072,6 +3072,7 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   self.SRS:SetPort(Port or 5002)
   self.SRS:SetLabel(self.AirbossRadio.alias or "AIRBOSS")
   self.SRS:SetCoordinate(self.carrier:GetCoordinate())
+  self.SRS:SetVolume(Volume)
   --self.SRS:SetModulations(Modulations)
   if GoogleCreds then
     self.SRS:SetGoogle(GoogleCreds)
