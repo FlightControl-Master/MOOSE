@@ -574,7 +574,7 @@ function AICSAR:SetSRSTTSRadio(OnOff,Path,Frequency,Modulation,Port,Voice,Cultur
   self.SRSModulation = Modulation or radio.modulation.AM
   self.SRSPort = Port or 5002
   if OnOff then
-    self.SRS = MSRS:New(Path,Frequency,Modulation,1)
+    self.SRS = MSRS:New(Path,Frequency,Modulation)
     self.SRS:SetPort(self.SRSPort)
     self.SRS:SetCoalition(self.coalition)
     self.SRS:SetLabel("ACSR")
@@ -600,7 +600,7 @@ end
 function AICSAR:SetPilotTTSVoice(Voice,Culture,Gender)
  self:T(self.lid .. "SetPilotTTSVoice")
  self.SRSPilotVoice = true
- self.SRSPilot = MSRS:New(self.SRSPath,self.SRSFrequency,self.SRSModulation,1)
+ self.SRSPilot = MSRS:New(self.SRSPath,self.SRSFrequency,self.SRSModulation)
  self.SRSPilot:SetCoalition(self.coalition)
  self.SRSPilot:SetVoice(Voice)
  self.SRSPilot:SetCulture(Culture or "en-US")
@@ -624,7 +624,7 @@ end
 function AICSAR:SetOperatorTTSVoice(Voice,Culture,Gender)
  self:T(self.lid .. "SetOperatorTTSVoice")
  self.SRSOperatorVoice = true
- self.SRSOperator = MSRS:New(self.SRSPath,self.SRSFrequency,self.SRSModulation,1)
+ self.SRSOperator = MSRS:New(self.SRSPath,self.SRSFrequency,self.SRSModulation)
  self.SRSOperator:SetCoalition(self.coalition)
  self.SRSOperator:SetVoice(Voice)
  self.SRSOperator:SetCulture(Culture or "en-GB")
