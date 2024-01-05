@@ -42,6 +42,7 @@
 -- @field #number CaptureUnits
 -- @field #number CaptureThreatlevel
 -- @extends Core.Base#BASE
+-- @extends Core.Fsm#FSM
 
 
 --- *If you see what is right and fail to act on it, you lack courage* --- Confucius
@@ -175,7 +176,7 @@ STRATEGO = {
   debug = false,
   drawzone = false,
   markzone = false,
-  version = "0.2.1",
+  version = "0.2.2",
   portweight = 3,
   POIweight = 1,
   maxrunways = 3,
@@ -244,8 +245,8 @@ STRATEGO.Type = {
 -- @param #number MaxDist Maximum distance of a single route in kilometers, defaults to 150.
 -- @return #STRATEGO self 
 function STRATEGO:New(Name,Coalition,MaxDist)
-  -- Inherit everything from BASE class.
-  local self = BASE:Inherit(self, BASE:New()) -- #STRATEGO
+  -- Inherit everything from FSM class.
+  local self = BASE:Inherit(self, FSM:New()) -- #STRATEGO
   
   self.coalition = Coalition
   self.coalitiontext = UTILS.GetCoalitionName(Coalition)
@@ -267,14 +268,56 @@ function STRATEGO:New(Name,Coalition,MaxDist)
       [3] = {0,0,1}, -- blue
       [4] = {1,0.65,0}, -- orange
     }
- 
+  
+    -- Start State.
+  self:SetStartState("Stopped")
+
+  -- Add FSM transitions.
+  --                 From State  -->   Event        -->      To State
+  self:AddTransition("Stopped",       "Start",               "Running")     -- Start FSM.
+  self:AddTransition("*",             "Update",              "*")           -- Start FSM.
+  self:AddTransition("*",             "NodeEvent",           "*")           -- Start FSM.
+  self:AddTransition("Running",       "Stop",                "Stopped")     -- Start FSM.
+  
+  ------------------------
+  --- Pseudo Functions ---
+  ------------------------
+  
+  --- Triggers the FSM event "Start". Starts the STRATEGO. Initializes parameters and starts event handlers.
+  -- @function [parent=#STRATEGO] Start
+  -- @param #STRATEGO self
+
+  --- Triggers the FSM event "Start" after a delay. Starts the STRATEGO. Initializes parameters and starts event handlers.
+  -- @function [parent=#STRATEGO] __Start
+  -- @param #STRATEGO self
+  -- @param #number delay Delay in seconds.
+
+  --- Triggers the FSM event "Stop". Stops the STRATEGO and all its event handlers.
+  -- @function [parent=#STRATEGO] Stop
+  -- @param #STRATEGO self
+
+  --- Triggers the FSM event "Stop" after a delay. Stops the STRATEGO and all its event handlers.
+  -- @function [parent=#STRATEGO] __Stop
+  -- @param #STRATEGO self
+  -- @param #number delay Delay in seconds.
+  
+  --- FSM Function OnAfterNodeEvent. A node changed coalition.
+  -- @function [parent=#STRATEGO] OnAfterNodeEvent
+  -- @param #STRATEGO self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Ops.OpsZone#OPSZONE OpsZone The OpsZone triggering the event.
+  -- @param #number Coalition The coalition of the new owner.
+  -- @return #STRATEGO self
+  
   return self
 end
 
---- [USER] Do initial setup and get ready.
+--- [INTERNAL] FSM function for initial setup and getting ready.
 -- @param #STRATEGO self
 -- @return #STRATEGO self
-function STRATEGO:Start()
+function STRATEGO:onafterStart(From,Event,To)
   self:T(self.lid.."Start")
   self:AnalyseBases()
   self:AnalysePOIs(self.ports,self.portweight,"PORT")
@@ -282,12 +325,27 @@ function STRATEGO:Start()
   
   for i=self.maxrunways,1,-1 do
   self:AnalyseRoutes(i,i*self.routefactor,self.colors[(i%3)+1],i)
-  --self:AnalyseRoutes(2,2*self.routefactor,self.colors[2],2)
-  --self:AnalyseRoutes(1,1*self.routefactor,self.colors[3],3)
   end
   self:AnalyseUnconnected(self.colors[4])
       
   self:I(self.lid.."Advisory ready.")
+  
+  self:__Update(180)
+  return self
+end
+
+--- [INTERNAL] Update knot association
+-- @param #STRATEGO self
+-- @return #STRATEGO self
+function STRATEGO:onafterUpdate(From,Event,To)
+  self:T(self.lid.."Update")
+  
+  self:UpdateNodeCoalitions()
+  
+  if self:GetState() == "Running" then
+    self:__Update(180)
+  end
+  
   return self
 end
 
@@ -308,6 +366,7 @@ end
 -- @param #boolean DrawZones If true, draw the OpsZones on the F10 map.
 -- @param #boolean MarkZones if true, mark the OpsZones on the F10 map (with further information).
 function STRATEGO:SetDebug(Debug,DrawZones,MarkZones)
+  self:T(self.lid.."SetDebug")
   self.debug = Debug
   self.drawzone = DrawZones
   self.markzone = MarkZones
@@ -322,6 +381,7 @@ end
 -- @param #number RouteFactor Defines which weight each route between two defined nodes gets: Weight * RouteFactor.
 -- @return #STRATEGO self
 function STRATEGO:SetWeights(MaxRunways,PortWeight,POIWeight,RouteFactor)
+  self:T(self.lid.."SetWeights")
   self.portweight = PortWeight or 3
   self.POIweight = POIWeight or 1
   self.maxrunways = MaxRunways or 3
@@ -334,6 +394,7 @@ end
 -- @param #number NeutralBenefit Pointsm defaults to 100.
 -- @return #STRATEGO self
 function STRATEGO:SetNeutralBenefit(NeutralBenefit)
+  self:T(self.lid.."SetNeutralBenefit")
   self.NeutralBenefit = NeutralBenefit or 100
   return self
 end
@@ -344,6 +405,7 @@ end
 -- @param #number CaptureThreatlevel Threat level needed, can be 0..10, defaults to one.
 -- @return #STRATEGO self
 function STRATEGO:SetCaptureOptions(CaptureUnits,CaptureThreatlevel)
+  self:T(self.lid.."SetCaptureOptions")
   self.CaptureUnits = CaptureUnits or 3
   self.CaptureThreatlevel = CaptureThreatlevel or 1
   return self
@@ -438,6 +500,15 @@ function STRATEGO:GetNewOpsZone(Zone,Coalition)
   opszone:SetDrawZone(self.drawzone)
   opszone:SetMarkZone(self.markzone)
   opszone:Start()
+  
+  local function Captured(opszone,coalition)
+    self:__NodeEvent(1,opszone,coalition)
+  end
+  
+  function opszone:OnBeforeCaptured(From,Event,To,Coalition)
+    Captured(opszone,Coalition)
+  end
+  
   return opszone
 end
 
@@ -502,6 +573,7 @@ end
 -- @param #boolean Draw (Optional) If true, draw route on the F10 map. Defaukt false.
 -- @return #STRATEGO self
 function STRATEGO:AddRoutesManually(Startpoint,Endpoint,Color,Linetype,Draw)
+  self:T(self.lid.."AddRoutesManually")
   local fromto,tofrom = self:GetToFrom(Startpoint,Endpoint)
   local startcoordinate = self.airbasetable[Startpoint].coord
   local targetcoordinate = self.airbasetable[Endpoint].coord
@@ -631,7 +703,7 @@ end
 -- @return #table Table of nodes.
 -- @return #number Weight The consolidated weight associated with the nodes.
 function STRATEGO:GetHighestWeightNodes()
-  self:T(self.lid.."GetHighestWeightBases")
+  self:T(self.lid.."GetHighestWeightNodes")
   local weight = 0
   local airbases = {}
   for _name,_data in pairs(self.airbasetable) do
@@ -649,7 +721,7 @@ end
 -- @return #table Table of nodes.
 -- @return #number Weight The consolidated weight associated with the nodes.
 function STRATEGO:GetNextHighestWeightNodes(Weight)
-  self:T(self.lid.."GetNextHighestWeightBases")
+  self:T(self.lid.."GetNextHighestWeightNodes")
   local weight = 0
   local airbases = {}
   for _name,_data in pairs(self.airbasetable) do
@@ -667,6 +739,7 @@ end
 -- @param #string Name.
 -- @return #number Weight The weight or 0 if not found.
 function STRATEGO:GetNodeWeight(Name)
+  self:T(self.lid.."GetNodeWeight")
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].weight or 0
   else
@@ -679,6 +752,7 @@ end
 -- @param #string Name.
 -- @return #number Weight The base weight or 0 if not found.
 function STRATEGO:GetNodeBaseWeight(Name)
+  self:T(self.lid.."GetNodeBaseWeight")
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].baseweight or 0
   else
@@ -691,6 +765,7 @@ end
 -- @param #string Name.
 -- @return #number Coalition The coalition.
 function STRATEGO:GetNodeCoalition(Name)
+  self:T(self.lid.."GetNodeCoalition")
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].coalition or coalition.side.NEUTRAL
   else
@@ -703,6 +778,7 @@ end
 -- @param #string Name.
 -- @return #string Type Type of the node, e.g. STRATEGO.Type.AIRBASE or nil if not found.
 function STRATEGO:GetNodeType(Name)
+  self:T(self.lid.."GetNodeType")
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].type
   else
@@ -715,6 +791,7 @@ end
 -- @param #string Name.
 -- @return Core.Zone#ZONE Zone The Zone of the node or nil if not found.
 function STRATEGO:GetNodeZone(Name)
+  self:T(self.lid.."GetNodeZone")
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].zone
   else
@@ -727,6 +804,7 @@ end
 -- @param #string Name.
 -- @return Ops.OpsZone#OPSZONE OpsZone The OpsZone of the node or nil if not found.
 function STRATEGO:GetNodeOpsZone(Name)
+  self:T(self.lid.."GetNodeOpsZone")
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].opszone
   else
@@ -739,6 +817,7 @@ end
 -- @param #string Name.
 -- @return Core.Point#COORDINATE Coordinate The Coordinate of the node or nil if not found.
 function STRATEGO:GetNodeCoordinate(Name)
+  self:T(self.lid.."GetNodeCoordinate")
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].coord
   else
@@ -751,6 +830,7 @@ end
 -- @param #string Name.
 -- @return #boolean Outcome
 function STRATEGO:IsAirbase(Name)
+  self:T(self.lid.."IsAirbase")
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].type == STRATEGO.Type.AIRBASE
   else
@@ -763,6 +843,7 @@ end
 -- @param #string Name.
 -- @return #boolean Outcome
 function STRATEGO:IsPort(Name)
+  self:T(self.lid.."IsPort")
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].type == STRATEGO.Type.PORT
   else
@@ -775,6 +856,7 @@ end
 -- @param #string Name.
 -- @return #boolean Outcome
 function STRATEGO:IsPOI(Name)
+  self:T(self.lid.."IsPOI")
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].type == STRATEGO.Type.POI
   else
@@ -787,6 +869,7 @@ end
 -- @param #string Name.
 -- @return #boolean Outcome
 function STRATEGO:IsFARP(Name)
+  self:T(self.lid.."IsFARP")
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].type == STRATEGO.Type.FARP
   else
@@ -799,6 +882,7 @@ end
 -- @param #string Name.
 -- @return #boolean Outcome
 function STRATEGO:IsShip(Name)
+  self:T(self.lid.."IsShip")
   if Name and self.airbasetable[Name] then
     return self.airbasetable[Name].type == STRATEGO.Type.SHIP
   else
@@ -881,6 +965,7 @@ end
 -- @param #STRATEGO self
 -- @return #table of #STRATEGO.Target data points
 function STRATEGO:FindStrategicTargets()
+  self:T(self.lid.."FindStrategicTargets")
   local targets = {}
   for _,_data in pairs(self.airbasetable) do
     local data = _data -- #STRATEGO.Data
@@ -924,6 +1009,7 @@ end
 -- @param #STRATEGO self
 -- @return #table of #STRATEGO.Target data points
 function STRATEGO:FindConsolidationTargets()
+  self:T(self.lid.."FindConsolidationTargets")
   local targets = {}
   for _,_data in pairs(self.airbasetable) do
     local data = _data -- #STRATEGO.Data
@@ -972,6 +1058,7 @@ end
 -- @param #boolean Friends (optional) If true, find only friendly or neutral neighbors.
 -- @return #table Neighbors Table of #STRATEGO.DistData entries indexed by neighbor node names.
 function STRATEGO:FindNeighborNodes(Name,Enemies,Friends)
+  self:T(self.lid.."FindNeighborNodes")
   local neighbors = {}
   local name = string.gsub(Name,"[%p%s]",".")
   for _route,_data in pairs(self.disttable) do
@@ -1008,7 +1095,8 @@ end
 -- @return #table Route Table of #string name entries of the route
 -- @return #boolean Complete If true, the route was found end-to-end.
 function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType)
-  self:I({Start,End,Hops})
+  self:T(self.lid.."FindRoute")
+  --self:I({Start,End,Hops})
   --local bases = UTILS.DeepCopy(self.airbasetable)
   local Route = {}  
   local hops = Hops or 4
@@ -1090,6 +1178,7 @@ end
 -- @param #number Number of points to add.
 -- @return #STRATEGO self
 function STRATEGO:AddBudget(Number)
+  self:T(self.lid.."AddBudget")
   self.Budget = self.Budget + Number
   return self
 end
@@ -1099,6 +1188,7 @@ end
 -- @param #number Number of points to subtract.
 -- @return #STRATEGO self
 function STRATEGO:SubtractBudget(Number)
+  self:T(self.lid.."SubtractBudget")
   self.Budget = self.Budget - Number
   return self
 end
@@ -1107,6 +1197,7 @@ end
 -- @param #STRATEGO self
 -- @return #number budget
 function STRATEGO:GetBudget()
+  self:T(self.lid.."GetBudget")
   return self.Budget
 end
 
@@ -1114,6 +1205,7 @@ end
 -- @param #STRATEGO self
 -- @return #table Target Table with #STRATEGO.Target data or nil if none found.
 function STRATEGO:FindAffordableStrategicTarget()
+  self:T(self.lid.."FindAffordableStrategicTarget")
   local targets = self:FindStrategicTargets() -- #table of #STRATEGO.Target
   local budget = self.Budget
   --local leftover = self.Budget
@@ -1145,6 +1237,7 @@ end
 -- @param #STRATEGO self
 -- @return #table Target Table with #STRATEGO.Target data or nil if none found.
 function STRATEGO:FindAffordableConsolidationTarget()
+  self:T(self.lid.."FindAffordableConsolidationTarget")
   local targets = self:FindConsolidationTargets() -- #table of #STRATEGO.Target
   local budget = self.Budget
   --local leftover = self.Budget
