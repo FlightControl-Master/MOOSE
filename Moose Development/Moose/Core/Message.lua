@@ -480,7 +480,7 @@ _MESSAGESRS = {}
 --          MESSAGE:New("Test message!",15,"SPAWN"):ToSRS()
 --          
 function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,Gender,Culture,Voice,Coalition,Volume,Label,Coordinate)
-  _MESSAGESRS.MSRS = MSRS:New(PathToSRS,Frequency or 243,Modulation or radio.modulation.AM,Volume)
+  _MESSAGESRS.MSRS = MSRS:New(PathToSRS,Frequency or 243,Modulation or radio.modulation.AM)
   
   _MESSAGESRS.frequency = Frequency
   _MESSAGESRS.modulation = Modulation or radio.modulation.AM
@@ -497,7 +497,7 @@ function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,G
   _MESSAGESRS.MSRS:SetGender(Gender)
   _MESSAGESRS.Gender = Gender or "female"
 
-  _MESSAGESRS.MSRS:SetGoogle(PathToCredentials)
+  _MESSAGESRS.MSRS:SetProviderOptionsGoogle(PathToCredentials)
 
   _MESSAGESRS.MSRS:SetLabel(Label or "MESSAGE")
   _MESSAGESRS.label = Label or "MESSAGE"
@@ -543,7 +543,7 @@ function MESSAGE:ToSRS(frequency,modulation,gender,culture,voice,coalition,volum
         _MESSAGESRS.MSRS:SetCoordinate(coordinate)  
       end
       local category = string.gsub(self.MessageCategory,":","")
-      _MESSAGESRS.SRSQ:NewTransmission(self.MessageText,nil,_MESSAGESRS.MSRS,nil,nil,nil,nil,nil,frequency or _MESSAGESRS.frequency,modulation or _MESSAGESRS.modulation, gender or _MESSAGESRS.Gender,culture or _MESSAGESRS.Culture,nil,volume or _MESSAGESRS.volume,category,coordinate or _MESSAGESRS.coordinate)
+      _MESSAGESRS.SRSQ:NewTransmission(self.MessageText,nil,_MESSAGESRS.MSRS,0.5,1,nil,nil,nil,frequency or _MESSAGESRS.frequency,modulation or _MESSAGESRS.modulation, gender or _MESSAGESRS.Gender,culture or _MESSAGESRS.Culture,nil,volume or _MESSAGESRS.volume,category,coordinate or _MESSAGESRS.coordinate)
   end
   return self
 end
