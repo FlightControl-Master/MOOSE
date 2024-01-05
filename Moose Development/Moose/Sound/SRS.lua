@@ -1844,7 +1844,7 @@ end
 -- @param #MSRSQUEUE self
 -- @return #MSRSQUEUE self The MSRSQUEUE object.
 function MSRSQUEUE:Clear()
-  self:T((self.lid.."Clearing MSRSQUEUE")
+  self:T(self.lid.."Clearing MSRSQUEUE")
   self.queue={}
   return self
 end
@@ -1958,7 +1958,7 @@ end
 -- @param #MSRSQUEUE self
 -- @param #MSRSQUEUE.Transmission transmission The transmission.
 function MSRSQUEUE:Broadcast(transmission)
-  self:T((self.lid.."Broadcast")
+  self:T(self.lid.."Broadcast")
   
   if transmission.frequency then
     transmission.msrs:PlayTextExt(transmission.text, nil, transmission.frequency, transmission.modulation, transmission.gender, transmission.culture, transmission.voice, transmission.volume, transmission.label, transmission.coordinate)
@@ -2128,7 +2128,7 @@ function MSRSQUEUE:_CheckRadioQueue(delay)
     -- Found a new transmission.
     if next~=nil and not playing then
       -- Debug info.
-      self:T((self.lid..string.format("Broadcasting text=\"%s\" at T=%.3f", next.text, time))
+      self:T(self.lid..string.format("Broadcasting text=\"%s\" at T=%.3f", next.text, time))
 
       -- Call SRS.
       self:Broadcast(next)
