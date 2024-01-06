@@ -176,7 +176,7 @@ STRATEGO = {
   debug = false,
   drawzone = false,
   markzone = false,
-  version = "0.2.2",
+  version = "0.2.3",
   portweight = 3,
   POIweight = 1,
   maxrunways = 3,
@@ -431,6 +431,9 @@ function STRATEGO:AnalyseBases()
       local numrwys = #runways
       if numrwys >= 1 then numrwys = numrwys * 0.5 end    
       local abzone = ab:GetZone()
+      if not abzone then 
+        abzone = ZONE_RADIUS:New(abname,ab:GetVec2(),500)
+      end
       local coa = ab:GetCoalition() + 1
       local abtype = "AIRBASE"
       if ab:IsShip() then
@@ -441,7 +444,7 @@ function STRATEGO:AnalyseBases()
         numrwys = 1
         abtype = "FARP"
       end
-      local coord = abzone:GetCoordinate()
+      local coord = ab:GetCoordinate()
       if debug then
         abzone:DrawZone(-1,colors[coa],1,colors[coa],0.3,1)
         coord:TextToAll(tostring(numrwys),-1,{0,0,0},1,colors[coa],0.3,20)

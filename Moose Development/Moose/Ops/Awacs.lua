@@ -2071,7 +2071,7 @@ function AWACS:AddGroupToDetection(Group)
   return self
 end
 
---- [User] Set AWACS SRS TTS details - see @{Sound.SRS} for details
+--- [User] Set AWACS SRS TTS details - see @{Sound.SRS} for details. `SetSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
 -- @param #AWACS self
 -- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
 -- @param #string Gender Defaults to "male"
@@ -2080,16 +2080,16 @@ end
 -- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS#SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
 -- @param #number Volume Volume - between 0.0 (silent) and 1.0 (loudest)
--- @param #string PathToGoogleKey Path to your google key if you want to use google TTS
--- @param #string AccessKey Your Google API access key. This is necessary if DCS-gRPC is used as backend.
+-- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS; if you use a config file for MSRS, hand in nil here.
+-- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
 -- @return #AWACS self
 function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey)
   self:T(self.lid.."SetSRS")
-  self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
-  self.Gender = Gender or "male"
-  self.Culture = Culture or "en-US"
-  self.Port = Port or 5002
-  self.Voice = Voice 
+  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone" 
+  self.Gender = Gender or MSRS.gender or "male"
+  self.Culture = Culture or MSRS.culture or "en-US"
+  self.Port = Port or MSRS.port or 5002
+  self.Voice = Voice or MSRS.voice
   self.PathToGoogleKey = PathToGoogleKey
   self.AccessKey = AccessKey
   self.Volume = Volume or 1.0
@@ -2098,7 +2098,6 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey
   self.AwacsSRS:SetCoalition(self.coalition)
   self.AwacsSRS:SetGender(self.Gender)
   self.AwacsSRS:SetCulture(self.Culture)
-  self.AwacsSRS:SetVoice(self.Voice)
   self.AwacsSRS:SetPort(self.Port)
   self.AwacsSRS:SetLabel("AWACS")
   self.AwacsSRS:SetVolume(Volume)
@@ -2106,7 +2105,13 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey
     --self.AwacsSRS:SetGoogle(self.PathToGoogleKey)
     self.AwacsSRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
   end
-  
+   -- Pre-configured Google?
+  if self.AwacsSRS:GetProvider() == MSRS.Provider.GOOGLE then
+    self.PathToGoogleKey = MSRS.poptions.gcloud.credentials
+    self.Voice = Voice or MSRS.poptions.gcloud.voice
+    self.AccessKey = AccessKey or MSRS.poptions.gcloud.key
+  end
+  self.AwacsSRS:SetVoice(self.Voice)
   return self
 end
 
@@ -3669,7 +3674,7 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
       CAPVoice = self.CapVoices[math.floor(math.random(1,10))]
     end
     
-    FlightGroup:SetSRS(self.PathToSRS,self.CAPGender,self.CAPCulture,CAPVoice,self.Port,self.PathToGoogleKey,"FLIGHT")
+    FlightGroup:SetSRS(self.PathToSRS,self.CAPGender,self.CAPCulture,CAPVoice,self.Port,self.PathToGoogleKey,"FLIGHT",1)
     
     local checkai = self.gettext:GetEntry("CHECKINAI",self.locale)
     text = string.format(checkai,self.callsigntxt, managedgroup.CallSign, self.CAPTimeOnStation, self.AOName)
