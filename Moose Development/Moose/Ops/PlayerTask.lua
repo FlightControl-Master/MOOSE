@@ -3993,7 +3993,7 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
   return self
 end
 
---- [User] Set SRS TTS details - see @{Sound.SRS} for details
+--- [User] Set SRS TTS details - see @{Sound.SRS} for details.`SetSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}. There needs to be exactly the same number of modulations!
 -- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
@@ -4004,17 +4004,17 @@ end
 -- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS#SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
 -- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
--- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
--- @param #string AccessKey Your Google API access key. This is necessary if DCS-gRPC is used as backend.
+-- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS; if you use a config file for MSRS, hand in nil here.
+-- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
 -- @param Core.Point#COORDINATE Coordinate Coordinate from which the controller radio is sending
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Coordinate)
   self:T(self.lid.."SetSRS")
-  self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
-  self.Gender = Gender or "male" --
-  self.Culture = Culture or "en-US" --
-  self.Port = Port or 5002 --
-  self.Voice = Voice --
+  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
+  self.Gender = Gender or MSRS.gender or "male" --
+  self.Culture = Culture or MSRS.culture or "en-US" --
+  self.Port = Port or MSRS.port or 5002 --
+  self.Voice = Voice or MSRS.voice
   self.PathToGoogleKey = PathToGoogleKey --
   self.AccessKey = AccessKey
   self.Volume = Volume or 1.0 --
@@ -4030,15 +4030,21 @@ function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Cultu
   self.SRS:SetGender(self.Gender)
   self.SRS:SetCulture(self.Culture)
   self.SRS:SetPort(self.Port)
-  self.SRS:SetVoice(self.Voice)
   self.SRS:SetVolume(self.Volume)
   if self.PathToGoogleKey then
     --self.SRS:SetGoogle(self.PathToGoogleKey)
     self.SRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
   end
+   -- Pre-configured Google?
+  if self.SRS:GetProvider() == MSRS.Provider.GOOGLE then
+    self.PathToGoogleKey = MSRS.poptions.gcloud.credentials
+    self.Voice = Voice or MSRS.poptions.gcloud.voice
+    self.AccessKey = AccessKey or MSRS.poptions.gcloud.key
+  end
   if Coordinate then
     self.SRS:SetCoordinate(Coordinate)
   end
+  self.SRS:SetVoice(self.Voice)
   self.SRSQueue = MSRSQUEUE:New(self.MenuName or self.Name)
   self.SRSQueue:SetTransmitOnlyWithPlayers(self.TransmitOnlyWithPlayers)
   return self
