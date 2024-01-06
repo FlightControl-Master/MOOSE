@@ -1343,9 +1343,17 @@ function DATABASE:_RegisterAirbase(airbase)
 
     -- Unique ID.
     local airbaseUID=airbase:GetID(true)
-
+    
+    local typename = airbase:GetTypeName()
+    
+    local category = airbase.category
+    
+    if category == Airbase.Category.SHIP and typename == "FARP_SINGLE_01" then
+      category = Airbase.Category.HELIPAD
+    end
+    
     -- Debug output.
-    local text=string.format("Register %s: %s (UID=%d), Runways=%d, Parking=%d [", AIRBASE.CategoryName[airbase.category], tostring(DCSAirbaseName), airbaseUID, #airbase.runways, airbase.NparkingTotal)
+    local text=string.format("Register %s: %s (UID=%d), Runways=%d, Parking=%d [", AIRBASE.CategoryName[category], tostring(DCSAirbaseName), airbaseUID, #airbase.runways, airbase.NparkingTotal)
     for _,terminalType in pairs(AIRBASE.TerminalType) do
       if airbase.NparkingTerminal and airbase.NparkingTerminal[terminalType] then
         text=text..string.format("%d=%d ", terminalType, airbase.NparkingTerminal[terminalType])
@@ -1893,7 +1901,7 @@ end
 
 --- Add a flight control to the data base.
 -- @param #DATABASE self
--- @param Ops.FlightControl#FLIGHTCONTROL flightcontrol
+-- @param OPS.FlightControl#FLIGHTCONTROL flightcontrol
 function DATABASE:AddFlightControl(flightcontrol)
   self:F2( { flightcontrol } )
   self.FLIGHTCONTROLS[flightcontrol.airbasename]=flightcontrol
@@ -1902,7 +1910,7 @@ end
 --- Get a flight control object from the data base.
 -- @param #DATABASE self
 -- @param #string airbasename Name of the associated airbase.
--- @return Ops.FlightControl#FLIGHTCONTROL The FLIGHTCONTROL object.s
+-- @return OPS.FlightControl#FLIGHTCONTROL The FLIGHTCONTROL object.s
 function DATABASE:GetFlightControl(airbasename)
   return self.FLIGHTCONTROLS[airbasename]
 end
