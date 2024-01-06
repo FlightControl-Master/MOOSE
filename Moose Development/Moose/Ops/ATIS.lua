@@ -1526,7 +1526,7 @@ function ATIS:MarkRunways( markall )
   end
 end
 
---- Use SRS Simple-Text-To-Speech for transmissions. No sound files necessary.
+--- Use SRS Simple-Text-To-Speech for transmissions. No sound files necessary.`SetSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
 -- @param #ATIS self
 -- @param #string PathToSRS Path to SRS directory (only necessary if SRS exe backend is used).
 -- @param #string Gender Gender: "male" or "female" (default).
@@ -1536,25 +1536,38 @@ end
 -- @param #string GoogleKey Path to Google JSON-Key (SRS exe backend) or Google API key (DCS-gRPC backend).
 -- @return #ATIS self
 function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
-  if PathToSRS or MSRS.path then
+  --if PathToSRS or MSRS.path then
     self.useSRS=true
-    self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
-    self.msrs:SetGender(Gender)
-    self.msrs:SetCulture(Culture)
-    self.msrs:SetVoice(Voice)
-    self.msrs:SetPort(Port)
+    
+    local path = PathToSRS or MSRS.path
+    local gender = Gender or MSRS.gender
+    local culture = Culture or MSRS.culture
+    local voice = Voice or MSRS.voice
+    local port = Port or MSRS.port or 5002
+    
+    self.msrs=MSRS:New(path, self.frequency, self.modulation)
+    self.msrs:SetGender(gender)
+    self.msrs:SetCulture(culture)
+    self.msrs:SetPort(port)
     self.msrs:SetCoalition(self:GetCoalition())
     self.msrs:SetLabel("ATIS")
-    self.msrs:SetGoogle(GoogleKey)
+    if GoogleKey then
+      self.msrs:SetProviderOptionsGoogle(GoogleKey,GoogleKey)
+    end
+   -- Pre-configured Google?
+    if self.msrs:GetProvider() == MSRS.Provider.GOOGLE then
+      voice = Voice or MSRS.poptions.gcloud.voice
+    end
+    self.msrs:SetVoice(voice)
     self.msrs:SetCoordinate(self.airbase:GetCoordinate())
     self.msrsQ = MSRSQUEUE:New("ATIS")
     self.msrsQ:SetTransmitOnlyWithPlayers(self.TransmitOnlyWithPlayers)
     if self.dTQueueCheck<=10 then
       self:SetQueueUpdateTime(90)
     end
-  else
-    self:E(self.lid..string.format("ERROR: No SRS path specified!"))
-  end
+  --else
+    --self:E(self.lid..string.format("ERROR: No SRS path specified!"))
+  --end
   return self
 end
 
