@@ -5,37 +5,41 @@
 -- This method is used by Moose developers and not mission builders.
 ModuleLoader = 'Scripts/Moose/Modules.lua'
 
-local f=io.open(ModuleLoader,"r")
-if f~=nil then
-  io.close(f)
+if io then
+  local f=io.open(ModuleLoader,"r")
+  if f~=nil then
+    io.close(f)
 
-  env.info( '*** MOOSE DYNAMIC INCLUDE START *** ' )
+    env.info( '*** MOOSE DYNAMIC INCLUDE START *** ' )
 
-  local base = _G
+    local base = _G
 
-  __Moose = {}
+    __Moose = {}
 
-  __Moose.Include = function( IncludeFile )
-    if not __Moose.Includes[ IncludeFile ] then
-      __Moose.Includes[IncludeFile] = IncludeFile
-      local f = assert( base.loadfile( IncludeFile ) )
-      if f == nil then
-        error ("Moose: Could not load Moose file " .. IncludeFile )
-      else
-        env.info( "Moose: " .. IncludeFile .. " dynamically loaded." )
-        return f()
+    __Moose.Include = function( IncludeFile )
+      if not __Moose.Includes[ IncludeFile ] then
+        __Moose.Includes[IncludeFile] = IncludeFile
+        local f = assert( base.loadfile( IncludeFile ) )
+        if f == nil then
+          error ("Moose: Could not load Moose file " .. IncludeFile )
+        else
+          env.info( "Moose: " .. IncludeFile .. " dynamically loaded." )
+          return f()
+        end
       end
     end
+
+    __Moose.Includes = {}
+
+    __Moose.Include( 'Scripts/Moose/Modules.lua' )
+    BASE:TraceOnOff( true )
+    env.info( '*** MOOSE INCLUDE END *** ' )
+
+    -- Skip the static part of this file completly
+    do return end
   end
-
-  __Moose.Includes = {}
-
-  __Moose.Include( 'Scripts/Moose/Modules.lua' )
-  BASE:TraceOnOff( true )
-  env.info( '*** MOOSE INCLUDE END *** ' )
-
-  -- Skip the static part of this file completly
-  do return end
+else
+  env.info( '*** MOOSE DYNAMIC INCLUDE NOT POSSIBLE (Desanitize io to use it) *** ' )
 end
 
 -- Individual Moose files are not found. Use the static code below.
