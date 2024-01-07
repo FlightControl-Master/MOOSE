@@ -505,6 +505,7 @@ function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,G
 
   if PathToCredentials then
     _MESSAGESRS.MSRS:SetProviderOptionsGoogle(PathToCredentials)
+    _MESSAGESRS.MSRS:SetProvider(MSRS.Provider.GOOGLE)
   end
   
   _MESSAGESRS.label = Label or MSRS.Label or "MESSAGE"
