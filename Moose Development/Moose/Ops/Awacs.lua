@@ -1416,6 +1416,7 @@ function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval,Number)
     if self.PathToGoogleKey then
       --self.TacticalSRS:SetGoogle(self.PathToGoogleKey)
       self.TacticalSRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
+      self.TacticalSRS:SetProvider(MSRS.Provider.GOOGLE)
     end
     self.TacticalSRSQ = MSRSQUEUE:New("Tactical AWACS")
   end
@@ -2104,9 +2105,10 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey
   if self.PathToGoogleKey then
     --self.AwacsSRS:SetGoogle(self.PathToGoogleKey)
     self.AwacsSRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
+    self.AwacsSRS:SetProvider(MSRS.Provider.GOOGLE)
   end
    -- Pre-configured Google?
-  if self.AwacsSRS:GetProvider() == MSRS.Provider.GOOGLE then
+  if (not PathToGoogleKey) and self.AwacsSRS:GetProvider() == MSRS.Provider.GOOGLE then
     self.PathToGoogleKey = MSRS.poptions.gcloud.credentials
     self.Voice = Voice or MSRS.poptions.gcloud.voice
     self.AccessKey = AccessKey or MSRS.poptions.gcloud.key
@@ -3524,7 +3526,7 @@ function AWACS:_Showtask(Group)
         local targetstatus = currenttask.Target:GetState()
         local ToDo = currenttask.ToDo
         local description = currenttask.ScreenText
-        local descTTS = currenttask.ScreenText
+	      local descTTS = currenttask.ScreenText
         local callsign = Callsign
         
         if self.debug then
@@ -3545,7 +3547,7 @@ function AWACS:_Showtask(Group)
             local alti = currenttask.Cluster.altitude or currenttask.Contact.altitude or currenttask.Contact.group:GetAltitude()
             local direction, direcTTS = self:_ToStringBRA(pposition,targetpos,alti)
             description = description .. "\nBRA "..direction
-            descTTS = descTTS ..";BRA "..direcTTS
+		        descTTS = descTTS ..";BRA "..direcTTS
           end
         elseif currenttask.ToDo == AWACS.TaskDescription.ANCHOR or currenttask.ToDo == AWACS.TaskDescription.REANCHOR then
           local targetpos = currenttask.Target:GetCoordinate()

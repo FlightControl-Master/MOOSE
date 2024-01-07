@@ -411,26 +411,36 @@ function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port, 
   self:SetRunwayRepairtime()
   self.nosubs = false
   
-  -- Set SRS Port
-  self:SetSRSPort(Port or 5002)
-  
   -- Set Callsign Options
   self:SetCallSignOptions(true,true)
   
   -- Init msrs queue.
   self.msrsqueue=MSRSQUEUE:New(self.alias)
   
+  -- Init msrs bases
+  local path = PathToSRS or MSRS.path
+  local port = Port or MSRS.port or 5002
+  
+  -- Set SRS Port
+  self:SetSRSPort(port)
+  
   -- SRS for Tower.
-  self.msrsTower=MSRS:New(PathToSRS, Frequency, Modulation)
-  self.msrsTower:SetPort(self.Port)
-  self.msrsTower:SetGoogle(GoogleKey)
+  self.msrsTower=MSRS:New(path, Frequency, Modulation)
+  self.msrsTower:SetPort(port)
+  if GoogleKey then
+    self.msrsTower:SetProviderOptionsGoogle(GoogleKey,GoogleKey)
+    self.msrsTower:SetProvider(MSRS.Provider.GOOGLE)
+  end  
   self.msrsTower:SetCoordinate(self:GetCoordinate())
   self:SetSRSTower()
   
   -- SRS for Pilot.
   self.msrsPilot=MSRS:New(PathToSRS, Frequency, Modulation)
   self.msrsPilot:SetPort(self.Port)
-  self.msrsPilot:SetGoogle(GoogleKey)
+  if GoogleKey then
+    self.msrsPilot:SetProviderOptionsGoogle(GoogleKey,GoogleKey)
+    self.msrsPilot:SetProvider(MSRS.Provider.GOOGLE)
+  end  
   self.msrsTower:SetCoordinate(self:GetCoordinate())
   self:SetSRSPilot()
   
@@ -633,7 +643,6 @@ function FLIGHTCONTROL:_SetSRSOptions(msrs, Gender, Culture, Voice, Volume, Labe
     msrs:SetVoice(Voice)
     msrs:SetVolume(Volume)
     msrs:SetLabel(Label)
-    msrs:SetGoogle(PathToGoogleCredentials)
     msrs:SetCoalition(self:GetCoalition())
     msrs:SetPort(Port or self.Port or 5002)
   end
@@ -648,12 +657,11 @@ end
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`. See [Google Voices](https://cloud.google.com/text-to-speech/docs/voices).
 -- @param #number Volume Volume. Default 1.0.
 -- @param #string Label Name under which SRS transmits. Default `self.alias`.
--- @param #string PathToGoogleCredentials Path to google credentials json file.
 -- @return #FLIGHTCONTROL self
-function FLIGHTCONTROL:SetSRSTower(Gender, Culture, Voice, Volume, Label, PathToGoogleCredentials)
+function FLIGHTCONTROL:SetSRSTower(Gender, Culture, Voice, Volume, Label)
 
   if self.msrsTower then
-    self:_SetSRSOptions(self.msrsTower, Gender or "female", Culture or "en-GB", Voice, Volume, Label or self.alias, PathToGoogleCredentials)
+    self:_SetSRSOptions(self.msrsTower, Gender or "female", Culture or "en-GB", Voice, Volume, Label or self.alias)
   end
 
   return self
@@ -666,12 +674,11 @@ end
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
 -- @param #number Volume Volume. Default 1.0.
 -- @param #string Label Name under which SRS transmits. Default "Pilot".
--- @param #string PathToGoogleCredentials Path to google credentials json file.
 -- @return #FLIGHTCONTROL self
-function FLIGHTCONTROL:SetSRSPilot(Gender, Culture, Voice, Volume, Label, PathToGoogleCredentials)
+function FLIGHTCONTROL:SetSRSPilot(Gender, Culture, Voice, Volume, Label)
 
   if self.msrsPilot then
-    self:_SetSRSOptions(self.msrsPilot, Gender or "male", Culture or "en-US", Voice, Volume, Label or "Pilot", PathToGoogleCredentials)
+    self:_SetSRSOptions(self.msrsPilot, Gender or "male", Culture or "en-US", Voice, Volume, Label or "Pilot")
   end
 
   return self
@@ -876,7 +883,7 @@ end
 
 --- Set ATIS.
 -- @param #FLIGHTCONTROL self
--- @param Ops.ATIS#ATIS ATIS ATIS.
+-- @param Ops.ATIS#ATIS Atis ATIS.
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetATIS(Atis)
   self.atis=Atis
