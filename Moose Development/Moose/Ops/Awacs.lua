@@ -507,7 +507,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.60", -- #string
+  version = "0.2.61", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -2948,7 +2948,7 @@ function AWACS:_Picture(Group,IsGeneral)
   if not self.intel then
     -- no intel yet!
     local picclean = self.gettext:GetEntry("PICCLEAN",self.locale)
-    text = string.format(picclean,self.callsigntxt, gcallsign)
+    text = string.format(picclean,gcallsign,self.callsigntxt)
     textScreen = text
     
     self:_NewRadioEntry(text,text,GID,false,true,true,false)
@@ -3526,7 +3526,7 @@ function AWACS:_Showtask(Group)
         local targetstatus = currenttask.Target:GetState()
         local ToDo = currenttask.ToDo
         local description = currenttask.ScreenText
-	      local descTTS = currenttask.ScreenText
+        local descTTS = currenttask.ScreenText
         local callsign = Callsign
         
         if self.debug then
@@ -3547,7 +3547,7 @@ function AWACS:_Showtask(Group)
             local alti = currenttask.Cluster.altitude or currenttask.Contact.altitude or currenttask.Contact.group:GetAltitude()
             local direction, direcTTS = self:_ToStringBRA(pposition,targetpos,alti)
             description = description .. "\nBRA "..direction
-		        descTTS = descTTS ..";BRA "..direcTTS
+            descTTS = descTTS ..";BRA "..direcTTS
           end
         elseif currenttask.ToDo == AWACS.TaskDescription.ANCHOR or currenttask.ToDo == AWACS.TaskDescription.REANCHOR then
           local targetpos = currenttask.Target:GetCoordinate()
