@@ -272,6 +272,13 @@ MSRS.Voices = {
     ["Zira"] = "Microsoft Zira Desktop", -- en-US
     ["Hortense"] = "Microsoft Hortense Desktop", --fr-FR
     },
+  MicrosoftGRPC = {
+    ["Hedda"] = "Hedda", -- de-DE
+    ["Hazel"] = "Hazel", -- en-GB
+    ["David"] = "David", -- en-US
+    ["Zira"] = "Zira", -- en-US
+    ["Hortense"] = "Hortense", --fr-FR
+    },  
   Google = {
     Standard = {
        ["en_AU_Standard_A"] = 'en-AU-Standard-A', -- [1] FEMALE
@@ -516,8 +523,20 @@ end
 -- @return #MSRS self
 function MSRS:SetBackend(Backend)
   self:F( {Backend=Backend} )
-  self.backend=Backend or MSRS.Backend.SRSEXE
-
+  Backend = Backend or MSRS.Backend.SRSEXE -- avoid nil
+  local function Checker(back)
+    local ok = false
+    for _,_backend in pairs(MSRS.Backend) do
+      if tostring(back) == _backend then ok = true end
+    end
+    return ok
+  end
+  
+  if Checker(Backend) then  
+    self.backend=Backend 
+  else    
+    MESSAGE:New("ERROR: Backend "..tostring(Backend).." is not supported!",30,"MSRS",true):ToLog():ToAll()    
+  end 
   return self
 end
 
@@ -906,11 +925,15 @@ end
 -- @param #string Provider
 -- @return #MSRS self
 function MSRS:SetProvider(Provider)
-  self:F( {Provider=Provider} )
-  self.provider = Provider or MSRS.Provider.WINDOWS
-  return self
+  BASE:F( {Provider=Provider} )
+  if self then
+    self.provider = Provider or MSRS.Provider.WINDOWS
+    return self
+  else
+    MSRS.provider = Provider or MSRS.Provider.WINDOWS
+  end
+  return
 end
-
 
 --- Get provider.
 -- @param #MSRS self
@@ -928,7 +951,7 @@ end
 -- @param #string Region Region to use.
 -- @return #MSRS.ProviderOptions Provider optionas table.
 function MSRS:SetProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
-  self:F( {Provider, CredentialsFile, AccessKey, SecretKey, Region} )
+  BASE:F( {Provider, CredentialsFile, AccessKey, SecretKey, Region} )
   local option=MSRS._CreateProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
 
   if self then
@@ -1184,7 +1207,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate Coordinate.
 -- @return #MSRS self
 function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
-  self:F( {Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate} )
+  self:T({Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate} )
 
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
@@ -1205,6 +1228,7 @@ function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture
       self:_ExecCommand(command)
 
     elseif self.backend==MSRS.Backend.GRPC then
+      --BASE:I("MSRS.Backend.GRPC")
 
       self:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate)
 
@@ -1593,7 +1617,7 @@ end
 --
 --     -- Moose MSRS default Config
 --     MSRS_Config = {
---       Path = C:\\Program Files\\DCS-SimpleRadio-Standalone, -- Path to SRS install directory.
+--       Path = "C:\\Program Files\\DCS-SimpleRadio-Standalone", -- Path to SRS install directory.
 --       Port = 5002,            -- Port of SRS server. Default 5002.
 --       Backend = "srsexe",     -- Interface to SRS: "srsexe" or "grpc".
 --       Frequency = {127, 243}, -- Default frequences. Must be a table 1..n entries!
@@ -1605,8 +1629,7 @@ end
 --       Gender = "male",
 --       Voice = "Microsoft Hazel Desktop", -- Voice that is used if no explicit provider voice is specified.
 --       Label = "MSRS",   
---       Provider = "win", --Provider for generating TTS (win, gcloud, azure, aws).
---       
+--       Provider = "win", --Provider for generating TTS (win, gcloud, azure, aws).      
 --       -- Windows
 --       win = {
 --         voice = "Microsoft Hazel Desktop",
@@ -1632,7 +1655,7 @@ end
 --       },
 --     }
 --
---  3) The config file is automatically loaded when Moose starts. YOu can also load the config into the MSRS raw class manually before you do anything else:
+--  3) The config file is automatically loaded when Moose starts. You can also load the config into the MSRS raw class manually before you do anything else:
 --
 --         MSRS.LoadConfigFile() -- Note the "." here
 --
@@ -1648,8 +1671,7 @@ end
 --  4) Use the config in your code like so, variable names are basically the same as in the config file, but all lower case, examples:
 --
 --         -- Needed once only
---         MESSAGE.SetMSRS(MSRS.path,nil,MSRS.google,243,radio.modulation.AM,nil,nil,
---         MSRS.Voices.Google.Standard.de_DE_Standard_B,coalition.side.BLUE)
+--         MESSAGE.SetMSRS(MSRS.path,MSRS.port,nil,127,rado.modulation.FM,nil,nil,nil,nil,nil,"TALK")
 --
 --         -- later on in your code
 --
@@ -1831,7 +1853,7 @@ end
 -- @param #MSRSQUEUE self
 -- @return #MSRSQUEUE self The MSRSQUEUE object.
 function MSRSQUEUE:Clear()
-  self:I(self.lid.."Clearing MSRSQUEUE")
+  self:T(self.lid.."Clearing MSRSQUEUE")
   self.queue={}
   return self
 end
@@ -1842,7 +1864,6 @@ end
 -- @param #MSRSQUEUE.Transmission transmission The transmission data table.
 -- @return #MSRSQUEUE self
 function MSRSQUEUE:AddTransmission(transmission)
-
   -- Init.
   transmission.isplaying=false
   transmission.Tstarted=nil
@@ -1921,20 +1942,20 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   transmission.Tplay=tstart or timer.getAbsTime()
   transmission.subtitle=subtitle
   transmission.interval=interval or 0
-  transmission.frequency=frequency
-  transmission.modulation=modulation
+  transmission.frequency=frequency or msrs.frequencies
+  transmission.modulation=modulation or msrs.modulations
   transmission.subgroups=subgroups
   if transmission.subtitle then
     transmission.subduration=subduration or transmission.duration
   else
     transmission.subduration=0 --nil
   end
-  transmission.gender = gender
-  transmission.culture = culture
-  transmission.voice = voice
-  transmission.volume = volume
-  transmission.label = label
-  transmission.coordinate = coordinate
+  transmission.gender = gender or msrs.gender
+  transmission.culture = culture or msrs.culture
+  transmission.voice = voice or msrs.voice
+  transmission.volume = volume or msrs.volume
+  transmission.label = label or msrs.Label
+  transmission.coordinate = coordinate or msrs.coordinate
 
   -- Add transmission to queue.
   self:AddTransmission(transmission)
@@ -1946,7 +1967,8 @@ end
 -- @param #MSRSQUEUE self
 -- @param #MSRSQUEUE.Transmission transmission The transmission.
 function MSRSQUEUE:Broadcast(transmission)
-
+  self:T(self.lid.."Broadcast")
+  
   if transmission.frequency then
     transmission.msrs:PlayTextExt(transmission.text, nil, transmission.frequency, transmission.modulation, transmission.gender, transmission.culture, transmission.voice, transmission.volume, transmission.label, transmission.coordinate)
   else

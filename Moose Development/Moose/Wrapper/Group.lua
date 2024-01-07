@@ -691,7 +691,15 @@ function GROUP:GetUnits()
     local DCSUnits = DCSGroup:getUnits() or {}
     local Units = {}
     for Index, UnitData in pairs( DCSUnits ) do
-      Units[#Units+1] = UNIT:Find( UnitData )
+      
+      local unit=UNIT:Find( UnitData )
+      if unit then
+        Units[#Units+1] = UNIT:Find( UnitData )
+      else
+        local UnitName=UnitData:getName()
+        unit=_DATABASE:AddUnit(UnitName)
+        Units[#Units+1]=unit
+      end
     end
     self:T3( Units )
     return Units

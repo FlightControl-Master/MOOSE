@@ -2316,14 +2316,17 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SetSRS(PathToSRS, Gender, Culture, Voice, Port, PathToGoogleKey, Label, Volume)
   self.useSRS=true
-  self.msrs=MSRS:New(PathToSRS, self.frequency, self.modulation)
+  local path = PathToSRS or MSRS.path
+  local port = Port or MSRS.port
+  self.msrs=MSRS:New(path, self.frequency, self.modulation)
   self.msrs:SetGender(Gender)
   self.msrs:SetCulture(Culture)
   self.msrs:SetVoice(Voice)
-  self.msrs:SetPort(Port)
+  self.msrs:SetPort(port)
   self.msrs:SetLabel(Label)
   if PathToGoogleKey then
-    self.msrs:SetGoogle(PathToGoogleKey)
+    self.msrs:SetProviderOptionsGoogle(PathToGoogleKey,PathToGoogleKey)
+    self.msrs:SetProvider(MSRS.Provider.GOOGLE)
   end
   self.msrs:SetCoalition(self:GetCoalition())
   self.msrs:SetVolume(Volume)

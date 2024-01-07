@@ -3230,13 +3230,22 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
     local TaskFinal = self.group:TaskFunction("FLIGHTGROUP._OnFinal", self)
 
     -- Final approach waypoint.
-    local papp=airbase:GetCoordinate():Translate(x1, runway.heading-180):SetAltitude(h1)
+    local rheading
+    if runway then
+      rheading = runway.heading-180
+    else
+      -- AB HeloBase w/o runway eg Naqoura
+      local wind = airbase:GetCoordinate():GetWind()
+      rheading = -wind
+    end
+    
+    local papp=airbase:GetCoordinate():Translate(x1, rheading):SetAltitude(h1)
     wp[#wp+1]=papp:WaypointAirTurningPoint("BARO", UTILS.KnotsToKmph(SpeedLand), {TaskFinal}, "Final Approach")
 
     -- Okay, it looks like it's best to specify the coordinates not at the airbase but a bit away. This causes a more direct landing approach.
-    local pland=airbase:GetCoordinate():Translate(x2, runway.heading-180):SetAltitude(h2)
+    local pland=airbase:GetCoordinate():Translate(x2, rheading):SetAltitude(h2)
     wp[#wp+1]=pland:WaypointAirLanding(UTILS.KnotsToKmph(SpeedLand), airbase, {}, "Landing")
-
+      
   elseif airbase:IsShip() or airbase:IsHelipad() then
 
     ---
