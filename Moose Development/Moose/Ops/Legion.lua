@@ -2745,7 +2745,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
   end
   
   -- Now we have a long list with assets.
-  LEGION._OptimizeAssetSelection(Assets, MissionTypeOpt, TargetVec2, false)
+  LEGION._OptimizeAssetSelection(Assets, MissionTypeOpt, TargetVec2, false, TotalWeight)
   
   
   -- Get payloads for air assets.
@@ -2770,7 +2770,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
   end
     
   -- Now find the best asset for the given payloads.
-  LEGION._OptimizeAssetSelection(Assets, MissionTypeOpt, TargetVec2, true)
+  LEGION._OptimizeAssetSelection(Assets, MissionTypeOpt, TargetVec2, true, TotalWeight)
 
   -- Number of assets. At most NreqMax.
   local Nassets=math.min(#Assets, NreqMax)
@@ -3114,8 +3114,9 @@ end
 -- @param #string MissionType Mission type for which the best assets are desired.
 -- @param DCS#Vec2 TargetVec2 Target 2D vector.
 -- @param #boolean IncludePayload If `true`, include the payload in the calulation if the asset has one attached.
+-- @param #number TotalWeight The total weight of the cargo to be transported, if applicable.
 -- @return #number Mission score.
-function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, IncludePayload)
+function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, IncludePayload, TotalWeight)
   
   -- Mission score.
   local score=0
@@ -3209,8 +3210,18 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
   
   -- TRANSPORT specific.
   if MissionType==AUFTRAG.Type.OPSTRANSPORT then
-    -- Add 1 score point for each 10 kg of cargo bay.
-    score=score+UTILS.Round(asset.cargobaymax/10, 0)
+    if TotalWeight then
+      -- Add 1 score point for each 10 kg of cargo bay capacity up to the total cargo weight,
+      -- and then subtract 1 score point for each excess 10kg of cargo bay capacity.
+      if asset.cargobaymax < TotalWeight then
+        score=score+UTILS.Round(asset.cargobaymax/10, 0)
+      else
+        score=score+UTILS.Round(TotalWeight/10, 0)
+      end
+    else
+      -- Add 1 score point for each 10 kg of cargo bay.
+      score=score+UTILS.Round(asset.cargobaymax/10, 0)
+    end
   end  
 
   -- TODO: This could be vastly improved. Need to gather ideas during testing.
@@ -3231,14 +3242,15 @@ end
 -- @param #string MissionType Mission type.
 -- @param DCS#Vec2 TargetVec2 Target position as 2D vector.
 -- @param #boolean IncludePayload If `true`, include the payload in the calulation if the asset has one attached.
-function LEGION._OptimizeAssetSelection(assets, MissionType, TargetVec2, IncludePayload)
+-- @param #number TotalWeight The total weight of the cargo to be transported, if applicable.
+function LEGION._OptimizeAssetSelection(assets, MissionType, TargetVec2, IncludePayload, TotalWeight)
 
   -- Calculate the mission score of all assets.
   for _,_asset in pairs(assets) do
     local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
     
     -- Calculate the asset score.
-    asset.score=LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, IncludePayload)
+    asset.score=LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, IncludePayload, TotalWeight)
     
     if IncludePayload then
     
