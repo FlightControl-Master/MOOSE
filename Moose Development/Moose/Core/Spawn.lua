@@ -1458,6 +1458,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
     else
 
       local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
+      local SpawnZone = self.SpawnGroups[self.SpawnIndex].SpawnZone
       self:T( SpawnTemplate.name )
 
       if SpawnTemplate then
@@ -1483,6 +1484,23 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
         if self.SpawnRandomizeUnits then
           for UnitID = 1, #SpawnTemplate.units do
             local RandomVec2 = PointVec3:GetRandomVec2InRadius( self.SpawnOuterRadius, self.SpawnInnerRadius )
+            if (SpawnZone) then
+              local inZone = SpawnZone:IsVec2InZone(RandomVec2)
+              local numTries = 1
+              while (not inZone) and (numTries < 20) do
+                if not inZone then
+                  RandomVec2 = PointVec3:GetRandomVec2InRadius( self.SpawnOuterRadius, self.SpawnInnerRadius )
+                  numTries = numTries + 1
+                  inZone = SpawnZone:IsVec2InZone(RandomVec2)
+                  self:I("Retrying " .. numTries .. "spawn " .. SpawnTemplate.name .. " in Zone " .. SpawnZone:GetName() .. "!")
+                  self:I(SpawnZone)
+                end
+              end
+              if (not inZone) then
+                self:I("Could not place unit within zone and within radius!")
+                RandomVec2 = SpawnZone:GetRandomVec2()
+              end
+            end
             SpawnTemplate.units[UnitID].x = RandomVec2.x
             SpawnTemplate.units[UnitID].y = RandomVec2.y
             self:T( 'SpawnTemplate.units[' .. UnitID .. '].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units[' .. UnitID .. '].y = ' .. SpawnTemplate.units[UnitID].y )
@@ -1534,12 +1552,14 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
 
           for UnitID = 1, #SpawnTemplate.units do
 
-            if UnitID > 1 then -- don't rotate position of unit #1
-              local unitXOff = SpawnTemplate.units[UnitID].x - pivotX -- rotate position offset around unit #1
-              local unitYOff = SpawnTemplate.units[UnitID].y - pivotY
+            if not self.SpawnRandomizeUnits then
+              if UnitID > 1 then -- don't rotate position of unit #1
+                local unitXOff = SpawnTemplate.units[UnitID].x - pivotX -- rotate position offset around unit #1
+                local unitYOff = SpawnTemplate.units[UnitID].y - pivotY
 
-              SpawnTemplate.units[UnitID].x = pivotX + (unitXOff * cosHeading) - (unitYOff * sinHeading)
-              SpawnTemplate.units[UnitID].y = pivotY + (unitYOff * cosHeading) + (unitXOff * sinHeading)
+                SpawnTemplate.units[UnitID].x = pivotX + (unitXOff * cosHeading) - (unitYOff * sinHeading)
+                SpawnTemplate.units[UnitID].y = pivotY + (unitYOff * cosHeading) + (unitXOff * sinHeading)
+              end
             end
 
             -- adjust heading of all units, including unit #1
@@ -3591,6 +3611,7 @@ function SPAWN:_RandomizeZones( SpawnIndex )
     self:T( { SpawnVec2 = SpawnVec2 } )
 
     local SpawnTemplate = self.SpawnGroups[SpawnIndex].SpawnTemplate
+    self.SpawnGroups[SpawnIndex].SpawnZone = SpawnZone
 
     self:T( { Route = SpawnTemplate.route } )
 
