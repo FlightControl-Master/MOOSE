@@ -507,7 +507,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.60", -- #string
+  version = "0.2.61", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -2948,7 +2948,7 @@ function AWACS:_Picture(Group,IsGeneral)
   if not self.intel then
     -- no intel yet!
     local picclean = self.gettext:GetEntry("PICCLEAN",self.locale)
-    text = string.format(picclean,self.callsigntxt, gcallsign)
+    text = string.format(picclean,gcallsign,self.callsigntxt)
     textScreen = text
     
     self:_NewRadioEntry(text,text,GID,false,true,true,false)
