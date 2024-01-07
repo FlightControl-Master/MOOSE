@@ -1553,9 +1553,10 @@ function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
     self.msrs:SetLabel("ATIS")
     if GoogleKey then
       self.msrs:SetProviderOptionsGoogle(GoogleKey,GoogleKey)
+      self.msrs:SetProvider(MSRS.Provider.GOOGLE)
     end
    -- Pre-configured Google?
-    if self.msrs:GetProvider() == MSRS.Provider.GOOGLE then
+    if (not GoogleKey) and self.msrs:GetProvider() == MSRS.Provider.GOOGLE then
       voice = Voice or MSRS.poptions.gcloud.voice
     end
     self.msrs:SetVoice(voice)
@@ -1568,6 +1569,20 @@ function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
   --else
     --self:E(self.lid..string.format("ERROR: No SRS path specified!"))
   --end
+  return self
+end
+
+--- Set an alternative provider to the one set in your MSRS configuration file.
+-- @param #ATIS self
+-- @param #string Provider The provider to use. Known providers are: `MSRS.Provider.WINDOWS` and `MSRS.Provider.GOOGLE`
+-- @return #ATIS self
+function ATIS:SetSRSProvider(Provider)
+  self:T(self.lid.."SetSRSProvider")
+  if self.msrs then
+    self.msrs:SetProvider(Provider)
+  else
+    MESSAGE:New(self.lid.."Set up SRS first before trying to change the provider!",30,"ATIS"):ToAll():ToLog()
+  end
   return self
 end
 

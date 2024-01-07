@@ -4034,9 +4034,10 @@ function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Cultu
   if self.PathToGoogleKey then
     --self.SRS:SetGoogle(self.PathToGoogleKey)
     self.SRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
+    self.SRS:SetProvider(MSRS.Provider.GOOGLE)
   end
    -- Pre-configured Google?
-  if self.SRS:GetProvider() == MSRS.Provider.GOOGLE then
+  if (not PathToGoogleKey) and self.SRS:GetProvider() == MSRS.Provider.GOOGLE then
     self.PathToGoogleKey = MSRS.poptions.gcloud.credentials
     self.Voice = Voice or MSRS.poptions.gcloud.voice
     self.AccessKey = AccessKey or MSRS.poptions.gcloud.key
