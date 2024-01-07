@@ -272,6 +272,13 @@ MSRS.Voices = {
     ["Zira"] = "Microsoft Zira Desktop", -- en-US
     ["Hortense"] = "Microsoft Hortense Desktop", --fr-FR
     },
+  MicrosoftGRPC = {
+    ["Hedda"] = "Hedda", -- de-DE
+    ["Hazel"] = "Hazel", -- en-GB
+    ["David"] = "David", -- en-US
+    ["Zira"] = "Zira", -- en-US
+    ["Hortense"] = "Hortense", --fr-FR
+    },  
   Google = {
     Standard = {
        ["en_AU_Standard_A"] = 'en-AU-Standard-A', -- [1] FEMALE
@@ -918,11 +925,15 @@ end
 -- @param #string Provider
 -- @return #MSRS self
 function MSRS:SetProvider(Provider)
-  self:F( {Provider=Provider} )
-  self.provider = Provider or MSRS.Provider.WINDOWS
-  return self
+  BASE:F( {Provider=Provider} )
+  if self then
+    self.provider = Provider or MSRS.Provider.WINDOWS
+    return self
+  else
+    MSRS.provider = Provider or MSRS.Provider.WINDOWS
+  end
+  return
 end
-
 
 --- Get provider.
 -- @param #MSRS self
@@ -940,7 +951,7 @@ end
 -- @param #string Region Region to use.
 -- @return #MSRS.ProviderOptions Provider optionas table.
 function MSRS:SetProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
-  self:F( {Provider, CredentialsFile, AccessKey, SecretKey, Region} )
+  BASE:F( {Provider, CredentialsFile, AccessKey, SecretKey, Region} )
   local option=MSRS._CreateProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
 
   if self then
@@ -1606,7 +1617,7 @@ end
 --
 --     -- Moose MSRS default Config
 --     MSRS_Config = {
---       Path = C:\\Program Files\\DCS-SimpleRadio-Standalone, -- Path to SRS install directory.
+--       Path = "C:\\Program Files\\DCS-SimpleRadio-Standalone", -- Path to SRS install directory.
 --       Port = 5002,            -- Port of SRS server. Default 5002.
 --       Backend = "srsexe",     -- Interface to SRS: "srsexe" or "grpc".
 --       Frequency = {127, 243}, -- Default frequences. Must be a table 1..n entries!
@@ -1618,8 +1629,7 @@ end
 --       Gender = "male",
 --       Voice = "Microsoft Hazel Desktop", -- Voice that is used if no explicit provider voice is specified.
 --       Label = "MSRS",   
---       Provider = "win", --Provider for generating TTS (win, gcloud, azure, aws).
---       
+--       Provider = "win", --Provider for generating TTS (win, gcloud, azure, aws).      
 --       -- Windows
 --       win = {
 --         voice = "Microsoft Hazel Desktop",
@@ -1645,7 +1655,7 @@ end
 --       },
 --     }
 --
---  3) The config file is automatically loaded when Moose starts. YOu can also load the config into the MSRS raw class manually before you do anything else:
+--  3) The config file is automatically loaded when Moose starts. You can also load the config into the MSRS raw class manually before you do anything else:
 --
 --         MSRS.LoadConfigFile() -- Note the "." here
 --
@@ -1661,8 +1671,7 @@ end
 --  4) Use the config in your code like so, variable names are basically the same as in the config file, but all lower case, examples:
 --
 --         -- Needed once only
---         MESSAGE.SetMSRS(MSRS.path,nil,MSRS.google,243,radio.modulation.AM,nil,nil,
---         MSRS.Voices.Google.Standard.de_DE_Standard_B,coalition.side.BLUE)
+--         MESSAGE.SetMSRS(MSRS.path,MSRS.port,nil,127,rado.modulation.FM,nil,nil,nil,nil,nil,"TALK")
 --
 --         -- later on in your code
 --
