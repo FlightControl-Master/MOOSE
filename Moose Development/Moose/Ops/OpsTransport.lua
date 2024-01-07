@@ -605,6 +605,16 @@ function OPSTRANSPORT:AddCargoGroups(GroupSet, TransportZoneCombo, DisembarkActi
       self:AddCargoGroups(group, TransportZoneCombo, DisembarkActivation)
       
     end
+    
+    -- Use FSM function to keep the SET up-to-date. Note that it overwrites the user FMS function, which cannot be used any more now.
+    local groupset=GroupSet --Core.Set#SET_OPSGROUP
+    function groupset.OnAfterAdded(groupset, From, Event, To, ObjectName, Object)
+    
+      self:T(self.lid..string.format("Adding Cargo Group %s", tostring(ObjectName)))
+      self:AddCargoGroups(Object, TransportZoneCombo, DisembarkActivation, DisembarkZone, DisembarkCarriers)
+    
+    end    
+    
   end
   
   -- Debug info.
