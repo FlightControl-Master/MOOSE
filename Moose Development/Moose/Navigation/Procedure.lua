@@ -69,9 +69,11 @@ APPROACH = {
 
 --- Type of approach.
 -- @type APPROACH.Type
+-- @field #string VFR Visual Flight Rules.
 -- @field #string VOR VOR
 -- @field #string NDB NDB
 APPROACH.Type={
+  VFR="VFR",
   VOR="VOR",
   ILS="ILS",
 }
@@ -113,9 +115,9 @@ APPROACH.version="0.0.1"
 
 --- Create a new APPROACH class instance.
 -- @param #APPROACH self
+-- @param #string Type Type of approach (ILS, VOR, LOC).
 -- @param Wrapper.Airbase#AIRBASE Airbase The airbase or name of the airbase.
 -- @param Wrapper.Airbase#AIRBASE.Runway Runway The runway or name of the runway.
--- @param #string Type Type of approach (ILS, VOR, LOC).
 -- @return #APPROACH self
 function APPROACH:New(Type, Airbase, Runway)
 
