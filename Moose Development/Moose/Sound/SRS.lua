@@ -918,11 +918,15 @@ end
 -- @param #string Provider
 -- @return #MSRS self
 function MSRS:SetProvider(Provider)
-  self:F( {Provider=Provider} )
-  self.provider = Provider or MSRS.Provider.WINDOWS
-  return self
+  BASE:F( {Provider=Provider} )
+  if self then
+    self.provider = Provider or MSRS.Provider.WINDOWS
+    return self
+  else
+    MSRS.provider = Provider or MSRS.Provider.WINDOWS
+  end
+  return
 end
-
 
 --- Get provider.
 -- @param #MSRS self
@@ -940,7 +944,7 @@ end
 -- @param #string Region Region to use.
 -- @return #MSRS.ProviderOptions Provider optionas table.
 function MSRS:SetProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
-  self:F( {Provider, CredentialsFile, AccessKey, SecretKey, Region} )
+  BASE:F( {Provider, CredentialsFile, AccessKey, SecretKey, Region} )
   local option=MSRS._CreateProviderOptions(Provider, CredentialsFile, AccessKey, SecretKey, Region)
 
   if self then
