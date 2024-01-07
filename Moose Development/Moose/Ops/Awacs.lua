@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update Nov 2023
+-- @date Last Update Jan 2024
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -507,7 +507,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.59", -- #string
+  version = "0.2.61", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -1405,15 +1405,18 @@ function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval,Number)
     self.TacticalFrequencies[freq] = freq
   end
   if self.AwacsSRS then
-    self.TacticalSRS = MSRS:New(self.PathToSRS,self.TacticalBaseFreq,self.TacticalModulation,self.Volume)
+    self.TacticalSRS = MSRS:New(self.PathToSRS,self.TacticalBaseFreq,self.TacticalModulation)
     self.TacticalSRS:SetCoalition(self.coalition)
     self.TacticalSRS:SetGender(self.Gender)
     self.TacticalSRS:SetCulture(self.Culture)
     self.TacticalSRS:SetVoice(self.Voice)
     self.TacticalSRS:SetPort(self.Port)
     self.TacticalSRS:SetLabel("AWACS")
+    self.TacticalSRS:SetVolume(self.Volume)
     if self.PathToGoogleKey then
-      self.TacticalSRS:SetGoogle(self.PathToGoogleKey)
+      --self.TacticalSRS:SetGoogle(self.PathToGoogleKey)
+      self.TacticalSRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
+      self.TacticalSRS:SetProvider(MSRS.Provider.GOOGLE)
     end
     self.TacticalSRSQ = MSRSQUEUE:New("Tactical AWACS")
   end
@@ -2069,7 +2072,7 @@ function AWACS:AddGroupToDetection(Group)
   return self
 end
 
---- [User] Set AWACS SRS TTS details - see @{Sound.SRS} for details
+--- [User] Set AWACS SRS TTS details - see @{Sound.SRS} for details. `SetSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
 -- @param #AWACS self
 -- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
 -- @param #string Gender Defaults to "male"
@@ -2078,29 +2081,39 @@ end
 -- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS#SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
 -- @param #number Volume Volume - between 0.0 (silent) and 1.0 (loudest)
--- @param #string PathToGoogleKey Path to your google key if you want to use google TTS
+-- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS; if you use a config file for MSRS, hand in nil here.
+-- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
 -- @return #AWACS self
-function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
+function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey)
   self:T(self.lid.."SetSRS")
-  self.PathToSRS = PathToSRS or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
-  self.Gender = Gender or "male"
-  self.Culture = Culture or "en-US"
-  self.Port = Port or 5002
-  self.Voice = Voice 
+  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone" 
+  self.Gender = Gender or MSRS.gender or "male"
+  self.Culture = Culture or MSRS.culture or "en-US"
+  self.Port = Port or MSRS.port or 5002
+  self.Voice = Voice or MSRS.voice
   self.PathToGoogleKey = PathToGoogleKey
+  self.AccessKey = AccessKey
   self.Volume = Volume or 1.0
   
-  self.AwacsSRS = MSRS:New(self.PathToSRS,self.MultiFrequency,self.MultiModulation,self.Volume)
+  self.AwacsSRS = MSRS:New(self.PathToSRS,self.MultiFrequency,self.MultiModulation)
   self.AwacsSRS:SetCoalition(self.coalition)
   self.AwacsSRS:SetGender(self.Gender)
   self.AwacsSRS:SetCulture(self.Culture)
-  self.AwacsSRS:SetVoice(self.Voice)
   self.AwacsSRS:SetPort(self.Port)
   self.AwacsSRS:SetLabel("AWACS")
+  self.AwacsSRS:SetVolume(Volume)
   if self.PathToGoogleKey then
-    self.AwacsSRS:SetGoogle(self.PathToGoogleKey)
+    --self.AwacsSRS:SetGoogle(self.PathToGoogleKey)
+    self.AwacsSRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
+    self.AwacsSRS:SetProvider(MSRS.Provider.GOOGLE)
   end
-  
+   -- Pre-configured Google?
+  if (not PathToGoogleKey) and self.AwacsSRS:GetProvider() == MSRS.Provider.GOOGLE then
+    self.PathToGoogleKey = MSRS.poptions.gcloud.credentials
+    self.Voice = Voice or MSRS.poptions.gcloud.voice
+    self.AccessKey = AccessKey or MSRS.poptions.gcloud.key
+  end
+  self.AwacsSRS:SetVoice(self.Voice)
   return self
 end
 
@@ -2935,7 +2948,7 @@ function AWACS:_Picture(Group,IsGeneral)
   if not self.intel then
     -- no intel yet!
     local picclean = self.gettext:GetEntry("PICCLEAN",self.locale)
-    text = string.format(picclean,self.callsigntxt, gcallsign)
+    text = string.format(picclean,gcallsign,self.callsigntxt)
     textScreen = text
     
     self:_NewRadioEntry(text,text,GID,false,true,true,false)
@@ -3663,7 +3676,7 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
       CAPVoice = self.CapVoices[math.floor(math.random(1,10))]
     end
     
-    FlightGroup:SetSRS(self.PathToSRS,self.CAPGender,self.CAPCulture,CAPVoice,self.Port,self.PathToGoogleKey,"FLIGHT")
+    FlightGroup:SetSRS(self.PathToSRS,self.CAPGender,self.CAPCulture,CAPVoice,self.Port,self.PathToGoogleKey,"FLIGHT",1)
     
     local checkai = self.gettext:GetEntry("CHECKINAI",self.locale)
     text = string.format(checkai,self.callsigntxt, managedgroup.CallSign, self.CAPTimeOnStation, self.AOName)
@@ -6595,7 +6608,7 @@ function AWACS:onafterCheckTacticalQueue(From,Event,To)
     if self.PathToGoogleKey then
       gtext = string.format("<speak><prosody rate='medium'>%s</prosody></speak>",gtext)
     end
-    self.TacticalSRSQ:NewTransmission(gtext,nil,self.TacticalSRS,nil,0.5,nil,nil,nil,frequency,self.TacticalModulation,nil,nil,nil,nil,nil)
+    self.TacticalSRSQ:NewTransmission(gtext,nil,self.TacticalSRS,nil,0.5,nil,nil,nil,frequency,self.TacticalModulation)
   
     self:T(RadioEntry.TextTTS)
     

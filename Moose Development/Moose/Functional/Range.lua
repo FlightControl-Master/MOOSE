@@ -1211,16 +1211,18 @@ function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume,
   
     self.useSRS=true
     
-    self.controlmsrs=MSRS:New(PathToSRS or MSRS.path, Frequency or 256, Modulation or radio.modulation.AM, Volume or 1.0)
+    self.controlmsrs=MSRS:New(PathToSRS or MSRS.path, Frequency or 256, Modulation or radio.modulation.AM)
     self.controlmsrs:SetPort(Port or MSRS.port)
     self.controlmsrs:SetCoalition(Coalition or coalition.side.BLUE)
     self.controlmsrs:SetLabel("RANGEC")
+    self.controlmsrs:SetVolume(Volume or 1.0)
     self.controlsrsQ = MSRSQUEUE:New("CONTROL")
 
-    self.instructmsrs=MSRS:New(PathToSRS or MSRS.path, Frequency or 305, Modulation or radio.modulation.AM, Volume or 1.0)
+    self.instructmsrs=MSRS:New(PathToSRS or MSRS.path, Frequency or 305, Modulation or radio.modulation.AM)
     self.instructmsrs:SetPort(Port or MSRS.port)
     self.instructmsrs:SetCoalition(Coalition or coalition.side.BLUE)
     self.instructmsrs:SetLabel("RANGEI")
+    self.instructmsrs:SetVolume(Volume or 1.0)
     self.instructsrsQ = MSRSQUEUE:New("INSTRUCT")
     
     if PathToGoogleKey then 

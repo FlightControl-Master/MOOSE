@@ -1508,15 +1508,22 @@ function PLAYERRECCE:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,V
   self.Modulation = Modulation or {radio.modulation.FM,radio.modulation.AM} --
   self.BCModulation = self.Modulation
   -- set up SRS 
-  self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation,self.Volume)
+  self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation)
   self.SRS:SetCoalition(self.Coalition)
   self.SRS:SetLabel(self.MenuName or self.Name)
   self.SRS:SetGender(self.Gender)
   self.SRS:SetCulture(self.Culture)
   self.SRS:SetPort(self.Port)
   self.SRS:SetVoice(self.Voice)
+  self.SRS:SetVolume(self.Volume)
   if self.PathToGoogleKey then
-    self.SRS:SetGoogle(self.PathToGoogleKey)
+    self.SRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.PathToGoogleKey)
+    self.SRS:SetProvider(MSRS.Provider.GOOGLE)
+  end
+     -- Pre-configured Google?
+  if (not PathToGoogleKey) and self.AwacsSRS:GetProvider() == MSRS.Provider.GOOGLE then
+    self.PathToGoogleKey = MSRS.poptions.gcloud.credentials
+    self.Voice = Voice or MSRS.poptions.gcloud.voice
   end
   self.SRSQueue = MSRSQUEUE:New(self.MenuName or self.Name)
   self.SRSQueue:SetTransmitOnlyWithPlayers(self.TransmitOnlyWithPlayers)

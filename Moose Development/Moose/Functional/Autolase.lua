@@ -462,7 +462,7 @@ function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Cultu
     self.Volume = Volume or 1.0
     self.Label = Label
     -- set up SRS
-    self.SRS = MSRS:New(self.SRSPath,self.SRSFreq,self.SRSMod,self.Volume)
+    self.SRS = MSRS:New(self.SRSPath,self.SRSFreq,self.SRSMod)
     self.SRS:SetCoalition(self.coalition)
     self.SRS:SetLabel(self.MenuName or self.Name)
     self.SRS:SetGender(self.Gender)
@@ -470,6 +470,7 @@ function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Cultu
     self.SRS:SetPort(self.Port)
     self.SRS:SetVoice(self.Voice)
     self.SRS:SetCoalition(self.coalition)
+    self.SRS:SetVolume(Volume)
     if self.PathToGoogleKey then
       self.SRS:SetGoogle(self.PathToGoogleKey)
     end

@@ -183,8 +183,10 @@ end
 -- @param #number Port SRS port. Default 5002.
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:SetSRS(PathToSRS, Port)
-  self.msrs=MSRS:New(PathToSRS, self.frequency/1000000, self.modulation)
-  self.msrs:SetPort(Port)
+  local path = PathToSRS or MSRS.path
+  local port = Port or MSRS.port
+  self.msrs=MSRS:New(path, self.frequency/1000000, self.modulation)
+  self.msrs:SetPort(port)
   return self
 end
 

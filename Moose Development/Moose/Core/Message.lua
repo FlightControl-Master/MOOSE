@@ -459,14 +459,14 @@ end
 
 _MESSAGESRS = {}
 
---- Set up MESSAGE generally to allow Text-To-Speech via SRS and TTS functions.
--- @param #string PathToSRS Path to SRS Folder, defaults to "C:\\\\Program Files\\\\DCS-SimpleRadio-Standalone".
--- @param #number Port Port number of SRS, defaults to 5002.
--- @param #string PathToCredentials (optional) Path to credentials file for e.g. Google.
+--- Set up MESSAGE generally to allow Text-To-Speech via SRS and TTS functions. `SetMSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
+-- @param #string PathToSRS (optional) Path to SRS Folder, defaults to "C:\\\\Program Files\\\\DCS-SimpleRadio-Standalone" or your configuration file setting.
+-- @param #number Port Port (optional) number of SRS, defaults to 5002 or your configuration file setting.
+-- @param #string PathToCredentials (optional) Path to credentials file for Google.
 -- @param #number Frequency Frequency in MHz. Can also be given as a #table of frequencies.
 -- @param #number Modulation Modulation, i.e. radio.modulation.AM  or radio.modulation.FM. Can also be given as a #table of modulations.
--- @param #string Gender (optional) Gender, i.e. "male" or "female", defaults to "female".
--- @param #string Culture (optional) Culture, e.g. "en-US", defaults to "en-GB"
+-- @param #string Gender (optional) Gender, i.e. "male" or "female", defaults to "female" or your configuration file setting.
+-- @param #string Culture (optional) Culture, e.g. "en-US", defaults to "en-GB" or your configuration file setting.
 -- @param #string Voice (optional) Voice. Will override gender and culture settings, e.g. MSRS.Voices.Microsoft.Hazel or MSRS.Voices.Google.Standard.de_DE_Standard_D. Hint on Microsoft voices - working voices are limited to Hedda, Hazel, David, Zira and Hortense. **Must** be installed on your Desktop or Server!
 -- @param #number Coalition (optional) Coalition, can be coalition.side.RED, coalition.side.BLUE or coalition.side.NEUTRAL. Defaults to coalition.side.NEUTRAL.
 -- @param #number Volume (optional) Volume, can be between 0.0 and 1.0 (loudest).
@@ -480,42 +480,51 @@ _MESSAGESRS = {}
 --          MESSAGE:New("Test message!",15,"SPAWN"):ToSRS()
 --          
 function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,Gender,Culture,Voice,Coalition,Volume,Label,Coordinate)
-  _MESSAGESRS.MSRS = MSRS:New(PathToSRS,Frequency or 243,Modulation or radio.modulation.AM,Volume)
   
-  _MESSAGESRS.frequency = Frequency
-  _MESSAGESRS.modulation = Modulation or radio.modulation.AM
+  _MESSAGESRS.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
   
-  _MESSAGESRS.MSRS:SetCoalition(Coalition or coalition.side.NEUTRAL)
-  _MESSAGESRS.coalition = Coalition or coalition.side.NEUTRAL
+  _MESSAGESRS.frequency = Frequency or MSRS.frequencies or 243
+  _MESSAGESRS.modulation = Modulation or MSRS.modulations or radio.modulation.AM
   
+  _MESSAGESRS.MSRS = MSRS:New(_MESSAGESRS.PathToSRS,_MESSAGESRS.frequency, _MESSAGESRS.modulation)
+
+  _MESSAGESRS.coalition = Coalition or MSRS.coalition or coalition.side.NEUTRAL    
+  _MESSAGESRS.MSRS:SetCoalition(_MESSAGESRS.coalition)
+
   _MESSAGESRS.coordinate = Coordinate
-  _MESSAGESRS.MSRS:SetCoordinate(Coordinate)
   
+  if Coordinate then
+    _MESSAGESRS.MSRS:SetCoordinate(Coordinate)
+  end
+  
+  _MESSAGESRS.Culture = Culture or MSRS.culture or "en-GB"
   _MESSAGESRS.MSRS:SetCulture(Culture)
-  _MESSAGESRS.Culture = Culture or "en-GB"
 
+  _MESSAGESRS.Gender = Gender or MSRS.gender or "female"
   _MESSAGESRS.MSRS:SetGender(Gender)
-  _MESSAGESRS.Gender = Gender or "female"
 
-  _MESSAGESRS.MSRS:SetGoogle(PathToCredentials)
-
-  _MESSAGESRS.MSRS:SetLabel(Label or "MESSAGE")
-  _MESSAGESRS.label = Label or "MESSAGE"
-
-  _MESSAGESRS.MSRS:SetPort(Port or 5002)
-  _MESSAGESRS.port = Port or 5002
+  if PathToCredentials then
+    _MESSAGESRS.MSRS:SetProviderOptionsGoogle(PathToCredentials)
+    _MESSAGESRS.MSRS:SetProvider(MSRS.Provider.GOOGLE)
+  end
   
-  _MESSAGESRS.volume = Volume or 1
+  _MESSAGESRS.label = Label or MSRS.Label or "MESSAGE"
+  _MESSAGESRS.MSRS:SetLabel(Label or "MESSAGE")
+
+  _MESSAGESRS.port = Port or MSRS.port or 5002
+  _MESSAGESRS.MSRS:SetPort(Port or 5002)
+
+  _MESSAGESRS.volume = Volume or MSRS.volume or 1
   _MESSAGESRS.MSRS:SetVolume(_MESSAGESRS.volume)
   
   if Voice then _MESSAGESRS.MSRS:SetVoice(Voice) end
   
-  _MESSAGESRS.voice = Voice --or MSRS.Voices.Microsoft.Hedda
+  _MESSAGESRS.voice = Voice or MSRS.voice --or MSRS.Voices.Microsoft.Hedda
   
-  _MESSAGESRS.SRSQ = MSRSQUEUE:New(Label or "MESSAGE")
+  _MESSAGESRS.SRSQ = MSRSQUEUE:New(_MESSAGESRS.label)
 end
 
---- Sends a message via SRS.
+--- Sends a message via SRS. `ToSRS()` will try to use as many attributes configured with @{Core.Message#MESSAGE.SetMSRS}() and @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
 -- @param #MESSAGE self
 -- @param #number frequency (optional) Frequency in MHz. Can also be given as a #table of frequencies. Only needed if you want to override defaults set with `MESSAGE.SetMSRS()` for this one setting.
 -- @param #number modulation (optional) Modulation, i.e. radio.modulation.AM  or radio.modulation.FM. Can also be given as a #table of modulations. Only needed if you want to override defaults set with `MESSAGE.SetMSRS()` for this one setting.
@@ -543,7 +552,7 @@ function MESSAGE:ToSRS(frequency,modulation,gender,culture,voice,coalition,volum
         _MESSAGESRS.MSRS:SetCoordinate(coordinate)  
       end
       local category = string.gsub(self.MessageCategory,":","")
-      _MESSAGESRS.SRSQ:NewTransmission(self.MessageText,nil,_MESSAGESRS.MSRS,nil,nil,nil,nil,nil,frequency or _MESSAGESRS.frequency,modulation or _MESSAGESRS.modulation, gender or _MESSAGESRS.Gender,culture or _MESSAGESRS.Culture,nil,volume or _MESSAGESRS.volume,category,coordinate or _MESSAGESRS.coordinate)
+      _MESSAGESRS.SRSQ:NewTransmission(self.MessageText,nil,_MESSAGESRS.MSRS,0.5,1,nil,nil,nil,frequency or _MESSAGESRS.frequency,modulation or _MESSAGESRS.modulation, gender or _MESSAGESRS.Gender,culture or _MESSAGESRS.Culture,nil,volume or _MESSAGESRS.volume,category,coordinate or _MESSAGESRS.coordinate)
   end
   return self
 end
