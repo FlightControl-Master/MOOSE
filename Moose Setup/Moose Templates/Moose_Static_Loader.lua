@@ -3,7 +3,11 @@
 -- Try to load Moose as individual script files from <DcsInstallDir\Script\Moose
 -- which should be a Junction link to the MOOSE repository subfolder "Moose Development\Moose".
 -- This method is used by Moose developers and not mission builders.
-ModuleLoader = 'Scripts/Moose/Modules.lua'
+if not MOOSE_DEVELOPMENT_FOLDER then
+	MOOSE_DEVELOPMENT_FOLDER='Scripts'
+end
+
+ModuleLoader = MOOSE_DEVELOPMENT_FOLDER..'/Moose/Modules.lua'
 
 if io then
   local f=io.open(ModuleLoader,"r")
@@ -31,7 +35,7 @@ if io then
 
     __Moose.Includes = {}
 
-    __Moose.Include( 'Scripts/Moose/Modules.lua' )
+    __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Modules.lua' )
     BASE:TraceOnOff( true )
     env.info( '*** MOOSE INCLUDE END *** ' )
 
