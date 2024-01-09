@@ -265,7 +265,7 @@ MSRS.version="0.3.0"
 --- Voices
 -- @type MSRS.Voices
 MSRS.Voices = {
-  Microsoft = {
+  Microsoft = { -- working ones if not using gRPC and MS
     ["Hedda"] = "Microsoft Hedda Desktop", -- de-DE
     ["Hazel"] = "Microsoft Hazel Desktop", -- en-GB
     ["David"] = "Microsoft David Desktop", -- en-US
@@ -277,7 +277,7 @@ MSRS.Voices = {
     ["en-US-Zira"] = "Microsoft Zira Desktop", -- en-US
     ["fr-FR-Hortense"] = "Microsoft Hortense Desktop", --fr-FR
     },
-  MicrosoftGRPC = { -- en-US/GB voices only as of Jan 2024
+  MicrosoftGRPC = { -- en-US/GB voices only as of Jan 2024, working ones if using gRPC and MS, if voice packs are installed
     --["Hedda"] = "Hedda", -- de-DE
     ["Hazel"] = "Hazel", -- en-GB
     ["George"] = "George", -- en-GB
@@ -285,7 +285,6 @@ MSRS.Voices = {
     ["David"] = "David", -- en-US
     ["Zira"] = "Zira", -- en-US
     ["Mark"] = "Mark", -- en-US
-    --[[
     ["James"] = "James", --en-AU
     ["Catherine"] = "Catherine", --en-AU
     ["Richard"] = "Richard", --en-CA

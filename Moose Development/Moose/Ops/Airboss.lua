@@ -3062,7 +3062,7 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   -- SRS
   local Frequency = self.AirbossRadio.frequency
   local Modulation = self.AirbossRadio.modulation
-  self.SRS = MSRS:New(PathToSRS,Frequency,Modulation,Volume,AltBackend)
+  self.SRS = MSRS:New(PathToSRS,Frequency,Modulation,AltBackend)
   self.SRS:SetCoalition(self:GetCoalition())
   self.SRS:SetCoordinate(self:GetCoordinate())
   self.SRS:SetCulture(Culture or "en-US")
@@ -3072,7 +3072,7 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   self.SRS:SetPort(Port or 5002)
   self.SRS:SetLabel(self.AirbossRadio.alias or "AIRBOSS")
   self.SRS:SetCoordinate(self.carrier:GetCoordinate())
-  self.SRS:SetVolume(Volume)
+  self.SRS:SetVolume(Volume or 1)
   --self.SRS:SetModulations(Modulations)
   if GoogleCreds then
     self.SRS:SetGoogle(GoogleCreds)
