@@ -3075,7 +3075,8 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   self.SRS:SetVolume(Volume)
   --self.SRS:SetModulations(Modulations)
   if GoogleCreds then
-    self.SRS:SetGoogle(GoogleCreds)
+    self.SRS:SetProviderOptionsGoogle(GoogleCreds,GoogleCreds)
+    self.SRS:SetProvider(MSRS.Provider.GOOGLE)
   end
   if Voice then
     self.SRS:SetVoice(Voice)

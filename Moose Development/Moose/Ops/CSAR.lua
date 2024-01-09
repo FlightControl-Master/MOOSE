@@ -2310,7 +2310,8 @@ function CSAR:onafterStart(From, Event, To)
     self.msrs:SetVoice(self.SRSVoice)
     self.msrs:SetGender(self.SRSGender)
     if self.SRSGPathToCredentials then
-      self.msrs:SetGoogle(self.SRSGPathToCredentials)
+      self.msrs:SetProviderOptionsGoogle(self.SRSGPathToCredentials,self.SRSGPathToCredentials)
+      self.msrs:SetProvider(MSRS.Provider.GOOGLE)
     end
     self.msrs:SetVolume(self.SRSVolume)
     self.msrs:SetLabel("CSAR")

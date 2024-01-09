@@ -451,12 +451,12 @@ end
 function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
   if OnOff then
     self.useSRS = true
-    self.SRSPath = Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+    self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
     self.SRSFreq = Frequency or 271
     self.SRSMod = Modulation or radio.modulation.AM
-    self.Gender = Gender or "male"
-    self.Culture = Culture or "en-US"
-    self.Port = Port or 5002
+    self.Gender = Gender or MSRS.gender or "male"
+    self.Culture = Culture or MSRS.culture or "en-US"
+    self.Port = Port or MSRS.port or 5002
     self.Voice = Voice 
     self.PathToGoogleKey = PathToGoogleKey
     self.Volume = Volume or 1.0
@@ -470,9 +470,10 @@ function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Cultu
     self.SRS:SetPort(self.Port)
     self.SRS:SetVoice(self.Voice)
     self.SRS:SetCoalition(self.coalition)
-    self.SRS:SetVolume(Volume)
+    self.SRS:SetVolume(self.Volume)
     if self.PathToGoogleKey then
-      self.SRS:SetGoogle(self.PathToGoogleKey)
+      self.SRS:SetProviderOptionsGoogle(PathToGoogleKey,PathToGoogleKey)
+      self.SRS:SetProvider(MSRS.Provider.GOOGLE)
     end
     self.SRSQueue = MSRSQUEUE:New(self.alias)
   else
