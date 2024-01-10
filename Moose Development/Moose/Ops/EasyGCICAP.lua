@@ -258,10 +258,10 @@ EASYGCICAP.version="0.0.9"
 
 --- Create a new GCICAP Manager
 -- @param #EASYGCICAP self
--- @param #string Alias
--- @param #string AirbaseName
--- @param #string Coalition
--- @param #string EWRName
+-- @param #string Alias A Name for this GCICAP
+-- @param #string AirbaseName Name of the Home Airbase
+-- @param #string Coalition Coalition, e.g. "blue" or "red"
+-- @param #string EWRName (Partial) group name of the EWR system of the coalition, e.g. "Red EWR"
 -- @return #EASYGCICAP self
 function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   -- Inherit everything from FSM class.
@@ -491,7 +491,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   
   -- Create Airwing
   local CAP_Wing = AIRWING:New(Airbasename,Alias)
-  CAP_Wing:SetVerbosityLevel(3)
+  CAP_Wing:SetVerbosityLevel(0)
   CAP_Wing:SetReportOff()
   CAP_Wing:SetMarker(false)
   CAP_Wing:SetAirbase(AIRBASE:FindByName(Airbasename))
