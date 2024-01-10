@@ -221,6 +221,9 @@ pip-log.txt
 #Goodsync
 _gsdata_/
 
+# PyCharm
+.idea
+
 #GITHUB
 Moose Test Missions/MOOSE_Test_Template.miz
 Moose Development/Moose/.vscode/launch.json
