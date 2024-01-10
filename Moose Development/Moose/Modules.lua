@@ -1,6 +1,3 @@
-if not MOOSE_DEVELOPMENT_FOLDER then
-	MOOSE_DEVELOPMENT_FOLDER='Scripts'
-end
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Utilities/Enums.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Utilities/Utils.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Utilities/Profiler.lua' )
