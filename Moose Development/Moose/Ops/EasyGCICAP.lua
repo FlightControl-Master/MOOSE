@@ -491,7 +491,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   
   -- Create Airwing
   local CAP_Wing = AIRWING:New(Airbasename,Alias)
-  CAP_Wing:SetVerbosityLevel(3)
+  CAP_Wing:SetVerbosityLevel(0)
   CAP_Wing:SetReportOff()
   CAP_Wing:SetMarker(false)
   CAP_Wing:SetAirbase(AIRBASE:FindByName(Airbasename))
