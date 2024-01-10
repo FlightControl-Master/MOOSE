@@ -265,19 +265,47 @@ MSRS.version="0.3.0"
 --- Voices
 -- @type MSRS.Voices
 MSRS.Voices = {
-  Microsoft = {
+  Microsoft = { -- working ones if not using gRPC and MS
     ["Hedda"] = "Microsoft Hedda Desktop", -- de-DE
     ["Hazel"] = "Microsoft Hazel Desktop", -- en-GB
     ["David"] = "Microsoft David Desktop", -- en-US
     ["Zira"] = "Microsoft Zira Desktop", -- en-US
     ["Hortense"] = "Microsoft Hortense Desktop", --fr-FR
+    ["de-DE-Hedda"] = "Microsoft Hedda Desktop", -- de-DE
+    ["en-GB-Hazel"] = "Microsoft Hazel Desktop", -- en-GB
+    ["en-US-David"] = "Microsoft David Desktop", -- en-US
+    ["en-US-Zira"] = "Microsoft Zira Desktop", -- en-US
+    ["fr-FR-Hortense"] = "Microsoft Hortense Desktop", --fr-FR
     },
-  MicrosoftGRPC = {
-    ["Hedda"] = "Hedda", -- de-DE
+  MicrosoftGRPC = { -- en-US/GB voices only as of Jan 2024, working ones if using gRPC and MS, if voice packs are installed
+    --["Hedda"] = "Hedda", -- de-DE
     ["Hazel"] = "Hazel", -- en-GB
+    ["George"] = "George", -- en-GB
+    ["Susan"] = "Susan", -- en-GB
     ["David"] = "David", -- en-US
     ["Zira"] = "Zira", -- en-US
-    ["Hortense"] = "Hortense", --fr-FR
+    ["Mark"] = "Mark", -- en-US
+    ["James"] = "James", --en-AU
+    ["Catherine"] = "Catherine", --en-AU
+    ["Richard"] = "Richard", --en-CA
+    ["Linda"] = "Linda", --en-CA
+    ["Ravi"] = "Ravi", --en-IN
+    ["Heera"] = "Heera", --en-IN
+    ["Sean"] = "Sean", --en-IR
+    ["en_GB_Hazel"] = "Hazel", -- en-GB
+    ["en_GB_George"] = "George", -- en-GB
+    ["en_GB_Susan"] = "Susan", -- en-GB
+    ["en_US_David"] = "David", -- en-US
+    ["en_US_Zira"] = "Zira", -- en-US
+    ["en_US_Mark"] = "Mark", -- en-US
+    ["en_AU_James"] = "James", --en-AU
+    ["en_AU_Catherine"] = "Catherine", --en-AU
+    ["en_CA_Richard"] = "Richard", --en-CA
+    ["en_CA_Linda"] = "Linda", --en-CA
+    ["en_IN_Ravi"] = "Ravi", --en-IN
+    ["en_IN_Heera"] = "Heera", --en-IN
+    ["en_IR_Sean"] = "Sean", --en-IR
+    --]]     
     },  
   Google = {
     Standard = {
