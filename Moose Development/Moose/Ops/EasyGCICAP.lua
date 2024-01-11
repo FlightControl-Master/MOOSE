@@ -528,6 +528,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:SetDespawnAfterHolding()
     flightgroup:SetDestinationbase(AIRBASE:FindByName(Airbasename))
     flightgroup:GetGroup():CommandEPLRS(true,5)
+    flightgroup:GetGroup():SetOptionRadarUsingForContinousSearch()
     if Mission.type ~= AUFTRAG.Type.TANKER and Mission.type ~= AUFTRAG.Type.AWACS and Mission.type ~= AUFTRAG.Type.RECON then
       flightgroup:SetDetection(true)
       flightgroup:SetEngageDetectedOn(self.engagerange,{"Air"},self.GoZoneSet,self.NoGoZoneSet)
@@ -548,7 +549,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:SetFuelLowRTB(true)
     Intel:AddAgent(flightgroup)
     function flightgroup:OnAfterHolding(From,Event,To)
-      self:ClearToLand(5)
+      self:Despawn(1,true)
     end 
     
   end
