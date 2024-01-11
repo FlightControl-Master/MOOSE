@@ -1744,7 +1744,7 @@ end
 function CTLD:_GenerateUHFrequencies()
   self:T(self.lid .. " _GenerateUHFrequencies")
     self.FreeUHFFrequencies = {}
-    self.FreeUHFFrequencies = UTILS.GenerateUHFrequencies()    
+    self.FreeUHFFrequencies = UTILS.GenerateUHFrequencies(243,320)    
     return self
 end
 
