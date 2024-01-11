@@ -47,7 +47,6 @@
 -- @field #number capalt
 -- @field #number capdir
 -- @field #number capleg
--- @field #number capgrouping
 -- @field #number maxinterceptsize
 -- @field #number missionrange
 -- @field #number noaltert5
@@ -65,6 +64,7 @@
 -- @field #boolean Monitor
 -- @field #boolean TankerInvisible
 -- @field #number CapFormation
+-- @field #table ReadyFlightGroups
 -- @extends Core.Fsm#FSM
 
 --- *“Airspeed, altitude, and brains. Two are always needed to successfully complete the flight.”* -- Unknown.
@@ -190,7 +190,6 @@ EASYGCICAP = {
   capalt = 25000,
   capdir = 45,
   capleg = 15,
-  capgrouping = 2,
   maxinterceptsize = 2,
   missionrange = 100,
   noaltert5 = 4,
@@ -209,6 +208,7 @@ EASYGCICAP = {
   Monitor = false,
   TankerInvisible = true,
   CapFormation = nil,
+  ReadyFlightGroups = {},
 }
 
 --- Internal Squadron data type
@@ -244,7 +244,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.0.9"
+EASYGCICAP.version="0.1.10"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -321,6 +321,7 @@ end
 -- @param #number Formation Formation to fly, defaults to ENUMS.Formation.FixedWing.FingerFour.Group
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetCAPFormation(Formation)
+  self:T(self.lid.."SetCAPFormation")
   self.CapFormation = Formation
   return self
 end
@@ -428,7 +429,7 @@ end
 --- Set default number of airframes standing by for intercept tasks (visible on the airfield)
 -- @param #EASYGCICAP self
 -- @param #number Airframes defaults to 2
--- @return #EASYGCICAP selfAirframes
+-- @return #EASYGCICAP self
 function EASYGCICAP:SetDefaultNumberAlter5Standby(Airframes)
   self:T(self.lid.."SetDefaultNumberAlter5Standby")
   self.noaltert5 = math.abs(Airframes) or 2
@@ -438,10 +439,22 @@ end
 --- Set default engage range for intruders detected by CAP flights in NM.
 -- @param #EASYGCICAP self
 -- @param #number Range defaults to 50NM
--- @return #EASYGCICAP selfAirframes
+-- @return #EASYGCICAP self
 function EASYGCICAP:SetDefaultEngageRange(Range)
   self:T(self.lid.."SetDefaultNumberAlter5Standby")
   self.engagerange = Range or 50
+  return self
+end
+
+--- Set default overhead for intercept calculations
+-- @param #EASYGCICAP self
+-- @param #number Overhead The overhead to use.
+-- @return #EASYGCICAP self
+-- @usage Either a CAP Plane or a newly spawned GCI plane will take care of intruders. Standard overhead is 0.75, i.e. a group of 3 intrudes will
+-- be managed by 2 planes from the assigned AirWing. There is an maximum missions limitation per AirWing, so we do not spam the skies.
+function EASYGCICAP:SetDefaultOverhead(Overhead)
+  self:T(self.lid.."SetDefaultOverhead")
+  self.overhead = Overhead or 0.75
   return self
 end
 
@@ -1046,6 +1059,172 @@ function EASYGCICAP:AddRejectZone(Zone)
   return self
 end
 
+--- (Internal) Try to assign the intercept to a FlightGroup already in air and ready.
+-- @param #EASYGCICAP self
+-- @param #table ReadyFlightGroups ReadyFlightGroups
+-- @param Ops.Auftrag#AUFTRAG InterceptAuftrag The Auftrag
+-- @param Wrapper.Group#GROUP Group The Target
+-- @param #number WingSize Calculated number of Flights
+-- @return #boolean assigned
+-- @return #number leftover
+function EASYGCICAP:_TryAssignIntercept(ReadyFlightGroups,InterceptAuftrag,Group,WingSize)
+  self:I("_TryAssignIntercept for size "..WingSize or 1)
+  local assigned = false
+  local wingsize = WingSize or 1
+  local mindist = 0
+  local disttable = {}
+  if Group and Group:IsAlive() then
+    local gcoord = Group:GetCoordinate() or COORDINATE:New(0,0,0)
+    self:I(self.lid..string.format("Assignment for %s",Group:GetName()))
+    for _name,_FG in pairs(ReadyFlightGroups or {}) do
+      local FG = _FG -- Ops.FlightGroup#FLIGHTGROUP
+      local fcoord = FG:GetCoordinate()
+      local dist = math.floor(UTILS.Round(fcoord:Get2DDistance(gcoord)/1000,1))
+      self:I(self.lid..string.format("FG %s Distance %dkm",_name,dist))
+      disttable[#disttable+1] = { FG=FG, dist=dist}
+      if dist>mindist then mindist=dist end
+    end
+    
+    local function sortDistance(a, b)
+      return a.dist < b.dist
+    end
+    
+    table.sort(disttable, sortDistance)
+    
+    for _,_entry in ipairs(disttable) do
+      local FG = _entry.FG -- Ops.FlightGroup#FLIGHTGROUP
+      FG:AddMission(InterceptAuftrag)
+      local cm = FG:GetMissionCurrent()
+      if cm then cm:Cancel() end
+      wingsize = wingsize - 1
+      self:I(self.lid..string.format("Assigned to FG %s Distance %dkm",FG:GetName(),_entry.dist))
+      if wingsize == 0 then 
+        assigned = true
+        break 
+      end
+    end
+  end
+  
+  return assigned, wingsize
+end
+
+--- Add a zone to the rejected zones set.
+-- @param #EASYGCICAP self
+-- @param Ops.Intelligence#INTEL.Cluster Cluster
+-- @return #EASYGCICAP self 
+function EASYGCICAP:_AssignIntercept(Cluster)
+   -- Here, we'll decide if we need to launch an intercepting flight, and from where
+  local overhead = self.overhead
+  local capspeed = self.capspeed + 100
+  local capalt = self.capalt
+  local maxsize = self.maxinterceptsize
+  local repeatsonfailure = self.repeatsonfailure
+  
+  local wings = self.wings
+  local ctlpts = self.ManagedCP
+  local MaxAliveMissions = self.MaxAliveMissions * self.capgrouping
+  local nogozoneset = self.NoGoZoneSet
+  local ReadyFlightGroups = self.ReadyFlightGroups
+  
+    -- Aircraft?
+  if Cluster.ctype ~= INTEL.Ctype.AIRCRAFT then return end
+  -- Threatlevel 0..10
+  local contact = self.Intel:GetHighestThreatContact(Cluster)
+  local name = contact.groupname --#string
+  local threat = contact.threatlevel --#number
+  local position = self.Intel:CalcClusterFuturePosition(Cluster,300)
+  -- calculate closest zone
+  local bestdistance = 2000*1000 -- 2000km
+  local targetairwing = nil -- Ops.AirWing#AIRWING
+  local targetawname = "" -- #string
+  local clustersize = self.Intel:ClusterCountUnits(Cluster) or 1
+  local wingsize = math.abs(overhead * (clustersize+1))
+  if wingsize > maxsize then wingsize = maxsize end
+  -- existing mission, and if so - done?
+  local retrymission = true
+  if Cluster.mission and (not Cluster.mission:IsOver()) then 
+    retrymission = false
+  end
+  if (retrymission) and (wingsize >= 1) then
+   MESSAGE:New(string.format("**** %s Interceptors need wingsize %d", UTILS.GetCoalitionName(self.coalition), wingsize),15,"CAPGCI"):ToAllIf(self.debug):ToLog()
+    for _,_data in pairs (wings) do
+      local airwing = _data[1] -- Ops.AirWing#AIRWING
+      local zone = _data[2] -- Core.Zone#ZONE
+      local zonecoord = zone:GetCoordinate()
+      local name = _data[3] -- #string
+      local distance = position:DistanceFromPointVec2(zonecoord)
+      local airframes = airwing:CountAssets(true)
+      if distance < bestdistance and airframes >= wingsize then
+        bestdistance = distance
+        targetairwing = airwing
+        targetawname = name
+      end
+    end
+    for _,_data in pairs (ctlpts) do
+      --local airwing = _data[1] -- Ops.AirWing#AIRWING
+      --local zone = _data[2] -- Core.Zone#ZONE
+      --local zonecoord = zone:GetCoordinate()
+      --local name = _data[3] -- #string
+      
+      local data = _data -- #EASYGCICAP.CapPoint
+      local name = data.AirbaseName
+      local zonecoord = data.Coordinate
+      local airwing = wings[name][1]
+      
+      local distance = position:DistanceFromPointVec2(zonecoord)
+      local airframes = airwing:CountAssets(true)
+      if distance < bestdistance and airframes >= wingsize then
+        bestdistance = distance
+        targetairwing = airwing -- Ops.AirWing#AIRWING
+        targetawname = name
+      end
+    end
+    local text = string.format("Closest Airwing is %s", targetawname)
+    local m = MESSAGE:New(text,10,"CAPGCI"):ToAllIf(self.debug):ToLog()
+    -- Do we have a matching airwing?
+    if targetairwing then
+      local AssetCount = targetairwing:CountAssetsOnMission(MissionTypes,Cohort)
+      -- Enough airframes on mission already?
+      self:T(self.lid.." Assets on Mission "..AssetCount)
+      if AssetCount <= MaxAliveMissions then
+        local repeats = repeatsonfailure
+        local InterceptAuftrag = AUFTRAG:NewINTERCEPT(contact.group)
+          :SetMissionRange(150)
+          :SetPriority(1,true,1)
+          --:SetRequiredAssets(wingsize)
+          :SetRepeatOnFailure(repeats)
+          :SetMissionSpeed(UTILS.KnotsToAltKIAS(capspeed,capalt))
+          :SetMissionAltitude(capalt)
+          
+          if nogozoneset:Count() > 0 then
+            InterceptAuftrag:AddConditionSuccess(
+              function(group,zoneset)
+                local success = false
+                if group and group:IsAlive() then
+                  local coord = group:GetCoordinate()
+                  if coord and zoneset:IsCoordinateInZone(coord) then
+                    success = true
+                  end
+                end
+                return success
+              end,
+              contact.group,
+              nogozoneset
+            )
+          end
+        local assigned, rest = self:_TryAssignIntercept(ReadyFlightGroups,InterceptAuftrag,contact.group,wingsize)
+        if not assigned  then
+          InterceptAuftrag:SetRequiredAssets(rest)
+          targetairwing:AddMission(InterceptAuftrag)
+        end
+        Cluster.mission = InterceptAuftrag
+      end
+    else
+      MESSAGE:New("**** Not enough airframes available or max mission limit reached!",15,"CAPGCI"):ToAllIf(self.debug):ToLog()
+    end
+   end
+end
+
 --- (Internal) Start detection.
 -- @param #EASYGCICAP self
 -- @return #EASYGCICAP self
@@ -1069,117 +1248,16 @@ function EASYGCICAP:_StartIntel()
     BlueIntel.debug = true
   end
   
-  -- Here, we'll decide if we need to launch an intercepting flight, and from where
-  
-  local overhead = self.overhead
-  local capspeed = self.capspeed + 100
-  local capalt = self.capalt
-  local maxsize = self.maxinterceptsize
-  local repeatsonfailure = self.repeatsonfailure
-  
-  local wings = self.wings
-  local ctlpts = self.ManagedCP
-  local MaxAliveMissions = self.MaxAliveMissions * self.capgrouping
-  local nogozoneset = self.NoGoZoneSet
+  local function AssignCluster(Cluster)
+    self:_AssignIntercept(Cluster)
+  end
   
   function BlueIntel:OnAfterNewCluster(From,Event,To,Cluster)
-    -- Aircraft?
-    if Cluster.ctype ~= INTEL.Ctype.AIRCRAFT then return end
-    -- Threatlevel 0..10
-    local contact = self:GetHighestThreatContact(Cluster)
-    local name = contact.groupname --#string
-    local threat = contact.threatlevel --#number
-    local position = self:CalcClusterFuturePosition(Cluster,300)
-    -- calculate closest zone
-    local bestdistance = 2000*1000 -- 2000km
-    local targetairwing = nil -- Ops.AirWing#AIRWING
-    local targetawname = "" -- #string
-    local clustersize = self:ClusterCountUnits(Cluster) or 1
-    local wingsize = math.abs(overhead * (clustersize+1))
-    if wingsize > maxsize then wingsize = maxsize end
-    -- existing mission, and if so - done?
-    local retrymission = true
-    if Cluster.mission and (not Cluster.mission:IsOver()) then 
-      retrymission = false
-    end
-    if (retrymission) and (wingsize >= 1) then
-     MESSAGE:New(string.format("**** %s Interceptors need wingsize %d", UTILS.GetCoalitionName(self.coalition), wingsize),15,"CAPGCI"):ToAllIf(self.debug):ToLog()
-      for _,_data in pairs (wings) do
-        local airwing = _data[1] -- Ops.AirWing#AIRWING
-        local zone = _data[2] -- Core.Zone#ZONE
-        local zonecoord = zone:GetCoordinate()
-        local name = _data[3] -- #string
-        local distance = position:DistanceFromPointVec2(zonecoord)
-        local airframes = airwing:CountAssets(true)
-        if distance < bestdistance and airframes >= wingsize then
-          bestdistance = distance
-          targetairwing = airwing
-          targetawname = name
-        end
-      end
-      for _,_data in pairs (ctlpts) do
-        --local airwing = _data[1] -- Ops.AirWing#AIRWING
-        --local zone = _data[2] -- Core.Zone#ZONE
-        --local zonecoord = zone:GetCoordinate()
-        --local name = _data[3] -- #string
-        
-        local data = _data -- #EASYGCICAP.CapPoint
-        local name = data.AirbaseName
-        local zonecoord = data.Coordinate
-        local airwing = wings[name][1]
-        
-        local distance = position:DistanceFromPointVec2(zonecoord)
-        local airframes = airwing:CountAssets(true)
-        if distance < bestdistance and airframes >= wingsize then
-          bestdistance = distance
-          targetairwing = airwing -- Ops.AirWing#AIRWING
-          targetawname = name
-        end
-      end
-      local text = string.format("Closest Airwing is %s", targetawname)
-      local m = MESSAGE:New(text,10,"CAPGCI"):ToAllIf(self.debug):ToLog()
-      -- Do we have a matching airwing?
-      if targetairwing then
-        local AssetCount = targetairwing:CountAssetsOnMission(MissionTypes,Cohort)
-        -- Enough airframes on mission already?
-        self:T(self.lid.." Assets on Mission "..AssetCount)
-        if AssetCount <= MaxAliveMissions then
-          local repeats = repeatsonfailure
-          local InterceptAuftrag = AUFTRAG:NewINTERCEPT(contact.group)
-            :SetMissionRange(150)
-            :SetPriority(1,true,1)
-            :SetRequiredAssets(wingsize)
-            :SetRepeatOnFailure(repeats)
-            :SetMissionSpeed(UTILS.KnotsToAltKIAS(capspeed,capalt))
-            :SetMissionAltitude(capalt)
-            
-            if nogozoneset:Count() > 0 then
-              InterceptAuftrag:AddConditionSuccess(
-                function(group,zoneset)
-                  local success = false
-                  if group and group:IsAlive() then
-                    local coord = group:GetCoordinate()
-                    if coord and zoneset:IsCoordinateInZone(coord) then
-                      success = true
-                    end
-                  end
-                  return success
-                end,
-                contact.group,
-                nogozoneset
-              )
-            end
-            
-          targetairwing:AddMission(InterceptAuftrag)
-          Cluster.mission = InterceptAuftrag
-        end
-      else
-        MESSAGE:New("**** Not enough airframes available or max mission limit reached!",15,"CAPGCI"):ToAllIf(self.debug):ToLog()
-      end
-   end
+    AssignCluster(Cluster)
   end
-self.Intel = BlueIntel  
-return self
+  
+  self.Intel = BlueIntel  
+  return self
 end
 
 -------------------------------------------------------------------------
@@ -1253,6 +1331,24 @@ function EASYGCICAP:onafterStatus(From,Event,To)
     tankermission = tankermission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.TANKER})
     assets = assets + count
     instock = instock + count2
+    local assetsonmission = _wing[1]:GetAssetsOnMission({AUFTRAG.Type.GCICAP,AUFTRAG.Type.PATROLRACETRACK})
+    -- update ready groups
+    self.ReadyFlightGroups = nil
+    self.ReadyFlightGroups = {}
+    for _,_asset in pairs(assetsonmission or {}) do
+      local asset = _asset -- Functional.Warehouse#WAREHOUSE.Assetitem
+      local FG = asset.flightgroup -- Ops.FlightGroup#FLIGHTGROUP
+      if FG then
+        local name = FG:GetName()
+        local engage = FG:IsEngaging()
+        local hasmissiles = FG:IsOutOfMissiles() == nil and true or false
+        local ready = hasmissiles and FG:IsFuelGood() and FG:IsAirborne()
+        --self:I(string.format("Flightgroup %s Engaging = %s Ready = %s",tostring(name),tostring(engage),tostring(ready)))
+        if ready then
+          self.ReadyFlightGroups[name] = FG
+        end
+      end
+    end
   end
   if self.Monitor then
     local threatcount = #self.Intel.Clusters or 0
