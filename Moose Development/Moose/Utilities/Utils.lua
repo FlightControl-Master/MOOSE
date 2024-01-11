@@ -2288,11 +2288,12 @@ function UTILS.GenerateUHFrequencies(Start,End)
           _start = _start + 500000
       end
     else
-      local End = End*1000000 or 399000000
-      local Start = Start*1000000 or 220000000
+      local myend = End*1000000 or 399000000
+      local mystart = Start*1000000 or 220000000
       
       while _start < 399000000 do
-      if _start ~= 243000000 and _start < Start and _start > End then
+      if _start ~= 243000000 and (_start < mystart or _start > myend) then
+        print(_start)
         table.insert(FreeUHFFrequencies, _start)
       end
           _start = _start + 500000
