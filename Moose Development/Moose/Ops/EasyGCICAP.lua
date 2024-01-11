@@ -258,10 +258,10 @@ EASYGCICAP.version="0.0.9"
 
 --- Create a new GCICAP Manager
 -- @param #EASYGCICAP self
--- @param #string Alias
--- @param #string AirbaseName
--- @param #string Coalition
--- @param #string EWRName
+-- @param #string Alias A Name for this GCICAP
+-- @param #string AirbaseName Name of the Home Airbase
+-- @param #string Coalition Coalition, e.g. "blue" or "red"
+-- @param #string EWRName (Partial) group name of the EWR system of the coalition, e.g. "Red EWR"
 -- @return #EASYGCICAP self
 function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   -- Inherit everything from FSM class.
@@ -528,6 +528,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:SetDespawnAfterHolding()
     flightgroup:SetDestinationbase(AIRBASE:FindByName(Airbasename))
     flightgroup:GetGroup():CommandEPLRS(true,5)
+    flightgroup:GetGroup():SetOptionRadarUsingForContinousSearch()
     if Mission.type ~= AUFTRAG.Type.TANKER and Mission.type ~= AUFTRAG.Type.AWACS and Mission.type ~= AUFTRAG.Type.RECON then
       flightgroup:SetDetection(true)
       flightgroup:SetEngageDetectedOn(self.engagerange,{"Air"},self.GoZoneSet,self.NoGoZoneSet)
@@ -548,7 +549,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:SetFuelLowRTB(true)
     Intel:AddAgent(flightgroup)
     function flightgroup:OnAfterHolding(From,Event,To)
-      self:ClearToLand(5)
+      self:Despawn(1,true)
     end 
     
   end
@@ -1140,20 +1141,6 @@ function EASYGCICAP:_StartIntel()
       -- Do we have a matching airwing?
       if targetairwing then
         local AssetCount = targetairwing:CountAssetsOnMission(MissionTypes,Cohort)
-        --[[
-        local Assets = targetairwing:GetAssetsOnMission(AUFTRAG.Type.GCICAP)
-        for _,_asset in pairs(Assets) do
-          local asset = _asset -- Functional.Warehouse#WAREHOUSE.Assetitem
-          local fg = asset.flightgroup
-          local name = asset.spawngroupname
-          local mission = fg:GetMissionCurrent()
-          local mtype = mission.type
-          local distance = position:Get3DDistance(fg:GetCoordinate()) or 1000*1000
-          distance = distance / 1000
-          local text = string.format("FlightGroup %s on mission %s with distance %d km",name,mtype,distance)
-          local m = MESSAGE:New(text,15,"GCICAP"):ToAllIf(self.debug):ToLog()
-        end
-        --]]
         -- Enough airframes on mission already?
         self:T(self.lid.." Assets on Mission "..AssetCount)
         if AssetCount <= MaxAliveMissions then
