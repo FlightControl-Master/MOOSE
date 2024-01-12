@@ -3546,9 +3546,7 @@ end
 -- @param #string To To state.
 function ARTY:onafterRespawn(Controllable, From, Event, To)
   self:_EventFromTo("onafterRespawn", Event, From, To)
-
-  env.info("FF Respawning arty group")
-
+  self:I("Respawning arty group")
   local group=self.Controllable --Wrapper.Group#GROUP
 
   -- Respawn group.

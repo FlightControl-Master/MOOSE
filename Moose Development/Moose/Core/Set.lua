@@ -7855,7 +7855,6 @@ do -- SET_OPSGROUP
             self:Add( groupname, group )
           end
         end
-
       end
     end
   end
