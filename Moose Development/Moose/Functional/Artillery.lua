@@ -1,4 +1,5 @@
----
+--- **Functional** - Control artillery units.
+--
 -- ===
 --
 -- The ARTY class can be used to easily assign and manage targets for artillery units using an advanced queueing system.
@@ -3545,7 +3546,7 @@ end
 -- @param #string To To state.
 function ARTY:onafterRespawn(Controllable, From, Event, To)
   self:_EventFromTo("onafterRespawn", Event, From, To)
-
+  self:I("Respawning arty group")
   local group=self.Controllable --Wrapper.Group#GROUP
 
   -- Respawn group.
