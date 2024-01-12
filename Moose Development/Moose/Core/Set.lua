@@ -7845,17 +7845,16 @@ do -- SET_OPSGROUP
 
     if Event.IniDCSUnit and Event.IniDCSGroup then
       local DCSgroup=Event.IniDCSGroup --DCS#Group
-      
+
       if DCSgroup:getInitialSize() == DCSgroup:getSize() then -- This seems to be not a good check as even for the first birth event, getSize returns the total number of units in the group.
-      
+
         local groupname, group = self:AddInDatabase( Event )
-        
+
         if group and group:CountAliveUnits()==DCSgroup:getInitialSize() then
           if group and self:IsIncludeObject( group ) then
             self:Add( groupname, group )
           end
         end
-        
       end
     end
   end
