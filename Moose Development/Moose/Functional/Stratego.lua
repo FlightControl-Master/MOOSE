@@ -222,6 +222,7 @@ STRATEGO = {
 -- @field #number points
 -- @field #number coalition
 -- @field #string coalitionname  
+-- @field Core.Point#COORDINATRE coordinate
 
 ---
 -- @type STRATEGO.Type
@@ -703,14 +704,21 @@ end
 
 --- [USER] Get a list of the nodes with the highest weight.
 -- @param #STRATEGO self
+-- @param #number Coalition (Optional) Find for this coalition only. E.g. coalition.side.BLUE.
 -- @return #table Table of nodes.
 -- @return #number Weight The consolidated weight associated with the nodes.
-function STRATEGO:GetHighestWeightNodes()
+function STRATEGO:GetHighestWeightNodes(Coalition)
   self:T(self.lid.."GetHighestWeightNodes")
   local weight = 0
   local airbases = {}
   for _name,_data in pairs(self.airbasetable) do
-    if _data.weight >= weight then
+    local okay = true
+    if Coalition then
+      if _data.coalition ~= Coalition then
+        okay = false
+      end
+    end
+    if _data.weight >= weight and okay then
       weight = _data.weight
       if not airbases[weight] then airbases[weight]={} end
       table.insert(airbases[weight],_name)
@@ -719,16 +727,24 @@ function STRATEGO:GetHighestWeightNodes()
   return airbases[weight],weight
 end
 
---- [USER] Get a list of the nodes a weight less than the give parameter.
+--- [USER] Get a list of the nodes a weight less than the given parameter.
 -- @param #STRATEGO self
+-- @param #number Weight Weight - nodes need to have less than this weight.
+-- @param #number Coalition (Optional) Find for this coalition only. E.g. coalition.side.BLUE.
 -- @return #table Table of nodes.
 -- @return #number Weight The consolidated weight associated with the nodes.
-function STRATEGO:GetNextHighestWeightNodes(Weight)
+function STRATEGO:GetNextHighestWeightNodes(Weight, Coalition)
   self:T(self.lid.."GetNextHighestWeightNodes")
   local weight = 0
   local airbases = {}
   for _name,_data in pairs(self.airbasetable) do
-    if _data.weight >= weight and _data.weight < Weight then
+    local okay = true
+    if Coalition then
+      if _data.coalition ~= Coalition then
+        okay = false
+      end
+    end
+    if _data.weight >= weight and _data.weight < Weight and okay then
       weight = _data.weight
       if not airbases[weight] then airbases[weight]={} end
       table.insert(airbases[weight],_name)
@@ -985,7 +1001,9 @@ function STRATEGO:FindStrategicTargets()
           name = name,
           dist = dist,
           points = fpoints,
-          coalition = coa,  
+          coalition = coa,
+          coalitionname = UTILS.GetCoalitionName(coa), 
+          coordinate = self.airbasetable[name].coord, 
           }
       end
       local enemycoa = self.coalition == coalition.side.BLUE and coalition.side.RED or coalition.side.BLUE
@@ -1000,7 +1018,9 @@ function STRATEGO:FindStrategicTargets()
           name = name,
           dist = dist,
           points = fpoints,
-          coalition = coa,  
+          coalition = coa,
+          coalitionname = UTILS.GetCoalitionName(coa),
+          coordinate = self.airbasetable[name].coord,  
           }
       end
     end
@@ -1031,6 +1051,7 @@ function STRATEGO:FindConsolidationTargets()
           points = fpoints,
           coalition = coa,
           coalitionname = UTILS.GetCoalitionName(coa),
+          coordinate = self.airbasetable[name].coord,
           }
       end
       local enemycoa = self.coalition == coalition.side.BLUE and coalition.side.RED or coalition.side.BLUE
@@ -1046,7 +1067,8 @@ function STRATEGO:FindConsolidationTargets()
           dist = dist,
           points = fpoints,
           coalition = coa,
-          coalitionname = UTILS.GetCoalitionName(coa),  
+          coalitionname = UTILS.GetCoalitionName(coa),
+          coordinate = self.airbasetable[name].coord,  
           }
       end
     end
@@ -1060,10 +1082,14 @@ end
 -- @param #boolean Enemies (optional) If true, find only enemy neighbors.
 -- @param #boolean Friends (optional) If true, find only friendly or neutral neighbors.
 -- @return #table Neighbors Table of #STRATEGO.DistData entries indexed by neighbor node names.
+-- @return #string Nearest Name of the nearest node.
+-- @return #number Distance Distance of the nearest node.
 function STRATEGO:FindNeighborNodes(Name,Enemies,Friends)
   self:T(self.lid.."FindNeighborNodes")
   local neighbors = {}
   local name = string.gsub(Name,"[%p%s]",".")
+  local shortestdist = 1000*1000
+  local nearest = nil
   for _route,_data in pairs(self.disttable) do
     if string.find(_route,name,1,true) then
       local dist = self.disttable[_route] -- #STRATEGO.DistData
@@ -1082,9 +1108,13 @@ function STRATEGO:FindNeighborNodes(Name,Enemies,Friends)
       else
         neighbors[cname] = dist
       end
+      if neighbors[cname] and  dist.dist < shortestdist then 
+        shortestdist = dist.dist
+        nearest = cname
+      end
     end
   end
-  return neighbors
+  return neighbors, nearest, shortestdist
 end
 
 --- [USER] Find a route between two nodes.
