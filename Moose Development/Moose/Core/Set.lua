@@ -1578,7 +1578,7 @@ do
   function SET_GROUP:AddInDatabase( Event )
     self:F3( { Event } )
 
-    if Event.IniObjectCategory == 1 then
+    if Event.IniObjectCategory == Object.Category.UNIT then
       if not self.Database[Event.IniDCSGroupName] then
         self.Database[Event.IniDCSGroupName] = GROUP:Register( Event.IniDCSGroupName )
         self:T3( self.Database[Event.IniDCSGroupName] )
@@ -2641,7 +2641,7 @@ do -- SET_UNIT
   function SET_UNIT:AddInDatabase( Event )
     self:F3( { Event } )
 
-    if Event.IniObjectCategory == 1 then
+    if Event.IniObjectCategory == Object.Category.UNIT then
       if not self.Database[Event.IniDCSUnitName] then
         self.Database[Event.IniDCSUnitName] = UNIT:Register( Event.IniDCSUnitName )
         self:T3( self.Database[Event.IniDCSUnitName] )
@@ -4518,7 +4518,7 @@ do -- SET_CLIENT
   function SET_CLIENT:_EventPlayerEnterUnit(Event)
     self:I( "_EventPlayerEnterUnit" )
     if Event.IniDCSUnit then
-      if Event.IniObjectCategory == 1 and Event.IniGroup and Event.IniGroup:IsGround() then
+      if Event.IniObjectCategory == Object.Category.UNIT and Event.IniGroup and Event.IniGroup:IsGround() then
         -- CA Slot entered
         local ObjectName, Object = self:AddInDatabase( Event )
         self:I( ObjectName, UTILS.PrintTableToLog(Object) )
@@ -4537,7 +4537,7 @@ do -- SET_CLIENT
   function SET_CLIENT:_EventPlayerLeaveUnit(Event)
     self:I( "_EventPlayerLeaveUnit" )
     if Event.IniDCSUnit then
-      if Event.IniObjectCategory == 1 and Event.IniGroup and Event.IniGroup:IsGround() then
+      if Event.IniObjectCategory == Object.Category.UNIT and Event.IniGroup and Event.IniGroup:IsGround() then
         -- CA Slot left
         local ObjectName, Object = self:FindInDatabase( Event )
         if ObjectName then
@@ -7837,6 +7837,29 @@ do -- SET_OPSGROUP
     return self
   end  
 
+  --- Handles the OnBirth event for the Set.
+  -- @param #SET_OPSGROUP self
+  -- @param Core.Event#EVENTDATA Event Event data.
+  function SET_OPSGROUP:_EventOnBirth( Event )
+    self:F3( { Event } )
+
+    if Event.IniDCSUnit and Event.IniDCSGroup then
+      local DCSgroup=Event.IniDCSGroup --DCS#Group
+
+      if DCSgroup:getInitialSize() == DCSgroup:getSize() then -- This seems to be not a good check as even for the first birth event, getSize returns the total number of units in the group.
+
+        local groupname, group = self:AddInDatabase( Event )
+
+        if group and group:CountAliveUnits()==DCSgroup:getInitialSize() then
+          if group and self:IsIncludeObject( group ) then
+            self:Add( groupname, group )
+          end
+        end
+
+      end
+    end
+  end
+
   --- Handles the OnDead or OnCrash event for alive groups set.
   -- Note: The GROUP object in the SET_OPSGROUP collection will only be removed if the last unit is destroyed of the GROUP.
   -- @param #SET_OPSGROUP self
@@ -7857,12 +7880,12 @@ do -- SET_OPSGROUP
   --- Handles the Database to check on an event (birth) that the Object was added in the Database.
   -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
   -- @param #SET_OPSGROUP self
-  -- @param Core.Event#EVENTDATA Event
-  -- @return #string The name of the GROUP
-  -- @return #table The GROUP
+  -- @param Core.Event#EVENTDATA Event Event data.
+  -- @return #string The name of the GROUP.
+  -- @return Wrapper.Group#GROUP The GROUP object.
   function SET_OPSGROUP:AddInDatabase( Event )
   
-    if Event.IniObjectCategory==1 then
+    if Event.IniObjectCategory==Object.Category.UNIT then
     
       if not self.Database[Event.IniDCSGroupName] then
         self.Database[Event.IniDCSGroupName] = GROUP:Register( Event.IniDCSGroupName )
@@ -7877,8 +7900,8 @@ do -- SET_OPSGROUP
   -- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
   -- @param #SET_OPSGROUP self
   -- @param Core.Event#EVENTDATA Event Event data table.
-  -- @return #string The name of the GROUP
-  -- @return #table The GROUP
+  -- @return #string The name of the GROUP.
+  -- @return Wrapper.Group#GROUP The GROUP object.
   function SET_OPSGROUP:FindInDatabase(Event)
     return Event.IniDCSGroupName, self.Database[Event.IniDCSGroupName]
   end
@@ -8197,7 +8220,7 @@ do -- SET_SCENERY
   end
   
   --- Get a table of alive objects.
-  -- @param #SET_GROUP self
+  -- @param #SET_SCENERY self
   -- @return #table Table of alive objects
   -- @return Core.Set#SET_SCENERY SET of alive objects
   function SET_SCENERY:GetAliveSet()
