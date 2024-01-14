@@ -7176,7 +7176,7 @@ function OPSGROUP:SetLaserTarget(Target)
 
       -- Scenery as target. Treat it like a coordinate. Set offset to 1 meter above ground.
       self.spot.TargetType=0
-      self.spot.offsetTarget={x=0, y=1, z=0}
+      self.spot.offsetTarget={x=0, y=3, z=0}
 
     elseif Target:IsInstanceOf("POSITIONABLE") then
 

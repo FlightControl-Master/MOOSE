@@ -3001,6 +3001,9 @@ function AWACS:_Picture(Group,IsGeneral)
     
     if clustersAO == 0 and clustersEWR == 0 then
       -- clean
+      local picclean = self.gettext:GetEntry("PICCLEAN",self.locale)
+      text = string.format(picclean,gcallsign,self.callsigntxt)
+      textScreen = text
       self:_NewRadioEntry(text,text,GID,Outcome,true,true,false)
     else
     
