@@ -98,7 +98,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.22"
+PLAYERTASK.version="0.1.23"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -2609,6 +2609,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
         -- not done yet
         local dcoord = self.LasingDrone:GetCoordinate()
         local tcoord = task.Target:GetCoordinate()
+        tcoord.y = tcoord.y + 2 
         local dist = dcoord:Get2DDistance(tcoord)
         -- close enough?
         if dist < 3000 and not self.LasingDrone:IsLasing() then
@@ -3192,7 +3193,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
         local islasing = self.LasingDrone:IsLasing() == true and yes or no
         local prectext = self.gettext:GetEntry("POINTERTARGETREPORT",self.locale)
         prectext = string.format(prectext,inreach,islasing)
-        text = text .. prectext
+        text = text .. prectext.."("..self.LaserCode..")"
       end
     end
     -- Buddylasing
