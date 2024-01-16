@@ -74,7 +74,7 @@
 -- @image Designation.JPG
 --
 -- Date: 24 Oct 2021
--- Last Update: Oct 2023
+-- Last Update: Jan 2024
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
@@ -87,6 +87,7 @@
 -- @field Core.Set#SET_GROUP RecceSet
 -- @field #table LaserCodes
 -- @field #table playermenus
+-- @field #boolean smokemenu
 -- @extends Ops.Intel#INTEL
 
 ---
@@ -97,6 +98,7 @@ AUTOLASE = {
   verbose = 0,
   alias = "",
   debug = false,
+  smokemenu = true,
 }
 
 --- Laser spot info
@@ -115,7 +117,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.22"
+AUTOLASE.version = "0.1.23"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -202,6 +204,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.blacklistattributes = {}
   self:SetLaserCodes( { 1688, 1130, 4785, 6547, 1465, 4578 } ) -- set self.LaserCodes
   self.playermenus = {}
+  self.smokemenu = true
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -329,9 +332,11 @@ function AUTOLASE:SetPilotMenu()
         local lasetopm = MENU_GROUP:New(Group,"Autolase",nil)
         self.playermenus[unitname] = lasetopm
         local lasemenu = MENU_GROUP_COMMAND:New(Group,"Status",lasetopm,self.ShowStatus,self,Group,Unit)
-        local smoke = (self.smoketargets == true) and "off" or "on"
-        local smoketext = string.format("Switch smoke targets to %s",smoke)
-        local smokemenu = MENU_GROUP_COMMAND:New(Group,smoketext,lasetopm,self.SetSmokeTargets,self,(not self.smoketargets))
+        if self.smokemenu then
+          local smoke = (self.smoketargets == true) and "off" or "on"
+          local smoketext = string.format("Switch smoke targets to %s",smoke)
+          local smokemenu = MENU_GROUP_COMMAND:New(Group,smoketext,lasetopm,self.SetSmokeTargets,self,(not self.smoketargets))
+        end
         for _,_grp in pairs(self.RecceSet.Set) do
           local grp = _grp -- Wrapper.Group#GROUP
           local unit = grp:GetUnit(1)
@@ -580,6 +585,23 @@ function AUTOLASE:SetSmokeTargets(OnOff,Color)
   self:NotifyPilots(Message,10)
   return self
 end
+
+--- (User) Show the "Switch smoke target..." menu entry for pilots. On by default.
+-- @param #AUTOLASE self
+-- @return #AUTOLASE self 
+function AUTOLASE:EnableSmokeMenu()
+  self.smokemenu = true
+  return self
+end
+
+--- (User) Do not show the "Switch smoke target..." menu entry for pilots.
+-- @param #AUTOLASE self
+-- @return #AUTOLASE self 
+function AUTOLASE:DisableSmokeMenu()
+  self.smokemenu = false
+  return self
+end
+
 
 --- (Internal) Function to calculate line of sight.
 -- @param #AUTOLASE self
