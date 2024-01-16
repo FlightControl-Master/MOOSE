@@ -59,7 +59,7 @@ while( MooseSource ) do
   MooseSource = string.gsub(MooseSource, "\r", "")
   
   if MooseSource ~= "" then
-    MooseSource = string.match( MooseSource, "Scripts/Moose/(.+)'" )
+    MooseSource = string.match( MooseSource, "/Moose/(.+)'" )
     local MooseFilePath = MooseDevelopmentPath .. "/" .. MooseSource
     if MooseDynamicStatic == "D" then
       print( "Load dynamic: " .. MooseFilePath )

@@ -4018,6 +4018,62 @@ function CONTROLLABLE:OptionEngageRange( EngageRange )
   return nil
 end
 
+--- [AIR] Set how the AI uses the onboard radar.
+-- @param #CONTROLLABLE self
+-- @param #number Option Options are: `NEVER = 0, FOR_ATTACK_ONLY = 1,FOR_SEARCH_IF_REQUIRED = 2, FOR_CONTINUOUS_SEARCH = 3`
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionRadarUsing(Option)
+ self:F2( { self.ControllableName } )
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.RADAR_USING,Option)
+  end
+  return self
+end
+
+--- [AIR] Set how the AI uses the onboard radar. Here: never.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionRadarUsingNever()
+ self:F2( { self.ControllableName } )
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.RADAR_USING,0)
+  end
+  return self
+end
+
+--- [AIR] Set how the AI uses the onboard radar, here: for attack only.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionRadarUsingForAttackOnly()
+ self:F2( { self.ControllableName } )
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.RADAR_USING,1)
+  end
+  return self
+end
+
+--- [AIR] Set how the AI uses the onboard radar, here: when required for searching.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionRadarUsingForSearchIfRequired()
+ self:F2( { self.ControllableName } )
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.RADAR_USING,2)
+  end
+  return self
+end
+
+--- [AIR] Set how the AI uses the onboard radar, here: always on.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionRadarUsingForContinousSearch()
+ self:F2( { self.ControllableName } )
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.RADAR_USING,3)
+  end
+  return self
+end
+
 --- (GROUND) Relocate controllable to a random point within a given radius; use e.g.for evasive actions; Note that not all ground controllables can actually drive, also the alarm state of the controllable might stop it from moving.
 -- @param #CONTROLLABLE self
 -- @param #number speed Speed of the controllable, default 20

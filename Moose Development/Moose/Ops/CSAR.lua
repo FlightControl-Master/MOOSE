@@ -293,7 +293,7 @@ CSAR.AircraftType["Bronco-OV-10A"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.18"
+CSAR.version="1.0.19"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -536,6 +536,7 @@ function CSAR:New(Coalition, Template, Alias)
   -- @param #number Frequency Beacon frequency in kHz.
   -- @param #string Leadername Name of the #UNIT of the downed pilot.
   -- @param #string CoordinatesText String of the position of the pilot. Format determined by self.coordtype.
+  -- @param #string Playername Player name if any given. Might be nil!
   
   --- On After "Aproach" event. Heli close to downed Pilot.
   -- @function [parent=#CSAR] OnAfterApproach
@@ -842,7 +843,7 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
 
   self:_CreateDownedPilotTrack(_spawnedGroup,_GroupName,_coalition,_unitName,_text,_typeName,_freq,_playerName,wetfeet)
 
-  self:_InitSARForPilot(_spawnedGroup, _unitName, _freq, noMessage) --shagrat use unitName to have the aircraft callsign / descriptive "name" etc.
+  self:_InitSARForPilot(_spawnedGroup, _unitName, _freq, noMessage, _playerName) --shagrat use unitName to have the aircraft callsign / descriptive "name" etc.
   
   return self
 end
@@ -1224,7 +1225,8 @@ end
 -- @param #string _GroupName Name of the Group
 -- @param #number _freq Beacon frequency.
 -- @param #boolean _nomessage Send message true or false.
-function CSAR:_InitSARForPilot(_downedGroup, _GroupName, _freq, _nomessage)
+-- @param #string _playername Name of the downed pilot if any
+function CSAR:_InitSARForPilot(_downedGroup, _GroupName, _freq, _nomessage, _playername)
   self:T(self.lid .. " _InitSARForPilot")
   local _leader = _downedGroup:GetUnit(1)
   local _groupName = _GroupName
@@ -1247,7 +1249,7 @@ function CSAR:_InitSARForPilot(_downedGroup, _GroupName, _freq, _nomessage)
   end
 
    -- trigger FSM event
-  self:__PilotDown(2,_downedGroup, _freqk, _groupName, _coordinatesText)
+  self:__PilotDown(2,_downedGroup, _freqk, _groupName, _coordinatesText, _playername)
   
   return self
 end
@@ -1923,7 +1925,7 @@ function CSAR:_DisplayToAllSAR(_message, _side, _messagetime)
   local messagetime = _messagetime or self.messageTime
   if self.msrs then
     local voice = self.CSARVoice or MSRS.Voices.Google.Standard.en_GB_Standard_F
-    if self.msrs.google == nil then
+    if self.msrs:GetProvider() == MSRS.Provider.WINDOWS then
       voice = self.CSARVoiceMS or MSRS.Voices.Microsoft.Hedda
     end
     self:I("Voice = "..voice)
@@ -2310,7 +2312,8 @@ function CSAR:onafterStart(From, Event, To)
     self.msrs:SetVoice(self.SRSVoice)
     self.msrs:SetGender(self.SRSGender)
     if self.SRSGPathToCredentials then
-      self.msrs:SetGoogle(self.SRSGPathToCredentials)
+      self.msrs:SetProviderOptionsGoogle(self.SRSGPathToCredentials,self.SRSGPathToCredentials)
+      self.msrs:SetProvider(MSRS.Provider.GOOGLE)
     end
     self.msrs:SetVolume(self.SRSVolume)
     self.msrs:SetLabel("CSAR")
@@ -2542,8 +2545,9 @@ end
 -- @param #number Frequency Beacon frequency in kHz.
 -- @param #string Leadername Name of the #UNIT of the downed pilot.
 -- @param #string CoordinatesText String of the position of the pilot. Format determined by self.coordtype.
-function CSAR:onbeforePilotDown(From, Event, To, Group, Frequency, Leadername, CoordinatesText)
-  self:T({From, Event, To, Group, Frequency, Leadername, CoordinatesText})
+-- @param #string Playername Player name if any given. Might be nil!
+function CSAR:onbeforePilotDown(From, Event, To, Group, Frequency, Leadername, CoordinatesText, Playername)
+  self:T({From, Event, To, Group, Frequency, Leadername, CoordinatesText, tostring(Playername)})
   return self
 end
 

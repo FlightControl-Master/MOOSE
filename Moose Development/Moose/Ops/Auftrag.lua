@@ -434,6 +434,7 @@ _AUFTRAGSNR=0
 -- @field #string ARMORATTACK Armor attack.
 -- @field #string CASENHANCED Enhanced CAS.
 -- @field #string HOVER Hover.
+-- @field #string LANDATCOORDINATE Land at coordinate.
 -- @field #string GROUNDATTACK Ground attack.
 -- @field #string CARGOTRANSPORT Cargo transport.
 -- @field #string RELOCATECOHORT Relocate a cohort from one legion to another.
@@ -480,6 +481,7 @@ AUFTRAG.Type={
   ARMORATTACK="Armor Attack",
   CASENHANCED="CAS Enhanced",
   HOVER="Hover",
+  LANDATCOORDINATE="Land at Coordinate",
   GROUNDATTACK="Ground Attack",
   CARGOTRANSPORT="Cargo Transport",
   RELOCATECOHORT="Relocate Cohort",
@@ -1039,6 +1041,42 @@ function AUFTRAG:NewHOVER(Coordinate, Altitude, Time, Speed, MissionAlt)
   mission.hoverTime = Time or 300
   self:SetMissionSpeed(Speed or 150)
   self:SetMissionAltitude(MissionAlt or 1000)
+  
+  -- Mission options:
+  mission.missionFraction=0.9
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+
+  mission.categories={AUFTRAG.Category.HELICOPTER}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+--- **[AIR ROTARY]** Create an LANDATCOORDINATE mission.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Where to land.
+-- @param #number OuterRadius (Optional) Vary the coordinate by this many feet, e.g. get a new random coordinate between OuterRadius and (optionally) avoiding InnerRadius of the coordinate.
+-- @param #number InnerRadius (Optional) Vary the coordinate by this many feet, e.g. get a new random coordinate between OuterRadius and (optionally) avoiding InnerRadius of the coordinate.
+-- @param #number Time Time in seconds to stay. Default 300 seconds.
+-- @param #number Speed Speed in knots to fly to the target coordinate. Default 150kn.
+-- @param #number MissionAlt Altitude to fly towards the mission in feet AGL. Default 1000ft.
+-- @return #AUFTRAG self
+function AUFTRAG:NewLANDATCOORDINATE(Coordinate, OuterRadius, InnerRadius, Time, Speed, MissionAlt)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.LANDATCOORDINATE)
+
+  mission:_TargetFromObject(Coordinate)
+
+  mission.stayTime = Time or 300
+  mission.stayAt = Coordinate
+  self:SetMissionSpeed(Speed or 150)
+  self:SetMissionAltitude(MissionAlt or 1000)
+  
+  if OuterRadius then
+    mission.stayAt = Coordinate:GetRandomCoordinateInRadius(UTILS.FeetToMeters(OuterRadius),UTILS.FeetToMeters(InnerRadius or 0))  
+  end
   
   -- Mission options:
   mission.missionFraction=0.9
@@ -6443,7 +6481,19 @@ function AUFTRAG:GetDCSMissionTask()
     param.missionAltitude = self.missionAltitude
 
     DCStask.params=param
+  
+    table.insert(DCStasks, DCStask)
 
+  elseif self.type==AUFTRAG.Type.LANDATCOORDINATE then
+
+    ---------------------
+    -- LANDATCOORDINATE Mission
+    ---------------------
+
+    local DCStask={}
+    local Vec2 = self.stayAt:GetVec2()  
+    local DCStask = CONTROLLABLE.TaskLandAtVec2(nil,Vec2,self.stayTime)
+  
     table.insert(DCStasks, DCStask)
 
   elseif self.type==AUFTRAG.Type.ONGUARD or self.type==AUFTRAG.Type.ARMOREDGUARD then
