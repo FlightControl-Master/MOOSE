@@ -18,5 +18,7 @@ __Moose.Include = function( IncludeFile )
 end
 
 __Moose.Includes = {}
-
-__Moose.Include( 'Scripts/Moose/Modules.lua' )
+if not MOOSE_DEVELOPMENT_FOLDER then
+	MOOSE_DEVELOPMENT_FOLDER='Scripts'
+end
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Modules.lua' )

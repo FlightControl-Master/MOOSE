@@ -98,7 +98,7 @@ PLAYERTASK = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.22"
+PLAYERTASK.version="0.1.23"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -1965,6 +1965,7 @@ end
 -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FlightGroup (e.g. drone) to be used for lasing (one unit in one group only).
 -- Can optionally be handed as Ops.ArmyGroup#ARMYGROUP - **Note** might not find an LOS spot or get lost on the way. Cannot island-hop.
 -- @param #number LaserCode The lasercode to be used. Defaults to 1688.
+-- @param Core.Point#COORDINATE HoldingPoint (Optional) Point where the drone should initially circle. If not set, defaults to BullsEye of the coalition.
 -- @return #PLAYERTASKCONTROLLER self
 -- @usage
 -- -- Set up precision bombing, FlightGroup as lasing unit
@@ -1979,7 +1980,7 @@ end
 --        ArmyGroup:Activate()
 --        taskmanager:EnablePrecisionBombing(ArmyGroup,1688)
 --
-function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode)
+function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode,HoldingPoint)
   self:T(self.lid.."EnablePrecisionBombing")
   if FlightGroup then
     if FlightGroup.ClassName and (FlightGroup.ClassName == "FLIGHTGROUP" or FlightGroup.ClassName == "ARMYGROUP")then
@@ -1995,6 +1996,7 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode)
       -- let it orbit the BullsEye if FG
       if self.LasingDrone:IsFlightgroup() then
         local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.Coalition ))
+        if HoldingPoint then BullsCoordinate = HoldingPoint end
         local Orbit = AUFTRAG:NewORBIT_CIRCLE(BullsCoordinate,10000,120)
         self.LasingDrone:AddMission(Orbit)
       end
@@ -2553,10 +2555,11 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
       self.LasingDrone.playertask.reachmessage = false
       -- move the drone to target
       if self.LasingDrone:IsFlightgroup() then
+        self.LasingDrone:CancelAllMissions()
         local auftrag = AUFTRAG:NewORBIT_CIRCLE(task.Target:GetCoordinate(),10000,120)
-        local currmission = self.LasingDrone:GetMissionCurrent()
+        --local currmission = self.LasingDrone:GetMissionCurrent()
         self.LasingDrone:AddMission(auftrag)
-        currmission:__Cancel(-2)
+        --currmission:__Cancel(-2)      
       elseif self.LasingDrone:IsArmygroup() then
         local tgtcoord = task.Target:GetCoordinate()
         local tgtzone = ZONE_RADIUS:New("ArmyGroup-"..math.random(1,10000),tgtcoord:GetVec2(),3000)
@@ -2606,6 +2609,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
         -- not done yet
         local dcoord = self.LasingDrone:GetCoordinate()
         local tcoord = task.Target:GetCoordinate()
+        tcoord.y = tcoord.y + 2 
         local dist = dcoord:Get2DDistance(tcoord)
         -- close enough?
         if dist < 3000 and not self.LasingDrone:IsLasing() then
@@ -3189,7 +3193,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
         local islasing = self.LasingDrone:IsLasing() == true and yes or no
         local prectext = self.gettext:GetEntry("POINTERTARGETREPORT",self.locale)
         prectext = string.format(prectext,inreach,islasing)
-        text = text .. prectext
+        text = text .. prectext.."("..self.LaserCode..")"
       end
     end
     -- Buddylasing

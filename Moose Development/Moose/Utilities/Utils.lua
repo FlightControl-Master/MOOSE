@@ -2346,20 +2346,37 @@ function UTILS.GenerateVHFrequencies()
   return FreeVHFFrequencies
 end
 
---- Function to generate valid UHF Frequencies in mHz (AM).
+--- Function to generate valid UHF Frequencies in mHz (AM). Can be between 220 and 399 mHz. 243 is auto-excluded.
+-- @param Start (Optional) Avoid frequencies between Start and End in mHz, e.g. 244
+-- @param End (Optional) Avoid frequencies between Start and End in mHz, e.g. 320
 -- @return #table UHF Frequencies
-function UTILS.GenerateUHFrequencies()
+function UTILS.GenerateUHFrequencies(Start,End)
 
     local FreeUHFFrequencies = {}
     local _start = 220000000
-
-    while _start < 399000000 do
-    if _start ~= 243000000 then
-      table.insert(FreeUHFFrequencies, _start)
+    
+    if not Start then
+      while _start < 399000000 do
+      if _start ~= 243000000 then
+        table.insert(FreeUHFFrequencies, _start)
+      end
+          _start = _start + 500000
+      end
+    else
+      local myend = End*1000000 or 399000000
+      local mystart = Start*1000000 or 220000000
+      
+      while _start < 399000000 do
+      if _start ~= 243000000 and (_start < mystart or _start > myend) then
+        print(_start)
+        table.insert(FreeUHFFrequencies, _start)
+      end
+          _start = _start + 500000
+      end
+      
     end
-        _start = _start + 500000
-    end
-
+    
+    
     return FreeUHFFrequencies
 end
 

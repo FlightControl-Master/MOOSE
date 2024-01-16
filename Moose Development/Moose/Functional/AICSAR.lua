@@ -527,7 +527,7 @@ end
 --- [User] Switch sound output on and use SRS output for sound files.
 -- @param #AICSAR self
 -- @param #boolean OnOff Switch on (true) or off (false).
--- @param #string Path Path to your SRS Server Component, e.g. "E:\\\\Program Files\\\\DCS-SimpleRadio-Standalone"
+-- @param #string Path Path to your SRS Server Component, e.g. "C:\\\\Program Files\\\\DCS-SimpleRadio-Standalone"
 -- @param #number Frequency Defaults to 243 (guard)
 -- @param #number Modulation Radio modulation. Defaults to radio.modulation.AM
 -- @param #string SoundPath Where to find the audio files. Defaults to nil, i.e. add messages via "Sound to..." in the Mission Editor.
@@ -538,13 +538,13 @@ function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath,Port)
   self.SRSRadio = OnOff and true
   self.SRSTTSRadio = false
   self.SRSFrequency = Frequency or 243
-  self.SRSPath = Path or "c:\\"
+  self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
   self.SRS:SetLabel("ACSR")
   self.SRS:SetCoalition(self.coalition)
   self.SRSModulation = Modulation or radio.modulation.AM
   local soundpath = os.getenv('TMP') .. "\\DCS\\Mission\\l10n\\DEFAULT" -- defaults to "l10n/DEFAULT/", i.e. add messages by "Sound to..." in the ME
   self.SRSSoundPath = SoundPath or soundpath
-  self.SRSPort = Port or 5002
+  self.SRSPort = Port or MSRS.port or 5002
   if OnOff then
     self.SRS = MSRS:New(Path,Frequency,Modulation)
     self.SRS:SetPort(self.SRSPort)
@@ -570,11 +570,11 @@ function AICSAR:SetSRSTTSRadio(OnOff,Path,Frequency,Modulation,Port,Voice,Cultur
   self.SRSTTSRadio = OnOff and true
   self.SRSRadio = false
   self.SRSFrequency = Frequency or 243
-  self.SRSPath = Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+  self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
   self.SRSModulation = Modulation or radio.modulation.AM
-  self.SRSPort = Port or 5002
+  self.SRSPort = Port or MSRS.port or 5002
   if OnOff then
-    self.SRS = MSRS:New(Path,Frequency,Modulation)
+    self.SRS = MSRS:New(self.SRSPath,Frequency,Modulation)
     self.SRS:SetPort(self.SRSPort)
     self.SRS:SetCoalition(self.coalition)
     self.SRS:SetLabel("ACSR")
@@ -582,7 +582,8 @@ function AICSAR:SetSRSTTSRadio(OnOff,Path,Frequency,Modulation,Port,Voice,Cultur
     self.SRS:SetCulture(Culture)
     self.SRS:SetGender(Gender)
     if GoogleCredentials then
-      self.SRS:SetGoogle(GoogleCredentials)
+      self.SRS:SetProviderOptionsGoogle(GoogleCredentials,GoogleCredentials)
+      self.SRS:SetProvider(MSRS.Provider.GOOGLE)
       self.SRSGoogle = true
     end
     self.SRSQ = MSRSQUEUE:New(self.alias)
@@ -608,8 +609,8 @@ function AICSAR:SetPilotTTSVoice(Voice,Culture,Gender)
  self.SRSPilot:SetLabel("PILOT")
  if self.SRSGoogle then
   local poptions = self.SRS:GetProviderOptions(MSRS.Provider.GOOGLE) -- Sound.SRS#MSRS.ProviderOptions
-  self.SRSPilot:SetGoogle(poptions.credentials)
-  self.SRSPilot:SetGoogleAPIKey(poptions.key)
+  self.SRSPilot:SetProviderOptionsGoogle(poptions.credentials,poptions.key)
+  self.SRSPilot:SetProvider(MSRS.Provider.GOOGLE)
  end
  return self
 end
@@ -632,8 +633,8 @@ function AICSAR:SetOperatorTTSVoice(Voice,Culture,Gender)
  self.SRSOperator:SetLabel("RESCUE")
  if self.SRSGoogle then
   local poptions = self.SRS:GetProviderOptions(MSRS.Provider.GOOGLE) -- Sound.SRS#MSRS.ProviderOptions
-  self.SRSOperator:SetGoogle(poptions.credentials)
-  self.SRSOperator:SetGoogleAPIKey(poptions.key)
+  self.SRSOperator:SetProviderOptionsGoogle(poptions.credentials,poptions.key)
+  self.SRSOperator:SetProvider(MSRS.Provider.GOOGLE)
  end
  return self
 end
