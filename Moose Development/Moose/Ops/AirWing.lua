@@ -36,14 +36,12 @@
 -- @field Core.Set#SET_ZONE zonesetAWACS Set of AWACS zones.
 -- @field Core.Set#SET_ZONE zonesetRECON Set of RECON zones. 
 -- @field #number nflightsCAP Number of CAP flights constantly in the air.
--- @field #number nflightsCAS Number of CAP flights constantly in the air.
 -- @field #number nflightsAWACS Number of AWACS flights constantly in the air.
 -- @field #number nflightsTANKERboom Number of TANKER flights with BOOM constantly in the air.
 -- @field #number nflightsTANKERprobe Number of TANKER flights with PROBE constantly in the air.
 -- @field #number nflightsRescueHelo Number of Rescue helo flights constantly in the air.
 -- @field #number nflightsRecon Number of Recon flights constantly in the air.
 -- @field #table pointsCAP Table of CAP points.
--- @field #table pointsCAS Table of CAS points.
 -- @field #table pointsTANKER Table of Tanker points.
 -- @field #table pointsAWACS Table of AWACS points.
 -- @field #table pointsRecon Table of RECON points.
@@ -58,6 +56,8 @@
 -- @field #boolean despawnAfterHolding Aircraft are despawned after holding.
 -- @field #boolean capOptionPatrolRaceTrack Use closer patrol race track or standard orbit auftrag.
 -- @field #number capFormation If capOptionPatrolRaceTrack is true, set the formation, also.
+-- @field #number capOptionVaryStartTime If set, vary mission start time for CAP missions generated random between capOptionVaryStartTime and capOptionVaryEndTime
+-- @field #number capOptionVaryEndTime If set, vary mission start time for CAP missions generated random between capOptionVaryStartTime and capOptionVaryEndTime
 -- 
 -- @extends Ops.Legion#LEGION
 
@@ -128,13 +128,14 @@ AIRWING = {
   payloads       =    {},
   payloadcounter =     0,
   pointsCAP      =    {},
-  pointsCAS      =    {},
   pointsTANKER   =    {},
   pointsAWACS    =    {},
   pointsRecon    =    {},
   markpoints     =   false,
   capOptionPatrolRaceTrack = false,
   capFormation   =    nil,
+  capOptionVaryStartTime =    nil,
+  capOptionVaryEndTime =    nil,
 }
 
 --- Payload data.
@@ -186,7 +187,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.9.4"
+AIRWING.version="0.9.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -229,7 +230,6 @@ function AIRWING:New(warehousename, airwingname)
   
   -- Defaults:
   self.nflightsCAP=0
-  self.nflightsCAS=0
   self.nflightsAWACS=0
   self.nflightsRecon=0
   self.nflightsTANKERboom=0
@@ -707,24 +707,6 @@ function AIRWING:SetNumberCAP(n)
   return self
 end
 
---- Set number of CAS flights constantly carried out.
--- @param #AIRWING self
--- @param #number n Number of flights. Default 1.
--- @return #AIRWING self
-function AIRWING:SetNumberCAS(n)
-  self.nflightsCAS=n or 1
-  return self
-end
-
---- Set CAS flight formation.
--- @param #AIRWING self
--- @param #number Formation Formation to take, e.g. ENUMS.Formation.FixedWing.Trail.Close, also see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_option_formation).
--- @return #AIRWING self
-function AIRWING:SetCASFormation(Formation)
-  self.casFormation = Formation
-  return self
-end
-
 --- Set CAP flight formation.
 -- @param #AIRWING self
 -- @param #number Formation Formation to take, e.g. ENUMS.Formation.FixedWing.Trail.Close, also see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_option_formation).
@@ -740,6 +722,17 @@ end
 -- @return #AIRWING self
 function AIRWING:SetCapCloseRaceTrack(OnOff)
   self.capOptionPatrolRaceTrack = OnOff
+  return self
+end
+
+--- Set CAP mission start to vary randomly between Start end End seconds.
+-- @param #AIRWING self
+-- @param #number Start
+-- @param #number End 
+-- @return #AIRWING self
+function AIRWING:SetCapStartTimeVariation(Start, End)
+  self.capOptionVaryStartTime = Start or 5
+  self.capOptionVaryEndTime = End or 60
   return self
 end
 
@@ -873,37 +866,6 @@ function AIRWING:AddPatrolPointCAP(Coordinate, Altitude, Speed, Heading, LegLeng
   local patrolpoint=self:NewPatrolPoint("CAP", Coordinate, Altitude, Speed, Heading, LegLength)
 
   table.insert(self.pointsCAP, patrolpoint)
-
-  return self
-end
-
---- Add a patrol Point for CAS missions.
--- @param #AIRWING self
--- @param Core.Zone#ZONE_BASE Zone Zone to patrol.
--- @param #number Altitude Orbit altitude in feet.
--- @param #number Speed Orbit speed in knots.
--- @param #number RangeMax Max Range in NM.
--- @param Core.Set#SET_ZONE NoEngageZoneSet (Optional)  Non engagement zone set
--- @param #table TargetTypes (Optional) Types of target attributes that will be engaged. See DCS enum attributes. Default {"Helicopters", "Ground Units", "Light armed ships"}.
--- @return #AIRWING self
-function AIRWING:AddPatrolPointCAS(Zone, Altitude, Speed, RangeMax, NoEngageZoneSet, TargetTypes)
-  
-  local patrolpoint={}  --#AIRWING.PatrolData
-  patrolpoint.type = "CAS"
-  patrolpoint.zone = Zone
-  patrolpoint.altitude=Altitude or math.random(10,20)*1000
-  patrolpoint.speed=Speed or 250
-  patrolpoint.noccupied=0
-  patrolpoint.NoEngageZoneSet=NoEngageZoneSet
-  patrolpoint.TargetTypes=TargetTypes
-  patrolpoint.RangeMax=RangeMax or 100
-  
-  if self.markpoints then
-    patrolpoint.marker=MARKER:New(Coordinate, "New Patrol Point"):ToAll()
-    AIRWING.UpdatePatrolPointMarker(patrolpoint)
-  end
-  
-  table.insert(self.pointsCAS, patrolpoint)
 
   return self
 end
@@ -1067,9 +1029,6 @@ function AIRWING:onafterStatus(From, Event, To)
 
   -- Check CAP missions.
   self:CheckCAP()
-  
-  -- Check CAP missions.
-  self:CheckCAS()
 
   -- Check TANKER missions.
   self:CheckTANKER()
@@ -1221,6 +1180,14 @@ function AIRWING:CheckCAP()
     
     end
     
+    if self.capOptionVaryStartTime then
+    
+      local ClockStart = math.random(self.capOptionVaryStartTime, self.capOptionVaryEndTime)
+    
+      missionCAP:SetTime(ClockStart)
+    
+    end
+    
     missionCAP.patroldata=patrol
 
     patrol.noccupied=patrol.noccupied+1
@@ -1228,47 +1195,6 @@ function AIRWING:CheckCAP()
     if self.markpoints then AIRWING.UpdatePatrolPointMarker(patrol) end
 
     self:AddMission(missionCAP)
-
-  end
-
-  return self
-end
-
---- Check how many CAS missions are assigned and add number of missing missions.
--- @param #AIRWING self
--- @return #AIRWING self
-function AIRWING:CheckCAS()
-
-  local Ncap=0 
-
-
-  -- Count CAP missions.
-  for _,_mission in pairs(self.missionqueue) do
-    local mission=_mission --Ops.Auftrag#AUFTRAG
-
-    if mission:IsNotOver() and (mission.type==AUFTRAG.Type.CASENHANCED or mission.type == AUFTRAG.Type.PATROLRACETRACK) and mission.patroldata then
-      Ncap=Ncap+1
-    end
-
-  end
-
-  for i=1,self.nflightsCAS-Ncap do
-
-    local patrol=self:_GetPatrolData(self.pointsCAS)
-
-    local altitude=patrol.altitude+500*patrol.noccupied
-
-    local missionCAS = nil -- Ops.Auftrag#AUFTRAG
-     
-    missionCAS=AUFTRAG:NewCASENHANCED(patrol.zone,altitude,patrol.speed,patrol.RangeMax,patrol.NoEngageZoneSet,patrol.TargetTypes)
-    
-    missionCAS.patroldata=patrol
-
-    patrol.noccupied=patrol.noccupied+1
-
-    if self.markpoints then AIRWING.UpdatePatrolPointMarker(patrol) end
-
-    self:AddMission(missionCAS)
 
   end
 

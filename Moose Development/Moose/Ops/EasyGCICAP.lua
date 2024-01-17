@@ -458,6 +458,17 @@ function EASYGCICAP:SetDefaultOverhead(Overhead)
   return self
 end
 
+--- Set CAP mission start to vary randomly between Start end End seconds.
+-- @param #EASYGCICAP self
+-- @param #number Start
+-- @param #number End 
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetCapStartTimeVariation(Start, End)
+  self.capOptionVaryStartTime = Start or 5
+  self.capOptionVaryEndTime = End or 60
+  return self
+end
+
 --- Add an AirWing to the manager
 -- @param #EASYGCICAP self
 -- @param #string Airbasename
@@ -511,6 +522,11 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   CAP_Wing:SetRespawnAfterDestroyed()
   CAP_Wing:SetNumberCAP(self.capgrouping)
   CAP_Wing:SetCapCloseRaceTrack(true)
+  
+  if self.capOptionVaryStartTime then
+    CAP_Wing:SetCapStartTimeVariation(self.capOptionVaryStartTime,self.capOptionVaryEndTime)
+  end
+  
   if CapFormation then
     CAP_Wing:SetCAPFormation(CapFormation)
   end
