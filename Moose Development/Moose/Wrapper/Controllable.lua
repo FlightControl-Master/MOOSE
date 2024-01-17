@@ -938,24 +938,52 @@ end
 -- @param #CONTROLLABLE self
 -- @param #number Frequency Radio frequency in MHz.
 -- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
+-- @param #number Power (Optional) Power of the Radio in Watts. Defaults to 10.
 -- @param #number Delay (Optional) Delay in seconds before the frequency is set. Default is immediately.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:CommandSetFrequency( Frequency, Modulation, Delay )
+function CONTROLLABLE:CommandSetFrequency( Frequency, Modulation, Power, Delay )
 
   local CommandSetFrequency = {
     id = 'SetFrequency',
     params = {
       frequency = Frequency * 1000000,
       modulation = Modulation or radio.modulation.AM,
+      power=Power or 10,
     },
   }
 
   if Delay and Delay > 0 then
-    SCHEDULER:New( nil, self.CommandSetFrequency, { self, Frequency, Modulation }, Delay )
+    SCHEDULER:New( nil, self.CommandSetFrequency, { self, Frequency, Modulation, Power } )
   else
     self:SetCommand( CommandSetFrequency )
   end
 
+  return self
+end
+
+--- [AIR] Set radio frequency. See [DCS command EPLRS](https://wiki.hoggitworld.com/view/DCS_command_setFrequencyForUnit)
+-- @param #CONTROLLABLE self
+-- @param #number Frequency Radio frequency in MHz.
+-- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
+-- @param #number Power (Optional) Power of the Radio in Watts. Defaults to 10.
+-- @param #UnitID UnitID (Optional, if your object is a UNIT) The UNIT ID this is for. 
+-- @param #number Delay (Optional) Delay in seconds before the frequency is set. Default is immediately.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSetFrequencyForUnit(Frequency,Modulation,Power,UnitID,Delay)
+  local CommandSetFrequencyForUnit={
+    id='SetFrequencyForUnit',
+    params={
+        frequency=Frequency*1000000,
+        modulation=Modulation or radio.modulation.AM,
+        unitId=UnitID or self:GetID(),
+        power=Power or 10,
+    },
+  }
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil,self.CommandSetFrequencyForUnit,{self,Frequency,Modulation,Power,UnitID})
+  else
+    self:SetCommand(CommandSetFrequencyForUnit)
+  end
   return self
 end
 
