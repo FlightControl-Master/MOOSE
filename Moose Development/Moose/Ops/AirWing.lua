@@ -56,6 +56,8 @@
 -- @field #boolean despawnAfterHolding Aircraft are despawned after holding.
 -- @field #boolean capOptionPatrolRaceTrack Use closer patrol race track or standard orbit auftrag.
 -- @field #number capFormation If capOptionPatrolRaceTrack is true, set the formation, also.
+-- @field #number capOptionVaryStartTime If set, vary mission start time for CAP missions generated random between capOptionVaryStartTime and capOptionVaryEndTime
+-- @field #number capOptionVaryEndTime If set, vary mission start time for CAP missions generated random between capOptionVaryStartTime and capOptionVaryEndTime
 -- 
 -- @extends Ops.Legion#LEGION
 
@@ -132,6 +134,8 @@ AIRWING = {
   markpoints     =   false,
   capOptionPatrolRaceTrack = false,
   capFormation   =    nil,
+  capOptionVaryStartTime =    nil,
+  capOptionVaryEndTime =    nil,
 }
 
 --- Payload data.
@@ -183,7 +187,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.9.4"
+AIRWING.version="0.9.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -721,6 +725,17 @@ function AIRWING:SetCapCloseRaceTrack(OnOff)
   return self
 end
 
+--- Set CAP mission start to vary randomly between Start end End seconds.
+-- @param #AIRWING self
+-- @param #number Start
+-- @param #number End 
+-- @return #AIRWING self
+function AIRWING:SetCapStartTimeVariation(Start, End)
+  self.capOptionVaryStartTime = Start or 5
+  self.capOptionVaryEndTime = End or 60
+  return self
+end
+
 --- Set number of TANKER flights with Boom constantly in the air.
 -- @param #AIRWING self
 -- @param #number Nboom Number of flights. Default 1.
@@ -1162,6 +1177,14 @@ function AIRWING:CheckCAP()
     else
         
       missionCAP=AUFTRAG:NewGCICAP(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg)
+    
+    end
+    
+    if self.capOptionVaryStartTime then
+    
+      local ClockStart = math.random(self.capOptionVaryStartTime, self.capOptionVaryEndTime)
+    
+      missionCAP:SetTime(ClockStart)
     
     end
     
