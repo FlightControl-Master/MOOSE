@@ -1899,8 +1899,17 @@ function AIRBASE:_InitRunways(IncludeInverse)
     local heading=math.deg(bearing)
       
     -- Data table.
-    local runway={} --#AIRBASE.Runway      
-    runway.name=string.format("%02d", tonumber(name))
+    local runway={} --#AIRBASE.Runway
+    
+    local namefromheading = math.floor(heading/10)
+
+    if self.AirbaseName == AIRBASE.Syria.Beirut_Rafic_Hariri and math.abs(namefromheading-name) > 1 then
+      runway.name=string.format("%02d", tonumber(namefromheading))
+    else
+     runway.name=string.format("%02d", tonumber(name))
+    end
+       
+    --runway.name=string.format("%02d", tonumber(name))
     runway.magheading=tonumber(runway.name)*10
     runway.heading=heading
     runway.width=width or 0
