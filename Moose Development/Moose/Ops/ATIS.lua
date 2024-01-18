@@ -700,7 +700,7 @@ ATIS.Messages = {
   EN =
   {
     HOURS = "hours",
-    TIME = "hours",
+    TIME = "Hours",
     NOCLOUDINFO = "Cloud coverage information not available",
     OVERCAST = "Overcast",
     BROKEN = "Broken clouds",
