@@ -435,7 +435,8 @@ function STRATEGO:AnalyseBases()
       if not abzone then 
         abzone = ZONE_RADIUS:New(abname,ab:GetVec2(),500)
       end
-      local coa = ab:GetCoalition() + 1
+      local coa = ab:GetCoalition() or 0
+      coa = coa+1
       local abtype = "AIRBASE"
       if ab:IsShip() then
         numrwys = 1
