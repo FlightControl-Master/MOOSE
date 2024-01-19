@@ -435,7 +435,8 @@ function STRATEGO:AnalyseBases()
       if not abzone then 
         abzone = ZONE_RADIUS:New(abname,ab:GetVec2(),500)
       end
-      local coa = ab:GetCoalition() or 0
+      local coa = ab:GetCoalition()
+      if coa == nil then return end -- Spawned FARPS issue - these have no tangible data
       coa = coa+1
       local abtype = "AIRBASE"
       if ab:IsShip() then
