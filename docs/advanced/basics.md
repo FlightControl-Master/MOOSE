@@ -11,17 +11,17 @@ concepts that we will explain here. You will need them for the later pages.
 
 Moose has about 260.000 lines of code and the amount is increasing each week.
 To maintain such a big code base a vcs (version control system) is needed.
-Moose uses [Git], a distributed source code management created 2005 by Linus
-Torvalds for the development of the Linux kernel.
+Moose uses [Git], a distributed source code management system created 2005 by
+Linus Torvalds for the development of the Linux kernel.
 
 As developer platform [GitHub] was choosen as a central place for Moose
-to create, store, and manage the code. [GitHub] use [Git] for version control
-and provides additional functionality like access control, bug tracking, feature
-requests and much more.
+to create, store, and manage the code. [GitHub] use [Git] as version control
+system and provides additional functionality like access control, bug tracking,
+feature requests and much more.
 
-As a Moose you don't need to learn to use [Git]. You can download the files on
-[GitHub] with a browser. But using [Git] will ease up the steps to keep the
-Moose version on your hard disk up to date.
+As a Moose user you don't need to learn how to use [Git]. You can download the
+files on [GitHub] with a browser. But using [Git] will ease up the steps to keep
+the Moose version on your hard disk up to date.
 
 You will need to interact with [GitHub]. At least to download the Moose files.
 For non developers the page can be confusing. Take your time and read this
@@ -73,6 +73,8 @@ Moose framework.
 # What is a debugger (good for)
 
 [Git]: https://en.wikipedia.org/wiki/Git
+[GitHub]: https://github.com/
+[YouTube]: https://www.youtube.com/
 [Moose Discord]: https://discord.gg/gj68fm969S
 [overview]: ../index.md
 [reposities]: ../repositories.md
