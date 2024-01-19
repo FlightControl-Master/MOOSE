@@ -1204,7 +1204,7 @@ do
     if not DontSetCargoBayLimit then
       -- I set the default cargo bay weight limit each time a new group is added to the set.
       -- TODO Why is this here in the first place?
-      for UnitID, UnitData in pairs( group:GetUnits() ) do
+      for UnitID, UnitData in pairs( group:GetUnits() or {} ) do
         if UnitData and UnitData:IsAlive() then
           UnitData:SetCargoBayWeightLimit()
         end
