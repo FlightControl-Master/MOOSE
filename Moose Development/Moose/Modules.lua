@@ -178,6 +178,7 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Tasking/Task_Cargo_Dispatcher
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Tasking/Task_Capture_Zone.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Tasking/Task_Capture_Dispatcher.lua' )
 
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/Vector.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Point.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Procedure.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/FlightPlan.lua' )
