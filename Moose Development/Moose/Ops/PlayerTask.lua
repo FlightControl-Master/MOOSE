@@ -3207,7 +3207,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
         local islasing = self.LasingDrone:IsLasing() == true and yes or no
         local prectext = self.gettext:GetEntry("POINTERTARGETREPORT",self.locale)
         prectext = string.format(prectext,inreach,islasing)
-        text = text .. prectext.."("..self.LaserCode..")"
+        text = text .. prectext.." ("..self.LaserCode..")"
       end
     end
     -- Buddylasing
