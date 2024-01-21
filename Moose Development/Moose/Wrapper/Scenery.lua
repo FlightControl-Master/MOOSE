@@ -123,17 +123,37 @@ end
 
 --- Check if SCENERY Object is alive.
 --@param #SCENERY self
+--@param #number Threshold (Optional) If given, SCENERY counts as alive above this relative life in percent (1..100).
 --@return #number life
-function SCENERY:IsAlive()
-  return self:GetLife() >= 1 and true or false
+function SCENERY:IsAlive(Threshold)
+  if not Threshold then
+    return self:GetLife() >= 1 and true or false
+  else
+    return self:GetRelativeLife() > Threshold and true or false
+  end
 end 
 
 --- Check if SCENERY Object is dead.
 --@param #SCENERY self
+--@param #number Threshold (Optional) If given, SCENERY counts as dead below this relative life in percent (1..100).
 --@return #number life
-function SCENERY:IsDead()
-  return self:GetLife() < 1 and true or false
+function SCENERY:IsDead(Threshold)
+  if not Threshold then
+    return self:GetLife() < 1 and true or false
+  else
+    return self:GetRelativeLife() <= Threshold and true or false
+  end
 end 
+
+--- Get SCENERY relative life in percent, e.g. 75.
+--@param #SCENERY self
+--@return #number rlife
+function SCENERY:GetRelativeLife()
+  local life = self:GetLife()
+  local life0 = self:GetLife0()
+  local rlife = math.floor((life/life0)*100)
+  return rlife
+end
 
 --- Get the threat level of a SCENERY object. Always 0 as scenery does not pose a threat to anyone.
 --@param #SCENERY self
