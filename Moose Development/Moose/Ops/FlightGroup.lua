@@ -2333,7 +2333,8 @@ function FLIGHTGROUP:onafterCruise(From, Event, To)
     -- CLIENT
     ---
   
-    --self:_UpdateMenu(0.1)
+    -- Had this commented out (forgot why, probably because it was not necessary) but re-enabling it because of carrier launch.
+    self:_UpdateMenu(0.1)
     
   end
     
