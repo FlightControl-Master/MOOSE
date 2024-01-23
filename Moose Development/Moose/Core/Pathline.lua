@@ -73,7 +73,7 @@ PATHLINE = {
 
 --- PATHLINE class version.
 -- @field #string version
-PATHLINE.version="0.1.0"
+PATHLINE.version="0.1.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -237,13 +237,14 @@ end
 --- Get COORDINATES of pathline. Note that COORDINATE objects are created when calling this function. That does involve deep copy calls and can have an impact on performance if done too often.
 -- @param #PATHLINE self
 -- @return <Core.Point#COORDINATE> List of COORDINATES points.
-function PATHLINE:GetCoordinats()
+function PATHLINE:GetCoordinates()
 
   local vecs={}
   
   for _,_point in pairs(self.points) do
     local point=_point --#PATHLINE.Point
     local coord=COORDINATE:NewFromVec3(point.vec3)
+    table.insert(vecs,coord)
   end
 
   return vecs
@@ -262,7 +263,7 @@ function PATHLINE:GetPointFromIndex(n)
   local point=nil --#PATHLINE.Point
   
   if n>=1 and n<=N then
-    point=self.point[n]
+    point=self.points[n]
   else
     self:E(self.lid..string.format("ERROR: No point in pathline for N=%s", tostring(n)))
   end
