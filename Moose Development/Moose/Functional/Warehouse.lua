@@ -3414,7 +3414,7 @@ end
 -- FSM states
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- On after Start event. Starts the warehouse. Addes event handlers and schedules status updates of reqests and queue.
+--- On after Start event. Starts the warehouse. Adds event handlers and schedules status updates of reqests and queue.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -3595,6 +3595,7 @@ function WAREHOUSE:onafterStatus(From, Event, To)
     local Trepair=self:GetRunwayRepairtime()
     self:I(self.lid..string.format("Runway destroyed! Will be repaired in %d sec", Trepair))
     if Trepair==0 then
+      self.runwaydestroyed = nil
       self:RunwayRepaired()
     end
   end
@@ -5392,7 +5393,8 @@ function WAREHOUSE:onafterRunwayDestroyed(From, Event, To)
   self:_InfoMessage(text)
 
   self.runwaydestroyed=timer.getAbsTime()
-
+  
+  return self
 end
 
 --- On after "RunwayRepaired" event.
@@ -5407,7 +5409,8 @@ function WAREHOUSE:onafterRunwayRepaired(From, Event, To)
   self:_InfoMessage(text)
 
   self.runwaydestroyed=nil
-
+  
+  return self
 end
 
 
