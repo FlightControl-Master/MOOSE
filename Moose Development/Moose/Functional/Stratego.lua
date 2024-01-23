@@ -176,7 +176,7 @@ STRATEGO = {
   debug = false,
   drawzone = false,
   markzone = false,
-  version = "0.2.3",
+  version = "0.2.4",
   portweight = 3,
   POIweight = 1,
   maxrunways = 3,
@@ -435,7 +435,9 @@ function STRATEGO:AnalyseBases()
       if not abzone then 
         abzone = ZONE_RADIUS:New(abname,ab:GetVec2(),500)
       end
-      local coa = ab:GetCoalition() + 1
+      local coa = ab:GetCoalition()
+      if coa == nil then return end -- Spawned FARPS issue - these have no tangible data
+      coa = coa+1
       local abtype = "AIRBASE"
       if ab:IsShip() then
         numrwys = 1
@@ -946,22 +948,22 @@ function STRATEGO:FindClosestConsolidationTarget(Startpoint,BaseWeight)
   return shortest,target, weight, coa
 end
 
---- [USER] Get the next best strategic target node with same or higher BaseWeight.
+--- [USER] Get the next best strategic target node with same or higher Consolidated Weight.
 -- @param #STRATEGO self
 -- @param #string Startpoint Name of start point.
--- @param #number BaseWeight Base weight of the node, e.g. the number of runways of an airbase or the weight of ports or POIs.
+-- @param #number Weight Consolidated Weight of the node, i.e. the calculated weight of the node based on number of runways, connections and a weight factor.
 -- @return #number ShortestDist Shortest distance found.
 -- @return #string Name Name of the target node.
 -- @return #number Weight Consolidated weight of the target node, zero if none found.
 -- @return #number Coalition Coaltion of the target.
-function STRATEGO:FindClosestStrategicTarget(Startpoint,BaseWeight)
-  self:T(self.lid.."FindClosestStrategicTarget")
+function STRATEGO:FindClosestStrategicTarget(Startpoint,Weight)
+  self:T(self.lid.."FindClosestStrategicTarget for "..Startpoint.." Weight "..Weight or 0)
   -- find existing routes
   local shortest = 1000*1000
   local target = nil
   local weight = 0
   local coa = nil
-  if not BaseWeight then BaseWeight = self.maxrunways end
+  if not Weight then Weight = self.maxrunways end
   local startpoint = string.gsub(Startpoint,"[%p%s]",".")
   for _,_route in pairs(self.routexists) do 
     if string.find(_route,startpoint,1,true) then
@@ -969,7 +971,11 @@ function STRATEGO:FindClosestStrategicTarget(Startpoint,BaseWeight)
       local tname = string.gsub(_route,startpoint,"")
       local tname = string.gsub(tname,";","")
       local cname = self.easynames[tname]
-      if dist < shortest and self.airbasetable[cname].coalition ~= self.coalition and self.airbasetable[cname].baseweight >= BaseWeight then
+      local coa = self.airbasetable[cname].coalition
+      local tweight = self.airbasetable[cname].baseweight
+      local ttweight = self.airbasetable[cname].weight
+      self:T("Start -> End: "..startpoint.." -> "..cname)
+      if (dist < shortest) and (coa ~= self.coalition) and (tweight >=  Weight) then
         shortest = dist
         target = cname
         weight = self.airbasetable[cname].weight
@@ -989,7 +995,7 @@ function STRATEGO:FindStrategicTargets()
   for _,_data in pairs(self.airbasetable) do
     local data = _data -- #STRATEGO.Data
     if data.coalition == self.coalition then
-      local dist, name, points, coa = self:FindClosestStrategicTarget(data.name,self.maxrunways)
+      local dist, name, points, coa = self:FindClosestStrategicTarget(data.name,data.weight)
       if coa == coalition.side.NEUTRAL and points ~= 0 then
         local fpoints = points + self.NeutralBenefit
         local tries = 1

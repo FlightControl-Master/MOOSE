@@ -297,8 +297,8 @@ end
 
 --- Get COORDINATES of pathline. Note that COORDINATE objects are created when calling this function. That does involve deep copy calls and can have an impact on performance if done too often.
 -- @param #PATHLINE self
--- @return #list <Core.Point#COORDINATE> List of COORDINATES points.
-function PATHLINE:GetCoordinats()
+-- @return <Core.Point#COORDINATE> List of COORDINATES points.
+function PATHLINE:GetCoordinates()
 
   local vecs={}
 
@@ -324,7 +324,7 @@ function PATHLINE:GetPointFromIndex(n)
   local point=nil --#PATHLINE.Point
 
   if n>=1 and n<=N then
-    point=self.point[n]
+    point=self.points[n]
   else
     self:E(self.lid..string.format("ERROR: No point in pathline for N=%s", tostring(n)))
   end

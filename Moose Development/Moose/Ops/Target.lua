@@ -1107,7 +1107,7 @@ function TARGET:GetTargetLife(Target)
 
   elseif Target.Type==TARGET.ObjectType.SCENERY then
   
-    if Target.Object and Target.Object:IsAlive()  then
+    if Target.Object and Target.Object:IsAlive(25)  then
       local life = Target.Object:GetLife()
       return life
     else
