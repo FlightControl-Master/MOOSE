@@ -578,7 +578,7 @@ function INTEL:AddAgent(AgentGroup)
   end
 
   -- Add to detection set.
-  self.detectionset:AddGroup(AgentGroup)
+  self.detectionset:AddGroup(AgentGroup,true)
   return self
 end
 

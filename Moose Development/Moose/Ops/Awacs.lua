@@ -121,6 +121,7 @@ do
 -- @field #number TacticalIncrFreq
 -- @field #number TacticalModulation
 -- @field #number TacticalInterval
+-- @field Core.Set#SET_GROUP DetectionSet
 -- @extends Core.Fsm#FSM
 
 
@@ -603,6 +604,7 @@ AWACS = {
   TacticalIncrFreq = 0.5,
   TacticalModulation = radio.modulation.AM,
   TacticalInterval = 120,
+  DetectionSet = nil,
 }
 
 ---
