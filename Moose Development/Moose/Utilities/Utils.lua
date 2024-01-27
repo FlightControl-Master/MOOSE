@@ -825,6 +825,64 @@ UTILS.tostringLL = function( lat, lon, acc, DMS)
   end
 end
 
+--[[acc:
+in DM: decimal point of minutes.
+In DMS: decimal point of seconds.
+position after the decimal of the least significant digit:
+So:
+42.32 - acc of 2.
+]]
+UTILS.tostringLLM2KData = function( lat, lon, acc)
+
+  local latHemi, lonHemi
+  if lat > 0 then
+    latHemi = 'N'
+  else
+    latHemi = 'S'
+  end
+
+  if lon > 0 then
+    lonHemi = 'E'
+  else
+    lonHemi = 'W'
+  end
+
+  lat = math.abs(lat)
+  lon = math.abs(lon)
+
+  local latDeg = math.floor(lat)
+  local latMin = (lat - latDeg)*60
+
+  local lonDeg = math.floor(lon)
+  local lonMin = (lon - lonDeg)*60
+
+  -- degrees, decimal minutes.
+  latMin = UTILS.Round(latMin, acc)
+  lonMin = UTILS.Round(lonMin, acc)
+  
+  if latMin == 60 then
+    latMin = 0
+    latDeg = latDeg + 1
+  end
+  
+  if lonMin == 60 then
+    lonMin = 0
+    lonDeg = lonDeg + 1
+  end
+  
+  local minFrmtStr -- create the formatting string for the minutes place
+  if acc <= 0 then  -- no decimal place.
+    minFrmtStr = '%02d'
+  else
+    local width = 3 + acc  -- 01.310 - that's a width of 6, for example.
+    minFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
+  end
+  
+  -- 024 23'N or 024 23.123'N
+  return latHemi..string.format('%02d:', latDeg) .. string.format(minFrmtStr, latMin), lonHemi..string.format('%02d:', lonDeg) .. string.format(minFrmtStr, lonMin)
+
+end
+
 -- acc- the accuracy of each easting/northing.  0, 1, 2, 3, 4, or 5.
 UTILS.tostringMGRS = function(MGRS, acc) --R2.1
 
