@@ -1689,8 +1689,8 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
 
       -- If there is a SpawnFunction hook defined, call it.
       if self.SpawnFunctionHook then
-        -- delay calling this for .1 seconds so that it hopefully comes after the BIRTH event of the group.
-        self.SpawnHookScheduler:Schedule( nil, self.SpawnFunctionHook, { self.SpawnGroups[self.SpawnIndex].Group, unpack( self.SpawnFunctionArguments ) }, 0.1 )
+        -- delay calling this for .3 seconds so that it hopefully comes after the BIRTH event of the group.
+        self.SpawnHookScheduler:Schedule( nil, self.SpawnFunctionHook, { self.SpawnGroups[self.SpawnIndex].Group, unpack( self.SpawnFunctionArguments ) }, 0.3 )
       end
       -- TODO: Need to fix this by putting an "R" in the name of the group when the group repeats.
       -- if self.Repeat then
