@@ -36,7 +36,7 @@ do
 -- @field #number Frequency
 -- @field #number Modulation
 -- @field Wrapper.Airbase#AIRBASE Airbase
--- @field Ops.AirWing#AIRWING AirWing
+-- @field Ops.Airwing#AIRWING AirWing
 -- @field #number AwacsAngels
 -- @field Core.Zone#ZONE OrbitZone
 -- @field #number CallSign
@@ -159,10 +159,10 @@ do
 -- 
 -- ## 3 Airwing(s)
 -- 
--- The AWACS plane, the optional escort planes, and the AI CAP planes work based on the @{Ops.AirWing} class. Read and understand the manual for this class in 
+-- The AWACS plane, the optional escort planes, and the AI CAP planes work based on the @{Ops.Airwing} class. Read and understand the manual for this class in 
 -- order to set everything up correctly. You will at least need one Squadron containing the AWACS plane itself.
 -- 
--- Set up the AirWing
+-- Set up the Airwing
 -- 
 --            local AwacsAW = AIRWING:New("AirForce WH-1","AirForce One")
 --            AwacsAW:SetMarker(false)
@@ -226,7 +226,7 @@ do
 -- 
 -- ## 5 Set up AWACS
 -- 
---            -- Set up AWACS called "AWACS North". It will use the AwacsAW AirWing set up above and be of the "blue" coalition. Homebase is Kutaisi.
+--            -- Set up AWACS called "AWACS North". It will use the AwacsAW Airwing set up above and be of the "blue" coalition. Homebase is Kutaisi.
 --            -- The AWACS Orbit Zone is a round zone set in the mission editor named "Awacs Orbit", the FEZ is a Polygon-Zone called "Rock" we have also
 --            -- set up in the mission editor with a late activated helo named "Rock#ZONE_POLYGON". Note this also sets the BullsEye to be referenced as "Rock".
 --            -- The CAP station zone is called "Fremont". We will be on 255 AM.
@@ -248,7 +248,7 @@ do
 --            
 -- ### 5.1 Alternative - Set up as GCI (no AWACS plane needed) Theater Air Control System (TACS)
 -- 
---            -- Set up as TACS called "GCI Senaki". It will use the AwacsAW AirWing set up above and be of the "blue" coalition. Homebase is Senaki.
+--            -- Set up as TACS called "GCI Senaki". It will use the AwacsAW Airwing set up above and be of the "blue" coalition. Homebase is Senaki.
 --            -- No need to set the AWACS Orbit Zone; the FEZ is still a Polygon-Zone called "Rock" we have also
 --            -- set up in the mission editor with a late activated helo named "Rock#ZONE_POLYGON". Note this also sets the BullsEye to be referenced as "Rock".
 --            -- The CAP station zone is called "Fremont". We will be on 255 AM. Note the Orbit Zone is given as *nil* in the `New()`-Statement
@@ -956,7 +956,7 @@ AWACS.TaskStatus = {
 -- DONE - Shift Change, Change on asset RTB or dead or mission done (done for AWACS and Escorts)
 -- DONE - TripWire - WIP - Threat (35nm), Meld (45nm, on mission), Merged (<3nm)
 -- 
--- DONE - Escorts via AirWing not staying on
+-- DONE - Escorts via Airwing not staying on
 -- DONE - Borders for INTEL. Optional, i.e. land based defense within borders
 -- DONE - Use AO as Anchor of Bulls, AO as default
 -- DONE - SRS TTS output
@@ -984,7 +984,7 @@ AWACS.TaskStatus = {
 --- Set up a new AI AWACS.
 -- @param #AWACS self
 -- @param #string Name Name of this AWACS for the radio menu.
--- @param #string AirWing The core Ops.AirWing#AIRWING managing the AWACS, Escort and (optionally) AI CAP planes for us.
+-- @param #string AirWing The core Ops.Airwing#AIRWING managing the AWACS, Escort and (optionally) AI CAP planes for us.
 -- @param #number Coalition Coalition, e.g. coalition.side.BLUE. Can also be passed as "blue", "red" or "neutral".
 -- @param #string AirbaseName Name of the home airbase.
 -- @param #string AwacsOrbit Name of the round, mission editor created zone where this AWACS orbits.
@@ -1024,7 +1024,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   
   -- base setup
   self.Name = Name -- #string
-  self.AirWing = AirWing -- Ops.AirWing#AIRWING object
+  self.AirWing = AirWing -- Ops.Airwing#AIRWING object
   
   AirWing:SetUsingOpsAwacs(self)
   
@@ -1032,7 +1032,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.CAPAirwings:Push(AirWing,1)
   
   self.AwacsFG = nil
-  --self.AwacsPayload = PayLoad -- Ops.AirWing#AIRWING.Payload
+  --self.AwacsPayload = PayLoad -- Ops.Airwing#AIRWING.Payload
   --self.ModernEra = true -- use of EPLRS
   self.RadarBlur = 15 -- +/-15% detection precision i.e. 85-115 reported group size
   if type(OpsZone) == "string" then
@@ -4978,7 +4978,7 @@ end
 
 --- [User] Add another AirWing for AI CAP Flights under management
 -- @param #AWACS self
--- @param Ops.AirWing#AIRWING AirWing The AirWing to (also) obtain CAP flights from
+-- @param Ops.Airwing#AIRWING AirWing The AirWing to (also) obtain CAP flights from
 -- @param Core.Zone#ZONE_RADIUS Zone (optional) This AirWing has it's own station zone, AI CAP will be send there
 -- @return #AWACS self
 function AWACS:AddCAPAirWing(AirWing,Zone)
@@ -5832,7 +5832,7 @@ function AWACS:onafterStart(From, Event, To)
   
   if not self.GCI then
     -- set up the AWACS and let it orbit
-    local AwacsAW = self.AirWing -- Ops.AirWing#AIRWING
+    local AwacsAW = self.AirWing -- Ops.Airwing#AIRWING
     local mission = AUFTRAG:NewORBIT_RACETRACK(self.OrbitZone:GetCoordinate(),self.AwacsAngels*1000,self.Speed,self.Heading,self.Leg)
     local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600
     mission:SetTime(nil,timeonstation)
@@ -6761,7 +6761,7 @@ function AWACS:onafterAwacsShiftChange(From,Event,To)
     self.AwacsTimeStamp = timer.getTime()
     
     -- set up the AWACS and let it orbit
-    local AwacsAW = self.AirWing -- Ops.AirWing#AIRWING
+    local AwacsAW = self.AirWing -- Ops.Airwing#AIRWING
     local mission = AUFTRAG:NewORBIT_RACETRACK(self.OrbitZone:GetCoordinate(),self.AwacsAngels*1000,self.Speed,self.Heading,self.Leg)
     self.CatchAllMissions[#self.CatchAllMissions+1] = mission
     local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600
