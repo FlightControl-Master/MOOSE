@@ -1222,10 +1222,10 @@ do
   function MANTIS:_PreFilterHeight(height)
     self:T(self.lid.."_PreFilterHeight")   
     local set = {}
-    local dlink = self.Detection -- Ops.Intelligence#INTEL_DLINK
+    local dlink = self.Detection -- Ops.Intel#INTEL_DLINK
     local detectedgroups = dlink:GetContactTable()
     for _,_contact in pairs(detectedgroups) do
-      local contact = _contact -- Ops.Intelligence#INTEL.Contact
+      local contact = _contact -- Ops.Intel#INTEL.Contact
       local grp = contact.group -- Wrapper.Group#GROUP
       if grp:IsAlive() then
         if grp:GetHeight(true) < height then
@@ -1777,7 +1777,7 @@ do
   -- @return #MANTIS self
   function MANTIS:_CheckDLinkState()
     self:T(self.lid .. "_CheckDLinkState")
-    local dlink = self.Detection -- Ops.Intelligence#INTEL_DLINK
+    local dlink = self.Detection -- Ops.Intel#INTEL_DLINK
     local TS = timer.getAbsTime()
     if not dlink:Is("Running") and (TS - self.DLTimeStamp > 29) then
       self.DLink = false

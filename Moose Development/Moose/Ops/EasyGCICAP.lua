@@ -702,7 +702,7 @@ function EASYGCICAP:_SetTankerPatrolPoints()
   self:T(self.lid.."_SetTankerPatrolPoints")
   for _,_data in pairs(self.ManagedTK) do
     local data = _data --#EASYGCICAP.CapPoint
-    local Wing = self.wings[data.AirbaseName][1] -- Ops.AirWing#AIRWING
+    local Wing = self.wings[data.AirbaseName][1] -- Ops.Airwing#AIRWING
     local Coordinate = data.Coordinate
     local Altitude = data.Altitude
     local Speed = data.Speed 
@@ -721,7 +721,7 @@ function EASYGCICAP:_SetAwacsPatrolPoints()
   self:T(self.lid.."_SetAwacsPatrolPoints")
   for _,_data in pairs(self.ManagedEWR) do
     local data = _data --#EASYGCICAP.CapPoint
-    local Wing = self.wings[data.AirbaseName][1] -- Ops.AirWing#AIRWING
+    local Wing = self.wings[data.AirbaseName][1] -- Ops.Airwing#AIRWING
     local Coordinate = data.Coordinate
     local Altitude = data.Altitude
     local Speed = data.Speed 
@@ -740,7 +740,7 @@ function EASYGCICAP:_SetCAPPatrolPoints()
   self:T(self.lid.."_SetCAPPatrolPoints")
   for _,_data in pairs(self.ManagedCP) do
     local data = _data --#EASYGCICAP.CapPoint
-    local Wing = self.wings[data.AirbaseName][1] -- Ops.AirWing#AIRWING
+    local Wing = self.wings[data.AirbaseName][1] -- Ops.Airwing#AIRWING
     local Coordinate = data.Coordinate
     local Altitude = data.Altitude
     local Speed = data.Speed 
@@ -759,7 +759,7 @@ function EASYGCICAP:_SetReconPatrolPoints()
   self:T(self.lid.."_SetReconPatrolPoints")
   for _,_data in pairs(self.ManagedREC) do
     local data = _data --#EASYGCICAP.CapPoint
-    local Wing = self.wings[data.AirbaseName][1] -- Ops.AirWing#AIRWING
+    local Wing = self.wings[data.AirbaseName][1] -- Ops.Airwing#AIRWING
     local Coordinate = data.Coordinate
     local Altitude = data.Altitude
     local Speed = data.Speed 
@@ -947,7 +947,7 @@ function EASYGCICAP:_AddSquadron(TemplateName, SquadName, AirbaseName, AirFrames
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
   Squadron_One:SetMissionRange(self.missionrange)
   
-  local wing = self.wings[AirbaseName][1] -- Ops.AirWing#AIRWING
+  local wing = self.wings[AirbaseName][1] -- Ops.Airwing#AIRWING
   
   wing:AddSquadron(Squadron_One)
   wing:NewPayload(TemplateName,-1,{AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.PATROLRACETRACK, AUFTRAG.Type.ALERT5},75)
@@ -978,7 +978,7 @@ function EASYGCICAP:_AddReconSquadron(TemplateName, SquadName, AirbaseName, AirF
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
   Squadron_One:SetMissionRange(self.missionrange)
   
-  local wing = self.wings[AirbaseName][1] -- Ops.AirWing#AIRWING
+  local wing = self.wings[AirbaseName][1] -- Ops.Airwing#AIRWING
   
   wing:AddSquadron(Squadron_One)
   wing:NewPayload(TemplateName,-1,{AUFTRAG.Type.RECON},75)
@@ -1014,7 +1014,7 @@ function EASYGCICAP:_AddTankerSquadron(TemplateName, SquadName, AirbaseName, Air
   Squadron_One:SetRadio(Frequency,Modulation)
   Squadron_One:AddTacanChannel(TACAN,TACAN)
   
-  local wing = self.wings[AirbaseName][1] -- Ops.AirWing#AIRWING
+  local wing = self.wings[AirbaseName][1] -- Ops.Airwing#AIRWING
   
   wing:AddSquadron(Squadron_One)
   wing:NewPayload(TemplateName,-1,{AUFTRAG.Type.TANKER},75)
@@ -1047,7 +1047,7 @@ function EASYGCICAP:_AddAWACSSquadron(TemplateName, SquadName, AirbaseName, AirF
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
   Squadron_One:SetMissionRange(self.missionrange)
   Squadron_One:SetRadio(Frequency,Modulation)
-  local wing = self.wings[AirbaseName][1] -- Ops.AirWing#AIRWING
+  local wing = self.wings[AirbaseName][1] -- Ops.Airwing#AIRWING
   
   wing:AddSquadron(Squadron_One)
   wing:NewPayload(TemplateName,-1,{AUFTRAG.Type.AWACS},75)
@@ -1151,7 +1151,7 @@ function EASYGCICAP:_AssignIntercept(Cluster)
   local position = self.Intel:CalcClusterFuturePosition(Cluster,300)
   -- calculate closest zone
   local bestdistance = 2000*1000 -- 2000km
-  local targetairwing = nil -- Ops.AirWing#AIRWING
+  local targetairwing = nil -- Ops.Airwing#AIRWING
   local targetawname = "" -- #string
   local clustersize = self.Intel:ClusterCountUnits(Cluster) or 1
   local wingsize = math.abs(overhead * (clustersize+1))
@@ -1164,7 +1164,7 @@ function EASYGCICAP:_AssignIntercept(Cluster)
   if (retrymission) and (wingsize >= 1) then
    MESSAGE:New(string.format("**** %s Interceptors need wingsize %d", UTILS.GetCoalitionName(self.coalition), wingsize),15,"CAPGCI"):ToAllIf(self.debug):ToLog()
     for _,_data in pairs (wings) do
-      local airwing = _data[1] -- Ops.AirWing#AIRWING
+      local airwing = _data[1] -- Ops.Airwing#AIRWING
       local zone = _data[2] -- Core.Zone#ZONE
       local zonecoord = zone:GetCoordinate()
       local name = _data[3] -- #string
@@ -1177,7 +1177,7 @@ function EASYGCICAP:_AssignIntercept(Cluster)
       end
     end
     for _,_data in pairs (ctlpts) do
-      --local airwing = _data[1] -- Ops.AirWing#AIRWING
+      --local airwing = _data[1] -- Ops.Airwing#AIRWING
       --local zone = _data[2] -- Core.Zone#ZONE
       --local zonecoord = zone:GetCoordinate()
       --local name = _data[3] -- #string
@@ -1191,7 +1191,7 @@ function EASYGCICAP:_AssignIntercept(Cluster)
       local airframes = airwing:CountAssets(true)
       if distance < bestdistance and airframes >= wingsize then
         bestdistance = distance
-        targetairwing = airwing -- Ops.AirWing#AIRWING
+        targetairwing = airwing -- Ops.Airwing#AIRWING
         targetawname = name
       end
     end

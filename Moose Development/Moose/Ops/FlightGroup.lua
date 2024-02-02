@@ -695,7 +695,7 @@ end
 
 --- Get airwing the flight group belongs to.
 -- @param #FLIGHTGROUP self
--- @return Ops.AirWing#AIRWING The AIRWING object (if any).
+-- @return Ops.Airwing#AIRWING The AIRWING object (if any).
 function FLIGHTGROUP:GetAirwing()
   return self.legion
 end
