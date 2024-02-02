@@ -1126,7 +1126,7 @@ end
 
 --- Add a zone to the rejected zones set.
 -- @param #EASYGCICAP self
--- @param Ops.Intelligence#INTEL.Cluster Cluster
+-- @param Ops.Intel#INTEL.Cluster Cluster
 -- @return #EASYGCICAP self 
 function EASYGCICAP:_AssignIntercept(Cluster)
    -- Here, we'll decide if we need to launch an intercepting flight, and from where
