@@ -852,8 +852,8 @@ AWACS.Messages = {
 --- Contact Data
 -- @type AWACS.ManagedContact
 -- @field #number CID
--- @field Ops.Intelligence#INTEL.Contact Contact
--- @field Ops.Intelligence#INTEL.Cluster Cluster
+-- @field Ops.Intel#INTEL.Contact Contact
+-- @field Ops.Intel#INTEL.Cluster Cluster
 -- @field #string IFF -- ID'ed or not (yet)
 -- @field Ops.Target#TARGET Target
 -- @field #number LinkedTask --> TID
@@ -902,8 +902,8 @@ AWACS.TaskStatus = {
 -- @field #AWACS.TaskStatus Status
 -- @field #AWACS.TaskDescription ToDo
 -- @field #string ScreenText Long descrition
--- @field Ops.Intelligence#INTEL.Contact Contact
--- @field Ops.Intelligence#INTEL.Cluster Cluster
+-- @field Ops.Intel#INTEL.Contact Contact
+-- @field Ops.Intel#INTEL.Cluster Cluster
 -- @field #number CurrentAuftrag
 -- @field #number RequestedTimestamp
 
@@ -2463,7 +2463,7 @@ function AWACS:_UpdateContactFromCluster(CID)
   
   local function GetFirstAliveContact(table)
     for _,_contact in pairs (table) do
-      local contact = _contact -- Ops.Intelligence#INTEL.Contact
+      local contact = _contact -- Ops.Intel#INTEL.Contact
       if contact and contact.group and contact.group:IsAlive() then
         return contact
       end
@@ -4260,7 +4260,7 @@ function AWACS:_StartIntel(awacs)
   
   intel:__Start(5)
   
-  self.intel = intel -- Ops.Intelligence#INTEL
+  self.intel = intel -- Ops.Intel#INTEL
   return self
 end
 
@@ -4420,8 +4420,8 @@ end
 -- @param #table Object Object for Ops.Target#TARGET assignment
 -- @param #AWACS.TaskStatus TaskStatus Status of this task
 -- @param Ops.Auftrag#AUFTRAG Auftrag The Auftrag for this task if any
--- @param Ops.Intelligence#INTEL.Cluster Cluster Intel Cluster for this task
--- @param Ops.Intelligence#INTEL.Contact Contact Intel Contact for this task
+-- @param Ops.Intel#INTEL.Cluster Cluster Intel Cluster for this task
+-- @param Ops.Intel#INTEL.Contact Contact Intel Contact for this task
 -- @return #number TID Task ID created
 function AWACS:_CreateTaskForGroup(GroupID,Description,ScreenText,Object,TaskStatus,Auftrag,Cluster,Contact)
    self:T(self.lid.."_CreateTaskForGroup "..GroupID .." Description: "..Description)
@@ -5063,7 +5063,7 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,Repo
   end
 
   local cluster = Contact.Cluster
-  local intel = self.intel -- Ops.Intelligence#INTEL
+  local intel = self.intel -- Ops.Intel#INTEL
   
   local size = self.intel:ClusterCountUnits(cluster)
   local threatsize, threatsizetext = self:_GetBlurredSize(size)
@@ -5465,7 +5465,7 @@ function AWACS:_TACRangeCall(GID,Contact)
   if not Contact then return self end
   local pilotcallsign = self:_GetCallSign(nil,GID) 
   local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
-  local contact = Contact.Contact -- Ops.Intelligence#INTEL.Contact
+  local contact = Contact.Contact -- Ops.Intel#INTEL.Contact
   local contacttag = Contact.TargetGroupNaming
   if contact and not Contact.TACCallDone then
     local position = contact.position -- Core.Point#COORDINATE
@@ -5494,7 +5494,7 @@ function AWACS:_MeldRangeCall(GID,Contact)
   local pilotcallsign = self:_GetCallSign(nil,GID) 
   local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
   local flightpos = managedgroup.Group:GetCoordinate()
-  local contact = Contact.Contact -- Ops.Intelligence#INTEL.Contact
+  local contact = Contact.Contact -- Ops.Intel#INTEL.Contact
   local contacttag = Contact.TargetGroupNaming
   if contact and not Contact.MeldCallDone then
     local position = contact.position -- Core.Point#COORDINATE
@@ -5524,7 +5524,7 @@ function AWACS:_ThreatRangeCall(GID,Contact)
   local pilotcallsign = self:_GetCallSign(nil,GID) 
   local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
   local flightpos = managedgroup.Group:GetCoordinate() or managedgroup.LastKnownPosition
-  local contact = Contact.Contact -- Ops.Intelligence#INTEL.Contact
+  local contact = Contact.Contact -- Ops.Intel#INTEL.Contact
   local contacttag = Contact.TargetGroupNaming
   if contact then
     local position = contact.position or contact.group:GetCoordinate() -- Core.Point#COORDINATE
@@ -6426,7 +6426,7 @@ end
 -- @param #string From 
 -- @param #string Event
 -- @param #string To
--- @param Ops.Intelligence#INTEL.Cluster Cluster
+-- @param Ops.Intel#INTEL.Cluster Cluster
 -- @return #AWACS self
 function AWACS:onafterNewCluster(From,Event,To,Cluster)
   self:T({From, Event, To, Cluster.index})
@@ -6438,7 +6438,7 @@ function AWACS:onafterNewCluster(From,Event,To,Cluster)
   
   local function GetFirstAliveContact(table)
     for _,_contact in pairs (table) do
-      local contact = _contact -- Ops.Intelligence#INTEL.Contact
+      local contact = _contact -- Ops.Intel#INTEL.Contact
       if contact and contact.group and contact.group:IsAlive() then
         return contact, contact.group
       end
@@ -6446,7 +6446,7 @@ function AWACS:onafterNewCluster(From,Event,To,Cluster)
     return nil
   end
   
-  local Contact, Group = GetFirstAliveContact(ContactTable) -- Ops.Intelligence#INTEL.Contact
+  local Contact, Group = GetFirstAliveContact(ContactTable) -- Ops.Intel#INTEL.Contact
   
   if not Contact then return self end
   
@@ -6457,7 +6457,7 @@ function AWACS:onafterNewCluster(From,Event,To,Cluster)
   local targetset = SET_GROUP:New()
   -- SET for TARGET
   for _,_grp in pairs(ContactTable) do
-    local grp = _grp -- Ops.Intelligence#INTEL.Contact
+    local grp = _grp -- Ops.Intel#INTEL.Contact
     targetset:AddGroup(grp.group, true)
   end
   local managedcontact = {} -- #AWACS.ManagedContact
@@ -6519,7 +6519,7 @@ end
 -- @param #string From 
 -- @param #string Event
 -- @param #string To
--- @param Ops.Intelligence#INTEL.Contact Contact
+-- @param Ops.Intel#INTEL.Contact Contact
 -- @return #AWACS self 
 function AWACS:onafterNewContact(From,Event,To,Contact)
   self:T({From, Event, To, Contact})
@@ -6548,7 +6548,7 @@ end
 -- @param #string From 
 -- @param #string Event
 -- @param #string To
--- @param Ops.Intelligence#INTEL.Contact Contact
+-- @param Ops.Intel#INTEL.Contact Contact
 -- @return #AWACS self
 function AWACS:onafterLostContact(From,Event,To,Contact)
   self:T({From, Event, To, Contact})
@@ -6560,7 +6560,7 @@ end
 -- @param #string From 
 -- @param #string Event
 -- @param #string To
--- @param Ops.Intelligence#INTEL.Cluster Cluster
+-- @param Ops.Intel#INTEL.Cluster Cluster
 -- @param Ops.Auftrag#AUFTRAG Mission
 -- @return #AWACS self
 function AWACS:onafterLostCluster(From,Event,To,Cluster,Mission)

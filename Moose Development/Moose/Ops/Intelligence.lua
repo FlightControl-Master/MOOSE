@@ -2272,7 +2272,7 @@ function INTEL:GetHighestThreatContact(Cluster)
   
   for _,_contact in pairs(Cluster.Contacts) do
 
-    local contact=_contact --Ops.Intelligence#INTEL.Contact
+    local contact=_contact --Ops.Intel#INTEL.Contact
 
     if contact.threatlevel>threatlevel then
       threatlevel=contact.threatlevel
@@ -2312,8 +2312,8 @@ end
 -- @field #string alias Alias name for logging.
 -- @field #number cachetime Number of seconds to keep an object.
 -- @field #number interval Number of seconds between collection runs.
--- @field #table contacts Table of Ops.Intelligence#INTEL.Contact contacts.
--- @field #table clusters Table of Ops.Intelligence#INTEL.Cluster clusters.
+-- @field #table contacts Table of Ops.Intel#INTEL.Contact contacts.
+-- @field #table clusters Table of Ops.Intel#INTEL.Cluster clusters.
 -- @field #table contactcoords Table of contacts' Core.Point#COORDINATE objects.
 -- @extends Core.Fsm#FSM
 
@@ -2337,7 +2337,7 @@ INTEL_DLINK.version = "0.0.1"
 
 --- Function to instantiate a new object
 -- @param #INTEL_DLINK self
--- @param #table Intels Table of Ops.Intelligence#INTEL objects.
+-- @param #table Intels Table of Ops.Intel#INTEL objects.
 -- @param #string Alias (optional) Name of this instance. Default "SPECTRE"
 -- @param #number Interval (optional) When to query #INTEL objects for detected items (default 20 seconds).
 -- @param #number Cachetime (optional) How long to cache detected items (default 300 seconds).
@@ -2449,7 +2449,7 @@ end
 
 --- Function to add an #INTEL object to the aggregator
 -- @param #INTEL_DLINK self
--- @param Ops.Intelligence#INTEL Intel the #INTEL object to add
+-- @param Ops.Intel#INTEL Intel the #INTEL object to add
 -- @return #INTEL_DLINK self
 function INTEL_DLINK:AddIntel(Intel)
    self:T(self.lid .. "AddIntel")

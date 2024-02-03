@@ -3946,7 +3946,7 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
   
   local function NewCluster(Cluster)
     if not self.usecluster then return self end
-    local cluster = Cluster -- Ops.Intelligence#INTEL.Cluster
+    local cluster = Cluster -- Ops.Intel#INTEL.Cluster
     local type = cluster.ctype
     self:T({type,self.Type})
     if (type == INTEL.Ctype.AIRCRAFT and self.Type == PLAYERTASKCONTROLLER.Type.A2A) or (type == INTEL.Ctype.NAVAL and (self.Type == PLAYERTASKCONTROLLER.Type.A2S or self.Type == PLAYERTASKCONTROLLER.Type.A2GS)) then
@@ -3954,7 +3954,7 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
       local contacts = cluster.Contacts -- #table of GROUP
       local targetset = SET_GROUP:New()
       for _,_object in pairs(contacts) do
-        local contact = _object -- Ops.Intelligence#INTEL.Contact
+        local contact = _object -- Ops.Intel#INTEL.Contact
         self:T("Adding group: "..contact.groupname)
         targetset:AddGroup(contact.group,true)
       end
@@ -3966,14 +3966,14 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
       if type == INTEL.Ctype.GROUND then
         targetset = SET_GROUP:New()
         for _,_object in pairs(contacts) do
-          local contact = _object -- Ops.Intelligence#INTEL.Contact
+          local contact = _object -- Ops.Intel#INTEL.Contact
           self:T("Adding group: "..contact.groupname)
           targetset:AddGroup(contact.group,true)
         end
       elseif type == INTEL.Ctype.STRUCTURE then
         targetset = SET_STATIC:New()
         for _,_object in pairs(contacts) do
-          local contact = _object -- Ops.Intelligence#INTEL.Contact
+          local contact = _object -- Ops.Intel#INTEL.Contact
           self:T("Adding static: "..contact.groupname)
           targetset:AddStatic(contact.group)
         end
@@ -3986,7 +3986,7 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
   
   local function NewContact(Contact)
     if self.usecluster then return self end
-    local contact = Contact -- Ops.Intelligence#INTEL.Contact
+    local contact = Contact -- Ops.Intel#INTEL.Contact
     local type = contact.ctype
     self:T({type,self.Type})
     if (type == INTEL.Ctype.AIRCRAFT and self.Type == PLAYERTASKCONTROLLER.Type.A2A) or (type == INTEL.Ctype.NAVAL and (self.Type == PLAYERTASKCONTROLLER.Type.A2S or self.Type == PLAYERTASKCONTROLLER.Type.A2GS)) then

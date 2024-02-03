@@ -914,12 +914,12 @@ function AUTOLASE:onafterMonitor(From, Event, To)
   
   self:SetPilotMenu()
   
-  local detecteditems = self.Contacts or {} -- #table of Ops.Intelligence#INTEL.Contact
+  local detecteditems = self.Contacts or {} -- #table of Ops.Intel#INTEL.Contact
   local groupsbythreat = {}
   local report = REPORT:New("Detections")
   local lines = 0
   for _,_contact in pairs(detecteditems) do
-    local contact = _contact -- Ops.Intelligence#INTEL.Contact
+    local contact = _contact -- Ops.Intel#INTEL.Contact
     local grp = contact.group
     local coord = contact.position
     local reccename = contact.recce or "none"
