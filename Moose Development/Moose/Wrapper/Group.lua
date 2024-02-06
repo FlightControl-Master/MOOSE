@@ -1134,8 +1134,9 @@ function GROUP:GetAverageVec3()
     -- Average.
     local Vec3={x=x/n, y=y/n, z=z/n} --DCS#Vec3
     return Vec3
-  end
-  return nil 
+  else
+    return self:GetVec3()
+  end 
 end
 
 --- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.
@@ -1169,8 +1170,13 @@ function GROUP:GetAverageCoordinate()
     coord.Heading = Heading
     return coord
   else
-    BASE:E( { "Cannot GetAverageCoordinate", Group = self, Alive = self:IsAlive() } )
-    return nil
+    local coord = self:GetCoordinate()
+    if coord then
+      return coord
+    else
+      BASE:E( { "Cannot GetAverageCoordinate", Group = self, Alive = self:IsAlive() } )
+      return nil
+    end
   end
 end
 

@@ -78,7 +78,7 @@ CLIENTMENU_ID = 0
 
 --- Create an new CLIENTMENU object.
 -- @param #CLIENTMENU self
--- @param Wrapper.Client#CLIENT Client The client for whom this entry is.
+-- @param Wrapper.Client#CLIENT Client The client for whom this entry is. Leave as nil for a generic entry.
 -- @param #string Text Text of the F10 menu entry.
 -- @param #CLIENTMENU Parent The parent menu entry.
 -- @param #string Function (optional) Function to call when the entry is used.
@@ -324,6 +324,22 @@ end
 -- 
 -- Many functions can either change the tree for one client or for all clients.
 -- 
+-- ## Conceptual remarks
+-- 
+-- There's a couple of things to fully understand: 
+-- 
+-- 1) **CLIENTMENUMANAGER** manages a set of entries from **CLIENTMENU**, it's main purpose is to administer the *shadow menu tree*, ie. a menu structure which is not 
+-- (yet) visible to any client   
+-- 2) The entries are **CLIENTMENU** objects, which are linked in a tree form. There's two ways to create them:   
+--          A) in the manager with ":NewEntry()" which initially 
+--              adds it to the shadow menu **only**   
+--          B) stand-alone directly as `CLIENTMENU:NewEntry()` - here it depends on whether or not you gave a CLIENT object if the entry is created as generic entry or pushed 
+--              a **specific** client. **Be aware** though that the entries are not managed by the CLIENTMANAGER before the next step!   
+-- A generic entry can be added to the manager (and the shadow tree) with `:AddEntry()` - this will also push it to all clients(!) if no client is given, or a specific client only.  
+-- 3) Pushing only works for alive clients.   
+-- 4) Live and shadow tree entries are managed via the CLIENTMENUMANAGER object.   
+-- 5) `Propagate()`refreshes the menu tree for all, or a single client.   
+-- 
 -- ## Create a base reference tree and send to all clients
 -- 
 --            local clientset = SET_CLIENT:New():FilterStart()
@@ -492,7 +508,7 @@ function CLIENTMENUMANAGER:_EventHandler(EventData)
   return self
 end
 
---- Set this Client Manager to auto-propagate menus to newly joined players. Useful if you have **one** menu structure only.
+--- Set this Client Manager to auto-propagate menus **once** to newly joined players. Useful if you have **one** menu structure only. Does not automatically push follow-up changes to the client(s).
 -- @param #CLIENTMENUMANAGER self
 -- @return #CLIENTMENUMANAGER self
 function CLIENTMENUMANAGER:InitAutoPropagation()
@@ -507,7 +523,7 @@ function CLIENTMENUMANAGER:InitAutoPropagation()
   return self 
 end
 
---- Create a new entry in the generic structure.
+--- Create a new entry in the **generic** structure.
 -- @param #CLIENTMENUMANAGER self
 -- @param #string Text Text of the F10 menu entry.
 -- @param #CLIENTMENU Parent The parent menu entry.
@@ -695,7 +711,7 @@ function CLIENTMENUMANAGER:Propagate(Client)
   return self
 end
 
---- Push a single previously created entry into the menu structure of all clients.
+--- Push a single previously created entry into the F10 menu structure of all clients.
 -- @param #CLIENTMENUMANAGER self
 -- @param #CLIENTMENU Entry The entry to add.
 -- @param Wrapper.Client#CLIENT Client (optional) If given, make this change only for this client. 
