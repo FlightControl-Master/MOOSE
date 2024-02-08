@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update Jan 2024
+-- @date Last Update Feb 2024
 
 
 do
@@ -409,6 +409,15 @@ function PLAYERTASK:IsDone()
     IsDone = true
   end
   return IsDone
+end
+
+--- [User] Check if PLAYERTASK has clients assigned to it.
+-- @param #PLAYERTASK self
+-- @return #boolean hasclients
+function PLAYERTASK:HasClients()
+  self:T(self.lid.."HasClients?")
+  local hasclients = self:CountClients() > 0 and true or false
+  return hasclients
 end
 
 --- [User] Get client names assigned as table of #strings
@@ -1552,7 +1561,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.64"
+PLAYERTASKCONTROLLER.version="0.1.65"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -3173,7 +3182,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     local ttsname = self.gettext:GetEntry("TASKNAMETTS",self.locale)
     local taskname = string.format(tname,task.Type,task.PlayerTaskNr)
     local ttstaskname = string.format(ttsname,task.TTSType,task.PlayerTaskNr)
-    local Coordinate = task.Target:GetCoordinate()
+    local Coordinate = task.Target:GetCoordinate() or COORDINATE:New(0,0,0)
     local CoordText = ""
     local CoordTextLLDM = nil
     if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
