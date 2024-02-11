@@ -483,6 +483,32 @@ RAT.status={
   EventCrash="Crashed",
 }
 
+--- Categories of the RAT class.
+-- @type RAT.RatCraft
+-- @field Wrapper.Group#Group group The aircraft group.
+-- @field Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
+-- @field #table destination Destination of this group.
+-- @field #table departure Departure place of this group.
+-- @field #table waypoints Waypoints.
+-- @field #boolean airborne Whether this group is airborne.
+-- @field #number nunits Number of units.
+-- @field #number Tground Time stamp on ground.
+-- @field #number Pground ?
+-- @field #number Uground ?
+-- @field #number Tlastcheck Time stamp of last check.
+-- @field #table P0 ?
+-- @field #table Pnow ?
+-- @field #number Distance Distance travelled in meters.
+-- @field #number takeoff Takeoff type.
+-- @field #number landing Laning type.
+-- @field #table wpholding Holding waypoint.
+-- @field #table wpfinal Final waypoint.
+-- @field #boolean active Whether the group is actie or uncontrolled.
+-- @field #string status Status of the group.
+-- @field #string livery Livery of the group.
+-- @field #boolean despawnme Despawn group if `true`.
+-- @field #number nrespawn Number of respawns.
+
 --- RAT friendly coalitions.
 -- @list coal
 RAT.coal={
@@ -545,13 +571,14 @@ RAT.id="RAT | "
 --- RAT version.
 -- @list version
 RAT.version={
-  version = "2.3.9",
+  version = "3.0.0",
   print = true,
 }
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --TODO list:
+--TODO: Integrate FLIGHTGROUP
 --DONE: Add scheduled spawn.
 --DONE: Add possibility to spawn in air.
 --DONE: Add departure zones for air start.
@@ -2151,6 +2178,9 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
 
   -- Actually spawn the group.
   local group=self:SpawnWithIndex(self.SpawnIndex) -- Wrapper.Group#GROUP
+  
+  -- Create a flightgroup object.
+  local flightgroup=FLIGHTGROUP:New(group)
 
   -- Increase counter of alive groups (also uncontrolled ones).
   self.alive=self.alive+1
@@ -2194,6 +2224,7 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   -- Init ratcraft array.
   self.ratcraft[self.SpawnIndex]={}
   self.ratcraft[self.SpawnIndex]["group"]=group
+  self.ratcraft[self.SpawnIndex]["flightgroup"]=flightgroup
   self.ratcraft[self.SpawnIndex]["destination"]=destination
   self.ratcraft[self.SpawnIndex]["departure"]=departure
   self.ratcraft[self.SpawnIndex]["waypoints"]=waypoints
@@ -3728,6 +3759,26 @@ function RAT:_SetStatus(group, status)
   end
 end
 
+--- Get RatCraft from a given group.
+-- @param #RAT self
+-- @param Wrapper.Group#GROUP group Group.
+-- @return #RAT.RatCraft Rat craft object.
+function RAT:_GetRatcraftFromGroup(group)
+
+  if group then
+
+    -- Get index from groupname.
+    local index=self:GetSpawnIndexFromGroup(group)
+
+    if self.ratcraft[index] then
+      return self.ratcraft[index]
+    end
+    
+  end
+  
+  return nil
+end
+
 --- Get status of group.
 -- @param #RAT self
 -- @param Wrapper.Group#GROUP group Group.
@@ -3786,6 +3837,9 @@ function RAT:_OnBirth(EventData)
           status=RAT.status.EventBirth
         end
         self:_SetStatus(SpawnGroup, status)
+        
+        local ratcraft=self.ratcraft[i] --#RAT.RatCraft
+        
 
         -- Get some info ablout this flight.
         local i=self:GetSpawnIndexFromGroup(SpawnGroup)
@@ -4222,6 +4276,8 @@ function RAT:_Despawn(group, delay)
     local index=self:GetSpawnIndexFromGroup(group)
 
     if index ~= nil then
+    
+      local ratcraft=self.ratcraft[index]
 
       self.ratcraft[index].group=nil
       self.ratcraft[index]["status"]="Dead"
@@ -4308,9 +4364,13 @@ function RAT:_Destroy(group)
         _DATABASE:DeleteUnit(DCSUnit:getName())
       end
     end
+    
+    local ratcraft=self:_GetRatcraftFromGroup(group)
+    
+    ratcraft.flightgroup:Destroy(0)
 
     -- Destroy DCS group.
-    DCSGroup:destroy()
+    --DCSGroup:destroy()
     DCSGroup = nil
   end
 

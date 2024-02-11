@@ -2199,6 +2199,8 @@ function OPSGROUP:Destroy(Delay)
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, OPSGROUP.Destroy, self, 0)
   else
+  
+    self:T(self.lid.."Destroying group!")
 
     -- Get all units.
     local units=self:GetDCSUnits()
