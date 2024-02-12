@@ -1699,6 +1699,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
     end
 
     self.SpawnGroups[self.SpawnIndex].Spawned = true
+    self.SpawnGroups[self.SpawnIndex].Group.TemplateDonor = self.SpawnTemplatePrefix
     return self.SpawnGroups[self.SpawnIndex].Group
   else
     -- self:E( { self.SpawnTemplatePrefix, "No more Groups to Spawn:", SpawnIndex, self.SpawnMaxGroups } )
