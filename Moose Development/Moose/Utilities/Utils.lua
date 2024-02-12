@@ -444,10 +444,11 @@ end
 --- Print a table to log in a nice format
 -- @param #table table The table to print
 -- @param #number indent Number of indents
+-- @param #boolean noprint Don't log but return text
 -- @return #string text Text created on the fly of the log output
-function UTILS.PrintTableToLog(table, indent)
+function UTILS.PrintTableToLog(table, indent, noprint)
   local text = "\n"
-  if not table then
+  if not table or type(table) ~= "table" then
     env.warning("No table passed!")
     return nil
   end
@@ -455,11 +456,16 @@ function UTILS.PrintTableToLog(table, indent)
   for k, v in pairs(table) do
     if string.find(k," ") then k='"'..k..'"'end
     if type(v) == "table" then
-      env.info(string.rep("  ", indent) .. tostring(k) .. " = {")
+      if not noprint then
+        env.info(string.rep("  ", indent) .. tostring(k) .. " = {")
+      end
       text = text ..string.rep("  ", indent) .. tostring(k) .. " = {\n"
       text = text .. tostring(UTILS.PrintTableToLog(v, indent + 1)).."\n"
-      env.info(string.rep("  ", indent) .. "},")
+      if not noprint then
+        env.info(string.rep("  ", indent) .. "},")
+      end
       text = text .. string.rep("  ", indent) .. "},\n"
+    elseif type(v) == "function" then
     else
       local value
       if tostring(v) == "true" or tostring(v) == "false" or tonumber(v) ~= nil then
@@ -467,7 +473,9 @@ function UTILS.PrintTableToLog(table, indent)
       else
         value = '"'..tostring(v)..'"'
       end
-      env.info(string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(value)..",\n")
+      if not noprint then
+        env.info(string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(value)..",\n")
+      end
       text = text .. string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(value)..",\n"
     end
   end
