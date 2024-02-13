@@ -2780,6 +2780,14 @@ end
 -- @param #boolean switch If true, Invisible is enabled. If false, Invisible is disabled.
 -- @return #GROUP self 
 function GROUP:SetCommandInvisible(switch)
+  return self:CommandSetInvisible(switch)
+end
+
+--- Switch on/off invisible flag for the group.
+-- @param #GROUP self
+-- @param #boolean switch If true, Invisible is enabled. If false, Invisible is disabled.
+-- @return #GROUP self 
+function GROUP:CommandSetInvisible(switch)
   self:F2( self.GroupName )
   if switch==nil then
     switch=false
@@ -2794,6 +2802,14 @@ end
 -- @param #boolean switch If true, Immortal is enabled. If false, Immortal is disabled.
 -- @return #GROUP self 
 function GROUP:SetCommandImmortal(switch)
+  return self:CommandSetImmortal(switch)
+end
+
+--- Switch on/off immortal flag for the group.
+-- @param #GROUP self
+-- @param #boolean switch If true, Immortal is enabled. If false, Immortal is disabled.
+-- @return #GROUP self 
+function GROUP:CommandSetImmortal(switch)
   self:F2( self.GroupName )
   if switch==nil then
     switch=false
