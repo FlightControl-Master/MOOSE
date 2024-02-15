@@ -1,7 +1,7 @@
 ---
 title: De-Sanitize DCS
 parent: Advanced
-nav_order: 2
+nav_order: 98
 ---
 # De-Sanitize the DCS scripting environment
 {: .no_toc }
