@@ -4349,25 +4349,26 @@ function RAT:_Destroy(group)
 
   if DCSGroup and DCSGroup:isExist() then
 
-    -- Cread one single Dead event and delete units from database.
-    local triggerdead=true
-    for _,DCSUnit in pairs(DCSGroup:getUnits()) do
-
-      -- Dead event.
-      if DCSUnit then
-        if triggerdead then
-          self:_CreateEventDead(timer.getTime(), DCSUnit)
-          triggerdead=false
-        end
-
-        -- Delete from data base.
-        _DATABASE:DeleteUnit(DCSUnit:getName())
-      end
-    end
+--    -- Cread one single Dead event and delete units from database.
+--    local triggerdead=true
+--    for _,DCSUnit in pairs(DCSGroup:getUnits()) do
+--
+--      -- Dead event.
+--      if DCSUnit then
+--        if triggerdead then
+--          self:_CreateEventDead(timer.getTime(), DCSUnit)
+--          triggerdead=false
+--        end
+--
+--        -- Delete from data base.
+--        _DATABASE:DeleteUnit(DCSUnit:getName())
+--      end
+--    end
     
     local ratcraft=self:_GetRatcraftFromGroup(group)
     
     ratcraft.flightgroup:Destroy(0)
+    ratcraft.flightgroup:__Stop(0.1)
 
     -- Destroy DCS group.
     --DCSGroup:destroy()
