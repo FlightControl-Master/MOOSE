@@ -9754,7 +9754,7 @@ function AIRBOSS:_Groove( playerData )
   local glideslopeError = groovedata.GSE
   local AoA = groovedata.AoA
 
-  if rho <= RXX and playerData.step == AIRBOSS.PatternStep.GROOVE_XX and (math.abs( groovedata.Roll ) <= 4.0 or playerData.unit:IsInZone( self:_GetZoneLineup() )) then
+  if rho <= RXX and playerData.step == AIRBOSS.PatternStep.GROOVE_XX and (math.abs( groovedata.Roll ) <= 4.0 and playerData.unit:IsInZone( self:_GetZoneLineup() )) then
 
     -- Start time in groove
     playerData.TIG0 = timer.getTime()
