@@ -899,7 +899,8 @@ function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
 
   local Point = {}
   local Vec2 = self:GetVec2()
-
+  local countryID = CountryID or country.id.USA
+  
   Points = Points and Points or 360
 
   local Angle
@@ -910,7 +911,7 @@ function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
 
-    local CountryName = _DATABASE.COUNTRY_NAME[CountryID]
+    local CountryName = _DATABASE.COUNTRY_NAME[countryID]
 
     local Tire = {
         ["country"] = CountryName,
@@ -925,7 +926,7 @@ function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
         ["heading"] = 0,
     } -- end of ["group"]
 
-    local Group = coalition.addStaticObject( CountryID, Tire )
+    local Group = coalition.addStaticObject( countryID, Tire )
     if UnBound and UnBound == true then
       Group:destroy()
     end
