@@ -37,6 +37,8 @@
 -- @field #table Templates Templates: Units, Groups, Statics, ClientsByName, ClientsByID.
 -- @field #table CLIENTS Clients.
 -- @field #table STORAGES DCS warehouse storages.
+-- @field #table STNS Used Link16 octal numbers for F16/15/18/AWACS planes.
+-- @field #table SADL Used Link16 octal numbers for A10/C-II planes.
 -- @extends Core.Base#BASE
 
 --- Contains collections of wrapper objects defined within MOOSE that reflect objects within the simulator.
@@ -93,6 +95,8 @@ DATABASE = {
   OPSZONES = {},
   PATHLINES = {},
   STORAGES = {},
+  STNS={},
+  SADL={},
 }
 
 local _DATABASECoalition =
@@ -1029,10 +1033,23 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
       self.Templates.ClientsByName[UnitTemplate.name].CountryID = CountryID
       self.Templates.ClientsByID[UnitTemplate.unitId] = UnitTemplate
     end
+    
+    if UnitTemplate.AddPropAircraft then
+      if UnitTemplate.AddPropAircraft.STN_L16 then
+        local stn = UTILS.OctalToDecimal(UnitTemplate.AddPropAircraft.STN_L16)
+        self.STNS[stn] = UnitTemplate.name
+        self:I("Register STN "..tostring(UnitTemplate.AddPropAircraft.STN_L16).." for ".. UnitTemplate.name)
+      end
+      if UnitTemplate.AddPropAircraft.SADL_TN then
+        local sadl = UTILS.OctalToDecimal(UnitTemplate.AddPropAircraft.SADL_TN)
+        self.SADL[sadl] = UnitTemplate.name
+        self:I("Register SADL "..tostring(UnitTemplate.AddPropAircraft.SADL_TN).." for ".. UnitTemplate.name)
+      end  
+    end
 
     UnitNames[#UnitNames+1] = self.Templates.Units[UnitTemplate.name].UnitName
   end
-
+    
   -- Debug info.
   self:T( { Group     = self.Templates.Groups[GroupTemplateName].GroupName,
             Coalition = self.Templates.Groups[GroupTemplateName].CoalitionID,
@@ -1041,6 +1058,80 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
             Units     = UnitNames
           }
         )
+end
+
+--- Get next (consecutive) free STN as octal number.
+-- @param #DATABASE self
+-- @param #number octal Starting octal.
+-- @param #string unitname Name of the associated unit.
+-- @return #number Octal
+function DATABASE:GetNextSTN(octal,unitname)
+  local first = UTILS.OctalToDecimal(octal)
+  if self.STNS[first] == unitname then return octal end
+  local nextoctal = 77777
+  local found = false
+  if 32767-first < 10 then
+    first = 0
+  end
+  for i=first+1,32767 do
+    if self.STNS[i] == nil then
+      found = true
+      nextoctal = UTILS.DecimalToOctal(i)
+      self.STNS[i] = unitname
+      self:T("Register STN "..tostring(nextoctal).." for ".. unitname)
+      break
+    end
+  end
+  if not found then
+    self:E(string.format("WARNING: No next free STN past %05d found!",octal))
+    -- cleanup
+    local NewSTNS = {}
+    for _id,_name in pairs(self.STNS) do
+      if self.UNITS[_name] ~= nil then
+        NewSTNS[_id] = _name
+      end
+    end
+    self.STNS = nil
+    self.STNS = NewSTNS
+  end
+  return nextoctal 
+end
+
+--- Get next (consecutive) free SADL as octal number.
+-- @param #DATABASE self
+-- @param #number octal Starting octal.
+-- @param #string unitname Name of the associated unit.
+-- @return #number Octal
+function DATABASE:GetNextSADL(octal,unitname)
+  local first = UTILS.OctalToDecimal(octal)
+  if self.SADL[first] == unitname then return octal end
+  local nextoctal = 7777
+  local found = false
+  if 4095-first < 10 then
+    first = 0
+  end
+  for i=first+1,4095 do
+    if self.STNS[i] == nil then
+      found = true
+      nextoctal = UTILS.DecimalToOctal(i)
+      self.SADL[i] = unitname
+      self:T("Register SADL "..tostring(nextoctal).." for ".. unitname)
+      break
+    end
+  end
+  if not found then
+    self:E(string.format("WARNING: No next free SADL past %04d found!",octal))
+    -- cleanup
+    local NewSTNS = {}
+    for _id,_name in pairs(self.SADL) do
+      if self.UNITS[_name] ~= nil then
+        NewSTNS[_id] = _name
+      end
+    end
+    self.SADL = nil
+    self.SADL = NewSTNS
+  end
+  return nextoctal 
 end
 
 --- Get group template.
