@@ -724,7 +724,7 @@ end
 -- @param #number Country Country id as number or enumerator:
 --
 --   * @{DCS#country.id.RUSSIA}
---   * @{DCS#county.id.USA}
+--   * @{DCS#country.id.USA}
 --
 -- @return #SPAWN self
 function SPAWN:InitCountry( Country )
