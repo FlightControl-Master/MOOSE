@@ -780,6 +780,34 @@ function SPAWN:InitSkill( Skill )
   return self
 end
 
+--- [Airplane - F15/16/18/AWACS/B1B/Tanker only] Set the STN Link16 starting number of the Group; each unit of the spawned group will have a consecutive STN set.
+-- @param #SPAWN self
+-- @param #number Octal The octal number (digits 1..7, max 5 digits, i.e. 77777) to set the STN to. Every STN needs to be unique!
+-- @return #SPAWN self
+function SPAWN:InitSTN(Octal)
+  self:F( { Octal = Octal } )
+  self.SpawnInitSTN = Octal or 77777
+  local num = UTILS.OctalToDecimal(Octal)
+  if _DATABASE.STNS[num] ~= nil then
+    self:E("WARNING - STN already assigned: "..tostring(Octal).." is used for ".._DATABASE.STNS[Octal])
+  end
+  return self
+end
+
+--- [Airplane - A10-C II only] Set the SADL TN starting number of the Group; each unit of the spawned group will have a consecutive SADL set.
+-- @param #SPAWN self
+-- @param #number Octal The octal number (digits 1..7, max 4 digits, i.e. 7777) to set the SADL to. Every SADL needs to be unique!
+-- @return #SPAWN self
+function SPAWN:InitSADL(Octal)
+  self:F( { Octal = Octal } )
+  self.SpawnInitSADL = Octal or 7777
+  local num = UTILS.OctalToDecimal(Octal)
+  if _DATABASE.SADL[num] ~= nil then
+    self:E("WARNING - SADL already assigned: "..tostring(Octal).." is used for ".._DATABASE.SADL[Octal])
+  end
+  return self
+end
+
 --- Sets the radio communication on or off. Same as checking/unchecking the COMM box in the mission editor.
 -- @param #SPAWN self
 -- @param #number switch If true (or nil), enables the radio communication. If false, disables the radio for the spawned group.
@@ -3400,30 +3428,48 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
     local AddProps = SpawnTemplate.units[UnitID].AddPropAircraft
     if AddProps then
       if SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 then
-        -- 4 digit octal with leading 0
-        if tonumber(SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16) ~= nil then
-          local octal = SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16
-          local decimal = UTILS.OctalToDecimal(octal)+UnitID-1
-          SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 = string.format("%05d",UTILS.DecimalToOctal(decimal))
-        else -- ED bug - chars in here
-          local STN = math.floor(UTILS.RandomGaussian(4088/2,nil,1000,4088))
-          STN = STN+UnitID-1
-          local OSTN = UTILS.DecimalToOctal(STN)
-          SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 = string.format("%05d",OSTN)
+        if self.SpawnInitSTN then
+          local octal = self.SpawnInitSTN
+          if UnitID > 1 then
+            octal = _DATABASE:GetNextSTN(self.SpawnInitSTN,SpawnTemplate.units[UnitID].name)
+          end
+          SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 = string.format("%05d",octal)
+        else
+          -- 5 digit octal with leading 0
+          if tonumber(SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16) ~= nil then
+            local octal = SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16
+            local num = UTILS.OctalToDecimal(octal)
+            if _DATABASE.STNS[num] ~= nil or UnitID > 1 then -- STN taken or next unit
+              octal = _DATABASE:GetNextSTN(octal,SpawnTemplate.units[UnitID].name)
+            end
+            SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 = string.format("%05d",octal)
+          else -- ED bug - chars in here
+            local OSTN = _DATABASE:GetNextSTN(1,SpawnTemplate.units[UnitID].name)
+            SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 = string.format("%05d",OSTN)
+          end
         end
       end
       -- A10CII
       if SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN then
-        -- 3 digit octal with leading 0
-        if tonumber(SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN) ~= nil then
-          local octal = SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN
-          local decimal = UTILS.OctalToDecimal(octal)+UnitID-1
-          SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN = string.format("%04d",UTILS.DecimalToOctal(decimal))
-        else -- ED bug - chars in here
-          local STN = math.floor(UTILS.RandomGaussian(504/2,nil,100,504))
-          STN = STN+UnitID-1
-          local OSTN = UTILS.DecimalToOctal(STN)
-          SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN = string.format("%04d",OSTN)
+        -- 4 digit octal with leading 0
+        if self.SpawnInitSADL then
+          local octal = self.SpawnInitSADL
+          if UnitID > 1 then
+            octal = _DATABASE:GetNextSADL(self.SpawnInitSADL,SpawnTemplate.units[UnitID].name)
+          end
+          SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 = string.format("%04d",octal)
+        else
+          if tonumber(SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN) ~= nil then
+            local octal = SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN
+            local num = UTILS.OctalToDecimal(octal)
+            if  _DATABASE.SADL[num] ~= nil or UnitID > 1 then -- SADL taken or next unit
+              octal = _DATABASE:GetNextSADL(self.SpawnInitSADL,SpawnTemplate.units[UnitID].name)
+            end
+            SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN = string.format("%04d",octal)
+          else -- ED bug - chars in here
+            local OSTN = _DATABASE:GetNextSADL(1,SpawnTemplate.units[UnitID].name)
+            SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN = string.format("%04d",OSTN)
+          end
         end
       end
       -- VoiceCallsignNumber
