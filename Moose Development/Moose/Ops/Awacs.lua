@@ -1384,7 +1384,7 @@ end
 -- Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- [User] Set the tactical information option, create 10 radio channels groups can subscribe and get Bogey Dope on a specific frequency automatically.
+--- [User] Set the tactical information option, create 10 radio channels groups can subscribe and get Bogey Dope on a specific frequency automatically. You **need** to set up SRS first before using this!
 -- @param #AWACS self
 -- @param #number BaseFreq Base Frequency to use, defaults to 130.
 -- @param #number Increase Increase to use, defaults to 0.5, thus channels created are 130, 130.5, 131 .. etc.
@@ -1394,6 +1394,10 @@ end
 -- @return #AWACS self
 function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval,Number)
   self:T(self.lid.."SetTacticalRadios")
+  if not self.AwacsSRS then
+    MESSAGE:New("AWACS: Setup SRS in your code BEFORE trying to add tac radios please!",30,"ERROR",true):ToLog():ToAll()
+    return self
+  end
   self.TacticalMenu = true
   self.TacticalBaseFreq = BaseFreq or 130
   self.TacticalIncrFreq = Increase or 0.5
