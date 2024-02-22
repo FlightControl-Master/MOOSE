@@ -3525,7 +3525,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
           if UnitID > 1 then
             octal = _DATABASE:GetNextSADL(self.SpawnInitSADL,SpawnTemplate.units[UnitID].name)
           end
-          SpawnTemplate.units[UnitID].AddPropAircraft.STN_L16 = string.format("%04d",octal)
+          SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN = string.format("%04d",octal)
         else
           if tonumber(SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN) ~= nil then
             local octal = SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN

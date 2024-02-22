@@ -1047,7 +1047,7 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
       if UnitTemplate.AddPropAircraft.SADL_TN then
         local sadl = UTILS.OctalToDecimal(UnitTemplate.AddPropAircraft.SADL_TN)
         if sadl == nil or sadl < 1 then
-          self:E("WARNING: Invalid SADL "..tostring(UnitTemplate.AddPropAircraft.STN_L16).." for ".. UnitTemplate.name)
+          self:E("WARNING: Invalid SADL "..tostring(UnitTemplate.AddPropAircraft.SADL_TN).." for ".. UnitTemplate.name)
         else
           self.SADL[sadl] = UnitTemplate.name
           self:I("Register SADL "..tostring(UnitTemplate.AddPropAircraft.SADL_TN).." for ".. UnitTemplate.name)
