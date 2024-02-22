@@ -199,6 +199,11 @@
 --
 --   * @{#SPAWN.InitRepeat}() or @{#SPAWN.InitRepeatOnLanding}(): This method is used to re-spawn automatically the same group after it has landed.
 --   * @{#SPAWN.InitRepeatOnEngineShutDown}(): This method is used to re-spawn automatically the same group after it has landed and it shuts down the engines at the ramp.
+--   
+-- ### Link-16 Datalink STN and SADL IDs (limited at the moment to F15/16/18/AWACS/Tanker/B1B, but not the F15E for clients, SADL A10CII only)
+-- 
+--   *{#SPAWN.InitSTN}(): Set the STN of the first unit in the group. All other units will have consecutive STNs, provided they have not been used yet.
+--   *{#SPAWN.InitSADL}(): Set the SADL of the first unit in the group. All other units will have consecutive SADLs, provided they have not been used yet.
 --
 -- ## SPAWN **Spawn** methods
 --
