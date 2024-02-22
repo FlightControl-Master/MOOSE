@@ -782,12 +782,16 @@ end
 
 --- [Airplane - F15/16/18/AWACS/B1B/Tanker only] Set the STN Link16 starting number of the Group; each unit of the spawned group will have a consecutive STN set.
 -- @param #SPAWN self
--- @param #number Octal The octal number (digits 1..7, max 5 digits, i.e. 77777) to set the STN to. Every STN needs to be unique!
+-- @param #number Octal The octal number (digits 1..7, max 5 digits, i.e. 1..77777) to set the STN to. Every STN needs to be unique!
 -- @return #SPAWN self
 function SPAWN:InitSTN(Octal)
   self:F( { Octal = Octal } )
   self.SpawnInitSTN = Octal or 77777
   local num = UTILS.OctalToDecimal(Octal)
+  if num == nil or num < 1 then
+    self:E("WARNING - STN "..tostring(Octal).." is not valid!")
+    return self
+  end
   if _DATABASE.STNS[num] ~= nil then
     self:E("WARNING - STN already assigned: "..tostring(Octal).." is used for ".._DATABASE.STNS[Octal])
   end
@@ -796,12 +800,16 @@ end
 
 --- [Airplane - A10-C II only] Set the SADL TN starting number of the Group; each unit of the spawned group will have a consecutive SADL set.
 -- @param #SPAWN self
--- @param #number Octal The octal number (digits 1..7, max 4 digits, i.e. 7777) to set the SADL to. Every SADL needs to be unique!
+-- @param #number Octal The octal number (digits 1..7, max 4 digits, i.e. 1..7777) to set the SADL to. Every SADL needs to be unique!
 -- @return #SPAWN self
 function SPAWN:InitSADL(Octal)
   self:F( { Octal = Octal } )
   self.SpawnInitSADL = Octal or 7777
   local num = UTILS.OctalToDecimal(Octal)
+  if num == nil or num < 1 then
+    self:E("WARNING - SADL "..tostring(Octal).." is not valid!")
+    return self
+  end
   if _DATABASE.SADL[num] ~= nil then
     self:E("WARNING - SADL already assigned: "..tostring(Octal).." is used for ".._DATABASE.SADL[Octal])
   end
