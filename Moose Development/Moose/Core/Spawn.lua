@@ -204,6 +204,17 @@
 -- 
 --   *{#SPAWN.InitSTN}(): Set the STN of the first unit in the group. All other units will have consecutive STNs, provided they have not been used yet.
 --   *{#SPAWN.InitSADL}(): Set the SADL of the first unit in the group. All other units will have consecutive SADLs, provided they have not been used yet.
+--   
+-- ### Callsigns
+-- 
+--   *{#SPAWN.InitRandomizeCallsign}(): Set a random callsign name per spawn.
+--   *{#SPAWN.SpawnInitCallSign}(): Set a specific callsign for a spawned group.
+--   
+-- ### Speed
+-- 
+--   *{#SPAWN.InitSpeedMps}(): Set the initial speed on spawning in meters per second.
+--   *{#SPAWN.InitSpeedKph}(): Set the initial speed on spawning in kilometers per hour.
+--   *{#SPAWN.InitSpeedKnots}(): Set the initial speed on spawning in knots.
 --
 -- ## SPAWN **Spawn** methods
 --
@@ -820,6 +831,46 @@ function SPAWN:InitSADL(Octal)
   end
   return self
 end
+
+--- [Airplane] Set the initial speed on spawning in meters per second. Useful when spawning in-air only.
+-- @param #SPAWN self
+-- @param #number MPS The speed in MPS to use.
+-- @return #SPAWN self
+function SPAWN:InitSpeedMps(MPS)
+self:F( { MPS = MPS } )
+  if MPS == nil or tonumber(MPS)<0 then
+    MPS=125
+  end
+  self.InitSpeed = MPS
+  return self
+end
+
+--- [Airplane] Set the initial speed on spawning in knots. Useful when spawning in-air only.
+-- @param #SPAWN self
+-- @param #number Knots The speed in knots to use.
+-- @return #SPAWN self
+function SPAWN:InitSpeedKnots(Knots)
+self:F( { Knots = Knots } )
+  if Knots == nil or tonumber(Knots)<0 then
+    Knots=300
+  end
+  self.InitSpeed = UTILS.KnotsToMps(Knots)
+  return self
+end
+
+--- [Airplane] Set the initial speed on spawning in kilometers per hour. Useful when spawning in-air only.
+-- @param #SPAWN self
+-- @param #number KPH The speed in KPH to use.
+-- @return #SPAWN self
+function SPAWN:InitSpeedKph(KPH)
+  self:F( { KPH = KPH } )
+  if KPH == nil or tonumber(KPH)<0 then
+    KPH=UTILS.KnotsToKmph(300)
+  end
+  self.InitSpeed = UTILS.KmphToMps(KPH)
+  return self
+end
+
 
 --- Sets the radio communication on or off. Same as checking/unchecking the COMM box in the mission editor.
 -- @param #SPAWN self
@@ -3436,6 +3487,10 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
       elseif type( Callsign ) == "number" then
         SpawnTemplate.units[UnitID].callsign = Callsign + SpawnIndex
       end
+    end
+    -- Speed
+    if self.InitSpeed then
+      SpawnTemplate.units[UnitID].speed = self.InitSpeed
     end
     -- Link16
     local AddProps = SpawnTemplate.units[UnitID].AddPropAircraft
