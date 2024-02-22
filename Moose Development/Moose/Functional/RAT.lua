@@ -483,7 +483,7 @@ RAT.status={
   EventCrash="Crashed",
 }
 
---- Categories of the RAT class.
+--- Datastructure of a spawned RAT group.
 -- @type RAT.RatCraft
 -- @field Wrapper.Group#Group group The aircraft group.
 -- @field Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
