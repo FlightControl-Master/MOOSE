@@ -30,6 +30,10 @@
 --
 -- ===
 --
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_Demos/tree/master/Sound/Radio)
+--
+-- ===
+--
 -- ### Authors: Hugues "Grey_Echo" Bousquet, funkyfranky
 --
 -- @module Sound.Radio
