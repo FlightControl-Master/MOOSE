@@ -427,132 +427,138 @@ AIRBASE.TheChannel = {
 --- Airbases of the Syria map:
 --
 -- * AIRBASE.Syria.Kuweires
--- * AIRBASE.Syria.Marj_Ruhayyil
--- * AIRBASE.Syria.Kiryat_Shmona
--- * AIRBASE.Syria.Marj_as_Sultan_North
--- * AIRBASE.Syria.Eyn_Shemer
 -- * AIRBASE.Syria.Incirlik
--- * AIRBASE.Syria.Damascus
--- * AIRBASE.Syria.Bassel_Al_Assad
--- * AIRBASE.Syria.Rosh_Pina
+-- * AIRBASE.Syria.King_Abdullah_II
+-- * AIRBASE.Syria.Akrotiri
 -- * AIRBASE.Syria.Aleppo
--- * AIRBASE.Syria.Al_Qusayr
--- * AIRBASE.Syria.Wujah_Al_Hajar
--- * AIRBASE.Syria.Al_Dumayr
--- * AIRBASE.Syria.Gazipasa
+-- * AIRBASE.Syria.Abu_al_Duhur
 -- * AIRBASE.Syria.Hatay
--- * AIRBASE.Syria.Nicosia [Deactivated by ED as of June/2023]
--- * AIRBASE.Syria.Pinarbashi
 -- * AIRBASE.Syria.Paphos
+-- * AIRBASE.Syria.At_Tanf
+-- * AIRBASE.Syria.Tal_Siman
+-- * AIRBASE.Syria.Rayak
+-- * AIRBASE.Syria.Muwaffaq_Salti
+-- * AIRBASE.Syria.Naqoura
+-- * AIRBASE.Syria.Gaziantep
+-- * AIRBASE.Syria.Al_Qusayr
+-- * AIRBASE.Syria.Al_Dumayr
 -- * AIRBASE.Syria.Kingsfield
--- * AIRBASE.Syria.Thalah
+-- * AIRBASE.Syria.Marj_as_Sultan_North
+-- * AIRBASE.Syria.Beirut_Rafic_Hariri
+-- * AIRBASE.Syria.Palmyra
+-- * AIRBASE.Syria.Hama
+-- * AIRBASE.Syria.Eyn_Shemer
+-- * AIRBASE.Syria.Sanliurfa
+-- * AIRBASE.Syria.Amman
+-- * AIRBASE.Syria.Deir_ez_Zor
+-- * AIRBASE.Syria.Taftanaz
+-- * AIRBASE.Syria.Damascus
+-- * AIRBASE.Syria.Gazipasa
+-- * AIRBASE.Syria.Herzliya
+-- * AIRBASE.Syria.H4
+-- * AIRBASE.Syria.Tiyas
+-- * AIRBASE.Syria.Lakatamia
+-- * AIRBASE.Syria.Kharab_Ishk
 -- * AIRBASE.Syria.Haifa
 -- * AIRBASE.Syria.Khalkhalah
 -- * AIRBASE.Syria.Megiddo
--- * AIRBASE.Syria.Lakatamia
--- * AIRBASE.Syria.Rayak
--- * AIRBASE.Syria.Larnaca
+-- * AIRBASE.Syria.An_Nasiriyah
+-- * AIRBASE.Syria.Bassel_Al_Assad
+-- * AIRBASE.Syria.Ruwayshid
 -- * AIRBASE.Syria.Mezzeh
 -- * AIRBASE.Syria.Gecitkale
--- * AIRBASE.Syria.Akrotiri
--- * AIRBASE.Syria.Naqoura
--- * AIRBASE.Syria.Gaziantep
--- * AIRBASE.Syria.Sayqal
--- * AIRBASE.Syria.Tiyas
--- * AIRBASE.Syria.Shayrat
--- * AIRBASE.Syria.Taftanaz
--- * AIRBASE.Syria.H4
--- * AIRBASE.Syria.King_Hussein_Air_College
--- * AIRBASE.Syria.Rene_Mouawad
--- * AIRBASE.Syria.Jirah
+-- * AIRBASE.Syria.Nicosia
 -- * AIRBASE.Syria.Ramat_David
--- * AIRBASE.Syria.Qabr_as_Sitt
--- * AIRBASE.Syria.Minakh
--- * AIRBASE.Syria.Adana_Sakirpasa
--- * AIRBASE.Syria.Palmyra
--- * AIRBASE.Syria.Hama
--- * AIRBASE.Syria.Ercan
--- * AIRBASE.Syria.Marj_as_Sultan_South
--- * AIRBASE.Syria.Tabqa
--- * AIRBASE.Syria.Beirut_Rafic_Hariri
--- * AIRBASE.Syria.An_Nasiriyah
--- * AIRBASE.Syria.Abu_al_Duhur
--- * AIRBASE.Syria.At_Tanf
--- * AIRBASE.Syria.H3
+-- * AIRBASE.Syria.Tha_lah
 -- * AIRBASE.Syria.H3_Northwest
+-- * AIRBASE.Syria.Sayqal
+-- * AIRBASE.Syria.Jirah
+-- * AIRBASE.Syria.Shayrat
+-- * AIRBASE.Syria.Adana_Sakirpasa
+-- * AIRBASE.Syria.Wujah_Al_Hajar
+-- * AIRBASE.Syria.Pinarbashi
 -- * AIRBASE.Syria.H3_Southwest
--- * AIRBASE.Syria.Kharab_Ishk
--- * AIRBASE.Syria.Raj_al_Issa_East (deleted by ED)
--- * AIRBASE.Syria.Raj_al_Issa_West (deleted by ED)
--- * AIRBASE.Syria.Ruwayshid
--- * AIRBASE.Syria.Sanliurfa
--- * AIRBASE.Syria.Tal_Siman
--- * AIRBASE.Syria.Deir_ez_Zor
+-- * AIRBASE.Syria.Rosh_Pina
+-- * AIRBASE.Syria.Kiryat_Shmona
+-- * AIRBASE.Syria.H3
+-- * AIRBASE.Syria.Qabr_as_Sitt
+-- * AIRBASE.Syria.Prince_Hassan
+-- * AIRBASE.Syria.Larnaca
+-- * AIRBASE.Syria.King_Hussein_Air_College
+-- * AIRBASE.Syria.Ercan
+-- * AIRBASE.Syria.Marj_Ruhayyil
+-- * AIRBASE.Syria.Tabqa
+-- * AIRBASE.Syria.Marj_as_Sultan_South
+-- * AIRBASE.Syria.Rene_Mouawad
+-- * AIRBASE.Syria.Minakh
 --
 --@field Syria
 AIRBASE.Syria={
-  ["Kuweires"]="Kuweires",
-  ["Marj_Ruhayyil"]="Marj Ruhayyil",
-  ["Kiryat_Shmona"]="Kiryat Shmona",
-  ["Marj_as_Sultan_North"]="Marj as Sultan North",
-  ["Eyn_Shemer"]="Eyn Shemer",
-  ["Incirlik"]="Incirlik",
-  ["Damascus"]="Damascus",
-  ["Bassel_Al_Assad"]="Bassel Al-Assad",
-  ["Rosh_Pina"]="Rosh Pina",
-  ["Aleppo"]="Aleppo",
-  ["Al_Qusayr"]="Al Qusayr",
-  ["Wujah_Al_Hajar"]="Wujah Al Hajar",
-  ["Al_Dumayr"]="Al-Dumayr",
-  ["Gazipasa"]="Gazipasa",
-  ["Hatay"]="Hatay",
-  --["Nicosia"]="Nicosia",
-  ["Pinarbashi"]="Pinarbashi",
-  ["Paphos"]="Paphos",
-  ["Kingsfield"]="Kingsfield",
-  ["Thalah"]="Tha'lah",
-  ["Haifa"]="Haifa",
-  ["Khalkhalah"]="Khalkhalah",
-  ["Megiddo"]="Megiddo",
-  ["Lakatamia"]="Lakatamia",
-  ["Rayak"]="Rayak",
-  ["Larnaca"]="Larnaca",
-  ["Mezzeh"]="Mezzeh",
-  ["Gecitkale"]="Gecitkale",
-  ["Akrotiri"]="Akrotiri",
-  ["Naqoura"]="Naqoura",
-  ["Gaziantep"]="Gaziantep",
-  ["Sayqal"]="Sayqal",
-  ["Tiyas"]="Tiyas",
-  ["Shayrat"]="Shayrat",
-  ["Taftanaz"]="Taftanaz",
-  ["H4"]="H4",
-  ["King_Hussein_Air_College"]="King Hussein Air College",
-  ["Rene_Mouawad"]="Rene Mouawad",
-  ["Jirah"]="Jirah",
-  ["Ramat_David"]="Ramat David",
-  ["Qabr_as_Sitt"]="Qabr as Sitt",
-  ["Minakh"]="Minakh",
-  ["Adana_Sakirpasa"]="Adana Sakirpasa",
-  ["Palmyra"]="Palmyra",
-  ["Hama"]="Hama",
-  ["Ercan"]="Ercan",
-  ["Marj_as_Sultan_South"]="Marj as Sultan South",
-  ["Tabqa"]="Tabqa",
-  ["Beirut_Rafic_Hariri"]="Beirut-Rafic Hariri",
-  ["An_Nasiriyah"]="An Nasiriyah",
-  ["Abu_al_Duhur"]="Abu al-Duhur",
-  ["At_Tanf"]="At Tanf",
-  ["H3"]="H3",
-  ["H3_Northwest"]="H3 Northwest",
-  ["H3_Southwest"]="H3 Southwest",
-  ["Kharab_Ishk"]="Kharab Ishk",
-  -- ["Raj_al_Issa_East"]="Raj al Issa East",
-  -- ["Raj_al_Issa_West"]="Raj al Issa West",
-  ["Ruwayshid"]="Ruwayshid",
-  ["Sanliurfa"]="Sanliurfa",
-  ["Tal_Siman"]="Tal Siman",
-  ["Deir_ez_Zor"] = "Deir ez-Zor", 
+  ["Kuweires"] = "Kuweires",
+  ["Incirlik"] = "Incirlik",
+  ["King_Abdullah_II"] = "King Abdullah II",
+  ["Akrotiri"] = "Akrotiri",
+  ["Aleppo"] = "Aleppo",
+  ["Abu_al_Duhur"] = "Abu al-Duhur",
+  ["Hatay"] = "Hatay",
+  ["Paphos"] = "Paphos",
+  ["At_Tanf"] = "At Tanf",
+  ["Tal_Siman"] = "Tal Siman",
+  ["Rayak"] = "Rayak",
+  ["Muwaffaq_Salti"] = "Muwaffaq Salti",
+  ["Naqoura"] = "Naqoura",
+  ["Gaziantep"] = "Gaziantep",
+  ["Al_Qusayr"] = "Al Qusayr",
+  ["Al_Dumayr"] = "Al-Dumayr",
+  ["Kingsfield"] = "Kingsfield",
+  ["Marj_as_Sultan_North"] = "Marj as Sultan North",
+  ["Beirut_Rafic_Hariri"] = "Beirut-Rafic Hariri",
+  ["Palmyra"] = "Palmyra",
+  ["Hama"] = "Hama",
+  ["Eyn_Shemer"] = "Eyn Shemer",
+  ["Sanliurfa"] = "Sanliurfa",
+  ["Amman"] = "Amman",
+  ["Deir_ez_Zor"] = "Deir ez-Zor",
+  ["Taftanaz"] = "Taftanaz",
+  ["Damascus"] = "Damascus",
+  ["Gazipasa"] = "Gazipasa",
+  ["Herzliya"] = "Herzliya",
+  ["H4"] = "H4",
+  ["Tiyas"] = "Tiyas",
+  ["Lakatamia"] = "Lakatamia",
+  ["Kharab_Ishk"] = "Kharab Ishk",
+  ["Haifa"] = "Haifa",
+  ["Khalkhalah"] = "Khalkhalah",
+  ["Megiddo"] = "Megiddo",
+  ["An_Nasiriyah"] = "An Nasiriyah",
+  ["Bassel_Al_Assad"] = "Bassel Al-Assad",
+  ["Ruwayshid"] = "Ruwayshid",
+  ["Mezzeh"] = "Mezzeh",
+  ["Gecitkale"] = "Gecitkale",
+  ["Nicosia"] = "Nicosia",
+  ["Ramat_David"] = "Ramat David",
+  ["Tha_lah"] = "Tha'lah",
+  ["H3_Northwest"] = "H3 Northwest",
+  ["Sayqal"] = "Sayqal",
+  ["Jirah"] = "Jirah",
+  ["Shayrat"] = "Shayrat",
+  ["Adana_Sakirpasa"] = "Adana Sakirpasa",
+  ["Wujah_Al_Hajar"] = "Wujah Al Hajar",
+  ["Pinarbashi"] = "Pinarbashi",
+  ["H3_Southwest"] = "H3 Southwest",
+  ["Rosh_Pina"] = "Rosh Pina",
+  ["Kiryat_Shmona"] = "Kiryat Shmona",
+  ["H3"] = "H3",
+  ["Qabr_as_Sitt"] = "Qabr as Sitt",
+  ["Prince_Hassan"] = "Prince Hassan",
+  ["Larnaca"] = "Larnaca",
+  ["King_Hussein_Air_College"] = "King Hussein Air College",
+  ["Ercan"] = "Ercan",
+  ["Marj_Ruhayyil"] = "Marj Ruhayyil",
+  ["Tabqa"] = "Tabqa",
+  ["Marj_as_Sultan_South"] = "Marj as Sultan South",
+  ["Rene_Mouawad"] = "Rene Mouawad",
+  ["Minakh"] = "Minakh",
 }
 
 --- Airbases of the Mariana Islands map:
