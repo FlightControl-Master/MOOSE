@@ -8,6 +8,10 @@
 --
 -- ===
 --
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_Demos/tree/master/Core/Beacon)
+--
+-- ===
+--
 -- ### Authors: Hugues "Grey_Echo" Bousquet, funkyfranky
 --
 -- @module Core.Beacon
