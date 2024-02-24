@@ -290,6 +290,7 @@ end
 -- myBeacon:AATACAN(20, "TEXACO", true) -- Activate the beacon
 function BEACON:AATACAN(TACANChannel, Message, Bearing, BeaconDuration)
   self:F({TACANChannel, Message, Bearing, BeaconDuration})
+  self:E("This method is DEPRECATED! Please use ActivateTACAN() instead.")
 
   local IsValid = true
 
