@@ -2173,7 +2173,7 @@ do -- Patrol methods
       local Waypoint = Waypoints[#Waypoints]
       PatrolGroup:SetTaskWaypoint( Waypoint, TaskRoute ) -- Set for the given Route at Waypoint 2 the TaskRouteToZone.
 
-      PatrolGroup:Route( Waypoints ) -- Move after a random seconds to the Route. See the Route method for details.
+      PatrolGroup:Route( Waypoints, 2 ) -- Move after a random seconds to the Route. See the Route method for details.
     end
   end
 
