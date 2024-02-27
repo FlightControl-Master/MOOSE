@@ -313,8 +313,8 @@ end
 --   
 --              local Path = FilePath or "C:\\Users\\<yourname>\\Saved Games\\DCS\\Missions\\" -- example path
 --              local BlueOpsFilename = BlueFileName or "ExamplePlatoonSave.csv" -- example filename 
---              local BlueSaveOps = SET_GROUP:New():FilterCoalitions("blue"):FilterPrefixes("AID"):FilterCategoryGround():FilterOnce()
---              UTILS.SaveSetOfGroups(BlueSaveOps,Path,BlueOpsFilename)
+--              local BlueSaveOps = SET_OPSGROUP:New():FilterCoalitions("blue"):FilterCategoryGround():FilterOnce()
+--              UTILS.SaveSetOfOpsGroups(BlueSaveOps,Path,BlueOpsFilename)
 --          
 -- where Path and Filename are strings, as chosen by you.
 -- You can then load back the assets at the start of your next mission run. Be aware that it takes a couple of seconds for the 
@@ -324,7 +324,7 @@ end
 --              local Path = FilePath or "C:\\Users\\<yourname>\\Saved Games\\DCS\\Missions\\" -- example path
 --              local BlueOpsFilename = BlueFileName or "ExamplePlatoonSave.csv" -- example filename  
 --              if UTILS.CheckFileExists(Path,BlueOpsFilename) then
---                local loadback = UTILS.LoadSetOfGroups(Path,BlueOpsFilename,false)
+--                local loadback = UTILS.LoadSetOfOpsGroups(Path,BlueOpsFilename,false)
 --                for _,_platoondata in pairs (loadback) do
 --                  local groupname = _platoondata.groupname -- #string
 --                  local coordinate = _platoondata.coordinate -- Core.Point#COORDINATE
