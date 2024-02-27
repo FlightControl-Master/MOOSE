@@ -3190,14 +3190,14 @@ function LEGION.CalculateAssetMissionScore(asset, MissionType, TargetVec2, Inclu
       elseif (currmission.type==AUFTRAG.Type.ONGUARD or currmission.type==AUFTRAG.Type.PATROLZONE) and (MissionType==AUFTRAG.Type.ARTY  or MissionType==AUFTRAG.Type.GROUNDATTACK) then
         score=score+25
       elseif currmission.type==AUFTRAG.Type.NOTHING then
-        score=score+25
+        score=score+30
       end
       
     end
   
     if MissionType==AUFTRAG.Type.OPSTRANSPORT or MissionType==AUFTRAG.Type.AMMOSUPPLY or MissionType==AUFTRAG.Type.AWACS or MissionType==AUFTRAG.Type.FUELSUPPLY or MissionType==AUFTRAG.Type.TANKER then
       -- TODO: need to check for missions that do not require ammo like transport, recon, awacs, tanker etc.
-      -- We better take a fresh asset. Sometimes spawned assets to something else, which is difficult to check.
+      -- We better take a fresh asset. Sometimes spawned assets do something else, which is difficult to check.
       score=score-10
     else
       -- Combat mission.

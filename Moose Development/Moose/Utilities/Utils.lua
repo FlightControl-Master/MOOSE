@@ -2644,6 +2644,9 @@ function UTILS.SaveSetOfGroups(Set,Path,Filename,Structured)
     if group and group:IsAlive() then
       local name = group:GetName()
       local template = string.gsub(name,"-(.+)$","")
+      if string.find(name,"AID") then
+        template = string.gsub(name,"(.AID.%d+$","")
+      end
       if string.find(template,"#") then
        template = string.gsub(name,"#(%d+)$","")
       end 
