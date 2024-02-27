@@ -2997,7 +2997,7 @@ do -- SET_UNIT
       local velocity = self:GetVelocity() or 0
       Coordinate:SetHeading( heading )
       Coordinate:SetVelocity( velocity )
-      self:I(UTILS.PrintTableToLog(Coordinate))
+      self:T(UTILS.PrintTableToLog(Coordinate))
     end
 
     return Coordinate
@@ -4521,7 +4521,7 @@ do -- SET_CLIENT
       if Event.IniObjectCategory == Object.Category.UNIT and Event.IniGroup and Event.IniGroup:IsGround() then
         -- CA Slot entered
         local ObjectName, Object = self:AddInDatabase( Event )
-        self:I( ObjectName, UTILS.PrintTableToLog(Object) )
+        self:T( ObjectName, UTILS.PrintTableToLog(Object) )
         if Object and self:IsIncludeObject( Object ) then
           self:Add( ObjectName, Object )
         end
