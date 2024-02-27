@@ -3728,3 +3728,88 @@ end
 function UTILS.OctalToDecimal(Number)
   return tonumber(Number,8)
 end
+
+--- Function to save the position of a set of #OPSGROUP (ARMYGROUP) objects.
+-- @param Core.Set#SET_OPSGROUP Set of ops objects to save
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @param #boolean Structured Append the data with a list of typenames in the group plus their count.
+-- @return #boolean outcome True if saving is successful, else false.
+function UTILS.SaveSetOfOpsGroups(Set,Path,Filename,Structured)
+  local filename = Filename or "SetOfGroups"
+  local data = "--Save SET of groups: (name,legion,template,alttemplate,units,position.x,position.y,position.z,strucdata) "..Filename .."\n"
+  local List = Set:GetSetObjects()
+  for _,_group in pairs (List) do
+    local group = _group:GetGroup() -- Wrapper.Group#GROUP
+    if group and group:IsAlive() then
+      local name = group:GetName()
+      local template = string.gsub(name,"(.AID.%d+$","")
+      if string.find(template,"#") then
+       template = string.gsub(name,"#(%d+)$","")
+      end
+      local alttemplate = _group.templatename or "none"
+      local legiono = _group.legion -- Ops.Legion#LEGION
+      local legion = "none"
+      if legiono and type(legiono) == "table" and legiono.ClassName then
+        legion = legiono:GetName()
+        local asset = legiono:GetAssetByName(name) -- Functional.Warehouse#WAREHOUSE.Assetitem
+        alttemplate=asset.templatename
+      end
+      local units = group:CountAliveUnits()
+      local position = group:GetVec3()
+      if Structured then
+        local structure = UTILS.GetCountPerTypeName(group)
+        local strucdata =  ""
+        for typen,anzahl in pairs (structure) do
+          strucdata = strucdata .. typen .. "=="..anzahl..";"
+        end
+        data = string.format("%s%s,%s,%s,%s,%d,%d,%d,%d,%s\n",data,name,legion,template,alttemplate,units,position.x,position.y,position.z,strucdata)
+      else
+        data = string.format("%s%s,%s,%s,%s,%d,%d,%d,%d\n",data,name,legion,template,alttemplate,units,position.x,position.y,position.z)
+      end     
+    end
+  end
+  -- save the data
+  local outcome = UTILS.SaveToFile(Path,Filename,data)
+  return outcome
+end
+
+--- Load back a #OPSGROUP (ARMYGROUP) data from file for use with @{Ops.Brigade#BRIGADE.LoadBackAssetInPosition}()
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #table Returns a table of data entries: `{ groupname=groupname, size=size, coordinate=coordinate, template=template, structure=structure, legion=legion, alttemplate=alttemplate }`
+-- Returns nil when the file cannot be read. 
+function UTILS.LoadSetOfOpsGroups(Path,Filename)
+
+  local filename = Filename or "SetOfGroups"
+  local datatable = {}
+  
+  if UTILS.CheckFileExists(Path,filename) then
+    local outcome,loadeddata = UTILS.LoadFromFile(Path,Filename)
+    -- remove header
+    table.remove(loadeddata, 1)
+    for _id,_entry in pairs (loadeddata) do
+      local dataset = UTILS.Split(_entry,",")
+      -- 1name,2legion,3template,4alttemplate,5units,6position.x,7position.y,8position.z,9strucdata
+      local groupname = dataset[1]
+      local legion = dataset[2]
+      local template = dataset[3]
+      local alttemplate = dataset[4]
+      local size = tonumber(dataset[5])
+      local posx = tonumber(dataset[6])
+      local posy = tonumber(dataset[7])
+      local posz = tonumber(dataset[8])
+      local structure = dataset[9]
+      local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
+      if size > 0 then
+        local data = { groupname=groupname, size=size, coordinate=coordinate, template=template, structure=structure, legion=legion, alttemplate=alttemplate }
+        table.insert(datatable,data)
+      end
+    end
+  else
+    return nil
+  end
+
+  return datatable
+end
+
