@@ -19,6 +19,10 @@
 --
 -- ===
 --
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_Demos/tree/master/Functional/FOX)
+--
+-- ===
+--
 -- ### Author: **funkyfranky**
 -- @module Functional.Fox
 -- @image Functional_FOX.png
