@@ -1244,7 +1244,9 @@ function UNIT:GetThreatLevel()
       
       if     Attributes["Fighters"]                                 then ThreatLevel = 10
       elseif Attributes["Multirole fighters"]                       then ThreatLevel = 9
+      elseif Attributes["Interceptors"]                             then ThreatLevel = 9
       elseif Attributes["Battleplanes"]                             then ThreatLevel = 8
+      elseif Attributes["Battle airplanes"]                         then ThreatLevel = 8
       elseif Attributes["Attack helicopters"]                       then ThreatLevel = 7
       elseif Attributes["Strategic bombers"]                        then ThreatLevel = 6
       elseif Attributes["Bombers"]                                  then ThreatLevel = 5
