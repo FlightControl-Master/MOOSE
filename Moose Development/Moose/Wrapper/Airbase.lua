@@ -169,163 +169,167 @@ AIRBASE.Nevada = {
 
 --- Airbases of the Normandy map:
 --
---   * AIRBASE.Normandy.Saint_Pierre_du_Mont
---   * AIRBASE.Normandy.Lignerolles
---   * AIRBASE.Normandy.Cretteville
---   * AIRBASE.Normandy.Maupertus
---   * AIRBASE.Normandy.Brucheville
---   * AIRBASE.Normandy.Meautis
---   * AIRBASE.Normandy.Cricqueville_en_Bessin
---   * AIRBASE.Normandy.Lessay
---   * AIRBASE.Normandy.Sainte_Laurent_sur_Mer
---   * AIRBASE.Normandy.Biniville
---   * AIRBASE.Normandy.Cardonville
---   * AIRBASE.Normandy.Deux_Jumeaux
---   * AIRBASE.Normandy.Chippelle
---   * AIRBASE.Normandy.Beuzeville
---   * AIRBASE.Normandy.Azeville
---   * AIRBASE.Normandy.Picauville
---   * AIRBASE.Normandy.Le_Molay
---   * AIRBASE.Normandy.Longues_sur_Mer
---   * AIRBASE.Normandy.Carpiquet
---   * AIRBASE.Normandy.Bazenville
---   * AIRBASE.Normandy.Sainte_Croix_sur_Mer
---   * AIRBASE.Normandy.Beny_sur_Mer
---   * AIRBASE.Normandy.Rucqueville
---   * AIRBASE.Normandy.Sommervieu
---   * AIRBASE.Normandy.Lantheuil
---   * AIRBASE.Normandy.Evreux
---   * AIRBASE.Normandy.Chailey
---   * AIRBASE.Normandy.Needs_Oar_Point
---   * AIRBASE.Normandy.Funtington
---   * AIRBASE.Normandy.Tangmere
---   * AIRBASE.Normandy.Ford
---   * AIRBASE.Normandy.Argentan
---   * AIRBASE.Normandy.Goulet
---   * AIRBASE.Normandy.Barville
---   * AIRBASE.Normandy.Essay
---   * AIRBASE.Normandy.Hauterive
---   * AIRBASE.Normandy.Lymington
---   * AIRBASE.Normandy.Vrigny
---   * AIRBASE.Normandy.Odiham
---   * AIRBASE.Normandy.Conches
---   * AIRBASE.Normandy.West_Malling
---   * AIRBASE.Normandy.Villacoublay
---   * AIRBASE.Normandy.Kenley
---   * AIRBASE.Normandy.Beauvais_Tille
---   * AIRBASE.Normandy.Cormeilles_en_Vexin
---   * AIRBASE.Normandy.Creil
---   * AIRBASE.Normandy.Guyancourt
---   * AIRBASE.Normandy.Lonrai
---   * AIRBASE.Normandy.Dinan_Trelivan
---   * AIRBASE.Normandy.Heathrow
---   * AIRBASE.Normandy.Fecamp_Benouville
---   * AIRBASE.Normandy.Farnborough
---   * AIRBASE.Normandy.Friston
---   * AIRBASE.Normandy.Deanland 
---   * AIRBASE.Normandy.Triqueville
---   * AIRBASE.Normandy.Poix
---   * AIRBASE.Normandy.Orly
---   * AIRBASE.Normandy.Stoney_Cross
---   * AIRBASE.Normandy.Amiens_Glisy
---   * AIRBASE.Normandy.Ronai
---   * AIRBASE.Normandy.Rouen_Boos
---   * AIRBASE.Normandy.Deauville
---   * AIRBASE.Normandy.Saint_Aubin
---   * AIRBASE.Normandy.Flers
---   * AIRBASE.Normandy.Avranches_Le_Val_Saint_Pere
---   * AIRBASE.Normandy.Gravesend
---   * AIRBASE.Normandy.Beaumont_le_Roger
---   * AIRBASE.Normandy.Broglie
---   * AIRBASE.Normandy.Bernay_Saint_Martin
---   * AIRBASE.Normandy.Saint_Andre_de_lEure
---   * AIRBASE.Normandy.Biggin_Hill
---   * AIRBASE.Normandy.Manston
---   * AIRBASE.Normandy.Detling
---   * AIRBASE.Normandy.Lympne
---   * AIRBASE.Normandy.Abbeville_Drucat
---   * AIRBASE.Normandy.Merville_Calonne
---   * AIRBASE.Normandy.Saint_Omer_Wizernes
+-- * AIRBASE.Normandy.Abbeville_Drucat
+-- * AIRBASE.Normandy.Amiens_Glisy
+-- * AIRBASE.Normandy.Argentan
+-- * AIRBASE.Normandy.Avranches_Le_Val_Saint_Pere
+-- * AIRBASE.Normandy.Azeville
+-- * AIRBASE.Normandy.Barville
+-- * AIRBASE.Normandy.Bazenville
+-- * AIRBASE.Normandy.Beaumont_le_Roger
+-- * AIRBASE.Normandy.Beauvais_Tille
+-- * AIRBASE.Normandy.Beny_sur_Mer
+-- * AIRBASE.Normandy.Bernay_Saint_Martin
+-- * AIRBASE.Normandy.Beuzeville
+-- * AIRBASE.Normandy.Biggin_Hill
+-- * AIRBASE.Normandy.Biniville
+-- * AIRBASE.Normandy.Broglie
+-- * AIRBASE.Normandy.Brucheville
+-- * AIRBASE.Normandy.Cardonville
+-- * AIRBASE.Normandy.Carpiquet
+-- * AIRBASE.Normandy.Chailey
+-- * AIRBASE.Normandy.Chippelle
+-- * AIRBASE.Normandy.Conches
+-- * AIRBASE.Normandy.Cormeilles_en_Vexin
+-- * AIRBASE.Normandy.Creil
+-- * AIRBASE.Normandy.Cretteville
+-- * AIRBASE.Normandy.Cricqueville_en_Bessin
+-- * AIRBASE.Normandy.Deanland
+-- * AIRBASE.Normandy.Deauville
+-- * AIRBASE.Normandy.Detling
+-- * AIRBASE.Normandy.Deux_Jumeaux
+-- * AIRBASE.Normandy.Dinan_Trelivan
+-- * AIRBASE.Normandy.Dunkirk_Mardyck
+-- * AIRBASE.Normandy.Essay
+-- * AIRBASE.Normandy.Evreux
+-- * AIRBASE.Normandy.Farnborough
+-- * AIRBASE.Normandy.Fecamp_Benouville
+-- * AIRBASE.Normandy.Flers
+-- * AIRBASE.Normandy.Ford
+-- * AIRBASE.Normandy.Friston
+-- * AIRBASE.Normandy.Funtington
+-- * AIRBASE.Normandy.Goulet
+-- * AIRBASE.Normandy.Gravesend
+-- * AIRBASE.Normandy.Guyancourt
+-- * AIRBASE.Normandy.Hauterive
+-- * AIRBASE.Normandy.Heathrow
+-- * AIRBASE.Normandy.High_Halden
+-- * AIRBASE.Normandy.Kenley
+-- * AIRBASE.Normandy.Lantheuil
+-- * AIRBASE.Normandy.Le_Molay
+-- * AIRBASE.Normandy.Lessay
+-- * AIRBASE.Normandy.Lignerolles
+-- * AIRBASE.Normandy.Longues_sur_Mer
+-- * AIRBASE.Normandy.Lonrai
+-- * AIRBASE.Normandy.Lymington
+-- * AIRBASE.Normandy.Lympne
+-- * AIRBASE.Normandy.Manston
+-- * AIRBASE.Normandy.Maupertus
+-- * AIRBASE.Normandy.Meautis
+-- * AIRBASE.Normandy.Merville_Calonne
+-- * AIRBASE.Normandy.Needs_Oar_Point
+-- * AIRBASE.Normandy.Odiham
+-- * AIRBASE.Normandy.Orly
+-- * AIRBASE.Normandy.Picauville
+-- * AIRBASE.Normandy.Poix
+-- * AIRBASE.Normandy.Ronai
+-- * AIRBASE.Normandy.Rouen_Boos
+-- * AIRBASE.Normandy.Rucqueville
+-- * AIRBASE.Normandy.Saint_Andre_de_lEure
+-- * AIRBASE.Normandy.Saint_Aubin
+-- * AIRBASE.Normandy.Saint_Omer_Wizernes
+-- * AIRBASE.Normandy.Saint_Pierre_du_Mont
+-- * AIRBASE.Normandy.Sainte_Croix_sur_Mer
+-- * AIRBASE.Normandy.Sainte_Laurent_sur_Mer
+-- * AIRBASE.Normandy.Sommervieu
+-- * AIRBASE.Normandy.Stoney_Cross
+-- * AIRBASE.Normandy.Tangmere
+-- * AIRBASE.Normandy.Triqueville
+-- * AIRBASE.Normandy.Villacoublay
+-- * AIRBASE.Normandy.Vrigny
+-- * AIRBASE.Normandy.West_Malling
 --
 -- @field Normandy
 AIRBASE.Normandy = {
-  ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
-  ["Lignerolles"] = "Lignerolles",
-  ["Cretteville"] = "Cretteville",
-  ["Maupertus"] = "Maupertus",
-  ["Brucheville"] = "Brucheville",
-  ["Meautis"] = "Meautis",
-  ["Cricqueville_en_Bessin"] = "Cricqueville-en-Bessin",
-  ["Lessay"] = "Lessay",
-  ["Sainte_Laurent_sur_Mer"] = "Sainte-Laurent-sur-Mer",
-  ["Biniville"] = "Biniville",
-  ["Cardonville"] = "Cardonville",
-  ["Deux_Jumeaux"] = "Deux Jumeaux",
-  ["Chippelle"] = "Chippelle",
-  ["Beuzeville"] = "Beuzeville",
-  ["Azeville"] = "Azeville",
-  ["Picauville"] = "Picauville",
-  ["Le_Molay"] = "Le Molay",
-  ["Longues_sur_Mer"] = "Longues-sur-Mer",
-  ["Carpiquet"] = "Carpiquet",
-  ["Bazenville"] = "Bazenville",
-  ["Sainte_Croix_sur_Mer"] = "Sainte-Croix-sur-Mer",
-  ["Beny_sur_Mer"] = "Beny-sur-Mer",
-  ["Rucqueville"] = "Rucqueville",
-  ["Sommervieu"] = "Sommervieu",
-  ["Lantheuil"] = "Lantheuil",
-  ["Evreux"] = "Evreux",
-  ["Chailey"] = "Chailey",
-  ["Needs_Oar_Point"] = "Needs Oar Point",
-  ["Funtington"] = "Funtington",
-  ["Tangmere"] = "Tangmere",
-  ["Ford"] = "Ford", 
+  ["Abbeville_Drucat"] = "Abbeville Drucat",
+  ["Amiens_Glisy"] = "Amiens-Glisy",
   ["Argentan"] = "Argentan",
-  ["Goulet"] = "Goulet",
+  ["Avranches_Le_Val_Saint_Pere"] = "Avranches Le Val-Saint-Pere",
+  ["Azeville"] = "Azeville",
   ["Barville"] = "Barville",
-  ["Essay"] = "Essay",
-  ["Hauterive"] = "Hauterive",
-  ["Lymington"] = "Lymington",
-  ["Vrigny"] = "Vrigny",
-  ["Odiham"] = "Odiham",
-  ["Conches"] = "Conches",
-  ["West_Malling"] = "West Malling",
-  ["Villacoublay"] = "Villacoublay",
-  ["Kenley"] = "Kenley",
+  ["Bazenville"] = "Bazenville",
+  ["Beaumont_le_Roger"] = "Beaumont-le-Roger",
   ["Beauvais_Tille"] = "Beauvais-Tille",
+  ["Beny_sur_Mer"] = "Beny-sur-Mer",
+  ["Bernay_Saint_Martin"] = "Bernay Saint Martin",
+  ["Beuzeville"] = "Beuzeville",
+  ["Biggin_Hill"] = "Biggin Hill",
+  ["Biniville"] = "Biniville",
+  ["Broglie"] = "Broglie",
+  ["Brucheville"] = "Brucheville",
+  ["Cardonville"] = "Cardonville",
+  ["Carpiquet"] = "Carpiquet",
+  ["Chailey"] = "Chailey",
+  ["Chippelle"] = "Chippelle",
+  ["Conches"] = "Conches",
   ["Cormeilles_en_Vexin"] = "Cormeilles-en-Vexin",
   ["Creil"] = "Creil",
-  ["Guyancourt"] = "Guyancourt",
-  ["Lonrai"] = "Lonrai",
-  ["Dinan_Trelivan"] = "Dinan-Trelivan",
-  ["Heathrow"] = "Heathrow",
-  ["Fecamp_Benouville"] = "Fecamp-Benouville",
-  ["Farnborough"] = "Farnborough",
-  ["Friston"] = "Friston",
+  ["Cretteville"] = "Cretteville",
+  ["Cricqueville_en_Bessin"] = "Cricqueville-en-Bessin",
   ["Deanland"] = "Deanland",
-  ["Triqueville"] = "Triqueville",
-  ["Poix"] = "Poix",
+  ["Deauville"] = "Deauville",
+  ["Detling"] = "Detling",
+  ["Deux_Jumeaux"] = "Deux Jumeaux",
+  ["Dinan_Trelivan"] = "Dinan-Trelivan",
+  ["Dunkirk_Mardyck"] = "Dunkirk-Mardyck",
+  ["Essay"] = "Essay",
+  ["Evreux"] = "Evreux",
+  ["Farnborough"] = "Farnborough",
+  ["Fecamp_Benouville"] = "Fecamp-Benouville",
+  ["Flers"] = "Flers",
+  ["Ford"] = "Ford",
+  ["Friston"] = "Friston",
+  ["Funtington"] = "Funtington",
+  ["Goulet"] = "Goulet",
+  ["Gravesend"] = "Gravesend",
+  ["Guyancourt"] = "Guyancourt",
+  ["Hauterive"] = "Hauterive",
+  ["Heathrow"] = "Heathrow",
+  ["High_Halden"] = "High Halden",
+  ["Kenley"] = "Kenley",
+  ["Lantheuil"] = "Lantheuil",
+  ["Le_Molay"] = "Le Molay",
+  ["Lessay"] = "Lessay",
+  ["Lignerolles"] = "Lignerolles",
+  ["Longues_sur_Mer"] = "Longues-sur-Mer",
+  ["Lonrai"] = "Lonrai",
+  ["Lymington"] = "Lymington",
+  ["Lympne"] = "Lympne",
+  ["Manston"] = "Manston",
+  ["Maupertus"] = "Maupertus",
+  ["Meautis"] = "Meautis",
+  ["Merville_Calonne"] = "Merville Calonne",
+  ["Needs_Oar_Point"] = "Needs Oar Point",
+  ["Odiham"] = "Odiham",
   ["Orly"] = "Orly",
-  ["Stoney_Cross"] = "Stoney Cross",
-  ["Amiens_Glisy"] = "Amiens-Glisy",
+  ["Picauville"] = "Picauville",
+  ["Poix"] = "Poix",
   ["Ronai"] = "Ronai",
   ["Rouen_Boos"] = "Rouen-Boos",
-  ["Deauville"] = "Deauville",
+  ["Rucqueville"] = "Rucqueville",
+  ["Saint_Andre_de_lEure"] = "Saint-Andre-de-lEure",
   ["Saint_Aubin"] = "Saint-Aubin",
-  ["Flers"] = "Flers",
-  ["Avranches_Le_Val_Saint_Pere"] = "Avranches Le Val-Saint-Pere",
-  ["Gravesend"] = "Gravesend",
-  ["Beaumont_le_Roger"] = "Beaumont-le-Roger",
-  ["Broglie"] = "Broglie",
-  ["Bernay_Saint_Martin"] = "Bernay Saint Martin",
-  ["Saint_Andre_de_lEure"] = "Saint-Andre-de-lEure",  
-  ["Biggin_Hill"] = "Biggin Hill",
-  ["Manston"] = "Manston",
-  ["Detling"] = "Detling",
-  ["Lympne"] = "Lympne",
-  ["Abbeville_Drucat"] = "Abbeville Drucat",
-  ["Merville_Calonne"] = "Merville Calonne",
   ["Saint_Omer_Wizernes"] = "Saint-Omer Wizernes",
+  ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
+  ["Sainte_Croix_sur_Mer"] = "Sainte-Croix-sur-Mer",
+  ["Sainte_Laurent_sur_Mer"] = "Sainte-Laurent-sur-Mer",
+  ["Sommervieu"] = "Sommervieu",
+  ["Stoney_Cross"] = "Stoney Cross",
+  ["Tangmere"] = "Tangmere",
+  ["Triqueville"] = "Triqueville",
+  ["Villacoublay"] = "Villacoublay",
+  ["Vrigny"] = "Vrigny",
+  ["West_Malling"] = "West Malling",
 }
 
 --- Airbases of the Persion Gulf Map:
@@ -359,7 +363,7 @@ AIRBASE.Normandy = {
 -- * AIRBASE.PersianGulf.Sirri_Island
 -- * AIRBASE.PersianGulf.Tunb_Island_AFB
 -- * AIRBASE.PersianGulf.Tunb_Kochak
--- 
+--
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
   ["Abu_Dhabi_International_Airport"] = "Abu Dhabi Intl",
@@ -407,7 +411,7 @@ AIRBASE.PersianGulf = {
 -- * AIRBASE.TheChannel.Biggin_Hill
 -- * AIRBASE.TheChannel.Eastchurch
 -- * AIRBASE.TheChannel.Headcorn
--- 
+--
 -- @field TheChannel
 AIRBASE.TheChannel = {
   ["Abbeville_Drucat"] = "Abbeville Drucat",
@@ -610,7 +614,7 @@ AIRBASE.MarianaIslands = {
 -- * AIRBASE.SouthAtlantic.Goose_Green
 -- * AIRBASE.SouthAtlantic.Hipico
 -- * AIRBASE.SouthAtlantic.CaletaTortel
--- 
+--
 --@field MarianaIslands
 AIRBASE.SouthAtlantic={
   ["Port_Stanley"]="Port Stanley",
@@ -674,7 +678,7 @@ AIRBASE.SouthAtlantic={
 --  * AIRBASE.Sinai.Ben_Gurion
 --  * AIRBASE.Sinai.Bir_Hasanah
 --  * AIRBASE.Sinai.Cairo_West
--- 
+--
 -- @field Sinai
 AIRBASE.Sinai = {
   ["Hatzerim"] = "Hatzerim",
@@ -812,13 +816,13 @@ function AIRBASE:Register(AirbaseName)
 
   -- Category.
   self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
-  
+
   -- H2 is bugged
   --if self.AirbaseName == "H4" and self.descriptors == nil then
     --self:E("***** H4 on Syria map is currently bugged!")
     --return nil
   --end
-  
+
   -- Set category.
   if self.category==Airbase.Category.AIRDROME then
     self.isAirdrome=true
@@ -836,10 +840,10 @@ function AIRBASE:Register(AirbaseName)
   else
     self:E("ERROR: Unknown airbase category!")
   end
-  
+
   -- Init Runways.
   self:_InitRunways()
-  
+
   -- Set the active runways based on wind direction.
   if self.isAirdrome then
     self:SetActiveRunway()
@@ -853,7 +857,7 @@ function AIRBASE:Register(AirbaseName)
 
   -- Init coordinate.
   self:GetCoordinate()
-  
+
   -- Storage.
   self.storage=_DATABASE:AddStorage(AirbaseName)
 
@@ -869,7 +873,7 @@ function AIRBASE:Register(AirbaseName)
   else
     self:E(string.format("ERROR: Cound not get position Vec2 of airbase %s", AirbaseName))
   end
-  
+
   -- Debug info.
   self:T2(string.format("Registered airbase %s", tostring(self.AirbaseName)))
 
@@ -955,7 +959,7 @@ function AIRBASE:GetWarehouse()
   return warehouse
 end
 
---- Get the warehouse storage of this airbase. The returned `STORAGE` object is the wrapper of the DCS warehouse. 
+--- Get the warehouse storage of this airbase. The returned `STORAGE` object is the wrapper of the DCS warehouse.
 -- This allows you to add and remove items such as aircraft, liquids, weapons and other equipment.
 -- @param #AIRBASE self
 -- @return Wrapper.Storage#STORAGE The storage.
@@ -970,7 +974,7 @@ end
 function AIRBASE:SetAutoCapture(Switch)
 
   local airbase=self:GetDCSObject()
-  
+
   if airbase then
     airbase:autoCapture(Switch)
   end
@@ -996,11 +1000,11 @@ end
 
 --- Returns whether auto capturing of the airbase is on or off.
 -- @param #AIRBASE self
--- @return #boolean Returns `true` if auto capturing is on, `false` if off and `nil` if the airbase object cannot be retrieved. 
+-- @return #boolean Returns `true` if auto capturing is on, `false` if off and `nil` if the airbase object cannot be retrieved.
 function AIRBASE:IsAutoCapture()
 
   local airbase=self:GetDCSObject()
-  
+
   local auto=nil
   if airbase then
     auto=airbase:autoCaptureIsOn()
@@ -1016,11 +1020,11 @@ end
 function AIRBASE:SetCoalition(Coal)
 
   local airbase=self:GetDCSObject()
-  
+
   if airbase then
     airbase:setCoalition(Coal)
   end
-  
+
   return self
 end
 
@@ -1148,7 +1152,7 @@ function AIRBASE:SetParkingSpotBlacklist(TerminalIdBlacklist)
   return self
 end
 
---- Sets the ATC belonging to an airbase object to be silent and unresponsive. This is useful for disabling the award winning ATC behavior in DCS. 
+--- Sets the ATC belonging to an airbase object to be silent and unresponsive. This is useful for disabling the award winning ATC behavior in DCS.
 -- Note that this DOES NOT remove the airbase from the list. It just makes it unresponsive and silent to any radio calls to it.
 -- @param #AIRBASE self
 -- @param #boolean Silent If `true`, enable silent mode. If `false` or `nil`, disable silent mode.
@@ -1157,12 +1161,12 @@ function AIRBASE:SetRadioSilentMode(Silent)
 
   -- Get DCS airbase object.
   local airbase=self:GetDCSObject()
-  
+
   -- Set mode.
   if airbase then
     airbase:setRadioSilentMode(Silent)
   end
-  
+
   return self
 end
 
@@ -1170,18 +1174,18 @@ end
 -- @param #AIRBASE self
 -- @return #boolean If `true`, silent mode is enabled.
 function AIRBASE:GetRadioSilentMode()
-  
+
   -- Is silent?
   local silent=nil
 
   -- Get DCS airbase object.
   local airbase=self:GetDCSObject()
-  
+
   -- Set mode.
   if airbase then
     silent=airbase:getRadioSilentMode()
   end
-  
+
   return silent
 end
 
@@ -1365,7 +1369,7 @@ function AIRBASE:_InitParkingSpots()
     self.NparkingTerminal[terminalType]=0
   end
 
-  -- Get client coordinates.  
+  -- Get client coordinates.
   local function isClient(coord)
     local clients=_DATABASE.CLIENTS
     for clientname, _client in pairs(clients) do
@@ -1854,7 +1858,7 @@ end
 -- @param #string Name Name of the runway, e.g. "31" or "21L".
 -- @return #AIRBASE.Runway Runway data.
 function AIRBASE:GetRunwayByName(Name)
-  
+
   if Name==nil then
     return
   end
@@ -1862,10 +1866,10 @@ function AIRBASE:GetRunwayByName(Name)
   if Name then
     for _,_runway in pairs(self.runways) do
       local runway=_runway --#AIRBASE.Runway
-      
+
       -- Name including L or R, e.g. "31L".
       local name=self:GetRunwayName(runway)
-      
+
       if name==Name:upper() then
         return runway
       end
@@ -1894,19 +1898,19 @@ function AIRBASE:_InitRunways(IncludeInverse)
     self.runways={}
     return {}
   end
-  
+
   --- Function to create a runway data table.
   local function _createRunway(name, course, width, length, center)
 
     -- Bearing in rad.
     local bearing=-1*course
-    
+
     -- Heading in degrees.
     local heading=math.deg(bearing)
-      
+
     -- Data table.
     local runway={} --#AIRBASE.Runway
-    
+
     local namefromheading = math.floor(heading/10)
 
     if self.AirbaseName == AIRBASE.Syria.Beirut_Rafic_Hariri and math.abs(namefromheading-name) > 1 then
@@ -1914,12 +1918,12 @@ function AIRBASE:_InitRunways(IncludeInverse)
     else
      runway.name=string.format("%02d", tonumber(name))
     end
-       
+
     --runway.name=string.format("%02d", tonumber(name))
     runway.magheading=tonumber(runway.name)*10
     runway.heading=heading
     runway.width=width or 0
-    runway.length=length or 0     
+    runway.length=length or 0
     runway.center=COORDINATE:NewFromVec3(center)
 
     -- Ensure heading is [0,360]
@@ -1928,7 +1932,7 @@ function AIRBASE:_InitRunways(IncludeInverse)
     elseif runway.heading<0 then
       runway.heading=runway.heading+360
     end
-    
+
     -- For example at Nellis, DCS reports two runways, i.e. 03 and 21, BUT the "course" of both is -0.700 rad = 40 deg!
     -- As a workaround, I check the difference between the "magnetic" heading derived from the name and the true heading.
     -- If this is too large then very likely the "inverse" heading is the one we are looking for.
@@ -1936,31 +1940,31 @@ function AIRBASE:_InitRunways(IncludeInverse)
       self:T(string.format("WARNING: Runway %s: heading=%.1f magheading=%.1f", runway.name, runway.heading, runway.magheading))
       runway.heading=runway.heading-180
     end
-    
+
     -- Ensure heading is [0,360]
     if runway.heading>360 then
       runway.heading=runway.heading-360
     elseif runway.heading<0 then
       runway.heading=runway.heading+360
     end
-    
+
     -- Start and endpoint of runway.
     runway.position=runway.center:Translate(-runway.length/2, runway.heading)
     runway.endpoint=runway.center:Translate( runway.length/2, runway.heading)
-    
+
     local init=runway.center:GetVec3()
     local width = runway.width/2
     local L2=runway.length/2
-    
+
     local offset1 = {x = init.x + (math.cos(bearing + math.pi) * L2), y = init.z + (math.sin(bearing + math.pi) * L2)}
     local offset2 = {x = init.x - (math.cos(bearing + math.pi) * L2), y = init.z - (math.sin(bearing + math.pi) * L2)}
-            
+
     local points={}
     points[1] = {x = offset1.x + (math.cos(bearing + (math.pi/2)) * width), y = offset1.y + (math.sin(bearing + (math.pi/2)) * width)}
     points[2] = {x = offset1.x + (math.cos(bearing - (math.pi/2)) * width), y = offset1.y + (math.sin(bearing - (math.pi/2)) * width)}
     points[3] = {x = offset2.x + (math.cos(bearing - (math.pi/2)) * width), y = offset2.y + (math.sin(bearing - (math.pi/2)) * width)}
     points[4] = {x = offset2.x + (math.cos(bearing + (math.pi/2)) * width), y = offset2.y + (math.sin(bearing + (math.pi/2)) * width)}
-    
+
     -- Runway zone.
     runway.zone=ZONE_POLYGON_BASE:New(string.format("%s Runway %s", self.AirbaseName, runway.name), points)
 
@@ -1970,54 +1974,54 @@ function AIRBASE:_InitRunways(IncludeInverse)
 
   -- Get DCS object.
   local airbase=self:GetDCSObject()
-  
+
   if airbase then
 
-   
+
     -- Get DCS runways.
     local runways=airbase:getRunways()
-    
+
     -- Debug info.
     self:T2(runways)
-    
+
     if runways then
-    
+
       -- Loop over runways.
       for _,rwy in pairs(runways) do
-      
+
         -- Debug info.
         self:T(rwy)
-        
+
         -- Get runway data.
         local runway=_createRunway(rwy.Name, rwy.course, rwy.width, rwy.length, rwy.position) --#AIRBASE.Runway
-        
+
         -- Add to table.
         table.insert(Runways, runway)
-        
+
         -- Include "inverse" runway.
         if IncludeInverse then
-        
+
           -- Create "inverse".
           local idx=tonumber(runway.name)
           local name2=tostring(idx-18)
           if idx<18 then
             name2=tostring(idx+18)
           end
-          
+
           -- Create "inverse" runway.
           local runway=_createRunway(name2, rwy.course-math.pi, rwy.width, rwy.length, rwy.position) --#AIRBASE.Runway
-  
+
           -- Add inverse to table.
           table.insert(Runways, runway)
-          
+
         end
-        
+
       end
-    
+
     end
-  
+
   end
-  
+
   -- Look for identical (parallel) runways, e.g. 03L and 03R at Nellis.
   local rpairs={}
   for i,_ri in pairs(Runways) do
@@ -2031,44 +2035,44 @@ function AIRBASE:_InitRunways(IncludeInverse)
       end
     end
   end
-  
+
   local function isLeft(a, b, c)
     --return ((b.x - a.x)*(c.z - a.z) - (b.z - a.z)*(c.x - a.x)) > 0
     return ((b.z - a.z)*(c.x - a.x) - (b.x - a.x)*(c.z - a.z)) > 0
   end
-  
+
   for i,j in pairs(rpairs) do
     local ri=Runways[i] --#AIRBASE.Runway
     local rj=Runways[j] --#AIRBASE.Runway
-    
+
     -- Draw arrow.
     --ri.center:ArrowToAll(rj.center)
-    
+
     local c0=ri.center
-    
+
     -- Vector in the direction of the runway.
     local a=UTILS.VecTranslate(c0, 1000, ri.heading)
-        
+
     -- Vector from runway i to runway j.
-    local b=UTILS.VecSubstract(rj.center, ri.center)    
+    local b=UTILS.VecSubstract(rj.center, ri.center)
     b=UTILS.VecAdd(ri.center, b)
-    
+
     -- Check if rj is left of ri.
     local left=isLeft(c0, a, b)
-    
+
     --env.info(string.format("Found pair %s: i=%d, j=%d, left==%s", ri.name, i, j, tostring(left)))
-    
+
     if left then
       ri.isLeft=false
       rj.isLeft=true
     else
       ri.isLeft=true
-      rj.isLeft=false    
+      rj.isLeft=false
     end
-    
+
     --break
   end
-  
+
   -- Set runways.
   self.runways=Runways
 
@@ -2248,9 +2252,9 @@ end
 -- @param #string Name Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
 -- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
 function AIRBASE:SetActiveRunway(Name, PreferLeft)
-  
+
   self:SetActiveRunwayTakeoff(Name, PreferLeft)
-  
+
   self:SetActiveRunwayLanding(Name,PreferLeft)
 
 end
@@ -2263,17 +2267,17 @@ end
 function AIRBASE:SetActiveRunwayLanding(Name, PreferLeft)
 
   local runway=self:GetRunwayByName(Name)
-  
+
   if not runway then
     runway=self:GetRunwayIntoWind(PreferLeft)
   end
-  
+
   if runway then
     self:T(string.format("%s: Setting active runway for landing as %s", self.AirbaseName, self:GetRunwayName(runway)))
   else
     self:E("ERROR: Could not set the runway for landing!")
   end
-  
+
   self.runwayLanding=runway
 
   return runway
@@ -2311,17 +2315,17 @@ end
 function AIRBASE:SetActiveRunwayTakeoff(Name, PreferLeft)
 
   local runway=self:GetRunwayByName(Name)
-  
+
   if not runway then
     runway=self:GetRunwayIntoWind(PreferLeft)
   end
-  
+
   if runway then
     self:T(string.format("%s: Setting active runway for takeoff as %s", self.AirbaseName, self:GetRunwayName(runway)))
   else
     self:E("ERROR: Could not set the runway for takeoff!")
   end
-  
+
   self.runwayTakeoff=runway
 
   return runway
@@ -2334,7 +2338,7 @@ end
 -- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
 -- @return #AIRBASE.Runway Active runway data table.
 function AIRBASE:GetRunwayIntoWind(PreferLeft)
-  
+
   -- Get runway data.
   local runways=self:GetRunways()
 
@@ -2357,24 +2361,24 @@ function AIRBASE:GetRunwayIntoWind(PreferLeft)
     local dotmin=nil
     for i,_runway in pairs(runways) do
       local runway=_runway --#AIRBASE.Runway
-      
+
       if PreferLeft==nil or PreferLeft==runway.isLeft then
 
         -- Angle in rad.
         local alpha=math.rad(runway.heading)
-  
+
         -- Runway vector.
         local Vrunway={x=math.cos(alpha), y=0, z=math.sin(alpha)}
-  
+
         -- Dot product: parallel component of the two vectors.
         local dot=UTILS.VecDot(Vwind, Vrunway)
-  
+
         -- New min?
         if dotmin==nil or dot<dotmin then
           dotmin=dot
           iact=i
         end
-        
+
       end
 
     end
@@ -2393,7 +2397,7 @@ end
 function AIRBASE:GetRunwayName(Runway, LongLeftRight)
 
   Runway=Runway or self:GetActiveRunway()
-  
+
   local name="XX"
   if Runway then
     name=Runway.name
