@@ -79,92 +79,92 @@ AIRBASE = {
 --
 -- Airbases of the Caucasus map:
 --
---   * AIRBASE.Caucasus.Gelendzhik
---   * AIRBASE.Caucasus.Krasnodar_Pashkovsky
---   * AIRBASE.Caucasus.Sukhumi_Babushara
---   * AIRBASE.Caucasus.Gudauta
---   * AIRBASE.Caucasus.Batumi
---   * AIRBASE.Caucasus.Senaki_Kolkhi
---   * AIRBASE.Caucasus.Kobuleti
---   * AIRBASE.Caucasus.Kutaisi
---   * AIRBASE.Caucasus.Tbilisi_Lochini
---   * AIRBASE.Caucasus.Soganlug
---   * AIRBASE.Caucasus.Vaziani
---   * AIRBASE.Caucasus.Anapa_Vityazevo
---   * AIRBASE.Caucasus.Krasnodar_Center
---   * AIRBASE.Caucasus.Novorossiysk
---   * AIRBASE.Caucasus.Krymsk
---   * AIRBASE.Caucasus.Maykop_Khanskaya
---   * AIRBASE.Caucasus.Sochi_Adler
---   * AIRBASE.Caucasus.Mineralnye_Vody
---   * AIRBASE.Caucasus.Nalchik
---   * AIRBASE.Caucasus.Mozdok
---   * AIRBASE.Caucasus.Beslan
+-- * AIRBASE.Caucasus.Anapa_Vityazevo
+-- * AIRBASE.Caucasus.Batumi
+-- * AIRBASE.Caucasus.Beslan
+-- * AIRBASE.Caucasus.Gelendzhik
+-- * AIRBASE.Caucasus.Gudauta
+-- * AIRBASE.Caucasus.Kobuleti
+-- * AIRBASE.Caucasus.Krasnodar_Center
+-- * AIRBASE.Caucasus.Krasnodar_Pashkovsky
+-- * AIRBASE.Caucasus.Krymsk
+-- * AIRBASE.Caucasus.Kutaisi
+-- * AIRBASE.Caucasus.Maykop_Khanskaya
+-- * AIRBASE.Caucasus.Mineralnye_Vody
+-- * AIRBASE.Caucasus.Mozdok
+-- * AIRBASE.Caucasus.Nalchik
+-- * AIRBASE.Caucasus.Novorossiysk
+-- * AIRBASE.Caucasus.Senaki_Kolkhi
+-- * AIRBASE.Caucasus.Sochi_Adler
+-- * AIRBASE.Caucasus.Soganlug
+-- * AIRBASE.Caucasus.Sukhumi_Babushara
+-- * AIRBASE.Caucasus.Tbilisi_Lochini
+-- * AIRBASE.Caucasus.Vaziani
 --
 -- @field Caucasus
 AIRBASE.Caucasus = {
-  ["Gelendzhik"] = "Gelendzhik",
-  ["Krasnodar_Pashkovsky"] = "Krasnodar-Pashkovsky",
-  ["Sukhumi_Babushara"] = "Sukhumi-Babushara",
-  ["Gudauta"] = "Gudauta",
-  ["Batumi"] = "Batumi",
-  ["Senaki_Kolkhi"] = "Senaki-Kolkhi",
-  ["Kobuleti"] = "Kobuleti",
-  ["Kutaisi"] = "Kutaisi",
-  ["Tbilisi_Lochini"] = "Tbilisi-Lochini",
-  ["Soganlug"] = "Soganlug",
-  ["Vaziani"] = "Vaziani",
   ["Anapa_Vityazevo"] = "Anapa-Vityazevo",
-  ["Krasnodar_Center"] = "Krasnodar-Center",
-  ["Novorossiysk"] = "Novorossiysk",
-  ["Krymsk"] = "Krymsk",
-  ["Maykop_Khanskaya"] = "Maykop-Khanskaya",
-  ["Sochi_Adler"] = "Sochi-Adler",
-  ["Mineralnye_Vody"] = "Mineralnye Vody",
-  ["Nalchik"] = "Nalchik",
-  ["Mozdok"] = "Mozdok",
+  ["Batumi"] = "Batumi",
   ["Beslan"] = "Beslan",
+  ["Gelendzhik"] = "Gelendzhik",
+  ["Gudauta"] = "Gudauta",
+  ["Kobuleti"] = "Kobuleti",
+  ["Krasnodar_Center"] = "Krasnodar-Center",
+  ["Krasnodar_Pashkovsky"] = "Krasnodar-Pashkovsky",
+  ["Krymsk"] = "Krymsk",
+  ["Kutaisi"] = "Kutaisi",
+  ["Maykop_Khanskaya"] = "Maykop-Khanskaya",
+  ["Mineralnye_Vody"] = "Mineralnye Vody",
+  ["Mozdok"] = "Mozdok",
+  ["Nalchik"] = "Nalchik",
+  ["Novorossiysk"] = "Novorossiysk",
+  ["Senaki_Kolkhi"] = "Senaki-Kolkhi",
+  ["Sochi_Adler"] = "Sochi-Adler",
+  ["Soganlug"] = "Soganlug",
+  ["Sukhumi_Babushara"] = "Sukhumi-Babushara",
+  ["Tbilisi_Lochini"] = "Tbilisi-Lochini",
+  ["Vaziani"] = "Vaziani",
 }
 
 --- Airbases of the Nevada map:
 --
---   * AIRBASE.Nevada.Creech_AFB
---   * AIRBASE.Nevada.Groom_Lake_AFB
---   * AIRBASE.Nevada.McCarran_International_Airport
---   * AIRBASE.Nevada.Nellis_AFB
---   * AIRBASE.Nevada.Beatty_Airport
---   * AIRBASE.Nevada.Boulder_City_Airport
---   * AIRBASE.Nevada.Echo_Bay
---   * AIRBASE.Nevada.Henderson_Executive_Airport
---   * AIRBASE.Nevada.Jean_Airport
---   * AIRBASE.Nevada.Laughlin_Airport
---   * AIRBASE.Nevada.Lincoln_County
---   * AIRBASE.Nevada.Mesquite
---   * AIRBASE.Nevada.Mina_Airport
---   * AIRBASE.Nevada.North_Las_Vegas
---   * AIRBASE.Nevada.Pahute_Mesa_Airstrip
---   * AIRBASE.Nevada.Tonopah_Airport
---   * AIRBASE.Nevada.Tonopah_Test_Range_Airfield
+-- * AIRBASE.Nevada.Beatty
+-- * AIRBASE.Nevada.Boulder_City
+-- * AIRBASE.Nevada.Creech
+-- * AIRBASE.Nevada.Echo_Bay
+-- * AIRBASE.Nevada.Groom_Lake
+-- * AIRBASE.Nevada.Henderson_Executive
+-- * AIRBASE.Nevada.Jean
+-- * AIRBASE.Nevada.Laughlin
+-- * AIRBASE.Nevada.Lincoln_County
+-- * AIRBASE.Nevada.McCarran_International
+-- * AIRBASE.Nevada.Mesquite
+-- * AIRBASE.Nevada.Mina
+-- * AIRBASE.Nevada.Nellis
+-- * AIRBASE.Nevada.North_Las_Vegas
+-- * AIRBASE.Nevada.Pahute_Mesa
+-- * AIRBASE.Nevada.Tonopah
+-- * AIRBASE.Nevada.Tonopah_Test_Range
 --
 -- @field Nevada
 AIRBASE.Nevada = {
-  ["Creech_AFB"] = "Creech",
-  ["Groom_Lake_AFB"] = "Groom Lake",
-  ["McCarran_International_Airport"] = "McCarran International",
-  ["Nellis_AFB"] = "Nellis",
-  ["Beatty_Airport"] = "Beatty",
-  ["Boulder_City_Airport"] = "Boulder City",
+  ["Beatty"] = "Beatty",
+  ["Boulder_City"] = "Boulder City",
+  ["Creech"] = "Creech",
   ["Echo_Bay"] = "Echo Bay",
-  ["Henderson_Executive_Airport"] = "Henderson Executive",
-  ["Jean_Airport"] = "Jean",
-  ["Laughlin_Airport"] = "Laughlin",
+  ["Groom_Lake"] = "Groom Lake",
+  ["Henderson_Executive"] = "Henderson Executive",
+  ["Jean"] = "Jean",
+  ["Laughlin"] = "Laughlin",
   ["Lincoln_County"] = "Lincoln County",
+  ["McCarran_International"] = "McCarran International",
   ["Mesquite"] = "Mesquite",
-  ["Mina_Airport"] = "Mina",
+  ["Mina"] = "Mina",
+  ["Nellis"] = "Nellis",
   ["North_Las_Vegas"] = "North Las Vegas",
-  ["Pahute_Mesa_Airstrip"] = "Pahute Mesa",
-  ["Tonopah_Airport"] = "Tonopah",
-  ["Tonopah_Test_Range_Airfield"] = "Tonopah Test Range",
+  ["Pahute_Mesa"] = "Pahute Mesa",
+  ["Tonopah"] = "Tonopah",
+  ["Tonopah_Test_Range"] = "Tonopah Test Range",
 }
 
 --- Airbases of the Normandy map:
@@ -334,31 +334,32 @@ AIRBASE.Normandy = {
 
 --- Airbases of the Persion Gulf Map:
 --
--- * AIRBASE.PersianGulf.Abu_Dhabi_International_Airport
--- * AIRBASE.PersianGulf.Abu_Musa_Island_Airport
--- * AIRBASE.PersianGulf.Al_Bateen_Airport
--- * AIRBASE.PersianGulf.Al_Ain_International_Airport
--- * AIRBASE.PersianGulf.Al_Dhafra_AB
+-- * AIRBASE.PersianGulf.Abu_Dhabi_Intl
+-- * AIRBASE.PersianGulf.Abu_Musa_Island
+-- * AIRBASE.PersianGulf.Al_Ain_Intl
+-- * AIRBASE.PersianGulf.Al_Bateen
+-- * AIRBASE.PersianGulf.Al_Dhafra_AFB
 -- * AIRBASE.PersianGulf.Al_Maktoum_Intl
--- * AIRBASE.PersianGulf.Al_Minhad_AB
--- * AIRBASE.PersianGulf.Bandar_e_Jask_airfield
+-- * AIRBASE.PersianGulf.Al_Minhad_AFB
 -- * AIRBASE.PersianGulf.Bandar_Abbas_Intl
 -- * AIRBASE.PersianGulf.Bandar_Lengeh
+-- * AIRBASE.PersianGulf.Bandar_e_Jask
 -- * AIRBASE.PersianGulf.Dubai_Intl
 -- * AIRBASE.PersianGulf.Fujairah_Intl
 -- * AIRBASE.PersianGulf.Havadarya
--- * AIRBASE.PersianGulf.Jiroft_Airport
--- * AIRBASE.PersianGulf.Kerman_Airport
+-- * AIRBASE.PersianGulf.Jiroft
+-- * AIRBASE.PersianGulf.Kerman
 -- * AIRBASE.PersianGulf.Khasab
--- * AIRBASE.PersianGulf.Kish_International_Airport
--- * AIRBASE.PersianGulf.Lar_Airbase
--- * AIRBASE.PersianGulf.Lavan_Island_Airport
--- * AIRBASE.PersianGulf.Liwa_Airbase
+-- * AIRBASE.PersianGulf.Kish_Intl
+-- * AIRBASE.PersianGulf.Lar
+-- * AIRBASE.PersianGulf.Lavan_Island
+-- * AIRBASE.PersianGulf.Liwa_AFB
 -- * AIRBASE.PersianGulf.Qeshm_Island
--- * AIRBASE.PersianGulf.Ras_Al_Khaimah
--- * AIRBASE.PersianGulf.Sas_Al_Nakheel_Airport
+-- * AIRBASE.PersianGulf.Quasoura_airport
+-- * AIRBASE.PersianGulf.Ras_Al_Khaimah_Intl
+-- * AIRBASE.PersianGulf.Sas_Al_Nakheel
 -- * AIRBASE.PersianGulf.Sharjah_Intl
--- * AIRBASE.PersianGulf.Shiraz_International_Airport
+-- * AIRBASE.PersianGulf.Shiraz_Intl
 -- * AIRBASE.PersianGulf.Sir_Abu_Nuayr
 -- * AIRBASE.PersianGulf.Sirri_Island
 -- * AIRBASE.PersianGulf.Tunb_Island_AFB
@@ -366,31 +367,32 @@ AIRBASE.Normandy = {
 --
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
-  ["Abu_Dhabi_International_Airport"] = "Abu Dhabi Intl",
-  ["Abu_Musa_Island_Airport"] = "Abu Musa Island",
-  ["Al_Ain_International_Airport"] = "Al Ain Intl",
-  ["Al_Bateen_Airport"] = "Al-Bateen",
-  ["Al_Dhafra_AB"] = "Al Dhafra AFB",
+  ["Abu_Dhabi_Intl"] = "Abu Dhabi Intl",
+  ["Abu_Musa_Island"] = "Abu Musa Island",
+  ["Al_Ain_Intl"] = "Al Ain Intl",
+  ["Al_Bateen"] = "Al-Bateen",
+  ["Al_Dhafra_AFB"] = "Al Dhafra AFB",
   ["Al_Maktoum_Intl"] = "Al Maktoum Intl",
-  ["Al_Minhad_AB"] = "Al Minhad AFB",
+  ["Al_Minhad_AFB"] = "Al Minhad AFB",
   ["Bandar_Abbas_Intl"] = "Bandar Abbas Intl",
   ["Bandar_Lengeh"] = "Bandar Lengeh",
-  ["Bandar_e_Jask_airfield"] = "Bandar-e-Jask",
+  ["Bandar_e_Jask"] = "Bandar-e-Jask",
   ["Dubai_Intl"] = "Dubai Intl",
   ["Fujairah_Intl"] = "Fujairah Intl",
   ["Havadarya"] = "Havadarya",
-  ["Jiroft_Airport"] = "Jiroft",
-  ["Kerman_Airport"] = "Kerman",
+  ["Jiroft"] = "Jiroft",
+  ["Kerman"] = "Kerman",
   ["Khasab"] = "Khasab",
-  ["Kish_International_Airport"] = "Kish Intl",
-  ["Lar_Airbase"] = "Lar",
-  ["Lavan_Island_Airport"] = "Lavan Island",
-  ["Liwa_Airbase"] = "Liwa AFB",
+  ["Kish_Intl"] = "Kish Intl",
+  ["Lar"] = "Lar",
+  ["Lavan_Island"] = "Lavan Island",
+  ["Liwa_AFB"] = "Liwa AFB",
   ["Qeshm_Island"] = "Qeshm Island",
-  ["Ras_Al_Khaimah"] = "Ras Al Khaimah Intl",
-  ["Sas_Al_Nakheel_Airport"] = "Sas Al Nakheel",
+  ["Quasoura_airport"] = "Quasoura_airport",
+  ["Ras_Al_Khaimah_Intl"] = "Ras Al Khaimah Intl",
+  ["Sas_Al_Nakheel"] = "Sas Al Nakheel",
   ["Sharjah_Intl"] = "Sharjah Intl",
-  ["Shiraz_International_Airport"] = "Shiraz Intl",
+  ["Shiraz_Intl"] = "Shiraz Intl",
   ["Sir_Abu_Nuayr"] = "Sir Abu Nuayr",
   ["Sirri_Island"] = "Sirri Island",
   ["Tunb_Island_AFB"] = "Tunb Island AFB",
@@ -400,317 +402,322 @@ AIRBASE.PersianGulf = {
 --- Airbases of The Channel Map:
 --
 -- * AIRBASE.TheChannel.Abbeville_Drucat
+-- * AIRBASE.TheChannel.Biggin_Hill
+-- * AIRBASE.TheChannel.Detling
+-- * AIRBASE.TheChannel.Dunkirk_Mardyck
+-- * AIRBASE.TheChannel.Eastchurch
+-- * AIRBASE.TheChannel.Hawkinge
+-- * AIRBASE.TheChannel.Headcorn
+-- * AIRBASE.TheChannel.High_Halden
+-- * AIRBASE.TheChannel.Lympne
+-- * AIRBASE.TheChannel.Manston
 -- * AIRBASE.TheChannel.Merville_Calonne
 -- * AIRBASE.TheChannel.Saint_Omer_Longuenesse
--- * AIRBASE.TheChannel.Dunkirk_Mardyck
--- * AIRBASE.TheChannel.Manston
--- * AIRBASE.TheChannel.Hawkinge
--- * AIRBASE.TheChannel.Lympne
--- * AIRBASE.TheChannel.Detling
--- * AIRBASE.TheChannel.High_Halden
--- * AIRBASE.TheChannel.Biggin_Hill
--- * AIRBASE.TheChannel.Eastchurch
--- * AIRBASE.TheChannel.Headcorn
 --
 -- @field TheChannel
 AIRBASE.TheChannel = {
   ["Abbeville_Drucat"] = "Abbeville Drucat",
+  ["Biggin_Hill"] = "Biggin Hill",
+  ["Detling"] = "Detling",
+  ["Dunkirk_Mardyck"] = "Dunkirk Mardyck",
+  ["Eastchurch"] = "Eastchurch",
+  ["Hawkinge"] = "Hawkinge",
+  ["Headcorn"] = "Headcorn",
+  ["High_Halden"] = "High Halden",
+  ["Lympne"] = "Lympne",
+  ["Manston"] = "Manston",
   ["Merville_Calonne"] = "Merville Calonne",
   ["Saint_Omer_Longuenesse"] = "Saint Omer Longuenesse",
-  ["Dunkirk_Mardyck"] = "Dunkirk Mardyck",
-  ["Manston"] = "Manston",
-  ["Hawkinge"] = "Hawkinge",
-  ["Lympne"] = "Lympne",
-  ["Detling"] = "Detling",
-  ["High_Halden"] = "High Halden",
-  ["Biggin_Hill"] = "Biggin Hill",
-  ["Eastchurch"] = "Eastchurch",
-  ["Headcorn"] = "Headcorn",
 }
 
 --- Airbases of the Syria map:
 --
--- * AIRBASE.Syria.Kuweires
--- * AIRBASE.Syria.Incirlik
--- * AIRBASE.Syria.King_Abdullah_II
--- * AIRBASE.Syria.Akrotiri
--- * AIRBASE.Syria.Aleppo
 -- * AIRBASE.Syria.Abu_al_Duhur
--- * AIRBASE.Syria.Hatay
--- * AIRBASE.Syria.Paphos
+-- * AIRBASE.Syria.Adana_Sakirpasa
+-- * AIRBASE.Syria.Akrotiri
+-- * AIRBASE.Syria.Al_Dumayr
+-- * AIRBASE.Syria.Al_Qusayr
+-- * AIRBASE.Syria.Aleppo
+-- * AIRBASE.Syria.Amman
+-- * AIRBASE.Syria.An_Nasiriyah
 -- * AIRBASE.Syria.At_Tanf
--- * AIRBASE.Syria.Tal_Siman
--- * AIRBASE.Syria.Rayak
+-- * AIRBASE.Syria.Bassel_Al_Assad
+-- * AIRBASE.Syria.Beirut_Rafic_Hariri
+-- * AIRBASE.Syria.Damascus
+-- * AIRBASE.Syria.Deir_ez_Zor
+-- * AIRBASE.Syria.Ercan
+-- * AIRBASE.Syria.Eyn_Shemer
+-- * AIRBASE.Syria.Gaziantep
+-- * AIRBASE.Syria.Gazipasa
+-- * AIRBASE.Syria.Gecitkale
+-- * AIRBASE.Syria.H3
+-- * AIRBASE.Syria.H3_Northwest
+-- * AIRBASE.Syria.H3_Southwest
+-- * AIRBASE.Syria.H4
+-- * AIRBASE.Syria.Haifa
+-- * AIRBASE.Syria.Hama
+-- * AIRBASE.Syria.Hatay
+-- * AIRBASE.Syria.Herzliya
+-- * AIRBASE.Syria.Incirlik
+-- * AIRBASE.Syria.Jirah
+-- * AIRBASE.Syria.Khalkhalah
+-- * AIRBASE.Syria.Kharab_Ishk
+-- * AIRBASE.Syria.King_Abdullah_II
+-- * AIRBASE.Syria.King_Hussein_Air_College
+-- * AIRBASE.Syria.Kingsfield
+-- * AIRBASE.Syria.Kiryat_Shmona
+-- * AIRBASE.Syria.Kuweires
+-- * AIRBASE.Syria.Lakatamia
+-- * AIRBASE.Syria.Larnaca
+-- * AIRBASE.Syria.Marj_Ruhayyil
+-- * AIRBASE.Syria.Marj_as_Sultan_North
+-- * AIRBASE.Syria.Marj_as_Sultan_South
+-- * AIRBASE.Syria.Megiddo
+-- * AIRBASE.Syria.Mezzeh
+-- * AIRBASE.Syria.Minakh
 -- * AIRBASE.Syria.Muwaffaq_Salti
 -- * AIRBASE.Syria.Naqoura
--- * AIRBASE.Syria.Gaziantep
--- * AIRBASE.Syria.Al_Qusayr
--- * AIRBASE.Syria.Al_Dumayr
--- * AIRBASE.Syria.Kingsfield
--- * AIRBASE.Syria.Marj_as_Sultan_North
--- * AIRBASE.Syria.Beirut_Rafic_Hariri
--- * AIRBASE.Syria.Palmyra
--- * AIRBASE.Syria.Hama
--- * AIRBASE.Syria.Eyn_Shemer
--- * AIRBASE.Syria.Sanliurfa
--- * AIRBASE.Syria.Amman
--- * AIRBASE.Syria.Deir_ez_Zor
--- * AIRBASE.Syria.Taftanaz
--- * AIRBASE.Syria.Damascus
--- * AIRBASE.Syria.Gazipasa
--- * AIRBASE.Syria.Herzliya
--- * AIRBASE.Syria.H4
--- * AIRBASE.Syria.Tiyas
--- * AIRBASE.Syria.Lakatamia
--- * AIRBASE.Syria.Kharab_Ishk
--- * AIRBASE.Syria.Haifa
--- * AIRBASE.Syria.Khalkhalah
--- * AIRBASE.Syria.Megiddo
--- * AIRBASE.Syria.An_Nasiriyah
--- * AIRBASE.Syria.Bassel_Al_Assad
--- * AIRBASE.Syria.Ruwayshid
--- * AIRBASE.Syria.Mezzeh
--- * AIRBASE.Syria.Gecitkale
 -- * AIRBASE.Syria.Nicosia
--- * AIRBASE.Syria.Ramat_David
--- * AIRBASE.Syria.Tha_lah
--- * AIRBASE.Syria.H3_Northwest
--- * AIRBASE.Syria.Sayqal
--- * AIRBASE.Syria.Jirah
--- * AIRBASE.Syria.Shayrat
--- * AIRBASE.Syria.Adana_Sakirpasa
--- * AIRBASE.Syria.Wujah_Al_Hajar
+-- * AIRBASE.Syria.Palmyra
+-- * AIRBASE.Syria.Paphos
 -- * AIRBASE.Syria.Pinarbashi
--- * AIRBASE.Syria.H3_Southwest
--- * AIRBASE.Syria.Rosh_Pina
--- * AIRBASE.Syria.Kiryat_Shmona
--- * AIRBASE.Syria.H3
--- * AIRBASE.Syria.Qabr_as_Sitt
 -- * AIRBASE.Syria.Prince_Hassan
--- * AIRBASE.Syria.Larnaca
--- * AIRBASE.Syria.King_Hussein_Air_College
--- * AIRBASE.Syria.Ercan
--- * AIRBASE.Syria.Marj_Ruhayyil
--- * AIRBASE.Syria.Tabqa
--- * AIRBASE.Syria.Marj_as_Sultan_South
+-- * AIRBASE.Syria.Qabr_as_Sitt
+-- * AIRBASE.Syria.Ramat_David
+-- * AIRBASE.Syria.Rayak
 -- * AIRBASE.Syria.Rene_Mouawad
--- * AIRBASE.Syria.Minakh
+-- * AIRBASE.Syria.Rosh_Pina
+-- * AIRBASE.Syria.Ruwayshid
+-- * AIRBASE.Syria.Sanliurfa
+-- * AIRBASE.Syria.Sayqal
+-- * AIRBASE.Syria.Shayrat
+-- * AIRBASE.Syria.Tabqa
+-- * AIRBASE.Syria.Taftanaz
+-- * AIRBASE.Syria.Tal_Siman
+-- * AIRBASE.Syria.Tha_lah
+-- * AIRBASE.Syria.Tiyas
+-- * AIRBASE.Syria.Wujah_Al_Hajar
 --
 --@field Syria
 AIRBASE.Syria={
-  ["Kuweires"] = "Kuweires",
-  ["Incirlik"] = "Incirlik",
-  ["King_Abdullah_II"] = "King Abdullah II",
-  ["Akrotiri"] = "Akrotiri",
-  ["Aleppo"] = "Aleppo",
   ["Abu_al_Duhur"] = "Abu al-Duhur",
-  ["Hatay"] = "Hatay",
-  ["Paphos"] = "Paphos",
+  ["Adana_Sakirpasa"] = "Adana Sakirpasa",
+  ["Akrotiri"] = "Akrotiri",
+  ["Al_Dumayr"] = "Al-Dumayr",
+  ["Al_Qusayr"] = "Al Qusayr",
+  ["Aleppo"] = "Aleppo",
+  ["Amman"] = "Amman",
+  ["An_Nasiriyah"] = "An Nasiriyah",
   ["At_Tanf"] = "At Tanf",
-  ["Tal_Siman"] = "Tal Siman",
-  ["Rayak"] = "Rayak",
+  ["Bassel_Al_Assad"] = "Bassel Al-Assad",
+  ["Beirut_Rafic_Hariri"] = "Beirut-Rafic Hariri",
+  ["Damascus"] = "Damascus",
+  ["Deir_ez_Zor"] = "Deir ez-Zor",
+  ["Ercan"] = "Ercan",
+  ["Eyn_Shemer"] = "Eyn Shemer",
+  ["Gaziantep"] = "Gaziantep",
+  ["Gazipasa"] = "Gazipasa",
+  ["Gecitkale"] = "Gecitkale",
+  ["H3"] = "H3",
+  ["H3_Northwest"] = "H3 Northwest",
+  ["H3_Southwest"] = "H3 Southwest",
+  ["H4"] = "H4",
+  ["Haifa"] = "Haifa",
+  ["Hama"] = "Hama",
+  ["Hatay"] = "Hatay",
+  ["Herzliya"] = "Herzliya",
+  ["Incirlik"] = "Incirlik",
+  ["Jirah"] = "Jirah",
+  ["Khalkhalah"] = "Khalkhalah",
+  ["Kharab_Ishk"] = "Kharab Ishk",
+  ["King_Abdullah_II"] = "King Abdullah II",
+  ["King_Hussein_Air_College"] = "King Hussein Air College",
+  ["Kingsfield"] = "Kingsfield",
+  ["Kiryat_Shmona"] = "Kiryat Shmona",
+  ["Kuweires"] = "Kuweires",
+  ["Lakatamia"] = "Lakatamia",
+  ["Larnaca"] = "Larnaca",
+  ["Marj_Ruhayyil"] = "Marj Ruhayyil",
+  ["Marj_as_Sultan_North"] = "Marj as Sultan North",
+  ["Marj_as_Sultan_South"] = "Marj as Sultan South",
+  ["Megiddo"] = "Megiddo",
+  ["Mezzeh"] = "Mezzeh",
+  ["Minakh"] = "Minakh",
   ["Muwaffaq_Salti"] = "Muwaffaq Salti",
   ["Naqoura"] = "Naqoura",
-  ["Gaziantep"] = "Gaziantep",
-  ["Al_Qusayr"] = "Al Qusayr",
-  ["Al_Dumayr"] = "Al-Dumayr",
-  ["Kingsfield"] = "Kingsfield",
-  ["Marj_as_Sultan_North"] = "Marj as Sultan North",
-  ["Beirut_Rafic_Hariri"] = "Beirut-Rafic Hariri",
-  ["Palmyra"] = "Palmyra",
-  ["Hama"] = "Hama",
-  ["Eyn_Shemer"] = "Eyn Shemer",
-  ["Sanliurfa"] = "Sanliurfa",
-  ["Amman"] = "Amman",
-  ["Deir_ez_Zor"] = "Deir ez-Zor",
-  ["Taftanaz"] = "Taftanaz",
-  ["Damascus"] = "Damascus",
-  ["Gazipasa"] = "Gazipasa",
-  ["Herzliya"] = "Herzliya",
-  ["H4"] = "H4",
-  ["Tiyas"] = "Tiyas",
-  ["Lakatamia"] = "Lakatamia",
-  ["Kharab_Ishk"] = "Kharab Ishk",
-  ["Haifa"] = "Haifa",
-  ["Khalkhalah"] = "Khalkhalah",
-  ["Megiddo"] = "Megiddo",
-  ["An_Nasiriyah"] = "An Nasiriyah",
-  ["Bassel_Al_Assad"] = "Bassel Al-Assad",
-  ["Ruwayshid"] = "Ruwayshid",
-  ["Mezzeh"] = "Mezzeh",
-  ["Gecitkale"] = "Gecitkale",
   ["Nicosia"] = "Nicosia",
-  ["Ramat_David"] = "Ramat David",
-  ["Tha_lah"] = "Tha'lah",
-  ["H3_Northwest"] = "H3 Northwest",
-  ["Sayqal"] = "Sayqal",
-  ["Jirah"] = "Jirah",
-  ["Shayrat"] = "Shayrat",
-  ["Adana_Sakirpasa"] = "Adana Sakirpasa",
-  ["Wujah_Al_Hajar"] = "Wujah Al Hajar",
+  ["Palmyra"] = "Palmyra",
+  ["Paphos"] = "Paphos",
   ["Pinarbashi"] = "Pinarbashi",
-  ["H3_Southwest"] = "H3 Southwest",
-  ["Rosh_Pina"] = "Rosh Pina",
-  ["Kiryat_Shmona"] = "Kiryat Shmona",
-  ["H3"] = "H3",
-  ["Qabr_as_Sitt"] = "Qabr as Sitt",
   ["Prince_Hassan"] = "Prince Hassan",
-  ["Larnaca"] = "Larnaca",
-  ["King_Hussein_Air_College"] = "King Hussein Air College",
-  ["Ercan"] = "Ercan",
-  ["Marj_Ruhayyil"] = "Marj Ruhayyil",
-  ["Tabqa"] = "Tabqa",
-  ["Marj_as_Sultan_South"] = "Marj as Sultan South",
+  ["Qabr_as_Sitt"] = "Qabr as Sitt",
+  ["Ramat_David"] = "Ramat David",
+  ["Rayak"] = "Rayak",
   ["Rene_Mouawad"] = "Rene Mouawad",
-  ["Minakh"] = "Minakh",
+  ["Rosh_Pina"] = "Rosh Pina",
+  ["Ruwayshid"] = "Ruwayshid",
+  ["Sanliurfa"] = "Sanliurfa",
+  ["Sayqal"] = "Sayqal",
+  ["Shayrat"] = "Shayrat",
+  ["Tabqa"] = "Tabqa",
+  ["Taftanaz"] = "Taftanaz",
+  ["Tal_Siman"] = "Tal Siman",
+  ["Tha_lah"] = "Tha'lah",
+  ["Tiyas"] = "Tiyas",
+  ["Wujah_Al_Hajar"] = "Wujah Al Hajar",
 }
 
 --- Airbases of the Mariana Islands map:
 --
--- * AIRBASE.MarianaIslands.Rota_Intl
 -- * AIRBASE.MarianaIslands.Andersen_AFB
 -- * AIRBASE.MarianaIslands.Antonio_B_Won_Pat_Intl
--- * AIRBASE.MarianaIslands.Saipan_Intl
--- * AIRBASE.MarianaIslands.Tinian_Intl
+-- * AIRBASE.MarianaIslands.North_West_Field
 -- * AIRBASE.MarianaIslands.Olf_Orote
 -- * AIRBASE.MarianaIslands.Pagan_Airstrip
--- * AIRBASE.MarianaIslands.North_West_Field
+-- * AIRBASE.MarianaIslands.Rota_Intl
+-- * AIRBASE.MarianaIslands.Saipan_Intl
+-- * AIRBASE.MarianaIslands.Tinian_Intl
 --
 -- @field MarianaIslands
 AIRBASE.MarianaIslands = {
-  ["Rota_Intl"] = "Rota Intl",
   ["Andersen_AFB"] = "Andersen AFB",
   ["Antonio_B_Won_Pat_Intl"] = "Antonio B. Won Pat Intl",
-  ["Saipan_Intl"] = "Saipan Intl",
-  ["Tinian_Intl"] = "Tinian Intl",
+  ["North_West_Field"] = "North West Field",
   ["Olf_Orote"] = "Olf Orote",
   ["Pagan_Airstrip"] = "Pagan Airstrip",
-  ["North_West_Field"] = "North West Field",
+  ["Rota_Intl"] = "Rota Intl",
+  ["Saipan_Intl"] = "Saipan Intl",
+  ["Tinian_Intl"] = "Tinian Intl",
 }
 
 --- Airbases of the South Atlantic map:
 --
--- * AIRBASE.SouthAtlantic.Port_Stanley
--- * AIRBASE.SouthAtlantic.Mount_Pleasant
--- * AIRBASE.SouthAtlantic.San_Carlos_FOB
--- * AIRBASE.SouthAtlantic.Rio_Grande
--- * AIRBASE.SouthAtlantic.Rio_Gallegos
--- * AIRBASE.SouthAtlantic.Ushuaia
--- * AIRBASE.SouthAtlantic.Ushuaia_Helo_Port
--- * AIRBASE.SouthAtlantic.Punta_Arenas
--- * AIRBASE.SouthAtlantic.Pampa_Guanaco
--- * AIRBASE.SouthAtlantic.San_Julian
--- * AIRBASE.SouthAtlantic.Puerto_Williams
--- * AIRBASE.SouthAtlantic.Puerto_Natales
--- * AIRBASE.SouthAtlantic.El_Calafate
--- * AIRBASE.SouthAtlantic.Puerto_Santa_Cruz
--- * AIRBASE.SouthAtlantic.Comandante_Luis_Piedrabuena
--- * AIRBASE.SouthAtlantic.Aerodromo_De_Tolhuin
--- * AIRBASE.SouthAtlantic.Porvenir_Airfield
--- * AIRBASE.SouthAtlantic.Almirante_Schroeders
--- * AIRBASE.SouthAtlantic.Rio_Turbio
--- * AIRBASE.SouthAtlantic.Rio_Chico
--- * AIRBASE.SouthAtlantic.Franco_Bianco
--- * AIRBASE.SouthAtlantic.Goose_Green
--- * AIRBASE.SouthAtlantic.Hipico
--- * AIRBASE.SouthAtlantic.CaletaTortel
+-- * AIRBASE.Falklands.Almirante_Schroeders
+-- * AIRBASE.Falklands.Caleta_Tortel
+-- * AIRBASE.Falklands.Comandante_Luis_Piedrabuena
+-- * AIRBASE.Falklands.Cullen
+-- * AIRBASE.Falklands.El_Calafate
+-- * AIRBASE.Falklands.Franco_Bianco
+-- * AIRBASE.Falklands.Gobernador_Gregores
+-- * AIRBASE.Falklands.Goose_Green
+-- * AIRBASE.Falklands.Gull_Point
+-- * AIRBASE.Falklands.Hipico_Flying_Club
+-- * AIRBASE.Falklands.Mount_Pleasant
+-- * AIRBASE.Falklands.O_Higgins
+-- * AIRBASE.Falklands.Pampa_Guanaco
+-- * AIRBASE.Falklands.Port_Stanley
+-- * AIRBASE.Falklands.Porvenir
+-- * AIRBASE.Falklands.Puerto_Natales
+-- * AIRBASE.Falklands.Puerto_Santa_Cruz
+-- * AIRBASE.Falklands.Puerto_Williams
+-- * AIRBASE.Falklands.Punta_Arenas
+-- * AIRBASE.Falklands.Rio_Chico
+-- * AIRBASE.Falklands.Rio_Gallegos
+-- * AIRBASE.Falklands.Rio_Grande
+-- * AIRBASE.Falklands.Rio_Turbio
+-- * AIRBASE.Falklands.San_Carlos_FOB
+-- * AIRBASE.Falklands.San_Julian
+-- * AIRBASE.Falklands.Tolhuin
+-- * AIRBASE.Falklands.Ushuaia
+-- * AIRBASE.Falklands.Ushuaia_Helo_Port
 --
 --@field MarianaIslands
 AIRBASE.SouthAtlantic={
-  ["Port_Stanley"]="Port Stanley",
-  ["Mount_Pleasant"]="Mount Pleasant",
-  ["San_Carlos_FOB"]="San Carlos FOB",
-  ["Rio_Grande"]="Rio Grande",
-  ["Rio_Gallegos"]="Rio Gallegos",
-  ["Ushuaia"]="Ushuaia",
-  ["Ushuaia_Helo_Port"]="Ushuaia Helo Port",
-  ["Punta_Arenas"]="Punta Arenas",
-  ["Pampa_Guanaco"]="Pampa Guanaco",
-  ["San_Julian"]="San Julian",
-  ["Puerto_Williams"]="Puerto Williams",
-  ["Puerto_Natales"]="Puerto Natales",
-  ["El_Calafate"]="El Calafate",
-  ["Puerto_Santa_Cruz"]="Puerto Santa Cruz",
-  ["Comandante_Luis_Piedrabuena"]="Comandante Luis Piedrabuena",
-  ["Aerodromo_De_Tolhuin"]="Aerodromo De Tolhuin",
-  ["Porvenir_Airfield"]="Porvenir Airfield",
-  ["Almirante_Schroeders"]="Almirante Schroeders",
-  ["Rio_Turbio"]="Rio Turbio",
-  ["Rio_Chico"] = "Rio Chico",
+  ["Almirante_Schroeders"] = "Almirante Schroeders",
+  ["Caleta_Tortel"] = "Caleta Tortel",
+  ["Comandante_Luis_Piedrabuena"] = "Comandante Luis Piedrabuena",
+  ["Cullen"] = "Cullen",
+  ["El_Calafate"] = "El Calafate",
   ["Franco_Bianco"] = "Franco Bianco",
+  ["Gobernador_Gregores"] = "Gobernador Gregores",
   ["Goose_Green"] = "Goose Green",
-  ["Hipico_Flying_Club"] = "Hipico Flying Club",
-  ["CaletaTortel"] = "CaletaTortel",
-  ["Aeropuerto_de_Gobernador_Gregores"] = "Aeropuerto de Gobernador Gregores",
-  ["Aerodromo_O_Higgins"] = "Aerodromo O'Higgins",
-  ["Cullen_Airport"] = "Cullen Airport",
   ["Gull_Point"] = "Gull Point",
+  ["Hipico_Flying_Club"] = "Hipico Flying Club",
+  ["Mount_Pleasant"] = "Mount Pleasant",
+  ["O_Higgins"] = "O'Higgins",
+  ["Pampa_Guanaco"] = "Pampa Guanaco",
+  ["Port_Stanley"] = "Port Stanley",
+  ["Porvenir"] = "Porvenir",
+  ["Puerto_Natales"] = "Puerto Natales",
+  ["Puerto_Santa_Cruz"] = "Puerto Santa Cruz",
+  ["Puerto_Williams"] = "Puerto Williams",
+  ["Punta_Arenas"] = "Punta Arenas",
+  ["Rio_Chico"] = "Rio Chico",
+  ["Rio_Gallegos"] = "Rio Gallegos",
+  ["Rio_Grande"] = "Rio Grande",
+  ["Rio_Turbio"] = "Rio Turbio",
+  ["San_Carlos_FOB"] = "San Carlos FOB",
+  ["San_Julian"] = "San Julian",
+  ["Tolhuin"] = "Tolhuin",
+  ["Ushuaia"] = "Ushuaia",
+  ["Ushuaia_Helo_Port"] = "Ushuaia Helo Port",
 }
 
 --- Airbases of the Sinai map:
 --
---  * AIRBASE.Sinai.Abu_Suwayr
---  * AIRBASE.Sinai.Sde_Dov
---  * AIRBASE.Sinai.AzZaqaziq
---  * AIRBASE.Sinai.Hatzor
---  * AIRBASE.Sinai.Kedem
---  * AIRBASE.Sinai.Nevatim
---  * AIRBASE.Sinai.Cairo_International_Airport
---  * AIRBASE.Sinai.Al_Ismailiyah
---  * AIRBASE.Sinai.As_Salihiyah
---  * AIRBASE.Sinai.Fayed
---  * AIRBASE.Sinai.Bilbeis_Air_Base
---  * AIRBASE.Sinai.Ramon_Airbase
---  * AIRBASE.Sinai.Kibrit_Air_Base
---  * AIRBASE.Sinai.El_Arish
---  * AIRBASE.Sinai.Ovda
---  * AIRBASE.Sinai.Melez
---  * AIRBASE.Sinai.Al_Mansurah
---  * AIRBASE.Sinai.Palmahim
---  * AIRBASE.Sinai.Baluza
---  * AIRBASE.Sinai.El_Gora
---  * AIRBASE.Sinai.Difarsuwar_Airfield
---  * AIRBASE.Sinai.Wadi_al_Jandali
---  * AIRBASE.Sinai.St_Catherine
---  * AIRBASE.Sinai.Tel_Nof
---  * AIRBASE.Sinai.Abu_Rudeis
---  * AIRBASE.Sinai.Inshas_Airbase
---  * AIRBASE.Sinai.Ben_Gurion
---  * AIRBASE.Sinai.Bir_Hasanah
---  * AIRBASE.Sinai.Cairo_West
+-- * AIRBASE.SinaiMap.Abu_Rudeis
+-- * AIRBASE.SinaiMap.Abu_Suwayr
+-- * AIRBASE.SinaiMap.Al_Ismailiyah
+-- * AIRBASE.SinaiMap.Al_Mansurah
+-- * AIRBASE.SinaiMap.As_Salihiyah
+-- * AIRBASE.SinaiMap.AzZaqaziq
+-- * AIRBASE.SinaiMap.Baluza
+-- * AIRBASE.SinaiMap.Ben_Gurion
+-- * AIRBASE.SinaiMap.Bilbeis_Air_Base
+-- * AIRBASE.SinaiMap.Bir_Hasanah
+-- * AIRBASE.SinaiMap.Cairo_International_Airport
+-- * AIRBASE.SinaiMap.Cairo_West
+-- * AIRBASE.SinaiMap.Difarsuwar_Airfield
+-- * AIRBASE.SinaiMap.El_Arish
+-- * AIRBASE.SinaiMap.El_Gora
+-- * AIRBASE.SinaiMap.Fayed
+-- * AIRBASE.SinaiMap.Hatzerim
+-- * AIRBASE.SinaiMap.Hatzor
+-- * AIRBASE.SinaiMap.Inshas_Airbase
+-- * AIRBASE.SinaiMap.Kedem
+-- * AIRBASE.SinaiMap.Kibrit_Air_Base
+-- * AIRBASE.SinaiMap.Melez
+-- * AIRBASE.SinaiMap.Nevatim
+-- * AIRBASE.SinaiMap.Ovda
+-- * AIRBASE.SinaiMap.Palmahim
+-- * AIRBASE.SinaiMap.Ramon_Airbase
+-- * AIRBASE.SinaiMap.Sde_Dov
+-- * AIRBASE.SinaiMap.St_Catherine
+-- * AIRBASE.SinaiMap.Tel_Nof
+-- * AIRBASE.SinaiMap.Wadi_al_Jandali
 --
 -- @field Sinai
 AIRBASE.Sinai = {
-  ["Hatzerim"] = "Hatzerim",
+  ["Abu_Rudeis"] = "Abu Rudeis",
   ["Abu_Suwayr"] = "Abu Suwayr",
-  ["Sde_Dov"] = "Sde Dov",
-  ["AzZaqaziq"] = "AzZaqaziq",
-  ["Hatzor"] = "Hatzor",
-  ["Kedem"] = "Kedem",
-  ["Nevatim"] = "Nevatim",
-  ["Cairo_International_Airport"] = "Cairo International Airport",
   ["Al_Ismailiyah"] = "Al Ismailiyah",
-  ["As_Salihiyah"] = "As Salihiyah",
-  ["Fayed"] = "Fayed",
-  ["Bilbeis_Air_Base"] = "Bilbeis Air Base",
-  ["Ramon_Airbase"] = "Ramon Airbase",
-  ["Kibrit_Air_Base"] = "Kibrit Air Base",
-  ["El_Arish"] = "El Arish",
-  ["Ovda"] = "Ovda",
-  ["Melez"] = "Melez",
   ["Al_Mansurah"] = "Al Mansurah",
-  ["Palmahim"] = "Palmahim",
+  ["As_Salihiyah"] = "As Salihiyah",
+  ["AzZaqaziq"] = "AzZaqaziq",
   ["Baluza"] = "Baluza",
-  ["El_Gora"] = "El Gora",
+  ["Ben_Gurion"] = "Ben-Gurion",
+  ["Bilbeis_Air_Base"] = "Bilbeis Air Base",
+  ["Bir_Hasanah"] = "Bir Hasanah",
+  ["Cairo_International_Airport"] = "Cairo International Airport",
+  ["Cairo_West"] = "Cairo West",
   ["Difarsuwar_Airfield"] = "Difarsuwar Airfield",
-  ["Wadi_al_Jandali"] = "Wadi al Jandali",
+  ["El_Arish"] = "El Arish",
+  ["El_Gora"] = "El Gora",
+  ["Fayed"] = "Fayed",
+  ["Hatzerim"] = "Hatzerim",
+  ["Hatzor"] = "Hatzor",
+  ["Inshas_Airbase"] = "Inshas Airbase",
+  ["Kedem"] = "Kedem",
+  ["Kibrit_Air_Base"] = "Kibrit Air Base",
+  ["Melez"] = "Melez",
+  ["Nevatim"] = "Nevatim",
+  ["Ovda"] = "Ovda",
+  ["Palmahim"] = "Palmahim",
+  ["Ramon_Airbase"] = "Ramon Airbase",
+  ["Sde_Dov"] = "Sde Dov",
   ["St_Catherine"] = "St Catherine",
   ["Tel_Nof"] = "Tel Nof",
-  ["Abu_Rudeis"] = "Abu Rudeis",
-  ["Inshas_Airbase"] = "Inshas Airbase",
-  ["Ben_Gurion"] = "Ben-Gurion",
-  ["Bir_Hasanah"] = "Bir Hasanah",
-  ["Cairo_West"] = "Cairo West",
+  ["Wadi_al_Jandali"] = "Wadi al Jandali",
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".

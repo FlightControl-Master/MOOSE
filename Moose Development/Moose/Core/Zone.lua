@@ -1180,7 +1180,7 @@ function ZONE_RADIUS:RemoveJunk()
   return n
 end
 
---- Count the number of different coalitions inside the zone.
+--- Get a table  of scanned units.
 -- @param #ZONE_RADIUS self
 -- @return #table Table of DCS units and DCS statics inside the zone.
 function ZONE_RADIUS:GetScannedUnits()
@@ -1215,7 +1215,7 @@ function ZONE_RADIUS:GetScannedSetUnit()
   return SetUnit
 end
 
---- Get a set of scanned units.
+--- Get a set of scanned groups.
 -- @param #ZONE_RADIUS self
 -- @return Core.Set#SET_GROUP Set of groups.
 function ZONE_RADIUS:GetScannedSetGroup()
