@@ -8,7 +8,7 @@
 --
 -- ## Example Missions:
 --
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Wrapper/Storage).
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_Demos/tree/master/Wrapper/Storage).
 --
 -- ===
 --
@@ -33,93 +33,93 @@
 -- ===
 --
 -- # The STORAGE Concept
--- 
--- The STORAGE class offers an easy-to-use wrapper interface to all DCS API functions of DCS warehouses. 
+--
+-- The STORAGE class offers an easy-to-use wrapper interface to all DCS API functions of DCS warehouses.
 -- We named the class STORAGE, because the name WAREHOUSE is already taken by another MOOSE class.
--- 
+--
 -- This class allows you to add and remove items to a DCS warehouse, such as aircraft, liquids, weapons and other equipment.
--- 
+--
 -- # Constructor
--- 
+--
 -- A DCS warehouse is associated with an airbase. Therefore, a `STORAGE` instance is automatically created, once an airbase is registered and added to the MOOSE database.
--- 
--- You can get the `STORAGE` object from the 
--- 
---     -- Create a STORAGE instance of the Batumi warehouse  
+--
+-- You can get the `STORAGE` object from the
+--
+--     -- Create a STORAGE instance of the Batumi warehouse
 --     local storage=STORAGE:FindByName("Batumi")
--- 
+--
 -- An other way to get the `STORAGE` object is to retrieve it from the AIRBASE function `AIRBASE:GetStorage()`
--- 
+--
 --     -- Get storage instance of Batumi airbase
 --     local Batumi=AIRBASE:FindByName("Batumi")
 --     local storage=Batumi:GetStorage()
--- 
+--
 -- # Aircraft, Weapons and Equipment
--- 
+--
 -- ## Adding Items
--- 
+--
 -- To add aircraft, weapons and/or othe equipment, you can use the @{#STORAGE.AddItem}() function
--- 
+--
 --     storage:AddItem("A-10C", 3)
 --     storage:AddItem("weapons.missiles.AIM_120C", 10)
---     
+--
 -- This will add three A-10Cs and ten AIM-120C missiles to the warehouse inventory.
--- 
+--
 -- ## Setting Items
--- 
+--
 -- You can also explicitly set, how many items are in the inventory with the @{#STORAGE.SetItem}() function.
--- 
+--
 -- ## Removing Items
--- 
+--
 -- Items can be removed from the inventory with the @{#STORAGE.RemoveItem}() function.
--- 
+--
 -- ## Getting Amount
--- 
+--
 -- The number of items currently in the inventory can be obtained with the @{#STORAGE.GetItemAmount}() function
--- 
+--
 --     local N=storage:GetItemAmount("A-10C")
 --     env.info(string.format("We currently have %d A-10Cs available", N))
--- 
+--
 -- # Liquids
--- 
+--
 -- Liquids can be added and removed by slightly different functions as described below. Currently there are four types of liquids
--- 
+--
 -- * Jet fuel `STORAGE.Liquid.JETFUEL`
 -- * Aircraft gasoline `STORAGE.Liquid.GASOLINE`
 -- * MW 50 `STORAGE.Liquid.MW50`
 -- * Diesel `STORAGE.Liquid.DIESEL`
--- 
+--
 -- ## Adding Liquids
--- 
+--
 -- To add a certain type of liquid, you can use the @{#STORAGE.AddItem}(Type, Amount) function
--- 
+--
 --     storage:AddLiquid(STORAGE.Liquid.JETFUEL, 10000)
 --     storage:AddLiquid(STORAGE.Liquid.DIESEL, 20000)
--- 
+--
 -- This will add 10,000 kg of jet fuel and 20,000 kg of diesel to the inventory.
--- 
+--
 -- ## Setting Liquids
--- 
+--
 -- You can also explicitly set the amount of liquid with the @{#STORAGE.SetLiquid}(Type, Amount) function.
--- 
+--
 -- ## Removing Liquids
--- 
+--
 -- Liquids can be removed with @{#STORAGE.RemoveLiquid}(Type, Amount) function.
--- 
+--
 -- ## Getting Amount
--- 
+--
 -- The current amount of a certain liquid can be obtained with the @{#STORAGE.GetLiquidAmount}(Type) function
--- 
+--
 --     local N=storage:GetLiquidAmount(STORAGE.Liquid.DIESEL)
 --     env.info(string.format("We currently have %d kg of Diesel available", N))
---     
--- 
+--
+--
 -- # Inventory
--- 
+--
 -- The current inventory of the warehouse can be obtained with the @{#STORAGE.GetInventory}() function. This returns three tables with the aircraft, liquids and weapons:
--- 
+--
 --     local aircraft, liquids, weapons=storage:GetInventory()
---     
+--
 --     UTILS.PrintTableToLog(aircraft)
 --     UTILS.PrintTableToLog(liquids)
 --     UTILS.PrintTableToLog(weapons)
@@ -168,7 +168,7 @@ function STORAGE:New(AirbaseName)
   local self=BASE:Inherit(self, BASE:New()) -- #STORAGE
 
   self.airbase=Airbase.getByName(AirbaseName)
-  
+
   if Airbase.getWarehouse then
     self.warehouse=self.airbase:getWarehouse()
   end
@@ -322,7 +322,7 @@ end
 function STORAGE:GetLiquidName(Type)
 
   local name="Unknown"
-  
+
   if Type==STORAGE.Liquid.JETFUEL then
     name = "Jet fuel"
   elseif Type==STORAGE.Liquid.GASOLINE then
@@ -411,25 +411,25 @@ function STORAGE:IsUnlimited(Type)
 
   -- Get current amount of type.
   local N=self:GetAmount(Type)
-  
+
   local unlimited=false
-  
+
   if N>0 then
-  
+
     -- Remove one item.
     self:RemoveAmount(Type, 1)
-    
+
     -- Get amount.
     local n=self:GetAmount(Type)
-    
+
     -- If amount did not change, it is unlimited.
     unlimited=n==N
-    
+
     -- Add item back.
     if not unlimited then
       self:AddAmount(Type, 1)
     end
-    
+
     -- Debug info.
     self:I(self.lid..string.format("Type=%s: unlimited=%s (N=%d n=%d)", tostring(Type), tostring(unlimited), N, n))
   end
@@ -523,7 +523,7 @@ end
 function STORAGE:GetInventory(Item)
 
   local inventory=self.warehouse:getInventory(Item)
-  
+
   return inventory.aircraft, inventory.liquids, inventory.weapon
 end
 
