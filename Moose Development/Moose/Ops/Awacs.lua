@@ -508,7 +508,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.62", -- #string
+  version = "0.2.63", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -1411,7 +1411,7 @@ function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval,Number)
     self.TacticalFrequencies[freq] = freq
   end
   if self.AwacsSRS then
-    self.TacticalSRS = MSRS:New(self.PathToSRS,self.TacticalBaseFreq,self.TacticalModulation)
+    self.TacticalSRS = MSRS:New(self.PathToSRS,self.TacticalBaseFreq,self.TacticalModulation,self.Backend)
     self.TacticalSRS:SetCoalition(self.coalition)
     self.TacticalSRS:SetGender(self.Gender)
     self.TacticalSRS:SetCulture(self.Culture)
@@ -2089,8 +2089,9 @@ end
 -- @param #number Volume Volume - between 0.0 (silent) and 1.0 (loudest)
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS; if you use a config file for MSRS, hand in nil here.
 -- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
+-- @param #string Backend (Optional) Your MSRS Backend if different from your config file settings, e.g. MSRS.Backend.SRSEXE or MSRS.Backend.GRPC
 -- @return #AWACS self
-function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey)
+function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Backend)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone" 
   self.Gender = Gender or MSRS.gender or "male"
@@ -2100,8 +2101,9 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey
   self.PathToGoogleKey = PathToGoogleKey
   self.AccessKey = AccessKey
   self.Volume = Volume or 1.0
-  
-  self.AwacsSRS = MSRS:New(self.PathToSRS,self.MultiFrequency,self.MultiModulation)
+  self.Backend = Backend or MSRS.backend
+  BASE:I({backend = self.Backend})
+  self.AwacsSRS = MSRS:New(self.PathToSRS,self.MultiFrequency,self.MultiModulation,self.Backend)
   self.AwacsSRS:SetCoalition(self.coalition)
   self.AwacsSRS:SetGender(self.Gender)
   self.AwacsSRS:SetCulture(self.Culture)
@@ -3154,9 +3156,13 @@ end
 function AWACS:_ShowAwacsInfo(Group)
   self:T(self.lid.."_ShowAwacsInfo")
   local report = REPORT:New("Info")
+  local STN = self.STN 
   report:Add("====================")
   report:Add(string.format("AWACS %s",self.callsigntxt))
   report:Add(string.format("Radio: %.3f %s",self.Frequency,UTILS.GetModulationName(self.Modulation)))
+  if STN then
+    report:Add(string.format("Link-16 STN: %s",STN))
+  end
   report:Add(string.format("Bulls Alias: %s",self.AOName))
   report:Add(string.format("Coordinate: %s",self.AOCoordinate:ToStringLLDDM()))
   report:Add("====================")
@@ -5993,6 +5999,10 @@ function AWACS:_CheckAwacsStatus()
   local awacs = nil -- Wrapper.Group#GROUP
   if self.AwacsFG then
     awacs = self.AwacsFG:GetGroup() -- Wrapper.Group#GROUP
+    local unit = awacs:GetUnit(1)
+    if unit then
+      self.STN = tostring(unit:GetSTN())
+    end
   end
   
   local monitoringdata = self.MonitoringData -- #AWACS.MonitoringData
@@ -6672,7 +6682,7 @@ function AWACS:onafterCheckTacticalQueue(From,Event,To)
  
  end -- end while
  
- if self:Is("Running") then
+ if not self:Is("Stopped") then
   self:__CheckTacticalQueue(-self.TacticalInterval)
  end
  return self
