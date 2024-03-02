@@ -1354,14 +1354,14 @@ function SCORING:_EventOnDeadOrCrash( Event )
               else
                 Player.PlayerKills = 1
               end
-              self:OnKillPvP(Player, TargetPlayerName, false, TargetThreatLevel, Player.ThreatLevel, ThreatScore)
+              self:OnKillPvP(PlayerName, TargetPlayerName, false, TargetThreatLevel, Player.ThreatLevel, ThreatScore)
               MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed enemy player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                                "Score: +" .. ThreatScore .. " = " .. Player.Score - Player.Penalty,
                                MESSAGE.Type.Information )
                      :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
                      :ToCoalitionIf( InitCoalition, self:IfMessagesDestroy() and self:IfMessagesToCoalition() )
             else
-              self:OnKillPvE(Player, TargetUnitName, false, TargetThreatLevel, Player.ThreatLevel, ThreatScore)
+              self:OnKillPvE(PlayerName, TargetUnitName, false, TargetThreatLevel, Player.ThreatLevel, ThreatScore)
               MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed enemy " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                                "Score: +" .. ThreatScore .. " = " .. Player.Score - Player.Penalty,
                                MESSAGE.Type.Information )
