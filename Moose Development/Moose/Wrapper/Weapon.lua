@@ -14,7 +14,7 @@
 --
 -- ## Additional Material:
 --
--- * **Demo Missions:** [GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Wrapper/Weapon)
+-- * **Demo Missions:** [GitHub](https://github.com/FlightControl-Master/MOOSE_Demos/tree/master/Wrapper/Weapon)
 -- * **YouTube videos:** None
 -- * **Guides:** None
 --
@@ -69,77 +69,77 @@
 -- ===
 --
 -- # The WEAPON Concept
--- 
+--
 -- The WEAPON class offers an easy-to-use wrapper interface to all DCS API functions.
--- 
+--
 -- Probably, the most striking highlight is that the position of the weapon can be tracked and its impact position can be determined, which is not
 -- possible with the native DCS scripting engine functions.
 --
 -- **Note** that this wrapper class is different from most others as weapon objects cannot be found with a DCS API function like `getByName()`.
 -- They can only be found in DCS events like the "Shot" event, where the weapon object is contained in the event data.
--- 
+--
 -- # Tracking
--- 
+--
 -- The status of the weapon can be tracked with the @{#WEAPON.StartTrack} function. This function will try to determin the position of the weapon in (normally) relatively
 -- small time steps. The time step can be set via the @{#WEAPON.SetTimeStepTrack} function and is by default set to 0.01 seconds.
--- 
+--
 -- Once the position cannot be retrieved any more, the weapon has impacted (or was destroyed otherwise) and the last known position is safed as the impact point.
 -- The impact point can be accessed with the @{#WEAPON.GetImpactVec3} or @{#WEAPON.GetImpactCoordinate} functions.
--- 
+--
 -- ## Impact Point Marking
--- 
+--
 -- You can mark the impact point on the F10 map with @{#WEAPON.SetMarkImpact}.
--- 
+--
 -- You can also trigger coloured smoke at the impact point via @{#WEAPON.SetSmokeImpact}.
--- 
+--
 -- ## Callback functions
--- 
+--
 -- It is possible to define functions that are called during the tracking of the weapon and upon impact, which help you to customize further actions.
--- 
+--
 -- ### Callback on Impact
--- 
+--
 -- The function called on impact can be set with @{#WEAPON.SetFuncImpact}
--- 
+--
 -- ### Callback when Tracking
--- 
+--
 -- The function called each time the weapon status is tracked can be set with @{#WEAPON.SetFuncTrack}
--- 
+--
 -- # Target
--- 
--- If the weapon has a specific target, you can get it with the @{#WEAPON.GetTarget} function. Note that the object, which is returned can vary. Normally, it is a UNIT 
+--
+-- If the weapon has a specific target, you can get it with the @{#WEAPON.GetTarget} function. Note that the object, which is returned can vary. Normally, it is a UNIT
 -- but it could also be a STATIC object.
--- 
+--
 -- Also note that the weapon does not always have a target, it can loose a target and re-aquire it and the target might change to another unit.
--- 
+--
 -- You can get the target name with the @{#WEAPON.GetTargetName} function.
--- 
+--
 -- The distance to the target is returned by the @{#WEAPON.GetTargetDistance} function.
--- 
+--
 -- # Category
--- 
+--
 -- The category (bomb, rocket, missile, shell, torpedo) of the weapon can be retrieved with the @{#WEAPON.GetCategory} function.
--- 
--- You can check if the weapon is a 
--- 
+--
+-- You can check if the weapon is a
+--
 -- * bomb with @{#WEAPON.IsBomb}
 -- * rocket with @{#WEAPON.IsRocket}
 -- * missile with @{#WEAPON.IsMissile}
 -- * shell with @{#WEAPON.IsShell}
 -- * torpedo with @{#WEAPON.IsTorpedo}
--- 
+--
 -- # Parameters
--- 
+--
 -- You can get various parameters of the weapon, *e.g.*
--- 
+--
 -- * position: @{#WEAPON.GetVec3}, @{#WEAPON.GetVec2 }, @{#WEAPON.GetCoordinate}
 -- * speed: @{#WEAPON.GetSpeed}
 -- * coalition: @{#WEAPON.GetCoalition}
 -- * country: @{#WEAPON.GetCountry}
--- 
+--
 -- # Dependencies
--- 
+--
 -- This class is used (at least) in the MOOSE classes:
--- 
+--
 -- * RANGE (to determine the impact points of bombs and missiles)
 -- * ARTY (to destroy and replace shells with smoke or illumination)
 -- * FOX (to destroy the missile before it hits the target)
@@ -181,48 +181,48 @@ function WEAPON:New(WeaponObject)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, POSITIONABLE:New("Weapon")) -- #WEAPON
-  
+
   -- Set DCS weapon object.
   self.weapon=WeaponObject
-  
+
   -- Descriptors containing a lot of info.
   self.desc=WeaponObject:getDesc()
 
   -- This gives the object category which is always Object.Category.WEAPON!
   --self.category=WeaponObject:getCategory()
-  
+
   -- Weapon category: 0=SHELL, 1=MISSILE, 2=ROCKET, 3=BOMB (Weapon.Category.X)
   self.category = self.desc.category
 
-  if self:IsMissile() and self.desc.missileCategory then    
+  if self:IsMissile() and self.desc.missileCategory then
     self.categoryMissile=self.desc.missileCategory
   end
-    
+
   -- Get type name.
   self.typeName=WeaponObject:getTypeName() or "Unknown Type"
-  
+
   -- Get name of object. Usually a number like "1234567".
   self.name=WeaponObject:getName()
-  
+
   -- Get coaliton of weapon.
   self.coalition=WeaponObject:getCoalition()
-  
+
   -- Get country of weapon.
   self.country=WeaponObject:getCountry()
-  
+
   -- Get DCS unit of the launcher.
   self.launcher=WeaponObject:getLauncher()
-  
+
   -- Get launcher of weapon.
   self.launcherName="Unknown Launcher"
   if self.launcher then
     self.launcherName=self.launcher:getName()
     self.launcherUnit=UNIT:Find(self.launcher)
   end
-  
+
   -- Init the coordinate of the weapon from that of the launcher.
   self.coordinate=COORDINATE:NewFromVec3(self.launcher:getPoint())
-  
+
   -- Set log ID.
   self.lid=string.format("[%s] %s | ", self.typeName, self.name)
 
@@ -237,12 +237,12 @@ function WEAPON:New(WeaponObject)
   -- Set default parameters
   self:SetTimeStepTrack()
   self:SetDistanceInterceptPoint()
-  
+
   -- Debug info.
-  local text=string.format("Weapon v%s\nName=%s, TypeName=%s, Category=%s, Coalition=%d, Country=%d, Launcher=%s", 
+  local text=string.format("Weapon v%s\nName=%s, TypeName=%s, Category=%s, Coalition=%d, Country=%d, Launcher=%s",
   self.version, self.name, self.typeName, self.category, self.coalition, self.country, self.launcherName)
   self:T(self.lid..text)
-  
+
   -- Descriptors.
   self:T2(self.desc)
 
@@ -312,13 +312,13 @@ function WEAPON:SetSmokeImpact(Switch, SmokeColor)
   else
     self.impactSmoke=true
   end
-  
+
   self.impactSmokeColor=SmokeColor or SMOKECOLOR.Red
 
   return self
 end
 
---- Set callback function when weapon is tracked and still alive. The first argument will be the WEAPON object. 
+--- Set callback function when weapon is tracked and still alive. The first argument will be the WEAPON object.
 -- Note that this can be called many times per second. So be careful for performance reasons.
 -- @param #WEAPON self
 -- @param #function FuncTrack Function called during tracking.
@@ -335,19 +335,19 @@ end
 -- @param #function FuncImpact Function called once the weapon impacted.
 -- @param ... Optional function arguments.
 -- @return #WEAPON self
--- 
+--
 -- @usage
 -- -- Function called on impact.
 -- local function OnImpact(Weapon)
 --   Weapon:GetImpactCoordinate():MarkToAll("Impact Coordinate of weapon")
 -- end
--- 
+--
 -- -- Set which function to call.
 -- myweapon:SetFuncImpact(OnImpact)
--- 
+--
 -- -- Start tracking.
 -- myweapon:Track()
--- 
+--
 function WEAPON:SetFuncImpact(FuncImpact, ...)
   self.impactFunc=FuncImpact
   self.impactArg=arg or {}
@@ -368,37 +368,37 @@ end
 function WEAPON:GetTarget()
 
   local target=nil --Wrapper.Object#OBJECT
-  
+
   if self.weapon then
-  
+
     -- Get the DCS target object, which can be a Unit, Weapon, Static, Scenery, Airbase.
     local object=self.weapon:getTarget()
-    
+
     if object then
-    
+
       -- Get object category.
       local category=Object.getCategory(object)
-      
+
       --Target name
       local name=object:getName()
-            
+
       -- Debug info.
-      self:T(self.lid..string.format("Got Target Object %s, category=%d", object:getName(), category))      
-      
+      self:T(self.lid..string.format("Got Target Object %s, category=%d", object:getName(), category))
+
       if category==Object.Category.UNIT then
-      
+
         target=UNIT:FindByName(name)
-        
+
       elseif category==Object.Category.STATIC then
-      
+
         target=STATIC:FindByName(name, false)
-        
+
       elseif category==Object.Category.SCENERY then
         self:E(self.lid..string.format("ERROR: Scenery target not implemented yet!"))
       else
         self:E(self.lid..string.format("ERROR: Object category=%d is not implemented yet!", category))
       end
-      
+
     end
   end
 
@@ -413,25 +413,25 @@ function WEAPON:GetTargetDistance(ConversionFunction)
 
   -- Get the target of the weapon.
   local target=self:GetTarget() --Wrapper.Unit#UNIT
-  
+
   local distance=nil
   if target then
 
     -- Current position of target.
     local tv3=target:GetVec3()
-    
+
     -- Current position of weapon.
     local wv3=self:GetVec3()
-    
+
     if tv3 and wv3 then
       distance=UTILS.VecDist3D(tv3, wv3)
-      
+
       if ConversionFunction then
         distance=ConversionFunction(distance)
       end
-      
+
     end
-  
+
   end
 
   return distance
@@ -445,10 +445,10 @@ function WEAPON:GetTargetName()
 
   -- Get the target of the weapon.
   local target=self:GetTarget() --Wrapper.Unit#UNIT
-  
+
   local name="None"
   if target then
-    name=target:GetName()  
+    name=target:GetName()
   end
 
   return name
@@ -476,13 +476,13 @@ function WEAPON:GetSpeed(ConversionFunction)
   if self.weapon then
 
     local v=self:GetVelocityVec3()
-    
+
     speed=UTILS.VecNorm(v)
-    
+
     if ConversionFunction then
       speed=ConversionFunction(speed)
     end
-    
+
   end
 
   return speed
@@ -508,11 +508,11 @@ end
 function WEAPON:GetVec2()
 
   local vec3=self:GetVec3()
-  
+
   if vec3 then
-  
+
     local vec2={x=vec3.x, y=vec3.z}
-    
+
     return vec2
   end
 
@@ -521,28 +521,28 @@ end
 
 --- Get type name.
 -- @param #WEAPON self
--- @return #string The type name. 
+-- @return #string The type name.
 function WEAPON:GetTypeName()
   return self.typeName
 end
 
 --- Get coalition.
 -- @param #WEAPON self
--- @return #number Coalition ID. 
+-- @return #number Coalition ID.
 function WEAPON:GetCoalition()
   return self.coalition
 end
 
 --- Get country.
 -- @param #WEAPON self
--- @return #number Country ID. 
+-- @return #number Country ID.
 function WEAPON:GetCountry()
   return self.country
 end
 
 --- Get DCS object.
 -- @param #WEAPON self
--- @return DCS#Weapon The weapon object. 
+-- @return DCS#Weapon The weapon object.
 function WEAPON:GetDCSObject()
   -- This polymorphic function is used in Wrapper.Identifiable#IDENTIFIABLE
   return self.weapon
@@ -675,23 +675,23 @@ end
 function WEAPON:Destroy(Delay)
 
   if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, WEAPON.Destroy, self, 0)    
+    self:ScheduleOnce(Delay, WEAPON.Destroy, self, 0)
   else
     if self.weapon then
       self:T(self.lid.."Destroying Weapon NOW!")
       self:StopTrack()
       self.weapon:destroy()
-    end    
+    end
   end
-  
+
   return self
 end
 
 --- Start tracking the weapon until it impacts or is destroyed otherwise.
--- The position of the weapon is monitored in small time steps. Once the position cannot be determined anymore, the monitoring is stopped and the last known position is 
--- the (approximate) impact point. Of course, the smaller the time step, the better the position can be determined. However, this can hit the performance as many 
+-- The position of the weapon is monitored in small time steps. Once the position cannot be determined anymore, the monitoring is stopped and the last known position is
+-- the (approximate) impact point. Of course, the smaller the time step, the better the position can be determined. However, this can hit the performance as many
 -- calculations per second need to be carried out.
--- @param #WEAPON self 
+-- @param #WEAPON self
 -- @param #number Delay Delay in seconds before the tracking starts. Default 0.001 sec.
 -- @return #WEAPON self
 function WEAPON:StartTrack(Delay)
@@ -700,8 +700,8 @@ function WEAPON:StartTrack(Delay)
   Delay=math.max(Delay or 0.001, 0.001)
 
   -- Debug info.
-  self:T(self.lid..string.format("Start tracking weapon in %.4f sec", Delay)) 
-  
+  self:T(self.lid..string.format("Start tracking weapon in %.4f sec", Delay))
+
   -- Weapon is not yet "alife" just yet. Start timer in 0.001 seconds.
   self.trackScheduleID=timer.scheduleFunction(WEAPON._TrackWeapon, self, timer.getTime() + Delay)
 
@@ -710,7 +710,7 @@ end
 
 
 --- Stop tracking the weapon by removing the scheduler function.
--- @param #WEAPON self 
+-- @param #WEAPON self
 -- @param #number Delay (Optional) Delay in seconds before the tracking is stopped.
 -- @return #WEAPON self
 function WEAPON:StopTrack(Delay)
@@ -719,13 +719,13 @@ function WEAPON:StopTrack(Delay)
     -- Delayed call.
     self:ScheduleOnce(Delay, WEAPON.StopTrack, self, 0)
   else
-  
+
     if self.trackScheduleID then
 
       timer.removeFunction(self.trackScheduleID)
 
     end
-    
+
   end
 
   return self
@@ -762,10 +762,10 @@ function WEAPON:_TrackWeapon(time)
 
     -- Update last known position.
     self.pos3 = pos3
-    
+
     -- Update last known vec3.
     self.vec3 = UTILS.DeepCopy(self.pos3.p)
-    
+
     -- Update coordinate.
     self.coordinate:UpdateFromVec3(self.vec3)
 
@@ -774,70 +774,70 @@ function WEAPON:_TrackWeapon(time)
 
     -- Keep on tracking by returning the next time below.
     self.tracking=true
-    
+
     -- Callback function.
     if self.trackFunc then
       self.trackFunc(self, unpack(self.trackArg))
     end
-    
+
     -- Verbose output.
     if self.verbose>=5 then
-    
+
       -- Get vec2 of current position.
       local vec2={x=self.vec3.x, y=self.vec3.z}
-    
+
       -- Land hight.
       local height=land.getHeight(vec2)
 
-      -- Current height above ground level.           
+      -- Current height above ground level.
       local agl=self.vec3.y-height
-      
+
       -- Estimated IP (if any)
       local ip=self:_GetIP(self.distIP)
-      
+
       -- Distance between positon and estimated impact.
       local d=0
       if ip then
         d=UTILS.VecDist3D(self.vec3, ip)
       end
-      
+
       -- Output.
       self:I(self.lid..string.format("T=%.3f: Height=%.3f m AGL=%.3f m, dIP=%.3f", time, height, agl, d))
-      
+
     end
 
   else
-  
+
     ---------------------------
     -- Weapon does NOT exist --
-    ---------------------------  
-  
+    ---------------------------
+
     -- Get intercept point from position (p) and direction (x) in 50 meters.
     local ip = self:_GetIP(self.distIP)
-    
+
     if self.verbose>=10 and ip then
-    
+
       -- Output.
       self:I(self.lid.."Got intercept point!")
-      
+
       -- Coordinate of the impact point.
       local coord=COORDINATE:NewFromVec3(ip)
-      
+
       -- Mark coordinate.
       coord:MarkToAll("Intercept point")
       coord:SmokeBlue()
-      
+
       -- Distance to last known pos.
       local d=UTILS.VecDist3D(ip, self.vec3)
-      
+
       -- Output.
       self:I(self.lid..string.format("FF d(ip, vec3)=%.3f meters", d))
-      
+
     end
-  
+
     -- Safe impact vec3.
     self.impactVec3=ip or self.vec3
-    
+
     -- Safe impact coordinate.
     self.impactCoord=COORDINATE:NewFromVec3(self.vec3)
 
@@ -848,22 +848,22 @@ function WEAPON:_TrackWeapon(time)
     if self.impactMark then
       self.impactCoord:MarkToAll(string.format("Impact point of weapon %s\ntype=%s\nlauncher=%s", self.name, self.typeName, self.launcherName))
     end
-    
+
     -- Smoke on impact point.
     if self.impactSmoke then
       self.impactCoord:Smoke(self.impactSmokeColor)
     end
-    
+
     -- Call callback function.
     if self.impactFunc then
       self.impactFunc(self, unpack(self.impactArg or {}))
     end
-    
+
     -- Stop tracking by returning nil below.
     self.tracking=false
-    
+
   end
-  
+
   -- Return next time the function is called or nil to stop the scheduler.
   if self.tracking then
     if self.dtTrack and self.dtTrack>=0.00001 then
@@ -885,12 +885,12 @@ function WEAPON:_GetIP(Distance)
   Distance=Distance or 50
 
   local ip=nil --DCS#Vec3
-  
+
   if Distance>0 and self.pos3 then
 
     -- Get intercept point from position (p) and direction (x) in 20 meters.
     ip = land.getIP(self.pos3.p, self.pos3.x, Distance or 20) --DCS#Vec3
-    
+
   end
 
   return ip
