@@ -160,7 +160,7 @@ AI_CARGO_DISPATCHER_SHIP = {
 --      local SetPickupZones = SET_ZONE:New():FilterPrefixes( "Pickup" ):FilterStart()
 --      local SetDeployZones = SET_ZONE:New():FilterPrefixes( "Deploy" ):FilterStart()
 --      NEED MORE THOUGHT - ShippingLane is part of Warehouse.......
---      local ShippingLane = GROUP:New():FilterPrefixes( "ShippingLane" ):FilterStart()
+--      local ShippingLane = SET_GROUP:New():FilterPrefixes( "ShippingLane" ):FilterOnce():GetSetObjects()
 -- 
 --      AICargoDispatcherShip = AI_CARGO_DISPATCHER_SHIP:New( SetShip, SetCargoInfantry, SetPickupZones, SetDeployZones, ShippingLane )
 --      AICargoDispatcherShip:Start()
