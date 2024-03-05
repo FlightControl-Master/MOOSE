@@ -140,7 +140,7 @@ COMMANDER = {
 
 --- COMMANDER class version.
 -- @field #string version
-COMMANDER.version="0.1.3"
+COMMANDER.version="0.1.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -675,7 +675,8 @@ function COMMANDER:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
   patrolzone.zone=Zone
   patrolzone.altitude=Altitude or 12000
   patrolzone.heading=Heading or 270
-  patrolzone.speed=UTILS.KnotsToAltKIAS(Speed or 350, patrolzone.altitude)
+  --patrolzone.speed=UTILS.KnotsToAltKIAS(Speed or 350, patrolzone.altitude)
+  patrolzone.speed=Speed or 350
   patrolzone.leg=Leg or 30
   patrolzone.mission=nil
   --patrolzone.marker=MARKER:New(patrolzone.zone:GetCoordinate(), "CAP Zone"):ToCoalition(self:GetCoalition())
@@ -700,7 +701,8 @@ function COMMANDER:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
   patrolzone.zone=Zone
   patrolzone.altitude=Altitude or 12000
   patrolzone.heading=Heading or 270
-  patrolzone.speed=UTILS.KnotsToAltKIAS(Speed or 350, patrolzone.altitude)
+  --patrolzone.speed=UTILS.KnotsToAltKIAS(Speed or 350, patrolzone.altitude)
+  patrolzone.speed=Speed or 350
   patrolzone.leg=Leg or 30
   patrolzone.mission=nil
   --patrolzone.marker=MARKER:New(patrolzone.zone:GetCoordinate(), "GCICAP Zone"):ToCoalition(self:GetCoalition())
@@ -745,7 +747,9 @@ function COMMANDER:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
   awacszone.zone=Zone
   awacszone.altitude=Altitude or 12000
   awacszone.heading=Heading or 270
-  awacszone.speed=UTILS.KnotsToAltKIAS(Speed or 350, awacszone.altitude)
+  --awacszone.speed=UTILS.KnotsToAltKIAS(Speed or 350, awacszone.altitude)
+  awacszone.speed=Speed or 350
+  awacszone.speed=Speed or 350
   awacszone.leg=Leg or 30
   awacszone.mission=nil
   --awacszone.marker=MARKER:New(awacszone.zone:GetCoordinate(), "AWACS Zone"):ToCoalition(self:GetCoalition())
@@ -791,7 +795,8 @@ function COMMANDER:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSyst
   tankerzone.zone=Zone
   tankerzone.altitude=Altitude or 12000
   tankerzone.heading=Heading or 270
-  tankerzone.speed=UTILS.KnotsToAltKIAS(Speed or 350, tankerzone.altitude)
+  --tankerzone.speed=UTILS.KnotsToAltKIAS(Speed or 350, tankerzone.altitude) -- speed translation to alt will be done by AUFTRAG anyhow
+  tankerzone.speed = Speed or 350
   tankerzone.leg=Leg or 30
   tankerzone.refuelsystem=RefuelSystem
   tankerzone.mission=nil
