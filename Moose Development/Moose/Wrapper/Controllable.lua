@@ -3871,6 +3871,10 @@ end
 -- @param #CONTROLLABLE self
 -- @param #table WayPoints If WayPoints is given, then use the route.
 -- @return #CONTROLLABLE self
+-- @usage Intended Workflow is:
+-- mygroup:WayPointInitialize()
+-- mygroup:WayPointFunction( WayPoint, WayPointIndex, WayPointFunction, ... )
+-- mygroup:WayPointExecute()
 function CONTROLLABLE:WayPointInitialize( WayPoints )
   self:F( { WayPoints } )
 
@@ -3902,9 +3906,15 @@ end
 -- @param #number WayPointIndex When defining multiple WayPoint functions for one WayPoint, use WayPointIndex to set the sequence of actions.
 -- @param #function WayPointFunction The waypoint function to be called when the controllable moves over the waypoint. The waypoint function takes variable parameters.
 -- @return #CONTROLLABLE self
+-- @usage Intended Workflow is:
+-- mygroup:WayPointInitialize()
+-- mygroup:WayPointFunction( WayPoint, WayPointIndex, WayPointFunction, ... )
+-- mygroup:WayPointExecute()
 function CONTROLLABLE:WayPointFunction( WayPoint, WayPointIndex, WayPointFunction, ... )
   self:F2( { WayPoint, WayPointIndex, WayPointFunction } )
-
+  if not self.WayPoints then
+    self:WayPointInitialize()
+  end
   table.insert( self.WayPoints[WayPoint].task.params.tasks, WayPointIndex )
   self.WayPoints[WayPoint].task.params.tasks[WayPointIndex] = self:TaskFunction( WayPointFunction, arg )
   return self
@@ -3917,6 +3927,10 @@ end
 -- @param #number WayPoint The WayPoint from where to execute the mission.
 -- @param #number WaitTime The amount seconds to wait before initiating the mission.
 -- @return #CONTROLLABLE self
+-- @usage Intended Workflow is:
+-- mygroup:WayPointInitialize()
+-- mygroup:WayPointFunction( WayPoint, WayPointIndex, WayPointFunction, ... )
+-- mygroup:WayPointExecute()
 function CONTROLLABLE:WayPointExecute( WayPoint, WaitTime )
   self:F( { WayPoint, WaitTime } )
 
