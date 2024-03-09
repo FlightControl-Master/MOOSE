@@ -535,7 +535,7 @@ OPSGROUP.version="1.0.0"
 -- @param Wrapper.Group#GROUP group The GROUP object. Can also be given by its group name as `#string`.
 -- @return #OPSGROUP self
 function OPSGROUP:New(group)
-
+    
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #OPSGROUP
 
@@ -554,9 +554,14 @@ function OPSGROUP:New(group)
   -- Check if group exists.
   if self.group then
     if not self:IsExist() then
-      self:T(self.lid.."ERROR: GROUP does not exist! Returning nil")
+      self:E(self.lid.."ERROR: GROUP does not exist! Returning nil")
       return nil
     end
+  end
+  
+  if UTILS.IsInstanceOf(group,"OPSGROUP") then
+    self:E(self.lid.."ERROR: GROUP is already an OPSGROUP: "..tostring(self.groupname).."!")
+    return group
   end
 
   -- Set the template.
@@ -591,33 +596,34 @@ function OPSGROUP:New(group)
 
   if units then
     local masterunit=units[1] --Wrapper.Unit#UNIT
-
-    -- Get Descriptors.
-    self.descriptors=masterunit:GetDesc()
-
-    -- Set type name.
-    self.actype=masterunit:GetTypeName()
-
-    -- Is this a submarine.
-    self.isSubmarine=masterunit:HasAttribute("Submarines")
-
-    -- Has this a datalink?
-    self.isEPLRS=masterunit:HasAttribute("Datalink")
-
-    if self:IsFlightgroup() then
-
-      self.rangemax=self.descriptors.range and self.descriptors.range*1000 or 500*1000
-
-      self.ceiling=self.descriptors.Hmax
-
-      self.tankertype=select(2, masterunit:IsTanker())
-      self.refueltype=select(2, masterunit:IsRefuelable())
-
-      --env.info("DCS Unit BOOM_AND_RECEPTACLE="..tostring(Unit.RefuelingSystem.BOOM_AND_RECEPTACLE))
-      --env.info("DCS Unit PROBE_AND_DROGUE="..tostring(Unit.RefuelingSystem.PROBE_AND_DROGUE))
-
+    
+    if unit then
+      -- Get Descriptors.
+      self.descriptors=masterunit:GetDesc()
+  
+      -- Set type name.
+      self.actype=masterunit:GetTypeName()
+  
+      -- Is this a submarine.
+      self.isSubmarine=masterunit:HasAttribute("Submarines")
+  
+      -- Has this a datalink?
+      self.isEPLRS=masterunit:HasAttribute("Datalink")
+  
+      if self:IsFlightgroup() then
+  
+        self.rangemax=self.descriptors.range and self.descriptors.range*1000 or 500*1000
+  
+        self.ceiling=self.descriptors.Hmax
+  
+        self.tankertype=select(2, masterunit:IsTanker())
+        self.refueltype=select(2, masterunit:IsRefuelable())
+  
+        --env.info("DCS Unit BOOM_AND_RECEPTACLE="..tostring(Unit.RefuelingSystem.BOOM_AND_RECEPTACLE))
+        --env.info("DCS Unit PROBE_AND_DROGUE="..tostring(Unit.RefuelingSystem.PROBE_AND_DROGUE))
+  
+      end
     end
-
   end
 
   -- Init set of detected units.
