@@ -932,7 +932,7 @@ function DATABASE:Spawn( SpawnTemplate )
   SpawnTemplate.CountryID = nil
   SpawnTemplate.CategoryID = nil
 
-  self:_RegisterGroupTemplate( SpawnTemplate, SpawnCoalitionID, SpawnCategoryID, SpawnCountryID  )
+  self:_RegisterGroupTemplate( SpawnTemplate, SpawnCoalitionID, SpawnCategoryID, SpawnCountryID, SpawnTemplate.name  )
 
   self:T3( SpawnTemplate )
   coalition.addGroup( SpawnCountryID, SpawnCategoryID, SpawnTemplate )

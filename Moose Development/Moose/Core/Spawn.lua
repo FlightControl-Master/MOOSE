@@ -536,7 +536,7 @@ function SPAWN:NewFromTemplate( SpawnTemplate, SpawnTemplatePrefix, SpawnAliasPr
   end
 
   if SpawnTemplate then
-    self.SpawnTemplate = SpawnTemplate -- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
+    self.SpawnTemplate = UTILS.DeepCopy(SpawnTemplate) -- Contains the template structure for a Group Spawn from the Mission Editor. Note that this group must have lateActivation always on!!!
     self.SpawnTemplatePrefix = SpawnTemplatePrefix
     self.SpawnAliasPrefix = SpawnAliasPrefix or SpawnTemplatePrefix
     self.SpawnTemplate.name = SpawnTemplatePrefix
