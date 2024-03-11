@@ -3396,7 +3396,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
       end
     end
   end
-
+  
   if self.SpawnInitKeepUnitNames == false then
     for UnitID = 1, #SpawnTemplate.units do
       SpawnTemplate.units[UnitID].name = string.format( SpawnTemplate.name .. '-%02d', UnitID )
@@ -3404,9 +3404,17 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
     end
   else
     for UnitID = 1, #SpawnTemplate.units do
-      local UnitPrefix, Rest = string.match( SpawnTemplate.units[UnitID].name, "^([^#]+)#?" ):gsub( "^%s*(.-)%s*$", "%1" )
-      self:T( { UnitPrefix, Rest } )
-
+        local SpawnInitKeepUnitIFF = false
+        if string.find(SpawnTemplate.units[UnitID].name,"#IFF_",1,true) then --Razbam IFF hack for F15E etc
+          SpawnInitKeepUnitIFF = true
+        end
+      local UnitPrefix, Rest
+      if SpawnInitKeepUnitIFF == false then
+        UnitPrefix, Rest = string.match( SpawnTemplate.units[UnitID].name, "^([^#]+)#?" ):gsub( "^%s*(.-)%s*$", "%1" )
+        self:T( { UnitPrefix, Rest } )
+      else
+       UnitPrefix=SpawnTemplate.units[UnitID].name
+      end
       SpawnTemplate.units[UnitID].name = string.format( '%s#%03d-%02d', UnitPrefix, SpawnIndex, UnitID )
       SpawnTemplate.units[UnitID].unitId = nil
     end
