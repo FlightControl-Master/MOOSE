@@ -12,7 +12,8 @@
 -- @image Wrapper_Static.JPG
 
 
---- @type STATIC
+---
+-- @type STATIC
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle Static objects.
@@ -236,7 +237,7 @@ function STATIC:SpawnAt(Coordinate, Heading, Delay)
 end
 
 
---- Respawn the @{Wrapper.Unit} at the same location with the same properties.
+--- Respawn the @{Wrapper.Static} at the same location with the same properties.
 -- This is useful to respawn a cargo after it has been destroyed.
 -- @param #STATIC self
 -- @param DCS#country.id CountryID (Optional) The country ID used for spawning the new static. Default is same as currently.
@@ -248,7 +249,7 @@ function STATIC:ReSpawn(CountryID, Delay)
   else
 
     CountryID=CountryID or self:GetCountry()  
-
+   
     local SpawnStatic=SPAWNSTATIC:NewFromStatic(self.StaticName, CountryID)
     
     SpawnStatic:Spawn(nil, self.StaticName)
@@ -270,8 +271,8 @@ function STATIC:ReSpawnAt(Coordinate, Heading, Delay)
 
   if Delay and Delay>0 then
     SCHEDULER:New(nil, self.ReSpawnAt, {self, Coordinate, Heading}, Delay)
-  else
-  
+  else      
+      
     local SpawnStatic=SPAWNSTATIC:NewFromStatic(self.StaticName, self:GetCountry())
     
     SpawnStatic:SpawnFromCoordinate(Coordinate, Heading, self.StaticName)
@@ -279,4 +280,53 @@ function STATIC:ReSpawnAt(Coordinate, Heading, Delay)
   end
   
   return self
+end
+
+--- Find the first(!) STATIC matching using patterns. Note that this is **a lot** slower than `:FindByName()`!
+-- @param #STATIC self
+-- @param #string Pattern The pattern to look for. Refer to [LUA patterns](http://www.easyuo.com/openeuo/wiki/index.php/Lua_Patterns_and_Captures_\(Regular_Expressions\)) for regular expressions in LUA.
+-- @return #STATIC The STATIC.
+-- @usage
+--          -- Find a static with a partial static name
+--          local grp = STATIC:FindByMatching( "Apple" )
+--          -- will return e.g. a static named "Apple-1-1"
+--
+--          -- using a pattern
+--          local grp = STATIC:FindByMatching( ".%d.%d$" )
+--          -- will return the first static found ending in "-1-1" to "-9-9", but not e.g. "-10-1"
+function STATIC:FindByMatching( Pattern )
+  local GroupFound = nil
+
+  for name,static in pairs(_DATABASE.STATICS) do
+    if string.match(name, Pattern ) then
+      GroupFound = static
+      break
+    end
+  end
+
+  return GroupFound
+end
+
+--- Find all STATIC objects matching using patterns. Note that this is **a lot** slower than `:FindByName()`!
+-- @param #STATIC self
+-- @param #string Pattern The pattern to look for. Refer to [LUA patterns](http://www.easyuo.com/openeuo/wiki/index.php/Lua_Patterns_and_Captures_\(Regular_Expressions\)) for regular expressions in LUA.
+-- @return #table Groups Table of matching #STATIC objects found
+-- @usage
+--          -- Find all static with a partial static name
+--          local grptable = STATIC:FindAllByMatching( "Apple" )
+--          -- will return all statics with "Apple" in the name
+--
+--          -- using a pattern
+--          local grp = STATIC:FindAllByMatching( ".%d.%d$" )
+--          -- will return the all statics found ending in "-1-1" to "-9-9", but not e.g. "-10-1" or "-1-10"
+function STATIC:FindAllByMatching( Pattern )
+  local GroupsFound = {}
+
+  for name,static in pairs(_DATABASE.STATICS) do
+    if string.match(name, Pattern ) then
+      GroupsFound[#GroupsFound+1] = static
+    end
+  end
+
+  return GroupsFound
 end
