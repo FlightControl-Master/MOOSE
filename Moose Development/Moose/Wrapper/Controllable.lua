@@ -4116,6 +4116,74 @@ function CONTROLLABLE:SetOptionRadarUsingForContinousSearch()
   return self
 end
 
+--- [AIR] Set if the AI is reporting passing of waypoints
+-- @param #CONTROLLABLE self
+-- @param #boolean OnOff If true or nil, AI will report passing waypoints, if false, it will not.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionWaypointPassReport(OnOff)
+ self:F2( { self.ControllableName } )
+ local onoff = (OnOff == nil or OnOff == true) and false or true
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.PROHIBIT_WP_PASS_REPORT,onoff)
+  end
+  return self
+end
+
+--- [AIR] Set the AI to not report anything over the radio - radio silence
+-- @param #CONTROLLABLE self
+-- @param #boolean OnOff If true or nil, radio is set to silence, if false radio silence is lifted.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionRadioSilence(OnOff)
+ local onoff = (OnOff == true or OnOff == nil) and true or false
+ self:F2( { self.ControllableName } )
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.SILENCE,onoff)
+  end
+  return self
+end
+
+--- [AIR] Set the AI to report contact for certain types of objects.
+-- @param #CONTROLLABLE self
+-- @param #table Objects Table of attribute names for which AI reports contact. Defaults to {"Air"}. See [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionRadioContact(Objects)
+ self:F2( { self.ControllableName } )
+ if not Objects then Objects = {"Air"} end
+ if type(Objects) ~= "table" then Objects = {Objects} end
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.OPTION_RADIO_USAGE_CONTACT,Objects)
+  end
+  return self
+end
+
+--- [AIR] Set the AI to report engaging certain types of objects.
+-- @param #CONTROLLABLE self
+-- @param #table Objects Table of attribute names for which AI reports contact. Defaults to {"Air"}, see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionRadioEngage(Objects)
+ self:F2( { self.ControllableName } )
+ if not Objects then Objects = {"Air"} end
+ if type(Objects) ~= "table" then Objects = {Objects} end
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.OPTION_RADIO_USAGE_ENGAGE,Objects)
+  end
+  return self
+end
+
+--- [AIR] Set the AI to report killing certain types of objects.
+-- @param #CONTROLLABLE self
+-- @param #table Objects Table of attribute names for which AI reports contact. Defaults to {"Air"}, see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionRadioKill(Objects)
+ self:F2( { self.ControllableName } )
+ if not Objects then Objects = {"Air"} end
+ if type(Objects) ~= "table" then Objects = {Objects} end
+  if self:IsAir() then
+    self:SetOption(AI.Option.Air.id.OPTION_RADIO_USAGE_KILL,Objects)
+  end
+  return self
+end
+
 --- (GROUND) Relocate controllable to a random point within a given radius; use e.g.for evasive actions; Note that not all ground controllables can actually drive, also the alarm state of the controllable might stop it from moving.
 -- @param #CONTROLLABLE self
 -- @param #number speed Speed of the controllable, default 20
