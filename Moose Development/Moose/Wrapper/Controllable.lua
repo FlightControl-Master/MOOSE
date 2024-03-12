@@ -4172,7 +4172,7 @@ end
 
 --- [AIR] Set the AI to report killing certain types of objects.
 -- @param #CONTROLLABLE self
--- @param #table Table of attribute names for which AI reports contact. Defaults to {"Air"}, see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
+-- @param #table Objects Table of attribute names for which AI reports contact. Defaults to {"Air"}, see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:SetOptionRadioKill(Objects)
  self:F2( { self.ControllableName } )
