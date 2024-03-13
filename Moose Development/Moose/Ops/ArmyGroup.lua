@@ -2069,7 +2069,7 @@ function ARMYGROUP:_InitGroup(Template)
   self.speedMax=self.group:GetSpeedMax()
   
   -- Is group mobile?
-  if self.speedMax>3.6 then
+  if self.speedMax and self.speedMax>3.6 then
     self.isMobile=true
   else
     self.isMobile=false
