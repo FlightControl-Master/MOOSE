@@ -426,7 +426,7 @@ function GROUP:IsActive()
 
   local DCSGroup = self:GetDCSObject() -- DCS#Group
 
-  if DCSGroup then
+  if DCSGroup and DCSGroup:isExist() then
     local unit = DCSGroup:getUnit(1)
     if unit then
       local GroupIsActive = unit:isActive()

@@ -1097,6 +1097,7 @@ do
       GroupPrefixes = nil,
       Zones = nil,
       Functions = nil,
+      Alive = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -1470,7 +1471,7 @@ do
     
   end
 
-  --- Builds a set of groups that are only active.
+  --- Builds a set of groups that are active, ie in the mission but not yet activated (false) or actived (true).
   -- Only the groups that are active will be included within the set.
   -- @param #SET_GROUP self
   -- @param #boolean Active (Optional) Include only active groups to the set.
@@ -1493,6 +1494,14 @@ do
   function SET_GROUP:FilterActive( Active )
     Active = Active or not (Active == false)
     self.Filter.Active = Active
+    return self
+  end
+  
+  --- Build a set of groups that are alive.
+  -- @param #SET_GROUP self
+  -- @return #SET_GROUP self
+  function SET_GROUP:FilterAlive()
+    self.Filter.Alive = true
     return self
   end
 
@@ -1993,7 +2002,16 @@ do
   function SET_GROUP:IsIncludeObject( MGroup )
     self:F2( MGroup )
     local MGroupInclude = true
-
+    
+    if self.Filter.Alive == true then
+      local MGroupAlive = false
+      self:F( { Active = self.Filter.Active } )
+      if MGroup and MGroup:IsAlive() then
+        MGroupAlive = true
+      end
+      MGroupInclude = MGroupInclude and MGroupAlive
+    end
+    
     if self.Filter.Active ~= nil then
       local MGroupActive = false
       self:F( { Active = self.Filter.Active } )
