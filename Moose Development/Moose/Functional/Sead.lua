@@ -320,9 +320,6 @@ function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADG
         end  
         
         local seadset = SET_GROUP:New():FilterPrefixes(self.SEADGroupPrefixes):FilterZones({targetzone}):FilterOnce()
-        local tgtcoord = targetzone:GetRandomPointVec2()
-        --if tgtcoord and tgtcoord.ClassName == "COORDINATE" then
-          --local tgtgrp = seadset:FindNearestGroupFromPointVec2(tgtcoord)
           local tgtgrp = seadset:GetRandom()
           local _targetgroup = nil
           local _targetgroupname = "none"
