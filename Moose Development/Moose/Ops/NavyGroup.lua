@@ -1804,6 +1804,7 @@ function NAVYGROUP:_InitGroup(Template)
     self.isMobile=true
   else
     self.isMobile=false
+    self.speedMax = 0
   end  
   
   -- Cruise speed: 70% of max speed.

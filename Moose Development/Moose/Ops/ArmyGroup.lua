@@ -2073,6 +2073,7 @@ function ARMYGROUP:_InitGroup(Template)
     self.isMobile=true
   else
     self.isMobile=false
+    self.speedMax = 0
   end
   
   -- Cruise speed in km/h

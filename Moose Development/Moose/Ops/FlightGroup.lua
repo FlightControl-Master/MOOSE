@@ -3803,6 +3803,7 @@ function FLIGHTGROUP:_InitGroup(Template)
     self.isMobile=true
   else
     self.isMobile=false
+    self.speedMax = 0
   end  
 
   -- Cruise speed limit 380 kts for fixed and 110 knots for rotary wings.
