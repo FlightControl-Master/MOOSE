@@ -444,10 +444,11 @@ end
 --- Print a table to log in a nice format
 -- @param #table table The table to print
 -- @param #number indent Number of indents
+-- @param #boolean noprint Don't log but return text
 -- @return #string text Text created on the fly of the log output
-function UTILS.PrintTableToLog(table, indent)
+function UTILS.PrintTableToLog(table, indent, noprint)
   local text = "\n"
-  if not table then
+  if not table or type(table) ~= "table" then
     env.warning("No table passed!")
     return nil
   end
@@ -455,11 +456,16 @@ function UTILS.PrintTableToLog(table, indent)
   for k, v in pairs(table) do
     if string.find(k," ") then k='"'..k..'"'end
     if type(v) == "table" then
-      env.info(string.rep("  ", indent) .. tostring(k) .. " = {")
+      if not noprint then
+        env.info(string.rep("  ", indent) .. tostring(k) .. " = {")
+      end
       text = text ..string.rep("  ", indent) .. tostring(k) .. " = {\n"
       text = text .. tostring(UTILS.PrintTableToLog(v, indent + 1)).."\n"
-      env.info(string.rep("  ", indent) .. "},")
+      if not noprint then
+        env.info(string.rep("  ", indent) .. "},")
+      end
       text = text .. string.rep("  ", indent) .. "},\n"
+    elseif type(v) == "function" then
     else
       local value
       if tostring(v) == "true" or tostring(v) == "false" or tonumber(v) ~= nil then
@@ -467,7 +473,9 @@ function UTILS.PrintTableToLog(table, indent)
       else
         value = '"'..tostring(v)..'"'
       end
-      env.info(string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(value)..",\n")
+      if not noprint then
+        env.info(string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(value)..",\n")
+      end
       text = text .. string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(value)..",\n"
     end
   end
@@ -2229,6 +2237,11 @@ function UTILS.IsLoadingDoorOpen( unit_name )
          return true -- no doors on this one ;)
       end
       
+      if type_name == "MH-60R" and (unit:getDrawArgumentValue(403) > 0 or unit:getDrawArgumentValue(403) == -1) then
+        BASE:T(unit_name .. " cargo door is open")
+        return true
+      end
+      
       return false
 
   end -- nil
@@ -3716,4 +3729,117 @@ end
 -- @return #number Decimal
 function UTILS.OctalToDecimal(Number)
   return tonumber(Number,8)
+end
+
+--- Function to save the position of a set of #OPSGROUP (ARMYGROUP) objects.
+-- @param Core.Set#SET_OPSGROUP Set of ops objects to save
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @param #boolean Structured Append the data with a list of typenames in the group plus their count.
+-- @return #boolean outcome True if saving is successful, else false.
+function UTILS.SaveSetOfOpsGroups(Set,Path,Filename,Structured)
+  local filename = Filename or "SetOfGroups"
+  local data = "--Save SET of groups: (name,legion,template,alttemplate,units,position.x,position.y,position.z,strucdata) "..Filename .."\n"
+  local List = Set:GetSetObjects()
+  for _,_group in pairs (List) do
+    local group = _group:GetGroup() -- Wrapper.Group#GROUP
+    if group and group:IsAlive() then
+      local name = group:GetName()
+      local template = string.gsub(name,"(.AID.%d+$","")
+      if string.find(template,"#") then
+       template = string.gsub(name,"#(%d+)$","")
+      end
+      local alttemplate = _group.templatename or "none"
+      local legiono = _group.legion -- Ops.Legion#LEGION
+      local legion = "none"
+      if legiono and type(legiono) == "table" and legiono.ClassName then
+        legion = legiono:GetName()
+        local asset = legiono:GetAssetByName(name) -- Functional.Warehouse#WAREHOUSE.Assetitem
+        alttemplate=asset.templatename
+      end
+      local units = group:CountAliveUnits()
+      local position = group:GetVec3()
+      if Structured then
+        local structure = UTILS.GetCountPerTypeName(group)
+        local strucdata =  ""
+        for typen,anzahl in pairs (structure) do
+          strucdata = strucdata .. typen .. "=="..anzahl..";"
+        end
+        data = string.format("%s%s,%s,%s,%s,%d,%d,%d,%d,%s\n",data,name,legion,template,alttemplate,units,position.x,position.y,position.z,strucdata)
+      else
+        data = string.format("%s%s,%s,%s,%s,%d,%d,%d,%d\n",data,name,legion,template,alttemplate,units,position.x,position.y,position.z)
+      end     
+    end
+  end
+  -- save the data
+  local outcome = UTILS.SaveToFile(Path,Filename,data)
+  return outcome
+end
+
+--- Load back a #OPSGROUP (ARMYGROUP) data from file for use with @{Ops.Brigade#BRIGADE.LoadBackAssetInPosition}()
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #table Returns a table of data entries: `{ groupname=groupname, size=size, coordinate=coordinate, template=template, structure=structure, legion=legion, alttemplate=alttemplate }`
+-- Returns nil when the file cannot be read. 
+function UTILS.LoadSetOfOpsGroups(Path,Filename)
+
+  local filename = Filename or "SetOfGroups"
+  local datatable = {}
+  
+  if UTILS.CheckFileExists(Path,filename) then
+    local outcome,loadeddata = UTILS.LoadFromFile(Path,Filename)
+    -- remove header
+    table.remove(loadeddata, 1)
+    for _id,_entry in pairs (loadeddata) do
+      local dataset = UTILS.Split(_entry,",")
+      -- 1name,2legion,3template,4alttemplate,5units,6position.x,7position.y,8position.z,9strucdata
+      local groupname = dataset[1]
+      local legion = dataset[2]
+      local template = dataset[3]
+      local alttemplate = dataset[4]
+      local size = tonumber(dataset[5])
+      local posx = tonumber(dataset[6])
+      local posy = tonumber(dataset[7])
+      local posz = tonumber(dataset[8])
+      local structure = dataset[9]
+      local coordinate = COORDINATE:NewFromVec3({x=posx, y=posy, z=posz})
+      if size > 0 then
+        local data = { groupname=groupname, size=size, coordinate=coordinate, template=template, structure=structure, legion=legion, alttemplate=alttemplate }
+        table.insert(datatable,data)
+      end
+    end
+  else
+    return nil
+  end
+
+  return datatable
+end
+
+--- Get the clock position from a relative heading
+-- @param #number refHdg The heading of the reference object (such as a Wrapper.UNIT) in 0-360
+-- @param #number tgtHdg The absolute heading from the reference object to the target object/point in 0-360
+-- @return #string text Text in clock heading such as "4 O'CLOCK"
+-- @usage Display the range and clock distance of a BTR in relation to REAPER 1-1's heading:
+-- 
+--          myUnit = UNIT:FindByName( "REAPER 1-1" )
+--          myTarget = GROUP:FindByName( "BTR-1" )
+--          
+--          coordUnit = myUnit:GetCoordinate()
+--          coordTarget = myTarget:GetCoordinate()
+--          
+--          hdgUnit = myUnit:GetHeading()
+--          hdgTarget = coordUnit:HeadingTo( coordTarget )
+--          distTarget = coordUnit:Get3DDistance( coordTarget )
+--          
+--          clockString = UTILS.ClockHeadingString( hdgUnit, hdgTarget )
+--          
+--          -- Will show this message to REAPER 1-1 in-game: Contact BTR at 3 o'clock for 1134m! 
+--          MESSAGE:New("Contact BTR at " .. clockString .. " for " .. distTarget  .. "m!):ToUnit( myUnit )
+function UTILS.ClockHeadingString(refHdg,tgtHdg)
+    local relativeAngle = tgtHdg - refHdg
+    if relativeAngle < 0 then
+        relativeAngle = relativeAngle + 360
+    end
+    local clockPos = math.ceil((relativeAngle % 360) / 30)
+    return clockPos.." o'clock"
 end

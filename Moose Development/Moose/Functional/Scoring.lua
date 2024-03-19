@@ -78,7 +78,8 @@
 -- ### Authors: **FlightControl**
 --
 -- ### Contributions:
---
+--  
+--   * **Applevangelist**: Additional functionality, fixes.
 --   * **Wingthor (TAW)**: Testing & Advice.
 --   * **Dutch-Baron (TAW)**: Testing & Advice.
 --   * **Whisper**: Testing and Advice.
@@ -116,11 +117,13 @@
 -- Special targets can be set that will give extra scores to the players when these are destroyed.
 -- Use the methods @{#SCORING.AddUnitScore}() and @{#SCORING.RemoveUnitScore}() to specify a special additional score for a specific @{Wrapper.Unit}s.
 -- Use the methods @{#SCORING.AddStaticScore}() and @{#SCORING.RemoveStaticScore}() to specify a special additional score for a specific @{Wrapper.Static}s.
--- Use the method @{#SCORING.SetGroupGroup}() to specify a special additional score for a specific @{Wrapper.Group}s.
+-- Use the method @{#SCORING.AddScoreSetGroup}() to specify a special additional score for a specific @{Wrapper.Group}s gathered in a @{Core.Set#SET_GROUP}.
 --
 --      local Scoring = SCORING:New( "Scoring File" )
 --      Scoring:AddUnitScore( UNIT:FindByName( "Unit #001" ), 200 )
 --      Scoring:AddStaticScore( STATIC:FindByName( "Static #1" ), 100 )
+--      local GroupSet = SET_GROUP:New():FilterPrefixes("RAT"):FilterStart()
+--      Scoring:AddScoreSetGroup( GroupSet, 100)
 --
 -- The above grants an additional score of 200 points for Unit #001 and an additional 100 points of Static #1 if these are destroyed.
 -- Note that later in the mission, one can remove these scores set, for example, when the a goal achievement time limit is over.
@@ -226,7 +229,7 @@ SCORING = {
   ClassID = 0,
   Players = {},
   AutoSave = true,
-  version = "1.17.1"
+  version = "1.18.2"
 }
 
 local _SCORINGCoalition = {
@@ -425,6 +428,31 @@ function SCORING:AddScoreGroup( ScoreGroup, Score )
     self.ScoringObjects[UnitName] = Score
   end
 
+  return self
+end
+
+--- Specify a special additional score for a @{Core.Set#SET_GROUP}.
+-- @param #SCORING self
+-- @param Core.Set#SET_GROUP Set The @{Core.Set#SET_GROUP} for which each @{Wrapper.Unit} in each Group a Score is given.
+-- @param #number Score The Score value.
+-- @return #SCORING
+function SCORING:AddScoreSetGroup(Set, Score)
+  local set = Set:GetSetObjects()
+  
+  for _,_group in pairs (set) do
+    if _group and _group:IsAlive() then
+      self:AddScoreGroup(_group,Score)
+    end
+  end
+  
+  local function AddScore(group)
+    self:AddScoreGroup(group,Score)
+  end
+  
+  function Set:OnAfterAdded(From,Event,To,ObjectName,Object)
+    AddScore(Object)
+  end
+  
   return self
 end
 
@@ -1030,7 +1058,7 @@ function SCORING:_EventOnHit( Event )
         PlayerHit.PenaltyHit = PlayerHit.PenaltyHit or 0
         PlayerHit.TimeStamp = PlayerHit.TimeStamp or 0
         PlayerHit.UNIT = PlayerHit.UNIT or TargetUNIT
-        -- After an instant kill we can't compute the thread level anymore. To fix this we compute at OnEventBirth
+        -- After an instant kill we can't compute the threat level anymore. To fix this we compute at OnEventBirth
         if PlayerHit.UNIT.ThreatType == nil then
           PlayerHit.ThreatLevel, PlayerHit.ThreatType = PlayerHit.UNIT:GetThreatLevel()
           -- if this fails for some reason, set a good default value
@@ -1141,7 +1169,7 @@ function SCORING:_EventOnHit( Event )
         PlayerHit.PenaltyHit = PlayerHit.PenaltyHit or 0
         PlayerHit.TimeStamp = PlayerHit.TimeStamp or 0
         PlayerHit.UNIT = PlayerHit.UNIT or TargetUNIT
-        -- After an instant kill we can't compute the thread level anymore. To fix this we compute at OnEventBirth
+        -- After an instant kill we can't compute the threat level anymore. To fix this we compute at OnEventBirth
         if PlayerHit.UNIT.ThreatType == nil then
           PlayerHit.ThreatLevel, PlayerHit.ThreatType = PlayerHit.UNIT:GetThreatLevel()
           -- if this fails for some reason, set a good default value
@@ -1288,17 +1316,17 @@ function SCORING:_EventOnDeadOrCrash( Event )
             TargetDestroy.PenaltyDestroy = TargetDestroy.PenaltyDestroy + 1
 
 
-            self:OnKillPvP(Player, TargetPlayerName, true, TargetThreatLevel, Player.ThreatLevel, ThreatPenalty)
+           --self:OnKillPvP(PlayerName, TargetPlayerName, true, TargetThreatLevel, Player.ThreatLevel, ThreatPenalty)
 
             if Player.HitPlayers[TargetPlayerName] then -- A player destroyed another player
-              self:OnKillPvP(Player, TargetPlayerName, true)
+              self:OnKillPvP(PlayerName, TargetPlayerName, true)
               MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed friendly player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                                "Penalty: -" .. ThreatPenalty .. " = " .. Player.Score - Player.Penalty,
                                MESSAGE.Type.Information )
                      :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
                      :ToCoalitionIf( InitCoalition, self:IfMessagesDestroy() and self:IfMessagesToCoalition() )
             else
-              self:OnKillPvE(Player, TargetUnitName, true, TargetThreatLevel, Player.ThreatLevel, ThreatPenalty)
+              self:OnKillPvE(PlayerName, TargetUnitName, true, TargetThreatLevel, Player.ThreatLevel, ThreatPenalty)
               MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed friendly target " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                                "Penalty: -" .. ThreatPenalty .. " = " .. Player.Score - Player.Penalty,
                                MESSAGE.Type.Information )
@@ -1326,14 +1354,14 @@ function SCORING:_EventOnDeadOrCrash( Event )
               else
                 Player.PlayerKills = 1
               end
-              self:OnKillPvP(Player, TargetPlayerName, false, TargetThreatLevel, Player.ThreatLevel, ThreatScore)
+              self:OnKillPvP(PlayerName, TargetPlayerName, false, TargetThreatLevel, Player.ThreatLevel, ThreatScore)
               MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed enemy player '" .. TargetPlayerName .. "' " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                                "Score: +" .. ThreatScore .. " = " .. Player.Score - Player.Penalty,
                                MESSAGE.Type.Information )
                      :ToAllIf( self:IfMessagesDestroy() and self:IfMessagesToAll() )
                      :ToCoalitionIf( InitCoalition, self:IfMessagesDestroy() and self:IfMessagesToCoalition() )
             else
-              self:OnKillPvE(Player, TargetUnitName, false, TargetThreatLevel, Player.ThreatLevel, ThreatScore)
+              self:OnKillPvE(PlayerName, TargetUnitName, false, TargetThreatLevel, Player.ThreatLevel, ThreatScore)
               MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. PlayerName .. "' destroyed enemy " .. TargetUnitCategory .. " ( " .. ThreatTypeTarget .. " ) " ..
                                "Score: +" .. ThreatScore .. " = " .. Player.Score - Player.Penalty,
                                MESSAGE.Type.Information )
@@ -1935,23 +1963,23 @@ end
 
 --- Handles the event when one player kill another player
 -- @param #SCORING self
--- @param #PLAYER Player the ataching player
--- @param #string TargetPlayerName the name of the killed player
--- @param #bool IsTeamKill true if this kill was a team kill
--- @param #number TargetThreatLevel Thread level of the target
--- @param #number PlayerThreatLevelThread level of the player
+-- @param #string PlayerName The attacking player
+-- @param #string TargetPlayerName The name of the killed player
+-- @param #boolean IsTeamKill true if this kill was a team kill
+-- @param #number TargetThreatLevel Threat level of the target
+-- @param #number PlayerThreatLevel Threat level of the player
 -- @param #number Score The score based on both threat levels
-function SCORING:OnKillPvP(Player, TargetPlayerName, IsTeamKill, TargetThreatLevel, PlayerThreatLevel, Score)
+function SCORING:OnKillPvP(PlayerName, TargetPlayerName, IsTeamKill, TargetThreatLevel, PlayerThreatLevel, Score)
   
 end
 --- Handles the event when one player kill another player
 -- @param #SCORING self
--- @param #PLAYER Player the ataching player
+-- @param #string PlayerName The attacking player
 -- @param #string TargetUnitName the name of the killed unit
--- @param #bool IsTeamKill true if this kill was a team kill
--- @param #number TargetThreatLevel Thread level of the target
--- @param #number PlayerThreatLevelThread level of the player
+-- @param #boolean IsTeamKill true if this kill was a team kill
+-- @param #number TargetThreatLevel Threat level of the target
+-- @param #number PlayerThreatLevel Threat level of the player
 -- @param #number Score The score based on both threat levels
-function SCORING:OnKillPvE(Player, TargetUnitName, IsTeamKill, TargetThreatLevel, PlayerThreatLevel, Score)
+function SCORING:OnKillPvE(PlayerName, TargetUnitName, IsTeamKill, TargetThreatLevel, PlayerThreatLevel, Score)
   
 end

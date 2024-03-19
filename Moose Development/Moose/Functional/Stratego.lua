@@ -41,6 +41,7 @@
 -- @field #boolean usebudget
 -- @field #number CaptureUnits
 -- @field #number CaptureThreatlevel
+-- @field #boolean ExcludeShips
 -- @extends Core.Base#BASE
 -- @extends Core.Fsm#FSM
 
@@ -176,7 +177,7 @@ STRATEGO = {
   debug = false,
   drawzone = false,
   markzone = false,
-  version = "0.2.4",
+  version = "0.2.5",
   portweight = 3,
   POIweight = 1,
   maxrunways = 3,
@@ -195,6 +196,7 @@ STRATEGO = {
   usebudget = false,
   CaptureUnits = 3,
   CaptureThreatlevel = 1,
+  ExcludeShips = true,
 }
 
 ---
@@ -256,6 +258,7 @@ function STRATEGO:New(Name,Coalition,MaxDist)
   self.maxdist = MaxDist or 150 -- km
   self.disttable = {}
   self.routexists = {}
+  self.ExcludeShips = true
   
   self.lid = string.format("STRATEGO %s %s | ",self.name,self.version) 
   
@@ -427,6 +430,7 @@ function STRATEGO:AnalyseBases()
   self.bases:ForEach(
     function(afb)
       local ab = afb -- Wrapper.Airbase#AIRBASE
+      if self.ExcludeShips and ab:IsShip() then return end
       local abname = ab:GetName()
       local runways = ab:GetRunways()
       local numrwys = #runways
@@ -438,14 +442,14 @@ function STRATEGO:AnalyseBases()
       local coa = ab:GetCoalition()
       if coa == nil then return end -- Spawned FARPS issue - these have no tangible data
       coa = coa+1
-      local abtype = "AIRBASE"
+      local abtype = STRATEGO.Type.AIRBASE
       if ab:IsShip() then
         numrwys = 1
-        abtype = "SHIP"
+        abtype = STRATEGO.Type.SHIP
       end
       if ab:IsHelipad() then 
         numrwys = 1
-        abtype = "FARP"
+        abtype = STRATEGO.Type.FARP
       end
       local coord = ab:GetCoordinate()
       if debug then
@@ -481,10 +485,10 @@ function STRATEGO:UpdateNodeCoalitions()
   local newtable = {}
   for _id,_data in pairs(self.airbasetable) do
     local data = _data -- #STRATEGO.Data
-    if data.type == "AIRBASE" or data.type == "FARP"  then
-      data.coalition = AIRBASE:FindByName(data.name):GetCoalition()
+    if data.type == STRATEGO.Type.AIRBASE or data.type == STRATEGO.Type.FARP or data.type == STRATEGO.Type.SHIP then
+      data.coalition = AIRBASE:FindByName(data.name):GetCoalition() or 0
     else
-      data.coalition = data.opszone:GetOwner()
+      data.coalition = data.opszone:GetOwner() or 0
     end
     newtable[_id] = _data
   end
@@ -937,11 +941,13 @@ function STRATEGO:FindClosestConsolidationTarget(Startpoint,BaseWeight)
       local cname = self.easynames[tname]
       local targetweight = self.airbasetable[cname].baseweight
       coa = self.airbasetable[cname].coalition
+      --self:T("Start -> End: "..startpoint.." -> "..cname)
       if (dist < shortest) and  (coa ~= self.coalition) and (BaseWeight >= targetweight) then
+        self:T("Found Consolidation Target: "..cname)
         shortest = dist
         target = cname
         weight = self.airbasetable[cname].weight
-        coa = self.airbasetable[cname].coalition
+        coa = coa
       end
     end
   end
@@ -974,8 +980,9 @@ function STRATEGO:FindClosestStrategicTarget(Startpoint,Weight)
       local coa = self.airbasetable[cname].coalition
       local tweight = self.airbasetable[cname].baseweight
       local ttweight = self.airbasetable[cname].weight
-      self:T("Start -> End: "..startpoint.." -> "..cname)
+      --self:T("Start -> End: "..startpoint.." -> "..cname)
       if (dist < shortest) and (coa ~= self.coalition) and (tweight >=  Weight) then
+        self:T("Found Strategic Target: "..cname)
         shortest = dist
         target = cname
         weight = self.airbasetable[cname].weight
@@ -996,38 +1003,31 @@ function STRATEGO:FindStrategicTargets()
     local data = _data -- #STRATEGO.Data
     if data.coalition == self.coalition then
       local dist, name, points, coa = self:FindClosestStrategicTarget(data.name,data.weight)
-      if coa == coalition.side.NEUTRAL and points ~= 0 then
-        local fpoints = points + self.NeutralBenefit
-        local tries = 1
-        while targets[fpoints] or tries < 100 do
-          fpoints = points + (self.NeutralBenefit+math.random(1,100))
-          tries = tries + 1
-        end
-        targets[fpoints] = {
-          name = name,
-          dist = dist,
-          points = fpoints,
-          coalition = coa,
-          coalitionname = UTILS.GetCoalitionName(coa), 
-          coordinate = self.airbasetable[name].coord, 
-          }
+      if points > 0 then
+        self:T({dist=dist, name=name, points=points, coa=coa})
       end
-      local enemycoa = self.coalition == coalition.side.BLUE and coalition.side.RED or coalition.side.BLUE
-      if coa == enemycoa and points ~= 0 then
-        local fpoints = points
-        local tries = 1
-        while targets[fpoints] or tries < 100 do
-          fpoints = points + (math.random(1,100))
-          tries = tries + 1
+      if points ~= 0 then
+        local enemycoa = self.coalition == coalition.side.BLUE and coalition.side.RED or coalition.side.BLUE
+        self:T("Enemycoa = "..enemycoa)
+        if coa == coalition.side.NEUTRAL then
+          local tdata = {}
+          tdata.name = name
+          tdata.dist = dist
+          tdata.points = points + self.NeutralBenefit
+          tdata.coalition = coa
+          tdata.coalitionname = UTILS.GetCoalitionName(coa) 
+          tdata.coordinate = self.airbasetable[name].coord 
+          table.insert(targets,tdata)
+        else
+          local tdata = {}
+          tdata.name = name
+          tdata.dist = dist
+          tdata.points = points
+          tdata.coalition = coa
+          tdata.coalitionname = UTILS.GetCoalitionName(coa) 
+          tdata.coordinate = self.airbasetable[name].coord 
+          table.insert(targets,tdata)
         end
-        targets[fpoints] = {
-          name = name,
-          dist = dist,
-          points = fpoints,
-          coalition = coa,
-          coalitionname = UTILS.GetCoalitionName(coa),
-          coordinate = self.airbasetable[name].coord,  
-          }
       end
     end
   end
@@ -1044,38 +1044,31 @@ function STRATEGO:FindConsolidationTargets()
     local data = _data -- #STRATEGO.Data
     if data.coalition == self.coalition then
       local dist, name, points, coa = self:FindClosestConsolidationTarget(data.name,self.maxrunways-1)
-      if coa == coalition.side.NEUTRAL and points ~= 0 then
-        local fpoints = points + self.NeutralBenefit
-        local tries = 1
-        while targets[fpoints] or tries < 100 do
-          fpoints = points - (self.NeutralBenefit+math.random(1,100))
-          tries = tries + 1
-        end
-        targets[fpoints] = {
-          name = name,
-          dist = dist,
-          points = fpoints,
-          coalition = coa,
-          coalitionname = UTILS.GetCoalitionName(coa),
-          coordinate = self.airbasetable[name].coord,
-          }
+      if points > 0 then
+        self:T({dist=dist, name=name, points=points, coa=coa})
       end
-      local enemycoa = self.coalition == coalition.side.BLUE and coalition.side.RED or coalition.side.BLUE
-      if coa == enemycoa and points ~= 0 then
-        local fpoints = points
-        local tries = 1
-        while targets[fpoints] or tries < 100 do
-          fpoints = points - (math.random(1,100))
-          tries = tries + 1
+      if points ~= 0 then
+        local enemycoa = self.coalition == coalition.side.BLUE and coalition.side.RED or coalition.side.BLUE
+        self:T("Enemycoa = "..enemycoa)
+        if coa == coalition.side.NEUTRAL then
+          local tdata = {}
+          tdata.name = name
+          tdata.dist = dist
+          tdata.points = points + self.NeutralBenefit
+          tdata.coalition = coa
+          tdata.coalitionname = UTILS.GetCoalitionName(coa) 
+          tdata.coordinate = self.airbasetable[name].coord 
+          table.insert(targets,tdata)
+        else 
+          local tdata = {}
+          tdata.name = name
+          tdata.dist = dist
+          tdata.points = points
+          tdata.coalition = coa
+          tdata.coalitionname = UTILS.GetCoalitionName(coa) 
+          tdata.coordinate = self.airbasetable[name].coord 
+          table.insert(targets,tdata)
         end
-        targets[fpoints] = {
-          name = name,
-          dist = dist,
-          points = fpoints,
-          coalition = coa,
-          coalitionname = UTILS.GetCoalitionName(coa),
-          coordinate = self.airbasetable[name].coord,  
-          }
       end
     end
   end
@@ -1245,13 +1238,15 @@ end
 -- @return #table Target Table with #STRATEGO.Target data or nil if none found.
 function STRATEGO:FindAffordableStrategicTarget()
   self:T(self.lid.."FindAffordableStrategicTarget")
-  local targets = self:FindStrategicTargets() -- #table of #STRATEGO.Target
+  local Stargets = self:FindStrategicTargets() -- #table of #STRATEGO.Target
+  --UTILS.PrintTableToLog(Stargets,1)
   local budget = self.Budget
   --local leftover = self.Budget
-  local target = nil -- #STRATEGO.Target
+  local ftarget = nil -- #STRATEGO.Target
   local Targets = {}
-  for _,_data in pairs(targets) do
+  for _,_data in pairs(Stargets) do
     local data = _data -- #STRATEGO.Target
+    self:T("Considering Strategic Target "..data.name)
     --if data.points <= budget and budget-data.points < leftover then
     if data.points <= budget then
       --leftover = budget-data.points
@@ -1259,14 +1254,18 @@ function STRATEGO:FindAffordableStrategicTarget()
       self:T(self.lid.."Affordable strategic target: "..data.name)
     end
   end
-  if not targets then
+  if #Targets == 0 then
     self:T(self.lid.."No suitable target found!")
     return nil
   end
-  target = Targets[math.random(1,#Targets)]
-  if target then
-    self:T(self.lid.."Final affordable strategic target: "..target.name)
-    return target
+  if #Targets > 1 then
+    ftarget = Targets[math.random(1,#Targets)]
+  else
+    ftarget = Targets[1]
+  end 
+  if ftarget then
+    self:T(self.lid.."Final affordable strategic target: "..ftarget.name)
+    return ftarget
   else
    return nil
   end
@@ -1277,13 +1276,15 @@ end
 -- @return #table Target Table with #STRATEGO.Target data or nil if none found.
 function STRATEGO:FindAffordableConsolidationTarget()
   self:T(self.lid.."FindAffordableConsolidationTarget")
-  local targets = self:FindConsolidationTargets() -- #table of #STRATEGO.Target
+  local Ctargets = self:FindConsolidationTargets() -- #table of #STRATEGO.Target
+  --UTILS.PrintTableToLog(Ctargets,1)
   local budget = self.Budget
   --local leftover = self.Budget
-  local target = nil -- #STRATEGO.Target
+  local ftarget = nil -- #STRATEGO.Target
   local Targets = {}
-  for _,_data in pairs(targets) do
+  for _,_data in pairs(Ctargets) do
     local data = _data -- #STRATEGO.Target
+    self:T("Considering Consolidation Target "..data.name)
     --if data.points <= budget and budget-data.points < leftover then
     if data.points <= budget then
       --leftover = budget-data.points
@@ -1291,14 +1292,18 @@ function STRATEGO:FindAffordableConsolidationTarget()
       self:T(self.lid.."Affordable consolidation target: "..data.name)
     end
   end
-  if not targets then
+  if #Targets == 0 then
     self:T(self.lid.."No suitable target found!")
     return nil
   end
-  target = Targets[math.random(1,#Targets)]
-  if target then
-    self:T(self.lid.."Final affordable consolidation target: "..target.name)
-    return target
+  if #Targets > 1 then
+    ftarget = Targets[math.random(1,#Targets)]
+  else
+    ftarget = Targets[1]
+  end
+  if ftarget then
+    self:T(self.lid.."Final affordable consolidation target: "..ftarget.name)
+    return ftarget
   else
     return nil
   end

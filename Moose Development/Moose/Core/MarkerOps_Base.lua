@@ -17,7 +17,7 @@
 -- ### Author: **Applevangelist**
 -- 
 -- Date: 5 May 2021
--- Last Update: Feb 2023
+-- Last Update: Mar 2023
 -- 
 -- ===
 ---
@@ -50,7 +50,7 @@ MARKEROPS_BASE = {
   ClassName = "MARKEROPS",
   Tag = "mytag",
   Keywords = {},
-  version = "0.1.1",
+  version = "0.1.3",
   debug = false,
   Casesensitive = true,
 }
@@ -114,6 +114,8 @@ function MARKEROPS_BASE:New(Tagname,Keywords,Casesensitive)
    -- @param #string Text The text on the marker
    -- @param #table Keywords Table of matching keywords found in the Event text
    -- @param Core.Point#COORDINATE Coord Coordinate of the marker.
+   -- @param #number MarkerID Id of this marker
+   -- @param #number CoalitionNumber Coalition of the marker creator
    
    --- On after "MarkChanged" event. Triggered when a Marker is changed on the F10 map.
    -- @function [parent=#MARKEROPS_BASE] OnAfterMarkChanged
@@ -124,7 +126,8 @@ function MARKEROPS_BASE:New(Tagname,Keywords,Casesensitive)
    -- @param #string Text The text on the marker
    -- @param #table Keywords Table of matching keywords found in the Event text
    -- @param Core.Point#COORDINATE Coord Coordinate of the marker.
-   -- @param #number idx DCS Marker ID
+   -- @param #number MarkerID Id of this marker
+   -- @param #number CoalitionNumber Coalition of the marker creator
 
    --- On after "MarkDeleted" event. Triggered when a Marker is deleted from the F10 map.
    -- @function [parent=#MARKEROPS_BASE] OnAfterMarkDeleted
@@ -133,7 +136,7 @@ function MARKEROPS_BASE:New(Tagname,Keywords,Casesensitive)
    -- @param #string Event The Event called
    -- @param #string To The To state
    
-      --- "Stop" trigger. Used to stop the function an unhandle events
+   --- "Stop" trigger. Used to stop the function an unhandle events
    -- @function [parent=#MARKEROPS_BASE] Stop
 
 end
@@ -155,29 +158,30 @@ function MARKEROPS_BASE:OnEventMark(Event)
       local text = tostring(Event.text)
       local m = MESSAGE:New(string.format("Mark added at %s with text: %s",coordtext,text),10,"Info",false):ToAll()
     end
+    local coalition = Event.MarkCoalition
     -- decision
     if Event.id==world.event.S_EVENT_MARK_ADDED then
-      self:T({event="S_EVENT_MARK_ADDED", carrier=self.groupname, vec3=Event.pos})
+      self:T({event="S_EVENT_MARK_ADDED", carrier=Event.IniGroupName, vec3=Event.pos})
       -- Handle event
       local Eventtext = tostring(Event.text)
       if Eventtext~=nil then
         if self:_MatchTag(Eventtext) then
          local matchtable = self:_MatchKeywords(Eventtext)
-         self:MarkAdded(Eventtext,matchtable,coord)
+         self:MarkAdded(Eventtext,matchtable,coord,Event.idx,coalition)
         end
       end
     elseif Event.id==world.event.S_EVENT_MARK_CHANGE then
-      self:T({event="S_EVENT_MARK_CHANGE", carrier=self.groupname, vec3=Event.pos})
+      self:T({event="S_EVENT_MARK_CHANGE", carrier=Event.IniGroupName, vec3=Event.pos})
       -- Handle event.
       local Eventtext = tostring(Event.text)
       if Eventtext~=nil then
         if self:_MatchTag(Eventtext) then
          local matchtable = self:_MatchKeywords(Eventtext)
-         self:MarkChanged(Eventtext,matchtable,coord,Event.idx)
+         self:MarkChanged(Eventtext,matchtable,coord,Event.idx,coalition)
         end
       end
     elseif Event.id==world.event.S_EVENT_MARK_REMOVED then
-      self:T({event="S_EVENT_MARK_REMOVED", carrier=self.groupname, vec3=Event.pos})
+      self:T({event="S_EVENT_MARK_REMOVED", carrier=Event.IniGroupName, vec3=Event.pos})
       -- Hande event.
       local Eventtext = tostring(Event.text)
       if Eventtext~=nil then
@@ -230,8 +234,10 @@ end
  -- @param #string To The To state
  -- @param #string Text The text on the marker
  -- @param #table Keywords Table of matching keywords found in the Event text
+ -- @param #number MarkerID Id of this marker
+ -- @param #number CoalitionNumber Coalition of the marker creator
  -- @param Core.Point#COORDINATE Coord Coordinate of the marker.
-function MARKEROPS_BASE:onbeforeMarkAdded(From,Event,To,Text,Keywords,Coord)
+function MARKEROPS_BASE:onbeforeMarkAdded(From,Event,To,Text,Keywords,Coord,MarkerID,CoalitionNumber)
   self:T({self.lid,From,Event,To,Text,Keywords,Coord:ToStringLLDDM()})
 end
 
@@ -242,8 +248,10 @@ end
  -- @param #string To The To state
  -- @param #string Text The text on the marker
  -- @param #table Keywords Table of matching keywords found in the Event text
+ -- @param #number MarkerID Id of this marker
+ -- @param #number CoalitionNumber Coalition of the marker creator
  -- @param Core.Point#COORDINATE Coord Coordinate of the marker.
-function MARKEROPS_BASE:onbeforeMarkChanged(From,Event,To,Text,Keywords,Coord)
+function MARKEROPS_BASE:onbeforeMarkChanged(From,Event,To,Text,Keywords,Coord,MarkerID,CoalitionNumber)
   self:T({self.lid,From,Event,To,Text,Keywords,Coord:ToStringLLDDM()})
 end
 

@@ -1097,6 +1097,7 @@ do
       GroupPrefixes = nil,
       Zones = nil,
       Functions = nil,
+      Alive = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -1470,7 +1471,7 @@ do
     
   end
 
-  --- Builds a set of groups that are only active.
+  --- Builds a set of groups that are active, ie in the mission but not yet activated (false) or actived (true).
   -- Only the groups that are active will be included within the set.
   -- @param #SET_GROUP self
   -- @param #boolean Active (Optional) Include only active groups to the set.
@@ -1493,6 +1494,14 @@ do
   function SET_GROUP:FilterActive( Active )
     Active = Active or not (Active == false)
     self.Filter.Active = Active
+    return self
+  end
+  
+  --- Build a set of groups that are alive.
+  -- @param #SET_GROUP self
+  -- @return #SET_GROUP self
+  function SET_GROUP:FilterAlive()
+    self.Filter.Alive = true
     return self
   end
 
@@ -1993,7 +2002,16 @@ do
   function SET_GROUP:IsIncludeObject( MGroup )
     self:F2( MGroup )
     local MGroupInclude = true
-
+    
+    if self.Filter.Alive == true then
+      local MGroupAlive = false
+      self:F( { Active = self.Filter.Active } )
+      if MGroup and MGroup:IsAlive() then
+        MGroupAlive = true
+      end
+      MGroupInclude = MGroupInclude and MGroupAlive
+    end
+    
     if self.Filter.Active ~= nil then
       local MGroupActive = false
       self:F( { Active = self.Filter.Active } )
@@ -2997,7 +3015,7 @@ do -- SET_UNIT
       local velocity = self:GetVelocity() or 0
       Coordinate:SetHeading( heading )
       Coordinate:SetVelocity( velocity )
-      self:I(UTILS.PrintTableToLog(Coordinate))
+      self:T(UTILS.PrintTableToLog(Coordinate))
     end
 
     return Coordinate
@@ -4521,7 +4539,7 @@ do -- SET_CLIENT
       if Event.IniObjectCategory == Object.Category.UNIT and Event.IniGroup and Event.IniGroup:IsGround() then
         -- CA Slot entered
         local ObjectName, Object = self:AddInDatabase( Event )
-        self:I( ObjectName, UTILS.PrintTableToLog(Object) )
+        self:T( ObjectName, UTILS.PrintTableToLog(Object) )
         if Object and self:IsIncludeObject( Object ) then
           self:Add( ObjectName, Object )
         end

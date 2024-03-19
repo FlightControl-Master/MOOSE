@@ -46,6 +46,10 @@
 --
 -- ===
 --
+-- ### [Demo Missions](https://github.com/FlightControl-Master/MOOSE_Demos/tree/master/Core/Zone)
+--
+-- ===
+--
 -- ### Author: **FlightControl**
 -- ### Contributions: **Applevangelist**, **FunkyFranky**, **coconutcockpit**
 --
@@ -326,14 +330,14 @@ function ZONE_BASE:GetRandomVec2()
   return nil
 end
 
---- Define a random @{Core.Point#POINT_VEC2} within the zone.
+--- Define a random @{Core.Point#POINT_VEC2} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_BASE self
 -- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
 function ZONE_BASE:GetRandomPointVec2()
   return nil
 end
 
---- Define a random @{Core.Point#POINT_VEC3} within the zone.
+--- Define a random @{Core.Point#POINT_VEC3} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
 -- @param #ZONE_BASE self
 -- @return Core.Point#POINT_VEC3 The PointVec3 coordinates.
 function ZONE_BASE:GetRandomPointVec3()
@@ -899,7 +903,8 @@ function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
 
   local Point = {}
   local Vec2 = self:GetVec2()
-
+  local countryID = CountryID or country.id.USA
+  
   Points = Points and Points or 360
 
   local Angle
@@ -910,7 +915,7 @@ function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
 
-    local CountryName = _DATABASE.COUNTRY_NAME[CountryID]
+    local CountryName = _DATABASE.COUNTRY_NAME[countryID]
 
     local Tire = {
         ["country"] = CountryName,
@@ -925,7 +930,7 @@ function ZONE_RADIUS:BoundZone( Points, CountryID, UnBound )
         ["heading"] = 0,
     } -- end of ["group"]
 
-    local Group = coalition.addStaticObject( CountryID, Tire )
+    local Group = coalition.addStaticObject( countryID, Tire )
     if UnBound and UnBound == true then
       Group:destroy()
     end
@@ -1175,7 +1180,7 @@ function ZONE_RADIUS:RemoveJunk()
   return n
 end
 
---- Count the number of different coalitions inside the zone.
+--- Get a table  of scanned units.
 -- @param #ZONE_RADIUS self
 -- @return #table Table of DCS units and DCS statics inside the zone.
 function ZONE_RADIUS:GetScannedUnits()
@@ -1210,7 +1215,7 @@ function ZONE_RADIUS:GetScannedSetUnit()
   return SetUnit
 end
 
---- Get a set of scanned units.
+--- Get a set of scanned groups.
 -- @param #ZONE_RADIUS self
 -- @return Core.Set#SET_GROUP Set of groups.
 function ZONE_RADIUS:GetScannedSetGroup()
@@ -1510,7 +1515,7 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
   return point
 end
 
---- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.
+--- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_RADIUS self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
@@ -1541,7 +1546,7 @@ function ZONE_RADIUS:GetRandomVec3( inner, outer )
 end
 
 
---- Returns a @{Core.Point#POINT_VEC3} object reflecting a random 3D location within the zone.
+--- Returns a @{Core.Point#POINT_VEC3} object reflecting a random 3D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
 -- @param #ZONE_RADIUS self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
@@ -1985,7 +1990,7 @@ function ZONE_GROUP:GetRandomVec2()
   return Point
 end
 
---- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.
+--- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_GROUP self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
@@ -2829,7 +2834,7 @@ function ZONE_POLYGON_BASE:GetRandomVec2()
     end
 end
 
---- Return a @{Core.Point#POINT_VEC2} object representing a random 2D point at landheight within the zone.
+--- Return a @{Core.Point#POINT_VEC2} object representing a random 2D point at landheight within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_POLYGON_BASE self
 -- @return @{Core.Point#POINT_VEC2}
 function ZONE_POLYGON_BASE:GetRandomPointVec2()
@@ -2842,7 +2847,7 @@ function ZONE_POLYGON_BASE:GetRandomPointVec2()
   return PointVec2
 end
 
---- Return a @{Core.Point#POINT_VEC3} object representing a random 3D point at landheight within the zone.
+--- Return a @{Core.Point#POINT_VEC3} object representing a random 3D point at landheight within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
 -- @param #ZONE_POLYGON_BASE self
 -- @return @{Core.Point#POINT_VEC3}
 function ZONE_POLYGON_BASE:GetRandomPointVec3()
@@ -3830,18 +3835,18 @@ function ZONE_OVAL:GetRandomVec2()
     return {x=rx, y=ry}
 end
 
---- Define a random @{Core.Point#POINT_VEC2} within the zone.
+--- Define a random @{Core.Point#POINT_VEC2} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_OVAL self
 -- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
 function ZONE_OVAL:GetRandomPointVec2()
     return POINT_VEC2:NewFromVec2(self:GetRandomVec2())
 end
 
---- Define a random @{Core.Point#POINT_VEC2} within the zone.
+--- Define a random @{Core.Point#POINT_VEC2} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
 -- @param #ZONE_OVAL self
 -- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
 function ZONE_OVAL:GetRandomPointVec3()
-    return POINT_VEC2:NewFromVec3(self:GetRandomVec2())
+    return POINT_VEC3:NewFromVec3(self:GetRandomVec2())
 end
 
 --- Draw the zone on the F10 map.
@@ -3981,7 +3986,7 @@ do -- ZONE_AIRBASE
     return ZoneVec2
   end
 
-  --- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone.
+  --- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
   -- @param #ZONE_AIRBASE self
   -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
   -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
