@@ -1192,17 +1192,17 @@ function UNIT:GetThreatLevel()
     if self:IsGround() then
     
       local ThreatLevels = {
-        "Unarmed", 
-        "Infantry", 
-        "Old Tanks & APCs", 
-        "Tanks & IFVs without ATGM",   
-        "Tanks & IFV with ATGM",
-        "Modern Tanks",
-        "AAA",
-        "IR Guided SAMs",
-        "SR SAMs",
-        "MR SAMs",
-        "LR SAMs"
+        [1] = "Unarmed", 
+        [2] = "Infantry", 
+        [3] = "Old Tanks & APCs", 
+        [4] = "Tanks & IFVs without ATGM",   
+        [5] = "Tanks & IFV with ATGM",
+        [6] = "Modern Tanks",
+        [7] = "AAA",
+        [8] = "IR Guided SAMs",
+        [9] = "SR SAMs",
+        [10] = "MR SAMs",
+        [11] = "LR SAMs"
       }
       
       
@@ -1228,17 +1228,17 @@ function UNIT:GetThreatLevel()
     if self:IsAir() then
     
       local ThreatLevels = {
-        "Unarmed", 
-        "Tanker", 
-        "AWACS", 
-        "Transport Helicopter",   
-        "UAV",
-        "Bomber",
-        "Strategic Bomber",
-        "Attack Helicopter",
-        "Battleplane",
-        "Multirole Fighter",
-        "Fighter"
+        [1] = "Unarmed", 
+        [2] = "Tanker", 
+        [3] = "AWACS", 
+        [4] = "Transport Helicopter",   
+        [5] = "UAV",
+        [6] = "Bomber",
+        [7] = "Strategic Bomber",
+        [8] = "Attack Helicopter",
+        [9] = "Battleplane",
+        [10] = "Multirole Fighter",
+        [11] = "Fighter"
       }
       
       
@@ -1272,17 +1272,17 @@ function UNIT:GetThreatLevel()
   --["Unarmed ships"] = {"Ships","HeavyArmoredUnits",},
     
       local ThreatLevels = {
-        "Unarmed ship", 
-        "Light armed ships", 
-        "Corvettes",
-        "",
-        "Frigates",
-        "",
-        "Cruiser",
-        "",
-        "Destroyer",
-        "",
-        "Aircraft Carrier"
+        [1] = "Unarmed ship", 
+        [2] = "Light armed ships", 
+        [3] = "Corvettes",
+        [4] = "",
+        [5] = "Frigates",
+        [6] = "",
+        [7] = "Cruiser",
+        [8] = "",
+        [9] = "Destroyer",
+        [10] = "",
+        [11] = "Aircraft Carrier"
       }
       
       
