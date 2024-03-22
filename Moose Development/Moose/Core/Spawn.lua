@@ -3806,6 +3806,7 @@ end
 -- @param #number SpawnIndex Spawn index.
 -- @return #number self.SpawnIndex
 function SPAWN:_GetSpawnIndex( SpawnIndex )
+  self:T("_GetSpawnIndex")
   self:F2( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive, self.AliveUnits, #self.SpawnTemplate.units } )
 
   if (self.SpawnMaxGroups == 0) or (SpawnIndex <= self.SpawnMaxGroups) then

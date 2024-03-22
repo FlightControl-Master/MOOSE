@@ -187,7 +187,7 @@ function TIRESIAS:SetAAARanges(FiringRange,SwitchAAA)
   return self
 end
 
---- [USER] Add a SET_GROUP of GROUP objects as exceptions. Can be done multiple times.
+--- [USER] Add a SET_GROUP of GROUP objects as exceptions. Can be done multiple times. Does **not** work work for GROUP objects spawned into the SET after start, i.e. the groups need to exist in the game already.
 -- @param #TIRESIAS self
 -- @param Core.Set#SET_GROUP Set to add to the exception list.
 -- @return #TIRESIAS self
