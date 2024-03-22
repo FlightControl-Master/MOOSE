@@ -229,7 +229,7 @@ SCORING = {
   ClassID = 0,
   Players = {},
   AutoSave = true,
-  version = "1.18.2"
+  version = "1.18.3"
 }
 
 local _SCORINGCoalition = {
@@ -1062,7 +1062,7 @@ function SCORING:_EventOnHit( Event )
         if PlayerHit.UNIT.ThreatType == nil then
           PlayerHit.ThreatLevel, PlayerHit.ThreatType = PlayerHit.UNIT:GetThreatLevel()
           -- if this fails for some reason, set a good default value
-          if PlayerHit.ThreatType == nil then
+          if PlayerHit.ThreatType == nil or PlayerHit.ThreatType == "" then
             PlayerHit.ThreatLevel = 1
             PlayerHit.ThreatType = "Unknown"
           end
