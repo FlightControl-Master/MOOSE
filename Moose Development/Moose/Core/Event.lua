@@ -1378,6 +1378,7 @@ function EVENT:onEvent( Event )
         Event.MarkCoordinate=COORDINATE:NewFromVec3(Event.pos)
         Event.MarkText=Event.text
         Event.MarkCoalition=Event.coalition
+        Event.IniCoalition=Event.coalition
         Event.MarkGroupID = Event.groupID
       end
 

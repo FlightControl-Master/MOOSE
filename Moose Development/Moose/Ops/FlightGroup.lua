@@ -44,7 +44,7 @@
 -- @field #boolean fuelcritical Fuel critical switch.
 -- @field #number fuelcriticalthresh Critical fuel threshold in percent.
 -- @field #boolean fuelcriticalrtb RTB on critical fuel switch.
--- @field Ops.FlightControl#FLIGHTCONTROL flightcontrol The flightcontrol handling this group.
+-- @field OPS.FlightControl#FLIGHTCONTROL flightcontrol The flightcontrol handling this group.
 -- @field Ops.Airboss#AIRBOSS airboss The airboss handling this group.
 -- @field Core.UserFlag#USERFLAG flaghold Flag for holding.
 -- @field #number Tholding Abs. mission time stamp when the group reached the holding point.
@@ -54,7 +54,7 @@
 -- @field #boolean despawnAfterLanding If `true`, group is despawned after landed at an airbase.
 -- @field #boolean despawnAfterHolding If `true`, group is despawned after reaching the holding point.
 -- @field #number RTBRecallCount Number that counts RTB calls.
--- @field Ops.FlightControl#FLIGHTCONTROL.HoldingStack stack Holding stack.
+-- @field OPS.FlightControl#FLIGHTCONTROL.HoldingStack stack Holding stack.
 -- @field #boolean isReadyTO Flight is ready for takeoff. This is for FLIGHTCONTROL.
 -- @field #boolean prohibitAB Disallow (true) or allow (false) AI to use the afterburner.
 -- @field #boolean jettisonEmptyTanks Allow (true) or disallow (false) AI to jettison empty fuel tanks.
@@ -695,7 +695,7 @@ end
 
 --- Get airwing the flight group belongs to.
 -- @param #FLIGHTGROUP self
--- @return Ops.AirWing#AIRWING The AIRWING object (if any).
+-- @return Ops.Airwing#AIRWING The AIRWING object (if any).
 function FLIGHTGROUP:GetAirwing()
   return self.legion
 end
@@ -793,7 +793,7 @@ end
 
 --- Set the FLIGHTCONTROL controlling this flight group.
 -- @param #FLIGHTGROUP self
--- @param Ops.FlightControl#FLIGHTCONTROL flightcontrol The FLIGHTCONTROL object.
+-- @param OPS.FlightControl#FLIGHTCONTROL flightcontrol The FLIGHTCONTROL object.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetFlightControl(flightcontrol)
 
@@ -822,7 +822,7 @@ end
 
 --- Get the FLIGHTCONTROL controlling this flight group.
 -- @param #FLIGHTGROUP self
--- @return Ops.FlightControl#FLIGHTCONTROL The FLIGHTCONTROL object.
+-- @return OPS.FlightControl#FLIGHTCONTROL The FLIGHTCONTROL object.
 function FLIGHTGROUP:GetFlightControl()
   return self.flightcontrol
 end
@@ -3799,10 +3799,11 @@ function FLIGHTGROUP:_InitGroup(Template)
   self.speedMax=group:GetSpeedMax()
   
   -- Is group mobile?
-  if self.speedMax>3.6 then
+  if self.speedMax and self.speedMax>3.6 then
     self.isMobile=true
   else
     self.isMobile=false
+    self.speedMax = 0
   end  
 
   -- Cruise speed limit 380 kts for fixed and 110 knots for rotary wings.
@@ -4871,7 +4872,7 @@ function FLIGHTGROUP:_UpdateMenu(delay)
       -- Get all FLIGHTCONTROLS
       local fc={}
       for airbasename,_flightcontrol in pairs(_DATABASE.FLIGHTCONTROLS) do
-        local flightcontrol=_flightcontrol --Ops.FlightControl#FLIGHTCONTROL
+        local flightcontrol=_flightcontrol --OPS.FlightControl#FLIGHTCONTROL
   
         -- Get coord of airbase.
         local coord=flightcontrol:GetCoordinate()
