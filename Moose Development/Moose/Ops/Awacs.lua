@@ -508,7 +508,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.63", -- #string
+  version = "0.2.64", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -4639,7 +4639,7 @@ function AWACS:_CheckTaskQueue()
         
         -- Check ranges for TAC and MELD
         -- postions relative to CAP position
-        
+        --[[
         local targetgrp = entry.Contact.group
         local position = entry.Contact.position or entry.Cluster.coordinate
         if targetgrp and targetgrp:IsAlive() and managedgroup then
@@ -4664,6 +4664,7 @@ function AWACS:_CheckTaskQueue()
             end
           end
         end
+        --]]
         
         local auftrag = entry.Auftrag -- Ops.Auftrag#AUFTRAG
         local auftragstatus = "Not Known"
@@ -4862,6 +4863,7 @@ function AWACS:_CheckTaskQueue()
           elseif entry.Status == AWACS.TaskStatus.ASSIGNED then
             self:T("Open Tasks VID ASSIGNED for GroupID "..entry.AssignedGroupID)
             -- check TAC/MELD ranges
+            --[[
             local targetgrp = entry.Contact.group
             local position = entry.Contact.position or entry.Cluster.coordinate
             if targetgrp and targetgrp:IsAlive() and managedgroup then
@@ -4886,6 +4888,7 @@ function AWACS:_CheckTaskQueue()
                 end
               end
             end
+            --]]
           elseif entry.Status == AWACS.TaskStatus.SUCCESS then
             self:T("Open Tasks VID success for GroupID "..entry.AssignedGroupID)
             -- outcomes - player ID'd
@@ -5486,6 +5489,7 @@ function AWACS:_TACRangeCall(GID,Contact)
   local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
   local contact = Contact.Contact -- Ops.Intel#INTEL.Contact
   local contacttag = Contact.TargetGroupNaming
+  local name = managedgroup.GroupName
   if contact then --and not Contact.TACCallDone then
     local position = contact.position -- Core.Point#COORDINATE
     if position then     
@@ -5494,12 +5498,13 @@ function AWACS:_TACRangeCall(GID,Contact)
       local grptxt = self.gettext:GetEntry("GROUP",self.locale)
       local miles = self.gettext:GetEntry("MILES",self.locale)
       local text = string.format("%s. %s. %s %s, %d %s.",self.callsigntxt,pilotcallsign,contacttag,grptxt,distance,miles)
-      self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+      if not self.TacticalSubscribers[name] then
+        self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+      end
       self:_UpdateContactEngagementTag(Contact.CID,Contact.EngagementTag,true,false,AWACS.TaskStatus.EXECUTING)
       if GID and GID ~= 0 then
         --local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
         if managedgroup and managedgroup.Group and managedgroup.Group:IsAlive() then
-          local name = managedgroup.GroupName
           if self.TacticalSubscribers[name] then
             self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true,true)
           end
@@ -5524,6 +5529,7 @@ function AWACS:_MeldRangeCall(GID,Contact)
   local flightpos = managedgroup.Group:GetCoordinate()
   local contact = Contact.Contact -- Ops.Intel#INTEL.Contact
   local contacttag = Contact.TargetGroupNaming or "Bogey"
+  local name = managedgroup.GroupName
   if contact then --and not Contact.MeldCallDone then
     local position = contact.position -- Core.Point#COORDINATE
     if position then
@@ -5535,7 +5541,9 @@ function AWACS:_MeldRangeCall(GID,Contact)
       end
       local grptxt = self.gettext:GetEntry("GROUP",self.locale)
       local text = string.format("%s. %s. %s %s, %s",self.callsigntxt,pilotcallsign,contacttag,grptxt,BRATExt)
-      self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+      if not self.TacticalSubscribers[name] then
+        self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+      end
       self:_UpdateContactEngagementTag(Contact.CID,Contact.EngagementTag,true,true,AWACS.TaskStatus.EXECUTING)
       if GID and GID ~= 0 then
         --local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
@@ -5563,6 +5571,8 @@ function AWACS:_ThreatRangeCall(GID,Contact)
   local flightpos = managedgroup.Group:GetCoordinate() or managedgroup.LastKnownPosition
   local contact = Contact.Contact -- Ops.Intel#INTEL.Contact
   local contacttag = Contact.TargetGroupNaming or "Bogey"
+  local name = managedgroup.GroupName
+  local IsSub = self.TacticalSubscribers[name] and true or false
   if contact then
     local position = contact.position or contact.group:GetCoordinate() -- Core.Point#COORDINATE
     if position then     
@@ -5575,7 +5585,9 @@ function AWACS:_ThreatRangeCall(GID,Contact)
       local grptxt = self.gettext:GetEntry("GROUP",self.locale)
       local thrt = self.gettext:GetEntry("THREAT",self.locale)
       local text = string.format("%s. %s. %s %s, %s. %s",self.callsigntxt,pilotcallsign,contacttag,grptxt, thrt, BRATExt)
-      self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+      if IsSub == false then
+        self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+      end
       if GID and GID ~= 0 then
         --local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
         if managedgroup and managedgroup.Group and managedgroup.Group:IsAlive() then
@@ -5600,11 +5612,17 @@ function AWACS:_MergedCall(GID)
   local pilotcallsign = self:_GetCallSign(nil,GID) 
   local merge = self.gettext:GetEntry("MERGED",self.locale)  
   local text = string.format("%s. %s. %s.",self.callsigntxt,pilotcallsign,merge)
-  self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+  local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
+  local name
+  if managedgroup then
+    name = managedgroup.GroupName or "none"
+  end
+  if not self.TacticalSubscribers[name] then
+    self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+  end
   if GID and GID ~= 0 then
     local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
-    if managedgroup and managedgroup.Group and managedgroup.Group:IsAlive() then
-      local name = managedgroup.GroupName
+    if managedgroup and managedgroup.Group and managedgroup.Group:IsAlive() then    
       if self.TacticalSubscribers[name] then
         self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true,true)
       end

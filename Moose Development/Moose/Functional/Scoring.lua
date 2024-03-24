@@ -229,7 +229,7 @@ SCORING = {
   ClassID = 0,
   Players = {},
   AutoSave = true,
-  version = "1.18.2"
+  version = "1.18.4"
 }
 
 local _SCORINGCoalition = {
@@ -248,13 +248,15 @@ local _SCORINGCategory = {
 --- Creates a new SCORING object to administer the scoring achieved by players.
 -- @param #SCORING self
 -- @param #string GameName The name of the game. This name is also logged in the CSV score file.
+-- @param #string SavePath (Optional) Path where to save the CSV file, defaults to your **<User>\\Saved Games\\DCS\\Logs** folder.
+-- @param #boolean AutoSave (Optional) If passed as `false`, then swith autosave off.
 -- @return #SCORING self
 -- @usage
 --
 --   -- Define a new scoring object for the mission Gori Valley.
 --   ScoringObject = SCORING:New( "Gori Valley" )
 --
-function SCORING:New( GameName )
+function SCORING:New( GameName, SavePath, AutoSave )
 
   -- Inherits from BASE
   local self = BASE:Inherit( self, BASE:New() ) -- #SCORING
@@ -317,7 +319,8 @@ function SCORING:New( GameName )
   end )
 
   -- Create the CSV file.
-  self.AutoSave = true
+  self.AutoSavePath = SavePath
+  self.AutoSave = AutoSave or true
   self:OpenCSV( GameName )
 
   return self
@@ -1062,7 +1065,7 @@ function SCORING:_EventOnHit( Event )
         if PlayerHit.UNIT.ThreatType == nil then
           PlayerHit.ThreatLevel, PlayerHit.ThreatType = PlayerHit.UNIT:GetThreatLevel()
           -- if this fails for some reason, set a good default value
-          if PlayerHit.ThreatType == nil then
+          if PlayerHit.ThreatType == nil or PlayerHit.ThreatType == "" then
             PlayerHit.ThreatLevel = 1
             PlayerHit.ThreatType = "Unknown"
           end
@@ -1839,10 +1842,11 @@ end
 function SCORING:OpenCSV( ScoringCSV )
   self:F( ScoringCSV )
 
-  if lfs and io and os and self.AutoSave then
+  if lfs and io and os and self.AutoSave == true then
     if ScoringCSV then
       self.ScoringCSV = ScoringCSV
-      local fdir = lfs.writedir() .. [[Logs\]] .. self.ScoringCSV .. " " .. os.date( "%Y-%m-%d %H-%M-%S" ) .. ".csv"
+      local path = self.AutoSavePath or lfs.writedir() .. [[Logs\]]
+      local fdir = path .. self.ScoringCSV .. " " .. os.date( "%Y-%m-%d %H-%M-%S" ) .. ".csv"
 
       self.CSVFile, self.err = io.open( fdir, "w+" )
       if not self.CSVFile then
