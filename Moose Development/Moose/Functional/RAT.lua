@@ -2121,7 +2121,7 @@ end
 -- @param #number _nrespawn Number of already performed respawn attempts (e.g. spawning on runway bug).
 -- @param #table parkingdata Explicitly specify the parking spots when spawning at an airport.
 -- @return #number Spawn index.
-function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _livery, _waypoint, _lastpos, _nrespawn, parkingdata)
+function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _livery, _waypoint, _lastpos, _nrespawn, parkingdata, index)
   self:F({rat=RAT.id, departure=_departure, destination=_destination, takeoff=_takeoff, landing=_landing, livery=_livery, waypoint=_waypoint, lastpos=_lastpos, nrespawn=_nrespawn})
 
   -- Set takeoff type.
@@ -2313,185 +2313,212 @@ end
 -- @param #number delay Delay before respawn
 function RAT:_Respawn(index, lastpos, delay)
 
-  -- Get the spawn index from group
-  --local index=self:GetSpawnIndexFromGroup(group)
-
-  -- Get departure and destination from previous journey.
-  local departure=self.ratcraft[index].departure
-  local destination=self.ratcraft[index].destination
-  local takeoff=self.ratcraft[index].takeoff
-  local landing=self.ratcraft[index].landing
-  local livery=self.ratcraft[index].livery
-  local lastwp=self.ratcraft[index].waypoints[#self.ratcraft[index].waypoints]
-  --local lastpos=group:GetCoordinate()
-
-  local _departure=nil
-  local _destination=nil
-  local _takeoff=nil
-  local _landing=nil
-  local _livery=nil
-  local _lastwp=nil
-  local _lastpos=nil
-
-  if self.continuejourney then
-
-    -- We continue our journey from the old departure airport.
-    _departure=destination:GetName()
-
-    -- Use the same livery for next aircraft.
-    _livery=livery
-
-    -- Last known position of the aircraft, which should be the sparking spot location.
-    -- Note: we have to check that it was supposed to land and not respawned directly after landing or after takeoff.
-    -- TODO: Need to think if continuejourney with respawn_after_takeoff actually makes sense.
-    if landing==RAT.wp.landing and lastpos and not (self.respawn_at_landing or self.respawn_after_takeoff) then
-      -- Check that we have an airport or FARP but not a ship (which would be categroy 1).
-      if destination:GetCategory()==4 then
-        _lastpos=lastpos
+  if delay and delay>0 then
+  
+    self:ScheduleOnce(delay, RAT._Respawn, self, index, lastpos, 0)
+  
+  else
+  
+    local ratcraft=self.ratcraft[index] --#RAT.RatCraft
+  
+    -- Get departure and destination from previous journey.
+    local departure=self.ratcraft[index].departure
+    local destination=self.ratcraft[index].destination
+    local takeoff=self.ratcraft[index].takeoff
+    local landing=self.ratcraft[index].landing
+    local livery=self.ratcraft[index].livery
+    local lastwp=self.ratcraft[index].waypoints[#self.ratcraft[index].waypoints]
+    
+    local flightgroup=ratcraft.flightgroup
+    local parkingdata=nil
+    env.info("Respawning ratcraft")
+    for _,_element in pairs(flightgroup.elements) do
+      local element=_element --Ops.OpsGroup#OPSGROUP.Element
+      
+      env.info(string.format("element %s", element.name))
+      
+      
+      if element.parking then
+        if parkingdata==nil then
+          parkingdata={}
+        end
+        env.info(string.format("element %s at spot id=%d", element.name, element.parking.TerminalID))
+        table.insert(parkingdata, element.parking)
+      else
+        env.info(string.format("element %s not SPOT", element.name))
       end
     end
-
-    if self.destinationzone then
-
-      -- Case: X --> Zone --> Zone --> Zone
-      _takeoff=RAT.wp.air
-      _landing=RAT.wp.air
-
-    elseif self.returnzone then
-
-      -- Case: X --> Zone --> X,  X --> Zone --> X
-      -- We flew to a zone and back. Takeoff type does not change.
-      _takeoff=self.takeoff
-
-      -- If we took of in air we also want to land "in air".
-      if self.takeoff==RAT.wp.air then
-        _landing=RAT.wp.air
-      else
-        _landing=RAT.wp.landing
-      end
-
-      -- Departure stays the same. (The destination is the zone here.)
-      _departure=departure:GetName()
-
-    else
-
-      -- Default case. Takeoff and landing type does not change.
-      _takeoff=self.takeoff
-      _landing=self.landing
-
-    end
-
-  elseif self.commute then
-
-    -- We commute between departure and destination.
-
-    if self.starshape==true then
-      if destination:GetName()==self.homebase then
-        -- We are at our home base ==> destination is again randomly selected.
-        _departure=self.homebase
-        _destination=nil -- destination will be set anew
-      else
-        -- We are not a our home base ==> we fly back to our home base.
-        _departure=destination:GetName()
-        _destination=self.homebase
-      end
-    else
-      -- Simply switch departure and destination.
+  
+    local _departure=nil
+    local _destination=nil
+    local _takeoff=nil
+    local _landing=nil
+    local _livery=nil
+    local _lastwp=nil
+    local _lastpos=nil
+  
+    if self.continuejourney then
+  
+      -- We continue our journey from the old departure airport.
       _departure=destination:GetName()
-      _destination=departure:GetName()
-    end
-
-    -- Use the same livery for next aircraft.
-    _livery=livery
-
-    -- Last known position of the aircraft, which should be the sparking spot location.
-    -- Note: we have to check that it was supposed to land and not respawned directly after landing or after takeoff.
-    -- TODO: Need to think if commute with respawn_after_takeoff actually makes sense.
-    if landing==RAT.wp.landing and lastpos and not (self.respawn_at_landing or self.respawn_after_takeoff) then
-      -- Check that we have landed on an airport or FARP but not a ship (which would be categroy 1).
-      if destination:GetCategory()==4 then
-        _lastpos=lastpos
+  
+      -- Use the same livery for next aircraft.
+      _livery=livery
+  
+      -- Last known position of the aircraft, which should be the sparking spot location.
+      -- Note: we have to check that it was supposed to land and not respawned directly after landing or after takeoff.
+      -- TODO: Need to think if continuejourney with respawn_after_takeoff actually makes sense.
+      if landing==RAT.wp.landing and lastpos and not (self.respawn_at_landing or self.respawn_after_takeoff) then
+        -- Check that we have an airport or FARP but not a ship (which would be categroy 1).
+        if destination:GetCategory()==4 then
+          _lastpos=lastpos
+        end
       end
-    end
-
-    -- Handle takeoff type.
-    if self.destinationzone then
-      -- self.takeoff is either RAT.wp.air or RAT.wp.cold
-      -- self.landing is RAT.wp.Air
-
-      if self.takeoff==RAT.wp.air then
-
-        -- Case: Zone <--> Zone (both have takeoff air)
-        _takeoff=RAT.wp.air  -- = self.takeoff (because we just checked)
-        _landing=RAT.wp.air  -- = self.landing (because destinationzone)
-
-      else
-
-        -- Case: Airport <--> Zone
-        if takeoff==RAT.wp.air then
-          -- Last takeoff was air so we are at the airport now, takeoff is from ground.
-          _takeoff=self.takeoff   -- must be either hot/cold/runway/hotcold
-          _landing=RAT.wp.air     -- must be air = self.landing (because destinationzone)
+  
+      if self.destinationzone then
+  
+        -- Case: X --> Zone --> Zone --> Zone
+        _takeoff=RAT.wp.air
+        _landing=RAT.wp.air
+  
+      elseif self.returnzone then
+  
+        -- Case: X --> Zone --> X,  X --> Zone --> X
+        -- We flew to a zone and back. Takeoff type does not change.
+        _takeoff=self.takeoff
+  
+        -- If we took of in air we also want to land "in air".
+        if self.takeoff==RAT.wp.air then
+          _landing=RAT.wp.air
         else
-          -- Last takeoff was on ground so we are at a zone now ==> takeoff in air, landing at airport.
-          _takeoff=RAT.wp.air
           _landing=RAT.wp.landing
         end
-
+  
+        -- Departure stays the same. (The destination is the zone here.)
+        _departure=departure:GetName()
+  
+      else
+  
+        -- Default case. Takeoff and landing type does not change.
+        _takeoff=self.takeoff
+        _landing=self.landing
+  
       end
-
-    elseif self.returnzone then
-
-      -- We flew to a zone and back. No need to swap departure and destination.
-      _departure=departure:GetName()
-      _destination=destination:GetName()
-
-      -- Takeoff and landing should also not change.
-      _takeoff=self.takeoff
-      _landing=self.landing
-
+  
+    elseif self.commute then
+  
+      -- We commute between departure and destination.
+  
+      if self.starshape==true then
+        if destination:GetName()==self.homebase then
+          -- We are at our home base ==> destination is again randomly selected.
+          _departure=self.homebase
+          _destination=nil -- destination will be set anew
+        else
+          -- We are not a our home base ==> we fly back to our home base.
+          _departure=destination:GetName()
+          _destination=self.homebase
+        end
+      else
+        -- Simply switch departure and destination.
+        _departure=destination:GetName()
+        _destination=departure:GetName()
+      end
+  
+      -- Use the same livery for next aircraft.
+      _livery=livery
+  
+      -- Last known position of the aircraft, which should be the sparking spot location.
+      -- Note: we have to check that it was supposed to land and not respawned directly after landing or after takeoff.
+      -- TODO: Need to think if commute with respawn_after_takeoff actually makes sense.
+      if landing==RAT.wp.landing and lastpos and not (self.respawn_at_landing or self.respawn_after_takeoff) then
+        -- Check that we have landed on an airport or FARP but not a ship (which would be categroy 1).
+        if destination:GetCategory()==4 then
+          _lastpos=lastpos
+        end
+      end
+  
+      -- Handle takeoff type.
+      if self.destinationzone then
+        -- self.takeoff is either RAT.wp.air or RAT.wp.cold
+        -- self.landing is RAT.wp.Air
+  
+        if self.takeoff==RAT.wp.air then
+  
+          -- Case: Zone <--> Zone (both have takeoff air)
+          _takeoff=RAT.wp.air  -- = self.takeoff (because we just checked)
+          _landing=RAT.wp.air  -- = self.landing (because destinationzone)
+  
+        else
+  
+          -- Case: Airport <--> Zone
+          if takeoff==RAT.wp.air then
+            -- Last takeoff was air so we are at the airport now, takeoff is from ground.
+            _takeoff=self.takeoff   -- must be either hot/cold/runway/hotcold
+            _landing=RAT.wp.air     -- must be air = self.landing (because destinationzone)
+          else
+            -- Last takeoff was on ground so we are at a zone now ==> takeoff in air, landing at airport.
+            _takeoff=RAT.wp.air
+            _landing=RAT.wp.landing
+          end
+  
+        end
+  
+      elseif self.returnzone then
+  
+        -- We flew to a zone and back. No need to swap departure and destination.
+        _departure=departure:GetName()
+        _destination=destination:GetName()
+  
+        -- Takeoff and landing should also not change.
+        _takeoff=self.takeoff
+        _landing=self.landing
+  
+      end
+  
     end
-
+  
+    -- Take the last waypoint as initial waypoint for next plane.
+    if _takeoff==RAT.wp.air and (self.continuejourney or self.commute) then
+      _lastwp=lastwp
+    end
+  
+    -- Debug
+    self:T2({departure=_departure, destination=_destination, takeoff=_takeoff, landing=_landing, livery=_livery, lastwp=_lastwp})
+  
+    -- We should give it at least 3 sec since this seems to be the time until free parking spots after despawn are available again (Sirri Island test).
+    local respawndelay
+    if delay then
+      respawndelay=delay
+    elseif self.respawn_delay then
+      respawndelay=self.respawn_delay+3  -- despawn happens after self.respawndelay. We add another 3 sec for free parking.
+    else
+      respawndelay=3
+    end
+  
+    -- Spawn new group.
+    local arg={}
+    arg.self=self
+    arg.departure=_departure
+    arg.destination=_destination
+    arg.takeoff=_takeoff
+    arg.landing=_landing
+    arg.livery=_livery
+    arg.lastwp=_lastwp
+    arg.lastpos=_lastpos
+    arg.parkingdata=parkingdata
+    self:T(RAT.id..string.format("%s delayed respawn in %.1f seconds.", self.alias, respawndelay))
+    SCHEDULER:New(nil, self._SpawnWithRouteTimer, {arg}, respawndelay)
+    
   end
-
-  -- Take the last waypoint as initial waypoint for next plane.
-  if _takeoff==RAT.wp.air and (self.continuejourney or self.commute) then
-    _lastwp=lastwp
-  end
-
-  -- Debug
-  self:T2({departure=_departure, destination=_destination, takeoff=_takeoff, landing=_landing, livery=_livery, lastwp=_lastwp})
-
-  -- We should give it at least 3 sec since this seems to be the time until free parking spots after despawn are available again (Sirri Island test).
-  local respawndelay
-  if delay then
-    respawndelay=delay
-  elseif self.respawn_delay then
-    respawndelay=self.respawn_delay+3  -- despawn happens after self.respawndelay. We add another 3 sec for free parking.
-  else
-    respawndelay=3
-  end
-
-  -- Spawn new group.
-  local arg={}
-  arg.self=self
-  arg.departure=_departure
-  arg.destination=_destination
-  arg.takeoff=_takeoff
-  arg.landing=_landing
-  arg.livery=_livery
-  arg.lastwp=_lastwp
-  arg.lastpos=_lastpos
-  self:T(RAT.id..string.format("%s delayed respawn in %.1f seconds.", self.alias, respawndelay))
-  SCHEDULER:New(nil, self._SpawnWithRouteTimer, {arg}, respawndelay)
 
 end
 
 --- Delayed spawn function called by scheduler.
 -- @param #RAT self
--- @param #table arg Parameters: arg.self, arg.departure, arg.destination, arg.takeoff, arg.landing, arg.livery, arg.lastwp, arg.lastpos
+-- @param #table arg Parameters: arg.self, arg.departure, arg.destination, arg.takeoff, arg.landing, arg.livery, arg.lastwp, arg.lastpos, arg.parkingdata
 function RAT._SpawnWithRouteTimer(arg)
-  RAT._SpawnWithRoute(arg.self, arg.departure, arg.destination, arg.takeoff, arg.landing, arg.livery, arg.lastwp, arg.lastpos)
+  RAT._SpawnWithRoute(arg.self, arg.departure, arg.destination, arg.takeoff, arg.landing, arg.livery, arg.lastwp, arg.lastpos, nil, arg.parkingdata)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -4093,7 +4120,7 @@ function RAT:_OnEngineShutdown(EventData)
             -- Respawn group.
             local idx=self:GetSpawnIndexFromGroup(SpawnGroup)
             local coord=SpawnGroup:GetCoordinate()
-            self:_Respawn(idx, coord)
+            self:_Respawn(idx, coord, 3)
           end
 
           -- Despawn group.
