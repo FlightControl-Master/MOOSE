@@ -36,7 +36,7 @@
 -- @field #number prio Priority.
 -- @field #number importance Importance.
 -- @field Ops.Auftrag#AUFTRAG mission Mission attached to this target.
--- @field Ops.Intelligence#INTEL.Contact contact Contact attached to this target.
+-- @field Ops.Intel#INTEL.Contact contact Contact attached to this target.
 -- @field #boolean isDestroyed If true, target objects were destroyed.
 -- @field #table resources Resource list.
 -- @field #table conditionStart Start condition functions.

@@ -145,7 +145,7 @@
 -- @field #table NassetsLegMax Number of required warehouse assets for each assigned legion.
 -- @field #table requestID The ID of the queued warehouse request. Necessary to cancel the request if the mission was cancelled before the request is processed.
 -- @field #table payloads User specified airwing payloads for this mission. Only these will be considered for the job!
--- @field Ops.AirWing#AIRWING.PatrolData patroldata Patrol data.
+-- @field Ops.Airwing#AIRWING.PatrolData patroldata Patrol data.
 --
 -- @field #table specialLegions User specified legions assigned for this mission. Only these will be considered for the job!
 -- @field #table specialCohorts User specified cohorts assigned for this mission. Only these will be considered for the job!
@@ -338,7 +338,7 @@
 --
 -- ## Legion Level
 --
--- Adding an AUFTRAG to an airwing is done via the @{Ops.AirWing#AIRWING.AddMission} function. See AIRWING docs for further details.
+-- Adding an AUFTRAG to an airwing is done via the @{Ops.Airwing#AIRWING.AddMission} function. See AIRWING docs for further details.
 -- Similarly, an AUFTRAG can be added to a brigade via the @{Ops.Brigade#BRIGADE.AddMission} function.
 --
 -- ## Commander Level
@@ -3734,7 +3734,7 @@ end
 
 --- Add a required payload for this mission. Only these payloads will be used for this mission. If they are not available, the mission cannot start. Only available for use with an AIRWING.
 -- @param #AUFTRAG self
--- @param Ops.AirWing#AIRWING.Payload Payload Required payload.
+-- @param Ops.Airwing#AIRWING.Payload Payload Required payload.
 -- @return #AUFTRAG self
 function AUFTRAG:AddRequiredPayload(Payload)
 

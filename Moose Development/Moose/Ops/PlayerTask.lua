@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update Jan 2024
+-- @date Last Update Feb 2024
 
 
 do
@@ -409,6 +409,15 @@ function PLAYERTASK:IsDone()
     IsDone = true
   end
   return IsDone
+end
+
+--- [User] Check if PLAYERTASK has clients assigned to it.
+-- @param #PLAYERTASK self
+-- @return #boolean hasclients
+function PLAYERTASK:HasClients()
+  self:T(self.lid.."HasClients?")
+  local hasclients = self:CountClients() > 0 and true or false
+  return hasclients
 end
 
 --- [User] Get client names assigned as table of #strings
@@ -1552,7 +1561,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.64"
+PLAYERTASKCONTROLLER.version="0.1.65"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -3173,7 +3182,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     local ttsname = self.gettext:GetEntry("TASKNAMETTS",self.locale)
     local taskname = string.format(tname,task.Type,task.PlayerTaskNr)
     local ttstaskname = string.format(ttsname,task.TTSType,task.PlayerTaskNr)
-    local Coordinate = task.Target:GetCoordinate()
+    local Coordinate = task.Target:GetCoordinate() or COORDINATE:New(0,0,0)
     local CoordText = ""
     local CoordTextLLDM = nil
     if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
@@ -3946,7 +3955,7 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
   
   local function NewCluster(Cluster)
     if not self.usecluster then return self end
-    local cluster = Cluster -- Ops.Intelligence#INTEL.Cluster
+    local cluster = Cluster -- Ops.Intel#INTEL.Cluster
     local type = cluster.ctype
     self:T({type,self.Type})
     if (type == INTEL.Ctype.AIRCRAFT and self.Type == PLAYERTASKCONTROLLER.Type.A2A) or (type == INTEL.Ctype.NAVAL and (self.Type == PLAYERTASKCONTROLLER.Type.A2S or self.Type == PLAYERTASKCONTROLLER.Type.A2GS)) then
@@ -3954,7 +3963,7 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
       local contacts = cluster.Contacts -- #table of GROUP
       local targetset = SET_GROUP:New()
       for _,_object in pairs(contacts) do
-        local contact = _object -- Ops.Intelligence#INTEL.Contact
+        local contact = _object -- Ops.Intel#INTEL.Contact
         self:T("Adding group: "..contact.groupname)
         targetset:AddGroup(contact.group,true)
       end
@@ -3966,14 +3975,14 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
       if type == INTEL.Ctype.GROUND then
         targetset = SET_GROUP:New()
         for _,_object in pairs(contacts) do
-          local contact = _object -- Ops.Intelligence#INTEL.Contact
+          local contact = _object -- Ops.Intel#INTEL.Contact
           self:T("Adding group: "..contact.groupname)
           targetset:AddGroup(contact.group,true)
         end
       elseif type == INTEL.Ctype.STRUCTURE then
         targetset = SET_STATIC:New()
         for _,_object in pairs(contacts) do
-          local contact = _object -- Ops.Intelligence#INTEL.Contact
+          local contact = _object -- Ops.Intel#INTEL.Contact
           self:T("Adding static: "..contact.groupname)
           targetset:AddStatic(contact.group)
         end
@@ -3986,7 +3995,7 @@ function PLAYERTASKCONTROLLER:SetupIntel(RecceName)
   
   local function NewContact(Contact)
     if self.usecluster then return self end
-    local contact = Contact -- Ops.Intelligence#INTEL.Contact
+    local contact = Contact -- Ops.Intel#INTEL.Contact
     local type = contact.ctype
     self:T({type,self.Type})
     if (type == INTEL.Ctype.AIRCRAFT and self.Type == PLAYERTASKCONTROLLER.Type.A2A) or (type == INTEL.Ctype.NAVAL and (self.Type == PLAYERTASKCONTROLLER.Type.A2S or self.Type == PLAYERTASKCONTROLLER.Type.A2GS)) then

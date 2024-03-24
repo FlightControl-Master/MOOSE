@@ -243,7 +243,7 @@ end
 
 --- Set airwing.
 -- @param #SQUADRON self
--- @param Ops.AirWing#AIRWING Airwing The airwing.
+-- @param Ops.Airwing#AIRWING Airwing The airwing.
 -- @return #SQUADRON self
 function SQUADRON:SetAirwing(Airwing)
   self.legion=Airwing
@@ -252,7 +252,7 @@ end
 
 --- Get airwing.
 -- @param #SQUADRON self
--- @return Ops.AirWing#AIRWING The airwing.
+-- @return Ops.Airwing#AIRWING The airwing.
 function SQUADRON:GetAirwing(Airwing)
   return self.legion
 end

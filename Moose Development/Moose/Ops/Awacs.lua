@@ -36,7 +36,7 @@ do
 -- @field #number Frequency
 -- @field #number Modulation
 -- @field Wrapper.Airbase#AIRBASE Airbase
--- @field Ops.AirWing#AIRWING AirWing
+-- @field Ops.Airwing#AIRWING AirWing
 -- @field #number AwacsAngels
 -- @field Core.Zone#ZONE OrbitZone
 -- @field #number CallSign
@@ -159,10 +159,10 @@ do
 -- 
 -- ## 3 Airwing(s)
 -- 
--- The AWACS plane, the optional escort planes, and the AI CAP planes work based on the @{Ops.AirWing} class. Read and understand the manual for this class in 
+-- The AWACS plane, the optional escort planes, and the AI CAP planes work based on the @{Ops.Airwing} class. Read and understand the manual for this class in 
 -- order to set everything up correctly. You will at least need one Squadron containing the AWACS plane itself.
 -- 
--- Set up the AirWing
+-- Set up the Airwing
 -- 
 --            local AwacsAW = AIRWING:New("AirForce WH-1","AirForce One")
 --            AwacsAW:SetMarker(false)
@@ -226,7 +226,7 @@ do
 -- 
 -- ## 5 Set up AWACS
 -- 
---            -- Set up AWACS called "AWACS North". It will use the AwacsAW AirWing set up above and be of the "blue" coalition. Homebase is Kutaisi.
+--            -- Set up AWACS called "AWACS North". It will use the AwacsAW Airwing set up above and be of the "blue" coalition. Homebase is Kutaisi.
 --            -- The AWACS Orbit Zone is a round zone set in the mission editor named "Awacs Orbit", the FEZ is a Polygon-Zone called "Rock" we have also
 --            -- set up in the mission editor with a late activated helo named "Rock#ZONE_POLYGON". Note this also sets the BullsEye to be referenced as "Rock".
 --            -- The CAP station zone is called "Fremont". We will be on 255 AM.
@@ -248,7 +248,7 @@ do
 --            
 -- ### 5.1 Alternative - Set up as GCI (no AWACS plane needed) Theater Air Control System (TACS)
 -- 
---            -- Set up as TACS called "GCI Senaki". It will use the AwacsAW AirWing set up above and be of the "blue" coalition. Homebase is Senaki.
+--            -- Set up as TACS called "GCI Senaki". It will use the AwacsAW Airwing set up above and be of the "blue" coalition. Homebase is Senaki.
 --            -- No need to set the AWACS Orbit Zone; the FEZ is still a Polygon-Zone called "Rock" we have also
 --            -- set up in the mission editor with a late activated helo named "Rock#ZONE_POLYGON". Note this also sets the BullsEye to be referenced as "Rock".
 --            -- The CAP station zone is called "Fremont". We will be on 255 AM. Note the Orbit Zone is given as *nil* in the `New()`-Statement
@@ -508,7 +508,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.61", -- #string
+  version = "0.2.64", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -852,8 +852,8 @@ AWACS.Messages = {
 --- Contact Data
 -- @type AWACS.ManagedContact
 -- @field #number CID
--- @field Ops.Intelligence#INTEL.Contact Contact
--- @field Ops.Intelligence#INTEL.Cluster Cluster
+-- @field Ops.Intel#INTEL.Contact Contact
+-- @field Ops.Intel#INTEL.Cluster Cluster
 -- @field #string IFF -- ID'ed or not (yet)
 -- @field Ops.Target#TARGET Target
 -- @field #number LinkedTask --> TID
@@ -902,8 +902,8 @@ AWACS.TaskStatus = {
 -- @field #AWACS.TaskStatus Status
 -- @field #AWACS.TaskDescription ToDo
 -- @field #string ScreenText Long descrition
--- @field Ops.Intelligence#INTEL.Contact Contact
--- @field Ops.Intelligence#INTEL.Cluster Cluster
+-- @field Ops.Intel#INTEL.Contact Contact
+-- @field Ops.Intel#INTEL.Cluster Cluster
 -- @field #number CurrentAuftrag
 -- @field #number RequestedTimestamp
 
@@ -956,7 +956,7 @@ AWACS.TaskStatus = {
 -- DONE - Shift Change, Change on asset RTB or dead or mission done (done for AWACS and Escorts)
 -- DONE - TripWire - WIP - Threat (35nm), Meld (45nm, on mission), Merged (<3nm)
 -- 
--- DONE - Escorts via AirWing not staying on
+-- DONE - Escorts via Airwing not staying on
 -- DONE - Borders for INTEL. Optional, i.e. land based defense within borders
 -- DONE - Use AO as Anchor of Bulls, AO as default
 -- DONE - SRS TTS output
@@ -984,7 +984,7 @@ AWACS.TaskStatus = {
 --- Set up a new AI AWACS.
 -- @param #AWACS self
 -- @param #string Name Name of this AWACS for the radio menu.
--- @param #string AirWing The core Ops.AirWing#AIRWING managing the AWACS, Escort and (optionally) AI CAP planes for us.
+-- @param #string AirWing The core Ops.Airwing#AIRWING managing the AWACS, Escort and (optionally) AI CAP planes for us.
 -- @param #number Coalition Coalition, e.g. coalition.side.BLUE. Can also be passed as "blue", "red" or "neutral".
 -- @param #string AirbaseName Name of the home airbase.
 -- @param #string AwacsOrbit Name of the round, mission editor created zone where this AWACS orbits.
@@ -1024,7 +1024,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   
   -- base setup
   self.Name = Name -- #string
-  self.AirWing = AirWing -- Ops.AirWing#AIRWING object
+  self.AirWing = AirWing -- Ops.Airwing#AIRWING object
   
   AirWing:SetUsingOpsAwacs(self)
   
@@ -1032,7 +1032,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.CAPAirwings:Push(AirWing,1)
   
   self.AwacsFG = nil
-  --self.AwacsPayload = PayLoad -- Ops.AirWing#AIRWING.Payload
+  --self.AwacsPayload = PayLoad -- Ops.Airwing#AIRWING.Payload
   --self.ModernEra = true -- use of EPLRS
   self.RadarBlur = 15 -- +/-15% detection precision i.e. 85-115 reported group size
   if type(OpsZone) == "string" then
@@ -1384,7 +1384,7 @@ end
 -- Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- [User] Set the tactical information option, create 10 radio channels groups can subscribe and get Bogey Dope on a specific frequency automatically.
+--- [User] Set the tactical information option, create 10 radio channels groups can subscribe and get Bogey Dope on a specific frequency automatically. You **need** to set up SRS first before using this!
 -- @param #AWACS self
 -- @param #number BaseFreq Base Frequency to use, defaults to 130.
 -- @param #number Increase Increase to use, defaults to 0.5, thus channels created are 130, 130.5, 131 .. etc.
@@ -1394,6 +1394,10 @@ end
 -- @return #AWACS self
 function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval,Number)
   self:T(self.lid.."SetTacticalRadios")
+  if not self.AwacsSRS then
+    MESSAGE:New("AWACS: Setup SRS in your code BEFORE trying to add tac radios please!",30,"ERROR",true):ToLog():ToAll()
+    return self
+  end
   self.TacticalMenu = true
   self.TacticalBaseFreq = BaseFreq or 130
   self.TacticalIncrFreq = Increase or 0.5
@@ -1407,7 +1411,7 @@ function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval,Number)
     self.TacticalFrequencies[freq] = freq
   end
   if self.AwacsSRS then
-    self.TacticalSRS = MSRS:New(self.PathToSRS,self.TacticalBaseFreq,self.TacticalModulation)
+    self.TacticalSRS = MSRS:New(self.PathToSRS,self.TacticalBaseFreq,self.TacticalModulation,self.Backend)
     self.TacticalSRS:SetCoalition(self.coalition)
     self.TacticalSRS:SetGender(self.Gender)
     self.TacticalSRS:SetCulture(self.Culture)
@@ -2085,8 +2089,9 @@ end
 -- @param #number Volume Volume - between 0.0 (silent) and 1.0 (loudest)
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS; if you use a config file for MSRS, hand in nil here.
 -- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
+-- @param #string Backend (Optional) Your MSRS Backend if different from your config file settings, e.g. MSRS.Backend.SRSEXE or MSRS.Backend.GRPC
 -- @return #AWACS self
-function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey)
+function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Backend)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone" 
   self.Gender = Gender or MSRS.gender or "male"
@@ -2096,8 +2101,9 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey
   self.PathToGoogleKey = PathToGoogleKey
   self.AccessKey = AccessKey
   self.Volume = Volume or 1.0
-  
-  self.AwacsSRS = MSRS:New(self.PathToSRS,self.MultiFrequency,self.MultiModulation)
+  self.Backend = Backend or MSRS.backend
+  BASE:I({backend = self.Backend})
+  self.AwacsSRS = MSRS:New(self.PathToSRS,self.MultiFrequency,self.MultiModulation,self.Backend)
   self.AwacsSRS:SetCoalition(self.coalition)
   self.AwacsSRS:SetGender(self.Gender)
   self.AwacsSRS:SetCulture(self.Culture)
@@ -2463,7 +2469,7 @@ function AWACS:_UpdateContactFromCluster(CID)
   
   local function GetFirstAliveContact(table)
     for _,_contact in pairs (table) do
-      local contact = _contact -- Ops.Intelligence#INTEL.Contact
+      local contact = _contact -- Ops.Intel#INTEL.Contact
       if contact and contact.group and contact.group:IsAlive() then
         return contact
       end
@@ -2499,13 +2505,22 @@ function AWACS:_CheckMerges()
             local cpos = contact.Cluster.coordinate or contact.Contact.position or contact.Contact.group:GetCoordinate()
             local dist = ppos:Get2DDistance(cpos)
             local distnm = UTILS.Round(UTILS.MetersToNM(dist),0)
-            if (pilot.IsPlayer or self.debug) and distnm <= 5 and not contact.MergeCallDone then
-              local label = contact.EngagementTag or ""
-              if not contact.MergeCallDone or not string.find(label,pcallsign) then
+            if (pilot.IsPlayer or self.debug) and distnm <= 5 then --and ((not contact.MergeCallDone) or (timer.getTime() - contact.MergeCallDone > 30)) then
+              --local label = contact.EngagementTag or ""
+              --if not contact.MergeCallDone or not string.find(label,pcallsign) then
                 self:T(self.lid.."Merged")
                 self:_MergedCall(_id)
-                contact.MergeCallDone = true
-              end
+                --contact.MergeCallDone = true
+              --end
+            end
+            if (pilot.IsPlayer or self.debug) and distnm >5 and distnm <= self.ThreatDistance then 
+              self:_ThreatRangeCall(_id,Contact)
+            end
+            if (pilot.IsPlayer or self.debug) and distnm > self.ThreatDistance and distnm <= self.MeldDistance then 
+              self:_MeldRangeCall(_id,Contact)
+            end
+            if (pilot.IsPlayer or self.debug) and distnm > self.MeldDistance and distnm <= self.TacDistance then 
+              self:_TACRangeCall(_id,Contact)
             end
           end
         )      
@@ -3099,7 +3114,7 @@ function AWACS:_BogeyDope(Group,Tactical)
       local clean = self.gettext:GetEntry("CLEAN",self.locale)
       text = string.format(clean,self:_GetCallSign(Group,GID) or "Ghost 1", self.callsigntxt)
       
-      self:_NewRadioEntry(text,textScreen,GID,Outcome,Outcome,true,false,true,Tactical)
+      self:_NewRadioEntry(text,text,GID,Outcome,Outcome,true,false,true,Tactical)
 
     else
     
@@ -3141,9 +3156,13 @@ end
 function AWACS:_ShowAwacsInfo(Group)
   self:T(self.lid.."_ShowAwacsInfo")
   local report = REPORT:New("Info")
+  local STN = self.STN 
   report:Add("====================")
   report:Add(string.format("AWACS %s",self.callsigntxt))
   report:Add(string.format("Radio: %.3f %s",self.Frequency,UTILS.GetModulationName(self.Modulation)))
+  if STN then
+    report:Add(string.format("Link-16 STN: %s",STN))
+  end
   report:Add(string.format("Bulls Alias: %s",self.AOName))
   report:Add(string.format("Coordinate: %s",self.AOCoordinate:ToStringLLDDM()))
   report:Add("====================")
@@ -4260,7 +4279,7 @@ function AWACS:_StartIntel(awacs)
   
   intel:__Start(5)
   
-  self.intel = intel -- Ops.Intelligence#INTEL
+  self.intel = intel -- Ops.Intel#INTEL
   return self
 end
 
@@ -4420,8 +4439,8 @@ end
 -- @param #table Object Object for Ops.Target#TARGET assignment
 -- @param #AWACS.TaskStatus TaskStatus Status of this task
 -- @param Ops.Auftrag#AUFTRAG Auftrag The Auftrag for this task if any
--- @param Ops.Intelligence#INTEL.Cluster Cluster Intel Cluster for this task
--- @param Ops.Intelligence#INTEL.Contact Contact Intel Contact for this task
+-- @param Ops.Intel#INTEL.Cluster Cluster Intel Cluster for this task
+-- @param Ops.Intel#INTEL.Contact Contact Intel Contact for this task
 -- @return #number TID Task ID created
 function AWACS:_CreateTaskForGroup(GroupID,Description,ScreenText,Object,TaskStatus,Auftrag,Cluster,Contact)
    self:T(self.lid.."_CreateTaskForGroup "..GroupID .." Description: "..Description)
@@ -4620,7 +4639,7 @@ function AWACS:_CheckTaskQueue()
         
         -- Check ranges for TAC and MELD
         -- postions relative to CAP position
-        
+        --[[
         local targetgrp = entry.Contact.group
         local position = entry.Contact.position or entry.Cluster.coordinate
         if targetgrp and targetgrp:IsAlive() and managedgroup then
@@ -4645,6 +4664,7 @@ function AWACS:_CheckTaskQueue()
             end
           end
         end
+        --]]
         
         local auftrag = entry.Auftrag -- Ops.Auftrag#AUFTRAG
         local auftragstatus = "Not Known"
@@ -4843,6 +4863,7 @@ function AWACS:_CheckTaskQueue()
           elseif entry.Status == AWACS.TaskStatus.ASSIGNED then
             self:T("Open Tasks VID ASSIGNED for GroupID "..entry.AssignedGroupID)
             -- check TAC/MELD ranges
+            --[[
             local targetgrp = entry.Contact.group
             local position = entry.Contact.position or entry.Cluster.coordinate
             if targetgrp and targetgrp:IsAlive() and managedgroup then
@@ -4867,6 +4888,7 @@ function AWACS:_CheckTaskQueue()
                 end
               end
             end
+            --]]
           elseif entry.Status == AWACS.TaskStatus.SUCCESS then
             self:T("Open Tasks VID success for GroupID "..entry.AssignedGroupID)
             -- outcomes - player ID'd
@@ -4978,7 +5000,7 @@ end
 
 --- [User] Add another AirWing for AI CAP Flights under management
 -- @param #AWACS self
--- @param Ops.AirWing#AIRWING AirWing The AirWing to (also) obtain CAP flights from
+-- @param Ops.Airwing#AIRWING AirWing The AirWing to (also) obtain CAP flights from
 -- @param Core.Zone#ZONE_RADIUS Zone (optional) This AirWing has it's own station zone, AI CAP will be send there
 -- @return #AWACS self
 function AWACS:AddCAPAirWing(AirWing,Zone)
@@ -5063,7 +5085,7 @@ function AWACS:_AnnounceContact(Contact,IsNew,Group,IsBogeyDope,Tag,IsPopup,Repo
   end
 
   local cluster = Contact.Cluster
-  local intel = self.intel -- Ops.Intelligence#INTEL
+  local intel = self.intel -- Ops.Intel#INTEL
   
   local size = self.intel:ClusterCountUnits(cluster)
   local threatsize, threatsizetext = self:_GetBlurredSize(size)
@@ -5465,9 +5487,10 @@ function AWACS:_TACRangeCall(GID,Contact)
   if not Contact then return self end
   local pilotcallsign = self:_GetCallSign(nil,GID) 
   local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
-  local contact = Contact.Contact -- Ops.Intelligence#INTEL.Contact
+  local contact = Contact.Contact -- Ops.Intel#INTEL.Contact
   local contacttag = Contact.TargetGroupNaming
-  if contact and not Contact.TACCallDone then
+  local name = managedgroup.GroupName
+  if contact then --and not Contact.TACCallDone then
     local position = contact.position -- Core.Point#COORDINATE
     if position then     
       local distance = position:Get2DDistance(managedgroup.Group:GetCoordinate())
@@ -5475,8 +5498,18 @@ function AWACS:_TACRangeCall(GID,Contact)
       local grptxt = self.gettext:GetEntry("GROUP",self.locale)
       local miles = self.gettext:GetEntry("MILES",self.locale)
       local text = string.format("%s. %s. %s %s, %d %s.",self.callsigntxt,pilotcallsign,contacttag,grptxt,distance,miles)
-      self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+      if not self.TacticalSubscribers[name] then
+        self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+      end
       self:_UpdateContactEngagementTag(Contact.CID,Contact.EngagementTag,true,false,AWACS.TaskStatus.EXECUTING)
+      if GID and GID ~= 0 then
+        --local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
+        if managedgroup and managedgroup.Group and managedgroup.Group:IsAlive() then
+          if self.TacticalSubscribers[name] then
+            self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true,true)
+          end
+        end
+      end
     end
   end
   return self
@@ -5494,9 +5527,10 @@ function AWACS:_MeldRangeCall(GID,Contact)
   local pilotcallsign = self:_GetCallSign(nil,GID) 
   local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
   local flightpos = managedgroup.Group:GetCoordinate()
-  local contact = Contact.Contact -- Ops.Intelligence#INTEL.Contact
-  local contacttag = Contact.TargetGroupNaming
-  if contact and not Contact.MeldCallDone then
+  local contact = Contact.Contact -- Ops.Intel#INTEL.Contact
+  local contacttag = Contact.TargetGroupNaming or "Bogey"
+  local name = managedgroup.GroupName
+  if contact then --and not Contact.MeldCallDone then
     local position = contact.position -- Core.Point#COORDINATE
     if position then
       local BRATExt = ""
@@ -5507,8 +5541,19 @@ function AWACS:_MeldRangeCall(GID,Contact)
       end
       local grptxt = self.gettext:GetEntry("GROUP",self.locale)
       local text = string.format("%s. %s. %s %s, %s",self.callsigntxt,pilotcallsign,contacttag,grptxt,BRATExt)
-      self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+      if not self.TacticalSubscribers[name] then
+        self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+      end
       self:_UpdateContactEngagementTag(Contact.CID,Contact.EngagementTag,true,true,AWACS.TaskStatus.EXECUTING)
+      if GID and GID ~= 0 then
+        --local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
+        if managedgroup and managedgroup.Group and managedgroup.Group:IsAlive() then
+          local name = managedgroup.GroupName
+          if self.TacticalSubscribers[name] then
+            self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true,true)
+          end
+        end
+      end
     end
   end
   return self
@@ -5524,8 +5569,10 @@ function AWACS:_ThreatRangeCall(GID,Contact)
   local pilotcallsign = self:_GetCallSign(nil,GID) 
   local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
   local flightpos = managedgroup.Group:GetCoordinate() or managedgroup.LastKnownPosition
-  local contact = Contact.Contact -- Ops.Intelligence#INTEL.Contact
-  local contacttag = Contact.TargetGroupNaming
+  local contact = Contact.Contact -- Ops.Intel#INTEL.Contact
+  local contacttag = Contact.TargetGroupNaming or "Bogey"
+  local name = managedgroup.GroupName
+  local IsSub = self.TacticalSubscribers[name] and true or false
   if contact then
     local position = contact.position or contact.group:GetCoordinate() -- Core.Point#COORDINATE
     if position then     
@@ -5538,7 +5585,18 @@ function AWACS:_ThreatRangeCall(GID,Contact)
       local grptxt = self.gettext:GetEntry("GROUP",self.locale)
       local thrt = self.gettext:GetEntry("THREAT",self.locale)
       local text = string.format("%s. %s. %s %s, %s. %s",self.callsigntxt,pilotcallsign,contacttag,grptxt, thrt, BRATExt)
-      self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+      if IsSub == false then
+        self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+      end
+      if GID and GID ~= 0 then
+        --local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
+        if managedgroup and managedgroup.Group and managedgroup.Group:IsAlive() then
+          local name = managedgroup.GroupName
+          if self.TacticalSubscribers[name] then
+            self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true,true)
+          end
+        end
+      end
     end
   end
   return self
@@ -5554,11 +5612,17 @@ function AWACS:_MergedCall(GID)
   local pilotcallsign = self:_GetCallSign(nil,GID) 
   local merge = self.gettext:GetEntry("MERGED",self.locale)  
   local text = string.format("%s. %s. %s.",self.callsigntxt,pilotcallsign,merge)
-  self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+  local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
+  local name
+  if managedgroup then
+    name = managedgroup.GroupName or "none"
+  end
+  if not self.TacticalSubscribers[name] then
+    self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
+  end
   if GID and GID ~= 0 then
     local managedgroup = self.ManagedGrps[GID] -- #AWACS.ManagedGroup
-    if managedgroup and managedgroup.Group and managedgroup.Group:IsAlive() then
-      local name = managedgroup.GroupName
+    if managedgroup and managedgroup.Group and managedgroup.Group:IsAlive() then    
       if self.TacticalSubscribers[name] then
         self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true,true)
       end
@@ -5832,7 +5896,7 @@ function AWACS:onafterStart(From, Event, To)
   
   if not self.GCI then
     -- set up the AWACS and let it orbit
-    local AwacsAW = self.AirWing -- Ops.AirWing#AIRWING
+    local AwacsAW = self.AirWing -- Ops.Airwing#AIRWING
     local mission = AUFTRAG:NewORBIT_RACETRACK(self.OrbitZone:GetCoordinate(),self.AwacsAngels*1000,self.Speed,self.Heading,self.Leg)
     local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600
     mission:SetTime(nil,timeonstation)
@@ -5953,6 +6017,10 @@ function AWACS:_CheckAwacsStatus()
   local awacs = nil -- Wrapper.Group#GROUP
   if self.AwacsFG then
     awacs = self.AwacsFG:GetGroup() -- Wrapper.Group#GROUP
+    local unit = awacs:GetUnit(1)
+    if unit then
+      self.STN = tostring(unit:GetSTN())
+    end
   end
   
   local monitoringdata = self.MonitoringData -- #AWACS.MonitoringData
@@ -6426,7 +6494,7 @@ end
 -- @param #string From 
 -- @param #string Event
 -- @param #string To
--- @param Ops.Intelligence#INTEL.Cluster Cluster
+-- @param Ops.Intel#INTEL.Cluster Cluster
 -- @return #AWACS self
 function AWACS:onafterNewCluster(From,Event,To,Cluster)
   self:T({From, Event, To, Cluster.index})
@@ -6438,7 +6506,7 @@ function AWACS:onafterNewCluster(From,Event,To,Cluster)
   
   local function GetFirstAliveContact(table)
     for _,_contact in pairs (table) do
-      local contact = _contact -- Ops.Intelligence#INTEL.Contact
+      local contact = _contact -- Ops.Intel#INTEL.Contact
       if contact and contact.group and contact.group:IsAlive() then
         return contact, contact.group
       end
@@ -6446,7 +6514,7 @@ function AWACS:onafterNewCluster(From,Event,To,Cluster)
     return nil
   end
   
-  local Contact, Group = GetFirstAliveContact(ContactTable) -- Ops.Intelligence#INTEL.Contact
+  local Contact, Group = GetFirstAliveContact(ContactTable) -- Ops.Intel#INTEL.Contact
   
   if not Contact then return self end
   
@@ -6457,7 +6525,7 @@ function AWACS:onafterNewCluster(From,Event,To,Cluster)
   local targetset = SET_GROUP:New()
   -- SET for TARGET
   for _,_grp in pairs(ContactTable) do
-    local grp = _grp -- Ops.Intelligence#INTEL.Contact
+    local grp = _grp -- Ops.Intel#INTEL.Contact
     targetset:AddGroup(grp.group, true)
   end
   local managedcontact = {} -- #AWACS.ManagedContact
@@ -6519,7 +6587,7 @@ end
 -- @param #string From 
 -- @param #string Event
 -- @param #string To
--- @param Ops.Intelligence#INTEL.Contact Contact
+-- @param Ops.Intel#INTEL.Contact Contact
 -- @return #AWACS self 
 function AWACS:onafterNewContact(From,Event,To,Contact)
   self:T({From, Event, To, Contact})
@@ -6548,7 +6616,7 @@ end
 -- @param #string From 
 -- @param #string Event
 -- @param #string To
--- @param Ops.Intelligence#INTEL.Contact Contact
+-- @param Ops.Intel#INTEL.Contact Contact
 -- @return #AWACS self
 function AWACS:onafterLostContact(From,Event,To,Contact)
   self:T({From, Event, To, Contact})
@@ -6560,7 +6628,7 @@ end
 -- @param #string From 
 -- @param #string Event
 -- @param #string To
--- @param Ops.Intelligence#INTEL.Cluster Cluster
+-- @param Ops.Intel#INTEL.Cluster Cluster
 -- @param Ops.Auftrag#AUFTRAG Mission
 -- @return #AWACS self
 function AWACS:onafterLostCluster(From,Event,To,Cluster,Mission)
@@ -6632,7 +6700,7 @@ function AWACS:onafterCheckTacticalQueue(From,Event,To)
  
  end -- end while
  
- if self:Is("Running") then
+ if not self:Is("Stopped") then
   self:__CheckTacticalQueue(-self.TacticalInterval)
  end
  return self
@@ -6761,7 +6829,7 @@ function AWACS:onafterAwacsShiftChange(From,Event,To)
     self.AwacsTimeStamp = timer.getTime()
     
     -- set up the AWACS and let it orbit
-    local AwacsAW = self.AirWing -- Ops.AirWing#AIRWING
+    local AwacsAW = self.AirWing -- Ops.Airwing#AIRWING
     local mission = AUFTRAG:NewORBIT_RACETRACK(self.OrbitZone:GetCoordinate(),self.AwacsAngels*1000,self.Speed,self.Heading,self.Leg)
     self.CatchAllMissions[#self.CatchAllMissions+1] = mission
     local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600

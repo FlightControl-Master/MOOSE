@@ -24,7 +24,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update December 2023
+-- Last Update February 2024
 
 do 
 
@@ -44,6 +44,7 @@ do
 -- @field #number PerCrateMass Mass in kg.
 -- @field #number Stock Number of builds available, -1 for unlimited.
 -- @field #string Subcategory Sub-category name.
+-- @field #boolean DontShowInMenu Show this item in menu or not.
 -- @extends Core.Base#BASE
 
 ---
@@ -62,6 +63,7 @@ CTLD_CARGO = {
   PerCrateMass = 0,
   Stock = nil,
   Mark = nil,
+  DontShowInMenu = false,
   }
   
   --- Define cargo types.
@@ -97,8 +99,9 @@ CTLD_CARGO = {
   -- @param #number PerCrateMass Mass in kg
   -- @param #number Stock Number of builds available, nil for unlimited
   -- @param #string Subcategory Name of subcategory, handy if using > 10 types to load.
+  -- @param #boolean DontShowInMenu Show this item in menu or not (default: false == show it).
   -- @return #CTLD_CARGO self
-  function CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock, Subcategory)
+  function CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock, Subcategory,DontShowInMenu)
     -- Inherit everything from BASE class.
     local self=BASE:Inherit(self, BASE:New()) -- #CTLD_CARGO
     self:T({ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped})
@@ -115,6 +118,7 @@ CTLD_CARGO = {
     self.Stock = Stock or nil --#number
     self.Mark = nil
     self.Subcategory = Subcategory or "Other"
+    self.DontShowInMenu = DontShowInMenu or false
     return self
   end
   
@@ -1222,13 +1226,14 @@ CTLD.UnitTypeCapabilities = {
     ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25, cargoweightlimit = 19000}, -- 19t cargo, 64 paratroopers. 
     --Actually it's longer, but the center coord is off-center of the model.
     ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
+    ["MH-60R"] = {type="MH-60R", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
     ["AH-64D_BLK_II"] = {type="AH-64D_BLK_II", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 17, cargoweightlimit = 200}, -- 2 ppl **outside** the helo
     ["Bronco-OV-10A"] = {type="Bronco-OV-10A", crates= false, troops=true, cratelimit = 0, trooplimit = 5, length = 13, cargoweightlimit = 1450},
 }
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.45"
+CTLD.version="1.0.48"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1433,7 +1438,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   --- Pseudo Functions ---
   ------------------------
   
-    --- Triggers the FSM event "Start". Starts the CTLD. Initializes parameters and starts event handlers.
+  --- Triggers the FSM event "Start". Starts the CTLD. Initializes parameters and starts event handlers.
   -- @function [parent=#CTLD] Start
   -- @param #CTLD self
 
@@ -3024,9 +3029,10 @@ end
 function CTLD:_GetUnitPositions(Coordinate,Radius,Heading,Template)
   local Positions = {}
   local template = _DATABASE:GetGroupTemplate(Template)
-  UTILS.PrintTableToLog(template)
+  --UTILS.PrintTableToLog(template)
   local numbertroops = #template.units
-  local newcenter = Coordinate:Translate(Radius,((Heading+270)%360))
+  local slightshift = math.abs(math.random(0,200)/100)
+  local newcenter = Coordinate:Translate(Radius+slightshift,((Heading+270)%360))
   for i=1,360,math.floor(360/numbertroops) do
     local phead = ((Heading+270+i)%360)
     local post = newcenter:Translate(Radius,phead)
@@ -3038,7 +3044,7 @@ function CTLD:_GetUnitPositions(Coordinate,Radius,Heading,Template)
     }
     table.insert(Positions,p1t)
   end
-  UTILS.PrintTableToLog(Positions)
+  --UTILS.PrintTableToLog(Positions)
   return Positions
 end
 
@@ -3700,14 +3706,20 @@ function CTLD:_RefreshF10Menus()
               for _,_entry in pairs(self.Cargo_Troops) do
                 local entry = _entry -- #CTLD_CARGO
                 local subcat = entry.Subcategory
-                menucount = menucount + 1
-                menus[menucount] = MENU_GROUP_COMMAND:New(_group,entry.Name,subcatmenus[subcat],self._LoadTroops, self, _group, _unit, entry)
+                local noshow = entry.DontShowInMenu
+                if not noshow then
+                  menucount = menucount + 1
+                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,entry.Name,subcatmenus[subcat],self._LoadTroops, self, _group, _unit, entry)
+                end
               end
             else              
               for _,_entry in pairs(self.Cargo_Troops) do
                 local entry = _entry -- #CTLD_CARGO
-                menucount = menucount + 1
-                menus[menucount] = MENU_GROUP_COMMAND:New(_group,entry.Name,troopsmenu,self._LoadTroops, self, _group, _unit, entry)
+                local noshow = entry.DontShowInMenu
+                if not noshow then
+                  menucount = menucount + 1
+                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,entry.Name,troopsmenu,self._LoadTroops, self, _group, _unit, entry)
+                end
               end
             end
             local unloadmenu1 = MENU_GROUP_COMMAND:New(_group,"Drop troops",toptroops, self._UnloadTroops, self, _group, _unit):Refresh()
@@ -3728,33 +3740,45 @@ function CTLD:_RefreshF10Menus()
               for _,_entry in pairs(self.Cargo_Crates) do
                 local entry = _entry -- #CTLD_CARGO
                 local subcat = entry.Subcategory
-                menucount = menucount + 1
-                local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
-                menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
+                local noshow = entry.DontShowInMenu
+                if not noshow then
+                  menucount = menucount + 1
+                  local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
+                end
               end
               for _,_entry in pairs(self.Cargo_Statics) do
                 local entry = _entry -- #CTLD_CARGO
                 local subcat = entry.Subcategory
-                menucount = menucount + 1
-                local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
-                menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
+                local noshow = entry.DontShowInMenu
+                if not noshow then
+                  menucount = menucount + 1
+                  local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
+                end
               end
             else
               for _,_entry in pairs(self.Cargo_Crates) do
                 local entry = _entry -- #CTLD_CARGO
-                menucount = menucount + 1
-                local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
-                menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
+                local noshow = entry.DontShowInMenu
+                if not noshow then
+                  menucount = menucount + 1
+                  local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
+                end
               end
               for _,_entry in pairs(self.Cargo_Statics) do
                 local entry = _entry -- #CTLD_CARGO
-                menucount = menucount + 1
-                local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
-                menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
+                local noshow = entry.DontShowInMenu
+                if not noshow then
+                  menucount = menucount + 1
+                  local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
+                end
               end
             end
             listmenu = MENU_GROUP_COMMAND:New(_group,"List crates nearby",topcrates, self._ListCratesNearby, self, _group, _unit)
-            removecrates = MENU_GROUP_COMMAND:New(_group,"Remove crates nearby",removecratesmenu, self._RemoveCratesNearby, self, _group, _unit)
+            local removecrates = MENU_GROUP_COMMAND:New(_group,"Remove crates nearby",removecratesmenu, self._RemoveCratesNearby, self, _group, _unit)
             local unloadmenu = MENU_GROUP_COMMAND:New(_group,"Drop crates",topcrates, self._UnloadCrates, self, _group, _unit)
             if not self.nobuildmenu then
               local buildmenu = MENU_GROUP_COMMAND:New(_group,"Build crates",topcrates, self._BuildCrates, self, _group, _unit)
