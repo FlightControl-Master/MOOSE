@@ -824,7 +824,7 @@ function MSRS:SetVoiceProvider(Voice, Provider)
   self:F( {Voice=Voice, Provider=Provider} )
   self.poptions=self.poptions or {}
 
-  self.poptions[Provider or self:GetProvider()]=Voice
+  self.poptions[Provider or self:GetProvider()].voice =Voice
 
   return self
 end
@@ -1238,7 +1238,7 @@ function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture
   self:T({Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate} )
 
   if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, MSRS.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
+    self:ScheduleOnce(Delay, self.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
   else
 
     Frequencies = Frequencies or self:GetFrequencies()
@@ -1560,8 +1560,8 @@ end
 function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate)
 
   -- Debug info.
-  self:F("MSRS_BACKEND_DCSGRPC:_DCSgRPCtts()")
-  self:F({Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate})
+  self:T("MSRS_BACKEND_DCSGRPC:_DCSgRPCtts()")
+  self:T({Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate})
 
   local options = {} -- #MSRS.GRPCOptions
 
@@ -1587,7 +1587,6 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
 
   -- Provider (win, gcloud, ...)
   local provider = self.provider or MSRS.Provider.WINDOWS
-  self:F({provider=provider})
 
   -- Provider options: voice, credentials
   options.provider = {}
@@ -1595,7 +1594,7 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
 
   -- Voice
   Voice=Voice or self:GetVoice(self.provider) or self.voice
-
+  
   if Voice then
     -- We use a specific voice
     options.provider[provider].voice = Voice
