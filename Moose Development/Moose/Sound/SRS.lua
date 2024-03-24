@@ -824,7 +824,7 @@ function MSRS:SetVoiceProvider(Voice, Provider)
   self:F( {Voice=Voice, Provider=Provider} )
   self.poptions=self.poptions or {}
 
-  self.poptions[Provider or self:GetProvider()].voice =Voice
+  self.poptions[Provider or self:GetProvider()].voice=Voice
 
   return self
 end
