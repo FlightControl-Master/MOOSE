@@ -3538,6 +3538,8 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
           if tonumber(SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN) ~= nil then
             local octal = SpawnTemplate.units[UnitID].AddPropAircraft.SADL_TN
             local num = UTILS.OctalToDecimal(octal)
+            self.SpawnInitSADL = num -- we arrived here seeing that self.SpawnInitSADL == nil, but now that we have a SADL (num), we also need to set it to self.SpawnInitSADL in case
+                                     -- we need to get the next SADL from _DATABASE, or else UTILS.OctalToDecimal() will fail in GetNextSADL
             if  _DATABASE.SADL[num] ~= nil or UnitID > 1 then -- SADL taken or next unit
               octal = _DATABASE:GetNextSADL(self.SpawnInitSADL,SpawnTemplate.units[UnitID].name)
             end
