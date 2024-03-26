@@ -2348,6 +2348,9 @@ function RAT:_Respawn(index, lastpos, delay)
         env.info(string.format("element %s not SPOT", element.name))
       end
     end
+    
+    flightgroup:Despawn(0, true)
+    flightgroup:Stop()
   
     local _departure=nil
     local _destination=nil
@@ -4121,12 +4124,16 @@ function RAT:_OnEngineShutdown(EventData)
             local idx=self:GetSpawnIndexFromGroup(SpawnGroup)
             local coord=SpawnGroup:GetCoordinate()
             self:_Respawn(idx, coord, 3)
+            
+          else
+
+            -- Despawn group.
+            text="Event: Group "..SpawnGroup:GetName().." will be destroyed now."
+            self:T(RAT.id..text)
+            self:_Despawn(SpawnGroup)
+          
           end
 
-          -- Despawn group.
-          text="Event: Group "..SpawnGroup:GetName().." will be destroyed now."
-          self:T(RAT.id..text)
-          self:_Despawn(SpawnGroup)
 
         end
 
