@@ -2350,7 +2350,11 @@ function RAT:_Respawn(index, lastpos, delay)
     end
     
     flightgroup:Despawn(0, true)
-    flightgroup:Stop()
+    flightgroup:__Stop(0.1)
+    -- This is usually done in _Despawn
+    ratcraft.group=nil
+    ratcraft.status="Dead"
+    -- TODO: remove ratcraft from self.ratcraft table
   
     local _departure=nil
     local _destination=nil
@@ -2500,28 +2504,11 @@ function RAT:_Respawn(index, lastpos, delay)
     end
   
     -- Spawn new group.
-    local arg={}
-    arg.self=self
-    arg.departure=_departure
-    arg.destination=_destination
-    arg.takeoff=_takeoff
-    arg.landing=_landing
-    arg.livery=_livery
-    arg.lastwp=_lastwp
-    arg.lastpos=_lastpos
-    arg.parkingdata=parkingdata
-    self:T(RAT.id..string.format("%s delayed respawn in %.1f seconds.", self.alias, respawndelay))
-    SCHEDULER:New(nil, self._SpawnWithRouteTimer, {arg}, respawndelay)
+    self:T(RAT.id..string.format("%s delayed respawn in %.1f seconds.", self.alias, respawndelay))  
+    self:ScheduleOnce(respawndelay, RAT._SpawnWithRoute, self,_departure,_destination,_takeoff,_landing,_livery, nil,_lastpos, nil, nil)
     
   end
 
-end
-
---- Delayed spawn function called by scheduler.
--- @param #RAT self
--- @param #table arg Parameters: arg.self, arg.departure, arg.destination, arg.takeoff, arg.landing, arg.livery, arg.lastwp, arg.lastpos, arg.parkingdata
-function RAT._SpawnWithRouteTimer(arg)
-  RAT._SpawnWithRoute(arg.self, arg.departure, arg.destination, arg.takeoff, arg.landing, arg.livery, arg.lastwp, arg.lastpos, nil, arg.parkingdata)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
