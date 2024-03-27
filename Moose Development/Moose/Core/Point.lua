@@ -702,8 +702,9 @@ do -- COORDINATE
   -- @param #COORDINATE PointVec2Reference The reference @{#COORDINATE}.
   -- @return DCS#Distance The distance from the reference @{#COORDINATE} in meters.
   function COORDINATE:DistanceFromPointVec2( PointVec2Reference )
-    self:F2( PointVec2Reference )
-
+    self:F2( PointVec2Reference )  
+    if not PointVec2Reference then return math.huge end
+    
     local Distance = ( ( PointVec2Reference.x - self.x ) ^ 2 + ( PointVec2Reference.z - self.z ) ^2 ) ^ 0.5
 
     self:T2( Distance )
