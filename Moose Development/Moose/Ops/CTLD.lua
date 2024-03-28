@@ -123,7 +123,7 @@ CTLD_CARGO = {
     self.Subcategory = Subcategory or "Other"
     self.DontShowInMenu = DontShowInMenu or false
     if type(Location) == "string" then
-      Location = ZONE:New("Location")
+      Location = ZONE:New(Location)
     end
     self.Location = Location
     return self
@@ -674,6 +674,8 @@ do
 --        my_ctld:AddCratesCargo("Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE,2,2775)
 --        -- if you want to limit your stock, add a number (here: 10) as parameter after weight. No parameter / nil means unlimited stock.
 --        my_ctld:AddCratesCargo("Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE,2,2775,10)
+--        -- additionally, you can limit **where** the stock is available (one location only!) - this one is available in a zone called "Vehicle Store".
+--        my_ctld:AddCratesCargo("Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE,2,2775,10,nil,nil,"Vehicle Store")
 --        
 --        -- add infantry unit called "Forward Ops Base" using template "FOB", of type FOB, size 4, i.e. needs four crates to be build:
 --        my_ctld:AddCratesCargo("Forward Ops Base",{"FOB"},CTLD_CARGO.Enum.FOB,4)
@@ -775,6 +777,9 @@ do
 --        ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25, cargoweightlimit = 19000},
 --        ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500},
 --        ["AH-64D_BLK_II"] = {type="AH-64D_BLK_II", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 17, cargoweightlimit = 200}, 
+--        ["MH-60R"] = {type="MH-60R", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
+--        ["SH-60B"] = {type="SH-60B", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
+--        ["Bronco-OV-10A"] = {type="Bronco-OV-10A", crates= false, troops=true, cratelimit = 0, trooplimit = 5, length = 13, cargoweightlimit = 1450},
 --        
 -- ### 2.1.2 Activate and deactivate zones
 -- 
@@ -1241,6 +1246,7 @@ CTLD.UnitTypeCapabilities = {
     --Actually it's longer, but the center coord is off-center of the model.
     ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
     ["MH-60R"] = {type="MH-60R", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
+    ["SH-60B"] = {type="SH-60B", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
     ["AH-64D_BLK_II"] = {type="AH-64D_BLK_II", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 17, cargoweightlimit = 200}, -- 2 ppl **outside** the helo
     ["Bronco-OV-10A"] = {type="Bronco-OV-10A", crates= false, troops=true, cratelimit = 0, trooplimit = 5, length = 13, cargoweightlimit = 1450},
 }
@@ -3769,9 +3775,13 @@ function CTLD:_RefreshF10Menus()
                 local entry = _entry -- #CTLD_CARGO
                 local subcat = entry.Subcategory
                 local noshow = entry.DontShowInMenu
+                local zone = entry.Location
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+                  if zone then
+                    menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
+                  end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
                 end
               end
@@ -3779,9 +3789,13 @@ function CTLD:_RefreshF10Menus()
                 local entry = _entry -- #CTLD_CARGO
                 local subcat = entry.Subcategory
                 local noshow = entry.DontShowInMenu
+                local zone = entry.Location
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+                  if zone then
+                    menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
+                  end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
                 end
               end
@@ -3789,18 +3803,26 @@ function CTLD:_RefreshF10Menus()
               for _,_entry in pairs(self.Cargo_Crates) do
                 local entry = _entry -- #CTLD_CARGO
                 local noshow = entry.DontShowInMenu
+                local zone = entry.Location
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+                  if zone then
+                    menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
+                  end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
                 end
               end
               for _,_entry in pairs(self.Cargo_Statics) do
                 local entry = _entry -- #CTLD_CARGO
                 local noshow = entry.DontShowInMenu
+                local zone = entry.Location
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
+                  if zone then
+                    menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
+                  end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
                 end
               end
