@@ -1253,7 +1253,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.49"
+CTLD.version="1.0.50"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2260,7 +2260,7 @@ end
     local secondarygroups = {}
     
     for i=1,#distancekeys do
-      local nearestGroup = nearestList[distancekeys[i]]
+      local nearestGroup = nearestList[distancekeys[i]] -- Wrapper.Group#GROUP
           -- find matching cargo type
       local groupType = string.match(nearestGroup:GetName(), "(.+)-(.+)$")
       local Cargotype = nil
@@ -2296,20 +2296,31 @@ end
           self.CargoCounter = self.CargoCounter + 1
           local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, Cargotype.CargoType, true, true, Cargotype.CratesNeeded,nil,nil,Cargotype.PerCrateMass)
           self:T({cargotype=loadcargotype})
+          local running = math.floor(nearestDistance / 4)+10 -- time run to helo plus boarding
           loaded.Troopsloaded = loaded.Troopsloaded + troopsize
           table.insert(loaded.Cargo,loadcargotype)
           self.Loaded_Cargo[unitname] = loaded
-          self:_SendMessage("Troops boarded!", 10, false, Group)
+          self:ScheduleOnce(running,self._SendMessage,self,"Troops boarded!", 10, false, Group)
+          self:_SendMessage("Troops boarding!", 10, false, Group)
           self:_UpdateUnitCargoMass(Unit)
-          self:__TroopsExtracted(1,Group, Unit, nearestGroup)
-      
+          self:__TroopsExtracted(running,Group, Unit, nearestGroup)
+          local coord = Unit:GetCoordinate() or Group:GetCoordinate() -- Core.Point#COORDINATE
+          local Point
+          if coord then
+            local heading = unit:GetHeading() or 0
+            local Angle = math.floor((heading+160)%360)
+            Point = coord:Translate(8,Angle):GetVec2()
+            if Point then
+              nearestGroup:RouteToVec2(Point,4)
+            end
+          end
           -- clean up:
           if type(Cargotype.Templates) == "table" and  Cargotype.Templates[2] then
             for _,_key in pairs (Cargotype.Templates) do
               table.insert(secondarygroups,_key)
             end
           end
-          nearestGroup:Destroy(false)
+          nearestGroup:Destroy(false,running)
         end
       end
     end
@@ -2319,7 +2330,7 @@ end
         if _group and _group:IsAlive() then
           local groupname = string.match(_group:GetName(), "(.+)-(.+)$")
           if _name == groupname then
-            _group:Destroy(false)
+            _group:Destroy(false,15)
           end
         end
       end
@@ -5437,19 +5448,19 @@ end
     return self
   end
   
-      --- (Internal) FSM Function onbeforeTroopsExtracted.
-    -- @param #CTLD self
-    -- @param #string From State.
-    -- @param #string Event Trigger.
-    -- @param #string To State.
-    -- @param Wrapper.Group#GROUP Group Group Object.
-    -- @param Wrapper.Unit#UNIT Unit Unit Object.
-    -- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
-    -- @return #CTLD self
-    function CTLD:onbeforeTroopsExtracted(From, Event, To, Group, Unit, Troops)
-      self:T({From, Event, To})
-      return self
-    end
+  --- (Internal) FSM Function onbeforeTroopsExtracted.
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
+  -- @return #CTLD self
+  function CTLD:onbeforeTroopsExtracted(From, Event, To, Group, Unit, Troops)
+    self:T({From, Event, To})
+    return self
+  end
     
     
   --- (Internal) FSM Function onbeforeTroopsDeployed.
