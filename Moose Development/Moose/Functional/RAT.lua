@@ -2182,6 +2182,21 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   
   -- Create a flightgroup object.
   local flightgroup=FLIGHTGROUP:New(group)
+  
+  function flightgroup.OnAfterPassingWaypoint(flightgroup, From, Event, To, Waypoint)
+    local waypoint=Waypoint --Ops.OpsGroup#OPSGROUP.Waypoint
+    
+    self:T(RAT.id..string.format("RAT passed waypoint %s [uid=%d]", waypoint.name, waypoint.uid))
+    
+    RAT._WaypointFunction(group, self, waypoint.uid)
+  
+  end
+  
+  function flightgroup:OnAfterPassedFinalWaypoint(From, Event, To)
+  
+    self:T(RAT.id..string.format("RAT passed FINAL waypoint"))
+  
+  end
 
   -- Increase counter of alive groups (also uncontrolled ones).
   self.alive=self.alive+1
@@ -3515,6 +3530,8 @@ end
 -- @param #number forID (Optional) Send message only for this ID.
 function RAT:Status(message, forID)
 
+  self:T(RAT.id.."Checking status")
+
   -- Optional arguments.
   if message==nil then
     message=false
@@ -3530,13 +3547,17 @@ function RAT:Status(message, forID)
   local nalive=0
 
   -- Loop over all ratcraft.
-  for spawnindex,ratcraft in ipairs(self.ratcraft) do
+  for spawnindex,ratcraft in pairs(self.ratcraft) do
+  
+    self:T(RAT.id..string.format("Ratcraft Index=%s", tostring(spawnindex)))
 
     -- Get group.
     local group=ratcraft.group  --Wrapper.Group#GROUP
 
     if group and group:IsAlive() and (group:GetCoordinate() or group:GetVec3()) then
       nalive=nalive+1
+      
+      self:T(RAT.id..string.format("Ratcraft Index=%s is ALIVE", tostring(spawnindex)))
 
       -- Gather some information.
       local prefix=self:_GetPrefixFromGroup(group)
@@ -3709,12 +3730,13 @@ function RAT:Status(message, forID)
           local idx=self:GetSpawnIndexFromGroup(group)
           local coord=group:GetCoordinate()
           self:_Respawn(idx, coord, 0)
+        else
+          -- Despawn old group.
+          if self.despawnair then
+            self:_Despawn(group, 0)
+          end
         end
 
-        -- Despawn old group.
-        if self.despawnair then
-          self:_Despawn(group, 0)
-        end
 
       end
 
@@ -4738,7 +4760,7 @@ function RAT._WaypointFunction(group, rat, wp)
   local text
 
   -- Info on passing waypoint.
-  text=string.format("Flight %s passing waypoint #%d %s.", group:GetName(), wp, rat.waypointdescriptions[wp])
+  text=string.format("Flight %s passing waypoint #%d %s", group:GetName(), wp, rat.waypointdescriptions[wp])
   BASE.T(rat, RAT.id..text)
 
   -- New status.
@@ -4770,7 +4792,7 @@ function RAT._WaypointFunction(group, rat, wp)
       MESSAGE:New(text, 10):ToAllIf(rat.Debug)
       BASE.T(rat, RAT.id..text)
       -- Enable despawn switch. Next time the status function is called, the aircraft will be despawned.
-      rat.ratcraft[sdx].despawnme=true
+      ratcraft.despawnme=true
     end
   end
 end
@@ -5330,6 +5352,9 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
           self:T(RAT.id..string.format("Group %s is spawned on farp/ship/runway %s.", self.alias, departure:GetName()))
           nfree=departure:GetFreeParkingSpotsNumber(termtype, true)
           spots=departure:GetFreeParkingSpotsTable(termtype, true)
+          -- Had a case at a Gas Platform where nfree=1 but spots from GetFreeParkingSpotsTable were empty.
+          --spots=departure:GetParkingSpotsTable(termtype)
+          self:T(RAT.id..string.format("Free nfree=%d nspots=%d", nfree, #spots))
         elseif parkingdata~=nil then
           -- Parking data explicitly set by user as input parameter.
           self:T2("Spawning with explicit parking data")
