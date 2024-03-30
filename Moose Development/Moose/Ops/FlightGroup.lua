@@ -786,6 +786,7 @@ function FLIGHTGROUP:SetReadyForTakeoff(ReadyTO, Delay)
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, FLIGHTGROUP.SetReadyForTakeoff, self, ReadyTO, 0)
   else
+    self:T(self.lid.."Set Ready for Takeoff switch for flightcontrol")
     self.isReadyTO=ReadyTO
   end
   return self

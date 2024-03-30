@@ -1063,9 +1063,10 @@ function FLIGHTCONTROL:onafterStatusUpdate()
   -- Check if runway was repaired.
   if self:IsRunwayOperational()==false then
     local Trepair=self:GetRunwayRepairtime()
-    self:I(self.lid..string.format("Runway still destroyed! Will be repaired in %d sec", Trepair))
     if Trepair==0 then
       self:RunwayRepaired()
+    else
+      self:I(self.lid..string.format("Runway still destroyed! Will be repaired in %d sec", Trepair))
     end
   end  
 
@@ -1835,7 +1836,7 @@ function FLIGHTCONTROL:_GetNextFightParking()
     local text="Parking flights:"
     for i,_flight in pairs(Qparking) do
       local flight=_flight --Ops.FlightGroup#FLIGHTGROUP
-      text=text..string.format("\n[%d] %s [%s], state=%s [%s]: Tparking=%.1f sec", i, flight.groupname, flight.actype, flight:GetState(), self:GetFlightStatus(flight), flight:GetParkingTime())
+      text=text..string.format("\n[%d] %s [%s], state=%s [%s]: Tparking=%.1f sec", i, flight.groupname, tostring(flight.actype), flight:GetState(), self:GetFlightStatus(flight), flight:GetParkingTime())
     end
     self:I(self.lid..text)
   end
@@ -2131,7 +2132,7 @@ function FLIGHTCONTROL:_InitParkingSpots()
       
         local isalive=unit:IsAlive()
       
-        --env.info(string.format("FF parking spot %d is occupied by unit %s alive=%s", spot.TerminalID, unitname, tostring(isalive)))
+        self:T2(self.lid..string.format("FF parking spot %d is occupied by unit %s alive=%s", spot.TerminalID, unitname, tostring(isalive)))
       
         if isalive then
       
