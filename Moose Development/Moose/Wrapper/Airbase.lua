@@ -594,36 +594,36 @@ AIRBASE.MarianaIslands = {
 
 --- Airbases of the South Atlantic map:
 --
--- * AIRBASE.Falklands.Almirante_Schroeders
--- * AIRBASE.Falklands.Caleta_Tortel
--- * AIRBASE.Falklands.Comandante_Luis_Piedrabuena
--- * AIRBASE.Falklands.Cullen
--- * AIRBASE.Falklands.El_Calafate
--- * AIRBASE.Falklands.Franco_Bianco
--- * AIRBASE.Falklands.Gobernador_Gregores
--- * AIRBASE.Falklands.Goose_Green
--- * AIRBASE.Falklands.Gull_Point
--- * AIRBASE.Falklands.Hipico_Flying_Club
--- * AIRBASE.Falklands.Mount_Pleasant
--- * AIRBASE.Falklands.O_Higgins
--- * AIRBASE.Falklands.Pampa_Guanaco
--- * AIRBASE.Falklands.Port_Stanley
--- * AIRBASE.Falklands.Porvenir
--- * AIRBASE.Falklands.Puerto_Natales
--- * AIRBASE.Falklands.Puerto_Santa_Cruz
--- * AIRBASE.Falklands.Puerto_Williams
--- * AIRBASE.Falklands.Punta_Arenas
--- * AIRBASE.Falklands.Rio_Chico
--- * AIRBASE.Falklands.Rio_Gallegos
--- * AIRBASE.Falklands.Rio_Grande
--- * AIRBASE.Falklands.Rio_Turbio
--- * AIRBASE.Falklands.San_Carlos_FOB
--- * AIRBASE.Falklands.San_Julian
--- * AIRBASE.Falklands.Tolhuin
--- * AIRBASE.Falklands.Ushuaia
--- * AIRBASE.Falklands.Ushuaia_Helo_Port
+-- * AIRBASE.SouthAtlantic.Almirante_Schroeders
+-- * AIRBASE.SouthAtlantic.Caleta_Tortel
+-- * AIRBASE.SouthAtlantic.Comandante_Luis_Piedrabuena
+-- * AIRBASE.SouthAtlantic.Cullen
+-- * AIRBASE.SouthAtlantic.El_Calafate
+-- * AIRBASE.SouthAtlantic.Franco_Bianco
+-- * AIRBASE.SouthAtlantic.Gobernador_Gregores
+-- * AIRBASE.SouthAtlantic.Goose_Green
+-- * AIRBASE.SouthAtlantic.Gull_Point
+-- * AIRBASE.SouthAtlantic.Hipico_Flying_Club
+-- * AIRBASE.SouthAtlantic.Mount_Pleasant
+-- * AIRBASE.SouthAtlantic.O_Higgins
+-- * AIRBASE.SouthAtlantic.Pampa_Guanaco
+-- * AIRBASE.SouthAtlantic.Port_Stanley
+-- * AIRBASE.SouthAtlantic.Porvenir
+-- * AIRBASE.SouthAtlantic.Puerto_Natales
+-- * AIRBASE.SouthAtlantic.Puerto_Santa_Cruz
+-- * AIRBASE.SouthAtlantic.Puerto_Williams
+-- * AIRBASE.SouthAtlantic.Punta_Arenas
+-- * AIRBASE.SouthAtlantic.Rio_Chico
+-- * AIRBASE.SouthAtlantic.Rio_Gallegos
+-- * AIRBASE.SouthAtlantic.Rio_Grande
+-- * AIRBASE.SouthAtlantic.Rio_Turbio
+-- * AIRBASE.SouthAtlantic.San_Carlos_FOB
+-- * AIRBASE.SouthAtlantic.San_Julian
+-- * AIRBASE.SouthAtlantic.Tolhuin
+-- * AIRBASE.SouthAtlantic.Ushuaia
+-- * AIRBASE.SouthAtlantic.Ushuaia_Helo_Port
 --
---@field MarianaIslands
+--@field SouthAtlantic
 AIRBASE.SouthAtlantic={
   ["Almirante_Schroeders"] = "Almirante Schroeders",
   ["Caleta_Tortel"] = "Caleta Tortel",
@@ -657,36 +657,36 @@ AIRBASE.SouthAtlantic={
 
 --- Airbases of the Sinai map:
 --
--- * AIRBASE.SinaiMap.Abu_Rudeis
--- * AIRBASE.SinaiMap.Abu_Suwayr
--- * AIRBASE.SinaiMap.Al_Ismailiyah
--- * AIRBASE.SinaiMap.Al_Mansurah
--- * AIRBASE.SinaiMap.As_Salihiyah
--- * AIRBASE.SinaiMap.AzZaqaziq
--- * AIRBASE.SinaiMap.Baluza
--- * AIRBASE.SinaiMap.Ben_Gurion
--- * AIRBASE.SinaiMap.Bilbeis_Air_Base
--- * AIRBASE.SinaiMap.Bir_Hasanah
--- * AIRBASE.SinaiMap.Cairo_International_Airport
--- * AIRBASE.SinaiMap.Cairo_West
--- * AIRBASE.SinaiMap.Difarsuwar_Airfield
--- * AIRBASE.SinaiMap.El_Arish
--- * AIRBASE.SinaiMap.El_Gora
--- * AIRBASE.SinaiMap.Fayed
--- * AIRBASE.SinaiMap.Hatzerim
--- * AIRBASE.SinaiMap.Hatzor
--- * AIRBASE.SinaiMap.Inshas_Airbase
--- * AIRBASE.SinaiMap.Kedem
--- * AIRBASE.SinaiMap.Kibrit_Air_Base
--- * AIRBASE.SinaiMap.Melez
--- * AIRBASE.SinaiMap.Nevatim
--- * AIRBASE.SinaiMap.Ovda
--- * AIRBASE.SinaiMap.Palmahim
--- * AIRBASE.SinaiMap.Ramon_Airbase
--- * AIRBASE.SinaiMap.Sde_Dov
--- * AIRBASE.SinaiMap.St_Catherine
--- * AIRBASE.SinaiMap.Tel_Nof
--- * AIRBASE.SinaiMap.Wadi_al_Jandali
+-- * AIRBASE.Sinai.Abu_Rudeis
+-- * AIRBASE.Sinai.Abu_Suwayr
+-- * AIRBASE.Sinai.Al_Ismailiyah
+-- * AIRBASE.Sinai.Al_Mansurah
+-- * AIRBASE.Sinai.As_Salihiyah
+-- * AIRBASE.Sinai.AzZaqaziq
+-- * AIRBASE.Sinai.Baluza
+-- * AIRBASE.Sinai.Ben_Gurion
+-- * AIRBASE.Sinai.Bilbeis_Air_Base
+-- * AIRBASE.Sinai.Bir_Hasanah
+-- * AIRBASE.Sinai.Cairo_International_Airport
+-- * AIRBASE.Sinai.Cairo_West
+-- * AIRBASE.Sinai.Difarsuwar_Airfield
+-- * AIRBASE.Sinai.El_Arish
+-- * AIRBASE.Sinai.El_Gora
+-- * AIRBASE.Sinai.Fayed
+-- * AIRBASE.Sinai.Hatzerim
+-- * AIRBASE.Sinai.Hatzor
+-- * AIRBASE.Sinai.Inshas_Airbase
+-- * AIRBASE.Sinai.Kedem
+-- * AIRBASE.Sinai.Kibrit_Air_Base
+-- * AIRBASE.Sinai.Melez
+-- * AIRBASE.Sinai.Nevatim
+-- * AIRBASE.Sinai.Ovda
+-- * AIRBASE.Sinai.Palmahim
+-- * AIRBASE.Sinai.Ramon_Airbase
+-- * AIRBASE.Sinai.Sde_Dov
+-- * AIRBASE.Sinai.St_Catherine
+-- * AIRBASE.Sinai.Tel_Nof
+-- * AIRBASE.Sinai.Wadi_al_Jandali
 --
 -- @field Sinai
 AIRBASE.Sinai = {
