@@ -2193,22 +2193,57 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   -- Actually spawn the group.
   local group=self:SpawnWithIndex(self.SpawnIndex) -- Wrapper.Group#GROUP
   
+  -- Group name.
+  local groupname=group:GetName()
+  
   -- Create a flightgroup object.
   local flightgroup=FLIGHTGROUP:New(group)
   
+  -- Setting holding time to nil
+  flightgroup.holdtime=nil
+  
+  local _self=self
+  
+  --- Function called when passing a waypoint.
   function flightgroup.OnAfterPassingWaypoint(flightgroup, From, Event, To, Waypoint)
     local waypoint=Waypoint --Ops.OpsGroup#OPSGROUP.Waypoint
     
+    -- Debug info.
     self:T(self.lid..string.format("RAT passed waypoint %s [uid=%d]", waypoint.name, waypoint.uid))
     
+    -- Call RAT waypoint function.
+    -- * calls _ATCRegisterFlight at holding waypoint ==> now in OnAfterHolding
+    -- * sets despawnme switch at final waypoint if landing=air
+    -- * sets status
     RAT._WaypointFunction(group, self, waypoint.uid)
   
   end
   
-  function flightgroup:OnAfterPassedFinalWaypoint(From, Event, To)
-  
+  --- Function called when passing the final waypoint
+  function flightgroup.OnAfterPassedFinalWaypoint(flightgroup, From, Event, To)
     self:T(self.lid..string.format("RAT passed FINAL waypoint"))
+    --TODO: Set despawnme switch if landing=air
+  end
   
+  --- Function called when flight is RTB.
+  function flightgroup.OnAfterRTB(flightgroup, From, Event, To, airbase, SpeedTo, SpeedHold, SpeedLand)
+    self:T(self.lid..string.format("RAT group is RTB"))  
+  end
+  
+  --- Function called when flight is holding.
+  function flightgroup.OnAfterHolding(flightgroup, From,Event,To)
+    self:T(self.lid..string.format("RAT group is HOLDING ==> ATCRegisterFlight"))
+    self:_ATCRegisterFlight(groupname, timer.getTime())
+
+    -- Register aircraft at ATC.
+    if self.ATCswitch then
+      if self.f10menu then
+        MENU_MISSION_COMMAND:New("Clear for landing", self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.ClearForLanding, self, groupname)
+      end
+      self:_ATCRegisterFlight(groupname, timer.getTime())
+    end    
+    
+    
   end
 
   -- Increase counter of alive groups (also uncontrolled ones).
@@ -2218,9 +2253,9 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   -- ATC is monitoring this flight (if it is supposed to land).
   if self.ATCswitch and landing==RAT.wp.landing then
     if self.returnzone then
-      self:_ATCAddFlight(group:GetName(), departure:GetName())
+      self:_ATCAddFlight(groupname, departure:GetName())
     else
-      self:_ATCAddFlight(group:GetName(), destination:GetName())
+      self:_ATCAddFlight(groupname, destination:GetName())
     end
   end
 
@@ -2228,6 +2263,8 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   if self.placemarkers then
     self:_PlaceMarkers(waypoints, self.SpawnIndex)
   end
+  
+  -- TODO: Use FLIGHTGROUP functions for invisible, immortal, etc.
 
   -- Set group to be invisible.
   if self.invisible then
@@ -3121,14 +3158,14 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- Holding and final destination.
   if landing==RAT.wp.landing then
 
-    -- Holding point
-    c[#c+1]=Pholding
-    wp[#wp+1]=self:_Waypoint(#wp+1, "Holding Point", RAT.wp.holding, c[#wp+1], VxHolding, H_holding+h_holding)
-    self.waypointdescriptions[#wp]="Holding Point"
-    self.waypointstatus[#wp]=RAT.status.Holding
-    wpholding=#wp
+    -- Holding point (removed the holding point because FLIGHTGROUP sends group to holding point with RTB command after the last waypoint)
+--    c[#c+1]=Pholding
+--    wp[#wp+1]=self:_Waypoint(#wp+1, "Holding Point", RAT.wp.holding, c[#wp+1], VxHolding, H_holding+h_holding)
+--    self.waypointdescriptions[#wp]="Holding Point"
+--    self.waypointstatus[#wp]=RAT.status.Holding
+--    wpholding=#wp
 
-    -- Final destination.
+    -- Final destination (leave this in because FLIGHTGROUP needs to know that we want to land and removes the landing waypoint automatically)
     c[#c+1]=Pdestination
     wp[#wp+1]=self:_Waypoint(#wp+1, "Final Destination", landing, c[#wp+1], VxFinal, H_destination, destination)
     self.waypointdescriptions[#wp]="Final Destination"
@@ -4321,29 +4358,41 @@ function RAT:_OnCrash(EventData)
     -- Check that the template name actually belongs to this object.
     if EventPrefix and EventPrefix == self.alias then
 
-      -- Update number of alive units in the group.
+      -- Get ratcraft object of this group.
       local ratcraft=self:_GetRatcraftFromGroup(SpawnGroup)
-      local _i=self:GetSpawnIndexFromGroup(SpawnGroup)
-      ratcraft.nunits=ratcraft.nunits-1
-      local _n=ratcraft.nunits
-      local _n0=SpawnGroup:GetInitialSize()
+      
+      if ratcraft then
 
-      -- Debug info.
-      local text=string.format("Event: Group %s crashed. Unit %s. Units still alive %d of %d.", SpawnGroup:GetName(), EventData.IniUnitName, _n, _n0)
-      self:T(self.lid..text)
-
-      -- Set status.
-      local status=RAT.status.EventCrash
-      self:_SetStatus(SpawnGroup, status)
-
-      -- Respawn group if all units are dead.
-      if _n==0 and self.respawn_after_crash and not self.norespawn then
-        local text=string.format("No units left of group %s. Group will be respawned now.", SpawnGroup:GetName())
+        -- Update number of alive units in the group.
+        ratcraft.nunits=ratcraft.nunits-1
+        
+        -- Number of initial units.
+        local _n0=SpawnGroup:GetInitialSize()
+  
+        -- Debug info.
+        local text=string.format("Event: Group %s crashed. Unit %s. Units still alive %d of %d.", SpawnGroup:GetName(), EventData.IniUnitName, ratcraft.nunits, _n0)
         self:T(self.lid..text)
-        -- Respawn group.
-        local idx=self:GetSpawnIndexFromGroup(SpawnGroup)
-        local coord=SpawnGroup:GetCoordinate()
-        self:_Respawn(idx, coord)
+  
+        -- Set status.
+        local status=RAT.status.EventCrash
+        self:_SetStatus(SpawnGroup, status)
+  
+        -- Respawn group if all units are dead.
+        if ratcraft.nunits==0 and self.respawn_after_crash and not self.norespawn then
+        
+          -- Debug info.
+          self:T(self.lid..string.format("No units left of group %s. Group will be respawned now.", SpawnGroup:GetName()))
+          
+          -- Get spawn index
+          local idx=self:GetSpawnIndexFromGroup(SpawnGroup)
+          local coord=SpawnGroup:GetCoordinate()
+          
+          -- Respawn group.
+          self:_Respawn(idx, coord)
+        end
+        
+      else
+        self:E(self.lid..string.format("ERROR: Could not find ratcraft object for crashed group %s!", SpawnGroup:GetName()))
       end
 
     end
@@ -4784,7 +4833,9 @@ function RAT._WaypointFunction(group, rat, wp)
 
     -- Aircraft arrived at holding point
     text=string.format("Flight %s to %s ATC: Holding and awaiting landing clearance.", group:GetName(), destination)
+    rat:T(rat.lid..text)
     MESSAGE:New(text, 10):ToAllIf(rat.reportstatus)
+    
 
     -- Register aircraft at ATC.
     if rat.ATCswitch then
@@ -5700,6 +5751,7 @@ end
 -- @field #boolean busy Whether airport is busy.
 -- @field #table onfinal List of flights on final.
 -- @field #number Nonfinal Number of flights on final.
+-- @field #number traffic Number of flights that landed (just for stats).
 -- @field #number Tlastclearance Time stamp when last flight started final approach.
 
 --- Data structure a RAT ATC airbase object.
@@ -5717,7 +5769,7 @@ function RAT:_ATCInit(airports_map)
   if not RAT.ATC.init then
   
     local text="Starting RAT ATC.\nSimultanious = "..RAT.ATC.Nclearance.."\n".."Delay        = "..RAT.ATC.delay
-    BASE:T(RAT.id..text)
+    BASE:I(RAT.id..text)
     
     for _,ap in pairs(airports_map) do
       local airbase=ap --Wrapper.Airbase#AIRBASE
@@ -5726,6 +5778,14 @@ function RAT:_ATCInit(airports_map)
       local fc=_DATABASE:GetFlightControl(name)
       
       if not fc then
+      
+        local airport={} --#RAT.AtcAirport
+        airport.queue={}
+        airport.busy=false
+        airport.onfinal={}
+        airport.Nonfinal=0
+        airport.traffic=0
+        airport.Tlastclearance=nil
       
         RAT.ATC.airport[name]={}
         RAT.ATC.airport[name].queue={}
@@ -5754,7 +5814,7 @@ end
 -- @param #string dest Name of the destination airport.
 function RAT:_ATCAddFlight(name, dest)
   -- Debug info
-  BASE:T(RAT.id..string.format("ATC %s: Adding flight %s with destination %s.", dest, name, dest))
+  BASE:I(RAT.id..string.format("ATC %s: Adding flight %s with destination %s.", dest, name, dest))
   
   local flight={} --#RAT.AtcFlight
   flight.destination=dest
@@ -5787,7 +5847,7 @@ end
 -- @param #string name Group name of the flight.
 -- @param #number time Time the fight first registered.
 function RAT:_ATCRegisterFlight(name, time)
-  BASE:T(RAT.id..string.format("Flight %s registered at ATC for landing clearance.", name))
+  BASE:I(RAT.id..string.format("Flight %s registered at ATC for landing clearance.", name))
   RAT.ATC.flight[name].Tarrive=time
   RAT.ATC.flight[name].holding=0
 end
@@ -5800,27 +5860,30 @@ function RAT:_ATCStatus()
   -- Current time.
   local Tnow=timer.getTime()
 
-  for name,_ in pairs(RAT.ATC.flight) do
+  for name,_flight in pairs(RAT.ATC.flight) do
+    local flight=_flight --#RAT.AtcFlight
 
     -- Holding time at destination.
     local hold=RAT.ATC.flight[name].holding
     local dest=RAT.ATC.flight[name].destination
     
-    if RAT.ATC.airport[dest] then
+    local airport=RAT.ATC.airport[dest] --#RAT.AtcAirport
+    
+    if airport then
 
       if hold >= 0 then
   
         -- Some string whether the runway is busy or not.
         local busy="Runway state is unknown"
-        if RAT.ATC.airport[dest].Nonfinal>0 then
-          busy="Runway is occupied by "..RAT.ATC.airport[dest].Nonfinal
+        if airport.Nonfinal>0 then
+          busy="Runway is occupied by "..airport.Nonfinal
         else
           busy="Runway is currently clear"
         end
   
         -- Aircraft is holding.
         local text=string.format("ATC %s: Flight %s is holding for %i:%02d. %s.", dest, name, hold/60, hold%60, busy)
-        BASE:T(RAT.id..text)
+        BASE:I(RAT.id..text)
   
       elseif hold==RAT.ATC.onfinal then
   
@@ -5828,7 +5891,7 @@ function RAT:_ATCStatus()
         local Tfinal=Tnow-RAT.ATC.flight[name].Tonfinal
   
         local text=string.format("ATC %s: Flight %s is on final. Waiting %i:%02d for landing event.", dest, name, Tfinal/60, Tfinal%60)
-        BASE:T(RAT.id..text)
+        BASE:I(RAT.id..text)
   
       elseif hold==RAT.ATC.unregistered then
   
@@ -5850,46 +5913,51 @@ end
 function RAT:_ATCCheck()
 
   -- Init queue of flights at all airports.
+  -- TODO: Global function
   RAT:_ATCQueue()
 
   -- Current time.
   local Tnow=timer.getTime()
 
-  for name,_ in pairs(RAT.ATC.airport) do
+  for airportname,_airport in pairs(RAT.ATC.airport) do
+    local airport=_airport --#RAT.AtcAirport
 
-    for qID,flight in ipairs(RAT.ATC.airport[name].queue) do
+    for qID,flightname in pairs(airport.queue) do
+      local flight=RAT.ATC.flight[flightname] --#RAT.AtcFlight
 
       -- Number of aircraft in queue.
-      local nqueue=#RAT.ATC.airport[name].queue
+      local nqueue=#airport.queue
 
       -- Conditions to clear an aircraft for landing
-      local landing1
-      if RAT.ATC.airport[name].Tlastclearance then
+      local landing1=false
+      if airport.Tlastclearance then
         -- Landing if time is enough and less then two planes are on final.
-        landing1=(Tnow-RAT.ATC.airport[name].Tlastclearance > RAT.ATC.delay) and RAT.ATC.airport[name].Nonfinal < RAT.ATC.Nclearance
-      else
-        landing1=false
+        landing1=(Tnow-airport.Tlastclearance > RAT.ATC.delay) and airport.Nonfinal < RAT.ATC.Nclearance
       end
+      
       -- No other aircraft is on final.
-      local landing2=RAT.ATC.airport[name].Nonfinal==0
+      local landing2=airport.Nonfinal==0
 
 
       if not landing1 and not landing2 then
 
         -- Update holding time.
-        RAT.ATC.flight[flight].holding=Tnow-RAT.ATC.flight[flight].Tarrive
+        flight.holding=Tnow-flight.Tarrive
 
         -- Debug message.
-        local text=string.format("ATC %s: Flight %s runway is busy. You are #%d of %d in landing queue. Your holding time is %i:%02d.", name, flight, qID, nqueue, RAT.ATC.flight[flight].holding/60, RAT.ATC.flight[flight].holding%60)
-        BASE:T(self.lid..text)
+        local text=string.format("ATC %s: Flight %s runway is busy. You are #%d of %d in landing queue. Your holding time is %i:%02d.", 
+        airportname, flightname, qID, nqueue, flight.holding/60, flight.holding%60)
+        BASE:I(self.lid..text)
 
       else
 
-        local text=string.format("ATC %s: Flight %s was cleared for landing. Your holding time was %i:%02d.", name, flight, RAT.ATC.flight[flight].holding/60, RAT.ATC.flight[flight].holding%60)
-        BASE:T(self.lid..text)
+        local text=string.format("ATC %s: Flight %s was cleared for landing. Your holding time was %i:%02d.", 
+        airportname, flightname, flight.holding/60, flight.holding%60)
+        BASE:I(self.lid..text)
 
         -- Clear flight for landing.
-        RAT:_ATCClearForLanding(name, flight)
+        -- TODO: Global function
+        RAT:_ATCClearForLanding(airportname, flightname)
 
       end
 
@@ -5898,49 +5966,63 @@ function RAT:_ATCCheck()
   end
 
   -- Update queue of flights at all airports.
+  -- TODO: Global function
   RAT:_ATCQueue()
 
 end
 
 --- Giving landing clearance for aircraft by setting user flag.
 -- @param #RAT self
--- @param #string airport Name of destination airport.
--- @param #string flight Group name of flight, which gets landing clearence.
-function RAT:_ATCClearForLanding(airport, flight)
+-- @param #string airportname Name of destination airport.
+-- @param #string flightname Group name of flight, which gets landing clearence.
+function RAT:_ATCClearForLanding(airportname, flightname)
 
-  -- Flight is cleared for landing.
-  RAT.ATC.flight[flight].holding=RAT.ATC.onfinal
+  -- Find FLIGHTGROUP in database.
+  local flightgroup=_DATABASE:FindOpsGroup(flightname) --Ops.FlightGroup#FLIGHTGROUP
   
-  -- Airport runway is busy now.
-  RAT.ATC.airport[airport].busy=true
+  if flightgroup then
   
-  -- Flight which is landing.
-  RAT.ATC.airport[airport].onfinal[flight]=flight
-  
-  -- Number of planes on final approach.
-  RAT.ATC.airport[airport].Nonfinal=RAT.ATC.airport[airport].Nonfinal+1
-  
-  -- Last time an aircraft got landing clearance.
-  RAT.ATC.airport[airport].Tlastclearance=timer.getTime()
-  
-  -- Current time.
-  RAT.ATC.flight[flight].Tonfinal=timer.getTime()
-  
-  -- Set user flag to 1 ==> stop condition for holding.
-  trigger.action.setUserFlag(flight, 1)
-  
-  -- Get flag value.
-  local flagvalue=trigger.misc.getUserFlag(flight)
+    -- Give clear to land signal.
+    flightgroup:ClearToLand()
+    
+    
+    local flight=RAT.ATC.flight[flightname] --#RAT.AtcFlight
+    
+    -- Flight is cleared for landing.
+    flight.holding=RAT.ATC.onfinal
+    
+    -- Current time.
+    flight.Tonfinal=timer.getTime()    
 
-  -- Debug message.
-  BASE:T(RAT.id..string.format("ATC %s: Flight %s cleared for landing (flag=%d).", airport, flight, flagvalue))
 
-  if string.find(flight,"#") then
-    flight =  string.match(flight,"^(.+)#")
+    local airport=RAT.ATC.airport[airportname] --#RAT.AtcAirport
+    
+    -- Airport runway is busy now.
+    airport.busy=true
+    
+    -- Flight which is landing.
+    airport.onfinal[flight]=flight
+    
+    -- Number of planes on final approach.
+    airport.Nonfinal=airport.Nonfinal+1
+    
+    -- Last time an aircraft got landing clearance.
+    airport.Tlastclearance=timer.getTime()
+
+  
+    -- Debug message.
+    BASE:I(RAT.id..string.format("ATC %s: Flight %s cleared for landing", airportname, flightname))
+  
+    if string.find(flight,"#") then
+      flight =  string.match(flight,"^(.+)#")
+    end
+    local text=string.format("ATC %s: Flight %s you are cleared for landing.", airportname, flightname)  
+    MESSAGE:New(text, 10):ToAllIf(RAT.ATC.messages)
+
+  else
+    BASE:E("Could not clear flight for landing!")
   end
-  local text=string.format("ATC %s: Flight %s you are cleared for landing.", airport, flight)  
-  MESSAGE:New(text, 10):ToAllIf(RAT.ATC.messages)
-  
+    
 end
 
 --- Takes care of organisational stuff after a plane has landed.
@@ -5948,38 +6030,43 @@ end
 -- @param #string name Group name of flight.
 function RAT:_ATCFlightLanded(name)
 
-  if RAT.ATC.flight[name] then
+  local flight=RAT.ATC.flight[name] --#RAT.AtcFlight
+
+  if flight then
 
     -- Destination airport.
-    local dest=RAT.ATC.flight[name].destination
+    local dest=flight.destination
 
     -- Times for holding and final approach.
     local Tnow=timer.getTime()
-    local Tfinal=Tnow-RAT.ATC.flight[name].Tonfinal
-    local Thold=RAT.ATC.flight[name].Tonfinal-RAT.ATC.flight[name].Tarrive
+    local Tfinal=Tnow-flight.Tonfinal
+    local Thold=flight.Tonfinal-flight.Tarrive
+    
+    local airport=RAT.ATC.airport[dest] --#RAT.AtcAirport
 
     -- Airport is not busy any more.
-    RAT.ATC.airport[dest].busy=false
+    airport.busy=false
 
     -- No aircraft on final any more.
-    RAT.ATC.airport[dest].onfinal[name]=nil
+    airport.onfinal[name]=nil
 
     -- Decrease number of aircraft on final.
-    RAT.ATC.airport[dest].Nonfinal=RAT.ATC.airport[dest].Nonfinal-1
+    airport.Nonfinal=airport.Nonfinal-1
 
     -- Remove this flight from list of flights.
+    -- TODO: Global function
     RAT:_ATCDelFlight(RAT.ATC.flight, name)
 
     -- Increase landing counter to monitor traffic.
-    RAT.ATC.airport[dest].traffic=RAT.ATC.airport[dest].traffic+1
+    airport.traffic=airport.traffic+1
 
     -- Number of planes landing per hour.
-    local TrafficPerHour=RAT.ATC.airport[dest].traffic/(timer.getTime()-RAT.ATC.T0)*3600
+    local TrafficPerHour=aiport.traffic/(timer.getTime()-RAT.ATC.T0)*3600
 
     -- Debug info
-    BASE:T(RAT.id..string.format("ATC %s: Flight %s landed. Tholding = %i:%02d, Tfinal = %i:%02d.", dest, name, Thold/60, Thold%60, Tfinal/60, Tfinal%60))
-    BASE:T(RAT.id..string.format("ATC %s: Number of flights still on final %d.", dest, RAT.ATC.airport[dest].Nonfinal))
-    BASE:T(RAT.id..string.format("ATC %s: Traffic report: Number of planes landed in total %d. Flights/hour = %3.2f.", dest, RAT.ATC.airport[dest].traffic, TrafficPerHour))
+    BASE:I(RAT.id..string.format("ATC %s: Flight %s landed. Tholding = %i:%02d, Tfinal = %i:%02d.", dest, name, Thold/60, Thold%60, Tfinal/60, Tfinal%60))
+    BASE:I(RAT.id..string.format("ATC %s: Number of flights still on final %d.", dest, airport.Nonfinal))
+    BASE:I(RAT.id..string.format("ATC %s: Traffic report: Number of planes landed in total %d. Flights/hour = %3.2f.", dest, airport.traffic, TrafficPerHour))
     
     if string.find(name,"#") then
       name =  string.match(name,"^(.+)#")

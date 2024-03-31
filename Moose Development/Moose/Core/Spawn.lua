@@ -3238,7 +3238,7 @@ end
 --- Get the index from a given group.
 -- The function will search the name of the group for a #, and will return the number behind the #-mark.
 function SPAWN:GetSpawnIndexFromGroup( SpawnGroup )
-  self:F2( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnGroup } )
+  self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnGroup } )
 
   local IndexString = string.match( SpawnGroup:GetName(), "#(%d*)$" ):sub( 2 )
   local Index = tonumber( IndexString )
@@ -3250,7 +3250,7 @@ end
 
 --- Return the last maximum index that can be used.
 function SPAWN:_GetLastIndex()
-  self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
+  self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 
   return self.SpawnMaxGroups
 end

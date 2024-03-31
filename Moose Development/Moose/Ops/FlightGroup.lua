@@ -59,6 +59,7 @@
 -- @field #boolean prohibitAB Disallow (true) or allow (false) AI to use the afterburner.
 -- @field #boolean jettisonEmptyTanks Allow (true) or disallow (false) AI to jettison empty fuel tanks.
 -- @field #boolean jettisonWeapons Allow (true) or disallow (false) AI to jettison weapons if in danger.
+-- @field #number holdtime Time [s] flight is holding before going on final. Set to nil for indefinitely.
 --
 -- @extends Ops.OpsGroup#OPSGROUP
 
@@ -273,6 +274,7 @@ function FLIGHTGROUP:New(group)
   -- Holding flag.
   self.flaghold=USERFLAG:New(string.format("%s_FlagHold", self.groupname))
   self.flaghold:Set(0)
+  self.holdtime=2*60
 
   -- Add FSM transitions.
   --                 From State  -->   Event      -->      To State
@@ -2098,7 +2100,7 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
   -- Debug info.
   if self.verbose>=1 then
     local text=string.format("Initialized Flight Group %s:\n", self.groupname)
-    text=text..string.format("Unit type     = %s\n", self.actype)
+    text=text..string.format("Unit type     = %s\n", tostring(self.actype))
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
     text=text..string.format("Range max    = %.1f km\n", self.rangemax/1000)
     text=text..string.format("Ceiling      = %.1f feet\n", UTILS.MetersToFeet(self.ceiling))
@@ -3199,7 +3201,7 @@ function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
   self.flaghold:Set(0)
 
   -- Set holding time.
-  local holdtime=2*60
+  local holdtime=self.holdtime
   if fc or self.airboss then
     holdtime=nil
   end
