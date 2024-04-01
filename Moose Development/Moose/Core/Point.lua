@@ -3148,17 +3148,18 @@ do -- COORDINATE
   -- @param #string Northing Meters northing - string in order to allow for leading zeros, e.g. "12340". Should be 5 digits.
   -- @return #COORDINATE self
   function COORDINATE:NewFromMGRS( UTMZone, MGRSDigraph, Easting, Northing )
-    if string.len(Easting) < 5 then Easting = Easting..string.rep("0",5-string.len(Easting) )end  
-    if string.len(Northing) < 5 then Northing = Northing..string.rep("0",5-string.len(Northing) )end
+    if string.len(Easting) < 5 then Easting = tostring(Easting..string.rep("0",5-string.len(Easting) )) end  
+    if string.len(Northing) < 5 then Northing = tostring(Northing..string.rep("0",5-string.len(Northing) )) end
     local MGRS = {
             UTMZone = UTMZone,
             MGRSDigraph = MGRSDigraph,
-            Easting = Easting,
-            Northing = Northing,
+            Easting = tostring(Easting),
+            Northing = tostring(Northing),
           }
     local lat, lon = coord.MGRStoLL(MGRS)
     local point = coord.LLtoLO(lat, lon, 0)
     local coord = COORDINATE:NewFromVec2({x=point.x,y=point.z})
+    return coord
   end
 
   --- Provides a coordinate string of the point, based on a coordinate format system:
