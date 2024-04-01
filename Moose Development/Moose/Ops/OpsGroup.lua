@@ -597,7 +597,7 @@ function OPSGROUP:New(group)
   if units then
     local masterunit=units[1] --Wrapper.Unit#UNIT
     
-    if unit then
+    if masterunit then
       -- Get Descriptors.
       self.descriptors=masterunit:GetDesc()
   
