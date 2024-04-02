@@ -117,6 +117,10 @@
 -- @field #string callsignAlias Callsign alias.
 --
 -- @field #OPSGROUP.Spot spot Laser and IR spot.
+-- 
+-- @field DCS#Vec3 stuckVec3 Position where the group got stuck.
+-- @field #number stuckTimestamp Time stamp [sec], when the group got stuck.
+-- @field #boolean stuckDespawn If `true`, group gets despawned after beeing stuck for a certain time.
 --
 -- @field #OPSGROUP.Ammo ammo Initial ammount of ammo.
 -- @field #OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
@@ -676,10 +680,11 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "UpdateRoute",      "*")           -- Update route of group.
 
   self:AddTransition("*",             "PassingWaypoint",   "*")           -- Group passed a waypoint.
-  self:AddTransition("*",             "PassedFinalWaypoint", "*")           -- Group passed the waypoint.
+  self:AddTransition("*",             "PassedFinalWaypoint", "*")         -- Group passed the waypoint.
   self:AddTransition("*",             "GotoWaypoint",      "*")           -- Group switches to a specific waypoint.
 
   self:AddTransition("*",             "Wait",              "*")           -- Group will wait for further orders.
+  self:AddTransition("*",             "Stuck",             "*")           -- Group got stuck.
 
   self:AddTransition("*",             "DetectedUnit",      "*")           -- Unit was detected (again) in this detection cycle.
   self:AddTransition("*",             "DetectedUnitNew",   "*")           -- Add a newly detected unit to the detected units set.
@@ -1889,7 +1894,7 @@ end
 
 --- Get current velocity of the group.
 -- @param #OPSGROUP self
--- @param #string UnitName (Optional) Get heading of a specific unit of the group. Default is from the first existing unit in the group.
+-- @param #string UnitName (Optional) Get velocity of a specific unit of the group. Default is from the first existing unit in the group.
 -- @return #number Velocity in m/s.
 function OPSGROUP:GetVelocity(UnitName)
 

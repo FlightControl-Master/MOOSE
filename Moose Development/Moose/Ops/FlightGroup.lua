@@ -1257,8 +1257,11 @@ function FLIGHTGROUP:Status()
     -- Check ammo status.
     self:_CheckAmmoStatus()
     
-      -- Check damage.
+    -- Check damage.
     self:_CheckDamage()
+    
+    -- Check if stuck while taxiing.
+    self:_CheckStuck()
     
     -- Get current mission (if any).
     local mission=self:GetMissionCurrent()
@@ -1627,6 +1630,9 @@ function FLIGHTGROUP:Status()
   if not mission then
     self.Twaiting=nil
     self.dTwait=nil
+    
+    -- Check if group is done.
+    -- TODO: Not sure why I introduced this here.
     self:_CheckGroupDone()
   end
 
@@ -2139,6 +2145,10 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
   self.isDestroyed=false
 
   if self.isAI then
+  
+    -- TODO: Could be that element is spawned UNCONTROLLED.
+    --       In that case, the commands are not yet used.
+    --       This should be shifted to something like after ACTIVATED
 
     -- Set ROE.
     self:SwitchROE(self.option.ROE)
@@ -2740,6 +2750,7 @@ function FLIGHTGROUP:onafterOutOfMissilesAA(From, Event, To)
   if self.outofAAMrtb then
     -- Back to destination or home.
     local airbase=self.destbase or self.homebase
+    self:T(self.lid.."Calling RTB in onafterOutOfMissilesAA")
     self:__RTB(-5, airbase)
   end
 end
@@ -2754,6 +2765,7 @@ function FLIGHTGROUP:onafterOutOfMissilesAG(From, Event, To)
   if self.outofAGMrtb then
     -- Back to destination or home.
     local airbase=self.destbase or self.homebase
+    self:T(self.lid.."Calling RTB in onafterOutOfMissilesAG")
     self:__RTB(-5, airbase)
   end
 end
@@ -2843,8 +2855,8 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
           -- Number of remaining tasks/missions?
           if nTasks==0 and nMissions==0 and nTransports==0 then
 
-            local destbase=self.destbase or self.homebase
-            local destzone=self.destzone or self.homezone
+            local destbase=self.destbase or self.homebase --Wrapper.Airbase#AIRBASE
+            local destzone=self.destzone or self.homezone --Wrapper.Airbase#AIRBASE
 
             -- Send flight to destination.
             if waittime then
@@ -2855,8 +2867,11 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
                 self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports AND parking at destination airbase ==> Arrived!")
                 self:Arrived()
               else
-                self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports ==> RTB!")
-                self:__RTB(-0.1, destbase)
+                -- Only send RTB if current base is not yet the destination
+                if self.currbase==nil or self.currbase.AirbaseName~=destbase.AirbaseName then
+                  self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports ==> RTB!")
+                  self:__RTB(-0.1, destbase)
+                end
               end
             elseif destzone then
               self:T(self.lid.."Passed Final WP and No current and/or future missions/tasks/transports ==> RTZ!")
@@ -2984,6 +2999,7 @@ function FLIGHTGROUP:onbeforeRTB(From, Event, To, airbase, SpeedTo, SpeedHold)
     end
 
     if Tsuspend and not allowed then
+      self:T(self.lid.."Calling RTB in onbeforeRTB")
       self:__RTB(Tsuspend, airbase, SpeedTo, SpeedHold)
     end
 
@@ -3364,8 +3380,8 @@ function FLIGHTGROUP:onafterWait(From, Event, To, Duration, Altitude, Speed)
   -- Set time stamp.
   self.Twaiting=timer.getAbsTime()
 
-  -- Max waiting
-  self.dTwait=Duration  
+  -- Max waiting time in seconds.
+  self.dTwait=Duration
 
 end
 
@@ -3664,6 +3680,7 @@ function FLIGHTGROUP:onafterFuelLow(From, Event, To)
 
   -- Send back to airbase.
   if airbase and self.fuellowrtb then
+    self:T(self.lid.."Calling RTB in onafterFuelLow")
     self:RTB(airbase)
     --TODO: RTZ
   end
@@ -3688,6 +3705,7 @@ function FLIGHTGROUP:onafterFuelCritical(From, Event, To)
   local airbase=self.destbase or self.homebase
 
   if airbase and self.fuelcriticalrtb and not self:IsGoing4Fuel() then
+    self:T(self.lid.."Calling RTB in onafterFuelCritical")
     self:RTB(airbase)
     --TODO: RTZ
   end
@@ -4833,6 +4851,87 @@ function FLIGHTGROUP:_GetTerminal(_attribute, _category)
   end
 
   return _terminal
+end
+
+--- Check if group got stuck. This overwrites the OPSGROUP function.
+-- Here we only check if stuck whilst taxiing.
+-- @param #FLIGHTGROUP self
+-- @param #boolean Despawn If `true`, despawn group if stuck.
+-- @return #number Time in seconds the group got stuck or nil if not stuck.
+function FLIGHTGROUP:_CheckStuck(Despawn)
+
+  -- Cases we are not stuck.
+  if not self:IsTaxiing() then
+    return nil
+  end
+
+  -- Current time.
+  local Tnow=timer.getTime()
+
+  -- Expected speed in m/s.
+  local ExpectedSpeed=5
+
+  -- Current speed in m/s.
+  local speed=self:GetVelocity()
+
+  -- Check speed.
+  if speed<0.1 then
+
+    if ExpectedSpeed>0 and not self.stuckTimestamp then
+      self:T2(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected", speed, ExpectedSpeed))
+      self.stuckTimestamp=Tnow
+      self.stuckVec3=self:GetVec3()
+    end
+
+  else
+    -- Moving (again).
+    self.stuckTimestamp=nil
+  end
+  
+  local holdtime=nil
+
+  -- Somehow we are not moving...
+  if self.stuckTimestamp then
+
+    -- Time we are holding.
+    holdtime=Tnow-self.stuckTimestamp
+    
+    -- Trigger stuck event.
+    self:Stuck(holdtime)
+
+    if holdtime>=5*60 and holdtime<15*60 then
+
+      -- Debug warning.
+      self:T(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
+
+    elseif holdtime>=15*60 then
+
+      -- Debug warning.
+      self:T(self.lid..string.format("WARNING: Group came to an unexpected standstill. Speed=%.1f<%.1f m/s expected for %d sec", speed, ExpectedSpeed, holdtime))
+
+      -- Look for a current mission and cancel it as we do not seem to be able to perform it.
+      local mission=self:GetMissionCurrent()
+      
+      if mission then
+        self:T(self.lid..string.format("WARNING: Cancelling mission %s [%s] due to being stuck", mission:GetName(), mission:GetType()))
+        self:MissionCancel(mission)
+      end
+
+      if self.stuckDespawn then
+        if self.legion then
+          self:T(self.lid..string.format("Asset is returned to its legion after being stuck!"))
+          self:ReturnToLegion()
+        else
+          self:T(self.lid..string.format("Despawning group after being stuck!"))
+          self:Despawn()
+        end
+      end
+
+    end
+
+  end
+
+  return holdtime
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
