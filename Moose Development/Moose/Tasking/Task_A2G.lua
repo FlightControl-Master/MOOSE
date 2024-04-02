@@ -280,7 +280,7 @@ do -- TASK_A2G
 
   function TASK_A2G:SetGoalTotal()
 
-    self.GoalTotal = self.TargetSetUnit:Count()
+    self.GoalTotal = self.TargetSetUnit:CountAlive()
   end
 
   function TASK_A2G:GetGoalTotal()
@@ -304,7 +304,7 @@ do -- TASK_A2G
   function TASK_A2G:onafterGoal( TaskUnit, From, Event, To )
     local TargetSetUnit = self.TargetSetUnit -- Core.Set#SET_UNIT
 
-    if TargetSetUnit:Count() == 0 then
+    if TargetSetUnit:CountAlive() == 0 then
       self:Success()
     end
 
@@ -328,7 +328,7 @@ do -- TASK_A2G
       self.TaskInfo:AddThreat( ThreatText, ThreatLevel, 10, "MOD", true )
 
       if self.Detection then
-        local DetectedItemsCount = self.TargetSetUnit:Count()
+        local DetectedItemsCount = self.TargetSetUnit:CountAlive()
         local ReportTypes = REPORT:New()
         local TargetTypes = {}
         for TargetUnitName, TargetUnit in pairs( self.TargetSetUnit:GetSet() ) do
@@ -341,7 +341,7 @@ do -- TASK_A2G
         self.TaskInfo:AddTargetCount( DetectedItemsCount, 11, "O", true )
         self.TaskInfo:AddTargets( DetectedItemsCount, ReportTypes:Text( ", " ), 20, "D", true )
       else
-        local DetectedItemsCount = self.TargetSetUnit:Count()
+        local DetectedItemsCount = self.TargetSetUnit:CountAlive()
         local DetectedItemsTypes = self.TargetSetUnit:GetTypeNames()
         self.TaskInfo:AddTargetCount( DetectedItemsCount, 11, "O", true )
         self.TaskInfo:AddTargets( DetectedItemsCount, DetectedItemsTypes, 20, "D", true )
