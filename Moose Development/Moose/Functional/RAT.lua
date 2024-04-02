@@ -866,7 +866,10 @@ function RAT:Spawn(naircraft)
   local Tstop=Tstart+dt*(self.ngroups-1)
 
   -- Status check and report scheduler.
-  SCHEDULER:New(nil, self.Status, {self}, Tstart+1, self.statusinterval)
+  --SCHEDULER:New(nil, self.Status, {self}, Tstart+1, self.statusinterval)
+  --self.sid_Status=self:ScheduleRepeat(Start,Repeat,RandomizeFactor,Stop,SchedulerFunction,...)
+  self.sid_Status=self:ScheduleRepeat(Tstart+1, self.statusinterval, nil, nil, RAT.Status, self)
+  
 
   -- Handle events.
   self:HandleEvent(EVENTS.Birth,          self._OnBirth)
@@ -884,13 +887,13 @@ function RAT:Spawn(naircraft)
   end
 
   -- Start scheduled spawning.
-  SCHEDULER:New(nil, self._SpawnWithRoute, {self}, Tstart, dt, 0.0, Tstop)
-  
-  --self.sid_spawn=self.Scheduler:Schedule(MasterObject,SchedulerFunction,SchedulerArguments,Start,Repeat,RandomizeFactor,Stop,TraceLevel,Fsm)
+  --SCHEDULER:New(nil, self._SpawnWithRoute, {self}, Tstart, dt, 0.0, Tstop)
+  self.sid_Spawn=self:ScheduleRepeat(Tstart, dt, 0.0, Tstop, RAT._SpawnWithRoute, self)
 
   -- Start scheduled activation of uncontrolled groups.
   if self.uncontrolled and self.activate_uncontrolled then
-    SCHEDULER:New(nil, self._ActivateUncontrolled, {self}, self.activate_delay, self.activate_delta, self.activate_frand)
+    --SCHEDULER:New(nil, self._ActivateUncontrolled, {self}, self.activate_delay, self.activate_delta, self.activate_frand)
+    self.sid_Activate=self:ScheduleRepeat(self.activate_delay, self.activate_delta, self.activate_frand, nil, RAT._ActivateUncontrolled, self)
   end
 
   return true
@@ -1710,7 +1713,7 @@ function RAT:Uncontrolled()
   return self
 end
 
---- Activate uncontrolled aircraft.
+--- Define how aircraft that are spawned in uncontrolled state are activate.
 -- @param #RAT self
 -- @param #number maxactivated Maximal numnber of activated aircraft. Absolute maximum will be the number of spawned groups. Default is 1.
 -- @param #number delay Time delay in seconds before (first) aircraft is activated. Default is 1 second.
@@ -2240,14 +2243,19 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   end
   
   --- Function called when flight is holding.
-  function flightgroup.OnAfterHolding(flightgroup, From,Event,To)
-    self:T(self.lid..string.format("RAT group is HOLDING ==> ATCRegisterFlight"))
-    self:_ATCRegisterFlight(groupname, timer.getTime())
+  function flightgroup.OnAfterHolding(Flightgroup, From, Event, To)
+    local flightgroup=Flightgroup --Ops.FlightGroup#FLIGHTGROUP
+  
+    if self.ATCswitch then
+      self:T(self.lid..string.format("RAT group is HOLDING ==> ATCRegisterFlight"))
+      self:_ATCRegisterFlight(groupname, timer.getTime())
+    end
 
     -- Register aircraft at ATC.
     if self.ATCswitch then
       if self.f10menu then
-        MENU_MISSION_COMMAND:New("Clear for landing", self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.ClearForLanding, self, groupname)
+        --MENU_MISSION_COMMAND:New("Clear for landing", self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.ClearForLanding, self, groupname)
+        MENU_MISSION_COMMAND:New("Clear for landing", self.Menu[self.SubMenuName].groups[self.SpawnIndex], flightgroup.ClearToLand, flightgroup)
       end
       self:_ATCRegisterFlight(groupname, timer.getTime())
     end
@@ -2452,6 +2460,10 @@ function RAT:_Respawn(group, lastpos, delay)
     local _lastpos=nil
   
     if self.continuejourney then
+    
+      ---
+      -- Continue Journey
+      ---
   
       -- We continue our journey from the old departure airport.
       _departure=destination:GetName()
@@ -2462,7 +2474,7 @@ function RAT:_Respawn(group, lastpos, delay)
       -- Last known position of the aircraft, which should be the sparking spot location.
       -- Note: we have to check that it was supposed to land and not respawned directly after landing or after takeoff.
       -- TODO: Need to think if continuejourney with respawn_after_takeoff actually makes sense.
-      if landing==RAT.wp.landing and lastpos and not (self.respawn_at_landing or self.respawn_after_takeoff) then
+      if landing==RAT.wp.landing and not (self.respawn_at_landing or self.respawn_after_takeoff) then
         -- Check that we have an airport or FARP but not a ship (which would be categroy 1).
         if destination:GetCategory()==4 then
           _lastpos=lastpos
@@ -2500,7 +2512,11 @@ function RAT:_Respawn(group, lastpos, delay)
       end
   
     elseif self.commute then
-  
+    
+      ---
+      -- Commute
+      ---
+    
       -- We commute between departure and destination.
   
       if self.starshape==true then
@@ -2623,39 +2639,14 @@ function RAT:_Despawn(group, delay)
       
         -- Get ratcraft.
         local ratcraft=self.ratcraft[index] --#RAT.RatCraft
-  
-        self.ratcraft[index].group=nil
-        self.ratcraft[index]["status"]="Dead"
-  
-        --TODO: Maybe here could be some more arrays deleted? Somehow this causes issues!
-        --[[
-        --self.ratcraft[index]["group"]=group
-        self.ratcraft[index]["destination"]=nil
-        self.ratcraft[index]["departure"]=nil
-        self.ratcraft[index]["waypoints"]=nil
-        self.ratcraft[index]["airborne"]=nil
-        self.ratcraft[index]["Tground"]=nil
-        self.ratcraft[index]["Pground"]=nil
-        self.ratcraft[index]["Tlastcheck"]=nil
-        self.ratcraft[index]["P0"]=nil
-        self.ratcraft[index]["Pnow"]=nil
-        self.ratcraft[index]["Distance"]=nil
-        self.ratcraft[index].takeoff=nil
-        self.ratcraft[index].landing=nil
-        self.ratcraft[index].wpholding=nil
-        self.ratcraft[index].wpfinal=nil
-        self.ratcraft[index].active=false
-        self.ratcraft[index]["status"]=nil
-        self.ratcraft[index].livery=nil
-        self.ratcraft[index].despawnme=nil
-        self.ratcraft[index].nrespawn=nil
-        ]]
         
-        --ratcraft.flightgroup:Destroy(0)
+        -- Despawn flightgroup and stop.
         ratcraft.flightgroup:Despawn()
         ratcraft.flightgroup:__Stop(0.1)
         
-        
+        -- Nil ratcraft in table.
+        self.ratcraft[index].group=nil
+        self.ratcraft[index]["status"]="Dead"        
         self.ratcraft[index]=nil
  
         -- Remove submenu for this group.
@@ -3916,109 +3907,106 @@ function RAT:_OnBirth(EventData)
     -- Get the template name of the group. This can be nil if this was not a spawned group.
     local EventPrefix = self:_GetPrefixFromGroup(SpawnGroup)
 
-    if EventPrefix then
+    -- Check that the template name actually belongs to this object.
+    if EventPrefix and EventPrefix == self.alias then
 
-      -- Check that the template name actually belongs to this object.
-      if EventPrefix == self.alias then
+      local text="Event: Group "..SpawnGroup:GetName().." was born."
+      self:T(self.lid..text)
 
-        local text="Event: Group "..SpawnGroup:GetName().." was born."
-        self:T(self.lid..text)
+      -- Set status.
+      local status="unknown in birth"
+      if SpawnGroup:InAir() then
+        status=RAT.status.EventBirthAir
+      elseif self.uncontrolled then
+        status=RAT.status.Uncontrolled
+      else
+        status=RAT.status.EventBirth
+      end
+      self:_SetStatus(SpawnGroup, status)        
+      
 
-        -- Set status.
-        local status="unknown in birth"
-        if SpawnGroup:InAir() then
-          status=RAT.status.EventBirthAir
-        elseif self.uncontrolled then
-          status=RAT.status.Uncontrolled
+      -- Get some info ablout this flight.
+      local i=self:GetSpawnIndexFromGroup(SpawnGroup)
+      
+      local ratcraft=self.ratcraft[i] --#RAT.RatCraft
+      
+      local _departure=ratcraft.departure:GetName()
+      local _destination=ratcraft.destination:GetName()
+      local _nrespawn=ratcraft.nrespawn
+      local _takeoff=ratcraft.takeoff
+      local _landing=ratcraft.landing
+      local _livery=ratcraft.livery
+
+      -- Some is only useful for an actual airbase (not a zone).
+      local _airbase=AIRBASE:FindByName(_departure)
+
+      -- Check if aircraft group was accidentally spawned on the runway.
+      -- This can happen due to no parking slots available and other DCS bugs.
+      local onrunway=false
+      if _airbase then
+        -- Check that we did not want to spawn at a runway or in air.
+        if self.checkonrunway and _takeoff ~= RAT.wp.runway and _takeoff ~= RAT.wp.air then
+          onrunway=_airbase:CheckOnRunWay(SpawnGroup, self.onrunwayradius, false)
+        end
+      end
+
+      -- Workaround if group was spawned on runway.
+      if onrunway then
+
+        -- Error message.
+        local text=string.format("ERROR: RAT group of %s was spawned on runway. Group #%d will be despawned immediately!", self.alias, i)
+        MESSAGE:New(text,30):ToAllIf(self.Debug)
+        self:E(self.lid..text)
+        if self.Debug then
+          SpawnGroup:FlareRed()
+        end
+
+        -- Despawn the group.
+        self:_Despawn(SpawnGroup)
+
+        -- Try to respawn the group if there is at least another airport or random airport selection is used.
+        if (self.Ndeparture_Airports>=2 or self.random_departure) and _nrespawn<self.onrunwaymaxretry then
+          -- Increase counter.
+          _nrespawn=_nrespawn+1
+
+          -- This creates a completely new group, i.e. livery etc from earlier flights (continuejourney, commute) is not taken over.
+          text=string.format("Try spawning new aircraft of group %s at another location. Attempt %d of max %d.", self.alias,_nrespawn,self.onrunwaymaxretry)
+          MESSAGE:New(text,10):ToAllIf(self.Debug)
+          self:T(self.lid..text)
+
+          -- Spawn new group.
+          self:_SpawnWithRoute(nil, nil, nil, nil, nil, nil, nil, _nrespawn)
         else
-          status=RAT.status.EventBirth
-        end
-        self:_SetStatus(SpawnGroup, status)        
-        
-
-        -- Get some info ablout this flight.
-        local i=self:GetSpawnIndexFromGroup(SpawnGroup)
-        
-        local ratcraft=self.ratcraft[i] --#RAT.RatCraft
-        
-        local _departure=ratcraft.departure:GetName()
-        local _destination=ratcraft.destination:GetName()
-        local _nrespawn=ratcraft.nrespawn
-        local _takeoff=ratcraft.takeoff
-        local _landing=ratcraft.landing
-        local _livery=ratcraft.livery
-
-        -- Some is only useful for an actual airbase (not a zone).
-        local _airbase=AIRBASE:FindByName(_departure)
-
-        -- Check if aircraft group was accidentally spawned on the runway.
-        -- This can happen due to no parking slots available and other DCS bugs.
-        local onrunway=false
-        if _airbase then
-          -- Check that we did not want to spawn at a runway or in air.
-          if self.checkonrunway and _takeoff ~= RAT.wp.runway and _takeoff ~= RAT.wp.air then
-            onrunway=_airbase:CheckOnRunWay(SpawnGroup, self.onrunwayradius, false)
-          end
-        end
-
-        -- Workaround if group was spawned on runway.
-        if onrunway then
-
-          -- Error message.
-          local text=string.format("ERROR: RAT group of %s was spawned on runway. Group #%d will be despawned immediately!", self.alias, i)
-          MESSAGE:New(text,30):ToAllIf(self.Debug)
-          self:E(self.lid..text)
-          if self.Debug then
-            SpawnGroup:FlareRed()
-          end
-
-          -- Despawn the group.
-          self:_Despawn(SpawnGroup)
-
-          -- Try to respawn the group if there is at least another airport or random airport selection is used.
-          if (self.Ndeparture_Airports>=2 or self.random_departure) and _nrespawn<self.onrunwaymaxretry then
-            -- Increase counter.
-            _nrespawn=_nrespawn+1
-
-            -- This creates a completely new group, i.e. livery etc from earlier flights (continuejourney, commute) is not taken over.
-            text=string.format("Try spawning new aircraft of group %s at another location. Attempt %d of max %d.", self.alias,_nrespawn,self.onrunwaymaxretry)
-            MESSAGE:New(text,10):ToAllIf(self.Debug)
+          -- This will respawn the same fight (maybe with a different route) but already in the air.
+          -- Note: Uncontrolled aircraft are not respawned in air.
+          if self.respawn_inair and not self.uncontrolled then
+            text=string.format("Spawning new aircraft of group %s in air since no parking slot is available at %s.", self.alias, _departure)
+            MESSAGE:New(text,10):ToAll()
             self:T(self.lid..text)
 
-            -- Spawn new group.
-            self:_SpawnWithRoute(nil, nil, nil, nil, nil, nil, nil, _nrespawn)
-          else
-            -- This will respawn the same fight (maybe with a different route) but already in the air.
-            -- Note: Uncontrolled aircraft are not respawned in air.
-            if self.respawn_inair and not self.uncontrolled then
-              text=string.format("Spawning new aircraft of group %s in air since no parking slot is available at %s.", self.alias, _departure)
-              MESSAGE:New(text,10):ToAll()
-              self:T(self.lid..text)
-
-              -- Spawn new group at this airport but already in air.
-              self:_SpawnWithRoute(_departure, _destination, RAT.wp.air, _landing, _livery)
-            end
+            -- Spawn new group at this airport but already in air.
+            self:_SpawnWithRoute(_departure, _destination, RAT.wp.air, _landing, _livery)
           end
-        end -- end of workaround
-
-        -- Check if any unit of the group was spawned on top of another unit in the MOOSE data base.
-        local ontop=false
-        if self.checkontop and (_airbase and _airbase:GetAirbaseCategory()==Airbase.Category.AIRDROME) then
-          ontop=self:_CheckOnTop(SpawnGroup, self.ontopradius)
         end
+      end -- end of workaround
 
-        if ontop then
-          local text=string.format("ERROR: Group of %s was spawned on top of another unit. Group #%d will be despawned immediately!", self.alias, i)
-          MESSAGE:New(text,30):ToAllIf(self.Debug)
-          self:T(self.lid..text)
-          if self.Debug then
-            SpawnGroup:FlareYellow()
-          end
-          -- Despawn group.
-          self:_Despawn(SpawnGroup)
-        end
-
+      -- Check if any unit of the group was spawned on top of another unit in the MOOSE data base.
+      local ontop=false
+      if self.checkontop and (_airbase and _airbase:GetAirbaseCategory()==Airbase.Category.AIRDROME) then
+        ontop=self:_CheckOnTop(SpawnGroup, self.ontopradius)
       end
+
+      if ontop then
+        local text=string.format("ERROR: Group of %s was spawned on top of another unit. Group #%d will be despawned immediately!", self.alias, i)
+        MESSAGE:New(text,30):ToAllIf(self.Debug)
+        self:T(self.lid..text)
+        if self.Debug then
+          SpawnGroup:FlareYellow()
+        end
+        -- Despawn group.
+        self:_Despawn(SpawnGroup)
+      end
+      
     end
   else
     self:T2(self.lid.."ERROR: Group does not exist in RAT:_OnBirth().")
@@ -4040,23 +4028,22 @@ function RAT:_OnEngineStartup(EventData)
     -- Get the template name of the group. This can be nil if this was not a spawned group.
     local EventPrefix = self:_GetPrefixFromGroup(SpawnGroup)
 
-    if EventPrefix then
+    -- Check that the template name actually belongs to this object.
+    if EventPrefix and EventPrefix == self.alias then
 
-      -- Check that the template name actually belongs to this object.
-      if EventPrefix == self.alias then
+      local text="Event: Group "..SpawnGroup:GetName().." started engines."
+      self:T(self.lid..text)
 
-        local text="Event: Group "..SpawnGroup:GetName().." started engines."
-        self:T(self.lid..text)
-
-        -- Set status.
-        local status
-        if SpawnGroup:InAir() then
-          status=RAT.status.EventEngineStartAir
-        else
-          status=RAT.status.EventEngineStart
-        end
-        self:_SetStatus(SpawnGroup, status)
+      -- Set status.
+      local status
+      if SpawnGroup:InAir() then
+        status=RAT.status.EventEngineStartAir
+      else
+        status=RAT.status.EventEngineStart
       end
+      
+      self:_SetStatus(SpawnGroup, status)
+
     end
 
   else
@@ -4076,29 +4063,25 @@ function RAT:_OnTakeoff(EventData)
     -- Get the template name of the group. This can be nil if this was not a spawned group.
     local EventPrefix = self:_GetPrefixFromGroup(SpawnGroup)
 
-    if EventPrefix then
+    -- Check that the template name actually belongs to this object.
+    if EventPrefix and EventPrefix == self.alias then
 
-      -- Check that the template name actually belongs to this object.
-      if EventPrefix == self.alias then
+      local text="Event: Group "..SpawnGroup:GetName().." is airborne."
+      self:T(self.lid..text)
 
-        local text="Event: Group "..SpawnGroup:GetName().." is airborne."
+      -- Set status.
+      local status=RAT.status.EventTakeoff
+      self:_SetStatus(SpawnGroup, status)
+
+      if self.respawn_after_takeoff then
+        text="Event: Group "..SpawnGroup:GetName().." will be respawned after takeoff."
         self:T(self.lid..text)
 
-        -- Set status.
-        local status=RAT.status.EventTakeoff
-        self:_SetStatus(SpawnGroup, status)
-
-        if self.respawn_after_takeoff then
-          text="Event: Group "..SpawnGroup:GetName().." will be respawned after takeoff."
-          self:T(self.lid..text)
-
-          -- Respawn group. We respawn with no parameters from the old flight.
-          self:_SpawnWithRoute(nil, nil, nil, nil, nil, nil, nil, nil)
-        end
-
+        -- Respawn group. We respawn with no parameters from the old flight.
+        self:_SpawnWithRoute(nil, nil, nil, nil, nil, nil, nil, nil)
       end
+      
     end
-
   else
     self:T2(self.lid.."ERROR: Group does not exist in RAT:_OnTakeoff().")
   end
@@ -4116,36 +4099,33 @@ function RAT:_OnLand(EventData)
     -- Get the template name of the group. This can be nil if this was not a spawned group.
     local EventPrefix = self:_GetPrefixFromGroup(SpawnGroup)
 
-    if EventPrefix then
+    -- Check that the template name actually belongs to this object.
+    if EventPrefix and EventPrefix == self.alias then
 
-      -- Check that the template name actually belongs to this object.
-      if EventPrefix == self.alias then
+      local text="Event: Group "..SpawnGroup:GetName().." landed"
+      self:T(self.lid..text)
 
-        local text="Event: Group "..SpawnGroup:GetName().." landed."
+      -- Set status.
+      local status=RAT.status.EventLand
+      self:_SetStatus(SpawnGroup, status)
+
+      -- ATC plane landed. Take it out of the queue and set runway to free.
+      if self.ATCswitch then
+        RAT:_ATCFlightLanded(SpawnGroup:GetName())
+      end
+
+      if self.respawn_at_landing and not self.norespawn then
+        text="Event: Group "..SpawnGroup:GetName().." will be respawned"
         self:T(self.lid..text)
 
-        -- Set status.
-        local status=RAT.status.EventLand
-        self:_SetStatus(SpawnGroup, status)
-
-        -- ATC plane landed. Take it out of the queue and set runway to free.
-        if self.ATCswitch then
-          RAT:_ATCFlightLanded(SpawnGroup:GetName())
-        end
-
-        if self.respawn_at_landing and not self.norespawn then
-          text="Event: Group "..SpawnGroup:GetName().." will be respawned."
-          self:T(self.lid..text)
-
-          -- Respawn group.
-          self:_Respawn(SpawnGroup)
-        end
-
+        -- Respawn group.
+        self:_Respawn(SpawnGroup)
       end
+      
     end
 
   else
-    self:T2(self.lid.."ERROR: Group does not exist in RAT:_OnLand().")
+    self:T2(self.lid.."ERROR: Group does not exist in RAT:_OnLand()")
   end
 end
 
@@ -4192,7 +4172,7 @@ function RAT:_OnEngineShutdown(EventData)
           else
 
             -- Despawn group.
-            text="Event: Group "..SpawnGroup:GetName().." will be destroyed now."
+            text="Event: Group "..SpawnGroup:GetName().." will be destroyed now"
             self:T(self.lid..text)
             self:_Despawn(SpawnGroup)
           
@@ -4702,6 +4682,7 @@ function RAT._WaypointFunction(group, rat, wp)
     -- Register aircraft at ATC.
     if rat.ATCswitch then
       if rat.f10menu then
+        -- TODO: get index and exchange with flightgroup landing clearance function
         MENU_MISSION_COMMAND:New("Clear for landing", rat.Menu[rat.SubMenuName].groups[sdx], rat.ClearForLanding, rat, group:GetName())
       end
       rat._ATCRegisterFlight(rat, group:GetName(), Tnow)
@@ -5924,7 +5905,7 @@ function RAT:_ATCFlightLanded(name)
     airport.traffic=airport.traffic+1
 
     -- Number of planes landing per hour.
-    local TrafficPerHour=aiport.traffic/(timer.getTime()-RAT.ATC.T0)*3600
+    local TrafficPerHour=airport.traffic/(timer.getTime()-RAT.ATC.T0)*3600
 
     -- Debug info
     BASE:I(RAT.id..string.format("ATC %s: Flight %s landed. Tholding = %i:%02d, Tfinal = %i:%02d.", dest, name, Thold/60, Thold%60, Tfinal/60, Tfinal%60))
