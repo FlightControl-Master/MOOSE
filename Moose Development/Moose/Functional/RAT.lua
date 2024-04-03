@@ -487,26 +487,21 @@ RAT.status={
 -- @field #number index Spawn index.
 -- @field Wrapper.Group#Group group The aircraft group.
 -- @field Ops.FlightGroup#FLIGHTGROUP flightgroup The flight group.
--- @field #table destination Destination of this group.
--- @field #table departure Departure place of this group.
+-- @field Wrapper.Airbase#AIRBASE destination Destination of this group. Can also be a ZONE.
+-- @field Wrapper.Airbase#AIRBASE departure Departure place of this group. Can also be a ZONE.
 -- @field #table waypoints Waypoints.
 -- @field #boolean airborne Whether this group is airborne.
 -- @field #number nunits Number of units.
--- @field #number Tground Time stamp on ground.
--- @field #number Pground ?
--- @field #number Uground ?
--- @field #number Tlastcheck Time stamp of last check.
--- @field #table P0 ?
--- @field #table Pnow ?
+-- @field Core.Point#COORDINATE Pnow Current position.
 -- @field #number Distance Distance travelled in meters.
 -- @field #number takeoff Takeoff type.
 -- @field #number landing Laning type.
--- @field #table wpholding Holding waypoint.
--- @field #table wpfinal Final waypoint.
--- @field #boolean active Whether the group is actie or uncontrolled.
+-- @field #table wpdesc Waypoint descriptins.
+-- @field #table wpstatus Waypoint status.
+-- @field #boolean active Whether the group is active or uncontrolled.
 -- @field #string status Status of the group.
 -- @field #string livery Livery of the group.
--- @field #boolean despawnme Despawn group if `true`.
+-- @field #boolean despawnme Despawn group if `true` in the next status update.
 -- @field #number nrespawn Number of respawns.
 
 --- RAT friendly coalitions.
@@ -714,7 +709,7 @@ function RAT:Spawn(naircraft)
 
   -- Init RAT ATC if not already done.
   if self.ATCswitch and not RAT.ATC.init then
-    self:_ATCInit(self.airports_map)
+    RAT._ATCInit(self.airports_map)
   end
 
   -- Create F10 main menu if it does not exists yet.
@@ -2165,7 +2160,7 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   end
 
   -- Set flight plan.
-  local departure, destination, waypoints, WPholding, WPfinal = self:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
+  local departure, destination, waypoints, wpdesc, wpstatus = self:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
 
   -- Return nil if we could not find a departure destination or waypoints
   if not (departure and destination and waypoints) then
@@ -2208,77 +2203,7 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   -- No automatic despawning if group gets stuck.
   flightgroup.stuckDespawn=false
   
-    
-  --- Function called when passing a waypoint.
-  function flightgroup.OnAfterPassingWaypoint(Flightgroup, From, Event, To, Waypoint)
-    local waypoint=Waypoint --Ops.OpsGroup#OPSGROUP.Waypoint
-    local flightgroup=Flightgroup --Ops.FlightGroup#FLIGHTGROUP
-    
-    local wp=waypoint.uid
-    
-    -- Debug info.
-    self:T(self.lid..string.format("RAT passed waypoint %s [uid=%d]: %s", waypoint.name, waypoint.uid, tostring(self.waypointdescriptions[wp])))
-    
-    -- Call RAT waypoint function.
-    -- * calls _ATCRegisterFlight at holding waypoint ==> now in OnAfterHolding
-    -- * sets despawnme switch at final waypoint if landing=air
-    -- * sets status
-    RAT._WaypointFunction(group, self, waypoint.uid)
-    
-    if waypoint.uid==3 then
-      --flightgroup:SelfDestruction(Delay,ExplosionPower,ElementName)    
-    end
   
-  end
-  
-  --- Function called when passing the final waypoint
-  function flightgroup.OnAfterPassedFinalWaypoint(flightgroup, From, Event, To)
-    self:T(self.lid..string.format("RAT passed FINAL waypoint"))
-    --TODO: Set despawnme switch if landing=air
-  end
-  
-  --- Function called when flight is RTB.
-  function flightgroup.OnAfterRTB(flightgroup, From, Event, To, airbase, SpeedTo, SpeedHold, SpeedLand)
-    self:T(self.lid..string.format("RAT group is RTB"))  
-  end
-  
-  --- Function called when flight is holding.
-  function flightgroup.OnAfterHolding(Flightgroup, From, Event, To)
-    local flightgroup=Flightgroup --Ops.FlightGroup#FLIGHTGROUP
-  
-    if self.ATCswitch then
-      self:T(self.lid..string.format("RAT group is HOLDING ==> ATCRegisterFlight"))
-      self:_ATCRegisterFlight(groupname, timer.getTime())
-    end
-
-    -- Register aircraft at ATC.
-    if self.ATCswitch then
-      if self.f10menu then
-        --MENU_MISSION_COMMAND:New("Clear for landing", self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.ClearForLanding, self, groupname)
-        MENU_MISSION_COMMAND:New("Clear for landing", self.Menu[self.SubMenuName].groups[self.SpawnIndex], flightgroup.ClearToLand, flightgroup)
-      end
-      self:_ATCRegisterFlight(groupname, timer.getTime())
-    end
-  end
-  
-  function flightgroup.OnAfterLandAtAirbase(Flightgroup, From, Event, To, Airport)
-    self:T(self.lid..string.format("RAT group landed at airbase"))
-  end
-  
-  function flightgroup.OnAfterArrived(Flightgroup, From, Event, To)
-    self:T(self.lid..string.format("RAT group arrived"))
-  end
-  
-  --- Function called when a group got stuck.
-  function flightgroup.OnAfterStuck(Flightgroup, From, Event, To, Stucktime)
-    local flightgroup=Flightgroup --Ops.FlightGroup#FLIGHTGROUP
-    self:T(self.lid..string.format("Group %s got stuck for %d seconds", flightgroup:GetName(), Stucktime))
-    if Stucktime>10*60 then
-      self:_Respawn(flightgroup.group)
-    end
-  
-  end
-
   -- Increase counter of alive groups (also uncontrolled ones).
   self.alive=self.alive+1
   self:T(self.lid..string.format("Alive groups counter now = %d.",self.alive))
@@ -2338,8 +2263,8 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   -- Each aircraft gets its own takeoff type.
   ratcraft.takeoff=takeoff
   ratcraft.landing=landing
-  ratcraft.wpholding=WPholding
-  ratcraft.wpfinal=WPfinal
+  ratcraft.wpdesc=wpdesc
+  ratcraft.wpstatus=wpstatus
 
   -- Aircraft is active or spawned in uncontrolled state.
   ratcraft.active=not self.uncontrolled
@@ -2379,6 +2304,102 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
     MENU_MISSION_COMMAND:New("Place markers",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self._PlaceMarkers, self, waypoints, self.SpawnIndex)
     MENU_MISSION_COMMAND:New("Status report",  self.Menu[self.SubMenuName].groups[self.SpawnIndex], self.Status, self, true, self.SpawnIndex)
   end
+
+  --- Function called when passing a waypoint.
+  function flightgroup.OnAfterPassingWaypoint(Flightgroup, From, Event, To, Waypoint)
+    local waypoint=Waypoint --Ops.OpsGroup#OPSGROUP.Waypoint
+    local flightgroup=Flightgroup --Ops.FlightGroup#FLIGHTGROUP
+    
+    local wpid=waypoint.uid
+    
+    local ratcraft=self:_GetRatcraftFromGroup(flightgroup.group)
+    
+    local wpdescription=tostring(ratcraft.wpdesc[wpid])
+    local wpstatus=ratcraft.wpstatus[wpid]
+    
+    -- Debug info.
+    self:T(self.lid..string.format("RAT passed waypoint %s [uid=%d]: %s [status=%s]", waypoint.name, wpid, wpdescription, wpstatus))
+
+    -- Set status    
+    self:_SetStatus(group, wpstatus)
+    
+    if waypoint.uid==3 then
+      --flightgroup:SelfDestruction(Delay,ExplosionPower,ElementName)    
+    end
+  
+  end
+  
+  --- Function called when passing the FINAL waypoint
+  function flightgroup.OnAfterPassedFinalWaypoint(flightgroup, From, Event, To)
+  
+    self:T(self.lid..string.format("RAT passed FINAL waypoint"))
+    
+    -- Info message.
+    local text=string.format("Flight %s arrived at final destination %s.", group:GetName(), destination)
+    MESSAGE:New(text, 10):ToAllIf(self.reportstatus)
+    self:T(self.lid..text)
+
+    if landing==RAT.wp.air then
+      -- Final waypoint is air ==> Despawn flight
+    
+      -- Info message.
+      local text=string.format("Activating despawn switch for flight %s! Group will be detroyed soon.", group:GetName())
+      MESSAGE:New(text, 10):ToAllIf(self.Debug)
+      self:T(self.lid..text)
+      
+      -- Enable despawn switch. Next time the status function is called, the aircraft will be despawned.
+      ratcraft.despawnme=true
+    end    
+    
+  end
+  
+  --- Function called when flight is RTB.
+  function flightgroup.OnAfterRTB(flightgroup, From, Event, To, airbase, SpeedTo, SpeedHold, SpeedLand)
+    self:T(self.lid..string.format("RAT group is RTB"))
+  end
+  
+  --- Function called when flight is holding.
+  function flightgroup.OnAfterHolding(Flightgroup, From, Event, To)
+    local flightgroup=Flightgroup --Ops.FlightGroup#FLIGHTGROUP
+    
+    -- Aircraft arrived at holding point
+    local text=string.format("Flight %s to %s ATC: Holding and awaiting landing clearance.", group:GetName(), destination)
+    self:T(rat.lid..text)
+    MESSAGE:New(text, 10):ToAllIf(self.reportstatus)
+    
+
+    -- Register aircraft at ATC.
+    if self.ATCswitch then
+      self:T(self.lid..string.format("RAT group is HOLDING ==> ATCRegisterFlight"))
+    
+      -- Create F10 menu
+      if self.f10menu then       
+        MENU_MISSION_COMMAND:New("Clear for landing", self.Menu[self.SubMenuName].groups[self.SpawnIndex], flightgroup.ClearToLand, flightgroup)
+      end
+      
+      -- Register at ATC
+      RAT._ATCRegisterFlight(groupname, timer.getTime())
+    end
+  end
+  
+  function flightgroup.OnAfterLandAtAirbase(Flightgroup, From, Event, To, Airport)
+    self:T(self.lid..string.format("RAT group landed at airbase"))
+  end
+  
+  function flightgroup.OnAfterArrived(Flightgroup, From, Event, To)
+    self:T(self.lid..string.format("RAT group arrived"))
+  end
+  
+  --- Function called when a group got stuck.
+  function flightgroup.OnAfterStuck(Flightgroup, From, Event, To, Stucktime)
+    local flightgroup=Flightgroup --Ops.FlightGroup#FLIGHTGROUP
+    self:T(self.lid..string.format("Group %s got stuck for %d seconds", flightgroup:GetName(), Stucktime))
+    if Stucktime>10*60 then
+      self:_Respawn(flightgroup.group)
+    end
+  
+  end
+  
 
   return self.SpawnIndex
 end
@@ -2473,7 +2494,8 @@ function RAT:_Respawn(group, lastpos, delay)
   
       -- Last known position of the aircraft, which should be the sparking spot location.
       -- Note: we have to check that it was supposed to land and not respawned directly after landing or after takeoff.
-      -- TODO: Need to think if continuejourney with respawn_after_takeoff actually makes sense.
+      -- DONE: Need to think if continuejourney with respawn_after_takeoff actually makes sense?
+      --       No, does not make sense. Disable it in consistency check.
       if landing==RAT.wp.landing and not (self.respawn_at_landing or self.respawn_after_takeoff) then
         -- Check that we have an airport or FARP but not a ship (which would be categroy 1).
         if destination:GetCategory()==4 then
@@ -2671,7 +2693,8 @@ end
 -- @return Wrapper.Airbase#AIRBASE Departure airbase.
 -- @return Wrapper.Airbase#AIRBASE Destination airbase.
 -- @return #table Table of flight plan waypoints.
--- @return #nil If no valid departure or destination airport could be found.
+-- @return #table Table of waypoint descriptions.
+-- @return #table Table of waypoint status.
 function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
 
   -- Max cruise speed.
@@ -2717,7 +2740,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
 
   -- DEPARTURE AIRPORT
   -- Departure airport or zone.
-  local departure=nil
+  local departure=nil --Wrapper.Airbase#AIRBASE
   if _departure then
     if self:_AirportExists(_departure) then
       -- Check if new departure is an airport.
@@ -2749,7 +2772,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   end
 
   -- Coordinates of departure point.
-  local Pdeparture
+  local Pdeparture  --Core.Point#COORDINATE
   if takeoff==RAT.wp.air then
     if _waypoint then
       -- Use coordinates of previous flight (commute or journey).
@@ -2815,7 +2838,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   end
 
   -- DESTINATION AIRPORT
-  local destination=nil
+  local destination=nil --Wrapper.Airbase#AIRBASE
   if _destination then
 
     if self:_AirportExists(_destination) then
@@ -2883,7 +2906,7 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   end
 
   -- Get destination coordinate. Either in a zone or exactly at the airport.
-  local Pdestination
+  local Pdestination --Core.Point#COORDINATE
   if landing==RAT.wp.air then
     local vec2=destination:GetRandomVec2()
     Pdestination=COORDINATE:NewFromVec2(vec2)
@@ -3262,9 +3285,9 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- Return departure, destination and waypoints.
   if self.returnzone then
     -- We return the actual zone here because returning the departure leads to problems with commute.
-    return departure, destination_returnzone, waypoints, wpholding, wpfinal
+    return departure, destination_returnzone, waypoints, wpholding, wpfinal, self.waypointdescriptions, self.waypointstatus
   else
-    return departure, destination, waypoints, wpholding, wpfinal
+    return departure, destination, waypoints, wpholding, wpfinal, self.waypointdescriptions, self.waypointstatus
   end
 
 end
@@ -4045,7 +4068,7 @@ function RAT:_OnEngineStartup(EventData)
       self:_SetStatus(SpawnGroup, status)
 
     end
-
+    
   else
     self:T2(self.lid.."ERROR: Group does not exist in RAT:_EngineStartup().")
   end
@@ -4111,7 +4134,7 @@ function RAT:_OnLand(EventData)
 
       -- ATC plane landed. Take it out of the queue and set runway to free.
       if self.ATCswitch then
-        RAT:_ATCFlightLanded(SpawnGroup:GetName())
+        RAT._ATCFlightLanded(SpawnGroup:GetName())
       end
 
       if self.respawn_at_landing and not self.norespawn then
@@ -4351,22 +4374,6 @@ function RAT:_OnCrash(EventData)
 end
 
 
---- Create a Dead event.
--- @param #RAT self
--- @param DCS#Time EventTime The time stamp of the event.
--- @param DCS#Object Initiator The initiating object of the event.
-function RAT:_CreateEventDead(EventTime, Initiator)
-  self:F( { EventTime, Initiator } )
-
-  local Event = {
-    id = world.event.S_EVENT_DEAD,
-    time = EventTime,
-    initiator = Initiator,
-    }
-
-  world.onEvent( Event )
-end
-
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a waypoint that can be used with the Route command.
@@ -4508,36 +4515,6 @@ function RAT:_Waypoint(index, description, Type, Coord, Speed, Altitude, Airport
       self:T(self.lid.."Unknown Airport category in _Waypoint()!")
     end
   end
-  
-  if false then
-  
-    -- TODO: Disable the tasks as this is done by FLIGHTGROUP now. Delete when working
-  
-    -- properties
-    RoutePoint.properties = {
-      ["vnav"]   = 1,
-      ["scale"]  = 0,
-      ["angle"]  = 0,
-      ["vangle"] = 0,
-      ["steer"]  = 2,
-    }
-    -- tasks
-    local TaskCombo = {}
-    local TaskHolding  = self:_TaskHolding({x=Coord.x, y=Coord.z}, Altitude, Speed, self:_Randomize(90,0.9))
-    local TaskWaypoint = self:_TaskFunction("RAT._WaypointFunction", self, index)
-  
-    RoutePoint.task = {}
-    RoutePoint.task.id = "ComboTask"
-    RoutePoint.task.params = {}
-  
-    TaskCombo[#TaskCombo+1]=TaskWaypoint
-    if Type==RAT.wp.holding then
-      TaskCombo[#TaskCombo+1]=TaskHolding
-    end
-  
-    RoutePoint.task.params.tasks = TaskCombo
-    
-  end
 
   -- Return waypoint.
   return RoutePoint
@@ -4587,154 +4564,6 @@ function RAT:_Routeinfo(waypoints, comment)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Orbit at a specified position at a specified alititude with a specified speed.
--- @param #RAT self
--- @param DCS#Vec2 P1 The point to hold the position.
--- @param #number Altitude The altitude ASL at which to hold the position.
--- @param #number Speed The speed flying when holding the position in m/s.
--- @param #number Duration Duration of holding pattern in seconds.
--- @return DCS#Task DCSTask
-function RAT:_TaskHolding(P1, Altitude, Speed, Duration)
-
-  --local LandHeight = land.getHeight(P1)
-
-  --TODO: randomize P1
-  -- Second point is 3 km north of P1 and 200 m for helos.
-  local dx=3000
-  local dy=0
-  if self.category==RAT.cat.heli then
-    dx=200
-    dy=0
-  end
-
-  local P2={}
-  P2.x=P1.x+dx
-  P2.y=P1.y+dy
-  local Task = {
-    id = 'Orbit',
-    params = {
-      pattern = AI.Task.OrbitPattern.RACE_TRACK,
-      --pattern = AI.Task.OrbitPattern.CIRCLE,
-      point = P1,
-      point2 = P2,
-      speed = Speed,
-      altitude = Altitude
-    }
-  }
-
-  local DCSTask={}
-  DCSTask.id="ControlledTask"
-  DCSTask.params={}
-  DCSTask.params.task=Task
-
-  if self.ATCswitch then
-    -- Set stop condition for holding. Either flag=1 or after max. X min holding.
-    local userflagname=string.format("%s#%03d", self.alias, self.SpawnIndex+1)
-    local maxholdingduration=60*120
-    DCSTask.params.stopCondition={userFlag=userflagname, userFlagValue=1, duration=maxholdingduration}
-  else
-    DCSTask.params.stopCondition={duration=Duration}
-  end
-
-  return DCSTask
-end
-
---- Function which is called after passing every waypoint. Info on waypoint is given and special functions are executed.
--- @param Wrapper.Group#GROUP group Group of aircraft.
--- @param #RAT rat RAT object.
--- @param #number wp Waypoint index. Running number of the waypoints. Determines the actions to be executed.
-function RAT._WaypointFunction(group, rat, wp)
-
-  -- Current time and Spawnindex.
-  local Tnow=timer.getTime()
-  
-  -- Get ratcraft object.
-  local ratcraft=rat:_GetRatcraftFromGroup(group)
-
-  -- Departure and destination names.
-  local departure=ratcraft.departure:GetName()
-  local destination=ratcraft.destination:GetName()
-  local landing=ratcraft.landing
-  local WPholding=ratcraft.wpholding
-  local WPfinal=ratcraft.wpfinal
-
-
-  -- For messages
-  local text
-
-  -- Info on passing waypoint.
-  text=string.format("Flight %s passing waypoint #%d %s", group:GetName(), wp, rat.waypointdescriptions[wp])
-  rat:T(rat.lid..text)
-
-  -- New status.
-  local status=rat.waypointstatus[wp]
-  rat:_SetStatus(group, status)
-
-  if wp==WPholding then
-
-    -- Aircraft arrived at holding point
-    text=string.format("Flight %s to %s ATC: Holding and awaiting landing clearance.", group:GetName(), destination)
-    rat:T(rat.lid..text)
-    MESSAGE:New(text, 10):ToAllIf(rat.reportstatus)
-    
-
-    -- Register aircraft at ATC.
-    if rat.ATCswitch then
-      if rat.f10menu then
-        -- TODO: get index and exchange with flightgroup landing clearance function
-        MENU_MISSION_COMMAND:New("Clear for landing", rat.Menu[rat.SubMenuName].groups[sdx], rat.ClearForLanding, rat, group:GetName())
-      end
-      rat._ATCRegisterFlight(rat, group:GetName(), Tnow)
-    end
-  end
-
-  -- TODO: Move this to OnAfter Final Waypoint
-  if wp==WPfinal then
-    text=string.format("Flight %s arrived at final destination %s.", group:GetName(), destination)
-    MESSAGE:New(text, 10):ToAllIf(rat.reportstatus)
-    rat:T(rat.lid..text)
-
-    if landing==RAT.wp.air then
-      text=string.format("Activating despawn switch for flight %s! Group will be detroyed soon.", group:GetName())
-      MESSAGE:New(text, 10):ToAllIf(rat.Debug)
-      rat:T(rat.lid..text)
-      -- Enable despawn switch. Next time the status function is called, the aircraft will be despawned.
-      ratcraft.despawnme=true
-    end
-  end
-end
-
---- Task function.
--- @param #RAT self
--- @param #string FunctionString Name of the function to be called.
-function RAT:_TaskFunction(FunctionString, ... )
-  self:F2({FunctionString, arg})
-
-  local DCSTask
-  local ArgumentKey
-
-  -- Templatename and anticipated name the group will get
-  local templatename=self.templategroup:GetName()
-  local groupname=self:_AnticipatedGroupName()
-
-  local DCSScript = {}
-  DCSScript[#DCSScript+1] = "local MissionControllable = GROUP:FindByName(\""..groupname.."\") "
-  DCSScript[#DCSScript+1] = "local RATtemplateControllable = GROUP:FindByName(\""..templatename.."\") "
-
-  if arg and arg.n > 0 then
-    ArgumentKey = '_' .. tostring(arg):match("table: (.*)")
-    self.templategroup:SetState(self.templategroup, ArgumentKey, arg)
-    DCSScript[#DCSScript+1] = "local Arguments = RATtemplateControllable:GetState(RATtemplateControllable, '" .. ArgumentKey .. "' ) "
-    DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable, unpack( Arguments ) )"
-  else
-    DCSScript[#DCSScript+1] = FunctionString .. "( MissionControllable )"
-  end
-
-  DCSTask = self.templategroup:TaskWrappedAction(self.templategroup:CommandDoScript(table.concat(DCSScript)))
-
-  return DCSTask
-end
 
 --- Anticipated group name from alias and spawn index.
 -- @param #RAT self
@@ -4829,10 +4658,10 @@ function RAT:_CommandStartUncontrolled(group)
   group:SetCommand(StartCommand)
 
   -- Spawn index.
-  local index=self:GetSpawnIndexFromGroup(group)
+  local ratcraft=self:_GetRatcraftFromGroup(group)
 
   -- Set status to active.
-  self.ratcraft[index].active=true
+  ratcraft.active=true
 
   -- Set status to "Ready and Starting Engines".
   self:_SetStatus(group, RAT.status.EventBirth)
@@ -5600,15 +5429,14 @@ end
 
 --- Data structure a RAT ATC airbase object.
 -- @type RAT.AtcFlight
--- @field #table destination The destination airbase.
+-- @field #string destination Name of the destination airbase.
 -- @field #number Tarrive Time stamp when flight arrived at holding.
 -- @field #number holding Holding time.
 -- @field #number Tonfinal Time stamp when flight started final approach.
 
 --- Initializes the ATC arrays and starts schedulers.
--- @param #RAT self
 -- @param #table airports_map List of all airports of the map.
-function RAT:_ATCInit(airports_map)
+function RAT._ATCInit(airports_map)
 
   if not RAT.ATC.init then
   
@@ -5631,19 +5459,13 @@ function RAT:_ATCInit(airports_map)
         airport.traffic=0
         airport.Tlastclearance=nil
       
-        RAT.ATC.airport[name]={}
-        RAT.ATC.airport[name].queue={}
-        RAT.ATC.airport[name].busy=false
-        RAT.ATC.airport[name].onfinal={}
-        RAT.ATC.airport[name].Nonfinal=0
-        RAT.ATC.airport[name].traffic=0
-        RAT.ATC.airport[name].Tlastclearance=nil
+        RAT.ATC.airport[name]=airport
         
       end
     end
     
-    SCHEDULER:New(nil, RAT._ATCCheck,  {self}, 5, 15)
-    SCHEDULER:New(nil, RAT._ATCStatus, {self}, 5, 60)
+    SCHEDULER:New(nil, RAT._ATCCheck,  {}, 5, 15)
+    SCHEDULER:New(nil, RAT._ATCStatus, {}, 5, 60)
     
     RAT.ATC.T0=timer.getTime()    
   end
@@ -5659,26 +5481,21 @@ end
 function RAT:_ATCAddFlight(name, dest)
   -- Debug info
   BASE:I(RAT.id..string.format("ATC %s: Adding flight %s with destination %s.", dest, name, dest))
-  
+
+  -- Create new flight  
   local flight={} --#RAT.AtcFlight
   flight.destination=dest
   flight.Tarrive=-1
   flight.holding=-1
   flight.Tarrive=-1
   
-  -- Create new flight
-  RAT.ATC.flight[name]={}
-  RAT.ATC.flight[name].destination=dest
-  RAT.ATC.flight[name].Tarrive=-1
-  RAT.ATC.flight[name].holding=-1
-  RAT.ATC.flight[name].Tonfinal=-1
+  RAT.ATC.flight[name]=flight
 end
 
 --- Deletes a flight from ATC lists after it landed.
--- @param #RAT self
 -- @param #table t Table.
 -- @param #string entry Flight name which shall be deleted.
-function RAT:_ATCDelFlight(t,entry)
+function RAT._ATCDelFlight(t,entry)
   for k,_ in pairs(t) do
     if k==entry then
       t[entry]=nil
@@ -5690,7 +5507,7 @@ end
 -- @param #RAT self
 -- @param #string name Group name of the flight.
 -- @param #number time Time the fight first registered.
-function RAT:_ATCRegisterFlight(name, time)
+function RAT._ATCRegisterFlight(name, time)
   BASE:I(RAT.id..string.format("Flight %s registered at ATC for landing clearance.", name))
   RAT.ATC.flight[name].Tarrive=time
   RAT.ATC.flight[name].holding=0
@@ -5698,8 +5515,7 @@ end
 
 
 --- ATC status report about flights.
--- @param #RAT self
-function RAT:_ATCStatus()
+function RAT._ATCStatus()
 
   -- Current time.
   local Tnow=timer.getTime()
@@ -5753,12 +5569,10 @@ function RAT:_ATCStatus()
 end
 
 --- Main ATC function. Updates the landing queue of all airports and inceases holding time for all flights.
--- @param #RAT self
-function RAT:_ATCCheck()
+function RAT._ATCCheck()
 
   -- Init queue of flights at all airports.
-  -- TODO: Global function
-  RAT:_ATCQueue()
+  RAT._ATCQueue()
 
   -- Current time.
   local Tnow=timer.getTime()
@@ -5800,8 +5614,7 @@ function RAT:_ATCCheck()
         BASE:I(self.lid..text)
 
         -- Clear flight for landing.
-        -- TODO: Global function
-        RAT:_ATCClearForLanding(airportname, flightname)
+        RAT._ATCClearForLanding(airportname, flightname)
 
       end
 
@@ -5810,16 +5623,14 @@ function RAT:_ATCCheck()
   end
 
   -- Update queue of flights at all airports.
-  -- TODO: Global function
-  RAT:_ATCQueue()
+  RAT._ATCQueue()
 
 end
 
 --- Giving landing clearance for aircraft by setting user flag.
--- @param #RAT self
 -- @param #string airportname Name of destination airport.
 -- @param #string flightname Group name of flight, which gets landing clearence.
-function RAT:_ATCClearForLanding(airportname, flightname)
+function RAT._ATCClearForLanding(airportname, flightname)
 
   -- Find FLIGHTGROUP in database.
   local flightgroup=_DATABASE:FindOpsGroup(flightname) --Ops.FlightGroup#FLIGHTGROUP
@@ -5870,9 +5681,8 @@ function RAT:_ATCClearForLanding(airportname, flightname)
 end
 
 --- Takes care of organisational stuff after a plane has landed.
--- @param #RAT self
 -- @param #string name Group name of flight.
-function RAT:_ATCFlightLanded(name)
+function RAT._ATCFlightLanded(name)
 
   local flight=RAT.ATC.flight[name] --#RAT.AtcFlight
 
@@ -5898,8 +5708,7 @@ function RAT:_ATCFlightLanded(name)
     airport.Nonfinal=airport.Nonfinal-1
 
     -- Remove this flight from list of flights.
-    -- TODO: Global function
-    RAT:_ATCDelFlight(RAT.ATC.flight, name)
+    RAT._ATCDelFlight(RAT.ATC.flight, name)
 
     -- Increase landing counter to monitor traffic.
     airport.traffic=airport.traffic+1
@@ -5922,8 +5731,10 @@ function RAT:_ATCFlightLanded(name)
 end
 
 --- Creates a landing queue for all flights holding at airports. Aircraft with longest holding time gets first permission to land.
--- @param #RAT self
-function RAT:_ATCQueue()
+function RAT._ATCQueue()
+
+  -- Current time
+  local Tnow=timer.getTime()
 
   for airport,_ in pairs(RAT.ATC.airport) do
 
@@ -5931,16 +5742,15 @@ function RAT:_ATCQueue()
     local _queue={}
 
     -- Loop over all flights.
-    for name,_ in pairs(RAT.ATC.flight) do
-      --fvh
-      local Tnow=timer.getTime()
+    for name,_flight in pairs(RAT.ATC.flight) do
+      local flight=_flight --#RAT.AtcFlight
 
       -- Update holding time (unless holing is set to onfinal=-100)
-      if RAT.ATC.flight[name].holding>=0 then
-        RAT.ATC.flight[name].holding=Tnow-RAT.ATC.flight[name].Tarrive
+      if flight.holding>=0 then
+        flight.holding=Tnow-flight.Tarrive
       end
-      local hold=RAT.ATC.flight[name].holding
-      local dest=RAT.ATC.flight[name].destination
+      local hold=flight.holding
+      local dest=flight.destination
 
       -- Flight is holding at this airport.
       if hold>=0 and airport==dest then
