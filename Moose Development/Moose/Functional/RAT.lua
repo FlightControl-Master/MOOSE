@@ -2219,7 +2219,7 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
 
   -- Place markers of waypoints on F10 map.
   if self.placemarkers then
-    self:_PlaceMarkers(waypoints, self.SpawnIndex)
+    self:_PlaceMarkers(waypoints, wpdesc, self.SpawnIndex)
   end
   
   -- TODO: Use FLIGHTGROUP functions for invisible, immortal, etc.
@@ -2334,8 +2334,10 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   
     self:T(self.lid..string.format("RAT passed FINAL waypoint"))
     
+    local ratcraft=self:_GetRatcraftFromGroup(flightgroup.group)
+    
     -- Info message.
-    local text=string.format("Flight %s arrived at final destination %s.", group:GetName(), destination)
+    local text=string.format("Flight %s arrived at final destination %s.", group:GetName(), destination:GetName())
     MESSAGE:New(text, 10):ToAllIf(self.reportstatus)
     self:T(self.lid..text)
 
@@ -2362,9 +2364,11 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   function flightgroup.OnAfterHolding(Flightgroup, From, Event, To)
     local flightgroup=Flightgroup --Ops.FlightGroup#FLIGHTGROUP
     
+    local ratcraft=self:_GetRatcraftFromGroup(flightgroup.group)
+    
     -- Aircraft arrived at holding point
-    local text=string.format("Flight %s to %s ATC: Holding and awaiting landing clearance.", group:GetName(), destination)
-    self:T(rat.lid..text)
+    local text=string.format("Flight %s to %s ATC: Holding and awaiting landing clearance.", group:GetName(), destination:GetName())
+    self:T(self.lid..text)
     MESSAGE:New(text, 10):ToAllIf(self.reportstatus)
     
 
@@ -3161,14 +3165,16 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   -- Waypoints and coordinates
   local wp={}
   local c={}
+  local waypointdescriptions={}
+  local waypointstatus={}
   local wpholding=nil
   local wpfinal=nil
 
   -- Departure/Take-off
   c[#c+1]=Pdeparture
   wp[#wp+1]=self:_Waypoint(#wp+1, "Departure", takeoff, c[#wp+1], VxClimb, H_departure, departure)
-  self.waypointdescriptions[#wp]="Departure"
-  self.waypointstatus[#wp]=RAT.status.Departure
+  waypointdescriptions[#wp]="Departure"
+  waypointstatus[#wp]=RAT.status.Departure
 
   -- Climb
   if takeoff==RAT.wp.air then
@@ -3182,8 +3188,8 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
       c[#c+1]=c[#c]:Translate(d_climb, heading)
 
       wp[#wp+1]=self:_Waypoint(#wp+1, "Begin of Cruise", RAT.wp.cruise, c[#wp+1], VxCruise, FLcruise)
-      self.waypointdescriptions[#wp]="Begin of Cruise"
-      self.waypointstatus[#wp]=RAT.status.Cruise
+      waypointdescriptions[#wp]="Begin of Cruise"
+      waypointstatus[#wp]=RAT.status.Cruise
     end
 
   else
@@ -3193,12 +3199,12 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
     c[#c+1]=c[#c]:Translate(d_climb/2, heading)
 
     wp[#wp+1]=self:_Waypoint(#wp+1, "Climb", RAT.wp.climb,  c[#wp+1], VxClimb, H_departure+(FLcruise-H_departure)/2)
-    self.waypointdescriptions[#wp]="Climb"
-    self.waypointstatus[#wp]=RAT.status.Climb
+    waypointdescriptions[#wp]="Climb"
+    waypointstatus[#wp]=RAT.status.Climb
 
     wp[#wp+1]=self:_Waypoint(#wp+1, "Begin of Cruise", RAT.wp.cruise, c[#wp+1], VxCruise, FLcruise)
-    self.waypointdescriptions[#wp]="Begin of Cruise"
-    self.waypointstatus[#wp]=RAT.status.Cruise
+    waypointdescriptions[#wp]="Begin of Cruise"
+    waypointstatus[#wp]=RAT.status.Cruise
 
   end
 
@@ -3208,8 +3214,8 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   if self.returnzone then
     c[#c+1]=Preturn
     wp[#wp+1]=self:_Waypoint(#wp+1, "Return Zone", RAT.wp.cruise, c[#wp+1], VxCruise, FLcruise)
-    self.waypointdescriptions[#wp]="Return Zone"
-    self.waypointstatus[#wp]=RAT.status.Uturn
+    waypointdescriptions[#wp]="Return Zone"
+    waypointstatus[#wp]=RAT.status.Uturn
   end
 
   if landing==RAT.wp.air then
@@ -3217,23 +3223,23 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
     -- Next waypoint is already the final destination.
     c[#c+1]=Pdestination
     wp[#wp+1]=self:_Waypoint(#wp+1, "Final Destination", RAT.wp.finalwp, c[#wp+1], VxCruise,  FLcruise)
-    self.waypointdescriptions[#wp]="Final Destination"
-    self.waypointstatus[#wp]=RAT.status.Destination
+    waypointdescriptions[#wp]="Final Destination"
+    waypointstatus[#wp]=RAT.status.Destination
 
   elseif self.returnzone then
 
     -- The little bit back to end of cruise.
     c[#c+1]=c[#c]:Translate(d_cruise/2, heading-180)
     wp[#wp+1]=self:_Waypoint(#wp+1, "End of Cruise", RAT.wp.cruise, c[#wp+1], VxCruise,  FLcruise)
-    self.waypointdescriptions[#wp]="End of Cruise"
-    self.waypointstatus[#wp]=RAT.status.Descent
+    waypointdescriptions[#wp]="End of Cruise"
+    waypointstatus[#wp]=RAT.status.Descent
 
   else
 
     c[#c+1]=c[#c]:Translate(d_cruise, heading)
     wp[#wp+1]=self:_Waypoint(#wp+1, "End of Cruise", RAT.wp.cruise, c[#wp+1], VxCruise,  FLcruise)
-    self.waypointdescriptions[#wp]="End of Cruise"
-    self.waypointstatus[#wp]=RAT.status.Descent
+    waypointdescriptions[#wp]="End of Cruise"
+    waypointstatus[#wp]=RAT.status.Descent
 
   end
 
@@ -3242,13 +3248,13 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
     if self.returnzone then
       c[#c+1]=c[#c]:Translate(d_descent/2, heading-180)
       wp[#wp+1]=self:_Waypoint(#wp+1, "Descent", RAT.wp.descent, c[#wp+1], VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
-      self.waypointdescriptions[#wp]="Descent"
-      self.waypointstatus[#wp]=RAT.status.DescentHolding
+      waypointdescriptions[#wp]="Descent"
+      waypointstatus[#wp]=RAT.status.DescentHolding
     else
       c[#c+1]=c[#c]:Translate(d_descent/2, heading)
       wp[#wp+1]=self:_Waypoint(#wp+1, "Descent", RAT.wp.descent, c[#wp+1], VxDescent, FLcruise-(FLcruise-(h_holding+H_holding))/2)
-      self.waypointdescriptions[#wp]="Descent"
-      self.waypointstatus[#wp]=RAT.status.DescentHolding
+      waypointdescriptions[#wp]="Descent"
+      waypointstatus[#wp]=RAT.status.DescentHolding
     end
   end
 
@@ -3258,15 +3264,15 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
     -- Holding point (removed the holding point because FLIGHTGROUP sends group to holding point with RTB command after the last waypoint)
 --    c[#c+1]=Pholding
 --    wp[#wp+1]=self:_Waypoint(#wp+1, "Holding Point", RAT.wp.holding, c[#wp+1], VxHolding, H_holding+h_holding)
---    self.waypointdescriptions[#wp]="Holding Point"
---    self.waypointstatus[#wp]=RAT.status.Holding
+--    waypointdescriptions[#wp]="Holding Point"
+--    waypointstatus[#wp]=RAT.status.Holding
 --    wpholding=#wp
 
     -- Final destination (leave this in because FLIGHTGROUP needs to know that we want to land and removes the landing waypoint automatically)
     c[#c+1]=Pdestination
     wp[#wp+1]=self:_Waypoint(#wp+1, "Final Destination", landing, c[#wp+1], VxFinal, H_destination, destination)
-    self.waypointdescriptions[#wp]="Final Destination"
-    self.waypointstatus[#wp]=RAT.status.Destination
+    waypointdescriptions[#wp]="Final Destination"
+    waypointstatus[#wp]=RAT.status.Destination
 
   end
 
@@ -3280,14 +3286,14 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   end
 
   -- Some info on the route.
-  self:_Routeinfo(waypoints, "Waypoint info in set_route:")
+  self:_Routeinfo(waypoints, "Waypoint info in set_route:", waypointdescriptions)
 
   -- Return departure, destination and waypoints.
   if self.returnzone then
     -- We return the actual zone here because returning the departure leads to problems with commute.
-    return departure, destination_returnzone, waypoints, wpholding, wpfinal, self.waypointdescriptions, self.waypointstatus
+    return departure, destination_returnzone, waypoints, waypointdescriptions, waypointstatus
   else
-    return departure, destination, waypoints, wpholding, wpfinal, self.waypointdescriptions, self.waypointstatus
+    return departure, destination, waypoints, waypointdescriptions, waypointstatus
   end
 
 end
@@ -4526,8 +4532,9 @@ end
 -- @param #RAT self
 -- @param #table waypoints Waypoints of the flight plan.
 -- @param #string comment Some comment to identify the provided information.
+-- @param #table waypointdescriptions Waypoint descriptions.
 -- @return #number total Total route length in meters.
-function RAT:_Routeinfo(waypoints, comment)
+function RAT:_Routeinfo(waypoints, comment, waypointdescriptions)
   local text=string.format("\n******************************************************\n")
   text=text..string.format("Template =  %s\n", self.SpawnTemplatePrefix)
   if comment then
@@ -4537,7 +4544,7 @@ function RAT:_Routeinfo(waypoints, comment)
   -- info on coordinate and altitude
   for i=1,#waypoints do
     local p=waypoints[i]
-    text=text..string.format("WP #%i: x = %6.1f km, y = %6.1f km, alt = %6.1f m  %s\n", i-1, p.x/1000, p.y/1000, p.alt, self.waypointdescriptions[i])
+    text=text..string.format("WP #%i: x = %6.1f km, y = %6.1f km, alt = %6.1f m  %s\n", i-1, p.x/1000, p.y/1000, p.alt, waypointdescriptions[i])
   end
   -- info on distance between waypoints
   local total=0.0
@@ -4551,7 +4558,7 @@ function RAT:_Routeinfo(waypoints, comment)
     local d=math.sqrt((x1-x2)^2 + (y1-y2)^2)
     local heading=self:_Course(point1, point2)
     total=total+d
-    text=text..string.format("Distance from WP %i-->%i = %6.1f km. Heading = %03d :  %s - %s\n", i-1, i, d/1000, heading, self.waypointdescriptions[i], self.waypointdescriptions[i+1])
+    text=text..string.format("Distance from WP %i-->%i = %6.1f km. Heading = %03d :  %s - %s\n", i-1, i, d/1000, heading, waypointdescriptions[i], waypointdescriptions[i+1])
   end
   text=text..string.format("Total distance = %6.1f km\n", total/1000)
   text=text..string.format("******************************************************\n")
@@ -4996,12 +5003,13 @@ end
 --- Place markers of the waypoints. Note we assume a very specific number and type of waypoints here.
 -- @param #RAT self
 -- @param #table waypoints Table with waypoints.
+-- @param #table waypointdescriptions Table with waypoint descriptions
 -- @param #number index Spawn index of group.
-function RAT:_PlaceMarkers(waypoints, index)
+function RAT:_PlaceMarkers(waypoints, waypointdescriptions, index)
   for i=1,#waypoints do
-    self:_SetMarker(self.waypointdescriptions[i], waypoints[i], index)
+    self:_SetMarker(waypointdescriptions[i], waypoints[i], index)
     if self.Debug then
-      local text=string.format("Marker at waypoint #%d: %s for flight #%d", i, self.waypointdescriptions[i], index)
+      local text=string.format("Marker at waypoint #%d: %s for flight #%d", i, waypointdescriptions[i], index)
       self:T2(self.lid..text)
     end
   end
@@ -5488,6 +5496,7 @@ function RAT:_ATCAddFlight(name, dest)
   flight.Tarrive=-1
   flight.holding=-1
   flight.Tarrive=-1
+  --flight.Tonfinal=-1
   
   RAT.ATC.flight[name]=flight
 end
@@ -5498,6 +5507,7 @@ end
 function RAT._ATCDelFlight(t,entry)
   for k,_ in pairs(t) do
     if k==entry then
+      BASE:I(RAT.id..string.format("Removing flight %s from queue", entry))
       t[entry]=nil
     end
   end
@@ -5548,7 +5558,7 @@ function RAT._ATCStatus()
       elseif hold==RAT.ATC.onfinal then
   
         -- Aircarft is on final approach for landing.
-        local Tfinal=Tnow-RAT.ATC.flight[name].Tonfinal
+        local Tfinal=Tnow-flight.Tonfinal
   
         local text=string.format("ATC %s: Flight %s is on final. Waiting %i:%02d for landing event.", dest, name, Tfinal/60, Tfinal%60)
         BASE:I(RAT.id..text)
@@ -5605,13 +5615,13 @@ function RAT._ATCCheck()
         -- Debug message.
         local text=string.format("ATC %s: Flight %s runway is busy. You are #%d of %d in landing queue. Your holding time is %i:%02d.", 
         airportname, flightname, qID, nqueue, flight.holding/60, flight.holding%60)
-        BASE:I(self.lid..text)
+        BASE:I(RAT.id..text)
 
       else
 
         local text=string.format("ATC %s: Flight %s was cleared for landing. Your holding time was %i:%02d.", 
         airportname, flightname, flight.holding/60, flight.holding%60)
-        BASE:I(self.lid..text)
+        BASE:I(RAT.id..text)
 
         -- Clear flight for landing.
         RAT._ATCClearForLanding(airportname, flightname)
@@ -5656,7 +5666,7 @@ function RAT._ATCClearForLanding(airportname, flightname)
     airport.busy=true
     
     -- Flight which is landing.
-    airport.onfinal[flight]=flight
+    airport.onfinal[flightname]=flight
     
     -- Number of planes on final approach.
     airport.Nonfinal=airport.Nonfinal+1
@@ -5749,6 +5759,7 @@ function RAT._ATCQueue()
       if flight.holding>=0 then
         flight.holding=Tnow-flight.Tarrive
       end
+      
       local hold=flight.holding
       local dest=flight.destination
 
