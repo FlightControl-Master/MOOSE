@@ -5873,7 +5873,7 @@ function RATMANAGER:New(ntot)
   self.ntot=ntot or 1
 
   -- Debug info
-  self:E(RATMANAGER.id..string.format("Creating manager for %d groups.", ntot))
+  self:I(RATMANAGER.id..string.format("Creating manager for %d groups", ntot))
 
   return self
 end
@@ -5915,68 +5915,71 @@ end
 function RATMANAGER:Start(delay)
 
   -- Time delay.
-  local delay=delay or 5
+  delay=delay or 5
 
-  -- Info text.
-  local text=string.format(RATMANAGER.id.."RAT manager will be started in %d seconds.\n", delay)
-  text=text..string.format("Managed groups:\n")
-  for i=1,self.nrat do
-    text=text..string.format("- %s with min groups %d\n", self.name[i], self.min[i])
+  if delay and delay>0 then
+  
+    -- Info text.
+    local text=string.format(RATMANAGER.id.."RAT manager will be started in %d seconds.\n", delay)
+    text=text..string.format("Managed groups:\n")
+    for i=1,self.nrat do
+      text=text..string.format("- %s with min groups %d\n", self.name[i], self.min[i])
+    end
+    text=text..string.format("Number of constantly alive groups %d", self.ntot)
+    self:E(text)  
+    
+    -- Delayed call
+    self:ScheduleOnce(delay, RATMANAGER.Start, self, 0)
+    
+  else
+
+    -- Ensure that ntot is at least sum of min RAT groups.
+    local n=0
+    for i=1,self.nrat do
+      n=n+self.min[i]
+    end
+    self.ntot=math.max(self.ntot, n)
+  
+    -- Get randum number of new RAT groups.
+    local N=self:_RollDice(self.nrat, self.ntot, self.min, self.alive)
+  
+    -- Loop over all RAT objects and spawn groups.
+    local time=0.0
+    for i=1,self.nrat do
+      for j=1,N[i] do
+        time=time+self.dTspawn
+        --SCHEDULER:New(nil, RAT._SpawnWithRoute, {self.rat[i]}, time)
+        self:ScheduleOnce(time, RAT._SpawnWithRoute, self.rat[i])
+      end
+    end
+  
+    -- Start activation scheduler for uncontrolled aircraft.
+    for i=1,self.nrat do
+      local rat=self.rat[i] --#RAT
+      if rat.uncontrolled and rat.activate_uncontrolled then
+        -- Start activating stuff but not before the latest spawn has happend.
+        local Tactivate=math.max(time+1, rat.activate_delay)
+        --SCHEDULER:New(self.rat[i], self.rat[i]._ActivateUncontrolled, {self.rat[i]}, Tactivate, self.rat[i].activate_delta, self.rat[i].activate_frand)
+        self:ScheduleRepeat(Tactivate,rat.activate_delta, rat.activate_frand, nil,rat._ActivateUncontrolled, rat)
+      end
+    end
+  
+    -- Start the manager. But not earlier than the latest spawn has happened!
+    local TstartManager=math.max(time+1, self.Tcheck)
+  
+    -- Start manager scheduler.
+    self.manager, self.managerid = SCHEDULER:New(self, self._Manage, {self}, TstartManager, self.Tcheck) --Core.Scheduler#SCHEDULER
+  
+    -- Info
+    local text=string.format(RATMANAGER.id.."Starting RAT manager with scheduler ID %s in %d seconds. Repeat interval %d seconds.", self.managerid, TstartManager, self.Tcheck)
+    self:I(text)  
+  
+  
   end
-  text=text..string.format("Number of constantly alive groups %d", self.ntot)
-  self:E(text)
-
-  -- Start scheduler.
-  SCHEDULER:New(nil, self._Start, {self}, delay)
 
   return self
 end
 
---- Instantly starts the RAT manager and spawns the initial random number RAT groups for each RAT object.
--- @param #RATMANAGER self
--- @return #RATMANAGER RATMANAGER self object.
-function RATMANAGER:_Start()
-
-  -- Ensure that ntot is at least sum of min RAT groups.
-  local n=0
-  for i=1,self.nrat do
-    n=n+self.min[i]
-  end
-  self.ntot=math.max(self.ntot, n)
-
-  -- Get randum number of new RAT groups.
-  local N=self:_RollDice(self.nrat, self.ntot, self.min, self.alive)
-
-  -- Loop over all RAT objects and spawn groups.
-  local time=0.0
-  for i=1,self.nrat do
-    for j=1,N[i] do
-      time=time+self.dTspawn
-      SCHEDULER:New(nil, RAT._SpawnWithRoute, {self.rat[i]}, time)
-    end
-  end
-
-  -- Start activation scheduler for uncontrolled aircraft.
-  for i=1,self.nrat do
-    if self.rat[i].uncontrolled and self.rat[i].activate_uncontrolled then
-      -- Start activating stuff but not before the latest spawn has happend.
-      local Tactivate=math.max(time+1, self.rat[i].activate_delay)
-      SCHEDULER:New(self.rat[i], self.rat[i]._ActivateUncontrolled, {self.rat[i]}, Tactivate, self.rat[i].activate_delta, self.rat[i].activate_frand)
-    end
-  end
-
-  -- Start the manager. But not earlier than the latest spawn has happened!
-  local TstartManager=math.max(time+1, self.Tcheck)
-
-  -- Start manager scheduler.
-  self.manager, self.managerid = SCHEDULER:New(self, self._Manage, {self}, TstartManager, self.Tcheck) --Core.Scheduler#SCHEDULER
-
-  -- Info
-  local text=string.format(RATMANAGER.id.."Starting RAT manager with scheduler ID %s in %d seconds. Repeat interval %d seconds.", self.managerid, TstartManager, self.Tcheck)
-  self:E(text)
-
-  return self
-end
 
 --- Stops the RAT manager.
 -- @param #RATMANAGER self
@@ -5984,19 +5987,26 @@ end
 -- @return #RATMANAGER RATMANAGER self object.
 function RATMANAGER:Stop(delay)
   delay=delay or 1
-  self:E(string.format(RATMANAGER.id.."Manager will be stopped in %d seconds.", delay))
-  SCHEDULER:New(nil, self._Stop, {self}, delay)
+
+  
+  if delay and delay>0 then
+  
+    self:I(RATMANAGER.id..string.format("Manager will be stopped in %d seconds.", delay))
+    
+    self:ScheduleOnce(delay, RATMANAGER.Stop, self, 0)
+  
+  else
+
+    self:I(RATMANAGER.id..string.format("Stopping manager with scheduler ID %s", self.managerid))
+    
+    self.manager:Stop(self.managerid)  
+  
+  end
+  
+  
   return self
 end
 
---- Instantly stops the RAT manager by terminating its scheduler.
--- @param #RATMANAGER self
--- @return #RATMANAGER RATMANAGER self object.
-function RATMANAGER:_Stop()
-  self:E(string.format(RATMANAGER.id.."Stopping manager with scheduler ID %s.", self.managerid))
-  self.manager:Stop(self.managerid)
-  return self
-end
 
 --- Sets the time interval between checks of alive RAT groups. Default is 60 seconds.
 -- @param #RATMANAGER self
@@ -6025,8 +6035,7 @@ function RATMANAGER:_Manage()
   local ntot=self:_Count()
 
   -- Debug info.
-  local text=string.format("Number of alive groups %d. New groups to be spawned %d.", ntot, self.ntot-ntot)
-  self:T(RATMANAGER.id..text)
+  self:T(RATMANAGER.id..string.format("Number of alive groups %d. New groups to be spawned %d.", ntot, self.ntot-ntot))
 
   -- Get number of necessary spawns.
   local N=self:_RollDice(self.nrat, self.ntot, self.min, self.alive)
@@ -6037,7 +6046,8 @@ function RATMANAGER:_Manage()
     for j=1,N[i] do
       time=time+self.dTspawn
       self.planned[i]=self.planned[i]+1
-      SCHEDULER:New(nil, RATMANAGER._Spawn, {self, i}, time)
+      --SCHEDULER:New(nil, RATMANAGER._Spawn, {self, i}, time)
+      self:ScheduleOnce(time, RATMANAGER._Spawn, self, i)
     end
   end
 end
