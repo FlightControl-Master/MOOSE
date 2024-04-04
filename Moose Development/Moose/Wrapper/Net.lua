@@ -723,7 +723,7 @@ end
 --- Converts a JSON string to a lua value. 
 -- @param #string Json Anything JSON
 -- @return #table Lua
-function NET.Lua2Json(Json)
+function NET.Json2Lua(Json)
   return net.json2lua(Json)
 end
 
