@@ -2196,9 +2196,10 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   -- Create a flightgroup object.
   local flightgroup=FLIGHTGROUP:New(group)
   
-  -- Setting holding time to nil so that flight never gets landing clearance.
-  -- TODO: Make this dependent on ATC switch.
-  flightgroup.holdtime=nil
+  -- Setting holding time to nil so that flight never gets landing clearance. This is done by the RAT ATC (FC sets holdtime to nil in FLIGHTGROUP).
+  if self.ATCswitch then
+    flightgroup.holdtime=nil
+  end
   
   -- No automatic despawning if group gets stuck.
   flightgroup.stuckDespawn=false
@@ -2210,10 +2211,16 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
 
   -- ATC is monitoring this flight (if it is supposed to land).
   if self.ATCswitch and landing==RAT.wp.landing then
+  
+    -- Get destination airbase name. For returnzone, this is the departure airbase.
+    local airbasename=destination:GetName()
     if self.returnzone then
-      self:_ATCAddFlight(groupname, departure:GetName())
-    else
-      self:_ATCAddFlight(groupname, destination:GetName())
+      airbasename=departure:GetName()
+    end
+    
+    -- Add flight (if there is no FC at the airbase)
+    if not _DATABASE:GetFlightControl(airbasename) then
+      self:_ATCAddFlight(groupname, airbasename)
     end
   end
 
@@ -2366,14 +2373,18 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
     
     local ratcraft=self:_GetRatcraftFromGroup(flightgroup.group)
     
+    local destinationname=ratcraft.destination:GetName()
+    
     -- Aircraft arrived at holding point
-    local text=string.format("Flight %s to %s ATC: Holding and awaiting landing clearance.", group:GetName(), destination:GetName())
+    local text=string.format("Flight %s to %s ATC: Holding and awaiting landing clearance.", groupname, destinationname)
     self:T(self.lid..text)
     MESSAGE:New(text, 10):ToAllIf(self.reportstatus)
-    
 
-    -- Register aircraft at ATC.
-    if self.ATCswitch then
+    -- Get FLIGHTCONTROL if there is any.    
+    local fc=_DATABASE:GetFlightControl(destinationname)
+    
+    -- Register aircraft at RAT ATC (but only if there is no FLIGHTCONTROL)
+    if self.ATCswitch and not fc then
       self:T(self.lid..string.format("RAT group is HOLDING ==> ATCRegisterFlight"))
     
       -- Create F10 menu
@@ -2386,10 +2397,12 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
     end
   end
   
-  function flightgroup.OnAfterLandAtAirbase(Flightgroup, From, Event, To, Airport)
+  --- Function called when the group landed at an airbase.
+  function flightgroup.OnAfterLanded(Flightgroup, From, Event, To, Airport)
     self:T(self.lid..string.format("RAT group landed at airbase"))
   end
   
+  --- Function called when the group arrived at their parking positions.
   function flightgroup.OnAfterArrived(Flightgroup, From, Event, To)
     self:T(self.lid..string.format("RAT group arrived"))
   end
