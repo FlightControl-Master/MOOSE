@@ -2228,29 +2228,30 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   if self.placemarkers then
     self:_PlaceMarkers(waypoints, wpdesc, self.SpawnIndex)
   end
-  
-  -- TODO: Use FLIGHTGROUP functions for invisible, immortal, etc.
 
   -- Set group to be invisible.
   if self.invisible then
-    self:_CommandInvisible(group, true)
+    flightgroup:SetDefaultInvisible(true)
+    flightgroup:SwitchInvisible(true)
   end
 
   -- Set group to be immortal.
   if self.immortal then
-    self:_CommandImmortal(group, true)
+    flightgroup:SetDefaultImmortal(true)
+    flightgroup:SwitchImmortal(true)
   end
 
   -- Set group to be immortal.
   if self.eplrs then
-    group:CommandEPLRS(true, 1)
+    flightgroup:SetDefaultEPLRS(true)
+    flightgroup:SwitchEPLRS(true)
   end
 
   -- Set ROE, default is "weapon hold".
-  self:_SetROE(group, self.roe)
+  self:_SetROE(flightgroup, self.roe)
 
   -- Set ROT, default is "no reaction".
-  self:_SetROT(group, self.rot)
+  self:_SetROT(flightgroup, self.rot)
   
   -- Init ratcraft array.
   local ratcraft={} --#RAT.RatCraft
@@ -4651,40 +4652,20 @@ function RAT:_ActivateUncontrolled()
         
     if departureFlightControl then
       self:T(self.lid..string.format("RAT group %s is ready for takeoff", group:GetName()))
-      ratcraft.flightgroup:SetReadyForTakeoff(true)
-      ratcraft.active=true
+      ratcraft.flightgroup:SetReadyForTakeoff(true)      
     else
       -- Start aircraft.
       self:T(self.lid..string.format("RAT group %s is switching to controlled now", group:GetName()))
-      self:_CommandStartUncontrolled(group)
+      ratcraft.flightgroup:StartUncontrolled()
     end
+    
+    -- Set status to active.
+    ratcraft.active=true
+    
+    -- Set status to "Ready and Starting Engines".
+    self:_SetStatus(group, RAT.status.EventBirth)    
   end
 
-end
-
---- Start uncontrolled aircraft group.
--- @param #RAT self
--- @param Wrapper.Group#GROUP group Group to be activated.
-function RAT:_CommandStartUncontrolled(group)
-
-  -- Start command.
-  local StartCommand = {id = 'Start', params = {}}
-
-  -- Debug message
-  local text=string.format("Uncontrolled: Activating group %s.", group:GetName())
-  self:T(self.lid..text)
-
-  -- Activate group.
-  group:SetCommand(StartCommand)
-
-  -- Spawn index.
-  local ratcraft=self:_GetRatcraftFromGroup(group)
-
-  -- Set status to active.
-  ratcraft.active=true
-
-  -- Set status to "Ready and Starting Engines".
-  self:_SetStatus(group, RAT.status.EventBirth)
 end
 
 --- Set RAT group to (in-)visible for other AI forces.
@@ -4888,33 +4869,51 @@ end
 
 --- Set ROE for a group.
 -- @param #RAT self
--- @param Wrapper.Group#GROUP group Group for which the ROE is set.
+-- @param Ops.FlightGroup#FLIGHTGROUP flightgroup Group for which the ROE is set.
 -- @param #string roe ROE of group.
-function RAT:_SetROE(group, roe)
-  self:T(self.lid.."Setting ROE to "..roe.." for group "..group:GetName())
-  if self.roe==RAT.ROE.returnfire then
-    group:OptionROEReturnFire()
-  elseif self.roe==RAT.ROE.weaponfree then
-    group:OptionROEWeaponFree()
+function RAT:_SetROE(flightgroup, roe)
+  
+  roe=roe or self.roe
+  
+  self:T(self.lid.."Setting ROE to "..roe.." for group "..flightgroup:GetName())  
+  
+  local _roe=ENUMS.ROE.WeaponHold
+  if roe==RAT.ROE.returnfire then
+    _roe=ENUMS.ROE.ReturnFire
+  elseif roe==RAT.ROE.weaponfree then
+    _roe=ENUMS.ROE.OpenFireWeaponFree
   else
-    group:OptionROEHoldFire()
+    
   end
+  
+  flightgroup:SetDefaultROE(_roe)
+  flightgroup:SwitchROE(_roe)
+  
 end
 
 
 --- Set ROT for a group.
 -- @param #RAT self
--- @param Wrapper.Group#GROUP group Group for which the ROT is set.
+-- @param Ops.FlightGroup#FLIGHTGROUP flightgroup Group for which the ROT is set.
 -- @param #string rot ROT of group.
-function RAT:_SetROT(group, rot)
-  self:T(self.lid.."Setting ROT to "..rot.." for group "..group:GetName())
-  if self.rot==RAT.ROT.passive then
-    group:OptionROTPassiveDefense()
-  elseif self.rot==RAT.ROT.evade then
-    group:OptionROTEvadeFire()
+function RAT:_SetROT(flightgroup, rot)
+
+  rot=rot or self.rot
+  
+  self:T(self.lid.."Setting ROT to "..rot.." for group "..flightgroup:GetName())
+  
+  local _rot=ENUMS.ROT.NoReaction
+  if rot==RAT.ROT.passive then
+    _rot=ENUMS.ROT.PassiveDefense
+  elseif rot==RAT.ROT.evade then
+    _rot=ENUMS.ROT.EvadeFire
   else
-    group:OptionROTNoReaction()
+    
   end
+  
+  flightgroup:SetDefaultROT(_rot)
+  flightgroup:SwitchROT(_rot)  
+  
 end
 
 

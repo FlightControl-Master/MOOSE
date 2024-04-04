@@ -12031,7 +12031,7 @@ function OPSGROUP:GetEPLRS()
   return self.option.EPLRS or self.optionDefault.EPLRS
 end
 
---- Set the default EPLRS for the group.
+--- Set the default emission state for the group.
 -- @param #OPSGROUP self
 -- @param #boolean OnOffSwitch If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
 -- @return #OPSGROUP self
@@ -12040,7 +12040,7 @@ function OPSGROUP:SetDefaultEmission(OnOffSwitch)
   if OnOffSwitch==nil then
     self.optionDefault.Emission=true
   else
-    self.optionDefault.EPLRS=OnOffSwitch
+    self.optionDefault.Emission=OnOffSwitch
   end
 
   return self
