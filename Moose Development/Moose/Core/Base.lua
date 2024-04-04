@@ -1150,7 +1150,7 @@ end
 -- @return #string Text
 function BASE:_Serialize(Arguments)
   local text = UTILS.PrintTableToLog({Arguments}, 0, true)
-  text = string.gsub(text,"\n","")
+  text = string.gsub(text,"(\n+)","")
   text = string.gsub(text,"%(%(","%(")
   text = string.gsub(text,"%)%)","%)")
   text = string.gsub(text,"(%s+)","")
