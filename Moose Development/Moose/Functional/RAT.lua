@@ -582,6 +582,8 @@ RAT.version={
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --TODO list:
+--TODO: Add unlimited fuel option (and disable range check). This also needs to be added to FLIGHTGROUP
+--TODO: 
 --TODO: Add max number of spawns
 --TODO: Add Stop function
 --TODO: Integrate FLIGHTGROUP
@@ -1487,14 +1489,12 @@ end
 
 --- Make aircraft respawn the moment they land rather than at engine shut down.
 -- @param #RAT self
--- @param #number delay (Optional) Delay in seconds until respawn happens after landing. Default is 180 seconds. Minimum is 1.0 seconds.
+-- @param #number delay (Optional) Delay in seconds until respawn happens after landing. Default is 1 second. Minimum is 1 second.
 -- @return #RAT RAT self object.
 function RAT:RespawnAfterLanding(delay)
   self:F2(delay)
-  delay = delay or 180
   self.respawn_at_landing=true
-  delay=math.max(1.0, delay)
-  self.respawn_delay=delay
+  self:SetRespawnDelay(delay)
   return self
 end
 
@@ -2432,11 +2432,11 @@ function RAT:ClearForLanding(name)
   self:T(self.lid.."ATC: User flag value (landing) for "..name.." set to "..flagvalue)
 end
 
---- Respawn a group. The original group is despawned and a new group is spawed.
+--- Despawn the original group and re-spawn a new one.
 -- @param #RAT self
 -- @param Wrapper.Group#GROUP group The group that should be respawned.
 -- @param Core.Point#COORDINATE lastpos Last known position of the group.
--- @param #number delay Delay before respawn in seconds.
+-- @param #number delay Delay before despawn in seconds.
 function RAT:_Respawn(group, lastpos, delay)
 
   if delay and delay>0 then
@@ -2637,14 +2637,7 @@ function RAT:_Respawn(group, lastpos, delay)
     self:T2({departure=_departure, destination=_destination, takeoff=_takeoff, landing=_landing, livery=_livery, lastwp=_lastwp})
   
     -- We should give it at least 3 sec since this seems to be the time until free parking spots after despawn are available again (Sirri Island test).
-    local respawndelay
-    if delay then
-      respawndelay=delay
-    elseif self.respawn_delay then
-      respawndelay=self.respawn_delay+3  -- despawn happens after self.respawndelay. We add another 3 sec for free parking.
-    else
-      respawndelay=3
-    end
+    local respawndelay=self.respawn_delay or 1
   
     -- Spawn new group.
     self:T(self.lid..string.format("%s delayed respawn in %.1f seconds.", self.alias, respawndelay))  
@@ -2657,10 +2650,8 @@ end
 --- Despawn group. The `FLIGHTGROUP` is despawned and stopped. The ratcraft is removed from the self.ratcraft table. Menues are removed.
 -- @param #RAT self
 -- @param Wrapper.Group#GROUP group Group to be despawned.
--- @param #number delay Delay in seconds before the despawn happens. Default is `self.respawn_delay`.
+-- @param #number delay Delay in seconds before the despawn happens. Default is immidiately.
 function RAT:_Despawn(group, delay)
-
-  delay=delay or self.respawn_delay
 
   if delay and delay>0 then
     -- Delayed call.
@@ -3785,7 +3776,7 @@ function RAT:Status(message, forID)
           -- Despawn old group.
           if self.despawnair then          
             self:T(self.lid..string.format("[STATUS despawnme] Flight %s will be despawned NOW and NO new group is created!", self.alias))            
-            self:_Despawn(group, 0)
+            self:_Despawn(group)
           end
                 
         else
