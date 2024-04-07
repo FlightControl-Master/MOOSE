@@ -146,6 +146,7 @@
 -- @field #boolean parkingverysafe If true, parking spots are considered as non-free until a possible aircraft has left and taken off. Default false.
 -- @field #boolean despawnair If true, aircraft are despawned when they reach their destination zone. Default.
 -- @field #boolean eplrs If true, turn on EPLSR datalink for the RAT group.
+-- @field #number NspawnMax Max number of spawns.
 -- @extends Core.Spawn#SPAWN
 
 --- Implements an easy to use way to randomly fill your map with AI aircraft.
@@ -683,8 +684,47 @@ end
 
 --- Stop RAT spawning by unhandling events, stoping schedulers etc.
 -- @param #RAT self
-function RAT:Stop()
-  -- TODO
+-- @param #number delay Delay before stop in seconds.
+function RAT:Stop(delay)
+  self:T3(self.lid..string.format("Stopping RAT! Delay %s sec!", tostring(delay)))
+
+  if delay and delay>0 then
+    self:T2(self.lid..string.format("Stopping RAT in %d sec!", delay))
+    self:ScheduleOnce(delay, RAT.Stop, self)
+  else
+  
+    self:T(self.lid.."Stopping RAT: Clearing schedulers and unhandling events!")
+  
+    if self.sid_Activate then
+      self.Scheduler:ScheduleStop(self.sid_Activate)
+    end
+    
+    if self.sid_Spawn then
+      self.Scheduler:ScheduleStop(self.sid_Spawn)
+    end
+    
+    if self.sid_Status then
+      self.Scheduler:ScheduleStop(self.sid_Status)
+    end
+  
+  
+    if self.Scheduler then
+      self.Scheduler:Clear()
+    end
+    
+    self.norespawn=true    
+    
+    -- Un-Handle events.
+    self:UnHandleEvent(EVENTS.Birth)
+    self:UnHandleEvent(EVENTS.EngineStartup)
+    self:UnHandleEvent(EVENTS.Takeoff)
+    self:UnHandleEvent(EVENTS.Land)
+    self:UnHandleEvent(EVENTS.EngineShutdown)
+    self:UnHandleEvent(EVENTS.Dead)
+    self:UnHandleEvent(EVENTS.Crash)
+    self:UnHandleEvent(EVENTS.Hit)    
+  
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -863,8 +903,6 @@ function RAT:Spawn(naircraft)
   local Tstop=Tstart+dt*(self.ngroups-1)
 
   -- Status check and report scheduler.
-  --SCHEDULER:New(nil, self.Status, {self}, Tstart+1, self.statusinterval)
-  --self.sid_Status=self:ScheduleRepeat(Start,Repeat,RandomizeFactor,Stop,SchedulerFunction,...)
   self.sid_Status=self:ScheduleRepeat(Tstart+1, self.statusinterval, nil, nil, RAT.Status, self)
   
 
@@ -884,12 +922,10 @@ function RAT:Spawn(naircraft)
   end
 
   -- Start scheduled spawning.
-  --SCHEDULER:New(nil, self._SpawnWithRoute, {self}, Tstart, dt, 0.0, Tstop)
   self.sid_Spawn=self:ScheduleRepeat(Tstart, dt, 0.0, Tstop, RAT._SpawnWithRoute, self)
 
   -- Start scheduled activation of uncontrolled groups.
   if self.uncontrolled and self.activate_uncontrolled then
-    --SCHEDULER:New(nil, self._ActivateUncontrolled, {self}, self.activate_delay, self.activate_delta, self.activate_frand)
     self.sid_Activate=self:ScheduleRepeat(self.activate_delay, self.activate_delta, self.activate_frand, nil, RAT._ActivateUncontrolled, self)
   end
 
@@ -2134,6 +2170,14 @@ end
 -- @return #number Spawn index.
 function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _livery, _waypoint, _lastpos, _nrespawn, parkingdata)
   self:F({rat=self.lid, departure=_departure, destination=_destination, takeoff=_takeoff, landing=_landing, livery=_livery, waypoint=_waypoint, lastpos=_lastpos, nrespawn=_nrespawn})
+  
+  -- Check if max spawn limit exists and is reached. SpawnIndex counting starts at 0, hence greater equal and not greater.
+  if self.NspawnMax and self.SpawnIndex>=self.NspawnMax then
+    self:T(self.lid..string.format("Max limit of spawns reached %d >= %d! Will not spawn any more groups", self.NspawnMax, self.SpawnIndex))
+    return
+  else
+    self:T2(self.lid..string.format("Spawning with spawn index=%d", self.SpawnIndex))
+  end
 
   -- Set takeoff type.
   local takeoff=self.takeoff
@@ -4636,12 +4680,14 @@ function RAT:_ActivateUncontrolled()
     -- Get departure airbase (if exists)
     local departureAirbase=self:_GetDepartureAirbase(ratcraft)
     
+    -- Get FLIGHTCONTROL of departure airbase (if it exists)
     local departureFlightControl=nil
     if departureAirbase then
       departureFlightControl=_DATABASE:GetFlightControl(departureAirbase:GetName())      
     end
         
     if departureFlightControl then
+      -- Group is ready to taxi. FLIGHCONTROL will start
       self:T(self.lid..string.format("RAT group %s is ready for takeoff", group:GetName()))
       ratcraft.flightgroup:SetReadyForTakeoff(true)      
     else
