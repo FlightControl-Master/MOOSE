@@ -20,7 +20,7 @@
 -- 
 -- @module Core.ClientMenu
 -- @image Core_Menu.JPG
--- last change: Oct 2023
+-- last change: Apr 2024
 
 -- TODO
 ----------------------------------------------------------------------------------------------------------------
@@ -51,6 +51,7 @@
 -- @field #boolean Generic
 -- @field #boolean debug
 -- @field #CLIENTMENUMANAGER Controller
+-- @field #active boolean
 -- @extends Core.Base#BASE
 
 ---
@@ -58,7 +59,7 @@
 CLIENTMENU = {
   ClassName = "CLIENTMENUE",
   lid = "",
-  version = "0.1.1",
+  version = "0.1.2",
   name = nil,
   path = nil,
   group = nil,
@@ -70,6 +71,7 @@ CLIENTMENU = {
   debug = false,
   Controller = nil,
   groupname = nil,
+  active = false,
 }
 
 ---
@@ -114,7 +116,7 @@ function CLIENTMENU:NewEntry(Client,Text,Parent,Function,...)
   if self.Functionargs and self.debug then
     self:T({"Functionargs",self.Functionargs})
   end
-  if not self.Generic then
+  if not self.Generic and self.active == false then
     if Function ~= nil then
       local ErrorHandler = function( errmsg )
         env.info( "MOOSE Error in CLIENTMENU COMMAND function: " .. errmsg )
@@ -133,8 +135,10 @@ function CLIENTMENU:NewEntry(Client,Text,Parent,Function,...)
         end
       end
       self.path = missionCommands.addCommandForGroup(self.GroupID,Text,self.parentpath, self.CallHandler)
+      self.active = true
     else
       self.path = missionCommands.addSubMenuForGroup(self.GroupID,Text,self.parentpath)
+      self.active = true
     end
   else
     if self.parentpath then
@@ -200,6 +204,7 @@ function CLIENTMENU:RemoveF10()
     if not status then
       self:I(string.format("**** Error Removing Menu Entry %s for %s!",tostring(self.name),self.groupname))
     end
+    self.active = false
   end
   return self
 end
@@ -302,6 +307,7 @@ end
 -- @field #table flattree
 -- @field #table rootentries
 -- @field #table menutree
+-- @field #table SecondSeat
 -- @field #number entrycount
 -- @field #boolean debug
 -- @field #table PlayerMenu
@@ -412,7 +418,7 @@ end
 CLIENTMENUMANAGER = {
   ClassName = "CLIENTMENUMANAGER",
   lid = "",
-  version = "0.1.4",
+  version = "0.1.5",
   name = nil,
   clientset = nil,
   menutree = {},
@@ -423,6 +429,7 @@ CLIENTMENUMANAGER = {
   debug = true,
   PlayerMenu = {},
   Coalition = nil,
+  SecondSeat = {},
 }
 
 --- Create a new ClientManager instance.
@@ -676,6 +683,7 @@ end
 function CLIENTMENUMANAGER:Propagate(Client)
   self:T(self.lid.."Propagate")
   --self:I(UTILS.PrintTableToLog(Client,1))
+  local knownunits = {} -- track so we can ID multi seated
   local Set = self.clientset.Set
   if Client then
     Set = {Client}
@@ -684,28 +692,36 @@ function CLIENTMENUMANAGER:Propagate(Client)
   for _,_client in pairs(Set) do
     local client = _client -- Wrapper.Client#CLIENT
     if client and client:IsAlive() then
+      local playerunit = client:GetName()
+      local playergroup = client:GetGroup()
       local playername = client:GetPlayerName() or "none"
-        if not self.playertree[playername] then
-          self.playertree[playername] = {}
+      if not knownunits[playerunit] then
+        knownunits[playerunit] = true
+      else
+        self:I("Player in multi seat unit: "..playername)
+        break -- multi seat already build
+      end
+      if not self.playertree[playername] then
+        self.playertree[playername] = {}
+      end
+      for level,branch in pairs (self.menutree) do
+        self:T("Building branch:" .. level)
+        for _,leaf in pairs(branch) do
+          self:T("Building leaf:" .. leaf)
+          local entry = self:FindEntryByUUID(leaf)
+          if entry then
+            self:T("Found generic entry:" .. entry.UUID)
+            local parent = nil
+            if entry.Parent and entry.Parent.UUID then
+              parent = self.playertree[playername][entry.Parent.UUID] or self:FindEntryByUUID(entry.Parent.UUID)
+            end
+            self.playertree[playername][entry.UUID] = CLIENTMENU:NewEntry(client,entry.name,parent,entry.Function,unpack(entry.Functionargs))
+            self.playertree[playername][entry.UUID].Once = entry.Once
+          else
+            self:T("NO generic entry for:" .. leaf)
+          end  
         end
-        for level,branch in pairs (self.menutree) do
-          self:T("Building branch:" .. level)
-          for _,leaf in pairs(branch) do
-            self:T("Building leaf:" .. leaf)
-            local entry = self:FindEntryByUUID(leaf)
-            if entry then
-              self:T("Found generic entry:" .. entry.UUID)
-              local parent = nil
-              if entry.Parent and entry.Parent.UUID then
-                parent = self.playertree[playername][entry.Parent.UUID] or self:FindEntryByUUID(entry.Parent.UUID)
-              end
-              self.playertree[playername][entry.UUID] = CLIENTMENU:NewEntry(client,entry.name,parent,entry.Function,unpack(entry.Functionargs))
-              self.playertree[playername][entry.UUID].Once = entry.Once
-            else
-              self:T("NO generic entry for:" .. leaf)
-            end  
-          end
-        end
+      end
     end
   end
   return self
@@ -719,6 +735,7 @@ end
 function CLIENTMENUMANAGER:AddEntry(Entry,Client)
   self:T(self.lid.."AddEntry")
   local Set = self.clientset.Set
+  local knownunits = {}
   if Client then
     Set = {Client}
   end
@@ -726,6 +743,13 @@ function CLIENTMENUMANAGER:AddEntry(Entry,Client)
     local client = _client -- Wrapper.Client#CLIENT
     if client and client:IsAlive() then
       local playername = client:GetPlayerName()
+      local unitname = client:GetName()
+      if not knownunits[unitname] then
+        knownunits[unitname] = true
+      else
+        self:I("Player in multi seat unit: "..playername)  
+        break
+      end
       if Entry then
         self:T("Adding generic entry:" .. Entry.UUID)
         local parent = nil
