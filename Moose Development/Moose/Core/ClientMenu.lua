@@ -307,7 +307,6 @@ end
 -- @field #table flattree
 -- @field #table rootentries
 -- @field #table menutree
--- @field #table SecondSeat
 -- @field #number entrycount
 -- @field #boolean debug
 -- @field #table PlayerMenu
@@ -418,7 +417,7 @@ end
 CLIENTMENUMANAGER = {
   ClassName = "CLIENTMENUMANAGER",
   lid = "",
-  version = "0.1.5",
+  version = "0.1.5a",
   name = nil,
   clientset = nil,
   menutree = {},
@@ -429,7 +428,6 @@ CLIENTMENUMANAGER = {
   debug = true,
   PlayerMenu = {},
   Coalition = nil,
-  SecondSeat = {},
 }
 
 --- Create a new ClientManager instance.
