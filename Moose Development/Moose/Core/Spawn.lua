@@ -292,9 +292,10 @@ SPAWN = {
 
 --- Enumerator for spawns at airbases
 -- @type SPAWN.Takeoff
--- @extends Wrapper.Group#GROUP.Takeoff
-
--- @field #SPAWN.Takeoff Takeoff
+-- @field #number Air Take off happens in air.
+-- @field #number Runway Spawn on runway. Does not work in MP!
+-- @field #number Hot Spawn at parking with engines on.
+-- @field #number Cold Spawn at parking with engines off.
 SPAWN.Takeoff = {
   Air = 1,
   Runway = 2,

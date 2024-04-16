@@ -432,7 +432,7 @@ RAT={
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Categories of the RAT class.
--- @list cat
+-- @type RAT.cat
 -- @field #string plane Plane.
 -- @field #string heli Heli.
 RAT.cat={
@@ -441,7 +441,7 @@ RAT.cat={
 }
 
 --- RAT waypoint type.
--- @list wp
+-- @type RAT.wp
 RAT.wp={
   coldorhot=0,
   air=1,
@@ -457,7 +457,7 @@ RAT.wp={
 }
 
 --- RAT aircraft status.
--- @list status
+-- @type RAT.status
 RAT.status={
   -- Waypoint states.
   Departure="At departure point",
@@ -506,7 +506,7 @@ RAT.status={
 -- @field #number nrespawn Number of respawns.
 
 --- RAT friendly coalitions.
--- @list coal
+-- @type RAT.coal
 RAT.coal={
   same="same",
   sameonly="sameonly",
@@ -514,7 +514,7 @@ RAT.coal={
 }
 
 --- RAT unit conversions.
--- @list unit
+-- @type RAT.unit
 RAT.unit={
   ft2meter=0.305,
   kmh2ms=0.278,
@@ -524,7 +524,7 @@ RAT.unit={
 }
 
 --- RAT rules of engagement.
--- @list ROE
+-- @type RAT.ROE
 RAT.ROE={
   weaponhold="hold",
   weaponfree="free",
@@ -532,7 +532,7 @@ RAT.ROE={
 }
 
 --- RAT reaction to threat.
--- @list ROT
+-- @type RAT.ROT
 RAT.ROT={
   evade="evade",
   passive="passive",
@@ -1523,6 +1523,15 @@ function RAT:SetSpawnInterval(interval)
   return self
 end
 
+--- Set max number of groups that will be spawned. When this limit is reached, no more RAT groups are spawned.
+-- @param #RAT self
+-- @param #number Nmax Max number of groups. Default `nil`=unlimited.
+-- @return #RAT RAT self object.
+function RAT:SetSpawnLimit(Nmax)
+  self.NspawnMax=Nmax
+  return self
+end
+
 --- Make aircraft respawn the moment they land rather than at engine shut down.
 -- @param #RAT self
 -- @param #number delay (Optional) Delay in seconds until respawn happens after landing. Default is 1 second. Minimum is 1 second.
@@ -2224,9 +2233,17 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   else
     livery=nil
   end
+  
+  -- We set the aircraft to uncontrolled if the departure airbase has a FLIGHTCONTROL.
+  local uncontrolled=self.uncontrolled
+  local isFlightcontrol=self:_IsFlightControlAirbase(departure)
+  if takeoff~=RAT.wp.air and departure and isFlightcontrol then
+    takeoff=RAT.wp.cold
+    uncontrolled=true
+  end 
 
   -- Modify the spawn template to follow the flight plan.
-  local successful=self:_ModifySpawnTemplate(waypoints, livery, _lastpos, departure, takeoff, parkingdata)
+  local successful=self:_ModifySpawnTemplate(waypoints, livery, _lastpos, departure, takeoff, parkingdata, uncontrolled)
   if not successful then
     return nil
   end
@@ -2263,7 +2280,7 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
     end
     
     -- Add flight (if there is no FC at the airbase)
-    if not _DATABASE:GetFlightControl(airbasename) then
+    if not self:_IsFlightControlAirbase(airbasename) then
       self:_ATCAddFlight(groupname, airbasename)
     end
   end
@@ -2271,6 +2288,13 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   -- Place markers of waypoints on F10 map.
   if self.placemarkers then
     self:_PlaceMarkers(waypoints, wpdesc, self.SpawnIndex)
+  end
+  
+  -- Set group ready for takeoff at the FLIGHTCONTROL (if we do not do via a scheduler).
+  if isFlightcontrol and not self.activate_uncontrolled then
+    local N=math.random(120)
+    self:T(self.lid..string.format("Flight will be ready for takeoff in %d seconds", N))
+    flightgroup:SetReadyForTakeoff(true, N)
   end
 
   -- Set group to be invisible.
@@ -2319,7 +2343,7 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   ratcraft.wpstatus=wpstatus
 
   -- Aircraft is active or spawned in uncontrolled state.
-  ratcraft.active=not self.uncontrolled
+  ratcraft.active=not uncontrolled
 
   -- Set status to spawned. This will be overwritten in birth event.
   ratcraft.status=RAT.status.Spawned
@@ -2466,6 +2490,31 @@ function RAT:_SpawnWithRoute(_departure, _destination, _takeoff, _landing, _live
   return self.SpawnIndex
 end
 
+--- Check if a given airbase has a FLIGHTCONTROL.
+-- @param #RAT self
+-- @param Wrapper.Airbase#AIRBASE airbase The airbase.
+-- @return #boolean `true` if the airbase has a FLIGHTCONTROL.
+function RAT:_IsFlightControlAirbase(airbase)
+  
+  if type(airbase)=="table" then
+    airbase=airbase:GetName()
+  end
+  
+  if airbase then
+  
+    local fc=_DATABASE:GetFlightControl(airbase)
+    
+    if fc then
+      self:T(self.lid..string.format("Airbase %s has a FLIGHTCONTROL running", airbase))
+      return true
+    else
+      return false
+    end
+  
+  end
+  
+  return nil
+end
 
 --- Clear flight for landing. Sets tigger value to 1.
 -- @param #RAT self
@@ -3693,22 +3742,12 @@ function RAT:_GetAirportsOfCoalition()
       local airport=_airport --Wrapper.Airbase#AIRBASE
       local category=airport:GetAirbaseCategory()
       if airport:GetCoalition()==coalition then
-        -- Planes cannot land on FARPs.
-        --local condition1=self.category==RAT.cat.plane and airport:GetTypeName()=="FARP"
-        local condition1=self.category==RAT.cat.plane and category==Airbase.Category.HELIPAD
-        -- Planes cannot land on ships.
-        --local condition2=self.category==RAT.cat.plane and airport:GetCategory()==1
-        local condition2=self.category==RAT.cat.plane and category==Airbase.Category.SHIP
 
-        -- Check that airport has the requested terminal types.
-        -- NOT good here because we would also not allow any airport zones!
-        --[[
-        local nspots=1
-        if self.termtype then
-          nspots=airport:GetParkingSpotsNumber(self.termtype)
-        end
-        local condition3 = nspots==0
-        ]]
+        -- Planes cannot land on FARPs.
+        local condition1=self.category==RAT.cat.plane and category==Airbase.Category.HELIPAD
+
+        -- Planes cannot land on ships.
+        local condition2=self.category==RAT.cat.plane and category==Airbase.Category.SHIP
 
         if not (condition1 or condition2) then
           table.insert(self.airports, airport)
@@ -5108,8 +5147,9 @@ end
 -- @param Wrapper.Airbase#AIRBASE departure Departure airbase or zone.
 -- @param #number takeoff Takeoff type.
 -- @param #table parkingdata Parking data, i.e. parking spot coordinates and terminal ids for all units of the group.
+-- @param #boolean uncontrolled If `true`, group is spawned uncontrolled.
 -- @return #boolean True if modification was successful or nil if not, e.g. when no parking space was found and spawn in air is disabled.
-function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, takeoff, parkingdata)
+function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, takeoff, parkingdata, uncontrolled)
   self:F2({waypoints=waypoints, livery=livery, spawnplace=spawnplace, departure=departure, takeoff=takeoff, parking=parkingdata})
 
   -- The 3D vector of the first waypoint, i.e. where we actually spawn the template group.
@@ -5160,9 +5200,9 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
       self:T(SpawnTemplate)
 
       -- Spawn aircraft in uncontrolled state.
-      if self.uncontrolled then
+      if self.uncontrolled or uncontrolled then
         -- This is used in the SPAWN:SpawnWithIndex() function. Some values are overwritten there!
-        self.SpawnUnControlled=true
+        --self.SpawnUnControlled=true
         SpawnTemplate.uncontrolled=true
       end
 
@@ -5347,9 +5387,6 @@ function RAT:_ModifySpawnTemplate(waypoints, livery, spawnplace, departure, take
         --PointVec3.y is already set from first waypoint here!
 
       end
-
-
---- new
 
       -- Translate the position of the Group Template to the Vec3.
       for UnitID = 1, nunits do
