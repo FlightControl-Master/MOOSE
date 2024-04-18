@@ -1074,7 +1074,7 @@ end
 -- @param #string unitname Name of the associated unit.
 -- @return #number Octal
 function DATABASE:GetNextSTN(octal,unitname)
-  local first = UTILS.OctalToDecimal(octal)
+  local first = UTILS.OctalToDecimal(octal) or 0
   if self.STNS[first] == unitname then return octal end
   local nextoctal = 77777
   local found = false
@@ -1111,7 +1111,7 @@ end
 -- @param #string unitname Name of the associated unit.
 -- @return #number Octal
 function DATABASE:GetNextSADL(octal,unitname)
-  local first = UTILS.OctalToDecimal(octal)
+  local first = UTILS.OctalToDecimal(octal) or 0
   if self.SADL[first] == unitname then return octal end
   local nextoctal = 7777
   local found = false
