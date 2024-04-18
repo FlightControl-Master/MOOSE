@@ -1685,7 +1685,7 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
     if Event.IniObjectCategory == 1 then
 
       -- Try to get the player name. This can be buggy for multicrew aircraft!
-      local PlayerName = Event.IniUnit:GetPlayerName() or FindPlayerName(Event.IniUnitName)
+      local PlayerName = Event.IniPlayerName or Event.IniUnit:GetPlayerName() or FindPlayerName(Event.IniUnitName)
           
       if PlayerName then
 
