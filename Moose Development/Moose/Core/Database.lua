@@ -1009,7 +1009,7 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
   self.Templates.Groups[GroupTemplateName].CategoryID = CategoryID
   self.Templates.Groups[GroupTemplateName].CoalitionID = CoalitionSide
   self.Templates.Groups[GroupTemplateName].CountryID = CountryID
-
+  
   local UnitNames = {}
 
   for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
@@ -2081,7 +2081,7 @@ function DATABASE:_RegisterTemplates()
                   for group_num, Template in pairs(obj_type_data.group) do
 
                     if obj_type_name ~= "static" and Template and Template.units and type(Template.units) == 'table' then  --making sure again- this is a valid group
-
+                      
                       self:_RegisterGroupTemplate(Template, CoalitionSide, _DATABASECategory[string.lower(CategoryName)], CountryID)
 
                     else
