@@ -1153,7 +1153,7 @@ function BASE:_Serialize(Arguments)
   text = string.gsub(text,"(\n+)","")
   text = string.gsub(text,"%(%(","%(")
   text = string.gsub(text,"%)%)","%)")
-  text = string.gsub(text,"(%s+)","")
+  text = string.gsub(text,"(%s+)"," ")
   return text
 end
 
