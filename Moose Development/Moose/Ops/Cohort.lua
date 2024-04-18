@@ -505,6 +505,9 @@ end
 function COHORT:SetCallsign(Callsign, Index)
   self.callsignName=Callsign
   self.callsignIndex=Index
+  self.callsign={}
+  self.callsign.NumberSquad=Callsign
+  self.callsign.NumberGroup=Index
   return self
 end
 
