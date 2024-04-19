@@ -2297,7 +2297,7 @@ end
           --return self
         else
           self.CargoCounter = self.CargoCounter + 1
-          nearestGroup.ExtractTime = timer.GetTime()
+          nearestGroup.ExtractTime = timer.getTime()
           local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, Cargotype.CargoType, true, true, Cargotype.CratesNeeded,nil,nil,Cargotype.PerCrateMass)
           self:T({cargotype=loadcargotype})
           local running = math.floor(nearestDistance / 4)+10 -- time run to helo plus boarding
