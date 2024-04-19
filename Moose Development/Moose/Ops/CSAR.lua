@@ -30,8 +30,8 @@
 -- @module Ops.CSAR
 -- @image OPS_CSAR.jpg
 
--- Date: May 2023
--- Last: Update Dec 2024
+---
+-- Last Update April 2024
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -294,7 +294,7 @@ CSAR.AircraftType["MH-60R"] = 10
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.20"
+CSAR.version="1.0.21"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -463,7 +463,7 @@ function CSAR:New(Coalition, Template, Alias)
   self.SRSModulation = radio.modulation.AM -- modulation
   self.SRSport = 5002 -- port
   self.SRSCulture = "en-GB"
-  self.SRSVoice = nil
+  self.SRSVoice = MSRS.Voices.Google.Standard.en_GB_Standard_B
   self.SRSGPathToCredentials = nil
   self.SRSVolume = 1.0 -- volume 0.0 to 1.0
   self.SRSGender = "male" -- male or female
@@ -1190,7 +1190,7 @@ function CSAR:_EventHandler(EventData)
    
           if _place:GetCoalition() == self.coalition or _place:GetCoalition() == coalition.side.NEUTRAL then
             self:__Landed(2,_event.IniUnitName, _place)
-            self:_ScheduledSARFlight(_event.IniUnitName,_event.IniGroupName,true)
+            self:_ScheduledSARFlight(_event.IniUnitName,_event.IniGroupName,true,true)
           else
               self:T(string.format("Airfield %d, Unit %d", _place:GetCoalition(), _unit:GetCoalition()))
               end
@@ -1529,7 +1529,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
   local _reset = true
   
   if (_distance < 500) then
-  
+      self:T(self.lid .. "[Pickup Debug] Helo closer than 500m: ".._lookupKeyHeli)
       if self.heliCloseMessage[_lookupKeyHeli] == nil then
           if self.autosmoke == true then
             self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land or hover at the smoke.", self:_GetCustomCallSign(_heliName), _pilotName), self.messageTime,false,true)
@@ -1538,14 +1538,16 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
           end
           self.heliCloseMessage[_lookupKeyHeli] = true
       end
-  
+      self:T(self.lid .. "[Pickup Debug] Checking landed vs Hover for ".._lookupKeyHeli)
       -- have we landed close enough?
       if not _heliUnit:InAir() then
-  
+        self:T(self.lid .. "[Pickup Debug] Helo landed: ".._lookupKeyHeli)
         if self.pilotRuntoExtractPoint == true then
             if (_distance < self.extractDistance) then
               local _time = self.landedStatus[_lookupKeyHeli]
+              self:T(self.lid .. "[Pickup Debug] Check pilot running or arrived ".._lookupKeyHeli)
               if _time == nil then
+                  self:T(self.lid .. "[Pickup Debug] Pilot running not arrived yet ".._lookupKeyHeli)
                   self.landedStatus[_lookupKeyHeli] = math.floor( (_distance - self.loadDistance) / 3.6 )   
                   _time = self.landedStatus[_lookupKeyHeli]
                   _woundedGroup:OptionAlarmStateGreen() 
@@ -1556,11 +1558,15 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
                   self.landedStatus[_lookupKeyHeli] = _time
               end
               --if _time <= 0 or _distance < self.loadDistance then
+              self:T(self.lid .. "[Pickup Debug] Pilot close enough? ".._lookupKeyHeli)
               if _distance < self.loadDistance + 5 or _distance <= 13 then
+                 self:T(self.lid .. "[Pickup Debug] Pilot close enough - YES ".._lookupKeyHeli)
                  if self.pilotmustopendoors and (self:_IsLoadingDoorOpen(_heliName) == false) then
                   self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true, true)
+                  self:T(self.lid .. "[Pickup Debug] Door closed, try again next loop ".._lookupKeyHeli)
                   return false
                  else
+                   self:T(self.lid .. "[Pickup Debug] Pick up Pilot ".._lookupKeyHeli)
                    self.landedStatus[_lookupKeyHeli] = nil
                    self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
                    return true
@@ -1568,28 +1574,32 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
               end
             end
         else
+          self:T(self.lid .. "[Pickup Debug] Helo landed, pilot NOT set to run to helo ".._lookupKeyHeli)
           if (_distance < self.loadDistance) then
+              self:T(self.lid .. "[Pickup Debug] Helo close enough, door check ".._lookupKeyHeli)
               if self.pilotmustopendoors and (self:_IsLoadingDoorOpen(_heliName) == false) then
+                self:T(self.lid .. "[Pickup Debug] Door closed, try again next loop ".._lookupKeyHeli)
                 self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true, true)
                 return false
               else
+                self:T(self.lid .. "[Pickup Debug] Pick up Pilot ".._lookupKeyHeli)
                 self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
                 return true
               end
           end
         end
       else
-  
+          self:T(self.lid .. "[Pickup Debug] Helo hovering".._lookupKeyHeli)
           local _unitsInHelicopter = self:_PilotsOnboard(_heliName)
           local _maxUnits = self.AircraftType[_heliUnit:GetTypeName()]
           if _maxUnits == nil then
             _maxUnits = self.max_units
           end
-          
+          self:T(self.lid .. "[Pickup Debug] Check capacity and close enough for winching ".._lookupKeyHeli)
           if _heliUnit:InAir() and _unitsInHelicopter + 1 <= _maxUnits then
               -- DONE - make variable
               if _distance < self.rescuehoverdistance then
-  
+                  self:T(self.lid .. "[Pickup Debug] Helo hovering close enough ".._lookupKeyHeli)
                   --check height!
                   local leaderheight = _woundedLeader:GetHeight()
                   if leaderheight < 0 then leaderheight = 0 end
@@ -1597,7 +1607,7 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
                   
                   -- DONE - make variable
                   if _height <= self.rescuehoverheight then
-  
+                      self:T(self.lid .. "[Pickup Debug] Helo hovering low enough ".._lookupKeyHeli)
                       local _time = self.hoverStatus[_lookupKeyHeli]
   
                       if _time == nil then
@@ -1607,22 +1617,28 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
                           _time = self.hoverStatus[_lookupKeyHeli] - 10
                           self.hoverStatus[_lookupKeyHeli] = _time
                       end
-  
+                      self:T(self.lid .. "[Pickup Debug] Check hover timer ".._lookupKeyHeli)
                       if _time > 0 then
+                          self:T(self.lid .. "[Pickup Debug] Helo hovering not long enough ".._lookupKeyHeli)
                           self:_DisplayMessageToSAR(_heliUnit, "Hovering above " .. _pilotName .. ". \n\nHold hover for " .. _time .. " seconds to winch them up. \n\nIf the countdown stops you\'re too far away!", self.messageTime, true)
                       else
+                       self:T(self.lid .. "[Pickup Debug] Helo hovering long enough - door check ".._lookupKeyHeli)
                        if self.pilotmustopendoors and (self:_IsLoadingDoorOpen(_heliName) == false) then
                           self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true, true)
+                          self:T(self.lid .. "[Pickup Debug] Door closed, try again next loop ".._lookupKeyHeli)
                           return false
                         else
                           self.hoverStatus[_lookupKeyHeli] = nil
                           self:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupName)
+                          self:T(self.lid .. "[Pickup Debug] Pilot picked up ".._lookupKeyHeli)
                           return true
                         end
                       end
                       _reset = false
                   else
+                      self:T(self.lid .. "[Pickup Debug] Helo hovering too high ".._lookupKeyHeli)
                       self:_DisplayMessageToSAR(_heliUnit, "Too high to winch " .. _pilotName .. " \nReduce height and hover for 10 seconds!", self.messageTime, true,true)
+                      self:T(self.lid .. "[Pickup Debug] Hovering too high, try again next loop ".._lookupKeyHeli)
                       return false
                   end
               end
@@ -1647,7 +1663,8 @@ end
 -- @param #string heliname Heli name
 -- @param #string groupname Group name
 -- @param #boolean isairport If true, EVENT.Landing took place at an airport or FARP
-function CSAR:_ScheduledSARFlight(heliname,groupname, isairport)
+-- @param #boolean noreschedule If true, do not try to reschedule this is distances are not ok (coming from landing event)
+function CSAR:_ScheduledSARFlight(heliname,groupname, isairport, noreschedule)
   self:T(self.lid .. " _ScheduledSARFlight")
   self:T({heliname,groupname})
   local _heliUnit = self:_GetSARHeli(heliname)
@@ -1667,20 +1684,29 @@ function CSAR:_ScheduledSARFlight(heliname,groupname, isairport)
   local _dist = self:_GetClosestMASH(_heliUnit)
 
   if _dist == -1 then
-      return
+    self:T(self.lid.."[Drop off debug] Check distance to MASH for "..heliname.." Distance can not be determined!")
+    return
   end
-
+  
+  self:T(self.lid.."[Drop off debug] Check distance to MASH for "..heliname.." Distance km: "..math.floor(_dist/1000))
+  
   if ( _dist < self.FARPRescueDistance or isairport ) and _heliUnit:InAir() == false then
+    self:T(self.lid.."[Drop off debug] Distance ok, door check")
     if self.pilotmustopendoors and self:_IsLoadingDoorOpen(heliname) == false then
       self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me out!", self.messageTime, true, true)
+      self:T(self.lid.."[Drop off debug] Door closed, try again next loop")
     else
+      self:T(self.lid.."[Drop off debug] Rescued!")
       self:_RescuePilots(_heliUnit)
       return
     end
   end
 
   --queue up
-  self:__Returning(-5,heliname,_woundedGroupName, isairport)
+  if not noreschedule then
+  self:__Returning(5,heliname,_woundedGroupName, isairport)
+  self:ScheduleOnce(5,self._ScheduledSARFlight,self,heliname,groupname, isairport, noreschedule)
+  end
   return self
 end
 
@@ -1752,7 +1778,7 @@ function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak, _overrid
     _text = string.gsub(_text,"nm"," nautical miles")
     --self.msrs:SetVoice(self.SRSVoice)
     --self.SRSQueue:NewTransmission(_text,nil,self.msrs,nil,1)
-    self:I("Voice = "..self.SRSVoice)
+    --self:I("Voice = "..self.SRSVoice)
     self.SRSQueue:NewTransmission(_text,duration,self.msrs,tstart,2,subgroups,subtitle,subduration,self.SRSchannel,self.SRSModulation,gender,culture,self.SRSVoice,volume,label,coord)
   end
   return self
@@ -1981,7 +2007,7 @@ end
 --- (Internal) Determine distance to closest MASH.
 -- @param #CSAR self
 -- @param Wrapper.Unit#UNIT _heli Helicopter #UNIT
--- @retunr
+-- @return #CSAR self
 function CSAR:_GetClosestMASH(_heli)
   self:T(self.lid .. " _GetClosestMASH")
   local _mashset = self.mash -- Core.Set#SET_GROUP
@@ -2219,7 +2245,7 @@ function CSAR:_RefreshRadioBeacons()
     if self:_CountActiveDownedPilots() > 0 then
       local PilotTable = self.downedPilots
       for _,_pilot in pairs (PilotTable) do
-        self:T({_pilot})
+        self:T({_pilot.name})
         local pilot = _pilot -- #CSAR.DownedPilot
         local group = pilot.group
         local frequency = pilot.frequency or 0 -- thanks to @Thrud
@@ -2501,7 +2527,7 @@ end
 -- @param #boolean IsAirport True if heli has landed on an AFB (from event land).
 function CSAR:onbeforeReturning(From, Event, To, Heliname, Woundedgroupname, IsAirPort)
   self:T({From, Event, To, Heliname, Woundedgroupname})
-  self:_ScheduledSARFlight(Heliname,Woundedgroupname, IsAirPort)
+  --self:_ScheduledSARFlight(Heliname,Woundedgroupname, IsAirPort)
   return self
 end
 
