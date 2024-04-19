@@ -652,15 +652,15 @@ function AI_PATROL_ZONE:onafterStart( Controllable, From, Event, To )
 end
 
 
---- @param #AI_PATROL_ZONE self
---- @param Wrapper.Controllable#CONTROLLABLE Controllable
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable+
 function AI_PATROL_ZONE:onbeforeDetect( Controllable, From, Event, To )
 
   return self.DetectOn and self.DetectActivated
 end
 
---- @param #AI_PATROL_ZONE self
---- @param Wrapper.Controllable#CONTROLLABLE Controllable
+-- @param #AI_PATROL_ZONE self
+-- @param Wrapper.Controllable#CONTROLLABLE Controllable
 function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
 
   local Detected = false
@@ -705,7 +705,7 @@ function AI_PATROL_ZONE:onafterDetect( Controllable, From, Event, To )
   
 end
 
---- @param Wrapper.Controllable#CONTROLLABLE AIControllable
+-- @param Wrapper.Controllable#CONTROLLABLE AIControllable
 -- This static method is called from the route path within the last task at the last waypoint of the Controllable.
 -- Note that this method is required, as triggers the next route when patrolling for the Controllable.
 function AI_PATROL_ZONE:_NewPatrolRoute( AIControllable )
@@ -822,13 +822,13 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
 
 end
 
---- @param #AI_PATROL_ZONE self
+-- @param #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:onbeforeStatus()
 
   return self.CheckStatus
 end
 
---- @param #AI_PATROL_ZONE self
+-- @param #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:onafterStatus()
   self:F2()
 
@@ -838,7 +838,7 @@ function AI_PATROL_ZONE:onafterStatus()
     
     local Fuel = self.Controllable:GetFuelMin()
     if Fuel < self.PatrolFuelThresholdPercentage then
-      self:I( self.Controllable:GetName() .. " is out of fuel:" .. Fuel .. ", RTB!" )
+      self:T( self.Controllable:GetName() .. " is out of fuel:" .. Fuel .. ", RTB!" )
       local OldAIControllable = self.Controllable
       
       local OrbitTask = OldAIControllable:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
@@ -852,7 +852,7 @@ function AI_PATROL_ZONE:onafterStatus()
     -- TODO: Check GROUP damage function.
     local Damage = self.Controllable:GetLife()
     if Damage <= self.PatrolDamageThreshold then
-      self:I( self.Controllable:GetName() .. " is damaged:" .. Damage .. ", RTB!" )
+      self:T( self.Controllable:GetName() .. " is damaged:" .. Damage .. ", RTB!" )
       RTB = true
     end
     
@@ -864,7 +864,7 @@ function AI_PATROL_ZONE:onafterStatus()
   end
 end
 
---- @param #AI_PATROL_ZONE self
+-- @param #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:onafterRTB()
   self:F2()
 
@@ -903,13 +903,13 @@ function AI_PATROL_ZONE:onafterRTB()
     
 end
 
---- @param #AI_PATROL_ZONE self
+-- @param #AI_PATROL_ZONE self
 function AI_PATROL_ZONE:onafterDead()
   self:SetDetectionOff()
   self:SetStatusOff()
 end
 
---- @param #AI_PATROL_ZONE self
+-- @param #AI_PATROL_ZONE self
 -- @param Core.Event#EVENTDATA EventData
 function AI_PATROL_ZONE:OnCrash( EventData )
 
@@ -920,7 +920,7 @@ function AI_PATROL_ZONE:OnCrash( EventData )
   end
 end
 
---- @param #AI_PATROL_ZONE self
+-- @param #AI_PATROL_ZONE self
 -- @param Core.Event#EVENTDATA EventData
 function AI_PATROL_ZONE:OnEjection( EventData )
 
@@ -929,7 +929,7 @@ function AI_PATROL_ZONE:OnEjection( EventData )
   end
 end
 
---- @param #AI_PATROL_ZONE self
+-- @param #AI_PATROL_ZONE self
 -- @param Core.Event#EVENTDATA EventData
 function AI_PATROL_ZONE:OnPilotDead( EventData )
 

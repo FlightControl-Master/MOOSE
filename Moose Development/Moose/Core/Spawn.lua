@@ -1778,8 +1778,6 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
           SpawnTemplate.hidden=true
         end
         
-        self:I(SpawnTemplate)
-        
         -- Set country, coalition and category.
         SpawnTemplate.CategoryID = self.SpawnInitCategory or SpawnTemplate.CategoryID
         SpawnTemplate.CountryID = self.SpawnInitCountry or SpawnTemplate.CountryID
