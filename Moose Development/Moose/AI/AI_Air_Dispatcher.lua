@@ -1141,7 +1141,7 @@ do -- AI_AIR_DISPATCHER
       for Resource = 1, DefenderSquadron.ResourceCount or 0 do
         self:ResourcePark( DefenderSquadron )
       end
-      self:I( "Parked resources for squadron " .. DefenderSquadron.Name )
+      self:T( "Parked resources for squadron " .. DefenderSquadron.Name )
     end
     
   end
@@ -1217,14 +1217,14 @@ do -- AI_AIR_DISPATCHER
 
     local AirbaseName = EventData.PlaceName -- The name of the airbase that was captured.
     
-    self:I( "Captured " .. AirbaseName )
+    self:T( "Captured " .. AirbaseName )
     
     -- Now search for all squadrons located at the airbase, and sanitize them.
     for SquadronName, Squadron in pairs( self.DefenderSquadrons ) do
       if Squadron.AirbaseName == AirbaseName then
         Squadron.ResourceCount = -999 -- The base has been captured, and the resources are eliminated. No more spawning.
         Squadron.Captured = true
-        self:I( "Squadron " .. SquadronName .. " captured." )
+        self:T( "Squadron " .. SquadronName .. " captured." )
       end
     end
   end

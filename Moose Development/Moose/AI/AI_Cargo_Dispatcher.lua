@@ -1161,7 +1161,7 @@ function AI_CARGO_DISPATCHER:onafterMonitor()
                 else
                   local text=string.format("WARNING: Cargo %s is too heavy to be loaded into transport. Cargo weight %.1f > %.1f load capacity of carrier %s.", 
                   tostring(Cargo:GetName()), Cargo:GetWeight(), LargestLoadCapacity, tostring(Carrier:GetName()))
-                  self:I(text)
+                  self:T(text)
                 end
               end
             end

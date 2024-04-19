@@ -838,7 +838,7 @@ function AI_PATROL_ZONE:onafterStatus()
     
     local Fuel = self.Controllable:GetFuelMin()
     if Fuel < self.PatrolFuelThresholdPercentage then
-      self:I( self.Controllable:GetName() .. " is out of fuel:" .. Fuel .. ", RTB!" )
+      self:T( self.Controllable:GetName() .. " is out of fuel:" .. Fuel .. ", RTB!" )
       local OldAIControllable = self.Controllable
       
       local OrbitTask = OldAIControllable:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
@@ -852,7 +852,7 @@ function AI_PATROL_ZONE:onafterStatus()
     -- TODO: Check GROUP damage function.
     local Damage = self.Controllable:GetLife()
     if Damage <= self.PatrolDamageThreshold then
-      self:I( self.Controllable:GetName() .. " is damaged:" .. Damage .. ", RTB!" )
+      self:T( self.Controllable:GetName() .. " is damaged:" .. Damage .. ", RTB!" )
       RTB = true
     end
     

@@ -1147,7 +1147,7 @@ do -- AI_A2G_DISPATCHER
       for Resource = 1, DefenderSquadron.ResourceCount or 0 do
         self:ResourcePark( DefenderSquadron )
       end
-      self:I( "Parked resources for squadron " .. DefenderSquadron.Name )
+      self:T( "Parked resources for squadron " .. DefenderSquadron.Name )
     end
     
   end
@@ -1224,14 +1224,14 @@ do -- AI_A2G_DISPATCHER
 
     local AirbaseName = EventData.PlaceName -- The name of the airbase that was captured.
     
-    self:I( "Captured " .. AirbaseName )
+    self:T( "Captured " .. AirbaseName )
     
     -- Now search for all squadrons located at the airbase, and sanitize them.
     for SquadronName, Squadron in pairs( self.DefenderSquadrons ) do
       if Squadron.AirbaseName == AirbaseName then
         Squadron.ResourceCount = -999 -- The base has been captured, and the resources are eliminated. No more spawning.
         Squadron.Captured = true
-        self:I( "Squadron " .. SquadronName .. " captured." )
+        self:T( "Squadron " .. SquadronName .. " captured." )
       end
     end
   end
@@ -2144,7 +2144,7 @@ do -- AI_A2G_DISPATCHER
     Sead.EngageAltType = EngageAltType
     Sead.Defend = true
     
-    self:I( { SEAD = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
+    self:T( { SEAD = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
     
     return self
   end
@@ -2234,7 +2234,7 @@ do -- AI_A2G_DISPATCHER
 
     self:SetSquadronPatrolInterval( SquadronName, self.DefenderDefault.PatrolLimit, self.DefenderDefault.PatrolMinSeconds, self.DefenderDefault.PatrolMaxSeconds, 1, "SEAD" )
     
-    self:I( { SEAD = { Zone:GetName(), PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
+    self:T( { SEAD = { Zone:GetName(), PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
   end
   
   
@@ -2295,7 +2295,7 @@ do -- AI_A2G_DISPATCHER
     Cas.EngageAltType = EngageAltType
     Cas.Defend = true
     
-    self:I( { CAS = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
+    self:T( { CAS = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
     
     return self
   end
@@ -2385,7 +2385,7 @@ do -- AI_A2G_DISPATCHER
 
     self:SetSquadronPatrolInterval( SquadronName, self.DefenderDefault.PatrolLimit, self.DefenderDefault.PatrolMinSeconds, self.DefenderDefault.PatrolMaxSeconds, 1, "CAS" )
     
-    self:I( { CAS = { Zone:GetName(), PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
+    self:T( { CAS = { Zone:GetName(), PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
   end
   
   
@@ -2446,7 +2446,7 @@ do -- AI_A2G_DISPATCHER
     Bai.EngageAltType = EngageAltType
     Bai.Defend = true
     
-    self:I( { BAI = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
+    self:T( { BAI = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
     
     return self
   end
@@ -2536,7 +2536,7 @@ do -- AI_A2G_DISPATCHER
 
     self:SetSquadronPatrolInterval( SquadronName, self.DefenderDefault.PatrolLimit, self.DefenderDefault.PatrolMinSeconds, self.DefenderDefault.PatrolMaxSeconds, 1, "BAI" )
     
-    self:I( { BAI = { Zone:GetName(), PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
+    self:T( { BAI = { Zone:GetName(), PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
   end
   
 
@@ -3894,7 +3894,7 @@ do -- AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
         
         if Squadron then
-          local FirstUnit = AttackSetUnit:GetFirst()
+          local FirstUnit = AttackSetUnit:GetRandomSurely()
           local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
            if self.SetSendPlayerMessages then
             Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", on route to ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), DefenderGroup )

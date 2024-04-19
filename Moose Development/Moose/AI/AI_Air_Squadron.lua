@@ -38,7 +38,7 @@ AI_AIR_SQUADRON = {
 -- @return #AI_AIR_SQUADRON
 function AI_AIR_SQUADRON:New( SquadronName, AirbaseName, TemplatePrefixes, ResourceCount )
 
-  self:I( { Air_Squadron = { SquadronName, AirbaseName, TemplatePrefixes, ResourceCount } } )
+  self:T( { Air_Squadron = { SquadronName, AirbaseName, TemplatePrefixes, ResourceCount } } )
 
   local AI_Air_Squadron = BASE:New() -- #AI_AIR_SQUADRON
   
