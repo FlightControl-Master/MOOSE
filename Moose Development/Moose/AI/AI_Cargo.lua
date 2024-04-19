@@ -9,7 +9,7 @@
 -- @module AI.AI_Cargo
 -- @image Cargo.JPG
 
---- @type AI_CARGO
+-- @type AI_CARGO
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 
@@ -547,7 +547,7 @@ function AI_CARGO:onafterUnloaded( Carrier, From, Event, To, Cargo, CarrierUnit,
     for _, CarrierUnit in pairs( Carrier:GetUnits() ) do
       local CarrierUnit = CarrierUnit -- Wrapper.Unit#UNIT
       local IsEmpty = CarrierUnit:IsCargoEmpty()
-      self:I({ IsEmpty = IsEmpty })
+      self:T({ IsEmpty = IsEmpty })
       if not IsEmpty then
         AllUnloaded = false
         break
