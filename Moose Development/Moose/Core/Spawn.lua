@@ -1608,8 +1608,8 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
                   RandomVec2 = PointVec3:GetRandomVec2InRadius( self.SpawnOuterRadius, self.SpawnInnerRadius )
                   numTries = numTries + 1
                   inZone = SpawnZone:IsVec2InZone(RandomVec2)
-                  self:I("Retrying " .. numTries .. "spawn " .. SpawnTemplate.name .. " in Zone " .. SpawnZone:GetName() .. "!")
-                  self:I(SpawnZone)
+                  --self:I("Retrying " .. numTries .. "spawn " .. SpawnTemplate.name .. " in Zone " .. SpawnZone:GetName() .. "!")
+                  --self:I(SpawnZone)
                 end
               end
               if (not inZone) then
@@ -1778,7 +1778,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
           SpawnTemplate.hidden=true
         end
         
-        self:I(SpawnTemplate)
+        --self:I(SpawnTemplate)
         
         -- Set country, coalition and category.
         SpawnTemplate.CategoryID = self.SpawnInitCategory or SpawnTemplate.CategoryID
