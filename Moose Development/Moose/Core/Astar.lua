@@ -1213,7 +1213,7 @@ function ASTAR:_LowestFscore(set, f_score)
   end
   
   -- Debug info.
-  self:T(self.lid..string.format("Lowest Fscore=%.1f, Node=%d", lowest, bestNode))
+  self:T(self.lid..string.format("Lowest Fscore=%.1f, Node=%s", lowest, tostring(bestNode)))
   
   return self.nodes[bestNode]
 end
