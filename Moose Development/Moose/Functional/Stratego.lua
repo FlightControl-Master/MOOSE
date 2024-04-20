@@ -759,9 +759,39 @@ function STRATEGO:GetNextHighestWeightNodes(Weight, Coalition)
   return airbases[weight],weight
 end
 
+--- [USER] Set the aggregated weight of a single node found by its name manually.
+-- @param #STRATEGO self
+-- @param #string Name The name to look for.
+-- @param #number Weight The weight to be set.
+-- @return #boolean success
+function STRATEGO:SetNodeWeight(Name,Weight)
+  self:T(self.lid.."SetNodeWeight")
+  if Name and Weight and self.airbasetable[Name] then
+    self.airbasetable[Name].weight = Weight or 0
+    return true
+  else
+    return false
+  end
+end
+
+--- [USER] Set the base weight of a single node found by its name manually.
+-- @param #STRATEGO self
+-- @param #string Name The name to look for.
+-- @param #number Weight The weight to be set.
+-- @return #boolean success
+function STRATEGO:SetNodeBaseWeight(Name,Weight)
+  self:T(self.lid.."SetNodeBaseWeight")
+  if Name and Weight and self.airbasetable[Name] then
+    self.airbasetable[Name].baseweight = Weight or 0
+    return true
+  else
+    return false
+  end
+end
+
 --- [USER] Get the aggregated weight of a node by its name.
 -- @param #STRATEGO self
--- @param #string Name.
+-- @param #string Name The name to look for.
 -- @return #number Weight The weight or 0 if not found.
 function STRATEGO:GetNodeWeight(Name)
   self:T(self.lid.."GetNodeWeight")
@@ -774,7 +804,7 @@ end
 
 --- [USER] Get the base weight of a node by its name.
 -- @param #STRATEGO self
--- @param #string Name.
+-- @param #string Name The name to look for.
 -- @return #number Weight The base weight or 0 if not found.
 function STRATEGO:GetNodeBaseWeight(Name)
   self:T(self.lid.."GetNodeBaseWeight")
@@ -787,7 +817,7 @@ end
 
 --- [USER] Get the COALITION of a node by its name.
 -- @param #STRATEGO self
--- @param #string Name.
+-- @param #string The name to look for.
 -- @return #number Coalition The coalition.
 function STRATEGO:GetNodeCoalition(Name)
   self:T(self.lid.."GetNodeCoalition")
@@ -800,7 +830,7 @@ end
 
 --- [USER] Get the TYPE of a node by its name.
 -- @param #STRATEGO self
--- @param #string Name.
+-- @param #string The name to look for.
 -- @return #string Type Type of the node, e.g. STRATEGO.Type.AIRBASE or nil if not found.
 function STRATEGO:GetNodeType(Name)
   self:T(self.lid.."GetNodeType")
@@ -813,7 +843,7 @@ end
 
 --- [USER] Get the ZONE of a node by its name.
 -- @param #STRATEGO self
--- @param #string Name.
+-- @param #string The name to look for.
 -- @return Core.Zone#ZONE Zone The Zone of the node or nil if not found.
 function STRATEGO:GetNodeZone(Name)
   self:T(self.lid.."GetNodeZone")
@@ -826,7 +856,7 @@ end
 
 --- [USER] Get the OPSZONE of a node by its name.
 -- @param #STRATEGO self
--- @param #string Name.
+-- @param #string The name to look for.
 -- @return Ops.OpsZone#OPSZONE OpsZone The OpsZone of the node or nil if not found.
 function STRATEGO:GetNodeOpsZone(Name)
   self:T(self.lid.."GetNodeOpsZone")
@@ -839,7 +869,7 @@ end
 
 --- [USER] Get the COORDINATE of a node by its name.
 -- @param #STRATEGO self
--- @param #string Name.
+-- @param #string The name to look for.
 -- @return Core.Point#COORDINATE Coordinate The Coordinate of the node or nil if not found.
 function STRATEGO:GetNodeCoordinate(Name)
   self:T(self.lid.."GetNodeCoordinate")
@@ -852,7 +882,7 @@ end
 
 --- [USER] Check if the TYPE of a node is AIRBASE.
 -- @param #STRATEGO self
--- @param #string Name.
+-- @param #string The name to look for.
 -- @return #boolean Outcome
 function STRATEGO:IsAirbase(Name)
   self:T(self.lid.."IsAirbase")
@@ -865,7 +895,7 @@ end
 
 --- [USER] Check if the TYPE of a node is PORT.
 -- @param #STRATEGO self
--- @param #string Name.
+-- @param #string The name to look for.
 -- @return #boolean Outcome
 function STRATEGO:IsPort(Name)
   self:T(self.lid.."IsPort")
@@ -878,7 +908,7 @@ end
 
 --- [USER] Check if the TYPE of a node is POI.
 -- @param #STRATEGO self
--- @param #string Name.
+-- @param #string The name to look for.
 -- @return #boolean Outcome
 function STRATEGO:IsPOI(Name)
   self:T(self.lid.."IsPOI")
@@ -891,7 +921,7 @@ end
 
 --- [USER] Check if the TYPE of a node is FARP.
 -- @param #STRATEGO self
--- @param #string Name.
+-- @param #string The name to look for.
 -- @return #boolean Outcome
 function STRATEGO:IsFARP(Name)
   self:T(self.lid.."IsFARP")
@@ -904,7 +934,7 @@ end
 
 --- [USER] Check if the TYPE of a node is SHIP.
 -- @param #STRATEGO self
--- @param #string Name.
+-- @param #string The name to look for.
 -- @return #boolean Outcome
 function STRATEGO:IsShip(Name)
   self:T(self.lid.."IsShip")
