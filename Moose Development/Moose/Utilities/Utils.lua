@@ -3513,6 +3513,25 @@ function string.contains(str, value)
     return string.match(str, value)
 end
 
+
+--- Moves an object from one table to another
+-- @param #obj object to move
+-- @param #from_table table to move from
+-- @param #to_table table to move to
+function table.move_object(obj, from_table, to_table)
+    local index
+    for i, v in pairs(from_table) do
+        if v == obj then
+            index = i
+        end
+    end
+
+    if index then
+        local moved = table.remove(from_table, index)
+        table.insert_unique(to_table, moved)
+    end
+end
+
 --- Given tbl is a indexed table ({"hello", "dcs", "world"}), checks if element exists in the table.
 --- The table can be made up out of complex tables or values as well
 -- @param #table tbl
@@ -3731,6 +3750,25 @@ function UTILS.OctalToDecimal(Number)
   return tonumber(Number,8)
 end
 
+
+--- HexToRGBA
+-- @param hex_string table
+-- @return #table R, G, B, A
+function UTILS.HexToRGBA(hex_string)
+    local hexNumber = tonumber(string.sub(hex_string, 3), 16) -- convert the string to a number
+    -- extract RGBA components
+    local alpha = hexNumber % 256
+    hexNumber = (hexNumber - alpha) / 256
+    local blue = hexNumber % 256
+    hexNumber = (hexNumber - blue) / 256
+    local green = hexNumber % 256
+    hexNumber = (hexNumber - green) / 256
+    local red = hexNumber % 256
+
+    return {R = red, G = green, B = blue, A = alpha}
+end
+
+
 --- Function to save the position of a set of #OPSGROUP (ARMYGROUP) objects.
 -- @param Core.Set#SET_OPSGROUP Set of ops objects to save
 -- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
@@ -3768,7 +3806,7 @@ function UTILS.SaveSetOfOpsGroups(Set,Path,Filename,Structured)
         data = string.format("%s%s,%s,%s,%s,%d,%d,%d,%d,%s\n",data,name,legion,template,alttemplate,units,position.x,position.y,position.z,strucdata)
       else
         data = string.format("%s%s,%s,%s,%s,%d,%d,%d,%d\n",data,name,legion,template,alttemplate,units,position.x,position.y,position.z)
-      end     
+      end
     end
   end
   -- save the data
@@ -3780,12 +3818,12 @@ end
 -- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
 -- @param #string Filename The name of the file.
 -- @return #table Returns a table of data entries: `{ groupname=groupname, size=size, coordinate=coordinate, template=template, structure=structure, legion=legion, alttemplate=alttemplate }`
--- Returns nil when the file cannot be read. 
+-- Returns nil when the file cannot be read.
 function UTILS.LoadSetOfOpsGroups(Path,Filename)
 
   local filename = Filename or "SetOfGroups"
   local datatable = {}
-  
+
   if UTILS.CheckFileExists(Path,filename) then
     local outcome,loadeddata = UTILS.LoadFromFile(Path,Filename)
     -- remove header
@@ -3820,20 +3858,20 @@ end
 -- @param #number tgtHdg The absolute heading from the reference object to the target object/point in 0-360
 -- @return #string text Text in clock heading such as "4 O'CLOCK"
 -- @usage Display the range and clock distance of a BTR in relation to REAPER 1-1's heading:
--- 
+--
 --          myUnit = UNIT:FindByName( "REAPER 1-1" )
 --          myTarget = GROUP:FindByName( "BTR-1" )
---          
+--
 --          coordUnit = myUnit:GetCoordinate()
 --          coordTarget = myTarget:GetCoordinate()
---          
+--
 --          hdgUnit = myUnit:GetHeading()
 --          hdgTarget = coordUnit:HeadingTo( coordTarget )
 --          distTarget = coordUnit:Get3DDistance( coordTarget )
---          
+--
 --          clockString = UTILS.ClockHeadingString( hdgUnit, hdgTarget )
---          
---          -- Will show this message to REAPER 1-1 in-game: Contact BTR at 3 o'clock for 1134m! 
+--
+--          -- Will show this message to REAPER 1-1 in-game: Contact BTR at 3 o'clock for 1134m!
 --          MESSAGE:New("Contact BTR at " .. clockString .. " for " .. distTarget  .. "m!):ToUnit( myUnit )
 function UTILS.ClockHeadingString(refHdg,tgtHdg)
     local relativeAngle = tgtHdg - refHdg
