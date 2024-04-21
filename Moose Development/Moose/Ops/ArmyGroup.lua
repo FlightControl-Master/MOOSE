@@ -976,6 +976,8 @@ function ARMYGROUP:onafterSpawned(From, Event, To)
     -- Update route.
     if Nwp>1 and self.isMobile then
       self:T(self.lid..string.format("Got %d waypoints on spawn ==> Cruise in -1.0 sec!", Nwp))
+      local wp=self:GetWaypointNext()
+      self.option.Formation=wp.action
       --self:__Cruise(-1, nil, self.option.Formation)
       self:__Cruise(-1)
     else
@@ -1288,6 +1290,7 @@ function ARMYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Formation)
 
   -- Current set speed in m/s.
   self.speedWp=wp.speed
+  self:T(self.lid..string.format("Expected/waypoint speed=%.1f m/s", self.speedWp))
 
   -- Debug output.
   if self.verbose>=10 then --or self.attribute==GROUP.Attribute.GROUND_APC then

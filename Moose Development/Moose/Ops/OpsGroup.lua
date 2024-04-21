@@ -6684,6 +6684,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
   local wpnext=self:GetWaypointNext()
   if wpnext then
     self.speedWp=wpnext.speed
+    self:T(self.lid..string.format("Expected/waypoint speed=%.1f m/s", self.speedWp))
   end
 
 end
@@ -11399,6 +11400,7 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
     -- Expected speed to the first waypoint.
     if i<=2 then
       self.speedWp=wp.speed
+      self:T(self.lid..string.format("Expected/waypoint speed=%.1f m/s", self.speedWp))
     end
 
     -- Speed in knots.
