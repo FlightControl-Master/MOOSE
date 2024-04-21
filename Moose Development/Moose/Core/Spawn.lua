@@ -1467,6 +1467,30 @@ do -- Delay methods
 
 end -- Delay methods
 
+--- Hide the group on the map view (visible to game master slots!).
+-- @param #SPAWN self
+-- @return #SPAWN The SPAWN object
+function SPAWN:InitHiddenOnMap()
+  self.SpawnHiddenOnMap = true
+  return self
+end
+
+--- Hide the group on MFDs (visible to game master slots!).
+-- @param #SPAWN self
+-- @return #SPAWN The SPAWN object
+function SPAWN:InitHiddenOnMFD()
+  self.SpawnHiddenOnMFD = true
+  return self
+end
+
+--- Hide the group on planner (visible to game master slots!).
+-- @param #SPAWN self
+-- @return #SPAWN The SPAWN object
+function SPAWN:InitHiddenOnPlanner()
+  self.SpawnHiddenOnPlanner = true
+  return self
+end
+
 --- Will spawn a group based on the internal index.
 -- Note: This method uses the global _DATABASE object (an instance of @{Core.Database#DATABASE}), which contains ALL initial and new spawned objects in MOOSE.
 -- @param #SPAWN self
@@ -1740,7 +1764,20 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
         if self.SpawnInitModu then
           SpawnTemplate.modulation = self.SpawnInitModu
         end
+        
+        -- hiding options
+        if self.SpawnHiddenOnPlanner then
+          SpawnTemplate.hiddenOnPlanner=true
+        end
 
+        if self.SpawnHiddenOnMFD then
+          SpawnTemplate.hiddenOnMFD=true
+        end
+        
+        if self.SpawnHiddenOnMap then
+          SpawnTemplate.hidden=true
+        end
+        
         -- Set country, coalition and category.
         SpawnTemplate.CategoryID = self.SpawnInitCategory or SpawnTemplate.CategoryID
         SpawnTemplate.CountryID = self.SpawnInitCountry or SpawnTemplate.CountryID

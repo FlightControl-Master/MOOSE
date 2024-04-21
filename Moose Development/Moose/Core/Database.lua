@@ -1009,7 +1009,7 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
   self.Templates.Groups[GroupTemplateName].CategoryID = CategoryID
   self.Templates.Groups[GroupTemplateName].CoalitionID = CoalitionSide
   self.Templates.Groups[GroupTemplateName].CountryID = CountryID
-
+  
   local UnitNames = {}
 
   for unit_num, UnitTemplate in pairs( GroupTemplate.units ) do
@@ -1074,7 +1074,7 @@ end
 -- @param #string unitname Name of the associated unit.
 -- @return #number Octal
 function DATABASE:GetNextSTN(octal,unitname)
-  local first = UTILS.OctalToDecimal(octal)
+  local first = UTILS.OctalToDecimal(octal) or 0
   if self.STNS[first] == unitname then return octal end
   local nextoctal = 77777
   local found = false
@@ -1111,7 +1111,7 @@ end
 -- @param #string unitname Name of the associated unit.
 -- @return #number Octal
 function DATABASE:GetNextSADL(octal,unitname)
-  local first = UTILS.OctalToDecimal(octal)
+  local first = UTILS.OctalToDecimal(octal) or 0
   if self.SADL[first] == unitname then return octal end
   local nextoctal = 7777
   local found = false
@@ -1685,7 +1685,7 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
     if Event.IniObjectCategory == 1 then
 
       -- Try to get the player name. This can be buggy for multicrew aircraft!
-      local PlayerName = Event.IniUnit:GetPlayerName() or FindPlayerName(Event.IniUnitName)
+      local PlayerName = Event.IniPlayerName or Event.IniUnit:GetPlayerName() or FindPlayerName(Event.IniUnitName)
           
       if PlayerName then
 
@@ -2081,7 +2081,7 @@ function DATABASE:_RegisterTemplates()
                   for group_num, Template in pairs(obj_type_data.group) do
 
                     if obj_type_name ~= "static" and Template and Template.units and type(Template.units) == 'table' then  --making sure again- this is a valid group
-
+                      
                       self:_RegisterGroupTemplate(Template, CoalitionSide, _DATABASECategory[string.lower(CategoryName)], CountryID)
 
                     else

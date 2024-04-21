@@ -904,14 +904,14 @@ do -- AI_A2G_DISPATCHER
   -- @type AI_A2G_DISPATCHER.DefenseCoordinates
   -- @map <#string,Core.Point#COORDINATE> A list of all defense coordinates mapped per defense coordinate name.
 
-  --- @field #AI_A2G_DISPATCHER.DefenseCoordinates DefenseCoordinates
+  -- @field #AI_A2G_DISPATCHER.DefenseCoordinates DefenseCoordinates
   AI_A2G_DISPATCHER.DefenseCoordinates = {}
 
   --- Enumerator for spawns at airbases.
   -- @type AI_A2G_DISPATCHER.Takeoff
   -- @extends Wrapper.Group#GROUP.Takeoff
   
-  --- @field #AI_A2G_DISPATCHER.Takeoff Takeoff
+  -- @field #AI_A2G_DISPATCHER.Takeoff Takeoff
   AI_A2G_DISPATCHER.Takeoff = GROUP.Takeoff
   
   --- Defines Landing location.
@@ -942,7 +942,7 @@ do -- AI_A2G_DISPATCHER
   -- @type AI_A2G_DISPATCHER.DefenseQueue
   -- @list<#AI_A2G_DISPATCHER.DefenseQueueItem> DefenseQueueItem A list of all defenses being queued ...
   
-  --- @field #AI_A2G_DISPATCHER.DefenseQueue DefenseQueue
+  -- @field #AI_A2G_DISPATCHER.DefenseQueue DefenseQueue
   AI_A2G_DISPATCHER.DefenseQueue = {}
   
   --- Defense approach types.
@@ -1136,7 +1136,7 @@ do -- AI_A2G_DISPATCHER
   end
 
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:onafterStart( From, Event, To )
 
     self:GetParent( self ).onafterStart( self, From, Event, To )
@@ -1147,7 +1147,7 @@ do -- AI_A2G_DISPATCHER
       for Resource = 1, DefenderSquadron.ResourceCount or 0 do
         self:ResourcePark( DefenderSquadron )
       end
-      self:I( "Parked resources for squadron " .. DefenderSquadron.Name )
+      self:T( "Parked resources for squadron " .. DefenderSquadron.Name )
     end
     
   end
@@ -1201,7 +1201,7 @@ do -- AI_A2G_DISPATCHER
   end
   
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:ResourcePark( DefenderSquadron )
     local TemplateID = math.random( 1, #DefenderSquadron.Spawn )
     local Spawn = DefenderSquadron.Spawn[ TemplateID ] -- Core.Spawn#SPAWN
@@ -1218,33 +1218,33 @@ do -- AI_A2G_DISPATCHER
   end
 
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2G_DISPATCHER:OnEventBaseCaptured( EventData )
 
     local AirbaseName = EventData.PlaceName -- The name of the airbase that was captured.
     
-    self:I( "Captured " .. AirbaseName )
+    self:T( "Captured " .. AirbaseName )
     
     -- Now search for all squadrons located at the airbase, and sanitize them.
     for SquadronName, Squadron in pairs( self.DefenderSquadrons ) do
       if Squadron.AirbaseName == AirbaseName then
         Squadron.ResourceCount = -999 -- The base has been captured, and the resources are eliminated. No more spawning.
         Squadron.Captured = true
-        self:I( "Squadron " .. SquadronName .. " captured." )
+        self:T( "Squadron " .. SquadronName .. " captured." )
       end
     end
   end
 
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2G_DISPATCHER:OnEventCrashOrDead( EventData )
     self.Detection:ForgetDetectedUnit( EventData.IniUnitName ) 
   end
 
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2G_DISPATCHER:OnEventLand( EventData )
     self:F( "Landed" )
@@ -1261,7 +1261,7 @@ do -- AI_A2G_DISPATCHER
           self:RemoveDefenderFromSquadron( Squadron, Defender )
         end
         DefenderUnit:Destroy()
-        self:ResourcePark( Squadron, Defender )
+        self:ResourcePark( Squadron )
         return
       end
       if DefenderUnit:GetLife() ~= DefenderUnit:GetLife0() then
@@ -1273,7 +1273,7 @@ do -- AI_A2G_DISPATCHER
   end
   
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   -- @param Core.Event#EVENTDATA EventData
   function AI_A2G_DISPATCHER:OnEventEngineShutdown( EventData )
     local DefenderUnit = EventData.IniUnit
@@ -1289,7 +1289,7 @@ do -- AI_A2G_DISPATCHER
           self:RemoveDefenderFromSquadron( Squadron, Defender )
         end
         DefenderUnit:Destroy()
-        self:ResourcePark( Squadron, Defender )
+        self:ResourcePark( Squadron )
       end
     end 
   end
@@ -1297,7 +1297,7 @@ do -- AI_A2G_DISPATCHER
 
   do -- Manage the defensive behaviour
   
-    --- @param #AI_A2G_DISPATCHER self
+    -- @param #AI_A2G_DISPATCHER self
     -- @param #string DefenseCoordinateName The name of the coordinate to be defended by A2G defenses.
     -- @param Core.Point#COORDINATE DefenseCoordinate The coordinate to be defended by A2G defenses.
     function AI_A2G_DISPATCHER:AddDefenseCoordinate( DefenseCoordinateName, DefenseCoordinate )
@@ -1305,19 +1305,19 @@ do -- AI_A2G_DISPATCHER
     end
     
 
-    --- @param #AI_A2G_DISPATCHER self
+    -- @param #AI_A2G_DISPATCHER self
     function AI_A2G_DISPATCHER:SetDefenseReactivityLow()
       self.DefenseReactivity = 0.05
     end
     
 
-    --- @param #AI_A2G_DISPATCHER self
+    -- @param #AI_A2G_DISPATCHER self
     function AI_A2G_DISPATCHER:SetDefenseReactivityMedium()
       self.DefenseReactivity = 0.15
     end
     
 
-    --- @param #AI_A2G_DISPATCHER self
+    -- @param #AI_A2G_DISPATCHER self
     function AI_A2G_DISPATCHER:SetDefenseReactivityHigh()
       self.DefenseReactivity = 0.5
     end
@@ -1351,14 +1351,14 @@ do -- AI_A2G_DISPATCHER
   --   1. the **distance of the closest airbase to target**, being smaller than the **Defend Radius**.
   --   2. the **distance to any defense reference point**.
   -- 
-  -- The **default** defense radius is defined as **400000** or **40km**. Override the default defense radius when the era of the warfare is early, or, 
+  -- The **default** defense radius is defined as **40000** or **40km**. Override the default defense radius when the era of the warfare is early, or, 
   -- when you don't want to let the AI_A2G_DISPATCHER react immediately when a certain border or area is not being crossed.
   -- 
   -- Use the method @{#AI_A2G_DISPATCHER.SetDefendRadius}() to set a specific defend radius for all squadrons,
   -- **the Defense Radius is defined for ALL squadrons which are operational.**
   -- 
   -- @param #AI_A2G_DISPATCHER self
-  -- @param #number DefenseRadius (Optional, Default = 200000) The defense radius to engage detected targets from the nearest capable and available squadron airbase.
+  -- @param #number DefenseRadius (Optional, Default = 20000) The defense radius to engage detected targets from the nearest capable and available squadron airbase.
   -- @return #AI_A2G_DISPATCHER
   -- @usage
   -- 
@@ -1373,7 +1373,7 @@ do -- AI_A2G_DISPATCHER
   --   
   function AI_A2G_DISPATCHER:SetDefenseRadius( DefenseRadius )
 
-    self.DefenseRadius = DefenseRadius or 100000
+    self.DefenseRadius = DefenseRadius or 40000
     
     self.Detection:SetAcceptRange( self.DefenseRadius ) 
   
@@ -1868,7 +1868,7 @@ do -- AI_A2G_DISPATCHER
   end
 
   
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   -- @param #string SquadronName The squadron name.
   -- @param #number TakeoffInterval  Only Takeoff new units each specified interval in seconds in 10 seconds steps.
   -- @usage
@@ -2144,7 +2144,7 @@ do -- AI_A2G_DISPATCHER
     Sead.EngageAltType = EngageAltType
     Sead.Defend = true
     
-    self:I( { SEAD = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
+    self:T( { SEAD = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
     
     return self
   end
@@ -2234,7 +2234,7 @@ do -- AI_A2G_DISPATCHER
 
     self:SetSquadronPatrolInterval( SquadronName, self.DefenderDefault.PatrolLimit, self.DefenderDefault.PatrolMinSeconds, self.DefenderDefault.PatrolMaxSeconds, 1, "SEAD" )
     
-    self:I( { SEAD = { Zone:GetName(), PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
+    self:T( { SEAD = { Zone:GetName(), PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
   end
   
   
@@ -2295,7 +2295,7 @@ do -- AI_A2G_DISPATCHER
     Cas.EngageAltType = EngageAltType
     Cas.Defend = true
     
-    self:I( { CAS = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
+    self:T( { CAS = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
     
     return self
   end
@@ -2385,7 +2385,7 @@ do -- AI_A2G_DISPATCHER
 
     self:SetSquadronPatrolInterval( SquadronName, self.DefenderDefault.PatrolLimit, self.DefenderDefault.PatrolMinSeconds, self.DefenderDefault.PatrolMaxSeconds, 1, "CAS" )
     
-    self:I( { CAS = { Zone:GetName(), PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
+    self:T( { CAS = { Zone:GetName(), PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
   end
   
   
@@ -2446,7 +2446,7 @@ do -- AI_A2G_DISPATCHER
     Bai.EngageAltType = EngageAltType
     Bai.Defend = true
     
-    self:I( { BAI = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
+    self:T( { BAI = { SquadronName, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
     
     return self
   end
@@ -2536,7 +2536,7 @@ do -- AI_A2G_DISPATCHER
 
     self:SetSquadronPatrolInterval( SquadronName, self.DefenderDefault.PatrolLimit, self.DefenderDefault.PatrolMinSeconds, self.DefenderDefault.PatrolMaxSeconds, 1, "BAI" )
     
-    self:I( { BAI = { Zone:GetName(), PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
+    self:T( { BAI = { Zone:GetName(), PatrolMinSpeed, PatrolMaxSpeed, PatrolFloorAltitude, PatrolCeilingAltitude, PatrolAltType, EngageMinSpeed, EngageMaxSpeed, EngageFloorAltitude, EngageCeilingAltitude, EngageAltType } } )
   end
   
 
@@ -3369,7 +3369,7 @@ do -- AI_A2G_DISPATCHER
   end 
 
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:AddDefenderToSquadron( Squadron, Defender, Size )
     self.Defenders = self.Defenders or {}
     local DefenderName = Defender:GetName()
@@ -3380,7 +3380,7 @@ do -- AI_A2G_DISPATCHER
     self:F( { DefenderName = DefenderName, SquadronResourceCount = Squadron.ResourceCount } )
   end
 
-  --- @param #AI_A2G_DISPATCHER self
+  -- @param #AI_A2G_DISPATCHER self
   function AI_A2G_DISPATCHER:RemoveDefenderFromSquadron( Squadron, Defender )
     self.Defenders = self.Defenders or {}
     local DefenderName = Defender:GetName()
@@ -3796,7 +3796,7 @@ do -- AI_A2G_DISPATCHER
         Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
       end
 
-      --- @param #AI_A2G_DISPATCHER self
+      -- @param #AI_A2G_DISPATCHER self
       function AI_A2G_Fsm:onafterLostControl( DefenderGroup, From, Event, To )
         self:F({"LostControl", DefenderGroup:GetName()})
         self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )
@@ -3813,7 +3813,7 @@ do -- AI_A2G_DISPATCHER
         end
       end
       
-      --- @param #AI_A2G_DISPATCHER self
+      -- @param #AI_A2G_DISPATCHER self
       function AI_A2G_Fsm:onafterHome( DefenderGroup, From, Event, To, Action )
         self:F({"Home", DefenderGroup:GetName()})
         self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )
@@ -3894,7 +3894,7 @@ do -- AI_A2G_DISPATCHER
         local Squadron = Dispatcher:GetSquadronFromDefender( DefenderGroup )
         
         if Squadron then
-          local FirstUnit = AttackSetUnit:GetFirst()
+          local FirstUnit = AttackSetUnit:GetRandomSurely()
           local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
            if self.SetSendPlayerMessages then
             Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", on route to ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), DefenderGroup )
@@ -3933,7 +3933,7 @@ do -- AI_A2G_DISPATCHER
         Dispatcher:ClearDefenderTaskTarget( DefenderGroup )
       end
 
-      --- @param #AI_A2G_DISPATCHER self
+      -- @param #AI_A2G_DISPATCHER self
       function AI_A2G_Fsm:onafterLostControl( DefenderGroup, From, Event, To )
         self:F({"Defender LostControl", DefenderGroup:GetName()})
         self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )
@@ -3950,7 +3950,7 @@ do -- AI_A2G_DISPATCHER
         end
       end
       
-      --- @param #AI_A2G_DISPATCHER self
+      -- @param #AI_A2G_DISPATCHER self
       function AI_A2G_Fsm:onafterHome( DefenderGroup, From, Event, To, Action )
         self:F({"Defender Home", DefenderGroup:GetName()})
         self:GetParent(self).onafterHome( self, DefenderGroup, From, Event, To )
