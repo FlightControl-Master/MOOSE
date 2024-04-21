@@ -27,7 +27,7 @@
 -- Using ovals can be handy to find an area on the ground that is actually an intersection of a cone and a plane. So imagine you're faking the view cone of
 -- a targeting pod and
 
--- @field #CIRCLE
+-- @field #OVAL
 
 --- OVAL class with properties and methods for handling ovals.
 OVAL = {

@@ -1,4 +1,8 @@
---- TRIANGLE class with properties and methods for handling triangles. This class is mostly used by the POLYGON class, but you can use it on its own as well
+-- TRIANGLE class with properties and methods for handling triangles. This class is mostly used by the POLYGON class, but you can use it on its own as well
+--
+-- ### Author: **nielsvaes/coconutcockpit**
+--
+--
 TRIANGLE = {
     ClassName = "TRIANGLE",
     Points = {},

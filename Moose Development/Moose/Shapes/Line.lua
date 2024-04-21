@@ -1,4 +1,20 @@
---- LINE class with properties and methods for handling lines.
+--
+--
+-- ### Author: **nielsvaes/coconutcockpit**
+--
+-- ===
+-- @module Shapes.LINE
+
+--- OVAL class.
+-- @type OVAL
+-- @field #string ClassName Name of the class.
+-- @field #number Points points of the line
+-- @field #number Coords coordinates of the line
+
+--
+-- ===
+
+-- @field #LINE
 LINE = {
     ClassName = "LINE",
     Points = {},
