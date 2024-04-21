@@ -129,7 +129,6 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Shapes/Line.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Shapes/Oval.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Shapes/Polygon.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Shapes/Triangle.lua' )
-__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Shapes/Arrow.lua' )
 
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Sound/UserSound.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Sound/SoundOutput.lua' )
