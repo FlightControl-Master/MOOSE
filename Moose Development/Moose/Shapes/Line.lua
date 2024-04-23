@@ -1,12 +1,12 @@
---
+---
 --
 -- ### Author: **nielsvaes/coconutcockpit**
 --
 -- ===
 -- @module Shapes.LINE
 
---- OVAL class.
--- @type OVAL
+--- LINE class.
+-- @type LINE
 -- @field #string ClassName Name of the class.
 -- @field #number Points points of the line
 -- @field #number Coords coordinates of the line
@@ -14,6 +14,7 @@
 --
 -- ===
 
+---
 -- @field #LINE
 LINE = {
     ClassName = "LINE",

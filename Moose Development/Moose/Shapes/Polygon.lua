@@ -1,4 +1,4 @@
---
+---
 --
 -- ### Author: **nielsvaes/coconutcockpit**
 --
@@ -26,10 +26,10 @@
 -- * A rect
 -- Use the POLYGON:FindOnMap() of POLYGON:Find() functions for this. You can also create a non existing polygon in memory using the POLYGON:New() function. Pass in a
 -- any number of Vec2s into this function to define the shape of the polygon you want.
-
+--
 -- You can draw very intricate and complex polygons in the Mission Editor to avoid (or include) map objects. You can then generate random points within this complex
 -- shape for spawning groups or checking positions.
-
+--
 -- When a POLYGON is made, it's automatically triangulated. The resulting triangles are stored in POLYGON.Triangles. This also immeadiately saves the surface area
 -- of the POLYGON. Because the POLYGON is triangulated, it's possible to generate random points within this POLYGON without having to use a trial and error method to see if
 -- the point is contained within the shape.
@@ -37,9 +37,8 @@
 -- which ignores the size of the triangles in the polygon to pick a random points. This will result in more points clumping together in parts of the polygon where the triangles are
 -- the smallest.
 
-
+---
 -- @field #POLYGON
-
 POLYGON = {
     ClassName = "POLYGON",
     Points = {},
