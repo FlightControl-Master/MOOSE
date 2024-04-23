@@ -1,3 +1,21 @@
+---
+--
+-- ### Author: **nielsvaes/coconutcockpit**
+--
+-- ===
+-- @module Shapes.CUBE
+
+--- LINE class.
+-- @type CUBE
+-- @field #string ClassName Name of the class.
+-- @field #number Points points of the line
+-- @field #number Coords coordinates of the line
+
+--
+-- ===
+
+---
+-- @field #CUBE
 CUBE = {
     ClassName = "CUBE",
     Points = {},

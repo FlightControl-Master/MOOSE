@@ -1,4 +1,4 @@
---
+---
 --
 -- ### Author: **nielsvaes/coconutcockpit**
 --
@@ -18,18 +18,17 @@
 --
 -- # OVAL
 -- OVALs can be fetched from the drawings in the Mission Editor
-
+--
 -- The major and minor axes define how elongated the shape of an oval is. This class has some basic functions that the other SHAPE classes have as well.
 -- Since it's not possible to draw the shape of an oval while the mission is running, right now the draw function draws 2 cicles. One with the major axis and one with
 -- the minor axis. It then draws a diamond shape on an angle where the corners touch the major and minor axes to give an indication of what the oval actually
 -- looks like.
-
+--
 -- Using ovals can be handy to find an area on the ground that is actually an intersection of a cone and a plane. So imagine you're faking the view cone of
 -- a targeting pod and
 
--- @field #OVAL
-
 --- OVAL class with properties and methods for handling ovals.
+-- @field #OVAL
 OVAL = {
     ClassName = "OVAL",
     MajorAxis = nil,

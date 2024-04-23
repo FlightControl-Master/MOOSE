@@ -17,12 +17,12 @@
 -- # CIRCLE
 -- CIRCLEs can be fetched from the drawings in the Mission Editor
 
+---
 -- This class has some of the standard CIRCLE functions you'd expect. One function of interest is CIRCLE:PointInSector() that you can use if a point is
 -- within a certain sector (pizza slice) of a circle. This can be useful for many things, including rudimentary, "radar-like" searches from a unit.
-
+-- 
+-- CIRCLE class with properties and methods for handling circles.
 -- @field #CIRCLE
-
---- CIRCLE class with properties and methods for handling circles.
 CIRCLE = {
     ClassName = "CIRCLE",
     Radius = nil,

@@ -30,14 +30,12 @@
 --      OVAL
 --      POLYGON
 --      TRIANGLE (although this one's a bit special as well)
-
+--
 -- ===
 -- The idea is that anything you draw on the map in the Mission Editor can be turned in a shape to work with in MOOSE.
 -- This is the base class that all other shape classes are built on. There are some shared functions, most of which are overridden in the derived classes
-
+--
 -- @field #SHAPE_BASE
-
-
 SHAPE_BASE = {
     ClassName = "SHAPE_BASE",
     Name = "",
