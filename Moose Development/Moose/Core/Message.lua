@@ -395,29 +395,36 @@ end
 --- Sends a MESSAGE to all players. 
 -- @param #MESSAGE self
 -- @param Core.Settings#Settings Settings (Optional) Settings for message display.
--- @return #MESSAGE
+-- @param #number Delay (Optional) Delay in seconds before the message is send. Default instantly (`nil`).
+-- @return #MESSAGE self
 -- @usage
 --
---   -- Send a message created to all players.
---   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 ):ToAll()
---   or
---   MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 ):ToAll()
---   or
---   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 )
---   MessageAll:ToAll()
+-- -- Send a message created to all players.
+-- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 ):ToAll()
+-- or
+-- MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 ):ToAll()
+-- or
+-- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 )
+-- MessageAll:ToAll()
 --
-function MESSAGE:ToAll( Settings )
+function MESSAGE:ToAll( Settings, Delay )
   self:F()
 
-  if self.MessageType then
-    local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
-    self.MessageDuration = Settings:GetMessageTime( self.MessageType )
-    self.MessageCategory = "" -- self.MessageType .. ": "
-  end
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, MESSAGE.ToAll, self, Settings, 0)
+  else
 
-  if self.MessageDuration ~= 0 then
-    self:T( self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ) .. " / " .. self.MessageDuration )
-    trigger.action.outText( self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ), self.MessageDuration, self.ClearScreen )
+    if self.MessageType then
+      local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
+      self.MessageDuration = Settings:GetMessageTime( self.MessageType )
+      self.MessageCategory = "" -- self.MessageType .. ": "
+    end
+  
+    if self.MessageDuration ~= 0 then
+      self:T( self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ) .. " / " .. self.MessageDuration )
+      trigger.action.outText( self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ), self.MessageDuration, self.ClearScreen )
+    end
+    
   end
 
   return self

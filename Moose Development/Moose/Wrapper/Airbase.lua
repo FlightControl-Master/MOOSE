@@ -1496,7 +1496,7 @@ function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
   -- Put coordinates of free spots into table.
   local freespots={}
   for _,_spot in pairs(parkingfree) do
-    if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) and _spot.Term_Index>0 then
+    if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) then -- and _spot.Term_Index>0 then --Not sure why I had this in. But caused problems now for a Gas platform where a valid spot was not included!
       if (allowTOAC and allowTOAC==true) or _spot.TO_AC==false then
 
         local spot=self:_GetParkingSpotByID(_spot.Term_Index)

@@ -359,12 +359,15 @@ end
 -- @param #GROUP self
 -- @return DCS#Group The DCS Group.
 function GROUP:GetDCSObject()
+
+  -- Get DCS group.
   local DCSGroup = Group.getByName( self.GroupName )
 
   if DCSGroup then
     return DCSGroup
   end
 
+  self:E(string.format("ERROR: Could not get DCS group object of group %s because DCS object could not be found!", tostring(self.GroupName)))
   return nil
 end
 

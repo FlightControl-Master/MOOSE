@@ -292,9 +292,10 @@ SPAWN = {
 
 --- Enumerator for spawns at airbases
 -- @type SPAWN.Takeoff
--- @extends Wrapper.Group#GROUP.Takeoff
-
--- @field #SPAWN.Takeoff Takeoff
+-- @field #number Air Take off happens in air.
+-- @field #number Runway Spawn on runway. Does not work in MP!
+-- @field #number Hot Spawn at parking with engines on.
+-- @field #number Cold Spawn at parking with engines off.
 SPAWN.Takeoff = {
   Air = 1,
   Runway = 2,
@@ -3275,7 +3276,7 @@ end
 --- Get the index from a given group.
 -- The function will search the name of the group for a #, and will return the number behind the #-mark.
 function SPAWN:GetSpawnIndexFromGroup( SpawnGroup )
-  self:F2( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnGroup } )
+  self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix, SpawnGroup } )
 
   local IndexString = string.match( SpawnGroup:GetName(), "#(%d*)$" ):sub( 2 )
   local Index = tonumber( IndexString )
@@ -3287,7 +3288,7 @@ end
 
 --- Return the last maximum index that can be used.
 function SPAWN:_GetLastIndex()
-  self:F( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
+  self:F3( { self.SpawnTemplatePrefix, self.SpawnAliasPrefix } )
 
   return self.SpawnMaxGroups
 end
