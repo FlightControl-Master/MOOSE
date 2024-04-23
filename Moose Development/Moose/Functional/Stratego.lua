@@ -15,6 +15,7 @@
 -- 
 -- @module Functional.Stratego
 -- @image Functional.Stratego.png
+-- Last Update April 2024
 
 
 ---
@@ -42,6 +43,7 @@
 -- @field #number CaptureUnits
 -- @field #number CaptureThreatlevel
 -- @field #boolean ExcludeShips
+-- @field Core.Zone#ZONE StrategoZone
 -- @extends Core.Base#BASE
 -- @extends Core.Fsm#FSM
 
@@ -154,6 +156,7 @@
 --  @{#STRATEGO.FindRoute}(): Find a route between two nodes.   
 --  @{#STRATEGO.SetCaptureOptions}(): Set how many units of which minimum threat level are needed to capture one node (i.e. the underlying OpsZone).   
 --  @{#STRATEGO.SetDebug}(): Set debug and draw options.   
+--  @{#STRATEGO.SetStrategoZone}(): Set a zone to restrict STRATEGO analytics to, can be any kind of ZONE Object.
 --
 --
 -- ## Visualisation example code for the Syria map:
@@ -177,7 +180,7 @@ STRATEGO = {
   debug = false,
   drawzone = false,
   markzone = false,
-  version = "0.2.6",
+  version = "0.2.7",
   portweight = 3,
   POIweight = 1,
   maxrunways = 3,
@@ -377,6 +380,15 @@ function STRATEGO:SetDebug(Debug,DrawZones,MarkZones)
   return self
 end
 
+--- [USER] Restrict Stratego to analyse this zone only.
+-- @param #STRATEGO self
+-- @param Core.Zone#ZONE Zone The Zone to restrict Stratego to, can be any kind of ZONE Object.
+-- @return #STRATEGO self
+function STRATEGO:SetStrategoZone(Zone)
+  self.StrategoZone = Zone
+  return self
+end
+
 --- [USER] Set weights for nodes and routes to determine their importance.
 -- @param #STRATEGO self
 -- @param #number MaxRunways Set the maximum number of runways the big (equals strategic) airbases on the map have. Defaults to 3. The weight of an airbase node hence equals the number of runways.
@@ -425,12 +437,19 @@ function STRATEGO:AnalyseBases()
   local airbasetable = self.airbasetable
   local nonconnectedab = self.nonconnectedab
   local easynames = self.easynames
+  local zone = self.StrategoZone -- Core.Zone#ZONE_POLYGON
   
   -- find bases with >= 1 runways
   self.bases:ForEach(
     function(afb)
       local ab = afb -- Wrapper.Airbase#AIRBASE
+      local abvec2 = ab:GetVec2()
       if self.ExcludeShips and ab:IsShip() then return end
+      if zone ~= nil then
+        if not zone:IsVec2InZone(abvec2) then
+          return
+        end
+      end
       local abname = ab:GetName()
       local runways = ab:GetRunways()
       local numrwys = #runways
