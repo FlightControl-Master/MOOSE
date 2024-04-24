@@ -4,6 +4,7 @@
 --
 -- ===
 -- @module Shapes.CUBE
+-- @image MOOSE.JPG
 
 --- LINE class.
 -- @type CUBE
