@@ -4,6 +4,7 @@
 --
 -- ===
 -- @module Shapes.OVAL
+-- @image MOOSE.JPG
 
 --- OVAL class.
 -- @type OVAL
