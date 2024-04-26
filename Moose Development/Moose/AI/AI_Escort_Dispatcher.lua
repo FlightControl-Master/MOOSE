@@ -15,7 +15,7 @@
 -- @image MOOSE.JPG
 
 
---- @type AI_ESCORT_DISPATCHER
+-- @type AI_ESCORT_DISPATCHER
 -- @extends Core.Fsm#FSM
 
 
@@ -33,7 +33,7 @@ AI_ESCORT_DISPATCHER = {
   ClassName = "AI_ESCORT_DISPATCHER",
 }
 
---- @field #list 
+-- @field #list 
 AI_ESCORT_DISPATCHER.AI_Escorts = {}
 
 
@@ -102,7 +102,7 @@ function AI_ESCORT_DISPATCHER:onafterStart( From, Event, To )
 
 end
 
---- @param #AI_ESCORT_DISPATCHER self
+-- @param #AI_ESCORT_DISPATCHER self
 -- @param Core.Event#EVENTDATA EventData
 function AI_ESCORT_DISPATCHER:OnEventExit( EventData )
 
@@ -110,11 +110,11 @@ function AI_ESCORT_DISPATCHER:OnEventExit( EventData )
   local PlayerGroup = EventData.IniGroup
   local PlayerUnit = EventData.IniUnit
   
-  self:I({EscortAirbase= self.EscortAirbase } )
-  self:I({PlayerGroupName = PlayerGroupName } )
-  self:I({PlayerGroup = PlayerGroup})
-  self:I({FirstGroup = self.CarrierSet:GetFirst()})
-  self:I({FindGroup = self.CarrierSet:FindGroup( PlayerGroupName )})
+  self:T({EscortAirbase= self.EscortAirbase } )
+  self:T({PlayerGroupName = PlayerGroupName } )
+  self:T({PlayerGroup = PlayerGroup})
+  self:T({FirstGroup = self.CarrierSet:GetFirst()})
+  self:T({FindGroup = self.CarrierSet:FindGroup( PlayerGroupName )})
   
   if self.CarrierSet:FindGroup( PlayerGroupName ) then
     if self.AI_Escorts[PlayerGroupName] then
@@ -125,7 +125,7 @@ function AI_ESCORT_DISPATCHER:OnEventExit( EventData )
       
 end
 
---- @param #AI_ESCORT_DISPATCHER self
+-- @param #AI_ESCORT_DISPATCHER self
 -- @param Core.Event#EVENTDATA EventData
 function AI_ESCORT_DISPATCHER:OnEventBirth( EventData )
 
@@ -133,17 +133,17 @@ function AI_ESCORT_DISPATCHER:OnEventBirth( EventData )
   local PlayerGroup = EventData.IniGroup
   local PlayerUnit = EventData.IniUnit
   
-  self:I({EscortAirbase= self.EscortAirbase } )
-  self:I({PlayerGroupName = PlayerGroupName } )
-  self:I({PlayerGroup = PlayerGroup})
-  self:I({FirstGroup = self.CarrierSet:GetFirst()})
-  self:I({FindGroup = self.CarrierSet:FindGroup( PlayerGroupName )})
+  self:T({EscortAirbase= self.EscortAirbase } )
+  self:T({PlayerGroupName = PlayerGroupName } )
+  self:T({PlayerGroup = PlayerGroup})
+  self:T({FirstGroup = self.CarrierSet:GetFirst()})
+  self:T({FindGroup = self.CarrierSet:FindGroup( PlayerGroupName )})
   
   if self.CarrierSet:FindGroup( PlayerGroupName ) then
     if not self.AI_Escorts[PlayerGroupName] then
       local LeaderUnit = PlayerUnit
       local EscortGroup = self.EscortSpawn:SpawnAtAirbase( self.EscortAirbase, SPAWN.Takeoff.Hot )
-      self:I({EscortGroup = EscortGroup})
+      self:T({EscortGroup = EscortGroup})
       
       self:ScheduleOnce( 1,
         function( EscortGroup )

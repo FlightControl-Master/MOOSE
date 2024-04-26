@@ -24,7 +24,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update March 2024
+-- Last Update April 2024
 
 do 
 
@@ -1253,7 +1253,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.50"
+CTLD.version="1.0.51"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2240,7 +2240,9 @@ end
     local extractdistance = self.CrateDistance * self.ExtractFactor
     for k,v in pairs(self.DroppedTroops) do
       local distance = self:_GetDistance(v:GetCoordinate(),unitcoord)
-      if distance <= extractdistance and distance ~= -1 then
+      local TNow = timer.getTime()
+      local vtime = v.ExtractTime or TNow-310
+      if distance <= extractdistance and distance ~= -1 and (TNow - vtime > 300) then
         nearestGroup = v
         nearestGroupIndex = k
         nearestDistance = distance
@@ -2291,9 +2293,11 @@ end
         end
         if troopsize + numberonboard > trooplimit then
           self:_SendMessage("Sorry, we\'re crammed already!", 10, false, Group)
+          nearestGroup.ExtractTime = 0
           --return self
         else
           self.CargoCounter = self.CargoCounter + 1
+          nearestGroup.ExtractTime = timer.getTime()
           local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, Cargotype.CargoType, true, true, Cargotype.CratesNeeded,nil,nil,Cargotype.PerCrateMass)
           self:T({cargotype=loadcargotype})
           local running = math.floor(nearestDistance / 4)+10 -- time run to helo plus boarding

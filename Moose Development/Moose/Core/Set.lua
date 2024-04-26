@@ -4388,8 +4388,8 @@ do -- SET_CLIENT
     return self
   end
 
-  --- Builds a set of CLIENTs that contain the given string in their unit/pilot name.
-  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all clients that **contain** the string. 
+  --- Builds a set of CLIENTs that contain the given string in their **unit/pilot** name and **NOT** the group name!
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all clients that **contain** the string. Pattern matching applies.
   -- @param #SET_CLIENT self
   -- @param #string Prefixes The string pattern(s) that needs to be contained in the unit/pilot name. Can also be passed as a `#table` of strings.
   -- @return #SET_CLIENT self

@@ -117,6 +117,10 @@
 -- @field #string callsignAlias Callsign alias.
 --
 -- @field #OPSGROUP.Spot spot Laser and IR spot.
+-- 
+-- @field DCS#Vec3 stuckVec3 Position where the group got stuck.
+-- @field #number stuckTimestamp Time stamp [sec], when the group got stuck.
+-- @field #boolean stuckDespawn If `true`, group gets despawned after beeing stuck for a certain time.
 --
 -- @field #OPSGROUP.Ammo ammo Initial ammount of ammo.
 -- @field #OPSGROUP.WeaponData weaponData Weapon data table with key=BitType.
@@ -682,10 +686,11 @@ function OPSGROUP:New(group)
   self:AddTransition("*",             "UpdateRoute",      "*")           -- Update route of group.
 
   self:AddTransition("*",             "PassingWaypoint",   "*")           -- Group passed a waypoint.
-  self:AddTransition("*",             "PassedFinalWaypoint", "*")           -- Group passed the waypoint.
+  self:AddTransition("*",             "PassedFinalWaypoint", "*")         -- Group passed the waypoint.
   self:AddTransition("*",             "GotoWaypoint",      "*")           -- Group switches to a specific waypoint.
 
   self:AddTransition("*",             "Wait",              "*")           -- Group will wait for further orders.
+  self:AddTransition("*",             "Stuck",             "*")           -- Group got stuck.
 
   self:AddTransition("*",             "DetectedUnit",      "*")           -- Unit was detected (again) in this detection cycle.
   self:AddTransition("*",             "DetectedUnitNew",   "*")           -- Add a newly detected unit to the detected units set.
@@ -1895,7 +1900,7 @@ end
 
 --- Get current velocity of the group.
 -- @param #OPSGROUP self
--- @param #string UnitName (Optional) Get heading of a specific unit of the group. Default is from the first existing unit in the group.
+-- @param #string UnitName (Optional) Get velocity of a specific unit of the group. Default is from the first existing unit in the group.
 -- @return #number Velocity in m/s.
 function OPSGROUP:GetVelocity(UnitName)
 
@@ -2211,6 +2216,8 @@ function OPSGROUP:Destroy(Delay)
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, OPSGROUP.Destroy, self, 0)
   else
+  
+    self:T(self.lid.."Destroying group!")
 
     -- Get all units.
     local units=self:GetDCSUnits()
@@ -6683,6 +6690,7 @@ function OPSGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
   local wpnext=self:GetWaypointNext()
   if wpnext then
     self.speedWp=wpnext.speed
+    self:T(self.lid..string.format("Expected/waypoint speed=%.1f m/s", self.speedWp))
   end
 
 end
@@ -11398,6 +11406,7 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
     -- Expected speed to the first waypoint.
     if i<=2 then
       self.speedWp=wp.speed
+      self:T(self.lid..string.format("Expected/waypoint speed=%.1f m/s", self.speedWp))
     end
 
     -- Speed in knots.
@@ -12030,7 +12039,7 @@ function OPSGROUP:GetEPLRS()
   return self.option.EPLRS or self.optionDefault.EPLRS
 end
 
---- Set the default EPLRS for the group.
+--- Set the default emission state for the group.
 -- @param #OPSGROUP self
 -- @param #boolean OnOffSwitch If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
 -- @return #OPSGROUP self
@@ -12039,7 +12048,7 @@ function OPSGROUP:SetDefaultEmission(OnOffSwitch)
   if OnOffSwitch==nil then
     self.optionDefault.Emission=true
   else
-    self.optionDefault.EPLRS=OnOffSwitch
+    self.optionDefault.Emission=OnOffSwitch
   end
 
   return self

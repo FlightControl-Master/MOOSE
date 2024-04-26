@@ -556,7 +556,7 @@ function AI_ESCORT:SetFlightMenuFormation( Formation )
 
   if MenuFormation then
     local Arguments = MenuFormation.Arguments
-    --self:I({Arguments=unpack(Arguments)})
+    --self:T({Arguments=unpack(Arguments)})
     local FlightMenuFormation = MENU_GROUP:New( self.PlayerGroup, "Formation", self.MainMenu )
     local MenuFlightFormationID = MENU_GROUP_COMMAND:New( self.PlayerGroup, Formation, FlightMenuFormation, 
       function ( self, Formation, ... )

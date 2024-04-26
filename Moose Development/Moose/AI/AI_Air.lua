@@ -9,7 +9,7 @@
 -- @module AI.AI_Air
 -- @image MOOSE.JPG
 
---- @type AI_AIR
+-- @type AI_AIR
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 --- The AI_AIR class implements the core functions to operate an AI @{Wrapper.Group}.
@@ -264,7 +264,7 @@ function AI_AIR:New( AIGroup )
   return self
 end
 
---- @param Wrapper.Group#GROUP self
+-- @param Wrapper.Group#GROUP self
 -- @param Core.Event#EVENTDATA EventData
 function GROUP:OnEventTakeoff( EventData, Fsm )
   Fsm:Takeoff()
@@ -446,13 +446,13 @@ function AI_AIR:onafterReturn( Controllable, From, Event, To )
   
 end
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 function AI_AIR:onbeforeStatus()
 
   return self.CheckStatus
 end
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 function AI_AIR:onafterStatus()
 
   if self.Controllable and self.Controllable:IsAlive() then
@@ -465,7 +465,7 @@ function AI_AIR:onafterStatus()
       local DistanceFromHomeBase = self.HomeAirbase:GetCoordinate():Get2DDistance( self.Controllable:GetCoordinate() )
       
       if DistanceFromHomeBase > self.DisengageRadius then
-        self:I( self.Controllable:GetName() .. " is too far from home base, RTB!" )
+        self:T( self.Controllable:GetName() .. " is too far from home base, RTB!" )
         self:Hold( 300 )
         RTB = false
       end
@@ -489,10 +489,10 @@ function AI_AIR:onafterStatus()
       if Fuel < self.FuelThresholdPercentage then
 
         if self.TankerName then
-          self:I( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... Refuelling at Tanker!" )
+          self:T( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... Refuelling at Tanker!" )
           self:Refuel()
         else
-          self:I( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... RTB!" )
+          self:T( self.Controllable:GetName() .. " is out of fuel: " .. Fuel .. " ... RTB!" )
           local OldAIControllable = self.Controllable
 
           local OrbitTask = OldAIControllable:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
@@ -518,7 +518,7 @@ function AI_AIR:onafterStatus()
     -- Note that a group can consist of more units, so if one unit is damaged of a group, the mission may continue.
     -- The damaged unit will RTB due to DCS logic, and the others will continue to engage.
     if ( Damage / InitialLife ) < self.PatrolDamageThreshold then
-      self:I( self.Controllable:GetName() .. " is damaged: " .. Damage .. " ... RTB!" )
+      self:T( self.Controllable:GetName() .. " is damaged: " .. Damage .. " ... RTB!" )
       self:Damaged()
       RTB = true
       self:SetStatusOff()
@@ -536,7 +536,7 @@ function AI_AIR:onafterStatus()
           if Damage ~= InitialLife then
             self:Damaged()
           else  
-            self:I( self.Controllable:GetName() .. " control lost! " )
+            self:T( self.Controllable:GetName() .. " control lost! " )
 
             self:LostControl()
           end
@@ -560,7 +560,7 @@ function AI_AIR:onafterStatus()
 end
 
 
---- @param Wrapper.Group#GROUP AIGroup
+-- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR.RTBRoute( AIGroup, Fsm )
 
   AIGroup:F( { "AI_AIR.RTBRoute:", AIGroup:GetName() } )
@@ -571,7 +571,7 @@ function AI_AIR.RTBRoute( AIGroup, Fsm )
 
 end
 
---- @param Wrapper.Group#GROUP AIGroup
+-- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR.RTBHold( AIGroup, Fsm )
 
   AIGroup:F( { "AI_AIR.RTBHold:", AIGroup:GetName() } )
@@ -598,7 +598,7 @@ function AI_AIR:SetRTBSpeedFactors(MinFactor,MaxFactor)
 end
 
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR:onafterRTB( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
@@ -617,7 +617,10 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     --- Calculate the target route point.
 
     local FromCoord = AIGroup:GetCoordinate()
+    if not FromCoord then return end
+        
     local ToTargetCoord = self.HomeAirbase:GetCoordinate() -- coordinate is on land height(!)
+
     local ToTargetVec3 = ToTargetCoord:GetVec3()
     ToTargetVec3.y = ToTargetCoord:GetLandHeight()+3000 -- let's set this 1000m/3000 feet above ground
     local ToTargetCoord2 = COORDINATE:NewFromVec3( ToTargetVec3 )
@@ -638,13 +641,13 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     local ToAirbaseCoord = ToTargetCoord2
 
     if Distance < 5000 then
-      self:I( "RTB and near the airbase!" )
+      self:T( "RTB and near the airbase!" )
       self:Home()
       return
     end
 
     if not AIGroup:InAir() == true then
-      self:I( "Not anymore in the air, considered Home." )
+      self:T( "Not anymore in the air, considered Home." )
       self:Home()
       return
     end
@@ -686,12 +689,12 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
 
 end
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR:onafterHome( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
 
-  self:I( "Group " .. self.Controllable:GetName() .. " ... Home! ( " .. self:GetState() .. " )" )
+  self:T( "Group " .. self.Controllable:GetName() .. " ... Home! ( " .. self:GetState() .. " )" )
   
   if AIGroup and AIGroup:IsAlive() then
   end
@@ -700,15 +703,17 @@ end
 
 
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR:onafterHold( AIGroup, From, Event, To, HoldTime )
   self:F( { AIGroup, From, Event, To } )
 
-  self:I( "Group " .. self.Controllable:GetName() .. " ... Holding! ( " .. self:GetState() .. " )" )
+  self:T( "Group " .. self.Controllable:GetName() .. " ... Holding! ( " .. self:GetState() .. " )" )
   
   if AIGroup and AIGroup:IsAlive() then
-    local OrbitTask = AIGroup:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed )
+    local Coordinate = AIGroup:GetCoordinate()
+    if Coordinate == nil then return end
+    local OrbitTask = AIGroup:TaskOrbitCircle( math.random( self.PatrolFloorAltitude, self.PatrolCeilingAltitude ), self.PatrolMinSpeed, Coordinate )
     local TimedOrbitTask = AIGroup:TaskControlled( OrbitTask, AIGroup:TaskCondition( nil, nil, nil, nil, HoldTime , nil ) )
     
     local RTBTask = AIGroup:TaskFunction( "AI_AIR.RTBHold", self )
@@ -722,17 +727,17 @@ function AI_AIR:onafterHold( AIGroup, From, Event, To, HoldTime )
 
 end
 
---- @param Wrapper.Group#GROUP AIGroup
+-- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR.Resume( AIGroup, Fsm )
 
-  AIGroup:I( { "AI_AIR.Resume:", AIGroup:GetName() } )
+  AIGroup:T( { "AI_AIR.Resume:", AIGroup:GetName() } )
   if AIGroup:IsAlive() then
     Fsm:__RTB( Fsm.TaskDelay )
   end
   
 end
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Wrapper.Group#GROUP AIGroup
 function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
   self:F( { AIGroup, From, Event, To } )
@@ -744,7 +749,7 @@ function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
 
     if Tanker and Tanker:IsAlive() and Tanker:IsAirPlane() then
 
-      self:I( "Group " .. self.Controllable:GetName() .. " ... Refuelling! State=" .. self:GetState() .. ", Refuelling tanker " .. self.TankerName )
+      self:T( "Group " .. self.Controllable:GetName() .. " ... Refuelling! State=" .. self:GetState() .. ", Refuelling tanker " .. self.TankerName )
 
       local RefuelRoute = {}
   
@@ -798,13 +803,13 @@ end
     
 
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 function AI_AIR:onafterDead()
   self:SetStatusOff()
 end
 
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Core.Event#EVENTDATA EventData
 function AI_AIR:OnCrash( EventData )
 
@@ -815,7 +820,7 @@ function AI_AIR:OnCrash( EventData )
   end
 end
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Core.Event#EVENTDATA EventData
 function AI_AIR:OnEjection( EventData )
 
@@ -824,7 +829,7 @@ function AI_AIR:OnEjection( EventData )
   end
 end
 
---- @param #AI_AIR self
+-- @param #AI_AIR self
 -- @param Core.Event#EVENTDATA EventData
 function AI_AIR:OnPilotDead( EventData )
 

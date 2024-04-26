@@ -762,11 +762,13 @@ AIRBASE.Sinai = {
 -- @field #number OpenMedOrBig 176: Combines OpenMed and OpenBig spots.
 -- @field #number HelicopterUsable 216: Combines HelicopterOnly, OpenMed and OpenBig.
 -- @field #number FighterAircraft 244: Combines Shelter. OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
+-- @field #number SmallSizeFigher 100: Tight spots for smaller type fixed wing aircraft, like the F-16. Example of these spots: 04, 05, 06 on Muwaffaq_Salti. A Viper sized plane can spawn here, but an A-10 or Strike Eagle can't
 AIRBASE.TerminalType = {
   Runway=16,
   HelicopterOnly=40,
   Shelter=68,
   OpenMed=72,
+  SmallSizeFighter=100,
   OpenBig=104,
   OpenMedOrBig=176,
   HelicopterUsable=216,
@@ -1678,7 +1680,7 @@ function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
   -- Put coordinates of free spots into table.
   local freespots={}
   for _,_spot in pairs(parkingfree) do
-    if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) and _spot.Term_Index>0 then
+    if AIRBASE._CheckTerminalType(_spot.Term_Type, termtype) then -- and _spot.Term_Index>0 then --Not sure why I had this in. But caused problems now for a Gas platform where a valid spot was not included!
       if (allowTOAC and allowTOAC==true) or _spot.TO_AC==false then
 
         local spot=self:_GetParkingSpotByID(_spot.Term_Index)
@@ -2025,7 +2027,7 @@ function AIRBASE._CheckTerminalType(Term_Type, termtype)
       match=true
      end
   elseif termtype==AIRBASE.TerminalType.FighterAircraft then
-    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig or Term_Type==AIRBASE.TerminalType.Shelter then
+    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig or Term_Type==AIRBASE.TerminalType.Shelter or Term_Type==AIRBASE.TerminalType.SmallSizeFighter then
       match=true
     end
   end

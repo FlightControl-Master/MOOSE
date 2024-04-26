@@ -359,14 +359,15 @@ end
 -- @param #GROUP self
 -- @return DCS#Group The DCS Group.
 function GROUP:GetDCSObject()
+
+  -- Get DCS group.
   local DCSGroup = Group.getByName( self.GroupName )
 
   if DCSGroup then
     return DCSGroup
-  else
-    env.error("ERROR: Could not get DCS group object!")
   end
 
+  self:E(string.format("ERROR: Could not get DCS group object of group %s because DCS object could not be found!", tostring(self.GroupName)))
   return nil
 end
 
@@ -1207,13 +1208,12 @@ end
 -- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
 function GROUP:GetCoordinate()
 
-
   local Units = self:GetUnits()  or {}
 
   for _,_unit in pairs(Units) do
     local FirstUnit = _unit -- Wrapper.Unit#UNIT
 
-    if FirstUnit then
+    if FirstUnit and FirstUnit:IsAlive() then
 
       local FirstUnitCoordinate = FirstUnit:GetCoordinate()
 
@@ -1225,6 +1225,22 @@ function GROUP:GetCoordinate()
 
     end
   end
+  -- no luck, try the API way
+  
+  local DCSGroup = Group.getByName(self.GroupName)
+  local DCSUnits = DCSGroup:getUnits() or {}
+  for _,_unit in pairs(DCSUnits) do
+    if Object.isExist(_unit) then
+      local position = _unit:getPosition()
+      local point = position.p ~= nil and position.p or _unit:GetPoint()
+      if point then
+        --self:I(point)
+        local coord = COORDINATE:NewFromVec3(point)
+        return coord
+      end
+    end
+  end
+  
   BASE:E( { "Cannot GetCoordinate", Group = self, Alive = self:IsAlive() } )
 
 end
