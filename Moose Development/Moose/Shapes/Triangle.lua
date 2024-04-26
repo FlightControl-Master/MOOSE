@@ -5,6 +5,7 @@
 --
 -- ===
 -- @module Shapes.TRIANGLE
+-- @image MOOSE.JPG
 
 --- LINE class.
 -- @type CUBE

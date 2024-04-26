@@ -4,6 +4,7 @@
 --
 -- ===
 -- @module Shapes.LINE
+-- @image MOOSE.JPG
 
 --- LINE class.
 -- @type LINE
