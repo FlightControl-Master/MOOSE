@@ -40,6 +40,7 @@
 -- @field #number coalition Coalition ID.
 -- @field #number country Country ID.
 -- @field DCS#Desc desc Descriptor table.
+-- @field DCS#Desc guidance Missile guidance descriptor.
 -- @field DCS#Unit launcher Launcher DCS unit.
 -- @field Wrapper.Unit#UNIT launcherUnit Launcher Unit.
 -- @field #string launcherName Name of launcher unit.
@@ -196,6 +197,9 @@ function WEAPON:New(WeaponObject)
 
   if self:IsMissile() and self.desc.missileCategory then
     self.categoryMissile=self.desc.missileCategory
+    if self.desc.guidance then
+      self.guidance = self.desc.guidance
+    end
   end
 
   -- Get type name.
@@ -667,6 +671,26 @@ function WEAPON:IsTorpedo()
   return self.category==Weapon.Category.TORPEDO
 end
 
+--- Check if weapon is a Fox One missile (Radar Semi-Active).
+-- @param #WEAPON self
+-- @return #boolean If `true`, is a Fox One.
+function WEAPON:IsFoxOne()
+  return self.guidance==Weapon.GuidanceType.RADAR_SEMI_ACTIVE
+end
+
+--- Check if weapon is a Fox Two missile (IR guided).
+-- @param #WEAPON self
+-- @return #boolean If `true`, is a Fox Two.
+function WEAPON:IsFoxTwo()
+  return self.guidance==Weapon.GuidanceType.IR
+end
+
+--- Check if weapon is a Fox Three missile (Radar Active).
+-- @param #WEAPON self
+-- @return #boolean If `true`, is a Fox Three.
+function WEAPON:IsFoxThree()
+ return self.guidance==Weapon.GuidanceType.RADAR_ACTIVE
+end
 
 --- Destroy the weapon object.
 -- @param #WEAPON self
