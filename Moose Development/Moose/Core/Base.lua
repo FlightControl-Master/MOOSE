@@ -1157,6 +1157,15 @@ function BASE:_Serialize(Arguments)
   return text
 end
 
+----- (Internal) Serialize arguments
+---- @param #BASE self
+---- @param #table Arguments
+---- @return #string Text
+--function BASE:_Serialize(Arguments)
+--  local text=UTILS.BasicSerialize(Arguments)
+--  return text
+--end
+
 --- Trace a function call. This function is private.
 -- @param #BASE self
 -- @param Arguments A #table or any field.
