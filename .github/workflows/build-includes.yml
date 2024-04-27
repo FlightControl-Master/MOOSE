@@ -47,6 +47,7 @@ jobs:
 
       - name: Update apt-get (needed for act docker image)
         run: |
+          sudo rm /etc/apt/sources.list.d/microsoft-prod.list
           sudo apt-get -qq update
 
       - name: Install tree
