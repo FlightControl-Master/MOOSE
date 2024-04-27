@@ -4,6 +4,7 @@
 --
 -- ===
 -- @module Shapes.POLYGON
+-- @image MOOSE.JPG
 
 --- POLYGON class.
 -- @type POLYGON

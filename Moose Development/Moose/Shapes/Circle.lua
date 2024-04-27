@@ -4,6 +4,7 @@
 --
 -- ===
 -- @module Shapes.CIRCLE
+-- @image MOOSE.JPG
 
 --- CIRCLE class.
 -- @type CIRCLE
