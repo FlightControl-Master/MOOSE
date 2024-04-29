@@ -42,6 +42,7 @@
 -- @field #boolean usebudget
 -- @field #number CaptureUnits
 -- @field #number CaptureThreatlevel
+-- @field #table CaptureObjectCategories
 -- @field #boolean ExcludeShips
 -- @field Core.Zone#ZONE StrategoZone
 -- @extends Core.Base#BASE
@@ -180,7 +181,7 @@ STRATEGO = {
   debug = false,
   drawzone = false,
   markzone = false,
-  version = "0.2.7",
+  version = "0.2.8",
   portweight = 3,
   POIweight = 1,
   maxrunways = 3,
@@ -199,6 +200,7 @@ STRATEGO = {
   usebudget = false,
   CaptureUnits = 3,
   CaptureThreatlevel = 1,
+  CaptureObjectCategories = {Object.Category.UNIT},
   ExcludeShips = true,
 }
 
@@ -419,11 +421,13 @@ end
 -- @param #STRATEGO self
 -- @param #number CaptureUnits Number of units needed, defaults to three.
 -- @param #number CaptureThreatlevel Threat level needed, can be 0..10, defaults to one.
+-- @param #table CaptureCategories Table of object categories which can capture a node, defaults to `{Object.Category.UNIT}`.
 -- @return #STRATEGO self
-function STRATEGO:SetCaptureOptions(CaptureUnits,CaptureThreatlevel)
+function STRATEGO:SetCaptureOptions(CaptureUnits,CaptureThreatlevel,CaptureCategories)
   self:T(self.lid.."SetCaptureOptions")
   self.CaptureUnits = CaptureUnits or 3
   self.CaptureThreatlevel = CaptureThreatlevel or 1
+  self.CaptureObjectCategories = CaptureCategories or {Object.Category.UNIT}
   return self
 end
 
@@ -526,6 +530,7 @@ function STRATEGO:GetNewOpsZone(Zone,Coalition)
   local opszone = OPSZONE:New(Zone,Coalition or 0)
   opszone:SetCaptureNunits(self.CaptureUnits)
   opszone:SetCaptureThreatlevel(self.CaptureThreatlevel)
+  opszone:SetObjectCategories(self.CaptureObjectCategories)
   opszone:SetDrawZone(self.drawzone)
   opszone:SetMarkZone(self.markzone)
   opszone:Start()
