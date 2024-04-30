@@ -38,11 +38,13 @@
 -- @type BEACON
 -- @field #string ClassName Name of the class "BEACON".
 -- @field Wrapper.Controllable#CONTROLLABLE Positionable The @{Wrapper.Controllable#CONTROLLABLE} that will receive radio capabilities.
+-- @field #number UniqueName Counter to make the unique naming work.
 -- @extends Core.Base#BASE
 BEACON = {
   ClassName    = "BEACON",
   Positionable = nil,
   name         = nil,
+  UniqueName = 0, 
 }
 
 --- Beacon types supported by DCS. 
@@ -384,7 +386,9 @@ end
 function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDuration)
   self:F({FileName, Frequency, Modulation, Power, BeaconDuration})
   local IsValid = false
-
+  
+  Modulation = Modulation or radio.modulation.AM
+  
   -- Check the filename
   if type(FileName) == "string" then
     if FileName:find(".ogg") or FileName:find(".wav") then
@@ -395,7 +399,7 @@ function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDurati
     end
   end
   if not IsValid then
-    self:E({"File name invalid. Maybe something wrong with the extension ? ", FileName})
+    self:E({"File name invalid. Maybe something wrong with the extension? ", FileName})
   end
 
   -- Check the Frequency
@@ -421,7 +425,9 @@ function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDurati
   if IsValid then
     self:T2({"Activating Beacon on ", Frequency, Modulation})
     -- Note that this is looped. I have to give this transmission a unique name, I use the class ID
-    trigger.action.radioTransmission(FileName, self.Positionable:GetPositionVec3(), Modulation, true, Frequency, Power, tostring(self.ID))
+    BEACON.UniqueName = BEACON.UniqueName + 1
+    self.BeaconName = "MooseBeacon"..tostring(BEACON.UniqueName)
+    trigger.action.radioTransmission(FileName, self.Positionable:GetPositionVec3(), Modulation, true, Frequency, Power, self.BeaconName)
 
      if BeaconDuration then -- Schedule the stop of the BEACON if asked by the MD
        SCHEDULER:New( nil, 
@@ -429,7 +435,8 @@ function BEACON:RadioBeacon(FileName, Frequency, Modulation, Power, BeaconDurati
            self:StopRadioBeacon()
          end, {}, BeaconDuration)
      end
-  end 
+  end
+  return self 
 end
 
 --- Stops the Radio Beacon
@@ -438,7 +445,7 @@ end
 function BEACON:StopRadioBeacon()
   self:F()
   -- The unique name of the transmission is the class ID
-  trigger.action.stopRadioTransmission(tostring(self.ID))
+  trigger.action.stopRadioTransmission(self.BeaconName)
   return self
 end
 
