@@ -1209,11 +1209,12 @@ end
 -- @param #number Major Major number, i.e. the group number of this name, e.g. 1 - resulting in e.g. Texaco-2-1
 -- @return #SPAWN self
 function SPAWN:InitCallSign(ID,Name,Minor,Major)
+  local Name = Name or "Enfield"
   self.SpawnInitCallSign = true
   self.SpawnInitCallSignID = ID or 1 
   self.SpawnInitCallSignMinor = Minor or 1
   self.SpawnInitCallSignMajor = Major or 1 
-  self.SpawnInitCallSignName = string.lower(Name) or "enfield"
+  self.SpawnInitCallSignName=string.lower(Name):gsub("^%l", string.upper)
   return self
 end
 
