@@ -6474,7 +6474,7 @@ function AIRBOSS:_LandAI( flight )
     or flight.actype == AIRBOSS.AircraftCarrier.RHINOF
     or flight.actype == AIRBOSS.AircraftCarrier.GROWLER then
     Speed = UTILS.KnotsToKmph( 200 )
-  elseif flight.actype == AIRBOSS.AircraftCarrier.E2D then
+  elseif flight.actype == AIRBOSS.AircraftCarrier.E2D or flight.actype == AIRBOSS.AircraftCarrier.C2A then
     Speed = UTILS.KnotsToKmph( 150 )
   elseif flight.actype == AIRBOSS.AircraftCarrier.F14A_AI or flight.actype == AIRBOSS.AircraftCarrier.F14A or flight.actype == AIRBOSS.AircraftCarrier.F14B then
     Speed = UTILS.KnotsToKmph( 175 )
@@ -11547,10 +11547,28 @@ end
 
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
 -- @param #AIRBOSS self
+-- @param #number vdeck Desired wind velocity over deck in knots.
 -- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
-function AIRBOSS:GetHeadingIntoWind_old( magnetic, coord )
+-- @return #number Carrier speed in knots to reach desired wind speed on deck.
+function AIRBOSS:GetHeadingIntoWind(vdeck, magnetic, coord )
+
+  if self.intowindold then
+    self:GetHeadingIntoWind_old(vdeck, magnetic, coord)
+  else
+    self:GetHeadingIntoWind_new(vdeck, magnetic, coord)
+  end
+
+end
+
+
+--- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
+-- @param #AIRBOSS self
+-- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
+-- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
+-- @return #number Carrier heading in degrees.
+function AIRBOSS:GetHeadingIntoWind_old( vdeck, magnetic, coord )
 
   local function adjustDegreesForWindSpeed(windSpeed)
     local degreesAdjustment = 0
@@ -11607,7 +11625,13 @@ function AIRBOSS:GetHeadingIntoWind_old( magnetic, coord )
     intowind = intowind + 360
   end
 
-  return intowind
+  -- Wind speed.
+  local _, vwind = self:GetWind()
+
+  -- Speed of carrier in m/s but at least 4 knots.
+  local vtot = math.max(UTILS.MpsToKnots(vdeck - vwind), 4)
+
+  return intowind, vtot
 end
 
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
@@ -11618,7 +11642,7 @@ end
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
 -- @return #number Carrier speed in knots to reach desired wind speed on deck.
-function AIRBOSS:GetHeadingIntoWind( vdeck, magnetic, coord )
+function AIRBOSS:GetHeadingIntoWind_new( vdeck, magnetic, coord )
 
   -- Default offset angle.
   local Offset=self.carrierparam.rwyangle or 0
@@ -14279,6 +14303,8 @@ function AIRBOSS:_GetACNickname( actype )
     nickname = "Harrier"
   elseif actype == AIRBOSS.AircraftCarrier.E2D then
     nickname = "Hawkeye"
+  elseif actype == AIRBOSS.AircraftCarrier.C2A then
+    nickname = "Greyhound"
   elseif actype == AIRBOSS.AircraftCarrier.F14A_AI or actype == AIRBOSS.AircraftCarrier.F14A or actype == AIRBOSS.AircraftCarrier.F14B then
     nickname = "Tomcat"
   elseif actype == AIRBOSS.AircraftCarrier.FA18C or actype == AIRBOSS.AircraftCarrier.HORNET then
