@@ -3884,3 +3884,46 @@ function UTILS.ClockHeadingString(refHdg,tgtHdg)
     local clockPos = math.ceil((relativeAngle % 360) / 30)
     return clockPos.." o'clock"
 end
+
+--- Get a NATO abbreviated MGRS text for SRS use, optionally with prosody slow tag
+-- @param #string Text The input string, e.g. "MGRS 4Q FJ 12345 67890"
+-- @param #boolean Slow Optional - add slow tags
+-- @return #string Output for (Slow) spelling in SRS TTS e.g. "MGRS;<prosody rate="slow">4;Quebec;Foxtrot;Juliett;1;2;3;4;5;6;7;8;niner;zero;</prosody>"
+function UTILS.MGRSStringToSRSFriendly(Text,Slow)
+    local Text = string.gsub(Text,"MGRS ","")
+    Text = string.gsub(Text,"%s+","")
+    Text = string.gsub(Text,"([%a%d])","%1;") -- "0;5;1;"
+    Text = string.gsub(Text,"A","Alpha")
+    Text = string.gsub(Text,"B","Bravo")
+    Text = string.gsub(Text,"C","Charlie")
+    Text = string.gsub(Text,"D","Delta")
+    Text = string.gsub(Text,"E","Echo")
+    Text = string.gsub(Text,"F","Foxtrot")
+    Text = string.gsub(Text,"G","Golf")
+    Text = string.gsub(Text,"H","Hotel")
+    Text = string.gsub(Text,"I","India")
+    Text = string.gsub(Text,"J","Juliett")
+    Text = string.gsub(Text,"K","Kilo")
+    Text = string.gsub(Text,"L","Lima")
+    Text = string.gsub(Text,"M","Mike")
+    Text = string.gsub(Text,"N","November")
+    Text = string.gsub(Text,"O","Oscar")
+    Text = string.gsub(Text,"P","Papa")
+    Text = string.gsub(Text,"Q","Quebec")
+    Text = string.gsub(Text,"R","Romeo")
+    Text = string.gsub(Text,"S","Sierra")
+    Text = string.gsub(Text,"T","Tango")
+    Text = string.gsub(Text,"U","Uniform")
+    Text = string.gsub(Text,"V","Victor")
+    Text = string.gsub(Text,"W","Whiskey")
+    Text = string.gsub(Text,"X","Xray")
+    Text = string.gsub(Text,"Y","Yankee")
+    Text = string.gsub(Text,"Z","Zulu")
+    Text = string.gsub(Text,"0","zero")
+    Text = string.gsub(Text,"9","niner")
+    if Slow then
+      Text = '<prosody rate="slow">'..Text..'</prosody>'
+    end 
+    Text = "MGRS;"..Text
+    return Text
+end
