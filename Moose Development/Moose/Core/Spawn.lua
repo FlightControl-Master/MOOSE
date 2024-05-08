@@ -202,19 +202,19 @@
 --   
 -- ### Link-16 Datalink STN and SADL IDs (limited at the moment to F15/16/18/AWACS/Tanker/B1B, but not the F15E for clients, SADL A10CII only)
 -- 
---   *{#SPAWN.InitSTN}(): Set the STN of the first unit in the group. All other units will have consecutive STNs, provided they have not been used yet.
---   *{#SPAWN.InitSADL}(): Set the SADL of the first unit in the group. All other units will have consecutive SADLs, provided they have not been used yet.
+--   * @{#SPAWN.InitSTN}(): Set the STN of the first unit in the group. All other units will have consecutive STNs, provided they have not been used yet.
+--   * @{#SPAWN.InitSADL}(): Set the SADL of the first unit in the group. All other units will have consecutive SADLs, provided they have not been used yet.
 --   
 -- ### Callsigns
 -- 
---   *{#SPAWN.InitRandomizeCallsign}(): Set a random callsign name per spawn.
---   *{#SPAWN.SpawnInitCallSign}(): Set a specific callsign for a spawned group.
+--   * @{#SPAWN.InitRandomizeCallsign}(): Set a random callsign name per spawn.
+--   * @{#SPAWN.SpawnInitCallSign}(): Set a specific callsign for a spawned group.
 --   
 -- ### Speed
 -- 
---   *{#SPAWN.InitSpeedMps}(): Set the initial speed on spawning in meters per second.
---   *{#SPAWN.InitSpeedKph}(): Set the initial speed on spawning in kilometers per hour.
---   *{#SPAWN.InitSpeedKnots}(): Set the initial speed on spawning in knots.
+--   * @{#SPAWN.InitSpeedMps}(): Set the initial speed on spawning in meters per second.
+--   * @{#SPAWN.InitSpeedKph}(): Set the initial speed on spawning in kilometers per hour.
+--   * @{#SPAWN.InitSpeedKnots}(): Set the initial speed on spawning in knots.
 --
 -- ## SPAWN **Spawn** methods
 --
@@ -1208,11 +1208,12 @@ end
 -- @param #number Major Major number, i.e. the group number of this name, e.g. 1 - resulting in e.g. Texaco-2-1
 -- @return #SPAWN self
 function SPAWN:InitCallSign(ID,Name,Minor,Major)
+  local Name = Name or "Enfield"
   self.SpawnInitCallSign = true
   self.SpawnInitCallSignID = ID or 1 
   self.SpawnInitCallSignMinor = Minor or 1
   self.SpawnInitCallSignMajor = Major or 1 
-  self.SpawnInitCallSignName = string.lower(Name) or "enfield"
+  self.SpawnInitCallSignName=string.lower(Name):gsub("^%l", string.upper)
   return self
 end
 

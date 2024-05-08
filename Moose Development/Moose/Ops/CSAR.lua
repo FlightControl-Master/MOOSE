@@ -291,10 +291,11 @@ CSAR.AircraftType["UH-60L"] = 10
 CSAR.AircraftType["AH-64D_BLK_II"] = 2
 CSAR.AircraftType["Bronco-OV-10A"] = 2
 CSAR.AircraftType["MH-60R"] = 10
+CSAR.AircraftType["OH-6A"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.21"
+CSAR.version="1.0.23"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -734,7 +735,7 @@ function CSAR:_SpawnPilotInField(country,point,frequency,wetfeet)
     :NewWithAlias(template,alias)
     :InitCoalition(coalition)
     :InitCountry(country)
-    :InitAIOnOff(pilotcacontrol)
+    --:InitAIOnOff(pilotcacontrol)
     :InitDelayOff()
     :SpawnFromCoordinate(point)
 
@@ -1238,10 +1239,24 @@ function CSAR:_InitSARForPilot(_downedGroup, _GroupName, _freq, _nomessage, _pla
   if not _nomessage then
   if _freq ~= 0 then --shagrat
     local _text = string.format("%s requests SAR at %s, beacon at %.2f KHz", _groupName, _coordinatesText, _freqk)--shagrat _groupName to prevent 'f15_Pilot_Parachute'
-    self:_DisplayToAllSAR(_text,self.coalition,self.messageTime)
+    if self.coordtype ~= 2 then --not MGRS
+      self:_DisplayToAllSAR(_text,self.coalition,self.messageTime)
+    else
+      self:_DisplayToAllSAR(_text,self.coalition,self.messageTime,false,true)
+      local coordtext = UTILS.MGRSStringToSRSFriendly(_coordinatesText,true)
+      local _text = string.format("%s requests SAR at %s, beacon at %.2f kilo hertz", _groupName, coordtext, _freqk)
+      self:_DisplayToAllSAR(_text,self.coalition,self.messageTime,true,false)
+    end
   else --shagrat CASEVAC msg
     local _text = string.format("Pickup Zone at %s.", _coordinatesText )
-    self:_DisplayToAllSAR(_text,self.coalition,self.messageTime)
+    if self.coordtype ~= 2 then --not MGRS
+      self:_DisplayToAllSAR(_text,self.coalition,self.messageTime)
+    else
+      self:_DisplayToAllSAR(_text,self.coalition,self.messageTime,false,true)
+      local coordtext = UTILS.MGRSStringToSRSFriendly(_coordinatesText,true)
+      local _text = string.format("Pickup Zone at %s.", coordtext )
+      self:_DisplayToAllSAR(_text,self.coalition,self.messageTime,true,false)
+    end
   end 
   end
   
@@ -1945,23 +1960,28 @@ end
 --- (Internal) Display info to all SAR groups.
 -- @param #CSAR self
 -- @param #string _message Message to display.
--- @param #number _side Coalition of message.
+-- @param #number _side Coalition of message. 
 -- @param #number _messagetime How long to show.
-function CSAR:_DisplayToAllSAR(_message, _side, _messagetime)
+-- @param #boolean ToSRS If true or nil, send to SRS TTS
+-- @param #boolean ToScreen If true or nil, send to Screen
+function CSAR:_DisplayToAllSAR(_message, _side, _messagetime,ToSRS,ToScreen)
   self:T(self.lid .. " _DisplayToAllSAR")
   local messagetime = _messagetime or self.messageTime
-  if self.msrs then
+  self:T({_message,ToSRS=ToSRS,ToScreen=ToScreen})
+  if self.msrs and (ToSRS == true or ToSRS == nil) then
     local voice = self.CSARVoice or MSRS.Voices.Google.Standard.en_GB_Standard_F
     if self.msrs:GetProvider() == MSRS.Provider.WINDOWS then
       voice = self.CSARVoiceMS or MSRS.Voices.Microsoft.Hedda
     end
-    self:I("Voice = "..voice)
+    self:F("Voice = "..voice)
     self.SRSQueue:NewTransmission(_message,duration,self.msrs,tstart,2,subgroups,subtitle,subduration,self.SRSchannel,self.SRSModulation,gender,culture,voice,volume,label,self.coordinate)
   end
-  for _, _unitName in pairs(self.csarUnits) do
-    local _unit = self:_GetSARHeli(_unitName)
-    if _unit and not self.suppressmessages then
-       self:_DisplayMessageToSAR(_unit, _message, _messagetime)
+  if ToScreen == true or ToScreen == nil then
+    for _, _unitName in pairs(self.csarUnits) do
+      local _unit = self:_GetSARHeli(_unitName)
+      if _unit and not self.suppressmessages then
+         self:_DisplayMessageToSAR(_unit, _message, _messagetime)
+      end
     end
   end
   return self
