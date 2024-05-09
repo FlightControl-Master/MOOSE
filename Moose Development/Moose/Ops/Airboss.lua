@@ -5213,6 +5213,7 @@ function AIRBOSS:_InitVoiceOvers()
     TOMCAT = { file = "PILOT-Tomcat", suffix = "ogg", loud = false, subtitle = "", duration = 0.66, subduration = 5 },
     HORNET = { file = "PILOT-Hornet", suffix = "ogg", loud = false, subtitle = "", duration = 0.56, subduration = 5 },
     VIKING = { file = "PILOT-Viking", suffix = "ogg", loud = false, subtitle = "", duration = 0.61, subduration = 5 },
+    GREYHOUND = { file = "PILOT-Greyhound", suffix = "ogg", loud = false, subtitle = "", duration = 0.61, subduration = 5 },
     BALL = { file = "PILOT-Ball", suffix = "ogg", loud = false, subtitle = "", duration = 0.50, subduration = 5 },
     BINGOFUEL = { file = "PILOT-BingoFuel", suffix = "ogg", loud = false, subtitle = "", duration = 0.80 },
     GASATDIVERT = { file = "PILOT-GasAtDivert", suffix = "ogg", loud = false, subtitle = "", duration = 1.80 },
