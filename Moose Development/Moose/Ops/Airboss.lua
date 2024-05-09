@@ -2727,9 +2727,12 @@ end
 
 --- Set if old into wind calculation is used when carrier turns into the wind for a recovery.
 -- @param #AIRBOSS self
--- @param #boolean SwitchOn If `true`, use old into wind calculation.
+-- @param #boolean SwitchOn If `true` or `nil`, use old into wind calculation.
 -- @return #AIRBOSS self
 function AIRBOSS:SetIntoWindLegacy( SwitchOn )
+  if SwitchOn==nil then
+    SwitchOn=true
+  end
   self.intowindold=SwitchOn
   return self
 end
@@ -11485,7 +11488,7 @@ end
 
 --- Get wind direction and speed at carrier position.
 -- @param #AIRBOSS self
--- @param #number alt Altitude ASL in meters. Default 15 m.
+-- @param #number alt Altitude ASL in meters. Default 18 m.
 -- @param #boolean magnetic Direction including magnetic declination.
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate at which to get the wind. Default is current carrier position.
 -- @return #number Direction the wind is blowing **from** in degrees.
@@ -11565,9 +11568,11 @@ end
 function AIRBOSS:GetHeadingIntoWind(vdeck, magnetic, coord )
 
   if self.intowindold then
-    self:GetHeadingIntoWind_old(vdeck, magnetic, coord)
+    --env.info("FF use OLD into wind")
+    return self:GetHeadingIntoWind_old(vdeck, magnetic, coord)
   else
-    self:GetHeadingIntoWind_new(vdeck, magnetic, coord)
+    --env.info("FF use NEW into wind")
+    return self:GetHeadingIntoWind_new(vdeck, magnetic, coord)
   end
 
 end
@@ -11575,6 +11580,7 @@ end
 
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
 -- @param #AIRBOSS self
+-- @param #number vdeck Desired wind velocity over deck in knots.
 -- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
@@ -11636,10 +11642,10 @@ function AIRBOSS:GetHeadingIntoWind_old( vdeck, magnetic, coord )
   end
 
   -- Wind speed.
-  local _, vwind = self:GetWind()
+  --local _, vwind = self:GetWind()
 
   -- Speed of carrier in m/s but at least 4 knots.
-  local vtot = math.max(UTILS.MpsToKnots(vdeck - vwind), 4)
+  local vtot = math.max(vdeck-UTILS.MpsToKnots(vwind), 4)
 
   return intowind, vtot
 end
