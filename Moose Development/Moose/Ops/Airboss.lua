@@ -255,6 +255,7 @@
 -- @field #boolean skipperUturn U-turn on/off via menu.
 -- @field #number skipperOffset Holding offset angle in degrees for Case II/III manual recoveries.
 -- @field #number skipperTime Recovery time in min for manual recovery.
+-- @field #boolean intowindold If true, use old into wind calculation.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -2721,6 +2722,15 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:SetLSOCallInterval( TimeInterval )
   self.LSOdT = TimeInterval or 4
+  return self
+end
+
+--- Set if old into wind calculation is used when carrier turns into the wind for a recovery.
+-- @param #AIRBOSS self
+-- @param #boolean SwitchOn If `true`, use old into wind calculation.
+-- @return #AIRBOSS self
+function AIRBOSS:SetIntoWindLegacy( SwitchOn )
+  self.intowindold=SwitchOn
   return self
 end
 
