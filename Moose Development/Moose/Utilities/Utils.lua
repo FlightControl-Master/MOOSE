@@ -55,6 +55,7 @@ BIGSMOKEPRESET = {
 -- @field #string MarianaIslands Mariana Islands map.
 -- @field #string Falklands South Atlantic map.
 -- @field #string Sinai Sinai map.
+-- @field #string Kola Kola map.
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
@@ -64,7 +65,8 @@ DCSMAP = {
   Syria="Syria",
   MarianaIslands="MarianaIslands",
   Falklands="Falklands",
-  Sinai="SinaiMap"
+  Sinai="SinaiMap",
+  Kola="Kola"
 }
 
 
@@ -1703,6 +1705,7 @@ end
 -- * Mariana Islands +2 (East)
 -- * Falklands +12 (East) - note there's a LOT of deviation across the map, as we're closer to the South Pole
 -- * Sinai +4.8 (East)
+-- * Kola +15 (East) - not there is a lot of deviation across the map (-1° to +24°), as we are close to the North pole
 -- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
 -- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
@@ -1729,6 +1732,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=12
   elseif map==DCSMAP.Sinai then
     declination=4.8
+  elseif map==DCSMAP.Kola then
+    declination=15
   else
     declination=0
   end
