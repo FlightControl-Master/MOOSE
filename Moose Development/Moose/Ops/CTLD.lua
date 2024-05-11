@@ -1254,7 +1254,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.52"
+CTLD.version="1.0.53"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3608,7 +3608,7 @@ function CTLD:_MoveGroupToZone(Group)
   local groupcoord = Group:GetCoordinate()
   -- Get closest zone of type
   local outcome, name, zone, distance  = self:IsUnitInZone(Group,CTLD.CargoZoneType.MOVE)
-  if (distance <= self.movetroopsdistance) and zone then
+  if (distance <= self.movetroopsdistance) and outcome == true and zone~= nil then
     -- yes, we can ;)
     local groupname = Group:GetName()
     local zonecoord = zone:GetRandomCoordinate(20,125) -- Core.Point#COORDINATE
@@ -4465,10 +4465,9 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
       zonewidth = zoneradius
     end
     local distance = self:_GetDistance(zonecoord,unitcoord)
-    if zone:IsVec2InZone(unitVec2) and active then 
+    self:T("Distance Zone: "..distance)
+    if (zone:IsVec2InZone(unitVec2) or Zonetype == CTLD.CargoZoneType.MOVE) and active == true and maxdist > distance then 
       outcome = true
-    end
-    if maxdist > distance then 
       maxdist = distance
       zoneret = zone 
       zonenameret = zonename
