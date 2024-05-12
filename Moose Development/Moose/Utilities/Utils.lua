@@ -3138,7 +3138,7 @@ end
 -- @param #table Table The table.
 -- @param #table Object The object to check.
 -- @param #string Key (Optional) Key to check. By default, the object itself is checked.
--- @return #booolen Returns `true` if object is in table.
+-- @return #boolean Returns `true` if object is in table.
 function UTILS.IsInTable(Table, Object, Key)
 
   for key, object in pairs(Table) do
@@ -3160,7 +3160,7 @@ end
 -- @param #table Table The table.
 -- @param #table Objects The objects to check.
 -- @param #string Key (Optional) Key to check.
--- @return #booolen Returns `true` if object is in table.
+-- @return #boolean Returns `true` if object is in table.
 function UTILS.IsAnyInTable(Table, Objects, Key)
 
   for _,Object in pairs(UTILS.EnsureTable(Objects)) do
@@ -3308,14 +3308,14 @@ end
 --- Checks if the current time is in between start_time and end_time
 -- @param #string time_string_01 Time string like "07:15:22"
 -- @param #string time_string_02 Time string like "08:11:27"
--- @return #bool True if it is, False if it's not
+-- @return #boolean True if it is, False if it's not
 function UTILS.TimeBetween(start_time, end_time)
     return UTILS.TimeLaterThan(start_time) and UTILS.TimeBefore(end_time)
 end
 
 --- Easy to read one line to roll the dice on something. 1% is very unlikely to happen, 99% is very likely to happen
 -- @param #number chance (optional) Percentage chance you want something to happen. Defaults to a random number if not given
--- @return #bool True if the dice roll was within the given percentage chance of happening
+-- @return #boolean True if the dice roll was within the given percentage chance of happening
 function UTILS.PercentageChance(chance)
     chance = chance or math.random(0, 100)
     chance = UTILS.Clamp(chance, 0, 100)
@@ -3368,10 +3368,10 @@ function UTILS.RemapValue(value, old_min, old_max, new_min, new_max)
 end
 
 --- Given a triangle made out of 3 vector 2s, return a vec2 that is a random number in this triangle
--- @param #Vec2 pt1 Min value to remap from
--- @param #Vec2 pt2 Max value to remap from
--- @param #Vec2 pt3 Max value to remap from
--- @return #Vec2 Random point in triangle
+-- @param DCS#Vec2 pt1 Min value to remap from
+-- @param DCS#Vec2 pt2 Max value to remap from
+-- @param DCS#Vec2 pt3 Max value to remap from
+-- @return DCS#Vec2 Random point in triangle
 function UTILS.RandomPointInTriangle(pt1, pt2, pt3)
     local pt = {math.random(), math.random()}
     table.sort(pt)
@@ -3389,7 +3389,7 @@ end
 -- @param #number angle Min value to remap from
 -- @param #number min Max value to remap from
 -- @param #number max Max value to remap from
--- @return #bool
+-- @return #boolean 
 function UTILS.AngleBetween(angle, min, max)
     angle = (360 + (angle % 360)) % 360
     min = (360 + min % 360) % 360
@@ -3449,10 +3449,10 @@ end
 --- Rotates a point around another point with a given angle. Useful if you're loading in groups or
 --- statics but you want to rotate them all as a collection. You can get the center point of everything
 --- and then rotate all the positions of every object around this center point.
--- @param #Vec2 point Point that you want to rotate
--- @param #Vec2 pivot Pivot point of the rotation
+-- @param DCS#Vec2 point Point that you want to rotate
+-- @param DCS#Vec2 pivot Pivot point of the rotation
 -- @param #number angle How many degrees the point should be rotated
--- @return #Vec Rotated point
+-- @return DCS#Vec2 Rotated point
 function UTILS.RotatePointAroundPivot(point, pivot, angle)
     local radians = math.rad(angle)
 
@@ -3484,7 +3484,7 @@ end
 --- Check if a string starts with something
 -- @param #string str String to check
 -- @param #string value
--- @return #bool True if str starts with value
+-- @return #boolean True if str starts with value
 function string.startswith(str, value)
    return string.sub(str,1,string.len(value)) == value
 end
@@ -3493,7 +3493,7 @@ end
 --- Check if a string ends with something
 -- @param #string str String to check
 -- @param #string value
--- @return #bool True if str ends with value
+-- @return #boolean True if str ends with value
 function string.endswith(str, value)
     return value == "" or str:sub(-#value) == value
 end
@@ -3516,16 +3516,16 @@ end
 --- string.split("hello_dcs_world", "-") would return {"hello", "dcs", "world"}
 -- @param #string str
 -- @param #string value
--- @return #bool True if str contains value
+-- @return #boolean True if str contains value
 function string.contains(str, value)
     return string.match(str, value)
 end
 
 
 --- Moves an object from one table to another
--- @param #obj object to move
--- @param #from_table table to move from
--- @param #to_table table to move to
+-- @param #table obj object to move
+-- @param #table from_table table to move from
+-- @param #table to_table table to move to
 function table.move_object(obj, from_table, to_table)
     local index
     for i, v in pairs(from_table) do
@@ -3544,7 +3544,7 @@ end
 --- The table can be made up out of complex tables or values as well
 -- @param #table tbl
 -- @param #string element
--- @return #bool True if tbl contains element
+-- @return #boolean True if tbl contains element
 function table.contains(tbl, element)
     if element == nil or tbl == nil then return false end
 
@@ -3561,7 +3561,7 @@ end
 --- Checks if a table contains a specific key.
 -- @param #table tbl Table to check
 -- @param #string key Key to look for
--- @return #bool True if tbl contains key
+-- @return #boolean True if tbl contains key
 function table.contains_key(tbl, key)
     if tbl[key] ~= nil then return true else return false end
 end
@@ -3608,7 +3608,7 @@ end
 --- Finds the index of an element in a table.
 -- @param #table table Table to search
 -- @param #string element Element to find
--- @return #int Index of the element, or nil if not found
+-- @return #number Index of the element, or nil if not found
 function table.index_of(table, element)
     for i, v in ipairs(table) do
         if v == element then
@@ -3620,7 +3620,7 @@ end
 
 --- Counts the number of elements in a table.
 -- @param #table T Table to count
--- @return #int Number of elements in the table
+-- @return #number Number of elements in the table
 function table.length(T)
   local count = 0
   for _ in pairs(T) do count = count + 1 end
@@ -3629,8 +3629,8 @@ end
 
 --- Slices a table between two indices, much like Python's my_list[2:-1]
 -- @param #table tbl Table to slice
--- @param #int first Starting index
--- @param #int last Ending index
+-- @param #number first Starting index
+-- @param #number last Ending index
 -- @return #table Sliced table
 function table.slice(tbl, first, last)
   local sliced = {}
@@ -3651,7 +3651,7 @@ end
 --- Counts the number of occurrences of a value in a table.
 -- @param #table tbl Table to search
 -- @param #string value Value to count
--- @return #int Number of occurrences of the value
+-- @return #number Number of occurrences of the value
 function table.count_value(tbl, value)
     local count = 0
     for _, item in pairs(tbl) do
@@ -3931,4 +3931,69 @@ function UTILS.MGRSStringToSRSFriendly(Text,Slow)
     end 
     Text = "MGRS;"..Text
     return Text
+end
+
+
+--- Read csv file and convert it to a lua table.
+-- The csv must have a header specifing the names of the columns. The column names are used as table keys.
+-- @param #string filename File name including full path on local disk.
+-- @return #table The table filled with data from the csv file.
+function UTILS.ReadCSV(filename)
+
+  if not UTILS.FileExists(filename) then
+  
+    env.error("File does not exist")
+    return nil
+  
+  end
+  
+  --- Function that load data from a file.
+  local function _loadfile( filename )
+    local f = io.open( filename, "rb" )
+    if f then
+      -- self:I(self.lid..string.format("Loading player results from file %s", tostring(filename)))
+      local data = f:read( "*all" )
+      f:close()
+      return data
+    else
+      BASE:E( self.lid .. string.format( "WARNING: Could not load player results from file %s. File might not exist just yet.", tostring( filename ) ) )
+      return nil
+    end
+  end
+  
+  -- Load asset data from file.
+  local data = _loadfile( filename )
+  
+  local lines=UTILS.Split(data, "\n" )
+  
+  local sep=";"
+  
+  local columns=UTILS.Split(lines[1], sep)
+  
+  BASE:I(columns)
+  
+  -- Remove header line.
+  table.remove(lines, 1)
+  
+  local csvdata={}  
+  for i, line in pairs(lines) do
+  
+    local row={}
+    for j, value in pairs(UTILS.Split(line, sep)) do
+    
+      local key=columns[j]
+    
+      
+      --env.info(string.format("i=%d, j=%d key=%s value=%s", i,j, key, value))
+      
+      row[key]=value
+    
+    end
+    table.insert(csvdata, row)
+    BASE:E(row)
+  
+  
+  end
+
+  return csvdata
 end
