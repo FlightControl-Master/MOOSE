@@ -3655,6 +3655,12 @@ function AIRBOSS:onafterStatus( From, Event, To )
     local pos = self:GetCoordinate()
     local speed = self.carrier:GetVelocityKNOTS()
 
+    -- Update magnetic variation if we can get it from DCS.
+    if require then
+      self.magvar=pos:GetMagneticDeclination()
+      --env.info(string.format("FF magvar=%.1f", self.magvar))
+    end
+
     -- Check water is ahead.
     local collision = false -- self:_CheckCollisionCoord(pos:Translate(self.collisiondist, hdg))
 
