@@ -255,6 +255,7 @@
 -- @field #boolean skipperUturn U-turn on/off via menu.
 -- @field #number skipperOffset Holding offset angle in degrees for Case II/III manual recoveries.
 -- @field #number skipperTime Recovery time in min for manual recovery.
+-- @field #boolean intowindold If true, use old into wind calculation.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -2724,6 +2725,18 @@ function AIRBOSS:SetLSOCallInterval( TimeInterval )
   return self
 end
 
+--- Set if old into wind calculation is used when carrier turns into the wind for a recovery.
+-- @param #AIRBOSS self
+-- @param #boolean SwitchOn If `true` or `nil`, use old into wind calculation.
+-- @return #AIRBOSS self
+function AIRBOSS:SetIntoWindLegacy( SwitchOn )
+  if SwitchOn==nil then
+    SwitchOn=true
+  end
+  self.intowindold=SwitchOn
+  return self
+end
+
 --- Airboss is a rather nice guy and not strictly following the rules. Fore example, he does allow you into the landing pattern if you are not coming from the Marshal stack.
 -- @param #AIRBOSS self
 -- @param #boolean Switch If true or nil, Airboss bends the rules a bit.
@@ -3640,6 +3653,12 @@ function AIRBOSS:onafterStatus( From, Event, To )
     local hdg = self:GetHeading()
     local pos = self:GetCoordinate()
     local speed = self.carrier:GetVelocityKNOTS()
+
+    -- Update magnetic variation if we can get it from DCS.
+    if require then
+      self.magvar=pos:GetMagneticDeclination()
+      --env.info(string.format("FF magvar=%.1f", self.magvar))
+    end
 
     -- Check water is ahead.
     local collision = false -- self:_CheckCollisionCoord(pos:Translate(self.collisiondist, hdg))
@@ -5200,6 +5219,7 @@ function AIRBOSS:_InitVoiceOvers()
     TOMCAT = { file = "PILOT-Tomcat", suffix = "ogg", loud = false, subtitle = "", duration = 0.66, subduration = 5 },
     HORNET = { file = "PILOT-Hornet", suffix = "ogg", loud = false, subtitle = "", duration = 0.56, subduration = 5 },
     VIKING = { file = "PILOT-Viking", suffix = "ogg", loud = false, subtitle = "", duration = 0.61, subduration = 5 },
+    GREYHOUND = { file = "PILOT-Greyhound", suffix = "ogg", loud = false, subtitle = "", duration = 0.61, subduration = 5 },
     BALL = { file = "PILOT-Ball", suffix = "ogg", loud = false, subtitle = "", duration = 0.50, subduration = 5 },
     BINGOFUEL = { file = "PILOT-BingoFuel", suffix = "ogg", loud = false, subtitle = "", duration = 0.80 },
     GASATDIVERT = { file = "PILOT-GasAtDivert", suffix = "ogg", loud = false, subtitle = "", duration = 1.80 },
@@ -6474,7 +6494,7 @@ function AIRBOSS:_LandAI( flight )
     or flight.actype == AIRBOSS.AircraftCarrier.RHINOF
     or flight.actype == AIRBOSS.AircraftCarrier.GROWLER then
     Speed = UTILS.KnotsToKmph( 200 )
-  elseif flight.actype == AIRBOSS.AircraftCarrier.E2D then
+  elseif flight.actype == AIRBOSS.AircraftCarrier.E2D or flight.actype == AIRBOSS.AircraftCarrier.C2A then
     Speed = UTILS.KnotsToKmph( 150 )
   elseif flight.actype == AIRBOSS.AircraftCarrier.F14A_AI or flight.actype == AIRBOSS.AircraftCarrier.F14A or flight.actype == AIRBOSS.AircraftCarrier.F14B then
     Speed = UTILS.KnotsToKmph( 175 )
@@ -11475,7 +11495,7 @@ end
 
 --- Get wind direction and speed at carrier position.
 -- @param #AIRBOSS self
--- @param #number alt Altitude ASL in meters. Default 15 m.
+-- @param #number alt Altitude ASL in meters. Default 18 m.
 -- @param #boolean magnetic Direction including magnetic declination.
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate at which to get the wind. Default is current carrier position.
 -- @return #number Direction the wind is blowing **from** in degrees.
@@ -11547,10 +11567,31 @@ end
 
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
 -- @param #AIRBOSS self
+-- @param #number vdeck Desired wind velocity over deck in knots.
 -- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
-function AIRBOSS:GetHeadingIntoWind_old( magnetic, coord )
+-- @return #number Carrier speed in knots to reach desired wind speed on deck.
+function AIRBOSS:GetHeadingIntoWind(vdeck, magnetic, coord )
+
+  if self.intowindold then
+    --env.info("FF use OLD into wind")
+    return self:GetHeadingIntoWind_old(vdeck, magnetic, coord)
+  else
+    --env.info("FF use NEW into wind")
+    return self:GetHeadingIntoWind_new(vdeck, magnetic, coord)
+  end
+
+end
+
+
+--- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
+-- @param #AIRBOSS self
+-- @param #number vdeck Desired wind velocity over deck in knots.
+-- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
+-- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
+-- @return #number Carrier heading in degrees.
+function AIRBOSS:GetHeadingIntoWind_old( vdeck, magnetic, coord )
 
   local function adjustDegreesForWindSpeed(windSpeed)
     local degreesAdjustment = 0
@@ -11607,7 +11648,13 @@ function AIRBOSS:GetHeadingIntoWind_old( magnetic, coord )
     intowind = intowind + 360
   end
 
-  return intowind
+  -- Wind speed.
+  --local _, vwind = self:GetWind()
+
+  -- Speed of carrier in m/s but at least 4 knots.
+  local vtot = math.max(vdeck-UTILS.MpsToKnots(vwind), 4)
+
+  return intowind, vtot
 end
 
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
@@ -11618,7 +11665,7 @@ end
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
 -- @return #number Carrier speed in knots to reach desired wind speed on deck.
-function AIRBOSS:GetHeadingIntoWind( vdeck, magnetic, coord )
+function AIRBOSS:GetHeadingIntoWind_new( vdeck, magnetic, coord )
 
   -- Default offset angle.
   local Offset=self.carrierparam.rwyangle or 0
@@ -14279,6 +14326,8 @@ function AIRBOSS:_GetACNickname( actype )
     nickname = "Harrier"
   elseif actype == AIRBOSS.AircraftCarrier.E2D then
     nickname = "Hawkeye"
+  elseif actype == AIRBOSS.AircraftCarrier.C2A then
+    nickname = "Greyhound"
   elseif actype == AIRBOSS.AircraftCarrier.F14A_AI or actype == AIRBOSS.AircraftCarrier.F14A or actype == AIRBOSS.AircraftCarrier.F14B then
     nickname = "Tomcat"
   elseif actype == AIRBOSS.AircraftCarrier.FA18C or actype == AIRBOSS.AircraftCarrier.HORNET then
