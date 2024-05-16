@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update Feb 2024
+-- @date Last Update May 2024
 
 
 do
@@ -1370,7 +1370,7 @@ PLAYERTASKCONTROLLER.Type = {
 AUFTRAG.Type.PRECISIONBOMBING = "Precision Bombing"
 AUFTRAG.Type.CTLD = "Combat Transport"
 AUFTRAG.Type.CSAR = "Combat Rescue"
-
+AUFTRAG.Type.CONQUER = "Conquer"
 ---
 -- @type Scores
 PLAYERTASKCONTROLLER.Scores = {
@@ -1383,7 +1383,8 @@ PLAYERTASKCONTROLLER.Scores = {
   [AUFTRAG.Type.BAI] = 100,
   [AUFTRAG.Type.SEAD] = 100,
   [AUFTRAG.Type.BOMBING] = 100,
-  [AUFTRAG.Type.BOMBRUNWAY] = 100,  
+  [AUFTRAG.Type.BOMBRUNWAY] = 100,
+  [AUFTRAG.Type.CONQUER] = 100,    
 }
  
 --- 
@@ -3218,9 +3219,11 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     local ThreatLocaleText = self.gettext:GetEntry("THREATTEXT",self.locale)
     text = string.format(ThreatLocaleText, taskname, ThreatGraph, targets, CoordText)
     local settings = _DATABASE:GetPlayerSettings(playername) or _SETTINGS -- Core.Settings#SETTINGS
-    local elevationmeasure = self.gettext:GetEntry("METER",self.locale)
-    if settings:IsMetric()() then
+    local elevationmeasure = self.gettext:GetEntry("FEET",self.locale)
+    if settings:IsMetric() then
       elevationmeasure = self.gettext:GetEntry("METER",self.locale)
+      --Elevation = math.floor(UTILS.MetersToFeet(Elevation))
+    else
       Elevation = math.floor(UTILS.MetersToFeet(Elevation))
     end
     -- ELEVATION = "\nTarget Elevation: %s %s",
