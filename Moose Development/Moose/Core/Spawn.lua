@@ -620,12 +620,14 @@ end
 -- and any spaces before and after the resulting name are removed.
 -- IMPORTANT! This method MUST be the first used after :New !!!
 -- @param #SPAWN self
--- @param #boolean KeepUnitNames (optional) If true, the unit names are kept, false or not provided to make new unit names.
+-- @param #boolean KeepUnitNames (optional) If true, the unit names are kept, false or not provided create new unit names.
 -- @return #SPAWN self
 function SPAWN:InitKeepUnitNames( KeepUnitNames )
   self:F()
 
-  self.SpawnInitKeepUnitNames = KeepUnitNames or true
+  self.SpawnInitKeepUnitNames = false
+  
+  if KeepUnitNames == true then self.SpawnInitKeepUnitNames = true end
 
   return self
 end
@@ -3437,24 +3439,28 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
   end
   
   if self.SpawnInitKeepUnitNames == false then
-    for UnitID = 1, #SpawnTemplate.units do
-      SpawnTemplate.units[UnitID].name = string.format( SpawnTemplate.name .. '-%02d', UnitID )
+    for UnitID = 1, #SpawnTemplate.units do      
+      if not string.find(SpawnTemplate.units[UnitID].name,"#IFF_",1,true) then --Razbam IFF hack for F15E etc
+        SpawnTemplate.units[UnitID].name = string.format( SpawnTemplate.name .. '-%02d', UnitID )    
+      end
       SpawnTemplate.units[UnitID].unitId = nil
     end
   else
     for UnitID = 1, #SpawnTemplate.units do
-        local SpawnInitKeepUnitIFF = false
-        if string.find(SpawnTemplate.units[UnitID].name,"#IFF_",1,true) then --Razbam IFF hack for F15E etc
-          SpawnInitKeepUnitIFF = true
-        end
-      local UnitPrefix, Rest
-      if SpawnInitKeepUnitIFF == false then
-        UnitPrefix, Rest = string.match( SpawnTemplate.units[UnitID].name, "^([^#]+)#?" ):gsub( "^%s*(.-)%s*$", "%1" )
-        self:T( { UnitPrefix, Rest } )
-      else
-       UnitPrefix=SpawnTemplate.units[UnitID].name
+      local SpawnInitKeepUnitIFF = false
+      if string.find(SpawnTemplate.units[UnitID].name,"#IFF_",1,true) then --Razbam IFF hack for F15E etc
+        SpawnInitKeepUnitIFF = true
       end
-      SpawnTemplate.units[UnitID].name = string.format( '%s#%03d-%02d', UnitPrefix, SpawnIndex, UnitID )
+      local UnitPrefix, Rest
+      if SpawnInitKeepUnitIFF == false then       
+        UnitPrefix, Rest = string.match( SpawnTemplate.units[UnitID].name, "^([^#]+)#?" ):gsub( "^%s*(.-)%s*$", "%1" )
+        SpawnTemplate.units[UnitID].name = string.format( '%s#%03d-%02d', UnitPrefix, SpawnIndex, UnitID )       
+        self:T( { UnitPrefix, Rest } )
+      --else
+       --UnitPrefix=SpawnTemplate.units[UnitID].name
+      end
+      --SpawnTemplate.units[UnitID].name = string.format( '%s#%03d-%02d', UnitPrefix, SpawnIndex, UnitID )
+      
       SpawnTemplate.units[UnitID].unitId = nil
     end
   end
