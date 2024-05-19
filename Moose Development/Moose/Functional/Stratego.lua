@@ -594,7 +594,7 @@ end
 -- @param #STRATEGO self
 -- @return #STRATEGO self
 function STRATEGO:GetToFrom(StartPoint,EndPoint)
-  self:T(self.lid.."GetToFrom")
+  self:T(self.lid.."GetToFrom "..tostring(StartPoint).." "..tostring(EndPoint))
   local pstart = string.gsub(StartPoint,"[%p%s]",".")
   local pend = string.gsub(EndPoint,"[%p%s]",".")
   local fromto = pstart..";"..pend
@@ -630,7 +630,7 @@ end
 -- @param #STRATEGO self
 -- @param #string Startpoint Starting Point, e.g. AIRBASE.Syria.Hatay
 -- @param #string Endpoint End Point, e.g. AIRBASE.Syria.H4
--- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Defaults to lila.
+-- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Defaults to violet.
 -- @param #number Linetype (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 5.
 -- @param #boolean Draw (Optional) If true, draw route on the F10 map. Defaukt false.
 -- @return #STRATEGO self
@@ -1241,6 +1241,33 @@ function STRATEGO:FindNeighborNodes(Name,Enemies,Friends)
   return neighbors, nearest, shortestdist
 end
 
+--- [INTERNAL] Route Finding - Find the next hop towards an end node from a start node
+-- @param #STRATEGO self
+-- @param #string Start The name of the start node.
+-- @param #string End The name of the end node.
+-- @param #table InRoute Table of node names making up the route so far.
+-- @return #string Name of the next closest node
+function STRATEGO:_GetNextClosest(Start,End,InRoute)
+  local ecoord = self.airbasetable[End].coord
+  local nodes,nearest = self:FindNeighborNodes(Start)
+  --self:I(tostring(nearest))
+  local closest = nil
+  local closedist = 1000*1000
+  for _name,_dist in pairs(nodes) do
+    local kcoord = self.airbasetable[_name].coord
+    local nnodes = self.airbasetable[_name].connections > 2 and true or false
+    if _name == End then nnodes = true end
+    if kcoord ~= nil and ecoord ~= nil and nnodes == true then
+      local dist = math.floor((kcoord:Get2DDistance(ecoord)/1000)+0.5)
+      if (dist < closedist and InRoute[_name] ~= true) then
+        closedist = dist
+        closest = _name
+      end
+    end
+  end
+  return closest
+end
+
 --- [USER] Find a route between two nodes.
 -- @param #STRATEGO self
 -- @param #string Start The name of the start node.
@@ -1271,29 +1298,7 @@ function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType)
     end
     return nil
   end
-  
-  local function NextClosest(Start,End)
-    local ecoord = self.airbasetable[End].coord
-    local nodes,nearest = self:FindNeighborNodes(Start)
-    --self:I(tostring(nearest))
-    local closest = nil
-    local closedist = 1000*1000
-    for _name,_dist in pairs(nodes) do
-      local kcoord = self.airbasetable[_name].coord
-      local nnodes = self.airbasetable[_name].connections > 2 and true or false
-      if _name == End then nnodes = true end
-      local dist = math.floor((kcoord:Get2DDistance(ecoord)/1000)+0.5)
-      if (dist < closedist and nnodes and InRoute[_name] ~= true) then
-        closedist = dist
-        closest = _name
-      end
-    end
-    if closest then
-      --MESSAGE:New(string.format("Start %s | End %s | Nextclosest %s",Start,End,closest),10,"STRATEGO"):ToLog():ToAll()
-      return closest
-    end
-  end
-  
+ 
   local function DrawRoute(Route)
     for i=1,#Route-1 do
       local p1=Route[i]
@@ -1319,8 +1324,8 @@ function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType)
     local spoint = Start
     for i=1,hops do
       --self:I("Start="..tostring(spoint))
-      local Next = NextClosest(spoint,End)
-      if Next then
+      local Next = self:_GetNextClosest(spoint,End,InRoute)
+      if Next ~= nil then
         Route[#Route+1] = Next
         InRoute[Next] = true
         local nodes = self:FindNeighborNodes(Next)
@@ -1332,7 +1337,9 @@ function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType)
         else
           spoint = Next
         end
-      end
+      else
+       break
+      end 
     end
   end
   
