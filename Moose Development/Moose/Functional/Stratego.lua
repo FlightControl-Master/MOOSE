@@ -181,7 +181,7 @@ STRATEGO = {
   debug = false,
   drawzone = false,
   markzone = false,
-  version = "0.2.9",
+  version = "0.2.10",
   portweight = 3,
   POIweight = 1,
   maxrunways = 3,
@@ -1257,9 +1257,9 @@ function STRATEGO:_GetNextClosest(Start,End,InRoute)
     local kcoord = self.airbasetable[_name].coord
     local nnodes = self.airbasetable[_name].connections > 2 and true or false
     if _name == End then nnodes = true end
-    if kcoord ~= nil and ecoord ~= nil and nnodes == true then
+    if kcoord ~= nil and ecoord ~= nil and nnodes == true and InRoute[_name] ~= true then
       local dist = math.floor((kcoord:Get2DDistance(ecoord)/1000)+0.5)
-      if (dist < closedist and InRoute[_name] ~= true) then
+      if (dist < closedist ) then
         closedist = dist
         closest = _name
       end
