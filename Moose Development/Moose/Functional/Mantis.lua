@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: Feb 2024
+-- Last Update: May 2024
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -58,6 +58,7 @@
 -- @field #boolean ShoradLink If true, #MANTIS has #SHORAD enabled
 -- @field #number ShoradTime Timer in seconds, how long #SHORAD will be active after a detection inside of the defense range
 -- @field #number ShoradActDistance Distance of an attacker in meters from a Mantis SAM site, on which Shorad will be switched on. Useful to not give away Shorad sites too early. Default 15km. Should be smaller than checkradius.
+-- @field #boolean checkforfriendlies If true, do not activate a SAM installation if a friendly aircraft is in firing range.
 -- @extends Core.Base#BASE
 
 
@@ -187,29 +188,34 @@
 --        -- This is effectively a 3-stage filter allowing for zone overlap. A coordinate is accepted first when   
 --        -- it is inside any AcceptZone. Then RejectZones are checked, which enforces both borders, but also overlaps of   
 --        -- Accept- and RejectZones. Last, if it is inside a conflict zone, it is accepted.   
---        `mybluemantis:AddZones(AcceptZones,RejectZones,ConflictZones)`   
+--        mybluemantis:AddZones(AcceptZones,RejectZones,ConflictZones)   
 --        
 --        
 -- ### 2.1.2 Change the number of long-, mid- and short-range systems going live on a detected target:   
 -- 
 --        -- parameters are numbers. Defaults are 1,2,2,6 respectively
---        `mybluemantis:SetMaxActiveSAMs(Short,Mid,Long,Classic)`
+--        mybluemantis:SetMaxActiveSAMs(Short,Mid,Long,Classic)
 -- 
 -- ### 2.1.3 SHORAD will automatically be added from SAM sites of type "short-range"   
 --        
 -- ### 2.1.4 Advanced features   
 -- 
 --        -- switch off auto mode **before** you start MANTIS.   
---        `mybluemantis.automode = false`
+--        mybluemantis.automode = false
 --        
 --        -- switch off auto shorad **before** you start MANTIS.   
---        `mybluemantis.autoshorad = false`
+--        mybluemantis.autoshorad = false
 --        
 --        -- scale of the activation range, i.e. don't activate at the fringes of max range, defaults below.   
 --        -- also see engagerange below.   
---        `    self.radiusscale[MANTIS.SamType.LONG] = 1.1`   
---        `    self.radiusscale[MANTIS.SamType.MEDIUM] = 1.2`   
---        `    self.radiusscale[MANTIS.SamType.SHORT] = 1.3`   
+--            self.radiusscale[MANTIS.SamType.LONG] = 1.1   
+--            self.radiusscale[MANTIS.SamType.MEDIUM] = 1.2   
+--            self.radiusscale[MANTIS.SamType.SHORT] = 1.3 
+--        
+-- ### 2.1.5 Friendlies check in firing range
+-- 
+--        -- For some scenarios, like Cold War, it might be useful not to activate SAMs if friendly aircraft are around to avoid death by friendly fire.
+--        mybluemantis.checkforfriendlies = true  
 -- 
 -- # 3. Default settings [both modes unless stated otherwise]
 --
@@ -321,6 +327,7 @@ MANTIS = {
   automode              = true,
   autoshorad            = true,
   ShoradGroupSet        = nil,
+  checkforfriendlies    = false,
 }
 
 --- Advanced state enumerator
@@ -631,7 +638,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.16"
+    self.version="0.8.17"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -1222,10 +1229,10 @@ do
   function MANTIS:_PreFilterHeight(height)
     self:T(self.lid.."_PreFilterHeight")   
     local set = {}
-    local dlink = self.Detection -- Ops.Intelligence#INTEL_DLINK
+    local dlink = self.Detection -- Ops.Intel#INTEL_DLINK
     local detectedgroups = dlink:GetContactTable()
     for _,_contact in pairs(detectedgroups) do
-      local contact = _contact -- Ops.Intelligence#INTEL.Contact
+      local contact = _contact -- Ops.Intel#INTEL.Contact
       local grp = contact.group -- Wrapper.Group#GROUP
       if grp:IsAlive() then
         if grp:GetHeight(true) < height then
@@ -1255,6 +1262,10 @@ do
       -- DEBUG
       set = self:_PreFilterHeight(height)
     end
+    local friendlyset -- Core.Set#SET_GROUP
+    if self.checkforfriendlies == true then
+      friendlyset = SET_GROUP:New():FilterCoalitions(self.Coalition):FilterCategories({"plane","helicopter"}):FilterFunction(function(grp) if grp and grp:InAir() then return true else return false end end):FilterOnce()
+    end
     for _,_coord in pairs (set) do
       local coord = _coord  -- get current coord to check
       -- output for cross-check
@@ -1279,8 +1290,16 @@ do
         local m = MESSAGE:New(text,10,"Check"):ToAllIf(self.debug)
         self:T(self.lid..text)
       end
+      -- friendlies around?
+      local nofriendlies = true
+      if self.checkforfriendlies == true then
+        local closestfriend, distance = friendlyset:GetClosestGroup(samcoordinate)
+        if closestfriend and distance and distance < rad then
+          nofriendlies = false
+        end
+      end
       -- end output to cross-check
-      if targetdistance <= rad and zonecheck then
+      if targetdistance <= rad and zonecheck == true and nofriendlies == true then
         return true, targetdistance
       end
     end
@@ -1777,7 +1796,7 @@ do
   -- @return #MANTIS self
   function MANTIS:_CheckDLinkState()
     self:T(self.lid .. "_CheckDLinkState")
-    local dlink = self.Detection -- Ops.Intelligence#INTEL_DLINK
+    local dlink = self.Detection -- Ops.Intel#INTEL_DLINK
     local TS = timer.getAbsTime()
     if not dlink:Is("Running") and (TS - self.DLTimeStamp > 29) then
       self.DLink = false

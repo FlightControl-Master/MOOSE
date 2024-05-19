@@ -1950,7 +1950,9 @@ function UTILS.GMTToLocalTimeDifference()
   elseif theatre==DCSMAP.Falklands then
     return -3  -- Fireland is UTC-3 hours.
   elseif theatre==DCSMAP.Sinai then
-    return 2   -- Currently map is +2 but should be +3 (DCS bug?)    
+    return 2   -- Currently map is +2 but should be +3 (DCS bug?)
+  elseif theatre==DCSMAP.Kola then
+    return 3   -- Currently map is +2 but should be +3 (DCS bug?)     
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
