@@ -638,7 +638,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.16"
+    self.version="0.8.17"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -1264,7 +1264,7 @@ do
     end
     local friendlyset -- Core.Set#SET_GROUP
     if self.checkforfriendlies == true then
-      friendlyset = SET_GROUP:New():FilterCoalitions(self.Coalition):FilterCategories({"plane","helicopter"}):FilterOnce()
+      friendlyset = SET_GROUP:New():FilterCoalitions(self.Coalition):FilterCategories({"plane","helicopter"}):FilterFunction(function(grp) if grp and grp:InAir() then return true else return false end end):FilterOnce()
     end
     for _,_coord in pairs (set) do
       local coord = _coord  -- get current coord to check
