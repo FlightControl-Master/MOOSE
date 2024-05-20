@@ -181,7 +181,7 @@ STRATEGO = {
   debug = false,
   drawzone = false,
   markzone = false,
-  version = "0.2.10",
+  version = "0.2.11",
   portweight = 3,
   POIweight = 1,
   maxrunways = 3,
@@ -1276,10 +1276,11 @@ end
 -- @param #boolean Draw If true, draw the route on the map.
 -- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Defaults to black.
 -- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 6.
+-- @param #boolean NoOptimize If set to true, do not optimize (shorten) the resulting route if possible.
 -- @return #table Route Table of #string name entries of the route
 -- @return #boolean Complete If true, the route was found end-to-end.
 -- @return #boolean Reverse If true, the route was found with a reverse search, the route table will be from sorted from end point to start point.
-function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType)
+function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType,NoOptimize)
   self:T(self.lid.."FindRoute")
   --self:I({Start,End,Hops})
   --local bases = UTILS.DeepCopy(self.airbasetable)
@@ -1376,7 +1377,7 @@ function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType)
     return Route, foundcut
   end 
   
-  if routecomplete == true then
+  if routecomplete == true and NoOptimize ~= true then
     local foundcut = true
     while foundcut ~= false do
       Route, foundcut = OptimizeRoute(Route)
