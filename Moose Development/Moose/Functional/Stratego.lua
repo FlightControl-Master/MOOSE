@@ -181,7 +181,7 @@ STRATEGO = {
   debug = false,
   drawzone = false,
   markzone = false,
-  version = "0.2.11",
+  version = "0.3.1",
   portweight = 3,
   POIweight = 1,
   maxrunways = 3,
@@ -803,9 +803,13 @@ end
 -- @param #number Coalition (Optional) Find for this coalition only. E.g. coalition.side.BLUE.
 -- @return #table Table of nodes.
 -- @return #number Weight The consolidated weight associated with the nodes.
+-- @return #number Highest Highest weight found.
+-- @return #string Name of the node with the highest weight.
 function STRATEGO:GetHighestWeightNodes(Coalition)
   self:T(self.lid.."GetHighestWeightNodes")
   local weight = 0
+  local highest = 0
+  local highname = nil
   local airbases = {}
   for _name,_data in pairs(self.airbasetable) do
     local okay = true
@@ -819,8 +823,12 @@ function STRATEGO:GetHighestWeightNodes(Coalition)
       if not airbases[weight] then airbases[weight]={} end
       table.insert(airbases[weight],_name)
     end
+    if _data.weight > highest and okay then
+      highest = _data.weight
+      highname = _name
+    end
   end
-  return airbases[weight],weight
+  return airbases[weight],weight,highest,highname
 end
 
 --- [USER] Get a list of the nodes a weight less than the given parameter.
@@ -1495,6 +1503,139 @@ function STRATEGO:FindAffordableConsolidationTarget()
   else
     return nil
   end
+end
+
+--- [INTERNAL] Internal helper function to check for islands, aka Floodtest
+-- @param #STRATEGO self
+-- @param #string next Name of the start node
+-- @param #table filled #table of visited nodes
+-- @param #table unfilled #table if unvisited nodes
+-- @return #STRATEGO self
+function STRATEGO:_FloodNext(next,filled,unfilled)
+  local start = self:FindNeighborNodes(next)
+  for _name,_ in pairs (start) do
+    if filled[_name] ~= true then
+      self:T("Flooding ".._name)
+      filled[_name] = true
+      unfilled[_name] = nil
+      self:_FloodNext(_name,filled,unfilled)
+    end
+  end
+  return self
+end
+
+--- [INTERNAL] Internal helper function to check for islands, aka Floodtest
+-- @param #STRATEGO self
+-- @param #string Start Name of the start node
+-- @param #table ABTable (Optional) #table of node names to check.
+-- @return #STRATEGO self
+function STRATEGO:_FloodFill(Start,ABTable)
+  self:T("Start = "..tostring(Start))
+  if Start == nil then return end
+  local filled = {}
+  local unfilled = {}
+  if ABTable then
+    unfilled = ABTable
+  else
+    for _name,_ in pairs(self.airbasetable) do
+      unfilled[_name] = true
+    end
+  end
+  filled[Start] = true
+  unfilled[Start] = nil
+  local start = self:FindNeighborNodes(Start)
+  for _name,_ in pairs (start) do
+    if filled[_name] ~= true then
+      self:T("Flooding ".._name)
+      filled[_name] = true
+      unfilled[_name] = nil
+      self:_FloodNext(_name,filled,unfilled)
+    end
+  end
+  return filled, unfilled
+end
+
+--- [INTERNAL] Internal helper function to check for islands, aka Floodtest
+-- @param #STRATEGO self
+-- @param #boolen connect If true, connect the two resulting islands at the shortest distance if necessary
+-- @param #boolen draw If true, draw outer vertices of found node networks
+-- @return #boolean Connected If true, all nodes are in one network
+-- @return #table Network #table of node names in the network
+-- @return #table Unconnected #table of node names **not** in the network
+function STRATEGO:_FloodTest(connect,draw)
+  
+  local function GetElastic(bases)
+    local vec2table = {}
+    for _name,_ in pairs(bases) do
+      local coord = self.airbasetable[_name].coord
+      local vec2 = coord:GetVec2()
+      table.insert(vec2table,vec2)
+    end
+    local zone = ZONE_ELASTIC:New("STRATEGO-Floodtest-"..math.random(1,10000),vec2table)
+    return zone
+  end
+  
+  local function DrawElastic(filled,drawit)
+    local zone = GetElastic(filled)
+    if drawit then
+      zone:SetColor({1,1,1},1)
+      zone:SetDrawCoalition(-1)
+      zone:Update(1,true) -- draw zone
+    end
+    return zone
+  end
+
+  local _,_,weight,name = self:GetHighestWeightNodes()
+  local filled, unfilled = self:_FloodFill(name)
+  local allin = true
+  if table.length(unfilled) > 0 then
+    MESSAGE:New("There is at least one node island!",15,"STRATEGO"):ToAllIf(self.debug):ToLog()
+    allin = false
+    if self.debug == true then
+      local zone1 = DrawElastic(filled,draw)
+      local zone2 = DrawElastic(unfilled,draw)
+      local vertices1 = zone1:GetVerticiesVec2()
+      local vertices2 = zone2:GetVerticiesVec2()
+      -- get closest vertices
+      local corner1 = nil
+      local corner2 = nil
+      local mindist = math.huge
+      local found = false
+      for _,_edge in pairs(vertices1) do
+        for _,_edge2 in pairs(vertices2) do
+          local dist=UTILS.VecDist2D(_edge,_edge2)
+          if dist < mindist then
+            mindist = dist
+            corner1 = _edge
+            corner2 = _edge2
+            found = true
+          end
+        end  
+      end
+      if found then
+        local Corner = COORDINATE:NewFromVec2(corner1)
+        local Corner2 = COORDINATE:NewFromVec2(corner2)
+        Corner:LineToAll(Corner2,-1,{1,1,1},1,1,true,"Island2Island")
+        local cornername
+        local cornername2
+        for _name,_data in pairs(self.airbasetable) do
+          local zone = _data.zone
+          if zone:IsVec2InZone(corner1) then
+            cornername = _name
+            self:T("Corner1 = ".._name)
+          end
+          if zone:IsVec2InZone(corner2) then
+            cornername2 = _name
+            self:T("Corner2 = ".._name)
+          end
+          if cornername and cornername2 and connect == true then
+            self:AddRoutesManually(cornername,cornername2,Color,Linetype,self.debug)
+          end
+        end
+      end
+    end
+  end
+  return allin, filled, unfilled
 end
 
 ---------------------------------------------------------------------------------------------------------------
