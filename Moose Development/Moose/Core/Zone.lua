@@ -3641,7 +3641,7 @@ do -- ZONE_ELASTIC
   end
 
 
-  --- Create a convec hull.
+  --- Create a convex hull.
   -- @param #ZONE_ELASTIC self
   -- @param #table pl Points
   -- @return #table Points
