@@ -1226,10 +1226,8 @@ function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume,
     self.instructsrsQ = MSRSQUEUE:New("INSTRUCT")
 
     if PathToGoogleKey then
-      self.controlmsrs:SetProviderOptionsGoogle(PathToGoogleKey,PathToGoogleKey)
-      self.controlmsrs:SetProvider(MSRS.Provider.GOOGLE)
-      self.instructmsrs:SetProviderOptionsGoogle(PathToGoogleKey,PathToGoogleKey)
-      self.instructmsrs:SetProvider(MSRS.Provider.GOOGLE)
+      self.controlmsrs:SetGoogle(PathToGoogleKey)
+      self.instructmsrs:SetGoogle(PathToGoogleKey)
     end
 
   else
