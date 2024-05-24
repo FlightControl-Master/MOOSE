@@ -74,7 +74,7 @@
 -- @image Designation.JPG
 --
 -- Date: 24 Oct 2021
--- Last Update: Jan 2024
+-- Last Update: May 2024
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
@@ -88,6 +88,7 @@
 -- @field #table LaserCodes
 -- @field #table playermenus
 -- @field #boolean smokemenu
+-- @field #boolean threatmenu
 -- @extends Ops.Intel#INTEL
 
 ---
@@ -117,7 +118,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.23"
+AUTOLASE.version = "0.1.25"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -205,6 +206,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self:SetLaserCodes( { 1688, 1130, 4785, 6547, 1465, 4578 } ) -- set self.LaserCodes
   self.playermenus = {}
   self.smokemenu = true
+  self.threatmenu = true
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -337,6 +339,13 @@ function AUTOLASE:SetPilotMenu()
           local smoketext = string.format("Switch smoke targets to %s",smoke)
           local smokemenu = MENU_GROUP_COMMAND:New(Group,smoketext,lasetopm,self.SetSmokeTargets,self,(not self.smoketargets))
         end
+       if self.threatmenu then
+           local threatmenutop = MENU_GROUP:New(Group,"Set min lasing threat",lasetopm)
+           for i=0,10,2 do
+            local text = "Threatlevel "..tostring(i)
+            local threatmenu = MENU_GROUP_COMMAND:New(Group,text,threatmenutop,self.SetMinThreatLevel,self,i)
+           end
+       end
         for _,_grp in pairs(self.RecceSet.Set) do
           local grp = _grp -- Wrapper.Group#GROUP
           local unit = grp:GetUnit(1)
@@ -602,6 +611,21 @@ function AUTOLASE:DisableSmokeMenu()
   return self
 end
 
+--- (User) Show the "Switch min threat lasing..." menu entry for pilots. On by default.
+-- @param #AUTOLASE self
+-- @return #AUTOLASE self 
+function AUTOLASE:EnableThreatLevelMenu()
+  self.threatmenu = true
+  return self
+end
+
+--- (User) Do not show the "Switch min threat lasing..." menu entry for pilots.
+-- @param #AUTOLASE self
+-- @return #AUTOLASE self 
+function AUTOLASE:DisableThreatLevelMenu()
+  self.threatmenu = false
+  return self
+end
 
 --- (Internal) Function to calculate line of sight.
 -- @param #AUTOLASE self
@@ -730,6 +754,7 @@ function AUTOLASE:ShowStatus(Group,Unit)
       report:Add(string.format("Recce %s has code %d",name,code))
     end
   end
+  report:Add(string.format("Lasing min threat level %d",self.minthreatlevel))
   local lines = 0
   for _ind,_entry in pairs(self.CurrentLasing) do
     local entry = _entry -- #AUTOLASE.LaserSpot
