@@ -74,7 +74,7 @@
 -- @image Designation.JPG
 --
 -- Date: 24 Oct 2021
--- Last Update: Jan 2024
+-- Last Update: May 2024
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
@@ -118,7 +118,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.24"
+AUTOLASE.version = "0.1.25"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -754,6 +754,7 @@ function AUTOLASE:ShowStatus(Group,Unit)
       report:Add(string.format("Recce %s has code %d",name,code))
     end
   end
+  report:Add(string.format("Lasing min threat level %d",self.minthreatlevel))
   local lines = 0
   for _ind,_entry in pairs(self.CurrentLasing) do
     local entry = _entry -- #AUTOLASE.LaserSpot
