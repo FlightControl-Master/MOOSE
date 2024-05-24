@@ -495,7 +495,7 @@ ATIS.Alphabet = {
 -- @field #number TheChannel -10° (West).
 -- @field #number Syria +5° (East).
 -- @field #number MarianaIslands +2° (East).
--- @field #number SinaiMao +5° (East).
+-- @field #number SinaiMap +5° (East).
 ATIS.RunwayM2T = {
   Caucasus = 0,
   Nevada = 12,
@@ -1085,6 +1085,55 @@ end
 function ATIS:SetSoundfilesPath( path )
   self.soundpath = tostring( path or "ATIS Soundfiles/" )
   self:T( self.lid .. string.format( "Setting sound files path to %s", self.soundpath ) )
+  return self
+end
+
+--- Set the path to the csv file that contains information about the used sound files.
+-- @param #ATIS self
+-- @param #string csvfile Full path to the csv file on your local disk (not in the miz file).
+-- @return #ATIS self
+function ATIS:SetSoundfilesInfoFile( csvfile )
+
+  --- Local function to return the ATIS.Soundfile for a given file name
+  local function getSound(filename)
+    for key,_soundfile in pairs(ATIS.Sound) do
+      local soundfile=_soundfile --#ATIS.Soundfile
+      if filename==soundfile.filename then
+        return soundfile
+      end      
+    end
+    return nil
+  end
+
+  local data=UTILS.ReadCSV(csvfile)
+  
+  if data then
+  
+  
+    env.info("FF sound info")
+    
+    local soundfiles={}
+    
+    for i,soundinfo in pairs(data) do
+      local sound=soundinfo  --#Soundinfo
+      
+      local soundfile=getSound(sound.filename..".ogg") --#ATIS.Soundfile
+      
+      if soundfile then
+      
+        -- Set duration
+        soundfile.duration=soundinfo.duration
+
+      else
+        self:E(string.format("ERROR: Could not get info for sound file %s", sound.filename))
+      end
+      
+    end
+  else
+    self:E("ERROR: Could not read sound csv file!")    
+  end
+
+
   return self
 end
 

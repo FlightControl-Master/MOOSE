@@ -3966,6 +3966,11 @@ function UTILS.ReadCSV(filename)
   
   local lines=UTILS.Split(data, "\n" )
   
+  -- Remove carriage returns from end of lines
+  for _,line in pairs(lines) do
+    line=string.gsub(line, "[\n\r]","")
+  end
+  
   local sep=";"
   
   local columns=UTILS.Split(lines[1], sep)
@@ -3977,11 +3982,12 @@ function UTILS.ReadCSV(filename)
   
   local csvdata={}  
   for i, line in pairs(lines) do
+    line=string.gsub(line, "[\n\r]","")
   
     local row={}
     for j, value in pairs(UTILS.Split(line, sep)) do
     
-      local key=columns[j]
+      local key=string.gsub(columns[j], "[\n\r]","")
     
       
       --env.info(string.format("i=%d, j=%d key=%s value=%s", i,j, key, value))

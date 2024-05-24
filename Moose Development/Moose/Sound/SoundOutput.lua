@@ -249,6 +249,9 @@ do -- Sound File
   -- @param #string Duration Duration in seconds. Default 3 seconds.
   -- @return #SOUNDFILE self
   function SOUNDFILE:SetDuration(Duration)
+    if Duration and type(Duration)=="string" then
+      Duration=tonumber(Duration)
+    end
     self.duration=Duration or 3
     return self
   end  
