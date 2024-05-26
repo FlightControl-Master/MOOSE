@@ -1122,7 +1122,9 @@ function ATIS:SetSoundfilesInfoFile( csvfile )
       if soundfile then
       
         -- Set duration
-        soundfile.duration=soundinfo.duration
+        soundfile.duration=tonumber(soundinfo.duration)
+        
+        self:I(soundfile)
 
       else
         self:E(string.format("ERROR: Could not get info for sound file %s", sound.filename))

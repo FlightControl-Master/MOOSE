@@ -268,7 +268,7 @@ function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval, 
     return nil
   end
   if type(duration)~="number" then
-    self:E(self.lid.."ERROR: Duration specified is NOT a number.")
+    self:E(self.lid..string.format("ERROR: Duration specified is NOT a number but type=%s. Filename=%s, duration=%s", type(duration), tostring(filename), tostring(duration)))
     return nil    
   end
   
