@@ -722,35 +722,35 @@ AIRBASE.Sinai = {
 
 --- Airbases of the Kola map
 -- 
+-- * AIRBASE.Kola.Banak
 -- * AIRBASE.Kola.Bas_100
 -- * AIRBASE.Kola.Bodo
 -- * AIRBASE.Kola.Jokkmokk
 -- * AIRBASE.Kola.Kalixfors
 -- * AIRBASE.Kola.Kemi_Tornio
 -- * AIRBASE.Kola.Kiruna
--- * AIRBASE.Kola.Lakselv
 -- * AIRBASE.Kola.Monchegorsk
 -- * AIRBASE.Kola.Murmansk_International
--- * AIRBASE.Kola.Olenegorsk
+-- * AIRBASE.Kola.Olenya
 -- * AIRBASE.Kola.Rovaniemi
--- * AIRBASE.Kola.Severomorsk1
--- * AIRBASE.Kola.Severomorsk3
+-- * AIRBASE.Kola.Severomorsk_1
+-- * AIRBASE.Kola.Severomorsk_3
 -- 
 -- @field Kola
 AIRBASE.Kola = {
+  ["Banak"] = "Banak",
   ["Bas_100"] = "Bas 100",
   ["Bodo"] = "Bodo",
   ["Jokkmokk"] = "Jokkmokk",
   ["Kalixfors"] = "Kalixfors",
   ["Kemi_Tornio"] = "Kemi Tornio",
   ["Kiruna"] = "Kiruna",
-  ["Lakselv"] = "Lakselv",
   ["Monchegorsk"] = "Monchegorsk",
   ["Murmansk_International"] = "Murmansk International",
-  ["Olenegorsk"] = "Olenegorsk",
+  ["Olenya"] = "Olenya",
   ["Rovaniemi"] = "Rovaniemi",
-  ["Severomorsk1"] = "Severomorsk1",
-  ["Severomorsk3"] = "Severomorsk3",
+  ["Severomorsk_1"] = "Severomorsk-1",
+  ["Severomorsk_3"] = "Severomorsk-3",
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
