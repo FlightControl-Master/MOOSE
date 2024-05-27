@@ -2123,10 +2123,12 @@ function PLAYERTASKCONTROLLER:_GetPlayerName(Client)
   local ttsplayername = nil
   if not self.customcallsigns[playername] then
     local playergroup = Client:GetGroup()
-    ttsplayername = playergroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
-    local newplayername = self:_GetTextForSpeech(ttsplayername)
-    self.customcallsigns[playername] = newplayername
-    ttsplayername = newplayername
+    if playergroup ~= nil then
+      ttsplayername = playergroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+      local newplayername = self:_GetTextForSpeech(ttsplayername)
+      self.customcallsigns[playername] = newplayername
+      ttsplayername = newplayername
+    end
   else
     ttsplayername = self.customcallsigns[playername]
   end
