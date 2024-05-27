@@ -170,7 +170,8 @@ function MENU_INDEX:Refresh( Group )
 end
 
 do -- MENU_BASE
-  --- @type MENU_BASE
+    ---
+  -- @type MENU_BASE
   -- @extends Core.Base#BASE
   --- Defines the main MENU class where other MENU classes are derived from.
   -- This is an abstract class, so don't use it.
@@ -210,6 +211,7 @@ do -- MENU_BASE
 
     return self
   end
+  
   function MENU_BASE:SetParentMenu( MenuText, Menu )
     if self.ParentMenu then
       self.ParentMenu.Menus = self.ParentMenu.Menus or {}
@@ -281,8 +283,10 @@ do -- MENU_BASE
   end
 
 end
-do -- MENU_COMMAND_BASE
-  --- @type MENU_COMMAND_BASE
+do 
+  ---
+  -- MENU_COMMAND_BASE
+  -- @type MENU_COMMAND_BASE
   -- @field #function MenuCallHandler
   -- @extends Core.Menu#MENU_BASE
 
@@ -347,8 +351,10 @@ do -- MENU_COMMAND_BASE
   end
 end
 
-do -- MENU_MISSION
-  --- @type MENU_MISSION
+do 
+  ---
+  -- MENU_MISSION
+  -- @type MENU_MISSION
   -- @extends Core.Menu#MENU_BASE
   --- Manages the main menus for a complete mission.
   --
@@ -513,8 +519,9 @@ do -- MENU_MISSION_COMMAND
     return self
   end
 end
-do -- MENU_COALITION
-  --- @type MENU_COALITION
+do 
+  --- MENU_COALITION
+  -- @type MENU_COALITION
   -- @extends Core.Menu#MENU_BASE
 
   --- Manages the main menus for DCS.coalition.
@@ -639,9 +646,10 @@ do -- MENU_COALITION
     return self
   end
 end
-do -- MENU_COALITION_COMMAND
+do 
 
-  --- @type MENU_COALITION_COMMAND
+  --- MENU_COALITION_COMMAND
+  -- @type MENU_COALITION_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
 
   --- Manages the command menus for coalitions, which allow players to execute functions during mission execution.
@@ -729,8 +737,11 @@ do
   -- So every menu for a client created must be tracked so that program logic accidentally does not create.
   -- the same menus twice during initialization logic.
   -- These menu classes are handling this logic with this variable.
+  
   local _MENUGROUPS = {}
-  --- @type MENU_GROUP
+  
+  ---
+  -- @type MENU_GROUP
   -- @extends Core.Menu#MENU_BASE
 
 
@@ -761,7 +772,7 @@ do
   --    MenuStatus[MenuGroupName]:Remove()
   --  end
   --
-  --  --- @param Wrapper.Group#GROUP MenuGroup
+  --  -- @param Wrapper.Group#GROUP MenuGroup
   --  local function AddStatusMenu( MenuGroup )
   --    local MenuGroupName = MenuGroup:GetName()
   --    -- This would create a menu for the red coalition under the MenuCoalitionRed menu object.
@@ -902,9 +913,9 @@ do
 
     return self
   end
-
-
-  --- @type MENU_GROUP_COMMAND
+  
+  ---
+  -- @type MENU_GROUP_COMMAND
   -- @extends Core.Menu#MENU_COMMAND_BASE
 
   --- The @{Core.Menu#MENU_GROUP_COMMAND} class manages the command menus for coalitions, which allow players to execute functions during mission execution.
@@ -987,7 +998,8 @@ do
 end
 --- MENU_GROUP_DELAYED
 do
-  --- @type MENU_GROUP_DELAYED
+  ---
+  -- @type MENU_GROUP_DELAYED
   -- @extends Core.Menu#MENU_BASE
 
 
@@ -1038,6 +1050,7 @@ do
   -- @param #MENU_GROUP_DELAYED self
   -- @return #MENU_GROUP_DELAYED
   function MENU_GROUP_DELAYED:Set()
+    if not self.GroupID then return end
     do
       if not self.MenuSet then
         missionCommands.addSubMenuForGroup( self.GroupID, self.MenuText, self.MenuParentPath )
@@ -1109,9 +1122,9 @@ do
 
     return self
   end
-
-
-  --- @type MENU_GROUP_COMMAND_DELAYED
+  
+  ---
+  -- @type MENU_GROUP_COMMAND_DELAYED
   -- @extends Core.Menu#MENU_COMMAND_BASE
 
   --- Manages the command menus for coalitions, which allow players to execute functions during mission execution.
