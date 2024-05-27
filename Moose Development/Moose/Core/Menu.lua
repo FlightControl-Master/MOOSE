@@ -1050,6 +1050,7 @@ do
   -- @param #MENU_GROUP_DELAYED self
   -- @return #MENU_GROUP_DELAYED
   function MENU_GROUP_DELAYED:Set()
+    if not self.GroupID then return end
     do
       if not self.MenuSet then
         missionCommands.addSubMenuForGroup( self.GroupID, self.MenuText, self.MenuParentPath )

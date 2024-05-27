@@ -20,7 +20,7 @@
 -- 
 -- @module Core.ClientMenu
 -- @image Core_Menu.JPG
--- last change: Apr 2024
+-- last change: May 2024
 
 -- TODO
 ----------------------------------------------------------------------------------------------------------------
@@ -691,7 +691,7 @@ function CLIENTMENUMANAGER:Propagate(Client)
     local client = _client -- Wrapper.Client#CLIENT
     if client and client:IsAlive() then
       local playerunit = client:GetName()
-      local playergroup = client:GetGroup()
+      --local playergroup = client:GetGroup()
       local playername = client:GetPlayerName() or "none"
       if not knownunits[playerunit] then
         knownunits[playerunit] = true
