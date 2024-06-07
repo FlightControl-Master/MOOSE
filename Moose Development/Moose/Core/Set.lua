@@ -1516,6 +1516,7 @@ do
       self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnDeadOrCrash )
       if self.Filter.Zones then
         self.ZoneTimer = TIMER:New(self._ContinousZoneFilter,self)
         local timing = self.ZoneTimerInterval or 30

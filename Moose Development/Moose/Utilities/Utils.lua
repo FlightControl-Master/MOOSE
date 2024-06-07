@@ -2249,6 +2249,11 @@ function UTILS.IsLoadingDoorOpen( unit_name )
         return true
       end
       
+      if type_name == " OH-58D" and (unit:getDrawArgumentValue(35) > 0 or unit:getDrawArgumentValue(421) == -1) then
+        BASE:T(unit_name .. " cargo door is open")
+        return true
+      end
+      
       return false
 
   end -- nil
