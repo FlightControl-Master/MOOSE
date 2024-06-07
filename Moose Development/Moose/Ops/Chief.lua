@@ -1078,6 +1078,13 @@ function CHIEF:SetStrategy(Strategy)
   return self
 end
 
+--- Get current strategy.
+-- @param #CHIEF self
+-- @return #string Strategy.
+function CHIEF:GetStrategy()
+  return self.strategy
+end
+
 --- Get defence condition.
 -- @param #CHIEF self
 -- @param #string Current Defence condition. See @{#CHIEF.DEFCON}, e.g. `CHIEF.DEFCON.RED`.
