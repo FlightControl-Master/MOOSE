@@ -897,6 +897,7 @@ ATIS.version = "1.0.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Correct fog for elevation.
+-- TODO: Generalize sound files input to be able to use custom made sounds.
 -- DONE: Option to add multiple frequencies for SRS
 -- DONE: Zulu time --> Zulu in output.
 -- DONE: Fix for AB not having a runway - Helopost like Naqoura
@@ -1089,8 +1090,9 @@ function ATIS:SetSoundfilesPath( path )
 end
 
 --- Set the path to the csv file that contains information about the used sound files.
+-- The parameter file has to be located on your local disk (**not** inside the miz file).
 -- @param #ATIS self
--- @param #string csvfile Full path to the csv file on your local disk (not in the miz file).
+-- @param #string csvfile Full path to the csv file on your local disk.
 -- @return #ATIS self
 function ATIS:SetSoundfilesInfoFile( csvfile )
 
@@ -1100,31 +1102,25 @@ function ATIS:SetSoundfilesInfoFile( csvfile )
       local soundfile=_soundfile --#ATIS.Soundfile
       if filename==soundfile.filename then
         return soundfile
-      end      
+      end
     end
     return nil
   end
 
+  -- Read csv file
   local data=UTILS.ReadCSV(csvfile)
   
   if data then
-  
-  
-    env.info("FF sound info")
-    
-    local soundfiles={}
-    
-    for i,soundinfo in pairs(data) do
-      local sound=soundinfo  --#Soundinfo
+
+    for i,sound in pairs(data) do
       
+      -- Get the ATIS.Soundfile
       local soundfile=getSound(sound.filename..".ogg") --#ATIS.Soundfile
       
       if soundfile then
       
         -- Set duration
-        soundfile.duration=tonumber(soundinfo.duration)
-        
-        self:I(soundfile)
+        soundfile.duration=tonumber(sound.duration)
 
       else
         self:E(string.format("ERROR: Could not get info for sound file %s", sound.filename))
@@ -1132,7 +1128,7 @@ function ATIS:SetSoundfilesInfoFile( csvfile )
       
     end
   else
-    self:E("ERROR: Could not read sound csv file!")    
+    self:E(string.format("ERROR: Could not read sound csv file!"))
   end
 
 
@@ -2619,13 +2615,10 @@ function ATIS:onafterBroadcast( From, Event, To )
     local subtitle = ""
     if runwayLanding then
       local actrun = self.gettext:GetEntry("ACTIVELANDING",self.locale)
-      --subtitle=string.format("Active runway landing %s", runwayLanding)
       subtitle=string.format("%s %s", actrun, runwayLanding)
       if rwyLandingLeft==true then
-        --subtitle=subtitle.." Left"
         subtitle=subtitle.." "..self.gettext:GetEntry("LEFT",self.locale)
       elseif rwyLandingLeft==false then
-        --subtitle=subtitle.." Right"
         subtitle=subtitle.." "..self.gettext:GetEntry("RIGHT",self.locale)
       end
       alltext = alltext .. ";\n" .. subtitle
@@ -2698,6 +2691,7 @@ function ATIS:onafterBroadcast( From, Event, To )
       alltext = alltext .. ";\n" .. subtitle
     end
   end
+  
   -- Airfield elevation
   if self.elevation then
     

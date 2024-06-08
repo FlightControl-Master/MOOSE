@@ -485,7 +485,6 @@ end
 --- Check radio queue for transmissions to be broadcasted.
 -- @param #RADIOQUEUE self
 function RADIOQUEUE:_CheckRadioQueue()
-  env.info("FF check radio queue "..self.alias)
 
   -- Check if queue is empty.
   if #self.queue==0 then

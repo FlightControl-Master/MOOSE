@@ -7,7 +7,7 @@
 -- Implementation is based on the [Simple Range Script](https://forums.eagle.ru/showthread.php?t=157991) by Ciribob, which itself was motivated
 -- by a script by SNAFU [see here](https://forums.eagle.ru/showthread.php?t=109174).
 --
--- [476th - Air Weapons Range Objects mod](http://www.476vfightergroup.com/downloads.php?do=file&id=287) is highly recommended for this class.
+-- [476th - Air Weapons Range Objects mod](https://www.476vfightergroup.com/downloads.php?do=download&downloadid=482) is highly recommended for this class.
 --
 -- **Main Features:**
 --
