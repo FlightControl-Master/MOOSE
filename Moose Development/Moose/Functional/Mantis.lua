@@ -509,7 +509,8 @@ do
     -- DONE: Treat Awacs separately, since they might be >80km off site
     -- DONE: Allow tables of prefixes for the setup
     -- DONE: Auto-Mode with range setups for various known SAM types.
-
+    
+    self.name = name or "mymantis"
     self.SAM_Templates_Prefix = samprefix or "Red SAM"
     self.EWR_Templates_Prefix = ewrprefix or "Red EWR"
     self.HQ_Template_CC = hq or nil
@@ -638,7 +639,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.17"
+    self.version="0.8.18"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
