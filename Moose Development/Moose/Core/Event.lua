@@ -1301,7 +1301,7 @@ function EVENT:onEvent( Event )
           -- STATIC
           ---
           Event.TgtDCSUnit = Event.target
-          if Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object
+          if Event.target.isExist and Event.target:isExist() and Event.id ~= 33 then -- leave out ejected seat object, check that isExist exists (Kiowa Hellfire issue, Special K)
             Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
             -- Workaround for borked target info on cruise missiles
             if Event.TgtDCSUnitName and Event.TgtDCSUnitName ~= "" then
