@@ -1250,11 +1250,12 @@ CTLD.UnitTypeCapabilities = {
     ["AH-64D_BLK_II"] = {type="AH-64D_BLK_II", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 17, cargoweightlimit = 200}, -- 2 ppl **outside** the helo
     ["Bronco-OV-10A"] = {type="Bronco-OV-10A", crates= false, troops=true, cratelimit = 0, trooplimit = 5, length = 13, cargoweightlimit = 1450},
     ["OH-6A"] = {type="OH-6A", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 7, cargoweightlimit = 550},
+    ["OH-58D"] = {type="OH-58D", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 14, cargoweightlimit = 400},
 }
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.53"
+CTLD.version="1.0.54"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self

@@ -509,10 +509,10 @@ function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,G
   end
   
   _MESSAGESRS.label = Label or MSRS.Label or "MESSAGE"
-  _MESSAGESRS.MSRS:SetLabel(Label or "MESSAGE")
+  _MESSAGESRS.MSRS:SetLabel(_MESSAGESRS.label)
 
   _MESSAGESRS.port = Port or MSRS.port or 5002
-  _MESSAGESRS.MSRS:SetPort(Port or 5002)
+  _MESSAGESRS.MSRS:SetPort(_MESSAGESRS.port)
 
   _MESSAGESRS.volume = Volume or MSRS.volume or 1
   _MESSAGESRS.MSRS:SetVolume(_MESSAGESRS.volume)

@@ -3076,9 +3076,25 @@ function ZONE_POLYGON:NewFromDrawing(DrawingName)
                     -- points for the drawings are saved in local space, so add the object's map x and y coordinates to get
                     -- world space points we can use
                     for _, point in UTILS.spairs(object["points"]) do
+                        -- check if we want to skip adding a point
+                        local skip = false
                         local p = {x = object["mapX"] + point["x"],
                                    y = object["mapY"] + point["y"] }
-                        table.add(points, p)
+
+                        -- Check if the same coordinates already exist in the list, skip if they do
+                        -- This can happen when drawing a Polygon in Free mode, DCS adds points on
+                        -- top of each other that are in the `mission` file, but not visible in the
+                        -- Mission Editor
+                        for _, pt in pairs(points) do
+                            if pt.x == p.x and pt.y == p.y then
+                                skip = true
+                            end
+                        end
+
+                        -- if it's a unique point, add it
+                        if not skip then
+                            table.add(points, p)
+                        end
                     end
                 elseif object["polygonMode"] == "rect" then
                     -- the points for a rect are saved as local coordinates with an angle. To get the world space points from this
@@ -3096,6 +3112,7 @@ function ZONE_POLYGON:NewFromDrawing(DrawingName)
 
                     points = {p1, p2, p3, p4}
                 else
+                    -- bring the Arrow code over from Shape/Polygon
                     -- something else that might be added in the future
                 end
             end
