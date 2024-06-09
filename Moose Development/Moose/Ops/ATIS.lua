@@ -618,6 +618,8 @@ ATIS.ICAOPhraseology = {
 -- @field #ATIS.Soundfile VORFrequency
 ATIS.Sound = {
   ActiveRunway = { filename = "ActiveRunway.ogg", duration = 0.99 },
+  ActiveRunwayDeparture = { filename = "ActiveRunwayDeparture.ogg", duration = 0.99 },
+  ActiveRunwayArrival = { filename = "ActiveRunwayArrival.ogg", duration = 0.99 },
   AdviceOnInitial = { filename = "AdviceOnInitial.ogg", duration = 3.00 },
   Airport = { filename = "Airport.ogg", duration = 0.66 },
   Altimeter = { filename = "Altimeter.ogg", duration = 0.68 },
@@ -1098,7 +1100,7 @@ function ATIS:SetSoundfilesInfoFile( csvfile )
 
   --- Local function to return the ATIS.Soundfile for a given file name
   local function getSound(filename)
-    for key,_soundfile in pairs(ATIS.Sound) do
+    for key,_soundfile in pairs(self.Sound) do
       local soundfile=_soundfile --#ATIS.Soundfile
       if filename==soundfile.filename then
         return soundfile
@@ -1700,16 +1702,16 @@ function ATIS:onafterStart( From, Event, To )
     self.radioqueue:SetRadioPower( self.power )
 
     -- Init numbers.
-    self.radioqueue:SetDigit( 0, ATIS.Sound.N0.filename, ATIS.Sound.N0.duration, self.soundpath )
-    self.radioqueue:SetDigit( 1, ATIS.Sound.N1.filename, ATIS.Sound.N1.duration, self.soundpath )
-    self.radioqueue:SetDigit( 2, ATIS.Sound.N2.filename, ATIS.Sound.N2.duration, self.soundpath )
-    self.radioqueue:SetDigit( 3, ATIS.Sound.N3.filename, ATIS.Sound.N3.duration, self.soundpath )
-    self.radioqueue:SetDigit( 4, ATIS.Sound.N4.filename, ATIS.Sound.N4.duration, self.soundpath )
-    self.radioqueue:SetDigit( 5, ATIS.Sound.N5.filename, ATIS.Sound.N5.duration, self.soundpath )
-    self.radioqueue:SetDigit( 6, ATIS.Sound.N6.filename, ATIS.Sound.N6.duration, self.soundpath )
-    self.radioqueue:SetDigit( 7, ATIS.Sound.N7.filename, ATIS.Sound.N7.duration, self.soundpath )
-    self.radioqueue:SetDigit( 8, ATIS.Sound.N8.filename, ATIS.Sound.N8.duration, self.soundpath )
-    self.radioqueue:SetDigit( 9, ATIS.Sound.N9.filename, ATIS.Sound.N9.duration, self.soundpath )
+    self.radioqueue:SetDigit( 0, self.Sound.N0.filename, self.Sound.N0.duration, self.soundpath )
+    self.radioqueue:SetDigit( 1, self.Sound.N1.filename, self.Sound.N1.duration, self.soundpath )
+    self.radioqueue:SetDigit( 2, self.Sound.N2.filename, self.Sound.N2.duration, self.soundpath )
+    self.radioqueue:SetDigit( 3, self.Sound.N3.filename, self.Sound.N3.duration, self.soundpath )
+    self.radioqueue:SetDigit( 4, self.Sound.N4.filename, self.Sound.N4.duration, self.soundpath )
+    self.radioqueue:SetDigit( 5, self.Sound.N5.filename, self.Sound.N5.duration, self.soundpath )
+    self.radioqueue:SetDigit( 6, self.Sound.N6.filename, self.Sound.N6.duration, self.soundpath )
+    self.radioqueue:SetDigit( 7, self.Sound.N7.filename, self.Sound.N7.duration, self.soundpath )
+    self.radioqueue:SetDigit( 8, self.Sound.N8.filename, self.Sound.N8.duration, self.soundpath )
+    self.radioqueue:SetDigit( 9, self.Sound.N9.filename, self.Sound.N9.duration, self.soundpath )
 
     -- Start radio queue.
     self.radioqueue:Start( 1, 0.1 )
@@ -2194,36 +2196,36 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   -- No cloud info for dynamic weather.
   local CloudCover = {} -- #ATIS.Soundfile
-  CloudCover = ATIS.Sound.CloudsNotAvailable
+  CloudCover = self.Sound.CloudsNotAvailable
   --local CLOUDSsub = "Cloud coverage information not available"
   local CLOUDSsub = self.gettext:GetEntry("NOCLOUDINFO",self.locale)
   -- Only valid for static weather.
   if static then
     if clouddens >= 9 then
       -- Overcast 9,10
-      CloudCover = ATIS.Sound.CloudsOvercast
+      CloudCover = self.Sound.CloudsOvercast
       --CLOUDSsub = "Overcast"
       CLOUDSsub = self.gettext:GetEntry("OVERCAST",self.locale)
     elseif clouddens >= 7 then
       -- Broken 7,8
-      CloudCover = ATIS.Sound.CloudsBroken
+      CloudCover = self.Sound.CloudsBroken
       --CLOUDSsub = "Broken clouds"
       CLOUDSsub = self.gettext:GetEntry("BROKEN",self.locale)
     elseif clouddens >= 4 then
       -- Scattered 4,5,6
-      CloudCover = ATIS.Sound.CloudsScattered
+      CloudCover = self.Sound.CloudsScattered
       --CLOUDSsub = "Scattered clouds"
       CLOUDSsub = self.gettext:GetEntry("SCATTERED",self.locale)
     elseif clouddens >= 1 then
       -- Few 1,2,3
-      CloudCover = ATIS.Sound.CloudsFew
+      CloudCover = self.Sound.CloudsFew
       --CLOUDSsub = "Few clouds"
       CLOUDSsub = self.gettext:GetEntry("FEWCLOUDS",self.locale)
     else
       -- No clouds
       CLOUDBASE = nil
       CLOUDCEIL = nil
-      CloudCover = ATIS.Sound.CloudsNo
+      CloudCover = self.Sound.CloudsNo
       --CLOUDSsub = "No clouds"
       CLOUDSsub = self.gettext:GetEntry("NOCLOUDS",self.locale)
     end
@@ -2257,7 +2259,7 @@ function ATIS:onafterBroadcast( From, Event, To )
   subtitle = string.format( "%s %s", information, NATO )
   local _INFORMATION = subtitle
   if not self.useSRS then
-    self:Transmission( ATIS.Sound.Information, 0.5, subtitle )
+    self:Transmission( self.Sound.Information, 0.5, subtitle )
     self.radioqueue:NewTransmission( string.format( "NATO Alphabet/%s.ogg", NATO ), 0.75, self.soundpath )
   end
   alltext = alltext .. ";\n" .. subtitle
@@ -2266,7 +2268,7 @@ function ATIS:onafterBroadcast( From, Event, To )
   subtitle = string.format( "%s Zulu", ZULU )
   if not self.useSRS then
     self.radioqueue:Number2Transmission( ZULU, nil, 0.5 )
-    self:Transmission( ATIS.Sound.Zulu, 0.2, subtitle )
+    self:Transmission( self.Sound.Zulu, 0.2, subtitle )
   end
   alltext = alltext .. ";\n" .. subtitle
 
@@ -2277,9 +2279,9 @@ function ATIS:onafterBroadcast( From, Event, To )
     --subtitle = string.format( "Sunrise at %s local time", SUNRISE )
     subtitle = string.format( sunrise, SUNRISE )
     if not self.useSRS then
-      self:Transmission( ATIS.Sound.SunriseAt, 0.5, subtitle )
+      self:Transmission( self.Sound.SunriseAt, 0.5, subtitle )
       self.radioqueue:Number2Transmission( SUNRISE, nil, 0.2 )
-      self:Transmission( ATIS.Sound.TimeLocal, 0.2 )
+      self:Transmission( self.Sound.TimeLocal, 0.2 )
     end
     alltext = alltext .. ";\n" .. subtitle
 
@@ -2288,9 +2290,9 @@ function ATIS:onafterBroadcast( From, Event, To )
     --subtitle = string.format( "Sunset at %s local time", SUNSET )
     subtitle = string.format( sunset, SUNSET )
     if not self.useSRS then
-      self:Transmission( ATIS.Sound.SunsetAt, 0.5, subtitle )
+      self:Transmission( self.Sound.SunsetAt, 0.5, subtitle )
       self.radioqueue:Number2Transmission( SUNSET, nil, 0.5 )
-      self:Transmission( ATIS.Sound.TimeLocal, 0.2 )
+      self:Transmission( self.Sound.TimeLocal, 0.2 )
     end
     alltext = alltext .. ";\n" .. subtitle
   end
@@ -2315,17 +2317,17 @@ function ATIS:onafterBroadcast( From, Event, To )
   end
   local _WIND = subtitle
   if not self.useSRS then
-    self:Transmission( ATIS.Sound.WindFrom, 1.0, subtitle )
+    self:Transmission( self.Sound.WindFrom, 1.0, subtitle )
     self.radioqueue:Number2Transmission( WINDFROM )
-    self:Transmission( ATIS.Sound.At, 0.2 )
+    self:Transmission( self.Sound.At, 0.2 )
     self.radioqueue:Number2Transmission( WINDSPEED )
     if self.metric then
-      self:Transmission( ATIS.Sound.MetersPerSecond, 0.2 )
+      self:Transmission( self.Sound.MetersPerSecond, 0.2 )
     else
-      self:Transmission( ATIS.Sound.Knots, 0.2 )
+      self:Transmission( self.Sound.Knots, 0.2 )
     end
     if turbulence > 0 then
-      self:Transmission( ATIS.Sound.Gusting, 0.2 )
+      self:Transmission( self.Sound.Gusting, 0.2 )
     end
   end
   alltext = alltext .. ";\n" .. subtitle
@@ -2341,12 +2343,12 @@ function ATIS:onafterBroadcast( From, Event, To )
     subtitle = string.format( visi, VISIBILITY )
   end
   if not self.useSRS then
-    self:Transmission( ATIS.Sound.Visibilty, 1.0, subtitle )
+    self:Transmission( self.Sound.Visibilty, 1.0, subtitle )
     self.radioqueue:Number2Transmission( VISIBILITY )
     if self.metric then
-      self:Transmission( ATIS.Sound.Kilometers, 0.2 )
+      self:Transmission( self.Sound.Kilometers, 0.2 )
     else
-      self:Transmission( ATIS.Sound.StatuteMiles, 0.2 )
+      self:Transmission( self.Sound.StatuteMiles, 0.2 )
     end
   end
   alltext = alltext .. ";\n" .. subtitle
@@ -2397,21 +2399,21 @@ function ATIS:onafterBroadcast( From, Event, To )
     --subtitle = string.format( "Weather phenomena: %s", wpsub )
     subtitle = string.format( "%s: %s", phenos, wpsub )
     if not self.useSRS then
-      self:Transmission( ATIS.Sound.WeatherPhenomena, 1.0, subtitle )
+      self:Transmission( self.Sound.WeatherPhenomena, 1.0, subtitle )
       if precepitation == 1 then
-        self:Transmission( ATIS.Sound.Rain, 0.5 )
+        self:Transmission( self.Sound.Rain, 0.5 )
       elseif precepitation == 2 then
-        self:Transmission( ATIS.Sound.ThunderStorm, 0.5 )
+        self:Transmission( self.Sound.ThunderStorm, 0.5 )
       elseif precepitation == 3 then
-        self:Transmission( ATIS.Sound.Snow, 0.5 )
+        self:Transmission( self.Sound.Snow, 0.5 )
       elseif precepitation == 4 then
-        self:Transmission( ATIS.Sound.SnowStorm, 0.5 )
+        self:Transmission( self.Sound.SnowStorm, 0.5 )
       end
       if fog then
-        self:Transmission( ATIS.Sound.Fog, 0.5 )
+        self:Transmission( self.Sound.Fog, 0.5 )
       end
       if dust then
-        self:Transmission( ATIS.Sound.Dust, 0.5 )
+        self:Transmission( self.Sound.Dust, 0.5 )
       end
     end
     alltext = alltext .. ";\n" .. subtitle
@@ -2437,29 +2439,29 @@ function ATIS:onafterBroadcast( From, Event, To )
       subtitle = string.format( cloudbase, cbase, cceil )
     end
     if not self.useSRS then
-      self:Transmission( ATIS.Sound.CloudBase, 1.0, subtitle )
+      self:Transmission( self.Sound.CloudBase, 1.0, subtitle )
       if tonumber( CLOUDBASE1000 ) > 0 then
         self.radioqueue:Number2Transmission( CLOUDBASE1000 )
-        self:Transmission( ATIS.Sound.Thousand, 0.1 )
+        self:Transmission( self.Sound.Thousand, 0.1 )
       end
       if tonumber( CLOUDBASE0100 ) > 0 then
         self.radioqueue:Number2Transmission( CLOUDBASE0100 )
-        self:Transmission( ATIS.Sound.Hundred, 0.1 )
+        self:Transmission( self.Sound.Hundred, 0.1 )
       end
       -- Ceiling
-      self:Transmission( ATIS.Sound.CloudCeiling, 0.5 )
+      self:Transmission( self.Sound.CloudCeiling, 0.5 )
       if tonumber( CLOUDCEIL1000 ) > 0 then
         self.radioqueue:Number2Transmission( CLOUDCEIL1000 )
-        self:Transmission( ATIS.Sound.Thousand, 0.1 )
+        self:Transmission( self.Sound.Thousand, 0.1 )
       end
       if tonumber( CLOUDCEIL0100 ) > 0 then
         self.radioqueue:Number2Transmission( CLOUDCEIL0100 )
-        self:Transmission( ATIS.Sound.Hundred, 0.1 )
+        self:Transmission( self.Sound.Hundred, 0.1 )
       end
       if self.metric then
-        self:Transmission( ATIS.Sound.Meters, 0.1 )
+        self:Transmission( self.Sound.Meters, 0.1 )
       else
-        self:Transmission( ATIS.Sound.Feet, 0.1 )
+        self:Transmission( self.Sound.Feet, 0.1 )
       end
     end
   end
@@ -2487,15 +2489,15 @@ function ATIS:onafterBroadcast( From, Event, To )
   end
   local _TEMPERATURE = subtitle
   if not self.useSRS then
-    self:Transmission( ATIS.Sound.Temperature, 1.0, subtitle )
+    self:Transmission( self.Sound.Temperature, 1.0, subtitle )
     if temperature < 0 then
-      self:Transmission( ATIS.Sound.Minus, 0.2 )
+      self:Transmission( self.Sound.Minus, 0.2 )
     end
     self.radioqueue:Number2Transmission( TEMPERATURE )
     if self.TDegF then
-      self:Transmission( ATIS.Sound.DegreesFahrenheit, 0.2 )
+      self:Transmission( self.Sound.DegreesFahrenheit, 0.2 )
     else
-      self:Transmission( ATIS.Sound.DegreesCelsius, 0.2 )
+      self:Transmission( self.Sound.DegreesCelsius, 0.2 )
     end
   end
   alltext = alltext .. ";\n" .. subtitle
@@ -2521,15 +2523,15 @@ function ATIS:onafterBroadcast( From, Event, To )
   end
   local _DEWPOINT = subtitle
   if not self.useSRS then
-    self:Transmission( ATIS.Sound.DewPoint, 1.0, subtitle )
+    self:Transmission( self.Sound.DewPoint, 1.0, subtitle )
     if dewpoint < 0 then
-      self:Transmission( ATIS.Sound.Minus, 0.2 )
+      self:Transmission( self.Sound.Minus, 0.2 )
     end
     self.radioqueue:Number2Transmission( DEWPOINT )
     if self.TDegF then
-      self:Transmission( ATIS.Sound.DegreesFahrenheit, 0.2 )
+      self:Transmission( self.Sound.DegreesFahrenheit, 0.2 )
     else
-      self:Transmission( ATIS.Sound.DegreesCelsius, 0.2 )
+      self:Transmission( self.Sound.DegreesCelsius, 0.2 )
     end
   end
   alltext = alltext .. ";\n" .. subtitle
@@ -2576,33 +2578,33 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   local _ALTIMETER = subtitle
   if not self.useSRS then
-    self:Transmission( ATIS.Sound.Altimeter, 1.0, subtitle )
+    self:Transmission( self.Sound.Altimeter, 1.0, subtitle )
     if not self.qnhonly then
-      self:Transmission( ATIS.Sound.QNH, 0.5 )
+      self:Transmission( self.Sound.QNH, 0.5 )
     end
     self.radioqueue:Number2Transmission( QNH[1] )
 
     if ATIS.ICAOPhraseology[UTILS.GetDCSMap()] then
-      self:Transmission( ATIS.Sound.Decimal, 0.2 )
+      self:Transmission( self.Sound.Decimal, 0.2 )
     end
     self.radioqueue:Number2Transmission( QNH[2] )
 
     if not self.qnhonly then
-      self:Transmission( ATIS.Sound.QFE, 0.75 )
+      self:Transmission( self.Sound.QFE, 0.75 )
       self.radioqueue:Number2Transmission( QFE[1] )
       if ATIS.ICAOPhraseology[UTILS.GetDCSMap()] then
-        self:Transmission( ATIS.Sound.Decimal, 0.2 )
+        self:Transmission( self.Sound.Decimal, 0.2 )
       end
       self.radioqueue:Number2Transmission( QFE[2] )
     end
 
     if self.PmmHg then
-      self:Transmission( ATIS.Sound.MillimetersOfMercury, 0.1 )
+      self:Transmission( self.Sound.MillimetersOfMercury, 0.1 )
     else
       if self.metric then
-        self:Transmission( ATIS.Sound.HectoPascal, 0.1 )
+        self:Transmission( self.Sound.HectoPascal, 0.1 )
       else
-        self:Transmission( ATIS.Sound.InchesOfMercury, 0.1 )
+        self:Transmission( self.Sound.InchesOfMercury, 0.1 )
       end
     end
   end
@@ -2614,7 +2616,9 @@ function ATIS:onafterBroadcast( From, Event, To )
     -- Active runway.
     local subtitle = ""
     if runwayLanding then
+    
       local actrun = self.gettext:GetEntry("ACTIVELANDING",self.locale)
+      
       subtitle=string.format("%s %s", actrun, runwayLanding)
       if rwyLandingLeft==true then
         subtitle=subtitle.." "..self.gettext:GetEntry("LEFT",self.locale)
@@ -2622,29 +2626,44 @@ function ATIS:onafterBroadcast( From, Event, To )
         subtitle=subtitle.." "..self.gettext:GetEntry("RIGHT",self.locale)
       end
       alltext = alltext .. ";\n" .. subtitle
-    end    
+
+      if not self.useSRS then
+        self:Transmission(self.Sound.ActiveRunwayArrival, 1.0, subtitle)
+        self.radioqueue:Number2Transmission(runwayLanding)
+        if rwyLandingLeft==true then
+          self:Transmission(self.Sound.Left, 0.2)
+        elseif rwyLandingLeft==false then
+          self:Transmission(self.Sound.Right, 0.2)
+        end
+      end
+      
+    end
+    
     if runwayTakeoff then
+    
       local actrun = self.gettext:GetEntry("ACTIVERUN",self.locale)
-      --subtitle=string.format("Active runway %s", runwayLanding)
+      
       subtitle=string.format("%s %s", actrun, runwayTakeoff)
       if rwyTakeoffLeft==true then
-        --subtitle=subtitle.." Left"
         subtitle=subtitle.." "..self.gettext:GetEntry("LEFT",self.locale)
       elseif rwyTakeoffLeft==false then
-        --subtitle=subtitle.." Right"
         subtitle=subtitle.." "..self.gettext:GetEntry("RIGHT",self.locale)
       end
+      alltext = alltext .. ";\n" .. subtitle
+      
+      if not self.useSRS then
+        self:Transmission(self.Sound.ActiveRunwayDeparture, 1.0, subtitle)
+        self.radioqueue:Number2Transmission(runwayTakeoff)
+        if rwyTakeoffLeft==true then
+          self:Transmission(self.Sound.Left, 0.2)
+        elseif rwyTakeoffLeft==false then
+          self:Transmission(self.Sound.Right, 0.2)
+        end
+      end
+      
+      
     end
     _RUNACT = subtitle
-    if not self.useSRS then
-      self:Transmission(ATIS.Sound.ActiveRunway, 1.0, subtitle)
-      self.radioqueue:Number2Transmission(runwayLanding)
-      if rwyLandingLeft==true then
-        self:Transmission(ATIS.Sound.Left, 0.2)
-      elseif rwyLandingLeft==false then
-        self:Transmission(ATIS.Sound.Right, 0.2)
-      end
-    end
     alltext = alltext .. ";\n" .. subtitle
 
     -- Runway length.
@@ -2673,19 +2692,19 @@ function ATIS:onafterBroadcast( From, Event, To )
 
       -- Transmit.
       if not self.useSRS then
-        self:Transmission( ATIS.Sound.RunwayLength, 1.0, subtitle )
+        self:Transmission( self.Sound.RunwayLength, 1.0, subtitle )
         if tonumber( L1000 ) > 0 then
           self.radioqueue:Number2Transmission( L1000 )
-          self:Transmission( ATIS.Sound.Thousand, 0.1 )
+          self:Transmission( self.Sound.Thousand, 0.1 )
         end
         if tonumber( L0100 ) > 0 then
           self.radioqueue:Number2Transmission( L0100 )
-          self:Transmission( ATIS.Sound.Hundred, 0.1 )
+          self:Transmission( self.Sound.Hundred, 0.1 )
         end
         if self.metric then
-          self:Transmission( ATIS.Sound.Meters, 0.1 )
+          self:Transmission( self.Sound.Meters, 0.1 )
         else
-          self:Transmission( ATIS.Sound.Feet, 0.1 )
+          self:Transmission( self.Sound.Feet, 0.1 )
         end
       end
       alltext = alltext .. ";\n" .. subtitle
@@ -2718,19 +2737,19 @@ function ATIS:onafterBroadcast( From, Event, To )
 
     -- Transmit.
     if not self.useSRS then
-      self:Transmission( ATIS.Sound.Elevation, 1.0, subtitle )
+      self:Transmission( self.Sound.Elevation, 1.0, subtitle )
       if tonumber( L1000 ) > 0 then
         self.radioqueue:Number2Transmission( L1000 )
-        self:Transmission( ATIS.Sound.Thousand, 0.1 )
+        self:Transmission( self.Sound.Thousand, 0.1 )
       end
       if tonumber( L0100 ) > 0 then
         self.radioqueue:Number2Transmission( L0100 )
-        self:Transmission( ATIS.Sound.Hundred, 0.1 )
+        self:Transmission( self.Sound.Hundred, 0.1 )
       end
       if self.metric then
-        self:Transmission( ATIS.Sound.Meters, 0.1 )
+        self:Transmission( self.Sound.Meters, 0.1 )
       else
-        self:Transmission( ATIS.Sound.Feet, 0.1 )
+        self:Transmission( self.Sound.Feet, 0.1 )
       end
     end
     alltext = alltext .. ";\n" .. subtitle
@@ -2749,16 +2768,16 @@ function ATIS:onafterBroadcast( From, Event, To )
     --subtitle = string.format( "Tower frequency %s", freqs )
     subtitle = string.format( "%s %s", twrfrq, freqs )
     if not self.useSRS then
-      self:Transmission( ATIS.Sound.TowerFrequency, 1.0, subtitle )
+      self:Transmission( self.Sound.TowerFrequency, 1.0, subtitle )
       for _, freq in pairs( self.towerfrequency ) do
         local f = string.format( "%.3f", freq )
         f = UTILS.Split( f, "." )
         self.radioqueue:Number2Transmission( f[1], nil, 0.5 )
         if tonumber( f[2] ) > 0 then
-          self:Transmission( ATIS.Sound.Decimal, 0.2 )
+          self:Transmission( self.Sound.Decimal, 0.2 )
           self.radioqueue:Number2Transmission( f[2] )
         end
-        self:Transmission( ATIS.Sound.MegaHertz, 0.2 )
+        self:Transmission( self.Sound.MegaHertz, 0.2 )
       end
     end
     alltext = alltext .. ";\n" .. subtitle
@@ -2771,15 +2790,15 @@ function ATIS:onafterBroadcast( From, Event, To )
     --subtitle = string.format( "ILS frequency %.2f MHz", ils.frequency )
     subtitle = string.format( "%s %.2f MHz", ilstxt, ils.frequency )
     if not self.useSRS then
-      self:Transmission( ATIS.Sound.ILSFrequency, 1.0, subtitle )
+      self:Transmission( self.Sound.ILSFrequency, 1.0, subtitle )
       local f = string.format( "%.2f", ils.frequency )
       f = UTILS.Split( f, "." )
       self.radioqueue:Number2Transmission( f[1], nil, 0.5 )
       if tonumber( f[2] ) > 0 then
-        self:Transmission( ATIS.Sound.Decimal, 0.2 )
+        self:Transmission( self.Sound.Decimal, 0.2 )
         self.radioqueue:Number2Transmission( f[2] )
       end
-      self:Transmission( ATIS.Sound.MegaHertz, 0.2 )
+      self:Transmission( self.Sound.MegaHertz, 0.2 )
     end
     alltext = alltext .. ";\n" .. subtitle
   end
@@ -2791,15 +2810,15 @@ function ATIS:onafterBroadcast( From, Event, To )
     --subtitle = string.format( "Outer NDB frequency %.2f MHz", ndb.frequency )
     subtitle = string.format( "%s %.2f MHz", ndbtxt, ndb.frequency )
     if not self.useSRS then
-      self:Transmission( ATIS.Sound.OuterNDBFrequency, 1.0, subtitle )
+      self:Transmission( self.Sound.OuterNDBFrequency, 1.0, subtitle )
       local f = string.format( "%.2f", ndb.frequency )
       f = UTILS.Split( f, "." )
       self.radioqueue:Number2Transmission( f[1], nil, 0.5 )
       if tonumber( f[2] ) > 0 then
-        self:Transmission( ATIS.Sound.Decimal, 0.2 )
+        self:Transmission( self.Sound.Decimal, 0.2 )
         self.radioqueue:Number2Transmission( f[2] )
       end
-      self:Transmission( ATIS.Sound.MegaHertz, 0.2 )
+      self:Transmission( self.Sound.MegaHertz, 0.2 )
     end
     alltext = alltext .. ";\n" .. subtitle
   end
@@ -2811,15 +2830,15 @@ function ATIS:onafterBroadcast( From, Event, To )
     --subtitle = string.format( "Inner NDB frequency %.2f MHz", ndb.frequency )
     subtitle = string.format( "%s %.2f MHz", ndbtxt, ndb.frequency )
     if not self.useSRS then
-      self:Transmission( ATIS.Sound.InnerNDBFrequency, 1.0, subtitle )
+      self:Transmission( self.Sound.InnerNDBFrequency, 1.0, subtitle )
       local f = string.format( "%.2f", ndb.frequency )
       f = UTILS.Split( f, "." )
       self.radioqueue:Number2Transmission( f[1], nil, 0.5 )
       if tonumber( f[2] ) > 0 then
-        self:Transmission( ATIS.Sound.Decimal, 0.2 )
+        self:Transmission( self.Sound.Decimal, 0.2 )
         self.radioqueue:Number2Transmission( f[2] )
       end
-      self:Transmission( ATIS.Sound.MegaHertz, 0.2 )
+      self:Transmission( self.Sound.MegaHertz, 0.2 )
     end
     alltext = alltext .. ";\n" .. subtitle
   end
@@ -2835,15 +2854,15 @@ function ATIS:onafterBroadcast( From, Event, To )
       subtitle = string.format( "%s %.2f MHz", vorttstxt, self.vor )
     end
     if not self.useSRS then
-      self:Transmission( ATIS.Sound.VORFrequency, 1.0, subtitle )
+      self:Transmission( self.Sound.VORFrequency, 1.0, subtitle )
       local f = string.format( "%.2f", self.vor )
       f = UTILS.Split( f, "." )
       self.radioqueue:Number2Transmission( f[1], nil, 0.5 )
       if tonumber( f[2] ) > 0 then
-        self:Transmission( ATIS.Sound.Decimal, 0.2 )
+        self:Transmission( self.Sound.Decimal, 0.2 )
         self.radioqueue:Number2Transmission( f[2] )
       end
-      self:Transmission( ATIS.Sound.MegaHertz, 0.2 )
+      self:Transmission( self.Sound.MegaHertz, 0.2 )
     end
     alltext = alltext .. ";\n" .. subtitle
   end
@@ -2854,7 +2873,7 @@ function ATIS:onafterBroadcast( From, Event, To )
     --subtitle=string.format("TACAN channel %dX Ray", self.tacan)
     subtitle=string.format(tactxt, self.tacan)
     if not self.useSRS then
-      self:Transmission( ATIS.Sound.TACANChannel, 1.0, subtitle )
+      self:Transmission( self.Sound.TACANChannel, 1.0, subtitle )
       self.radioqueue:Number2Transmission( tostring( self.tacan ), nil, 0.2 )
       self.radioqueue:NewTransmission( "NATO Alphabet/Xray.ogg", 0.75, self.soundpath, nil, 0.2 )
     end
@@ -2867,7 +2886,7 @@ function ATIS:onafterBroadcast( From, Event, To )
     --subtitle = string.format( "RSBN channel %d", self.rsbn )
     subtitle = string.format( "%s %d", rsbntxt, self.rsbn )
     if not self.useSRS then
-      self:Transmission( ATIS.Sound.RSBNChannel, 1.0, subtitle )
+      self:Transmission( self.Sound.RSBNChannel, 1.0, subtitle )
       self.radioqueue:Number2Transmission( tostring( self.rsbn ), nil, 0.2 )
     end
     alltext = alltext .. ";\n" .. subtitle
@@ -2880,7 +2899,7 @@ function ATIS:onafterBroadcast( From, Event, To )
     --subtitle = string.format( "PRMG channel %d", ndb.frequency )
     subtitle = string.format( "%s %d", prmtxt, ndb.frequency )
     if not self.useSRS then
-      self:Transmission( ATIS.Sound.PRMGChannel, 1.0, subtitle )
+      self:Transmission( self.Sound.PRMGChannel, 1.0, subtitle )
       self.radioqueue:Number2Transmission( tostring( ndb.frequency ), nil, 0.5 )
     end
     alltext = alltext .. ";\n" .. subtitle
@@ -2896,7 +2915,7 @@ function ATIS:onafterBroadcast( From, Event, To )
   --subtitle = string.format( "Advise on initial contact, you have information %s", NATO )
   subtitle = string.format( "%s %s", advtxt, NATO )
   if not self.useSRS then
-    self:Transmission( ATIS.Sound.AdviceOnInitial, 0.5, subtitle )
+    self:Transmission( self.Sound.AdviceOnInitial, 0.5, subtitle )
     self.radioqueue:NewTransmission( string.format( "NATO Alphabet/%s.ogg", NATO ), 0.75, self.soundpath )
   end
   alltext = alltext .. ";\n" .. subtitle
