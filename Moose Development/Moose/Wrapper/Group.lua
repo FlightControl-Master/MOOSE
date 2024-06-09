@@ -1207,15 +1207,17 @@ function GROUP:GetCoordinate()
   -- no luck, try the API way
   
   local DCSGroup = Group.getByName(self.GroupName)
-  local DCSUnits = DCSGroup:getUnits() or {}
-  for _,_unit in pairs(DCSUnits) do
-    if Object.isExist(_unit) then
-      local position = _unit:getPosition()
-      local point = position.p ~= nil and position.p or _unit:GetPoint()
-      if point then
-        --self:I(point)
-        local coord = COORDINATE:NewFromVec3(point)
-        return coord
+  if DCSGroup then
+    local DCSUnits = DCSGroup:getUnits() or {}
+    for _,_unit in pairs(DCSUnits) do
+      if Object.isExist(_unit) then
+        local position = _unit:getPosition()
+        local point = position.p ~= nil and position.p or _unit:GetPoint()
+        if point then
+          --self:I(point)
+          local coord = COORDINATE:NewFromVec3(point)
+          return coord
+        end
       end
     end
   end
