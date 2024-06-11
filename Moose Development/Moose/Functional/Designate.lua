@@ -184,7 +184,7 @@
 
 do -- DESIGNATE
 
-  --- @type DESIGNATE
+  -- @type DESIGNATE
   -- @extends Core.Fsm#FSM_PROCESS
 
   --- Manage the designation of detected targets.
@@ -525,7 +525,7 @@ do -- DESIGNATE
 
     self.AttackSet:ForEachGroupAlive(
     
-      --- @param Wrapper.Group#GROUP AttackGroup
+      -- @param Wrapper.Group#GROUP AttackGroup
       function( AttackGroup )
         self.FlashStatusMenu[AttackGroup] = FlashMenu
       end
@@ -554,7 +554,7 @@ do -- DESIGNATE
 
     self.AttackSet:ForEachGroupAlive(
     
-      --- @param Wrapper.Group#GROUP AttackGroup
+      -- @param Wrapper.Group#GROUP AttackGroup
       function( AttackGroup )
         self.FlashDetectionMessage[AttackGroup] = FlashDetectionMessage
       end
@@ -826,7 +826,7 @@ do -- DESIGNATE
           -- This Detection is obsolete, remove from the designate scope
           self.Designating[DesignateIndex] = nil
           self.AttackSet:ForEachGroupAlive(
-            --- @param Wrapper.Group#GROUP AttackGroup
+            -- @param Wrapper.Group#GROUP AttackGroup
             function( AttackGroup )
               if AttackGroup:IsAlive() == true then
                 local DetectionText = self.Detection:DetectedItemReportSummary( DetectedItem, AttackGroup ):Text( ", " )
@@ -903,7 +903,7 @@ do -- DESIGNATE
 
     self.AttackSet:ForEachGroupAlive(
     
-      --- @param Wrapper.Group#GROUP GroupReport
+      -- @param Wrapper.Group#GROUP GroupReport
       function( AttackGroup )
       
         if self.FlashStatusMenu[AttackGroup] or ( MenuAttackGroup and ( AttackGroup:GetName() == MenuAttackGroup:GetName() ) ) then
@@ -1060,7 +1060,7 @@ do -- DESIGNATE
 
     self.AttackSet:ForEachGroupAlive(
     
-      --- @param Wrapper.Group#GROUP GroupReport
+      -- @param Wrapper.Group#GROUP GroupReport
       function( AttackGroup )
       
         self:ScheduleOnce( Delay, self.SetMenu, self, AttackGroup )
@@ -1198,7 +1198,7 @@ do -- DESIGNATE
     --local ReportTypes = REPORT:New()
     --local ReportLaserCodes = REPORT:New()
     
-    TargetSetUnit:Flush( self )
+    --TargetSetUnit:Flush( self )
 
     --self:F( { Recces = self.Recces } ) 
     for TargetUnit, RecceData in pairs( self.Recces ) do
@@ -1229,10 +1229,12 @@ do -- DESIGNATE
       end
     end    
     
+    if TargetSetUnit == nil then return end
+    
     if self.AutoLase or ( not self.AutoLase and ( self.LaseStart + Duration >= timer.getTime() ) ) then
 
       TargetSetUnit:ForEachUnitPerThreatLevel( 10, 0,
-        --- @param Wrapper.Unit#UNIT SmokeUnit
+        -- @param Wrapper.Unit#UNIT SmokeUnit
         function( TargetUnit )
         
           self:F( { TargetUnit = TargetUnit:GetName() } )
@@ -1253,7 +1255,7 @@ do -- DESIGNATE
     
                     local RecceUnit = UnitData -- Wrapper.Unit#UNIT
                     local RecceUnitDesc = RecceUnit:GetDesc()
-                    --self:F( { RecceUnit = RecceUnit:GetName(), RecceDescription = RecceUnitDesc } )
+                    --self:F( { RecceUnit = RecceUnit:GetName(), RecceDescription = RecceUnitDesc } )x
     
                     if RecceUnit:IsLasing() == false then
                       --self:F( { IsDetected = RecceUnit:IsDetected( TargetUnit ), IsLOS = RecceUnit:IsLOS( TargetUnit ) } )
@@ -1275,9 +1277,10 @@ do -- DESIGNATE
                           local Spot = RecceUnit:LaseUnit( TargetUnit, LaserCode, Duration )
                           local AttackSet = self.AttackSet
                           local DesignateName = self.DesignateName
+                          local typename = TargetUnit:GetTypeName()
     
                           function Spot:OnAfterDestroyed( From, Event, To )
-                            self.Recce:MessageToSetGroup( "Target " .. TargetUnit:GetTypeName() .. " destroyed. " .. TargetSetUnit:Count() .. " targets left.", 
+                            self.Recce:MessageToSetGroup( "Target " ..typename .. " destroyed. " .. TargetSetUnit:CountAlive() .. " targets left.", 
                                                           5, AttackSet, self.DesignateName )
                           end
     
@@ -1285,7 +1288,7 @@ do -- DESIGNATE
                           -- OK. We have assigned for the Recce a TargetUnit. We can exit the function.
                           MarkingCount = MarkingCount + 1
                           local TargetUnitType = TargetUnit:GetTypeName()
-                          RecceUnit:MessageToSetGroup( "Marking " .. TargetUnit:GetTypeName() .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 
+                          RecceUnit:MessageToSetGroup( "Marking " .. TargetUnitType .. " with laser " .. RecceUnit:GetSpot().LaserCode .. " for " .. Duration .. "s.", 
                                                      10, self.AttackSet, DesignateName )
                           if not MarkedTypes[TargetUnitType] then
                             MarkedTypes[TargetUnitType] = true
@@ -1392,7 +1395,7 @@ do -- DESIGNATE
     local MarkedCount = 0
   
     TargetSetUnit:ForEachUnitPerThreatLevel( 10, 0,
-      --- @param Wrapper.Unit#UNIT SmokeUnit
+      -- @param Wrapper.Unit#UNIT SmokeUnit
       function( SmokeUnit )
 
         if MarkedCount < self.MaximumMarkings then
@@ -1457,9 +1460,10 @@ do -- DESIGNATE
   -- @param #DESIGNATE self
   -- @return #DESIGNATE
   function DESIGNATE:onafterDoneSmoking( From, Event, To, Index )
-
-    self.Designating[Index] = string.gsub( self.Designating[Index], "S", "" )
-    self:SetDesignateMenu()
+    if self.Designating[Index] ~= nil then
+      self.Designating[Index] = string.gsub( self.Designating[Index], "S", "" )
+      self:SetDesignateMenu()
+    end
   end
 
   --- DoneIlluminating
@@ -1472,5 +1476,3 @@ do -- DESIGNATE
   end
 
 end
-
-
