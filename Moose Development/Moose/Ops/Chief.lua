@@ -1463,7 +1463,7 @@ end
 --- Add a CAP zone. Flights will engage detected targets inside this zone. 
 -- @param #CHIEF self
 -- @param Core.Zone#ZONE Zone CAP Zone. Has to be a circular zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
@@ -1479,7 +1479,7 @@ end
 --- Add a GCI CAP.
 -- @param #CHIEF self
 -- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
@@ -1506,7 +1506,7 @@ end
 --- Add an AWACS zone.
 -- @param #CHIEF self
 -- @param Core.Zone#ZONE Zone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
@@ -1533,7 +1533,7 @@ end
 --- Add a refuelling tanker zone.
 -- @param #CHIEF self
 -- @param Core.Zone#ZONE Zone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
