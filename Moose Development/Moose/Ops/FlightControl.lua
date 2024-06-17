@@ -332,7 +332,7 @@ FLIGHTCONTROL.FlightStatus={
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.7.6"
+FLIGHTCONTROL.version="0.7.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -419,6 +419,9 @@ function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port, 
   
   -- Init msrs queue.
   self.msrsqueue=MSRSQUEUE:New(self.alias)
+  
+  -- Set that transmission is only if alive players on the server.
+  self:SetTransmitOnlyWithPlayers(true)
   
   -- Init msrs bases
   local path = PathToSRS or MSRS.path
@@ -585,6 +588,16 @@ function FLIGHTCONTROL:SetRadioOnlyIfPlayers(Switch)
   else
     self.radioOnlyIfPlayers=false
   end
+  return self
+end
+
+
+--- Set whether to only transmit TTS messages if there are players on the server.
+-- @param #FLIGHTCONTROL self
+-- @param #boolean Switch If `true`, only send TTS messages if there are alive Players. If `false` or `nil`, transmission are done also if no players are on the server.
+-- @return #FLIGHTCONTROL self
+function FLIGHTCONTROL:SetTransmitOnlyWithPlayers(Switch)
+  self.msrsqueue:SetTransmitOnlyWithPlayers(Switch)
   return self
 end
 
