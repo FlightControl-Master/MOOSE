@@ -62,6 +62,8 @@
 -- @field #number runwayrepairtime Time in seconds until runway will be repaired after it was destroyed. Default is 3600 sec (one hour).
 -- @field #boolean markerParking If `true`, occupied parking spots are marked.
 -- @field #boolean nosubs If `true`, SRS TTS is without subtitles.
+-- @field #number Nplayers Number of human players. Updated at each StatusUpdate call.
+-- @field #boolean radioOnlyIfPlayers Activate to limit transmissions only if players are active at the airbase.
 -- @extends Core.Fsm#FSM
 
 --- **Ground Control**: Airliner X, Good news, you are clear to taxi to the active.
@@ -272,6 +274,7 @@ FLIGHTCONTROL = {
   holdingpatterns  =  {},
   hpcounter        =   0,
   nosubs         =  false,
+  Nplayers       =     0,
 }
 
 --- Holding point. Contains holding stacks.
@@ -329,7 +332,7 @@ FLIGHTCONTROL.FlightStatus={
 
 --- FlightControl class version.
 -- @field #string version
-FLIGHTCONTROL.version="0.7.5"
+FLIGHTCONTROL.version="0.7.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -570,6 +573,21 @@ function FLIGHTCONTROL:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
   return self
 end
+
+--- Limit radio transmissions only if human players are registered at the airbase.
+-- This can be used to reduce TTS messages on heavy missions.
+-- @param #FLIGHTCONTROL self
+-- @param #boolean Switch If `true` or `nil` no transmission if there are no players. Use `false` enable TTS with no players.
+-- @return #FLIGHTCONTROL self
+function FLIGHTCONTROL:SetRadioOnlyIfPlayers(Switch)
+  if Switch==nil or Switch==true then
+    self.radioOnlyIfPlayers=true
+  else
+    self.radioOnlyIfPlayers=false
+  end
+  return self
+end
+
 
 --- Set subtitles to appear on SRS TTS messages.
 -- @param #FLIGHTCONTROL self
@@ -4082,6 +4100,15 @@ function FLIGHTCONTROL:_CheckFlights()
     end  
   end
 
+  -- Count number of players
+  self.Nplayers=0
+  for _,_flight in pairs(self.flights) do
+    local flight=_flight --Ops.FlightGroup#FLIGHTGROUP    
+    if not flight.isAI then
+      self.Nplayers=self.Nplayers+1
+    end    
+  end
+
   -- Check speeding.  
   if self.speedLimitTaxi then
 
@@ -4314,6 +4341,11 @@ end
 -- @param #number Delay Delay in seconds before the text is transmitted. Default 0 sec.
 function FLIGHTCONTROL:TransmissionTower(Text, Flight, Delay)
 
+  if self.radioOnlyIfPlayers==true and self.Nplayers==0 then
+    self:T(self.lid.."No players ==> skipping TOWER radio transmission")
+    return
+  end 
+
   -- Spoken text.
   local text=self:_GetTextForSpeech(Text)
     
@@ -4344,6 +4376,12 @@ end
 -- @param Ops.FlightGroup#FLIGHTGROUP Flight The flight.
 -- @param #number Delay Delay in seconds before the text is transmitted. Default 0 sec.
 function FLIGHTCONTROL:TransmissionPilot(Text, Flight, Delay)
+
+  if self.radioOnlyIfPlayers==true and self.Nplayers==0 then
+    self:T(self.lid.."No players ==> skipping PILOT radio transmission")
+    return
+  end 
+
 
   -- Get player data.
   local playerData=Flight:_GetPlayerData()
