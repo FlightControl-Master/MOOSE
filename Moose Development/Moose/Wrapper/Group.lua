@@ -1775,10 +1775,14 @@ end
 
 --- Returns the group template from the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
 -- @param #GROUP self
--- @return #table
+-- @return #table Template table.
 function GROUP:GetTemplate()
   local GroupName = self:GetName()
-  return UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ) )
+  local template=_DATABASE:GetGroupTemplate( GroupName )
+  if template then
+    return UTILS.DeepCopy( template )
+  end
+  return nil
 end
 
 --- Returns the group template route.points[] (the waypoints) from the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
