@@ -15,7 +15,7 @@
 -- 
 -- @module Functional.Stratego
 -- @image Functional.Stratego.png
--- Last Update April 2024
+-- Last Update May 2024
 
 
 ---
@@ -42,6 +42,7 @@
 -- @field #boolean usebudget
 -- @field #number CaptureUnits
 -- @field #number CaptureThreatlevel
+-- @field #table CaptureObjectCategories
 -- @field #boolean ExcludeShips
 -- @field Core.Zone#ZONE StrategoZone
 -- @extends Core.Base#BASE
@@ -180,7 +181,7 @@ STRATEGO = {
   debug = false,
   drawzone = false,
   markzone = false,
-  version = "0.2.7",
+  version = "0.3.1",
   portweight = 3,
   POIweight = 1,
   maxrunways = 3,
@@ -199,6 +200,7 @@ STRATEGO = {
   usebudget = false,
   CaptureUnits = 3,
   CaptureThreatlevel = 1,
+  CaptureObjectCategories = {Object.Category.UNIT},
   ExcludeShips = true,
 }
 
@@ -210,9 +212,10 @@ STRATEGO = {
 -- @field #number coalition
 -- @field #boolean port
 -- @field Core.Zone#ZONE_RADIUS zone,
--- @field Core.Point#COORDINATRE coord
+-- @field Core.Point#COORDINATE coord
 -- @field #string type
 -- @field Ops.OpsZone#OPSZONE opszone
+-- @field #number connections
 
 ---
 -- @type STRATEGO.DistData
@@ -419,11 +422,13 @@ end
 -- @param #STRATEGO self
 -- @param #number CaptureUnits Number of units needed, defaults to three.
 -- @param #number CaptureThreatlevel Threat level needed, can be 0..10, defaults to one.
+-- @param #table CaptureCategories Table of object categories which can capture a node, defaults to `{Object.Category.UNIT}`.
 -- @return #STRATEGO self
-function STRATEGO:SetCaptureOptions(CaptureUnits,CaptureThreatlevel)
+function STRATEGO:SetCaptureOptions(CaptureUnits,CaptureThreatlevel,CaptureCategories)
   self:T(self.lid.."SetCaptureOptions")
   self.CaptureUnits = CaptureUnits or 3
   self.CaptureThreatlevel = CaptureThreatlevel or 1
+  self.CaptureObjectCategories = CaptureCategories or {Object.Category.UNIT}
   return self
 end
 
@@ -486,6 +491,7 @@ function STRATEGO:AnalyseBases()
         coord = coord,
         type = abtype,
         opszone = opszone,
+        connections = 0,
       }
       airbasetable[abname] = tbl
       nonconnectedab[abname] = true
@@ -526,6 +532,7 @@ function STRATEGO:GetNewOpsZone(Zone,Coalition)
   local opszone = OPSZONE:New(Zone,Coalition or 0)
   opszone:SetCaptureNunits(self.CaptureUnits)
   opszone:SetCaptureThreatlevel(self.CaptureThreatlevel)
+  opszone:SetObjectCategories(self.CaptureObjectCategories)
   opszone:SetDrawZone(self.drawzone)
   opszone:SetMarkZone(self.markzone)
   opszone:Start()
@@ -571,10 +578,12 @@ function STRATEGO:AnalysePOIs(Set,Weight,Key)
         coord = coord,
         type = Key,
         opszone = opszone,
+        connections = 0,
       }
-      airbasetable[zone:GetName()] = tbl
-      nonconnectedab[zone:GetName()] = true
+      airbasetable[zname] = tbl
+      nonconnectedab[zname] = true
       local name = string.gsub(zname,"[%p%s]",".")
+      --self:I({name=name,zone=zname})
       easynames[name]=zname
     end
   )
@@ -585,7 +594,7 @@ end
 -- @param #STRATEGO self
 -- @return #STRATEGO self
 function STRATEGO:GetToFrom(StartPoint,EndPoint)
-  self:T(self.lid.."GetToFrom")
+  self:T(self.lid.."GetToFrom "..tostring(StartPoint).." "..tostring(EndPoint))
   local pstart = string.gsub(StartPoint,"[%p%s]",".")
   local pend = string.gsub(EndPoint,"[%p%s]",".")
   local fromto = pstart..";"..pend
@@ -593,11 +602,35 @@ function STRATEGO:GetToFrom(StartPoint,EndPoint)
   return fromto, tofrom
 end
 
+--- [USER] Get available connecting nodes from one start node
+-- @param #STRATEGO self
+-- @param #string StartPoint The starting name
+-- @return #boolean found
+-- @return #table Nodes 
+function STRATEGO:GetRoutesFromNode(StartPoint)
+  self:T(self.lid.."GetRoutesFromNode")
+  local pstart = string.gsub(StartPoint,"[%p%s]",".")
+  local found = false
+  pstart=pstart..";"
+  local routes = {}
+  local listed = {}
+  for _,_data in pairs(self.routexists) do
+    if string.find(_data,pstart,1,true) and not listed[_data] then
+      local target = string.gsub(_data,pstart,"")
+      local fname = self.easynames[target]
+      table.insert(routes,fname)
+      found = true
+      listed[_data] = true
+    end
+  end
+  return found,routes
+end
+
 --- [USER] Manually add a route, for e.g. Island hopping or to connect isolated networks. Use **after** STRATEGO has been started!
 -- @param #STRATEGO self
 -- @param #string Startpoint Starting Point, e.g. AIRBASE.Syria.Hatay
 -- @param #string Endpoint End Point, e.g. AIRBASE.Syria.H4
--- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Defaults to lila.
+-- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Defaults to violet.
 -- @param #number Linetype (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 5.
 -- @param #boolean Draw (Optional) If true, draw route on the F10 map. Defaukt false.
 -- @return #STRATEGO self
@@ -625,6 +658,8 @@ function STRATEGO:AddRoutesManually(Startpoint,Endpoint,Color,Linetype,Draw)
   local factor = self.airbasetable[Startpoint].baseweight*self.routefactor
   self.airbasetable[Startpoint].weight = self.airbasetable[Startpoint].weight+factor
   self.airbasetable[Endpoint].weight = self.airbasetable[Endpoint].weight+factor
+  self.airbasetable[Endpoint].connections = self.airbasetable[Endpoint].connections + 2
+  self.airbasetable[Startpoint].connections = self.airbasetable[Startpoint].connections+2
   if self.debug or Draw then
     startcoordinate:LineToAll(targetcoordinate,-1,color,1,linetype,nil,string.format("%dkm",dist))
   end
@@ -643,7 +678,7 @@ function STRATEGO:AnalyseRoutes(tgtrwys,factor,color,linetype)
       for _,_data in pairs(self.airbasetable) do
         local fromto,tofrom = self:GetToFrom(startpoint,_data.name) 
         if _data.name == startpoint then
-          -- sam as we
+          -- same as we
         elseif _data.baseweight == tgtrwys and not (self.routexists[fromto] or self.routexists[tofrom]) then
           local tgtc = _data.coord
           local dist = UTILS.Round(tgtc:Get2DDistance(startcoord),-2)/1000
@@ -665,6 +700,8 @@ function STRATEGO:AnalyseRoutes(tgtrwys,factor,color,linetype)
             self.nonconnectedab[startpoint] = false
             self.airbasetable[startpoint].weight = self.airbasetable[startpoint].weight+factor
             self.airbasetable[_data.name].weight = self.airbasetable[_data.name].weight+factor
+            self.airbasetable[startpoint].connections = self.airbasetable[startpoint].connections + 1
+            self.airbasetable[_data.name].connections = self.airbasetable[_data.name].connections + 1
             if self.debug then
               startcoord:LineToAll(tgtc,-1,color,1,linetype,nil,string.format("%dkm",dist))
             end
@@ -711,6 +748,8 @@ function STRATEGO:AnalyseUnconnected(Color)
        end
        self.airbasetable[startpoint].weight = self.airbasetable[startpoint].weight+1
        self.airbasetable[closest].weight = self.airbasetable[closest].weight+1
+       self.airbasetable[startpoint].connections = self.airbasetable[startpoint].connections+2
+       self.airbasetable[closest].connections = self.airbasetable[closest].connections+2
        local data = {
           start = startpoint,
           target = closest,
@@ -727,14 +766,50 @@ function STRATEGO:AnalyseUnconnected(Color)
   return self
 end
 
+--[[
+function STRATEGO:PruneDeadEnds(abtable)
+  local found = false
+  local newtable = {}
+  for name, _data in pairs(abtable) do
+    local data = _data -- #STRATEGO.Data
+    if data.connections > 2 then
+      newtable[name] = data     
+    else
+      -- dead end
+      found = true
+      local neighbors, nearest, distance  = self:FindNeighborNodes(name)
+      --self:I("Pruning "..name)
+      if nearest then
+        for _name,_ in pairs(neighbors) do
+          local abname = self.easynames[_name] or _name
+          --self:I({easyname=_name,airbasename=abname})
+          if abtable[abname] then
+            abtable[abname].connections = abtable[abname].connections -1 
+          end
+        end
+      end
+      if self.debug then
+        data.coord:CircleToAll(5000,-1,{1,1,1},1,{1,1,1},1,3,true,"Dead End")
+      end
+    end
+  end
+  abtable = nil
+  return found,newtable
+end
+--]]
+
 --- [USER] Get a list of the nodes with the highest weight.
 -- @param #STRATEGO self
 -- @param #number Coalition (Optional) Find for this coalition only. E.g. coalition.side.BLUE.
 -- @return #table Table of nodes.
 -- @return #number Weight The consolidated weight associated with the nodes.
+-- @return #number Highest Highest weight found.
+-- @return #string Name of the node with the highest weight.
 function STRATEGO:GetHighestWeightNodes(Coalition)
   self:T(self.lid.."GetHighestWeightNodes")
   local weight = 0
+  local highest = 0
+  local highname = nil
   local airbases = {}
   for _name,_data in pairs(self.airbasetable) do
     local okay = true
@@ -748,8 +823,12 @@ function STRATEGO:GetHighestWeightNodes(Coalition)
       if not airbases[weight] then airbases[weight]={} end
       table.insert(airbases[weight],_name)
     end
+    if _data.weight > highest and okay then
+      highest = _data.weight
+      highname = _name
+    end
   end
-  return airbases[weight],weight
+  return airbases[weight],weight,highest,highname
 end
 
 --- [USER] Get a list of the nodes a weight less than the given parameter.
@@ -1136,33 +1215,65 @@ function STRATEGO:FindNeighborNodes(Name,Enemies,Friends)
   self:T(self.lid.."FindNeighborNodes")
   local neighbors = {}
   local name = string.gsub(Name,"[%p%s]",".")
+  --self:I({Name=Name,name=name})
   local shortestdist = 1000*1000
   local nearest = nil
   for _route,_data in pairs(self.disttable) do
     if string.find(_route,name,1,true) then
       local dist = self.disttable[_route] -- #STRATEGO.DistData
+      --self:I({route=_route,name=name})
       local tname = string.gsub(_route,name,"")
       local tname = string.gsub(tname,";","")
+      --self:I({tname=tname,cname=self.easynames[tname]})
       local cname = self.easynames[tname] -- name of target
-      local encoa = self.coalition == coalition.side.BLUE and coalition.side.RED or coalition.side.BLUE
-      if Enemies == true then
-        if self.airbasetable[cname].coalition == encoa then
-         neighbors[cname] = dist
+      if cname then
+        local encoa = self.coalition == coalition.side.BLUE and coalition.side.RED or coalition.side.BLUE
+        if Enemies == true then
+          if self.airbasetable[cname].coalition == encoa then
+           neighbors[cname] = dist
+          end
+        elseif Friends == true then
+          if self.airbasetable[cname].coalition ~= encoa then
+           neighbors[cname] = dist
+          end
+        else
+          neighbors[cname] = dist
         end
-      elseif Friends == true then
-        if self.airbasetable[cname].coalition ~= encoa then
-         neighbors[cname] = dist
+        if neighbors[cname] and  dist.dist < shortestdist then 
+          shortestdist = dist.dist
+          nearest = cname
         end
-      else
-        neighbors[cname] = dist
-      end
-      if neighbors[cname] and  dist.dist < shortestdist then 
-        shortestdist = dist.dist
-        nearest = cname
       end
     end
   end
   return neighbors, nearest, shortestdist
+end
+
+--- [INTERNAL] Route Finding - Find the next hop towards an end node from a start node
+-- @param #STRATEGO self
+-- @param #string Start The name of the start node.
+-- @param #string End The name of the end node.
+-- @param #table InRoute Table of node names making up the route so far.
+-- @return #string Name of the next closest node
+function STRATEGO:_GetNextClosest(Start,End,InRoute)
+  local ecoord = self.airbasetable[End].coord
+  local nodes,nearest = self:FindNeighborNodes(Start)
+  --self:I(tostring(nearest))
+  local closest = nil
+  local closedist = 1000*1000
+  for _name,_dist in pairs(nodes) do
+    local kcoord = self.airbasetable[_name].coord
+    local nnodes = self.airbasetable[_name].connections > 2 and true or false
+    if _name == End then nnodes = true end
+    if kcoord ~= nil and ecoord ~= nil and nnodes == true and InRoute[_name] ~= true then
+      local dist = math.floor((kcoord:Get2DDistance(ecoord)/1000)+0.5)
+      if (dist < closedist ) then
+        closedist = dist
+        closest = _name
+      end
+    end
+  end
+  return closest
 end
 
 --- [USER] Find a route between two nodes.
@@ -1173,15 +1284,19 @@ end
 -- @param #boolean Draw If true, draw the route on the map.
 -- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Defaults to black.
 -- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 6.
+-- @param #boolean NoOptimize If set to true, do not optimize (shorten) the resulting route if possible.
 -- @return #table Route Table of #string name entries of the route
 -- @return #boolean Complete If true, the route was found end-to-end.
-function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType)
+-- @return #boolean Reverse If true, the route was found with a reverse search, the route table will be from sorted from end point to start point.
+function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType,NoOptimize)
   self:T(self.lid.."FindRoute")
   --self:I({Start,End,Hops})
   --local bases = UTILS.DeepCopy(self.airbasetable)
-  local Route = {}  
+  local Route = {}
+  local InRoute = {}  
   local hops = Hops or 4
   local routecomplete = false
+  local reverse = false
   
   local function Checker(neighbors)
     for _name,_data in pairs(neighbors) do
@@ -1192,26 +1307,7 @@ function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType)
     end
     return nil
   end
-  
-  local function NextClosest(Start,End)
-    local ecoord = self.airbasetable[End].coord
-    local nodes = self:FindNeighborNodes(Start)
-    local closest = nil
-    local closedist = 1000*1000
-    for _name,_dist in pairs(nodes) do
-      local kcoord = self.airbasetable[_name].coord
-      local dist = math.floor((kcoord:Get2DDistance(ecoord)/1000)+0.5)
-      if dist < closedist then
-        closedist = dist
-        closest = _name
-      end
-    end
-    if closest then
-      --MESSAGE:New(string.format("Start %s | End %s | Nextclosest %s",Start,End,closest),10,"STRATEGO"):ToLog():ToAll()
-      return closest
-    end
-  end
-  
+ 
   local function DrawRoute(Route)
     for i=1,#Route-1 do
       local p1=Route[i]
@@ -1226,6 +1322,7 @@ function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType)
   
   -- One hop
   Route[#Route+1] = Start
+  InRoute[Start] = true
   local nodes = self:FindNeighborNodes(Start)
   local endpoint = Checker(nodes)
   
@@ -1235,9 +1332,11 @@ function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType)
   else
     local spoint = Start
     for i=1,hops do
-      local Next = NextClosest(spoint,End)
-      if Next then
+      --self:I("Start="..tostring(spoint))
+      local Next = self:_GetNextClosest(spoint,End,InRoute)
+      if Next ~= nil then
         Route[#Route+1] = Next
+        InRoute[Next] = true
         local nodes = self:FindNeighborNodes(Next)
         local endpoint = Checker(nodes)
         if endpoint then
@@ -1247,11 +1346,59 @@ function STRATEGO:FindRoute(Start,End,Hops,Draw,Color,LineType)
         else
           spoint = Next
         end
-      end
+      else
+       break
+      end 
     end
   end
-  if (self.debug or Draw) then DrawRoute(Route) end 
-  return Route, routecomplete
+  
+  -- optimize route
+  local function OptimizeRoute(Route)
+    local foundcut = false
+    local largestcut = 0
+    local cut = {}
+    for i=1,#Route do
+      --self:I({Start=Route[i]})
+      local found,nodes = self:GetRoutesFromNode(Route[i])
+      for _,_name in pairs(nodes or {}) do
+        for j=i+2,#Route do      
+          if _name == Route[j] then
+            --self:I({"Shortcut",Route[i],Route[j]})          
+            if j-i > largestcut then
+              largestcut = j-i
+              cut = {i=i,j=j}
+              foundcut = true
+            end
+          end
+        end
+      end
+    end
+    if foundcut then
+      local newroute = {}
+      for i=1,#Route do
+        if i<= cut.i or i>=cut.j then
+          table.insert(newroute,Route[i])
+        end
+      end
+      return newroute
+    end
+    return Route, foundcut
+  end 
+  
+  if routecomplete == true and NoOptimize ~= true then
+    local foundcut = true
+    while foundcut ~= false do
+      Route, foundcut = OptimizeRoute(Route)
+    end
+  else
+    -- reverse search
+    Route, routecomplete = self:FindRoute(End,Start,Hops,Draw,Color,LineType)
+    reverse = true
+  end
+  
+  if (self.debug or Draw) then DrawRoute(Route) end
+  
+  return Route, routecomplete, reverse
 end
 
 --- [USER] Add budget points.
@@ -1356,6 +1503,139 @@ function STRATEGO:FindAffordableConsolidationTarget()
   else
     return nil
   end
+end
+
+--- [INTERNAL] Internal helper function to check for islands, aka Floodtest
+-- @param #STRATEGO self
+-- @param #string next Name of the start node
+-- @param #table filled #table of visited nodes
+-- @param #table unfilled #table if unvisited nodes
+-- @return #STRATEGO self
+function STRATEGO:_FloodNext(next,filled,unfilled)
+  local start = self:FindNeighborNodes(next)
+  for _name,_ in pairs (start) do
+    if filled[_name] ~= true then
+      self:T("Flooding ".._name)
+      filled[_name] = true
+      unfilled[_name] = nil
+      self:_FloodNext(_name,filled,unfilled)
+    end
+  end
+  return self
+end
+
+--- [INTERNAL] Internal helper function to check for islands, aka Floodtest
+-- @param #STRATEGO self
+-- @param #string Start Name of the start node
+-- @param #table ABTable (Optional) #table of node names to check.
+-- @return #STRATEGO self
+function STRATEGO:_FloodFill(Start,ABTable)
+  self:T("Start = "..tostring(Start))
+  if Start == nil then return end
+  local filled = {}
+  local unfilled = {}
+  if ABTable then
+    unfilled = ABTable
+  else
+    for _name,_ in pairs(self.airbasetable) do
+      unfilled[_name] = true
+    end
+  end
+  filled[Start] = true
+  unfilled[Start] = nil
+  local start = self:FindNeighborNodes(Start)
+  for _name,_ in pairs (start) do
+    if filled[_name] ~= true then
+      self:T("Flooding ".._name)
+      filled[_name] = true
+      unfilled[_name] = nil
+      self:_FloodNext(_name,filled,unfilled)
+    end
+  end
+  return filled, unfilled
+end
+
+--- [INTERNAL] Internal helper function to check for islands, aka Floodtest
+-- @param #STRATEGO self
+-- @param #boolen connect If true, connect the two resulting islands at the shortest distance if necessary
+-- @param #boolen draw If true, draw outer vertices of found node networks
+-- @return #boolean Connected If true, all nodes are in one network
+-- @return #table Network #table of node names in the network
+-- @return #table Unconnected #table of node names **not** in the network
+function STRATEGO:_FloodTest(connect,draw)
+  
+  local function GetElastic(bases)
+    local vec2table = {}
+    for _name,_ in pairs(bases) do
+      local coord = self.airbasetable[_name].coord
+      local vec2 = coord:GetVec2()
+      table.insert(vec2table,vec2)
+    end
+    local zone = ZONE_ELASTIC:New("STRATEGO-Floodtest-"..math.random(1,10000),vec2table)
+    return zone
+  end
+  
+  local function DrawElastic(filled,drawit)
+    local zone = GetElastic(filled)
+    if drawit then
+      zone:SetColor({1,1,1},1)
+      zone:SetDrawCoalition(-1)
+      zone:Update(1,true) -- draw zone
+    end
+    return zone
+  end
+
+  local _,_,weight,name = self:GetHighestWeightNodes()
+  local filled, unfilled = self:_FloodFill(name)
+  local allin = true
+  if table.length(unfilled) > 0 then
+    MESSAGE:New("There is at least one node island!",15,"STRATEGO"):ToAllIf(self.debug):ToLog()
+    allin = false
+    if self.debug == true then
+      local zone1 = DrawElastic(filled,draw)
+      local zone2 = DrawElastic(unfilled,draw)
+      local vertices1 = zone1:GetVerticiesVec2()
+      local vertices2 = zone2:GetVerticiesVec2()
+      -- get closest vertices
+      local corner1 = nil
+      local corner2 = nil
+      local mindist = math.huge
+      local found = false
+      for _,_edge in pairs(vertices1) do
+        for _,_edge2 in pairs(vertices2) do
+          local dist=UTILS.VecDist2D(_edge,_edge2)
+          if dist < mindist then
+            mindist = dist
+            corner1 = _edge
+            corner2 = _edge2
+            found = true
+          end
+        end  
+      end
+      if found then
+        local Corner = COORDINATE:NewFromVec2(corner1)
+        local Corner2 = COORDINATE:NewFromVec2(corner2)
+        Corner:LineToAll(Corner2,-1,{1,1,1},1,1,true,"Island2Island")
+        local cornername
+        local cornername2
+        for _name,_data in pairs(self.airbasetable) do
+          local zone = _data.zone
+          if zone:IsVec2InZone(corner1) then
+            cornername = _name
+            self:T("Corner1 = ".._name)
+          end
+          if zone:IsVec2InZone(corner2) then
+            cornername2 = _name
+            self:T("Corner2 = ".._name)
+          end
+          if cornername and cornername2 and connect == true then
+            self:AddRoutesManually(cornername,cornername2,Color,Linetype,self.debug)
+          end
+        end
+      end
+    end
+  end
+  return allin, filled, unfilled
 end
 
 ---------------------------------------------------------------------------------------------------------------

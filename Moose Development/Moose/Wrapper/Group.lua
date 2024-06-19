@@ -367,7 +367,7 @@ function GROUP:GetDCSObject()
     return DCSGroup
   end
 
-  self:E(string.format("ERROR: Could not get DCS group object of group %s because DCS object could not be found!", tostring(self.GroupName)))
+  self:T2(string.format("ERROR: Could not get DCS group object of group %s because DCS object could not be found!", tostring(self.GroupName)))
   return nil
 end
 
@@ -1228,15 +1228,17 @@ function GROUP:GetCoordinate()
   -- no luck, try the API way
   
   local DCSGroup = Group.getByName(self.GroupName)
-  local DCSUnits = DCSGroup:getUnits() or {}
-  for _,_unit in pairs(DCSUnits) do
-    if Object.isExist(_unit) then
-      local position = _unit:getPosition()
-      local point = position.p ~= nil and position.p or _unit:GetPoint()
-      if point then
-        --self:I(point)
-        local coord = COORDINATE:NewFromVec3(point)
-        return coord
+  if DCSGroup then
+    local DCSUnits = DCSGroup:getUnits() or {}
+    for _,_unit in pairs(DCSUnits) do
+      if Object.isExist(_unit) then
+        local position = _unit:getPosition()
+        local point = position.p ~= nil and position.p or _unit:GetPoint()
+        if point then
+          --self:I(point)
+          local coord = COORDINATE:NewFromVec3(point)
+          return coord
+        end
       end
     end
   end
@@ -1794,10 +1796,14 @@ end
 
 --- Returns the group template from the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
 -- @param #GROUP self
--- @return #table
+-- @return #table Template table.
 function GROUP:GetTemplate()
   local GroupName = self:GetName()
-  return UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ) )
+  local template=_DATABASE:GetGroupTemplate( GroupName )
+  if template then
+    return UTILS.DeepCopy( template )
+  end
+  return nil
 end
 
 --- Returns the group template route.points[] (the waypoints) from the global _DATABASE object (an instance of @{Core.Database#DATABASE}).

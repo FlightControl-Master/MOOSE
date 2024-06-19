@@ -2831,6 +2831,11 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
         self:T(self.lid.."Engaging! Group NOT done...")
         return
       end
+      -- Check if group is going for fuel.
+      if self:IsGoing4Fuel() then
+        self:T(self.lid.."Going for FUEL! Group NOT done...")
+        return
+      end
 
       -- Number of tasks remaining.
       local nTasks=self:CountRemainingTasks()
@@ -3447,6 +3452,9 @@ function FLIGHTGROUP:onafterRefuel(From, Event, To, Coordinate)
 
   self:Route({wp0, wp9}, 1)
 
+  -- Set RTB on Bingo option. Currently DCS does not execute the refueling task if RTB_ON_BINGO is set to "NO RTB ON BINGO"
+  self.group:SetOption(AI.Option.Air.id.RTB_ON_BINGO, true)
+
 end
 
 --- On after "Refueled" event.
@@ -3459,6 +3467,9 @@ function FLIGHTGROUP:onafterRefueled(From, Event, To)
   -- Debug message.
   local text=string.format("Flight group finished refuelling")
   self:T(self.lid..text)
+
+  -- Set RTB on Bingo option to "NO RTB ON BINGO"
+  self.group:SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)
 
   -- Check if flight is done.
   self:_CheckGroupDone(1)

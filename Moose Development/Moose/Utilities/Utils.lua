@@ -55,6 +55,7 @@ BIGSMOKEPRESET = {
 -- @field #string MarianaIslands Mariana Islands map.
 -- @field #string Falklands South Atlantic map.
 -- @field #string Sinai Sinai map.
+-- @field #string Kola Kola map.
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
@@ -64,7 +65,8 @@ DCSMAP = {
   Syria="Syria",
   MarianaIslands="MarianaIslands",
   Falklands="Falklands",
-  Sinai="SinaiMap"
+  Sinai="SinaiMap",
+  Kola="Kola"
 }
 
 
@@ -102,7 +104,7 @@ CALLSIGN={
     Shell=3,
     Navy_One=4,
     Mauler=5,
-    Bloodhound=6,  
+    Bloodhound=6,
     },
   -- JTAC
   JTAC={
@@ -416,7 +418,7 @@ function UTILS._OneLineSerialize(tbl)
       end
 
     end
-    
+
       tbl_str[#tbl_str + 1] = '}'
       return table.concat(tbl_str)
     else
@@ -433,7 +435,7 @@ UTILS.BasicSerialize = function(s)
     if ((type(s) == 'number') or (type(s) == 'boolean') or (type(s) == 'function') or (type(s) == 'userdata') ) then
       return tostring(s)
     elseif type(s) == "table" then
-      return UTILS._OneLineSerialize(s) 
+      return UTILS._OneLineSerialize(s)
     elseif type(s) == 'string' then
       s = string.format('(%s)', s)
       return s
@@ -562,15 +564,15 @@ end
 -- @param #string fname File name.
 function UTILS.Gdump(fname)
   if lfs and io then
-  
+
     local fdir = lfs.writedir() .. [[Logs\]] .. fname
-    
+
     local f = io.open(fdir, 'w')
-    
+
     f:write(UTILS.TableShow(_G))
-    
+
     f:close()
-    
+
     env.info(string.format('Wrote debug data to $1', fdir))
   else
     env.error("WARNING: lfs and/or io not de-sanitized - cannot dump _G!")
@@ -894,17 +896,17 @@ UTILS.tostringLLM2KData = function( lat, lon, acc)
   -- degrees, decimal minutes.
   latMin = UTILS.Round(latMin, acc)
   lonMin = UTILS.Round(lonMin, acc)
-  
+
   if latMin == 60 then
     latMin = 0
     latDeg = latDeg + 1
   end
-  
+
   if lonMin == 60 then
     lonMin = 0
     lonDeg = lonDeg + 1
   end
-  
+
   local minFrmtStr -- create the formatting string for the minutes place
   if acc <= 0 then  -- no decimal place.
     minFrmtStr = '%02d'
@@ -912,7 +914,7 @@ UTILS.tostringLLM2KData = function( lat, lon, acc)
     local width = 3 + acc  -- 01.310 - that's a width of 6, for example.
     minFrmtStr = '%0' .. width .. '.' .. acc .. 'f'
   end
-  
+
   -- 024 23'N or 024 23.123'N
   return latHemi..string.format('%02d:', latDeg) .. string.format(minFrmtStr, latMin), lonHemi..string.format('%02d:', lonDeg) .. string.format(minFrmtStr, lonMin)
 
@@ -924,9 +926,9 @@ UTILS.tostringMGRS = function(MGRS, acc) --R2.1
   if acc <= 0 then
     return MGRS.UTMZone .. ' ' .. MGRS.MGRSDigraph
   else
-    
+
     if acc > 5 then acc = 5 end
-    
+
     -- Test if Easting/Northing have less than 4 digits.
     --MGRS.Easting=123    -- should be 00123
     --MGRS.Northing=5432  -- should be 05432
@@ -1409,7 +1411,7 @@ end
 function UTILS.VecDist2D(a, b)
 
   local d = math.huge
-  
+
   if (not a) or (not b) then return d end
 
   local c={x=b.x-a.x, y=b.y-a.y}
@@ -1425,12 +1427,12 @@ end
 -- @param DCS#Vec3 b Vector in 3D with x, y, z components.
 -- @return #number Distance between the vectors.
 function UTILS.VecDist3D(a, b)
-  
-    
+
+
   local d = math.huge
-  
+
   if (not a) or (not b) then return d end
-  
+
   local c={x=b.x-a.x, y=b.y-a.y, z=b.z-a.z}
 
   d=math.sqrt(UTILS.VecDot(c, c))
@@ -1778,6 +1780,7 @@ end
 -- * Mariana Islands +2 (East)
 -- * Falklands +12 (East) - note there's a LOT of deviation across the map, as we're closer to the South Pole
 -- * Sinai +4.8 (East)
+-- * Kola +15 (East) - not there is a lot of deviation across the map (-1° to +24°), as we are close to the North pole
 -- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
 -- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
@@ -1804,6 +1807,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=12
   elseif map==DCSMAP.Sinai then
     declination=4.8
+  elseif map==DCSMAP.Kola then
+    declination=15
   else
     declination=0
   end
@@ -1871,7 +1876,7 @@ function UTILS.GetCoalitionEnemy(Coalition, Neutral)
 
   local Coalitions={}
   if Coalition then
-    if Coalition==coalition.side.RED then      
+    if Coalition==coalition.side.RED then
       Coalitions={coalition.side.BLUE}
     elseif Coalition==coalition.side.BLUE then
       Coalitions={coalition.side.RED}
@@ -1879,7 +1884,7 @@ function UTILS.GetCoalitionEnemy(Coalition, Neutral)
       Coalitions={coalition.side.RED, coalition.side.BLUE}
     end
   end
-  
+
   if Neutral then
     table.insert(Coalitions, coalition.side.NEUTRAL)
   end
@@ -1910,17 +1915,17 @@ end
 -- @param #number Typename The type name.
 -- @return #string The Reporting name or "Bogey".
 function UTILS.GetReportingName(Typename)
-  
+
   local typename = string.lower(Typename)
-  
+
   for name, value in pairs(ENUMS.ReportingName.NATO) do
     local svalue = string.lower(value)
     if string.find(typename,svalue,1,true) then
       return name
     end
   end
-  
-  return "Bogey"  
+
+  return "Bogey"
 end
 
 --- Get the callsign name from its enumerator value
@@ -1951,49 +1956,49 @@ function UTILS.GetCallsignName(Callsign)
       return name
     end
   end
-  
+
   for name, value in pairs(CALLSIGN.B1B) do
     if value==Callsign then
       return name
     end
   end
-  
+
   for name, value in pairs(CALLSIGN.B52) do
     if value==Callsign then
       return name
     end
   end
-  
+
   for name, value in pairs(CALLSIGN.F15E) do
     if value==Callsign then
       return name
     end
   end
-  
+
   for name, value in pairs(CALLSIGN.F16) do
     if value==Callsign then
       return name
     end
   end
-  
+
   for name, value in pairs(CALLSIGN.F18) do
     if value==Callsign then
       return name
     end
   end
-  
+
   for name, value in pairs(CALLSIGN.FARP) do
     if value==Callsign then
       return name
     end
   end
-  
+
   for name, value in pairs(CALLSIGN.TransportAircraft) do
     if value==Callsign then
       return name
     end
   end
-  
+
   return "Ghostrider"
 end
 
@@ -2020,7 +2025,9 @@ function UTILS.GMTToLocalTimeDifference()
   elseif theatre==DCSMAP.Falklands then
     return -3  -- Fireland is UTC-3 hours.
   elseif theatre==DCSMAP.Sinai then
-    return 2   -- Currently map is +2 but should be +3 (DCS bug?)    
+    return 2   -- Currently map is +2 but should be +3 (DCS bug?)
+  elseif theatre==DCSMAP.Kola then
+    return 3   -- Currently map is +2 but should be +3 (DCS bug?)
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
@@ -2225,19 +2232,19 @@ function UTILS.GetRandomTableElement(t, replace)
     BASE:I("Error in ShuffleTable: Missing or wrong type of Argument")
     return
   end
-  
+
   math.random()
   math.random()
   math.random()
-  
+
   local r=math.random(#t)
-  
+
   local element=t[r]
-  
+
   if not replace then
     table.remove(t, r)
   end
-  
+
   return element
 end
 
@@ -2266,7 +2273,7 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           BASE:T(unit_name .. " a side door is open ")
           return true
       end
-    
+
       if string.find(type_name, "SA342" ) and (unit:getDrawArgumentValue(34) == 1) then
           BASE:T(unit_name .. " front door(s) are open or doors removed")
           return true
@@ -2291,7 +2298,7 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           BASE:T(unit_name .. " door is open")
           return true
       end
-     
+
       if type_name == "UH-60L" and (unit:getDrawArgumentValue(401) == 1 or unit:getDrawArgumentValue(402) == 1) then
           BASE:T(unit_name .. " cargo door is open")
           return true
@@ -2301,22 +2308,27 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           BASE:T(unit_name .. " front door(s) are open")
           return true
       end
-      
+
       if type_name == "AH-64D_BLK_II" then
          BASE:T(unit_name .. " front door(s) are open")
          return true -- no doors on this one ;)
       end
-      
+
       if type_name == "Bronco-OV-10A" then
          BASE:T(unit_name .. " front door(s) are open")
          return true -- no doors on this one ;)
       end
-      
+
       if type_name == "MH-60R" and (unit:getDrawArgumentValue(403) > 0 or unit:getDrawArgumentValue(403) == -1) then
         BASE:T(unit_name .. " cargo door is open")
         return true
       end
-      
+
+      if type_name == " OH-58D" and (unit:getDrawArgumentValue(35) > 0 or unit:getDrawArgumentValue(421) == -1) then
+        BASE:T(unit_name .. " cargo door is open")
+        return true
+      end
+
       return false
 
   end -- nil
@@ -2425,7 +2437,7 @@ function UTILS.GenerateUHFrequencies(Start,End)
 
     local FreeUHFFrequencies = {}
     local _start = 220000000
-    
+
     if not Start then
       while _start < 399000000 do
       if _start ~= 243000000 then
@@ -2436,7 +2448,7 @@ function UTILS.GenerateUHFrequencies(Start,End)
     else
       local myend = End*1000000 or 399000000
       local mystart = Start*1000000 or 220000000
-      
+
       while _start < 399000000 do
       if _start ~= 243000000 and (_start < mystart or _start > myend) then
         print(_start)
@@ -2444,10 +2456,10 @@ function UTILS.GenerateUHFrequencies(Start,End)
       end
           _start = _start + 500000
       end
-      
+
     end
-    
-    
+
+
     return FreeUHFFrequencies
 end
 
@@ -2488,7 +2500,7 @@ function UTILS.GenerateLaserCodes()
     return jtacGeneratedLaserCodes
 end
 
---- Ensure the passed object is a table. 
+--- Ensure the passed object is a table.
 -- @param #table Object The object that should be a table.
 -- @param #boolean ReturnNil If `true`, return `#nil` if `Object` is nil. Otherwise an empty table `{}` is returned.
 -- @return #table The object that now certainly *is* a table.
@@ -2500,11 +2512,11 @@ function UTILS.EnsureTable(Object, ReturnNil)
     end
   else
     if ReturnNil then
-      return nil      
+      return nil
     else
-      Object={}   
+      Object={}
     end
-    
+
   end
 
   return Object
@@ -2516,30 +2528,30 @@ end
 -- @param #table Data The LUA data structure to save. This will be e.g. a table of text lines with an \\n at the end of each line.
 -- @return #boolean outcome True if saving is possible, else false.
 function UTILS.SaveToFile(Path,Filename,Data)
-  -- Thanks to @FunkyFranky 
+  -- Thanks to @FunkyFranky
   -- Check io module is available.
   if not io then
     BASE:E("ERROR: io not desanitized. Can't save current file.")
     return false
   end
-  
+
   -- Check default path.
   if Path==nil and not lfs then
     BASE:E("WARNING: lfs not desanitized. File will be saved in DCS installation root directory rather than your \"Saved Games\\DCS\" folder.")
   end
-  
+
   -- Set path or default.
   local path = nil
   if lfs then
     path=Path or lfs.writedir()
   end
-  
+
   -- Set file name.
   local filename=Filename
   if path~=nil then
     filename=path.."\\"..filename
   end
-  
+
   -- write
   local f = assert(io.open(filename, "wb"))
   f:write(Data)
@@ -2547,43 +2559,43 @@ function UTILS.SaveToFile(Path,Filename,Data)
   return true
 end
 
---- Function to save an object to a file
+--- Function to load an object from a file.
 -- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
 -- @param #string Filename The name of the file.
 -- @return #boolean outcome True if reading is possible and successful, else false.
 -- @return #table data The data read from the filesystem (table of lines of text). Each line is one single #string!
 function UTILS.LoadFromFile(Path,Filename)
-  -- Thanks to @FunkyFranky    
+  -- Thanks to @FunkyFranky
   -- Check io module is available.
   if not io then
     BASE:E("ERROR: io not desanitized. Can't save current state.")
     return false
   end
-  
+
   -- Check default path.
   if Path==nil and not lfs then
     BASE:E("WARNING: lfs not desanitized. Loading will look into your DCS installation root directory rather than your \"Saved Games\\DCS\" folder.")
   end
-  
+
   -- Set path or default.
   local path = nil
   if lfs then
     path=Path or lfs.writedir()
   end
-  
+
   -- Set file name.
   local filename=Filename
   if path~=nil then
     filename=path.."\\"..filename
   end
-  
+
   -- Check if file exists.
   local exists=UTILS.CheckFileExists(Path,Filename)
   if not exists then
     BASE:I(string.format("ERROR: File %s does not exist!",filename))
     return false
   end
-    
+
   -- read
   local file=assert(io.open(filename, "rb"))
   local loadeddata = {}
@@ -2610,30 +2622,30 @@ function UTILS.CheckFileExists(Path,Filename)
       return false
     end
   end
-     
+
   -- Check io module is available.
   if not io then
     BASE:E("ERROR: io not desanitized.")
     return false
   end
-  
+
   -- Check default path.
   if Path==nil and not lfs then
     BASE:E("WARNING: lfs not desanitized. Loading will look into your DCS installation root directory rather than your \"Saved Games\\DCS\" folder.")
   end
-  
+
   -- Set path or default.
   local path = nil
   if lfs then
     path=Path or lfs.writedir()
   end
-  
+
   -- Set file name.
   local filename=Filename
   if path~=nil then
     filename=path.."\\"..filename
   end
-  
+
   -- Check if file exists.
   local exists=_fileexists(filename)
   if not exists then
@@ -2670,7 +2682,7 @@ end
 -- @return #boolean outcome True if saving is successful, else false.
 -- @usage
 -- We will go through the list and find the corresponding group and save the current group size (0 when dead).
--- These groups are supposed to be put on the map in the ME and have *not* moved (e.g. stationary SAM sites). 
+-- These groups are supposed to be put on the map in the ME and have *not* moved (e.g. stationary SAM sites).
 -- Position is still saved for your usage.
 -- The idea is to reduce the number of units when reloading the data again to restart the saved mission.
 -- The data will be a simple comma separated list of groupname and size, with one header line.
@@ -2709,12 +2721,12 @@ end
 -- @return #boolean outcome True if saving is successful, else false.
 -- @usage
 -- We will go through the set and find the corresponding group and save the current group size and current position.
--- The idea is to respawn the groups **spawned during an earlier run of the mission** at the given location and reduce 
--- the number of units in the group when reloading the data again to restart the saved mission. Note that *dead* groups 
+-- The idea is to respawn the groups **spawned during an earlier run of the mission** at the given location and reduce
+-- the number of units in the group when reloading the data again to restart the saved mission. Note that *dead* groups
 -- cannot be covered with this.
 -- **Note** Do NOT use dashes or hashes in group template names (-,#)!
 -- The data will be a simple comma separated list of groupname and size, with one header line.
--- The current task/waypoint/etc cannot be restored. 
+-- The current task/waypoint/etc cannot be restored.
 function UTILS.SaveSetOfGroups(Set,Path,Filename,Structured)
   local filename = Filename or "SetOfGroups"
   local data = "--Save SET of groups: "..Filename .."\n"
@@ -2724,9 +2736,12 @@ function UTILS.SaveSetOfGroups(Set,Path,Filename,Structured)
     if group and group:IsAlive() then
       local name = group:GetName()
       local template = string.gsub(name,"-(.+)$","")
+      if string.find(name,"AID") then
+        template = string.gsub(name,"(.AID.%d+$","")
+      end
       if string.find(template,"#") then
        template = string.gsub(name,"#(%d+)$","")
-      end 
+      end
       local units = group:CountAliveUnits()
       local position = group:GetVec3()
       if Structured then
@@ -2738,7 +2753,7 @@ function UTILS.SaveSetOfGroups(Set,Path,Filename,Structured)
         data = string.format("%s%s,%s,%d,%d,%d,%d,%s\n",data,name,template,units,position.x,position.y,position.z,strucdata)
       else
         data = string.format("%s%s,%s,%d,%d,%d,%d\n",data,name,template,units,position.x,position.y,position.z)
-      end     
+      end
     end
   end
   -- save the data
@@ -2809,16 +2824,16 @@ end
 -- @return #table Table of data objects (tables) containing groupname, coordinate and group object. Returns nil when file cannot be read.
 -- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
 function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinematic,Effect,Density)
-  
+
   local fires = {}
-  
+
   local function Smokers(name,coord,effect,density)
     local eff = math.random(8)
     if type(effect) == "number" then eff = effect end
     coord:BigSmokeAndFire(eff,density,name)
     table.insert(fires,name)
   end
-  
+
   local function Cruncher(group,typename,anzahl)
     local units = group:GetUnits()
     local reduced = 0
@@ -2836,7 +2851,7 @@ function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinema
       end
     end
   end
-  
+
   local reduce = true
   if Reduce == false then reduce = false end
   local filename = Filename or "StateListofGroups"
@@ -2878,13 +2893,13 @@ function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinema
               end
               local reduce = false
               if loadednumber < _number then reduce = true end
-              
-              --BASE:I(string.format("Looking at: %s | Original number: %d | Loaded number: %d | Reduce: %s",_name,_number,loadednumber,tostring(reduce))) 
-              
+
+              --BASE:I(string.format("Looking at: %s | Original number: %d | Loaded number: %d | Reduce: %s",_name,_number,loadednumber,tostring(reduce)))
+
               if reduce then
-                Cruncher(actualgroup,_name,_number-loadednumber)  
+                Cruncher(actualgroup,_name,_number-loadednumber)
               end
-                         
+
             end
           else
             local reduction = actualgroup:CountAliveUnits() - size
@@ -2899,7 +2914,7 @@ function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinema
         end
       end
       table.insert(datatable,data)
-    end 
+    end
   else
     return nil
   end
@@ -2914,11 +2929,11 @@ end
 -- @param #boolean Cinematic (Optional, needs Structured=true) If true, place a fire/smoke effect on the dead static position.
 -- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
 -- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
--- @return Core.Set#SET_GROUP Set of GROUP objects. 
+-- @return Core.Set#SET_GROUP Set of GROUP objects.
 -- Returns nil when file cannot be read. Returns a table of data entries if Spawn is false: `{ groupname=groupname, size=size, coordinate=coordinate, template=template }`
 -- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
 function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,Density)
-  
+
   local fires = {}
   local usedtemplates = {}
   local spawn = true
@@ -2926,14 +2941,14 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,D
   local filename = Filename or "SetOfGroups"
   local setdata = SET_GROUP:New()
   local datatable = {}
-  
+
   local function Smokers(name,coord,effect,density)
     local eff = math.random(8)
     if type(effect) == "number" then eff = effect end
     coord:BigSmokeAndFire(eff,density,name)
     table.insert(fires,name)
   end
-  
+
   local function Cruncher(group,typename,anzahl)
     local units = group:GetUnits()
     local reduced = 0
@@ -2951,7 +2966,7 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,D
       end
     end
   end
-  
+
   local function PostSpawn(args)
     local spwndgrp = args[1]
     local size = args[2]
@@ -2961,16 +2976,16 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,D
     local actualsize = spwndgrp:CountAliveUnits()
     if actualsize > size then
       if Structured and structure then
-  
+
         local loadedstructure = {}
         local strcset = UTILS.Split(structure,";")
         for _,_data in pairs(strcset) do
           local datasplit = UTILS.Split(_data,"==")
           loadedstructure[datasplit[1]] = tonumber(datasplit[2])
         end
-  
+
         local originalstructure = UTILS.GetCountPerTypeName(spwndgrp)
-  
+
         for _name,_number in pairs(originalstructure) do
           local loadednumber = 0
           if loadedstructure[_name] then
@@ -2978,11 +2993,11 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,D
           end
           local reduce = false
           if loadednumber < _number then reduce = true end
-          
+
           if reduce then
-            Cruncher(spwndgrp,_name,_number-loadednumber)  
+            Cruncher(spwndgrp,_name,_number-loadednumber)
           end
-                     
+
         end
       else
         local reduction = actualsize-size
@@ -2995,16 +3010,16 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,D
       end
     end
   end
-            
+
   local function MultiUse(Data)
-    local template = Data.template 
+    local template = Data.template
     if template and usedtemplates[template] and usedtemplates[template].used and usedtemplates[template].used > 1 then
       -- multispawn
       if not usedtemplates[template].done then
         local spwnd = 0
         local spawngrp = SPAWN:New(template)
         spawngrp:InitLimit(0,usedtemplates[template].used)
-        for _,_entry in pairs(usedtemplates[template].data) do       
+        for _,_entry in pairs(usedtemplates[template].data) do
           spwnd = spwnd + 1
           local sgrp=spawngrp:SpawnFromCoordinate(_entry.coordinate,spwnd)
           BASE:ScheduleOnce(0.5,PostSpawn,{sgrp,_entry.size,_entry.structure})
@@ -3016,7 +3031,7 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,D
       return false
     end
   end
-  
+
   --BASE:I("Spawn = "..tostring(spawn))
   if UTILS.CheckFileExists(Path,filename) then
     local outcome,loadeddata = UTILS.LoadFromFile(Path,Filename)
@@ -3050,13 +3065,13 @@ function UTILS.LoadSetOfGroups(Path,Filename,Spawn,Structured,Cinematic,Effect,D
         end
       end
     end
-    for _id,_entry in pairs (datatable) do  
+    for _id,_entry in pairs (datatable) do
       if spawn and not MultiUse(_entry) and _entry.size > 0 then
         local group = SPAWN:New(_entry.template)
         local sgrp=group:SpawnFromCoordinate(_entry.coordinate)
         BASE:ScheduleOnce(0.5,PostSpawn,{sgrp,_entry.size,_entry.structure})
       end
-    end 
+    end
   else
     return nil
   end
@@ -3085,7 +3100,7 @@ function UTILS.LoadSetOfStatics(Path,Filename)
       if StaticObject then
         datatable:AddObject(StaticObject)
       end
-    end 
+    end
   else
     return nil
   end
@@ -3101,7 +3116,7 @@ end
 -- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
 -- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
 -- @return #table Table of data objects (tables) containing staticname, size (0=dead else 1), coordinate and the static object. Dead objects will have coordinate points `{x=0,y=0,z=0}`
--- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )` 
+-- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
 -- Returns nil when file cannot be read.
 function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce,Dead,Cinematic,Effect,Density)
   local fires = {}
@@ -3137,7 +3152,7 @@ function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce,Dead,Cinematic,E
             if Cinematic then
               local effect = math.random(8)
               if type(Effect) == "number" then
-                effect = Effect 
+                effect = Effect
               end
               coord:BigSmokeAndFire(effect,Density,staticname)
               table.insert(fires,staticname)
@@ -3147,7 +3162,7 @@ function UTILS.LoadStationaryListOfStatics(Path,Filename,Reduce,Dead,Cinematic,E
           end
         end
       end
-    end 
+    end
   else
     return nil
   end
@@ -3251,10 +3266,10 @@ function UTILS.ToStringBRAANATO(FromGrp,ToGrp)
       if aspect == "" then
         BRAANATO = string.format("%s, BRA, %03d, %d miles, Angels %d, Track %s",GroupWords,bearing, rangeNM, alt, track)
       else
-        BRAANATO = string.format("%s, BRAA, %03d, %d miles, Angels %d, %s, Track %s",GroupWords, bearing, rangeNM, alt, aspect, track)      
+        BRAANATO = string.format("%s, BRAA, %03d, %d miles, Angels %d, %s, Track %s",GroupWords, bearing, rangeNM, alt, aspect, track)
       end
   end
-  return BRAANATO 
+  return BRAANATO
 end
 
 --- Check if an object is contained in a table.
@@ -3299,7 +3314,7 @@ function UTILS.IsAnyInTable(Table, Objects, Key)
         end
       end
     end
-    
+
   end
 
   return false
@@ -3315,30 +3330,30 @@ end
 -- @param #table Color Color of the line in RGB, e.g. {1,0,0} for red
 -- @param #number Alpha Transparency factor, between 0.1 and 1
 -- @param #number LineType Line type to be used, line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
--- @param #boolean ReadOnly 
+-- @param #boolean ReadOnly
 function UTILS.PlotRacetrack(Coordinate, Altitude, Speed, Heading, Leg, Coalition, Color, Alpha, LineType, ReadOnly)
     local fix_coordinate = Coordinate
     local altitude = Altitude
     local speed = Speed or 350
     local heading = Heading or 270
     local leg_distance = Leg or 10
-    
+
     local coalition = Coalition or -1
     local color = Color or {1,0,0}
     local alpha = Alpha or 1
     local lineType = LineType or 1
-    
-    
+
+
     speed = UTILS.IasToTas(speed, UTILS.FeetToMeters(altitude), oatcorr)
-      
+
     local turn_radius = 0.0211 * speed -3.01
-    
+
     local point_two = fix_coordinate:Translate(UTILS.NMToMeters(leg_distance), heading, true, false)
     local point_three = point_two:Translate(UTILS.NMToMeters(turn_radius)*2, heading - 90, true, false)
     local point_four = fix_coordinate:Translate(UTILS.NMToMeters(turn_radius)*2, heading - 90, true, false)
     local circle_center_fix_four = point_two:Translate(UTILS.NMToMeters(turn_radius), heading - 90, true, false)
     local circle_center_two_three = fix_coordinate:Translate(UTILS.NMToMeters(turn_radius), heading - 90, true, false)
-    
+
 
     fix_coordinate:LineToAll(point_two, coalition, color, alpha, lineType)
     point_four:LineToAll(point_three, coalition, color, alpha, lineType)
@@ -4011,4 +4026,47 @@ function UTILS.ClockHeadingString(refHdg,tgtHdg)
     end
     local clockPos = math.ceil((relativeAngle % 360) / 30)
     return clockPos.." o'clock"
+end
+
+--- Get a NATO abbreviated MGRS text for SRS use, optionally with prosody slow tag
+-- @param #string Text The input string, e.g. "MGRS 4Q FJ 12345 67890"
+-- @param #boolean Slow Optional - add slow tags
+-- @return #string Output for (Slow) spelling in SRS TTS e.g. "MGRS;<prosody rate="slow">4;Quebec;Foxtrot;Juliett;1;2;3;4;5;6;7;8;niner;zero;</prosody>"
+function UTILS.MGRSStringToSRSFriendly(Text,Slow)
+    local Text = string.gsub(Text,"MGRS ","")
+    Text = string.gsub(Text,"%s+","")
+    Text = string.gsub(Text,"([%a%d])","%1;") -- "0;5;1;"
+    Text = string.gsub(Text,"A","Alpha")
+    Text = string.gsub(Text,"B","Bravo")
+    Text = string.gsub(Text,"C","Charlie")
+    Text = string.gsub(Text,"D","Delta")
+    Text = string.gsub(Text,"E","Echo")
+    Text = string.gsub(Text,"F","Foxtrot")
+    Text = string.gsub(Text,"G","Golf")
+    Text = string.gsub(Text,"H","Hotel")
+    Text = string.gsub(Text,"I","India")
+    Text = string.gsub(Text,"J","Juliett")
+    Text = string.gsub(Text,"K","Kilo")
+    Text = string.gsub(Text,"L","Lima")
+    Text = string.gsub(Text,"M","Mike")
+    Text = string.gsub(Text,"N","November")
+    Text = string.gsub(Text,"O","Oscar")
+    Text = string.gsub(Text,"P","Papa")
+    Text = string.gsub(Text,"Q","Quebec")
+    Text = string.gsub(Text,"R","Romeo")
+    Text = string.gsub(Text,"S","Sierra")
+    Text = string.gsub(Text,"T","Tango")
+    Text = string.gsub(Text,"U","Uniform")
+    Text = string.gsub(Text,"V","Victor")
+    Text = string.gsub(Text,"W","Whiskey")
+    Text = string.gsub(Text,"X","Xray")
+    Text = string.gsub(Text,"Y","Yankee")
+    Text = string.gsub(Text,"Z","Zulu")
+    Text = string.gsub(Text,"0","zero")
+    Text = string.gsub(Text,"9","niner")
+    if Slow then
+      Text = '<prosody rate="slow">'..Text..'</prosody>'
+    end
+    Text = "MGRS;"..Text
+    return Text
 end

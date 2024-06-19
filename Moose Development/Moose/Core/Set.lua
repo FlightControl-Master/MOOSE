@@ -1516,6 +1516,7 @@ do
       self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnDeadOrCrash )
       if self.Filter.Zones then
         self.ZoneTimer = TIMER:New(self._ContinousZoneFilter,self)
         local timing = self.ZoneTimerInterval or 30
@@ -3477,7 +3478,7 @@ do -- SET_STATIC
 
   --- Add STATIC(s) to SET_STATIC.
   -- @param #SET_STATIC self
-  -- @param #string AddStatic A single STATIC.
+  -- @param Wrapper.Static#STATIC AddStatic A single STATIC.
   -- @return #SET_STATIC self
   function SET_STATIC:AddStatic( AddStatic )
     self:F2( AddStatic:GetName() )

@@ -74,7 +74,7 @@
 -- @image Designation.JPG
 --
 -- Date: 24 Oct 2021
--- Last Update: Jan 2024
+-- Last Update: May 2024
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
@@ -88,6 +88,7 @@
 -- @field #table LaserCodes
 -- @field #table playermenus
 -- @field #boolean smokemenu
+-- @field #boolean threatmenu
 -- @extends Ops.Intel#INTEL
 
 ---
@@ -117,7 +118,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.23"
+AUTOLASE.version = "0.1.25"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -205,6 +206,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self:SetLaserCodes( { 1688, 1130, 4785, 6547, 1465, 4578 } ) -- set self.LaserCodes
   self.playermenus = {}
   self.smokemenu = true
+  self.threatmenu = true
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -323,39 +325,51 @@ end
 function AUTOLASE:SetPilotMenu()
   if self.usepilotset then
     local pilottable = self.pilotset:GetSetObjects() or {}
+    local grouptable = {}
     for _,_unit in pairs (pilottable) do
       local Unit = _unit -- Wrapper.Unit#UNIT
       if Unit and Unit:IsAlive() then
         local Group = Unit:GetGroup()
+        local GroupName = Group:GetName() or "none"
         local unitname = Unit:GetName()
-        if self.playermenus[unitname] then self.playermenus[unitname]:Remove() end
-        local lasetopm = MENU_GROUP:New(Group,"Autolase",nil)
-        self.playermenus[unitname] = lasetopm
-        local lasemenu = MENU_GROUP_COMMAND:New(Group,"Status",lasetopm,self.ShowStatus,self,Group,Unit)
-        if self.smokemenu then
-          local smoke = (self.smoketargets == true) and "off" or "on"
-          local smoketext = string.format("Switch smoke targets to %s",smoke)
-          local smokemenu = MENU_GROUP_COMMAND:New(Group,smoketext,lasetopm,self.SetSmokeTargets,self,(not self.smoketargets))
-        end
-        for _,_grp in pairs(self.RecceSet.Set) do
-          local grp = _grp -- Wrapper.Group#GROUP
-          local unit = grp:GetUnit(1)
-          --local name = grp:GetName()
-          if unit and unit:IsAlive() then
-            local name = unit:GetName()
-            local mname = string.gsub(name,".%d+.%d+$","")
-            local code = self:GetLaserCode(name)
-            local unittop = MENU_GROUP:New(Group,"Change laser code for "..mname,lasetopm)
-            for _,_code in pairs(self.LaserCodes) do
-              local text = tostring(_code)
-              if _code == code then text = text.."(*)" end
-              local changemenu = MENU_GROUP_COMMAND:New(Group,text,unittop,self.SetRecceLaserCode,self,name,_code,true)
-            end
-          end
-        end
+        if not grouptable[GroupName] == true then
+          if self.playermenus[unitname] then self.playermenus[unitname]:Remove() end -- menus
+          local lasetopm = MENU_GROUP:New(Group,"Autolase",nil)
+          self.playermenus[unitname] = lasetopm
+          local lasemenu = MENU_GROUP_COMMAND:New(Group,"Status",lasetopm,self.ShowStatus,self,Group,Unit)
+          if self.smokemenu then
+            local smoke = (self.smoketargets == true) and "off" or "on"
+            local smoketext = string.format("Switch smoke targets to %s",smoke)
+            local smokemenu = MENU_GROUP_COMMAND:New(Group,smoketext,lasetopm,self.SetSmokeTargets,self,(not self.smoketargets))
+          end -- smokement
+         if self.threatmenu then
+             local threatmenutop = MENU_GROUP:New(Group,"Set min lasing threat",lasetopm)
+             for i=0,10,2 do
+              local text = "Threatlevel "..tostring(i)
+              local threatmenu = MENU_GROUP_COMMAND:New(Group,text,threatmenutop,self.SetMinThreatLevel,self,i)
+             end -- threatlevel
+         end -- threatmenu
+          for _,_grp in pairs(self.RecceSet.Set) do
+            local grp = _grp -- Wrapper.Group#GROUP
+            local unit = grp:GetUnit(1)
+            --local name = grp:GetName()
+            if unit and unit:IsAlive() then
+              local name = unit:GetName()
+              local mname = string.gsub(name,".%d+.%d+$","")
+              local code = self:GetLaserCode(name)
+              local unittop = MENU_GROUP:New(Group,"Change laser code for "..mname,lasetopm)
+              for _,_code in pairs(self.LaserCodes) do
+                local text = tostring(_code)
+                if _code == code then text = text.."(*)" end
+                local changemenu = MENU_GROUP_COMMAND:New(Group,text,unittop,self.SetRecceLaserCode,self,name,_code,true)
+              end -- Codes
+            end -- unit alive
+          end -- Recceset
+          grouptable[GroupName] = true
+        end -- grouptable[GroupName] 
         --lasemenu:Refresh()
-      end
-    end
+      end -- unit alive
+    end -- pilot loop
   else
     if not self.NoMenus then
       self.Menu = MENU_COALITION_COMMAND:New(self.coalition,"Autolase",nil,self.ShowStatus,self)
@@ -602,6 +616,21 @@ function AUTOLASE:DisableSmokeMenu()
   return self
 end
 
+--- (User) Show the "Switch min threat lasing..." menu entry for pilots. On by default.
+-- @param #AUTOLASE self
+-- @return #AUTOLASE self 
+function AUTOLASE:EnableThreatLevelMenu()
+  self.threatmenu = true
+  return self
+end
+
+--- (User) Do not show the "Switch min threat lasing..." menu entry for pilots.
+-- @param #AUTOLASE self
+-- @return #AUTOLASE self 
+function AUTOLASE:DisableThreatLevelMenu()
+  self.threatmenu = false
+  return self
+end
 
 --- (Internal) Function to calculate line of sight.
 -- @param #AUTOLASE self
@@ -730,6 +759,7 @@ function AUTOLASE:ShowStatus(Group,Unit)
       report:Add(string.format("Recce %s has code %d",name,code))
     end
   end
+  report:Add(string.format("Lasing min threat level %d",self.minthreatlevel))
   local lines = 0
   for _ind,_entry in pairs(self.CurrentLasing) do
     local entry = _entry -- #AUTOLASE.LaserSpot

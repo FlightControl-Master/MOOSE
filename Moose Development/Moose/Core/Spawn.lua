@@ -202,19 +202,19 @@
 --   
 -- ### Link-16 Datalink STN and SADL IDs (limited at the moment to F15/16/18/AWACS/Tanker/B1B, but not the F15E for clients, SADL A10CII only)
 -- 
---   *{#SPAWN.InitSTN}(): Set the STN of the first unit in the group. All other units will have consecutive STNs, provided they have not been used yet.
---   *{#SPAWN.InitSADL}(): Set the SADL of the first unit in the group. All other units will have consecutive SADLs, provided they have not been used yet.
+--   * @{#SPAWN.InitSTN}(): Set the STN of the first unit in the group. All other units will have consecutive STNs, provided they have not been used yet.
+--   * @{#SPAWN.InitSADL}(): Set the SADL of the first unit in the group. All other units will have consecutive SADLs, provided they have not been used yet.
 --   
 -- ### Callsigns
 -- 
---   *{#SPAWN.InitRandomizeCallsign}(): Set a random callsign name per spawn.
---   *{#SPAWN.SpawnInitCallSign}(): Set a specific callsign for a spawned group.
+--   * @{#SPAWN.InitRandomizeCallsign}(): Set a random callsign name per spawn.
+--   * @{#SPAWN.SpawnInitCallSign}(): Set a specific callsign for a spawned group.
 --   
 -- ### Speed
 -- 
---   *{#SPAWN.InitSpeedMps}(): Set the initial speed on spawning in meters per second.
---   *{#SPAWN.InitSpeedKph}(): Set the initial speed on spawning in kilometers per hour.
---   *{#SPAWN.InitSpeedKnots}(): Set the initial speed on spawning in knots.
+--   * @{#SPAWN.InitSpeedMps}(): Set the initial speed on spawning in meters per second.
+--   * @{#SPAWN.InitSpeedKph}(): Set the initial speed on spawning in kilometers per hour.
+--   * @{#SPAWN.InitSpeedKnots}(): Set the initial speed on spawning in knots.
 --
 -- ## SPAWN **Spawn** methods
 --
@@ -620,12 +620,14 @@ end
 -- and any spaces before and after the resulting name are removed.
 -- IMPORTANT! This method MUST be the first used after :New !!!
 -- @param #SPAWN self
--- @param #boolean KeepUnitNames (optional) If true, the unit names are kept, false or not provided to make new unit names.
+-- @param #boolean KeepUnitNames (optional) If true, the unit names are kept, false or not provided create new unit names.
 -- @return #SPAWN self
 function SPAWN:InitKeepUnitNames( KeepUnitNames )
   self:F()
 
-  self.SpawnInitKeepUnitNames = KeepUnitNames or true
+  self.SpawnInitKeepUnitNames = false
+  
+  if KeepUnitNames == true then self.SpawnInitKeepUnitNames = true end
 
   return self
 end
@@ -1209,11 +1211,12 @@ end
 -- @param #number Major Major number, i.e. the group number of this name, e.g. 1 - resulting in e.g. Texaco-2-1
 -- @return #SPAWN self
 function SPAWN:InitCallSign(ID,Name,Minor,Major)
+  local Name = Name or "Enfield"
   self.SpawnInitCallSign = true
   self.SpawnInitCallSignID = ID or 1 
   self.SpawnInitCallSignMinor = Minor or 1
   self.SpawnInitCallSignMajor = Major or 1 
-  self.SpawnInitCallSignName = string.lower(Name) or "enfield"
+  self.SpawnInitCallSignName=string.lower(Name):gsub("^%l", string.upper)
   return self
 end
 
@@ -1609,8 +1612,8 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
                   RandomVec2 = PointVec3:GetRandomVec2InRadius( self.SpawnOuterRadius, self.SpawnInnerRadius )
                   numTries = numTries + 1
                   inZone = SpawnZone:IsVec2InZone(RandomVec2)
-                  self:I("Retrying " .. numTries .. "spawn " .. SpawnTemplate.name .. " in Zone " .. SpawnZone:GetName() .. "!")
-                  self:I(SpawnZone)
+                  --self:I("Retrying " .. numTries .. "spawn " .. SpawnTemplate.name .. " in Zone " .. SpawnZone:GetName() .. "!")
+                  --self:I(SpawnZone)
                 end
               end
               if (not inZone) then
@@ -3436,24 +3439,28 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
   end
   
   if self.SpawnInitKeepUnitNames == false then
-    for UnitID = 1, #SpawnTemplate.units do
-      SpawnTemplate.units[UnitID].name = string.format( SpawnTemplate.name .. '-%02d', UnitID )
+    for UnitID = 1, #SpawnTemplate.units do      
+      if not string.find(SpawnTemplate.units[UnitID].name,"#IFF_",1,true) then --Razbam IFF hack for F15E etc
+        SpawnTemplate.units[UnitID].name = string.format( SpawnTemplate.name .. '-%02d', UnitID )    
+      end
       SpawnTemplate.units[UnitID].unitId = nil
     end
   else
     for UnitID = 1, #SpawnTemplate.units do
-        local SpawnInitKeepUnitIFF = false
-        if string.find(SpawnTemplate.units[UnitID].name,"#IFF_",1,true) then --Razbam IFF hack for F15E etc
-          SpawnInitKeepUnitIFF = true
-        end
-      local UnitPrefix, Rest
-      if SpawnInitKeepUnitIFF == false then
-        UnitPrefix, Rest = string.match( SpawnTemplate.units[UnitID].name, "^([^#]+)#?" ):gsub( "^%s*(.-)%s*$", "%1" )
-        self:T( { UnitPrefix, Rest } )
-      else
-       UnitPrefix=SpawnTemplate.units[UnitID].name
+      local SpawnInitKeepUnitIFF = false
+      if string.find(SpawnTemplate.units[UnitID].name,"#IFF_",1,true) then --Razbam IFF hack for F15E etc
+        SpawnInitKeepUnitIFF = true
       end
-      SpawnTemplate.units[UnitID].name = string.format( '%s#%03d-%02d', UnitPrefix, SpawnIndex, UnitID )
+      local UnitPrefix, Rest
+      if SpawnInitKeepUnitIFF == false then       
+        UnitPrefix, Rest = string.match( SpawnTemplate.units[UnitID].name, "^([^#]+)#?" ):gsub( "^%s*(.-)%s*$", "%1" )
+        SpawnTemplate.units[UnitID].name = string.format( '%s#%03d-%02d', UnitPrefix, SpawnIndex, UnitID )       
+        self:T( { UnitPrefix, Rest } )
+      --else
+       --UnitPrefix=SpawnTemplate.units[UnitID].name
+      end
+      --SpawnTemplate.units[UnitID].name = string.format( '%s#%03d-%02d', UnitPrefix, SpawnIndex, UnitID )
+      
       SpawnTemplate.units[UnitID].unitId = nil
     end
   end

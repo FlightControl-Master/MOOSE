@@ -2109,7 +2109,7 @@ function ARMYGROUP:_InitGroup(Template, Delay)
       return
     end
 
-    self:I(self.lid.."FF Initializing Group")
+    self:T(self.lid.."FF Initializing Group")
 
     -- Get template of group.
     local template=Template or self:_GetTemplate()

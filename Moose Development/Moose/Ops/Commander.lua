@@ -663,7 +663,7 @@ end
 --- Add a CAP zone.
 -- @param #COMMANDER self
 -- @param Core.Zone#ZONE Zone CapZone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
@@ -689,7 +689,7 @@ end
 --- Add a GCICAP zone.
 -- @param #COMMANDER self
 -- @param Core.Zone#ZONE Zone CapZone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
@@ -735,7 +735,7 @@ end
 --- Add an AWACS zone.
 -- @param #COMMANDER self
 -- @param Core.Zone#ZONE Zone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.
@@ -782,7 +782,7 @@ end
 --- Add a refuelling tanker zone.
 -- @param #COMMANDER self
 -- @param Core.Zone#ZONE Zone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,0000 feet.
+-- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
 -- @param #number Speed Orbit speed in KIAS. Default 350 kts.
 -- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
 -- @param #number Leg Length of race-track in NM. Default 30 NM.

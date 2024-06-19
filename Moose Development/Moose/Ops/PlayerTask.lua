@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update Feb 2024
+-- @date Last Update May 2024
 
 
 do
@@ -1213,6 +1213,9 @@ do
 --                AIRDEFENSE = "Airdefense",
 --                SAM = "SAM",
 --                GROUP = "Group",
+--                ELEVATION = "\nTarget Elevation: %s %s",
+--                METER = "meter",
+--                FEET = "feet",
 --              },
 -- 
 -- e.g.
@@ -1367,7 +1370,7 @@ PLAYERTASKCONTROLLER.Type = {
 AUFTRAG.Type.PRECISIONBOMBING = "Precision Bombing"
 AUFTRAG.Type.CTLD = "Combat Transport"
 AUFTRAG.Type.CSAR = "Combat Rescue"
-
+AUFTRAG.Type.CONQUER = "Conquer"
 ---
 -- @type Scores
 PLAYERTASKCONTROLLER.Scores = {
@@ -1380,7 +1383,8 @@ PLAYERTASKCONTROLLER.Scores = {
   [AUFTRAG.Type.BAI] = 100,
   [AUFTRAG.Type.SEAD] = 100,
   [AUFTRAG.Type.BOMBING] = 100,
-  [AUFTRAG.Type.BOMBRUNWAY] = 100,  
+  [AUFTRAG.Type.BOMBRUNWAY] = 100,
+  [AUFTRAG.Type.CONQUER] = 100,    
 }
  
 --- 
@@ -1419,6 +1423,9 @@ PLAYERTASKCONTROLLER.Messages = {
     THREATMEDIUM = "medium",
     THREATLOW = "low",
     THREATTEXT = "%s\nThreat: %s\nTargets left: %d\nCoord: %s",
+    ELEVATION = "\nTarget Elevation: %s %s",
+    METER = "meter",
+    FEET = "feet",
     THREATTEXTTTS = "%s, %s. Target information for %s. Threat level %s. Targets left %d. Target location %s.",
     MARKTASK = "%s, %s, copy, task %03d location marked on map!",
     SMOKETASK = "%s, %s, copy, task %03d location smoked!",
@@ -1499,6 +1506,9 @@ PLAYERTASKCONTROLLER.Messages = {
     THREATMEDIUM = "mittel",
     THREATLOW = "niedrig",
     THREATTEXT = "%s\nGefahrstufe: %s\nZiele: %d\nKoord: %s",
+    ELEVATION = "\nZiel Höhe: %s %s",
+    METER = "Meter",
+    FEET = "Fuss",
     THREATTEXTTTS = "%s, %s. Zielinformation zu %s. Gefahrstufe %s. Ziele %d. Zielposition %s.",
     MARKTASK = "%s, %s, verstanden, Zielposition %03d auf der Karte markiert!",
     SMOKETASK = "%s, %s, verstanden, Zielposition %03d mit Rauch markiert!",
@@ -1561,7 +1571,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.65"
+PLAYERTASKCONTROLLER.version="0.1.66"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -2113,10 +2123,12 @@ function PLAYERTASKCONTROLLER:_GetPlayerName(Client)
   local ttsplayername = nil
   if not self.customcallsigns[playername] then
     local playergroup = Client:GetGroup()
-    ttsplayername = playergroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
-    local newplayername = self:_GetTextForSpeech(ttsplayername)
-    self.customcallsigns[playername] = newplayername
-    ttsplayername = newplayername
+    if playergroup ~= nil then
+      ttsplayername = playergroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+      local newplayername = self:_GetTextForSpeech(ttsplayername)
+      self.customcallsigns[playername] = newplayername
+      ttsplayername = newplayername
+    end
   else
     ttsplayername = self.customcallsigns[playername]
   end
@@ -3182,7 +3194,8 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     local ttsname = self.gettext:GetEntry("TASKNAMETTS",self.locale)
     local taskname = string.format(tname,task.Type,task.PlayerTaskNr)
     local ttstaskname = string.format(ttsname,task.TTSType,task.PlayerTaskNr)
-    local Coordinate = task.Target:GetCoordinate() or COORDINATE:New(0,0,0)
+    local Coordinate = task.Target:GetCoordinate() or COORDINATE:New(0,0,0) -- Core.Point#COORDINATE
+    local Elevation = Coordinate:GetLandHeight() or 0 -- meters
     local CoordText = ""
     local CoordTextLLDM = nil
     if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
@@ -3207,6 +3220,17 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     local ThreatGraph = "[" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]: "..ThreatLevel
     local ThreatLocaleText = self.gettext:GetEntry("THREATTEXT",self.locale)
     text = string.format(ThreatLocaleText, taskname, ThreatGraph, targets, CoordText)
+    local settings = _DATABASE:GetPlayerSettings(playername) or _SETTINGS -- Core.Settings#SETTINGS
+    local elevationmeasure = self.gettext:GetEntry("FEET",self.locale)
+    if settings:IsMetric() then
+      elevationmeasure = self.gettext:GetEntry("METER",self.locale)
+      --Elevation = math.floor(UTILS.MetersToFeet(Elevation))
+    else
+      Elevation = math.floor(UTILS.MetersToFeet(Elevation))
+    end
+    -- ELEVATION = "\nTarget Elevation: %s %s",
+    local elev = self.gettext:GetEntry("ELEVATION",self.locale)
+    text = text .. string.format(elev,tostring(math.floor(Elevation)),elevationmeasure)
     -- Prec bombing
     if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.precisionbombing then
       if self.LasingDrone and self.LasingDrone.playertask then
