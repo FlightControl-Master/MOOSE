@@ -545,7 +545,7 @@ do -- DETECTION_BASE
     -- @param #string To The To State string.
     function DETECTION_BASE:onafterDetect( From, Event, To )
 
-      local DetectDelay = 0.1
+      local DetectDelay = 0.15
       self.DetectionCount = 0
       self.DetectionRun = 0
       self:UnIdentifyAllDetectedObjects() -- Resets the DetectedObjectsIdentified table
@@ -604,7 +604,7 @@ do -- DETECTION_BASE
     -- @param #number DetectionTimeStamp Time stamp of detection event.
     function DETECTION_BASE:onafterDetection( From, Event, To, Detection, DetectionTimeStamp )
 
-      -- self:F( { DetectedObjects = self.DetectedObjects } )
+      self:I( { DetectedObjects = self.DetectedObjects } )
 
       self.DetectionRun = self.DetectionRun + 1
 
@@ -612,14 +612,14 @@ do -- DETECTION_BASE
 
       if Detection and Detection:IsAlive() then
 
-        -- self:T( { "DetectionGroup is Alive", DetectionGroup:GetName() } )
+        self:I( { "DetectionGroup is Alive", Detection:GetName() } )
 
         local DetectionGroupName = Detection:GetName()
         local DetectionUnit = Detection:GetUnit( 1 )
 
         local DetectedUnits = {}
 
-        local DetectedTargets = Detection:GetDetectedTargets(
+        local DetectedTargets = DetectionUnit:GetDetectedTargets(
           self.DetectVisual,
           self.DetectOptical,
           self.DetectRadar,
@@ -628,8 +628,10 @@ do -- DETECTION_BASE
           self.DetectDLINK
         )
 
-        self:F( { DetectedTargets = DetectedTargets } )
-
+        --self:I( { DetectedTargets = DetectedTargets } )
+        --self:I(UTILS.PrintTableToLog(DetectedTargets))
+        
+        
         for DetectionObjectID, Detection in pairs( DetectedTargets ) do
           local DetectedObject = Detection.object -- DCS#Object
 

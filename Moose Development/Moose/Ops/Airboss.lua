@@ -14365,32 +14365,55 @@ function AIRBOSS:_GetOnboardNumbers( group, playeronly )
   -- Debug text.
   local text = string.format( "Onboard numbers of group %s:", groupname )
 
-  -- Units of template group.
-  local units = group:GetTemplate().units
+  local template=group:GetTemplate()
 
-  -- Get numbers.
   local numbers = {}
-  for _, unit in pairs( units ) do
+  if template then
 
-    -- Onboard number and unit name.
-    local n = tostring( unit.onboard_num )
-    local name = unit.name
-    local skill = unit.skill or "Unknown"
+    -- Units of template group.
+    local units = template.units
 
-    -- Debug text.
-    text = text .. string.format( "\n- unit %s: onboard #=%s  skill=%s", name, n, tostring( skill ) )
+    -- Get numbers.
+    for _, unit in pairs( units ) do
 
-    if playeronly and skill == "Client" or skill == "Player" then
-      -- There can be only one player in the group, so we skip everything else.
-      return n
+      -- Onboard number and unit name.
+      local n = tostring( unit.onboard_num )
+      local name = unit.name
+      local skill = unit.skill or "Unknown"
+
+      -- Debug text.
+      text = text .. string.format( "\n- unit %s: onboard #=%s  skill=%s", name, n, tostring( skill ) )
+
+      if playeronly and skill == "Client" or skill == "Player" then
+        -- There can be only one player in the group, so we skip everything else.
+        return n
+      end
+
+      -- Table entry.
+      numbers[name] = n
     end
 
-    -- Table entry.
-    numbers[name] = n
-  end
+    -- Debug info.
+    self:T2( self.lid .. text )
 
-  -- Debug info.
-  self:T2( self.lid .. text )
+  else
+
+    if playeronly then
+      return 101
+    else
+
+      local units=group:GetUnits()
+
+      for i,_unit in pairs(units) do
+        local name=_unit:GetName()
+
+        numbers[name]=100+i
+
+      end
+
+    end
+
+  end
 
   return numbers
 end

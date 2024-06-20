@@ -3478,7 +3478,7 @@ do -- SET_STATIC
 
   --- Add STATIC(s) to SET_STATIC.
   -- @param #SET_STATIC self
-  -- @param #string AddStatic A single STATIC.
+  -- @param Wrapper.Static#STATIC AddStatic A single STATIC.
   -- @return #SET_STATIC self
   function SET_STATIC:AddStatic( AddStatic )
     self:F2( AddStatic:GetName() )
