@@ -2188,7 +2188,7 @@ function FLIGHTGROUP:onafterSpawned(From, Event, To)
     -- TODO: make this input.
     self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_JETT, self.jettisonWeapons)
     self:GetGroup():SetOption(AI.Option.Air.id.PROHIBIT_AB,   self.prohibitAB)   -- Does not seem to work. AI still used the after burner.
-    self:GetGroup():SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)    
+    self:GetGroup():SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)
     self:GetGroup():SetOption(AI.Option.Air.id.JETT_TANKS_IF_EMPTY, self.jettisonEmptyTanks)
     --self.group:SetOption(AI.Option.Air.id.RADAR_USING, AI.Option.Air.val.RADAR_USING.FOR_CONTINUOUS_SEARCH)
 
@@ -2803,6 +2803,11 @@ function FLIGHTGROUP:_CheckGroupDone(delay, waittime)
       if self:IsEngaging() then
         self:T(self.lid.."Engaging! Group NOT done...")
         return
+      end
+      -- Check if group is going for fuel.
+      if self:IsGoing4Fuel() then
+        self:T(self.lid.."Going for FUEL! Group NOT done...")
+        return      
       end
       
       -- Number of tasks remaining.
@@ -3419,6 +3424,9 @@ function FLIGHTGROUP:onafterRefuel(From, Event, To, Coordinate)
   local wp9=Coordinate:WaypointAir("BARO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, Speed, true, nil, DCSTasks, "Refuel")
 
   self:Route({wp0, wp9}, 1)
+  
+  -- Set RTB on Bingo option. Currently DCS does not execute the refueling task if RTB_ON_BINGO is set to "NO RTB ON BINGO"
+  self.group:SetOption(AI.Option.Air.id.RTB_ON_BINGO, true)
 
 end
 
@@ -3432,6 +3440,9 @@ function FLIGHTGROUP:onafterRefueled(From, Event, To)
   -- Debug message.
   local text=string.format("Flight group finished refuelling")
   self:T(self.lid..text)
+  
+  -- Set RTB on Bingo option to "NO RTB ON BINGO"
+  self.group:SetOption(AI.Option.Air.id.RTB_ON_BINGO, false)  
 
   -- Check if flight is done.
   self:_CheckGroupDone(1)
