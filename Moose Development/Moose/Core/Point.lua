@@ -2747,7 +2747,10 @@ do -- COORDINATE
 
       local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
       local sunset=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tdiff)
-
+      
+      if sunrise == "N/R" then return false end
+      if sunrise == "N/S" then return true end
+      
       local time=UTILS.ClockToSeconds(clock)
 
       -- Check if time is between sunrise and sunset.
