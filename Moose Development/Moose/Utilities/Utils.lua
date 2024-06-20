@@ -197,6 +197,45 @@ CALLSIGN={
     Cargo=11,
     Ascot=12,
   },
+  AH64={
+    Army_Air = 9,
+    Apache = 10,
+    Crow = 11,
+    Sioux = 12,
+    Gatling = 13,
+    Gunslinger = 14,
+    Hammerhead = 15,
+    Bootleg = 16,
+    Palehorse = 17,
+    Carnivor = 18,
+    Saber = 19,
+  },
+  Kiowa = {
+    Anvil = 1,
+    Azrael = 2,
+    BamBam = 3,
+    Blackjack = 4,
+    Bootleg = 5,
+    BurninStogie = 6,
+    Chaos = 7,
+    CrazyHorse = 8,
+    Crusader = 9,
+    Darkhorse = 10,
+    Eagle = 11,
+    Lighthorse = 12,
+    Mustang = 13,
+    Outcast = 14,
+    Palehorse = 15,
+    Pegasus = 16,
+    Pistol = 17,
+    Roughneck = 18,
+    Saber = 19,
+    Shamus = 20,
+    Spur = 21,
+    Stetson = 22,
+    Wrath = 23,
+  },
+  
 } --#CALLSIGN
 
 --- Utilities static class.
@@ -1923,7 +1962,19 @@ function UTILS.GetCallsignName(Callsign)
       return name
     end
   end
-
+  
+  for name, value in pairs(CALLSIGN.AH64) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.Kiowa) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
   return "Ghostrider"
 end
 
