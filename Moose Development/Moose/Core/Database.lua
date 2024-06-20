@@ -1147,10 +1147,13 @@ end
 -- @param #string GroupName Group name.
 -- @return #table Group template table.
 function DATABASE:GetGroupTemplate( GroupName )
-  local GroupTemplate = self.Templates.Groups[GroupName].Template
-  GroupTemplate.SpawnCoalitionID = self.Templates.Groups[GroupName].CoalitionID
-  GroupTemplate.SpawnCategoryID = self.Templates.Groups[GroupName].CategoryID
-  GroupTemplate.SpawnCountryID = self.Templates.Groups[GroupName].CountryID
+  local GroupTemplate=nil
+  if self.Templates.Groups[GroupName] then
+    GroupTemplate = self.Templates.Groups[GroupName].Template
+    GroupTemplate.SpawnCoalitionID = self.Templates.Groups[GroupName].CoalitionID
+    GroupTemplate.SpawnCategoryID = self.Templates.Groups[GroupName].CategoryID
+    GroupTemplate.SpawnCountryID = self.Templates.Groups[GroupName].CountryID
+  end
   return GroupTemplate
 end
 
