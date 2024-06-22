@@ -445,7 +445,11 @@ function UNIT:IsPlayer()
   if not group then return false end
     
   -- Units of template group.
-  local units=group:GetTemplate().units
+  local template = group:GetTemplate()
+  
+  if (template == nil) or (template.units == nil ) then return false end
+  
+  local units=template.units
   
   -- Get numbers.
   for _,unit in pairs(units) do
