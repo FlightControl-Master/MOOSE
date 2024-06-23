@@ -604,6 +604,14 @@ function OPSZONE:GetAttackDuration()
   return nil
 end
 
+--- Find an OPSZONE using the Zone Name.
+-- @param #OPSZONE self
+-- @param #string ZoneName The zone name.
+-- @return #OPSZONE The OPSZONE or nil if not found.
+function OPSZONE:FindByName( ZoneName )
+  local Found = _DATABASE:FindOpsZone( ZoneName )
+  return Found
+end
 
 --- Check if the red coalition is currently owning the zone.
 -- @param #OPSZONE self 

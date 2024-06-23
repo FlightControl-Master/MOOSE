@@ -793,11 +793,13 @@ end
 --- Get the number of ammunition and in particular the number of shells, rockets, bombs and missiles a unit currently has.
 -- @param #UNIT self
 -- @return #number Total amount of ammo the unit has left. This is the sum of shells, rockets, bombs and missiles.
--- @return #number Number of shells left.
+-- @return #number Number of shells left. Shells include MG ammunition, AP and HE shells, and artillery shells where applicable.
 -- @return #number Number of rockets left.
 -- @return #number Number of bombs left.
 -- @return #number Number of missiles left.
--- @return #number Number of artillery shells left (with explosive mass, included in shells; shells can also be machine gun ammo)
+-- @return #number Number of artillery shells left (with explosive mass, included in shells; HE will also be reported as artillery shells for tanks)
+-- @return #number Number of tank AP shells left (for tanks, if applicable)
+-- @return #number Number of tank HE shells left (for tanks, if applicable)
 function UNIT:GetAmmunition()
 
   -- Init counter.
@@ -807,6 +809,8 @@ function UNIT:GetAmmunition()
   local nmissiles=0
   local nbombs=0
   local narti=0
+  local nAPshells = 0
+  local nHEshells = 0
 
   local unit=self
 
@@ -848,6 +852,14 @@ function UNIT:GetAmmunition()
           narti=narti+Nammo
         end
         
+        if ammotable[w].desc.typeName and string.find(ammotable[w].desc.typeName,"_AP",1,true) then
+          nAPshells = nAPshells+Nammo
+        end
+        
+        if ammotable[w].desc.typeName and string.find(ammotable[w].desc.typeName,"_HE",1,true) then
+          nHEshells = nHEshells+Nammo
+        end
+        
       elseif Category==Weapon.Category.ROCKET then
 
         -- Add up all rockets.
@@ -884,7 +896,55 @@ function UNIT:GetAmmunition()
   -- Total amount of ammunition.
   nammo=nshells+nrockets+nmissiles+nbombs
 
-  return nammo, nshells, nrockets, nbombs, nmissiles, narti
+  return nammo, nshells, nrockets, nbombs, nmissiles, narti, nAPshells, nHEshells
+end
+
+--- Checks if a tank still has AP shells.
+-- @param #UNIT self
+-- @return #boolean HasAPShells  
+function UNIT:HasAPShells()
+  local _,_,_,_,_,_,shells = self:GetAmmunition()
+  if shells > 0 then return true else return false end
+end
+
+--- Get number of AP shells from a tank.
+-- @param #UNIT self
+-- @return #number Number of AP shells 
+function UNIT:GetAPShells()
+  local _,_,_,_,_,_,shells = self:GetAmmunition()
+  return shells or 0
+end
+
+--- Get number of HE shells from a tank.
+-- @param #UNIT self
+-- @return #number Number of HE shells
+function UNIT:GetHEShells()
+  local _,_,_,_,_,_,_,shells = self:GetAmmunition()
+  return shells or 0
+end
+
+--- Checks if a tank still has HE shells.
+-- @param #UNIT self
+-- @return #boolean HasHEShells  
+function UNIT:HasHEShells()
+  local _,_,_,_,_,_,_,shells = self:GetAmmunition()
+  if shells > 0 then return true else return false end
+end
+
+--- Checks if an artillery unit still has artillery shells.
+-- @param #UNIT self
+-- @return #boolean HasArtiShells  
+function UNIT:HasArtiShells()
+  local _,_,_,_,_,shells = self:GetAmmunition()
+  if shells > 0 then return true else return false end
+end
+
+--- Get number of artillery shells from an artillery unit.
+-- @param #UNIT self
+-- @return #number Number of artillery shells
+function UNIT:GetArtiShells()
+  local _,_,_,_,_,shells = self:GetAmmunition()
+  return shells or 0
 end
 
 --- Returns the unit sensors.
