@@ -7946,10 +7946,12 @@ function WAREHOUSE:_FindParkingForAssets(airbase, assets)
       local clients=_DATABASE.CLIENTS
       for clientname, client in pairs(clients) do
         local template=_DATABASE:GetGroupTemplateFromUnitName(clientname)
-        local units=template.units
-        for i,unit in pairs(units) do
-          local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
-          coords[unit.name]=coord
+        if template then
+          local units=template.units
+          for i,unit in pairs(units) do
+            local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
+            coords[unit.name]=coord
+          end
         end
       end
     end

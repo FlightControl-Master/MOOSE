@@ -4729,8 +4729,11 @@ do -- SET_CLIENT
         local MClientCoalition = false
         for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
           local ClientCoalitionID = _DATABASE:GetCoalitionFromClientTemplate( MClientName )
+          if ClientCoalitionID==nil and MClient:IsAlive()~=nil then
+            ClientCoalitionID=MClient:GetCoalition()
+          end
           self:T3( { "Coalition:", ClientCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
-          if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == ClientCoalitionID then
+          if self.FilterMeta.Coalitions[CoalitionName] and ClientCoalitionID and self.FilterMeta.Coalitions[CoalitionName] == ClientCoalitionID then
             MClientCoalition = true
           end
         end
@@ -4742,8 +4745,11 @@ do -- SET_CLIENT
         local MClientCategory = false
         for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
           local ClientCategoryID = _DATABASE:GetCategoryFromClientTemplate( MClientName )
+          if ClientCategoryID==nil and MClient:IsAlive()~=nil then
+            ClientCategoryID=MClient:GetCategory()
+          end
           self:T3( { "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
-          if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == ClientCategoryID then
+          if self.FilterMeta.Categories[CategoryName] and ClientCategoryID and self.FilterMeta.Categories[CategoryName] == ClientCategoryID then
             MClientCategory = true
           end
         end
@@ -4767,8 +4773,11 @@ do -- SET_CLIENT
         local MClientCountry = false
         for CountryID, CountryName in pairs( self.Filter.Countries ) do
           local ClientCountryID = _DATABASE:GetCountryFromClientTemplate( MClientName )
+          if ClientCountryID==nil and MClient:IsAlive()~=nil then
+            ClientCountryID=MClient:GetCountry()
+          end
           self:T3( { "Country:", ClientCountryID, country.id[CountryName], CountryName } )
-          if country.id[CountryName] and country.id[CountryName] == ClientCountryID then
+          if country.id[CountryName] and ClientCountryID and country.id[CountryName] == ClientCountryID then
             MClientCountry = true
           end
         end
