@@ -2233,7 +2233,7 @@ do -- COORDINATE
     --   local MarkGroup = GROUP:FindByName( "AttackGroup" )
     --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
     --   <<< logic >>>
-    --   RemoveMark( MarkID ) -- The mark is now removed
+    --   TargetCoord:RemoveMark( MarkID ) -- The mark is now removed
     function COORDINATE:RemoveMark( MarkID )
       trigger.action.removeMark( MarkID )
     end
