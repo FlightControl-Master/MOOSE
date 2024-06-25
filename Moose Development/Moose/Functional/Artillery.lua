@@ -45,6 +45,7 @@
 -- @field #table currentMove Holds the current commanded move, if there is one assigned.
 -- @field #number Nammo0 Initial amount total ammunition (shells+rockets+missiles) of the whole group.
 -- @field #number Nshells0 Initial amount of shells of the whole group.
+-- @field #number Narty0 Initial amount of artillery shells of the whole group.
 -- @field #number Nrockets0 Initial amount of rockets of the whole group.
 -- @field #number Nmissiles0 Initial amount of missiles of the whole group.
 -- @field #number Nukes0 Initial amount of tactical nukes of the whole group. Default is 0.
@@ -415,7 +416,7 @@
 --      arty set, battery "Paladin Alpha", rearming place
 --
 -- Setting the rearming group is independent of the position of the mark. Just create one anywhere on the map and type
---      arty set, battery "Mortar Bravo", rearming group "Ammo Truck M818"
+--      arty set, battery "Mortar Bravo", rearming group "Ammo Truck M939"
 -- Note that the name of the rearming group has to be given in quotation marks and spelt exactly as the group name defined in the mission editor.
 --
 -- ## Transporting
@@ -453,7 +454,7 @@
 --     -- Creat a new ARTY object from a Paladin group.
 --     paladin=ARTY:New(GROUP:FindByName("Blue Paladin"))
 --
---     -- Define a rearming group. This is a Transport M818 truck.
+--     -- Define a rearming group. This is a Transport M939 truck.
 --     paladin:SetRearmingGroup(GROUP:FindByName("Blue Ammo Truck"))
 --
 --     -- Set the max firing range. A Paladin unit has a range of 20 km.
@@ -694,7 +695,7 @@ ARTY.db={
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.3.0"
+ARTY.version="1.3.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -707,7 +708,7 @@ ARTY.version="1.3.0"
 -- DONE: Add user defined rearm weapon types.
 -- DONE: Check if target is in range. Maybe this requires a data base with the ranges of all arty units. <solved by user function>
 -- DONE: Make ARTY move to rearming position.
--- DONE: Check that right rearming vehicle is specified. Blue M818, Red Ural-375. Are there more? <user needs to know!>
+-- DONE: Check that right rearming vehicle is specified. Blue M939, Red Ural-375. Are there more? <user needs to know!>
 -- DONE: Check if ARTY group is still alive.
 -- DONE: Handle dead events.
 -- DONE: Abort firing task if no shooting event occured with 5(?) minutes. Something went wrong then. Min/max range for example.
@@ -1532,7 +1533,7 @@ end
 
 --- Assign a group, which is responsible for rearming the ARTY group. If the group is too far away from the ARTY group it will be guided towards the ARTY group.
 -- @param #ARTY self
--- @param Wrapper.Group#GROUP group Group that is supposed to rearm the ARTY group. For the blue coalition, this is often a unarmed M818 transport whilst for red an unarmed Ural-375 transport can be used.
+-- @param Wrapper.Group#GROUP group Group that is supposed to rearm the ARTY group. For the blue coalition, this is often a unarmed M939 transport whilst for red an unarmed Ural-375 transport can be used.
 -- @return self
 function ARTY:SetRearmingGroup(group)
   self:F({group=group})
@@ -1887,7 +1888,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   MESSAGE:New(text, 5):ToAllIf(self.Debug)
 
   -- Get Ammo.
-  self.Nammo0, self.Nshells0, self.Nrockets0, self.Nmissiles0=self:GetAmmo(self.Debug)
+  self.Nammo0, self.Nshells0, self.Nrockets0, self.Nmissiles0, self.Narty0=self:GetAmmo(self.Debug)
 
   -- Init nuclear explosion parameters if they were not set by user.
   if self.nukerange==nil then
@@ -2093,7 +2094,7 @@ function ARTY:_StatusReport(display)
   end
 
   -- Get Ammo.
-  local Nammo, Nshells, Nrockets, Nmissiles=self:GetAmmo()
+  local Nammo, Nshells, Nrockets, Nmissiles, Narty=self:GetAmmo()
   local Nnukes=self.Nukes
   local Nillu=self.Nillu
   local Nsmoke=self.Nsmoke
@@ -2106,7 +2107,7 @@ function ARTY:_StatusReport(display)
   text=text..string.format("Clock               = %s\n", Clock)
   text=text..string.format("FSM state           = %s\n", self:GetState())
   text=text..string.format("Total ammo count    = %d\n", Nammo)
-  text=text..string.format("Number of shells    = %d\n", Nshells)
+  text=text..string.format("Number of shells    = %d\n", Narty)
   text=text..string.format("Number of rockets   = %d\n", Nrockets)
   text=text..string.format("Number of missiles  = %d\n", Nmissiles)
   text=text..string.format("Number of nukes     = %d\n", Nnukes)
@@ -2293,7 +2294,7 @@ function ARTY:OnEventShot(EventData)
         end
 
         -- Get current ammo.
-        local _nammo,_nshells,_nrockets,_nmissiles=self:GetAmmo()
+        local _nammo,_nshells,_nrockets,_nmissiles,_narty=self:GetAmmo()
 
         -- Decrease available nukes because we just fired one.
         if self.currentTarget.weapontype==ARTY.WeaponType.TacticalNukes then
@@ -2323,7 +2324,7 @@ function ARTY:OnEventShot(EventData)
 
         -- Weapon type name for current target.
         local _weapontype=self:_WeaponTypeName(self.currentTarget.weapontype)
-        self:T(self.lid..string.format("Group %s ammo: total=%d, shells=%d, rockets=%d, missiles=%d", self.groupname, _nammo, _nshells, _nrockets, _nmissiles))
+        self:T(self.lid..string.format("Group %s ammo: total=%d, shells=%d, rockets=%d, missiles=%d", self.groupname, _nammo, _narty, _nrockets, _nmissiles))
         self:T(self.lid..string.format("Group %s uses weapontype %s for current target.", self.groupname, _weapontype))
 
         -- Default switches for cease fire and relocation.
@@ -2771,7 +2772,7 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
   self:_EventFromTo("onafterStatus", Event, From, To)
   
   -- Get ammo.
-  local nammo, nshells, nrockets, nmissiles=self:GetAmmo()
+  local nammo, nshells, nrockets, nmissiles, narty=self:GetAmmo()
   
   -- We have a cargo group ==> check if group was loaded into a carrier.
   if self.iscargo and self.cargogroup then
@@ -2788,7 +2789,7 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
-  self:T(self.lid..string.format("Status %s, Ammo total=%d: shells=%d [smoke=%d, illu=%d, nukes=%d*%.3f kT], rockets=%d, missiles=%d", fsmstate, nammo, nshells, self.Nsmoke, self.Nillu, self.Nukes, self.nukewarhead/1000000, nrockets, nmissiles))
+  self:T(self.lid..string.format("Status %s, Ammo total=%d: shells=%d [smoke=%d, illu=%d, nukes=%d*%.3f kT], rockets=%d, missiles=%d", fsmstate, nammo, narty, self.Nsmoke, self.Nillu, self.Nukes, self.nukewarhead/1000000, nrockets, nmissiles))
 
   if self.Controllable and self.Controllable:IsAlive() then
 
@@ -2871,19 +2872,18 @@ function ARTY:onafterStatus(Controllable, From, Event, To)
       if self.currentTarget then
         self:CeaseFire(self.currentTarget)
       end
-
-      -- Open fire on timed target.
-      self:OpenFire(_timedTarget)
-
+      
+      if self:is("CombatReady") then
+        -- Open fire on timed target.
+        self:OpenFire(_timedTarget)
+      end
     elseif _normalTarget then
-
-      -- Open fire on normal target.
-      self:OpenFire(_normalTarget)
-
+      
+      if self:is("CombatReady") then  
+        -- Open fire on normal target.
+        self:OpenFire(_normalTarget)
+      end
     end
-
-    -- Get ammo.
-    --local nammo, nshells, nrockets, nmissiles=self:GetAmmo()
 
     -- Check if we have a target in the queue for which weapons are still available.
     local gotsome=false
@@ -3045,14 +3045,14 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   local range=Controllable:GetCoordinate():Get2DDistance(target.coord)
 
   -- Get ammo.
-  local Nammo, Nshells, Nrockets, Nmissiles=self:GetAmmo()
-  local nfire=Nammo
+  local Nammo, Nshells, Nrockets, Nmissiles, Narty=self:GetAmmo()
+  local nfire=Narty
   local _type="shots"
   if target.weapontype==ARTY.WeaponType.Auto then
-    nfire=Nammo
+    nfire=Narty
     _type="shots"
   elseif target.weapontype==ARTY.WeaponType.Cannon then
-    nfire=Nshells
+    nfire=Narty
     _type="shells"
   elseif target.weapontype==ARTY.WeaponType.TacticalNukes then
     nfire=self.Nukes
@@ -3337,7 +3337,7 @@ function ARTY:_CheckRearmed()
   self:F2()
 
   -- Get current ammo.
-  local nammo,nshells,nrockets,nmissiles=self:GetAmmo()
+  local nammo,nshells,nrockets,nmissiles,narty=self:GetAmmo()
 
   -- Number of units still alive.
   local units=self.Controllable:GetUnits()
@@ -3603,7 +3603,11 @@ function ARTY:_FireAtCoord(coord, radius, nshells, weapontype)
   if weapontype==ARTY.WeaponType.TacticalNukes or weapontype==ARTY.WeaponType.IlluminationShells or weapontype==ARTY.WeaponType.SmokeShells then
     weapontype=ARTY.WeaponType.Cannon
   end
-
+  
+  if group:HasTask() then
+    group:ClearTasks()
+  end
+  
   -- Set ROE to weapon free.
   group:OptionROEOpenFire()
 
@@ -3614,7 +3618,7 @@ function ARTY:_FireAtCoord(coord, radius, nshells, weapontype)
   local fire=group:TaskFireAtPoint(vec2, radius, nshells, weapontype)
 
   -- Execute task.
-  group:SetTask(fire)
+  group:SetTask(fire,1)
 end
 
 --- Set task for attacking a group.
@@ -3631,7 +3635,11 @@ function ARTY:_AttackGroup(target)
   if weapontype==ARTY.WeaponType.TacticalNukes or weapontype==ARTY.WeaponType.IlluminationShells or weapontype==ARTY.WeaponType.SmokeShells then
     weapontype=ARTY.WeaponType.Cannon
   end
-
+  
+  if group:HasTask() then
+    group:ClearTasks()
+  end
+    
   -- Set ROE to weapon free.
   group:OptionROEOpenFire()
 
@@ -3642,7 +3650,7 @@ function ARTY:_AttackGroup(target)
   local fire=group:TaskAttackGroup(targetgroup, weapontype, AI.Task.WeaponExpend.ONE, 1)
 
   -- Execute task.
-  group:SetTask(fire)
+  group:SetTask(fire,1)
 end
 
 
@@ -3915,6 +3923,7 @@ end
 -- @return #number Number of shells the group has left.
 -- @return #number Number of rockets the group has left.
 -- @return #number Number of missiles the group has left.
+-- @return #number Number of artillery shells the group has left.
 function ARTY:GetAmmo(display)
   self:F3({display=display})
 
@@ -3928,6 +3937,7 @@ function ARTY:GetAmmo(display)
   local nshells=0
   local nrockets=0
   local nmissiles=0
+  local nartyshells=0
 
   -- Get all units.
   local units=self.Controllable:GetUnits()
@@ -4030,7 +4040,8 @@ function ARTY:GetAmmo(display)
 
             -- Add up all shells.
             nshells=nshells+Nammo
-
+            local _,_,_,_,_,shells = unit:GetAmmunition()
+            nartyshells=nartyshells+shells
             -- Debug info.
             text=text..string.format("- %d shells of type %s\n", Nammo, _weaponName)
 
@@ -4076,7 +4087,7 @@ function ARTY:GetAmmo(display)
   -- Total amount of ammunition.
   nammo=nshells+nrockets+nmissiles
 
-  return nammo, nshells, nrockets, nmissiles
+  return nammo, nshells, nrockets, nmissiles, nartyshells
 end
 
 --- Returns a name of a missile category.
@@ -4827,7 +4838,10 @@ function ARTY:_CheckShootingStarted()
 
     -- Check if we waited long enough and no shot was fired.
     --if dt > self.WaitForShotTime and self.Nshots==0 then
-    if dt > self.WaitForShotTime and (self.Nshots==0 or self.currentTarget.nshells >= self.Nshots) then  --https://github.com/FlightControl-Master/MOOSE/issues/1356
+    
+    self:T(string.format("dt = %d WaitTime = %d | shots = %d TargetShells = %d",dt,self.WaitForShotTime,self.Nshots,self.currentTarget.nshells))
+    
+    if (dt > self.WaitForShotTime and self.Nshots==0) or (self.currentTarget.nshells <= self.Nshots) then  --https://github.com/FlightControl-Master/MOOSE/issues/1356
 
       -- Debug info.
       self:T(self.lid..string.format("%s, no shot event after %d seconds. Removing current target %s from list.", self.groupname, self.WaitForShotTime, name))
@@ -4889,7 +4903,7 @@ end
 function ARTY:_CheckOutOfAmmo(targets)
 
   -- Get current ammo.
-  local _nammo,_nshells,_nrockets,_nmissiles=self:GetAmmo()
+  local _nammo,_nshells,_nrockets,_nmissiles,_narty=self:GetAmmo()
 
    -- Special weapon type requested ==> Check if corresponding ammo is empty.
   local _partlyoutofammo=false
@@ -4901,7 +4915,7 @@ function ARTY:_CheckOutOfAmmo(targets)
       self:T(self.lid..string.format("Group %s, auto weapon requested for target %s but all ammo is empty.", self.groupname, Target.name))
       _partlyoutofammo=true
 
-    elseif Target.weapontype==ARTY.WeaponType.Cannon and _nshells==0 then
+    elseif Target.weapontype==ARTY.WeaponType.Cannon and _narty==0 then
 
       self:T(self.lid..string.format("Group %s, cannons requested for target %s but shells empty.", self.groupname, Target.name))
       _partlyoutofammo=true
@@ -4945,14 +4959,14 @@ end
 function ARTY:_CheckWeaponTypeAvailable(target)
 
   -- Get current ammo of group.
-  local Nammo, Nshells, Nrockets, Nmissiles=self:GetAmmo()
+  local Nammo, Nshells, Nrockets, Nmissiles, Narty=self:GetAmmo()
 
   -- Check if enough ammo is there for the selected weapon type.
   local nfire=Nammo
   if target.weapontype==ARTY.WeaponType.Auto then
     nfire=Nammo
   elseif target.weapontype==ARTY.WeaponType.Cannon then
-    nfire=Nshells
+    nfire=Narty
   elseif target.weapontype==ARTY.WeaponType.TacticalNukes then
     nfire=self.Nukes
   elseif target.weapontype==ARTY.WeaponType.IlluminationShells then
