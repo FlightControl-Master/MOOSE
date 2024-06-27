@@ -11378,11 +11378,19 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
 
-  -- Template waypoints.
-  self.waypoints0=UTILS.DeepCopy(_DATABASE:GetGroupTemplate(self.groupname).route.points) --self.group:GetTemplateRoutePoints()
-
   -- Waypoints empty!
   self.waypoints={}
+  self.waypoints0={}
+
+  -- Get group template
+  local template=_DATABASE:GetGroupTemplate(self.groupname)
+
+  if template==nil then
+    return self
+  end
+
+  -- Template waypoints.
+  self.waypoints0=UTILS.DeepCopy(template.route.points) --self.group:GetTemplateRoutePoints()
 
   WpIndexMin=WpIndexMin or 1
   WpIndexMax=WpIndexMax or #self.waypoints0
@@ -13641,11 +13649,7 @@ function OPSGROUP:_AddElementByName(unitname)
   local unit=UNIT:FindByName(unitname)
 
   if unit then
-
-    -- Get unit template.
-    local unittemplate=unit:GetTemplate()
-    --local unittemplate=_DATABASE:GetUnitTemplateFromUnitName(unitname)
-
+  
     -- Element table.
     local element=self:GetElementByName(unitname)
 
@@ -13672,8 +13676,18 @@ function OPSGROUP:_AddElementByName(unitname)
     element.Nhit=0
     element.opsgroup=self
 
+    -- Get unit template.
+    local unittemplate=unit:GetTemplate()
+
+    if unittemplate==nil then
+      if element.DCSunit:getPlayerName() then
+        element.skill="Client"
+      end
+    else
+      element.skill=unittemplate~=nil and unittemplate.skill or "Unknown"
+    end
+
     -- Skill etc.
-    element.skill=unittemplate.skill or "Unknown"
     if element.skill=="Client" or element.skill=="Player" then
       element.ai=false
       element.client=CLIENT:FindByName(unitname)
@@ -13732,24 +13746,22 @@ function OPSGROUP:_AddElementByName(unitname)
       element.weightCargo=0
     end
     element.weight=element.weightEmpty+element.weightCargo
-
+    
     -- FLIGHTGROUP specific.
-    if self.isFlightgroup then
-      element.callsign=element.unit:GetCallsign()
+    element.callsign=element.unit:GetCallsign()
+    element.fuelmass=element.fuelmass0 or 99999
+    element.fuelrel=element.unit:GetFuel() or 1
+    
+    if self.isFlightgroup and unittemplate then
       element.modex=unittemplate.onboard_num
       element.payload=unittemplate.payload
       element.pylons=unittemplate.payload and unittemplate.payload.pylons or nil
       element.fuelmass0=unittemplate.payload and unittemplate.payload.fuel or 0
-      element.fuelmass=element.fuelmass0
-      element.fuelrel=element.unit:GetFuel()
     else
       element.callsign="Peter-1-1"
       element.modex="000"
       element.payload={}
       element.pylons={}
-      element.fuelmass0=99999
-      element.fuelmass =99999
-      element.fuelrel=1
     end
 
     -- Debug text.

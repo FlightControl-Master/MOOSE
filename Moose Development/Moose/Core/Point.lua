@@ -2250,7 +2250,7 @@ do -- COORDINATE
     --   local MarkGroup = GROUP:FindByName( "AttackGroup" )
     --   local MarkID = TargetCoord:MarkToGroup( "This is a target for the attack group", AttackGroup )
     --   <<< logic >>>
-    --   RemoveMark( MarkID ) -- The mark is now removed
+    --   TargetCoord:RemoveMark( MarkID ) -- The mark is now removed
     function COORDINATE:RemoveMark( MarkID )
       trigger.action.removeMark( MarkID )
     end
@@ -2764,7 +2764,10 @@ do -- COORDINATE
 
       local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
       local sunset=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tdiff)
-
+      
+      if sunrise == "N/R" then return false end
+      if sunrise == "N/S" then return true end
+      
       local time=UTILS.ClockToSeconds(clock)
 
       -- Check if time is between sunrise and sunset.

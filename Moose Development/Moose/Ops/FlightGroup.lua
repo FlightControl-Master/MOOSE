@@ -3898,17 +3898,8 @@ function FLIGHTGROUP:_InitGroup(Template)
   -- Group object.
   local group=self.group --Wrapper.Group#GROUP
 
-  -- Get template of group.
-  local template=Template or self:_GetTemplate()
-
   -- Helo group.
   self.isHelo=group:IsHelicopter()
-
-  -- Is (template) group uncontrolled.
-  self.isUncontrolled=template.uncontrolled
-
-  -- Is (template) group late activated.
-  self.isLateActivated=template.lateActivation
 
   -- Max speed in km/h.
   self.speedMax=group:GetSpeedMax()
@@ -3929,25 +3920,38 @@ function FLIGHTGROUP:_InitGroup(Template)
 
   -- Group ammo.
   self.ammo=self:GetAmmoTot()
+  
+  -- Get template of group.
+  local template=Template or self:_GetTemplate()  
 
-  -- Radio parameters from template. Default is set on spawn if not modified by user.
-  self.radio.Freq=tonumber(template.frequency)
-  self.radio.Modu=tonumber(template.modulation)
-  self.radio.On=template.communication
+  -- Is (template) group uncontrolled.
+  self.isUncontrolled=template~=nil and template.uncontrolled or false
 
-  -- Set callsign. Default is set on spawn if not modified by user.
-  local callsign=template.units[1].callsign
-  --self:I({callsign=callsign})
-  if type(callsign)=="number" then  -- Sometimes callsign is just "101".
-    local cs=tostring(callsign)
-    callsign={}
-    callsign[1]=cs:sub(1,1)
-    callsign[2]=cs:sub(2,2)
-    callsign[3]=cs:sub(3,3)
+  -- Is (template) group late activated.
+  self.isLateActivated=template~=nil and template.lateActivation or false
+
+  if template then
+
+    -- Radio parameters from template. Default is set on spawn if not modified by user.
+    self.radio.Freq=tonumber(template.frequency)
+    self.radio.Modu=tonumber(template.modulation)
+    self.radio.On=template.communication
+  
+    -- Set callsign. Default is set on spawn if not modified by user.
+    local callsign=template.units[1].callsign
+    --self:I({callsign=callsign})
+    if type(callsign)=="number" then  -- Sometimes callsign is just "101".
+      local cs=tostring(callsign)
+      callsign={}
+      callsign[1]=cs:sub(1,1)
+      callsign[2]=cs:sub(2,2)
+      callsign[3]=cs:sub(3,3)
+    end
+    self.callsign.NumberSquad=tonumber(callsign[1])
+    self.callsign.NumberGroup=tonumber(callsign[2])
+    self.callsign.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
+    
   end
-  self.callsign.NumberSquad=tonumber(callsign[1])
-  self.callsign.NumberGroup=tonumber(callsign[2])
-  self.callsign.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
 
   -- Set default formation.
   if self.isHelo then
