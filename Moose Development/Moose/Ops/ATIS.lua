@@ -63,6 +63,8 @@
 -- @field #number power Radio power in Watts. Default 100 W.
 -- @field Sound.RadioQueue#RADIOQUEUE radioqueue Radio queue for broadcasing messages.
 -- @field #string soundpath Path to sound files.
+-- @field #string soundpathAirports Path to airport names sound files.
+-- @field #string soundpathNato Path to NATO alphabet sound files.
 -- @field #string relayunitname Name of the radio relay unit.
 -- @field #table towerfrequency Table with tower frequencies.
 -- @field #string activerunway The active runway specified by the user.
@@ -1078,12 +1080,24 @@ function ATIS:SetLocale(locale)
   return self
 end
 
---- Set sound files folder within miz file.
+--- Set sound files folder within miz file (not your local hard drive!).
 -- @param #ATIS self
--- @param #string path Path for sound files. Default "ATIS Soundfiles/". Mind the slash "/" at the end!
+-- @param #string pathMain Path to folder containing main sound files. Default "ATIS Soundfiles/". Mind the slash "/" at the end!
+-- @param #string pathAirports Path folder containing the airport names sound files. Default is `"ATIS Soundfiles/<Map Name>"`, *e.g.* `"ATIS Soundfiles/Caucasus/"`.
+-- @param #string pathNato Path folder containing the NATO alphabet sound files. Default is "ATIS Soundfiles/NATO Alphabet/".
 -- @return #ATIS self
-function ATIS:SetSoundfilesPath( path )
-  self.soundpath = tostring( path or "ATIS Soundfiles/" )
+function ATIS:SetSoundfilesPath( pathMain, pathAirports, pathNato )
+  self.soundpath = tostring( pathMain or "ATIS Soundfiles/" )
+  if pathAirports==nil then
+    self.soundpathAirports=self.soundpath..env.mission.theatre.."/"
+  else
+    self.soundpathAirports=pathAirports
+  end
+  if pathNato==nil then
+    self.soundpathNato=self.soundpath.."NATO Alphabet/"
+  else
+    self.soundpathNato=pathNato
+  end
   self:T( self.lid .. string.format( "Setting sound files path to %s", self.soundpath ) )
   return self
 end
@@ -2009,11 +2023,46 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   -- Cloud preset (DCS 2.7)
   local cloudspreset = clouds.preset or "Nothing"
+  
+  env.info("FF cloud preset "..cloudspreset)
 
   -- Precepitation: 0=None, 1=Rain, 2=Thunderstorm, 3=Snow, 4=Snowstorm.
   local precepitation = 0
 
-  if cloudspreset:find( "Preset10" ) then
+  if cloudspreset:find( "RainyPreset1" ) then
+    -- Overcast + Rain
+    clouddens = 9
+    if temperature > 5 then
+      precepitation = 1 -- rain
+    else
+      precepitation = 3 -- snow
+    end
+  elseif cloudspreset:find( "RainyPreset2" ) then
+    -- Overcast + Rain
+    clouddens = 9
+    if temperature > 5 then
+      precepitation = 1 -- rain
+    else
+      precepitation = 3 -- snow
+    end
+  elseif cloudspreset:find( "RainyPreset3" ) then
+    -- Overcast + Rain
+    clouddens = 9
+    if temperature > 5 then
+      precepitation = 1 -- rain
+    else
+      precepitation = 3 -- snow
+    end
+    env.info("Fprecipt "..precepitation)
+  elseif cloudspreset:find( "RainyPreset" ) then
+    -- Overcast + Rain
+    clouddens = 9
+    if temperature > 5 then
+      precepitation = 1 -- rain
+    else
+      precepitation = 3 -- snow
+    end    
+  elseif cloudspreset:find( "Preset10" ) then
     -- Scattered 5
     clouddens = 4
   elseif cloudspreset:find( "Preset11" ) then
@@ -2094,38 +2143,8 @@ function ATIS:onafterBroadcast( From, Event, To )
   elseif cloudspreset:find( "Preset9" ) then
     -- Scattered 4
     clouddens = 4
-  elseif cloudspreset:find( "RainyPreset" ) then
-    -- Overcast + Rain
-    clouddens = 9
-    if temperature > 5 then
-      precepitation = 1 -- rain
-    else
-      precepitation = 3 -- snow
-    end
-  elseif cloudspreset:find( "RainyPreset1" ) then
-    -- Overcast + Rain
-    clouddens = 9
-    if temperature > 5 then
-      precepitation = 1 -- rain
-    else
-      precepitation = 3 -- snow
-    end
-  elseif cloudspreset:find( "RainyPreset2" ) then
-    -- Overcast + Rain
-    clouddens = 9
-    if temperature > 5 then
-      precepitation = 1 -- rain
-    else
-      precepitation = 3 -- snow
-    end
-  elseif cloudspreset:find( "RainyPreset3" ) then
-    -- Overcast + Rain
-    clouddens = 9
-    if temperature > 5 then
-      precepitation = 1 -- rain
-    else
-      precepitation = 3 -- snow
-    end
+  else
+    self:E(string.format("WARNING! Unknown weather preset: %s", tostring(cloudspreset)))
   end
 
   local CLOUDBASE = string.format( "%d", UTILS.MetersToFeet( cloudbase ) )
@@ -2200,7 +2219,7 @@ function ATIS:onafterBroadcast( From, Event, To )
   end
   if not self.useSRS then
     --self:I(string.format( "%s/%s.ogg", self.theatre, self.airbasename ))
-    self.radioqueue:NewTransmission( string.format( "%s/%s.ogg", self.theatre, self.airbasename ), 3.0, self.soundpath, nil, nil, subtitle, self.subduration )
+    self.radioqueue:NewTransmission( string.format( "%s.ogg", self.airbasename ), 3.0, self.soundpathAirports, nil, nil, subtitle, self.subduration )
   end
   local alltext = subtitle
 
@@ -2211,7 +2230,7 @@ function ATIS:onafterBroadcast( From, Event, To )
   local _INFORMATION = subtitle
   if not self.useSRS then
     self:Transmission( ATIS.Sound.Information, 0.5, subtitle )
-    self.radioqueue:NewTransmission( string.format( "NATO Alphabet/%s.ogg", NATO ), 0.75, self.soundpath )
+    self.radioqueue:NewTransmission( string.format( "%s.ogg", NATO ), 0.75, self.soundpathNato )
   end
   alltext = alltext .. ";\n" .. subtitle
 
@@ -2811,7 +2830,7 @@ function ATIS:onafterBroadcast( From, Event, To )
     if not self.useSRS then
       self:Transmission( ATIS.Sound.TACANChannel, 1.0, subtitle )
       self.radioqueue:Number2Transmission( tostring( self.tacan ), nil, 0.2 )
-      self.radioqueue:NewTransmission( "NATO Alphabet/Xray.ogg", 0.75, self.soundpath, nil, 0.2 )
+      self.radioqueue:NewTransmission( "Xray.ogg", 0.75, self.soundpathNato, nil, 0.2 )
     end
     alltext = alltext .. ";\n" .. subtitle
   end
@@ -2852,7 +2871,7 @@ function ATIS:onafterBroadcast( From, Event, To )
   subtitle = string.format( "%s %s", advtxt, NATO )
   if not self.useSRS then
     self:Transmission( ATIS.Sound.AdviceOnInitial, 0.5, subtitle )
-    self.radioqueue:NewTransmission( string.format( "NATO Alphabet/%s.ogg", NATO ), 0.75, self.soundpath )
+    self.radioqueue:NewTransmission( string.format( "%s.ogg", NATO ), 0.75, self.soundpathNato )
   end
   alltext = alltext .. ";\n" .. subtitle
 
@@ -3107,7 +3126,7 @@ end
 -- @param #ATIS.Soundfile sound ATIS sound object.
 -- @param #number interval Interval in seconds after the last transmission finished.
 -- @param #string subtitle Subtitle of the transmission.
--- @param #string path Path to sound file. Default self.soundpath.
+-- @param #string path Path to sound file. Default `self.soundpath`.
 function ATIS:Transmission( sound, interval, subtitle, path )
   self.radioqueue:NewTransmission( sound.filename, sound.duration, path or self.soundpath, nil, interval, subtitle, self.subduration )
 end
