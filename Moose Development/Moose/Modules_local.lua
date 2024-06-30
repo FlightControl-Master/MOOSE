@@ -1,7 +1,7 @@
 __Moose.Include( 'Utilities\\Enums.lua' )
 __Moose.Include( 'Utilities\\Utils.lua' )
 __Moose.Include( 'Utilities\\Profiler.lua' )
-__Moose.Include( 'Utilities\\STTS.lua' )
+--__Moose.Include( 'Utilities\\STTS.lua' )
 __Moose.Include( 'Utilities\\FiFo.lua' )
 __Moose.Include( 'Utilities\\Socket.lua' )
 
