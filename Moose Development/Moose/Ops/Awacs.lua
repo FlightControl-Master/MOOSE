@@ -1626,7 +1626,7 @@ function AWACS:_NewRadioEntry(TextTTS, TextScreen,GID,IsGroup,ToScreen,IsNew,Fro
   RadioEntry.TextScreen = TextScreen or TextTTS
   RadioEntry.GroupID = GID
   RadioEntry.ToScreen = ToScreen 
-  RadioEntry.Duration = STTS.getSpeechTime(TextTTS,0.95,false) or 8
+  RadioEntry.Duration = MSRS.getSpeechTime(TextTTS,0.95,false) or 8
   RadioEntry.FromAI = FromAI
   RadioEntry.IsGroup = IsGroup
   if Tactical then
