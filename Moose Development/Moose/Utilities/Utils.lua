@@ -482,6 +482,15 @@ UTILS.BasicSerialize = function(s)
   end
 end
 
+--- Counts the number of elements in a table.
+-- @param #table T Table to count
+-- @return #int Number of elements in the table
+function UTILS.TableLength(T)
+  local count = 0
+  for _ in pairs(T or {}) do count = count + 1 end
+  return count
+end
+
 --- Print a table to log in a nice format
 -- @param #table table The table to print
 -- @param #number indent Number of indents
@@ -496,7 +505,7 @@ function UTILS.PrintTableToLog(table, indent, noprint)
   if not indent then indent = 0 end
   for k, v in pairs(table) do
     if string.find(k," ") then k='"'..k..'"'end
-    if type(v) == "table" then
+    if type(v) == "table" and UTILS.TableLength(v) > 0 then
       if not noprint then
         env.info(string.rep("  ", indent) .. tostring(k) .. " = {")
       end
@@ -3676,14 +3685,6 @@ function table.index_of(table, element)
     return nil
 end
 
---- Counts the number of elements in a table.
--- @param #table T Table to count
--- @return #int Number of elements in the table
-function table.length(T)
-  local count = 0
-  for _ in pairs(T) do count = count + 1 end
-  return count
-end
 
 --- Slices a table between two indices, much like Python's my_list[2:-1]
 -- @param #table tbl Table to slice

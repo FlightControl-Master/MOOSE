@@ -2916,7 +2916,7 @@ function ATIS:onafterReport( From, Event, To, Text )
     self:T( "SRS TTS: " .. text )
 
     -- Play text-to-speech report.
-    local duration = STTS.getSpeechTime(text,0.95)
+    local duration = MSRS.getSpeechTime(text,0.95)
     self.msrsQ:NewTransmission(text,duration,self.msrs,nil,2)
     --self.msrs:PlayText( text )
     self.SRSText = text
