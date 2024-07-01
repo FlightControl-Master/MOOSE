@@ -3998,23 +3998,20 @@ end
 -- @return #table The table filled with data from the csv file.
 function UTILS.ReadCSV(filename)
 
-  if not UTILS.FileExists(filename) then
-  
+  if not UTILS.FileExists(filename) then  
     env.error("File does not exist")
-    return nil
-  
+    return nil  
   end
   
   --- Function that load data from a file.
   local function _loadfile( filename )
     local f = io.open( filename, "rb" )
     if f then
-      -- self:I(self.lid..string.format("Loading player results from file %s", tostring(filename)))
       local data = f:read( "*all" )
       f:close()
       return data
     else
-      BASE:E( self.lid .. string.format( "WARNING: Could not load player results from file %s. File might not exist just yet.", tostring( filename ) ) )
+      BASE:E(string.format( "WARNING: Could read data from file %s!", tostring( filename ) ) )
       return nil
     end
   end
@@ -4032,9 +4029,7 @@ function UTILS.ReadCSV(filename)
   local sep=";"
   
   local columns=UTILS.Split(lines[1], sep)
-  
-  BASE:I(columns)
-  
+
   -- Remove header line.
   table.remove(lines, 1)
   
@@ -4046,16 +4041,9 @@ function UTILS.ReadCSV(filename)
     for j, value in pairs(UTILS.Split(line, sep)) do
     
       local key=string.gsub(columns[j], "[\n\r]","")
-    
-      
-      --env.info(string.format("i=%d, j=%d key=%s value=%s", i,j, key, value))
-      
-      row[key]=value
-    
+      row[key]=value    
     end
     table.insert(csvdata, row)
-    BASE:E(row)
-  
   
   end
 

@@ -2073,8 +2073,6 @@ function ATIS:onafterBroadcast( From, Event, To )
   -- Cloud preset (DCS 2.7)
   local cloudspreset = clouds.preset or "Nothing"
 
-  env.info("FF cloud preset "..cloudspreset)
-
   -- Precepitation: 0=None, 1=Rain, 2=Thunderstorm, 3=Snow, 4=Snowstorm.
   local precepitation = 0
 
@@ -2102,7 +2100,6 @@ function ATIS:onafterBroadcast( From, Event, To )
     else
       precepitation = 3 -- snow
     end
-    env.info("Fprecipt "..precepitation)
   elseif cloudspreset:find( "RainyPreset" ) then
     -- Overcast + Rain
     clouddens = 9
