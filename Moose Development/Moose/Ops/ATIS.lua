@@ -1110,7 +1110,7 @@ end
 -- @param #ATIS self
 -- @param #string csvfile Full path to the csv file on your local disk.
 -- @return #ATIS self
-function ATIS:SetSoundfilesInfoFile( csvfile )
+function ATIS:SetSoundfilesInfo( csvfile )
 
   --- Local function to return the ATIS.Soundfile for a given file name
   local function getSound(filename)
