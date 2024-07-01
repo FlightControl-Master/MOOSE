@@ -268,7 +268,7 @@ function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval, 
     return nil
   end
   if type(duration)~="number" then
-    self:E(self.lid.."ERROR: Duration specified is NOT a number.")
+    self:E(self.lid..string.format("ERROR: Duration specified is NOT a number but type=%s. Filename=%s, duration=%s", type(duration), tostring(filename), tostring(duration)))
     return nil    
   end
   
@@ -361,6 +361,7 @@ end
 -- @param #RADIOQUEUE self
 -- @param #RADIOQUEUE.Transmission transmission The transmission.
 function RADIOQUEUE:Broadcast(transmission)
+  self:T("Broarcast")
 
   if ((transmission.soundfile and transmission.soundfile.useSRS) or transmission.soundtext) and self.msrs then
     self:_BroadcastSRS(transmission)
@@ -425,7 +426,7 @@ function RADIOQUEUE:Broadcast(transmission)
   else
     
     -- Broadcasting from carrier. No subtitle possible. Need to send messages to players.
-    self:T(self.lid..string.format("Broadcasting via trigger.action.radioTransmission()."))
+    self:T(self.lid..string.format("Broadcasting via trigger.action.radioTransmission()"))
   
     -- Position from where to transmit.
     local vec3=nil
@@ -453,6 +454,8 @@ function RADIOQUEUE:Broadcast(transmission)
         local text=string.format("file=%s, freq=%.2f MHz, duration=%.2f sec, subtitle=%s", filename, self.frequency/1000000, transmission.duration, transmission.subtitle or "")
         MESSAGE:New(string.format(text, filename, transmission.duration, transmission.subtitle or ""), 5, "RADIOQUEUE "..self.alias):ToAll()
       end
+    else
+      self:E("ERROR: Could not get vec3 to determin transmission origin! Did you specify a sender and is it still alive?")
     end
 
   end
@@ -482,7 +485,6 @@ end
 --- Check radio queue for transmissions to be broadcasted.
 -- @param #RADIOQUEUE self
 function RADIOQUEUE:_CheckRadioQueue()
-  --env.info("FF check radio queue "..self.alias)
 
   -- Check if queue is empty.
   if #self.queue==0 then
