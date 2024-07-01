@@ -58,7 +58,7 @@ do -- UserFlag
 
   --- Set the userflag to a given Number.
   -- @param #USERFLAG self
-  -- @param #number Number The number value to be checked if it is the same as the userflag.
+  -- @param #number Number The number value to set the flag to.
   -- @param #number Delay Delay in seconds, before the flag is set.
   -- @return #USERFLAG The userflag instance.
   -- @usage

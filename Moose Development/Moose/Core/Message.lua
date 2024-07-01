@@ -177,40 +177,22 @@ end
 --
 --   -- Send the 2 messages created with the @{New} method to the Client Group.
 --   -- Note that the Message of MessageClient2 is overwriting the Message of MessageClient1.
---   ClientGroup = Group.getByName( "ClientGroup" )
+--   Client = CLIENT:FindByName("UnitNameOfMyClient")
 --
---   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25, "Score" ):ToClient( ClientGroup )
---   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25, "Score" ):ToClient( ClientGroup )
+--   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25, "Score" ):ToClient( Client )
+--   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25, "Score" ):ToClient( Client )
 --   or
---   MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25 ):ToClient( ClientGroup )
---   MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25 ):ToClient( ClientGroup )
+--   MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25 ):ToClient( Client )
+--   MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25 ):ToClient( Client )
 --   or
 --   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25 )
 --   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25 )
---   MessageClient1:ToClient( ClientGroup )
---   MessageClient2:ToClient( ClientGroup )
+--   MessageClient1:ToClient( Client )
+--   MessageClient2:ToClient( Client )
 --
 function MESSAGE:ToClient( Client, Settings )
   self:F( Client )
-
-  if Client and Client:GetClientGroupID() then
-
-    if self.MessageType then
-      local Settings = Settings or ( Client and _DATABASE:GetPlayerSettings( Client:GetPlayerName() ) ) or _SETTINGS -- Core.Settings#SETTINGS
-      self.MessageDuration = Settings:GetMessageTime( self.MessageType )
-      self.MessageCategory = "" -- self.MessageType .. ": "
-    end
-    
-    local Unit = Client:GetClient()
-    
-    if self.MessageDuration ~= 0 then
-      local ClientGroupID = Client:GetClientGroupID()
-      self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
-      --trigger.action.outTextForGroup( ClientGroupID, self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
-      trigger.action.outTextForUnit( Unit:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration , self.ClearScreen)
-    end
-  end
-  
+  self:ToUnit(Client, Settings) 
   return self
 end
 
