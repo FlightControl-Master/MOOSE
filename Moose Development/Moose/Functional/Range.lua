@@ -3352,7 +3352,7 @@ function RANGE:_AddF10Commands( _unitName )
           -------------------
 
           -- _rangePath = missionCommands.addSubMenuForGroup(_gid, self.rangename, RANGE.MenuF10Root)
-          _rangePath = MENU_GROUP:New( group, "On the Range" )
+          _rangePath = MENU_GROUP:New( group, "On the Range", RANGE.MenuF10Root )
 
         else
 
