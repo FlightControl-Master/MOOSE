@@ -593,13 +593,14 @@ RANGE.MenuF10Root = nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version = "2.7.3"
+RANGE.version = "2.8.0"
 
 -- TODO list:
 -- TODO: Verbosity level for messages.
 -- TODO: Add option for default settings such as smoke off.
 -- TODO: Add custom weapons, which can be specified by the user.
 -- TODO: Check if units are still alive.
+-- TODO: Option for custom sound files.
 -- DONE: Scenery as targets.
 -- DONE: Add statics for strafe pits.
 -- DONE: Add missiles.
@@ -1326,6 +1327,53 @@ function RANGE:SetSoundfilesPath( path )
   self:I( self.lid .. string.format( "Setting sound files path to %s", self.soundpath ) )
   return self
 end
+
+--- Set the path to the csv file that contains information about the used sound files.
+-- The parameter file has to be located on your local disk (**not** inside the miz file).
+-- @param #RANGE self
+-- @param #string csvfile Full path to the csv file on your local disk.
+-- @return #RANGE self
+function RANGE:SetSoundfilesInfo( csvfile )
+
+  --- Local function to return the ATIS.Soundfile for a given file name
+  local function getSound(filename)
+    for key,_soundfile in pairs(self.Sound) do
+      local soundfile=_soundfile --#RANGE.Soundfile
+      if filename==soundfile.filename then
+        return soundfile
+      end
+    end
+    return nil
+  end
+
+  -- Read csv file
+  local data=UTILS.ReadCSV(csvfile)
+
+  if data then
+
+    for i,sound in pairs(data) do
+
+      -- Get the ATIS.Soundfile
+      local soundfile=getSound(sound.filename..".ogg") --#RANGE.Soundfile
+
+      if soundfile then
+
+        -- Set duration
+        soundfile.duration=tonumber(sound.duration)
+
+      else
+        self:E(string.format("ERROR: Could not get info for sound file %s", sound.filename))
+      end
+
+    end
+  else
+    self:E(string.format("ERROR: Could not read sound csv file!"))
+  end
+
+
+  return self
+end
+
 
 --- Add new strafe pit. For a strafe pit, hits from guns are counted. One pit can consist of several units.
 -- A strafe run approach is only valid if the player enters via a zone in front of the pit, which is defined by boxlength, boxwidth, and heading.
