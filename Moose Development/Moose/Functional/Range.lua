@@ -1665,12 +1665,16 @@ end
 
 --- Add all units of a group as bombing targets.
 -- @param #RANGE self
--- @param Wrapper.Group#GROUP group Group of bombing targets.
+-- @param Wrapper.Group#GROUP group Group of bombing targets. Can also be given as group name.
 -- @param #number goodhitrange Max distance from unit which is considered as a good hit.
 -- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
 -- @return #RANGE self
 function RANGE:AddBombingTargetGroup( group, goodhitrange, randommove )
   self:F( { group = group, goodhitrange = goodhitrange, randommove = randommove } )
+  
+  if group and type(group)=="string" then
+    group=GROUP:FindByName(group)
+  end
 
   if group then
 
@@ -3351,8 +3355,9 @@ function RANGE:_AddF10Commands( _unitName )
           -- MISSION LEVEL --
           -------------------
 
+          -- Main F10 menu: F10/<RANGE.MenuF10Root>/<Range Name>
           -- _rangePath = missionCommands.addSubMenuForGroup(_gid, self.rangename, RANGE.MenuF10Root)
-          _rangePath = MENU_GROUP:New( group, "On the Range", RANGE.MenuF10Root )
+          _rangePath = MENU_GROUP:New( group, self.rangename, RANGE.MenuF10Root )
 
         else
 
@@ -3365,8 +3370,10 @@ function RANGE:_AddF10Commands( _unitName )
             -- RANGE.MenuF10[_gid]=missionCommands.addSubMenuForGroup(_gid, "On the Range")
             RANGE.MenuF10[_gid] = MENU_GROUP:New( group, "On the Range" )
           end
+          
           -- _rangePath = missionCommands.addSubMenuForGroup(_gid, self.rangename, RANGE.MenuF10[_gid])
           _rangePath = MENU_GROUP:New( group, self.rangename, RANGE.MenuF10[_gid] )
+          
         end
 
         local _statsPath = MENU_GROUP:New( group, "Statistics", _rangePath )
