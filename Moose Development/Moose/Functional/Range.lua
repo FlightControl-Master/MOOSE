@@ -3366,13 +3366,15 @@ function RANGE:_AddF10Commands( _unitName )
           -- MISSION LEVEL --
           -------------------        
         
-          _rootMenu = MENU_GROUP:New( group, self.rangename, self.menuF10root )
+          --_rootMenu = MENU_GROUP:New( group, self.rangename, self.menuF10root )
+          _rootMenu = self.menuF10root
           self:T2(self.lid..string.format("Creating F10 menu for group %s", group:GetName()))
 
         elseif RANGE.MenuF10Root then
 
           -- Main F10 menu: F10/<RANGE.MenuF10Root>/<Range Name>
-          _rootMenu = MENU_GROUP:New( group, self.rangename, RANGE.MenuF10Root )
+          --_rootMenu = MENU_GROUP:New( group, self.rangename, RANGE.MenuF10Root )
+          _rootMenu = RANGE.MenuF10Root
 
         else
 
