@@ -1078,6 +1078,9 @@ end
 -- @param Core.Zone#ZONE zone MOOSE zone defining the range perimeters.
 -- @return #RANGE self
 function RANGE:SetRangeZone( zone )
+  if zone and type(zone)=="string" then
+    zone=ZONE:FindByName(zone)
+  end
   self.rangezone = zone
   return self
 end
