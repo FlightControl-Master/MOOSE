@@ -106,6 +106,7 @@
 -- @field Sound.SRS#MSRS instructmsrs SRS wrapper for range instructor.
 -- @field Sound.SRS#MSRSQUEUE instructsrsQ SRS queue for range instructor.
 -- @field #number Coalition Coalition side for the menu, if any.
+-- @field Core.Menu#MENU_MISSION menuF10root Specific user defined root F10 menu.
 -- @extends Core.Fsm#FSM
 
 --- *Don't only practice your art, but force your way into its secrets; art deserves that, for it and knowledge can raise man to the Divine.* - Ludwig van Beethoven
@@ -928,6 +929,16 @@ end
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Set the root F10 menu under which the range F10 menu is created.
+-- @param #RANGE self
+-- @param Core.Menu#MENU_MISSION menu The root F10 menu.
+-- @return #RANGE self
+function RANGE:SetMenuRoot(menu)
+  self.menuF10root=menu
+  return self
+end
+
+
 --- Set maximal strafing altitude. Player entering a strafe pit above that altitude are not registered for a valid pass.
 -- @param #RANGE self
 -- @param #number maxalt Maximum altitude in meters AGL. Default is 914 m = 3000 ft.
@@ -1713,12 +1724,16 @@ end
 
 --- Add all units of a group as bombing targets.
 -- @param #RANGE self
--- @param Wrapper.Group#GROUP group Group of bombing targets.
+-- @param Wrapper.Group#GROUP group Group of bombing targets. Can also be given as group name.
 -- @param #number goodhitrange Max distance from unit which is considered as a good hit.
 -- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
 -- @return #RANGE self
 function RANGE:AddBombingTargetGroup( group, goodhitrange, randommove )
   self:F( { group = group, goodhitrange = goodhitrange, randommove = randommove } )
+  
+  if group and type(group)=="string" then
+    group=GROUP:FindByName(group)
+  end
 
   if group then
 
@@ -3391,16 +3406,23 @@ function RANGE:_AddF10Commands( _unitName )
         self.MenuAddedTo[_gid] = true
 
         -- Range root menu path.
-        local _rangePath = nil
+        local _rootMenu = nil
 
-        if RANGE.MenuF10Root then
-
+        if self.menuF10root then
+        
           -------------------
           -- MISSION LEVEL --
-          -------------------
+          -------------------        
+        
+          --_rootMenu = MENU_GROUP:New( group, self.rangename, self.menuF10root )
+          _rootMenu = self.menuF10root
+          self:T2(self.lid..string.format("Creating F10 menu for group %s", group:GetName()))
 
-          -- _rangePath = missionCommands.addSubMenuForGroup(_gid, self.rangename, RANGE.MenuF10Root)
-          _rangePath = MENU_GROUP:New( group, "On the Range" )
+        elseif RANGE.MenuF10Root then
+
+          -- Main F10 menu: F10/<RANGE.MenuF10Root>/<Range Name>
+          --_rootMenu = MENU_GROUP:New( group, self.rangename, RANGE.MenuF10Root )
+          _rootMenu = RANGE.MenuF10Root
 
         else
 
@@ -3410,12 +3432,17 @@ function RANGE:_AddF10Commands( _unitName )
 
           -- Main F10 menu: F10/On the Range/<Range Name>/
           if RANGE.MenuF10[_gid] == nil then
-            -- RANGE.MenuF10[_gid]=missionCommands.addSubMenuForGroup(_gid, "On the Range")
-            RANGE.MenuF10[_gid] = MENU_GROUP:New( group, "On the Range" )
+            self:T2(self.lid..string.format("Creating F10 menu 'On the Range' for group %s", group:GetName()))
+          else
+            self:T2(self.lid..string.format("F10 menu 'On the Range' already EXISTS for group %s", group:GetName()))
           end
-          -- _rangePath = missionCommands.addSubMenuForGroup(_gid, self.rangename, RANGE.MenuF10[_gid])
-          _rangePath = MENU_GROUP:New( group, self.rangename, RANGE.MenuF10[_gid] )
+          
+          _rootMenu=RANGE.MenuF10[_gid] or MENU_GROUP:New( group, "On the Range" )
+                    
         end
+        
+        -- Range menu
+        local _rangePath = MENU_GROUP:New( group, self.rangename, _rootMenu )
 
         local _statsPath = MENU_GROUP:New( group, "Statistics", _rangePath )
         local _markPath = MENU_GROUP:New( group, "Mark Targets", _rangePath )

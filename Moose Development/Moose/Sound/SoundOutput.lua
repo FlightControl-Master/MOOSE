@@ -359,7 +359,7 @@ do -- Text-To-Speech
     local self=BASE:Inherit(self, BASE:New()) -- #SOUNDTEXT
 
     self:SetText(Text)
-    self:SetDuration(Duration or STTS.getSpeechTime(Text))
+    self:SetDuration(Duration or MSRS.getSpeechTime(Text))
     --self:SetGender()
     --self:SetCulture()
     
