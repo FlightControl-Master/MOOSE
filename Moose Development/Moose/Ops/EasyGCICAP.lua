@@ -65,6 +65,8 @@
 -- @field #boolean TankerInvisible
 -- @field #number CapFormation
 -- @field #table ReadyFlightGroups
+-- @field #boolean DespawnAfterLanding
+-- @field #boolean DespawnAfterHolding
 -- @extends Core.Fsm#FSM
 
 --- *“Airspeed, altitude, and brains. Two are always needed to successfully complete the flight.”* -- Unknown.
@@ -209,6 +211,8 @@ EASYGCICAP = {
   TankerInvisible = true,
   CapFormation = nil,
   ReadyFlightGroups = {},
+  DespawnAfterLanding = false,
+  DespawnAfterHolding = true,
 }
 
 --- Internal Squadron data type
@@ -244,7 +248,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.10"
+EASYGCICAP.version="0.1.11"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -292,6 +296,8 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.Monitor = false
   self.TankerInvisible = true
   self.CapFormation = ENUMS.Formation.FixedWing.FingerFour.Group
+  self.DespawnAfterLanding = false
+  self.DespawnAfterHolding = true
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("EASYGCICAP %s | ", self.alias)
@@ -341,7 +347,7 @@ end
 -- @param #number Maxiumum Maxmimum number of parallel missions allowed. Count is Cap-Missions + Intercept-Missions + Alert5-Missionsm default is 6
 -- @return #EASYGCICAP self 
 function EASYGCICAP:SetMaxAliveMissions(Maxiumum)
-  self:T(self.lid.."SetDefaultResurrection")
+  self:T(self.lid.."SetMaxAliveMissions")
   self.MaxAliveMissions = Maxiumum or 8
   return self
 end
@@ -458,6 +464,26 @@ function EASYGCICAP:SetDefaultOverhead(Overhead)
   return self
 end
 
+--- Set default despawning after landing.
+-- @param #EASYGCICAP self
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetDefaultDespawnAfterLanding()
+  self:T(self.lid.."SetDefaultDespawnAfterLanding")
+  self.DespawnAfterLanding = true
+  self.DespawnAfterHolding = false
+  return self
+end
+
+--- Set default despawning after holding (despawn in air close to AFB).
+-- @param #EASYGCICAP self
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetDefaultDespawnAfterHolding()
+  self:T(self.lid.."SetDefaultDespawnAfterLanding")
+  self.DespawnAfterLanding = false
+  self.DespawnAfterHolding = true
+  return self
+end
+
 --- Set CAP mission start to vary randomly between Start end End seconds.
 -- @param #EASYGCICAP self
 -- @param #number Start
@@ -512,6 +538,8 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   self:T(self.lid.."_AddAirwing "..Airbasename)
   
   local CapFormation = self.CapFormation
+  local DespawnAfterLanding = self.DespawnAfterLanding
+  local DespawnAfterHolding = self.DespawnAfterHolding
   
   -- Create Airwing
   local CAP_Wing = AIRWING:New(Airbasename,Alias)
@@ -553,8 +581,11 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   
   function CAP_Wing:OnAfterFlightOnMission(From, Event, To, Flightgroup, Mission)
     local flightgroup = Flightgroup -- Ops.FlightGroup#FLIGHTGROUP
-    --flightgroup:SetDespawnAfterLanding()
-    flightgroup:SetDespawnAfterHolding()
+    if DespawnAfterLanding then
+      flightgroup:SetDespawnAfterLanding()
+    elseif DespawnAfterHolding then
+      flightgroup:SetDespawnAfterHolding()
+    end
     flightgroup:SetDestinationbase(AIRBASE:FindByName(Airbasename))
     flightgroup:GetGroup():CommandEPLRS(true,5)
     flightgroup:GetGroup():SetOptionRadarUsingForContinousSearch()
@@ -577,10 +608,11 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:GetGroup():OptionROTEvadeFire()   
     flightgroup:SetFuelLowRTB(true)
     Intel:AddAgent(flightgroup)
-    function flightgroup:OnAfterHolding(From,Event,To)
-      self:Despawn(1,true)
-    end 
-    
+    if DespawnAfterHolding then
+      function flightgroup:OnAfterHolding(From,Event,To)
+        self:Despawn(1,true)
+      end 
+    end
   end
   
   if self.noaltert5 > 0 then  
