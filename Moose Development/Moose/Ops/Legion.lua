@@ -21,6 +21,7 @@
 -- @field #table cohorts Cohorts of this legion.
 -- @field Ops.Commander#COMMANDER commander Commander of this legion.
 -- @field Ops.Chief#CHIEF chief Chief of this legion.
+-- @field #boolean tacview If `true`, show tactical overview on status update.
 -- @extends Functional.Warehouse#WAREHOUSE
 
 --- *Per aspera ad astra.*
@@ -319,6 +320,14 @@ end
 -- @return #LEGION self
 function LEGION:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
+  return self
+end
+
+--- Set tactical overview on.
+-- @param #LEGION self
+-- @return #LEGION self
+function LEGION:SetTacticalOverviewOn()  
+  self.tacview=true
   return self
 end
 
@@ -1772,7 +1781,7 @@ end
 -- Mission Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new flight group after an asset was spawned.
+--- Create a new OPS group after an asset was spawned.
 -- @param #LEGION self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset.
 -- @return Ops.FlightGroup#FLIGHTGROUP The created flightgroup object.
@@ -1836,6 +1845,53 @@ function LEGION:_CreateFlightGroup(asset)
   return opsgroup
 end
 
+--- Display tactical overview.
+-- @param #LEGION self 
+function LEGION:_TacticalOverview()
+
+  if self.tacview then
+
+    local NassetsTotal=self:CountAssets(nil)
+    local NassetsStock=self:CountAssets(true)
+    local NassetsActiv=self:CountAssets(false)
+  
+    local NmissionsTotal=#self.missionqueue
+    local NmissionsRunni=self:CountMissionsInQueue()
+  
+    -- Info message
+    local text=string.format("Tactical Overview %s\n", self.alias)
+    text=text..string.format("===================================\n")
+  
+    -- Asset info.
+    text=text..string.format("Assets: %d [Active=%d, Stock=%d]\n", NassetsTotal, NassetsActiv, NassetsStock)
+  
+    -- Mission info.
+    text=text..string.format("Missions: %d [Running=%d]\n", NmissionsTotal, NmissionsRunni)
+    for _,mtype in pairs(AUFTRAG.Type) do
+      local n=self:CountMissionsInQueue(mtype)
+      if n>0 then
+        local N=self:CountMissionsInQueue(mtype)
+        text=text..string.format("  - %s: %d [Running=%d]\n", mtype, n, N)
+      end
+    end
+  
+    
+    local Ntransports=#self.transportqueue
+    if Ntransports>0 then
+      text=text..string.format("Transports: %d\n", Ntransports)
+      for _,_transport in pairs(self.transportqueue) do
+        local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
+        text=text..string.format(" - %s", transport:GetState())
+      end
+    end
+  
+    -- Message to coalition.
+    MESSAGE:New(text, 60, nil, true):ToCoalition(self:GetCoalition())  
+  
+    
+  end
+  
+end
 
 --- Check if an asset is currently on a mission (STARTED or EXECUTING).
 -- @param #LEGION self

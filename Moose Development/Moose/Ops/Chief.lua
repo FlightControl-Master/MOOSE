@@ -3240,7 +3240,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
     else
       
       -- Mission not supported.
-      self:E(self.lid..string.format("ERROR: Mission type not supported for OPSZONE! Unrecruiting assets..."))
+      self:E(self.lid..string.format("ERROR: Mission type %s not supported for OPSZONE! Unrecruiting assets...", tostring(MissionType)))
       LEGION.UnRecruitAssets(assets)
       
       return false  
