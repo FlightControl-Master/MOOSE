@@ -179,14 +179,14 @@ end
 --   -- Note that the Message of MessageClient2 is overwriting the Message of MessageClient1.
 --   Client = CLIENT:FindByName("UnitNameOfMyClient")
 --
---   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25, "Score" ):ToClient( Client )
---   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25, "Score" ):ToClient( Client )
+--   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", 25, "Score" ):ToClient( Client )
+--   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", 25, "Score" ):ToClient( Client )
 --   or
---   MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25 ):ToClient( Client )
---   MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25 ):ToClient( Client )
+--   MESSAGE:New( "Congratulations, you've just hit a target", 25, "Score"):ToClient( Client )
+--   MESSAGE:New( "Congratulations, you've just killed a target", 25, "Score"):ToClient( Client )
 --   or
---   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25 )
---   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25 )
+--   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", 25, "Score")
+--   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", 25, "Score")
 --   MessageClient1:ToClient( Client )
 --   MessageClient2:ToClient( Client )
 --
@@ -287,11 +287,11 @@ end
 -- @usage
 --
 --   -- Send a message created with the @{New} method to the BLUE coalition.
---   MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25):ToBlue()
+--   MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", 25, "Penalty"):ToBlue()
 --   or
---   MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToBlue()
+--   MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", 25, "Penalty"):ToBlue()
 --   or
---   MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 )
+--   MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", 25, "Penalty")
 --   MessageBLUE:ToBlue()
 --
 function MESSAGE:ToBlue()
@@ -308,11 +308,11 @@ end
 -- @usage
 --
 --   -- Send a message created with the @{New} method to the RED coalition.
---   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToRed()
+--   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty"):ToRed()
 --   or
---   MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToRed()
+--   MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty"):ToRed()
 --   or
---   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 )
+--   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty")
 --   MessageRED:ToRed()
 --
 function MESSAGE:ToRed()
@@ -331,11 +331,11 @@ end
 -- @usage
 --
 --   -- Send a message created with the @{New} method to the RED coalition.
---   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToCoalition( coalition.side.RED )
+--   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty"):ToCoalition( coalition.side.RED )
 --   or
---   MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToCoalition( coalition.side.RED )
+--   MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty"):ToCoalition( coalition.side.RED )
 --   or
---   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 )
+--   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty")
 --   MessageRED:ToCoalition( coalition.side.RED )
 --
 function MESSAGE:ToCoalition( CoalitionSide, Settings )
@@ -381,11 +381,11 @@ end
 -- @usage
 --
 --   -- Send a message created to all players.
---   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 ):ToAll()
+--   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", 25, "End of Mission"):ToAll()
 --   or
---   MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 ):ToAll()
+--   MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", 25, "End of Mission"):ToAll()
 --   or
---   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 )
+--   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", 25, "End of Mission")
 --   MessageAll:ToAll()
 --
 function MESSAGE:ToAll( Settings )
