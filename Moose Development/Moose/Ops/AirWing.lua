@@ -1041,6 +1041,9 @@ function AIRWING:onafterStatus(From, Event, To)
 
   -- Check Recon missions.
   self:CheckRECON()
+  
+  -- Display tactival overview.
+  self:_TacticalOverview()  
 
   ----------------
   -- Transport ---
