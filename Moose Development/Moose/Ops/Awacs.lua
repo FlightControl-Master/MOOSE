@@ -508,7 +508,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.64", -- #string
+  version = "0.2.65", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -5585,6 +5585,12 @@ function AWACS:_ThreatRangeCall(GID,Contact)
       local grptxt = self.gettext:GetEntry("GROUP",self.locale)
       local thrt = self.gettext:GetEntry("THREAT",self.locale)
       local text = string.format("%s. %s. %s %s, %s. %s",self.callsigntxt,pilotcallsign,contacttag,grptxt, thrt, BRATExt)
+      -- DONE MS TTS - fix spelling out B-R-A in this case
+      if string.find(text,"BRAA",1,true) then
+        text = string.gsub(text,"BRAA","brah")
+      elseif string.find(text,"BRA",1,true) then
+       text = string.gsub(text,"BRA","brah")
+      end
       if IsSub == false then
         self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
       end
