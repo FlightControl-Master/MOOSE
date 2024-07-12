@@ -361,7 +361,7 @@ end
 -- @param #RADIOQUEUE self
 -- @param #RADIOQUEUE.Transmission transmission The transmission.
 function RADIOQUEUE:Broadcast(transmission)
-  self:T("Broarcast")
+  self:T("Broadcast")
 
   if ((transmission.soundfile and transmission.soundfile.useSRS) or transmission.soundtext) and self.msrs then
     self:_BroadcastSRS(transmission)
@@ -455,7 +455,7 @@ function RADIOQUEUE:Broadcast(transmission)
         MESSAGE:New(string.format(text, filename, transmission.duration, transmission.subtitle or ""), 5, "RADIOQUEUE "..self.alias):ToAll()
       end
     else
-      self:E("ERROR: Could not get vec3 to determin transmission origin! Did you specify a sender and is it still alive?")
+      self:E("ERROR: Could not get vec3 to determine transmission origin! Did you specify a sender and is it still alive?")
     end
 
   end
