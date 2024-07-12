@@ -593,7 +593,6 @@ AIRBASE.MarianaIslands = {
 --- Airbases of the South Atlantic map:
 --
 -- * AIRBASE.SouthAtlantic.Almirante_Schroeders
--- * AIRBASE.SouthAtlantic.Caleta_Tortel
 -- * AIRBASE.SouthAtlantic.Comandante_Luis_Piedrabuena
 -- * AIRBASE.SouthAtlantic.Cullen
 -- * AIRBASE.SouthAtlantic.El_Calafate
@@ -624,7 +623,6 @@ AIRBASE.MarianaIslands = {
 --@field SouthAtlantic
 AIRBASE.SouthAtlantic={
   ["Almirante_Schroeders"] = "Almirante Schroeders",
-  ["Caleta_Tortel"] = "Caleta Tortel",
   ["Comandante_Luis_Piedrabuena"] = "Comandante Luis Piedrabuena",
   ["Cullen"] = "Cullen",
   ["El_Calafate"] = "El Calafate",
