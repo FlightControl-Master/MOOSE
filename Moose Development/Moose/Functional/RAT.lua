@@ -2140,6 +2140,7 @@ function RAT:_InitAircraft(DCSgroup)
     self.aircraft.height=6.97           --   <- These lines added
     self.aircraft.width=21.44           --   <- These lines added
   end
+
   self.aircraft.box=math.max(self.aircraft.length,self.aircraft.width)
 
   -- info message
