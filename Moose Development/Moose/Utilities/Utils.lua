@@ -66,7 +66,8 @@ DCSMAP = {
   MarianaIslands="MarianaIslands",
   Falklands="Falklands",
   Sinai="SinaiMap",
-  Kola="Kola"
+  Kola="Kola",
+  Afghanistan="Afghanistan",
 }
 
 
@@ -482,6 +483,15 @@ UTILS.BasicSerialize = function(s)
   end
 end
 
+--- Counts the number of elements in a table.
+-- @param #table T Table to count
+-- @return #int Number of elements in the table
+function UTILS.TableLength(T)
+  local count = 0
+  for _ in pairs(T or {}) do count = count + 1 end
+  return count
+end
+
 --- Print a table to log in a nice format
 -- @param #table table The table to print
 -- @param #number indent Number of indents
@@ -496,7 +506,7 @@ function UTILS.PrintTableToLog(table, indent, noprint)
   if not indent then indent = 0 end
   for k, v in pairs(table) do
     if string.find(k," ") then k='"'..k..'"'end
-    if type(v) == "table" then
+    if type(v) == "table" and UTILS.TableLength(v) > 0 then
       if not noprint then
         env.info(string.rep("  ", indent) .. tostring(k) .. " = {")
       end
@@ -1744,7 +1754,8 @@ end
 -- * Mariana Islands +2 (East)
 -- * Falklands +12 (East) - note there's a LOT of deviation across the map, as we're closer to the South Pole
 -- * Sinai +4.8 (East)
--- * Kola +15 (East) - not there is a lot of deviation across the map (-1° to +24°), as we are close to the North pole
+-- * Kola +15 (East) - note there is a lot of deviation across the map (-1° to +24°), as we are close to the North pole
+-- * Afghanistan +3 (East) - actually +3.6 (NW) to +2.3 (SE)
 -- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
 -- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
@@ -1773,6 +1784,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=4.8
   elseif map==DCSMAP.Kola then
     declination=15
+  elseif map==DCSMAP.Afghanistan then
+    declination=3
   else
     declination=0
   end
@@ -2004,6 +2017,8 @@ function UTILS.GMTToLocalTimeDifference()
     return 2   -- Currently map is +2 but should be +3 (DCS bug?)
   elseif theatre==DCSMAP.Kola then
     return 3   -- Currently map is +2 but should be +3 (DCS bug?)
+  elseif theatre==DCSMAP.Afghanistan then
+    return 4.5   -- UTC +4:30
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
@@ -4070,4 +4085,3 @@ function UTILS.LCGRandom()
   UTILS.lcg.seed = (UTILS.lcg.a * UTILS.lcg.seed + UTILS.lcg.c) % UTILS.lcg.m
   return UTILS.lcg.seed / UTILS.lcg.m
 end
-

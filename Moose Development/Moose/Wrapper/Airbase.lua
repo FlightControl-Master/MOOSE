@@ -753,6 +753,43 @@ AIRBASE.Kola = {
   ["Severomorsk_3"] = "Severomorsk-3",
 }
 
+--- Airbases of the Afghanistan map
+-- 
+-- * AIRBASE.Afghanistan.Bost
+-- * AIRBASE.Afghanistan.Camp_Bastion
+-- * AIRBASE.Afghanistan.Camp_Bastion_Heliport
+-- * AIRBASE.Afghanistan.Chaghcharan
+-- * AIRBASE.Afghanistan.Dwyer
+-- * AIRBASE.Afghanistan.Farah
+-- * AIRBASE.Afghanistan.Herat
+-- * AIRBASE.Afghanistan.Kandahar
+-- * AIRBASE.Afghanistan.Kandahar_Heliport
+-- * AIRBASE.Afghanistan.Maymana_Zahiraddin_Faryabi
+-- * AIRBASE.Afghanistan.Nimroz
+-- * AIRBASE.Afghanistan.Qala_i_Naw
+-- * AIRBASE.Afghanistan.Shindand
+-- * AIRBASE.Afghanistan.Shindand_Heliport
+-- * AIRBASE.Afghanistan.Tarinkot
+-- 
+-- @field Afghanistan
+AIRBASE.Afghanistan = {
+  ["Bost"] = "Bost",
+  ["Camp_Bastion"] = "Camp Bastion",
+  ["Camp_Bastion_Heliport"] = "Camp Bastion Heliport",
+  ["Chaghcharan"] = "Chaghcharan",
+  ["Dwyer"] = "Dwyer",
+  ["Farah"] = "Farah",
+  ["Herat"] = "Herat",
+  ["Kandahar"] = "Kandahar",
+  ["Kandahar_Heliport"] = "Kandahar Heliport",
+  ["Maymana_Zahiraddin_Faryabi"] = "Maymana Zahiraddin Faryabi",
+  ["Nimroz"] = "Nimroz",
+  ["Qala_i_Naw"] = "Qala i Naw",
+  ["Shindand"] = "Shindand",
+  ["Shindand_Heliport"] = "Shindand Heliport",
+  ["Tarinkot"] = "Tarinkot",
+}
+
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 -- @type AIRBASE.ParkingSpot
 -- @field Core.Point#COORDINATE Coordinate Coordinate of the parking spot.
