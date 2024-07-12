@@ -59,6 +59,7 @@
 -- @field #number ShoradTime Timer in seconds, how long #SHORAD will be active after a detection inside of the defense range
 -- @field #number ShoradActDistance Distance of an attacker in meters from a Mantis SAM site, on which Shorad will be switched on. Useful to not give away Shorad sites too early. Default 15km. Should be smaller than checkradius.
 -- @field #boolean checkforfriendlies If true, do not activate a SAM installation if a friendly aircraft is in firing range.
+-- @field #table FilterZones Table of Core.Zone#ZONE Zones Consider SAM groups in this zone(s) only for this MANTIS instance, must be handed as #table of Zone objects.
 -- @extends Core.Base#BASE
 
 
