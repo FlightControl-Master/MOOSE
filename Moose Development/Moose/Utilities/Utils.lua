@@ -66,7 +66,8 @@ DCSMAP = {
   MarianaIslands="MarianaIslands",
   Falklands="Falklands",
   Sinai="SinaiMap",
-  Kola="Kola"
+  Kola="Kola",
+  Afghanistan="Afghanistan",
 }
 
 
@@ -1753,7 +1754,8 @@ end
 -- * Mariana Islands +2 (East)
 -- * Falklands +12 (East) - note there's a LOT of deviation across the map, as we're closer to the South Pole
 -- * Sinai +4.8 (East)
--- * Kola +15 (East) - not there is a lot of deviation across the map (-1° to +24°), as we are close to the North pole
+-- * Kola +15 (East) - note there is a lot of deviation across the map (-1° to +24°), as we are close to the North pole
+-- * Afghanistan +3 (East) - actually +3.6 (NW) to +2.3 (SE)
 -- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
 -- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
@@ -1782,6 +1784,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=4.8
   elseif map==DCSMAP.Kola then
     declination=15
+  elseif map==DCSMAP.Afghanistan then
+    declination=3
   else
     declination=0
   end
@@ -2013,6 +2017,8 @@ function UTILS.GMTToLocalTimeDifference()
     return 2   -- Currently map is +2 but should be +3 (DCS bug?)
   elseif theatre==DCSMAP.Kola then
     return 3   -- Currently map is +2 but should be +3 (DCS bug?)
+  elseif theatre==DCSMAP.Afghanistan then
+    return 4.5   -- UTC +4:30
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
