@@ -261,16 +261,22 @@ EVENTS = {
   SimulationStart           = world.event.S_EVENT_SIMULATION_START or -1,
   WeaponRearm               = world.event.S_EVENT_WEAPON_REARM or -1,
   WeaponDrop                = world.event.S_EVENT_WEAPON_DROP or -1,
-  -- Added with DCS 2.9.0
+  -- Added with DCS 2.9.x
   UnitTaskTimeout           = world.event.S_EVENT_UNIT_TASK_TIMEOUT or -1,
   UnitTaskStage             = world.event.S_EVENT_UNIT_TASK_STAGE or -1,
   MacSubtaskScore           = world.event.S_EVENT_MAC_SUBTASK_SCORE or -1, 
   MacExtraScore             = world.event.S_EVENT_MAC_EXTRA_SCORE or -1,
   MissionRestart            = world.event.S_EVENT_MISSION_RESTART or -1,
   MissionWinner             = world.event.S_EVENT_MISSION_WINNER or -1, 
-  PostponedTakeoff          = world.event.S_EVENT_POSTPONED_TAKEOFF or -1, 
-  PostponedLand             = world.event.S_EVENT_POSTPONED_LAND or -1, 
+  RunwayTakeoff             = world.event.S_EVENT_RUNWAY_TAKEOFF or -1, 
+  RunwayTouch               = world.event.S_EVENT_RUNWAY_TOUCH or -1,
+  MacLMSRestart             = world.event.S_EVENT_MAC_LMS_RESTART or -1,
+  SimulationFreeze          = world.event.S_EVENT_SIMULATION_FREEZE or -1, 
+  SimulationUnfreeze        = world.event.S_EVENT_SIMULATION_UNFREEZE or -1, 
+  HumanAircraftRepairStart  = world.event.S_EVENT_HUMAN_AIRCRAFT_REPAIR_START or -1, 
+  HumanAircraftRepairFinish = world.event.S_EVENT_HUMAN_AIRCRAFT_REPAIR_FINISH or -1, 
 }
+
 
 --- The Event structure
 -- Note that at the beginning of each field description, there is an indication which field will be populated depending on the object type involved in the Event:
