@@ -688,19 +688,50 @@ local _EVENTMETA = {
      Event = "OnEventMissionWinner",
      Text = "S_EVENT_MISSION_WINNER"
    },
-  [EVENTS.PostponedTakeoff] = {
+  [EVENTS.RunwayTakeoff] = {
      Order = 1,
      Side = "I",
-     Event = "OnEventPostponedTakeoff",
-     Text = "S_EVENT_POSTPONED_TAKEOFF"
+     Event = "OnEventRunwayTakeoff",
+     Text = "S_EVENT_RUNWAY_TAKEOFF"
    },
-  [EVENTS.PostponedLand] = {
+  [EVENTS.RunwayTouch] = {
      Order = 1,
      Side = "I",
-     Event = "OnEventPostponedLand",
-     Text = "S_EVENT_POSTPONED_LAND"
+     Event = "OnEventRunwayTouch",
+     Text = "S_EVENT_RUNWAY_TOUCH"
+   }, 
+     [EVENTS.MacLMSRestart] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventMacLMSRestart",
+     Text = "S_EVENT_MAC_LMS_RESTART"
+   }, 
+     [EVENTS.SimulationFreeze] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventSimulationFreeze",
+     Text = "S_EVENT_SIMULATION_FREEZE"
+   }, 
+     [EVENTS.SimulationUnfreeze] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventSimulationUnfreeze",
+     Text = "S_EVENT_SIMULATION_UNFREEZE"
+   }, 
+     [EVENTS.HumanAircraftRepairStart] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventHumanAircraftRepairStart",
+     Text = "S_EVENT_HUMAN_AIRCRAFT_REPAIR_START"
+   }, 
+     [EVENTS.HumanAircraftRepairFinish] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventHumanAircraftRepairFinish",
+     Text = "S_EVENT_HUMAN_AIRCRAFT_REPAIR_FINISH"
    }, 
 }
+
 
 --- The Events structure
 -- @type EVENT.Events
