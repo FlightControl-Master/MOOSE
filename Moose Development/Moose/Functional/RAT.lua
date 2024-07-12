@@ -2052,6 +2052,10 @@ function RAT:_InitAircraft(DCSgroup)
     self.aircraft.length=16
     self.aircraft.height=5
     self.aircraft.width=9
+  elseif DCStype == "Saab340" then      --   <- These lines added
+    self.aircraft.length=19.73          --   <- These lines added
+    self.aircraft.height=6.97           --   <- These lines added
+    self.aircraft.width=21.44           --   <- These lines added
   end
   self.aircraft.box=math.max(self.aircraft.length,self.aircraft.width)
 
