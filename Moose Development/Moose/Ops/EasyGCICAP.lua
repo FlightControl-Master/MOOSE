@@ -7,6 +7,7 @@
 -- 
 -------------------------------------------------------------------------
 -- Date: September 2023
+-- Last Update: July 2024
 -------------------------------------------------------------------------
 --
 --- **Ops** - Easy GCI & CAP Manager
@@ -248,7 +249,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.11"
+EASYGCICAP.version="0.1.12"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1156,7 +1157,7 @@ function EASYGCICAP:_TryAssignIntercept(ReadyFlightGroups,InterceptAuftrag,Group
   return assigned, wingsize
 end
 
---- Add a zone to the rejected zones set.
+--- Here, we'll decide if we need to launch an intercepting flight, and from where
 -- @param #EASYGCICAP self
 -- @param Ops.Intel#INTEL.Cluster Cluster
 -- @return #EASYGCICAP self 
@@ -1200,9 +1201,11 @@ function EASYGCICAP:_AssignIntercept(Cluster)
       local zone = _data[2] -- Core.Zone#ZONE
       local zonecoord = zone:GetCoordinate()
       local name = _data[3] -- #string
+      local coa = AIRBASE:FindByName(name):GetCoalition()
       local distance = position:DistanceFromPointVec2(zonecoord)
       local airframes = airwing:CountAssets(true)
-      if distance < bestdistance and airframes >= wingsize then
+      local samecoalitionab = coa == self.coalition and true or false
+      if distance < bestdistance and airframes >= wingsize and samecoalitionab == true then
         bestdistance = distance
         targetairwing = airwing
         targetawname = name
@@ -1218,10 +1221,11 @@ function EASYGCICAP:_AssignIntercept(Cluster)
       local name = data.AirbaseName
       local zonecoord = data.Coordinate
       local airwing = wings[name][1]
-      
+      local coa = AIRBASE:FindByName(name):GetCoalition()
+      local samecoalitionab = coa == self.coalition and true or false
       local distance = position:DistanceFromPointVec2(zonecoord)
       local airframes = airwing:CountAssets(true)
-      if distance < bestdistance and airframes >= wingsize then
+      if distance < bestdistance and airframes >= wingsize and samecoalitionab == true then
         bestdistance = distance
         targetairwing = airwing -- Ops.Airwing#AIRWING
         targetawname = name
