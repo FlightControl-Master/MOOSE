@@ -58,7 +58,7 @@
 --   * @{#CONTROLLABLE.TaskFollow}: (AIR) Following another airborne controllable.
 --   * @{#CONTROLLABLE.TaskHold}: (GROUND) Hold ground controllable from moving.
 --   * @{#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the controllable.
---   * @{#CONTROLLABLE.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
+--   * @{#CONTROLLABLE.TaskLandAtVec2}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
 --   * @{#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).
 --   * @{#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the controllable at a specified altitude.
 --   * @{#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified altitude during a specified duration with a specified speed.
@@ -1516,8 +1516,10 @@ end
 -- @param #CONTROLLABLE self
 -- @param DCS#Vec2 Vec2 The point where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
+-- @param #boolean CombatLanding (optional) If true, set the Combat Landing option.
+-- @param #number DirectionAfterLand (optional) Heading after landing in degrees.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:TaskLandAtVec2( Vec2, Duration )
+function CONTROLLABLE:TaskLandAtVec2( Vec2, Duration , CombatLanding, DirectionAfterLand)
 
   local DCSTask = {
     id = 'Land',
@@ -1525,9 +1527,15 @@ function CONTROLLABLE:TaskLandAtVec2( Vec2, Duration )
       point        = Vec2,
       durationFlag = Duration and true or false,
       duration     = Duration,
+      combatLandingFlag = CombatLanding == true and true or false,
     },
   }
-
+  
+  if DirectionAfterLand ~= nil and type(DirectionAfterLand) == "number" then
+    DCSTask.params.directionEnabled = true
+    DCSTask.params.direction = math.rad(DirectionAfterLand) 
+  end
+  
   return DCSTask
 end
 
@@ -1535,13 +1543,16 @@ end
 -- @param #CONTROLLABLE self
 -- @param Core.Zone#ZONE Zone The zone where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
+-- @param #boolean RandomPoint (optional) If true,land at a random point inside of the zone. 
+-- @param #boolean CombatLanding (optional) If true, set the Combat Landing option.
+-- @param #number DirectionAfterLand (optional) Heading after landing in degrees.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskLandAtZone( Zone, Duration, RandomPoint )
+function CONTROLLABLE:TaskLandAtZone( Zone, Duration, RandomPoint, CombatLanding, DirectionAfterLand )
 
   -- Get landing point
   local Point = RandomPoint and Zone:GetRandomVec2() or Zone:GetVec2()
 
-  local DCSTask = CONTROLLABLE.TaskLandAtVec2( self, Point, Duration )
+  local DCSTask = CONTROLLABLE.TaskLandAtVec2( self, Point, Duration, CombatLanding, DirectionAfterLand)
 
   return DCSTask
 end
