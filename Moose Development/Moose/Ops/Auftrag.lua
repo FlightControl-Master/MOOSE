@@ -1062,8 +1062,10 @@ end
 -- @param #number Time Time in seconds to stay. Default 300 seconds.
 -- @param #number Speed Speed in knots to fly to the target coordinate. Default 150kn.
 -- @param #number MissionAlt Altitude to fly towards the mission in feet AGL. Default 1000ft.
+-- @param #boolean CombatLanding (Optional) If true, set the Combat Landing option.
+-- @param #number DirectionAfterLand (Optional) Heading after landing in degrees.
 -- @return #AUFTRAG self
-function AUFTRAG:NewLANDATCOORDINATE(Coordinate, OuterRadius, InnerRadius, Time, Speed, MissionAlt)
+function AUFTRAG:NewLANDATCOORDINATE(Coordinate, OuterRadius, InnerRadius, Time, Speed, MissionAlt, CombatLanding, DirectionAfterLand)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.LANDATCOORDINATE)
 
@@ -1071,6 +1073,8 @@ function AUFTRAG:NewLANDATCOORDINATE(Coordinate, OuterRadius, InnerRadius, Time,
 
   mission.stayTime = Time or 300
   mission.stayAt = Coordinate
+  mission.combatLand = CombatLanding
+  mission.directionAfter = DirectionAfterLand
   self:SetMissionSpeed(Speed or 150)
   self:SetMissionAltitude(MissionAlt or 1000)
   
@@ -6492,8 +6496,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     local DCStask={}
     local Vec2 = self.stayAt:GetVec2()  
-    local DCStask = CONTROLLABLE.TaskLandAtVec2(nil,Vec2,self.stayTime)
-  
+    local DCStask = CONTROLLABLE.TaskLandAtVec2(nil,Vec2,self.stayTime, self.combatLand, self.directionAfter)
     table.insert(DCStasks, DCStask)
 
   elseif self.type==AUFTRAG.Type.ONGUARD or self.type==AUFTRAG.Type.ARMOREDGUARD then
