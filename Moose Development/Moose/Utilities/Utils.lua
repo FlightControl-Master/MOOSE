@@ -4085,4 +4085,3 @@ function UTILS.LCGRandom()
   UTILS.lcg.seed = (UTILS.lcg.a * UTILS.lcg.seed + UTILS.lcg.c) % UTILS.lcg.m
   return UTILS.lcg.seed / UTILS.lcg.m
 end
-
