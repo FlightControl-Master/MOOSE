@@ -4049,3 +4049,25 @@ function UTILS.ReadCSV(filename)
 
   return csvdata
 end
+
+--- Seed the LCG random number generator.
+-- @param #number seed Seed value. Default is a random number using math.random()
+function UTILS.LCGRandomSeed(seed)
+  UTILS.lcg = {
+    seed = seed or math.random(1, 2^32 - 1),
+    a = 1664525,
+    c = 1013904223,
+    m = 2^32
+  }
+end
+
+--- Return a pseudo-random number using the LCG algorithm.
+-- @return #number Random number between 0 and 1.
+function UTILS.LCGRandom()
+  if UTILS.lcg == nil then
+    UTILS.LCGRandomSeed()
+  end
+  UTILS.lcg.seed = (UTILS.lcg.a * UTILS.lcg.seed + UTILS.lcg.c) % UTILS.lcg.m
+  return UTILS.lcg.seed / UTILS.lcg.m
+end
+
