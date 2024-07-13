@@ -1516,6 +1516,7 @@ do
       self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.UnitLost, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnDeadOrCrash )
       if self.Filter.Zones then
         self.ZoneTimer = TIMER:New(self._ContinousZoneFilter,self)
@@ -1548,6 +1549,7 @@ do
       self:UnHandleEvent(EVENTS.Dead)
       self:UnHandleEvent(EVENTS.Crash)
       self:UnHandleEvent(EVENTS.RemoveUnit)
+      self:UnHandleEvent(EVENTS.UnitLost)
       
       if self.Filter.Zones and self.ZoneTimer and self.ZoneTimer:IsRunning() then
         self.ZoneTimer:Stop()
@@ -2622,6 +2624,7 @@ do -- SET_UNIT
       self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.UnitLost, self._EventOnDeadOrCrash )
       if self.Filter.Zones then
         self.ZoneTimer = TIMER:New(self._ContinousZoneFilter,self)
         local timing = self.ZoneTimerInterval or 30
@@ -7845,6 +7848,7 @@ do -- SET_OPSGROUP
       self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
       self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.UnitLost, self._EventOnDeadOrCrash )
     end
 
     return self

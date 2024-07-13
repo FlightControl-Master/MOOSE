@@ -135,7 +135,7 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
-  --self:HandleEvent( EVENTS.UnitLost, self._EventOnDeadOrCrash )  -- DCS 2.7.1 for Aerial units no dead event ATM
+  self:HandleEvent( EVENTS.UnitLost, self._EventOnDeadOrCrash )  -- DCS 2.7.1 for Aerial units no dead event ATM
   self:HandleEvent( EVENTS.Hit, self.AccountHits )
   self:HandleEvent( EVENTS.NewCargo )
   self:HandleEvent( EVENTS.DeleteCargo )
@@ -188,6 +188,7 @@ end
 --- Deletes a Unit from the DATABASE based on the Unit Name.
 -- @param #DATABASE self
 function DATABASE:DeleteUnit( DCSUnitName )
+  self:T("DeleteUnit "..tostring(DCSUnitName))
   self.UNITS[DCSUnitName] = nil
 end
 
@@ -1569,7 +1570,6 @@ end
 -- @param #DATABASE self
 -- @param Core.Event#EVENTDATA Event
 function DATABASE:_EventOnDeadOrCrash( Event )
-
   if Event.IniDCSUnit then
 
     local name=Event.IniDCSUnitName
@@ -1577,7 +1577,7 @@ function DATABASE:_EventOnDeadOrCrash( Event )
     if Event.IniObjectCategory == 3 then
 
       ---
-      -- STATICS
+      -- STATICS 
       ---
 
       if self.STATICS[Event.IniDCSUnitName] then
@@ -1587,7 +1587,7 @@ function DATABASE:_EventOnDeadOrCrash( Event )
       ---
       -- Maybe a UNIT?
       ---
-
+ 
       -- Delete unit.
       if self.UNITS[Event.IniDCSUnitName] then
         self:T("STATIC Event for UNIT "..tostring(Event.IniDCSUnitName))
@@ -1610,7 +1610,8 @@ function DATABASE:_EventOnDeadOrCrash( Event )
 
         -- Delete unit.
         if self.UNITS[Event.IniDCSUnitName] then
-          self:DeleteUnit(Event.IniDCSUnitName)
+          self:ScheduleOnce(1,self.DeleteUnit,self,Event.IniDCSUnitName)
+          --self:DeleteUnit(Event.IniDCSUnitName)
         end
 
         -- Remove client players.
