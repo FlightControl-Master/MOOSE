@@ -3414,7 +3414,7 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #number Radius (Optional) Radius to check around the coordinate, defaults to 50m (100m diameter)
   -- @param #number Minelevation (Optional) Elevation from which on a area is defined as steep, defaults to 8% (8m height gain across 100 meters)
-  -- @return #boolen IsSteep If true, area is steep
+  -- @return #boolean IsSteep If true, area is steep
   -- @return #number MaxElevation Elevation in meters measured over 100m
   function COORDINATE:IsInSteepArea(Radius,Minelevation)
     local steep = false
@@ -3446,7 +3446,7 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param #number Radius (Optional) Radius to check around the coordinate, defaults to 50m (100m diameter)
   -- @param #number Minelevation (Optional) Elevation from which on a area is defined as steep, defaults to 8% (8m height gain across 100 meters)
-  -- @return #boolen IsFlat If true, area is flat
+  -- @return #boolean IsFlat If true, area is flat
   -- @return #number MaxElevation Elevation in meters measured over 100m
   function COORDINATE:IsInFlatArea(Radius,Minelevation)
     local steep, elev = self:IsInSteepArea(Radius,Minelevation)

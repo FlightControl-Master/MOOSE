@@ -262,9 +262,10 @@ EVENTS = {
   WeaponRearm               = world.event.S_EVENT_WEAPON_REARM or -1,
   WeaponDrop                = world.event.S_EVENT_WEAPON_DROP or -1,
   -- Added with DCS 2.9.x
-  UnitTaskTimeout           = world.event.S_EVENT_UNIT_TASK_TIMEOUT or -1,
+  --UnitTaskTimeout           = world.event.S_EVENT_UNIT_TASK_TIMEOUT or -1,
+  UnitTaskComplete          = world.event.S_EVENT_UNIT_TASK_COMPLETE or -1,
   UnitTaskStage             = world.event.S_EVENT_UNIT_TASK_STAGE or -1,
-  MacSubtaskScore           = world.event.S_EVENT_MAC_SUBTASK_SCORE or -1, 
+  --MacSubtaskScore           = world.event.S_EVENT_MAC_SUBTASK_SCORE or -1, 
   MacExtraScore             = world.event.S_EVENT_MAC_EXTRA_SCORE or -1,
   MissionRestart            = world.event.S_EVENT_MISSION_RESTART or -1,
   MissionWinner             = world.event.S_EVENT_MISSION_WINNER or -1, 
@@ -652,24 +653,24 @@ local _EVENTMETA = {
      Text = "S_EVENT_WEAPON_DROP"
    },
    -- DCS 2.9
-  [EVENTS.UnitTaskTimeout] = {
-     Order = 1,
-     Side = "I",
-     Event = "OnEventUnitTaskTimeout",
-     Text = "S_EVENT_UNIT_TASK_TIMEOUT "
-   },
+  --[EVENTS.UnitTaskTimeout] = {
+    -- Order = 1,
+    -- Side = "I",
+    -- Event = "OnEventUnitTaskTimeout",
+    -- Text = "S_EVENT_UNIT_TASK_TIMEOUT "
+   --},
   [EVENTS.UnitTaskStage] = {
      Order = 1,
      Side = "I",
      Event = "OnEventUnitTaskStage",
      Text = "S_EVENT_UNIT_TASK_STAGE "
    },
-  [EVENTS.MacSubtaskScore] = {
-     Order = 1,
-     Side = "I",
-     Event = "OnEventMacSubtaskScore",
-     Text = "S_EVENT_MAC_SUBTASK_SCORE"
-   },
+  --[EVENTS.MacSubtaskScore] = {
+    -- Order = 1,
+     --Side = "I",
+     --Event = "OnEventMacSubtaskScore",
+     --Text = "S_EVENT_MAC_SUBTASK_SCORE"
+   --},
   [EVENTS.MacExtraScore] = {
      Order = 1,
      Side = "I",
