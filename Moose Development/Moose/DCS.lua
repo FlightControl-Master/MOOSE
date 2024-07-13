@@ -56,6 +56,35 @@ do -- world
   -- @field S_EVENT_SCORE [https://wiki.hoggitworld.com/view/DCS_event_score](https://wiki.hoggitworld.com/view/DCS_event_score) DCS>=2.5.6
   -- @field S_EVENT_UNIT_LOST [https://wiki.hoggitworld.com/view/DCS_event_unit_lost](https://wiki.hoggitworld.com/view/DCS_event_unit_lost) DCS>=2.5.6
   -- @field S_EVENT_LANDING_AFTER_EJECTION [https://wiki.hoggitworld.com/view/DCS_event_landing_after_ejection](https://wiki.hoggitworld.com/view/DCS_event_landing_after_ejection) DCS>=2.5.6
+  -- @field S_EVENT_PARATROOPER_LENDING
+  -- @field S_EVENT_DISCARD_CHAIR_AFTER_EJECTION
+  -- @field S_EVENT_WEAPON_ADD
+  -- @field S_EVENT_TRIGGER_ZONE
+  -- @field S_EVENT_LANDING_QUALITY_MARK
+  -- @field S_EVENT_BDA
+  -- @field S_EVENT_AI_ABORT_MISSION
+  -- @field S_EVENT_DAYNIGHT
+  -- @field S_EVENT_FLIGHT_TIME
+  -- @field S_EVENT_PLAYER_SELF_KILL_PILOT
+  -- @field S_EVENT_PLAYER_CAPTURE_AIRFIELD
+  -- @field S_EVENT_EMERGENCY_LANDING
+  -- @field S_EVENT_UNIT_CREATE_TASK
+  -- @field S_EVENT_UNIT_DELETE_TASK
+  -- @field S_EVENT_SIMULATION_START
+  -- @field S_EVENT_WEAPON_REARM
+  -- @field S_EVENT_WEAPON_DROP
+  -- @field S_EVENT_UNIT_TASK_COMPLETE
+  -- @field S_EVENT_UNIT_TASK_STAGE
+  -- @field S_EVENT_MAC_EXTRA_SCORE
+  -- @field S_EVENT_MISSION_RESTART
+  -- @field S_EVENT_MISSION_WINNER
+  -- @field S_EVENT_RUNWAY_TAKEOFF
+  -- @field S_EVENT_RUNWAY_TOUCH
+  -- @field S_EVENT_MAC_LMS_RESTART
+  -- @field S_EVENT_SIMULATION_FREEZE
+  -- @field S_EVENT_SIMULATION_UNFREEZE
+  -- @field S_EVENT_HUMAN_AIRCRAFT_REPAIR_START
+  -- @field S_EVENT_HUMAN_AIRCRAFT_REPAIR_FINISH
   -- @field S_EVENT_MAX
   
   --- The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.

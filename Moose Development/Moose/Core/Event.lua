@@ -659,11 +659,17 @@ local _EVENTMETA = {
     -- Event = "OnEventUnitTaskTimeout",
     -- Text = "S_EVENT_UNIT_TASK_TIMEOUT "
    --},
+  [EVENTS.UnitTaskComplete] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventUnitTaskComplete",
+     Text = "S_EVENT_UNIT_TASK_COMPLETE"
+   },
   [EVENTS.UnitTaskStage] = {
      Order = 1,
      Side = "I",
      Event = "OnEventUnitTaskStage",
-     Text = "S_EVENT_UNIT_TASK_STAGE "
+     Text = "S_EVENT_UNIT_TASK_STAGE"
    },
   --[EVENTS.MacSubtaskScore] = {
     -- Order = 1,
@@ -675,7 +681,7 @@ local _EVENTMETA = {
      Order = 1,
      Side = "I",
      Event = "OnEventMacExtraScore",
-     Text = "S_EVENT_MAC_EXTRA_SCOREP"
+     Text = "S_EVENT_MAC_EXTRA_SCORE"
    },
   [EVENTS.MissionRestart] = {
      Order = 1,
