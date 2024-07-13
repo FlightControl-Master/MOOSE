@@ -1238,7 +1238,7 @@ function SPAWN:InitPositionVec2(Vec2)
   self:T( { self.SpawnTemplatePrefix, Vec2} )
   self.SpawnInitPosition = Vec2
   self.SpawnFromNewPosition = true
-  self:I("MaxGroups:"..self.SpawnMaxGroups)
+  self:T("MaxGroups:"..self.SpawnMaxGroups)
   for SpawnGroupID = 1, self.SpawnMaxGroups do
     self:_SetInitialPosition( SpawnGroupID )
   end
@@ -1390,9 +1390,10 @@ function SPAWN:InitArray( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
     self.SpawnGroups[SpawnGroupID].Visible = true
 
     self:HandleEvent( EVENTS.Birth, self._OnBirth )
-    self:HandleEvent( EVENTS.Dead, self._OnDeadOrCrash )
+    --self:HandleEvent( EVENTS.Dead, self._OnDeadOrCrash )
     self:HandleEvent( EVENTS.Crash, self._OnDeadOrCrash )
     self:HandleEvent( EVENTS.RemoveUnit, self._OnDeadOrCrash )
+    self:HandleEvent( EVENTS.UnitLost, self._OnDeadOrCrash )
     if self.Repeat then
       self:HandleEvent( EVENTS.Takeoff, self._OnTakeOff )
       self:HandleEvent( EVENTS.Land, self._OnLand )
@@ -1797,8 +1798,9 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
       if not NoBirth then
         self:HandleEvent( EVENTS.Birth, self._OnBirth )
       end
-      self:HandleEvent( EVENTS.Dead, self._OnDeadOrCrash )
+      --self:HandleEvent( EVENTS.Dead, self._OnDeadOrCrash )
       self:HandleEvent( EVENTS.Crash, self._OnDeadOrCrash )
+      self:HandleEvent( EVENTS.UnitLost, self._OnDeadOrCrash )
       self:HandleEvent( EVENTS.RemoveUnit, self._OnDeadOrCrash )
       if self.Repeat then
         self:HandleEvent( EVENTS.Takeoff, self._OnTakeOff )
@@ -3853,11 +3855,11 @@ end
 -- @param #number SpawnIndex Spawn index.
 -- @return #number self.SpawnIndex
 function SPAWN:_GetSpawnIndex( SpawnIndex )
-  self:F2( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnMaxGroups, self.SpawnMaxUnitsAlive, self.AliveUnits, #self.SpawnTemplate.units } )
+  self:T( { template=self.SpawnTemplatePrefix, SpawnIndex=SpawnIndex, SpawnMaxGroups=self.SpawnMaxGroups, SpawnMaxUnitsAlive=self.SpawnMaxUnitsAlive, AliveUnits=self.AliveUnits, TemplateUnits=#self.SpawnTemplate.units } )
 
   if (self.SpawnMaxGroups == 0) or (SpawnIndex <= self.SpawnMaxGroups) then
     if (self.SpawnMaxUnitsAlive == 0) or (self.AliveUnits + #self.SpawnTemplate.units <= self.SpawnMaxUnitsAlive) or self.UnControlled == true then
-      self:F( { SpawnCount = self.SpawnCount, SpawnIndex = SpawnIndex } )
+      self:T( { SpawnCount = self.SpawnCount, SpawnIndex = SpawnIndex } )
       if SpawnIndex and SpawnIndex >= self.SpawnCount + 1 then
         self.SpawnCount = self.SpawnCount + 1
         SpawnIndex = self.SpawnCount
@@ -3898,12 +3900,17 @@ function SPAWN:_OnBirth( EventData )
 
 end
 
+---
 -- @param #SPAWN self 
 -- @param Core.Event#EVENTDATA EventData
 function SPAWN:_OnDeadOrCrash( EventData )
-  self:F( self.SpawnTemplatePrefix )
+  self:T( "Dead or crash event ID "..EventData.id)
+  self:T( "Dead or crash event for "..self.SpawnTemplatePrefix )
+  
+  if EventData.id == EVENTS.Dead then return end
   
   local unit=UNIT:FindByName(EventData.IniUnitName)
+  --local group=GROUP:FindByName(EventData.IniGroupName)
   
   if unit then
   
