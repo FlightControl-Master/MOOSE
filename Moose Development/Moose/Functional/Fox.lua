@@ -129,7 +129,6 @@ FOX = {
   lid            =   nil,
   menuadded      =    {},
   menudisabled   =   nil,
-  destroy        =   nil,
   launchalert    =   nil,
   marklaunch     =   nil,
   missiles       =    {},

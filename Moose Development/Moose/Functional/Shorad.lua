@@ -112,7 +112,6 @@ SHORAD = {
   shootandscoot = false,
   SkateNumber = 3,
   SkateZones = nil,
-  minscootdist = 100,
   minscootdist = 3000,
   scootrandomcoord = false,  
 }
