@@ -738,7 +738,7 @@ do -- SETTINGS
 
       local PlayerGroup = PlayerUnit:GetGroup()
       local PlayerName = PlayerUnit:GetPlayerName()
-      local PlayerNames = PlayerGroup:GetPlayerNames()
+      --local PlayerNames = PlayerGroup:GetPlayerNames()
 
       local PlayerMenu = MENU_GROUP:New( PlayerGroup, 'Settings "' .. PlayerName .. '"' )
 
