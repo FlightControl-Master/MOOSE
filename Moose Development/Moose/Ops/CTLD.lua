@@ -24,7 +24,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update April 2024
+-- Last Update July 2024
 
 do 
 
@@ -1255,7 +1255,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.54"
+CTLD.version="1.0.55"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3670,7 +3670,7 @@ function CTLD:_RefreshF10Menus()
   -- rebuild units table
   local _UnitList = {}
   for _key, _group in pairs (PlayerTable) do  
-    local _unit = _group:GetUnit(1) -- Wrapper.Unit#UNIT Asume that there is only one unit in the flight for players
+    local _unit = _group:GetFirstUnitAlive() -- Wrapper.Unit#UNIT Asume that there is only one unit in the flight for players
     if _unit then 
       if _unit:IsAlive() and _unit:IsPlayer() then
         if _unit:IsHelicopter() or (self:IsHercules(_unit) and self.enableHercules) then --ensure no stupid unit entries here

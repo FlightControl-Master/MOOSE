@@ -359,12 +359,15 @@ end
 -- @param #GROUP self
 -- @return DCS#Group The DCS Group.
 function GROUP:GetDCSObject()
+
+  -- Get DCS group.
   local DCSGroup = Group.getByName( self.GroupName )
 
   if DCSGroup then
     return DCSGroup
   end
 
+  self:T2(string.format("ERROR: Could not get DCS group object of group %s because DCS object could not be found!", tostring(self.GroupName)))
   return nil
 end
 
@@ -2742,7 +2745,7 @@ do -- Players
     local PlayerNames = {}
 
     local Units = self:GetUnits()
-    for UnitID, UnitData in pairs( Units ) do
+    for UnitID, UnitData in pairs( Units or {}) do
       local Unit = UnitData -- Wrapper.Unit#UNIT
       local PlayerName = Unit:GetPlayerName()
       if PlayerName and PlayerName ~= "" then
