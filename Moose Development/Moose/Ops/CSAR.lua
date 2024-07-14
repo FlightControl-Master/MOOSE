@@ -31,7 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 ---
--- Last Update April 2024
+-- Last Update July 2024
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -296,7 +296,7 @@ CSAR.AircraftType["OH58D"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.24"
+CSAR.version="1.0.25"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -2111,12 +2111,12 @@ function CSAR:_AddMedevacMenuItem()
   local coalition = self.coalition
   local allheligroupset = self.allheligroupset -- Core.Set#SET_GROUP
   local _allHeliGroups = allheligroupset:GetSetObjects()
-
   -- rebuild units table
   local _UnitList = {}
   for _key, _group in pairs (_allHeliGroups) do  
-    local _unit = _group:GetUnit(1) -- Asume that there is only one unit in the flight for players
-    if _unit then 
+    local _unit = _group:GetFirstUnitAlive() -- Asume that there is only one unit in the flight for players
+    if _unit then
+      --self:T("Unitname ".._unit:GetName().." IsAlive "..tostring(_unit:IsAlive()).." IsPlayer "..tostring(_unit:IsPlayer())) 
       if _unit:IsAlive() and _unit:IsPlayer() then         
         local unitName = _unit:GetName()
             _UnitList[unitName] = unitName

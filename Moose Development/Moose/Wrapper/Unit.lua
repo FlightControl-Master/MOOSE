@@ -447,7 +447,14 @@ function UNIT:IsPlayer()
   -- Units of template group.
   local template = group:GetTemplate()
   
-  if (template == nil) or (template.units == nil ) then return false end
+  if (template == nil) or (template.units == nil ) then 
+    local DCSObject = self:GetDCSObject()
+    if DCSObject then
+      if DCSObject:getPlayerName() ~= nil then return true else return false end
+    else
+      return false 
+    end
+  end
   
   local units=template.units
   
