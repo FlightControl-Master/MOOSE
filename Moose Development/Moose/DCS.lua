@@ -25,38 +25,68 @@ do -- world
   
   --- [https://wiki.hoggitworld.com/view/DCS_enum_world](https://wiki.hoggitworld.com/view/DCS_enum_world)
   -- @type world.event
-  -- @field S_EVENT_INVALID 
-  -- @field S_EVENT_SHOT [https://wiki.hoggitworld.com/view/DCS_event_shot](https://wiki.hoggitworld.com/view/DCS_event_shot)
-  -- @field S_EVENT_HIT [https://wiki.hoggitworld.com/view/DCS_event_hit](https://wiki.hoggitworld.com/view/DCS_event_hit)
-  -- @field S_EVENT_TAKEOFF [https://wiki.hoggitworld.com/view/DCS_event_takeoff](https://wiki.hoggitworld.com/view/DCS_event_takeoff)
-  -- @field S_EVENT_LAND [https://wiki.hoggitworld.com/view/DCS_event_land](https://wiki.hoggitworld.com/view/DCS_event_land)
-  -- @field S_EVENT_CRASH [https://wiki.hoggitworld.com/view/DCS_event_crash](https://wiki.hoggitworld.com/view/DCS_event_crash)
-  -- @field S_EVENT_EJECTION [https://wiki.hoggitworld.com/view/DCS_event_ejection](https://wiki.hoggitworld.com/view/DCS_event_ejection)
-  -- @field S_EVENT_REFUELING [https://wiki.hoggitworld.com/view/DCS_event_refueling](https://wiki.hoggitworld.com/view/DCS_event_refueling)
-  -- @field S_EVENT_DEAD [https://wiki.hoggitworld.com/view/DCS_event_dead](https://wiki.hoggitworld.com/view/DCS_event_dead)
-  -- @field S_EVENT_PILOT_DEAD [https://wiki.hoggitworld.com/view/DCS_event_pilot_dead](https://wiki.hoggitworld.com/view/DCS_event_pilot_dead)
-  -- @field S_EVENT_BASE_CAPTURED [https://wiki.hoggitworld.com/view/DCS_event_base_captured](https://wiki.hoggitworld.com/view/DCS_event_base_captured)
-  -- @field S_EVENT_MISSION_START [https://wiki.hoggitworld.com/view/DCS_event_mission_start](https://wiki.hoggitworld.com/view/DCS_event_mission_start)
-  -- @field S_EVENT_MISSION_END [https://wiki.hoggitworld.com/view/DCS_event_mission_end](https://wiki.hoggitworld.com/view/DCS_event_mission_end)
-  -- @field S_EVENT_TOOK_CONTROL 
-  -- @field S_EVENT_REFUELING_STOP [https://wiki.hoggitworld.com/view/DCS_event_refueling_stop](https://wiki.hoggitworld.com/view/DCS_event_refueling_stop)
-  -- @field S_EVENT_BIRTH [https://wiki.hoggitworld.com/view/DCS_event_birth](https://wiki.hoggitworld.com/view/DCS_event_birth)
-  -- @field S_EVENT_HUMAN_FAILURE [https://wiki.hoggitworld.com/view/DCS_event_human_failure](https://wiki.hoggitworld.com/view/DCS_event_human_failure)
-  -- @field S_EVENT_ENGINE_STARTUP [https://wiki.hoggitworld.com/view/DCS_event_engine_startup](https://wiki.hoggitworld.com/view/DCS_event_engine_startup)
-  -- @field S_EVENT_ENGINE_SHUTDOWN [https://wiki.hoggitworld.com/view/DCS_event_engine_shutdown](https://wiki.hoggitworld.com/view/DCS_event_engine_shutdown)
-  -- @field S_EVENT_PLAYER_ENTER_UNIT [https://wiki.hoggitworld.com/view/DCS_event_player_enter_unit](https://wiki.hoggitworld.com/view/DCS_event_player_enter_unit)
-  -- @field S_EVENT_PLAYER_LEAVE_UNIT [https://wiki.hoggitworld.com/view/DCS_event_player_leave_unit](https://wiki.hoggitworld.com/view/DCS_event_player_leave_unit)
-  -- @field S_EVENT_PLAYER_COMMENT 
-  -- @field S_EVENT_SHOOTING_START [https://wiki.hoggitworld.com/view/DCS_event_shooting_start](https://wiki.hoggitworld.com/view/DCS_event_shooting_start)
-  -- @field S_EVENT_SHOOTING_END [https://wiki.hoggitworld.com/view/DCS_event_shooting_end](https://wiki.hoggitworld.com/view/DCS_event_shooting_end)
-  -- @field S_EVENT_MARK ADDED [https://wiki.hoggitworld.com/view/DCS_event_mark_added](https://wiki.hoggitworld.com/view/DCS_event_mark_added) DCS>=2.5.1
-  -- @field S_EVENT_MARK CHANGE [https://wiki.hoggitworld.com/view/DCS_event_mark_change](https://wiki.hoggitworld.com/view/DCS_event_mark_change) DCS>=2.5.1
-  -- @field S_EVENT_MARK REMOVE [https://wiki.hoggitworld.com/view/DCS_event_mark_remove](https://wiki.hoggitworld.com/view/DCS_event_mark_remove) DCS>=2.5.1
-  -- @field S_EVENT_KILL [https://wiki.hoggitworld.com/view/DCS_event_kill](https://wiki.hoggitworld.com/view/DCS_event_kill) DCS>=2.5.6
-  -- @field S_EVENT_SCORE [https://wiki.hoggitworld.com/view/DCS_event_score](https://wiki.hoggitworld.com/view/DCS_event_score) DCS>=2.5.6
-  -- @field S_EVENT_UNIT_LOST [https://wiki.hoggitworld.com/view/DCS_event_unit_lost](https://wiki.hoggitworld.com/view/DCS_event_unit_lost) DCS>=2.5.6
-  -- @field S_EVENT_LANDING_AFTER_EJECTION [https://wiki.hoggitworld.com/view/DCS_event_landing_after_ejection](https://wiki.hoggitworld.com/view/DCS_event_landing_after_ejection) DCS>=2.5.6
-  -- @field S_EVENT_MAX
+  -- @field S_EVENT_INVALID = 0
+  -- @field S_EVENT_SHOT = 1
+  -- @field S_EVENT_HIT = 2
+  -- @field S_EVENT_TAKEOFF = 3
+  -- @field S_EVENT_LAND = 4
+  -- @field S_EVENT_CRASH = 5
+  -- @field S_EVENT_EJECTION = 6
+  -- @field S_EVENT_REFUELING = 7
+  -- @field S_EVENT_DEAD = 8
+  -- @field S_EVENT_PILOT_DEAD = 9
+  -- @field S_EVENT_BASE_CAPTURED = 10
+  -- @field S_EVENT_MISSION_START = 11
+  -- @field S_EVENT_MISSION_END = 12
+  -- @field S_EVENT_TOOK_CONTROL = 13
+  -- @field S_EVENT_REFUELING_STOP = 14
+  -- @field S_EVENT_BIRTH = 15
+  -- @field S_EVENT_HUMAN_FAILURE = 16
+  -- @field S_EVENT_DETAILED_FAILURE = 17
+  -- @field S_EVENT_ENGINE_STARTUP = 18
+  -- @field S_EVENT_ENGINE_SHUTDOWN = 19
+  -- @field S_EVENT_PLAYER_ENTER_UNIT = 20
+  -- @field S_EVENT_PLAYER_LEAVE_UNIT = 21
+  -- @field S_EVENT_PLAYER_COMMENT = 22
+  -- @field S_EVENT_SHOOTING_START = 23
+  -- @field S_EVENT_SHOOTING_END = 24
+  -- @field S_EVENT_MARK_ADDED  = 25 
+  -- @field S_EVENT_MARK_CHANGE = 26
+  -- @field S_EVENT_MARK_REMOVED = 27
+  -- @field S_EVENT_KILL = 28
+  -- @field S_EVENT_SCORE = 29
+  -- @field S_EVENT_UNIT_LOST = 30
+  -- @field S_EVENT_LANDING_AFTER_EJECTION = 31
+  -- @field S_EVENT_PARATROOPER_LENDING = 32 -- who's lending whom what? ;)
+  -- @field S_EVENT_DISCARD_CHAIR_AFTER_EJECTION = 33 
+  -- @field S_EVENT_WEAPON_ADD = 34
+  -- @field S_EVENT_TRIGGER_ZONE = 35
+  -- @field S_EVENT_LANDING_QUALITY_MARK = 36
+  -- @field S_EVENT_BDA = 37 -- battle damage assessment
+  -- @field S_EVENT_AI_ABORT_MISSION = 38 
+  -- @field S_EVENT_DAYNIGHT = 39 
+  -- @field S_EVENT_FLIGHT_TIME = 40 
+  -- @field S_EVENT_PLAYER_SELF_KILL_PILOT = 41 
+  -- @field S_EVENT_PLAYER_CAPTURE_AIRFIELD = 42 
+  -- @field S_EVENT_EMERGENCY_LANDING = 43
+  -- @field S_EVENT_UNIT_CREATE_TASK = 44
+  -- @field S_EVENT_UNIT_DELETE_TASK = 45
+  -- @field S_EVENT_SIMULATION_START = 46
+  -- @field S_EVENT_WEAPON_REARM = 47
+  -- @field S_EVENT_WEAPON_DROP = 48
+  -- @field S_EVENT_UNIT_TASK_COMPLETE = 49
+  -- @field S_EVENT_UNIT_TASK_STAGE = 50
+  -- @field S_EVENT_MAC_EXTRA_SCORE= 51 -- not sure what this is
+  -- @field S_EVENT_MISSION_RESTART= 52
+  -- @field S_EVENT_MISSION_WINNER = 53
+  -- @field S_EVENT_RUNWAY_TAKEOFF= 54 
+  -- @field S_EVENT_RUNWAY_TOUCH= 55 
+  -- @field S_EVENT_MAC_LMS_RESTART= 56 -- not sure what this is
+  -- @field S_EVENT_SIMULATION_FREEZE = 57 
+  -- @field S_EVENT_SIMULATION_UNFREEZE = 58 
+  -- @field S_EVENT_HUMAN_AIRCRAFT_REPAIR_START = 59 
+  -- @field S_EVENT_HUMAN_AIRCRAFT_REPAIR_FINISH = 60   
+  -- @field S_EVENT_MAX = 61
   
   --- The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.
   -- @type world.BirthPlace
