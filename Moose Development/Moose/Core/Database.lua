@@ -170,10 +170,11 @@ end
 --- Adds a Unit based on the Unit Name in the DATABASE.
 -- @param #DATABASE self
 -- @param #string DCSUnitName Unit name.
+-- @param #boolean force
 -- @return Wrapper.Unit#UNIT The added unit.
-function DATABASE:AddUnit( DCSUnitName )
+function DATABASE:AddUnit( DCSUnitName, force )
 
-  if not self.UNITS[DCSUnitName] then
+  if not self.UNITS[DCSUnitName] or force == true then
     -- Debug info.
     self:T( { "Add UNIT:", DCSUnitName } )
 
@@ -832,15 +833,25 @@ end
 function DATABASE:FindGroup( GroupName )
 
   local GroupFound = self.GROUPS[GroupName]
+  
+  if GroupFound == nil and GroupName ~= nil then
+    -- see if the group exists in the API, maybe a dynamic slot
+    self:_RegisterDynamicGroup(GroupName)
+    return self.GROUPS[GroupName]
+  end
+  
   return GroupFound
 end
 
 
 --- Adds a GROUP based on the GroupName in the DATABASE.
 -- @param #DATABASE self
-function DATABASE:AddGroup( GroupName )
+-- @param #string GroupName
+-- @param #boolean force
+-- @return Wrapper.Group#GROUP The Group
+function DATABASE:AddGroup( GroupName, force )
 
-  if not self.GROUPS[GroupName] then
+  if not self.GROUPS[GroupName] or force == true then
     self:T( { "Add GROUP:", GroupName } )
     self.GROUPS[GroupName] = GROUP:Register( GroupName )
   end
@@ -1346,6 +1357,36 @@ function DATABASE:_RegisterPlayers()
   return self
 end
 
+--- Private method that registers a single dynamic slot Group and Units within in the mission.
+-- @param #DATABASE self
+-- @return #DATABASE self
+function DATABASE:_RegisterDynamicGroup(Groupname)
+  local DCSGroup = Group.getByName(Groupname)
+  if DCSGroup:isExist() then
+  
+    -- Group name.
+    local DCSGroupName = DCSGroup:getName()
+  
+    -- Add group.
+    self:I(string.format("Register Group: %s", tostring(DCSGroupName)))
+    self:AddGroup( DCSGroupName, true )
+  
+    -- Loop over units in group.
+    for DCSUnitId, DCSUnit in pairs( DCSGroup:getUnits() ) do
+  
+      -- Get unit name.
+      local DCSUnitName = DCSUnit:getName()
+  
+      -- Add unit.
+      self:I(string.format("Register Unit: %s", tostring(DCSUnitName)))
+      self:AddUnit( DCSUnitName, true )
+  
+    end
+  else
+    self:E({"Group does not exist: ", DCSGroup})
+  end
+  return self
+end
 
 --- Private method that registers all Groups and Units within in the mission.
 -- @param #DATABASE self
@@ -1518,9 +1559,9 @@ function DATABASE:_EventOnBirth( Event )
     end
 
     if Event.IniObjectCategory == Object.Category.UNIT then
-
-      Event.IniUnit = self:FindUnit( Event.IniDCSUnitName )
+      
       Event.IniGroup = self:FindGroup( Event.IniDCSGroupName )
+      Event.IniUnit = self:FindUnit( Event.IniDCSUnitName )
 
       -- Client
       local client=self.CLIENTS[Event.IniDCSUnitName] --Wrapper.Client#CLIENT
@@ -1536,7 +1577,7 @@ function DATABASE:_EventOnBirth( Event )
 
         -- Debug info.
         self:I(string.format("Player '%s' joined unit '%s' of group '%s'", tostring(PlayerName), tostring(Event.IniDCSUnitName), tostring(Event.IniDCSGroupName)))
-
+              
         -- Add client in case it does not exist already.
         if not client then
           client=self:AddClient(Event.IniDCSUnitName)
@@ -1549,14 +1590,19 @@ function DATABASE:_EventOnBirth( Event )
         if not self.PLAYERS[PlayerName] then
           self:AddPlayer( Event.IniUnitName, PlayerName )
         end
-
-        -- Player settings.
-        local Settings = SETTINGS:Set( PlayerName )
-        Settings:SetPlayerMenu(Event.IniUnit)
-
-        -- Create an event.
-        self:CreateEventPlayerEnterAircraft(Event.IniUnit)
-
+        
+        local function SetPlayerSettings(self,PlayerName,IniUnit)
+          -- Player settings.
+          local Settings = SETTINGS:Set( PlayerName )
+          --Settings:SetPlayerMenu(Event.IniUnit)
+          Settings:SetPlayerMenu(IniUnit)
+          -- Create an event.
+          self:CreateEventPlayerEnterAircraft(IniUnit)
+          --self:CreateEventPlayerEnterAircraft(Event.IniUnit)
+        end
+        
+        self:ScheduleOnce(1,SetPlayerSettings,self,PlayerName,Event.IniUnit)
+        
       end
 
     end
@@ -1719,6 +1765,7 @@ function DATABASE:_EventOnPlayerLeaveUnit( Event )
         local client=self.CLIENTS[Event.IniDCSUnitName] --Wrapper.Client#CLIENT
         if client then
           client:RemovePlayer(PlayerName)
+          --self.PLAYERSETTINGS[PlayerName] = nil
         end
 
       end
