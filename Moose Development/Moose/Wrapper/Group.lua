@@ -2745,7 +2745,7 @@ do -- Players
     local PlayerNames = {}
 
     local Units = self:GetUnits()
-    for UnitID, UnitData in pairs( Units ) do
+    for UnitID, UnitData in pairs( Units or {}) do
       local Unit = UnitData -- Wrapper.Unit#UNIT
       local PlayerName = Unit:GetPlayerName()
       if PlayerName and PlayerName ~= "" then
