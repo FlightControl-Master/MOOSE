@@ -11,7 +11,8 @@
 -- @module Wrapper.Identifiable
 -- @image MOOSE.JPG
 
---- @type IDENTIFIABLE
+---
+-- @type IDENTIFIABLE
 -- @extends Wrapper.Object#OBJECT
 -- @field #string IdentifiableName The name of the identifiable.
 
@@ -111,19 +112,28 @@ end
 --  * Object.Category.SCENERY = 5
 --  * Object.Category.Cargo = 6
 --  
+--  For UNITs this returns a second value, one of
+--  
+--  Unit.Category.AIRPLANE      = 0  
+--  Unit.Category.HELICOPTER    = 1  
+--  Unit.Category.GROUND_UNIT   = 2  
+--  Unit.Category.SHIP          = 3  
+--  Unit.Category.STRUCTURE     = 4  
+--  
 -- @param #IDENTIFIABLE self
 -- @return DCS#Object.Category The category ID, i.e. a number.
+-- @return DCS#Unit.Category The unit category ID, i.e. a number. For units only.
 function IDENTIFIABLE:GetCategory()
   self:F2( self.ObjectName )
 
   local DCSObject = self:GetDCSObject()
   if DCSObject then
-    local ObjectCategory = DCSObject:getCategory()
+    local ObjectCategory, UnitCategory = DCSObject:getCategory()
     self:T3( ObjectCategory )
-    return ObjectCategory
+    return ObjectCategory, UnitCategory
   end
 
-  return nil
+  return nil,nil
 end
 
 

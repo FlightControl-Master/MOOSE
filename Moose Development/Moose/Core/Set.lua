@@ -4748,11 +4748,12 @@ do -- SET_CLIENT
         local MClientCategory = false
         for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
           local ClientCategoryID = _DATABASE:GetCategoryFromClientTemplate( MClientName )
+          local UnitCategory
           if ClientCategoryID==nil and MClient:IsAlive()~=nil then
-            ClientCategoryID=MClient:GetCategory()
+            ClientCategoryID,UnitCategory=MClient:GetCategory()
           end
-          self:T3( { "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
-          if self.FilterMeta.Categories[CategoryName] and ClientCategoryID and self.FilterMeta.Categories[CategoryName] == ClientCategoryID then
+          self:T3( { "Category:", UnitCategory, self.FilterMeta.Categories[CategoryName], CategoryName } )
+          if self.FilterMeta.Categories[CategoryName] and UnitCategory and self.FilterMeta.Categories[CategoryName] == UnitCategory then
             MClientCategory = true
           end
         end
@@ -5196,12 +5197,15 @@ do -- SET_PLAYER
     if MClient then
       local MClientName = MClient.UnitName
 
-      if self.Filter.Coalitions then
+      if self.Filter.Coalitions and MClientInclude then
         local MClientCoalition = false
         for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
           local ClientCoalitionID = _DATABASE:GetCoalitionFromClientTemplate( MClientName )
+          if ClientCoalitionID==nil and MClient:IsAlive()~=nil then
+            ClientCoalitionID=MClient:GetCoalition()
+          end
           self:T3( { "Coalition:", ClientCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
-          if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == ClientCoalitionID then
+          if self.FilterMeta.Coalitions[CoalitionName] and ClientCoalitionID and self.FilterMeta.Coalitions[CoalitionName] == ClientCoalitionID then
             MClientCoalition = true
           end
         end
@@ -5209,12 +5213,16 @@ do -- SET_PLAYER
         MClientInclude = MClientInclude and MClientCoalition
       end
 
-      if self.Filter.Categories then
+      if self.Filter.Categories and MClientInclude then
         local MClientCategory = false
         for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
           local ClientCategoryID = _DATABASE:GetCategoryFromClientTemplate( MClientName )
-          self:T3( { "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
-          if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == ClientCategoryID then
+          local UnitCategory
+          if ClientCategoryID==nil and MClient:IsAlive()~=nil then
+            ClientCategoryID,UnitCategory=MClient:GetCategory()
+          end
+          self:T3( { "Category:", UnitCategory, self.FilterMeta.Categories[CategoryName], CategoryName } )
+          if self.FilterMeta.Categories[CategoryName] and UnitCategory and self.FilterMeta.Categories[CategoryName] == UnitCategory then
             MClientCategory = true
           end
         end
