@@ -1540,11 +1540,11 @@ function SPAWN:ReSpawn( SpawnIndex )
     SpawnGroup:WayPointExecute( 1, 5 )
   end
 
-  if SpawnGroup.ReSpawnFunction then
+  if SpawnGroup and SpawnGroup.ReSpawnFunction then
     SpawnGroup:ReSpawnFunction()
   end
 
-  SpawnGroup:ResetEvents()
+  if SpawnGroup then SpawnGroup:ResetEvents() end
 
   return SpawnGroup
 end
@@ -1565,8 +1565,24 @@ end
 -- @param #string SpawnIndex The index of the group to be spawned.
 -- @return Wrapper.Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
-  self:F2( { SpawnTemplatePrefix = self.SpawnTemplatePrefix, SpawnIndex = SpawnIndex, AliveUnits = self.AliveUnits, SpawnMaxGroups = self.SpawnMaxGroups } )
-
+  
+  local set = SET_GROUP:New():FilterAlive():FilterPrefixes({self.SpawnTemplatePrefix, self.SpawnAliasPrefix}):FilterOnce()
+  local aliveunits = 0
+  set:ForEachGroupAlive(
+  function(grp)
+    aliveunits = aliveunits + grp:CountAliveUnits()
+  end
+  )
+  
+  if aliveunits ~= self.AliveUnits then 
+    self.AliveUnits = aliveunits
+    self:T("***** self.AliveUnits accounting failure! Corrected! *****") 
+  end
+  
+  set= nil
+  
+  self:T( { SpawnTemplatePrefix = self.SpawnTemplatePrefix, SpawnIndex = SpawnIndex, AliveUnits = self.AliveUnits, SpawnMaxGroups = self.SpawnMaxGroups } )
+  
   if self:_GetSpawnIndex( SpawnIndex ) then
     
     if self.SpawnFromNewPosition then
@@ -1613,12 +1629,12 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
                   RandomVec2 = PointVec3:GetRandomVec2InRadius( self.SpawnOuterRadius, self.SpawnInnerRadius )
                   numTries = numTries + 1
                   inZone = SpawnZone:IsVec2InZone(RandomVec2)
-                  --self:I("Retrying " .. numTries .. "spawn " .. SpawnTemplate.name .. " in Zone " .. SpawnZone:GetName() .. "!")
-                  --self:I(SpawnZone)
+                  --self:T("Retrying " .. numTries .. "spawn " .. SpawnTemplate.name .. " in Zone " .. SpawnZone:GetName() .. "!")
+                  --self:T(SpawnZone)
                 end
               end
               if (not inZone) then
-                self:I("Could not place unit within zone and within radius!")
+                self:T("Could not place unit within zone and within radius!")
                 RandomVec2 = SpawnZone:GetRandomVec2()
               end
             end
@@ -3905,9 +3921,9 @@ end
 -- @param Core.Event#EVENTDATA EventData
 function SPAWN:_OnDeadOrCrash( EventData )
   self:T( "Dead or crash event ID "..EventData.id)
-  self:T( "Dead or crash event for "..self.SpawnTemplatePrefix )
+  self:T( "Dead or crash event for "..EventData.IniUnitName )
   
-  if EventData.id == EVENTS.Dead then return end
+  --if EventData.id == EVENTS.Dead then return end
   
   local unit=UNIT:FindByName(EventData.IniUnitName)
   --local group=GROUP:FindByName(EventData.IniGroupName)
@@ -3918,14 +3934,11 @@ function SPAWN:_OnDeadOrCrash( EventData )
    
     if EventPrefix then -- EventPrefix can be nil if no # is found, which means, no spawnable group!
       self:T( { "Dead event: " .. EventPrefix } )
-      
-      if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) then
-    
-       self.AliveUnits = self.AliveUnits - 1
-       
-       self:T( "Alive Units: " .. self.AliveUnits )    
+      self:T(string.format("EventPrefix = %s | SpawnAliasPrefix = %s  | Old AliveUnits = %d",EventPrefix,self.SpawnAliasPrefix,self.AliveUnits))
+      if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) and self.AliveUnits > 0 then
+       self.AliveUnits = self.AliveUnits - 1   
       end
-    
+      self:T( "New Alive Units: " .. self.AliveUnits ) 
     end
   end
 end
@@ -4051,7 +4064,8 @@ function SPAWN:_SpawnCleanUpScheduler()
             -- If the plane is not moving or dead , and is on the ground, assign it with a timestamp...
             if Stamp.Time + self.SpawnCleanUpInterval < timer.getTime() then
               self:T( { "CleanUp Scheduler:", "ReSpawning:", SpawnGroup:GetName() } )
-              self:ReSpawn( SpawnCursor )
+              --self:ReSpawn( SpawnCursor )
+              SCHEDULER:New( nil, self.ReSpawn, { self, SpawnCursor }, 3 )
               Stamp.Vec2 = nil
               Stamp.Time = nil
             end
