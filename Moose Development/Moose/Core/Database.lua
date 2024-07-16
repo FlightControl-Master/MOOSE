@@ -1362,7 +1362,7 @@ end
 -- @return #DATABASE self
 function DATABASE:_RegisterDynamicGroup(Groupname)
   local DCSGroup = Group.getByName(Groupname)
-  if DCSGroup:isExist() then
+  if DCSGroup and DCSGroup:isExist() then
   
     -- Group name.
     local DCSGroupName = DCSGroup:getName()
