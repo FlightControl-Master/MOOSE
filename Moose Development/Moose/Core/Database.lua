@@ -834,7 +834,7 @@ function DATABASE:FindGroup( GroupName )
 
   local GroupFound = self.GROUPS[GroupName]
   
-  if GroupFound == nil and GroupName ~= nil then
+  if GroupFound == nil and GroupName ~= nil and self.Templates.Groups[GroupName] == nil then
     -- see if the group exists in the API, maybe a dynamic slot
     self:_RegisterDynamicGroup(GroupName)
     return self.GROUPS[GroupName]
