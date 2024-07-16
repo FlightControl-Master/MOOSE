@@ -815,10 +815,11 @@ end
 --- Adds a CLIENT based on the ClientName in the DATABASE.
 -- @param #DATABASE self
 -- @param #string ClientName Name of the Client unit.
+-- @param #boolean Force (optional) Force registration of client.
 -- @return Wrapper.Client#CLIENT The client object.
-function DATABASE:AddClient( ClientName )
+function DATABASE:AddClient( ClientName, Force )
 
-  if not self.CLIENTS[ClientName] then
+  if not self.CLIENTS[ClientName] or Force == true then
     self.CLIENTS[ClientName] = CLIENT:Register( ClientName )
   end
 
@@ -1579,8 +1580,8 @@ function DATABASE:_EventOnBirth( Event )
         self:I(string.format("Player '%s' joined unit '%s' of group '%s'", tostring(PlayerName), tostring(Event.IniDCSUnitName), tostring(Event.IniDCSGroupName)))
               
         -- Add client in case it does not exist already.
-        if not client then
-          client=self:AddClient(Event.IniDCSUnitName)
+        if client == nil or (client and client:CountPlayers() == 0) then
+          client=self:AddClient(Event.IniDCSUnitName, true)
         end
 
         -- Add player.
