@@ -3934,7 +3934,7 @@ function SPAWN:_OnDeadOrCrash( EventData )
    
     if EventPrefix then -- EventPrefix can be nil if no # is found, which means, no spawnable group!
       self:T( { "Dead event: " .. EventPrefix } )
-      self:T(string.format("EventPrefix = %s | SpawnAliasPrefix = %s  | Old AliveUnits = %d",EventPrefix,self.SpawnAliasPrefix,self.AliveUnits))
+      self:T(string.format("EventPrefix = %s | SpawnAliasPrefix = %s  | Old AliveUnits = %d",EventPrefix or "",self.SpawnAliasPrefix or "",self.AliveUnits or 0))
       if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) and self.AliveUnits > 0 then
        self.AliveUnits = self.AliveUnits - 1   
       end
