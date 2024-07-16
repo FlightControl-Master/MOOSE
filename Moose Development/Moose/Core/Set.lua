@@ -4743,18 +4743,23 @@ do -- SET_CLIENT
         self:T( { "Evaluated Coalition", MClientCoalition } )
         MClientInclude = MClientInclude and MClientCoalition
       end
-
+      
       if self.Filter.Categories and MClientInclude then
         local MClientCategory = false
         for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
           local ClientCategoryID = _DATABASE:GetCategoryFromClientTemplate( MClientName )
-          local UnitCategory
-          if ClientCategoryID==nil and MClient:IsAlive()~=nil then
+          local UnitCategory = 0
+          if ClientCategoryID==nil and MClient:IsExist() then
             ClientCategoryID,UnitCategory=MClient:GetCategory()
-          end
-          self:T3( { "Category:", UnitCategory, self.FilterMeta.Categories[CategoryName], CategoryName } )
-          if self.FilterMeta.Categories[CategoryName] and UnitCategory and self.FilterMeta.Categories[CategoryName] == UnitCategory then
-            MClientCategory = true
+            self:T3( { "Category:", UnitCategory, self.FilterMeta.Categories[CategoryName], CategoryName } )
+            if self.FilterMeta.Categories[CategoryName] and UnitCategory and self.FilterMeta.Categories[CategoryName] == UnitCategory then
+              MClientCategory = true
+            end
+          else
+            self:T3( { "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
+            if self.FilterMeta.Categories[CategoryName] and ClientCategoryID and self.FilterMeta.Categories[CategoryName] == ClientCategoryID then
+              MClientCategory = true
+            end
           end
         end
         self:T( { "Evaluated Category", MClientCategory } )
@@ -5217,13 +5222,18 @@ do -- SET_PLAYER
         local MClientCategory = false
         for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
           local ClientCategoryID = _DATABASE:GetCategoryFromClientTemplate( MClientName )
-          local UnitCategory
-          if ClientCategoryID==nil and MClient:IsAlive()~=nil then
+          local UnitCategory = 0
+          if ClientCategoryID==nil and MClient:IsExist() then
             ClientCategoryID,UnitCategory=MClient:GetCategory()
-          end
-          self:T3( { "Category:", UnitCategory, self.FilterMeta.Categories[CategoryName], CategoryName } )
-          if self.FilterMeta.Categories[CategoryName] and UnitCategory and self.FilterMeta.Categories[CategoryName] == UnitCategory then
-            MClientCategory = true
+            self:T3( { "Category:", UnitCategory, self.FilterMeta.Categories[CategoryName], CategoryName } )
+            if self.FilterMeta.Categories[CategoryName] and UnitCategory and self.FilterMeta.Categories[CategoryName] == UnitCategory then
+              MClientCategory = true
+            end
+          else
+            self:T3( { "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
+            if self.FilterMeta.Categories[CategoryName] and ClientCategoryID and self.FilterMeta.Categories[CategoryName] == ClientCategoryID then
+              MClientCategory = true
+            end
           end
         end
         self:T( { "Evaluated Category", MClientCategory } )
