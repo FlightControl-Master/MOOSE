@@ -3811,6 +3811,48 @@ function CONTROLLABLE:OptionProhibitAfterburner( Prohibit )
   return self
 end
 
+--- [Ground] Allows AI radar units to take defensive actions to avoid anti radiation missiles. Units are allowed to shut radar off and displace. 
+-- @param #CONTROLLABLE self
+-- @param #number Seconds Can be - nil, 0 or false = switch off this option, any positive number = number of seconds the escape sequency runs.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionEvasionOfARM(Seconds)
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsGround() then
+      if Seconds == nil then Seconds = false end
+      Controller:setOption( AI.Option.Ground.id.EVASION_OF_ARM, Seconds)
+    end
+
+  end
+
+  return self
+end
+
+--- [Ground] Option that defines the vehicle spacing when in an on road and off road formation. 
+-- @param #CONTROLLABLE self
+-- @param #number meters Can be zero to 100 meters. Defaults to 50 meters.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionFormationInterval(meters)
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsGround() then
+      if meters == nil or meters > 100 or meters < 0 then meters = 50 end
+      Controller:setOption( 30, meters)
+    end
+
+  end
+
+  return self
+end
+
 --- [Air] Defines the usage of Electronic Counter Measures by airborne forces.
 -- @param #CONTROLLABLE self
 -- @param #number ECMvalue Can be - 0=Never on, 1=if locked by radar, 2=if detected by radar, 3=always on, defaults to 1

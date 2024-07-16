@@ -149,7 +149,7 @@ STORAGE.Liquid = {
 
 --- STORAGE class version.
 -- @field #string version
-STORAGE.version="0.0.1"
+STORAGE.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -162,7 +162,7 @@ STORAGE.version="0.0.1"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new STORAGE object from the DCS weapon object.
+--- Create a new STORAGE object from the DCS airbase object.
 -- @param #STORAGE self
 -- @param #string AirbaseName Name of the airbase.
 -- @return #STORAGE self
@@ -182,8 +182,28 @@ function STORAGE:New(AirbaseName)
   return self
 end
 
+--- Create a new STORAGE object from an DCS static cargo object.
+-- @param #STORAGE self
+-- @param #string StaticCargoName Unit name of the static.
+-- @return #STORAGE self
+function STORAGE:NewFromStaticCargo(StaticCargoName)
 
---- Find a STORAGE in the **_DATABASE** using the name associated airbase.
+  -- Inherit everything from BASE class.
+  local self=BASE:Inherit(self, BASE:New()) -- #STORAGE
+
+  self.airbase=StaticObject.getByName(StaticCargoName)
+
+  if Airbase.getWarehouse then
+    self.warehouse=Warehouse.getCargoAsWarehouse(self.airbase)
+  end
+
+  self.lid = string.format("STORAGE %s", StaticCargoName)
+
+  return self
+end
+
+
+--- Airbases only - Find a STORAGE in the **_DATABASE** using the name associated airbase.
 -- @param #STORAGE self
 -- @param #string AirbaseName The Airbase Name.
 -- @return #STORAGE self
