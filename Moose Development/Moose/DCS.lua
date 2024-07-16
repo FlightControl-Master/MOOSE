@@ -1695,6 +1695,7 @@ do -- AI
   -- @field ALARM_STATE @{#AI.Option.Ground.val.ALARM_STATE}
   -- @field ENGAGE_AIR_WEAPONS
   -- @field AC_ENGAGEMENT_RANGE_RESTRICTION
+  -- @field EVASION_OF_ARM
   
   ---
   -- @type AI.Option.Ground.mid -- Moose added
