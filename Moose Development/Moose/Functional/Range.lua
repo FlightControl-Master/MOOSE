@@ -1239,10 +1239,12 @@ function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume,
     self.instructmsrs:SetLabel("RANGEI")
     self.instructmsrs:SetVolume(Volume or 1.0)
     self.instructsrsQ = MSRSQUEUE:New("INSTRUCT")
-
-    if PathToGoogleKey then
-      self.controlmsrs:SetGoogle(PathToGoogleKey)
-      self.instructmsrs:SetGoogle(PathToGoogleKey)
+    
+    if PathToGoogleKey then 
+      self.controlmsrs:SetProviderOptionsGoogle(PathToGoogleKey,PathToGoogleKey)
+      self.controlmsrs:SetProvider(MSRS.Provider.GOOGLE)
+      self.instructmsrs:SetProviderOptionsGoogle(PathToGoogleKey,PathToGoogleKey)
+      self.instructmsrs:SetProvider(MSRS.Provider.GOOGLE)
     end
 
   else
@@ -2398,7 +2400,7 @@ function RANGE:onafterSave( From, Event, To )
   end
 
   -- Path.
-  local path = lfs.writedir() .. [[Logs\]]
+  local path = self.targetpath or lfs.writedir() .. [[Logs\]]
 
   -- Set file name.
   local filename = path .. string.format( "RANGE-%s_BombingResults.csv", self.rangename )
@@ -2463,7 +2465,7 @@ function RANGE:onafterLoad( From, Event, To )
   end
 
   -- Path in DCS log file.
-  local path = lfs.writedir() .. [[Logs\]]
+  local path = self.targetpath or lfs.writedir() .. [[Logs\]]
 
   -- Set file name.
   local filename = path .. string.format( "RANGE-%s_BombingResults.csv", self.rangename )
@@ -3854,13 +3856,13 @@ function RANGE:_TargetsheetOnOff( _unitname )
 
         -- Inform player.
         if playerData and playerData.targeton == true then
-          text = string.format( "roger, your targetsheets are now SAVED." )
+          text = string.format( "Roger, your targetsheets are now SAVED." )
         else
-          text = string.format( "affirm, your targetsheets are NOT SAVED." )
+          text = string.format( "Affirm, your targetsheets are NOT SAVED." )
         end
 
       else
-        text = "negative, target sheet data recorder is broken on this range."
+        text = "Negative, target sheet data recorder is broken on this range."
       end
 
       -- Message to player.
