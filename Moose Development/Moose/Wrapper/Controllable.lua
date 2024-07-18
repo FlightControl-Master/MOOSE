@@ -1012,7 +1012,7 @@ end
 
 -- TASKS FOR AIR CONTROLLABLES
 
---- (AIR) Attack a Controllable.
+--- (AIR + GROUND) Attack a Controllable.
 -- @param #CONTROLLABLE self
 -- @param Wrapper.Group#GROUP AttackGroup The Group to be attacked.
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
@@ -1060,7 +1060,7 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
   return DCSTask
 end
 
---- (AIR) Attack the Unit.
+--- (AIR + GROUND) Attack the Unit.
 -- @param #CONTROLLABLE self
 -- @param Wrapper.Unit#UNIT AttackUnit The UNIT to be attacked
 -- @param #boolean GroupAttack (Optional) If true, all units in the group will attack the Unit when found. Default false.
