@@ -93,6 +93,7 @@
 -- @field #number engageWeaponType Weapon type used.
 -- @field #number engageWeaponExpend How many weapons are used.
 -- @field #boolean engageAsGroup Group attack.
+-- @field #number engageLength Length of engage (carpet or strafing) in meters.
 -- @field #number engageMaxDistance Max engage distance.
 -- @field #number refuelSystem Refuel type (boom or probe) for TANKER missions.
 --
@@ -239,6 +240,10 @@
 -- ## Bombing Carpet
 --
 -- A carpet bombing mission can be created with the @{#AUFTRAG.NewBOMBCARPET}() function.
+-- 
+-- ## Strafing
+--
+-- A strafing mission can be created with the @{#AUFTRAG.NewSTRAFING}() function.
 --
 -- ## CAP
 --
@@ -445,6 +450,7 @@ _AUFTRAGSNR=0
 -- @field #string CAPTUREZONE Capture zone mission.
 -- @field #string NOTHING Nothing.
 -- @field #string PATROLRACETRACK Patrol Racetrack.
+-- @field #string STRAFING Strafing run.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",
@@ -491,6 +497,7 @@ AUFTRAG.Type={
   CAPTUREZONE="Capture Zone",
   NOTHING="Nothing",
   PATROLRACETRACK="Patrol Racetrack",
+  STRAFING="Strafing",
 }
 
 --- Special task description.
@@ -1738,6 +1745,7 @@ function AUFTRAG:NewSTRIKE(Target, Altitude)
 end
 
 --- **[AIR]** Create a BOMBING mission. Flight will drop bombs a specified coordinate.
+-- See [DCS task bombing](https://wiki.hoggitworld.com/view/DCS_task_bombing).
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT, STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
@@ -1770,6 +1778,44 @@ function AUFTRAG:NewBOMBING(Target, Altitude)
 
   return mission
 end
+
+--- **[AIR]** Create a STRAFING mission. Assigns a point on the ground for which the AI will do a strafing run with guns or rockets.
+-- See [DCS task strafing](https://wiki.hoggitworld.com/view/DCS_task_strafing).
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT, STATIC or TARGET object.
+-- @param #number Altitude Engage altitude in feet. Default 1000 ft.
+-- @param #number Length The total length of the strafing target in meters. Default `nil`.
+-- @return #AUFTRAG self
+function AUFTRAG:NewSTRAFING(Target, Altitude, Length)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.STRAFING)
+
+  mission:_TargetFromObject(Target)
+
+  -- DCS task options:
+  mission.engageWeaponType=805337088 -- Corresponds to guns/cannons (805306368) + any rocket (30720). This is the default when selecting this task in the ME.
+  mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 1000)
+  mission.engageLength=Length
+
+  -- Mission options:
+  mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
+  mission.missionAltitude=mission.engageAltitude*0.8
+  mission.missionFraction=0.5
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.NoReaction   -- No reaction is better.
+
+  -- Evaluate result after 5 min. We might need time until the bombs have dropped and targets have been detroyed.
+  mission.dTevaluate=5*60
+
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+
+  -- Get DCS task.
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
 
 --- **[AIR]** Create a BOMBRUNWAY mission.
 -- @param #AUFTRAG self
@@ -1825,7 +1871,7 @@ function AUFTRAG:NewBOMBCARPET(Target, Altitude, CarpetLength)
   mission.engageWeaponType=ENUMS.WeaponFlag.Auto
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
   mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
-  mission.engageCarpetLength=CarpetLength or 500
+  mission.engageLength=CarpetLength or 500
   mission.engageAsGroup=false  -- Looks like this must be false or the task is not executed. It is not available in the ME anyway but in the task of the mission file.
   mission.engageDirection=nil  -- This is also not available in the ME.
 
@@ -2615,6 +2661,8 @@ function AUFTRAG:NewFromTarget(Target, MissionType)
     mission=self:NewBOMBING(Target, Altitude)
   elseif MissionType==AUFTRAG.Type.BOMBRUNWAY then
     mission=self:NewBOMBRUNWAY(Target, Altitude)
+  elseif MissionType==AUFTRAG.Type.STRAFING then
+    mission=self:NewSTRAFING(Target, Altitude)    
   elseif MissionType==AUFTRAG.Type.CAS then
     mission=self:NewCAS(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000), Altitude, Speed, Target:GetAverageCoordinate(), Heading, Leg, TargetTypes)
   elseif MissionType==AUFTRAG.Type.CASENHANCED then
@@ -5956,6 +6004,16 @@ function AUFTRAG:GetDCSMissionTask()
     local DCStask=CONTROLLABLE.TaskBombing(nil, self:GetTargetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, Divebomb)
 
     table.insert(DCStasks, DCStask)
+    
+  elseif self.type==AUFTRAG.Type.STRAFING then
+
+    ----------------------
+    -- STRAFING Mission --
+    ----------------------
+
+    local DCStask=CONTROLLABLE.TaskStrafing(nil,self:GetTargetVec2(), self.engageQuantity, self.engageLength,self.engageWeaponType,self.engageWeaponExpend,self.engageDirection,self.engageAsGroup)
+
+    table.insert(DCStasks, DCStask)    
 
   elseif self.type==AUFTRAG.Type.BOMBRUNWAY then
 
@@ -5973,7 +6031,7 @@ function AUFTRAG:GetDCSMissionTask()
     -- BOMBCARPET Mission --
     ------------------------
 
-    local DCStask=CONTROLLABLE.TaskCarpetBombing(nil, self:GetTargetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, self.engageCarpetLength)
+    local DCStask=CONTROLLABLE.TaskCarpetBombing(nil, self:GetTargetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, self.engageLength)
 
     table.insert(DCStasks, DCStask)
 
