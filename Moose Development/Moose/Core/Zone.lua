@@ -1203,7 +1203,7 @@ function ZONE_RADIUS:GetScannedSetUnit()
         if FoundUnit then
           SetUnit:AddUnit( FoundUnit )
         else
-          local FoundStatic = STATIC:FindByName( UnitObject:getName() )
+          local FoundStatic = STATIC:FindByName( UnitObject:getName(), false )
           if FoundStatic then
             SetUnit:AddUnit( FoundStatic )
           end
