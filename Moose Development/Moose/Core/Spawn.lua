@@ -3920,8 +3920,8 @@ end
 -- @param #SPAWN self 
 -- @param Core.Event#EVENTDATA EventData
 function SPAWN:_OnDeadOrCrash( EventData )
-  self:T( "Dead or crash event ID "..EventData.id)
-  self:T( "Dead or crash event for "..EventData.IniUnitName )
+  self:T( "Dead or crash event ID "..tostring(EventData.id or 0))
+  self:T( "Dead or crash event for "..tostring(EventData.IniUnitName or "none") )
   
   --if EventData.id == EVENTS.Dead then return end
   
