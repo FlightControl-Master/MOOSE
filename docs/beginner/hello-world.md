@@ -172,7 +172,7 @@ compftable in filtering these informations fast.
 Now it is time to [create your own Hello world] mission.
 
 [Saved Games folder]: ../beginner/tipps-and-tricks.md#find-the-saved-games-folder
-[hello-world demo mission]: https://raw.githubusercontent.com/FlightControl-Master/MOOSE_MISSIONS/master/Core/Message/001-hello-world.miz
+[001-hello-world.miz]: https://raw.githubusercontent.com/FlightControl-Master/MOOSE_MISSIONS/master/Core/Message/001-hello-world.miz
 [Core.Message]: https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Core.Message.html
 [Wikipedia:Class]: https://en.wikipedia.org/wiki/Class_(computer_programming)
 [create your own Hello world]: hello-world-build.md
