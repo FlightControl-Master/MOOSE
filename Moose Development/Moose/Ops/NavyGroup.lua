@@ -44,6 +44,7 @@
 -- @field #number pathCorridor Path corrdidor width in meters.
 -- @field #boolean ispathfinding If true, group is currently path finding.
 -- @field #NAVYGROUP.Target engage Engage target.
+-- @field #boolean intowindold Use old calculation to determine heading into wind.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
@@ -456,6 +457,18 @@ function NAVYGROUP:SetPathfindingOff()
   return self
 end
 
+--- Set if old into wind calculation is used when carrier turns into the wind for a recovery.
+-- @param #NAVYGROUP self
+-- @param #boolean SwitchOn If `true` or `nil`, use old into wind calculation.
+-- @return #NAVYGROUP self
+function NAVYGROUP:SetIntoWindLegacy( SwitchOn )
+  if SwitchOn==nil then
+    SwitchOn=true
+  end
+  self.intowindold=SwitchOn
+  return self
+end
+
 
 --- Add a *scheduled* task.
 -- @param #NAVYGROUP self
@@ -600,6 +613,58 @@ function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
   return recovery
 end
+
+--- Get "Turn Into Wind" data. You can specify a certain ID.
+-- @param #NAVYGROUP self
+-- @param #number TID (Optional) Turn Into wind ID. If not given, the currently open "Turn into Wind" data is return (if there is any).
+-- @return #NAVYGROUP.IntoWind Turn into window data table.
+function NAVYGROUP:GetTurnIntoWind(TID)
+
+  if TID then
+  
+    -- Look for a specific ID.
+    for _,_turn in pairs(self.Qintowind) do
+      local turn=_turn --#NAVYGROUP.IntoWind      
+      if turn.Id==TID then
+        return turn
+      end    
+    end
+  
+  else
+
+    -- Return currently open window.
+    return self.intowind
+  
+  end
+
+  return nil
+end
+
+--- Extend duration of turn into wind.
+-- @param #NAVYGROUP self
+-- @param #number Duration Duration in seconds. Default 300 sec.
+-- @param #NAVYGROUP.IntoWind TurnIntoWind (Optional) Turn into window data table. If not given, the currently open one is used (if there is any).
+-- @return #NAVYGROUP self
+function NAVYGROUP:ExtendTurnIntoWind(Duration, TurnIntoWind)
+
+  Duration=Duration or 300
+
+  -- ID of turn or nil
+  local TID=TurnIntoWind and TurnIntoWind.Id or nil
+  
+  -- Get turn data.
+  local turn=self:GetTurnIntoWind(TID)
+  
+  if turn then
+    turn.Tstop=turn.Tstop+Duration
+    self:T(self.lid..string.format("Extending turn into wind by %d seconds. New stop time is %s", Duration, UTILS.SecondsToClock(turn.Tstop)))
+  else
+    self:E(self.lid.."Could not get turn into wind to extend!")
+  end
+
+  return self
+end
+
 
 --- Remove steam into wind window from queue. If the window is currently active, it is stopped first.
 -- @param #NAVYGROUP self
@@ -2069,8 +2134,43 @@ end
 --- Get heading of group into the wind.
 -- @param #NAVYGROUP self
 -- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
+-- @param #number vdeck Desired wind speed on deck in Knots.
 -- @return #number Carrier heading in degrees.
-function NAVYGROUP:GetHeadingIntoWind_old(Offset)
+-- @return #number Carrier speed in knots.
+function NAVYGROUP:GetHeadingIntoWind_old(Offset, vdeck)
+
+  local function adjustDegreesForWindSpeed(windSpeed)
+    local degreesAdjustment = 0
+    -- the windspeeds are in m/s    
+    -- +0 degrees at 15m/s = 37kts
+    -- +0 degrees at 14m/s = 35kts
+    -- +0 degrees at 13m/s = 33kts
+    -- +4 degrees at 12m/s = 31kts
+    -- +4 degrees at 11m/s = 29kts
+    -- +4 degrees at 10m/s = 27kts
+    -- +4 degrees at 9m/s = 27kts
+    -- +4 degrees at 8m/s = 27kts
+    -- +8 degrees at 7m/s = 27kts
+    -- +8 degrees at 6m/s = 27kts
+    -- +8 degrees at 5m/s = 26kts
+    -- +20 degrees at 4m/s = 26kts
+    -- +20 degrees at 3m/s = 26kts
+    -- +30 degrees at 2m/s = 26kts 1s
+  
+    if windSpeed > 0 and windSpeed < 3 then
+      degreesAdjustment = 30
+    elseif windSpeed >= 3 and windSpeed < 5 then
+      degreesAdjustment = 20
+    elseif windSpeed >= 5 and windSpeed < 8 then
+      degreesAdjustment = 8
+    elseif windSpeed >= 8 and windSpeed < 13 then
+      degreesAdjustment = 4
+    elseif windSpeed >= 13 then
+      degreesAdjustment = 0
+    end
+  
+    return degreesAdjustment
+  end
 
   Offset=Offset or 0
 
@@ -2078,7 +2178,7 @@ function NAVYGROUP:GetHeadingIntoWind_old(Offset)
   local windfrom, vwind=self:GetWind()
 
   -- Actually, we want the runway in the wind.
-  local intowind=windfrom-Offset
+  local intowind = windfrom - Offset + adjustDegreesForWindSpeed(vwind)
 
   -- If no wind, take current heading.
   if vwind<0.1 then
@@ -2089,8 +2189,11 @@ function NAVYGROUP:GetHeadingIntoWind_old(Offset)
   if intowind<0 then
     intowind=intowind+360
   end
+
+  -- Speed of carrier in m/s but at least 4 knots.
+  local vtot = math.max(vdeck-UTILS.MpsToKnots(vwind), 4)
   
-  return intowind
+  return intowind, vtot
 end
 
 
@@ -2100,7 +2203,8 @@ end
 -- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
 -- @param #number vdeck Desired wind speed on deck in Knots.
 -- @return #number Carrier heading in degrees.
-function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
+-- @return #number Carrier speed in knots.
+function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck)
 
   -- Default offset angle.
   Offset=Offset or 0
@@ -2179,6 +2283,25 @@ function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
   self:T(self.lid..string.format("Heading into Wind: vship=%.1f, vwind=%.1f, WindTo=%03d°, Theta=%03d°, Heading=%03d", v, vwind, windto, theta, intowind))
   
   return intowind, v
+end
+
+--- Get heading of group into the wind. This minimizes the cross wind for an angled runway.
+-- Implementation based on [Mags & Bami](https://magwo.github.io/carrier-cruise/) work.
+-- @param #NAVYGROUP self
+-- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
+-- @param #number vdeck Desired wind speed on deck in Knots.
+-- @return #number Carrier heading in degrees.
+-- @return #number Carrier speed in knots.
+function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
+
+  if self.intowindold then
+    --env.info("FF use OLD into wind")
+    return self:GetHeadingIntoWind_old(Offset, vdeck)
+  else
+    --env.info("FF use NEW into wind")
+    return self:GetHeadingIntoWind_new(Offset, vdeck)
+  end
+
 end
 
 
