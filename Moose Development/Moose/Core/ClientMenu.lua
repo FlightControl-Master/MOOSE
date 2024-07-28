@@ -417,7 +417,7 @@ end
 CLIENTMENUMANAGER = {
   ClassName = "CLIENTMENUMANAGER",
   lid = "",
-  version = "0.1.5a",
+  version = "0.1.6",
   name = nil,
   clientset = nil,
   menutree = {},
@@ -740,7 +740,7 @@ function CLIENTMENUMANAGER:AddEntry(Entry,Client)
   for _,_client in pairs(Set) do
     local client = _client -- Wrapper.Client#CLIENT
     if client and client:IsAlive() then
-      local playername = client:GetPlayerName()
+      local playername = client:GetPlayerName() or "None"
       local unitname = client:GetName()
       if not knownunits[unitname] then
         knownunits[unitname] = true
