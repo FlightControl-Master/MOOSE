@@ -68,6 +68,7 @@
 -- @field #table ReadyFlightGroups
 -- @field #boolean DespawnAfterLanding
 -- @field #boolean DespawnAfterHolding
+-- @field #list<Ops.Auftrag#AUFTRAG> ListOfAuftrag
 -- @extends Core.Fsm#FSM
 
 --- *“Airspeed, altitude, and brains. Two are always needed to successfully complete the flight.”* -- Unknown.
@@ -214,6 +215,7 @@ EASYGCICAP = {
   ReadyFlightGroups = {},
   DespawnAfterLanding = false,
   DespawnAfterHolding = true,
+  ListOfAuftrag = {}
 }
 
 --- Internal Squadron data type
@@ -249,7 +251,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.12"
+EASYGCICAP.version="0.1.13"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -299,6 +301,7 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.CapFormation = ENUMS.Formation.FixedWing.FingerFour.Group
   self.DespawnAfterLanding = false
   self.DespawnAfterHolding = true
+  self.ListOfAuftrag = {}
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("EASYGCICAP %s | ", self.alias)
@@ -621,6 +624,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     alert:SetRequiredAssets(self.noaltert5)
     alert:SetRepeat(99) 
     CAP_Wing:AddMission(alert)
+    table.insert(self.ListOfAuftrag,alert)
   end
     
   self.wings[Airbasename] = { CAP_Wing, AIRBASE:FindByName(Airbasename):GetZone(), Airbasename }
@@ -1264,6 +1268,8 @@ function EASYGCICAP:_AssignIntercept(Cluster)
               nogozoneset
             )
           end
+          
+        table.insert(self.ListOfAuftrag,InterceptAuftrag)
         local assigned, rest = self:_TryAssignIntercept(ReadyFlightGroups,InterceptAuftrag,contact.group,wingsize)
         if not assigned  then
           InterceptAuftrag:SetRequiredAssets(rest)
@@ -1355,6 +1361,20 @@ end
 -- @return #EASYGCICAP self
 function EASYGCICAP:onafterStatus(From,Event,To)
   self:T({From,Event,To})
+  -- cleanup
+  local cleaned = false
+  local cleanlist = {}
+  for _,_auftrag in pairs(self.ListOfAuftrag) do
+    local auftrag = _auftrag -- Ops.Auftrag#AUFTRAG
+    if auftrag and (not (auftrag:IsCancelled() or auftrag:IsDone() or auftrag:IsOver())) then
+      table.insert(cleanlist,auftrag)
+      cleaned = true
+    end
+  end
+  if cleaned == true then
+    self.ListOfAuftrag = nil
+    self.ListOfAuftrag = cleanlist
+  end
   -- Gather Some Stats
   local function counttable(tbl)
     local count = 0
