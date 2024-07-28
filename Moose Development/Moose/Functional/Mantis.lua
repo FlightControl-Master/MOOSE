@@ -240,7 +240,7 @@
 --
 --  Use this option if you want to make use of or allow advanced SEAD tactics.
 --
--- # 5. Integrate SHORAD [classic mode]
+-- # 5. Integrate SHORAD [classic mode, not necessary in automode]
 --
 --  You can also choose to integrate Mantis with @{Functional.Shorad#SHORAD} for protection against HARMs and AGMs. When SHORAD detects a missile fired at one of MANTIS' SAM sites, it will activate SHORAD systems in
 --  the given defense checkradius around that SAM site. Create a SHORAD object first, then integrate with MANTIS like so:
