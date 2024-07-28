@@ -737,7 +737,7 @@ do -- SETTINGS
     if _SETTINGS.ShowPlayerMenu == true then
 
       local PlayerGroup = PlayerUnit:GetGroup()
-      local PlayerName = PlayerUnit:GetPlayerName()
+      local PlayerName = PlayerUnit:GetPlayerName() or "None"
       --local PlayerNames = PlayerGroup:GetPlayerNames()
 
       local PlayerMenu = MENU_GROUP:New( PlayerGroup, 'Settings "' .. PlayerName .. '"' )
