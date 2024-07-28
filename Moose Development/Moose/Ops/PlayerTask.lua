@@ -1571,7 +1571,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.66"
+PLAYERTASKCONTROLLER.version="0.1.67"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -2208,7 +2208,7 @@ end
 function PLAYERTASKCONTROLLER:_EventHandler(EventData)
   self:T(self.lid.."_EventHandler: "..EventData.id)
   --self:T(self.lid.."_EventHandler: "..EventData.IniPlayerName)
-  if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
+  if EventData.id == EVENTS.UnitLost or EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
     if EventData.IniPlayerName then
       self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
       --if self.PlayerMenu[EventData.IniPlayerName] then
@@ -4140,6 +4140,7 @@ function PLAYERTASKCONTROLLER:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Crash, self._EventHandler)
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
   self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
+  self:HandleEvent(EVENTS.UnitLost, self._EventHandler)
   self:SetEventPriority(5)          
   return self
 end
