@@ -133,7 +133,7 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   self.TTSType = TTSType or "close air support"
   self.lastsmoketime = 0
   
-  if Repeat then
+  if type(Repeat) == "boolean" and type(Times) == "number" then
     self.Repeat = true
     self.RepeatNo = Times or 1
   end
