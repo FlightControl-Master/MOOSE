@@ -2107,7 +2107,7 @@ do
       
       if group and group:IsAlive() and (Coalitions==nil or UTILS.IsAnyInTable(Coalitions, group:GetCoalition())) then
       
-        local coord=group:GetCoord()
+        local coord=group:GetCoordinate()
         
         -- Distance between ref. coordinate and group coordinate.
         local d=UTILS.VecDist3D(Coordinate, coord)
