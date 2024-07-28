@@ -2109,14 +2109,17 @@ do
       
         local coord=group:GetCoordinate()
         
-        -- Distance between ref. coordinate and group coordinate.
-        local d=UTILS.VecDist3D(Coordinate, coord)
-      
-        if d<dmin then
-          dmin=d
-          gmin=group
-        end
+        local d
         
+        if coord ~= nil then
+          -- Distance between ref. coordinate and group coordinate.
+          d=UTILS.VecDist3D(Coordinate, coord)
+        
+          if d<dmin then
+            dmin=d
+            gmin=group
+          end
+        end
       end
     
     end
