@@ -1973,7 +1973,9 @@ function PLAYERTASKCONTROLLER:_SendMessageToClients(Text,Seconds)
   local seconds = Seconds or 10
   self.ClientSet:ForEachClient(
     function (Client)
-      local m = MESSAGE:New(Text,seconds,"Tasking"):ToClient(Client)
+      if Client ~= nil and Client:IsActive() then
+        local m = MESSAGE:New(Text,seconds,"Tasking"):ToClient(Client)
+      end
     end
   )
   return self
