@@ -604,7 +604,7 @@ do -- DETECTION_BASE
     -- @param #number DetectionTimeStamp Time stamp of detection event.
     function DETECTION_BASE:onafterDetection( From, Event, To, Detection, DetectionTimeStamp )
 
-      self:I( { DetectedObjects = self.DetectedObjects } )
+      self:T( { DetectedObjects = self.DetectedObjects } )
 
       self.DetectionRun = self.DetectionRun + 1
 
@@ -612,7 +612,7 @@ do -- DETECTION_BASE
 
       if Detection and Detection:IsAlive() then
 
-        self:I( { "DetectionGroup is Alive", Detection:GetName() } )
+        self:T( { "DetectionGroup is Alive", Detection:GetName() } )
 
         local DetectionGroupName = Detection:GetName()
         local DetectionUnit = Detection:GetUnit( 1 )
@@ -628,8 +628,8 @@ do -- DETECTION_BASE
           self.DetectDLINK
         )
 
-        --self:I( { DetectedTargets = DetectedTargets } )
-        --self:I(UTILS.PrintTableToLog(DetectedTargets))
+        --self:T( { DetectedTargets = DetectedTargets } )
+        --self:T(UTILS.PrintTableToLog(DetectedTargets))
         
         
         for DetectionObjectID, Detection in pairs( DetectedTargets ) do
