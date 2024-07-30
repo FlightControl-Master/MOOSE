@@ -97,7 +97,8 @@
 -- 
 -- ### Prerequisites
 -- 
--- You have to put a STATIC object on the airbase with the UNIT name according to the name of the airbase. E.g. for Kuitaisi this has to have the name Kutaisi. This object symbolizes the AirWing HQ.
+-- You have to put a **STATIC WAREHOUSE** object on the airbase with the UNIT name according to the name of the airbase. **Do not put any other static type or it creates a conflict with the airbase name!** 
+-- E.g. for Kuitaisi this has to have the unit name Kutaisi. This object symbolizes the AirWing HQ.
 -- Next put a late activated template group for your CAP/GCI Squadron on the map. Last, put a zone on the map for the CAP operations, let's name it "Blue Zone 1". Size of the zone plays no role.
 -- Put an EW radar system on the map and name it aptly, like "Blue EWR".
 -- 
