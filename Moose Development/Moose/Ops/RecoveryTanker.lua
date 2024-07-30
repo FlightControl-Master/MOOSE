@@ -660,7 +660,7 @@ function RECOVERYTANKER:SetRecoveryAirboss(switch)
   return self
 end
 
---- Set that the group takes the roll of an AWACS instead of a refueling tanker.
+--- Set that the group takes the role of an AWACS instead of a refueling tanker.
 -- @param #RECOVERYTANKER self
 -- @param #boolean switch If true or nil, set roll AWACS.
 -- @param #boolean eplrs If true or nil, enable EPLRS. If false, EPLRS will be off.
