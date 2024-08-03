@@ -77,6 +77,7 @@ __Moose.Include( 'Functional\\Mantis.lua' )
 __Moose.Include( 'Functional\\Shorad.lua' )
 __Moose.Include( 'Functional\\Autolase.lua' )
 __Moose.Include( 'Functional\\AICSAR.lua' )
+__Moose.Include( 'Functional\\ClientWatch.lua' )
 
 __Moose.Include( 'Ops\\Airboss.lua' )
 __Moose.Include( 'Ops\\RecoveryTanker.lua' )
