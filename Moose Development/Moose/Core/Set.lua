@@ -2149,7 +2149,7 @@ end
 do -- SET_UNIT
   
   ---
-  -- @type SET_UNIT
+  -- @type SET_UNIT SET\_UNIT
   -- @field Core.Timer#TIMER ZoneTimer
   -- @field #number ZoneTimerInterval
   -- @extends Core.Set#SET_BASE
@@ -2300,7 +2300,12 @@ do -- SET_UNIT
     local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.UNITS ) ) -- #SET_UNIT
 
     self:FilterActive( false )
-
+    
+    --- Count Alive Units
+    -- @function [parent=#SET_UNIT] CountAlive
+    -- @param #SET_UNIT self
+    -- @return #SET_UNIT self
+    
     return self
   end
 
@@ -2500,6 +2505,22 @@ do -- SET_UNIT
   function SET_UNIT:FilterActive( Active )
     Active = Active or not (Active == false)
     self.Filter.Active = Active
+    return self
+  end
+  
+  --- Builds a set of units which exist and are alive.
+  -- @param #SET_UNIT self
+  -- @return #SET_UNIT self
+  function SET_UNIT:FilterAlive()
+    self:FilterFunction(
+      function(unit)
+        if unit and unit:IsExist() and unit:IsAlive() then
+          return true
+        else
+          return false
+        end
+      end
+    )
     return self
   end
 
