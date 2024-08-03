@@ -77,6 +77,7 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/Warehouse.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/Fox.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/Mantis.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/Shorad.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/ClientWatch.lua' )
 
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Ops/Airboss.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Ops/RecoveryTanker.lua' )
