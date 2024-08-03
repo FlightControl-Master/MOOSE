@@ -1053,7 +1053,7 @@ end
 -- but they will all follow the same Template route and have the same prefix name.
 -- In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.
 -- @param #SPAWN self
--- @param #string SpawnTemplatePrefixTable A table with the names of the groups defined within the mission editor, from which one will be chosen when a new group will be spawned.
+-- @param #list<#string> SpawnTemplatePrefixTable A table with the names of the groups defined within the mission editor, from which one will be chosen when a new group will be spawned.
 -- @return #SPAWN
 -- @usage
 --

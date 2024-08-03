@@ -293,10 +293,11 @@ CSAR.AircraftType["Bronco-OV-10A"] = 2
 CSAR.AircraftType["MH-60R"] = 10
 CSAR.AircraftType["OH-6A"] = 2
 CSAR.AircraftType["OH58D"] = 2
+CSAR.AircraftType["CH-47Fbl1"] = 30
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.25"
+CSAR.version="1.0.26"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
