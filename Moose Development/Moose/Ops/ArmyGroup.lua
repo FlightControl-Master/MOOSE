@@ -403,6 +403,7 @@ function ARMYGROUP:New(group)
   self:HandleEvent(EVENTS.Birth,      self.OnEventBirth)
   self:HandleEvent(EVENTS.Dead,       self.OnEventDead)
   self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)
+  self:HandleEvent(EVENTS.UnitLost,   self.OnEventRemoveUnit)
   self:HandleEvent(EVENTS.Hit,        self.OnEventHit)
 
   -- Start the status monitoring.

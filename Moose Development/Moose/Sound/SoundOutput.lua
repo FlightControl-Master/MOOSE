@@ -24,7 +24,7 @@
 
 do -- Sound Base
 
-  --- @type SOUNDBASE
+  -- @type SOUNDBASE
   -- @field #string ClassName Name of the class.
   -- @extends Core.Base#BASE
 
@@ -100,7 +100,7 @@ end
 
 do -- Sound File
 
-  --- @type SOUNDFILE
+  -- @type SOUNDFILE
   -- @field #string ClassName Name of the class
   -- @field #string filename Name of the flag.
   -- @field #string path Directory path, where the sound file is located. This includes the final slash "/".
@@ -292,7 +292,7 @@ end
 
 do -- Text-To-Speech
 
-  --- @type SOUNDTEXT
+  -- @type SOUNDTEXT
   -- @field #string ClassName Name of the class
   -- @field #string text Text to speak.
   -- @field #number duration Duration in seconds.

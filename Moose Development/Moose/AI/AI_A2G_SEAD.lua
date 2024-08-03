@@ -13,9 +13,8 @@
 
 
 
---- @type AI_A2G_SEAD
--- @extends AI.AI_Air_Patrol#AI_AIR_PATROL
--- @extends AI.AI_Air_Engage#AI_AIR_ENGAGE
+-- @type AI_A2G_SEAD
+-- @extends AI.AI_A2G_Patrol#AI_AIR_PATROL
 
 
 --- Implements the core functions to SEAD intruders. Use the Engage trigger to intercept intruders.

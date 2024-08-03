@@ -72,8 +72,8 @@
 
 do -- TASK_CARGO_CSAR
 
-  --- @type TASK_CARGO_CSAR
-  -- @extends Tasking.Task_CARGO#TASK_CARGO
+  -- @type TASK_CARGO_CSAR
+  -- @extends Tasking.Task_Cargo#TASK_CARGO
   
   --- Orchestrates the task for players to execute CSAR for downed pilots.
   -- 

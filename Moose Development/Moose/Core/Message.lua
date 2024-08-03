@@ -177,7 +177,7 @@ end
 --
 --   -- Send the 2 messages created with the @{New} method to the Client Group.
 --   -- Note that the Message of MessageClient2 is overwriting the Message of MessageClient1.
---   Client = CLIENT:FindByName("UnitNameOfMyClient")
+--   Client = CLIENT:FindByName("NameOfClientUnit")
 --
 --   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", 25, "Score" ):ToClient( Client )
 --   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", 25, "Score" ):ToClient( Client )
@@ -192,7 +192,7 @@ end
 --
 function MESSAGE:ToClient( Client, Settings )
   self:F( Client )
-  self:ToUnit(Client, Settings) 
+  self:ToUnit(Client,Settings)
   return self
 end
 
@@ -239,6 +239,7 @@ function MESSAGE:ToUnit( Unit, Settings )
 
     if self.MessageDuration ~= 0 then
       self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+      local ID = Unit:GetID()
       trigger.action.outTextForUnit( Unit:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration, self.ClearScreen )
     end
   end

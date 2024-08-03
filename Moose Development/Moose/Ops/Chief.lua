@@ -163,7 +163,7 @@
 -- 
 -- Will at a strategic zone with importance 2.
 -- 
--- If the zone is currently owned by another coalition and enemy ground troops are present in the zone, a CAS and an ARTY mission are lauchned:
+-- If the zone is currently owned by another coalition and enemy ground troops are present in the zone, a CAS and an ARTY mission are launched:
 -- 
 -- * A mission of type `AUFTRAG.Type.CASENHANCED` is started if assets are available that can carry out this mission type.
 -- * A mission of type `AUFTRAG.Type.ARTY` is started provided assets are available.

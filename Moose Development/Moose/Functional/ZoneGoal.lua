@@ -17,7 +17,7 @@
 
 do -- Zone
 
-  --- @type ZONE_GOAL
+  -- @type ZONE_GOAL
   -- @field #string ClassName Name of the class.
   -- @field Core.Goal#GOAL Goal The goal object.
   -- @field #number SmokeTime Time stamp in seconds when the last smoke of the zone was triggered.
@@ -178,7 +178,7 @@ do -- Zone
 
   end
 
-  --- @param #ZONE_GOAL self
+  -- @param #ZONE_GOAL self
   -- @param Core.Event#EVENTDATA EventData Event data table.
   function ZONE_GOAL:__Destroyed( EventData )
     self:F( { "EventDead", EventData } )

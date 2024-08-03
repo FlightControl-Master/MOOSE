@@ -598,7 +598,7 @@ do -- CARGO_GROUP
   end
 
 
-  --- Get the amount of cargo units in the group.
+  --- Get the underlying GROUP object from the CARGO_GROUP.
   -- @param #CARGO_GROUP self
   -- @return #CARGO_GROUP
   function CARGO_GROUP:GetGroup( Cargo )

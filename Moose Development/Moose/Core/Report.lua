@@ -15,7 +15,8 @@
 -- @module Core.Report
 -- @image Core_Report.JPG
 
---- @type REPORT
+---
+-- @type REPORT
 -- @extends Core.Base#BASE
 
 --- Provides a handy means to create messages and reports.

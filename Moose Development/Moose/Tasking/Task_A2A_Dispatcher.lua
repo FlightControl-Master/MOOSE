@@ -148,7 +148,7 @@ do -- TASK_A2A_DISPATCHER
   --
   --      TaskDispatcher = TASK_A2A_DISPATCHER:New( ... )
   --
-  --      --- @param #TaskDispatcher self
+  --      -- @param #TaskDispatcher self
   --      -- @param #string From Contains the name of the state from where the Event was triggered.
   --      -- @param #string Event Contains the name of the event that was triggered. In this case Assign.
   --      -- @param #string To Contains the name of the state that will be transitioned to.

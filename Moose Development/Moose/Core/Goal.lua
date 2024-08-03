@@ -24,7 +24,7 @@
 
 do -- Goal
 
-  --- @type GOAL
+  -- @type GOAL
   -- @extends Core.Fsm#FSM
 
   --- Models processes that have an objective with a defined achievement. Derived classes implement the ways how the achievements can be realized.
@@ -71,10 +71,10 @@ do -- Goal
     ClassName = "GOAL",
   }
 
-  --- @field #table GOAL.Players
+  -- @field #table GOAL.Players
   GOAL.Players = {}
 
-  --- @field #number GOAL.TotalContributions
+  -- @field #number GOAL.TotalContributions
   GOAL.TotalContributions = 0
 
   --- GOAL Constructor.
@@ -145,7 +145,7 @@ do -- Goal
     self.TotalContributions = self.TotalContributions + 1
   end
 
-  --- @param #GOAL self
+  -- @param #GOAL self
   -- @param #number Player contribution.
   function GOAL:GetPlayerContribution( PlayerName )
     return self.Players[PlayerName] or 0

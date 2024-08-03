@@ -3623,6 +3623,7 @@ function AIRBOSS:onafterStart( From, Event, To )
   self:HandleEvent( EVENTS.PlayerLeaveUnit, self._PlayerLeft )
   self:HandleEvent( EVENTS.MissionEnd )
   self:HandleEvent( EVENTS.RemoveUnit )
+  self:HandleEvent( EVENTS.UnitLost, self.OnEventRemoveUnit )
 
   -- self.StatusScheduler=SCHEDULER:New(self)
   -- self.StatusScheduler:Schedule(self, self._Status, {}, 1, 0.5)

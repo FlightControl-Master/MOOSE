@@ -4,7 +4,7 @@
 
 do -- DETECTION_ZONES
 
-  --- @type DETECTION_ZONES
+  -- @type DETECTION_ZONES
   -- @field DCS#Distance DetectionZoneRange The range till which targets are grouped upon the first detected target.
   -- @field #DETECTION_BASE.DetectedItems DetectedItems A list of areas containing the set of @{Wrapper.Unit}s, @{Core.Zone}s, the center @{Wrapper.Unit} within the zone, and ID of each area that was detected within a DetectionZoneRange.
   -- @extends Functional.Detection#DETECTION_BASE
@@ -68,7 +68,7 @@ do -- DETECTION_ZONES
     return self
   end
 
-  --- @param #DETECTION_ZONES self
+  -- @param #DETECTION_ZONES self
   -- @param #number The amount of alive recce.
   function DETECTION_ZONES:CountAliveRecce()
 
@@ -76,7 +76,7 @@ do -- DETECTION_ZONES
 
   end    
   
-  --- @param #DETECTION_ZONES self
+  -- @param #DETECTION_ZONES self
   function DETECTION_ZONES:ForEachAliveRecce( IteratorFunction, ... )
     self:F2( arg )
     
@@ -352,7 +352,7 @@ do -- DETECTION_ZONES
       --DetectedSet:Flush( self )
       
       DetectedSet:ForEachUnit(
-        --- @param Wrapper.Unit#UNIT DetectedUnit
+        -- @param Wrapper.Unit#UNIT DetectedUnit
         function( DetectedUnit )
           if DetectedUnit:IsAlive() then
             --self:T( "Detected Set #" .. DetectedItem.ID .. ":" .. DetectedUnit:GetName() )
@@ -380,7 +380,7 @@ do -- DETECTION_ZONES
   
   end
 
-  --- @param #DETECTION_ZONES self
+  -- @param #DETECTION_ZONES self
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
   -- @param #string To The To State string.

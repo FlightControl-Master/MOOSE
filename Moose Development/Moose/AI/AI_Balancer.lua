@@ -27,7 +27,7 @@
 -- @module AI.AI_Balancer
 -- @image AI_Balancing.JPG
 
---- @type AI_BALANCER
+-- @type AI_BALANCER
 -- @field Core.Set#SET_CLIENT SetClient
 -- @field Core.Spawn#SPAWN SpawnAI
 -- @field Wrapper.Group#GROUP Test

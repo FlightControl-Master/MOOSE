@@ -394,7 +394,8 @@ function NAVYGROUP:New(group)
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,      self.OnEventBirth)
   self:HandleEvent(EVENTS.Dead,       self.OnEventDead)
-  self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)  
+  self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)
+  self:HandleEvent(EVENTS.UnitLost, self.OnEventRemoveUnit)  
   
   -- Start the status monitoring.
   self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)

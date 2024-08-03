@@ -417,7 +417,7 @@ end
 CLIENTMENUMANAGER = {
   ClassName = "CLIENTMENUMANAGER",
   lid = "",
-  version = "0.1.5a",
+  version = "0.1.6",
   name = nil,
   clientset = nil,
   menutree = {},

@@ -77,7 +77,7 @@
 --            ammotruck.monitor = -60 -- 1 minute - AMMOTRUCK checks run every one minute
 --            ammotruck.routeonroad = true -- Trucks will **try** to drive on roads
 --            ammotruck.usearmygroup = false -- If true, will make use of ARMYGROUP in the background (if used in DEV branch)
---        ammotruck.reloads = 5 -- Maxn re-arms a truck can do before he needs to go home and restock. Set to -1 for unlimited
+--            ammotruck.reloads = 5 -- Maxn re-arms a truck can do before he needs to go home and restock. Set to -1 for unlimited
 -- 
 -- ## 3 FSM Events to shape mission
 -- 
