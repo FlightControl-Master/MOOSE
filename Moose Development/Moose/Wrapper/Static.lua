@@ -330,3 +330,12 @@ function STATIC:FindAllByMatching( Pattern )
 
   return GroupsFound
 end
+
+--- Get the Wrapper.Storage#STORAGE object of an static if it is used as cargo and has been set up as storage object.
+-- @param #STATIC self
+-- @return Wrapper.Storage#STORAGE Storage or `nil` if not fund or set up.
+function STATIC:GetStaticStorage()
+  local name = self:GetName()
+  local storage = STORAGE:NewFromStaticCargo(name)
+  return storage
+end
