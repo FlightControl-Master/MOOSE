@@ -24,7 +24,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update July 2024
+-- Last Update Aug 2024
 
 do 
 
@@ -46,6 +46,7 @@ do
 -- @field #string Subcategory Sub-category name.
 -- @field #boolean DontShowInMenu Show this item in menu or not.
 -- @field Core.Zone#ZONE Location Location (if set) where to get this cargo item.
+-- @field #table ResourceMap Resource Map information table if it has been set for static cargo items.
 -- @extends Core.Base#BASE
 
 ---
@@ -122,14 +123,31 @@ CTLD_CARGO = {
     self.Mark = nil
     self.Subcategory = Subcategory or "Other"
     self.DontShowInMenu = DontShowInMenu or false
+    self.ResourceMap = nil
     if type(Location) == "string" then
       Location = ZONE:New(Location)
     end
     self.Location = Location
     return self
   end
-
- --- Query Location.
+  
+  --- Add Resource Map information table
+  -- @param #CTLD_CARGO self
+  -- @param #table ResourceMap
+  -- @return #CTLD_CARGO self
+  function CTLD_CARGO:SetStaticResourceMap(ResourceMap)
+    self.ResourceMap = ResourceMap
+    return self
+  end
+  
+  --- Get Resource Map information table
+  -- @param #CTLD_CARGO self
+  -- @return #table ResourceMap
+  function CTLD_CARGO:GetStaticResourceMap()
+    return self.ResourceMap
+  end
+  
+  --- Query Location.
   -- @param #CTLD_CARGO self
   -- @return Core.Zone#ZONE location or `nil` if not set
   function CTLD_CARGO:GetLocation()
@@ -1251,7 +1269,7 @@ CTLD.UnitTypeCapabilities = {
     ["Bronco-OV-10A"] = {type="Bronco-OV-10A", crates= false, troops=true, cratelimit = 0, trooplimit = 5, length = 13, cargoweightlimit = 1450},
     ["OH-6A"] = {type="OH-6A", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 7, cargoweightlimit = 550},
     ["OH-58D"] = {type="OH58D", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 14, cargoweightlimit = 400},
-    ["CH-47Fbl1"] = {type="CH-47Fbl1", crates=true, troops=true, cratelimit = 4, trooplimit = 31, length = 30, cargoweightlimit = 8000},
+    ["CH-47Fbl1"] = {type="CH-47Fbl1", crates=true, troops=true, cratelimit = 4, trooplimit = 31, length = 20, cargoweightlimit = 8000},
 }
 
 --- CTLD class version.
@@ -2418,7 +2436,8 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
     return self
   end
   -- spawn crates in front of helicopter
-  local IsHerc = self:IsHercules(Unit) -- Herc
+  local IsHerc = self:IsHercules(Unit) -- Herc, Bronco and Hook load from behind
+  local IsHook = self:IsHook(Unit) -- Herc, Bronco and Hook load from behind
   local cargotype = Cargo -- Ops.CTLD#CTLD_CARGO
   local number = number or cargotype:GetCratesNeeded() --#number
   local cratesneeded = cargotype:GetCratesNeeded() --#number
@@ -2440,7 +2459,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
   local rheading = 0
   local angleOffNose = 0
   local addon = 0
-  if IsHerc then 
+  if IsHerc or IsHook then 
     -- spawn behind the Herc
     addon = 180
   end
@@ -2490,17 +2509,25 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
       dist = dist - (20 + math.random(1,10))
       local width = width / 2
       local Offy = math.random(-width,width)
-      self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
+      local spawnstatic = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
       :InitCargoMass(cgomass)
       :InitCargo(self.enableslingload)
       :InitLinkToUnit(Ship,dist,Offy,0)
-      :Spawn(270,cratealias)
+      if isstatic then
+        local map=cargotype:GetStaticResourceMap()
+        spawnstatic.TemplateStaticUnit.resourcePayload = map
+      end
+      self.Spawned_Crates[self.CrateCounter] = spawnstatic:Spawn(270,cratealias)
     else   
-      self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
+      local spawnstatic = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
         :InitCoordinate(cratecoord)
         :InitCargoMass(cgomass)
         :InitCargo(self.enableslingload)
-        :Spawn(270,cratealias)
+      if isstatic then
+        local map=cargotype:GetStaticResourceMap()
+        spawnstatic.TemplateStaticUnit.resourcePayload = map
+      end
+      self.Spawned_Crates[self.CrateCounter] = spawnstatic:Spawn(270,cratealias)
     end
     local templ = cargotype:GetTemplates()
     local sorte = cargotype:GetType()
@@ -2510,9 +2537,13 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
     if drop then
                 --CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock, Subcategory)
       realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass,nil,subcat)
+      local map=cargotype:GetStaticResourceMap()
+      realcargo:SetStaticResourceMap(map)
       table.insert(droppedcargo,realcargo)
     else
-      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,false,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],false,cargotype.PerCrateMass,nil,subcat)    
+      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,false,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],false,cargotype.PerCrateMass,nil,subcat)
+      local map=cargotype:GetStaticResourceMap()
+      realcargo:SetStaticResourceMap(map)    
     end
     table.insert(self.Spawned_Cargo, realcargo)
   end
@@ -2562,11 +2593,15 @@ function CTLD:InjectStatics(Zone, Cargo, RandomCoord)
     basetype = cratetemplate
   end
   self.CrateCounter = self.CrateCounter + 1
-  self.Spawned_Crates[self.CrateCounter] = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
+  local spawnstatic = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
     :InitCargoMass(cgomass)
     :InitCargo(self.enableslingload)
     :InitCoordinate(cratecoord)
-    :Spawn(270,cratealias)
+  if isstatic then
+    local map = cargotype:GetStaticResourceMap()
+    spawnstatic.TemplateStaticUnit.resourcePayload = map
+  end
+  self.Spawned_Crates[self.CrateCounter] = spawnstatic:Spawn(270,cratealias)
   local templ = cargotype:GetTemplates()
   local sorte = cargotype:GetType()
   self.CargoCounter = self.CargoCounter + 1
@@ -2744,6 +2779,13 @@ function CTLD:_LoadCratesNearby(Group, Unit)
   local cratelimit = capabilities.cratelimit -- #number
   local grounded = not self:IsUnitInAir(Unit)
   local canhoverload = self:CanHoverLoad(Unit)
+  
+  -- Door check
+  if self.pilotmustopendoors and not UTILS.IsLoadingDoorOpen(Unit:GetName()) then
+    self:_SendMessage("You need to open the door(s) to load cargo!", 10, false, Group)
+    if not self.debug then return self end 
+  end
+ 
   --- cases -------------------------------
   -- Chopper can\'t do crates - bark & return
   -- Chopper can do crates -
@@ -3058,7 +3100,7 @@ function CTLD:_ListInventory(Group, Unit)
   return self
 end
 
---- (Internal) Function to check if a unit is a Hercules C-130.
+--- (Internal) Function to check if a unit is a Hercules C-130 or a Bronco.
 -- @param #CTLD self
 -- @param Wrapper.Unit#UNIT Unit
 -- @return #boolean Outcome
@@ -3070,6 +3112,17 @@ function CTLD:IsHercules(Unit)
   end
 end
 
+--- (Internal) Function to check if a unit is a CH-47
+-- @param #CTLD self
+-- @param Wrapper.Unit#UNIT Unit
+-- @return #boolean Outcome
+function CTLD:IsHook(Unit)
+  if string.find(Unit:GetTypeName(),"CH.47") then 
+    return true
+  else
+    return false
+  end
+end
 
 --- (Internal) Function to set troops positions of a template to a nice circle
 -- @param #CTLD self
@@ -3122,8 +3175,9 @@ function CTLD:_UnloadTroops(Group, Unit)
   end
   -- check for hover unload
   local hoverunload = self:IsCorrectHover(Unit) --if true we\'re hovering in parameters
-  local IsHerc = self:IsHercules(Unit) 
-  if IsHerc then
+  local IsHerc = self:IsHercules(Unit)
+  local IsHook = self:IsHook(Unit) 
+  if IsHerc and (not IsHook) then
     -- no hover but airdrop here
     hoverunload = self:IsCorrectFlightParameters(Unit)
   end
@@ -3252,10 +3306,16 @@ function CTLD:_UnloadCrates(Group, Unit)
       end
     end
   end
+  -- Door check
+  if self.pilotmustopendoors and not UTILS.IsLoadingDoorOpen(Unit:GetName()) then
+    self:_SendMessage("You need to open the door(s) to drop cargo!", 10, false, Group)
+    if not self.debug then return self end 
+  end
   -- check for hover unload
   local hoverunload = self:IsCorrectHover(Unit) --if true we\'re hovering in parameters
   local IsHerc = self:IsHercules(Unit)
-  if IsHerc then
+  local IsHook = self:IsHook(Unit)
+  if IsHerc and (not IsHook) then
     -- no hover but airdrop here
     hoverunload = self:IsCorrectFlightParameters(Unit)
   end
@@ -3949,8 +4009,14 @@ function CTLD:AddStaticsCargo(Name,Mass,Stock,SubCategory,DontShowInMenu,Locatio
   self.CargoCounter = self.CargoCounter + 1
   local type = CTLD_CARGO.Enum.STATIC
   local template = STATIC:FindByName(Name,true):GetTypeName()
+  local unittemplate = _DATABASE:GetStaticUnitTemplate(Name)
+  local ResourceMap = nil
+  if unittemplate and unittemplate.resourcePayload then
+    ResourceMap = UTILS.DeepCopy(unittemplate.resourcePayload)
+  end
   -- Crates are not directly loadable
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,template,type,false,false,1,nil,nil,Mass,Stock,SubCategory,DontShowInMenu,Location)
+  cargo:SetStaticResourceMap(ResourceMap)
   table.insert(self.Cargo_Statics,cargo)
   return self
 end
@@ -3965,8 +4031,14 @@ function CTLD:GetStaticsCargoFromTemplate(Name,Mass)
   self.CargoCounter = self.CargoCounter + 1
   local type = CTLD_CARGO.Enum.STATIC
   local template = STATIC:FindByName(Name,true):GetTypeName()
+  local unittemplate = _DATABASE:GetStaticUnitTemplate(Name)
+  local ResourceMap = nil
+  if unittemplate and unittemplate.resourcePayload then
+    ResourceMap = UTILS.DeepCopy(unittemplate.resourcePayload)
+  end
   -- Crates are not directly loadable
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,template,type,false,false,1,nil,nil,Mass,1)
+  cargo:SetStaticResourceMap(ResourceMap)
   --table.insert(self.Cargo_Statics,cargo)
   return cargo
 end
@@ -5942,7 +6014,9 @@ end
           cargotemplates = UTILS.Split(cargotemplates,";")
           injectstatic = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)      
         elseif cargotype == CTLD_CARGO.Enum.STATIC or cargotype == CTLD_CARGO.Enum.REPAIR then
-          injectstatic = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass) 
+          injectstatic = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)
+          local map=cargotype:GetStaticResourceMap()
+          injectstatic:SetStaticResourceMap(map) 
         end
         if injectstatic then
           self:InjectStatics(dropzone,injectstatic)
@@ -6298,6 +6372,8 @@ function CTLD_HERCULES:Cargo_SpawnDroppedAsCargo(_name, _pos)
   
     self.CTLD.Spawned_Crates[self.CTLD.CrateCounter] = theStatic
     local newCargo = CTLD_CARGO:New(self.CTLD.CargoCounter, theCargo.Name, theCargo.Templates, theCargo.CargoType, true, false, theCargo.CratesNeeded, self.CTLD.Spawned_Crates[self.CTLD.CrateCounter], true, theCargo.PerCrateMass, nil, theCargo.Subcategory)
+    local map=theCargo:GetStaticResourceMap()
+    newCargo:SetStaticResourceMap(map)
     table.insert(self.CTLD.Spawned_Cargo, newCargo)
 
     newCargo:SetWasDropped(true)
