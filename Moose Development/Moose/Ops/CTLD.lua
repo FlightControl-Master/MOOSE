@@ -1274,7 +1274,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.56"
+CTLD.version="1.0.57"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1841,7 +1841,7 @@ end
 -- @param #CTLD self
 -- @param Core.Event#EVENTDATA EventData
 function CTLD:_EventHandler(EventData)
-  self:T(string.format("%s Event = %d",self.lid, EventData.id))
+  self:I(string.format("%s Event = %d",self.lid, EventData.id))
   local event = EventData -- Core.Event#EVENTDATA
   if event.id == EVENTS.PlayerEnterAircraft or event.id == EVENTS.PlayerEnterUnit then
     local _coalition = event.IniCoalition
@@ -1865,12 +1865,37 @@ function CTLD:_EventHandler(EventData)
       self:_RefreshF10Menus()
     end
     return
-  elseif event.id == EVENTS.PlayerLeaveUnit then
+  elseif event.id == EVENTS.PlayerLeaveUnit or event.id == EVENTS.UnitLost then
     -- remove from pilot table
     local unitname = event.IniUnitName or "none"
     self.CtldUnits[unitname] = nil
     self.Loaded_Cargo[unitname] = nil
     self.MenusDone[unitname] = nil
+  elseif event.id == EVENTS.Birth and event.IniObjectCategory == 6 and string.match(event.IniUnitName,".+|%d%d:%d%d|PKG%d+") then
+    --UTILS.PrintTableToLog(event)
+    ---------------
+    -- New dynamic cargo system Handling
+    --------------
+    local function RegisterDynamicCargo()
+      local static = _DATABASE:AddStatic(event.IniUnitName)     
+      if static then
+        static.DCSCargoObject = event.IniDCSUnit
+        local Mass = event.IniDCSUnit:getCargoWeight()
+        local country = event.IniDCSUnit:getCountry()
+        local template = _DATABASE:_GetGenericStaticCargoGroupTemplate(event.IniUnitName,event.IniTypeName,Mass,event.IniCoalition,country)
+        _DATABASE:_RegisterStaticTemplate(template,event.IniCoalition,"static",country)
+        self:I("**** Ground crew created static cargo added: "..event.IniUnitName .." | Weight in kgs: "..Mass)
+        local cargotype = self:AddStaticsCargo(event.IniUnitName,Mass,1,nil,true)
+        self.CrateCounter = self.CrateCounter + 1
+        self.Spawned_Crates[self.CrateCounter] = static
+        cargotype.Positionable = static
+        table.insert(self.Spawned_Cargo, cargotype)
+      end
+    end
+    self:ScheduleOnce(0.5,RegisterDynamicCargo)
+    ---------------
+    -- End new dynamic cargo system Handling
+    --------------
   end
   return self
 end
@@ -2604,7 +2629,7 @@ function CTLD:InjectStatics(Zone, Cargo, RandomCoord)
   self.Spawned_Crates[self.CrateCounter] = spawnstatic:Spawn(270,cratealias)
   local templ = cargotype:GetTemplates()
   local sorte = cargotype:GetType()
-  self.CargoCounter = self.CargoCounter + 1
+  --self.CargoCounter = self.CargoCounter + 1
   cargotype.Positionable = self.Spawned_Crates[self.CrateCounter]
   table.insert(self.Spawned_Cargo, cargotype)
   return self
@@ -2631,8 +2656,8 @@ end
 function CTLD:_ListCratesNearby( _group, _unit)
   self:T(self.lid .. " _ListCratesNearby")
   local finddist = self.CrateDistance or 35
-  local crates,number = self:_FindCratesNearby(_group,_unit, finddist,true) -- #table
-  if number > 0 then
+  local crates,number,loadedbygc,indexgc = self:_FindCratesNearby(_group,_unit, finddist,true) -- #table
+  if number > 0 or indexgc > 0 then
     local text = REPORT:New("Crates Found Nearby:")
     text:Add("------------------------------------------------------------")
     for _,_entry in pairs (crates) do
@@ -2649,6 +2674,19 @@ function CTLD:_ListCratesNearby( _group, _unit)
     text:Add("        N O N E")
     end
     text:Add("------------------------------------------------------------")
+    if indexgc > 0 then
+      text:Add("Probably ground crew loaded (F8)")
+      for _,_entry in pairs (loadedbygc) do
+        local entry = _entry -- #CTLD_CARGO
+        local name = entry:GetName() --#string
+        local dropped = entry:WasDropped()
+        if dropped then
+          text:Add(string.format("Dropped crate for %s, %dkg",name, entry.PerCrateMass))
+        else
+          text:Add(string.format("Crate for %s, %dkg",name, entry.PerCrateMass))
+        end
+      end
+    end
     self:_SendMessage(text:Text(), 30, true, _group) 
   else
     self:_SendMessage(string.format("No (loadable) crates within %d meters!",finddist), 10, false, _group) 
@@ -2722,8 +2760,10 @@ end
 -- @param Wrapper.Unit#UNIT _unit Unit
 -- @param #number _dist Distance
 -- @param #boolean _ignoreweight Find everything in range, ignore loadable weight
--- @return #table Table of crates
+-- @return #table Crates Table of crates
 -- @return #number Number Number of crates found
+-- @return #table CratesGC Table of crates possibly loaded by GC
+-- @return #number NumberGC Number of crates possibly loaded by GC
 function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
   self:T(self.lid .. " _FindCratesNearby")
   local finddist = _dist
@@ -2731,7 +2771,9 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
   local existingcrates = self.Spawned_Cargo -- #table
   -- cycle
   local index = 0
+  local indexg = 0
   local found = {}
+  local LoadedbyGC = {}
   local loadedmass = 0
   local unittype = "none"
   local capabilities = {}
@@ -2744,20 +2786,47 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
   for _,_cargoobject in pairs (existingcrates) do
     local cargo = _cargoobject -- #CTLD_CARGO
     local static = cargo:GetPositionable() -- Wrapper.Static#STATIC -- crates
-    local staticid = cargo:GetID()
     local weight = cargo:GetMass() -- weight in kgs of this cargo
+    local staticid = cargo:GetID()
     self:T(self.lid .. " Found cargo mass: " .. weight)
-    if static and static:IsAlive() then
-      local staticpos = static:GetCoordinate()
+    local cargoalive = false -- TODO dyn cargo spawn workaround
+    local dcsunit = nil
+    local dcsunitpos = nil
+    if static.DCSCargoObject then
+      dcsunit = Unit.getByName(static.StaticName)
+      if dcsunit then
+        cargoalive = dcsunit:isExist() ~= nil and true or false
+      end
+      if cargoalive == true then
+        local dcsvec3 = dcsunit:getPoint() or dcsunit:getPosition().p or {x=0,y=0,z=0}
+        self:I({dcsvec3 = dcsunit:getPoint(), dcspos = dcsunit:getPosition().p})
+        if dcsvec3 then
+          dcsunitpos = COORDINATE:New(dcsvec3.x,dcsvec3.z,dcsvec3.y)
+        end
+      end
+    end 
+    if static and (static:IsAlive() or cargoalive) then
+      local staticpos = static:GetCoordinate() or dcsunitpos
+      --- Testing
+      local landheight = staticpos:GetLandHeight()
+      local agl = staticpos.y-landheight
+      agl = UTILS.Round(agl,2)
+      local GCloaded = agl > 0 and true or false
+      --- Testing
       local distance = self:_GetDistance(location,staticpos)
-      if distance <= finddist and static and (weight <= maxloadable or _ignoreweight) then 
+      self:I({name=static:GetName(),agl=agl,GCloaded=GCloaded,distance=string.format("%.2f",distance or 0)})
+      if (not GCloaded) and distance <= finddist and static and (weight <= maxloadable or _ignoreweight) then 
         index = index + 1
         table.insert(found, staticid, cargo)
         maxloadable = maxloadable - weight
       end
+      if GCloaded == true and distance < 10 and static then
+        indexg = indexg + 1
+        table.insert(LoadedbyGC,staticid, cargo)
+      end
     end
   end
-  return found, index
+  return found, index, LoadedbyGC, indexg
 end
 
 --- (Internal) Function to get and load nearby crates.
@@ -2963,7 +3032,9 @@ function CTLD:_ListCargo(Group, Unit)
   local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
   local loadedmass = self:_GetUnitCargoMass(Unit) -- #number
   local maxloadable = self:_GetMaxLoadableMass(Unit)
-  if self.Loaded_Cargo[unitname] then
+  local finddist = self.CrateDistance or 35
+  local _,_,loadedgc,loadedno = self:_FindCratesNearby(Group,Unit,finddist,true)
+  if self.Loaded_Cargo[unitname] or loadedno > 0 then
     local no_troops = loadedcargo.Troopsloaded or 0
     local no_crates = loadedcargo.Cratesloaded or 0
     local cargotable = loadedcargo.Cargo or {} -- #table
@@ -2985,7 +3056,7 @@ function CTLD:_ListCargo(Group, Unit)
     report:Add("------------------------------------------------------------")
     report:Add("       -- CRATES --")
     local cratecount = 0
-    for _,_cargo in pairs(cargotable) do
+    for _,_cargo in pairs(cargotable or {}) do
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
       if (type ~= CTLD_CARGO.Enum.TROOPS and type ~= CTLD_CARGO.Enum.ENGINEERS) and (not cargo:WasDropped() or self.allowcratepickupagain) then
@@ -2995,6 +3066,18 @@ function CTLD:_ListCargo(Group, Unit)
     end
     if cratecount == 0 then
       report:Add("        N O N E")
+    end
+    if loadedno > 0 then
+      report:Add("------------------------------------------------------------")
+      report:Add("       -- CRATES loaded via F8 --")
+      for _,_cargo in pairs(loadedgc or {}) do
+        local cargo = _cargo -- #CTLD_CARGO
+        local type = cargo:GetType() -- #CTLD_CARGO.Enum
+        if (type ~= CTLD_CARGO.Enum.TROOPS and type ~= CTLD_CARGO.Enum.ENGINEERS) then
+          report:Add(string.format("Crate: %s size 1",cargo:GetName()))
+          loadedmass = loadedmass + cargo:GetMass()
+        end
+      end
     end
     report:Add("------------------------------------------------------------")
     report:Add("Total Mass: ".. loadedmass .. " kg. Loadable: "..maxloadable.." kg.")
@@ -4004,6 +4087,7 @@ end
 -- @param #string SubCategory Name of sub-category (optional).
 -- @param #boolean DontShowInMenu (optional) If set to "true" this won't show up in the menu.
 -- @param Core.Zone#ZONE Location (optional) If set, the cargo item is **only** available here. Can be a #ZONE object or the name of a zone as #string.
+-- @return #CTLD_CARGO CargoObject
 function CTLD:AddStaticsCargo(Name,Mass,Stock,SubCategory,DontShowInMenu,Location)
   self:T(self.lid .. " AddStaticsCargo")
   self.CargoCounter = self.CargoCounter + 1
@@ -4018,7 +4102,7 @@ function CTLD:AddStaticsCargo(Name,Mass,Stock,SubCategory,DontShowInMenu,Locatio
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,template,type,false,false,1,nil,nil,Mass,Stock,SubCategory,DontShowInMenu,Location)
   cargo:SetStaticResourceMap(ResourceMap)
   table.insert(self.Cargo_Statics,cargo)
-  return self
+  return cargo
 end
 
 --- User function - Get a *generic* static-type loadable as #CTLD_CARGO object.
@@ -5404,7 +5488,9 @@ end
     -- Events
     self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
     self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventHandler)
-    self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)   
+    self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventHandler)
+    self:HandleEvent(EVENTS.UnitLost, self._EventHandler)  
+    self:HandleEvent(EVENTS.Birth, self._EventHandler) 
     self:__Status(-5)
     
     -- AutoSave
@@ -6404,8 +6490,6 @@ function CTLD_HERCULES:Cargo_SpawnObjects(Cargo_Drop_initiator,Cargo_Drop_Direct
   
   if offload_cargo == true or ParatrooperGroupSpawn == true then  
     if ParatrooperGroupSpawn == true then
-      --self:Soldier_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country, 0)
-      --self:Soldier_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country, 5)
       self:Soldier_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country, 10)
     else
       self:Cargo_SpawnGroup(Cargo_Drop_initiator,Cargo_Content_position, Cargo_Type_name, CargoHeading, Cargo_Country)
