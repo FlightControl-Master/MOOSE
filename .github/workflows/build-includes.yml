@@ -5,6 +5,8 @@ on:
     branches:
       - master
       - develop
+      - Apple/Develop
+      
     paths:
       - 'Moose Setup/**/*.lua'
       - 'Moose Development/**/*.lua'
