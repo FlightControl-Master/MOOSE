@@ -770,10 +770,37 @@ do
 --          my_ctld.nobuildmenu = false -- if set to true effectively enforces to have engineers build/repair stuff for you.
 --          my_ctld.RadioSound = "beacon.ogg" -- -- this sound will be hearable if you tune in the beacon frequency. Add the sound file to your miz.
 --          my_ctld.RadioSoundFC3 = "beacon.ogg" -- this sound will be hearable by FC3 users (actually all UHF radios); change to something like "beaconsilent.ogg" and add the sound file to your miz if you don't want to annoy FC3 pilots.
---          
--- ## 2.1 User functions
+--          my_ctld.enableChinhookGCLoading = true -- this will effectively suppress the crate load and drop menus for CTLD for the Chinhook
 -- 
--- ### 2.1.1 Adjust or add chopper unit-type capabilities
+-- ## 2.1 CH-47 Chinhook support
+-- 
+-- The Chinhook comes with the option to use the ground crew menu to load and unload cargo into the Helicopter itself for better immersion. As well, it can sling-load cargo from ground. The cargo you can actually **create**
+-- from this menu is limited to contain items from the airbase or FARP's resources warehouse and can take a number of shapes (static shapes in the category of cargo) independent of their contents. If you unload this
+-- kind of cargo with the ground crew, the contents will be "absorbed" into the airbase or FARP you landed at, and the cargo static will be removed after ca 2 mins. 
+-- 
+-- ## 2.1.1 Moose CTLD created crate cargo
+-- 
+-- Given the correct shape, Moose created cargo can be either loaded with the ground crew or via the F10 CTLD menu. **It is strongly recommend to either use the ground crew or CTLD to load/unload cargo**. Mix and match will not work here.
+-- Static shapes loadable *into* the Chinhook are at the time of writing:
+-- 
+--      * Ammo crate (type "ammo_cargo")
+--      * M117 bomb crate (type name "m117_cargo")
+--      * Dual shell fuel barrels (type name "barrels")
+--      * UH-1H net (type name "uh1h_cargo")
+--      
+-- All other kinds of cargo can be sling-loaded.
+--      
+-- ## 2.1.2 Recommended settings
+--          
+--          my_ctld.basetype = "ammo_cargo"
+--          my_ctld.forcehoverload = false -- no hover autoload, leads to cargo complications with ground crew created cargo items
+--          my_ctld.pilotmustopendoors = true -- crew must open back loading door 50% (horizontal) or more
+--          my_ctld.enableslingload = true -- will set cargo items as sling-loadable
+--          my_ctld.enableChinhookGCLoading = true -- will effectively suppress the crate load and drop menus for CTLD for the Chinhook
+--          
+-- ## 2.2 User functions
+-- 
+-- ### 2.2.1 Adjust or add chopper unit-type capabilities
 --  
 -- Use this function to adjust what a heli type can or cannot do:
 -- 
@@ -798,8 +825,12 @@ do
 --        ["MH-60R"] = {type="MH-60R", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
 --        ["SH-60B"] = {type="SH-60B", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
 --        ["Bronco-OV-10A"] = {type="Bronco-OV-10A", crates= false, troops=true, cratelimit = 0, trooplimit = 5, length = 13, cargoweightlimit = 1450},
+--        ["Bronco-OV-10A"] = {type="Bronco-OV-10A", crates= false, troops=true, cratelimit = 0, trooplimit = 5, length = 13, cargoweightlimit = 1450},
+--        ["OH-6A"] = {type="OH-6A", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 7, cargoweightlimit = 550},
+--        ["OH-58D"] = {type="OH58D", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 14, cargoweightlimit = 400},
+--        ["CH-47Fbl1"] = {type="CH-47Fbl1", crates=true, troops=true, cratelimit = 4, trooplimit = 31, length = 20, cargoweightlimit = 8000},
 --        
--- ### 2.1.2 Activate and deactivate zones
+-- ### 2.2.2 Activate and deactivate zones
 -- 
 -- Activate a zone:
 -- 
@@ -811,7 +842,7 @@ do
 --        -- Deactivate zone called Name of type #CTLD.CargoZoneType ZoneType:
 --        my_ctld:DeactivateZone(Name,CTLD.CargoZoneType.DROP)
 -- 
--- ## 2.1.3 Limit and manage available resources
+-- ## 2.2.3 Limit and manage available resources
 --  
 --  When adding generic cargo types, you can effectively limit how many units can be dropped/build by the players, e.g.
 --  
@@ -1274,7 +1305,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.0.57"
+CTLD.version="1.0.58"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1452,6 +1483,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.nobuildinloadzones = true
   self.movecratesbeforebuild = true
   self.surfacetypes = {land.SurfaceType.LAND,land.SurfaceType.ROAD,land.SurfaceType.RUNWAY,land.SurfaceType.SHALLOW_WATER}
+  
+  -- Chinhook
+  self.enableChinhookGCLoading = true
   
   local AliaS = string.gsub(self.alias," ","_")
   self.filename = string.format("CTLD_%s_Persist.csv",AliaS)
@@ -3865,6 +3899,8 @@ function CTLD:_RefreshF10Menus()
           local capabilities = self:_GetUnitCapabilities(_unit) -- #CTLD.UnitTypeCapabilities
           local cantroops = capabilities.troops
           local cancrates = capabilities.crates
+          local isHook = self:IsHook(_unit)
+          local nohookswitch = not (isHook and self.enableChinhookGCLoading)
           -- top menu
           local topmenu = MENU_GROUP:New(_group,"CTLD",nil)
           local toptroops = nil
@@ -3921,8 +3957,10 @@ function CTLD:_RefreshF10Menus()
             local extractMenu1 = MENU_GROUP_COMMAND:New(_group, "Extract troops", toptroops, self._ExtractTroops, self, _group, _unit):Refresh()
           end
           -- sub menu crates management
-          if cancrates then 
-            local loadmenu = MENU_GROUP_COMMAND:New(_group,"Load crates",topcrates, self._LoadCratesNearby, self, _group, _unit)
+          if cancrates then
+            if nohookswitch then 
+              local loadmenu = MENU_GROUP_COMMAND:New(_group,"Load crates",topcrates, self._LoadCratesNearby, self, _group, _unit)
+            end
             local cratesmenu = MENU_GROUP:New(_group,"Get Crates",topcrates)
             local packmenu = MENU_GROUP_COMMAND:New(_group, "Pack crates", topcrates, self._PackCratesNearby, self, _group, _unit)
             local removecratesmenu = MENU_GROUP:New(_group, "Remove crates", topcrates)
@@ -3990,11 +4028,14 @@ function CTLD:_RefreshF10Menus()
             end
             listmenu = MENU_GROUP_COMMAND:New(_group,"List crates nearby",topcrates, self._ListCratesNearby, self, _group, _unit)
             local removecrates = MENU_GROUP_COMMAND:New(_group,"Remove crates nearby",removecratesmenu, self._RemoveCratesNearby, self, _group, _unit)
-            local unloadmenu = MENU_GROUP_COMMAND:New(_group,"Drop crates",topcrates, self._UnloadCrates, self, _group, _unit)
+            local unloadmenu
+            if nohookswitch then 
+              unloadmenu = MENU_GROUP_COMMAND:New(_group,"Drop crates",topcrates, self._UnloadCrates, self, _group, _unit)
+            end
             if not self.nobuildmenu then
               local buildmenu = MENU_GROUP_COMMAND:New(_group,"Build crates",topcrates, self._BuildCrates, self, _group, _unit)
               local repairmenu = MENU_GROUP_COMMAND:New(_group,"Repair",topcrates, self._RepairCrates, self, _group, _unit):Refresh()
-            else
+            elseif unloadmenu then
               unloadmenu:Refresh()
             end
           end
