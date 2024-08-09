@@ -1,5 +1,7 @@
 --- **Functional** - Manage and track client slots easily to add your own client-based menus and modules to.
 -- 
+-- The @{#CLIENTWATCH} class adds a simplified way to create scripts and menus for individual clients. Instead of creating large algorithms and juggling multiple event handlers, you can simply provide one or more prefixes to the class and use the callback functions on spawn, despawn, and any aircraft related events to script to your hearts content.
+-- 
 -- ===
 -- 
 -- ## Features:
@@ -10,51 +12,30 @@
 --   * More reliable aircraft lost events for when DCS thinks the aircraft id dead but a dead event fails to trigger
 --   * Easily manage clients spawned in dynamic slots
 --
--- ===
--- 
--- ## Missions:
---
--- ## [MOOSE - ALL Demo Missions](https://github.com/FlightControl-Master/MOOSE_MISSIONS)
--- 
--- === 
--- 
--- The @{#CLIENTWATCH} class adds a simplified way to create scripts and menus for individual clients. Instead of creating large algorithms and juggling multiple event handlers, you can simply provide one or more prefixes to the class and use the callback functions on spawn, despawn, and any aircraft related events to script to your hearts content.
--- 
 -- ====
--- 
--- # YouTube Channel
--- 
--- ### [MOOSE YouTube Channel](https://www.youtube.com/channel/UCjrA9j5LQoWsG4SpS8i79Qg)
--- 
--- ===
 -- 
 -- ### Author: **Statua**
 -- 
 -- ### Contributions: **FlightControl**: Wrapper.CLIENT
 -- 
--- ===
--- 
+-- ====
 -- @module Functional.ClientWatch
--- @image ClientWatch.JPG
+-- @image clientwatch.jpg
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 --- CLIENTWATCH class
 -- @type CLIENTWATCH
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Write Debug messages to DCS log file and send Debug messages to all players.
 -- @field #string lid String for DCS log file.
 -- @extends Core.Fsm#FSM_CONTROLLABLE
--- 
 
 --- Manage and track client slots easily to add your own client-based menus and modules to.
 -- 
 -- ## Creating a new instance
 -- 
 -- To start, you must first create a new instance of the client manager and provide it with either a Wrapper.Client#CLIENT object, a string prefix of the unit name, or a table of string prefixes for unit names. These are used to capture the client unit when it spawns and apply your scripted functions to it. Only fixed wing and rotary wing aircraft controlled by players can be used by this class.
-
----
---**This will not work if the client aircraft is alive!**
+-- **This will not work if the client aircraft is alive!**
 -- 
 -- ### Examples
 --
@@ -125,40 +106,55 @@
 -- 
 -- ### Examples
 --
-        --  -- Show a message to player when they take damage from a weapon
-        --  local clientInstance = CLIENTWATCH:New("Rotary")
-        --  function clientInstance:OnAfterSpawn(From,Event,To,ClientObject)
-        --      function ClientObject:OnAfterHit(From,Event,To,EventData)
-        --         local typeShooter = EventData.IniTypeName
-        --         local nameWeapon = EventData.weapon_name
-        --         MESSAGE:New("A "..typeShooter.." hit you with a "..nameWeapon,20):ToUnit(ClientObject.Unit)
-        --      end
-        --  end
--- 
+--          -- Show a message to player when they take damage from a weapon
+--          local clientInstance = CLIENTWATCH:New("Rotary")
+--              function clientInstance:OnAfterSpawn(From,Event,To,ClientObject)
+--              function ClientObject:OnAfterHit(From,Event,To,EventData)
+--                 local typeShooter = EventData.IniTypeName
+--                 local nameWeapon = EventData.weapon_name
+--                 MESSAGE:New("A "..typeShooter.." hit you with a "..nameWeapon,20):ToUnit(ClientObject.Unit)
+--              end
+--          end
 -- 
 -- @field #CLIENTWATCH
-
-CLIENTWATCHTools = {}
 CLIENTWATCH = {}
 CLIENTWATCH.ClassName = "CLIENTWATCH"
 CLIENTWATCH.Debug = false
 CLIENTWATCH.lid = nil
-  
---- CLIENTWATCH version.
--- @field #number version
-CLIENTWATCH.version="1.0.0"
 
-  -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- @type CLIENTWATCHTools
+-- @field #table Unit Wrapper.UNIT of the cient object
+-- @field #table Group Wrapper.GROUP of the cient object
+-- @field #table Client Wrapper.CLIENT of the cient object
+-- @field #string PlayerName Name of the player controlling the client object
+-- @field #string UnitName Name of the unit that is the client object
+-- @field #string GroupName Name of the group the client object belongs to
+CLIENTWATCHTools = {}
+  
+--- CLIENTWATCH version
+-- @field #string version
+CLIENTWATCH.version="1.0.1"
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Creates a new instance of CLIENTWATCH to add scripts to. Can be used multiple times with the same client/prefixes if you need it for multiple scripts.
 -- @param #CLIENTWATCH self
--- @param Provide either a Wrapper.Client#CLIENT of the client you want to use, a #string prefix of the DCS UNIT name, or a #table of #string prefixes for multiple DCS UNIT names
+-- @param #string, #table, or Wrapper.Client#CLIENT client Takes multiple inputs. If provided a #string, it will watch for clients whos UNIT NAME or GROUP NAME matches part of the #string as a prefix. You can also provide it with a #table containing multiple #string prefixes. Lastly, you can provide it with a Wrapper.Client#CLIENT of the specific client you want to apply this to.
 -- @return #CLIENTWATCH self
 function CLIENTWATCH:New(client)
     --Init FSM
     local self=BASE:Inherit(self, FSM:New())
     self:SetStartState( "Idle" )
     self:AddTransition( "*", "Spawn", "*" )
+
+    --- User function for OnAfter "Spawn" event.
+  -- @function [parent=#CLIENTWATCH] OnAfterSpawn
+  -- @param #CLIENTWATCH self
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable Controllable of the group.
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #table clientObject Custom object that handles events and stores Moose object data. See top documentation for more details.
 
     --Set up spawn tracking
     if type(client) == "table" or type(client) == "string" then
@@ -169,9 +165,12 @@ function CLIENTWATCH:New(client)
                 self.ClientName = client:GetName()
                 self:HandleEvent(EVENTS.Birth)
                 function self:OnEventBirth(eventdata)
-                    if self.ClientName == eventdata.IniUnitName and eventdata.IniCategory <= 1 then
-                        local clientObject = CLIENTWATCHTools:_newClient(eventdata)
-                        self:Spawn(clientObject)
+                    if self.Debug then UTILS.PrintTableToLog(eventdata) end
+                    if eventdata.IniCategory and eventdata.IniCategory <= 1 then
+                        if self.ClientName == eventdata.IniUnitName then
+                            local clientObject = CLIENTWATCHTools:_newClient(eventdata)
+                            self:Spawn(clientObject)
+                        end
                     end
                 end
 
@@ -188,11 +187,14 @@ function CLIENTWATCH:New(client)
                 if tableValid then
                     self:HandleEvent(EVENTS.Birth)
                     function self:OnEventBirth(eventdata)
+                        if self.Debug then UTILS.PrintTableToLog(eventdata) end
                         for _,entry in pairs(client) do
-                            if string.match(eventdata.IniUnitName,entry) and eventdata.IniCategory == 1 then
-                                local clientObject = CLIENTWATCHTools:_newClient(eventdata)
-                                self:Spawn(clientObject)
-                                break
+                            if eventdata.IniCategory and eventdata.IniCategory <= 1 then
+                                if string.match(eventdata.IniUnitName,entry) or string.match(eventdata.IniGroupName,entry) then
+                                    local clientObject = CLIENTWATCHTools:_newClient(eventdata)
+                                    self:Spawn(clientObject)
+                                    break
+                                end
                             end
                         end
                     end
@@ -203,9 +205,12 @@ function CLIENTWATCH:New(client)
             --SOLO STRING
             self:HandleEvent(EVENTS.Birth)
             function self:OnEventBirth(eventdata)
-                if string.match(eventdata.IniUnitName,client) and eventdata.IniCategory == 1 then
-                    local clientObject = CLIENTWATCHTools:_newClient(eventdata)
-                    self:Spawn(clientObject)
+                if self.Debug then UTILS.PrintTableToLog(eventdata) end
+                if eventdata.IniCategory and eventdata.IniCategory <= 1 then
+                    if string.match(eventdata.IniUnitName,client) or string.match(eventdata.IniGroupName,client) then
+                        local clientObject = CLIENTWATCHTools:_newClient(eventdata)
+                        self:Spawn(clientObject)
+                    end
                 end
             end
         end
