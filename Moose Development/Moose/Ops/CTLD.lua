@@ -1643,6 +1643,8 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param #string ZoneName Name of the Zone where the Troops have been RTB'd.
+  -- @param Core.Zone#ZONE_Radius ZoneObject of the Zone where the Troops have been RTB'd.
   
   --- FSM Function OnAfterTroopsPickedUp.
   -- @function [parent=#CTLD] OnAfterTroopsPickedUp
@@ -3361,7 +3363,7 @@ function CTLD:_UnloadTroops(Group, Unit)
       end  -- cargotable loop
     else -- droppingatbase
         self:_SendMessage("Troops have returned to base!", 10, false, Group) 
-        self:__TroopsRTB(1, Group, Unit)
+        self:__TroopsRTB(1, Group, Unit, zonename, zone)
     end
     -- cleanup load list
     local    loaded = {} -- #CTLD.LoadedCargo
@@ -5794,8 +5796,10 @@ end
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param #string ZoneName Name of the Zone where the Troops have been RTB'd.
+  -- @param Core.Zone#ZONE_Radius ZoneObject of the Zone where the Troops have been RTB'd.
   -- @return #CTLD self
-  function CTLD:onbeforeTroopsRTB(From, Event, To, Group, Unit)
+  function CTLD:onbeforeTroopsRTB(From, Event, To, Group, Unit, ZoneName, ZoneObject)
     self:T({From, Event, To})
     return self
   end
