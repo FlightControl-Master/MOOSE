@@ -34,6 +34,7 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/MarkerOps_Base.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/TextAndSound.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/Pathline.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/ClientMenu.lua')
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/ClientWatch.lua')
 
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Wrapper/Object.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Wrapper/Identifiable.lua' )
