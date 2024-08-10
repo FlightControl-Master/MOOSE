@@ -721,11 +721,12 @@ AIRBASE.Sinai = {
 --- Airbases of the Kola map
 -- 
 -- * AIRBASE.Kola.Banak
--- * AIRBASE.Kola.Bas_100
 -- * AIRBASE.Kola.Bodo
 -- * AIRBASE.Kola.Jokkmokk
 -- * AIRBASE.Kola.Kalixfors
+-- * AIRBASE.Kola.Kallax
 -- * AIRBASE.Kola.Kemi_Tornio
+-- * AIRBASE.Kola.Kirkenes
 -- * AIRBASE.Kola.Kiruna
 -- * AIRBASE.Kola.Monchegorsk
 -- * AIRBASE.Kola.Murmansk_International
@@ -733,11 +734,12 @@ AIRBASE.Sinai = {
 -- * AIRBASE.Kola.Rovaniemi
 -- * AIRBASE.Kola.Severomorsk_1
 -- * AIRBASE.Kola.Severomorsk_3
+-- * AIRBASE.Kola.Vidsel
+-- * AIRBASE.Kola.Vuojarvi
 -- 
 -- @field Kola
 AIRBASE.Kola = {
   ["Banak"] = "Banak",
-  ["Bas_100"] = "Bas 100",
   ["Bodo"] = "Bodo",
   ["Jokkmokk"] = "Jokkmokk",
   ["Kalixfors"] = "Kalixfors",
@@ -749,6 +751,10 @@ AIRBASE.Kola = {
   ["Rovaniemi"] = "Rovaniemi",
   ["Severomorsk_1"] = "Severomorsk-1",
   ["Severomorsk_3"] = "Severomorsk-3",
+  ["Vuojarvi"] = "Vuojarvi",
+  ["Kirkenes"] = "Kirkenes",
+  ["Kallax"] = "Kallax",
+  ["Vidsel"] = "Vidsel",
 }
 
 --- Airbases of the Afghanistan map
