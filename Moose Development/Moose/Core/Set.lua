@@ -4460,6 +4460,23 @@ do -- SET_CLIENT
     return self
   end
 
+  --- Builds a set of units which exist and are alive.
+  -- @param #SET_CLIENT self
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:FilterAlive()
+    self:FilterFunction(
+      function(unit)
+        if unit and unit:IsExist() and unit:IsAlive() then
+          return true
+        else
+          return false
+        end
+      end
+    )
+    return self
+  end
+
+
    --- Builds a set of clients in zones.
   -- @param #SET_CLIENT self
   -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
