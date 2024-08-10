@@ -770,18 +770,18 @@ do
 --          my_ctld.nobuildmenu = false -- if set to true effectively enforces to have engineers build/repair stuff for you.
 --          my_ctld.RadioSound = "beacon.ogg" -- -- this sound will be hearable if you tune in the beacon frequency. Add the sound file to your miz.
 --          my_ctld.RadioSoundFC3 = "beacon.ogg" -- this sound will be hearable by FC3 users (actually all UHF radios); change to something like "beaconsilent.ogg" and add the sound file to your miz if you don't want to annoy FC3 pilots.
---          my_ctld.enableChinhookGCLoading = true -- this will effectively suppress the crate load and drop menus for CTLD for the Chinhook
+--          my_ctld.enableChinookGCLoading = true -- this will effectively suppress the crate load and drop menus for CTLD for the Chinook
 -- 
--- ## 2.1 CH-47 Chinhook support
+-- ## 2.1 CH-47 Chinook support
 -- 
--- The Chinhook comes with the option to use the ground crew menu to load and unload cargo into the Helicopter itself for better immersion. As well, it can sling-load cargo from ground. The cargo you can actually **create**
+-- The Chinook comes with the option to use the ground crew menu to load and unload cargo into the Helicopter itself for better immersion. As well, it can sling-load cargo from ground. The cargo you can actually **create**
 -- from this menu is limited to contain items from the airbase or FARP's resources warehouse and can take a number of shapes (static shapes in the category of cargo) independent of their contents. If you unload this
 -- kind of cargo with the ground crew, the contents will be "absorbed" into the airbase or FARP you landed at, and the cargo static will be removed after ca 2 mins. 
 -- 
 -- ## 2.1.1 Moose CTLD created crate cargo
 -- 
 -- Given the correct shape, Moose created cargo can be either loaded with the ground crew or via the F10 CTLD menu. **It is strongly recommend to either use the ground crew or CTLD to load/unload cargo**. Mix and match will not work here.
--- Static shapes loadable *into* the Chinhook are at the time of writing:
+-- Static shapes loadable *into* the Chinook are at the time of writing:
 -- 
 --      * Ammo crate (type "ammo_cargo")
 --      * M117 bomb crate (type name "m117_cargo")
@@ -796,7 +796,9 @@ do
 --          my_ctld.forcehoverload = false -- no hover autoload, leads to cargo complications with ground crew created cargo items
 --          my_ctld.pilotmustopendoors = true -- crew must open back loading door 50% (horizontal) or more
 --          my_ctld.enableslingload = true -- will set cargo items as sling-loadable
---          my_ctld.enableChinhookGCLoading = true -- will effectively suppress the crate load and drop menus for CTLD for the Chinhook
+--          my_ctld.enableChinookGCLoading = true -- will effectively suppress the crate load and drop menus for CTLD for the Chinook
+--          my_ctld.movecratesbeforebuild = false -- cannot detect movement of crates at the moment
+--          my_ctld.nobuildinloadzones = true -- don't build where you load.
 --          
 -- ## 2.2 User functions
 -- 
@@ -1484,8 +1486,8 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.movecratesbeforebuild = true
   self.surfacetypes = {land.SurfaceType.LAND,land.SurfaceType.ROAD,land.SurfaceType.RUNWAY,land.SurfaceType.SHALLOW_WATER}
   
-  -- Chinhook
-  self.enableChinhookGCLoading = true
+  -- Chinook
+  self.enableChinookGCLoading = true
   
   local AliaS = string.gsub(self.alias," ","_")
   self.filename = string.format("CTLD_%s_Persist.csv",AliaS)
@@ -3902,7 +3904,7 @@ function CTLD:_RefreshF10Menus()
           local cantroops = capabilities.troops
           local cancrates = capabilities.crates
           local isHook = self:IsHook(_unit)
-          local nohookswitch = not (isHook and self.enableChinhookGCLoading)
+          local nohookswitch = not (isHook and self.enableChinookGCLoading)
           -- top menu
           local topmenu = MENU_GROUP:New(_group,"CTLD",nil)
           local toptroops = nil
