@@ -349,7 +349,7 @@ function STATIC:GetCargoWeight()
   if DCSObject then
      mass = DCSObject:getCargoWeight() or 0
      local masstxt = DCSObject:getCargoDisplayName() or "none"
-     BASE:I("GetCargoWeight "..tostring(mass).." MassText "..masstxt)
+     --BASE:I("GetCargoWeight "..tostring(mass).." MassText "..masstxt)
   end
   return mass
 end
