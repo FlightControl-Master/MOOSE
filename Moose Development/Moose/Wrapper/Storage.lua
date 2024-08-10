@@ -147,9 +147,33 @@ STORAGE.Liquid = {
   DIESEL = 3,
 }
 
+--- Liquid Names for the static cargo resource table.
+-- @type STORAGE.LiquidName
+-- @field #number JETFUEL "jet_fuel".
+-- @field #number GASOLINE "gasoline".
+-- @field #number MW50 "methanol_mixture".
+-- @field #number DIESEL "diesel".
+STORAGE.LiquidName = {
+   GASOLINE = "gasoline",
+   DIESEL =    "diesel",
+   MW50 =  "methanol_mixture",
+   JETFUEL = "jet_fuel",  
+}
+
+--- Storage types.
+-- @type STORAGE.Type
+-- @field #number WEAPONS weapons.
+-- @field #number LIQUIDS liquids. Also see #list<#STORAGE.Liquid> for types of liquids.
+-- @field #number AIRCRAFT aircraft.
+STORAGE.Type = {
+  WEAPONS = "weapons",
+  LIQUIDS = "liquids",
+  AIRCRAFT = "aircrafts",
+}
+
 --- STORAGE class version.
 -- @field #string version
-STORAGE.version="0.0.2"
+STORAGE.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list

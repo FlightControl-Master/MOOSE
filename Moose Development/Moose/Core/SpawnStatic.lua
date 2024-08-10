@@ -189,10 +189,66 @@ function SPAWNSTATIC:NewFromType(StaticType, StaticCategory, CountryID)
   self.InitStaticCategory=StaticCategory
   self.CountryID=CountryID or country.id.USA
   self.SpawnTemplatePrefix=self.InitStaticType
+  self.TemplateStaticUnit = {}
 
   self.InitStaticCoordinate=COORDINATE:New(0, 0, 0)
   self.InitStaticHeading=0
 
+  return self
+end
+
+--- (Internal/Cargo) Init the resource table for STATIC object that should be spawned containing storage objects.
+-- NOTE that you have to init many other parameters as the resources.
+-- @param #SPAWNSTATIC self
+-- @param #number CombinedWeight The weight this cargo object should have (some have fixed weights!), defaults to 1kg.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:_InitResourceTable(CombinedWeight)
+  if not self.TemplateStaticUnit.resourcePayload then
+    self.TemplateStaticUnit.resourcePayload = {
+      ["weapons"] = {},
+      ["aircrafts"] = {},
+      ["gasoline"] = 0,
+      ["diesel"] = 0,
+      ["methanol_mixture"] = 0,
+      ["jet_fuel"] = 0,   
+    }
+  end
+  self:InitCargo(true)
+  self:InitCargoMass(CombinedWeight or 1)
+  return self
+end
+
+--- (User/Cargo) Add to resource table for STATIC object that should be spawned containing storage objects. Inits the object table if necessary and sets it to be cargo for helicopters.
+-- @param #SPAWNSTATIC self
+-- @param #string Type Type of cargo. Known types are: STORAGE.Type.WEAPONS, STORAGE.Type.LIQUIDS, STORAGE.Type.AIRCRAFT. Liquids are fuel.
+-- @param #string Name Name of the cargo type. Liquids can be STORAGE.LiquidName.JETFUEL, STORAGE.LiquidName.GASOLINE, STORAGE.LiquidName.MW50 and STORAGE.LiquidName.DIESEL. The currently available weapon items are available in the `ENUMS.Storage.weapons`, e.g. `ENUMS.Storage.weapons.bombs.Mk_82Y`. Aircraft go by their typename.
+-- @param #number Amount of tons (liquids) or number (everything else) to add.
+-- @param #number CombinedWeight Combined weight to be set to this static cargo object. NOTE - some static cargo objects have fixed weights!
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:AddCargoResource(Type,Name,Amount,CombinedWeight)
+  if not self.TemplateStaticUnit.resourcePayload then
+    self:_InitResourceTable(CombinedWeight)
+  end
+  if Type == STORAGE.Type.LIQUIDS and type(Name) == "string" then
+    self.TemplateStaticUnit.resourcePayload[Name] = Amount
+  else
+  self.TemplateStaticUnit.resourcePayload[Type] = {
+    [Name] = {
+      ["amount"] = Amount,
+      }
+  }
+  end
+  UTILS.PrintTableToLog(self.TemplateStaticUnit)
+  return self
+end
+
+--- (User/Cargo) Resets resource table to zero for STATIC object that should be spawned containing storage objects. Inits the object table if necessary and sets it to be cargo for helicopters.
+-- Handy if you spawn from cargo statics which have resources already set.
+-- @param #SPAWNSTATIC self
+-- @return #SPAWNSTATIC self 
+function SPAWNSTATIC:ResetCargoResources()
+  self.TemplateStaticUnit.resourcePayload = nil
+  self:_InitResourceTable()
   return self
 end
 
@@ -313,6 +369,25 @@ function SPAWNSTATIC:InitLinkToUnit(Unit, OffsetX, OffsetY, OffsetAngle)
   self.InitOffsetX=OffsetX or 0
   self.InitOffsetY=OffsetY or 0
   self.InitOffsetAngle=OffsetAngle or 0
+
+  return self
+end
+
+--- Allows to place a CallFunction hook when a new static spawns.
+-- The provided method will be called when a new group is spawned, including its given parameters.
+-- The first parameter of the SpawnFunction is the @{Wrapper.Static#STATIC} that was spawned.
+-- @param #SPAWNSTATIC self
+-- @param #function SpawnCallBackFunction The function to be called when a group spawns.
+-- @param SpawnFunctionArguments A random amount of arguments to be provided to the function when the group spawns.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:OnSpawnStatic( SpawnCallBackFunction, ... )
+  self:F( "OnSpawnStatic" )
+
+  self.SpawnFunctionHook = SpawnCallBackFunction
+  self.SpawnFunctionArguments = {}
+  if arg then
+    self.SpawnFunctionArguments = arg
+  end
 
   return self
 end
@@ -488,7 +563,7 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     -- ED's dirty way to spawn FARPS.
     Static=coalition.addGroup(CountryID, -1, TemplateGroup)
 
-    -- Currently DCS 2.8 does not trigger birth events if FAPRS are spawned!
+    -- Currently DCS 2.8 does not trigger birth events if FARPS are spawned!
     -- We create such an event. The airbase is registered in Core.Event
     local Event = {
       id = EVENTS.Birth,
@@ -502,6 +577,12 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     self:T("Spawning Static")
     self:T2({Template=Template})
     Static=coalition.addStaticObject(CountryID, Template)
+  end
+  
+  -- If there is a SpawnFunction hook defined, call it.
+  if self.SpawnFunctionHook then
+    -- delay calling this for .3 seconds so that it hopefully comes after the BIRTH event of the group.
+    self:ScheduleOnce(0.3,self.SpawnFunctionHook,mystatic, unpack(self.SpawnFunctionArguments))
   end
 
   return mystatic

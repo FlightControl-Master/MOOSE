@@ -2319,8 +2319,8 @@ function UTILS.IsLoadingDoorOpen( unit_name )
         BASE:T(unit_name .. " cargo door is open")
         return true
       end
-      
-      if type_name == "CH-47Fbl1" and (unit:getDrawArgumentValue(86) > 0) then
+
+      if type_name == "CH-47Fbl1" and (unit:getDrawArgumentValue(86) > 0.5) then
         BASE:T(unit_name .. " rear cargo door is open")
         return true
       end

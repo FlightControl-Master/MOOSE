@@ -199,6 +199,7 @@
 --
 --   * @{#SPAWN.InitRepeat}() or @{#SPAWN.InitRepeatOnLanding}(): This method is used to re-spawn automatically the same group after it has landed.
 --   * @{#SPAWN.InitRepeatOnEngineShutDown}(): This method is used to re-spawn automatically the same group after it has landed and it shuts down the engines at the ramp.
+--   * @{#SPAWN.StopRepeat}(): This method is used to stop the repeater.
 --   
 -- ### Link-16 Datalink STN and SADL IDs (limited at the moment to F15/16/18/AWACS/Tanker/B1B, but not the F15E for clients, SADL A10CII only)
 -- 
@@ -1408,6 +1409,30 @@ function SPAWN:InitArray( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
     SpawnY = SpawnYIndex * SpawnDeltaY
   end
 
+  return self
+end
+
+--- Stop the SPAWN InitRepeat function (EVENT handler for takeoff, land and engine shutdown)
+-- @param #SPAWN self
+-- @return #SPAWN self
+-- @usage
+--          local spawn = SPAWN:New("Template Group")
+--            :InitRepeatOnEngineShutDown()
+--          local plane = spawn:Spawn() -- it is important that we keep the SPAWN object and do not overwrite it with the resulting GROUP object by just calling :Spawn()
+--          
+--          -- later on
+--          spawn:StopRepeat()
+function SPAWN:StopRepeat()
+  if self.Repeat then
+    self:UnHandleEvent(EVENTS.Takeoff)
+    self:UnHandleEvent(EVENTS.Land)
+  end
+  if self.RepeatOnEngineShutDown then
+    self:UnHandleEvent(EVENTS.EngineShutdown)
+  end
+  self.Repeat = false
+  self.RepeatOnEngineShutDown = false
+  self.RepeatOnLanding = false
   return self
 end
 

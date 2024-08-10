@@ -178,7 +178,7 @@ end
 -- @param #STATIC self
 -- @return DCS static object
 function STATIC:GetDCSObject()
-  local DCSStatic = StaticObject.getByName( self.StaticName )
+  local DCSStatic = StaticObject.getByName( self.StaticName ) 
   
   if DCSStatic then
     return DCSStatic
@@ -329,4 +329,27 @@ function STATIC:FindAllByMatching( Pattern )
   end
 
   return GroupsFound
+end
+
+--- Get the Wrapper.Storage#STORAGE object of an static if it is used as cargo and has been set up as storage object.
+-- @param #STATIC self
+-- @return Wrapper.Storage#STORAGE Storage or `nil` if not fund or set up.
+function STATIC:GetStaticStorage()
+  local name = self:GetName()
+  local storage = STORAGE:NewFromStaticCargo(name)
+  return storage
+end
+
+--- Get the Cargo Weight of a static object in kgs. Returns -1 if not found.
+-- @param #STATIC self
+-- @return #number Mass Weight in kgs.
+function STATIC:GetCargoWeight()
+  local DCSObject = StaticObject.getByName(self.StaticName )
+  local mass = -1
+  if DCSObject then
+     mass = DCSObject:getCargoWeight() or 0
+     local masstxt = DCSObject:getCargoDisplayName() or "none"
+     --BASE:I("GetCargoWeight "..tostring(mass).." MassText "..masstxt)
+  end
+  return mass
 end
