@@ -1879,7 +1879,7 @@ end
 -- @param #CTLD self
 -- @param Core.Event#EVENTDATA EventData
 function CTLD:_EventHandler(EventData)
-  self:I(string.format("%s Event = %d",self.lid, EventData.id))
+  self:T(string.format("%s Event = %d",self.lid, EventData.id))
   local event = EventData -- Core.Event#EVENTDATA
   if event.id == EVENTS.PlayerEnterAircraft or event.id == EVENTS.PlayerEnterUnit then
     local _coalition = event.IniCoalition
@@ -1930,7 +1930,7 @@ function CTLD:_EventHandler(EventData)
         table.insert(self.Spawned_Cargo, cargotype)
       end
     end
-    self:ScheduleOnce(0.5,RegisterDynamicCargo)
+    --self:ScheduleOnce(0.5,RegisterDynamicCargo)
     ---------------
     -- End new dynamic cargo system Handling
     --------------

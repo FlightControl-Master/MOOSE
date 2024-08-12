@@ -20,6 +20,7 @@
 --   * Manage database of hits to units and statics.
 --   * Manage database of destroys of units and statics.
 --   * Manage database of @{Core.Zone#ZONE_BASE} objects.
+--   * Manage database of @{Wrapper.DynamicCargo#DYNAMICCARGO} objects alive in the mission.
 --
 -- ===
 --
@@ -39,6 +40,7 @@
 -- @field #table STORAGES DCS warehouse storages.
 -- @field #table STNS Used Link16 octal numbers for F16/15/18/AWACS planes.
 -- @field #table SADL Used Link16 octal numbers for A10/C-II planes.
+-- @field #table DYNAMICCARGO Dynamic Cargo objects.
 -- @extends Core.Base#BASE
 
 --- Contains collections of wrapper objects defined within MOOSE that reflect objects within the simulator.
@@ -54,6 +56,7 @@
 --  * PLAYERS
 --  * CARGOS
 --  * STORAGES (DCS warehouses)
+--  * DYNAMICCARGO
 --
 -- On top, for internal MOOSE administration purposes, the DATABASE administers the Unit and Group TEMPLATES as defined within the Mission Editor.
 --
@@ -97,6 +100,7 @@ DATABASE = {
   STORAGES = {},
   STNS={},
   SADL={},
+  DYNAMICCARGO={},
 }
 
 local _DATABASECoalition =
@@ -143,6 +147,8 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.DeleteZone )
   --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit ) -- This is not working anymore!, handling this through the birth event.
   self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
+  -- DCS 2.9.7 Moose own dynamic cargo events
+  self:HandleEvent( EVENTS.DynamicCargoRemoved, self._EventOnDynamicCargoRemoved)
 
   self:_RegisterTemplates()
   self:_RegisterGroupsAndUnits()
@@ -222,6 +228,34 @@ function DATABASE:FindStatic( StaticName )
 
   local StaticFound = self.STATICS[StaticName]
   return StaticFound
+end
+
+--- Add a DynamicCargo to the database.
+-- @param #DATABASE self
+-- @param #string Name Name of the dynamic cargo.
+-- @return Wrapper.DynamicCargo#DYNAMICCARGO The dynamic cargo object.
+function DATABASE:AddDynamicCargo( Name )
+  if not self.DYNAMICCARGO[Name] then
+    self.DYNAMICCARGO[Name] = DYNAMICCARGO:Register(Name)
+    return self.DYNAMICCARGO[Name]
+  end
+  return nil
+end
+
+--- Finds a DYNAMICCARGO based on the Dynamic Cargo Name.
+-- @param #DATABASE self
+-- @param #string DynamicCargoName
+-- @return Wrapper.DynamicCargo#DYNAMICCARGO The found DYNAMICCARGO.
+function DATABASE:FindDynamicCargo( DynamicCargoName )
+  local StaticFound = self.DYNAMICCARGO[DynamicCargoName]
+  return StaticFound
+end
+
+--- Deletes a DYNAMICCARGO from the DATABASE based on the Dynamic Cargo Name.
+-- @param #DATABASE self
+function DATABASE:DeleteDynamicCargo( DynamicCargoName )
+  self.DYNAMICCARGO[DynamicCargoName] = nil
+  return self
 end
 
 --- Adds a Airbase based on the Airbase Name in the DATABASE.
@@ -1244,7 +1278,7 @@ function DATABASE:_GetGenericStaticCargoGroupTemplate(Name,Typename,Mass,Coaliti
   StaticTemplate.CategoryID = "static"
   StaticTemplate.CoalitionID = Coalition or coalition.side.BLUE
   StaticTemplate.CountryID = Country or country.id.GERMANY
-  UTILS.PrintTableToLog(StaticTemplate)
+  --UTILS.PrintTableToLog(StaticTemplate)
   return StaticTemplate
 end
 
@@ -1568,7 +1602,7 @@ end
 -- @param #DATABASE self
 -- @param Core.Event#EVENTDATA Event
 function DATABASE:_EventOnBirth( Event )
-  self:F( { Event } )
+  self:T( { Event } )
 
   if Event.IniDCSUnit then
 
@@ -1576,7 +1610,17 @@ function DATABASE:_EventOnBirth( Event )
 
       -- Add static object to DB.
       self:AddStatic( Event.IniDCSUnitName )
+    
+    elseif Event.IniObjectCategory == Object.Category.CARGO and string.match(Event.IniUnitName,".+|%d%d:%d%d|PKG%d+") then
 
+      -- Add dynamic cargo object to DB
+      
+      local cargo = self:AddDynamicCargo(Event.IniDCSUnitName)
+      
+      self:I(string.format("Adding dynamic cargo %s", tostring(Event.IniDCSUnitName)))
+      
+      self:CreateEventNewDynamicCargo( cargo )
+        
     else
 
       if Event.IniObjectCategory == Object.Category.UNIT then
@@ -1762,6 +1806,15 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
   end
 end
 
+--- Handles the OnDynamicCargoRemoved event to clean the active dynamic cargo table.
+-- @param #DATABASE self
+-- @param Core.Event#EVENTDATA Event
+function DATABASE:_EventOnDynamicCargoRemoved( Event )
+  self:T( { Event } )
+  if Event.IniDynamicCargoName then
+    self:DeleteDynamicCargo(Event.IniDynamicCargoName)
+  end
+end
 
 --- Handles the OnPlayerLeaveUnit event to clean the active players table.
 -- @param #DATABASE self
