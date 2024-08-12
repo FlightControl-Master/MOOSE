@@ -26,7 +26,7 @@
 -- @module Core.Base
 -- @image Core_Base.JPG
 
-local _TraceOnOff = true
+local _TraceOnOff = false -- default to no tracing
 local _TraceLevel = 1
 local _TraceAll = false
 local _TraceClass = {}
@@ -1200,7 +1200,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F( Arguments )
 
-  if BASE.Debug and _TraceOnOff then
+  if BASE.Debug and _TraceOnOff == true then
     local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
 
@@ -1215,7 +1215,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F2( Arguments )
 
-  if BASE.Debug and _TraceOnOff then
+  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 2 then
     local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
 
@@ -1230,7 +1230,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F3( Arguments )
 
-  if BASE.Debug and _TraceOnOff then
+  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 3 then
     local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
 
@@ -1274,7 +1274,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T( Arguments )
 
-  if BASE.Debug and _TraceOnOff then
+  if BASE.Debug and _TraceOnOff == true then
     local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
 
@@ -1289,7 +1289,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T2( Arguments )
 
-  if BASE.Debug and _TraceOnOff then
+  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 2 then
     local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
 
@@ -1304,7 +1304,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T3( Arguments )
 
-  if BASE.Debug and _TraceOnOff then
+  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 3 then
     local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
 
