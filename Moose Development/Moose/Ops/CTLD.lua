@@ -2817,6 +2817,7 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
   local capabilities = {}
   local maxmass = 2000
   local maxloadable = 2000
+  local IsNoHook = not self:IsHook(_unit)
   if not _ignoreweight then
     maxloadable = self:_GetMaxLoadableMass(_unit)
   end
@@ -2830,14 +2831,14 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
     local cargoalive = false -- TODO dyn cargo spawn workaround
     local dcsunit = nil
     local dcsunitpos = nil
-    if static.DCSCargoObject then
+    if static and static.DCSCargoObject then
       dcsunit = Unit.getByName(static.StaticName)
       if dcsunit then
         cargoalive = dcsunit:isExist() ~= nil and true or false
       end
       if cargoalive == true then
         local dcsvec3 = dcsunit:getPoint() or dcsunit:getPosition().p or {x=0,y=0,z=0}
-        self:I({dcsvec3 = dcsunit:getPoint(), dcspos = dcsunit:getPosition().p})
+        self:T({dcsvec3 = dcsunit:getPoint(), dcspos = dcsunit:getPosition().p})
         if dcsvec3 then
           dcsunitpos = COORDINATE:New(dcsvec3.x,dcsvec3.z,dcsvec3.y)
         end
@@ -2850,9 +2851,10 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
       local agl = staticpos.y-landheight
       agl = UTILS.Round(agl,2)
       local GCloaded = agl > 0 and true or false
+	 if IsNoHook == true then GCloaded = false end
       --- Testing
       local distance = self:_GetDistance(location,staticpos)
-      self:I({name=static:GetName(),agl=agl,GCloaded=GCloaded,distance=string.format("%.2f",distance or 0)})
+      self:T({name=static:GetName(),IsNoHook=IsNoHook,agl=agl,GCloaded=GCloaded,distance=string.format("%.2f",distance or 0)})
       if (not GCloaded) and distance <= finddist and static and (weight <= maxloadable or _ignoreweight) then 
         index = index + 1
         table.insert(found, staticid, cargo)
