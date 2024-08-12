@@ -3240,7 +3240,7 @@ end
 -- @param Wrapper.Unit#UNIT Unit
 -- @return #boolean Outcome
 function CTLD:IsHook(Unit)
-  if string.find(Unit:GetTypeName(),"CH.47") then 
+  if Unit and string.find(Unit:GetTypeName(),"CH.47") then 
     return true
   else
     return false
