@@ -547,20 +547,22 @@ function GROUP:GetCategoryName()
   return nil
 end
 
-
 --- Returns the coalition of the DCS Group.
 -- @param #GROUP self
 -- @return DCS#coalition.side The coalition side of the DCS Group.
 function GROUP:GetCoalition()
-  self:F2( self.GroupName )
-
-  local DCSGroup = self:GetDCSObject()
-  if DCSGroup then
-    local GroupCoalition = DCSGroup:getCoalition()
-    self:T3( GroupCoalition )
-    return GroupCoalition
+  --self:F2( self.GroupName )
+  if self.GroupCoalition ~= nil then
+    return self.GroupCoalition
+  else
+    local DCSGroup = self:GetDCSObject()
+    if DCSGroup then
+      local GroupCoalition = DCSGroup:getCoalition()
+      --self:T3( GroupCoalition )
+      self.GroupCoalition = GroupCoalition
+      return GroupCoalition
+    end
   end
-
   return nil
 end
 
