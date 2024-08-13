@@ -2669,7 +2669,7 @@ do -- COORDINATE
     local date=UTILS.GetDCSMissionDate()
 
     -- Debug output.
-    self:I(string.format("Sun rise at lat=%.3f long=%.3f on %s (DayOfYear=%d): %s (%d sec of the day) (GMT %d)", Latitude, Longitude, date, DayOfYear, tostring(UTILS.SecondsToClock(sunrise)), sunrise, Tdiff))
+    --self:I(string.format("Sun rise at lat=%.3f long=%.3f on %s (DayOfYear=%d): %s (%s sec of the day) (GMT %d)", Latitude, Longitude, date, DayOfYear, tostring(UTILS.SecondsToClock(sunrise)), tonumber(sunrise) or "0", Tdiff))
 
     if InSeconds or type(sunrise) == "string" then
       return sunrise
@@ -2837,7 +2837,7 @@ do -- COORDINATE
     local date=UTILS.GetDCSMissionDate()
 
     -- Debug output.
-    self:I(string.format("Sun set at lat=%.3f long=%.3f on %s (DayOfYear=%d): %s (%d sec of the day) (GMT %d)", Latitude, Longitude, date, DayOfYear, tostring(UTILS.SecondsToClock(sunrise)), sunrise, Tdiff))
+    --self:I(string.format("Sun set at lat=%.3f long=%.3f on %s (DayOfYear=%d): %s (%s sec of the day) (GMT %d)", Latitude, Longitude, date, DayOfYear, tostring(UTILS.SecondsToClock(sunrise)), tostring(sunrise) or "0", Tdiff))
 
     if InSeconds or type(sunrise) == "string" then
       return sunrise
