@@ -179,16 +179,20 @@ end
 -- @param #boolean force
 -- @return Wrapper.Unit#UNIT The added unit.
 function DATABASE:AddUnit( DCSUnitName, force )
-
-  if not self.UNITS[DCSUnitName] or force == true then
+  
+  local DCSunitName = DCSUnitName
+  
+  if type(DCSunitName) == "number" then DCSunitName = string.format("%d",DCSUnitName) end
+  
+  if not self.UNITS[DCSunitName] or force == true then
     -- Debug info.
-    self:T( { "Add UNIT:", DCSUnitName } )
+    self:T( { "Add UNIT:", DCSunitName } )
 
     -- Register unit
-    self.UNITS[DCSUnitName]=UNIT:Register(DCSUnitName)
+    self.UNITS[DCSunitName]=UNIT:Register(DCSunitName)
   end
 
-  return self.UNITS[DCSUnitName]
+  return self.UNITS[DCSunitName]
 end
 
 
@@ -1451,7 +1455,7 @@ function DATABASE:_RegisterDynamicGroup(Groupname)
   
       -- Add unit.
       self:I(string.format("Register Unit: %s", tostring(DCSUnitName)))
-      self:AddUnit( DCSUnitName, true )
+      self:AddUnit( tostring(DCSUnitName), true )
   
     end
   else
