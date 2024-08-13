@@ -1975,17 +1975,25 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   local hours = self.gettext:GetEntry("HOURS",self.locale)
   local sunrise = coord:GetSunrise()
-  sunrise = UTILS.Split( sunrise, ":" )
-  local SUNRISE = string.format( "%s%s", sunrise[1], sunrise[2] )
-  if self.useSRS then
-    SUNRISE = string.format( "%s %s %s", sunrise[1], sunrise[2], hours )
+  --self:I(sunrise)
+  local SUNRISE = "no time"
+  if tostring(sunrise) ~= "N/S" and tostring(sunrise) ~= "N/R" then
+    sunrise = UTILS.Split( sunrise, ":" )
+    SUNRISE = string.format( "%s%s", sunrise[1], sunrise[2] )
+    if self.useSRS then
+      SUNRISE = string.format( "%s %s %s", sunrise[1], sunrise[2], hours )
+    end
   end
-
+  
   local sunset = coord:GetSunset()
-  sunset = UTILS.Split( sunset, ":" )
-  local SUNSET = string.format( "%s%s", sunset[1], sunset[2] )
-  if self.useSRS then
-    SUNSET = string.format( "%s %s %s", sunset[1], sunset[2], hours )
+  --self:I(sunset)
+  local SUNSET = "no time"
+  if tostring(sunset) ~= "N/S" and tostring(sunset) ~= "N/R" then
+    sunset = UTILS.Split( sunset, ":" )
+    SUNSET = string.format( "%s%s", sunset[1], sunset[2] )
+    if self.useSRS then
+      SUNSET = string.format( "%s %s %s", sunset[1], sunset[2], hours )
+    end
   end
 
   ---------------------------------

@@ -1221,7 +1221,7 @@ function UTILS.SecondsToClock(seconds, short)
   end
 
   -- Seconds
-  local seconds = tonumber(seconds)
+  local seconds = tonumber(seconds) or 0
 
   -- Seconds of this day.
   local _seconds=seconds%(60*60*24)
@@ -2122,9 +2122,9 @@ function UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, Rising, Tlocal)
    local cosH = (cos(zenith) - (sinDec * sin(latitude))) / (cosDec * cos(latitude))
 
    if rising and cosH > 1 then
-      return "N/R" -- The sun never rises on this location on the specified date
+      return "N/S" -- The sun never rises on this location on the specified date
    elseif cosH < -1 then
-      return "N/S" -- The sun never sets on this location on the specified date
+      return "N/R" -- The sun never sets on this location on the specified date
    end
 
    -- Finish calculating H and convert into hours
