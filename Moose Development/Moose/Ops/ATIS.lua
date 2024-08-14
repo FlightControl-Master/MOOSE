@@ -882,6 +882,66 @@ ATIS.Messages = {
     FARP = "Farp",
     DELIMITER = "Punto", -- decimal delimiter
   },
+  -- French messages thanks to @Wojtech and Bing
+  FR = {
+    HOURS = "Heures",
+    TIME = "Temps",
+    NOCLOUDINFO = "Informations sur la couverture nuageuse non disponibles",
+    OVERCAST = "Ciel couvert",
+    BROKEN = "Nuages fragmentés",
+    SCATTERED = "Nuages épars",
+    FEWCLOUDS = "Nuages rares",
+    NOCLOUDS = "Clair",
+    AIRPORT = "Aéroport",
+    INFORMATION ="Information",
+    SUNRISEAT = "Levé du soleil à %s heure locale",
+    SUNSETAT = "Couché du soleil à %s heure locale",
+    WINDFROMMS = "Vent du %s pour %s mètres par seconde",
+    WINDFROMKNOTS = "Vent du %s pour %s noeuds",
+    GUSTING = "Rafale de vent",
+    VISIKM = "Visibilité %s kilomètres",
+    VISISM = "Visibilité %s Miles",
+    RAIN = "Pluie",
+    TSTORM = "Orage",
+    SNOW = "Neige",
+    SSTROM = "Tempête de neige",
+    FOG = "Brouillard",
+    DUST = "Poussière",
+    PHENOMENA = "Phénomène météorologique",
+    CLOUDBASEM = "Couverture nuageuse de %s à %s mètres",
+    CLOUDBASEFT = "Couverture nuageuse de %s à %s pieds",
+    TEMPERATURE = "Température",
+    DEWPOINT = "Point de rosée",
+    ALTIMETER = "Altimètre",
+    ACTIVERUN = "Décollages piste",
+    ACTIVELANDING = "Atterrissages piste",
+    LEFT = "Gauche",
+    RIGHT = "Droite",
+    RWYLENGTH = "Longueur de piste",
+    METERS = "Mètre",
+    FEET = "Pieds",
+    ELEVATION = "Hauteur",
+    TOWERFREQ = "Fréquences de la tour",
+    ILSFREQ = "Fréquences ILS",
+    OUTERNDB = "Fréquences Outer NDB",
+    INNERNDB = "Fréquences Inner NDB",
+    VORFREQ = "Fréquences VOR",
+    VORFREQTTS = "Fréquences V O R",
+    TACANCH = "Canal TACAN %d",
+    RSBNCH = "Canal RSBN",
+    PRMGCH = "Canal PRMG",
+    ADVISE = "Informez le contrôle que vous avez copié l'information",
+    STATUTE = "Statute Miles",
+    DEGREES = "Degré celcius",
+    FAHRENHEIT = "Degré Fahrenheit",
+    INCHHG = "Pouces de mercure",
+    MMHG = "Millimètres de mercure",
+    HECTO = "Hectopascals",
+    METERSPER = "Mètres par seconde",
+    TACAN = "TAKAN",
+    FARP = "FARPE",
+    DELIMITER = "Décimal", -- decimal delimiter
+  }
 }
 
 ---
@@ -1061,7 +1121,7 @@ end
 -- @return #ATIS self
 function ATIS:_InitLocalization()
   self:T(self.lid.."_InitLocalization")
-  self.gettext = TEXTANDSOUND:New("AWACS","en") -- Core.TextAndSound#TEXTANDSOUND
+  self.gettext = TEXTANDSOUND:New("ATIS","en") -- Core.TextAndSound#TEXTANDSOUND
   self.locale = "en"
   for locale,table in pairs(self.Messages) do
     local Locale = string.lower(tostring(locale))

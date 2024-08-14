@@ -1358,7 +1358,7 @@ function DATABASE:GetCoalitionFromClientTemplate( ClientName )
   if self.Templates.ClientsByName[ClientName] then  
     return self.Templates.ClientsByName[ClientName].CoalitionID
   end
-  self:E("ERROR: Template does not exist for client "..tostring(ClientName))
+  self:E("WARNING: Template does not exist for client "..tostring(ClientName))
   return nil
 end
 
@@ -1370,7 +1370,7 @@ function DATABASE:GetCategoryFromClientTemplate( ClientName )
   if self.Templates.ClientsByName[ClientName] then  
     return self.Templates.ClientsByName[ClientName].CategoryID
   end
-  self:E("ERROR: Template does not exist for client "..tostring(ClientName))
+  self:E("WARNING: Template does not exist for client "..tostring(ClientName))
   return nil
 end
 
@@ -1382,7 +1382,7 @@ function DATABASE:GetCountryFromClientTemplate( ClientName )
   if self.Templates.ClientsByName[ClientName] then  
     return self.Templates.ClientsByName[ClientName].CountryID
   end
-  self:E("ERROR: Template does not exist for client "..tostring(ClientName))
+  self:E("WARNING: Template does not exist for client "..tostring(ClientName))
   return nil  
 end
 
