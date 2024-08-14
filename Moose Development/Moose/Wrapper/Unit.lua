@@ -1729,7 +1729,10 @@ end
 function UNIT:GetSkill()
   self:F2( self.UnitName )
   local name = self.UnitName
-  local skill = _DATABASE.Templates.Units[name].Template.skill or "Random"
+  local skill = "Random"
+  if _DATABASE.Templates.Units[name] and _DATABASE.Templates.Units[name].Template and _DATABASE.Templates.Units[name].Template.skill then
+    skill = _DATABASE.Templates.Units[name].Template.skill or "Random"
+  end
   return skill
 end
 
