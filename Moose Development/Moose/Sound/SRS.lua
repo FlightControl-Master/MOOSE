@@ -304,8 +304,7 @@ MSRS.Voices = {
     ["en_CA_Linda"] = "Linda", --en-CA
     ["en_IN_Ravi"] = "Ravi", --en-IN
     ["en_IN_Heera"] = "Heera", --en-IN
-    ["en_IR_Sean"] = "Sean", --en-IR
-    --]]     
+    ["en_IR_Sean"] = "Sean", --en-IR   
     },  
   Google = {
     Standard = {
