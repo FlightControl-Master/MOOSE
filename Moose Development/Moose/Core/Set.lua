@@ -4792,10 +4792,12 @@ do -- SET_CLIENT
           local UnitCategory = 0
           if ClientCategoryID==nil and MClient:IsExist() then
             ClientCategoryID,UnitCategory=MClient:GetCategory()
+            --self:T3("Applying Category Workaround .. Outcome: Obj is "..tostring(ClientCategoryID).." Unit is "..tostring(UnitCategory))
             self:T3( { "Category:", UnitCategory, self.FilterMeta.Categories[CategoryName], CategoryName } )
             if self.FilterMeta.Categories[CategoryName] and UnitCategory and self.FilterMeta.Categories[CategoryName] == UnitCategory then
               MClientCategory = true
             end
+            --self:T3("Filter Outcome is "..tostring(MClientCategory))
           else
             self:T3( { "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
             if self.FilterMeta.Categories[CategoryName] and ClientCategoryID and self.FilterMeta.Categories[CategoryName] == ClientCategoryID then

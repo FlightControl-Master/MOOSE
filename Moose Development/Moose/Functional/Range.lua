@@ -4109,7 +4109,7 @@ function RANGE:_GetPlayerUnitAndName( _unitName )
     -- Get DCS unit from its name.
     local DCSunit = Unit.getByName( _unitName )
 
-    if DCSunit then
+    if DCSunit and DCSunit.getPlayerName then
 
       local playername = DCSunit:getPlayerName()
       local unit = UNIT:Find( DCSunit )
