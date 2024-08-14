@@ -271,11 +271,11 @@ MSRS.Voices = {
     ["David"] = "Microsoft David Desktop", -- en-US
     ["Zira"] = "Microsoft Zira Desktop", -- en-US
     ["Hortense"] = "Microsoft Hortense Desktop", --fr-FR
-    ["de-DE-Hedda"] = "Microsoft Hedda Desktop", -- de-DE
-    ["en-GB-Hazel"] = "Microsoft Hazel Desktop", -- en-GB
-    ["en-US-David"] = "Microsoft David Desktop", -- en-US
-    ["en-US-Zira"] = "Microsoft Zira Desktop", -- en-US
-    ["fr-FR-Hortense"] = "Microsoft Hortense Desktop", --fr-FR
+    ["de_DE_Hedda"] = "Microsoft Hedda Desktop", -- de-DE
+    ["en_GB_Hazel"] = "Microsoft Hazel Desktop", -- en-GB
+    ["en_US_David"] = "Microsoft David Desktop", -- en-US
+    ["en_US_Zira"] = "Microsoft Zira Desktop", -- en-US
+    ["fr_FR_Hortense"] = "Microsoft Hortense Desktop", --fr-FR
     },
   MicrosoftGRPC = { -- en-US/GB voices only as of Jan 2024, working ones if using gRPC and MS, if voice packs are installed
     --["Hedda"] = "Hedda", -- de-DE
