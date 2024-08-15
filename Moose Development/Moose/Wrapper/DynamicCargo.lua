@@ -49,7 +49,7 @@
 DYNAMICCARGO = {
   ClassName          = "DYNAMICCARGO",
   verbose            = 0,
-  testing            = true,
+  testing            = false,
   Interval           = 10,
   
 }
@@ -124,7 +124,7 @@ DYNAMICCARGO.AircraftDimensions = {
 
 --- DYNAMICCARGO class version.
 -- @field #string version
-DYNAMICCARGO.version="0.0.3"
+DYNAMICCARGO.version="0.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -169,6 +169,11 @@ function DYNAMICCARGO:Register(CargoName)
   
   if not _DYNAMICCARGO_HELOS then
       _DYNAMICCARGO_HELOS = SET_CLIENT:New():FilterAlive():FilterFunction(DYNAMICCARGO._FilterHeloTypes):FilterStart()
+  end
+  
+  if self.testing then
+    BASE:TraceOn()
+    BASE:TraceClass("DYNAMICCARGO")
   end
   
   return self
@@ -341,11 +346,13 @@ function DYNAMICCARGO:_GetPossibleHeloNearby(pos,loading)
   local Playername = nil
   for _,_helo in pairs (set or {}) do
     local helo = _helo -- Wrapper.Client#CLIENT
-    local name = helo:GetPlayerName() or "None"
+    local name = helo:GetPlayerName() or _DATABASE:_FindPlayerNameByUnitName(helo:GetName()) or "None"
     self:T(self.lid.." Checking: "..name)
     local hpos = helo:GetCoordinate()
     -- TODO Unloading via sling load?
-    local inair = hpos.y-hpos:GetLandHeight() > 4 and true or false
+    --local inair = hpos.y-hpos:GetLandHeight() > 4.5 and true or false -- Standard FARP is 4.5m
+    local inair = helo:InAir()
+    self:T(self.lid.." InAir: AGL/InAir: "..hpos.y-hpos:GetLandHeight().."/"..tostring(inair))
     local typename = helo:GetTypeName()
     if hpos and typename and inair == false then
       local dimensions = DYNAMICCARGO.AircraftDimensions[typename]
@@ -389,7 +396,7 @@ function DYNAMICCARGO:_UpdatePosition()
       ---------------
       if self.CargoState == DYNAMICCARGO.State.NEW then
         local isloaded, client, playername = self:_GetPossibleHeloNearby(pos,true) 
-        self:T(self.lid.." moved! NEW -> LOADED by "..playername)
+        self:T(self.lid.." moved! NEW -> LOADED by "..tostring(playername))
         self.CargoState = DYNAMICCARGO.State.LOADED
         self.Owner = playername
         _DATABASE:CreateEventDynamicCargoLoaded(self)
@@ -414,7 +421,7 @@ function DYNAMICCARGO:_UpdatePosition()
             isunloaded, client, playername = self:_GetPossibleHeloNearby(pos,false)        
           end
           if isunloaded then
-            self:T(self.lid.." moved! LOADED -> UNLOADED by "..playername)
+            self:T(self.lid.." moved! LOADED -> UNLOADED by "..tostring(playername))
             self.CargoState = DYNAMICCARGO.State.UNLOADED
             self.Owner = playername
             _DATABASE:CreateEventDynamicCargoUnloaded(self)
