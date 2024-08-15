@@ -1811,7 +1811,7 @@ function RANGE:OnEventBirth( EventData )
   if not EventData.IniPlayerName then return end
 
   local _unitName = EventData.IniUnitName
-  local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
+  local _unit, _playername = self:_GetPlayerUnitAndName( _unitName, EventData.IniPlayerName )
 
   self:T3( self.lid .. "BIRTH: unit   = " .. tostring( EventData.IniUnitName ) )
   self:T3( self.lid .. "BIRTH: group  = " .. tostring( EventData.IniGroupName ) )
@@ -1967,7 +1967,9 @@ end
 -- @param #number attackAlt Attack altitude.
 -- @param #number attackVel Attack velocity.
 function RANGE._OnImpact(weapon, self, playerData, attackHdg, attackAlt, attackVel)
-
+  
+  if not playerData then return end
+  
   -- Get closet target to last position.
   local _closetTarget = nil -- #RANGE.BombTarget
   local _distance = nil
@@ -1984,13 +1986,13 @@ function RANGE._OnImpact(weapon, self, playerData, attackHdg, attackAlt, attackV
   -- Coordinate of impact point.
   local impactcoord = weapon:GetImpactCoordinate()
 
-  -- Check if impact happened in range zone.
+  -- Check if impact happened in range zone.+
   local insidezone = self.rangezone:IsCoordinateInZone( impactcoord )
 
 
   -- Smoke impact point of bomb.
-  if playerData.smokebombimpact and insidezone then
-    if playerData.delaysmoke then
+  if playerData and playerData.smokebombimpact and insidezone then
+    if playerData and playerData.delaysmoke then
       timer.scheduleFunction( self._DelayedSmoke, { coord = impactcoord, color = playerData.smokecolor }, timer.getTime() + self.TdelaySmoke )
     else
       impactcoord:Smoke( playerData.smokecolor )
@@ -2115,7 +2117,7 @@ function RANGE:OnEventShot( EventData )
   local _unitName = EventData.IniUnitName
 
   -- Get player unit and name.
-  local _unit, _playername = self:_GetPlayerUnitAndName( _unitName )
+  local _unit, _playername = self:_GetPlayerUnitAndName( _unitName, EventData.IniPlayerName )
 
   -- Distance Player-to-Range. Set this to larger value than the threshold.
   local dPR = self.BombtrackThreshold * 2
@@ -2127,11 +2129,13 @@ function RANGE:OnEventShot( EventData )
   end
 
   -- Only track if distance player to range is < 25 km. Also check that a player shot. No need to track AI weapons.
-  if _track and dPR <= self.BombtrackThreshold and _unit and _playername then
+  if _track and dPR <= self.BombtrackThreshold and _unit and _playername and self.PlayerSettings[_playername] then
 
     -- Player data.
     local playerData = self.PlayerSettings[_playername] -- #RANGE.PlayerData
-
+    
+    if not playerData then return end
+    
     -- Attack parameters.
     local attackHdg=_unit:GetHeading()
     local attackAlt=_unit:GetHeight()
@@ -4099,8 +4103,8 @@ end
 -- @return Wrapper.Unit#UNIT Unit of player.
 -- @return #string Name of the player.
 -- @return #boolean If true, group has > 1 player in it
-function RANGE:_GetPlayerUnitAndName( _unitName )
-  self:F2( _unitName )
+function RANGE:_GetPlayerUnitAndName( _unitName, PlayerName )
+  self:I( _unitName )
 
   if _unitName ~= nil then
 
@@ -4111,7 +4115,7 @@ function RANGE:_GetPlayerUnitAndName( _unitName )
 
     if DCSunit and DCSunit.getPlayerName then
 
-      local playername = DCSunit:getPlayerName()
+      local playername = DCSunit:getPlayerName() or PlayerName or "None"
       local unit = UNIT:Find( DCSunit )
 
       self:T2( { DCSunit = DCSunit, unit = unit, playername = playername } )
