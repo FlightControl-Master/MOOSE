@@ -782,7 +782,7 @@ do
 -- 
 -- ## 2.1.1 Moose CTLD created crate cargo
 -- 
--- Given the correct shape, Moose created cargo can be either loaded with the ground crew or via the F10 CTLD menu. **It is strongly recommend to either use the ground crew or CTLD to load/unload cargo**. Mix and match will not work here.
+-- Given the correct shape, Moose created cargo can be either loaded with the ground crew or via the F10 CTLD menu. **It is strongly recommend to either use the ground crew or CTLD to load/unload Moose created cargo**. Mix and match will not work here.
 -- Static shapes loadable *into* the Chinook are at the time of writing:
 -- 
 --      * Ammo crate (type "ammo_cargo")
@@ -1593,7 +1593,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo crate.
+  -- @param #CTLD_CARGO Cargo Cargo crate. Can be a Wrapper.DynamicCargo#DYNAMICCARGO object, if ground crew loaded!
   -- @return #CTLD self
   
    --- FSM Function OnBeforeTroopsDeployed.
@@ -1615,7 +1615,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #table Cargotable Table of #CTLD_CARGO objects dropped.
+  -- @param #table Cargotable Table of #CTLD_CARGO objects dropped. Can be a Wrapper.DynamicCargo#DYNAMICCARGO object, if ground crew unloaded!
   -- @return #CTLD self
   
   --- FSM Function OnBeforeCratesBuild.
@@ -1681,7 +1681,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo crate.
+  -- @param #CTLD_CARGO Cargo Cargo crate. Can be a Wrapper.DynamicCargo#DYNAMICCARGO object, if ground crew loaded!
   -- @return #CTLD self
   
    --- FSM Function OnAfterTroopsDeployed.
@@ -1703,7 +1703,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #table Cargotable Table of #CTLD_CARGO objects dropped.
+  -- @param #table Cargotable Table of #CTLD_CARGO objects dropped. Can be a Wrapper.DynamicCargo#DYNAMICCARGO object, if ground crew unloaded!
   -- @return #CTLD self
   
   --- FSM Function OnAfterCratesBuild.
@@ -5758,7 +5758,7 @@ end
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo crate.
+  -- @param #CTLD_CARGO Cargo Cargo crate. Can be a Wrapper.DynamicCargo#DYNAMICCARGO object, if ground crew loaded!
   -- @return #CTLD self
   function CTLD:onbeforeCratesPickedUp(From, Event, To, Group, Unit, Cargo)
     self:T({From, Event, To})
@@ -5840,7 +5840,7 @@ end
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #table Cargotable Table of #CTLD_CARGO objects dropped.
+  -- @param #table Cargotable Table of #CTLD_CARGO objects dropped. Can be a Wrapper.DynamicCargo#DYNAMICCARGO object, if ground crew unloaded!
   -- @return #CTLD self
   function CTLD:onbeforeCratesDropped(From, Event, To, Group, Unit, Cargotable)
     self:T({From, Event, To})
