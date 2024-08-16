@@ -88,8 +88,7 @@ do -- SET_BASE
     Index = {},
     Database = nil,
     CallScheduler = nil,
-    TimeInterval = nil,
-    YieldInterval = nil,
+    
   }
 
   --- Filters
@@ -503,19 +502,6 @@ do -- SET_BASE
 
     -- Now base the new Set on the BaseSet
     self.Database = BaseSet:GetSet()
-    return self
-  end
-
-  --- Define the SET iterator **"yield interval"** and the **"time interval"**.
-  -- @param #SET_BASE self
-  -- @param #number YieldInterval Sets the frequency when the iterator loop will yield after the number of objects processed. The default frequency is 10 objects processed.
-  -- @param #number TimeInterval Sets the time in seconds when the main logic will resume the iterator loop. The default time is 0.001 seconds.
-  -- @return #SET_BASE self
-  function SET_BASE:SetIteratorIntervals( YieldInterval, TimeInterval )
-
-    self.YieldInterval = YieldInterval
-    self.TimeInterval = TimeInterval
-
     return self
   end
 
@@ -2003,12 +1989,12 @@ do
   -- @param Wrapper.Group#GROUP MGroup The group that is checked for inclusion.
   -- @return #SET_GROUP self
   function SET_GROUP:IsIncludeObject( MGroup )
-    self:F2( MGroup )
+    --self:F2( MGroup )
     local MGroupInclude = true
     
     if self.Filter.Alive == true then
       local MGroupAlive = false
-      self:F( { Active = self.Filter.Active } )
+      --self:F( { Active = self.Filter.Active } )
       if MGroup and MGroup:IsAlive() then
         MGroupAlive = true
       end
@@ -2017,7 +2003,7 @@ do
     
     if self.Filter.Active ~= nil then
       local MGroupActive = false
-      self:F( { Active = self.Filter.Active } )
+      --self:F( { Active = self.Filter.Active } )
       if self.Filter.Active == false or (self.Filter.Active == true and MGroup:IsActive() == true) then
         MGroupActive = true
       end
@@ -2027,7 +2013,7 @@ do
     if self.Filter.Coalitions and MGroupInclude then
       local MGroupCoalition = false
       for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-        self:T3( { "Coalition:", MGroup:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        --self:T3( { "Coalition:", MGroup:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
         if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MGroup:GetCoalition() then
           MGroupCoalition = true
         end
@@ -2038,7 +2024,7 @@ do
     if self.Filter.Categories and MGroupInclude then
       local MGroupCategory = false
       for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-        self:T3( { "Category:", MGroup:GetCategory(), self.FilterMeta.Categories[CategoryName], CategoryName } )
+        --self:T3( { "Category:", MGroup:GetCategory(), self.FilterMeta.Categories[CategoryName], CategoryName } )
         if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MGroup:GetCategory() then
           MGroupCategory = true
         end
@@ -2049,7 +2035,7 @@ do
     if self.Filter.Countries and MGroupInclude then
       local MGroupCountry = false
       for CountryID, CountryName in pairs( self.Filter.Countries ) do
-        self:T3( { "Country:", MGroup:GetCountry(), CountryName } )
+        --self:T3( { "Country:", MGroup:GetCountry(), CountryName } )
         if country.id[CountryName] == MGroup:GetCountry() then
           MGroupCountry = true
         end
@@ -2060,7 +2046,7 @@ do
     if self.Filter.GroupPrefixes and MGroupInclude then
       local MGroupPrefix = false
       for GroupPrefixId, GroupPrefix in pairs( self.Filter.GroupPrefixes ) do
-        self:T3( { "Prefix:", string.find( MGroup:GetName(), GroupPrefix, 1 ), GroupPrefix } )
+        --self:T3( { "Prefix:", string.find( MGroup:GetName(), GroupPrefix, 1 ), GroupPrefix } )
         if string.find( MGroup:GetName(), GroupPrefix:gsub( "-", "%%-" ), 1 ) then
           MGroupPrefix = true
         end
@@ -2085,7 +2071,7 @@ do
       MGroupInclude = MGroupInclude and MGroupFunc
     end
      
-    self:T2( MGroupInclude )
+    --self:T2( MGroupInclude )
     return MGroupInclude
   end
 
@@ -3239,7 +3225,7 @@ do -- SET_UNIT
   -- @param Wrapper.Unit#UNIT MUnit
   -- @return #SET_UNIT self
   function SET_UNIT:IsIncludeObject( MUnit )
-    self:F2( {MUnit} )
+    --self:F2( {MUnit} )
 
     local MUnitInclude = false
 
@@ -3258,7 +3244,7 @@ do -- SET_UNIT
       if self.Filter.Coalitions and MUnitInclude then
         local MUnitCoalition = false
         for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-          self:F( { "Coalition:", MUnit:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+          --self:F( { "Coalition:", MUnit:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
           if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MUnit:GetCoalition() then
             MUnitCoalition = true
           end
@@ -3269,7 +3255,7 @@ do -- SET_UNIT
       if self.Filter.Categories and MUnitInclude then
         local MUnitCategory = false
         for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-          self:T3( { "Category:", MUnit:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
+          --self:T3( { "Category:", MUnit:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
           if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MUnit:GetDesc().category then
             MUnitCategory = true
           end
@@ -3280,7 +3266,7 @@ do -- SET_UNIT
       if self.Filter.Types and MUnitInclude then
         local MUnitType = false
         for TypeID, TypeName in pairs( self.Filter.Types ) do
-          self:T3( { "Type:", MUnit:GetTypeName(), TypeName } )
+          --self:T3( { "Type:", MUnit:GetTypeName(), TypeName } )
           if TypeName == MUnit:GetTypeName() then
             MUnitType = true
           end
@@ -3291,7 +3277,7 @@ do -- SET_UNIT
       if self.Filter.Countries and MUnitInclude then
         local MUnitCountry = false
         for CountryID, CountryName in pairs( self.Filter.Countries ) do
-          self:T3( { "Country:", MUnit:GetCountry(), CountryName } )
+          --self:T3( { "Country:", MUnit:GetCountry(), CountryName } )
           if country.id[CountryName] == MUnit:GetCountry() then
             MUnitCountry = true
           end
@@ -3302,7 +3288,7 @@ do -- SET_UNIT
       if self.Filter.UnitPrefixes and MUnitInclude then
         local MUnitPrefix = false
         for UnitPrefixId, UnitPrefix in pairs( self.Filter.UnitPrefixes ) do
-          self:T3( { "Prefix:", string.find( MUnit:GetName(), UnitPrefix, 1 ), UnitPrefix } )
+          --self:T3( { "Prefix:", string.find( MUnit:GetName(), UnitPrefix, 1 ), UnitPrefix } )
           if string.find( MUnit:GetName(), UnitPrefix, 1 ) then
             MUnitPrefix = true
           end
@@ -3313,10 +3299,10 @@ do -- SET_UNIT
       if self.Filter.RadarTypes and MUnitInclude then
         local MUnitRadar = false
         for RadarTypeID, RadarType in pairs( self.Filter.RadarTypes ) do
-          self:T3( { "Radar:", RadarType } )
+          --self:T3( { "Radar:", RadarType } )
           if MUnit:HasSensors( Unit.SensorType.RADAR, RadarType ) == true then
             if MUnit:GetRadar() == true then -- This call is necessary to evaluate the SEAD capability.
-              self:T3( "RADAR Found" )
+              --self:T3( "RADAR Found" )
             end
             MUnitRadar = true
           end
@@ -3327,7 +3313,7 @@ do -- SET_UNIT
       if self.Filter.SEAD and MUnitInclude then
         local MUnitSEAD = false
         if MUnit:HasSEAD() == true then
-          self:T3( "SEAD Found" )
+          --self:T3( "SEAD Found" )
           MUnitSEAD = true
         end
         MUnitInclude = MUnitInclude and MUnitSEAD
@@ -3337,7 +3323,7 @@ do -- SET_UNIT
     if self.Filter.Zones and MUnitInclude then
       local MGroupZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
-        self:T3( "Zone:", ZoneName )
+        --self:T3( "Zone:", ZoneName )
         if MUnit:IsInZone(Zone) then
           MGroupZone = true
         end
@@ -3350,7 +3336,7 @@ do -- SET_UNIT
       MUnitInclude = MUnitInclude  and MUnitFunc
     end
     
-    self:T2( MUnitInclude )
+    --self:T2( MUnitInclude )
     return MUnitInclude
   end
 
@@ -3698,7 +3684,7 @@ do -- SET_STATIC
       self:_FilterStart()
       self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
       self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+      self:HandleEvent( EVENTS.UnitLost, self._EventOnDeadOrCrash )
     end
 
     return self
@@ -4753,7 +4739,7 @@ do -- SET_CLIENT
   -- @param Wrapper.Client#CLIENT MClient
   -- @return #SET_CLIENT self
   function SET_CLIENT:IsIncludeObject( MClient )
-    self:F2( MClient )
+    --self:F2( MClient )
 
     local MClientInclude = true
 
@@ -4776,12 +4762,12 @@ do -- SET_CLIENT
           if ClientCoalitionID==nil and MClient:IsAlive()~=nil then
             ClientCoalitionID=MClient:GetCoalition()
           end
-          self:T3( { "Coalition:", ClientCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+          --self:T3( { "Coalition:", ClientCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
           if self.FilterMeta.Coalitions[CoalitionName] and ClientCoalitionID and self.FilterMeta.Coalitions[CoalitionName] == ClientCoalitionID then
             MClientCoalition = true
           end
         end
-        self:T( { "Evaluated Coalition", MClientCoalition } )
+        --self:T( { "Evaluated Coalition", MClientCoalition } )
         MClientInclude = MClientInclude and MClientCoalition
       end
       
@@ -4792,25 +4778,27 @@ do -- SET_CLIENT
           local UnitCategory = 0
           if ClientCategoryID==nil and MClient:IsExist() then
             ClientCategoryID,UnitCategory=MClient:GetCategory()
+            --self:T3("Applying Category Workaround .. Outcome: Obj is "..tostring(ClientCategoryID).." Unit is "..tostring(UnitCategory))
             self:T3( { "Category:", UnitCategory, self.FilterMeta.Categories[CategoryName], CategoryName } )
             if self.FilterMeta.Categories[CategoryName] and UnitCategory and self.FilterMeta.Categories[CategoryName] == UnitCategory then
               MClientCategory = true
             end
+            --self:T3("Filter Outcome is "..tostring(MClientCategory))
           else
-            self:T3( { "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
+            --self:T3( { "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
             if self.FilterMeta.Categories[CategoryName] and ClientCategoryID and self.FilterMeta.Categories[CategoryName] == ClientCategoryID then
               MClientCategory = true
             end
           end
         end
-        self:T( { "Evaluated Category", MClientCategory } )
+        --self:T( { "Evaluated Category", MClientCategory } )
         MClientInclude = MClientInclude and MClientCategory
       end
 
       if self.Filter.Types and MClientInclude then
         local MClientType = false
         for TypeID, TypeName in pairs( self.Filter.Types ) do
-          self:T3( { "Type:", MClient:GetTypeName(), TypeName } )
+          --self:T3( { "Type:", MClient:GetTypeName(), TypeName } )
           if TypeName == MClient:GetTypeName() then
             MClientType = true
           end
@@ -4831,26 +4819,26 @@ do -- SET_CLIENT
             MClientCountry = true
           end
         end
-        self:T( { "Evaluated Country", MClientCountry } )
+        --self:T( { "Evaluated Country", MClientCountry } )
         MClientInclude = MClientInclude and MClientCountry
       end
 
       if self.Filter.ClientPrefixes and MClientInclude then
         local MClientPrefix = false
         for ClientPrefixId, ClientPrefix in pairs( self.Filter.ClientPrefixes ) do
-          self:T3( { "Prefix:", string.find( MClient.UnitName, ClientPrefix, 1 ), ClientPrefix } )
+          --self:T3( { "Prefix:", string.find( MClient.UnitName, ClientPrefix, 1 ), ClientPrefix } )
           if string.find( MClient.UnitName, ClientPrefix, 1 ) then
             MClientPrefix = true
           end
         end
-        self:T( { "Evaluated Prefix", MClientPrefix } )
+        --self:T( { "Evaluated Prefix", MClientPrefix } )
         MClientInclude = MClientInclude and MClientPrefix
       end
 
     if self.Filter.Zones and MClientInclude then
       local MClientZone = false
       for ZoneName, Zone in pairs( self.Filter.Zones ) do
-      self:T3( "Zone:", ZoneName )
+      --self:T3( "Zone:", ZoneName )
       local unit = MClient:GetClientGroupUnit()
       if unit and unit:IsInZone(Zone) then
         MClientZone = true
@@ -4868,7 +4856,7 @@ do -- SET_CLIENT
           MClientPlayername = true
         end
       end
-      self:T( { "Evaluated Playername", MClientPlayername } )
+      --self:T( { "Evaluated Playername", MClientPlayername } )
       MClientInclude = MClientInclude and MClientPlayername
     end
     
@@ -4881,7 +4869,7 @@ do -- SET_CLIENT
           MClientCallsigns = true
         end
       end
-      self:T( { "Evaluated Callsign", MClientCallsigns } )
+      --self:T( { "Evaluated Callsign", MClientCallsigns } )
       MClientInclude = MClientInclude and MClientCallsigns
     end
     
@@ -4891,7 +4879,7 @@ do -- SET_CLIENT
     end
     
   end
-    self:T2( MClientInclude )
+    --self:T2( MClientInclude )
     return MClientInclude
   end
 
@@ -8501,4 +8489,491 @@ do -- SET_SCENERY
     return rlife
   end
   
+end
+
+-- TODO SET_DYNAMICCARGO
+
+do -- SET_DYNAMICCARGO
+  
+  ---
+  -- @type SET_DYNAMICCARGO
+  -- @field #table Filter Table of filters.
+  -- @field #table Set Table of objects.
+  -- @field #table Index Table of indices.
+  -- @field #table List Unused table.
+  -- @field Core.Scheduler#SCHEDULER CallScheduler.
+  -- @field #SET_DYNAMICCARGO.Filters Filter Filters.
+  -- @field #number ZoneTimerInterval.
+  -- @field Core.Timer#TIMER ZoneTimer Timer for active filtering of zones.
+  -- @extends Core.Set#SET_BASE
+  
+  ---
+  -- @type SET_DYNAMICCARGO.Filters
+  -- @field #string Coalitions
+  -- @field #string Types
+  -- @field #string Countries
+  -- @field #string StaticPrefixes
+  -- @field #string Zones
+  
+  --- The @{Core.Set#SET_DYNAMICCARGO} class defines the functions that define a collection of objects form @{Wrapper.DynamicCargo#DYNAMICCARGO}.
+  -- A SET provides iterators to iterate the SET.
+  --
+  -- @field #SET_DYNAMICCARGO SET_DYNAMICCARGO
+  SET_DYNAMICCARGO = {
+    ClassName = "SET_DYNAMICCARGO",
+    Filter = {},
+    Set = {},
+    List = {},
+    Index = {},
+    Database = nil,
+    CallScheduler = nil,
+    Filter = {
+      Coalitions = nil,
+      Types = nil,
+      Countries = nil,
+      StaticPrefixes = nil,
+      Zones = nil,
+    },
+    FilterMeta = {
+      Coalitions = {
+        red = coalition.side.RED,
+        blue = coalition.side.BLUE,
+        neutral = coalition.side.NEUTRAL,
+      }
+    },
+    ZoneTimerInterval = 20,
+    ZoneTimer = nil,
+  }
+  
+  --- Creates a new SET_DYNAMICCARGO object, building a set of units belonging to a coalitions, categories, countries, types or with defined prefix names.
+  -- @param #SET_DYNAMICCARGO self
+  -- @return #SET_DYNAMICCARGO
+  -- @usage
+  -- -- Define a new SET_DYNAMICCARGO Object. This DBObject will contain a reference to all alive Statics.
+  -- DBObject = SET_DYNAMICCARGO:New()
+  function SET_DYNAMICCARGO:New()
+
+    --- Inherits from BASE
+    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.DYNAMICCARGO ) ) -- Core.Set#SET_DYNAMICCARGO
+
+    return self
+  end
+  
+  ---
+  -- @param #SET_DYNAMICCARGO self
+  -- @param Wrapper.DynamicCargo#DYNAMICCARGO DCargo
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:IsIncludeObject( DCargo )
+    --self:F2( DCargo )
+    local DCargoInclude = true
+
+    if self.Filter.Coalitions then
+      local DCargoCoalition = false
+      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+        self:I( { "Coalition:", DCargo:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == DCargo:GetCoalition() then
+          DCargoCoalition = true
+        end
+      end
+      DCargoInclude = DCargoInclude and DCargoCoalition
+    end
+
+    if self.Filter.Types then
+      local DCargoType = false
+      for TypeID, TypeName in pairs( self.Filter.Types ) do
+        self:I( { "Type:", DCargo:GetTypeName(), TypeName } )
+        if TypeName == DCargo:GetTypeName() then
+          DCargoType = true
+        end
+      end
+      DCargoInclude = DCargoInclude and DCargoType
+    end
+
+    if self.Filter.Countries then
+      local DCargoCountry = false
+      for CountryID, CountryName in pairs( self.Filter.Countries ) do
+        self:I( { "Country:", DCargo:GetCountry(), CountryName } )
+        if country.id[CountryName] == DCargo:GetCountry() then
+          DCargoCountry = true
+        end
+      end
+      DCargoInclude = DCargoInclude and DCargoCountry
+    end
+
+    if self.Filter.StaticPrefixes then
+      local DCargoPrefix = false
+      for StaticPrefixId, StaticPrefix in pairs( self.Filter.StaticPrefixes ) do
+        self:I( { "Prefix:", string.find( DCargo:GetName(), StaticPrefix, 1 ), StaticPrefix } )
+        if string.find( DCargo:GetName(), StaticPrefix, 1 ) then
+          DCargoPrefix = true
+        end
+      end
+      DCargoInclude = DCargoInclude and DCargoPrefix
+    end
+    
+    if self.Filter.Zones then
+      local DCargoZone = false
+      for ZoneName, Zone in pairs( self.Filter.Zones ) do
+        self:I( "In zone: "..ZoneName )
+        if DCargo and DCargo:IsInZone(Zone) then
+          DCargoZone = true
+        end
+      end
+      DCargoInclude = DCargoInclude and DCargoZone
+    end
+    
+    self:I( DCargoInclude )
+    return DCargoInclude
+  end
+  
+  --- Builds a set of dynamic cargo of defined coalitions.
+  -- Possible current coalitions are red, blue and neutral.
+  -- @param #SET_DYNAMICCARGO self
+  -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterCoalitions( Coalitions )
+    if not self.Filter.Coalitions then
+      self.Filter.Coalitions = {}
+    end
+    if type( Coalitions ) ~= "table" then
+      Coalitions = { Coalitions }
+    end
+    for CoalitionID, Coalition in pairs( Coalitions ) do
+      self.Filter.Coalitions[Coalition] = Coalition
+    end
+    return self
+  end
+  
+  --- Builds a set of dynamic cargo of defined dynamic cargo type names.
+  -- @param #SET_DYNAMICCARGO self
+  -- @param #string Types Can take those type name strings known within DCS world.
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterTypes( Types )
+    if not self.Filter.Types then
+      self.Filter.Types = {}
+    end
+    if type( Types ) ~= "table" then
+      Types = { Types }
+    end
+    for TypeID, Type in pairs( Types ) do
+      self.Filter.Types[Type] = Type
+    end
+    return self
+  end
+  
+  --- [User] Add a custom condition function.
+  -- @function [parent=#SET_DYNAMICCARGO] FilterFunction
+  -- @param #SET_DYNAMICCARGO self
+  -- @param #function ConditionFunction If this function returns `true`, the object is added to the SET. The function needs to take a DYNAMICCARGO object as first argument.
+  -- @param ... Condition function arguments if any.
+  -- @return #SET_DYNAMICCARGO self
+  -- @usage
+  --          -- Image you want to exclude a specific DYNAMICCARGO from a SET:
+  --          local cargoset = SET_DYNAMICCARGO:New():FilterCoalitions("blue"):FilterFunction(
+  --          -- The function needs to take a DYNAMICCARGO object as first - and in this case, only - argument.
+  --          function(dynamiccargo)
+  --              local isinclude = true
+  --              if dynamiccargo:GetName() == "Exclude Me" then isinclude = false end
+  --              return isinclude
+  --          end
+  --          ):FilterOnce()
+  --          BASE:I(cargoset:Flush())
+  
+  --- Builds a set of dynamic cargo of defined countries.
+  -- Possible current countries are those known within DCS world.
+  -- @param #SET_DYNAMICCARGO self
+  -- @param #string Countries Can take those country strings known within DCS world.
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterCountries( Countries )
+    if not self.Filter.Countries then
+      self.Filter.Countries = {}
+    end
+    if type( Countries ) ~= "table" then
+      Countries = { Countries }
+    end
+    for CountryID, Country in pairs( Countries ) do
+      self.Filter.Countries[Country] = Country
+    end
+    return self
+  end
+
+  --- Builds a set of DYNAMICCARGOs that contain the given string in their name.
+  -- **Attention!** Bad naming convention as this **does not** filter only **prefixes** but all names that **contain** the string. LUA Regex applies.
+  -- @param #SET_DYNAMICCARGO self
+  -- @param #string Prefixes The string pattern(s) that need to be contained in the dynamic cargo name. Can also be passed as a `#table` of strings.
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterPrefixes( Prefixes )
+    if not self.Filter.StaticPrefixes then
+      self.Filter.StaticPrefixes = {}
+    end
+    if type( Prefixes ) ~= "table" then
+      Prefixes = { Prefixes }
+    end
+    for PrefixID, Prefix in pairs( Prefixes ) do
+      self.Filter.StaticPrefixes[Prefix] = Prefix
+    end
+    return self
+  end
+  
+  --- Builds a set of DYNAMICCARGOs that contain the given string in their name.
+  -- **Attention!** LUA Regex applies!
+  -- @param #SET_DYNAMICCARGO self
+  -- @param #string Patterns The string pattern(s) that need to be contained in the dynamic cargo name. Can also be passed as a `#table` of strings.
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterNamePattern( Patterns )
+    return self:FilterPrefixes(Patterns)
+  end
+   
+  --- Builds a set of DYNAMICCARGOs that are in state DYNAMICCARGO.State.LOADED (i.e. is on board of a Chinook).
+  -- @param #SET_DYNAMICCARGO self
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterIsLoaded()
+    self:FilterFunction(
+      function(cargo)
+        if cargo and cargo.CargoState and cargo.CargoState == DYNAMICCARGO.State.LOADED then
+          return true
+        else
+          return false
+        end
+      end
+    )
+    return self
+  end
+  
+  --- Builds a set of DYNAMICCARGOs that are in state DYNAMICCARGO.State.LOADED (i.e. was on board of a Chinook previously and is now unloaded).
+  -- @param #SET_DYNAMICCARGO self
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterIsUnloaded()
+    self:FilterFunction(
+      function(cargo)
+        if cargo and cargo.CargoState and cargo.CargoState == DYNAMICCARGO.State.UNLOADED then
+          return true
+        else
+          return false
+        end
+      end
+    )
+    return self
+  end
+  
+  --- Builds a set of DYNAMICCARGOs that are in state DYNAMICCARGO.State.NEW (i.e. new and never loaded into a Chinook).
+  -- @param #SET_DYNAMICCARGO self
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterIsNew()
+    self:FilterFunction(
+      function(cargo)
+        if cargo and cargo.CargoState and cargo.CargoState == DYNAMICCARGO.State.NEW then
+          return true
+        else
+          return false
+        end
+      end
+    )
+    return self
+  end
+  
+  --- Builds a set of DYNAMICCARGOs that are owned at the moment by this player name.
+  -- @param #SET_DYNAMICCARGO self
+  -- @param #string PlayerName
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterCurrentOwner(PlayerName)
+    self:FilterFunction(
+      function(cargo)
+        if cargo and cargo.Owner and string.find(cargo.Owner,PlayerName,1,true) then
+          return true
+        else
+          return false
+        end
+      end
+    )
+    return self
+  end
+  
+  --- Builds a set of dynamic cargo in zones.
+  -- @param #SET_DYNAMICCARGO self
+  -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterZones( Zones )
+    if not self.Filter.Zones then
+      self.Filter.Zones = {}
+    end
+    local zones = {}
+    if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
+      zones = Zones.Set
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
+    else
+      zones = Zones
+    end
+    for _,Zone in pairs( zones ) do
+      local zonename = Zone:GetName()
+      self.Filter.Zones[zonename] = Zone
+    end
+    return self
+  end
+  
+  --- Starts the filtering.
+  -- @param #SET_DYNAMICCARGO self
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterStart()
+    if _DATABASE then
+      self:HandleEvent( EVENTS.NewDynamicCargo, self._EventHandlerDCAdd )
+      self:HandleEvent( EVENTS.DynamicCargoRemoved, self._EventHandlerDCRemove )
+      if self.Filter.Zones then
+        self.ZoneTimer = TIMER:New(self._ContinousZoneFilter,self)
+        local timing = self.ZoneTimerInterval or 30
+        self.ZoneTimer:Start(timing,timing)
+      end
+      self:_FilterStart()
+    end
+
+    return self
+  end
+  
+    --- Stops the filtering.
+  -- @param #SET_DYNAMICCARGO self
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterStop()
+    if _DATABASE then
+      self:UnHandleEvent( EVENTS.NewDynamicCargo)
+      self:UnHandleEvent( EVENTS.DynamicCargoRemoved )
+      if self.ZoneTimer and self.ZoneTimer:IsRunning() then
+        self.ZoneTimer:Stop()
+      end
+    end
+
+    return self
+  end
+  
+  --- [Internal] Private function for use of continous zone filter
+  -- @param #SET_DYNAMICCARGO self
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:_ContinousZoneFilter()   
+    local Database = _DATABASE.DYNAMICCARGO  
+    for ObjectName, Object in pairs( Database ) do
+      if self:IsIncludeObject( Object ) and self:IsNotInSet(Object) then
+        self:Add( ObjectName, Object )
+      elseif (not self:IsIncludeObject( Object )) and self:IsInSet(Object) then
+        self:Remove(ObjectName)
+      end
+    end
+    
+    return self  
+  end
+  
+  --- Handles the events for the Set.
+  -- @param #SET_DYNAMICCARGO self
+  -- @param Core.Event#EVENTDATA Event
+  function SET_DYNAMICCARGO:_EventHandlerDCAdd( Event )
+    if Event.IniDynamicCargo and Event.IniDynamicCargoName then
+      if not _DATABASE.DYNAMICCARGO[Event.IniDynamicCargoName] then
+        _DATABASE:AddDynamicCargo( Event.IniDynamicCargoName )
+      end
+      local ObjectName, Object = self:FindInDatabase( Event )
+      if Object and self:IsIncludeObject( Object ) then
+        self:Add( ObjectName, Object )
+      end
+    end
+    
+    return self
+  end
+  
+   --- Handles the remove event for dynamic cargo set.
+  -- @param #SET_DYNAMICCARGO self
+  -- @param Core.Event#EVENTDATA Event
+  function SET_DYNAMICCARGO:_EventHandlerDCRemove( Event )
+    if Event.IniDCSUnitName then
+      local ObjectName, Object = self:FindInDatabase( Event )
+      if ObjectName then
+        self:Remove( ObjectName )
+      end
+    end
+    
+    return self
+  end
+  
+  --- Handles the Database to check on any event that Object exists in the Database.
+  -- This is required, because sometimes the _DATABASE event gets called later than the SET_DYNAMICCARGO event or vise versa!
+  -- @param #SET_DYNAMICCARGO self
+  -- @param Core.Event#EVENTDATA Event
+  -- @return #string The name of the DYNAMICCARGO
+  -- @return Wrapper.DynamicCargo#DYNAMICCARGO The DYNAMICCARGO object
+  function SET_DYNAMICCARGO:FindInDatabase( Event )
+    return Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName]
+  end
+  
+  --- Set filter timer interval for FilterZones if using active filtering with FilterStart().
+  -- @param #SET_DYNAMICCARGO self
+  -- @param #number Seconds Seconds between check intervals, defaults to 30. **Caution** - do not be too agressive with timing! Objects are usually not moving fast enough
+  -- to warrant a check of below 10 seconds.
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterZoneTimer(Seconds) 
+    self.ZoneTimerInterval = Seconds or 30
+    return self
+  end
+  
+  --- This filter is N/A for SET_DYNAMICCARGO
+  -- @param #SET_DYNAMICCARGO self
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterDeads()
+    return self
+  end
+
+  --- This filter is N/A for SET_DYNAMICCARGO
+  -- @param #SET_DYNAMICCARGO self
+  -- @return #SET_DYNAMICCARGO self
+  function SET_DYNAMICCARGO:FilterCrashes()
+    return self
+  end
+  
+  --- Returns a list of current owners (playernames) indexed by playername from the SET.
+  -- @param #SET_DYNAMICCARGO self
+  -- @return #list<#string> Ownerlist
+  function SET_DYNAMICCARGO:GetOwnerNames()
+    local owners = {}
+    self:ForEach(
+      function(cargo)
+        if cargo and cargo.Owner then
+          table.insert(owners, cargo.Owner, cargo.Owner)
+        end
+      end
+    )  
+    return owners
+  end
+  
+  --- Returns a list @{Wrapper.Storage#STORAGE} objects from the SET indexed by cargo name.
+  -- @param #SET_DYNAMICCARGO self
+  -- @return #list<Wrapper.Storage#STORAGE> Storagelist
+  function SET_DYNAMICCARGO:GetStorageObjects()
+    local owners = {}
+    self:ForEach(
+      function(cargo)
+        if cargo and cargo.warehouse then
+          table.insert(owners, cargo.StaticName, cargo.warehouse)
+        end
+      end
+    )  
+    return owners
+  end
+  
+  --- Returns a list of current owners (Wrapper.Client#CLIENT objects) indexed by playername from the SET.
+  -- @param #SET_DYNAMICCARGO self
+  -- @return #list<#string> Ownerlist
+  function SET_DYNAMICCARGO:GetOwnerClientObjects()
+    local owners = {}
+    self:ForEach(
+      function(cargo)
+        if cargo and cargo.Owner then
+          local client = CLIENT:FindByPlayerName(cargo.Owner)
+          if client then
+            table.insert(owners, cargo.Owner, client)
+          end
+        end
+      end
+    )  
+    return owners
+  end
+  
+
 end

@@ -124,7 +124,7 @@ DYNAMICCARGO.AircraftDimensions = {
 
 --- DYNAMICCARGO class version.
 -- @field #string version
-DYNAMICCARGO.version="0.0.4"
+DYNAMICCARGO.version="0.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -194,11 +194,55 @@ end
 -- User API Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Get last know owner (player) name of this DYNAMICCARGO
+--- Get last known owner name of this DYNAMICCARGO
 -- @param #DYNAMICCARGO self
--- @return DCS#Vec3 Position in 3D space
-function DYNAMICCARGO:GetLastPosition()
+-- @return #string Owner
+function DYNAMICCARGO:GetLastOwner()
   return self.Owner
+end
+
+--- Returns true if the cargo is new and has never been loaded into a Helo.
+-- @param #DYNAMICCARGO self
+-- @return #boolean Outcome
+function DYNAMICCARGO:IsNew()
+  if self.CargoState and self.CargoState == DYNAMICCARGO.State.NEW then
+    return true
+  else
+    return false
+  end
+end
+
+--- Returns true if the cargo been loaded into a Helo.
+-- @param #DYNAMICCARGO self
+-- @return #boolean Outcome
+function DYNAMICCARGO:IsLoaded()
+  if self.CargoState and self.CargoState == DYNAMICCARGO.State.LOADED then
+    return true
+  else
+    return false
+  end
+end
+
+--- Returns true if the cargo has been unloaded from a Helo.
+-- @param #DYNAMICCARGO self
+-- @return #boolean Outcome
+function DYNAMICCARGO:IsUnloaded()
+  if self.CargoState and self.CargoState == DYNAMICCARGO.State.REMOVED then
+    return true
+  else
+    return false
+  end
+end
+
+--- Returns true if the cargo has been removed.
+-- @param #DYNAMICCARGO self
+-- @return #boolean Outcome
+function DYNAMICCARGO:IsRemoved()
+  if self.CargoState and self.CargoState == DYNAMICCARGO.State.UNLOADED then
+    return true
+  else
+    return false
+  end
 end
 
 --- [CTLD] Get number of crates this DYNAMICCARGO consists of. Always one.
