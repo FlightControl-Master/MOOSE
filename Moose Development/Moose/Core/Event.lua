@@ -1482,7 +1482,7 @@ function EVENT:onEvent( Event )
       end
 
       -- Weapon.
-      if Event.weapon and type(Event.weapon) == "table" then
+      if Event.weapon and type(Event.weapon) == "table" and Event.weapon.isExist and Event.weapon:isExist() then
         Event.Weapon = Event.weapon
         Event.WeaponName = Event.weapon:isExist() and Event.weapon:getTypeName() or "Unknown Weapon"
         Event.WeaponUNIT = CLIENT:Find( Event.Weapon, '', true ) -- Sometimes, the weapon is a player unit!
