@@ -48,6 +48,7 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Wrapper/Marker.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Wrapper/Weapon.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Wrapper/Net.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Wrapper/Storage.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Wrapper/DynamicCargo.lua' )
 
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Cargo/Cargo.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Cargo/CargoUnit.lua' )

@@ -528,6 +528,7 @@ function NET:SendChatToPlayer(Message, ToPlayer, FromPlayer)
   return self
 end
 
+--[[ not in 2.97 MSE any longer
 --- Load a specific mission.
 -- @param #NET self
 -- @param #string Path and Mission
@@ -550,6 +551,7 @@ function NET:LoadNextMission()
   outcome = net.load_next_mission()
   return outcome
 end
+--]]
 
 --- Return a table of players currently connected to the server.  
 -- @param #NET self

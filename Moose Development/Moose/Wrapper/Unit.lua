@@ -1500,7 +1500,7 @@ function UNIT:InAir(NoHeloCheck)
     local UnitCategory = DCSUnit:getDesc().category
 
     -- If DCS says that it is in air, check if this is really the case, since we might have landed on a building where inAir()=true but actually is not.
-    -- This is a workaround since DCS currently does not acknoledge that helos land on buildings.
+    -- This is a workaround since DCS currently does not acknowledge that helos land on buildings.
     -- Note however, that the velocity check will fail if the ground is moving, e.g. on an aircraft carrier!    
     if UnitInAir==true and UnitCategory == Unit.Category.HELICOPTER and (not NoHeloCheck) then
       local VelocityVec3 = DCSUnit:getVelocity()
