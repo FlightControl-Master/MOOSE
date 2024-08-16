@@ -47,7 +47,9 @@
 DYNAMICCARGO = {
   ClassName          = "DYNAMICCARGO",
   verbose            = 0,
-  testing            = true,
+  testing            = false,
+  Interval           = 10,
+  
 }
 
 --- Liquid types.
@@ -119,7 +121,7 @@ DYNAMICCARGO.AircraftDimensions = {
 
 --- DYNAMICCARGO class version.
 -- @field #string version
-DYNAMICCARGO.version="0.0.1"
+DYNAMICCARGO.version="0.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -180,6 +182,79 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User API Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Get last known owner name of this DYNAMICCARGO
+-- @param #DYNAMICCARGO self
+-- @return #string Owner
+function DYNAMICCARGO:GetLastOwner()
+  return self.Owner
+end
+
+--- Returns true if the cargo is new and has never been loaded into a Helo.
+-- @param #DYNAMICCARGO self
+-- @return #boolean Outcome
+function DYNAMICCARGO:IsNew()
+  if self.CargoState and self.CargoState == DYNAMICCARGO.State.NEW then
+    return true
+  else
+    return false
+  end
+end
+
+--- Returns true if the cargo been loaded into a Helo.
+-- @param #DYNAMICCARGO self
+-- @return #boolean Outcome
+function DYNAMICCARGO:IsLoaded()
+  if self.CargoState and self.CargoState == DYNAMICCARGO.State.LOADED then
+    return true
+  else
+    return false
+  end
+end
+
+--- Returns true if the cargo has been unloaded from a Helo.
+-- @param #DYNAMICCARGO self
+-- @return #boolean Outcome
+function DYNAMICCARGO:IsUnloaded()
+  if self.CargoState and self.CargoState == DYNAMICCARGO.State.REMOVED then
+    return true
+  else
+    return false
+  end
+end
+
+--- Returns true if the cargo has been removed.
+-- @param #DYNAMICCARGO self
+-- @return #boolean Outcome
+function DYNAMICCARGO:IsRemoved()
+  if self.CargoState and self.CargoState == DYNAMICCARGO.State.UNLOADED then
+    return true
+  else
+    return false
+  end
+end
+
+--- [CTLD] Get number of crates this DYNAMICCARGO consists of. Always one.
+-- @param #DYNAMICCARGO self
+-- @return #number crate number, always one
+function DYNAMICCARGO:GetCratesNeeded()
+  return 1
+end
+
+--- [CTLD] Get this DYNAMICCARGO drop state. True if DYNAMICCARGO.State.UNLOADED
+-- @param #DYNAMICCARGO self
+-- @return #boolean Dropped
+function DYNAMICCARGO:WasDropped()
+  return self.CargoState == DYNAMICCARGO.State.UNLOADED and true or false
+end
+
+--- [CTLD] Get CTLD_CARGO.Enum type of this DYNAMICCARGO
+-- @param #DYNAMICCARGO self
+-- @return #string Type, only one at the moment is CTLD_CARGO.Enum.GCLOADABLE
+function DYNAMICCARGO:GetType()
+  return CTLD_CARGO.Enum.GCLOADABLE
+end
+
 
 --- Find last known position of this DYNAMICCARGO
 -- @param #DYNAMICCARGO self
