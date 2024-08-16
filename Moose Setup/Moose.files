@@ -47,6 +47,7 @@ Wrapper/Marker.lua
 Wrapper/Weapon.lua
 Wrapper/Net.lua
 Wrapper/Storage.lua
+Wrapper/DynamicCargo.lua
 
 Functional/Scoring.lua
 Functional/CleanUp.lua

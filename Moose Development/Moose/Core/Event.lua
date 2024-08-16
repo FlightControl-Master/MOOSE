@@ -1482,7 +1482,7 @@ function EVENT:onEvent( Event )
       end
 
       -- Weapon.
-      if Event.weapon and type(Event.weapon) == "table" then
+      if Event.weapon and type(Event.weapon) == "table" and Event.weapon.isExist and Event.weapon:isExist() then
         Event.Weapon = Event.weapon
         Event.WeaponName = Event.weapon:isExist() and Event.weapon:getTypeName() or "Unknown Weapon"
         Event.WeaponUNIT = CLIENT:Find( Event.Weapon, '', true ) -- Sometimes, the weapon is a player unit!
@@ -1530,6 +1530,7 @@ function EVENT:onEvent( Event )
       if Event.dynamiccargo then
         Event.IniDynamicCargo = Event.dynamiccargo
         Event.IniDynamicCargoName = Event.IniDynamicCargo.StaticName
+        Event.IniPlayerName = Event.IniDynamicCargo.Owner or string.match(Event.IniUnitName,"^(.+)|%d%d:%d%d|PKG%d+")
       end
 
       -- Zone object.

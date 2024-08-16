@@ -179,16 +179,20 @@ end
 -- @param #boolean force
 -- @return Wrapper.Unit#UNIT The added unit.
 function DATABASE:AddUnit( DCSUnitName, force )
-
-  if not self.UNITS[DCSUnitName] or force == true then
+  
+  local DCSunitName = DCSUnitName
+  
+  if type(DCSunitName) == "number" then DCSunitName = string.format("%d",DCSUnitName) end
+  
+  if not self.UNITS[DCSunitName] or force == true then
     -- Debug info.
-    self:T( { "Add UNIT:", DCSUnitName } )
+    self:T( { "Add UNIT:", DCSunitName } )
 
     -- Register unit
-    self.UNITS[DCSUnitName]=UNIT:Register(DCSUnitName)
+    self.UNITS[DCSunitName]=UNIT:Register(DCSunitName)
   end
 
-  return self.UNITS[DCSUnitName]
+  return self.UNITS[DCSunitName]
 end
 
 
@@ -852,12 +856,16 @@ end
 -- @param #boolean Force (optional) Force registration of client.
 -- @return Wrapper.Client#CLIENT The client object.
 function DATABASE:AddClient( ClientName, Force )
-
-  if not self.CLIENTS[ClientName] or Force == true then
-    self.CLIENTS[ClientName] = CLIENT:Register( ClientName )
+  
+  local DCSUnitName = ClientName
+  
+  if type(DCSUnitName) == "number" then DCSUnitName = string.format("%d",ClientName) end
+  
+  if not self.CLIENTS[DCSUnitName] or Force == true then
+    self.CLIENTS[DCSUnitName] = CLIENT:Register( DCSUnitName )
   end
 
-  return self.CLIENTS[ClientName]
+  return self.CLIENTS[DCSUnitName]
 end
 
 
@@ -897,14 +905,31 @@ end
 --- Adds a player based on the Player Name in the DATABASE.
 -- @param #DATABASE self
 function DATABASE:AddPlayer( UnitName, PlayerName )
-
+  
+  if type(UnitName) == "number" then UnitName = string.format("%d",UnitName) end
+  
   if PlayerName then
-    self:T( { "Add player for unit:", UnitName, PlayerName } )
+    self:I( { "Add player for unit:", UnitName, PlayerName } )
     self.PLAYERS[PlayerName] = UnitName
     self.PLAYERUNITS[PlayerName] = self:FindUnit( UnitName )
     self.PLAYERSJOINED[PlayerName] = PlayerName
   end
   
+end
+
+--- Get a PlayerName by UnitName from PLAYERS in DATABASE.
+-- @param #DATABASE self
+-- @return #string PlayerName
+-- @return Wrapper.Unit#UNIT PlayerUnit
+function DATABASE:_FindPlayerNameByUnitName(UnitName)
+  if UnitName then
+    for playername,unitname in pairs(self.PLAYERS) do
+      if unitname == UnitName and self.PLAYERUNITS[playername] and self.PLAYERUNITS[playername]:IsAlive() then
+        return playername, self.PLAYERUNITS[playername]
+      end
+    end
+  end
+  return nil
 end
 
 --- Deletes a player from the DATABASE based on the Player Name.
@@ -1451,7 +1476,7 @@ function DATABASE:_RegisterDynamicGroup(Groupname)
   
       -- Add unit.
       self:I(string.format("Register Unit: %s", tostring(DCSUnitName)))
-      self:AddUnit( DCSUnitName, true )
+      self:AddUnit( tostring(DCSUnitName), true )
   
     end
   else
