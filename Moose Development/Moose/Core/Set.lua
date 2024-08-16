@@ -27,6 +27,7 @@
 --   * @{#SET_CARGO}: Defines a collection of @{Cargo.Cargo}s filtered by filter criteria.
 --   * @{#SET_ZONE}: Defines a collection of @{Core.Zone}s filtered by filter criteria.
 --   * @{#SET_SCENERY}: Defines a collection of @{Wrapper.Scenery}s added via a filtered @{#SET_ZONE}.
+--   * @{#SET_DYNAMICCARGO}: Defines a collection of @{Wrapper.DynamicCargo}s added via a filtered @{#SET_ZONE}.
 --
 -- These classes are derived from @{#SET_BASE}, which contains the main methods to manage the collections.
 --
@@ -8495,7 +8496,61 @@ do -- SET_DYNAMICCARGO
   
   --- The @{Core.Set#SET_DYNAMICCARGO} class defines the functions that define a collection of objects form @{Wrapper.DynamicCargo#DYNAMICCARGO}.
   -- A SET provides iterators to iterate the SET.
+  --- Mission designers can use the SET_DYNAMICCARGO class to build sets of cargos belonging to certain:
   --
+  --  * Coalitions
+  --  * Categories
+  --  * Countries
+  --  * Static types
+  --  * Starting with certain prefix strings.
+  --  * Etc.
+  --
+  -- ## SET_DYNAMICCARGO constructor
+  --
+  -- Create a new SET_DYNAMICCARGO object with the @{#SET_DYNAMICCARGO.New} method:
+  --
+  --    * @{#SET_DYNAMICCARGO.New}: Creates a new SET_DYNAMICCARGO object.
+  --
+  -- ## SET_DYNAMICCARGO filter criteria
+  --
+  -- You can set filter criteria to define the set of objects within the SET_DYNAMICCARGO.
+  -- Filter criteria are defined by:
+  --
+  --    * @{#SET_DYNAMICCARGO.FilterCoalitions}: Builds the SET_DYNAMICCARGO with the objects belonging to the coalition(s).
+  --    * @{#SET_DYNAMICCARGO.FilterTypes}: Builds the SET_DYNAMICCARGO with the cargos belonging to the statiy type name(s).
+  --    * @{#SET_DYNAMICCARGO.FilterCountries}: Builds the SET_DYNAMICCARGO with the objects belonging to the country(ies).
+  --    * @{#SET_DYNAMICCARGO.FilterNamePatterns}, @{#SET_DYNAMICCARGO.FilterPrefixes}: Builds the SET_DYNAMICCARGO with the cargo containing the same string(s) in their name. **Attention!** LUA regular expression apply here, so special characters in names like minus, dot, hash (#) etc might lead to unexpected results. 
+  -- Have a read through here to understand the application of regular expressions: [LUA regular expressions](https://riptutorial.com/lua/example/20315/lua-pattern-matching)
+  --    * @{#SET_DYNAMICCARGO.FilterZones}: Builds the SET_DYNAMICCARGO with the cargo within a @{Core.Zone#ZONE}.
+  --    * @{#SET_DYNAMICCARGO.FilterFunction}: Builds the SET_DYNAMICCARGO with a custom condition.
+  --    * @{#SET_DYNAMICCARGO.FilterCurrentOwner}: Builds the SET_DYNAMICCARGO with a specific owner name.
+  --    * @{#SET_DYNAMICCARGO.FilterIsLoaded}: Builds the SET_DYNAMICCARGO which is in state LOADED.
+  --    * @{#SET_DYNAMICCARGO.FilterIsNew}: Builds the SET_DYNAMICCARGO with is in state NEW.
+  --    * @{#SET_DYNAMICCARGO.FilterIsUnloaded}: Builds the SET_DYNAMICCARGO with is in state UNLOADED.
+  --    
+  -- Once the filter criteria have been set for the SET\_DYNAMICCARGO, you can start and stop filtering using:
+  --
+  --   * @{#SET_DYNAMICCARGO.FilterStart}: Starts the continous filtering of the objects within the SET_DYNAMICCARGO.
+  --   * @{#SET_DYNAMICCARGO.FilterStop}: Stops the continous filtering of the objects within the SET_DYNAMICCARGO.
+  --   * @{#SET_DYNAMICCARGO.FilterOnce}: Filters once for the objects within the SET_DYNAMICCARGO.
+  --
+  -- ## SET_DYNAMICCARGO iterators
+  --
+  -- Once the filters have been defined and the SET\_DYNAMICCARGO has been built, you can iterate the SET\_DYNAMICCARGO with the available iterator methods.
+  -- The iterator methods will walk the SET\_DYNAMICCARGO set, and call for each element within the set a function that you provide.
+  -- The following iterator methods are currently available within the SET\_DYNAMICCARGO:
+  --
+  --   * @{#SET_DYNAMICCARGO.ForEach}: Calls a function for each alive dynamic cargo it finds within the SET\_DYNAMICCARGO.
+  --
+  -- ## SET_DYNAMICCARGO atomic methods
+  --
+  -- Various methods exist for a SET_DYNAMICCARGO to perform actions or calculations and retrieve results from the SET\_DYNAMICCARGO:
+  --
+  --   * @{#SET_DYNAMICCARGO.GetOwnerClientObjects}(): Retrieve the type names of the @{Wrapper.Static}s in the SET, delimited by a comma.
+  --   * @{#SET_DYNAMICCARGO.GetOwnerNames}(): Retrieve the type names of the @{Wrapper.Static}s in the SET, delimited by a comma.
+  --   * @{#SET_DYNAMICCARGO.GetStorageObjects}(): Retrieve the type names of the @{Wrapper.Static}s in the SET, delimited by a comma.  
+  -- 
+  -- ===
   -- @field #SET_DYNAMICCARGO SET_DYNAMICCARGO
   SET_DYNAMICCARGO = {
     ClassName = "SET_DYNAMICCARGO",
@@ -8920,7 +8975,7 @@ do -- SET_DYNAMICCARGO
     return owners
   end
   
-  --- Returns a list @{Wrapper.Storage#STORAGE} objects from the SET indexed by cargo name.
+  --- Returns a list of @{Wrapper.Storage#STORAGE} objects from the SET indexed by cargo name.
   -- @param #SET_DYNAMICCARGO self
   -- @return #list<Wrapper.Storage#STORAGE> Storagelist
   function SET_DYNAMICCARGO:GetStorageObjects()
