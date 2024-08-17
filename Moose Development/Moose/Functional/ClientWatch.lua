@@ -20,7 +20,7 @@
 -- 
 -- ====
 -- @module Functional.ClientWatch
--- @image ClientWatch.JPG
+-- @image clientwatch.jpg
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- CLIENTWATCH class
@@ -28,6 +28,8 @@
 -- @field #string ClassName Name of the class.
 -- @field #boolean Debug Write Debug messages to DCS log file and send Debug messages to all players.
 -- @field #string lid String for DCS log file.
+-- @field #number FilterCoalition If not nil, will only activate for aircraft of the given coalition value.
+-- @field #number FilterCategory If not nil, will only activate for aircraft of the given category value.
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 --- Manage and track client slots easily to add your own client-based menus and modules to.
@@ -66,7 +68,7 @@
 --
 --          -- Create an instance with a client unit prefix and send them a message when they spawn
 --          local clientInstance = CLIENTWATCH:New("Rotary")
---          function clientInstance:OnAfterSpawn(From,Event,To,ClientObject)
+--          function clientInstance:OnAfterSpawn(From,Event,To,ClientObject,EventData)
 --              MESSAGE:New("Welcome to your aircraft!",10):ToUnit(ClientObject.Unit)
 --          end
 --
@@ -108,7 +110,7 @@
 --
 --          -- Show a message to player when they take damage from a weapon
 --          local clientInstance = CLIENTWATCH:New("Rotary")
---              function clientInstance:OnAfterSpawn(From,Event,To,ClientObject)
+--              function clientInstance:OnAfterSpawn(From,Event,To,ClientObject,EventData)
 --              function ClientObject:OnAfterHit(From,Event,To,EventData)
 --                 local typeShooter = EventData.IniTypeName
 --                 local nameWeapon = EventData.weapon_name
@@ -120,6 +122,7 @@
 CLIENTWATCH = {}
 CLIENTWATCH.ClassName = "CLIENTWATCH"
 CLIENTWATCH.Debug = false
+CLIENTWATCH.DebugEventData = false
 CLIENTWATCH.lid = nil
 
 -- @type CLIENTWATCHTools
@@ -139,13 +142,19 @@ CLIENTWATCH.version="1.0.1"
 
 --- Creates a new instance of CLIENTWATCH to add scripts to. Can be used multiple times with the same client/prefixes if you need it for multiple scripts.
 -- @param #CLIENTWATCH self
--- @param #string, #table, or Wrapper.Client#CLIENT client Takes multiple inputs. If provided a #string, it will watch for clients whos UNIT NAME or GROUP NAME matches part of the #string as a prefix. You can also provide it with a #table containing multiple #string prefixes. Lastly, you can provide it with a Wrapper.Client#CLIENT of the specific client you want to apply this to.
+-- @param #string Will watch for clients whos UNIT NAME or GROUP NAME matches part of the #string as a prefix.
+-- @param #table Put strings in a table to use multiple prefixes for the above method.
+-- @param Wrapper.Client#CLIENT Provide a Moose CLIENT object to apply to that specific aircraft slot (static slots only!)
+-- @param #nil Leave blank to activate for ALL CLIENTS
 -- @return #CLIENTWATCH self
 function CLIENTWATCH:New(client)
     --Init FSM
     local self=BASE:Inherit(self, FSM:New())
     self:SetStartState( "Idle" )
     self:AddTransition( "*", "Spawn", "*" )
+
+    self.FilterCoalition = nil
+    self.FilterCategory = nil
 
     --- User function for OnAfter "Spawn" event.
   -- @function [parent=#CLIENTWATCH] OnAfterSpawn
@@ -155,27 +164,50 @@ function CLIENTWATCH:New(client)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param #table clientObject Custom object that handles events and stores Moose object data. See top documentation for more details.
+  -- @param #table eventdata Data from EVENTS.Birth.
 
     --Set up spawn tracking
-    if type(client) == "table" or type(client) == "string" then
+    if not client then
+        if self.Debug then self:I({"New client instance created. ClientType = All clients"}) end
+        self:HandleEvent(EVENTS.Birth)
+        function self:OnEventBirth(eventdata)
+            if (eventdata.IniCategory == 0 or eventdata.IniCategory == 1) and eventdata.IniPlayerName 
+            and (not self.FilterCoalition or self.FilterCoalition == eventdata.IniCoalition) 
+            and (not self.FilterCategory or self.FilterCategory == eventdata.IniCategory) then
+                if self.Debug then 
+                    self:I({"Client spawned in.",IniCategory = eventdata.IniCategory})
+                end
+                local clientWatchDebug = self.Debug
+                local clientObject = CLIENTWATCHTools:_newClient(clientWatchDebug,eventdata)
+                self:Spawn(clientObject,eventdata)
+            end
+        end
+    elseif type(client) == "table" or type(client) == "string" then
         if type(client) == "table" then 
 
             --CLIENT TABLE
             if client.ClassName == "CLIENT" then
+                if self.Debug then self:I({"New client instance created. ClientType = Wrapper.CLIENT",client}) end
                 self.ClientName = client:GetName()
                 self:HandleEvent(EVENTS.Birth)
                 function self:OnEventBirth(eventdata)
-                    if self.Debug then UTILS.PrintTableToLog(eventdata) end
-                    if eventdata.IniCategory and eventdata.IniCategory <= 1 then
+                    if (eventdata.IniCategory == 0 or eventdata.IniCategory == 1) and eventdata.IniPlayerName 
+                    and (not self.FilterCoalition or self.FilterCoalition == eventdata.IniCoalition) 
+                    and (not self.FilterCategory or self.FilterCategory == eventdata.IniCategory) then
                         if self.ClientName == eventdata.IniUnitName then
-                            local clientObject = CLIENTWATCHTools:_newClient(eventdata)
-                            self:Spawn(clientObject)
+                            if self.Debug then 
+                                self:I({"Client spawned in.",IniCategory = eventdata.IniCategory})
+                            end
+                            local clientWatchDebug = self.Debug
+                            local clientObject = CLIENTWATCHTools:_newClient(clientWatchDebug,eventdata)
+                            self:Spawn(clientObject,eventdata)
                         end
                     end
                 end
 
             --STRING TABLE
             else
+                if self.Debug then self:I({"New client instance created. ClientType = Multiple Prefixes",client}) end
                 local tableValid = true
                 for _,entry in pairs(client) do
                     if type(entry) ~= "string" then
@@ -187,12 +219,17 @@ function CLIENTWATCH:New(client)
                 if tableValid then
                     self:HandleEvent(EVENTS.Birth)
                     function self:OnEventBirth(eventdata)
-                        if self.Debug then UTILS.PrintTableToLog(eventdata) end
                         for _,entry in pairs(client) do
-                            if eventdata.IniCategory and eventdata.IniCategory <= 1 then
+                            if (eventdata.IniCategory == 0 or eventdata.IniCategory == 1) and eventdata.IniPlayerName 
+                            and (not self.FilterCoalition or self.FilterCoalition == eventdata.IniCoalition) 
+                            and (not self.FilterCategory or self.FilterCategory == eventdata.IniCategory) then
                                 if string.match(eventdata.IniUnitName,entry) or string.match(eventdata.IniGroupName,entry) then
-                                    local clientObject = CLIENTWATCHTools:_newClient(eventdata)
-                                    self:Spawn(clientObject)
+                                    if self.Debug then 
+                                        self:I({"Client spawned in.",IniCategory = eventdata.IniCategory})
+                                    end
+                                    local clientWatchDebug = self.Debug
+                                    local clientObject = CLIENTWATCHTools:_newClient(clientWatchDebug,eventdata)
+                                    self:Spawn(clientObject,eventdata)
                                     break
                                 end
                             end
@@ -201,15 +238,21 @@ function CLIENTWATCH:New(client)
                 end
             end
         else
+            if self.Debug then self:I({"New client instance created. ClientType = Single Prefix",client}) end
 
             --SOLO STRING
             self:HandleEvent(EVENTS.Birth)
             function self:OnEventBirth(eventdata)
-                if self.Debug then UTILS.PrintTableToLog(eventdata) end
-                if eventdata.IniCategory and eventdata.IniCategory <= 1 then
+                if (eventdata.IniCategory == 0 or eventdata.IniCategory == 1) and eventdata.IniPlayerName 
+                and (not self.FilterCoalition or self.FilterCoalition == eventdata.IniCoalition) 
+                and (not self.FilterCategory or self.FilterCategory == eventdata.IniCategory) then
                     if string.match(eventdata.IniUnitName,client) or string.match(eventdata.IniGroupName,client) then
-                        local clientObject = CLIENTWATCHTools:_newClient(eventdata)
-                        self:Spawn(clientObject)
+                        if self.Debug then 
+                            self:I({"Client spawned in.",IniCategory = eventdata.IniCategory})
+                        end
+                        local clientWatchDebug = self.Debug
+                        local clientObject = CLIENTWATCHTools:_newClient(clientWatchDebug,eventdata)
+                        self:Spawn(clientObject,eventdata)
                     end
                 end
             end
@@ -222,13 +265,41 @@ function CLIENTWATCH:New(client)
     return self
 end
 
+
+--- Filter out all clients not belonging to the provided coalition
+-- @param #CLIENTWATCH self
+-- @param #number Coalition number (1 = red, 2 = blue)
+-- @param #string Coalition string ('red' or 'blue')
+function CLIENTWATCH:FilterByCoalition(value)
+    if value == 1 or value == "red" then
+        self.FilterCoalition = 1
+    else
+        self.FilterCoalition = 2
+    end
+    return self
+end
+
+
+--- Filter out all clients that are not of the given category
+-- @param #CLIENTWATCH self
+-- @param #number Category number (0 = airplane, 1 = helicopter)
+-- @param #string Category string ('airplane' or 'helicopter')
+function CLIENTWATCH:FilterByCategory(value)
+    if value == 1 or value == "helicopter" then
+        self.FilterCategory = 1
+    else
+        self.FilterCategory = 0
+    end
+    return self
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Internal function for creating a new client on birth. Do not use!!!.
 -- @param #CLIENTWATCHTools self
 -- @param #EVENTS.Birth EventData
 -- @return #CLIENTWATCHTools self
-function CLIENTWATCHTools:_newClient(eventdata)
+function CLIENTWATCHTools:_newClient(clientWatchDebug,eventdata)
     --Init FSM
     local self=BASE:Inherit(self, FSM:New())
     self:SetStartState( "Alive" )
@@ -299,78 +370,130 @@ function CLIENTWATCHTools:_newClient(eventdata)
 
     function self:OnEventHit(EventData)
         if EventData.TgtUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered hit event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:Hit(EventData)
         end
     end
 
     function self:OnEventKill(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered kill event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:Kill(EventData)
         end
     end
 
     function self:OnEventScore(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered score event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:Score(EventData)
         end
     end
 
     function self:OnEventShot(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered shot event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:Shot(EventData)
         end
     end
 
     function self:OnEventShootingStart(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered shooting start event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:ShootingStart(EventData)
         end
     end
 
     function self:OnEventShootingEnd(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered shooting end event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:ShootingEnd(EventData)
         end
     end
 
     function self:OnEventLand(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered land event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:Land(EventData)
         end
     end
 
     function self:OnEventTakeoff(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered takeoff event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:Takeoff(EventData)
         end
     end
 
     function self:OnEventRunwayTakeoff(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered runway takeoff event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:RunwayTakeoff(EventData)
         end
     end
 
     function self:OnEventRunwayTouch(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered runway touch event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:RunwayTouch(EventData)
         end
     end
 
     function self:OnEventRefueling(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered refueling event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:Refueling(EventData)
         end
     end
 
     function self:OnEventRefuelingStop(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered refueling event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:RefuelingStop(EventData)
         end
     end
 
     function self:OnEventPlayerLeaveUnit(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered leave unit event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:PlayerLeaveUnit(EventData)
             self._deadRoutine()
         end
@@ -378,6 +501,10 @@ function CLIENTWATCHTools:_newClient(eventdata)
 
     function self:OnEventCrash(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered crash event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:Crash(EventData)
             self._deadRoutine()
         end
@@ -385,6 +512,10 @@ function CLIENTWATCHTools:_newClient(eventdata)
 
     function self:OnEventDead(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered dead event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:Dead(EventData)
             self._deadRoutine()
         end
@@ -392,6 +523,10 @@ function CLIENTWATCHTools:_newClient(eventdata)
 
     function self:OnEventPilotDead(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered pilot dead event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:PilotDead(EventData)
             self._deadRoutine()
         end
@@ -399,6 +534,10 @@ function CLIENTWATCHTools:_newClient(eventdata)
 
     function self:OnEventUnitLost(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered unit lost event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:UnitLost(EventData)
             self._deadRoutine()
         end
@@ -406,6 +545,10 @@ function CLIENTWATCHTools:_newClient(eventdata)
 
     function self:OnEventEjection(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered ejection event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:Ejection(EventData)
             self._deadRoutine()
         end
@@ -413,6 +556,10 @@ function CLIENTWATCHTools:_newClient(eventdata)
 
     function self:OnEventHumanFailure(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered human failure event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:HumanFailure(EventData)
             if not self.Unit:IsAlive() then
                 self._deadRoutine()
@@ -422,42 +569,70 @@ function CLIENTWATCHTools:_newClient(eventdata)
 
     function self:OnEventHumanAircraftRepairFinish(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered repair finished event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:HumanAircraftRepairFinish(EventData)
         end
     end
 
     function self:OnEventHumanAircraftRepairStart(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered repair start event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:HumanAircraftRepairStart(EventData)
         end
     end
 
     function self:OnEventEngineShutdown(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered engine shutdown event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:EngineShutdown(EventData)
         end
     end
 
     function self:OnEventEngineStartup(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered engine startup event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:EngineStartup(EventData)
         end
     end
 
     function self:OnEventWeaponAdd(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered weapon add event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:WeaponAdd(EventData)
         end
     end
 
     function self:OnEventWeaponDrop(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered weapon drop event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:WeaponDrop(EventData)
         end
     end
 
     function self:OnEventWeaponRearm(EventData)
         if EventData.IniUnitName == self.UnitName then
+            if clientWatchDebug then
+                self:I({"Client triggered weapon rearm event.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+                
+            end
             self:WeaponRearm(EventData)
         end
     end
@@ -466,6 +641,9 @@ function CLIENTWATCHTools:_newClient(eventdata)
     --Fallback timer
     self.FallbackTimer = TIMER:New(function()
         if not self.Unit:IsAlive() then
+            if clientWatchDebug then
+                self:I({"Client is registered as dead without an event trigger. Running fallback dead routine.",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName})
+            end
             self._deadRoutine()
         end
     end)
@@ -473,6 +651,7 @@ function CLIENTWATCHTools:_newClient(eventdata)
 
     --Stop event handlers and trigger Despawn
     function self._deadRoutine()
+        if clientWatchDebug then self:I({"Client dead routine triggered. Shutting down tracking...",Player = self.PlayerName,Group = self.GroupName,Unit = self.UnitName}) end
         self:UnHandleEvent( EVENTS.Hit )
         self:UnHandleEvent( EVENTS.Kill )
         self:UnHandleEvent( EVENTS.Score )
@@ -503,6 +682,6 @@ function CLIENTWATCHTools:_newClient(eventdata)
         self:Despawn()
     end
     
-    self:I({"CLIENT SPAWN EVENT", PlayerName = self.PlayerName, UnitName = self.UnitName, GroupName = self.GroupName})
+    self:I({"Detected client spawn and applied internal functions and events.", PlayerName = self.PlayerName, UnitName = self.UnitName, GroupName = self.GroupName})
     return self
 end
