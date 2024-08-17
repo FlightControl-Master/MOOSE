@@ -801,6 +801,7 @@ do
 --          my_ctld.enableChinookGCLoading = true -- will effectively suppress the crate load and drop menus for CTLD for the Chinook
 --          my_ctld.movecratesbeforebuild = false -- cannot detect movement of crates at the moment
 --          my_ctld.nobuildinloadzones = true -- don't build where you load.
+--          my_ctld.ChinookTroopCircleRadius = 5 -- Radius for troops dropping in a nice circle. Adjust to your planned squad size for the Chinook.
 --          
 -- ## 2.2 User functions
 -- 
@@ -1206,6 +1207,7 @@ CTLD = {
   dropOffZones = {},
   pickupZones  = {},
   DynamicCargo = {},
+  ChinookTroopCircleRadius = 5,
 }
 
 ------------------------------
@@ -1950,7 +1952,60 @@ function CTLD:_EventHandler(EventData)
       self:_SendMessage(string.format("Crate %s loaded by ground crew!",event.IniDynamicCargoName), 10, false, Group)
       self:__CratesPickedUp(1, Group, client, dcargo)
     end
-    --self:ScheduleOnce(0.5,RegisterDynamicCargo)
+    ---------------
+    -- End new dynamic cargo system Handling
+    --------------
+  elseif event.id == EVENTS.DynamicCargoUnloaded then
+    self:T(self.lid.."GC Unload Event "..event.IniDynamicCargoName)
+    ---------------
+    -- New dynamic cargo system Handling UNLOADING
+    --------------
+    local dcargo = event.IniDynamicCargo -- Wrapper.DynamicCargo#DYNAMICCARGO
+    -- get client/unit object
+    local client = CLIENT:FindByPlayerName(dcargo.Owner)
+    if client and client:IsAlive() then
+      -- add to unit load list
+      local unitname = client:GetName() or "none"
+      local loaded = {}
+      if self.Loaded_Cargo[unitname] then
+        loaded = self.Loaded_Cargo[unitname] -- #CTLD.LoadedCargo
+        loaded.Cratesloaded = loaded.Cratesloaded - 1
+        if loaded.Cratesloaded < 0  then loaded.Cratesloaded = 0 end
+        -- TODO zap cargo from list
+        local Loaded = {}
+        for _,_item in pairs (loaded.Cargo or {}) do
+          self:T(self.lid.."UNLOAD checking: ".._item:GetName())
+          self:T(self.lid.."UNLOAD state: ".. tostring(_item:WasDropped()))
+          if _item and _item:GetType() == CTLD_CARGO.Enum.GCLOADABLE and event.IniDynamicCargoName and event.IniDynamicCargoName ~= _item:GetName() and not _item:WasDropped() then
+            table.insert(Loaded,_item)
+          else
+            table.insert(Loaded,_item)
+          end 
+        end
+        loaded.Cargo = nil
+        loaded.Cargo = Loaded
+        self.Loaded_Cargo[unitname] = nil
+        self.Loaded_Cargo[unitname] = loaded
+      else
+        loaded = {} -- #CTLD.LoadedCargo
+        loaded.Troopsloaded = 0
+        loaded.Cratesloaded = 0
+        loaded.Cargo = {}
+        self.Loaded_Cargo[unitname] = loaded
+      end
+      local Group = client:GetGroup()
+      self:_SendMessage(string.format("Crate %s unloaded by ground crew!",event.IniDynamicCargoName), 10, false, Group) 
+      self:__CratesDropped(1,Group,client,{dcargo})
+    end
+    ---------------
+    -- End new dynamic cargo system Handling
+    --------------
+  elseif event.id == EVENTS.DynamicCargoRemoved then
+    self:T(self.lid.."GC Remove Event "..event.IniDynamicCargoName)
+    ---------------
+    -- New dynamic cargo system Handling REMOVE
+    --------------
+    self.DynamicCargo[event.IniDynamicCargoName] = nil
     ---------------
     -- End new dynamic cargo system Handling
     --------------
@@ -3381,6 +3436,8 @@ function CTLD:_UnloadTroops(Group, Unit)
             randomcoord:Translate(offset,Angle,nil,true)
           end
           local tempcount = 0
+          local ishook = self:IsHook(Unit)
+          if ishook then tempcount = self.ChinookTroopCircleRadius or 5 end -- 10m circle for the Chinook
           for _,_template in pairs(temptable) do
             self.TroopCounter = self.TroopCounter + 1
             tempcount = tempcount+1
