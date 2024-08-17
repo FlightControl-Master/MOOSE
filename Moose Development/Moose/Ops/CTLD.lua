@@ -801,6 +801,7 @@ do
 --          my_ctld.enableChinookGCLoading = true -- will effectively suppress the crate load and drop menus for CTLD for the Chinook
 --          my_ctld.movecratesbeforebuild = false -- cannot detect movement of crates at the moment
 --          my_ctld.nobuildinloadzones = true -- don't build where you load.
+--          my_ctld.ChinookTroopCircleRadius = 5 -- Radius for troops dropping in a nice circle. Adjust to your planned squad size for the Chinook.
 --          
 -- ## 2.2 User functions
 -- 
@@ -1206,6 +1207,7 @@ CTLD = {
   dropOffZones = {},
   pickupZones  = {},
   DynamicCargo = {},
+  ChinookTroopCircleRadius = 5,
 }
 
 ------------------------------
@@ -3434,6 +3436,8 @@ function CTLD:_UnloadTroops(Group, Unit)
             randomcoord:Translate(offset,Angle,nil,true)
           end
           local tempcount = 0
+          local ishook = self:IsHook(Unit)
+          if ishook then tempcount = self.ChinookTroopCircleRadius or 5 end -- 10m circle for the Chinook
           for _,_template in pairs(temptable) do
             self.TroopCounter = self.TroopCounter + 1
             tempcount = tempcount+1
