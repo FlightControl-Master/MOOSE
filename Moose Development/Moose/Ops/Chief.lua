@@ -34,6 +34,7 @@
 -- @field Ops.Commander#COMMANDER commander Commander of assigned legions.
 -- @field #number Nsuccess Number of successful missions.
 -- @field #number Nfailure Number of failed mission.
+-- @field #table assetNumbers Asset numbers. Each entry is a table of data type `#CHIEF.AssetNumber`.
 -- @extends Ops.Intel#INTEL
 
 --- *In preparing for battle I have always found that plans are useless, but planning is indispensable* -- Dwight D Eisenhower
@@ -331,7 +332,7 @@ CHIEF.Strategy = {
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.6.0"
+CHIEF.version="0.6.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1284,8 +1285,10 @@ end
 -- 
 -- Empty:
 -- 
--- * `AUFTRAG.Type.ONGURAD` with Nmin=1 and Nmax=1 assets, Attribute=`GROUP.Attribute.GROUND_TANK`.
+-- * `AUFTRAG.Type.ONGURAD` with Nmin=0 and Nmax=1 assets, Attribute=`GROUP.Attribute.GROUND_TANK`.
+-- * `AUFTRAG.Type.ONGURAD` with Nmin=0 and Nmax=1 assets, Attribute=`GROUP.Attribute.GROUND_IFV`.
 -- * `AUFTRAG.Type.ONGUARD` with Nmin=1 and Nmax=3 assets, Attribute=`GROUP.Attribute.GROUND_INFANTRY`.
+-- * `AUFTRAG.Type.OPSTRANSPORT` with Nmin=0 and Nmax=1 assets, Attribute=`GROUP.Attribute.AIR_TRANSPORTHELO` or `GROUP.Attribute.GROUND_APC`. This asset is used to transport the infantry groups.
 -- 
 -- Resources can be created with the @{#CHIEF.CreateResource} and @{#CHIEF.AddToResource} functions.
 -- 
@@ -3033,10 +3036,13 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
   end
 
   -- Recruite infantry assets.
+  self:T(self.lid..string.format("Recruiting assets for zone %s", StratZone.opszone:GetName()))
   self:T(self.lid.."Missiontype="..MissionType)
   self:T({categories=Categories})
   self:T({attributes=Attributes})
   self:T({properties=Properties})
+  
+  
   local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, RangeMax, nil, nil, nil, nil, Categories, Attributes, Properties)
   
   if recruited then
@@ -3052,8 +3058,11 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
     local TargetCoord = TargetZone:GetCoordinate()
 
     -- First check if we need a transportation.
-    local transport=nil    
+    local transport=nil --Ops.OpsTransport#OPSTRANSPORT
+    local Ntransports=0
     if Resource.carrierNmin and Resource.carrierNmax and Resource.carrierNmax>0 then
+    
+      self:T(self.lid..string.format("Recruiting carrier assets: Nmin=%s, Nmax=%s", tostring(Resource.carrierNmin), tostring(Resource.carrierNmax)))
     
       -- Filter only those assets that shall be transported.
       local cargoassets=CHIEF._FilterAssets(assets, Resource.Categories, Resource.Attributes, Resource.Properties)
@@ -3063,6 +3072,10 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
         -- Recruit transport carrier assets.
         recruited, transport=LEGION.AssignAssetsForTransport(self.commander, self.commander.legions, cargoassets, 
         Resource.carrierNmin, Resource.carrierNmax, TargetZone, nil, Resource.carrierCategories, Resource.carrierAttributes, Resource.carrierProperties)
+        
+        Ntransports=transport~=nil and #transport.assets or 0
+        
+        self:T(self.lid..string.format("Recruited %d transport carrier assets success=%s", Ntransports, tostring(recruited)))
         
       end
     
@@ -3076,7 +3089,7 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
       return false
     end
 
-    -- Debug messgage.
+    -- Debug message
     self:T2(self.lid..string.format("Recruited %d assets for mission %s", #assets, MissionType))
     
   
@@ -3224,10 +3237,13 @@ function CHIEF:RecruitAssetsForZone(StratZone, Resource)
       -- Attach mission to ops zone.
       StratZone.opszone:_AddMission(self.coalition, MissionType, mission)
       
+      mission:SetName(string.format("Stratzone %s-%d", StratZone.opszone:GetName(), mission.auftragsnummer))
+      
       -- Attach mission to resource.
       Resource.mission=mission
       
-      if transport then
+      -- Check if transport assets could be allocated. If carrier Nmin=0 and 0 assets could be allocated, transport would still be created but not usefull obviously
+      if transport and Ntransports>0 then
         -- Attach OPS transport to mission.
         mission.opstransport=transport
         -- Set ops zone to transport.
