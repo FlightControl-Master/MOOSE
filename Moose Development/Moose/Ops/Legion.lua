@@ -2806,7 +2806,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
   
   -- Break if no assets could be found
   if #Assets==0 then
-    env.info(string.format("LEGION.RecruitCohortAssets: No assets could be recruited for mission type %s [Nmin=%s, Nmax=%s]", MissionTypeRecruit, tostring(NreqMin), tostring(NreqMax)))
+    --env.info(string.format("LEGION.RecruitCohortAssets: No assets could be recruited for mission type %s [Nmin=%s, Nmax=%s]", MissionTypeRecruit, tostring(NreqMin), tostring(NreqMax)))
     return false, {}, {}  
   end
   
