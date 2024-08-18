@@ -2003,12 +2003,13 @@ do
     if self.Filter.Categories and MGroupInclude then
       local MGroupCategory = false
       for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-        --self:T3( { "Category:", MGroup:GetCategory(), self.FilterMeta.Categories[CategoryName], CategoryName } )
+        --self:I( { "Category:", MGroup:GetCategory(), self.FilterMeta.Categories[CategoryName], CategoryName } )
         if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MGroup:GetCategory() then
           MGroupCategory = true
         end
       end
       MGroupInclude = MGroupInclude and MGroupCategory
+      --self:I("Is Included: "..tostring(MGroupInclude))
     end
 
     if self.Filter.Countries and MGroupInclude then
@@ -2025,12 +2026,13 @@ do
     if self.Filter.GroupPrefixes and MGroupInclude then
       local MGroupPrefix = false
       for GroupPrefixId, GroupPrefix in pairs( self.Filter.GroupPrefixes ) do
-        --self:T3( { "Prefix:", string.find( MGroup:GetName(), GroupPrefix, 1 ), GroupPrefix } )
-        if string.find( MGroup:GetName(), GroupPrefix:gsub( "-", "%%-" ), 1 ) then
+        --self:I( { "Prefix:", MGroup:GetName(), GroupPrefix } )
+        if string.find( string.lower(MGroup:GetName()), string.lower(GroupPrefix), 1 ) or string.find( string.lower(MGroup:GetName()), string.lower(GroupPrefix), 1, true ) then
           MGroupPrefix = true
         end
       end
       MGroupInclude = MGroupInclude and MGroupPrefix
+      --self:I("Is Included: "..tostring(MGroupInclude))
     end
     
     if self.Filter.Zones and MGroupInclude then
@@ -2050,7 +2052,7 @@ do
       MGroupInclude = MGroupInclude and MGroupFunc
     end
      
-    --self:T2( MGroupInclude )
+    --self:I( MGroupInclude )
     return MGroupInclude
   end
 

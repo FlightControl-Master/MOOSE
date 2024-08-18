@@ -516,7 +516,7 @@ function GROUP:GetCategory()
   local DCSGroup = self:GetDCSObject()
   if DCSGroup then
     local GroupCategory = DCSGroup:getCategory()
-    self:T3( GroupCategory )
+    --self:I( GroupCategory )
     return GroupCategory
   end
 
