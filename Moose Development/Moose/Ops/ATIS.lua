@@ -2137,7 +2137,7 @@ function ATIS:onafterBroadcast( From, Event, To )
   local cloudbase = clouds.base
   local cloudceil = clouds.base + clouds.thickness
   local clouddens = clouds.density
-
+    
   -- Cloud preset (DCS 2.7)
   local cloudspreset = clouds.preset or "Nothing"
 
@@ -2163,6 +2163,39 @@ function ATIS:onafterBroadcast( From, Event, To )
   elseif cloudspreset:find( "RainyPreset3" ) then
     -- Overcast + Rain
     clouddens = 9
+    if temperature > 5 then
+      precepitation = 1 -- rain
+    else
+      precepitation = 3 -- snow
+    end
+  elseif cloudspreset:find( "RainyPreset4" ) then
+    -- Overcast + Rain
+    clouddens = 5
+    if temperature > 5 then
+      precepitation = 1 -- rain
+    else
+      precepitation = 3 -- snow
+    end
+  elseif cloudspreset:find( "RainyPreset5" ) then
+    -- Overcast + Rain
+    clouddens = 5
+    if temperature > 5 then
+      precepitation = 1 -- rain
+    else
+      precepitation = 3 -- snow
+    end
+  elseif cloudspreset:find( "RainyPreset6" ) then
+    -- Overcast + Rain
+    clouddens = 5
+    if temperature > 5 then
+      precepitation = 1 -- rain
+    else
+      precepitation = 3 -- snow
+    end
+    -- NEWRAINPRESET4
+  elseif cloudspreset:find( "NEWRAINPRESET4" ) then
+    -- Overcast + Rain
+    clouddens = 5
     if temperature > 5 then
       precepitation = 1 -- rain
     else

@@ -177,7 +177,7 @@ end
 --
 --   -- Send the 2 messages created with the @{New} method to the Client Group.
 --   -- Note that the Message of MessageClient2 is overwriting the Message of MessageClient1.
---   Client = CLIENT:FindByName("UnitNameOfMyClient")
+--   Client = CLIENT:FindByName("NameOfClientUnit")
 --
 --   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", 25, "Score" ):ToClient( Client )
 --   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", 25, "Score" ):ToClient( Client )
@@ -192,7 +192,7 @@ end
 --
 function MESSAGE:ToClient( Client, Settings )
   self:F( Client )
-  self:ToUnit(Client, Settings) 
+  self:ToUnit(Client,Settings)
   return self
 end
 
@@ -239,6 +239,7 @@ function MESSAGE:ToUnit( Unit, Settings )
 
     if self.MessageDuration ~= 0 then
       self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+      local ID = Unit:GetID()
       trigger.action.outTextForUnit( Unit:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration, self.ClearScreen )
     end
   end
@@ -377,7 +378,8 @@ end
 --- Sends a MESSAGE to all players. 
 -- @param #MESSAGE self
 -- @param Core.Settings#Settings Settings (Optional) Settings for message display.
--- @return #MESSAGE
+-- @param #number Delay (Optional) Delay in seconds before the message is send. Default instantly (`nil`).
+-- @return #MESSAGE self
 -- @usage
 --
 --   -- Send a message created to all players.
@@ -388,18 +390,24 @@ end
 --   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", 25, "End of Mission")
 --   MessageAll:ToAll()
 --
-function MESSAGE:ToAll( Settings )
+function MESSAGE:ToAll( Settings, Delay )
   self:F()
 
-  if self.MessageType then
-    local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
-    self.MessageDuration = Settings:GetMessageTime( self.MessageType )
-    self.MessageCategory = "" -- self.MessageType .. ": "
-  end
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, MESSAGE.ToAll, self, Settings, 0)
+  else
 
-  if self.MessageDuration ~= 0 then
-    self:T( self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ) .. " / " .. self.MessageDuration )
-    trigger.action.outText( self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ), self.MessageDuration, self.ClearScreen )
+    if self.MessageType then
+      local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
+      self.MessageDuration = Settings:GetMessageTime( self.MessageType )
+      self.MessageCategory = "" -- self.MessageType .. ": "
+    end
+  
+    if self.MessageDuration ~= 0 then
+      self:T( self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ) .. " / " .. self.MessageDuration )
+      trigger.action.outText( self.MessageCategory .. self.MessageText:gsub( "\n$", "" ):gsub( "\n$", "" ), self.MessageDuration, self.ClearScreen )
+    end
+    
   end
 
   return self

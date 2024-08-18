@@ -1629,7 +1629,7 @@ WAREHOUSE = {
 -- @field #boolean arrived If true, asset arrived at its destination.
 -- 
 -- @field #number damage Damage of asset group in percent.
--- @field Ops.AirWing#AIRWING.Payload payload The payload of the asset.
+-- @field Ops.Airwing#AIRWING.Payload payload The payload of the asset.
 -- @field Ops.OpsGroup#OPSGROUP flightgroup The flightgroup object.
 -- @field Ops.Cohort#COHORT cohort The cohort this asset belongs to.
 -- @field Ops.Legion#LEGION legion The legion this asset belonts to.
