@@ -2619,6 +2619,8 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
     local RangeMax = RangeMax or 0    
     local InRange=(RangeMax and math.max(RangeMax, Rmax) or Rmax) >= TargetDistance
     
+    --env.info(string.format("Range TargetDist=%.1f Rmax=%.1f RangeMax=%.1f InRange=%s", TargetDistance, Rmax, RangeMax, tostring(InRange)))
+    
     return InRange    
   end
 
@@ -2684,7 +2686,7 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
   else
     Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of category", Cohort.name))
     return false  
-  end  
+  end
   
   if can then
     can=CheckAttribute(Cohort)
@@ -2740,7 +2742,7 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
   else
     Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of max weight", Cohort.name))
     return false
-  end  
+  end
   
   return nil
 end
@@ -2784,6 +2786,8 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     
     -- Check if cohort can do the mission.
     local can=LEGION._CohortCan(cohort, MissionTypeRecruit, Categories, Attributes, Properties, WeaponTypes, TargetVec2, RangeMax, RefuelSystem, CargoWeight, MaxWeight)
+
+    --env.info(string.format("RecruitCohortAssets %s Cohort=%s can=%s", MissionTypeRecruit, cohort:GetName(), tostring(can)))
     
     -- Check OnDuty, capable, in range and refueling type (if TANKER).
     if can then
@@ -2798,6 +2802,12 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
       
     end
     
+  end
+  
+  -- Break if no assets could be found
+  if #Assets==0 then
+    --env.info(string.format("LEGION.RecruitCohortAssets: No assets could be recruited for mission type %s [Nmin=%s, Nmax=%s]", MissionTypeRecruit, tostring(NreqMin), tostring(NreqMax)))
+    return false, {}, {}  
   end
   
   -- Now we have a long list with assets.
