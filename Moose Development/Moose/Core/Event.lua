@@ -1530,7 +1530,9 @@ function EVENT:onEvent( Event )
       if Event.dynamiccargo then
         Event.IniDynamicCargo = Event.dynamiccargo
         Event.IniDynamicCargoName = Event.IniDynamicCargo.StaticName
-        Event.IniPlayerName = Event.IniDynamicCargo.Owner or string.match(Event.IniUnitName,"^(.+)|%d%d:%d%d|PKG%d+")
+        if Event.IniDynamicCargo.Owner or Event.IniUnitName then
+          Event.IniPlayerName = Event.IniDynamicCargo.Owner or string.match(Event.IniUnitName or "None|00:00|PKG00","^(.+)|%d%d:%d%d|PKG%d+")
+        end
       end
 
       -- Zone object.
