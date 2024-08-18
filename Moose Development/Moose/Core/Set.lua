@@ -9009,6 +9009,5 @@ do -- SET_DYNAMICCARGO
     )  
     return owners
   end
-  
 
 end
