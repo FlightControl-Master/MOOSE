@@ -1148,10 +1148,10 @@ function CONTROLLABLE:TaskStrafing( Vec2, AttackQty, Length, WeaponType, WeaponE
     id = 'Strafing',
     params = {
      point = Vec2, -- req
-     weaponType = WeaponType or 1073741822,
+     weaponType = WeaponType or 805337088, -- Default 805337088 corresponds to guns/cannons (805306368) + any rocket (30720). You can set other types but then the AI uses even bombs for a strafing run!
      expend = WeaponExpend or "Auto",
      attackQty = AttackQty or 1,  -- req
-     attackQtyLimit = AttackQty >1 and true or false,
+     attackQtyLimit = AttackQty~=nil and true or false,
      direction = Direction and math.rad(Direction) or 0,
      directionEnabled = Direction and true or false,
      groupAttack = GroupAttack or false,

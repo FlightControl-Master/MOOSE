@@ -27,7 +27,7 @@
 --   * @{#SET_CARGO}: Defines a collection of @{Cargo.Cargo}s filtered by filter criteria.
 --   * @{#SET_ZONE}: Defines a collection of @{Core.Zone}s filtered by filter criteria.
 --   * @{#SET_SCENERY}: Defines a collection of @{Wrapper.Scenery}s added via a filtered @{#SET_ZONE}.
---   * @{#SET_DYNAMICCARGO}: Defines a collection of @{Wrapper.DynamicCargo}s added via a filtered @{#SET_ZONE}.
+--   * @{#SET_DYNAMICCARGO}: Defines a collection of @{Wrapper.DynamicCargo}s filtered by filter criteria.
 --
 -- These classes are derived from @{#SET_BASE}, which contains the main methods to manage the collections.
 --
