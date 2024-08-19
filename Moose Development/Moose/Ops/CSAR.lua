@@ -963,7 +963,6 @@ end
 -- @param Core.Point#COORDINATE Point
 -- @param #number Coalition Coalition.
 -- @param #string Description (optional) Description.
--- @param #boolean addBeacon (optional) yes or no.
 -- @param #boolean Nomessage (optional) If true, don\'t send a message to SAR.
 -- @param #string Unitname (optional) Name of the lost unit.
 -- @param #string Typename (optional) Type of plane.
