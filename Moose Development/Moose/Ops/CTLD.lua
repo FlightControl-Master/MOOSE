@@ -2939,8 +2939,8 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
       local agl = staticpos.y-landheight
       agl = UTILS.Round(agl,2)
       local GCloaded = agl > 0 and true or false
-	    if IsNoHook == true then GCloaded = false end
-	    --]]
+      if IsNoHook == true then GCloaded = false end
+      --]]
       --- Testing
       local distance = self:_GetDistance(location,staticpos)
       --self:T({name=static:GetName(),IsHook=IsHook,agl=agl,GCloaded=GCloaded,distance=string.format("%.2f",distance or 0)})
