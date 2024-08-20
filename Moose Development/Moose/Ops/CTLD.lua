@@ -773,8 +773,8 @@ do
 --          my_ctld.RadioSound = "beacon.ogg" -- -- this sound will be hearable if you tune in the beacon frequency. Add the sound file to your miz.
 --          my_ctld.RadioSoundFC3 = "beacon.ogg" -- this sound will be hearable by FC3 users (actually all UHF radios); change to something like "beaconsilent.ogg" and add the sound file to your miz if you don't want to annoy FC3 pilots.
 --          my_ctld.enableChinookGCLoading = true -- this will effectively suppress the crate load and drop for CTLD_CARGO.Enum.STATIc types for CTLD for the Chinook
---          my_ctld.TroopUnloadDistGround = 1.5 -- If hovering, spawn dropped troops this far away from the helo
---          my_ctld.TroopUnloadDistHover = 5 -- If grounded, spawn dropped troops this far away from the helo
+--          my_ctld.TroopUnloadDistGround = 5 -- If hovering, spawn dropped troops this far away in meters from the helo
+--          my_ctld.TroopUnloadDistHover = 1.5 -- If grounded, spawn dropped troops this far away in meters from the helo
 -- 
 -- ## 2.1 CH-47 Chinook support
 -- 
@@ -1210,8 +1210,8 @@ CTLD = {
   pickupZones  = {},
   DynamicCargo = {},
   ChinookTroopCircleRadius = 5,
-  TroopUnloadDistGround = 1.5,
-  TroopUnloadDistHover = 5,
+  TroopUnloadDistGround = 5,
+  TroopUnloadDistHover = 1.5,
 }
 
 ------------------------------
@@ -1316,7 +1316,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.12"
+CTLD.version="1.1.13"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3436,7 +3436,7 @@ function CTLD:_UnloadTroops(Group, Unit)
             randomcoord = Group:GetCoordinate()
             -- slightly left from us           
             local Angle = (heading+270)%360
-            local offset = hoverunload and self.TroopUnloadDistGround or self.TroopUnloadDistHover
+            local offset = hoverunload and self.TroopUnloadDistHover or self.TroopUnloadDistGround
             randomcoord:Translate(offset,Angle,nil,true)
           end
           local tempcount = 0
