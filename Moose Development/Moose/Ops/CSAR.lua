@@ -274,6 +274,7 @@ CSAR = {
 -- @field #number timestamp Timestamp for approach process.
 -- @field #boolean alive Group is alive or dead/rescued.
 -- @field #boolean wetfeet Group is spawned over (deep) water.
+-- @field #string BeaconName Name of radio beacon - if any.
 
 --- All slot / Limit settings
 -- @type CSAR.AircraftType
@@ -636,7 +637,7 @@ end
 -- @param #string Playername Name of Player (if applicable)
 -- @param #boolean Wetfeet Ejected over water
 -- @return #CSAR self.
-function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Description,Typename,Frequency,Playername,Wetfeet)
+function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Description,Typename,Frequency,Playername,Wetfeet,BeaconName)
   self:T({"_CreateDownedPilotTrack",Groupname,Side,OriginalUnit,Description,Typename,Frequency,Playername})
   
   -- create new entry
@@ -644,7 +645,7 @@ function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Descript
   DownedPilot.desc = Description or ""
   DownedPilot.frequency = Frequency or 0
   DownedPilot.index = self.downedpilotcounter
-  DownedPilot.name = Groupname or ""
+  DownedPilot.name = Groupname or Playername or ""
   DownedPilot.originalUnit = OriginalUnit or ""
   DownedPilot.player = Playername or ""
   DownedPilot.side = Side or 0
@@ -653,6 +654,7 @@ function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Descript
   DownedPilot.timestamp = 0
   DownedPilot.alive = true
   DownedPilot.wetfeet = Wetfeet or false
+  DownedPilot.BeaconName = BeaconName
   
   -- Add Pilot
   local PilotTable = self.downedPilots
@@ -821,8 +823,18 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   end
   end
   
+  local BeaconName
+  
+  if _playerName then
+    BeaconName = _unitName..math.random(1,10000)
+  elseif _unitName then
+    BeaconName = _playerName..math.random(1,10000)
+  else
+    BeaconName = "Ghost-1-1"..math.random(1,10000)
+  end
+  
   if (_freq and _freq ~= 0) then --shagrat only add beacon if _freq is NOT 0 
-    self:_AddBeaconToGroup(_spawnedGroup, _freq)
+    self:_AddBeaconToGroup(_spawnedGroup, _freq, BeaconName)
   end
   
   self:_AddSpecialOptions(_spawnedGroup)
@@ -847,7 +859,7 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   
   local _GroupName = _spawnedGroup:GetName() or _alias
 
-  self:_CreateDownedPilotTrack(_spawnedGroup,_GroupName,_coalition,_unitName,_text,_typeName,_freq,_playerName,wetfeet)
+  self:_CreateDownedPilotTrack(_spawnedGroup,_GroupName,_coalition,_unitName,_text,_typeName,_freq,_playerName,wetfeet,BeaconName)
 
   self:_InitSARForPilot(_spawnedGroup, _unitName, _freq, noMessage, _playerName) --shagrat use unitName to have the aircraft callsign / descriptive "name" etc.
   
@@ -2232,11 +2244,13 @@ end
 -- @param #CSAR self
 -- @param Wrapper.Group#GROUP _group Group #GROUP object.
 -- @param #number _freq Frequency to use
+-- @param #string _name Beacon Name to use
 -- @return #CSAR self
-function CSAR:_AddBeaconToGroup(_group, _freq)
+function CSAR:_AddBeaconToGroup(_group, _freq, _name)
     self:T(self.lid .. " _AddBeaconToGroup")
     if self.CreateRadioBeacons == false then return end
     local _group = _group   
+    
     if _group == nil then
         --return frequency to pool of available
         for _i, _current in ipairs(self.UsedVHFFrequencies) do
@@ -2256,9 +2270,10 @@ function CSAR:_AddBeaconToGroup(_group, _freq)
         local name = _radioUnit:GetName()
         local Sound =  "l10n/DEFAULT/"..self.radioSound
         local vec3 = _radioUnit:GetVec3() or _radioUnit:GetPositionVec3() or {x=0,y=0,z=0}
-        trigger.action.radioTransmission(Sound, vec3, 0, false, Frequency, self.ADFRadioPwr or 1000,name..math.random(1,10000)) -- Beacon in MP only runs for exactly 30secs straight
+        trigger.action.radioTransmission(Sound, vec3, 0, false, Frequency, self.ADFRadioPwr or 1000,_name) -- Beacon in MP only runs for exactly 30secs straight
       end
     end
+    
     return self
 end
 
@@ -2275,8 +2290,10 @@ function CSAR:_RefreshRadioBeacons()
         local pilot = _pilot -- #CSAR.DownedPilot
         local group = pilot.group
         local frequency = pilot.frequency or 0 -- thanks to @Thrud
+        local bname = pilot.BeaconName or pilot.name..math.random(1,100000)
+        trigger.action.stopRadioTransmission(bname)
         if group and group:IsAlive() and frequency > 0 then
-          self:_AddBeaconToGroup(group,frequency)
+          self:_AddBeaconToGroup(group,frequency,bname)
         end
       end
     end
