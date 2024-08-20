@@ -31,7 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 ---
--- Last Update July 2024
+-- Last Update Aug 2024
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -136,6 +136,7 @@
 --       mycsar.csarUsePara = false -- If set to true, will use the LandingAfterEjection Event instead of Ejection. Requires mycsar.enableForAI to be set to true. --shagrat
 --       mycsar.wetfeettemplate = "man in floating thingy" -- if you use a mod to have a pilot in a rescue float, put the template name in here for wet feet spawns. Note: in conjunction with csarUsePara this might create dual ejected pilots in edge cases.
 --       mycsar.allowbronco = false  -- set to true to use the Bronco mod as a CSAR plane
+--       mycsar.CreateRadioBeacons = true -- set to false to disallow creating ADF radio beacons.
 --        
 -- ## 3. Results
 -- 
@@ -256,6 +257,7 @@ CSAR = {
   topmenuname = "CSAR",
   ADFRadioPwr = 1000,
   PilotWeight = 80,
+  CreateRadioBeacons = true,
 }
 
 --- Downed pilots info.
@@ -297,7 +299,7 @@ CSAR.AircraftType["CH-47Fbl1"] = 31
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.26"
+CSAR.version="1.0.27"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -963,7 +965,6 @@ end
 -- @param Core.Point#COORDINATE Point
 -- @param #number Coalition Coalition.
 -- @param #string Description (optional) Description.
--- @param #boolean addBeacon (optional) yes or no.
 -- @param #boolean Nomessage (optional) If true, don\'t send a message to SAR.
 -- @param #string Unitname (optional) Name of the lost unit.
 -- @param #string Typename (optional) Type of plane.
@@ -1856,11 +1857,11 @@ function CSAR:_DisplayActiveSAR(_unitName)
         else
           distancetext = string.format("%.1fkm", _distance/1000.0)
         end
-    if _value.frequency == 0 then--shagrat insert CASEVAC without Frequency
-      table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %s ", _value.desc, _coordinatesText, distancetext) })
-    else
-      table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %.2f KHz ADF - %s ", _value.desc, _coordinatesText, _value.frequency / 1000, distancetext) })
-    end
+        if _value.frequency == 0 or self.CreateRadioBeacons == false then--shagrat insert CASEVAC without Frequency
+          table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %s ", _value.desc, _coordinatesText, distancetext) })
+        else
+          table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %.2f KHz ADF - %s ", _value.desc, _coordinatesText, _value.frequency / 1000, distancetext) })
+        end
     end
   end
   
@@ -2231,8 +2232,10 @@ end
 -- @param #CSAR self
 -- @param Wrapper.Group#GROUP _group Group #GROUP object.
 -- @param #number _freq Frequency to use
+-- @return #CSAR self
 function CSAR:_AddBeaconToGroup(_group, _freq)
     self:T(self.lid .. " _AddBeaconToGroup")
+    if self.CreateRadioBeacons == false then return end
     local _group = _group   
     if _group == nil then
         --return frequency to pool of available
@@ -2248,7 +2251,7 @@ function CSAR:_AddBeaconToGroup(_group, _freq)
     if _group:IsAlive() then
       local _radioUnit = _group:GetUnit(1)
       if _radioUnit then    
-     local name = _radioUnit:GetName()
+        local name = _radioUnit:GetName()
         local Frequency = _freq -- Freq in Hertz
         local name = _radioUnit:GetName()
         local Sound =  "l10n/DEFAULT/"..self.radioSound
@@ -2261,9 +2264,10 @@ end
 
 --- (Internal) Helper function to (re-)add beacon to downed pilot.
 -- @param #CSAR self
--- @param #table _args Arguments
+-- @return #CSAR self
 function CSAR:_RefreshRadioBeacons()
     self:T(self.lid .. " _RefreshRadioBeacons")
+    if self.CreateRadioBeacons == false then return end
     if self:_CountActiveDownedPilots() > 0 then
       local PilotTable = self.downedPilots
       for _,_pilot in pairs (PilotTable) do
