@@ -18085,7 +18085,7 @@ function AIRBOSS:_MarkCaseZones( _unitName, flare )
             self:_GetZoneArcIn( case ):FlareZone( FLARECOLOR.White, 45 )
             text = text .. "\n* arc turn in with WHITE flares"
             self:_GetZoneArcOut( case ):FlareZone( FLARECOLOR.White, 45 )
-            text = text .. "\n* arc trun out with WHITE flares"
+            text = text .. "\n* arc turn out with WHITE flares"
           end
         end
 
@@ -18137,7 +18137,7 @@ function AIRBOSS:_MarkCaseZones( _unitName, flare )
             self:_GetZoneArcIn( case ):SmokeZone( SMOKECOLOR.Blue, 45 )
             text = text .. "\n* arc turn in with BLUE smoke"
             self:_GetZoneArcOut( case ):SmokeZone( SMOKECOLOR.Blue, 45 )
-            text = text .. "\n* arc trun out with BLUE smoke"
+            text = text .. "\n* arc turn out with BLUE smoke"
           end
         end
 

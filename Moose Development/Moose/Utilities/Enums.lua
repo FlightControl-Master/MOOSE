@@ -580,12 +580,22 @@ ENUMS.Link16Power = {
 --- Enums for the STORAGE class for stores - which need to be in ""
 -- @type ENUMS.Storage
 -- @type ENUMS.Storage.weapons
+-- @type ENUMS.Storage.weapons.missiles
+-- @type ENUMS.Storage.weapons.bombs
+-- @type ENUMS.Storage.weapons.nurs
+-- @type ENUMS.Storage.weapons.containers
+-- @type ENUMS.Storage.weapons.droptanks
+-- @type ENUMS.Storage.weapons.adapters
+-- @type ENUMS.Storage.weapons.torpedoes
 ENUMS.Storage = {
   weapons = {
     missiles = {}, -- Missiles
     bombs = {}, -- Bombs
     nurs = {}, --  Rockets and unguided
-    containers = {}, -- Containers
+    containers = {
+      Gazelle = {}, -- Gazelle specifics
+      CH47 = {}, -- Chinook specifics
+    }, -- Containers
     droptanks = {}, -- Droptanks
     adapters = {}, -- Adapter
     torpedoes = {}, -- Torpedoes
@@ -1148,4 +1158,25 @@ ENUMS.Storage.weapons.bombs.BDU_50LD = "weapons.bombs.BDU_50LD"
 ENUMS.Storage.weapons.bombs.AGM_62 = "weapons.bombs.AGM_62"
 ENUMS.Storage.weapons.containers.US_M10_SMOKE_TANK_WHITE = "weapons.containers.{US_M10_SMOKE_TANK_WHITE}" 
 ENUMS.Storage.weapons.missiles.MICA_T = "weapons.missiles.MICA_T" 
-ENUMS.Storage.weapons.containers.HVAR_rocket = "weapons.containers.HVAR_rocket" 
+ENUMS.Storage.weapons.containers.HVAR_rocket = "weapons.containers.HVAR_rocket"
+-- Gazelle
+ENUMS.Storage.weapons.containers.Gazelle.HMP400_100RDS = {4,15,46,1771}
+ENUMS.Storage.weapons.containers.Gazelle.HMP400_200RDS = {4,15,46,1770}
+ENUMS.Storage.weapons.containers.Gazelle.HMP400_400RDS = {4,15,46,1769}
+ENUMS.Storage.weapons.containers.Gazelle.GIAT_M261_AP = {4,15,46,1768}
+ENUMS.Storage.weapons.containers.Gazelle.GIAT_M261_SAPHEI = {4,15,46,1767}
+ENUMS.Storage.weapons.containers.Gazelle.GIAT_M261_HE = {4,15,46,1766}
+ENUMS.Storage.weapons.containers.Gazelle.GIAT_M261_HEAP = {4,15,46,1765}
+ENUMS.Storage.weapons.containers.Gazelle.GIAT_M261_APHE = {4,15,46,1764}
+ENUMS.Storage.weapons.containers.Gazelle.GAZELLE_IR_DEFLECTOR = {4,15,47,680}
+ENUMS.Storage.weapons.containers.Gazelle.GAZELLE_FAS_SANDFILTER = {4,15,47,679}
+-- Chinook
+ENUMS.Storage.weapons.containers.CH47.CH47_PORT_M60D = {4,15,46,2476}
+ENUMS.Storage.weapons.containers.CH47.CH47_STBD_M60D = {4,15,46,2477}
+ENUMS.Storage.weapons.containers.CH47.CH47_AFT_M60D = {4,15,46,2478}
+ENUMS.Storage.weapons.containers.CH47.CH47_PORT_M134D = {4,15,46,2482}
+ENUMS.Storage.weapons.containers.CH47.CH47_STBD_M134D = {4,15,46,2483}
+ENUMS.Storage.weapons.containers.CH47.CH47_AFT_M3M = {4,15,46,2484}
+ENUMS.Storage.weapons.containers.CH47.CH47_PORT_M240H = {4,15,46,2479}
+ENUMS.Storage.weapons.containers.CH47.CH47_STBD_M240H = {4,15,46,2480}
+ENUMS.Storage.weapons.containers.CH47.CH47_AFT_M240H = {4,15,46,2481}
