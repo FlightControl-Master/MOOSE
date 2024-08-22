@@ -2350,17 +2350,19 @@ end
 --- Function to generate valid VHF frequencies in kHz for radio beacons (FM).
 -- @return #table VHFrequencies
 function UTILS.GenerateVHFrequencies()
-
+  
   -- known and sorted map-wise NDBs in kHz
   local _skipFrequencies = {
-  214,274,291.5,295,297.5,
-  300.5,304,305,307,309.5,311,312,312.5,316,
-  320,324,328,329,330,332,336,337,
-  342,343,348,351,352,353,358,
-  363,365,368,372.5,374,
-  380,381,384,385,389,395,396,
-  414,420,430,432,435,440,450,455,462,470,485,
-  507,515,520,525,528,540,550,560,570,577,580,
+  214,243,264,273,274,288,291.5,295,297.5,
+  300.5,304,305,307,309.5,310,311,312,312.5,316,317,
+  320,323,324,325,326,328,329,330,332,335,336,337,
+  340,342,343,346,348,351,352,353,358,
+  360,363,364,365,368,372.5,373,374,
+  380,381,384,385,387,389,391,395,396,399,
+  403,404,410,412,414,418,420,423,
+  430,432,435,440,445,
+  450,455,462,470,485,490,
+  507,515,520,525,528,540,550,560,563,570,577,580,595,
   602,625,641,662,670,680,682,690,
   705,720,722,730,735,740,745,750,770,795,
   822,830,862,866,
@@ -4089,4 +4091,111 @@ function UTILS.LCGRandom()
   end
   UTILS.lcg.seed = (UTILS.lcg.a * UTILS.lcg.seed + UTILS.lcg.c) % UTILS.lcg.m
   return UTILS.lcg.seed / UTILS.lcg.m
+end
+
+--- Spawns a new FARP of a defined type and coalition and functional statics (fuel depot, ammo storage, tent, windsock) around that FARP to make it operational.
+-- Adds vehicles from template if given. Fills the FARP warehouse with liquids and known materiels.
+-- References: [DCS Forum Topic](https://forum.dcs.world/topic/282989-farp-equipment-to-run-it)
+-- @param #string Name Name of this FARP installation. Must be unique. 
+-- @param Core.Point#COORDINATE Coordinate Where to spawn the FARP.
+-- @param #string FARPType Type of FARP, can be one of the known types ENUMS.FARPType.FARP, ENUMS.FARPType.INVISIBLE, ENUMS.FARPType.HELIPADSINGLE, ENUMS.FARPType.PADSINGLE. Defaults to ENUMS.FARPType.FARP.
+-- @param #number Coalition Coalition of this FARP, i.e. coalition.side.BLUE or coalition.side.RED, defaults to coalition.side.BLUE.
+-- @param #number Country Country of this FARP, defaults to country.id.USA (blue) or country.id.RUSSIA (red).
+-- @param #number CallSign Callsign of the FARP ATC, defaults to CALLSIGN.FARP.Berlin.
+-- @param #number Frequency Frequency of the FARP ATC Radio, defaults to 127.5 (MHz).
+-- @param #number Modulation Modulation of the FARP ATC Radio, defaults to radio.modulation.AM.
+-- @param #number ADF ADF Beacon (FM) Frequency in KHz, e.g. 428. If not nil, creates an VHF/FM ADF Beacon for this FARP. Requires a sound called "beacon.ogg" to be in the mission (trigger "sound to" ...)
+-- @param #number SpawnRadius Radius of the FARP, i.e. where the FARP objects will be placed in meters, not more than 150m away. Defaults to 100.
+-- @param #string VehicleTemplate, template name for additional vehicles. Can be nil for no additional vehicles.
+-- @param #number Liquids Tons of fuel to be added initially to the FARP. Defaults to 10 (tons). Set to 0 for no fill.
+-- @param #number Equipment Number of equipment items per known item to be added initially to the FARP. Defaults to 10 (items). Set to 0 for no fill.
+-- @return #list<Wrapper.Static#STATIC> Table of spawned objects and vehicle object (if given).
+-- @return #string ADFBeaconName Name of the ADF beacon, to be able to remove/stop it later.
+function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,Country,CallSign,Frequency,Modulation,ADF,SpawnRadius,VehicleTemplate,Liquids,Equipment)
+  
+  -- Set Defaults
+  local farplocation = Coordinate
+  local farptype = FARPType or ENUMS.FARPType.FARP
+  local Coalition = Coalition or coalition.side.BLUE
+  local callsign = CallSign or CALLSIGN.FARP.Berlin
+  local freq = Frequency or 127.5
+  local mod = Modulation or radio.modulation.AM
+  local radius = SpawnRadius or 100
+  if radius < 0 or radius > 150 then radius = 100 end
+  local liquids = Liquids or 10
+  liquids = liquids * 1000 -- tons to kg
+  local equip = Equipment or 10
+  local statictypes = ENUMS.FARPObjectTypeNamesAndShape[farptype] or {TypeName="FARP", ShapeName="FARPS"}
+  local STypeName = statictypes.TypeName
+  local SShapeName = statictypes.ShapeName
+  local Country = Country or (Coalition == coalition.side.BLUE and country.id.USA or country.id.RUSSIA)
+  local ReturnObjects = {}
+  
+  -- Spawn FARP
+  local newfarp = SPAWNSTATIC:NewFromType(STypeName,"Heliports",Country) --  "Invisible FARP" "FARP"
+  newfarp:InitShape(SShapeName) -- "invisiblefarp" "FARPS"
+  newfarp:InitFARP(callsign,freq,freq)
+  local spawnedfarp = newfarp:SpawnFromCoordinate(farplocation,0,Name)
+  table.insert(ReturnObjects,spawnedfarp)
+  -- Spawn Objects
+  local FARPStaticObjectsNato = {
+    ["FUEL"] = { TypeName = "FARP Fuel Depot", ShapeName = "GSM Rus", Category = "Fortifications"},
+    ["AMMO"] = { TypeName = "FARP Ammo Dump Coating", ShapeName = "SetkaKP", Category = "Fortifications"},
+    ["TENT"] = { TypeName = "FARP Tent", ShapeName = "PalatkaB", Category = "Fortifications"},
+    ["WINDSOCK"]  = { TypeName = "Windsock", ShapeName = "H-Windsock_RW", Category = "Fortifications"},
+  }
+    
+  local farpobcount = 0
+  for _name,_object in pairs(FARPStaticObjectsNato) do
+    local objloc = farplocation:Translate(100,farpobcount*30)
+    local heading = objloc:HeadingTo(farplocation)
+    local newobject = SPAWNSTATIC:NewFromType(_object.TypeName,_object.Category,Country)
+    newobject:InitShape(_object.ShapeName)
+    newobject:InitHeading(heading)
+    newobject:SpawnFromCoordinate(objloc,farpobcount*30,_name.." - "..Name)
+    table.insert(ReturnObjects,newobject)
+    farpobcount = farpobcount + 1
+  end
+  
+  -- Vehicle if any
+  if VehicleTemplate and type(VehicleTemplate) == "string" then
+    local vcoordinate = farplocation:Translate(100,farpobcount*30)
+    local heading = vcoordinate:HeadingTo(farplocation)
+    local vehicles = SPAWN:NewWithAlias(VehicleTemplate,"FARP Vehicles - "..Name)
+    vehicles:InitGroupHeading(heading)
+    vehicles:InitCountry(Country)
+    vehicles:InitCoalition(Coalition)
+    vehicles:InitDelayOff()
+    local spawnedvehicle = vehicles:SpawnFromCoordinate(vcoordinate)
+    table.insert(ReturnObjects,spawnedvehicle)
+  end
+  
+  local newWH = STORAGE:New(Name)
+  if liquids and liquids > 0 then
+    -- Storage fill-up
+    newWH:SetLiquid(STORAGE.Liquid.DIESEL,liquids) -- kgs to tons
+    newWH:SetLiquid(STORAGE.Liquid.GASOLINE,liquids)
+    newWH:SetLiquid(STORAGE.Liquid.JETFUEL,liquids)
+    newWH:SetLiquid(STORAGE.Liquid.MW50,liquids)
+  end
+  
+  if equip and equip > 0 then
+    for cat,nitem in pairs(ENUMS.Storage.weapons) do
+      for name,item in pairs(nitem) do
+        newWH:SetItem(item,equip)
+      end
+    end
+  end
+  
+  local ADFName
+  if ADF and type(ADF) == "number" then
+    local ADFFreq = ADF*1000 -- KHz to Hz
+    local Sound =  "l10n/DEFAULT/beacon.ogg"
+    local vec3 = farplocation:GetVec3()
+    ADFName = Name .. " ADF "..tostring(ADF).."KHz"
+    --BASE:I(string.format("Adding FARP Beacon %d KHz Name %s",ADF,ADFName))
+    trigger.action.radioTransmission(Sound, vec3, 0, true, ADFFreq, 250, ADFName)
+  end
+  
+  return ReturnObjects, ADFName
 end
