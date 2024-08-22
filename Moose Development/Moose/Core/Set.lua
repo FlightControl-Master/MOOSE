@@ -2027,7 +2027,7 @@ do
       local MGroupPrefix = false
       for GroupPrefixId, GroupPrefix in pairs( self.Filter.GroupPrefixes ) do
         --self:I( { "Prefix:", MGroup:GetName(), GroupPrefix } )
-        if string.find( string.lower(MGroup:GetName()), string.lower(GroupPrefix), 1 ) or string.find( string.lower(MGroup:GetName()), string.lower(GroupPrefix), 1, true ) then
+        if string.find(MGroup:GetName(), string.gsub(GroupPrefix,"-","%%-"),1) then
           MGroupPrefix = true
         end
       end
