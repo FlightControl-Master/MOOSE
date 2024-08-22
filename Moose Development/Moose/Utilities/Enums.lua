@@ -592,13 +592,12 @@ ENUMS.Storage = {
     missiles = {}, -- Missiles
     bombs = {}, -- Bombs
     nurs = {}, --  Rockets and unguided
-    containers = {
-      Gazelle = {}, -- Gazelle specifics
-      CH47 = {}, -- Chinook specifics
-    }, -- Containers
+    containers = {}, -- Containers
     droptanks = {}, -- Droptanks
     adapters = {}, -- Adapter
     torpedoes = {}, -- Torpedoes
+    Gazelle = {}, -- Gazelle specifics
+    CH47 = {}, -- Chinook specifics
   }
 }
 
@@ -1160,23 +1159,52 @@ ENUMS.Storage.weapons.containers.US_M10_SMOKE_TANK_WHITE = "weapons.containers.{
 ENUMS.Storage.weapons.missiles.MICA_T = "weapons.missiles.MICA_T" 
 ENUMS.Storage.weapons.containers.HVAR_rocket = "weapons.containers.HVAR_rocket"
 -- Gazelle
-ENUMS.Storage.weapons.containers.Gazelle.HMP400_100RDS = {4,15,46,1771}
-ENUMS.Storage.weapons.containers.Gazelle.HMP400_200RDS = {4,15,46,1770}
-ENUMS.Storage.weapons.containers.Gazelle.HMP400_400RDS = {4,15,46,1769}
-ENUMS.Storage.weapons.containers.Gazelle.GIAT_M261_AP = {4,15,46,1768}
-ENUMS.Storage.weapons.containers.Gazelle.GIAT_M261_SAPHEI = {4,15,46,1767}
-ENUMS.Storage.weapons.containers.Gazelle.GIAT_M261_HE = {4,15,46,1766}
-ENUMS.Storage.weapons.containers.Gazelle.GIAT_M261_HEAP = {4,15,46,1765}
-ENUMS.Storage.weapons.containers.Gazelle.GIAT_M261_APHE = {4,15,46,1764}
-ENUMS.Storage.weapons.containers.Gazelle.GAZELLE_IR_DEFLECTOR = {4,15,47,680}
-ENUMS.Storage.weapons.containers.Gazelle.GAZELLE_FAS_SANDFILTER = {4,15,47,679}
+ENUMS.Storage.weapons.Gazelle.HMP400_100RDS = {4,15,46,1771}
+ENUMS.Storage.weapons.Gazelle.HMP400_200RDS = {4,15,46,1770}
+ENUMS.Storage.weapons.Gazelle.HMP400_400RDS = {4,15,46,1769}
+ENUMS.Storage.weapons.Gazelle.GIAT_M261_AP = {4,15,46,1768}
+ENUMS.Storage.weapons.Gazelle.GIAT_M261_SAPHEI = {4,15,46,1767}
+ENUMS.Storage.weapons.Gazelle.GIAT_M261_HE = {4,15,46,1766}
+ENUMS.Storage.weapons.Gazelle.GIAT_M261_HEAP = {4,15,46,1765}
+ENUMS.Storage.weapons.Gazelle.GIAT_M261_APHE = {4,15,46,1764}
+ENUMS.Storage.weapons.Gazelle.GAZELLE_IR_DEFLECTOR = {4,15,47,680}
+ENUMS.Storage.weapons.Gazelle.GAZELLE_FAS_SANDFILTER = {4,15,47,679}
 -- Chinook
-ENUMS.Storage.weapons.containers.CH47.CH47_PORT_M60D = {4,15,46,2476}
-ENUMS.Storage.weapons.containers.CH47.CH47_STBD_M60D = {4,15,46,2477}
-ENUMS.Storage.weapons.containers.CH47.CH47_AFT_M60D = {4,15,46,2478}
-ENUMS.Storage.weapons.containers.CH47.CH47_PORT_M134D = {4,15,46,2482}
-ENUMS.Storage.weapons.containers.CH47.CH47_STBD_M134D = {4,15,46,2483}
-ENUMS.Storage.weapons.containers.CH47.CH47_AFT_M3M = {4,15,46,2484}
-ENUMS.Storage.weapons.containers.CH47.CH47_PORT_M240H = {4,15,46,2479}
-ENUMS.Storage.weapons.containers.CH47.CH47_STBD_M240H = {4,15,46,2480}
-ENUMS.Storage.weapons.containers.CH47.CH47_AFT_M240H = {4,15,46,2481}
+ENUMS.Storage.weapons.CH47.CH47_PORT_M60D = {4,15,46,2476}
+ENUMS.Storage.weapons.CH47.CH47_STBD_M60D = {4,15,46,2477}
+ENUMS.Storage.weapons.CH47.CH47_AFT_M60D = {4,15,46,2478}
+ENUMS.Storage.weapons.CH47.CH47_PORT_M134D = {4,15,46,2482}
+ENUMS.Storage.weapons.CH47.CH47_STBD_M134D = {4,15,46,2483}
+ENUMS.Storage.weapons.CH47.CH47_AFT_M3M = {4,15,46,2484}
+ENUMS.Storage.weapons.CH47.CH47_PORT_M240H = {4,15,46,2479}
+ENUMS.Storage.weapons.CH47.CH47_STBD_M240H = {4,15,46,2480}
+ENUMS.Storage.weapons.CH47.CH47_AFT_M240H = {4,15,46,2481}
+
+
+---
+-- @type ENUMS.FARPType
+-- @field #string FARP
+-- @field #string INVISIBLE
+-- @field #string HELIPADSINGLE
+-- @field #string PADSINGLE
+ENUMS.FARPType = {
+  FARP = "FARP",
+  INVISIBLE = "INVISIBLE",
+  HELIPADSINGLE = "HELIPADSINGLE",
+  PADSINGLE = "PADSINGLE",  
+}
+
+
+---
+-- @type ENUMS.FARPObjectTypeNamesAndShape
+-- @field #string FARP
+-- @field #string INVISIBLE
+-- @field #string HELIPADSINGLE
+-- @field #string PADSINGLE
+ENUMS.FARPObjectTypeNamesAndShape ={
+  [ENUMS.FARPType.FARP] = { TypeName="FARP", ShapeName="FARPS"},
+  [ENUMS.FARPType.INVISIBLE] = { TypeName="Invisible FARP", ShapeName="invisiblefarp"},
+  [ENUMS.FARPType.HELIPADSINGLE] = { TypeName="SINGLE_HELIPAD", ShapeName="FARP"},
+  [ENUMS.FARPType.PADSINGLE] = { TypeName="FARP_SINGLE_01", ShapeName="FARP_SINGLE_01"},
+}
+
