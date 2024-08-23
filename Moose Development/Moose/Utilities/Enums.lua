@@ -591,6 +591,7 @@ ENUMS.Link16Power = {
 -- @type ENUMS.Storage.weapons.CH47
 -- @type ENUMS.Storage.weapons.OH58
 -- @type ENUMS.Storage.weapons.UH1H
+-- @type ENUMS.Storage.weapons.AH64D
 ENUMS.Storage = {
   weapons = {
     missiles = {}, -- Missiles
@@ -604,6 +605,7 @@ ENUMS.Storage = {
     CH47 = {}, -- Chinook specifics
     OH58 = {}, -- Kiowa specifics
     UH1H = {}, -- Huey specifics
+    AH64D = {}, -- Huey specifics
   }
 }
 
@@ -1205,6 +1207,9 @@ ENUMS.Storage.weapons.OH58.Smk_Grenade_Red  =  {4,5,9,483}
 ENUMS.Storage.weapons.OH58.Smk_Grenade_Violet  =  {4,5,9,486}
 ENUMS.Storage.weapons.OH58.Smk_Grenade_White  =  {4,5,9,488}
 ENUMS.Storage.weapons.OH58.Smk_Grenade_Yellow  =  {4,5,9,487}
+-- Apache
+ENUMS.Storage.weapons.AH64D.AN_APG78 = {4,15,44,2138}
+ENUMS.Storage.weapons.AH64D.Internal_Aux_FuelTank = {1,3,43,1700}
 
 ---
 -- @type ENUMS.FARPType
