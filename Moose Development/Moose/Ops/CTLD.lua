@@ -1305,7 +1305,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.13"
+CTLD.version="1.1.14"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
