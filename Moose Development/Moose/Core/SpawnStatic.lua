@@ -472,7 +472,11 @@ end
 function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
 
   Template=Template or {}
-
+  
+  if not Template.alt then
+    Template.alt = land.getHeight( {x = Template.x, y = Template.y} )
+  end
+  
   local CountryID=CountryID or self.CountryID
 
   if self.InitStaticType then
@@ -486,7 +490,7 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
   if self.InitStaticCoordinate then
     Template.x   = self.InitStaticCoordinate.x
     Template.y   = self.InitStaticCoordinate.z
-    Template.alt = self.InitStaticCoordinate.y
+    Template.alt = self.InitStaticCoordinate.y or land.getHeight( {x = Template.x, y = Template.z} )
   end
 
   if self.InitStaticHeading then
