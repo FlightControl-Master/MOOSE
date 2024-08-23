@@ -26,6 +26,11 @@
 
 -- Last Update Aug 2024
 
+
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- TODO CTLD_CARGO
+------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
 do 
 
 ------------------------------------------------------
@@ -47,6 +52,9 @@ do
 -- @field #boolean DontShowInMenu Show this item in menu or not.
 -- @field Core.Zone#ZONE Location Location (if set) where to get this cargo item.
 -- @field #table ResourceMap Resource Map information table if it has been set for static cargo items.
+-- @field #string StaticShape Individual shape if set.
+-- @field #string StaticType Individual type if set.
+-- @field #list<#string> TypeNames Table of unit types able to pick this cargo up.
 -- @extends Core.Base#BASE
 
 ---
@@ -126,10 +134,37 @@ CTLD_CARGO = {
     self.Subcategory = Subcategory or "Other"
     self.DontShowInMenu = DontShowInMenu or false
     self.ResourceMap = nil
+    self.StaticType = nil -- "container_cargo"
+    self.StaticShape = nil
+    self.TypeNames = nil
     if type(Location) == "string" then
       Location = ZONE:New(Location)
     end
     self.Location = Location
+    return self
+  end
+  
+  --- Add specific static type and shape to this CARGO.
+  -- @param #CTLD_CARGO self
+  -- @param #string TypeName
+  -- @param #string ShapeName
+  -- @return #CTLD_CARGO self
+  function CTLD_CARGO:SetStaticTypeAndShape(TypeName,ShapeName)
+    self.StaticType = TypeName or "container_cargo"
+    self.StaticShape = ShapeName
+    return self
+  end
+  
+  --- Add specific unit types to this CARGO (restrict what types can pick this up).
+  -- @param #CTLD_CARGO self
+  -- @param #string UnitTypes Unit type name, can also be a #list<#string> table of unit type names.
+  -- @return #CTLD_CARGO self
+  function CTLD_CARGO:AddUnitTypeName(UnitTypes)
+    if not self.TypeNames then self.TypeNames = {} end
+    if type(UnitTypes) ~= "table" then UnitTypes = {UnitTypes} end
+    for _,_singletype in pairs(UnitTypes or {}) do
+      self.TypeNames[_singletype]=_singletype
+    end
     return self
   end
   
@@ -1087,101 +1122,55 @@ do
 -- 
 --            my_ctld:AddCratesCargo("FARP",{"FOB"},CTLD_CARGO.Enum.FOB,2)
 --            
--- Also, you need to have **all statics with the fitting names** as per the script in your mission already, as we're going to copy them, and a template 
--- for FARP vehicles, so -- services are goin to work (e.g. for the blue side: an unarmed humvee, two trucks and a fuel truck. Optionally add a fire fighter).
--- 
--- The following code will build a FARP at the coordinate the FOB was dropped and built:
+-- The following code will build a FARP at the coordinate the FOB was dropped and built (the UTILS function used below **does not** need a template for the statics):
 --            
---            -- FARP Radio. First one has 130AM, next 131 and for forth
---            local FARPFreq = 130
---            local FARPName = 1 -- numbers 1..10
---  
---            local FARPClearnames = {
---              [1]="London",
---              [2]="Dallas",
---              [3]="Paris",
---              [4]="Moscow",
---              [5]="Berlin",
---              [6]="Rome",
---              [7]="Madrid",
---              [8]="Warsaw",
---              [9]="Dublin",
---              [10]="Perth",
---              }
---  
---              function BuildAFARP(Coordinate)
---                local coord = Coordinate -- Core.Point#COORDINATE
---    
---                local FarpName = ((FARPName-1)%10)+1
---                local FName = FARPClearnames[FarpName]
---                
---                FARPFreq = FARPFreq + 1
---                FARPName = FARPName + 1
+--          -- FARP Radio. First one has 130AM name London, next 131 name Dallas, and so forth. 
+--          local FARPFreq = 129
+--          local FARPName = 1  --numbers 1..10
+-- 
+--          local FARPClearnames = {
+--            [1]="London",
+--            [2]="Dallas",
+--            [3]="Paris",
+--            [4]="Moscow",
+--            [5]="Berlin",
+--            [6]="Rome",
+--            [7]="Madrid",
+--            [8]="Warsaw",
+--            [9]="Dublin",
+--            [10]="Perth",
+--            }
+-- 
+--          function BuildAFARP(Coordinate)
+--            local coord = Coordinate  --Core.Point#COORDINATE
 --
---                -- Create a SPAWNSTATIC object from a template static FARP object.
---                local SpawnStaticFarp=SPAWNSTATIC:NewFromStatic("Static Invisible FARP-1", country.id.USA)
---    
---                -- Spawning FARPs is special in DCS. Therefore, we need to specify that this is a FARP. We also set the callsign and the frequency.
---                SpawnStaticFarp:InitFARP(FARPName, FARPFreq, 0)
---                SpawnStaticFarp:InitDead(false)
---    
---                -- Spawn FARP 
---                local ZoneSpawn = ZONE_RADIUS:New("FARP "..FName,Coordinate:GetVec2(),160,false)
---                local Heading = 0
---                local FarpBerlin=SpawnStaticFarp:SpawnFromZone(ZoneSpawn, Heading, "FARP "..FName)
---    
---                -- ATC and services - put them 125m from the center of the zone towards North
---                local FarpVehicles = SPAWN:NewWithAlias("FARP Vehicles Template","FARP "..FName.." Technicals")
---                FarpVehicles:InitHeading(180)
---                local FarpVCoord = coord:Translate(125,0)
---                FarpVehicles:SpawnFromCoordinate(FarpVCoord)
---    
---                -- We will put the rest of the statics in a nice circle around the center
---                local base = 330
---                local delta = 30
---    
---                local windsock = SPAWNSTATIC:NewFromStatic("Static Windsock-1",country.id.USA)
---                local sockcoord = coord:Translate(125,base)
---                windsock:SpawnFromCoordinate(sockcoord,Heading,"Windsock "..FName)
---                base=base-delta
---    
---                local fueldepot = SPAWNSTATIC:NewFromStatic("Static FARP Fuel Depot-1",country.id.USA)
---                local fuelcoord = coord:Translate(125,base)
---                fueldepot:SpawnFromCoordinate(fuelcoord,Heading,"Fueldepot "..FName)
---                base=base-delta
---    
---                local ammodepot = SPAWNSTATIC:NewFromStatic("Static FARP Ammo Storage-2-1",country.id.USA)
---                local ammocoord = coord:Translate(125,base)
---                ammodepot:SpawnFromCoordinate(ammocoord,Heading,"Ammodepot "..FName)
---                base=base-delta
---    
---                local CommandPost = SPAWNSTATIC:NewFromStatic("Static FARP Command Post-1",country.id.USA)
---                local CommandCoord = coord:Translate(125,base)
---                CommandPost:SpawnFromCoordinate(CommandCoord,Heading,"Command Post "..FName)
---                base=base-delta
---    
---                local Tent1 = SPAWNSTATIC:NewFromStatic("Static FARP Tent-11",country.id.USA)
---                local Tent1Coord = coord:Translate(125,base)
---                Tent1:SpawnFromCoordinate(Tent1Coord,Heading,"Command Tent "..FName)
---                base=base-delta
---    
---                local Tent2 = SPAWNSTATIC:NewFromStatic("Static FARP Tent-11",country.id.USA)
---                local Tent2Coord = coord:Translate(125,base)
---                Tent2:SpawnFromCoordinate(Tent2Coord,Heading,"Command Tent2 "..FName)
---     
---                -- add a loadzone to CTLD
---                my_ctld:AddCTLDZone("FARP "..FName,CTLD.CargoZoneType.LOAD,SMOKECOLOR.Blue,true,true)
---                local m  = MESSAGE:New(string.format("FARP %s in operation!",FName),15,"CTLD"):ToBlue() 
---              end
+--            local FarpNameNumber = ((FARPName-1)%10)+1 -- make sure 11 becomes 1 etc
+--            local FName = FARPClearnames[FarpNameNumber] -- get clear namee
 --  
---              function my_ctld:OnAfterCratesBuild(From,Event,To,Group,Unit,Vehicle)
---                local name = Vehicle:GetName()
---                if string.match(name,"FOB",1,true) then
---                  local Coord = Vehicle:GetCoordinate()
---                  Vehicle:Destroy(false)
---                  BuildAFARP(Coord) 
---                end
---              end
+--            FARPFreq = FARPFreq + 1
+--            FARPName = FARPName + 1
+--  
+--            FName = FName .. " FAT COW "..tostring(FARPFreq).."AM" -- make name unique
+--  
+--            -- Get a Zone for loading 
+--            local ZoneSpawn = ZONE_RADIUS:New("FARP "..FName,Coordinate:GetVec2(),150,false)
+--  
+--            -- Spawn a FARP with our little helper and fill it up with resources (10t fuel each type, 10 pieces of each known equipment)
+--            UTILS.SpawnFARPAndFunctionalStatics(FName,Coordinate,ENUMS.FARPType.INVISIBLE,my_ctld.coalition,country.id.USA,FarpNameNumber,FARPFreq,radio.modulation.AM,nil,nil,nil,10,10)
+-- 
+--            -- add a loadzone to CTLD
+--            my_ctld:AddCTLDZone("FARP "..FName,CTLD.CargoZoneType.LOAD,SMOKECOLOR.Blue,true,true)
+--            local m  = MESSAGE:New(string.format("FARP %s in operation!",FName),15,"CTLD"):ToBlue() 
+--          end
+--
+--          function my_ctld:OnAfterCratesBuild(From,Event,To,Group,Unit,Vehicle)
+--            local name = Vehicle:GetName()
+--            if string.find(name,"FOB",1,true) then
+--              local Coord = Vehicle:GetCoordinate()
+--              Vehicle:Destroy(false)
+--              BuildAFARP(Coord) 
+--            end
+--          end
 -- 
 -- 
 -- @field #CTLD
@@ -2724,31 +2713,33 @@ function CTLD:InjectStatics(Zone, Cargo, RandomCoord)
   local cratename = cargotype:GetName()
   local cgotype = cargotype:GetType()
   local cgomass = cargotype:GetMass()
-  local cratealias = string.format("%s-%s-%d", cratename, cratetemplate, math.random(1,100000))
-  local isstatic = false
-  if cgotype == CTLD_CARGO.Enum.STATIC then
-    cratetemplate = cargotype:GetTemplates()
-    isstatic = true
+  local cratenumber = cargotype:GetCratesNeeded() or 1
+  for i=1,cratenumber do
+    local cratealias = string.format("%s-%s-%d", cratename, cratetemplate, math.random(1,100000))
+    local isstatic = false
+    if cgotype == CTLD_CARGO.Enum.STATIC then
+      cratetemplate = cargotype:GetTemplates()
+      isstatic = true
+    end
+    local basetype = self.basetype or "container_cargo"
+    if isstatic then
+      basetype = cratetemplate
+    end
+    self.CrateCounter = self.CrateCounter + 1
+    local spawnstatic = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
+      :InitCargoMass(cgomass)
+      :InitCargo(self.enableslingload)
+      :InitCoordinate(cratecoord)
+    if isstatic then
+      local map = cargotype:GetStaticResourceMap()
+      spawnstatic.TemplateStaticUnit.resourcePayload = map
+    end
+    self.Spawned_Crates[self.CrateCounter] = spawnstatic:Spawn(270,cratealias)
+    local templ = cargotype:GetTemplates()
+    local sorte = cargotype:GetType()
+    cargotype.Positionable = self.Spawned_Crates[self.CrateCounter]
+    table.insert(self.Spawned_Cargo, cargotype)
   end
-  local basetype = self.basetype or "container_cargo"
-  if isstatic then
-    basetype = cratetemplate
-  end
-  self.CrateCounter = self.CrateCounter + 1
-  local spawnstatic = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
-    :InitCargoMass(cgomass)
-    :InitCargo(self.enableslingload)
-    :InitCoordinate(cratecoord)
-  if isstatic then
-    local map = cargotype:GetStaticResourceMap()
-    spawnstatic.TemplateStaticUnit.resourcePayload = map
-  end
-  self.Spawned_Crates[self.CrateCounter] = spawnstatic:Spawn(270,cratealias)
-  local templ = cargotype:GetTemplates()
-  local sorte = cargotype:GetType()
-  --self.CargoCounter = self.CargoCounter + 1
-  cargotype.Positionable = self.Spawned_Crates[self.CrateCounter]
-  table.insert(self.Spawned_Cargo, cargotype)
   return self
 end
 
@@ -4221,7 +4212,11 @@ end
 -- @param #string SubCategory Name of sub-category (optional).
 -- @param #boolean DontShowInMenu (optional) If set to "true" this won't show up in the menu.
 -- @param Core.Zone#ZONE Location (optional) If set, the cargo item is **only** available here. Can be a #ZONE object or the name of a zone as #string.
-function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock,SubCategory,DontShowInMenu,Location)
+-- @param #string UnitTypes Unit type names (optional). If set, only these unit types can pick up the cargo, e.g. "UH-1H" or {"UH-1H","OH-58D"}
+-- @param #string TypeName Static type name (optional). If set, spawn cargo crate with an alternate type shape.
+-- @param #string ShapeName Static shape name (optional). If set, spawn cargo crate with an alternate type sub-shape.
+-- @return #CTLD self
+function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes,TypeName,ShapeName)
   self:T(self.lid .. " AddCratesCargo")
   if not self:_CheckTemplates(Templates) then
     self:E(self.lid .. "Crates Cargo for " .. Name .. " has missing template(s)!" )
@@ -4230,6 +4225,12 @@ function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock,Sub
   self.CargoCounter = self.CargoCounter + 1
   -- Crates are not directly loadable
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Templates,Type,false,false,NoCrates,nil,nil,PerCrateMass,Stock,SubCategory,DontShowInMenu,Location)
+  if UnitTypes then
+    cargo:AddUnitTypeName(UnitTypes)
+  end
+  if TypeName then
+    cargo:SetStaticTypeAndShape(TypeName,ShapeName)
+  end
   table.insert(self.Cargo_Crates,cargo)
   return self
 end
@@ -4293,7 +4294,11 @@ end
 -- @param #string SubCategory Name of the sub-category (optional).
 -- @param #boolean DontShowInMenu (optional) If set to "true" this won't show up in the menu.
 -- @param Core.Zone#ZONE Location (optional) If set, the cargo item is **only** available here. Can be a #ZONE object or the name of a zone as #string.
-function CTLD:AddCratesRepair(Name,Template,Type,NoCrates, PerCrateMass,Stock,SubCategory,DontShowInMenu,Location)
+-- @param #string UnitTypes Unit type names (optional). If set, only these unit types can pick up the cargo, e.g. "UH-1H" or {"UH-1H","OH-58D"}
+-- @param #string TypeName Static type name (optional). If set, spawn cargo crate with an alternate type shape.
+-- @param #string ShapeName Static shape name (optional). If set, spawn cargo crate with an alternate type sub-shape.
+-- @return #CTLD self
+function CTLD:AddCratesRepair(Name,Template,Type,NoCrates, PerCrateMass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes,TypeName,ShapeName)
   self:T(self.lid .. " AddCratesRepair")
   if not self:_CheckTemplates(Template) then
     self:E(self.lid .. "Repair Cargo for " .. Name .. " has a missing template!" )
@@ -4302,6 +4307,12 @@ function CTLD:AddCratesRepair(Name,Template,Type,NoCrates, PerCrateMass,Stock,Su
   self.CargoCounter = self.CargoCounter + 1
   -- Crates are not directly loadable
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Template,Type,false,false,NoCrates,nil,nil,PerCrateMass,Stock,SubCategory,DontShowInMenu,Location)
+  if UnitTypes then
+    cargo:AddUnitTypeName(UnitTypes)
+  end
+  if TypeName then
+    cargo:SetStaticTypeAndShape(TypeName,ShapeName)
+  end
   table.insert(self.Cargo_Crates,cargo)
   return self
 end
