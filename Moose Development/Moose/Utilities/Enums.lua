@@ -587,6 +587,10 @@ ENUMS.Link16Power = {
 -- @type ENUMS.Storage.weapons.droptanks
 -- @type ENUMS.Storage.weapons.adapters
 -- @type ENUMS.Storage.weapons.torpedoes
+-- @type ENUMS.Storage.weapons.Gazelle
+-- @type ENUMS.Storage.weapons.CH47
+-- @type ENUMS.Storage.weapons.OH58
+-- @type ENUMS.Storage.weapons.UH1H
 ENUMS.Storage = {
   weapons = {
     missiles = {}, -- Missiles
@@ -598,6 +602,8 @@ ENUMS.Storage = {
     torpedoes = {}, -- Torpedoes
     Gazelle = {}, -- Gazelle specifics
     CH47 = {}, -- Chinook specifics
+    OH58 = {}, -- Kiowa specifics
+    UH1H = {}, -- Huey specifics
   }
 }
 
@@ -1179,7 +1185,26 @@ ENUMS.Storage.weapons.CH47.CH47_AFT_M3M = {4,15,46,2484}
 ENUMS.Storage.weapons.CH47.CH47_PORT_M240H = {4,15,46,2479}
 ENUMS.Storage.weapons.CH47.CH47_STBD_M240H = {4,15,46,2480}
 ENUMS.Storage.weapons.CH47.CH47_AFT_M240H = {4,15,46,2481}
-
+-- Huey
+ENUMS.Storage.weapons.UH1H.M134_MiniGun_Right = {4,15,46,161}
+ENUMS.Storage.weapons.UH1H.M134_MiniGun_Left = {4,15,46,160}
+ENUMS.Storage.weapons.UH1H.M134_MiniGun_Right_Door  =  {4,15,46,175}
+ENUMS.Storage.weapons.UH1H.M60_MG_Right_Door  =  {4,15,46,177}
+ENUMS.Storage.weapons.UH1H.M134_MiniGun_Left_Door  =  {4,15,46,174}
+ENUMS.Storage.weapons.UH1H.M60_MG_Left_Door  =  {4,15,46,176}
+-- Kiowa
+ENUMS.Storage.weapons.OH58.FIM92  =  {4,4,7,446}
+ENUMS.Storage.weapons.OH58.MG_M3P100  =  {4,15,46,2578}
+ENUMS.Storage.weapons.OH58.MG_M3P200  =  {4,15,46,2577}
+ENUMS.Storage.weapons.OH58.MG_M3P300  =  {4,15,46,2576}
+ENUMS.Storage.weapons.OH58.MG_M3P400  =  {4,15,46,2575}
+ENUMS.Storage.weapons.OH58.MG_M3P500  =  {4,15,46,2574}
+ENUMS.Storage.weapons.OH58.Smk_Grenade_Blue  =  {4,5,9,484}
+ENUMS.Storage.weapons.OH58.Smk_Grenade_Green  =  {4,5,9,485}
+ENUMS.Storage.weapons.OH58.Smk_Grenade_Red  =  {4,5,9,483}
+ENUMS.Storage.weapons.OH58.Smk_Grenade_Violet  =  {4,5,9,486}
+ENUMS.Storage.weapons.OH58.Smk_Grenade_White  =  {4,5,9,488}
+ENUMS.Storage.weapons.OH58.Smk_Grenade_Yellow  =  {4,5,9,487}
 
 ---
 -- @type ENUMS.FARPType
