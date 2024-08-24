@@ -4134,7 +4134,7 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
   -- Spawn FARP
   local newfarp = SPAWNSTATIC:NewFromType(STypeName,"Heliports",Country) --  "Invisible FARP" "FARP"
   newfarp:InitShape(SShapeName) -- "invisiblefarp" "FARPS"
-  newfarp:InitFARP(callsign,freq,freq)
+  newfarp:InitFARP(callsign,freq,mod)
   local spawnedfarp = newfarp:SpawnFromCoordinate(farplocation,0,Name)
   table.insert(ReturnObjects,spawnedfarp)
   -- Spawn Objects
