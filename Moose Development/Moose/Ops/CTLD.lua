@@ -54,6 +54,7 @@ do
 -- @field #table ResourceMap Resource Map information table if it has been set for static cargo items.
 -- @field #string StaticShape Individual shape if set.
 -- @field #string StaticType Individual type if set.
+-- @field #string StaticCategory Individual static category if set.
 -- @field #list<#string> TypeNames Table of unit types able to pick this cargo up.
 -- @extends Core.Base#BASE
 
@@ -134,9 +135,10 @@ CTLD_CARGO = {
     self.Subcategory = Subcategory or "Other"
     self.DontShowInMenu = DontShowInMenu or false
     self.ResourceMap = nil
-    self.StaticType = nil -- "container_cargo"
+    self.StaticType = "container_cargo" -- "container_cargo"
     self.StaticShape = nil
     self.TypeNames = nil
+    self.StaticCategory = "Cargos"
     if type(Location) == "string" then
       Location = ZONE:New(Location)
     end
@@ -149,10 +151,20 @@ CTLD_CARGO = {
   -- @param #string TypeName
   -- @param #string ShapeName
   -- @return #CTLD_CARGO self
-  function CTLD_CARGO:SetStaticTypeAndShape(TypeName,ShapeName)
+  function CTLD_CARGO:SetStaticTypeAndShape(Category,TypeName,ShapeName)
+    self.StaticCategory = Category or "Cargos"
     self.StaticType = TypeName or "container_cargo"
     self.StaticShape = ShapeName
     return self
+  end
+  
+  --- Get the specific static type and shape from this CARGO if set.
+  -- @param #CTLD_CARGO self
+  -- @return #string Category
+  -- @return #string TypeName
+  -- @return #string ShapeName
+  function CTLD_CARGO:GetStaticTypeAndShape()
+    return self.StaticCategory, self.StaticType, self.StaticShape
   end
   
   --- Add specific unit types to this CARGO (restrict what types can pick this up).
@@ -166,6 +178,27 @@ CTLD_CARGO = {
       self.TypeNames[_singletype]=_singletype
     end
     return self
+  end
+  
+  --- Check if a specific unit can carry this CARGO (restrict what types can pick this up).
+  -- @param #CTLD_CARGO self
+  -- @param Wrapper.Unit#UNIT Unit
+  -- @return #boolean Outcome
+  function CTLD_CARGO:UnitCanCarry(Unit)
+    local outcome = false
+    UTILS.PrintTableToLog(self.TypeNames)
+    if (not self.TypeNames) or (not Unit) or (not Unit:IsAlive()) then 
+      return false 
+    end
+    local unittype = Unit:GetTypeName() or "none"
+    --self:I("Checking for type name: "..unittype)
+    for _,_typeName in pairs(self.TypeNames or {}) do
+      if _typeName == unittype then
+        outcome = true
+        break
+      end
+    end
+    return outcome
   end
   
   --- Add Resource Map information table
@@ -1305,7 +1338,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.13"
+CTLD.version="1.1.15"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2594,40 +2627,63 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
     -- spawn behind the Herc
     addon = 180
   end
+  heading = (heading+addon)%360
+  local row = 1
+  local column = 1
+  local initialdist = IsHerc and 16 or (capabilities.length+2) -- initial spacing of the first crates
+  local startpos = position:Translate(initialdist,heading)
+  if self.placeCratesAhead == true then
+    cratedistance = initialdist
+  end
   -- loop crates needed
+  local cratecoord = nil -- Core.Point#COORDINATE
   for i=1,number do
     local cratealias = string.format("%s-%s-%d", cratename, cratetemplate, math.random(1,100000))
-    if not self.placeCratesAhead then
+    if not self.placeCratesAhead or drop == true then
       cratedistance = (i-1)*2.5 + capabilities.length
       if cratedistance > self.CrateDistance then cratedistance = self.CrateDistance end
       -- altered heading logic
       -- DONE: right standard deviation?
       rheading = UTILS.RandomGaussian(0,30,-90,90,100)
-      rheading = math.fmod((heading + rheading + addon), 360)
+      rheading = math.fmod((heading + rheading), 360)
+      cratecoord = position:Translate(cratedistance,rheading)
     else
+      cratedistance = (row-1)*6
+      rheading = 90
+      row = row+1
+      cratecoord = startpos:Translate(cratedistance,rheading)
+      if row > 4 then
+        row = 1
+        startpos:Translate(6,heading,nil,true)
+      end
+      --[[
       local initialSpacing = IsHerc and 16 or (capabilities.length+2) -- initial spacing of the first crates
       local crateSpacing = 4 -- further spacing of remaining crates
       local lateralSpacing = 4 -- lateral spacing of crates
-      local nrSideBySideCrates = 3 -- number of crates that are placed side-by-side
+      local nrSideBySideCrates = 4 -- number of crates that are placed side-by-side
 
       if cratesneeded == 1 then
         -- single crate needed spawns straight ahead
         cratedistance = initialSpacing
-        rheading = heading
+        rheading = math.fmod((heading + addon), 360)
       else
-        if (i - 1) % nrSideBySideCrates == 0 then
-            cratedistance = i == 1 and initialSpacing or cratedistance + crateSpacing
+        --if (i - 1) % nrSideBySideCrates == 0 then
+            cratedistance = i == 1 and initialSpacing or (cratedistance + crateSpacing)
             angleOffNose = math.ceil(math.deg(math.atan(lateralSpacing / cratedistance)))
-            rheading = heading - angleOffNose
-        else
-            rheading = rheading + angleOffNose
-        end
+            self:I("angleOffNose = "..angleOffNose)
+            rheading = heading + addon - angleOffNose
+        --else
+          --  rheading = heading + addon + angleOffNose
+        --end
       end
+      --]]
     end
-    local cratecoord = position:Translate(cratedistance,rheading)
-    local cratevec2 = cratecoord:GetVec2()
+    
+    --local cratevec2 = cratecoord:GetVec2()
     self.CrateCounter = self.CrateCounter + 1
-    local basetype = self.basetype or "container_cargo"
+    local CCat, CType, CShape = Cargo:GetStaticTypeAndShape()
+    local basetype = CType or self.basetype or "container_cargo"
+    CCat = CCat or "Cargos"
     if isstatic then
       basetype = cratetemplate
     end
@@ -2640,20 +2696,26 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
       dist = dist - (20 + math.random(1,10))
       local width = width / 2
       local Offy = math.random(-width,width)
-      local spawnstatic = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
+      local spawnstatic = SPAWNSTATIC:NewFromType(basetype,CCat,self.cratecountry)
       :InitCargoMass(cgomass)
       :InitCargo(self.enableslingload)
       :InitLinkToUnit(Ship,dist,Offy,0)
+      if CShape then
+        spawnstatic:InitShape(CShape)
+      end 
       if isstatic then
         local map=cargotype:GetStaticResourceMap()
         spawnstatic.TemplateStaticUnit.resourcePayload = map
       end
       self.Spawned_Crates[self.CrateCounter] = spawnstatic:Spawn(270,cratealias)
     else   
-      local spawnstatic = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
+      local spawnstatic = SPAWNSTATIC:NewFromType(basetype,CCat,self.cratecountry)
         :InitCoordinate(cratecoord)
         :InitCargoMass(cgomass)
         :InitCargo(self.enableslingload)
+      if CShape then
+        spawnstatic:InitShape(CShape)
+      end 
       if isstatic then
         local map=cargotype:GetStaticResourceMap()
         spawnstatic.TemplateStaticUnit.resourcePayload = map
@@ -2667,15 +2729,25 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
     local realcargo = nil
     if drop then
                 --CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock, Subcategory)
-      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass,nil,subcat)
+      realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass,nil,subcat) -- #CTLD_CARGO
       local map=cargotype:GetStaticResourceMap()
       realcargo:SetStaticResourceMap(map)
+      local CCat, CType, CShape = cargotype:GetStaticTypeAndShape()
+      realcargo:SetStaticTypeAndShape(CCat,CType,CShape)
+      if cargotype.TypeNames then
+        realcargo.TypeNames = UTILS.DeepCopy(cargotype.TypeNames)
+      end
       table.insert(droppedcargo,realcargo)
     else
       realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,false,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],false,cargotype.PerCrateMass,nil,subcat)
       local map=cargotype:GetStaticResourceMap()
-      realcargo:SetStaticResourceMap(map)    
+      realcargo:SetStaticResourceMap(map) 
+      if cargotype.TypeNames then
+        realcargo.TypeNames = UTILS.DeepCopy(cargotype.TypeNames)
+      end   
     end
+    local CCat, CType, CShape = cargotype:GetStaticTypeAndShape()
+    realcargo:SetStaticTypeAndShape(CCat,CType,CShape)
     table.insert(self.Spawned_Cargo, realcargo)
   end
   if not (drop or pack) then
@@ -2721,15 +2793,20 @@ function CTLD:InjectStatics(Zone, Cargo, RandomCoord)
       cratetemplate = cargotype:GetTemplates()
       isstatic = true
     end
-    local basetype = self.basetype or "container_cargo"
+    local CCat,CType,CShape = cargotype:GetStaticTypeAndShape()
+    local basetype = CType or self.basetype or "container_cargo"
+    CCat = CCat or "Cargos"
     if isstatic then
       basetype = cratetemplate
     end
     self.CrateCounter = self.CrateCounter + 1
-    local spawnstatic = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)
+    local spawnstatic = SPAWNSTATIC:NewFromType(basetype,CCat,self.cratecountry)
       :InitCargoMass(cgomass)
       :InitCargo(self.enableslingload)
       :InitCoordinate(cratecoord)
+    if CShape then
+      spawnstatic:InitShape(CShape)
+    end
     if isstatic then
       local map = cargotype:GetStaticResourceMap()
       spawnstatic.TemplateStaticUnit.resourcePayload = map
@@ -2891,59 +2968,30 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
   if not _ignoreweight then
     maxloadable = self:_GetMaxLoadableMass(_unit)
   end
-  self:T(self.lid .. " Max loadable mass: " .. maxloadable)
+  self:T2(self.lid .. " Max loadable mass: " .. maxloadable)
   for _,_cargoobject in pairs (existingcrates) do
     local cargo = _cargoobject -- #CTLD_CARGO
     local static = cargo:GetPositionable() -- Wrapper.Static#STATIC -- crates
     local weight = cargo:GetMass() -- weight in kgs of this cargo
     local staticid = cargo:GetID()
-    self:T(self.lid .. " Found cargo mass: " .. weight)
-    --local cargoalive = false -- TODO dyn cargo spawn workaround
-    --local dcsunit = nil
-    --local dcsunitpos = nil
-    --[[
-    if static and static.DCSCargoObject then
-      dcsunit = Unit.getByName(static.StaticName)
-      if dcsunit then
-        cargoalive = dcsunit:isExist() ~= nil and true or false
-      end
-      if cargoalive == true then
-        local dcsvec3 = dcsunit:getPoint() or dcsunit:getPosition().p or {x=0,y=0,z=0}
-        self:T({dcsvec3 = dcsunit:getPoint(), dcspos = dcsunit:getPosition().p})
-        if dcsvec3 then
-          dcsunitpos = COORDINATE:New(dcsvec3.x,dcsvec3.z,dcsvec3.y)
-        end
-      end
-    end 
-    --]]
+    self:T2(self.lid .. " Found cargo mass: " .. weight)
     if static and static:IsAlive() then --or cargoalive) then
       local restricthooktononstatics = self.enableChinookGCLoading and IsHook
-      self:T(self.lid .. " restricthooktononstatics: " .. tostring(restricthooktononstatics))
+      --self:I(self.lid .. " restricthooktononstatics: " .. tostring(restricthooktononstatics))
       local cargoisstatic = cargo:GetType() == CTLD_CARGO.Enum.STATIC and true or false
-      self:T(self.lid .. " Cargo is static: " .. tostring(cargoisstatic))
+      --self:I(self.lid .. " Cargo is static: " .. tostring(cargoisstatic))
       local restricted = cargoisstatic and restricthooktononstatics
-      self:T(self.lid .. " Loading restricted: " .. tostring(restricted))
+      --self:I(self.lid .. " Loading restricted: " .. tostring(restricted))
       local staticpos = static:GetCoordinate() --or dcsunitpos
-      --[[
-      --- Testing
-      local landheight = staticpos:GetLandHeight()
-      local agl = staticpos.y-landheight
-      agl = UTILS.Round(agl,2)
-      local GCloaded = agl > 0 and true or false
-      if IsNoHook == true then GCloaded = false end
-      --]]
+      local cando = cargo:UnitCanCarry(_unit)
+      --self:I(self.lid .. " Unit can carry: " .. tostring(cando))
       --- Testing
       local distance = self:_GetDistance(location,staticpos)
-      --self:T({name=static:GetName(),IsHook=IsHook,agl=agl,GCloaded=GCloaded,distance=string.format("%.2f",distance or 0)})
-      --if (not restricthooktononstatics) and distance <= finddist and static and (weight <= maxloadable or _ignoreweight) then
-      self:T(self.lid .. string.format("Dist %dm/%dm | weight %dkg | maxloadable %dkg",distance,finddist,weight,maxloadable))
-      if distance <= finddist and (weight <= maxloadable or _ignoreweight) and restricted == false then 
+      --self:I(self.lid .. string.format("Dist %dm/%dm | weight %dkg | maxloadable %dkg",distance,finddist,weight,maxloadable))
+      if distance <= finddist and (weight <= maxloadable or _ignoreweight) and restricted == false and cando == true then 
         index = index + 1
         table.insert(found, staticid, cargo)
         maxloadable = maxloadable - weight
-      --elseif restricthooktononstatics and distance < 10 and static then
-        --indexg = indexg + 1
-        --table.insert(LoadedbyGC,staticid, cargo)
       end
       
     end
@@ -4212,11 +4260,12 @@ end
 -- @param #string SubCategory Name of sub-category (optional).
 -- @param #boolean DontShowInMenu (optional) If set to "true" this won't show up in the menu.
 -- @param Core.Zone#ZONE Location (optional) If set, the cargo item is **only** available here. Can be a #ZONE object or the name of a zone as #string.
--- @param #string UnitTypes Unit type names (optional). If set, only these unit types can pick up the cargo, e.g. "UH-1H" or {"UH-1H","OH-58D"}
--- @param #string TypeName Static type name (optional). If set, spawn cargo crate with an alternate type shape.
--- @param #string ShapeName Static shape name (optional). If set, spawn cargo crate with an alternate type sub-shape.
+-- @param #string UnitTypes Unit type names (optional). If set, only these unit types can pick up the cargo, e.g. "UH-1H" or {"UH-1H","OH-58D"}.
+-- @param #string Category Static category name (optional). If set, spawn cargo crate with an alternate category type, e.g. "Cargos".
+-- @param #string TypeName Static type name (optional). If set, spawn cargo crate with an alternate type shape, e.g. "iso_container".
+-- @param #string ShapeName Static shape name (optional). If set, spawn cargo crate with an alternate type sub-shape, e.g. "iso_container_cargo".
 -- @return #CTLD self
-function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes,TypeName,ShapeName)
+function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes,Category,TypeName,ShapeName)
   self:T(self.lid .. " AddCratesCargo")
   if not self:_CheckTemplates(Templates) then
     self:E(self.lid .. "Crates Cargo for " .. Name .. " has missing template(s)!" )
@@ -4229,7 +4278,7 @@ function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock,Sub
     cargo:AddUnitTypeName(UnitTypes)
   end
   if TypeName then
-    cargo:SetStaticTypeAndShape(TypeName,ShapeName)
+    cargo:SetStaticTypeAndShape(Category,TypeName,ShapeName)
   end
   table.insert(self.Cargo_Crates,cargo)
   return self
@@ -4295,10 +4344,11 @@ end
 -- @param #boolean DontShowInMenu (optional) If set to "true" this won't show up in the menu.
 -- @param Core.Zone#ZONE Location (optional) If set, the cargo item is **only** available here. Can be a #ZONE object or the name of a zone as #string.
 -- @param #string UnitTypes Unit type names (optional). If set, only these unit types can pick up the cargo, e.g. "UH-1H" or {"UH-1H","OH-58D"}
--- @param #string TypeName Static type name (optional). If set, spawn cargo crate with an alternate type shape.
--- @param #string ShapeName Static shape name (optional). If set, spawn cargo crate with an alternate type sub-shape.
+-- @param #string Category Static category name (optional). If set, spawn cargo crate with an alternate category type, e.g. "Cargos".
+-- @param #string TypeName Static type name (optional). If set, spawn cargo crate with an alternate type shape, e.g. "iso_container".
+-- @param #string ShapeName Static shape name (optional). If set, spawn cargo crate with an alternate type sub-shape, e.g. "iso_container_cargo".
 -- @return #CTLD self
-function CTLD:AddCratesRepair(Name,Template,Type,NoCrates, PerCrateMass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes,TypeName,ShapeName)
+function CTLD:AddCratesRepair(Name,Template,Type,NoCrates, PerCrateMass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes,Category,TypeName,ShapeName)
   self:T(self.lid .. " AddCratesRepair")
   if not self:_CheckTemplates(Template) then
     self:E(self.lid .. "Repair Cargo for " .. Name .. " has a missing template!" )
@@ -4311,7 +4361,7 @@ function CTLD:AddCratesRepair(Name,Template,Type,NoCrates, PerCrateMass,Stock,Su
     cargo:AddUnitTypeName(UnitTypes)
   end
   if TypeName then
-    cargo:SetStaticTypeAndShape(TypeName,ShapeName)
+    cargo:SetStaticTypeAndShape(Category,TypeName,ShapeName)
   end
   table.insert(self.Cargo_Crates,cargo)
   return self
@@ -6618,17 +6668,20 @@ end
 -- @param Core.Point#POINT_VEC3 Cargo_Drop_Position
 -- @return #CTLD_HERCULES self
 function CTLD_HERCULES:Cargo_SpawnDroppedAsCargo(_name, _pos)
-  local theCargo = self.CTLD:_FindCratesCargoObject(_name)
+  local theCargo = self.CTLD:_FindCratesCargoObject(_name) -- #CTLD_CARGO
   if theCargo then
     self.CTLD.CrateCounter = self.CTLD.CrateCounter + 1
-    self.CTLD.CargoCounter = self.CTLD.CargoCounter + 1
-
-    local basetype = self.CTLD.basetype or "container_cargo"
-    local theStatic = SPAWNSTATIC:NewFromType(basetype,"Cargos",self.cratecountry)    
+    local CCat, CType, CShape = theCargo:GetStaticTypeAndShape()
+    local basetype = CType or self.CTLD.basetype or "container_cargo"
+    CCat = CCat or "Cargos"
+    local theStatic = SPAWNSTATIC:NewFromType(basetype,CCat,self.cratecountry)    
     :InitCargoMass(theCargo.PerCrateMass)
     :InitCargo(self.CTLD.enableslingload)
     :InitCoordinate(_pos)
-    :Spawn(270,_name .. "-Container-".. math.random(1,100000))
+    if CShape then
+      theStatic:InitShape(CShape)
+    end
+    theStatic:Spawn(270,_name .. "-Container-".. math.random(1,100000))
   
     self.CTLD.Spawned_Crates[self.CTLD.CrateCounter] = theStatic
     local newCargo = CTLD_CARGO:New(self.CTLD.CargoCounter, theCargo.Name, theCargo.Templates, theCargo.CargoType, true, false, theCargo.CratesNeeded, self.CTLD.Spawned_Crates[self.CTLD.CrateCounter], true, theCargo.PerCrateMass, nil, theCargo.Subcategory)

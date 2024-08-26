@@ -4147,7 +4147,7 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
     
   local farpobcount = 0
   for _name,_object in pairs(FARPStaticObjectsNato) do
-    local objloc = farplocation:Translate(100,farpobcount*30)
+    local objloc = farplocation:Translate(radius,farpobcount*30)
     local heading = objloc:HeadingTo(farplocation)
     local newobject = SPAWNSTATIC:NewFromType(_object.TypeName,_object.Category,Country)
     newobject:InitShape(_object.ShapeName)
@@ -4159,7 +4159,7 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
   
   -- Vehicle if any
   if VehicleTemplate and type(VehicleTemplate) == "string" then
-    local vcoordinate = farplocation:Translate(100,farpobcount*30)
+    local vcoordinate = farplocation:Translate(radius,farpobcount*30)
     local heading = vcoordinate:HeadingTo(farplocation)
     local vehicles = SPAWN:NewWithAlias(VehicleTemplate,"FARP Vehicles - "..Name)
     vehicles:InitGroupHeading(heading)
