@@ -2945,11 +2945,12 @@ end
 -- @param Wrapper.Unit#UNIT _unit Unit
 -- @param #number _dist Distance
 -- @param #boolean _ignoreweight Find everything in range, ignore loadable weight
+-- @param #boolean ignoretype Find everything in range, ignore loadable type name
 -- @return #table Crates Table of crates
 -- @return #number Number Number of crates found
 -- @return #table CratesGC Table of crates possibly loaded by GC
 -- @return #number NumberGC Number of crates possibly loaded by GC
-function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
+function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight, ignoretype)
   self:T(self.lid .. " _FindCratesNearby")
   local finddist = _dist
   local location = _group:GetCoordinate()
@@ -2962,7 +2963,7 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
   local loadedmass = 0
   local unittype = "none"
   local capabilities = {}
-  local maxmass = 2000
+  --local maxmass = 2000
   local maxloadable = 2000
   local IsHook = self:IsHook(_unit)
   if not _ignoreweight then
@@ -2984,6 +2985,7 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight)
       --self:I(self.lid .. " Loading restricted: " .. tostring(restricted))
       local staticpos = static:GetCoordinate() --or dcsunitpos
       local cando = cargo:UnitCanCarry(_unit)
+      if ignoretype == true then cando = true end
       --self:I(self.lid .. " Unit can carry: " .. tostring(cando))
       --- Testing
       local distance = self:_GetDistance(location,staticpos)
