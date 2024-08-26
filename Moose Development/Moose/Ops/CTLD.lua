@@ -186,19 +186,19 @@ CTLD_CARGO = {
   -- @return #boolean Outcome
   function CTLD_CARGO:UnitCanCarry(Unit)
     local outcome = false
-    UTILS.PrintTableToLog(self.TypeNames)
-    if (not self.TypeNames) or (not Unit) or (not Unit:IsAlive()) then 
-      return false 
-    end
-    local unittype = Unit:GetTypeName() or "none"
-    --self:I("Checking for type name: "..unittype)
-    for _,_typeName in pairs(self.TypeNames or {}) do
-      if _typeName == unittype then
-        outcome = true
-        break
+    if not self.TypeNames then return true end
+    if Unit and Unit:IsAlive() then
+      local unittype = Unit:GetTypeName() or "none"
+      --self:I("Checking for type name: "..unittype)
+      for _,_typeName in pairs(self.TypeNames or {}) do
+        if _typeName == unittype then
+          outcome = true
+          break
+        end
       end
+        return outcome
     end
-    return outcome
+    return true
   end
   
   --- Add Resource Map information table
