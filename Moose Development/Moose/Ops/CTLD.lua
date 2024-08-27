@@ -1331,7 +1331,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.15"
+CTLD.version="1.1.16"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -4272,6 +4272,7 @@ function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock,Sub
   if UnitTypes then
     cargo:AddUnitTypeName(UnitTypes)
   end
+  cargo:SetStaticTypeAndShape("Cargos",self.basetype)
   if TypeName then
     cargo:SetStaticTypeAndShape(Category,TypeName,ShapeName)
   end
@@ -4355,6 +4356,7 @@ function CTLD:AddCratesRepair(Name,Template,Type,NoCrates, PerCrateMass,Stock,Su
   if UnitTypes then
     cargo:AddUnitTypeName(UnitTypes)
   end
+  cargo:SetStaticTypeAndShape("cargos",self.basetype)
   if TypeName then
     cargo:SetStaticTypeAndShape(Category,TypeName,ShapeName)
   end
