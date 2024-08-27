@@ -9,6 +9,7 @@
 -- @module AI.AI_Air
 -- @image MOOSE.JPG
 
+---
 -- @type AI_AIR
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 

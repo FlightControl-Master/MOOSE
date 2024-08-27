@@ -15649,7 +15649,7 @@ function AIRBOSS:_Number2Sound( playerData, sender, number, delay )
   end
 
   -- Split string into characters.
-  local numbers = _split( number )
+  local numbers = _split( tostring(number) )
 
   local wait = 0
   for i = 1, #numbers do
@@ -15717,7 +15717,7 @@ function AIRBOSS:_Number2Radio( radio, number, delay, interval, pilotcall )
   end
 
   -- Split string into characters.
-  local numbers = _split( number )
+  local numbers = _split( tostring(number) )
 
   local wait = 0
   for i = 1, #numbers do
