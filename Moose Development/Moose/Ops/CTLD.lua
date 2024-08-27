@@ -185,20 +185,13 @@ CTLD_CARGO = {
   -- @param Wrapper.Unit#UNIT Unit
   -- @return #boolean Outcome
   function CTLD_CARGO:UnitCanCarry(Unit)
-    local outcome = false
-    if not self.TypeNames then return true end
-    if Unit and Unit:IsAlive() then
-      local unittype = Unit:GetTypeName() or "none"
-      --self:I("Checking for type name: "..unittype)
-      for _,_typeName in pairs(self.TypeNames or {}) do
-        if _typeName == unittype then
-          outcome = true
-          break
-        end
-      end
-        return outcome
+    if self.TypeNames == nil then return true end
+    local typename = Unit:GetTypeName() or "none"
+    if self.TypeNames[typename] then
+      return true
+    else
+      return false
     end
-    return true
   end
   
   --- Add Resource Map information table
@@ -2594,7 +2587,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
   local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitTypeCapabilities
   local canloadcratesno = capabilities.cratelimit
   local loaddist = self.CrateDistance or 35
-  local nearcrates, numbernearby = self:_FindCratesNearby(Group,Unit,loaddist,true)
+  local nearcrates, numbernearby = self:_FindCratesNearby(Group,Unit,loaddist,true,true)
   if numbernearby >= canloadcratesno and not drop then
     self:_SendMessage("There are enough crates nearby already! Take care of those first!", 10, false, Group)
     return self
@@ -2841,7 +2834,7 @@ end
 function CTLD:_ListCratesNearby( _group, _unit)
   self:T(self.lid .. " _ListCratesNearby")
   local finddist = self.CrateDistance or 35
-  local crates,number,loadedbygc,indexgc = self:_FindCratesNearby(_group,_unit, finddist,true) -- #table
+  local crates,number,loadedbygc,indexgc = self:_FindCratesNearby(_group,_unit, finddist,true,true) -- #table
   if number > 0 or indexgc > 0 then
     local text = REPORT:New("Crates Found Nearby:")
     text:Add("------------------------------------------------------------")
@@ -2887,7 +2880,7 @@ end
 function CTLD:_RemoveCratesNearby( _group, _unit)
   self:T(self.lid .. " _RemoveCratesNearby")
   local finddist = self.CrateDistance or 35
-  local crates,number = self:_FindCratesNearby(_group,_unit, finddist,true) -- #table
+  local crates,number = self:_FindCratesNearby(_group,_unit, finddist,true,true) -- #table
   if number > 0 then
     local text = REPORT:New("Removing Crates Found Nearby:")
     text:Add("------------------------------------------------------------")
@@ -3056,7 +3049,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
     end
     -- get nearby crates
     local finddist = self.CrateDistance or 35
-    local nearcrates,number = self:_FindCratesNearby(Group,Unit,finddist,false) -- #table
+    local nearcrates,number = self:_FindCratesNearby(Group,Unit,finddist,false,false) -- #table
     self:T(self.lid .. " Crates found: " .. number)
     if number == 0 and self.hoverautoloading then
       return self -- exit
@@ -3662,7 +3655,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering)
   end
   -- get nearby crates
   local finddist = self.CrateDistance or 35
-  local crates,number = self:_FindCratesNearby(Group,Unit, finddist,true) -- #table
+  local crates,number = self:_FindCratesNearby(Group,Unit, finddist,true,true) -- #table
   local buildables = {}
   local foundbuilds = false
   local canbuild = false
@@ -3797,7 +3790,7 @@ function CTLD:_RepairCrates(Group, Unit, Engineering)
   self:T(self.lid .. " _RepairCrates")
   -- get nearby crates
   local finddist = self.CrateDistance or 35
-  local crates,number = self:_FindCratesNearby(Group,Unit,finddist,true) -- #table
+  local crates,number = self:_FindCratesNearby(Group,Unit,finddist,true,true) -- #table
   local buildables = {}
   local foundbuilds = false
   local canbuild = false
@@ -5415,7 +5408,7 @@ end
       self:T(_engineers.lid .. _engineers:GetStatus())
       if wrenches and wrenches:IsAlive() then
         if engineers:IsStatus("Running") or engineers:IsStatus("Searching") then
-          local crates,number = self:_FindCratesNearby(wrenches,nil, self.EngineerSearch,true) -- #table
+          local crates,number = self:_FindCratesNearby(wrenches,nil, self.EngineerSearch,true,true) -- #table
           engineers:Search(crates,number)
         elseif engineers:IsStatus("Moving") then
           engineers:Move()
