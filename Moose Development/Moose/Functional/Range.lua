@@ -1340,7 +1340,7 @@ end
 -- @return #RANGE self
 function RANGE:SetSoundfilesPath( path )
   self.soundpath = tostring( path or "Range Soundfiles/" )
-  self:I( self.lid .. string.format( "Setting sound files path to %s", self.soundpath ) )
+  self:T2( self.lid .. string.format( "Setting sound files path to %s", self.soundpath ) )
   return self
 end
 
@@ -1636,9 +1636,9 @@ function RANGE:AddBombingTargetUnit( unit, goodhitrange, randommove )
 
   -- Debug or error output.
   if _isstatic == true then
-    self:I( self.lid .. string.format( "Adding STATIC bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring( randommove ) ) )
+    self:T( self.lid .. string.format( "Adding STATIC bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring( randommove ) ) )
   elseif _isstatic == false then
-    self:I( self.lid .. string.format( "Adding UNIT bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring( randommove ) ) )
+    self:T( self.lid .. string.format( "Adding UNIT bombing target %s with good hit range %d. Random move = %s.", name, goodhitrange, tostring( randommove ) ) )
   else
     self:E( self.lid .. string.format( "ERROR! No bombing target with name %s could be found. Carefully check all UNIT and STATIC names defined in the mission editor!", name ) )
   end
@@ -1706,7 +1706,7 @@ function RANGE:AddBombingTargetScenery( scenery, goodhitrange)
 
   -- Debug or error output.
   if name then
-    self:I( self.lid .. string.format( "Adding SCENERY bombing target %s with good hit range %d", name, goodhitrange) )
+    self:T( self.lid .. string.format( "Adding SCENERY bombing target %s with good hit range %d", name, goodhitrange) )
   else
     self:E( self.lid .. string.format( "ERROR! No bombing target with name %s could be found!", name ) )
   end
@@ -2196,7 +2196,7 @@ function RANGE:onafterStatus( From, Event, To )
     end
 
     -- Check range status.
-    self:I( self.lid .. text )
+    self:T( self.lid .. text )
 
   end
 
@@ -2397,7 +2397,7 @@ function RANGE:onafterSave( From, Event, To )
     if f then
       f:write( data )
       f:close()
-      self:I( self.lid .. string.format( "Saving player results to file %s", tostring( filename ) ) )
+      self:T( self.lid .. string.format( "Saving player results to file %s", tostring( filename ) ) )
     else
       self:E( self.lid .. string.format( "ERROR: Could not save results to file %s", tostring( filename ) ) )
     end
@@ -2476,7 +2476,7 @@ function RANGE:onafterLoad( From, Event, To )
 
   -- Info message.
   local text = string.format( "Loading player bomb results from file %s", filename )
-  self:I( self.lid .. text )
+  self:T( self.lid .. text )
 
   -- Load asset data from file.
   local data = _loadfile( filename )
@@ -2849,7 +2849,7 @@ function RANGE:_DisplayRangeInfo( _unitname )
 
   -- Check if we have a player.
   if unit and playername then
-    self:I(playername)
+    --self:I(playername)
     -- Message text.
     local text = ""
 
@@ -4104,7 +4104,7 @@ end
 -- @return #string Name of the player.
 -- @return #boolean If true, group has > 1 player in it
 function RANGE:_GetPlayerUnitAndName( _unitName, PlayerName )
-  self:I( _unitName )
+  --self:I( _unitName )
 
   if _unitName ~= nil then
 
