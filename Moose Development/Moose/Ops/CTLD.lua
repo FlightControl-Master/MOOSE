@@ -1331,7 +1331,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.16"
+CTLD.version="1.1.17"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2760,8 +2760,9 @@ end
 -- @param Core.Zone#ZONE Zone Zone to spawn in.
 -- @param #CTLD_CARGO Cargo The cargo type to spawn.
 -- @param #boolean RandomCoord Randomize coordinate.
+-- @param #boolean FromLoad Create only **one** crate per cargo type, as we are re-creating dropped crates that CTLD has saved prior.
 -- @return #CTLD self
-function CTLD:InjectStatics(Zone, Cargo, RandomCoord)
+function CTLD:InjectStatics(Zone, Cargo, RandomCoord, FromLoad)
   self:T(self.lid .. " InjectStatics")
   local cratecoord = Zone:GetCoordinate()
   if RandomCoord then
@@ -2779,6 +2780,7 @@ function CTLD:InjectStatics(Zone, Cargo, RandomCoord)
   local cgotype = cargotype:GetType()
   local cgomass = cargotype:GetMass()
   local cratenumber = cargotype:GetCratesNeeded() or 1
+  if FromLoad == true then cratenumber=1 end
   for i=1,cratenumber do
     local cratealias = string.format("%s-%s-%d", cratename, cratetemplate, math.random(1,100000))
     local isstatic = false
@@ -2822,7 +2824,7 @@ end
 function CTLD:InjectStaticFromTemplate(Zone, Template, Mass)
   self:T(self.lid .. " InjectStaticFromTemplate")
   local cargotype = self:GetStaticsCargoFromTemplate(Template,Mass) -- #CTLD_CARGO
-  self:InjectStatics(Zone,cargotype,true)
+  self:InjectStatics(Zone,cargotype,true,true)
   return self
 end
 
@@ -6326,7 +6328,7 @@ end
           injectstatic:SetStaticResourceMap(map) 
         end
         if injectstatic then
-          self:InjectStatics(dropzone,injectstatic)
+          self:InjectStatics(dropzone,injectstatic,false,true)
         end
       end    
     end
@@ -6654,7 +6656,7 @@ function CTLD_HERCULES:Cargo_SpawnStatic(Cargo_Drop_initiator,Cargo_Drop_Positio
   local Zone = ZONE_RADIUS:New("Cargo Static " .. math.random(1,10000),position,100)
   if not dead then
     local injectstatic = CTLD_CARGO:New(nil,"Cargo Static Group "..math.random(1,10000),"iso_container",CTLD_CARGO.Enum.STATIC,true,false,1,nil,true,4500,1) 
-    self.CTLD:InjectStatics(Zone,injectstatic,true)
+    self.CTLD:InjectStatics(Zone,injectstatic,true,true)
   end
   return self
 end
