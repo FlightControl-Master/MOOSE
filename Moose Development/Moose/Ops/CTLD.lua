@@ -1512,7 +1512,8 @@ function CTLD:New(Coalition, Prefixes, Alias)
   
   -- Chinook
   self.enableChinookGCLoading = true
-  
+  self.ChinookTroopCircleRadius = 5
+        
   local AliaS = string.gsub(self.alias," ","_")
   self.filename = string.format("CTLD_%s_Persist.csv",AliaS)
   
