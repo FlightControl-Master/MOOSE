@@ -174,7 +174,10 @@
 --   * @{#CONTROLLABLE.OptionKeepWeaponsOnThreat}
 --
 -- ## 5.5) Air-2-Air missile attack range:
---   * @{#CONTROLLABLE.OptionAAAttackRange}(): Defines the usage of A2A missiles against possible targets .
+--   * @{#CONTROLLABLE.OptionAAAttackRange}(): Defines the usage of A2A missiles against possible targets.
+--   
+-- # 6) [GROUND] IR Maker Beacons for GROUPs and UNITs
+--  * @{#CONTROLLABLE:NewIRMarker}(): Create a blinking IR Marker on a GROUP or UNIT.
 --
 -- @field #CONTROLLABLE
 CONTROLLABLE = {
@@ -5618,4 +5621,129 @@ function CONTROLLABLE:PatrolRaceTrack(Point1, Point2, Altitude, Speed, Formation
   end
 
   return self
+end
+
+--- IR Marker courtesy Florian Brinker (fbrinker)
+
+--- [GROUND] Create and enable a new IR Marker for the given controllable UNIT or GROUP.
+-- @param #CONTROLLABLE self
+-- @param #boolean EnableImmediately (Optionally) If true start up the IR Marker immediately. Else you need to call `myobject:EnableIRMarker()` later on.
+-- @param #number Runtime (Optionally) Run this IR Marker for the given number of seconds, then stop. Use in conjunction with EnableImmediately.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:NewIRMarker(EnableImmediately, Runtime)
+  --sefl:F("NewIRMarker")
+    if self.ClassName == "GROUP" then
+      self.IRMarkerGroup = true
+      self.IRMarkerUnit = false
+    elseif self.ClassName == "UNIT" then
+      self.IRMarkerGroup = false
+      self.IRMarkerUnit = true
+    end
+
+    self.spot = nil
+    self.timer = nil
+    self.stoptimer = nil
+    
+    if EnableImmediately and EnableImmediately == true then
+      self:EnableIRMarker(Runtime)
+    end
+    
+    return self
+end
+
+--- [GROUND] Enable the IR marker.
+-- @param #CONTROLLABLE self
+-- @param #number Runtime (Optionally) Run this IR Marker for the given number of seconds, then stop. Else run until you call `myobject:DisableIRMarker()`.
+-- @return #CONTROLLABLE self 
+function CONTROLLABLE:EnableIRMarker(Runtime)
+  --sefl:F("EnableIRMarker")
+    if self.IRMarkerGroup == nil then
+      self:NewIRMarker(true,Runtime)
+      return
+    end
+    
+    if (self.IRMarkerGroup == true) then
+        self:EnableIRMarkerForGroup()
+        return
+    end
+
+    self.timer = TIMER:New(CONTROLLABLE._MarkerBlink, self)
+    self.timer:Start(nil, 1 - math.random(1, 5) / 10 / 2, Runtime) -- start randomized
+    
+    return self
+end
+
+--- [GROUND] Disable the IR marker.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self 
+function CONTROLLABLE:DisableIRMarker()
+ --sefl:F("DisableIRMarker")
+    if (self.IRMarkerGroup == true) then
+        self:DisableIRMarkerForGroup()
+        return
+    end
+    
+    if self.spot then 
+      self.spot:destroy()
+      self.spot = nil
+      if self.timer and self.timer:IsRunning() then
+          self.timer:Stop()
+          self.timer = nil
+      end
+    end
+    return self
+end
+
+--- [GROUND] Enable the IR markers for a whole group.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self 
+function CONTROLLABLE:EnableIRMarkerForGroup()
+  --sefl:F("EnableIRMarkerForGroup")
+  if self.ClassName == "GROUP" then
+    local units = self:GetUnits() or {}
+    for _,_unit in pairs(units) do
+      _unit:EnableIRMarker()
+    end
+  end
+  return self
+end
+
+--- [GROUND] Disable the IR markers for a whole group.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self 
+function CONTROLLABLE:DisableIRMarkerForGroup()
+  --sefl:F("DisableIRMarkerForGroup")
+  if self.ClassName == "GROUP" then
+    local units = self:GetUnits() or {}
+    for _,_unit in pairs(units) do
+      _unit:DisableIRMarker()
+    end
+  end
+  return self
+end
+
+--- [Internal] This method is called by the scheduler after enabling the IR marker.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self 
+function CONTROLLABLE:_MarkerBlink()
+  --sefl:F("_MarkerBlink")
+    if self:IsAlive() ~= true then
+        self:DisableIRMarker()
+        return
+    end
+
+    self.timer.dT = 1 - (math.random(1, 2) / 10 / 2) -- randomize the blinking by a small amount
+
+    local _, _, unitBBHeight, _ = self:GetObjectSize()
+    local unitPos = self:GetPositionVec3()
+
+    self.spot = Spot.createInfraRed(
+        self.DCSUnit,
+        { x = 0, y = (unitBBHeight + 1), z = 0 },
+        { x = unitPos.x, y = (unitPos.y + unitBBHeight), z = unitPos.z }
+    )
+
+    local offTimer = TIMER:New(function() if self.spot then self.spot:destroy() end end)
+    offTimer:Start(0.5)
+    return self
 end
