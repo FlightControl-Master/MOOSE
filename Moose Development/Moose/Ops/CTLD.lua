@@ -24,7 +24,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update Aug 2024
+-- Last Update Sep 2024
 
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1331,7 +1331,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.17"
+CTLD.version="1.1.15"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1513,7 +1513,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- Chinook
   self.enableChinookGCLoading = true
   self.ChinookTroopCircleRadius = 5
-        
+  
   local AliaS = string.gsub(self.alias," ","_")
   self.filename = string.format("CTLD_%s_Persist.csv",AliaS)
   
