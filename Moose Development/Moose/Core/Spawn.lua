@@ -1391,7 +1391,7 @@ function SPAWN:InitArray( SpawnAngle, SpawnWidth, SpawnDeltaX, SpawnDeltaY )
     self.SpawnGroups[SpawnGroupID].Visible = true
 
     self:HandleEvent( EVENTS.Birth, self._OnBirth )
-    --self:HandleEvent( EVENTS.Dead, self._OnDeadOrCrash )
+    self:HandleEvent( EVENTS.Dead, self._OnDeadOrCrash )
     self:HandleEvent( EVENTS.Crash, self._OnDeadOrCrash )
     self:HandleEvent( EVENTS.RemoveUnit, self._OnDeadOrCrash )
     self:HandleEvent( EVENTS.UnitLost, self._OnDeadOrCrash )
@@ -1591,7 +1591,7 @@ end
 -- @param #string SpawnIndex The index of the group to be spawned.
 -- @return Wrapper.Group#GROUP The group that was spawned. You can use this group for further actions.
 function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
-  
+  --[[
   local set = SET_GROUP:New():FilterAlive():FilterPrefixes({self.SpawnTemplatePrefix, self.SpawnAliasPrefix}):FilterOnce()
   local aliveunits = 0
   set:ForEachGroupAlive(
@@ -1606,7 +1606,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
   end
   
   set= nil
-  
+  --]]
   --self:T2( { SpawnTemplatePrefix = self.SpawnTemplatePrefix, SpawnIndex = SpawnIndex, AliveUnits = self.AliveUnits, SpawnMaxGroups = self.SpawnMaxGroups } )
   
   if self:_GetSpawnIndex( SpawnIndex ) then
@@ -1887,6 +1887,7 @@ end
 
 --- Spawns new groups at varying time intervals.
 -- This is useful if you want to have continuity within your missions of certain (AI) groups to be present (alive) within your missions.
+-- **WARNING** - Setting a very low SpawnTime heavily impacts your mission performance and CPU time, it is NOT useful to check the alive state of an object every split second! Be reasonable and stay at 15 seconds and above!
 -- @param #SPAWN self
 -- @param #number SpawnTime The time interval defined in seconds between each new spawn of new groups.
 -- @param #number SpawnTimeVariation The variation to be applied on the defined time interval between each new spawn.
@@ -1908,6 +1909,14 @@ function SPAWN:SpawnScheduled( SpawnTime, SpawnTimeVariation, WithDelay )
   
   local SpawnTime = SpawnTime or 60
   local SpawnTimeVariation = SpawnTimeVariation or 0.5
+  
+  -- Noob catch
+  if SpawnTime < 15 then
+   self:E("****SPAWN SCHEDULED****\nWARNING - Setting a very low SpawnTime heavily impacts your mission performance and CPU time, it is NOT useful to check the alive state of an object every "..tostring(SpawnTime).." seconds.\nSetting to 15 second intervals.\n*****")
+   SpawnTime = 15
+  end
+  
+  if SpawnTimeVariation > 1 or SpawnTimeVariation < 0  then SpawnTimeVariation = 0.5 end
   
   if SpawnTime ~= nil and SpawnTimeVariation ~= nil then
     local InitialDelay = 0
@@ -3944,6 +3953,35 @@ end
 
 ---
 -- @param #SPAWN self 
+-- @return #number count
+function SPAWN:_CountAliveUnits()
+  local count = 0
+  if self.SpawnAliasPrefix then
+    if not self.SpawnAliasPrefixEscaped then self.SpawnAliasPrefixEscaped = string.gsub(self.SpawnAliasPrefix,"[%p%s]",".") end
+    local SpawnAliasPrefix = self.SpawnAliasPrefixEscaped
+    local agroups = GROUP:FindAllByMatching(SpawnAliasPrefix)
+    for _,_grp in pairs(agroups) do
+      local game = self:_GetPrefixFromGroupName(_grp.GroupName)
+      if game and game == self.SpawnAliasPrefix then
+        count = count + _grp:CountAliveUnits()
+      end
+    end
+  else
+    if not self.SpawnTemplatePrefixEscaped then self.SpawnTemplatePrefixEscaped = string.gsub(self.SpawnTemplatePrefix,"[%p%s]",".") end
+    local SpawnTemplatePrefix = self.SpawnTemplatePrefixEscaped
+    local groups = GROUP:FindAllByMatching(SpawnTemplatePrefix)
+    for _,_grp in pairs(groups) do
+      local game = self:_GetPrefixFromGroupName(_grp.GroupName)
+      if game and game == self.SpawnTemplatePrefix then
+        count = count + _grp:CountAliveUnits()
+      end
+    end
+  end
+  return count
+end
+
+---
+-- @param #SPAWN self 
 -- @param Core.Event#EVENTDATA EventData
 function SPAWN:_OnDeadOrCrash( EventData )
   --self:T2( "Dead or crash event ID "..tostring(EventData.id or 0))
@@ -3959,12 +3997,13 @@ function SPAWN:_OnDeadOrCrash( EventData )
     local EventPrefix = self:_GetPrefixFromGroupName(unit.GroupName)
    
     if EventPrefix then -- EventPrefix can be nil if no # is found, which means, no spawnable group!
-      --self:T2( { "Dead event: " .. EventPrefix } )
       --self:T2(string.format("EventPrefix = %s | SpawnAliasPrefix = %s  | Old AliveUnits = %d",EventPrefix or "",self.SpawnAliasPrefix or "",self.AliveUnits or 0))
       if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) and self.AliveUnits > 0 then
-       self.AliveUnits = self.AliveUnits - 1   
+        --self:I( { "Dead event: " .. EventPrefix } )
+       --self.AliveUnits = self.AliveUnits - 1   
+       self.AliveUnits = self:_CountAliveUnits()
+       --self:I( "New Alive Units: " .. self.AliveUnits ) 
       end
-      --self:T2( "New Alive Units: " .. self.AliveUnits ) 
     end
   end
 end
