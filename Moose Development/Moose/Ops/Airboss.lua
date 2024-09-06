@@ -14678,7 +14678,7 @@ function AIRBOSS:_GetPlayerUnitAndName( _unitName )
     -- Get DCS unit from its name.
     local DCSunit = Unit.getByName( _unitName )
 
-    if DCSunit then
+    if DCSunit and DCSunit.getPlayerName then
 
       -- Get player name if any.
       local playername = DCSunit:getPlayerName()

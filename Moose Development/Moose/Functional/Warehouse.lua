@@ -6732,7 +6732,7 @@ end
 -- @param Wrapper.Group#GROUP deadgroup Group of unit that died.
 -- @param #WAREHOUSE.Pendingitem request Request that needs to be updated.
 function WAREHOUSE:_UnitDead(deadunit, deadgroup, request)
-  self:F(self.lid.."FF unit dead "..deadunit:GetName())
+  --self:F(self.lid.."FF unit dead "..deadunit:GetName())
 
   -- Find opsgroup.
   local opsgroup=_DATABASE:FindOpsGroup(deadgroup)
