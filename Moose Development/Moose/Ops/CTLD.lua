@@ -929,6 +929,13 @@ do
 --  
 --  Notes:
 --  Troops dropped back into a LOAD zone will effectively be added to the stock. Crates lost in e.g. a heli crash are just that - lost.
+--  
+-- ## 2.2.4 Create own SET_GROUP to manage CTLD Pilot groups
+-- 
+--              -- Parameter: Set The SET_GROUP object created by the mission designer/user to represent the CTLD pilot groups.
+--              -- Needs to be set before starting the CTLD instance.
+--              local myset = SET_GROUP:New():FilterPrefixes("Helikopter"):FilterCoalitions("red"):FilterStart()
+--              my_ctld:SetOwnSetPilotGroups(myset)
 -- 
 -- ## 3. Events
 --
@@ -1227,6 +1234,7 @@ CTLD = {
   ChinookTroopCircleRadius = 5,
   TroopUnloadDistGround = 5,
   TroopUnloadDistHover = 1.5,
+  UserSetGroup = nil,
 }
 
 ------------------------------
@@ -1331,7 +1339,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.15"
+CTLD.version="1.1.16"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1513,6 +1521,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- Chinook
   self.enableChinookGCLoading = true
   self.ChinookTroopCircleRadius = 5
+  
+  -- User SET_GROUP
+  self.UserSetGroup = nil
   
   local AliaS = string.gsub(self.alias," ","_")
   self.filename = string.format("CTLD_%s_Persist.csv",AliaS)
@@ -4973,6 +4984,16 @@ end
     return self
   end
   
+  --- User - Function to add onw SET_GROUP Set-up for pilot filtering and assignment.
+  -- Needs to be set before starting the CTLD instance.
+  -- @param #CTLD self
+  -- @param Core.Set#SET_GROUP Set The SET_GROUP object created by the mission designer/user to represent the CTLD pilot groups.
+  -- @return #CTLD self 
+  function CTLD:SetOwnSetPilotGroups(Set)
+    self.UserSetGroup = Set
+    return self
+  end
+  
   --- [Deprecated] - Function to add/adjust unittype capabilities. Has been replaced with `SetUnitCapabilities()` - pls use the new one going forward!
   -- @param #CTLD self
   -- @param #string Unittype The unittype to adjust. If passed as Wrapper.Unit#UNIT, it will search for the unit in the mission.
@@ -5691,7 +5712,9 @@ end
   function CTLD:onafterStart(From, Event, To)
     self:T({From, Event, To})
     self:I(self.lid .. "Started ("..self.version..")")
-    if self.useprefix or self.enableHercules then
+    if self.UserSetGroup then
+      self.PilotGroups  = self.UserSetGroup
+    elseif self.useprefix or self.enableHercules then
       local prefix = self.prefixes
       if self.enableHercules then
         self.PilotGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefix):FilterStart()
