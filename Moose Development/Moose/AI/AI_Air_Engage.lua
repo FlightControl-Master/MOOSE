@@ -426,7 +426,12 @@ function AI_AIR_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, Attac
       local DefenderCoord = DefenderGroup:GetPointVec3()
       DefenderCoord:SetY( EngageAltitude ) -- Ground targets don't have an altitude.
 
-      local TargetCoord = AttackSetUnit:GetRandomSurely():GetPointVec3()
+      local TargetUnit = AttackSetUnit:GetRandomSurely()
+      local TargetCoord = nil
+      
+      if TargetUnit then
+        TargetUnit:GetPointVec3()   
+      end
       
       if TargetCoord == nil then
         self:Return()
@@ -522,7 +527,12 @@ function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetU
       local DefenderCoord = DefenderGroup:GetPointVec3()
       DefenderCoord:SetY( EngageAltitude ) -- Ground targets don't have an altitude.
 
-      local TargetCoord = AttackSetUnit:GetRandomSurely():GetPointVec3()
+      local TargetCoord = nil
+      
+      local TargetUnit = AttackSetUnit:GetRandomSurely()
+      if TargetUnit then
+        TargetCoord=TargetUnit:GetPointVec3()
+      end
       if not TargetCoord then
           self:Return()
           return
