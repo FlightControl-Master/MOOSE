@@ -3895,10 +3895,14 @@ do -- AI_A2G_DISPATCHER
         
         if Squadron then
           local FirstUnit = AttackSetUnit:GetRandomSurely()
+          if FirstUnit then
           local Coordinate = FirstUnit:GetCoordinate() -- Core.Point#COORDINATE
            if self.SetSendPlayerMessages then
             Dispatcher:MessageToPlayers( Squadron,  DefenderName .. ", on route to ground target at " .. Coordinate:ToStringA2G( DefenderGroup ), DefenderGroup )
            end
+          else
+            return
+          end
         end
         self:GetParent(self).onafterEngageRoute( self, DefenderGroup, From, Event, To, AttackSetUnit )
       end
@@ -4785,3 +4789,4 @@ end
     end
     self:T({Squadron = Squadron.Name,SquadronResourceCount = Squadron.ResourceCount})
   end
+  

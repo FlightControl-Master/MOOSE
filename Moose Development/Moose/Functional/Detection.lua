@@ -595,7 +595,8 @@ do -- DETECTION_BASE
 
       return self
     end
-
+    
+    ---
     -- @param #DETECTION_BASE self
     -- @param #string From The From State string.
     -- @param #string Event The Event string.
@@ -615,7 +616,7 @@ do -- DETECTION_BASE
         self:T( { "DetectionGroup is Alive", Detection:GetName() } )
 
         local DetectionGroupName = Detection:GetName()
-        local DetectionUnit = Detection:GetUnit( 1 )
+        local DetectionUnit = Detection:GetFirstUnitAlive()
 
         local DetectedUnits = {}
 
@@ -632,20 +633,20 @@ do -- DETECTION_BASE
         --self:T(UTILS.PrintTableToLog(DetectedTargets))
         
         
-        for DetectionObjectID, Detection in pairs( DetectedTargets ) do
+        for DetectionObjectID, Detection in pairs( DetectedTargets or {}) do
           local DetectedObject = Detection.object -- DCS#Object
 
           if DetectedObject and DetectedObject:isExist() and DetectedObject.id_ < 50000000 then -- and ( DetectedObject:getCategory() == Object.Category.UNIT or DetectedObject:getCategory() == Object.Category.STATIC ) then
             local DetectedObjectName = DetectedObject:getName()
             if not self.DetectedObjects[DetectedObjectName] then
               self.DetectedObjects[DetectedObjectName] = self.DetectedObjects[DetectedObjectName] or {}
-              self.DetectedObjects[DetectedObjectName].Name = DetectedObjectName
+              self.DetectedObjects[DetectedObjectName].Name = DetectedObjectName 
               self.DetectedObjects[DetectedObjectName].Object = DetectedObject
             end
           end
         end
 
-        for DetectionObjectName, DetectedObjectData in pairs( self.DetectedObjects ) do
+        for DetectionObjectName, DetectedObjectData in pairs( self.DetectedObjects or {}) do
 
           local DetectedObject = DetectedObjectData.Object
 
