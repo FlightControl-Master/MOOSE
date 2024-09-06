@@ -31,7 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 ---
--- Last Update Aug 2024
+-- Last Update Sep 2024
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -41,6 +41,7 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number coalition Coalition side number, e.g. `coalition.side.RED`.
 -- @field Core.Set#SET_GROUP allheligroupset Set of CSAR heli groups.
+-- @field Core.Set#SET_GROUP UserSetGroup Set of CSAR heli groups as designed by the mission designer (if any set).
 -- @extends Core.Fsm#FSM
 
 --- *Combat search and rescue (CSAR) are search and rescue operations that are carried out during war that are within or near combat zones.* (Wikipedia)
@@ -116,8 +117,15 @@
 --         mycsar.topmenuname = "CSAR" -- set the menu entry name
 --         mycsar.ADFRadioPwr = 1000 -- ADF Beacons sending with 1KW as default
 --         mycsar.PilotWeight = 80 --  Loaded pilots weigh 80kgs each
+--  
+-- ## 2.1 Create own SET_GROUP to manage CTLD Pilot groups
+-- 
+--         -- Parameter: Set The SET_GROUP object created by the mission designer/user to represent the CSAR pilot groups.
+--         -- Needs to be set before starting the CSAR instance.
+--         local myset = SET_GROUP:New():FilterPrefixes("Helikopter"):FilterCoalitions("red"):FilterStart()
+--         mycsar:SetOwnSetPilotGroups(myset)
 --         
--- ## 2.1 SRS Features and Other Features
+-- ## 2.2 SRS Features and Other Features
 -- 
 --       mycsar.useSRS = false -- Set true to use FF\'s SRS integration
 --       mycsar.SRSPath = "C:\\Progra~1\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your SRS installation -- server(!)
@@ -258,6 +266,7 @@ CSAR = {
   ADFRadioPwr = 1000,
   PilotWeight = 80,
   CreateRadioBeacons = true,
+  UserSetGroup = nil,
 }
 
 --- Downed pilots info.
@@ -274,6 +283,7 @@ CSAR = {
 -- @field #number timestamp Timestamp for approach process.
 -- @field #boolean alive Group is alive or dead/rescued.
 -- @field #boolean wetfeet Group is spawned over (deep) water.
+-- @field #string BeaconName Name of radio beacon - if any.
 
 --- All slot / Limit settings
 -- @type CSAR.AircraftType
@@ -299,7 +309,7 @@ CSAR.AircraftType["CH-47Fbl1"] = 31
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.27"
+CSAR.version="1.0.28"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -458,6 +468,9 @@ function CSAR:New(Coalition, Template, Alias)
   
   -- added 1.0.16
   self.PilotWeight = 80
+  
+  -- Own SET_GROUP if any
+  self.UserSetGroup = nil
       
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
@@ -636,7 +649,7 @@ end
 -- @param #string Playername Name of Player (if applicable)
 -- @param #boolean Wetfeet Ejected over water
 -- @return #CSAR self.
-function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Description,Typename,Frequency,Playername,Wetfeet)
+function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Description,Typename,Frequency,Playername,Wetfeet,BeaconName)
   self:T({"_CreateDownedPilotTrack",Groupname,Side,OriginalUnit,Description,Typename,Frequency,Playername})
   
   -- create new entry
@@ -644,7 +657,7 @@ function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Descript
   DownedPilot.desc = Description or ""
   DownedPilot.frequency = Frequency or 0
   DownedPilot.index = self.downedpilotcounter
-  DownedPilot.name = Groupname or ""
+  DownedPilot.name = Groupname or Playername or ""
   DownedPilot.originalUnit = OriginalUnit or ""
   DownedPilot.player = Playername or ""
   DownedPilot.side = Side or 0
@@ -653,6 +666,7 @@ function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Descript
   DownedPilot.timestamp = 0
   DownedPilot.alive = true
   DownedPilot.wetfeet = Wetfeet or false
+  DownedPilot.BeaconName = BeaconName
   
   -- Add Pilot
   local PilotTable = self.downedPilots
@@ -821,8 +835,18 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   end
   end
   
+  local BeaconName
+  
+  if _playerName then
+    BeaconName = _unitName..math.random(1,10000)
+  elseif _unitName then
+    BeaconName = _playerName..math.random(1,10000)
+  else
+    BeaconName = "Ghost-1-1"..math.random(1,10000)
+  end
+  
   if (_freq and _freq ~= 0) then --shagrat only add beacon if _freq is NOT 0 
-    self:_AddBeaconToGroup(_spawnedGroup, _freq)
+    self:_AddBeaconToGroup(_spawnedGroup, _freq, BeaconName)
   end
   
   self:_AddSpecialOptions(_spawnedGroup)
@@ -847,7 +871,7 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   
   local _GroupName = _spawnedGroup:GetName() or _alias
 
-  self:_CreateDownedPilotTrack(_spawnedGroup,_GroupName,_coalition,_unitName,_text,_typeName,_freq,_playerName,wetfeet)
+  self:_CreateDownedPilotTrack(_spawnedGroup,_GroupName,_coalition,_unitName,_text,_typeName,_freq,_playerName,wetfeet,BeaconName)
 
   self:_InitSARForPilot(_spawnedGroup, _unitName, _freq, noMessage, _playerName) --shagrat use unitName to have the aircraft callsign / descriptive "name" etc.
   
@@ -2232,11 +2256,13 @@ end
 -- @param #CSAR self
 -- @param Wrapper.Group#GROUP _group Group #GROUP object.
 -- @param #number _freq Frequency to use
+-- @param #string _name Beacon Name to use
 -- @return #CSAR self
-function CSAR:_AddBeaconToGroup(_group, _freq)
+function CSAR:_AddBeaconToGroup(_group, _freq, _name)
     self:T(self.lid .. " _AddBeaconToGroup")
     if self.CreateRadioBeacons == false then return end
     local _group = _group   
+    
     if _group == nil then
         --return frequency to pool of available
         for _i, _current in ipairs(self.UsedVHFFrequencies) do
@@ -2256,9 +2282,10 @@ function CSAR:_AddBeaconToGroup(_group, _freq)
         local name = _radioUnit:GetName()
         local Sound =  "l10n/DEFAULT/"..self.radioSound
         local vec3 = _radioUnit:GetVec3() or _radioUnit:GetPositionVec3() or {x=0,y=0,z=0}
-        trigger.action.radioTransmission(Sound, vec3, 0, false, Frequency, self.ADFRadioPwr or 1000,name..math.random(1,10000)) -- Beacon in MP only runs for exactly 30secs straight
+        trigger.action.radioTransmission(Sound, vec3, 0, false, Frequency, self.ADFRadioPwr or 1000,_name) -- Beacon in MP only runs for exactly 30secs straight
       end
     end
+    
     return self
 end
 
@@ -2275,8 +2302,10 @@ function CSAR:_RefreshRadioBeacons()
         local pilot = _pilot -- #CSAR.DownedPilot
         local group = pilot.group
         local frequency = pilot.frequency or 0 -- thanks to @Thrud
+        local bname = pilot.BeaconName or pilot.name..math.random(1,100000)
+        trigger.action.stopRadioTransmission(bname)
         if group and group:IsAlive() and frequency > 0 then
-          self:_AddBeaconToGroup(group,frequency)
+          self:_AddBeaconToGroup(group,frequency,bname)
         end
       end
     end
@@ -2313,6 +2342,16 @@ function CSAR:_ReachedPilotLimit()
    end
 end
 
+  --- User - Function to add onw SET_GROUP Set-up for pilot filtering and assignment.
+  -- Needs to be set before starting the CSAR instance.
+  -- @param #CSAR self
+  -- @param Core.Set#SET_GROUP Set The SET_GROUP object created by the mission designer/user to represent the CSAR pilot groups.
+  -- @return #CSAR self 
+  function CSAR:SetOwnSetPilotGroups(Set)
+    self.UserSetGroup = Set
+    return self
+  end
+
   ------------------------------
   --- FSM internal Functions ---
   ------------------------------
@@ -2334,7 +2373,9 @@ function CSAR:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventHandler)
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
   
-  if self.allowbronco then
+  if self.UserSetGroup then
+    self.PilotGroups  = self.UserSetGroup
+  elseif self.allowbronco then
     local prefixes = self.csarPrefix or {}
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefixes):FilterStart()
   elseif self.useprefix then
@@ -2343,7 +2384,9 @@ function CSAR:onafterStart(From, Event, To)
   else
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterCategoryHelicopter():FilterStart()
   end
+  
   self.mash = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart() -- currently only GROUP objects, maybe support STATICs also?
+  
   if not self.coordinate then
     local csarhq = self.mash:GetRandom()
     if csarhq then 
