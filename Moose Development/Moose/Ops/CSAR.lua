@@ -31,7 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 ---
--- Last Update Aug 2024
+-- Last Update Sep 2024
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -41,6 +41,7 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number coalition Coalition side number, e.g. `coalition.side.RED`.
 -- @field Core.Set#SET_GROUP allheligroupset Set of CSAR heli groups.
+-- @field Core.Set#SET_GROUP UserSetGroup Set of CSAR heli groups as designed by the mission designer (if any set).
 -- @extends Core.Fsm#FSM
 
 --- *Combat search and rescue (CSAR) are search and rescue operations that are carried out during war that are within or near combat zones.* (Wikipedia)
@@ -116,8 +117,15 @@
 --         mycsar.topmenuname = "CSAR" -- set the menu entry name
 --         mycsar.ADFRadioPwr = 1000 -- ADF Beacons sending with 1KW as default
 --         mycsar.PilotWeight = 80 --  Loaded pilots weigh 80kgs each
+--  
+-- ## 2.1 Create own SET_GROUP to manage CTLD Pilot groups
+-- 
+--         -- Parameter: Set The SET_GROUP object created by the mission designer/user to represent the CSAR pilot groups.
+--         -- Needs to be set before starting the CSAR instance.
+--         local myset = SET_GROUP:New():FilterPrefixes("Helikopter"):FilterCoalitions("red"):FilterStart()
+--         mycsar:SetOwnSetPilotGroups(myset)
 --         
--- ## 2.1 SRS Features and Other Features
+-- ## 2.2 SRS Features and Other Features
 -- 
 --       mycsar.useSRS = false -- Set true to use FF\'s SRS integration
 --       mycsar.SRSPath = "C:\\Progra~1\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your SRS installation -- server(!)
@@ -258,6 +266,7 @@ CSAR = {
   ADFRadioPwr = 1000,
   PilotWeight = 80,
   CreateRadioBeacons = true,
+  UserSetGroup = nil,
 }
 
 --- Downed pilots info.
@@ -300,7 +309,7 @@ CSAR.AircraftType["CH-47Fbl1"] = 31
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.27"
+CSAR.version="1.0.28"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -459,6 +468,9 @@ function CSAR:New(Coalition, Template, Alias)
   
   -- added 1.0.16
   self.PilotWeight = 80
+  
+  -- Own SET_GROUP if any
+  self.UserSetGroup = nil
       
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
@@ -2330,6 +2342,16 @@ function CSAR:_ReachedPilotLimit()
    end
 end
 
+  --- User - Function to add onw SET_GROUP Set-up for pilot filtering and assignment.
+  -- Needs to be set before starting the CSAR instance.
+  -- @param #CSAR self
+  -- @param Core.Set#SET_GROUP Set The SET_GROUP object created by the mission designer/user to represent the CSAR pilot groups.
+  -- @return #CSAR self 
+  function CSAR:SetOwnSetPilotGroups(Set)
+    self.UserSetGroup = Set
+    return self
+  end
+
   ------------------------------
   --- FSM internal Functions ---
   ------------------------------
@@ -2351,7 +2373,9 @@ function CSAR:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventHandler)
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
   
-  if self.allowbronco then
+  if self.UserSetGroup then
+    self.PilotGroups  = self.UserSetGroup
+  elseif self.allowbronco then
     local prefixes = self.csarPrefix or {}
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefixes):FilterStart()
   elseif self.useprefix then
@@ -2360,7 +2384,9 @@ function CSAR:onafterStart(From, Event, To)
   else
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterCategoryHelicopter():FilterStart()
   end
+  
   self.mash = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart() -- currently only GROUP objects, maybe support STATICs also?
+  
   if not self.coordinate then
     local csarhq = self.mash:GetRandom()
     if csarhq then 
