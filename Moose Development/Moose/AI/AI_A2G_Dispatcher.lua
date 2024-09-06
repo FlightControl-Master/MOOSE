@@ -4789,3 +4789,4 @@ end
     end
     self:T({Squadron = Squadron.Name,SquadronResourceCount = Squadron.ResourceCount})
   end
+  
