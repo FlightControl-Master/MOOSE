@@ -2374,7 +2374,7 @@ function CSAR:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
   
   if self.UserSetGroup then
-    self.PilotGroups  = self.UserSetGroup
+    self.allheligroupset  = self.UserSetGroup
   elseif self.allowbronco then
     local prefixes = self.csarPrefix or {}
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefixes):FilterStart()
