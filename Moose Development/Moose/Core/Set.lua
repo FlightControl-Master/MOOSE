@@ -181,7 +181,7 @@ do -- SET_BASE
         return false
       end
     end  
-    -- No condition was true.
+    -- No condition was false.
     return true
   end
   
