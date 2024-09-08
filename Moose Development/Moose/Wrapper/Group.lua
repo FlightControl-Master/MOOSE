@@ -367,7 +367,7 @@ function GROUP:GetDCSObject()
     return DCSGroup
   end
 
-  self:E(string.format("ERROR: Could not get DCS group object of group %s because DCS object could not be found!", tostring(self.GroupName)))
+  --self:T2(string.format("ERROR: Could not get DCS group object of group %s because DCS object could not be found!", tostring(self.GroupName)))
   return nil
 end
 
@@ -1006,6 +1006,20 @@ function GROUP:Activate(delay)
     self:ScheduleOnce(delay, GROUP.Activate, self)
   else
     trigger.action.activateGroup( self:GetDCSObject() )
+  end
+  return self
+end
+
+--- Deactivates an activated GROUP.
+-- @param #GROUP self
+-- @param #number delay Delay in seconds, before the group is activated.
+-- @return #GROUP self
+function GROUP:Deactivate(delay)
+  --self:F2( { self.GroupName } )
+  if delay and delay>0 then
+    self:ScheduleOnce(delay, GROUP.Deactivate, self)
+  else
+    trigger.action.deactivateGroup( self:GetDCSObject() )
   end
   return self
 end
