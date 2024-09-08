@@ -117,6 +117,8 @@
 --         mycsar.topmenuname = "CSAR" -- set the menu entry name
 --         mycsar.ADFRadioPwr = 1000 -- ADF Beacons sending with 1KW as default
 --         mycsar.PilotWeight = 80 --  Loaded pilots weigh 80kgs each
+--         mycsar.AllowIRStrobe = false -- Allow a menu item to request an IR strobe to find a downed pilot at night (requires NVGs to see it).
+--         mycsar.IRStrobeRuntime = 300 -- If an IR Strobe is activated, it runs for 300 seconds (5 mins).
 --  
 -- ## 2.1 Create own SET_GROUP to manage CTLD Pilot groups
 -- 
@@ -267,6 +269,8 @@ CSAR = {
   PilotWeight = 80,
   CreateRadioBeacons = true,
   UserSetGroup = nil,
+  AllowIRStrobe = false,
+  IRStrobeRuntime = 300,
 }
 
 --- Downed pilots info.
@@ -309,7 +313,7 @@ CSAR.AircraftType["CH-47Fbl1"] = 31
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.28"
+CSAR.version="1.0.29"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -753,7 +757,6 @@ function CSAR:_SpawnPilotInField(country,point,frequency,wetfeet)
     :NewWithAlias(template,alias)
     :InitCoalition(coalition)
     :InitCountry(country)
-    --:InitAIOnOff(pilotcacontrol)
     :InitDelayOff()
     :SpawnFromCoordinate(point)
 
@@ -1818,9 +1821,6 @@ function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak, _overrid
     end
     _text = string.gsub(_text,"km"," kilometer")
     _text = string.gsub(_text,"nm"," nautical miles")
-    --self.msrs:SetVoice(self.SRSVoice)
-    --self.SRSQueue:NewTransmission(_text,nil,self.msrs,nil,1)
-    --self:I("Voice = "..self.SRSVoice)
     self.SRSQueue:NewTransmission(_text,duration,self.msrs,tstart,2,subgroups,subtitle,subduration,self.SRSchannel,self.SRSModulation,gender,culture,self.SRSVoice,volume,label,coord)
   end
   return self
@@ -1966,7 +1966,7 @@ function CSAR:_SignalFlare(_unitName)
       else
         _distance = string.format("%.1fkm",_closest.distance/1000)
       end 
-      local _msg = string.format("%s - Popping signal flare at your %s o\'clock. Distance %s", self:_GetCustomCallSign(_unitName), _clockDir, _distance)
+      local _msg = string.format("%s - Firing signal flare at your %s o\'clock. Distance %s", self:_GetCustomCallSign(_unitName), _clockDir, _distance)
       self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
       
       local _coord = _closest.pilot:GetCoordinate()
@@ -2000,7 +2000,7 @@ function CSAR:_DisplayToAllSAR(_message, _side, _messagetime,ToSRS,ToScreen)
     if self.msrs:GetProvider() == MSRS.Provider.WINDOWS then
       voice = self.CSARVoiceMS or MSRS.Voices.Microsoft.Hedda
     end
-    self:F("Voice = "..voice)
+    --self:F("Voice = "..voice)
     self.SRSQueue:NewTransmission(_message,duration,self.msrs,tstart,2,subgroups,subtitle,subduration,self.SRSchannel,self.SRSModulation,gender,culture,voice,volume,label,self.coordinate)
   end
   if ToScreen == true or ToScreen == nil then
@@ -2010,6 +2010,41 @@ function CSAR:_DisplayToAllSAR(_message, _side, _messagetime,ToSRS,ToScreen)
          self:_DisplayMessageToSAR(_unit, _message, _messagetime)
       end
     end
+  end
+  return self
+end
+
+---(Internal) Request IR Strobe at closest downed pilot.
+--@param #CSAR self
+--@param #string _unitName Name of the helicopter
+function CSAR:_ReqIRStrobe( _unitName )
+  self:T(self.lid .. " _ReqIRStrobe")
+  local _heli = self:_GetSARHeli(_unitName)
+  if _heli == nil then
+      return
+  end
+  local smokedist = 8000
+  if smokedist < self.approachdist_far then smokedist = self.approachdist_far end
+  local _closest = self:_GetClosestDownedPilot(_heli)
+  if _closest ~= nil and _closest.pilot ~= nil and _closest.distance > 0 and _closest.distance < smokedist then
+      local _clockDir = self:_GetClockDirection(_heli, _closest.pilot)
+      local _distance = string.format("%.1fkm",_closest.distance/1000)
+      if _SETTINGS:IsImperial() then
+        _distance = string.format("%.1fnm",UTILS.MetersToNM(_closest.distance))
+      else
+        _distance = string.format("%.1fkm",_closest.distance/1000)
+      end 
+      local _msg = string.format("%s - IR Strobe active at your %s o\'clock. Distance %s", self:_GetCustomCallSign(_unitName), _clockDir, _distance)
+      self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
+      _closest.pilot:NewIRMarker(true,self.IRStrobeRuntime or 300)
+  else
+      local _distance = string.format("%.1fkm",smokedist/1000)
+      if _SETTINGS:IsImperial() then
+        _distance = string.format("%.1fnm",UTILS.MetersToNM(smokedist))
+      else
+        _distance = string.format("%.1fkm",smokedist/1000)
+      end 
+      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",_distance), self.messageTime, false, false, true)
   end
   return self
 end
@@ -2165,7 +2200,12 @@ function CSAR:_AddMedevacMenuItem()
           local _rootMenu1 = MENU_GROUP_COMMAND:New(_group,"List Active CSAR",_rootPath, self._DisplayActiveSAR,self,_unitName)
           local _rootMenu2 = MENU_GROUP_COMMAND:New(_group,"Check Onboard",_rootPath, self._CheckOnboard,self,_unitName)
           local _rootMenu3 = MENU_GROUP_COMMAND:New(_group,"Request Signal Flare",_rootPath, self._SignalFlare,self,_unitName)
-          local _rootMenu4 = MENU_GROUP_COMMAND:New(_group,"Request Smoke",_rootPath, self._Reqsmoke,self,_unitName):Refresh()
+          local _rootMenu4 = MENU_GROUP_COMMAND:New(_group,"Request Smoke",_rootPath, self._Reqsmoke,self,_unitName)
+          if self.AllowIRStrobe then
+            local _rootMenu5 = MENU_GROUP_COMMAND:New(_group,"Request IR Strobe",_rootPath, self._ReqIRStrobe,self,_unitName):Refresh()
+          else
+            _rootMenu4:Refresh()
+          end
         end
       end
     end
