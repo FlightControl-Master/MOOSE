@@ -219,6 +219,7 @@ function UNIT:Name()
   return self.UnitName
 end
 
+--[[
 --- Get the DCS unit object.
 -- @param #UNIT self
 -- @return DCS#Unit The DCS unit object.
@@ -230,10 +231,34 @@ function UNIT:GetDCSObject()
     return DCSUnit
   end
   
-  --if self.DCSUnit then
-    --return self.DCSUnit
-  --end
+  return nil
+end
+--]]
+
+--- Returns the DCS Unit.
+-- @param #UNIT self
+-- @return DCS#Unit The DCS Group.
+function UNIT:GetDCSObject()
+
+  if (not self.LastCallDCSObject) or (self.LastCallDCSObject and timer.getTime() - self.LastCallDCSObject  > 1) then
+
+    -- Get DCS group.
+    local DCSUnit = Unit.getByName( self.UnitName )
+
+    if DCSUnit then
+      self.LastCallDCSObject = timer.getTime()
+      self.DCSObject = DCSUnit
+      return DCSUnit
+    else
+      self.DCSObject = nil
+      self.LastCallDCSObject = nil
+    end
   
+  else
+    return self.DCSObject
+  end
+  
+  --self:E(string.format("ERROR: Could not get DCS group object of group %s because DCS object could not be found!", tostring(self.UnitName)))
   return nil
 end
 
@@ -243,7 +268,7 @@ end
 -- @return #number The height of the group or nil if is not existing or alive.  
 function UNIT:GetAltitude(FromGround)
   
-  local DCSUnit = Unit.getByName( self.UnitName )
+  local DCSUnit = self:GetDCSObject()
 
   if DCSUnit then
     local altitude = 0
