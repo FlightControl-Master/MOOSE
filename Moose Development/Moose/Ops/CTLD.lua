@@ -836,6 +836,8 @@ do
 --          my_ctld.enableChinookGCLoading = true -- this will effectively suppress the crate load and drop for CTLD_CARGO.Enum.STATIc types for CTLD for the Chinook
 --          my_ctld.TroopUnloadDistGround = 5 -- If hovering, spawn dropped troops this far away in meters from the helo
 --          my_ctld.TroopUnloadDistHover = 1.5 -- If grounded, spawn dropped troops this far away in meters from the helo
+--          my_ctld.TroopUnloadDistGroundHerc = 25 -- On the ground, unload troops this far behind the Hercules
+--          my_ctld.TroopUnloadDistGroundHook = 15 -- On the ground, unload troops this far behind the Chinook
 -- 
 -- ## 2.1 CH-47 Chinook support
 -- 
@@ -1233,6 +1235,8 @@ CTLD = {
   DynamicCargo = {},
   ChinookTroopCircleRadius = 5,
   TroopUnloadDistGround = 5,
+  TroopUnloadDistGroundHerc = 25,
+  TroopUnloadDistGroundHook = 15,
   TroopUnloadDistHover = 1.5,
   UserSetGroup = nil,
 }
@@ -1339,7 +1343,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.16"
+CTLD.version="1.1.17"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3484,7 +3488,10 @@ function CTLD:_UnloadTroops(Group, Unit)
             randomcoord = Group:GetCoordinate()
             -- slightly left from us           
             local Angle = (heading+270)%360
+            if IsHerc or IsHook then Angle = (heading+180)%360 end
             local offset = hoverunload and self.TroopUnloadDistHover or self.TroopUnloadDistGround
+            if IsHerc then offset = self.TroopUnloadDistGroundHerc or 25 end
+            if IsHook then offset = self.TroopUnloadDistGroundHook or 15 end
             randomcoord:Translate(offset,Angle,nil,true)
           end
           local tempcount = 0
@@ -3494,7 +3501,7 @@ function CTLD:_UnloadTroops(Group, Unit)
             self.TroopCounter = self.TroopCounter + 1
             tempcount = tempcount+1
             local alias = string.format("%s-%d", _template, math.random(1,100000))
-            local rad = 2.5+tempcount
+            local rad = 2.5+(tempcount*2)
             local Positions = self:_GetUnitPositions(randomcoord,rad,heading,_template)
             self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
               --:InitRandomizeUnits(true,20,2)

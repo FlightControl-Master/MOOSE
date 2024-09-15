@@ -291,7 +291,7 @@
 -- ## Nevada: Nellis AFB
 --
 --     -- ATIS Nellis AFB on 270.10 MHz AM.
---     atisNellis=ATIS:New(AIRBASE.Nevada.Nellis_AFB, 270.1)
+--     atisNellis=ATIS:New(AIRBASE.Nevada.Nellis, 270.1)
 --     atisNellis:SetRadioRelayUnitName("Radio Relay Nellis")
 --     atisNellis:SetActiveRunway("21L")
 --     atisNellis:SetTowerFrequencies({327.000, 132.550})
@@ -302,7 +302,7 @@
 -- ## Persian Gulf: Abu Dhabi International Airport
 --
 --     -- ATIS Abu Dhabi International on 125.1 MHz AM.
---     atisAbuDhabi=ATIS:New(AIRBASE.PersianGulf.Abu_Dhabi_International_Airport, 125.1)
+--     atisAbuDhabi=ATIS:New(AIRBASE.PersianGulf.Abu_Dhabi_Intl, 125.1)
 --     atisAbuDhabi:SetRadioRelayUnitName("Radio Relay Abu Dhabi International Airport")
 --     atisAbuDhabi:SetMetricUnits()
 --     atisAbuDhabi:SetActiveRunway("L")

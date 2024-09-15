@@ -1035,23 +1035,23 @@ end
 -- The following airbases are monitored at the Nevada region.
 -- Use the @{Wrapper.Airbase#AIRBASE.Nevada} enumeration to select the airbases to be monitored.
 -- 
---    * `AIRBASE.Nevada.Beatty_Airport`
---    * `AIRBASE.Nevada.Boulder_City_Airport`
---    * `AIRBASE.Nevada.Creech_AFB`
+--    * `AIRBASE.Nevada.Beatty`
+--    * `AIRBASE.Nevada.Boulder_City`
+--    * `AIRBASE.Nevada.Creech`
 --    * `AIRBASE.Nevada.Echo_Bay`
---    * `AIRBASE.Nevada.Groom_Lake_AFB`
---    * `AIRBASE.Nevada.Henderson_Executive_Airport`
---    * `AIRBASE.Nevada.Jean_Airport`
---    * `AIRBASE.Nevada.Laughlin_Airport`
+--    * `AIRBASE.Nevada.Groom_Lake`
+--    * `AIRBASE.Nevada.Henderson_Executive`
+--    * `AIRBASE.Nevada.Jean`
+--    * `AIRBASE.Nevada.Laughlin`
 --    * `AIRBASE.Nevada.Lincoln_County`
---    * `AIRBASE.Nevada.McCarran_International_Airport`
+--    * `AIRBASE.Nevada.McCarran_International`
 --    * `AIRBASE.Nevada.Mesquite`
---    * `AIRBASE.Nevada.Mina_Airport`
---    * `AIRBASE.Nevada.Nellis_AFB`
+--    * `AIRBASE.Nevada.Mina`
+--    * `AIRBASE.Nevada.Nellis`
 --    * `AIRBASE.Nevada.North_Las_Vegas`
---    * `AIRBASE.Nevada.Pahute_Mesa_Airstrip`
---    * `AIRBASE.Nevada.Tonopah_Airport`
---    * `AIRBASE.Nevada.Tonopah_Test_Range_Airfield`
+--    * `AIRBASE.Nevada.Pahute_Mesa`
+--    * `AIRBASE.Nevada.Tonopah`
+--    * `AIRBASE.Nevada.Tonopah_Test_Range`
 --
 -- # Installation
 -- 
@@ -1088,10 +1088,10 @@ end
 --    
 --     -- Monitor specific airbases.
 --     ATC_Ground = ATC_GROUND_NEVADA:New(              
---       { AIRBASE.Nevada.Laughlin_Airport,                        
+--       { AIRBASE.Nevada.Laughlin,                        
 --         AIRBASE.Nevada.Lincoln_County,               
 --         AIRBASE.Nevada.North_Las_Vegas,              
---         AIRBASE.Nevada.McCarran_International_Airport
+--         AIRBASE.Nevada.McCarran_International
 --       }                                              
 --     )                                                
 -- 
@@ -1330,33 +1330,33 @@ end
 -- The following airbases are monitored at the PersianGulf region.
 -- Use the @{Wrapper.Airbase#AIRBASE.PersianGulf} enumeration to select the airbases to be monitored.
 -- 
---   * `AIRBASE.PersianGulf.Abu_Musa_Island_Airport`
---   * `AIRBASE.PersianGulf.Al_Dhafra_AB`
+--   * `AIRBASE.PersianGulf.Abu_Musa_Island`
+--   * `AIRBASE.PersianGulf.Al_Dhafra_AFB`
 --   * `AIRBASE.PersianGulf.Al_Maktoum_Intl`
---   * `AIRBASE.PersianGulf.Al_Minhad_AB`
+--   * `AIRBASE.PersianGulf.Al_Minhad_AFB`
 --   * `AIRBASE.PersianGulf.Bandar_Abbas_Intl`
 --   * `AIRBASE.PersianGulf.Bandar_Lengeh`
 --   * `AIRBASE.PersianGulf.Dubai_Intl`
 --   * `AIRBASE.PersianGulf.Fujairah_Intl`
 --   * `AIRBASE.PersianGulf.Havadarya`
---   * `AIRBASE.PersianGulf.Kerman_Airport`
+--   * `AIRBASE.PersianGulf.Kerman`
 --   * `AIRBASE.PersianGulf.Khasab`
---   * `AIRBASE.PersianGulf.Lar_Airbase`
+--   * `AIRBASE.PersianGulf.Lar`
 --   * `AIRBASE.PersianGulf.Qeshm_Island`
 --   * `AIRBASE.PersianGulf.Sharjah_Intl`
---   * `AIRBASE.PersianGulf.Shiraz_International_Airport`
+--   * `AIRBASE.PersianGulf.Shiraz_Intl`
 --   * `AIRBASE.PersianGulf.Sir_Abu_Nuayr`
 --   * `AIRBASE.PersianGulf.Sirri_Island`
 --   * `AIRBASE.PersianGulf.Tunb_Island_AFB`
 --   * `AIRBASE.PersianGulf.Tunb_Kochak`
---   * `AIRBASE.PersianGulf.Sas_Al_Nakheel_Airport`
---   * `AIRBASE.PersianGulf.Bandar_e_Jask_airfield`
---   * `AIRBASE.PersianGulf.Abu_Dhabi_International_Airport`
---   * `AIRBASE.PersianGulf.Al_Bateen_Airport`
---   * `AIRBASE.PersianGulf.Kish_International_Airport`
---   * `AIRBASE.PersianGulf.Al_Ain_International_Airport`
---   * `AIRBASE.PersianGulf.Lavan_Island_Airport`
---   * `AIRBASE.PersianGulf.Jiroft_Airport`
+--   * `AIRBASE.PersianGulf.Sas_Al_Nakheel`
+--   * `AIRBASE.PersianGulf.Bandar_e_Jask`
+--   * `AIRBASE.PersianGulf.Abu_Dhabi_Intl`
+--   * `AIRBASE.PersianGulf.Al_Bateen`
+--   * `AIRBASE.PersianGulf.Kish_Intl`
+--   * `AIRBASE.PersianGulf.Al_Ain_Intl`
+--   * `AIRBASE.PersianGulf.Lavan_Island`
+--   * `AIRBASE.PersianGulf.Jiroft`
 --
 -- # Installation
 -- 
@@ -1391,8 +1391,8 @@ end
 --     AirbasePoliceCaucasus = ATC_GROUND_PERSIANGULF:New()
 --     
 --     ATC_Ground = ATC_GROUND_PERSIANGULF:New( 
---       { AIRBASE.PersianGulf.Kerman_Airport,
---         AIRBASE.PersianGulf.Al_Minhad_AB 
+--       { AIRBASE.PersianGulf.Kerman,
+--         AIRBASE.PersianGulf.Al_Minhad_AFB 
 --       } 
 --     )
 -- 
