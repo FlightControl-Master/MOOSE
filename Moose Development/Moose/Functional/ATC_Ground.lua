@@ -1035,23 +1035,23 @@ end
 -- The following airbases are monitored at the Nevada region.
 -- Use the @{Wrapper.Airbase#AIRBASE.Nevada} enumeration to select the airbases to be monitored.
 -- 
---    * `AIRBASE.Nevada.Beatty_Airport`
---    * `AIRBASE.Nevada.Boulder_City_Airport`
---    * `AIRBASE.Nevada.Creech_AFB`
+--    * `AIRBASE.Nevada.Beatty`
+--    * `AIRBASE.Nevada.Boulder_City`
+--    * `AIRBASE.Nevada.Creech`
 --    * `AIRBASE.Nevada.Echo_Bay`
---    * `AIRBASE.Nevada.Groom_Lake_AFB`
---    * `AIRBASE.Nevada.Henderson_Executive_Airport`
---    * `AIRBASE.Nevada.Jean_Airport`
---    * `AIRBASE.Nevada.Laughlin_Airport`
+--    * `AIRBASE.Nevada.Groom_Lake`
+--    * `AIRBASE.Nevada.Henderson_Executive`
+--    * `AIRBASE.Nevada.Jean`
+--    * `AIRBASE.Nevada.Laughlin`
 --    * `AIRBASE.Nevada.Lincoln_County`
---    * `AIRBASE.Nevada.McCarran_International_Airport`
+--    * `AIRBASE.Nevada.McCarran_International`
 --    * `AIRBASE.Nevada.Mesquite`
---    * `AIRBASE.Nevada.Mina_Airport`
---    * `AIRBASE.Nevada.Nellis_AFB`
+--    * `AIRBASE.Nevada.Mina`
+--    * `AIRBASE.Nevada.Nellis`
 --    * `AIRBASE.Nevada.North_Las_Vegas`
---    * `AIRBASE.Nevada.Pahute_Mesa_Airstrip`
---    * `AIRBASE.Nevada.Tonopah_Airport`
---    * `AIRBASE.Nevada.Tonopah_Test_Range_Airfield`
+--    * `AIRBASE.Nevada.Pahute_Mesa`
+--    * `AIRBASE.Nevada.Tonopah`
+--    * `AIRBASE.Nevada.Tonopah_Test_Range`
 --
 -- # Installation
 -- 
