@@ -458,7 +458,7 @@ function DYNAMICCARGO:_UpdatePosition()
         self:T(self.lid.." AGL: "..agl or -1)
         local isunloaded = true
         local client
-        local playername
+        local playername = self.Owner
         if count > 0 and (agl > 0 or self.testing) then
           self:T(self.lid.." Possible alive helos: "..count or -1)
           if agl ~= 0 or self.testing then
@@ -470,6 +470,11 @@ function DYNAMICCARGO:_UpdatePosition()
             self.Owner = playername
             _DATABASE:CreateEventDynamicCargoUnloaded(self)
           end
+        elseif count > 0 and agl == 0 then
+          self:T(self.lid.." moved! LOADED -> UNLOADED by "..tostring(playername))
+          self.CargoState = DYNAMICCARGO.State.UNLOADED
+          self.Owner = playername
+          _DATABASE:CreateEventDynamicCargoUnloaded(self)
         end
       end
       self.LastPosition = pos
