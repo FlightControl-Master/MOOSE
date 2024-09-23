@@ -226,7 +226,7 @@ function STORAGE:NewFromStaticCargo(StaticCargoName)
   return self
 end
 
---- Create a new STORAGE object from an DCS static cargo object.
+--- Create a new STORAGE object from a Wrapper.DynamicCargo#DYNAMICCARGO object.
 -- @param #STORAGE self
 -- @param #string DynamicCargoName Unit name of the dynamic cargo.
 -- @return #STORAGE self
@@ -235,7 +235,7 @@ function STORAGE:NewFromDynamicCargo(DynamicCargoName)
   -- Inherit everything from BASE class.
   local self=BASE:Inherit(self, BASE:New()) -- #STORAGE
 
-  self.airbase=Unit.getByName(DynamicCargoName)
+  self.airbase=Unit.getByName(DynamicCargoName) or StaticObject.getByName(DynamicCargoName)
 
   if Airbase.getWarehouse then
     self.warehouse=Warehouse.getCargoAsWarehouse(self.airbase)

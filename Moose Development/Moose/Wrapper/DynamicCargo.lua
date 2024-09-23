@@ -183,7 +183,7 @@ end
 -- @param #DYNAMICCARGO self
 -- @return DCS static object
 function DYNAMICCARGO:GetDCSObject()
-  local DCSStatic = Unit.getByName( self.StaticName ) 
+  local DCSStatic = StaticObject.getByName( self.StaticName ) or Unit.getByName( self.StaticName ) 
   if DCSStatic then
     return DCSStatic
   end
