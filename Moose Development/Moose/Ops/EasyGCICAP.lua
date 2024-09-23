@@ -50,7 +50,7 @@
 -- @field #number capleg
 -- @field #number maxinterceptsize
 -- @field #number missionrange
--- @field #number noaltert5
+-- @field #number noalert5
 -- @field #table ManagedAW
 -- @field #table ManagedSQ
 -- @field #table ManagedCP
@@ -167,7 +167,7 @@
 -- * @{#EASYGCICAP.SetDefaultCAPLeg}: Set the length of the CAP leg, default is 15 NM.
 -- * @{#EASYGCICAP.SetDefaultCAPGrouping}: Set how many planes will be spawned per mission (CVAP/GCI), defaults to 2.
 -- * @{#EASYGCICAP.SetDefaultMissionRange}: Set how many NM the planes can go from the home base, defaults to 100.
--- * @{#EASYGCICAP.SetDefaultNumberAlter5Standby}: Set how many planes will be spawned on cold standby (Alert5), default 2.
+-- * @{#EASYGCICAP.SetDefaultNumberAlert5Standby}: Set how many planes will be spawned on cold standby (Alert5), default 2.
 -- * @{#EASYGCICAP.SetDefaultEngageRange}: Set max engage range for CAP flights if they detect intruders, defaults to 50.
 -- * @{#EASYGCICAP.SetMaxAliveMissions}: Set max parallel missions can be done (CAP+GCI+Alert5+Tanker+AWACS), defaults to 8.
 -- * @{#EASYGCICAP.SetDefaultRepeatOnFailure}: Set max repeats on failure for intercepting/killing intruders, defaults to 3.
@@ -197,7 +197,7 @@ EASYGCICAP = {
   capleg = 15,
   maxinterceptsize = 2,
   missionrange = 100,
-  noaltert5 = 4,
+  noalert5 = 4,
   ManagedAW = {},
   ManagedSQ = {},
   ManagedCP = {},
@@ -252,7 +252,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.13"
+EASYGCICAP.version="0.1.15"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -278,7 +278,7 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   -- defaults
   self.alias = Alias or AirbaseName.." CAP Wing"
   self.coalitionname = string.lower(Coalition) or "blue"
-  self.coalition = self.coaltitionname == "blue" and coalition.side.BLUE or coalition.side.RED
+  self.coalition = self.coalitionname == "blue" and coalition.side.BLUE or coalition.side.RED
   self.wings = {}
   self.EWRName = EWRName or self.coalitionname.." EWR"
   --self.CapZoneName = CapZoneName
@@ -293,7 +293,7 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.capleg = 15
   self.capgrouping = 2
   self.missionrange = 100
-  self.noaltert5 = 2
+  self.noalert5 = 2
   self.MaxAliveMissions = 8
   self.engagerange = 50
   self.repeatsonfailure = 3
@@ -441,9 +441,9 @@ end
 -- @param #EASYGCICAP self
 -- @param #number Airframes defaults to 2
 -- @return #EASYGCICAP self
-function EASYGCICAP:SetDefaultNumberAlter5Standby(Airframes)
-  self:T(self.lid.."SetDefaultNumberAlter5Standby")
-  self.noaltert5 = math.abs(Airframes) or 2
+function EASYGCICAP:SetDefaultNumberAlert5Standby(Airframes)
+  self:T(self.lid.."SetDefaultNumberAlert5Standby")
+  self.noalert5 = math.abs(Airframes) or 2
   return self
 end
 
@@ -452,7 +452,7 @@ end
 -- @param #number Range defaults to 50NM
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetDefaultEngageRange(Range)
-  self:T(self.lid.."SetDefaultNumberAlter5Standby")
+  self:T(self.lid.."SetDefaultEngageRange")
   self.engagerange = Range or 50
   return self
 end
@@ -620,9 +620,9 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     end
   end
   
-  if self.noaltert5 > 0 then  
+  if self.noalert5 > 0 then  
     local alert = AUFTRAG:NewALERT5(AUFTRAG.Type.INTERCEPT) 
-    alert:SetRequiredAssets(self.noaltert5)
+    alert:SetRequiredAssets(self.noalert5)
     alert:SetRepeat(99) 
     CAP_Wing:AddMission(alert)
     table.insert(self.ListOfAuftrag,alert)
