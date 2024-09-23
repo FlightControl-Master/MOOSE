@@ -8355,14 +8355,17 @@ do -- SET_SCENERY
   -- @param #SET_SCENERY self
   -- @return Core.Point#COORDINATE The center coordinate of all the objects in the set.
   function SET_SCENERY:GetCoordinate()
-    
+    --[[
     local Coordinate = COORDINATE:New({0,0,0})
-    
+
     local Item = self:GetRandomSurely()
     
     if Item then
       Coordinate:GetCoordinate()
     end
+    --]]
+    
+    local Coordinate = self:GetFirst():GetCoordinate()
     
     local x1 = Coordinate.x
     local x2 = Coordinate.x
