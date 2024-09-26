@@ -841,9 +841,9 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   local BeaconName
   
   if _playerName then
-    BeaconName = _unitName..math.random(1,10000)
-  elseif _unitName then
     BeaconName = _playerName..math.random(1,10000)
+  elseif _unitName then
+    BeaconName = _unitName..math.random(1,10000)
   else
     BeaconName = "Ghost-1-1"..math.random(1,10000)
   end
