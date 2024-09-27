@@ -1371,7 +1371,7 @@ function EVENT:onEvent( Event )
           -- Scenery
           ---          
           Event.IniDCSUnit = Event.initiator
-          Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+          Event.IniDCSUnitName = Event.IniDCSUnit.getName and Event.IniDCSUnit:getName() or "Scenery no name "..math.random(1,20000)
           Event.IniUnitName = Event.IniDCSUnitName
           Event.IniUnit = SCENERY:Register( Event.IniDCSUnitName, Event.initiator )
           Event.IniCategory = Event.IniDCSUnit:getDesc().category
