@@ -66,11 +66,11 @@ SEAD = {
   SEADGroupPrefixes = {},
   SuppressedGroups = {},
   EngagementRange = 75, --  default 75% engagement range Feature Request #1355
-  Padding = 10,
+  Padding = 15,
   CallBack = nil,
   UseCallBack = false,
   debug = false,
-  WeaponTrack = false,
+  WeaponTrack = true,
 }
 
   --- Missile enumerators
@@ -481,8 +481,8 @@ function SEAD:HandleEventShot( EventData )
     self:T( '*** SEAD - Weapon Match' )
     if self.WeaponTrack == true then
       WeaponWrapper:SetFuncTrack(function(weapon) env.info(string.format("*** Weapon Speed: %d m/s",weapon:GetSpeed() or -1)) end)
-      WeaponWrapper:StartTrack(1)
-      WeaponWrapper:StopTrack(15)
+      WeaponWrapper:StartTrack()
+      WeaponWrapper:StopTrack(30)
     end
     local _targetskill = "Random"
     local _targetgroupname = "none"
@@ -536,7 +536,7 @@ function SEAD:HandleEventShot( EventData )
     end
     if SEADGroupFound == true then -- yes we are being attacked
       if string.find(SEADWeaponName,"ADM_141",1,true) then
-        self:__ManageEvasion(2,_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup,0,WeaponWrapper)
+        self:__ManageEvasion(2,_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup,2,WeaponWrapper)
       else
         self:ManageEvasion(_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup,0,WeaponWrapper)
       end

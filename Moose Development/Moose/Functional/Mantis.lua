@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: July 2024
+-- Last Update: Sep 2024
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
