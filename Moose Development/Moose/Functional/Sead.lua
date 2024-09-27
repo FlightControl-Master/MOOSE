@@ -28,6 +28,16 @@
 
 ---
 -- @type SEAD
+-- @field #string ClassName The Class Name.
+-- @field #table TargetSkill Table of target skills.
+-- @field #table SEADGroupPrefixes Table of SEAD prefixes.
+-- @field #table SuppressedGroups Table of currently suppressed groups.
+-- @field #number EngagementRange Engagement Range.
+-- @field #number Padding Padding in seconds.
+-- @field #function CallBack Callback function for suppression plans.
+-- @field #boolean UseCallBack Switch for callback function to be used.
+-- @field #boolean debug Debug switch.
+-- @field #boolen WeaponTrack Track switch, if true track weapon speed for 15 secs.
 -- @extends Core.Base#BASE
 
 --- Make SAM sites execute evasive and defensive behaviour when being fired upon.
@@ -60,6 +70,7 @@ SEAD = {
   CallBack = nil,
   UseCallBack = false,
   debug = false,
+  WeaponTrack = false,
 }
 
   --- Missile enumerators
@@ -144,7 +155,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   self:AddTransition("*",             "ManageEvasion",                "*")
   self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  self:I("*** SEAD - Started Version 0.4.6")
+  self:I("*** SEAD - Started Version 0.4.7")
   return self
 end
 
@@ -371,7 +382,7 @@ function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADP
         reach = wpndata[1] * 1.1
         local mach = wpndata[2]
         wpnspeed = math.floor(mach * 340.29)
-        if Weapon then
+        if Weapon and Weapon:GetSpeed() > 0 then
           wpnspeed = Weapon:GetSpeed()
           self:T(string.format("*** SEAD - Weapon Speed from WEAPON: %f m/s",wpnspeed))
         end
@@ -460,7 +471,7 @@ function SEAD:HandleEventShot( EventData )
   local SEADWeapon = EventData.Weapon -- Identify the weapon fired
   local SEADWeaponName = EventData.WeaponName -- return weapon type
 
-  local WeaponWrapper = WEAPON:New(EventData.Weapon)
+  local WeaponWrapper = WEAPON:New(EventData.Weapon) -- Wrapper.Weapon#WEAPON
   --local SEADWeaponSpeed = WeaponWrapper:GetSpeed() -- mps
   
   self:T( "*** SEAD - Missile Launched = " .. SEADWeaponName)
@@ -468,6 +479,11 @@ function SEAD:HandleEventShot( EventData )
 
   if self:_CheckHarms(SEADWeaponName) then
     self:T( '*** SEAD - Weapon Match' )
+    if self.WeaponTrack == true then
+      WeaponWrapper:SetFuncTrack(function(weapon) env.info(string.format("*** Weapon Speed: %d m/s",weapon:GetSpeed() or -1)) end)
+      WeaponWrapper:StartTrack(1)
+      WeaponWrapper:StopTrack(15)
+    end
     local _targetskill = "Random"
     local _targetgroupname = "none"
     local _target = EventData.Weapon:getTarget() -- Identify target
