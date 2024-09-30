@@ -19,7 +19,7 @@
 --
 -- ### Authors: **applevangelist**, **FlightControl**
 --
--- Last Update: Dec 2023
+-- Last Update: Oct 2024
 --
 -- ===
 --
@@ -37,7 +37,7 @@
 -- @field #function CallBack Callback function for suppression plans.
 -- @field #boolean UseCallBack Switch for callback function to be used.
 -- @field #boolean debug Debug switch.
--- @field #boolen WeaponTrack Track switch, if true track weapon speed for 15 secs.
+-- @field #boolen WeaponTrack Track switch, if true track weapon speed for 30 secs.
 -- @extends Core.Base#BASE
 
 --- Make SAM sites execute evasive and defensive behaviour when being fired upon.
@@ -70,7 +70,7 @@ SEAD = {
   CallBack = nil,
   UseCallBack = false,
   debug = false,
-  WeaponTrack = true,
+  WeaponTrack = false,
 }
 
   --- Missile enumerators
@@ -481,7 +481,7 @@ function SEAD:HandleEventShot( EventData )
     self:T( '*** SEAD - Weapon Match' )
     if self.WeaponTrack == true then
       WeaponWrapper:SetFuncTrack(function(weapon) env.info(string.format("*** Weapon Speed: %d m/s",weapon:GetSpeed() or -1)) end)
-      WeaponWrapper:StartTrack()
+      WeaponWrapper:StartTrack(0.1)
       WeaponWrapper:StopTrack(30)
     end
     local _targetskill = "Random"

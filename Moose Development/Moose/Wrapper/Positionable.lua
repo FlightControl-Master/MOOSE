@@ -110,14 +110,17 @@ function POSITIONABLE:Destroy( GenerateEvent )
 
     if GenerateEvent and GenerateEvent == true then
       if self:IsAir() then
+        --self:ScheduleOnce(1,self.CreateEventCrash,self,timer.getTime(),DCSObject)
         self:CreateEventCrash( timer.getTime(), DCSObject )
       else
+        --self:ScheduleOnce(1,self.CreateEventDead,self,timer.getTime(),DCSObject)
         self:CreateEventDead( timer.getTime(), DCSObject )
       end
     elseif GenerateEvent == false then
       -- Do nothing!
     else
       self:CreateEventRemoveUnit( timer.getTime(), DCSObject )
+      --self:ScheduleOnce(1,self.CreateEventRemoveUnit,self,timer.getTime(),DCSObject)
     end
 
     USERFLAG:New( UnitGroupName ):Set( 100 )

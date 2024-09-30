@@ -492,13 +492,16 @@ function GROUP:Destroy( GenerateEvent, delay )
         if GenerateEvent and GenerateEvent == true then
           if self:IsAir() then
             self:CreateEventCrash( timer.getTime(), UnitData )
+            --self:ScheduleOnce(1,self.CreateEventCrash,self,timer.getTime(),UnitData)
           else
             self:CreateEventDead( timer.getTime(), UnitData )
+            --self:ScheduleOnce(1,self.CreateEventDead,self,timer.getTime(),UnitData)
           end
         elseif GenerateEvent == false then
           -- Do nothing!
         else
           self:CreateEventRemoveUnit( timer.getTime(), UnitData )
+          --self:ScheduleOnce(1,self.CreateEventRemoveUnit,self,timer.getTime(),UnitData)
         end
       end
       USERFLAG:New( self:GetName() ):Set( 100 )
