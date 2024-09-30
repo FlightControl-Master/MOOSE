@@ -3956,17 +3956,17 @@ end
 -- @return #number count
 function SPAWN:_CountAliveUnits()
   local count = 0
-  self:I("self.SpawnAliasPrefix="..tostring(self.SpawnAliasPrefix).." | self.SpawnTemplatePrefix="..tostring(self.SpawnTemplatePrefix))
+  --self:I("self.SpawnAliasPrefix="..tostring(self.SpawnAliasPrefix).." | self.SpawnTemplatePrefix="..tostring(self.SpawnTemplatePrefix))
   if self.SpawnAliasPrefix then
     if not self.SpawnAliasPrefixEscaped then self.SpawnAliasPrefixEscaped = string.gsub(self.SpawnAliasPrefix,"[%p%s]",".") end
-    self:I("self.SpawnAliasPrefixEscaped="..tostring(self.SpawnAliasPrefixEscaped))
+    --self:I("self.SpawnAliasPrefixEscaped="..tostring(self.SpawnAliasPrefixEscaped))
     local SpawnAliasPrefix = self.SpawnAliasPrefixEscaped
     local agroups = GROUP:FindAllByMatching(SpawnAliasPrefix)
     for _,_grp in pairs(agroups) do
-      self:I("Group Name = " .. _grp:GetName())
+      --self:I("Group Name = " .. _grp:GetName())
       local game = self:_GetPrefixFromGroupName(_grp.GroupName)
-      self:I("Game = "..game)
-      self:I("Count = ".._grp:CountAliveUnits())
+      --self:I("Game = "..game)
+      --self:I("Count = ".._grp:CountAliveUnits())
       if game and game == self.SpawnAliasPrefix then
         count = count + _grp:CountAliveUnits()
       end
@@ -3990,8 +3990,8 @@ end
 -- @param #SPAWN self 
 -- @param Core.Event#EVENTDATA EventData
 function SPAWN:_OnDeadOrCrash( EventData )
-  self:I( "Dead or crash event ID "..tostring(EventData.id or 0))
-  self:I( "Dead or crash event for "..tostring(EventData.IniUnitName or "none") )
+  --self:I( "Dead or crash event ID "..tostring(EventData.id or 0))
+  --self:I( "Dead or crash event for "..tostring(EventData.IniUnitName or "none") )
   
   --if EventData.id == EVENTS.Dead then return end
   
@@ -4003,9 +4003,9 @@ function SPAWN:_OnDeadOrCrash( EventData )
     local EventPrefix = self:_GetPrefixFromGroupName(unit.GroupName)
    
     if EventPrefix then -- EventPrefix can be nil if no # is found, which means, no spawnable group!
-      self:I(string.format("EventPrefix = %s | SpawnAliasPrefix = %s  | Old AliveUnits = %d",EventPrefix or "",self.SpawnAliasPrefix or "",self.AliveUnits or 0))
+      --self:I(string.format("EventPrefix = %s | SpawnAliasPrefix = %s  | Old AliveUnits = %d",EventPrefix or "",self.SpawnAliasPrefix or "",self.AliveUnits or 0))
       if EventPrefix == self.SpawnTemplatePrefix or ( self.SpawnAliasPrefix and EventPrefix == self.SpawnAliasPrefix ) and self.AliveUnits > 0 then
-       self:I( { "Dead event: " .. EventPrefix } )
+       --self:I( { "Dead event: " .. EventPrefix } )
        --self.AliveUnits = self.AliveUnits - 1
        self:ScheduleOnce(1,self._CountAliveUnits,self)   
        --self.AliveUnits = self:_CountAliveUnits()
