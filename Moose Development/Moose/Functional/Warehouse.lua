@@ -8433,12 +8433,14 @@ function WAREHOUSE:_GetAttribute(group)
   local attribute=WAREHOUSE.Attribute.OTHER_UNKNOWN --#WAREHOUSE.Attribute
 
   if group then
+  
+    local groupCat=group:GetCategory()
 
     -----------
     --- Air ---
     -----------
     -- Planes
-    local transportplane=group:HasAttribute("Transports") and group:HasAttribute("Planes")
+    local transportplane=group:HasAttribute("Transports") and group:HasAttribute("Planes") and groupCat==Group.Category.AIRPLANE
     local awacs=group:HasAttribute("AWACS")
     local fighter=group:HasAttribute("Fighters") or group:HasAttribute("Interceptors") or group:HasAttribute("Multirole fighters") or (group:HasAttribute("Bombers") and not group:HasAttribute("Strategic bombers"))
     local bomber=group:HasAttribute("Strategic bombers")
