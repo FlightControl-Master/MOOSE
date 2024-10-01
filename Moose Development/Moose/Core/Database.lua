@@ -1582,12 +1582,29 @@ end
 -- @param DCS#Airbase airbase Airbase.
 -- @return #DATABASE self
 function DATABASE:_RegisterAirbase(airbase)
-
+  
+  local IsSyria = UTILS.GetDCSMap() == "Syria" and true or false
+  local countHSyria = 0
+  
   if airbase then
 
     -- Get the airbase name.
     local DCSAirbaseName = airbase:getName()
-
+    
+    -- DCS 2.9.8.1107 added 143 helipads all named H with the same object ID ..
+    if IsSyria and DCSAirbaseName == "H" and countHSyria > 0 then
+      --[[
+      local p = airbase:getPosition().p
+      local mgrs = COORDINATE:New(p.x,p.z,p.y):ToStringMGRS()
+      self:I("Airbase on Syria map named H @ "..mgrs)
+      countHSyria = countHSyria + 1
+      if countHSyria > 1 then return self end
+      --]]
+      return self
+    elseif IsSyria and DCSAirbaseName == "H" and countHSyria == 0 then
+      countHSyria = countHSyria + 1
+    end
+    
     -- This gave the incorrect value to be inserted into the airdromeID for DCS 2.5.6. Is fixed now.
     local airbaseID=airbase:getID()
 

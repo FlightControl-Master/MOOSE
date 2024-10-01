@@ -63,6 +63,11 @@
 -- To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
 -- the first letter of the method is also capitalized. So, by example, the DCS Airbase method DCSWrapper.Airbase#Airbase.getName()
 -- is implemented in the AIRBASE class as @{#AIRBASE.GetName}().
+-- 
+-- ## Note on the "H" heli pads in the Syria map:
+-- 
+-- As of the time of writing (Oct 2024, DCS DCS 2.9.8.1107), these 143 objects have the **same name and object ID**, which makes them unusable in Moose, e.g. you cannot find a specific one for spawning etc.
+-- Waiting for Ugra and ED to fix this issue.
 --
 -- @field #AIRBASE AIRBASE
 AIRBASE = {
@@ -450,6 +455,7 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Gaziantep
 -- * AIRBASE.Syria.Gazipasa
 -- * AIRBASE.Syria.Gecitkale
+-- * AIRBASE.Syria.H
 -- * AIRBASE.Syria.H3
 -- * AIRBASE.Syria.H3_Northwest
 -- * AIRBASE.Syria.H3_Southwest
@@ -518,6 +524,7 @@ AIRBASE.Syria={
   ["Gaziantep"] = "Gaziantep",
   ["Gazipasa"] = "Gazipasa",
   ["Gecitkale"] = "Gecitkale",
+  ["H"] = "H",
   ["H3"] = "H3",
   ["H3_Northwest"] = "H3 Northwest",
   ["H3_Southwest"] = "H3 Southwest",
@@ -752,12 +759,14 @@ AIRBASE.Sinai = {
 -- 
 -- * AIRBASE.Kola.Banak
 -- * AIRBASE.Kola.Bodo
+-- * AIRBASE.Kola.Ivalo
 -- * AIRBASE.Kola.Jokkmokk
 -- * AIRBASE.Kola.Kalixfors
 -- * AIRBASE.Kola.Kallax
 -- * AIRBASE.Kola.Kemi_Tornio
 -- * AIRBASE.Kola.Kirkenes
 -- * AIRBASE.Kola.Kiruna
+-- * AIRBASE.Kola.Kuusamo
 -- * AIRBASE.Kola.Monchegorsk
 -- * AIRBASE.Kola.Murmansk_International
 -- * AIRBASE.Kola.Olenya
@@ -771,20 +780,22 @@ AIRBASE.Sinai = {
 AIRBASE.Kola = {
   ["Banak"] = "Banak",
   ["Bodo"] = "Bodo",
+  ["Ivalo"] = "Ivalo",
   ["Jokkmokk"] = "Jokkmokk",
   ["Kalixfors"] = "Kalixfors",
+  ["Kallax"] = "Kallax",
   ["Kemi_Tornio"] = "Kemi Tornio",
+  ["Kirkenes"] = "Kirkenes",
   ["Kiruna"] = "Kiruna",
+  ["Kuusamo"] = "Kuusamo",
   ["Monchegorsk"] = "Monchegorsk",
   ["Murmansk_International"] = "Murmansk International",
   ["Olenya"] = "Olenya",
   ["Rovaniemi"] = "Rovaniemi",
   ["Severomorsk_1"] = "Severomorsk-1",
   ["Severomorsk_3"] = "Severomorsk-3",
-  ["Vuojarvi"] = "Vuojarvi",
-  ["Kirkenes"] = "Kirkenes",
-  ["Kallax"] = "Kallax",
   ["Vidsel"] = "Vidsel",
+  ["Vuojarvi"] = "Vuojarvi",
 }
 
 --- Airbases of the Afghanistan map
@@ -926,7 +937,7 @@ function AIRBASE:Register(AirbaseName)
 
   -- Debug info.
   --self:I({airbase=AirbaseName, descriptors=self.descriptors})
-
+  
   -- Category.
   self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
 
