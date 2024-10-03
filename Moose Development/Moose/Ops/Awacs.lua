@@ -122,6 +122,7 @@ do
 -- @field #number TacticalModulation
 -- @field #number TacticalInterval
 -- @field Core.Set#SET_GROUP DetectionSet
+-- @field #number MaxMissionRange
 -- @extends Core.Fsm#FSM
 
 
@@ -508,7 +509,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.65", -- #string
+  version = "0.2.66", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -605,6 +606,7 @@ AWACS = {
   TacticalModulation = radio.modulation.AM,
   TacticalInterval = 120,
   DetectionSet = nil,
+  MaxMissionRange = 125,
 }
 
 ---
@@ -1572,6 +1574,15 @@ function AWACS:SetLocale(Locale)
   return self
 end
 
+--- [User] Set the max mission range flights can be away from their home base.
+-- @param #AWACS self
+-- @param #number NM Distance in nautical miles
+-- @return #AWACS self
+function AWACS:SetMaxMissionRange(NM)
+  self.MaxMissionRange = NM or 125
+  return self
+end
+
 --- [User] Add additional frequency and modulation for AWACS SRS output.
 -- @param #AWACS self
 -- @param #number Frequency The frequency to add, e.g. 132.5
@@ -2228,6 +2239,7 @@ function AWACS:_StartEscorts(Shiftchange)
     local escort = AUFTRAG:NewESCORT(group, {x= -100*((i + (i%2))/2), y=0, z=(100 + 100*((i + (i%2))/2))*(-1)^i},45,{"Air"})
     escort:SetRequiredAssets(1)
     escort:SetTime(nil,timeonstation)
+    escort:SetMissionRange(self.MaxMissionRange)
     self.AirWing:AddMission(escort)
     self.CatchAllMissions[#self.CatchAllMissions+1] = escort
 
@@ -5739,7 +5751,7 @@ function AWACS:_AssignPilotToTarget(Pilots,Targets)
     local intercept = AUFTRAG:NewINTERCEPT(Target.Target)
     intercept:SetWeaponExpend(AI.Task.WeaponExpend.ALL)
     intercept:SetWeaponType(ENUMS.WeaponFlag.Auto)
-    
+    intercept:SetMissionRange(self.MaxMissionRange)
     -- TODO 
     -- now this is going to be interesting...
     -- Check if the target left the "hot" area or is dead already
@@ -5787,6 +5799,7 @@ function AWACS:_AssignPilotToTarget(Pilots,Targets)
     AnchorSpeed = UTILS.KnotsToAltKIAS(AnchorSpeed,Angels)
     local Anchor = self.AnchorStacks:ReadByPointer(Pilot.AnchorStackNo) -- #AWACS.AnchorData
     local capauftrag = AUFTRAG:NewCAP(Anchor.StationZone,Angels,AnchorSpeed,Anchor.StationZoneCoordinate,0,15,{})
+    capauftrag:SetMissionRange(self.MaxMissionRange)
     capauftrag:SetTime(nil,((self.CAPTimeOnStation*3600)+(15*60)))
     Pilot.FlightGroup:AddMission(capauftrag) 
     
@@ -5904,6 +5917,7 @@ function AWACS:onafterStart(From, Event, To)
     -- set up the AWACS and let it orbit
     local AwacsAW = self.AirWing -- Ops.Airwing#AIRWING
     local mission = AUFTRAG:NewORBIT_RACETRACK(self.OrbitZone:GetCoordinate(),self.AwacsAngels*1000,self.Speed,self.Heading,self.Leg)
+    mission:SetMissionRange(self.MaxMissionRange)
     local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600
     mission:SetTime(nil,timeonstation)
     self.CatchAllMissions[#self.CatchAllMissions+1] = mission
@@ -6477,6 +6491,7 @@ function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo
       if auftragtype == AUFTRAG.Type.ALERT5 then
         -- all correct
         local capauftrag = AUFTRAG:NewCAP(Anchor.StationZone,Angels*1000,AnchorSpeed,Anchor.StationZone:GetCoordinate(),0,15,{})
+        capauftrag:SetMissionRange(self.MaxMissionRange)
         capauftrag:SetTime(nil,((self.CAPTimeOnStation*3600)+(15*60)))
         capauftrag:AddAsset(managedgroup.FlightGroup)
         self.CatchAllMissions[#self.CatchAllMissions+1] = capauftrag
@@ -6840,7 +6855,8 @@ function AWACS:onafterAwacsShiftChange(From,Event,To)
     self.CatchAllMissions[#self.CatchAllMissions+1] = mission
     local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600
     mission:SetTime(nil,timeonstation)
-  
+    mission:SetMissionRange(self.MaxMissionRange)
+    
     AwacsAW:AddMission(mission)
     
     self.AwacsMissionReplacement = mission
