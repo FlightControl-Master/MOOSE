@@ -262,7 +262,7 @@ MSRS = {
 
 --- MSRS class version.
 -- @field #string version
-MSRS.version="0.3.2"
+MSRS.version="0.3.3"
 
 --- Voices
 -- @type MSRS.Voices
