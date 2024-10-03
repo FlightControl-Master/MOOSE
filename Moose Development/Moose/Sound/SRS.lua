@@ -52,6 +52,7 @@
 -- @field #table poptions Provider options. Each element is a data structure of type `MSRS.ProvierOptions`.
 -- @field #string provider Provider of TTS (win, gcloud, azure, amazon).
 -- @field #string backend Backend used as interface to SRS (MSRS.Backend.SRSEXE or MSRS.Backend.GRPC).
+-- @field #boolean UsePowerShell Use PowerShell to execute the command and not cmd.exe
 -- @extends Core.Base#BASE
 
 --- *It is a very sad thing that nowadays there is so little useless information.* - Oscar Wilde
@@ -256,11 +257,12 @@ MSRS = {
   ConfigFilePath =    "Config\\",
   ConfigLoaded   =     false,
   poptions       =        {},
+  UsePowerShell  =      false,
 }
 
 --- MSRS class version.
 -- @field #string version
-MSRS.version="0.3.0"
+MSRS.version="0.3.3"
 
 --- Voices
 -- @type MSRS.Voices
@@ -588,7 +590,7 @@ function MSRS:SetBackendSRSEXE()
 end
 
 --- Set the default backend.
--- @param #MSRS self
+-- @param #string Backend
 function MSRS.SetDefaultBackend(Backend)
   MSRS.backend=Backend or MSRS.Backend.SRSEXE
 end
@@ -1375,20 +1377,25 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   modus=modus:gsub("1", "FM")
 
   -- Command.
+  local pwsh = string.format('Start-Process -WindowStyle Hidden -WorkingDirectory \"%s\" -FilePath \"%s\" -ArgumentList \'-f "%s" -m "%s" -c %s -p %s -n "%s" -v "%.1f"', path, exe, freqs, modus, coal, port, label,volume )
+  
   local command=string.format('"%s\\%s" -f "%s" -m "%s" -c %s -p %s -n "%s" -v "%.1f"', path, exe, freqs, modus, coal, port, label,volume)
 
   -- Set voice or gender/culture.
-  if voice then
+  if voice and self.UsePowerShell ~= true then
     -- Use a specific voice (no need for gender and/or culture.
     command=command..string.format(" --voice=\"%s\"", tostring(voice))
+    pwsh=pwsh..string.format(" --voice=\"%s\"", tostring(voice))
   else
     -- Add gender.
     if gender and gender~="female" then
       command=command..string.format(" -g %s", tostring(gender))
+      pwsh=pwsh..string.format(" -g %s", tostring(gender))
     end
     -- Add culture.
     if culture and culture~="en-GB" then
       command=command..string.format(" -l %s", tostring(culture))
+      pwsh=pwsh..string.format(" -l %s", tostring(culture))
     end
   end
 
@@ -1396,12 +1403,14 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   if coordinate then
     local lat,lon,alt=self:_GetLatLongAlt(coordinate)
     command=command..string.format(" -L %.4f -O %.4f -A %d", lat, lon, alt)
+    pwsh=pwsh..string.format(" -L %.4f -O %.4f -A %d", lat, lon, alt)
   end
 
   -- Set provider options
   if self.provider==MSRS.Provider.GOOGLE then
     local pops=self:GetProviderOptions()
     command=command..string.format(' --ssml -G "%s"', pops.credentials)
+    pwsh=pwsh..string.format(' --ssml -G "%s"', pops.credentials)
   elseif self.provider==MSRS.Provider.WINDOWS then
     -- Nothing to do.
   else
@@ -1415,8 +1424,12 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
 
   -- Debug output.
   self:T("MSRS command from _GetCommand="..command)
-
-  return command
+  
+  if self.UsePowerShell == true then
+    return pwsh
+  else
+    return command
+  end
 end
 
 --- Execute SRS command to play sound using the `DCS-SR-ExternalAudio.exe`.
@@ -1424,7 +1437,7 @@ end
 -- @param #string command Command to executer
 -- @return #number Return value of os.execute() command.
 function MSRS:_ExecCommand(command)
-  self:F( {command=command} )
+  self:T2( {command=command} )
 
   -- Skip this function if _GetCommand was not able to find the executable
   if string.find(command, "CommandNotFound") then return 0 end
@@ -1432,7 +1445,13 @@ function MSRS:_ExecCommand(command)
   local batContent = command.." && exit"
   -- Create a tmp file.
   local filename=os.getenv('TMP').."\\MSRS-"..MSRS.uuid()..".bat"
-
+  
+  if self.UsePowerShell == true then
+   filename=os.getenv('TMP').."\\MSRS-"..MSRS.uuid()..".ps1"
+   batContent = command .. "\'"
+   self:I({batContent=batContent})
+  end
+  
   local script=io.open(filename, "w+")
   script:write(batContent)
   script:close()
@@ -1441,7 +1460,7 @@ function MSRS:_ExecCommand(command)
   self:T("MSRS batch content: "..batContent)
 
   local res=nil
-  if true then
+  if self.UsePowerShell ~= true then
 
     -- Create a tmp file.
     local filenvbs = os.getenv('TMP') .. "\\MSRS-"..MSRS.uuid()..".vbs"
@@ -1469,23 +1488,20 @@ function MSRS:_ExecCommand(command)
     timer.scheduleFunction(os.remove, filenvbs, timer.getTime()+1)
     self:T("MSRS vbs and batch file removed")
 
-  elseif false then
+  elseif self.UsePowerShell == true then
 
-    -- Create a tmp file.
-    local filenvbs = os.getenv('TMP') .. "\\MSRS-"..MSRS.uuid()..".vbs"
-
-    -- VBS script
-    local script = io.open(filenvbs, "w+")
-    script:write(string.format('Set oShell = CreateObject ("Wscript.Shell")\n'))
-    script:write(string.format('Dim strArgs\n'))
-    script:write(string.format('strArgs = "cmd /c %s"\n', filename))
-    script:write(string.format('oShell.Run strArgs, 0, false'))
-    script:close()
-
-    local runvbs=string.format('cscript.exe //Nologo //B "%s"', filenvbs)
-
+    local pwsh = string.format('powershell.exe  -ExecutionPolicy Unrestricted -WindowStyle Hidden -Command "%s"',filename)
+    --env.info("[MSRS] TextToSpeech Command :\n" .. pwsh.."\n")
+    
+    if string.len(pwsh) > 255 then
+      self:E("[MSRS] - pwsh string too long")      
+    end
+    
     -- Play file in 0.01 seconds
-    res=os.execute(runvbs)
+    res=os.execute(pwsh)
+    
+    -- Remove file in 1 second.
+    timer.scheduleFunction(os.remove, filename, timer.getTime()+1)
 
   else
     -- Play command.

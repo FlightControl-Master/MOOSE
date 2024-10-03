@@ -155,7 +155,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   self:AddTransition("*",             "ManageEvasion",                "*")
   self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  self:I("*** SEAD - Started Version 0.4.7")
+  self:I("*** SEAD - Started Version 0.4.8")
   return self
 end
 
@@ -463,21 +463,24 @@ end
 -- @return #SEAD self
 function SEAD:HandleEventShot( EventData )
   self:T( { EventData.id } )
-  local SEADPlane = EventData.IniUnit -- Wrapper.Unit#UNIT
-  local SEADGroup = EventData.IniGroup -- Wrapper.Group#GROUP
-  local SEADPlanePos = SEADPlane:GetCoordinate() -- Core.Point#COORDINATE
-  local SEADUnit = EventData.IniDCSUnit
-  local SEADUnitName = EventData.IniDCSUnitName
-  local SEADWeapon = EventData.Weapon -- Identify the weapon fired
-  local SEADWeaponName = EventData.WeaponName -- return weapon type
-
-  local WeaponWrapper = WEAPON:New(EventData.Weapon) -- Wrapper.Weapon#WEAPON
-  --local SEADWeaponSpeed = WeaponWrapper:GetSpeed() -- mps
   
-  self:T( "*** SEAD - Missile Launched = " .. SEADWeaponName)
-  --self:T({ SEADWeapon })
-
+  local SEADWeapon = EventData.Weapon -- Identify the weapon fired
+  local SEADWeaponName = EventData.WeaponName or "None" -- return weapon type
+  
   if self:_CheckHarms(SEADWeaponName) then
+    local SEADPlane = EventData.IniUnit -- Wrapper.Unit#UNIT
+    
+    if not SEADPlane then return self end -- case IniUnit is empty
+    
+    local SEADGroup = EventData.IniGroup -- Wrapper.Group#GROUP
+    local SEADPlanePos = SEADPlane:GetCoordinate() -- Core.Point#COORDINATE
+    local SEADUnit = EventData.IniDCSUnit
+    local SEADUnitName = EventData.IniDCSUnitName
+  
+    local WeaponWrapper = WEAPON:New(EventData.Weapon) -- Wrapper.Weapon#WEAPON
+    
+    self:T( "*** SEAD - Missile Launched = " .. SEADWeaponName)
+
     self:T( '*** SEAD - Weapon Match' )
     if self.WeaponTrack == true then
       WeaponWrapper:SetFuncTrack(function(weapon) env.info(string.format("*** Weapon Speed: %d m/s",weapon:GetSpeed() or -1)) end)
