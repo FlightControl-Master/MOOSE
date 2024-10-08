@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update July 2024
+-- @date Last Update Oct 2024
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -509,7 +509,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.66", -- #string
+  version = "0.2.67", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -2446,7 +2446,7 @@ function AWACS:_GetCallSign(Group,GID, IsPlayer)
   
   local callsign = "Ghost 1"
   if Group and Group:IsAlive() then
-    callsign = Group:GetCustomCallSign(self.callsignshort,self.keepnumber,self.callsignTranslations)
+    callsign = Group:GetCustomCallSign(self.callsignshort,self.keepnumber,self.callsignTranslations,self.callsignCustomFunc,self.callsignCustomArgs)
   end  
   return callsign
 end
@@ -2455,10 +2455,12 @@ end
 -- @param #AWACS self
 -- @param #boolean ShortCallsign If true, only call out the major flight number
 -- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name as-is, no amendments or numbers.
--- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
+-- @param #table CallsignTranslations (Optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized.
 -- callsigns from playername or group name.
+-- @param #func CallsignCustomFunc (Optional) For player names only(!). If given, this function will return the callsign. Needs to take the groupname and the playername as first two arguments.
+-- @param #arg ... (Optional) Comma separated arguments to add to the custom function call after groupname and playername.
 -- @return #AWACS self
-function AWACS:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
+function AWACS:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations,CallsignCustomFunc,...)
   if not ShortCallsign or ShortCallsign == false then
    self.callsignshort = false
   else
@@ -2466,6 +2468,8 @@ function AWACS:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
   end
   self.keepnumber = Keepnumber or false
   self.callsignTranslations = CallsignTranslations
+  self.callsignCustomFunc = CallsignCustomFunc
+  self.callsignCustomArgs = arg or {}
   return self  
 end
 

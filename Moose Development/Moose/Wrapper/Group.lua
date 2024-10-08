@@ -2926,8 +2926,10 @@ end
 -- @param #GROUP self
 -- @param #boolean ShortCallsign Return a shortened customized callsign, i.e. "Ghostrider 9" and not "Ghostrider 9 1"
 -- @param #boolean Keepnumber (Player only) Return customized callsign, incl optional numbers at the end, e.g. "Aerial 1-1#Ghostrider 109" results in "Ghostrider 109", if you want to e.g. use historical US Navy Callsigns
--- @param #table CallsignTranslations Table to translate between DCS standard callsigns and bespoke ones. Overrides personal/parsed callsigns if set
+-- @param #table CallsignTranslations (Optional) Table to translate between DCS standard callsigns and bespoke ones. Overrides personal/parsed callsigns if set
 -- callsigns from playername or group name.
+-- @param #func CustomFunction (Optional) For player names only(!). If given, this function will return the callsign. Needs to take the groupname and the playername as first arguments.
+-- @param #arg ... (Optional) Comma separated arguments to add to the CustomFunction call after groupname and playername.
 -- @return #string Callsign
 -- @usage
 --            -- suppose there are three groups with one (client) unit each:
@@ -2948,8 +2950,12 @@ end
 --            -- Apollo for Slot 2 or Apollo 403 if Keepnumber is set
 --            -- Apollo for Slot 3
 --            -- Bengal-4 for Slot 4
-
-function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
+-- 
+--            -- Using a custom function (for player units **only**):
+--            -- Imagine your playernames are looking like so: "[Squadname] | Cpt Apple" and you only want to have the last word as callsign, i.e. "Apple" here. Then this custom function will return this:
+--            local callsign = mygroup:GetCustomCallSign(true,false,nil,function(groupname,playername) return string.match(playername,"([%a]+)$") end)
+-- 
+function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations,CustomFunction,...)
   --self:I("GetCustomCallSign")
 
   local callsign = "Ghost 1"
@@ -2963,7 +2969,14 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
     local callnumbermajor = string.char(string.byte(callnumber,1)) -- 9
     local callnumberminor = string.char(string.byte(callnumber,2)) -- 1
     local personalized = false
-
+    local playername = IsPlayer == true and self:GetPlayerName() or shortcallsign
+    
+    if CustomFunction and IsPlayer then
+      local arguments = arg or {}
+      local callsign = CustomFunction(groupname,playername,unpack(arguments))
+      return callsign
+    end
+    
     -- prioritize bespoke callsigns over parsing, prefer parsing over default callsigns
     if CallsignTranslations and CallsignTranslations[callsignroot] then
       callsignroot = CallsignTranslations[callsignroot]
@@ -2975,9 +2988,9 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations)
         shortcallsign = string.match(groupname,"#%s*([%a]+)") or "Ghost" -- Ghostrider
       end
       personalized = true
-    elseif IsPlayer and string.find(self:GetPlayerName(),"|") then
+    elseif IsPlayer and string.find(playername,"|") then
       -- personalized flight name in group naming
-      shortcallsign = string.match(self:GetPlayerName(),"|%s*([%a]+)") or string.match(self:GetPlayerName(),"|%s*([%d]+)") or "Ghost" -- Ghostrider
+      shortcallsign = string.match(playername,"|%s*([%a]+)") or string.match(self:GetPlayerName(),"|%s*([%d]+)") or "Ghost" -- Ghostrider
       personalized = true
     end
 
