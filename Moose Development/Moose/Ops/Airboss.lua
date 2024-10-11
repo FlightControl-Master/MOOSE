@@ -3615,7 +3615,7 @@ function AIRBOSS:onafterStart( From, Event, To )
 
   -- Handle events.
   self:HandleEvent( EVENTS.Birth )
-  self:HandleEvent( EVENTS.Land )
+  self:HandleEvent( EVENTS.RunwayTouch )
   self:HandleEvent( EVENTS.EngineShutdown )
   self:HandleEvent( EVENTS.Takeoff )
   self:HandleEvent( EVENTS.Crash )
@@ -4381,7 +4381,7 @@ function AIRBOSS:onafterStop( From, Event, To )
 
   -- Unhandle events.
   self:UnHandleEvent( EVENTS.Birth )
-  self:UnHandleEvent( EVENTS.Land )
+  self:UnHandleEvent( EVENTS.RunwayTouch )
   self:UnHandleEvent( EVENTS.EngineShutdown )
   self:UnHandleEvent( EVENTS.Takeoff )
   self:UnHandleEvent( EVENTS.Crash )
@@ -8291,7 +8291,7 @@ end
 --- Airboss event handler for event land.
 -- @param #AIRBOSS self
 -- @param Core.Event#EVENTDATA EventData
-function AIRBOSS:OnEventLand( EventData )
+function AIRBOSS:OnEventRunwayTouch( EventData )
   self:F3( { eventland = EventData } )
 
   -- Nil checks.
