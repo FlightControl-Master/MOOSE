@@ -899,10 +899,14 @@ function CONTROLLABLE:CommandEPLRS( SwitchOnOff, Delay )
     id = 'EPLRS',
     params = {
       value = SwitchOnOff,
-      groupId = self:GetID(),
+      groupId = nil,
     },
   }
-
+  
+  if self:IsGround() then
+   CommandEPLRS.params.groupId = self:GetID()
+  end
+  
   if Delay and Delay > 0 then
     SCHEDULER:New( nil, self.CommandEPLRS, { self, SwitchOnOff }, Delay )
   else
@@ -1006,10 +1010,13 @@ function CONTROLLABLE:TaskEPLRS( SwitchOnOff, idx )
     id = 'EPLRS',
     params = {
       value = SwitchOnOff,
-      groupId = self:GetID(),
+      groupId = nil,
     },
   }
-
+  if self:IsGround() then
+   CommandEPLRS.params.groupId = self:GetID()
+  end
+  
   return self:TaskWrappedAction( CommandEPLRS, idx or 1 )
 end
 
