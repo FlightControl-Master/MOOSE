@@ -108,26 +108,30 @@ function MARKEROPS_BASE:New(Tagname,Keywords,Casesensitive)
    --- On after "MarkAdded" event. Triggered when a Marker is added to the F10 map.
    -- @function [parent=#MARKEROPS_BASE] OnAfterMarkAdded
    -- @param #MARKEROPS_BASE self
-   -- @param #string From The From state
-   -- @param #string Event The Event called
-   -- @param #string To The To state
-   -- @param #string Text The text on the marker
-   -- @param #table Keywords Table of matching keywords found in the Event text
+   -- @param #string From The From state.
+   -- @param #string Event The Event called.
+   -- @param #string To The To state.
+   -- @param #string Text The text on the marker.
+   -- @param #table Keywords Table of matching keywords found in the Event text.
    -- @param Core.Point#COORDINATE Coord Coordinate of the marker.
-   -- @param #number MarkerID Id of this marker
-   -- @param #number CoalitionNumber Coalition of the marker creator
+   -- @param #number MarkerID Id of this marker.
+   -- @param #number CoalitionNumber Coalition of the marker creator.
+   -- @param #string PlayerName Name of the player creating/changing the mark. nil if it cannot be obtained. 
+   -- @param Core.Event#EVENTDATA EventData the event data table. 
    
    --- On after "MarkChanged" event. Triggered when a Marker is changed on the F10 map.
    -- @function [parent=#MARKEROPS_BASE] OnAfterMarkChanged
    -- @param #MARKEROPS_BASE self
-   -- @param #string From The From state
-   -- @param #string Event The Event called
-   -- @param #string To The To state
-   -- @param #string Text The text on the marker
-   -- @param #table Keywords Table of matching keywords found in the Event text
+   -- @param #string From The From state.
+   -- @param #string Event The Event called.
+   -- @param #string To The To state.
+   -- @param #string Text The text on the marker.
+   -- @param #table Keywords Table of matching keywords found in the Event text.
    -- @param Core.Point#COORDINATE Coord Coordinate of the marker.
-   -- @param #number MarkerID Id of this marker
-   -- @param #number CoalitionNumber Coalition of the marker creator
+   -- @param #number MarkerID Id of this marker.
+   -- @param #number CoalitionNumber Coalition of the marker creator.
+   -- @param #string PlayerName Name of the player creating/changing the mark. nil if it cannot be obtained. 
+   -- @param Core.Event#EVENTDATA EventData the event data table
 
    --- On after "MarkDeleted" event. Triggered when a Marker is deleted from the F10 map.
    -- @function [parent=#MARKEROPS_BASE] OnAfterMarkDeleted
@@ -167,7 +171,7 @@ function MARKEROPS_BASE:OnEventMark(Event)
       if Eventtext~=nil then
         if self:_MatchTag(Eventtext) then
          local matchtable = self:_MatchKeywords(Eventtext)
-         self:MarkAdded(Eventtext,matchtable,coord,Event.idx,coalition)
+         self:MarkAdded(Eventtext,matchtable,coord,Event.idx,coalition,Event.PlayerName,Event)
         end
       end
     elseif Event.id==world.event.S_EVENT_MARK_CHANGE then
@@ -177,7 +181,7 @@ function MARKEROPS_BASE:OnEventMark(Event)
       if Eventtext~=nil then
         if self:_MatchTag(Eventtext) then
          local matchtable = self:_MatchKeywords(Eventtext)
-         self:MarkChanged(Eventtext,matchtable,coord,Event.idx,coalition)
+         self:MarkChanged(Eventtext,matchtable,coord,Event.idx,coalition,Event.PlayerName,Event)
         end
       end
     elseif Event.id==world.event.S_EVENT_MARK_REMOVED then
