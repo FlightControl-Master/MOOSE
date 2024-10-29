@@ -721,9 +721,10 @@ function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
 
             if NotInRunwayZone then
               
-     
+              local Taxi = Client:GetState( self, "Taxi" )
+              
               if IsOnGround then
-                local Taxi = Client:GetState( self, "Taxi" )
+                
                 self:T( Taxi )
                 if Taxi == false then
                   local Velocity = VELOCITY:New( AirbaseMeta.KickSpeed or self.KickSpeed )
@@ -740,7 +741,7 @@ function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
                 local IsAboveRunway = Client:IsAboveRunway()
                 self:T( {IsAboveRunway, IsOnGround, Velocity:Get() })
   
-                if IsOnGround then
+                if IsOnGround and not Taxi then
                   local Speeding = false
                   if AirbaseMeta.MaximumKickSpeed then 
                     if Velocity:Get() > AirbaseMeta.MaximumKickSpeed then
@@ -758,6 +759,8 @@ function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
                     Client:SetState( self, "Speeding", true )
                     local SpeedingWarnings = Client:GetState( self, "Warnings" )
                     Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
+                    Client:Message( "Warning " .. SpeedingWarnings .. "/3! Airbase traffic rule violation! Slow down now! Your speed is " .. 
+                                        Velocity:ToString(), 5, "ATC" )
                   end
                 end                  
            
