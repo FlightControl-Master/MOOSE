@@ -24,7 +24,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update Sep 2024
+-- Last Update Oct 2024
 
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1343,7 +1343,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.17"
+CTLD.version="1.1.18"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2429,6 +2429,7 @@ end
     local nearestGroup = nil
     local nearestGroupIndex = -1
     local nearestDistance = 10000000
+    local maxdistance = 0
     local nearestList = {}
     local distancekeys = {}
     local extractdistance = self.CrateDistance * self.ExtractFactor
@@ -2440,8 +2441,14 @@ end
         nearestGroup = v
         nearestGroupIndex = k
         nearestDistance = distance
+        if math.floor(distance) > maxdistance then maxdistance = math.floor(distance) end
+        if nearestList[math.floor(distance)] then 
+          distance = maxdistance+1
+          maxdistance = distance 
+        end
         table.insert(nearestList, math.floor(distance), v)
         distancekeys[#distancekeys+1] = math.floor(distance)
+        --self:I(string.format("Adding group %s distance %dm",nearestGroup:GetName(),distance))
       end
     end
     
@@ -2494,7 +2501,7 @@ end
           nearestGroup.ExtractTime = timer.getTime()
           local loadcargotype = CTLD_CARGO:New(self.CargoCounter, Cargotype.Name, Cargotype.Templates, Cargotype.CargoType, true, true, Cargotype.CratesNeeded,nil,nil,Cargotype.PerCrateMass)
           self:T({cargotype=loadcargotype})
-          local running = math.floor(nearestDistance / 4)+10 -- time run to helo plus boarding
+          local running = math.floor(nearestDistance / 4)+20 -- time run to helo plus boarding
           loaded.Troopsloaded = loaded.Troopsloaded + troopsize
           table.insert(loaded.Cargo,loadcargotype)
           self.Loaded_Cargo[unitname] = loaded
@@ -2509,26 +2516,32 @@ end
             local Angle = math.floor((heading+160)%360)
             Point = coord:Translate(8,Angle):GetVec2()
             if Point then
-              nearestGroup:RouteToVec2(Point,4)
+              nearestGroup:RouteToVec2(Point,5)
             end
           end
           -- clean up:
-          if type(Cargotype.Templates) == "table" and  Cargotype.Templates[2] then
+          local hassecondaries = false
+          if type(Cargotype.Templates) == "table" and Cargotype.Templates[2] then
             for _,_key in pairs (Cargotype.Templates) do
               table.insert(secondarygroups,_key)
+              hassecondaries = true
             end
           end
-          nearestGroup:Destroy(false,running)
+          local destroytimer = math.random(10,20)
+          --self:I("Destroying Group "..nearestGroup:GetName().." in "..destroytimer.." seconds!")
+          nearestGroup:Destroy(false,destroytimer)
         end
       end
     end
     -- clean up secondary groups
-    for _,_name in pairs(secondarygroups) do
-      for _,_group in pairs(nearestList) do
-        if _group and _group:IsAlive() then
-          local groupname = string.match(_group:GetName(), "(.+)-(.+)$")
-          if _name == groupname then
-            _group:Destroy(false,15)
+    if hassecondaries == true then
+      for _,_name in pairs(secondarygroups) do
+        for _,_group in pairs(nearestList) do
+          if _group and _group:IsAlive() then
+            local groupname = string.match(_group:GetName(), "(.+)-(.+)$")
+            if _name == groupname then
+              _group:Destroy(false,15)
+            end
           end
         end
       end
@@ -3412,8 +3425,8 @@ function CTLD:_GetUnitPositions(Coordinate,Radius,Heading,Template)
   local template = _DATABASE:GetGroupTemplate(Template)
   --UTILS.PrintTableToLog(template)
   local numbertroops = #template.units
-  local slightshift = math.abs(math.random(0,200)/100)
-  local newcenter = Coordinate:Translate(Radius+slightshift,((Heading+270)%360))
+  local slightshift = math.abs(math.random(1,500)/100)
+  local newcenter = Coordinate:Translate(Radius+slightshift,((Heading+270+math.random(1,10))%360))
   for i=1,360,math.floor(360/numbertroops) do
     local phead = ((Heading+270+i)%360)
     local post = newcenter:Translate(Radius,phead)
