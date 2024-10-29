@@ -1474,6 +1474,7 @@ function EVENT:onEvent( Event )
           ---
           Event.TgtDCSUnit = Event.target
           Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
+          if Event.TgtDCSUnitName==nil then return end
           Event.TgtUnitName = Event.TgtDCSUnitName
           Event.TgtUnit = SCENERY:Register( Event.TgtDCSUnitName, Event.target )
           Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
