@@ -485,7 +485,8 @@ function GROUP:Destroy( GenerateEvent, delay )
     self:ScheduleOnce(delay, GROUP.Destroy, self, GenerateEvent)
   else
 
-    local DCSGroup = self:GetDCSObject()
+    --local DCSGroup = self:GetDCSObject()
+    local DCSGroup = Group.getByName( self.GroupName )
 
     if DCSGroup then
       for Index, UnitData in pairs( DCSGroup:getUnits() ) do
