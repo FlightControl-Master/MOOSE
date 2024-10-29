@@ -18,7 +18,7 @@
 -- ### Author: FlightControl - Framework Design &  Programming
 -- ### Refactoring to use the Runway auto-detection: Applevangelist
 -- @date August 2022
--- Last Update Nov 2023
+-- Last Update Oct 2024
 --
 -- ===
 -- 
@@ -721,14 +721,18 @@ function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
 
             if NotInRunwayZone then
               
+              local Taxi = Client:GetState( self, "Taxi" )
+              
               if IsOnGround then
-                local Taxi = Client:GetState( self, "Taxi" )
+                
                 self:T( Taxi )
                 if Taxi == false then
                   local Velocity = VELOCITY:New( AirbaseMeta.KickSpeed or self.KickSpeed )
                   Client:Message( "Welcome to " .. AirbaseID .. ". The maximum taxiing speed is " .. 
                                   Velocity:ToString() , 20, "ATC" )
                   Client:SetState( self, "Taxi", true )
+                  Client:SetState( self, "Speeding", false )
+                  Client:SetState( self, "Warnings", 0 )
                 end
   
                 -- TODO: GetVelocityKMH function usage
@@ -737,7 +741,7 @@ function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
                 local IsAboveRunway = Client:IsAboveRunway()
                 self:T( {IsAboveRunway, IsOnGround, Velocity:Get() })
   
-                if IsOnGround then
+                if IsOnGround and not Taxi then
                   local Speeding = false
                   if AirbaseMeta.MaximumKickSpeed then 
                     if Velocity:Get() > AirbaseMeta.MaximumKickSpeed then
@@ -749,15 +753,17 @@ function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
                     end
                   end
                   if Speeding == true then
-                    MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. 
-                                 " has been kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
-                    Client:Destroy()
-                    Client:SetState( self, "Speeding", false )
-                    Client:SetState( self, "Warnings", 0 )
+                    --MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. 
+                    --             " has been kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
+                    --Client:Destroy()
+                    Client:SetState( self, "Speeding", true )
+                    local SpeedingWarnings = Client:GetState( self, "Warnings" )
+                    Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
+                    Client:Message( "Warning " .. SpeedingWarnings .. "/3! Airbase traffic rule violation! Slow down now! Your speed is " .. 
+                                        Velocity:ToString(), 5, "ATC" )
                   end
                 end                  
-                  
-  
+           
                 if IsOnGround then
   
                   local Speeding = false
