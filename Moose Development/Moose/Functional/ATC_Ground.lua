@@ -18,7 +18,7 @@
 -- ### Author: FlightControl - Framework Design &  Programming
 -- ### Refactoring to use the Runway auto-detection: Applevangelist
 -- @date August 2022
--- Last Update Nov 2023
+-- Last Update Oct 2024
 --
 -- ===
 -- 
@@ -721,6 +721,7 @@ function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
 
             if NotInRunwayZone then
               
+     
               if IsOnGround then
                 local Taxi = Client:GetState( self, "Taxi" )
                 self:T( Taxi )
@@ -729,6 +730,8 @@ function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
                   Client:Message( "Welcome to " .. AirbaseID .. ". The maximum taxiing speed is " .. 
                                   Velocity:ToString() , 20, "ATC" )
                   Client:SetState( self, "Taxi", true )
+                  Client:SetState( self, "Speeding", false )
+                  Client:SetState( self, "Warnings", 0 )
                 end
   
                 -- TODO: GetVelocityKMH function usage
@@ -749,15 +752,15 @@ function ATC_GROUND_UNIVERSAL:_AirbaseMonitor()
                     end
                   end
                   if Speeding == true then
-                    MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. 
-                                 " has been kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
-                    Client:Destroy()
-                    Client:SetState( self, "Speeding", false )
-                    Client:SetState( self, "Warnings", 0 )
+                    --MESSAGE:New( "Penalty! Player " .. Client:GetPlayerName() .. 
+                    --             " has been kicked, due to a severe airbase traffic rule violation ...", 10, "ATC" ):ToAll()
+                    --Client:Destroy()
+                    Client:SetState( self, "Speeding", true )
+                    local SpeedingWarnings = Client:GetState( self, "Warnings" )
+                    Client:SetState( self, "Warnings", SpeedingWarnings + 1 )
                   end
                 end                  
-                  
-  
+           
                 if IsOnGround then
   
                   local Speeding = false
