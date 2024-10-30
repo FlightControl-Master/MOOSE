@@ -253,6 +253,9 @@ AIRBASE.Nevada = {
 -- * AIRBASE.Normandy.Villacoublay
 -- * AIRBASE.Normandy.Vrigny
 -- * AIRBASE.Normandy.West_Malling
+-- * AIRBASE.Normandy.Eastchurch
+-- * AIRBASE.Normandy.Headcorn
+-- * AIRBASE.Normandy.Hawkinge
 --
 -- @field Normandy
 AIRBASE.Normandy = {
@@ -335,6 +338,9 @@ AIRBASE.Normandy = {
   ["Villacoublay"] = "Villacoublay",
   ["Vrigny"] = "Vrigny",
   ["West_Malling"] = "West Malling",
+  ["Eastchurch"] = "Eastchurch",
+  ["Headcorn"] = "Headcorn",
+  ["Hawkinge"] = "Hawkinge",
 }
 
 --- Airbases of the Persion Gulf Map:
@@ -503,6 +509,10 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Tha_lah
 -- * AIRBASE.Syria.Tiyas
 -- * AIRBASE.Syria.Wujah_Al_Hajar
+-- * AIRBASE.Syria.Ben_Gurion 
+-- * AIRBASE.Syria.Hatzor
+-- * AIRBASE.Syria.Palmashim
+-- * AIRBASE.Syria.Tel_Nof
 --
 --@field Syria
 AIRBASE.Syria={
@@ -572,6 +582,10 @@ AIRBASE.Syria={
   ["Tha_lah"] = "Tha'lah",
   ["Tiyas"] = "Tiyas",
   ["Wujah_Al_Hajar"] = "Wujah Al Hajar",
+  ["Ben_Gurion"] = "Ben Gurion",
+  ["Hatzor"] = "Hatzor",
+  ["Palmashim"] = "Palmashim",
+  ["Tel_Nof"] = "Tel Nof",
 }
 
 --- Airbases of the Mariana Islands map:
@@ -775,7 +789,9 @@ AIRBASE.Sinai = {
 -- * AIRBASE.Kola.Severomorsk_3
 -- * AIRBASE.Kola.Vidsel
 -- * AIRBASE.Kola.Vuojarvi
--- 
+-- * AIRBASE.Kola.Andoya
+-- * AIRBASE.Kola.Alakourtti
+--
 -- @field Kola
 AIRBASE.Kola = {
   ["Banak"] = "Banak",
@@ -796,6 +812,8 @@ AIRBASE.Kola = {
   ["Severomorsk_3"] = "Severomorsk-3",
   ["Vidsel"] = "Vidsel",
   ["Vuojarvi"] = "Vuojarvi",
+  ["Andoya"] = "Andoya",
+  ["Alakourtti"] = "Alakourtti",
 }
 
 --- Airbases of the Afghanistan map
