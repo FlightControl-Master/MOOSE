@@ -360,7 +360,7 @@ end
 -- @return DCS#Group The DCS Group.
 function GROUP:GetDCSObject()
 
-  if (not self.LastCallDCSObject) or (self.LastCallDCSObject and timer.getTime() - self.LastCallDCSObject  > 1) then
+  --if (not self.LastCallDCSObject) or (self.LastCallDCSObject and timer.getTime() - self.LastCallDCSObject  > 1) then
 
     -- Get DCS group.
     local DCSGroup = Group.getByName( self.GroupName )
@@ -369,14 +369,14 @@ function GROUP:GetDCSObject()
       self.LastCallDCSObject = timer.getTime()
       self.DCSObject = DCSGroup
       return DCSGroup
-    else
-      self.DCSObject = nil
-      self.LastCallDCSObject = nil
+   -- else
+     -- self.DCSObject = nil
+     -- self.LastCallDCSObject = nil
     end
   
-  else
-    return self.DCSObject
-  end
+  --else
+    --return self.DCSObject
+  --end
   
   --self:E(string.format("ERROR: Could not get DCS group object of group %s because DCS object could not be found!", tostring(self.GroupName)))
   return nil
@@ -493,13 +493,16 @@ function GROUP:Destroy( GenerateEvent, delay )
         if GenerateEvent and GenerateEvent == true then
           if self:IsAir() then
             self:CreateEventCrash( timer.getTime(), UnitData )
+            --self:ScheduleOnce(1,self.CreateEventCrash,self,timer.getTime(),UnitData)
           else
             self:CreateEventDead( timer.getTime(), UnitData )
+            --self:ScheduleOnce(1,self.CreateEventDead,self,timer.getTime(),UnitData)
           end
         elseif GenerateEvent == false then
           -- Do nothing!
         else
           self:CreateEventRemoveUnit( timer.getTime(), UnitData )
+          --self:ScheduleOnce(1,self.CreateEventRemoveUnit,self,timer.getTime(),UnitData)
         end
       end
       USERFLAG:New( self:GetName() ):Set( 100 )

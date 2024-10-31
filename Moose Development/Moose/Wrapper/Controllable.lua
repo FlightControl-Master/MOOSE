@@ -899,13 +899,13 @@ function CONTROLLABLE:CommandEPLRS( SwitchOnOff, Delay )
     id = 'EPLRS',
     params = {
       value = SwitchOnOff,
-      groupId = nil,
+      groupId = self:GetID(),
     },
   }
   
-  if self:IsGround() then
-   CommandEPLRS.params.groupId = self:GetID()
-  end
+  --if self:IsGround() then
+   --CommandEPLRS.params.groupId = self:GetID()
+  --end
   
   if Delay and Delay > 0 then
     SCHEDULER:New( nil, self.CommandEPLRS, { self, SwitchOnOff }, Delay )
@@ -941,7 +941,7 @@ function CONTROLLABLE:CommandSetUnlimitedFuel(OnOff, Delay)
 end
 
 
---- Set radio frequency. See [DCS command EPLRS](https://wiki.hoggitworld.com/view/DCS_command_setFrequency)
+--- Set radio frequency. See [DCS command SetFrequency](https://wiki.hoggitworld.com/view/DCS_command_setFrequency)
 -- @param #CONTROLLABLE self
 -- @param #number Frequency Radio frequency in MHz.
 -- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
@@ -968,7 +968,7 @@ function CONTROLLABLE:CommandSetFrequency( Frequency, Modulation, Power, Delay )
   return self
 end
 
---- [AIR] Set radio frequency. See [DCS command EPLRS](https://wiki.hoggitworld.com/view/DCS_command_setFrequencyForUnit)
+--- [AIR] Set radio frequency. See [DCS command SetFrequencyForUnit](https://wiki.hoggitworld.com/view/DCS_command_setFrequencyForUnit)
 -- @param #CONTROLLABLE self
 -- @param #number Frequency Radio frequency in MHz.
 -- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
@@ -1010,12 +1010,13 @@ function CONTROLLABLE:TaskEPLRS( SwitchOnOff, idx )
     id = 'EPLRS',
     params = {
       value = SwitchOnOff,
-      groupId = nil,
+      groupId = self:GetID(),
     },
   }
-  if self:IsGround() then
-   CommandEPLRS.params.groupId = self:GetID()
-  end
+  
+  --if self:IsGround() then
+   --CommandEPLRS.params.groupId = self:GetID()
+  --end
   
   return self:TaskWrappedAction( CommandEPLRS, idx or 1 )
 end
