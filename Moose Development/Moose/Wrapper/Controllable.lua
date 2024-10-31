@@ -960,7 +960,7 @@ function CONTROLLABLE:CommandSetFrequency( Frequency, Modulation, Power, Delay )
   }
 
   if Delay and Delay > 0 then
-    SCHEDULER:New( nil, self.CommandSetFrequency, { self, Frequency, Modulation, Power } )
+    SCHEDULER:New( nil, self.CommandSetFrequency, { self, Frequency, Modulation, Power },Delay )
   else
     self:SetCommand( CommandSetFrequency )
   end
@@ -987,7 +987,7 @@ function CONTROLLABLE:CommandSetFrequencyForUnit(Frequency,Modulation,Power,Unit
     },
   }
   if Delay and Delay>0 then
-    SCHEDULER:New(nil,self.CommandSetFrequencyForUnit,{self,Frequency,Modulation,Power,UnitID})
+    SCHEDULER:New(nil,self.CommandSetFrequencyForUnit,{self,Frequency,Modulation,Power,UnitID},Delay)
   else
     self:SetCommand(CommandSetFrequencyForUnit)
   end
