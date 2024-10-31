@@ -360,7 +360,7 @@ end
 -- @return DCS#Group The DCS Group.
 function GROUP:GetDCSObject()
 
-  if (not self.LastCallDCSObject) or (self.LastCallDCSObject and timer.getTime() - self.LastCallDCSObject  > 1) then
+  --if (not self.LastCallDCSObject) or (self.LastCallDCSObject and timer.getTime() - self.LastCallDCSObject  > 1) then
 
     -- Get DCS group.
     local DCSGroup = Group.getByName( self.GroupName )
@@ -369,14 +369,14 @@ function GROUP:GetDCSObject()
       self.LastCallDCSObject = timer.getTime()
       self.DCSObject = DCSGroup
       return DCSGroup
-    else
-      self.DCSObject = nil
-      self.LastCallDCSObject = nil
+   -- else
+     -- self.DCSObject = nil
+     -- self.LastCallDCSObject = nil
     end
   
-  else
-    return self.DCSObject
-  end
+  --else
+    --return self.DCSObject
+  --end
   
   --self:E(string.format("ERROR: Could not get DCS group object of group %s because DCS object could not be found!", tostring(self.GroupName)))
   return nil
