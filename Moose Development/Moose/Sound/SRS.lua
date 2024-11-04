@@ -1490,7 +1490,7 @@ function MSRS:_ExecCommand(command)
 
   elseif self.UsePowerShell == true then
 
-    local pwsh = string.format('powershell.exe  -ExecutionPolicy Unrestricted -WindowStyle Hidden -Command "%s"',filename)
+    local pwsh = string.format('start /min "" powershell.exe  -ExecutionPolicy Unrestricted -WindowStyle Hidden -Command "%s"',filename)
     --env.info("[MSRS] TextToSpeech Command :\n" .. pwsh.."\n")
     
     if string.len(pwsh) > 255 then
