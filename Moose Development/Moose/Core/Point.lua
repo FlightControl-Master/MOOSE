@@ -2410,7 +2410,7 @@ do -- COORDINATE
       for i,coord in ipairs(Coordinates) do
         vecs[i+1]=coord:GetVec3()
       end
-
+      
       if #vecs<3 then
         self:E("ERROR: A free form polygon needs at least three points!")
       elseif #vecs==3 then
