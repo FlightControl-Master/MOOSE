@@ -273,7 +273,7 @@ function PLAYERTASK:NewFromTarget(Target, Repeat, Times, TTSType)
     return PLAYERTASK:New(self:_GetTaskTypeForTarget(Target), Target, Repeat, Times, TTSType)
 end
 
---- Determines AUFTRAG type based on the target characteristics.
+--- [Internal] Determines AUFTRAG type based on the target characteristics.
 -- @return #AUFTRAG.Type self
 function PLAYERTASK:_GetTaskTypeForTarget(Target)
 
