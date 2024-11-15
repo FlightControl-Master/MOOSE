@@ -1329,6 +1329,7 @@ function EVENT:onEvent( Event )
           end
           
           Event.IniDCSGroupName = Event.IniUnit and Event.IniUnit.GroupName or ""
+          Event.IniGroupName=Event.IniDCSGroupName --At least set the group name because group might not exist any more
           if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
             Event.IniDCSGroupName = Event.IniDCSGroup:getName()
             Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
