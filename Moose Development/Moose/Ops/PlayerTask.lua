@@ -500,14 +500,15 @@ function PLAYERTASK:AddStaticObjectSuccessCondition()
 end
 
 --- [USER] Adds task success condition for AUFTRAG.Type.RECON when a client is at a certain LOS distance from the target.
--- @param #number maxDistance Minimum distance from client to target in LOS for success condition. (Default 5 NM)
+-- @param #PLAYERTASK self
+-- @param #number MinDistance Minimum distance in meters from client to target in LOS for success condition. (Default 5 NM)
 -- @return #PLAYERTASK self
-function PLAYERTASK:AddReconSuccessCondition(minDistance)
+function PLAYERTASK:AddReconSuccessCondition(MinDistance)
     local task = self
     task:AddConditionSuccess(
             function(target)
                 local targetLocation = target:GetCoordinate()
-                local minD = minDistance or UTILS.NMToMeters(5)
+                local minD = MinDistance or UTILS.NMToMeters(5)
                 for _, client in ipairs(task:GetClientObjects()) do
                     local clientCoord = client:GetCoordinate()
                     local distance = clientCoord:Get2DDistance(targetLocation)
