@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update May 2024
+-- @date Last Update Nov 2024
 
 
 do
@@ -274,7 +274,9 @@ function PLAYERTASK:NewFromTarget(Target, Repeat, Times, TTSType)
 end
 
 --- [Internal] Determines AUFTRAG type based on the target characteristics.
--- @return #AUFTRAG.Type self
+-- @param #PLAYERTASK self
+-- @param Ops.Target#TARGET Target Target for this task
+-- @return #string AUFTRAG.Type 
 function PLAYERTASK:_GetTaskTypeForTarget(Target)
 
     local group = nil      --Wrapper.Group#GROUP
@@ -1310,10 +1312,33 @@ do
 --  * Anti-Ship - Any ship targets, if the controller is of type "A2S"
 --  * CTLD - Combat transport and logistics deployment
 --  * CSAR - Combat search and rescue
+--  * RECON - Identify targets
+--  * CAPTUREZONE - Capture an Ops.OpsZone#OPSZONE
+--  * Any #string name can be passed as Auftrag type, but then you need to make sure to define a success condition, and possibly also add the task type to the standard scoring list: `PLAYERTASKCONTROLLER.Scores["yournamehere"]=100`
 --  
 -- ## 3 Task repetition
 --  
 -- On failure, tasks will be replanned by default for a maximum of 5 times.
+-- 
+-- ## 3.1 Pre-configured success conditions
+-- 
+-- Pre-configured success conditions for #PLAYERTASK tasks are available as follows:
+-- 
+-- `mytask:AddStaticObjectSuccessCondition()` -- success if static object is at least 80% dead
+-- 
+-- `mytask:AddOpsZoneCaptureSuccessCondition(CaptureSquadGroupNamePrefix,Coalition)`  -- success if a squad of the given (partial) name and coalition captures the OpsZone
+-- 
+-- `mytask:AddReconSuccessCondition(MinDistance)`  -- success if object is in line-of-sight with the given min distance in NM
+-- 
+-- `mytask:AddTimeLimitSuccessCondition(TimeLimit)` -- failure if the task is not completed within the time limit in seconds given
+-- 
+-- ## 3.2 Task chaining
+-- 
+-- You can create chains of tasks, which will depend on success or failure of the previous task with the following commands:
+-- 
+-- `mytask:AddNextTaskAfterSuccess(FollowUpTask)` and  
+-- 
+-- `mytask:AddNextTaskAfterFailure(FollowUpTask)`
 -- 
 -- ## 4 SETTINGS, SRS and language options (localization)
 -- 
