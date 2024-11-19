@@ -506,6 +506,14 @@ end
 
 --- [USER] Adds task success condition for dead STATIC, SET_STATIC, SCENERY or SET_SCENERY target object.
 -- @return #PLAYERTASK self
+-- @usage
+-- -- We can use either STATIC, SET_STATIC, SCENERY or SET_SCENERY as target objects.
+-- local mytask = PLAYERTASK:NewFromTarget(static, true, 50, "Destroy the target")
+-- mytask:SetMenuName("Destroy Power Plant")
+-- mytask:AddFreetext("Locate and destroy the power plant near Olenya.")
+-- mytask:AddStaticObjectSuccessCondition()
+--
+-- playerTaskManager:AddPlayerTaskToQueue(mytask)
 function PLAYERTASK:AddStaticObjectSuccessCondition()
     local task = self
     -- TODO Check if the killer is one of the task clients
@@ -549,6 +557,22 @@ end
 -- @param #SET_BASE CaptureSquadGroupNamePrefix The prefix of the group name that needs to capture the zone.
 -- @param #number Coalition The coalition that needs to capture the zone.
 -- @return #PLAYERTASK self
+-- @usage
+-- -- We can use either STATIC, SET_STATIC, SCENERY or SET_SCENERY as target objects.
+-- local opsZone = OPSZONE:New(zone, coalition.side.RED)
+--
+-- ...
+--
+-- -- We can use either OPSZONE or SET_OPSZONE.
+-- local mytask = PLAYERTASK:NewFromTarget(opsZone, true, 50, "Capture the zone")
+-- mytask:SetMenuName("Capture the ops zone")
+-- mytask:AddFreetext("Transport capture squad to the ops zone.")
+--
+-- -- We set CaptureSquadGroupNamePrefix the group name prefix as set in the ME or the spawn of the group that need to be present at the OpsZone like a capture squad,
+-- -- and set the capturing Coalition in order to trigger a successful task.
+-- mytask:AddOpsZoneCaptureSuccessCondition("capture-squad", coalition.side.BLUE)
+--
+-- playerTaskManager:AddPlayerTaskToQueue(mytask)
 function PLAYERTASK:AddOpsZoneCaptureSuccessCondition(CaptureSquadGroupNamePrefix, Coalition)
     local task = self
     task:AddConditionSuccess(
@@ -582,8 +606,18 @@ end
 
 --- [USER] Adds task success condition for AUFTRAG.Type.RECON when a client is at a certain LOS distance from the target.
 -- @param #PLAYERTASK self
--- @param #number MinDistance Minimum distance in meters from client to target in LOS for success condition. (Default 5 NM)
+-- @param #number MinDistance (Optional) Minimum distance in meters from client to target in LOS for success condition. (Default 5 NM)
 -- @return #PLAYERTASK self
+-- @usage
+-- -- target can be any object that has a `GetCoordinate()` function like STATIC, GROUP, ZONE...
+-- local mytask = PLAYERTASK:New(AUFTRAG.Type.RECON, ZONE:New("WF Zone"), true, 50, "Deep Earth")
+-- mytask:SetMenuName("Recon weapon factory")
+-- mytask:AddFreetext("Locate and investigate underground weapons factory near Kovdor.")
+--
+-- -- We set the MinDistance (optional) in meters for the client to be in LOS from the target in order to trigger a successful task.
+-- mytask:AddReconSuccessCondition(10000) -- 10 km (default is 5 NM if not set)
+--
+-- playerTaskManager:AddPlayerTaskToQueue(mytask)
 function PLAYERTASK:AddReconSuccessCondition(MinDistance)
     local task = self
     task:AddConditionSuccess(
@@ -609,6 +643,16 @@ end
 -- @param #PLAYERTASK self
 -- @param #number TimeLimit Time limit in seconds for the task to be completed. (Default 0 = no time limit)
 -- @return #PLAYERTASK self
+-- @usage
+-- local mytask = PLAYERTASK:New(AUFTRAG.Type.RECON, ZONE:New("WF Zone"), true, 50, "Deep Earth")
+-- mytask:SetMenuName("Recon weapon factory")
+-- mytask:AddFreetext("Locate and investigate underground weapons factory near Kovdor.")
+-- mytask:AddReconSuccessCondition(10000) -- 10 km
+--
+-- -- We set the TimeLimit to 10 minutes (600 seconds) from the moment the task is started, once the time has passed and the task is not yet successful it will trigger a failure.
+-- mytask:AddTimeLimitFailureCondition(600)
+--
+-- playerTaskManager:AddPlayerTaskToQueue(mytask)
 function PLAYERTASK:AddTimeLimitFailureCondition(TimeLimit)
     local task = self
     TimeLimit = TimeLimit or 0

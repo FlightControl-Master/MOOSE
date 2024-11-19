@@ -490,6 +490,19 @@ function OPSZONE:SetDrawZone(Switch)
   return self
 end
 
+--- Set if zone is drawn on the F10 map for the owner coalition only.
+-- @param #OPSZONE self
+-- @param #boolean Switch If `false` or `nil`, draw zone for all coalitions. If `true`, zone is drawn for the owning coalition only if drawZone is true.
+-- @return #OPSZONE self
+function OPSZONE:SetDrawZoneForCoalition(Switch)
+  if Switch==true then
+    self.drawZoneForCoalition=true
+  else
+    self.drawZoneForCoalition=false
+  end
+  return self
+end
+
 --- Set if a marker on the F10 map shows the current zone status.
 -- @param #OPSZONE self
 -- @param #boolean Switch If `true`, zone is marked. If `false` or `nil`, zone is not marked.
@@ -837,8 +850,12 @@ function OPSZONE:onafterCaptured(From, Event, To, NewOwnerCoalition)
     self.zone:UndrawZone()
     
     local color=self:_GetZoneColor()
-    
-    self.zone:DrawZone(nil, color, 1.0, color, 0.5)
+
+    local coalition = nil
+    if self.drawZoneForCoalition then
+      coalition = self.ownerCurrent
+    end
+    self.zone:DrawZone(coalition, color, 1.0, color, 0.5)
   end  
 
   for _,_chief in pairs(self.chiefs) do
@@ -913,8 +930,12 @@ function OPSZONE:onenterGuarded(From, Event, To)
       self.zone:UndrawZone()
       
       local color=self:_GetZoneColor()
-      
-      self.zone:DrawZone(nil, color, 1.0, color, 0.5)
+
+      local coalition = nil
+      if self.drawZoneForCoalition then
+          coalition = self.ownerCurrent
+      end
+      self.zone:DrawZone(coalition, color, 1.0, color, 0.5)
     end
     
   end
@@ -954,9 +975,13 @@ function OPSZONE:onenterAttacked(From, Event, To, AttackerCoalition)
       
       -- Color.
       local color={1, 204/255, 204/255}
-      
+
+      local coalition = nil
+      if self.drawZoneForCoalition then
+          coalition = self.ownerCurrent
+      end
       -- Draw zone.
-      self.zone:DrawZone(nil, color, 1.0, color, 0.5)
+      self.zone:DrawZone(coalition, color, 1.0, color, 0.5)
     end
     
     self:_CleanMissionTable()
@@ -987,8 +1012,12 @@ function OPSZONE:onenterEmpty(From, Event, To)
       self.zone:UndrawZone()
       
       local color=self:_GetZoneColor()
-      
-      self.zone:DrawZone(nil, color, 1.0, color, 0.2)
+
+      local coalition = nil
+      if self.drawZoneForCoalition then
+          coalition = self.ownerCurrent
+      end
+      self.zone:DrawZone(coalition, color, 1.0, color, 0.2)
     end
     
   end
