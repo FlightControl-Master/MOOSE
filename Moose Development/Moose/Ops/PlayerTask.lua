@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update May 2024
+-- @date Last Update Nov 2024
 
 
 do
@@ -95,7 +95,7 @@ PLAYERTASK = {
   FinalState         =   "none",
   PreviousCount      =   0,
   }
-  
+
 --- PLAYERTASK class version.
 -- @field #string version
 PLAYERTASK.version="0.1.24"
@@ -112,14 +112,14 @@ PLAYERTASK.version="0.1.24"
 -- @param #boolean Repeat Repeat this task if true (default = false)
 -- @param #number Times Repeat on failure this many times if Repeat is true (default = 1)
 -- @param #string TTSType TTS friendly task type name
--- @return #PLAYERTASK self 
+-- @return #PLAYERTASK self
 function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #PLAYERTASK
-  
+
   self.Type = Type
-  
+
   self.Repeat = false
   self.repeats = 0
   self.RepeatNo = 1
@@ -132,18 +132,18 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   self.timestamp = timer.getAbsTime()
   self.TTSType = TTSType or "close air support"
   self.lastsmoketime = 0
-  
+
   if type(Repeat) == "boolean" and Repeat == true and type(Times) == "number" and Times > 1 then
     self.Repeat = true
     self.RepeatNo = Times or 1
   end
-  
+
   _PlayerTaskNr = _PlayerTaskNr + 1
-  
+
   self.PlayerTaskNr = _PlayerTaskNr
-  
+
   self.lid=string.format("PlayerTask #%d %s | ", self.PlayerTaskNr, tostring(self.Type))
-  
+
   if Target and Target.ClassName and Target.ClassName == "TARGET" then
     self.Target = Target
   elseif Target and Target.ClassName then
@@ -152,16 +152,16 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
     self:E(self.lid.."*** NO VALID TARGET!")
     return self
   end
-  
+
   self.PreviousCount = self.Target:CountTargets()
-  
+
   self:T(self.lid.."Created.")
-  
+
   -- FMS start state is PLANNED.
   self:SetStartState("Planned")
 
   -- PLANNED --> REQUESTED --> EXECUTING --> DONE
-  self:AddTransition("*",            "Planned",          "Planned")   -- Task is in planning stage. 
+  self:AddTransition("*",            "Planned",          "Planned")   -- Task is in planning stage.
   self:AddTransition("*",            "Requested",        "Requested")   -- Task clients have been requested to join.
   self:AddTransition("*",            "ClientAdded",      "*")  -- Client has been added to the task
   self:AddTransition("*",            "ClientRemoved",    "*")  -- Client has been removed from the task
@@ -174,28 +174,28 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   self:AddTransition("*",            "Failed",           "Failed") -- Done or repeat --> PLANNED
   self:AddTransition("*",            "Status",           "*")
   self:AddTransition("*",            "Stop",             "Stopped")
-  
+
   self:__Status(-5)
   return self
-  
+
   ---
   -- Pseudo Functions
   ---
-  
+
   --- On After "Planned" event. Task has been planned.
   -- @function [parent=#PLAYERTASK] OnAfterPlanned
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  
+
   --- On After "Requested" event. Task has been Requested.
   -- @function [parent=#PLAYERTASK] OnAfterRequested
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "ClientAdded" event. Client has been added to the task.
   -- @function [parent=#PLAYERTASK] OnAfterClientAdded
   -- @param #PLAYERTASK self
@@ -203,63 +203,63 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Wrapper.Client#CLIENT Client
-   
+
   --- On After "ClientRemoved" event. Client has been removed from the task.
   -- @function [parent=#PLAYERTASK] OnAfterClientRemoved
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "Executing" event. Task is executed by the 1st client.
   -- @function [parent=#PLAYERTASK] OnAfterExecuting
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "Done" event. Task is done.
   -- @function [parent=#PLAYERTASK] OnAfterDone
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "Cancel" event. Task has been cancelled.
   -- @function [parent=#PLAYERTASK] OnAfterCancel
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "Planned" event. Task has been planned.
   -- @function [parent=#PLAYERTASK] OnAfterPilotPlanned
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "Success" event. Task has been a success.
   -- @function [parent=#PLAYERTASK] OnAfterSuccess
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "ClientAborted" event. A client has aborted the task.
   -- @function [parent=#PLAYERTASK] OnAfterClientAborted
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "Failed" event. Task has been a failure.
   -- @function [parent=#PLAYERTASK] OnAfterFailed
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  
+
 end
 
 --- Constructor that automatically determines the task type based on the target.
@@ -274,7 +274,9 @@ function PLAYERTASK:NewFromTarget(Target, Repeat, Times, TTSType)
 end
 
 --- [Internal] Determines AUFTRAG type based on the target characteristics.
--- @return #AUFTRAG.Type self
+-- @param #PLAYERTASK self
+-- @param Ops.Target#TARGET Target Target for this task
+-- @return #string AUFTRAG.Type 
 function PLAYERTASK:_GetTaskTypeForTarget(Target)
 
     local group = nil      --Wrapper.Group#GROUP
@@ -299,6 +301,9 @@ function PLAYERTASK:_GetTaskTypeForTarget(Target)
 
         auftrag = AUFTRAG.Type.BOMBING
 
+    elseif Target:IsInstanceOf("OPSZONE")
+            or Target:IsInstanceOf("SET_OPSZONE") then
+        auftrag = AUFTRAG.Type.CAPTUREZONE
     end
 
     if group then
@@ -350,6 +355,38 @@ function PLAYERTASK:_GetTaskTypeForTarget(Target)
     return auftrag
 
 end
+
+
+--- [Internal] Check OpsZone capture success condition.
+-- @param #PLAYERTASK self
+-- @param Ops.OpsZone#OPSZONE OpsZone The OpsZone target object.
+-- @param #string CaptureSquadGroupNamePrefix The prefix of the group name that needs to capture the zone.
+-- @param #number Coalition The coalition that needs to capture the zone.
+-- @param #boolean CheckClientInZone Check if any of the clients are in zone.
+-- @return #PLAYERTASK self
+function PLAYERTASK:_CheckCaptureOpsZoneSuccess(OpsZone, CaptureSquadGroupNamePrefix, Coalition, CheckClientInZone)
+    local isClientInZone = true
+    if CheckClientInZone then
+        isClientInZone = false
+        for _, client in ipairs(self:GetClientObjects()) do
+            local clientCoord = client:GetCoordinate()
+            if OpsZone.zone:IsCoordinateInZone(clientCoord) then
+                isClientInZone = true
+                break
+            end
+        end
+    end
+
+    local isCaptureGroupInZone = false
+    OpsZone:GetScannedGroupSet():ForEachGroup(function(group)
+        if string.find(group:GetName(), CaptureSquadGroupNamePrefix) then
+            isCaptureGroupInZone = true
+        end
+    end)
+
+    return OpsZone:GetOwner() == Coalition and isClientInZone and isCaptureGroupInZone
+end
+
 
 --- [Internal] Add a PLAYERTASKCONTROLLER for this task
 -- @param #PLAYERTASK self
@@ -469,8 +506,17 @@ end
 
 --- [USER] Adds task success condition for dead STATIC, SET_STATIC, SCENERY or SET_SCENERY target object.
 -- @return #PLAYERTASK self
+-- @usage
+-- -- We can use either STATIC, SET_STATIC, SCENERY or SET_SCENERY as target objects.
+-- local mytask = PLAYERTASK:NewFromTarget(static, true, 50, "Destroy the target")
+-- mytask:SetMenuName("Destroy Power Plant")
+-- mytask:AddFreetext("Locate and destroy the power plant near Olenya.")
+-- mytask:AddStaticObjectSuccessCondition()
+--
+-- playerTaskManager:AddPlayerTaskToQueue(mytask)
 function PLAYERTASK:AddStaticObjectSuccessCondition()
     local task = self
+    -- TODO Check if the killer is one of the task clients
     task:AddConditionSuccess(
             function(target)
                 if target == nil then return false end
@@ -496,13 +542,82 @@ function PLAYERTASK:AddStaticObjectSuccessCondition()
                 return isDead
             end, task:GetTarget()
     )
+
+    -- TODO Check if the killer is one of the task clients
+    --task:AddConditionFailure(
+    --        function()
+    --
+    --        end)
+    return self
+end
+
+--- [USER] Adds task success condition for AUFTRAG.Type.CAPTUREZONE for OpsZone or OpsZone set target object.
+--- At least one of the task clients and one capture group need to be inside the zone in order for the capture to be successful.
+-- @param #PLAYERTASK self
+-- @param #SET_BASE CaptureSquadGroupNamePrefix The prefix of the group name that needs to capture the zone.
+-- @param #number Coalition The coalition that needs to capture the zone.
+-- @return #PLAYERTASK self
+-- @usage
+-- -- We can use either STATIC, SET_STATIC, SCENERY or SET_SCENERY as target objects.
+-- local opsZone = OPSZONE:New(zone, coalition.side.RED)
+--
+-- ...
+--
+-- -- We can use either OPSZONE or SET_OPSZONE.
+-- local mytask = PLAYERTASK:NewFromTarget(opsZone, true, 50, "Capture the zone")
+-- mytask:SetMenuName("Capture the ops zone")
+-- mytask:AddFreetext("Transport capture squad to the ops zone.")
+--
+-- -- We set CaptureSquadGroupNamePrefix the group name prefix as set in the ME or the spawn of the group that need to be present at the OpsZone like a capture squad,
+-- -- and set the capturing Coalition in order to trigger a successful task.
+-- mytask:AddOpsZoneCaptureSuccessCondition("capture-squad", coalition.side.BLUE)
+--
+-- playerTaskManager:AddPlayerTaskToQueue(mytask)
+function PLAYERTASK:AddOpsZoneCaptureSuccessCondition(CaptureSquadGroupNamePrefix, Coalition)
+    local task = self
+    task:AddConditionSuccess(
+            function(target)
+                if target:IsInstanceOf("OPSZONE") then
+                    return task:_CheckCaptureOpsZoneSuccess(target, CaptureSquadGroupNamePrefix, Coalition, true)
+                elseif target:IsInstanceOf("SET_OPSZONE") then
+                    local successes = 0
+                    local isClientInZone = false
+                    target:ForEachZone(function(opszone)
+                        if task:_CheckCaptureOpsZoneSuccess(opszone, CaptureSquadGroupNamePrefix, Coalition) then
+                            successes = successes + 1
+                        end
+
+                        for _, client in ipairs(task:GetClientObjects()) do
+                            local clientCoord = client:GetCoordinate()
+                            if opszone.zone:IsCoordinateInZone(clientCoord) then
+                                isClientInZone = true
+                                break
+                            end
+                        end
+                    end)
+                    return successes == target:Count() and isClientInZone
+                end
+
+                return false
+            end, task:GetTarget()
+    )
     return self
 end
 
 --- [USER] Adds task success condition for AUFTRAG.Type.RECON when a client is at a certain LOS distance from the target.
 -- @param #PLAYERTASK self
--- @param #number MinDistance Minimum distance in meters from client to target in LOS for success condition. (Default 5 NM)
+-- @param #number MinDistance (Optional) Minimum distance in meters from client to target in LOS for success condition. (Default 5 NM)
 -- @return #PLAYERTASK self
+-- @usage
+-- -- target can be any object that has a `GetCoordinate()` function like STATIC, GROUP, ZONE...
+-- local mytask = PLAYERTASK:New(AUFTRAG.Type.RECON, ZONE:New("WF Zone"), true, 50, "Deep Earth")
+-- mytask:SetMenuName("Recon weapon factory")
+-- mytask:AddFreetext("Locate and investigate underground weapons factory near Kovdor.")
+--
+-- -- We set the MinDistance (optional) in meters for the client to be in LOS from the target in order to trigger a successful task.
+-- mytask:AddReconSuccessCondition(10000) -- 10 km (default is 5 NM if not set)
+--
+-- playerTaskManager:AddPlayerTaskToQueue(mytask)
 function PLAYERTASK:AddReconSuccessCondition(MinDistance)
     local task = self
     task:AddConditionSuccess(
@@ -521,6 +636,34 @@ function PLAYERTASK:AddReconSuccessCondition(MinDistance)
                 return false
             end, task:GetTarget())
 
+    return self
+end
+
+--- [USER] Adds a time limit for the task to be completed.
+-- @param #PLAYERTASK self
+-- @param #number TimeLimit Time limit in seconds for the task to be completed. (Default 0 = no time limit)
+-- @return #PLAYERTASK self
+-- @usage
+-- local mytask = PLAYERTASK:New(AUFTRAG.Type.RECON, ZONE:New("WF Zone"), true, 50, "Deep Earth")
+-- mytask:SetMenuName("Recon weapon factory")
+-- mytask:AddFreetext("Locate and investigate underground weapons factory near Kovdor.")
+-- mytask:AddReconSuccessCondition(10000) -- 10 km
+--
+-- -- We set the TimeLimit to 10 minutes (600 seconds) from the moment the task is started, once the time has passed and the task is not yet successful it will trigger a failure.
+-- mytask:AddTimeLimitFailureCondition(600)
+--
+-- playerTaskManager:AddPlayerTaskToQueue(mytask)
+function PLAYERTASK:AddTimeLimitFailureCondition(TimeLimit)
+    local task = self
+    TimeLimit = TimeLimit or 0
+    task.StartTime = -1
+    task:AddConditionFailure(
+            function()
+                if task.StartTime == -1 then
+                    task.StartTime = timer.getTime()
+                end
+                return TimeLimit > 0 and timer.getTime() - task.StartTime > TimeLimit
+            end)
     return self
 end
 
@@ -1213,10 +1356,33 @@ do
 --  * Anti-Ship - Any ship targets, if the controller is of type "A2S"
 --  * CTLD - Combat transport and logistics deployment
 --  * CSAR - Combat search and rescue
+--  * RECON - Identify targets
+--  * CAPTUREZONE - Capture an Ops.OpsZone#OPSZONE
+--  * Any #string name can be passed as Auftrag type, but then you need to make sure to define a success condition, and possibly also add the task type to the standard scoring list: `PLAYERTASKCONTROLLER.Scores["yournamehere"]=100`
 --  
 -- ## 3 Task repetition
 --  
 -- On failure, tasks will be replanned by default for a maximum of 5 times.
+-- 
+-- ## 3.1 Pre-configured success conditions
+-- 
+-- Pre-configured success conditions for #PLAYERTASK tasks are available as follows:
+-- 
+-- `mytask:AddStaticObjectSuccessCondition()` -- success if static object is at least 80% dead
+-- 
+-- `mytask:AddOpsZoneCaptureSuccessCondition(CaptureSquadGroupNamePrefix,Coalition)`  -- success if a squad of the given (partial) name and coalition captures the OpsZone
+-- 
+-- `mytask:AddReconSuccessCondition(MinDistance)`  -- success if object is in line-of-sight with the given min distance in NM
+-- 
+-- `mytask:AddTimeLimitSuccessCondition(TimeLimit)` -- failure if the task is not completed within the time limit in seconds given
+-- 
+-- ## 3.2 Task chaining
+-- 
+-- You can create chains of tasks, which will depend on success or failure of the previous task with the following commands:
+-- 
+-- `mytask:AddNextTaskAfterSuccess(FollowUpTask)` and  
+-- 
+-- `mytask:AddNextTaskAfterFailure(FollowUpTask)`
 -- 
 -- ## 4 SETTINGS, SRS and language options (localization)
 -- 
@@ -1534,6 +1700,7 @@ PLAYERTASKCONTROLLER.Scores = {
   [AUFTRAG.Type.RECON] = 100,
   [AUFTRAG.Type.ESCORT] = 100,
   [AUFTRAG.Type.CAP] = 100,
+  [AUFTRAG.Type.CAPTUREZONE] = 100,
 }
  
 --- 
