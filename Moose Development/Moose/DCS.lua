@@ -14,6 +14,7 @@ do -- world
   -- @field #world.event event [https://wiki.hoggitworld.com/view/DCS_enum_world](https://wiki.hoggitworld.com/view/DCS_enum_world)
   -- @field #world.BirthPlace BirthPlace The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.
   -- @field #world.VolumeType VolumeType The volumeType enumerator defines the types of 3d geometery used within the [world.searchObjects](https://wiki.hoggitworld.com/view/DCS_func_searchObjects) function.
+  -- @field #world.weather weather Weather functions for fog etc.
 
   --- The world singleton contains functions centered around two different but extremely useful functions.
   -- * Events and event handlers are all governed within world.
@@ -132,6 +133,36 @@ do -- world
   -- @function [parent=#world] getAirbases
   -- @param #number coalitionId The coalition side number ID. Default is all airbases are returned.
   -- @return #table Table of DCS airbase objects.
+
+
+  --- Weather functions.
+  -- @type world.weather
+
+  --- Fog animation data structure.
+  -- @type world.FogAnimation
+  -- @field #number time
+  -- @field #number visibility
+  -- @field #number thickness
+
+  --- Returns the current fog thickness.
+  -- @function [parent=#world.weather] getFogThickness Returns the fog thickness.
+  -- @return #number Fog thickness in meters. If there is no fog, zero is returned.
+
+  --- Sets the fog thickness instantly. Any current fog animation is discarded.
+  -- @function [parent=#world.weather] setFogThickness
+  -- @param #number thickness Fog thickness in meters. Set to zero to disable fog.
+
+  --- Returns the current fog visibility distance.
+  -- @function [parent=#world.weather] getFogVisibilityDistance Returns the current maximum visibility distance in meters. Returns zero if fog is not present.
+
+  --- Instantly sets the maximum visibility distance of fog at sea level when looking at the horizon. Any current fog animation is discarded. Set zero to disable the fog.
+  -- @function [parent=#world.weather] setFogVisibilityDistance
+  -- @param #number visibility Max fog visibility in meters. Set to zero to disable fog.
+
+  --- Sets fog animation keys. Time is set in seconds and relative to the current simulation time, where time=0 is the current moment. 
+  -- Time must be increasing. Previous animation is always discarded despite the data being correct.
+  -- @function [parent=#world.weather] setFogAnimation
+  -- @param #world.FogAnimation animation List of fog animations
  
 end -- world
 
