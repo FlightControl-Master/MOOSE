@@ -3005,7 +3005,7 @@ function CONTROLLABLE:GetDetectedTargets( DetectVisual, DetectOptical, DetectRad
   if DCSControllable then
 
     local DetectionVisual = (DetectVisual and DetectVisual == true) and Controller.Detection.VISUAL or nil
-    local DetectionOptical = (DetectOptical and DetectOptical == true) and Controller.Detection.OPTICAL or nil
+    local DetectionOptical = (DetectOptical and DetectOptical == true) and Controller.Detection.OPTIC or nil
     local DetectionRadar = (DetectRadar and DetectRadar == true) and Controller.Detection.RADAR or nil
     local DetectionIRST = (DetectIRST and DetectIRST == true) and Controller.Detection.IRST or nil
     local DetectionRWR = (DetectRWR and DetectRWR == true) and Controller.Detection.RWR or nil
@@ -3039,26 +3039,27 @@ function CONTROLLABLE:GetDetectedTargets( DetectVisual, DetectOptical, DetectRad
   return nil
 end
 
---- Check if a target is detected.
+--- Check if a DCS object (unit or static) is detected by the controllable. 
+-- Note that after a target is detected it remains "detected" for a certain amount of time, even if the controllable cannot "see" the target any more with it's sensors.
 -- The optional parametes specify the detection methods that can be applied.
+-- 
 -- If **no** detection method is given, the detection will use **all** the available methods by default.
 -- If **at least one** detection method is specified, only the methods set to *true* will be used.
 -- @param #CONTROLLABLE self
 -- @param DCS#Object DCSObject The DCS object that is checked.
--- @param #CONTROLLABLE self
 -- @param #boolean DetectVisual (Optional) If *false*, do not include visually detected targets.
 -- @param #boolean DetectOptical (Optional) If *false*, do not include optically detected targets.
 -- @param #boolean DetectRadar (Optional) If *false*, do not include targets detected by radar.
 -- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
 -- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
 -- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
--- @return #boolean True if target is detected.
--- @return #boolean True if target is visible by line of sight.
--- @return #number Mission time when target was detected.
--- @return #boolean True if target type is known.
--- @return #boolean True if distance to target is known.
--- @return DCS#Vec3 Last known position vector of the target.
--- @return DCS#Vec3 Last known velocity vector of the target.
+-- @return #boolean `true` if target is detected.
+-- @return #boolean `true` if target is *currently* visible by line of sight. Target must be detected (first parameter returns `true`).
+-- @return #boolean `true` if target type is known. Target must be detected (first parameter returns `true`).
+-- @return #boolean `true` if distance to target is known. Target must be detected (first parameter returns `true`).
+-- @return #number Mission time in seconds when target was last detected. Only present if the target is currently not visible (second parameter returns `false`) otherwise `nil` is returned.
+-- @return DCS#Vec3 Last known position vector of the target. Only present if the target is currently not visible (second parameter returns `false`) otherwise `nil` is returned.
+-- @return DCS#Vec3 Last known velocity vector of the target. Only present if the target is currently not visible (second parameter returns `false`) otherwise `nil` is returned.
 function CONTROLLABLE:IsTargetDetected( DCSObject, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
   self:F2( self.ControllableName )
 
@@ -3067,7 +3068,7 @@ function CONTROLLABLE:IsTargetDetected( DCSObject, DetectVisual, DetectOptical, 
   if DCSControllable then
 
     local DetectionVisual = (DetectVisual and DetectVisual == true) and Controller.Detection.VISUAL or nil
-    local DetectionOptical = (DetectOptical and DetectOptical == true) and Controller.Detection.OPTICAL or nil
+    local DetectionOptical = (DetectOptical and DetectOptical == true) and Controller.Detection.OPTIC or nil
     local DetectionRadar = (DetectRadar and DetectRadar == true) and Controller.Detection.RADAR or nil
     local DetectionIRST = (DetectIRST and DetectIRST == true) and Controller.Detection.IRST or nil
     local DetectionRWR = (DetectRWR and DetectRWR == true) and Controller.Detection.RWR or nil
@@ -3075,10 +3076,10 @@ function CONTROLLABLE:IsTargetDetected( DCSObject, DetectVisual, DetectOptical, 
 
     local Controller = self:_GetController()
 
-    local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity
+    local TargetIsDetected, TargetIsVisible, TargetKnowType, TargetKnowDistance, TargetLastTime, TargetLastPos, TargetLastVelocity
       = Controller:isTargetDetected( DCSObject, DetectionVisual, DetectionOptical, DetectionRadar, DetectionIRST, DetectionRWR, DetectionDLINK )
 
-    return TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity
+    return TargetIsDetected, TargetIsVisible, TargetKnowType, TargetKnowDistance, TargetLastTime, TargetLastPos, TargetLastVelocity
   end
 
   return nil
@@ -3086,6 +3087,7 @@ end
 
 --- Check if a certain UNIT is detected by the controllable.
 -- The optional parametes specify the detection methods that can be applied.
+-- 
 -- If **no** detection method is given, the detection will use **all** the available methods by default.
 -- If **at least one** detection method is specified, only the methods set to *true* will be used.
 -- @param #CONTROLLABLE self
@@ -3096,13 +3098,13 @@ end
 -- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
 -- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
 -- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
--- @return #boolean True if target is detected.
--- @return #boolean True if target is visible by line of sight.
--- @return #number Mission time when target was detected.
--- @return #boolean True if target type is known.
--- @return #boolean True if distance to target is known.
--- @return DCS#Vec3 Last known position vector of the target.
--- @return DCS#Vec3 Last known velocity vector of the target.
+-- @return #boolean `true` if target is detected.
+-- @return #boolean `true` if target is *currently* visible by line of sight. Target must be detected (first parameter returns `true`).
+-- @return #boolean `true` if target type is known. Target must be detected (first parameter returns `true`).
+-- @return #boolean `true` if distance to target is known. Target must be detected (first parameter returns `true`).
+-- @return #number Mission time in seconds when target was last detected. Only present if the target is currently not visible (second parameter returns `false`) otherwise `nil` is returned.
+-- @return DCS#Vec3 Last known position vector of the target. Only present if the target is currently not visible (second parameter returns `false`) otherwise `nil` is returned.
+-- @return DCS#Vec3 Last known velocity vector of the target. Only present if the target is currently not visible (second parameter returns `false`) otherwise `nil` is returned.
 function CONTROLLABLE:IsUnitDetected( Unit, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
   self:F2( self.ControllableName )
 
