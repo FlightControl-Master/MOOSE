@@ -153,7 +153,7 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.7.0"
+TARGET.version="0.7.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1068,6 +1068,8 @@ function TARGET:_AddObject(Object)
 
     target.Life0=1
     target.Life=1
+    
+    target.N0=target.N0+1
       
   elseif Object:IsInstanceOf("ZONE_BASE") then
   
@@ -1081,6 +1083,8 @@ function TARGET:_AddObject(Object)
 
     target.Life0=1
     target.Life=1
+    
+    target.N0=target.N0+1
 
   elseif Object:IsInstanceOf("OPSZONE") then
   
@@ -2008,12 +2012,16 @@ function TARGET:CountObjectives(Target, Coalitions)
     
   elseif Target.Type==TARGET.ObjectType.COORDINATE then
   
-    -- No target we can check!
+    -- No target, where we can check the alive status, so we assume it is alive. Changed this because otherwise target count is 0 if we pass a coordinate.
+    -- This is also more consitent with the life and is alive status.
+    N=N+1
 
   elseif Target.Type==TARGET.ObjectType.ZONE then
   
-    -- No target we can check!
-    
+    -- No target, where we can check the alive status, so we assume it is alive. Changed this because otherwise target count is 0 if we pass a coordinate.
+    -- This is also more consitent with the life and is alive status.
+    N=N+1
+        
   elseif Target.Type==TARGET.ObjectType.OPSZONE then
     
     local target=Target.Object --Ops.OpsZone#OPSZONE
