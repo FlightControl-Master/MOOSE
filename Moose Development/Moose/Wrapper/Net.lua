@@ -43,7 +43,7 @@ do
 -- @field #NET
 NET = {
   ClassName = "NET",
-  Version = "0.1.3",
+  Version = "0.1.4",
   BlockTime = 600,
   BlockedPilots = {},
   BlockedUCIDs = {},
@@ -67,6 +67,9 @@ function NET:New()
   self.KnownPilots = {}
   self:SetBlockMessage()
   self:SetUnblockMessage()
+  self.BlockedSides = {}
+  self.BlockedSides[1] = false
+  self.BlockedSides[2] = false
   
     -- Start State.
   self:SetStartState("Stopped")
@@ -160,11 +163,12 @@ end
 -- @param #string PlayerSlot
 -- @return #boolean IsBlocked
 function NET:IsAnyBlocked(UCID,Name,PlayerID,PlayerSide,PlayerSlot)
+  self:T({UCID,Name,PlayerID,PlayerSide,PlayerSlot})
   local blocked = false
   local TNow = timer.getTime()
   -- UCID
   if UCID and self.BlockedUCIDs[UCID] and TNow < self.BlockedUCIDs[UCID] then
-    return true
+    blocked =  true
   end
   -- ID/Name
   if PlayerID and not Name then
@@ -172,16 +176,18 @@ function NET:IsAnyBlocked(UCID,Name,PlayerID,PlayerSide,PlayerSlot)
   end
   -- Name
   if Name and self.BlockedPilots[Name] and TNow < self.BlockedPilots[Name] then
-    return true
+    blocked =  true
   end
   -- Side
-  if PlayerSide and self.BlockedSides[PlayerSide] and TNow < self.BlockedSides[PlayerSide] then
-    return true
+  self:T({time = self.BlockedSides[PlayerSide]})
+  if PlayerSide and type(self.BlockedSides[PlayerSide]) == "number" and TNow < self.BlockedSides[PlayerSide] then
+    blocked =  true
   end
   -- Slot
   if PlayerSlot and self.BlockedSlots[PlayerSlot] and TNow < self.BlockedSlots[PlayerSlot] then
-    return true
+    blocked =  true
   end
+  self:T("IsAnyBlocked: "..tostring(blocked))
   return blocked
 end
 
@@ -200,19 +206,27 @@ function NET:_EventHandler(EventData)
     local ucid = self:GetPlayerUCID(nil,name) or "none"
     local PlayerID = self:GetPlayerIDByName(name) or "none"
     local PlayerSide, PlayerSlot = self:GetSlot(data.IniUnit)
+    if not PlayerSide then PlayerSide = EventData.IniCoalition end
+    if not PlayerSlot then PlayerSlot = EventData.IniUnit:GetID() end
     local TNow = timer.getTime()
     
-    self:T(self.lid.."Event for: "..name.." | UCID: "..ucid)
+    self:T(self.lid.."Event for: "..name.." | UCID: "..ucid .. " | ID/SIDE/SLOT "..PlayerID.."/"..PlayerSide.."/"..PlayerSlot)
     
     -- Joining
     if data.id == EVENTS.PlayerEnterUnit or data.id == EVENTS.PlayerEnterAircraft then
       self:T(self.lid.."Pilot Joining: "..name.." | UCID: "..ucid.." | Event ID: "..data.id)
       -- Check for blockages
       local blocked = self:IsAnyBlocked(ucid,name,PlayerID,PlayerSide,PlayerSlot)  
-      
-      if blocked and PlayerID and tonumber(PlayerID) ~= 1 then
+      if blocked and PlayerID then -- and tonumber(PlayerID) ~= 1 then
+        self:T("Player blocked")
         -- block pilot
-        local outcome = net.force_player_slot(tonumber(PlayerID), 0, '' )
+        local outcome = net.force_player_slot(tonumber(PlayerID), PlayerSide, data.IniUnit:GetID() )
+        self:T({Blocked_worked=outcome})
+        if outcome == false then
+          local unit = data.IniUnit
+          local sched = TIMER:New(unit.Destroy,unit,3):Start(3)
+          self:__PlayerBlocked(5,unit,name,1)
+        end
       else
         local client = CLIENT:FindByPlayerName(name) or data.IniUnit
         if not self.KnownPilots[name] or (self.KnownPilots[name] and TNow-self.KnownPilots[name].timestamp > 3) then
@@ -225,6 +239,7 @@ function NET:_EventHandler(EventData)
             slot = PlayerSlot,
             timestamp = TNow,
           }
+          --UTILS.PrintTableToLog(self.KnownPilots[name])
         end
         return self
       end
@@ -350,11 +365,10 @@ end
 
 --- Block a specific coalition side, does NOT automatically kick all players of that side or kick out joined players
 -- @param #NET self
--- @param #number side The side to block - 1 : Red, 2 : Blue
+-- @param #number Side The side to block - 1 : Red, 2 : Blue
 -- @param #number Seconds Seconds (optional) Number of seconds the player has to wait before rejoining.
 -- @return #NET self
 function NET:BlockSide(Side,Seconds)
-  self:T({Side,Seconds})
   local addon = Seconds or self.BlockTime
   if Side == 1 or Side == 2 then
     self.BlockedSides[Side] = timer.getTime()+addon
@@ -367,10 +381,9 @@ end
 -- @param #number Seconds Seconds (optional) Number of seconds the player has to wait before rejoining.
 -- @return #NET self
 function NET:UnblockSide(Side,Seconds)
-  self:T({Side,Seconds})
   local addon = Seconds or self.BlockTime
   if Side == 1 or Side == 2 then
-    self.BlockedSides[Side] = nil
+    self.BlockedSides[Side] = false
   end
   return self
 end
@@ -485,8 +498,11 @@ end
 -- @param Wrapper.Client#CLIENT Client The client
 -- @return #number PlayerID or nil
 function NET:GetPlayerIDFromClient(Client)
+  self:T("GetPlayerIDFromClient")
+  self:T({Client=Client})
   if Client then
     local name = Client:GetPlayerName()
+    self:T({name=name})
     local id = self:GetPlayerIDByName(name)
     return id
   else
@@ -682,16 +698,19 @@ end
 -- @return #number SideID i.e. 0 : spectators, 1 : Red, 2 : Blue
 -- @return #number SlotID
 function NET:GetSlot(Client)
+  self:T("NET.GetSlot")
   local PlayerID = self:GetPlayerIDFromClient(Client)
+  self:T("NET.GetSlot PlayerID = "..tostring(PlayerID))
   if PlayerID then
     local side,slot = net.get_slot(tonumber(PlayerID))
+    self:T("NET.GetSlot side, slot = "..tostring(side)..","..tostring(slot))
     return side,slot
   else
     return nil,nil
   end
 end
 
---- Force the slot for a specific client.
+--- Force the slot for a specific client. If this returns false, it didn't work via `net` (which is ALWAYS the case as of Nov 2024)!
 -- @param #NET self
 -- @param Wrapper.Client#CLIENT Client The client
 -- @param #number SideID i.e. 0 : spectators, 1 : Red, 2 : Blue
@@ -699,19 +718,22 @@ end
 -- @return #boolean Success
 function NET:ForceSlot(Client,SideID,SlotID)
   local PlayerID = self:GetPlayerIDFromClient(Client)
-  if PlayerID and tonumber(PlayerID) ~= 1 then
-    return net.force_player_slot(tonumber(PlayerID), SideID, SlotID or '' )
+  local SlotID = SlotID or Client:GetID()
+  if PlayerID then -- and tonumber(PlayerID) ~= 1 then
+    return net.force_player_slot(tonumber(PlayerID), SideID, SlotID )
   else
     return false
   end
 end
 
---- Force a client back to spectators.
+--- Force a client back to spectators. If this returns false, it didn't work via `net` (which is ALWAYS the case as of Nov 2024)!
 -- @param #NET self
 -- @param Wrapper.Client#CLIENT Client The client
 -- @return #boolean Succes
 function NET:ReturnToSpectators(Client)
   local outcome = self:ForceSlot(Client,0)
+  -- workaround
+  local sched = TIMER:New(Client.Destroy,Client,1):Start(1)
   return outcome 
 end
 
@@ -781,7 +803,7 @@ function NET:onafterStatus(From,Event,To)
   local function HouseHold(tavolo)
     local TNow = timer.getTime()
     for _,entry in pairs (tavolo) do
-      if entry >= TNow then entry =  nil end
+      if type(entry) == "number" and entry >= TNow then entry =  false end
     end
   end
   
