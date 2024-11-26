@@ -187,7 +187,7 @@ function NET:IsAnyBlocked(UCID,Name,PlayerID,PlayerSide,PlayerSlot)
   if PlayerSlot and self.BlockedSlots[PlayerSlot] and TNow < self.BlockedSlots[PlayerSlot] then
     blocked =  true
   end
-  self:T("IsAnyBlocke: "..tostring(blocked))
+  self:T("IsAnyBlocked: "..tostring(blocked))
   return blocked
 end
 
@@ -207,19 +207,26 @@ function NET:_EventHandler(EventData)
     local PlayerID = self:GetPlayerIDByName(name) or "none"
     local PlayerSide, PlayerSlot = self:GetSlot(data.IniUnit)
     if not PlayerSide then PlayerSide = EventData.IniCoalition end
+    if not PlayerSlot then PlayerSlot = EventData.IniUnit:GetID() end
     local TNow = timer.getTime()
     
-    self:T(self.lid.."Event for: "..name.." | UCID: "..ucid)
+    self:T(self.lid.."Event for: "..name.." | UCID: "..ucid .. " | ID/SIDE/SLOT "..PlayerID.."/"..PlayerSide.."/"..PlayerSlot)
     
     -- Joining
     if data.id == EVENTS.PlayerEnterUnit or data.id == EVENTS.PlayerEnterAircraft then
       self:T(self.lid.."Pilot Joining: "..name.." | UCID: "..ucid.." | Event ID: "..data.id)
       -- Check for blockages
       local blocked = self:IsAnyBlocked(ucid,name,PlayerID,PlayerSide,PlayerSlot)  
-      
-      if blocked and PlayerID and tonumber(PlayerID) ~= 1 then
+      if blocked and PlayerID then -- and tonumber(PlayerID) ~= 1 then
+        self:T("Player blocked")
         -- block pilot
-        local outcome = net.force_player_slot(tonumber(PlayerID), 0, '' )
+        local outcome = net.force_player_slot(tonumber(PlayerID), PlayerSide, data.IniUnit:GetID() )
+        self:T({Blocked_worked=outcome})
+        if outcome == false then
+          local unit = data.IniUnit
+          local sched = TIMER:New(unit.Destroy,unit,3):Start(3)
+          self:__PlayerBlocked(5,unit,name,1)
+        end
       else
         local client = CLIENT:FindByPlayerName(name) or data.IniUnit
         if not self.KnownPilots[name] or (self.KnownPilots[name] and TNow-self.KnownPilots[name].timestamp > 3) then
@@ -232,7 +239,7 @@ function NET:_EventHandler(EventData)
             slot = PlayerSlot,
             timestamp = TNow,
           }
-          UTILS.PrintTableToLog(self.KnownPilots[name])
+          --UTILS.PrintTableToLog(self.KnownPilots[name])
         end
         return self
       end
@@ -358,7 +365,7 @@ end
 
 --- Block a specific coalition side, does NOT automatically kick all players of that side or kick out joined players
 -- @param #NET self
--- @param #number side The side to block - 1 : Red, 2 : Blue
+-- @param #number Side The side to block - 1 : Red, 2 : Blue
 -- @param #number Seconds Seconds (optional) Number of seconds the player has to wait before rejoining.
 -- @return #NET self
 function NET:BlockSide(Side,Seconds)
@@ -703,7 +710,7 @@ function NET:GetSlot(Client)
   end
 end
 
---- Force the slot for a specific client.
+--- Force the slot for a specific client. If this returns false, it didn't work via `net` (which is ALWAYS the case as of Nov 2024)!
 -- @param #NET self
 -- @param Wrapper.Client#CLIENT Client The client
 -- @param #number SideID i.e. 0 : spectators, 1 : Red, 2 : Blue
@@ -711,19 +718,22 @@ end
 -- @return #boolean Success
 function NET:ForceSlot(Client,SideID,SlotID)
   local PlayerID = self:GetPlayerIDFromClient(Client)
-  if PlayerID and tonumber(PlayerID) ~= 1 then
-    return net.force_player_slot(tonumber(PlayerID), SideID, SlotID or '' )
+  local SlotID = SlotID or Client:GetID()
+  if PlayerID then -- and tonumber(PlayerID) ~= 1 then
+    return net.force_player_slot(tonumber(PlayerID), SideID, SlotID )
   else
     return false
   end
 end
 
---- Force a client back to spectators.
+--- Force a client back to spectators. If this returns false, it didn't work via `net` (which is ALWAYS the case as of Nov 2024)!
 -- @param #NET self
 -- @param Wrapper.Client#CLIENT Client The client
 -- @return #boolean Succes
 function NET:ReturnToSpectators(Client)
   local outcome = self:ForceSlot(Client,0)
+  -- workaround
+  local sched = TIMER:New(Client.Destroy,Client,1):Start(1)
   return outcome 
 end
 
