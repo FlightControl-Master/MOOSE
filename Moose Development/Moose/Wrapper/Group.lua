@@ -2337,8 +2337,11 @@ end
 -- @return #table The mission route defined by points.
 function GROUP:GetTaskRoute()
   --self:F2( self.GroupName )
-
-  return UTILS.DeepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
+  if _DATABASE.Templates.Groups[self.GroupName].Template and _DATABASE.Templates.Groups[self.GroupName].Template.route and _DATABASE.Templates.Groups[self.GroupName].Template.route.points then
+    return UTILS.DeepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
+  else
+    return {}
+  end
 end
 
 --- Return the route of a group by using the global _DATABASE object (an instance of @{Core.Database#DATABASE}).
