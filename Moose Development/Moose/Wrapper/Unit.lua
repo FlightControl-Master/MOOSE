@@ -240,7 +240,9 @@ end
 -- @return DCS#Unit The DCS Group.
 function UNIT:GetDCSObject()
 
-  if (not self.LastCallDCSObject) or (self.LastCallDCSObject and timer.getTime() - self.LastCallDCSObject  > 1) then
+  -- FF: Added checks that DCSObject exists because otherwise there were problems when respawning the unit right after it was initially spawned (e.g. teleport in OPSGROUP).
+  --     Got "Unit does not exit" after coalition.addGroup() when trying to access unit data because LastCallDCSObject<=1. 
+  if (not self.LastCallDCSObject) or (self.LastCallDCSObject and timer.getTime()-self.LastCallDCSObject>1) or (self.DCSObject==nil) or (self.DCSObject:isExist()==false) then
 
     -- Get DCS group.
     local DCSUnit = Unit.getByName( self.UnitName )

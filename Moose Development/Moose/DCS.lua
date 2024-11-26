@@ -14,6 +14,7 @@ do -- world
   -- @field #world.event event [https://wiki.hoggitworld.com/view/DCS_enum_world](https://wiki.hoggitworld.com/view/DCS_enum_world)
   -- @field #world.BirthPlace BirthPlace The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.
   -- @field #world.VolumeType VolumeType The volumeType enumerator defines the types of 3d geometery used within the [world.searchObjects](https://wiki.hoggitworld.com/view/DCS_func_searchObjects) function.
+  -- @field #world.weather weather Weather functions for fog etc.
 
   --- The world singleton contains functions centered around two different but extremely useful functions.
   -- * Events and event handlers are all governed within world.
@@ -132,6 +133,36 @@ do -- world
   -- @function [parent=#world] getAirbases
   -- @param #number coalitionId The coalition side number ID. Default is all airbases are returned.
   -- @return #table Table of DCS airbase objects.
+
+
+  --- Weather functions.
+  -- @type world.weather
+
+  --- Fog animation data structure.
+  -- @type world.FogAnimation
+  -- @field #number time
+  -- @field #number visibility
+  -- @field #number thickness
+
+  --- Returns the current fog thickness.
+  -- @function [parent=#world.weather] getFogThickness Returns the fog thickness.
+  -- @return #number Fog thickness in meters. If there is no fog, zero is returned.
+
+  --- Sets the fog thickness instantly. Any current fog animation is discarded.
+  -- @function [parent=#world.weather] setFogThickness
+  -- @param #number thickness Fog thickness in meters. Set to zero to disable fog.
+
+  --- Returns the current fog visibility distance.
+  -- @function [parent=#world.weather] getFogVisibilityDistance Returns the current maximum visibility distance in meters. Returns zero if fog is not present.
+
+  --- Instantly sets the maximum visibility distance of fog at sea level when looking at the horizon. Any current fog animation is discarded. Set zero to disable the fog.
+  -- @function [parent=#world.weather] setFogVisibilityDistance
+  -- @param #number visibility Max fog visibility in meters. Set to zero to disable fog.
+
+  --- Sets fog animation keys. Time is set in seconds and relative to the current simulation time, where time=0 is the current moment. 
+  -- Time must be increasing. Previous animation is always discarded despite the data being correct.
+  -- @function [parent=#world.weather] setFogAnimation
+  -- @param #world.FogAnimation animation List of fog animations
  
 end -- world
 
@@ -407,7 +438,7 @@ do -- coalition
   -- @param #table groupData Group data table.
   -- @return DCS#Group The spawned Group object.
 
-  --- Dynamically spawns a static object. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_addGroup)
+  --- Dynamically spawns a static object. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_addStaticObject)
   -- @function [parent=#coalition] addStaticObject
   -- @param #number countryId Id of the country.
   -- @param #table groupData Group data table.
@@ -420,6 +451,7 @@ end -- coalition
 
 do -- Types
 
+  --- Descriptors.
   -- @type Desc
   -- @field #number speedMax0 Max speed in meters/second at zero altitude.
   -- @field #number massEmpty Empty mass in kg.
@@ -1013,14 +1045,16 @@ do -- Spot
 end -- Spot
 
 do -- Controller
+
   --- Controller is an object that performs A.I.-tasks. Other words controller is an instance of A.I.. Controller stores current main task, active enroute tasks and behavior options. Controller performs commands. Please, read DCS A-10C GUI Manual EN.pdf chapter "Task Planning for Unit Groups", page 91 to understand A.I. system of DCS:A-10C. 
   -- 
   -- This class has 2 types of functions:
   -- 
   -- * Tasks
-  -- * Commands: Commands are instant actions those required zero time to perform. Commands may be used both for control unit/group behavior and control game mechanics. 
+  -- * Commands: Commands are instant actions those required zero time to perform. Commands may be used both for control unit/group behavior and control game mechanics.
+  -- 
   -- @type Controller
-  -- @field #Controller.Detection Detection Enum contains identifiers of surface types. 
+  -- @field #Controller.Detection Detection Enum contains identifiers of surface types.
   
   --- Enables and disables the controller.
   -- Note: Now it works only for ground / naval groups!
@@ -1079,18 +1113,18 @@ do -- Controller
   
   -- Detection
   
-  --- Enum contains identifiers of surface types. 
+  --- Enum containing detection types.
   -- @type Controller.Detection
-  -- @field VISUAL
-  -- @field OPTIC
-  -- @field RADAR
-  -- @field IRST
-  -- @field RWR
-  -- @field DLINK
+  -- @field #number VISUAL Visual detection. Numeric value 1.
+  -- @field #number OPTIC Optical detection. Numeric value 2.
+  -- @field #number RADAR Radar detection. Numeric value 4.
+  -- @field #number IRST Infra-red search and track detection. Numeric value 8.
+  -- @field #number RWR Radar Warning Receiver detection. Numeric value 16.
+  -- @field #number DLINK Data link detection. Numeric value 32.
   
   --- Detected target. 
-  -- @type DetectedTarget
-  -- @field Wrapper.Object#Object object The target
+  -- @type Controller.DetectedTarget
+  -- @field DCS#Object object The target
   -- @field #boolean visible The target is visible
   -- @field #boolean type The target type is known
   -- @field #boolean distance Distance to the target is known
@@ -1103,9 +1137,9 @@ do -- Controller
   -- @param #Controller.Detection detection Controller.Detection detection1, Controller.Detection detection2, ... Controller.Detection detectionN 
   -- @return #boolean detected True if the target is detected. 
   -- @return #boolean visible Has effect only if detected is true. True if the target is visible now. 
+  -- @return #boolean type Has effect only if detected is true. True if the target type is known.
+  -- @return #boolean distance Has effect only if detected is true. True if the distance to the target is known.
   -- @return #ModelTime lastTime Has effect only if visible is false. Last time when target was seen. 
-  -- @return #boolean type Has effect only if detected is true. True if the target type is known. 
-  -- @return #boolean distance Has effect only if detected is true. True if the distance to the target is known. 
   -- @return #Vec3 lastPos Has effect only if visible is false. Last position of the target when it was seen. 
   -- @return #Vec3 lastVel Has effect only if visible is false. Last velocity of the target when it was seen. 
   
@@ -1131,6 +1165,7 @@ end -- Controller
 
 do -- Unit
 
+  --- Unit.
   -- @type Unit
   -- @extends #CoalitionObject
   -- @field ID Identifier of an unit. It assigned to an unit by the Mission Editor automatically. 

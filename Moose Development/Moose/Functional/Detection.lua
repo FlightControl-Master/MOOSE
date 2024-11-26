@@ -652,7 +652,7 @@ do -- DETECTION_BASE
 
           if DetectedObject:isExist() then
 
-            local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity = DetectionUnit:IsTargetDetected(
+            local TargetIsDetected, TargetIsVisible, TargetKnowType, TargetKnowDistance, TargetLastTime, TargetLastPos, TargetLastVelocity = DetectionUnit:IsTargetDetected(
               DetectedObject,
               self.DetectVisual,
               self.DetectOptical,
