@@ -45,12 +45,6 @@
 -- By efficiently utilizing the FSM class and derived classes, MOOSE allows mission designers to quickly build processes.
 -- **Ready made FSM-based implementations classes** exist within the MOOSE framework that **can easily be re-used,
 -- and tailored** by mission designers through **the implementation of Transition Handlers**.
--- Each of these FSM implementation classes start either with:
---
---   * an acronym **AI\_**, which indicates a FSM implementation directing **AI controlled** @{Wrapper.Group#GROUP} and/or @{Wrapper.Unit#UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
---   * an acronym **TASK\_**, which indicates a FSM implementation executing a @{Tasking.Task#TASK} executed by Groups of players. These TASK\_ classes derive the @{#FSM_TASK} class.
---   * an acronym **ACT\_**, which indicates an Sub-FSM implementation, directing **Humans actions** that need to be done in a @{Tasking.Task#TASK}, seated in a @{Wrapper.Client#CLIENT} (slot) or a @{Wrapper.Unit#UNIT} (CA join). These ACT\_ classes derive the @{#FSM_PROCESS} class.
---
 -- Detailed explanations and API specifics are further below clarified and FSM derived class specifics are described in those class documentation sections.
 --
 -- ##__Disclaimer:__
@@ -61,7 +55,6 @@
 --
 -- The following derived classes are available in the MOOSE framework, that implement a specialized form of a FSM:
 --
---   * @{#FSM_TASK}: Models Finite State Machines for @{Tasking.Task}s.
 --   * @{#FSM_PROCESS}: Models Finite State Machines for @{Tasking.Task} actions, which control @{Wrapper.Client}s.
 --   * @{#FSM_CONTROLLABLE}: Models Finite State Machines for @{Wrapper.Controllable}s, which are @{Wrapper.Group}s, @{Wrapper.Unit}s, @{Wrapper.Client}s.
 --   * @{#FSM_SET}: Models Finite State Machines for @{Core.Set}s. Note that these FSMs control multiple objects!!! So State concerns here
@@ -78,7 +71,8 @@
 -- @image Core_Finite_State_Machine.JPG
 
 do -- FSM
-
+  
+  ---
   -- @type FSM
   -- @field #string ClassName Name of the class.
   -- @field Core.Scheduler#SCHEDULER CallScheduler Call scheduler.
@@ -117,11 +111,6 @@ do -- FSM
   -- By efficiently utilizing the FSM class and derived classes, MOOSE allows mission designers to quickly build processes.
   -- **Ready made FSM-based implementations classes** exist within the MOOSE framework that **can easily be re-used,
   -- and tailored** by mission designers through **the implementation of Transition Handlers**.
-  -- Each of these FSM implementation classes start either with:
-  --
-  --   * an acronym **AI\_**, which indicates an FSM implementation directing **AI controlled** @{Wrapper.Group#GROUP} and/or @{Wrapper.Unit#UNIT}. These AI\_ classes derive the @{#FSM_CONTROLLABLE} class.
-  --   * an acronym **TASK\_**, which indicates an FSM implementation executing a @{Tasking.Task#TASK} executed by Groups of players. These TASK\_ classes derive the @{#FSM_TASK} class.
-  --   * an acronym **ACT\_**, which indicates an Sub-FSM implementation, directing **Humans actions** that need to be done in a @{Tasking.Task#TASK}, seated in a @{Wrapper.Client#CLIENT} (slot) or a @{Wrapper.Unit#UNIT} (CA join). These ACT\_ classes derive the @{#FSM_PROCESS} class.
   --
   -- ![Transition Rules and Transition Handlers and Event Triggers](..\Presentations\FSM\Dia3.JPG)
   --
@@ -1081,7 +1070,8 @@ do -- FSM_CONTROLLABLE
 end
 
 do -- FSM_PROCESS
-
+  
+  ---
   -- @type FSM_PROCESS
   -- @field Tasking.Task#TASK Task
   -- @extends Core.Fsm#FSM_CONTROLLABLE

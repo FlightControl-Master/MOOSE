@@ -1777,8 +1777,6 @@ function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation,
   return DCSTask
 end
 
--- EN-ACT_ROUTE TASKS FOR AIRBORNE CONTROLLABLES
-
 --- (AIR) Engaging targets of defined types.
 -- @param #CONTROLLABLE self
 -- @param DCS#Distance Distance Maximal distance from the target to a route leg. If the target is on a greater distance it will be ignored.
