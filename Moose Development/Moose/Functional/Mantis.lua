@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: July 2024
+-- Last Update: Sep 2024
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -1396,7 +1396,7 @@ do
   -- @return #string type Long, medium or short range
   -- @return #number blind "blind" spot
   function MANTIS:_GetSAMDataFromUnits(grpname,mod,sma,chm)
-    self:T(self.lid.."_GetSAMRangeFromUnits")
+    self:T(self.lid.."_GetSAMDataFromUnits")
     local found = false
     local range = self.checkradius
     local height = 3000
@@ -1449,7 +1449,7 @@ do
   -- @return #string type Long, medium or short range
   -- @return #number blind "blind" spot
   function MANTIS:_GetSAMRange(grpname)
-    self:T(self.lid.."_GetSAMRange")
+    self:I(self.lid.."_GetSAMRange for "..tostring(grpname))
     local range = self.checkradius
     local height = 3000
     local type = MANTIS.SamType.MEDIUM
@@ -1466,9 +1466,9 @@ do
     elseif string.find(grpname,"CHM",1,true) then
       CHMod = true
     end
-    if self.automode then
+    --if self.automode then
       for idx,entry in pairs(self.SamData) do
-        --self:I("ID = " .. idx)
+        self:T("ID = " .. idx)
         if string.find(grpname,idx,1,true) then
           local _entry = entry -- #MANTIS.SamData
           type = _entry.Type
@@ -1476,14 +1476,14 @@ do
           range = _entry.Range * 1000 * radiusscale -- max firing range
           height = _entry.Height * 1000 -- max firing height        
           blind = _entry.Blindspot 
-          --self:I("Matching Groupname = " .. grpname .. " Range= " .. range)
+          self:T("Matching Groupname = " .. grpname .. " Range= " .. range)
           found = true
           break
         end
       end
-    end
+    --end
     -- secondary filter if not found
-    if (not found and self.automode) or HDSmod or SMAMod or CHMod then
+    if (not found) or HDSmod or SMAMod or CHMod then
       range, height, type = self:_GetSAMDataFromUnits(grpname,HDSmod,SMAMod,CHMod)
     elseif not found then
       self:E(self.lid .. string.format("*****Could not match radar data for %s! Will default to midrange values!",grpname))
