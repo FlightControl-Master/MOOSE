@@ -664,7 +664,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="1.2.1"
+AUFTRAG.version="1.2.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2302,7 +2302,7 @@ function AUFTRAG:NewCAPTUREZONE(OpsZone, Coalition, Speed, Altitude, Formation)
   params.formation=Formation or "Off Road"  
   params.zone=mission:GetObjective()
   params.altitude=mission.missionAltitude
-  params.speed=mission.missionSpeed  
+  params.speed=mission.missionSpeed and UTILS.KmphToMps(mission.missionSpeed) or nil
 
   mission.DCStask.params=params
 
@@ -2352,7 +2352,7 @@ function AUFTRAG:NewGROUNDATTACK(Target, Speed, Formation)
 
   mission.DCStask=mission:GetDCSMissionTask()
   
-  mission.DCStask.params.speed=Speed
+  mission.DCStask.params.speed=mission.missionSpeed and UTILS.KmphToMps(mission.missionSpeed) or nil
   mission.DCStask.params.formation=Formation or ENUMS.Formation.Vehicle.Vee
   
   return mission
@@ -6099,7 +6099,7 @@ function AUFTRAG:GetDCSMissionTask()
     local param={}
     param.zone=self:GetObjective()
     param.altitude=self.missionAltitude
-    param.speed=self.missionSpeed
+    param.speed=self.missionSpeed and UTILS.KmphToMps(self.missionSpeed) or nil
 
     DCStask.params=param
 
@@ -6179,7 +6179,7 @@ function AUFTRAG:GetDCSMissionTask()
     local param={}
     param.target=self.engageTarget
     param.altitude=self.missionAltitude
-    param.speed=self.missionSpeed
+    param.speed=self.missionSpeed and UTILS.KmphToMps(self.missionSpeed) or nil
     param.lastindex=nil
 
     DCStask.params=param
@@ -6352,7 +6352,7 @@ function AUFTRAG:GetDCSMissionTask()
     local param={}
     param.zone=self:GetObjective()
     param.altitude=self.missionAltitude
-    param.speed=self.missionSpeed
+    param.speed=self.missionSpeed and UTILS.KmphToMps(self.missionSpeed) or nil
 
     DCStask.params=param
 
@@ -6388,7 +6388,7 @@ function AUFTRAG:GetDCSMissionTask()
     local param={}
     param.zone=self:GetObjective()
     param.altitude=self.missionAltitude
-    param.speed=self.missionSpeed
+    param.speed=self.missionSpeed and UTILS.KmphToMps(self.missionSpeed) or nil
 
     DCStask.params=param
 
@@ -6408,7 +6408,7 @@ function AUFTRAG:GetDCSMissionTask()
     local param={}
     param.target=self:GetTargetData()
     param.action="Wedge"
-    param.speed=self.missionSpeed
+    param.speed=self.missionSpeed and UTILS.KmphToMps(self.missionSpeed) or nil
 
     DCStask.params=param
 

@@ -1449,7 +1449,7 @@ do
   -- @return #string type Long, medium or short range
   -- @return #number blind "blind" spot
   function MANTIS:_GetSAMRange(grpname)
-    self:I(self.lid.."_GetSAMRange for "..tostring(grpname))
+    self:T(self.lid.."_GetSAMRange for "..tostring(grpname))
     local range = self.checkradius
     local height = 3000
     local type = MANTIS.SamType.MEDIUM
