@@ -4480,7 +4480,7 @@ function OPSGROUP:_UpdateTask(Task, Mission)
     -- Set speed. Default max.
     local speed=self.speedMax and UTILS.KmphToKnots(self.speedMax) or nil
     if Task.dcstask.params.speed then
-      speed=Task.dcstask.params.speed
+      speed=UTILS.MpsToKnots(Task.dcstask.params.speed)
     end
     
     if target then

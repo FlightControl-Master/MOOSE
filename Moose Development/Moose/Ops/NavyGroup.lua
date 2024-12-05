@@ -1269,7 +1269,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
     if self.verbose>=10 then
       for i=1,#waypoints do
         local wp=waypoints[i] --Ops.OpsGroup#OPSGROUP.Waypoint
-        local text=string.format("%s Waypoint [%d] UID=%d speed=%d", self.groupname, i-1, wp.uid or -1, wp.speed)
+        local text=string.format("%s Waypoint [%d] UID=%d speed=%d m/s", self.groupname, i-1, wp.uid or -1, wp.speed)
         self:I(self.lid..text)
         COORDINATE:NewFromWaypoint(wp):MarkToAll(text)            
       end
