@@ -48,12 +48,6 @@ __Moose.Include( 'Wrapper\\Weapon.lua' )
 __Moose.Include( 'Wrapper\\Storage.lua' )
 __Moose.Include( 'Wrapper\\DynamicCargo.lua' )
 
-__Moose.Include( 'Cargo\\Cargo.lua' )
-__Moose.Include( 'Cargo\\CargoUnit.lua' )
-__Moose.Include( 'Cargo\\CargoSlingload.lua' )
-__Moose.Include( 'Cargo\\CargoCrate.lua' )
-__Moose.Include( 'Cargo\\CargoGroup.lua' )
-
 __Moose.Include( 'Functional\\Scoring.lua' )
 __Moose.Include( 'Functional\\CleanUp.lua' )
 __Moose.Include( 'Functional\\Movement.lua' )
@@ -121,7 +115,5 @@ __Moose.Include( 'Sound\\Radio.lua' )
 __Moose.Include( 'Sound\\RadioQueue.lua' )
 __Moose.Include( 'Sound\\RadioSpeech.lua' )
 __Moose.Include( 'Sound\\SRS.lua' )
-
-__Moose.Include( 'Tasking\\Task_Capture_Dispatcher.lua' )
 
 __Moose.Include( 'Globals.lua' )
