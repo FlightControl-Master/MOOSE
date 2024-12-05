@@ -3481,7 +3481,7 @@ end
 
 --- Set Rules of Engagement (ROE) for this mission.
 -- @param #AUFTRAG self
--- @param #string roe Mission ROE.
+-- @param #number roe Mission ROE, e.g. `ENUMS.ROE.ReturnFire` (whiche equals 3)
 -- @return #AUFTRAG self
 function AUFTRAG:SetROE(roe)
 
@@ -3493,7 +3493,7 @@ end
 
 --- Set Reaction on Threat (ROT) for this mission.
 -- @param #AUFTRAG self
--- @param #string rot Mission ROT.
+-- @param #number rot Mission ROT, e.g. `ENUMS.ROT.NoReaction` (whiche equals 0)
 -- @return #AUFTRAG self
 function AUFTRAG:SetROT(rot)
 
