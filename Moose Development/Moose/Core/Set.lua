@@ -7936,22 +7936,31 @@ do -- SET_OPSGROUP
   --- Handles the OnBirth event for the Set.
   -- @param #SET_OPSGROUP self
   -- @param Core.Event#EVENTDATA Event Event data.
-  function SET_OPSGROUP:_EventOnBirth( Event )
+function SET_OPSGROUP:_EventOnBirth(Event)
     --self:F3( { Event } )
 
     if Event.IniDCSUnit and Event.IniDCSGroup then
-      local DCSgroup=Event.IniDCSGroup --DCS#Group
+        local DCSgroup = Event.IniDCSGroup --DCS#Group
 
-      if DCSgroup:getInitialSize() == DCSgroup:getSize() then -- This seems to be not a good check as even for the first birth event, getSize returns the total number of units in the group.
-
-        local groupname, group = self:AddInDatabase( Event )
-
-        if group and group:CountAliveUnits()==DCSgroup:getInitialSize() then
-          if group and self:IsIncludeObject( group ) then
-            self:Add( groupname, group )
-          end
+        -- group:CountAliveUnits() alternative as this fails for Respawn/Teleport
+        local CountAliveActive = 0
+        for index, data in pairs(DCSgroup:getUnits()) do
+            if data:isExist() and data:isActive() then
+                CountAliveActive = CountAliveActive + 1
+            end
         end
-      end
+
+        if DCSgroup:getInitialSize() == DCSgroup:getSize() then
+
+            local groupname, group = self:AddInDatabase(Event)
+
+            -- group:CountAliveUnits() alternative
+            if group and CountAliveActive == DCSgroup:getInitialSize() then
+                if group and self:IsIncludeObject(group) then
+                    self:Add(groupname, group)
+                end
+            end
+        end
     end
   end
 
