@@ -252,7 +252,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.15"
+EASYGCICAP.version="0.1.16"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -269,7 +269,7 @@ EASYGCICAP.version="0.1.15"
 -- @param #string Alias A Name for this GCICAP
 -- @param #string AirbaseName Name of the Home Airbase
 -- @param #string Coalition Coalition, e.g. "blue" or "red"
--- @param #string EWRName (Partial) group name of the EWR system of the coalition, e.g. "Red EWR"
+-- @param #string EWRName (Partial) group name of the EWR system of the coalition, e.g. "Red EWR", can be handed in as table of names, e.g.{"EWR","Radar","SAM"}
 -- @return #EASYGCICAP self
 function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   -- Inherit everything from FSM class.
@@ -280,7 +280,8 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.coalitionname = string.lower(Coalition) or "blue"
   self.coalition = self.coalitionname == "blue" and coalition.side.BLUE or coalition.side.RED
   self.wings = {}
-  self.EWRName = EWRName or self.coalitionname.." EWR"
+  if type(EWRName) == "string" then EWRName = {EWRName} end
+  self.EWRName = EWRName --or self.coalitionname.." EWR"
   --self.CapZoneName = CapZoneName
   self.airbasename = AirbaseName
   self.airbase = AIRBASE:FindByName(self.airbasename)
@@ -1291,11 +1292,11 @@ function EASYGCICAP:_StartIntel()
   self:T(self.lid.."_StartIntel")
   -- Border GCI Detection
   local BlueAir_DetectionSetGroup = SET_GROUP:New()
-  BlueAir_DetectionSetGroup:FilterPrefixes( { self.EWRName } )
+  BlueAir_DetectionSetGroup:FilterPrefixes( self.EWRName )
   BlueAir_DetectionSetGroup:FilterStart()
   
   -- Intel type detection
-  local BlueIntel = INTEL:New(BlueAir_DetectionSetGroup,self.coalitionname, self.EWRName)
+  local BlueIntel = INTEL:New(BlueAir_DetectionSetGroup,self.coalitionname, self.alias)
   BlueIntel:SetClusterAnalysis(true,false,false)
   BlueIntel:SetForgetTime(300)
   BlueIntel:SetAcceptZones(self.GoZoneSet)
