@@ -7760,7 +7760,7 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
 
 
       -- Despawn old group. Dont trigger any remove unit event since this is a respawn.
-      self:Despawn(0, true)
+      --self:Despawn(0, true)
 
     else
 
@@ -7777,13 +7777,16 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     end
 
     -- Debug output.
-    self:T({Template=Template})
+    self:T2({Template=Template})
 
     -- Spawn new group.
-    self.group=_DATABASE:Spawn(Template)
+    --self.group=_DATABASE:Spawn(Template)
+    local countryID=self.group:GetCountry()
+    local categoryID=self.group:GetCategory()
+    local dcsgroup=coalition.addGroup(countryID, categoryID, Template)
 
     -- Set DCS group and controller.
-    self.dcsgroup=self:GetDCSGroup()
+    self.dcsgroup=dcsgroup or self:GetDCSGroup()
     self.controller=self.dcsgroup:getController()
 
     -- Set activation and controlled state.
@@ -7794,7 +7797,6 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     self.isDead=false
     self.isDestroyed=false
 
-
     self.groupinitialized=false    
     self.wpcounter=1
     self.currentwp=1
@@ -7802,8 +7804,8 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     -- Init waypoints.
     self:_InitWaypoints()
 
-    -- Init Group.
-    self:_InitGroup(Template)
+    -- Init Group. This call is delayed because NAVY groups did not like to be initialized just yet (group did not contain any units).
+    self:_InitGroup(Template, 0.1)
     
     -- Reset events.
     --self:ResetEvents()
@@ -7830,24 +7832,6 @@ end
 -- @param #string To To state.
 function OPSGROUP:onafterDamaged(From, Event, To)
   self:T(self.lid..string.format("Group damaged at t=%.3f", timer.getTime()))
-
-  --[[
-  local lifemin=nil
-  for _,_element in pairs(self.elements) do
-    local element=_element --#OPSGROUP.Element
-    if element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
-      local life, life0=self:GetLifePoints(element)
-      if lifemin==nil or life<lifemin then
-        lifemin=life
-      end
-    end
-  end
-
-  if lifemin and lifemin/self.life<0.5 then
-    self:RTB()
-  end
-  ]]
-
 end
 
 --- On after "Destroyed" event.
