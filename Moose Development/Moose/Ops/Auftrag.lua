@@ -5777,10 +5777,10 @@ function AUFTRAG:SetMissionIngressCoord(Coordinate, Altitude)
     Coordinate=Coordinate:GetCoordinate()
   end
 
-  self.missionIngressCoordgressCoord=Coordinate
+  self.missionIngressCoord=Coordinate
 
   if Altitude then
-    self.missionIngressCoordgressCoord.y=UTILS.FeetToMeters(Altitude)
+    self.missionIngressCoord.y=UTILS.FeetToMeters(Altitude)
   end
 end
 
