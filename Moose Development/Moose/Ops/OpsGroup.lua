@@ -11444,10 +11444,10 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
   if self:IsFlightgroup() then
 
     -- Get home and destination airbases from waypoints.
-    self.homebase=self.homebase or self:GetHomebaseFromWaypoints()
+    self.homebase=self.homebase or self:GetHomebaseFromWaypoints() -- GetHomebaseFromWaypoints() returns carriers or destroyers if no airbase is found.
     local destbase=self:GetDestinationFromWaypoints()
     self.destbase=self.destbase or destbase
-    self.currbase=self:GetHomebaseFromWaypoints()
+    --self.currbase=self:GetHomebaseFromWaypoints() -- Skipped To fix RTB issue
 
     --env.info("FF home base "..(self.homebase and self.homebase:GetName() or "unknown"))
     --env.info("FF dest base "..(self.destbase and self.destbase:GetName() or "unknown"))
@@ -11458,9 +11458,9 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
     end
 
     -- Set destination to homebase.
-    if self.destbase==nil then
-      self.destbase=self.homebase
-    end
+    --if self.destbase==nil then  -- Skipped To fix RTB issue
+    --  self.destbase=self.homebase
+    --end
 
   end
 
