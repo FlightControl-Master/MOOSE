@@ -91,7 +91,7 @@ NAVYGROUP = {
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="1.0.2"
+NAVYGROUP.version="1.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -395,7 +395,7 @@ function NAVYGROUP:New(group)
   self:HandleEvent(EVENTS.Birth,      self.OnEventBirth)
   self:HandleEvent(EVENTS.Dead,       self.OnEventDead)
   self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)
-  self:HandleEvent(EVENTS.UnitLost, self.OnEventRemoveUnit)  
+  self:HandleEvent(EVENTS.UnitLost,   self.OnEventRemoveUnit)  
   
   -- Start the status monitoring.
   self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)
@@ -775,7 +775,7 @@ end
 
 --- Update status.
 -- @param #NAVYGROUP self
-function NAVYGROUP:Status(From, Event, To)
+function NAVYGROUP:Status()
 
   -- FSM state.
   local fsmstate=self:GetState()
@@ -979,6 +979,35 @@ function NAVYGROUP:Status(From, Event, To)
   end
 
   ---
+  -- Elements
+  ---
+
+  if self.verbose>=2 then
+    local text="Elements:"
+    for i,_element in pairs(self.elements) do
+      local element=_element --Ops.OpsGroup#OPSGROUP.Element
+
+      local name=element.name
+      local status=element.status
+      local unit=element.unit
+      local life,life0=self:GetLifePoints(element)
+
+      local life0=element.life0
+
+      -- Get ammo.
+      local ammo=self:GetAmmoElement(element)
+
+      -- Output text for element.
+      text=text..string.format("\n[%d] %s: status=%s, life=%.1f/%.1f, guns=%d, rockets=%d, bombs=%d, missiles=%d, cargo=%d/%d kg",
+      i, name, status, life, life0, ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles, element.weightCargo, element.weightMaxCargo)
+    end
+    if #self.elements==0 then
+      text=text.." none!"
+    end
+    self:I(self.lid..text)
+  end
+
+  ---
   -- Engage Detected Targets
   ---
   if self:IsCruising() and self.detectionOn and self.engagedetectedOn then
@@ -1041,7 +1070,7 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
 
   -- Debug info.
   if self.verbose>=1 then
-    local text=string.format("Initialized Navy Group %s:\n", self.groupname)
+    local text=string.format("Initialized Navy Group %s [GID=%d]:\n", self.groupname, self.group:GetID())
     text=text..string.format("Unit type     = %s\n", self.actype)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
     text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
@@ -1894,13 +1923,21 @@ function NAVYGROUP:_InitGroup(Template, Delay)
     self.optionDefault.Formation="Off Road"
     self.option.Formation=self.optionDefault.Formation
   
-    -- Default TACAN off.
-    self:SetDefaultTACAN(nil, nil, nil, nil, true)
-    self.tacan=UTILS.DeepCopy(self.tacanDefault)
+    -- Default TACAN off (we check if something is set already to keep those values in case of respawn)
+    if not self.tacanDefault then
+      self:SetDefaultTACAN(nil, nil, nil, nil, true)
+    end
+    if not self.tacan then
+      self.tacan=UTILS.DeepCopy(self.tacanDefault)
+    end
     
     -- Default ICLS off.
-    self:SetDefaultICLS(nil, nil, nil, true)
-    self.icls=UTILS.DeepCopy(self.iclsDefault)
+    if not self.iclsDefault then
+      self:SetDefaultICLS(nil, nil, nil, true)
+    end
+    if not self.icls then
+      self.icls=UTILS.DeepCopy(self.iclsDefault)
+    end
     
     -- Get all units of the group.
     local units=self.group:GetUnits()

@@ -217,7 +217,7 @@ FLIGHTGROUP.Players={}
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="1.0.2"
+FLIGHTGROUP.version="1.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -3883,8 +3883,12 @@ function FLIGHTGROUP:_InitGroup(Template, Delay)
     end
   
     -- Default TACAN off.
-    self:SetDefaultTACAN(nil, nil, nil, nil, true)
-    self.tacan=UTILS.DeepCopy(self.tacanDefault)
+    if not self.tacanDefault then
+      self:SetDefaultTACAN(nil, nil, nil, nil, true)
+    end
+    if not self.tacan then
+      self.tacan=UTILS.DeepCopy(self.tacanDefault)
+    end
   
     -- Is this purely AI?
     self.isAI=not self:_IsHuman(group)

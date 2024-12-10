@@ -512,7 +512,7 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="1.0.1"
+OPSGROUP.version="1.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -7819,7 +7819,7 @@ function OPSGROUP:_Spawn(Delay, Template)
     self:_InitWaypoints()
 
     -- Init Group. This call is delayed because NAVY groups did not like to be initialized just yet (group did not contain any units).
-    self:_InitGroup(Template)
+    self:_InitGroup(Template, 0.001)
     
     -- Reset events.
     --self:ResetEvents()  

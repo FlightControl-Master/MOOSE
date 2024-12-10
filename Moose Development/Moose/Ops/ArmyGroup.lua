@@ -68,7 +68,7 @@ ARMYGROUP = {
 
 --- Army Group version.
 -- @field #string version
-ARMYGROUP.version="1.0.1"
+ARMYGROUP.version="1.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2106,59 +2106,13 @@ function ARMYGROUP:_InitGroup(Template, Delay)
     -- Set default formation to "on road".
     self.optionDefault.Formation=ENUMS.Formation.Vehicle.OnRoad
 
-    -- First check if group was already initialized.
-    if self.groupinitialized then
-      self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
-      return
-    end
-
-    self:T(self.lid.."FF Initializing Group")
-
-    -- Get template of group.
-    local template=Template or self:_GetTemplate()
-
-    -- Ground are always AI.
-    self.isAI=true
-
-    -- Is (template) group late activated.
-    self.isLateActivated=template.lateActivation
-
-    -- Ground groups cannot be uncontrolled.
-    self.isUncontrolled=false
-
-    -- Max speed in km/h.
-    self.speedMax=self.group:GetSpeedMax()
-
-    -- Is group mobile?
-    if self.speedMax>3.6 then
-      self.isMobile=true
-    else
-      self.isMobile=false
-    end
-
-    -- Cruise speed in km/h
-    self.speedCruise=self.speedMax*0.7
-
-    -- Group ammo.
-    self.ammo=self:GetAmmoTot()
-
-    -- Radio parameters from template.
-    self.radio.On=false  -- Radio is always OFF for ground.
-    self.radio.Freq=133
-    self.radio.Modu=radio.modulation.AM
-
-    -- Set default radio.
-    self:SetDefaultRadio(self.radio.Freq, self.radio.Modu, self.radio.On)
-
-    -- Get current formation from first waypoint.
-    self.option.Formation=template.route.points[1].action
-
-    -- Set default formation to "on road".
-    self.optionDefault.Formation=ENUMS.Formation.Vehicle.OnRoad
-
     -- Default TACAN off.
-    self:SetDefaultTACAN(nil, nil, nil, nil, true)
-    self.tacan=UTILS.DeepCopy(self.tacanDefault)
+    if not self.tacanDefault then
+      self:SetDefaultTACAN(nil, nil, nil, nil, true)
+    end
+    if not self.tacan then
+      self.tacan=UTILS.DeepCopy(self.tacanDefault)
+    end
 
     -- Units of the group.
     local units=self.group:GetUnits()
