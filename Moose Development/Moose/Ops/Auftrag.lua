@@ -162,6 +162,7 @@
 -- @field #number missionRange Mission range in meters. Used by LEGION classes (AIRWING, BRIGADE, ...).
 -- @field Core.Point#COORDINATE missionWaypointCoord Mission waypoint coordinate.
 -- @field Core.Point#COORDINATE missionEgressCoord Mission egress waypoint coordinate.
+-- @field Core.Point#COORDINATE missionIngressCoord Mission Ingress waypoint coordinate.
 -- @field #number missionWaypointRadius Random radius in meters.
 -- @field #boolean legionReturn If `true`, assets return to their legion (default). If `false`, they will stay alive. 
 --
@@ -4657,6 +4658,15 @@ function AUFTRAG:SetGroupWaypointCoordinate(opsgroup, coordinate)
   return self
 end
 
+--- [Air] Set mission (ingress) waypoint coordinate for FLIGHT group.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE coordinate Waypoint Coordinate.
+-- @return #AUFTRAG self
+function AUFTRAG:SetIngressCoordinate(coordinate)
+  self.missionIngressCoord = coordinate
+  return self
+end
+
 --- Get mission (ingress) waypoint coordinate of OPS group
 -- @param #AUFTRAG self
 -- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
@@ -5755,11 +5765,37 @@ function AUFTRAG:SetMissionEgressCoord(Coordinate, Altitude)
   end
 end
 
+--- [Air] Set the mission ingress coordinate. This is the coordinate where the assigned group will fly before the actual mission coordinate.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Egrees coordinate.
+-- @param #number Altitude (Optional) Altitude in feet. Default is y component of coordinate.
+-- @return #AUFTRAG self
+function AUFTRAG:SetMissionIngressCoord(Coordinate, Altitude)
+
+  -- Obviously a zone was passed. We get the coordinate.
+  if Coordinate:IsInstanceOf("ZONE_BASE") then
+    Coordinate=Coordinate:GetCoordinate()
+  end
+
+  self.missionIngressCoordgressCoord=Coordinate
+
+  if Altitude then
+    self.missionIngressCoordgressCoord.y=UTILS.FeetToMeters(Altitude)
+  end
+end
+
 --- Get the mission egress coordinate if this was defined.
 -- @param #AUFTRAG self
 -- @return Core.Point#COORDINATE Coordinate Coordinate or nil.
 function AUFTRAG:GetMissionEgressCoord()
   return self.missionEgressCoord
+end
+
+--- Get the mission ingress coordinate if this was defined.
+-- @param #AUFTRAG self
+-- @return Core.Point#COORDINATE Coordinate Coordinate or nil.
+function AUFTRAG:GetMissionIngressCoord()
+  return self.missionIngressCoord
 end
 
 --- Get coordinate which was set as mission waypoint coordinate.

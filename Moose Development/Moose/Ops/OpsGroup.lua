@@ -6118,7 +6118,14 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- Add mission execution (ingress) waypoint.
     local waypoint=nil --#OPSGROUP.Waypoint
     if self:IsFlightgroup() then
-    
+      
+      local ingresscoord = mission:GetMissionIngressCoord()
+      
+      if ingresscoord then
+        waypoint=FLIGHTGROUP.AddWaypoint(self, ingresscoord, SpeedToMission, uid, UTILS.MetersToFeet(ingresscoord.y or self.altitudeCruise), false)
+        uid=waypoint.uid
+      end
+      
       waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
       
     elseif self:IsArmygroup() then
