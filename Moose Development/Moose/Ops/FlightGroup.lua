@@ -217,7 +217,7 @@ FLIGHTGROUP.Players={}
 
 --- FLIGHTGROUP class version.
 -- @field #string version
-FLIGHTGROUP.version="1.0.2"
+FLIGHTGROUP.version="1.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -3803,114 +3803,124 @@ end
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #FLIGHTGROUP self
 -- @param #table Template Template used to init the group. Default is `self.template`.
+-- @param #number Delay Delay in seconds before group is initialized. Default `nil`, *i.e.* instantaneous.
 -- @return #FLIGHTGROUP self
-function FLIGHTGROUP:_InitGroup(Template)
+function FLIGHTGROUP:_InitGroup(Template, Delay)
 
-  -- First check if group was already initialized.
-  if self.groupinitialized then
-    self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
-    return
-  end
-
-  -- Group object.
-  local group=self.group --Wrapper.Group#GROUP
-
-  -- Helo group.
-  self.isHelo=group:IsHelicopter()
-
-  -- Max speed in km/h.
-  self.speedMax=group:GetSpeedMax()
-  
-  -- Is group mobile?
-  if self.speedMax and self.speedMax>3.6 then
-    self.isMobile=true
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, FLIGHTGROUP._InitGroup, self, Template, 0)
   else
-    self.isMobile=false
-    self.speedMax = 0
-  end  
 
-  -- Cruise speed limit 380 kts for fixed and 110 knots for rotary wings.
-  local speedCruiseLimit=self.isHelo and UTILS.KnotsToKmph(110) or UTILS.KnotsToKmph(380)
-
-  -- Cruise speed: 70% of max speed but within limit.
-  self.speedCruise=math.min(self.speedMax*0.7, speedCruiseLimit)
-
-  -- Group ammo.
-  self.ammo=self:GetAmmoTot()
-  
-  -- Get template of group.
-  local template=Template or self:_GetTemplate()  
-
-  -- Is (template) group uncontrolled.
-  self.isUncontrolled=template~=nil and template.uncontrolled or false
-
-  -- Is (template) group late activated.
-  self.isLateActivated=template~=nil and template.lateActivation or false
-
-  if template then
-
-    -- Radio parameters from template. Default is set on spawn if not modified by user.
-    self.radio.Freq=tonumber(template.frequency)
-    self.radio.Modu=tonumber(template.modulation)
-    self.radio.On=template.communication
-  
-    -- Set callsign. Default is set on spawn if not modified by user.
-    local callsign=template.units[1].callsign
-    --self:I({callsign=callsign})
-    if type(callsign)=="number" then  -- Sometimes callsign is just "101".
-      local cs=tostring(callsign)
-      callsign={}
-      callsign[1]=cs:sub(1,1)
-      callsign[2]=cs:sub(2,2)
-      callsign[3]=cs:sub(3,3)
+    -- First check if group was already initialized.
+    if self.groupinitialized then
+      self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
+      return
     end
-    self.callsign.NumberSquad=tonumber(callsign[1])
-    self.callsign.NumberGroup=tonumber(callsign[2])
-    self.callsign.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
+  
+    -- Group object.
+    local group=self.group --Wrapper.Group#GROUP
+  
+    -- Helo group.
+    self.isHelo=group:IsHelicopter()
+  
+    -- Max speed in km/h.
+    self.speedMax=group:GetSpeedMax()
     
-  end
-
-  -- Set default formation.
-  if self.isHelo then
-    self.optionDefault.Formation=ENUMS.Formation.RotaryWing.EchelonLeft.D300
-  else
-    self.optionDefault.Formation=ENUMS.Formation.FixedWing.EchelonLeft.Group
-  end
-
-  -- Default TACAN off.
-  self:SetDefaultTACAN(nil, nil, nil, nil, true)
-  self.tacan=UTILS.DeepCopy(self.tacanDefault)
-
-  -- Is this purely AI?
-  self.isAI=not self:_IsHuman(group)
-
-  -- Create Menu.
-  if not self.isAI then
-    self.menu=self.menu or {}
-    self.menu.atc=self.menu.atc or {} --#table
-    self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC") --Core.Menu#MENU_GROUP
-    self.menu.atc.help=self.menu.atc.help or MENU_GROUP:New(self.group, "Help", self.menu.atc.root) --Core.Menu#MENU_GROUP
-  end
-
-  -- Units of the group.
-  local units=self.group:GetUnits()
+    -- Is group mobile?
+    if self.speedMax and self.speedMax>3.6 then
+      self.isMobile=true
+    else
+      self.isMobile=false
+      self.speedMax = 0
+    end  
   
-  -- DCS group.
-  local dcsgroup=Group.getByName(self.groupname)
-  local size0=dcsgroup:getInitialSize()
+    -- Cruise speed limit 380 kts for fixed and 110 knots for rotary wings.
+    local speedCruiseLimit=self.isHelo and UTILS.KnotsToKmph(110) or UTILS.KnotsToKmph(380)
   
-  -- Quick check.
-  if #units~=size0 then
-    self:T(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
-  end  
-
-  -- Add elemets.
-  for _,unit in pairs(units) do
-    self:_AddElementByName(unit:GetName())
+    -- Cruise speed: 70% of max speed but within limit.
+    self.speedCruise=math.min(self.speedMax*0.7, speedCruiseLimit)
+  
+    -- Group ammo.
+    self.ammo=self:GetAmmoTot()
+    
+    -- Get template of group.
+    local template=Template or self:_GetTemplate()  
+  
+    -- Is (template) group uncontrolled.
+    self.isUncontrolled=template~=nil and template.uncontrolled or false
+  
+    -- Is (template) group late activated.
+    self.isLateActivated=template~=nil and template.lateActivation or false
+  
+    if template then
+  
+      -- Radio parameters from template. Default is set on spawn if not modified by user.
+      self.radio.Freq=tonumber(template.frequency)
+      self.radio.Modu=tonumber(template.modulation)
+      self.radio.On=template.communication
+    
+      -- Set callsign. Default is set on spawn if not modified by user.
+      local callsign=template.units[1].callsign
+      --self:I({callsign=callsign})
+      if type(callsign)=="number" then  -- Sometimes callsign is just "101".
+        local cs=tostring(callsign)
+        callsign={}
+        callsign[1]=cs:sub(1,1)
+        callsign[2]=cs:sub(2,2)
+        callsign[3]=cs:sub(3,3)
+      end
+      self.callsign.NumberSquad=tonumber(callsign[1])
+      self.callsign.NumberGroup=tonumber(callsign[2])
+      self.callsign.NameSquad=UTILS.GetCallsignName(self.callsign.NumberSquad)
+      
+    end
+  
+    -- Set default formation.
+    if self.isHelo then
+      self.optionDefault.Formation=ENUMS.Formation.RotaryWing.EchelonLeft.D300
+    else
+      self.optionDefault.Formation=ENUMS.Formation.FixedWing.EchelonLeft.Group
+    end
+  
+    -- Default TACAN off.
+    if not self.tacanDefault then
+      self:SetDefaultTACAN(nil, nil, nil, nil, true)
+    end
+    if not self.tacan then
+      self.tacan=UTILS.DeepCopy(self.tacanDefault)
+    end
+  
+    -- Is this purely AI?
+    self.isAI=not self:_IsHuman(group)
+  
+    -- Create Menu.
+    if not self.isAI then
+      self.menu=self.menu or {}
+      self.menu.atc=self.menu.atc or {} --#table
+      self.menu.atc.root=self.menu.atc.root or MENU_GROUP:New(self.group, "ATC") --Core.Menu#MENU_GROUP
+      self.menu.atc.help=self.menu.atc.help or MENU_GROUP:New(self.group, "Help", self.menu.atc.root) --Core.Menu#MENU_GROUP
+    end
+  
+    -- Units of the group.
+    local units=self.group:GetUnits()
+    
+    -- DCS group.
+    local dcsgroup=Group.getByName(self.groupname)
+    local size0=dcsgroup:getInitialSize()
+    
+    -- Quick check.
+    if #units~=size0 then
+      self:T(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
+    end  
+  
+    -- Add elemets.
+    for _,unit in pairs(units) do
+      self:_AddElementByName(unit:GetName())
+    end
+  
+    -- Init done.
+    self.groupinitialized=true
   end
-
-  -- Init done.
-  self.groupinitialized=true
     
   return self
 end

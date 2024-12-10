@@ -512,7 +512,7 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="1.0.1"
+OPSGROUP.version="1.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -7675,6 +7675,7 @@ function OPSGROUP:Teleport(Coordinate, Delay, NoPauseMission)
         unit.heading=math.rad(heading)
         unit.psi=-unit.heading
       else
+        -- Remove unit from spawn template because it is already dead
         table.remove(units, i)
       end
     end
@@ -7762,25 +7763,41 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
       -- Despawn old group. Dont trigger any remove unit event since this is a respawn.
       self:Despawn(0, true)
 
-    else
-
-      ---
-      -- Group is NOT ALIVE
-      ---
-
-      -- Ensure elements in utero.
-      for _,_element in pairs(self.elements) do
-        local element=_element --#OPSGROUP.Element
-        self:ElementInUtero(element)
-      end
-
     end
 
+    -- Ensure elements in utero.
+    for _,_element in pairs(self.elements) do
+      local element=_element --#OPSGROUP.Element
+      if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+        self:ElementInUtero(element)
+      end
+    end    
+
+    -- Spawn with a little delay (especially Navy groups caused problems if they were instantly respawned)
+    self:_Spawn(0.01, Template)
+
+  end
+
+  return self
+end
+
+--- Spawn group from a given template.
+-- @param #OPSGROUP self
+-- @param #number Delay Delay in seconds before respawn happens. Default 0.
+-- @param DCS#Template Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
+-- @return #OPSGROUP self
+function OPSGROUP:_Spawn(Delay, Template)
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP._Spawn, self, 0, Template)
+  else
     -- Debug output.
-    self:T({Template=Template})
+    self:T2({Template=Template})
 
     -- Spawn new group.
     self.group=_DATABASE:Spawn(Template)
+    --local countryID=self.group:GetCountry()
+    --local categoryID=self.group:GetCategory()
+    --local dcsgroup=coalition.addGroup(countryID, categoryID, Template)
 
     -- Set DCS group and controller.
     self.dcsgroup=self:GetDCSGroup()
@@ -7794,7 +7811,6 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     self.isDead=false
     self.isDestroyed=false
 
-
     self.groupinitialized=false    
     self.wpcounter=1
     self.currentwp=1
@@ -7802,15 +7818,12 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     -- Init waypoints.
     self:_InitWaypoints()
 
-    -- Init Group.
-    self:_InitGroup(Template)
+    -- Init Group. This call is delayed because NAVY groups did not like to be initialized just yet (group did not contain any units).
+    self:_InitGroup(Template, 0.001)
     
     -- Reset events.
-    --self:ResetEvents()
-
+    --self:ResetEvents()  
   end
-
-  return self
 end
 
 --- On after "InUtero" event.
@@ -7830,24 +7843,6 @@ end
 -- @param #string To To state.
 function OPSGROUP:onafterDamaged(From, Event, To)
   self:T(self.lid..string.format("Group damaged at t=%.3f", timer.getTime()))
-
-  --[[
-  local lifemin=nil
-  for _,_element in pairs(self.elements) do
-    local element=_element --#OPSGROUP.Element
-    if element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
-      local life, life0=self:GetLifePoints(element)
-      if lifemin==nil or life<lifemin then
-        lifemin=life
-      end
-    end
-  end
-
-  if lifemin and lifemin/self.life<0.5 then
-    self:RTB()
-  end
-  ]]
-
 end
 
 --- On after "Destroyed" event.
