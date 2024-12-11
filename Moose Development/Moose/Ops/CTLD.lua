@@ -24,7 +24,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update Oct 2024
+-- Last Update Dec 2024
 
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -838,6 +838,7 @@ do
 --          my_ctld.TroopUnloadDistHover = 1.5 -- If grounded, spawn dropped troops this far away in meters from the helo
 --          my_ctld.TroopUnloadDistGroundHerc = 25 -- On the ground, unload troops this far behind the Hercules
 --          my_ctld.TroopUnloadDistGroundHook = 15 -- On the ground, unload troops this far behind the Chinook
+--          my_ctld.TroopUnloadDistHoverHook = 5 -- When hovering, unload troops this far behind the Chinook
 -- 
 -- ## 2.1 CH-47 Chinook support
 -- 
@@ -1237,6 +1238,7 @@ CTLD = {
   TroopUnloadDistGround = 5,
   TroopUnloadDistGroundHerc = 25,
   TroopUnloadDistGroundHook = 15,
+  TroopUnloadDistHoverHook = 5,
   TroopUnloadDistHover = 1.5,
   UserSetGroup = nil,
 }
@@ -1343,7 +1345,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.18"
+CTLD.version="1.1.19"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3504,7 +3506,12 @@ function CTLD:_UnloadTroops(Group, Unit)
             if IsHerc or IsHook then Angle = (heading+180)%360 end
             local offset = hoverunload and self.TroopUnloadDistHover or self.TroopUnloadDistGround
             if IsHerc then offset = self.TroopUnloadDistGroundHerc or 25 end
-            if IsHook then offset = self.TroopUnloadDistGroundHook or 15 end
+            if IsHook then  
+              offset = self.TroopUnloadDistGroundHook or 15 
+              if self.TroopUnloadDistHoverHook then
+                offset = self.TroopUnloadDistHoverHook or 5
+              end
+            end
             randomcoord:Translate(offset,Angle,nil,true)
           end
           local tempcount = 0
