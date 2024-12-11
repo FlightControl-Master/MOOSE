@@ -385,24 +385,26 @@ function WEAPON:GetTarget()
 
       --Target name
       local name=object:getName()
-
-      -- Debug info.
-      self:T(self.lid..string.format("Got Target Object %s, category=%d", object:getName(), category))
-
-      if category==Object.Category.UNIT then
-
-        target=UNIT:FindByName(name)
-
-      elseif category==Object.Category.STATIC then
-
-        target=STATIC:FindByName(name, false)
-
-      elseif category==Object.Category.SCENERY then
-        self:E(self.lid..string.format("ERROR: Scenery target not implemented yet!"))
-      else
-        self:E(self.lid..string.format("ERROR: Object category=%d is not implemented yet!", category))
+      
+      if name then 
+      
+        -- Debug info.
+        self:T(self.lid..string.format("Got Target Object %s, category=%d", name, category))
+  
+        if category==Object.Category.UNIT then
+  
+          target=UNIT:FindByName(name)
+  
+        elseif category==Object.Category.STATIC then
+  
+          target=STATIC:FindByName(name, false)
+  
+        elseif category==Object.Category.SCENERY then
+          self:E(self.lid..string.format("ERROR: Scenery target not implemented yet!"))
+        else
+          self:E(self.lid..string.format("ERROR: Object category=%d is not implemented yet!", category))
+        end
       end
-
     end
   end
 
