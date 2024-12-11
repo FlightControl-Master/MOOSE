@@ -439,27 +439,50 @@ MANTIS.SamDataSMA = {
 -- @field #string Type #MANTIS.SamType of SAM, i.e. SHORT, MEDIUM or LONG (range)
 -- @field #string Radar Radar typename on unit level (used as key)
 MANTIS.SamDataCH = {
-  -- units from CH (Military Assets by Currenthill)
-  -- https://www.currenthill.com/
-  -- group name MUST contain CHM to ID launcher type correctly!
- ["2S38 CH"] = { Range=8, Blindspot=0.5, Height=6, Type="Short", Radar="2S38" },
- ["PantsirS1 CH"] = { Range=20, Blindspot=1.2, Height=15, Type="Short", Radar="PantsirS1" }, 
- ["PantsirS2 CH"] = { Range=30, Blindspot=1.2, Height=18, Type="Medium", Radar="PantsirS2" }, 
- ["PGL-625 CH"] = { Range=10, Blindspot=0.5, Height=5, Type="Short", Radar="PGL_625" }, 
- ["HQ-17A CH"] = { Range=20, Blindspot=1.5, Height=10, Type="Short", Radar="HQ17A" }, 
- ["M903PAC2 CH"] = { Range=160, Blindspot=3, Height=24.5, Type="Long", Radar="MIM104_M903_PAC2" },
- ["M903PAC3 CH"] = { Range=120, Blindspot=1, Height=40, Type="Long", Radar="MIM104_M903_PAC3" }, 
- ["TorM2 CH"] = { Range=12, Blindspot=1, Height=10, Type="Short", Radar="TorM2" },
- ["TorM2K CH"] = { Range=12, Blindspot=1, Height=10, Type="Short", Radar="TorM2K" },
- ["TorM2M CH"] = { Range=16, Blindspot=1, Height=10, Type="Short", Radar="TorM2M" }, 
- ["NASAMS3-AMRAAMER CH"] = { Range=50, Blindspot=2, Height=35.7, Type="Medium", Radar="CH_NASAMS3_LN_AMRAAM_ER" }, 
- ["NASAMS3-AIM9X2 CH"] = { Range=20, Blindspot=0.2, Height=18, Type="Short", Radar="CH_NASAMS3_LN_AIM9X2" },
- ["C-RAM CH"] = { Range=2, Blindspot=0, Height=2, Type="Short", Radar="CH_Centurion_C_RAM" }, 
- ["PGZ-09 CH"] = { Range=4, Blindspot=0, Height=3, Type="Short", Radar="CH_PGZ09" },
- ["S350-9M100 CH"] = { Range=15, Blindspot=1.5, Height=8, Type="Short", Radar="CH_S350_50P6_9M100" },
- ["S350-9M96D CH"] = { Range=150, Blindspot=2.5, Height=30, Type="Long", Radar="CH_S350_50P6_9M96D" },
- ["LAV-AD CH"] = { Range=8, Blindspot=0.2, Height=4.8, Type="Short", Radar="CH_LAVAD" }, 
- ["HQ-22 CH"] = { Range=170, Blindspot=5, Height=27, Type="Long", Radar="CH_HQ22_LN" }, 
+    -- units from CH (Military Assets by Currenthill)
+    -- https://www.currenthill.com/
+    -- group name MUST contain CHM to ID launcher type correctly!
+   ["2S38 CHM"] = { Range=8, Blindspot=0.5, Height=6, Type="Short", Radar="2S38" },
+   ["PantsirS1 CHM"] = { Range=20, Blindspot=1.2, Height=15, Type="Short", Radar="PantsirS1" }, 
+   ["PantsirS2 CHM"] = { Range=30, Blindspot=1.2, Height=18, Type="Medium", Radar="PantsirS2" }, 
+   ["PGL-625 CHM"] = { Range=10, Blindspot=0.5, Height=5, Type="Short", Radar="PGL_625" }, 
+   ["HQ-17A CHM"] = { Range=20, Blindspot=1.5, Height=10, Type="Short", Radar="HQ17A" }, 
+   ["M903PAC2 CHM"] = { Range=160, Blindspot=3, Height=24.5, Type="Long", Radar="MIM104_M903_PAC2" },
+   ["M903PAC3 CHM"] = { Range=120, Blindspot=1, Height=40, Type="Long", Radar="MIM104_M903_PAC3" }, 
+   ["TorM2 CHM"] = { Range=12, Blindspot=1, Height=10, Type="Short", Radar="TorM2" },
+   ["TorM2K CHM"] = { Range=12, Blindspot=1, Height=10, Type="Short", Radar="TorM2K" },
+   ["TorM2M CHM"] = { Range=16, Blindspot=1, Height=10, Type="Short", Radar="TorM2M" }, 
+   ["NASAMS3-AMRAAMER CHM"] = { Range=50, Blindspot=2, Height=35.7, Type="Medium", Radar="CH_NASAMS3_LN_AMRAAM_ER" }, 
+   ["NASAMS3-AIM9X2 CHM"] = { Range=20, Blindspot=0.2, Height=18, Type="Short", Radar="CH_NASAMS3_LN_AIM9X2" },
+   ["C-RAM CHM"] = { Range=2, Blindspot=0, Height=2, Type="Short", Radar="CH_Centurion_C_RAM" }, 
+   ["PGZ-09 CHM"] = { Range=4, Blindspot=0, Height=3, Type="Short", Radar="CH_PGZ09" },
+   ["S350-9M100 CHM"] = { Range=15, Blindspot=1.5, Height=8, Type="Short", Radar="CH_S350_50P6_9M100" },
+   ["S350-9M96D CHM"] = { Range=150, Blindspot=2.5, Height=30, Type="Long", Radar="CH_S350_50P6_9M96D" },
+   ["LAV-AD CHM"] = { Range=8, Blindspot=0.2, Height=4.8, Type="Short", Radar="CH_LAVAD" }, 
+   ["HQ-22 CHM"] = { Range=170, Blindspot=5, Height=27, Type="Long", Radar="CH_HQ22_LN" }, 
+   ["PGZ-95 CHM"] = { Range=2, Blindspot=0, Height=2, Type="Short", Radar="CH_PGZ95" },
+   ["LD-3000 CHM"] = { Range=3, Blindspot=0, Height=3, Type="Short", Radar="CH_LD3000_stationary" }, 
+   ["LD-3000M CHM"] = { Range=3, Blindspot=0, Height=3, Type="Short", Radar="CH_LD3000" },  
+   ["FlaRakRad CHM"] = { Range=8, Blindspot=1.5, Height=6, Type="Short", Radar="HQ17A" },  
+   ["IRIS-T SLM CHM"] = { Range=40, Blindspot=0.5, Height=20, Type="Medium", Radar="CH_IRIST_SLM" }, 
+   ["M903PAC2KAT1 CHM"] = { Range=160, Blindspot=3, Height=24.5, Type="Long", Radar="CH_MIM104_M903_PAC2_KAT1" }, 
+   ["Skynex CHM"] = { Range=3.5, Blindspot=0, Height=3.5, Type="Short", Radar="CH_SkynexHX" },
+   ["Skyshield CHM"] = { Range=3.5, Blindspot=0, Height=3.5, Type="Short", Radar="CH_Skyshield_Gun" },
+   ["WieselOzelot CHM"] = { Range=8, Blindspot=0.2, Height=4.8, Type="Short", Radar="CH_Wiesel2Ozelot" }, 
+   ["BukM3-9M317M CHM"] = { Range=70, Blindspot=0.25, Height=35, Type="Medium", Radar="CH_BukM3_9A317M" },  
+   ["BukM3-9M317MA CHM"] = { Range=70, Blindspot=0.25, Height=35, Type="Medium", Radar="CH_BukM3_9A317MA" },  
+   ["SkySabre CHM"] = { Range=30, Blindspot=0.5, Height=10, Type="Medium", Radar="CH_SkySabreLN" },  
+   ["Stormer CHM"] = { Range=7.5, Blindspot=0.3, Height=7, Type="Short", Radar="CH_StormerHVM" },  
+   ["THAAD CHM"] = { Range=200, Blindspot=40, Height=150, Type="Long", Radar="CH_THAAD_M1120" },  
+   ["USInfantryFIM92K CHM"] = { Range=8, Blindspot=0.2, Height=4.8, Type="Short", Radar="CH_USInfantry_FIM92" }, 
+   ["RBS98M CHM"] = { Range=20, Blindspot=0, Height=8, Type="Short", Radar="RBS-98" },
+   ["RBS70 CHM"] = { Range=8, Blindspot=0, Height=5.5, Type="Short", Radar="RBS-70" },  
+   ["RBS90 CHM"] = { Range=8, Blindspot=0, Height=5.5, Type="Short", Radar="RBS-90" },  
+   ["RBS103A CHM"] = { Range=150, Blindspot=3, Height=24.5, Type="Long", Radar="LvS-103_Lavett103_Rb103A" },
+   ["RBS103B CHM"] = { Range=35, Blindspot=0, Height=36, Type="Medium", Radar="LvS-103_Lavett103_Rb103B" }, 
+   ["RBS103AM CHM"] = { Range=150, Blindspot=3, Height=24.5, Type="Long", Radar="LvS-103_Lavett103_HX_Rb103A" },
+   ["RBS103BM CHM"] = { Range=35, Blindspot=0, Height=36, Type="Medium", Radar="LvS-103_Lavett103_HX_Rb103B" },
+   ["Lvkv9040M CHM"] = { Range=4, Blindspot=0, Height=2.5, Type="Short", Radar="LvKv9040" },  
 }
 
 -----------------------------------------------------------------------
@@ -640,7 +663,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.18"
+    self.version="0.8.19"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
