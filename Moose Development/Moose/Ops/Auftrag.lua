@@ -5767,7 +5767,7 @@ end
 
 --- [Air] Set the mission ingress coordinate. This is the coordinate where the assigned group will fly before the actual mission coordinate.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Coordinate Egrees coordinate.
+-- @param Core.Point#COORDINATE Coordinate Ingrees coordinate.
 -- @param #number Altitude (Optional) Altitude in feet. Default is y component of coordinate.
 -- @return #AUFTRAG self
 function AUFTRAG:SetMissionIngressCoord(Coordinate, Altitude)
