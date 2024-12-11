@@ -4169,7 +4169,7 @@ function OPSGROUP:onbeforeTaskExecute(From, Event, To, Task)
       if self:IsWaiting() then
         -- Group is already waiting
       else
-        -- Wait indefinately.
+        -- Wait indefinitely.
         local alt=Mission.missionAltitude and UTILS.MetersToFeet(Mission.missionAltitude) or nil
         self:Wait(nil, alt)
       end
@@ -6121,7 +6121,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       
       local ingresscoord = mission:GetMissionIngressCoord()
       
-      if ingresscoord then
+      if ingresscoord and not self:IsWaiting() then
         waypoint=FLIGHTGROUP.AddWaypoint(self, ingresscoord, SpeedToMission, uid, UTILS.MetersToFeet(ingresscoord.y or self.altitudeCruise), false)
         uid=waypoint.uid
       end
