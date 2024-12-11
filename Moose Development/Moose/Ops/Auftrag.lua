@@ -1820,7 +1820,7 @@ end
 
 --- **[AIR]** Create a BOMBRUNWAY mission.
 -- @param #AUFTRAG self
--- @param Wrapper.Airbase#AIRBASE Airdrome The airbase to bomb. This must be an airdrome (not a FARP or ship) as these to not have a runway.
+-- @param Wrapper.Airbase#AIRBASE Airdrome The airbase to bomb. This must be an airdrome (not a FARP or ship) as these do not have a runway.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
 -- @return #AUFTRAG self
 function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
@@ -5830,6 +5830,12 @@ function AUFTRAG:GetMissionWaypointCoord(group, randomradius, surfacetypes)
     if self.missionAltitude then
       coord.y=self.missionAltitude
     end
+    return coord
+  end
+  
+    -- Check if a coord has been explicitly set.
+  if self.missionIngressCoord then
+    local coord=self.missionIngressCoord
     return coord
   end
 

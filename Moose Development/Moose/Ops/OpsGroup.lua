@@ -1041,7 +1041,7 @@ function OPSGROUP:SetReturnToLegion(Switch)
   else
     self.legionReturn=true
   end
-  self:T(self.lid..string.format("Setting ReturnToLetion=%s", tostring(self.legionReturn)))
+  self:T(self.lid..string.format("Setting ReturnToLegion=%s", tostring(self.legionReturn)))
   return self
 end
 
@@ -6119,13 +6119,14 @@ function OPSGROUP:RouteToMission(mission, delay)
     local waypoint=nil --#OPSGROUP.Waypoint
     if self:IsFlightgroup() then
       
+
       local ingresscoord = mission:GetMissionIngressCoord()
       
-      if ingresscoord and not self:IsWaiting() then
-        waypoint=FLIGHTGROUP.AddWaypoint(self, ingresscoord, SpeedToMission, uid, UTILS.MetersToFeet(ingresscoord.y or self.altitudeCruise), false)
+      if ingresscoord and mission:IsReadyToPush() then
+        waypoint=FLIGHTGROUP.AddWaypoint(self, ingresscoord, SpeedToMission, uid, UTILS.MetersToFeet(self.altitudeCruise), false)
         uid=waypoint.uid
       end
-      
+     
       waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
       
     elseif self:IsArmygroup() then
