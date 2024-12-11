@@ -11450,7 +11450,7 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
     self.homebase=self.homebase or self:GetHomebaseFromWaypoints() -- GetHomebaseFromWaypoints() returns carriers or destroyers if no airbase is found.
     local destbase=self:GetDestinationFromWaypoints()
     self.destbase=self.destbase or destbase
-    --self.currbase=self:GetHomebaseFromWaypoints() -- Skipped To fix RTB issue
+    self.currbase=self:GetHomebaseFromWaypoints() -- Skipped To fix RTB issue
 
     --env.info("FF home base "..(self.homebase and self.homebase:GetName() or "unknown"))
     --env.info("FF dest base "..(self.destbase and self.destbase:GetName() or "unknown"))
@@ -11461,9 +11461,9 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
     end
 
     -- Set destination to homebase.
-    --if self.destbase==nil then  -- Skipped To fix RTB issue
-    --  self.destbase=self.homebase
-    --end
+    if self.destbase==nil then  -- Skipped To fix RTB issue
+      self.destbase=self.homebase
+    end
 
   end
 
