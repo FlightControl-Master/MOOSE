@@ -91,7 +91,7 @@ NAVYGROUP = {
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="1.0.2"
+NAVYGROUP.version="1.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -395,7 +395,7 @@ function NAVYGROUP:New(group)
   self:HandleEvent(EVENTS.Birth,      self.OnEventBirth)
   self:HandleEvent(EVENTS.Dead,       self.OnEventDead)
   self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)
-  self:HandleEvent(EVENTS.UnitLost, self.OnEventRemoveUnit)  
+  self:HandleEvent(EVENTS.UnitLost,   self.OnEventRemoveUnit)  
   
   -- Start the status monitoring.
   self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)
@@ -775,7 +775,7 @@ end
 
 --- Update status.
 -- @param #NAVYGROUP self
-function NAVYGROUP:Status(From, Event, To)
+function NAVYGROUP:Status()
 
   -- FSM state.
   local fsmstate=self:GetState()
@@ -979,6 +979,35 @@ function NAVYGROUP:Status(From, Event, To)
   end
 
   ---
+  -- Elements
+  ---
+
+  if self.verbose>=2 then
+    local text="Elements:"
+    for i,_element in pairs(self.elements) do
+      local element=_element --Ops.OpsGroup#OPSGROUP.Element
+
+      local name=element.name
+      local status=element.status
+      local unit=element.unit
+      local life,life0=self:GetLifePoints(element)
+
+      local life0=element.life0
+
+      -- Get ammo.
+      local ammo=self:GetAmmoElement(element)
+
+      -- Output text for element.
+      text=text..string.format("\n[%d] %s: status=%s, life=%.1f/%.1f, guns=%d, rockets=%d, bombs=%d, missiles=%d, cargo=%d/%d kg",
+      i, name, status, life, life0, ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles, element.weightCargo, element.weightMaxCargo)
+    end
+    if #self.elements==0 then
+      text=text.." none!"
+    end
+    self:I(self.lid..text)
+  end
+
+  ---
   -- Engage Detected Targets
   ---
   if self:IsCruising() and self.detectionOn and self.engagedetectedOn then
@@ -1041,7 +1070,7 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
 
   -- Debug info.
   if self.verbose>=1 then
-    local text=string.format("Initialized Navy Group %s:\n", self.groupname)
+    local text=string.format("Initialized Navy Group %s [GID=%d]:\n", self.groupname, self.group:GetID())
     text=text..string.format("Unit type     = %s\n", self.actype)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
     text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
@@ -1841,80 +1870,95 @@ end
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #NAVYGROUP self
 -- @param #table Template Template used to init the group. Default is `self.template`.
+-- @param #number Delay Delay in seconds before group is initialized. Default `nil`, *i.e.* instantaneous. 
 -- @return #NAVYGROUP self
-function NAVYGROUP:_InitGroup(Template)
+function NAVYGROUP:_InitGroup(Template, Delay)
 
-  -- First check if group was already initialized.
-  if self.groupinitialized then
-    self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
-    return
-  end
-
-  -- Get template of group.
-  local template=Template or self:_GetTemplate()
-
-  -- Ships are always AI.
-  self.isAI=true
-  
-  -- Is (template) group late activated.
-  self.isLateActivated=template.lateActivation
-  
-  -- Naval groups cannot be uncontrolled.
-  self.isUncontrolled=false
-  
-  -- Max speed in km/h.
-  self.speedMax=self.group:GetSpeedMax()
-  
-  -- Is group mobile?
-  if self.speedMax and self.speedMax>3.6 then
-    self.isMobile=true
+  if Delay and Delay>0 then
+    -- Delayed call
+    self:ScheduleOnce(Delay, NAVYGROUP._InitGroup, self, Template, 0)
   else
-    self.isMobile=false
-    self.speedMax = 0
-  end  
   
-  -- Cruise speed: 70% of max speed.
-  self.speedCruise=self.speedMax*0.7
+    -- First check if group was already initialized.
+    if self.groupinitialized then
+      self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
+      return
+    end
   
-  -- Group ammo.
-  self.ammo=self:GetAmmoTot()
+    -- Get template of group.
+    local template=Template or self:_GetTemplate()
   
-  -- Radio parameters from template. Default is set on spawn if not modified by the user.
-  self.radio.On=true  -- Radio is always on for ships.
-  self.radio.Freq=tonumber(template.units[1].frequency)/1000000
-  self.radio.Modu=tonumber(template.units[1].modulation)
+    -- Ships are always AI.
+    self.isAI=true
+    
+    -- Is (template) group late activated.
+    self.isLateActivated=template.lateActivation
+    
+    -- Naval groups cannot be uncontrolled.
+    self.isUncontrolled=false
+    
+    -- Max speed in km/h.
+    self.speedMax=self.group:GetSpeedMax()
+    
+    -- Is group mobile?
+    if self.speedMax and self.speedMax>3.6 then
+      self.isMobile=true
+    else
+      self.isMobile=false
+      self.speedMax = 0
+    end  
+    
+    -- Cruise speed: 70% of max speed.
+    self.speedCruise=self.speedMax*0.7
+    
+    -- Group ammo.
+    self.ammo=self:GetAmmoTot()
+    
+    -- Radio parameters from template. Default is set on spawn if not modified by the user.
+    self.radio.On=true  -- Radio is always on for ships.
+    self.radio.Freq=tonumber(template.units[1].frequency)/1000000
+    self.radio.Modu=tonumber(template.units[1].modulation)
+    
+    -- Set default formation. No really applicable for ships.
+    self.optionDefault.Formation="Off Road"
+    self.option.Formation=self.optionDefault.Formation
   
-  -- Set default formation. No really applicable for ships.
-  self.optionDefault.Formation="Off Road"
-  self.option.Formation=self.optionDefault.Formation
-
-  -- Default TACAN off.
-  self:SetDefaultTACAN(nil, nil, nil, nil, true)
-  self.tacan=UTILS.DeepCopy(self.tacanDefault)
+    -- Default TACAN off (we check if something is set already to keep those values in case of respawn)
+    if not self.tacanDefault then
+      self:SetDefaultTACAN(nil, nil, nil, nil, true)
+    end
+    if not self.tacan then
+      self.tacan=UTILS.DeepCopy(self.tacanDefault)
+    end
+    
+    -- Default ICLS off.
+    if not self.iclsDefault then
+      self:SetDefaultICLS(nil, nil, nil, true)
+    end
+    if not self.icls then
+      self.icls=UTILS.DeepCopy(self.iclsDefault)
+    end
+    
+    -- Get all units of the group.
+    local units=self.group:GetUnits()
   
-  -- Default ICLS off.
-  self:SetDefaultICLS(nil, nil, nil, true)
-  self.icls=UTILS.DeepCopy(self.iclsDefault)
-  
-  -- Get all units of the group.
-  local units=self.group:GetUnits()
-
-  -- DCS group.
-  local dcsgroup=Group.getByName(self.groupname)
-  local size0=dcsgroup:getInitialSize()
-  
-  -- Quick check.
-  if #units~=size0 then
-    self:E(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
+    -- DCS group.
+    local dcsgroup=Group.getByName(self.groupname)
+    local size0=dcsgroup:getInitialSize()
+    
+    -- Quick check.
+    if #units~=size0 then
+      self:E(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
+    end
+    
+    -- Add elemets.
+    for _,unit in pairs(units) do
+      self:_AddElementByName(unit:GetName())
+    end
+    
+    -- Init done.
+    self.groupinitialized=true
   end
-  
-  -- Add elemets.
-  for _,unit in pairs(units) do
-    self:_AddElementByName(unit:GetName())
-  end
-  
-  -- Init done.
-  self.groupinitialized=true
   
   return self
 end
