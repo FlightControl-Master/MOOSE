@@ -6121,9 +6121,25 @@ function OPSGROUP:RouteToMission(mission, delay)
       
 
       local ingresscoord = mission:GetMissionIngressCoord()
+      local holdingcoord = mission:GetMissionHoldingCoord()
       
-      if ingresscoord and mission:IsReadyToPush() then
-        waypoint=FLIGHTGROUP.AddWaypoint(self, ingresscoord, SpeedToMission, uid, UTILS.MetersToFeet(self.altitudeCruise), false)
+      if holdingcoord then 
+        waypoint=FLIGHTGROUP.AddWaypoint(self, holdingcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionHoldingCoordAlt or self.altitudeCruise), false)
+        uid=waypoint.uid
+          -- Orbit until flaghold=1 (true) but max 5 min
+        self.flaghold:Set(0)
+        local TaskOrbit = self.group:TaskOrbit(holdingcoord, mission.missionHoldingCoordAlt)
+        local TaskStop  = self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1, nil, mission.missionHoldingDuration or 900)
+        local TaskCntr  = self.group:TaskControlled(TaskOrbit, TaskStop)
+        local TaskOver  = self.group:TaskFunction("FLIGHTGROUP._FinishedWaiting", self)       
+        local DCSTasks=self.group:TaskCombo({TaskCntr, TaskOver})
+        -- Add waypoint task. UpdateRoute is called inside.
+        local waypointtask=self:AddTaskWaypoint(DCSTasks, waypoint, "Holding")
+        waypointtask.ismission=false
+      end
+      
+      if ingresscoord then 
+        waypoint=FLIGHTGROUP.AddWaypoint(self, ingresscoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionIngressCoordAlt or self.altitudeCruise), false)
         uid=waypoint.uid
       end
      
@@ -6165,7 +6181,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     if egresscoord then
       local Ewaypoint=nil --#OPSGROUP.Waypoint
       if self:IsFlightgroup() then
-        Ewaypoint=FLIGHTGROUP.AddWaypoint(self, egresscoord, SpeedToMission, waypoint.uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+        Ewaypoint=FLIGHTGROUP.AddWaypoint(self, egresscoord, SpeedToMission, waypoint.uid, UTILS.MetersToFeet(mission.missionEgressCoordAlt or self.altitudeCruise), false)
       elseif self:IsArmygroup() then
         Ewaypoint=ARMYGROUP.AddWaypoint(self,   egresscoord, SpeedToMission, waypoint.uid, mission.optionFormation, false)
       elseif self:IsNavygroup() then

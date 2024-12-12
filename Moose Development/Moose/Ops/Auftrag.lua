@@ -4664,6 +4664,7 @@ end
 -- @return #AUFTRAG self
 function AUFTRAG:SetIngressCoordinate(coordinate)
   self.missionIngressCoord = coordinate
+  self.missionIngressCoordAlt = UTILS.MetersToFeet(coordinate.y) or 10000
   return self
 end
 
@@ -5722,7 +5723,7 @@ function AUFTRAG:GetMissionTypesText(MissionTypes)
   return text
 end
 
---- Set the mission waypoint coordinate where the mission is executed. Note that altitude is set via `:SetMissionAltitude`.
+--- [NON-AIR] Set the mission waypoint coordinate where the mission is executed. Note that altitude is set via `:SetMissionAltitude`.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Coordinate where the mission is executed.
 -- @return #AUFTRAG self
@@ -5762,6 +5763,7 @@ function AUFTRAG:SetMissionEgressCoord(Coordinate, Altitude)
 
   if Altitude then
     self.missionEgressCoord.y=UTILS.FeetToMeters(Altitude)
+    self.missionEgressCoordAlt = UTILS.FeetToMeters(Altitude)
   end
 end
 
@@ -5781,6 +5783,29 @@ function AUFTRAG:SetMissionIngressCoord(Coordinate, Altitude)
 
   if Altitude then
     self.missionIngressCoord.y=UTILS.FeetToMeters(Altitude)
+    self.missionIngressCoordAlt = UTILS.FeetToMeters(Altitude or 10000)
+  end
+end
+
+--- [Air] Set the mission holding coordinate. This is the coordinate where the assigned group will fly before the actual mission execution starts. Do not forget to add a push condition, too!
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Holding coordinate.
+-- @param #number Altitude (Optional) Altitude in feet. Default is y component of coordinate.
+-- @param #number Duration (Optional) Duration in seconds on how long to hold, defaults to 15 minutes. Mission continues if either a push condition is met or the time is up.
+-- @return #AUFTRAG self
+function AUFTRAG:SetMissionHoldingCoord(Coordinate, Altitude, Duration)
+
+  -- Obviously a zone was passed. We get the coordinate.
+  if Coordinate:IsInstanceOf("ZONE_BASE") then
+    Coordinate=Coordinate:GetCoordinate()
+  end
+  
+  self.missionHoldingCoord=Coordinate
+  self.missionHoldingDuration=Duration or 900
+
+  if Altitude then
+    self.missionHoldingCoord.y=UTILS.FeetToMeters(Altitude)
+    self.missionHoldingCoordAlt = UTILS.FeetToMeters(Altitude or 10000)
   end
 end
 
@@ -5796,6 +5821,13 @@ end
 -- @return Core.Point#COORDINATE Coordinate Coordinate or nil.
 function AUFTRAG:GetMissionIngressCoord()
   return self.missionIngressCoord
+end
+
+--- Get the mission holding coordinate if this was defined.
+-- @param #AUFTRAG self
+-- @return Core.Point#COORDINATE Coordinate Coordinate or nil.
+function AUFTRAG:GetMissionHoldingCoord()
+  return self.missionHoldingCoord
 end
 
 --- Get coordinate which was set as mission waypoint coordinate.
@@ -5833,15 +5865,26 @@ function AUFTRAG:GetMissionWaypointCoord(group, randomradius, surfacetypes)
     return coord
   end
   
-    -- Check if a coord has been explicitly set.
+  local coord=group:GetCoordinate()
+  
+  -- Check if an ingress or holding coord has been explicitly set.
+  if self.missionHoldingCoord then
+    coord=self.missionHoldingCoord
+    if self.missionHoldingCoorddAlt then
+      coord:SetAltitude(self.missionHoldingCoordAlt, true)
+    end
+  end
+  
   if self.missionIngressCoord then
-    local coord=self.missionIngressCoord
-    return coord
+    coord=self.missionIngressCoord
+    if self.missionIngressCoordAlt then
+      coord:SetAltitude(self.missionIngressCoordAlt, true)
+    end
   end
 
   -- Create waypoint coordinate half way between us and the target.
   local waypointcoord=COORDINATE:New(0,0,0)
-  local coord=group:GetCoordinate()
+  
   if coord then
     waypointcoord=coord:GetIntermediateCoordinate(self:GetTargetCoordinate(), self.missionFraction)
   else
