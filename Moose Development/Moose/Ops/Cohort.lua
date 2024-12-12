@@ -88,7 +88,10 @@ COHORT = {
 
 --- COHORT class version.
 -- @field #string version
-COHORT.version="0.3.5"
+COHORT.version="0.3.6"
+
+--- Global variable to store the unique(!) cohort names
+_COHORTNAMES={}
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -110,6 +113,17 @@ COHORT.version="0.3.5"
 -- @return #COHORT self
 function COHORT:New(TemplateGroupName, Ngroups, CohortName)
 
+  -- Name of the cohort.
+  local name=tostring(CohortName or TemplateGroupName)
+  
+  -- Cohort name has to be unique or we will get serious problems!
+  if UTILS.IsAnyInTable(_COHORTNAMES, name) then
+    env.error(string.format('ERROR: cannot create cohort "%s" because another cohort with that name already exists. Names must be unique!', name))
+    return nil
+  else
+    table.insert(_COHORTNAMES, name)
+  end
+
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #COHORT
 
@@ -117,7 +131,7 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   self.templatename=TemplateGroupName
 
   -- Cohort name.
-  self.name=tostring(CohortName or TemplateGroupName)
+  self.name=name
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("COHORT %s | ", self.name)

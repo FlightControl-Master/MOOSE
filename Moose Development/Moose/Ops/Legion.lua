@@ -53,7 +53,7 @@ LEGION.RandomAssetScore=1
 
 --- LEGION class version.
 -- @field #string version
-LEGION.version="0.5.0"
+LEGION.version="0.5.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1826,6 +1826,9 @@ function LEGION:_CreateFlightGroup(asset)
 
   -- Set home base.
   opsgroup.homebase=self.airbase
+  
+  -- Set destination base
+  opsgroup.destbase=self.airbase
   
   -- Set home zone.
   opsgroup.homezone=self.spawnzone  
