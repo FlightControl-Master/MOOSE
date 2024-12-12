@@ -56,6 +56,8 @@ BIGSMOKEPRESET = {
 -- @field #string Falklands South Atlantic map.
 -- @field #string Sinai Sinai map.
 -- @field #string Kola Kola map.
+-- @field #string Afghanistan Afghanistan map
+-- @field #string Iraq Iraq map
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
@@ -68,6 +70,7 @@ DCSMAP = {
   Sinai="SinaiMap",
   Kola="Kola",
   Afghanistan="Afghanistan",
+  Iraq="Iraq"
 }
 
 
@@ -1786,6 +1789,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=15
   elseif map==DCSMAP.Afghanistan then
     declination=3
+  elseif map==DCSMAP.Iraq then
+    declination=4.4
   else
     declination=0
   end
