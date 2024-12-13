@@ -1277,6 +1277,25 @@ function FLIGHTGROUP:Status()
       end
     end
     
+    --- check if we need to end holding
+    --self:T(self.lid.."Checking if we are holding at a holding point...")
+    if mission and mission.missionHoldingCoord and self.isHoldingAtHoldingPoint == true then
+      self:T(self.lid.."...yes")
+      if mission:IsReadyToPush() then
+        --self:T(self.lid.."Ready to push -> YES")
+        -- move flag to 1
+        self.flaghold:Set(1)
+        -- Not waiting any more.
+        self.Twaiting=nil
+        self.dTwait=nil
+        self.isHoldingAtHoldingPoint = false
+      --else
+       --self:T(self.lid.."Ready to push -> NO!")
+      end
+    --else
+     --self:T(self.lid.."...no")
+    end
+    
     -- If mission, check if DCS task needs to be updated.
     if mission and mission.updateDCSTask then
     

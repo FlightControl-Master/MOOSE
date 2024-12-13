@@ -6136,6 +6136,7 @@ function OPSGROUP:RouteToMission(mission, delay)
         -- Add waypoint task. UpdateRoute is called inside.
         local waypointtask=self:AddTaskWaypoint(DCSTasks, waypoint, "Holding")
         waypointtask.ismission=false
+        self.isHoldingAtHoldingPoint = true
       end
       
       if ingresscoord then 
