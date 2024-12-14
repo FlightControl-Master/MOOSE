@@ -56,6 +56,8 @@ BIGSMOKEPRESET = {
 -- @field #string Falklands South Atlantic map.
 -- @field #string Sinai Sinai map.
 -- @field #string Kola Kola map.
+-- @field #string Afghanistan Afghanistan map
+-- @field #string Iraq Iraq map
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
@@ -68,6 +70,7 @@ DCSMAP = {
   Sinai="SinaiMap",
   Kola="Kola",
   Afghanistan="Afghanistan",
+  Iraq="Iraq"
 }
 
 
@@ -1786,6 +1789,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=15
   elseif map==DCSMAP.Afghanistan then
     declination=3
+  elseif map==DCSMAP.Iraq then
+    declination=4.4
   else
     declination=0
   end
@@ -2523,7 +2528,7 @@ end
 --- Function to save an object to a file
 -- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
 -- @param #string Filename The name of the file. Existing file will be overwritten.
--- @param #table Data The LUA data structure to save. This will be e.g. a table of text lines with an \\n at the end of each line.
+-- @param #string Data The data structure to save. This will be e.g. a string of text lines with an \\n at the end of each line.
 -- @return #boolean outcome True if saving is possible, else false.
 function UTILS.SaveToFile(Path,Filename,Data)
   -- Thanks to @FunkyFranky

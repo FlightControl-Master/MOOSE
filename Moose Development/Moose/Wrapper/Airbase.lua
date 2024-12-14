@@ -853,6 +853,38 @@ AIRBASE.Afghanistan = {
   ["Tarinkot"] = "Tarinkot",
 }
 
+--- Airbases of the Iraq map
+--
+-- * `AIRBASE.Iraq.Baghdad_International_Airport` Baghdad International Airport
+-- * `AIRBASE.Iraq.Sulaimaniyah_International_Airport` Sulaimaniyah International Airport
+-- * `AIRBASE.Iraq.Al_Sahra_Airport` Al-Sahra Airport
+-- * `AIRBASE.Iraq.Erbil_International_Airport` Erbil International Airport
+-- * `AIRBASE.Iraq.Al_Taji_Airport` Al-Taji Airport
+-- * `AIRBASE.Iraq.Al_Asad_Airbase` Al-Asad Airbase
+-- * `AIRBASE.Iraq.Al_Salam_Airbase` Al-Salam Airbase
+-- * `AIRBASE.Iraq.Balad_Airbase` Balad Airbase
+-- * `AIRBASE.Iraq.Kirkuk_International_Airport` Kirkuk International Airport
+-- * `AIRBASE.Iraq.Bashur_Airport` Bashur Airport
+-- * `AIRBASE.Iraq.Al_Taquddum_Airport` Al-Taquddum Airport
+-- * `AIRBASE.Iraq.Qayyarah_Airfield_West` Qayyarah Airfield West
+-- * `AIRBASE.Iraq.K1_Base` K1 Base
+--
+AIRBASE.Iraq = {
+  ["Baghdad_International_Airport"] = "Baghdad International Airport",
+  ["Sulaimaniyah_International_Airport"] = "Sulaimaniyah International Airport",
+  ["Al_Sahra_Airport"] = "Al-Sahra Airport",
+  ["Erbil_International_Airport"] = "Erbil International Airport",
+  ["Al_Taji_Airport"] = "Al-Taji Airport",
+  ["Al_Asad_Airbase"] = "Al-Asad Airbase",
+  ["Al_Salam_Airbase"] = "Al-Salam Airbase",
+  ["Balad_Airbase"] = "Balad Airbase",
+  ["Kirkuk_International_Airport"] = "Kirkuk International Airport",
+  ["Bashur_Airport"] = "Bashur Airport",
+  ["Al_Taquddum_Airport"] = "Al-Taquddum Airport",
+  ["Qayyarah_Airfield_West"] = "Qayyarah Airfield West",
+  ["K1_Base"] = "K1 Base",
+}
+
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 -- @type AIRBASE.ParkingSpot
 -- @field Core.Point#COORDINATE Coordinate Coordinate of the parking spot.

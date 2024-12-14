@@ -498,6 +498,9 @@ ATIS.Alphabet = {
 -- @field #number Syria +5° (East).
 -- @field #number MarianaIslands +2° (East).
 -- @field #number SinaiMap +5° (East).
+-- @field #number Kola +15° (East).
+-- @field #number Afghanistan +3° (East).
+-- @field #number Iraq +4.4° (East).
 ATIS.RunwayM2T = {
   Caucasus = 0,
   Nevada = 12,
@@ -508,6 +511,9 @@ ATIS.RunwayM2T = {
   MarianaIslands = 2,
   Falklands = 12,
   SinaiMap = 5,
+  Kola = 15,
+  Afghanistan = 3,
+  Iraq=4.4
 }
 
 --- Whether ICAO phraseology is used for ATIS broadcasts.
@@ -521,6 +527,9 @@ ATIS.RunwayM2T = {
 -- @field #boolean MarianaIslands true.
 -- @field #boolean Falklands true.
 -- @field #boolean SinaiMap true.
+-- @field #boolean Kola true.
+-- @field #boolean Afghanistan true.
+-- @field #boolean Iraq true.
 ATIS.ICAOPhraseology = {
   Caucasus = true,
   Nevada = false,
@@ -531,6 +540,9 @@ ATIS.ICAOPhraseology = {
   MarianaIslands = true,
   Falklands = true,
   SinaiMap = true,
+  Kola = true,
+  Afghanistan = true,
+  Iraq = true,
 }
 
 --- Nav point data.
