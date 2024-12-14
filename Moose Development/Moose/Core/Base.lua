@@ -34,11 +34,12 @@ local _TraceClassMethod = {}
 
 local _ClassID = 0
 
----
+--- Base class of everything
 -- @type BASE
--- @field ClassName The name of the class.
--- @field ClassID The ID number of the class.
--- @field ClassNameAndID The name of the class concatenated with the ID number of the class.
+-- @field #string ClassName The name of the class.
+-- @field #number ClassID The ID number of the class.
+-- @field #string ClassNameAndID The name of the class concatenated with the ID number of the class.
+-- @field Core.Scheduler#SCHEDULER Scheduler The scheduler object.
 
 --- BASE class
 --
@@ -208,14 +209,6 @@ BASE.__ = {}
 -- @field #BASE._
 BASE._ = {
   Schedules = {}, --- Contains the Schedulers Active
-}
-
---- The Formation Class
--- @type FORMATION
--- @field Cone A cone formation.
-FORMATION = {
-  Cone = "Cone",
-  Vee = "Vee",
 }
 
 --- BASE constructor.

@@ -211,10 +211,9 @@ function DATABASE:AddStatic( DCSStaticName )
 
   if not self.STATICS[DCSStaticName] then
     self.STATICS[DCSStaticName] = STATIC:Register( DCSStaticName )
-    return self.STATICS[DCSStaticName]
   end
 
-  return nil
+  return self.STATICS[DCSStaticName]
 end
 
 
@@ -224,12 +223,11 @@ function DATABASE:DeleteStatic( DCSStaticName )
   self.STATICS[DCSStaticName] = nil
 end
 
---- Finds a STATIC based on the StaticName.
+--- Finds a STATIC based on the Static Name.
 -- @param #DATABASE self
--- @param #string StaticName
+-- @param #string StaticName Name of the static object.
 -- @return Wrapper.Static#STATIC The found STATIC.
 function DATABASE:FindStatic( StaticName )
-
   local StaticFound = self.STATICS[StaticName]
   return StaticFound
 end
@@ -241,9 +239,8 @@ end
 function DATABASE:AddDynamicCargo( Name )
   if not self.DYNAMICCARGO[Name] then
     self.DYNAMICCARGO[Name] = DYNAMICCARGO:Register(Name)
-    return self.DYNAMICCARGO[Name]
   end
-  return nil
+  return self.DYNAMICCARGO[Name]
 end
 
 --- Finds a DYNAMICCARGO based on the Dynamic Cargo Name.
