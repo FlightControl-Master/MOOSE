@@ -535,12 +535,6 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
   -- Name of the spawned static.
   Template.name = self.InitStaticName or string.format("%s#%05d", self.SpawnTemplatePrefix, self.SpawnIndex)
 
-  -- Add and register the new static.
-  local mystatic=_DATABASE:AddStatic(Template.name)
-
-  -- Debug output.
-  self:T(Template)
-
   -- Add static to the game.
   local Static=nil  --DCS#StaticObject
 
@@ -577,12 +571,28 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     self:T("Spawning Static")
     self:T2({Template=Template})
     Static=coalition.addStaticObject(CountryID, Template)
+    
+    if Static then
+      self:T(string.format("Succesfully spawned static object \"%s\" ID=%d", Static:getName(), Static:getID()))
+      --[[
+      local static=StaticObject.getByName(Static:getName())
+      if static then
+        env.info(string.format("FF got static from StaticObject.getByName"))
+      else
+        env.error(string.format("FF error did NOT get static from StaticObject.getByName"))
+      end ]]      
+    else
+      self:E(string.format("ERROR: DCS static object \"%s\" is nil!", tostring(Template.name)))
+    end
   end
+  
+  -- Add and register the new static.
+  local mystatic=_DATABASE:AddStatic(Template.name)
   
   -- If there is a SpawnFunction hook defined, call it.
   if self.SpawnFunctionHook then
     -- delay calling this for .3 seconds so that it hopefully comes after the BIRTH event of the group.
-    self:ScheduleOnce(0.3,self.SpawnFunctionHook,mystatic, unpack(self.SpawnFunctionArguments))
+    self:ScheduleOnce(0.3, self.SpawnFunctionHook, mystatic, unpack(self.SpawnFunctionArguments))
   end
 
   return mystatic
