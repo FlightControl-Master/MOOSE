@@ -61,6 +61,8 @@ function STATIC:Register( StaticName )
   if DCSStatic then
     local Life0 = DCSStatic:getLife() or 1
     self.Life0 = Life0
+  else
+    self:E(string.format("Static object %s does not exist!", tostring(self.StaticName)))
   end
   
   return self
