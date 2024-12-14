@@ -869,6 +869,7 @@ AIRBASE.Afghanistan = {
 -- * `AIRBASE.Iraq.Qayyarah_Airfield_West` Qayyarah Airfield West
 -- * `AIRBASE.Iraq.K1_Base` K1 Base
 --
+-- @field Iraq
 AIRBASE.Iraq = {
   ["Baghdad_International_Airport"] = "Baghdad International Airport",
   ["Sulaimaniyah_International_Airport"] = "Sulaimaniyah International Airport",

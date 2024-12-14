@@ -2987,7 +2987,7 @@ function RANGE:_DisplayBombTargets( _unitname )
       end
     end
 
-    self:_DisplayMessageToGroup( _unit, _text, 120, true, true, _multiplayer )
+    self:_DisplayMessageToGroup( _unit, _text, 150, true, true, _multiplayer )
   end
 end
 
@@ -3453,10 +3453,10 @@ function RANGE:_AddF10Commands( _unitName )
         -- Range menu
         local _rangePath = MENU_GROUP:New( group, self.rangename, _rootMenu )
 
-        local _statsPath = MENU_GROUP:New( group, "Statistics", _rangePath )
-        local _markPath = MENU_GROUP:New( group, "Mark Targets", _rangePath )
-        local _settingsPath = MENU_GROUP:New( group, "My Settings", _rangePath )
         local _infoPath = MENU_GROUP:New( group, "Range Info", _rangePath )
+        local _markPath = MENU_GROUP:New( group, "Mark Targets", _rangePath )
+        local _statsPath = MENU_GROUP:New( group, "Statistics", _rangePath )
+        local _settingsPath = MENU_GROUP:New( group, "My Settings", _rangePath )
 
         -- F10/On the Range/<Range Name>/My Settings/
         local _mysmokePath = MENU_GROUP:New( group, "Smoke Color", _settingsPath )
