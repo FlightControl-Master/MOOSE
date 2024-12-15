@@ -680,7 +680,7 @@ ATIS.Sound = {
   N6 = { filename = "N-6.ogg", duration = 0.46 },
   N7 = { filename = "N-7.ogg", duration = 0.52 },
   N8 = { filename = "N-8.ogg", duration = 0.36 },
-  N9 = { filename = "N-9.ogg", duration = 0.1 },
+  N9 = { filename = "N-9.ogg", duration = 0.51 },
   NauticalMiles = { filename = "NauticalMiles.ogg", duration = 0.93 },
   None = { filename = "None.ogg", duration = 0.33 },
   OuterNDBFrequency = { filename = "OuterNDBFrequency.ogg", duration = 1.70 },
