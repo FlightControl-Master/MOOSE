@@ -1989,15 +1989,11 @@ end
 --   - @{#GROUP.InitHeight}: Set the height for the units in meters for the respawned group. (This is applicable for air units).
 --   - @{#GROUP.InitRandomizeHeading}: Randomize the headings for the units within the respawned group.
 --   - @{#GROUP.InitZone}: Set the respawn @{Core.Zone} for the respawned group.
---   - @{#GROUP.InitRandomizeZones}: Randomize the respawn @{Core.Zone} between one of the @{Core.Zone}s given for the respawned group.
 --   - @{#GROUP.InitRandomizePositionZone}: Randomize the positions of the units of the respawned group within the @{Core.Zone}.
 --   - @{#GROUP.InitRandomizePositionRadius}: Randomize the positions of the units of the respawned group in a circle band.
---   - @{#GROUP.InitRandomizeTemplates}: Randomize the Template for the respawned group.
---
 --
 -- Notes:
 --
---   - When InitZone or InitRandomizeZones is not used, the position of the respawned group will be its current position.
 --   - The current alive group will always be destroyed and respawned using the template definition.
 --
 -- @param Wrapper.Group#GROUP self
@@ -2019,10 +2015,24 @@ function GROUP:Respawn( Template, Reset )
     end
     return h
   end
+  
+  local function TransFormRoute(Template,OldPos,NewPos)
+    if Template.route and Template.route.points then
+      for _,_point in ipairs(Template.route.points) do
+        --self:I(string.format("Point x = %f Point y = %f",_point.x,_point.y))
+        _point.x = _point.x - OldPos.x + NewPos.x
+        _point.y = _point.y - OldPos.y + NewPos.y
+        --self:I(string.format("Point x = %f Point y = %f",_point.x,_point.y))
+      end
+    end
+    return Template
+  end
 
   -- First check if group is alive.
   if self:IsAlive() then
-
+    
+    local OldPos = self:GetVec2()
+    
     -- Respawn zone.
     local Zone = self.InitRespawnZone -- Core.Zone#ZONE
 
@@ -2035,6 +2045,8 @@ function GROUP:Respawn( Template, Reset )
     -- X, Y
     Template.x = Vec3.x
     Template.y = Vec3.z
+    
+    local NewPos = { x = Vec3.x, y = Vec3.z }
 
     --Template.x = nil
     --Template.y = nil
@@ -2089,11 +2101,13 @@ function GROUP:Respawn( Template, Reset )
           -- Set heading.
           Template.units[UnitID].heading = _Heading(self.InitRespawnHeading and self.InitRespawnHeading or GroupUnit:GetHeading())
           Template.units[UnitID].psi     = -Template.units[UnitID].heading
-
+          
           -- Debug.
           --self:F( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
         end
       end
+      
+      Template = TransFormRoute(Template,OldPos,NewPos)
 
     elseif Reset==false then  -- Reset=false or nil
 
@@ -2132,11 +2146,13 @@ function GROUP:Respawn( Template, Reset )
 
         -- Heading
         Template.units[UnitID].heading = self.InitRespawnHeading and self.InitRespawnHeading or TemplateUnitData.heading
-
+        
         -- Debug.
         --self:F( { UnitID, Template.units[UnitID], Template.units[UnitID] } )
       end
-
+      
+      Template = TransFormRoute(Template,OldPos,NewPos)
+      
     else
 
       local units=self:GetUnits()
@@ -2185,10 +2201,11 @@ function GROUP:Respawn( Template, Reset )
   -- Destroy old group. Dont trigger any dead/crash events since this is a respawn.
   self:Destroy(false)
 
-  --self:T({Template=Template})
+  --UTILS.PrintTableToLog(Template)
 
   -- Spawn new group.
-  _DATABASE:Spawn(Template)
+  self:ScheduleOnce(0.1,_DATABASE.Spawn,_DATABASE,Template)
+  --_DATABASE:Spawn(Template)
 
   -- Reset events.
   self:ResetEvents()
@@ -2196,6 +2213,29 @@ function GROUP:Respawn( Template, Reset )
   return self
 end
 
+--- Respawn the @{Wrapper.Group} at a @{Core.Point#COORDINATE}.
+-- The method will setup the new group template according the Init(Respawn) settings provided for the group.
+-- These settings can be provided by calling the relevant Init...() methods of the Group prior.
+--
+--   - @{#GROUP.InitHeading}: Set the heading for the units in degrees within the respawned group.
+--   - @{#GROUP.InitHeight}: Set the height for the units in meters for the respawned group. (This is applicable for air units).
+--   - @{#GROUP.InitRandomizeHeading}: Randomize the headings for the units within the respawned group.
+--   - @{#GROUP.InitRandomizePositionZone}: Randomize the positions of the units of the respawned group within the @{Core.Zone}.
+--   - @{#GROUP.InitRandomizePositionRadius}: Randomize the positions of the units of the respawned group in a circle band.
+--
+-- Notes:
+--
+--   - When no coordinate is given, the position of the respawned group will be its current position.
+--   - The current alive group will always be destroyed first.
+--   - The new group will have all of its original units and health restored.
+--
+-- @param Wrapper.Group#GROUP self
+-- @param Core.Point#COORDINATE Coordinate Where to respawn the group. Can be handed as a @{Core.Zone#ZONE_BASE} object.
+-- @return Wrapper.Group#GROUP self
+function GROUP:Teleport(Coordinate)
+  self:InitZone(Coordinate)
+  return self:Respawn(nil,false)
+end
 
 --- Respawn a group at an airbase.
 -- Note that the group has to be on parking spots at the airbase already in order for this to work.
