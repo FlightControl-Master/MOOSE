@@ -663,7 +663,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.19"
+    self.version="0.8.20"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -1753,11 +1753,11 @@ do
           instatusred=instatusred+1
         end
       end
-      statusreport:Add("+-----------------------+")
-      statusreport:Add(string.format("+ SAM in RED State: %0d",instatusred))
-      statusreport:Add(string.format("+ SAM in GREEN State: %0d",instatusgreen))
-      statusreport:Add("+-----------------------+")
-      MESSAGE:New(statusreport:Text(),10,nil,true):ToAll()
+      statusreport:Add("+-----------------------------+")
+      statusreport:Add(string.format("+ SAM in RED State: %2d",instatusred))
+      statusreport:Add(string.format("+ SAM in GREEN State: %2d",instatusgreen))
+      statusreport:Add("+-----------------------------+")
+      MESSAGE:New(statusreport:Text(),10,nil,true):ToAll():ToLog()
     end
     return self
   end
