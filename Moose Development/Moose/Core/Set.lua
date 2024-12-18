@@ -1709,7 +1709,7 @@ do
 
   --- Iterate the SET_GROUP and return true if all the @{Wrapper.Group#GROUP} are completely in the @{Core.Zone#ZONE}
   -- @param #SET_GROUP self
-  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @param Core.Zone#ZONE Zone The Zone to be tested for.
   -- @return #boolean true if all the @{Wrapper.Group#GROUP} are completely in the @{Core.Zone#ZONE}, false otherwise
   -- @usage
   -- local MyZone = ZONE:New("Zone1")
@@ -1756,7 +1756,7 @@ do
 
   --- Iterate the SET_GROUP and return true if at least one of the @{Wrapper.Group#GROUP} is completely inside the @{Core.Zone#ZONE}
   -- @param #SET_GROUP self
-  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @param Core.Zone#ZONE Zone The Zone to be tested for.
   -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is completely inside the @{Core.Zone#ZONE}, false otherwise.
   -- @usage
   -- local MyZone = ZONE:New("Zone1")
@@ -1781,7 +1781,7 @@ do
 
   --- Iterate the SET_GROUP and return true if at least one @{#UNIT} of one @{Wrapper.Group#GROUP} of the @{#SET_GROUP} is in @{Core.Zone}
   -- @param #SET_GROUP self
-  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @param Core.Zone#ZONE Zone The Zone to be tested for.
   -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completely inside the @{Core.Zone#ZONE}, false otherwise.
   -- @usage
   -- local MyZone = ZONE:New("Zone1")
@@ -1807,7 +1807,7 @@ do
   --- Iterate the SET_GROUP and return true if at least one @{Wrapper.Group#GROUP} of the @{#SET_GROUP} is partly in @{Core.Zone}.
   -- Will return false if a @{Wrapper.Group#GROUP} is fully in the @{Core.Zone}
   -- @param #SET_GROUP self
-  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @param Core.Zone#ZONE Zone The Zone to be tested for.
   -- @return #boolean true if at least one of the @{Wrapper.Group#GROUP} is partly or completely inside the @{Core.Zone#ZONE}, false otherwise.
   -- @usage
   -- local MyZone = ZONE:New("Zone1")
@@ -1842,7 +1842,7 @@ do
   -- This could also be achieved with `not SET_GROUP:AnyPartlyInZone(Zone)`, but it's easier for the
   -- mission designer to add a dedicated method
   -- @param #SET_GROUP self
-  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @param Core.Zone#ZONE Zone The Zone to be tested for.
   -- @return #boolean true if no @{Wrapper.Group#GROUP} is inside the @{Core.Zone#ZONE} in any way, false otherwise.
   -- @usage
   -- local MyZone = ZONE:New("Zone1")
@@ -1869,7 +1869,7 @@ do
   -- That could easily be done with SET_GROUP:ForEachGroupCompletelyInZone(), but this function
   -- provides an easy to use shortcut...
   -- @param #SET_GROUP self
-  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @param Core.Zone#ZONE Zone The Zone to be tested for.
   -- @return #number the number of GROUPs completely in the Zone
   -- @usage
   -- local MyZone = ZONE:New("Zone1")
@@ -1891,7 +1891,7 @@ do
 
   --- Iterate the SET_GROUP and count how many UNITs are completely in the Zone
   -- @param #SET_GROUP self
-  -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+  -- @param Core.Zone#ZONE Zone The Zone to be tested for.
   -- @return #number the number of GROUPs completely in the Zone
   -- @usage
   -- local MyZone = ZONE:New("Zone1")
@@ -2706,7 +2706,7 @@ do -- SET_UNIT
 
     --- Check if no element of the SET_UNIT is in the Zone.
     -- @param #SET_UNIT self
-    -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+    -- @param Core.Zone#ZONE Zone The Zone to be tested for.
     -- @return #boolean
     function SET_UNIT:IsNotInZone( Zone )
 
@@ -3746,7 +3746,7 @@ do -- SET_STATIC
 
     --- Check if no element of the SET_STATIC is in the Zone.
     -- @param #SET_STATIC self
-    -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
+    -- @param Core.Zone#ZONE Zone The Zone to be tested for.
     -- @return #boolean
     function SET_STATIC:IsNotInZone( Zone )
 

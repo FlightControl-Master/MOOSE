@@ -1278,6 +1278,12 @@ CTLD.RadioModulation = {
   FM = 1,
 }
 
+--- Loaded Cargo
+-- @type CTLD.LoadedCargo
+-- @field #number Troopsloaded
+-- @field #number Cratesloaded
+-- @field #table Cargo Table of #CTLD_CARGO objects
+
 --- Zone Info.
 -- @type CTLD.CargoZone
 -- @field #string name Name of Zone.
