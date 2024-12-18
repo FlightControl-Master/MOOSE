@@ -1351,7 +1351,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.19"
+CTLD.version="1.1.20"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -5387,6 +5387,27 @@ end
       table.insert(Stock,_troop.Name,_troop.Stock or -1)
     end
     return Stock
+  end
+  
+  --- User - Query the cargo loaded from a specific unit
+  -- @param #CTLD self
+  -- @param Wrapper.Unit#UNIT Unit The (client) unit to query.
+  -- @return #number Troopsloaded
+  -- @return #number Cratesloaded
+  -- @return #table Cargo Table of #CTLD_CARGO objects
+  function CTLD:GetLoadedCargo(Unit)
+    local Troops = 0
+    local Crates = 0
+    local Cargo = {}
+    if Unit and Unit:IsAlive() then
+      local name = Unit:GetName()
+      if self.Loaded_Cargo[name] then
+        Troops = self.Loaded_Cargo[name].Troopsloaded or 0
+        Crates = self.Loaded_Cargo[name].Cratesloaded or 0
+        Cargo = self.Loaded_Cargo[name].Cargo or {}
+      end
+    end
+    return Troops, Crates, Cargo
   end
   
   --- User - function to get a table of statics cargo in stock

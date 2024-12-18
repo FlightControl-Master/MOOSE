@@ -5723,7 +5723,7 @@ function AUFTRAG:GetMissionTypesText(MissionTypes)
   return text
 end
 
---- [NON-AIR] Set the mission waypoint coordinate where the mission is executed. Note that altitude is set via `:SetMissionAltitude`.
+--- [NON-AIR] Set the mission waypoint coordinate from where the mission is executed. Note that altitude is set via `:SetMissionAltitude`.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Coordinate where the mission is executed.
 -- @return #AUFTRAG self
@@ -5751,8 +5751,9 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Egrees coordinate.
 -- @param #number Altitude (Optional) Altitude in feet. Default is y component of coordinate.
+-- @param #number Speed (Optional) Speed in knots to reach this waypoint. Defaults to mission speed.
 -- @return #AUFTRAG self
-function AUFTRAG:SetMissionEgressCoord(Coordinate, Altitude)
+function AUFTRAG:SetMissionEgressCoord(Coordinate, Altitude, Speed)
 
   -- Obviously a zone was passed. We get the coordinate.
   if Coordinate:IsInstanceOf("ZONE_BASE") then
@@ -5765,14 +5766,19 @@ function AUFTRAG:SetMissionEgressCoord(Coordinate, Altitude)
     self.missionEgressCoord.y=UTILS.FeetToMeters(Altitude)
     self.missionEgressCoordAlt = UTILS.FeetToMeters(Altitude)
   end
+  
+  self.missionEgressCoordSpeed=Speed and Speed or nil
+  
+  return self
 end
 
 --- [Air] Set the mission ingress coordinate. This is the coordinate where the assigned group will fly before the actual mission coordinate.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Ingrees coordinate.
 -- @param #number Altitude (Optional) Altitude in feet. Default is y component of coordinate.
+-- @param #number Speed (Optional) Speed in knots to reach this waypoint. Defaults to mission speed.
 -- @return #AUFTRAG self
-function AUFTRAG:SetMissionIngressCoord(Coordinate, Altitude)
+function AUFTRAG:SetMissionIngressCoord(Coordinate, Altitude, Speed)
 
   -- Obviously a zone was passed. We get the coordinate.
   if Coordinate:IsInstanceOf("ZONE_BASE") then
@@ -5785,15 +5791,20 @@ function AUFTRAG:SetMissionIngressCoord(Coordinate, Altitude)
     self.missionIngressCoord.y=UTILS.FeetToMeters(Altitude)
     self.missionIngressCoordAlt = UTILS.FeetToMeters(Altitude or 10000)
   end
+  
+  self.missionIngressCoordSpeed=Speed and Speed or nil
+  
+  return self
 end
 
 --- [Air] Set the mission holding coordinate. This is the coordinate where the assigned group will fly before the actual mission execution starts. Do not forget to add a push condition, too!
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Holding coordinate.
 -- @param #number Altitude (Optional) Altitude in feet. Default is y component of coordinate.
+-- @param #number Speed (Optional) Speed in knots to reach this waypoint and hold there. Defaults to mission speed.
 -- @param #number Duration (Optional) Duration in seconds on how long to hold, defaults to 15 minutes. Mission continues if either a push condition is met or the time is up.
 -- @return #AUFTRAG self
-function AUFTRAG:SetMissionHoldingCoord(Coordinate, Altitude, Duration)
+function AUFTRAG:SetMissionHoldingCoord(Coordinate, Altitude, Speed, Duration)
 
   -- Obviously a zone was passed. We get the coordinate.
   if Coordinate:IsInstanceOf("ZONE_BASE") then
@@ -5807,6 +5818,10 @@ function AUFTRAG:SetMissionHoldingCoord(Coordinate, Altitude, Duration)
     self.missionHoldingCoord.y=UTILS.FeetToMeters(Altitude)
     self.missionHoldingCoordAlt = UTILS.FeetToMeters(Altitude or 10000)
   end
+  
+  self.missionHoldingCoordSpeed=Speed and Speed or nil
+
+  return self
 end
 
 --- Get the mission egress coordinate if this was defined.
