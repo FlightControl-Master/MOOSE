@@ -8595,7 +8595,6 @@ end
 -- @param #WAREHOUSE.Queueitem qitem Item of queue to be removed.
 -- @param #table queue The queue from which the item should be deleted.
 function WAREHOUSE:_DeleteQueueItem(qitem, queue)
-  self:F({qitem=qitem, queue=queue})
 
   for i=1,#queue do
     local _item=queue[i] --#WAREHOUSE.Queueitem
