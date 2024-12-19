@@ -1753,9 +1753,18 @@ do
           instatusred=instatusred+1
         end
       end
+      local activeshorads = 0
+      if self.Shorad then
+        for _,_name in pairs(self.Shorad.ActiveGroups or {}) do
+          activeshorads=activeshorads+1
+        end
+      end
       statusreport:Add("+-----------------------------+")
       statusreport:Add(string.format("+ SAM in RED State: %2d",instatusred))
       statusreport:Add(string.format("+ SAM in GREEN State: %2d",instatusgreen))
+      if self.Shorad then
+       statusreport:Add(string.format("+ SHORAD active: %2d",activeshorads))  
+      end
       statusreport:Add("+-----------------------------+")
       MESSAGE:New(statusreport:Text(),10,nil,true):ToAll():ToLog()
     end
