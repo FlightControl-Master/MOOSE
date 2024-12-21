@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: Sep 2024
+-- Last Update: Dec 2024
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -663,7 +663,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.20"
+    self.version="0.8.21"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
