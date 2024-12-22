@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update Oct 2024
+-- @date Last Update Dec 2024
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -509,7 +509,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.67", -- #string
+  version = "0.2.68", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -5922,6 +5922,7 @@ function AWACS:onafterStart(From, Event, To)
     local AwacsAW = self.AirWing -- Ops.Airwing#AIRWING
     local mission = AUFTRAG:NewORBIT_RACETRACK(self.OrbitZone:GetCoordinate(),self.AwacsAngels*1000,self.Speed,self.Heading,self.Leg)
     mission:SetMissionRange(self.MaxMissionRange)
+    mission:SetRequiredAttribute({ GROUP.Attribute.AIR_AWACS }) -- prefered plane type, thanks to Heart8reaker
     local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600
     mission:SetTime(nil,timeonstation)
     self.CatchAllMissions[#self.CatchAllMissions+1] = mission
