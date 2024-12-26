@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: Sep 2024
+-- Last Update: Dec 2024
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -663,7 +663,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.20"
+    self.version="0.8.21"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -1753,9 +1753,18 @@ do
           instatusred=instatusred+1
         end
       end
+      local activeshorads = 0
+      if self.Shorad then
+        for _,_name in pairs(self.Shorad.ActiveGroups or {}) do
+          activeshorads=activeshorads+1
+        end
+      end
       statusreport:Add("+-----------------------------+")
       statusreport:Add(string.format("+ SAM in RED State: %2d",instatusred))
       statusreport:Add(string.format("+ SAM in GREEN State: %2d",instatusgreen))
+      if self.Shorad then
+       statusreport:Add(string.format("+ SHORAD active: %2d",activeshorads))  
+      end
       statusreport:Add("+-----------------------------+")
       MESSAGE:New(statusreport:Text(),10,nil,true):ToAll():ToLog()
     end
