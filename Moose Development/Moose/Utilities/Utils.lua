@@ -4204,3 +4204,123 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
   
   return ReturnObjects, ADFName
 end
+
+--- Converts a Vec2 to a Vec3.
+-- @param vec the 2D vector
+-- @param y optional new y axis (altitude) value. If omitted it's 0.
+function UTILS.Vec2toVec3(vec,y) 
+  if not vec.z then
+    if vec.alt and not y then
+      y = vec.alt
+    elseif not y then
+      y = 0
+    end
+    return {x = vec.x, y = y, z = vec.y}
+  else
+    return {x = vec.x, y = vec.y, z = vec.z}  -- it was already Vec3, actually.
+  end
+end
+
+--- Get the correction needed for true north in radians
+-- @param gPoint The map point vec2 or vec3
+-- @return number correction
+function UTILS.GetNorthCorrection(gPoint)  
+  local point = UTILS.DeepCopy(gPoint)
+  if not point.z then --Vec2; convert to Vec3
+    point.z = point.y
+    point.y = 0
+  end
+  local lat, lon = coord.LOtoLL(point)
+  local north_posit = coord.LLtoLO(lat + 1, lon)
+  return math.atan2(north_posit.z - point.z, north_posit.x - point.x)
+end
+
+--- Convert time in seconds to a DHMS table `{d = days, h = hours, m = minutes, s = seconds}`
+-- @param timeInSec Time in Seconds
+-- @return #table Table with DHMS data
+function UTILS.GetDHMS(timeInSec)
+  if timeInSec and type(timeInSec) == 'number' then
+    local tbl = {d = 0, h = 0, m = 0, s = 0}
+    if timeInSec > 86400 then
+      while timeInSec > 86400 do
+        tbl.d = tbl.d + 1
+        timeInSec = timeInSec - 86400
+      end
+    end
+    if timeInSec > 3600 then
+      while timeInSec > 3600 do
+        tbl.h = tbl.h + 1
+        timeInSec = timeInSec - 3600
+      end
+    end
+    if timeInSec > 60 then
+      while timeInSec > 60 do
+        tbl.m = tbl.m + 1
+        timeInSec = timeInSec - 60
+      end
+    end
+    tbl.s = timeInSec
+    return tbl
+  else
+    BASE:E("No number handed!")
+    return
+  end
+end
+
+--- Returns heading-error corrected direction in radians.
+-- True-north corrected direction from point along vector vec.
+-- @param vec Vec3 Starting point
+-- @param point Vec2 Direction
+-- @return direction corrected direction from point.
+function UTILS.GetDirectionRadians(vec, point)
+  local dir = math.atan2(vec.z, vec.x)
+  if point then
+    dir = dir + UTILS.GetNorthCorrection(point)
+  end
+  if dir < 0 then
+    dir = dir + 2 * math.pi -- put dir in range of 0 to 2*pi
+  end
+  return dir
+end
+
+--- Raycasting a point in polygon. Code from http://softsurfer.com/Archive/algorithm_0103/algorithm_0103.htm
+-- @param point Vec2 or Vec3 to test
+-- @param #table poly Polygon Table of Vec2/3 point forming the Polygon
+-- @param #number maxalt Altitude limit (optional)
+-- @param #boolean outcome 
+function UTILS.IsPointInPolygon(point, poly, maxalt) 
+  point = UTILS.Vec2toVec3(point)
+  local px = point.x
+  local pz = point.z
+  local cn = 0
+  local newpoly = UTILS.DeepCopy(poly)
+
+  if not maxalt or (point.y <= maxalt) then
+    local polysize = #newpoly
+    newpoly[#newpoly + 1] = newpoly[1]
+
+    newpoly[1] = UTILS.Vec2toVec3(newpoly[1])
+
+    for k = 1, polysize do
+      newpoly[k+1] = UTILS.Vec2toVec3(newpoly[k+1])
+      if ((newpoly[k].z <= pz) and (newpoly[k+1].z > pz)) or ((newpoly[k].z > pz) and (newpoly[k+1].z <= pz)) then
+        local vt = (pz - newpoly[k].z) / (newpoly[k+1].z - newpoly[k].z)
+        if (px < newpoly[k].x + vt*(newpoly[k+1].x - newpoly[k].x)) then
+          cn = cn + 1
+        end
+      end
+    end
+
+    return cn%2 == 1
+  else
+    return false
+  end
+end
+
+--- Vector scalar multiplication.
+-- @param vec Vec3 vector to multiply
+-- @param #number mult scalar multiplicator
+-- @return Vec3 new vector multiplied with the given scalar
+function UTILS.ScalarMult(vec, mult)
+  return {x = vec.x*mult, y = vec.y*mult, z = vec.z*mult}
+end

@@ -110,7 +110,7 @@ do -- COORDINATE
   --
   -- ## 4.4) Get the North correction of the current location.
   --
-  --   * @{#COORDINATE.GetNorthCorrection}(): Obtains the north correction at the current 3D point.
+  --   * @{#COORDINATE.GetNorthCorrectionRadians}(): Obtains the north correction at the current 3D point.
   --
   -- ## 4.5) Point Randomization
   --
