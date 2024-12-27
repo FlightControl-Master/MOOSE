@@ -1351,7 +1351,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.20"
+CTLD.version="1.1.21"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3514,7 +3514,7 @@ function CTLD:_UnloadTroops(Group, Unit)
             if IsHerc then offset = self.TroopUnloadDistGroundHerc or 25 end
             if IsHook then  
               offset = self.TroopUnloadDistGroundHook or 15 
-              if self.TroopUnloadDistHoverHook then
+              if hoverunload and self.TroopUnloadDistHoverHook then
                 offset = self.TroopUnloadDistHoverHook or 5
               end
             end
