@@ -1957,9 +1957,18 @@ do -- COORDINATE
   --- Smokes the point in a color.
   -- @param #COORDINATE self
   -- @param Utilities.Utils#SMOKECOLOR SmokeColor
-  function COORDINATE:Smoke( SmokeColor )
+  -- @param #string name (Optional) Name if you want to stop the smoke early (normal duration: 5mins)
+  function COORDINATE:Smoke( SmokeColor, name )
     self:F2( { SmokeColor } )
-    trigger.action.smoke( self:GetVec3(), SmokeColor )
+    self.firename = name or "Smoke-"..math.random(1,100000)
+    trigger.action.smoke( self:GetVec3(), SmokeColor, self.firename )
+  end
+
+  --- Stops smoking the point in a color.
+  -- @param #COORDINATE self
+  -- @param #string name (Optional) Name if you want to stop the smoke early (normal duration: 5mins)
+  function COORDINATE:StopSmoke( name )
+    self:StopBigSmokeAndFire( name )
   end
 
   --- Smoke the COORDINATE Green.
@@ -2410,7 +2419,7 @@ do -- COORDINATE
       for i,coord in ipairs(Coordinates) do
         vecs[i+1]=coord:GetVec3()
       end
-
+      
       if #vecs<3 then
         self:E("ERROR: A free form polygon needs at least three points!")
       elseif #vecs==3 then
@@ -3313,16 +3322,16 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable The controllable to retrieve the settings from, otherwise the default settings will be chosen.
   -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
-  -- @param Tasking.Task#TASK Task The task for which coordinates need to be calculated.
   -- @return #string The coordinate Text in the configured coordinate system.
-  function COORDINATE:ToString( Controllable, Settings, Task )
+  function COORDINATE:ToString( Controllable, Settings )
 
 --    self:E( { Controllable = Controllable and Controllable:GetName() } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
     local ModeA2A = nil
-
+    
+    --[[
     if Task then
       if Task:IsInstanceOf( TASK_A2A ) then
         ModeA2A = true
@@ -3339,7 +3348,7 @@ do -- COORDINATE
         end
       end
     end
-
+    --]]
 
     if ModeA2A == nil then
       local IsAir = Controllable and ( Controllable:IsAirPlane() or Controllable:IsHelicopter() ) or false
