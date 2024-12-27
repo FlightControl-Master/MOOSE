@@ -318,11 +318,14 @@ MSRS.Voices = {
        ["en_IN_Standard_B"] = 'en-IN-Standard-B', -- [6] MALE
        ["en_IN_Standard_C"] = 'en-IN-Standard-C', -- [7] MALE
        ["en_IN_Standard_D"] = 'en-IN-Standard-D', -- [8] FEMALE
-       ["en_GB_Standard_A"] = 'en-GB-Standard-A', -- [9] FEMALE
-       ["en_GB_Standard_B"] = 'en-GB-Standard-B', -- [10] MALE
-       ["en_GB_Standard_C"] = 'en-GB-Standard-C', -- [11] FEMALE
-       ["en_GB_Standard_D"] = 'en-GB-Standard-D', -- [12] MALE
-       ["en_GB_Standard_F"] = 'en-GB-Standard-F', -- [13] FEMALE
+       -- 2025 changes
+       ["en_GB_Standard_A"] = 'en-GB-Standard-N', -- [9] FEMALE
+       ["en_GB_Standard_B"] = 'en-GB-Standard-O', -- [10] MALE
+       ["en_GB_Standard_C"] = 'en-GB-Standard-N', -- [11] FEMALE
+       ["en_GB_Standard_D"] = 'en-GB-Standard-O', -- [12] MALE
+       ["en_GB_Standard_F"] = 'en-GB-Standard-N', -- [13] FEMALE
+       ["en_GB_Standard_O"] = 'en-GB-Standard-O', -- [12] MALE
+       ["en_GB_Standard_N"] = 'en-GB-Standard-N', -- [13] FEMALE
        ["en_US_Standard_A"] = 'en-US-Standard-A', -- [14] MALE
        ["en_US_Standard_B"] = 'en-US-Standard-B', -- [15] MALE
        ["en_US_Standard_C"] = 'en-US-Standard-C', -- [16] FEMALE
@@ -333,25 +336,36 @@ MSRS.Voices = {
        ["en_US_Standard_H"] = 'en-US-Standard-H', -- [21] FEMALE
        ["en_US_Standard_I"] = 'en-US-Standard-I', -- [22] MALE
        ["en_US_Standard_J"] = 'en-US-Standard-J', -- [23] MALE
-       ["fr_FR_Standard_A"] = "fr-FR-Standard-A", -- Female
-       ["fr_FR_Standard_B"] = "fr-FR-Standard-B", -- Male
-       ["fr_FR_Standard_C"] = "fr-FR-Standard-C", -- Female
-       ["fr_FR_Standard_D"] = "fr-FR-Standard-D", -- Male
-       ["fr_FR_Standard_E"] = "fr-FR-Standard-E", -- Female
-       ["de_DE_Standard_A"] = "de-DE-Standard-A", -- Female
-       ["de_DE_Standard_B"] = "de-DE-Standard-B", -- Male
-       ["de_DE_Standard_C"] = "de-DE-Standard-C", -- Female
-       ["de_DE_Standard_D"] = "de-DE-Standard-D", -- Male
-       ["de_DE_Standard_E"] = "de-DE-Standard-E", -- Male
-       ["de_DE_Standard_F"] = "de-DE-Standard-F", -- Female
-       ["es_ES_Standard_A"] = "es-ES-Standard-A", -- Female
-       ["es_ES_Standard_B"] = "es-ES-Standard-B", -- Male
-       ["es_ES_Standard_C"] = "es-ES-Standard-C", -- Female
-       ["es_ES_Standard_D"] = "es-ES-Standard-D", -- Female
-       ["it_IT_Standard_A"] = "it-IT-Standard-A", -- Female
-       ["it_IT_Standard_B"] = "it-IT-Standard-B", -- Female
-       ["it_IT_Standard_C"] = "it-IT-Standard-C", -- Male
-       ["it_IT_Standard_D"] = "it-IT-Standard-D", -- Male
+       -- 2025 catalog changes
+       ["fr_FR_Standard_A"] = "fr-FR-Standard-F", -- Female
+       ["fr_FR_Standard_B"] = "fr-FR-Standard-G", -- Male
+       ["fr_FR_Standard_C"] = "fr-FR-Standard-F", -- Female
+       ["fr_FR_Standard_D"] = "fr-FR-Standard-G", -- Male
+       ["fr_FR_Standard_E"] = "fr-FR-Standard-F", -- Female
+       ["fr_FR_Standard_G"] = "fr-FR-Standard-G", -- Male
+       ["fr_FR_Standard_F"] = "fr-FR-Standard-F", -- Female
+       -- 2025 catalog changes
+       ["de_DE_Standard_A"] = "de-DE-Standard-G", -- Female
+       ["de_DE_Standard_B"] = "de-DE-Standard-H", -- Male
+       ["de_DE_Standard_C"] = "de-DE-Standard-G", -- Female
+       ["de_DE_Standard_D"] = "de-DE-Standard-H", -- Male
+       ["de_DE_Standard_E"] = "de-DE-Standard-H", -- Male
+       ["de_DE_Standard_F"] = "de-DE-Standard-G", -- Female
+       ["de_DE_Standard_H"] = "de-DE-Standard-H", -- Male
+       ["de_DE_Standard_G"] = "de-DE-Standard-G", -- Female
+       ["es_ES_Standard_A"] = "es-ES-Standard-E", -- Female
+       ["es_ES_Standard_B"] = "es-ES-Standard-F", -- Male
+       ["es_ES_Standard_C"] = "es-ES-Standard-E", -- Female
+       ["es_ES_Standard_D"] = "es-ES-Standard-F", -- Male
+       ["es_ES_Standard_E"] = "es-ES-Standard-E", -- Female
+       ["es_ES_Standard_F"] = "es-ES-Standard-F", -- Male
+       -- 2025 catalog changes
+       ["it_IT_Standard_A"] = "it-IT-Standard-E", -- Female
+       ["it_IT_Standard_B"] = "it-IT-Standard-E", -- Female
+       ["it_IT_Standard_C"] = "it-IT-Standard-F", -- Male
+       ["it_IT_Standard_D"] = "it-IT-Standard-F", -- Male
+       ["it_IT_Standard_E"] = "it-IT-Standard-E", -- Female
+       ["it_IT_Standard_F"] = "it-IT-Standard-F", -- Male
       },
       Wavenet = {
        ["en_AU_Wavenet_A"] = 'en-AU-Wavenet-A', -- [1] FEMALE
@@ -362,12 +376,15 @@ MSRS.Voices = {
        ["en_IN_Wavenet_B"] = 'en-IN-Wavenet-B', -- [6] MALE
        ["en_IN_Wavenet_C"] = 'en-IN-Wavenet-C', -- [7] MALE
        ["en_IN_Wavenet_D"] = 'en-IN-Wavenet-D', -- [8] FEMALE
-       ["en_GB_Wavenet_A"] = 'en-GB-Wavenet-A', -- [9] FEMALE
-       ["en_GB_Wavenet_B"] = 'en-GB-Wavenet-B', -- [10] MALE
-       ["en_GB_Wavenet_C"] = 'en-GB-Wavenet-C', -- [11] FEMALE
-       ["en_GB_Wavenet_D"] = 'en-GB-Wavenet-D', -- [12] MALE
-       ["en_GB_Wavenet_F"] = 'en-GB-Wavenet-F', -- [13] FEMALE
-       ["en_US_Wavenet_A"] = 'en-US-Wavenet-A', -- [14] MALE
+       -- 2025 changes
+       ["en_GB_Wavenet_A"] = 'en-GB-Wavenet-N', -- [9] FEMALE
+       ["en_GB_Wavenet_B"] = 'en-GB-Wavenet-O', -- [10] MALE
+       ["en_GB_Wavenet_C"] = 'en-GB-Wavenet-N', -- [11] FEMALE
+       ["en_GB_Wavenet_D"] = 'en-GB-Wavenet-O', -- [12] MALE
+       ["en_GB_Wavenet_F"] = 'en-GB-Wavenet-N', -- [13] FEMALE
+       ["en_GB_Wavenet_O"] = 'en-GB-Wavenet-O', -- [12] MALE
+       ["en_GB_Wavenet_N"] = 'en-GB-Wavenet-N', -- [13] FEMALE     
+       ["en_US_Wavenet_A"] = 'en-US-Wavenet-N', -- [14] MALE
        ["en_US_Wavenet_B"] = 'en-US-Wavenet-B', -- [15] MALE
        ["en_US_Wavenet_C"] = 'en-US-Wavenet-C', -- [16] FEMALE
        ["en_US_Wavenet_D"] = 'en-US-Wavenet-D', -- [17] MALE
@@ -377,24 +394,35 @@ MSRS.Voices = {
        ["en_US_Wavenet_H"] = 'en-US-Wavenet-H', -- [21] FEMALE
        ["en_US_Wavenet_I"] = 'en-US-Wavenet-I', -- [22] MALE
        ["en_US_Wavenet_J"] = 'en-US-Wavenet-J', -- [23] MALE
-       ["fr_FR_Wavenet_A"] = "fr-FR-Wavenet-A", -- Female
-       ["fr_FR_Wavenet_B"] = "fr-FR-Wavenet-B", -- Male
-       ["fr_FR_Wavenet_C"] = "fr-FR-Wavenet-C", -- Female
-       ["fr_FR_Wavenet_D"] = "fr-FR-Wavenet-D", -- Male
-       ["fr_FR_Wavenet_E"] = "fr-FR-Wavenet-E", -- Female
-       ["de_DE_Wavenet_A"] = "de-DE-Wavenet-A", -- Female
-       ["de_DE_Wavenet_B"] = "de-DE-Wavenet-B", -- Male
-       ["de_DE_Wavenet_C"] = "de-DE-Wavenet-C", -- Female
-       ["de_DE_Wavenet_D"] = "de-DE-Wavenet-D", -- Male
-       ["de_DE_Wavenet_E"] = "de-DE-Wavenet-E", -- Male
-       ["de_DE_Wavenet_F"] = "de-DE-Wavenet-F", -- Female
-       ["es_ES_Wavenet_B"] = "es-ES-Wavenet-B", -- Male
-       ["es_ES_Wavenet_C"] = "es-ES-Wavenet-C", -- Female
-       ["es_ES_Wavenet_D"] = "es-ES-Wavenet-D", -- Female
-       ["it_IT_Wavenet_A"] = "it-IT-Wavenet-A", -- Female
-       ["it_IT_Wavenet_B"] = "it-IT-Wavenet-B", -- Female
-       ["it_IT_Wavenet_C"] = "it-IT-Wavenet-C", -- Male
-       ["it_IT_Wavenet_D"] = "it-IT-Wavenet-D", -- Male
+       -- 2025 catalog changes
+       ["fr_FR_Wavenet_A"] = "fr-FR-Wavenet-F", -- Female
+       ["fr_FR_Wavenet_B"] = "fr-FR-Wavenet-G", -- Male
+       ["fr_FR_Wavenet_C"] = "fr-FR-Wavenet-F", -- Female
+       ["fr_FR_Wavenet_D"] = "fr-FR-Wavenet-G", -- Male
+       ["fr_FR_Wavenet_E"] = "fr-FR-Wavenet-F", -- Female
+       ["fr_FR_Wavenet_G"] = "fr-FR-Wavenet-G", -- Male
+       ["fr_FR_Wavenet_F"] = "fr-FR-Wavenet-F", -- Female
+       -- 2025 catalog changes
+       ["de_DE_Wavenet_A"] = "de-DE-Wavenet-G", -- Female
+       ["de_DE_Wavenet_B"] = "de-DE-Wavenet-H", -- Male
+       ["de_DE_Wavenet_C"] = "de-DE-Wavenet-G", -- Female
+       ["de_DE_Wavenet_D"] = "de-DE-Wavenet-H", -- Male
+       ["de_DE_Wavenet_E"] = "de-DE-Wavenet-H", -- Male
+       ["de_DE_Wavenet_F"] = "de-DE-Wavenet-G", -- Female
+       ["de_DE_Wavenet_H"] = "de-DE-Wavenet-H", -- Male
+       ["de_DE_Wavenet_G"] = "de-DE-Wavenet-G", -- Female
+       ["es_ES_Wavenet_B"] = "es-ES-Wavenet-E", -- Male
+       ["es_ES_Wavenet_C"] = "es-ES-Wavenet-F", -- Female
+       ["es_ES_Wavenet_D"] = "es-ES-Wavenet-E", -- Female
+       ["es_ES_Wavenet_E"] = "es-ES-Wavenet-E", -- Male
+       ["es_ES_Wavenet_F"] = "es-ES-Wavenet-F", -- Female
+       -- 2025 catalog changes
+       ["it_IT_Wavenet_A"] = "it-IT-Wavenet-E", -- Female
+       ["it_IT_Wavenet_B"] = "it-IT-Wavenet-E", -- Female
+       ["it_IT_Wavenet_C"] = "it-IT-Wavenet-F", -- Male
+       ["it_IT_Wavenet_D"] = "it-IT-Wavenet-F", -- Male
+       ["it_IT_Wavenet_E"] = "it-IT-Wavenet-E", -- Female
+       ["it_IT_Wavenet_F"] = "it-IT-Wavenet-F", -- Male
       } ,
     },
   }
@@ -1634,9 +1662,9 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
   end
 
   for _,freq in pairs(Frequencies) do
-    self:F("Calling GRPC.tts with the following parameter:")
-    self:F({ssml=ssml, freq=freq, options=options})
-    self:F(options.provider[provider])
+    self:T("Calling GRPC.tts with the following parameter:")
+    self:T({ssml=ssml, freq=freq, options=options})
+    self:T(options.provider[provider])
     GRPC.tts(ssml, freq*1e6, options)
   end
 
