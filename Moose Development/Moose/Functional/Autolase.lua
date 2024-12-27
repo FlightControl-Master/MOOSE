@@ -118,7 +118,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.25"
+AUTOLASE.version = "0.1.26"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -757,9 +757,11 @@ function AUTOLASE:ShowStatus(Group,Unit)
       end
       local code = self:GetLaserCode(unit:GetName())
       report:Add(string.format("Recce %s has code %d",name,code))
+      report:Add("---------------")
     end
   end
   report:Add(string.format("Lasing min threat level %d",self.minthreatlevel))
+  report:Add("---------------")
   local lines = 0
   for _ind,_entry in pairs(self.CurrentLasing) do
     local entry = _entry -- #AUTOLASE.LaserSpot
@@ -779,7 +781,7 @@ function AUTOLASE:ShowStatus(Group,Unit)
     if playername then
       local settings = _DATABASE:GetPlayerSettings(playername)
       if settings then
-        self:I("Get Settings ok!")
+        self:T("Get Settings ok!")
         if settings:IsA2G_MGRS() then
           locationstring = entry.coordinate:ToStringMGRS(settings)
         elseif settings:IsA2G_LL_DMS() then
@@ -789,12 +791,14 @@ function AUTOLASE:ShowStatus(Group,Unit)
         end
       end
     end
-    local text = string.format("%s lasing %s code %d\nat %s",reccename,typename,code,locationstring)
+    local text = string.format("+ %s lasing %s code %d\nat %s",reccename,typename,code,locationstring)
     report:Add(text)
+    report:Add("---------------")
     lines = lines + 1
   end
   if lines == 0 then
     report:Add("No targets!")
+    report:Add("---------------")
   end
   local reporttime = self.reporttimelong
   if lines == 0 then reporttime = self.reporttimeshort end

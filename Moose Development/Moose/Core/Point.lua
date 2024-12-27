@@ -1957,9 +1957,18 @@ do -- COORDINATE
   --- Smokes the point in a color.
   -- @param #COORDINATE self
   -- @param Utilities.Utils#SMOKECOLOR SmokeColor
-  function COORDINATE:Smoke( SmokeColor )
+  -- @param #string name (Optional) Name if you want to stop the smoke early (normal duration: 5mins)
+  function COORDINATE:Smoke( SmokeColor, name )
     self:F2( { SmokeColor } )
-    trigger.action.smoke( self:GetVec3(), SmokeColor )
+    self.firename = name or "Smoke-"..math.random(1,100000)
+    trigger.action.smoke( self:GetVec3(), SmokeColor, self.firename )
+  end
+
+  --- Stops smoking the point in a color.
+  -- @param #COORDINATE self
+  -- @param #string name (Optional) Name if you want to stop the smoke early (normal duration: 5mins)
+  function COORDINATE:StopSmoke( name )
+    self:StopBigSmokeAndFire( name )
   end
 
   --- Smoke the COORDINATE Green.
