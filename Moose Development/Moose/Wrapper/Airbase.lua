@@ -791,6 +791,8 @@ AIRBASE.Sinai = {
 -- * AIRBASE.Kola.Vuojarvi
 -- * AIRBASE.Kola.Andoya
 -- * AIRBASE.Kola.Alakourtti
+-- * AIRBASE.Kola.Kittila
+-- * AIRBASE.Kola.Bardufoss
 --
 -- @field Kola
 AIRBASE.Kola = {
@@ -814,6 +816,8 @@ AIRBASE.Kola = {
   ["Vuojarvi"] = "Vuojarvi",
   ["Andoya"] = "Andoya",
   ["Alakourtti"] = "Alakourtti",
+  ["Kittila"] = "Kittila",
+  ["Bardufoss"] = "Bardufoss",
 }
 
 --- Airbases of the Afghanistan map
@@ -855,19 +859,19 @@ AIRBASE.Afghanistan = {
 
 --- Airbases of the Iraq map
 --
--- * `AIRBASE.Iraq.Baghdad_International_Airport` Baghdad International Airport
--- * `AIRBASE.Iraq.Sulaimaniyah_International_Airport` Sulaimaniyah International Airport
--- * `AIRBASE.Iraq.Al_Sahra_Airport` Al-Sahra Airport
--- * `AIRBASE.Iraq.Erbil_International_Airport` Erbil International Airport
--- * `AIRBASE.Iraq.Al_Taji_Airport` Al-Taji Airport
--- * `AIRBASE.Iraq.Al_Asad_Airbase` Al-Asad Airbase
--- * `AIRBASE.Iraq.Al_Salam_Airbase` Al-Salam Airbase
--- * `AIRBASE.Iraq.Balad_Airbase` Balad Airbase
--- * `AIRBASE.Iraq.Kirkuk_International_Airport` Kirkuk International Airport
--- * `AIRBASE.Iraq.Bashur_Airport` Bashur Airport
--- * `AIRBASE.Iraq.Al_Taquddum_Airport` Al-Taquddum Airport
--- * `AIRBASE.Iraq.Qayyarah_Airfield_West` Qayyarah Airfield West
--- * `AIRBASE.Iraq.K1_Base` K1 Base
+-- * AIRBASE.Iraq.Baghdad_International_Airport
+-- * AIRBASE.Iraq.Sulaimaniyah_International_Airport
+-- * AIRBASE.Iraq.Al_Sahra_Airport
+-- * AIRBASE.Iraq.Erbil_International_Airpor
+-- * AIRBASE.Iraq.Al_Taji_Airport
+-- * AIRBASE.Iraq.Al_Asad_Airbase
+-- * AIRBASE.Iraq.Al_Salam_Airbase
+-- * AIRBASE.Iraq.Balad_Airbase
+-- * AIRBASE.Iraq.Kirkuk_International_Airport
+-- * AIRBASE.Iraq.Bashur_Airport
+-- * AIRBASE.Iraq.Al_Taquddum_Airport
+-- * AIRBASE.Iraq.Qayyarah_Airfield_West
+-- * AIRBASE.Iraq.K1_Base
 --
 -- @field Iraq
 AIRBASE.Iraq = {
