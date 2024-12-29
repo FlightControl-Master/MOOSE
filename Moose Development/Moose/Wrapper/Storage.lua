@@ -499,7 +499,7 @@ function STORAGE:IsUnlimited(Type)
     end
 
     -- Debug info.
-    self:I(self.lid..string.format("Type=%s: unlimited=%s (N=%d n=%d)", tostring(Type), tostring(unlimited), N, n))
+    self:T(self.lid..string.format("Type=%s: unlimited=%s (N=%d n=%d)", tostring(Type), tostring(unlimited), N, n))
   end
 
   return unlimited
@@ -593,6 +593,154 @@ function STORAGE:GetInventory(Item)
   local inventory=self.warehouse:getInventory(Item)
 
   return inventory.aircraft, inventory.liquids, inventory.weapon
+end
+
+--- Save the contents of a STORAGE to files in CSV format. Filenames created are the Filename given amended by "_Liquids", "_Aircraft" and "_Weapons" followed by a ".csv". Requires io and lfs to be desanitized to be working.
+-- @param #STORAGE self
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The base name of the files. Existing files will be overwritten.
+-- @return #STORAGE self
+function STORAGE:SaveToFile(Path,Filename)
+
+    if not io then
+      BASE:E("ERROR: io not desanitized. Can't save the files.")
+      return false
+    end
+  
+    -- Check default path.
+    if Path==nil and not lfs then
+      BASE:E("WARNING: lfs not desanitized. File will be saved in DCS installation root directory rather than your given path.")
+    end
+    
+    local ac, lq, wp = self:GetInventory()
+    local DataAircraft = ""
+    local DataLiquids = ""
+    local DataWeapons = ""
+    
+    if #lq > 0 then
+      DataLiquids = DataLiquids .."Liquids in Storage:\n"
+      for key,amount in pairs(lq) do
+        DataLiquids = DataLiquids..tostring(key).."="..tostring(amount).."\n"
+      end
+      --self:I(DataLiquids)
+      UTILS.SaveToFile(Path,Filename.."_Liquids.csv",DataLiquids)
+    end
+    
+    if UTILS.TableLength(ac) > 0 then
+      DataAircraft = DataAircraft .."Aircraft in Storage:\n"
+      for key,amount in pairs(ac) do
+        DataAircraft = DataAircraft..tostring(key).."="..tostring(amount).."\n"
+      end
+      --self:I(DataAircraft)
+      UTILS.SaveToFile(Path,Filename.."_Aircraft.csv",DataAircraft)
+    end
+    
+    if UTILS.TableLength(wp) > 0 then
+      DataWeapons = DataWeapons .."Weapons and Materiel in Storage:\n"
+      for key,amount in pairs(wp) do
+        DataWeapons = DataWeapons..tostring(key).."="..tostring(amount).."\n"
+      end
+      -- Gazelle table keys
+      for key,amount in pairs(ENUMS.Storage.weapons.Gazelle) do
+        amount = self:GetItemAmount(ENUMS.Storage.weapons.Gazelle[key])
+        DataWeapons = DataWeapons.."ENUMS.Storage.weapons.Gazelle."..tostring(key).."="..tostring(amount).."\n"
+      end
+      -- CH47
+      for key,amount in pairs(ENUMS.Storage.weapons.CH47) do
+        amount = self:GetItemAmount(ENUMS.Storage.weapons.CH47[key])
+        DataWeapons = DataWeapons.."ENUMS.Storage.weapons.CH47."..tostring(key).."="..tostring(amount).."\n"
+      end
+      -- UH1H
+      for key,amount in pairs(ENUMS.Storage.weapons.UH1H) do
+        amount = self:GetItemAmount(ENUMS.Storage.weapons.UH1H[key])
+        DataWeapons = DataWeapons.."ENUMS.Storage.weapons.UH1H."..tostring(key).."="..tostring(amount).."\n"
+      end
+      -- OH58D
+      for key,amount in pairs(ENUMS.Storage.weapons.OH58) do
+        amount = self:GetItemAmount(ENUMS.Storage.weapons.OH58[key])
+        DataWeapons = DataWeapons.."ENUMS.Storage.weapons.OH58."..tostring(key).."="..tostring(amount).."\n"
+      end
+      -- AH64D
+      for key,amount in pairs(ENUMS.Storage.weapons.AH64D) do
+        amount = self:GetItemAmount(ENUMS.Storage.weapons.AH64D[key])
+        DataWeapons = DataWeapons.."ENUMS.Storage.weapons.AH64D."..tostring(key).."="..tostring(amount).."\n"
+      end
+      --self:I(DataAircraft)
+     UTILS.SaveToFile(Path,Filename.."_Weapons.csv",DataWeapons) 
+    end
+
+  return self
+end
+
+--- Load the contents of a STORAGE from files. Filenames searched for are the Filename given amended by "_Liquids", "_Aircraft" and "_Weapons" followed by a ".csv". Requires io and lfs to be desanitized to be working.
+-- @param #STORAGE self
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @return #STORAGE self
+function STORAGE:LoadFromFile(Path,Filename)
+ 
+ if not io then
+      BASE:E("ERROR: io not desanitized. Can't read the files.")
+    return false
+  end
+  
+  -- Check default path.
+  if Path==nil and not lfs then
+    BASE:E("WARNING: lfs not desanitized. File will be read from DCS installation root directory rather than your give path.")
+  end
+  
+  --Liquids
+  if self:IsLimitedLiquids() then
+    local Ok,Liquids = UTILS.LoadFromFile(Path,Filename.."_Liquids.csv")
+    if Ok then
+      for _id,_line in pairs(Liquids) do
+        if string.find(_line,"Storage") == nil then
+            local tbl=UTILS.Split(_line,"=")
+            local lqno = tonumber(tbl[1])
+            local lqam = tonumber(tbl[2])
+            self:SetLiquid(lqno,lqam)
+        end
+      end
+    else
+        self:E("File for Liquids could not be found: "..tostring(Path).."\\"..tostring(Filename"_Liquids.csv"))
+    end
+  end
+  
+  --Aircraft
+  if self:IsLimitedAircraft() then
+    local Ok,Aircraft = UTILS.LoadFromFile(Path,Filename.."_Aircraft.csv")
+    if Ok then
+      for _id,_line in pairs(Aircraft) do
+        if string.find(_line,"Storage") == nil then
+            local tbl=UTILS.Split(_line,"=")
+            local acname = tbl[1]
+            local acnumber = tonumber(tbl[2])
+            self:SetAmount(acname,acnumber)
+        end
+      end
+    else
+        self:E("File for Aircraft could not be found: "..tostring(Path).."\\"..tostring(Filename"_Aircraft.csv"))
+    end
+  end
+  
+  --Weapons
+  if self:IsLimitedWeapons()() then
+    local Ok,Weapons = UTILS.LoadFromFile(Path,Filename.."_Weapons.csv")
+    if Ok then
+      for _id,_line in pairs(Weapons) do
+        if string.find(_line,"Storage") == nil then
+            local tbl=UTILS.Split(_line,"=")
+            local wpname = tbl[1]
+            local wpnumber = tonumber(tbl[2])
+            self:SetAmount(wpname,wpnumber)
+        end
+      end
+    else
+        self:E("File for Weapons could not be found: "..tostring(Path).."\\"..tostring(Filename"_Weapons.csv"))
+    end
+  end
+   
+  return self
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
