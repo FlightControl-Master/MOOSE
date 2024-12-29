@@ -26,6 +26,7 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field DCS#Warehouse warehouse The DCS warehouse object.
 -- @field DCS#Airbase airbase The DCS airbase object.
+-- @field Core.Timer#TIMER SaverTimer The TIMER for autosave.
 -- @extends Core.Base#BASE
 
 --- *The capitalist cannot store labour-power in warehouses after he has bought it, as he may do with the raw material.* -- Karl Marx
@@ -173,14 +174,14 @@ STORAGE.Type = {
 
 --- STORAGE class version.
 -- @field #string version
-STORAGE.version="0.0.3"
+STORAGE.version="0.1.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: A lot...
--- TODO: Persistence
+-- DONE: Persistence
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -266,6 +267,10 @@ end
 -- @return #STORAGE self
 function STORAGE:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
+  if self.verbose > 1 then
+    BASE:TraceOn()
+    BASE:TraceClass("STORAGE")
+  end
   return self
 end
 
@@ -624,6 +629,9 @@ function STORAGE:SaveToFile(Path,Filename)
       end
       --self:I(DataLiquids)
       UTILS.SaveToFile(Path,Filename.."_Liquids.csv",DataLiquids)
+      if self.verbose and self.verbose > 0 then
+        self:I(self.lid.."Saving Liquids to "..tostring(Path).."\\"..tostring(Filename).."_Liquids.csv")
+      end
     end
     
     if UTILS.TableLength(ac) > 0 then
@@ -633,6 +641,9 @@ function STORAGE:SaveToFile(Path,Filename)
       end
       --self:I(DataAircraft)
       UTILS.SaveToFile(Path,Filename.."_Aircraft.csv",DataAircraft)
+      if self.verbose and self.verbose > 0 then
+        self:I(self.lid.."Saving Aircraft to "..tostring(Path).."\\"..tostring(Filename).."_Aircraft.csv")
+      end
     end
     
     if UTILS.TableLength(wp) > 0 then
@@ -666,7 +677,10 @@ function STORAGE:SaveToFile(Path,Filename)
         DataWeapons = DataWeapons.."ENUMS.Storage.weapons.AH64D."..tostring(key).."="..tostring(amount).."\n"
       end
       --self:I(DataAircraft)
-     UTILS.SaveToFile(Path,Filename.."_Weapons.csv",DataWeapons) 
+       UTILS.SaveToFile(Path,Filename.."_Weapons.csv",DataWeapons)
+       if self.verbose and self.verbose > 0 then
+         self:I(self.lid.."Saving Weapons to "..tostring(Path).."\\"..tostring(Filename).."_Weapons.csv")
+       end
     end
 
   return self
@@ -693,6 +707,9 @@ function STORAGE:LoadFromFile(Path,Filename)
   if self:IsLimitedLiquids() then
     local Ok,Liquids = UTILS.LoadFromFile(Path,Filename.."_Liquids.csv")
     if Ok then
+       if self.verbose and self.verbose > 0 then
+         self:I(self.lid.."Loading Liquids from "..tostring(Path).."\\"..tostring(Filename).."_Liquids.csv")
+       end
       for _id,_line in pairs(Liquids) do
         if string.find(_line,"Storage") == nil then
             local tbl=UTILS.Split(_line,"=")
@@ -710,6 +727,9 @@ function STORAGE:LoadFromFile(Path,Filename)
   if self:IsLimitedAircraft() then
     local Ok,Aircraft = UTILS.LoadFromFile(Path,Filename.."_Aircraft.csv")
     if Ok then
+       if self.verbose and self.verbose > 0 then
+         self:I(self.lid.."Loading Aircraft from "..tostring(Path).."\\"..tostring(Filename).."_Aircraft.csv")
+       end
       for _id,_line in pairs(Aircraft) do
         if string.find(_line,"Storage") == nil then
             local tbl=UTILS.Split(_line,"=")
@@ -727,6 +747,9 @@ function STORAGE:LoadFromFile(Path,Filename)
   if self:IsLimitedWeapons()() then
     local Ok,Weapons = UTILS.LoadFromFile(Path,Filename.."_Weapons.csv")
     if Ok then
+       if self.verbose and self.verbose > 0 then
+         self:I(self.lid.."Loading _eapons from "..tostring(Path).."\\"..tostring(Filename).."_Weapons.csv")
+       end
       for _id,_line in pairs(Weapons) do
         if string.find(_line,"Storage") == nil then
             local tbl=UTILS.Split(_line,"=")
@@ -742,6 +765,35 @@ function STORAGE:LoadFromFile(Path,Filename)
    
   return self
 end
+
+--- Start a STORAGE autosave process.
+-- @param #STORAGE self
+-- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
+-- @param #string Filename The name of the file.
+-- @param #number Interval The interval, start after this many seconds and repeat every interval seconds. Defaults to 300.
+-- @param #boolean LoadOnce If LoadOnce is true or nil, we try to load saved storage first.
+-- @return #STORAGE self
+function STORAGE:StartAutoSave(Path,Filename,Interval,LoadOnce)
+  if LoadOnce ~= false then
+    self:LoadFromFile(Path,Filename)
+  end
+  local interval = Interval or 300
+  self.SaverTimer = TIMER:New(STORAGE.SaveToFile,self,Path,Filename)
+  self.SaverTimer:Start(interval,interval)
+  return self
+end
+
+--- Stop a running STORAGE autosave process.
+-- @param #STORAGE self
+-- @return #STORAGE self
+function STORAGE:StopAutoSave()
+  if self.SaverTimer and self.SaverTimer:IsRunning() then
+    self.SaverTimer:Stop()
+    self.SaverTimer = nil
+  end
+  return self
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Private Functions
