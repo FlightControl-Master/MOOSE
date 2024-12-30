@@ -128,6 +128,35 @@
 -- # Weapons Helper Enumerater
 -- 
 -- The currently available weapon items are available in the `ENUMS.Storage.weapons`, e.g. `ENUMS.Storage.weapons.bombs.Mk_82Y`.
+-- 
+-- # Persistence
+-- 
+-- The contents of the storage can be saved to and read from disk. For this to function, `io` and `lfs` need to be desanitized in `MissionScripting.lua`.
+-- 
+-- ## Save once
+-- 
+-- ### To save once, e.g. this is sufficient:
+--    
+--      -- Filenames created are the Filename given amended by "_Liquids", "_Aircraft" and "_Weapons" followed by a ".csv". Only Storage NOT set to unlimited will be saved.
+--      local Path = "C:\\Users\\UserName\\Saved Games\\DCS\\Missions\\"
+--      local Filename = "Batumi"
+--      storage:SaveToFile(Path,Filename)
+--    
+-- ### Autosave
+-- 
+--      storage:StartAutoSave(Path,Filename,300,true) -- save every 300 secs/5 mins starting in 5 mins, load the existing storage - if any - first if the last parameter is **not** `false`.
+-- 
+-- ### Stop Autosave
+-- 
+--      storage:StopAutoSave() -- stop the scheduler.
+--    
+-- ### Load back with e.g.
+-- 
+--      -- Filenames searched for the Filename given amended by "_Liquids", "_Aircraft" and "_Weapons" followed by a ".csv". Only Storage NOT set to unlimited will be loaded.
+--      local Path = "C:\\Users\\UserName\\Saved Games\\DCS\\Missions\\"
+--      local Filename = "Batumi"
+--      storage:LoadFromFile(Path,Filename)
+--    
 --
 -- @field #STORAGE
 STORAGE = {
