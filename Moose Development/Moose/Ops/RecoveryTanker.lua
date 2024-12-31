@@ -997,6 +997,8 @@ function RECOVERYTANKER:onafterStart(From, Event, To)
 
   -- Init status updates in 10 seconds.
   self:__Status(10)
+  
+  return self
 end
 
 
