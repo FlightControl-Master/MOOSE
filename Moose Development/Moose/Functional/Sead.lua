@@ -19,7 +19,7 @@
 --
 -- ### Authors: **applevangelist**, **FlightControl**
 --
--- Last Update: Oct 2024
+-- Last Update: Dec 2024
 --
 -- ===
 --
@@ -157,7 +157,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   self:AddTransition("*",             "ManageEvasion",                "*")
   self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  self:I("*** SEAD - Started Version 0.4.8")
+  self:I("*** SEAD - Started Version 0.4.9")
   return self
 end
 
