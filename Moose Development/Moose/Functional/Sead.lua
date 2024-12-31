@@ -19,7 +19,7 @@
 --
 -- ### Authors: **applevangelist**, **FlightControl**
 --
--- Last Update: Oct 2024
+-- Last Update: Dec 2024
 --
 -- ===
 --
@@ -80,6 +80,7 @@ SEAD = {
   ["AGM_122"] = "AGM_122",
   ["AGM_84"] = "AGM_84",
   ["AGM_45"] = "AGM_45",
+  ["AGM_65"] = "AGM_65",
   ["ALARM"] = "ALARM",
   ["LD-10"] = "LD-10",
   ["X_58"] = "X_58",
@@ -99,6 +100,7 @@ SEAD = {
   -- km and mach
   ["AGM_88"] = { 150, 3},
   ["AGM_45"] = { 12, 2},
+  ["AGM_65"] = { 16, 0.9},
   ["AGM_122"] = { 16.5, 2.3},
   ["AGM_84"] = { 280, 0.8},
   ["ALARM"] = { 45, 2},
@@ -155,7 +157,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   self:AddTransition("*",             "ManageEvasion",                "*")
   self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  self:I("*** SEAD - Started Version 0.4.8")
+  self:I("*** SEAD - Started Version 0.4.9")
   return self
 end
 
@@ -468,6 +470,7 @@ function SEAD:HandleEventShot( EventData )
   local SEADWeaponName = EventData.WeaponName or "None" -- return weapon type
   
   if self:_CheckHarms(SEADWeaponName) then
+    --UTILS.PrintTableToLog(EventData)
     local SEADPlane = EventData.IniUnit -- Wrapper.Unit#UNIT
     
     if not SEADPlane then return self end -- case IniUnit is empty
@@ -493,7 +496,7 @@ function SEAD:HandleEventShot( EventData )
     if not _target or self.debug  then -- AGM-88 or 154 w/o target data
       self:E("***** SEAD - No target data for " .. (SEADWeaponName or "None"))
       if string.find(SEADWeaponName,"AGM_88",1,true) or string.find(SEADWeaponName,"AGM_154",1,true) then
-        self:I("**** Tracking AGM-88/154 with no target data.")
+        self:T("**** Tracking AGM-88/154 with no target data.")
         local pos0 = SEADPlane:GetCoordinate()
         local fheight = SEADPlane:GetHeight()
         self:__CalculateHitZone(20,SEADWeapon,pos0,fheight,SEADGroup,SEADWeaponName)
