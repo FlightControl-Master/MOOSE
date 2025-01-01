@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: Dec 2024
+-- Last Update: Jan 2025
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -663,7 +663,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.21"
+    self.version="0.8.22"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -860,7 +860,7 @@ do
     self.AcceptZones = AcceptZones or {}
     self.RejectZones = RejectZones or {}
     self.ConflictZones = ConflictZones or {}
-    if #AcceptZones > 0 or #RejectZones > 0 or #ConflictZones > 0 then
+    if #self.AcceptZones > 0 or #self.RejectZones > 0 or #self.ConflictZones > 0 then
       self.usezones = true
     end
     return self
@@ -1690,7 +1690,10 @@ do
       local samgroup = GROUP:FindByName(name)
       local IsInZone, Distance = self:_CheckObjectInZone(detset, samcoordinate, radius, height, dlink)
       local suppressed = self.SuppressedGroups[name] or false
-      local activeshorad = self.Shorad.ActiveGroups[name] or false
+      local activeshorad = false
+      if self.Shorad and self.Shorad.ActiveGroups and self.Shorad.ActiveGroups[name] then
+       activeshorad = true
+      end
       if IsInZone and not suppressed and not activeshorad then --check any target in zone and not currently managed by SEAD
         if samgroup:IsAlive() then
           -- switch on SAM
