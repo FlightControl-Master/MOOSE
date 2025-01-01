@@ -860,7 +860,7 @@ do
     self.AcceptZones = AcceptZones or {}
     self.RejectZones = RejectZones or {}
     self.ConflictZones = ConflictZones or {}
-    if #AcceptZones > 0 or #RejectZones > 0 or #ConflictZones > 0 then
+    if #self.AcceptZones > 0 or #self.RejectZones > 0 or #self.ConflictZones > 0 then
       self.usezones = true
     end
     return self
