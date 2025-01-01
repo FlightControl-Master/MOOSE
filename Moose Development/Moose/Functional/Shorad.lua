@@ -21,7 +21,7 @@
 -- @image Functional.Shorad.jpg
 --
 -- Date: Nov 2021
--- Last Update: Nov 2023
+-- Last Update: Jan 2025
 
 -------------------------------------------------------------------------
 --- **SHORAD** class, extends Core.Base#BASE
@@ -521,7 +521,27 @@ do
     -- go through set and find the one(s) to activate
     local TDiff = 4
     for _,_group in pairs (shoradset) do
-      if _group:IsAnyInZone(targetzone) then
+      
+      local groupname = _group:GetName()
+      
+      if groupname == TargetGroup then
+        -- Shot at a SHORAD group
+        if self.UseEmOnOff then
+          _group:EnableEmission(false)
+        end
+        _group:OptionAlarmStateGreen()
+        self.ActiveGroups[groupname] = nil
+        local text = string.format("Shot at SHORAD %s! Evading!", _group:GetName())
+        self:T(text)
+        local m = MESSAGE:New(text,10,"SHORAD"):ToAllIf(self.debug)
+        
+        --Shoot and Scoot
+        if self.shootandscoot then
+          self:__ShootAndScoot(1,_group)
+        end
+        
+      elseif _group:IsAnyInZone(targetzone) then
+        -- shot at a group we protect
         local text = string.format("Waking up SHORAD %s", _group:GetName())
         self:T(text)
         local m = MESSAGE:New(text,10,"SHORAD"):ToAllIf(self.debug)
@@ -529,7 +549,6 @@ do
           _group:EnableEmission(true)
         end
         _group:OptionAlarmStateRed()
-        local groupname = _group:GetName()
         if self.ActiveGroups[groupname] == nil then -- no timer yet for this group
           self.ActiveGroups[groupname] = { Timing = ActiveTimer }
           local endtime = timer.getTime() + (ActiveTimer * math.random(75,100) / 100 ) -- randomize wakeup a bit
