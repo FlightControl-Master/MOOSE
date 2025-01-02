@@ -80,6 +80,7 @@
 -- @field #boolean smokeownposition
 -- @field #table SmokeOwn
 -- @field #boolean smokeaveragetargetpos
+-- @field #boolean reporttostringbullsonly
 -- @extends Core.Fsm#FSM
 
 ---
@@ -105,7 +106,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.1.23",
+  version            =   "0.1.24",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   ViewZoneLaser      =   {},
@@ -133,7 +134,8 @@ PLAYERRECCE = {
   TargetCache        =   nil,
   smokeownposition   =   false,
   SmokeOwn           =   {},
-  smokeaveragetargetpos = false,
+  smokeaveragetargetpos = true,
+  reporttostringbullsonly = true,
 }
 
 --- 
@@ -235,6 +237,8 @@ function PLAYERRECCE:New(Name, Coalition, PlayerSet)
   self.lasingtime = 60
   
   self.minthreatlevel = 0
+  
+  self.reporttostringbullsonly = true
   
   self.TForget = 600
   self.TargetCache = FIFO:New()
@@ -929,7 +933,8 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
     if (not oldtarget) or targetset:IsNotInSet(oldtarget) or target:IsDead() or target:IsDestroyed() then
       -- lost LOS or dead
       laser:LaseOff()
-      if target:IsDead() or target:IsDestroyed() or target:GetLife() < 2 then
+      self:T(self.lid.."Target Life Points: "..target:GetLife() or "none")
+      if target:IsDead() or target:IsDestroyed() or target:GetDamage() > 79 or target:GetLife() <= 1 then
         self:__Shack(-1,client,oldtarget)
         --self.LaserTarget[playername] = nil
       else
@@ -1274,6 +1279,9 @@ self:T(self.lid.."_ReportLaserTargets")
     report:Add("Threat Level: "..ThreatGraph.." ("..ThreatLevelText..")")
     if not self.ReferencePoint then
       report:Add("Location: "..client:GetCoordinate():ToStringBULLS(self.Coalition,Settings))
+      if self.reporttostringbullsonly ~= true then
+        report:Add("Location: "..client:GetCoordinate():ToStringA2G(nil,Settings))
+      end
     else
       report:Add("Location: "..client:GetCoordinate():ToStringFromRPShort(self.ReferencePoint,self.RPName,client,Settings))
     end
@@ -1317,8 +1325,14 @@ function PLAYERRECCE:_ReportVisualTargets(client,group,playername)
     report:Add("Threat Level: "..ThreatGraph.." ("..ThreatLevelText..")")
     if not self.ReferencePoint then
       report:Add("Location: "..client:GetCoordinate():ToStringBULLS(self.Coalition,Settings))
+      if self.reporttostringbullsonly ~= true then
+        report:Add("Location: "..client:GetCoordinate():ToStringA2G(nil,Settings))
+      end
     else
       report:Add("Location: "..client:GetCoordinate():ToStringFromRPShort(self.ReferencePoint,self.RPName,client,Settings))
+      if self.reporttostringbullsonly ~= true then
+        report:Add("Location: "..client:GetCoordinate():ToStringA2G(nil,Settings))
+      end
     end
     report:Add(string.rep("-",15))
     local text = report:Text()
@@ -1549,6 +1563,16 @@ end
 function PLAYERRECCE:SetMenuName(Name)
  self:T(self.lid.."SetMenuName: "..Name)
  self.MenuName = Name
+ return self
+end
+
+--- [User] Set reporting to be BULLS only or BULLS plus playersettings based coordinate.
+-- @param #PLAYERRECCE self
+-- @param #boolean OnOff
+-- @return #PLAYERRECCE self
+function PLAYERRECCE:SetReportBullsOnly(OnOff)
+ self:T(self.lid.."SetReportBullsOnly: "..tostring(OnOff))
+ self.reporttostringbullsonly = OnOff
  return self
 end
 

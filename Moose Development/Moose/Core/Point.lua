@@ -110,7 +110,7 @@ do -- COORDINATE
   --
   -- ## 4.4) Get the North correction of the current location.
   --
-  --   * @{#COORDINATE.GetNorthCorrection}(): Obtains the north correction at the current 3D point.
+  --   * @{#COORDINATE.GetNorthCorrectionRadians}(): Obtains the north correction at the current 3D point.
   --
   -- ## 4.5) Point Randomization
   --
@@ -968,8 +968,10 @@ do -- COORDINATE
   -- @return DCS#Distance Distance The distance in meters.
   function COORDINATE:Get2DDistance(TargetCoordinate)
     if not TargetCoordinate then return 1000000 end
-    local a={x=TargetCoordinate.x-self.x, y=0, z=TargetCoordinate.z-self.z}
-    local norm=UTILS.VecNorm(a)
+    --local a={x=TargetCoordinate.x-self.x, y=0, z=TargetCoordinate.z-self.z}
+    local a = self:GetVec2()
+    local b = TargetCoordinate:GetVec2()
+    local norm=UTILS.VecDist2D(a,b)
     return norm
   end
 
@@ -1329,13 +1331,16 @@ do -- COORDINATE
   -- @param Core.Settings#SETTINGS Settings
   -- @param #string Language (Optional) Language "en" or "ru"
   -- @param #boolean MagVar If true, also state angle in magnetic
+  -- @param #number Precision Rounding precision, defaults to 0
   -- @return #string The BR Text
-  function COORDINATE:GetBRText( AngleRadians, Distance, Settings, Language, MagVar )
+  function COORDINATE:GetBRText( AngleRadians, Distance, Settings, Language, MagVar, Precision )
 
     local Settings = Settings or _SETTINGS -- Core.Settings#SETTINGS
-
+      
+    Precision = Precision or 0
+      
     local BearingText = self:GetBearingText( AngleRadians, 0, Settings, MagVar )
-    local DistanceText = self:GetDistanceText( Distance, Settings, Language, 0 )
+    local DistanceText = self:GetDistanceText( Distance, Settings, Language, Precision )
 
     local BRText = BearingText .. DistanceText
 
@@ -1957,9 +1962,18 @@ do -- COORDINATE
   --- Smokes the point in a color.
   -- @param #COORDINATE self
   -- @param Utilities.Utils#SMOKECOLOR SmokeColor
-  function COORDINATE:Smoke( SmokeColor )
+  -- @param #string name (Optional) Name if you want to stop the smoke early (normal duration: 5mins)
+  function COORDINATE:Smoke( SmokeColor, name )
     self:F2( { SmokeColor } )
-    trigger.action.smoke( self:GetVec3(), SmokeColor )
+    self.firename = name or "Smoke-"..math.random(1,100000)
+    trigger.action.smoke( self:GetVec3(), SmokeColor, self.firename )
+  end
+
+  --- Stops smoking the point in a color.
+  -- @param #COORDINATE self
+  -- @param #string name (Optional) Name if you want to stop the smoke early (normal duration: 5mins)
+  function COORDINATE:StopSmoke( name )
+    self:StopBigSmokeAndFire( name )
   end
 
   --- Smoke the COORDINATE Green.
@@ -2410,7 +2424,7 @@ do -- COORDINATE
       for i,coord in ipairs(Coordinates) do
         vecs[i+1]=coord:GetVec3()
       end
-
+      
       if #vecs<3 then
         self:E("ERROR: A free form polygon needs at least three points!")
       elseif #vecs==3 then
@@ -2900,12 +2914,13 @@ do -- COORDINATE
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
   -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @param #boolean MagVar If true, also get angle in MagVar for BR/BRA
+  -- @param #number Precision Rounding precision, currently full km as default (=0)
   -- @return #string The BR text.
-  function COORDINATE:ToStringBR( FromCoordinate, Settings, MagVar )
+  function COORDINATE:ToStringBR( FromCoordinate, Settings, MagVar, Precision )
     local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
     local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = self:Get2DDistance( FromCoordinate )
-    return "BR, " .. self:GetBRText( AngleRadians, Distance, Settings, nil, MagVar )
+    return "BR, " .. self:GetBRText( AngleRadians, Distance, Settings, nil, MagVar, Precision )
   end
 
   --- Return a BRA string from a COORDINATE to the COORDINATE.
@@ -3313,16 +3328,16 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable The controllable to retrieve the settings from, otherwise the default settings will be chosen.
   -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
-  -- @param Tasking.Task#TASK Task The task for which coordinates need to be calculated.
   -- @return #string The coordinate Text in the configured coordinate system.
-  function COORDINATE:ToString( Controllable, Settings, Task )
+  function COORDINATE:ToString( Controllable, Settings )
 
 --    self:E( { Controllable = Controllable and Controllable:GetName() } )
 
     local Settings = Settings or ( Controllable and _DATABASE:GetPlayerSettings( Controllable:GetPlayerName() ) ) or _SETTINGS
 
     local ModeA2A = nil
-
+    
+    --[[
     if Task then
       if Task:IsInstanceOf( TASK_A2A ) then
         ModeA2A = true
@@ -3339,7 +3354,7 @@ do -- COORDINATE
         end
       end
     end
-
+    --]]
 
     if ModeA2A == nil then
       local IsAir = Controllable and ( Controllable:IsAirPlane() or Controllable:IsHelicopter() ) or false

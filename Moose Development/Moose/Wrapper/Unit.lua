@@ -127,6 +127,7 @@ function UNIT:Register( UnitName )
     local group = unit:getGroup()
     if group then 
       self.GroupName=group:getName()
+      self.groupId = group:getID()  
     end
     self.DCSUnit = unit
   end
