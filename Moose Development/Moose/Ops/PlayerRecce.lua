@@ -933,6 +933,7 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
     if (not oldtarget) or targetset:IsNotInSet(oldtarget) or target:IsDead() or target:IsDestroyed() then
       -- lost LOS or dead
       laser:LaseOff()
+      self:T(self.lid.."Target Life Points: "..target:GetLife() or "none")
       if target:IsDead() or target:IsDestroyed() or target:GetLife() < 2 then
         self:__Shack(-1,client,oldtarget)
         --self.LaserTarget[playername] = nil
