@@ -106,7 +106,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.1.23",
+  version            =   "0.1.24",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   ViewZoneLaser      =   {},
@@ -934,7 +934,7 @@ function PLAYERRECCE:_LaseTarget(client,targetset)
       -- lost LOS or dead
       laser:LaseOff()
       self:T(self.lid.."Target Life Points: "..target:GetLife() or "none")
-      if target:IsDead() or target:IsDestroyed() or target:GetLife() < 2 then
+      if target:IsDead() or target:IsDestroyed() or target:GetDamage() > 79 or target:GetLife() <= 1 then
         self:__Shack(-1,client,oldtarget)
         --self.LaserTarget[playername] = nil
       else
