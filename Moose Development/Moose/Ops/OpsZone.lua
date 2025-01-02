@@ -1314,7 +1314,7 @@ function OPSZONE:EvaluateZone()
       
       if Nblu>0 then
       
-        if not self:IsAttacked() and self.Tnut>=self.threatlevelCapture then
+        if not self:IsAttacked() and self.Tblu>=self.threatlevelCapture then
           self:Attacked(coalition.side.BLUE)
         end
         
@@ -1366,7 +1366,7 @@ function OPSZONE:EvaluateZone()
       
       if Nred>0 then
       
-        if not self:IsAttacked() and self.Tnut>=self.threatlevelCapture then
+        if not self:IsAttacked() and self.Tred>=self.threatlevelCapture then
           -- Red is attacking blue zone.
           self:Attacked(coalition.side.RED)
         end
