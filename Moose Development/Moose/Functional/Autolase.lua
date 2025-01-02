@@ -74,7 +74,7 @@
 -- @image Designation.JPG
 --
 -- Date: 24 Oct 2021
--- Last Update: May 2024
+-- Last Update: Jan 2025
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
@@ -89,6 +89,7 @@
 -- @field #table playermenus
 -- @field #boolean smokemenu
 -- @field #boolean threatmenu
+-- @field #number RoundingPrecision
 -- @extends Ops.Intel#INTEL
 
 ---
@@ -100,6 +101,7 @@ AUTOLASE = {
   alias = "",
   debug = false,
   smokemenu = true,
+  RoundingPrecision = 0,
 }
 
 --- Laser spot info
@@ -118,7 +120,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.26"
+AUTOLASE.version = "0.1.27"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -207,6 +209,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.playermenus = {}
   self.smokemenu = true
   self.threatmenu = true
+  self.RoundingPrecision = 0
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -600,6 +603,15 @@ function AUTOLASE:SetSmokeTargets(OnOff,Color)
   return self
 end
 
+--- (User) Function to set rounding precision for BR distance output.
+-- @param #AUTOLASE self
+-- @param #number IDP Rounding precision before/after the decimal sign. Defaults to zero. Positive values round right of the decimal sign, negative ones left of the decimal sign. 
+-- @return #AUTOLASE self 
+function AUTOLASE:SetRoundingPrecsion(IDP)
+  self.RoundingPrecision = IDP or 0
+  return self
+end
+
 --- (User) Show the "Switch smoke target..." menu entry for pilots. On by default.
 -- @param #AUTOLASE self
 -- @return #AUTOLASE self 
@@ -787,7 +799,9 @@ function AUTOLASE:ShowStatus(Group,Unit)
         elseif settings:IsA2G_LL_DMS() then
           locationstring = entry.coordinate:ToStringLLDMS(settings)
         elseif settings:IsA2G_BR() then
-          locationstring = entry.coordinate:ToStringBR(Group:GetCoordinate() or Unit:GetCoordinate(),settings)
+          -- attention this is the distance from the ASKING unit to target, not from RECCE to target!
+          local startcoordinate = Unit:GetCoordinate() or Group:GetCoordinate()
+          locationstring = entry.coordinate:ToStringBR(startcoordinate,settings,false,self.RoundingPrecision)
         end
       end
     end
