@@ -2156,7 +2156,11 @@ end
 
 ]]
 
---- **[GROUND, NAVAL]** Create an ARTY mission.
+--- **[GROUND, NAVAL]** Create an ARTY mission ("Fire at point" task).
+-- 
+-- If the group has more than one weapon type supporting the "Fire at point" task, the employed weapon type can be set via the `AUFTRAG:SetWeaponType()` function.
+-- 
+-- **Note** that it is recommended to set the weapon range via the `OPSGROUP:AddWeaponRange()` function as this cannot be retrieved from the DCS API.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target Center of the firing solution.
 -- @param #number Nshots Number of shots to be fired. Default `#nil`.
