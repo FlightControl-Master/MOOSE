@@ -107,6 +107,8 @@
 -- @field Sound.SRS#MSRSQUEUE instructsrsQ SRS queue for range instructor.
 -- @field #number Coalition Coalition side for the menu, if any.
 -- @field Core.Menu#MENU_MISSION menuF10root Specific user defined root F10 menu.
+-- @field #number ceilingaltitude Range ceiling altitude in ft MSL.  Aircraft above this altitude are not considered to be in the range. Default is 20000 ft.
+-- @field #boolean ceilingenabled Range has a ceiling and is not unlimited.  Default is false.
 -- @extends Core.Fsm#FSM
 
 --- *Don't only practice your art, but force your way into its secrets; art deserves that, for it and knowledge can raise man to the Divine.* - Ludwig van Beethoven
@@ -273,6 +275,10 @@
 --      -- Create a range object.
 --      GoldwaterRange=RANGE:New("Goldwater Range")
 --
+--      -- Add a ceiling to the range.  Aircraft must be below this altitude (MSL) to be considered in the range.
+--      GoldwaterRange:SetRangeCeiling(20000)
+--      GoldwaterRange:EnableRangeCeiling(true)
+--
 --      -- Distance between strafe target and foul line. You have to specify the names of the unit or static objects.
 --      -- Note that this could also be done manually by simply measuring the distance between the target and the foul line in the ME.
 --      GoldwaterRange:GetFoullineDistance("GWR Strafe Pit Left 1", "GWR Foul Line Left")
@@ -358,6 +364,8 @@ RANGE = {
   targetpath = nil,
   targetprefix = nil,
   Coalition = nil,
+  ceilingaltitude = 20000,
+  ceilingenabled = false,
   }
 
 --- Default range parameters.
@@ -1082,6 +1090,39 @@ function RANGE:SetRangeZone( zone )
     zone=ZONE:FindByName(zone)
   end
   self.rangezone = zone
+  return self
+end
+
+--- Set range ceiling. For example, no bomb impact points are smoked if a bomb falls outside of this zone.
+-- If a zone is not explicitly specified, the range zone is determined by its location and radius.
+-- @param #RANGE self
+-- @param #number ceiling (optional) Ceiling altitude of the range in ft MSL. Default 20000ft MSL
+-- @return #RANGE self
+function RANGE:SetRangeCeiling( alt )
+  self:T(self.lid.."SetRangeCeiling")
+  if alt and type(alt) == "number" then
+    self.ceilingaltitude=alt
+  else
+    self:E(self.lid.."Altitude either not provided or is not a number, using default setting (20000).")
+    self.ceilingaltitude=20000
+  end
+  return self
+end
+
+--- Set range ceiling. For example, no bomb impact points are smoked if a bomb falls outside of this zone.
+-- If a zone is not explicitly specified, the range zone is determined by its location and radius.
+-- @param #RANGE self
+-- @param #boolean enabled True if you would like to enable the ceiling check.  If no value give, will Default is false.
+-- @return #RANGE self
+function RANGE:EnableRangeCeiling( enabled )
+  self:T(self.lid.."EnableRangeCeiling")
+  if enabled and type(enabled) == "boolean" then
+    self.ceilingenabled=enabled
+  else
+    self:E(self.lid.."Enabled either not provided or is not a boolean, using default setting (false).")
+    self.ceilingenabled=false
+  end
+
   return self
 end
 
@@ -3112,7 +3153,11 @@ function RANGE:_CheckPlayers()
 
     if unit and unit:IsAlive() then
 
-      if unit:IsInZone( self.rangezone ) then
+      local unitalt = unit:GetAltitude(false)
+      local unitaltinfeet = UTILS.MetersToFeet(unitalt)
+
+      if unit:IsInZone(self.rangezone) and (not self.ceilingenabled or unitaltinfeet < self.ceilingaltitude) then
+
 
         ------------------------------
         -- Player INSIDE Range Zone --
