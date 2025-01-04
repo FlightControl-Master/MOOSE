@@ -60,6 +60,8 @@
 -- @field #number ShoradActDistance Distance of an attacker in meters from a Mantis SAM site, on which Shorad will be switched on. Useful to not give away Shorad sites too early. Default 15km. Should be smaller than checkradius.
 -- @field #boolean checkforfriendlies If true, do not activate a SAM installation if a friendly aircraft is in firing range.
 -- @field #table FilterZones Table of Core.Zone#ZONE Zones Consider SAM groups in this zone(s) only for this MANTIS instance, must be handed as #table of Zone objects.
+-- @field #boolean SmokeDecoy If true, smoke short range SAM units as decoy if a plane is in firing range.
+-- @field #number SmokeDecoyColor Color to use, defaults to SMOKECOLOR.White
 -- @extends Core.Base#BASE
 
 
@@ -329,6 +331,8 @@ MANTIS = {
   autoshorad            = true,
   ShoradGroupSet        = nil,
   checkforfriendlies    = false,
+  SmokeDecoy            = false,
+  SmokeDecoyColor       = SMOKECOLOR.White,
 }
 
 --- Advanced state enumerator
@@ -590,7 +594,10 @@ do
     
     self.SkateZones = nil
     self.SkateNumber =  3
-    self.shootandscoot = false   
+    self.shootandscoot = false
+    
+    self.SmokeDecoy = false
+    self.SmokeDecoyColor = SMOKECOLOR.White
     
     self.UseEmOnOff = true
     if EmOnOff == false then
@@ -602,6 +609,7 @@ do
     else
       self.advAwacs = false
     end
+    
 
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("MANTIS %s | ", self.name)
@@ -663,7 +671,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.8.22"
+    self.version="0.8.23"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -896,6 +904,16 @@ do
       range = 95
     end
     self.engagerange = range
+    return self
+  end
+  
+  --- Function to set Short Range SAMs to spit out smoke as decoy, if an enemy plane is in range.
+  -- @param #MANTIS self
+  -- @param #boolean Onoff Set to true for on and nil/false for off.
+  -- @param #number Color (Optional) Color to use, defaults to `SMOKECOLOR.White`
+  function MANTIS:SetSmokeDecoy(Onoff,Color)
+    self.SmokeDecoy = Onoff
+    self.SmokeDecoyColor = Color or SMOKECOLOR.White
     return self
   end
   
@@ -1550,18 +1568,18 @@ do
         local grpname = group:GetName()
         local grpcoord = group:GetCoordinate()
         local grprange,grpheight,type,blind  = self:_GetSAMRange(grpname)
-        table.insert( SAM_Tbl, {grpname, grpcoord, grprange, grpheight, blind})
+        table.insert( SAM_Tbl, {grpname, grpcoord, grprange, grpheight, blind, type})
         --table.insert( SEAD_Grps, grpname )
         if type == MANTIS.SamType.LONG then
-          table.insert( SAM_Tbl_lg, {grpname, grpcoord, grprange, grpheight, blind})
+          table.insert( SAM_Tbl_lg, {grpname, grpcoord, grprange, grpheight, blind, type})
           table.insert( SEAD_Grps, grpname )
           --self:T("SAM "..grpname.." is type LONG")
         elseif type == MANTIS.SamType.MEDIUM then
-         table.insert( SAM_Tbl_md, {grpname, grpcoord, grprange, grpheight, blind})
+         table.insert( SAM_Tbl_md, {grpname, grpcoord, grprange, grpheight, blind, type})
          table.insert( SEAD_Grps, grpname )
          --self:T("SAM "..grpname.." is type MEDIUM")
         elseif type == MANTIS.SamType.SHORT then
-          table.insert( SAM_Tbl_sh, {grpname, grpcoord, grprange, grpheight, blind})
+          table.insert( SAM_Tbl_sh, {grpname, grpcoord, grprange, grpheight, blind, type})
           --self:T("SAM "..grpname.." is type SHORT")
           self.ShoradGroupSet:Add(grpname,group)
           if not self.autoshorad then
@@ -1609,16 +1627,16 @@ do
           local grpname = group:GetName()
           local grpcoord = group:GetCoordinate()
           local grprange, grpheight,type,blind  = self:_GetSAMRange(grpname)
-          table.insert( SAM_Tbl, {grpname, grpcoord, grprange, grpheight, blind}) -- make the table lighter, as I don't really use the zone here
+          table.insert( SAM_Tbl, {grpname, grpcoord, grprange, grpheight, blind, type}) -- make the table lighter, as I don't really use the zone here
           table.insert( SEAD_Grps, grpname )
           if type == MANTIS.SamType.LONG then
-            table.insert( SAM_Tbl_lg, {grpname, grpcoord, grprange, grpheight, blind})
+            table.insert( SAM_Tbl_lg, {grpname, grpcoord, grprange, grpheight, blind, type})
             --self:I({grpname,grprange, grpheight})
           elseif type == MANTIS.SamType.MEDIUM then
-           table.insert( SAM_Tbl_md, {grpname, grpcoord, grprange, grpheight, blind})
+           table.insert( SAM_Tbl_md, {grpname, grpcoord, grprange, grpheight, blind, type})
            --self:I({grpname,grprange, grpheight})
           elseif type == MANTIS.SamType.SHORT then
-            table.insert( SAM_Tbl_sh, {grpname, grpcoord, grprange, grpheight, blind})
+            table.insert( SAM_Tbl_sh, {grpname, grpcoord, grprange, grpheight, blind, type})
             --self:I({grpname,grprange, grpheight})
             self.ShoradGroupSet:Add(grpname,group)
             if self.autoshorad then
@@ -1688,6 +1706,7 @@ do
       local radius = _data[3]
       local height = _data[4]
       local blind = _data[5] * 1.25 + 1
+      local shortsam = _data[6] == MANTIS.SamType.SHORT and true or false
       local samgroup = GROUP:FindByName(name)
       local IsInZone, Distance = self:_CheckObjectInZone(detset, samcoordinate, radius, height, dlink)
       local suppressed = self.SuppressedGroups[name] or false
@@ -1712,6 +1731,15 @@ do
           if self.SamStateTracker[name] ~= "RED" and switch then
             self:__RedState(1,samgroup)
             self.SamStateTracker[name] = "RED"
+          end
+          if shortsam == true and self.SmokeDecoy == true then
+            local units = samgroup:GetUnits() or {}
+            local smoke = self.SmokeDecoyColor or SMOKECOLOR.White
+            for _,unit in pairs(units) do
+              if unit and unit:IsAlive() then
+                unit:Smoke(smoke,2,2)
+              end
+            end
           end
           -- link in to SHORAD if available
           -- DONE: Test integration fully
