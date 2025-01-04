@@ -1093,8 +1093,7 @@ function RANGE:SetRangeZone( zone )
   return self
 end
 
---- Set range ceiling. For example, no bomb impact points are smoked if a bomb falls outside of this zone.
--- If a zone is not explicitly specified, the range zone is determined by its location and radius.
+--- Set range ceiling. Altitude in MSL
 -- @param #RANGE self
 -- @param #number ceiling (optional) Ceiling altitude of the range in ft MSL. Default 20000ft MSL
 -- @return #RANGE self
@@ -1109,8 +1108,7 @@ function RANGE:SetRangeCeiling( alt )
   return self
 end
 
---- Set range ceiling. For example, no bomb impact points are smoked if a bomb falls outside of this zone.
--- If a zone is not explicitly specified, the range zone is determined by its location and radius.
+--- Enable using the range ceiling. Aircraft above this altitude are not considered in the range.
 -- @param #RANGE self
 -- @param #boolean enabled True if you would like to enable the ceiling check.  If no value give, will Default is false.
 -- @return #RANGE self
