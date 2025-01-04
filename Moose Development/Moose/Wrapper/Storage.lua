@@ -773,7 +773,7 @@ function STORAGE:LoadFromFile(Path,Filename)
   end
   
   --Weapons
-  if self:IsLimitedWeapons()() then
+  if self:IsLimitedWeapons() then
     local Ok,Weapons = UTILS.LoadFromFile(Path,Filename.."_Weapons.csv")
     if Ok then
        if self.verbose and self.verbose > 0 then
