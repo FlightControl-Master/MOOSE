@@ -1361,7 +1361,8 @@ function EVENT:onEvent( Event )
             Event.IniDynamicCargoName = Event.IniUnitName
             Event.IniPlayerName = string.match(Event.IniUnitName,"^(.+)|%d%d:%d%d|PKG%d+")
           else
-            Event.IniUnit = CARGO:FindByName( Event.IniDCSUnitName )
+            --Event.IniUnit = CARGO:FindByName( Event.IniDCSUnitName )
+            Event.IniUnit = STATIC:FindByName( Event.IniDCSUnitName, false )
           end
           Event.IniCoalition = Event.IniDCSUnit:getCoalition()
           Event.IniCategory = Event.IniDCSUnit:getDesc().category
