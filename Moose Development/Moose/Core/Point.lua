@@ -970,6 +970,9 @@ do -- COORDINATE
     if not TargetCoordinate then return 1000000 end
     --local a={x=TargetCoordinate.x-self.x, y=0, z=TargetCoordinate.z-self.z}
     local a = self:GetVec2()
+    if not TargetCoordinate.ClassName then
+      TargetCoordinate=COORDINATE:NewFromVec3(TargetCoordinate)
+    end
     local b = TargetCoordinate:GetVec2()
     local norm=UTILS.VecDist2D(a,b)
     return norm
