@@ -1733,11 +1733,12 @@ do
             self.SamStateTracker[name] = "RED"
           end
           if shortsam == true and self.SmokeDecoy == true then
+            self:I("Smoking")
             local units = samgroup:GetUnits() or {}
             local smoke = self.SmokeDecoyColor or SMOKECOLOR.White
             for _,unit in pairs(units) do
               if unit and unit:IsAlive() then
-                unit:Smoke(smoke,2,2)
+                unit:GetCoordinate():Smoke(smoke)
               end
             end
           end
