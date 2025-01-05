@@ -411,7 +411,7 @@ function CLEANUP_AIRBASE.__:CleanUpSchedule()
   					end
   				end
   				-- Clean Units which are waiting for a very long time in the CleanUpZone.
-  				if CleanUpUnit and not CleanUpUnit:GetPlayerName() then
+  				if CleanUpUnit and (CleanUpUnit.GetPlayerName == nil or not CleanUpUnit:GetPlayerName()) then
   					local CleanUpUnitVelocity = CleanUpUnit:GetVelocityKMH()
   					if CleanUpUnitVelocity < 1 then
   						if CleanUpListData.CleanUpMoved then
