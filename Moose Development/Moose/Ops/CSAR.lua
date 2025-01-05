@@ -31,7 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 ---
--- Last Update Sep 2024
+-- Last Update Jan 2025
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -92,7 +92,7 @@
 --         mycsar.immortalcrew = true -- Set to true to make wounded crew immortal.
 --         mycsar.invisiblecrew = false -- Set to true to make wounded crew insvisible.
 --         mycsar.loadDistance = 75 -- configure distance for pilots to get into helicopter in meters.
---         mycsar.mashprefix = {"MASH"} -- prefixes of #GROUP objects used as MASHes.
+--         mycsar.mashprefix = {"MASH"} -- prefixes of #GROUP objects used as MASHes. Will also try to add ZONE and STATIC objects with this prefix once at startup.
 --         mycsar.max_units = 6 -- max number of pilots that can be carried if #CSAR.AircraftType is undefined.
 --         mycsar.messageTime = 15 -- Time to show messages for in seconds. Doubled for long messages.
 --         mycsar.radioSound = "beacon.ogg" -- the name of the sound file to use for the pilots\' radio beacons. 
@@ -313,7 +313,7 @@ CSAR.AircraftType["CH-47Fbl1"] = 31
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.29"
+CSAR.version="1.0.30"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -2425,7 +2425,22 @@ function CSAR:onafterStart(From, Event, To)
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterCategoryHelicopter():FilterStart()
   end
   
-  self.mash = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart() -- currently only GROUP objects, maybe support STATICs also?
+  self.mash = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart()
+  
+  local staticmashes = SET_STATIC:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterOnce()
+  local zonemashes = SET_ZONE:New():FilterPrefixes(self.mashprefix):FilterOnce()
+  
+  if staticmashes:Count() > 0  then
+    for _,_mash in pairs(staticmashes.Set) do
+      self.mash:AddObject(_mash)
+    end
+  end
+  
+  if zonemashes:Count() > 0  then
+    for _,_mash in pairs(zonemashes.Set) do
+      self.mash:AddObject(_mash)
+    end
+  end
   
   if not self.coordinate then
     local csarhq = self.mash:GetRandom()
