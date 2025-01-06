@@ -1096,12 +1096,12 @@ end
 
 --- Set range ceiling altitude in feet MSL.
 -- @param #RANGE self
--- @param #number ceiling (optional) Ceiling altitude of the range in ft MSL. Default 20000ft MSL
+-- @param #number altitude (optional) Ceiling altitude of the range in ft MSL. Default 20000ft MSL
 -- @return #RANGE self
-function RANGE:SetRangeCeiling( alt )
+function RANGE:SetRangeCeiling( altitude )
   self:T(self.lid.."SetRangeCeiling")
-  if alt and type(alt) == "number" then
-    self.ceilingaltitude=alt
+  if altitude and type(altitude) == "number" then
+    self.ceilingaltitude=altitude
   else
     self:E(self.lid.."Altitude either not provided or is not a number, using default setting (20000).")
     self.ceilingaltitude=20000
