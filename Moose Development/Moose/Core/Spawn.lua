@@ -1081,7 +1081,7 @@ function SPAWN:InitRandomizeTemplate( SpawnTemplatePrefixTable )
   self.SpawnRandomizeTemplate = true
 
   for SpawnGroupID = 1, self.SpawnMaxGroups do
-    self:_RandomizeTemplate( SpawnGroupID )
+    self:_RandomizeTemplate( SpawnGroupID, RandomizePositionInZone )
   end
 
   return self
@@ -1093,6 +1093,7 @@ end
 -- In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.
 -- @param #SPAWN self
 -- @param Core.Set#SET_GROUP SpawnTemplateSet A SET_GROUP object set, that contains the groups that are possible unit representatives of the group to be spawned.
+-- @param #boolean RandomizePositionInZone If nil or true, also the position inside the selected random zone will be randomized. Set to false to use the center of the zone.
 -- @return #SPAWN
 -- @usage
 --
@@ -1111,11 +1112,11 @@ end
 --   Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
 --   Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplateSet( Spawn_US_PlatoonSet ):InitRandomizeRoute( 3, 3, 2000 )
 --
-function SPAWN:InitRandomizeTemplateSet( SpawnTemplateSet )
+function SPAWN:InitRandomizeTemplateSet( SpawnTemplateSet,RandomizePositionInZone )
   --self:F( { self.SpawnTemplatePrefix } )
 
   local setnames = SpawnTemplateSet:GetSetNames()
-  self:InitRandomizeTemplate(setnames)
+  self:InitRandomizeTemplate(setnames,RandomizePositionInZone)
   
   return self
 end
@@ -1125,7 +1126,8 @@ end
 -- but they will all follow the same Template route and have the same prefix name.
 -- In other words, this method randomizes between a defined set of groups the template to be used for each new spawn of a group.
 -- @param #SPAWN self
--- @param #string SpawnTemplatePrefixes A string or a list of string that contains the prefixes of the groups that are possible unit representatives of the group to be spawned. 
+-- @param #string SpawnTemplatePrefixes A string or a list of string that contains the prefixes of the groups that are possible unit representatives of the group to be spawned.
+-- @param #boolean RandomizePositionInZone If nil or true, also the position inside the selected random zone will be randomized. Set to false to use the center of the zone. 
 -- @return #SPAWN
 -- @usage
 --
@@ -1141,12 +1143,12 @@ end
 --   Spawn_US_Platoon_Middle = SPAWN:New( 'US Tank Platoon Middle' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
 --   Spawn_US_Platoon_Right = SPAWN:New( 'US Tank Platoon Right' ):InitLimit( 12, 150 ):SpawnScheduled( 200, 0.4 ):InitRandomizeTemplatePrefixes( "US Tank Platoon Templates" ):InitRandomizeRoute( 3, 3, 2000 )
 --
-function SPAWN:InitRandomizeTemplatePrefixes( SpawnTemplatePrefixes ) -- R2.3
+function SPAWN:InitRandomizeTemplatePrefixes( SpawnTemplatePrefixes, RandomizePositionInZone ) -- R2.3
   --self:F( { self.SpawnTemplatePrefix } )
 
   local SpawnTemplateSet = SET_GROUP:New():FilterPrefixes( SpawnTemplatePrefixes ):FilterOnce()
 
-  self:InitRandomizeTemplateSet( SpawnTemplateSet )
+  self:InitRandomizeTemplateSet( SpawnTemplateSet, RandomizePositionInZone )
 
   return self
 end
@@ -1166,6 +1168,7 @@ end
 --- This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types.
 -- @param #SPAWN self
 -- @param #table SpawnZoneTable A table with @{Core.Zone} objects. If this table is given, then each spawn will be executed within the given list of @{Core.Zone}s objects.
+-- @param #boolean RandomizePositionInZone If nil or true, also the position inside the selected random zone will be randomized. Set to false to use the center of the zone.
 -- @return #SPAWN self
 -- @usage
 --
@@ -1178,7 +1181,7 @@ end
 --                           :InitRandomizeZones( ZoneTable )
 --                           :SpawnScheduled( 5, .5 )
 --
-function SPAWN:InitRandomizeZones( SpawnZoneTable )
+function SPAWN:InitRandomizeZones( SpawnZoneTable, RandomizePositionInZone )
   --self:F( { self.SpawnTemplatePrefix, SpawnZoneTable } )
   
   local temptable = {}
@@ -1190,7 +1193,7 @@ function SPAWN:InitRandomizeZones( SpawnZoneTable )
   self.SpawnRandomizeZones = true
 
   for SpawnGroupID = 1, self.SpawnMaxGroups do
-    self:_RandomizeZones( SpawnGroupID )
+    self:_RandomizeZones( SpawnGroupID, RandomizePositionInZone )
   end
 
   return self
@@ -3814,8 +3817,9 @@ end
 --- Private method that randomizes the @{Core.Zone}s where the Group will be spawned.
 -- @param #SPAWN self
 -- @param #number SpawnIndex
+-- @param #boolean RandomizePositionInZone If nil or true, also the position inside the selected random zone will be randomized. Set to false to use the center of the zone.
 -- @return #SPAWN self
-function SPAWN:_RandomizeZones( SpawnIndex )
+function SPAWN:_RandomizeZones( SpawnIndex,  RandomizePositionInZone)
   --self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnRandomizeZones } )
 
   if self.SpawnRandomizeZones then
@@ -3829,7 +3833,11 @@ function SPAWN:_RandomizeZones( SpawnIndex )
 
     --self:T2( "Preparing Spawn in Zone", SpawnZone:GetName() )
 
-    local SpawnVec2 = SpawnZone:GetRandomVec2()
+    local SpawnVec2 = SpawnZone:GetVec2()
+
+    if RandomizePositionInZone ~= false then
+        SpawnVec2 = SpawnZone:GetRandomVec2()
+    end
 
     --self:T2( { SpawnVec2 = SpawnVec2 } )
 
