@@ -350,7 +350,7 @@ end
 
 --- Set Maximum of alive missions to stop airplanes spamming the map
 -- @param #EASYGCICAP self
--- @param #number Maxiumum Maxmimum number of parallel missions allowed. Count is Cap-Missions + Intercept-Missions + Alert5-Missionsm default is 6
+-- @param #number Maxiumum Maxmimum number of parallel missions allowed. Count is Cap-Missions + Intercept-Missions + Alert5-Missionsm default is 8
 -- @return #EASYGCICAP self 
 function EASYGCICAP:SetMaxAliveMissions(Maxiumum)
   self:T(self.lid.."SetMaxAliveMissions")
@@ -1177,7 +1177,7 @@ function EASYGCICAP:_AssignIntercept(Cluster)
   
   local wings = self.wings
   local ctlpts = self.ManagedCP
-  local MaxAliveMissions = self.MaxAliveMissions * self.capgrouping
+  local MaxAliveMissions = self.MaxAliveMissions --* self.capgrouping
   local nogozoneset = self.NoGoZoneSet
   local ReadyFlightGroups = self.ReadyFlightGroups
   
