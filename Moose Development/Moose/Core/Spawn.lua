@@ -3817,7 +3817,7 @@ end
 --- Private method that randomizes the @{Core.Zone}s where the Group will be spawned.
 -- @param #SPAWN self
 -- @param #number SpawnIndex
-.. @param #boolean RandomizePositionInZone If nil or true, also the position inside the selected random zone will be randomized. Set to false to use the center of the zone.
+-- @param #boolean RandomizePositionInZone If nil or true, also the position inside the selected random zone will be randomized. Set to false to use the center of the zone.
 -- @return #SPAWN self
 function SPAWN:_RandomizeZones( SpawnIndex,  RandomizePositionInZone)
   --self:F( { self.SpawnTemplatePrefix, SpawnIndex, self.SpawnRandomizeZones } )
