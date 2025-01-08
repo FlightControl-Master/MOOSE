@@ -27,13 +27,13 @@
 -- @module Functional.Tiresias
 -- @image Functional.Tiresias.jpg
 --
--- Last Update: Dec 2023
+-- Last Update: Jan 2024
 
 -------------------------------------------------------------------------
 --- **TIRESIAS** class, extends Core.Base#BASE
 -- @type TIRESIAS
 -- @field #string ClassName
--- @field #booelan debug
+-- @field #boolean debug
 -- @field #string version
 -- @field #number Interval
 -- @field Core.Set#SET_GROUP GroundSet
@@ -47,7 +47,8 @@
 -- @field #number HeloSwitchRange
 -- @field #number PlaneSwitchRange
 -- @field Core.Set#SET_GROUP FlightSet
--- @field #boolean SwitchAAA 
+-- @field #boolean SwitchAAA
+-- @field #boolean SwitchSAM 
 -- @extends Core.Fsm#FSM
 
 ---
@@ -97,7 +98,7 @@
 TIRESIAS = {
   ClassName = "TIRESIAS",
   debug = false,
-  version = "0.0.5",
+  version = "0.0.6",
   Interval = 20,
   GroundSet = nil,
   VehicleSet = nil,
@@ -107,7 +108,10 @@ TIRESIAS = {
   AAARange = 60, -- 60%
   HeloSwitchRange = 10, -- NM
   PlaneSwitchRange = 25, -- NM
+  SAMSwitchRange = 75, --NM 
   SwitchAAA = true,
+  SwitchSAM = false,
+  MantisHandlingSAM = true
 }
 
 --- [USER] Create a new Tiresias object and start it up.
@@ -129,7 +133,7 @@ function TIRESIAS:New()
     self:AddTransition("*",             "Status",                  "*")           -- TIRESIAS status update.
     self:AddTransition("*",             "Stop",                    "Stopped")     -- Stop FSM.
     
-    self.ExceptionSet = SET_GROUP:New():Clear(false)
+    --self.ExceptionSet = SET_GROUP:New():Clear(false)
     
     self:HandleEvent(EVENTS.PlayerEnterAircraft,self._EventHandler)
     
@@ -169,10 +173,12 @@ end
 -- @param #TIRESIAS self
 -- @param #number HeloMiles Radius around a Helicopter in which AI ground units will be activated. Defaults to 10NM.
 -- @param #number PlaneMiles Radius around an Airplane in which AI ground units will be activated. Defaults to 25NM.
+-- @param #number SAMMiles Radius around an Airplane in which SAM AI ground units will be activated. Defaults to 75NM.
 -- @return #TIRESIAS self 
-function TIRESIAS:SetActivationRanges(HeloMiles,PlaneMiles)
+function TIRESIAS:SetActivationRanges(HeloMiles,PlaneMiles,SAMMiles)
   self.HeloSwitchRange = HeloMiles or 10
   self.PlaneSwitchRange = PlaneMiles or 25
+  self.SAMSwitchRange = SAMMiles or 75
   return self
 end
 
@@ -187,12 +193,28 @@ function TIRESIAS:SetAAARanges(FiringRange,SwitchAAA)
   return self
 end
 
+--- [USER] Set if TIRESIAS is also taking care or SAM installtions.
+-- @param #TIRESIAS self
+-- @param #boolean OnOff Set to true to switch on, false to switch off. Default is false.
+-- @param #boolean MantisPresent Set to true to switch on, false to switch off. Default is true.
+-- @return #TIRESIAS self
+function TIRESIAS:SetSwitchSAM(OnOff,MantisPresent)
+  if OnOff == nil or OnOff == false then
+    self.SwitchSAM = false
+  else
+    self.SwitchSAM = true
+  end
+  self.MantisHandlingSAM = MantisPresent or true
+  return self
+end
+
 --- [USER] Add a SET_GROUP of GROUP objects as exceptions. Can be done multiple times. Does **not** work work for GROUP objects spawned into the SET after start, i.e. the groups need to exist in the game already.
 -- @param #TIRESIAS self
 -- @param Core.Set#SET_GROUP Set to add to the exception list.
 -- @return #TIRESIAS self
 function TIRESIAS:AddExceptionSet(Set)
   self:T(self.lid.."AddExceptionSet")
+  if not self.ExceptionSet then self.ExceptionSet = SET_GROUP:New():Clear(false) end
   local exceptions = self.ExceptionSet
   Set:ForEachGroupAlive(
     function(grp)
@@ -242,9 +264,9 @@ function TIRESIAS._FilterAAA(Group)
   local grp = Group -- Wrapper.Group#GROUP
   local isaaa = grp:IsAAA()
   if isaaa == true and grp:IsGround() and not grp:IsShip() then 
-    return true -- remove from SET
+    return true -- keep in SET
   else
-    return false -- keep in SET
+    return false -- remove from SET
   end
 end
 
@@ -255,9 +277,9 @@ function TIRESIAS._FilterSAM(Group)
   local grp = Group -- Wrapper.Group#GROUP
   local issam = grp:IsSAM()
   if issam == true and grp:IsGround() and not grp:IsShip()  then 
-    return true -- remove from SET
+    return true -- keep in SET
   else
-    return false -- keep in SET
+    return false -- remove from SET
   end
 end
 
@@ -269,6 +291,7 @@ function TIRESIAS:_InitGroups()
   -- Set all groups invisible/motionless
   local EngageRange = self.AAARange
   local SwitchAAA = self.SwitchAAA
+  local SwitchSAM = self.SwitchSAM
   --- AAA
   self.AAASet:ForEachGroupAlive(
     function(grp)
@@ -287,7 +310,7 @@ function TIRESIAS:_InitGroups()
           AIOff = SwitchAAA,
         }
       end
-      if grp.Tiresias and (not grp.Tiresias.exception == true) then
+      if grp.Tiresias and (grp.Tiresias.exception == false) then
         if  grp.Tiresias.invisible and grp.Tiresias.invisible == false then
           grp:SetCommandInvisible(true)
           grp.Tiresias.invisible = true
@@ -332,16 +355,18 @@ function TIRESIAS:_InitGroups()
         grp.Tiresias = { -- #TIRESIAS.Data
           type = "SAM",
           invisible = true,
-          exception = false,
+          exception = not SwitchSAM,
+          AIOff = SwitchSAM,
         }
       end
-      if grp.Tiresias and (not grp.Tiresias.exception == true) then
+      if grp.Tiresias and (grp.Tiresias.exception == false) then
         if grp.Tiresias and grp.Tiresias.invisible and grp.Tiresias.invisible == false then
           grp:SetCommandInvisible(true)
           grp.Tiresias.invisible = true
+          grp:SetAIOnOff(SwitchSAM)
         end
       end
-      --BASE:I(string.format("Init/Switch off SAM %s (Exception %s)",grp:GetName(),tostring(grp.Tiresias.exception)))
+      BASE:I(string.format("Init/Switch off SAM %s (Exception %s)",grp:GetName(),tostring(grp.Tiresias.exception)))
     end
   )
   return self
@@ -381,18 +406,22 @@ end
 function TIRESIAS:_SwitchOnGroups(group,radius)
   self:T(self.lid.."_SwitchOnGroups "..group:GetName().." Radius "..radius.." NM")
   local zone = ZONE_GROUP:New("Zone-"..group:GetName(),group,UTILS.NMToMeters(radius))
+  local samzone = ZONE_GROUP:New("ZoneSAM-"..group:GetName(),group,UTILS.NMToMeters(self.SAMSwitchRange))
   local ground = SET_GROUP:New():FilterCategoryGround():FilterZones({zone}):FilterOnce()
+  local sam = SET_GROUP:New():FilterFunction(self._FilterSAM):FilterZones({samzone}):FilterOnce()
   local count = ground:CountAlive()
   if self.debug then
     local text = string.format("There are %d groups around this plane or helo!",count)
     self:I(text)
   end
   local SwitchAAA = self.SwitchAAA
+  local SwitchSAM = self.SwitchSAM
+  local MantisHandling = self.MantisHandlingSAM
   if ground:CountAlive() > 0 then
     ground:ForEachGroupAlive(
       function(grp)
         local name = grp:GetName()
-        if grp.Tiresias and grp.Tiresias.type and (not grp.Tiresias.exception == true ) then
+        if grp.Tiresias and grp.Tiresias.exception and (grp.Tiresias.exception == false ) then
           if grp.Tiresias.invisible == true then
             grp:SetCommandInvisible(false)
             grp.Tiresias.invisible = false
@@ -401,14 +430,35 @@ function TIRESIAS:_SwitchOnGroups(group,radius)
             grp:SetAIOn()
             grp.Tiresias.AIOff = false
           end
-          if SwitchAAA and grp.Tiresias.type == "AAA" and grp.Tiresias.AIOff and grp.Tiresias.AIOff == true then
+          if (SwitchAAA) and (grp.Tiresias.type == "AAA") and grp.Tiresias.AIOff and grp.Tiresias.AIOff == true then
             grp:SetAIOn()
             grp:EnableEmission(true)
             grp.Tiresias.AIOff = false
-          end
-          --BASE:I(string.format("TIRESIAS - Switch on %s %s (Exception %s)",tostring(grp.Tiresias.type),grp:GetName(),tostring(grp.Tiresias.exception)))
+          end          
+          BASE:I(string.format("TIRESIAS - Switch on %s %s (Exception %s)",tostring(grp.Tiresias.type),grp:GetName(),tostring(grp.Tiresias.exception)))
         else
           BASE:T("TIRESIAS - This group "..tostring(name).. " has not been initialized or is an exception!")
+        end
+      end
+    )
+  end
+  if sam:CountAlive() > 0 and self.SwitchSAM == true then
+    sam:ForEachGroupAlive(
+      function(grp)
+        local name = grp:GetName()
+        BASE:I(string.format("%s - %s",name,tostring(SwitchSAM)))
+        UTILS.PrintTableToLog(grp.Tiresias)
+        if SwitchSAM and grp.Tiresias.type == "SAM" and grp.Tiresias.AIOff and grp.Tiresias.AIOff == true then
+          BASE:I("First check passed")
+          if grp.Tiresias.exception ~= true then
+            BASE:I("Second check passed")
+            grp:SetAIOn()
+            if not MantisHandling then
+              grp:EnableEmission(true)
+            end
+            grp.Tiresias.AIOff = false
+            BASE:I(string.format("TIRESIAS - Switch on %s %s (Exception %s)",tostring(grp.Tiresias.type),grp:GetName(),tostring(grp.Tiresias.exception)))
+          end          
         end
       end
     )
@@ -502,14 +552,22 @@ function TIRESIAS:onafterStart(From, Event, To)
     end
   end
   
+  local SwitchSAM = self.SwitchSAM
+  local MantisManages = self.MantisHandlingSAM
+  
   function SAMSet:OnAfterAdded(From,Event,To,ObjectName,Object)
     if Object and Object:IsAlive() then
       BASE:I("TIRESIAS: SAM Object Added: "..Object:GetName())
       Object:SetCommandInvisible(true)
+      if SwitchSAM then
+          Object:SetAIOff()
+          Object:EnableEmission(not MantisManages)
+      end
       Object.Tiresias = { -- #TIRESIAS.Data
         type = "SAM",
         invisible = true,
-        exception = false,
+        exception = not SwitchSAM,
+        AIOff = SwitchSAM,
       }
     end
   end
@@ -547,7 +605,7 @@ end
 -- @return #TIRESIAS self
 function TIRESIAS:onafterStatus(From, Event, To)
   self:T({From, Event, To})
-    if self.debug then
+  if self.debug then
     local count = self.VehicleSet:CountAlive()
     local AAAcount = self.AAASet:CountAlive()
     local SAMcount = self.SAMSet:CountAlive()

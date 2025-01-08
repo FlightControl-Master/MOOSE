@@ -1538,6 +1538,13 @@ do
         local size = 1
         if Event.IniDCSGroup then
          size = Event.IniDCSGroup:getSize()
+        elseif Event.IniDCSGroupName then
+          local grp = Group.getByName(Event.IniDCSGroupName)
+          if grp then
+            size = grp:getSize()
+          end
+        elseif Object:IsAlive() then
+          size = Object:CountAliveUnits()
         end
         if size == 1 then -- Only remove if the last unit of the group was destroyed.
           self:Remove( ObjectName )
