@@ -7962,7 +7962,7 @@ do -- SET_OPSGROUP
   function SET_OPSGROUP:_EventOnDeadOrCrash( Event )
     --self:F( { Event } )
 
-    if Event.IniDCSUnit then
+    if Event.IniDCSGroup then
       local ObjectName, Object = self:FindInDatabase( Event )
       if ObjectName then
         if Event.IniDCSGroup:getSize() == 1 then -- Only remove if the last unit of the group was destroyed.
