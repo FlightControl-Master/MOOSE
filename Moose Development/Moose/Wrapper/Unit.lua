@@ -1777,7 +1777,8 @@ function UNIT:GetSTN()
   local VCN = nil -- VoiceCallsignNumber
   local FGL = false -- FlightGroupLeader
   local template = self:GetTemplate()
-  if template.AddPropAircraft then
+  if template then
+    if template.AddPropAircraft then
     if template.AddPropAircraft.STN_L16 then
       STN = template.AddPropAircraft.STN_L16
     elseif template.AddPropAircraft.SADL_TN then
@@ -1793,6 +1794,6 @@ function UNIT:GetSTN()
   if template.datalinks and template.datalinks.SADL and template.datalinks.SADL.settings then
     FGL = template.datalinks.SADL.settings.flightLead
   end
-  
+  end
   return STN, VCL, VCN, FGL
 end
