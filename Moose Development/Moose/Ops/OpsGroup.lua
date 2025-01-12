@@ -512,7 +512,7 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="1.0.3"
+OPSGROUP.version="1.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1333,8 +1333,9 @@ end
 -- @param Core.Point#COORDINATE TargetCoord Coordinate of the target.
 -- @param #number WeaponBitType Weapon type.
 -- @param Core.Point#COORDINATE RefCoord Reference coordinate.
+-- @param #table SurfaceTypes Valid surfaces types of the coordinate. Default any (nil).
 -- @return Core.Point#COORDINATE Coordinate in weapon range
-function OPSGROUP:GetCoordinateInRange(TargetCoord, WeaponBitType, RefCoord)
+function OPSGROUP:GetCoordinateInRange(TargetCoord, WeaponBitType, RefCoord, SurfaceTypes)
 
   local coordInRange=nil --Core.Point#COORDINATE
   
@@ -1343,35 +1344,58 @@ function OPSGROUP:GetCoordinateInRange(TargetCoord, WeaponBitType, RefCoord)
   -- Get weapon range.
   local weapondata=self:GetWeaponData(WeaponBitType)
   
+  -- Heading intervals to search for a possible new coordinate in range.
+  local dh={0, -5, 5, -10, 10, -15, 15, -20, 20, -25, 25, -30, 30}
+  
+  -- Function that checks if the given surface type is valid.ss
+  local function _checkSurface(point)
+    if SurfaceTypes then
+      local stype=land.getSurfaceType(point)
+      for _,sf in pairs(SurfaceTypes) do
+        if sf==stype then
+          return true
+        end
+      end
+      return false
+    else
+      return true
+    end
+  end  
+  
   if weapondata then
   
     -- Heading to target.
-    local heading=RefCoord:HeadingTo(TargetCoord)
+    local heading=TargetCoord:HeadingTo(RefCoord)
   
     -- Distance to target.
     local dist=RefCoord:Get2DDistance(TargetCoord)
+    
+    local range=nil
+    if dist>weapondata.RangeMax then
+      range=weapondata.RangeMax
+      self:T(self.lid..string.format("Out of max range = %.1f km by %.1f km for weapon %s", weapondata.RangeMax/1000, (weapondata.RangeMax-dist)/1000, tostring(WeaponBitType)))
+    elseif dist<weapondata.RangeMin then
+      range=weapondata.RangeMin
+      self:T(self.lid..string.format("Out of min range = %.1f km by %.1f km for weapon %s", weapondata.RangeMin/1000, (weapondata.RangeMin-dist)/1000, tostring(WeaponBitType)))
+    end
   
     -- Check if we are within range.
-    if dist>weapondata.RangeMax then
+    if range then
+      
+      for _,delta in pairs(dh) do
+      
+        local h=heading+delta
   
-      local d=(dist-weapondata.RangeMax)*1.05
-  
-      -- New waypoint coord.
-      coordInRange=RefCoord:Translate(d, heading)
-  
-      -- Debug info.
-      self:T(self.lid..string.format("Out of max range = %.1f km for weapon %s", weapondata.RangeMax/1000, tostring(WeaponBitType)))
-    elseif dist<weapondata.RangeMin then
-  
-      local d=(dist-weapondata.RangeMin)*1.05
-  
-      -- New waypoint coord.
-      coordInRange=RefCoord:Translate(d, heading)
-  
-      -- Debug info.
-      self:T(self.lid..string.format("Out of min range = %.1f km for weapon %s", weapondata.RangeMax/1000, tostring(WeaponBitType)))          
-    else
-  
+        -- New waypoint coord.
+        coordInRange=TargetCoord:Translate(range*1.02, h)
+        
+        if _checkSurface(coordInRange) then
+          break
+        end
+        
+      end
+      
+    else  
       -- Debug info.
       self:T(self.lid..string.format("Already in range for weapon %s", tostring(WeaponBitType)))                    
     end
@@ -1450,11 +1474,14 @@ end
 -- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
 -- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
 -- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
+-- @param #function ConversionToMeters Function that converts input units of ranges to meters. Defaul `UTILS.NMToMeters`.
 -- @return #OPSGROUP self
-function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType)
+function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType, ConversionToMeters)
 
-  RangeMin=UTILS.NMToMeters(RangeMin or 0)
-  RangeMax=UTILS.NMToMeters(RangeMax or 10)
+  ConversionToMeters=ConversionToMeters or UTILS.NMToMeters
+
+  RangeMin=ConversionToMeters(RangeMin or 0)
+  RangeMax=ConversionToMeters(RangeMax or 10)
 
   local weapon={} --#OPSGROUP.WeaponData
 
@@ -6083,7 +6110,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       
       else
 
-        local coordInRange=self:GetCoordinateInRange(targetcoord, mission.engageWeaponType, waypointcoord)
+        local coordInRange=self:GetCoordinateInRange(targetcoord, mission.engageWeaponType, waypointcoord, surfacetypes)
         
         if coordInRange then
   
@@ -6155,6 +6182,8 @@ function OPSGROUP:RouteToMission(mission, delay)
       if d<1000 or mission.type==AUFTRAG.Type.RELOCATECOHORT then
         formation=ENUMS.Formation.Vehicle.OffRoad
       end
+      
+      waypointcoord:MarkToAll("Bla Bla")
       
       waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, formation, false)
       
