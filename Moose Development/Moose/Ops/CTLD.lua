@@ -1352,7 +1352,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.22"
+CTLD.version="1.1.23"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -5583,11 +5583,12 @@ end
       if PreciseLocation then
         randomcoord = zone:GetCoordinate():GetVec2()
       end
+      local randompositions = not PreciseLocation
       for _,_template in pairs(temptable) do
         self.TroopCounter = self.TroopCounter + 1
         local alias = string.format("%s-%d", _template, math.random(1,100000))
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
-          :InitRandomizeUnits(true,20,2)
+          :InitRandomizeUnits(randompositions,20,2)
           :InitDelayOff()
           :SpawnFromVec2(randomcoord)
         if self.movetroopstowpzone and type ~= CTLD_CARGO.Enum.ENGINEERS then
