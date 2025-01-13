@@ -2185,6 +2185,7 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius, Altitude)
   mission.optionAlarm=0
 
   mission.missionFraction=0.0
+  mission.missionWaypointRadius=0.0
 
   -- Evaluate after 8 min.
   mission.dTevaluate=8*60
