@@ -1345,12 +1345,12 @@ function OPSGROUP:GetCoordinateInRange(TargetCoord, WeaponBitType, RefCoord, Sur
   local weapondata=self:GetWeaponData(WeaponBitType)
   
   -- Heading intervals to search for a possible new coordinate in range.
-  local dh={0, -5, 5, -10, 10, -15, 15, -20, 20, -25, 25, -30, 30}
+  local dh={0, -5, 5, -10, 10, -15, 15, -20, 20, -25, 25, -30, 30, -35, 35, -40, 40, -45, 45, -50, 50, -55, 55, -60, 60, -65, 65, -70, 70, -75, 75, -80, 80}
   
-  -- Function that checks if the given surface type is valid.ss
+  -- Function that checks if the given surface type is valid
   local function _checkSurface(point)
     if SurfaceTypes then
-      local stype=land.getSurfaceType(point)
+      local stype=point:GetSurfaceType()
       for _,sf in pairs(SurfaceTypes) do
         if sf==stype then
           return true
@@ -1387,7 +1387,7 @@ function OPSGROUP:GetCoordinateInRange(TargetCoord, WeaponBitType, RefCoord, Sur
         local h=heading+delta
   
         -- New waypoint coord.
-        coordInRange=TargetCoord:Translate(range*1.02, h)
+        coordInRange=TargetCoord:Translate(range, h)
         
         if _checkSurface(coordInRange) then
           break
@@ -6100,13 +6100,12 @@ function OPSGROUP:RouteToMission(mission, delay)
       -- Target Coord. 
       local targetcoord=mission:GetTargetCoordinate()
       
-      
       -- In range already?
-      local inRange=self:InWeaponRange(targetcoord, mission.engageWeaponType)
+      local inRange=self:InWeaponRange(targetcoord, mission.engageWeaponType, waypointcoord)
       
       if inRange then
       
-        waypointcoord=self:GetCoordinate(true)
+        --waypointcoord=self:GetCoordinate(true)
       
       else
 
@@ -6182,8 +6181,6 @@ function OPSGROUP:RouteToMission(mission, delay)
       if d<1000 or mission.type==AUFTRAG.Type.RELOCATECOHORT then
         formation=ENUMS.Formation.Vehicle.OffRoad
       end
-      
-      waypointcoord:MarkToAll("Bla Bla")
       
       waypoint=ARMYGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, formation, false)
       
