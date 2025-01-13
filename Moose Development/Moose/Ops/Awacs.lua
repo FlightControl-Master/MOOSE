@@ -509,7 +509,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.69", -- #string
+  version = "0.2.70", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -2171,9 +2171,10 @@ end
 -- @param #AWACS self
 -- @param #number EscortNumber Number of fighther planes to accompany this AWACS. 0 or nil means no escorts.
 -- @param #number Formation Formation the escort should take (if more than one plane), e.g. `ENUMS.Formation.FixedWing.FingerFour.Group`
--- @param #table OffsetVector Offset the escorts should fly behind the AWACS, given as table, distance in meters, e.g. `{x=500,y=0,z=500}` - 500m behind and to the left, no vertical separation.
+-- @param #table OffsetVector Offset the escorts should fly behind the AWACS, given as table, distance in meters, e.g. `{x=-500,y=0,z=500}` - 500m behind and to the right, no vertical separation.
+-- @param #number EscortEngageMaxDistance Escorts engage air targets max this NM away, defaults to 45NM.
 -- @return #AWACS self
-function AWACS:SetEscort(EscortNumber,Formation,OffsetVector)
+function AWACS:SetEscort(EscortNumber,Formation,OffsetVector,EscortEngageMaxDistance)
   self:T(self.lid.."SetEscort")
   if EscortNumber and EscortNumber > 0 then
     self.HasEscorts = true
@@ -2183,7 +2184,8 @@ function AWACS:SetEscort(EscortNumber,Formation,OffsetVector)
     self.EscortNumber = 0
   end
   self.EscortFormation = Formation
-  self.OffsetVec = OffsetVector or {x=500,y=0,z=500}
+  self.OffsetVec = OffsetVector or {x=500,y=100,z=500}
+  self.EscortEngageMaxDistance = EscortEngageMaxDistance or 45
   return self
 end
 
@@ -2238,18 +2240,12 @@ function AWACS:_StartEscorts(Shiftchange)
   local group = AwacsFG:GetGroup()
 
   local timeonstation = (self.EscortsTimeOnStation + self.ShiftChangeTime) * 3600 -- hours to seconds
-  local OffsetX = 500
-  local OffsetY = 500
-  local OffsetZ = 500
-  if self.OffsetVec then
-    OffsetX = self.OffsetVec.x
-    OffsetY = self.OffsetVec.y
-    OffsetZ = self.OffsetVec.z 
-  end
-  for i=1,self.EscortNumber do
+  
+  --for i=1,self.EscortNumber do
     -- every
-    local escort = AUFTRAG:NewESCORT(group, {x= -OffsetX*((i + (i%2))/2), y=OffsetY, z=(OffsetZ + OffsetZ*((i + (i%2))/2))*(-1)^i},45,{"Air"})
-    escort:SetRequiredAssets(1)
+    --local escort = AUFTRAG:NewESCORT(group, {x= -OffsetX*((i + (i%2))/2), y=OffsetY, z=(OffsetZ + OffsetZ*((i + (i%2))/2))*(-1)^i},45,{"Air"})
+    local escort = AUFTRAG:NewESCORT(group,self.OffsetVec,self.EscortEngageMaxDistance,{"Air"})
+    escort:SetRequiredAssets(self.EscortNumber)
     escort:SetTime(nil,timeonstation)
     if self.Escortformation then
       escort:SetFormation(self.Escortformation)
@@ -2260,11 +2256,11 @@ function AWACS:_StartEscorts(Shiftchange)
     self.CatchAllMissions[#self.CatchAllMissions+1] = escort
 
     if Shiftchange then
-      self.EscortMissionReplacement[i] = escort
+      self.EscortMissionReplacement[1] = escort
     else
-      self.EscortMission[i] = escort
+      self.EscortMission[1] = escort
     end
-  end
+  --end
   
   return self
 end
