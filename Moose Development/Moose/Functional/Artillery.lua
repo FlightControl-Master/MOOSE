@@ -695,7 +695,7 @@ ARTY.db={
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.3.1"
+ARTY.version="1.3.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -3049,7 +3049,7 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   local nfire=Narty
   local _type="shots"
   if target.weapontype==ARTY.WeaponType.Auto then
-    nfire=Narty
+    nfire=Nammo  -- We take everything that is available
     _type="shots"
   elseif target.weapontype==ARTY.WeaponType.Cannon then
     nfire=Narty
@@ -3070,6 +3070,8 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
     nfire=Nmissiles
     _type="cruise missiles"
   end
+  
+  --env.info(string.format("FF type=%s, Nrockets=%d, Nfire=%d target.nshells=%d", _type, Nrockets, nfire, target.nshells))
 
   -- Adjust if less than requested ammo is left.
   target.nshells=math.min(target.nshells, nfire)
