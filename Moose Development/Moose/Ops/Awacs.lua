@@ -184,7 +184,7 @@ do
 --            
 -- Add Escorts Squad (recommended, optional)
 -- 
---            local Squad_Two = SQUADRON:New("Escorts",4,"Escorts North")
+--            local Squad_Two = SQUADRON:New("Escorts",4,"Escorts North") -- taking a template with 2 planes here, will result in a group of 2 escorts which can fly in formation escorting the AWACS.
 --            Squad_Two:AddMissionCapability({AUFTRAG.Type.ESCORT})
 --            Squad_Two:SetFuelLowRefuel(true)
 --            Squad_Two:SetFuelLowThreshold(0.3)
@@ -232,8 +232,8 @@ do
 --            -- set up in the mission editor with a late activated helo named "Rock#ZONE_POLYGON". Note this also sets the BullsEye to be referenced as "Rock".
 --            -- The CAP station zone is called "Fremont". We will be on 255 AM.
 --            local testawacs = AWACS:New("AWACS North",AwacsAW,"blue",AIRBASE.Caucasus.Kutaisi,"Awacs Orbit",ZONE:FindByName("Rock"),"Fremont",255,radio.modulation.AM )
---            -- set two escorts
---            testawacs:SetEscort(2)
+--            -- set one escort group; this example has two units in the template group, so they can fly a nice formation.
+--            testawacs:SetEscort(1,ENUMS.Formation.FixedWing.FingerFour.Group,{x=-500,y=50,z=500},45)
 --            -- Callsign will be "Focus". We'll be a Angels 30, doing 300 knots, orbit leg to 88deg with a length of 25nm.
 --            testawacs:SetAwacsDetails(CALLSIGN.AWACS.Focus,1,30,300,88,25)
 --            -- Set up SRS on port 5010 - change the below to your path and port
@@ -2169,9 +2169,9 @@ end
 
 --- [User] Set AWACS Escorts Template
 -- @param #AWACS self
--- @param #number EscortNumber Number of fighther planes to accompany this AWACS. 0 or nil means no escorts.
--- @param #number Formation Formation the escort should take (if more than one plane), e.g. `ENUMS.Formation.FixedWing.FingerFour.Group`
--- @param #table OffsetVector Offset the escorts should fly behind the AWACS, given as table, distance in meters, e.g. `{x=-500,y=0,z=500}` - 500m behind and to the right, no vertical separation.
+-- @param #number EscortNumber Number of fighther plane GROUPs to accompany this AWACS. 0 or nil means no escorts. If you want >1 plane in an escort group, you can either set the respective squadron grouping to the desired number, or use a template for escorts with >1 unit.
+-- @param #number Formation Formation the escort should take (if more than one plane), e.g. `ENUMS.Formation.FixedWing.FingerFour.Group`. Formation is used on GROUP level, multiple groups of one unit will NOT conform to this formation.
+-- @param #table OffsetVector Offset the escorts should fly behind the AWACS, given as table, distance in meters, e.g. `{x=-500,y=0,z=500}` - 500m behind (negative value) and to the right (negative for left), no vertical separation (positive over, negative under the AWACS flight). For multiple groups, the vectors will be slightly changed to avoid collisions.
 -- @param #number EscortEngageMaxDistance Escorts engage air targets max this NM away, defaults to 45NM.
 -- @return #AWACS self
 function AWACS:SetEscort(EscortNumber,Formation,OffsetVector,EscortEngageMaxDistance)
@@ -2240,12 +2240,20 @@ function AWACS:_StartEscorts(Shiftchange)
   local group = AwacsFG:GetGroup()
 
   local timeonstation = (self.EscortsTimeOnStation + self.ShiftChangeTime) * 3600 -- hours to seconds
+  local OffsetX = 500
+  local OffsetY = 500
+  local OffsetZ = 500
+  if self.OffsetVec then
+    OffsetX = self.OffsetVec.x
+    OffsetY = self.OffsetVec.y
+    OffsetZ = self.OffsetVec.z 
+  end
   
-  --for i=1,self.EscortNumber do
+  for i=1,self.EscortNumber do
     -- every
-    --local escort = AUFTRAG:NewESCORT(group, {x= -OffsetX*((i + (i%2))/2), y=OffsetY, z=(OffsetZ + OffsetZ*((i + (i%2))/2))*(-1)^i},45,{"Air"})
-    local escort = AUFTRAG:NewESCORT(group,self.OffsetVec,self.EscortEngageMaxDistance,{"Air"})
-    escort:SetRequiredAssets(self.EscortNumber)
+    local escort = AUFTRAG:NewESCORT(group, {x= OffsetX*((i + (i%2))/2), y=OffsetY*((i + (i%2))/2), z=(OffsetZ + OffsetZ*((i + (i%2))/2))*(-1)^i},self.EscortEngageMaxDistance,{"Air"})
+    --local escort = AUFTRAG:NewESCORT(group,self.OffsetVec,self.EscortEngageMaxDistance,{"Air"})
+    --escort:SetRequiredAssets(self.EscortNumber)
     escort:SetTime(nil,timeonstation)
     if self.Escortformation then
       escort:SetFormation(self.Escortformation)
