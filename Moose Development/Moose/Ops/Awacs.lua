@@ -2264,11 +2264,11 @@ function AWACS:_StartEscorts(Shiftchange)
     self.CatchAllMissions[#self.CatchAllMissions+1] = escort
 
     if Shiftchange then
-      self.EscortMissionReplacement[1] = escort
+      self.EscortMissionReplacement[i] = escort
     else
-      self.EscortMission[1] = escort
+      self.EscortMission[i] = escort
     end
-  --end
+  end
   
   return self
 end

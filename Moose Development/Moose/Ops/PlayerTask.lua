@@ -700,6 +700,15 @@ function PLAYERTASK:IsDone()
   return IsDone
 end
 
+--- [User] Check if task is NOT done
+-- @param #PLAYERTASK self
+-- @return #boolean done
+function PLAYERTASK:IsNotDone()
+  self:T(self.lid.."IsNotDone?")
+  local IsNotDone = not self:IsDone()
+  return IsNotDone
+end
+
 --- [User] Check if PLAYERTASK has clients assigned to it.
 -- @param #PLAYERTASK self
 -- @return #boolean hasclients
@@ -1156,7 +1165,7 @@ function PLAYERTASK:onafterCancel(From, Event, To)
     self.TaskController:__TaskCancelled(-1,self)
   end
   self.timestamp = timer.getAbsTime()
-  self.FinalState = "Cancel"
+  self.FinalState = "Cancelled"
   self:__Done(-1)
   return self
 end
