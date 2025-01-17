@@ -798,6 +798,8 @@ function AUTOLASE:ShowStatus(Group,Unit)
           locationstring = entry.coordinate:ToStringMGRS(settings)
         elseif settings:IsA2G_LL_DMS() then
           locationstring = entry.coordinate:ToStringLLDMS(settings)
+        elseif settings:IsA2G_LL_DDM() then
+         locationstring = entry.coordinate:ToStringLLDDM(settings)
         elseif settings:IsA2G_BR() then
           -- attention this is the distance from the ASKING unit to target, not from RECCE to target!
           local startcoordinate = Unit:GetCoordinate() or Group:GetCoordinate()

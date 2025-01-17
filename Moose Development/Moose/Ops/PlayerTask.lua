@@ -4446,8 +4446,9 @@ end
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS; if you use a config file for MSRS, hand in nil here.
 -- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
 -- @param Core.Point#COORDINATE Coordinate Coordinate from which the controller radio is sending
+-- @param #string Backend (Optional) MSRS Backend to be used, can be MSRS.Backend.SRSEXE or MSRS.Backend.GRPC; if you use a config file for MSRS, hand in nil here.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Coordinate)
+function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Coordinate,Backend)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
   self.Gender = Gender or MSRS.gender or "male" --
@@ -4463,7 +4464,7 @@ function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Cultu
   self.Modulation = Modulation or {radio.modulation.FM,radio.modulation.AM} --
   self.BCModulation = self.Modulation
   -- set up SRS 
-  self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation)
+  self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation,Backend)
   self.SRS:SetCoalition(self.Coalition)
   self.SRS:SetLabel(self.MenuName or self.Name)
   self.SRS:SetGender(self.Gender)
