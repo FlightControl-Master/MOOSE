@@ -1732,8 +1732,9 @@ do
             self:__RedState(1,samgroup)
             self.SamStateTracker[name] = "RED"
           end
+          -- TODO doesn't work
           if shortsam == true and self.SmokeDecoy == true then
-            self:I("Smoking")
+            self:T("Smoking")
             local units = samgroup:GetUnits() or {}
             local smoke = self.SmokeDecoyColor or SMOKECOLOR.White
             for _,unit in pairs(units) do
