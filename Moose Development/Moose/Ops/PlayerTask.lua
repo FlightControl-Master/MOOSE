@@ -98,7 +98,7 @@ PLAYERTASK = {
 
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.24"
+PLAYERTASK.version="0.1.25"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -700,6 +700,15 @@ function PLAYERTASK:IsDone()
   return IsDone
 end
 
+--- [User] Check if task is NOT done
+-- @param #PLAYERTASK self
+-- @return #boolean done
+function PLAYERTASK:IsNotDone()
+  self:T(self.lid.."IsNotDone?")
+  local IsNotDone = not self:IsDone()
+  return IsNotDone
+end
+
 --- [User] Check if PLAYERTASK has clients assigned to it.
 -- @param #PLAYERTASK self
 -- @return #boolean hasclients
@@ -1156,7 +1165,7 @@ function PLAYERTASK:onafterCancel(From, Event, To)
     self.TaskController:__TaskCancelled(-1,self)
   end
   self.timestamp = timer.getAbsTime()
-  self.FinalState = "Cancel"
+  self.FinalState = "Cancelled"
   self:__Done(-1)
   return self
 end
@@ -1308,6 +1317,8 @@ do
 -- @field Core.ClientMenu#CLIENTMENU ActiveTopMenu
 -- @field Core.ClientMenu#CLIENTMENU ActiveInfoMenu
 -- @field Core.ClientMenu#CLIENTMENU MenuNoTask
+-- @field #boolean InformationMenu Show Radio Info Menu
+-- @field #number TaskInfoDuration How long to show the briefing info on the screen
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1663,6 +1674,8 @@ PLAYERTASKCONTROLLER = {
   UseTypeNames       = false,
   Scoring            = nil,
   MenuNoTask         = nil,
+  InformationMenu    = false,
+  TaskInfoDuration   = 30,
   }
 
 ---
@@ -1799,6 +1812,7 @@ PLAYERTASKCONTROLLER.Messages = {
     CRUISER = "Cruiser",
     DESTROYER = "Destroyer",
     CARRIER = "Aircraft Carrier",
+    RADIOS = "Radios",
   },
   DE = {
     TASKABORT = "Auftrag abgebrochen!",
@@ -1882,12 +1896,13 @@ PLAYERTASKCONTROLLER.Messages = {
     CRUISER = "Kreuzer",
     DESTROYER = "Zerstörer",
     CARRIER = "Flugzeugträger",
+    RADIOS = "Frequenzen",
   },
 }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.67"
+PLAYERTASKCONTROLLER.version="0.1.69"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -1948,6 +1963,10 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.ShowMagnetic = true
   
   self.UseTypeNames = false
+  
+  self.InformationMenu = false
+  
+  self.TaskInfoDuration = 30
   
   self.IsClientSet = false
   
@@ -2166,6 +2185,16 @@ function PLAYERTASKCONTROLLER:SetAllowFlashDirection(OnOff)
   return self
 end
 
+--- [User] Set to show a menu entry to retrieve the radio frequencies used.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #boolean OnOff Set to `true` to switch on and `false` to switch off. Default is OFF.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetShowRadioInfoMenu(OnOff)
+  self:T(self.lid.."SetAllowRadioInfoMenu")
+  self.InformationMenu = OnOff
+  return self
+end
+
 --- [User] Do not show menu entries to smoke or flare targets
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #PLAYERTASKCONTROLLER self
@@ -2261,7 +2290,7 @@ function PLAYERTASKCONTROLLER:_GetTextForSpeech(text)
   return text
 end
 
---- [User] Set repetition options for tasks
+--- [User] Set repetition options for tasks.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #boolean OnOff Set to `true` to switch on and `false` to switch off (defaults to true)
 -- @param #number Repeats Number of repeats (defaults to 5)
@@ -2276,6 +2305,16 @@ function PLAYERTASKCONTROLLER:SetTaskRepetition(OnOff, Repeats)
     self.repeatonfailed = false
     self.repeattimes = Repeats or 5
   end
+  return self
+end
+
+--- [User] Set how long the briefing is shown on screen.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #number Seconds Duration in seconds. Defaults to 30 seconds.
+-- @return #PLAYERTASKCONTROLLER self 
+function PLAYERTASKCONTROLLER:SetBriefingDuration(Seconds)
+  self:T(self.lid.."SetBriefingDuration")
+  self.TaskInfoDuration = Seconds or 30
   return self
 end
 
@@ -3464,6 +3503,32 @@ function PLAYERTASKCONTROLLER:_SwitchFlashing(Group, Client)
   return self
 end
 
+function PLAYERTASKCONTROLLER:_ShowRadioInfo(Group, Client)
+  self:T(self.lid.."_ShowRadioInfo")
+  local playername, ttsplayername = self:_GetPlayerName(Client)
+  
+  if self.UseSRS then
+    local frequency = self.Frequency
+    local freqtext = ""
+    if type(frequency) == "table" then
+      freqtext = self.gettext:GetEntry("FREQUENCIES",self.locale)
+      freqtext = freqtext..table.concat(frequency,", ")      
+    else
+      local freqt = self.gettext:GetEntry("FREQUENCY",self.locale)
+      freqtext = string.format(freqt,frequency)
+    end
+    
+    local switchtext = self.gettext:GetEntry("BROADCAST",self.locale)
+
+    playername = ttsplayername or self:_GetTextForSpeech(playername)
+    --local text = string.format("%s, %s, switch to %s for task assignment!",EventData.IniPlayerName,self.MenuName or self.Name,freqtext)
+    local text = string.format(switchtext,playername,self.MenuName or self.Name,freqtext)
+    self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2,{Group},text,30,self.BCFrequency,self.BCModulation)
+  end
+  
+  return self
+end
+
 --- [Internal] Flashing directional info for a client
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #PLAYERTASKCONTROLLER self
@@ -3683,7 +3748,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     text = self.gettext:GetEntry("NOACTIVETASK",self.locale)
   end
   if not self.NoScreenOutput then
-    local m=MESSAGE:New(text,15,"Tasking"):ToClient(Client)
+    local m=MESSAGE:New(text,self.TaskInfoDuration or 30,"Tasking"):ToClient(Client)
   end
   return self
 end
@@ -4037,6 +4102,11 @@ function PLAYERTASKCONTROLLER:_CreateJoinMenuTemplate()
     self.MenuNoTask = nil
   end
   
+  if self.InformationMenu then
+    local radioinfo = self.gettext:GetEntry("RADIOS",self.locale)
+    JoinTaskMenuTemplate:NewEntry(radioinfo,self.JoinTopMenu,self._ShowRadioInfo,self)
+  end
+  
   self.JoinTaskMenuTemplate = JoinTaskMenuTemplate
   
   return self
@@ -4376,8 +4446,9 @@ end
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS; if you use a config file for MSRS, hand in nil here.
 -- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
 -- @param Core.Point#COORDINATE Coordinate Coordinate from which the controller radio is sending
+-- @param #string Backend (Optional) MSRS Backend to be used, can be MSRS.Backend.SRSEXE or MSRS.Backend.GRPC; if you use a config file for MSRS, hand in nil here.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Coordinate)
+function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Coordinate,Backend)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
   self.Gender = Gender or MSRS.gender or "male" --
@@ -4393,7 +4464,7 @@ function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Cultu
   self.Modulation = Modulation or {radio.modulation.FM,radio.modulation.AM} --
   self.BCModulation = self.Modulation
   -- set up SRS 
-  self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation)
+  self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation,Backend)
   self.SRS:SetCoalition(self.Coalition)
   self.SRS:SetLabel(self.MenuName or self.Name)
   self.SRS:SetGender(self.Gender)
