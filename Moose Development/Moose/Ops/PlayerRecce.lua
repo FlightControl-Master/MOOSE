@@ -106,7 +106,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.1.24",
+  version            =   "0.1.25",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   ViewZoneLaser      =   {},
@@ -166,7 +166,8 @@ PLAYERRECCE.MaxViewDistance = {
   ["SA342Minigun"] = 8000,
   ["SA342L"] = 8000,
   ["Ka-50"] = 8000, 
-  ["Ka-50_3"] = 8000, 
+  ["Ka-50_3"] = 8000,
+  ["OH58D"] = 8000, 
 }
 
 ---
