@@ -809,6 +809,8 @@ end
 -- @param #boolean noMessage 
 -- @param #string _description Description
 -- @param #boolean forcedesc Use the description only for the pilot track entry
+-- @return Wrapper.Group#GROUP PilotInField Pilot GROUP object
+-- @return #string AliasName Alias display name
 function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description, forcedesc )
   self:T(self.lid .. " _AddCsar")
   self:T({_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description})
@@ -878,7 +880,7 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
 
   self:_InitSARForPilot(_spawnedGroup, _unitName, _freq, noMessage, _playerName) --shagrat use unitName to have the aircraft callsign / descriptive "name" etc.
   
-  return self
+  return _spawnedGroup, _alias
 end
 
 --- (Internal) Function to add a CSAR object into the scene at a zone coordinate. For mission designers wanting to add e.g. PoWs to the scene.
@@ -1829,8 +1831,9 @@ end
 --- (Internal) Function to get string of a group\'s position.
 -- @param #CSAR self
 -- @param Wrapper.Controllable#CONTROLLABLE _woundedGroup Group or Unit object.
+-- @param Wrapper.Unit#UNIT _Unit Requesting helo pilot unit
 -- @return #string Coordinates as Text
-function CSAR:_GetPositionOfWounded(_woundedGroup)
+function CSAR:_GetPositionOfWounded(_woundedGroup,_Unit)
   self:T(self.lid .. " _GetPositionOfWounded")
   local _coordinate = _woundedGroup:GetCoordinate()
   local _coordinatesText = "None"
@@ -1843,6 +1846,26 @@ function CSAR:_GetPositionOfWounded(_woundedGroup)
       _coordinatesText = _coordinate:ToStringMGRS()  
     else -- Bullseye Metric --(medevac.coordtype == 4 or 3)
       _coordinatesText = _coordinate:ToStringBULLS(self.coalition)
+    end
+  end
+  if _Unit and _Unit:GetPlayerName() then
+    local playername = _Unit:GetPlayerName()
+    if playername then
+      local settings = _DATABASE:GetPlayerSettings(playername) or _SETTINGS
+      if settings then
+        self:T("Get Settings ok!")
+        if settings:IsA2G_MGRS() then
+          _coordinatesText = _coordinate:ToStringMGRS(settings)
+        elseif settings:IsA2G_LL_DMS() then
+          _coordinatesText = _coordinate:ToStringLLDMS(settings)
+        elseif settings:IsA2G_LL_DDM() then
+          _coordinatesText = _coordinate:ToStringLLDDM(settings)
+        elseif settings:IsA2G_BR() then
+          -- attention this is the distance from the ASKING unit to target, not from RECCE to target!
+          local startcoordinate = _Unit:GetCoordinate()
+          _coordinatesText = _coordinate:ToStringBR(startcoordinate,settings)
+        end
+      end
     end
   end
   return _coordinatesText
@@ -1870,13 +1893,17 @@ function CSAR:_DisplayActiveSAR(_unitName)
     self:T({Table=_value})
     local _woundedGroup = _value.group
     if _woundedGroup and _value.alive then  
-        local _coordinatesText = self:_GetPositionOfWounded(_woundedGroup) 
+        local _coordinatesText = self:_GetPositionOfWounded(_woundedGroup,_heli) 
         local _helicoord =  _heli:GetCoordinate()
         local _woundcoord = _woundedGroup:GetCoordinate()
         local _distance = self:_GetDistance(_helicoord, _woundcoord)
         self:T({_distance = _distance})
         local distancetext = ""
-        if _SETTINGS:IsImperial() then
+        local settings = _SETTINGS
+        if _heli:GetPlayerName() then
+          settings = _DATABASE:GetPlayerSettings(_heli:GetPlayerName()) or _SETTINGS
+        end
+        if settings:IsImperial() then
           distancetext = string.format("%.1fnm",UTILS.MetersToNM(_distance))
         else
           distancetext = string.format("%.1fkm", _distance/1000.0)
