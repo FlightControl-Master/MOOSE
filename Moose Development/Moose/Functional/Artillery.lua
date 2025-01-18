@@ -534,7 +534,7 @@
 ARTY={
   ClassName="ARTY",
   lid=nil,
-  Debug=false,
+  Debug=true,
   targets={},
   moves={},
   currentTarget=nil,
@@ -619,63 +619,101 @@ ARTY.WeaponType={
 }
 
 --- Database of common artillery unit properties.
+-- @type ARTY.dbitem
+-- @field #string displayname Name displayed in ME.
+-- @field #number minrange Minimum firing range in meters.
+-- @field #number maxrange Maximum firing range in meters.
+-- @field #number reloadtime Reload time in seconds.
+
+--- Database of common artillery unit properties.
+-- Table key is the "type name" and table value is and `ARTY.dbitem`.
 -- @type ARTY.db
 ARTY.db={
-  ["2B11 mortar"] = {  -- type "2B11 mortar"
-    minrange   = 500,  -- correct?
-    maxrange   = 7000, -- 7 km
-    reloadtime = 30,   -- 30 sec
+  ["2B11 mortar"] = {
+    displayname = "Mortar 2B11 120mm", 
+    minrange    = 500,  -- correct?
+    maxrange    = 7000, -- 7 km
+    reloadtime  = 30,   -- 30 sec
   },
-  ["SPH 2S1 Gvozdika"] = { -- type "SAU Gvozdika"
-    minrange   = 300,      -- correct?
-    maxrange   = 15000,    -- 15 km
-    reloadtime = nil,      -- unknown
+  ["SAU Gvozdika"] = {
+    displayname = "SPH 2S1 Gvozdika 122mm",
+    minrange    = 300,      -- correct?
+    maxrange    = 15000,    -- 15 km
+    reloadtime  = nil,      -- unknown
   },
-  ["SPH 2S19 Msta"] = { --type "SAU Msta", alias "2S19 Msta"
-    minrange   = 300,     -- correct?
-    maxrange   = 23500,   -- 23.5 km
-    reloadtime = nil,     -- unknown
+  ["SAU Msta"] = {
+    displayname = "SPH 2S19 Msta 152mm",
+    minrange    = 300,     -- correct?
+    maxrange    = 23500,   -- 23.5 km
+    reloadtime  = nil,     -- unknown
   },
-  ["SPH 2S3 Akatsia"] = { -- type "SAU Akatsia", alias "2S3 Akatsia"
-    minrange   = 300,   -- correct?
-    maxrange   = 17000, -- 17 km
-    reloadtime = nil,   -- unknown
+  ["SAU Akatsia"] = {
+    displayname = "SPH 2S3 Akatsia 152mm",
+    minrange    = 300,
+    maxrange    = 17000,
+    reloadtime  = nil,
   },
-  ["SPH 2S9 Nona"] = { --type "SAU 2-C9"
-    minrange   = 500,   -- correct?
-    maxrange   = 7000,  -- 7 km
-    reloadtime = nil,   -- unknown
+  ["SAU 2-C9"] = {
+    displayname = "SPM 2S9 Nona 120mm M",
+    minrange    = 500,
+    maxrange    = 7000,
+    reloadtime  = nil,
   },
-  ["SPH M109 Paladin"] = { -- type "M-109", alias "M109"
-    minrange   = 300,     -- correct?
-    maxrange   = 22000,   -- 22 km
-    reloadtime = nil,   -- unknown
+  ["M-109"] = {
+    displayname = "SPH M109 Paladin 155mm",
+    minrange    = 300,
+    maxrange    = 22000,
+    reloadtime  = nil,
   },
-  ["SpGH Dana"] = {       -- type "SpGH_Dana"
-    minrange   = 300,     -- correct?
-    maxrange   = 18700,   -- 18.7 km
-    reloadtime = nil,     -- unknown
+  ["SpGH_Dana"] = {
+    displayname = "SPH Dana vz77 152mm",
+    minrange    = 300,
+    maxrange    = 18700,
+    reloadtime  = nil,
   },
   ["MLRS BM-21 Grad"] = { --type "Grad-URAL", alias "MLRS BM-21 Grad"
-    minrange = 5000,  --  5 km
-    maxrange = 19000, -- 19 km
-    reloadtime = 420, -- 7 min
+    minrange = 5000,
+    maxrange = 19000,
+    reloadtime = 420,
   },
   ["MLRS 9K57 Uragan BM-27"] = { -- type "Uragan_BM-27"
-    minrange   = 11500, -- 11.5 km
-    maxrange   = 35800, -- 35.8 km
-    reloadtime = 840,   -- 14 min
+    minrange   = 11500,
+    maxrange   = 35800,
+    reloadtime = 840,
   },
   ["MLRS 9A52 Smerch"] = { -- type "Smerch"
-    minrange   = 20000, -- 20 km
-    maxrange   = 70000, -- 70 km
-    reloadtime = 2160,  -- 36 min
+    minrange   = 20000,
+    maxrange   = 70000,
+    reloadtime = 2160,
   },
   ["MLRS M270"] = { --type "MRLS", alias "M270 MRLS"
-    minrange   = 10000, -- 10 km
-    maxrange   = 32000, -- 32 km
-    reloadtime = 540,   -- 9 min
+    minrange   = 10000,
+    maxrange   = 32000,
+    reloadtime = 540,
   },
+  ["M12_GMC"] = {
+    displayname = "SPH M12 GMC 155mm",
+    minrange    = 300,
+    maxrange    = 18200,
+    reloadtime  = nil,
+  },
+  ["Wespe124"] = {
+    displayname = "SPH Sd.Kfz.124 Wespe 105mm",
+    minrange    = 300,
+    maxrange    = 7000,
+    reloadtime  = nil,
+  },
+  ["T155_Firtina"] = {
+    displayname = "SPH T155 Firtina 155mm",
+    minrange    = 300,
+    maxrange    = 41000,
+    reloadtime  = nil,
+  },      
+  ["LeFH_18-40-105"] = {
+    minrange   = 500,   -- 500 m(?)
+    maxrange   = 10500, -- 32 km
+    reloadtime = 540,   -- 9 min
+  },  
 }
 
 --- Target.
@@ -1923,7 +1961,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   end
 
   -- Check if we have and arty type that is in the DB.
-  local _dbproperties=self:_CheckDB(self.DisplayName)
+  local _dbproperties=self:_CheckDB(self.Type)
   self:T({dbproperties=_dbproperties})
   if _dbproperties~=nil then
     for property,value in pairs(_dbproperties) do
