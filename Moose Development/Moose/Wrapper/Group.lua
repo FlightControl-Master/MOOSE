@@ -3003,7 +3003,7 @@ end
 --            local callsign = mygroup:GetCustomCallSign(true,false,nil,function(groupname,playername) return string.match(playername,"([%a]+)$") end)
 -- 
 function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations,CustomFunction,...)
-  --self:I("GetCustomCallSign")
+  self:T("GetCustomCallSign")
 
   local callsign = "Ghost 1"
   if self:IsAlive() then
@@ -3016,8 +3016,12 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations,C
     local callnumbermajor = string.char(string.byte(callnumber,1)) -- 9
     local callnumberminor = string.char(string.byte(callnumber,2)) -- 1
     local personalized = false
-    local playername = IsPlayer == true and self:GetPlayerName() or shortcallsign
+    --local playername = IsPlayer == true and self:GetPlayerName() or shortcallsign
+    local playername = shortcallsign
     
+    if IsPlayer then playername = self:GetPlayerName() end
+    
+    self:T2("GetCustomCallSign outcome = "..playername)
     if CustomFunction and IsPlayer then
       local arguments = arg or {}
       local callsign = CustomFunction(groupname,playername,unpack(arguments))
