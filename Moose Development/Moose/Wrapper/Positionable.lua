@@ -145,7 +145,11 @@ function POSITIONABLE:GetPosition()
   self:F2( self.PositionableName )
 
   local DCSPositionable = self:GetDCSObject()
-
+  
+  if self:IsInstanceOf("GROUP") then
+    DCSPositionable = self:GetFirstUnitAlive():GetDCSObject()
+  end
+    
   if DCSPositionable then
     local PositionablePosition = DCSPositionable:getPosition()
     self:T3( PositionablePosition )
