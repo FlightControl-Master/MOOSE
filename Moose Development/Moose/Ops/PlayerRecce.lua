@@ -106,7 +106,7 @@ PLAYERRECCE = {
   ClassName          =   "PLAYERRECCE",
   verbose            =   true,
   lid                =   nil,
-  version            =   "0.1.24",
+  version            =   "0.1.26",
   ViewZone           =   {},
   ViewZoneVisual     =   {},
   ViewZoneLaser      =   {},
@@ -154,7 +154,8 @@ PLAYERRECCE.LaserRelativePos = {
   ["SA342Minigun"] = { x = 1.7, y = 1.2, z = 0 },
   ["SA342L"] = { x = 1.7, y = 1.2, z = 0 },
   ["Ka-50"] = { x = 6.1, y = -0.85 , z = 0 },
-  ["Ka-50_3"] = { x = 6.1, y = -0.85 , z = 0 }
+  ["Ka-50_3"] = { x = 6.1, y = -0.85 , z = 0 },
+  ["OH58D"] = {x = 0, y = 2.8, z = 0},
 }
 
 ---
@@ -166,7 +167,8 @@ PLAYERRECCE.MaxViewDistance = {
   ["SA342Minigun"] = 8000,
   ["SA342L"] = 8000,
   ["Ka-50"] = 8000, 
-  ["Ka-50_3"] = 8000, 
+  ["Ka-50_3"] = 8000,
+  ["OH58D"] = 8000, 
 }
 
 ---
@@ -178,7 +180,8 @@ PLAYERRECCE.Cameraheight = {
   ["SA342Minigun"] = 2.85,
   ["SA342L"] = 2.85,
   ["Ka-50"] = 0.5, 
-  ["Ka-50_3"] = 0.5, 
+  ["Ka-50_3"] = 0.5,
+  ["OH58D"] = 4.25, 
 }
 
 ---
@@ -190,7 +193,8 @@ PLAYERRECCE.CanLase = {
   ["SA342Minigun"] = false, -- no optics
   ["SA342L"] = true,
   ["Ka-50"] = true,
-  ["Ka-50_3"] = true,  
+  ["Ka-50_3"] = true,
+  ["OH58D"] = false, -- has onboard and useable laser   
 }
 
 ---
@@ -546,7 +550,7 @@ function PLAYERRECCE:SetAttackSet(AttackSet)
   return self
 end
 
----[Internal] Check Gazelle camera in on
+---[Internal] Check Helicopter camera in on
 -- @param #PLAYERRECCE self
 -- @param Wrapper.Client#CLIENT client
 -- @param #string playername
@@ -562,12 +566,64 @@ function PLAYERRECCE:_CameraOn(client,playername)
       if vivihorizontal < -0.7 or vivihorizontal > 0.7 then 
         camera = false
       end
+    elseif string.find(typename,"OH58") then
+      local dcsunit = Unit.getByName(client:GetName())
+      local vivihorizontal = dcsunit:getDrawArgumentValue(528) or 0 -- Kiow
+      if vivihorizontal < -0.527 or vivihorizontal > 0.527 then 
+        camera = false
+      end  
     elseif string.find(typename,"Ka-50")  then
       camera = true
     end
   end
   return camera
 end
+
+--- [Internal] Get the view parameters from a Kiowa MMS camera
+-- @param #PLAYERRECCE self
+-- @param Wrapper.Unit#UNIT Kiowa
+-- @return #number cameraheading in degrees.
+-- @return #number cameranodding in degrees.
+-- @return #number maxview in meters.
+-- @return #boolean cameraison If true, camera is on, else off.
+function PLAYERRECCE:_GetKiowaMMSSight(Kiowa)
+  self:T(self.lid.."_GetKiowaMMSSight")
+  local unit = Kiowa -- Wrapper.Unit#UNIT
+  if unit and unit:IsAlive() then
+    local dcsunit = Unit.getByName(Kiowa:GetName())
+    --[[
+    shagrat — 01/01/2025 23:13
+    Found the necessary ARGS for the Kiowa MMS angle and rotation:
+    Arg 527 vertical movement
+     0 = neutral
+    -1.0 = max depression (30° max depression angle)
+    +1.0 = max elevation angle (30° max elevation angle)
+    
+    Arg 528 horizontal movement 
+    0 = forward (0 degr)
+    -0.25 = 90° left
+    -0.5 = rear (180°) left (max 190° = -0.527
+    +0.25 = 90° right
+    +0.5 = 180° right (max 190° = 0.527)
+    --]]
+    local mmshorizontal = dcsunit:getDrawArgumentValue(528) or 0
+    local mmsvertical = dcsunit:getDrawArgumentValue(527) or 0
+    self:T(string.format("Kiowa MMS Arguments Read: H %.3f V %.3f",mmshorizontal,mmsvertical))
+    local mmson = true
+    if mmshorizontal < -0.527 or mmshorizontal > 0.527 then mmson = false end
+    local horizontalview = mmshorizontal / 0.527 * 190
+    local heading = unit:GetHeading()
+    local mmsheading = (heading+horizontalview)%360
+    --local mmsyaw = mmsvertical * 30
+    local mmsyaw = math.atan(mmsvertical)*40
+    local maxview = self:_GetActualMaxLOSight(unit,mmsheading, mmsyaw,not mmson)
+    if maxview > 8000 then maxview = 8000 end
+    self:T(string.format("Kiowa MMS Heading %d, Yaw %d, MaxView %dm MMS On %s",mmsheading,mmsyaw,maxview,tostring(mmson)))
+    return mmsheading,mmsyaw,maxview,mmson
+  end
+  return 0,0,0,false
+end
+
 
 --- [Internal] Get the view parameters from a Gazelle camera
 -- @param #PLAYERRECCE self
@@ -597,40 +653,15 @@ function PLAYERRECCE:_GetGazelleVivianneSight(Gazelle)
       vivioff = true
       return 0,0,0,false
     end
-    vivivertical = vivivertical / 1.10731 -- normalize
+
     local horizontalview = vivihorizontal * -180 
-    local verticalview = vivivertical * 30 -- ca +/- 30°
-   --self:I(string.format("vivihorizontal=%.5f | vivivertical=%.5f",vivihorizontal,vivivertical)) 
-    --self:I(string.format("horizontal=%.5f | vertical=%.5f",horizontalview,verticalview))
+    --local verticalview = vivivertical * 30 -- ca +/- 30°
+    local verticalview = math.atan(vivivertical)
+
     local heading = unit:GetHeading()
     local viviheading = (heading+horizontalview)%360
     local maxview = self:_GetActualMaxLOSight(unit,viviheading, verticalview,vivioff)
-    --self:I(string.format("maxview=%.5f",maxview))
-    -- visual skew
-    local factor = 3.15
-    self.GazelleViewFactors = {
-      [1]=1.18,
-      [2]=1.32,
-      [3]=1.46,
-      [4]=1.62,
-      [5]=1.77,
-      [6]=1.85,
-      [7]=2.05,
-      [8]=2.05,
-      [9]=2.3,
-      [10]=2.3,
-      [11]=2.27,
-      [12]=2.27,
-      [13]=2.43,
-      }
-    local lfac = UTILS.Round(maxview,-2)
-    if lfac <= 1300 then
-      --factor = self.GazelleViewFactors[lfac/100]
-      factor = 3.15
-      maxview = math.ceil((maxview*factor)/100)*100
-    end
     if maxview > 8000 then maxview = 8000 end
-    --self:I(string.format("corrected maxview=%.5f",maxview))
     return viviheading, verticalview,maxview, not vivioff
   end
   return 0,0,0,false
@@ -651,20 +682,20 @@ function PLAYERRECCE:_GetActualMaxLOSight(unit,vheading, vnod, vivoff)
   if unit and unit:IsAlive() then
     local typename = unit:GetTypeName()
     maxview = self.MaxViewDistance[typename] or 8000  
-    local CamHeight = self.Cameraheight[typename] or 0
-    if vnod < 0 then
+    local CamHeight = self.Cameraheight[typename] or 1
+    if vnod < -2 then
         -- Looking down
         -- determine max distance we're looking at
         local beta = 90
-        local gamma = math.floor(90-vnod)
-        local alpha = math.floor(180-beta-gamma)
+        local gamma = 90-math.abs(vnod)
+        local alpha = 90-gamma
         local a = unit:GetHeight()-unit:GetCoordinate():GetLandHeight()+CamHeight
         local b = a / math.sin(math.rad(alpha))
         local c = b * math.sin(math.rad(gamma))
         maxview = c*1.2 -- +20%
     end
   end 
-  return math.abs(maxview)
+  return math.ceil(math.abs(maxview))
 end
 
 --- [User] Set callsign options for TTS output. See @{Wrapper.Group#GROUP.GetCustomCallSign}() on how to set customized callsigns.
@@ -673,8 +704,10 @@ end
 -- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name for players as-is, no amendments or numbers.
 -- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
 -- callsigns from playername or group name.
+-- @param #func CallsignCustomFunc (Optional) For player names only(!). If given, this function will return the callsign. Needs to take the groupname and the playername as first two arguments.
+-- @param #arg ... (Optional) Comma separated arguments to add to the custom function call after groupname and playername.
 -- @return #PLAYERRECCE self
-function PLAYERRECCE:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
+function PLAYERRECCE:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations,CallsignCustomFunc,...)
   if not ShortCallsign or ShortCallsign == false then
    self.ShortCallsign = false
   else
@@ -682,6 +715,8 @@ function PLAYERRECCE:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTransla
   end
   self.Keepnumber = Keepnumber or false
   self.CallsignTranslations = CallsignTranslations
+  self.CallsignCustomFunc = CallsignCustomFunc
+  self.CallsignCustomArgs = arg or {}
   return self  
 end
 
@@ -817,6 +852,14 @@ function PLAYERRECCE:_GetTargetSet(unit,camera,laser)
     nod,maxview,camon = 10,1000,true
     angle = 10
     maxview = self.MaxViewDistance[typename] or 5000
+  elseif string.find(typename,"OH58") and camera then
+    --heading = unit:GetHeading()
+    nod,maxview,camon = 0,8000,true
+    heading,nod,maxview,camon = self:_GetKiowaMMSSight(unit)
+    angle = 8
+    if maxview == 0 then
+      maxview = self.MaxViewDistance[typename] or 5000
+    end
   else
     -- visual
     heading = unit:GetHeading()
@@ -1361,6 +1404,7 @@ function PLAYERRECCE:_BuildMenus(Client)
     local client = _client -- Wrapper.Client#CLIENT
     if client and client:IsAlive() then
       local playername = client:GetPlayerName()
+      self:T("Menu for "..playername)
       if not self.UnitLaserCodes[playername] then
         self:_SetClientLaserCode(nil,nil,playername,1688)
       end
@@ -1369,6 +1413,7 @@ function PLAYERRECCE:_BuildMenus(Client)
       end
       local group = client:GetGroup()
       if not self.ClientMenus[playername] then
+        self:T("Start Menubuild for "..playername)
         local canlase = self.CanLase[client:GetTypeName()]
         self.ClientMenus[playername] = MENU_GROUP:New(group,self.MenuName or self.Name or "RECCE")
         local txtonstation = self.OnStation[playername] and "ON" or "OFF"
@@ -1585,6 +1630,15 @@ function PLAYERRECCE:EnableSmokeOwnPosition()
   return self
 end
 
+--- [User] Enable auto lasing for the Kiowa OH-58D.
+-- @param #PLAYERRECCE self
+-- @return #PLAYERRECCE self
+function PLAYERRECCE:EnableKiowaAutolase()
+  self:T(self.lid.."EnableKiowaAutolase")
+  self.CanLase.OH58D = true
+  return self
+end
+
 --- [User] Disable smoking of own position
 -- @param #PLAYERRECCE self
 -- @return #PLAYERRECCE 
@@ -1742,7 +1796,7 @@ end
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterRecceOnStation(From, Event, To, Client, Playername)
   self:T({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition)
   if self.ReferencePoint then
@@ -1751,7 +1805,7 @@ function PLAYERRECCE:onafterRecceOnStation(From, Event, To, Client, Playername)
   end
   local text1 = "Party time!"
   local text2 = string.format("All stations, FACA %s on station\nat %s!",callsign, coordtext)
-  local text2tts = string.format("All stations, FACA %s on station at %s!",callsign, coordtext)
+  local text2tts = string.format(" All stations, FACA %s on station at %s!",callsign, coordtext)
   text2tts = self:_GetTextForSpeech(text2tts)
   if self.debug then
   self:T(text2.."\n"..text2tts)
@@ -1782,7 +1836,7 @@ end
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterRecceOffStation(From, Event, To, Client, Playername)
   self:T({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition)
   if self.ReferencePoint then
@@ -1922,7 +1976,7 @@ end
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterIllumination(From, Event, To, Client, Playername, TargetSet)
   self:T({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition)
   if self.AttackSet then
@@ -1965,7 +2019,7 @@ end
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetsSmoked(From, Event, To, Client, Playername, TargetSet)
   self:T({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition)
   if self.AttackSet then
@@ -2008,7 +2062,7 @@ end
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetsFlared(From, Event, To, Client, Playername, TargetSet)
   self:T({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition)
   if self.AttackSet then
@@ -2052,7 +2106,7 @@ end
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetLasing(From, Event, To, Client, Target, Lasercode, Lasingtime)
   self:T({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
   local Settings = ( Client and _DATABASE:GetPlayerSettings( Client:GetPlayerName() ) ) or _SETTINGS
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition,Settings)
@@ -2099,7 +2153,7 @@ end
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterShack(From, Event, To, Client, Target)
   self:T({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
   local Settings = ( Client and _DATABASE:GetPlayerSettings( Client:GetPlayerName() ) ) or _SETTINGS
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition,Settings)
@@ -2146,7 +2200,7 @@ end
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:onafterTargetLOSLost(From, Event, To, Client, Target)
   self:T({From, Event, To})
-  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+  local callsign = Client:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
   local Settings = ( Client and _DATABASE:GetPlayerSettings( Client:GetPlayerName() ) ) or _SETTINGS
   local coord = Client:GetCoordinate()
   local coordtext = coord:ToStringBULLS(self.Coalition,Settings)
