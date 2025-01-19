@@ -2261,8 +2261,10 @@ end
 -- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name for players as-is, no amendments or numbers.
 -- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
 -- callsigns from playername or group name.
+-- @param #func CallsignCustomFunc (Optional) For player names only(!). If given, this function will return the callsign. Needs to take the groupname and the playername as first two arguments.
+-- @param #arg ... (Optional) Comma separated arguments to add to the custom function call after groupname and playername.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
+function PLAYERTASKCONTROLLER:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations,CallsignCustomFunc,...)
   if not ShortCallsign or ShortCallsign == false then
    self.ShortCallsign = false
   else
@@ -2270,6 +2272,8 @@ function PLAYERTASKCONTROLLER:SetCallSignOptions(ShortCallsign,Keepnumber,Callsi
   end
   self.Keepnumber = Keepnumber or false
   self.CallsignTranslations = CallsignTranslations
+  self.CallsignCustomFunc = CallsignCustomFunc
+  self.CallsignCustomArgs = arg or {}
   return self  
 end
 
@@ -2481,7 +2485,7 @@ function PLAYERTASKCONTROLLER:_GetPlayerName(Client)
   if not self.customcallsigns[playername] then
     local playergroup = Client:GetGroup()
     if playergroup ~= nil then
-      ttsplayername = playergroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+      ttsplayername = playergroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
       local newplayername = self:_GetTextForSpeech(ttsplayername)
       self.customcallsigns[playername] = newplayername
       ttsplayername = newplayername
@@ -2621,7 +2625,7 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
           if self.customcallsigns[playername] then
             self.customcallsigns[playername] = nil
           end
-          playername = EventData.IniGroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber)
+          playername = EventData.IniGroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
         end
         playername = self:_GetTextForSpeech(playername)
         --local text = string.format("%s, %s, switch to %s for task assignment!",EventData.IniPlayerName,self.MenuName or self.Name,freqtext)
@@ -3641,7 +3645,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
         local pcoord = player:GetCoordinate()
         if pcoord:Get2DDistance(Coordinate) <= reachdist then
           inreach = true
-          local callsign = player:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+          local callsign = player:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
           local playername = player:GetPlayerName()
           local islasing = no
           if self.PlayerRecce.CanLase[player:GetTypeName()] and self.PlayerRecce.AutoLase[playername] then
