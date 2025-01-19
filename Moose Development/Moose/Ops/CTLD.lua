@@ -1352,7 +1352,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.23"
+CTLD.version="1.1.24"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -5512,14 +5512,18 @@ end
       local match = false
       local cgotbl = self.Cargo_Troops
       local name = cargo:GetName()
+      local CargoObject
+      local CargoName
       for _,_cgo in pairs (cgotbl) do
         local cname = _cgo:GetName()
         if name == cname then
           match = true
+          CargoObject = _cgo
+          CargoName = cname
           break
         end
       end
-      return match
+      return match, CargoObject, CargoName
     end
     
     local function Cruncher(group,typename,anzahl)
@@ -5565,11 +5569,24 @@ end
      end
     end
     
-    if not IsTroopsMatch(cargo) then
+    local match,CargoObject,CargoName = IsTroopsMatch(cargo)
+    
+    if not match then
       self.CargoCounter = self.CargoCounter + 1
       cargo.ID = self.CargoCounter
       cargo.Stock = 1
-      table.insert(self.Cargo_Troops,cargo)
+      table.insert(self.Cargo_Crates,cargo)
+    end
+    
+    if match and CargoObject then
+      local stock = CargoObject:GetStock()
+      if stock ~= -1 and stock ~= nil and stock == 0 then
+       -- stock empty
+       self:T(self.lid.."Stock of "..CargoName.." is empty. Cannot inject.")
+       return
+      else
+        CargoObject:RemoveStock(1)
+      end
     end
     
     local type = cargo:GetType() -- #CTLD_CARGO.Enum
@@ -5637,14 +5654,18 @@ end
       local match = false
       local cgotbl = self.Cargo_Crates
       local name = cargo:GetName()
+      local CargoObject
+      local CargoName
       for _,_cgo in pairs (cgotbl) do
         local cname = _cgo:GetName()
         if name == cname then
           match = true
+          CargoObject = _cgo
+          CargoName = cname
           break
         end
       end
-      return match
+      return match,CargoObject,CargoName
     end
     
     local function Cruncher(group,typename,anzahl)
@@ -5690,11 +5711,24 @@ end
      end
     end
     
-    if not IsVehicMatch(cargo) then
+    local match,CargoObject,CargoName = IsVehicMatch(cargo)
+    
+    if not match then
       self.CargoCounter = self.CargoCounter + 1
       cargo.ID = self.CargoCounter
       cargo.Stock = 1
       table.insert(self.Cargo_Crates,cargo)
+    end
+    
+    if match and CargoObject then
+      local stock = CargoObject:GetStock()
+      if stock ~= -1 and stock ~= nil and stock == 0 then
+       -- stock empty
+       self:T(self.lid.."Stock of "..CargoName.." is empty. Cannot inject.")
+       return
+      else
+        CargoObject:RemoveStock(1)
+      end
     end
     
     local type = cargo:GetType() -- #CTLD_CARGO.Enum
