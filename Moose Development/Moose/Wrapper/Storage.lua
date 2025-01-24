@@ -227,7 +227,7 @@ function STORAGE:New(AirbaseName)
 
   self.airbase=Airbase.getByName(AirbaseName)
 
-  if Airbase.getWarehouse then
+  if Airbase.getWarehouse and self.airbase then
     self.warehouse=self.airbase:getWarehouse()
   end
 
@@ -838,6 +838,35 @@ function STORAGE:StopAutoSave()
     self.SaverTimer = nil
   end
   return self
+end
+
+--- Try to find the #STORAGE object of one of the many "H"-Helipads in Syria. You need to put a (small, round) zone on top of it, because the name is not unique(!).
+-- @param #STORAGE self
+-- @param #string ZoneName The name of the zone where to find the helipad.
+-- @return #STORAGE self or nil if not found.
+function STORAGE:FindSyriaHHelipadWarehouse(ZoneName)
+ local findzone = ZONE:New(ZoneName)
+ local base = world.getAirbases()
+ for i = 1, #base do
+   local info = {}
+   --info.desc = Airbase.getDesc(base[i])
+   info.callsign = Airbase.getCallsign(base[i])
+   info.id = Airbase.getID(base[i])
+   --info.cat = Airbase.getCategory(base[i])
+   info.point = Airbase.getPoint(base[i])
+   info.coordinate = COORDINATE:NewFromVec3(info.point)
+   info.DCSObject = base[i]
+   --if Airbase.getUnit(base[i]) then
+       --info.unitId = Airbase.getUnit(base[i]):getID()
+   --end
+   if info.callsign == "H" and findzone:IsCoordinateInZone(info.coordinate) then
+    info.warehouse = info.DCSObject:getWarehouse()
+    info.Storage = STORAGE:New(info.callsign..info.id)
+    info.Storage.airbase = info.DCSObject
+    info.Storage.warehouse = info.warehouse         
+    return info.Storage
+   end
+ end
 end
 
 
