@@ -1415,7 +1415,7 @@ function ZONE_RADIUS:SearchZone( EvaluateFunction, ObjectCategories )
     id = world.VolumeType.SPHERE,
       params = {
       point = ZoneCoord:GetVec3(),
-      radius = ZoneRadius / 2,
+      radius = ZoneRadius,
       }
     }
 
