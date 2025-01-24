@@ -980,7 +980,7 @@ do
 --  
 -- ## 3.5 OnAfterCratesDropped
 --  
---    This function is called when a player has deployed crates to a DROP zone:
+--    This function is called when a player has deployed crates:
 --
 --        function my_ctld:OnAfterCratesDropped(From, Event, To, Group, Unit, Cargotable)
 --          ... your code here ...
@@ -1242,6 +1242,8 @@ CTLD = {
   TroopUnloadDistHoverHook = 5,
   TroopUnloadDistHover = 1.5,
   UserSetGroup = nil,
+  LoadedGroupsTable = {},
+  keeploadtable = true,
 }
 
 ------------------------------
@@ -1352,7 +1354,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.24"
+CTLD.version="1.1.25"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1419,7 +1421,8 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self:AddTransition("*",             "CratesRepaired",      "*")           -- CTLD repair  event.
   self:AddTransition("*",             "CratesBuildStarted",  "*")           -- CTLD build  event.
   self:AddTransition("*",             "CratesRepairStarted", "*")           -- CTLD repair  event.
-  self:AddTransition("*",             "Load",                "*")           -- CTLD load  event.  
+  self:AddTransition("*",             "Load",                "*")           -- CTLD load  event.
+  self:AddTransition("*",             "Loaded",              "*")           -- CTLD load  event.   
   self:AddTransition("*",             "Save",                "*")           -- CTLD save  event.      
   self:AddTransition("*",             "Stop",                "Stopped")     -- Stop FSM.
   
@@ -1520,6 +1523,8 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.filepath = nil
   self.saveinterval = 600
   self.eventoninject = true
+  self.keeploadtable = true
+  self.LoadedGroupsTable = {}
   
   -- sub categories
   self.usesubcats = false
@@ -1831,6 +1836,14 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To To state.
   -- @param #string path (Optional) Path where the file is located. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if the lfs module is desanitized.
   -- @param #string filename (Optional) File name for loading. Default is "CTLD_<alias>_Persist.csv".
+  
+  --- FSM Function OnAfterLoaded.
+  -- @function [parent=#CTLD] OnAfterLoaded
+  -- @param #CTLD self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #table LoadedGroups Table of loaded groups, each entry is a table with three values: Group, TimeStamp and CargoType.
   
   --- FSM Function OnAfterSave.
   -- @function [parent=#CTLD] OnAfterSave
@@ -3510,10 +3523,9 @@ function CTLD:_UnloadTroops(Group, Unit)
             local rad = 2.5+(tempcount*2)
             local Positions = self:_GetUnitPositions(randomcoord,rad,heading,_template)
             self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
-              --:InitRandomizeUnits(true,20,2)
-              --:InitHeading(heading)
               :InitDelayOff()
               :InitSetUnitAbsolutePositions(Positions)
+              :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
               :SpawnFromVec2(randomcoord:GetVec2())
             self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter],type)
           end -- template loop
@@ -3934,10 +3946,12 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation)
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
           --:InitRandomizeUnits(true,20,2)
           :InitDelayOff()
+          :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
           :SpawnFromVec2(randomcoord)
       else -- don't random position of e.g. SAM units build as FOB
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
           :InitDelayOff()
+          :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
           :SpawnFromVec2(randomcoord)
       end
       if Repair then
@@ -5496,6 +5510,7 @@ end
   -- @param #table Surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
   -- @param #boolean PreciseLocation (Optional) Don't try to get a random position in the zone but use the dead center. Caution not to stack up stuff on another!
   -- @param #string Structure (Optional) String object describing the current structure of the injected group; mainly for load/save to keep current state setup.
+  -- @param #number TimeStamp (Optional) Timestamp used internally on re-loading from disk.
   -- @return #CTLD self
   -- @usage Use this function to pre-populate the field with Troops or Engineers at a random coordinate in a zone:
   --            -- create a matching #CTLD_CARGO type
@@ -5504,7 +5519,7 @@ end
   --            local dropzone = ZONE:New("InjectZone") -- Core.Zone#ZONE
   --            -- and go:
   --            my_ctld:InjectTroops(dropzone,InjectTroopsType,{land.SurfaceType.LAND})
-  function CTLD:InjectTroops(Zone,Cargo,Surfacetypes,PreciseLocation,Structure)
+  function CTLD:InjectTroops(Zone,Cargo,Surfacetypes,PreciseLocation,Structure,TimeStamp)
     self:T(self.lid.." InjectTroops")
     local cargo = Cargo -- #CTLD_CARGO
     
@@ -5607,6 +5622,7 @@ end
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
           :InitRandomizeUnits(randompositions,20,2)
           :InitDelayOff()
+          :OnSpawnGroup(function(grp,TimeStamp) grp.spawntime = TimeStamp or timer.getTime() end,TimeStamp)
           :SpawnFromVec2(randomcoord)
         if self.movetroopstowpzone and type ~= CTLD_CARGO.Enum.ENGINEERS then
           self:_MoveGroupToZone(self.DroppedTroops[self.TroopCounter])
@@ -5624,6 +5640,11 @@ end
         BASE:ScheduleOnce(0.5,PostSpawn,{self.DroppedTroops[self.TroopCounter],Structure})
       end
       
+      if self.keeploadtables and TimeStamp then
+        local cargotype = cargo.CargoType
+        table.insert(self.LoadedGroupsTable,{Group=self.DroppedTroops[self.TroopCounter], TimeStamp=TimeStamp, CargoType=cargotype})
+      end
+      
       if self.eventoninject then
          self:__TroopsDeployed(1,nil,nil,self.DroppedTroops[self.TroopCounter],type)
       end
@@ -5638,6 +5659,7 @@ end
   -- @param #table Surfacetypes (Optional) Table of surface types. Can also be a single surface type. We will try max 1000 times to find the right type!
   -- @param #boolean PreciseLocation (Optional) Don't try to get a random position in the zone but use the dead center. Caution not to stack up stuff on another!
   -- @param #string Structure (Optional) String object describing the current structure of the injected group; mainly for load/save to keep current state setup.
+  -- @param #number TimeStamp (Optional) Timestamp used internally on re-loading from disk.
   -- @return #CTLD self
   -- @usage Use this function to pre-populate the field with Vehicles or FOB at a random coordinate in a zone:
   --            -- create a matching #CTLD_CARGO type
@@ -5646,7 +5668,7 @@ end
   --            local dropzone = ZONE:New("InjectZone") -- Core.Zone#ZONE
   --            -- and go:
   --            my_ctld:InjectVehicles(dropzone,InjectVehicleType)
-  function CTLD:InjectVehicles(Zone,Cargo,Surfacetypes,PreciseLocation,Structure)
+  function CTLD:InjectVehicles(Zone,Cargo,Surfacetypes,PreciseLocation,Structure,TimeStamp)
     self:T(self.lid.." InjectVehicles")
     local cargo = Cargo -- #CTLD_CARGO
     
@@ -5752,15 +5774,22 @@ end
           self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
             :InitRandomizeUnits(true,20,2)
             :InitDelayOff()
+            :OnSpawnGroup(function(grp,TimeStamp) grp.spawntime = TimeStamp or timer.getTime() end,TimeStamp)
             :SpawnFromVec2(randomcoord)
         else -- don't random position of e.g. SAM units build as FOB
           self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
             :InitDelayOff()
+            :OnSpawnGroup(function(grp,TimeStamp) grp.spawntime = TimeStamp or timer.getTime() end,TimeStamp)
             :SpawnFromVec2(randomcoord)
         end
         
         if Structure then
           BASE:ScheduleOnce(0.5,PostSpawn,{self.DroppedTroops[self.TroopCounter],Structure})
+        end
+        
+        if self.keeploadtables and TimeStamp then
+          local cargotype = cargo.CargoType
+          table.insert(self.LoadedGroupsTable,{Group=self.DroppedTroops[self.TroopCounter], TimeStamp=TimeStamp, CargoType=cargotype})
         end
         
         if self.eventoninject then
@@ -6180,7 +6209,7 @@ end
     
       
     --local data = "LoadedData = {\n"
-    local data = "Group,x,y,z,CargoName,CargoTemplates,CargoType,CratesNeeded,CrateMass,Structure,StaticCategory,StaticType,StaticShape\n"
+    local data = "Group,x,y,z,CargoName,CargoTemplates,CargoType,CratesNeeded,CrateMass,Structure,StaticCategory,StaticType,StaticShape,SpawnTime\n"
     local n = 0
     for _,_grp in pairs(grouptable) do
       local group = _grp -- Wrapper.Group#GROUP
@@ -6213,6 +6242,7 @@ end
           for typen,anzahl in pairs (structure) do
             strucdata = strucdata .. typen .. "=="..anzahl..";"
           end
+          local spawntime = group.spawntime or timer.getTime()+n
           
           if type(cgotemp) == "table" then       
             local templates = "{"
@@ -6224,8 +6254,8 @@ end
           end
           
           local location = group:GetVec3()
-          local txt = string.format("%s,%d,%d,%d,%s,%s,%s,%d,%d,%s,%s,%s,%s\n"
-              ,template,location.x,location.y,location.z,cgoname,cgotemp,cgotype,cgoneed,cgomass,strucdata,scat,stype,sshape or "none")             
+          local txt = string.format("%s,%d,%d,%d,%s,%s,%s,%d,%d,%s,%s,%s,%s,%f\n"
+              ,template,location.x,location.y,location.z,cgoname,cgotemp,cgotype,cgoneed,cgomass,strucdata,scat,stype,sshape or "none",spawntime)             
           data = data .. txt
         end
       end
@@ -6378,10 +6408,10 @@ end
     
     -- remove header
     table.remove(loadeddata, 1)
-    
+    local n=0
     for _id,_entry in pairs (loadeddata) do
       local dataset = UTILS.Split(_entry,",")     
-      -- 1=Group,2=x,3=y,4=z,5=CargoName,6=CargoTemplates,7=CargoType,8=CratesNeeded,9=CrateMass,10=Structure,11=StaticCategory,12=StaticType,13=StaticShape
+      -- 1=Group,2=x,3=y,4=z,5=CargoName,6=CargoTemplates,7=CargoType,8=CratesNeeded,9=CrateMass,10=Structure,11=StaticCategory,12=StaticType,13=StaticShape,14=Timestamp
       local groupname = dataset[1]
       local vec2 = {}
       vec2.x = tonumber(dataset[2])
@@ -6394,6 +6424,8 @@ end
       local StaticCategory = dataset[11]
       local StaticType = dataset[12]
       local StaticShape = dataset[13]
+      n=n+1
+      local timestamp = tonumber(dataset[14]) or timer.getTime()+n
       if type(groupname) == "string" and groupname ~= "STATIC" then
         cargotemplates = string.gsub(cargotemplates,"{","")
         cargotemplates = string.gsub(cargotemplates,"}","")
@@ -6408,10 +6440,10 @@ end
         if cargotype == CTLD_CARGO.Enum.VEHICLE or cargotype == CTLD_CARGO.Enum.FOB then
           local injectvehicle = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)
           injectvehicle:SetStaticTypeAndShape(StaticCategory,StaticType,StaticShape)      
-          self:InjectVehicles(dropzone,injectvehicle,self.surfacetypes,self.useprecisecoordloads,structure)
+          self:InjectVehicles(dropzone,injectvehicle,self.surfacetypes,self.useprecisecoordloads,structure,timestamp)
         elseif cargotype == CTLD_CARGO.Enum.TROOPS or cargotype == CTLD_CARGO.Enum.ENGINEERS then
           local injecttroops = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)      
-          self:InjectTroops(dropzone,injecttroops,self.surfacetypes,self.useprecisecoordloads,structure)
+          self:InjectTroops(dropzone,injecttroops,self.surfacetypes,self.useprecisecoordloads,structure,timestamp)
         end
       elseif (type(groupname) == "string" and groupname == "STATIC") or cargotype == CTLD_CARGO.Enum.REPAIR then
         local dropzone = ZONE_RADIUS:New("DropZone",vec2,20)
@@ -6433,7 +6465,9 @@ end
         end
       end    
     end
-    
+    if self.keeploadtable then -- keeploadtables
+      self:__Loaded(1,self.LoadedGroupsTable)
+    end
     return self
   end
 end -- end do
