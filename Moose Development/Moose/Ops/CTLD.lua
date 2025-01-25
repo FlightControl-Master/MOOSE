@@ -5641,7 +5641,7 @@ end
       end
       
       if self.keeploadtable and TimeStamp ~= nil then
-        self:I("Inserting: "..cargo.CargoType)
+        self:T2("Inserting: "..cargo.CargoType)
         local cargotype = cargo.CargoType
         table.insert(self.LoadedGroupsTable,{Group=self.DroppedTroops[self.TroopCounter], TimeStamp=TimeStamp, CargoType=cargotype})
       end
@@ -5789,7 +5789,7 @@ end
         end
         
         if self.keeploadtable and TimeStamp ~= nil then
-          self:I("Inserting: "..cargo.CargoType)
+          self:T2("Inserting: "..cargo.CargoType)
           local cargotype = cargo.CargoType
           table.insert(self.LoadedGroupsTable,{Group=self.DroppedTroops[self.TroopCounter], TimeStamp=TimeStamp, CargoType=cargotype})
         end
@@ -6449,7 +6449,7 @@ end
       local StaticShape = dataset[13]
       n=n+1
       local timestamp = tonumber(dataset[14]) or (timer.getTime()+n)
-      self:I("TimeStamp = "..timestamp)
+      self:T2("TimeStamp = "..timestamp)
       if type(groupname) == "string" and groupname ~= "STATIC" then
         cargotemplates = string.gsub(cargotemplates,"{","")
         cargotemplates = string.gsub(cargotemplates,"}","")
