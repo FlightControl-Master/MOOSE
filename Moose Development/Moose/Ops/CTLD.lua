@@ -1354,7 +1354,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.25"
+CTLD.version="1.1.26"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -5969,6 +5969,27 @@ end
   -- @return #CTLD self
   function CTLD:onbeforeTroopsExtracted(From, Event, To, Group, Unit, Troops)
     self:T({From, Event, To})
+    if Unit and Unit:IsPlayer() and self.PlayerTaskQueue then
+      local playername = Unit:GetPlayerName()
+      local dropcoord = Troops:GetCoordinate() or COORDINATE:New(0,0,0)
+      local dropvec2 = dropcoord:GetVec2()
+      self.PlayerTaskQueue:ForEach(
+        function (Task)
+          local task = Task -- Ops.PlayerTask#PLAYERTASK
+          local subtype = task:GetSubType()
+          -- right subtype?
+          if Event == subtype and not task:IsDone() then
+            local targetzone = task.Target:GetObject() -- Core.Zone#ZONE should be a zone in this case ....
+            if targetzone and targetzone.ClassName and string.match(targetzone.ClassName,"ZONE") and targetzone:IsVec2InZone(dropvec2) then
+              if task.Clients:HasUniqueID(playername) then
+                -- success
+                task:__Success(-1)
+              end
+            end
+          end
+        end
+      )
+    end
     return self
   end
     
