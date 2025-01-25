@@ -5640,7 +5640,8 @@ end
         BASE:ScheduleOnce(0.5,PostSpawn,{self.DroppedTroops[self.TroopCounter],Structure})
       end
       
-      if self.keeploadtables and TimeStamp then
+      if self.keeploadtable and TimeStamp ~= nil then
+        self:I("Inserting: "..cargo.CargoType)
         local cargotype = cargo.CargoType
         table.insert(self.LoadedGroupsTable,{Group=self.DroppedTroops[self.TroopCounter], TimeStamp=TimeStamp, CargoType=cargotype})
       end
@@ -5787,7 +5788,8 @@ end
           BASE:ScheduleOnce(0.5,PostSpawn,{self.DroppedTroops[self.TroopCounter],Structure})
         end
         
-        if self.keeploadtables and TimeStamp then
+        if self.keeploadtable and TimeStamp ~= nil then
+          self:I("Inserting: "..cargo.CargoType)
           local cargotype = cargo.CargoType
           table.insert(self.LoadedGroupsTable,{Group=self.DroppedTroops[self.TroopCounter], TimeStamp=TimeStamp, CargoType=cargotype})
         end
@@ -6446,7 +6448,8 @@ end
       local StaticType = dataset[12]
       local StaticShape = dataset[13]
       n=n+1
-      local timestamp = tonumber(dataset[14]) or timer.getTime()+n
+      local timestamp = tonumber(dataset[14]) or (timer.getTime()+n)
+      self:I("TimeStamp = "..timestamp)
       if type(groupname) == "string" and groupname ~= "STATIC" then
         cargotemplates = string.gsub(cargotemplates,"{","")
         cargotemplates = string.gsub(cargotemplates,"}","")
