@@ -4094,7 +4094,12 @@ function CTLD:_RefreshF10Menus()
           --local nohookswitch = not (isHook and self.enableChinookGCLoading)
           local nohookswitch = true
           -- top menu
+          if _group.CTLDTopmenu then
+            _group.CTLDTopmenu:Remove()
+            _group.CTLDTopmenu = nil
+          end
           local topmenu = MENU_GROUP:New(_group,"CTLD",nil)
+          _group.CTLDTopmenu = topmenu
           local toptroops = nil
           local topcrates = nil
           if cantroops then
@@ -5701,8 +5706,8 @@ end
       
       if self.keeploadtable and TimeStamp ~= nil then
         self:T2("Inserting: "..cargo.CargoType)
-        local cargotype = cargo.CargoType
-        table.insert(self.LoadedGroupsTable,{Group=self.DroppedTroops[self.TroopCounter], TimeStamp=TimeStamp, CargoType=cargotype})
+        local cargotype = type
+        table.insert(self.LoadedGroupsTable,{Group=self.DroppedTroops[self.TroopCounter], TimeStamp=TimeStamp, CargoType=cargotype, CargoName=name})
       end
       
       if self.eventoninject then
@@ -5849,8 +5854,8 @@ end
         
         if self.keeploadtable and TimeStamp ~= nil then
           self:T2("Inserting: "..cargo.CargoType)
-          local cargotype = cargo.CargoType
-          table.insert(self.LoadedGroupsTable,{Group=self.DroppedTroops[self.TroopCounter], TimeStamp=TimeStamp, CargoType=cargotype})
+          local cargotype = type
+          table.insert(self.LoadedGroupsTable,{Group=self.DroppedTroops[self.TroopCounter], TimeStamp=TimeStamp, CargoType=cargotype, CargoName=name})
         end
         
         if self.eventoninject then
