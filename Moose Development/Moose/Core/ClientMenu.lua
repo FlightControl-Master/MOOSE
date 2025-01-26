@@ -57,7 +57,7 @@
 ---
 -- @field #CLIENTMENU
 CLIENTMENU = {
-  ClassName = "CLIENTMENUE",
+  ClassName = "CLIENTMENU",
   lid = "",
   version = "0.1.3",
   name = nil,
