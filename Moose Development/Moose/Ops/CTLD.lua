@@ -2428,6 +2428,7 @@ end
     -- landed or hovering over load zone?
     local grounded = not self:IsUnitInAir(Unit)
     local hoverload = self:CanHoverLoad(Unit)
+    local hassecondaries = false
     
     if not grounded and not hoverload then
       self:_SendMessage("You need to land or hover in position to load!", 10, false, Group)
@@ -2542,7 +2543,7 @@ end
             end
           end
           -- clean up:
-          local hassecondaries = false
+          hassecondaries = false
           if type(Cargotype.Templates) == "table" and Cargotype.Templates[2] then
             for _,_key in pairs (Cargotype.Templates) do
               table.insert(secondarygroups,_key)
@@ -5502,6 +5503,33 @@ end
     return self
   end
   
+  --- (User) Get a generic #CTLD_CARGO entry from a group name, works for Troops and Vehicles, FOB, i.e. everything that is spawned as a GROUP object.
+  -- @param #CTLD self
+  -- @param #string GroupName The name to use for the search
+  -- @return #CTLD_CARGO The cargo object or nil if not found
+  function CTLD:GetGenericCargoObjectFromGroupName(GroupName)
+    local Cargotype = nil
+    for k,v in pairs(self.Cargo_Troops) do
+    local comparison = ""
+    if type(v.Templates) == "string" then comparison = v.Templates else comparison = v.Templates[1] end
+      if comparison == GroupName then
+        Cargotype = v
+        break
+      end
+    end
+    if not Cargotype then
+      for k,v in pairs(self.Cargo_Crates) do
+      local comparison = ""
+      if type(v.Templates) == "string" then comparison = v.Templates else comparison = v.Templates[1] end
+        if comparison == GroupName then
+          Cargotype = v
+          break
+        end
+      end
+    end
+    return Cargotype
+  end
+  
   --- (Internal) Check on engineering teams
   -- @param #CTLD self
   -- @return #CTLD self
@@ -5682,7 +5710,7 @@ end
     return self
   end
   
-    --- (User) Pre-populate vehicles in the field.
+  --- (User) Pre-populate vehicles in the field.
   -- @param #CTLD self
   -- @param Core.Zone#ZONE Zone The zone where to drop the troops.
   -- @param Ops.CTLD#CTLD_CARGO Cargo The #CTLD_CARGO object to spawn.
