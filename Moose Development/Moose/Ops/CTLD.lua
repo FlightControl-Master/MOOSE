@@ -1354,7 +1354,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.26"
+CTLD.version="1.1.27"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -4127,18 +4127,28 @@ function CTLD:_RefreshF10Menus()
                 local entry = _entry -- #CTLD_CARGO
                 local subcat = entry.Subcategory
                 local noshow = entry.DontShowInMenu
+                local stock = _entry:GetStock()
                 if not noshow then
                   menucount = menucount + 1
-                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,entry.Name,subcatmenus[subcat],self._LoadTroops, self, _group, _unit, entry)
+                  local menutext = entry.Name
+                  if stock >= 0 then
+                   menutext = menutext.." ["..stock.."]"
+                  end
+                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._LoadTroops, self, _group, _unit, entry)
                 end
               end
             else              
               for _,_entry in pairs(self.Cargo_Troops) do
                 local entry = _entry -- #CTLD_CARGO
                 local noshow = entry.DontShowInMenu
+                local stock = _entry:GetStock()
                 if not noshow then
                   menucount = menucount + 1
-                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,entry.Name,troopsmenu,self._LoadTroops, self, _group, _unit, entry)
+                  local menutext = entry.Name
+                  if stock >= 0 then
+                   menutext = menutext.." ["..stock.."]"
+                  end
+                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,troopsmenu,self._LoadTroops, self, _group, _unit, entry)
                 end
               end
             end
@@ -4164,11 +4174,15 @@ function CTLD:_RefreshF10Menus()
                 local subcat = entry.Subcategory
                 local noshow = entry.DontShowInMenu
                 local zone = entry.Location
+                local stock = _entry:GetStock()
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
                   if zone then
                     menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
+                  end
+                  if stock >= 0 then
+                   menutext = menutext.."["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
                 end
@@ -4178,11 +4192,15 @@ function CTLD:_RefreshF10Menus()
                 local subcat = entry.Subcategory
                 local noshow = entry.DontShowInMenu
                 local zone = entry.Location
+                local stock = _entry:GetStock()
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
                   if zone then
                     menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
+                  end
+                  if stock >= 0 then
+                   menutext = menutext.."["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
                 end
@@ -4192,11 +4210,15 @@ function CTLD:_RefreshF10Menus()
                 local entry = _entry -- #CTLD_CARGO
                 local noshow = entry.DontShowInMenu
                 local zone = entry.Location
+                local stock = _entry:GetStock()
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
                   if zone then
                     menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
+                  end
+                  if stock >= 0 then
+                   menutext = menutext.."["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
                 end
@@ -4205,11 +4227,15 @@ function CTLD:_RefreshF10Menus()
                 local entry = _entry -- #CTLD_CARGO
                 local noshow = entry.DontShowInMenu
                 local zone = entry.Location
+                local stock = _entry:GetStock()
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
                   if zone then
                     menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
+                  end
+                  if stock >= 0 then
+                   menutext = menutext.."["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
                 end
@@ -5369,7 +5395,8 @@ end
     local Stock = {}
     local gentroops = self.Cargo_Crates
     for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
-      table.insert(Stock,_troop.Name,_troop.Stock or -1)
+      Stock[_troop.Name] = _troop.Stock or -1
+      --table.insert(Stock,_troop.Name,_troop.Stock or -1)
     end
     return Stock
   end  
@@ -5381,7 +5408,8 @@ end
     local Stock = {}
     local gentroops = self.Cargo_Troops
     for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
-      table.insert(Stock,_troop.Name,_troop.Stock or -1)
+      Stock[_troop.Name] = _troop.Stock or -1
+      --table.insert(Stock,_troop.Name,_troop.Stock or -1)
     end
     return Stock
   end
@@ -5414,7 +5442,8 @@ end
     local Stock = {}
     local gentroops = self.Cargo_Statics
     for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
-      table.insert(Stock,_troop.Name,_troop.Stock or -1)
+      Stock[_troop.Name] = _troop.Stock or -1
+      -- table.insert(Stock,_troop.Name,_troop.Stock or -1)
     end
     return Stock
   end
