@@ -105,6 +105,7 @@ function MENU_INDEX:PrepareCoalition( CoalitionSide )
     self.Coalition[CoalitionSide] = self.Coalition[CoalitionSide] or {}
     self.Coalition[CoalitionSide].Menus = self.Coalition[CoalitionSide].Menus or {}
 end
+
 ---
 -- @param Wrapper.Group#GROUP Group
 function MENU_INDEX:PrepareGroup( Group )
@@ -118,9 +119,11 @@ end
 function MENU_INDEX:HasMissionMenu( Path )
   return self.MenuMission.Menus[Path]
 end
+
 function MENU_INDEX:SetMissionMenu( Path, Menu )
   self.MenuMission.Menus[Path] = Menu
 end
+
 function MENU_INDEX:ClearMissionMenu( Path )
   self.MenuMission.Menus[Path] = nil
 end
@@ -128,9 +131,11 @@ end
 function MENU_INDEX:HasCoalitionMenu( Coalition, Path )
   return self.Coalition[Coalition].Menus[Path]
 end
+
 function MENU_INDEX:SetCoalitionMenu( Coalition, Path, Menu )
   self.Coalition[Coalition].Menus[Path] = Menu
 end
+
 function MENU_INDEX:ClearCoalitionMenu( Coalition, Path )
   self.Coalition[Coalition].Menus[Path] = nil
 end
@@ -138,19 +143,24 @@ end
 function MENU_INDEX:HasGroupMenu( Group, Path )
   if Group and Group:IsAlive() then
     local MenuGroupName = Group:GetName()
-    return self.Group[MenuGroupName].Menus[Path]
+    if self.Group[MenuGroupName] and self.Group[MenuGroupName].Menus and self.Group[MenuGroupName].Menus[Path] then
+      return self.Group[MenuGroupName].Menus[Path]
+    end
   end
   return nil
 end
+
 function MENU_INDEX:SetGroupMenu( Group, Path, Menu )
   local MenuGroupName = Group:GetName()
-  Group:F({MenuGroupName=MenuGroupName,Path=Path})
+  --Group:F({MenuGroupName=MenuGroupName,Path=Path})
   self.Group[MenuGroupName].Menus[Path] = Menu
 end
+
 function MENU_INDEX:ClearGroupMenu( Group, Path )
   local MenuGroupName = Group:GetName()
   self.Group[MenuGroupName].Menus[Path] = nil
 end
+
 function MENU_INDEX:Refresh( Group )
     for MenuID, Menu in pairs( self.MenuMission.Menus ) do
       Menu:Refresh()
