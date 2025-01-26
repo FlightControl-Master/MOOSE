@@ -839,6 +839,7 @@ do
 --          my_ctld.TroopUnloadDistGroundHerc = 25 -- On the ground, unload troops this far behind the Hercules
 --          my_ctld.TroopUnloadDistGroundHook = 15 -- On the ground, unload troops this far behind the Chinook
 --          my_ctld.TroopUnloadDistHoverHook = 5 -- When hovering, unload troops this far behind the Chinook
+--          my_ctld.showstockinmenuitems = false -- When set to true, the menu lines will also show the remaining items in stock (that is, if you set any), downside is that the menu for all will be build every 30 seconds anew.
 -- 
 -- ## 2.1 CH-47 Chinook support
 -- 
@@ -1354,7 +1355,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.27"
+CTLD.version="1.1.28"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1530,6 +1531,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.usesubcats = false
   self.subcats = {}
   self.subcatsTroop = {}
+  self.showstockinmenuitems = false
   
   -- disallow building in loadzones
   self.nobuildinloadzones = true
@@ -4078,7 +4080,7 @@ function CTLD:_RefreshF10Menus()
   local menucount = 0
   local menus = {}  
   for _, _unitName in pairs(self.CtldUnits) do
-    if not self.MenusDone[_unitName] then 
+    if (not self.MenusDone[_unitName]) or (self.showstockinmenuitems == true) then 
       local _unit = UNIT:FindByName(_unitName) -- Wrapper.Unit#UNIT
       if _unit then
         local _group = _unit:GetGroup() -- Wrapper.Group#GROUP
@@ -4132,7 +4134,7 @@ function CTLD:_RefreshF10Menus()
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = entry.Name
-                  if stock >= 0 then
+                  if stock >= 0 and self.showstockinmenuitems == true then
                    menutext = menutext.." ["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._LoadTroops, self, _group, _unit, entry)
@@ -4146,7 +4148,7 @@ function CTLD:_RefreshF10Menus()
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = entry.Name
-                  if stock >= 0 then
+                  if stock >= 0 and self.showstockinmenuitems == true then
                    menutext = menutext.." ["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,troopsmenu,self._LoadTroops, self, _group, _unit, entry)
@@ -4182,7 +4184,7 @@ function CTLD:_RefreshF10Menus()
                   if zone then
                     menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
                   end
-                  if stock >= 0 then
+                  if stock >= 0 and self.showstockinmenuitems == true then
                    menutext = menutext.."["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
@@ -4200,7 +4202,7 @@ function CTLD:_RefreshF10Menus()
                   if zone then
                     menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
                   end
-                  if stock >= 0 then
+                  if stock >= 0 and self.showstockinmenuitems == true then
                    menutext = menutext.."["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
@@ -4218,7 +4220,7 @@ function CTLD:_RefreshF10Menus()
                   if zone then
                     menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
                   end
-                  if stock >= 0 then
+                  if stock >= 0 and self.showstockinmenuitems == true then
                    menutext = menutext.."["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
@@ -4235,7 +4237,7 @@ function CTLD:_RefreshF10Menus()
                   if zone then
                     menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
                   end
-                  if stock >= 0 then
+                  if stock >= 0 and self.showstockinmenuitems == true then
                    menutext = menutext.."["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
