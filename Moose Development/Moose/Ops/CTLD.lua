@@ -839,6 +839,7 @@ do
 --          my_ctld.TroopUnloadDistGroundHerc = 25 -- On the ground, unload troops this far behind the Hercules
 --          my_ctld.TroopUnloadDistGroundHook = 15 -- On the ground, unload troops this far behind the Chinook
 --          my_ctld.TroopUnloadDistHoverHook = 5 -- When hovering, unload troops this far behind the Chinook
+--          my_ctld.showstockinmenuitems = false -- When set to true, the menu lines will also show the remaining items in stock (that is, if you set any), downside is that the menu for all will be build every 30 seconds anew.
 -- 
 -- ## 2.1 CH-47 Chinook support
 -- 
@@ -1354,7 +1355,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.26"
+CTLD.version="1.1.28"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1530,6 +1531,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.usesubcats = false
   self.subcats = {}
   self.subcatsTroop = {}
+  self.showstockinmenuitems = false
   
   -- disallow building in loadzones
   self.nobuildinloadzones = true
@@ -2428,6 +2430,7 @@ end
     -- landed or hovering over load zone?
     local grounded = not self:IsUnitInAir(Unit)
     local hoverload = self:CanHoverLoad(Unit)
+    local hassecondaries = false
     
     if not grounded and not hoverload then
       self:_SendMessage("You need to land or hover in position to load!", 10, false, Group)
@@ -2542,7 +2545,7 @@ end
             end
           end
           -- clean up:
-          local hassecondaries = false
+          hassecondaries = false
           if type(Cargotype.Templates) == "table" and Cargotype.Templates[2] then
             for _,_key in pairs (Cargotype.Templates) do
               table.insert(secondarygroups,_key)
@@ -4077,7 +4080,7 @@ function CTLD:_RefreshF10Menus()
   local menucount = 0
   local menus = {}  
   for _, _unitName in pairs(self.CtldUnits) do
-    if not self.MenusDone[_unitName] then 
+    if (not self.MenusDone[_unitName]) or (self.showstockinmenuitems == true) then 
       local _unit = UNIT:FindByName(_unitName) -- Wrapper.Unit#UNIT
       if _unit then
         local _group = _unit:GetGroup() -- Wrapper.Group#GROUP
@@ -4127,18 +4130,28 @@ function CTLD:_RefreshF10Menus()
                 local entry = _entry -- #CTLD_CARGO
                 local subcat = entry.Subcategory
                 local noshow = entry.DontShowInMenu
+                local stock = _entry:GetStock()
                 if not noshow then
                   menucount = menucount + 1
-                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,entry.Name,subcatmenus[subcat],self._LoadTroops, self, _group, _unit, entry)
+                  local menutext = entry.Name
+                  if stock >= 0 and self.showstockinmenuitems == true then
+                   menutext = menutext.." ["..stock.."]"
+                  end
+                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._LoadTroops, self, _group, _unit, entry)
                 end
               end
             else              
               for _,_entry in pairs(self.Cargo_Troops) do
                 local entry = _entry -- #CTLD_CARGO
                 local noshow = entry.DontShowInMenu
+                local stock = _entry:GetStock()
                 if not noshow then
                   menucount = menucount + 1
-                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,entry.Name,troopsmenu,self._LoadTroops, self, _group, _unit, entry)
+                  local menutext = entry.Name
+                  if stock >= 0 and self.showstockinmenuitems == true then
+                   menutext = menutext.." ["..stock.."]"
+                  end
+                  menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,troopsmenu,self._LoadTroops, self, _group, _unit, entry)
                 end
               end
             end
@@ -4164,11 +4177,15 @@ function CTLD:_RefreshF10Menus()
                 local subcat = entry.Subcategory
                 local noshow = entry.DontShowInMenu
                 local zone = entry.Location
+                local stock = _entry:GetStock()
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
                   if zone then
                     menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
+                  end
+                  if stock >= 0 and self.showstockinmenuitems == true then
+                   menutext = menutext.."["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
                 end
@@ -4178,11 +4195,15 @@ function CTLD:_RefreshF10Menus()
                 local subcat = entry.Subcategory
                 local noshow = entry.DontShowInMenu
                 local zone = entry.Location
+                local stock = _entry:GetStock()
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
                   if zone then
                     menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
+                  end
+                  if stock >= 0 and self.showstockinmenuitems == true then
+                   menutext = menutext.."["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,subcatmenus[subcat],self._GetCrates, self, _group, _unit, entry)
                 end
@@ -4192,11 +4213,15 @@ function CTLD:_RefreshF10Menus()
                 local entry = _entry -- #CTLD_CARGO
                 local noshow = entry.DontShowInMenu
                 local zone = entry.Location
+                local stock = _entry:GetStock()
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
                   if zone then
                     menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
+                  end
+                  if stock >= 0 and self.showstockinmenuitems == true then
+                   menutext = menutext.."["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
                 end
@@ -4205,11 +4230,15 @@ function CTLD:_RefreshF10Menus()
                 local entry = _entry -- #CTLD_CARGO
                 local noshow = entry.DontShowInMenu
                 local zone = entry.Location
+                local stock = _entry:GetStock()
                 if not noshow then
                   menucount = menucount + 1
                   local menutext = string.format("Crate %s (%dkg)",entry.Name,entry.PerCrateMass or 0)
                   if zone then
                     menutext = string.format("Crate %s (%dkg)[R]",entry.Name,entry.PerCrateMass or 0)
+                  end
+                  if stock >= 0 and self.showstockinmenuitems == true then
+                   menutext = menutext.."["..stock.."]"
                   end
                   menus[menucount] = MENU_GROUP_COMMAND:New(_group,menutext,cratesmenu,self._GetCrates, self, _group, _unit, entry)
                 end
@@ -5369,7 +5398,8 @@ end
     local Stock = {}
     local gentroops = self.Cargo_Crates
     for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
-      table.insert(Stock,_troop.Name,_troop.Stock or -1)
+      Stock[_troop.Name] = _troop.Stock or -1
+      --table.insert(Stock,_troop.Name,_troop.Stock or -1)
     end
     return Stock
   end  
@@ -5381,7 +5411,8 @@ end
     local Stock = {}
     local gentroops = self.Cargo_Troops
     for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
-      table.insert(Stock,_troop.Name,_troop.Stock or -1)
+      Stock[_troop.Name] = _troop.Stock or -1
+      --table.insert(Stock,_troop.Name,_troop.Stock or -1)
     end
     return Stock
   end
@@ -5414,7 +5445,8 @@ end
     local Stock = {}
     local gentroops = self.Cargo_Statics
     for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
-      table.insert(Stock,_troop.Name,_troop.Stock or -1)
+      Stock[_troop.Name] = _troop.Stock or -1
+      -- table.insert(Stock,_troop.Name,_troop.Stock or -1)
     end
     return Stock
   end
@@ -5471,6 +5503,33 @@ end
       end
     end
     return self
+  end
+  
+  --- (User) Get a generic #CTLD_CARGO entry from a group name, works for Troops and Vehicles, FOB, i.e. everything that is spawned as a GROUP object.
+  -- @param #CTLD self
+  -- @param #string GroupName The name to use for the search
+  -- @return #CTLD_CARGO The cargo object or nil if not found
+  function CTLD:GetGenericCargoObjectFromGroupName(GroupName)
+    local Cargotype = nil
+    for k,v in pairs(self.Cargo_Troops) do
+    local comparison = ""
+    if type(v.Templates) == "string" then comparison = v.Templates else comparison = v.Templates[1] end
+      if comparison == GroupName then
+        Cargotype = v
+        break
+      end
+    end
+    if not Cargotype then
+      for k,v in pairs(self.Cargo_Crates) do
+      local comparison = ""
+      if type(v.Templates) == "string" then comparison = v.Templates else comparison = v.Templates[1] end
+        if comparison == GroupName then
+          Cargotype = v
+          break
+        end
+      end
+    end
+    return Cargotype
   end
   
   --- (Internal) Check on engineering teams
@@ -5653,7 +5712,7 @@ end
     return self
   end
   
-    --- (User) Pre-populate vehicles in the field.
+  --- (User) Pre-populate vehicles in the field.
   -- @param #CTLD self
   -- @param Core.Zone#ZONE Zone The zone where to drop the troops.
   -- @param Ops.CTLD#CTLD_CARGO Cargo The #CTLD_CARGO object to spawn.
