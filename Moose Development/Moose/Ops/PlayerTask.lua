@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update Nov 2024
+-- @date Last Update Jan 2025
 
 
 do
@@ -1184,7 +1184,7 @@ function PLAYERTASK:onafterSuccess(From, Event, To)
   if self.TargetMarker then
     self.TargetMarker:Remove()
   end
-  if self.TaskController.Scoring then
+  if self.TaskController and self.TaskController.Scoring then
     local clients,count = self:GetClientObjects()
     if count > 0 then
       for _,_client in pairs(clients) do
@@ -1242,7 +1242,7 @@ end
 do
 -------------------------------------------------------------------------------------------------------------------
 -- PLAYERTASKCONTROLLER
-  -- TODO: PLAYERTASKCONTROLLER
+-- TODO: PLAYERTASKCONTROLLER
 -- DONE Playername customized
 -- DONE Coalition-level screen info to SET based
 -- DONE Flash directions
