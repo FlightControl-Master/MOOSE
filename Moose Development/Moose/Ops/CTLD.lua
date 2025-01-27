@@ -975,7 +975,7 @@ do
 --  
 --    This function is called when a player has re-boarded already deployed troops from the field:
 --
---        function my_ctld:OnAfterTroopsExtracted(From, Event, To, Group, Unit, Troops)
+--        function my_ctld:OnAfterTroopsExtracted(From, Event, To, Group, Unit, Troops, Troopname)
 --          ... your code here ...
 --        end
 --  
@@ -1635,7 +1635,8 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo troops.
+  -- @param Wrapper.Group#GROUP Troops extracted.
+  -- @param #string Troopname Name of the extracted group.
   -- @return #CTLD self
     
   --- FSM Function OnBeforeCratesPickedUp.
@@ -1723,7 +1724,8 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo troops.
+  -- @param Wrapper.Group#GROUP Troops extracted.
+  -- @param #string Troopname Name of the extracted group.
   -- @return #CTLD self
     
   --- FSM Function OnAfterCratesPickedUp.
@@ -2533,7 +2535,8 @@ end
           self:ScheduleOnce(running,self._SendMessage,self,"Troops boarded!", 10, false, Group)
           self:_SendMessage("Troops boarding!", 10, false, Group)
           self:_UpdateUnitCargoMass(Unit)
-          self:__TroopsExtracted(running,Group, Unit, nearestGroup)
+          local groupname = nearestGroup:GetName()
+          self:__TroopsExtracted(running,Group, Unit, nearestGroup, groupname)
           local coord = Unit:GetCoordinate() or Group:GetCoordinate() -- Core.Point#COORDINATE
           local Point
           if coord then
@@ -5654,7 +5657,7 @@ end
       self.CargoCounter = self.CargoCounter + 1
       cargo.ID = self.CargoCounter
       cargo.Stock = 1
-      table.insert(self.Cargo_Crates,cargo)
+      table.insert(self.Cargo_Troops,cargo)
     end
     
     if match and CargoObject then
@@ -6032,13 +6035,14 @@ end
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
   -- @param Wrapper.Group#GROUP Troops Troops #GROUP Object.
+  -- @param #string Groupname Name of the extracted #GROUP.
   -- @return #CTLD self
-  function CTLD:onbeforeTroopsExtracted(From, Event, To, Group, Unit, Troops)
+  function CTLD:onbeforeTroopsExtracted(From, Event, To, Group, Unit, Troops, Groupname)
     self:T({From, Event, To})
     if Unit and Unit:IsPlayer() and self.PlayerTaskQueue then
       local playername = Unit:GetPlayerName()
-      local dropcoord = Troops:GetCoordinate() or COORDINATE:New(0,0,0)
-      local dropvec2 = dropcoord:GetVec2()
+      --local dropcoord = Troops:GetCoordinate() or COORDINATE:New(0,0,0)
+      --local dropvec2 = dropcoord:GetVec2()
       self.PlayerTaskQueue:ForEach(
         function (Task)
           local task = Task -- Ops.PlayerTask#PLAYERTASK
@@ -6046,7 +6050,9 @@ end
           -- right subtype?
           if Event == subtype and not task:IsDone() then
             local targetzone = task.Target:GetObject() -- Core.Zone#ZONE should be a zone in this case ....
-            if targetzone and targetzone.ClassName and string.match(targetzone.ClassName,"ZONE") and targetzone:IsVec2InZone(dropvec2) then
+            --self:T2({Name=Groupname,Property=task:GetProperty("ExtractName")})
+            local okaygroup = string.find(Groupname,task:GetProperty("ExtractName"),1,true)
+            if targetzone and targetzone.ClassName and string.match(targetzone.ClassName,"ZONE") and okaygroup then
               if task.Clients:HasUniqueID(playername) then
                 -- success
                 task:__Success(-1)
