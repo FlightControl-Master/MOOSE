@@ -6041,8 +6041,8 @@ end
     self:T({From, Event, To})
     if Unit and Unit:IsPlayer() and self.PlayerTaskQueue then
       local playername = Unit:GetPlayerName()
-      local dropcoord = Troops:GetCoordinate() or COORDINATE:New(0,0,0)
-      local dropvec2 = dropcoord:GetVec2()
+      --local dropcoord = Troops:GetCoordinate() or COORDINATE:New(0,0,0)
+      --local dropvec2 = dropcoord:GetVec2()
       self.PlayerTaskQueue:ForEach(
         function (Task)
           local task = Task -- Ops.PlayerTask#PLAYERTASK
@@ -6050,7 +6050,7 @@ end
           -- right subtype?
           if Event == subtype and not task:IsDone() then
             local targetzone = task.Target:GetObject() -- Core.Zone#ZONE should be a zone in this case ....
-            if targetzone and targetzone.ClassName and string.match(targetzone.ClassName,"ZONE") and targetzone:IsVec2InZone(dropvec2) then
+            if targetzone and targetzone.ClassName and string.match(targetzone.ClassName,"ZONE") and targetzone:GetProperty("Extractname") == Groupname then
               if task.Clients:HasUniqueID(playername) then
                 -- success
                 task:__Success(-1)
