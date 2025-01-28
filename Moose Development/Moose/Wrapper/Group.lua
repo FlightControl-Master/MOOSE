@@ -1225,7 +1225,7 @@ function GROUP:GetCoordinate()
   local vec3=self:GetVec3()
   if vec3 then
     local coord=COORDINATE:NewFromVec3(vec3)
-    return vec3
+    return coord
   end
 
   local Units = self:GetUnits() or {}
