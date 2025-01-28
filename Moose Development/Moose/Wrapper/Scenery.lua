@@ -91,6 +91,7 @@ function SCENERY:SetProperty(PropertyName, PropertyValue)
   self.Properties[PropertyName] = PropertyValue
   return self
 end
+
 --- Obtain object name.
 --@param #SCENERY self
 --@return #string Name
