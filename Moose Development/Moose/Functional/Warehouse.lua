@@ -6047,7 +6047,7 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
 
     else
 
-      if #parking<#template.units and not airstart then
+      if parking and #parking<#template.units and not airstart then
         local text=string.format("ERROR: Not enough parking! Free parking = %d < %d aircraft to be spawned.", #parking, #template.units)
         self:_DebugMessage(text)
         return nil
