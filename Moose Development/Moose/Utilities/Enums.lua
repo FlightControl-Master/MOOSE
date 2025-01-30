@@ -1327,7 +1327,7 @@ ENUMS.Storage.weapons.OH58.Smk_Grenade_Violet  =  {4,5,9,490}
 ENUMS.Storage.weapons.OH58.Smk_Grenade_White  =  {4,5,9,492}
 ENUMS.Storage.weapons.OH58.Smk_Grenade_Yellow  =  {4,5,9,491}
 -- Apache
-ENUMS.Storage.weapons.AH64D.AN_APG78 = {4,15,44,2138}
+ENUMS.Storage.weapons.AH64D.AN_APG78 = {4,15,44,2114}
 ENUMS.Storage.weapons.AH64D.Internal_Aux_FuelTank = {1,3,43,1700}
 
 ---
