@@ -1011,6 +1011,14 @@ do
 --        function my_ctld:OnAfterCratesDropped(From, Event, To, Group, Unit, Cargotable)
 --          ... your code here ...
 --        end
+--
+--- ## 3.6 OnAfterHelicopterLost
+--  
+--    This function is called when a player has deployed left a unit or crashed/died:
+--
+--        function my_ctld:OnAfterHelicopterLost(From, Event, To, Unitname, Cargotable)
+--          ... your code here ...
+--        end  
 --  
 -- ## 3.6 OnAfterCratesBuild, OnAfterCratesRepaired
 --  
