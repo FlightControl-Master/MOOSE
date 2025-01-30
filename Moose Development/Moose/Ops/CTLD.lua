@@ -1422,6 +1422,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self:AddTransition("*",             "CratesRepaired",      "*")           -- CTLD repair  event.
   self:AddTransition("*",             "CratesBuildStarted",  "*")           -- CTLD build  event.
   self:AddTransition("*",             "CratesRepairStarted", "*")           -- CTLD repair  event.
+  self:AddTransition("*",             "HelicopterLost",      "*")           -- CTLD lost  event.
   self:AddTransition("*",             "Load",                "*")           -- CTLD load  event.
   self:AddTransition("*",             "Loaded",              "*")           -- CTLD load  event.   
   self:AddTransition("*",             "Save",                "*")           -- CTLD save  event.      
@@ -1831,6 +1832,24 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
+        
+  --- FSM Function OnBeforeHelicopterLost.
+  -- @function [parent=#CTLD] OnBeforeHelicopterLost
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param #string Unitname The name of the unit lost.
+  -- @param #table LostCargo Table of #CTLD_CARGO object which were aboard the helicopter/transportplane lost. Can be an empty table!
+
+  --- FSM Function OnAfterHelicopterLost.
+  -- @function [parent=#CTLD] OnAfterHelicopterLost
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param #string Unitname The name of the unit lost.
+  -- @param #table LostCargo Table of #CTLD_CARGO object which were aboard the helicopter/transportplane lost. Can be an empty table!
   
   --- FSM Function OnAfterLoad.
   -- @function [parent=#CTLD] OnAfterLoad
@@ -1972,6 +1991,10 @@ function CTLD:_EventHandler(EventData)
   elseif event.id == EVENTS.PlayerLeaveUnit or event.id == EVENTS.UnitLost then
     -- remove from pilot table
     local unitname = event.IniUnitName or "none"
+    if self.CtldUnits[unitname] then
+        local lostcargo = UTILS.DeepCopy(self.Loaded_Cargo[unitname] or {})
+        self:__HelicopterLost(1,unitname,lostcargo)    
+    end
     self.CtldUnits[unitname] = nil
     self.Loaded_Cargo[unitname] = nil
     self.MenusDone[unitname] = nil

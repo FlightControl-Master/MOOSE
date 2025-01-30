@@ -1221,7 +1221,14 @@ end
 -- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
 function GROUP:GetCoordinate()
 
-  local Units = self:GetUnits()  or {}
+  -- First try to get the 3D vector of the group. This uses 
+  local vec3=self:GetVec3()
+  if vec3 then
+    local coord=COORDINATE:NewFromVec3(vec3)
+    return coord
+  end
+
+  local Units = self:GetUnits() or {}
 
   for _,_unit in pairs(Units) do
     local FirstUnit = _unit -- Wrapper.Unit#UNIT

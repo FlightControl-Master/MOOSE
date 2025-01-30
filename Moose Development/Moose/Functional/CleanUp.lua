@@ -387,7 +387,7 @@ function CLEANUP_AIRBASE.__:CleanUpSchedule()
 		local CleanUpUnit = CleanUpListData.CleanUpUnit -- Wrapper.Unit#UNIT
 		local CleanUpGroupName = CleanUpListData.CleanUpGroupName
 
-		if CleanUpUnit:IsAlive() ~= nil then
+		if CleanUpUnit and CleanUpUnit:IsAlive() ~= nil then
 
 		  if self:IsInAirbase( CleanUpUnit:GetVec2() ) then
 
