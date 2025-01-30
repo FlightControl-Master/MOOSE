@@ -5349,6 +5349,8 @@ end
   
   --- User - Count both the stock and groups in the field for available cargo types. Counts only limited cargo items and only troops and vehicle/FOB crates!
   -- @param #CTLD self
+  -- @param #boolean Restock If true, restock the cargo and troop items.
+  -- @param #number Threshold Percentage below which to restock, used in conjunction with Restock (must be true). Defaults to 75 (percent).
   -- @return #table Table A table of contents with numbers.
   -- @usage
   --      The index is the unique cargo name.
@@ -5361,8 +5363,9 @@ end
   --          Infield -- number of groups alive in the field of this kind.
   --          Inhelo -- number of troops/crates in any helo alive. Can be with decimals < 1 if e.g. you have cargo that need 4 crates, but you have 2 loaded.
   --          Sum -- sum is stock + infield + inhelo.
+  --          GenericCargo -- this filed holds the generic CTLD_CARGO object which drives the available stock. Only populated if Restock is true.
   --        }
-  function CTLD:_CountStockPlusInHeloPlusAliveGroups()
+  function CTLD:_CountStockPlusInHeloPlusAliveGroups(Restock,Threshold)
     local Troopstable = {}
     -- generics
     for _id,_cargo in pairs(self.Cargo_Crates) do
@@ -5377,6 +5380,9 @@ end
             Inhelo = 0,
             Sum = generic:GetStock(),
           }
+        if Restock == true then
+          Troopstable[genname].GenericCargo = generic
+        end
       end
     end
     ---
@@ -5392,6 +5398,9 @@ end
             Inhelo = 0,
             Sum = generic:GetStock(),
           }
+        if Restock == true then
+          Troopstable[genname].GenericCargo = generic
+        end
       end
     end   
     -- Troops & Built Crates
@@ -5403,19 +5412,8 @@ end
            local genname = generic:GetName()
            self:T("Found Generic "..genname .. " in the field. Adding.")
            if generic:GetStock0() > 0 then -- don't count unlimited stock
-             if not Troopstable[genname] then
-              Troopstable[genname] = {
-                Stock0 = generic:GetStock0(),
-                Stock = generic:GetStock(),
-                StockR = generic:GetRelativeStock(),
-                Infield = 1,
-                Inhelo = 0,
-                Sum = generic:GetStock()+1,
-              }
-             else
               Troopstable[genname].Infield = Troopstable[genname].Infield + 1
               Troopstable[genname].Sum = Troopstable[genname].Infield + Troopstable[genname].Stock + Troopstable[genname].Inhelo
-             end
            end
         else
           self:E(self.lid.."Group without Cargo Generic: ".._group:GetName())
@@ -5455,7 +5453,19 @@ end
           end
         end
       end
+    end    
+    -- Restock?
+    if Restock == true then
+      local threshold = Threshold or 75
+      for _name,_data in pairs(Troopstable) do
+        if _data.StockR and _data.StockR < threshold then
+          if _data.GenericCargo then
+            _data.GenericCargo:SetStock(_data.Stock0) -- refill to start level
+          end
+        end
+      end
     end
+    -- Return
     return Troopstable
   end
   
@@ -5473,6 +5483,7 @@ end
     for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
       if _troop.Name == name then
         _troop:AddStock(number)
+        break
       end
     end
     return self
@@ -5491,6 +5502,7 @@ end
     for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
       if _troop.Name == name then
         _troop:AddStock(number)
+        break
       end
     end
     return self
@@ -5509,6 +5521,7 @@ end
     for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
       if _troop.Name == name then
         _troop:AddStock(number)
+        break
       end
     end
     return self
@@ -5527,6 +5540,7 @@ end
     for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
       if _troop.Name == name then
         _troop:SetStock(number)
+        break
       end
     end
     return self
@@ -5545,6 +5559,7 @@ end
     for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
       if _troop.Name == name then
         _troop:SetStock(number)
+        break
       end
     end
     return self
@@ -5563,6 +5578,7 @@ end
     for _id,_troop in pairs (gentroops) do -- #number, #CTLD_CARGO
       if _troop.Name == name then
         _troop:SetStock(number)
+        break
       end
     end
     return self
