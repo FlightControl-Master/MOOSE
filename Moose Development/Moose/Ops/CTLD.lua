@@ -56,6 +56,7 @@ do
 -- @field #string StaticType Individual type if set.
 -- @field #string StaticCategory Individual static category if set.
 -- @field #list<#string> TypeNames Table of unit types able to pick this cargo up.
+-- @field #number Stock0 Initial stock, if any given.
 -- @extends Core.Base#BASE
 
 ---
@@ -73,6 +74,7 @@ CTLD_CARGO = {
   HasBeenDropped = false,
   PerCrateMass = 0,
   Stock = nil,
+  Stock0 = nil,
   Mark = nil,
   DontShowInMenu = false,
   Location = nil,
@@ -131,6 +133,7 @@ CTLD_CARGO = {
     self.HasBeenDropped = Dropped or false --#boolean
     self.PerCrateMass = PerCrateMass or 0 -- #number
     self.Stock = Stock or nil --#number
+    self.Stock0 = Stock or nil --#number 
     self.Mark = nil
     self.Subcategory = Subcategory or "Other"
     self.DontShowInMenu = DontShowInMenu or false
@@ -321,10 +324,32 @@ CTLD_CARGO = {
   
   --- Get Stock.
   -- @param #CTLD_CARGO self
-  -- @return #number Stock
+  -- @return #number Stock or -1 if unlimited.
   function CTLD_CARGO:GetStock()
     if self.Stock then
       return self.Stock
+    else
+      return -1
+    end
+  end
+  
+  --- Get Stock0.
+  -- @param #CTLD_CARGO self
+  -- @return #number Stock0 or -1 if unlimited.
+  function CTLD_CARGO:GetStock0()
+    if self.Stock0 then
+      return self.Stock0
+    else
+      return -1
+    end
+  end
+  
+    --- Get relative Stock.
+  -- @param #CTLD_CARGO self
+  -- @return #number Stock Percentage like 75, or -1 if unlimited.
+  function CTLD_CARGO:GetRelativeStock()
+    if self.Stock and self.Stock0 then
+      return math.floor((self.Stock/self.Stock0)*100)
     else
       return -1
     end
@@ -1355,7 +1380,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.28"
+CTLD.version="1.1.29"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -5313,6 +5338,119 @@ end
     self.EngineersInField = engtable
     return self
   end
+  
+  --- User - Count both the stock and groups in the field for available cargo types. Counts only limited cargo items and only troops and vehicle/FOB crates!
+  -- @param #CTLD self
+  -- @return #table Table A table of contents with numbers.
+  -- @usage
+  --      The index is the unique cargo name.
+  --      Each entry in the returned table contains a table with the following entries:
+  --      
+  --      {
+  --          Stock0 -- number of original stock when the cargo entry was created.
+  --          Stock -- number of currently available stock.
+  --          StockR -- relative number of available stock, e.g. 75 (percent).
+  --          Infield -- number of groups alive in the field of this kind.
+  --          Inhelo -- number of troops/crates in any helo alive. Can be with decimals < 1 if e.g. you have cargo that need 4 crates, but you have 2 loaded.
+  --          Sum -- sum is stock + infield + inhelo.
+  --        }
+  function CTLD:_CountStockPlusInHeloPlusAliveGroups()
+    local Troopstable = {}
+    -- generics
+    for _id,_cargo in pairs(self.Cargo_Crates) do
+      local generic = _cargo -- #CTLD_CARGO
+      local genname = generic:GetName()
+      if generic and generic:GetStock0() > 0 and not Troopstable[genname] then 
+        Troopstable[genname] = {
+            Stock0 = generic:GetStock0(),
+            Stock = generic:GetStock(),
+            StockR = generic:GetRelativeStock(),
+            Infield = 0,
+            Inhelo = 0,
+            Sum = generic:GetStock(),
+          }
+      end
+    end
+    ---
+    for _id,_cargo in pairs(self.Cargo_Troops) do
+      local generic = _cargo -- #CTLD_CARGO
+      local genname = generic:GetName()
+      if generic and generic:GetStock0() > 0 and not Troopstable[genname] then        
+        Troopstable[genname] = {
+            Stock0 = generic:GetStock0(),
+            Stock = generic:GetStock(),
+            StockR = generic:GetRelativeStock(),
+            Infield = 0,
+            Inhelo = 0,
+            Sum = generic:GetStock(),
+          }
+      end
+    end   
+    -- Troops & Built Crates
+    for _index, _group in pairs (self.DroppedTroops) do
+      if _group and _group:IsAlive() then
+        self:T("Looking at ".._group:GetName() .. " in the field")
+        local generic = self:GetGenericCargoObjectFromGroupName(_group:GetName()) -- #CTLD_CARGO
+        if generic then 
+           local genname = generic:GetName()
+           self:T("Found Generic "..genname .. " in the field. Adding.")
+           if generic:GetStock0() > 0 then -- don't count unlimited stock
+             if not Troopstable[genname] then
+              Troopstable[genname] = {
+                Stock0 = generic:GetStock0(),
+                Stock = generic:GetStock(),
+                StockR = generic:GetRelativeStock(),
+                Infield = 1,
+                Inhelo = 0,
+                Sum = generic:GetStock()+1,
+              }
+             else
+              Troopstable[genname].Infield = Troopstable[genname].Infield + 1
+              Troopstable[genname].Sum = Troopstable[genname].Infield + Troopstable[genname].Stock + Troopstable[genname].Inhelo
+             end
+           end
+        else
+          self:E(self.lid.."Group without Cargo Generic: ".._group:GetName())
+        end
+      end
+    end
+    -- Helos
+    for _unitname,_loaded in pairs(self.Loaded_Cargo) do
+      local _unit = UNIT:FindByName(_unitname)
+      if _unit and _unit:IsAlive() then
+        local unitname = _unit:GetName()
+        local loadedcargo = self.Loaded_Cargo[unitname].Cargo or {}
+        for _,_cgo in pairs (loadedcargo) do
+          local cargo = _cgo -- #CTLD_CARGO
+          local type = cargo.CargoType
+          local gname = cargo.Name
+          local gcargo = self:_FindCratesCargoObject(gname) or self:_FindTroopsCargoObject(gname)
+          self:T("Looking at ".. gname .. " in the helo - type = "..type)
+          if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS or type == CTLD_CARGO.Enum.VEHICLE or type == CTLD_CARGO.Enum.FOB) then
+            -- valid troops/engineers
+            if gcargo and gcargo:GetStock0() > 0 then -- don't count unlimited stock
+              self:T("Adding ".. gname .. " in the helo - type = "..type)
+              if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS) then
+                Troopstable[gname].Inhelo = Troopstable[gname].Inhelo + 1
+              end
+              if (type == CTLD_CARGO.Enum.VEHICLE or type == CTLD_CARGO.Enum.FOB) then
+                -- maybe multiple crates of the same type
+                local counting = gcargo.CratesNeeded
+                local added = 1
+                if counting > 1 then
+                  added = added/counting
+                end
+                Troopstable[gname].Inhelo = Troopstable[gname].Inhelo + added
+              end
+              Troopstable[gname].Sum = Troopstable[gname].Infield + Troopstable[gname].Stock + Troopstable[gname].Inhelo
+            end
+          end
+        end
+      end
+    end
+    return Troopstable
+  end
+  
 
   --- User - function to add stock of a certain troops type
   -- @param #CTLD self
@@ -5542,19 +5680,24 @@ end
   -- @return #CTLD_CARGO The cargo object or nil if not found
   function CTLD:GetGenericCargoObjectFromGroupName(GroupName)
     local Cargotype = nil
+    local template = GroupName
+    if string.find(template,"#") then
+      template = string.gsub(GroupName,"#(%d+)$","")
+    end   
+    template = string.gsub(template,"-(%d+)$","")
     for k,v in pairs(self.Cargo_Troops) do
     local comparison = ""
     if type(v.Templates) == "string" then comparison = v.Templates else comparison = v.Templates[1] end
-      if comparison == GroupName then
+      if comparison == template then
         Cargotype = v
         break
       end
     end
     if not Cargotype then
-      for k,v in pairs(self.Cargo_Crates) do
+      for k,v in pairs(self.Cargo_Crates) do -- #number, #CTLD_CARGO
       local comparison = ""
       if type(v.Templates) == "string" then comparison = v.Templates else comparison = v.Templates[1] end
-        if comparison == GroupName then
+        if comparison == template and v.CargoType ~= CTLD_CARGO.Enum.REPAIR then
           Cargotype = v
           break
         end
@@ -5679,7 +5822,7 @@ end
     if not match then
       self.CargoCounter = self.CargoCounter + 1
       cargo.ID = self.CargoCounter
-      cargo.Stock = 1
+      --cargo.Stock = 1
       table.insert(self.Cargo_Troops,cargo)
     end
     
@@ -5829,7 +5972,7 @@ end
     if not match then
       self.CargoCounter = self.CargoCounter + 1
       cargo.ID = self.CargoCounter
-      cargo.Stock = 1
+      --cargo.Stock = 1
       table.insert(self.Cargo_Crates,cargo)
     end
     
