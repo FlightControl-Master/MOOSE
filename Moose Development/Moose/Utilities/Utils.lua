@@ -4324,3 +4324,78 @@ end
 function UTILS.ScalarMult(vec, mult)
   return {x = vec.x*mult, y = vec.y*mult, z = vec.z*mult}
 end
+
+--- Utilities weather class for fog mainly.
+-- @type UTILS.Weather
+UTILS.Weather = {}
+
+--- Returns the current fog thickness in meters. Returns zero if fog is not present. 
+function UTILS.Weather.GetFogThickness()
+  return world.weather.getFogThickness()
+end
+
+--- Sets the fog to the desired thickness in meters at sea level. 
+-- @param #number Thickness Thickness in meters.
+-- Any fog animation will be discarded.
+-- Valid range : 100 to 5000 meters
+function UTILS.Weather.SetFogThickness(Thickness)
+  local value = Thickness
+  if value < 100 then value = 100
+  elseif value > 5000 then  value = 5000 end
+  return world.weather.setFogThickness(value)
+end
+
+--- Removes the fog.
+function UTILS.Weather.RemoveFog()
+  return world.weather.setFogThickness(0)
+end
+
+--- Gets the maximum visibility distance of the current fog setting.
+-- Returns 0 if no fog is present. 
+function UTILS.Weather.GetFogVisibilityDistanceMax()
+  return world.weather.getFogVisibilityDistance()
+end
+
+--- Sets the maximum visibility at sea level in meters.
+-- @param #number Thickness Thickness in meters.
+-- Limit: 100 to 100000 
+function UTILS.Weather.SetFogVisibilityDistance(Thickness)
+  local value = Thickness
+  if value < 100 then value = 100
+  elseif value > 100000 then  value = 100000 end
+  return world.weather.setFogVisibilityDistance(value)
+end
+
+---  Uses data from the passed table to change the fog visibility and thickness over a desired timeframe. This allows for a gradual increase/decrease of fog values rather than abruptly applying the values.
+-- Animation Key Format: {time, visibility, thickness}
+-- @param #table AnimationKeys Table of AnimationKey tables
+-- @usage
+-- Time: in seconds 0 to infinity
+-- Time is relative to when the function was called. Time value for each key must be larger than the previous key. If time is set to 0 then the fog will be applied to the corresponding visibility and thickness values at that key. Any time value greater than 0 will result in the current fog being inherited and changed to the first key.
+-- Visibility: in meters 100 to 100000
+-- Thickness: in meters 100 to 5000
+-- The speed at which the visibility and thickness changes is based on the time between keys and the values that visibility and thickness are being set to.
+--
+-- When the function is passed an empty table {} or nil the fog animation will be discarded and whatever the current thickness and visibility are set to will remain.
+-- 
+-- The following will set the fog in the mission to disappear in 1 minute.
+--
+--            UTILS.Weather.SetFogAnimation({ {60, 0, 0} })
+--
+-- The following will take 1 hour to get to the first fog setting, it will maintain that fog setting for another hour, then lightly removes the fog over the 2nd and 3rd hour, the completely removes the fog after 3 hours and 3 minutes from when the function was called.
+--
+--            UTILS.Weather.SetFogAnimation({
+--              {3600, 10000, 3000},    -- one hour to get to that fog setting
+--              {7200, 10000, 3000},    -- will maintain for 2 hours
+--              {10800, 20000, 2000},   -- at 3 hours visibility will have been increased while thickness decreases slightly
+--              {12600, 0, 0},          -- at 3:30 after the function was called the fog will be completely removed. 
+--            })
+--  
+function UTILS.Weather.SetFogAnimation(AnimationKeys)
+  return world.weather.setFogAnimation(AnimationKeys)
+end
+
+--- The fog animation will be discarded and whatever the current thickness and visibility are set to will remain
+function UTILS.Weather.StopFogAnimation()
+  return world.weather.setFogAnimation({})
+end
