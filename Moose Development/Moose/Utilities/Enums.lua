@@ -1279,6 +1279,8 @@ ENUMS.Storage.weapons.nurs.S_5M = "weapons.nurs.S_5M"
 ENUMS.Storage.weapons.missiles.AGM_12A = "weapons.missiles.AGM_12A"
 ENUMS.Storage.weapons.droptanks.JAYHAWK_120_Fuel_Tank = "weapons.droptanks.JAYHAWK_120_Fuel_Tank"
 ENUMS.Storage.weapons.bombs.GBU_15_V_1_B = "weapons.bombs.GBU_15_V_1_B"
+ENUMS.Storage.weapons.missiles.HYDRA_70_M151_APKWS = {4,4,8,292}
+ENUMS.Storage.weapons.missiles.HYDRA_70_M282_APKWS = {4,4,8,293}
 -- dupes with typos
 ENUMS.Storage.weapons.bombs.BAP100 = "weapons.bombs.BAP_100"
 ENUMS.Storage.weapons.bombs.BLU3B_GROUP = "weapons.bombs.BLU-3B_GROUP"
@@ -1327,7 +1329,7 @@ ENUMS.Storage.weapons.OH58.Smk_Grenade_Violet  =  {4,5,9,490}
 ENUMS.Storage.weapons.OH58.Smk_Grenade_White  =  {4,5,9,492}
 ENUMS.Storage.weapons.OH58.Smk_Grenade_Yellow  =  {4,5,9,491}
 -- Apache
-ENUMS.Storage.weapons.AH64D.AN_APG78 = {4,15,44,2138}
+ENUMS.Storage.weapons.AH64D.AN_APG78 = {4,15,44,2114}
 ENUMS.Storage.weapons.AH64D.Internal_Aux_FuelTank = {1,3,43,1700}
 
 ---
