@@ -757,7 +757,11 @@ end
 -- @param #GROUP self
 -- @return #boolean If true, group is associated with a client or player slot.
 function GROUP:IsPlayer()
-  return self:GetUnit(1):IsPlayer()
+  local unit = self:GetUnit(1)
+  if unit then
+    return unit:IsPlayer()
+  end
+  return false
 end
 
 --- Returns the UNIT wrapper object with number UnitNumber. If it doesn't exist, tries to return the next available unit.
