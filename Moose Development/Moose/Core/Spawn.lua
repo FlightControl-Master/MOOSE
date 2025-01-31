@@ -1278,6 +1278,7 @@ end
 
 --- Respawn group after landing.
 -- @param #SPAWN self
+-- @param #number WaitingTime Wait this many seconds before despawning the alive group after landing. Defaults to 3 .
 -- @return #SPAWN self
 -- @usage
 --
@@ -1285,15 +1286,16 @@ end
 --   -- Re-SPAWN the Group(s) after each landing and Engine Shut-Down automatically.
 --   SpawnRU_SU34 = SPAWN:New( 'Su-34' )
 --                       :InitRandomizeRoute( 1, 1, 3000 )
---                       :InitRepeatOnLanding()
+--                       :InitRepeatOnLanding(20)
 --                       :Spawn()
 --
-function SPAWN:InitRepeatOnLanding()
+function SPAWN:InitRepeatOnLanding(WaitingTime)
   --self:F( { self.SpawnTemplatePrefix } )
 
   self:InitRepeat()
   self.RepeatOnEngineShutDown = false
   self.RepeatOnLanding = true
+  self.RepeatOnLandingTime = (WaitingTime and WaitingTime > 3) and WaitingTime or 3
 
   return self
 end
@@ -4064,7 +4066,7 @@ function SPAWN:_OnLand( EventData )
           -- self:ReSpawn( SpawnGroupIndex )
           -- Delay respawn by three seconds due to DCS 2.5.4.26368 OB bug https://github.com/FlightControl-Master/MOOSE/issues/1076
           -- Bug was initially only for engine shutdown event but after ED "fixed" it, it now happens on landing events.
-          SCHEDULER:New( nil, self.ReSpawn, { self, SpawnGroupIndex }, 3 )
+          SCHEDULER:New( nil, self.ReSpawn, { self, SpawnGroupIndex }, self.RepeatOnLandingTime or 3 )
         end
       end
     end
