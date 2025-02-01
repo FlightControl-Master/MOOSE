@@ -1606,7 +1606,7 @@ function MSRS:_ExecCommand(command)
   if self.UsePowerShell == true then
    filename=os.getenv('TMP').."\\MSRS-"..MSRS.uuid()..".ps1"
    batContent = command .. "\'"
-   self:I({batContent=batContent})
+   self:T({batContent=batContent})
   end
   
   local script=io.open(filename, "w+")
@@ -2115,7 +2115,7 @@ end
 -- @param Core.Point#COORDINATE coordinate Coordinate to be used
 -- @return #MSRSQUEUE.Transmission Radio transmission table.
 function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label,coordinate)
-
+  self:T({Text=text, Dur=duration, start=tstart, int=interval, sub=subgroups, subt=subtitle, sudb=subduration, F=frequency, M=modulation, G=gender, C=culture, V=voice, Vol=volume, L=label})
   if self.TransmitOnlyWithPlayers then
     if self.PlayerSet and self.PlayerSet:CountAlive() == 0 then
       return self
@@ -2155,7 +2155,7 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   transmission.volume = volume or msrs.volume
   transmission.label = label or msrs.Label
   transmission.coordinate = coordinate or msrs.coordinate
-
+ 
   -- Add transmission to queue.
   self:AddTransmission(transmission)
 
