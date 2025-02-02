@@ -319,6 +319,7 @@ function TIRESIAS:_InitGroups()
           grp:SetCommandInvisible(true)
           grp:SetAIOff()
           grp.Tiresias.invisible = true
+          grp.Tiresias.AIOff = true
         end
       end     
       --BASE:I(string.format("Init/Switch off Vehicle %s (Exception %s)",grp:GetName(),tostring(grp.Tiresias.exception)))
