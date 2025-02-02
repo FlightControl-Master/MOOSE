@@ -1797,3 +1797,42 @@ function UNIT:GetSTN()
   end
   return STN, VCL, VCN, FGL
 end
+
+do -- AI methods
+
+  --- Turns the AI On or Off for the UNIT.
+  -- @param #UNIT self
+  -- @param #boolean AIOnOff The value true turns the AI On, the value false turns the AI Off.
+  -- @return #UNIT The UNIT.
+  function UNIT:SetAIOnOff( AIOnOff )
+
+    local DCSUnit = self:GetDCSObject() -- DCS#Group
+
+    if DCSUnit then
+      local DCSController = DCSUnit:getController() -- DCS#Controller
+      if DCSController then
+        DCSController:setOnOff( AIOnOff )
+        return self
+      end
+    end
+
+    return nil
+  end
+
+  --- Turns the AI On for the UNIT.
+  -- @param #UNIT self
+  -- @return #UNIT The UNIT.
+  function UNIT:SetAIOn()
+
+    return self:SetAIOnOff( true )
+  end
+
+  --- Turns the AI Off for the UNIT.
+  -- @param #UNIT self
+  -- @return #UNIT The UNIT.
+  function UNIT:SetAIOff()
+
+    return self:SetAIOnOff( false )
+  end
+
+end
