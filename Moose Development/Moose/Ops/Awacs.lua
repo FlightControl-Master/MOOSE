@@ -1773,7 +1773,7 @@ function AWACS:_EventHandler(EventData)
     end
   end
   
-  if Event.id == EVENTS.PlayerLeaveUnit then --player left unit
+  if Event.id == EVENTS.PlayerLeaveUnit and Event.IniGroupName then --player left unit
     -- check known player?
     self:T("Player group left  unit: " .. Event.IniGroupName)
     self:T("Player name left: " .. Event.IniPlayerName)
