@@ -288,7 +288,7 @@ function TIRESIAS:_InitGroups()
         }
       end
       if grp.Tiresias and (not grp.Tiresias.exception == true) then
-        if  grp.Tiresias.invisible and grp.Tiresias.invisible == false then
+        if grp.Tiresias.invisible == false then
           grp:SetCommandInvisible(true)
           grp.Tiresias.invisible = true
           if SwitchAAA then
@@ -315,10 +315,11 @@ function TIRESIAS:_InitGroups()
         }
       end
       if grp.Tiresias and (not grp.Tiresias.exception == true) then
-        if grp.Tiresias and grp.Tiresias.invisible and grp.Tiresias.invisible == false then
+        if grp.Tiresias and grp.Tiresias.invisible == false then
           grp:SetCommandInvisible(true)
           grp:SetAIOff()
           grp.Tiresias.invisible = true
+          grp.Tiresias.AIOff = true
         end
       end     
       --BASE:I(string.format("Init/Switch off Vehicle %s (Exception %s)",grp:GetName(),tostring(grp.Tiresias.exception)))
@@ -336,7 +337,7 @@ function TIRESIAS:_InitGroups()
         }
       end
       if grp.Tiresias and (not grp.Tiresias.exception == true) then
-        if grp.Tiresias and grp.Tiresias.invisible and grp.Tiresias.invisible == false then
+        if grp.Tiresias and grp.Tiresias.invisible == false then
           grp:SetCommandInvisible(true)
           grp.Tiresias.invisible = true
         end
@@ -392,7 +393,8 @@ function TIRESIAS:_SwitchOnGroups(group,radius)
     ground:ForEachGroupAlive(
       function(grp)
         local name = grp:GetName()
-        if grp.Tiresias and grp.Tiresias.type and (not grp.Tiresias.exception == true ) then
+        if grp:GetCoalition() ~= group:GetCoalition()
+                            and grp.Tiresias and grp.Tiresias.type and (not grp.Tiresias.exception == true ) then
           if grp.Tiresias.invisible == true then
             grp:SetCommandInvisible(false)
             grp.Tiresias.invisible = false
