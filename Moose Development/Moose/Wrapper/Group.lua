@@ -3152,7 +3152,7 @@ function GROUP:IsSAM()
   local units = self:GetUnits()
   for _,_unit in pairs(units or {}) do
     local unit = _unit -- Wrapper.Unit#UNIT
-    if unit:HasSEAD() and unit:IsGround() and (not unit:HasAttribute("Mobile AAA")) then
+    if unit:IsSAM() then
       issam = true
       break
     end
@@ -3162,18 +3162,16 @@ end
 
 --- [GROUND] Determine if a GROUP has a AAA unit, i.e. has no radar or optical tracker but the AAA = true or the "Mobile AAA" = true attribute.
 -- @param #GROUP self
--- @return #boolean IsSAM True if AAA, else false
+-- @return #boolean IsAAA True if AAA, else false
 function GROUP:IsAAA()
-  local issam = false
+  local isAAA = false
   local units = self:GetUnits()
   for _,_unit in pairs(units or {}) do
     local unit = _unit -- Wrapper.Unit#UNIT
-    local desc = unit:GetDesc() or {}
-    local attr = desc.attributes or {}
-    if unit:HasSEAD() then return false end
-    if attr["AAA"] or attr["SAM related"] then
-      issam = true
+    if unit:IsAAA() then
+      isAAA = true
+      break
     end
   end
-  return issam
+  return isAAA
 end
