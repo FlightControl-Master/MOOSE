@@ -1895,6 +1895,21 @@ function UNIT:IsSAM()
     return false
 end
 
+--- [GROUND] Determine if a UNIT is a EWR unit
+-- @param #UNIT self
+-- @return #boolean IsEWR True if EWR, else false
+function UNIT:IsEWR()
+    if self:IsGround() then
+        local DCSUnit = self:GetDCSObject()
+
+        if DCSUnit then
+            local attrs = DCSUnit:getDesc().attributes
+            return attrs["EWR"] == true
+        end
+    end
+    return false
+end
+
 --- [GROUND] Determine if a UNIT is a AAA unit, i.e. has no radar or optical tracker but the AAA = true or the "Mobile AAA" = true attribute.
 -- @param #UNIT self
 -- @return #boolean IsAAA True if AAA, else false
