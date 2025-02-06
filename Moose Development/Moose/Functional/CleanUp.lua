@@ -357,7 +357,7 @@ function CLEANUP_AIRBASE.__:EventAddForCleanUp( Event )
   self:F({Event})
 
 
-	if Event.IniDCSUnit and Event.IniCategory == Object.Category.UNIT then
+	if Event.IniDCSUnit and Event.IniUnit and Event.IniCategory == Object.Category.UNIT then
 		if self.CleanUpList[Event.IniDCSUnitName] == nil then
 			if self:IsInAirbase( Event.IniUnit:GetVec2() ) then
 				self:AddForCleanUp( Event.IniUnit, Event.IniDCSUnitName )
@@ -365,7 +365,7 @@ function CLEANUP_AIRBASE.__:EventAddForCleanUp( Event )
 		end
 	end
 
-	if Event.TgtDCSUnit and Event.TgtCategory == Object.Category.UNIT then
+	if Event.TgtDCSUnit and Event.TgtUnit and Event.TgtCategory == Object.Category.UNIT then
 		if self.CleanUpList[Event.TgtDCSUnitName] == nil then
 			if self:IsInAirbase( Event.TgtUnit:GetVec2() ) then
 				self:AddForCleanUp( Event.TgtUnit, Event.TgtDCSUnitName )
