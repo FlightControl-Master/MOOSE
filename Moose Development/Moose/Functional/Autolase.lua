@@ -74,7 +74,7 @@
 -- @image Designation.JPG
 --
 -- Date: 24 Oct 2021
--- Last Update: Jan 2025
+-- Last Update: Feb 2025
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
@@ -90,6 +90,7 @@
 -- @field #boolean smokemenu
 -- @field #boolean threatmenu
 -- @field #number RoundingPrecision
+-- @field #table smokeoffset
 -- @extends Ops.Intel#INTEL
 
 ---
@@ -120,7 +121,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.27"
+AUTOLASE.version = "0.1.28"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -193,6 +194,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.reporttimelong = 30
   self.smoketargets = false
   self.smokecolor = SMOKECOLOR.Red
+  self.smokeoffset = nil
   self.notifypilots = true
   self.targetsperrecce = {}
   self.RecceUnits = {}
@@ -210,6 +212,8 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.smokemenu = true
   self.threatmenu = true
   self.RoundingPrecision = 0
+  
+  self:EnableSmokeMenu({Angle=math.random(0,359),Distance=math.random(10,20)})
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -614,9 +618,15 @@ end
 
 --- (User) Show the "Switch smoke target..." menu entry for pilots. On by default.
 -- @param #AUTOLASE self
+-- @param #table Offset (Optional) Define an offset for the smoke, i.e. not directly on the unit itself, angle is degrees and distance is meters. E.g. `autolase:EnableSmokeMenu({Angle=30,Distance=20})`
 -- @return #AUTOLASE self 
-function AUTOLASE:EnableSmokeMenu()
+function AUTOLASE:EnableSmokeMenu(Offset)
   self.smokemenu = true
+  if Offset then
+    self.smokeoffset = {}
+    self.smokeoffset.Distance = Offset.Distance or math.random(10,20)
+    self.smokeoffset.Angle = Offset.Angle or math.random(0,359)
+  end
   return self
 end
 
@@ -625,6 +635,7 @@ end
 -- @return #AUTOLASE self 
 function AUTOLASE:DisableSmokeMenu()
   self.smokemenu = false
+  self.smokeoffset = nil
   return self
 end
 
@@ -1097,6 +1108,9 @@ function AUTOLASE:onafterMonitor(From, Event, To)
           }
        if self.smoketargets then
           local coord = unit:GetCoordinate()
+          if self.smokeoffset then
+            coord:Translate(self.smokeoffset.Distance,self.smokeoffset.Angle,true,true)
+          end
           local color = self:GetSmokeColor(reccename)
           coord:Smoke(color)
        end
