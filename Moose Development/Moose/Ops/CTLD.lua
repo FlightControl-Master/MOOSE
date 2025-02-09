@@ -3192,9 +3192,9 @@ function CTLD:_LoadCratesNearby(Group, Unit)
         end
       end
       self.Loaded_Cargo[unitname] = loaded
-      self:_UpdateUnitCargoMass(Unit)
-      self:_RefreshDropCratesMenu(Group, Unit)
-     -- clean up real world crates
+      self:_UpdateUnitCargoMass(Unit) 
+      self:_RefreshDropCratesMenu(Group,Unit)
+      -- clean up real world crates
       self:_CleanupTrackedCrates(crateidsloaded)
     end
   end
