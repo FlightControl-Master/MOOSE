@@ -509,7 +509,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.70", -- #string
+  version = "0.2.71", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -2244,9 +2244,9 @@ function AWACS:_StartEscorts(Shiftchange)
   local OffsetY = 500
   local OffsetZ = 500
   if self.OffsetVec then
-    OffsetX = self.OffsetVec.x
-    OffsetY = self.OffsetVec.y
-    OffsetZ = self.OffsetVec.z 
+    OffsetX = self.OffsetVec.x or 500
+    OffsetY = self.OffsetVec.y or 500
+    OffsetZ = self.OffsetVec.z or 500
   end
   
   for i=1,self.EscortNumber do
