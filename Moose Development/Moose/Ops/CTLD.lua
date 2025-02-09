@@ -4397,10 +4397,6 @@ function CTLD:_UnloadSingleCrate(Group, Unit, CrateName)
       table.insert(matched, cObj)
     end
   end
-  if #matched < needed then
-    self:_SendMessage(string.format("You only have %d of %d %s crates needed!", #matched, needed, CrateName), 10, false, Group)
-    return self
-  end
   local crateToUse = matched[1]
   self:_GetCrates(Group, Unit, crateToUse, needed, true)
   local used = 0
