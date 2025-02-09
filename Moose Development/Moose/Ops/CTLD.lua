@@ -24,7 +24,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update Jan 2025
+-- Last Update Feb 2025
 
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1388,7 +1388,7 @@ CTLD.UnitTypeCapabilities = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.29"
+CTLD.version="1.1.30"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3202,6 +3202,9 @@ function CTLD:_LoadCratesNearby(Group, Unit)
 end
 
 --- (Internal) Function to clean up tracked cargo crates
+-- @param #CTLD self
+-- @param #list crateIdsToRemove Table of IDs
+-- @return self
 function CTLD:_CleanupTrackedCrates(crateIdsToRemove)
   local existingcrates = self.Spawned_Cargo -- #table
   local newexcrates = {}
@@ -3855,7 +3858,6 @@ end
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
-
 function CTLD:_PackCratesNearby(Group, Unit)
   self:T(self.lid .. " _PackCratesNearby")
   -----------------------------------------
@@ -4338,6 +4340,12 @@ function CTLD:_RefreshF10Menus()
   return self
 end
 
+--- (Internal) Function to unload a single crate
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group The calling group.
+-- @param Wrapper.Unit#UNIT Unit The calling unit.
+-- @param #string CrateName The name of the crate to unload
+-- @return #CTLD self
 function CTLD:_UnloadSingleCrate(Group, Unit, CrateName)
   if not self.dropcratesanywhere then
     local inzone, zoneName, zone, distance = self:IsUnitInZone(Unit, CTLD.CargoZoneType.DROP)
@@ -4426,39 +4434,50 @@ function CTLD:_UnloadSingleCrate(Group, Unit, CrateName)
   return self
 end
 
+--- (Internal) Function to refresh the menu for a single unit after crates dropped.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group The calling group.
+-- @param Wrapper.Unit#UNIT Unit The calling unit.
+-- @return #CTLD self
 function CTLD:_RefreshDropCratesMenu(Group, Unit)
-local theGroup = Group
-local theUnit = Unit
-if not theGroup.CTLDTopmenu then return end
-local topCrates = theGroup.MyTopCratesMenu
-if not topCrates then return end
-if topCrates.DropCratesMenu then topCrates.DropCratesMenu:Remove() end
-local dropCratesMenu = MENU_GROUP:New(theGroup, "Drop Crates", topCrates)
-topCrates.DropCratesMenu = dropCratesMenu
-MENU_GROUP_COMMAND:New(theGroup, "Drop ALL crates", dropCratesMenu, self._UnloadCrates, self, theGroup, theUnit)
-local loadedData = self.Loaded_Cargo[Unit:GetName()]
-if loadedData and loadedData.Cargo then
-local cargoByName = {}
-for _, cargoObj in pairs(loadedData.Cargo) do
-  if cargoObj and not cargoObj:WasDropped() then
-	local ctype = cargoObj:GetType()
-	if ctype ~= CTLD_CARGO.Enum.TROOPS and ctype ~= CTLD_CARGO.Enum.ENGINEERS and ctype ~= CTLD_CARGO.Enum.GCLOADABLE then
-	  local cName = cargoObj:GetName()
-	  local needed = cargoObj:GetCratesNeeded() or 1
-	  if not cargoByName[cName] then
-		cargoByName[cName] = {count = 0, needed = needed}
-	  end
-	  cargoByName[cName].count = cargoByName[cName].count + 1
-	end
+  local theGroup = Group
+  local theUnit = Unit
+  if not theGroup.CTLDTopmenu then return end
+  local topCrates = theGroup.MyTopCratesMenu
+  if not topCrates then return end
+  if topCrates.DropCratesMenu then topCrates.DropCratesMenu:Remove() end
+  local dropCratesMenu = MENU_GROUP:New(theGroup, "Drop Crates", topCrates)
+  topCrates.DropCratesMenu = dropCratesMenu
+  MENU_GROUP_COMMAND:New(theGroup, "Drop ALL crates", dropCratesMenu, self._UnloadCrates, self, theGroup, theUnit)
+  local loadedData = self.Loaded_Cargo[Unit:GetName()]
+  if loadedData and loadedData.Cargo then
+    local cargoByName = {}
+    for _, cargoObj in pairs(loadedData.Cargo) do
+      if cargoObj and not cargoObj:WasDropped() then
+        local ctype = cargoObj:GetType()
+        if ctype ~= CTLD_CARGO.Enum.TROOPS and ctype ~= CTLD_CARGO.Enum.ENGINEERS and ctype ~= CTLD_CARGO.Enum.GCLOADABLE then
+          local cName = cargoObj:GetName()
+          local needed = cargoObj:GetCratesNeeded() or 1
+          if not cargoByName[cName] then
+            cargoByName[cName] = {count = 0, needed = needed}
+          end
+          cargoByName[cName].count = cargoByName[cName].count + 1
+        end
+      end
+    end
+    for name, info in pairs(cargoByName) do
+      local line = string.format("Drop %s (%d/%d)", name, info.count, info.needed)
+      MENU_GROUP_COMMAND:New(theGroup, line, dropCratesMenu, self._UnloadSingleCrate, self, theGroup, theUnit, name)
+    end
   end
 end
-for name, info in pairs(cargoByName) do
-  local line = string.format("Drop %s (%d/%d)", name, info.count, info.needed)
-  MENU_GROUP_COMMAND:New(theGroup, line, dropCratesMenu, self._UnloadSingleCrate, self, theGroup, theUnit, name)
-end
-end
-end
 
+--- (Internal) Function to unload a single Troop group by ID.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group The calling group.
+-- @param Wrapper.Unit#UNIT Unit The calling unit.
+-- @param #number cargoId the Cargo ID
+-- @return #CTLD self
 function CTLD:_UnloadSingleTroopByID(Group, Unit, cargoID)
   self:T(self.lid .. " _UnloadSingleTroopByID for cargo ID " .. tostring(cargoID))
 
@@ -4653,9 +4672,11 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, cargoID)
   return self
 end
 
-
-
---------------------
+--- (Internal) Function to refresh menu for troops on drop for a specific unit
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group The requesting group.
+-- @param Wrapper.Unit#UNIT Unit The requesting unit.
+-- @return #CTLD self
 function CTLD:_RefreshDropTroopsMenu(Group, Unit)
   local theGroup=Group
   local theUnit=Unit
@@ -4681,9 +4702,8 @@ function CTLD:_RefreshDropTroopsMenu(Group, Unit)
       end
     end
   end
+  return self
 end
-
-
 
 --- [Internal] Function to check if a template exists in the mission.
 -- @param #CTLD self
@@ -5412,7 +5432,7 @@ function CTLD:SmokeZoneNearBy(Unit, Flare)
     local distance = UTILS.MetersToNM(self.smokedistance)
     self:_SendMessage(string.format("Negative, need to be closer than %dnm to a zone!",distance), 10, false, Group)
   end
-  return self 
+    return self 
 end
 
   --- User - Function to add/adjust unittype capabilities.
