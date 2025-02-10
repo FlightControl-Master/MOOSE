@@ -441,17 +441,20 @@ function ATC_GROUND_UNIVERSAL:New(AirbaseList)
   self:T( { self.ClassName } )
 
   self.Airbases = {}
-
-  for _name,_ in pairs(_DATABASE.AIRBASES) do
-    self.Airbases[_name]={}  
-  end
   
   self.AirbaseList = AirbaseList
   
   if not self.AirbaseList then
     self.AirbaseList = {}
     for _name,_ in pairs(_DATABASE.AIRBASES) do
-      self.AirbaseList[_name]=_name 
+      -- TODO exclude FARPS and Ships
+      self.AirbaseList[_name]=_name
+      self.Airbases[_name]={}
+    end
+  else
+    for _,_name in pairs(AirbaseList) do
+      -- TODO exclude FARPS and Ships
+      self.Airbases[_name]={}  
     end
   end
   
