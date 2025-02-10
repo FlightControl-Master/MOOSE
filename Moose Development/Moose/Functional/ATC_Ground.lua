@@ -18,7 +18,7 @@
 -- ### Author: FlightControl - Framework Design &  Programming
 -- ### Refactoring to use the Runway auto-detection: Applevangelist
 -- @date August 2022
--- Last Update Oct 2024
+-- Last Update Feb 2025
 --
 -- ===
 -- 
@@ -416,7 +416,7 @@ end
 -- @field #ATC_GROUND_UNIVERSAL
 ATC_GROUND_UNIVERSAL = {
   ClassName = "ATC_GROUND_UNIVERSAL",
-  Version = "0.0.1",
+  Version = "0.0.2",
   SetClient = nil,
   Airbases = nil,
   AirbaseList = nil,
@@ -441,17 +441,25 @@ function ATC_GROUND_UNIVERSAL:New(AirbaseList)
   self:T( { self.ClassName } )
 
   self.Airbases = {}
-
-  for _name,_ in pairs(_DATABASE.AIRBASES) do
-    self.Airbases[_name]={}  
-  end
   
   self.AirbaseList = AirbaseList
   
   if not self.AirbaseList then
     self.AirbaseList = {}
-    for _name,_ in pairs(_DATABASE.AIRBASES) do
-      self.AirbaseList[_name]=_name 
+    for _name,_base in pairs(_DATABASE.AIRBASES) do
+      -- DONE exclude FARPS and Ships
+      if _base and _base.isAirdrome == true then
+        self.AirbaseList[_name]=_name
+        self.Airbases[_name]={}
+      end
+    end
+  else
+    for _,_name in pairs(AirbaseList) do
+      -- DONE exclude FARPS and Ships
+      local airbase = _DATABASE:FindAirbase(_name)
+      if airbase and airbase.isAirdrome == true then
+        self.Airbases[_name]={} 
+      end 
     end
   end
   
@@ -1447,11 +1455,10 @@ function ATC_GROUND_PERSIANGULF:Start( RepeatScanSeconds )
   self.AirbaseMonitor = SCHEDULER:New( self, self._AirbaseMonitor, { self }, 0, RepeatScanSeconds )
 end
           
-
- -- @type ATC_GROUND_MARIANAISLANDS
+---
+-- @type ATC_GROUND_MARIANAISLANDS
 -- @extends #ATC_GROUND
 
-     
 
 --- # ATC\_GROUND\_MARIANA, extends @{#ATC_GROUND}
 -- 
