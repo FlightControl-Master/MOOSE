@@ -2021,6 +2021,13 @@ function CTLD:_EventHandler(EventData)
       self:_RefreshF10Menus()
     end
     return
+  elseif event.id == EVENTS.Land or event.id == EVENTS.Takeoff then
+    local unitname = event.IniUnitName
+    if self.CtldUnits[unitname] then
+      local _group = event.IniGroup
+      local _unit = event.IniUnit
+      self:_RefreshLoadCratesMenu(_group, _unit)
+    end
   elseif event.id == EVENTS.PlayerLeaveUnit or event.id == EVENTS.UnitLost then
     -- remove from pilot table
     local unitname = event.IniUnitName or "none"
@@ -2845,7 +2852,9 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
     text = string.format("Crates for %s have been dropped!",cratename)
     self:__CratesDropped(1, Group, Unit, droppedcargo)
   end
-  self:_SendMessage(text, 10, false, Group) 
+  self:_SendMessage(text, 10, false, Group)
+  self:_RefreshLoadCratesMenu(Group, Unit)
+  
   return self
 end
 
@@ -2973,31 +2982,32 @@ end
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
 -- @return #CTLD self
-function CTLD:_RemoveCratesNearby( _group, _unit)
-  self:T(self.lid .. " _RemoveCratesNearby")
-  local finddist = self.CrateDistance or 35
-  local crates,number = self:_FindCratesNearby(_group,_unit, finddist,true,true) -- #table
-  if number > 0 then
-    local text = REPORT:New("Removing Crates Found Nearby:")
+function CTLD:_RemoveCratesNearby(_group, _unit)
+  self:T(self.lid.." _RemoveCratesNearby")
+  local finddist=self.CrateDistance or 35
+  local crates,number=self:_FindCratesNearby(_group,_unit,finddist,true,true)
+  if number>0 then
+    local removedIDs={}
+    local text=REPORT:New("Removing Crates Found Nearby:")
     text:Add("------------------------------------------------------------")
-    for _,_entry in pairs (crates) do
-      local entry = _entry -- #CTLD_CARGO
-      local name = entry:GetName() --#string
-      local dropped = entry:WasDropped()
-      if dropped then
-        text:Add(string.format("Crate for %s, %dkg removed",name, entry.PerCrateMass))
-      else
-        text:Add(string.format("Crate for %s, %dkg removed",name, entry.PerCrateMass))
+    for _,_entry in pairs(crates)do
+      local entry=_entry
+      local name=entry:GetName()or"none"
+      text:Add(string.format("Crate for %s, %dkg removed",name,entry.PerCrateMass))
+      if entry:GetPositionable()then
+        entry:GetPositionable():Destroy(false)
       end
-      entry:GetPositionable():Destroy(false)
+      table.insert(removedIDs,entry:GetID())
     end
-    if text:GetCount() == 1 then
-    text:Add("        N O N E")
+    if text:GetCount()==1 then
+      text:Add("        N O N E")
     end
     text:Add("------------------------------------------------------------")
-    self:_SendMessage(text:Text(), 30, true, _group) 
+    self:_SendMessage(text:Text(),30,true,_group)
+    self:_CleanupTrackedCrates(removedIDs)
+    self:_RefreshLoadCratesMenu(_group,_unit)
   else
-    self:_SendMessage(string.format("No (loadable) crates within %d meters!",finddist), 10, false, _group) 
+    self:_SendMessage(string.format("No (loadable) crates within %d meters!",finddist),10,false,_group)
   end
   return self
 end
@@ -3212,6 +3222,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
       self.Loaded_Cargo[unitname] = loaded
       self:_UpdateUnitCargoMass(Unit)
       self:_RefreshDropCratesMenu(Group, Unit)
+      self:_RefreshLoadCratesMenu(Group, Unit)
       -- clean up real world crates
       self:_CleanupTrackedCrates(crateidsloaded)
     end
@@ -3900,6 +3911,7 @@ function CTLD:_PackCratesNearby(Group, Unit)
           if (_entry.Templates[1] == _Template.GroupName) then -- check if the #CTLD_CARGO matches the template name
             _Group:Destroy() -- if a match is found destroy the Wrapper.Group#GROUP near the player
             self:_GetCrates(Group, Unit, _entry, nil, false, true) -- spawn the appropriate crates near the player
+            self:_RefreshLoadCratesMenu(Group,Unit) -- call the refresher to show the crates in the menu
             return self
           end
         end
@@ -4235,17 +4247,10 @@ function CTLD:_RefreshF10Menus()
           end
           if cancrates then
             local topcrates  = MENU_GROUP:New(_group, "Manage Crates", topmenu)
-            local cratesmenu = MENU_GROUP:New(_group, "Get Crates", topcrates)
             _group.MyTopCratesMenu = topcrates
 
-            -- Show "Load crates" on 1 line
-            MENU_GROUP_COMMAND:New(_group, "Load crates", topcrates, self._LoadCratesNearby, self, _group, _unit)
-
-            MENU_GROUP_COMMAND:New(_group, "Pack crates", topcrates, self._PackCratesNearby, self, _group, _unit)
-            local removecratesmenu = MENU_GROUP:New(_group, "Remove crates", topcrates)
-            MENU_GROUP_COMMAND:New(_group, "Remove crates nearby", removecratesmenu, self._RemoveCratesNearby, self, _group, _unit)
-
             -- Build the “Get Crates” sub-menu items
+            local cratesmenu = MENU_GROUP:New(_group, "Get Crates", topcrates)
             if self.usesubcats then
               local subcatmenus = {}
               for catName, _ in pairs(self.subcats) do
@@ -4290,15 +4295,24 @@ function CTLD:_RefreshF10Menus()
               end
             end
 
-            MENU_GROUP_COMMAND:New(_group, "List crates nearby", topcrates, self._ListCratesNearby, self, _group, _unit)
-            
+            local loadCratesMenu=MENU_GROUP:New(_group,"Load Crates",topcrates)
+            _group.MyLoadCratesMenu=loadCratesMenu
+            MENU_GROUP_COMMAND:New(_group,"Load ALL",loadCratesMenu,self._LoadCratesNearby,self,_group,_unit)
+            MENU_GROUP_COMMAND:New(_group,"Show loadable crates",loadCratesMenu,self._RefreshLoadCratesMenu,self,_group,_unit)
+
+            local dropCratesMenu=MENU_GROUP:New(_group,"Drop Crates",topcrates)
+            topcrates.DropCratesMenu=dropCratesMenu
+
             if not self.nobuildmenu then
-              MENU_GROUP_COMMAND:New(_group, "Repair", topcrates, self._RepairCrates, self, _group, _unit):Refresh()
               MENU_GROUP_COMMAND:New(_group, "Build crates", topcrates, self._BuildCrates, self, _group, _unit)
+              MENU_GROUP_COMMAND:New(_group, "Repair", topcrates, self._RepairCrates, self, _group, _unit):Refresh()
             end
-            -- Drop Crates sub-menu
-            local dropCratesMenu = MENU_GROUP:New(_group, "Drop Crates", topcrates)
-            MENU_GROUP_COMMAND:New(_group, "Drop ALL crates", dropCratesMenu, self._UnloadCrates, self, _group, _unit)
+
+            local removecratesmenu = MENU_GROUP:New(_group, "Remove crates", topcrates)
+            MENU_GROUP_COMMAND:New(_group, "Remove crates nearby", removecratesmenu, self._RemoveCratesNearby, self, _group, _unit)
+
+            MENU_GROUP_COMMAND:New(_group, "Pack crates", topcrates, self._PackCratesNearby, self, _group, _unit)
+            MENU_GROUP_COMMAND:New(_group, "List crates nearby", topcrates, self._ListCratesNearby, self, _group, _unit)
 
             local uName = _unit:GetName()
             local loadedData = self.Loaded_Cargo[uName]
@@ -4317,9 +4331,9 @@ function CTLD:_RefreshF10Menus()
                 MENU_GROUP_COMMAND:New(_group, line, dropCratesMenu, self._UnloadSingleCrateSet, self, _group, _unit, name)
               end
             end
-
-
           end
+
+
 
           -----------------------------------------------------
           -- Misc sub‐menus
@@ -4349,6 +4363,8 @@ function CTLD:_RefreshF10Menus()
 
           -- Mark we built the menu
           self.MenusDone[_unitName] = true
+          self:_RefreshLoadCratesMenu(_group, _unit)
+          self:_RefreshDropCratesMenu(_group,_unit)
 
         end -- if _group
       end -- if _unit
@@ -4359,6 +4375,168 @@ function CTLD:_RefreshF10Menus()
 
   return self
 end
+
+--- (Internal) Function to refresh the menu for load crates. Triggered from land/getcrate/pack and more
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group The calling group.
+-- @param Wrapper.Unit#UNIT Unit The calling unit.
+-- @return #CTLD self
+function CTLD:_RefreshLoadCratesMenu(Group, Unit)
+  if not Group.MyLoadCratesMenu then return end
+  Group.MyLoadCratesMenu:RemoveSubMenus()
+
+  local d = self.CrateDistance or 35
+  local nearby, n = self:_FindCratesNearby(Group, Unit, d, true, true)
+  if n == 0 then
+    MENU_GROUP_COMMAND:New(Group, "No crates found! Rescan?", Group.MyLoadCratesMenu, function() self:_RefreshLoadCratesMenu(Group, Unit) end)
+    return
+  end
+  MENU_GROUP_COMMAND:New(Group, "Rescan?", Group.MyLoadCratesMenu, function() self:_RefreshLoadCratesMenu(Group, Unit) end)
+  MENU_GROUP_COMMAND:New(Group, "Load ALL", Group.MyLoadCratesMenu, self._LoadCratesNearby, self, Group, Unit)
+  local cargoByName = {}
+  for _, crate in pairs(nearby) do
+    local cName = crate:GetName()
+    cargoByName[cName] = cargoByName[cName] or {}
+    table.insert(cargoByName[cName], crate)
+  end
+
+  for cName, cList in pairs(cargoByName) do
+    local needed = cList[1]:GetCratesNeeded() or 1
+    local found  = #cList
+
+    local line
+    if found >= needed then
+      line = string.format("Load %s", cName)
+    else
+      line = string.format("Load %s (%d/%d)", cName, found, needed)
+    end
+    MENU_GROUP_COMMAND:New(Group, line, Group.MyLoadCratesMenu, self._LoadSingleCrateSet, self, Group, Unit, cName)
+  end
+end
+
+---
+-- Loads exactly `CratesNeeded` crates for one cargoName in range.
+-- If "Ammo Truck" needs 2 crates, we pick up 2 if available.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Unit#UNIT Unit
+-- @param #string cargoName The cargo name, e.g. "Ammo Truck"
+function CTLD:_LoadSingleCrateSet(Group, Unit, cargoName)
+  self:T(self.lid .. " _LoadSingleCrateSet cargoName=" .. (cargoName or "nil"))
+
+  -- 1) Must be landed or hovering
+  local grounded = not self:IsUnitInAir(Unit)
+  local hover    = self:CanHoverLoad(Unit)
+  if not grounded and not hover then
+    self:_SendMessage("You must land or hover to load crates!", 10, false, Group)
+    return self
+  end
+
+  -- 2) Check door if required
+  if self.pilotmustopendoors and not UTILS.IsLoadingDoorOpen(Unit:GetName()) then
+    self:_SendMessage("You need to open the door(s) to load cargo!", 10, false, Group)
+    return self
+  end
+
+  -- 3) Find crates with `cargoName` in range
+  local finddist = self.CrateDistance or 35
+  local cratesNearby, number = self:_FindCratesNearby(Group, Unit, finddist, false, false)
+  if number == 0 then
+    self:_SendMessage("No crates found in range!", 10, false, Group)
+    return self
+  end
+
+  local matchingCrates = {}
+  local needed = nil
+  for _, crateObj in pairs(cratesNearby) do
+    if crateObj:GetName() == cargoName then
+      needed = needed or crateObj:GetCratesNeeded()
+      table.insert(matchingCrates, crateObj)
+    end
+  end
+  if not needed then
+    self:_SendMessage(string.format("No \"%s\" crates found in range!", cargoName), 10, false, Group)
+    return self
+  end
+
+  local found = #matchingCrates
+
+  -- 4) Check capacity
+  local unitName = Unit:GetName()
+  local loadedData = self.Loaded_Cargo[unitName] or { Troopsloaded=0, Cratesloaded=0, Cargo={} }
+  local capabilities = self:_GetUnitCapabilities(Unit)
+  local capacity = capabilities.cratelimit or 0
+  if loadedData.Cratesloaded >= capacity then
+    self:_SendMessage("No more capacity to load crates!", 10, false, Group)
+    return self
+  end
+
+  -- decide how many we can actually load
+  local spaceLeft = capacity - loadedData.Cratesloaded
+  local toLoad = math.min(found, needed, spaceLeft)
+  if toLoad < 1 then
+    self:_SendMessage("Cannot load crates: either none found or no capacity left.", 10, false, Group)
+    return self
+  end
+
+  -- 5) Load exactly `toLoad` crates
+  local crateIDsLoaded = {}
+  for i = 1, toLoad do
+    local crate = matchingCrates[i]
+    crate:SetHasMoved(true)
+    crate:SetWasDropped(false)
+    table.insert(loadedData.Cargo, crate)
+    loadedData.Cratesloaded = loadedData.Cratesloaded + 1
+    local stObj = crate:GetPositionable()
+    if stObj and stObj:IsAlive() then
+      stObj:Destroy(false)
+    end
+    table.insert(crateIDsLoaded, crate:GetID())
+  end
+  self.Loaded_Cargo[unitName] = loadedData
+  self:_UpdateUnitCargoMass(Unit)
+
+  -- 6) Remove them from self.Spawned_Cargo
+  local newSpawned = {}
+  for _, cObj in ipairs(self.Spawned_Cargo) do
+    local keep = true
+    for i=1, toLoad do
+      if matchingCrates[i] and cObj:GetID() == matchingCrates[i]:GetID() then
+        keep = false
+        break
+      end
+    end
+    if keep then
+      table.insert(newSpawned, cObj)
+    end
+  end
+  self.Spawned_Cargo = newSpawned
+
+  -- 7) Show final message, including a special note if capacity is now reached
+  local loadedHere = toLoad
+  if loadedHere < needed and loadedData.Cratesloaded >= capacity then
+    self:_SendMessage(string.format("Loaded only %d/%d crate(s) of %s. Cargo limit is now reached!", loadedHere, needed, cargoName), 10, false, Group)
+  else
+    local fullSets = math.floor(loadedHere / needed)
+    local leftover = loadedHere % needed
+    if needed > 1 then
+      if fullSets > 0 and leftover == 0 then
+        self:_SendMessage(string.format("Loaded %d %s.", fullSets, cargoName), 10, false, Group)
+      elseif fullSets > 0 and leftover > 0 then
+        self:_SendMessage(string.format("Loaded %d %s(s), with %d leftover crate(s).", fullSets, cargoName, leftover), 10, false, Group)
+      else
+        self:_SendMessage(string.format("Loaded only %d/%d crate(s) of %s.", loadedHere, needed, cargoName), 15, false, Group)
+      end
+    else
+      self:_SendMessage(string.format("Loaded %d %s(s).", loadedHere, cargoName), 10, false, Group)
+    end
+  end
+
+  self:_RefreshLoadCratesMenu(Group, Unit)
+  self:_RefreshDropCratesMenu(Group, Unit)
+  return self
+end
+
 
 --- (Internal) Function to unload a single crate
 -- @param #CTLD self
@@ -4467,7 +4645,7 @@ function CTLD:_UnloadSingleCrateSet(Group, Unit, setIndex)
   -- Update cargo mass, refresh menu
   self:_UpdateUnitCargoMass(Unit)
   self:_RefreshDropCratesMenu(Group, Unit)
-
+  self:_RefreshLoadCratesMenu(Group, Unit)
   return self
 end
 
@@ -4477,72 +4655,74 @@ end
 -- @param Wrapper.Unit#UNIT Unit The calling unit.
 -- @return #CTLD self
 function CTLD:_RefreshDropCratesMenu(Group, Unit)
-  local theGroup = Group
-  local theUnit = Unit
-  if not theGroup.CTLDTopmenu then return end
-  local topCrates = theGroup.MyTopCratesMenu
+  if not Group.CTLDTopmenu then return end
+  local topCrates = Group.MyTopCratesMenu
   if not topCrates then return end
   if topCrates.DropCratesMenu then
-    topCrates.DropCratesMenu:Remove()
+    topCrates.DropCratesMenu:RemoveSubMenus()
+  else
+    topCrates.DropCratesMenu = MENU_GROUP:New(Group, "Drop Crates", topCrates)
   end
-  local dropCratesMenu = MENU_GROUP:New(theGroup, "Drop Crates", topCrates)
-  topCrates.DropCratesMenu = dropCratesMenu
-  MENU_GROUP_COMMAND:New(theGroup, "Drop ALL crates", dropCratesMenu, self._UnloadCrates, self, theGroup, theUnit)
 
+  local dropCratesMenu = topCrates.DropCratesMenu
   local loadedData = self.Loaded_Cargo[Unit:GetName()]
-  if not loadedData or not loadedData.Cargo then return end
+  if not loadedData or not loadedData.Cargo then
+    MENU_GROUP_COMMAND:New(Group,"No crates to drop!",dropCratesMenu,function() end)
+    return
+  end
 
-  local cargoByName = {}
-  for _, cObj in ipairs(loadedData.Cargo) do
+  local cargoByName={}
+  local dropableCrates=0
+  for _,cObj in ipairs(loadedData.Cargo) do
     if cObj and not cObj:WasDropped() then
-      local cType = cObj:GetType()
-      if cType ~= CTLD_CARGO.Enum.TROOPS and cType ~= CTLD_CARGO.Enum.ENGINEERS and cType ~= CTLD_CARGO.Enum.GCLOADABLE then
-        local name = cObj:GetName() or "Unknown"
-        cargoByName[name] = cargoByName[name] or {}
-        table.insert(cargoByName[name], cObj)
+      local cType=cObj:GetType()
+      if cType~=CTLD_CARGO.Enum.TROOPS and cType~=CTLD_CARGO.Enum.ENGINEERS and cType~=CTLD_CARGO.Enum.GCLOADABLE then
+        local name=cObj:GetName()or"Unknown"
+        cargoByName[name]=cargoByName[name]or{}
+        table.insert(cargoByName[name],cObj)
+        dropableCrates=dropableCrates+1
       end
     end
   end
 
-  self.CrateGroupList = self.CrateGroupList or {}
-  self.CrateGroupList[Unit:GetName()] = {}
+  if dropableCrates==0 then
+    MENU_GROUP_COMMAND:New(Group,"No crates to drop!",dropCratesMenu,function() end)
+    return
+  end
 
-  -- A single global line index for ALL crate names
-  local lineIndex = 1
+  MENU_GROUP_COMMAND:New(Group,"Drop ALL crates",dropCratesMenu,self._UnloadCrates,self,Group,Unit)
+  self.CrateGroupList=self.CrateGroupList or{}
+  self.CrateGroupList[Unit:GetName()]={}
 
-  for cName, list in pairs(cargoByName) do
-    local needed = list[1]:GetCratesNeeded() or 1
-    table.sort(list, function(a,b) return a:GetID() < b:GetID() end)
-
-    local i = 1
-    while i <= #list do
-      local left = (#list - i + 1)
-      if left >= needed then
-        local chunk = {}
-        for n = i, i + needed - 1 do
-          table.insert(chunk, list[n])
+  local lineIndex=1
+  for cName,list in pairs(cargoByName) do
+    local needed=list[1]:GetCratesNeeded() or 1
+    table.sort(list,function(a,b)return a:GetID()<b:GetID()end)
+    local i=1
+    while i<=#list do
+      local left=(#list-i+1)
+      if left>=needed then
+        local chunk={}
+        for n=i,i+needed-1 do
+          table.insert(chunk,list[n])
         end
-        -- Now label uses the global lineIndex and increments after each chunk
-        local label = string.format("%d. %s", lineIndex, cName)
-        table.insert(self.CrateGroupList[Unit:GetName()], chunk)
-        local setIndex = #self.CrateGroupList[Unit:GetName()]
-        MENU_GROUP_COMMAND:New(theGroup, label, dropCratesMenu, self._UnloadSingleCrateSet, self, theGroup, theUnit, setIndex)
-
-        i = i + needed
+        local label=string.format("%d. %s",lineIndex,cName)
+        table.insert(self.CrateGroupList[Unit:GetName()],chunk)
+        local setIndex=#self.CrateGroupList[Unit:GetName()]
+        MENU_GROUP_COMMAND:New(Group,label,dropCratesMenu,self._UnloadSingleCrateSet,self,Group,Unit,setIndex)
+        i=i+needed
       else
-        local chunk = {}
-        for n = i, #list do
-          table.insert(chunk, list[n])
+        local chunk={}
+        for n=i,#list do
+          table.insert(chunk,list[n])
         end
-        local label = string.format("%d. %s %d/%d", lineIndex, cName, left, needed)
-        table.insert(self.CrateGroupList[Unit:GetName()], chunk)
-        local setIndex = #self.CrateGroupList[Unit:GetName()]
-        MENU_GROUP_COMMAND:New(theGroup, label, dropCratesMenu, self._UnloadSingleCrateSet, self, theGroup, theUnit, setIndex)
-
-        i = #list + 1
+        local label=string.format("%d. %s %d/%d",lineIndex,cName,left,needed)
+        table.insert(self.CrateGroupList[Unit:GetName()],chunk)
+        local setIndex=#self.CrateGroupList[Unit:GetName()]
+        MENU_GROUP_COMMAND:New(Group,label,dropCratesMenu,self._UnloadSingleCrateSet,self,Group,Unit,setIndex)
+        i=#list+1
       end
-
-      lineIndex = lineIndex + 1
+      lineIndex=lineIndex+1
     end
   end
 end
@@ -6562,6 +6742,8 @@ end
     self:HandleEvent(EVENTS.DynamicCargoLoaded, self._EventHandler)  
     self:HandleEvent(EVENTS.DynamicCargoUnloaded, self._EventHandler)  
     self:HandleEvent(EVENTS.DynamicCargoRemoved, self._EventHandler)     
+    self:HandleEvent(EVENTS.Land, self._EventHandler)
+    self:HandleEvent(EVENTS.Takeoff, self._EventHandler)
     self:__Status(-5)
     
     -- AutoSave
