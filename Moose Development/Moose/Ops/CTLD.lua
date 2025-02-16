@@ -3333,6 +3333,7 @@ function CTLD:_ListCargo(Group, Unit)
   local maxloadable = self:_GetMaxLoadableMass(Unit)
   local finddist = self.CrateDistance or 35
   --local _,_,loadedgc,loadedno = self:_FindCratesNearby(Group,Unit,finddist,true)
+
   if self.Loaded_Cargo[unitname] then
     local no_troops = loadedcargo.Troopsloaded or 0
     local no_crates = loadedcargo.Cratesloaded or 0
@@ -3346,7 +3347,7 @@ function CTLD:_ListCargo(Group, Unit)
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
       if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS) and (not cargo:WasDropped() or self.allowcratepickupagain) then
-        report:Add(string.format("Troop: %s size %d",cargo:GetName(),cargo:GetCratesNeeded()))
+        report:Add(string.format("Troop: %s size %d", cargo:GetName(), cargo:GetCratesNeeded()))
       end
     end
     if report:GetCount() == 4 then
@@ -3355,17 +3356,24 @@ function CTLD:_ListCargo(Group, Unit)
     report:Add("------------------------------------------------------------")
     report:Add("       -- CRATES --")
     local cratecount = 0
+    local accumCrates = {}
     for _,_cargo in pairs(cargotable or {}) do
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
       if (type ~= CTLD_CARGO.Enum.TROOPS and type ~= CTLD_CARGO.Enum.ENGINEERS and type ~= CTLD_CARGO.Enum.GCLOADABLE) and (not cargo:WasDropped() or self.allowcratepickupagain) then
-        report:Add(string.format("Crate: %s size 1",cargo:GetName()))
-        cratecount = cratecount + 1
+        local cName = cargo:GetName()
+        local needed = cargo:GetCratesNeeded() or 1
+        accumCrates[cName] = accumCrates[cName] or {count=0, needed=needed}
+        accumCrates[cName].count = accumCrates[cName].count + 1
       end
       if type == CTLD_CARGO.Enum.GCLOADABLE and not cargo:WasDropped() then
-        report:Add(string.format("GC loaded Crate: %s size 1",cargo:GetName()))
+        report:Add(string.format("GC loaded Crate: %s size 1", cargo:GetName()))
         cratecount = cratecount + 1
       end
+    end
+    for cName, data in pairs(accumCrates) do
+      cratecount = cratecount + data.count
+      report:Add(string.format("Crate: %s %d/%d", cName, data.count, data.needed))
     end
     if cratecount == 0 then
       report:Add("        N O N E")
@@ -3387,13 +3395,12 @@ function CTLD:_ListCargo(Group, Unit)
     report:Add("------------------------------------------------------------")
     report:Add("Total Mass: ".. loadedmass .. " kg. Loadable: "..maxloadable.." kg.")
     local text = report:Text()
-    self:_SendMessage(text, 30, true, Group) 
+    self:_SendMessage(text, 30, true, Group)
   else
-    self:_SendMessage(string.format("Nothing loaded!\nTroop limit: %d | Crate limit %d | Weight limit %d kgs",trooplimit,cratelimit,maxloadable), 10, false, Group) 
+    self:_SendMessage(string.format("Nothing loaded!\nTroop limit: %d | Crate limit %d | Weight limit %d kgs", trooplimit, cratelimit, maxloadable), 10, false, Group)
   end
   return self
 end
-
 --- (Internal) Function to list loaded cargo.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
@@ -4391,7 +4398,6 @@ function CTLD:_RefreshLoadCratesMenu(Group, Unit)
     MENU_GROUP_COMMAND:New(Group, "No crates found! Rescan?", Group.MyLoadCratesMenu, function() self:_RefreshLoadCratesMenu(Group, Unit) end)
     return
   end
-  MENU_GROUP_COMMAND:New(Group, "Rescan?", Group.MyLoadCratesMenu, function() self:_RefreshLoadCratesMenu(Group, Unit) end)
   MENU_GROUP_COMMAND:New(Group, "Load ALL", Group.MyLoadCratesMenu, self._LoadCratesNearby, self, Group, Unit)
   local cargoByName = {}
   for _, crate in pairs(nearby) do
@@ -4408,6 +4414,7 @@ function CTLD:_RefreshLoadCratesMenu(Group, Unit)
     if found >= needed then
       line = string.format("Load %s", cName)
     else
+    MENU_GROUP_COMMAND:New(Group, "Rescan?", Group.MyLoadCratesMenu, function() self:_RefreshLoadCratesMenu(Group, Unit) end)
       line = string.format("Load %s (%d/%d)", cName, found, needed)
     end
     MENU_GROUP_COMMAND:New(Group, line, Group.MyLoadCratesMenu, self._LoadSingleCrateSet, self, Group, Unit, cName)
