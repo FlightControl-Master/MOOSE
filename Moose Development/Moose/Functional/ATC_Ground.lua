@@ -457,7 +457,7 @@ function ATC_GROUND_UNIVERSAL:New(AirbaseList)
     for _,_name in pairs(AirbaseList) do
       -- DONE exclude FARPS and Ships
       local airbase = _DATABASE:FindAirbase(_name)
-      if airbase and airbase.isAirdrome == true then
+      if airbase and (airbase.isAirdrome == true) then
         self.Airbases[_name]={} 
       end 
     end
