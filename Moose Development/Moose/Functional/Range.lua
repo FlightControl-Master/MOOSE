@@ -1933,7 +1933,7 @@ function RANGE:OnEventHit( EventData )
   local _currentTarget = self.strafeStatus[_unitID] --#RANGE.StrafeStatus
 
   -- Player has rolled in on a strafing target.
-  if _currentTarget and target:IsAlive() then
+  if _currentTarget and target and target:IsAlive() then
 
     local playerPos = _unit:GetCoordinate()
     local targetPos = target:GetCoordinate()
