@@ -443,7 +443,9 @@ do
     for _,_groups in pairs (shoradset) do
       local groupname = _groups:GetName()
       if string.find(groupname, tgtgrp, 1, true) then
-        returnname = true
+        if _groups:IsSAM() then
+          returnname = true
+        end
       end
     end
     return returnname
