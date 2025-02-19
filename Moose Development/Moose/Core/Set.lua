@@ -289,7 +289,14 @@ do -- SET_BASE
   
     -- Debug info.
     --self:T2( { ObjectName = ObjectName, Object = Object } )
-
+    
+    -- Error ahndling
+    if not ObjectName or ObjectName == "" then
+      self:E("SET_BASE:Add - Invalid ObjectName handed")
+      self:E({ObjectName=ObjectName, Object=Object})
+      return self
+    end
+    
     -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
     if self.Set[ObjectName] then
       self:Remove( ObjectName, true )

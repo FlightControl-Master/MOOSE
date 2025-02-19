@@ -607,7 +607,7 @@ function UNIT:GetSpeedMax()
     local Desc = self:GetDesc()
 
     if Desc then
-        local SpeedMax = Desc.speedMax
+        local SpeedMax = Desc.speedMax or 0
         return SpeedMax * 3.6
     end
 
