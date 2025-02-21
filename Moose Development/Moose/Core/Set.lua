@@ -531,6 +531,21 @@ do -- SET_BASE
 
     return self.SomeIteratorLimit or self:Count()
   end
+  
+  --- Get max threat level of all objects in the SET.
+  -- @param #SET_BASE self
+  -- @return #number Max threat level found.
+  function SET_BASE:GetThreatLevelMax()
+    local ThreatMax = 0
+    for _,_unit in pairs(self.Set or {}) do
+      local unit = _unit -- Wrapper.Unit#UNIT
+      local threat = unit.GetThreatLevel and unit:GetThreatLevel() or 0
+      if threat > ThreatMax then
+        ThreatMax = threat
+      end
+    end
+    return ThreatMax
+  end
 
   --- Filters for the defined collection.
   -- @param #SET_BASE self
