@@ -387,6 +387,8 @@ function TARGET:AddObject(Object)
   
     if Object:IsInstanceOf("OPSGROUP") then
       self:_AddObject(Object:GetGroup()) -- We add the MOOSE GROUP object not the OPSGROUP object.
+    --elseif Object:IsInstanceOf("OPSZONE") then
+      --self:_AddObject(Object:GetZone())
     else
       self:_AddObject(Object)
     end
@@ -1296,11 +1298,27 @@ function TARGET:GetTargetThreatLevelMax(Target)
     return 0
 
   elseif Target.Type==TARGET.ObjectType.ZONE then
+    
+    local zone = Target.Object -- Core.Zone#ZONE_RADIUS
+    local foundunits = {}
+    if zone:IsInstanceOf("ZONE_RADIUS") or zone:IsInstanceOf("ZONE_POLYGON") then
+      zone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT,Unit.Category.SHIP})
+      foundunits = zone:GetScannedSetUnit()
+    else
+      foundunits = SET_UNIT:New():FilterZones({zone}):FilterOnce()
+    end
+    local ThreatMax = foundunits:GetThreatLevelMax() or 0
+    return ThreatMax
   
-    return 0
+  elseif Target.Type==TARGET.ObjectType.OPSZONE then
+    
+    local unitset = Target.Object:GetScannedUnitSet() -- Core.Set#SET_UNIT
+    local ThreatMax = unitset:GetThreatLevelMax()
+    return ThreatMax
     
   else
     self:E("ERROR: unknown target object type in GetTargetThreatLevel!")
+    return 0
   end
   
   return self
