@@ -994,10 +994,11 @@ function AUTOLASE:_Prescient()
           -- loop found units
           if hasunits then
             self:T(self.lid.."Checking possibly visible UNITs for Recce "..unit:GetName())
-            for _,_target in pairs(Units) do -- _, Wrapper.Unit#UNIT
-              if _target:GetCoalition() ~= self.coalition then
-                if unit:IsLOS(_target) and (not _target:IsUnitDetected(unit))then
-                  unit:KnowUnit(_target,true,true)
+            for _,_target in pairs(Units) do -- Wrapper.Unit#UNIT object here
+              local target = _target -- Wrapper.Unit#UNIT
+              if target and target:GetCoalition() ~= self.coalition then
+                if unit:IsLOS(target) and (not target:IsUnitDetected(unit))then
+                  unit:KnowUnit(target,true,true)
                 end
               end
             end
@@ -1005,11 +1006,12 @@ function AUTOLASE:_Prescient()
           -- loop found statics
           if hasstatics then
            self:T(self.lid.."Checking possibly visible STATICs for Recce "..unit:GetName())
-            for _,_static in pairs(Statics) do -- _, Wrapper.Unit#UNIT
-              if _static:GetCoalition() ~= self.coalition then
-                local IsLOS = position:IsLOS(_static:GetCoordinate())
+            for _,_static in pairs(Statics) do -- DCS static object here
+              local static = STATIC:Find(_static)
+              if static and static:GetCoalition() ~= self.coalition then
+                local IsLOS = position:IsLOS(static:GetCoordinate())
                 if IsLOS then
-                  unit:KnowUnit(_static,true,true)
+                  unit:KnowUnit(static,true,true)
                 end
               end
             end

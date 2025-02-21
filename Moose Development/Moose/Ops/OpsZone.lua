@@ -723,6 +723,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
+-- @return  #OPSZONE self
 function OPSZONE:onafterStart(From, Event, To)
 
   -- Info.
@@ -739,6 +740,7 @@ function OPSZONE:onafterStart(From, Event, To)
     self:HandleEvent(EVENTS.BaseCaptured)
   end
   
+  return self
 end
 
 --- Stop OPSZONE FSM.
