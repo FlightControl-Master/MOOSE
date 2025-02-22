@@ -148,6 +148,7 @@
 --  **Location** is of highest importance here. Whilst AWACS in DCS has almost the "all seeing eye", EWR don't have that. Choose your location wisely, against a mountain backdrop or inside a valley even the best EWR system
 --  doesn't work well. Prefer higher-up locations with a good view; use F7 in-game to check where you actually placed your EWR and have a look around. Apart from the obvious choice, do also consider other radar units
 --  for this role, most have "SR" (search radar) or "STR" (search and track radar) in their names, use the encyclopedia to see what they actually do.
+--  **HINT** Set at least one EWR on invisible and immortal so MANTIS doesn't stop working.
 --
 -- ## 1.2 SAM sites
 --
@@ -201,7 +202,7 @@
 --        -- parameters are numbers. Defaults are 1,2,2,6,6 respectively
 --        mybluemantis:SetMaxActiveSAMs(Short,Mid,Long,Classic,Point)
 -- 
--- ### 2.1.3 SHORAD/Point defense will automatically be added from SAM sites of type "short-range" if the range is less than 5km or if the type is AAA. 
+-- ### 2.1.3 SHORAD/Point defense will automatically be added from SAM sites of type "point" or if the range is less than 5km or if the type is AAA. 
 --        
 -- ### 2.1.4 Advanced features   
 -- 
@@ -684,7 +685,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.9.24"
+    self.version="0.9.25"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -1145,6 +1146,24 @@ do
       end
     end
     return self
+  end
+  
+  --- [Internal] Check if any EWR or AWACS is still alive
+  -- @param #MANTIS self
+  -- @return #boolean outcome
+  function MANTIS:_CheckAnyEWRAlive()
+    self:T(self.lid .. "_CheckAnyEWRAlive")
+    local alive = false
+    if self.EWR_Group:CountAlive() > 0 then
+      alive = true
+    end
+    if not alive and self.AWACS_Prefix then
+      local awacs = GROUP:FindByName(self.AWACS_Prefix)
+      if awacs and awacs:IsAlive() then
+        alive = true
+      end
+    end
+    return alive
   end
 
   --- [Internal] Function to determine state of the advanced mode
@@ -1757,9 +1776,9 @@ do
       local radius = _data[3]
       local height = _data[4]
       local blind = _data[5] * 1.25 + 1
-      local shortsam = _data[6] == MANTIS.SamType.SHORT and true or false
+      local shortsam = (_data[6] == MANTIS.SamType.SHORT) and true or false
       if not shortsam then
-        shortsam = _data[6] == MANTIS.SamType.POINT and true or false
+        shortsam = (_data[6] == MANTIS.SamType.POINT) and true or false
       end
       local samgroup = GROUP:FindByName(name)
       local IsInZone, Distance = self:_CheckObjectInZone(detset, samcoordinate, radius, height, dlink)
@@ -2001,12 +2020,34 @@ do
     if not self.state2flag then
       self:_Check(self.Detection,self.DLink)
     end
-
-    --[[ check Awacs
-    if self.advAwacs and not self.state2flag then
-      self:_Check(self.AWACS_Detection,false)
+  
+    local EWRAlive = self:_CheckAnyEWRAlive()
+    
+    local function FindSAMSRTR()
+      for i=1,1000 do
+        local randomsam = self.SAM_Group:GetRandom()
+        if randomsam and randomsam:IsAlive() then
+          if randomsam:IsSAM() then return randomsam end
+        end
+      end
     end
-    --]]
+    
+    -- Switch on a random SR/TR if no EWR left over
+    if not EWRAlive then
+      local randomsam = FindSAMSRTR() -- Wrapper.Group#GROUP
+      if randomsam and randomsam:IsAlive() then
+        if self.UseEmOnOff then
+          randomsam:EnableEmission(true)
+        else
+          randomsam:OptionAlarmStateRed()
+        end
+        local name = randomsam:GetName()
+        if self.SamStateTracker[name] ~= "RED" then
+          self:__RedState(1,randomsam)
+          self.SamStateTracker[name] = "RED"
+        end
+      end
+    end
     
     -- relocate HQ and EWR
     if self.autorelocate then
@@ -2015,8 +2056,6 @@ do
       local timepassed = thistime - self.TimeStamp
 
       local halfintv = math.floor(timepassed / relointerval)
-
-      --self:T({timepassed=timepassed, halfintv=halfintv})
 
       if halfintv >= 1 then
         self.TimeStamp = timer.getAbsTime()
