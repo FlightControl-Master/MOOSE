@@ -252,7 +252,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.16"
+EASYGCICAP.version="0.1.17"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -599,7 +599,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   
   local TankerInvisible = self.TankerInvisible
   
-  function CAP_Wing:OnAfterFlightOnMission(From, Event, To, Flightgroup, Mission)
+  function CAP_Wing:onbeforeFlightOnMission(From, Event, To, Flightgroup, Mission)
     local flightgroup = Flightgroup -- Ops.FlightGroup#FLIGHTGROUP
     if DespawnAfterLanding then
       flightgroup:SetDespawnAfterLanding()
@@ -629,7 +629,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:SetFuelLowRTB(true)
     Intel:AddAgent(flightgroup)
     if DespawnAfterHolding then
-      function flightgroup:OnAfterHolding(From,Event,To)
+      function flightgroup:onbeforeHolding(From,Event,To)
         self:Despawn(1,true)
       end 
     end
@@ -1327,7 +1327,7 @@ function EASYGCICAP:_StartIntel()
     self:_AssignIntercept(Cluster)
   end
   
-  function BlueIntel:OnAfterNewCluster(From,Event,To,Cluster)
+  function BlueIntel:onbeforeNewCluster(From,Event,To,Cluster)
     AssignCluster(Cluster)
   end
   

@@ -4310,7 +4310,7 @@ function CONTROLLABLE:OptionDisperseOnAttack( Seconds )
 end
 
 --- Returns if the unit is a submarine.
--- @param #POSITIONABLE self
+-- @param #CONTROLLABLE self
 -- @return #boolean Submarines attributes result.
 function CONTROLLABLE:IsSubmarine()
   self:F2()

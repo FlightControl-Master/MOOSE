@@ -4611,6 +4611,16 @@ do -- SET_CLIENT
     end
     return self
   end
+  
+  --- Make the SET handle CA slots **only** (GROUND units used by any player). Needs active filtering with `FilterStart()`
+  -- @param #SET_CLIENT self
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:HandleCASlots()
+    self:HandleEvent(EVENTS.PlayerEnterUnit,SET_CLIENT._EventPlayerEnterUnit)
+    self:HandleEvent(EVENTS.PlayerLeaveUnit,SET_CLIENT._EventPlayerLeaveUnit)
+    self:FilterFunction(function(client) if client and client:IsAlive() and client:IsGround() then return true else return false end end)
+    return self
+  end  
 
   --- Handles the Database to check on an event (birth) that the Object was added in the Database.
   -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
