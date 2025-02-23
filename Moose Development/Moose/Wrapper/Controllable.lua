@@ -4263,6 +4263,9 @@ function CONTROLLABLE:RelocateGroundRandomInRadius( speed, radius, onroad, short
   self:F2( { self.ControllableName } )
 
   local _coord = self:GetCoordinate()
+  if not _coord then
+  return self
+  end
   local _radius = radius or 500
   local _speed = speed or 20
   local _tocoord = _coord:GetRandomCoordinateInRadius( _radius, 100 )
