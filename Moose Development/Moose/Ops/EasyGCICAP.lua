@@ -252,7 +252,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.16"
+EASYGCICAP.version="0.1.17"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -348,9 +348,23 @@ function EASYGCICAP:SetTankerAndAWACSInvisible(Switch)
   return self
 end
 
---- Set Maximum of alive missions to stop airplanes spamming the map
+--- Count alive missions in our internal stack.
 -- @param #EASYGCICAP self
--- @param #number Maxiumum Maxmimum number of parallel missions allowed. Count is Cap-Missions + Intercept-Missions + Alert5-Missionsm default is 6
+-- @return #number count
+function EASYGCICAP:_CountAliveAuftrags()
+  local alive = 0
+  for _,_auftrag in pairs(self.ListOfAuftrag) do
+    local auftrag = _auftrag -- Ops.Auftrag#AUFTRAG
+    if auftrag and (not (auftrag:IsCancelled() or auftrag:IsDone() or auftrag:IsOver())) then
+       alive = alive + 1
+    end
+  end
+  return alive
+end
+
+--- Set Maximum of alive missions created by this instance to stop airplanes spamming the map
+-- @param #EASYGCICAP self
+-- @param #number Maxiumum Maxmimum number of parallel missions allowed. Count is Intercept-Missions + Alert5-Missions, default is 8
 -- @return #EASYGCICAP self 
 function EASYGCICAP:SetMaxAliveMissions(Maxiumum)
   self:T(self.lid.."SetMaxAliveMissions")
@@ -585,7 +599,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   
   local TankerInvisible = self.TankerInvisible
   
-  function CAP_Wing:OnAfterFlightOnMission(From, Event, To, Flightgroup, Mission)
+  function CAP_Wing:onbeforeFlightOnMission(From, Event, To, Flightgroup, Mission)
     local flightgroup = Flightgroup -- Ops.FlightGroup#FLIGHTGROUP
     if DespawnAfterLanding then
       flightgroup:SetDespawnAfterLanding()
@@ -615,7 +629,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:SetFuelLowRTB(true)
     Intel:AddAgent(flightgroup)
     if DespawnAfterHolding then
-      function flightgroup:OnAfterHolding(From,Event,To)
+      function flightgroup:onbeforeHolding(From,Event,To)
         self:Despawn(1,true)
       end 
     end
@@ -1177,7 +1191,7 @@ function EASYGCICAP:_AssignIntercept(Cluster)
   
   local wings = self.wings
   local ctlpts = self.ManagedCP
-  local MaxAliveMissions = self.MaxAliveMissions * self.capgrouping
+  local MaxAliveMissions = self.MaxAliveMissions --* self.capgrouping
   local nogozoneset = self.NoGoZoneSet
   local ReadyFlightGroups = self.ReadyFlightGroups
   
@@ -1242,9 +1256,10 @@ function EASYGCICAP:_AssignIntercept(Cluster)
     -- Do we have a matching airwing?
     if targetairwing then
       local AssetCount = targetairwing:CountAssetsOnMission(MissionTypes,Cohort)
+      local missioncount = self:_CountAliveAuftrags()
       -- Enough airframes on mission already?
       self:T(self.lid.." Assets on Mission "..AssetCount)
-      if AssetCount <= MaxAliveMissions then
+      if missioncount < MaxAliveMissions then
         local repeats = repeatsonfailure
         local InterceptAuftrag = AUFTRAG:NewINTERCEPT(contact.group)
           :SetMissionRange(150)
@@ -1312,7 +1327,7 @@ function EASYGCICAP:_StartIntel()
     self:_AssignIntercept(Cluster)
   end
   
-  function BlueIntel:OnAfterNewCluster(From,Event,To,Cluster)
+  function BlueIntel:onbeforeNewCluster(From,Event,To,Cluster)
     AssignCluster(Cluster)
   end
   
@@ -1429,12 +1444,14 @@ function EASYGCICAP:onafterStatus(From,Event,To)
     local text =  "GCICAP "..self.alias
     text = text.."\nWings: "..wings.."\nSquads: "..squads.."\nCapPoints: "..caps.."\nAssets on Mission: "..assets.."\nAssets in Stock: "..instock
     text = text.."\nThreats: "..threatcount
-    text = text.."\nMissions: "..capmission+interceptmission
+    text = text.."\nAirWing managed Missions: "..capmission+awacsmission+tankermission+reconmission
     text = text.."\n - CAP: "..capmission
-    text = text.."\n - Intercept: "..interceptmission
     text = text.."\n - AWACS: "..awacsmission
     text = text.."\n - TANKER: "..tankermission
     text = text.."\n - Recon: "..reconmission
+    text = text.."\nSelf managed Missions:"
+    text = text.."\n - Mission Limit: "..self.MaxAliveMissions
+    text = text.."\n - Alert5+Intercept "..self:_CountAliveAuftrags()
     MESSAGE:New(text,15,"GCICAP"):ToAll():ToLogIf(self.debug)
   end
   self:__Status(30)
