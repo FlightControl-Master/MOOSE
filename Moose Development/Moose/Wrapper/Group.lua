@@ -1227,11 +1227,14 @@ function GROUP:GetCoordinate()
 
   -- First try to get the 3D vector of the group. This uses 
   local vec3=self:GetVec3()
+  local coord
   if vec3 then
-    local coord=COORDINATE:NewFromVec3(vec3)
+    coord=COORDINATE:NewFromVec3(vec3)
+    coord.Heading = self:GetHeading() or 0
     return coord
   end
 
+  -- No luck try units and add Heading data
   local Units = self:GetUnits() or {}
 
   for _,_unit in pairs(Units) do
@@ -1242,15 +1245,15 @@ function GROUP:GetCoordinate()
       local FirstUnitCoordinate = FirstUnit:GetCoordinate()
 
       if FirstUnitCoordinate then
-        local Heading = self:GetHeading()
+        local Heading = self:GetHeading() or 0
         FirstUnitCoordinate.Heading = Heading
         return FirstUnitCoordinate
       end
 
     end
   end
-  -- no luck, try the API way
   
+  -- no luck, try the API way  
   local DCSGroup = Group.getByName(self.GroupName)
   if DCSGroup then
     local DCSUnits = DCSGroup:getUnits() or {}
@@ -1261,14 +1264,19 @@ function GROUP:GetCoordinate()
         if point then
           --self:I(point)
           local coord = COORDINATE:NewFromVec3(point)
+          coord.Heading = 0
+          local munit = UNIT:Find(_unit)
+          if munit then
+            coord.Heading = munit:GetHeading() or 0
+          end
           return coord
         end
       end
     end
   end
-  
+    
   BASE:E( { "Cannot GetCoordinate", Group = self, Alive = self:IsAlive() } )
-
+  
 end
 
 
