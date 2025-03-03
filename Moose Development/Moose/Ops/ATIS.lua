@@ -2408,7 +2408,7 @@ function ATIS:onafterBroadcast( From, Event, To )
     local sunrise = self.gettext:GetEntry("SUNRISEAT",self.locale)
     --subtitle = string.format( "Sunrise at %s local time", SUNRISE )
     subtitle = string.format( sunrise, SUNRISE )
-    if not self.useSRS and  == false then
+    if not self.useSRS and NorthPolar == false then
       self:Transmission( self.Sound.SunriseAt, 0.5, subtitle )
       self.radioqueue:Number2Transmission( SUNRISE, nil, 0.2 )
       self:Transmission( self.Sound.TimeLocal, 0.2 )
@@ -2419,7 +2419,7 @@ function ATIS:onafterBroadcast( From, Event, To )
     local sunset = self.gettext:GetEntry("SUNSETAT",self.locale)
     --subtitle = string.format( "Sunset at %s local time", SUNSET )
     subtitle = string.format( sunset, SUNSET )
-    if not self.useSRS and  == false then
+    if not self.useSRS and NorthPolar == false then
       self:Transmission( self.Sound.SunsetAt, 0.5, subtitle )
       self.radioqueue:Number2Transmission( SUNSET, nil, 0.5 )
       self:Transmission( self.Sound.TimeLocal, 0.2 )
