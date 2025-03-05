@@ -926,11 +926,12 @@ AIRBASE.Iraq = {
 -- @field #number HelicopterOnly 40: Special spots for Helicopers.
 -- @field #number Shelter 68: Hardened Air Shelter. Currently only on Caucaus map.
 -- @field #number OpenMed 72: Open/Shelter air airplane only.
+-- @field #number SmallSizeFigher 100: Tight spots for smaller type fixed wing aircraft, like the F-16. Example of these spots: 04, 05, 06 on Muwaffaq_Salti. A Viper sized plane can spawn here, but an A-10 or Strike Eagle can't
 -- @field #number OpenBig 104: Open air spawn points. Generally larger but does not guarantee large aircraft are capable of spawning there.
 -- @field #number OpenMedOrBig 176: Combines OpenMed and OpenBig spots.
 -- @field #number HelicopterUsable 216: Combines HelicopterOnly, OpenMed and OpenBig.
--- @field #number FighterAircraft 244: Combines Shelter. OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
--- @field #number SmallSizeFigher 100: Tight spots for smaller type fixed wing aircraft, like the F-16. Example of these spots: 04, 05, 06 on Muwaffaq_Salti. A Viper sized plane can spawn here, but an A-10 or Strike Eagle can't
+-- @field #number FighterAircraft 244: Combines Shelter, OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
+-- @field #number FighterAircraftSmall 344: Combines Shelter, SmallsizeFighter, OpenMed and OpenBig spots. So effectively all spots usable by small fixed wing aircraft.
 AIRBASE.TerminalType = {
   Runway=16,
   HelicopterOnly=40,
@@ -941,6 +942,7 @@ AIRBASE.TerminalType = {
   OpenMedOrBig=176,
   HelicopterUsable=216,
   FighterAircraft=244,
+  FighterAircraftSmall=344,
 }
 
 --- Status of a parking spot.
@@ -2013,9 +2015,13 @@ function AIRBASE._CheckTerminalType(Term_Type, termtype)
       match=true
      end
   elseif termtype==AIRBASE.TerminalType.FighterAircraft then
-    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig or Term_Type==AIRBASE.TerminalType.Shelter or Term_Type==AIRBASE.TerminalType.SmallSizeFighter then
+    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig or Term_Type==AIRBASE.TerminalType.Shelter then
       match=true
     end
+  elseif termtype==AIRBASE.TerminalType.FighterAircraftSmall then
+    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig or Term_Type==AIRBASE.TerminalType.Shelter or Term_Type==AIRBASE.TerminalType.SmallSizeFighter then
+      match=true
+    end    
   end
 
   return match
