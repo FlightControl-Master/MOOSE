@@ -2046,7 +2046,7 @@ function _ZONE_TRIANGLE:New(p1, p2, p3)
     end
 
     self.SurfaceArea = math.abs((p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y)) * 0.5
-
+    
     return self
 end
 
@@ -2563,7 +2563,7 @@ function ZONE_POLYGON_BASE:ReFill(Color,Alpha)
     self.FillTriangles = {}
   end
   -- refill
-  for _, triangle in pairs(self._Triangles) do
+  for _,triangle in pairs(self._Triangles) do
       local draw_ids = triangle:Fill(coalition,color,alpha,nil)
       self.FillTriangles = draw_ids
       table.combine(self.DrawID, draw_ids)
@@ -3574,7 +3574,7 @@ do -- ZONE_ELASTIC
 
     -- Debug info.
     --self:T(string.format("Updating ZONE_ELASTIC %s", tostring(self.ZoneName)))
-
+    
     -- Copy all points.
     local points=UTILS.DeepCopy(self.points or {})
 
@@ -3592,6 +3592,9 @@ do -- ZONE_ELASTIC
 
     -- Update polygon verticies from points.
     self._.Polygon=self:_ConvexHull(points)
+          
+    self._Triangles = self:_Triangulate()
+    self.SurfaceArea = self:_CalculateSurfaceArea()
 
     if Draw~=false then
       if self.DrawID or Draw==true then
