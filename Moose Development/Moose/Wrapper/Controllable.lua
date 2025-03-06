@@ -5733,6 +5733,14 @@ function CONTROLLABLE:DisableIRMarkerForGroup()
   return self
 end
 
+--- [GROUND] Check if an IR Spot exists.
+-- @param #CONTROLLABLE self
+-- @return #boolean outcome
+function CONTROLLABLE:HasIRMarker()
+  if self.spot then return true end
+  return false
+end
+
 --- [Internal] This method is called by the scheduler after enabling the IR marker.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self 
