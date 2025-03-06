@@ -1777,8 +1777,6 @@ function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation,
   return DCSTask
 end
 
--- EN-ACT_ROUTE TASKS FOR AIRBORNE CONTROLLABLES
-
 --- (AIR) Engaging targets of defined types.
 -- @param #CONTROLLABLE self
 -- @param DCS#Distance Distance Maximal distance from the target to a route leg. If the target is on a greater distance it will be ignored.
@@ -5733,6 +5731,14 @@ function CONTROLLABLE:DisableIRMarkerForGroup()
     end
   end
   return self
+end
+
+--- [GROUND] Check if an IR Spot exists.
+-- @param #CONTROLLABLE self
+-- @return #boolean outcome
+function CONTROLLABLE:HasIRMarker()
+  if self.spot then return true end
+  return false
 end
 
 --- [Internal] This method is called by the scheduler after enabling the IR marker.
