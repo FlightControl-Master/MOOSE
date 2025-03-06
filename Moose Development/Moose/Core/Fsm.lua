@@ -937,7 +937,8 @@ do -- FSM
 end
 
 do -- FSM_CONTROLLABLE
-
+  
+  ---
   -- @type FSM_CONTROLLABLE
   -- @field Wrapper.Controllable#CONTROLLABLE Controllable
   -- @extends Core.Fsm#FSM
