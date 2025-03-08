@@ -514,7 +514,7 @@ function UTILS.PrintTableToLog(table, indent, noprint)
         env.info(string.rep("  ", indent) .. tostring(k) .. " = {")
       end
       text = text ..string.rep("  ", indent) .. tostring(k) .. " = {\n"
-      text = text .. tostring(UTILS.PrintTableToLog(v, indent + 1)).."\n"
+      text = text .. tostring(UTILS.PrintTableToLog(v, indent + 1), noprint).."\n"
       if not noprint then
         env.info(string.rep("  ", indent) .. "},")
       end

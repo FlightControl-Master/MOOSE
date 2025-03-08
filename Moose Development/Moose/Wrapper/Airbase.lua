@@ -994,7 +994,7 @@ function AIRBASE:Register(AirbaseName)
 
   -- Debug info.
   --self:I({airbase=AirbaseName, descriptors=self.descriptors})
-  
+
   -- Category.
   self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
 
@@ -1009,6 +1009,7 @@ if self.category==Airbase.Category.AIRDROME then
   self.isAirdrome=true
 elseif self.category==Airbase.Category.HELIPAD or self.descriptors.typeName=="FARP_SINGLE_01" then
   self.isHelipad=true
+  self.category=Airbase.Category.HELIPAD
 elseif self.category==Airbase.Category.SHIP then
   self.isShip=true
   -- DCS bug: Oil rigs and gas platforms have category=2 (ship). Also they cannot be retrieved by coalition.getStaticObjects()
@@ -1024,20 +1025,33 @@ end
 
   -- Init Runways.
   self:_InitRunways()
-
+  
+  -- Number of runways
+  local Nrunways=#self.runways
+  
   -- Set the active runways based on wind direction.
-  if self.isAirdrome then
+  if Nrunways>0 then
     self:SetActiveRunway()
   end
 
   -- Init parking spots.
   self:_InitParkingSpots()
+  
+  -- Some heliports identify as airdromes in the airbase category. This is buggy in the descriptors category but also in the getCategory() and getCategoryEx() functions.
+  if self.category==Airbase.Category.AIRDROME and (Nrunways==0 or self.NparkingTotal==self.NparkingTerminal[AIRBASE.TerminalType.HelicopterOnly]) then
+    self:E(string.format("WARNING: %s identifies as airdrome (category=0) but has no runways or just helo parking ==> will change to helipad (category=1)", self.AirbaseName))
+    self.category=Airbase.Category.HELIPAD
+    self.isAirdrome=false
+    self.isHelipad=true
+    --self:GetCoordinate():MarkToAll("Helipad not airdrome")
+  end  
 
   -- Get 2D position vector.
   local vec2=self:GetVec2()
 
   -- Init coordinate.
   self:GetCoordinate()
+  
 
   -- Storage.
   self.storage=_DATABASE:AddStorage(AirbaseName)
@@ -1059,6 +1073,46 @@ end
   self:T2(string.format("Registered airbase %s", tostring(self.AirbaseName)))
 
   return self
+end
+
+--- Get the category of this airbase. This is only a debug function because DCS 2.9 incorrectly returns heliports as airdromes.
+-- @param #AIRBASE self
+function AIRBASE:_GetCategory()
+
+  local name=self.AirbaseName
+  
+  local static=StaticObject.getByName(name)
+  local airbase=Airbase.getByName(name)
+  local unit=Unit.getByName(name)
+  
+  local text=string.format("\n=====================================================")
+  text=text..string.format("\nAirbase %s:", name)
+  if static then
+    local oc, uc=static:getCategory()
+    local ex=static:getCategoryEx()
+    text=text..string.format("\nSTATIC: oc=%d, uc=%d, ex=%d", oc, uc, ex)
+    --text=text..UTILS.PrintTableToLog(static:getDesc(), nil, true)
+    text=text..string.format("\n--------------------------------------------------")
+  end
+  if unit then
+    local oc, uc=unit:getCategory()
+    local ex=unit:getCategoryEx()
+    text=text..string.format("\nUNIT: oc=%d, uc=%d, ex=%d", oc, uc, ex)
+    --text=text..UTILS.PrintTableToLog(unit:getDesc(), nil, true)
+    text=text..string.format("\n--------------------------------------------------")
+  end  
+  if airbase then
+    local oc, uc=airbase:getCategory()
+    local ex=airbase:getCategoryEx()
+    text=text..string.format("\nAIRBASE: oc=%d, uc=%d, ex=%d", oc, uc, ex)
+    text=text..string.format("\n--------------------------------------------------")
+    text=text..UTILS.PrintTableToLog(airbase:getDesc(), nil, true)  
+  end
+  
+  text=text..string.format("\n=====================================================")
+  
+
+  env.info(text)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1592,6 +1646,9 @@ function AIRBASE:_InitParkingSpots()
     self.parkingByID[park.TerminalID]=park
     table.insert(self.parking, park)
   end
+  
+  -- Runways are not included in total number of parking spots
+  self.NparkingTotal=self.NparkingTotal-self.NparkingTerminal[AIRBASE.TerminalType.Runway]
 
   return self
 end
@@ -2079,11 +2136,6 @@ function AIRBASE:_InitRunways(IncludeInverse)
   -- Runway table.
   local Runways={}
 
-  if self:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
-    self.runways={}
-    return {}
-  end
-
   --- Function to create a runway data table.
   local function _createRunway(name, course, width, length, center)
 
@@ -2169,7 +2221,7 @@ function AIRBASE:_InitRunways(IncludeInverse)
     -- Debug info.
     self:T2(runways)
 
-    if runways then
+    if runways and #runways>0 then
 
       -- Loop over runways.
       for _,rwy in pairs(runways) do
@@ -2202,6 +2254,12 @@ function AIRBASE:_InitRunways(IncludeInverse)
         end
 
       end
+      
+    else
+    
+      -- No runways
+      self.runways={}
+      return {}      
 
     end
 
