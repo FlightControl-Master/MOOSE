@@ -2054,7 +2054,7 @@ end
 -- @param #_ZONE_TRIANGLE self
 -- @param #table pt The point to check
 -- @param #table points (optional) The points of the triangle, or 3 other points if you're just using the TRIANGLE class without an object of it
--- @return #bool True if the point is contained, false otherwise
+-- @return #boolean True if the point is contained, false otherwise
 function _ZONE_TRIANGLE:ContainsPoint(pt, points)
     points = points or self.Points
 
@@ -3536,7 +3536,37 @@ do -- ZONE_ELASTIC
 
     return self
   end
+  
+  --- Remove a vertex (point) from the polygon.
+  -- @param #ZONE_ELASTIC self
+  -- @param DCS#Vec2 Vec2 Point in 2D (with x and y coordinates).
+  -- @return #ZONE_ELASTIC self
+  function ZONE_ELASTIC:RemoveVertex2D(Vec2)
+    
+    local found = false
+    local findex = 0
+    for _id,_vec2 in pairs(self.points) do
+      if _vec2.x == Vec2.x and _vec2.y == Vec2.y then
+        found = true
+        findex = _id
+        break
+      end
+    end
+    
+    if found == true and findex >  0 then
+      table.remove(self.points,findex)
+    end
 
+    return self
+  end
+    
+  --- Remove a vertex (point) from the polygon.
+  -- @param #ZONE_ELASTIC self
+  -- @param DCS#Vec3 Vec3 Point in 3D (with x, y and z coordinates). Only the x and z coordinates are used.
+  -- @return #ZONE_ELASTIC self
+  function ZONE_ELASTIC:RemoveVertex3D(Vec3)
+    return self:RemoveVertex2D({x=Vec3.x, y=Vec3.z})
+  end
 
   --- Add a vertex (point) to the polygon.
   -- @param #ZONE_ELASTIC self
@@ -3793,7 +3823,7 @@ end
 --- Checks if a point is contained within the oval.
 -- @param #ZONE_OVAL self
 -- @param #table point The point to check
--- @return #bool True if the point is contained, false otherwise
+-- @return #boolean True if the point is contained, false otherwise
 function ZONE_OVAL:IsVec2InZone(vec2)
     local cos, sin = math.cos, math.sin
     local dx = vec2.x - self.CenterVec2.x
