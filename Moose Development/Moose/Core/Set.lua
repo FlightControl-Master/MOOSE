@@ -5403,6 +5403,7 @@ do -- SET_AIRBASE
     Airbases = {},
     Filter = {
       Coalitions = nil,
+      Zones = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -5554,6 +5555,31 @@ do -- SET_AIRBASE
     end
     return self
   end
+  
+  --- Builds a set of airbase objects in zones.
+  -- @param #SET_AIRBASE self
+  -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
+  -- @return #SET_AIRBASE self
+  function SET_AIRBASE:FilterZones( Zones )
+    if not self.Filter.Zones then
+      self.Filter.Zones = {}
+    end
+    local zones = {}
+    if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
+      zones = Zones.Set
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
+    else
+      zones = Zones
+    end
+    for _,Zone in pairs( zones ) do
+      local zonename = Zone:GetName()
+      --self:T((zonename)
+      self.Filter.Zones[zonename] = Zone
+    end
+    return self
+  end  
 
   --- Starts the filtering.
   -- @param #SET_AIRBASE self
@@ -5692,6 +5718,20 @@ do -- SET_AIRBASE
         --self:T(( { "Evaluated Category", MAirbaseCategory } )
         MAirbaseInclude = MAirbaseInclude and MAirbaseCategory
       end
+      
+      if self.Filter.Zones and MAirbaseInclude then
+        local MAirbaseZone = false
+        for ZoneName, Zone in pairs( self.Filter.Zones ) do
+          --self:T(( "Zone:", ZoneName )
+          local coord = MAirbase:GetCoordinate()
+          if coord and Zone:IsCoordinateInZone(coord) then
+            MAirbaseZone = true
+          end
+          --self:T(( { "Evaluated Zone", MSceneryZone } )
+        end
+        MAirbaseInclude = MAirbaseInclude and MAirbaseZone
+      end      
+      
     end
     
     if self.Filter.Functions and MAirbaseInclude then

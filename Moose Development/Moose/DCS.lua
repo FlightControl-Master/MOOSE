@@ -630,9 +630,13 @@ do -- Object
   --- @function [parent=#Object] destroy
   -- @param #Object self
   
-  --- @function [parent=#Object] getCategory
+  --- Returns an enumerator of the category for the specific object. 
+  -- The enumerator returned is dependent on the category of the object and how the function is called. 
+  -- As of DCS 2.9.2 when this function is called on an Object, Unit, Weapon, or Airbase a 2nd value will be returned which details the object sub-category value.
+  -- @function [parent=#Object] getCategory
   -- @param #Object self
-  -- @return #Object.Category
+  -- @return #Object.Category The object category (1=UNIT, 2=WEAPON, 3=STATIC, 4=BASE, 5=SCENERY, 6=Cargo)
+  -- @return #number The subcategory of the passed object, e.g. Unit.Category if a unit object was passed.
   
   --- Returns type name of the Object.
   -- @function [parent=#Object] getTypeName
