@@ -831,8 +831,8 @@ do
 --          my_ctld.PackDistance = 35 -- Pack crates in this radius only
 --          my_ctld.dropcratesanywhere = false -- Option to allow crates to be dropped anywhere.
 --          my_ctld.dropAsCargoCrate = false -- Hercules only: Parachuted herc cargo is not unpacked automatically but placed as crate to be unpacked. Needs a cargo with the same name defined like the cargo that was dropped.
---          my_ctld.maximumHoverHeight = 15 -- Hover max this high to load.
---          my_ctld.minimumHoverHeight = 4 -- Hover min this low to load.
+--          my_ctld.maximumHoverHeight = 15 -- Hover max this high to load in meters.
+--          my_ctld.minimumHoverHeight = 4 -- Hover min this low to load in meters.
 --          my_ctld.forcehoverload = true -- Crates (not: troops) can **only** be loaded while hovering.
 --          my_ctld.hoverautoloading = true -- Crates in CrateDistance in a LOAD zone will be loaded automatically if space allows.
 --          my_ctld.smokedistance = 2000 -- Smoke or flares can be request for zones this far away (in meters).
