@@ -2173,12 +2173,10 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           --self:T2( string.format( "Group %s is spawned on farp/ship/runway %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName() ) )
           nfree = SpawnAirbase:GetFreeParkingSpotsNumber( termtype, true )
           spots = SpawnAirbase:GetFreeParkingSpotsTable( termtype, true )
-          --[[
         elseif Parkingdata~=nil then
-          -- Parking data explicitly set by user as input parameter.
+          -- Parking data explicitly set by user as input parameter. (This was commented out for some unknown reason. But I need it this way.)
           nfree=#Parkingdata
           spots=Parkingdata
-        ]]
         else
           if ishelo then
             if termtype == nil then
