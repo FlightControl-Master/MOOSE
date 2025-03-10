@@ -5693,15 +5693,22 @@ function CONTROLLABLE:DisableIRMarker()
         self:DisableIRMarkerForGroup()
         return
     end
-    
-    if self.spot then 
-      self.spot:destroy()
-      self.spot = nil
+
+      if self.spot then
+          self.spot:destroy()
+          self.spot = nil
+      end
       if self.timer and self.timer:IsRunning() then
           self.timer:Stop()
           self.timer = nil
       end
+
+    if self.ClassName == "GROUP" then
+      self.IRMarkerGroup = nil
+    elseif self.ClassName == "UNIT" then
+      self.IRMarkerUnit = nil
     end
+
     return self
 end
 
@@ -5709,7 +5716,7 @@ end
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self 
 function CONTROLLABLE:EnableIRMarkerForGroup()
-  --sefl:F("EnableIRMarkerForGroup")
+  --self:F("EnableIRMarkerForGroup")
   if self.ClassName == "GROUP" then
     local units = self:GetUnits() or {}
     for _,_unit in pairs(units) do
@@ -5729,6 +5736,7 @@ function CONTROLLABLE:DisableIRMarkerForGroup()
     for _,_unit in pairs(units) do
       _unit:DisableIRMarker()
     end
+    self.IRMarkerGroup = nil
   end
   return self
 end
@@ -5737,8 +5745,16 @@ end
 -- @param #CONTROLLABLE self
 -- @return #boolean outcome
 function CONTROLLABLE:HasIRMarker()
-  if self.spot then return true end
+  if self.IRMarkerGroup == true or self.IRMarkerUnit == true then return true end
   return false
+end
+
+--- [Internal] This method is called by the scheduler after disabling the IR marker.
+function CONTROLLABLE._StopSpot(spot)
+    if spot then 
+        spot:destroy() 
+        spot=nil 
+    end
 end
 
 --- [Internal] This method is called by the scheduler after enabling the IR marker.
@@ -5756,13 +5772,16 @@ function CONTROLLABLE:_MarkerBlink()
     local _, _, unitBBHeight, _ = self:GetObjectSize()
     local unitPos = self:GetPositionVec3()
 
-    self.spot = Spot.createInfraRed(
-        self.DCSUnit,
-        { x = 0, y = (unitBBHeight + 1), z = 0 },
-        { x = unitPos.x, y = (unitPos.y + unitBBHeight), z = unitPos.z }
-    )
-
-    local offTimer = TIMER:New(function() if self.spot then self.spot:destroy() end end)
-    offTimer:Start(0.5)
+    if not self.spot then
+        local spot = Spot.createInfraRed(
+            self.DCSUnit,
+            { x = 0, y = (unitBBHeight + 1), z = 0 },
+            { x = unitPos.x, y = (unitPos.y + unitBBHeight), z = unitPos.z }
+        )
+        self.spot = spot
+        local offTimer = nil
+        local offTimer = TIMER:New(CONTROLLABLE._StopSpot, spot)
+        offTimer:Start(0.5)
+    end
     return self
 end
