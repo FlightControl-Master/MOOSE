@@ -5639,7 +5639,7 @@ end
 --- [GROUND] Create and enable a new IR Marker for the given controllable UNIT or GROUP.
 -- @param #CONTROLLABLE self
 -- @param #boolean EnableImmediately (Optionally) If true start up the IR Marker immediately. Else you need to call `myobject:EnableIRMarker()` later on.
--- @param #number Runtime (Optionally) Run this IR Marker for the given number of seconds, then stop. Use in conjunction with EnableImmediately.
+-- @param #number Runtime (Optionally) Run this IR Marker for the given number of seconds, then stop. Use in conjunction with EnableImmediately. Defaults to 60 seconds.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:NewIRMarker(EnableImmediately, Runtime)
   self:T2("NewIRMarker")
@@ -5751,7 +5751,12 @@ end
 -- @return #boolean outcome
 function CONTROLLABLE:HasIRMarker()
   self:T2("HasIRMarker")
-  if self.timer and self.timer:IsRunning() then return true end
+  if self:IsInstanceOf("GROUP") then
+    local units = self:GetUnits() or {}
+    for _,_unit in pairs(units) do
+      if _unit.timer and _unit.timer:IsRunning() then return true end
+    end
+  elseif self.timer and self.timer:IsRunning() then return true end
   return false
 end
 
