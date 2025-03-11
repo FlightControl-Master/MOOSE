@@ -2388,7 +2388,7 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode,Holdi
       LasingDrone.playertask.template = LasingDrone:_GetTemplate(true)
       LasingDrone.playertask.alt = Alt or 10000
       LasingDrone.playertask.speed = Speed or 120
-      LasingDrone.playertask.maxtravel = UTILS.NMToMeters(MaxTravelDist) or UTILS.NMToMeters(100)
+      LasingDrone.playertask.maxtravel = UTILS.NMToMeters(MaxTravelDist or 50)
       
       -- let it orbit the BullsEye if FG
       if LasingDrone:IsFlightgroup() then
@@ -2396,6 +2396,7 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode,Holdi
         local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.Coalition ))
         if HoldingPoint then BullsCoordinate = HoldingPoint end
         local Orbit = AUFTRAG:NewORBIT_CIRCLE(BullsCoordinate,Alt,Speed)
+        Orbit:SetMissionAltitude(Alt)
         LasingDrone:AddMission(Orbit)
       elseif LasingDrone:IsArmygroup() then
         --settings.IsArmygroup = true
@@ -2410,7 +2411,7 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode,Holdi
     elseif FlightGroup.ClassName and (FlightGroup.ClassName == "SET_OPSGROUP") then --SET_OPSGROUP
       FlightGroup:ForEachGroup(
         function(group)
-          self:EnablePrecisionBombing(group,LaserCode,HoldingPoint,Alt,Speed)
+          self:EnablePrecisionBombing(group,LaserCode,HoldingPoint,Alt,Speed,MaxTravelDist)
         end  
       )
     else
@@ -2958,6 +2959,7 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
  self:T(self.lid.."_CheckPrecisionTasks")
+ self:T({count=self.PrecisionTasks:Count(),enabled=self.precisionbombing})
  if self.PrecisionTasks:Count() > 0 and self.precisionbombing then
    
    -- alive checks
@@ -2986,26 +2988,38 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
     end -- function
     )
   
-  local function SelectDrone()
+  local function SelectDrone(coord)
     local selected = nil
+    local mindist = math.huge
+    local dist = math.huge
     self.LasingDroneSet:ForEachGroup(
       function(grp)
         if grp.playertask and (not grp.playertask.busy) then
-          selected = grp
+          local gc = grp:GetCoordinate()
+          if coord and gc then
+            dist = coord:Get2DDistance(gc)
+          end
+          if dist < mindist then
+            selected = grp
+            mindist = dist
+          end
         end
       end
     )
     return selected
   end
+  
+  local task = self.PrecisionTasks:Pull() -- Ops.PlayerTask#PLAYERTASK
+  local taskpt = task.Target:GetCoordinate() 
     
-  local SelectedDrone = SelectDrone() -- Ops.OpsGroup#OPSGROUP
+  local SelectedDrone = SelectDrone(taskpt) -- Ops.OpsGroup#OPSGROUP
     
   -- do we have a lasing unit assignable?
   if SelectedDrone and SelectedDrone:IsAlive() then
     if SelectedDrone.playertask and (not SelectedDrone.playertask.busy) then
       -- not busy, get a task
       self:T(self.lid.."Sending lasing unit to target")
-      local task = self.PrecisionTasks:Pull() -- Ops.PlayerTask#PLAYERTASK
+      local isassigned = self:_FindLasingDroneForTaskID(task.PlayerTaskNr)
       -- distance check
       local startpoint = SelectedDrone:GetCoordinate()
       local endpoint = task.Target:GetCoordinate()      
@@ -3013,7 +3027,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
       if startpoint and endpoint then
         dist = startpoint:Get2DDistance(endpoint)
       end
-      if dist <= SelectedDrone.playertask.maxtravel then
+      if dist <= SelectedDrone.playertask.maxtravel and (not isassigned) then
         SelectedDrone.playertask.id = task.PlayerTaskNr
         SelectedDrone.playertask.busy = true
         SelectedDrone.playertask.inreach = false
@@ -3052,10 +3066,14 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
       else
         self:T(self.lid.."Lasing unit too far from target")
       end
-      self.PrecisionTasks:Push(task,task.PlayerTaskNr)
+      
     end
-    
-  local function DronesWithTask(SelectedDrone)
+  end
+  
+  self.PrecisionTasks:Push(task,task.PlayerTaskNr)
+  
+  
+    local function DronesWithTask(SelectedDrone)
     -- handle drones with a task
     if SelectedDrone.playertask and SelectedDrone.playertask.busy then
       -- drone is busy, set up laser when over target
@@ -3076,10 +3094,12 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
         self:T(self.lid.."Laser Off")
       else
         -- not done yet
+        self:T(self.lid.."Not done yet")
         local dcoord = SelectedDrone:GetCoordinate()
         local tcoord = task.Target:GetCoordinate()
         tcoord.y = tcoord.y + 2 
         local dist = dcoord:Get2DDistance(tcoord)
+        self:T(self.lid.."Dist "..dist)
         -- close enough?
         if dist < 3000 and not SelectedDrone:IsLasing() then
           self:T(self.lid.."Laser On")
@@ -3120,8 +3140,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
    end -- end function
    
    self.LasingDroneSet:ForEachGroup(DronesWithTask)
-   
-  end --
+  
  end --
  return self
 end
@@ -3721,7 +3740,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
         local islasing = LasingDrone:IsLasing() == true and yes or no
         local prectext = self.gettext:GetEntry("POINTERTARGETREPORT",self.locale)
         prectext = string.format(prectext,inreach,islasing)
-        text = text .. prectext.." ("..self.LaserCode..")"
+        text = text .. prectext.." ("..LasingDrone.playertask.lasercode..")"
       end
     end
     -- Buddylasing
