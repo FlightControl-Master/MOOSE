@@ -1935,6 +1935,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.TaskQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.TasksPerPlayer = FIFO:New() -- Utilities.FiFo#FIFO
   self.PrecisionTasks = FIFO:New() -- Utilities.FiFo#FIFO
+  self.LasingDroneSet = SET_OPSGROUP:New() -- Core.Set#SET_OPSGROUP
   --self.PlayerMenu = {} -- #table
   self.FlashPlayer = {} -- #table
   self.AllowFlash = false
@@ -2348,6 +2349,7 @@ end
 -- @param Core.Point#COORDINATE HoldingPoint (Optional) Point where the drone should initially circle. If not set, defaults to BullsEye of the coalition.
 -- @param #number Alt (Optional) Altitude in feet. Only applies if using a FLIGHTGROUP object! Defaults to 10000.
 -- @param #number Speed (Optional) Speed in knots. Only applies if using a FLIGHTGROUP object! Defaults to 120.
+-- @param #number MaxTravelDist (Optional) Max distance to travel to traget. Only applies if using a FLIGHTGROUP object! Defaults to 100 NM.
 -- @return #PLAYERTASKCONTROLLER self
 -- @usage
 -- -- Set up precision bombing, FlightGroup as lasing unit
@@ -2362,35 +2364,56 @@ end
 --        ArmyGroup:Activate()
 --        taskmanager:EnablePrecisionBombing(ArmyGroup,1688)
 --
-function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode,HoldingPoint, Alt, Speed)
+function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode,HoldingPoint,Alt,Speed,MaxTravelDist)
   self:T(self.lid.."EnablePrecisionBombing")
+  
+  if not self.LasingDroneSet then 
+    self.LasingDroneSet = SET_OPSGROUP:New()
+  end
+  
+  local LasingDrone -- Ops.FlightGroup#FLIGHTGROUP FlightGroup
+  
   if FlightGroup then
     if FlightGroup.ClassName and (FlightGroup.ClassName == "FLIGHTGROUP" or FlightGroup.ClassName == "ARMYGROUP")then
       -- ok we have a FG
-      self.LasingDrone = FlightGroup -- Ops.FlightGroup#FLIGHTGROUP FlightGroup
-      self.LasingDrone.playertask = {}
-      self.LasingDrone.playertask.busy = false
-      self.LasingDrone.playertask.id = 0
+      LasingDrone = FlightGroup -- Ops.FlightGroup#FLIGHTGROUP FlightGroup
+      
       self.precisionbombing = true
-      self.LasingDrone:SetLaser(LaserCode)
-      self.LaserCode = LaserCode or 1688
-      self.LasingDroneTemplate = self.LasingDrone:_GetTemplate(true)
-      self.LasingDroneAlt = Alt or 10000
-      self.LasingDroneSpeed = Speed or 120
+
+      LasingDrone.playertask = {}
+      LasingDrone.playertask.id = 0
+      LasingDrone.playertask.busy = false
+      LasingDrone.playertask.lasercode = LaserCode or 1688     
+      LasingDrone:SetLaser(LasingDrone.playertask.lasercode)
+      LasingDrone.playertask.template = LasingDrone:_GetTemplate(true)
+      LasingDrone.playertask.alt = Alt or 10000
+      LasingDrone.playertask.speed = Speed or 120
+      LasingDrone.playertask.maxtravel = UTILS.NMToMeters(MaxTravelDist or 50)
+      
       -- let it orbit the BullsEye if FG
-      if self.LasingDrone:IsFlightgroup() then
-        self.LasingDroneIsFlightgroup = true
+      if LasingDrone:IsFlightgroup() then
+        --settings.IsFlightgroup = true
         local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.Coalition ))
         if HoldingPoint then BullsCoordinate = HoldingPoint end
-        local Orbit = AUFTRAG:NewORBIT_CIRCLE(BullsCoordinate,self.LasingDroneAlt,self.LasingDroneSpeed)
-        self.LasingDrone:AddMission(Orbit)
-      elseif self.LasingDrone:IsArmygroup() then
-        self.LasingDroneIsArmygroup = true
+        local Orbit = AUFTRAG:NewORBIT_CIRCLE(BullsCoordinate,Alt,Speed)
+        Orbit:SetMissionAltitude(Alt)
+        LasingDrone:AddMission(Orbit)
+      elseif LasingDrone:IsArmygroup() then
+        --settings.IsArmygroup = true
         local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.Coalition ))
         if HoldingPoint then BullsCoordinate = HoldingPoint end
         local Orbit = AUFTRAG:NewONGUARD(BullsCoordinate)
-        self.LasingDrone:AddMission(Orbit)
+        LasingDrone:AddMission(Orbit)
       end
+      
+      self.LasingDroneSet:AddObject(FlightGroup)
+      
+    elseif FlightGroup.ClassName and (FlightGroup.ClassName == "SET_OPSGROUP") then --SET_OPSGROUP
+      FlightGroup:ForEachGroup(
+        function(group)
+          self:EnablePrecisionBombing(group,LaserCode,HoldingPoint,Alt,Speed,MaxTravelDist)
+        end  
+      )
     else
       self:E(self.lid.."No FLIGHTGROUP object passed or FLIGHTGROUP is not alive!")
     end
@@ -2398,6 +2421,20 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode,Holdi
     self.autolase = nil
     self.precisionbombing = false
   end
+  return self
+end
+
+--- [User] Convenience function - add done or ground allowing precision laser-guided bombing on statics and "high-value" ground units (MBT etc)
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FlightGroup (e.g. drone) to be used for lasing (one unit in one group only).
+-- Can optionally be handed as Ops.ArmyGroup#ARMYGROUP - **Note** might not find an LOS spot or get lost on the way. Cannot island-hop.
+-- @param #number LaserCode The lasercode to be used. Defaults to 1688.
+-- @param Core.Point#COORDINATE HoldingPoint (Optional) Point where the drone should initially circle. If not set, defaults to BullsEye of the coalition.
+-- @param #number Alt (Optional) Altitude in feet. Only applies if using a FLIGHTGROUP object! Defaults to 10000.
+-- @param #number Speed (Optional) Speed in knots. Only applies if using a FLIGHTGROUP object! Defaults to 120.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddPrecisionBombingOpsGroup(FlightGroup,LaserCode,HoldingPoint, Alt, Speed)
+  self:EnablePrecisionBombing(FlightGroup,LaserCode,HoldingPoint,Alt,Speed)
   return self
 end
 
@@ -2922,99 +2959,155 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
  self:T(self.lid.."_CheckPrecisionTasks")
+ self:T({count=self.PrecisionTasks:Count(),enabled=self.precisionbombing})
  if self.PrecisionTasks:Count() > 0 and self.precisionbombing then
-   if not self.LasingDrone or self.LasingDrone:IsDead() then
-    -- we need a new drone
-    self:E(self.lid.."Lasing drone is dead ... creating a new one!")
-    if self.LasingDrone then
-      self.LasingDrone:_Respawn(1,nil,true)
-    else
-      -- DONE: Handle ArmyGroup
-      if self.LasingDroneIsFlightgroup then
-        local FG = FLIGHTGROUP:New(self.LasingDroneTemplate)
-        FG:Activate()
-        self:EnablePrecisionBombing(FG,self.LaserCode or 1688)
+   
+   -- alive checks
+   self.LasingDroneSet:ForEachGroup(  
+   function(LasingDrone)
+     if not LasingDrone or LasingDrone:IsDead() then
+      -- we need a new drone
+      self:E(self.lid.."Lasing drone is dead ... creating a new one!")
+      if LasingDrone then
+        LasingDrone:_Respawn(1,nil,true)
       else
-        local FG = ARMYGROUP:New(self.LasingDroneTemplate)
-        FG:Activate()
-        self:EnablePrecisionBombing(FG,self.LaserCode or 1688)
-      end
-    end
-    return self
-   end
-  -- do we have a lasing unit assigned?
-  if self.LasingDrone and self.LasingDrone:IsAlive() then
-    if self.LasingDrone.playertask and (not self.LasingDrone.playertask.busy) then
-      -- not busy, get a task
-      self:T(self.lid.."Sending lasing unit to target")
-      local task = self.PrecisionTasks:Pull() -- Ops.PlayerTask#PLAYERTASK
-      self.LasingDrone.playertask.id = task.PlayerTaskNr
-      self.LasingDrone.playertask.busy = true
-      self.LasingDrone.playertask.inreach = false
-      self.LasingDrone.playertask.reachmessage = false
-      -- move the drone to target
-      if self.LasingDroneIsFlightgroup then
-        self.LasingDrone:CancelAllMissions()
-        local auftrag = AUFTRAG:NewORBIT_CIRCLE(task.Target:GetCoordinate(),self.LasingDroneAlt,self.LasingDroneSpeed)
-        self.LasingDrone:AddMission(auftrag)   
-      elseif self.LasingDroneIsArmygroup then
-        local tgtcoord = task.Target:GetCoordinate()
-        local tgtzone = ZONE_RADIUS:New("ArmyGroup-"..math.random(1,10000),tgtcoord:GetVec2(),3000)
-        local finalpos=nil -- Core.Point#COORDINATE
-        for i=1,50 do
-          finalpos = tgtzone:GetRandomCoordinate(2500,0,{land.SurfaceType.LAND,land.SurfaceType.ROAD,land.SurfaceType.SHALLOW_WATER}) 
-          if finalpos then
-            if finalpos:IsLOS(tgtcoord,0) then
-              break
-            end
+        --[[
+        -- DONE: Handle ArmyGroup
+        if LasingDrone:IsFlightgroup() then
+          local FG = FLIGHTGROUP:New(LasingDroneTemplate)
+          FG:Activate()
+          self:EnablePrecisionBombing(FG,self.LaserCode or 1688)
+        else
+          local FG = ARMYGROUP:New(LasingDroneTemplate)
+          FG:Activate()
+          self:EnablePrecisionBombing(FG,self.LaserCode or 1688)
+        end -- if LasingDroneIsFlightgroup
+        --]]
+      end -- if LasingDrone
+     end -- if not LasingDrone
+    end -- function
+    )
+  
+  local function SelectDrone(coord)
+    local selected = nil
+    local mindist = math.huge
+    local dist = math.huge
+    self.LasingDroneSet:ForEachGroup(
+      function(grp)
+        if grp.playertask and (not grp.playertask.busy) then
+          local gc = grp:GetCoordinate()
+          if coord and gc then
+            dist = coord:Get2DDistance(gc)
+          end
+          if dist < mindist then
+            selected = grp
+            mindist = dist
           end
         end
-        if finalpos then
-          self.LasingDrone:CancelAllMissions()
-          -- yeah we got one
-          local auftrag = AUFTRAG:NewARMOREDGUARD(finalpos,"Off road")
-          self.LasingDrone:AddMission(auftrag)
-        else
-          -- could not find LOS position!
-          self:E("***Could not find LOS position to post ArmyGroup for lasing!")
-          self.LasingDrone.playertask.id = 0
-          self.LasingDrone.playertask.busy = false
-          self.LasingDrone.playertask.inreach = false
-          self.LasingDrone.playertask.reachmessage = false
-        end
       end
-      self.PrecisionTasks:Push(task,task.PlayerTaskNr)
-    elseif self.LasingDrone.playertask and self.LasingDrone.playertask.busy then
+    )
+    return selected
+  end
+  
+  local task = self.PrecisionTasks:Pull() -- Ops.PlayerTask#PLAYERTASK
+  local taskpt = task.Target:GetCoordinate() 
+    
+  local SelectedDrone = SelectDrone(taskpt) -- Ops.OpsGroup#OPSGROUP
+    
+  -- do we have a lasing unit assignable?
+  if SelectedDrone and SelectedDrone:IsAlive() then
+    if SelectedDrone.playertask and (not SelectedDrone.playertask.busy) then
+      -- not busy, get a task
+      self:T(self.lid.."Sending lasing unit to target")
+      local isassigned = self:_FindLasingDroneForTaskID(task.PlayerTaskNr)
+      -- distance check
+      local startpoint = SelectedDrone:GetCoordinate()
+      local endpoint = task.Target:GetCoordinate()      
+      local dist = math.huge
+      if startpoint and endpoint then
+        dist = startpoint:Get2DDistance(endpoint)
+      end
+      if dist <= SelectedDrone.playertask.maxtravel and (not isassigned) then
+        SelectedDrone.playertask.id = task.PlayerTaskNr
+        SelectedDrone.playertask.busy = true
+        SelectedDrone.playertask.inreach = false
+        SelectedDrone.playertask.reachmessage = false
+        -- move the drone to target
+        if SelectedDrone:IsFlightgroup() then
+          SelectedDrone:CancelAllMissions()
+          local auftrag = AUFTRAG:NewORBIT_CIRCLE(task.Target:GetCoordinate(),SelectedDrone.playertask.alt,SelectedDrone.playertask.speed)
+          SelectedDrone:AddMission(auftrag)   
+        elseif SelectedDrone:IsArmygroup() then
+          local tgtcoord = task.Target:GetCoordinate()
+          local tgtzone = ZONE_RADIUS:New("ArmyGroup-"..math.random(1,10000),tgtcoord:GetVec2(),3000)
+          local finalpos=nil -- Core.Point#COORDINATE
+          for i=1,50 do
+            finalpos = tgtzone:GetRandomCoordinate(2500,0,{land.SurfaceType.LAND,land.SurfaceType.ROAD,land.SurfaceType.SHALLOW_WATER}) 
+            if finalpos then
+              if finalpos:IsLOS(tgtcoord,0) then
+                break
+              end
+            end
+          end
+          if finalpos then
+            SelectedDrone:CancelAllMissions()
+            -- yeah we got one
+            local auftrag = AUFTRAG:NewARMOREDGUARD(finalpos,"Off road")
+            SelectedDrone:AddMission(auftrag)
+          else
+            -- could not find LOS position!
+            self:E("***Could not find LOS position to post ArmyGroup for lasing!")
+            SelectedDrone.playertask.id = 0
+            SelectedDrone.playertask.busy = false
+            SelectedDrone.playertask.inreach = false
+            SelectedDrone.playertask.reachmessage = false
+          end
+        end
+      else
+        self:T(self.lid.."Lasing unit too far from target")
+      end
+      
+    end
+  end
+  
+  self.PrecisionTasks:Push(task,task.PlayerTaskNr)
+  
+  
+    local function DronesWithTask(SelectedDrone)
+    -- handle drones with a task
+    if SelectedDrone.playertask and SelectedDrone.playertask.busy then
       -- drone is busy, set up laser when over target
-      local task = self.PrecisionTasks:ReadByID(self.LasingDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
+      local task = self.PrecisionTasks:ReadByID(SelectedDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
       self:T("Looking at Task: "..task.PlayerTaskNr.." Type: "..task.Type.." State: "..task:GetState())
       if (not task) or task:GetState() == "Done" or task:GetState() == "Stopped" then
         -- we're done here
-        local task = self.PrecisionTasks:PullByID(self.LasingDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
+        local task = self.PrecisionTasks:PullByID(SelectedDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
         self:_CheckTaskQueue()
         task = nil
-        if self.LasingDrone:IsLasing() then
-          self.LasingDrone:__LaserOff(-1)
+        if SelectedDrone:IsLasing() then
+          SelectedDrone:__LaserOff(-1)
         end
-        self.LasingDrone.playertask.busy = false
-        self.LasingDrone.playertask.inreach = false
-        self.LasingDrone.playertask.id = 0
-        self.LasingDrone.playertask.reachmessage = false
+        SelectedDrone.playertask.busy = false
+        SelectedDrone.playertask.inreach = false
+        SelectedDrone.playertask.id = 0
+        SelectedDrone.playertask.reachmessage = false
         self:T(self.lid.."Laser Off")
       else
         -- not done yet
-        local dcoord = self.LasingDrone:GetCoordinate()
+        self:T(self.lid.."Not done yet")
+        local dcoord = SelectedDrone:GetCoordinate()
         local tcoord = task.Target:GetCoordinate()
         tcoord.y = tcoord.y + 2 
         local dist = dcoord:Get2DDistance(tcoord)
+        self:T(self.lid.."Dist "..dist)
         -- close enough?
-        if dist < 3000 and not self.LasingDrone:IsLasing() then
+        if dist < 3000 and not SelectedDrone:IsLasing() then
           self:T(self.lid.."Laser On")
-          self.LasingDrone:__LaserOn(-1,tcoord)
-          self.LasingDrone.playertask.inreach = true
-          if not self.LasingDrone.playertask.reachmessage then
+          SelectedDrone:__LaserOn(-1,tcoord)
+          SelectedDrone.playertask.inreach = true
+          if not SelectedDrone.playertask.reachmessage then
             --local textmark = self.gettext:GetEntry("FLARETASK",self.locale)
-            self.LasingDrone.playertask.reachmessage = true
+            SelectedDrone.playertask.reachmessage = true
             local clients = task:GetClients()
             local text = ""
             for _,playername in pairs(clients) do
@@ -3022,7 +3115,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
               local ttsplayername = playername
               if self.customcallsigns[playername] then
                 ttsplayername = self.customcallsigns[playername]
-              end
+              end --
               --text = string.format("%s, %s, pointer over target for task %03d, lasing!", playername, self.MenuName or self.Name, task.PlayerTaskNr)
               text = string.format(pointertext, ttsplayername, self.MenuName or self.Name, task.PlayerTaskNr)
               if not self.NoScreenOutput then
@@ -3034,18 +3127,21 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
                 ) 
                 if client then
                     local m = MESSAGE:New(text,15,"Tasking"):ToClient(client)
-                end
-              end
-            end
+                end --
+              end --
+            end --
             if self.UseSRS then
               self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
-            end
-          end
-        end
-      end
-    end
-  end
- end
+            end --
+          end --
+        end --
+      end -- end else
+    end -- end handle drones with a task
+   end -- end function
+   
+   self.LasingDroneSet:ForEachGroup(DronesWithTask)
+  
+ end --
  return self
 end
 
@@ -3558,6 +3654,22 @@ function PLAYERTASKCONTROLLER:_FlashInfo()
   return self
 end
 
+--- [Internal] Find matching drone for precision bombing task, if any is assigned.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #number ID Task ID to look for
+-- @return Ops.OpsGroup#OPSGROUP Drone
+function PLAYERTASKCONTROLLER:_FindLasingDroneForTaskID(ID)
+  local drone = nil
+  self.LasingDroneSet:ForEachGroup(
+    function(grp)
+      if grp and grp:IsAlive() and grp.playertask and grp.playertask.id and grp.playertask.id == ID then
+        drone = grp
+      end
+    end
+  )
+  return drone
+end
+
 --- [Internal] Show active task info
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Ops.PlayerTask#PLAYERTASK Task
@@ -3585,6 +3697,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     local Elevation = Coordinate:GetLandHeight() or 0 -- meters
     local CoordText = ""
     local CoordTextLLDM = nil
+    local LasingDrone = self:_FindLasingDroneForTaskID(task.PlayerTaskNr)
     if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
       CoordText = Coordinate:ToStringA2G(Client,nil,self.ShowMagnetic)
     else
@@ -3620,14 +3733,14 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     text = text .. string.format(elev,tostring(math.floor(Elevation)),elevationmeasure)
     -- Prec bombing
     if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.precisionbombing then
-      if self.LasingDrone and self.LasingDrone.playertask then
+      if LasingDrone and LasingDrone.playertask then
         local yes = self.gettext:GetEntry("YES",self.locale)
         local no = self.gettext:GetEntry("NO",self.locale)
-        local inreach = self.LasingDrone.playertask.inreach == true and yes or no
-        local islasing = self.LasingDrone:IsLasing() == true and yes or no
+        local inreach = LasingDrone.playertask.inreach == true and yes or no
+        local islasing = LasingDrone:IsLasing() == true and yes or no
         local prectext = self.gettext:GetEntry("POINTERTARGETREPORT",self.locale)
         prectext = string.format(prectext,inreach,islasing)
-        text = text .. prectext.." ("..self.LaserCode..")"
+        text = text .. prectext.." ("..LasingDrone.playertask.lasercode..")"
       end
     end
     -- Buddylasing
@@ -3732,7 +3845,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
       local ttstext = string.format(ThreatLocaleTextTTS,ttsplayername,self.MenuName or self.Name,ttstaskname,ThreatLevelText, targets, CoordText)
       -- POINTERTARGETLASINGTTS = ". Pointer over target and lasing."
       if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.precisionbombing then
-        if self.LasingDrone.playertask.inreach and self.LasingDrone:IsLasing() then
+        if LasingDrone and  LasingDrone.playertask.inreach and LasingDrone:IsLasing() then
           local lasingtext = self.gettext:GetEntry("POINTERTARGETLASINGTTS",self.locale)
           ttstext = ttstext .. lasingtext
         end
