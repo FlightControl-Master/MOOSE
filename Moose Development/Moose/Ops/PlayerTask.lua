@@ -2415,7 +2415,7 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode,Holdi
         end  
       )
     else
-      self:E(self.lid.."No FLIGHTGROUP object passed or FLIGHTGROUP is not alive!")
+      self:E(self.lid.."No OPSGROUP/SET_OPSGROUP object passed or object is not alive!")
     end
   else
     self.autolase = nil
