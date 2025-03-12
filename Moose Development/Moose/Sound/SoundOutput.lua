@@ -5,7 +5,7 @@
 -- ## Features:
 -- 
 --   * Create a SOUNDFILE object (mp3 or ogg) to be played via DCS or SRS transmissions
---   * Create a SOUNDTEXT object for text-to-speech output vis SRS Simple-Text-To-Speech (STTS)
+--   * Create a SOUNDTEXT object for text-to-speech output vis SRS Simple-Text-To-Speech (MSRS)
 -- 
 -- ===
 -- 
