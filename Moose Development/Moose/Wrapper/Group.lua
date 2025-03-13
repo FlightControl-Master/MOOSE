@@ -2816,7 +2816,7 @@ do -- Event Handling
 
     self:EventDispatcher():Reset( self )
 
-    for UnitID, UnitData in pairs( self:GetUnits() ) do
+    for UnitID, UnitData in pairs( self:GetUnits() or {}) do
       UnitData:ResetEvents()
     end
 
