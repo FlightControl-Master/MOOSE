@@ -1638,7 +1638,7 @@ function AIRBASE:_InitParkingSpots()
     self.NparkingTotal=self.NparkingTotal+1
 
     for _,terminalType in pairs(AIRBASE.TerminalType) do
-      if self._CheckTerminalType(terminalType, park.TerminalType) then
+      if self._CheckTerminalType(park.TerminalType, terminalType) then
         self.NparkingTerminal[terminalType]=self.NparkingTerminal[terminalType]+1
       end
     end
