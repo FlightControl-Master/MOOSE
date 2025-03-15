@@ -2033,12 +2033,10 @@ end
 --
 --   Spawn_Plane:SpawnAtAirbase( AIRBASE:FindByName( AIRBASE.Caucasus.Krymsk ), SPAWN.Takeoff.Cold, nil, AIRBASE.TerminalType.OpenBig )
 --
-function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalType, EmergencyAirSpawn, Parkingdata ) -- R2.2, R2.4
-  --self:F( { self.SpawnTemplatePrefix, SpawnAirbase, Takeoff, TakeoffAltitude, TerminalType } )
+function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalType, EmergencyAirSpawn, Parkingdata )
 
   -- Get position of airbase.
   local PointVec3 = SpawnAirbase:GetCoordinate()
-  --self:T2( PointVec3 )
 
   -- Set take off type. Default is hot.
   Takeoff = Takeoff or SPAWN.Takeoff.Hot
@@ -2048,39 +2046,24 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
     EmergencyAirSpawn = true
   end
 
-  --self:F( { SpawnIndex = self.SpawnIndex } )
-
   if self:_GetSpawnIndex( self.SpawnIndex + 1 ) then
 
     -- Get group template.
     local SpawnTemplate = self.SpawnGroups[self.SpawnIndex].SpawnTemplate
 
-    --self:F( { SpawnTemplate = SpawnTemplate } )
-
     if SpawnTemplate then
 
-      -- Check if the aircraft with the specified SpawnIndex is already spawned.
-      -- If yes, ensure that the aircraft is spawned at the same aircraft spot.
-
-      local GroupAlive = self:GetGroupFromIndex( self.SpawnIndex )
-
-      --self:F( { GroupAlive = GroupAlive } )
-
-      -- Debug output
-      --self:T2( { "Current point of ", self.SpawnTemplatePrefix, SpawnAirbase } )
-
       -- Template group, unit and its attributes.
-      local TemplateGroup = GROUP:FindByName( self.SpawnTemplatePrefix )
-      local TemplateUnit = TemplateGroup:GetUnit( 1 )
+      local group = GROUP:FindByName( self.SpawnTemplatePrefix )
+      local unit  = group:GetUnit( 1 )
 
       -- General category of spawned group.
-      local group = TemplateGroup
       local istransport = group:HasAttribute( "Transports" ) and group:HasAttribute( "Planes" )
       local isawacs = group:HasAttribute( "AWACS" )
       local isfighter = group:HasAttribute( "Fighters" ) or group:HasAttribute( "Interceptors" ) or group:HasAttribute( "Multirole fighters" ) or (group:HasAttribute( "Bombers" ) and not group:HasAttribute( "Strategic bombers" ))
       local isbomber = group:HasAttribute( "Strategic bombers" )
       local istanker = group:HasAttribute( "Tankers" )
-      local ishelo = TemplateUnit:HasAttribute( "Helicopters" )
+      local ishelo = unit:HasAttribute( "Helicopters" )
 
       -- Number of units in the group. With grouping this can actually differ from the template group size!
       local nunits = #SpawnTemplate.units
@@ -2098,40 +2081,30 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       local AirbaseCategory = SpawnAirbase:GetAirbaseCategory()
       --self:F( { AirbaseCategory = AirbaseCategory } )
 
-      -- Set airdromeId.
+      -- Set airdrome ID. For helipads and ships we need to add the helipad ID and linked unit.
+      SpawnPoint.airdromeId = AirbaseID
       if AirbaseCategory == Airbase.Category.SHIP then
         SpawnPoint.linkUnit = AirbaseID
         SpawnPoint.helipadId = AirbaseID
       elseif AirbaseCategory == Airbase.Category.HELIPAD then
         SpawnPoint.linkUnit = AirbaseID
         SpawnPoint.helipadId = AirbaseID
-      elseif AirbaseCategory == Airbase.Category.AIRDROME then
-        SpawnPoint.airdromeId = AirbaseID
       end
 
       -- Set waypoint type/action.
-      SpawnPoint.alt = 0
-      SpawnPoint.type = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
+      SpawnPoint.alt    = 0
+      SpawnPoint.type   = GROUPTEMPLATE.Takeoff[Takeoff][1] -- type
       SpawnPoint.action = GROUPTEMPLATE.Takeoff[Takeoff][2] -- action
 
       -- Check if we spawn on ground. 
       local spawnonground = not (Takeoff == SPAWN.Takeoff.Air)
-      --self:T2( { spawnonground = spawnonground, TOtype = Takeoff, TOair = Takeoff == SPAWN.Takeoff.Air } )
 
       -- Check where we actually spawn if we spawn on ground.
-      local spawnonship = false
-      local spawnonfarp = false
-      local spawnonrunway = false
-      local spawnonairport = false
-      if spawnonground then
-        if AirbaseCategory == Airbase.Category.SHIP then
-          spawnonship = true
-        elseif AirbaseCategory == Airbase.Category.HELIPAD then
-          spawnonfarp = true
-        elseif AirbaseCategory == Airbase.Category.AIRDROME then
-          spawnonairport = true
-        end
-        spawnonrunway = Takeoff == SPAWN.Takeoff.Runway
+      local autoparking=false
+      if SpawnAirbase.isAirdrome then
+        autoparking=false
+      else
+        autoparking=true
       end
 
       -- Array with parking spots coordinates.
@@ -2147,8 +2120,8 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
 
         -- Set terminal type.
         local termtype = TerminalType
-        if spawnonrunway then
-          if spawnonship then
+        if Takeoff==SPAWN.Takeoff.Runway then
+          if SpawnAirbase.isShip then
             -- Looks like there are no runway spawn spots on the stennis!
             if ishelo then
               termtype = AIRBASE.TerminalType.HelicopterUsable
@@ -2168,9 +2141,8 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
         local verysafe = false
 
         -- Number of free parking spots at the airbase.
-        if spawnonship or spawnonfarp or spawnonrunway then
+        if autoparking then
           -- These places work procedural and have some kind of build in queue ==> Less effort.
-          --self:T2( string.format( "Group %s is spawned on farp/ship/runway %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName() ) )
           nfree = SpawnAirbase:GetFreeParkingSpotsNumber( termtype, true )
           spots = SpawnAirbase:GetFreeParkingSpotsTable( termtype, true )
         elseif Parkingdata~=nil then
@@ -2182,18 +2154,18 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
             if termtype == nil then
               -- Helo is spawned. Try exclusive helo spots first.
               --self:T2( string.format( "Helo group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.HelicopterOnly ) )
-              spots = SpawnAirbase:FindFreeParkingSpotForAircraft( TemplateGroup, AIRBASE.TerminalType.HelicopterOnly, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
+              spots = SpawnAirbase:FindFreeParkingSpotForAircraft( group, AIRBASE.TerminalType.HelicopterOnly, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
               nfree = #spots
               if nfree < nunits then
                 -- Not enough helo ports. Let's try also other terminal types.
                 --self:T2( string.format( "Helo group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.HelicopterUsable ) )
-                spots = SpawnAirbase:FindFreeParkingSpotForAircraft( TemplateGroup, AIRBASE.TerminalType.HelicopterUsable, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
+                spots = SpawnAirbase:FindFreeParkingSpotForAircraft( group, AIRBASE.TerminalType.HelicopterUsable, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
                 nfree = #spots
               end
             else
               -- No terminal type specified. We try all spots except shelters.
               --self:T2( string.format( "Helo group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), termtype ) )
-              spots = SpawnAirbase:FindFreeParkingSpotForAircraft( TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
+              spots = SpawnAirbase:FindFreeParkingSpotForAircraft( group, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
               nfree = #spots
             end
           else
@@ -2202,44 +2174,33 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
               if isbomber or istransport or istanker or isawacs then
                 -- First we fill the potentially bigger spots.
                 --self:T2( string.format( "Transport/bomber group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.OpenBig ) )
-                spots = SpawnAirbase:FindFreeParkingSpotForAircraft( TemplateGroup, AIRBASE.TerminalType.OpenBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
+                spots = SpawnAirbase:FindFreeParkingSpotForAircraft( group, AIRBASE.TerminalType.OpenBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
                 nfree = #spots
                 if nfree < nunits then
                   -- Now we try the smaller ones.
                   --self:T2( string.format( "Transport/bomber group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.OpenMedOrBig ) )
-                  spots = SpawnAirbase:FindFreeParkingSpotForAircraft( TemplateGroup, AIRBASE.TerminalType.OpenMedOrBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
+                  spots = SpawnAirbase:FindFreeParkingSpotForAircraft( group, AIRBASE.TerminalType.OpenMedOrBig, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
                   nfree = #spots
                 end
               else
                 --self:T2( string.format( "Fighter group %s is at %s using terminal type %d.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), AIRBASE.TerminalType.FighterAircraft ) )
-                spots = SpawnAirbase:FindFreeParkingSpotForAircraft( TemplateGroup, AIRBASE.TerminalType.FighterAircraft, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
+                spots = SpawnAirbase:FindFreeParkingSpotForAircraft( group, AIRBASE.TerminalType.FighterAircraft, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
                 nfree = #spots
               end
             else
               -- Terminal type explicitly given.
               --self:T2( string.format( "Plane group %s is at %s using terminal type %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), tostring( termtype ) ) )
-              spots = SpawnAirbase:FindFreeParkingSpotForAircraft( TemplateGroup, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
+              spots = SpawnAirbase:FindFreeParkingSpotForAircraft( group, termtype, scanradius, scanunits, scanstatics, scanscenery, verysafe, nunits, Parkingdata )
               nfree = #spots
             end
           end
         end
 
-        -- Debug: Get parking data.
-        --[[
-        local parkingdata=SpawnAirbase:GetParkingSpotsTable(termtype)
-        --self:T2(string.format("Parking at %s, terminal type %s:", SpawnAirbase:GetName(), tostring(termtype)))
-        for _,_spot in pairs(parkingdata) do
-          --self:T2(string.format("%s, Termin Index = %3d, Term Type = %03d, Free = %5s, TOAC = %5s, Term ID0 = %3d, Dist2Rwy = %4d",
-          SpawnAirbase:GetName(), _spot.TerminalID, _spot.TerminalType,tostring(_spot.Free),tostring(_spot.TOAC),_spot.TerminalID0,_spot.DistToRwy))
-        end
-        --self:T2(string.format("%s at %s: free parking spots = %d - number of units = %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), nfree, nunits))
-        ]]
-
         -- Set this to true if not enough spots are available for emergency air start.
         local _notenough = false
 
         -- Need to differentiate some cases again.
-        if spawnonship or spawnonfarp or spawnonrunway then
+        if autoparking then
 
           -- On free spot required in these cases.
           if nfree >= 1 then
@@ -2257,7 +2218,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
             _notenough = true
           end
 
-        elseif spawnonairport then
+        else
 
           if nfree >= nunits then
 
@@ -2279,13 +2240,10 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
             self:E( string.format( "WARNING: Group %s has no parking spots at %s ==> air start!", self.SpawnTemplatePrefix, SpawnAirbase:GetName() ) )
 
             -- Not enough parking spots at the airport ==> Spawn in air.
-            spawnonground = false
-            spawnonship = false
-            spawnonfarp = false
-            spawnonrunway = false
+            autoparking=false
 
             -- Set waypoint type/action to turning point.
-            SpawnPoint.type = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][1] -- type   = Turning Point
+            SpawnPoint.type   = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][1] -- type   = Turning Point
             SpawnPoint.action = GROUPTEMPLATE.Takeoff[GROUP.Takeoff.Air][2] -- action = Turning Point
 
             -- Adjust altitude to be 500-1000 m above the airbase.
@@ -2327,7 +2285,6 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
         SpawnTemplate.parked = true
 
         for UnitID = 1, nunits do
-          --self:T2( 'Before Translation SpawnTemplate.units[' .. UnitID .. '].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units[' .. UnitID .. '].y = ' .. SpawnTemplate.units[UnitID].y )
 
           -- Template of the current unit.
           local UnitTemplate = SpawnTemplate.units[UnitID]
@@ -2343,9 +2300,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           if spawnonground then
 
             -- Ships and FARPS seem to have a build in queue.
-            if spawnonship or spawnonfarp or spawnonrunway then
-
-              --self:T2( string.format( "Group %s spawning at farp, ship or runway %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName() ) )
+            if autoparking then
 
               -- Spawn on ship. We take only the position of the ship.
               SpawnTemplate.units[UnitID].x = PointVec3.x -- TX
@@ -2354,19 +2309,14 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
 
             else
 
-              --self:T2( string.format( "Group %s spawning at airbase %s on parking spot id %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), parkingindex[UnitID] ) )
-
               -- Get coordinates of parking spot.
               SpawnTemplate.units[UnitID].x = parkingspots[UnitID].x
               SpawnTemplate.units[UnitID].y = parkingspots[UnitID].z
               SpawnTemplate.units[UnitID].alt = parkingspots[UnitID].y
 
-              -- parkingspots[UnitID]:MarkToAll(string.format("Group %s spawning at airbase %s on parking spot id %d", self.SpawnTemplatePrefix, SpawnAirbase:GetName(), parkingindex[UnitID]))
             end
 
           else
-
-            --self:T2( string.format( "Group %s spawning in air at %s.", self.SpawnTemplatePrefix, SpawnAirbase:GetName() ) )
 
             -- Spawn in air as requested initially. Original template orientation is perserved, altitude is already correctly set.
             SpawnTemplate.units[UnitID].x = TX
@@ -2381,11 +2331,6 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           if parkingindex[UnitID] then
             UnitTemplate.parking = parkingindex[UnitID]
           end
-
-          -- Debug output.
-          --self:T2( string.format( "Group %s unit number %d: Parking    = %s", self.SpawnTemplatePrefix, UnitID, tostring( UnitTemplate.parking ) ) )
-          --self:T2( string.format( "Group %s unit number %d: Parking ID = %s", self.SpawnTemplatePrefix, UnitID, tostring( UnitTemplate.parking_id ) ) )
-          --self:T2( 'After Translation SpawnTemplate.units[' .. UnitID .. '].x = ' .. SpawnTemplate.units[UnitID].x .. ', SpawnTemplate.units[' .. UnitID .. '].y = ' .. SpawnTemplate.units[UnitID].y )
         end
       end
 
@@ -2405,14 +2350,15 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       -- When spawned in the air, we need to generate a Takeoff Event.
       if Takeoff == GROUP.Takeoff.Air then
         for UnitID, UnitSpawned in pairs( GroupSpawned:GetUnits() ) do
-          SCHEDULER:New( nil, BASE.CreateEventTakeoff, { GroupSpawned, timer.getTime(), UnitSpawned:GetDCSObject() }, 5 )
+          --SCHEDULER:New( nil, BASE.CreateEventTakeoff, { GroupSpawned, timer.getTime(), UnitSpawned:GetDCSObject() }, 5 )  --No need to create a new SCHEDULER instance every time!
+          self:ScheduleOnce(5, BASE.CreateEventTakeoff, {GroupSpawned, timer.getTime(), UnitSpawned:GetDCSObject()})
         end
       end
 
       -- Check if we accidentally spawned on the runway. Needs to be schedules, because group is not immidiately alive.
-      if Takeoff ~= SPAWN.Takeoff.Runway and Takeoff ~= SPAWN.Takeoff.Air and spawnonairport then
-        SCHEDULER:New( nil, AIRBASE.CheckOnRunWay, { SpawnAirbase, GroupSpawned, 75, true }, 1.0 )
-      end
+      --if Takeoff ~= SPAWN.Takeoff.Runway and Takeoff ~= SPAWN.Takeoff.Air and spawnonairport then
+      --  SCHEDULER:New( nil, AIRBASE.CheckOnRunWay, { SpawnAirbase, GroupSpawned, 75, true }, 1.0 )
+      --end
 
       return GroupSpawned
     end
