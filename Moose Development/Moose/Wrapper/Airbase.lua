@@ -1038,12 +1038,14 @@ end
   self:_InitParkingSpots()
   
   -- Some heliports identify as airdromes in the airbase category. This is buggy in the descriptors category but also in the getCategory() and getCategoryEx() functions.
+  -- Well, thinking about it, this is actually not that "buggy" since these are really helicopter airdromes, which do not have an automatic parking spot routine.
+  -- I am still changing the category but marking it as airdrome and heliport at the same time via isAirdrome=true and isHelipad=true (important in SPAWN.SpawnAtAirbase).
+  -- The main reason for changing the category is to be able to filter airdromes from helipads, e.g. in SET_AIRBASE.
   if self.category==Airbase.Category.AIRDROME and (Nrunways==0 or self.NparkingTotal==self.NparkingTerminal[AIRBASE.TerminalType.HelicopterOnly]) then
-    self:E(string.format("WARNING: %s identifies as airdrome (category=0) but has no runways or just helo parking ==> will change to helipad (category=1)", self.AirbaseName))
+    --self:E(string.format("WARNING: %s identifies as airdrome (category=0) but has no runways or just helo parking ==> will change to helipad (category=1)", self.AirbaseName))
     self.category=Airbase.Category.HELIPAD
-    self.isAirdrome=false
+    self.isAirdrome=true
     self.isHelipad=true
-    --self:GetCoordinate():MarkToAll("Helipad not airdrome")
   end  
 
   -- Get 2D position vector.
@@ -1052,7 +1054,6 @@ end
   -- Init coordinate.
   self:GetCoordinate()
   
-
   -- Storage.
   self.storage=_DATABASE:AddStorage(AirbaseName)
 
