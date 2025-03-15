@@ -355,6 +355,14 @@ MANTIS.SamType = {
   POINT = "Point",
 }
 
+--- SAM Radiusscale
+-- @type MANTIS.radiusscale
+MANTIS.radiusscale = {}
+MANTIS.radiusscale[MANTIS.SamType.LONG] = 1.1
+MANTIS.radiusscale[MANTIS.SamType.MEDIUM] = 1.2
+MANTIS.radiusscale[MANTIS.SamType.SHORT] = 1.75
+MANTIS.radiusscale[MANTIS.SamType.POINT] = 3
+
 --- SAM data
 -- @type MANTIS.SamData
 -- @field #number Range Max firing range in km
@@ -584,11 +592,6 @@ do
     self.SuppressedGroups = {}
     -- 0.8 additions
     self.automode = true
-    self.radiusscale = {}
-    self.radiusscale[MANTIS.SamType.LONG] = 1.1
-    self.radiusscale[MANTIS.SamType.MEDIUM] = 1.2
-    self.radiusscale[MANTIS.SamType.SHORT] = 1.3
-    self.radiusscale[MANTIS.SamType.POINT] = 1.4
     --self.SAMCheckRanges = {}
     self.usezones = false
     self.AcceptZones = {}
@@ -685,7 +688,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.9.25"
+    self.version="0.9.26"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
