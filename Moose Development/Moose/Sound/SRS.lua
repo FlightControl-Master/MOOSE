@@ -1313,7 +1313,8 @@ function MSRS:PlaySoundFile(Soundfile, Delay)
 
     -- Append file.
     command=command..' --file="'..tostring(soundfile)..'"'
-
+    command=string.gsub(command,"--ssml","-h")    
+    
     -- Execute command.
     self:_ExecCommand(command)
 

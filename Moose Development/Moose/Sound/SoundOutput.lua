@@ -291,7 +291,8 @@ do -- Sound File
 end
 
 do -- Text-To-Speech
-
+  
+  ---
   -- @type SOUNDTEXT
   -- @field #string ClassName Name of the class
   -- @field #string text Text to speak.
