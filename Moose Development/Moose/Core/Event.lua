@@ -1375,7 +1375,7 @@ function EVENT:onEvent( Event )
           Event.IniDCSUnitName = Event.IniDCSUnit.getName and Event.IniDCSUnit:getName() or "Scenery no name "..math.random(1,20000)
           Event.IniUnitName = Event.IniDCSUnitName
           Event.IniUnit = SCENERY:Register( Event.IniDCSUnitName, Event.initiator )
-          Event.IniCategory = Event.IniDCSUnit:getDesc().category
+          Event.IniCategory = Event.IniDCSUnit.getDesc and Event.IniDCSUnit:getDesc().category
           Event.IniTypeName = Event.initiator:isExist() and Event.IniDCSUnit:getTypeName() or "SCENERY"
 
         elseif Event.IniObjectCategory == Object.Category.BASE then
