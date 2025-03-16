@@ -74,7 +74,7 @@
 -- @image Designation.JPG
 --
 -- Date: 24 Oct 2021
--- Last Update: Feb 2025
+-- Last Update: Mar 2025
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
@@ -92,6 +92,7 @@
 -- @field #number RoundingPrecision
 -- @field #table smokeoffset
 -- @field #boolean increasegroundawareness
+-- @field #number MonitorFrequency
 -- @extends Ops.Intel#INTEL
 
 ---
@@ -105,6 +106,7 @@ AUTOLASE = {
   smokemenu = true,
   RoundingPrecision = 0,
   increasegroundawareness = true,
+  MonitorFrequency = 30,
 }
 
 --- Laser spot info
@@ -123,7 +125,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.29"
+AUTOLASE.version = "0.1.30"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -215,6 +217,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.threatmenu = true
   self.RoundingPrecision = 0
   self.increasegroundawareness = true
+  self.MonitorFrequency = 30
   
   self:EnableSmokeMenu({Angle=math.random(0,359),Distance=math.random(10,20)})
   
@@ -319,11 +322,20 @@ end
 -- Helper Functions
 -------------------------------------------------------------------
 
+--- [User] When using Monitor, set the frequency here in which the report will appear
+-- @param #AUTOLASE self
+-- @param #number Seconds Run the report loop every number of seconds defined here.
+-- @return #AUTOLASE self
+function AUTOLASE:SetMonitorFrequency(Seconds)
+  self.MonitorFrequency = Seconds or 30
+  return self
+end
+
 --- [User] Set a table of possible laser codes.
--- Each new RECCE can select a code from this table, default is { 1688, 1130, 4785, 6547, 1465, 4578 } .
+-- Each new RECCE can select a code from this table, default is { 1688, 1130, 4785, 6547, 1465, 4578 }.
 -- @param #AUTOLASE self
 -- @param #list<#number> LaserCodes
--- @return #AUTOLASE
+-- @return #AUTOLASE self
 function AUTOLASE:SetLaserCodes( LaserCodes )
   self.LaserCodes = ( type( LaserCodes ) == "table" ) and LaserCodes or { LaserCodes }
   return self
@@ -1203,7 +1215,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     end
   end
   
-  self:__Monitor(-30)
+  self:__Monitor(self.MonitorFrequency or 30)
   return self
 end
 
