@@ -600,7 +600,7 @@ do
     self.maxlongrange = 1
     self.maxmidrange = 2
     self.maxshortrange = 2
-    self.maxpointdefrange =6 
+    self.maxpointdefrange = 6 
     self.maxclassic = 6
     self.autoshorad = true
     self.ShoradGroupSet = SET_GROUP:New() -- Core.Set#SET_GROUP
@@ -2188,7 +2188,7 @@ do
       local Shorad = self.Shorad
       local radius = self.checkradius
       local ontime = self.ShoradTime
-      Shorad:WakeUpShorad(Name, radius, ontime)
+      Shorad:WakeUpShorad(Name, radius, ontime, nil, true)
       self:__ShoradActivated(1,Name, radius, ontime)
     end
     return self
