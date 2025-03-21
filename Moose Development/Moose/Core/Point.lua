@@ -1221,7 +1221,7 @@ do -- COORDINATE
     local s = string.format( '%03d°', AngleDegrees )
     
     if MagVar then
-      local variation = UTILS.GetMagneticDeclination() or 0
+      local variation = self:GetMagneticDeclination() or 0
       local AngleMagnetic = AngleDegrees - variation
       
       if AngleMagnetic < 0 then AngleMagnetic = 360-AngleMagnetic end
@@ -2959,6 +2959,8 @@ do -- COORDINATE
     local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     
     local bearing = UTILS.Round( UTILS.ToDegree( AngleRadians ),0 )
+    local magnetic = self:GetMagneticDeclination() or 0
+    bearing = bearing - magnetic
     
     local rangeMetres = self:Get2DDistance(currentCoord)
     local rangeNM = UTILS.Round( UTILS.MetersToNM(rangeMetres), 0)
