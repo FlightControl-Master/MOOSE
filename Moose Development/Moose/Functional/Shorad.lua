@@ -543,7 +543,7 @@ do
           self:__ShootAndScoot(1,_group)
         end
         
-      elseif _group:IsAnyInZone(targetzone) then
+      elseif _group:IsAnyInZone(targetzone) or groupname == TargetGroup then
         -- shot at a group we protect
         local text = string.format("Waking up SHORAD %s", _group:GetName())
         self:T(text)
