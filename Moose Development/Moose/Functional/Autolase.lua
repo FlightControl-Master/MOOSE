@@ -125,7 +125,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.30"
+AUTOLASE.version = "0.1.31"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -1215,7 +1215,8 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     end
   end
   
-  self:__Monitor(self.MonitorFrequency or 30)
+  local nextloop = -self.MonitorFrequency or -30
+  self:__Monitor(nextloop)
   return self
 end
 
