@@ -445,6 +445,21 @@ function LEGION:DelCohort(Cohort)
   return self
 end
 
+--- Remove specific asset from legion.
+-- @param #LEGION self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
+-- @return #LEGION self
+function LEGION:DelAsset(Asset)
+
+  if Asset.cohort then
+    Asset.cohort:DelAsset(Asset)
+  else
+    self:E(self.lid..string.format("ERROR: Asset has not cohort attached. Cannot remove it from legion!"))
+  end
+  
+  return self
+end
+
 
 --- Relocate a cohort to another legion.
 -- Assets in stock are spawned and routed to the new legion.
@@ -1643,6 +1658,9 @@ function LEGION:onafterAssetDead(From, Event, To, asset, request)
   if self.commander and self.commander.chief then
     self.commander.chief.detectionset:RemoveGroupsByName({asset.spawngroupname})
   end
+  
+  -- Remove asset from cohort and legion.
+  self:DelAsset(asset)
 
   -- Remove asset from mission is done via Mission:AssetDead() call from flightgroup onafterFlightDead function
   -- Remove asset from squadron same
