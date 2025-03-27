@@ -2082,13 +2082,15 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       --self:F( { AirbaseCategory = AirbaseCategory } )
 
       -- Set airdrome ID. For helipads and ships we need to add the helipad ID and linked unit.
-      SpawnPoint.airdromeId = AirbaseID
+      -- Note, it is important not to set the airdrome ID for at least ships, because spawn will happen at origin of the map
       if AirbaseCategory == Airbase.Category.SHIP then
         SpawnPoint.linkUnit = AirbaseID
         SpawnPoint.helipadId = AirbaseID
       elseif AirbaseCategory == Airbase.Category.HELIPAD then
         SpawnPoint.linkUnit = AirbaseID
         SpawnPoint.helipadId = AirbaseID
+      else
+        SpawnPoint.airdromeId = AirbaseID
       end
 
       -- Set waypoint type/action.
