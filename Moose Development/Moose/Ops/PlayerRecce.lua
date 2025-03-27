@@ -838,7 +838,7 @@ function PLAYERRECCE:_GetTargetSet(unit,camera,laser)
   local minview = 0
   local typename = unit:GetTypeName()
   local playername = unit:GetPlayerName()
-  local maxview = self.MaxViewDistance[typename] or 5000
+  local maxview = self.MaxViewDistance[typename] or 8000
   local heading,nod,maxview,angle = 0,30,8000,10
   local camon = false
   local name = unit:GetName()
@@ -846,24 +846,25 @@ function PLAYERRECCE:_GetTargetSet(unit,camera,laser)
     heading,nod,maxview,camon = self:_GetGazelleVivianneSight(unit)
     angle=10
     -- Model nod and actual TV view don't compute
-    maxview = self.MaxViewDistance[typename] or 5000
+    maxview = self.MaxViewDistance[typename] or 8000
   elseif string.find(typename,"Ka-50") and camera then
     heading = unit:GetHeading()
     nod,maxview,camon = 10,1000,true
     angle = 10
-    maxview = self.MaxViewDistance[typename] or 5000
+    maxview = self.MaxViewDistance[typename] or 8000
   elseif string.find(typename,"OH58") and camera then
     --heading = unit:GetHeading()
     nod,maxview,camon = 0,8000,true
     heading,nod,maxview,camon = self:_GetKiowaMMSSight(unit)
     angle = 8
     if maxview == 0 then
-      maxview = self.MaxViewDistance[typename] or 5000
+      maxview = self.MaxViewDistance[typename] or 8000
     end
   else
     -- visual
     heading = unit:GetHeading()
-    nod,maxview,camon = 10,1000,true
+    nod,maxview,camon = 10,3000,true
+    maxview = self.MaxViewDistance[typename] or 3000
     angle = 45
   end
   if laser then
