@@ -846,7 +846,6 @@ function AI_PATROL_ZONE:onafterStatus()
       OldAIControllable:SetTask( TimedOrbitTask, 10 )
 
       RTB = true
-    else
     end
     
     -- TODO: Check GROUP damage function.
@@ -854,6 +853,16 @@ function AI_PATROL_ZONE:onafterStatus()
     if Damage <= self.PatrolDamageThreshold then
       self:T( self.Controllable:GetName() .. " is damaged:" .. Damage .. ", RTB!" )
       RTB = true
+    end
+    
+    if self:IsInstanceOf("AI_CAS") or self:IsInstanceOf("AI_BAI") then
+      local atotal,shells,rockets,bombs,missiles = self.Controllable:GetAmmunition()
+      local arelevant = rockets+bombs   
+      if arelevant == 0 or missiles == 0 then 
+        RTB = true
+        self:T({total=atotal,shells=shells,rockets=rockets,bombs=bombs,missiles=missiles})
+        self:T( self.Controllable:GetName() .. " is out of ammo, RTB!" ) 
+      end
     end
     
     if RTB == true then
