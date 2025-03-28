@@ -174,8 +174,7 @@ function AI_BAI_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  
+  -- @param #string To The To State string. 
   -- @return #boolean Return false to cancel Transition.
   
   --- OnAfter Transition Handler for Event Engage.
