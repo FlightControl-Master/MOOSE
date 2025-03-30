@@ -24,7 +24,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update Feb 2025
+-- Last Update April 2025
 
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -923,7 +923,6 @@ do
 --        ["MH-60R"] = {type="MH-60R", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
 --        ["SH-60B"] = {type="SH-60B", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
 --        ["Bronco-OV-10A"] = {type="Bronco-OV-10A", crates= false, troops=true, cratelimit = 0, trooplimit = 5, length = 13, cargoweightlimit = 1450},
---        ["Bronco-OV-10A"] = {type="Bronco-OV-10A", crates= false, troops=true, cratelimit = 0, trooplimit = 5, length = 13, cargoweightlimit = 1450},
 --        ["OH-6A"] = {type="OH-6A", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 7, cargoweightlimit = 550},
 --        ["OH58D"] = {type="OH58D", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 14, cargoweightlimit = 400},
 --        ["CH-47Fbl1"] = {type="CH-47Fbl1", crates=true, troops=true, cratelimit = 4, trooplimit = 31, length = 20, cargoweightlimit = 8000},
@@ -1087,11 +1086,11 @@ do
 -- 
 -- ## 4.7 List Inventory
 -- 
--- Lists invetory of available units to drop or build.
+-- Lists inventory of available units to drop or build.
 -- 
--- ## 5. Support for Hercules mod by Anubis
+-- ## 5. Support for fixed wings
 -- 
--- Basic support for the Hercules mod By Anubis has been build into CTLD - that is you can load/drop/build the same way and for the same objects as 
+-- Basic support for the Hercules mod By Anubis has been build into CTLD, as well as Bronco and Mosquito - that is you can load/drop/build the same way and for the same objects as 
 -- the helicopters (main method). 
 -- To cover objects and troops which can be loaded from the groud crew Rearm/Refuel menu (F8), you need to use @{#CTLD_HERCULES.New}() and link
 -- this object to your CTLD setup (alternative method). In this case, do **not** use the `Hercules_Cargo.lua` or `Hercules_Cargo_CTLD.lua` which are part of the mod 
@@ -1103,13 +1102,13 @@ do
 -- 
 -- Enable these options for Hercules support:
 --  
---              my_ctld.enableHercules = true
---              my_ctld.HercMinAngels = 155 -- for troop/cargo drop via chute in meters, ca 470 ft
---              my_ctld.HercMaxAngels = 2000 -- for troop/cargo drop via chute in meters, ca 6000 ft
---              my_ctld.HercMaxSpeed = 77 -- 77mps or 270kph or 150kn
+--              my_ctld.enableFixedWing = true
+--              my_ctld.FixedMinAngels = 155 -- for troop/cargo drop via chute in meters, ca 470 ft
+--              my_ctld.FixedMaxAngels = 2000 -- for troop/cargo drop via chute in meters, ca 6000 ft
+--              my_ctld.FixedMaxSpeed = 77 -- 77mps or 270kph or 150kn
 -- 
--- Hint: you can **only** airdrop from the Hercules if you are "in parameters", i.e. at or below `HercMaxSpeed` and in the AGL bracket between
--- `HercMinAngels` and `HercMaxAngels`!
+-- Hint: you can **only** airdrop from the Hercules if you are "in parameters", i.e. at or below `FixedMaxSpeed` and in the AGLFixedMinAngelseen
+-- `FixedMinAngels` and `FixedMaxAngels`!
 -- 
 -- Also, the following options need to be set to `true`:
 -- 
@@ -1117,9 +1116,9 @@ do
 -- 
 -- ### 5.2 Integrate Hercules ground crew (F8 Menu) loadable objects (alternative method, use either the above OR this method, NOT both!)
 -- 
--- Integrate to your CTLD instance like so, where `my_ctld` is a previously created CTLD instance:
+-- Taking another approach, integrate to your CTLD instance like so, where `my_ctld` is a previously created CTLD instance:
 --            
---            my_ctld.enableHercules = false -- avoid dual loading via CTLD F10 and F8 ground crew
+--            my_ctld.enableFixedWing = false -- avoid dual loading via CTLD F10 and F8 ground crew
 --            local herccargo = CTLD_HERCULES:New("blue", "Hercules Test", my_ctld)
 --            
 -- You also need: 
@@ -1384,11 +1383,20 @@ CTLD.UnitTypeCapabilities = {
     ["OH-6A"] = {type="OH-6A", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 7, cargoweightlimit = 550},
     ["OH58D"] = {type="OH58D", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 14, cargoweightlimit = 400},
     ["CH-47Fbl1"] = {type="CH-47Fbl1", crates=true, troops=true, cratelimit = 4, trooplimit = 31, length = 20, cargoweightlimit = 10800},
+    ["MosquitoFBMkVI"] = {type="MosquitoFBMkVI", crates= true, troops=false, cratelimit = 2, trooplimit = 0, length = 13, cargoweightlimit = 1800},
+}
+
+--- Allowed Fixed Wing Types
+-- @type CTLD.FixedWingTypes
+CTLD.FixedWingTypes = {
+  ["Hercules"] = "Hercules",
+  ["Bronco"] = "Bronco",
+  ["Mosquito"] = "Mosquito",
 }
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.30"
+CTLD.version="1.1.31"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1528,10 +1536,11 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.troopdropzoneradius = 100
   
   -- added support Hercules Mod
-  self.enableHercules = false
-  self.HercMinAngels = 165 -- for troop/cargo drop via chute
-  self.HercMaxAngels = 2000 -- for troop/cargo drop via chute
-  self.HercMaxSpeed = 77 -- 280 kph or 150kn eq 77 mps
+  self.enableHercules = false -- deprecated
+  self.enableFixedWing = false
+  self.FixedMinAngels = 165 -- for troop/cargo drop via chute
+  self.FixedMaxAngels = 2000 -- for troop/cargo drop via chute
+  self.FixedMaxSpeed = 77 -- 280 kph or 150kn eq 77 mps
   
   -- message suppression
   self.suppressmessages = false
@@ -2015,7 +2024,7 @@ function CTLD:_EventHandler(EventData)
       self:_RefreshF10Menus()
     end
     -- Herc support
-    if self:IsHercules(_unit) and self.enableHercules then
+    if self:IsFixedWing(_unit) and self.enableFixedWing then
       local unitname = event.IniUnitName or "none"
       self.Loaded_Cargo[unitname] = nil
       self:_RefreshF10Menus()
@@ -2181,6 +2190,22 @@ function CTLD:_FindCratesCargoObject(Name)
     end
   end
   return nil
+end
+
+--- (User) Add a new fixed wing type to the list of allowed types.
+-- @param #CTLD self
+-- @param #string typename The typename to add. Can be handed as Wrapper.Unit#UNIT object. Do NOT forget to `myctld:SetUnitCapabilities()` for this type!
+-- @return #CTLD self
+function CTLD:AddAllowedFixedWingType(typename)
+  if type(typename) == "string" then
+    self.FixedWingTypes[typename] = typename
+  elseif typename and typename.ClassName and typename:IsInstanceOf("UNIT") then
+    local TypeName = typename:GetTypeName() or "none"
+    self.FixedWingTypes[TypeName] = TypeName
+  else
+    self:E(self.lid.."No valid typename or no UNIT handed!")
+  end
+  return self
 end
 
 --- (User) Pre-load troops into a helo, e.g. for airstart. Unit **must** be alive in-game, i.e. player has taken the slot!
@@ -2715,7 +2740,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
     return self
   end
   -- spawn crates in front of helicopter
-  local IsHerc = self:IsHercules(Unit) -- Herc, Bronco and Hook load from behind
+  local IsHerc = self:IsFixedWing(Unit) -- Herc, Bronco and Hook load from behind
   local IsHook = self:IsHook(Unit) -- Herc, Bronco and Hook load from behind
   local cargotype = Cargo -- Ops.CTLD#CTLD_CARGO
   local number = number or cargotype:GetCratesNeeded() --#number
@@ -3088,7 +3113,7 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight, ignoretype
       --self:I(self.lid .. " Unit can carry: " .. tostring(cando))
       --- Testing
       local distance = self:_GetDistance(location,staticpos)
-      --self:I(self.lid .. string.format("Dist %dm/%dm | weight %dkg | maxloadable %dkg",distance,finddist,weight,maxloadable))
+      self:T(self.lid .. string.format("Dist %dm/%dm | weight %dkg | maxloadable %dkg",distance,finddist,weight,maxloadable))
       if distance <= finddist and (weight <= maxloadable or _ignoreweight) and restricted == false and cando == true then 
         index = index + 1
         table.insert(found, staticid, cargo)
@@ -3495,16 +3520,18 @@ function CTLD:_ListInventory(Group, Unit)
   return self
 end
 
---- (Internal) Function to check if a unit is a Hercules C-130 or a Bronco.
+--- (Internal) Function to check if a unit is an allowed fixed wing.
 -- @param #CTLD self
 -- @param Wrapper.Unit#UNIT Unit
 -- @return #boolean Outcome
-function CTLD:IsHercules(Unit)
-  if Unit:GetTypeName() == "Hercules" or string.find(Unit:GetTypeName(),"Bronco") then 
-    return true
-  else
-    return false
+function CTLD:IsFixedWing(Unit)
+  local typename = Unit:GetTypeName() or "none"  
+  for _,_name in pairs(self.FixedWingTypes or {}) do
+    if typename == _name or string.find(typename,_name,1,true) then
+      return true
+    end
   end
+  return false
 end
 
 --- (Internal) Function to check if a unit is a CH-47
@@ -3570,7 +3597,7 @@ function CTLD:_UnloadTroops(Group, Unit)
   end
   -- check for hover unload
   local hoverunload = self:IsCorrectHover(Unit) --if true we\'re hovering in parameters
-  local IsHerc = self:IsHercules(Unit)
+  local IsHerc = self:IsFixedWing(Unit)
   local IsHook = self:IsHook(Unit) 
   if IsHerc and (not IsHook) then
     -- no hover but airdrop here
@@ -3718,7 +3745,7 @@ function CTLD:_UnloadCrates(Group, Unit)
   end
   -- check for hover unload
   local hoverunload = self:IsCorrectHover(Unit) --if true we\'re hovering in parameters
-  local IsHerc = self:IsHercules(Unit)
+  local IsHerc = self:IsFixedWing(Unit)
   local IsHook = self:IsHook(Unit)
   if IsHerc and (not IsHook) then
     -- no hover but airdrop here
@@ -3784,7 +3811,7 @@ end
 function CTLD:_BuildCrates(Group, Unit,Engineering)
   self:T(self.lid .. " _BuildCrates")
   -- avoid users trying to build from flying Hercs
-  if self:IsHercules(Unit) and self.enableHercules and not Engineering then
+  if self:IsFixedWing(Unit) and self.enableFixedWing and not Engineering then
     local speed = Unit:GetVelocityKMH()
     if speed > 1 then
       self:_SendMessage("You need to land / stop to build something, Pilot!", 10, false, Group) 
@@ -4150,7 +4177,7 @@ function CTLD:_RefreshF10Menus()
     local firstUnit = groupObj:GetFirstUnitAlive()
     if firstUnit then
       if firstUnit:IsPlayer() then
-        if firstUnit:IsHelicopter() or (self.enableHercules and self:IsHercules(firstUnit)) then
+        if firstUnit:IsHelicopter() or (self.enableFixedWing and self:IsFixedWing(firstUnit)) then
           local _unit = firstUnit:GetName()
           _UnitList[_unit] = _unit
         end
@@ -4362,7 +4389,7 @@ function CTLD:_RefreshF10Menus()
           MENU_GROUP_COMMAND:New(_group, "Fire flare now", smoketopmenu, self.SmokePositionNow, self, _unit, true)
           MENU_GROUP_COMMAND:New(_group, "Drop beacon now", smoketopmenu, self.DropBeaconNow, self, _unit):Refresh()
 
-          if self:IsHercules(_unit) then
+          if self:IsFixedWing(_unit) then
             MENU_GROUP_COMMAND:New(_group, "Show flight parameters", topmenu, self._ShowFlightParams, self, _group, _unit):Refresh()
           else
             MENU_GROUP_COMMAND:New(_group, "Show hover parameters", topmenu, self._ShowHoverParams, self, _group, _unit):Refresh()
@@ -4597,7 +4624,7 @@ function CTLD:_UnloadSingleCrateSet(Group, Unit, setIndex)
   -- Check hover/airdrop/landed logic
   local grounded = not self:IsUnitInAir(Unit)
   local hoverunload = self:IsCorrectHover(Unit)
-  local isHerc = self:IsHercules(Unit)
+  local isHerc = self:IsFixedWing(Unit)
   local isHook = self:IsHook(Unit)
   if isHerc and not isHook then
     hoverunload = self:IsCorrectFlightParameters(Unit)
@@ -4758,7 +4785,7 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID)
   end
 
   local hoverunload = self:IsCorrectHover(Unit)
-  local isHerc = self:IsHercules(Unit)
+  local isHerc = self:IsFixedWing(Unit)
   local isHook = self:IsHook(Unit)
   if isHerc and not isHook then
     hoverunload = self:IsCorrectFlightParameters(Unit)
@@ -4900,7 +4927,7 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID)
     self.Loaded_Cargo[unitName].Cratesloaded = cratesLoaded
     self:_RefreshDropTroopsMenu(Group, Unit)
   else
-    local isHerc = self:IsHercules(Unit)
+    local isHerc = self:IsFixedWing(Unit)
     if isHerc then
       self:_SendMessage("Nothing loaded or not within airdrop parameters!", 10, false, Group)
     else
@@ -5802,9 +5829,9 @@ end
       end
       local gheight = ucoord:GetLandHeight()
       local aheight = uheight - gheight -- height above ground
-      local minh = self.HercMinAngels-- 1500m
-      local maxh =  self.HercMaxAngels -- 5000m
-      local maxspeed =  self.HercMaxSpeed -- 77 mps
+      local minh = self.FixedMinAngels-- 1500m
+      local maxh =  self.FixedMaxAngels -- 5000m
+      local maxspeed =  self.FixedMaxSpeed -- 77 mps
       -- DONE: TEST - Speed test for Herc, should not be above 280kph/150kn
       local kmspeed = uspeed * 3.6
       local knspeed = kmspeed / 1.86
@@ -5847,12 +5874,12 @@ end
     if not inhover then htxt = "false" end
     local text = ""
     if _SETTINGS:IsImperial() then
-      local minheight = UTILS.MetersToFeet(self.HercMinAngels)
-      local maxheight = UTILS.MetersToFeet(self.HercMaxAngels)
+      local minheight = UTILS.MetersToFeet(self.FixedMinAngels)
+      local maxheight = UTILS.MetersToFeet(self.FixedMaxAngels)
       text = string.format("Flight parameters (airdrop):\n - Min height %dft \n - Max height %dft \n - In parameter: %s", minheight, maxheight, htxt)
     else
-      local minheight = self.HercMinAngels
-      local maxheight = self.HercMaxAngels
+      local minheight = self.FixedMinAngels
+      local maxheight = self.FixedMaxAngels
       text = string.format("Flight parameters (airdrop):\n - Min height %dm \n - Max height %dm \n - In parameter: %s", minheight, maxheight, htxt)
     end
     self:_SendMessage(text, 10, false, Group)
@@ -5865,7 +5892,7 @@ end
   -- @return #boolean Outcome
   function CTLD:CanHoverLoad(Unit)
     self:T(self.lid .. " CanHoverLoad")
-    if self:IsHercules(Unit) then return false end
+    if self:IsFixedWing(Unit) then return false end
     local outcome = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD) and self:IsCorrectHover(Unit)
     if not outcome then
       outcome = self:IsUnitInZone(Unit,CTLD.CargoZoneType.SHIP) --and self:IsCorrectHover(Unit)
@@ -5880,7 +5907,7 @@ end
   function CTLD:IsUnitInAir(Unit)
     -- get speed and height
     local minheight = self.minimumHoverHeight
-    if self.enableHercules and self:IsHercules(Unit) then
+    if self.enableFixedWing and self:IsFixedWing(Unit) then
       minheight = 5.1 -- herc is 5m AGL on the ground
     end
     local uheight = Unit:GetHeight()
@@ -6727,11 +6754,12 @@ end
   function CTLD:onafterStart(From, Event, To)
     self:T({From, Event, To})
     self:I(self.lid .. "Started ("..self.version..")")
+    if self.enableHercules then self.enableFixedWing = true end
     if self.UserSetGroup then
       self.PilotGroups  = self.UserSetGroup
-    elseif self.useprefix or self.enableHercules then
+    elseif self.useprefix or self.enableFixedWing then
       local prefix = self.prefixes
-      if self.enableHercules then
+      if self.enableFixedWing then
         self.PilotGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefix):FilterStart()
       else
         self.PilotGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefix):FilterCategories("helicopter"):FilterStart()
@@ -7533,7 +7561,7 @@ CTLD_HERCULES.Types = {
 -- @usage
 -- Integrate to your CTLD instance like so, where `my_ctld` is a previously created CTLD instance:
 --            
---            my_ctld.enableHercules = false -- avoid dual loading via CTLD F10 and F8 ground crew
+--            my_ctld.enableFixedWing = false -- avoid dual loading via CTLD F10 and F8 ground crew
 --            local herccargo = CTLD_HERCULES:New("blue", "Hercules Test", my_ctld)
 --            
 -- You also need: 
