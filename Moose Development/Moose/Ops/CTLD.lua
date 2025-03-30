@@ -3346,7 +3346,7 @@ function CTLD:_ListCargo(Group, Unit)
     for _,_cargo in pairs(cargotable) do
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
-      if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS) and (not cargo:WasDropped() or self.allowcratepickupagain) then
+      if (type == CTLD_CARGO.Enum.TROOPS or (type == CTLD_CARGO.Enum.ENGINEERS and cargo:CanLoadDirectly())) and (not cargo:WasDropped() or self.allowcratepickupagain) then
         report:Add(string.format("Troop: %s size %d", cargo:GetName(), cargo:GetCratesNeeded()))
       end
     end
@@ -3360,7 +3360,7 @@ function CTLD:_ListCargo(Group, Unit)
     for _,_cargo in pairs(cargotable or {}) do
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
-      if (type ~= CTLD_CARGO.Enum.TROOPS and type ~= CTLD_CARGO.Enum.ENGINEERS and type ~= CTLD_CARGO.Enum.GCLOADABLE) and (not cargo:WasDropped() or self.allowcratepickupagain) then
+      if (type ~= CTLD_CARGO.Enum.TROOPS and not (type == CTLD_CARGO.Enum.ENGINEERS and cargo.LoadDirectly) and type ~= CTLD_CARGO.Enum.GCLOADABLE) and (not cargo:WasDropped() or self.allowcratepickupagain) then
         local cName = cargo:GetName()
         local needed = cargo:GetCratesNeeded() or 1
         accumCrates[cName] = accumCrates[cName] or {count=0, needed=needed}
@@ -3735,7 +3735,7 @@ function CTLD:_UnloadCrates(Group, Unit)
     for _,_cargo in pairs (cargotable) do
       local cargo = _cargo -- #CTLD_CARGO
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
-      if type ~= CTLD_CARGO.Enum.TROOPS and type ~= CTLD_CARGO.Enum.ENGINEERS and type ~= CTLD_CARGO.Enum.GCLOADABLE and (not cargo:WasDropped() or self.allowcratepickupagain) then
+      if (type ~= CTLD_CARGO.Enum.TROOPS and (type ~= CTLD_CARGO.Enum.ENGINEERS or not cargo:CanLoadDirectly()) and type ~= CTLD_CARGO.Enum.GCLOADABLE and (not cargo:WasDropped() or self.allowcratepickupagain)) then
         -- unload crates
         self:_GetCrates(Group, Unit, cargo, 1, true)
         cargo:SetWasDropped(true)
@@ -3743,29 +3743,34 @@ function CTLD:_UnloadCrates(Group, Unit)
       end
     end
     -- cleanup load list
-    local loaded = {} -- #CTLD.LoadedCargo
-    loaded.Troopsloaded = 0
-    loaded.Cratesloaded = 0
-    loaded.Cargo = {}
-    
-    for _,_cargo in pairs (cargotable) do
-      local cargo = _cargo -- #CTLD_CARGO
+  local loaded = {} -- #CTLD.LoadedCargo
+  loaded.Troopsloaded = 0
+  loaded.Cratesloaded = 0
+  loaded.Cargo = {}
+
+  for _,_cargo in pairs(cargotable) do
+    local cargo = _cargo -- #CTLD_CARGO
+    if not cargo:WasDropped() then
       local type = cargo:GetType() -- #CTLD_CARGO.Enum
-      local size = cargo:GetCratesNeeded()
-      if type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS then
-        table.insert(loaded.Cargo,_cargo)
+      local size = cargo:GetCratesNeeded() or 1
+      
+      if (type == CTLD_CARGO.Enum.TROOPS or (type == CTLD_CARGO.Enum.ENGINEERS and cargo:CanLoadDirectly())) then
+        table.insert(loaded.Cargo, _cargo)
         loaded.Troopsloaded = loaded.Troopsloaded + size
-      end
-      if type == CTLD_CARGO.Enum.GCLOADABLE and not cargo:WasDropped() then
-        table.insert(loaded.Cargo,_cargo)
+      elseif (type == CTLD_CARGO.Enum.GCLOADABLE) then
+        table.insert(loaded.Cargo, _cargo)
         loaded.Cratesloaded = loaded.Cratesloaded + size
+      else
+        table.insert(loaded.Cargo, _cargo)
+        loaded.Cratesloaded = loaded.Cratesloaded + 1
       end
     end
-    self.Loaded_Cargo[unitname] = nil
-    self.Loaded_Cargo[unitname] = loaded
-    
-    self:_UpdateUnitCargoMass(Unit)
-    self:_RefreshDropCratesMenu(Group,Unit)
+  end
+
+  self.Loaded_Cargo[unitname] = nil
+  self.Loaded_Cargo[unitname] = loaded
+  self:_UpdateUnitCargoMass(Unit)
+  self:_RefreshDropCratesMenu(Group,Unit)
   else
     if IsHerc then
         self:_SendMessage("Nothing loaded or not within airdrop parameters!", 10, false, Group) 
@@ -4639,7 +4644,7 @@ function CTLD:_UnloadSingleCrateSet(Group, Unit, setIndex)
       if not cObj:WasDropped() then
         table.insert(newList, cObj)
         local ct = cObj:GetType()
-        if ct ~= CTLD_CARGO.Enum.TROOPS and ct ~= CTLD_CARGO.Enum.ENGINEERS then
+        if (ct~=CTLD_CARGO.Enum.TROOPS and (ct~=CTLD_CARGO.Enum.ENGINEERS or not cObj:CanLoadDirectly())) then
           newCratesCount = newCratesCount + 1
         end
       end
@@ -4683,7 +4688,7 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
   for _,cObj in ipairs(loadedData.Cargo) do
     if cObj and not cObj:WasDropped() then
       local cType=cObj:GetType()
-      if cType~=CTLD_CARGO.Enum.TROOPS and cType~=CTLD_CARGO.Enum.ENGINEERS and cType~=CTLD_CARGO.Enum.GCLOADABLE then
+      if (cType~=CTLD_CARGO.Enum.TROOPS and not (cType==CTLD_CARGO.Enum.ENGINEERS and cObj:CanLoadDirectly()) and cType~=CTLD_CARGO.Enum.GCLOADABLE) then
         local name=cObj:GetName()or"Unknown"
         cargoByName[name]=cargoByName[name]or{}
         table.insert(cargoByName[name],cObj)
@@ -4935,7 +4940,7 @@ function CTLD:_RefreshDropTroopsMenu(Group, Unit)
   local troopsByName = {}
   for _, cargoObj in ipairs(loadedData.Cargo) do
     if cargoObj
-       and (cargoObj:GetType() == CTLD_CARGO.Enum.TROOPS or cargoObj:GetType() == CTLD_CARGO.Enum.ENGINEERS)
+       and (cargoObj:GetType() == CTLD_CARGO.Enum.TROOPS or (cargoObj:GetType() == CTLD_CARGO.Enum.ENGINEERS and cargoObj:CanLoadDirectly()))
        and not cargoObj:WasDropped()
     then
       local name = cargoObj:GetName() or "Unknown"
