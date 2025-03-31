@@ -9045,7 +9045,7 @@ function OPSGROUP:AddWeightCargo(UnitName, Weight)
     self:T(self.lid..string.format("%s: Adding %.1f kg cargo weight. New cargo weight=%.1f kg", UnitName, Weight, element.weightCargo))
 
     -- For airborne units, we set the weight in game.
-    if self.isFlightgroup then
+    if self.isFlightgroup and element.unit and element.unit:IsAlive() then -- #2272 trying to deduct cargo weight from possibly dead units
       trigger.action.setUnitInternalCargo(element.name, element.weightCargo)  --https://wiki.hoggitworld.com/view/DCS_func_setUnitInternalCargo
     end
 
