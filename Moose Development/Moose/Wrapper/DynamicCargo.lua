@@ -124,7 +124,7 @@ DYNAMICCARGO.AircraftDimensions = {
 
 --- DYNAMICCARGO class version.
 -- @field #string version
-DYNAMICCARGO.version="0.0.5"
+DYNAMICCARGO.version="0.0.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -227,7 +227,7 @@ end
 -- @param #DYNAMICCARGO self
 -- @return #boolean Outcome
 function DYNAMICCARGO:IsUnloaded()
-  if self.CargoState and self.CargoState == DYNAMICCARGO.State.REMOVED then
+  if self.CargoState and self.CargoState == DYNAMICCARGO.State.UNLOADED then
     return true
   else
     return false
@@ -238,7 +238,7 @@ end
 -- @param #DYNAMICCARGO self
 -- @return #boolean Outcome
 function DYNAMICCARGO:IsRemoved()
-  if self.CargoState and self.CargoState == DYNAMICCARGO.State.UNLOADED then
+  if self.CargoState and self.CargoState == DYNAMICCARGO.State.REMOVED then
     return true
   else
     return false
