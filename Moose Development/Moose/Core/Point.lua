@@ -1168,6 +1168,9 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @return #number The y coordinate.
   function COORDINATE:GetY()
+    if self:IsInstanceOf("POINT_VEC2") then
+      return self.z
+    end
     return self.y
   end
 
@@ -1192,7 +1195,11 @@ do -- COORDINATE
   -- @param #number y The y coordinate.
   -- @return #COORDINATE
   function COORDINATE:SetY( y )
-    self.y = y
+    if self:IsInstanceOf("POINT_VEC2") then
+      self.z = y
+    else
+      self.y = y
+    end
     return self
   end
 
@@ -1289,7 +1296,11 @@ do -- COORDINATE
   -- @param #number y The y coordinate value to add to the current y coordinate.
   -- @return #COORDINATE
   function COORDINATE:AddY( y )
-    self.y = self.y + y
+    if self:IsInstanceOf("POINT_VEC2") then
+      return self:AddZ(y)
+    else
+      self.y = self.y + y
+    end
     return self
   end
 
