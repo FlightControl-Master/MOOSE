@@ -202,4 +202,3 @@ function ZONE_DETECTION:IsVec3InZone( Vec3 )
 
   return InZone
 end
-
