@@ -453,7 +453,7 @@ function AI_AIR_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, Attac
         
         --- Calculate the target route point.
         
-        local FromWP = DefenderCoord:WaypointAir(self.PatrolAltType or "RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, EngageSpeed, true)
+        local FromWP = DefenderCoord:WaypointAir(self.PatrolAltType or "RADIO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, EngageSpeed, true)
         
         EngageRoute[#EngageRoute+1] = FromWP
   
@@ -462,7 +462,7 @@ function AI_AIR_ENGAGE:onafterEngageRoute( DefenderGroup, From, Event, To, Attac
         local FromEngageAngle = DefenderCoord:GetAngleDegrees( DefenderCoord:GetDirectionVec3( TargetCoord ) )
         local ToCoord=DefenderCoord:Translate( EngageDistance, FromEngageAngle, true )
         
-        local ToWP = ToCoord:WaypointAir(self.PatrolAltType or "RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, EngageSpeed, true)
+        local ToWP = ToCoord:WaypointAir(self.PatrolAltType or "RADIO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, EngageSpeed, true)
   
         EngageRoute[#EngageRoute+1] = ToWP
 
@@ -536,7 +536,7 @@ function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetU
       local EngageRoute = {}
       local AttackTasks = {}
       
-      local FromWP = DefenderCoord:WaypointAir(self.EngageAltType or "RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, EngageSpeed, true)
+      local FromWP = DefenderCoord:WaypointAir(self.EngageAltType or "RADIO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, EngageSpeed, true)
       EngageRoute[#EngageRoute+1] = FromWP
 
       self:SetTargetDistance( TargetCoord ) -- For RTB status check
@@ -544,7 +544,7 @@ function AI_AIR_ENGAGE:onafterEngage( DefenderGroup, From, Event, To, AttackSetU
       local FromEngageAngle = DefenderCoord:GetAngleDegrees( DefenderCoord:GetDirectionVec3( TargetCoord ) )
       local ToCoord=DefenderCoord:Translate( EngageDistance, FromEngageAngle, true )
       
-      local ToWP = ToCoord:WaypointAir(self.EngageAltType or "RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, EngageSpeed, true)
+      local ToWP = ToCoord:WaypointAir(self.EngageAltType or "RADIO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, EngageSpeed, true)
       EngageRoute[#EngageRoute+1] = ToWP
       
       -- TODO: A factor of * 3 this way too low. This causes the AI NOT to engage until very close or even merged sometimes. Some A2A missiles have a much longer range! Needs more frequent updates of the task!

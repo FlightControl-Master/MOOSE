@@ -309,7 +309,7 @@ function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
     local ToTargetSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
     local speedkmh=ToTargetSpeed
 
-    local FromWP = CurrentCoord:WaypointAir(self.PatrolAltType or "RADIO", POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, ToTargetSpeed, true)
+    local FromWP = CurrentCoord:WaypointAir(self.PatrolAltType or "RADIO", COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, ToTargetSpeed, true)
     PatrolRoute[#PatrolRoute+1] = FromWP
 
     if self.racetrack then
@@ -359,9 +359,9 @@ function AI_AIR_PATROL:onafterPatrolRoute( AIPatrol, From, Event, To )
     else
 
       --- Create a route point of type air.
-      local ToWP = ToTargetCoord:WaypointAir(self.PatrolAltType, POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, ToTargetSpeed, true)  
+      local ToWP = ToTargetCoord:WaypointAir(self.PatrolAltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, ToTargetSpeed, true)  
       PatrolRoute[#PatrolRoute+1] = ToWP
-
+      
       local Tasks = {}
       Tasks[#Tasks+1] = AIPatrol:TaskFunction("AI_AIR_PATROL.___PatrolRoute", self)
       PatrolRoute[#PatrolRoute].task = AIPatrol:TaskCombo( Tasks )

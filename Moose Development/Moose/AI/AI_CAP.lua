@@ -423,12 +423,12 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
 
     --DONE: Create GetAltitude function for GROUP, and delete GetUnit(1).
     local CurrentAltitude = self.Controllable:GetAltitude()
-    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+    local CurrentPointVec3 = COORDINATE:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToEngageZoneSpeed = self.PatrolMaxSpeed
     local CurrentRoutePoint = CurrentPointVec3:WaypointAir(
         self.PatrolAltType,
-        POINT_VEC3.RoutePointType.TurningPoint,
-        POINT_VEC3.RoutePointAction.TurningPoint,
+        COORDINATE.WaypointType.TurningPoint,
+        COORDINATE.WaypointAction.TurningPoint,
         ToEngageZoneSpeed,
         true
       )
@@ -445,13 +445,13 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
 
     --- Obtain a 3D @{Point} from the 2D point + altitude.
-    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
+    local ToTargetPointVec3 = COORDINATE:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
 
     --- Create a route point of type air.
     local ToPatrolRoutePoint = ToTargetPointVec3:WaypointAir(
       self.PatrolAltType,
-      POINT_VEC3.RoutePointType.TurningPoint,
-      POINT_VEC3.RoutePointAction.TurningPoint,
+      COORDINATE.WaypointType.TurningPoint,
+      COORDINATE.WaypointAction.TurningPoint,
       ToTargetSpeed,
       true
     )

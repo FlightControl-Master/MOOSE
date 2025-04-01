@@ -2,7 +2,8 @@
 -- @module Core.Zone_Detection
 -- @image MOOSE.JPG
 
---- @type ZONE_DETECTION
+---
+-- @type ZONE_DETECTION
 -- @field DCS#Vec2 Vec2 The current location of the zone.
 -- @field DCS#Distance Radius The radius of the zone.
 -- @extends #ZONE_BASE
@@ -106,7 +107,7 @@ function ZONE_DETECTION:SmokeZone( SmokeColor, Points, AddHeight, AngleOffset )
     local Radial = ( Angle + AngleOffset ) * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
-    POINT_VEC2:New( Point.x, Point.y, AddHeight ):Smoke( SmokeColor )
+    COORDINATE:New( Point.x, AddHeight, Point.y):Smoke( SmokeColor )
   end
 
   return self
@@ -137,7 +138,7 @@ function ZONE_DETECTION:FlareZone( FlareColor, Points, Azimuth, AddHeight )
     local Radial = Angle * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
-    POINT_VEC2:New( Point.x, Point.y, AddHeight ):Flare( FlareColor, Azimuth )
+    COORDINATE:New( Point.x, AddHeight, Point.y ):Flare( FlareColor, Azimuth )
   end
 
   return self
@@ -201,4 +202,3 @@ function ZONE_DETECTION:IsVec3InZone( Vec3 )
 
   return InZone
 end
-
