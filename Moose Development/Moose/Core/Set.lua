@@ -629,14 +629,14 @@ do -- SET_BASE
     return self
   end
 
-  --- Iterate the SET_BASE while identifying the nearest object in the set from a @{Core.Point#POINT_VEC2}.
+  --- Iterate the SET_BASE while identifying the nearest object in the set from a @{Core.Point#COORDINATE}.
   -- @param #SET_BASE self
-  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#COORDINATE} or @{Core.Point#POINT_VEC2} object (but **not** a simple DCS#Vec2!) from where to evaluate the closest object in the set.
+  -- @param Core.Point#COORDINATE Coordinate A @{Core.Point#COORDINATE} object (but **not** a simple DCS#Vec2!) from where to evaluate the closest object in the set.
   -- @return Core.Base#BASE The closest object.
   -- @usage
   --          myset:FindNearestObjectFromPointVec2( ZONE:New("Test Zone"):GetCoordinate() )
-  function SET_BASE:FindNearestObjectFromPointVec2( PointVec2 )
-    --self:F2( PointVec2 )
+  function SET_BASE:FindNearestObjectFromPointVec2( Coordinate )
+    --self:F2( Coordinate )
 
     local NearestObject = nil
     local ClosestDistance = nil
@@ -644,9 +644,9 @@ do -- SET_BASE
     for ObjectID, ObjectData in pairs( self.Set ) do
       if NearestObject == nil then
         NearestObject = ObjectData
-        ClosestDistance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
+        ClosestDistance = Coordinate:DistanceFromPointVec2( ObjectData:GetCoordinate() )
       else
-        local Distance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
+        local Distance = Coordinate:DistanceFromPointVec2( ObjectData:GetCoordinate() )
         if Distance < ClosestDistance then
           NearestObject = ObjectData
           ClosestDistance = Distance
@@ -1242,12 +1242,12 @@ do
     return GroupFound
   end
 
-  --- Iterate the SET_GROUP while identifying the nearest object from a @{Core.Point#POINT_VEC2}.
+  --- Iterate the SET_GROUP while identifying the nearest object from a @{Core.Point#COORDINATE}.
   -- @param #SET_GROUP self
-  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+  -- @param Core.Point#COORDINATE Coordinate A @{Core.Point#COORDINATE} object from where to evaluate the closest object in the set.
   -- @return Wrapper.Group#GROUP The closest group.
-  function SET_GROUP:FindNearestGroupFromPointVec2( PointVec2 )
-    --self:F2( PointVec2 )
+  function SET_GROUP:FindNearestGroupFromPointVec2( Coordinate )
+    --self:F2( Coordinate )
 
     local NearestGroup = nil -- Wrapper.Group#GROUP
     local ClosestDistance = nil
@@ -1257,9 +1257,9 @@ do
     for ObjectID, ObjectData in pairs( Set ) do
       if NearestGroup == nil then
         NearestGroup = ObjectData
-        ClosestDistance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
+        ClosestDistance = Coordinate:DistanceFromPointVec2( ObjectData:GetCoordinate() )
       else
-        local Distance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
+        local Distance = Coordinate:DistanceFromPointVec2( ObjectData:GetCoordinate() )
         if Distance < ClosestDistance then
           NearestGroup = ObjectData
           ClosestDistance = Distance
@@ -5670,14 +5670,14 @@ do -- SET_AIRBASE
     return self
   end
 
-  --- Iterate the SET_AIRBASE while identifying the nearest @{Wrapper.Airbase#AIRBASE} from a @{Core.Point#POINT_VEC2}.
+  --- Iterate the SET_AIRBASE while identifying the nearest @{Wrapper.Airbase#AIRBASE} from a @{Core.Point#COORDINATE}.
   -- @param #SET_AIRBASE self
-  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest @{Wrapper.Airbase#AIRBASE}.
+  -- @param Core.Point#COORDINATE Coordinate A @{Core.Point#COORDINATE} object from where to evaluate the closest @{Wrapper.Airbase#AIRBASE}.
   -- @return Wrapper.Airbase#AIRBASE The closest @{Wrapper.Airbase#AIRBASE}.
-  function SET_AIRBASE:FindNearestAirbaseFromPointVec2( PointVec2 )
-    --self:F2( PointVec2 )
+  function SET_AIRBASE:FindNearestAirbaseFromPointVec2( Coordinate )
+    --self:F2( Coordinate )
 
-    local NearestAirbase = self:FindNearestObjectFromPointVec2( PointVec2 )
+    local NearestAirbase = self:FindNearestObjectFromPointVec2( Coordinate )
     return NearestAirbase
   end
 
@@ -6007,17 +6007,19 @@ do -- SET_CARGO
     return self
   end
 
-  --- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo.Cargo#CARGO} from a @{Core.Point#POINT_VEC2}.
+  --- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo.Cargo#CARGO} from a @{Core.Point#COORDINATE}.
   -- @param #SET_CARGO self
-  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest @{Cargo.Cargo#CARGO}.
+  -- @param Core.Point#COORDINATE Coordinate A @{Core.Point#COORDINATE} object from where to evaluate the closest @{Cargo.Cargo#CARGO}.
   -- @return Cargo.Cargo#CARGO The closest @{Cargo.Cargo#CARGO}.
-  function SET_CARGO:FindNearestCargoFromPointVec2( PointVec2 ) -- R2.1
-    --self:F2( PointVec2 )
+  function SET_CARGO:FindNearestCargoFromPointVec2( Coordinate ) -- R2.1
+    --self:F2( Coordinate )
 
-    local NearestCargo = self:FindNearestObjectFromPointVec2( PointVec2 )
+    local NearestCargo = self:FindNearestObjectFromPointVec2( Coordinate )
     return NearestCargo
   end
-
+  
+  ---
+  -- @param #SET_CARGO self
   function SET_CARGO:FirstCargoWithState( State )
 
     local FirstCargo = nil
@@ -6032,6 +6034,8 @@ do -- SET_CARGO
     return FirstCargo
   end
 
+  ---
+  -- @param #SET_CARGO self
   function SET_CARGO:FirstCargoWithStateAndNotDeployed( State )
 
     local FirstCargo = nil

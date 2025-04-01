@@ -7699,7 +7699,7 @@ end
 --- [Internal] Function to spawn a soldier group of 10 units
 -- @param #CTLD_HERCULES self
 -- @param Wrapper.Group#GROUP Cargo_Drop_initiator
--- @param Core.Point#POINT_VEC3 Cargo_Drop_Position
+-- @param Core.Point#COORDINATE Cargo_Drop_Position
 -- @param #string Cargo_Type_name
 -- @param #number CargoHeading
 -- @param #number Cargo_Country
@@ -7722,7 +7722,7 @@ end
 --- [Internal] Function to spawn a group
 -- @param #CTLD_HERCULES self
 -- @param Wrapper.Group#GROUP Cargo_Drop_initiator
--- @param Core.Point#POINT_VEC3 Cargo_Drop_Position
+-- @param Core.Point#COORDINATE Cargo_Drop_Position
 -- @param #string Cargo_Type_name
 -- @param #number CargoHeading
 -- @param #number Cargo_Country
@@ -7746,7 +7746,7 @@ end
 --- [Internal] Function to spawn static cargo
 -- @param #CTLD_HERCULES self
 -- @param Wrapper.Group#GROUP Cargo_Drop_initiator
--- @param Core.Point#POINT_VEC3 Cargo_Drop_Position
+-- @param Core.Point#COORDINATE Cargo_Drop_Position
 -- @param #string Cargo_Type_name
 -- @param #number CargoHeading
 -- @param #boolean dead
@@ -7768,7 +7768,7 @@ end
 --- [Internal] Function to spawn cargo by type at position
 -- @param #CTLD_HERCULES self
 -- @param #string Cargo_Type_name
--- @param Core.Point#POINT_VEC3 Cargo_Drop_Position
+-- @param Core.Point#COORDINATE Cargo_Drop_Position
 -- @return #CTLD_HERCULES self
 function CTLD_HERCULES:Cargo_SpawnDroppedAsCargo(_name, _pos)
   local theCargo = self.CTLD:_FindCratesCargoObject(_name) -- #CTLD_CARGO

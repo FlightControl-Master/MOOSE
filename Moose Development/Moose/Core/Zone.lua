@@ -213,7 +213,7 @@ end
 
 --- Returns if a PointVec3 is within the zone.
 -- @param #ZONE_BASE self
--- @param Core.Point#POINT_VEC3 PointVec3 The PointVec3 to test.
+-- @param Core.Point#COORDINATE PointVec3 The PointVec3 to test.
 -- @return #boolean true if the PointVec3 is within the zone.
 function ZONE_BASE:IsPointVec3InZone( PointVec3 )
   local InZone = self:IsPointVec2InZone( PointVec3 )
@@ -227,16 +227,16 @@ function ZONE_BASE:GetVec2()
   return nil
 end
 
---- Returns a @{Core.Point#POINT_VEC2} of the zone.
+--- Returns a @{Core.Point#COORDINATE} of the zone.
 -- @param #ZONE_BASE self
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
--- @return Core.Point#POINT_VEC2 The PointVec2 of the zone.
+-- @return Core.Point#COORDINATE The COORDINATE of the zone.
 function ZONE_BASE:GetPointVec2()
   --self:F2( self.ZoneName )
 
   local Vec2 = self:GetVec2()
 
-  local PointVec2 = POINT_VEC2:NewFromVec2( Vec2 )
+  local PointVec2 = COORDINATE:NewFromVec2( Vec2 )
 
   --self:T2( { PointVec2 } )
 
@@ -261,16 +261,16 @@ function ZONE_BASE:GetVec3( Height )
   return Vec3
 end
 
---- Returns a @{Core.Point#POINT_VEC3} of the zone.
+--- Returns a @{Core.Point#COORDINATE} of the zone.
 -- @param #ZONE_BASE self
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
--- @return Core.Point#POINT_VEC3 The PointVec3 of the zone.
+-- @return Core.Point#COORDINATE The PointVec3 of the zone.
 function ZONE_BASE:GetPointVec3( Height )
   --self:F2( self.ZoneName )
 
   local Vec3 = self:GetVec3( Height )
 
-  local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
+  local PointVec3 = COORDINATE:NewFromVec3( Vec3 )
 
   --self:T2( { PointVec3 } )
 
@@ -330,16 +330,16 @@ function ZONE_BASE:GetRandomVec2()
   return nil
 end
 
---- Define a random @{Core.Point#POINT_VEC2} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
+--- Define a random @{Core.Point#COORDINATE} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_BASE self
--- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
+-- @return Core.Point#COORDINATE The COORDINATE coordinates.
 function ZONE_BASE:GetRandomPointVec2()
   return nil
 end
 
---- Define a random @{Core.Point#POINT_VEC3} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
+--- Define a random @{Core.Point#COORDINATE} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
 -- @param #ZONE_BASE self
--- @return Core.Point#POINT_VEC3 The PointVec3 coordinates.
+-- @return Core.Point#COORDINATE The COORDINATE coordinates.
 function ZONE_BASE:GetRandomPointVec3()
   return nil
 end
@@ -814,8 +814,8 @@ end
 -- Various functions exist to find random points within the zone.
 --
 --   * @{#ZONE_RADIUS.GetRandomVec2}(): Gets a random 2D point in the zone.
---   * @{#ZONE_RADIUS.GetRandomPointVec2}(): Gets a @{Core.Point#POINT_VEC2} object representing a random 2D point in the zone.
---   * @{#ZONE_RADIUS.GetRandomPointVec3}(): Gets a @{Core.Point#POINT_VEC3} object representing a random 3D point in the zone. Note that the height of the point is at landheight.
+--   * @{#ZONE_RADIUS.GetRandomPointVec2}(): Gets a @{Core.Point#COORDINATE} object representing a random 2D point in the zone.
+--   * @{#ZONE_RADIUS.GetRandomPointVec3}(): Gets a @{Core.Point#COORDINATE} object representing a random 3D point in the zone. Note that the height of the point is at landheight.
 --
 -- ## Draw zone
 --
@@ -1010,7 +1010,7 @@ function ZONE_RADIUS:SmokeZone( SmokeColor, Points, AddHeight, AngleOffset )
     local Radial = ( Angle + AngleOffset ) * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
-    POINT_VEC2:New( Point.x, Point.y, AddHeight ):Smoke( SmokeColor )
+    COORDINATE:New( Point.x, AddHeight, Point.y  ):Smoke( SmokeColor )
   end
 
   return self
@@ -1040,7 +1040,7 @@ function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth, AddHeight )
     local Radial = Angle * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
-    POINT_VEC2:New( Point.x, Point.y, AddHeight ):Flare( FlareColor, Azimuth )
+    COORDINATE:New( Point.x, AddHeight, Point.y ):Flare( FlareColor, Azimuth )
   end
 
   return self
@@ -1561,15 +1561,15 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
   return point
 end
 
---- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
+--- Returns a @{Core.Point#COORDINATE} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_RADIUS self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Core.Point#POINT_VEC2 The @{Core.Point#POINT_VEC2} object reflecting the random 3D location within the zone.
+-- @return Core.Point#COORDINATE The @{Core.Point#COORDINATE} object reflecting the random 3D location within the zone.
 function ZONE_RADIUS:GetRandomPointVec2( inner, outer )
   --self:F( self.ZoneName, inner, outer )
 
-  local PointVec2 = POINT_VEC2:NewFromVec2( self:GetRandomVec2( inner, outer ) )
+  local PointVec2 = COORDINATE:NewFromVec2( self:GetRandomVec2( inner, outer ) )
 
   --self:T3( { PointVec2 } )
 
@@ -1592,15 +1592,15 @@ function ZONE_RADIUS:GetRandomVec3( inner, outer )
 end
 
 
---- Returns a @{Core.Point#POINT_VEC3} object reflecting a random 3D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
+--- Returns a @{Core.Point#COORDINATE} object reflecting a random 3D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
 -- @param #ZONE_RADIUS self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Core.Point#POINT_VEC3 The @{Core.Point#POINT_VEC3} object reflecting the random 3D location within the zone.
+-- @return Core.Point#COORDINATE The @{Core.Point#COORDINATE} object reflecting the random 3D location within the zone.
 function ZONE_RADIUS:GetRandomPointVec3( inner, outer )
   --self:F( self.ZoneName, inner, outer )
 
-  local PointVec3 = POINT_VEC3:NewFromVec2( self:GetRandomVec2( inner, outer ) )
+  local PointVec3 = COORDINATE:NewFromVec2( self:GetRandomVec2( inner, outer ) )
 
   --self:T3( { PointVec3 } )
 
@@ -2036,15 +2036,15 @@ function ZONE_GROUP:GetRandomVec2()
   return Point
 end
 
---- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
+--- Returns a @{Core.Point#COORDINATE} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_GROUP self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Core.Point#POINT_VEC2 The @{Core.Point#POINT_VEC2} object reflecting the random 3D location within the zone.
+-- @return Core.Point#COORDINATE The @{Core.Point#COORDINATE} object reflecting the random 3D location within the zone.
 function ZONE_GROUP:GetRandomPointVec2( inner, outer )
   --self:F( self.ZoneName, inner, outer )
 
-  local PointVec2 = POINT_VEC2:NewFromVec2( self:GetRandomVec2() )
+  local PointVec2 = COORDINATE:NewFromVec2( self:GetRandomVec2() )
 
   --self:T3( { PointVec2 } )
 
@@ -2192,8 +2192,8 @@ end
 -- Various functions exist to find random points within the zone.
 --
 --   * @{#ZONE_POLYGON_BASE.GetRandomVec2}(): Gets a random 2D point in the zone.
---   * @{#ZONE_POLYGON_BASE.GetRandomPointVec2}(): Return a @{Core.Point#POINT_VEC2} object representing a random 2D point within the zone.
---   * @{#ZONE_POLYGON_BASE.GetRandomPointVec3}(): Return a @{Core.Point#POINT_VEC3} object representing a random 3D point at landheight within the zone.
+--   * @{#ZONE_POLYGON_BASE.GetRandomPointVec2}(): Return a @{Core.Point#COORDINATE} object representing a random 2D point within the zone.
+--   * @{#ZONE_POLYGON_BASE.GetRandomPointVec3}(): Return a @{Core.Point#COORDINATE} object representing a random 3D point at landheight within the zone.
 --
 -- ## Draw zone
 --
@@ -2769,7 +2769,7 @@ function ZONE_POLYGON_BASE:SmokeZone( SmokeColor, Segments )
     for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
       local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
       local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
-      POINT_VEC2:New( PointX, PointY ):Smoke( SmokeColor )
+      COORDINATE:New( PointX, 0, PointY ):Smoke( SmokeColor )
     end
     j = i
     i = i + 1
@@ -2804,7 +2804,7 @@ function ZONE_POLYGON_BASE:FlareZone( FlareColor, Segments, Azimuth, AddHeight )
     for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
       local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
       local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
-      POINT_VEC2:New( PointX, PointY, AddHeight ):Flare(FlareColor, Azimuth)
+      COORDINATE:New( PointX, AddHeight, PointY ):Flare(FlareColor, Azimuth)
     end
     j = i
     i = i + 1
@@ -2880,26 +2880,26 @@ function ZONE_POLYGON_BASE:GetRandomVec2()
     end
 end
 
---- Return a @{Core.Point#POINT_VEC2} object representing a random 2D point at landheight within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
+--- Return a @{Core.Point#COORDINATE} object representing a random 2D point at landheight within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_POLYGON_BASE self
--- @return @{Core.Point#POINT_VEC2}
+-- @return @{Core.Point#COORDINATE}
 function ZONE_POLYGON_BASE:GetRandomPointVec2()
   --self:F2()
 
-  local PointVec2 = POINT_VEC2:NewFromVec2( self:GetRandomVec2() )
+  local PointVec2 = COORDINATE:NewFromVec2( self:GetRandomVec2() )
 
   --self:T2( PointVec2 )
 
   return PointVec2
 end
 
---- Return a @{Core.Point#POINT_VEC3} object representing a random 3D point at landheight within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
+--- Return a @{Core.Point#COORDINATE} object representing a random 3D point at landheight within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
 -- @param #ZONE_POLYGON_BASE self
--- @return @{Core.Point#POINT_VEC3}
+-- @return @{Core.Point#COORDINATE}
 function ZONE_POLYGON_BASE:GetRandomPointVec3()
   --self:F2()
 
-  local PointVec3 = POINT_VEC3:NewFromVec2( self:GetRandomVec2() )
+  local PointVec3 = COORDINATE:NewFromVec2( self:GetRandomVec2() )
 
   --self:T2( PointVec3 )
 
@@ -3931,18 +3931,18 @@ function ZONE_OVAL:GetRandomVec2()
     return {x=rx, y=ry}
 end
 
---- Define a random @{Core.Point#POINT_VEC2} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
+--- Define a random @{Core.Point#COORDINATE} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_OVAL self
--- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
+-- @return Core.Point#COORDINATE The COORDINATE coordinates.
 function ZONE_OVAL:GetRandomPointVec2()
-    return POINT_VEC2:NewFromVec2(self:GetRandomVec2())
+    return COORDINATE:NewFromVec2(self:GetRandomVec2())
 end
 
---- Define a random @{Core.Point#POINT_VEC2} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
+--- Define a random @{Core.Point#COORDINATE} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
 -- @param #ZONE_OVAL self
--- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
+-- @return Core.Point#COORDINATE The COORDINATE coordinates.
 function ZONE_OVAL:GetRandomPointVec3()
-    return POINT_VEC3:NewFromVec3(self:GetRandomVec2())
+    return COORDINATE:NewFromVec3(self:GetRandomVec2())
 end
 
 --- Draw the zone on the F10 map.
@@ -4082,15 +4082,15 @@ do -- ZONE_AIRBASE
     return ZoneVec2
   end
 
-  --- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
+  --- Returns a @{Core.Point#COORDINATE} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
   -- @param #ZONE_AIRBASE self
   -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
   -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
-  -- @return Core.Point#POINT_VEC2 The @{Core.Point#POINT_VEC2} object reflecting the random 3D location within the zone.
+  -- @return Core.Point#COORDINATE The @{Core.Point#COORDINATE} object reflecting the random 3D location within the zone.
   function ZONE_AIRBASE:GetRandomPointVec2( inner, outer )
     --self:F( self.ZoneName, inner, outer )
 
-    local PointVec2 = POINT_VEC2:NewFromVec2( self:GetRandomVec2() )
+    local PointVec2 = COORDINATE:NewFromVec2( self:GetRandomVec2() )
 
     --self:T3( { PointVec2 } )
 

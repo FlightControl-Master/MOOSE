@@ -1179,9 +1179,9 @@ function GROUP:GetAverageVec3()
   end
 end
 
---- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.
+--- Returns a COORDINATE object indicating the point in 2D of the first UNIT of the GROUP within the mission.
 -- @param #GROUP self
--- @return Core.Point#POINT_VEC2 The 2D point vector of the first DCS Unit of the GROUP.
+-- @return Core.Point#COORDINATE The 3D point vector of the first DCS Unit of the GROUP.
 -- @return #nil The first UNIT is not existing or alive.
 function GROUP:GetPointVec2()
   --self:F2(self.GroupName)
@@ -1194,7 +1194,7 @@ function GROUP:GetPointVec2()
     return FirstUnitPointVec2
   end
 
-  BASE:E( { "Cannot GetPointVec2", Group = self, Alive = self:IsAlive() } )
+  BASE:E( { "Cannot get COORDINATE", Group = self, Alive = self:IsAlive() } )
 
   return nil
 end
@@ -2093,7 +2093,7 @@ function GROUP:Respawn( Template, Reset )
               GroupUnitVec3 = Zone:GetRandomVec3()
             else
               if self.InitRespawnRandomizePositionInner and self.InitRespawnRandomizePositionOuter then
-                GroupUnitVec3 = POINT_VEC3:NewFromVec2( From ):GetRandomPointVec3InRadius( self.InitRespawnRandomizePositionsOuter, self.InitRespawnRandomizePositionsInner )
+                GroupUnitVec3 = COORDINATE:NewFromVec3(From):GetRandomVec3InRadius(self.InitRespawnRandomizePositionsOuter, self.InitRespawnRandomizePositionsInner)
               else
                 GroupUnitVec3 = Zone:GetVec3()
               end
@@ -2144,7 +2144,7 @@ function GROUP:Respawn( Template, Reset )
             GroupUnitVec3 = Zone:GetRandomVec3()
           else
             if self.InitRespawnRandomizePositionInner and self.InitRespawnRandomizePositionOuter then
-              GroupUnitVec3 = POINT_VEC3:NewFromVec2( From ):GetRandomPointVec3InRadius( self.InitRespawnRandomizePositionsOuter, self.InitRespawnRandomizePositionsInner )
+              GroupUnitVec3 = COORDINATE:NewFromVec2( From ):GetRandomPointVec3InRadius( self.InitRespawnRandomizePositionsOuter, self.InitRespawnRandomizePositionsInner )
             else
               GroupUnitVec3 = Zone:GetVec3()
             end
