@@ -1157,6 +1157,151 @@ do -- COORDINATE
     return vec3
   end
 
+  --- Return the x coordinate of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #number The x coordinate.
+  function COORDINATE:GetX()
+    return self.x
+  end
+
+  --- Return the y coordinate of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #number The y coordinate.
+  function COORDINATE:GetY()
+    return self.y
+  end
+
+  --- Return the z coordinate of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #number The z coordinate.
+  function COORDINATE:GetZ()
+    return self.z
+  end
+
+  --- Set the x coordinate of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #number x The x coordinate.
+  -- @return #COORDINATE
+  function COORDINATE:SetX( x )
+    self.x = x
+    return self
+  end
+
+  --- Set the y coordinate of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #number y The y coordinate.
+  -- @return #COORDINATE
+  function COORDINATE:SetY( y )
+    self.y = y
+    return self
+  end
+
+  --- Set the z coordinate of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #number z The z coordinate.
+  -- @return #COORDINATE
+  function COORDINATE:SetZ( z )
+    self.z = z
+    return self
+  end
+
+  --- Add to the x coordinate of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #number x The x coordinate value to add to the current x coordinate.
+  -- @return #COORDINATE
+  function COORDINATE:AddX( x )
+    self.x = self.x + x
+    return self
+  end
+  
+  
+  --- Return Return the Lat(itude) coordinate of the COORDINATE (ie: (parent)COORDINATE.x).
+  -- @param #COORDINATE self
+  -- @return #number The x coordinate.
+  function COORDINATE:GetLat()
+    return self.x
+  end
+
+  --- Set the Lat(itude) coordinate of the COORDINATE (ie: COORDINATE.x).
+  -- @param #COORDINATE self
+  -- @param #number x The x coordinate.
+  -- @return #COORDINATE
+  function COORDINATE:SetLat( x )
+    self.x = x
+    return self
+  end
+
+  --- Return the Lon(gitude) coordinate of the COORDINATE (ie: (parent)COORDINATE.z).
+  -- @param #COORDINATE self
+  -- @return #number The y coordinate.
+  function COORDINATE:GetLon()
+    return self.z
+  end
+
+  --- Set the Lon(gitude) coordinate of the COORDINATE (ie: COORDINATE.z).
+  -- @param #COORDINATE self
+  -- @param #number y The y coordinate.
+  -- @return #COORDINATE
+  function COORDINATE:SetLon( z )
+    self.z = z
+    return self
+  end
+
+  --- Return the altitude (height) of the land at the COORDINATE.
+  -- @param #COORDINATE self
+  -- @return #number The land altitude.
+  function COORDINATE:GetAlt()
+    return self.y ~= 0 or land.getHeight( { x = self.x, y = self.z } )
+  end
+
+  --- Set the altitude of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #number Altitude The land altitude. If nothing (nil) is given, then the current land altitude is set.
+  -- @return #COORDINATE
+  function COORDINATE:SetAlt( Altitude )
+    self.y = Altitude or land.getHeight( { x = self.x, y = self.z } )
+    return self
+  end
+
+  --- Add to the current land height an altitude.
+  -- @param #COORDINATE self
+  -- @param #number Altitude The Altitude to add. If nothing (nil) is given, then the current land altitude is set.
+  -- @return #COORDINATE
+  function COORDINATE:AddAlt( Altitude )
+    self.y = land.getHeight( { x = self.x, y = self.z } ) + Altitude or 0
+    return self
+  end
+
+
+  --- Return a random COORDINATE within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param DCS#Distance OuterRadius
+  -- @param DCS#Distance InnerRadius
+  -- @return #COORDINATE
+  function COORDINATE:GetRandomPointVec2InRadius( OuterRadius, InnerRadius )
+    self:F2( { OuterRadius, InnerRadius } )
+
+    return COORDINATE:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
+  end
+
+  --- Add to the y coordinate of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #number y The y coordinate value to add to the current y coordinate.
+  -- @return #COORDINATE
+  function COORDINATE:AddY( y )
+    self.y = self.y + y
+    return self
+  end
+
+  --- Add to the z coordinate of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #number z The z coordinate value to add to the current z coordinate.
+  -- @return #COORDINATE
+  function COORDINATE:AddZ( z )
+    self.z = self.z +z
+    return self
+  end
+
 
   --- Returns a text documenting the wind direction (from) and strength according the measurement system @{Core.Settings}.
   -- The text will reflect the wind like this:
@@ -3474,9 +3619,18 @@ do -- COORDINATE
     return flat, elev
   end
   
+  --- Return a random COORDINATE within an Outer Radius and optionally NOT within an Inner Radius of the COORDINATE.
+  -- @param #COORDINATE self
+  -- @param DCS#Distance OuterRadius
+  -- @param DCS#Distance InnerRadius
+  -- @return #COORDINATE
+  function COORDINATE:GetRandomPointVec3InRadius( OuterRadius, InnerRadius )
+    return COORDINATE:NewFromVec3( self:GetRandomVec3InRadius( OuterRadius, InnerRadius ) )
+  end
+  
 end
 
-do -- POINT_VEC3
+do 
 
   --- The POINT_VEC3 class
   -- @type POINT_VEC3
@@ -3492,6 +3646,8 @@ do -- POINT_VEC3
 
 
   --- Defines a 3D point in the simulator and with its methods, you can use or manipulate the point in 3D space.
+  --
+  -- **DEPRECATED - PLEASE USE COORDINATE!**
   --
   -- **Important Note:** Most of the functions in this section were taken from MIST, and reworked to OO concepts.
   -- In order to keep the credibility of the the author,
@@ -3580,129 +3736,18 @@ do -- POINT_VEC3
     return self
   end
 
-  --- Create a new POINT_VEC3 object from Vec2 coordinates.
-  -- @param #POINT_VEC3 self
-  -- @param DCS#Vec2 Vec2 The Vec2 point.
-  -- @param DCS#Distance LandHeightAdd (optional) Add a landheight.
-  -- @return Core.Point#POINT_VEC3 self
-  function POINT_VEC3:NewFromVec2( Vec2, LandHeightAdd )
-
-    local self = BASE:Inherit( self, COORDINATE:NewFromVec2( Vec2, LandHeightAdd ) ) -- Core.Point#POINT_VEC3
-    self:F2( self )
-
-    return self
-  end
-
-
-  --- Create a new POINT_VEC3 object from  Vec3 coordinates.
-  -- @param #POINT_VEC3 self
-  -- @param DCS#Vec3 Vec3 The Vec3 point.
-  -- @return Core.Point#POINT_VEC3 self
-  function POINT_VEC3:NewFromVec3( Vec3 )
-
-    local self = BASE:Inherit( self, COORDINATE:NewFromVec3( Vec3 ) ) -- Core.Point#POINT_VEC3
-    self:F2( self )
-
-    return self
-  end
-
-
-
-  --- Return the x coordinate of the POINT_VEC3.
-  -- @param #POINT_VEC3 self
-  -- @return #number The x coordinate.
-  function POINT_VEC3:GetX()
-    return self.x
-  end
-
-  --- Return the y coordinate of the POINT_VEC3.
-  -- @param #POINT_VEC3 self
-  -- @return #number The y coordinate.
-  function POINT_VEC3:GetY()
-    return self.y
-  end
-
-  --- Return the z coordinate of the POINT_VEC3.
-  -- @param #POINT_VEC3 self
-  -- @return #number The z coordinate.
-  function POINT_VEC3:GetZ()
-    return self.z
-  end
-
-  --- Set the x coordinate of the POINT_VEC3.
-  -- @param #POINT_VEC3 self
-  -- @param #number x The x coordinate.
-  -- @return #POINT_VEC3
-  function POINT_VEC3:SetX( x )
-    self.x = x
-    return self
-  end
-
-  --- Set the y coordinate of the POINT_VEC3.
-  -- @param #POINT_VEC3 self
-  -- @param #number y The y coordinate.
-  -- @return #POINT_VEC3
-  function POINT_VEC3:SetY( y )
-    self.y = y
-    return self
-  end
-
-  --- Set the z coordinate of the POINT_VEC3.
-  -- @param #POINT_VEC3 self
-  -- @param #number z The z coordinate.
-  -- @return #POINT_VEC3
-  function POINT_VEC3:SetZ( z )
-    self.z = z
-    return self
-  end
-
-  --- Add to the x coordinate of the POINT_VEC3.
-  -- @param #POINT_VEC3 self
-  -- @param #number x The x coordinate value to add to the current x coordinate.
-  -- @return #POINT_VEC3
-  function POINT_VEC3:AddX( x )
-    self.x = self.x + x
-    return self
-  end
-
-  --- Add to the y coordinate of the POINT_VEC3.
-  -- @param #POINT_VEC3 self
-  -- @param #number y The y coordinate value to add to the current y coordinate.
-  -- @return #POINT_VEC3
-  function POINT_VEC3:AddY( y )
-    self.y = self.y + y
-    return self
-  end
-
-  --- Add to the z coordinate of the POINT_VEC3.
-  -- @param #POINT_VEC3 self
-  -- @param #number z The z coordinate value to add to the current z coordinate.
-  -- @return #POINT_VEC3
-  function POINT_VEC3:AddZ( z )
-    self.z = self.z +z
-    return self
-  end
-
-  --- Return a random POINT_VEC3 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC3.
-  -- @param #POINT_VEC3 self
-  -- @param DCS#Distance OuterRadius
-  -- @param DCS#Distance InnerRadius
-  -- @return #POINT_VEC3
-  function POINT_VEC3:GetRandomPointVec3InRadius( OuterRadius, InnerRadius )
-
-    return POINT_VEC3:NewFromVec3( self:GetRandomVec3InRadius( OuterRadius, InnerRadius ) )
-  end
-
 end
 
-do -- POINT_VEC2
+do
 
-  -- @type POINT_VEC2
+  --- @type POINT_VEC2
   -- @field DCS#Distance x The x coordinate in meters.
   -- @field DCS#Distance y the y coordinate in meters.
   -- @extends Core.Point#COORDINATE
 
   --- Defines a 2D point in the simulator. The height coordinate (if needed) will be the land height + an optional added height specified.
+  --
+  --  **DEPRECATED - PLEASE USE COORDINATE!**
   --
   -- ## POINT_VEC2 constructor
   --
@@ -3749,168 +3794,6 @@ do -- POINT_VEC2
     self:F2( self )
 
     return self
-  end
-
-  --- Create a new POINT_VEC2 object from  Vec2 coordinates.
-  -- @param #POINT_VEC2 self
-  -- @param DCS#Vec2 Vec2 The Vec2 point.
-  -- @return Core.Point#POINT_VEC2 self
-  function POINT_VEC2:NewFromVec2( Vec2, LandHeightAdd )
-
-    local LandHeight = land.getHeight( Vec2 )
-
-    LandHeightAdd = LandHeightAdd or 0
-    LandHeight = LandHeight + LandHeightAdd
-
-    local self = BASE:Inherit( self, COORDINATE:NewFromVec2( Vec2, LandHeightAdd ) ) -- #POINT_VEC2
-    self:F2( self )
-
-    return self
-  end
-
-  --- Create a new POINT_VEC2 object from  Vec3 coordinates.
-  -- @param #POINT_VEC2 self
-  -- @param DCS#Vec3 Vec3 The Vec3 point.
-  -- @return Core.Point#POINT_VEC2 self
-  function POINT_VEC2:NewFromVec3( Vec3 )
-
-    local self = BASE:Inherit( self, COORDINATE:NewFromVec3( Vec3 ) ) -- #POINT_VEC2
-    self:F2( self )
-
-    return self
-  end
-
-  --- Return the x coordinate of the POINT_VEC2.
-  -- @param #POINT_VEC2 self
-  -- @return #number The x coordinate.
-  function POINT_VEC2:GetX()
-    return self.x
-  end
-
-  --- Return the y coordinate of the POINT_VEC2.
-  -- @param #POINT_VEC2 self
-  -- @return #number The y coordinate.
-  function POINT_VEC2:GetY()
-    return self.z
-  end
-
-  --- Set the x coordinate of the POINT_VEC2.
-  -- @param #POINT_VEC2 self
-  -- @param #number x The x coordinate.
-  -- @return #POINT_VEC2
-  function POINT_VEC2:SetX( x )
-    self.x = x
-    return self
-  end
-
-  --- Set the y coordinate of the POINT_VEC2.
-  -- @param #POINT_VEC2 self
-  -- @param #number y The y coordinate.
-  -- @return #POINT_VEC2
-  function POINT_VEC2:SetY( y )
-    self.z = y
-    return self
-  end
-
-  --- Return Return the Lat(itude) coordinate of the POINT_VEC2 (ie: (parent)POINT_VEC3.x).
-  -- @param #POINT_VEC2 self
-  -- @return #number The x coordinate.
-  function POINT_VEC2:GetLat()
-    return self.x
-  end
-
-  --- Set the Lat(itude) coordinate of the POINT_VEC2 (ie: POINT_VEC3.x).
-  -- @param #POINT_VEC2 self
-  -- @param #number x The x coordinate.
-  -- @return #POINT_VEC2
-  function POINT_VEC2:SetLat( x )
-    self.x = x
-    return self
-  end
-
-  --- Return the Lon(gitude) coordinate of the POINT_VEC2 (ie: (parent)POINT_VEC3.z).
-  -- @param #POINT_VEC2 self
-  -- @return #number The y coordinate.
-  function POINT_VEC2:GetLon()
-    return self.z
-  end
-
-  --- Set the Lon(gitude) coordinate of the POINT_VEC2 (ie: POINT_VEC3.z).
-  -- @param #POINT_VEC2 self
-  -- @param #number y The y coordinate.
-  -- @return #POINT_VEC2
-  function POINT_VEC2:SetLon( z )
-    self.z = z
-    return self
-  end
-
-  --- Return the altitude (height) of the land at the POINT_VEC2.
-  -- @param #POINT_VEC2 self
-  -- @return #number The land altitude.
-  function POINT_VEC2:GetAlt()
-    return self.y ~= 0 or land.getHeight( { x = self.x, y = self.z } )
-  end
-
-  --- Set the altitude of the POINT_VEC2.
-  -- @param #POINT_VEC2 self
-  -- @param #number Altitude The land altitude. If nothing (nil) is given, then the current land altitude is set.
-  -- @return #POINT_VEC2
-  function POINT_VEC2:SetAlt( Altitude )
-    self.y = Altitude or land.getHeight( { x = self.x, y = self.z } )
-    return self
-  end
-
-  --- Add to the x coordinate of the POINT_VEC2.
-  -- @param #POINT_VEC2 self
-  -- @param #number x The x coordinate.
-  -- @return #POINT_VEC2
-  function POINT_VEC2:AddX( x )
-    self.x = self.x + x
-    return self
-  end
-
-  --- Add to the y coordinate of the POINT_VEC2.
-  -- @param #POINT_VEC2 self
-  -- @param #number y The y coordinate.
-  -- @return #POINT_VEC2
-  function POINT_VEC2:AddY( y )
-    self.z = self.z + y
-    return self
-  end
-
-  --- Add to the current land height an altitude.
-  -- @param #POINT_VEC2 self
-  -- @param #number Altitude The Altitude to add. If nothing (nil) is given, then the current land altitude is set.
-  -- @return #POINT_VEC2
-  function POINT_VEC2:AddAlt( Altitude )
-    self.y = land.getHeight( { x = self.x, y = self.z } ) + Altitude or 0
-    return self
-  end
-
-
-  --- Return a random POINT_VEC2 within an Outer Radius and optionally NOT within an Inner Radius of the POINT_VEC2.
-  -- @param #POINT_VEC2 self
-  -- @param DCS#Distance OuterRadius
-  -- @param DCS#Distance InnerRadius
-  -- @return #POINT_VEC2
-  function POINT_VEC2:GetRandomPointVec2InRadius( OuterRadius, InnerRadius )
-    self:F2( { OuterRadius, InnerRadius } )
-
-    return POINT_VEC2:NewFromVec2( self:GetRandomVec2InRadius( OuterRadius, InnerRadius ) )
-  end
-
-  -- TODO: Check this to replace
-  --- Calculate the distance from a reference @{#POINT_VEC2}.
-  -- @param #POINT_VEC2 self
-  -- @param #POINT_VEC2 PointVec2Reference The reference @{#POINT_VEC2}.
-  -- @return DCS#Distance The distance from the reference @{#POINT_VEC2} in meters.
-  function POINT_VEC2:DistanceFromPointVec2( PointVec2Reference )
-    self:F2( PointVec2Reference )
-
-    local Distance = ( ( PointVec2Reference.x - self.x ) ^ 2 + ( PointVec2Reference.z - self.z ) ^2 ) ^ 0.5
-
-    self:T2( Distance )
-    return Distance
   end
 
 end

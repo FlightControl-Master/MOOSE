@@ -16,7 +16,7 @@
 
 --- @type POSITIONABLE
 -- @field Core.Point#COORDINATE coordinate Coordinate object.
--- @field Core.Point#POINT_VEC3 pointvec3 Point Vec3 object.
+-- @field Core.Point#COORDINATE pointvec3 Point Vec3 object.
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 
 
@@ -284,9 +284,9 @@ function POSITIONABLE:GetVec2()
   return nil
 end
 
---- Returns a POINT_VEC2 object indicating the point in 2D of the POSITIONABLE within the mission.
+--- Returns a COORDINATE object indicating the point in 2D of the POSITIONABLE within the mission.
 -- @param #POSITIONABLE self
--- @return Core.Point#POINT_VEC2 The 2D point vector of the POSITIONABLE.
+-- @return Core.Point#COORDINATE The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetPointVec2()
   self:F2( self.PositionableName )
@@ -296,20 +296,20 @@ function POSITIONABLE:GetPointVec2()
   if DCSPositionable then
     local PositionableVec3 = DCSPositionable:getPosition().p
 
-    local PositionablePointVec2 = POINT_VEC2:NewFromVec3( PositionableVec3 )
+    local PositionablePointVec2 = COORDINATE:NewFromVec3( PositionableVec3 )
 
     -- self:F( PositionablePointVec2 )
     return PositionablePointVec2
   end
 
-  self:E( { "Cannot GetPointVec2", Positionable = self, Alive = self:IsAlive() } )
+  self:E( { "Cannot Coordinate", Positionable = self, Alive = self:IsAlive() } )
 
   return nil
 end
 
---- Returns a POINT_VEC3 object indicating the point in 3D of the POSITIONABLE within the mission.
+--- Returns a COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param #POSITIONABLE self
--- @return Core.Point#POINT_VEC3 The 3D point vector of the POSITIONABLE.
+-- @return Core.Point#COORDINATE The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetPointVec3()
 
@@ -329,8 +329,8 @@ function POSITIONABLE:GetPointVec3()
 
     else
 
-      -- Create a new POINT_VEC3 object.
-      self.pointvec3 = POINT_VEC3:NewFromVec3( PositionableVec3 )
+      -- Create a new COORDINATE object.
+      self.pointvec3 = COORDINATE:NewFromVec3( PositionableVec3 )
 
     end
 
