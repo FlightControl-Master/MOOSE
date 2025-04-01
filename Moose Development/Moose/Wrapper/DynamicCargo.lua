@@ -124,7 +124,7 @@ DYNAMICCARGO.AircraftDimensions = {
 
 --- DYNAMICCARGO class version.
 -- @field #string version
-DYNAMICCARGO.version="0.0.6"
+DYNAMICCARGO.version="0.0.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -183,7 +183,7 @@ end
 -- @param #DYNAMICCARGO self
 -- @return DCS static object
 function DYNAMICCARGO:GetDCSObject()
-  local DCSStatic = Unit.getByName( self.StaticName ) 
+  local DCSStatic = StaticObject.getByName( self.StaticName ) or Unit.getByName( self.StaticName ) 
   if DCSStatic then
     return DCSStatic
   end
@@ -376,6 +376,33 @@ end
 -- Private Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- [Internal] _Get helo hovering intel
+-- @param #DYNAMICCARGO self
+-- @param Wrapper.Unit#UNIT Unit The Unit to test
+-- @param #number ropelength Ropelength to test
+-- @return #boolean Outcome
+function DYNAMICCARGO:_HeloHovering(Unit,ropelength)
+    local DCSUnit = Unit:GetDCSObject() --DCS#Unit
+    local hovering = false
+    local Height = 0
+    if DCSUnit then
+        local UnitInAir = DCSUnit:inAir()
+        local UnitCategory = DCSUnit:getDesc().category       
+        if UnitInAir == true and UnitCategory == Unit.Category.HELICOPTER then
+            local VelocityVec3 = DCSUnit:getVelocity()
+            local Velocity = UTILS.VecNorm(VelocityVec3)
+            local Coordinate = DCSUnit:getPoint()
+            local LandHeight = land.getHeight({ x = Coordinate.x, y = Coordinate.z })
+            Height = Coordinate.y - LandHeight
+            if Velocity < 1 and Height <= ropelength and Height > 6 then -- hover lower than ropelength but higher than the normal FARP height.
+                hovering = true
+            end
+        end
+        return hovering, Height
+    end
+    return false
+end
+
 --- [Internal] _Get Possible Player Helo Nearby
 -- @param #DYNAMICCARGO self
 -- @param Core.Point#COORDINATE pos
@@ -393,30 +420,37 @@ function DYNAMICCARGO:_GetPossibleHeloNearby(pos,loading)
     local name = helo:GetPlayerName() or _DATABASE:_FindPlayerNameByUnitName(helo:GetName()) or "None"
     self:T(self.lid.." Checking: "..name)
     local hpos = helo:GetCoordinate()
-    -- TODO Unloading via sling load?
-    --local inair = hpos.y-hpos:GetLandHeight() > 4.5 and true or false -- Standard FARP is 4.5m
-    local inair = helo:InAir()
-    self:T(self.lid.." InAir: AGL/InAir: "..hpos.y-hpos:GetLandHeight().."/"..tostring(inair))
+    -- TODO Check unloading via sling load?
     local typename = helo:GetTypeName()
-    if hpos and typename and inair == false then
-      local dimensions = DYNAMICCARGO.AircraftDimensions[typename]
-      if dimensions then
-        local delta2D = hpos:Get2DDistance(pos)
-        local delta3D = hpos:Get3DDistance(pos)
-        if self.testing then
-          self:T(string.format("Cargo relative position: 2D %dm | 3D %dm",delta2D,delta3D))
-          self:T(string.format("Helo dimension: length %dm | width %dm | rope %dm",dimensions.length,dimensions.width,dimensions.ropelength))
-        end
-        if loading~=true and delta2D > dimensions.length or delta2D > dimensions.width or delta3D > dimensions.ropelength then
-          success = true
-          Helo = helo
-          Playername = name
-        end
-        if loading == true and delta2D < dimensions.length or delta2D < dimensions.width or delta3D < dimensions.ropelength then
-          success = true
-          Helo = helo
-          Playername = name
-        end
+    local dimensions = DYNAMICCARGO.AircraftDimensions[typename]
+    local hovering, height = self:_HeloHovering(helo,dimensions.ropelength)
+    local helolanded = not helo:InAir()
+    self:T(self.lid.." InAir: AGL/Hovering: "..hpos.y-hpos:GetLandHeight().."/"..tostring(hovering))
+    if hpos and typename and dimensions then
+      local delta2D = hpos:Get2DDistance(pos)
+      local delta3D = hpos:Get3DDistance(pos)
+      if self.testing then
+        self:T(string.format("Cargo relative position: 2D %dm | 3D %dm",delta2D,delta3D))
+        self:T(string.format("Helo dimension: length %dm | width %dm | rope %dm",dimensions.length,dimensions.width,dimensions.ropelength))
+        self:T(string.format("Helo hovering: %s at %dm",tostring(hovering),height))
+      end
+      -- unloading from ground
+      if loading~=true and (delta2D > dimensions.length or delta2D > dimensions.width) and helolanded then
+        success = true
+        Helo = helo
+        Playername = name
+      end
+      -- unloading from hover/rope
+      if loading~=true and (delta2D < dimensions.length or delta2D < dimensions.width) and hovering then
+        success = true
+        Helo = helo
+        Playername = name
+      end
+      -- loading
+      if loading == true and (delta2D < dimensions.length or delta2D < dimensions.width or delta3D < dimensions.ropelength) then
+        success = true
+        Helo = helo
+        Playername = name
       end
     end
   end
