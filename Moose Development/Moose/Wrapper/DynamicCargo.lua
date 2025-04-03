@@ -388,7 +388,7 @@ function DYNAMICCARGO:_HeloHovering(Unit,ropelength)
     if DCSUnit then
         local UnitInAir = DCSUnit:inAir()
         local UnitCategory = DCSUnit:getDesc().category       
-        if UnitInAir == true and UnitCategory == Unit.Category.HELICOPTER then
+        if UnitInAir == true and UnitCategory == 1 then
             local VelocityVec3 = DCSUnit:getVelocity()
             local Velocity = UTILS.VecNorm(VelocityVec3)
             local Coordinate = DCSUnit:getPoint()
