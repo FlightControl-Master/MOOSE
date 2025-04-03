@@ -994,6 +994,65 @@ function CONTROLLABLE:CommandSetFrequencyForUnit(Frequency,Modulation,Power,Unit
   return self
 end
 
+--- [AIR] Set smoke on or off. See [DCS command smoke on off](https://wiki.hoggitworld.com/view/DCS_command_smoke_on_off)
+-- @param #CONTROLLABLE self
+-- @param #boolean OnOff Set to true for on and false for off. Defaults to true.
+-- @param #number Delay (Optional) Delay the command by this many seconds.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSmokeOnOff(OnOff, Delay)
+  local switch = (OnOff == nil) and true or OnOff
+  local command = {
+      id = 'SMOKE_ON_OFF', 
+      params = { 
+          value = switch
+          }
+      }
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil,self.CommandSmokeOnOff,{self,switch},Delay)
+  else
+    self:SetCommand(command)
+  end
+  return self
+end
+
+--- [AIR] Set smoke on. See [DCS command smoke on off](https://wiki.hoggitworld.com/view/DCS_command_smoke_on_off)
+-- @param #CONTROLLABLE self
+-- @param #number Delay (Optional) Delay the command by this many seconds.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSmokeON(Delay)
+  local command = {
+      id = 'SMOKE_ON_OFF', 
+      params = { 
+          value = true
+          }
+      }
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil,self.CommandSmokeON,{self},Delay)
+  else
+    self:SetCommand(command)
+  end
+  return self
+end
+
+--- [AIR] Set smoke off. See [DCS command smoke on off](https://wiki.hoggitworld.com/view/DCS_command_smoke_on_off)
+-- @param #CONTROLLABLE self
+-- @param #number Delay (Optional) Delay the command by this many seconds.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSmokeOFF(Delay)
+  local command = {
+      id = 'SMOKE_ON_OFF', 
+      params = { 
+          value = false
+          }
+      }
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil,self.CommandSmokeOFF,{self},Delay)
+  else
+    self:SetCommand(command)
+  end
+  return self
+end
+
 --- Set EPLRS data link on/off.
 -- @param #CONTROLLABLE self
 -- @param #boolean SwitchOnOff If true (or nil) switch EPLRS on. If false switch off.
