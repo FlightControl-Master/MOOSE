@@ -380,7 +380,8 @@ function RADIOQUEUE:Broadcast(transmission)
     self:T(self.lid..string.format("Broadcasting from aircraft %s", sender:GetName()))
     
     
-    if not self.senderinit then
+    --if not self.senderinit then
+    -- TODO Seems to be a DCS bug - if I explode ANY unit in a group the BC assignment gets lost
     
       -- Command to set the Frequency for the transmission.
       local commandFrequency={
@@ -394,7 +395,7 @@ function RADIOQUEUE:Broadcast(transmission)
       sender:SetCommand(commandFrequency)
       
       self.senderinit=true
-    end
+    --end
     
     -- Set subtitle only if duration>0 sec.
     local subtitle=nil
