@@ -2,17 +2,17 @@
 --
 -- ## Main Features:
 --
---    * Convenient access to DCS API functions
+--    * Convenient access to Ground Crew created cargo items.
 --
 -- ===
 --
 -- ## Example Missions:
 --
--- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_Demos/tree/master/Wrapper/Storage).
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_Demos/tree/master/).
 --
 -- ===
 --
--- ### Author: **Applevangelist**
+-- ### Author: **Applevangelist**; additional checks **Chesster**
 --
 -- ===
 -- @module Wrapper.DynamicCargo
@@ -435,19 +435,19 @@ function DYNAMICCARGO:_GetPossibleHeloNearby(pos,loading)
         self:T(string.format("Helo hovering: %s at %dm",tostring(hovering),height))
       end
       -- unloading from ground
-      if loading~=true and (delta2D > dimensions.length or delta2D > dimensions.width) and helolanded then
+      if loading~=true and (delta2D > dimensions.length or delta2D > dimensions.width) and helolanded then  -- Theoretically the cargo could still be attached to the sling if landed next to the cargo. But once moved again it would go back into loaded state once lifted again.
         success = true
         Helo = helo
         Playername = name
       end
       -- unloading from hover/rope
-      if loading~=true and (delta2D < dimensions.length or delta2D < dimensions.width) and hovering then
+      if loading~=true and delta3D > dimensions.ropelength then     
         success = true
         Helo = helo
         Playername = name
       end
       -- loading
-      if loading == true and (delta2D < dimensions.length or delta2D < dimensions.width or delta3D < dimensions.ropelength) then
+      if loading == true and ((delta2D < dimensions.length and delta2D < dimensions.width and helolanded) or (delta3D == dimensions.ropelength and helo:InAir())) then -- Loaded via ground or sling                  
         success = true
         Helo = helo
         Playername = name
@@ -468,20 +468,22 @@ function DYNAMICCARGO:_UpdatePosition()
       self:T(string.format("Cargo position: x=%d, y=%d, z=%d",pos.x,pos.y,pos.z))
       self:T(string.format("Last position: x=%d, y=%d, z=%d",self.LastPosition.x,self.LastPosition.y,self.LastPosition.z))
     end
-    if UTILS.Round(UTILS.VecDist3D(pos,self.LastPosition),2) > 0.5 then
+    if UTILS.Round(UTILS.VecDist3D(pos,self.LastPosition),2) > 0.5 then      -- This checks if the cargo has moved more than 0.5m since last check. If so then the cargo is loaded
       ---------------
       -- LOAD Cargo
       ---------------
-      if self.CargoState == DYNAMICCARGO.State.NEW then
-        local isloaded, client, playername = self:_GetPossibleHeloNearby(pos,true) 
+      if self.CargoState == DYNAMICCARGO.State.NEW or self.CargoState == DYNAMICCARGO.State.UNLOADED then
+        local isloaded, client, playername = self:_GetPossibleHeloNearby(pos,true)         
         self:T(self.lid.." moved! NEW -> LOADED by "..tostring(playername))
         self.CargoState = DYNAMICCARGO.State.LOADED
         self.Owner = playername
-        _DATABASE:CreateEventDynamicCargoLoaded(self)
+        _DATABASE:CreateEventDynamicCargoLoaded(self)        
+      end  
       ---------------
       -- UNLOAD Cargo
-      ---------------   
-      elseif self.CargoState == DYNAMICCARGO.State.LOADED then
+      ---------------
+      --  If the cargo is stationary then we need to end this condition here to check whether it is unloaded or still onboard or still hooked if anyone can hover that precisly   
+    elseif self.CargoState == DYNAMICCARGO.State.LOADED then
         -- TODO add checker if we are in flight somehow
         -- ensure not just the helo is moving
         local count = _DYNAMICCARGO_HELOS:CountAlive()
@@ -493,26 +495,19 @@ function DYNAMICCARGO:_UpdatePosition()
         local isunloaded = true
         local client
         local playername = self.Owner
-        if count > 0 and (agl > 0 or self.testing) then
-          self:T(self.lid.." Possible alive helos: "..count or -1)
-          if agl ~= 0 or self.testing then
-            isunloaded, client, playername = self:_GetPossibleHeloNearby(pos,false)        
-          end
+        if count > 0 then
+          self:T(self.lid.." Possible alive helos: "..count or -1)          
+            isunloaded, client, playername = self:_GetPossibleHeloNearby(pos,false)       
           if isunloaded then
             self:T(self.lid.." moved! LOADED -> UNLOADED by "..tostring(playername))
             self.CargoState = DYNAMICCARGO.State.UNLOADED
             self.Owner = playername
             _DATABASE:CreateEventDynamicCargoUnloaded(self)
-          end
-        elseif count > 0 and agl == 0 then
-          self:T(self.lid.." moved! LOADED -> UNLOADED by "..tostring(playername))
-          self.CargoState = DYNAMICCARGO.State.UNLOADED
-          self.Owner = playername
-          _DATABASE:CreateEventDynamicCargoUnloaded(self)
+          end        
         end
       end
       self.LastPosition = pos
-    end
+    --end
   else
     ---------------
     -- REMOVED Cargo
