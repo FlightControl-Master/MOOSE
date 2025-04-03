@@ -361,7 +361,6 @@ end
 -- @param #RADIOQUEUE self
 -- @param #RADIOQUEUE.Transmission transmission The transmission.
 function RADIOQUEUE:Broadcast(transmission)
-  self:T("Broadcast")
 
   if ((transmission.soundfile and transmission.soundfile.useSRS) or transmission.soundtext) and self.msrs then
     self:_BroadcastSRS(transmission)
@@ -377,10 +376,11 @@ function RADIOQUEUE:Broadcast(transmission)
   if sender then
     
     -- Broadcasting from aircraft. Only players tuned in to the right frequency will see the message.
-    self:T(self.lid..string.format("Broadcasting from aircraft %s", sender:GetName()))
+    self:T(self.lid..string.format("Broadcasting from aircraft %s | sender init: %s", sender:GetName(),tostring(self.senderinit)))
     
     
-    if not self.senderinit then
+    --if not self.senderinit then 
+    -- TODO Seems to be a DCS bug - if I explode ANY unit in a group the BC assignment gets lost
     
       -- Command to set the Frequency for the transmission.
       local commandFrequency={
@@ -394,7 +394,7 @@ function RADIOQUEUE:Broadcast(transmission)
       sender:SetCommand(commandFrequency)
       
       self.senderinit=true
-    end
+    --end
     
     -- Set subtitle only if duration>0 sec.
     local subtitle=nil
@@ -420,7 +420,7 @@ function RADIOQUEUE:Broadcast(transmission)
     -- Debug message.
     if self.Debugmode then
       local text=string.format("file=%s, freq=%.2f MHz, duration=%.2f sec, subtitle=%s", filename, self.frequency/1000000, transmission.duration, transmission.subtitle or "")
-      MESSAGE:New(text, 2, "RADIOQUEUE "..self.alias):ToAll()
+      MESSAGE:New(text, 2, "RADIOQUEUE "..self.alias):ToAll():ToLog()
     end
       
   else
@@ -452,7 +452,7 @@ function RADIOQUEUE:Broadcast(transmission)
       -- Debug message.
       if self.Debugmode then
         local text=string.format("file=%s, freq=%.2f MHz, duration=%.2f sec, subtitle=%s", filename, self.frequency/1000000, transmission.duration, transmission.subtitle or "")
-        MESSAGE:New(string.format(text, filename, transmission.duration, transmission.subtitle or ""), 5, "RADIOQUEUE "..self.alias):ToAll()
+        MESSAGE:New(string.format(text, filename, transmission.duration, transmission.subtitle or ""), 5, "RADIOQUEUE "..self.alias):ToAll():ToLog()
       end
     else
       self:E("ERROR: Could not get vec3 to determine transmission origin! Did you specify a sender and is it still alive?")
@@ -485,7 +485,7 @@ end
 --- Check radio queue for transmissions to be broadcasted.
 -- @param #RADIOQUEUE self
 function RADIOQUEUE:_CheckRadioQueue()
-
+  self:T("_CheckRadioQueue")
   -- Check if queue is empty.
   if #self.queue==0 then
     -- Queue is now empty. Nothing to else to do.
