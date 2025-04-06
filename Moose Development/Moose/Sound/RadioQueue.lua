@@ -379,7 +379,10 @@ function RADIOQUEUE:Broadcast(transmission)
     self:T(self.lid..string.format("Broadcasting from aircraft %s | sender init: %s", sender:GetName(),tostring(self.senderinit)))
     
     
-    --if not self.senderinit then 
+    self:T(self.lid..string.format("Broadcasting from aircraft %s", sender:GetName()))
+    
+    
+    --if not self.senderinit then
     -- TODO Seems to be a DCS bug - if I explode ANY unit in a group the BC assignment gets lost
     
       -- Command to set the Frequency for the transmission.
