@@ -15,7 +15,7 @@ with open( os.path.dirname(__file__) + '/docs-header.html', 'r') as file:
 # that directory
 files = Path(directory).glob('*.html')
 for file in files:
-  # print(file)
+  print(file)
   with open(file, 'r') as fileread:
     filedata = fileread.read()
     # Replace the target string
