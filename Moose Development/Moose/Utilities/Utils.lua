@@ -2329,8 +2329,12 @@ function UTILS.IsLoadingDoorOpen( unit_name )
         BASE:T(unit_name .. " rear cargo door is open")
         return true
       end
-
-      return false
+      
+      -- ground
+      local UnitDescriptor = unit:getDesc()
+      local IsGroundResult = (UnitDescriptor.category == Unit.Category.GROUND_UNIT)
+      
+      return IsGroundResult
 
   end -- nil
 

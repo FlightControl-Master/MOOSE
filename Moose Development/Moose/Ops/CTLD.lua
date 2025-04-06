@@ -1242,7 +1242,21 @@ do
 --            end
 --          end
 -- 
+-- ## 8. Transport crates and troops with CA (Combined Arms) trucks
 -- 
+-- You can optionally also allow to CTLD with CA trucks and other vehicles:
+-- 
+--          -- Create a SET_CLIENT to capture CA vehicles steered by players
+--          local truckers = SET_CLIENT:New():HandleCASlots():FilterCoalitions("blue"):FilterPrefixes("Truck"):FilterStart()
+--          -- Allow CA transport
+--          my_ctld:AllowCATransport(true,truckers)
+--          -- Set truck capability by typename
+--          my_ctld:SetUnitCapabilities("M 818", true, true, 2, 12, 9, 4500)
+--          -- Alternatively set truck capability with a UNIT object
+--          local GazTruck = UNIT:FindByName("GazTruck-1-1")
+--          my_ctld:SetUnitCapabilities(GazTruck, true, true, 2, 12, 9, 4500)
+-- 
+--
 -- @field #CTLD
 CTLD = {
   ClassName       = "CTLD",
@@ -1277,6 +1291,7 @@ CTLD = {
   UserSetGroup = nil,
   LoadedGroupsTable = {},
   keeploadtable = true,
+  allowCATransport = false,
 }
 
 ------------------------------
@@ -1384,6 +1399,7 @@ CTLD.UnitTypeCapabilities = {
     ["OH58D"] = {type="OH58D", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 14, cargoweightlimit = 400},
     ["CH-47Fbl1"] = {type="CH-47Fbl1", crates=true, troops=true, cratelimit = 4, trooplimit = 31, length = 20, cargoweightlimit = 10800},
     ["MosquitoFBMkVI"] = {type="MosquitoFBMkVI", crates= true, troops=false, cratelimit = 2, trooplimit = 0, length = 13, cargoweightlimit = 1800},
+    ["M 818"] = {type="M 818", crates= true, troops=true, cratelimit = 4, trooplimit = 12, length = 9, cargoweightlimit = 4500},
 }
 
 --- Allowed Fixed Wing Types
@@ -1396,7 +1412,7 @@ CTLD.FixedWingTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.31"
+CTLD.version="1.1.32"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1605,6 +1621,10 @@ function CTLD:New(Coalition, Prefixes, Alias)
   for i=1,100 do
     math.random()
   end
+  
+  -- CA Transport
+  self.allowCATransport = false -- #boolean
+  self.CATransportSet = nil -- Core.Set#SET_CLIENT
   
   self:_GenerateVHFrequencies()
   self:_GenerateUHFrequencies()
@@ -1949,6 +1969,16 @@ function CTLD:_GetUnitCapabilities(Unit)
   return capabilities
 end
 
+--- (User) Function to allow transport via Combined Arms Trucks.
+-- @param #CTLD self
+-- @param #boolean OnOff Switch on (true) or off (false).
+-- @param Core.Set#SET_CLIENT ClientSet The CA handling client set for ground transport.
+-- @return #CTLD self
+function CTLD:AllowCATransport(OnOff,ClientSet)
+  self.allowCATransport = OnOff -- #boolean
+  self.CATransportSet = ClientSet -- Core.Set#SET_CLIENT
+  return self
+end
 
 --- (Internal) Function to generate valid UHF Frequencies
 -- @param #CTLD self
@@ -2742,6 +2772,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
   -- spawn crates in front of helicopter
   local IsHerc = self:IsFixedWing(Unit) -- Herc, Bronco and Hook load from behind
   local IsHook = self:IsHook(Unit) -- Herc, Bronco and Hook load from behind
+  local IsTruck = Unit:IsGround()
   local cargotype = Cargo -- Ops.CTLD#CTLD_CARGO
   local number = number or cargotype:GetCratesNeeded() --#number
   local cratesneeded = cargotype:GetCratesNeeded() --#number
@@ -2763,7 +2794,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
   local rheading = 0
   local angleOffNose = 0
   local addon = 0
-  if IsHerc or IsHook then 
+  if IsHerc or IsHook or IsTruck then 
     -- spawn behind the Herc
     addon = 180
   end
@@ -3093,24 +3124,24 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight, ignoretype
   if not _ignoreweight then
     maxloadable = self:_GetMaxLoadableMass(_unit)
   end
-  self:T2(self.lid .. " Max loadable mass: " .. maxloadable)
+  self:T(self.lid .. " Max loadable mass: " .. maxloadable)
   for _,_cargoobject in pairs (existingcrates) do
     local cargo = _cargoobject -- #CTLD_CARGO
     local static = cargo:GetPositionable() -- Wrapper.Static#STATIC -- crates
     local weight = cargo:GetMass() -- weight in kgs of this cargo
     local staticid = cargo:GetID()
-    self:T2(self.lid .. " Found cargo mass: " .. weight)
+    self:T(self.lid .. " Found cargo mass: " .. weight)
     if static and static:IsAlive() then --or cargoalive) then
       local restricthooktononstatics = self.enableChinookGCLoading and IsHook
-      --self:I(self.lid .. " restricthooktononstatics: " .. tostring(restricthooktononstatics))
+      self:T(self.lid .. " restricthooktononstatics: " .. tostring(restricthooktononstatics))
       local cargoisstatic = cargo:GetType() == CTLD_CARGO.Enum.STATIC and true or false
-      --self:I(self.lid .. " Cargo is static: " .. tostring(cargoisstatic))
+      self:T(self.lid .. " Cargo is static: " .. tostring(cargoisstatic))
       local restricted = cargoisstatic and restricthooktononstatics
-      --self:I(self.lid .. " Loading restricted: " .. tostring(restricted))
+      self:T(self.lid .. " Loading restricted: " .. tostring(restricted))
       local staticpos = static:GetCoordinate() --or dcsunitpos
       local cando = cargo:UnitCanCarry(_unit)
       if ignoretype == true then cando = true end
-      --self:I(self.lid .. " Unit can carry: " .. tostring(cando))
+      self:T(self.lid .. " Unit can carry: " .. tostring(cando))
       --- Testing
       local distance = self:_GetDistance(location,staticpos)
       self:T(self.lid .. string.format("Dist %dm/%dm | weight %dkg | maxloadable %dkg",distance,finddist,weight,maxloadable))
@@ -4184,6 +4215,19 @@ function CTLD:_RefreshF10Menus()
       end
     end
   end
+  
+  -- 3) CA Units
+  if self.allowCATransport and self.CATransportSet then
+    for _,_clientobj in pairs(self.CATransportSet.Set) do
+      local client = _clientobj -- Wrapper.Client#CLIENT
+      if client:IsGround() then
+        local cname = client:GetName()
+        --self:I(self.lid.."Adding: "..cname)
+        _UnitList[cname] = cname
+      end
+    end
+  end
+  
   self.CtldUnits = _UnitList
 
   -- subcats?
@@ -4212,10 +4256,15 @@ function CTLD:_RefreshF10Menus()
   local menus = {}
   for _, _unitName in pairs(self.CtldUnits) do
     if (not self.MenusDone[_unitName]) or (self.showstockinmenuitems == true) then
+      --self:I(self.lid.."Menu not done yet")
       local _unit  = UNIT:FindByName(_unitName)
+      if not _unit and self.allowCATransport then
+        _unit = CLIENT:FindByName(_unitName)
+      end
       if _unit and _unit:IsAlive() then
         local _group = _unit:GetGroup()
         if _group then
+          --self:I(self.lid.."Unit and Group exist")
           local capabilities = self:_GetUnitCapabilities(_unit)
           local cantroops  = capabilities.troops
           local cancrates  = capabilities.crates
@@ -5730,9 +5779,8 @@ end
     local unit = nil
     if type(Unittype) == "string" then
       unittype = Unittype
-    elseif type(Unittype) == "table" then
-      unit = UNIT:FindByName(Unittype) -- Wrapper.Unit#UNIT
-      unittype = unit:GetTypeName()
+    elseif type(Unittype) == "table" and Unittype.ClassName and Unittype:IsInstanceOf("UNIT") then
+      unittype = Unittype:GetTypeName()
     else
       return self
     end
