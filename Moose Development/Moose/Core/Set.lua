@@ -2519,6 +2519,35 @@ do -- SET_UNIT
     )
     return self
   end
+  
+  --- Builds a set of units which belong to groups with certain **group names**.
+  -- @param #SET_UNIT self
+  -- @param #string Prefixes The (partial) group names to look for. Can be a single string or a table of strings.
+  -- @return #SET_UNIT self
+  function SET_UNIT:FilterGroupPrefixes(Prefixes)
+    if type(Prefixes) == "string" then
+      Prefixes = {Prefixes}
+    end
+    self:FilterFunction(
+      function(unit,prefixes)
+        local outcome = false
+        if unit then
+          local grp = unit:GetGroup()
+          local gname = grp ~= nil and grp:GetName() or "none"
+          for _,_fix in pairs(prefixes or {}) do
+            if string.find(gname,_fix) then
+              outcome = true
+              break
+            end
+          end
+        else
+          return false
+        end
+        return outcome
+      end, Prefixes
+    )
+    return self
+  end
 
   --- Builds a set of units having a radar of give types.
   -- All the units having a radar of a given type will be included within the set.
@@ -4432,6 +4461,35 @@ do -- SET_CLIENT
     for PrefixID, Prefix in pairs( Prefixes ) do
       self.Filter.ClientPrefixes[Prefix] = Prefix
     end
+    return self
+  end
+  
+  --- Builds a set of clients which belong to groups with certain **group names**.
+  -- @param #SET_CLIENT self
+  -- @param #string Prefixes The (partial) group names to look for. Can be anywhere in the group name. Can be a single string or a table of strings.
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:FilterGroupPrefixes(Prefixes)
+    if type(Prefixes) == "string" then
+      Prefixes = {Prefixes}
+    end
+    self:FilterFunction(
+      function(unit,prefixes)
+        local outcome = false
+        if unit then
+          local grp = unit:GetGroup()
+          local gname = grp ~= nil and grp:GetName() or "none"
+          for _,_fix in pairs(prefixes or {}) do
+            if string.find(gname,_fix) then
+              outcome = true
+              break
+            end
+          end
+        else
+          return false
+        end
+        return outcome
+      end, Prefixes
+    )
     return self
   end
 
