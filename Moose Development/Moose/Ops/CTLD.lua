@@ -1412,7 +1412,7 @@ CTLD.FixedWingTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.1.32"
+CTLD.version="1.2.33"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2055,6 +2055,12 @@ function CTLD:_EventHandler(EventData)
     end
     -- Herc support
     if self:IsFixedWing(_unit) and self.enableFixedWing then
+      local unitname = event.IniUnitName or "none"
+      self.Loaded_Cargo[unitname] = nil
+      self:_RefreshF10Menus()
+    end
+    -- CA support
+    if _unit:IsGround() and self.allowCATransport then
       local unitname = event.IniUnitName or "none"
       self.Loaded_Cargo[unitname] = nil
       self:_RefreshF10Menus()
@@ -4141,6 +4147,7 @@ function CTLD:_MoveGroupToZone(Group)
   local groupcoord = Group:GetCoordinate()
   -- Get closest zone of type
   local outcome, name, zone, distance  = self:IsUnitInZone(Group,CTLD.CargoZoneType.MOVE)
+  self:T({canmove=outcome, name=name, zone=zone, dist=distance,max=self.movetroopsdistance})
   if (distance <= self.movetroopsdistance) and outcome == true and zone~= nil then
     -- yes, we can ;)
     local groupname = Group:GetName()
@@ -5240,6 +5247,8 @@ function CTLD:ActivateZone(Name,ZoneType,NewState)
     table = self.dropOffZones
   elseif ZoneType == CTLD.CargoZoneType.SHIP then
     table = self.shipZones
+  elseif ZoneType == CTLD.CargoZoneType.BEACON then
+    table = self.droppedBeacons
   else
     table = self.wpZones
   end
@@ -5672,7 +5681,8 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
     end
     local distance = self:_GetDistance(zonecoord,unitcoord)
     self:T("Distance Zone: "..distance)
-    if (zone:IsVec2InZone(unitVec2) or Zonetype == CTLD.CargoZoneType.MOVE) and active == true and maxdist > distance then 
+    self:T("Zone Active: "..tostring(active))
+    if (zone:IsVec2InZone(unitVec2) or Zonetype == CTLD.CargoZoneType.MOVE) and active == true and distance < maxdist then 
       outcome = true
       maxdist = distance
       zoneret = zone 
