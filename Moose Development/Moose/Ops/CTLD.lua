@@ -4222,7 +4222,7 @@ function CTLD:_RefreshF10Menus()
       local client = _clientobj -- Wrapper.Client#CLIENT
       if client:IsGround() then
         local cname = client:GetName()
-        --self:I(self.lid.."Adding: "..cname)
+        self:T(self.lid.."Adding: "..cname)
         _UnitList[cname] = cname
       end
     end
@@ -4256,7 +4256,7 @@ function CTLD:_RefreshF10Menus()
   local menus = {}
   for _, _unitName in pairs(self.CtldUnits) do
     if (not self.MenusDone[_unitName]) or (self.showstockinmenuitems == true) then
-      --self:I(self.lid.."Menu not done yet")
+      self:T(self.lid.."Menu not done yet for ".._unitName)
       local _unit  = UNIT:FindByName(_unitName)
       if not _unit and self.allowCATransport then
         _unit = CLIENT:FindByName(_unitName)
@@ -4264,7 +4264,7 @@ function CTLD:_RefreshF10Menus()
       if _unit and _unit:IsAlive() then
         local _group = _unit:GetGroup()
         if _group then
-          --self:I(self.lid.."Unit and Group exist")
+          self:T(self.lid.."Unit and Group exist")
           local capabilities = self:_GetUnitCapabilities(_unit)
           local cantroops  = capabilities.troops
           local cancrates  = capabilities.crates
