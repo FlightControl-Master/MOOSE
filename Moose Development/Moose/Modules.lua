@@ -32,6 +32,7 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/MarkerOps_Base.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/TextAndSound.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/Pathline.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/ClientMenu.lua')
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/Vector.lua')
 
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Wrapper/Object.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Wrapper/Identifiable.lua' )
@@ -186,7 +187,7 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Tasking/Task_Cargo_Dispatcher
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Tasking/Task_Capture_Zone.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Tasking/Task_Capture_Dispatcher.lua' )
 
-__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/Vector.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Beacons.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Point.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Procedure.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/FlightPlan.lua' )
