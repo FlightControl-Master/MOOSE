@@ -74,7 +74,7 @@
 -- @image Designation.JPG
 --
 -- Date: 24 Oct 2021
--- Last Update: May 2024
+-- Last Update: Mar 2025
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
@@ -89,6 +89,10 @@
 -- @field #table playermenus
 -- @field #boolean smokemenu
 -- @field #boolean threatmenu
+-- @field #number RoundingPrecision
+-- @field #table smokeoffset
+-- @field #boolean increasegroundawareness
+-- @field #number MonitorFrequency
 -- @extends Ops.Intel#INTEL
 
 ---
@@ -100,6 +104,9 @@ AUTOLASE = {
   alias = "",
   debug = false,
   smokemenu = true,
+  RoundingPrecision = 0,
+  increasegroundawareness = true,
+  MonitorFrequency = 30,
 }
 
 --- Laser spot info
@@ -118,7 +125,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.26"
+AUTOLASE.version = "0.1.31"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -191,6 +198,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.reporttimelong = 30
   self.smoketargets = false
   self.smokecolor = SMOKECOLOR.Red
+  self.smokeoffset = nil
   self.notifypilots = true
   self.targetsperrecce = {}
   self.RecceUnits = {}
@@ -207,6 +215,11 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.playermenus = {}
   self.smokemenu = true
   self.threatmenu = true
+  self.RoundingPrecision = 0
+  self.increasegroundawareness = true
+  self.MonitorFrequency = 30
+  
+  self:EnableSmokeMenu({Angle=math.random(0,359),Distance=math.random(10,20)})
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("AUTOLASE %s (%s) | ", self.alias, self.coalition and UTILS.GetCoalitionName(self.coalition) or "unknown")
@@ -309,13 +322,38 @@ end
 -- Helper Functions
 -------------------------------------------------------------------
 
+--- [User] When using Monitor, set the frequency here in which the report will appear
+-- @param #AUTOLASE self
+-- @param #number Seconds Run the report loop every number of seconds defined here.
+-- @return #AUTOLASE self
+function AUTOLASE:SetMonitorFrequency(Seconds)
+  self.MonitorFrequency = Seconds or 30
+  return self
+end
+
 --- [User] Set a table of possible laser codes.
--- Each new RECCE can select a code from this table, default is { 1688, 1130, 4785, 6547, 1465, 4578 } .
+-- Each new RECCE can select a code from this table, default is { 1688, 1130, 4785, 6547, 1465, 4578 }.
 -- @param #AUTOLASE self
 -- @param #list<#number> LaserCodes
--- @return #AUTOLASE
+-- @return #AUTOLASE self
 function AUTOLASE:SetLaserCodes( LaserCodes )
   self.LaserCodes = ( type( LaserCodes ) == "table" ) and LaserCodes or { LaserCodes }
+  return self
+end
+
+--- [User] Improve ground unit detection by using a zone scan and LOS check.
+-- @param #AUTOLASE self
+-- @return #AUTOLASE self 
+function AUTOLASE:EnableImproveGroundUnitsDetection()
+  self.increasegroundawareness = true
+  return self
+end
+
+--- [User] Do not improve ground unit detection by using a zone scan and LOS check.
+-- @param #AUTOLASE self
+-- @return #AUTOLASE self 
+function AUTOLASE:DisableImproveGroundUnitsDetection()
+  self.increasegroundawareness = false
   return self
 end
 
@@ -600,11 +638,26 @@ function AUTOLASE:SetSmokeTargets(OnOff,Color)
   return self
 end
 
+--- (User) Function to set rounding precision for BR distance output.
+-- @param #AUTOLASE self
+-- @param #number IDP Rounding precision before/after the decimal sign. Defaults to zero. Positive values round right of the decimal sign, negative ones left of the decimal sign. 
+-- @return #AUTOLASE self 
+function AUTOLASE:SetRoundingPrecsion(IDP)
+  self.RoundingPrecision = IDP or 0
+  return self
+end
+
 --- (User) Show the "Switch smoke target..." menu entry for pilots. On by default.
 -- @param #AUTOLASE self
+-- @param #table Offset (Optional) Define an offset for the smoke, i.e. not directly on the unit itself, angle is degrees and distance is meters. E.g. `autolase:EnableSmokeMenu({Angle=30,Distance=20})`
 -- @return #AUTOLASE self 
-function AUTOLASE:EnableSmokeMenu()
+function AUTOLASE:EnableSmokeMenu(Offset)
   self.smokemenu = true
+  if Offset then
+    self.smokeoffset = {}
+    self.smokeoffset.Distance = Offset.Distance or math.random(10,20)
+    self.smokeoffset.Angle = Offset.Angle or math.random(0,359)
+  end
   return self
 end
 
@@ -613,6 +666,7 @@ end
 -- @return #AUTOLASE self 
 function AUTOLASE:DisableSmokeMenu()
   self.smokemenu = false
+  self.smokeoffset = nil
   return self
 end
 
@@ -671,7 +725,8 @@ function AUTOLASE:CleanCurrentLasing()
       local unit = recce:GetUnit(1)
       local name = unit:GetName()
       if not self.RecceUnits[name] then
-        self.RecceUnits[name] = { name=name, unit=unit, cooldown = false, timestamp = timer.getAbsTime() }
+        local isground = (unit and unit.IsGround) and unit:IsGround() or false
+        self.RecceUnits[name] = { name=name, unit=unit, cooldown = false, timestamp = timer.getAbsTime(), isground=isground }
       end
     end
   end
@@ -786,8 +841,12 @@ function AUTOLASE:ShowStatus(Group,Unit)
           locationstring = entry.coordinate:ToStringMGRS(settings)
         elseif settings:IsA2G_LL_DMS() then
           locationstring = entry.coordinate:ToStringLLDMS(settings)
+        elseif settings:IsA2G_LL_DDM() then
+         locationstring = entry.coordinate:ToStringLLDDM(settings)
         elseif settings:IsA2G_BR() then
-          locationstring = entry.coordinate:ToStringBR(Group:GetCoordinate() or Unit:GetCoordinate(),settings)
+          -- attention this is the distance from the ASKING unit to target, not from RECCE to target!
+          local startcoordinate = Unit:GetCoordinate() or Group:GetCoordinate()
+          locationstring = entry.coordinate:ToStringBR(startcoordinate,settings,false,self.RoundingPrecision)
         end
       end
     end
@@ -917,6 +976,65 @@ function AUTOLASE:CanLase(Recce,Unit)
   return canlase
 end
 
+--- (Internal) Function to do a zone check per ground Recce and make found units and statics "known".
+-- @param #AUTOLASE self
+-- @return #AUTOLASE self 
+function AUTOLASE:_Prescient()
+  -- self.RecceUnits[name] = { name=name, unit=unit, cooldown = false, timestamp = timer.getAbsTime(), isground=isground }
+  for _,_data in pairs(self.RecceUnits) do
+    -- ground units only
+    if _data.isground and _data.unit and _data.unit:IsAlive() then
+      local unit = _data.unit -- Wrapper.Unit#UNIT
+      local position = unit:GetCoordinate() -- Core.Point#COORDINATE
+      local needsinit = false
+      if position then
+        local lastposition = unit:GetProperty("lastposition")
+        -- property initiated?
+        if not lastposition then
+          unit:SetProperty("lastposition",position)
+          lastposition = position
+          needsinit = true
+        end
+        -- has moved?
+        local dist = position:Get2DDistance(lastposition)
+        -- refresh?
+        local TNow = timer.getAbsTime()
+        -- check
+        if dist > 10 or needsinit==true or TNow - _data.timestamp > 29 then
+          -- init scan objects
+          local hasunits,hasstatics,_,Units,Statics = position:ScanObjects(self.LaseDistance,true,true,false)
+          -- loop found units
+          if hasunits then
+            self:T(self.lid.."Checking possibly visible UNITs for Recce "..unit:GetName())
+            for _,_target in pairs(Units) do -- Wrapper.Unit#UNIT object here
+              local target = _target -- Wrapper.Unit#UNIT
+              if target and target:GetCoalition() ~= self.coalition then
+                if unit:IsLOS(target) and (not target:IsUnitDetected(unit))then
+                  unit:KnowUnit(target,true,true)
+                end
+              end
+            end
+          end
+          -- loop found statics
+          if hasstatics then
+           self:T(self.lid.."Checking possibly visible STATICs for Recce "..unit:GetName())
+            for _,_static in pairs(Statics) do -- DCS static object here
+              local static = STATIC:Find(_static)
+              if static and static:GetCoalition() ~= self.coalition then
+                local IsLOS = position:IsLOS(static:GetCoordinate())
+                if IsLOS then
+                  unit:KnowUnit(static,true,true)
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+  return self
+end
+
 -------------------------------------------------------------------
 -- FSM Functions
 -------------------------------------------------------------------
@@ -929,6 +1047,9 @@ end
 -- @return #AUTOLASE self
 function AUTOLASE:onbeforeMonitor(From, Event, To)
   self:T({From, Event, To})
+  if self.increasegroundawareness then
+    self:_Prescient()
+  end
   -- Check if group has detected any units.
   self:UpdateIntel()
   return self
@@ -957,7 +1078,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     local grp = contact.group
     local coord = contact.position
     local reccename = contact.recce or "none"
-  local threat = contact.threatlevel or 0
+    local threat = contact.threatlevel or 0
     local reccegrp = UNIT:FindByName(reccename)
     if reccegrp then
       local reccecoord = reccegrp:GetCoordinate()
@@ -1081,6 +1202,9 @@ function AUTOLASE:onafterMonitor(From, Event, To)
           }
        if self.smoketargets then
           local coord = unit:GetCoordinate()
+          if self.smokeoffset then
+            coord:Translate(self.smokeoffset.Distance,self.smokeoffset.Angle,true,true)
+          end
           local color = self:GetSmokeColor(reccename)
           coord:Smoke(color)
        end
@@ -1091,7 +1215,8 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     end
   end
   
-  self:__Monitor(-30)
+  local nextloop = -self.MonitorFrequency or -30
+  self:__Monitor(nextloop)
   return self
 end
 

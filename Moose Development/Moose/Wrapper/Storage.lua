@@ -203,7 +203,7 @@ STORAGE.Type = {
 
 --- STORAGE class version.
 -- @field #string version
-STORAGE.version="0.1.4"
+STORAGE.version="0.1.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -227,11 +227,11 @@ function STORAGE:New(AirbaseName)
 
   self.airbase=Airbase.getByName(AirbaseName)
 
-  if Airbase.getWarehouse then
+  if Airbase.getWarehouse and self.airbase then
     self.warehouse=self.airbase:getWarehouse()
   end
 
-  self.lid = string.format("STORAGE %s", AirbaseName)
+  self.lid = string.format("STORAGE %s | ", AirbaseName)
 
   return self
 end
@@ -251,7 +251,7 @@ function STORAGE:NewFromStaticCargo(StaticCargoName)
     self.warehouse=Warehouse.getCargoAsWarehouse(self.airbase)
   end
 
-  self.lid = string.format("STORAGE %s", StaticCargoName)
+  self.lid = string.format("STORAGE %s | ", StaticCargoName)
 
   return self
 end
@@ -271,7 +271,7 @@ function STORAGE:NewFromDynamicCargo(DynamicCargoName)
     self.warehouse=Warehouse.getCargoAsWarehouse(self.airbase)
   end
 
-  self.lid = string.format("STORAGE %s", DynamicCargoName)
+  self.lid = string.format("STORAGE %s | ", DynamicCargoName)
 
   return self
 end
@@ -656,7 +656,6 @@ function STORAGE:SaveToFile(Path,Filename)
       for key,amount in pairs(lq) do
         DataLiquids = DataLiquids..tostring(key).."="..tostring(amount).."\n"
       end
-      --self:I(DataLiquids)
       UTILS.SaveToFile(Path,Filename.."_Liquids.csv",DataLiquids)
       if self.verbose and self.verbose > 0 then
         self:I(self.lid.."Saving Liquids to "..tostring(Path).."\\"..tostring(Filename).."_Liquids.csv")
@@ -668,7 +667,6 @@ function STORAGE:SaveToFile(Path,Filename)
       for key,amount in pairs(ac) do
         DataAircraft = DataAircraft..tostring(key).."="..tostring(amount).."\n"
       end
-      --self:I(DataAircraft)
       UTILS.SaveToFile(Path,Filename.."_Aircraft.csv",DataAircraft)
       if self.verbose and self.verbose > 0 then
         self:I(self.lid.."Saving Aircraft to "..tostring(Path).."\\"..tostring(Filename).."_Aircraft.csv")
@@ -677,9 +675,17 @@ function STORAGE:SaveToFile(Path,Filename)
     
     if UTILS.TableLength(wp) > 0 then
       DataWeapons = DataWeapons .."Weapons and Materiel in Storage:\n"
-      for key,amount in pairs(wp) do
-        DataWeapons = DataWeapons..tostring(key).."="..tostring(amount).."\n"
+
+      for _,_category in pairs(ENUMS.Storage.weapons) do
+        for _,_key in pairs(_category) do
+          local amount = self:GetAmount(_key)
+          if type(_key) == "table" then
+            _key = "{"..table.concat(_key,",").."}"
+          end
+          DataWeapons = DataWeapons..tostring(_key).."="..tostring(amount).."\n"
+        end
       end
+
       -- Gazelle table keys
       for key,amount in pairs(ENUMS.Storage.weapons.Gazelle) do
         amount = self:GetItemAmount(ENUMS.Storage.weapons.Gazelle[key])
@@ -705,7 +711,6 @@ function STORAGE:SaveToFile(Path,Filename)
         amount = self:GetItemAmount(ENUMS.Storage.weapons.AH64D[key])
         DataWeapons = DataWeapons.."ENUMS.Storage.weapons.AH64D."..tostring(key).."="..tostring(amount).."\n"
       end
-      --self:I(DataAircraft)
        UTILS.SaveToFile(Path,Filename.."_Weapons.csv",DataWeapons)
        if self.verbose and self.verbose > 0 then
          self:I(self.lid.."Saving Weapons to "..tostring(Path).."\\"..tostring(Filename).."_Weapons.csv")
@@ -777,14 +782,26 @@ function STORAGE:LoadFromFile(Path,Filename)
     local Ok,Weapons = UTILS.LoadFromFile(Path,Filename.."_Weapons.csv")
     if Ok then
        if self.verbose and self.verbose > 0 then
-         self:I(self.lid.."Loading _eapons from "..tostring(Path).."\\"..tostring(Filename).."_Weapons.csv")
+         self:I(self.lid.."Loading Weapons from "..tostring(Path).."\\"..tostring(Filename).."_Weapons.csv")
        end
       for _id,_line in pairs(Weapons) do
         if string.find(_line,"Storage") == nil then
             local tbl=UTILS.Split(_line,"=")
             local wpname = tbl[1]
             local wpnumber = tonumber(tbl[2])
-            self:SetAmount(wpname,wpnumber)
+            if string.find(wpname,"{") == 1 then
+             --self:I("Found a table: "..wpname)
+             wpname = string.gsub(wpname,"{","")
+             wpname = string.gsub(wpname,"}","")
+             local tbl = UTILS.Split(wpname,",")
+             local wptbl = {}
+             for _id,_key in ipairs(tbl) do
+                table.insert(wptbl,_id,_key)
+             end
+             self:SetAmount(wptbl,wpnumber)  
+            else
+             self:SetAmount(wpname,wpnumber)
+            end
         end
       end
     else
@@ -821,6 +838,35 @@ function STORAGE:StopAutoSave()
     self.SaverTimer = nil
   end
   return self
+end
+
+--- Try to find the #STORAGE object of one of the many "H"-Helipads in Syria. You need to put a (small, round) zone on top of it, because the name is not unique(!).
+-- @param #STORAGE self
+-- @param #string ZoneName The name of the zone where to find the helipad.
+-- @return #STORAGE self or nil if not found.
+function STORAGE:FindSyriaHHelipadWarehouse(ZoneName)
+ local findzone = ZONE:New(ZoneName)
+ local base = world.getAirbases()
+ for i = 1, #base do
+   local info = {}
+   --info.desc = Airbase.getDesc(base[i])
+   info.callsign = Airbase.getCallsign(base[i])
+   info.id = Airbase.getID(base[i])
+   --info.cat = Airbase.getCategory(base[i])
+   info.point = Airbase.getPoint(base[i])
+   info.coordinate = COORDINATE:NewFromVec3(info.point)
+   info.DCSObject = base[i]
+   --if Airbase.getUnit(base[i]) then
+       --info.unitId = Airbase.getUnit(base[i]):getID()
+   --end
+   if info.callsign == "H" and findzone:IsCoordinateInZone(info.coordinate) then
+    info.warehouse = info.DCSObject:getWarehouse()
+    info.Storage = STORAGE:New(info.callsign..info.id)
+    info.Storage.airbase = info.DCSObject
+    info.Storage.warehouse = info.warehouse         
+    return info.Storage
+   end
+ end
 end
 
 

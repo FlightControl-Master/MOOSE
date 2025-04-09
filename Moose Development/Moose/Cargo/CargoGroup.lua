@@ -22,6 +22,7 @@ do -- CARGO_GROUP
   --- @type CARGO_GROUP
   -- @field Core.Set#SET_CARGO CargoSet The collection of derived CARGO objects.
   -- @field #string GroupName The name of the CargoGroup.
+  -- @field Wrapper.Group#GROUÜ CargoCarrier The carrier group.
   -- @extends Cargo.Cargo#CARGO_REPORTABLE
   
   --- Defines a cargo that is represented by a @{Wrapper.Group} object within the simulator.
@@ -410,7 +411,7 @@ do -- CARGO_GROUP
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param Core.Point#COORDINATE ToPointVec2
   -- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
   function CARGO_GROUP:onafterUnBoard( From, Event, To, ToPointVec2, NearRadius, ... )
     self:T( {From, Event, To, ToPointVec2, NearRadius } )
@@ -453,7 +454,7 @@ do -- CARGO_GROUP
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param Core.Point#COORDINATE ToPointVec2
   -- @param #number NearRadius If distance is smaller than this number, cargo is loaded into the carrier.
   function CARGO_GROUP:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius, ... )
     --self:T( { From, Event, To, ToPointVec2, NearRadius } )
@@ -491,7 +492,7 @@ do -- CARGO_GROUP
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param Core.Point#COORDINATE ToPointVec2
   function CARGO_GROUP:onafterUnLoad( From, Event, To, ToPointVec2, ... )
     --self:T( { From, Event, To, ToPointVec2 } )
   
@@ -771,3 +772,4 @@ do -- CARGO_GROUP
     
 
 end -- CARGO_GROUP
+

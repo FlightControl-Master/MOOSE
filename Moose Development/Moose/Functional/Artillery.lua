@@ -619,63 +619,148 @@ ARTY.WeaponType={
 }
 
 --- Database of common artillery unit properties.
+-- @type ARTY.dbitem
+-- @field #string displayname Name displayed in ME.
+-- @field #number minrange Minimum firing range in meters.
+-- @field #number maxrange Maximum firing range in meters.
+-- @field #number reloadtime Reload time in seconds.
+
+--- Database of common artillery unit properties.
+-- Table key is the "type name" and table value is and `ARTY.dbitem`.
 -- @type ARTY.db
 ARTY.db={
-  ["2B11 mortar"] = {  -- type "2B11 mortar"
-    minrange   = 500,  -- correct?
-    maxrange   = 7000, -- 7 km
-    reloadtime = 30,   -- 30 sec
+  ["LeFH_18-40-105"] = {
+    displayname = "FH LeFH-18 105mm", -- name displayed in the ME
+    minrange    = 500,                -- min range (green circle) in meters
+    maxrange    = 10500,              -- max range (red circle) in meters
+    reloadtime  = nil,                -- reload time in seconds
   },
-  ["SPH 2S1 Gvozdika"] = { -- type "SAU Gvozdika"
-    minrange   = 300,      -- correct?
-    maxrange   = 15000,    -- 15 km
-    reloadtime = nil,      -- unknown
+  ["M2A1-105"] = {
+    displayname = "FH M2A1 105mm",
+    minrange    = 500,
+    maxrange    = 11500,
+    reloadtime  = nil,
   },
-  ["SPH 2S19 Msta"] = { --type "SAU Msta", alias "2S19 Msta"
-    minrange   = 300,     -- correct?
-    maxrange   = 23500,   -- 23.5 km
-    reloadtime = nil,     -- unknown
+  ["Pak40"] = {
+    displayname = "FH Pak 40 75mm",
+    minrange    = 500,
+    maxrange    = 3000,
+    reloadtime  = nil,
+  },      
+  ["L118_Unit"] = {
+    displayname = "L118 Light Artillery Gun",
+    minrange    = 500,
+    maxrange    = 17500,
+    reloadtime  = nil,
   },
-  ["SPH 2S3 Akatsia"] = { -- type "SAU Akatsia", alias "2S3 Akatsia"
-    minrange   = 300,   -- correct?
-    maxrange   = 17000, -- 17 km
-    reloadtime = nil,   -- unknown
+  ["Smerch"] = {
+    displayname = "MLRS 9A52 Smerch CM 300mm",
+    minrange    = 20000,
+    maxrange    = 70000,
+    reloadtime  = 2160,
   },
-  ["SPH 2S9 Nona"] = { --type "SAU 2-C9"
-    minrange   = 500,   -- correct?
-    maxrange   = 7000,  -- 7 km
-    reloadtime = nil,   -- unknown
+  ["Smerch_HE"] = {
+    displayname = "MLRS 9A52 Smerch HE 300mm",
+    minrange    = 20000,
+    maxrange    = 70000,
+    reloadtime  = 2160,
   },
-  ["SPH M109 Paladin"] = { -- type "M-109", alias "M109"
-    minrange   = 300,     -- correct?
-    maxrange   = 22000,   -- 22 km
-    reloadtime = nil,   -- unknown
+  ["Uragan_BM-27"] = {
+    displayname = "MLRS 9K57 Uragan BM-27 220mm",
+    minrange   = 11500,
+    maxrange   = 35800,
+    reloadtime = 840,
   },
-  ["SpGH Dana"] = {       -- type "SpGH_Dana"
-    minrange   = 300,     -- correct?
-    maxrange   = 18700,   -- 18.7 km
-    reloadtime = nil,     -- unknown
+  ["Grad-URAL"] = {
+    displayname = "MLRS BM-21 Grad 122mm",
+    minrange   = 5000,
+    maxrange   = 19000,
+    reloadtime = 420,
   },
-  ["MLRS BM-21 Grad"] = { --type "Grad-URAL", alias "MLRS BM-21 Grad"
-    minrange = 5000,  --  5 km
-    maxrange = 19000, -- 19 km
-    reloadtime = 420, -- 7 min
+  ["HL_B8M1"] = {
+    displayname = "MLRS HL with B8M1 80mm",
+    minrange   = 500,
+    maxrange   = 5000,
+    reloadtime = nil,
   },
-  ["MLRS 9K57 Uragan BM-27"] = { -- type "Uragan_BM-27"
-    minrange   = 11500, -- 11.5 km
-    maxrange   = 35800, -- 35.8 km
-    reloadtime = 840,   -- 14 min
+  ["tt_B8M1"] = {
+    displayname = "MLRS LC with B8M1 80mm",
+    minrange   = 500,
+    maxrange   = 5000,
+    reloadtime = nil,
   },
-  ["MLRS 9A52 Smerch"] = { -- type "Smerch"
-    minrange   = 20000, -- 20 km
-    maxrange   = 70000, -- 70 km
-    reloadtime = 2160,  -- 36 min
+  ["MLRS"] = {
+    displayname = "MLRS M270 227mm",
+    minrange   = 10000,
+    maxrange   = 32000,
+    reloadtime = 540,
   },
-  ["MLRS M270"] = { --type "MRLS", alias "M270 MRLS"
-    minrange   = 10000, -- 10 km
-    maxrange   = 32000, -- 32 km
-    reloadtime = 540,   -- 9 min
+  ["2B11 mortar"] = {
+    displayname = "Mortar 2B11 120mm", 
+    minrange    = 500,
+    maxrange    = 7000,
+    reloadtime  = 30,
   },
+  ["PLZ05"] = {
+    displayname = "PLZ-05", 
+    minrange    = 500,
+    maxrange    = 23500,
+    reloadtime  = nil,
+  },
+  ["SAU Gvozdika"] = {
+    displayname = "SPH 2S1 Gvozdika 122mm",
+    minrange    = 300,
+    maxrange    = 15000,
+    reloadtime  = nil,
+  },
+  ["SAU Msta"] = {
+    displayname = "SPH 2S19 Msta 152mm",
+    minrange    = 300,
+    maxrange    = 23500,
+    reloadtime  = nil,
+  },
+  ["SAU Akatsia"] = {
+    displayname = "SPH 2S3 Akatsia 152mm",
+    minrange    = 300,
+    maxrange    = 17000,
+    reloadtime  = nil,
+  },
+  ["SpGH_Dana"] = {
+    displayname = "SPH Dana vz77 152mm",
+    minrange    = 300,
+    maxrange    = 18700,
+    reloadtime  = nil,
+  },
+  ["M-109"] = {
+    displayname = "SPH M109 Paladin 155mm",
+    minrange    = 300,
+    maxrange    = 22000,
+    reloadtime  = nil,
+  }, 
+  ["M12_GMC"] = {
+    displayname = "SPH M12 GMC 155mm",
+    minrange    = 300,
+    maxrange    = 18200,
+    reloadtime  = nil,
+  },
+  ["Wespe124"] = {
+    displayname = "SPH Sd.Kfz.124 Wespe 105mm",
+    minrange    = 300,
+    maxrange    = 7000,
+    reloadtime  = nil,
+  },
+  ["T155_Firtina"] = {
+    displayname = "SPH T155 Firtina 155mm",
+    minrange    = 300,
+    maxrange    = 41000,
+    reloadtime  = nil,
+  },
+  ["SAU 2-C9"] = {
+    displayname = "SPM 2S9 Nona 120mm M",
+    minrange    = 500,
+    maxrange    = 7000,
+    reloadtime  = nil,
+  },  
 }
 
 --- Target.
@@ -695,7 +780,7 @@ ARTY.db={
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.3.1"
+ARTY.version="1.3.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -797,8 +882,8 @@ function ARTY:New(group, alias)
   -- Maximum speed in km/h.
   self.SpeedMax=group:GetSpeedMax()
 
-  -- Group is mobile or not (e.g. mortars).
-  if self.SpeedMax>1 then
+  -- Group is mobile or not (e.g. mortars). Some immobile units have a speed of 1 m/s = 3.6 km/h. So we check this number.
+  if self.SpeedMax>3.6 then
     self.ismobile=true
   else
     self.ismobile=false
@@ -1923,7 +2008,7 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   end
 
   -- Check if we have and arty type that is in the DB.
-  local _dbproperties=self:_CheckDB(self.DisplayName)
+  local _dbproperties=self:_CheckDB(self.Type)
   self:T({dbproperties=_dbproperties})
   if _dbproperties~=nil then
     for property,value in pairs(_dbproperties) do
@@ -1969,8 +2054,8 @@ function ARTY:onafterStart(Controllable, From, Event, To)
   text=text..string.format("Type                = %s\n", self.Type)
   text=text..string.format("Display Name        = %s\n", self.DisplayName)
   text=text..string.format("Number of units     = %d\n", self.IniGroupStrength)
-  text=text..string.format("Speed max           = %d km/h\n", self.SpeedMax)
-  text=text..string.format("Speed default       = %d km/h\n", self.Speed)
+  text=text..string.format("Speed max           = %.1f km/h\n", self.SpeedMax)
+  text=text..string.format("Speed default       = %.1f km/h\n", self.Speed)
   text=text..string.format("Is mobile           = %s\n", tostring(self.ismobile))
   text=text..string.format("Is cargo            = %s\n", tostring(self.iscargo))
   text=text..string.format("Min range           = %.1f km\n", self.minrange/1000)
@@ -3049,7 +3134,7 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
   local nfire=Narty
   local _type="shots"
   if target.weapontype==ARTY.WeaponType.Auto then
-    nfire=Narty
+    nfire=Nammo  -- We take everything that is available
     _type="shots"
   elseif target.weapontype==ARTY.WeaponType.Cannon then
     nfire=Narty
@@ -3070,6 +3155,8 @@ function ARTY:onafterOpenFire(Controllable, From, Event, To, target)
     nfire=Nmissiles
     _type="cruise missiles"
   end
+  
+  --env.info(string.format("FF type=%s, Nrockets=%d, Nfire=%d target.nshells=%d", _type, Nrockets, nfire, target.nshells))
 
   -- Adjust if less than requested ammo is left.
   target.nshells=math.min(target.nshells, nfire)

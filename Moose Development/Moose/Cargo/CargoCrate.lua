@@ -114,7 +114,7 @@ do -- CARGO_CRATE
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Core.Point#POINT_VEC2
+  -- @param Core.Point#COORDINATE
   function CARGO_CRATE:onenterUnLoaded( From, Event, To, ToPointVec2 )
     --self:T( { ToPointVec2, From, Event, To } )
   

@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update Dec 2024
+-- @date Last Update Jan 2025
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -184,7 +184,7 @@ do
 --            
 -- Add Escorts Squad (recommended, optional)
 -- 
---            local Squad_Two = SQUADRON:New("Escorts",4,"Escorts North")
+--            local Squad_Two = SQUADRON:New("Escorts",4,"Escorts North") -- taking a template with 2 planes here, will result in a group of 2 escorts which can fly in formation escorting the AWACS.
 --            Squad_Two:AddMissionCapability({AUFTRAG.Type.ESCORT})
 --            Squad_Two:SetFuelLowRefuel(true)
 --            Squad_Two:SetFuelLowThreshold(0.3)
@@ -232,8 +232,8 @@ do
 --            -- set up in the mission editor with a late activated helo named "Rock#ZONE_POLYGON". Note this also sets the BullsEye to be referenced as "Rock".
 --            -- The CAP station zone is called "Fremont". We will be on 255 AM.
 --            local testawacs = AWACS:New("AWACS North",AwacsAW,"blue",AIRBASE.Caucasus.Kutaisi,"Awacs Orbit",ZONE:FindByName("Rock"),"Fremont",255,radio.modulation.AM )
---            -- set two escorts
---            testawacs:SetEscort(2)
+--            -- set one escort group; this example has two units in the template group, so they can fly a nice formation.
+--            testawacs:SetEscort(1,ENUMS.Formation.FixedWing.FingerFour.Group,{x=-500,y=50,z=500},45)
 --            -- Callsign will be "Focus". We'll be a Angels 30, doing 300 knots, orbit leg to 88deg with a length of 25nm.
 --            testawacs:SetAwacsDetails(CALLSIGN.AWACS.Focus,1,30,300,88,25)
 --            -- Set up SRS on port 5010 - change the below to your path and port
@@ -509,7 +509,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.68", -- #string
+  version = "0.2.71", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -1773,7 +1773,7 @@ function AWACS:_EventHandler(EventData)
     end
   end
   
-  if Event.id == EVENTS.PlayerLeaveUnit then --player left unit
+  if Event.id == EVENTS.PlayerLeaveUnit and Event.IniGroupName then --player left unit
     -- check known player?
     self:T("Player group left  unit: " .. Event.IniGroupName)
     self:T("Player name left: " .. Event.IniPlayerName)
@@ -2169,9 +2169,12 @@ end
 
 --- [User] Set AWACS Escorts Template
 -- @param #AWACS self
--- @param #number EscortNumber Number of fighther planes to accompany this AWACS. 0 or nil means no escorts.
+-- @param #number EscortNumber Number of fighther plane GROUPs to accompany this AWACS. 0 or nil means no escorts. If you want >1 plane in an escort group, you can either set the respective squadron grouping to the desired number, or use a template for escorts with >1 unit.
+-- @param #number Formation Formation the escort should take (if more than one plane), e.g. `ENUMS.Formation.FixedWing.FingerFour.Group`. Formation is used on GROUP level, multiple groups of one unit will NOT conform to this formation.
+-- @param #table OffsetVector Offset the escorts should fly behind the AWACS, given as table, distance in meters, e.g. `{x=-500,y=0,z=500}` - 500m behind (negative value) and to the right (negative for left), no vertical separation (positive over, negative under the AWACS flight). For multiple groups, the vectors will be slightly changed to avoid collisions.
+-- @param #number EscortEngageMaxDistance Escorts engage air targets max this NM away, defaults to 45NM.
 -- @return #AWACS self
-function AWACS:SetEscort(EscortNumber)
+function AWACS:SetEscort(EscortNumber,Formation,OffsetVector,EscortEngageMaxDistance)
   self:T(self.lid.."SetEscort")
   if EscortNumber and EscortNumber > 0 then
     self.HasEscorts = true
@@ -2180,6 +2183,9 @@ function AWACS:SetEscort(EscortNumber)
     self.HasEscorts = false
     self.EscortNumber = 0
   end
+  self.EscortFormation = Formation
+  self.OffsetVec = OffsetVector or {x=500,y=100,z=500}
+  self.EscortEngageMaxDistance = EscortEngageMaxDistance or 45
   return self
 end
 
@@ -2234,12 +2240,26 @@ function AWACS:_StartEscorts(Shiftchange)
   local group = AwacsFG:GetGroup()
 
   local timeonstation = (self.EscortsTimeOnStation + self.ShiftChangeTime) * 3600 -- hours to seconds
+  local OffsetX = 500
+  local OffsetY = 500
+  local OffsetZ = 500
+  if self.OffsetVec then
+    OffsetX = self.OffsetVec.x or 500
+    OffsetY = self.OffsetVec.y or 500
+    OffsetZ = self.OffsetVec.z or 500
+  end
+  
   for i=1,self.EscortNumber do
-    -- every 
-    local escort = AUFTRAG:NewESCORT(group, {x= -100*((i + (i%2))/2), y=0, z=(100 + 100*((i + (i%2))/2))*(-1)^i},45,{"Air"})
-    escort:SetRequiredAssets(1)
+    -- every
+    local escort = AUFTRAG:NewESCORT(group, {x= OffsetX*((i + (i%2))/2), y=OffsetY*((i + (i%2))/2), z=(OffsetZ + OffsetZ*((i + (i%2))/2))*(-1)^i},self.EscortEngageMaxDistance,{"Air"})
+    --local escort = AUFTRAG:NewESCORT(group,self.OffsetVec,self.EscortEngageMaxDistance,{"Air"})
+    --escort:SetRequiredAssets(self.EscortNumber)
     escort:SetTime(nil,timeonstation)
+    if self.Escortformation then
+      escort:SetFormation(self.Escortformation)
+    end
     escort:SetMissionRange(self.MaxMissionRange)
+    
     self.AirWing:AddMission(escort)
     self.CatchAllMissions[#self.CatchAllMissions+1] = escort
 
@@ -3642,7 +3662,7 @@ function AWACS:_CheckIn(Group)
       managedgroup.LastTasking = timer.getTime()
       
       GID = managedgroup.GID
-    self.ManagedGrps[self.ManagedGrpID]=managedgroup
+      self.ManagedGrps[self.ManagedGrpID]=managedgroup
     
     local alphacheckbulls = self:_ToStringBULLS(Group:GetCoordinate())
     local alphacheckbullstts = self:_ToStringBULLS(Group:GetCoordinate(),false,true)
@@ -3909,6 +3929,12 @@ function AWACS:_SetClientMenus()
             checkin = checkin,
           }
           self.clientmenus:Push(menus,cgrpname)
+          -- catch errors - when this entry is built we should NOT have a managed entry
+          local GID,hasentry = self:_GetManagedGrpID(cgrp)
+          if hasentry then
+            -- this user is checked in but has the check in entry ... not good.
+            self:_CheckOut(cgrp,GID,true)
+          end
         end
       end
     else
@@ -6065,6 +6091,7 @@ function AWACS:_CheckAwacsStatus()
       end
     end 
   end
+  
   --------------------------------
   --     AWACS
   --------------------------------
@@ -6213,12 +6240,13 @@ function AWACS:_CheckAwacsStatus()
         
         report:Add("====================")
         
+        local RESMission
         -- Check for replacement mission - if any
         if self.ShiftChangeEscortsFlag and self.ShiftChangeEscortsRequested then -- Ops.Auftrag#AUFTRAG
-          ESmission = self.EscortMissionReplacement[i]
-          local esstatus = ESmission:GetState()
-          local ESmissiontime = (timer.getTime() - self.EscortsTimeStamp)
-          local ESTOSLeft = UTILS.Round((((self.EscortsTimeOnStation+self.ShiftChangeTime)*3600) - ESmissiontime),0) -- seconds
+          RESMission = self.EscortMissionReplacement[i]
+          local esstatus = RESMission:GetState()
+          local RESMissiontime = (timer.getTime() - self.EscortsTimeStamp)
+          local ESTOSLeft = UTILS.Round((((self.EscortsTimeOnStation+self.ShiftChangeTime)*3600) - RESMissiontime),0) -- seconds
           ESTOSLeft = UTILS.Round(ESTOSLeft/60,0) -- minutes
           local ChangeTime = UTILS.Round(((self.ShiftChangeTime * 3600)/60),0)
 
@@ -6226,7 +6254,7 @@ function AWACS:_CheckAwacsStatus()
           report:Add(string.format("Auftrag Status: %s",esstatus))
           report:Add(string.format("TOS Left: %d min",ESTOSLeft))
           
-          local OpsGroups = ESmission:GetOpsGroups()
+          local OpsGroups = RESMission:GetOpsGroups()
           local OpsGroup = self:_GetAliveOpsGroupFromTable(OpsGroups) -- Ops.OpsGroup#OPSGROUP
           if OpsGroup then
             local OpsName = OpsGroup:GetName() or "Unknown"
@@ -6238,13 +6266,13 @@ function AWACS:_CheckAwacsStatus()
             report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
           end
           
-          if ESmission:IsExecuting() then
+          if RESMission and RESMission:IsExecuting() then
             -- make the actual change in the queue
             self.ShiftChangeEscortsFlag = false
             self.ShiftChangeEscortsRequested = false
             -- cancel old mission
             if ESmission and ESmission:IsNotOver() then
-              ESmission:Cancel()
+              ESmission:__Cancel(1)
             end
             self.EscortMission[i] = self.EscortMissionReplacement[i]
               self.EscortMissionReplacement[i] = nil

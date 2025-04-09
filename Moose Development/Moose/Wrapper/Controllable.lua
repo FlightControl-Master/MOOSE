@@ -973,7 +973,7 @@ end
 -- @param #number Frequency Radio frequency in MHz.
 -- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
 -- @param #number Power (Optional) Power of the Radio in Watts. Defaults to 10.
--- @param #UnitID UnitID (Optional, if your object is a UNIT) The UNIT ID this is for.
+-- @param #number UnitID (Optional, if your object is a UNIT) The UNIT ID this is for.
 -- @param #number Delay (Optional) Delay in seconds before the frequency is set. Default is immediately.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandSetFrequencyForUnit(Frequency,Modulation,Power,UnitID,Delay)
@@ -990,6 +990,65 @@ function CONTROLLABLE:CommandSetFrequencyForUnit(Frequency,Modulation,Power,Unit
     SCHEDULER:New(nil,self.CommandSetFrequencyForUnit,{self,Frequency,Modulation,Power,UnitID},Delay)
   else
     self:SetCommand(CommandSetFrequencyForUnit)
+  end
+  return self
+end
+
+--- [AIR] Set smoke on or off. See [DCS command smoke on off](https://wiki.hoggitworld.com/view/DCS_command_smoke_on_off)
+-- @param #CONTROLLABLE self
+-- @param #boolean OnOff Set to true for on and false for off. Defaults to true.
+-- @param #number Delay (Optional) Delay the command by this many seconds.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSmokeOnOff(OnOff, Delay)
+  local switch = (OnOff == nil) and true or OnOff
+  local command = {
+      id = 'SMOKE_ON_OFF', 
+      params = { 
+          value = switch
+          }
+      }
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil,self.CommandSmokeOnOff,{self,switch},Delay)
+  else
+    self:SetCommand(command)
+  end
+  return self
+end
+
+--- [AIR] Set smoke on. See [DCS command smoke on off](https://wiki.hoggitworld.com/view/DCS_command_smoke_on_off)
+-- @param #CONTROLLABLE self
+-- @param #number Delay (Optional) Delay the command by this many seconds.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSmokeON(Delay)
+  local command = {
+      id = 'SMOKE_ON_OFF', 
+      params = { 
+          value = true
+          }
+      }
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil,self.CommandSmokeON,{self},Delay)
+  else
+    self:SetCommand(command)
+  end
+  return self
+end
+
+--- [AIR] Set smoke off. See [DCS command smoke on off](https://wiki.hoggitworld.com/view/DCS_command_smoke_on_off)
+-- @param #CONTROLLABLE self
+-- @param #number Delay (Optional) Delay the command by this many seconds.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSmokeOFF(Delay)
+  local command = {
+      id = 'SMOKE_ON_OFF', 
+      params = { 
+          value = false
+          }
+      }
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil,self.CommandSmokeOFF,{self},Delay)
+  else
+    self:SetCommand(command)
   end
   return self
 end
@@ -1776,8 +1835,6 @@ function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation,
 
   return DCSTask
 end
-
--- EN-ACT_ROUTE TASKS FOR AIRBORNE CONTROLLABLES
 
 --- (AIR) Engaging targets of defined types.
 -- @param #CONTROLLABLE self
@@ -4263,6 +4320,9 @@ function CONTROLLABLE:RelocateGroundRandomInRadius( speed, radius, onroad, short
   self:F2( { self.ControllableName } )
 
   local _coord = self:GetCoordinate()
+  if not _coord then
+  return self
+  end
   local _radius = radius or 500
   local _speed = speed or 20
   local _tocoord = _coord:GetRandomCoordinateInRadius( _radius, 100 )
@@ -4312,7 +4372,7 @@ function CONTROLLABLE:OptionDisperseOnAttack( Seconds )
 end
 
 --- Returns if the unit is a submarine.
--- @param #POSITIONABLE self
+-- @param #CONTROLLABLE self
 -- @return #boolean Submarines attributes result.
 function CONTROLLABLE:IsSubmarine()
   self:F2()
@@ -5638,22 +5698,21 @@ end
 --- [GROUND] Create and enable a new IR Marker for the given controllable UNIT or GROUP.
 -- @param #CONTROLLABLE self
 -- @param #boolean EnableImmediately (Optionally) If true start up the IR Marker immediately. Else you need to call `myobject:EnableIRMarker()` later on.
--- @param #number Runtime (Optionally) Run this IR Marker for the given number of seconds, then stop. Use in conjunction with EnableImmediately.
+-- @param #number Runtime (Optionally) Run this IR Marker for the given number of seconds, then stop. Use in conjunction with EnableImmediately. Defaults to 60 seconds.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:NewIRMarker(EnableImmediately, Runtime)
-  --sefl:F("NewIRMarker")
-    if self.ClassName == "GROUP" then
+  self:T2("NewIRMarker")
+    if self:IsInstanceOf("GROUP") then
+      if self.IRMarkerGroup == true then return end
       self.IRMarkerGroup = true
       self.IRMarkerUnit = false
-    elseif self.ClassName == "UNIT" then
+    elseif self:IsInstanceOf("UNIT") then
+      if self.IRMarkerUnit == true then return end
       self.IRMarkerGroup = false
       self.IRMarkerUnit = true
     end
-
-    self.spot = nil
-    self.timer = nil
-    self.stoptimer = nil
     
+    self.Runtime = Runtime or 60
     if EnableImmediately and EnableImmediately == true then
       self:EnableIRMarker(Runtime)
     end
@@ -5666,19 +5725,23 @@ end
 -- @param #number Runtime (Optionally) Run this IR Marker for the given number of seconds, then stop. Else run until you call `myobject:DisableIRMarker()`.
 -- @return #CONTROLLABLE self 
 function CONTROLLABLE:EnableIRMarker(Runtime)
-  --sefl:F("EnableIRMarker")
+  self:T2("EnableIRMarker")
     if self.IRMarkerGroup == nil then
       self:NewIRMarker(true,Runtime)
       return
     end
     
-    if (self.IRMarkerGroup == true) then
-        self:EnableIRMarkerForGroup()
+    if self:IsInstanceOf("GROUP") then
+        self:EnableIRMarkerForGroup(Runtime)
         return
     end
-
+    
+    if self.timer and self.timer:IsRunning() then return self end
+    
+    local Runtime = Runtime or self.Runtime
     self.timer = TIMER:New(CONTROLLABLE._MarkerBlink, self)
     self.timer:Start(nil, 1 - math.random(1, 5) / 10 / 2, Runtime) -- start randomized
+    self.IRMarkerUnit = true
     
     return self
 end
@@ -5687,33 +5750,42 @@ end
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self 
 function CONTROLLABLE:DisableIRMarker()
- --sefl:F("DisableIRMarker")
-    if (self.IRMarkerGroup == true) then
+ self:T2("DisableIRMarker")
+    if self:IsInstanceOf("GROUP") then
         self:DisableIRMarkerForGroup()
         return
     end
-    
-    if self.spot then 
-      self.spot:destroy()
-      self.spot = nil
+
+      if self.spot then
+          self.spot = nil
+      end
       if self.timer and self.timer:IsRunning() then
           self.timer:Stop()
           self.timer = nil
       end
+
+    if self:IsInstanceOf("GROUP") then
+      self.IRMarkerGroup = nil
+    elseif self:IsInstanceOf("UNIT") then
+      self.IRMarkerUnit = nil
     end
+
     return self
 end
 
 --- [GROUND] Enable the IR markers for a whole group.
 -- @param #CONTROLLABLE self
+-- @param #number Runtime Runtime of the marker in seconds
 -- @return #CONTROLLABLE self 
-function CONTROLLABLE:EnableIRMarkerForGroup()
-  --sefl:F("EnableIRMarkerForGroup")
-  if self.ClassName == "GROUP" then
+function CONTROLLABLE:EnableIRMarkerForGroup(Runtime)
+  self:T2("EnableIRMarkerForGroup")
+  if self:IsInstanceOf("GROUP") 
+  then
     local units = self:GetUnits() or {}
     for _,_unit in pairs(units) do
-      _unit:EnableIRMarker()
+      _unit:EnableIRMarker(Runtime)
     end
+    self.IRMarkerGroup = true
   end
   return self
 end
@@ -5722,21 +5794,43 @@ end
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self 
 function CONTROLLABLE:DisableIRMarkerForGroup()
-  --sefl:F("DisableIRMarkerForGroup")
-  if self.ClassName == "GROUP" then
+  self:T2("DisableIRMarkerForGroup")
+  if self:IsInstanceOf("GROUP") then
     local units = self:GetUnits() or {}
     for _,_unit in pairs(units) do
       _unit:DisableIRMarker()
     end
+    self.IRMarkerGroup = nil
   end
   return self
+end
+
+--- [GROUND] Check if an IR Spot exists.
+-- @param #CONTROLLABLE self
+-- @return #boolean outcome
+function CONTROLLABLE:HasIRMarker()
+  self:T2("HasIRMarker")
+  if self:IsInstanceOf("GROUP") then
+    local units = self:GetUnits() or {}
+    for _,_unit in pairs(units) do
+      if _unit.timer and _unit.timer:IsRunning() then return true end
+    end
+  elseif self.timer and self.timer:IsRunning() then return true end
+  return false
+end
+
+--- [Internal] This method is called by the scheduler to blink the IR marker.
+function CONTROLLABLE._StopSpot(spot)
+    if spot then 
+        spot:destroy() 
+    end
 end
 
 --- [Internal] This method is called by the scheduler after enabling the IR marker.
 -- @param #CONTROLLABLE self
 -- @return #CONTROLLABLE self 
 function CONTROLLABLE:_MarkerBlink()
-  --sefl:F("_MarkerBlink")
+  self:T2("_MarkerBlink")
     if self:IsAlive() ~= true then
         self:DisableIRMarker()
         return
@@ -5747,13 +5841,17 @@ function CONTROLLABLE:_MarkerBlink()
     local _, _, unitBBHeight, _ = self:GetObjectSize()
     local unitPos = self:GetPositionVec3()
 
-    self.spot = Spot.createInfraRed(
-        self.DCSUnit,
-        { x = 0, y = (unitBBHeight + 1), z = 0 },
-        { x = unitPos.x, y = (unitPos.y + unitBBHeight), z = unitPos.z }
-    )
-
-    local offTimer = TIMER:New(function() if self.spot then self.spot:destroy() end end)
-    offTimer:Start(0.5)
+    if self.timer:IsRunning() then
+        self:T2("Create Spot")
+        local spot = Spot.createInfraRed(
+            self.DCSUnit,
+            { x = 0, y = (unitBBHeight + 1), z = 0 },
+            { x = unitPos.x, y = (unitPos.y + unitBBHeight), z = unitPos.z }
+        )
+        self.spot = spot
+        local offTimer = nil
+        local offTimer = TIMER:New(CONTROLLABLE._StopSpot, spot)
+        offTimer:Start(0.5)
+    end
     return self
 end

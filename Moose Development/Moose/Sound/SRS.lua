@@ -267,6 +267,135 @@ MSRS.version="0.3.3"
 --- Voices
 -- @type MSRS.Voices
 MSRS.Voices = {
+  Amazon = {
+    Generative = {
+      en_AU = {
+        Olivia = "Olivia",
+      },
+      en_GB = {
+        Amy = "Amy",
+      },
+      en_US = {
+        Danielle = "Danielle",
+        Joanna = "Joanna",
+        Ruth = "Ruth",
+        Stephen = "Stephen",
+        },
+      fr_FR = {
+        ["Léa"] = "Léa",
+        ["Rémi"] = "Rémi",
+      },
+      de_DE = {
+        Vicki = "Vicki",
+        Daniel = "Daniel",
+      },
+      it_IT = {
+        Bianca = "Bianca",
+        Adriano = "Adriano",
+      },
+      es_ES = {
+        Lucia = "Lucia",
+        Sergio = "Sergio",    
+      },
+    },
+    LongForm = {
+      en_US = {
+        Danielle = "Danielle",
+        Gregory = "Gregory",
+        Ivy = "Ivy",
+        Ruth = "Ruth",
+        Patrick = "Patrick",
+      },
+      es_ES = {
+        Alba = "Alba",
+        ["Raúl"] = "Raúl",    
+      },
+    },
+    Neural = {
+      en_AU = {
+        Olivia = "Olivia",
+      },
+      en_GB = {
+        Amy = "Amy",
+        Emma = "Emma",
+        Brian = "Brian",
+        Arthur = "Arthur",
+      },
+      en_US = {
+        Danielle = "Danielle",
+        Gregory = "Gregory",
+        Ivy = "Ivy",
+        Joanna = "Joanna",
+        Kendra = "Kendra",
+        Kimberly = "Kimberly",
+        Salli = "Salli",
+        Joey = "Joey",
+        Kevin = "Kevin",  
+        Ruth = "Ruth",
+        Stephen = "Stephen",       
+      },
+      fr_FR = {
+        ["Léa"] = "Léa",
+        ["Rémi"] = "Rémi",
+      },
+      de_DE = {
+        Vicki = "Vicki",
+        Daniel = "Daniel",
+      },
+      it_IT = {
+        Bianca = "Bianca",
+        Adriano = "Adriano",
+      },
+      es_ES = {
+        Lucia = "Lucia",
+        Sergio = "Sergio",    
+      },
+    },
+    Standard = {
+      en_AU = {
+        Nicole = "Nicole",
+        Russel = "Russel",
+      },
+      en_GB = {
+        Amy = "Amy",
+        Emma = "Emma",
+        Brian = "Brian",
+      },
+      en_IN = {
+        Aditi = "Aditi",
+        Raveena = "Raveena",
+      },
+      en_US = {
+        Ivy = "Ivy",
+        Joanna = "Joanna",
+        Kendra = "Kendra",
+        Kimberly = "Kimberly",
+        Salli = "Salli",
+        Joey = "Joey",
+        Kevin = "Kevin",       
+      },
+      fr_FR = {
+        Celine = "Celine",
+        ["Léa"] = "Léa",
+        Mathieu = "Mathieu",
+      },
+      de_DE = {
+        Marlene = "Marlene",
+        Vicki = "Vicki",
+        Hans = "Hans",
+      },
+      it_IT = {
+        Carla = "Carla",
+        Bianca = "Bianca",
+        Giorgio = "Giorgio",
+      },
+      es_ES = {
+        Conchita = "Conchita",
+        Lucia = "Lucia",
+        Enrique = "Enrique",     
+      },
+    },
+  },
   Microsoft = { -- working ones if not using gRPC and MS
     ["Hedda"] = "Microsoft Hedda Desktop", -- de-DE
     ["Hazel"] = "Microsoft Hazel Desktop", -- en-GB
@@ -974,7 +1103,7 @@ end
 -- - `MSRS.Provider.WINDOWS`: Microsoft Windows (default)
 -- - `MSRS.Provider.GOOGLE`: Google Cloud
 -- - `MSRS.Provider.AZURE`: Microsoft Azure (only with DCS-gRPC backend)
--- - `MSRS.Provier.AMAZON`: Amazone Web Service (only with DCS-gRPC backend)
+-- - `MSRS.Provier.AMAZON`: Amazon Web Service (only with DCS-gRPC backend)
 --
 -- Note that all providers except Microsoft Windows need as additonal information the credentials of your account.
 --
@@ -1184,7 +1313,8 @@ function MSRS:PlaySoundFile(Soundfile, Delay)
 
     -- Append file.
     command=command..' --file="'..tostring(soundfile)..'"'
-
+    command=string.gsub(command,"--ssml","-h")    
+    
     -- Execute command.
     self:_ExecCommand(command)
 
@@ -1442,7 +1572,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   elseif self.provider==MSRS.Provider.WINDOWS then
     -- Nothing to do.
   else
-    self:E("ERROR: SRS only supports WINWOWS and GOOGLE as TTS providers! Use DCS-gRPC backend for other providers such as ")
+    self:E("ERROR: SRS only supports WINDOWS and GOOGLE as TTS providers! Use DCS-gRPC backend for other providers such as AWS and Azure.")
   end
 
   if not UTILS.FileExists(fullPath) then
@@ -1477,7 +1607,7 @@ function MSRS:_ExecCommand(command)
   if self.UsePowerShell == true then
    filename=os.getenv('TMP').."\\MSRS-"..MSRS.uuid()..".ps1"
    batContent = command .. "\'"
-   self:I({batContent=batContent})
+   self:T({batContent=batContent})
   end
   
   local script=io.open(filename, "w+")
@@ -1660,7 +1790,7 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
       ssml=string.format("<voice%s%s>%s</voice>", gender, language, Text)
     end
   end
-
+  
   for _,freq in pairs(Frequencies) do
     self:T("Calling GRPC.tts with the following parameter:")
     self:T({ssml=ssml, freq=freq, options=options})
@@ -1986,7 +2116,7 @@ end
 -- @param Core.Point#COORDINATE coordinate Coordinate to be used
 -- @return #MSRSQUEUE.Transmission Radio transmission table.
 function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label,coordinate)
-
+  self:T({Text=text, Dur=duration, start=tstart, int=interval, sub=subgroups, subt=subtitle, sudb=subduration, F=frequency, M=modulation, G=gender, C=culture, V=voice, Vol=volume, L=label})
   if self.TransmitOnlyWithPlayers then
     if self.PlayerSet and self.PlayerSet:CountAlive() == 0 then
       return self
@@ -2026,7 +2156,7 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   transmission.volume = volume or msrs.volume
   transmission.label = label or msrs.Label
   transmission.coordinate = coordinate or msrs.coordinate
-
+ 
   -- Add transmission to queue.
   self:AddTransmission(transmission)
 

@@ -757,7 +757,11 @@ end
 -- @param #GROUP self
 -- @return #boolean If true, group is associated with a client or player slot.
 function GROUP:IsPlayer()
-  return self:GetUnit(1):IsPlayer()
+  local unit = self:GetUnit(1)
+  if unit then
+    return unit:IsPlayer()
+  end
+  return false
 end
 
 --- Returns the UNIT wrapper object with number UnitNumber. If it doesn't exist, tries to return the next available unit.
@@ -1175,9 +1179,9 @@ function GROUP:GetAverageVec3()
   end
 end
 
---- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.
+--- Returns a COORDINATE object indicating the point in 2D of the first UNIT of the GROUP within the mission.
 -- @param #GROUP self
--- @return Core.Point#POINT_VEC2 The 2D point vector of the first DCS Unit of the GROUP.
+-- @return Core.Point#COORDINATE The 3D point vector of the first DCS Unit of the GROUP.
 -- @return #nil The first UNIT is not existing or alive.
 function GROUP:GetPointVec2()
   --self:F2(self.GroupName)
@@ -1190,7 +1194,7 @@ function GROUP:GetPointVec2()
     return FirstUnitPointVec2
   end
 
-  BASE:E( { "Cannot GetPointVec2", Group = self, Alive = self:IsAlive() } )
+  BASE:E( { "Cannot get COORDINATE", Group = self, Alive = self:IsAlive() } )
 
   return nil
 end
@@ -1221,7 +1225,17 @@ end
 -- @return Core.Point#COORDINATE The COORDINATE of the GROUP.
 function GROUP:GetCoordinate()
 
-  local Units = self:GetUnits()  or {}
+  -- First try to get the 3D vector of the group. This uses 
+  local vec3=self:GetVec3()
+  local coord
+  if vec3 then
+    coord=COORDINATE:NewFromVec3(vec3)
+    coord.Heading = self:GetHeading() or 0
+    return coord
+  end
+
+  -- No luck try units and add Heading data
+  local Units = self:GetUnits() or {}
 
   for _,_unit in pairs(Units) do
     local FirstUnit = _unit -- Wrapper.Unit#UNIT
@@ -1231,15 +1245,15 @@ function GROUP:GetCoordinate()
       local FirstUnitCoordinate = FirstUnit:GetCoordinate()
 
       if FirstUnitCoordinate then
-        local Heading = self:GetHeading()
+        local Heading = self:GetHeading() or 0
         FirstUnitCoordinate.Heading = Heading
         return FirstUnitCoordinate
       end
 
     end
   end
-  -- no luck, try the API way
   
+  -- no luck, try the API way  
   local DCSGroup = Group.getByName(self.GroupName)
   if DCSGroup then
     local DCSUnits = DCSGroup:getUnits() or {}
@@ -1250,14 +1264,19 @@ function GROUP:GetCoordinate()
         if point then
           --self:I(point)
           local coord = COORDINATE:NewFromVec3(point)
+          coord.Heading = 0
+          local munit = UNIT:Find(_unit)
+          if munit then
+            coord.Heading = munit:GetHeading() or 0
+          end
           return coord
         end
       end
     end
   end
-  
+    
   BASE:E( { "Cannot GetCoordinate", Group = self, Alive = self:IsAlive() } )
-
+  
 end
 
 
@@ -2074,7 +2093,7 @@ function GROUP:Respawn( Template, Reset )
               GroupUnitVec3 = Zone:GetRandomVec3()
             else
               if self.InitRespawnRandomizePositionInner and self.InitRespawnRandomizePositionOuter then
-                GroupUnitVec3 = POINT_VEC3:NewFromVec2( From ):GetRandomPointVec3InRadius( self.InitRespawnRandomizePositionsOuter, self.InitRespawnRandomizePositionsInner )
+                GroupUnitVec3 = COORDINATE:NewFromVec3(From):GetRandomVec3InRadius(self.InitRespawnRandomizePositionsOuter, self.InitRespawnRandomizePositionsInner)
               else
                 GroupUnitVec3 = Zone:GetVec3()
               end
@@ -2125,7 +2144,7 @@ function GROUP:Respawn( Template, Reset )
             GroupUnitVec3 = Zone:GetRandomVec3()
           else
             if self.InitRespawnRandomizePositionInner and self.InitRespawnRandomizePositionOuter then
-              GroupUnitVec3 = POINT_VEC3:NewFromVec2( From ):GetRandomPointVec3InRadius( self.InitRespawnRandomizePositionsOuter, self.InitRespawnRandomizePositionsInner )
+              GroupUnitVec3 = COORDINATE:NewFromVec2( From ):GetRandomPointVec3InRadius( self.InitRespawnRandomizePositionsOuter, self.InitRespawnRandomizePositionsInner )
             else
               GroupUnitVec3 = Zone:GetVec3()
             end
@@ -2797,7 +2816,7 @@ do -- Event Handling
 
     self:EventDispatcher():Reset( self )
 
-    for UnitID, UnitData in pairs( self:GetUnits() ) do
+    for UnitID, UnitData in pairs( self:GetUnits() or {}) do
       UnitData:ResetEvents()
     end
 
@@ -3003,7 +3022,7 @@ end
 --            local callsign = mygroup:GetCustomCallSign(true,false,nil,function(groupname,playername) return string.match(playername,"([%a]+)$") end)
 -- 
 function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations,CustomFunction,...)
-  --self:I("GetCustomCallSign")
+  self:T("GetCustomCallSign")
 
   local callsign = "Ghost 1"
   if self:IsAlive() then
@@ -3016,8 +3035,12 @@ function GROUP:GetCustomCallSign(ShortCallsign,Keepnumber,CallsignTranslations,C
     local callnumbermajor = string.char(string.byte(callnumber,1)) -- 9
     local callnumberminor = string.char(string.byte(callnumber,2)) -- 1
     local personalized = false
-    local playername = IsPlayer == true and self:GetPlayerName() or shortcallsign
+    --local playername = IsPlayer == true and self:GetPlayerName() or shortcallsign
+    local playername = shortcallsign
     
+    if IsPlayer then playername = self:GetPlayerName() end
+    
+    self:T2("GetCustomCallSign outcome = "..playername)
     if CustomFunction and IsPlayer then
       local arguments = arg or {}
       local callsign = CustomFunction(groupname,playername,unpack(arguments))
@@ -3137,7 +3160,7 @@ function GROUP:IsSAM()
   local units = self:GetUnits()
   for _,_unit in pairs(units or {}) do
     local unit = _unit -- Wrapper.Unit#UNIT
-    if unit:HasSEAD() and unit:IsGround() and (not unit:HasAttribute("Mobile AAA")) then
+    if unit:IsSAM() then
       issam = true
       break
     end
@@ -3147,18 +3170,16 @@ end
 
 --- [GROUND] Determine if a GROUP has a AAA unit, i.e. has no radar or optical tracker but the AAA = true or the "Mobile AAA" = true attribute.
 -- @param #GROUP self
--- @return #boolean IsSAM True if AAA, else false
+-- @return #boolean IsAAA True if AAA, else false
 function GROUP:IsAAA()
-  local issam = false
+  local isAAA = false
   local units = self:GetUnits()
   for _,_unit in pairs(units or {}) do
     local unit = _unit -- Wrapper.Unit#UNIT
-    local desc = unit:GetDesc() or {}
-    local attr = desc.attributes or {}
-    if unit:HasSEAD() then return false end
-    if attr["AAA"] or attr["SAM related"] then
-      issam = true
+    if unit:IsAAA() then
+      isAAA = true
+      break
     end
   end
-  return issam
+  return isAAA
 end

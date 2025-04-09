@@ -1719,15 +1719,16 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT, STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 2000 ft.
+-- @param #number EngageWeaponType Which weapon to use. Defaults to auto, ie ENUMS.WeaponFlag.Auto. See ENUMS.WeaponFlag for options.
 -- @return #AUFTRAG self
-function AUFTRAG:NewSTRIKE(Target, Altitude)
+function AUFTRAG:NewSTRIKE(Target, Altitude, EngageWeaponType)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.STRIKE)
 
   mission:_TargetFromObject(Target)
 
   -- DCS Task options:
-  mission.engageWeaponType=ENUMS.WeaponFlag.Auto
+  mission.engageWeaponType=EngageWeaponType or ENUMS.WeaponFlag.Auto
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
   mission.engageAltitude=UTILS.FeetToMeters(Altitude or 2000)
 
@@ -1750,15 +1751,16 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT, STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
+-- @param #number EngageWeaponType Which weapon to use. Defaults to auto, ie ENUMS.WeaponFlag.Auto. See ENUMS.WeaponFlag for options.
 -- @return #AUFTRAG self
-function AUFTRAG:NewBOMBING(Target, Altitude)
+function AUFTRAG:NewBOMBING(Target, Altitude, EngageWeaponType)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BOMBING)
 
   mission:_TargetFromObject(Target)
 
   -- DCS task options:
-  mission.engageWeaponType=ENUMS.WeaponFlag.Auto
+  mission.engageWeaponType=EngageWeaponType or ENUMS.WeaponFlag.Auto
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
   mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
 
@@ -2156,7 +2158,11 @@ end
 
 ]]
 
---- **[GROUND, NAVAL]** Create an ARTY mission.
+--- **[GROUND, NAVAL]** Create an ARTY mission ("Fire at point" task).
+-- 
+-- If the group has more than one weapon type supporting the "Fire at point" task, the employed weapon type can be set via the `AUFTRAG:SetWeaponType()` function.
+-- 
+-- **Note** that it is recommended to set the weapon range via the `OPSGROUP:AddWeaponRange()` function as this cannot be retrieved from the DCS API.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target Center of the firing solution.
 -- @param #number Nshots Number of shots to be fired. Default `#nil`.
@@ -2179,6 +2185,7 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius, Altitude)
   mission.optionAlarm=0
 
   mission.missionFraction=0.0
+  mission.missionWaypointRadius=0.0
 
   -- Evaluate after 8 min.
   mission.dTevaluate=8*60

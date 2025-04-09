@@ -1,6 +1,7 @@
 # import required module
 from pathlib import Path
 import os
+import codecs
 
 # assign directory
 directory = '.'
@@ -15,8 +16,9 @@ with open( os.path.dirname(__file__) + '/docs-header.html', 'r') as file:
 # that directory
 files = Path(directory).glob('*.html')
 for file in files:
-  # print(file)
-  with open(file, 'r') as fileread:
+  #print(file)
+  #with open(file, 'r') as fileread:
+  with codecs.open(file, 'r', encoding='utf-8', errors='ignore') as fileread:
     filedata = fileread.read()
     # Replace the target string
     filedata = filedata.replace( '<head>', newhead )

@@ -1774,8 +1774,10 @@ function COMMANDER:RecruitAssetsForMission(Mission)
         MaxWeight=cohort.cargobayLimit
       end
     end
-    
-    self:T(self.lid..string.format("Largest cargo bay available=%.1f", MaxWeight))
+
+    if MaxWeight then
+        self:T(self.lid..string.format("Largest cargo bay available=%.1f", MaxWeight))
+    end
   end
   
   local legions=self.legions

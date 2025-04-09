@@ -751,12 +751,12 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
       if not CurrentVec2 then return end
       --Done: Create GetAltitude function for GROUP, and delete GetUnit(1).
       local CurrentAltitude = self.Controllable:GetAltitude()
-      local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+      local CurrentPointVec3 = COORDINATE:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
       local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
           self.PatrolAltType, 
-          POINT_VEC3.RoutePointType.TakeOffParking, 
-          POINT_VEC3.RoutePointAction.FromParkingArea, 
+          COORDINATE.WaypointType.TakeOffParking, 
+          COORDINATE.WaypointAction.FromParkingArea, 
           ToPatrolZoneSpeed, 
           true 
         )
@@ -767,12 +767,12 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
       if not CurrentVec2 then return end
       --DONE: Create GetAltitude function for GROUP, and delete GetUnit(1).
       local CurrentAltitude = self.Controllable:GetAltitude()
-      local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+      local CurrentPointVec3 = COORDINATE:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
       local ToPatrolZoneSpeed = self.PatrolMaxSpeed
       local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
           self.PatrolAltType, 
-          POINT_VEC3.RoutePointType.TurningPoint, 
-          POINT_VEC3.RoutePointAction.TurningPoint, 
+          COORDINATE.WaypointType.TurningPoint, 
+          COORDINATE.WaypointAction.TurningPoint, 
           ToPatrolZoneSpeed, 
           true 
         )
@@ -792,13 +792,13 @@ function AI_PATROL_ZONE:onafterRoute( Controllable, From, Event, To )
     self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
     
     --- Obtain a 3D @{Point} from the 2D point + altitude.
-    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
+    local ToTargetPointVec3 = COORDINATE:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
     
     --- Create a route point of type air.
     local ToTargetRoutePoint = ToTargetPointVec3:WaypointAir( 
       self.PatrolAltType, 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
+      COORDINATE.WaypointType.TurningPoint, 
+      COORDINATE.WaypointAction.TurningPoint, 
       ToTargetSpeed, 
       true 
     )
@@ -846,7 +846,6 @@ function AI_PATROL_ZONE:onafterStatus()
       OldAIControllable:SetTask( TimedOrbitTask, 10 )
 
       RTB = true
-    else
     end
     
     -- TODO: Check GROUP damage function.
@@ -854,6 +853,16 @@ function AI_PATROL_ZONE:onafterStatus()
     if Damage <= self.PatrolDamageThreshold then
       self:T( self.Controllable:GetName() .. " is damaged:" .. Damage .. ", RTB!" )
       RTB = true
+    end
+    
+    if self:IsInstanceOf("AI_CAS") or self:IsInstanceOf("AI_BAI") then
+      local atotal,shells,rockets,bombs,missiles = self.Controllable:GetAmmunition()
+      local arelevant = rockets+bombs   
+      if arelevant == 0 or missiles == 0 then 
+        RTB = true
+        self:T({total=atotal,shells=shells,rockets=rockets,bombs=bombs,missiles=missiles})
+        self:T( self.Controllable:GetName() .. " is out of ammo, RTB!" ) 
+      end
     end
     
     if RTB == true then
@@ -881,12 +890,12 @@ function AI_PATROL_ZONE:onafterRTB()
     --DONE: Create GetAltitude function for GROUP, and delete GetUnit(1).
     --local CurrentAltitude = self.Controllable:GetUnit(1):GetAltitude()
     local CurrentAltitude = self.Controllable:GetAltitude()
-    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+    local CurrentPointVec3 = COORDINATE:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToPatrolZoneSpeed = self.PatrolMaxSpeed
     local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
         self.PatrolAltType, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
+        COORDINATE.WaypointType.TurningPoint, 
+        COORDINATE.WaypointAction.TurningPoint, 
         ToPatrolZoneSpeed, 
         true 
       )

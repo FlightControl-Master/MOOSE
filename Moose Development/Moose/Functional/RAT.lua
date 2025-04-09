@@ -3814,15 +3814,20 @@ function RAT:Status(message, forID)
       local N0units=group:GetInitialSize()
 
       -- Monitor travelled distance since last check.
-      local Pnow=coords
-      local Dtravel=Pnow:Get2DDistance(ratcraft.Pnow)
-      ratcraft.Pnow=Pnow
+      local Dtravel=0
+      if coords and ratcraft.Pnow then
+        local Dtravel=coords:Get2DDistance(ratcraft.Pnow)
+        ratcraft.Pnow=coords
+      end
 
       -- Add up the travelled distance.
       ratcraft.Distance=ratcraft.Distance+Dtravel
 
       -- Distance remaining to destination.
-      local Ddestination=Pnow:Get2DDistance(ratcraft.destination:GetCoordinate())
+      local Ddestination=-1
+      if ratcraft.Pnow then
+        Ddestination=ratcraft.Pnow:Get2DDistance(ratcraft.destination:GetCoordinate())
+      end
 
       -- Status report.
       if (forID and spawnindex==forID) or (not forID) then

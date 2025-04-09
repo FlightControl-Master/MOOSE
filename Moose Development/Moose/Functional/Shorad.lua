@@ -113,7 +113,7 @@ SHORAD = {
   SkateNumber = 3,
   SkateZones = nil,
   minscootdist = 100,
-  minscootdist = 3000,
+  maxscootdist = 3000,
   scootrandomcoord = false,  
 }
 
@@ -443,7 +443,9 @@ do
     for _,_groups in pairs (shoradset) do
       local groupname = _groups:GetName()
       if string.find(groupname, tgtgrp, 1, true) then
-        returnname = true
+        if _groups:IsSAM() then
+          returnname = true
+        end
       end
     end
     return returnname
@@ -470,6 +472,7 @@ do
   -- @param #number Radius Radius of the #ZONE
   -- @param #number ActiveTimer Number of seconds to stay active
   -- @param #number TargetCat (optional) Category, i.e. Object.Category.UNIT or Object.Category.STATIC
+  -- @param #boolean ShotAt If true, function is called after a shot
   -- @return #SHORAD self 
   -- @usage Use this function to integrate with other systems, example   
   -- 
@@ -479,7 +482,7 @@ do
   -- mymantis = MANTIS:New("BlueMantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
   -- mymantis:AddShorad(myshorad,720)
   -- mymantis:Start()
-  function SHORAD:onafterWakeUpShorad(From, Event, To, TargetGroup, Radius, ActiveTimer, TargetCat)
+  function SHORAD:onafterWakeUpShorad(From, Event, To, TargetGroup, Radius, ActiveTimer, TargetCat, ShotAt)
     self:T(self.lid .. " WakeUpShorad")
     self:T({TargetGroup, Radius, ActiveTimer, TargetCat})
     local targetcat = TargetCat or Object.Category.UNIT
@@ -524,7 +527,7 @@ do
       
       local groupname = _group:GetName()
       
-      if groupname == TargetGroup then
+      if groupname == TargetGroup and ShotAt==true then
         -- Shot at a SHORAD group
         if self.UseEmOnOff then
           _group:EnableEmission(false)
@@ -540,7 +543,7 @@ do
           self:__ShootAndScoot(1,_group)
         end
         
-      elseif _group:IsAnyInZone(targetzone) then
+      elseif _group:IsAnyInZone(targetzone) or groupname == TargetGroup then
         -- shot at a group we protect
         local text = string.format("Waking up SHORAD %s", _group:GetName())
         self:T(text)
@@ -626,7 +629,7 @@ do
             _targetgroupname = tgtgrp:GetName() -- group name
             _targetskill = tgtgrp:GetUnit(1):GetSkill()
             self:T("*** Found Target = ".. _targetgroupname)
-            self:WakeUpShorad(_targetgroupname, self.Radius, self.ActiveTimer, Object.Category.UNIT)
+            self:WakeUpShorad(_targetgroupname, self.Radius, self.ActiveTimer, Object.Category.UNIT,true)
           end
         end
       end     
@@ -755,7 +758,7 @@ do
           -- if being shot at, find closest SHORADs to activate
           if shotatsams or shotatus then
             self:T({shotatsams=shotatsams,shotatus=shotatus})
-            self:WakeUpShorad(targetgroupname, self.Radius, self.ActiveTimer, targetcat)
+            self:WakeUpShorad(targetgroupname, self.Radius, self.ActiveTimer, targetcat, true)
           end
         end  
       end
