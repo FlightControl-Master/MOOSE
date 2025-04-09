@@ -32,6 +32,7 @@ __Moose.Include( 'Core\\MarkerOps_Base.lua' )
 __Moose.Include( 'Core\\TextAndSound.lua' )
 __Moose.Include( 'Core\\Condition.lua' )
 __Moose.Include( 'Core\\ClientMenu.lua' )
+__Moose.Include( 'Core\\Vector.lua' )
 
 __Moose.Include( 'Wrapper\\Object.lua' )
 __Moose.Include( 'Wrapper\\Identifiable.lua' )
@@ -177,5 +178,8 @@ __Moose.Include( 'Tasking\\Task_Cargo_CSAR.lua' )
 __Moose.Include( 'Tasking\\Task_Cargo_Dispatcher.lua' )
 __Moose.Include( 'Tasking\\Task_Capture_Zone.lua' )
 __Moose.Include( 'Tasking\\Task_Capture_Dispatcher.lua' )
+
+__Moose.Include( 'Navigation\\Point.lua' )
+__Moose.Include( 'Navigation\\Beacons.lua' )
 
 __Moose.Include( 'Globals.lua' )
