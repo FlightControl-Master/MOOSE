@@ -93,6 +93,7 @@
 -- @field #number engageWeaponType Weapon type used.
 -- @field #number engageWeaponExpend How many weapons are used.
 -- @field #boolean engageAsGroup Group attack.
+-- @field #number engageLength Length of engage (carpet or strafing) in meters.
 -- @field #number engageMaxDistance Max engage distance.
 -- @field #number refuelSystem Refuel type (boom or probe) for TANKER missions.
 --
@@ -161,6 +162,7 @@
 -- @field #number missionRange Mission range in meters. Used by LEGION classes (AIRWING, BRIGADE, ...).
 -- @field Core.Point#COORDINATE missionWaypointCoord Mission waypoint coordinate.
 -- @field Core.Point#COORDINATE missionEgressCoord Mission egress waypoint coordinate.
+-- @field Core.Point#COORDINATE missionIngressCoord Mission Ingress waypoint coordinate.
 -- @field #number missionWaypointRadius Random radius in meters.
 -- @field #boolean legionReturn If `true`, assets return to their legion (default). If `false`, they will stay alive. 
 --
@@ -239,6 +241,10 @@
 -- ## Bombing Carpet
 --
 -- A carpet bombing mission can be created with the @{#AUFTRAG.NewBOMBCARPET}() function.
+-- 
+-- ## Strafing
+--
+-- A strafing mission can be created with the @{#AUFTRAG.NewSTRAFING}() function.
 --
 -- ## CAP
 --
@@ -445,6 +451,7 @@ _AUFTRAGSNR=0
 -- @field #string CAPTUREZONE Capture zone mission.
 -- @field #string NOTHING Nothing.
 -- @field #string PATROLRACETRACK Patrol Racetrack.
+-- @field #string STRAFING Strafing run.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",
@@ -491,6 +498,7 @@ AUFTRAG.Type={
   CAPTUREZONE="Capture Zone",
   NOTHING="Nothing",
   PATROLRACETRACK="Patrol Racetrack",
+  STRAFING="Strafing",
 }
 
 --- Special task description.
@@ -1062,8 +1070,10 @@ end
 -- @param #number Time Time in seconds to stay. Default 300 seconds.
 -- @param #number Speed Speed in knots to fly to the target coordinate. Default 150kn.
 -- @param #number MissionAlt Altitude to fly towards the mission in feet AGL. Default 1000ft.
+-- @param #boolean CombatLanding (Optional) If true, set the Combat Landing option.
+-- @param #number DirectionAfterLand (Optional) Heading after landing in degrees.
 -- @return #AUFTRAG self
-function AUFTRAG:NewLANDATCOORDINATE(Coordinate, OuterRadius, InnerRadius, Time, Speed, MissionAlt)
+function AUFTRAG:NewLANDATCOORDINATE(Coordinate, OuterRadius, InnerRadius, Time, Speed, MissionAlt, CombatLanding, DirectionAfterLand)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.LANDATCOORDINATE)
 
@@ -1071,6 +1081,8 @@ function AUFTRAG:NewLANDATCOORDINATE(Coordinate, OuterRadius, InnerRadius, Time,
 
   mission.stayTime = Time or 300
   mission.stayAt = Coordinate
+  mission.combatLand = CombatLanding
+  mission.directionAfter = DirectionAfterLand
   self:SetMissionSpeed(Speed or 150)
   self:SetMissionAltitude(MissionAlt or 1000)
   
@@ -1707,15 +1719,16 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT, STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 2000 ft.
+-- @param #number EngageWeaponType Which weapon to use. Defaults to auto, ie ENUMS.WeaponFlag.Auto. See ENUMS.WeaponFlag for options.
 -- @return #AUFTRAG self
-function AUFTRAG:NewSTRIKE(Target, Altitude)
+function AUFTRAG:NewSTRIKE(Target, Altitude, EngageWeaponType)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.STRIKE)
 
   mission:_TargetFromObject(Target)
 
   -- DCS Task options:
-  mission.engageWeaponType=ENUMS.WeaponFlag.Auto
+  mission.engageWeaponType=EngageWeaponType or ENUMS.WeaponFlag.Auto
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
   mission.engageAltitude=UTILS.FeetToMeters(Altitude or 2000)
 
@@ -1734,18 +1747,20 @@ function AUFTRAG:NewSTRIKE(Target, Altitude)
 end
 
 --- **[AIR]** Create a BOMBING mission. Flight will drop bombs a specified coordinate.
+-- See [DCS task bombing](https://wiki.hoggitworld.com/view/DCS_task_bombing).
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT, STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
+-- @param #number EngageWeaponType Which weapon to use. Defaults to auto, ie ENUMS.WeaponFlag.Auto. See ENUMS.WeaponFlag for options.
 -- @return #AUFTRAG self
-function AUFTRAG:NewBOMBING(Target, Altitude)
+function AUFTRAG:NewBOMBING(Target, Altitude, EngageWeaponType)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BOMBING)
 
   mission:_TargetFromObject(Target)
 
   -- DCS task options:
-  mission.engageWeaponType=ENUMS.WeaponFlag.Auto
+  mission.engageWeaponType=EngageWeaponType or ENUMS.WeaponFlag.Auto
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
   mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
 
@@ -1767,9 +1782,47 @@ function AUFTRAG:NewBOMBING(Target, Altitude)
   return mission
 end
 
+--- **[AIR]** Create a STRAFING mission. Assigns a point on the ground for which the AI will do a strafing run with guns or rockets.
+-- See [DCS task strafing](https://wiki.hoggitworld.com/view/DCS_task_strafing).
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT, STATIC or TARGET object.
+-- @param #number Altitude Engage altitude in feet. Default 1000 ft.
+-- @param #number Length The total length of the strafing target in meters. Default `nil`.
+-- @return #AUFTRAG self
+function AUFTRAG:NewSTRAFING(Target, Altitude, Length)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.STRAFING)
+
+  mission:_TargetFromObject(Target)
+
+  -- DCS task options:
+  mission.engageWeaponType=805337088 -- Corresponds to guns/cannons (805306368) + any rocket (30720). This is the default when selecting this task in the ME.
+  mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 1000)
+  mission.engageLength=Length
+
+  -- Mission options:
+  mission.missionTask=ENUMS.MissionTask.GROUNDATTACK
+  mission.missionAltitude=mission.engageAltitude*0.8
+  mission.missionFraction=0.5
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.NoReaction   -- No reaction is better.
+
+  -- Evaluate result after 5 min. We might need time until the bombs have dropped and targets have been detroyed.
+  mission.dTevaluate=5*60
+
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+
+  -- Get DCS task.
+  mission.DCStask=mission:GetDCSMissionTask()
+
+  return mission
+end
+
+
 --- **[AIR]** Create a BOMBRUNWAY mission.
 -- @param #AUFTRAG self
--- @param Wrapper.Airbase#AIRBASE Airdrome The airbase to bomb. This must be an airdrome (not a FARP or ship) as these to not have a runway.
+-- @param Wrapper.Airbase#AIRBASE Airdrome The airbase to bomb. This must be an airdrome (not a FARP or ship) as these do not have a runway.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
 -- @return #AUFTRAG self
 function AUFTRAG:NewBOMBRUNWAY(Airdrome, Altitude)
@@ -1821,7 +1874,7 @@ function AUFTRAG:NewBOMBCARPET(Target, Altitude, CarpetLength)
   mission.engageWeaponType=ENUMS.WeaponFlag.Auto
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
   mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
-  mission.engageCarpetLength=CarpetLength or 500
+  mission.engageLength=CarpetLength or 500
   mission.engageAsGroup=false  -- Looks like this must be false or the task is not executed. It is not available in the ME anyway but in the task of the mission file.
   mission.engageDirection=nil  -- This is also not available in the ME.
 
@@ -2105,7 +2158,11 @@ end
 
 ]]
 
---- **[GROUND, NAVAL]** Create an ARTY mission.
+--- **[GROUND, NAVAL]** Create an ARTY mission ("Fire at point" task).
+-- 
+-- If the group has more than one weapon type supporting the "Fire at point" task, the employed weapon type can be set via the `AUFTRAG:SetWeaponType()` function.
+-- 
+-- **Note** that it is recommended to set the weapon range via the `OPSGROUP:AddWeaponRange()` function as this cannot be retrieved from the DCS API.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target Center of the firing solution.
 -- @param #number Nshots Number of shots to be fired. Default `#nil`.
@@ -2128,6 +2185,7 @@ function AUFTRAG:NewARTY(Target, Nshots, Radius, Altitude)
   mission.optionAlarm=0
 
   mission.missionFraction=0.0
+  mission.missionWaypointRadius=0.0
 
   -- Evaluate after 8 min.
   mission.dTevaluate=8*60
@@ -2252,7 +2310,7 @@ function AUFTRAG:NewCAPTUREZONE(OpsZone, Coalition, Speed, Altitude, Formation)
   params.formation=Formation or "Off Road"  
   params.zone=mission:GetObjective()
   params.altitude=mission.missionAltitude
-  params.speed=mission.missionSpeed  
+  params.speed=mission.missionSpeed and UTILS.KmphToMps(mission.missionSpeed) or nil
 
   mission.DCStask.params=params
 
@@ -2302,7 +2360,7 @@ function AUFTRAG:NewGROUNDATTACK(Target, Speed, Formation)
 
   mission.DCStask=mission:GetDCSMissionTask()
   
-  mission.DCStask.params.speed=Speed
+  mission.DCStask.params.speed=mission.missionSpeed and UTILS.KmphToMps(mission.missionSpeed) or nil
   mission.DCStask.params.formation=Formation or ENUMS.Formation.Vehicle.Vee
   
   return mission
@@ -2611,6 +2669,8 @@ function AUFTRAG:NewFromTarget(Target, MissionType)
     mission=self:NewBOMBING(Target, Altitude)
   elseif MissionType==AUFTRAG.Type.BOMBRUNWAY then
     mission=self:NewBOMBRUNWAY(Target, Altitude)
+  elseif MissionType==AUFTRAG.Type.STRAFING then
+    mission=self:NewSTRAFING(Target, Altitude)    
   elseif MissionType==AUFTRAG.Type.CAS then
     mission=self:NewCAS(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000), Altitude, Speed, Target:GetAverageCoordinate(), Heading, Leg, TargetTypes)
   elseif MissionType==AUFTRAG.Type.CASENHANCED then
@@ -3429,7 +3489,7 @@ end
 
 --- Set Rules of Engagement (ROE) for this mission.
 -- @param #AUFTRAG self
--- @param #string roe Mission ROE.
+-- @param #number roe Mission ROE, e.g. `ENUMS.ROE.ReturnFire` (whiche equals 3)
 -- @return #AUFTRAG self
 function AUFTRAG:SetROE(roe)
 
@@ -3441,7 +3501,7 @@ end
 
 --- Set Reaction on Threat (ROT) for this mission.
 -- @param #AUFTRAG self
--- @param #string rot Mission ROT.
+-- @param #number rot Mission ROT, e.g. `ENUMS.ROT.NoReaction` (whiche equals 0)
 -- @return #AUFTRAG self
 function AUFTRAG:SetROT(rot)
 
@@ -4605,6 +4665,16 @@ function AUFTRAG:SetGroupWaypointCoordinate(opsgroup, coordinate)
   return self
 end
 
+--- [Air] Set mission (ingress) waypoint coordinate for FLIGHT group.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE coordinate Waypoint Coordinate.
+-- @return #AUFTRAG self
+function AUFTRAG:SetIngressCoordinate(coordinate)
+  self.missionIngressCoord = coordinate
+  self.missionIngressCoordAlt = UTILS.MetersToFeet(coordinate.y) or 10000
+  return self
+end
+
 --- Get mission (ingress) waypoint coordinate of OPS group
 -- @param #AUFTRAG self
 -- @param Ops.OpsGroup#OPSGROUP opsgroup The OPS group.
@@ -5660,7 +5730,7 @@ function AUFTRAG:GetMissionTypesText(MissionTypes)
   return text
 end
 
---- Set the mission waypoint coordinate where the mission is executed. Note that altitude is set via `:SetMissionAltitude`.
+--- [NON-AIR] Set the mission waypoint coordinate from where the mission is executed. Note that altitude is set via `:SetMissionAltitude`.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Coordinate where the mission is executed.
 -- @return #AUFTRAG self
@@ -5688,8 +5758,9 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Coordinate Egrees coordinate.
 -- @param #number Altitude (Optional) Altitude in feet. Default is y component of coordinate.
+-- @param #number Speed (Optional) Speed in knots to reach this waypoint. Defaults to mission speed.
 -- @return #AUFTRAG self
-function AUFTRAG:SetMissionEgressCoord(Coordinate, Altitude)
+function AUFTRAG:SetMissionEgressCoord(Coordinate, Altitude, Speed)
 
   -- Obviously a zone was passed. We get the coordinate.
   if Coordinate:IsInstanceOf("ZONE_BASE") then
@@ -5700,7 +5771,64 @@ function AUFTRAG:SetMissionEgressCoord(Coordinate, Altitude)
 
   if Altitude then
     self.missionEgressCoord.y=UTILS.FeetToMeters(Altitude)
+    self.missionEgressCoordAlt = UTILS.FeetToMeters(Altitude)
   end
+  
+  self.missionEgressCoordSpeed=Speed and Speed or nil
+  
+  return self
+end
+
+--- [Air] Set the mission ingress coordinate. This is the coordinate where the assigned group will fly before the actual mission coordinate.
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Ingrees coordinate.
+-- @param #number Altitude (Optional) Altitude in feet. Default is y component of coordinate.
+-- @param #number Speed (Optional) Speed in knots to reach this waypoint. Defaults to mission speed.
+-- @return #AUFTRAG self
+function AUFTRAG:SetMissionIngressCoord(Coordinate, Altitude, Speed)
+
+  -- Obviously a zone was passed. We get the coordinate.
+  if Coordinate:IsInstanceOf("ZONE_BASE") then
+    Coordinate=Coordinate:GetCoordinate()
+  end
+
+  self.missionIngressCoord=Coordinate
+
+  if Altitude then
+    self.missionIngressCoord.y=UTILS.FeetToMeters(Altitude)
+    self.missionIngressCoordAlt = UTILS.FeetToMeters(Altitude or 10000)
+  end
+  
+  self.missionIngressCoordSpeed=Speed and Speed or nil
+  
+  return self
+end
+
+--- [Air] Set the mission holding coordinate. This is the coordinate where the assigned group will fly before the actual mission execution starts. Do not forget to add a push condition, too!
+-- @param #AUFTRAG self
+-- @param Core.Point#COORDINATE Coordinate Holding coordinate.
+-- @param #number Altitude (Optional) Altitude in feet. Default is y component of coordinate.
+-- @param #number Speed (Optional) Speed in knots to reach this waypoint and hold there. Defaults to mission speed.
+-- @param #number Duration (Optional) Duration in seconds on how long to hold, defaults to 15 minutes. Mission continues if either a push condition is met or the time is up.
+-- @return #AUFTRAG self
+function AUFTRAG:SetMissionHoldingCoord(Coordinate, Altitude, Speed, Duration)
+
+  -- Obviously a zone was passed. We get the coordinate.
+  if Coordinate:IsInstanceOf("ZONE_BASE") then
+    Coordinate=Coordinate:GetCoordinate()
+  end
+  
+  self.missionHoldingCoord=Coordinate
+  self.missionHoldingDuration=Duration or 900
+
+  if Altitude then
+    self.missionHoldingCoord.y=UTILS.FeetToMeters(Altitude)
+    self.missionHoldingCoordAlt = UTILS.FeetToMeters(Altitude or 10000)
+  end
+  
+  self.missionHoldingCoordSpeed=Speed and Speed or nil
+
+  return self
 end
 
 --- Get the mission egress coordinate if this was defined.
@@ -5708,6 +5836,20 @@ end
 -- @return Core.Point#COORDINATE Coordinate Coordinate or nil.
 function AUFTRAG:GetMissionEgressCoord()
   return self.missionEgressCoord
+end
+
+--- Get the mission ingress coordinate if this was defined.
+-- @param #AUFTRAG self
+-- @return Core.Point#COORDINATE Coordinate Coordinate or nil.
+function AUFTRAG:GetMissionIngressCoord()
+  return self.missionIngressCoord
+end
+
+--- Get the mission holding coordinate if this was defined.
+-- @param #AUFTRAG self
+-- @return Core.Point#COORDINATE Coordinate Coordinate or nil.
+function AUFTRAG:GetMissionHoldingCoord()
+  return self.missionHoldingCoord
 end
 
 --- Get coordinate which was set as mission waypoint coordinate.
@@ -5744,10 +5886,27 @@ function AUFTRAG:GetMissionWaypointCoord(group, randomradius, surfacetypes)
     end
     return coord
   end
+  
+  local coord=group:GetCoordinate()
+  
+  -- Check if an ingress or holding coord has been explicitly set.
+  if self.missionHoldingCoord then
+    coord=self.missionHoldingCoord
+    if self.missionHoldingCoorddAlt then
+      coord:SetAltitude(self.missionHoldingCoordAlt, true)
+    end
+  end
+  
+  if self.missionIngressCoord then
+    coord=self.missionIngressCoord
+    if self.missionIngressCoordAlt then
+      coord:SetAltitude(self.missionIngressCoordAlt, true)
+    end
+  end
 
   -- Create waypoint coordinate half way between us and the target.
   local waypointcoord=COORDINATE:New(0,0,0)
-  local coord=group:GetCoordinate()
+  
   if coord then
     waypointcoord=coord:GetIntermediateCoordinate(self:GetTargetCoordinate(), self.missionFraction)
   else
@@ -5952,6 +6111,16 @@ function AUFTRAG:GetDCSMissionTask()
     local DCStask=CONTROLLABLE.TaskBombing(nil, self:GetTargetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, Divebomb)
 
     table.insert(DCStasks, DCStask)
+    
+  elseif self.type==AUFTRAG.Type.STRAFING then
+
+    ----------------------
+    -- STRAFING Mission --
+    ----------------------
+
+    local DCStask=CONTROLLABLE.TaskStrafing(nil,self:GetTargetVec2(), self.engageQuantity, self.engageLength,self.engageWeaponType,self.engageWeaponExpend,self.engageDirection,self.engageAsGroup)
+
+    table.insert(DCStasks, DCStask)    
 
   elseif self.type==AUFTRAG.Type.BOMBRUNWAY then
 
@@ -5969,7 +6138,7 @@ function AUFTRAG:GetDCSMissionTask()
     -- BOMBCARPET Mission --
     ------------------------
 
-    local DCStask=CONTROLLABLE.TaskCarpetBombing(nil, self:GetTargetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, self.engageCarpetLength)
+    local DCStask=CONTROLLABLE.TaskCarpetBombing(nil, self:GetTargetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, self.engageLength)
 
     table.insert(DCStasks, DCStask)
 
@@ -6037,7 +6206,7 @@ function AUFTRAG:GetDCSMissionTask()
     local param={}
     param.zone=self:GetObjective()
     param.altitude=self.missionAltitude
-    param.speed=self.missionSpeed
+    param.speed=self.missionSpeed and UTILS.KmphToMps(self.missionSpeed) or nil
 
     DCStask.params=param
 
@@ -6117,7 +6286,7 @@ function AUFTRAG:GetDCSMissionTask()
     local param={}
     param.target=self.engageTarget
     param.altitude=self.missionAltitude
-    param.speed=self.missionSpeed
+    param.speed=self.missionSpeed and UTILS.KmphToMps(self.missionSpeed) or nil
     param.lastindex=nil
 
     DCStask.params=param
@@ -6290,7 +6459,7 @@ function AUFTRAG:GetDCSMissionTask()
     local param={}
     param.zone=self:GetObjective()
     param.altitude=self.missionAltitude
-    param.speed=self.missionSpeed
+    param.speed=self.missionSpeed and UTILS.KmphToMps(self.missionSpeed) or nil
 
     DCStask.params=param
 
@@ -6326,7 +6495,7 @@ function AUFTRAG:GetDCSMissionTask()
     local param={}
     param.zone=self:GetObjective()
     param.altitude=self.missionAltitude
-    param.speed=self.missionSpeed
+    param.speed=self.missionSpeed and UTILS.KmphToMps(self.missionSpeed) or nil
 
     DCStask.params=param
 
@@ -6346,7 +6515,7 @@ function AUFTRAG:GetDCSMissionTask()
     local param={}
     param.target=self:GetTargetData()
     param.action="Wedge"
-    param.speed=self.missionSpeed
+    param.speed=self.missionSpeed and UTILS.KmphToMps(self.missionSpeed) or nil
 
     DCStask.params=param
 
@@ -6492,8 +6661,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     local DCStask={}
     local Vec2 = self.stayAt:GetVec2()  
-    local DCStask = CONTROLLABLE.TaskLandAtVec2(nil,Vec2,self.stayTime)
-  
+    local DCStask = CONTROLLABLE.TaskLandAtVec2(nil,Vec2,self.stayTime, self.combatLand, self.directionAfter)
     table.insert(DCStasks, DCStask)
 
   elseif self.type==AUFTRAG.Type.ONGUARD or self.type==AUFTRAG.Type.ARMOREDGUARD then

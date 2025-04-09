@@ -174,8 +174,7 @@ function AI_BAI_ZONE:New( PatrolZone, PatrolFloorAltitude, PatrolCeilingAltitude
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
   -- @param #string From The From State string.
   -- @param #string Event The Event string.
-  -- @param #string To The To State string.
-  
+  -- @param #string To The To State string. 
   -- @return #boolean Return false to cancel Transition.
   
   --- OnAfter Transition Handler for Event Engage.
@@ -408,7 +407,7 @@ function AI_BAI_ZONE:onafterStart( Controllable, From, Event, To )
   self:SetDetectionDeactivated() -- When not engaging, set the detection off.
 end
 
---- @param Wrapper.Controllable#CONTROLLABLE AIControllable
+-- @param Wrapper.Controllable#CONTROLLABLE AIControllable
 function _NewEngageRoute( AIControllable )
 
   AIControllable:T( "NewEngageRoute" )
@@ -417,7 +416,7 @@ function _NewEngageRoute( AIControllable )
 end
 
 
---- @param #AI_BAI_ZONE self
+-- @param #AI_BAI_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -429,7 +428,7 @@ function AI_BAI_ZONE:onbeforeEngage( Controllable, From, Event, To )
   end
 end
 
---- @param #AI_BAI_ZONE self
+-- @param #AI_BAI_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -478,7 +477,7 @@ function AI_BAI_ZONE:onafterTarget( Controllable, From, Event, To )
 end
 
 
---- @param #AI_BAI_ZONE self
+-- @param #AI_BAI_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -488,7 +487,7 @@ function AI_BAI_ZONE:onafterAbort( Controllable, From, Event, To )
   self:__Route( 1 )
 end
 
---- @param #AI_BAI_ZONE self
+-- @param #AI_BAI_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -522,12 +521,12 @@ function AI_BAI_ZONE:onafterEngage( Controllable, From, Event, To,
     
     --DONE: Create GetAltitude function for GROUP, and delete GetUnit(1).
     local CurrentAltitude = self.Controllable:GetAltitude()
-    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+    local CurrentPointVec3 = COORDINATE:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToEngageZoneSpeed = self.PatrolMaxSpeed
     local CurrentRoutePoint = CurrentPointVec3:WaypointAir( 
         self.PatrolAltType, 
-        POINT_VEC3.RoutePointType.TurningPoint, 
-        POINT_VEC3.RoutePointAction.TurningPoint, 
+        COORDINATE.WaypointType.TurningPoint, 
+        COORDINATE.WaypointAction.TurningPoint, 
         self.EngageSpeed, 
         true 
       )
@@ -578,13 +577,13 @@ function AI_BAI_ZONE:onafterEngage( Controllable, From, Event, To,
     self:T2( ToTargetVec2 )
 
     --- Obtain a 3D @{Point} from the 2D point + altitude.
-    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, self.EngageAltitude, ToTargetVec2.y )
+    local ToTargetPointVec3 = COORDINATE:New( ToTargetVec2.x, self.EngageAltitude, ToTargetVec2.y )
     
     --- Create a route point of type air.
     local ToTargetRoutePoint = ToTargetPointVec3:WaypointAir( 
       self.PatrolAltType, 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
+      COORDINATE.WaypointType.TurningPoint, 
+      COORDINATE.WaypointAction.TurningPoint, 
       self.EngageSpeed, 
       true 
     )
@@ -612,7 +611,7 @@ function AI_BAI_ZONE:onafterEngage( Controllable, From, Event, To,
 end
 
 
---- @param #AI_BAI_ZONE self
+-- @param #AI_BAI_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -623,7 +622,7 @@ function AI_BAI_ZONE:onafterAccomplish( Controllable, From, Event, To )
 end
 
 
---- @param #AI_BAI_ZONE self
+-- @param #AI_BAI_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -637,7 +636,7 @@ function AI_BAI_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
 end
 
 
---- @param #AI_BAI_ZONE self
+-- @param #AI_BAI_ZONE self
 -- @param Core.Event#EVENTDATA EventData
 function AI_BAI_ZONE:OnEventDead( EventData )
   self:F( { "EventDead", EventData } )

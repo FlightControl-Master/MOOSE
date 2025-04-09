@@ -491,6 +491,9 @@ function BRIGADE:onafterStatus(From, Event, To)
   -- Info ---
   -----------    
 
+  -- Display tactival overview.
+  self:_TacticalOverview()
+
   -- General info:
   if self.verbose>=1 then
 

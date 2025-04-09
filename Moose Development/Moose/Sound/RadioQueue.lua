@@ -361,7 +361,7 @@ end
 -- @param #RADIOQUEUE self
 -- @param #RADIOQUEUE.Transmission transmission The transmission.
 function RADIOQUEUE:Broadcast(transmission)
-  self:T("Broarcast")
+  self:T("Broadcast")
 
   if ((transmission.soundfile and transmission.soundfile.useSRS) or transmission.soundtext) and self.msrs then
     self:_BroadcastSRS(transmission)
@@ -380,7 +380,8 @@ function RADIOQUEUE:Broadcast(transmission)
     self:T(self.lid..string.format("Broadcasting from aircraft %s", sender:GetName()))
     
     
-    if not self.senderinit then
+    --if not self.senderinit then
+    -- TODO Seems to be a DCS bug - if I explode ANY unit in a group the BC assignment gets lost
     
       -- Command to set the Frequency for the transmission.
       local commandFrequency={
@@ -394,7 +395,7 @@ function RADIOQUEUE:Broadcast(transmission)
       sender:SetCommand(commandFrequency)
       
       self.senderinit=true
-    end
+    --end
     
     -- Set subtitle only if duration>0 sec.
     local subtitle=nil
@@ -455,7 +456,7 @@ function RADIOQUEUE:Broadcast(transmission)
         MESSAGE:New(string.format(text, filename, transmission.duration, transmission.subtitle or ""), 5, "RADIOQUEUE "..self.alias):ToAll()
       end
     else
-      self:E("ERROR: Could not get vec3 to determin transmission origin! Did you specify a sender and is it still alive?")
+      self:E("ERROR: Could not get vec3 to determine transmission origin! Did you specify a sender and is it still alive?")
     end
 
   end

@@ -75,35 +75,37 @@ MESSAGE.Type = {
 
 --- Creates a new MESSAGE object. Note that these MESSAGE objects are not yet displayed on the display panel. You must use the functions @{#MESSAGE.ToClient} or @{#MESSAGE.ToCoalition} or @{#MESSAGE.ToAll} to send these Messages to the respective recipients.
 -- @param self
--- @param #string MessageText is the text of the Message.
--- @param #number MessageDuration is a number in seconds of how long the MESSAGE should be shown on the display panel.
--- @param #string MessageCategory (optional) is a string expressing the "category" of the Message. The category will be shown as the first text in the message followed by a ": ".
+-- @param #string Text is the text of the Message.
+-- @param #number Duration Duration in seconds how long the message text is shown.
+-- @param #string Category (Optional) String expressing the "category" of the Message. The category will be shown as the first text in the message followed by a ": ".
 -- @param #boolean ClearScreen (optional) Clear all previous messages if true.
--- @return #MESSAGE
+-- @return #MESSAGE self
 -- @usage
 --
---    -- Create a series of new Messages.
---    -- MessageAll is meant to be sent to all players, for 25 seconds, and is classified as "Score".
---    -- MessageRED is meant to be sent to the RED players only, for 10 seconds, and is classified as "End of Mission", with ID "Win".
---    -- MessageClient1 is meant to be sent to a Client, for 25 seconds, and is classified as "Score", with ID "Score".
---    -- MessageClient1 is meant to be sent to a Client, for 25 seconds, and is classified as "Score", with ID "Score".
+--   -- Create a series of new Messages.
+--   -- MessageAll is meant to be sent to all players, for 25 seconds, and is classified as "Score".
+--   -- MessageRED is meant to be sent to the RED players only, for 10 seconds, and is classified as "End of Mission", with ID "Win".
+--   -- MessageClient1 is meant to be sent to a Client, for 25 seconds, and is classified as "Score", with ID "Score".
+--   -- MessageClient1 is meant to be sent to a Client, for 25 seconds, and is classified as "Score", with ID "Score".
 --   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!",  25, "End of Mission" )
 --   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty" )
 --   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target",  25, "Score" )
 --   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", 25, "Score")
 --
-function MESSAGE:New( MessageText, MessageDuration, MessageCategory, ClearScreen )
+function MESSAGE:New( Text, Duration, Category, ClearScreen )
+
   local self = BASE:Inherit( self, BASE:New() )
-  self:F( { MessageText, MessageDuration, MessageCategory } )
+  
+  self:F( { Text, Duration, Category } )
 
   self.MessageType = nil
 
   -- When no MessageCategory is given, we don't show it as a title... 
-  if MessageCategory and MessageCategory ~= "" then
-    if MessageCategory:sub( -1 ) ~= "\n" then
-      self.MessageCategory = MessageCategory .. ": "
+  if Category and Category ~= "" then
+    if Category:sub( -1 ) ~= "\n" then
+      self.MessageCategory = Category .. ": "
     else
-      self.MessageCategory = MessageCategory:sub( 1, -2 ) .. ":\n"
+      self.MessageCategory = Category:sub( 1, -2 ) .. ":\n"
     end
   else
     self.MessageCategory = ""
@@ -114,9 +116,9 @@ function MESSAGE:New( MessageText, MessageDuration, MessageCategory, ClearScreen
     self.ClearScreen = ClearScreen
   end
 
-  self.MessageDuration = MessageDuration or 5
+  self.MessageDuration = Duration or 5
   self.MessageTime = timer.getTime()
-  self.MessageText = MessageText:gsub( "^\n", "", 1 ):gsub( "\n$", "", 1 )
+  self.MessageText = Text:gsub( "^\n", "", 1 ):gsub( "\n$", "", 1 )
 
   self.MessageSent = false
   self.MessageGroup = false
@@ -177,22 +179,22 @@ end
 --
 --   -- Send the 2 messages created with the @{New} method to the Client Group.
 --   -- Note that the Message of MessageClient2 is overwriting the Message of MessageClient1.
---   Client = CLIENT:FindByName("UnitNameOfMyClient")
+--   Client = CLIENT:FindByName("NameOfClientUnit")
 --
---   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25, "Score" ):ToClient( Client )
---   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25, "Score" ):ToClient( Client )
+--   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", 25, "Score" ):ToClient( Client )
+--   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", 25, "Score" ):ToClient( Client )
 --   or
---   MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25 ):ToClient( Client )
---   MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25 ):ToClient( Client )
+--   MESSAGE:New( "Congratulations, you've just hit a target", 25, "Score"):ToClient( Client )
+--   MESSAGE:New( "Congratulations, you've just killed a target", 25, "Score"):ToClient( Client )
 --   or
---   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", "Score", 25 )
---   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", "Score", 25 )
+--   MessageClient1 = MESSAGE:New( "Congratulations, you've just hit a target", 25, "Score")
+--   MessageClient2 = MESSAGE:New( "Congratulations, you've just killed a target", 25, "Score")
 --   MessageClient1:ToClient( Client )
 --   MessageClient2:ToClient( Client )
 --
 function MESSAGE:ToClient( Client, Settings )
   self:F( Client )
-  self:ToUnit(Client, Settings) 
+  self:ToUnit(Client,Settings)
   return self
 end
 
@@ -239,6 +241,7 @@ function MESSAGE:ToUnit( Unit, Settings )
 
     if self.MessageDuration ~= 0 then
       self:T( self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$","") .. " / " .. self.MessageDuration )
+      local ID = Unit:GetID()
       trigger.action.outTextForUnit( Unit:GetID(), self.MessageCategory .. self.MessageText:gsub("\n$",""):gsub("\n$",""), self.MessageDuration, self.ClearScreen )
     end
   end
@@ -287,11 +290,11 @@ end
 -- @usage
 --
 --   -- Send a message created with the @{New} method to the BLUE coalition.
---   MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25):ToBlue()
+--   MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", 25, "Penalty"):ToBlue()
 --   or
---   MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToBlue()
+--   MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", 25, "Penalty"):ToBlue()
 --   or
---   MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 )
+--   MessageBLUE = MESSAGE:New( "To the BLUE Players: You receive a penalty because you've killed one of your own units", 25, "Penalty")
 --   MessageBLUE:ToBlue()
 --
 function MESSAGE:ToBlue()
@@ -308,11 +311,11 @@ end
 -- @usage
 --
 --   -- Send a message created with the @{New} method to the RED coalition.
---   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToRed()
+--   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty"):ToRed()
 --   or
---   MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToRed()
+--   MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty"):ToRed()
 --   or
---   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 )
+--   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty")
 --   MessageRED:ToRed()
 --
 function MESSAGE:ToRed()
@@ -331,11 +334,11 @@ end
 -- @usage
 --
 --   -- Send a message created with the @{New} method to the RED coalition.
---   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToCoalition( coalition.side.RED )
+--   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty"):ToCoalition( coalition.side.RED )
 --   or
---   MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 ):ToCoalition( coalition.side.RED )
+--   MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty"):ToCoalition( coalition.side.RED )
 --   or
---   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", "Penalty", 25 )
+--   MessageRED = MESSAGE:New( "To the RED Players: You receive a penalty because you've killed one of your own units", 25, "Penalty")
 --   MessageRED:ToCoalition( coalition.side.RED )
 --
 function MESSAGE:ToCoalition( CoalitionSide, Settings )
@@ -381,13 +384,13 @@ end
 -- @return #MESSAGE self
 -- @usage
 --
--- -- Send a message created to all players.
--- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 ):ToAll()
--- or
--- MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 ):ToAll()
--- or
--- MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", "End of Mission", 25 )
--- MessageAll:ToAll()
+--   -- Send a message created to all players.
+--   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", 25, "End of Mission"):ToAll()
+--   or
+--   MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", 25, "End of Mission"):ToAll()
+--   or
+--   MessageAll = MESSAGE:New( "To all Players: BLUE has won! Each player of BLUE wins 50 points!", 25, "End of Mission")
+--   MessageAll:ToAll()
 --
 function MESSAGE:ToAll( Settings, Delay )
   self:F()
@@ -461,6 +464,7 @@ _MESSAGESRS = {}
 -- @param #number Volume (optional) Volume, can be between 0.0 and 1.0 (loudest).
 -- @param #string Label (optional) Label, defaults to "MESSAGE" or the Message Category set.
 -- @param Core.Point#COORDINATE Coordinate (optional) Coordinate this messages originates from.
+-- @param #string Backend (optional) Backend to be used, can be MSRS.Backend.SRSEXE or MSRS.Backend.GRPC
 -- @usage
 --          -- Mind the dot here, not using the colon this time around!
 --          -- Needed once only
@@ -468,7 +472,7 @@ _MESSAGESRS = {}
 --          -- later on in your code
 --          MESSAGE:New("Test message!",15,"SPAWN"):ToSRS()
 --          
-function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,Gender,Culture,Voice,Coalition,Volume,Label,Coordinate)
+function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,Gender,Culture,Voice,Coalition,Volume,Label,Coordinate,Backend)
   
   _MESSAGESRS.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
   
@@ -484,6 +488,10 @@ function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,G
   
   if Coordinate then
     _MESSAGESRS.MSRS:SetCoordinate(Coordinate)
+  end
+  
+  if Backend then
+   _MESSAGESRS.MSRS:SetBackend(Backend)
   end
   
   _MESSAGESRS.Culture = Culture or MSRS.culture or "en-GB"

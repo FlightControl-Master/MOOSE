@@ -21,6 +21,7 @@
 -- @field #table cohorts Cohorts of this legion.
 -- @field Ops.Commander#COMMANDER commander Commander of this legion.
 -- @field Ops.Chief#CHIEF chief Chief of this legion.
+-- @field #boolean tacview If `true`, show tactical overview on status update.
 -- @extends Functional.Warehouse#WAREHOUSE
 
 --- *Per aspera ad astra.*
@@ -52,7 +53,7 @@ LEGION.RandomAssetScore=1
 
 --- LEGION class version.
 -- @field #string version
-LEGION.version="0.5.0"
+LEGION.version="0.5.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -322,6 +323,14 @@ function LEGION:SetVerbosity(VerbosityLevel)
   return self
 end
 
+--- Set tactical overview on.
+-- @param #LEGION self
+-- @return #LEGION self
+function LEGION:SetTacticalOverviewOn()  
+  self.tacview=true
+  return self
+end
+
 --- Add a mission for the legion. It will pick the best available assets for the mission and lauch it when ready. 
 -- @param #LEGION self
 -- @param Ops.Auftrag#AUFTRAG Mission Mission for this legion.
@@ -433,6 +442,21 @@ function LEGION:DelCohort(Cohort)
     end
   end
 
+  return self
+end
+
+--- Remove specific asset from legion.
+-- @param #LEGION self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
+-- @return #LEGION self
+function LEGION:DelAsset(Asset)
+
+  if Asset.cohort then
+    Asset.cohort:DelAsset(Asset)
+  else
+    self:E(self.lid..string.format("ERROR: Asset has not cohort attached. Cannot remove it from legion!"))
+  end
+  
   return self
 end
 
@@ -1634,6 +1658,9 @@ function LEGION:onafterAssetDead(From, Event, To, asset, request)
   if self.commander and self.commander.chief then
     self.commander.chief.detectionset:RemoveGroupsByName({asset.spawngroupname})
   end
+  
+  -- Remove asset from cohort and legion.
+  self:DelAsset(asset)
 
   -- Remove asset from mission is done via Mission:AssetDead() call from flightgroup onafterFlightDead function
   -- Remove asset from squadron same
@@ -1772,7 +1799,7 @@ end
 -- Mission Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new flight group after an asset was spawned.
+--- Create a new OPS group after an asset was spawned.
 -- @param #LEGION self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset.
 -- @return Ops.FlightGroup#FLIGHTGROUP The created flightgroup object.
@@ -1818,6 +1845,9 @@ function LEGION:_CreateFlightGroup(asset)
   -- Set home base.
   opsgroup.homebase=self.airbase
   
+  -- Set destination base
+  opsgroup.destbase=self.airbase
+  
   -- Set home zone.
   opsgroup.homezone=self.spawnzone  
 
@@ -1836,6 +1866,53 @@ function LEGION:_CreateFlightGroup(asset)
   return opsgroup
 end
 
+--- Display tactical overview.
+-- @param #LEGION self 
+function LEGION:_TacticalOverview()
+
+  if self.tacview then
+
+    local NassetsTotal=self:CountAssets(nil)
+    local NassetsStock=self:CountAssets(true)
+    local NassetsActiv=self:CountAssets(false)
+  
+    local NmissionsTotal=#self.missionqueue
+    local NmissionsRunni=self:CountMissionsInQueue()
+  
+    -- Info message
+    local text=string.format("Tactical Overview %s\n", self.alias)
+    text=text..string.format("===================================\n")
+  
+    -- Asset info.
+    text=text..string.format("Assets: %d [Active=%d, Stock=%d]\n", NassetsTotal, NassetsActiv, NassetsStock)
+  
+    -- Mission info.
+    text=text..string.format("Missions: %d [Running=%d]\n", NmissionsTotal, NmissionsRunni)
+    for _,mtype in pairs(AUFTRAG.Type) do
+      local n=self:CountMissionsInQueue(mtype)
+      if n>0 then
+        local N=self:CountMissionsInQueue(mtype)
+        text=text..string.format("  - %s: %d [Running=%d]\n", mtype, n, N)
+      end
+    end
+  
+    
+    local Ntransports=#self.transportqueue
+    if Ntransports>0 then
+      text=text..string.format("Transports: %d\n", Ntransports)
+      for _,_transport in pairs(self.transportqueue) do
+        local transport=_transport --Ops.OpsTransport#OPSTRANSPORT
+        text=text..string.format(" - %s", transport:GetState())
+      end
+    end
+  
+    -- Message to coalition.
+    MESSAGE:New(text, 60, nil, true):ToCoalition(self:GetCoalition())  
+  
+    
+  end
+  
+end
 
 --- Check if an asset is currently on a mission (STARTED or EXECUTING).
 -- @param #LEGION self
@@ -2563,6 +2640,8 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
     local RangeMax = RangeMax or 0    
     local InRange=(RangeMax and math.max(RangeMax, Rmax) or Rmax) >= TargetDistance
     
+    --env.info(string.format("Range TargetDist=%.1f Rmax=%.1f RangeMax=%.1f InRange=%s", TargetDistance, Rmax, RangeMax, tostring(InRange)))
+    
     return InRange    
   end
 
@@ -2628,7 +2707,7 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
   else
     Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of category", Cohort.name))
     return false  
-  end  
+  end
   
   if can then
     can=CheckAttribute(Cohort)
@@ -2684,7 +2763,7 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
   else
     Cohort:T(Cohort.lid..string.format("Cohort %s cannot because of max weight", Cohort.name))
     return false
-  end  
+  end
   
   return nil
 end
@@ -2728,6 +2807,8 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     
     -- Check if cohort can do the mission.
     local can=LEGION._CohortCan(cohort, MissionTypeRecruit, Categories, Attributes, Properties, WeaponTypes, TargetVec2, RangeMax, RefuelSystem, CargoWeight, MaxWeight)
+
+    --env.info(string.format("RecruitCohortAssets %s Cohort=%s can=%s", MissionTypeRecruit, cohort:GetName(), tostring(can)))
     
     -- Check OnDuty, capable, in range and refueling type (if TANKER).
     if can then
@@ -2742,6 +2823,12 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
       
     end
     
+  end
+  
+  -- Break if no assets could be found
+  if #Assets==0 then
+    --env.info(string.format("LEGION.RecruitCohortAssets: No assets could be recruited for mission type %s [Nmin=%s, Nmax=%s]", MissionTypeRecruit, tostring(NreqMin), tostring(NreqMax)))
+    return false, {}, {}  
   end
   
   -- Now we have a long list with assets.

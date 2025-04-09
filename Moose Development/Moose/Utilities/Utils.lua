@@ -56,6 +56,8 @@ BIGSMOKEPRESET = {
 -- @field #string Falklands South Atlantic map.
 -- @field #string Sinai Sinai map.
 -- @field #string Kola Kola map.
+-- @field #string Afghanistan Afghanistan map
+-- @field #string Iraq Iraq map
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
@@ -66,7 +68,9 @@ DCSMAP = {
   MarianaIslands="MarianaIslands",
   Falklands="Falklands",
   Sinai="SinaiMap",
-  Kola="Kola"
+  Kola="Kola",
+  Afghanistan="Afghanistan",
+  Iraq="Iraq"
 }
 
 
@@ -482,6 +486,15 @@ UTILS.BasicSerialize = function(s)
   end
 end
 
+--- Counts the number of elements in a table.
+-- @param #table T Table to count
+-- @return #int Number of elements in the table
+function UTILS.TableLength(T)
+  local count = 0
+  for _ in pairs(T or {}) do count = count + 1 end
+  return count
+end
+
 --- Print a table to log in a nice format
 -- @param #table table The table to print
 -- @param #number indent Number of indents
@@ -496,12 +509,12 @@ function UTILS.PrintTableToLog(table, indent, noprint)
   if not indent then indent = 0 end
   for k, v in pairs(table) do
     if string.find(k," ") then k='"'..k..'"'end
-    if type(v) == "table" then
+    if type(v) == "table" and UTILS.TableLength(v) > 0 then
       if not noprint then
         env.info(string.rep("  ", indent) .. tostring(k) .. " = {")
       end
       text = text ..string.rep("  ", indent) .. tostring(k) .. " = {\n"
-      text = text .. tostring(UTILS.PrintTableToLog(v, indent + 1)).."\n"
+      text = text .. tostring(UTILS.PrintTableToLog(v, indent + 1), noprint).."\n"
       if not noprint then
         env.info(string.rep("  ", indent) .. "},")
       end
@@ -1238,7 +1251,7 @@ function UTILS.SecondsToClock(seconds, short)
   end
 
   -- Seconds
-  local seconds = tonumber(seconds)
+  local seconds = tonumber(seconds) or 0
 
   -- Seconds of this day.
   local _seconds=seconds%(60*60*24)
@@ -1819,7 +1832,8 @@ end
 -- * Mariana Islands +2 (East)
 -- * Falklands +12 (East) - note there's a LOT of deviation across the map, as we're closer to the South Pole
 -- * Sinai +4.8 (East)
--- * Kola +15 (East) - not there is a lot of deviation across the map (-1° to +24°), as we are close to the North pole
+-- * Kola +15 (East) - note there is a lot of deviation across the map (-1° to +24°), as we are close to the North pole
+-- * Afghanistan +3 (East) - actually +3.6 (NW) to +2.3 (SE)
 -- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
 -- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
@@ -1848,6 +1862,10 @@ function UTILS.GetMagneticDeclination(map)
     declination=4.8
   elseif map==DCSMAP.Kola then
     declination=15
+  elseif map==DCSMAP.Afghanistan then
+    declination=3
+  elseif map==DCSMAP.Iraq then
+    declination=4.4
   else
     declination=0
   end
@@ -2079,6 +2097,8 @@ function UTILS.GMTToLocalTimeDifference()
     return 2   -- Currently map is +2 but should be +3 (DCS bug?)
   elseif theatre==DCSMAP.Kola then
     return 3   -- Currently map is +2 but should be +3 (DCS bug?)
+  elseif theatre==DCSMAP.Afghanistan then
+    return 4.5   -- UTC +4:30
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
@@ -2182,9 +2202,9 @@ function UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, Rising, Tlocal)
    local cosH = (cos(zenith) - (sinDec * sin(latitude))) / (cosDec * cos(latitude))
 
    if rising and cosH > 1 then
-      return "N/R" -- The sun never rises on this location on the specified date
+      return "N/S" -- The sun never rises on this location on the specified date
    elseif cosH < -1 then
-      return "N/S" -- The sun never sets on this location on the specified date
+      return "N/R" -- The sun never sets on this location on the specified date
    end
 
    -- Finish calculating H and convert into hours
@@ -2375,12 +2395,21 @@ function UTILS.IsLoadingDoorOpen( unit_name )
         return true
       end
 
-      if type_name == " OH-58D" and (unit:getDrawArgumentValue(35) > 0 or unit:getDrawArgumentValue(421) == -1) then
-        BASE:T(unit_name .. " cargo door is open")
-        return true
+      if type_name == "OH58D" then
+        BASE:T(unit_name .. " front door(s) are open")
+        return true -- no doors on this one ;)
       end
 
-      return false
+      if type_name == "CH-47Fbl1" and (unit:getDrawArgumentValue(86) > 0.5) then
+        BASE:T(unit_name .. " rear cargo door is open")
+        return true
+      end
+      
+      -- ground
+      local UnitDescriptor = unit:getDesc()
+      local IsGroundResult = (UnitDescriptor.category == Unit.Category.GROUND_UNIT)
+      
+      return IsGroundResult
 
   end -- nil
 
@@ -2405,17 +2434,19 @@ end
 --- Function to generate valid VHF frequencies in kHz for radio beacons (FM).
 -- @return #table VHFrequencies
 function UTILS.GenerateVHFrequencies()
-
+  
   -- known and sorted map-wise NDBs in kHz
   local _skipFrequencies = {
-  214,274,291.5,295,297.5,
-  300.5,304,305,307,309.5,311,312,312.5,316,
-  320,324,328,329,330,332,336,337,
-  342,343,348,351,352,353,358,
-  363,365,368,372.5,374,
-  380,381,384,385,389,395,396,
-  414,420,430,432,435,440,450,455,462,470,485,
-  507,515,520,525,528,540,550,560,570,577,580,
+  214,243,264,273,274,288,291.5,295,297.5,
+  300.5,304,305,307,309.5,310,311,312,312.5,316,317,
+  320,323,324,325,326,328,329,330,332,335,336,337,
+  340,342,343,346,348,351,352,353,358,
+  360,363,364,365,368,372.5,373,374,
+  380,381,384,385,387,389,391,395,396,399,
+  403,404,410,412,414,418,420,423,
+  430,432,435,440,445,
+  450,455,462,470,485,490,
+  507,515,520,525,528,540,550,560,563,570,577,580,595,
   602,625,641,662,670,680,682,690,
   705,720,722,730,735,740,745,750,770,795,
   822,830,862,866,
@@ -2576,7 +2607,7 @@ end
 --- Function to save an object to a file
 -- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
 -- @param #string Filename The name of the file. Existing file will be overwritten.
--- @param #table Data The LUA data structure to save. This will be e.g. a table of text lines with an \\n at the end of each line.
+-- @param #string Data The data structure to save. This will be e.g. a string of text lines with an \\n at the end of each line.
 -- @return #boolean outcome True if saving is possible, else false.
 function UTILS.SaveToFile(Path,Filename,Data)
   -- Thanks to @FunkyFranky
@@ -4179,4 +4210,327 @@ function UTILS.ReadCSV(filename)
   end
 
   return csvdata
+end
+
+--- Seed the LCG random number generator.
+-- @param #number seed Seed value. Default is a random number using math.random()
+function UTILS.LCGRandomSeed(seed)
+  UTILS.lcg = {
+    seed = seed or math.random(1, 2^32 - 1),
+    a = 1664525,
+    c = 1013904223,
+    m = 2^32
+  }
+end
+
+--- Return a pseudo-random number using the LCG algorithm.
+-- @return #number Random number between 0 and 1.
+function UTILS.LCGRandom()
+  if UTILS.lcg == nil then
+    UTILS.LCGRandomSeed()
+  end
+  UTILS.lcg.seed = (UTILS.lcg.a * UTILS.lcg.seed + UTILS.lcg.c) % UTILS.lcg.m
+  return UTILS.lcg.seed / UTILS.lcg.m
+end
+
+--- Spawns a new FARP of a defined type and coalition and functional statics (fuel depot, ammo storage, tent, windsock) around that FARP to make it operational.
+-- Adds vehicles from template if given. Fills the FARP warehouse with liquids and known materiels.
+-- References: [DCS Forum Topic](https://forum.dcs.world/topic/282989-farp-equipment-to-run-it)
+-- @param #string Name Name of this FARP installation. Must be unique. 
+-- @param Core.Point#COORDINATE Coordinate Where to spawn the FARP.
+-- @param #string FARPType Type of FARP, can be one of the known types ENUMS.FARPType.FARP, ENUMS.FARPType.INVISIBLE, ENUMS.FARPType.HELIPADSINGLE, ENUMS.FARPType.PADSINGLE. Defaults to ENUMS.FARPType.FARP.
+-- @param #number Coalition Coalition of this FARP, i.e. coalition.side.BLUE or coalition.side.RED, defaults to coalition.side.BLUE.
+-- @param #number Country Country of this FARP, defaults to country.id.USA (blue) or country.id.RUSSIA (red).
+-- @param #number CallSign Callsign of the FARP ATC, defaults to CALLSIGN.FARP.Berlin.
+-- @param #number Frequency Frequency of the FARP ATC Radio, defaults to 127.5 (MHz).
+-- @param #number Modulation Modulation of the FARP ATC Radio, defaults to radio.modulation.AM.
+-- @param #number ADF ADF Beacon (FM) Frequency in KHz, e.g. 428. If not nil, creates an VHF/FM ADF Beacon for this FARP. Requires a sound called "beacon.ogg" to be in the mission (trigger "sound to" ...)
+-- @param #number SpawnRadius Radius of the FARP, i.e. where the FARP objects will be placed in meters, not more than 150m away. Defaults to 100.
+-- @param #string VehicleTemplate, template name for additional vehicles. Can be nil for no additional vehicles.
+-- @param #number Liquids Tons of fuel to be added initially to the FARP. Defaults to 10 (tons). Set to 0 for no fill.
+-- @param #number Equipment Number of equipment items per known item to be added initially to the FARP. Defaults to 10 (items). Set to 0 for no fill.
+-- @return #list<Wrapper.Static#STATIC> Table of spawned objects and vehicle object (if given).
+-- @return #string ADFBeaconName Name of the ADF beacon, to be able to remove/stop it later.
+function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,Country,CallSign,Frequency,Modulation,ADF,SpawnRadius,VehicleTemplate,Liquids,Equipment)
+  
+  -- Set Defaults
+  local farplocation = Coordinate
+  local farptype = FARPType or ENUMS.FARPType.FARP
+  local Coalition = Coalition or coalition.side.BLUE
+  local callsign = CallSign or CALLSIGN.FARP.Berlin
+  local freq = Frequency or 127.5
+  local mod = Modulation or radio.modulation.AM
+  local radius = SpawnRadius or 100
+  if radius < 0 or radius > 150 then radius = 100 end
+  local liquids = Liquids or 10
+  liquids = liquids * 1000 -- tons to kg
+  local equip = Equipment or 10
+  local statictypes = ENUMS.FARPObjectTypeNamesAndShape[farptype] or {TypeName="FARP", ShapeName="FARPS"}
+  local STypeName = statictypes.TypeName
+  local SShapeName = statictypes.ShapeName
+  local Country = Country or (Coalition == coalition.side.BLUE and country.id.USA or country.id.RUSSIA)
+  local ReturnObjects = {}
+  
+  -- Spawn FARP
+  local newfarp = SPAWNSTATIC:NewFromType(STypeName,"Heliports",Country) --  "Invisible FARP" "FARP"
+  newfarp:InitShape(SShapeName) -- "invisiblefarp" "FARPS"
+  newfarp:InitFARP(callsign,freq,mod)
+  local spawnedfarp = newfarp:SpawnFromCoordinate(farplocation,0,Name)
+  table.insert(ReturnObjects,spawnedfarp)
+  -- Spawn Objects
+  local FARPStaticObjectsNato = {
+    ["FUEL"] = { TypeName = "FARP Fuel Depot", ShapeName = "GSM Rus", Category = "Fortifications"},
+    ["AMMO"] = { TypeName = "FARP Ammo Dump Coating", ShapeName = "SetkaKP", Category = "Fortifications"},
+    ["TENT"] = { TypeName = "FARP Tent", ShapeName = "PalatkaB", Category = "Fortifications"},
+    ["WINDSOCK"]  = { TypeName = "Windsock", ShapeName = "H-Windsock_RW", Category = "Fortifications"},
+  }
+    
+  local farpobcount = 0
+  for _name,_object in pairs(FARPStaticObjectsNato) do
+    local objloc = farplocation:Translate(radius,farpobcount*30)
+    local heading = objloc:HeadingTo(farplocation)
+    local newobject = SPAWNSTATIC:NewFromType(_object.TypeName,_object.Category,Country)
+    newobject:InitShape(_object.ShapeName)
+    newobject:InitHeading(heading)
+    newobject:SpawnFromCoordinate(objloc,farpobcount*30,_name.." - "..Name)
+    table.insert(ReturnObjects,newobject)
+    farpobcount = farpobcount + 1
+  end
+  
+  -- Vehicle if any
+  if VehicleTemplate and type(VehicleTemplate) == "string" then
+    local vcoordinate = farplocation:Translate(radius,farpobcount*30)
+    local heading = vcoordinate:HeadingTo(farplocation)
+    local vehicles = SPAWN:NewWithAlias(VehicleTemplate,"FARP Vehicles - "..Name)
+    vehicles:InitGroupHeading(heading)
+    vehicles:InitCountry(Country)
+    vehicles:InitCoalition(Coalition)
+    vehicles:InitDelayOff()
+    local spawnedvehicle = vehicles:SpawnFromCoordinate(vcoordinate)
+    table.insert(ReturnObjects,spawnedvehicle)
+  end
+  
+  local newWH = STORAGE:New(Name)
+  if liquids and liquids > 0 then
+    -- Storage fill-up
+    newWH:SetLiquid(STORAGE.Liquid.DIESEL,liquids) -- kgs to tons
+    newWH:SetLiquid(STORAGE.Liquid.GASOLINE,liquids)
+    newWH:SetLiquid(STORAGE.Liquid.JETFUEL,liquids)
+    newWH:SetLiquid(STORAGE.Liquid.MW50,liquids)
+  end
+  
+  if equip and equip > 0 then
+    for cat,nitem in pairs(ENUMS.Storage.weapons) do
+      for name,item in pairs(nitem) do
+        newWH:SetItem(item,equip)
+      end
+    end
+  end
+  
+  local ADFName
+  if ADF and type(ADF) == "number" then
+    local ADFFreq = ADF*1000 -- KHz to Hz
+    local Sound =  "l10n/DEFAULT/beacon.ogg"
+    local vec3 = farplocation:GetVec3()
+    ADFName = Name .. " ADF "..tostring(ADF).."KHz"
+    --BASE:I(string.format("Adding FARP Beacon %d KHz Name %s",ADF,ADFName))
+    trigger.action.radioTransmission(Sound, vec3, 0, true, ADFFreq, 250, ADFName)
+  end
+  
+  return ReturnObjects, ADFName
+end
+
+--- Converts a Vec2 to a Vec3.
+-- @param vec the 2D vector
+-- @param y optional new y axis (altitude) value. If omitted it's 0.
+function UTILS.Vec2toVec3(vec,y) 
+  if not vec.z then
+    if vec.alt and not y then
+      y = vec.alt
+    elseif not y then
+      y = 0
+    end
+    return {x = vec.x, y = y, z = vec.y}
+  else
+    return {x = vec.x, y = vec.y, z = vec.z}  -- it was already Vec3, actually.
+  end
+end
+
+--- Get the correction needed for true north in radians
+-- @param gPoint The map point vec2 or vec3
+-- @return number correction
+function UTILS.GetNorthCorrection(gPoint)  
+  local point = UTILS.DeepCopy(gPoint)
+  if not point.z then --Vec2; convert to Vec3
+    point.z = point.y
+    point.y = 0
+  end
+  local lat, lon = coord.LOtoLL(point)
+  local north_posit = coord.LLtoLO(lat + 1, lon)
+  return math.atan2(north_posit.z - point.z, north_posit.x - point.x)
+end
+
+--- Convert time in seconds to a DHMS table `{d = days, h = hours, m = minutes, s = seconds}`
+-- @param timeInSec Time in Seconds
+-- @return #table Table with DHMS data
+function UTILS.GetDHMS(timeInSec)
+  if timeInSec and type(timeInSec) == 'number' then
+    local tbl = {d = 0, h = 0, m = 0, s = 0}
+    if timeInSec > 86400 then
+      while timeInSec > 86400 do
+        tbl.d = tbl.d + 1
+        timeInSec = timeInSec - 86400
+      end
+    end
+    if timeInSec > 3600 then
+      while timeInSec > 3600 do
+        tbl.h = tbl.h + 1
+        timeInSec = timeInSec - 3600
+      end
+    end
+    if timeInSec > 60 then
+      while timeInSec > 60 do
+        tbl.m = tbl.m + 1
+        timeInSec = timeInSec - 60
+      end
+    end
+    tbl.s = timeInSec
+    return tbl
+  else
+    BASE:E("No number handed!")
+    return
+  end
+end
+
+--- Returns heading-error corrected direction in radians.
+-- True-north corrected direction from point along vector vec.
+-- @param vec Vec3 Starting point
+-- @param point Vec2 Direction
+-- @return direction corrected direction from point.
+function UTILS.GetDirectionRadians(vec, point)
+  local dir = math.atan2(vec.z, vec.x)
+  if point then
+    dir = dir + UTILS.GetNorthCorrection(point)
+  end
+  if dir < 0 then
+    dir = dir + 2 * math.pi -- put dir in range of 0 to 2*pi
+  end
+  return dir
+end
+
+--- Raycasting a point in polygon. Code from http://softsurfer.com/Archive/algorithm_0103/algorithm_0103.htm
+-- @param point Vec2 or Vec3 to test
+-- @param #table poly Polygon Table of Vec2/3 point forming the Polygon
+-- @param #number maxalt Altitude limit (optional)
+-- @param #boolean outcome 
+function UTILS.IsPointInPolygon(point, poly, maxalt) 
+  point = UTILS.Vec2toVec3(point)
+  local px = point.x
+  local pz = point.z
+  local cn = 0
+  local newpoly = UTILS.DeepCopy(poly)
+
+  if not maxalt or (point.y <= maxalt) then
+    local polysize = #newpoly
+    newpoly[#newpoly + 1] = newpoly[1]
+
+    newpoly[1] = UTILS.Vec2toVec3(newpoly[1])
+
+    for k = 1, polysize do
+      newpoly[k+1] = UTILS.Vec2toVec3(newpoly[k+1])
+      if ((newpoly[k].z <= pz) and (newpoly[k+1].z > pz)) or ((newpoly[k].z > pz) and (newpoly[k+1].z <= pz)) then
+        local vt = (pz - newpoly[k].z) / (newpoly[k+1].z - newpoly[k].z)
+        if (px < newpoly[k].x + vt*(newpoly[k+1].x - newpoly[k].x)) then
+          cn = cn + 1
+        end
+      end
+    end
+
+    return cn%2 == 1
+  else
+    return false
+  end
+end
+
+--- Vector scalar multiplication.
+-- @param vec Vec3 vector to multiply
+-- @param #number mult scalar multiplicator
+-- @return Vec3 new vector multiplied with the given scalar
+function UTILS.ScalarMult(vec, mult)
+  return {x = vec.x*mult, y = vec.y*mult, z = vec.z*mult}
+end
+
+--- Utilities weather class for fog mainly.
+-- @type UTILS.Weather
+UTILS.Weather = {}
+
+--- Returns the current fog thickness in meters. Returns zero if fog is not present. 
+function UTILS.Weather.GetFogThickness()
+  return world.weather.getFogThickness()
+end
+
+--- Sets the fog to the desired thickness in meters at sea level. 
+-- @param #number Thickness Thickness in meters.
+-- Any fog animation will be discarded.
+-- Valid range : 100 to 5000 meters
+function UTILS.Weather.SetFogThickness(Thickness)
+  local value = Thickness
+  if value < 100 then value = 100
+  elseif value > 5000 then  value = 5000 end
+  return world.weather.setFogThickness(value)
+end
+
+--- Removes the fog.
+function UTILS.Weather.RemoveFog()
+  return world.weather.setFogThickness(0)
+end
+
+--- Gets the maximum visibility distance of the current fog setting.
+-- Returns 0 if no fog is present. 
+function UTILS.Weather.GetFogVisibilityDistanceMax()
+  return world.weather.getFogVisibilityDistance()
+end
+
+--- Sets the maximum visibility at sea level in meters.
+-- @param #number Thickness Thickness in meters.
+-- Limit: 100 to 100000 
+function UTILS.Weather.SetFogVisibilityDistance(Thickness)
+  local value = Thickness
+  if value < 100 then value = 100
+  elseif value > 100000 then  value = 100000 end
+  return world.weather.setFogVisibilityDistance(value)
+end
+
+---  Uses data from the passed table to change the fog visibility and thickness over a desired timeframe. This allows for a gradual increase/decrease of fog values rather than abruptly applying the values.
+-- Animation Key Format: {time, visibility, thickness}
+-- @param #table AnimationKeys Table of AnimationKey tables
+-- @usage
+-- Time: in seconds 0 to infinity
+-- Time is relative to when the function was called. Time value for each key must be larger than the previous key. If time is set to 0 then the fog will be applied to the corresponding visibility and thickness values at that key. Any time value greater than 0 will result in the current fog being inherited and changed to the first key.
+-- Visibility: in meters 100 to 100000
+-- Thickness: in meters 100 to 5000
+-- The speed at which the visibility and thickness changes is based on the time between keys and the values that visibility and thickness are being set to.
+--
+-- When the function is passed an empty table {} or nil the fog animation will be discarded and whatever the current thickness and visibility are set to will remain.
+-- 
+-- The following will set the fog in the mission to disappear in 1 minute.
+--
+--            UTILS.Weather.SetFogAnimation({ {60, 0, 0} })
+--
+-- The following will take 1 hour to get to the first fog setting, it will maintain that fog setting for another hour, then lightly removes the fog over the 2nd and 3rd hour, the completely removes the fog after 3 hours and 3 minutes from when the function was called.
+--
+--            UTILS.Weather.SetFogAnimation({
+--              {3600, 10000, 3000},    -- one hour to get to that fog setting
+--              {7200, 10000, 3000},    -- will maintain for 2 hours
+--              {10800, 20000, 2000},   -- at 3 hours visibility will have been increased while thickness decreases slightly
+--              {12600, 0, 0},          -- at 3:30 after the function was called the fog will be completely removed. 
+--            })
+--  
+function UTILS.Weather.SetFogAnimation(AnimationKeys)
+  return world.weather.setFogAnimation(AnimationKeys)
+end
+
+--- The fog animation will be discarded and whatever the current thickness and visibility are set to will remain
+function UTILS.Weather.StopFogAnimation()
+  return world.weather.setFogAnimation({})
 end

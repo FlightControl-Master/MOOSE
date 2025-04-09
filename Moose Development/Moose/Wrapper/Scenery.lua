@@ -1,13 +1,13 @@
 --- **Wrapper** - SCENERY models scenery within the DCS simulator.
---
+-- 
 -- ===
---
+-- 
 -- ### Author: **FlightControl**
---
+-- 
 -- ### Contributions: **Applevangelist**, **funkyfranky**
---
+-- 
 -- ===
---
+-- 
 -- @module Wrapper.Scenery
 -- @image Wrapper_Scenery.JPG
 
@@ -23,13 +23,13 @@
 
 
 --- Wrapper class to handle Scenery objects that are defined on the map.
---
+-- 
 -- The @{Wrapper.Scenery#SCENERY} class is a wrapper class to handle the DCS Scenery objects:
---
+-- 
 --  * Wraps the DCS Scenery objects.
 --  * Support all DCS Scenery APIs.
 --  * Enhance with Scenery specific APIs not in the DCS API set.
---
+--  
 --  @field #SCENERY
 SCENERY = {
   ClassName = "SCENERY",
@@ -43,28 +43,36 @@ SCENERY = {
 function SCENERY:Register( SceneryName, SceneryObject )
 
   local self = BASE:Inherit( self, POSITIONABLE:New( SceneryName ) )
-
+  
   self.SceneryName = tostring(SceneryName)
-
+  
   self.SceneryObject = SceneryObject
-
-  if self.SceneryObject then
-    self.Life0 = self.SceneryObject:getLife()
+  
+  if self.SceneryObject and self.SceneryObject.getLife then -- fix some objects do not have all functions
+    self.Life0 = self.SceneryObject:getLife() or 0
   else
     self.Life0 = 0
   end
-
+  
   self.Properties = {}
-
+  
   return self
 end
 
---- Returns the Value of the zone with the given PropertyName, or nil if no matching property exists.
+--- Returns the value of the scenery with the given PropertyName, or nil if no matching property exists.
 -- @param #SCENERY self
 -- @param #string PropertyName The name of a the QuadZone Property from the scenery assignment to be retrieved.
 -- @return #string The Value of the QuadZone Property from the scenery assignment with the given PropertyName, or nil if absent.
 function SCENERY:GetProperty(PropertyName)
   return self.Properties[PropertyName]
+end
+
+--- Checks if the value of the scenery with the given PropertyName exists.
+-- @param #SCENERY self
+-- @param #string PropertyName The name of a the QuadZone Property from the scenery assignment to be retrieved.
+-- @return #boolean Outcome True if it exists, else false.
+function SCENERY:HasProperty(PropertyName)
+  return self.Properties[PropertyName] ~= nil and true or false
 end
 
 --- Returns the scenery Properties table.
@@ -83,6 +91,7 @@ function SCENERY:SetProperty(PropertyName, PropertyValue)
   self.Properties[PropertyName] = PropertyValue
   return self
 end
+
 --- Obtain object name.
 --@param #SCENERY self
 --@return #string Name
@@ -97,15 +106,15 @@ function SCENERY:GetDCSObject()
   return self.SceneryObject
 end
 
---- Get current life points from the SCENERY Object.
---  **CAVEAT**: Some objects change their life value or "hitpoints" **after** the first hit. Hence we will adjust the life0 value to 120%
---  of the last life value if life exceeds life0 (initial life) at any point. Thus will will get a smooth percentage decrease, if you use this e.g. as success
+--- Get current life points from the SCENERY Object. Note - Some scenery objects always have 0 life points.
+--  **CAVEAT**: Some objects change their life value or "hitpoints" **after** the first hit. Hence we will adjust the life0 value to 120% 
+--  of the last life value if life exceeds life0 (initial life) at any point. Thus will will get a smooth percentage decrease, if you use this e.g. as success 
 --  criteria for a bombing task.
 --@param #SCENERY self
 --@return #number life
 function SCENERY:GetLife()
   local life = 0
-  if self.SceneryObject then
+  if self.SceneryObject and self.SceneryObject.getLife then
     life = self.SceneryObject:getLife()
     if life > self.Life0 then
       self.Life0 = math.floor(life * 1.2)
@@ -121,7 +130,7 @@ function SCENERY:GetLife0()
   return self.Life0 or 0
 end
 
---- Check if SCENERY Object is alive.
+--- Check if SCENERY Object is alive. Note - Some scenery objects always have 0 life points.
 --@param #SCENERY self
 --@param #number Threshold (Optional) If given, SCENERY counts as alive above this relative life in percent (1..100).
 --@return #number life
@@ -133,7 +142,7 @@ function SCENERY:IsAlive(Threshold)
   end
 end 
 
---- Check if SCENERY Object is dead.
+--- Check if SCENERY Object is dead. Note - Some scenery objects always have 0 life points.
 --@param #SCENERY self
 --@param #number Threshold (Optional) If given, SCENERY counts as dead below this relative life in percent (1..100).
 --@return #number life
@@ -145,12 +154,13 @@ function SCENERY:IsDead(Threshold)
   end
 end 
 
---- Get SCENERY relative life in percent, e.g. 75.
+--- Get SCENERY relative life in percent, e.g. 75. Note - Some scenery objects always have 0 life points.
 --@param #SCENERY self
 --@return #number rlife
 function SCENERY:GetRelativeLife()
   local life = self:GetLife()
   local life0 = self:GetLife0()
+  if life == 0 or life0 == 0 then return 0 end
   local rlife = math.floor((life/life0)*100)
   return rlife
 end
@@ -175,7 +185,7 @@ function SCENERY:FindByName(Name, Coordinate, Radius, Role)
   local radius = Radius or 100
   local name = Name or "unknown"
   local scenery = nil
-
+  
   ---
   -- @param Core.Point#COORDINATE coordinate
   -- @param #number radius
@@ -199,13 +209,13 @@ function SCENERY:FindByName(Name, Coordinate, Radius, Role)
     end
     return nil
   end
-
+  
   if Coordinate then
     --BASE:I("Coordinate Scenery Scan")
     scenery = SceneryScan(Coordinate, radius, name)
   end
 
-  return scenery
+  return scenery  
 end
 
 --- Find a SCENERY object from its name or id. Since SCENERY isn't registered in the Moose database (just too many objects per map), we need to do a scan first
@@ -215,7 +225,7 @@ end
 --@param Core.Zone#ZONE_BASE Zone Where to find the scenery object. Can be handed as zone name.
 --@param #number Radius (optional) Search radius around coordinate, defaults to 100
 --@return #SCENERY Scenery Object or `nil` if it cannot be found
-function SCENERY:FindByNameInZone(Name, Zone, Radius)
+function SCENERY:FindByNameInZone(Name, Zone, Radius)   
   local radius = Radius or 100
   local name = Name or "unknown"
   if type(Zone) == "string" then
@@ -270,7 +280,7 @@ end
 function SCENERY:FindAllByZoneName( ZoneName )
   local zone = ZoneName -- Core.Zone#ZONE_RADIUS
   if type(ZoneName) == "string" then
-    zone = ZONE:FindByName(ZoneName)
+    zone = ZONE:FindByName(ZoneName) 
   end
   local _id = zone:GetProperty('OBJECT ID')
   --local properties = zone:GetAllProperties() or {}
@@ -290,7 +300,7 @@ function SCENERY:FindAllByZoneName( ZoneName )
       return {obj}
     else
       return nil
-    end
+    end 
   end
 end
 

@@ -169,10 +169,6 @@ Defines an extensive API to manage 3D points in the DCS World 3D simulation spac
 **Features:**
 
   * Provides a COORDINATE class, which allows to manage points in 3D space and perform various operations on it.
-  * Provides a POINT_VEC2 class, which is derived from COORDINATE, and allows to manage points in 3D space, but from a
-    Lat/Lon and Altitude perspective.
-  * Provides a POINT_VEC3 class, which is derived from COORDINATE, and allows to manage points in 3D space, but from a
-    X, Z and Y vector perspective.
 
 **The coordinate system classes are essential to understand. Learn this!**
 

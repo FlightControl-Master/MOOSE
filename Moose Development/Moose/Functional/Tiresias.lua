@@ -97,7 +97,7 @@
 TIRESIAS = {
   ClassName = "TIRESIAS",
   debug = false,
-  version = "0.0.4",
+  version = "0.0.5",
   Interval = 20,
   GroundSet = nil,
   VehicleSet = nil,
@@ -187,7 +187,7 @@ function TIRESIAS:SetAAARanges(FiringRange,SwitchAAA)
   return self
 end
 
---- [USER] Add a SET_GROUP of GROUP objects as exceptions. Can be done multiple times.
+--- [USER] Add a SET_GROUP of GROUP objects as exceptions. Can be done multiple times. Does **not** work work for GROUP objects spawned into the SET after start, i.e. the groups need to exist in the game already.
 -- @param #TIRESIAS self
 -- @param Core.Set#SET_GROUP Set to add to the exception list.
 -- @return #TIRESIAS self
@@ -203,7 +203,7 @@ function TIRESIAS:AddExceptionSet(Set)
         }
        exceptions:AddGroup(grp,true)
       end
-      BASE:I("TIRESIAS: Added exception group: "..grp:GetName())
+      BASE:T("TIRESIAS: Added exception group: "..grp:GetName())
     end
   )  
   return self
@@ -288,7 +288,7 @@ function TIRESIAS:_InitGroups()
         }
       end
       if grp.Tiresias and (not grp.Tiresias.exception == true) then
-        if  grp.Tiresias.invisible and grp.Tiresias.invisible == false then
+        if grp.Tiresias.invisible == false then
           grp:SetCommandInvisible(true)
           grp.Tiresias.invisible = true
           if SwitchAAA then
@@ -315,10 +315,11 @@ function TIRESIAS:_InitGroups()
         }
       end
       if grp.Tiresias and (not grp.Tiresias.exception == true) then
-        if grp.Tiresias and grp.Tiresias.invisible and grp.Tiresias.invisible == false then
+        if grp.Tiresias and grp.Tiresias.invisible == false then
           grp:SetCommandInvisible(true)
           grp:SetAIOff()
           grp.Tiresias.invisible = true
+          grp.Tiresias.AIOff = true
         end
       end     
       --BASE:I(string.format("Init/Switch off Vehicle %s (Exception %s)",grp:GetName(),tostring(grp.Tiresias.exception)))
@@ -336,7 +337,7 @@ function TIRESIAS:_InitGroups()
         }
       end
       if grp.Tiresias and (not grp.Tiresias.exception == true) then
-        if grp.Tiresias and grp.Tiresias.invisible and grp.Tiresias.invisible == false then
+        if grp.Tiresias and grp.Tiresias.invisible == false then
           grp:SetCommandInvisible(true)
           grp.Tiresias.invisible = true
         end
@@ -391,7 +392,9 @@ function TIRESIAS:_SwitchOnGroups(group,radius)
   if ground:CountAlive() > 0 then
     ground:ForEachGroupAlive(
       function(grp)
-        if grp.Tiresias and grp.Tiresias.type and (not grp.Tiresias.exception == true ) then
+        local name = grp:GetName()
+        if grp:GetCoalition() ~= group:GetCoalition()
+                            and grp.Tiresias and grp.Tiresias.type and (not grp.Tiresias.exception == true ) then
           if grp.Tiresias.invisible == true then
             grp:SetCommandInvisible(false)
             grp.Tiresias.invisible = false
@@ -407,7 +410,7 @@ function TIRESIAS:_SwitchOnGroups(group,radius)
           end
           --BASE:I(string.format("TIRESIAS - Switch on %s %s (Exception %s)",tostring(grp.Tiresias.type),grp:GetName(),tostring(grp.Tiresias.exception)))
         else
-          BASE:E("TIRESIAS - This group has not been initialized or is an exception!")
+          BASE:T("TIRESIAS - This group "..tostring(name).. " has not been initialized or is an exception!")
         end
       end
     )

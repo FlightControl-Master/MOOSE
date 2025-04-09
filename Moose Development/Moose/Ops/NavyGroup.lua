@@ -44,6 +44,7 @@
 -- @field #number pathCorridor Path corrdidor width in meters.
 -- @field #boolean ispathfinding If true, group is currently path finding.
 -- @field #NAVYGROUP.Target engage Engage target.
+-- @field #boolean intowindold Use old calculation to determine heading into wind.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
@@ -90,7 +91,7 @@ NAVYGROUP = {
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="1.0.2"
+NAVYGROUP.version="1.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -393,7 +394,8 @@ function NAVYGROUP:New(group)
   -- Handle events:
   self:HandleEvent(EVENTS.Birth,      self.OnEventBirth)
   self:HandleEvent(EVENTS.Dead,       self.OnEventDead)
-  self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)  
+  self:HandleEvent(EVENTS.RemoveUnit, self.OnEventRemoveUnit)
+  self:HandleEvent(EVENTS.UnitLost,   self.OnEventRemoveUnit)  
   
   -- Start the status monitoring.
   self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)
@@ -452,6 +454,18 @@ end
 -- @return #NAVYGROUP self
 function NAVYGROUP:SetPathfindingOff()
   self:SetPathfinding(false, self.pathCorridor)
+  return self
+end
+
+--- Set if old into wind calculation is used when carrier turns into the wind for a recovery.
+-- @param #NAVYGROUP self
+-- @param #boolean SwitchOn If `true` or `nil`, use old into wind calculation.
+-- @return #NAVYGROUP self
+function NAVYGROUP:SetIntoWindLegacy( SwitchOn )
+  if SwitchOn==nil then
+    SwitchOn=true
+  end
+  self.intowindold=SwitchOn
   return self
 end
 
@@ -600,6 +614,58 @@ function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
   return recovery
 end
 
+--- Get "Turn Into Wind" data. You can specify a certain ID.
+-- @param #NAVYGROUP self
+-- @param #number TID (Optional) Turn Into wind ID. If not given, the currently open "Turn into Wind" data is return (if there is any).
+-- @return #NAVYGROUP.IntoWind Turn into window data table.
+function NAVYGROUP:GetTurnIntoWind(TID)
+
+  if TID then
+  
+    -- Look for a specific ID.
+    for _,_turn in pairs(self.Qintowind) do
+      local turn=_turn --#NAVYGROUP.IntoWind      
+      if turn.Id==TID then
+        return turn
+      end    
+    end
+  
+  else
+
+    -- Return currently open window.
+    return self.intowind
+  
+  end
+
+  return nil
+end
+
+--- Extend duration of turn into wind.
+-- @param #NAVYGROUP self
+-- @param #number Duration Duration in seconds. Default 300 sec.
+-- @param #NAVYGROUP.IntoWind TurnIntoWind (Optional) Turn into window data table. If not given, the currently open one is used (if there is any).
+-- @return #NAVYGROUP self
+function NAVYGROUP:ExtendTurnIntoWind(Duration, TurnIntoWind)
+
+  Duration=Duration or 300
+
+  -- ID of turn or nil
+  local TID=TurnIntoWind and TurnIntoWind.Id or nil
+  
+  -- Get turn data.
+  local turn=self:GetTurnIntoWind(TID)
+  
+  if turn then
+    turn.Tstop=turn.Tstop+Duration
+    self:T(self.lid..string.format("Extending turn into wind by %d seconds. New stop time is %s", Duration, UTILS.SecondsToClock(turn.Tstop)))
+  else
+    self:E(self.lid.."Could not get turn into wind to extend!")
+  end
+
+  return self
+end
+
+
 --- Remove steam into wind window from queue. If the window is currently active, it is stopped first.
 -- @param #NAVYGROUP self
 -- @param #NAVYGROUP.IntoWind IntoWindData Turn into window data table.
@@ -709,7 +775,7 @@ end
 
 --- Update status.
 -- @param #NAVYGROUP self
-function NAVYGROUP:Status(From, Event, To)
+function NAVYGROUP:Status()
 
   -- FSM state.
   local fsmstate=self:GetState()
@@ -913,6 +979,35 @@ function NAVYGROUP:Status(From, Event, To)
   end
 
   ---
+  -- Elements
+  ---
+
+  if self.verbose>=2 then
+    local text="Elements:"
+    for i,_element in pairs(self.elements) do
+      local element=_element --Ops.OpsGroup#OPSGROUP.Element
+
+      local name=element.name
+      local status=element.status
+      local unit=element.unit
+      local life,life0=self:GetLifePoints(element)
+
+      local life0=element.life0
+
+      -- Get ammo.
+      local ammo=self:GetAmmoElement(element)
+
+      -- Output text for element.
+      text=text..string.format("\n[%d] %s: status=%s, life=%.1f/%.1f, guns=%d, rockets=%d, bombs=%d, missiles=%d, cargo=%d/%d kg",
+      i, name, status, life, life0, ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles, element.weightCargo, element.weightMaxCargo)
+    end
+    if #self.elements==0 then
+      text=text.." none!"
+    end
+    self:I(self.lid..text)
+  end
+
+  ---
   -- Engage Detected Targets
   ---
   if self:IsCruising() and self.detectionOn and self.engagedetectedOn then
@@ -975,7 +1070,7 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
 
   -- Debug info.
   if self.verbose>=1 then
-    local text=string.format("Initialized Navy Group %s:\n", self.groupname)
+    local text=string.format("Initialized Navy Group %s [GID=%d]:\n", self.groupname, self.group:GetID())
     text=text..string.format("Unit type     = %s\n", self.actype)
     text=text..string.format("Speed max    = %.1f Knots\n", UTILS.KmphToKnots(self.speedMax))
     text=text..string.format("Speed cruise = %.1f Knots\n", UTILS.KmphToKnots(self.speedCruise))
@@ -1203,7 +1298,7 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
     if self.verbose>=10 then
       for i=1,#waypoints do
         local wp=waypoints[i] --Ops.OpsGroup#OPSGROUP.Waypoint
-        local text=string.format("%s Waypoint [%d] UID=%d speed=%d", self.groupname, i-1, wp.uid or -1, wp.speed)
+        local text=string.format("%s Waypoint [%d] UID=%d speed=%d m/s", self.groupname, i-1, wp.uid or -1, wp.speed)
         self:I(self.lid..text)
         COORDINATE:NewFromWaypoint(wp):MarkToAll(text)            
       end
@@ -1775,80 +1870,95 @@ end
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #NAVYGROUP self
 -- @param #table Template Template used to init the group. Default is `self.template`.
+-- @param #number Delay Delay in seconds before group is initialized. Default `nil`, *i.e.* instantaneous. 
 -- @return #NAVYGROUP self
-function NAVYGROUP:_InitGroup(Template)
+function NAVYGROUP:_InitGroup(Template, Delay)
 
-  -- First check if group was already initialized.
-  if self.groupinitialized then
-    self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
-    return
-  end
-
-  -- Get template of group.
-  local template=Template or self:_GetTemplate()
-
-  -- Ships are always AI.
-  self.isAI=true
-  
-  -- Is (template) group late activated.
-  self.isLateActivated=template.lateActivation
-  
-  -- Naval groups cannot be uncontrolled.
-  self.isUncontrolled=false
-  
-  -- Max speed in km/h.
-  self.speedMax=self.group:GetSpeedMax()
-  
-  -- Is group mobile?
-  if self.speedMax and self.speedMax>3.6 then
-    self.isMobile=true
+  if Delay and Delay>0 then
+    -- Delayed call
+    self:ScheduleOnce(Delay, NAVYGROUP._InitGroup, self, Template, 0)
   else
-    self.isMobile=false
-    self.speedMax = 0
-  end  
   
-  -- Cruise speed: 70% of max speed.
-  self.speedCruise=self.speedMax*0.7
+    -- First check if group was already initialized.
+    if self.groupinitialized then
+      self:T(self.lid.."WARNING: Group was already initialized! Will NOT do it again!")
+      return
+    end
   
-  -- Group ammo.
-  self.ammo=self:GetAmmoTot()
+    -- Get template of group.
+    local template=Template or self:_GetTemplate()
   
-  -- Radio parameters from template. Default is set on spawn if not modified by the user.
-  self.radio.On=true  -- Radio is always on for ships.
-  self.radio.Freq=tonumber(template.units[1].frequency)/1000000
-  self.radio.Modu=tonumber(template.units[1].modulation)
+    -- Ships are always AI.
+    self.isAI=true
+    
+    -- Is (template) group late activated.
+    self.isLateActivated=template.lateActivation
+    
+    -- Naval groups cannot be uncontrolled.
+    self.isUncontrolled=false
+    
+    -- Max speed in km/h.
+    self.speedMax=self.group:GetSpeedMax()
+    
+    -- Is group mobile?
+    if self.speedMax and self.speedMax>3.6 then
+      self.isMobile=true
+    else
+      self.isMobile=false
+      self.speedMax = 0
+    end  
+    
+    -- Cruise speed: 70% of max speed.
+    self.speedCruise=self.speedMax*0.7
+    
+    -- Group ammo.
+    self.ammo=self:GetAmmoTot()
+    
+    -- Radio parameters from template. Default is set on spawn if not modified by the user.
+    self.radio.On=true  -- Radio is always on for ships.
+    self.radio.Freq=tonumber(template.units[1].frequency)/1000000
+    self.radio.Modu=tonumber(template.units[1].modulation)
+    
+    -- Set default formation. No really applicable for ships.
+    self.optionDefault.Formation="Off Road"
+    self.option.Formation=self.optionDefault.Formation
   
-  -- Set default formation. No really applicable for ships.
-  self.optionDefault.Formation="Off Road"
-  self.option.Formation=self.optionDefault.Formation
-
-  -- Default TACAN off.
-  self:SetDefaultTACAN(nil, nil, nil, nil, true)
-  self.tacan=UTILS.DeepCopy(self.tacanDefault)
+    -- Default TACAN off (we check if something is set already to keep those values in case of respawn)
+    if not self.tacanDefault then
+      self:SetDefaultTACAN(nil, nil, nil, nil, true)
+    end
+    if not self.tacan then
+      self.tacan=UTILS.DeepCopy(self.tacanDefault)
+    end
+    
+    -- Default ICLS off.
+    if not self.iclsDefault then
+      self:SetDefaultICLS(nil, nil, nil, true)
+    end
+    if not self.icls then
+      self.icls=UTILS.DeepCopy(self.iclsDefault)
+    end
+    
+    -- Get all units of the group.
+    local units=self.group:GetUnits()
   
-  -- Default ICLS off.
-  self:SetDefaultICLS(nil, nil, nil, true)
-  self.icls=UTILS.DeepCopy(self.iclsDefault)
-  
-  -- Get all units of the group.
-  local units=self.group:GetUnits()
-
-  -- DCS group.
-  local dcsgroup=Group.getByName(self.groupname)
-  local size0=dcsgroup:getInitialSize()
-  
-  -- Quick check.
-  if #units~=size0 then
-    self:E(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
+    -- DCS group.
+    local dcsgroup=Group.getByName(self.groupname)
+    local size0=dcsgroup:getInitialSize()
+    
+    -- Quick check.
+    if #units~=size0 then
+      self:E(self.lid..string.format("ERROR: Got #units=%d but group consists of %d units!", #units, size0))
+    end
+    
+    -- Add elemets.
+    for _,unit in pairs(units) do
+      self:_AddElementByName(unit:GetName())
+    end
+    
+    -- Init done.
+    self.groupinitialized=true
   end
-  
-  -- Add elemets.
-  for _,unit in pairs(units) do
-    self:_AddElementByName(unit:GetName())
-  end
-  
-  -- Init done.
-  self.groupinitialized=true
   
   return self
 end
@@ -2068,8 +2178,43 @@ end
 --- Get heading of group into the wind.
 -- @param #NAVYGROUP self
 -- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
+-- @param #number vdeck Desired wind speed on deck in Knots.
 -- @return #number Carrier heading in degrees.
-function NAVYGROUP:GetHeadingIntoWind_old(Offset)
+-- @return #number Carrier speed in knots.
+function NAVYGROUP:GetHeadingIntoWind_old(Offset, vdeck)
+
+  local function adjustDegreesForWindSpeed(windSpeed)
+    local degreesAdjustment = 0
+    -- the windspeeds are in m/s    
+    -- +0 degrees at 15m/s = 37kts
+    -- +0 degrees at 14m/s = 35kts
+    -- +0 degrees at 13m/s = 33kts
+    -- +4 degrees at 12m/s = 31kts
+    -- +4 degrees at 11m/s = 29kts
+    -- +4 degrees at 10m/s = 27kts
+    -- +4 degrees at 9m/s = 27kts
+    -- +4 degrees at 8m/s = 27kts
+    -- +8 degrees at 7m/s = 27kts
+    -- +8 degrees at 6m/s = 27kts
+    -- +8 degrees at 5m/s = 26kts
+    -- +20 degrees at 4m/s = 26kts
+    -- +20 degrees at 3m/s = 26kts
+    -- +30 degrees at 2m/s = 26kts 1s
+  
+    if windSpeed > 0 and windSpeed < 3 then
+      degreesAdjustment = 30
+    elseif windSpeed >= 3 and windSpeed < 5 then
+      degreesAdjustment = 20
+    elseif windSpeed >= 5 and windSpeed < 8 then
+      degreesAdjustment = 8
+    elseif windSpeed >= 8 and windSpeed < 13 then
+      degreesAdjustment = 4
+    elseif windSpeed >= 13 then
+      degreesAdjustment = 0
+    end
+  
+    return degreesAdjustment
+  end
 
   Offset=Offset or 0
 
@@ -2077,7 +2222,7 @@ function NAVYGROUP:GetHeadingIntoWind_old(Offset)
   local windfrom, vwind=self:GetWind()
 
   -- Actually, we want the runway in the wind.
-  local intowind=windfrom-Offset
+  local intowind = windfrom - Offset + adjustDegreesForWindSpeed(vwind)
 
   -- If no wind, take current heading.
   if vwind<0.1 then
@@ -2088,8 +2233,11 @@ function NAVYGROUP:GetHeadingIntoWind_old(Offset)
   if intowind<0 then
     intowind=intowind+360
   end
+
+  -- Speed of carrier in m/s but at least 4 knots.
+  local vtot = math.max(vdeck-UTILS.MpsToKnots(vwind), 4)
   
-  return intowind
+  return intowind, vtot
 end
 
 
@@ -2099,7 +2247,8 @@ end
 -- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
 -- @param #number vdeck Desired wind speed on deck in Knots.
 -- @return #number Carrier heading in degrees.
-function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
+-- @return #number Carrier speed in knots.
+function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck)
 
   -- Default offset angle.
   Offset=Offset or 0
@@ -2178,6 +2327,25 @@ function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
   self:T(self.lid..string.format("Heading into Wind: vship=%.1f, vwind=%.1f, WindTo=%03d°, Theta=%03d°, Heading=%03d", v, vwind, windto, theta, intowind))
   
   return intowind, v
+end
+
+--- Get heading of group into the wind. This minimizes the cross wind for an angled runway.
+-- Implementation based on [Mags & Bami](https://magwo.github.io/carrier-cruise/) work.
+-- @param #NAVYGROUP self
+-- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
+-- @param #number vdeck Desired wind speed on deck in Knots.
+-- @return #number Carrier heading in degrees.
+-- @return #number Carrier speed in knots.
+function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
+
+  if self.intowindold then
+    --env.info("FF use OLD into wind")
+    return self:GetHeadingIntoWind_old(Offset, vdeck)
+  else
+    --env.info("FF use NEW into wind")
+    return self:GetHeadingIntoWind_new(Offset, vdeck)
+  end
+
 end
 
 

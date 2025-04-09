@@ -31,7 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 ---
--- Last Update April 2024
+-- Last Update Jan 2025
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -41,6 +41,7 @@
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #number coalition Coalition side number, e.g. `coalition.side.RED`.
 -- @field Core.Set#SET_GROUP allheligroupset Set of CSAR heli groups.
+-- @field Core.Set#SET_GROUP UserSetGroup Set of CSAR heli groups as designed by the mission designer (if any set).
 -- @extends Core.Fsm#FSM
 
 --- *Combat search and rescue (CSAR) are search and rescue operations that are carried out during war that are within or near combat zones.* (Wikipedia)
@@ -91,7 +92,7 @@
 --         mycsar.immortalcrew = true -- Set to true to make wounded crew immortal.
 --         mycsar.invisiblecrew = false -- Set to true to make wounded crew insvisible.
 --         mycsar.loadDistance = 75 -- configure distance for pilots to get into helicopter in meters.
---         mycsar.mashprefix = {"MASH"} -- prefixes of #GROUP objects used as MASHes.
+--         mycsar.mashprefix = {"MASH"} -- prefixes of #GROUP objects used as MASHes. Will also try to add ZONE and STATIC objects with this prefix once at startup.
 --         mycsar.max_units = 6 -- max number of pilots that can be carried if #CSAR.AircraftType is undefined.
 --         mycsar.messageTime = 15 -- Time to show messages for in seconds. Doubled for long messages.
 --         mycsar.radioSound = "beacon.ogg" -- the name of the sound file to use for the pilots\' radio beacons. 
@@ -116,8 +117,17 @@
 --         mycsar.topmenuname = "CSAR" -- set the menu entry name
 --         mycsar.ADFRadioPwr = 1000 -- ADF Beacons sending with 1KW as default
 --         mycsar.PilotWeight = 80 --  Loaded pilots weigh 80kgs each
+--         mycsar.AllowIRStrobe = false -- Allow a menu item to request an IR strobe to find a downed pilot at night (requires NVGs to see it).
+--         mycsar.IRStrobeRuntime = 300 -- If an IR Strobe is activated, it runs for 300 seconds (5 mins).
+--  
+-- ## 2.1 Create own SET_GROUP to manage CTLD Pilot groups
+-- 
+--         -- Parameter: Set The SET_GROUP object created by the mission designer/user to represent the CSAR pilot groups.
+--         -- Needs to be set before starting the CSAR instance.
+--         local myset = SET_GROUP:New():FilterPrefixes("Helikopter"):FilterCoalitions("red"):FilterStart()
+--         mycsar:SetOwnSetPilotGroups(myset)
 --         
--- ## 2.1 SRS Features and Other Features
+-- ## 2.2 SRS Features and Other Features
 -- 
 --       mycsar.useSRS = false -- Set true to use FF\'s SRS integration
 --       mycsar.SRSPath = "C:\\Progra~1\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your SRS installation -- server(!)
@@ -136,6 +146,7 @@
 --       mycsar.csarUsePara = false -- If set to true, will use the LandingAfterEjection Event instead of Ejection. Requires mycsar.enableForAI to be set to true. --shagrat
 --       mycsar.wetfeettemplate = "man in floating thingy" -- if you use a mod to have a pilot in a rescue float, put the template name in here for wet feet spawns. Note: in conjunction with csarUsePara this might create dual ejected pilots in edge cases.
 --       mycsar.allowbronco = false  -- set to true to use the Bronco mod as a CSAR plane
+--       mycsar.CreateRadioBeacons = true -- set to false to disallow creating ADF radio beacons.
 --        
 -- ## 3. Results
 -- 
@@ -256,6 +267,10 @@ CSAR = {
   topmenuname = "CSAR",
   ADFRadioPwr = 1000,
   PilotWeight = 80,
+  CreateRadioBeacons = true,
+  UserSetGroup = nil,
+  AllowIRStrobe = false,
+  IRStrobeRuntime = 300,
 }
 
 --- Downed pilots info.
@@ -272,6 +287,7 @@ CSAR = {
 -- @field #number timestamp Timestamp for approach process.
 -- @field #boolean alive Group is alive or dead/rescued.
 -- @field #boolean wetfeet Group is spawned over (deep) water.
+-- @field #string BeaconName Name of radio beacon - if any.
 
 --- All slot / Limit settings
 -- @type CSAR.AircraftType
@@ -293,10 +309,11 @@ CSAR.AircraftType["Bronco-OV-10A"] = 2
 CSAR.AircraftType["MH-60R"] = 10
 CSAR.AircraftType["OH-6A"] = 2
 CSAR.AircraftType["OH58D"] = 2
+CSAR.AircraftType["CH-47Fbl1"] = 31
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.24"
+CSAR.version="1.0.30"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -455,6 +472,9 @@ function CSAR:New(Coalition, Template, Alias)
   
   -- added 1.0.16
   self.PilotWeight = 80
+  
+  -- Own SET_GROUP if any
+  self.UserSetGroup = nil
       
   -- WARNING - here\'ll be dragons
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
@@ -633,7 +653,7 @@ end
 -- @param #string Playername Name of Player (if applicable)
 -- @param #boolean Wetfeet Ejected over water
 -- @return #CSAR self.
-function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Description,Typename,Frequency,Playername,Wetfeet)
+function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Description,Typename,Frequency,Playername,Wetfeet,BeaconName)
   self:T({"_CreateDownedPilotTrack",Groupname,Side,OriginalUnit,Description,Typename,Frequency,Playername})
   
   -- create new entry
@@ -641,7 +661,7 @@ function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Descript
   DownedPilot.desc = Description or ""
   DownedPilot.frequency = Frequency or 0
   DownedPilot.index = self.downedpilotcounter
-  DownedPilot.name = Groupname or ""
+  DownedPilot.name = Groupname or Playername or ""
   DownedPilot.originalUnit = OriginalUnit or ""
   DownedPilot.player = Playername or ""
   DownedPilot.side = Side or 0
@@ -650,6 +670,7 @@ function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Descript
   DownedPilot.timestamp = 0
   DownedPilot.alive = true
   DownedPilot.wetfeet = Wetfeet or false
+  DownedPilot.BeaconName = BeaconName
   
   -- Add Pilot
   local PilotTable = self.downedPilots
@@ -736,7 +757,6 @@ function CSAR:_SpawnPilotInField(country,point,frequency,wetfeet)
     :NewWithAlias(template,alias)
     :InitCoalition(coalition)
     :InitCountry(country)
-    --:InitAIOnOff(pilotcacontrol)
     :InitDelayOff()
     :SpawnFromCoordinate(point)
 
@@ -789,6 +809,8 @@ end
 -- @param #boolean noMessage 
 -- @param #string _description Description
 -- @param #boolean forcedesc Use the description only for the pilot track entry
+-- @return Wrapper.Group#GROUP PilotInField Pilot GROUP object
+-- @return #string AliasName Alias display name
 function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description, forcedesc )
   self:T(self.lid .. " _AddCsar")
   self:T({_coalition , _country, _point, _typeName, _unitName, _playerName, _freq, noMessage, _description})
@@ -818,8 +840,18 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   end
   end
   
+  local BeaconName
+  
+  if _playerName then
+    BeaconName = _playerName..math.random(1,10000)
+  elseif _unitName then
+    BeaconName = _unitName..math.random(1,10000)
+  else
+    BeaconName = "Ghost-1-1"..math.random(1,10000)
+  end
+  
   if (_freq and _freq ~= 0) then --shagrat only add beacon if _freq is NOT 0 
-    self:_AddBeaconToGroup(_spawnedGroup, _freq)
+    self:_AddBeaconToGroup(_spawnedGroup, _freq, BeaconName)
   end
   
   self:_AddSpecialOptions(_spawnedGroup)
@@ -844,11 +876,11 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
   
   local _GroupName = _spawnedGroup:GetName() or _alias
 
-  self:_CreateDownedPilotTrack(_spawnedGroup,_GroupName,_coalition,_unitName,_text,_typeName,_freq,_playerName,wetfeet)
+  self:_CreateDownedPilotTrack(_spawnedGroup,_GroupName,_coalition,_unitName,_text,_typeName,_freq,_playerName,wetfeet,BeaconName)
 
   self:_InitSARForPilot(_spawnedGroup, _unitName, _freq, noMessage, _playerName) --shagrat use unitName to have the aircraft callsign / descriptive "name" etc.
   
-  return self
+  return _spawnedGroup, _alias
 end
 
 --- (Internal) Function to add a CSAR object into the scene at a zone coordinate. For mission designers wanting to add e.g. PoWs to the scene.
@@ -962,7 +994,6 @@ end
 -- @param Core.Point#COORDINATE Point
 -- @param #number Coalition Coalition.
 -- @param #string Description (optional) Description.
--- @param #boolean addBeacon (optional) yes or no.
 -- @param #boolean Nomessage (optional) If true, don\'t send a message to SAR.
 -- @param #string Unitname (optional) Name of the lost unit.
 -- @param #string Typename (optional) Type of plane.
@@ -1792,9 +1823,6 @@ function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak, _overrid
     end
     _text = string.gsub(_text,"km"," kilometer")
     _text = string.gsub(_text,"nm"," nautical miles")
-    --self.msrs:SetVoice(self.SRSVoice)
-    --self.SRSQueue:NewTransmission(_text,nil,self.msrs,nil,1)
-    --self:I("Voice = "..self.SRSVoice)
     self.SRSQueue:NewTransmission(_text,duration,self.msrs,tstart,2,subgroups,subtitle,subduration,self.SRSchannel,self.SRSModulation,gender,culture,self.SRSVoice,volume,label,coord)
   end
   return self
@@ -1803,8 +1831,9 @@ end
 --- (Internal) Function to get string of a group\'s position.
 -- @param #CSAR self
 -- @param Wrapper.Controllable#CONTROLLABLE _woundedGroup Group or Unit object.
+-- @param Wrapper.Unit#UNIT _Unit Requesting helo pilot unit
 -- @return #string Coordinates as Text
-function CSAR:_GetPositionOfWounded(_woundedGroup)
+function CSAR:_GetPositionOfWounded(_woundedGroup,_Unit)
   self:T(self.lid .. " _GetPositionOfWounded")
   local _coordinate = _woundedGroup:GetCoordinate()
   local _coordinatesText = "None"
@@ -1817,6 +1846,26 @@ function CSAR:_GetPositionOfWounded(_woundedGroup)
       _coordinatesText = _coordinate:ToStringMGRS()  
     else -- Bullseye Metric --(medevac.coordtype == 4 or 3)
       _coordinatesText = _coordinate:ToStringBULLS(self.coalition)
+    end
+  end
+  if _Unit and _Unit:GetPlayerName() then
+    local playername = _Unit:GetPlayerName()
+    if playername then
+      local settings = _DATABASE:GetPlayerSettings(playername) or _SETTINGS
+      if settings then
+        self:T("Get Settings ok!")
+        if settings:IsA2G_MGRS() then
+          _coordinatesText = _coordinate:ToStringMGRS(settings)
+        elseif settings:IsA2G_LL_DMS() then
+          _coordinatesText = _coordinate:ToStringLLDMS(settings)
+        elseif settings:IsA2G_LL_DDM() then
+          _coordinatesText = _coordinate:ToStringLLDDM(settings)
+        elseif settings:IsA2G_BR() then
+          -- attention this is the distance from the ASKING unit to target, not from RECCE to target!
+          local startcoordinate = _Unit:GetCoordinate()
+          _coordinatesText = _coordinate:ToStringBR(startcoordinate,settings)
+        end
+      end
     end
   end
   return _coordinatesText
@@ -1844,22 +1893,26 @@ function CSAR:_DisplayActiveSAR(_unitName)
     self:T({Table=_value})
     local _woundedGroup = _value.group
     if _woundedGroup and _value.alive then  
-        local _coordinatesText = self:_GetPositionOfWounded(_woundedGroup) 
+        local _coordinatesText = self:_GetPositionOfWounded(_woundedGroup,_heli) 
         local _helicoord =  _heli:GetCoordinate()
         local _woundcoord = _woundedGroup:GetCoordinate()
         local _distance = self:_GetDistance(_helicoord, _woundcoord)
         self:T({_distance = _distance})
         local distancetext = ""
-        if _SETTINGS:IsImperial() then
+        local settings = _SETTINGS
+        if _heli:GetPlayerName() then
+          settings = _DATABASE:GetPlayerSettings(_heli:GetPlayerName()) or _SETTINGS
+        end
+        if settings:IsImperial() then
           distancetext = string.format("%.1fnm",UTILS.MetersToNM(_distance))
         else
           distancetext = string.format("%.1fkm", _distance/1000.0)
         end
-    if _value.frequency == 0 then--shagrat insert CASEVAC without Frequency
-      table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %s ", _value.desc, _coordinatesText, distancetext) })
-    else
-      table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %.2f KHz ADF - %s ", _value.desc, _coordinatesText, _value.frequency / 1000, distancetext) })
-    end
+        if _value.frequency == 0 or self.CreateRadioBeacons == false then--shagrat insert CASEVAC without Frequency
+          table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %s ", _value.desc, _coordinatesText, distancetext) })
+        else
+          table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %.2f KHz ADF - %s ", _value.desc, _coordinatesText, _value.frequency / 1000, distancetext) })
+        end
     end
   end
   
@@ -1940,7 +1993,7 @@ function CSAR:_SignalFlare(_unitName)
       else
         _distance = string.format("%.1fkm",_closest.distance/1000)
       end 
-      local _msg = string.format("%s - Popping signal flare at your %s o\'clock. Distance %s", self:_GetCustomCallSign(_unitName), _clockDir, _distance)
+      local _msg = string.format("%s - Firing signal flare at your %s o\'clock. Distance %s", self:_GetCustomCallSign(_unitName), _clockDir, _distance)
       self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
       
       local _coord = _closest.pilot:GetCoordinate()
@@ -1974,7 +2027,7 @@ function CSAR:_DisplayToAllSAR(_message, _side, _messagetime,ToSRS,ToScreen)
     if self.msrs:GetProvider() == MSRS.Provider.WINDOWS then
       voice = self.CSARVoiceMS or MSRS.Voices.Microsoft.Hedda
     end
-    self:F("Voice = "..voice)
+    --self:F("Voice = "..voice)
     self.SRSQueue:NewTransmission(_message,duration,self.msrs,tstart,2,subgroups,subtitle,subduration,self.SRSchannel,self.SRSModulation,gender,culture,voice,volume,label,self.coordinate)
   end
   if ToScreen == true or ToScreen == nil then
@@ -1984,6 +2037,41 @@ function CSAR:_DisplayToAllSAR(_message, _side, _messagetime,ToSRS,ToScreen)
          self:_DisplayMessageToSAR(_unit, _message, _messagetime)
       end
     end
+  end
+  return self
+end
+
+---(Internal) Request IR Strobe at closest downed pilot.
+--@param #CSAR self
+--@param #string _unitName Name of the helicopter
+function CSAR:_ReqIRStrobe( _unitName )
+  self:T(self.lid .. " _ReqIRStrobe")
+  local _heli = self:_GetSARHeli(_unitName)
+  if _heli == nil then
+      return
+  end
+  local smokedist = 8000
+  if smokedist < self.approachdist_far then smokedist = self.approachdist_far end
+  local _closest = self:_GetClosestDownedPilot(_heli)
+  if _closest ~= nil and _closest.pilot ~= nil and _closest.distance > 0 and _closest.distance < smokedist then
+      local _clockDir = self:_GetClockDirection(_heli, _closest.pilot)
+      local _distance = string.format("%.1fkm",_closest.distance/1000)
+      if _SETTINGS:IsImperial() then
+        _distance = string.format("%.1fnm",UTILS.MetersToNM(_closest.distance))
+      else
+        _distance = string.format("%.1fkm",_closest.distance/1000)
+      end 
+      local _msg = string.format("%s - IR Strobe active at your %s o\'clock. Distance %s", self:_GetCustomCallSign(_unitName), _clockDir, _distance)
+      self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
+      _closest.pilot:NewIRMarker(true,self.IRStrobeRuntime or 300)
+  else
+      local _distance = string.format("%.1fkm",smokedist/1000)
+      if _SETTINGS:IsImperial() then
+        _distance = string.format("%.1fnm",UTILS.MetersToNM(smokedist))
+      else
+        _distance = string.format("%.1fkm",smokedist/1000)
+      end 
+      self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",_distance), self.messageTime, false, false, true)
   end
   return self
 end
@@ -2111,12 +2199,12 @@ function CSAR:_AddMedevacMenuItem()
   local coalition = self.coalition
   local allheligroupset = self.allheligroupset -- Core.Set#SET_GROUP
   local _allHeliGroups = allheligroupset:GetSetObjects()
-
   -- rebuild units table
   local _UnitList = {}
   for _key, _group in pairs (_allHeliGroups) do  
-    local _unit = _group:GetUnit(1) -- Asume that there is only one unit in the flight for players
-    if _unit then 
+    local _unit = _group:GetFirstUnitAlive() -- Asume that there is only one unit in the flight for players
+    if _unit then
+      --self:T("Unitname ".._unit:GetName().." IsAlive "..tostring(_unit:IsAlive()).." IsPlayer "..tostring(_unit:IsPlayer())) 
       if _unit:IsAlive() and _unit:IsPlayer() then         
         local unitName = _unit:GetName()
             _UnitList[unitName] = unitName
@@ -2139,7 +2227,12 @@ function CSAR:_AddMedevacMenuItem()
           local _rootMenu1 = MENU_GROUP_COMMAND:New(_group,"List Active CSAR",_rootPath, self._DisplayActiveSAR,self,_unitName)
           local _rootMenu2 = MENU_GROUP_COMMAND:New(_group,"Check Onboard",_rootPath, self._CheckOnboard,self,_unitName)
           local _rootMenu3 = MENU_GROUP_COMMAND:New(_group,"Request Signal Flare",_rootPath, self._SignalFlare,self,_unitName)
-          local _rootMenu4 = MENU_GROUP_COMMAND:New(_group,"Request Smoke",_rootPath, self._Reqsmoke,self,_unitName):Refresh()
+          local _rootMenu4 = MENU_GROUP_COMMAND:New(_group,"Request Smoke",_rootPath, self._Reqsmoke,self,_unitName)
+          if self.AllowIRStrobe then
+            local _rootMenu5 = MENU_GROUP_COMMAND:New(_group,"Request IR Strobe",_rootPath, self._ReqIRStrobe,self,_unitName):Refresh()
+          else
+            _rootMenu4:Refresh()
+          end
         end
       end
     end
@@ -2230,9 +2323,13 @@ end
 -- @param #CSAR self
 -- @param Wrapper.Group#GROUP _group Group #GROUP object.
 -- @param #number _freq Frequency to use
-function CSAR:_AddBeaconToGroup(_group, _freq)
+-- @param #string _name Beacon Name to use
+-- @return #CSAR self
+function CSAR:_AddBeaconToGroup(_group, _freq, _name)
     self:T(self.lid .. " _AddBeaconToGroup")
+    if self.CreateRadioBeacons == false then return end
     local _group = _group   
+    
     if _group == nil then
         --return frequency to pool of available
         for _i, _current in ipairs(self.UsedVHFFrequencies) do
@@ -2247,22 +2344,24 @@ function CSAR:_AddBeaconToGroup(_group, _freq)
     if _group:IsAlive() then
       local _radioUnit = _group:GetUnit(1)
       if _radioUnit then    
-     local name = _radioUnit:GetName()
+        local name = _radioUnit:GetName()
         local Frequency = _freq -- Freq in Hertz
         local name = _radioUnit:GetName()
         local Sound =  "l10n/DEFAULT/"..self.radioSound
         local vec3 = _radioUnit:GetVec3() or _radioUnit:GetPositionVec3() or {x=0,y=0,z=0}
-        trigger.action.radioTransmission(Sound, vec3, 0, false, Frequency, self.ADFRadioPwr or 1000,name..math.random(1,10000)) -- Beacon in MP only runs for exactly 30secs straight
+        trigger.action.radioTransmission(Sound, vec3, 0, false, Frequency, self.ADFRadioPwr or 1000,_name) -- Beacon in MP only runs for exactly 30secs straight
       end
     end
+    
     return self
 end
 
 --- (Internal) Helper function to (re-)add beacon to downed pilot.
 -- @param #CSAR self
--- @param #table _args Arguments
+-- @return #CSAR self
 function CSAR:_RefreshRadioBeacons()
     self:T(self.lid .. " _RefreshRadioBeacons")
+    if self.CreateRadioBeacons == false then return end
     if self:_CountActiveDownedPilots() > 0 then
       local PilotTable = self.downedPilots
       for _,_pilot in pairs (PilotTable) do
@@ -2270,8 +2369,10 @@ function CSAR:_RefreshRadioBeacons()
         local pilot = _pilot -- #CSAR.DownedPilot
         local group = pilot.group
         local frequency = pilot.frequency or 0 -- thanks to @Thrud
+        local bname = pilot.BeaconName or pilot.name..math.random(1,100000)
+        trigger.action.stopRadioTransmission(bname)
         if group and group:IsAlive() and frequency > 0 then
-          self:_AddBeaconToGroup(group,frequency)
+          self:_AddBeaconToGroup(group,frequency,bname)
         end
       end
     end
@@ -2308,6 +2409,16 @@ function CSAR:_ReachedPilotLimit()
    end
 end
 
+  --- User - Function to add onw SET_GROUP Set-up for pilot filtering and assignment.
+  -- Needs to be set before starting the CSAR instance.
+  -- @param #CSAR self
+  -- @param Core.Set#SET_GROUP Set The SET_GROUP object created by the mission designer/user to represent the CSAR pilot groups.
+  -- @return #CSAR self 
+  function CSAR:SetOwnSetPilotGroups(Set)
+    self.UserSetGroup = Set
+    return self
+  end
+
   ------------------------------
   --- FSM internal Functions ---
   ------------------------------
@@ -2329,7 +2440,9 @@ function CSAR:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventHandler)
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
   
-  if self.allowbronco then
+  if self.UserSetGroup then
+    self.allheligroupset  = self.UserSetGroup
+  elseif self.allowbronco then
     local prefixes = self.csarPrefix or {}
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(prefixes):FilterStart()
   elseif self.useprefix then
@@ -2338,7 +2451,24 @@ function CSAR:onafterStart(From, Event, To)
   else
     self.allheligroupset = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterCategoryHelicopter():FilterStart()
   end
-  self.mash = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart() -- currently only GROUP objects, maybe support STATICs also?
+  
+  self.mash = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart()
+  
+  local staticmashes = SET_STATIC:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterOnce()
+  local zonemashes = SET_ZONE:New():FilterPrefixes(self.mashprefix):FilterOnce()
+  
+  if staticmashes:Count() > 0  then
+    for _,_mash in pairs(staticmashes.Set) do
+      self.mash:AddObject(_mash)
+    end
+  end
+  
+  if zonemashes:Count() > 0  then
+    for _,_mash in pairs(zonemashes.Set) do
+      self.mash:AddObject(_mash)
+    end
+  end
+  
   if not self.coordinate then
     local csarhq = self.mash:GetRandom()
     if csarhq then 

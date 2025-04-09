@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update Jan 2024
+-- @date Last Update Jan 2025
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -122,6 +122,7 @@ do
 -- @field #number TacticalModulation
 -- @field #number TacticalInterval
 -- @field Core.Set#SET_GROUP DetectionSet
+-- @field #number MaxMissionRange
 -- @extends Core.Fsm#FSM
 
 
@@ -183,7 +184,7 @@ do
 --            
 -- Add Escorts Squad (recommended, optional)
 -- 
---            local Squad_Two = SQUADRON:New("Escorts",4,"Escorts North")
+--            local Squad_Two = SQUADRON:New("Escorts",4,"Escorts North") -- taking a template with 2 planes here, will result in a group of 2 escorts which can fly in formation escorting the AWACS.
 --            Squad_Two:AddMissionCapability({AUFTRAG.Type.ESCORT})
 --            Squad_Two:SetFuelLowRefuel(true)
 --            Squad_Two:SetFuelLowThreshold(0.3)
@@ -231,8 +232,8 @@ do
 --            -- set up in the mission editor with a late activated helo named "Rock#ZONE_POLYGON". Note this also sets the BullsEye to be referenced as "Rock".
 --            -- The CAP station zone is called "Fremont". We will be on 255 AM.
 --            local testawacs = AWACS:New("AWACS North",AwacsAW,"blue",AIRBASE.Caucasus.Kutaisi,"Awacs Orbit",ZONE:FindByName("Rock"),"Fremont",255,radio.modulation.AM )
---            -- set two escorts
---            testawacs:SetEscort(2)
+--            -- set one escort group; this example has two units in the template group, so they can fly a nice formation.
+--            testawacs:SetEscort(1,ENUMS.Formation.FixedWing.FingerFour.Group,{x=-500,y=50,z=500},45)
 --            -- Callsign will be "Focus". We'll be a Angels 30, doing 300 knots, orbit leg to 88deg with a length of 25nm.
 --            testawacs:SetAwacsDetails(CALLSIGN.AWACS.Focus,1,30,300,88,25)
 --            -- Set up SRS on port 5010 - change the below to your path and port
@@ -508,7 +509,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.64", -- #string
+  version = "0.2.71", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -605,6 +606,7 @@ AWACS = {
   TacticalModulation = radio.modulation.AM,
   TacticalInterval = 120,
   DetectionSet = nil,
+  MaxMissionRange = 125,
 }
 
 ---
@@ -935,7 +937,7 @@ AWACS.TaskStatus = {
 --@field #boolean FromAI
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO-List 0.2.53
+-- TODO-List 0.2.54
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --
 -- DONE - WIP - Player tasking, VID
@@ -1572,6 +1574,15 @@ function AWACS:SetLocale(Locale)
   return self
 end
 
+--- [User] Set the max mission range flights can be away from their home base.
+-- @param #AWACS self
+-- @param #number NM Distance in nautical miles
+-- @return #AWACS self
+function AWACS:SetMaxMissionRange(NM)
+  self.MaxMissionRange = NM or 125
+  return self
+end
+
 --- [User] Add additional frequency and modulation for AWACS SRS output.
 -- @param #AWACS self
 -- @param #number Frequency The frequency to add, e.g. 132.5
@@ -1762,7 +1773,7 @@ function AWACS:_EventHandler(EventData)
     end
   end
   
-  if Event.id == EVENTS.PlayerLeaveUnit then --player left unit
+  if Event.id == EVENTS.PlayerLeaveUnit and Event.IniGroupName then --player left unit
     -- check known player?
     self:T("Player group left  unit: " .. Event.IniGroupName)
     self:T("Player name left: " .. Event.IniPlayerName)
@@ -2158,9 +2169,12 @@ end
 
 --- [User] Set AWACS Escorts Template
 -- @param #AWACS self
--- @param #number EscortNumber Number of fighther planes to accompany this AWACS. 0 or nil means no escorts.
+-- @param #number EscortNumber Number of fighther plane GROUPs to accompany this AWACS. 0 or nil means no escorts. If you want >1 plane in an escort group, you can either set the respective squadron grouping to the desired number, or use a template for escorts with >1 unit.
+-- @param #number Formation Formation the escort should take (if more than one plane), e.g. `ENUMS.Formation.FixedWing.FingerFour.Group`. Formation is used on GROUP level, multiple groups of one unit will NOT conform to this formation.
+-- @param #table OffsetVector Offset the escorts should fly behind the AWACS, given as table, distance in meters, e.g. `{x=-500,y=0,z=500}` - 500m behind (negative value) and to the right (negative for left), no vertical separation (positive over, negative under the AWACS flight). For multiple groups, the vectors will be slightly changed to avoid collisions.
+-- @param #number EscortEngageMaxDistance Escorts engage air targets max this NM away, defaults to 45NM.
 -- @return #AWACS self
-function AWACS:SetEscort(EscortNumber)
+function AWACS:SetEscort(EscortNumber,Formation,OffsetVector,EscortEngageMaxDistance)
   self:T(self.lid.."SetEscort")
   if EscortNumber and EscortNumber > 0 then
     self.HasEscorts = true
@@ -2169,6 +2183,9 @@ function AWACS:SetEscort(EscortNumber)
     self.HasEscorts = false
     self.EscortNumber = 0
   end
+  self.EscortFormation = Formation
+  self.OffsetVec = OffsetVector or {x=500,y=100,z=500}
+  self.EscortEngageMaxDistance = EscortEngageMaxDistance or 45
   return self
 end
 
@@ -2223,11 +2240,26 @@ function AWACS:_StartEscorts(Shiftchange)
   local group = AwacsFG:GetGroup()
 
   local timeonstation = (self.EscortsTimeOnStation + self.ShiftChangeTime) * 3600 -- hours to seconds
+  local OffsetX = 500
+  local OffsetY = 500
+  local OffsetZ = 500
+  if self.OffsetVec then
+    OffsetX = self.OffsetVec.x or 500
+    OffsetY = self.OffsetVec.y or 500
+    OffsetZ = self.OffsetVec.z or 500
+  end
+  
   for i=1,self.EscortNumber do
-    -- every 
-    local escort = AUFTRAG:NewESCORT(group, {x= -100*((i + (i%2))/2), y=0, z=(100 + 100*((i + (i%2))/2))*(-1)^i},45,{"Air"})
-    escort:SetRequiredAssets(1)
+    -- every
+    local escort = AUFTRAG:NewESCORT(group, {x= OffsetX*((i + (i%2))/2), y=OffsetY*((i + (i%2))/2), z=(OffsetZ + OffsetZ*((i + (i%2))/2))*(-1)^i},self.EscortEngageMaxDistance,{"Air"})
+    --local escort = AUFTRAG:NewESCORT(group,self.OffsetVec,self.EscortEngageMaxDistance,{"Air"})
+    --escort:SetRequiredAssets(self.EscortNumber)
     escort:SetTime(nil,timeonstation)
+    if self.Escortformation then
+      escort:SetFormation(self.Escortformation)
+    end
+    escort:SetMissionRange(self.MaxMissionRange)
+    
     self.AirWing:AddMission(escort)
     self.CatchAllMissions[#self.CatchAllMissions+1] = escort
 
@@ -2434,7 +2466,7 @@ function AWACS:_GetCallSign(Group,GID, IsPlayer)
   
   local callsign = "Ghost 1"
   if Group and Group:IsAlive() then
-    callsign = Group:GetCustomCallSign(self.callsignshort,self.keepnumber,self.callsignTranslations)
+    callsign = Group:GetCustomCallSign(self.callsignshort,self.keepnumber,self.callsignTranslations,self.callsignCustomFunc,self.callsignCustomArgs)
   end  
   return callsign
 end
@@ -2443,10 +2475,12 @@ end
 -- @param #AWACS self
 -- @param #boolean ShortCallsign If true, only call out the major flight number
 -- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name as-is, no amendments or numbers.
--- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
+-- @param #table CallsignTranslations (Optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized.
 -- callsigns from playername or group name.
+-- @param #func CallsignCustomFunc (Optional) For player names only(!). If given, this function will return the callsign. Needs to take the groupname and the playername as first two arguments.
+-- @param #arg ... (Optional) Comma separated arguments to add to the custom function call after groupname and playername.
 -- @return #AWACS self
-function AWACS:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
+function AWACS:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations,CallsignCustomFunc,...)
   if not ShortCallsign or ShortCallsign == false then
    self.callsignshort = false
   else
@@ -2454,6 +2488,8 @@ function AWACS:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
   end
   self.keepnumber = Keepnumber or false
   self.callsignTranslations = CallsignTranslations
+  self.callsignCustomFunc = CallsignCustomFunc
+  self.callsignCustomArgs = arg or {}
   return self  
 end
 
@@ -3626,7 +3662,7 @@ function AWACS:_CheckIn(Group)
       managedgroup.LastTasking = timer.getTime()
       
       GID = managedgroup.GID
-    self.ManagedGrps[self.ManagedGrpID]=managedgroup
+      self.ManagedGrps[self.ManagedGrpID]=managedgroup
     
     local alphacheckbulls = self:_ToStringBULLS(Group:GetCoordinate())
     local alphacheckbullstts = self:_ToStringBULLS(Group:GetCoordinate(),false,true)
@@ -3893,6 +3929,12 @@ function AWACS:_SetClientMenus()
             checkin = checkin,
           }
           self.clientmenus:Push(menus,cgrpname)
+          -- catch errors - when this entry is built we should NOT have a managed entry
+          local GID,hasentry = self:_GetManagedGrpID(cgrp)
+          if hasentry then
+            -- this user is checked in but has the check in entry ... not good.
+            self:_CheckOut(cgrp,GID,true)
+          end
         end
       end
     else
@@ -5585,6 +5627,12 @@ function AWACS:_ThreatRangeCall(GID,Contact)
       local grptxt = self.gettext:GetEntry("GROUP",self.locale)
       local thrt = self.gettext:GetEntry("THREAT",self.locale)
       local text = string.format("%s. %s. %s %s, %s. %s",self.callsigntxt,pilotcallsign,contacttag,grptxt, thrt, BRATExt)
+      -- DONE MS TTS - fix spelling out B-R-A in this case
+      if string.find(text,"BRAA",1,true) then
+        text = string.gsub(text,"BRAA","brah")
+      elseif string.find(text,"BRA",1,true) then
+       text = string.gsub(text,"BRA","brah")
+      end
       if IsSub == false then
         self:_NewRadioEntry(text,text,GID,true,self.debug,true,false,true)
       end
@@ -5733,7 +5781,7 @@ function AWACS:_AssignPilotToTarget(Pilots,Targets)
     local intercept = AUFTRAG:NewINTERCEPT(Target.Target)
     intercept:SetWeaponExpend(AI.Task.WeaponExpend.ALL)
     intercept:SetWeaponType(ENUMS.WeaponFlag.Auto)
-    
+    intercept:SetMissionRange(self.MaxMissionRange)
     -- TODO 
     -- now this is going to be interesting...
     -- Check if the target left the "hot" area or is dead already
@@ -5781,6 +5829,7 @@ function AWACS:_AssignPilotToTarget(Pilots,Targets)
     AnchorSpeed = UTILS.KnotsToAltKIAS(AnchorSpeed,Angels)
     local Anchor = self.AnchorStacks:ReadByPointer(Pilot.AnchorStackNo) -- #AWACS.AnchorData
     local capauftrag = AUFTRAG:NewCAP(Anchor.StationZone,Angels,AnchorSpeed,Anchor.StationZoneCoordinate,0,15,{})
+    capauftrag:SetMissionRange(self.MaxMissionRange)
     capauftrag:SetTime(nil,((self.CAPTimeOnStation*3600)+(15*60)))
     Pilot.FlightGroup:AddMission(capauftrag) 
     
@@ -5898,6 +5947,8 @@ function AWACS:onafterStart(From, Event, To)
     -- set up the AWACS and let it orbit
     local AwacsAW = self.AirWing -- Ops.Airwing#AIRWING
     local mission = AUFTRAG:NewORBIT_RACETRACK(self.OrbitZone:GetCoordinate(),self.AwacsAngels*1000,self.Speed,self.Heading,self.Leg)
+    mission:SetMissionRange(self.MaxMissionRange)
+    mission:SetRequiredAttribute({ GROUP.Attribute.AIR_AWACS }) -- prefered plane type, thanks to Heart8reaker
     local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600
     mission:SetTime(nil,timeonstation)
     self.CatchAllMissions[#self.CatchAllMissions+1] = mission
@@ -6040,6 +6091,7 @@ function AWACS:_CheckAwacsStatus()
       end
     end 
   end
+  
   --------------------------------
   --     AWACS
   --------------------------------
@@ -6188,12 +6240,13 @@ function AWACS:_CheckAwacsStatus()
         
         report:Add("====================")
         
+        local RESMission
         -- Check for replacement mission - if any
         if self.ShiftChangeEscortsFlag and self.ShiftChangeEscortsRequested then -- Ops.Auftrag#AUFTRAG
-          ESmission = self.EscortMissionReplacement[i]
-          local esstatus = ESmission:GetState()
-          local ESmissiontime = (timer.getTime() - self.EscortsTimeStamp)
-          local ESTOSLeft = UTILS.Round((((self.EscortsTimeOnStation+self.ShiftChangeTime)*3600) - ESmissiontime),0) -- seconds
+          RESMission = self.EscortMissionReplacement[i]
+          local esstatus = RESMission:GetState()
+          local RESMissiontime = (timer.getTime() - self.EscortsTimeStamp)
+          local ESTOSLeft = UTILS.Round((((self.EscortsTimeOnStation+self.ShiftChangeTime)*3600) - RESMissiontime),0) -- seconds
           ESTOSLeft = UTILS.Round(ESTOSLeft/60,0) -- minutes
           local ChangeTime = UTILS.Round(((self.ShiftChangeTime * 3600)/60),0)
 
@@ -6201,7 +6254,7 @@ function AWACS:_CheckAwacsStatus()
           report:Add(string.format("Auftrag Status: %s",esstatus))
           report:Add(string.format("TOS Left: %d min",ESTOSLeft))
           
-          local OpsGroups = ESmission:GetOpsGroups()
+          local OpsGroups = RESMission:GetOpsGroups()
           local OpsGroup = self:_GetAliveOpsGroupFromTable(OpsGroups) -- Ops.OpsGroup#OPSGROUP
           if OpsGroup then
             local OpsName = OpsGroup:GetName() or "Unknown"
@@ -6213,13 +6266,13 @@ function AWACS:_CheckAwacsStatus()
             report:Add("***** Cannot obtain (yet) this missions OpsGroup!")
           end
           
-          if ESmission:IsExecuting() then
+          if RESMission and RESMission:IsExecuting() then
             -- make the actual change in the queue
             self.ShiftChangeEscortsFlag = false
             self.ShiftChangeEscortsRequested = false
             -- cancel old mission
             if ESmission and ESmission:IsNotOver() then
-              ESmission:Cancel()
+              ESmission:__Cancel(1)
             end
             self.EscortMission[i] = self.EscortMissionReplacement[i]
               self.EscortMissionReplacement[i] = nil
@@ -6471,6 +6524,7 @@ function AWACS:onafterAssignedAnchor(From, Event, To, GID, Anchor, AnchorStackNo
       if auftragtype == AUFTRAG.Type.ALERT5 then
         -- all correct
         local capauftrag = AUFTRAG:NewCAP(Anchor.StationZone,Angels*1000,AnchorSpeed,Anchor.StationZone:GetCoordinate(),0,15,{})
+        capauftrag:SetMissionRange(self.MaxMissionRange)
         capauftrag:SetTime(nil,((self.CAPTimeOnStation*3600)+(15*60)))
         capauftrag:AddAsset(managedgroup.FlightGroup)
         self.CatchAllMissions[#self.CatchAllMissions+1] = capauftrag
@@ -6834,7 +6888,8 @@ function AWACS:onafterAwacsShiftChange(From,Event,To)
     self.CatchAllMissions[#self.CatchAllMissions+1] = mission
     local timeonstation = (self.AwacsTimeOnStation + self.ShiftChangeTime) * 3600
     mission:SetTime(nil,timeonstation)
-  
+    mission:SetMissionRange(self.MaxMissionRange)
+    
     AwacsAW:AddMission(mission)
     
     self.AwacsMissionReplacement = mission

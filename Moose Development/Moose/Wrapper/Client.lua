@@ -201,6 +201,13 @@ function CLIENT:AddPlayer(PlayerName)
   return self
 end
 
+--- Get number of associated players.
+-- @param #CLIENT self
+-- @return #number Count
+function CLIENT:CountPlayers()
+  return #self.Players or 0
+end
+
 --- Get player name(s).
 -- @param #CLIENT self
 -- @return #table List of player names or an empty table `{}`.
@@ -306,7 +313,7 @@ function CLIENT:IsMultiSeated()
   return false
 end
 
---- Checks for a client alive event and calls a function on a continuous basis.
+--- Checks for a client alive event and calls a function on a continuous basis. Does **NOT** work for dynamic spawn client slots!
 -- @param #CLIENT self
 -- @param #function CallBackFunction Create a function that will be called when a player joins the slot.
 -- @param ... (Optional) Arguments for callback function as comma separated list.
@@ -325,7 +332,7 @@ end
 
 -- @param #CLIENT self
 function CLIENT:_AliveCheckScheduler( SchedulerName )
-  self:F3( { SchedulerName, self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
+  self:T2( { SchedulerName, self.ClientName, self.ClientAlive2, self.ClientBriefingShown, self.ClientCallBack } )
 
   if self:IsAlive() then
    
@@ -608,4 +615,3 @@ function CLIENT:GetPlayerInfo(Attribute)
     return nil
   end
 end
-

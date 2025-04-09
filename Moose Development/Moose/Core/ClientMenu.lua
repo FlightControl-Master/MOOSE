@@ -20,7 +20,7 @@
 -- 
 -- @module Core.ClientMenu
 -- @image Core_Menu.JPG
--- last change: May 2024
+-- last change: Jan 2025
 
 -- TODO
 ----------------------------------------------------------------------------------------------------------------
@@ -57,9 +57,9 @@
 ---
 -- @field #CLIENTMENU
 CLIENTMENU = {
-  ClassName = "CLIENTMENUE",
+  ClassName = "CLIENTMENU",
   lid = "",
-  version = "0.1.2",
+  version = "0.1.3",
   name = nil,
   path = nil,
   group = nil,
@@ -417,7 +417,7 @@ end
 CLIENTMENUMANAGER = {
   ClassName = "CLIENTMENUMANAGER",
   lid = "",
-  version = "0.1.5a",
+  version = "0.1.6",
   name = nil,
   clientset = nil,
   menutree = {},
@@ -455,7 +455,7 @@ end
 -- @param #CLIENTMENUMANAGER self
 -- @param Core.Event#EVENTDATA EventData
 -- @return #CLIENTMENUMANAGER self
-function CLIENTMENUMANAGER:_EventHandler(EventData)
+function CLIENTMENUMANAGER:_EventHandler(EventData,Retry)
   self:T(self.lid.."_EventHandler: "..EventData.id)
   --self:I(self.lid.."_EventHandler: "..tostring(EventData.IniPlayerName))
   if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
@@ -468,6 +468,10 @@ function CLIENTMENUMANAGER:_EventHandler(EventData)
     if EventData.IniPlayerName and EventData.IniGroup then
       if (not self.clientset:IsIncludeObject(_DATABASE:FindClient( EventData.IniUnitName ))) then
         self:T(self.lid.."Client not in SET: "..EventData.IniPlayerName)
+        if not Retry then
+          -- try again in 2 secs
+          self:ScheduleOnce(2,CLIENTMENUMANAGER._EventHandler,self,EventData,true)
+        end
         return self
       end
       --self:I(self.lid.."Join event for player: "..EventData.IniPlayerName)
@@ -524,7 +528,7 @@ function CLIENTMENUMANAGER:InitAutoPropagation()
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
   self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
   self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventHandler)
-  self:SetEventPriority(5) 
+  self:SetEventPriority(6) 
   return self 
 end
 
@@ -740,7 +744,7 @@ function CLIENTMENUMANAGER:AddEntry(Entry,Client)
   for _,_client in pairs(Set) do
     local client = _client -- Wrapper.Client#CLIENT
     if client and client:IsAlive() then
-      local playername = client:GetPlayerName()
+      local playername = client:GetPlayerName() or "None"
       local unitname = client:GetName()
       if not knownunits[unitname] then
         knownunits[unitname] = true

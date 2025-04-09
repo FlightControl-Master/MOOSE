@@ -7,6 +7,7 @@
 -- 
 -------------------------------------------------------------------------
 -- Date: September 2023
+-- Last Update: July 2024
 -------------------------------------------------------------------------
 --
 --- **Ops** - Easy GCI & CAP Manager
@@ -49,7 +50,7 @@
 -- @field #number capleg
 -- @field #number maxinterceptsize
 -- @field #number missionrange
--- @field #number noaltert5
+-- @field #number noalert5
 -- @field #table ManagedAW
 -- @field #table ManagedSQ
 -- @field #table ManagedCP
@@ -67,6 +68,7 @@
 -- @field #table ReadyFlightGroups
 -- @field #boolean DespawnAfterLanding
 -- @field #boolean DespawnAfterHolding
+-- @field #list<Ops.Auftrag#AUFTRAG> ListOfAuftrag
 -- @extends Core.Fsm#FSM
 
 --- *“Airspeed, altitude, and brains. Two are always needed to successfully complete the flight.”* -- Unknown.
@@ -95,7 +97,8 @@
 -- 
 -- ### Prerequisites
 -- 
--- You have to put a STATIC object on the airbase with the UNIT name according to the name of the airbase. E.g. for Kuitaisi this has to have the name Kutaisi. This object symbolizes the AirWing HQ.
+-- You have to put a **STATIC WAREHOUSE** object on the airbase with the UNIT name according to the name of the airbase. **Do not put any other static type or it creates a conflict with the airbase name!** 
+-- E.g. for Kuitaisi this has to have the unit name Kutaisi. This object symbolizes the AirWing HQ.
 -- Next put a late activated template group for your CAP/GCI Squadron on the map. Last, put a zone on the map for the CAP operations, let's name it "Blue Zone 1". Size of the zone plays no role.
 -- Put an EW radar system on the map and name it aptly, like "Blue EWR".
 -- 
@@ -164,7 +167,7 @@
 -- * @{#EASYGCICAP.SetDefaultCAPLeg}: Set the length of the CAP leg, default is 15 NM.
 -- * @{#EASYGCICAP.SetDefaultCAPGrouping}: Set how many planes will be spawned per mission (CVAP/GCI), defaults to 2.
 -- * @{#EASYGCICAP.SetDefaultMissionRange}: Set how many NM the planes can go from the home base, defaults to 100.
--- * @{#EASYGCICAP.SetDefaultNumberAlter5Standby}: Set how many planes will be spawned on cold standby (Alert5), default 2.
+-- * @{#EASYGCICAP.SetDefaultNumberAlert5Standby}: Set how many planes will be spawned on cold standby (Alert5), default 2.
 -- * @{#EASYGCICAP.SetDefaultEngageRange}: Set max engage range for CAP flights if they detect intruders, defaults to 50.
 -- * @{#EASYGCICAP.SetMaxAliveMissions}: Set max parallel missions can be done (CAP+GCI+Alert5+Tanker+AWACS), defaults to 8.
 -- * @{#EASYGCICAP.SetDefaultRepeatOnFailure}: Set max repeats on failure for intercepting/killing intruders, defaults to 3.
@@ -194,7 +197,7 @@ EASYGCICAP = {
   capleg = 15,
   maxinterceptsize = 2,
   missionrange = 100,
-  noaltert5 = 4,
+  noalert5 = 4,
   ManagedAW = {},
   ManagedSQ = {},
   ManagedCP = {},
@@ -213,6 +216,7 @@ EASYGCICAP = {
   ReadyFlightGroups = {},
   DespawnAfterLanding = false,
   DespawnAfterHolding = true,
+  ListOfAuftrag = {}
 }
 
 --- Internal Squadron data type
@@ -248,7 +252,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.11"
+EASYGCICAP.version="0.1.17"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -265,7 +269,7 @@ EASYGCICAP.version="0.1.11"
 -- @param #string Alias A Name for this GCICAP
 -- @param #string AirbaseName Name of the Home Airbase
 -- @param #string Coalition Coalition, e.g. "blue" or "red"
--- @param #string EWRName (Partial) group name of the EWR system of the coalition, e.g. "Red EWR"
+-- @param #string EWRName (Partial) group name of the EWR system of the coalition, e.g. "Red EWR", can be handed in as table of names, e.g.{"EWR","Radar","SAM"}
 -- @return #EASYGCICAP self
 function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   -- Inherit everything from FSM class.
@@ -274,9 +278,10 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   -- defaults
   self.alias = Alias or AirbaseName.." CAP Wing"
   self.coalitionname = string.lower(Coalition) or "blue"
-  self.coalition = self.coaltitionname == "blue" and coalition.side.BLUE or coalition.side.RED
+  self.coalition = self.coalitionname == "blue" and coalition.side.BLUE or coalition.side.RED
   self.wings = {}
-  self.EWRName = EWRName or self.coalitionname.." EWR"
+  if type(EWRName) == "string" then EWRName = {EWRName} end
+  self.EWRName = EWRName --or self.coalitionname.." EWR"
   --self.CapZoneName = CapZoneName
   self.airbasename = AirbaseName
   self.airbase = AIRBASE:FindByName(self.airbasename)
@@ -289,7 +294,7 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.capleg = 15
   self.capgrouping = 2
   self.missionrange = 100
-  self.noaltert5 = 2
+  self.noalert5 = 2
   self.MaxAliveMissions = 8
   self.engagerange = 50
   self.repeatsonfailure = 3
@@ -298,6 +303,7 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.CapFormation = ENUMS.Formation.FixedWing.FingerFour.Group
   self.DespawnAfterLanding = false
   self.DespawnAfterHolding = true
+  self.ListOfAuftrag = {}
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("EASYGCICAP %s | ", self.alias)
@@ -342,9 +348,23 @@ function EASYGCICAP:SetTankerAndAWACSInvisible(Switch)
   return self
 end
 
---- Set Maximum of alive missions to stop airplanes spamming the map
+--- Count alive missions in our internal stack.
 -- @param #EASYGCICAP self
--- @param #number Maxiumum Maxmimum number of parallel missions allowed. Count is Cap-Missions + Intercept-Missions + Alert5-Missionsm default is 6
+-- @return #number count
+function EASYGCICAP:_CountAliveAuftrags()
+  local alive = 0
+  for _,_auftrag in pairs(self.ListOfAuftrag) do
+    local auftrag = _auftrag -- Ops.Auftrag#AUFTRAG
+    if auftrag and (not (auftrag:IsCancelled() or auftrag:IsDone() or auftrag:IsOver())) then
+       alive = alive + 1
+    end
+  end
+  return alive
+end
+
+--- Set Maximum of alive missions created by this instance to stop airplanes spamming the map
+-- @param #EASYGCICAP self
+-- @param #number Maxiumum Maxmimum number of parallel missions allowed. Count is Intercept-Missions + Alert5-Missions, default is 8
 -- @return #EASYGCICAP self 
 function EASYGCICAP:SetMaxAliveMissions(Maxiumum)
   self:T(self.lid.."SetMaxAliveMissions")
@@ -436,9 +456,9 @@ end
 -- @param #EASYGCICAP self
 -- @param #number Airframes defaults to 2
 -- @return #EASYGCICAP self
-function EASYGCICAP:SetDefaultNumberAlter5Standby(Airframes)
-  self:T(self.lid.."SetDefaultNumberAlter5Standby")
-  self.noaltert5 = math.abs(Airframes) or 2
+function EASYGCICAP:SetDefaultNumberAlert5Standby(Airframes)
+  self:T(self.lid.."SetDefaultNumberAlert5Standby")
+  self.noalert5 = math.abs(Airframes) or 2
   return self
 end
 
@@ -447,7 +467,7 @@ end
 -- @param #number Range defaults to 50NM
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetDefaultEngageRange(Range)
-  self:T(self.lid.."SetDefaultNumberAlter5Standby")
+  self:T(self.lid.."SetDefaultEngageRange")
   self.engagerange = Range or 50
   return self
 end
@@ -579,7 +599,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   
   local TankerInvisible = self.TankerInvisible
   
-  function CAP_Wing:OnAfterFlightOnMission(From, Event, To, Flightgroup, Mission)
+  function CAP_Wing:onbeforeFlightOnMission(From, Event, To, Flightgroup, Mission)
     local flightgroup = Flightgroup -- Ops.FlightGroup#FLIGHTGROUP
     if DespawnAfterLanding then
       flightgroup:SetDespawnAfterLanding()
@@ -609,17 +629,18 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:SetFuelLowRTB(true)
     Intel:AddAgent(flightgroup)
     if DespawnAfterHolding then
-      function flightgroup:OnAfterHolding(From,Event,To)
+      function flightgroup:onbeforeHolding(From,Event,To)
         self:Despawn(1,true)
       end 
     end
   end
   
-  if self.noaltert5 > 0 then  
+  if self.noalert5 > 0 then  
     local alert = AUFTRAG:NewALERT5(AUFTRAG.Type.INTERCEPT) 
-    alert:SetRequiredAssets(self.noaltert5)
+    alert:SetRequiredAssets(self.noalert5)
     alert:SetRepeat(99) 
     CAP_Wing:AddMission(alert)
+    table.insert(self.ListOfAuftrag,alert)
   end
     
   self.wings[Airbasename] = { CAP_Wing, AIRBASE:FindByName(Airbasename):GetZone(), Airbasename }
@@ -1156,7 +1177,7 @@ function EASYGCICAP:_TryAssignIntercept(ReadyFlightGroups,InterceptAuftrag,Group
   return assigned, wingsize
 end
 
---- Add a zone to the rejected zones set.
+--- Here, we'll decide if we need to launch an intercepting flight, and from where
 -- @param #EASYGCICAP self
 -- @param Ops.Intel#INTEL.Cluster Cluster
 -- @return #EASYGCICAP self 
@@ -1170,7 +1191,7 @@ function EASYGCICAP:_AssignIntercept(Cluster)
   
   local wings = self.wings
   local ctlpts = self.ManagedCP
-  local MaxAliveMissions = self.MaxAliveMissions * self.capgrouping
+  local MaxAliveMissions = self.MaxAliveMissions --* self.capgrouping
   local nogozoneset = self.NoGoZoneSet
   local ReadyFlightGroups = self.ReadyFlightGroups
   
@@ -1200,9 +1221,11 @@ function EASYGCICAP:_AssignIntercept(Cluster)
       local zone = _data[2] -- Core.Zone#ZONE
       local zonecoord = zone:GetCoordinate()
       local name = _data[3] -- #string
+      local coa = AIRBASE:FindByName(name):GetCoalition()
       local distance = position:DistanceFromPointVec2(zonecoord)
       local airframes = airwing:CountAssets(true)
-      if distance < bestdistance and airframes >= wingsize then
+      local samecoalitionab = coa == self.coalition and true or false
+      if distance < bestdistance and airframes >= wingsize and samecoalitionab == true then
         bestdistance = distance
         targetairwing = airwing
         targetawname = name
@@ -1218,10 +1241,11 @@ function EASYGCICAP:_AssignIntercept(Cluster)
       local name = data.AirbaseName
       local zonecoord = data.Coordinate
       local airwing = wings[name][1]
-      
+      local coa = AIRBASE:FindByName(name):GetCoalition()
+      local samecoalitionab = coa == self.coalition and true or false
       local distance = position:DistanceFromPointVec2(zonecoord)
       local airframes = airwing:CountAssets(true)
-      if distance < bestdistance and airframes >= wingsize then
+      if distance < bestdistance and airframes >= wingsize and samecoalitionab == true then
         bestdistance = distance
         targetairwing = airwing -- Ops.Airwing#AIRWING
         targetawname = name
@@ -1232,9 +1256,10 @@ function EASYGCICAP:_AssignIntercept(Cluster)
     -- Do we have a matching airwing?
     if targetairwing then
       local AssetCount = targetairwing:CountAssetsOnMission(MissionTypes,Cohort)
+      local missioncount = self:_CountAliveAuftrags()
       -- Enough airframes on mission already?
       self:T(self.lid.." Assets on Mission "..AssetCount)
-      if AssetCount <= MaxAliveMissions then
+      if missioncount < MaxAliveMissions then
         local repeats = repeatsonfailure
         local InterceptAuftrag = AUFTRAG:NewINTERCEPT(contact.group)
           :SetMissionRange(150)
@@ -1260,6 +1285,8 @@ function EASYGCICAP:_AssignIntercept(Cluster)
               nogozoneset
             )
           end
+          
+        table.insert(self.ListOfAuftrag,InterceptAuftrag)
         local assigned, rest = self:_TryAssignIntercept(ReadyFlightGroups,InterceptAuftrag,contact.group,wingsize)
         if not assigned  then
           InterceptAuftrag:SetRequiredAssets(rest)
@@ -1280,11 +1307,11 @@ function EASYGCICAP:_StartIntel()
   self:T(self.lid.."_StartIntel")
   -- Border GCI Detection
   local BlueAir_DetectionSetGroup = SET_GROUP:New()
-  BlueAir_DetectionSetGroup:FilterPrefixes( { self.EWRName } )
+  BlueAir_DetectionSetGroup:FilterPrefixes( self.EWRName )
   BlueAir_DetectionSetGroup:FilterStart()
   
   -- Intel type detection
-  local BlueIntel = INTEL:New(BlueAir_DetectionSetGroup,self.coalitionname, self.EWRName)
+  local BlueIntel = INTEL:New(BlueAir_DetectionSetGroup,self.coalitionname, self.alias)
   BlueIntel:SetClusterAnalysis(true,false,false)
   BlueIntel:SetForgetTime(300)
   BlueIntel:SetAcceptZones(self.GoZoneSet)
@@ -1300,7 +1327,7 @@ function EASYGCICAP:_StartIntel()
     self:_AssignIntercept(Cluster)
   end
   
-  function BlueIntel:OnAfterNewCluster(From,Event,To,Cluster)
+  function BlueIntel:onbeforeNewCluster(From,Event,To,Cluster)
     AssignCluster(Cluster)
   end
   
@@ -1351,6 +1378,20 @@ end
 -- @return #EASYGCICAP self
 function EASYGCICAP:onafterStatus(From,Event,To)
   self:T({From,Event,To})
+  -- cleanup
+  local cleaned = false
+  local cleanlist = {}
+  for _,_auftrag in pairs(self.ListOfAuftrag) do
+    local auftrag = _auftrag -- Ops.Auftrag#AUFTRAG
+    if auftrag and (not (auftrag:IsCancelled() or auftrag:IsDone() or auftrag:IsOver())) then
+      table.insert(cleanlist,auftrag)
+      cleaned = true
+    end
+  end
+  if cleaned == true then
+    self.ListOfAuftrag = nil
+    self.ListOfAuftrag = cleanlist
+  end
   -- Gather Some Stats
   local function counttable(tbl)
     local count = 0
@@ -1403,12 +1444,14 @@ function EASYGCICAP:onafterStatus(From,Event,To)
     local text =  "GCICAP "..self.alias
     text = text.."\nWings: "..wings.."\nSquads: "..squads.."\nCapPoints: "..caps.."\nAssets on Mission: "..assets.."\nAssets in Stock: "..instock
     text = text.."\nThreats: "..threatcount
-    text = text.."\nMissions: "..capmission+interceptmission
+    text = text.."\nAirWing managed Missions: "..capmission+awacsmission+tankermission+reconmission
     text = text.."\n - CAP: "..capmission
-    text = text.."\n - Intercept: "..interceptmission
     text = text.."\n - AWACS: "..awacsmission
     text = text.."\n - TANKER: "..tankermission
     text = text.."\n - Recon: "..reconmission
+    text = text.."\nSelf managed Missions:"
+    text = text.."\n - Mission Limit: "..self.MaxAliveMissions
+    text = text.."\n - Alert5+Intercept "..self:_CountAliveAuftrags()
     MESSAGE:New(text,15,"GCICAP"):ToAll():ToLogIf(self.debug)
   end
   self:__Status(30)

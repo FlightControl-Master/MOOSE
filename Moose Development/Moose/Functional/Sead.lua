@@ -19,7 +19,7 @@
 --
 -- ### Authors: **applevangelist**, **FlightControl**
 --
--- Last Update: Dec 2023
+-- Last Update: Dec 2024
 --
 -- ===
 --
@@ -28,6 +28,16 @@
 
 ---
 -- @type SEAD
+-- @field #string ClassName The Class Name.
+-- @field #table TargetSkill Table of target skills.
+-- @field #table SEADGroupPrefixes Table of SEAD prefixes.
+-- @field #table SuppressedGroups Table of currently suppressed groups.
+-- @field #number EngagementRange Engagement Range.
+-- @field #number Padding Padding in seconds.
+-- @field #function CallBack Callback function for suppression plans.
+-- @field #boolean UseCallBack Switch for callback function to be used.
+-- @field #boolean debug Debug switch.
+-- @field #boolen WeaponTrack Track switch, if true track weapon speed for 30 secs.
 -- @extends Core.Base#BASE
 
 --- Make SAM sites execute evasive and defensive behaviour when being fired upon.
@@ -56,10 +66,11 @@ SEAD = {
   SEADGroupPrefixes = {},
   SuppressedGroups = {},
   EngagementRange = 75, --  default 75% engagement range Feature Request #1355
-  Padding = 10,
+  Padding = 15,
   CallBack = nil,
   UseCallBack = false,
   debug = false,
+  WeaponTrack = false,
 }
 
   --- Missile enumerators
@@ -69,6 +80,7 @@ SEAD = {
   ["AGM_122"] = "AGM_122",
   ["AGM_84"] = "AGM_84",
   ["AGM_45"] = "AGM_45",
+  ["AGM_65"] = "AGM_65",
   ["ALARM"] = "ALARM",
   ["LD-10"] = "LD-10",
   ["X_58"] = "X_58",
@@ -88,6 +100,7 @@ SEAD = {
   -- km and mach
   ["AGM_88"] = { 150, 3},
   ["AGM_45"] = { 12, 2},
+  ["AGM_65"] = { 16, 0.9},
   ["AGM_122"] = { 16.5, 2.3},
   ["AGM_84"] = { 280, 0.8},
   ["ALARM"] = { 45, 2},
@@ -144,7 +157,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   self:AddTransition("*",             "ManageEvasion",                "*")
   self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  self:I("*** SEAD - Started Version 0.4.6")
+  self:I("*** SEAD - Started Version 0.4.9")
   return self
 end
 
@@ -371,7 +384,7 @@ function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADP
         reach = wpndata[1] * 1.1
         local mach = wpndata[2]
         wpnspeed = math.floor(mach * 340.29)
-        if Weapon then
+        if Weapon and Weapon:GetSpeed() > 0 then
           wpnspeed = Weapon:GetSpeed()
           self:T(string.format("*** SEAD - Weapon Speed from WEAPON: %f m/s",wpnspeed))
         end
@@ -452,29 +465,38 @@ end
 -- @return #SEAD self
 function SEAD:HandleEventShot( EventData )
   self:T( { EventData.id } )
-  local SEADPlane = EventData.IniUnit -- Wrapper.Unit#UNIT
-  local SEADGroup = EventData.IniGroup -- Wrapper.Group#GROUP
-  local SEADPlanePos = SEADPlane:GetCoordinate() -- Core.Point#COORDINATE
-  local SEADUnit = EventData.IniDCSUnit
-  local SEADUnitName = EventData.IniDCSUnitName
-  local SEADWeapon = EventData.Weapon -- Identify the weapon fired
-  local SEADWeaponName = EventData.WeaponName -- return weapon type
-
-  local WeaponWrapper = WEAPON:New(EventData.Weapon)
-  --local SEADWeaponSpeed = WeaponWrapper:GetSpeed() -- mps
   
-  self:T( "*** SEAD - Missile Launched = " .. SEADWeaponName)
-  --self:T({ SEADWeapon })
-
+  local SEADWeapon = EventData.Weapon -- Identify the weapon fired
+  local SEADWeaponName = EventData.WeaponName or "None" -- return weapon type
+  
   if self:_CheckHarms(SEADWeaponName) then
+    --UTILS.PrintTableToLog(EventData)
+    local SEADPlane = EventData.IniUnit -- Wrapper.Unit#UNIT
+    
+    if not SEADPlane then return self end -- case IniUnit is empty
+    
+    local SEADGroup = EventData.IniGroup -- Wrapper.Group#GROUP
+    local SEADPlanePos = SEADPlane:GetCoordinate() -- Core.Point#COORDINATE
+    local SEADUnit = EventData.IniDCSUnit
+    local SEADUnitName = EventData.IniDCSUnitName
+  
+    local WeaponWrapper = WEAPON:New(EventData.Weapon) -- Wrapper.Weapon#WEAPON
+    
+    self:T( "*** SEAD - Missile Launched = " .. SEADWeaponName)
+
     self:T( '*** SEAD - Weapon Match' )
+    if self.WeaponTrack == true then
+      WeaponWrapper:SetFuncTrack(function(weapon) env.info(string.format("*** Weapon Speed: %d m/s",weapon:GetSpeed() or -1)) end)
+      WeaponWrapper:StartTrack(0.1)
+      WeaponWrapper:StopTrack(30)
+    end
     local _targetskill = "Random"
     local _targetgroupname = "none"
     local _target = EventData.Weapon:getTarget() -- Identify target
     if not _target or self.debug  then -- AGM-88 or 154 w/o target data
       self:E("***** SEAD - No target data for " .. (SEADWeaponName or "None"))
       if string.find(SEADWeaponName,"AGM_88",1,true) or string.find(SEADWeaponName,"AGM_154",1,true) then
-        self:I("**** Tracking AGM-88/154 with no target data.")
+        self:T("**** Tracking AGM-88/154 with no target data.")
         local pos0 = SEADPlane:GetCoordinate()
         local fheight = SEADPlane:GetHeight()
         self:__CalculateHitZone(20,SEADWeapon,pos0,fheight,SEADGroup,SEADWeaponName)
@@ -520,7 +542,7 @@ function SEAD:HandleEventShot( EventData )
     end
     if SEADGroupFound == true then -- yes we are being attacked
       if string.find(SEADWeaponName,"ADM_141",1,true) then
-        self:__ManageEvasion(2,_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup,0,WeaponWrapper)
+        self:__ManageEvasion(2,_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup,2,WeaponWrapper)
       else
         self:ManageEvasion(_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup,0,WeaponWrapper)
       end

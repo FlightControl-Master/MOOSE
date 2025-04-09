@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update May 2024
+-- @date Last Update Jan 2025
 
 
 do
@@ -95,10 +95,10 @@ PLAYERTASK = {
   FinalState         =   "none",
   PreviousCount      =   0,
   }
-  
+
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.24"
+PLAYERTASK.version="0.1.25"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -112,14 +112,14 @@ PLAYERTASK.version="0.1.24"
 -- @param #boolean Repeat Repeat this task if true (default = false)
 -- @param #number Times Repeat on failure this many times if Repeat is true (default = 1)
 -- @param #string TTSType TTS friendly task type name
--- @return #PLAYERTASK self 
+-- @return #PLAYERTASK self
 function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #PLAYERTASK
-  
+
   self.Type = Type
-  
+
   self.Repeat = false
   self.repeats = 0
   self.RepeatNo = 1
@@ -132,18 +132,18 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   self.timestamp = timer.getAbsTime()
   self.TTSType = TTSType or "close air support"
   self.lastsmoketime = 0
-  
-  if Repeat then
+
+  if type(Repeat) == "boolean" and Repeat == true and type(Times) == "number" and Times > 1 then
     self.Repeat = true
     self.RepeatNo = Times or 1
   end
-  
+
   _PlayerTaskNr = _PlayerTaskNr + 1
-  
+
   self.PlayerTaskNr = _PlayerTaskNr
-  
+
   self.lid=string.format("PlayerTask #%d %s | ", self.PlayerTaskNr, tostring(self.Type))
-  
+
   if Target and Target.ClassName and Target.ClassName == "TARGET" then
     self.Target = Target
   elseif Target and Target.ClassName then
@@ -152,16 +152,16 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
     self:E(self.lid.."*** NO VALID TARGET!")
     return self
   end
-  
+
   self.PreviousCount = self.Target:CountTargets()
-  
+
   self:T(self.lid.."Created.")
-  
+
   -- FMS start state is PLANNED.
   self:SetStartState("Planned")
 
   -- PLANNED --> REQUESTED --> EXECUTING --> DONE
-  self:AddTransition("*",            "Planned",          "Planned")   -- Task is in planning stage. 
+  self:AddTransition("*",            "Planned",          "Planned")   -- Task is in planning stage.
   self:AddTransition("*",            "Requested",        "Requested")   -- Task clients have been requested to join.
   self:AddTransition("*",            "ClientAdded",      "*")  -- Client has been added to the task
   self:AddTransition("*",            "ClientRemoved",    "*")  -- Client has been removed from the task
@@ -174,28 +174,28 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   self:AddTransition("*",            "Failed",           "Failed") -- Done or repeat --> PLANNED
   self:AddTransition("*",            "Status",           "*")
   self:AddTransition("*",            "Stop",             "Stopped")
-  
+
   self:__Status(-5)
   return self
-  
+
   ---
   -- Pseudo Functions
   ---
-  
+
   --- On After "Planned" event. Task has been planned.
   -- @function [parent=#PLAYERTASK] OnAfterPlanned
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  
+
   --- On After "Requested" event. Task has been Requested.
   -- @function [parent=#PLAYERTASK] OnAfterRequested
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "ClientAdded" event. Client has been added to the task.
   -- @function [parent=#PLAYERTASK] OnAfterClientAdded
   -- @param #PLAYERTASK self
@@ -203,64 +203,190 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Wrapper.Client#CLIENT Client
-   
+
   --- On After "ClientRemoved" event. Client has been removed from the task.
   -- @function [parent=#PLAYERTASK] OnAfterClientRemoved
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "Executing" event. Task is executed by the 1st client.
   -- @function [parent=#PLAYERTASK] OnAfterExecuting
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "Done" event. Task is done.
   -- @function [parent=#PLAYERTASK] OnAfterDone
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "Cancel" event. Task has been cancelled.
   -- @function [parent=#PLAYERTASK] OnAfterCancel
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "Planned" event. Task has been planned.
   -- @function [parent=#PLAYERTASK] OnAfterPilotPlanned
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "Success" event. Task has been a success.
   -- @function [parent=#PLAYERTASK] OnAfterSuccess
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "ClientAborted" event. A client has aborted the task.
   -- @function [parent=#PLAYERTASK] OnAfterClientAborted
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-   
+
   --- On After "Failed" event. Task has been a failure.
   -- @function [parent=#PLAYERTASK] OnAfterFailed
   -- @param #PLAYERTASK self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  
+
 end
+
+--- Constructor that automatically determines the task type based on the target.
+-- @param #PLAYERTASK self
+-- @param Ops.Target#TARGET Target Target for this task
+-- @param #boolean Repeat Repeat this task if true (default = false)
+-- @param #number Times Repeat on failure this many times if Repeat is true (default = 1)
+-- @param #string TTSType TTS friendly task type name
+-- @return #PLAYERTASK self
+function PLAYERTASK:NewFromTarget(Target, Repeat, Times, TTSType)
+    return PLAYERTASK:New(self:_GetTaskTypeForTarget(Target), Target, Repeat, Times, TTSType)
+end
+
+--- [Internal] Determines AUFTRAG type based on the target characteristics.
+-- @param #PLAYERTASK self
+-- @param Ops.Target#TARGET Target Target for this task
+-- @return #string AUFTRAG.Type 
+function PLAYERTASK:_GetTaskTypeForTarget(Target)
+
+    local group = nil      --Wrapper.Group#GROUP
+    local auftrag = nil
+
+    if Target:IsInstanceOf("GROUP") then
+        group = Target --Target is already a group.
+    elseif Target:IsInstanceOf("SET_GROUP") then
+        group = Target:GetFirst()
+    elseif Target:IsInstanceOf("UNIT") then
+        group = Target:GetGroup()
+    elseif Target:IsInstanceOf("SET_UNIT") then
+        group = Target:GetFirst():GetGroup()
+    elseif Target:IsInstanceOf("AIRBASE") then
+
+        auftrag = AUFTRAG.Type.BOMBRUNWAY
+
+    elseif Target:IsInstanceOf("STATIC")
+            or Target:IsInstanceOf("SET_STATIC")
+            or Target:IsInstanceOf("SCENERY")
+            or Target:IsInstanceOf("SET_SCENERY") then
+
+        auftrag = AUFTRAG.Type.BOMBING
+
+    elseif Target:IsInstanceOf("OPSZONE")
+            or Target:IsInstanceOf("SET_OPSZONE") then
+        auftrag = AUFTRAG.Type.CAPTUREZONE
+    end
+
+    if group then
+
+        local category = group:GetCategory()
+        local attribute = group:GetAttribute()
+
+        if (category == Group.Category.AIRPLANE or category == Group.Category.HELICOPTER)
+                and group:InAir() then
+
+            auftrag = AUFTRAG.Type.INTERCEPT
+
+        elseif category == Group.Category.GROUND or category == Group.Category.TRAIN then
+
+            if attribute == GROUP.Attribute.GROUND_SAM
+                    or attribute == GROUP.Attribute.GROUND_EWR then
+
+                auftrag = AUFTRAG.Type.SEAD
+
+            elseif attribute == GROUP.Attribute.GROUND_AAA
+                    or attribute == GROUP.Attribute.GROUND_APC
+                    or attribute == GROUP.Attribute.GROUND_IFV
+                    or attribute == GROUP.Attribute.GROUND_TRUCK
+                    or attribute == GROUP.Attribute.GROUND_TRAIN then
+
+                auftrag = AUFTRAG.Type.BAI
+
+            elseif attribute == GROUP.Attribute.GROUND_INFANTRY
+                    or attribute == GROUP.Attribute.GROUND_ARTILLERY
+                    or attribute == GROUP.Attribute.GROUND_TANK then
+
+                auftrag = AUFTRAG.Type.CAS
+
+            else
+
+                auftrag = AUFTRAG.Type.BAI
+
+            end
+
+        elseif category == Group.Category.SHIP then
+
+            auftrag = AUFTRAG.Type.ANTISHIP
+
+        else
+            self:T(self.lid .. "ERROR: Unknown Group category!")
+        end
+    end
+
+    return auftrag
+
+end
+
+
+--- [Internal] Check OpsZone capture success condition.
+-- @param #PLAYERTASK self
+-- @param Ops.OpsZone#OPSZONE OpsZone The OpsZone target object.
+-- @param #string CaptureSquadGroupNamePrefix The prefix of the group name that needs to capture the zone.
+-- @param #number Coalition The coalition that needs to capture the zone.
+-- @param #boolean CheckClientInZone Check if any of the clients are in zone.
+-- @return #PLAYERTASK self
+function PLAYERTASK:_CheckCaptureOpsZoneSuccess(OpsZone, CaptureSquadGroupNamePrefix, Coalition, CheckClientInZone)
+    local isClientInZone = true
+    if CheckClientInZone then
+        isClientInZone = false
+        for _, client in ipairs(self:GetClientObjects()) do
+            local clientCoord = client:GetCoordinate()
+            if OpsZone.zone:IsCoordinateInZone(clientCoord) then
+                isClientInZone = true
+                break
+            end
+        end
+    end
+
+    local isCaptureGroupInZone = false
+    OpsZone:GetScannedGroupSet():ForEachGroup(function(group)
+        if string.find(group:GetName(), CaptureSquadGroupNamePrefix) then
+            isCaptureGroupInZone = true
+        end
+    end)
+
+    return OpsZone:GetOwner() == Coalition and isClientInZone and isCaptureGroupInZone
+end
+
 
 --- [Internal] Add a PLAYERTASKCONTROLLER for this task
 -- @param #PLAYERTASK self
@@ -378,6 +504,169 @@ function PLAYERTASK:SetMenuName(Text)
   return self
 end
 
+--- [USER] Adds task success condition for dead STATIC, SET_STATIC, SCENERY or SET_SCENERY target object.
+-- @return #PLAYERTASK self
+-- @usage
+-- -- We can use either STATIC, SET_STATIC, SCENERY or SET_SCENERY as target objects.
+-- local mytask = PLAYERTASK:NewFromTarget(static, true, 50, "Destroy the target")
+-- mytask:SetMenuName("Destroy Power Plant")
+-- mytask:AddFreetext("Locate and destroy the power plant near Olenya.")
+-- mytask:AddStaticObjectSuccessCondition()
+--
+-- playerTaskManager:AddPlayerTaskToQueue(mytask)
+function PLAYERTASK:AddStaticObjectSuccessCondition()
+    local task = self
+    -- TODO Check if the killer is one of the task clients
+    task:AddConditionSuccess(
+            function(target)
+                if target == nil then return false end
+
+                local isDead = false
+                if target:IsInstanceOf("STATIC")
+                or target:IsInstanceOf("SCENERY")
+                or target:IsInstanceOf("SET_SCENERY") then
+                    isDead = (not target) or target:GetLife() < 1 or target:GetLife() < 0.2* target:GetLife0()
+                elseif target:IsInstanceOf("SET_STATIC") then
+                    local deadCount = 0
+                    target:ForEachStatic(function(static)
+                        if static:GetLife() < 1 or static:GetLife() < 0.2* static:GetLife0() then
+                            deadCount = deadCount + 1
+                        end
+                    end)
+
+                    if deadCount == target:Count() then
+                        isDead = true
+                    end
+                end
+
+                return isDead
+            end, task:GetTarget()
+    )
+
+    -- TODO Check if the killer is one of the task clients
+    --task:AddConditionFailure(
+    --        function()
+    --
+    --        end)
+    return self
+end
+
+--- [USER] Adds task success condition for AUFTRAG.Type.CAPTUREZONE for OpsZone or OpsZone set target object.
+--- At least one of the task clients and one capture group need to be inside the zone in order for the capture to be successful.
+-- @param #PLAYERTASK self
+-- @param #SET_BASE CaptureSquadGroupNamePrefix The prefix of the group name that needs to capture the zone.
+-- @param #number Coalition The coalition that needs to capture the zone.
+-- @return #PLAYERTASK self
+-- @usage
+-- -- We can use either STATIC, SET_STATIC, SCENERY or SET_SCENERY as target objects.
+-- local opsZone = OPSZONE:New(zone, coalition.side.RED)
+--
+-- ...
+--
+-- -- We can use either OPSZONE or SET_OPSZONE.
+-- local mytask = PLAYERTASK:NewFromTarget(opsZone, true, 50, "Capture the zone")
+-- mytask:SetMenuName("Capture the ops zone")
+-- mytask:AddFreetext("Transport capture squad to the ops zone.")
+--
+-- -- We set CaptureSquadGroupNamePrefix the group name prefix as set in the ME or the spawn of the group that need to be present at the OpsZone like a capture squad,
+-- -- and set the capturing Coalition in order to trigger a successful task.
+-- mytask:AddOpsZoneCaptureSuccessCondition("capture-squad", coalition.side.BLUE)
+--
+-- playerTaskManager:AddPlayerTaskToQueue(mytask)
+function PLAYERTASK:AddOpsZoneCaptureSuccessCondition(CaptureSquadGroupNamePrefix, Coalition)
+    local task = self
+    task:AddConditionSuccess(
+            function(target)
+                if target:IsInstanceOf("OPSZONE") then
+                    return task:_CheckCaptureOpsZoneSuccess(target, CaptureSquadGroupNamePrefix, Coalition, true)
+                elseif target:IsInstanceOf("SET_OPSZONE") then
+                    local successes = 0
+                    local isClientInZone = false
+                    target:ForEachZone(function(opszone)
+                        if task:_CheckCaptureOpsZoneSuccess(opszone, CaptureSquadGroupNamePrefix, Coalition) then
+                            successes = successes + 1
+                        end
+
+                        for _, client in ipairs(task:GetClientObjects()) do
+                            local clientCoord = client:GetCoordinate()
+                            if opszone.zone:IsCoordinateInZone(clientCoord) then
+                                isClientInZone = true
+                                break
+                            end
+                        end
+                    end)
+                    return successes == target:Count() and isClientInZone
+                end
+
+                return false
+            end, task:GetTarget()
+    )
+    return self
+end
+
+--- [USER] Adds task success condition for AUFTRAG.Type.RECON when a client is at a certain LOS distance from the target.
+-- @param #PLAYERTASK self
+-- @param #number MinDistance (Optional) Minimum distance in meters from client to target in LOS for success condition. (Default 5 NM)
+-- @return #PLAYERTASK self
+-- @usage
+-- -- target can be any object that has a `GetCoordinate()` function like STATIC, GROUP, ZONE...
+-- local mytask = PLAYERTASK:New(AUFTRAG.Type.RECON, ZONE:New("WF Zone"), true, 50, "Deep Earth")
+-- mytask:SetMenuName("Recon weapon factory")
+-- mytask:AddFreetext("Locate and investigate underground weapons factory near Kovdor.")
+--
+-- -- We set the MinDistance (optional) in meters for the client to be in LOS from the target in order to trigger a successful task.
+-- mytask:AddReconSuccessCondition(10000) -- 10 km (default is 5 NM if not set)
+--
+-- playerTaskManager:AddPlayerTaskToQueue(mytask)
+function PLAYERTASK:AddReconSuccessCondition(MinDistance)
+    local task = self
+    task:AddConditionSuccess(
+            function(target)
+                local targetLocation = target:GetCoordinate()
+                local minD = MinDistance or UTILS.NMToMeters(5)
+                for _, client in ipairs(task:GetClientObjects()) do
+                    local clientCoord = client:GetCoordinate()
+                    local distance = clientCoord:Get2DDistance(targetLocation)
+                    local isLos = land.isVisible(clientCoord:GetVec3(), targetLocation:GetVec3())
+
+                    if distance < minD and isLos then
+                        return true
+                    end
+                end
+                return false
+            end, task:GetTarget())
+
+    return self
+end
+
+--- [USER] Adds a time limit for the task to be completed.
+-- @param #PLAYERTASK self
+-- @param #number TimeLimit Time limit in seconds for the task to be completed. (Default 0 = no time limit)
+-- @return #PLAYERTASK self
+-- @usage
+-- local mytask = PLAYERTASK:New(AUFTRAG.Type.RECON, ZONE:New("WF Zone"), true, 50, "Deep Earth")
+-- mytask:SetMenuName("Recon weapon factory")
+-- mytask:AddFreetext("Locate and investigate underground weapons factory near Kovdor.")
+-- mytask:AddReconSuccessCondition(10000) -- 10 km
+--
+-- -- We set the TimeLimit to 10 minutes (600 seconds) from the moment the task is started, once the time has passed and the task is not yet successful it will trigger a failure.
+-- mytask:AddTimeLimitFailureCondition(600)
+--
+-- playerTaskManager:AddPlayerTaskToQueue(mytask)
+function PLAYERTASK:AddTimeLimitFailureCondition(TimeLimit)
+    local task = self
+    TimeLimit = TimeLimit or 0
+    task.StartTime = -1
+    task:AddConditionFailure(
+            function()
+                if task.StartTime == -1 then
+                    task.StartTime = timer.getTime()
+                end
+                return TimeLimit > 0 and timer.getTime() - task.StartTime > TimeLimit
+            end)
+    return self
+end
+
 --- [USER] Add a task to be assigned to same clients when task was a success.
 -- @param #PLAYERTASK self
 -- @param Ops.PlayerTask#PLAYERTASK Task
@@ -409,6 +698,15 @@ function PLAYERTASK:IsDone()
     IsDone = true
   end
   return IsDone
+end
+
+--- [User] Check if task is NOT done
+-- @param #PLAYERTASK self
+-- @return #boolean done
+function PLAYERTASK:IsNotDone()
+  self:T(self.lid.."IsNotDone?")
+  local IsNotDone = not self:IsDone()
+  return IsNotDone
 end
 
 --- [User] Check if PLAYERTASK has clients assigned to it.
@@ -867,7 +1165,7 @@ function PLAYERTASK:onafterCancel(From, Event, To)
     self.TaskController:__TaskCancelled(-1,self)
   end
   self.timestamp = timer.getAbsTime()
-  self.FinalState = "Cancel"
+  self.FinalState = "Cancelled"
   self:__Done(-1)
   return self
 end
@@ -886,7 +1184,7 @@ function PLAYERTASK:onafterSuccess(From, Event, To)
   if self.TargetMarker then
     self.TargetMarker:Remove()
   end
-  if self.TaskController.Scoring then
+  if self.TaskController and self.TaskController.Scoring then
     local clients,count = self:GetClientObjects()
     if count > 0 then
       for _,_client in pairs(clients) do
@@ -944,7 +1242,7 @@ end
 do
 -------------------------------------------------------------------------------------------------------------------
 -- PLAYERTASKCONTROLLER
-  -- TODO: PLAYERTASKCONTROLLER
+-- TODO: PLAYERTASKCONTROLLER
 -- DONE Playername customized
 -- DONE Coalition-level screen info to SET based
 -- DONE Flash directions
@@ -1019,6 +1317,8 @@ do
 -- @field Core.ClientMenu#CLIENTMENU ActiveTopMenu
 -- @field Core.ClientMenu#CLIENTMENU ActiveInfoMenu
 -- @field Core.ClientMenu#CLIENTMENU MenuNoTask
+-- @field #boolean InformationMenu Show Radio Info Menu
+-- @field #number TaskInfoDuration How long to show the briefing info on the screen
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1067,10 +1367,33 @@ do
 --  * Anti-Ship - Any ship targets, if the controller is of type "A2S"
 --  * CTLD - Combat transport and logistics deployment
 --  * CSAR - Combat search and rescue
+--  * RECON - Identify targets
+--  * CAPTUREZONE - Capture an Ops.OpsZone#OPSZONE
+--  * Any #string name can be passed as Auftrag type, but then you need to make sure to define a success condition, and possibly also add the task type to the standard scoring list: `PLAYERTASKCONTROLLER.Scores["yournamehere"]=100`
 --  
 -- ## 3 Task repetition
 --  
 -- On failure, tasks will be replanned by default for a maximum of 5 times.
+-- 
+-- ## 3.1 Pre-configured success conditions
+-- 
+-- Pre-configured success conditions for #PLAYERTASK tasks are available as follows:
+-- 
+-- `mytask:AddStaticObjectSuccessCondition()` -- success if static object is at least 80% dead
+-- 
+-- `mytask:AddOpsZoneCaptureSuccessCondition(CaptureSquadGroupNamePrefix,Coalition)`  -- success if a squad of the given (partial) name and coalition captures the OpsZone
+-- 
+-- `mytask:AddReconSuccessCondition(MinDistance)`  -- success if object is in line-of-sight with the given min distance in NM
+-- 
+-- `mytask:AddTimeLimitSuccessCondition(TimeLimit)` -- failure if the task is not completed within the time limit in seconds given
+-- 
+-- ## 3.2 Task chaining
+-- 
+-- You can create chains of tasks, which will depend on success or failure of the previous task with the following commands:
+-- 
+-- `mytask:AddNextTaskAfterSuccess(FollowUpTask)` and  
+-- 
+-- `mytask:AddNextTaskAfterFailure(FollowUpTask)`
 -- 
 -- ## 4 SETTINGS, SRS and language options (localization)
 -- 
@@ -1351,6 +1674,8 @@ PLAYERTASKCONTROLLER = {
   UseTypeNames       = false,
   Scoring            = nil,
   MenuNoTask         = nil,
+  InformationMenu    = false,
+  TaskInfoDuration   = 30,
   }
 
 ---
@@ -1384,7 +1709,11 @@ PLAYERTASKCONTROLLER.Scores = {
   [AUFTRAG.Type.SEAD] = 100,
   [AUFTRAG.Type.BOMBING] = 100,
   [AUFTRAG.Type.BOMBRUNWAY] = 100,
-  [AUFTRAG.Type.CONQUER] = 100,    
+  [AUFTRAG.Type.CONQUER] = 100,
+  [AUFTRAG.Type.RECON] = 100,
+  [AUFTRAG.Type.ESCORT] = 100,
+  [AUFTRAG.Type.CAP] = 100,
+  [AUFTRAG.Type.CAPTUREZONE] = 100,
 }
  
 --- 
@@ -1483,6 +1812,7 @@ PLAYERTASKCONTROLLER.Messages = {
     CRUISER = "Cruiser",
     DESTROYER = "Destroyer",
     CARRIER = "Aircraft Carrier",
+    RADIOS = "Radios",
   },
   DE = {
     TASKABORT = "Auftrag abgebrochen!",
@@ -1566,12 +1896,13 @@ PLAYERTASKCONTROLLER.Messages = {
     CRUISER = "Kreuzer",
     DESTROYER = "Zerstörer",
     CARRIER = "Flugzeugträger",
+    RADIOS = "Frequenzen",
   },
 }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.66"
+PLAYERTASKCONTROLLER.version="0.1.69"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -1604,6 +1935,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.TaskQueue = FIFO:New() -- Utilities.FiFo#FIFO
   self.TasksPerPlayer = FIFO:New() -- Utilities.FiFo#FIFO
   self.PrecisionTasks = FIFO:New() -- Utilities.FiFo#FIFO
+  self.LasingDroneSet = SET_OPSGROUP:New() -- Core.Set#SET_OPSGROUP
   --self.PlayerMenu = {} -- #table
   self.FlashPlayer = {} -- #table
   self.AllowFlash = false
@@ -1632,6 +1964,10 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.ShowMagnetic = true
   
   self.UseTypeNames = false
+  
+  self.InformationMenu = false
+  
+  self.TaskInfoDuration = 30
   
   self.IsClientSet = false
   
@@ -1850,6 +2186,16 @@ function PLAYERTASKCONTROLLER:SetAllowFlashDirection(OnOff)
   return self
 end
 
+--- [User] Set to show a menu entry to retrieve the radio frequencies used.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #boolean OnOff Set to `true` to switch on and `false` to switch off. Default is OFF.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetShowRadioInfoMenu(OnOff)
+  self:T(self.lid.."SetAllowRadioInfoMenu")
+  self.InformationMenu = OnOff
+  return self
+end
+
 --- [User] Do not show menu entries to smoke or flare targets
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #PLAYERTASKCONTROLLER self
@@ -1916,8 +2262,10 @@ end
 -- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name for players as-is, no amendments or numbers.
 -- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
 -- callsigns from playername or group name.
+-- @param #func CallsignCustomFunc (Optional) For player names only(!). If given, this function will return the callsign. Needs to take the groupname and the playername as first two arguments.
+-- @param #arg ... (Optional) Comma separated arguments to add to the custom function call after groupname and playername.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations)
+function PLAYERTASKCONTROLLER:SetCallSignOptions(ShortCallsign,Keepnumber,CallsignTranslations,CallsignCustomFunc,...)
   if not ShortCallsign or ShortCallsign == false then
    self.ShortCallsign = false
   else
@@ -1925,6 +2273,8 @@ function PLAYERTASKCONTROLLER:SetCallSignOptions(ShortCallsign,Keepnumber,Callsi
   end
   self.Keepnumber = Keepnumber or false
   self.CallsignTranslations = CallsignTranslations
+  self.CallsignCustomFunc = CallsignCustomFunc
+  self.CallsignCustomArgs = arg or {}
   return self  
 end
 
@@ -1945,7 +2295,7 @@ function PLAYERTASKCONTROLLER:_GetTextForSpeech(text)
   return text
 end
 
---- [User] Set repetition options for tasks
+--- [User] Set repetition options for tasks.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #boolean OnOff Set to `true` to switch on and `false` to switch off (defaults to true)
 -- @param #number Repeats Number of repeats (defaults to 5)
@@ -1963,6 +2313,16 @@ function PLAYERTASKCONTROLLER:SetTaskRepetition(OnOff, Repeats)
   return self
 end
 
+--- [User] Set how long the briefing is shown on screen.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #number Seconds Duration in seconds. Defaults to 30 seconds.
+-- @return #PLAYERTASKCONTROLLER self 
+function PLAYERTASKCONTROLLER:SetBriefingDuration(Seconds)
+  self:T(self.lid.."SetBriefingDuration")
+  self.TaskInfoDuration = Seconds or 30
+  return self
+end
+
 --- [Internal] Send message to SET_CLIENT of players
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string Text the text to be send
@@ -1973,7 +2333,9 @@ function PLAYERTASKCONTROLLER:_SendMessageToClients(Text,Seconds)
   local seconds = Seconds or 10
   self.ClientSet:ForEachClient(
     function (Client)
-      local m = MESSAGE:New(Text,seconds,"Tasking"):ToClient(Client)
+      if Client ~= nil and Client:IsActive() then
+        local m = MESSAGE:New(Text,seconds,"Tasking"):ToClient(Client)
+      end
     end
   )
   return self
@@ -1987,6 +2349,7 @@ end
 -- @param Core.Point#COORDINATE HoldingPoint (Optional) Point where the drone should initially circle. If not set, defaults to BullsEye of the coalition.
 -- @param #number Alt (Optional) Altitude in feet. Only applies if using a FLIGHTGROUP object! Defaults to 10000.
 -- @param #number Speed (Optional) Speed in knots. Only applies if using a FLIGHTGROUP object! Defaults to 120.
+-- @param #number MaxTravelDist (Optional) Max distance to travel to traget. Only applies if using a FLIGHTGROUP object! Defaults to 100 NM.
 -- @return #PLAYERTASKCONTROLLER self
 -- @usage
 -- -- Set up precision bombing, FlightGroup as lasing unit
@@ -2001,35 +2364,56 @@ end
 --        ArmyGroup:Activate()
 --        taskmanager:EnablePrecisionBombing(ArmyGroup,1688)
 --
-function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode,HoldingPoint, Alt, Speed)
+function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode,HoldingPoint,Alt,Speed,MaxTravelDist)
   self:T(self.lid.."EnablePrecisionBombing")
+  
+  if not self.LasingDroneSet then 
+    self.LasingDroneSet = SET_OPSGROUP:New()
+  end
+  
+  local LasingDrone -- Ops.FlightGroup#FLIGHTGROUP FlightGroup
+  
   if FlightGroup then
     if FlightGroup.ClassName and (FlightGroup.ClassName == "FLIGHTGROUP" or FlightGroup.ClassName == "ARMYGROUP")then
       -- ok we have a FG
-      self.LasingDrone = FlightGroup -- Ops.FlightGroup#FLIGHTGROUP FlightGroup
-      self.LasingDrone.playertask = {}
-      self.LasingDrone.playertask.busy = false
-      self.LasingDrone.playertask.id = 0
+      LasingDrone = FlightGroup -- Ops.FlightGroup#FLIGHTGROUP FlightGroup
+      
       self.precisionbombing = true
-      self.LasingDrone:SetLaser(LaserCode)
-      self.LaserCode = LaserCode or 1688
-      self.LasingDroneTemplate = self.LasingDrone:_GetTemplate(true)
-      self.LasingDroneAlt = Alt or 10000
-      self.LasingDroneSpeed = Speed or 120
+
+      LasingDrone.playertask = {}
+      LasingDrone.playertask.id = 0
+      LasingDrone.playertask.busy = false
+      LasingDrone.playertask.lasercode = LaserCode or 1688     
+      LasingDrone:SetLaser(LasingDrone.playertask.lasercode)
+      LasingDrone.playertask.template = LasingDrone:_GetTemplate(true)
+      LasingDrone.playertask.alt = Alt or 10000
+      LasingDrone.playertask.speed = Speed or 120
+      LasingDrone.playertask.maxtravel = UTILS.NMToMeters(MaxTravelDist or 50)
+      
       -- let it orbit the BullsEye if FG
-      if self.LasingDrone:IsFlightgroup() then
-        self.LasingDroneIsFlightgroup = true
+      if LasingDrone:IsFlightgroup() then
+        --settings.IsFlightgroup = true
         local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.Coalition ))
         if HoldingPoint then BullsCoordinate = HoldingPoint end
-        local Orbit = AUFTRAG:NewORBIT_CIRCLE(BullsCoordinate,self.LasingDroneAlt,self.LasingDroneSpeed)
-        self.LasingDrone:AddMission(Orbit)
-      elseif self.LasingDrone:IsArmygroup() then
-        self.LasingDroneIsArmygroup = true
+        local Orbit = AUFTRAG:NewORBIT_CIRCLE(BullsCoordinate,Alt,Speed)
+        Orbit:SetMissionAltitude(Alt)
+        LasingDrone:AddMission(Orbit)
+      elseif LasingDrone:IsArmygroup() then
+        --settings.IsArmygroup = true
         local BullsCoordinate = COORDINATE:NewFromVec3( coalition.getMainRefPoint( self.Coalition ))
         if HoldingPoint then BullsCoordinate = HoldingPoint end
         local Orbit = AUFTRAG:NewONGUARD(BullsCoordinate)
-        self.LasingDrone:AddMission(Orbit)
+        LasingDrone:AddMission(Orbit)
       end
+      
+      self.LasingDroneSet:AddObject(FlightGroup)
+      
+    elseif FlightGroup.ClassName and (FlightGroup.ClassName == "SET_OPSGROUP") then --SET_OPSGROUP
+      FlightGroup:ForEachGroup(
+        function(group)
+          self:EnablePrecisionBombing(group,LaserCode,HoldingPoint,Alt,Speed,MaxTravelDist)
+        end  
+      )
     else
       self:E(self.lid.."No FLIGHTGROUP object passed or FLIGHTGROUP is not alive!")
     end
@@ -2037,6 +2421,20 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode,Holdi
     self.autolase = nil
     self.precisionbombing = false
   end
+  return self
+end
+
+--- [User] Convenience function - add done or ground allowing precision laser-guided bombing on statics and "high-value" ground units (MBT etc)
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FlightGroup (e.g. drone) to be used for lasing (one unit in one group only).
+-- Can optionally be handed as Ops.ArmyGroup#ARMYGROUP - **Note** might not find an LOS spot or get lost on the way. Cannot island-hop.
+-- @param #number LaserCode The lasercode to be used. Defaults to 1688.
+-- @param Core.Point#COORDINATE HoldingPoint (Optional) Point where the drone should initially circle. If not set, defaults to BullsEye of the coalition.
+-- @param #number Alt (Optional) Altitude in feet. Only applies if using a FLIGHTGROUP object! Defaults to 10000.
+-- @param #number Speed (Optional) Speed in knots. Only applies if using a FLIGHTGROUP object! Defaults to 120.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddPrecisionBombingOpsGroup(FlightGroup,LaserCode,HoldingPoint, Alt, Speed)
+  self:EnablePrecisionBombing(FlightGroup,LaserCode,HoldingPoint,Alt,Speed)
   return self
 end
 
@@ -2124,7 +2522,7 @@ function PLAYERTASKCONTROLLER:_GetPlayerName(Client)
   if not self.customcallsigns[playername] then
     local playergroup = Client:GetGroup()
     if playergroup ~= nil then
-      ttsplayername = playergroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+      ttsplayername = playergroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
       local newplayername = self:_GetTextForSpeech(ttsplayername)
       self.customcallsigns[playername] = newplayername
       ttsplayername = newplayername
@@ -2206,7 +2604,7 @@ end
 function PLAYERTASKCONTROLLER:_EventHandler(EventData)
   self:T(self.lid.."_EventHandler: "..EventData.id)
   --self:T(self.lid.."_EventHandler: "..EventData.IniPlayerName)
-  if EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
+  if EventData.id == EVENTS.UnitLost or EventData.id == EVENTS.PlayerLeaveUnit or EventData.id == EVENTS.Ejection or EventData.id == EVENTS.Crash or EventData.id == EVENTS.PilotDead then
     if EventData.IniPlayerName then
       self:T(self.lid.."Event for player: "..EventData.IniPlayerName)
       --if self.PlayerMenu[EventData.IniPlayerName] then
@@ -2264,7 +2662,7 @@ function PLAYERTASKCONTROLLER:_EventHandler(EventData)
           if self.customcallsigns[playername] then
             self.customcallsigns[playername] = nil
           end
-          playername = EventData.IniGroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber)
+          playername = EventData.IniGroup:GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
         end
         playername = self:_GetTextForSpeech(playername)
         --local text = string.format("%s, %s, switch to %s for task assignment!",EventData.IniPlayerName,self.MenuName or self.Name,freqtext)
@@ -2561,99 +2959,155 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
  self:T(self.lid.."_CheckPrecisionTasks")
+ self:T({count=self.PrecisionTasks:Count(),enabled=self.precisionbombing})
  if self.PrecisionTasks:Count() > 0 and self.precisionbombing then
-   if not self.LasingDrone or self.LasingDrone:IsDead() then
-    -- we need a new drone
-    self:E(self.lid.."Lasing drone is dead ... creating a new one!")
-    if self.LasingDrone then
-      self.LasingDrone:_Respawn(1,nil,true)
-    else
-      -- DONE: Handle ArmyGroup
-      if self.LasingDroneIsFlightgroup then
-        local FG = FLIGHTGROUP:New(self.LasingDroneTemplate)
-        FG:Activate()
-        self:EnablePrecisionBombing(FG,self.LaserCode or 1688)
+   
+   -- alive checks
+   self.LasingDroneSet:ForEachGroup(  
+   function(LasingDrone)
+     if not LasingDrone or LasingDrone:IsDead() then
+      -- we need a new drone
+      self:E(self.lid.."Lasing drone is dead ... creating a new one!")
+      if LasingDrone then
+        LasingDrone:_Respawn(1,nil,true)
       else
-        local FG = ARMYGROUP:New(self.LasingDroneTemplate)
-        FG:Activate()
-        self:EnablePrecisionBombing(FG,self.LaserCode or 1688)
-      end
-    end
-    return self
-   end
-  -- do we have a lasing unit assigned?
-  if self.LasingDrone and self.LasingDrone:IsAlive() then
-    if self.LasingDrone.playertask and (not self.LasingDrone.playertask.busy) then
-      -- not busy, get a task
-      self:T(self.lid.."Sending lasing unit to target")
-      local task = self.PrecisionTasks:Pull() -- Ops.PlayerTask#PLAYERTASK
-      self.LasingDrone.playertask.id = task.PlayerTaskNr
-      self.LasingDrone.playertask.busy = true
-      self.LasingDrone.playertask.inreach = false
-      self.LasingDrone.playertask.reachmessage = false
-      -- move the drone to target
-      if self.LasingDroneIsFlightgroup then
-        self.LasingDrone:CancelAllMissions()
-        local auftrag = AUFTRAG:NewORBIT_CIRCLE(task.Target:GetCoordinate(),self.LasingDroneAlt,self.LasingDroneSpeed)
-        self.LasingDrone:AddMission(auftrag)   
-      elseif self.LasingDroneIsArmygroup then
-        local tgtcoord = task.Target:GetCoordinate()
-        local tgtzone = ZONE_RADIUS:New("ArmyGroup-"..math.random(1,10000),tgtcoord:GetVec2(),3000)
-        local finalpos=nil -- Core.Point#COORDINATE
-        for i=1,50 do
-          finalpos = tgtzone:GetRandomCoordinate(2500,0,{land.SurfaceType.LAND,land.SurfaceType.ROAD,land.SurfaceType.SHALLOW_WATER}) 
-          if finalpos then
-            if finalpos:IsLOS(tgtcoord,0) then
-              break
-            end
+        --[[
+        -- DONE: Handle ArmyGroup
+        if LasingDrone:IsFlightgroup() then
+          local FG = FLIGHTGROUP:New(LasingDroneTemplate)
+          FG:Activate()
+          self:EnablePrecisionBombing(FG,self.LaserCode or 1688)
+        else
+          local FG = ARMYGROUP:New(LasingDroneTemplate)
+          FG:Activate()
+          self:EnablePrecisionBombing(FG,self.LaserCode or 1688)
+        end -- if LasingDroneIsFlightgroup
+        --]]
+      end -- if LasingDrone
+     end -- if not LasingDrone
+    end -- function
+    )
+  
+  local function SelectDrone(coord)
+    local selected = nil
+    local mindist = math.huge
+    local dist = math.huge
+    self.LasingDroneSet:ForEachGroup(
+      function(grp)
+        if grp.playertask and (not grp.playertask.busy) then
+          local gc = grp:GetCoordinate()
+          if coord and gc then
+            dist = coord:Get2DDistance(gc)
+          end
+          if dist < mindist then
+            selected = grp
+            mindist = dist
           end
         end
-        if finalpos then
-          self.LasingDrone:CancelAllMissions()
-          -- yeah we got one
-          local auftrag = AUFTRAG:NewARMOREDGUARD(finalpos,"Off road")
-          self.LasingDrone:AddMission(auftrag)
-        else
-          -- could not find LOS position!
-          self:E("***Could not find LOS position to post ArmyGroup for lasing!")
-          self.LasingDrone.playertask.id = 0
-          self.LasingDrone.playertask.busy = false
-          self.LasingDrone.playertask.inreach = false
-          self.LasingDrone.playertask.reachmessage = false
-        end
       end
-      self.PrecisionTasks:Push(task,task.PlayerTaskNr)
-    elseif self.LasingDrone.playertask and self.LasingDrone.playertask.busy then
+    )
+    return selected
+  end
+  
+  local task = self.PrecisionTasks:Pull() -- Ops.PlayerTask#PLAYERTASK
+  local taskpt = task.Target:GetCoordinate() 
+    
+  local SelectedDrone = SelectDrone(taskpt) -- Ops.OpsGroup#OPSGROUP
+    
+  -- do we have a lasing unit assignable?
+  if SelectedDrone and SelectedDrone:IsAlive() then
+    if SelectedDrone.playertask and (not SelectedDrone.playertask.busy) then
+      -- not busy, get a task
+      self:T(self.lid.."Sending lasing unit to target")
+      local isassigned = self:_FindLasingDroneForTaskID(task.PlayerTaskNr)
+      -- distance check
+      local startpoint = SelectedDrone:GetCoordinate()
+      local endpoint = task.Target:GetCoordinate()      
+      local dist = math.huge
+      if startpoint and endpoint then
+        dist = startpoint:Get2DDistance(endpoint)
+      end
+      if dist <= SelectedDrone.playertask.maxtravel and (not isassigned) then
+        SelectedDrone.playertask.id = task.PlayerTaskNr
+        SelectedDrone.playertask.busy = true
+        SelectedDrone.playertask.inreach = false
+        SelectedDrone.playertask.reachmessage = false
+        -- move the drone to target
+        if SelectedDrone:IsFlightgroup() then
+          SelectedDrone:CancelAllMissions()
+          local auftrag = AUFTRAG:NewORBIT_CIRCLE(task.Target:GetCoordinate(),SelectedDrone.playertask.alt,SelectedDrone.playertask.speed)
+          SelectedDrone:AddMission(auftrag)   
+        elseif SelectedDrone:IsArmygroup() then
+          local tgtcoord = task.Target:GetCoordinate()
+          local tgtzone = ZONE_RADIUS:New("ArmyGroup-"..math.random(1,10000),tgtcoord:GetVec2(),3000)
+          local finalpos=nil -- Core.Point#COORDINATE
+          for i=1,50 do
+            finalpos = tgtzone:GetRandomCoordinate(2500,0,{land.SurfaceType.LAND,land.SurfaceType.ROAD,land.SurfaceType.SHALLOW_WATER}) 
+            if finalpos then
+              if finalpos:IsLOS(tgtcoord,0) then
+                break
+              end
+            end
+          end
+          if finalpos then
+            SelectedDrone:CancelAllMissions()
+            -- yeah we got one
+            local auftrag = AUFTRAG:NewARMOREDGUARD(finalpos,"Off road")
+            SelectedDrone:AddMission(auftrag)
+          else
+            -- could not find LOS position!
+            self:E("***Could not find LOS position to post ArmyGroup for lasing!")
+            SelectedDrone.playertask.id = 0
+            SelectedDrone.playertask.busy = false
+            SelectedDrone.playertask.inreach = false
+            SelectedDrone.playertask.reachmessage = false
+          end
+        end
+      else
+        self:T(self.lid.."Lasing unit too far from target")
+      end
+      
+    end
+  end
+  
+  self.PrecisionTasks:Push(task,task.PlayerTaskNr)
+  
+  
+    local function DronesWithTask(SelectedDrone)
+    -- handle drones with a task
+    if SelectedDrone.playertask and SelectedDrone.playertask.busy then
       -- drone is busy, set up laser when over target
-      local task = self.PrecisionTasks:ReadByID(self.LasingDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
+      local task = self.PrecisionTasks:ReadByID(SelectedDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
       self:T("Looking at Task: "..task.PlayerTaskNr.." Type: "..task.Type.." State: "..task:GetState())
       if (not task) or task:GetState() == "Done" or task:GetState() == "Stopped" then
         -- we're done here
-        local task = self.PrecisionTasks:PullByID(self.LasingDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
+        local task = self.PrecisionTasks:PullByID(SelectedDrone.playertask.id) -- Ops.PlayerTask#PLAYERTASK
         self:_CheckTaskQueue()
         task = nil
-        if self.LasingDrone:IsLasing() then
-          self.LasingDrone:__LaserOff(-1)
+        if SelectedDrone:IsLasing() then
+          SelectedDrone:__LaserOff(-1)
         end
-        self.LasingDrone.playertask.busy = false
-        self.LasingDrone.playertask.inreach = false
-        self.LasingDrone.playertask.id = 0
-        self.LasingDrone.playertask.reachmessage = false
+        SelectedDrone.playertask.busy = false
+        SelectedDrone.playertask.inreach = false
+        SelectedDrone.playertask.id = 0
+        SelectedDrone.playertask.reachmessage = false
         self:T(self.lid.."Laser Off")
       else
         -- not done yet
-        local dcoord = self.LasingDrone:GetCoordinate()
+        self:T(self.lid.."Not done yet")
+        local dcoord = SelectedDrone:GetCoordinate()
         local tcoord = task.Target:GetCoordinate()
         tcoord.y = tcoord.y + 2 
         local dist = dcoord:Get2DDistance(tcoord)
+        self:T(self.lid.."Dist "..dist)
         -- close enough?
-        if dist < 3000 and not self.LasingDrone:IsLasing() then
+        if dist < 3000 and not SelectedDrone:IsLasing() then
           self:T(self.lid.."Laser On")
-          self.LasingDrone:__LaserOn(-1,tcoord)
-          self.LasingDrone.playertask.inreach = true
-          if not self.LasingDrone.playertask.reachmessage then
+          SelectedDrone:__LaserOn(-1,tcoord)
+          SelectedDrone.playertask.inreach = true
+          if not SelectedDrone.playertask.reachmessage then
             --local textmark = self.gettext:GetEntry("FLARETASK",self.locale)
-            self.LasingDrone.playertask.reachmessage = true
+            SelectedDrone.playertask.reachmessage = true
             local clients = task:GetClients()
             local text = ""
             for _,playername in pairs(clients) do
@@ -2661,7 +3115,7 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
               local ttsplayername = playername
               if self.customcallsigns[playername] then
                 ttsplayername = self.customcallsigns[playername]
-              end
+              end --
               --text = string.format("%s, %s, pointer over target for task %03d, lasing!", playername, self.MenuName or self.Name, task.PlayerTaskNr)
               text = string.format(pointertext, ttsplayername, self.MenuName or self.Name, task.PlayerTaskNr)
               if not self.NoScreenOutput then
@@ -2673,18 +3127,21 @@ function PLAYERTASKCONTROLLER:_CheckPrecisionTasks()
                 ) 
                 if client then
                     local m = MESSAGE:New(text,15,"Tasking"):ToClient(client)
-                end
-              end
-            end
+                end --
+              end --
+            end --
             if self.UseSRS then
               self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
-            end
-          end
-        end
-      end
-    end
-  end
- end
+            end --
+          end --
+        end --
+      end -- end else
+    end -- end handle drones with a task
+   end -- end function
+   
+   self.LasingDroneSet:ForEachGroup(DronesWithTask)
+  
+ end --
  return self
 end
 
@@ -3146,6 +3603,32 @@ function PLAYERTASKCONTROLLER:_SwitchFlashing(Group, Client)
   return self
 end
 
+function PLAYERTASKCONTROLLER:_ShowRadioInfo(Group, Client)
+  self:T(self.lid.."_ShowRadioInfo")
+  local playername, ttsplayername = self:_GetPlayerName(Client)
+  
+  if self.UseSRS then
+    local frequency = self.Frequency
+    local freqtext = ""
+    if type(frequency) == "table" then
+      freqtext = self.gettext:GetEntry("FREQUENCIES",self.locale)
+      freqtext = freqtext..table.concat(frequency,", ")      
+    else
+      local freqt = self.gettext:GetEntry("FREQUENCY",self.locale)
+      freqtext = string.format(freqt,frequency)
+    end
+    
+    local switchtext = self.gettext:GetEntry("BROADCAST",self.locale)
+
+    playername = ttsplayername or self:_GetTextForSpeech(playername)
+    --local text = string.format("%s, %s, switch to %s for task assignment!",EventData.IniPlayerName,self.MenuName or self.Name,freqtext)
+    local text = string.format(switchtext,playername,self.MenuName or self.Name,freqtext)
+    self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2,{Group},text,30,self.BCFrequency,self.BCModulation)
+  end
+  
+  return self
+end
+
 --- [Internal] Flashing directional info for a client
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #PLAYERTASKCONTROLLER self
@@ -3169,6 +3652,22 @@ function PLAYERTASKCONTROLLER:_FlashInfo()
     end
   end
   return self
+end
+
+--- [Internal] Find matching drone for precision bombing task, if any is assigned.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #number ID Task ID to look for
+-- @return Ops.OpsGroup#OPSGROUP Drone
+function PLAYERTASKCONTROLLER:_FindLasingDroneForTaskID(ID)
+  local drone = nil
+  self.LasingDroneSet:ForEachGroup(
+    function(grp)
+      if grp and grp:IsAlive() and grp.playertask and grp.playertask.id and grp.playertask.id == ID then
+        drone = grp
+      end
+    end
+  )
+  return drone
 end
 
 --- [Internal] Show active task info
@@ -3198,6 +3697,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     local Elevation = Coordinate:GetLandHeight() or 0 -- meters
     local CoordText = ""
     local CoordTextLLDM = nil
+    local LasingDrone = self:_FindLasingDroneForTaskID(task.PlayerTaskNr)
     if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
       CoordText = Coordinate:ToStringA2G(Client,nil,self.ShowMagnetic)
     else
@@ -3233,14 +3733,14 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     text = text .. string.format(elev,tostring(math.floor(Elevation)),elevationmeasure)
     -- Prec bombing
     if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.precisionbombing then
-      if self.LasingDrone and self.LasingDrone.playertask then
+      if LasingDrone and LasingDrone.playertask then
         local yes = self.gettext:GetEntry("YES",self.locale)
         local no = self.gettext:GetEntry("NO",self.locale)
-        local inreach = self.LasingDrone.playertask.inreach == true and yes or no
-        local islasing = self.LasingDrone:IsLasing() == true and yes or no
+        local inreach = LasingDrone.playertask.inreach == true and yes or no
+        local islasing = LasingDrone:IsLasing() == true and yes or no
         local prectext = self.gettext:GetEntry("POINTERTARGETREPORT",self.locale)
         prectext = string.format(prectext,inreach,islasing)
-        text = text .. prectext.." ("..self.LaserCode..")"
+        text = text .. prectext.." ("..LasingDrone.playertask.lasercode..")"
       end
     end
     -- Buddylasing
@@ -3258,7 +3758,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
         local pcoord = player:GetCoordinate()
         if pcoord:Get2DDistance(Coordinate) <= reachdist then
           inreach = true
-          local callsign = player:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations)
+          local callsign = player:GetGroup():GetCustomCallSign(self.ShortCallsign,self.Keepnumber,self.CallsignTranslations,self.CallsignCustomFunc,self.CallsignCustomArgs)
           local playername = player:GetPlayerName()
           local islasing = no
           if self.PlayerRecce.CanLase[player:GetTypeName()] and self.PlayerRecce.AutoLase[playername] then
@@ -3345,7 +3845,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
       local ttstext = string.format(ThreatLocaleTextTTS,ttsplayername,self.MenuName or self.Name,ttstaskname,ThreatLevelText, targets, CoordText)
       -- POINTERTARGETLASINGTTS = ". Pointer over target and lasing."
       if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.precisionbombing then
-        if self.LasingDrone.playertask.inreach and self.LasingDrone:IsLasing() then
+        if LasingDrone and  LasingDrone.playertask.inreach and LasingDrone:IsLasing() then
           local lasingtext = self.gettext:GetEntry("POINTERTARGETLASINGTTS",self.locale)
           ttstext = ttstext .. lasingtext
         end
@@ -3365,7 +3865,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     text = self.gettext:GetEntry("NOACTIVETASK",self.locale)
   end
   if not self.NoScreenOutput then
-    local m=MESSAGE:New(text,15,"Tasking"):ToClient(Client)
+    local m=MESSAGE:New(text,self.TaskInfoDuration or 30,"Tasking"):ToClient(Client)
   end
   return self
 end
@@ -3719,6 +4219,11 @@ function PLAYERTASKCONTROLLER:_CreateJoinMenuTemplate()
     self.MenuNoTask = nil
   end
   
+  if self.InformationMenu then
+    local radioinfo = self.gettext:GetEntry("RADIOS",self.locale)
+    JoinTaskMenuTemplate:NewEntry(radioinfo,self.JoinTopMenu,self._ShowRadioInfo,self)
+  end
+  
   self.JoinTaskMenuTemplate = JoinTaskMenuTemplate
   
   return self
@@ -4058,8 +4563,9 @@ end
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS; if you use a config file for MSRS, hand in nil here.
 -- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
 -- @param Core.Point#COORDINATE Coordinate Coordinate from which the controller radio is sending
+-- @param #string Backend (Optional) MSRS Backend to be used, can be MSRS.Backend.SRSEXE or MSRS.Backend.GRPC; if you use a config file for MSRS, hand in nil here.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Coordinate)
+function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Coordinate,Backend)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
   self.Gender = Gender or MSRS.gender or "male" --
@@ -4075,7 +4581,7 @@ function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Cultu
   self.Modulation = Modulation or {radio.modulation.FM,radio.modulation.AM} --
   self.BCModulation = self.Modulation
   -- set up SRS 
-  self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation)
+  self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation,Backend)
   self.SRS:SetCoalition(self.Coalition)
   self.SRS:SetLabel(self.MenuName or self.Name)
   self.SRS:SetGender(self.Gender)
@@ -4138,6 +4644,7 @@ function PLAYERTASKCONTROLLER:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.Crash, self._EventHandler)
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
   self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
+  self:HandleEvent(EVENTS.UnitLost, self._EventHandler)
   self:SetEventPriority(5)          
   return self
 end

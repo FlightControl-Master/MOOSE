@@ -58,7 +58,7 @@
 --   * @{#CONTROLLABLE.TaskFollow}: (AIR) Following another airborne controllable.
 --   * @{#CONTROLLABLE.TaskHold}: (GROUND) Hold ground controllable from moving.
 --   * @{#CONTROLLABLE.TaskHoldPosition}: (AIR) Hold position at the current position of the first unit of the controllable.
---   * @{#CONTROLLABLE.TaskLand}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
+--   * @{#CONTROLLABLE.TaskLandAtVec2}: (AIR HELICOPTER) Landing at the ground. For helicopters only.
 --   * @{#CONTROLLABLE.TaskLandAtZone}: (AIR) Land the controllable at a @{Core.Zone#ZONE_RADIUS).
 --   * @{#CONTROLLABLE.TaskOrbitCircle}: (AIR) Orbit at the current position of the first unit of the controllable at a specified altitude.
 --   * @{#CONTROLLABLE.TaskOrbitCircleAtVec2}: (AIR) Orbit at a specified position at a specified altitude during a specified duration with a specified speed.
@@ -174,7 +174,10 @@
 --   * @{#CONTROLLABLE.OptionKeepWeaponsOnThreat}
 --
 -- ## 5.5) Air-2-Air missile attack range:
---   * @{#CONTROLLABLE.OptionAAAttackRange}(): Defines the usage of A2A missiles against possible targets .
+--   * @{#CONTROLLABLE.OptionAAAttackRange}(): Defines the usage of A2A missiles against possible targets.
+--   
+-- # 6) [GROUND] IR Maker Beacons for GROUPs and UNITs
+--  * @{#CONTROLLABLE:NewIRMarker}(): Create a blinking IR Marker on a GROUP or UNIT.
 --
 -- @field #CONTROLLABLE
 CONTROLLABLE = {
@@ -899,7 +902,11 @@ function CONTROLLABLE:CommandEPLRS( SwitchOnOff, Delay )
       groupId = self:GetID(),
     },
   }
-
+  
+  --if self:IsGround() then
+   --CommandEPLRS.params.groupId = self:GetID()
+  --end
+  
   if Delay and Delay > 0 then
     SCHEDULER:New( nil, self.CommandEPLRS, { self, SwitchOnOff }, Delay )
   else
@@ -934,7 +941,7 @@ function CONTROLLABLE:CommandSetUnlimitedFuel(OnOff, Delay)
 end
 
 
---- Set radio frequency. See [DCS command EPLRS](https://wiki.hoggitworld.com/view/DCS_command_setFrequency)
+--- Set radio frequency. See [DCS command SetFrequency](https://wiki.hoggitworld.com/view/DCS_command_setFrequency)
 -- @param #CONTROLLABLE self
 -- @param #number Frequency Radio frequency in MHz.
 -- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
@@ -953,7 +960,7 @@ function CONTROLLABLE:CommandSetFrequency( Frequency, Modulation, Power, Delay )
   }
 
   if Delay and Delay > 0 then
-    SCHEDULER:New( nil, self.CommandSetFrequency, { self, Frequency, Modulation, Power } )
+    SCHEDULER:New( nil, self.CommandSetFrequency, { self, Frequency, Modulation, Power },Delay )
   else
     self:SetCommand( CommandSetFrequency )
   end
@@ -961,12 +968,12 @@ function CONTROLLABLE:CommandSetFrequency( Frequency, Modulation, Power, Delay )
   return self
 end
 
---- [AIR] Set radio frequency. See [DCS command EPLRS](https://wiki.hoggitworld.com/view/DCS_command_setFrequencyForUnit)
+--- [AIR] Set radio frequency. See [DCS command SetFrequencyForUnit](https://wiki.hoggitworld.com/view/DCS_command_setFrequencyForUnit)
 -- @param #CONTROLLABLE self
 -- @param #number Frequency Radio frequency in MHz.
 -- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
 -- @param #number Power (Optional) Power of the Radio in Watts. Defaults to 10.
--- @param #UnitID UnitID (Optional, if your object is a UNIT) The UNIT ID this is for.
+-- @param #number UnitID (Optional, if your object is a UNIT) The UNIT ID this is for.
 -- @param #number Delay (Optional) Delay in seconds before the frequency is set. Default is immediately.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandSetFrequencyForUnit(Frequency,Modulation,Power,UnitID,Delay)
@@ -980,9 +987,68 @@ function CONTROLLABLE:CommandSetFrequencyForUnit(Frequency,Modulation,Power,Unit
     },
   }
   if Delay and Delay>0 then
-    SCHEDULER:New(nil,self.CommandSetFrequencyForUnit,{self,Frequency,Modulation,Power,UnitID})
+    SCHEDULER:New(nil,self.CommandSetFrequencyForUnit,{self,Frequency,Modulation,Power,UnitID},Delay)
   else
     self:SetCommand(CommandSetFrequencyForUnit)
+  end
+  return self
+end
+
+--- [AIR] Set smoke on or off. See [DCS command smoke on off](https://wiki.hoggitworld.com/view/DCS_command_smoke_on_off)
+-- @param #CONTROLLABLE self
+-- @param #boolean OnOff Set to true for on and false for off. Defaults to true.
+-- @param #number Delay (Optional) Delay the command by this many seconds.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSmokeOnOff(OnOff, Delay)
+  local switch = (OnOff == nil) and true or OnOff
+  local command = {
+      id = 'SMOKE_ON_OFF', 
+      params = { 
+          value = switch
+          }
+      }
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil,self.CommandSmokeOnOff,{self,switch},Delay)
+  else
+    self:SetCommand(command)
+  end
+  return self
+end
+
+--- [AIR] Set smoke on. See [DCS command smoke on off](https://wiki.hoggitworld.com/view/DCS_command_smoke_on_off)
+-- @param #CONTROLLABLE self
+-- @param #number Delay (Optional) Delay the command by this many seconds.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSmokeON(Delay)
+  local command = {
+      id = 'SMOKE_ON_OFF', 
+      params = { 
+          value = true
+          }
+      }
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil,self.CommandSmokeON,{self},Delay)
+  else
+    self:SetCommand(command)
+  end
+  return self
+end
+
+--- [AIR] Set smoke off. See [DCS command smoke on off](https://wiki.hoggitworld.com/view/DCS_command_smoke_on_off)
+-- @param #CONTROLLABLE self
+-- @param #number Delay (Optional) Delay the command by this many seconds.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:CommandSmokeOFF(Delay)
+  local command = {
+      id = 'SMOKE_ON_OFF', 
+      params = { 
+          value = false
+          }
+      }
+  if Delay and Delay>0 then
+    SCHEDULER:New(nil,self.CommandSmokeOFF,{self},Delay)
+  else
+    self:SetCommand(command)
   end
   return self
 end
@@ -1006,13 +1072,17 @@ function CONTROLLABLE:TaskEPLRS( SwitchOnOff, idx )
       groupId = self:GetID(),
     },
   }
-
+  
+  --if self:IsGround() then
+   --CommandEPLRS.params.groupId = self:GetID()
+  --end
+  
   return self:TaskWrappedAction( CommandEPLRS, idx or 1 )
 end
 
 -- TASKS FOR AIR CONTROLLABLES
 
---- (AIR) Attack a Controllable.
+--- (AIR + GROUND) Attack a Controllable.
 -- @param #CONTROLLABLE self
 -- @param Wrapper.Group#GROUP AttackGroup The Group to be attacked.
 -- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. If parameter is not defined that means no limits on weapon usage.
@@ -1060,7 +1130,7 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
   return DCSTask
 end
 
---- (AIR) Attack the Unit.
+--- (AIR + GROUND) Attack the Unit.
 -- @param #CONTROLLABLE self
 -- @param Wrapper.Unit#UNIT AttackUnit The UNIT to be attacked
 -- @param #boolean GroupAttack (Optional) If true, all units in the group will attack the Unit when found. Default false.
@@ -1148,10 +1218,10 @@ function CONTROLLABLE:TaskStrafing( Vec2, AttackQty, Length, WeaponType, WeaponE
     id = 'Strafing',
     params = {
      point = Vec2, -- req
-     weaponType = WeaponType or 1073741822,
+     weaponType = WeaponType or 805337088, -- Default 805337088 corresponds to guns/cannons (805306368) + any rocket (30720). You can set other types but then the AI uses even bombs for a strafing run!
      expend = WeaponExpend or "Auto",
      attackQty = AttackQty or 1,  -- req
-     attackQtyLimit = AttackQty >1 and true or false,
+     attackQtyLimit = AttackQty~=nil and true or false,
      direction = Direction and math.rad(Direction) or 0,
      directionEnabled = Direction and true or false,
      groupAttack = GroupAttack or false,
@@ -1516,8 +1586,10 @@ end
 -- @param #CONTROLLABLE self
 -- @param DCS#Vec2 Vec2 The point where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
+-- @param #boolean CombatLanding (optional) If true, set the Combat Landing option.
+-- @param #number DirectionAfterLand (optional) Heading after landing in degrees.
 -- @return #CONTROLLABLE self
-function CONTROLLABLE:TaskLandAtVec2( Vec2, Duration )
+function CONTROLLABLE:TaskLandAtVec2( Vec2, Duration , CombatLanding, DirectionAfterLand)
 
   local DCSTask = {
     id = 'Land',
@@ -1525,9 +1597,15 @@ function CONTROLLABLE:TaskLandAtVec2( Vec2, Duration )
       point        = Vec2,
       durationFlag = Duration and true or false,
       duration     = Duration,
+      combatLandingFlag = CombatLanding == true and true or false,
     },
   }
-
+  
+  if DirectionAfterLand ~= nil and type(DirectionAfterLand) == "number" then
+    DCSTask.params.directionEnabled = true
+    DCSTask.params.direction = math.rad(DirectionAfterLand) 
+  end
+  
   return DCSTask
 end
 
@@ -1535,13 +1613,16 @@ end
 -- @param #CONTROLLABLE self
 -- @param Core.Zone#ZONE Zone The zone where to land.
 -- @param #number Duration The duration in seconds to stay on the ground.
+-- @param #boolean RandomPoint (optional) If true,land at a random point inside of the zone. 
+-- @param #boolean CombatLanding (optional) If true, set the Combat Landing option.
+-- @param #number DirectionAfterLand (optional) Heading after landing in degrees.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskLandAtZone( Zone, Duration, RandomPoint )
+function CONTROLLABLE:TaskLandAtZone( Zone, Duration, RandomPoint, CombatLanding, DirectionAfterLand )
 
   -- Get landing point
   local Point = RandomPoint and Zone:GetRandomVec2() or Zone:GetVec2()
 
-  local DCSTask = CONTROLLABLE.TaskLandAtVec2( self, Point, Duration )
+  local DCSTask = CONTROLLABLE.TaskLandAtVec2( self, Point, Duration, CombatLanding, DirectionAfterLand)
 
   return DCSTask
 end
@@ -1754,8 +1835,6 @@ function CONTROLLABLE:TaskFAC_AttackGroup( AttackGroup, WeaponType, Designation,
 
   return DCSTask
 end
-
--- EN-ACT_ROUTE TASKS FOR AIRBORNE CONTROLLABLES
 
 --- (AIR) Engaging targets of defined types.
 -- @param #CONTROLLABLE self
@@ -2983,7 +3062,7 @@ function CONTROLLABLE:GetDetectedTargets( DetectVisual, DetectOptical, DetectRad
   if DCSControllable then
 
     local DetectionVisual = (DetectVisual and DetectVisual == true) and Controller.Detection.VISUAL or nil
-    local DetectionOptical = (DetectOptical and DetectOptical == true) and Controller.Detection.OPTICAL or nil
+    local DetectionOptical = (DetectOptical and DetectOptical == true) and Controller.Detection.OPTIC or nil
     local DetectionRadar = (DetectRadar and DetectRadar == true) and Controller.Detection.RADAR or nil
     local DetectionIRST = (DetectIRST and DetectIRST == true) and Controller.Detection.IRST or nil
     local DetectionRWR = (DetectRWR and DetectRWR == true) and Controller.Detection.RWR or nil
@@ -3017,26 +3096,27 @@ function CONTROLLABLE:GetDetectedTargets( DetectVisual, DetectOptical, DetectRad
   return nil
 end
 
---- Check if a target is detected.
+--- Check if a DCS object (unit or static) is detected by the controllable. 
+-- Note that after a target is detected it remains "detected" for a certain amount of time, even if the controllable cannot "see" the target any more with it's sensors.
 -- The optional parametes specify the detection methods that can be applied.
+-- 
 -- If **no** detection method is given, the detection will use **all** the available methods by default.
 -- If **at least one** detection method is specified, only the methods set to *true* will be used.
 -- @param #CONTROLLABLE self
 -- @param DCS#Object DCSObject The DCS object that is checked.
--- @param #CONTROLLABLE self
 -- @param #boolean DetectVisual (Optional) If *false*, do not include visually detected targets.
 -- @param #boolean DetectOptical (Optional) If *false*, do not include optically detected targets.
 -- @param #boolean DetectRadar (Optional) If *false*, do not include targets detected by radar.
 -- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
 -- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
 -- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
--- @return #boolean True if target is detected.
--- @return #boolean True if target is visible by line of sight.
--- @return #number Mission time when target was detected.
--- @return #boolean True if target type is known.
--- @return #boolean True if distance to target is known.
--- @return DCS#Vec3 Last known position vector of the target.
--- @return DCS#Vec3 Last known velocity vector of the target.
+-- @return #boolean `true` if target is detected.
+-- @return #boolean `true` if target is *currently* visible by line of sight. Target must be detected (first parameter returns `true`).
+-- @return #boolean `true` if target type is known. Target must be detected (first parameter returns `true`).
+-- @return #boolean `true` if distance to target is known. Target must be detected (first parameter returns `true`).
+-- @return #number Mission time in seconds when target was last detected. Only present if the target is currently not visible (second parameter returns `false`) otherwise `nil` is returned.
+-- @return DCS#Vec3 Last known position vector of the target. Only present if the target is currently not visible (second parameter returns `false`) otherwise `nil` is returned.
+-- @return DCS#Vec3 Last known velocity vector of the target. Only present if the target is currently not visible (second parameter returns `false`) otherwise `nil` is returned.
 function CONTROLLABLE:IsTargetDetected( DCSObject, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
   self:F2( self.ControllableName )
 
@@ -3045,7 +3125,7 @@ function CONTROLLABLE:IsTargetDetected( DCSObject, DetectVisual, DetectOptical, 
   if DCSControllable then
 
     local DetectionVisual = (DetectVisual and DetectVisual == true) and Controller.Detection.VISUAL or nil
-    local DetectionOptical = (DetectOptical and DetectOptical == true) and Controller.Detection.OPTICAL or nil
+    local DetectionOptical = (DetectOptical and DetectOptical == true) and Controller.Detection.OPTIC or nil
     local DetectionRadar = (DetectRadar and DetectRadar == true) and Controller.Detection.RADAR or nil
     local DetectionIRST = (DetectIRST and DetectIRST == true) and Controller.Detection.IRST or nil
     local DetectionRWR = (DetectRWR and DetectRWR == true) and Controller.Detection.RWR or nil
@@ -3053,10 +3133,10 @@ function CONTROLLABLE:IsTargetDetected( DCSObject, DetectVisual, DetectOptical, 
 
     local Controller = self:_GetController()
 
-    local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity
+    local TargetIsDetected, TargetIsVisible, TargetKnowType, TargetKnowDistance, TargetLastTime, TargetLastPos, TargetLastVelocity
       = Controller:isTargetDetected( DCSObject, DetectionVisual, DetectionOptical, DetectionRadar, DetectionIRST, DetectionRWR, DetectionDLINK )
 
-    return TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity
+    return TargetIsDetected, TargetIsVisible, TargetKnowType, TargetKnowDistance, TargetLastTime, TargetLastPos, TargetLastVelocity
   end
 
   return nil
@@ -3064,6 +3144,7 @@ end
 
 --- Check if a certain UNIT is detected by the controllable.
 -- The optional parametes specify the detection methods that can be applied.
+-- 
 -- If **no** detection method is given, the detection will use **all** the available methods by default.
 -- If **at least one** detection method is specified, only the methods set to *true* will be used.
 -- @param #CONTROLLABLE self
@@ -3074,13 +3155,13 @@ end
 -- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
 -- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
 -- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
--- @return #boolean True if target is detected.
--- @return #boolean True if target is visible by line of sight.
--- @return #number Mission time when target was detected.
--- @return #boolean True if target type is known.
--- @return #boolean True if distance to target is known.
--- @return DCS#Vec3 Last known position vector of the target.
--- @return DCS#Vec3 Last known velocity vector of the target.
+-- @return #boolean `true` if target is detected.
+-- @return #boolean `true` if target is *currently* visible by line of sight. Target must be detected (first parameter returns `true`).
+-- @return #boolean `true` if target type is known. Target must be detected (first parameter returns `true`).
+-- @return #boolean `true` if distance to target is known. Target must be detected (first parameter returns `true`).
+-- @return #number Mission time in seconds when target was last detected. Only present if the target is currently not visible (second parameter returns `false`) otherwise `nil` is returned.
+-- @return DCS#Vec3 Last known position vector of the target. Only present if the target is currently not visible (second parameter returns `false`) otherwise `nil` is returned.
+-- @return DCS#Vec3 Last known velocity vector of the target. Only present if the target is currently not visible (second parameter returns `false`) otherwise `nil` is returned.
 function CONTROLLABLE:IsUnitDetected( Unit, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK )
   self:F2( self.ControllableName )
 
@@ -3800,6 +3881,48 @@ function CONTROLLABLE:OptionProhibitAfterburner( Prohibit )
   return self
 end
 
+--- [Ground] Allows AI radar units to take defensive actions to avoid anti radiation missiles. Units are allowed to shut radar off and displace. 
+-- @param #CONTROLLABLE self
+-- @param #number Seconds Can be - nil, 0 or false = switch off this option, any positive number = number of seconds the escape sequency runs.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionEvasionOfARM(Seconds)
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsGround() then
+      if Seconds == nil then Seconds = false end
+      Controller:setOption( AI.Option.Ground.id.EVASION_OF_ARM, Seconds)
+    end
+
+  end
+
+  return self
+end
+
+--- [Ground] Option that defines the vehicle spacing when in an on road and off road formation. 
+-- @param #CONTROLLABLE self
+-- @param #number meters Can be zero to 100 meters. Defaults to 50 meters.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionFormationInterval(meters)
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsGround() then
+      if meters == nil or meters > 100 or meters < 0 then meters = 50 end
+      Controller:setOption( 30, meters)
+    end
+
+  end
+
+  return self
+end
+
 --- [Air] Defines the usage of Electronic Counter Measures by airborne forces.
 -- @param #CONTROLLABLE self
 -- @param #number ECMvalue Can be - 0=Never on, 1=if locked by radar, 2=if detected by radar, 3=always on, defaults to 1
@@ -4197,6 +4320,9 @@ function CONTROLLABLE:RelocateGroundRandomInRadius( speed, radius, onroad, short
   self:F2( { self.ControllableName } )
 
   local _coord = self:GetCoordinate()
+  if not _coord then
+  return self
+  end
   local _radius = radius or 500
   local _speed = speed or 20
   local _tocoord = _coord:GetRandomCoordinateInRadius( _radius, 100 )
@@ -4246,7 +4372,7 @@ function CONTROLLABLE:OptionDisperseOnAttack( Seconds )
 end
 
 --- Returns if the unit is a submarine.
--- @param #POSITIONABLE self
+-- @param #CONTROLLABLE self
 -- @return #boolean Submarines attributes result.
 function CONTROLLABLE:IsSubmarine()
   self:F2()
@@ -5565,4 +5691,167 @@ function CONTROLLABLE:PatrolRaceTrack(Point1, Point2, Altitude, Speed, Formation
   end
 
   return self
+end
+
+--- IR Marker courtesy Florian Brinker (fbrinker)
+
+--- [GROUND] Create and enable a new IR Marker for the given controllable UNIT or GROUP.
+-- @param #CONTROLLABLE self
+-- @param #boolean EnableImmediately (Optionally) If true start up the IR Marker immediately. Else you need to call `myobject:EnableIRMarker()` later on.
+-- @param #number Runtime (Optionally) Run this IR Marker for the given number of seconds, then stop. Use in conjunction with EnableImmediately. Defaults to 60 seconds.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:NewIRMarker(EnableImmediately, Runtime)
+  self:T2("NewIRMarker")
+    if self:IsInstanceOf("GROUP") then
+      if self.IRMarkerGroup == true then return end
+      self.IRMarkerGroup = true
+      self.IRMarkerUnit = false
+    elseif self:IsInstanceOf("UNIT") then
+      if self.IRMarkerUnit == true then return end
+      self.IRMarkerGroup = false
+      self.IRMarkerUnit = true
+    end
+    
+    self.Runtime = Runtime or 60
+    if EnableImmediately and EnableImmediately == true then
+      self:EnableIRMarker(Runtime)
+    end
+    
+    return self
+end
+
+--- [GROUND] Enable the IR marker.
+-- @param #CONTROLLABLE self
+-- @param #number Runtime (Optionally) Run this IR Marker for the given number of seconds, then stop. Else run until you call `myobject:DisableIRMarker()`.
+-- @return #CONTROLLABLE self 
+function CONTROLLABLE:EnableIRMarker(Runtime)
+  self:T2("EnableIRMarker")
+    if self.IRMarkerGroup == nil then
+      self:NewIRMarker(true,Runtime)
+      return
+    end
+    
+    if self:IsInstanceOf("GROUP") then
+        self:EnableIRMarkerForGroup(Runtime)
+        return
+    end
+    
+    if self.timer and self.timer:IsRunning() then return self end
+    
+    local Runtime = Runtime or self.Runtime
+    self.timer = TIMER:New(CONTROLLABLE._MarkerBlink, self)
+    self.timer:Start(nil, 1 - math.random(1, 5) / 10 / 2, Runtime) -- start randomized
+    self.IRMarkerUnit = true
+    
+    return self
+end
+
+--- [GROUND] Disable the IR marker.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self 
+function CONTROLLABLE:DisableIRMarker()
+ self:T2("DisableIRMarker")
+    if self:IsInstanceOf("GROUP") then
+        self:DisableIRMarkerForGroup()
+        return
+    end
+
+      if self.spot then
+          self.spot = nil
+      end
+      if self.timer and self.timer:IsRunning() then
+          self.timer:Stop()
+          self.timer = nil
+      end
+
+    if self:IsInstanceOf("GROUP") then
+      self.IRMarkerGroup = nil
+    elseif self:IsInstanceOf("UNIT") then
+      self.IRMarkerUnit = nil
+    end
+
+    return self
+end
+
+--- [GROUND] Enable the IR markers for a whole group.
+-- @param #CONTROLLABLE self
+-- @param #number Runtime Runtime of the marker in seconds
+-- @return #CONTROLLABLE self 
+function CONTROLLABLE:EnableIRMarkerForGroup(Runtime)
+  self:T2("EnableIRMarkerForGroup")
+  if self:IsInstanceOf("GROUP") 
+  then
+    local units = self:GetUnits() or {}
+    for _,_unit in pairs(units) do
+      _unit:EnableIRMarker(Runtime)
+    end
+    self.IRMarkerGroup = true
+  end
+  return self
+end
+
+--- [GROUND] Disable the IR markers for a whole group.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self 
+function CONTROLLABLE:DisableIRMarkerForGroup()
+  self:T2("DisableIRMarkerForGroup")
+  if self:IsInstanceOf("GROUP") then
+    local units = self:GetUnits() or {}
+    for _,_unit in pairs(units) do
+      _unit:DisableIRMarker()
+    end
+    self.IRMarkerGroup = nil
+  end
+  return self
+end
+
+--- [GROUND] Check if an IR Spot exists.
+-- @param #CONTROLLABLE self
+-- @return #boolean outcome
+function CONTROLLABLE:HasIRMarker()
+  self:T2("HasIRMarker")
+  if self:IsInstanceOf("GROUP") then
+    local units = self:GetUnits() or {}
+    for _,_unit in pairs(units) do
+      if _unit.timer and _unit.timer:IsRunning() then return true end
+    end
+  elseif self.timer and self.timer:IsRunning() then return true end
+  return false
+end
+
+--- [Internal] This method is called by the scheduler to blink the IR marker.
+function CONTROLLABLE._StopSpot(spot)
+    if spot then 
+        spot:destroy() 
+    end
+end
+
+--- [Internal] This method is called by the scheduler after enabling the IR marker.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self 
+function CONTROLLABLE:_MarkerBlink()
+  self:T2("_MarkerBlink")
+    if self:IsAlive() ~= true then
+        self:DisableIRMarker()
+        return
+    end
+
+    self.timer.dT = 1 - (math.random(1, 2) / 10 / 2) -- randomize the blinking by a small amount
+
+    local _, _, unitBBHeight, _ = self:GetObjectSize()
+    local unitPos = self:GetPositionVec3()
+
+    if self.timer:IsRunning() then
+        self:T2("Create Spot")
+        local spot = Spot.createInfraRed(
+            self.DCSUnit,
+            { x = 0, y = (unitBBHeight + 1), z = 0 },
+            { x = unitPos.x, y = (unitPos.y + unitBBHeight), z = unitPos.z }
+        )
+        self.spot = spot
+        local offTimer = nil
+        local offTimer = TIMER:New(CONTROLLABLE._StopSpot, spot)
+        offTimer:Start(0.5)
+    end
+    return self
 end

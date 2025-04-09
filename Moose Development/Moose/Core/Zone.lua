@@ -144,7 +144,7 @@ ZONE_BASE = {
 -- @return #ZONE_BASE self
 function ZONE_BASE:New( ZoneName )
   local self = BASE:Inherit( self, FSM:New() )
-  self:F( ZoneName )
+  --self:F( ZoneName )
 
   self.ZoneName = ZoneName
 
@@ -157,7 +157,7 @@ end
 -- @param #ZONE_BASE self
 -- @return #string The name of the zone.
 function ZONE_BASE:GetName()
-  self:F2()
+  --self:F2()
 
   return self.ZoneName
 end
@@ -167,7 +167,7 @@ end
 -- @param #string ZoneName The name of the zone.
 -- @return #ZONE_BASE
 function ZONE_BASE:SetName( ZoneName )
-  self:F2()
+  --self:F2()
 
   self.ZoneName = ZoneName
 end
@@ -177,7 +177,7 @@ end
 -- @param DCS#Vec2 Vec2 The Vec2 to test.
 -- @return #boolean true if the Vec2 is within the zone.
 function ZONE_BASE:IsVec2InZone( Vec2 )
-  self:F2( Vec2 )
+ --self:F2( Vec2 )
 
   return false
 end
@@ -213,7 +213,7 @@ end
 
 --- Returns if a PointVec3 is within the zone.
 -- @param #ZONE_BASE self
--- @param Core.Point#POINT_VEC3 PointVec3 The PointVec3 to test.
+-- @param Core.Point#COORDINATE PointVec3 The PointVec3 to test.
 -- @return #boolean true if the PointVec3 is within the zone.
 function ZONE_BASE:IsPointVec3InZone( PointVec3 )
   local InZone = self:IsPointVec2InZone( PointVec3 )
@@ -227,18 +227,18 @@ function ZONE_BASE:GetVec2()
   return nil
 end
 
---- Returns a @{Core.Point#POINT_VEC2} of the zone.
+--- Returns a @{Core.Point#COORDINATE} of the zone.
 -- @param #ZONE_BASE self
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
--- @return Core.Point#POINT_VEC2 The PointVec2 of the zone.
+-- @return Core.Point#COORDINATE The COORDINATE of the zone.
 function ZONE_BASE:GetPointVec2()
-  self:F2( self.ZoneName )
+  --self:F2( self.ZoneName )
 
   local Vec2 = self:GetVec2()
 
-  local PointVec2 = POINT_VEC2:NewFromVec2( Vec2 )
+  local PointVec2 = COORDINATE:NewFromVec2( Vec2 )
 
-  self:T2( { PointVec2 } )
+  --self:T2( { PointVec2 } )
 
   return PointVec2
 end
@@ -248,7 +248,7 @@ end
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return DCS#Vec3 The Vec3 of the zone.
 function ZONE_BASE:GetVec3( Height )
-  self:F2( self.ZoneName )
+  --self:F2( self.ZoneName )
 
   Height = Height or 0
 
@@ -256,23 +256,23 @@ function ZONE_BASE:GetVec3( Height )
 
   local Vec3 = { x = Vec2.x, y = Height and Height or land.getHeight( self:GetVec2() ), z = Vec2.y }
 
-  self:T2( { Vec3 } )
+  --self:T2( { Vec3 } )
 
   return Vec3
 end
 
---- Returns a @{Core.Point#POINT_VEC3} of the zone.
+--- Returns a @{Core.Point#COORDINATE} of the zone.
 -- @param #ZONE_BASE self
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
--- @return Core.Point#POINT_VEC3 The PointVec3 of the zone.
+-- @return Core.Point#COORDINATE The PointVec3 of the zone.
 function ZONE_BASE:GetPointVec3( Height )
-  self:F2( self.ZoneName )
+  --self:F2( self.ZoneName )
 
   local Vec3 = self:GetVec3( Height )
 
-  local PointVec3 = POINT_VEC3:NewFromVec3( Vec3 )
+  local PointVec3 = COORDINATE:NewFromVec3( Vec3 )
 
-  self:T2( { PointVec3 } )
+  --self:T2( { PointVec3 } )
 
   return PointVec3
 end
@@ -282,7 +282,7 @@ end
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return Core.Point#COORDINATE The Coordinate of the zone.
 function ZONE_BASE:GetCoordinate( Height ) --R2.1
-  self:F2(self.ZoneName)
+  --self:F2(self.ZoneName)
 
   local Vec3 = self:GetVec3( Height )
 
@@ -344,16 +344,16 @@ function ZONE_BASE:GetRandomVec2()
   return nil
 end
 
---- Define a random @{Core.Point#POINT_VEC2} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
+--- Define a random @{Core.Point#COORDINATE} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_BASE self
--- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
+-- @return Core.Point#COORDINATE The COORDINATE coordinates.
 function ZONE_BASE:GetRandomPointVec2()
   return nil
 end
 
---- Define a random @{Core.Point#POINT_VEC3} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
+--- Define a random @{Core.Point#COORDINATE} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
 -- @param #ZONE_BASE self
--- @return Core.Point#POINT_VEC3 The PointVec3 coordinates.
+-- @return Core.Point#COORDINATE The COORDINATE coordinates.
 function ZONE_BASE:GetRandomPointVec3()
   return nil
 end
@@ -377,7 +377,7 @@ end
 --- Bound the zone boundaries with a tires.
 -- @param #ZONE_BASE self
 function ZONE_BASE:BoundZone()
-  self:F2()
+  --self:F2()
 end
 
 --- Set draw coalition of zone.
@@ -524,7 +524,7 @@ end
 -- @param #ZONE_BASE self
 -- @param Utilities.Utils#SMOKECOLOR SmokeColor The smoke color.
 function ZONE_BASE:SmokeZone( SmokeColor )
-  self:F2( SmokeColor )
+  --self:F2( SmokeColor )
 
 end
 
@@ -533,7 +533,7 @@ end
 -- @param #number ZoneProbability A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 -- @return #ZONE_BASE self
 function ZONE_BASE:SetZoneProbability( ZoneProbability )
-  self:F( { self:GetName(), ZoneProbability = ZoneProbability } )
+  --self:F( { self:GetName(), ZoneProbability = ZoneProbability } )
 
   self.ZoneProbability = ZoneProbability or 1
   return self
@@ -543,7 +543,7 @@ end
 -- @param #ZONE_BASE self
 -- @return #number A value between 0 and 1. 0 = 0% and 1 = 100% probability.
 function ZONE_BASE:GetZoneProbability()
-  self:F2()
+  --self:F2()
 
   return self.ZoneProbability
 end
@@ -574,7 +574,7 @@ end
 -- -- The result should be that Zone1 would be more probable selected than Zone2.
 --
 function ZONE_BASE:GetZoneMaybe()
-  self:F2()
+  --self:F2()
 
   local Randomization = math.random()
   if Randomization <= self.ZoneProbability then
@@ -619,10 +619,13 @@ function ZONE_BASE:Trigger(Objects)
   self:AddTransition("TriggerStopped","TriggerStart","TriggerRunning")
   self:AddTransition("*","EnteredZone","*")
   self:AddTransition("*","LeftZone","*")
+  self:AddTransition("*","ZoneEmpty","*")
+  self:AddTransition("*","ObjectDead","*")
   self:AddTransition("*","TriggerRunCheck","*")
   self:AddTransition("*","TriggerStop","TriggerStopped")
   self:TriggerStart()
   self.checkobjects = Objects
+  self.ObjectsInZone = false
   if UTILS.IsInstanceOf(Objects,"SET_BASE") then
     self.objectset = Objects.Set
   else
@@ -660,6 +663,22 @@ function ZONE_BASE:Trigger(Objects)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable The controllable leaving the zone.
+  
+  --- On After "ObjectDead" event. An observed object has left the zone.
+  -- @function [parent=#ZONE_BASE] OnAfterObjectDead
+  -- @param #ZONE_BASE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The controllable which died. Might be nil.
+  
+  --- On After "ZoneEmpty" event. All observed objects have left the zone or are dead.
+  -- @function [parent=#ZONE_BASE] OnAfterZoneEmpty
+  -- @param #ZONE_BASE self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
 end
 
 --- (Internal) Check the assigned objects for being in/out of the zone
@@ -673,9 +692,13 @@ function ZONE_BASE:_TriggerCheck(fromstart)
     -- just earmark everyone in/out
     for _,_object in pairs(objectset) do
       local obj = _object -- Wrapper.Controllable#CONTROLLABLE
-      if not obj.TriggerInZone then obj.TriggerInZone = {} end
+      if not obj.TriggerInZone then 
+        obj.TriggerInZone = {}
+        obj.TriggerZoneDeadNotification = false 
+      end
       if obj and obj:IsAlive() and self:IsCoordinateInZone(obj:GetCoordinate()) then
         obj.TriggerInZone[self.ZoneName] = true
+        self.ObjectsInZone = true
       else
         obj.TriggerInZone[self.ZoneName] = false
       end
@@ -683,6 +706,7 @@ function ZONE_BASE:_TriggerCheck(fromstart)
     end
   else
     -- Check for changes
+    local objcount = 0
     for _,_object in pairs(objectset) do
       local obj = _object -- Wrapper.Controllable#CONTROLLABLE
       if obj and obj:IsAlive() then
@@ -697,11 +721,20 @@ function ZONE_BASE:_TriggerCheck(fromstart)
         -- is obj in zone?
         local inzone = self:IsCoordinateInZone(obj:GetCoordinate())
         --self:I("Object "..obj:GetName().." is in zone: "..tostring(inzone))
+        if inzone and obj.TriggerInZone[self.ZoneName] then
+          -- just count
+          objcount = objcount + 1
+          self.ObjectsInZone = true
+          obj.TriggerZoneDeadNotification = false
+        end
         if inzone and not obj.TriggerInZone[self.ZoneName] then
           -- wasn't in zone before
           --self:I("Newly entered")
           self:__EnteredZone(0.5,obj)
           obj.TriggerInZone[self.ZoneName] = true
+          objcount = objcount + 1
+          self.ObjectsInZone = true
+          obj.TriggerZoneDeadNotification = false
         elseif (not inzone) and obj.TriggerInZone[self.ZoneName] then
           -- has left the zone
           --self:I("Newly left")
@@ -710,7 +743,20 @@ function ZONE_BASE:_TriggerCheck(fromstart)
         else
           --self:I("Not left or not entered, or something went wrong!")
         end
+      else
+        -- object dead
+        if not obj.TriggerZoneDeadNotification == true then
+          obj.TriggerInZone = nil
+          self:__ObjectDead(0.5,obj)
+          obj.TriggerZoneDeadNotification = true
+        end
       end
+    end
+    -- zone empty?
+    if objcount == 0 and self.ObjectsInZone == true then
+      -- zone was not but is now empty
+      self.ObjectsInZone = false
+      self:__ZoneEmpty(0.5)
     end
   end
   return self
@@ -782,8 +828,8 @@ end
 -- Various functions exist to find random points within the zone.
 --
 --   * @{#ZONE_RADIUS.GetRandomVec2}(): Gets a random 2D point in the zone.
---   * @{#ZONE_RADIUS.GetRandomPointVec2}(): Gets a @{Core.Point#POINT_VEC2} object representing a random 2D point in the zone.
---   * @{#ZONE_RADIUS.GetRandomPointVec3}(): Gets a @{Core.Point#POINT_VEC3} object representing a random 3D point in the zone. Note that the height of the point is at landheight.
+--   * @{#ZONE_RADIUS.GetRandomPointVec2}(): Gets a @{Core.Point#COORDINATE} object representing a random 2D point in the zone.
+--   * @{#ZONE_RADIUS.GetRandomPointVec3}(): Gets a @{Core.Point#COORDINATE} object representing a random 3D point in the zone. Note that the height of the point is at landheight.
 --
 -- ## Draw zone
 --
@@ -805,7 +851,7 @@ function ZONE_RADIUS:New( ZoneName, Vec2, Radius, DoNotRegisterZone )
 
   -- Inherit ZONE_BASE.
   local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) ) -- #ZONE_RADIUS
-  self:F( { ZoneName, Vec2, Radius } )
+  --self:F( { ZoneName, Vec2, Radius } )
 
   self.Radius = Radius
   self.Vec2 = Vec2
@@ -961,7 +1007,7 @@ end
 -- @param #number AddOffSet (optional) The angle to be added for the smoking start position.
 -- @return #ZONE_RADIUS self
 function ZONE_RADIUS:SmokeZone( SmokeColor, Points, AddHeight, AngleOffset )
-  self:F2( SmokeColor )
+  --self:F2( SmokeColor )
 
   local Point = {}
   local Vec2 = self:GetVec2()
@@ -978,7 +1024,7 @@ function ZONE_RADIUS:SmokeZone( SmokeColor, Points, AddHeight, AngleOffset )
     local Radial = ( Angle + AngleOffset ) * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
-    POINT_VEC2:New( Point.x, Point.y, AddHeight ):Smoke( SmokeColor )
+    COORDINATE:New( Point.x, AddHeight, Point.y  ):Smoke( SmokeColor )
   end
 
   return self
@@ -992,7 +1038,7 @@ end
 -- @param #number AddHeight (optional) The height to be added for the smoke.
 -- @return #ZONE_RADIUS self
 function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth, AddHeight )
-  self:F2( { FlareColor, Azimuth } )
+  --self:F2( { FlareColor, Azimuth } )
 
   local Point = {}
   local Vec2 = self:GetVec2()
@@ -1008,7 +1054,7 @@ function ZONE_RADIUS:FlareZone( FlareColor, Points, Azimuth, AddHeight )
     local Radial = Angle * RadialBase / 360
     Point.x = Vec2.x + math.cos( Radial ) * self:GetRadius()
     Point.y = Vec2.y + math.sin( Radial ) * self:GetRadius()
-    POINT_VEC2:New( Point.x, Point.y, AddHeight ):Flare( FlareColor, Azimuth )
+    COORDINATE:New( Point.x, AddHeight, Point.y ):Flare( FlareColor, Azimuth )
   end
 
   return self
@@ -1018,9 +1064,9 @@ end
 -- @param #ZONE_RADIUS self
 -- @return DCS#Distance The radius of the zone.
 function ZONE_RADIUS:GetRadius()
-  self:F2( self.ZoneName )
+  --self:F2( self.ZoneName )
 
-  self:T2( { self.Radius } )
+  --self:T2( { self.Radius } )
 
   return self.Radius
 end
@@ -1030,10 +1076,10 @@ end
 -- @param DCS#Distance Radius The radius of the zone.
 -- @return DCS#Distance The radius of the zone.
 function ZONE_RADIUS:SetRadius( Radius )
-  self:F2( self.ZoneName )
+  --self:F2( self.ZoneName )
 
   self.Radius = Radius
-  self:T2( { self.Radius } )
+  --self:T2( { self.Radius } )
 
   return self.Radius
 end
@@ -1042,9 +1088,9 @@ end
 -- @param #ZONE_RADIUS self
 -- @return DCS#Vec2 The location of the zone.
 function ZONE_RADIUS:GetVec2()
-  self:F2( self.ZoneName )
+  --self:F2( self.ZoneName )
 
-  self:T2( { self.Vec2 } )
+  --self:T2( { self.Vec2 } )
 
   return self.Vec2
 end
@@ -1054,11 +1100,11 @@ end
 -- @param DCS#Vec2 Vec2 The new location of the zone.
 -- @return DCS#Vec2 The new location of the zone.
 function ZONE_RADIUS:SetVec2( Vec2 )
-  self:F2( self.ZoneName )
+  --self:F2( self.ZoneName )
 
   self.Vec2 = Vec2
 
-  self:T2( { self.Vec2 } )
+  --self:T2( { self.Vec2 } )
 
   return self.Vec2
 end
@@ -1068,14 +1114,14 @@ end
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return DCS#Vec3 The point of the zone.
 function ZONE_RADIUS:GetVec3( Height )
-  self:F2( { self.ZoneName, Height } )
+  --self:F2( { self.ZoneName, Height } )
 
   Height = Height or 0
   local Vec2 = self:GetVec2()
 
   local Vec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
 
-  self:T2( { Vec3 } )
+  --self:T2( { Vec3 } )
 
   return Vec3
 end
@@ -1152,7 +1198,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
 
           self.ScanData.Units[ZoneObject] = ZoneObject
 
-          self:F2( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
+          --self:F2( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
         end
       end
 
@@ -1163,7 +1209,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
         self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( tostring(SceneryName), ZoneObject)
         table.insert(self.ScanData.SceneryTable,self.ScanData.Scenery[SceneryType][SceneryName] )
-        self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
+        --self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
 
     end
@@ -1217,7 +1263,7 @@ function ZONE_RADIUS:GetScannedSetUnit()
         if FoundUnit then
           SetUnit:AddUnit( FoundUnit )
         else
-          local FoundStatic = STATIC:FindByName( UnitObject:getName() )
+          local FoundStatic = STATIC:FindByName( UnitObject:getName(), false )
           if FoundStatic then
             SetUnit:AddUnit( FoundStatic )
           end
@@ -1423,13 +1469,13 @@ function ZONE_RADIUS:SearchZone( EvaluateFunction, ObjectCategories )
   local ZoneCoord = self:GetCoordinate()
   local ZoneRadius = self:GetRadius()
 
-  self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+  --self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
 
   local SphereSearch = {
     id = world.VolumeType.SPHERE,
       params = {
       point = ZoneCoord:GetVec3(),
-      radius = ZoneRadius / 2,
+      radius = ZoneRadius,
       }
     }
 
@@ -1450,7 +1496,7 @@ end
 -- @param DCS#Vec2 Vec2 The location to test.
 -- @return #boolean true if the location is within the zone.
 function ZONE_RADIUS:IsVec2InZone( Vec2 )
-  self:F2( Vec2 )
+  --self:F2( Vec2 )
 
   if not Vec2 then return false end
 
@@ -1470,7 +1516,7 @@ end
 -- @param DCS#Vec3 Vec3 The point to test.
 -- @return #boolean true if the point is within the zone.
 function ZONE_RADIUS:IsVec3InZone( Vec3 )
-  self:F2( Vec3 )
+  --self:F2( Vec3 )
   if not Vec3 then return false end
   local InZone = self:IsVec2InZone( { x = Vec3.x, y = Vec3.z } )
 
@@ -1529,17 +1575,17 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
   return point
 end
 
---- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
+--- Returns a @{Core.Point#COORDINATE} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_RADIUS self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Core.Point#POINT_VEC2 The @{Core.Point#POINT_VEC2} object reflecting the random 3D location within the zone.
+-- @return Core.Point#COORDINATE The @{Core.Point#COORDINATE} object reflecting the random 3D location within the zone.
 function ZONE_RADIUS:GetRandomPointVec2( inner, outer )
-  self:F( self.ZoneName, inner, outer )
+  --self:F( self.ZoneName, inner, outer )
 
-  local PointVec2 = POINT_VEC2:NewFromVec2( self:GetRandomVec2( inner, outer ) )
+  local PointVec2 = COORDINATE:NewFromVec2( self:GetRandomVec2( inner, outer ) )
 
-  self:T3( { PointVec2 } )
+  --self:T3( { PointVec2 } )
 
   return PointVec2
 end
@@ -1550,27 +1596,27 @@ end
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
 -- @return DCS#Vec3 The random location within the zone.
 function ZONE_RADIUS:GetRandomVec3( inner, outer )
-  self:F( self.ZoneName, inner, outer )
+  --self:F( self.ZoneName, inner, outer )
 
   local Vec2 = self:GetRandomVec2( inner, outer )
 
-  self:T3( { x = Vec2.x, y = self.y, z = Vec2.y } )
+  --self:T3( { x = Vec2.x, y = self.y, z = Vec2.y } )
 
   return { x = Vec2.x, y = self.y, z = Vec2.y }
 end
 
 
---- Returns a @{Core.Point#POINT_VEC3} object reflecting a random 3D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
+--- Returns a @{Core.Point#COORDINATE} object reflecting a random 3D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
 -- @param #ZONE_RADIUS self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Core.Point#POINT_VEC3 The @{Core.Point#POINT_VEC3} object reflecting the random 3D location within the zone.
+-- @return Core.Point#COORDINATE The @{Core.Point#COORDINATE} object reflecting the random 3D location within the zone.
 function ZONE_RADIUS:GetRandomPointVec3( inner, outer )
-  self:F( self.ZoneName, inner, outer )
+  --self:F( self.ZoneName, inner, outer )
 
-  local PointVec3 = POINT_VEC3:NewFromVec2( self:GetRandomVec2( inner, outer ) )
+  local PointVec3 = COORDINATE:NewFromVec2( self:GetRandomVec2( inner, outer ) )
 
-  self:T3( { PointVec3 } )
+  --self:T3( { PointVec3 } )
 
   return PointVec3
 end
@@ -1699,7 +1745,7 @@ function ZONE_RADIUS:GetRandomCoordinateWithoutBuildings(inner,outer,distance,ma
 
   T1=timer.getTime()
 
-  self:T(string.format("Found a coordinate: %s | Iterations: %d | Time: %.3f",tostring(found),iterations,T1-T0))
+  --self:T(string.format("Found a coordinate: %s | Iterations: %d | Time: %.3f",tostring(found),iterations,T1-T0))
 
   if found then return rcoord else return nil end
 
@@ -1768,7 +1814,7 @@ function ZONE:New( ZoneName )
 
   -- Create a new ZONE_RADIUS.
   local self=BASE:Inherit( self, ZONE_RADIUS:New(ZoneName, {x=Zone.point.x, y=Zone.point.z}, Zone.radius, true))
-  self:F(ZoneName)
+  --self:F(ZoneName)
 
   -- Color of zone.
   self.Color={1, 0, 0, 0.15}
@@ -1838,7 +1884,7 @@ function ZONE_UNIT:New( ZoneName, ZoneUNIT, Radius, Offset)
     self.relative_to_unit = Offset.relative_to_unit or false
   end
 
-  self:F( { ZoneName, ZoneUNIT:GetVec2(), Radius } )
+  --self:F( { ZoneName, ZoneUNIT:GetVec2(), Radius } )
 
   self.ZoneUNIT = ZoneUNIT
   self.LastVec2 = ZoneUNIT:GetVec2()
@@ -1854,7 +1900,7 @@ end
 -- @param #ZONE_UNIT self
 -- @return DCS#Vec2 The location of the zone based on the @{Wrapper.Unit#UNIT}location and the offset, if any.
 function ZONE_UNIT:GetVec2()
-  self:F2( self.ZoneName )
+  --self:F2( self.ZoneName )
 
   local ZoneVec2 = self.ZoneUNIT:GetVec2()
   if ZoneVec2 then
@@ -1887,7 +1933,7 @@ function ZONE_UNIT:GetVec2()
     return self.LastVec2
   end
 
-  self:T2( { ZoneVec2 } )
+  --self:T2( { ZoneVec2 } )
 
   return nil
 end
@@ -1896,7 +1942,7 @@ end
 -- @param #ZONE_UNIT self
 -- @return DCS#Vec2 The random location within the zone.
 function ZONE_UNIT:GetRandomVec2()
-  self:F( self.ZoneName )
+  --self:F( self.ZoneName )
 
   local RandomVec2 = {}
   --local Vec2 = self.ZoneUNIT:GetVec2()  -- FF: This does not take care of the new offset feature!
@@ -1910,7 +1956,7 @@ function ZONE_UNIT:GetRandomVec2()
   RandomVec2.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
   RandomVec2.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
 
-  self:T( { RandomVec2 } )
+  --self:T( { RandomVec2 } )
 
   return RandomVec2
 end
@@ -1920,7 +1966,7 @@ end
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
 -- @return DCS#Vec3 The point of the zone.
 function ZONE_UNIT:GetVec3( Height )
-  self:F2( self.ZoneName )
+  --self:F2( self.ZoneName )
 
   Height = Height or 0
 
@@ -1928,7 +1974,7 @@ function ZONE_UNIT:GetVec3( Height )
 
   local Vec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
 
-  self:T2( { Vec3 } )
+  --self:T2( { Vec3 } )
 
   return Vec3
 end
@@ -1954,7 +2000,7 @@ ZONE_GROUP = {
 -- @return #ZONE_GROUP self
 function ZONE_GROUP:New( ZoneName, ZoneGROUP, Radius )
   local self = BASE:Inherit( self, ZONE_RADIUS:New( ZoneName, ZoneGROUP:GetVec2(), Radius, true ) )
-  self:F( { ZoneName, ZoneGROUP:GetVec2(), Radius } )
+  --self:F( { ZoneName, ZoneGROUP:GetVec2(), Radius } )
 
   self._.ZoneGROUP = ZoneGROUP
   self._.ZoneVec2Cache = self._.ZoneGROUP:GetVec2()
@@ -1970,7 +2016,7 @@ end
 -- @param #ZONE_GROUP self
 -- @return DCS#Vec2 The location of the zone based on the @{Wrapper.Group} location.
 function ZONE_GROUP:GetVec2()
-  self:F( self.ZoneName )
+  --self:F( self.ZoneName )
 
   local ZoneVec2 = nil
 
@@ -1981,7 +2027,7 @@ function ZONE_GROUP:GetVec2()
     ZoneVec2 = self._.ZoneVec2Cache
   end
 
-  self:T( { ZoneVec2 } )
+  --self:T( { ZoneVec2 } )
 
   return ZoneVec2
 end
@@ -1990,7 +2036,7 @@ end
 -- @param #ZONE_GROUP self
 -- @return DCS#Vec2 The random location of the zone based on the @{Wrapper.Group} location.
 function ZONE_GROUP:GetRandomVec2()
-  self:F( self.ZoneName )
+  --self:F( self.ZoneName )
 
   local Point = {}
   local Vec2 = self._.ZoneGROUP:GetVec2()
@@ -1999,22 +2045,22 @@ function ZONE_GROUP:GetRandomVec2()
   Point.x = Vec2.x + math.cos( angle ) * math.random() * self:GetRadius();
   Point.y = Vec2.y + math.sin( angle ) * math.random() * self:GetRadius();
 
-  self:T( { Point } )
+  --self:T( { Point } )
 
   return Point
 end
 
---- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
+--- Returns a @{Core.Point#COORDINATE} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_GROUP self
 -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
 -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
--- @return Core.Point#POINT_VEC2 The @{Core.Point#POINT_VEC2} object reflecting the random 3D location within the zone.
+-- @return Core.Point#COORDINATE The @{Core.Point#COORDINATE} object reflecting the random 3D location within the zone.
 function ZONE_GROUP:GetRandomPointVec2( inner, outer )
-  self:F( self.ZoneName, inner, outer )
+  --self:F( self.ZoneName, inner, outer )
 
-  local PointVec2 = POINT_VEC2:NewFromVec2( self:GetRandomVec2() )
+  local PointVec2 = COORDINATE:NewFromVec2( self:GetRandomVec2() )
 
-  self:T3( { PointVec2 } )
+  --self:T3( { PointVec2 } )
 
   return PointVec2
 end
@@ -2060,7 +2106,7 @@ function _ZONE_TRIANGLE:New(p1, p2, p3)
     end
 
     self.SurfaceArea = math.abs((p2.x - p1.x) * (p3.y - p1.y) - (p3.x - p1.x) * (p2.y - p1.y)) * 0.5
-
+    
     return self
 end
 
@@ -2068,7 +2114,7 @@ end
 -- @param #_ZONE_TRIANGLE self
 -- @param #table pt The point to check
 -- @param #table points (optional) The points of the triangle, or 3 other points if you're just using the TRIANGLE class without an object of it
--- @return #bool True if the point is contained, false otherwise
+-- @return #boolean True if the point is contained, false otherwise
 function _ZONE_TRIANGLE:ContainsPoint(pt, points)
     points = points or self.Points
 
@@ -2160,8 +2206,8 @@ end
 -- Various functions exist to find random points within the zone.
 --
 --   * @{#ZONE_POLYGON_BASE.GetRandomVec2}(): Gets a random 2D point in the zone.
---   * @{#ZONE_POLYGON_BASE.GetRandomPointVec2}(): Return a @{Core.Point#POINT_VEC2} object representing a random 2D point within the zone.
---   * @{#ZONE_POLYGON_BASE.GetRandomPointVec3}(): Return a @{Core.Point#POINT_VEC3} object representing a random 3D point at landheight within the zone.
+--   * @{#ZONE_POLYGON_BASE.GetRandomPointVec2}(): Return a @{Core.Point#COORDINATE} object representing a random 2D point within the zone.
+--   * @{#ZONE_POLYGON_BASE.GetRandomPointVec3}(): Return a @{Core.Point#COORDINATE} object representing a random 3D point at landheight within the zone.
 --
 -- ## Draw zone
 --
@@ -2197,7 +2243,7 @@ function ZONE_POLYGON_BASE:New( ZoneName, PointsArray )
 
   -- Inherit ZONE_BASE.
   local self = BASE:Inherit( self, ZONE_BASE:New( ZoneName ) )
-  self:F( { ZoneName, PointsArray } )
+  --self:F( { ZoneName, PointsArray } )
 
   if PointsArray then
 
@@ -2365,7 +2411,7 @@ end
 -- @param #ZONE_POLYGON_BASE self
 -- @return DCS#Vec2 The location of the zone based on the @{Wrapper.Group} location.
 function ZONE_POLYGON_BASE:GetVec2()
-  self:F( self.ZoneName )
+  --self:F( self.ZoneName )
 
   local Bounds = self:GetBoundingSquare()
 
@@ -2448,9 +2494,9 @@ end
 -- @param #ZONE_POLYGON_BASE self
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:Flush()
-  self:F2()
+  --self:F2()
 
-  self:F( { Polygon = self.ZoneName, Coordinates = self._.Polygon } )
+  --self:F( { Polygon = self.ZoneName, Coordinates = self._.Polygon } )
 
   return self
 end
@@ -2469,7 +2515,7 @@ function ZONE_POLYGON_BASE:BoundZone( UnBound )
   j = #self._.Polygon
 
   while i <= #self._.Polygon do
-    self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
+    --self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
 
     local DeltaX = self._.Polygon[j].x - self._.Polygon[i].x
     local DeltaY = self._.Polygon[j].y - self._.Polygon[i].y
@@ -2577,7 +2623,7 @@ function ZONE_POLYGON_BASE:ReFill(Color,Alpha)
     self.FillTriangles = {}
   end
   -- refill
-  for _, triangle in pairs(self._Triangles) do
+  for _,triangle in pairs(self._Triangles) do
       local draw_ids = triangle:Fill(coalition,color,alpha,nil)
       self.FillTriangles = draw_ids
       table.combine(self.DrawID, draw_ids)
@@ -2721,7 +2767,7 @@ end
 -- @param #number Segments (Optional) Number of segments within boundary line. Default 10.
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:SmokeZone( SmokeColor, Segments )
-  self:F2( SmokeColor )
+  --self:F2( SmokeColor )
 
   Segments=Segments or 10
 
@@ -2729,7 +2775,7 @@ function ZONE_POLYGON_BASE:SmokeZone( SmokeColor, Segments )
   local j=#self._.Polygon
 
   while i <= #self._.Polygon do
-    self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
+    --self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
 
     local DeltaX = self._.Polygon[j].x - self._.Polygon[i].x
     local DeltaY = self._.Polygon[j].y - self._.Polygon[i].y
@@ -2737,7 +2783,7 @@ function ZONE_POLYGON_BASE:SmokeZone( SmokeColor, Segments )
     for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
       local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
       local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
-      POINT_VEC2:New( PointX, PointY ):Smoke( SmokeColor )
+      COORDINATE:New( PointX, 0, PointY ):Smoke( SmokeColor )
     end
     j = i
     i = i + 1
@@ -2754,7 +2800,7 @@ end
 -- @param #number AddHeight (optional) The height to be added for the smoke.
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:FlareZone( FlareColor, Segments, Azimuth, AddHeight )
-  self:F2(FlareColor)
+  --self:F2(FlareColor)
 
   Segments=Segments or 10
 
@@ -2764,7 +2810,7 @@ function ZONE_POLYGON_BASE:FlareZone( FlareColor, Segments, Azimuth, AddHeight )
   local j=#self._.Polygon
 
   while i <= #self._.Polygon do
-    self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
+    --self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
 
     local DeltaX = self._.Polygon[j].x - self._.Polygon[i].x
     local DeltaY = self._.Polygon[j].y - self._.Polygon[i].y
@@ -2772,7 +2818,7 @@ function ZONE_POLYGON_BASE:FlareZone( FlareColor, Segments, Azimuth, AddHeight )
     for Segment = 0, Segments do -- We divide each line in 5 segments and smoke a point on the line.
       local PointX = self._.Polygon[i].x + ( Segment * DeltaX / Segments )
       local PointY = self._.Polygon[i].y + ( Segment * DeltaY / Segments )
-      POINT_VEC2:New( PointX, PointY, AddHeight ):Flare(FlareColor, Azimuth)
+      COORDINATE:New( PointX, AddHeight, PointY ):Flare(FlareColor, Azimuth)
     end
     j = i
     i = i + 1
@@ -2787,7 +2833,7 @@ end
 -- @param DCS#Vec2 Vec2 The location to test.
 -- @return #boolean true if the location is within the zone.
 function ZONE_POLYGON_BASE:IsVec2InZone( Vec2 )
-  self:F2( Vec2 )
+  --self:F2( Vec2 )
   if not Vec2 then return false end
   local Next
   local Prev
@@ -2797,18 +2843,18 @@ function ZONE_POLYGON_BASE:IsVec2InZone( Vec2 )
   Prev = #self._.Polygon
 
   while Next <= #self._.Polygon do
-    self:T( { Next, Prev, self._.Polygon[Next], self._.Polygon[Prev] } )
+    --self:T( { Next, Prev, self._.Polygon[Next], self._.Polygon[Prev] } )
     if ( ( ( self._.Polygon[Next].y > Vec2.y ) ~= ( self._.Polygon[Prev].y > Vec2.y ) ) and
          ( Vec2.x < ( self._.Polygon[Prev].x - self._.Polygon[Next].x ) * ( Vec2.y - self._.Polygon[Next].y ) / ( self._.Polygon[Prev].y - self._.Polygon[Next].y ) + self._.Polygon[Next].x )
        ) then
        InPolygon = not InPolygon
     end
-    self:T2( { InPolygon = InPolygon } )
+    --self:T2( { InPolygon = InPolygon } )
     Prev = Next
     Next = Next + 1
   end
 
-  self:T( { InPolygon = InPolygon } )
+  --self:T( { InPolygon = InPolygon } )
   return InPolygon
 end
 
@@ -2817,7 +2863,7 @@ end
 -- @param DCS#Vec3 Vec3 The point to test.
 -- @return #boolean true if the point is within the zone.
 function ZONE_POLYGON_BASE:IsVec3InZone( Vec3 )
-  self:F2( Vec3 )
+  --self:F2( Vec3 )
 
   if not Vec3 then return false end
 
@@ -2848,28 +2894,28 @@ function ZONE_POLYGON_BASE:GetRandomVec2()
     end
 end
 
---- Return a @{Core.Point#POINT_VEC2} object representing a random 2D point at landheight within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
+--- Return a @{Core.Point#COORDINATE} object representing a random 2D point at landheight within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_POLYGON_BASE self
--- @return @{Core.Point#POINT_VEC2}
+-- @return @{Core.Point#COORDINATE}
 function ZONE_POLYGON_BASE:GetRandomPointVec2()
-  self:F2()
+  --self:F2()
 
-  local PointVec2 = POINT_VEC2:NewFromVec2( self:GetRandomVec2() )
+  local PointVec2 = COORDINATE:NewFromVec2( self:GetRandomVec2() )
 
-  self:T2( PointVec2 )
+  --self:T2( PointVec2 )
 
   return PointVec2
 end
 
---- Return a @{Core.Point#POINT_VEC3} object representing a random 3D point at landheight within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
+--- Return a @{Core.Point#COORDINATE} object representing a random 3D point at landheight within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
 -- @param #ZONE_POLYGON_BASE self
--- @return @{Core.Point#POINT_VEC3}
+-- @return @{Core.Point#COORDINATE}
 function ZONE_POLYGON_BASE:GetRandomPointVec3()
-  self:F2()
+  --self:F2()
 
-  local PointVec3 = POINT_VEC3:NewFromVec2( self:GetRandomVec2() )
+  local PointVec3 = COORDINATE:NewFromVec2( self:GetRandomVec2() )
 
-  self:T2( PointVec3 )
+  --self:T2( PointVec3 )
 
   return PointVec3
 end
@@ -2879,11 +2925,11 @@ end
 -- @param #ZONE_POLYGON_BASE self
 -- @return Core.Point#COORDINATE
 function ZONE_POLYGON_BASE:GetRandomCoordinate()
-  self:F2()
+  --self:F2()
 
   local Coordinate = COORDINATE:NewFromVec2( self:GetRandomVec2() )
 
-  self:T2( Coordinate )
+  --self:T2( Coordinate )
 
   return Coordinate
 end
@@ -2900,7 +2946,7 @@ function ZONE_POLYGON_BASE:GetBoundingSquare()
   local y2 = self._.Polygon[1].y
 
   for i = 2, #self._.Polygon do
-    self:T2( { self._.Polygon[i], x1, y1, x2, y2 } )
+    --self:T2( { self._.Polygon[i], x1, y1, x2, y2 } )
     x1 = ( x1 > self._.Polygon[i].x ) and self._.Polygon[i].x or x1
     x2 = ( x2 < self._.Polygon[i].x ) and self._.Polygon[i].x or x2
     y1 = ( y1 > self._.Polygon[i].y ) and self._.Polygon[i].y or y1
@@ -2923,7 +2969,7 @@ function ZONE_POLYGON_BASE:GetBoundingVec2()
   local y2 = self._.Polygon[1].y
 
   for i = 2, #self._.Polygon do
-    self:T2( { self._.Polygon[i], x1, y1, x2, y2 } )
+    --self:T2( { self._.Polygon[i], x1, y1, x2, y2 } )
     x1 = ( x1 > self._.Polygon[i].x ) and self._.Polygon[i].x or x1
     x2 = ( x2 < self._.Polygon[i].x ) and self._.Polygon[i].x or x2
     y1 = ( y1 > self._.Polygon[i].y ) and self._.Polygon[i].y or y1
@@ -2962,7 +3008,7 @@ function ZONE_POLYGON_BASE:Boundary(Coalition, Color, Radius, Alpha, Segments, C
         Limit = #self._.Polygon
     end
     while i <= #self._.Polygon do
-        self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
+        --self:T( { i, j, self._.Polygon[i], self._.Polygon[j] } )
         if j ~= Limit then
             local DeltaX = self._.Polygon[j].x - self._.Polygon[i].x
             local DeltaY = self._.Polygon[j].y - self._.Polygon[i].y
@@ -3033,7 +3079,7 @@ function ZONE_POLYGON:New( ZoneName, ZoneGroup )
   local GroupPoints = ZoneGroup:GetTaskRoute()
 
   local self = BASE:Inherit( self, ZONE_POLYGON_BASE:New( ZoneName, GroupPoints ) )
-  self:F( { ZoneName, ZoneGroup, self._.Polygon } )
+  --self:F( { ZoneName, ZoneGroup, self._.Polygon } )
 
   -- Zone objects are added to the _DATABASE and SET_ZONE objects.
   _EVENTDISPATCHER:CreateEventNewZone( self )
@@ -3049,7 +3095,7 @@ end
 function ZONE_POLYGON:NewFromPointsArray( ZoneName, PointsArray )
 
   local self = BASE:Inherit( self, ZONE_POLYGON_BASE:New( ZoneName, PointsArray ) )
-  self:F( { ZoneName, self._.Polygon } )
+  --self:F( { ZoneName, self._.Polygon } )
 
   -- Zone objects are added to the _DATABASE and SET_ZONE objects.
   _EVENTDISPATCHER:CreateEventNewZone( self )
@@ -3069,7 +3115,7 @@ function ZONE_POLYGON:NewFromGroupName( GroupName )
   local GroupPoints = ZoneGroup:GetTaskRoute()
 
   local self = BASE:Inherit( self, ZONE_POLYGON_BASE:New( GroupName, GroupPoints ) )
-  self:F( { GroupName, ZoneGroup, self._.Polygon } )
+  --self:F( { GroupName, ZoneGroup, self._.Polygon } )
 
   -- Zone objects are added to the _DATABASE and SET_ZONE objects.
   _EVENTDISPATCHER:CreateEventNewZone( self )
@@ -3235,7 +3281,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
 
           self.ScanData.Units[ZoneObject] = ZoneObject
 
-          self:F2( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
+          --self:F2( { Name = ZoneObject:getName(), Coalition = CoalitionDCSUnit } )
         end
       end
 
@@ -3246,7 +3292,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
         self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
         table.insert(self.ScanData.SceneryTable,self.ScanData.Scenery[SceneryType][SceneryName])
-        self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
+        --self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
 
     end
@@ -3550,7 +3596,37 @@ do -- ZONE_ELASTIC
 
     return self
   end
+  
+  --- Remove a vertex (point) from the polygon.
+  -- @param #ZONE_ELASTIC self
+  -- @param DCS#Vec2 Vec2 Point in 2D (with x and y coordinates).
+  -- @return #ZONE_ELASTIC self
+  function ZONE_ELASTIC:RemoveVertex2D(Vec2)
+    
+    local found = false
+    local findex = 0
+    for _id,_vec2 in pairs(self.points) do
+      if _vec2.x == Vec2.x and _vec2.y == Vec2.y then
+        found = true
+        findex = _id
+        break
+      end
+    end
+    
+    if found == true and findex >  0 then
+      table.remove(self.points,findex)
+    end
 
+    return self
+  end
+    
+  --- Remove a vertex (point) from the polygon.
+  -- @param #ZONE_ELASTIC self
+  -- @param DCS#Vec3 Vec3 Point in 3D (with x, y and z coordinates). Only the x and z coordinates are used.
+  -- @return #ZONE_ELASTIC self
+  function ZONE_ELASTIC:RemoveVertex3D(Vec3)
+    return self:RemoveVertex2D({x=Vec3.x, y=Vec3.z})
+  end
 
   --- Add a vertex (point) to the polygon.
   -- @param #ZONE_ELASTIC self
@@ -3587,8 +3663,8 @@ do -- ZONE_ELASTIC
   function ZONE_ELASTIC:Update(Delay, Draw)
 
     -- Debug info.
-    self:T(string.format("Updating ZONE_ELASTIC %s", tostring(self.ZoneName)))
-
+    --self:T(string.format("Updating ZONE_ELASTIC %s", tostring(self.ZoneName)))
+    
     -- Copy all points.
     local points=UTILS.DeepCopy(self.points or {})
 
@@ -3606,6 +3682,9 @@ do -- ZONE_ELASTIC
 
     -- Update polygon verticies from points.
     self._.Polygon=self:_ConvexHull(points)
+          
+    self._Triangles = self:_Triangulate()
+    self.SurfaceArea = self:_CalculateSurfaceArea()
 
     if Draw~=false then
       if self.DrawID or Draw==true then
@@ -3655,7 +3734,7 @@ do -- ZONE_ELASTIC
   end
 
 
-  --- Create a convec hull.
+  --- Create a convex hull.
   -- @param #ZONE_ELASTIC self
   -- @param #table pl Points
   -- @return #table Points
@@ -3804,7 +3883,7 @@ end
 --- Checks if a point is contained within the oval.
 -- @param #ZONE_OVAL self
 -- @param #table point The point to check
--- @return #bool True if the point is contained, false otherwise
+-- @return #boolean True if the point is contained, false otherwise
 function ZONE_OVAL:IsVec2InZone(vec2)
     local cos, sin = math.cos, math.sin
     local dx = vec2.x - self.CenterVec2.x
@@ -3866,18 +3945,18 @@ function ZONE_OVAL:GetRandomVec2()
     return {x=rx, y=ry}
 end
 
---- Define a random @{Core.Point#POINT_VEC2} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
+--- Define a random @{Core.Point#COORDINATE} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
 -- @param #ZONE_OVAL self
--- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
+-- @return Core.Point#COORDINATE The COORDINATE coordinates.
 function ZONE_OVAL:GetRandomPointVec2()
-    return POINT_VEC2:NewFromVec2(self:GetRandomVec2())
+    return COORDINATE:NewFromVec2(self:GetRandomVec2())
 end
 
---- Define a random @{Core.Point#POINT_VEC2} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
+--- Define a random @{Core.Point#COORDINATE} within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec3 table.
 -- @param #ZONE_OVAL self
--- @return Core.Point#POINT_VEC2 The PointVec2 coordinates.
+-- @return Core.Point#COORDINATE The COORDINATE coordinates.
 function ZONE_OVAL:GetRandomPointVec3()
-    return POINT_VEC3:NewFromVec3(self:GetRandomVec2())
+    return COORDINATE:NewFromVec3(self:GetRandomVec2())
 end
 
 --- Draw the zone on the F10 map.
@@ -4001,7 +4080,7 @@ do -- ZONE_AIRBASE
   -- @param #ZONE_AIRBASE self
   -- @return DCS#Vec2 The location of the zone based on the AIRBASE location.
   function ZONE_AIRBASE:GetVec2()
-    self:F( self.ZoneName )
+    --self:F( self.ZoneName )
 
     local ZoneVec2 = nil
 
@@ -4012,22 +4091,22 @@ do -- ZONE_AIRBASE
       ZoneVec2 = self._.ZoneVec2Cache
     end
 
-    self:T( { ZoneVec2 } )
+    --self:T( { ZoneVec2 } )
 
     return ZoneVec2
   end
 
-  --- Returns a @{Core.Point#POINT_VEC2} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
+  --- Returns a @{Core.Point#COORDINATE} object reflecting a random 2D location within the zone. Note that this is actually a @{Core.Point#COORDINATE} type object, and not a simple Vec2 table.
   -- @param #ZONE_AIRBASE self
   -- @param #number inner (optional) Minimal distance from the center of the zone. Default is 0.
   -- @param #number outer (optional) Maximal distance from the outer edge of the zone. Default is the radius of the zone.
-  -- @return Core.Point#POINT_VEC2 The @{Core.Point#POINT_VEC2} object reflecting the random 3D location within the zone.
+  -- @return Core.Point#COORDINATE The @{Core.Point#COORDINATE} object reflecting the random 3D location within the zone.
   function ZONE_AIRBASE:GetRandomPointVec2( inner, outer )
-    self:F( self.ZoneName, inner, outer )
+    --self:F( self.ZoneName, inner, outer )
 
-    local PointVec2 = POINT_VEC2:NewFromVec2( self:GetRandomVec2() )
+    local PointVec2 = COORDINATE:NewFromVec2( self:GetRandomVec2() )
 
-    self:T3( { PointVec2 } )
+    --self:T3( { PointVec2 } )
 
     return PointVec2
   end

@@ -9,6 +9,7 @@
 -- @module AI.AI_Air
 -- @image MOOSE.JPG
 
+---
 -- @type AI_AIR
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
@@ -656,8 +657,8 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     --- Create a route point of type air.
     local FromRTBRoutePoint = FromCoord:WaypointAir( 
       self.PatrolAltType, 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
+      COORDINATE.WaypointType.TurningPoint, 
+      COORDINATE.WaypointAction.TurningPoint, 
       RTBSpeed, 
       true 
     )
@@ -665,8 +666,8 @@ function AI_AIR:onafterRTB( AIGroup, From, Event, To )
     --- Create a route point of type air.
     local ToRTBRoutePoint = ToAirbaseCoord:WaypointAir( 
       self.PatrolAltType, 
-      POINT_VEC3.RoutePointType.TurningPoint, 
-      POINT_VEC3.RoutePointAction.TurningPoint, 
+      COORDINATE.WaypointType.TurningPoint, 
+      COORDINATE.WaypointAction.TurningPoint, 
       RTBSpeed, 
       true 
     )
@@ -760,10 +761,10 @@ function AI_AIR:onafterRefuel( AIGroup, From, Event, To )
       local ToRefuelSpeed = math.random( self.PatrolMinSpeed, self.PatrolMaxSpeed )
       
       --- Create a route point of type air.
-      local FromRefuelRoutePoint = FromRefuelCoord:WaypointAir(self.PatrolAltType, POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, ToRefuelSpeed, true)
+      local FromRefuelRoutePoint = FromRefuelCoord:WaypointAir(self.PatrolAltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, ToRefuelSpeed, true)
 
       --- Create a route point of type air. NOT used!
-      local ToRefuelRoutePoint = Tanker:GetCoordinate():WaypointAir(self.PatrolAltType, POINT_VEC3.RoutePointType.TurningPoint, POINT_VEC3.RoutePointAction.TurningPoint, ToRefuelSpeed, true)
+      local ToRefuelRoutePoint = Tanker:GetCoordinate():WaypointAir(self.PatrolAltType, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, ToRefuelSpeed, true)
   
       self:F( { ToRefuelSpeed = ToRefuelSpeed } )
       

@@ -88,7 +88,10 @@ COHORT = {
 
 --- COHORT class version.
 -- @field #string version
-COHORT.version="0.3.5"
+COHORT.version="0.3.6"
+
+--- Global variable to store the unique(!) cohort names
+_COHORTNAMES={}
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -110,6 +113,17 @@ COHORT.version="0.3.5"
 -- @return #COHORT self
 function COHORT:New(TemplateGroupName, Ngroups, CohortName)
 
+  -- Name of the cohort.
+  local name=tostring(CohortName or TemplateGroupName)
+  
+  -- Cohort name has to be unique or we will get serious problems!
+  if UTILS.IsAnyInTable(_COHORTNAMES, name) then
+    env.error(string.format('ERROR: cannot create cohort "%s" because another cohort with that name already exists. Names must be unique!', name))
+    return nil
+  else
+    table.insert(_COHORTNAMES, name)
+  end
+
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #COHORT
 
@@ -117,7 +131,7 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   self.templatename=TemplateGroupName
 
   -- Cohort name.
-  self.name=tostring(CohortName or TemplateGroupName)
+  self.name=name
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("COHORT %s | ", self.name)
@@ -577,7 +591,7 @@ function COHORT:AddAsset(Asset)
   return self
 end
 
---- Remove asset from chort.
+--- Remove specific asset from chort.
 -- @param #COHORT self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
 -- @return #COHORT self
@@ -608,6 +622,40 @@ function COHORT:DelGroup(GroupName)
   end
   return self
 end
+
+--- Remove assets from pool. Not that assets must not be spawned or already reserved or requested.
+-- @param #COHORT self
+-- @param #number N Number of assets to be removed. Default 1.
+-- @return #COHORT self
+function COHORT:RemoveAssets(N)
+  self:T2(self.lid..string.format("Remove %d assets of Cohort", N))
+
+  N=N or 1
+  
+  local n=0
+  for i=#self.assets,1,-1 do
+    local asset=self.assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+  
+    self:T2(self.lid..string.format("Checking removing asset %s", asset.spawngroupname))
+    if not (asset.requested or asset.spawned or asset.isReserved) then
+      self:T2(self.lid..string.format("Removing asset %s", asset.spawngroupname))
+      table.remove(self.assets, i)
+      n=n+1
+    else
+      self:T2(self.lid..string.format("Could NOT Remove asset %s", asset.spawngroupname))
+    end
+    
+    if n>=N then
+      break
+    end
+  
+  end
+  
+  self:T(self.lid..string.format("Removed %d/%d assets. New asset count=%d", n, N, #self.assets))
+
+  return self
+end
+
 
 --- Get name of the cohort.
 -- @param #COHORT self
@@ -975,6 +1023,7 @@ function COHORT:CanMission(Mission)
   
     if Mission.refuelSystem and Mission.refuelSystem==self.tankerSystem then
       -- Correct refueling system.
+      self:T(self.lid..string.format("INFO: Correct refueling system requested=%s != %s=available", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
     else
       self:T(self.lid..string.format("INFO: Wrong refueling system requested=%s != %s=available", tostring(Mission.refuelSystem), tostring(self.tankerSystem)))
       return false

@@ -97,6 +97,7 @@ RADIO = {
   Power            = 100,
   Loop             = false,
   alias            = nil,
+  moduhasbeenset   = false,
 }
 
 --- Create a new RADIO Object. This doesn't broadcast a transmission, though, use @{#RADIO.Broadcast} to actually broadcast.
@@ -167,12 +168,13 @@ function RADIO:SetFrequency(Frequency)
   self:F2(Frequency)
 
   if type(Frequency) == "number" then
-
+    
     -- If frequency is in range
     --if (Frequency >= 30 and Frequency <= 87.995) or (Frequency >= 108 and Frequency <= 173.995) or (Frequency >= 225 and Frequency <= 399.975) then
 
       -- Convert frequency from MHz to Hz
-      self.Frequency = Frequency * 1000000
+      self.Frequency = Frequency
+      self.HertzFrequency = Frequency * 1000000
 
       -- If the RADIO is attached to a UNIT or a GROUP, we need to send the DCS Command "SetFrequency" to change the UNIT or GROUP frequency
       if self.Positionable.ClassName == "UNIT" or self.Positionable.ClassName == "GROUP" then
@@ -180,7 +182,7 @@ function RADIO:SetFrequency(Frequency)
         local commandSetFrequency={
           id = "SetFrequency",
           params = {
-            frequency  = self.Frequency,
+            frequency  = self.HertzFrequency,
             modulation = self.Modulation,
           }
         }
@@ -197,7 +199,7 @@ function RADIO:SetFrequency(Frequency)
   return self
 end
 
---- Set AM or FM modulation of the radio transmitter.
+--- Set AM or FM modulation of the radio transmitter. Set this before you set a frequency!
 -- @param #RADIO self
 -- @param #number Modulation Modulation is either radio.modulation.AM or radio.modulation.FM.
 -- @return #RADIO self
@@ -206,6 +208,10 @@ function RADIO:SetModulation(Modulation)
   if type(Modulation) == "number" then
     if Modulation == radio.modulation.AM or Modulation == radio.modulation.FM then --TODO Maybe make this future proof if ED decides to add an other modulation ?
       self.Modulation = Modulation
+      if self.moduhasbeenset == false and Modulation == radio.modulation.FM then -- override default
+        self:SetFrequency(self.Frequency)
+      end
+      self.moduhasbeenset = true
       return self
     end
   end

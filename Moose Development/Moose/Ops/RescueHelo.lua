@@ -963,6 +963,8 @@ function RESCUEHELO:onafterStart(From, Event, To)
   
   -- Init status check
   self:__Status(1)
+  
+  return self
 end
 
 --- On after Status event. Checks player status.

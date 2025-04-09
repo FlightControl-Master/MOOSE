@@ -1,9 +1,9 @@
 --- **DCS API** Prototypes.
---
+-- 
 -- ===
---
+-- 
 -- See the [Simulator Scripting Engine Documentation](https://wiki.hoggitworld.com/view/Simulator_Scripting_Engine_Documentation) on Hoggit for further explanation and examples.
---
+-- 
 -- @module DCS
 -- @image MOOSE.JPG
 
@@ -14,50 +14,81 @@ do -- world
   -- @field #world.event event [https://wiki.hoggitworld.com/view/DCS_enum_world](https://wiki.hoggitworld.com/view/DCS_enum_world)
   -- @field #world.BirthPlace BirthPlace The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.
   -- @field #world.VolumeType VolumeType The volumeType enumerator defines the types of 3d geometery used within the [world.searchObjects](https://wiki.hoggitworld.com/view/DCS_func_searchObjects) function.
+  -- @field #world.weather weather Weather functions for fog etc.
 
   --- The world singleton contains functions centered around two different but extremely useful functions.
   -- * Events and event handlers are all governed within world.
   -- * A number of functions to get information about the game world.
-  --
+  -- 
   -- See [https://wiki.hoggitworld.com/view/DCS_singleton_world](https://wiki.hoggitworld.com/view/DCS_singleton_world)
   -- @field #world world
   world = {}
-
+  
   --- [https://wiki.hoggitworld.com/view/DCS_enum_world](https://wiki.hoggitworld.com/view/DCS_enum_world)
   -- @type world.event
-  -- @field S_EVENT_INVALID
-  -- @field S_EVENT_SHOT [https://wiki.hoggitworld.com/view/DCS_event_shot](https://wiki.hoggitworld.com/view/DCS_event_shot)
-  -- @field S_EVENT_HIT [https://wiki.hoggitworld.com/view/DCS_event_hit](https://wiki.hoggitworld.com/view/DCS_event_hit)
-  -- @field S_EVENT_TAKEOFF [https://wiki.hoggitworld.com/view/DCS_event_takeoff](https://wiki.hoggitworld.com/view/DCS_event_takeoff)
-  -- @field S_EVENT_LAND [https://wiki.hoggitworld.com/view/DCS_event_land](https://wiki.hoggitworld.com/view/DCS_event_land)
-  -- @field S_EVENT_CRASH [https://wiki.hoggitworld.com/view/DCS_event_crash](https://wiki.hoggitworld.com/view/DCS_event_crash)
-  -- @field S_EVENT_EJECTION [https://wiki.hoggitworld.com/view/DCS_event_ejection](https://wiki.hoggitworld.com/view/DCS_event_ejection)
-  -- @field S_EVENT_REFUELING [https://wiki.hoggitworld.com/view/DCS_event_refueling](https://wiki.hoggitworld.com/view/DCS_event_refueling)
-  -- @field S_EVENT_DEAD [https://wiki.hoggitworld.com/view/DCS_event_dead](https://wiki.hoggitworld.com/view/DCS_event_dead)
-  -- @field S_EVENT_PILOT_DEAD [https://wiki.hoggitworld.com/view/DCS_event_pilot_dead](https://wiki.hoggitworld.com/view/DCS_event_pilot_dead)
-  -- @field S_EVENT_BASE_CAPTURED [https://wiki.hoggitworld.com/view/DCS_event_base_captured](https://wiki.hoggitworld.com/view/DCS_event_base_captured)
-  -- @field S_EVENT_MISSION_START [https://wiki.hoggitworld.com/view/DCS_event_mission_start](https://wiki.hoggitworld.com/view/DCS_event_mission_start)
-  -- @field S_EVENT_MISSION_END [https://wiki.hoggitworld.com/view/DCS_event_mission_end](https://wiki.hoggitworld.com/view/DCS_event_mission_end)
-  -- @field S_EVENT_TOOK_CONTROL
-  -- @field S_EVENT_REFUELING_STOP [https://wiki.hoggitworld.com/view/DCS_event_refueling_stop](https://wiki.hoggitworld.com/view/DCS_event_refueling_stop)
-  -- @field S_EVENT_BIRTH [https://wiki.hoggitworld.com/view/DCS_event_birth](https://wiki.hoggitworld.com/view/DCS_event_birth)
-  -- @field S_EVENT_HUMAN_FAILURE [https://wiki.hoggitworld.com/view/DCS_event_human_failure](https://wiki.hoggitworld.com/view/DCS_event_human_failure)
-  -- @field S_EVENT_ENGINE_STARTUP [https://wiki.hoggitworld.com/view/DCS_event_engine_startup](https://wiki.hoggitworld.com/view/DCS_event_engine_startup)
-  -- @field S_EVENT_ENGINE_SHUTDOWN [https://wiki.hoggitworld.com/view/DCS_event_engine_shutdown](https://wiki.hoggitworld.com/view/DCS_event_engine_shutdown)
-  -- @field S_EVENT_PLAYER_ENTER_UNIT [https://wiki.hoggitworld.com/view/DCS_event_player_enter_unit](https://wiki.hoggitworld.com/view/DCS_event_player_enter_unit)
-  -- @field S_EVENT_PLAYER_LEAVE_UNIT [https://wiki.hoggitworld.com/view/DCS_event_player_leave_unit](https://wiki.hoggitworld.com/view/DCS_event_player_leave_unit)
-  -- @field S_EVENT_PLAYER_COMMENT
-  -- @field S_EVENT_SHOOTING_START [https://wiki.hoggitworld.com/view/DCS_event_shooting_start](https://wiki.hoggitworld.com/view/DCS_event_shooting_start)
-  -- @field S_EVENT_SHOOTING_END [https://wiki.hoggitworld.com/view/DCS_event_shooting_end](https://wiki.hoggitworld.com/view/DCS_event_shooting_end)
-  -- @field S_EVENT_MARK ADDED [https://wiki.hoggitworld.com/view/DCS_event_mark_added](https://wiki.hoggitworld.com/view/DCS_event_mark_added) DCS>=2.5.1
-  -- @field S_EVENT_MARK CHANGE [https://wiki.hoggitworld.com/view/DCS_event_mark_change](https://wiki.hoggitworld.com/view/DCS_event_mark_change) DCS>=2.5.1
-  -- @field S_EVENT_MARK REMOVE [https://wiki.hoggitworld.com/view/DCS_event_mark_remove](https://wiki.hoggitworld.com/view/DCS_event_mark_remove) DCS>=2.5.1
-  -- @field S_EVENT_KILL [https://wiki.hoggitworld.com/view/DCS_event_kill](https://wiki.hoggitworld.com/view/DCS_event_kill) DCS>=2.5.6
-  -- @field S_EVENT_SCORE [https://wiki.hoggitworld.com/view/DCS_event_score](https://wiki.hoggitworld.com/view/DCS_event_score) DCS>=2.5.6
-  -- @field S_EVENT_UNIT_LOST [https://wiki.hoggitworld.com/view/DCS_event_unit_lost](https://wiki.hoggitworld.com/view/DCS_event_unit_lost) DCS>=2.5.6
-  -- @field S_EVENT_LANDING_AFTER_EJECTION [https://wiki.hoggitworld.com/view/DCS_event_landing_after_ejection](https://wiki.hoggitworld.com/view/DCS_event_landing_after_ejection) DCS>=2.5.6
-  -- @field S_EVENT_MAX
-
+  -- @field S_EVENT_INVALID = 0
+  -- @field S_EVENT_SHOT = 1
+  -- @field S_EVENT_HIT = 2
+  -- @field S_EVENT_TAKEOFF = 3
+  -- @field S_EVENT_LAND = 4
+  -- @field S_EVENT_CRASH = 5
+  -- @field S_EVENT_EJECTION = 6
+  -- @field S_EVENT_REFUELING = 7
+  -- @field S_EVENT_DEAD = 8
+  -- @field S_EVENT_PILOT_DEAD = 9
+  -- @field S_EVENT_BASE_CAPTURED = 10
+  -- @field S_EVENT_MISSION_START = 11
+  -- @field S_EVENT_MISSION_END = 12
+  -- @field S_EVENT_TOOK_CONTROL = 13
+  -- @field S_EVENT_REFUELING_STOP = 14
+  -- @field S_EVENT_BIRTH = 15
+  -- @field S_EVENT_HUMAN_FAILURE = 16
+  -- @field S_EVENT_DETAILED_FAILURE = 17
+  -- @field S_EVENT_ENGINE_STARTUP = 18
+  -- @field S_EVENT_ENGINE_SHUTDOWN = 19
+  -- @field S_EVENT_PLAYER_ENTER_UNIT = 20
+  -- @field S_EVENT_PLAYER_LEAVE_UNIT = 21
+  -- @field S_EVENT_PLAYER_COMMENT = 22
+  -- @field S_EVENT_SHOOTING_START = 23
+  -- @field S_EVENT_SHOOTING_END = 24
+  -- @field S_EVENT_MARK_ADDED  = 25 
+  -- @field S_EVENT_MARK_CHANGE = 26
+  -- @field S_EVENT_MARK_REMOVED = 27
+  -- @field S_EVENT_KILL = 28
+  -- @field S_EVENT_SCORE = 29
+  -- @field S_EVENT_UNIT_LOST = 30
+  -- @field S_EVENT_LANDING_AFTER_EJECTION = 31
+  -- @field S_EVENT_PARATROOPER_LENDING = 32 -- who's lending whom what? ;)
+  -- @field S_EVENT_DISCARD_CHAIR_AFTER_EJECTION = 33 
+  -- @field S_EVENT_WEAPON_ADD = 34
+  -- @field S_EVENT_TRIGGER_ZONE = 35
+  -- @field S_EVENT_LANDING_QUALITY_MARK = 36
+  -- @field S_EVENT_BDA = 37 -- battle damage assessment
+  -- @field S_EVENT_AI_ABORT_MISSION = 38 
+  -- @field S_EVENT_DAYNIGHT = 39 
+  -- @field S_EVENT_FLIGHT_TIME = 40 
+  -- @field S_EVENT_PLAYER_SELF_KILL_PILOT = 41 
+  -- @field S_EVENT_PLAYER_CAPTURE_AIRFIELD = 42 
+  -- @field S_EVENT_EMERGENCY_LANDING = 43
+  -- @field S_EVENT_UNIT_CREATE_TASK = 44
+  -- @field S_EVENT_UNIT_DELETE_TASK = 45
+  -- @field S_EVENT_SIMULATION_START = 46
+  -- @field S_EVENT_WEAPON_REARM = 47
+  -- @field S_EVENT_WEAPON_DROP = 48
+  -- @field S_EVENT_UNIT_TASK_COMPLETE = 49
+  -- @field S_EVENT_UNIT_TASK_STAGE = 50
+  -- @field S_EVENT_MAC_EXTRA_SCORE= 51 -- not sure what this is
+  -- @field S_EVENT_MISSION_RESTART= 52
+  -- @field S_EVENT_MISSION_WINNER = 53
+  -- @field S_EVENT_RUNWAY_TAKEOFF= 54 
+  -- @field S_EVENT_RUNWAY_TOUCH= 55 
+  -- @field S_EVENT_MAC_LMS_RESTART= 56 -- not sure what this is
+  -- @field S_EVENT_SIMULATION_FREEZE = 57 
+  -- @field S_EVENT_SIMULATION_UNFREEZE = 58 
+  -- @field S_EVENT_HUMAN_AIRCRAFT_REPAIR_START = 59 
+  -- @field S_EVENT_HUMAN_AIRCRAFT_REPAIR_FINISH = 60   
+  -- @field S_EVENT_MAX = 61
+  
   --- The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.
   -- @type world.BirthPlace
   -- @field wsBirthPlace_Air
@@ -76,24 +107,24 @@ do -- world
   --- Adds a function as an event handler that executes whenever a simulator event occurs. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_addEventHandler).
   -- @function [parent=#world] addEventHandler
   -- @param #table handler Event handler table.
-
+  
   --- Removes the specified event handler from handling events.
   -- @function [parent=#world] removeEventHandler
   -- @param #table handler Event handler table.
-
+  
   --- Returns a table of the single unit object in the game who's skill level is set as "Player". See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_getPlayer).
   -- There is only a single player unit in a mission and in single player the user will always spawn into this unit automatically unless other client or Combined Arms slots are available.
   -- @function [parent=#world] getPlayer
-  -- @return DCS#Unit
-
+  -- @return DCS#Unit  
+  
   --- Searches a defined volume of 3d space for the specified objects within it and then can run function on each returned object. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_searchObjects).
   -- @function [parent=#world] searchObjects
   -- @param DCS#Object.Category objectcategory Category (can be a table) of objects to search.
   -- @param DCS#word.VolumeType volume Shape of the search area/volume.
   -- @param ObjectSeachHandler handler A function that handles the search.
   -- @param #table any Additional data.
-  -- @return DCS#Unit
-
+  -- @return DCS#Unit  
+  
   --- Returns a table of mark panels indexed numerically that are present within the mission. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_getMarkPanels)
   -- @function [parent=#world] getMarkPanels
   -- @return #table Table of marks.
@@ -103,6 +134,36 @@ do -- world
   -- @param #number coalitionId The coalition side number ID. Default is all airbases are returned.
   -- @return #table Table of DCS airbase objects.
 
+
+  --- Weather functions.
+  -- @type world.weather
+
+  --- Fog animation data structure.
+  -- @type world.FogAnimation
+  -- @field #number time
+  -- @field #number visibility
+  -- @field #number thickness
+
+  --- Returns the current fog thickness.
+  -- @function [parent=#world.weather] getFogThickness Returns the fog thickness.
+  -- @return #number Fog thickness in meters. If there is no fog, zero is returned.
+
+  --- Sets the fog thickness instantly. Any current fog animation is discarded.
+  -- @function [parent=#world.weather] setFogThickness
+  -- @param #number thickness Fog thickness in meters. Set to zero to disable fog.
+
+  --- Returns the current fog visibility distance.
+  -- @function [parent=#world.weather] getFogVisibilityDistance Returns the current maximum visibility distance in meters. Returns zero if fog is not present.
+
+  --- Instantly sets the maximum visibility distance of fog at sea level when looking at the horizon. Any current fog animation is discarded. Set zero to disable the fog.
+  -- @function [parent=#world.weather] setFogVisibilityDistance
+  -- @param #number visibility Max fog visibility in meters. Set to zero to disable fog.
+
+  --- Sets fog animation keys. Time is set in seconds and relative to the current simulation time, where time=0 is the current moment. 
+  -- Time must be increasing. Previous animation is always discarded despite the data being correct.
+  -- @function [parent=#world.weather] setFogAnimation
+  -- @param #world.FogAnimation animation List of fog animations
+ 
 end -- world
 
 
@@ -115,90 +176,90 @@ do -- env
   -- @function [parent=#env] info
   -- @param #string message message string to add to log.
   -- @param #boolean showMessageBox If the parameter is true Message Box will appear. Optional.
-
-  --- Add message to simulator log with caption "WARNING". Message box is optional.
+  
+  --- Add message to simulator log with caption "WARNING". Message box is optional. 
   -- @function [parent=#env] warning
   -- @param #string message message string to add to log.
   -- @param #boolean showMessageBox If the parameter is true Message Box will appear. Optional.
-
+  
   --- Add message to simulator log with caption "ERROR". Message box is optional.
   -- @function [parent=#env] error
   -- @param #string message message string to add to log.
   -- @param #boolean showMessageBox If the parameter is true Message Box will appear. Optional.
-
+  
   --- Enables/disables appearance of message box each time lua error occurs.
   -- @function [parent=#env] setErrorMessageBoxEnabled
   -- @param #boolean on if true message box appearance is enabled.
 
   --- [DCS Singleton env](https://wiki.hoggitworld.com/view/DCS_singleton_env)
-  env = {} --#env
-
+  env = {} --#env 
+  
 end -- env
 
 do -- radio
 
   ---@type radio
   -- @field #radio.modulation modulation
-
+  
   ---
   -- @type radio.modulation
   -- @field AM
   -- @field FM
-
+  
   radio = {}
   radio.modulation = {}
-  radio.modulation.AM = 0
+  radio.modulation.AM = 0  
   radio.modulation.FM = 1
-
+  
 end
 
 do -- timer
 
   --- [DCS Singleton timer](https://wiki.hoggitworld.com/view/DCS_singleton_timer)
   -- @type timer
-
+  
   --- Returns model time in seconds.
   -- @function [parent=#timer] getTime
-  -- @return #Time
-
+  -- @return #Time   
+  
   --- Returns mission time in seconds.
   -- @function [parent=#timer] getAbsTime
   -- @return #Time
-
+  
   --- Returns mission start time in seconds.
   -- @function [parent=#timer] getTime0
   -- @return #Time
-
+  
   --- Schedules function to call at desired model time.
   --  Time function FunctionToCall(any argument, Time time)
-  --
+  --  
   --  ...
-  --
+  --  
   --  return ...
-  --
+  --  
   --  end
-  --
-  --  Must return model time of next call or nil. Note that the DCS scheduler calls the function in protected mode and any Lua errors in the called function will be trapped and not reported. If the function triggers a Lua error then it will be terminated and not scheduled to run again.
+  --  
+  --  Must return model time of next call or nil. Note that the DCS scheduler calls the function in protected mode and any Lua errors in the called function will be trapped and not reported. If the function triggers a Lua error then it will be terminated and not scheduled to run again. 
   -- @function [parent=#timer] scheduleFunction
-  -- @param #FunctionToCall functionToCall Lua-function to call. Must have prototype of FunctionToCall.
+  -- @param #FunctionToCall functionToCall Lua-function to call. Must have prototype of FunctionToCall. 
   -- @param functionArgument Function argument of any type to pass to functionToCall.
   -- @param #Time time Model time of the function call.
   -- @return functionId
-
+  
   --- Re-schedules function to call at another model time.
-  -- @function [parent=#timer] setFunctionTime
-  -- @param functionId Lua-function to call. Must have prototype of FunctionToCall.
-  -- @param #Time time Model time of the function call.
-
-
+  -- @function [parent=#timer] setFunctionTime 
+  -- @param functionId Lua-function to call. Must have prototype of FunctionToCall. 
+  -- @param #Time time Model time of the function call. 
+  
+  
   --- Removes the function from schedule.
   -- @function [parent=#timer] removeFunction
-  -- @param functionId Function identifier to remove from schedule
-
+  -- @param functionId Function identifier to remove from schedule 
+  
   --- [DCS Singleton timer](https://wiki.hoggitworld.com/view/DCS_singleton_timer)
   timer = {} --#timer
 
-end
+end 
 
 
 do -- land
@@ -206,7 +267,7 @@ do -- land
   --- [DCS Singleton land](https://wiki.hoggitworld.com/view/DCS_singleton_land)
   -- @type land
   -- @field #land.SurfaceType SurfaceType
-
+  
   --- [Type of surface enumerator](https://wiki.hoggitworld.com/view/DCS_singleton_land)
   -- @type land.SurfaceType
   -- @field LAND Land=1
@@ -214,52 +275,37 @@ do -- land
   -- @field WATER Water=3
   -- @field ROAD Road=4
   -- @field RUNWAY Runway=5
-
+  
   --- Returns the distance from sea level (y-axis) of a given vec2 point.
   -- @function [parent=#land] getHeight
-  -- @param #Vec2 point Point on the ground.
+  -- @param #Vec2 point Point on the ground. 
   -- @return #number Height in meters.
 
-  --- Returns the surface height and depth of a point. Useful for checking if the path is deep enough to support a given ship.
-  -- Both values are positive. When checked over water at sea level the first value is always zero.
+  --- Returns the surface height and depth of a point. Useful for checking if the path is deep enough to support a given ship. 
+  -- Both values are positive. When checked over water at sea level the first value is always zero. 
   -- When checked over water at altitude, for example the reservoir of the Inguri Dam, the first value is the corresponding altitude the water level is at.
   -- @function [parent=#land] getSurfaceHeightWithSeabed
   -- @param #Vec2 point Position where to check.
   -- @return #number Height in meters.
   -- @return #number Depth in meters.
-
+  
   --- Returns surface type at the given point.
   -- @function [parent=#land] getSurfaceType
-  -- @param #Vec2 point Point on the land.
+  -- @param #Vec2 point Point on the land. 
   -- @return #number Enumerator value from `land.SurfaceType` (LAND=1, SHALLOW_WATER=2, WATER=3, ROAD=4, RUNWAY=5)
-
+  
   --- [DCS Singleton land](https://wiki.hoggitworld.com/view/DCS_singleton_land)
   land = {} --#land
 
 end -- land
 
-do
-
-  --- [DCS enum radio](https://wiki.hoggitworld.com/view/DCS_enum_radio)
-  -- @type radio
-  -- @field #radio.modulation modulation Modulation
-
-  --- [Type of modulation](https://wiki.hoggitworld.com/view/DCS_singleton_land)
-  -- @type radio.modulation
-  -- @field #number AM Amplitude modulation (AM=0)
-  -- @field #number FM Frequency modulation (FM=1)
-
-  radio={} --#radio
-
-end -- radio
-
 do -- country
 
   --- [DCS Enum country](https://wiki.hoggitworld.com/view/DCS_enum_country)
   -- @type country
-  -- @field #country.id id
-
-
+  -- @field #country.id id 
+  
+  
   --- [DCS enumerator country](https://wiki.hoggitworld.com/view/DCS_enum_country)
   -- @type country.id
   -- @field RUSSIA
@@ -325,7 +371,7 @@ do -- country
   -- @field HONDURAS
   -- @field ETHIOPIA
   -- @field CHILE
-  -- @field BRAZIL
+  -- @field BRAZIL 
   -- @field BAHRAIN
   -- @field THIRDREICH
   -- @field YUGOSLAVIA
@@ -363,7 +409,7 @@ do -- Command
   -- @type Command
   -- @field #string id
   -- @field #Command.params params
-
+  
   -- @type Command.params
 
 end -- Command
@@ -373,13 +419,13 @@ do -- coalition
   --- [DCS Enum coalition](https://wiki.hoggitworld.com/view/DCS_enum_coalition)
   -- @type coalition
   -- @field #coalition.side side
-
+  
   --- [DCS Enum coalition.side](https://wiki.hoggitworld.com/view/DCS_enum_coalition)
   -- @type coalition.side
   -- @field NEUTRAL
   -- @field RED
   -- @field BLUE
-
+  
   --- Get country coalition.
   -- @function [parent=#coalition] getCountryCoalition
   -- @param #number countryId Country ID.
@@ -392,12 +438,12 @@ do -- coalition
   -- @param #table groupData Group data table.
   -- @return DCS#Group The spawned Group object.
 
-  --- Dynamically spawns a static object. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_addGroup)
+  --- Dynamically spawns a static object. See [hoggit](https://wiki.hoggitworld.com/view/DCS_func_addStaticObject)
   -- @function [parent=#coalition] addStaticObject
   -- @param #number countryId Id of the country.
   -- @param #table groupData Group data table.
   -- @return DCS#Static The spawned static object.
-
+  
   coalition = {} -- #coalition
 
 end -- coalition
@@ -405,7 +451,7 @@ end -- coalition
 
 do -- Types
 
-  --- Descriptors
+  --- Descriptors.
   -- @type Desc
   -- @field #number speedMax0 Max speed in meters/second at zero altitude.
   -- @field #number massEmpty Empty mass in kg.
@@ -428,79 +474,79 @@ do -- Types
   -- @field #TypeName typeName Type Name.
   -- @field #string displayName Localized display name.
   -- @field #number category Unit category.
-
+  
   --- A distance type
   -- @type Distance
-
+  
   --- An angle type
   -- @type Angle
-
+  
   --- Time is given in seconds.
   -- @type Time
   -- @extends #number Time in seconds.
-
-  --- Model time is the time that drives the simulation. Model time may be stopped, accelerated and decelerated relative real time.
+  
+  --- Model time is the time that drives the simulation. Model time may be stopped, accelerated and decelerated relative real time. 
   -- @type ModelTime
   -- @extends #number
-
+  
   --- Mission time is a model time plus time of the mission start.
   -- @type MissionTime
   -- @extends #number Time in seconds.
-
-
+  
+  
   --- Distance is given in meters.
   -- @type Distance
   -- @extends #number Distance in meters.
-
+  
   --- Angle is given in radians.
   -- @type Angle
   -- @extends #number Angle in radians.
-
+  
   --- Azimuth is an angle of rotation around world axis y counter-clockwise.
   -- @type Azimuth
   -- @extends #number Angle in radians.
-
+  
   --- Mass is given in kilograms.
   -- @type Mass
   -- @extends #number
-
+  
   --- Vec3 type is a 3D-vector.
   -- DCS world has 3-dimensional coordinate system. DCS ground is an infinite plain.
   -- @type Vec3
   -- @field #Distance x is directed to the North
   -- @field #Distance z is directed to the East
   -- @field #Distance y is directed up
-
+  
   --- Vec2 is a 2D-vector for the ground plane as a reference plane.
   -- @type Vec2
   -- @field #Distance x Vec2.x = Vec3.x
   -- @field #Distance y Vec2.y = Vec3.z
-
-  --- Position is a composite structure. It consists of both coordinate vector and orientation matrix. Position3 (also known as "Pos3" for short) is a table that has following format:
+  
+  --- Position is a composite structure. It consists of both coordinate vector and orientation matrix. Position3 (also known as "Pos3" for short) is a table that has following format: 
   -- @type Position3
   -- @field #Vec3 p 3D position vector.
   -- @field #Vec3 x Orientation component of vector pointing East.
   -- @field #Vec3 y Orientation component of vector pointing up.
   -- @field #Vec3 z Orientation component of vector pointing North.
-
+  
   --- 3-dimensional box.
   -- @type Box3
   -- @field #Vec3 min Min.
   -- @field #Vec3 max Max
-
-  --- Each object belongs to a type. Object type is a named couple of properties those independent of mission and common for all units of the same type. Name of unit type is a string. Samples of unit type: "Su-27", "KAMAZ" and "M2 Bradley".
+  
+  --- Each object belongs to a type. Object type is a named couple of properties those independent of mission and common for all units of the same type. Name of unit type is a string. Samples of unit type: "Su-27", "KAMAZ" and "M2 Bradley". 
   -- @type TypeName
   -- @extends #string
-
-  --- AttributeName = string
+  
+  --- AttributeName = string 
   -- Each object type may have attributes.
   -- Attributes are enlisted in ./Scripts/Database/db_attributes.Lua.
-  -- To know what attributes the object type has, look for the unit type script in sub-directories planes/, helicopter/s, vehicles, navy/ of ./Scripts/Database/ directory.
+  -- To know what attributes the object type has, look for the unit type script in sub-directories planes/, helicopter/s, vehicles, navy/ of ./Scripts/Database/ directory. 
   -- @type AttributeName
   -- @extends #string
-
+  
   --- List of @{#AttributeName}
-  -- @type AttributeNameArray
+  -- @type AttributeNameArray 
   -- @list <#AttributeName>
 
   -- @type Zone
@@ -511,18 +557,18 @@ do -- Types
 
   -- @type ModelTime
   -- @extends #number
-
+  
   -- @type Time
   -- @extends #number
-
+  
   --- A task descriptor (internal structure for DCS World). See [https://wiki.hoggitworld.com/view/Category:Tasks](https://wiki.hoggitworld.com/view/Category:Tasks).
   -- In MOOSE, these tasks can be accessed via @{Wrapper.Controllable#CONTROLLABLE}.
   -- @type Task
   -- @field #string id
   -- @field #Task.param param
-
+  
   -- @type Task.param
-
+  
   --- List of @{#Task}
   -- @type TaskArray
   -- @list <#Task>
@@ -539,8 +585,8 @@ do -- Types
   -- @field #number x 2D Position on x-axis in meters.
   -- @field #number y 2D Position on y-axis in meters.
   -- @field #table units Unit list.
-  --
-
+  -- 
+  
   --- Unit data structure.
   --@type Template.Unit
   --@field #string name Name of the unit.
@@ -558,7 +604,7 @@ do -- Object
   -- @type Object
   -- @field #Object.Category Category
   -- @field #Object.Desc Desc
-
+  
   --- [DCS Enum Object.Category](https://wiki.hoggitworld.com/view/DCS_Class_Object)
   -- @type Object.Category
   -- @field UNIT
@@ -567,12 +613,12 @@ do -- Object
   -- @field BASE
   -- @field SCENERY
   -- @field CARGO
-
+  
   -- @type Object.Desc
   -- @extends #Desc
   -- @field #number life initial life level
   -- @field #Box3 box bounding box of collision geometry
-
+  
   --- @function [parent=#Object] isExist
   -- @param #Object self
   -- @return #boolean
@@ -580,55 +626,59 @@ do -- Object
   --- @function [parent=#Object] isActive
   -- @param #Object self
   -- @return #boolean
-
+  
   --- @function [parent=#Object] destroy
   -- @param #Object self
-
-  --- @function [parent=#Object] getCategory
+  
+  --- Returns an enumerator of the category for the specific object. 
+  -- The enumerator returned is dependent on the category of the object and how the function is called. 
+  -- As of DCS 2.9.2 when this function is called on an Object, Unit, Weapon, or Airbase a 2nd value will be returned which details the object sub-category value.
+  -- @function [parent=#Object] getCategory
   -- @param #Object self
-  -- @return #Object.Category
-
+  -- @return #Object.Category The object category (1=UNIT, 2=WEAPON, 3=STATIC, 4=BASE, 5=SCENERY, 6=Cargo)
+  -- @return #number The subcategory of the passed object, e.g. Unit.Category if a unit object was passed.
+  
   --- Returns type name of the Object.
   -- @function [parent=#Object] getTypeName
   -- @param #Object self
-  -- @return #string
-
+  -- @return #string 
+  
   --- Returns object descriptor.
   -- @function [parent=#Object] getDesc
   -- @param #Object self
   -- @return #Object.Desc
-
+  
   --- Returns true if the object belongs to the category.
   -- @function [parent=#Object] hasAttribute
   -- @param #Object self
   -- @param #AttributeName attributeName Attribute name to check.
   -- @return #boolean
-
+  
   --- Returns name of the object. This is the name that is assigned to the object in the Mission Editor.
   -- @function [parent=#Object] getName
   -- @param #Object self
   -- @return #string
-
+  
   --- Returns object coordinates for current time.
   -- @function [parent=#Object] getPoint
   -- @param #Object self
   -- @return #Vec3 3D position vector with x,y,z components.
-
-  --- Returns object position for current time.
+  
+  --- Returns object position for current time. 
   -- @function [parent=#Object] getPosition
   -- @param #Object self
   -- @return #Position3
-
+  
   --- Returns the unit's velocity vector.
   -- @function [parent=#Object] getVelocity
   -- @param #Object self
   -- @return #Vec3 3D velocity vector.
-
+  
   --- Returns true if the unit is in air.
   -- @function [parent=#Object] inAir
   -- @param #Object self
   -- @return #boolean
-
+  
   Object = {} --#Object
 
 end -- Object
@@ -638,12 +688,12 @@ do -- CoalitionObject
   --- [DCS Class CoalitionObject](https://wiki.hoggitworld.com/view/DCS_Class_Coalition_Object)
   -- @type CoalitionObject
   -- @extends #Object
-
+  
   --- Returns coalition of the object.
   -- @function [parent=#CoalitionObject] getCoalition
   -- @param #CoalitionObject self
   -- @return #coalition.side
-
+  
   --- Returns object country.
   -- @function [parent=#CoalitionObject] getCountry
   -- @param #CoalitionObject self
@@ -662,7 +712,7 @@ do -- Weapon
   -- @field #Weapon.flag flag enum stores weapon flags. Some of them are combination of another flags.
   -- @field #Weapon.Category Category enum that stores weapon categories.
   -- @field #Weapon.GuidanceType GuidanceType enum that stores guidance methods. Available only for guided weapon (Weapon.Category.MISSILE and some Weapon.Category.BOMB).
-  -- @field #Weapon.MissileCategory MissileCategory enum that stores missile category. Available only for missiles (Weapon.Category.MISSILE).
+  -- @field #Weapon.MissileCategory MissileCategory enum that stores missile category. Available only for missiles (Weapon.Category.MISSILE). 
   -- @field #Weapon.WarheadType WarheadType enum that stores warhead types.
   -- @field #Weapon.Desc Desc The descriptor of a weapon.
 
@@ -695,20 +745,20 @@ do -- Weapon
   -- @field TeleASM
   -- @field CruiseMissile
   -- @field GuidedASM = LaserASM + TeleASM
-  -- @field TacticASM = GuidedASM + FireAndForgetASM
+  -- @field TacticASM = GuidedASM + FireAndForgetASM 
   -- @field AnyASM = AntiRadarMissile + AntiShipMissile + AntiTankMissile + FireAndForgetASM + GuidedASM + CruiseMissile
   -- @field SRAAM
-  -- @field MRAAM
-  -- @field LRAAM
-  -- @field IR_AAM
-  -- @field SAR_AAM
-  -- @field AR_AAM
-  -- @field AnyAAM = IR_AAM + SAR_AAM + AR_AAM + SRAAM + MRAAM + LRAAM
+  -- @field MRAAM 
+  -- @field LRAAM 
+  -- @field IR_AAM 
+  -- @field SAR_AAM 
+  -- @field AR_AAM 
+  -- @field AnyAAM = IR_AAM + SAR_AAM + AR_AAM + SRAAM + MRAAM + LRAAM 
   -- @field AnyMissile = AnyASM + AnyAAM
   -- @field AnyAutonomousMissile = IR_AAM + AntiRadarMissile + AntiShipMissile + FireAndForgetASM + CruiseMissile
   -- @field GUN_POD
   -- @field BuiltInCannon
-  -- @field Cannons = GUN_POD + BuiltInCannon
+  -- @field Cannons = GUN_POD + BuiltInCannon 
   -- @field AnyAGWeapon = BuiltInCannon + GUN_POD + AnyBomb + AnyRocket + AnyASM
   -- @field AnyAAWeapon = BuiltInCannon + GUN_POD + AnyAAM
   -- @field UnguidedWeapon = Cannons + BuiltInCannon + GUN_POD + AnyUnguidedBomb + AnyRocket
@@ -724,9 +774,9 @@ do -- Weapon
   -- @field #number ROCKET Rocket.
   -- @field #number BOMB Bomb.
   -- @field #number TORPEDO Torpedo.
+  
 
-
-  --- Weapon.GuidanceType enum that stores guidance methods. Available only for guided weapon (Weapon.Category.MISSILE and some Weapon.Category.BOMB).
+  --- Weapon.GuidanceType enum that stores guidance methods. Available only for guided weapon (Weapon.Category.MISSILE and some Weapon.Category.BOMB). 
   -- @type Weapon.GuidanceType
   -- @field INS
   -- @field IR
@@ -735,10 +785,10 @@ do -- Weapon
   -- @field RADAR_PASSIVE
   -- @field TV
   -- @field LASER
-  -- @field TELE
+  -- @field TELE 
 
-
-  --- Weapon.MissileCategory enum that stores missile category. Available only for missiles (Weapon.Category.MISSILE).
+  
+  --- Weapon.MissileCategory enum that stores missile category. Available only for missiles (Weapon.Category.MISSILE). 
   -- @type Weapon.MissileCategory
   -- @field AAM
   -- @field SAM
@@ -747,23 +797,23 @@ do -- Weapon
   -- @field CRUISE
   -- @field OTHER
 
-  --- Weapon.WarheadType enum that stores warhead types.
+  --- Weapon.WarheadType enum that stores warhead types. 
   -- @type Weapon.WarheadType
   -- @field AP
   -- @field HE
   -- @field SHAPED_EXPLOSIVE
-
+  
   --- Returns the unit that launched the weapon.
   -- @function [parent=#Weapon] getLauncher
   -- @param #Weapon self
   -- @return #Unit
-
-  --- returns target of the guided weapon. Unguided weapons and guided weapon that is targeted at the point on the ground will return nil.
+  
+  --- returns target of the guided weapon. Unguided weapons and guided weapon that is targeted at the point on the ground will return nil. 
   -- @function [parent=#Weapon] getTarget
   -- @param #Weapon self
   -- @return #Object
-
-  --- returns weapon descriptor. Descriptor type depends on weapon category.
+  
+  --- returns weapon descriptor. Descriptor type depends on weapon category.  
   -- @function [parent=#Weapon] getDesc
   -- @param #Weapon self
   -- @return #Weapon.Desc
@@ -778,50 +828,50 @@ end -- Weapon
 do -- Airbase
 
   --- [DCS Class Airbase](https://wiki.hoggitworld.com/view/DCS_Class_Airbase)
-  -- Represents airbases: airdromes, helipads and ships with flying decks or landing pads.
+  -- Represents airbases: airdromes, helipads and ships with flying decks or landing pads.  
   -- @type Airbase
   -- @extends #CoalitionObject
-  -- @field #Airbase.ID ID Identifier of an airbase. It assigned to an airbase by the Mission Editor automatically. This identifier is used in AI tasks to refer an airbase that exists (spawned and not dead) or not.
-  -- @field #Airbase.Category Category enum contains identifiers of airbase categories.
-  -- @field #Airbase.Desc Desc Airbase descriptor. Airdromes are unique and their types are unique, but helipads and ships are not always unique and may have the same type.
-
+  -- @field #Airbase.ID ID Identifier of an airbase. It assigned to an airbase by the Mission Editor automatically. This identifier is used in AI tasks to refer an airbase that exists (spawned and not dead) or not. 
+  -- @field #Airbase.Category Category enum contains identifiers of airbase categories. 
+  -- @field #Airbase.Desc Desc Airbase descriptor. Airdromes are unique and their types are unique, but helipads and ships are not always unique and may have the same type. 
+  
   --- Enum contains identifiers of airbase categories.
   -- @type Airbase.Category
   -- @field AIRDROME
   -- @field HELIPAD
   -- @field SHIP
-
-  --- Airbase descriptor. Airdromes are unique and their types are unique, but helipads and ships are not always unique and may have the same type.
+  
+  --- Airbase descriptor. Airdromes are unique and their types are unique, but helipads and ships are not always unique and may have the same type. 
   -- @type Airbase.Desc
   -- @extends #Desc
   -- @field #Airbase.Category category Category of the airbase type.
-
+  
   --- Returns airbase by its name. If no airbase found the function will return nil.
   -- @function [parent=#Airbase] getByName
   -- @param #string name
   -- @return #Airbase
-
+  
   --- Returns airbase descriptor by type name. If no descriptor is found the function will return nil.
   -- @function [parent=#Airbase] getDescByName
   -- @param #TypeName typeName Airbase type name.
   -- @return #Airbase.Desc
-
+  
   --- Returns Unit that is corresponded to the airbase. Works only for ships.
   -- @function [parent=#Airbase] getUnit
   -- @param self
   -- @return #Unit
-
+  
   --- Returns identifier of the airbase.
   -- @function [parent=#Airbase] getID
   -- @param self
   -- @return #Airbase.ID
-
+  
   --- Returns the airbase's callsign - the localized string.
   -- @function [parent=#Airbase] getCallsign
   -- @param self
   -- @return #string
-
-  --- Returns descriptor of the airbase.
+  
+  --- Returns descriptor of the airbase. 
   -- @function [parent=#Airbase] getDesc
   -- @param self
   -- @return #Airbase.Desc
@@ -831,7 +881,7 @@ do -- Airbase
   -- @param self
   -- @return #Warehouse The DCS warehouse object of this airbase.
 
-  --- Enables or disables the airbase and FARP auto capture game mechanic where ownership of a base can change based on the presence of ground forces or the
+  --- Enables or disables the airbase and FARP auto capture game mechanic where ownership of a base can change based on the presence of ground forces or the 
   -- default setting assigned in the editor.
   -- @function [parent=#Airbase] autoCapture
   -- @param self
@@ -842,13 +892,13 @@ do -- Airbase
   -- @param self
   -- @return #boolean `true` if autoCapture behavior is enabled and `false` otherwise.
 
-  --- Changes the passed airbase object's coalition to the set value. Must be used with Airbase.autoCapture to disable auto capturing of the base,
+  --- Changes the passed airbase object's coalition to the set value. Must be used with Airbase.autoCapture to disable auto capturing of the base, 
   -- otherwise the base can revert back to a different coalition depending on the situation and built in game capture rules.
   -- @function [parent=#Airbase] setCoalition
   -- @param self
   -- @param #number coa The new owner coalition: 0=neutra, 1=red, 2=blue.
 
-  --- Returns the wsType of every object that exists in DCS. A wsType is a table consisting of 4 entries indexed numerically.
+  --- Returns the wsType of every object that exists in DCS. A wsType is a table consisting of 4 entries indexed numerically. 
   -- It can be used to broadly categorize object types. The table can be broken down as: {mainCategory, subCat1, subCat2, index}
   -- @function [parent=#Airbase] getResourceMap
   -- @param self
@@ -865,7 +915,7 @@ do -- Warehouse
   -- The warehouse class gives control over warehouses that exist in airbase objects. These warehouses can limit the aircraft, munitions, and fuel available to coalition aircraft.
   -- @type Warehouse
 
-
+  
   --- Get a warehouse by passing its name.
   -- @function [parent=#Warehouse] getByName
   -- @param #string Name Name of the warehouse.
@@ -933,7 +983,7 @@ do -- Warehouse
   -- @return #table Itemized list of everything currently in a warehouse
 
 
-  Warehouse = {} --#Warehouse
+  Warehouse = {} --#Warehouse 
 
 end
 
@@ -941,15 +991,15 @@ do -- Spot
 
   --- [DCS Class Spot](https://wiki.hoggitworld.com/view/DCS_Class_Spot)
   -- Represents a spot from laser or IR-pointer.
-  -- @type Spot
-  -- @field #Spot.Category Category enum that stores spot categories.
-
-  --- Enum that stores spot categories.
+  -- @type Spot 
+  -- @field #Spot.Category Category enum that stores spot categories. 
+  
+  --- Enum that stores spot categories. 
   -- @type Spot.Category
   -- @field #string INFRA_RED
   -- @field #string LASER
 
-
+  
   --- Creates a laser ray emanating from the given object to a point in 3d space.
   -- @function [parent=#Spot] createLaser
   -- @param DCS#Object Source The source object of the laser.
@@ -969,7 +1019,7 @@ do -- Spot
   -- @function [parent=#Spot] getPoint
   -- @param #Spot self
   -- @return DCS#Vec3 Point in 3D, where the beam is pointing at.
-
+  
   --- Sets the destination point from which the source of the spot is drawn toward.
   -- @function [parent=#Spot] setPoint
   -- @param #Spot self
@@ -984,7 +1034,7 @@ do -- Spot
   -- @function [parent=#Spot] setCode
   -- @param #Spot self
   -- @param #number Code The laser code. Default value is 1688.
-
+  
   --- Destroys the spot.
   -- @function [parent=#Spot] destroy
   -- @param #Spot self
@@ -999,117 +1049,119 @@ do -- Spot
 end -- Spot
 
 do -- Controller
-  --- Controller is an object that performs A.I.-tasks. Other words controller is an instance of A.I.. Controller stores current main task, active enroute tasks and behavior options. Controller performs commands. Please, read DCS A-10C GUI Manual EN.pdf chapter "Task Planning for Unit Groups", page 91 to understand A.I. system of DCS:A-10C.
-  --
+
+  --- Controller is an object that performs A.I.-tasks. Other words controller is an instance of A.I.. Controller stores current main task, active enroute tasks and behavior options. Controller performs commands. Please, read DCS A-10C GUI Manual EN.pdf chapter "Task Planning for Unit Groups", page 91 to understand A.I. system of DCS:A-10C. 
+  -- 
   -- This class has 2 types of functions:
-  --
+  -- 
   -- * Tasks
   -- * Commands: Commands are instant actions those required zero time to perform. Commands may be used both for control unit/group behavior and control game mechanics.
+  -- 
   -- @type Controller
   -- @field #Controller.Detection Detection Enum contains identifiers of surface types.
-
+  
   --- Enables and disables the controller.
   -- Note: Now it works only for ground / naval groups!
   -- @function [parent=#Controller] setOnOff
   -- @param self
   -- @param #boolean value Enable / Disable.
-
+  
   -- Tasks
-
+  
   --- Resets current task and then sets the task to the controller. Task is a table that contains task identifier and task parameters.
   -- @function [parent=#Controller] setTask
   -- @param self
   -- @param #Task task
-
+  
   --- Resets current task of the controller.
-  -- @function [parent=#Controller] resetTask
+  -- @function [parent=#Controller] resetTask 
   -- @param self
-
+  
   --- Pushes the task to the front of the queue and makes the task active. Further call of function Controller.setTask() function will stop current task, clear the queue and set the new task active. If the task queue is empty the function will work like function Controller.setTask() function.
   -- @function [parent=#Controller] pushTask
   -- @param self
   -- @param #Task task
-
+  
   --- Pops current (front) task from the queue and makes active next task in the queue (if exists). If no more tasks in the queue the function works like function Controller.resetTask() function. Does nothing if the queue is empty.
   -- @function [parent=#Controller] popTask
   -- @param self
-
-  --- Returns true if the controller has a task.
+  
+  --- Returns true if the controller has a task. 
   -- @function [parent=#Controller] hasTask
   -- @param self
   -- @return #boolean
-
+  
   -- Commands
-
+  
   --TODO: describe #Command structure
   --- Sets the command to perform by controller.
   -- @function [parent=#Controller] setCommand
   -- @param self
-  -- @param #Command command Table that contains command identifier and command parameters.
-
-
+  -- @param #Command command Table that contains command identifier and command parameters. 
+  
+  
   -- Behaviours
-
+  
   --- Sets the option to the controller.
   -- Option is a pair of identifier and value. Behavior options are global parameters those affect controller behavior in all tasks it performs.
   -- Option identifiers and values are stored in table AI.Option in subtables Air, Ground and Naval.
-  --
+  -- 
   -- OptionId = @{#AI.Option.Air.id} or @{#AI.Option.Ground.id} or @{#AI.Option.Naval.id}
   -- OptionValue = AI.Option.Air.val[optionName] or AI.Option.Ground.val[optionName] or AI.Option.Naval.val[optionName]
-  --
+  -- 
   -- @function [parent=#Controller] setOption
   -- @param self
-  -- @param #OptionId optionId Option identifier.
+  -- @param #OptionId optionId Option identifier. 
   -- @param #OptionValue optionValue Value of the option.
-
-
+  
+  
   -- Detection
-
-  --- Enum contains identifiers of surface types.
+  
+  --- Enum containing detection types.
   -- @type Controller.Detection
-  -- @field VISUAL
-  -- @field OPTIC
-  -- @field RADAR
-  -- @field IRST
-  -- @field RWR
-  -- @field DLINK
-
-  --- Detected target.
-  -- @type DetectedTarget
-  -- @field Wrapper.Object#Object object The target
+  -- @field #number VISUAL Visual detection. Numeric value 1.
+  -- @field #number OPTIC Optical detection. Numeric value 2.
+  -- @field #number RADAR Radar detection. Numeric value 4.
+  -- @field #number IRST Infra-red search and track detection. Numeric value 8.
+  -- @field #number RWR Radar Warning Receiver detection. Numeric value 16.
+  -- @field #number DLINK Data link detection. Numeric value 32.
+  
+  --- Detected target. 
+  -- @type Controller.DetectedTarget
+  -- @field DCS#Object object The target
   -- @field #boolean visible The target is visible
   -- @field #boolean type The target type is known
   -- @field #boolean distance Distance to the target is known
-
-
-  --- Checks if the target is detected or not. If one or more detection method is specified the function will return true if the target is detected by at least one of these methods. If no detection methods are specified the function will return true if the target is detected by any method.
+  
+  
+  --- Checks if the target is detected or not. If one or more detection method is specified the function will return true if the target is detected by at least one of these methods. If no detection methods are specified the function will return true if the target is detected by any method. 
   -- @function [parent=#Controller] isTargetDetected
   -- @param self
   -- @param Wrapper.Object#Object target Target to check
-  -- @param #Controller.Detection detection Controller.Detection detection1, Controller.Detection detection2, ... Controller.Detection detectionN
-  -- @return #boolean detected True if the target is detected.
-  -- @return #boolean visible Has effect only if detected is true. True if the target is visible now.
-  -- @return #ModelTime lastTime Has effect only if visible is false. Last time when target was seen.
+  -- @param #Controller.Detection detection Controller.Detection detection1, Controller.Detection detection2, ... Controller.Detection detectionN 
+  -- @return #boolean detected True if the target is detected. 
+  -- @return #boolean visible Has effect only if detected is true. True if the target is visible now. 
   -- @return #boolean type Has effect only if detected is true. True if the target type is known.
   -- @return #boolean distance Has effect only if detected is true. True if the distance to the target is known.
-  -- @return #Vec3 lastPos Has effect only if visible is false. Last position of the target when it was seen.
-  -- @return #Vec3 lastVel Has effect only if visible is false. Last velocity of the target when it was seen.
-
-
+  -- @return #ModelTime lastTime Has effect only if visible is false. Last time when target was seen. 
+  -- @return #Vec3 lastPos Has effect only if visible is false. Last position of the target when it was seen. 
+  -- @return #Vec3 lastVel Has effect only if visible is false. Last velocity of the target when it was seen. 
+  
+  
   --- Returns list of detected targets. If one or more detection method is specified the function will return targets which were detected by at least one of these methods. If no detection methods are specified the function will return targets which were detected by any method.
   -- @function [parent=#Controller] getDetectedTargets
   -- @param self
-  -- @param #Controller.Detection detection Controller.Detection detection1, Controller.Detection detection2, ... Controller.Detection detectionN
+  -- @param #Controller.Detection detection Controller.Detection detection1, Controller.Detection detection2, ... Controller.Detection detectionN 
   -- @return #list<#DetectedTarget> array of DetectedTarget
-
+  
   --- Know a target.
   -- @function [parent=#Controller] knowTarget
   -- @param self
   -- @param Wrapper.Object#Object object The target.
   -- @param #boolean type Target type is known.
   -- @param #boolean distance Distance to target is known.
-
-
+  
+  
   Controller = {} --#Controller
 
 end -- Controller
@@ -1117,9 +1169,10 @@ end -- Controller
 
 do -- Unit
 
+  --- Unit.
   -- @type Unit
   -- @extends #CoalitionObject
-  -- @field ID Identifier of an unit. It assigned to an unit by the Mission Editor automatically.
+  -- @field ID Identifier of an unit. It assigned to an unit by the Mission Editor automatically. 
   -- @field #Unit.Category Category
   -- @field #Unit.RefuelingSystem RefuelingSystem
   -- @field #Unit.SensorType SensorType
@@ -1137,8 +1190,8 @@ do -- Unit
   -- @field #Unit.Optic Optic
   -- @field #Unit.Radar Radar
   -- @field #Unit.IRST IRST
-
-
+  
+  
   --- Enum that stores unit categories.
   -- @type Unit.Category
   -- @field AIRPLANE
@@ -1146,39 +1199,39 @@ do -- Unit
   -- @field GROUND_UNIT
   -- @field SHIP
   -- @field STRUCTURE
-
+  
   --- Enum that stores aircraft refueling system types.
   -- @type Unit.RefuelingSystem
   -- @field BOOM_AND_RECEPTACLE Tanker with a boom.
   -- @field PROBE_AND_DROGUE Tanker with a probe.
-
+  
   --- Enum that stores sensor types.
   -- @type Unit.SensorType
   -- @field OPTIC
   -- @field RADAR
   -- @field IRST
   -- @field RWR
-
+  
   --- Enum that stores types of optic sensors.
   -- @type Unit.OpticType
   -- @field TV TV-sensor
   -- @field LLTV Low-level TV-sensor
   -- @field IR Infra-Red optic sensor
-
+  
   --- Enum that stores radar types.
   -- @type Unit.RadarType
   -- @field AS air search radar
   -- @field SS surface/land search radar
-
-
-  --- A unit descriptor.
+  
+  
+  --- A unit descriptor. 
   -- @type Unit.Desc
   -- @extends #Object.Desc
   -- @field #Unit.Category category Unit Category
   -- @field #Mass massEmpty mass of empty unit
   -- @field #number speedMax istance / Time, --maximal velocity
-
-  --- An aircraft descriptor.
+  
+  --- An aircraft descriptor. 
   -- @type Unit.DescAircraft
   -- @extends #Unit.Desc
   -- @field #Mass fuelMassMax maximal inner fuel mass
@@ -1188,137 +1241,137 @@ do -- Unit
   -- @field #number NyMin minimal safe acceleration
   -- @field #number NyMax maximal safe acceleration
   -- @field #Unit.RefuelingSystem tankerType refueling system type
-
+  
   --- An airplane descriptor.
-  -- @type Unit.DescAirplane
+  -- @type Unit.DescAirplane 
   -- @extends #Unit.DescAircraft
   -- @field #number speedMax0 Distance / Time maximal TAS at ground level
   -- @field #number speedMax10K Distance / Time maximal TAS at altitude of 10 km
-
+  
   --- A helicopter descriptor.
-  -- @type Unit.DescHelicopter
+  -- @type Unit.DescHelicopter 
   -- @extends #Unit.DescAircraft
   -- @field #Distance HmaxStat static ceiling
-
+  
   --- A vehicle descriptor.
-  -- @type Unit.DescVehicle
+  -- @type Unit.DescVehicle 
   -- @extends #Unit.Desc
   -- @field #Angle maxSlopeAngle maximal slope angle
   -- @field #boolean riverCrossing can the vehicle cross a rivers
-
+  
   --- A ship descriptor.
-  -- @type Unit.DescShip
+  -- @type Unit.DescShip 
   -- @extends #Unit.Desc
-
+   
   --- ammunition item: "type-count" pair.
   -- @type Unit.AmmoItem
   -- @field #Weapon.Desc desc ammunition descriptor
   -- @field #number count ammunition count
-
+  
   --- A unit sensor.
   -- @type Unit.Sensor
   -- @field #TypeName typeName
   -- @field #Unit.SensorType type
-
+  
   --- An optic sensor.
-  -- @type Unit.Optic
+  -- @type Unit.Optic 
   -- @extends #Unit.Sensor
   -- @field #Unit.OpticType opticType
-
+  
   --- A radar.
-  -- @type  Unit.Radar
+  -- @type  Unit.Radar 
   -- @extends #Unit.Sensor
   -- @field #Distance detectionDistanceRBM detection distance for RCS=1m^2 in real-beam mapping mode, nil if radar doesn't support surface/land search
   -- @field #Distance detectionDistanceHRM detection distance for RCS=1m^2 in high-resolution mapping mode, nil if radar has no HRM
   -- @field #Unit.Radar.detectionDistanceAir detectionDistanceAir detection distance for RCS=1m^2 airborne target, nil if radar doesn't support air search
-
+  
   --- A radar.
-  -- @type Unit.Radar.detectionDistanceAir
+  -- @type Unit.Radar.detectionDistanceAir 
   -- @field #Unit.Radar.detectionDistanceAir.upperHemisphere upperHemisphere
   -- @field #Unit.Radar.detectionDistanceAir.lowerHemisphere lowerHemisphere
-
+  
   --- A radar.
   -- @type Unit.Radar.detectionDistanceAir.upperHemisphere
   -- @field #Distance headOn
   -- @field #Distance tailOn
-
+  
   --- A radar.
-  -- @type Unit.Radar.detectionDistanceAir.lowerHemisphere
+  -- @type Unit.Radar.detectionDistanceAir.lowerHemisphere 
   -- @field #Distance headOn
   -- @field #Distance tailOn
-
+  
   --- An IRST.
-  --  @type Unit.IRST
+  --  @type Unit.IRST 
   --  @extends #Unit.Sensor
   --  @field #Distance detectionDistanceIdle detection of tail-on target with heat signature = 1 in upper hemisphere, engines are in idle
   --  @field #Distance detectionDistanceMaximal ..., engines are in maximal mode
   --  @field #Distance detectionDistanceAfterburner ..., engines are in afterburner mode
-
+  
   --- An RWR.
-  --  @type Unit.RWR
+  --  @type Unit.RWR 
   --  @extends #Unit.Sensor
-
+  
   --- table that stores all unit sensors.
   -- TODO @type Sensors
-  --
-
-
-  --- Returns unit object by the name assigned to the unit in Mission Editor. If there is unit with such name or the unit is destroyed the function will return nil. The function provides access to non-activated units too.
+  -- 
+  
+  
+  --- Returns unit object by the name assigned to the unit in Mission Editor. If there is unit with such name or the unit is destroyed the function will return nil. The function provides access to non-activated units too. 
   -- @function [parent=#Unit] getByName
   -- @param #string name
   -- @return #Unit
-
+  
   --- Returns if the unit is activated.
   -- @function [parent=#Unit] isActive
   -- @param #Unit self
   -- @return #boolean
-
+  
   --- Returns name of the player that control the unit or nil if the unit is controlled by A.I.
   -- @function [parent=#Unit] getPlayerName
   -- @param #Unit self
   -- @return #string
-
+  
   --- returns the unit's unique identifier.
   -- @function [parent=#Unit] getID
   -- @param #Unit self
   -- @return #Unit.ID
-
-
+  
+  
   --- Returns the unit's number in the group. The number is the same number the unit has in ME. It may not be changed during the mission. If any unit in the group is destroyed, the numbers of another units will not be changed.
   -- @function [parent=#Unit] getNumber
   -- @param #Unit self
   -- @return #number
-
+  
   --- Returns controller of the unit if it exist and nil otherwise
   -- @function [parent=#Unit] getController
   -- @param #Unit self
   -- @return #Controller
-
+  
   --- Returns the unit's group if it exist and nil otherwise
   -- @function [parent=#Unit] getGroup
   -- @param #Unit self
   -- @return #Group
-
+  
   --- Returns the unit's callsign - the localized string.
   -- @function [parent=#Unit] getCallsign
   -- @param #Unit self
   -- @return #string
-
+  
   --- Returns the unit's health. Dead units has health <= 1.0
   -- @function [parent=#Unit] getLife
   -- @param #Unit self
   -- @return #number
-
+  
   --- returns the unit's initial health.
   -- @function [parent=#Unit] getLife0
   -- @param #Unit self
   -- @return #number
-
+  
   --- Returns relative amount of fuel (from 0.0 to 1.0) the unit has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
   -- @function [parent=#Unit] getFuel
   -- @param #Unit self
   -- @return #number
-
+  
   --- Returns the unit ammunition.
   -- @function [parent=#Unit] getAmmo
   -- @param #Unit self
@@ -1328,12 +1381,12 @@ do -- Unit
   -- @function [parent=#Unit] getDescentCapacity
   -- @param #Unit self
   -- @return #number Number of soldiers that embark.
-
-  --- Returns the unit sensors.
+  
+  --- Returns the unit sensors. 
   -- @function [parent=#Unit] getSensors
   -- @param #Unit self
   -- @return #Unit.Sensors
-
+  
   --- Returns true if the unit has specified types of sensors. This function is more preferable than Unit.getSensors() if you don't want to get information about all the unit's sensors, and just want to check if the unit has specified types of sensors.
   -- @function [parent=#Unit] hasSensors
   -- @param #Unit self
@@ -1347,25 +1400,25 @@ do -- Unit
   -- unit:hasSensors(Unit.SensorType.RADAR, Unit.RadarType.AS)
   -- If no additional parameters are specified the function returns true if the unit has at least one sensor of specified type.
   -- If sensor type is not specified the function returns true if the unit has at least one sensor of any type.
-  --
-
+  -- 
+  
   --- returns two values:
   -- First value indicates if at least one of the unit's radar(s) is on.
-  -- Second value is the object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
+  -- Second value is the object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target. 
   -- @function [parent=#Unit] getRadar
   -- @param #Unit self
   -- @return #boolean, Wrapper.Object#Object
-
-  --- Returns unit descriptor. Descriptor type depends on unit category.
+  
+  --- Returns unit descriptor. Descriptor type depends on unit category. 
   -- @function [parent=#Unit] getDesc
   -- @param #Unit self
   -- @return #Unit.Desc
-
+  
   --- GROUND - Switch on/off radar emissions
   -- @function [parent=#Unit] enableEmission
   -- @param #Unit self
   -- @param #boolean switch
-
+  
   Unit = {} --#Unit
 
 end -- Unit
@@ -1375,9 +1428,9 @@ do -- Group
 
   --- Represents group of Units.
   -- @type Group
-  -- @field #ID ID Identifier of a group. It is assigned to a group by Mission Editor automatically.
-  -- @field #Group.Category Category Enum contains identifiers of group types.
-
+  -- @field #ID ID Identifier of a group. It is assigned to a group by Mission Editor automatically. 
+  -- @field #Group.Category Category Enum contains identifiers of group types. 
+  
   --- Enum contains identifiers of group types.
   -- @type Group.Category
   -- @field AIRPLANE
@@ -1385,76 +1438,76 @@ do -- Group
   -- @field GROUND
   -- @field SHIP
   -- @field TRAIN
-
+  
   -- Static Functions
-
-  --- Returns group by the name assigned to the group in Mission Editor.
+  
+  --- Returns group by the name assigned to the group in Mission Editor. 
   -- @function [parent=#Group] getByName
   -- @param #string name
   -- @return #Group
-
+  
   -- Member Functions
-
-  --- returns true if the group exist or false otherwise.
+  
+  --- returns true if the group exist or false otherwise. 
   -- @function [parent=#Group] isExist
-  -- @param #Group self
+  -- @param #Group self 
   -- @return #boolean
-
+  
   --- Destroys the group and all of its units.
   -- @function [parent=#Group] destroy
-  -- @param #Group self
-
+  -- @param #Group self 
+  
   --- Returns category of the group.
   -- @function [parent=#Group] getCategory
-  -- @param #Group self
+  -- @param #Group self 
   -- @return #Group.Category
-
+  
   --- Returns the coalition of the group.
   -- @function [parent=#Group] getCoalition
-  -- @param #Group self
+  -- @param #Group self 
   -- @return #coalition.side
-
+  
   --- Returns the group's name. This is the same name assigned to the group in Mission Editor.
   -- @function [parent=#Group] getName
-  -- @param #Group self
+  -- @param #Group self 
   -- @return #string
-
+  
   --- Returns the group identifier.
   -- @function [parent=#Group] getID
-  -- @param #Group self
+  -- @param #Group self 
   -- @return #ID
-
+  
   --- Returns the unit with number unitNumber. If the unit is not exists the function will return nil.
   -- @function [parent=#Group] getUnit
-  -- @param #Group self
+  -- @param #Group self 
   -- @param #number unitNumber
   -- @return #Unit
-
+  
   --- Returns current size of the group. If some of the units will be destroyed, As units are destroyed the size of the group will be changed.
   -- @function [parent=#Group] getSize
-  -- @param #Group self
+  -- @param #Group self 
   -- @return #number
-
+  
   --- Returns initial size of the group. If some of the units will be destroyed, initial size of the group will not be changed; Initial size limits the unitNumber parameter for Group.getUnit() function.
   -- @function [parent=#Group] getInitialSize
-  -- @param #Group self
+  -- @param #Group self 
   -- @return #number
-
+  
   --- Returns array of the units present in the group now. Destroyed units will not be enlisted at all.
   -- @function [parent=#Group] getUnits
-  -- @param #Group self
+  -- @param #Group self 
   -- @return #list<#Unit> array of Units
-
-  --- Returns controller of the group.
+  
+  --- Returns controller of the group. 
   -- @function [parent=#Group] getController
-  -- @param #Group self
+  -- @param #Group self 
   -- @return #Controller
-
+  
     --- GROUND - Switch on/off radar emissions
   -- @function [parent=#Group] enableEmission
   -- @param #Group self
   -- @param #boolean switch
-
+  
   Group = {} --#Group
 
 end -- Group
@@ -1503,7 +1556,7 @@ do -- AI
   -- @field #AI.Skill Skill
   -- @field #AI.Task Task
   -- @field #AI.Option Option
-
+  
   --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
   -- @type AI.Skill
   -- @field AVERAGE
@@ -1512,7 +1565,7 @@ do -- AI
   -- @field EXCELLENT
   -- @field PLAYER
   -- @field CLIENT
-
+  
   --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
   -- @type AI.Task
   -- @field #AI.Task.WeaponExpend WeaponExpend
@@ -1522,7 +1575,7 @@ do -- AI
   -- @field #AI.Task.TurnMethod TurnMethod
   -- @field #AI.Task.AltitudeType AltitudeType
   -- @field #AI.Task.VehicleFormation VehicleFormation
-
+  
   --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
   -- @type AI.Task.WeaponExpend
   -- @field ONE
@@ -1531,12 +1584,12 @@ do -- AI
   -- @field QUARTER
   -- @field HALF
   -- @field ALL
-
+  
   --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
   -- @type AI.Task.OrbitPattern
   -- @field CIRCLE
   -- @field RACE_TRACK
-
+  
   --- [https://wiki.hoggitworld.com/view/DCS_enum_AI](https://wiki.hoggitworld.com/view/DCS_enum_AI)
   -- @type AI.Task.Designation
   -- @field NO
@@ -1544,7 +1597,7 @@ do -- AI
   -- @field WP
   -- @field IR_POINTER
   -- @field LASER
-
+  
   ---
   -- @type AI.Task.WaypointType
   -- @field TAKEOFF
@@ -1552,17 +1605,17 @@ do -- AI
   -- @field TURNING_POINT
   -- @field TAKEOFF_PARKING_HOT
   -- @field LAND
-
+  
   ---
   -- @type AI.Task.TurnMethod
   -- @field FLY_OVER_POINT
   -- @field FIN_POINT
-
+  
   ---
   -- @type AI.Task.AltitudeType
   -- @field BARO
   -- @field RADIO
-
+  
   ---
   -- @type AI.Task.VehicleFormation
   -- @field OFF_ROAD
@@ -1573,29 +1626,29 @@ do -- AI
   -- @field VEE
   -- @field ECHELON_LEFT
   -- @field ECHELON_RIGHT
-
+  
   ---
   -- @type AI.Option
   -- @field #AI.Option.Air                          Air
   -- @field #AI.Option.Ground                       Ground
   -- @field #AI.Option.Naval                        Naval
-
+  
   ---
   -- @type AI.Option.Air
   -- @field #AI.Option.Air.id                       id
   -- @field #AI.Option.Air.val                      val
-
+  
   ---
   -- @type AI.Option.Ground
   -- @field #AI.Option.Ground.id                    id
   -- @field #AI.Option.Ground.val                   val
   -- @field #AI.Option.Ground.mid                   mid
   -- @field #AI.Option.Ground.mval                  mval
-  --
+  -- 
   -- @type AI.Option.Naval
   -- @field #AI.Option.Naval.id                     id
   -- @field #AI.Option.Naval.val                    val
-
+ 
   ---
   -- @type AI.Option.Air.id
   -- @field NO_OPTION
@@ -1626,7 +1679,7 @@ do -- AI
   -- @field #AI.Option.Air.val.REACTION_ON_THREAT REACTION_ON_THREAT
   -- @field #AI.Option.Air.val.RADAR_USING RADAR_USING
   -- @field #AI.Option.Air.val.FLARE_USING FLARE_USING
-
+  
   ---
   -- @type AI.Option.Air.val.ROE
   -- @field WEAPON_FREE
@@ -1634,36 +1687,36 @@ do -- AI
   -- @field OPEN_FIRE
   -- @field RETURN_FIRE
   -- @field WEAPON_HOLD
-
-  ---
+  
+  --- 
   -- @type AI.Option.Air.val.REACTION_ON_THREAT
   -- @field NO_REACTION
   -- @field PASSIVE_DEFENCE
   -- @field EVADE_FIRE
   -- @field BYPASS_AND_ESCAPE
   -- @field ALLOW_ABORT_MISSION
-
+  
   ---
   -- @type AI.Option.Air.val.RADAR_USING
   -- @field NEVER
   -- @field FOR_ATTACK_ONLY
   -- @field FOR_SEARCH_IF_REQUIRED
   -- @field FOR_CONTINUOUS_SEARCH
-
+  
   ---
   -- @type AI.Option.Air.val.FLARE_USING
   -- @field NEVER
   -- @field AGAINST_FIRED_MISSILE
   -- @field WHEN_FLYING_IN_SAM_WEZ
   -- @field WHEN_FLYING_NEAR_ENEMIES
-
+  
   ---
   -- @type AI.Option.Air.val.ECM_USING
   -- @field NEVER_USE
   -- @field USE_IF_ONLY_LOCK_BY_RADAR
   -- @field USE_IF_DETECTED_LOCK_BY_RADAR
   -- @field ALWAYS_USE
-
+  
   ---
   -- @type AI.Option.Air.val.MISSILE_ATTACK
   -- @field MAX_RANGE
@@ -1681,56 +1734,57 @@ do -- AI
   -- @field ALARM_STATE @{#AI.Option.Ground.val.ALARM_STATE}
   -- @field ENGAGE_AIR_WEAPONS
   -- @field AC_ENGAGEMENT_RANGE_RESTRICTION
-
+  -- @field EVASION_OF_ARM
+  
   ---
   -- @type AI.Option.Ground.mid -- Moose added
   -- @field RESTRICT_AAA_MIN        27
   -- @field RESTRICT_AAA_MAX        29
   -- @field RESTRICT_TARGETS @{#AI.Option.Ground.mval.ENGAGE_TARGETS}  28
-
+  
   ---
   -- @type AI.Option.Ground.val
   -- @field #AI.Option.Ground.val.ROE               ROE
   -- @field #AI.Option.Ground.val.ALARM_STATE       ALARM_STATE
   -- @field #AI.Option.Ground.val.ENGAGE_TARGETS    RESTRICT_TARGETS
-
+  
   ---
   -- @type AI.Option.Ground.val.ROE
   -- @field OPEN_FIRE
   -- @field RETURN_FIRE
   -- @field WEAPON_HOLD
-
+  
   ---
   -- @type AI.Option.Ground.mval -- Moose added
   -- @field #AI.Option.Ground.mval.ENGAGE_TARGETS   ENGAGE_TARGETS
-
+  
   ---
   -- @type AI.Option.Ground.mval.ENGAGE_TARGETS -- Moose added
   -- @field ANY_TARGET -- 0
   -- @field AIR_UNITS_ONLY -- 1
   -- @field GROUND_UNITS_ONLY -- 2
-
+  
   ---
   -- @type AI.Option.Ground.val.ALARM_STATE
   -- @field AUTO
   -- @field GREEN
   -- @field RED
-
+  
   ---
   -- @type AI.Option.Naval.id
   -- @field NO_OPTION
   -- @field ROE
-
+  
   ---
   -- @type AI.Option.Naval.val
   -- @field #AI.Option.Naval.val.ROE ROE
-
+  
   ---
   -- @type AI.Option.Naval.val.ROE
   -- @field OPEN_FIRE
   -- @field RETURN_FIRE
   -- @field WEAPON_HOLD
-
+  
   AI = {} --#AI
 
 end -- AI

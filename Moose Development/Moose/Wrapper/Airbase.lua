@@ -64,6 +64,11 @@
 -- To be able to distinguish easily in your code the difference between a AIRBASE API call and a DCS Airbase API call,
 -- the first letter of the method is also capitalized. So, by example, the DCS Airbase method DCSWrapper.Airbase#Airbase.getName()
 -- is implemented in the AIRBASE class as @{#AIRBASE.GetName}().
+-- 
+-- ## Note on the "H" heli pads in the Syria map:
+-- 
+-- As of the time of writing (Oct 2024, DCS DCS 2.9.8.1107), these 143 objects have the **same name and object ID**, which makes them unusable in Moose, e.g. you cannot find a specific one for spawning etc.
+-- Waiting for Ugra and ED to fix this issue.
 --
 -- @field #AIRBASE AIRBASE
 AIRBASE = {
@@ -250,6 +255,9 @@ AIRBASE.Nevada = {
 -- * AIRBASE.Normandy.Villacoublay
 -- * AIRBASE.Normandy.Vrigny
 -- * AIRBASE.Normandy.West_Malling
+-- * AIRBASE.Normandy.Eastchurch
+-- * AIRBASE.Normandy.Headcorn
+-- * AIRBASE.Normandy.Hawkinge
 --
 -- @field Normandy
 AIRBASE.Normandy = {
@@ -332,6 +340,9 @@ AIRBASE.Normandy = {
   ["Villacoublay"] = "Villacoublay",
   ["Vrigny"] = "Vrigny",
   ["West_Malling"] = "West Malling",
+  ["Eastchurch"] = "Eastchurch",
+  ["Headcorn"] = "Headcorn",
+  ["Hawkinge"] = "Hawkinge",
 }
 
 --- Airbases of the Persion Gulf Map:
@@ -452,6 +463,7 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Gaziantep
 -- * AIRBASE.Syria.Gazipasa
 -- * AIRBASE.Syria.Gecitkale
+-- * AIRBASE.Syria.H
 -- * AIRBASE.Syria.H3
 -- * AIRBASE.Syria.H3_Northwest
 -- * AIRBASE.Syria.H3_Southwest
@@ -499,6 +511,10 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Tha_lah
 -- * AIRBASE.Syria.Tiyas
 -- * AIRBASE.Syria.Wujah_Al_Hajar
+-- * AIRBASE.Syria.Ben_Gurion 
+-- * AIRBASE.Syria.Hatzor
+-- * AIRBASE.Syria.Palmashim
+-- * AIRBASE.Syria.Tel_Nof
 --
 --@field Syria
 AIRBASE.Syria={
@@ -520,6 +536,7 @@ AIRBASE.Syria={
   ["Gaziantep"] = "Gaziantep",
   ["Gazipasa"] = "Gazipasa",
   ["Gecitkale"] = "Gecitkale",
+  ["H"] = "H",
   ["H3"] = "H3",
   ["H3_Northwest"] = "H3 Northwest",
   ["H3_Southwest"] = "H3 Southwest",
@@ -567,6 +584,10 @@ AIRBASE.Syria={
   ["Tha_lah"] = "Tha'lah",
   ["Tiyas"] = "Tiyas",
   ["Wujah_Al_Hajar"] = "Wujah Al Hajar",
+  ["Ben_Gurion"] = "Ben Gurion",
+  ["Hatzor"] = "Hatzor",
+  ["Palmashim"] = "Palmashim",
+  ["Tel_Nof"] = "Tel Nof",
 }
 
 --- Airbases of the Mariana Islands map:
@@ -595,7 +616,6 @@ AIRBASE.MarianaIslands = {
 --- Airbases of the South Atlantic map:
 --
 -- * AIRBASE.SouthAtlantic.Almirante_Schroeders
--- * AIRBASE.SouthAtlantic.Caleta_Tortel
 -- * AIRBASE.SouthAtlantic.Comandante_Luis_Piedrabuena
 -- * AIRBASE.SouthAtlantic.Cullen
 -- * AIRBASE.SouthAtlantic.El_Calafate
@@ -626,7 +646,6 @@ AIRBASE.MarianaIslands = {
 --@field SouthAtlantic
 AIRBASE.SouthAtlantic={
   ["Almirante_Schroeders"] = "Almirante Schroeders",
-  ["Caleta_Tortel"] = "Caleta Tortel",
   ["Comandante_Luis_Piedrabuena"] = "Comandante Luis Piedrabuena",
   ["Cullen"] = "Cullen",
   ["El_Calafate"] = "El Calafate",
@@ -659,100 +678,237 @@ AIRBASE.SouthAtlantic={
 --
 -- * AIRBASE.Sinai.Abu_Rudeis
 -- * AIRBASE.Sinai.Abu_Suwayr
+-- * AIRBASE.Sinai.Al_Bahr_al_Ahmar
 -- * AIRBASE.Sinai.Al_Ismailiyah
+-- * AIRBASE.Sinai.Al_Khatatbah
 -- * AIRBASE.Sinai.Al_Mansurah
+-- * AIRBASE.Sinai.Al_Rahmaniyah_Air_Base
 -- * AIRBASE.Sinai.As_Salihiyah
 -- * AIRBASE.Sinai.AzZaqaziq
 -- * AIRBASE.Sinai.Baluza
 -- * AIRBASE.Sinai.Ben_Gurion
+-- * AIRBASE.Sinai.Beni_Suef
 -- * AIRBASE.Sinai.Bilbeis_Air_Base
 -- * AIRBASE.Sinai.Bir_Hasanah
+-- * AIRBASE.Sinai.Birma_Air_Base
+-- * AIRBASE.Sinai.Borj_El_Arab_International_Airport
 -- * AIRBASE.Sinai.Cairo_International_Airport
 -- * AIRBASE.Sinai.Cairo_West
 -- * AIRBASE.Sinai.Difarsuwar_Airfield
 -- * AIRBASE.Sinai.El_Arish
 -- * AIRBASE.Sinai.El_Gora
+-- * AIRBASE.Sinai.El_Minya
 -- * AIRBASE.Sinai.Fayed
+-- * AIRBASE.Sinai.Gebel_El_Basur_Air_Base
 -- * AIRBASE.Sinai.Hatzerim
 -- * AIRBASE.Sinai.Hatzor
+-- * AIRBASE.Sinai.Hurghada_International_Airport
 -- * AIRBASE.Sinai.Inshas_Airbase
+-- * AIRBASE.Sinai.Jiyanklis_Air_Base
 -- * AIRBASE.Sinai.Kedem
 -- * AIRBASE.Sinai.Kibrit_Air_Base
+-- * AIRBASE.Sinai.Kom_Awshim
 -- * AIRBASE.Sinai.Melez
 -- * AIRBASE.Sinai.Nevatim
 -- * AIRBASE.Sinai.Ovda
--- * AIRBASE.Sinai.Palmahim
+-- * AIRBASE.Sinai.Palmachim
+-- * AIRBASE.Sinai.Quwaysina
 -- * AIRBASE.Sinai.Ramon_Airbase
+-- * AIRBASE.Sinai.Ramon_International_Airport
 -- * AIRBASE.Sinai.Sde_Dov
+-- * AIRBASE.Sinai.Sharm_El_Sheikh_International_Airport
 -- * AIRBASE.Sinai.St_Catherine
 -- * AIRBASE.Sinai.Tel_Nof
+-- * AIRBASE.Sinai.Wadi_Abu_Rish
 -- * AIRBASE.Sinai.Wadi_al_Jandali
 --
 -- @field Sinai
 AIRBASE.Sinai = {
   ["Abu_Rudeis"] = "Abu Rudeis",
   ["Abu_Suwayr"] = "Abu Suwayr",
+  ["Al_Bahr_al_Ahmar"] = "Al Bahr al Ahmar",
   ["Al_Ismailiyah"] = "Al Ismailiyah",
+  ["Al_Khatatbah"] = "Al Khatatbah",
   ["Al_Mansurah"] = "Al Mansurah",
+  ["Al_Rahmaniyah_Air_Base"] = "Al Rahmaniyah Air Base",
   ["As_Salihiyah"] = "As Salihiyah",
   ["AzZaqaziq"] = "AzZaqaziq",
   ["Baluza"] = "Baluza",
   ["Ben_Gurion"] = "Ben-Gurion",
+  ["Beni_Suef"] = "Beni Suef",
   ["Bilbeis_Air_Base"] = "Bilbeis Air Base",
   ["Bir_Hasanah"] = "Bir Hasanah",
+  ["Birma_Air_Base"] = "Birma Air Base",
+  ["Borj_El_Arab_International_Airport"] = "Borj El Arab International Airport",
   ["Cairo_International_Airport"] = "Cairo International Airport",
   ["Cairo_West"] = "Cairo West",
   ["Difarsuwar_Airfield"] = "Difarsuwar Airfield",
   ["El_Arish"] = "El Arish",
   ["El_Gora"] = "El Gora",
+  ["El_Minya"] = "El Minya",
   ["Fayed"] = "Fayed",
+  ["Gebel_El_Basur_Air_Base"] = "Gebel El Basur Air Base",
   ["Hatzerim"] = "Hatzerim",
   ["Hatzor"] = "Hatzor",
+  ["Hurghada_International_Airport"] = "Hurghada International Airport",
   ["Inshas_Airbase"] = "Inshas Airbase",
+  ["Jiyanklis_Air_Base"] = "Jiyanklis Air Base",
   ["Kedem"] = "Kedem",
   ["Kibrit_Air_Base"] = "Kibrit Air Base",
+  ["Kom_Awshim"] = "Kom Awshim",
   ["Melez"] = "Melez",
   ["Nevatim"] = "Nevatim",
   ["Ovda"] = "Ovda",
-  ["Palmahim"] = "Palmahim",
+  ["Palmachim"] = "Palmachim",
+  ["Quwaysina"] = "Quwaysina",
   ["Ramon_Airbase"] = "Ramon Airbase",
+  ["Ramon_International_Airport"] = "Ramon International Airport",
   ["Sde_Dov"] = "Sde Dov",
+  ["Sharm_El_Sheikh_International_Airport"] = "Sharm El Sheikh International Airport",
   ["St_Catherine"] = "St Catherine",
   ["Tel_Nof"] = "Tel Nof",
+  ["Wadi_Abu_Rish"] = "Wadi Abu Rish",
   ["Wadi_al_Jandali"] = "Wadi al Jandali",
 }
 
 --- Airbases of the Kola map
 -- 
 -- * AIRBASE.Kola.Banak
--- * AIRBASE.Kola.Bas_100
 -- * AIRBASE.Kola.Bodo
+-- * AIRBASE.Kola.Ivalo
 -- * AIRBASE.Kola.Jokkmokk
 -- * AIRBASE.Kola.Kalixfors
+-- * AIRBASE.Kola.Kallax
 -- * AIRBASE.Kola.Kemi_Tornio
+-- * AIRBASE.Kola.Kirkenes
 -- * AIRBASE.Kola.Kiruna
+-- * AIRBASE.Kola.Kuusamo
 -- * AIRBASE.Kola.Monchegorsk
 -- * AIRBASE.Kola.Murmansk_International
 -- * AIRBASE.Kola.Olenya
 -- * AIRBASE.Kola.Rovaniemi
 -- * AIRBASE.Kola.Severomorsk_1
 -- * AIRBASE.Kola.Severomorsk_3
--- 
+-- * AIRBASE.Kola.Vidsel
+-- * AIRBASE.Kola.Vuojarvi
+-- * AIRBASE.Kola.Andoya
+-- * AIRBASE.Kola.Alakourtti
+-- * AIRBASE.Kola.Kittila
+-- * AIRBASE.Kola.Bardufoss
+--
 -- @field Kola
 AIRBASE.Kola = {
   ["Banak"] = "Banak",
-  ["Bas_100"] = "Bas 100",
   ["Bodo"] = "Bodo",
+  ["Ivalo"] = "Ivalo",
   ["Jokkmokk"] = "Jokkmokk",
   ["Kalixfors"] = "Kalixfors",
+  ["Kallax"] = "Kallax",
   ["Kemi_Tornio"] = "Kemi Tornio",
+  ["Kirkenes"] = "Kirkenes",
   ["Kiruna"] = "Kiruna",
+  ["Kuusamo"] = "Kuusamo",
   ["Monchegorsk"] = "Monchegorsk",
   ["Murmansk_International"] = "Murmansk International",
   ["Olenya"] = "Olenya",
   ["Rovaniemi"] = "Rovaniemi",
   ["Severomorsk_1"] = "Severomorsk-1",
   ["Severomorsk_3"] = "Severomorsk-3",
+  ["Vidsel"] = "Vidsel",
+  ["Vuojarvi"] = "Vuojarvi",
+  ["Andoya"] = "Andoya",
+  ["Alakourtti"] = "Alakourtti",
+  ["Kittila"] = "Kittila",
+  ["Bardufoss"] = "Bardufoss",
+}
+
+--- Airbases of the Afghanistan map
+-- 
+-- * AIRBASE.Afghanistan.Bost
+-- * AIRBASE.Afghanistan.Bagram
+-- * AIRBASE.Afghanistan.Bamyan
+-- * AIRBASE.Afghanistan.Camp_Bastion
+-- * AIRBASE.Afghanistan.Camp_Bastion_Heliport
+-- * AIRBASE.Afghanistan.Chaghcharan
+-- * AIRBASE.Afghanistan.Dwyer
+-- * AIRBASE.Afghanistan.Farah
+-- * AIRBASE.Afghanistan.Herat
+-- * AIRBASE.Afghanistan.Gardez
+-- * AIRBASE.Afghanistan.Ghazni_Heliport
+-- * AIRBASE.Afghanistan.Jalalabad
+-- * AIRBASE.Afghanistan.Kabul
+-- * AIRBASE.Afghanistan.Kandahar
+-- * AIRBASE.Afghanistan.Kandahar_Heliport
+-- * AIRBASE.Afghanistan.Khost
+-- * AIRBASE.Afghanistan.Khost_Heliport
+-- * AIRBASE.Afghanistan.Maymana_Zahiraddin_Faryabi
+-- * AIRBASE.Afghanistan.Nimroz
+-- * AIRBASE.Afghanistan.Qala_i_Naw
+-- * AIRBASE.Afghanistan.Shindand
+-- * AIRBASE.Afghanistan.Shindand_Heliport
+-- * AIRBASE.Afghanistan.Tarinkot
+-- * AIRBASE.Afghanistan.Urgoon_Heliport
+-- 
+-- @field Afghanistan
+AIRBASE.Afghanistan = {
+  ["Bagram"] = "Bagram",
+  ["Bamyan"] = "Bamyan",
+  ["Bost"] = "Bost",
+  ["Camp_Bastion"] = "Camp Bastion",
+  ["Camp_Bastion_Heliport"] = "Camp Bastion Heliport",
+  ["Chaghcharan"] = "Chaghcharan",
+  ["Dwyer"] = "Dwyer",
+  ["Farah"] = "Farah",
+  ["Gardez"] = "Gardez",
+  ["Ghazni_Heliport"] = "Ghazni Heliport",
+  ["Herat"] = "Herat",
+  ["Jalalabad"] = "Jalalabad",
+  ["Kabul"] = "Kabul",
+  ["Kandahar"] = "Kandahar",
+  ["Kandahar_Heliport"] = "Kandahar Heliport",
+  ["Khost"] = "Khost",
+  ["Khost_Heliport"] = "Khost Heliport",
+  ["Maymana_Zahiraddin_Faryabi"] = "Maymana Zahiraddin Faryabi",
+  ["Nimroz"] = "Nimroz",
+  ["Qala_i_Naw"] = "Qala i Naw",
+  ["Sharana"] = "Sharana",
+  ["Shindand"] = "Shindand",
+  ["Shindand_Heliport"] = "Shindand Heliport",
+  ["Tarinkot"] = "Tarinkot",
+  ["Urgoon_Heliport"] = "Urgoon Heliport",
+}
+
+--- Airbases of the Iraq map
+--
+-- * AIRBASE.Iraq.Baghdad_International_Airport
+-- * AIRBASE.Iraq.Sulaimaniyah_International_Airport
+-- * AIRBASE.Iraq.Al_Sahra_Airport
+-- * AIRBASE.Iraq.Erbil_International_Airpor
+-- * AIRBASE.Iraq.Al_Taji_Airport
+-- * AIRBASE.Iraq.Al_Asad_Airbase
+-- * AIRBASE.Iraq.Al_Salam_Airbase
+-- * AIRBASE.Iraq.Balad_Airbase
+-- * AIRBASE.Iraq.Kirkuk_International_Airport
+-- * AIRBASE.Iraq.Bashur_Airport
+-- * AIRBASE.Iraq.Al_Taquddum_Airport
+-- * AIRBASE.Iraq.Qayyarah_Airfield_West
+-- * AIRBASE.Iraq.K1_Base
+--
+-- @field Iraq
+AIRBASE.Iraq = {
+  ["Baghdad_International_Airport"] = "Baghdad International Airport",
+  ["Sulaimaniyah_International_Airport"] = "Sulaimaniyah International Airport",
+  ["Al_Sahra_Airport"] = "Al-Sahra Airport",
+  ["Erbil_International_Airport"] = "Erbil International Airport",
+  ["Al_Taji_Airport"] = "Al-Taji Airport",
+  ["Al_Asad_Airbase"] = "Al-Asad Airbase",
+  ["Al_Salam_Airbase"] = "Al-Salam Airbase",
+  ["Balad_Airbase"] = "Balad Airbase",
+  ["Kirkuk_International_Airport"] = "Kirkuk International Airport",
+  ["Bashur_Airport"] = "Bashur Airport",
+  ["Al_Taquddum_Airport"] = "Al-Taquddum Airport",
+  ["Qayyarah_Airfield_West"] = "Qayyarah Airfield West",
+  ["K1_Base"] = "K1 Base",
 }
 
 --- AIRBASE.ParkingSpot ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
@@ -791,11 +947,12 @@ AIRBASE.Kola = {
 -- @field #number HelicopterOnly 40: Special spots for Helicopers.
 -- @field #number Shelter 68: Hardened Air Shelter. Currently only on Caucaus map.
 -- @field #number OpenMed 72: Open/Shelter air airplane only.
+-- @field #number SmallSizeFigher 100: Tight spots for smaller type fixed wing aircraft, like the F-16. Example of these spots: 04, 05, 06 on Muwaffaq_Salti. A Viper sized plane can spawn here, but an A-10 or Strike Eagle can't
 -- @field #number OpenBig 104: Open air spawn points. Generally larger but does not guarantee large aircraft are capable of spawning there.
 -- @field #number OpenMedOrBig 176: Combines OpenMed and OpenBig spots.
 -- @field #number HelicopterUsable 216: Combines HelicopterOnly, OpenMed and OpenBig.
--- @field #number FighterAircraft 244: Combines Shelter. OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
--- @field #number SmallSizeFigher 100: Tight spots for smaller type fixed wing aircraft, like the F-16. Example of these spots: 04, 05, 06 on Muwaffaq_Salti. A Viper sized plane can spawn here, but an A-10 or Strike Eagle can't
+-- @field #number FighterAircraft 244: Combines Shelter, OpenMed and OpenBig spots. So effectively all spots usable by fixed wing aircraft.
+-- @field #number FighterAircraftSmall 344: Combines Shelter, SmallsizeFighter, OpenMed and OpenBig spots. So effectively all spots usable by small fixed wing aircraft.
 AIRBASE.TerminalType = {
   Runway=16,
   HelicopterOnly=40,
@@ -806,6 +963,7 @@ AIRBASE.TerminalType = {
   OpenMedOrBig=176,
   HelicopterUsable=216,
   FighterAircraft=244,
+  FighterAircraftSmall=344,
 }
 
 --- Status of a parking spot.
@@ -894,40 +1052,55 @@ function AIRBASE:Register(AirbaseName)
   --end
 
   -- Set category.
-  if self.category==Airbase.Category.AIRDROME then
-    self.isAirdrome=true
-  elseif self.category==Airbase.Category.HELIPAD then
+if self.category==Airbase.Category.AIRDROME then
+  self.isAirdrome=true
+elseif self.category==Airbase.Category.HELIPAD or self.descriptors.typeName=="FARP_SINGLE_01" then
+  self.isHelipad=true
+  self.category=Airbase.Category.HELIPAD
+elseif self.category==Airbase.Category.SHIP then
+  self.isShip=true
+  -- DCS bug: Oil rigs and gas platforms have category=2 (ship). Also they cannot be retrieved by coalition.getStaticObjects()
+  if self.descriptors.typeName=="Oil rig" or self.descriptors.typeName=="Ga" then
     self.isHelipad=true
-  elseif self.category==Airbase.Category.SHIP then
-    self.isShip=true
-    -- DCS bug: Oil rigs and gas platforms have category=2 (ship). Also they cannot be retrieved by coalition.getStaticObjects()
-    if self.descriptors.typeName=="Oil rig" or self.descriptors.typeName=="Ga" then
-      self.isHelipad=true
-      self.isShip=false
-      self.category=Airbase.Category.HELIPAD
-      _DATABASE:AddStatic(AirbaseName)
-    end
-  else
-    self:E("ERROR: Unknown airbase category!")
+    self.isShip=false
+    self.category=Airbase.Category.HELIPAD
+    _DATABASE:AddStatic(AirbaseName)
   end
+else
+  self:E("ERROR: Unknown airbase category!")
+end
 
   -- Init Runways.
   self:_InitRunways()
-
+  
+  -- Number of runways
+  local Nrunways=#self.runways
+  
   -- Set the active runways based on wind direction.
-  if self.isAirdrome then
+  if Nrunways>0 then
     self:SetActiveRunway()
   end
 
   -- Init parking spots.
   self:_InitParkingSpots()
+  
+  -- Some heliports identify as airdromes in the airbase category. This is buggy in the descriptors category but also in the getCategory() and getCategoryEx() functions.
+  -- Well, thinking about it, this is actually not that "buggy" since these are really helicopter airdromes, which do not have an automatic parking spot routine.
+  -- I am still changing the category but marking it as airdrome and heliport at the same time via isAirdrome=true and isHelipad=true (important in SPAWN.SpawnAtAirbase).
+  -- The main reason for changing the category is to be able to filter airdromes from helipads, e.g. in SET_AIRBASE.
+  if self.category==Airbase.Category.AIRDROME and (Nrunways==0 or self.NparkingTotal==self.NparkingTerminal[AIRBASE.TerminalType.HelicopterOnly]) then
+    --self:E(string.format("WARNING: %s identifies as airdrome (category=0) but has no runways or just helo parking ==> will change to helipad (category=1)", self.AirbaseName))
+    self.category=Airbase.Category.HELIPAD
+    self.isAirdrome=true
+    self.isHelipad=true
+  end  
 
   -- Get 2D position vector.
   local vec2=self:GetVec2()
 
   -- Init coordinate.
   self:GetCoordinate()
-
+  
   -- Storage.
   self.storage=_DATABASE:AddStorage(AirbaseName)
 
@@ -948,6 +1121,46 @@ function AIRBASE:Register(AirbaseName)
   self:T2(string.format("Registered airbase %s", tostring(self.AirbaseName)))
 
   return self
+end
+
+--- Get the category of this airbase. This is only a debug function because DCS 2.9 incorrectly returns heliports as airdromes.
+-- @param #AIRBASE self
+function AIRBASE:_GetCategory()
+
+  local name=self.AirbaseName
+  
+  local static=StaticObject.getByName(name)
+  local airbase=Airbase.getByName(name)
+  local unit=Unit.getByName(name)
+  
+  local text=string.format("\n=====================================================")
+  text=text..string.format("\nAirbase %s:", name)
+  if static then
+    local oc, uc=static:getCategory()
+    local ex=static:getCategoryEx()
+    text=text..string.format("\nSTATIC: oc=%d, uc=%d, ex=%d", oc, uc, ex)
+    --text=text..UTILS.PrintTableToLog(static:getDesc(), nil, true)
+    text=text..string.format("\n--------------------------------------------------")
+  end
+  if unit then
+    local oc, uc=unit:getCategory()
+    local ex=unit:getCategoryEx()
+    text=text..string.format("\nUNIT: oc=%d, uc=%d, ex=%d", oc, uc, ex)
+    --text=text..UTILS.PrintTableToLog(unit:getDesc(), nil, true)
+    text=text..string.format("\n--------------------------------------------------")
+  end  
+  if airbase then
+    local oc, uc=airbase:getCategory()
+    local ex=airbase:getCategoryEx()
+    text=text..string.format("\nAIRBASE: oc=%d, uc=%d, ex=%d", oc, uc, ex)
+    text=text..string.format("\n--------------------------------------------------")
+    text=text..UTILS.PrintTableToLog(airbase:getDesc(), nil, true)  
+  end
+  
+  text=text..string.format("\n=====================================================")
+  
+
+  env.info(text)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1629,7 +1842,7 @@ function AIRBASE:_InitParkingSpots()
     self.NparkingTotal=self.NparkingTotal+1
 
     for _,terminalType in pairs(AIRBASE.TerminalType) do
-      if self._CheckTerminalType(terminalType, park.TerminalType) then
+      if self._CheckTerminalType(park.TerminalType, terminalType) then
         self.NparkingTerminal[terminalType]=self.NparkingTerminal[terminalType]+1
       end
     end
@@ -1637,6 +1850,9 @@ function AIRBASE:_InitParkingSpots()
     self.parkingByID[park.TerminalID]=park
     table.insert(self.parking, park)
   end
+  
+  -- Runways are not included in total number of parking spots
+  self.NparkingTotal=self.NparkingTotal-self.NparkingTerminal[AIRBASE.TerminalType.Runway]
 
   return self
 end
@@ -2060,9 +2276,13 @@ function AIRBASE._CheckTerminalType(Term_Type, termtype)
       match=true
      end
   elseif termtype==AIRBASE.TerminalType.FighterAircraft then
-    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig or Term_Type==AIRBASE.TerminalType.Shelter or Term_Type==AIRBASE.TerminalType.SmallSizeFighter then
+    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig or Term_Type==AIRBASE.TerminalType.Shelter then
       match=true
     end
+  elseif termtype==AIRBASE.TerminalType.FighterAircraftSmall then
+    if Term_Type==AIRBASE.TerminalType.OpenMed or Term_Type==AIRBASE.TerminalType.OpenBig or Term_Type==AIRBASE.TerminalType.Shelter or Term_Type==AIRBASE.TerminalType.SmallSizeFighter then
+      match=true
+    end    
   end
 
   return match
@@ -2119,11 +2339,6 @@ function AIRBASE:_InitRunways(IncludeInverse)
 
   -- Runway table.
   local Runways={}
-
-  if self:GetAirbaseCategory()~=Airbase.Category.AIRDROME then
-    self.runways={}
-    return {}
-  end
 
   --- Function to create a runway data table.
   local function _createRunway(name, course, width, length, center)
@@ -2210,7 +2425,7 @@ function AIRBASE:_InitRunways(IncludeInverse)
     -- Debug info.
     self:T2(runways)
 
-    if runways then
+    if runways and #runways>0 then
 
       -- Loop over runways.
       for _,rwy in pairs(runways) do
@@ -2243,6 +2458,12 @@ function AIRBASE:_InitRunways(IncludeInverse)
         end
 
       end
+      
+    else
+    
+      -- No runways
+      self.runways={}
+      return {}      
 
     end
 

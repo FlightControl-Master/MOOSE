@@ -79,7 +79,7 @@
 
 do -- FSM
 
-  --- @type FSM
+  -- @type FSM
   -- @field #string ClassName Name of the class.
   -- @field Core.Scheduler#SCHEDULER CallScheduler Call scheduler.
   -- @field #table options Options.
@@ -948,8 +948,9 @@ do -- FSM
 end
 
 do -- FSM_CONTROLLABLE
-
-  --- @type FSM_CONTROLLABLE
+  
+  ---
+  -- @type FSM_CONTROLLABLE
   -- @field Wrapper.Controllable#CONTROLLABLE Controllable
   -- @extends Core.Fsm#FSM
 
@@ -1081,8 +1082,9 @@ do -- FSM_CONTROLLABLE
 end
 
 do -- FSM_PROCESS
-
-  --- @type FSM_PROCESS
+  
+  ---
+  -- @type FSM_PROCESS
   -- @field Tasking.Task#TASK Task
   -- @extends Core.Fsm#FSM_CONTROLLABLE
 

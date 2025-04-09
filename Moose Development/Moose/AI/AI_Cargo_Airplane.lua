@@ -9,7 +9,7 @@
 -- @module AI.AI_Cargo_Airplane
 -- @image AI_Cargo_Dispatching_For_Airplanes.JPG
 
---- @type AI_CARGO_AIRPLANE
+-- @type AI_CARGO_AIRPLANE
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 
@@ -440,7 +440,7 @@ function AI_CARGO_AIRPLANE:Route( Airplane, Airbase, Speed, Height, Uncontrolled
     
     -- To point.
     local AirbasePointVec2 = Airbase:GetPointVec2()
-    local ToWaypoint = AirbasePointVec2:WaypointAir(POINT_VEC3.RoutePointAltType.BARO, "Land", "Landing", Speed or Airplane:GetSpeedMax()*0.8, true, Airbase)
+    local ToWaypoint = AirbasePointVec2:WaypointAir(COORDINATE.WaypointAltType.BARO, "Land", "Landing", Speed or Airplane:GetSpeedMax()*0.8, true, Airbase)
         
     --ToWaypoint["airdromeId"]   = Airbase:GetID()
     --ToWaypoint["speed_locked"] = true

@@ -136,12 +136,12 @@
 -- 
 -- Escort groups can have their own mission. This menu item will allow the escort group to resume their Mission from a given waypoint.
 -- Note that this is really fantastic, as you now have the dynamic of taking control of the escort groups, and allowing them to resume their path or mission.
---
--- # Developer Note
--- 
--- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
--- Therefore, this class is considered to be deprecated
---
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- ===
 -- 
 -- ### Authors: **FlightControl** 
@@ -153,7 +153,7 @@
 
 
 
---- @type AI_ESCORT_REQUEST
+-- @type AI_ESCORT_REQUEST
 -- @extends AI.AI_Escort#AI_ESCORT
 
 --- AI_ESCORT_REQUEST class
@@ -228,7 +228,7 @@ function AI_ESCORT_REQUEST:New( EscortUnit, EscortSpawn, EscortAirbase, EscortNa
   return self
 end
 
---- @param #AI_ESCORT_REQUEST self
+-- @param #AI_ESCORT_REQUEST self
 function AI_ESCORT_REQUEST:SpawnEscort()
 
   local EscortGroup = self.EscortSpawn:SpawnAtAirbase( self.EscortAirbase, SPAWN.Takeoff.Hot )
@@ -253,7 +253,7 @@ function AI_ESCORT_REQUEST:SpawnEscort()
       self:_InitEscortMenus( EscortGroup )
       self:_InitEscortRoute( EscortGroup )
 
-      --- @param #AI_ESCORT self
+      -- @param #AI_ESCORT self
       -- @param Core.Event#EVENTDATA EventData
       function EscortGroup:OnEventDeadOrCrash( EventData )
         self:F( { "EventDead", EventData } )
@@ -268,7 +268,7 @@ function AI_ESCORT_REQUEST:SpawnEscort()
 
 end
 
---- @param #AI_ESCORT_REQUEST self
+-- @param #AI_ESCORT_REQUEST self
 -- @param Core.Set#SET_GROUP EscortGroupSet
 function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
 
@@ -290,14 +290,14 @@ function AI_ESCORT_REQUEST:onafterStart( EscortGroupSet )
     
 end
 
---- @param #AI_ESCORT_REQUEST self
+-- @param #AI_ESCORT_REQUEST self
 -- @param Core.Set#SET_GROUP EscortGroupSet
 function AI_ESCORT_REQUEST:onafterStop( EscortGroupSet )
 
   self:F()
   
   EscortGroupSet:ForEachGroup(
-    --- @param Wrapper.Group#GROUP EscortGroup
+    -- @param Core.Group#GROUP EscortGroup
     function( EscortGroup )
       EscortGroup:WayPointInitialize()
     

@@ -19,7 +19,7 @@
 --    * Option to present information in imperial or metric units
 --    * Runway length and airfield elevation (optional)
 --    * Frequencies/channels of nav aids (ILS, VOR, NDB, TACAN, PRMG, RSBN) (optional)
---    * SRS Simple-Text-To-Speech (STTS) integration (no sound files necessary)
+--    * SRS Simple-Text-To-Speech (MSRS) integration (no sound files necessary)
 --
 -- ===
 --
@@ -291,7 +291,7 @@
 -- ## Nevada: Nellis AFB
 --
 --     -- ATIS Nellis AFB on 270.10 MHz AM.
---     atisNellis=ATIS:New(AIRBASE.Nevada.Nellis_AFB, 270.1)
+--     atisNellis=ATIS:New(AIRBASE.Nevada.Nellis, 270.1)
 --     atisNellis:SetRadioRelayUnitName("Radio Relay Nellis")
 --     atisNellis:SetActiveRunway("21L")
 --     atisNellis:SetTowerFrequencies({327.000, 132.550})
@@ -302,7 +302,7 @@
 -- ## Persian Gulf: Abu Dhabi International Airport
 --
 --     -- ATIS Abu Dhabi International on 125.1 MHz AM.
---     atisAbuDhabi=ATIS:New(AIRBASE.PersianGulf.Abu_Dhabi_International_Airport, 125.1)
+--     atisAbuDhabi=ATIS:New(AIRBASE.PersianGulf.Abu_Dhabi_Intl, 125.1)
 --     atisAbuDhabi:SetRadioRelayUnitName("Radio Relay Abu Dhabi International Airport")
 --     atisAbuDhabi:SetMetricUnits()
 --     atisAbuDhabi:SetActiveRunway("L")
@@ -498,6 +498,9 @@ ATIS.Alphabet = {
 -- @field #number Syria +5° (East).
 -- @field #number MarianaIslands +2° (East).
 -- @field #number SinaiMap +5° (East).
+-- @field #number Kola +15° (East).
+-- @field #number Afghanistan +3° (East).
+-- @field #number Iraq +4.4° (East).
 ATIS.RunwayM2T = {
   Caucasus = 0,
   Nevada = 12,
@@ -508,6 +511,9 @@ ATIS.RunwayM2T = {
   MarianaIslands = 2,
   Falklands = 12,
   SinaiMap = 5,
+  Kola = 15,
+  Afghanistan = 3,
+  Iraq=4.4
 }
 
 --- Whether ICAO phraseology is used for ATIS broadcasts.
@@ -521,6 +527,9 @@ ATIS.RunwayM2T = {
 -- @field #boolean MarianaIslands true.
 -- @field #boolean Falklands true.
 -- @field #boolean SinaiMap true.
+-- @field #boolean Kola true.
+-- @field #boolean Afghanistan true.
+-- @field #boolean Iraq true.
 ATIS.ICAOPhraseology = {
   Caucasus = true,
   Nevada = false,
@@ -531,6 +540,9 @@ ATIS.ICAOPhraseology = {
   MarianaIslands = true,
   Falklands = true,
   SinaiMap = true,
+  Kola = true,
+  Afghanistan = true,
+  Iraq = true,
 }
 
 --- Nav point data.
@@ -619,83 +631,83 @@ ATIS.ICAOPhraseology = {
 -- @field #ATIS.Soundfile TACANChannel
 -- @field #ATIS.Soundfile VORFrequency
 ATIS.Sound = {
-  ActiveRunway = { filename = "ActiveRunway.ogg", duration = 0.99 },
-  ActiveRunwayDeparture = { filename = "ActiveRunwayDeparture.ogg", duration = 0.99 },
-  ActiveRunwayArrival = { filename = "ActiveRunwayArrival.ogg", duration = 0.99 },
-  AdviceOnInitial = { filename = "AdviceOnInitial.ogg", duration = 3.00 },
-  Airport = { filename = "Airport.ogg", duration = 0.66 },
-  Altimeter = { filename = "Altimeter.ogg", duration = 0.68 },
-  At = { filename = "At.ogg", duration = 0.41 },
-  CloudBase = { filename = "CloudBase.ogg", duration = 0.82 },
-  CloudCeiling = { filename = "CloudCeiling.ogg", duration = 0.61 },
-  CloudsBroken = { filename = "CloudsBroken.ogg", duration = 1.07 },
-  CloudsFew = { filename = "CloudsFew.ogg", duration = 0.99 },
-  CloudsNo = { filename = "CloudsNo.ogg", duration = 1.01 },
-  CloudsNotAvailable = { filename = "CloudsNotAvailable.ogg", duration = 2.35 },
-  CloudsOvercast = { filename = "CloudsOvercast.ogg", duration = 0.83 },
-  CloudsScattered = { filename = "CloudsScattered.ogg", duration = 1.18 },
-  Decimal = { filename = "Decimal.ogg", duration = 0.54 },
-  DegreesCelsius = { filename = "DegreesCelsius.ogg", duration = 1.27 },
-  DegreesFahrenheit = { filename = "DegreesFahrenheit.ogg", duration = 1.23 },
-  DewPoint = { filename = "DewPoint.ogg", duration = 0.65 },
-  Dust = { filename = "Dust.ogg", duration = 0.54 },
-  Elevation = { filename = "Elevation.ogg", duration = 0.78 },
-  EndOfInformation = { filename = "EndOfInformation.ogg", duration = 1.15 },
-  Feet = { filename = "Feet.ogg", duration = 0.45 },
-  Fog = { filename = "Fog.ogg", duration = 0.47 },
-  Gusting = { filename = "Gusting.ogg", duration = 0.55 },
-  HectoPascal = { filename = "HectoPascal.ogg", duration = 1.15 },
-  Hundred = { filename = "Hundred.ogg", duration = 0.47 },
-  InchesOfMercury = { filename = "InchesOfMercury.ogg", duration = 1.16 },
-  Information = { filename = "Information.ogg", duration = 0.85 },
-  Kilometers = { filename = "Kilometers.ogg", duration = 0.78 },
-  Knots = { filename = "Knots.ogg", duration = 0.59 },
-  Left = { filename = "Left.ogg", duration = 0.54 },
-  MegaHertz = { filename = "MegaHertz.ogg", duration = 0.87 },
-  Meters = { filename = "Meters.ogg", duration = 0.59 },
-  MetersPerSecond = { filename = "MetersPerSecond.ogg", duration = 1.14 },
-  Miles = { filename = "Miles.ogg", duration = 0.60 },
-  MillimetersOfMercury = { filename = "MillimetersOfMercury.ogg", duration = 1.53 },
-  Minus = { filename = "Minus.ogg", duration = 0.64 },
-  N0 = { filename = "N-0.ogg", duration = 0.55 },
-  N1 = { filename = "N-1.ogg", duration = 0.41 },
-  N2 = { filename = "N-2.ogg", duration = 0.37 },
-  N3 = { filename = "N-3.ogg", duration = 0.41 },
-  N4 = { filename = "N-4.ogg", duration = 0.37 },
-  N5 = { filename = "N-5.ogg", duration = 0.43 },
-  N6 = { filename = "N-6.ogg", duration = 0.55 },
-  N7 = { filename = "N-7.ogg", duration = 0.43 },
-  N8 = { filename = "N-8.ogg", duration = 0.38 },
-  N9 = { filename = "N-9.ogg", duration = 0.55 },
-  NauticalMiles = { filename = "NauticalMiles.ogg", duration = 1.04 },
-  None = { filename = "None.ogg", duration = 0.43 },
-  QFE = { filename = "QFE.ogg", duration = 0.63 },
-  QNH = { filename = "QNH.ogg", duration = 0.71 },
-  Rain = { filename = "Rain.ogg", duration = 0.41 },
-  Right = { filename = "Right.ogg", duration = 0.44 },
-  Snow = { filename = "Snow.ogg", duration = 0.48 },
-  SnowStorm = { filename = "SnowStorm.ogg", duration = 0.82 },
-  StatuteMiles = { filename = "StatuteMiles.ogg", duration = 1.15 },
-  SunriseAt = { filename = "SunriseAt.ogg", duration = 0.92 },
-  SunsetAt = { filename = "SunsetAt.ogg", duration = 0.95 },
-  Temperature = { filename = "Temperature.ogg", duration = 0.64 },
-  Thousand = { filename = "Thousand.ogg", duration = 0.55 },
-  ThunderStorm = { filename = "ThunderStorm.ogg", duration = 0.81 },
-  TimeLocal = { filename = "TimeLocal.ogg", duration = 0.90 },
-  TimeZulu = { filename = "TimeZulu.ogg", duration = 0.86 },
-  TowerFrequency = { filename = "TowerFrequency.ogg", duration = 1.19 },
-  Visibilty = { filename = "Visibility.ogg", duration = 0.79 },
-  WeatherPhenomena = { filename = "WeatherPhenomena.ogg", duration = 1.07 },
-  WindFrom = { filename = "WindFrom.ogg", duration = 0.60 },
+  ActiveRunway = { filename = "ActiveRunway.ogg", duration = 0.85 },
+  ActiveRunwayDeparture = { filename = "ActiveRunwayDeparture.ogg", duration = 1.50 },
+  ActiveRunwayArrival = { filename = "ActiveRunwayArrival.ogg", duration = 1.38 },
+  AdviceOnInitial = { filename = "AdviceOnInitial.ogg", duration = 2.98 },
+  Airport = { filename = "Airport.ogg", duration = 0.55 },
+  Altimeter = { filename = "Altimeter.ogg", duration = 0.91 },
+  At = { filename = "At.ogg", duration = 0.32 },
+  CloudBase = { filename = "CloudBase.ogg", duration = 0.69 },
+  CloudCeiling = { filename = "CloudCeiling.ogg", duration = 0.53 },
+  CloudsBroken = { filename = "CloudsBroken.ogg", duration = 0.81 },
+  CloudsFew = { filename = "CloudsFew.ogg", duration = 0.74 },
+  CloudsNo = { filename = "CloudsNo.ogg", duration =  0.69},
+  CloudsNotAvailable = { filename = "CloudsNotAvailable.ogg", duration = 2.64 },
+  CloudsOvercast = { filename = "CloudsOvercast.ogg", duration = 0.82 },
+  CloudsScattered = { filename = "CloudsScattered.ogg", duration = 0.89 },
+  Decimal = { filename = "Decimal.ogg", duration = 0.71 },
+  DegreesCelsius = { filename = "DegreesCelsius.ogg", duration = 1.08 },
+  DegreesFahrenheit = { filename = "DegreesFahrenheit.ogg", duration = 1.07 },
+  DewPoint = { filename = "DewPoint.ogg", duration = 0.59 },
+  Dust = { filename = "Dust.ogg", duration = 0.37 },
+  Elevation = { filename = "Elevation.ogg", duration = 0.92 },
+  EndOfInformation = { filename = "EndOfInformation.ogg", duration = 1.24 },
+  Feet = { filename = "Feet.ogg", duration = 0.34 },
+  Fog = { filename = "Fog.ogg", duration = 0.41 },
+  Gusting = { filename = "Gusting.ogg", duration = 0.58 },
+  HectoPascal = { filename = "HectoPascal.ogg", duration = 0.92 },
+  Hundred = { filename = "Hundred.ogg", duration = 0.53 },
   ILSFrequency = { filename = "ILSFrequency.ogg", duration = 1.30 },
-  InnerNDBFrequency = { filename = "InnerNDBFrequency.ogg", duration = 1.56 },
-  OuterNDBFrequency = { filename = "OuterNDBFrequency.ogg", duration = 1.59 },
-  RunwayLength = { filename = "RunwayLength.ogg", duration = 0.91 },
-  VORFrequency = { filename = "VORFrequency.ogg", duration = 1.38 },
-  TACANChannel = { filename = "TACANChannel.ogg", duration = 0.88 },
-  PRMGChannel = { filename = "PRMGChannel.ogg", duration = 1.18 },
-  RSBNChannel = { filename = "RSBNChannel.ogg", duration = 1.14 },
-  Zulu = { filename = "Zulu.ogg", duration = 0.62 },
+  InchesOfMercury = { filename = "InchesOfMercury.ogg", duration = 1.26 },
+  Information = { filename = "Information.ogg", duration = 0.99 },  
+  InnerNDBFrequency = { filename = "InnerNDBFrequency.ogg", duration = 1.69 },
+  Kilometers = { filename = "Kilometers.ogg", duration = 0.93 },
+  Knots = { filename = "Knots.ogg", duration = 0.46 },
+  Left = { filename = "Left.ogg", duration = 0.41 },
+  MegaHertz = { filename = "MegaHertz.ogg", duration = 0.83 },
+  Meters = { filename = "Meters.ogg", duration = 0.55 },
+  MetersPerSecond = { filename = "MetersPerSecond.ogg", duration = 1.03 },
+  Miles = { filename = "Miles.ogg", duration = 0.44 },
+  MillimetersOfMercury = { filename = "MillimetersOfMercury.ogg", duration = 1.59 },
+  Minus = { filename = "Minus.ogg", duration = 0.55 },
+  N0 = { filename = "N-0.ogg", duration = 0.52 },
+  N1 = { filename = "N-1.ogg", duration = 0.35 },
+  N2 = { filename = "N-2.ogg", duration = 0.41 },
+  N3 = { filename = "N-3.ogg", duration = 0.34 },
+  N4 = { filename = "N-4.ogg", duration = 0.37 },
+  N5 = { filename = "N-5.ogg", duration = 0.40 },
+  N6 = { filename = "N-6.ogg", duration = 0.46 },
+  N7 = { filename = "N-7.ogg", duration = 0.52 },
+  N8 = { filename = "N-8.ogg", duration = 0.36 },
+  N9 = { filename = "N-9.ogg", duration = 0.51 },
+  NauticalMiles = { filename = "NauticalMiles.ogg", duration = 0.93 },
+  None = { filename = "None.ogg", duration = 0.33 },
+  OuterNDBFrequency = { filename = "OuterNDBFrequency.ogg", duration = 1.70 },
+  PRMGChannel = { filename = "PRMGChannel.ogg", duration = 1.27 },  
+  QFE = { filename = "QFE.ogg", duration = 0.90 },
+  QNH = { filename = "QNH.ogg", duration = 0.94 },
+  Rain = { filename = "Rain.ogg", duration = 0.35 },
+  Right = { filename = "Right.ogg", duration = 0.31 },
+  RSBNChannel = { filename = "RSBNChannel.ogg", duration = 1.26 },
+  RunwayLength = { filename = "RunwayLength.ogg", duration = 0.81 },    
+  Snow = { filename = "Snow.ogg", duration = 0.40 },
+  SnowStorm = { filename = "SnowStorm.ogg", duration = 0.73 },
+  StatuteMiles = { filename = "StatuteMiles.ogg", duration = 0.90 },
+  SunriseAt = { filename = "SunriseAt.ogg", duration = 0.82 },
+  SunsetAt = { filename = "SunsetAt.ogg", duration = 0.87 },
+  TACANChannel = { filename = "TACANChannel.ogg", duration = 0.81 },  
+  Temperature = { filename = "Temperature.ogg", duration = 0.70 },
+  Thousand = { filename = "Thousand.ogg", duration = 0.58 },
+  ThunderStorm = { filename = "ThunderStorm.ogg", duration = 0.79 },
+  TimeLocal = { filename = "TimeLocal.ogg", duration = 0.83 },
+  TimeZulu = { filename = "TimeZulu.ogg", duration = 0.83 },
+  TowerFrequency = { filename = "TowerFrequency.ogg", duration = 1.05 },
+  Visibilty = { filename = "Visibility.ogg", duration = 1.16 },
+  VORFrequency = { filename = "VORFrequency.ogg", duration = 1.28 },  
+  WeatherPhenomena = { filename = "WeatherPhenomena.ogg", duration = 1.09 },
+  WindFrom = { filename = "WindFrom.ogg", duration = 0.63 },
+  Zulu = { filename = "Zulu.ogg", duration = 0.51 },
 }
 
 ---
@@ -882,6 +894,66 @@ ATIS.Messages = {
     FARP = "Farp",
     DELIMITER = "Punto", -- decimal delimiter
   },
+  -- French messages thanks to @Wojtech and Bing
+  FR = {
+    HOURS = "Heures",
+    TIME = "Temps",
+    NOCLOUDINFO = "Informations sur la couverture nuageuse non disponibles",
+    OVERCAST = "Ciel couvert",
+    BROKEN = "Nuages fragmentés",
+    SCATTERED = "Nuages épars",
+    FEWCLOUDS = "Nuages rares",
+    NOCLOUDS = "Clair",
+    AIRPORT = "Aéroport",
+    INFORMATION ="Information",
+    SUNRISEAT = "Levé du soleil à %s heure locale",
+    SUNSETAT = "Couché du soleil à %s heure locale",
+    WINDFROMMS = "Vent du %s pour %s mètres par seconde",
+    WINDFROMKNOTS = "Vent du %s pour %s noeuds",
+    GUSTING = "Rafale de vent",
+    VISIKM = "Visibilité %s kilomètres",
+    VISISM = "Visibilité %s Miles",
+    RAIN = "Pluie",
+    TSTORM = "Orage",
+    SNOW = "Neige",
+    SSTROM = "Tempête de neige",
+    FOG = "Brouillard",
+    DUST = "Poussière",
+    PHENOMENA = "Phénomène météorologique",
+    CLOUDBASEM = "Couverture nuageuse de %s à %s mètres",
+    CLOUDBASEFT = "Couverture nuageuse de %s à %s pieds",
+    TEMPERATURE = "Température",
+    DEWPOINT = "Point de rosée",
+    ALTIMETER = "Altimètre",
+    ACTIVERUN = "Décollages piste",
+    ACTIVELANDING = "Atterrissages piste",
+    LEFT = "Gauche",
+    RIGHT = "Droite",
+    RWYLENGTH = "Longueur de piste",
+    METERS = "Mètre",
+    FEET = "Pieds",
+    ELEVATION = "Hauteur",
+    TOWERFREQ = "Fréquences de la tour",
+    ILSFREQ = "Fréquences ILS",
+    OUTERNDB = "Fréquences Outer NDB",
+    INNERNDB = "Fréquences Inner NDB",
+    VORFREQ = "Fréquences VOR",
+    VORFREQTTS = "Fréquences V O R",
+    TACANCH = "Canal TACAN %d",
+    RSBNCH = "Canal RSBN",
+    PRMGCH = "Canal PRMG",
+    ADVISE = "Informez le contrôle que vous avez copié l'information",
+    STATUTE = "Statute Miles",
+    DEGREES = "Degré celcius",
+    FAHRENHEIT = "Degré Fahrenheit",
+    INCHHG = "Pouces de mercure",
+    MMHG = "Millimètres de mercure",
+    HECTO = "Hectopascals",
+    METERSPER = "Mètres par seconde",
+    TACAN = "TAKAN",
+    FARP = "FARPE",
+    DELIMITER = "Décimal", -- decimal delimiter
+  }
 }
 
 ---
@@ -894,7 +966,7 @@ _ATIS = {}
 
 --- ATIS class version.
 -- @field #string version
-ATIS.version = "1.0.0"
+ATIS.version = "1.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1061,7 +1133,7 @@ end
 -- @return #ATIS self
 function ATIS:_InitLocalization()
   self:T(self.lid.."_InitLocalization")
-  self.gettext = TEXTANDSOUND:New("AWACS","en") -- Core.TextAndSound#TEXTANDSOUND
+  self.gettext = TEXTANDSOUND:New("ATIS","en") -- Core.TextAndSound#TEXTANDSOUND
   self.locale = "en"
   for locale,table in pairs(self.Messages) do
     local Locale = string.lower(tostring(locale))
@@ -1975,17 +2047,28 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   local hours = self.gettext:GetEntry("HOURS",self.locale)
   local sunrise = coord:GetSunrise()
-  sunrise = UTILS.Split( sunrise, ":" )
-  local SUNRISE = string.format( "%s%s", sunrise[1], sunrise[2] )
-  if self.useSRS then
-    SUNRISE = string.format( "%s %s %s", sunrise[1], sunrise[2], hours )
+  --self:I(sunrise)
+  local SUNRISE = "no time"
+  local NorthPolar = true
+  if tostring(sunrise) ~= "N/S" and tostring(sunrise) ~= "N/R" then
+    sunrise = UTILS.Split( sunrise, ":" )
+    SUNRISE = string.format( "%s%s", sunrise[1], sunrise[2] )
+    if self.useSRS then
+      SUNRISE = string.format( "%s %s %s", sunrise[1], sunrise[2], hours )
+    end
+    NorthPolar = false
   end
-
+  
   local sunset = coord:GetSunset()
-  sunset = UTILS.Split( sunset, ":" )
-  local SUNSET = string.format( "%s%s", sunset[1], sunset[2] )
-  if self.useSRS then
-    SUNSET = string.format( "%s %s %s", sunset[1], sunset[2], hours )
+  --self:I(sunset)
+  local SUNSET = "no time"
+  if tostring(sunset) ~= "N/S" and tostring(sunset) ~= "N/R" then
+    sunset = UTILS.Split( sunset, ":" )
+    SUNSET = string.format( "%s%s", sunset[1], sunset[2] )
+    if self.useSRS then
+      SUNSET = string.format( "%s %s %s", sunset[1], sunset[2], hours )
+    end
+    NorthPolar = false
   end
 
   ---------------------------------
@@ -2012,34 +2095,32 @@ function ATIS:onafterBroadcast( From, Event, To )
   ---------------
 
   -- Get mission weather info. Most of this is static.
-  local clouds, visibility, turbulence, fog, dust, static = self:GetMissionWeather()
-
-  -- Check that fog is actually "thick" enough to reach the airport. If an airport is in the mountains, fog might not affect it as it is measured from sea level.
-  if fog and fog.thickness < height + 25 then
-    fog = nil
-  end
-
-  -- Dust only up to 1500 ft = 457 m ASL.
-  if dust and height + 25 > UTILS.FeetToMeters( 1500 ) then
-    dust = nil
-  end
+  local clouds, visibility, turbulence, dustdens, static = self:GetMissionWeather()
+  
+  local dust=false
+  local fog=false
 
   ------------------
   --- Visibility ---
   ------------------
 
-  -- Get min visibility.
-  local visibilitymin = visibility
-
-  if fog then
-    if fog.visibility < visibilitymin then
-      visibilitymin = fog.visibility
+  if dustdens then
+  
+    -- Dust only up to 1500 ft = 457 m ASL.
+    if UTILS.FeetToMeters( 1500 )> height+25 then
+      dust=true
+      visibility=math.min(visibility, dustdens)
     end
-  end
-
-  if dust then
-    if dust < visibilitymin then
-      visibilitymin = dust
+    
+  else -- As of DCS 2.9.10.3948 (December 2024), fog and dust are mutually exclusive!
+  
+    -- Get current fog visibility and thickness
+    local fvis=world.weather.getFogVisibilityDistance()
+    local fheight=world.weather.getFogThickness()
+    
+    if fvis>0 and fheight>height+25 then
+      fog=true
+      visibility=math.min(visibility, fvis)
     end
   end
 
@@ -2047,7 +2128,7 @@ function ATIS:onafterBroadcast( From, Event, To )
 
   if self.metric then
     -- Visibility in km.
-    local reportedviz = UTILS.Round( visibilitymin / 1000 )
+    local reportedviz = UTILS.Round( visibility / 1000 )
     -- max reported visibility 9999 m
     if reportedviz > 10 then
       reportedviz = 10
@@ -2055,7 +2136,7 @@ function ATIS:onafterBroadcast( From, Event, To )
     VISIBILITY = string.format( "%d", reportedviz )
   else
     -- max reported visibility 10 NM
-    local reportedviz = UTILS.Round( UTILS.MetersToSM( visibilitymin ) )
+    local reportedviz = UTILS.Round( UTILS.MetersToSM( visibility ) )
     if reportedviz > 10 then
       reportedviz = 10
     end
@@ -2069,7 +2150,7 @@ function ATIS:onafterBroadcast( From, Event, To )
   local cloudbase = clouds.base
   local cloudceil = clouds.base + clouds.thickness
   local clouddens = clouds.density
-
+    
   -- Cloud preset (DCS 2.7)
   local cloudspreset = clouds.preset or "Nothing"
 
@@ -2095,6 +2176,39 @@ function ATIS:onafterBroadcast( From, Event, To )
   elseif cloudspreset:find( "RainyPreset3" ) then
     -- Overcast + Rain
     clouddens = 9
+    if temperature > 5 then
+      precepitation = 1 -- rain
+    else
+      precepitation = 3 -- snow
+    end
+  elseif cloudspreset:find( "RainyPreset4" ) then
+    -- Overcast + Rain
+    clouddens = 5
+    if temperature > 5 then
+      precepitation = 1 -- rain
+    else
+      precepitation = 3 -- snow
+    end
+  elseif cloudspreset:find( "RainyPreset5" ) then
+    -- Overcast + Rain
+    clouddens = 5
+    if temperature > 5 then
+      precepitation = 1 -- rain
+    else
+      precepitation = 3 -- snow
+    end
+  elseif cloudspreset:find( "RainyPreset6" ) then
+    -- Overcast + Rain
+    clouddens = 5
+    if temperature > 5 then
+      precepitation = 1 -- rain
+    else
+      precepitation = 3 -- snow
+    end
+    -- NEWRAINPRESET4
+  elseif cloudspreset:find( "NEWRAINPRESET4" ) then
+    -- Overcast + Rain
+    clouddens = 5
     if temperature > 5 then
       precepitation = 1 -- rain
     else
@@ -2294,7 +2408,7 @@ function ATIS:onafterBroadcast( From, Event, To )
     local sunrise = self.gettext:GetEntry("SUNRISEAT",self.locale)
     --subtitle = string.format( "Sunrise at %s local time", SUNRISE )
     subtitle = string.format( sunrise, SUNRISE )
-    if not self.useSRS then
+    if not self.useSRS and NorthPolar == false then
       self:Transmission( self.Sound.SunriseAt, 0.5, subtitle )
       self.radioqueue:Number2Transmission( SUNRISE, nil, 0.2 )
       self:Transmission( self.Sound.TimeLocal, 0.2 )
@@ -2305,7 +2419,7 @@ function ATIS:onafterBroadcast( From, Event, To )
     local sunset = self.gettext:GetEntry("SUNSETAT",self.locale)
     --subtitle = string.format( "Sunset at %s local time", SUNSET )
     subtitle = string.format( sunset, SUNSET )
-    if not self.useSRS then
+    if not self.useSRS and NorthPolar == false then
       self:Transmission( self.Sound.SunsetAt, 0.5, subtitle )
       self.radioqueue:Number2Transmission( SUNSET, nil, 0.5 )
       self:Transmission( self.Sound.TimeLocal, 0.2 )
@@ -2631,7 +2745,7 @@ function ATIS:onafterBroadcast( From, Event, To )
   if not self.ATISforFARPs then
     -- Active runway.
     local subtitle = ""
-    if runwayLanding then
+    if runwayLanding and runwayLanding ~= runwayTakeoff then
 
       local actrun = self.gettext:GetEntry("ACTIVELANDING",self.locale)
 
@@ -3249,28 +3363,13 @@ function ATIS:GetMissionWeather()
     dust = weather.dust_density
   end
 
-  -- Fog
-  --[[
-  ["enable_fog"] = false,
-  ["fog"] =
-  {
-      ["thickness"] = 0,
-      ["visibility"] = 25,
-  }, -- end of ["fog"]
-  ]]
-  local fog = nil
-  if weather.enable_fog == true then
-    fog = weather.fog
-  end
-
   self:T( "FF weather:" )
   self:T( { clouds = clouds } )
   self:T( { visibility = visibility } )
   self:T( { turbulence = turbulence } )
-  self:T( { fog = fog } )
   self:T( { dust = dust } )
   self:T( { static = static } )
-  return clouds, visibility, turbulence, fog, dust, static
+  return clouds, visibility, turbulence, dust, static
 end
 
 --- Get thousands of a number.

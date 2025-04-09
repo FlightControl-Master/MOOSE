@@ -31,7 +31,7 @@
 -- @module AI.AI_CAP
 -- @image AI_Combat_Air_Patrol.JPG
 
---- @type AI_CAP_ZONE
+-- @type AI_CAP_ZONE
 -- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
 -- @field Core.Zone#ZONE_BASE TargetZone The @{Core.Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
@@ -344,7 +344,7 @@ function AI_CAP_ZONE:onafterStart( Controllable, From, Event, To )
 
 end
 
---- @param AI.AI_CAP#AI_CAP_ZONE 
+-- @param AI.AI_CAP#AI_CAP_ZONE 
 -- @param Wrapper.Group#GROUP EngageGroup
 function AI_CAP_ZONE.EngageRoute( EngageGroup, Fsm )
 
@@ -355,7 +355,7 @@ function AI_CAP_ZONE.EngageRoute( EngageGroup, Fsm )
   end
 end
 
---- @param #AI_CAP_ZONE self
+-- @param #AI_CAP_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -367,7 +367,7 @@ function AI_CAP_ZONE:onbeforeEngage( Controllable, From, Event, To )
   end
 end
 
---- @param #AI_CAP_ZONE self
+-- @param #AI_CAP_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -395,7 +395,7 @@ function AI_CAP_ZONE:onafterDetected( Controllable, From, Event, To )
   end
 end
 
---- @param #AI_CAP_ZONE self
+-- @param #AI_CAP_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -405,7 +405,7 @@ function AI_CAP_ZONE:onafterAbort( Controllable, From, Event, To )
   self:__Route( 1 )
 end
 
---- @param #AI_CAP_ZONE self
+-- @param #AI_CAP_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -423,12 +423,12 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
 
     --DONE: Create GetAltitude function for GROUP, and delete GetUnit(1).
     local CurrentAltitude = self.Controllable:GetAltitude()
-    local CurrentPointVec3 = POINT_VEC3:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
+    local CurrentPointVec3 = COORDINATE:New( CurrentVec2.x, CurrentAltitude, CurrentVec2.y )
     local ToEngageZoneSpeed = self.PatrolMaxSpeed
     local CurrentRoutePoint = CurrentPointVec3:WaypointAir(
         self.PatrolAltType,
-        POINT_VEC3.RoutePointType.TurningPoint,
-        POINT_VEC3.RoutePointAction.TurningPoint,
+        COORDINATE.WaypointType.TurningPoint,
+        COORDINATE.WaypointAction.TurningPoint,
         ToEngageZoneSpeed,
         true
       )
@@ -445,13 +445,13 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
     self:T2( { self.PatrolMinSpeed, self.PatrolMaxSpeed, ToTargetSpeed } )
 
     --- Obtain a 3D @{Point} from the 2D point + altitude.
-    local ToTargetPointVec3 = POINT_VEC3:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
+    local ToTargetPointVec3 = COORDINATE:New( ToTargetVec2.x, ToTargetAltitude, ToTargetVec2.y )
 
     --- Create a route point of type air.
     local ToPatrolRoutePoint = ToTargetPointVec3:WaypointAir(
       self.PatrolAltType,
-      POINT_VEC3.RoutePointType.TurningPoint,
-      POINT_VEC3.RoutePointAction.TurningPoint,
+      COORDINATE.WaypointType.TurningPoint,
+      COORDINATE.WaypointAction.TurningPoint,
       ToTargetSpeed,
       true
     )
@@ -505,7 +505,7 @@ function AI_CAP_ZONE:onafterEngage( Controllable, From, Event, To )
   end
 end
 
---- @param #AI_CAP_ZONE self
+-- @param #AI_CAP_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -515,7 +515,7 @@ function AI_CAP_ZONE:onafterAccomplish( Controllable, From, Event, To )
   self:SetDetectionOff()
 end
 
---- @param #AI_CAP_ZONE self
+-- @param #AI_CAP_ZONE self
 -- @param Wrapper.Controllable#CONTROLLABLE Controllable The Controllable Object managed by the FSM.
 -- @param #string From The From State string.
 -- @param #string Event The Event string.
@@ -528,7 +528,7 @@ function AI_CAP_ZONE:onafterDestroy( Controllable, From, Event, To, EventData )
   end
 end
 
---- @param #AI_CAP_ZONE self
+-- @param #AI_CAP_ZONE self
 -- @param Core.Event#EVENTDATA EventData
 function AI_CAP_ZONE:OnEventDead( EventData )
   self:F( { "EventDead", EventData } )

@@ -26,7 +26,7 @@
 -- @module Core.Base
 -- @image Core_Base.JPG
 
-local _TraceOnOff = true
+local _TraceOnOff = false -- default to no tracing
 local _TraceLevel = 1
 local _TraceAll = false
 local _TraceClass = {}
@@ -34,11 +34,12 @@ local _TraceClassMethod = {}
 
 local _ClassID = 0
 
----
+--- Base class of everything
 -- @type BASE
--- @field ClassName The name of the class.
--- @field ClassID The ID number of the class.
--- @field ClassNameAndID The name of the class concatenated with the ID number of the class.
+-- @field #string ClassName The name of the class.
+-- @field #number ClassID The ID number of the class.
+-- @field #string ClassNameAndID The name of the class concatenated with the ID number of the class.
+-- @field Core.Scheduler#SCHEDULER Scheduler The scheduler object.
 
 --- BASE class
 --
@@ -200,6 +201,7 @@ BASE = {
   States = {},
   Debug = debug,
   Scheduler = nil,
+  Properties = {},
 }
 
 -- @field #BASE.__
@@ -208,14 +210,6 @@ BASE.__ = {}
 -- @field #BASE._
 BASE._ = {
   Schedules = {}, --- Contains the Schedulers Active
-}
-
---- The Formation Class
--- @type FORMATION
--- @field Cone A cone formation.
-FORMATION = {
-  Cone = "Cone",
-  Vee = "Vee",
 }
 
 --- BASE constructor.
@@ -741,7 +735,31 @@ do -- Event Handling
   -- @function [parent=#BASE] OnEventPlayerEnterAircraft
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
-
+  
+  --- Occurs when a player creates a dynamic cargo object from the F8 ground crew menu.
+  -- *** NOTE *** this is a workarounf for DCS not creating these events as of Aug 2024.
+  -- @function [parent=#BASE] OnEventNewDynamicCargo
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+  
+    --- Occurs when a player loads a dynamic cargo object with the F8 ground crew menu into a helo.
+  -- *** NOTE *** this is a workarounf for DCS not creating these events as of Aug 2024.
+  -- @function [parent=#BASE] OnEventDynamicCargoLoaded
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+  
+  --- Occurs when a player unloads a dynamic cargo object with the F8 ground crew menu from a helo.
+  -- *** NOTE *** this is a workarounf for DCS not creating these events as of Aug 2024.
+  -- @function [parent=#BASE] OnEventDynamicCargoUnloaded
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+  
+  --- Occurs when a dynamic cargo crate is removed.
+  -- *** NOTE *** this is a workarounf for DCS not creating these events as of Aug 2024.
+  -- @function [parent=#BASE] OnEventDynamicCargoRemoved
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
+  
 end
 
 --- Creation of a Birth Event.
@@ -862,6 +880,62 @@ end
   
     world.onEvent(Event)
   end  
+  
+    --- Creation of a S_EVENT_NEW_DYNAMIC_CARGO event.
+  -- @param #BASE self
+  -- @param Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo the dynamic cargo object
+  function BASE:CreateEventNewDynamicCargo(DynamicCargo)
+    self:F({DynamicCargo})
+    local Event = {
+      id = EVENTS.NewDynamicCargo,
+      time = timer.getTime(),
+      dynamiccargo = DynamicCargo,
+      initiator = DynamicCargo:GetDCSObject(),
+    }
+    world.onEvent( Event )
+  end
+  
+  --- Creation of a S_EVENT_DYNAMIC_CARGO_LOADED event.
+  -- @param #BASE self
+  -- @param Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo the dynamic cargo object
+  function BASE:CreateEventDynamicCargoLoaded(DynamicCargo)
+    self:F({DynamicCargo})
+    local Event = {
+      id = EVENTS.DynamicCargoLoaded,
+      time = timer.getTime(),
+      dynamiccargo = DynamicCargo,
+      initiator = DynamicCargo:GetDCSObject(),
+    }
+    world.onEvent( Event )
+  end
+  
+  --- Creation of a S_EVENT_DYNAMIC_CARGO_UNLOADED event.
+  -- @param #BASE self
+  -- @param Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo the dynamic cargo object
+  function BASE:CreateEventDynamicCargoUnloaded(DynamicCargo)
+    self:F({DynamicCargo})
+    local Event = {
+      id = EVENTS.DynamicCargoUnloaded,
+      time = timer.getTime(),
+      dynamiccargo = DynamicCargo,
+      initiator = DynamicCargo:GetDCSObject(),
+    }
+    world.onEvent( Event )
+  end
+  
+  --- Creation of a S_EVENT_DYNAMIC_CARGO_REMOVED event.
+  -- @param #BASE self
+  -- @param Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo the dynamic cargo object
+  function BASE:CreateEventDynamicCargoRemoved(DynamicCargo)
+    self:F({DynamicCargo})
+    local Event = {
+      id = EVENTS.DynamicCargoRemoved,
+      time = timer.getTime(),
+      dynamiccargo = DynamicCargo,
+      initiator = DynamicCargo:GetDCSObject(),
+    }
+    world.onEvent( Event )
+  end
                   
 --- The main event handling function... This function captures all events generated for the class.
 -- @param #BASE self
@@ -1036,6 +1110,31 @@ function BASE:ClearState( Object, StateName )
   end
 end
 
+--- Set one property of an object.
+-- @param #BASE self
+-- @param Key The key that is used as a reference of the value. Note that the key can be a #string, but it can also be any other type!
+-- @param Value The value that is stored. Note that the value can be a #string, but it can also be any other type!
+function BASE:SetProperty(Key,Value)
+  self.Properties = self.Properties or {}
+  self.Properties[Key] = Value
+end
+            
+--- Get one property of an object by the key.
+-- @param #BASE self
+-- @param Key The key that is used as a reference of the value. Note that the key can be a #string, but it can also be any other type!
+-- @return Value The value that is stored. Note that the value can be a #string, but it can also be any other type! Nil if not found.         
+function BASE:GetProperty(Key)
+  self.Properties = self.Properties or {}
+  return self.Properties[Key]
+end
+
+--- Get all of the properties of an object in a table.
+-- @param #BASE self
+-- @return #table of values, indexed by keys.
+function BASE:GetProperties()
+  return self.Properties
+end
+            
 -- Trace section
 
 -- Log a trace (only shown when trace is on)
@@ -1200,7 +1299,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F( Arguments )
 
-  if BASE.Debug and _TraceOnOff then
+  if BASE.Debug and _TraceOnOff == true then
     local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
 
@@ -1215,7 +1314,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F2( Arguments )
 
-  if BASE.Debug and _TraceOnOff then
+  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 2 then
     local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
 
@@ -1230,7 +1329,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F3( Arguments )
 
-  if BASE.Debug and _TraceOnOff then
+  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 3 then
     local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
 
@@ -1274,7 +1373,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T( Arguments )
 
-  if BASE.Debug and _TraceOnOff then
+  if BASE.Debug and _TraceOnOff == true then
     local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
 
@@ -1289,7 +1388,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T2( Arguments )
 
-  if BASE.Debug and _TraceOnOff then
+  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 2 then
     local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
 
@@ -1304,7 +1403,7 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T3( Arguments )
 
-  if BASE.Debug and _TraceOnOff then
+  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 3 then
     local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
 
@@ -1336,7 +1435,7 @@ function BASE:E( Arguments )
 
     env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, UTILS.BasicSerialize( Arguments ) ) )
   else
-    env.info( string.format( "%1s:%30s%05d(%s)", "E", self.ClassName, self.ClassID, BASE:_Serialize(Arguments) ) )
+    env.info( string.format( "%1s:%30s%05d(%s)", "E", self.ClassName, self.ClassID, UTILS.BasicSerialize(Arguments) ) )
   end
 
 end
@@ -1363,8 +1462,7 @@ function BASE:I( Arguments )
 
     env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "I", self.ClassName, self.ClassID, Function, UTILS.BasicSerialize( Arguments ) ) )
   else
-    env.info( string.format( "%1s:%30s%05d(%s)", "I", self.ClassName, self.ClassID, BASE:_Serialize(Arguments)) )
+    env.info( string.format( "%1s:%30s%05d(%s)", "I", self.ClassName, self.ClassID, UTILS.BasicSerialize(Arguments)) )
   end
 
 end
-

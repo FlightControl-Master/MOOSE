@@ -92,10 +92,10 @@
 -- 
 -- @field #UNIT
 UNIT = {
-  ClassName="UNIT",
-  UnitName=nil,
-  GroupName=nil,
-  DCSUnit = nil,
+    ClassName = "UNIT",
+    UnitName = nil,
+    GroupName = nil,
+    DCSUnit = nil,
 }
 
 
@@ -108,33 +108,34 @@ UNIT = {
 
 
 -- Registration.
-  
+
 --- Create a new UNIT from DCSUnit.
 -- @param #UNIT self
 -- @param #string UnitName The name of the DCS unit.
 -- @return #UNIT self
-function UNIT:Register( UnitName )
+function UNIT:Register(UnitName)
 
-  -- Inherit CONTROLLABLE.
-  local self = BASE:Inherit( self, CONTROLLABLE:New( UnitName ) ) --#UNIT
-  
-  -- Set unit name.
-  self.UnitName = UnitName
-  
-  local unit=Unit.getByName(self.UnitName)
-  
-  if unit then
-    local group = unit:getGroup()
-    if group then 
-      self.GroupName=group:getName()
+    -- Inherit CONTROLLABLE.
+    local self = BASE:Inherit(self, CONTROLLABLE:New(UnitName)) --#UNIT
+
+    -- Set unit name.
+    self.UnitName = UnitName
+
+    local unit = Unit.getByName(self.UnitName)
+
+    if unit then
+        local group = unit:getGroup()
+        if group then
+            self.GroupName = group:getName()
+            self.groupId = group:getID()
+        end
+        self.DCSUnit = unit
     end
-    self.DCSUnit = unit
-  end
-  
-  -- Set event prio.
-  self:SetEventPriority( 3 )
-  
-  return self
+
+    -- Set event prio.
+    self:SetEventPriority(3)
+
+    return self
 end
 
 -- Reference methods.
@@ -143,23 +144,23 @@ end
 -- @param #UNIT self
 -- @param DCS#Unit DCSUnit An existing DCS Unit object reference.
 -- @return #UNIT self
-function UNIT:Find( DCSUnit )
-  if DCSUnit then
-    local UnitName = DCSUnit:getName()
-    local UnitFound = _DATABASE:FindUnit( UnitName )
-    return UnitFound
-  end
-  return nil
+function UNIT:Find(DCSUnit)
+    if DCSUnit then
+        local UnitName = DCSUnit:getName()
+        local UnitFound = _DATABASE:FindUnit(UnitName)
+        return UnitFound
+    end
+    return nil
 end
 
 --- Find a UNIT in the _DATABASE using the name of an existing DCS Unit.
 -- @param #UNIT self
 -- @param #string UnitName The Unit Name.
 -- @return #UNIT self
-function UNIT:FindByName( UnitName )
-  
-  local UnitFound = _DATABASE:FindUnit( UnitName )
-  return UnitFound
+function UNIT:FindByName(UnitName)
+
+    local UnitFound = _DATABASE:FindUnit(UnitName)
+    return UnitFound
 end
 
 --- Find the first(!) UNIT matching using patterns. Note that this is **a lot** slower than `:FindByName()`!
@@ -174,17 +175,17 @@ end
 --          -- using a pattern
 --          local unit = UNIT:FindByMatching( ".%d.%d$" )
 --          -- will return the first group found ending in "-1-1" to "-9-9", but not e.g. "-10-1"
-function UNIT:FindByMatching( Pattern )
-  local GroupFound = nil
-  
-  for name,group in pairs(_DATABASE.UNITS) do
-    if string.match(name, Pattern ) then
-      GroupFound = group
-      break
+function UNIT:FindByMatching(Pattern)
+    local GroupFound = nil
+
+    for name, group in pairs(_DATABASE.UNITS) do
+        if string.match(name, Pattern) then
+            GroupFound = group
+            break
+        end
     end
-  end
-  
-  return GroupFound
+
+    return GroupFound
 end
 
 --- Find all UNIT objects matching using patterns. Note that this is **a lot** slower than `:FindByName()`!
@@ -199,26 +200,27 @@ end
 --          -- using a pattern
 --          local unittable = UNIT:FindAllByMatching( ".%d.%d$" )
 --          -- will return the all units found ending in "-1-1" to "-9-9", but not e.g. "-10-1" or "-1-10"
-function UNIT:FindAllByMatching( Pattern )
-  local GroupsFound = {}
-  
-  for name,group in pairs(_DATABASE.UNITS) do
-    if string.match(name, Pattern ) then
-      GroupsFound[#GroupsFound+1] = group
+function UNIT:FindAllByMatching(Pattern)
+    local GroupsFound = {}
+
+    for name, group in pairs(_DATABASE.UNITS) do
+        if string.match(name, Pattern) then
+            GroupsFound[#GroupsFound + 1] = group
+        end
     end
-  end
-  
-  return GroupsFound
+
+    return GroupsFound
 end
 
 --- Return the name of the UNIT.
 -- @param #UNIT self
 -- @return #string The UNIT name.
 function UNIT:Name()
-  
-  return self.UnitName
+
+    return self.UnitName
 end
 
+--[[
 --- Get the DCS unit object.
 -- @param #UNIT self
 -- @return DCS#Unit The DCS unit object.
@@ -230,11 +232,37 @@ function UNIT:GetDCSObject()
     return DCSUnit
   end
   
-  --if self.DCSUnit then
-    --return self.DCSUnit
-  --end
-  
   return nil
+end
+--]]
+
+--- Returns the DCS Unit.
+-- @param #UNIT self
+-- @return DCS#Unit The DCS Group.
+function UNIT:GetDCSObject()
+
+    -- FF: Added checks that DCSObject exists because otherwise there were problems when respawning the unit right after it was initially spawned (e.g. teleport in OPSGROUP).
+    --     Got "Unit does not exit" after coalition.addGroup() when trying to access unit data because LastCallDCSObject<=1.
+    if (not self.LastCallDCSObject) or (self.LastCallDCSObject and timer.getTime() - self.LastCallDCSObject > 1) or (self.DCSObject == nil) or (self.DCSObject:isExist() == false) then
+
+        -- Get DCS group.
+        local DCSUnit = Unit.getByName(self.UnitName)
+
+        if DCSUnit then
+            self.LastCallDCSObject = timer.getTime()
+            self.DCSObject = DCSUnit
+            return DCSUnit
+        else
+            self.DCSObject = nil
+            self.LastCallDCSObject = nil
+        end
+
+    else
+        return self.DCSObject
+    end
+
+    --self:E(string.format("ERROR: Could not get DCS group object of group %s because DCS object could not be found!", tostring(self.UnitName)))
+    return nil
 end
 
 --- Returns the unit altitude above sea level in meters.
@@ -242,22 +270,22 @@ end
 -- @param #boolean FromGround Measure from the ground or from sea level (ASL). Provide **true** for measuring from the ground (AGL). **false** or **nil** if you measure from sea level. 
 -- @return #number The height of the group or nil if is not existing or alive.  
 function UNIT:GetAltitude(FromGround)
-  
-  local DCSUnit = Unit.getByName( self.UnitName )
 
-  if DCSUnit then
-    local altitude = 0
-    local point = DCSUnit:getPoint() --DCS#Vec3
-    altitude = point.y
-    if FromGround then
-      local land = land.getHeight( { x = point.x, y = point.z } ) or 0
-      altitude = altitude - land
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+        local altitude = 0
+        local point = DCSUnit:getPoint() --DCS#Vec3
+        altitude = point.y
+        if FromGround then
+            local land = land.getHeight({ x = point.x, y = point.z }) or 0
+            altitude = altitude - land
+        end
+        return altitude
     end
-    return altitude
-  end
 
-  return nil
-  
+    return nil
+
 end
 
 --- Respawn the @{Wrapper.Unit} using a (tweaked) template of the parent Group.
@@ -271,85 +299,85 @@ end
 -- @param #UNIT self
 -- @param Core.Point#COORDINATE Coordinate The position where to Spawn the new Unit at.
 -- @param #number Heading The heading of the unit respawn.
-function UNIT:ReSpawnAt( Coordinate, Heading )
+function UNIT:ReSpawnAt(Coordinate, Heading)
 
-  self:T( self:Name() )
-  local SpawnGroupTemplate = UTILS.DeepCopy( _DATABASE:GetGroupTemplateFromUnitName( self:Name() ) )
-  self:T( SpawnGroupTemplate )
+    --self:T( self:Name() )
+    local SpawnGroupTemplate = UTILS.DeepCopy(_DATABASE:GetGroupTemplateFromUnitName(self:Name()))
+    --self:T( SpawnGroupTemplate )
 
-  local SpawnGroup = self:GetGroup()
-  self:T( { SpawnGroup = SpawnGroup } )
-  
-  if SpawnGroup then
-  
-    local Vec3 = SpawnGroup:GetVec3()
-    SpawnGroupTemplate.x = Coordinate.x
-    SpawnGroupTemplate.y = Coordinate.z
-    
-    self:F( #SpawnGroupTemplate.units )
-    for UnitID, UnitData in pairs( SpawnGroup:GetUnits() or {} ) do
-      local GroupUnit = UnitData -- #UNIT
-      self:F( GroupUnit:GetName() )
-      if GroupUnit:IsAlive() then
-        local GroupUnitVec3 = GroupUnit:GetVec3()
-        local GroupUnitHeading = GroupUnit:GetHeading()
-        SpawnGroupTemplate.units[UnitID].alt = GroupUnitVec3.y
-        SpawnGroupTemplate.units[UnitID].x = GroupUnitVec3.x
-        SpawnGroupTemplate.units[UnitID].y = GroupUnitVec3.z
-        SpawnGroupTemplate.units[UnitID].heading = GroupUnitHeading
-        self:F( { UnitID, SpawnGroupTemplate.units[UnitID], SpawnGroupTemplate.units[UnitID] } )
-      end
-    end
-  end
-  
-  for UnitTemplateID, UnitTemplateData in pairs( SpawnGroupTemplate.units ) do
-    self:T( { UnitTemplateData.name, self:Name() } )
-    SpawnGroupTemplate.units[UnitTemplateID].unitId = nil
-    if UnitTemplateData.name == self:Name() then
-      self:T("Adjusting")
-      SpawnGroupTemplate.units[UnitTemplateID].alt = Coordinate.y
-      SpawnGroupTemplate.units[UnitTemplateID].x = Coordinate.x
-      SpawnGroupTemplate.units[UnitTemplateID].y = Coordinate.z
-      SpawnGroupTemplate.units[UnitTemplateID].heading = Heading
-      self:F( { UnitTemplateID, SpawnGroupTemplate.units[UnitTemplateID], SpawnGroupTemplate.units[UnitTemplateID] } )
-    else
-      self:F( SpawnGroupTemplate.units[UnitTemplateID].name )
-      local GroupUnit = UNIT:FindByName( SpawnGroupTemplate.units[UnitTemplateID].name ) -- #UNIT
-      if GroupUnit and GroupUnit:IsAlive() then
-        local GroupUnitVec3 = GroupUnit:GetVec3()
-        local GroupUnitHeading = GroupUnit:GetHeading()
-        UnitTemplateData.alt = GroupUnitVec3.y
-        UnitTemplateData.x = GroupUnitVec3.x
-        UnitTemplateData.y = GroupUnitVec3.z
-        UnitTemplateData.heading = GroupUnitHeading
-      else
-        if SpawnGroupTemplate.units[UnitTemplateID].name ~= self:Name() then
-          self:T("nilling")
-          SpawnGroupTemplate.units[UnitTemplateID].delete = true
+    local SpawnGroup = self:GetGroup()
+    --self:T( { SpawnGroup = SpawnGroup } )
+
+    if SpawnGroup then
+
+        local Vec3 = SpawnGroup:GetVec3()
+        SpawnGroupTemplate.x = Coordinate.x
+        SpawnGroupTemplate.y = Coordinate.z
+
+        --self:F( #SpawnGroupTemplate.units )
+        for UnitID, UnitData in pairs(SpawnGroup:GetUnits() or {}) do
+            local GroupUnit = UnitData -- #UNIT
+            --self:F( GroupUnit:GetName() )
+            if GroupUnit:IsAlive() then
+                local GroupUnitVec3 = GroupUnit:GetVec3()
+                local GroupUnitHeading = GroupUnit:GetHeading()
+                SpawnGroupTemplate.units[UnitID].alt = GroupUnitVec3.y
+                SpawnGroupTemplate.units[UnitID].x = GroupUnitVec3.x
+                SpawnGroupTemplate.units[UnitID].y = GroupUnitVec3.z
+                SpawnGroupTemplate.units[UnitID].heading = GroupUnitHeading
+                --self:F( { UnitID, SpawnGroupTemplate.units[UnitID], SpawnGroupTemplate.units[UnitID] } )
+            end
         end
-      end
     end
-  end
 
-  -- Remove obscolete units from the group structure
-  local i = 1
-  while i <= #SpawnGroupTemplate.units do
-
-    local UnitTemplateData = SpawnGroupTemplate.units[i]
-    self:T( UnitTemplateData.name )
-
-    if UnitTemplateData.delete then
-      table.remove( SpawnGroupTemplate.units, i )
-    else
-      i = i + 1
+    for UnitTemplateID, UnitTemplateData in pairs(SpawnGroupTemplate.units) do
+        --self:T( { UnitTemplateData.name, self:Name() } )
+        SpawnGroupTemplate.units[UnitTemplateID].unitId = nil
+        if UnitTemplateData.name == self:Name() then
+            --self:T("Adjusting")
+            SpawnGroupTemplate.units[UnitTemplateID].alt = Coordinate.y
+            SpawnGroupTemplate.units[UnitTemplateID].x = Coordinate.x
+            SpawnGroupTemplate.units[UnitTemplateID].y = Coordinate.z
+            SpawnGroupTemplate.units[UnitTemplateID].heading = Heading
+            --self:F( { UnitTemplateID, SpawnGroupTemplate.units[UnitTemplateID], SpawnGroupTemplate.units[UnitTemplateID] } )
+        else
+            --self:F( SpawnGroupTemplate.units[UnitTemplateID].name )
+            local GroupUnit = UNIT:FindByName(SpawnGroupTemplate.units[UnitTemplateID].name) -- #UNIT
+            if GroupUnit and GroupUnit:IsAlive() then
+                local GroupUnitVec3 = GroupUnit:GetVec3()
+                local GroupUnitHeading = GroupUnit:GetHeading()
+                UnitTemplateData.alt = GroupUnitVec3.y
+                UnitTemplateData.x = GroupUnitVec3.x
+                UnitTemplateData.y = GroupUnitVec3.z
+                UnitTemplateData.heading = GroupUnitHeading
+            else
+                if SpawnGroupTemplate.units[UnitTemplateID].name ~= self:Name() then
+                    --self:T("nilling")
+                    SpawnGroupTemplate.units[UnitTemplateID].delete = true
+                end
+            end
+        end
     end
-  end
-  
-  SpawnGroupTemplate.groupId = nil
-  
-  self:T( SpawnGroupTemplate )
 
-  _DATABASE:Spawn( SpawnGroupTemplate )
+    -- Remove obscolete units from the group structure
+    local i = 1
+    while i <= #SpawnGroupTemplate.units do
+
+        local UnitTemplateData = SpawnGroupTemplate.units[i]
+        --self:T( UnitTemplateData.name )
+
+        if UnitTemplateData.delete then
+            table.remove(SpawnGroupTemplate.units, i)
+        else
+            i = i + 1
+        end
+    end
+
+    SpawnGroupTemplate.groupId = nil
+
+    --self:T( SpawnGroupTemplate )
+
+    _DATABASE:Spawn(SpawnGroupTemplate)
 end
 
 
@@ -358,17 +386,17 @@ end
 -- @param #UNIT self
 -- @return #boolean `true` if Unit is activated. `nil` The DCS Unit is not existing or alive.  
 function UNIT:IsActive()
-  self:F2( self.UnitName )
+    --self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-  
-    local UnitIsActive = DCSUnit:isActive()
-    return UnitIsActive 
-  end
+    local DCSUnit = self:GetDCSObject()
 
-  return nil
+    if DCSUnit then
+
+        local UnitIsActive = DCSUnit:isActive()
+        return UnitIsActive
+    end
+
+    return nil
 end
 
 --- Returns if the unit is exists in the mission.
@@ -378,14 +406,14 @@ end
 -- @return #boolean Returns `true` if unit exists in the mission.
 function UNIT:IsExist()
 
-  local DCSUnit = self:GetDCSObject() -- DCS#Unit
-  
-  if DCSUnit then
-    local exists = DCSUnit:isExist()
-    return exists
-  end 
-  
-  return nil
+    local DCSUnit = self:GetDCSObject() -- DCS#Unit
+
+    if DCSUnit then
+        local exists = DCSUnit:isExist()
+        return exists
+    end
+
+    return nil
 end
 
 --- Returns if the Unit is alive.  
@@ -395,73 +423,86 @@ end
 -- @param #UNIT self
 -- @return #boolean Returns `true` if Unit is alive and active, `false` if it exists but is not active and `nil` if the object does not exist or DCS `isExist` function returns false.
 function UNIT:IsAlive()
-  self:F3( self.UnitName )
+    --self:F3( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject() -- DCS#Unit
-  
-  if DCSUnit and DCSUnit:isExist() then
-    local UnitIsAlive = DCSUnit:isActive()
-    return UnitIsAlive
-  end 
-  
-  return nil
+    local DCSUnit = self:GetDCSObject() -- DCS#Unit
+
+    if DCSUnit and DCSUnit:isExist() then
+        local UnitIsAlive = DCSUnit:isActive()
+        return UnitIsAlive
+    end
+
+    return nil
 end
 
 --- Returns if the Unit is dead.
 -- @param #UNIT self  
 -- @return #boolean `true` if Unit is dead, else false or nil if the unit does not exist
 function UNIT:IsDead()
-  return not self:IsAlive()
+    return not self:IsAlive()
 end
 
 --- Returns the Unit's callsign - the localized string.
 -- @param #UNIT self
 -- @return #string The Callsign of the Unit.
 function UNIT:GetCallsign()
-  self:F2( self.UnitName )
+    --self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitCallSign = DCSUnit:getCallsign()
-    if UnitCallSign == "" then
-      UnitCallSign = DCSUnit:getName()
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+        local UnitCallSign = DCSUnit:getCallsign()
+        if UnitCallSign == "" then
+            UnitCallSign = DCSUnit:getName()
+        end
+        return UnitCallSign
     end
-    return UnitCallSign
-  end
-  
-  self:F( self.ClassName .. " " .. self.UnitName .. " not found!" )
-  return nil
+
+    --self:F( self.ClassName .. " " .. self.UnitName .. " not found!" )
+    return nil
 end
 
 --- Check if an (air) unit is a client or player slot. Information is retrieved from the group template.
 -- @param #UNIT self
 -- @return #boolean If true, unit is associated with a client or player slot.
 function UNIT:IsPlayer()
-  
-  -- Get group.
-  local group=self:GetGroup()
-  
-  if not group then return false end
-    
-  -- Units of template group.
-  local template = group:GetTemplate()
-  
-  if (template == nil) or (template.units == nil ) then return false end
-  
-  local units=template.units
-  
-  -- Get numbers.
-  for _,unit in pairs(units) do
-      
-    -- Check if unit name matach and skill is Client or Player.
-    if unit.name==self:GetName() and (unit.skill=="Client" or unit.skill=="Player") then
-      return true
+
+    -- Get group.
+    local group = self:GetGroup()
+
+    if not group then
+        return false
     end
 
-  end
-  
-  return false
+    -- Units of template group.
+    local template = group:GetTemplate()
+
+    if (template == nil) or (template.units == nil) then
+        local DCSObject = self:GetDCSObject()
+        if DCSObject then
+            if DCSObject:getPlayerName() ~= nil then
+                return true
+            else
+                return false
+            end
+        else
+            return false
+        end
+    end
+
+    local units = template.units
+
+    -- Get numbers.
+    for _, unit in pairs(units) do
+
+        -- Check if unit name matach and skill is Client or Player.
+        if unit.name == self:GetName() and (unit.skill == "Client" or unit.skill == "Player") then
+            return true
+        end
+
+    end
+
+    return false
 end
 
 
@@ -470,32 +511,32 @@ end
 -- @return #string Player Name
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPlayerName()
-  self:F( self.UnitName )
+    --self:F( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject() -- DCS#Unit
-  
-  if DCSUnit then
-  
-    local PlayerName = DCSUnit:getPlayerName()
-    -- TODO Workaround DCS-BUG-3 - https://github.com/FlightControl-Master/MOOSE/issues/696
---    if PlayerName == nil or PlayerName == "" then
---      local PlayerCategory = DCSUnit:getDesc().category
---      if PlayerCategory == Unit.Category.GROUND_UNIT or PlayerCategory == Unit.Category.SHIP then
---        PlayerName = "Player" .. DCSUnit:getID()
---      end
---    end
---    -- Good code
---    if PlayerName == nil then 
---      PlayerName = nil
---    else
---      if PlayerName == "" then
---        PlayerName = "Player" .. DCSUnit:getID()
---      end
---    end
-    return PlayerName
-  end
+    local DCSUnit = self:GetDCSObject() -- DCS#Unit
 
-  return nil
+    if DCSUnit then
+
+        local PlayerName = DCSUnit:getPlayerName()
+        -- TODO Workaround DCS-BUG-3 - https://github.com/FlightControl-Master/MOOSE/issues/696
+        --    if PlayerName == nil or PlayerName == "" then
+        --      local PlayerCategory = DCSUnit:getDesc().category
+        --      if PlayerCategory == Unit.Category.GROUND_UNIT or PlayerCategory == Unit.Category.SHIP then
+        --        PlayerName = "Player" .. DCSUnit:getID()
+        --      end
+        --    end
+        --    -- Good code
+        --    if PlayerName == nil then
+        --      PlayerName = nil
+        --    else
+        --      if PlayerName == "" then
+        --        PlayerName = "Player" .. DCSUnit:getID()
+        --      end
+        --    end
+        return PlayerName
+    end
+
+    return nil
 
 end
 
@@ -504,11 +545,11 @@ end
 -- @return #boolean If true, unit is a player or client aircraft  
 function UNIT:IsClient()
 
-  if _DATABASE.CLIENTS[self.UnitName] then
-    return true
-  end
+    if _DATABASE.CLIENTS[self.UnitName] then
+        return true
+    end
 
-  return false
+    return false
 end
 
 --- Get the CLIENT of the unit  
@@ -516,23 +557,23 @@ end
 -- @return Wrapper.Client#CLIENT  
 function UNIT:GetClient()
 
-  local client=_DATABASE.CLIENTS[self.UnitName]
+    local client = _DATABASE.CLIENTS[self.UnitName]
 
-  if client then
-    return client
-  end
+    if client then
+        return client
+    end
 
-  return nil
+    return nil
 end
 
 --- [AIRPLANE] Get the NATO reporting name of a UNIT. Currently airplanes only!
 --@param #UNIT self
 --@return #string NatoReportingName or "Bogey" if unknown.
 function UNIT:GetNatoReportingName()
-  
-  local typename = self:GetTypeName()
-  return UTILS.GetReportingName(typename)
-  
+
+    local typename = self:GetTypeName()
+    return UTILS.GetReportingName(typename)
+
 end
 
 
@@ -544,16 +585,16 @@ end
 -- @return #number The Unit number. 
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetNumber()
-  self:F2( self.UnitName )
+    --self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitNumber = DCSUnit:getNumber()
-    return UnitNumber
-  end
+    local DCSUnit = self:GetDCSObject()
 
-  return nil
+    if DCSUnit then
+        local UnitNumber = DCSUnit:getNumber()
+        return UnitNumber
+    end
+
+    return nil
 end
 
 
@@ -561,16 +602,16 @@ end
 -- @param #UNIT self
 -- @return #number Speed in km/h. 
 function UNIT:GetSpeedMax()
-  self:F2( self.UnitName )
+    --self:F2( self.UnitName )
 
-  local Desc = self:GetDesc()
-  
-  if Desc then
-    local SpeedMax = Desc.speedMax
-    return SpeedMax*3.6
-  end
+    local Desc = self:GetDesc()
 
-  return 0
+    if Desc then
+        local SpeedMax = Desc.speedMax or 0
+        return SpeedMax * 3.6
+    end
+
+    return 0
 end
 
 --- Returns the unit's max range in meters derived from the DCS descriptors.
@@ -578,21 +619,21 @@ end
 -- @param #UNIT self
 -- @return #number Range in meters.
 function UNIT:GetRange()
-  self:F2( self.UnitName )
+    --self:F2( self.UnitName )
 
-  local Desc = self:GetDesc()
-  
-  if Desc then
-    local Range = Desc.range --This is in kilometers (not meters) for some reason. But should check again!
-    if Range then
-      Range=Range*1000 -- convert to meters.
-    else
-      Range=10000000 --10.000 km if no range
+    local Desc = self:GetDesc()
+
+    if Desc then
+        local Range = Desc.range --This is in kilometers (not meters) for some reason. But should check again!
+        if Range then
+            Range = Range * 1000 -- convert to meters.
+        else
+            Range = 10000000 --10.000 km if no range
+        end
+        return Range
     end
-    return Range
-  end
 
-  return nil
+    return nil
 end
 
 --- Check if the unit is refuelable. Also retrieves the refuelling system (boom or probe) if applicable.
@@ -600,18 +641,18 @@ end
 -- @return #boolean If true, unit is refuelable (checks for the attribute "Refuelable").
 -- @return #number Refueling system (if any): 0=boom, 1=probe.
 function UNIT:IsRefuelable()
-  self:F2( self.UnitName )
+    --self:F2( self.UnitName )
 
-  local refuelable=self:HasAttribute("Refuelable")
-  
-  local system=nil
-  
-  local Desc=self:GetDesc()
-  if Desc and Desc.tankerType then
-    system=Desc.tankerType
-  end
+    local refuelable = self:HasAttribute("Refuelable")
 
-  return refuelable, system
+    local system = nil
+
+    local Desc = self:GetDesc()
+    if Desc and Desc.tankerType then
+        system = Desc.tankerType
+    end
+
+    return refuelable, system
 end
 
 --- Check if the unit is a tanker. Also retrieves the refuelling system (boom or probe) if applicable.
@@ -619,41 +660,41 @@ end
 -- @return #boolean If true, unit is a tanker (checks for the attribute "Tankers").
 -- @return #number Refueling system (if any): 0=boom, 1=probe.
 function UNIT:IsTanker()
-  self:F2( self.UnitName )
+    --self:F2( self.UnitName )
 
-  local tanker=self:HasAttribute("Tankers")
-  
-  local system=nil
-  
-  if tanker then
-  
-    local Desc=self:GetDesc()
-    if Desc and Desc.tankerType then
-      system=Desc.tankerType
-    end
-    
-    local typename=self:GetTypeName()
-    
-    -- Some hard coded data as this is not in the descriptors...
-    if typename=="IL-78M" then
-      system=1 --probe
-    elseif typename=="KC130" or typename=="KC130J" then
-      system=1 --probe
-    elseif typename=="KC135BDA" then
-      system=1 --probe
-    elseif typename=="KC135MPRS" then
-      system=1 --probe
-    elseif typename=="S-3B Tanker" then
-      system=1 --probe
-    elseif typename=="KC_10_Extender" then
-      system=1 --probe
-    elseif typename=="KC_10_Extender_D" then
-      system=0 --boom
-    end
-    
-  end
+    local tanker = self:HasAttribute("Tankers")
 
-  return tanker, system
+    local system = nil
+
+    if tanker then
+
+        local Desc = self:GetDesc()
+        if Desc and Desc.tankerType then
+            system = Desc.tankerType
+        end
+
+        local typename = self:GetTypeName()
+
+        -- Some hard coded data as this is not in the descriptors...
+        if typename == "IL-78M" then
+            system = 1 --probe
+        elseif typename == "KC130" or typename == "KC130J" then
+            system = 1 --probe
+        elseif typename == "KC135BDA" then
+            system = 1 --probe
+        elseif typename == "KC135MPRS" then
+            system = 1 --probe
+        elseif typename == "S-3B Tanker" then
+            system = 1 --probe
+        elseif typename == "KC_10_Extender" then
+            system = 1 --probe
+        elseif typename == "KC_10_Extender_D" then
+            system = 0 --boom
+        end
+
+    end
+
+    return tanker, system
 end
 
 --- Check if the unit can supply ammo. Currently, we have
@@ -668,21 +709,21 @@ end
 -- @return #boolean If `true`, unit can supply ammo.
 function UNIT:IsAmmoSupply()
 
-  -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
-  local typename=self:GetTypeName()
-  
-  if typename=="M 818" then
-    -- Blue ammo truck.
-    return true
-  elseif typename=="Ural-375" then  
-    -- Red ammo truck.
-    return true
-  elseif typename=="ZIL-135" then
-    -- Red ammo truck. Checked that it can also provide ammo.
-    return true    
-  end
+    -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
+    local typename = self:GetTypeName()
 
-  return false
+    if typename == "M 818" then
+        -- Blue ammo truck.
+        return true
+    elseif typename == "Ural-375" then
+        -- Red ammo truck.
+        return true
+    elseif typename == "ZIL-135" then
+        -- Red ammo truck. Checked that it can also provide ammo.
+        return true
+    end
+
+    return false
 end
 
 --- Check if the unit can supply fuel. Currently, we have
@@ -698,41 +739,41 @@ end
 -- @return #boolean If `true`, unit can supply fuel.
 function UNIT:IsFuelSupply()
 
-  -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
-  local typename=self:GetTypeName()
-  
-  if typename=="M978 HEMTT Tanker" then
-    return true
-  elseif typename=="ATMZ-5" then
-    return true
-  elseif typename=="ATMZ-10" then
-    return true
-  elseif typename=="ATZ-5" then
-    return true    
-  end
+    -- Type name is the only thing we can check. There is no attribute (Sep. 2021) which would tell us.
+    local typename = self:GetTypeName()
 
-  return false
+    if typename == "M978 HEMTT Tanker" then
+        return true
+    elseif typename == "ATMZ-5" then
+        return true
+    elseif typename == "ATMZ-10" then
+        return true
+    elseif typename == "ATZ-5" then
+        return true
+    end
+
+    return false
 end
 
 --- Returns the unit's group if it exists and nil otherwise.
 -- @param Wrapper.Unit#UNIT self
 -- @return Wrapper.Group#GROUP The Group of the Unit or `nil` if the unit does not exist.  
 function UNIT:GetGroup()
-  self:F2( self.UnitName )  
-  local UnitGroup = GROUP:FindByName(self.GroupName)
-  if UnitGroup then
-    return UnitGroup
-  else
-    local DCSUnit = self:GetDCSObject()    
-    if DCSUnit then
-      local grp = DCSUnit:getGroup()
-      if grp then
-        local UnitGroup = GROUP:FindByName( grp:getName() )
+    --self:F2( self.UnitName )
+    local UnitGroup = GROUP:FindByName(self.GroupName)
+    if UnitGroup then
         return UnitGroup
-      end
+    else
+        local DCSUnit = self:GetDCSObject()
+        if DCSUnit then
+            local grp = DCSUnit:getGroup()
+            if grp then
+                local UnitGroup = GROUP:FindByName(grp:getName())
+                return UnitGroup
+            end
+        end
     end
-  end
-  return nil
+    return nil
 end
 
 --- Returns the prefix name of the DCS Unit. A prefix name is a part of the name before a '#'-sign.
@@ -742,39 +783,39 @@ end
 -- @return #string The name of the DCS Unit.
 -- @return #nil The DCS Unit is not existing or alive.  
 function UNIT:GetPrefix()
-  self:F2( self.UnitName )
+    --self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitPrefix = string.match( self.UnitName, ".*#" ):sub( 1, -2 )
-    self:T3( UnitPrefix )
-    return UnitPrefix
-  end
-  
-  return nil
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+        local UnitPrefix = string.match(self.UnitName, ".*#"):sub(1, -2)
+        --self:T3( UnitPrefix )
+        return UnitPrefix
+    end
+
+    return nil
 end
 
 --- Returns the Unit's ammunition.
 -- @param #UNIT self
 -- @return DCS#Unit.Ammo Table with ammuntion of the unit (or nil). This can be a complex table! 
 function UNIT:GetAmmo()
-  self:F2( self.UnitName )
-  local DCSUnit = self:GetDCSObject()
-  if DCSUnit then
-    --local status, unitammo = pcall(
-      -- function()
+    --self:F2( self.UnitName )
+    local DCSUnit = self:GetDCSObject()
+    if DCSUnit then
+        --local status, unitammo = pcall(
+        -- function()
         -- local UnitAmmo = DCSUnit:getAmmo()
         -- return UnitAmmo
-       --end
-    --)
-    --if status then
-      --return unitammo
-    --end
-    local UnitAmmo = DCSUnit:getAmmo()
-    return UnitAmmo
-  end
-  return nil
+        --end
+        --)
+        --if status then
+        --return unitammo
+        --end
+        local UnitAmmo = DCSUnit:getAmmo()
+        return UnitAmmo
+    end
+    return nil
 end
 
 
@@ -783,11 +824,11 @@ end
 -- @param #number mass to set cargo to
 -- @return #UNIT self
 function UNIT:SetUnitInternalCargo(mass)
-  local DCSUnit = self:GetDCSObject()
-  if DCSUnit then
-    trigger.action.setUnitInternalCargo(DCSUnit:getName(), mass)
-  end
-  return self
+    local DCSUnit = self:GetDCSObject()
+    if DCSUnit then
+        trigger.action.setUnitInternalCargo(DCSUnit:getName(), mass)
+    end
+    return self
 end
 
 --- Get the number of ammunition and in particular the number of shells, rockets, bombs and missiles a unit currently has.
@@ -802,165 +843,177 @@ end
 -- @return #number Number of tank HE shells left (for tanks, if applicable)
 function UNIT:GetAmmunition()
 
-  -- Init counter.
-  local nammo=0
-  local nshells=0
-  local nrockets=0
-  local nmissiles=0
-  local nbombs=0
-  local narti=0
-  local nAPshells = 0
-  local nHEshells = 0
+    -- Init counter.
+    local nammo = 0
+    local nshells = 0
+    local nrockets = 0
+    local nmissiles = 0
+    local nbombs = 0
+    local narti = 0
+    local nAPshells = 0
+    local nHEshells = 0
 
-  local unit=self
+    local unit = self
 
-  -- Get ammo table.
-  local ammotable=unit:GetAmmo()
+    -- Get ammo table.
+    local ammotable = unit:GetAmmo()
 
-  if ammotable then
+    if ammotable then
 
-    local weapons=#ammotable
-    
-    -- Loop over all weapons.
-    for w=1,weapons do
+        local weapons = #ammotable
 
-      -- Number of current weapon.
-      local Nammo=ammotable[w]["count"]
+        -- Loop over all weapons.
+        for w = 1, weapons do
 
-      -- Type name of current weapon.
-      local Tammo=ammotable[w]["desc"]["typeName"]
+            -- Number of current weapon.
+            local Nammo = ammotable[w]["count"]
 
-      --local _weaponString = UTILS.Split(Tammo,"%.")
-      --local _weaponName   = _weaponString[#_weaponString]
+            -- Type name of current weapon.
+            local Tammo = ammotable[w]["desc"]["typeName"]
 
-      -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3
-      local Category=ammotable[w].desc.category
+            --local _weaponString = UTILS.Split(Tammo,"%.")
+            --local _weaponName   = _weaponString[#_weaponString]
 
-      -- Get missile category: Weapon.MissileCategory AAM=1, SAM=2, BM=3, ANTI_SHIP=4, CRUISE=5, OTHER=6
-      local MissileCategory=nil
-      if Category==Weapon.Category.MISSILE then
-        MissileCategory=ammotable[w].desc.missileCategory
-      end
+            -- Get the weapon category: shell=0, missile=1, rocket=2, bomb=3
+            local Category = ammotable[w].desc.category
 
-      -- We are specifically looking for shells or rockets here.
-      if Category==Weapon.Category.SHELL then
+            -- Get missile category: Weapon.MissileCategory AAM=1, SAM=2, BM=3, ANTI_SHIP=4, CRUISE=5, OTHER=6
+            local MissileCategory = nil
+            if Category == Weapon.Category.MISSILE then
+                MissileCategory = ammotable[w].desc.missileCategory
+            end
 
-        -- Add up all shells.
-        nshells=nshells+Nammo
-        
-        if ammotable[w].desc.warhead and ammotable[w].desc.warhead.explosiveMass and ammotable[w].desc.warhead.explosiveMass > 0 then
-          narti=narti+Nammo
+            -- We are specifically looking for shells or rockets here.
+            if Category == Weapon.Category.SHELL then
+
+                -- Add up all shells.
+                nshells = nshells + Nammo
+
+                if ammotable[w].desc.warhead and ammotable[w].desc.warhead.explosiveMass and ammotable[w].desc.warhead.explosiveMass > 0 then
+                    narti = narti + Nammo
+                end
+
+                if ammotable[w].desc.typeName and string.find(ammotable[w].desc.typeName, "_AP", 1, true) then
+                    nAPshells = nAPshells + Nammo
+                end
+
+                if ammotable[w].desc.typeName and string.find(ammotable[w].desc.typeName, "_HE", 1, true) then
+                    nHEshells = nHEshells + Nammo
+                end
+
+            elseif Category == Weapon.Category.ROCKET then
+
+                -- Add up all rockets.
+                nrockets = nrockets + Nammo
+
+            elseif Category == Weapon.Category.BOMB then
+
+                -- Add up all rockets.
+                nbombs = nbombs + Nammo
+
+            elseif Category == Weapon.Category.MISSILE then
+
+
+                -- Add up all  missiles (category 5)
+                if MissileCategory == Weapon.MissileCategory.AAM then
+                    nmissiles = nmissiles + Nammo
+                elseif MissileCategory == Weapon.MissileCategory.ANTI_SHIP then
+                    nmissiles = nmissiles + Nammo
+                elseif MissileCategory == Weapon.MissileCategory.BM then
+                    nmissiles = nmissiles + Nammo
+                elseif MissileCategory == Weapon.MissileCategory.OTHER then
+                    nmissiles = nmissiles + Nammo
+                elseif MissileCategory == Weapon.MissileCategory.SAM then
+                    nmissiles = nmissiles + Nammo
+                elseif MissileCategory == Weapon.MissileCategory.CRUISE then
+                    nmissiles = nmissiles + Nammo
+                end
+
+            end
+
         end
-        
-        if ammotable[w].desc.typeName and string.find(ammotable[w].desc.typeName,"_AP",1,true) then
-          nAPshells = nAPshells+Nammo
-        end
-        
-        if ammotable[w].desc.typeName and string.find(ammotable[w].desc.typeName,"_HE",1,true) then
-          nHEshells = nHEshells+Nammo
-        end
-        
-      elseif Category==Weapon.Category.ROCKET then
-
-        -- Add up all rockets.
-        nrockets=nrockets+Nammo
-
-      elseif Category==Weapon.Category.BOMB then
-
-        -- Add up all rockets.
-        nbombs=nbombs+Nammo
-        
-      elseif Category==Weapon.Category.MISSILE then
-        
-        
-        -- Add up all  missiles (category 5)
-        if MissileCategory==Weapon.MissileCategory.AAM then
-          nmissiles=nmissiles+Nammo
-        elseif MissileCategory==Weapon.MissileCategory.ANTI_SHIP then
-          nmissiles=nmissiles+Nammo
-        elseif MissileCategory==Weapon.MissileCategory.BM then
-          nmissiles=nmissiles+Nammo
-        elseif MissileCategory==Weapon.MissileCategory.OTHER then
-          nmissiles=nmissiles+Nammo
-        elseif MissileCategory==Weapon.MissileCategory.SAM then
-          nmissiles=nmissiles+Nammo
-        elseif MissileCategory==Weapon.MissileCategory.CRUISE then
-          nmissiles=nmissiles+Nammo
-        end
-
-      end
-
     end
-  end
 
-  -- Total amount of ammunition.
-  nammo=nshells+nrockets+nmissiles+nbombs
+    -- Total amount of ammunition.
+    nammo = nshells + nrockets + nmissiles + nbombs
 
-  return nammo, nshells, nrockets, nbombs, nmissiles, narti, nAPshells, nHEshells
+    return nammo, nshells, nrockets, nbombs, nmissiles, narti, nAPshells, nHEshells
 end
 
 --- Checks if a tank still has AP shells.
 -- @param #UNIT self
 -- @return #boolean HasAPShells  
 function UNIT:HasAPShells()
-  local _,_,_,_,_,_,shells = self:GetAmmunition()
-  if shells > 0 then return true else return false end
+    local _, _, _, _, _, _, shells = self:GetAmmunition()
+    if shells > 0 then
+        return true
+    else
+        return false
+    end
 end
 
 --- Get number of AP shells from a tank.
 -- @param #UNIT self
 -- @return #number Number of AP shells 
 function UNIT:GetAPShells()
-  local _,_,_,_,_,_,shells = self:GetAmmunition()
-  return shells or 0
+    local _, _, _, _, _, _, shells = self:GetAmmunition()
+    return shells or 0
 end
 
 --- Get number of HE shells from a tank.
 -- @param #UNIT self
 -- @return #number Number of HE shells
 function UNIT:GetHEShells()
-  local _,_,_,_,_,_,_,shells = self:GetAmmunition()
-  return shells or 0
+    local _, _, _, _, _, _, _, shells = self:GetAmmunition()
+    return shells or 0
 end
 
 --- Checks if a tank still has HE shells.
 -- @param #UNIT self
 -- @return #boolean HasHEShells  
 function UNIT:HasHEShells()
-  local _,_,_,_,_,_,_,shells = self:GetAmmunition()
-  if shells > 0 then return true else return false end
+    local _, _, _, _, _, _, _, shells = self:GetAmmunition()
+    if shells > 0 then
+        return true
+    else
+        return false
+    end
 end
 
 --- Checks if an artillery unit still has artillery shells.
 -- @param #UNIT self
 -- @return #boolean HasArtiShells  
 function UNIT:HasArtiShells()
-  local _,_,_,_,_,shells = self:GetAmmunition()
-  if shells > 0 then return true else return false end
+    local _, _, _, _, _, shells = self:GetAmmunition()
+    if shells > 0 then
+        return true
+    else
+        return false
+    end
 end
 
 --- Get number of artillery shells from an artillery unit.
 -- @param #UNIT self
 -- @return #number Number of artillery shells
 function UNIT:GetArtiShells()
-  local _,_,_,_,_,shells = self:GetAmmunition()
-  return shells or 0
+    local _, _, _, _, _, shells = self:GetAmmunition()
+    return shells or 0
 end
 
 --- Returns the unit sensors.
 -- @param #UNIT self
 -- @return DCS#Unit.Sensors Table of sensors.  
 function UNIT:GetSensors()
-  self:F2( self.UnitName )
+    --self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitSensors = DCSUnit:getSensors()
-    return UnitSensors
-  end
-  
-  return nil
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+        local UnitSensors = DCSUnit:getSensors()
+        return UnitSensors
+    end
+
+    return nil
 end
 
 -- Need to add here a function per sensortype
@@ -969,41 +1022,41 @@ end
 --- Returns if the unit has sensors of a certain type.
 -- @param #UNIT self
 -- @return #boolean returns true if the unit has specified types of sensors. This function is more preferable than Unit.getSensors() if you don't want to get information about all the unit's sensors, and just want to check if the unit has specified types of sensors. 
-function UNIT:HasSensors( ... )
-  self:F2( arg )
+function UNIT:HasSensors(...)
+    --self:F2( arg )
 
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local HasSensors = DCSUnit:hasSensors( unpack( arg ) )
-    return HasSensors
-  end
-  
-  return nil
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+        local HasSensors = DCSUnit:hasSensors(unpack(arg))
+        return HasSensors
+    end
+
+    return nil
 end
 
 --- Returns if the unit is SEADable.
 -- @param #UNIT self
 -- @return #boolean returns true if the unit is SEADable. 
 function UNIT:HasSEAD()
-  self:F2()
+    --self:F2()
 
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitSEADAttributes = DCSUnit:getDesc().attributes
-    
-    local HasSEAD = false
-    if UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] == true or
-       UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] == true or
-       UnitSEADAttributes["Optical Tracker"] and UnitSEADAttributes["Optical Tracker"] == true  
-       then
-       HasSEAD = true
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+        local UnitSEADAttributes = DCSUnit:getDesc().attributes
+
+        local HasSEAD = false
+        if UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND1_FOR_ARM"] == true or
+        UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] and UnitSEADAttributes["RADAR_BAND2_FOR_ARM"] == true or
+        UnitSEADAttributes["Optical Tracker"] and UnitSEADAttributes["Optical Tracker"] == true
+        then
+            HasSEAD = true
+        end
+        return HasSEAD
     end
-    return HasSEAD
-  end
-  
-  return nil
+
+    return nil
 end
 
 --- Returns two values:
@@ -1014,32 +1067,32 @@ end
 -- @return #boolean  Indicates if at least one of the unit's radar(s) is on.
 -- @return DCS#Object The object of the radar's interest. Not nil only if at least one radar of the unit is tracking a target.
 function UNIT:GetRadar()
-  self:F2( self.UnitName )
+    --self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitRadarOn, UnitRadarObject = DCSUnit:getRadar()
-    return UnitRadarOn, UnitRadarObject
-  end
-  
-  return nil, nil
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+        local UnitRadarOn, UnitRadarObject = DCSUnit:getRadar()
+        return UnitRadarOn, UnitRadarObject
+    end
+
+    return nil, nil
 end
 
 --- Returns relative amount of fuel (from 0.0 to 1.0) the UNIT has in its internal tanks. If there are additional fuel tanks the value may be greater than 1.0.
 -- @param #UNIT self
 -- @return #number The relative amount of fuel (from 0.0 to 1.0) or *nil* if the DCS Unit is not existing or alive. 
 function UNIT:GetFuel()
-  self:F3( self.UnitName )
+    --self:F3( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitFuel = DCSUnit:getFuel()
-    return UnitFuel
-  end
-  
-  return nil
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+        local UnitFuel = DCSUnit:getFuel()
+        return UnitFuel
+    end
+
+    return nil
 end
 
 
@@ -1047,18 +1100,18 @@ end
 -- @param #UNIT self
 -- @return #list<Wrapper.Unit#UNIT> A list of one @{Wrapper.Unit}.
 function UNIT:GetUnits()
-  self:F3( { self.UnitName } )
-  local DCSUnit = self:GetDCSObject()
+    --self:F3( { self.UnitName } )
+    local DCSUnit = self:GetDCSObject()
 
-  local Units = {}
-  
-  if DCSUnit then
-    Units[1] = UNIT:Find( DCSUnit )
-    self:T3( Units )
-    return Units
-  end
+    local Units = {}
 
-  return nil
+    if DCSUnit then
+        Units[1] = UNIT:Find(DCSUnit)
+        - self:T3(Units)
+        return Units
+    end
+
+    return nil
 end
 
 
@@ -1066,60 +1119,60 @@ end
 -- @param #UNIT self
 -- @return #number The Unit's health value or -1 if unit does not exist any more.
 function UNIT:GetLife()
-  self:F2( self.UnitName )
+    --self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit and DCSUnit:isExist() then
-    local UnitLife = DCSUnit:getLife()
-    return UnitLife
-  end
-  
-  return -1
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit and DCSUnit:isExist() then
+        local UnitLife = DCSUnit:getLife()
+        return UnitLife
+    end
+
+    return -1
 end
 
 --- Returns the Unit's initial health.
 -- @param #UNIT self
 -- @return #number The Unit's initial health value or 0 if unit does not exist any more.  
 function UNIT:GetLife0()
-  self:F2( self.UnitName )
+    --self:F2( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitLife0 = DCSUnit:getLife0()
-    return UnitLife0
-  end
-  
-  return 0
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+        local UnitLife0 = DCSUnit:getLife0()
+        return UnitLife0
+    end
+
+    return 0
 end
 
 --- Returns the unit's relative health.
 -- @param #UNIT self
 -- @return #number The Unit's relative health value, i.e. a number in [0,1] or -1 if unit does not exist any more.
 function UNIT:GetLifeRelative()
-  self:F2(self.UnitName)
+    --self:F2(self.UnitName)
 
-  if self and self:IsAlive() then
-    local life0=self:GetLife0()
-    local lifeN=self:GetLife()
-    return lifeN/life0
-  end
-  
-  return -1
+    if self and self:IsAlive() then
+        local life0 = self:GetLife0()
+        local lifeN = self:GetLife()
+        return lifeN / life0
+    end
+
+    return -1
 end
 
 --- Returns the unit's relative damage, i.e. 1-life.
 -- @param #UNIT self
 -- @return #number The Unit's relative health value, i.e. a number in [0,1] or 1 if unit does not exist any more.
 function UNIT:GetDamageRelative()
-  self:F2(self.UnitName)
+    --self:F2(self.UnitName)
 
-  if self and self:IsAlive() then
-    return 1-self:GetLifeRelative()
-  end
-  
-  return 1
+    if self and self:IsAlive() then
+        return 1 - self:GetLifeRelative()
+    end
+
+    return 1
 end
 
 --- Returns the current value for an animation argument on the external model of the given object. 
@@ -1130,14 +1183,14 @@ end
 -- @return #number Value of the animation argument [-1, 1]. If draw argument value is invalid for the unit in question a value of 0 will be returned.
 function UNIT:GetDrawArgumentValue(AnimationArgument)
 
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local value = DCSUnit:getDrawArgumentValue(AnimationArgument or 0)
-    return value
-  end
-  
-  return 0
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+        local value = DCSUnit:getDrawArgumentValue(AnimationArgument or 0)
+        return value
+    end
+
+    return 0
 end
 
 --- Returns the category of the #UNIT from descriptor. Returns one of
@@ -1151,38 +1204,38 @@ end
 -- @param #UNIT self
 -- @return #number Unit category from `getDesc().category`.
 function UNIT:GetUnitCategory()
-  self:F3( self.UnitName )
+    --self:F3( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
-  if DCSUnit then
-    return DCSUnit:getDesc().category    
-  end
-  
-  return nil
+    local DCSUnit = self:GetDCSObject()
+    if DCSUnit then
+        return DCSUnit:getDesc().category
+    end
+
+    return nil
 end
 
 --- Returns the category name of the #UNIT.
 -- @param #UNIT self
 -- @return #string Category name = Helicopter, Airplane, Ground Unit, Ship
 function UNIT:GetCategoryName()
-  self:F3( self.UnitName )
+    --self:F3( self.UnitName )
 
-  local DCSUnit = self:GetDCSObject()
-  if DCSUnit then
-    local CategoryNames = {
-      [Unit.Category.AIRPLANE] = "Airplane",
-      [Unit.Category.HELICOPTER] = "Helicopter",
-      [Unit.Category.GROUND_UNIT] = "Ground Unit",
-      [Unit.Category.SHIP] = "Ship",
-      [Unit.Category.STRUCTURE] = "Structure",
-    }
-    local UnitCategory = DCSUnit:getDesc().category
-    self:T3( UnitCategory )
+    local DCSUnit = self:GetDCSObject()
+    if DCSUnit then
+        local CategoryNames = {
+            [Unit.Category.AIRPLANE] = "Airplane",
+            [Unit.Category.HELICOPTER] = "Helicopter",
+            [Unit.Category.GROUND_UNIT] = "Ground Unit",
+            [Unit.Category.SHIP] = "Ship",
+            [Unit.Category.STRUCTURE] = "Structure",
+        }
+        local UnitCategory = DCSUnit:getDesc().category
+        --self:T3( UnitCategory )
 
-    return CategoryNames[UnitCategory]
-  end
+        return CategoryNames[UnitCategory]
+    end
 
-  return nil
+    return nil
 end
 
 
@@ -1244,125 +1297,150 @@ end
 function UNIT:GetThreatLevel()
 
 
-  local ThreatLevel = 0
-  local ThreatText = ""
-  
-  local Descriptor = self:GetDesc()
-  
-  if Descriptor then 
-  
-    local Attributes = Descriptor.attributes
-    
-    if self:IsGround() then
-    
-      local ThreatLevels = {
-        [1] = "Unarmed", 
-        [2] = "Infantry", 
-        [3] = "Old Tanks & APCs", 
-        [4] = "Tanks & IFVs without ATGM",   
-        [5] = "Tanks & IFV with ATGM",
-        [6] = "Modern Tanks",
-        [7] = "AAA",
-        [8] = "IR Guided SAMs",
-        [9] = "SR SAMs",
-        [10] = "MR SAMs",
-        [11] = "LR SAMs"
-      }
-      
-      
-      if     Attributes["LR SAM"]                                                     then ThreatLevel = 10
-      elseif Attributes["MR SAM"]                                                     then ThreatLevel = 9
-      elseif Attributes["SR SAM"] and
-             not Attributes["IR Guided SAM"]                                          then ThreatLevel = 8
-      elseif ( Attributes["SR SAM"] or Attributes["MANPADS"] ) and
-             Attributes["IR Guided SAM"]                                              then ThreatLevel = 7
-      elseif Attributes["AAA"]                                                        then ThreatLevel = 6
-      elseif Attributes["Modern Tanks"]                                               then ThreatLevel = 5
-      elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
-             Attributes["ATGM"]                                                       then ThreatLevel = 4
-      elseif ( Attributes["Tanks"] or Attributes["IFV"] ) and
-             not Attributes["ATGM"]                                                   then ThreatLevel = 3
-      elseif Attributes["Old Tanks"] or Attributes["APC"] or Attributes["Artillery"]  then ThreatLevel = 2
-      elseif Attributes["Infantry"]  or Attributes["EWR"]                             then ThreatLevel = 1
-      end
-      
-      ThreatText = ThreatLevels[ThreatLevel+1]
-    end
-    
-    if self:IsAir() then
-    
-      local ThreatLevels = {
-        [1] = "Unarmed", 
-        [2] = "Tanker", 
-        [3] = "AWACS", 
-        [4] = "Transport Helicopter",   
-        [5] = "UAV",
-        [6] = "Bomber",
-        [7] = "Strategic Bomber",
-        [8] = "Attack Helicopter",
-        [9] = "Battleplane",
-        [10] = "Multirole Fighter",
-        [11] = "Fighter"
-      }
-      
-      
-      if     Attributes["Fighters"]                                 then ThreatLevel = 10
-      elseif Attributes["Multirole fighters"]                       then ThreatLevel = 9
-      elseif Attributes["Interceptors"]                             then ThreatLevel = 9
-      elseif Attributes["Battleplanes"]                             then ThreatLevel = 8
-      elseif Attributes["Battle airplanes"]                         then ThreatLevel = 8
-      elseif Attributes["Attack helicopters"]                       then ThreatLevel = 7
-      elseif Attributes["Strategic bombers"]                        then ThreatLevel = 6
-      elseif Attributes["Bombers"]                                  then ThreatLevel = 5
-      elseif Attributes["UAVs"]                                     then ThreatLevel = 4
-      elseif Attributes["Transport helicopters"]                    then ThreatLevel = 3
-      elseif Attributes["AWACS"]                                    then ThreatLevel = 2
-      elseif Attributes["Tankers"]                                  then ThreatLevel = 1
-      end
-  
-      ThreatText = ThreatLevels[ThreatLevel+1]
-    end
-    
-    if self:IsShip() then
-  
-  --["Aircraft Carriers"] = {"Heavy armed ships",},
-  --["Cruisers"] = {"Heavy armed ships",},
-  --["Destroyers"] = {"Heavy armed ships",},
-  --["Frigates"] = {"Heavy armed ships",},
-  --["Corvettes"] = {"Heavy armed ships",},
-  --["Heavy armed ships"] = {"Armed ships", "Armed Air Defence", "HeavyArmoredUnits",},
-  --["Light armed ships"] = {"Armed ships","NonArmoredUnits"},
-  --["Armed ships"] = {"Ships"},
-  --["Unarmed ships"] = {"Ships","HeavyArmoredUnits",},
-    
-      local ThreatLevels = {
-        [1] = "Unarmed ship", 
-        [2] = "Light armed ships", 
-        [3] = "Corvettes",
-        [4] = "",
-        [5] = "Frigates",
-        [6] = "",
-        [7] = "Cruiser",
-        [8] = "",
-        [9] = "Destroyer",
-        [10] = "",
-        [11] = "Aircraft Carrier"
-      }
-      
-      
-      if     Attributes["Aircraft Carriers"]                        then ThreatLevel = 10
-      elseif Attributes["Destroyers"]                               then ThreatLevel = 8
-      elseif Attributes["Cruisers"]                                 then ThreatLevel = 6
-      elseif Attributes["Frigates"]                                 then ThreatLevel = 4
-      elseif Attributes["Corvettes"]                                then ThreatLevel = 2
-      elseif Attributes["Light armed ships"]                        then ThreatLevel = 1
-      end
-  
-      ThreatText = ThreatLevels[ThreatLevel+1]
-    end
-  end
+    local ThreatLevel = 0
+    local ThreatText = ""
 
-  return ThreatLevel, ThreatText
+    local Descriptor = self:GetDesc()
+
+    if Descriptor then
+
+        local Attributes = Descriptor.attributes
+
+        if self:IsGround() then
+
+            local ThreatLevels = {
+                [1] = "Unarmed",
+                [2] = "Infantry",
+                [3] = "Old Tanks & APCs",
+                [4] = "Tanks & IFVs without ATGM",
+                [5] = "Tanks & IFV with ATGM",
+                [6] = "Modern Tanks",
+                [7] = "AAA",
+                [8] = "IR Guided SAMs",
+                [9] = "SR SAMs",
+                [10] = "MR SAMs",
+                [11] = "LR SAMs"
+            }
+
+            if Attributes["LR SAM"] then
+                ThreatLevel = 10
+            elseif Attributes["MR SAM"] then
+                ThreatLevel = 9
+            elseif Attributes["SR SAM"] and
+            not Attributes["IR Guided SAM"] then
+                ThreatLevel = 8
+            elseif (Attributes["SR SAM"] or Attributes["MANPADS"]) and
+            Attributes["IR Guided SAM"] then
+                ThreatLevel = 7
+            elseif Attributes["AAA"] then
+                ThreatLevel = 6
+            elseif Attributes["Modern Tanks"] then
+                ThreatLevel = 5
+            elseif (Attributes["Tanks"] or Attributes["IFV"]) and
+            Attributes["ATGM"] then
+                ThreatLevel = 4
+            elseif (Attributes["Tanks"] or Attributes["IFV"]) and
+            not Attributes["ATGM"] then
+                ThreatLevel = 3
+            elseif Attributes["Old Tanks"] or Attributes["APC"] or Attributes["Artillery"] then
+                ThreatLevel = 2
+            elseif Attributes["Infantry"] or Attributes["EWR"] then
+                ThreatLevel = 1
+            end
+
+            ThreatText = ThreatLevels[ThreatLevel + 1]
+        end
+
+        if self:IsAir() then
+
+            local ThreatLevels = {
+                [1] = "Unarmed",
+                [2] = "Tanker",
+                [3] = "AWACS",
+                [4] = "Transport Helicopter",
+                [5] = "UAV",
+                [6] = "Bomber",
+                [7] = "Strategic Bomber",
+                [8] = "Attack Helicopter",
+                [9] = "Battleplane",
+                [10] = "Multirole Fighter",
+                [11] = "Fighter"
+            }
+
+            if Attributes["Fighters"] then
+                ThreatLevel = 10
+            elseif Attributes["Multirole fighters"] then
+                ThreatLevel = 9
+            elseif Attributes["Interceptors"] then
+                ThreatLevel = 9
+            elseif Attributes["Battleplanes"] then
+                ThreatLevel = 8
+            elseif Attributes["Battle airplanes"] then
+                ThreatLevel = 8
+            elseif Attributes["Attack helicopters"] then
+                ThreatLevel = 7
+            elseif Attributes["Strategic bombers"] then
+                ThreatLevel = 6
+            elseif Attributes["Bombers"] then
+                ThreatLevel = 5
+            elseif Attributes["UAVs"] then
+                ThreatLevel = 4
+            elseif Attributes["Transport helicopters"] then
+                ThreatLevel = 3
+            elseif Attributes["AWACS"] then
+                ThreatLevel = 2
+            elseif Attributes["Tankers"] then
+                ThreatLevel = 1
+            end
+
+            ThreatText = ThreatLevels[ThreatLevel + 1]
+        end
+
+        if self:IsShip() then
+
+            --["Aircraft Carriers"] = {"Heavy armed ships",},
+            --["Cruisers"] = {"Heavy armed ships",},
+            --["Destroyers"] = {"Heavy armed ships",},
+            --["Frigates"] = {"Heavy armed ships",},
+            --["Corvettes"] = {"Heavy armed ships",},
+            --["Heavy armed ships"] = {"Armed ships", "Armed Air Defence", "HeavyArmoredUnits",},
+            --["Light armed ships"] = {"Armed ships","NonArmoredUnits"},
+            --["Armed ships"] = {"Ships"},
+            --["Unarmed ships"] = {"Ships","HeavyArmoredUnits",},
+
+            local ThreatLevels = {
+                [1] = "Unarmed ship",
+                [2] = "Light armed ships",
+                [3] = "Corvettes",
+                [4] = "",
+                [5] = "Frigates",
+                [6] = "",
+                [7] = "Cruiser",
+                [8] = "",
+                [9] = "Destroyer",
+                [10] = "",
+                [11] = "Aircraft Carrier"
+            }
+
+            if Attributes["Aircraft Carriers"] then
+                ThreatLevel = 10
+            elseif Attributes["Destroyers"] then
+                ThreatLevel = 8
+            elseif Attributes["Cruisers"] then
+                ThreatLevel = 6
+            elseif Attributes["Frigates"] then
+                ThreatLevel = 4
+            elseif Attributes["Corvettes"] then
+                ThreatLevel = 2
+            elseif Attributes["Light armed ships"] then
+                ThreatLevel = 1
+            end
+
+            ThreatText = ThreatLevels[ThreatLevel + 1]
+        end
+    end
+
+    return ThreatLevel, ThreatText
 
 end
 
@@ -1373,25 +1451,25 @@ end
 -- @return #UNIT self
 function UNIT:Explode(power, delay)
 
-  -- Default.
-  power=power or 100
-  
-  local DCSUnit = self:GetDCSObject()
-  if DCSUnit then
-  
-    -- Check if delay or not.
-    if delay and delay>0 then
-      -- Delayed call.
-      SCHEDULER:New(nil, self.Explode, {self, power}, delay)
-    else
-      -- Create an explotion at the coordinate of the unit.
-      self:GetCoordinate():Explosion(power)
+    -- Default.
+    power = power or 100
+
+    local DCSUnit = self:GetDCSObject()
+    if DCSUnit then
+
+        -- Check if delay or not.
+        if delay and delay > 0 then
+            -- Delayed call.
+            SCHEDULER:New(nil, self.Explode, { self, power }, delay)
+        else
+            -- Create an explotion at the coordinate of the unit.
+            self:GetCoordinate():Explosion(power)
+        end
+
+        return self
     end
-  
-    return self
-  end
-  
-  return nil
+
+    return nil
 end
 
 -- Is functions
@@ -1404,25 +1482,25 @@ end
 -- @param Radius The radius in meters with the DCS Unit in the centre.
 -- @return true If the other DCS Unit is within the radius of the 2D point of the DCS Unit. 
 -- @return #nil The DCS Unit is not existing or alive.  
-function UNIT:OtherUnitInRadius( AwaitUnit, Radius )
-  self:F2( { self.UnitName, AwaitUnit.UnitName, Radius } )
+function UNIT:OtherUnitInRadius(AwaitUnit, Radius)
+    --self:F2( { self.UnitName, AwaitUnit.UnitName, Radius } )
 
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitVec3 = self:GetVec3()
-    local AwaitUnitVec3 = AwaitUnit:GetVec3()
-  
-    if  (((UnitVec3.x - AwaitUnitVec3.x)^2 + (UnitVec3.z - AwaitUnitVec3.z)^2)^0.5 <= Radius) then
-      self:T3( "true" )
-      return true
-    else
-      self:T3( "false" )
-      return false
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+        local UnitVec3 = self:GetVec3()
+        local AwaitUnitVec3 = AwaitUnit:GetVec3()
+
+        if (((UnitVec3.x - AwaitUnitVec3.x) ^ 2 + (UnitVec3.z - AwaitUnitVec3.z) ^ 2) ^ 0.5 <= Radius) then
+            --self:T3( "true" )
+            return true
+        else
+            --self:T3( "false" )
+            return false
+        end
     end
-  end
 
-  return nil
+    return nil
 end
 
 
@@ -1434,22 +1512,22 @@ end
 --- Returns if the unit is a friendly unit.
 -- @param #UNIT self
 -- @return #boolean IsFriendly evaluation result.
-function UNIT:IsFriendly( FriendlyCoalition )
-  self:F2()
-  
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitCoalition = DCSUnit:getCoalition()
-    self:T3( { UnitCoalition, FriendlyCoalition } )
-    
-    local IsFriendlyResult = ( UnitCoalition == FriendlyCoalition )
-  
-    self:F( IsFriendlyResult )
-    return IsFriendlyResult
-  end
-  
-  return nil
+function UNIT:IsFriendly(FriendlyCoalition)
+    --self:F2()
+
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+        local UnitCoalition = DCSUnit:getCoalition()
+        --self:T3( { UnitCoalition, FriendlyCoalition } )
+
+        local IsFriendlyResult = (UnitCoalition == FriendlyCoalition)
+
+        --self:F( IsFriendlyResult )
+        return IsFriendlyResult
+    end
+
+    return nil
 end
 
 --- Returns if the unit is of a ship category.
@@ -1457,21 +1535,21 @@ end
 -- @param #UNIT self
 -- @return #boolean Ship category evaluation result.
 function UNIT:IsShip()
-  self:F2()
-  
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-    local UnitDescriptor = DCSUnit:getDesc()
-    self:T3( { UnitDescriptor.category, Unit.Category.SHIP } )
-    
-    local IsShipResult = ( UnitDescriptor.category == Unit.Category.SHIP )
-  
-    self:T3( IsShipResult )
-    return IsShipResult
-  end
-  
-  return nil
+    --self:F2()
+
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+        local UnitDescriptor = DCSUnit:getDesc()
+        --self:T3( { UnitDescriptor.category, Unit.Category.SHIP } )
+
+        local IsShipResult = (UnitDescriptor.category == Unit.Category.SHIP)
+
+        --self:T3( IsShipResult )
+        return IsShipResult
+    end
+
+    return nil
 end
 
 --- Returns true if the UNIT is in the air.
@@ -1479,143 +1557,147 @@ end
 -- @param #boolean NoHeloCheck If true, no additonal checks for helos are performed.
 -- @return #boolean Return true if in the air or #nil if the UNIT is not existing or alive.   
 function UNIT:InAir(NoHeloCheck)
-  self:F2( self.UnitName )
+    --self:F2( self.UnitName )
 
-  -- Get DCS unit object.
-  local DCSUnit = self:GetDCSObject() --DCS#Unit
-  
-  if DCSUnit then
+    -- Get DCS unit object.
+    local DCSUnit = self:GetDCSObject() --DCS#Unit
 
-    -- Get DCS result of whether unit is in air or not.
-    local UnitInAir = DCSUnit:inAir()
+    if DCSUnit then
 
-    -- Get unit category.
-    local UnitCategory = DCSUnit:getDesc().category
+        -- Get DCS result of whether unit is in air or not.
+        local UnitInAir = DCSUnit:inAir()
 
-    -- If DCS says that it is in air, check if this is really the case, since we might have landed on a building where inAir()=true but actually is not.
-    -- This is a workaround since DCS currently does not acknoledge that helos land on buildings.
-    -- Note however, that the velocity check will fail if the ground is moving, e.g. on an aircraft carrier!    
-    if UnitInAir==true and UnitCategory == Unit.Category.HELICOPTER and (not NoHeloCheck) then
-      local VelocityVec3 = DCSUnit:getVelocity()
-      local Velocity = UTILS.VecNorm(VelocityVec3)
-      local Coordinate = DCSUnit:getPoint()
-      local LandHeight = land.getHeight( { x = Coordinate.x, y = Coordinate.z } )
-      local Height = Coordinate.y - LandHeight
-      if Velocity < 1 and Height <= 60   then
-        UnitInAir = false
-      end
-    end
-    
-    self:T3( UnitInAir )
-    return UnitInAir
-  end
-  
-  return nil
-end
+        -- Get unit category.
+        local UnitCategory = DCSUnit:getDesc().category
 
-do -- Event Handling
-
-  --- Subscribe to a DCS Event.
-  -- @param #UNIT self
-  -- @param Core.Event#EVENTS EventID Event ID.
-  -- @param #function EventFunction (Optional) The function to be called when the event occurs for the unit.
-  -- @return #UNIT self
-  function UNIT:HandleEvent(EventID, EventFunction)
-  
-    self:EventDispatcher():OnEventForUnit(self:GetName(), EventFunction, self, EventID)
-    
-    return self
-  end
-  
-  --- UnSubscribe to a DCS event.
-  -- @param #UNIT self
-  -- @param Core.Event#EVENTS EventID Event ID.
-  -- @return #UNIT self
-  function UNIT:UnHandleEvent(EventID)
-  
-    --self:EventDispatcher():RemoveForUnit( self:GetName(), self, EventID )
-    
-    -- Fixes issue #1365 https://github.com/FlightControl-Master/MOOSE/issues/1365
-    self:EventDispatcher():RemoveEvent(self, EventID)
-    
-    return self
-  end
-  
-  --- Reset the subscriptions.
-  -- @param #UNIT self
-  -- @return #UNIT
-  function UNIT:ResetEvents()
-  
-    self:EventDispatcher():Reset( self )
-    
-    return self
-  end
-
-end
-
-do -- Detection
-
-  --- Returns if a unit is detecting the TargetUnit.
-  -- @param #UNIT self
-  -- @param #UNIT TargetUnit
-  -- @return #boolean true If the TargetUnit is detected by the unit, otherwise false.
-  function UNIT:IsDetected( TargetUnit ) --R2.1
-
-    local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity = self:IsTargetDetected( TargetUnit:GetDCSObject() )  
-    
-    return TargetIsDetected
-  end
-  
-  --- Returns if a unit has Line of Sight (LOS) with the TargetUnit.
-  -- @param #UNIT self
-  -- @param #UNIT TargetUnit
-  -- @return #boolean true If the TargetUnit has LOS with the unit, otherwise false.
-  function UNIT:IsLOS( TargetUnit ) --R2.1
-
-    local IsLOS = self:GetPointVec3():IsLOS( TargetUnit:GetPointVec3() )
-
-    return IsLOS
-  end
-
-  --- Forces the unit to become aware of the specified target, without the unit manually detecting the other unit itself.
-  -- Applies only to a Unit Controller. Cannot be used at the group level.
-  -- @param #UNIT self
-  -- @param #UNIT TargetUnit The unit to be known.
-  -- @param #boolean TypeKnown The target type is known. If *false*, the type is not known.
-  -- @param #boolean DistanceKnown The distance to the target is known. If *false*, distance is unknown.
-  function UNIT:KnowUnit(TargetUnit, TypeKnown, DistanceKnown)
-
-    -- Defaults.
-    if TypeKnown~=false then
-      TypeKnown=true
-    end
-    if DistanceKnown~=false then
-      DistanceKnown=true
-    end
-  
-    local DCSControllable = self:GetDCSObject()
-  
-    if DCSControllable then
-  
-      local Controller = DCSControllable:getController()  --self:_GetController()
-      
-      if Controller then
-      
-        local object=TargetUnit:GetDCSObject()
-        
-        if object then
-          
-          self:I(string.format("Unit %s now knows target unit %s. Type known=%s, distance known=%s", self:GetName(), TargetUnit:GetName(), tostring(TypeKnown), tostring(DistanceKnown)))
-      
-          Controller:knowTarget(object, TypeKnown, DistanceKnown)
-          
+        -- If DCS says that it is in air, check if this is really the case, since we might have landed on a building where inAir()=true but actually is not.
+        -- This is a workaround since DCS currently does not acknowledge that helos land on buildings.
+        -- Note however, that the velocity check will fail if the ground is moving, e.g. on an aircraft carrier!
+        if UnitInAir == true and UnitCategory == Unit.Category.HELICOPTER and (not NoHeloCheck) then
+            local VelocityVec3 = DCSUnit:getVelocity()
+            local Velocity = UTILS.VecNorm(VelocityVec3)
+            local Coordinate = DCSUnit:getPoint()
+            local LandHeight = land.getHeight({ x = Coordinate.x, y = Coordinate.z })
+            local Height = Coordinate.y - LandHeight
+            if Velocity < 1 and Height <= 60 then
+                UnitInAir = false
+            end
         end
-        
-      end
-  
+
+        --self:T3( UnitInAir )
+        return UnitInAir
     end
-    
-  end
+
+    return nil
+end
+
+do
+    -- Event Handling
+
+    --- Subscribe to a DCS Event.
+    -- @param #UNIT self
+    -- @param Core.Event#EVENTS EventID Event ID.
+    -- @param #function EventFunction (Optional) The function to be called when the event occurs for the unit.
+    -- @return #UNIT self
+    function UNIT:HandleEvent(EventID, EventFunction)
+
+        self:EventDispatcher():OnEventForUnit(self:GetName(), EventFunction, self, EventID)
+
+        return self
+    end
+
+    --- UnSubscribe to a DCS event.
+    -- @param #UNIT self
+    -- @param Core.Event#EVENTS EventID Event ID.
+    -- @return #UNIT self
+    function UNIT:UnHandleEvent(EventID)
+
+        --self:EventDispatcher():RemoveForUnit( self:GetName(), self, EventID )
+
+        -- Fixes issue #1365 https://github.com/FlightControl-Master/MOOSE/issues/1365
+        self:EventDispatcher():RemoveEvent(self, EventID)
+
+        return self
+    end
+
+    --- Reset the subscriptions.
+    -- @param #UNIT self
+    -- @return #UNIT
+    function UNIT:ResetEvents()
+
+        self:EventDispatcher():Reset(self)
+
+        return self
+    end
+
+end
+
+do
+    -- Detection
+
+    --- Returns if a unit is detecting the TargetUnit.
+    -- @param #UNIT self
+    -- @param #UNIT TargetUnit
+    -- @return #boolean true If the TargetUnit is detected by the unit, otherwise false.
+    function UNIT:IsDetected(TargetUnit)
+        --R2.1
+
+        local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity = self:IsTargetDetected(TargetUnit:GetDCSObject())
+
+        return TargetIsDetected
+    end
+
+    --- Returns if a unit has Line of Sight (LOS) with the TargetUnit.
+    -- @param #UNIT self
+    -- @param #UNIT TargetUnit
+    -- @return #boolean true If the TargetUnit has LOS with the unit, otherwise false.
+    function UNIT:IsLOS(TargetUnit)
+        --R2.1
+
+        local IsLOS = self:GetPointVec3():IsLOS(TargetUnit:GetPointVec3())
+
+        return IsLOS
+    end
+
+    --- Forces the unit to become aware of the specified target, without the unit manually detecting the other unit itself.
+    -- Applies only to a Unit Controller. Cannot be used at the group level.
+    -- @param #UNIT self
+    -- @param #UNIT TargetUnit The unit to be known.
+    -- @param #boolean TypeKnown The target type is known. If *false*, the type is not known.
+    -- @param #boolean DistanceKnown The distance to the target is known. If *false*, distance is unknown.
+    function UNIT:KnowUnit(TargetUnit, TypeKnown, DistanceKnown)
+
+        -- Defaults.
+        if TypeKnown ~= false then
+            TypeKnown = true
+        end
+        if DistanceKnown ~= false then
+            DistanceKnown = true
+        end
+
+        local DCSControllable = self:GetDCSObject()
+
+        if DCSControllable then
+
+            local Controller = DCSControllable:getController()  --self:_GetController()
+
+            if Controller then
+
+                local object = TargetUnit:GetDCSObject()
+
+                if object then
+
+                    self:I(string.format("Unit %s now knows target unit %s. Type known=%s, distance known=%s", self:GetName(), TargetUnit:GetName(), tostring(TypeKnown), tostring(DistanceKnown)))
+
+                    Controller:knowTarget(object, TypeKnown, DistanceKnown)
+
+                end
+
+            end
+
+        end
+
+    end
 
 end
 
@@ -1624,26 +1706,26 @@ end
 -- @return #table Table of the unit template (deep copy) or #nil.
 function UNIT:GetTemplate()
 
-  local group=self:GetGroup()
-  
-  local name=self:GetName()
-  
-  if group then
-    local template=group:GetTemplate()
-    
-    if template then
-    
-      for _,unit in pairs(template.units) do
-      
-        if unit.name==name then
-          return UTILS.DeepCopy(unit) 
+    local group = self:GetGroup()
+
+    local name = self:GetName()
+
+    if group then
+        local template = group:GetTemplate()
+
+        if template then
+
+            for _, unit in pairs(template.units) do
+
+                if unit.name == name then
+                    return UTILS.DeepCopy(unit)
+                end
+            end
+
         end
-      end
-      
-    end     
-  end
-  
-  return nil
+    end
+
+    return nil
 end
 
 
@@ -1659,13 +1741,13 @@ end
 -- @return #table Payload table (deep copy) or #nil.
 function UNIT:GetTemplatePayload()
 
-  local unit=self:GetTemplate()
-  
-  if unit then
-    return unit.payload
-  end
-  
-  return nil
+    local unit = self:GetTemplate()
+
+    if unit then
+        return unit.payload
+    end
+
+    return nil
 end
 
 --- Get the pylons table from a unit's template. This can be a complex table depending on the weapons the unit is carrying.
@@ -1673,13 +1755,13 @@ end
 -- @return #table Table of pylons (deepcopy) or #nil.
 function UNIT:GetTemplatePylons()
 
-  local payload=self:GetTemplatePayload()
-  
-  if payload then
-    return payload.pylons
-  end
+    local payload = self:GetTemplatePayload()
 
-  return nil
+    if payload then
+        return payload.pylons
+    end
+
+    return nil
 end
 
 --- Get the fuel of the unit from its template.
@@ -1687,13 +1769,13 @@ end
 -- @return #number Fuel of unit in kg.
 function UNIT:GetTemplateFuel()
 
-  local payload=self:GetTemplatePayload()
-  
-  if payload then
-    return payload.fuel
-  end
+    local payload = self:GetTemplatePayload()
 
-  return nil
+    if payload then
+        return payload.fuel
+    end
+
+    return nil
 end
 
 --- GROUND - Switch on/off radar emissions of a unit.
@@ -1701,29 +1783,32 @@ end
 -- @param #boolean switch If true, emission is enabled. If false, emission is disabled. 
 -- @return #UNIT self
 function UNIT:EnableEmission(switch)
-  self:F2( self.UnitName )
-  
-  local switch = switch or false
-  
-  local DCSUnit = self:GetDCSObject()
-  
-  if DCSUnit then
-  
-    DCSUnit:enableEmission(switch)
+    --self:F2( self.UnitName )
 
-  end
+    local switch = switch or false
 
-  return self
+    local DCSUnit = self:GetDCSObject()
+
+    if DCSUnit then
+
+        DCSUnit:enableEmission(switch)
+
+    end
+
+    return self
 end
 
 --- Get skill from Unit.
 -- @param #UNIT self
 -- @return #string Skill String of skill name.
 function UNIT:GetSkill()
-  self:F2( self.UnitName )
-  local name = self.UnitName
-  local skill = _DATABASE.Templates.Units[name].Template.skill or "Random"
-  return skill
+    --self:F2( self.UnitName )
+    local name = self.UnitName
+    local skill = "Random"
+    if _DATABASE.Templates.Units[name] and _DATABASE.Templates.Units[name].Template and _DATABASE.Templates.Units[name].Template.skill then
+        skill = _DATABASE.Templates.Units[name].Template.skill or "Random"
+    end
+    return skill
 end
 
 --- Get Link16 STN or SADL TN and other datalink info from Unit, if any.
@@ -1733,28 +1818,110 @@ end
 -- @return #string VCN Voice Callsign Number or nil if not set/capable.
 -- @return #string Lead If true, unit is Flight Lead, else false or nil.
 function UNIT:GetSTN()
-  self:F2(self.UnitName)
-  local STN = nil -- STN/TN
-  local VCL = nil -- VoiceCallsignLabel
-  local VCN = nil -- VoiceCallsignNumber
-  local FGL = false -- FlightGroupLeader
-  local template = self:GetTemplate()
-  if template.AddPropAircraft then
-    if template.AddPropAircraft.STN_L16 then
-      STN = template.AddPropAircraft.STN_L16
-    elseif template.AddPropAircraft.SADL_TN then
-      STN = template.AddPropAircraft.SADL_TN
+    --self:F2(self.UnitName)
+    local STN = nil -- STN/TN
+    local VCL = nil -- VoiceCallsignLabel
+    local VCN = nil -- VoiceCallsignNumber
+    local FGL = false -- FlightGroupLeader
+    local template = self:GetTemplate()
+    if template then
+        if template.AddPropAircraft then
+            if template.AddPropAircraft.STN_L16 then
+                STN = template.AddPropAircraft.STN_L16
+            elseif template.AddPropAircraft.SADL_TN then
+                STN = template.AddPropAircraft.SADL_TN
+            end
+            VCN = template.AddPropAircraft.VoiceCallsignNumber
+            VCL = template.AddPropAircraft.VoiceCallsignLabel
+        end
+        if template.datalinks and template.datalinks.Link16 and template.datalinks.Link16.settings then
+            FGL = template.datalinks.Link16.settings.flightLead
+        end
+        -- A10CII
+        if template.datalinks and template.datalinks.SADL and template.datalinks.SADL.settings then
+            FGL = template.datalinks.SADL.settings.flightLead
+        end
     end
-    VCN = template.AddPropAircraft.VoiceCallsignNumber
-    VCL = template.AddPropAircraft.VoiceCallsignLabel    
-  end
-  if template.datalinks and template.datalinks.Link16 and template.datalinks.Link16.settings then
-    FGL = template.datalinks.Link16.settings.flightLead
-  end
-  -- A10CII
-  if template.datalinks and template.datalinks.SADL and template.datalinks.SADL.settings then
-    FGL = template.datalinks.SADL.settings.flightLead
-  end
-  
-  return STN, VCL, VCN, FGL
+    return STN, VCL, VCN, FGL
+end
+
+do
+    -- AI methods
+
+    --- Turns the AI On or Off for the UNIT.
+    -- @param #UNIT self
+    -- @param #boolean AIOnOff The value true turns the AI On, the value false turns the AI Off.
+    -- @return #UNIT The UNIT.
+    function UNIT:SetAIOnOff(AIOnOff)
+
+        local DCSUnit = self:GetDCSObject() -- DCS#Group
+
+        if DCSUnit then
+            local DCSController = DCSUnit:getController() -- DCS#Controller
+            if DCSController then
+                DCSController:setOnOff(AIOnOff)
+                return self
+            end
+        end
+
+        return nil
+    end
+
+    --- Turns the AI On for the UNIT.
+    -- @param #UNIT self
+    -- @return #UNIT The UNIT.
+    function UNIT:SetAIOn()
+
+        return self:SetAIOnOff(true)
+    end
+
+    --- Turns the AI Off for the UNIT.
+    -- @param #UNIT self
+    -- @return #UNIT The UNIT.
+    function UNIT:SetAIOff()
+
+        return self:SetAIOnOff(false)
+    end
+
+end
+
+--- [GROUND] Determine if a UNIT is a SAM unit, i.e. has radar or optical tracker and is no mobile AAA.
+-- @param #UNIT self
+-- @return #boolean IsSAM True if SAM, else false
+function UNIT:IsSAM()
+    if self:HasSEAD() and self:IsGround() and (not self:HasAttribute("Mobile AAA")) then
+        return true
+    end
+    return false
+end
+
+--- [GROUND] Determine if a UNIT is a EWR unit
+-- @param #UNIT self
+-- @return #boolean IsEWR True if EWR, else false
+function UNIT:IsEWR()
+    if self:IsGround() then
+        local DCSUnit = self:GetDCSObject()
+
+        if DCSUnit then
+            local attrs = DCSUnit:getDesc().attributes
+            return attrs["EWR"] == true
+        end
+    end
+    return false
+end
+
+--- [GROUND] Determine if a UNIT is a AAA unit, i.e. has no radar or optical tracker but the AAA = true or the "Mobile AAA" = true attribute.
+-- @param #UNIT self
+-- @return #boolean IsAAA True if AAA, else false
+function UNIT:IsAAA()
+    local unit = self -- Wrapper.Unit#UNIT
+    local desc = unit:GetDesc() or {}
+    local attr = desc.attributes or {}
+    if unit:HasSEAD() then
+        return false
+    end
+    if attr["AAA"] or attr["SAM related"] then
+        return true
+    end
+    return false
 end

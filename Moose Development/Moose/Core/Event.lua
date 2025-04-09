@@ -194,6 +194,11 @@ world.event.S_EVENT_NEW_ZONE_GOAL = world.event.S_EVENT_MAX + 1004
 world.event.S_EVENT_DELETE_ZONE_GOAL = world.event.S_EVENT_MAX + 1005
 world.event.S_EVENT_REMOVE_UNIT = world.event.S_EVENT_MAX + 1006
 world.event.S_EVENT_PLAYER_ENTER_AIRCRAFT = world.event.S_EVENT_MAX + 1007
+-- dynamic cargo
+world.event.S_EVENT_NEW_DYNAMIC_CARGO = world.event.S_EVENT_MAX + 1008
+world.event.S_EVENT_DYNAMIC_CARGO_LOADED = world.event.S_EVENT_MAX + 1009
+world.event.S_EVENT_DYNAMIC_CARGO_UNLOADED = world.event.S_EVENT_MAX + 1010
+world.event.S_EVENT_DYNAMIC_CARGO_REMOVED = world.event.S_EVENT_MAX + 1011
 
 
 --- The different types of events supported by MOOSE.
@@ -261,16 +266,28 @@ EVENTS = {
   SimulationStart           = world.event.S_EVENT_SIMULATION_START or -1,
   WeaponRearm               = world.event.S_EVENT_WEAPON_REARM or -1,
   WeaponDrop                = world.event.S_EVENT_WEAPON_DROP or -1,
-  -- Added with DCS 2.9.0
-  UnitTaskTimeout           = world.event.S_EVENT_UNIT_TASK_TIMEOUT or -1,
+  -- Added with DCS 2.9.x
+  --UnitTaskTimeout           = world.event.S_EVENT_UNIT_TASK_TIMEOUT or -1,
+  UnitTaskComplete          = world.event.S_EVENT_UNIT_TASK_COMPLETE or -1,
   UnitTaskStage             = world.event.S_EVENT_UNIT_TASK_STAGE or -1,
-  MacSubtaskScore           = world.event.S_EVENT_MAC_SUBTASK_SCORE or -1, 
+  --MacSubtaskScore           = world.event.S_EVENT_MAC_SUBTASK_SCORE or -1, 
   MacExtraScore             = world.event.S_EVENT_MAC_EXTRA_SCORE or -1,
   MissionRestart            = world.event.S_EVENT_MISSION_RESTART or -1,
   MissionWinner             = world.event.S_EVENT_MISSION_WINNER or -1, 
-  PostponedTakeoff          = world.event.S_EVENT_POSTPONED_TAKEOFF or -1, 
-  PostponedLand             = world.event.S_EVENT_POSTPONED_LAND or -1, 
+  RunwayTakeoff             = world.event.S_EVENT_RUNWAY_TAKEOFF or -1, 
+  RunwayTouch               = world.event.S_EVENT_RUNWAY_TOUCH or -1,
+  MacLMSRestart             = world.event.S_EVENT_MAC_LMS_RESTART or -1,
+  SimulationFreeze          = world.event.S_EVENT_SIMULATION_FREEZE or -1, 
+  SimulationUnfreeze        = world.event.S_EVENT_SIMULATION_UNFREEZE or -1, 
+  HumanAircraftRepairStart  = world.event.S_EVENT_HUMAN_AIRCRAFT_REPAIR_START or -1, 
+  HumanAircraftRepairFinish = world.event.S_EVENT_HUMAN_AIRCRAFT_REPAIR_FINISH or -1,
+  -- dynamic cargo
+  NewDynamicCargo           = world.event.S_EVENT_NEW_DYNAMIC_CARGO or -1,
+  DynamicCargoLoaded        = world.event.S_EVENT_DYNAMIC_CARGO_LOADED or -1,
+  DynamicCargoUnloaded      = world.event.S_EVENT_DYNAMIC_CARGO_UNLOADED or -1,
+  DynamicCargoRemoved       = world.event.S_EVENT_DYNAMIC_CARGO_REMOVED or -1,
 }
+
 
 --- The Event structure
 -- Note that at the beginning of each field description, there is an indication which field will be populated depending on the object type involved in the Event:
@@ -327,6 +344,9 @@ EVENTS = {
 --
 -- @field Core.Zone#ZONE Zone The zone object.
 -- @field #string ZoneName The name of the zone.
+-- 
+-- @field Wrapper.DynamicCargo#DYNAMICCARGO IniDynamicCargo The dynamic cargo object.
+-- @field #string IniDynamicCargoName The dynamic cargo unit name.
 
 
 
@@ -646,24 +666,24 @@ local _EVENTMETA = {
      Text = "S_EVENT_WEAPON_DROP"
    },
    -- DCS 2.9
-  [EVENTS.UnitTaskTimeout] = {
-     Order = 1,
-     Side = "I",
-     Event = "OnEventUnitTaskTimeout",
-     Text = "S_EVENT_UNIT_TASK_TIMEOUT "
-   },
+  --[EVENTS.UnitTaskTimeout] = {
+    -- Order = 1,
+    -- Side = "I",
+    -- Event = "OnEventUnitTaskTimeout",
+    -- Text = "S_EVENT_UNIT_TASK_TIMEOUT "
+   --},
   [EVENTS.UnitTaskStage] = {
      Order = 1,
      Side = "I",
      Event = "OnEventUnitTaskStage",
      Text = "S_EVENT_UNIT_TASK_STAGE "
    },
-  [EVENTS.MacSubtaskScore] = {
-     Order = 1,
-     Side = "I",
-     Event = "OnEventMacSubtaskScore",
-     Text = "S_EVENT_MAC_SUBTASK_SCORE"
-   },
+  --[EVENTS.MacSubtaskScore] = {
+    -- Order = 1,
+     --Side = "I",
+     --Event = "OnEventMacSubtaskScore",
+     --Text = "S_EVENT_MAC_SUBTASK_SCORE"
+   --},
   [EVENTS.MacExtraScore] = {
      Order = 1,
      Side = "I",
@@ -682,19 +702,75 @@ local _EVENTMETA = {
      Event = "OnEventMissionWinner",
      Text = "S_EVENT_MISSION_WINNER"
    },
-  [EVENTS.PostponedTakeoff] = {
+  [EVENTS.RunwayTakeoff] = {
      Order = 1,
      Side = "I",
-     Event = "OnEventPostponedTakeoff",
-     Text = "S_EVENT_POSTPONED_TAKEOFF"
+     Event = "OnEventRunwayTakeoff",
+     Text = "S_EVENT_RUNWAY_TAKEOFF"
    },
-  [EVENTS.PostponedLand] = {
+  [EVENTS.RunwayTouch] = {
      Order = 1,
      Side = "I",
-     Event = "OnEventPostponedLand",
-     Text = "S_EVENT_POSTPONED_LAND"
+     Event = "OnEventRunwayTouch",
+     Text = "S_EVENT_RUNWAY_TOUCH"
+   }, 
+     [EVENTS.MacLMSRestart] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventMacLMSRestart",
+     Text = "S_EVENT_MAC_LMS_RESTART"
+   }, 
+     [EVENTS.SimulationFreeze] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventSimulationFreeze",
+     Text = "S_EVENT_SIMULATION_FREEZE"
+   }, 
+     [EVENTS.SimulationUnfreeze] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventSimulationUnfreeze",
+     Text = "S_EVENT_SIMULATION_UNFREEZE"
+   }, 
+     [EVENTS.HumanAircraftRepairStart] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventHumanAircraftRepairStart",
+     Text = "S_EVENT_HUMAN_AIRCRAFT_REPAIR_START"
+   }, 
+     [EVENTS.HumanAircraftRepairFinish] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventHumanAircraftRepairFinish",
+     Text = "S_EVENT_HUMAN_AIRCRAFT_REPAIR_FINISH"
+   },
+   -- dynamic cargo
+     [EVENTS.NewDynamicCargo] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventNewDynamicCargo",
+     Text = "S_EVENT_NEW_DYNAMIC_CARGO"
+   },
+     [EVENTS.DynamicCargoLoaded] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventDynamicCargoLoaded",
+     Text = "S_EVENT_DYNAMIC_CARGO_LOADED"
+   },
+     [EVENTS.DynamicCargoUnloaded] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventDynamicCargoUnloaded",
+     Text = "S_EVENT_DYNAMIC_CARGO_UNLOADED"
+   },
+     [EVENTS.DynamicCargoRemoved] = {
+     Order = 1,
+     Side = "I",
+     Event = "OnEventDynamicCargoRemoved",
+     Text = "S_EVENT_DYNAMIC_CARGO_REMOVED"
    }, 
 }
+
 
 --- The Events structure
 -- @type EVENT.Events
@@ -1108,7 +1184,63 @@ do -- Event Creation
 
     world.onEvent( Event )
   end
-
+  
+  --- Creation of a S_EVENT_NEW_DYNAMIC_CARGO event.
+  -- @param #EVENT self
+  -- @param Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo the dynamic cargo object
+  function EVENT:CreateEventNewDynamicCargo(DynamicCargo)
+    self:F({DynamicCargo})
+    local Event = {
+      id = EVENTS.NewDynamicCargo,
+      time = timer.getTime(),
+      dynamiccargo = DynamicCargo,
+      initiator = DynamicCargo:GetDCSObject(),
+    }
+    world.onEvent( Event )
+  end
+  
+  --- Creation of a S_EVENT_DYNAMIC_CARGO_LOADED event.
+  -- @param #EVENT self
+  -- @param Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo the dynamic cargo object
+  function EVENT:CreateEventDynamicCargoLoaded(DynamicCargo)
+    self:F({DynamicCargo})
+    local Event = {
+      id = EVENTS.DynamicCargoLoaded,
+      time = timer.getTime(),
+      dynamiccargo = DynamicCargo,
+      initiator = DynamicCargo:GetDCSObject(),
+    }
+    world.onEvent( Event )
+  end
+  
+  --- Creation of a S_EVENT_DYNAMIC_CARGO_UNLOADED event.
+  -- @param #EVENT self
+  -- @param Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo the dynamic cargo object
+  function EVENT:CreateEventDynamicCargoUnloaded(DynamicCargo)
+    self:F({DynamicCargo})
+    local Event = {
+      id = EVENTS.DynamicCargoUnloaded,
+      time = timer.getTime(),
+      dynamiccargo = DynamicCargo,
+      initiator = DynamicCargo:GetDCSObject(),
+    }
+    world.onEvent( Event )
+  end
+  
+  --- Creation of a S_EVENT_DYNAMIC_CARGO_REMOVED event.
+  -- @param #EVENT self
+  -- @param Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo the dynamic cargo object
+  function EVENT:CreateEventDynamicCargoRemoved(DynamicCargo)
+    self:F({DynamicCargo})
+    local Event = {
+      id = EVENTS.DynamicCargoRemoved,
+      time = timer.getTime(),
+      dynamiccargo = DynamicCargo,
+      initiator = DynamicCargo:GetDCSObject(),
+    }
+    world.onEvent( Event )
+  end
+  
 end
 
 --- Main event function.
@@ -1197,6 +1329,7 @@ function EVENT:onEvent( Event )
           end
           
           Event.IniDCSGroupName = Event.IniUnit and Event.IniUnit.GroupName or ""
+          Event.IniGroupName=Event.IniDCSGroupName --At least set the group name because group might not exist any more
           if Event.IniDCSGroup and Event.IniDCSGroup:isExist() then
             Event.IniDCSGroupName = Event.IniDCSGroup:getName()
             Event.IniGroup = GROUP:FindByName( Event.IniDCSGroupName )
@@ -1223,7 +1356,13 @@ function EVENT:onEvent( Event )
           Event.IniDCSUnit = Event.initiator
           Event.IniDCSUnitName = Event.IniDCSUnit:getName()
           Event.IniUnitName = Event.IniDCSUnitName
-          Event.IniUnit = CARGO:FindByName( Event.IniDCSUnitName )
+          if string.match(Event.IniUnitName,".+|%d%d:%d%d|PKG%d+") then
+            Event.IniDynamicCargo = DYNAMICCARGO:FindByName(Event.IniUnitName)
+            Event.IniDynamicCargoName = Event.IniUnitName
+            Event.IniPlayerName = string.match(Event.IniUnitName,"^(.+)|%d%d:%d%d|PKG%d+")
+          else
+            Event.IniUnit = CARGO:FindByName( Event.IniDCSUnitName )
+          end
           Event.IniCoalition = Event.IniDCSUnit:getCoalition()
           Event.IniCategory = Event.IniDCSUnit:getDesc().category
           Event.IniTypeName = Event.IniDCSUnit:getTypeName()
@@ -1233,10 +1372,10 @@ function EVENT:onEvent( Event )
           -- Scenery
           ---          
           Event.IniDCSUnit = Event.initiator
-          Event.IniDCSUnitName = Event.IniDCSUnit:getName()
+          Event.IniDCSUnitName = Event.IniDCSUnit.getName and Event.IniDCSUnit:getName() or "Scenery no name "..math.random(1,20000)
           Event.IniUnitName = Event.IniDCSUnitName
           Event.IniUnit = SCENERY:Register( Event.IniDCSUnitName, Event.initiator )
-          Event.IniCategory = Event.IniDCSUnit:getDesc().category
+          Event.IniCategory = Event.IniDCSUnit.getDesc and Event.IniDCSUnit:getDesc().category
           Event.IniTypeName = Event.initiator:isExist() and Event.IniDCSUnit:getTypeName() or "SCENERY"
 
         elseif Event.IniObjectCategory == Object.Category.BASE then
@@ -1335,24 +1474,26 @@ function EVENT:onEvent( Event )
           -- SCENERY
           ---
           Event.TgtDCSUnit = Event.target
-          Event.TgtDCSUnitName = Event.TgtDCSUnit:getName()
-          Event.TgtUnitName = Event.TgtDCSUnitName
-          Event.TgtUnit = SCENERY:Register( Event.TgtDCSUnitName, Event.target )
-          Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
-          Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+          Event.TgtDCSUnitName = Event.TgtDCSUnit.getName and Event.TgtDCSUnit.getName() or nil
+          if Event.TgtDCSUnitName~=nil then
+            Event.TgtUnitName = Event.TgtDCSUnitName
+            Event.TgtUnit = SCENERY:Register( Event.TgtDCSUnitName, Event.target )
+            Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
+            Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+          end
         end
       end
 
       -- Weapon.
-      if Event.weapon then
+      if Event.weapon and type(Event.weapon) == "table" and Event.weapon.isExist and Event.weapon:isExist() then
         Event.Weapon = Event.weapon
         Event.WeaponName = Event.weapon:isExist() and Event.weapon:getTypeName() or "Unknown Weapon"
         Event.WeaponUNIT = CLIENT:Find( Event.Weapon, '', true ) -- Sometimes, the weapon is a player unit!
         Event.WeaponPlayerName = Event.WeaponUNIT and Event.Weapon.getPlayerName and Event.Weapon:getPlayerName()
         --Event.WeaponPlayerName = Event.WeaponUNIT and Event.Weapon:getPlayerName()
-        Event.WeaponCoalition = Event.WeaponUNIT and Event.Weapon:getCoalition()
-        Event.WeaponCategory = Event.WeaponUNIT and Event.Weapon:getDesc().category
-        Event.WeaponTypeName = Event.WeaponUNIT and Event.Weapon:getTypeName()
+        Event.WeaponCoalition = Event.WeaponUNIT and Event.Weapon.getCoalition and Event.Weapon:getCoalition()
+        Event.WeaponCategory = Event.WeaponUNIT and Event.Weapon.getDesc and Event.Weapon:getDesc().category
+        Event.WeaponTypeName = Event.WeaponUNIT and Event.Weapon.getTypeName  and Event.Weapon:getTypeName()
         --Event.WeaponTgtDCSUnit = Event.Weapon:getTarget()
       end
 
@@ -1386,6 +1527,15 @@ function EVENT:onEvent( Event )
       if Event.cargo then
         Event.Cargo = Event.cargo
         Event.CargoName = Event.cargo.Name
+      end
+      
+      -- Dynamic cargo Object
+      if Event.dynamiccargo then
+        Event.IniDynamicCargo = Event.dynamiccargo
+        Event.IniDynamicCargoName = Event.IniDynamicCargo.StaticName
+        if Event.IniDynamicCargo.Owner or Event.IniUnitName then
+          Event.IniPlayerName = Event.IniDynamicCargo.Owner or string.match(Event.IniUnitName or "None|00:00|PKG00","^(.+)|%d%d:%d%d|PKG%d+")
+        end
       end
 
       -- Zone object.

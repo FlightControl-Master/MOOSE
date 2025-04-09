@@ -513,7 +513,7 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="1.0.1"
+OPSGROUP.version="1.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1047,7 +1047,7 @@ function OPSGROUP:SetReturnToLegion(Switch)
   else
     self.legionReturn=true
   end
-  self:T(self.lid..string.format("Setting ReturnToLetion=%s", tostring(self.legionReturn)))
+  self:T(self.lid..string.format("Setting ReturnToLegion=%s", tostring(self.legionReturn)))
   return self
 end
 
@@ -1339,8 +1339,9 @@ end
 -- @param Core.Point#COORDINATE TargetCoord Coordinate of the target.
 -- @param #number WeaponBitType Weapon type.
 -- @param Core.Point#COORDINATE RefCoord Reference coordinate.
+-- @param #table SurfaceTypes Valid surfaces types of the coordinate. Default any (nil).
 -- @return Core.Point#COORDINATE Coordinate in weapon range
-function OPSGROUP:GetCoordinateInRange(TargetCoord, WeaponBitType, RefCoord)
+function OPSGROUP:GetCoordinateInRange(TargetCoord, WeaponBitType, RefCoord, SurfaceTypes)
 
   local coordInRange=nil --Core.Point#COORDINATE
   
@@ -1349,35 +1350,58 @@ function OPSGROUP:GetCoordinateInRange(TargetCoord, WeaponBitType, RefCoord)
   -- Get weapon range.
   local weapondata=self:GetWeaponData(WeaponBitType)
   
+  -- Heading intervals to search for a possible new coordinate in range.
+  local dh={0, -5, 5, -10, 10, -15, 15, -20, 20, -25, 25, -30, 30, -35, 35, -40, 40, -45, 45, -50, 50, -55, 55, -60, 60, -65, 65, -70, 70, -75, 75, -80, 80}
+  
+  -- Function that checks if the given surface type is valid
+  local function _checkSurface(point)
+    if SurfaceTypes then
+      local stype=point:GetSurfaceType()
+      for _,sf in pairs(SurfaceTypes) do
+        if sf==stype then
+          return true
+        end
+      end
+      return false
+    else
+      return true
+    end
+  end  
+  
   if weapondata then
   
     -- Heading to target.
-    local heading=RefCoord:HeadingTo(TargetCoord)
+    local heading=TargetCoord:HeadingTo(RefCoord)
   
     -- Distance to target.
     local dist=RefCoord:Get2DDistance(TargetCoord)
+    
+    local range=nil
+    if dist>weapondata.RangeMax then
+      range=weapondata.RangeMax
+      self:T(self.lid..string.format("Out of max range = %.1f km by %.1f km for weapon %s", weapondata.RangeMax/1000, (weapondata.RangeMax-dist)/1000, tostring(WeaponBitType)))
+    elseif dist<weapondata.RangeMin then
+      range=weapondata.RangeMin
+      self:T(self.lid..string.format("Out of min range = %.1f km by %.1f km for weapon %s", weapondata.RangeMin/1000, (weapondata.RangeMin-dist)/1000, tostring(WeaponBitType)))
+    end
   
     -- Check if we are within range.
-    if dist>weapondata.RangeMax then
+    if range then
+      
+      for _,delta in pairs(dh) do
+      
+        local h=heading+delta
   
-      local d=(dist-weapondata.RangeMax)*1.05
-  
-      -- New waypoint coord.
-      coordInRange=RefCoord:Translate(d, heading)
-  
-      -- Debug info.
-      self:T(self.lid..string.format("Out of max range = %.1f km for weapon %s", weapondata.RangeMax/1000, tostring(WeaponBitType)))
-    elseif dist<weapondata.RangeMin then
-  
-      local d=(dist-weapondata.RangeMin)*1.05
-  
-      -- New waypoint coord.
-      coordInRange=RefCoord:Translate(d, heading)
-  
-      -- Debug info.
-      self:T(self.lid..string.format("Out of min range = %.1f km for weapon %s", weapondata.RangeMax/1000, tostring(WeaponBitType)))          
-    else
-  
+        -- New waypoint coord.
+        coordInRange=TargetCoord:Translate(range, h)
+        
+        if _checkSurface(coordInRange) then
+          break
+        end
+        
+      end
+      
+    else  
       -- Debug info.
       self:T(self.lid..string.format("Already in range for weapon %s", tostring(WeaponBitType)))                    
     end
@@ -1456,11 +1480,14 @@ end
 -- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
 -- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
 -- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
+-- @param #function ConversionToMeters Function that converts input units of ranges to meters. Defaul `UTILS.NMToMeters`.
 -- @return #OPSGROUP self
-function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType)
+function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType, ConversionToMeters)
 
-  RangeMin=UTILS.NMToMeters(RangeMin or 0)
-  RangeMax=UTILS.NMToMeters(RangeMax or 10)
+  ConversionToMeters=ConversionToMeters or UTILS.NMToMeters
+
+  RangeMin=ConversionToMeters(RangeMin or 0)
+  RangeMax=ConversionToMeters(RangeMax or 10)
 
   local weapon={} --#OPSGROUP.WeaponData
 
@@ -4175,7 +4202,7 @@ function OPSGROUP:onbeforeTaskExecute(From, Event, To, Task)
       if self:IsWaiting() then
         -- Group is already waiting
       else
-        -- Wait indefinately.
+        -- Wait indefinitely.
         local alt=Mission.missionAltitude and UTILS.MetersToFeet(Mission.missionAltitude) or nil
         self:Wait(nil, alt)
       end
@@ -4486,7 +4513,7 @@ function OPSGROUP:_UpdateTask(Task, Mission)
     -- Set speed. Default max.
     local speed=self.speedMax and UTILS.KmphToKnots(self.speedMax) or nil
     if Task.dcstask.params.speed then
-      speed=Task.dcstask.params.speed
+      speed=UTILS.MpsToKnots(Task.dcstask.params.speed)
     end
     
     if target then
@@ -6079,17 +6106,16 @@ function OPSGROUP:RouteToMission(mission, delay)
       -- Target Coord. 
       local targetcoord=mission:GetTargetCoordinate()
       
-      
       -- In range already?
-      local inRange=self:InWeaponRange(targetcoord, mission.engageWeaponType)
+      local inRange=self:InWeaponRange(targetcoord, mission.engageWeaponType, waypointcoord)
       
       if inRange then
       
-        waypointcoord=self:GetCoordinate(true)
+        --waypointcoord=self:GetCoordinate(true)
       
       else
 
-        local coordInRange=self:GetCoordinateInRange(targetcoord, mission.engageWeaponType, waypointcoord)
+        local coordInRange=self:GetCoordinateInRange(targetcoord, mission.engageWeaponType, waypointcoord, surfacetypes)
         
         if coordInRange then
   
@@ -6124,7 +6150,32 @@ function OPSGROUP:RouteToMission(mission, delay)
     -- Add mission execution (ingress) waypoint.
     local waypoint=nil --#OPSGROUP.Waypoint
     if self:IsFlightgroup() then
-    
+      
+
+      local ingresscoord = mission:GetMissionIngressCoord()
+      local holdingcoord = mission:GetMissionHoldingCoord()
+      
+      if holdingcoord then 
+        waypoint=FLIGHTGROUP.AddWaypoint(self, holdingcoord, mission.missionHoldingCoordSpeed or SpeedToMission, uid, UTILS.MetersToFeet(mission.missionHoldingCoordAlt or self.altitudeCruise), false)
+        uid=waypoint.uid
+          -- Orbit until flaghold=1 (true) but max 5 min
+        self.flaghold:Set(0)
+        local TaskOrbit = self.group:TaskOrbit(holdingcoord, mission.missionHoldingCoordAlt, UTILS.KnotsToMps(mission.missionHoldingCoordSpeed or SpeedToMission))
+        local TaskStop  = self.group:TaskCondition(nil, self.flaghold.UserFlagName, 1, nil, mission.missionHoldingDuration or 900)
+        local TaskCntr  = self.group:TaskControlled(TaskOrbit, TaskStop)
+        local TaskOver  = self.group:TaskFunction("FLIGHTGROUP._FinishedWaiting", self)       
+        local DCSTasks=self.group:TaskCombo({TaskCntr, TaskOver})
+        -- Add waypoint task. UpdateRoute is called inside.
+        local waypointtask=self:AddTaskWaypoint(DCSTasks, waypoint, "Holding")
+        waypointtask.ismission=false
+        self.isHoldingAtHoldingPoint = true
+      end
+      
+      if ingresscoord then 
+        waypoint=FLIGHTGROUP.AddWaypoint(self, ingresscoord, mission.missionIngressCoordSpeed or SpeedToMission, uid, UTILS.MetersToFeet(mission.missionIngressCoordAlt or self.altitudeCruise), false)
+        uid=waypoint.uid
+      end
+     
       waypoint=FLIGHTGROUP.AddWaypoint(self, waypointcoord, SpeedToMission, uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
       
     elseif self:IsArmygroup() then
@@ -6163,7 +6214,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     if egresscoord then
       local Ewaypoint=nil --#OPSGROUP.Waypoint
       if self:IsFlightgroup() then
-        Ewaypoint=FLIGHTGROUP.AddWaypoint(self, egresscoord, SpeedToMission, waypoint.uid, UTILS.MetersToFeet(mission.missionAltitude or self.altitudeCruise), false)
+        Ewaypoint=FLIGHTGROUP.AddWaypoint(self, egresscoord, mission.missionEgressCoordSpeed or SpeedToMission, waypoint.uid, UTILS.MetersToFeet(mission.missionEgressCoordAlt or self.altitudeCruise), false)
       elseif self:IsArmygroup() then
         Ewaypoint=ARMYGROUP.AddWaypoint(self,   egresscoord, SpeedToMission, waypoint.uid, mission.optionFormation, false)
       elseif self:IsNavygroup() then
@@ -7681,6 +7732,7 @@ function OPSGROUP:Teleport(Coordinate, Delay, NoPauseMission)
         unit.heading=math.rad(heading)
         unit.psi=-unit.heading
       else
+        -- Remove unit from spawn template because it is already dead
         table.remove(units, i)
       end
     end
@@ -7768,25 +7820,41 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
       -- Despawn old group. Dont trigger any remove unit event since this is a respawn.
       self:Despawn(0, true)
 
-    else
-
-      ---
-      -- Group is NOT ALIVE
-      ---
-
-      -- Ensure elements in utero.
-      for _,_element in pairs(self.elements) do
-        local element=_element --#OPSGROUP.Element
-        self:ElementInUtero(element)
-      end
-
     end
 
+    -- Ensure elements in utero.
+    for _,_element in pairs(self.elements) do
+      local element=_element --#OPSGROUP.Element
+      if element and element.status~=OPSGROUP.ElementStatus.DEAD then
+        self:ElementInUtero(element)
+      end
+    end    
+
+    -- Spawn with a little delay (especially Navy groups caused problems if they were instantly respawned)
+    self:_Spawn(0.01, Template)
+
+  end
+
+  return self
+end
+
+--- Spawn group from a given template.
+-- @param #OPSGROUP self
+-- @param #number Delay Delay in seconds before respawn happens. Default 0.
+-- @param DCS#Template Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
+-- @return #OPSGROUP self
+function OPSGROUP:_Spawn(Delay, Template)
+  if Delay and Delay>0 then
+    self:ScheduleOnce(Delay, OPSGROUP._Spawn, self, 0, Template)
+  else
     -- Debug output.
-    self:T({Template=Template})
+    self:T2({Template=Template})
 
     -- Spawn new group.
     self.group=_DATABASE:Spawn(Template)
+    --local countryID=self.group:GetCountry()
+    --local categoryID=self.group:GetCategory()
+    --local dcsgroup=coalition.addGroup(countryID, categoryID, Template)
 
     -- Set DCS group and controller.
     self.dcsgroup=self:GetDCSGroup()
@@ -7800,7 +7868,6 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     self.isDead=false
     self.isDestroyed=false
 
-
     self.groupinitialized=false    
     self.wpcounter=1
     self.currentwp=1
@@ -7808,15 +7875,12 @@ function OPSGROUP:_Respawn(Delay, Template, Reset)
     -- Init waypoints.
     self:_InitWaypoints()
 
-    -- Init Group.
-    self:_InitGroup(Template)
+    -- Init Group. This call is delayed because NAVY groups did not like to be initialized just yet (group did not contain any units).
+    self:_InitGroup(Template, 0.001)
     
     -- Reset events.
-    --self:ResetEvents()
-
+    --self:ResetEvents()  
   end
-
-  return self
 end
 
 --- On after "InUtero" event.
@@ -7836,24 +7900,6 @@ end
 -- @param #string To To state.
 function OPSGROUP:onafterDamaged(From, Event, To)
   self:T(self.lid..string.format("Group damaged at t=%.3f", timer.getTime()))
-
-  --[[
-  local lifemin=nil
-  for _,_element in pairs(self.elements) do
-    local element=_element --#OPSGROUP.Element
-    if element.status~=OPSGROUP.ElementStatus.DEAD and element.status~=OPSGROUP.ElementStatus.INUTERO then
-      local life, life0=self:GetLifePoints(element)
-      if lifemin==nil or life<lifemin then
-        lifemin=life
-      end
-    end
-  end
-
-  if lifemin and lifemin/self.life<0.5 then
-    self:RTB()
-  end
-  ]]
-
 end
 
 --- On after "Destroyed" event.
@@ -9005,7 +9051,7 @@ function OPSGROUP:AddWeightCargo(UnitName, Weight)
     self:T(self.lid..string.format("%s: Adding %.1f kg cargo weight. New cargo weight=%.1f kg", UnitName, Weight, element.weightCargo))
 
     -- For airborne units, we set the weight in game.
-    if self.isFlightgroup then
+    if self.isFlightgroup and element.unit and element.unit:IsAlive() then -- #2272 trying to deduct cargo weight from possibly dead units
       trigger.action.setUnitInternalCargo(element.name, element.weightCargo)  --https://wiki.hoggitworld.com/view/DCS_func_setUnitInternalCargo
     end
 
@@ -11450,10 +11496,10 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
   if self:IsFlightgroup() then
 
     -- Get home and destination airbases from waypoints.
-    self.homebase=self.homebase or self:GetHomebaseFromWaypoints()
+    self.homebase=self.homebase or self:GetHomebaseFromWaypoints() -- GetHomebaseFromWaypoints() returns carriers or destroyers if no airbase is found.
     local destbase=self:GetDestinationFromWaypoints()
     self.destbase=self.destbase or destbase
-    self.currbase=self:GetHomebaseFromWaypoints()
+    self.currbase=self:GetHomebaseFromWaypoints() -- Skipped To fix RTB issue
 
     --env.info("FF home base "..(self.homebase and self.homebase:GetName() or "unknown"))
     --env.info("FF dest base "..(self.destbase and self.destbase:GetName() or "unknown"))
@@ -11464,7 +11510,7 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
     end
 
     -- Set destination to homebase.
-    if self.destbase==nil then
+    if self.destbase==nil then  -- Skipped To fix RTB issue
       self.destbase=self.homebase
     end
 

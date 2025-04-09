@@ -595,7 +595,8 @@ do -- DETECTION_BASE
 
       return self
     end
-
+    
+    ---
     -- @param #DETECTION_BASE self
     -- @param #string From The From State string.
     -- @param #string Event The Event string.
@@ -604,7 +605,7 @@ do -- DETECTION_BASE
     -- @param #number DetectionTimeStamp Time stamp of detection event.
     function DETECTION_BASE:onafterDetection( From, Event, To, Detection, DetectionTimeStamp )
 
-      self:I( { DetectedObjects = self.DetectedObjects } )
+      self:T( { DetectedObjects = self.DetectedObjects } )
 
       self.DetectionRun = self.DetectionRun + 1
 
@@ -612,10 +613,10 @@ do -- DETECTION_BASE
 
       if Detection and Detection:IsAlive() then
 
-        self:I( { "DetectionGroup is Alive", Detection:GetName() } )
+        self:T( { "DetectionGroup is Alive", Detection:GetName() } )
 
         local DetectionGroupName = Detection:GetName()
-        local DetectionUnit = Detection:GetUnit( 1 )
+        local DetectionUnit = Detection:GetFirstUnitAlive()
 
         local DetectedUnits = {}
 
@@ -628,30 +629,30 @@ do -- DETECTION_BASE
           self.DetectDLINK
         )
 
-        --self:I( { DetectedTargets = DetectedTargets } )
-        --self:I(UTILS.PrintTableToLog(DetectedTargets))
+        --self:T( { DetectedTargets = DetectedTargets } )
+        --self:T(UTILS.PrintTableToLog(DetectedTargets))
         
         
-        for DetectionObjectID, Detection in pairs( DetectedTargets ) do
+        for DetectionObjectID, Detection in pairs( DetectedTargets or {}) do
           local DetectedObject = Detection.object -- DCS#Object
 
           if DetectedObject and DetectedObject:isExist() and DetectedObject.id_ < 50000000 then -- and ( DetectedObject:getCategory() == Object.Category.UNIT or DetectedObject:getCategory() == Object.Category.STATIC ) then
             local DetectedObjectName = DetectedObject:getName()
             if not self.DetectedObjects[DetectedObjectName] then
               self.DetectedObjects[DetectedObjectName] = self.DetectedObjects[DetectedObjectName] or {}
-              self.DetectedObjects[DetectedObjectName].Name = DetectedObjectName
+              self.DetectedObjects[DetectedObjectName].Name = DetectedObjectName 
               self.DetectedObjects[DetectedObjectName].Object = DetectedObject
             end
           end
         end
 
-        for DetectionObjectName, DetectedObjectData in pairs( self.DetectedObjects ) do
+        for DetectionObjectName, DetectedObjectData in pairs( self.DetectedObjects or {}) do
 
           local DetectedObject = DetectedObjectData.Object
 
           if DetectedObject:isExist() then
 
-            local TargetIsDetected, TargetIsVisible, TargetLastTime, TargetKnowType, TargetKnowDistance, TargetLastPos, TargetLastVelocity = DetectionUnit:IsTargetDetected(
+            local TargetIsDetected, TargetIsVisible, TargetKnowType, TargetKnowDistance, TargetLastTime, TargetLastPos, TargetLastVelocity = DetectionUnit:IsTargetDetected(
               DetectedObject,
               self.DetectVisual,
               self.DetectOptical,

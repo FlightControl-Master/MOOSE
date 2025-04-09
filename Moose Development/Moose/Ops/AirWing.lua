@@ -187,7 +187,7 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.9.5"
+AIRWING.version="0.9.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1041,6 +1041,9 @@ function AIRWING:onafterStatus(From, Event, To)
 
   -- Check Recon missions.
   self:CheckRECON()
+  
+  -- Display tactival overview.
+  self:_TacticalOverview()  
 
   ----------------
   -- Transport ---
@@ -1362,16 +1365,20 @@ function AIRWING:CheckRescuhelo()
 
   local N=self:CountMissionsInQueue({AUFTRAG.Type.RESCUEHELO})
 
-  local name=self.airbase:GetName()
-
-  local carrier=UNIT:FindByName(name)
-
-  for i=1,self.nflightsRescueHelo-N do
-
-    local mission=AUFTRAG:NewRESCUEHELO(carrier)
-
-    self:AddMission(mission)
-
+  if self.airbase then
+  
+    local name=self.airbase:GetName()
+  
+    local carrier=UNIT:FindByName(name)
+  
+    for i=1,self.nflightsRescueHelo-N do
+  
+      local mission=AUFTRAG:NewRESCUEHELO(carrier)
+  
+      self:AddMission(mission)
+  
+    end
+    
   end
 
   return self

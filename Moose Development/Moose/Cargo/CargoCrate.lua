@@ -78,7 +78,7 @@ do -- CARGO_CRATE
     return self
   end
   
-  --- @param #CARGO_CRATE self
+  -- @param #CARGO_CRATE self
   -- @param Core.Event#EVENTDATA EventData 
   function CARGO_CRATE:OnEventCargoDead( EventData )
 
@@ -114,7 +114,7 @@ do -- CARGO_CRATE
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Core.Point#POINT_VEC2
+  -- @param Core.Point#COORDINATE
   function CARGO_CRATE:onenterUnLoaded( From, Event, To, ToPointVec2 )
     --self:T( { ToPointVec2, From, Event, To } )
   

@@ -153,13 +153,13 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.6.0"
+TARGET.version="0.7.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
--- TODO: Had cases where target life was 0 but target was not dead. Need to figure out why!
+-- DONE: Had cases where target life was 0 but target was not dead. Need to figure out why! <== This is due to delayed dead event.
 -- DONE: Add pseudo functions.
 -- DONE: Initial object can be nil.
 
@@ -243,6 +243,36 @@ function TARGET:New(TargetObject)
   -- @function [parent=#TARGET] __Status
   -- @param #TARGET self
   -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "ObjectDamaged".
+  -- @function [parent=#TARGET] ObjectDamaged
+  -- @param #TARGET self
+  -- @param #TARGET.Object Target Target object.
+
+  --- Triggers the FSM event "ObjectDestroyed".
+  -- @function [parent=#TARGET] ObjectDestroyed
+  -- @param #TARGET self
+  -- @param #TARGET.Object Target Target object.
+
+  --- Triggers the FSM event "ObjectDead".
+  -- @function [parent=#TARGET] ObjectDead
+  -- @param #TARGET self
+  -- @param #TARGET.Object Target Target object.
+
+
+  --- Triggers the FSM event "Damaged".
+  -- @function [parent=#TARGET] Damaged
+  -- @param #TARGET self
+
+  --- Triggers the FSM event "Destroyed".
+  -- @function [parent=#TARGET] Destroyed
+  -- @param #TARGET self
+
+  --- Triggers the FSM event "Dead".
+  -- @function [parent=#TARGET] Dead
+  -- @param #TARGET self
+
   
   --- On After "ObjectDamaged" event. A (sub-) target object has been damaged, e.g. a UNIT of a GROUP, or an object of a SET
   -- @function [parent=#TARGET] OnAfterObjectDamaged
@@ -267,22 +297,23 @@ function TARGET:New(TargetObject)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param #TARGET.Object Target Target object.
+
   
-    --- On After "Damaged" event. The (whole) target object has been damaged.
+  --- On After "Damaged" event. Any of the target objects has been damaged.
   -- @function [parent=#TARGET] OnAfterDamaged
   -- @param #TARGET self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
   
-  --- On After "ObjectDestroyed" event. The (whole) target object has been destroyed.
+  --- On After "Destroyed" event. All target objects have been destroyed.
   -- @function [parent=#TARGET] OnAfterDestroyed
   -- @param #TARGET self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
   
-  --- On After "ObjectDead" event. The (whole) target object is dead.
+  --- On After "Dead" event. All target objects are dead.
   -- @function [parent=#TARGET] OnAfterDead
   -- @param #TARGET self
   -- @param #string From From state.
@@ -290,7 +321,7 @@ function TARGET:New(TargetObject)
   -- @param #string To To state.
 
   -- Start.
-  self:__Start(-1)
+  self:__Start(-0.1)
 
   return self
 end
@@ -356,6 +387,8 @@ function TARGET:AddObject(Object)
   
     if Object:IsInstanceOf("OPSGROUP") then
       self:_AddObject(Object:GetGroup()) -- We add the MOOSE GROUP object not the OPSGROUP object.
+    --elseif Object:IsInstanceOf("OPSZONE") then
+      --self:_AddObject(Object:GetZone())
     else
       self:_AddObject(Object)
     end
@@ -527,6 +560,11 @@ function TARGET:IsAlive()
   for _,_target in pairs(self.targets) do
     local target=_target --Ops.Target#TARGET.Object
     if target.Status~=TARGET.ObjectStatus.DEAD then
+      if self.isDestroyed then
+        self:E(self.lid..string.format("ERROR: target is DESTROYED but target object status is not DEAD but %s for object %s", target.Status, target.Name))
+      elseif self:IsDead() then
+        self:E(self.lid..string.format("ERROR: target is DEAD but target object status is not DEAD but %s for object %s", target.Status, target.Name))
+      end
       return true
     end
   end
@@ -549,6 +587,25 @@ function TARGET:IsDead()
   local is=self:Is("Dead")
   return is
 end
+
+--- Check if target object is dead.
+-- @param #TARGET self
+-- @param #TARGET.Object TargetObject The target object.
+-- @return #boolean If true, target is dead.
+function TARGET:IsTargetDead(TargetObject)
+  local isDead=TargetObject.Status==TARGET.ObjectStatus.DEAD
+  return isDead
+end
+
+--- Check if target object is alive.
+-- @param #TARGET self
+-- @param #TARGET.Object TargetObject The target object.
+-- @return #boolean If true, target is dead.
+function TARGET:IsTargetAlive(TargetObject)
+  local isAlive=TargetObject.Status==TARGET.ObjectStatus.ALIVE
+  return isAlive
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Start & Status
@@ -581,7 +638,8 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function TARGET:onafterStatus(From, Event, To)
-  self:T({From, Event, To})
+  --self:T({From, Event, To})
+  
   -- FSM state.
   local fsmstate=self:GetState()
     
@@ -592,6 +650,7 @@ function TARGET:onafterStatus(From, Event, To)
     
     -- old life
     local life=target.Life
+    
     -- curr life    
     target.Life=self:GetTargetLife(target)
     
@@ -603,13 +662,14 @@ function TARGET:onafterStatus(From, Event, To)
       self.life0 = self.life0+delta
     end
     
+    -- Check if life decreased ==> damaged
     if target.Life<life then
-      target.Status = TARGET.ObjectStatus.DAMAGED
-      self:ObjectDamaged(target)      
+      --target.Status = TARGET.ObjectStatus.DAMAGED
+      self:ObjectDamaged(target)
       damaged=true
     end
     
-    if life < 1 and (not target.Status == TARGET.ObjectStatus.DEAD) then
+    if target.Life<1 and target.Status~=TARGET.ObjectStatus.DEAD then
       self:E(self.lid..string.format("FF life is zero but no object dead event fired ==> object dead now for target object %s!", tostring(target.Name)))
       self:ObjectDead(target)
       damaged = true
@@ -624,11 +684,12 @@ function TARGET:onafterStatus(From, Event, To)
   
   -- Log output verbose=1.
   if self.verbose>=1 then
-    local text=string.format("%s: Targets=%d/%d Life=%.1f/%.1f Damage=%.1f", fsmstate, self:CountTargets(), self.N0, self:GetLife(), self:GetLife0(), self:GetDamage())
+    local text=string.format("%s: Targets=%d/%d [%d, %d], Life=%.1f/%.1f, Damage=%.1f", 
+    fsmstate, self:CountTargets(), self.N0, self.Ndestroyed, self.Ndead, self:GetLife(), self:GetLife0(), self:GetDamage())
     if self:CountTargets() == 0 or self:GetDamage() >= 100 then
-      text=text.." Dead!"
+      text=text.." - Dead!"
     elseif damaged then
-      text=text.." Damaged!"
+      text=text.." - Damaged!"
     end
     self:I(self.lid..text)
   end  
@@ -639,19 +700,35 @@ function TARGET:onafterStatus(From, Event, To)
     for i,_target in pairs(self.targets) do
       local target=_target --#TARGET.Object
       local damage=(1-target.Life/target.Life0)*100
-      text=text..string.format("\n[%d] %s %s %s: Life=%.1f/%.1f, Damage=%.1f", i, target.Type, target.Name, target.Status, target.Life, target.Life0, damage)
+      text=text..string.format("\n[%d] %s %s %s: Life=%.1f/%.1f, Damage=%.1f, N0=%d, Ndestroyed=%d, Ndead=%d", 
+      i, target.Type, target.Name, target.Status, target.Life, target.Life0, damage, target.N0, target.Ndestroyed, target.Ndead)
     end
     self:I(self.lid..text)
   end
   
-  if self:CountTargets() == 0 or self:GetDamage() >= 100 then
+  -- Consitency check if target is still alive but all target objects are dead
+  if self:IsAlive() and (self:CountTargets()==0 or self:GetDamage()>=100) then
     self:Dead()
+  end
+  
+  -- Quick sanity check
+  for i,_target in pairs(self.targets) do
+    local target=_target --#TARGET.Object
+    if target.Ndestroyed>target.N0 then
+      self:E(self.lid..string.format("ERROR: Number of destroyed target objects greater than number of initial target objects: %d>%d!", target.Ndestroyed, target.N0))
+    end
+    if target.Ndestroyed>target.N0 then
+      self:E(self.lid..string.format("ERROR: Number of dead target objects greater than number of initial target objects: %d>%d!", target.Ndead, target.N0))
+    end
   end
   
   -- Update status again in 30 sec.
   if self:IsAlive() then
     self:__Status(-self.TStatus)
+  else
+    self:I(self.lid..string.format("Target is not alive any more ==> no further status updates are carried out"))
   end
+  
   return self
 end
 
@@ -687,6 +764,10 @@ function TARGET:onafterObjectDestroyed(From, Event, To, Target)
   -- Increase destroyed counter.
   self.Ndestroyed=self.Ndestroyed+1
   
+  Target.Ndestroyed=Target.Ndestroyed+1
+  
+  Target.Life=0
+  
   -- Call object dead event.
   self:ObjectDead(Target)
   
@@ -707,6 +788,12 @@ function TARGET:onafterObjectDead(From, Event, To, Target)
   -- Set target status.
   Target.Status=TARGET.ObjectStatus.DEAD
   
+  -- Increase dead object counter
+  Target.Ndead=Target.Ndead+1
+  
+  -- Set target object life to 0.
+  Target.Life=0
+  
   -- Increase dead counter.
   self.Ndead=self.Ndead+1
   
@@ -716,6 +803,7 @@ function TARGET:onafterObjectDead(From, Event, To, Target)
     local target=_target --#TARGET.Object
     if target.Status==TARGET.ObjectStatus.ALIVE then
       dead=false
+      break -- break the loop because we now we are not dead
     end
   end
   
@@ -759,7 +847,6 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function TARGET:onafterDestroyed(From, Event, To)
-  
   self:T({From, Event, To})
   
   self:T(self.lid..string.format("TARGET destroyed"))
@@ -813,23 +900,27 @@ function TARGET:OnEventUnitDeadOrLost(EventData)
     -- Check if we could find a target object.
     if target then
     
+      local Ndead=target.Ndead
+      local Ndestroyed=target.Ndestroyed
       if EventData.id==EVENTS.RemoveUnit then
-        target.Ndead=target.Ndead+1
+        Ndead=Ndead+1
       else
-        target.Ndestroyed=target.Ndestroyed+1
-        target.Ndead=target.Ndead+1
+        Ndestroyed=Ndestroyed+1
+        Ndead=Ndead+1
       end
       
-      if target.Ndead==target.N0 then
       
-        if target.Ndestroyed>=target.N0 then
+      -- Check if ALL objects are dead
+      if Ndead==target.N0 then
+      
+        if Ndestroyed>=target.N0 then
 
           -- Debug message.
           self:T2(self.lid..string.format("EVENT ID=%d: target %s dead/lost ==> destroyed", EventData.id, tostring(target.Name)))
           
           target.Life = 0
           
-          -- Trigger object destroyed event.
+          -- Trigger object destroyed event. This sets the Life to zero and increases Ndestroyed
           self:ObjectDestroyed(target)
           
         else
@@ -839,7 +930,7 @@ function TARGET:OnEventUnitDeadOrLost(EventData)
           
           target.Life = 0
           
-          -- Trigger object dead event.
+          -- Trigger object dead event.  This sets the Life to zero and increases Ndead counter
           self:ObjectDead(target)
         
         end
@@ -979,6 +1070,8 @@ function TARGET:_AddObject(Object)
 
     target.Life0=1
     target.Life=1
+    
+    target.N0=target.N0+1
       
   elseif Object:IsInstanceOf("ZONE_BASE") then
   
@@ -992,6 +1085,8 @@ function TARGET:_AddObject(Object)
 
     target.Life0=1
     target.Life=1
+    
+    target.N0=target.N0+1
 
   elseif Object:IsInstanceOf("OPSZONE") then
   
@@ -1203,11 +1298,27 @@ function TARGET:GetTargetThreatLevelMax(Target)
     return 0
 
   elseif Target.Type==TARGET.ObjectType.ZONE then
+    
+    local zone = Target.Object -- Core.Zone#ZONE_RADIUS
+    local foundunits = {}
+    if zone:IsInstanceOf("ZONE_RADIUS") or zone:IsInstanceOf("ZONE_POLYGON") then
+      zone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT,Unit.Category.SHIP})
+      foundunits = zone:GetScannedSetUnit()
+    else
+      foundunits = SET_UNIT:New():FilterZones({zone}):FilterOnce()
+    end
+    local ThreatMax = foundunits:GetThreatLevelMax() or 0
+    return ThreatMax
   
-    return 0
+  elseif Target.Type==TARGET.ObjectType.OPSZONE then
+    
+    local unitset = Target.Object:GetScannedUnitSet() -- Core.Set#SET_UNIT
+    local ThreatMax = unitset:GetThreatLevelMax()
+    return ThreatMax
     
   else
     self:E("ERROR: unknown target object type in GetTargetThreatLevel!")
+    return 0
   end
   
   return self
@@ -1919,12 +2030,16 @@ function TARGET:CountObjectives(Target, Coalitions)
     
   elseif Target.Type==TARGET.ObjectType.COORDINATE then
   
-    -- No target we can check!
+    -- No target, where we can check the alive status, so we assume it is alive. Changed this because otherwise target count is 0 if we pass a coordinate.
+    -- This is also more consitent with the life and is alive status.
+    N=N+1
 
   elseif Target.Type==TARGET.ObjectType.ZONE then
   
-    -- No target we can check!
-    
+    -- No target, where we can check the alive status, so we assume it is alive. Changed this because otherwise target count is 0 if we pass a coordinate.
+    -- This is also more consitent with the life and is alive status.
+    N=N+1
+        
   elseif Target.Type==TARGET.ObjectType.OPSZONE then
     
     local target=Target.Object --Ops.OpsZone#OPSZONE
