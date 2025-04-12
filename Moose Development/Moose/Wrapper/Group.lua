@@ -1842,8 +1842,12 @@ end
 -- @param #GROUP self
 -- @return #table
 function GROUP:GetTemplateRoutePoints()
+  if not self or not self:IsAlive() then return end
   local GroupName = self:GetName()
-  return UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ).route.points )
+  local template = _DATABASE:GetGroupTemplate(GroupName)
+  if template and template.route and template.route.points then
+    return UTILS.DeepCopy(template.route.points)
+  end
 end
 
 
