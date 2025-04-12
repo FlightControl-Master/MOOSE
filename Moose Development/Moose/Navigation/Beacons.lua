@@ -2,7 +2,9 @@
 --
 -- **Main Features:**
 --
---    * Beacons of the map
+--    * Access beacons of the map
+--    * Find closest beacon
+--    * Get frequencies and channels
 -- 
 -- ===
 --
@@ -54,6 +56,10 @@
 -- 
 -- # User Functions
 -- 
+-- ## F10 Map Markers
+-- 
+-- ## Position
+-- 
 -- ## Get Closest Beacon
 -- 
 --
@@ -71,6 +77,7 @@ BEACONS = {
 -- @field #string beaconId Beacon ID.
 -- @field #string callsign Call sign.
 -- @field #number frequency Frequency in Hz.
+-- @field #number channel TACAN, RSBN or PRMG channel depending on type.
 -- @field #table position Position table.
 -- @field #number direction Direction in degrees.
 -- @field #table positionGeo Table with latitude and longitude.
@@ -78,18 +85,20 @@ BEACONS = {
 -- @field #number chartOffsetX No idea what this offset is?!
 -- @field DCS#Vec3 vec3 Position vector 3D.
 -- @field #number markerID ID for the F10 marker.
+-- @field #string typeName Name of becon type.
+-- @field Wrapper.Scenery#SCENERY scenery The scenery object.
 
 --- BEACONS class version.
 -- @field #string version
-BEACONS.version="0.0.1"
+BEACONS.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: A lot...
--- TODO: TACAN channel from frequency
--- TODO: Scenery object
+-- DONE: TACAN channel from frequency (was already in beacon.lua as channel)
+-- DONE: Scenery object
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor(s)
@@ -107,13 +116,35 @@ function BEACONS:NewFromTable(BeaconTable)
   for _,_beacon in pairs(BeaconTable) do
     local beacon=_beacon --#BEACONS.Beacon
     
+    -- Get 3D vector
     beacon.vec3={x=beacon.position[1], y=beacon.position[2], z=beacon.position[3]}
     
+    -- Get coordinate
+    beacon.coordinate=COORDINATE:NewFromVec3(beacon.vec3)
+    
+    -- Get type name
+    beacon.typeName=self:_GetTypeName(beacon.type)
+    
+    -- Find closest scenery object from scan
+    beacon.scenery=beacon.coordinate:FindClosestScenery(20)
+    
+    -- Debug stuff for scenery object
+    if false then
+      if beacon.scenery then
+        env.info(string.format("FF Beacon %s %s %s got scenery object %s, %s", beacon.callsign, beacon.beaconId, beacon.typeName, beacon.scenery:GetName(), beacon.scenery:GetTypeName() ))
+        UTILS.PrintTableToLog(beacon.scenery.SceneryObject)
+        UTILS.PrintTableToLog(beacon.sceneObjects)
+      else
+        env.info(string.format("FF NO scenery object  %s %s %s ", beacon.callsign, beacon.beaconId, beacon.typeName))
+      end
+    end
+    
+    -- Add to table
     table.insert(self.beacons, beacon)
   end
   
+  -- Debug output
   self:I(string.format("Added %d beacons", #self.beacons))
-  
   
   return self
 end
@@ -214,7 +245,28 @@ function BEACONS:GetBeacons(TypeID)
   return beacons
 end
 
+--- Count beacons, optionally of a given type.
+-- @param #BEACONS self
+-- @param #number TypeID (Optional) Only count specific beacon types, *e.g.* `BEACON.Type.TACAN`.
+-- @return #number Number of beacons.
+function BEACONS:CountBeacons(TypeID)
 
+  local n=#self.beacons
+  
+  if TypeID then
+    for _,_beacon in pairs(self.beacons) do
+      local bc=_beacon --#BEACONS.Beacon
+      
+      if TypeID==bc.type then
+        n=n+1
+      end 
+    end
+  else
+    n=#self.beacons
+  end
+
+  return n
+end
 
 --- Add markers for all beacons on the F10 map.
 -- @param #BEACONS self
@@ -266,16 +318,42 @@ end
 -- @return #string Marker text.
 function BEACONS:_GetMarkerText(beacon)
 
-  local frequency=beacon.frequency~=nil and beacon.frequency/1000 or -1
+  local frequency, funit=self:_GetFrequency(beacon.frequency)
   local direction=beacon.direction~=nil and beacon.direction or -1
 
   local text=string.format("Beacon %s", tostring(beacon.beaconId))  
   text=text..string.format("\nCallsign: %s", tostring(beacon.callsign))
-  text=text..string.format("\nType: %s", tostring(self:_GetTypeName(beacon.type)))
-  text=text..string.format("\nFrequency: %.3f kHz", frequency)
+  text=text..string.format("\nType: %s", tostring(beacon.typeName))
+  --if beacon.type==BEACON.Type.TACAN or beacon.type==BEACON.Type.RSBN or beacon.type==BEACON.Type.PRMG_GLIDESLOPE or beacon.type==BEACON.Type.PRMG_LOCALIZER then
+  if UTILS.IsInTable({BEACON.Type.TACAN, BEACON.Type.RSBN, BEACON.Type.PRMG_GLIDESLOPE, BEACON.Type.PRMG_LOCALIZER}, beacon.type) then
+    text=text..string.format("\nChannel: %s", tostring(beacon.channel))
+  end
+  text=text..string.format("\nFrequency: %.3f %s", frequency, funit)
   text=text..string.format("\nDirection: %.1f°", direction)
   
   return text
+end
+
+
+--- Get converted frequency.
+-- @param #BEACONS self
+-- @param #number freq Frequency in Hz.
+-- @return #number Frequency in better unit.
+-- @return #string Unit ("Hz", "kHz", "MHz").
+function BEACONS:_GetFrequency(freq)
+
+  freq=freq or 0
+  local unit="Hz"
+  
+  if freq>=1e6 then
+    freq=freq/1e6
+    unit="MHz"
+  elseif freq>=1e3 then
+    freq=freq/1e3
+    unit="kHz"
+  end
+
+  return freq, unit
 end
 
 --- Get name of beacon type.
@@ -294,7 +372,6 @@ function BEACONS:_GetTypeName(typeID)
 
   return "Unknown"
 end
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
