@@ -8755,7 +8755,6 @@ do -- SET_DYNAMICCARGO
   -- @field #SET_DYNAMICCARGO SET_DYNAMICCARGO
   SET_DYNAMICCARGO = {
     ClassName = "SET_DYNAMICCARGO",
-    Filter = {},
     Set = {},
     List = {},
     Index = {},
