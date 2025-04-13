@@ -189,5 +189,6 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Tasking/Task_Capture_Dispatch
 
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Point.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Beacons.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Radios.lua' )
 
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Globals.lua' )

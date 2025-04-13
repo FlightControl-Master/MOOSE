@@ -181,5 +181,6 @@ __Moose.Include( 'Tasking\\Task_Capture_Dispatcher.lua' )
 
 __Moose.Include( 'Navigation\\Point.lua' )
 __Moose.Include( 'Navigation\\Beacons.lua' )
+__Moose.Include( 'Navigation\\Radios.lua' )
 
 __Moose.Include( 'Globals.lua' )
