@@ -83,7 +83,7 @@ TOWNS = {
 
 --- TOWNS class version.
 -- @field #string version
-TOWNS.version="0.0.0"
+TOWNS.version="0.0.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -92,6 +92,7 @@ TOWNS.version="0.0.0"
 -- TODO: A lot...
 -- TODO: Road connection
 -- TODO: Rail connection
+-- TODO: Connection between towns
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor(s)
@@ -113,6 +114,12 @@ function TOWNS:NewFromTable(TownTable)
 
     -- Get coordinate
     town.coordinate=COORDINATE:NewFromLLDD(town.latitude, town.longitude)
+    
+    -- Get coordinate of closest road
+    town.coordRoad=town.coordinate:GetClosestPointToRoad()
+    
+    -- Get coordinate of closest rail
+    town.coordRail=town.coordinate:GetClosestPointToRoad(true)
     
     -- Add to table
     table.insert(self.towns, town)
@@ -170,6 +177,34 @@ function TOWNS:GetCoordinate(town)
   return town.coordinate
 end
 
+--- Get closest road coordinate of a town.
+-- @param #TOWNS self
+-- @param #TOWNS.Town town The town data structure.
+-- @return Core.Point#COORDINATE The closest road coordinate.
+function TOWNS:GetCoordRoad(town)
+  return town.coordRoad
+end
+
+--- Get closest rail coordinate of a town.
+-- @param #TOWNS self
+-- @param #TOWNS.Town town The town data structure.
+-- @return Core.Point#COORDINATE The closest rail coordinate.
+function TOWNS:GetCoordRail(town)
+  return town.coordRail
+end
+
+--- Get road connection between two towns.
+-- @param #TOWNS self
+-- @param #TOWNS.Town townA The town data structure.
+-- @param #TOWNS.Town townB The town data structure.
+-- @return #table Table containing path coordinates.
+function TOWNS:GetConnectionRoad(townA, townB)
+
+  local path=townA.coordRoad:GetPathOnRoad(townB.coordRoad)
+
+  return path
+end
+
 --- Find closest town to a given coordinate.
 -- @param #TOWNS self
 -- @param Core.Point#COORDINATE Coordinate The reference coordinate.
@@ -182,7 +217,7 @@ function TOWNS:GetClosestTown(Coordinate)
   for _,_town in pairs(self.towns) do
     local town=_town --#TOWNS.Town
     
-    local dist=Coordinate:Get2DDistance(bc.coordinate)
+    local dist=Coordinate:Get2DDistance(town.coordinate)
     
     if dist<distmin then
       distmin=dist
@@ -208,8 +243,8 @@ function TOWNS:MarkerShow(Town)
 
   for _,_town in pairs(self.towns) do
     local town=_town --#TOWNS.Town
-    if Town==nil or Town.name==Town.name then
-      local text=self:_GetMarkerText(Town)
+    if Town==nil or Town.name==town.name then
+      local text=self:_GetMarkerText(town)
       local coord=town.coordinate
       if town.markerID then
         UTILS.RemoveMark(town.markerID)
