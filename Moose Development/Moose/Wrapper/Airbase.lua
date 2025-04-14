@@ -1419,7 +1419,7 @@ function AIRBASE:Register(AirbaseName)
   self.descriptors=self:GetDesc()
 
   -- Debug info.
-  --self:I({airbase=AirbaseName, descriptors=self.descriptors})
+  --self:T({airbase=AirbaseName, descriptors=self.descriptors})
 
   -- Category.
   self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
@@ -2538,7 +2538,7 @@ function AIRBASE:GetRunwayByName(Name)
 
       -- Name including L or R, e.g. "31L".
       local name=self:GetRunwayName(runway)
-
+      self:T("Check Runway Name: "..name)
       if name==Name:upper() then
         return runway
       end
@@ -2565,7 +2565,7 @@ function AIRBASE:_InitRunways(IncludeInverse)
 
   --- Function to create a runway data table.
   local function _createRunway(name, course, width, length, center)
-
+    self:T("Create Runway: name = "..name)
     -- Bearing in rad.
     local bearing=-1*course
 
@@ -2581,6 +2581,7 @@ function AIRBASE:_InitRunways(IncludeInverse)
       runway.name=string.format("%02d", tonumber(namefromheading))
     else
      runway.name=string.format("%02d", tonumber(name))
+     self:T("RunwayName: "..runway.name)
     end
 
     --runway.name=string.format("%02d", tonumber(name))
@@ -2902,7 +2903,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
     runway.endpoint=c2
 
     -- Debug info.
-    --self:I(string.format("Airbase %s: Adding runway id=%s, heading=%03d, length=%d m i=%d j=%d", self:GetName(), runway.idx, runway.heading, runway.length, i, j))
+    self:T(string.format("Airbase %s: Adding runway id=%s, heading=%03d, length=%d m i=%d j=%d", self:GetName(), runway.idx, runway.heading, runway.length, i, j))
 
     -- Debug mark
     if mark then
@@ -3029,8 +3030,8 @@ function AIRBASE:GetRunwayIntoWind(PreferLeft)
 
     -- Loop over runways.
     local dotmin=nil
-    for i,_runway in pairs(runways) do
-      local runway=_runway --#AIRBASE.Runway
+    for i                                                                                                                                                                                                             ,_runway in pairs(runways) do
+      local runway=_runway --#AIRBASE.Runway                                                                    
 
       if PreferLeft==nil or PreferLeft==runway.isLeft then
 
