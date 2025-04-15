@@ -62,6 +62,7 @@
 -- @field #number repeatsonfailure
 -- @field Core.Set#SET_ZONE GoZoneSet
 -- @field Core.Set#SET_ZONE NoGoZoneSet
+-- @field Core.Set#SET_ZONE ConflictZoneSet
 -- @field #boolean Monitor
 -- @field #boolean TankerInvisible
 -- @field #number CapFormation
@@ -102,6 +103,11 @@
 -- Next put a late activated template group for your CAP/GCI Squadron on the map. Last, put a zone on the map for the CAP operations, let's name it "Blue Zone 1". Size of the zone plays no role.
 -- Put an EW radar system on the map and name it aptly, like "Blue EWR".
 -- 
+-- ### Zones
+-- 
+-- For our example, you create a RED and a BLUE border, as a closed polygonal zone representing the borderlines. You can also have conflict zone, where - for our example - BLUE will attack
+-- RED planes, despite being on RED territory. Think of a no-fly zone or an limited area of engagement. Conflict zones take precedence over borders, i.e. they can overlap all borders.
+-- 
 -- ### Code it
 -- 
 --          -- Set up a basic system for the blue side, we'll reside on Kutaisi, and use GROUP objects with "Blue EWR" in the name as EW Radar Systems.
@@ -114,10 +120,10 @@
 --          mywing:AddSquadron("Blue Sq1 M2000c","CAP Kutaisi",AIRBASE.Caucasus.Kutaisi,20,AI.Skill.GOOD,102,"ec1.5_Vendee_Jeanne_clean")
 --          
 --          -- Add a couple of zones
---          -- We'll defend our border
+--          -- We'll defend our own border
 --          mywing:AddAcceptZone(ZONE_POLYGON:New( "Blue Border", GROUP:FindByName( "Blue Border" ) ))
---          -- We'll attack intruders also here
---          mywing:AddAcceptZone(ZONE_POLYGON:New("Red Defense Zone", GROUP:FindByName( "Red Defense Zone" )))
+--          -- We'll attack intruders also here - conflictzones can overlap borders(!) - limited zone of engagement
+--          mywing:AddConflictZone(ZONE_POLYGON:New("Red Defense Zone", GROUP:FindByName( "Red Defense Zone" )))
 --          -- We'll leave the reds alone on their turf
 --          mywing:AddRejectZone(ZONE_POLYGON:New( "Red Border", GROUP:FindByName( "Red Border" ) ))
 --          
@@ -125,10 +131,10 @@
 --          -- Set up borders on map
 --          local BlueBorder = ZONE_POLYGON:New( "Blue Border", GROUP:FindByName( "Blue Border" ) )
 --          BlueBorder:DrawZone(-1,{0,0,1},1,FillColor,FillAlpha,1,true)
---          local BlueNoGoZone = ZONE_POLYGON:New("Red Defense Zone", GROUP:FindByName( "Red Defense Zone" ))
---          BlueNoGoZone:DrawZone(-1,{1,1,0},1,FillColor,FillAlpha,2,true)
---          local BlueNoGoZone2 = ZONE_POLYGON:New( "Red Border", GROUP:FindByName( "Red Border" ) )
---          BlueNoGoZone2:DrawZone(-1,{1,0,0},1,FillColor,FillAlpha,4,true)
+--          local ConflictZone = ZONE_POLYGON:New("Red Defense Zone", GROUP:FindByName( "Red Defense Zone" ))
+--          ConflictZone:DrawZone(-1,{1,1,0},1,FillColor,FillAlpha,2,true)
+--          local BlueNoGoZone = ZONE_POLYGON:New( "Red Border", GROUP:FindByName( "Red Border" ) )
+--          BlueNoGoZone:DrawZone(-1,{1,0,0},1,FillColor,FillAlpha,4,true)
 --          
 -- ### Add a second airwing with squads and own CAP point (optional)
 --          
@@ -210,6 +216,7 @@ EASYGCICAP = {
   repeatsonfailure = 3,
   GoZoneSet = nil,
   NoGoZoneSet = nil,
+  ConflictZoneSet = nil,
   Monitor = false,
   TankerInvisible = true,
   CapFormation = nil,
@@ -252,7 +259,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.17"
+EASYGCICAP.version="0.1.18"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -287,6 +294,7 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.airbase = AIRBASE:FindByName(self.airbasename)
   self.GoZoneSet = SET_ZONE:New()
   self.NoGoZoneSet = SET_ZONE:New()
+  self.ConflictZoneSet = SET_ZONE:New()
   self.resurrection = 900
   self.capspeed = 300
   self.capalt = 25000
@@ -1113,7 +1121,7 @@ end
 -- @param Core.Zone#ZONE_BASE Zone
 -- @return #EASYGCICAP self 
 function EASYGCICAP:AddAcceptZone(Zone)
-  self:T(self.lid.."AddAcceptZone0")
+  self:T(self.lid.."AddAcceptZone")
   self.GoZoneSet:AddZone(Zone)
   return self
 end
@@ -1127,6 +1135,18 @@ function EASYGCICAP:AddRejectZone(Zone)
   self.NoGoZoneSet:AddZone(Zone)
   return self
 end
+
+--- Add a zone to the conflict zones set.
+-- @param #EASYGCICAP self
+-- @param Core.Zone#ZONE_BASE Zone
+-- @return #EASYGCICAP self 
+function EASYGCICAP:AddConflictZone(Zone)
+  self:T(self.lid.."AddConflictZone")
+  self.ConflictZoneSet:AddZone(Zone)
+  self.GoZoneSet:AddZone(Zone)
+  return self
+end
+
 
 --- (Internal) Try to assign the intercept to a FlightGroup already in air and ready.
 -- @param #EASYGCICAP self
@@ -1193,6 +1213,7 @@ function EASYGCICAP:_AssignIntercept(Cluster)
   local ctlpts = self.ManagedCP
   local MaxAliveMissions = self.MaxAliveMissions --* self.capgrouping
   local nogozoneset = self.NoGoZoneSet
+  local conflictzoneset = self.ConflictZoneSet
   local ReadyFlightGroups = self.ReadyFlightGroups
   
     -- Aircraft?
@@ -1271,18 +1292,22 @@ function EASYGCICAP:_AssignIntercept(Cluster)
           
           if nogozoneset:Count() > 0 then
             InterceptAuftrag:AddConditionSuccess(
-              function(group,zoneset)
+              function(group,zoneset,conflictset)
                 local success = false
                 if group and group:IsAlive() then
                   local coord = group:GetCoordinate()
-                  if coord and zoneset:IsCoordinateInZone(coord) then
+                  if coord and zoneset:Count() > 0 and zoneset:IsCoordinateInZone(coord) then
                     success = true
+                  end
+                  if coord and conflictset:Count() > 0 and conflictset:IsCoordinateInZone(coord) then
+                    success = false
                   end
                 end
                 return success
               end,
               contact.group,
-              nogozoneset
+              nogozoneset,
+              conflictzoneset
             )
           end
           
@@ -1316,6 +1341,7 @@ function EASYGCICAP:_StartIntel()
   BlueIntel:SetForgetTime(300)
   BlueIntel:SetAcceptZones(self.GoZoneSet)
   BlueIntel:SetRejectZones(self.NoGoZoneSet)
+  BlueIntel:SetConflictZones(self.ConflictZoneSet)
   BlueIntel:SetVerbosity(0)
   BlueIntel:Start()
   
