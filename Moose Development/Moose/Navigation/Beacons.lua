@@ -66,7 +66,7 @@
 -- @field #BEACONS
 BEACONS = {
   ClassName  = "BEACONS",
-  verbose    =         0,
+  verbose    =         1,
   beacons    =        {},
 }
 
@@ -90,7 +90,7 @@ BEACONS = {
 
 --- BEACONS class version.
 -- @field #string version
-BEACONS.version="0.0.2"
+BEACONS.version="0.0.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -145,6 +145,15 @@ function BEACONS:NewFromTable(BeaconTable)
   
   -- Debug output
   self:I(string.format("Added %d beacons", #self.beacons))
+  
+  if self.verbose > 0 then
+    local text="Beacon types:"
+    for typeName,typeID in pairs(BEACON.Type) do
+      local n=self:CountBeacons(typeID)
+      text=text..string.format("\n%s = %d", typeName, n)      
+    end
+    self:I(text)
+  end
   
   return self
 end
@@ -251,7 +260,7 @@ end
 -- @return #number Number of beacons.
 function BEACONS:CountBeacons(TypeID)
 
-  local n=#self.beacons
+  local n=0
   
   if TypeID then
     for _,_beacon in pairs(self.beacons) do
@@ -268,39 +277,45 @@ function BEACONS:CountBeacons(TypeID)
   return n
 end
 
---- Add markers for all beacons on the F10 map.
+--- Add markers for all beacons on the F10 map. Optionally, only a specific beacon or a certain beacon type can be marked.
 -- @param #BEACONS self
 -- @param #BEACONS.Beacon Beacon (Optional) Only this specifc beacon.
+-- @param #number TypeID (Optional) Only show specific beacon types, *e.g.* `BEACON.Type.TACAN`.
 -- @return #BEACONS self
-function BEACONS:MarkerShow(Beacon)
+function BEACONS:MarkerShow(Beacon, TypeID)
 
   for _,_beacon in pairs(self.beacons) do
     local beacon=_beacon --#BEACONS.Beacon
     if Beacon==nil or Beacon.beaconId==beacon.beaconId then
-      local text=self:_GetMarkerText(beacon)
-      local coord=COORDINATE:NewFromVec3(beacon.vec3)
-      if beacon.markerID then
-        UTILS.RemoveMark(beacon.markerID)
+      if TypeID==nil or beacon.type==TypeID then
+        local text=self:_GetMarkerText(beacon)
+        local coord=COORDINATE:NewFromVec3(beacon.vec3)
+        if beacon.markerID then
+          UTILS.RemoveMark(beacon.markerID)
+        end
+        beacon.markerID=coord:MarkToAll(text)
       end
-      beacon.markerID=coord:MarkToAll(text)
     end
   end
 
   return self
 end
 
---- Remove markers of all beacons from the F10 map.
+--- Remove markers of all beacons from the F10 map. Optionally, remove only marker of a specific beacon or a certain beacon type.
 -- @param #BEACONS self
 -- @param #BEACONS.Beacon Beacon (Optional) Only this specifc beacon.
+-- @param #number TypeID (Optional) Only show specific beacon types, *e.g.* `BEACON.Type.TACAN`.
 -- @return #BEACONS self
-function BEACONS:MarkerRemove(Beacon)
+function BEACONS:MarkerRemove(Beacon, TypeID)
 
   for _,_beacon in pairs(self.beacons) do
     local beacon=_beacon --#BEACONS.Beacon
     if Beacon==nil or Beacon.beaconId==beacon.beaconId then    
-      if beacon.markerID then
-        UTILS.RemoveMark(beacon.markerID)
-        beacon.markerID=nil
+      if TypeID==nil or beacon.type==TypeID then    
+        if beacon.markerID then
+          UTILS.RemoveMark(beacon.markerID)
+          beacon.markerID=nil
+        end
       end
     end
   end
@@ -321,10 +336,8 @@ function BEACONS:_GetMarkerText(beacon)
   local frequency, funit=self:_GetFrequency(beacon.frequency)
   local direction=beacon.direction~=nil and beacon.direction or -1
 
-  local text=string.format("Beacon %s", tostring(beacon.beaconId))  
+  local text=string.format("Beacon %s [ID=%s]", tostring(beacon.typeName), tostring(beacon.beaconId))  
   text=text..string.format("\nCallsign: %s", tostring(beacon.callsign))
-  text=text..string.format("\nType: %s", tostring(beacon.typeName))
-  --if beacon.type==BEACON.Type.TACAN or beacon.type==BEACON.Type.RSBN or beacon.type==BEACON.Type.PRMG_GLIDESLOPE or beacon.type==BEACON.Type.PRMG_LOCALIZER then
   if UTILS.IsInTable({BEACON.Type.TACAN, BEACON.Type.RSBN, BEACON.Type.PRMG_GLIDESLOPE, BEACON.Type.PRMG_LOCALIZER}, beacon.type) then
     text=text..string.format("\nChannel: %s", tostring(beacon.channel))
   end
