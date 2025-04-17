@@ -90,7 +90,7 @@ BEACONS = {
 
 --- BEACONS class version.
 -- @field #string version
-BEACONS.version="0.0.3"
+BEACONS.version="0.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -209,20 +209,24 @@ end
 -- @param #BEACONS self
 -- @param Core.Point#COORDINATE Coordinate The reference coordinate.
 -- @param #number TypeID (Optional) Only search for specific beacon types, *e.g.* `BEACON.Type.TACAN`.
+-- @param #number DistMax (Optional) Max search distance in meters.
+-- @param #table ExcludeList (Optional) List of beacons to exclude.
 -- @return #BEACONS.Beacon The closest beacon.
-function BEACONS:GetClosestBeacon(Coordinate, TypeID)
+function BEACONS:GetClosestBeacon(Coordinate, TypeID, DistMax, ExcludeList)
 
   local beacon=nil --#BEACONS.Beacon
   local distmin=math.huge
   
+  ExcludeList=ExcludeList or {}
+  
   for _,_beacon in pairs(self.beacons) do
     local bc=_beacon --#BEACONS.Beacon
     
-    if TypeID==nil or TypeID==bc.type then
+    if (TypeID==nil or TypeID==bc.type) and (not UTILS.IsInTable(ExcludeList, bc, "beaconId")) then
     
       local dist=Coordinate:Get2DDistance(bc.vec3)
       
-      if dist<distmin then
+      if dist<distmin and (DistMax==nil or dist<=DistMax) then
         distmin=dist
         beacon=bc
       end
