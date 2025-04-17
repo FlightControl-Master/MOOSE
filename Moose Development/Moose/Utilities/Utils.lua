@@ -58,6 +58,7 @@ BIGSMOKEPRESET = {
 -- @field #string Kola Kola map.
 -- @field #string Afghanistan Afghanistan map
 -- @field #string Iraq Iraq map
+-- @field #string GermanyCW Germany Cold War map
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
@@ -70,7 +71,8 @@ DCSMAP = {
   Sinai="SinaiMap",
   Kola="Kola",
   Afghanistan="Afghanistan",
-  Iraq="Iraq"
+  Iraq="Iraq",
+  GermanyCW="GermanyCW",
 }
 
 
@@ -1759,7 +1761,9 @@ end
 -- * Sinai +4.8 (East)
 -- * Kola +15 (East) - note there is a lot of deviation across the map (-1° to +24°), as we are close to the North pole
 -- * Afghanistan +3 (East) - actually +3.6 (NW) to +2.3 (SE)
--- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
+-- * Iraq +4.4 (East)
+-- * Germany Cold War +0.1 (East) - near Fulda
+-- @param #string map (Optional) Map for which the declination is returned. Default is from `env.mission.theatre`.
 -- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
 
@@ -1791,6 +1795,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=3
   elseif map==DCSMAP.Iraq then
     declination=4.4
+  elseif map==DCSMAP.GermanyCW then
+    declination=0.1
   else
     declination=0
   end
@@ -2024,6 +2030,10 @@ function UTILS.GMTToLocalTimeDifference()
     return 3   -- Currently map is +2 but should be +3 (DCS bug?)
   elseif theatre==DCSMAP.Afghanistan then
     return 4.5   -- UTC +4:30
+  elseif theatre==DCSMAP.Iraq then
+    return 3.0   -- UTC +3
+  elseif theatre==DCSMAP.GermanyCW then
+    return 1.0   -- UTC +1 Central European Time (not summer time)  
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
