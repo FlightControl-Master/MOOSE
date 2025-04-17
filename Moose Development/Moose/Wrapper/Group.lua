@@ -1842,7 +1842,6 @@ end
 -- @param #GROUP self
 -- @return #table
 function GROUP:GetTemplateRoutePoints()
-  if not self or not self:IsAlive() then return end
   local GroupName = self:GetName()
   local template = _DATABASE:GetGroupTemplate(GroupName)
   if template and template.route and template.route.points then
