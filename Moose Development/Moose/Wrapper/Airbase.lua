@@ -1078,7 +1078,7 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Neubrandenburg  
 -- * AIRBASE.GermanyCW.Neuruppin  
 -- * AIRBASE.GermanyCW.Northeim  
--- * AIRBASE.GermanyCW.Ober_Morlen  
+-- * AIRBASE.GermanyCW.Ober_Moerlen  
 -- * AIRBASE.GermanyCW.Obermehler_Schlotheim  
 -- * AIRBASE.GermanyCW.Parchim  
 -- * AIRBASE.GermanyCW.Peenemuende  
@@ -1104,7 +1104,7 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Walldorf  
 -- * AIRBASE.GermanyCW.Waren_Vielist  
 -- * AIRBASE.GermanyCW.Werneuchen  
--- * AIRBASE.GermanyCW.Weser_Wumme  
+-- * AIRBASE.GermanyCW.Weser_Wuemme  
 -- * AIRBASE.GermanyCW.Wiesbaden  
 -- * AIRBASE.GermanyCW.Wismar  
 -- * AIRBASE.GermanyCW.Wittstock  
@@ -1282,7 +1282,7 @@ AIRBASE.GermanyCW = {
   ["Neubrandenburg"] = "Neubrandenburg",
   ["Neuruppin"] = "Neuruppin",
   ["Northeim"] = "Northeim",
-  ["Ober_Morlen"] = "Ober-Morlen",
+  ["Ober_Moerlen"] = "Ober-Morlen",
   ["Obermehler_Schlotheim"] = "Obermehler Schlotheim",
   ["Parchim"] = "Parchim",
   ["Peenemuende"] = "Peenemunde",
@@ -1308,7 +1308,7 @@ AIRBASE.GermanyCW = {
   ["Walldorf"] = "Walldorf",
   ["Waren_Vielist"] = "Waren Vielist",
   ["Werneuchen"] = "Werneuchen",
-  ["Weser_Wumme"] = "Weser Wumme",
+  ["Weser_Wuemme"] = "Weser Wumme",
   ["Wiesbaden"] = "Wiesbaden",
   ["Wismar"] = "Wismar",
   ["Wittstock"] = "Wittstock",
