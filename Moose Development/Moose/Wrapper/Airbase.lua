@@ -941,7 +941,7 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Gatow  
 -- * AIRBASE.GermanyCW.Gelnhausen  
 -- * AIRBASE.GermanyCW.Giebelstadt  
--- * AIRBASE.GermanyCW.Glindbruchkippe_
+-- * AIRBASE.GermanyCW.Glindbruchkippe
 -- * AIRBASE.GermanyCW.Gross_Mohrdorf  
 -- * AIRBASE.GermanyCW.Grosse_Wiese  
 -- * AIRBASE.GermanyCW.Guetersloh  
@@ -1084,7 +1084,7 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Peenemuende  
 -- * AIRBASE.GermanyCW.Pferdsfeld  
 -- * AIRBASE.GermanyCW.Pinnow  
--- * AIRBASE.GermanyCW.Pottschutthohe  
+-- * AIRBASE.GermanyCW.Pottschutthoehe  
 -- * AIRBASE.GermanyCW.Ramstein  
 -- * AIRBASE.GermanyCW.Rinteln  
 -- * AIRBASE.GermanyCW.Schoenefeld  
