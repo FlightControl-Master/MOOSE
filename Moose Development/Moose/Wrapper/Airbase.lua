@@ -913,10 +913,10 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Airracing_Frankfurt  
 -- * AIRBASE.GermanyCW.Airracing_Frankfurt  
 -- * AIRBASE.GermanyCW.Airracing_Koblenz  
--- * AIRBASE.GermanyCW.Airracing_Lubeck  
+-- * AIRBASE.GermanyCW.Airracing_Luebeck  
 -- * AIRBASE.GermanyCW.Allstedt  
 -- * AIRBASE.GermanyCW.Altes_Lager  
--- * AIRBASE.GermanyCW.Bad_Durkheim  
+-- * AIRBASE.GermanyCW.Bad_Duerkheim  
 -- * AIRBASE.GermanyCW.Barth  
 -- * AIRBASE.GermanyCW.Bienenfarm  
 -- * AIRBASE.GermanyCW.Bindersleben  
@@ -924,8 +924,8 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Braunschweig  
 -- * AIRBASE.GermanyCW.Bremen  
 -- * AIRBASE.GermanyCW.Briest  
--- * AIRBASE.GermanyCW.Buchel  
--- * AIRBASE.GermanyCW.Buckeburg  
+-- * AIRBASE.GermanyCW.Buechel  
+-- * AIRBASE.GermanyCW.Bueckeburg  
 -- * AIRBASE.GermanyCW.Celle  
 -- * AIRBASE.GermanyCW.Cochstedt  
 -- * AIRBASE.GermanyCW.Damgarten  
@@ -941,10 +941,10 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Gatow  
 -- * AIRBASE.GermanyCW.Gelnhausen  
 -- * AIRBASE.GermanyCW.Giebelstadt  
--- * AIRBASE.GermanyCW.Glindbruchkippe_  
+-- * AIRBASE.GermanyCW.Glindbruchkippe_
 -- * AIRBASE.GermanyCW.Gross_Mohrdorf  
 -- * AIRBASE.GermanyCW.Grosse_Wiese  
--- * AIRBASE.GermanyCW.Gutersloh  
+-- * AIRBASE.GermanyCW.Guetersloh  
 -- * AIRBASE.GermanyCW.H_FRG_01  
 -- * AIRBASE.GermanyCW.H_FRG_02  
 -- * AIRBASE.GermanyCW.H_FRG_03  
@@ -1064,14 +1064,14 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Hockenheim  
 -- * AIRBASE.GermanyCW.Holzdorf  
 -- * AIRBASE.GermanyCW.Kammermark  
--- * AIRBASE.GermanyCW.Kothen  
+-- * AIRBASE.GermanyCW.Koethen  
 -- * AIRBASE.GermanyCW.Laage  
 -- * AIRBASE.GermanyCW.Langenselbold  
--- * AIRBASE.GermanyCW.Larz  
+-- * AIRBASE.GermanyCW.Laerz  
 -- * AIRBASE.GermanyCW.Leipzig_Halle  
 -- * AIRBASE.GermanyCW.Leipzig_Mockau  
--- * AIRBASE.GermanyCW.Lubeck  
--- * AIRBASE.GermanyCW.Luneburg  
+-- * AIRBASE.GermanyCW.Luebeck  
+-- * AIRBASE.GermanyCW.Lueneburg  
 -- * AIRBASE.GermanyCW.Mahlwinkel  
 -- * AIRBASE.GermanyCW.Mendig  
 -- * AIRBASE.GermanyCW.Merseburg  
@@ -1081,13 +1081,13 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Ober_Morlen  
 -- * AIRBASE.GermanyCW.Obermehler_Schlotheim  
 -- * AIRBASE.GermanyCW.Parchim  
--- * AIRBASE.GermanyCW.Peenemunde  
+-- * AIRBASE.GermanyCW.Peenemuende  
 -- * AIRBASE.GermanyCW.Pferdsfeld  
 -- * AIRBASE.GermanyCW.Pinnow  
 -- * AIRBASE.GermanyCW.Pottschutthohe  
 -- * AIRBASE.GermanyCW.Ramstein  
 -- * AIRBASE.GermanyCW.Rinteln  
--- * AIRBASE.GermanyCW.Schonefeld  
+-- * AIRBASE.GermanyCW.Schoenefeld  
 -- * AIRBASE.GermanyCW.Schweinfurt  
 -- * AIRBASE.GermanyCW.Sembach  
 -- * AIRBASE.GermanyCW.Spangdahlem  
@@ -1111,16 +1111,16 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Worms  
 -- * AIRBASE.GermanyCW.Wunstorf  
 -- * AIRBASE.GermanyCW.Zerbst  
--- * AIRBASE.GermanyCW.Zweibrucken  
+-- * AIRBASE.GermanyCW.Zweibruecken  
 --
 -- @field GermanyCW
 AIRBASE.GermanyCW = {
   ["Airracing_Frankfurt"] = "Airracing Frankfurt",
   ["Airracing_Koblenz"] = "Airracing Koblenz",
-  ["Airracing_Lubeck"] = "Airracing Lubeck",
+  ["Airracing_Luebeck"] = "Airracing Lubeck",
   ["Allstedt"] = "Allstedt",
   ["Altes_Lager"] = "Altes Lager",
-  ["Bad_Durkheim"] = "Bad Durkheim",
+  ["Bad_Duerkheim"] = "Bad Durkheim",
   ["Barth"] = "Barth",
   ["Bienenfarm"] = "Bienenfarm",
   ["Bindersleben"] = "Bindersleben",
@@ -1128,8 +1128,8 @@ AIRBASE.GermanyCW = {
   ["Braunschweig"] = "Braunschweig",
   ["Bremen"] = "Bremen",
   ["Briest"] = "Briest",
-  ["Buchel"] = "Buchel",
-  ["Buckeburg"] = "Buckeburg",
+  ["Buechel"] = "Buchel",
+  ["Bueckeburg"] = "Buckeburg",
   ["Celle"] = "Celle",
   ["Cochstedt"] = "Cochstedt",
   ["Damgarten"] = "Damgarten",
@@ -1145,10 +1145,10 @@ AIRBASE.GermanyCW = {
   ["Gatow"] = "Gatow",
   ["Gelnhausen"] = "Gelnhausen",
   ["Giebelstadt"] = "Giebelstadt",
-  ["Glindbruchkippe_"] = "Glindbruchkippe ",
+  ["Glindbruchkippe"] = "Glindbruchkippe ",
   ["Gross_Mohrdorf"] = "Gross Mohrdorf",
   ["Grosse_Wiese"] = "Grosse Wiese",
-  ["Gutersloh"] = "Gutersloh",
+  ["Guetersloh"] = "Gutersloh",
   ["H_FRG_01"] = "H FRG 01",
   ["H_FRG_02"] = "H FRG 02",
   ["H_FRG_03"] = "H FRG 03",
@@ -1268,14 +1268,14 @@ AIRBASE.GermanyCW = {
   ["Hockenheim"] = "Hockenheim",
   ["Holzdorf"] = "Holzdorf",
   ["Kammermark"] = "Kammermark",
-  ["Kothen"] = "Kothen",
+  ["Koethen"] = "Kothen",
   ["Laage"] = "Laage",
   ["Langenselbold"] = "Langenselbold",
-  ["Larz"] = "Larz",
+  ["Laerz"] = "Larz",
   ["Leipzig_Halle"] = "Leipzig Halle",
   ["Leipzig_Mockau"] = "Leipzig Mockau",
-  ["Lubeck"] = "Lubeck",
-  ["Luneburg"] = "Luneburg",
+  ["Luebeck"] = "Lubeck",
+  ["Lueneburg"] = "Luneburg",
   ["Mahlwinkel"] = "Mahlwinkel",
   ["Mendig"] = "Mendig",
   ["Merseburg"] = "Merseburg",
@@ -1285,15 +1285,14 @@ AIRBASE.GermanyCW = {
   ["Ober_Morlen"] = "Ober-Morlen",
   ["Obermehler_Schlotheim"] = "Obermehler Schlotheim",
   ["Parchim"] = "Parchim",
-  ["Peenemunde"] = "Peenemunde",
+  ["Peenemuende"] = "Peenemunde",
   ["Pferdsfeld"] = "Pferdsfeld",
   ["Pinnow"] = "Pinnow",
-  ["Pottschutthohe"] = "Pottschutthohe",
+  ["Pottschutthoehe"] = "Pottschutthohe",
   ["Ramstein"] = "Ramstein",
   ["Rinteln"] = "Rinteln",
-  ["Schonefeld"] = "Schonefeld",
-  ["Schweinfurt"] = "Schweinfurt",
   ["Schoenefeld"] = "Schonefeld",
+  ["Schweinfurt"] = "Schweinfurt",
   ["Sembach"] = "Sembach",
   ["Spangdahlem"] = "Spangdahlem",
   ["Sperenberg"] = "Sperenberg",
@@ -1316,7 +1315,7 @@ AIRBASE.GermanyCW = {
   ["Worms"] = "Worms",
   ["Wunstorf"] = "Wunstorf",
   ["Zerbst"] = "Zerbst",
-  ["Zweibrucken"] = "Zweibrucken",
+  ["Zweibruecken"] = "Zweibrucken",
 }
 
 
