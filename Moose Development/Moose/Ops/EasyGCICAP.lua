@@ -259,7 +259,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.18"
+EASYGCICAP.version="0.1.20"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -606,6 +606,9 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   local Intel = self.Intel
   
   local TankerInvisible = self.TankerInvisible
+  local engagerange = self.engagerange
+  local GoZoneSet = self.GoZoneSet
+  local NoGoZoneSet = self.NoGoZoneSet
   
   function CAP_Wing:onbeforeFlightOnMission(From, Event, To, Flightgroup, Mission)
     local flightgroup = Flightgroup -- Ops.FlightGroup#FLIGHTGROUP
@@ -619,7 +622,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:GetGroup():SetOptionRadarUsingForContinousSearch()
     if Mission.type ~= AUFTRAG.Type.TANKER and Mission.type ~= AUFTRAG.Type.AWACS and Mission.type ~= AUFTRAG.Type.RECON then
       flightgroup:SetDetection(true)
-      flightgroup:SetEngageDetectedOn(self.engagerange,{"Air"},self.GoZoneSet,self.NoGoZoneSet)
+      flightgroup:SetEngageDetectedOn(engagerange,{"Air"},GoZoneSet,NoGoZoneSet)
       flightgroup:SetOutOfAAMRTB()
       if CapFormation then
         flightgroup:GetGroup():SetOption(AI.Option.Air.id.FORMATION,CapFormation)
