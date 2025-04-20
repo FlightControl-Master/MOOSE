@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update Jan 2025
+-- @date Last Update April 2025
 
 
 do
@@ -1902,7 +1902,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.69"
+PLAYERTASKCONTROLLER.version="0.1.70"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -3703,6 +3703,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     else
       CoordText = Coordinate:ToStringA2A(Client,nil,self.ShowMagnetic)
     end
+    --self:I("CoordText = "..CoordText)
     -- Threat Level
     local ThreatLevel = task.Target:GetThreatLevelMax()
     --local ThreatLevelText = "high"
@@ -3837,7 +3838,8 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
         Text = string.gsub(Text,"9","niner")
         CoordText = "MGRS;"..Text
         if self.PathToGoogleKey then
-          CoordText = string.format("<say-as interpret-as='characters'>%s</say-as>",CoordText)
+          --CoordText = string.format("<say-as interpret-as=\'characters\'>%s</say-as>",CoordText)
+          --doesn't seem to work any longer
         end
         --self:I(self.lid.." | ".. CoordText)
       end
@@ -3855,10 +3857,12 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
         CoordText = string.gsub(ttstext," BR, "," Bee, Arr, ")
        end
       elseif task:HasFreetext() then
+      
         -- add tts freetext
         local brieftxt = self.gettext:GetEntry("BRIEFING",self.locale)
         ttstext = ttstext .. string.format("; %s: ",brieftxt)..task:GetFreetextTTS()
       end
+      --self:I("**** TTS Text ****\n"..ttstext.."\n*****")
       self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,2)
     end  
   else
@@ -4357,7 +4361,7 @@ function PLAYERTASKCONTROLLER:SwitchDetectStatics(OnOff)
   return self
 end
 
---- [User] Add accept zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+--- [User] Add an accept zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -4371,7 +4375,7 @@ function PLAYERTASKCONTROLLER:AddAcceptZone(AcceptZone)
   return self
 end
 
---- [User] Add accept SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+--- [User] Add an accept SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Set#SET_ZONE AcceptZoneSet Add a SET_ZONE to the accept zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -4385,7 +4389,7 @@ function PLAYERTASKCONTROLLER:AddAcceptZoneSet(AcceptZoneSet)
   return self
 end
 
---- [User] Add reject zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+--- [User] Add a reject zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -4399,7 +4403,7 @@ function PLAYERTASKCONTROLLER:AddRejectZone(RejectZone)
   return self
 end
 
---- [User] Add reject SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+--- [User] Add a reject SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Set#SET_ZONE  RejectZoneSet Add a zone to the reject zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -4413,9 +4417,37 @@ function PLAYERTASKCONTROLLER:AddRejectZoneSet(RejectZoneSet)
   return self
 end
 
---- [User] Remove accept zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+--- [User] Add a conflict zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
--- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
+-- @param Core.Zone#ZONE ConflictZone Add a zone to the conflict zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddConflictZone(ConflictZone)
+  self:T(self.lid.."AddConflictZone")
+  if self.Intel then
+    self.Intel:AddConflictZone(ConflictZone)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Add a conflict SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Set#SET_ZONE ConflictZoneSet Add a zone to the conflict zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddConflictZoneSet(ConflictZoneSet)
+  self:T(self.lid.."AddConflictZoneSet")
+  if self.Intel then
+    self.Intel.conflictzoneset:AddSet(ConflictZoneSet)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Remove an accept zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Zone#ZONE AcceptZone Remove this zone from the accept zone set.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:RemoveAcceptZone(AcceptZone)
   self:T(self.lid.."RemoveAcceptZone")
@@ -4427,14 +4459,28 @@ function PLAYERTASKCONTROLLER:RemoveAcceptZone(AcceptZone)
   return self
 end
 
---- [User] Remove reject zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+--- [User] Remove a reject zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
--- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
+-- @param Core.Zone#ZONE RejectZone Remove this zone from the reject zone set.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:RemoveRejectZoneSet(RejectZone)
+function PLAYERTASKCONTROLLER:RemoveRejectZone(RejectZone)
   self:T(self.lid.."RemoveRejectZone")
   if self.Intel then
     self.Intel:RemoveRejectZone(RejectZone)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Remove a conflict zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Zone#ZONE ConflictZone Remove this zone from the conflict zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:RemoveConflictZone(ConflictZone)
+  self:T(self.lid.."RemoveConflictZone")
+  if self.Intel then
+    self.Intel:RemoveConflictZone(ConflictZone)
   else
     self:E(self.lid.."*****NO detection has been set up (yet)!")
   end
