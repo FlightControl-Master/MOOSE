@@ -2102,7 +2102,16 @@ function RANGE._OnImpact(weapon, self, playerData, attackHdg, attackAlt, attackV
     result.attackHdg = attackHdg
     result.attackVel = attackVel
     result.attackAlt = attackAlt
-    result.date=os and os.date() or "n/a"
+    if os then
+  if os.date then
+    env.info("os.date is available")
+    env.info(os.date())
+  else
+    env.info("os available but os.date missing!")
+  end
+else
+  env.info("No os available")
+end
 
     -- Add to table.
     table.insert( _results, result )
