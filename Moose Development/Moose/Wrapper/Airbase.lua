@@ -793,6 +793,11 @@ AIRBASE.Sinai = {
 -- * AIRBASE.Kola.Alakourtti
 -- * AIRBASE.Kola.Kittila
 -- * AIRBASE.Kola.Bardufoss
+-- * AIRBASE.Kola.Alta
+-- * AIRBASE.Kola.Sodankyla
+-- * AIRBASE.Kola.Enontekio
+-- * AIRBASE.Kola.Evenes
+-- * AIRBASE.Kola.Hosio
 --
 -- @field Kola
 AIRBASE.Kola = {
@@ -818,6 +823,11 @@ AIRBASE.Kola = {
   ["Alakourtti"] = "Alakourtti",
   ["Kittila"] = "Kittila",
   ["Bardufoss"] = "Bardufoss",
+  ["Alta"] = "Alta",
+  ["Sodankyla"] = "Sodankyla",
+  ["Enontekio"] = "Enontekio",
+  ["Evenes"] = "Evenes",
+  ["Hosio"] = "Hosio",
 }
 
 --- Airbases of the Afghanistan map
