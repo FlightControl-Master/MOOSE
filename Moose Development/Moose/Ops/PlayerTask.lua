@@ -98,7 +98,7 @@ PLAYERTASK = {
 
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.25"
+PLAYERTASK.version="0.1.26"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -978,6 +978,12 @@ function PLAYERTASK:onafterStatus(From, Event, To)
   local status = self:GetState()
   
   if status == "Stopped" then return self end
+  
+  -- update marker in case target is moving
+  if self.TargetMarker then
+    local coordinate = self.Target:GetCoordinate() 
+    self.TargetMarker:UpdateCoordinate(coordinate,0.5) 
+  end
   
   -- Check Target status
   local targetdead = false
