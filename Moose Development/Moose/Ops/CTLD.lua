@@ -3564,7 +3564,7 @@ end
 function CTLD:IsFixedWing(Unit)
   local typename = Unit:GetTypeName() or "none"  
   for _,_name in pairs(self.FixedWingTypes or {}) do
-    if typename == _name or string.find(typename,_name,1,true) then
+    if _name and (typename==_name or string.find(typename,_name,1,true))then
       return true
     end
   end
