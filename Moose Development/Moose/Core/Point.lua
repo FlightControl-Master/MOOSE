@@ -25,7 +25,7 @@
 
 do -- COORDINATE
   
-  ---
+  --- Coordinate class
   -- @type COORDINATE
   -- @field #string ClassName Name of the class
   -- @field #number x Component of the 3D vector.
@@ -2118,14 +2118,35 @@ do -- COORDINATE
   end
 
 
-  --- Smokes the point in a color.
+  --- Create colored smoke the point. The smoke we last up to 5 min (DCS limitation) but you can optionally specify a shorter duration or stop it manually.
   -- @param #COORDINATE self
-  -- @param Utilities.Utils#SMOKECOLOR SmokeColor
-  -- @param #string name (Optional) Name if you want to stop the smoke early (normal duration: 5mins)
-  function COORDINATE:Smoke( SmokeColor, name )
-    self:F2( { SmokeColor } )
-    self.firename = name or "Smoke-"..math.random(1,100000)
-    trigger.action.smoke( self:GetVec3(), SmokeColor, self.firename )
+  -- @param #number SmokeColor Color of smoke, e.g. `SMOKECOLOR.Green` for green smoke.
+  -- @param #number Duration (Optional) Duration of the smoke in seconds. DCS stopps the smoke automatically after 5 min.
+  -- @param #number Delay (Optional) Delay before the smoke is started in seconds.
+  -- @param #string Name (Optional) Name if you want to stop the smoke early (normal duration: 5mins)
+  -- @return #COORDINATE self
+  function COORDINATE:Smoke( SmokeColor, Duration, Delay, Name)
+    self:F2( { SmokeColor, Name, Duration, Delay } )
+
+    SmokeColor=SmokeColor or SMOKECOLOR.Green
+    
+    if Delay and Delay>0 then
+      self:ScheduleOnce(Delay, COORDINATE.Smoke, self, SmokeColor, Duration, 0, Name)
+    else
+    
+      -- Create a name which is used to stop the smoke manually
+      self.firename = Name or "Smoke-"..math.random(1,100000)
+      
+      -- Create smoke
+      trigger.action.smoke( self:GetVec3(), SmokeColor, self.firename )
+      
+      -- Stop smoke
+      if Duration and Duration>0 then
+        self:ScheduleOnce(Duration, COORDINATE.StopSmoke, self, self.firename )
+      end
+    end
+    
+    return self
   end
 
   --- Stops smoking the point in a color.
@@ -2137,49 +2158,83 @@ do -- COORDINATE
 
   --- Smoke the COORDINATE Green.
   -- @param #COORDINATE self
-  function COORDINATE:SmokeGreen()
-    self:F2()
-    self:Smoke( SMOKECOLOR.Green )
+  -- @param #number Duration (Optional) Duration of the smoke in seconds. DCS stopps the smoke automatically after 5 min.
+  -- @param #number Delay (Optional) Delay before the smoke is started in seconds.
+  -- @return #COORDINATE self
+  function COORDINATE:SmokeGreen(Duration, Delay)
+    self:Smoke( SMOKECOLOR.Green, Duration, Delay )
+    return self
   end
 
   --- Smoke the COORDINATE Red.
   -- @param #COORDINATE self
-  function COORDINATE:SmokeRed()
-    self:F2()
-    self:Smoke( SMOKECOLOR.Red )
+  -- @param #number Duration (Optional) Duration of the smoke in seconds. DCS stopps the smoke automatically after 5 min.
+  -- @param #number Delay (Optional) Delay before the smoke is started in seconds.
+  -- @return #COORDINATE self
+  function COORDINATE:SmokeRed(Duration, Delay)
+    self:Smoke( SMOKECOLOR.Red, Duration, Delay )
+    return self    
   end
 
   --- Smoke the COORDINATE White.
   -- @param #COORDINATE self
-  function COORDINATE:SmokeWhite()
-    self:F2()
-    self:Smoke( SMOKECOLOR.White )
+  -- @param #number Duration (Optional) Duration of the smoke in seconds. DCS stopps the smoke automatically after 5 min.
+  -- @param #number Delay (Optional) Delay before the smoke is started in seconds.
+  -- @return #COORDINATE self 
+  function COORDINATE:SmokeWhite(Duration, Delay)
+    self:Smoke( SMOKECOLOR.White, Duration, Delay )
+    return self    
   end
 
   --- Smoke the COORDINATE Orange.
   -- @param #COORDINATE self
-  function COORDINATE:SmokeOrange()
-    self:F2()
-    self:Smoke( SMOKECOLOR.Orange )
+  -- @param #number Duration (Optional) Duration of the smoke in seconds. DCS stopps the smoke automatically after 5 min.
+  -- @param #number Delay (Optional) Delay before the smoke is started in seconds.
+  -- @return #COORDINATE self
+  function COORDINATE:SmokeOrange(Duration, Delay)
+    self:Smoke( SMOKECOLOR.Orange, Duration, Delay )
+    return self    
   end
 
   --- Smoke the COORDINATE Blue.
   -- @param #COORDINATE self
-  function COORDINATE:SmokeBlue()
-    self:F2()
-    self:Smoke( SMOKECOLOR.Blue )
+  -- @param #number Duration (Optional) Duration of the smoke in seconds. DCS stopps the smoke automatically after 5 min.
+  -- @param #number Delay (Optional) Delay before the smoke is started in seconds.
+  -- @return #COORDINATE self
+  function COORDINATE:SmokeBlue(Duration, Delay)
+    self:Smoke( SMOKECOLOR.Blue, Duration, Delay )
+    return self    
   end
 
   --- Big smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @param Utilities.Utils#BIGSMOKEPRESET preset Smoke preset (1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke).
-  -- @param #number density (Optional) Smoke density. Number in [0,...,1]. Default 0.5.
-  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
-  function COORDINATE:BigSmokeAndFire( preset, density, name )
-    self:F2( { preset=preset, density=density } )
-    density=density or 0.5
-    self.firename = name or "Fire-"..math.random(1,10000)
-    trigger.action.effectSmokeBig( self:GetVec3(), preset, density, self.firename )
+  -- @param #number Preset Smoke preset (1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke).
+  -- @param #number Density (Optional) Smoke density. Number in [0,...,1]. Default 0.5.
+  -- @param #number Duration (Optional) Duration of the smoke and fire in seconds.
+  -- @param #number Delay (Optional) Delay before the smoke and fire is started in seconds.
+  -- @param #string Name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  -- @return #COORDINATE self
+  function COORDINATE:BigSmokeAndFire( Preset, Density, Duration, Delay, Name )
+    self:F2( { preset=Preset, density=Density } )
+    
+    Preset=Preset or BIGSMOKEPRESET.SmallSmokeAndFire    
+    Density=Density or 0.5
+    
+    if Delay and Delay>0 then
+      self:ScheduleOnce(Delay, COORDINATE.BigSmokeAndFire, self, Preset, Density, Duration, 0, Name)
+    else
+    
+      self.firename = Name or "Fire-"..math.random(1,10000)
+      
+      trigger.action.effectSmokeBig( self:GetVec3(), Preset, Density, self.firename )
+      
+      -- Stop smoke
+      if Duration and Duration>0 then
+        self:ScheduleOnce(Duration, COORDINATE.StopBigSmokeAndFire, self, self.firename )
+      end      
+    end
+    
+    return self
   end
   
   --- Stop big smoke and fire at the coordinate.
@@ -2192,82 +2247,98 @@ do -- COORDINATE
 
   --- Small smoke and fire at the coordinate.
   -- @param #COORDINATE self
-  -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
-  -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
-  function COORDINATE:BigSmokeAndFireSmall( density, name )
-    self:F2( { density=density } )
-    density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmokeAndFire, density, name)
+  -- @param #number Density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #number Duration (Optional) Duration of the smoke and fire in seconds.
+  -- @param #number Delay (Optional) Delay before the smoke and fire is started in seconds.
+  -- @param #string Name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
+  -- @return #COORDINATE self
+  function COORDINATE:BigSmokeAndFireSmall( Density, Duration, Delay, Name )
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmokeAndFire, Density, Duration, Delay, Name)
+    return self
   end
 
   --- Medium smoke and fire at the coordinate.
   -- @param #COORDINATE self
   -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #number Duration (Optional) Duration of the smoke and fire in seconds.
+  -- @param #number Delay (Optional) Delay before the smoke and fire is started in seconds.
   -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
-  function COORDINATE:BigSmokeAndFireMedium( density, name )
-    self:F2( { density=density } )
-    density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmokeAndFire, density, name)
+  -- @return #COORDINATE self
+  function COORDINATE:BigSmokeAndFireMedium( Density, Duration, Delay, Name )
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmokeAndFire, Density, Duration, Delay, Name)
+    return self    
   end
 
   --- Large smoke and fire at the coordinate.
   -- @param #COORDINATE self
   -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #number Duration (Optional) Duration of the smoke and fire in seconds.
+  -- @param #number Delay (Optional) Delay before the smoke and fire is started in seconds.
   -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
-  function COORDINATE:BigSmokeAndFireLarge( density, name )
-    self:F2( { density=density } )
-    density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmokeAndFire, density, name)
+  -- @return #COORDINATE self
+  function COORDINATE:BigSmokeAndFireLarge( Density, Duration, Delay, Name )
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmokeAndFire, Density, Duration, Delay, Name)
+    return self
   end
 
   --- Huge smoke and fire at the coordinate.
   -- @param #COORDINATE self
   -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #number Duration (Optional) Duration of the smoke and fire in seconds.
+  -- @param #number Delay (Optional) Delay before the smoke and fire is started in seconds.
   -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
-  function COORDINATE:BigSmokeAndFireHuge( density, name )
-    self:F2( { density=density } )
-    density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmokeAndFire, density, name)
+  -- @return #COORDINATE self
+  function COORDINATE:BigSmokeAndFireHuge( Density, Duration, Delay, Name )
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmokeAndFire, Density, Duration, Delay, Name)
+    return self
   end
 
   --- Small smoke at the coordinate.
   -- @param #COORDINATE self
   -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #number Duration (Optional) Duration of the smoke and fire in seconds.
+  -- @param #number Delay (Optional) Delay before the smoke and fire is started in seconds.
   -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
-  function COORDINATE:BigSmokeSmall( density, name )
-    self:F2( { density=density } )
-    density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmoke, density, name)
+  -- @return #COORDINATE self
+  function COORDINATE:BigSmokeSmall( Density, Duration, Delay, Name )
+    self:BigSmokeAndFire(BIGSMOKEPRESET.SmallSmoke, Density, Duration, Delay, Name)
+    return self
   end
 
   --- Medium smoke at the coordinate.
   -- @param #COORDINATE self
   -- @param number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #number Duration (Optional) Duration of the smoke and fire in seconds.
+  -- @param #number Delay (Optional) Delay before the smoke and fire is started in seconds.
   -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
-  function COORDINATE:BigSmokeMedium( density, name )
-    self:F2( { density=density } )
-    density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmoke, density, name)
+  -- @return #COORDINATE self
+  function COORDINATE:BigSmokeMedium( Density, Duration, Delay, Name )
+    self:BigSmokeAndFire(BIGSMOKEPRESET.MediumSmoke, Density, Duration, Delay, Name)
+    return self
   end
 
   --- Large smoke at the coordinate.
   -- @param #COORDINATE self
   -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #number Duration (Optional) Duration of the smoke and fire in seconds.
+  -- @param #number Delay (Optional) Delay before the smoke and fire is started in seconds.
   -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
-  function COORDINATE:BigSmokeLarge( density, name )
-    self:F2( { density=density } )
-    density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmoke, density,name)
+  -- @return #COORDINATE self
+  function COORDINATE:BigSmokeLarge( Density, Duration, Delay, Name )
+    self:BigSmokeAndFire(BIGSMOKEPRESET.LargeSmoke, Density, Duration, Delay, Name)
+    return self
   end
 
   --- Huge smoke at the coordinate.
   -- @param #COORDINATE self
   -- @param #number density (Optional) Smoke density. Number between 0 and 1. Default 0.5.
+  -- @param #number Duration (Optional) Duration of the smoke and fire in seconds.
+  -- @param #number Delay (Optional) Delay before the smoke and fire is started in seconds.
   -- @param #string name (Optional) Name of the fire to stop it later again if not using the same COORDINATE object. Defaults to "Fire-" plus a random 5-digit-number.
-  function COORDINATE:BigSmokeHuge( density, name )
-    self:F2( { density=density } )
-    density=density or 0.5
-    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmoke, density,name)
+  -- @return #COORDINATE self
+  function COORDINATE:BigSmokeHuge( Density, Duration, Delay, Name )
+    self:BigSmokeAndFire(BIGSMOKEPRESET.HugeSmoke, Density, Duration, Delay, Name)
+    return self
   end
 
   --- Flares the point in a color.
