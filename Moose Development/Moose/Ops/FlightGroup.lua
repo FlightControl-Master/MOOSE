@@ -259,7 +259,7 @@ function FLIGHTGROUP:New(group)
   local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #FLIGHTGROUP
 
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("FLIGHTGROUP %s | ", self.groupname)
+  self.lid=string.format("FLIGHTGROUP %s | ", self.groupname or "N/A")
 
   -- Defaults
   self:SetDefaultROE()
