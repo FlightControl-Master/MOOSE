@@ -5662,6 +5662,7 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
     if Zonetype == CTLD.CargoZoneType.SHIP then
       self:T("Checking Type Ship: "..zonename)
       local ZoneUNIT = UNIT:FindByName(zonename)
+      if not ZoneUNIT then return false end
       zonecoord = ZoneUNIT:GetCoordinate()
       zoneradius = czone.shiplength
       zonewidth = czone.shipwidth
