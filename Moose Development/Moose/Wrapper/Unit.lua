@@ -1107,7 +1107,6 @@ function UNIT:GetUnits()
 
     if DCSUnit then
         Units[1] = UNIT:Find(DCSUnit)
-        - self:T3(Units)
         return Units
     end
 
