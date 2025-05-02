@@ -31,7 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 ---
--- Last Update Jan 2025
+-- Last Update May 2025
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -313,7 +313,7 @@ CSAR.AircraftType["CH-47Fbl1"] = 31
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.30"
+CSAR.version="1.0.31"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -2120,7 +2120,11 @@ end
 function CSAR:_GetClosestMASH(_heli)
   self:T(self.lid .. " _GetClosestMASH")
   local _mashset = self.mash -- Core.Set#SET_GROUP
-  local _mashes = _mashset:GetSetObjects() -- #table
+  local MashSets = {}
+  --local _mashes = _mashset.Set-- #table
+  table.insert(MashSets,_mashset.Set)
+  table.insert(MashSets,self.zonemashes.Set)
+  table.insert(MashSets,self.staticmashes.Set)
   local _shortestDistance = -1
   local _distance = 0
   local _helicoord = _heli:GetCoordinate()
@@ -2151,17 +2155,19 @@ function CSAR:_GetClosestMASH(_heli)
     _shortestDistance = distance
   end
   
-  for _, _mashUnit in pairs(_mashes) do
-      local _mashcoord
-      if _mashUnit and (not _mashUnit:IsInstanceOf("ZONE_BASE")) and _mashUnit:IsAlive() then
-        _mashcoord = _mashUnit:GetCoordinate()
-      elseif _mashUnit and _mashUnit:IsInstanceOf("ZONE_BASE") then
-        _mashcoord = _mashUnit:GetCoordinate()
-      end
-      _distance = self:_GetDistance(_helicoord, _mashcoord)
-      if _distance ~= nil and (_shortestDistance == -1 or _distance < _shortestDistance) then
-        _shortestDistance = _distance
-      end
+  for _,_mashes in pairs(MashSets)  do
+    for _, _mashUnit in pairs(_mashes or {}) do
+        local _mashcoord
+        if _mashUnit and (not _mashUnit:IsInstanceOf("ZONE_BASE")) and _mashUnit:IsAlive() then
+          _mashcoord = _mashUnit:GetCoordinate()
+        elseif _mashUnit and _mashUnit:IsInstanceOf("ZONE_BASE") then
+          _mashcoord = _mashUnit:GetCoordinate()
+        end
+        _distance = self:_GetDistance(_helicoord, _mashcoord)
+        if _distance ~= nil and (_shortestDistance == -1 or _distance < _shortestDistance) then
+          _shortestDistance = _distance
+        end
+    end
   end
   
   if _shortestDistance ~= -1 then
@@ -2458,9 +2464,10 @@ function CSAR:onafterStart(From, Event, To)
   
   self.mash = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart()
   
-  local staticmashes = SET_STATIC:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterOnce()
-  local zonemashes = SET_ZONE:New():FilterPrefixes(self.mashprefix):FilterOnce()
+  self.staticmashes = SET_STATIC:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterOnce()
+  self.zonemashes = SET_ZONE:New():FilterPrefixes(self.mashprefix):FilterOnce()
   
+  --[[
   if staticmashes:Count() > 0  then
     for _,_mash in pairs(staticmashes.Set) do
       self.mash:AddObject(_mash)
@@ -2468,10 +2475,13 @@ function CSAR:onafterStart(From, Event, To)
   end
   
   if zonemashes:Count() > 0  then
+    self:T("Adding zones to self.mash SET")
     for _,_mash in pairs(zonemashes.Set) do
       self.mash:AddObject(_mash)
     end
+    self:T("Objects in SET: "..self.mash:Count())
   end
+  --]]
   
   if not self.coordinate then
     local csarhq = self.mash:GetRandom()
