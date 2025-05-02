@@ -2152,12 +2152,15 @@ function CSAR:_GetClosestMASH(_heli)
   end
   
   for _, _mashUnit in pairs(_mashes) do
-      if _mashUnit and _mashUnit:IsAlive() then
-          local _mashcoord = _mashUnit:GetCoordinate()
-          _distance = self:_GetDistance(_helicoord, _mashcoord)
-          if _distance ~= nil and (_shortestDistance == -1 or _distance < _shortestDistance) then
-            _shortestDistance = _distance
-          end
+      local _mashcoord
+      if _mashUnit and (not _mashUnit:IsInstanceOf("ZONE_BASE")) and _mashUnit:IsAlive() then
+        _mashcoord = _mashUnit:GetCoordinate()
+      elseif _mashUnit and _mashUnit:IsInstanceOf("ZONE_BASE") then
+        _mashcoord = _mashUnit:GetCoordinate()
+      end
+      _distance = self:_GetDistance(_helicoord, _mashcoord)
+      if _distance ~= nil and (_shortestDistance == -1 or _distance < _shortestDistance) then
+        _shortestDistance = _distance
       end
   end
   
@@ -2166,6 +2169,7 @@ function CSAR:_GetClosestMASH(_heli)
   else
       return -1
   end
+  
 end
 
 --- (Internal) Display onboarded rescued pilots.
