@@ -141,7 +141,6 @@ FOX = {
   explosiondist  =   200,
   explosiondist2 =   500,
   bigmissilemass =    50,
-  destroy        =   nil,
   dt50           =     5,
   dt10           =     1,
   dt05           =   0.5,

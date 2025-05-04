@@ -158,7 +158,6 @@ AI_FORMATION.__Enum.Mode = {
 -- @field #number GroundRadar
 -- @field #number Ground
 AI_FORMATION.__Enum.ReportType = {
-  Airborne = "*",
   Airborne = "A",
   GroundRadar = "R",
   Ground = "G",
@@ -1222,7 +1221,6 @@ function AI_FORMATION:FollowMe(FollowGroup, ClientUnit, CT1, CV1, CT2, CV2)
         local CVI = { 
           x = CV2.x + CS * 10 * math.sin(Ca),
           y = GH2.y + Inclination, -- + FollowFormation.y,
-          y = GH2.y,
           z = CV2.z + CS * 10 * math.cos(Ca),
         }
   
