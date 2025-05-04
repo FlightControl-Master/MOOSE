@@ -866,7 +866,7 @@ do
 --          my_ctld.TroopUnloadDistGroundHook = 15 -- On the ground, unload troops this far behind the Chinook
 --          my_ctld.TroopUnloadDistHoverHook = 5 -- When hovering, unload troops this far behind the Chinook
 --          my_ctld.showstockinmenuitems = false -- When set to true, the menu lines will also show the remaining items in stock (that is, if you set any), downside is that the menu for all will be build every 30 seconds anew.
---          my_ctld.onestepmenu = false -- When set to true, the menu will create Drop and build, Get and load, Pack and remove, Pack and load, Pack only. it will be a 1 step solution.
+--          my_ctld.onestepmenu = false -- When set to true, the menu will create Drop and build, Get and load, Pack and remove, Pack and load, Pack. it will be a 1 step solution.
 -- 
 -- ## 2.1 CH-47 Chinook support
 -- 
@@ -4461,8 +4461,8 @@ function CTLD:_RefreshF10Menus()
                       local stock = cargoObj:GetStock()
                       if stock>=0 and self.showstockinmenuitems then txt = txt.."["..stock.."]" end
                       local mSet = MENU_GROUP:New(_group,txt,subcatmenus[cargoObj.Subcategory])
+                      MENU_GROUP_COMMAND:New(_group,"Get",mSet,self._GetCrates,self,_group,_unit,cargoObj)
                       MENU_GROUP_COMMAND:New(_group,"Get and Load",mSet,self._GetAndLoad,self,_group,_unit,cargoObj)
-                      MENU_GROUP_COMMAND:New(_group,"Get only",mSet,self._GetCrates,self,_group,_unit,cargoObj)
                     end
                   end
                   for _,cargoObj in pairs(self.Cargo_Statics) do
@@ -4472,8 +4472,8 @@ function CTLD:_RefreshF10Menus()
                       local stock = cargoObj:GetStock()
                       if stock>=0 and self.showstockinmenuitems then txt = txt.."["..stock.."]" end
                       local mSet = MENU_GROUP:New(_group,txt,subcatmenus[cargoObj.Subcategory])
+                      MENU_GROUP_COMMAND:New(_group,"Get",mSet,self._GetCrates,self,_group,_unit,cargoObj)
                       MENU_GROUP_COMMAND:New(_group,"Get and Load",mSet,self._GetAndLoad,self,_group,_unit,cargoObj)
-                      MENU_GROUP_COMMAND:New(_group,"Get only",mSet,self._GetCrates,self,_group,_unit,cargoObj)
                     end
                   end
                 else
@@ -4484,8 +4484,8 @@ function CTLD:_RefreshF10Menus()
                       local stock = cargoObj:GetStock()
                       if stock>=0 and self.showstockinmenuitems then txt = txt.."["..stock.."]" end
                       local mSet = MENU_GROUP:New(_group,txt,cratesmenu)
+                      MENU_GROUP_COMMAND:New(_group,"Get",mSet,self._GetCrates,self,_group,_unit,cargoObj)                      
                       MENU_GROUP_COMMAND:New(_group,"Get and Load",mSet,self._GetAndLoad,self,_group,_unit,cargoObj)
-                      MENU_GROUP_COMMAND:New(_group,"Get only",mSet,self._GetCrates,self,_group,_unit,cargoObj)
                     end
                   end
                   for _,cargoObj in pairs(self.Cargo_Statics) do
@@ -4495,8 +4495,9 @@ function CTLD:_RefreshF10Menus()
                       local stock = cargoObj:GetStock()
                       if stock>=0 and self.showstockinmenuitems then txt = txt.."["..stock.."]" end
                       local mSet = MENU_GROUP:New(_group,txt,cratesmenu)
+                      MENU_GROUP_COMMAND:New(_group,"Get",mSet,self._GetCrates,self,_group,_unit,cargoObj)
                       MENU_GROUP_COMMAND:New(_group,"Get and Load",mSet,self._GetAndLoad,self,_group,_unit,cargoObj)
-                      MENU_GROUP_COMMAND:New(_group,"Get only",mSet,self._GetCrates,self,_group,_unit,cargoObj)
+                      
                     end
                   end
                 end
@@ -4564,9 +4565,9 @@ function CTLD:_RefreshF10Menus()
   
               if self.onestepmenu then
                 local mPack=MENU_GROUP:New(_group,"Pack crates",topcrates)
+                MENU_GROUP_COMMAND:New(_group,"Pack",mPack,self._PackCratesNearby,self,_group,_unit)
                 MENU_GROUP_COMMAND:New(_group,"Pack and Load",mPack,self._PackAndLoad,self,_group,_unit)
                 MENU_GROUP_COMMAND:New(_group,"Pack and Remove",mPack,self._PackAndRemove,self,_group,_unit)
-                MENU_GROUP_COMMAND:New(_group,"Pack only",mPack,self._PackCratesNearby,self,_group,_unit)
                 MENU_GROUP_COMMAND:New(_group, "List crates nearby", topcrates, self._ListCratesNearby, self, _group, _unit)
               else
                 MENU_GROUP_COMMAND:New(_group, "Pack crates", topcrates, self._PackCratesNearby, self, _group, _unit)
@@ -5005,8 +5006,8 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
       -- one-step (enhanced) menu
       --------------------------------------------------------------------
       local mAll=MENU_GROUP:New(Group,"Drop ALL crates",dropCratesMenu)
+      MENU_GROUP_COMMAND:New(Group,"Drop",mAll,self._UnloadCrates,self,Group,Unit)
       MENU_GROUP_COMMAND:New(Group,"Drop and build",mAll,self._DropAndBuild,self,Group,Unit)
-      MENU_GROUP_COMMAND:New(Group,"Drop only",mAll,self._UnloadCrates,self,Group,Unit)
   
       self.CrateGroupList=self.CrateGroupList or{}
       self.CrateGroupList[Unit:GetName()]={}
@@ -5027,8 +5028,8 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
             table.insert(self.CrateGroupList[Unit:GetName()],chunk)
             local setIndex=#self.CrateGroupList[Unit:GetName()]
             local mSet=MENU_GROUP:New(Group,label,dropCratesMenu)
+            MENU_GROUP_COMMAND:New(Group,"Drop",mSet,self._UnloadSingleCrateSet,self,Group,Unit,setIndex)
             MENU_GROUP_COMMAND:New(Group,"Drop and build",mSet,self._DropSingleAndBuild,self,Group,Unit,setIndex)
-            MENU_GROUP_COMMAND:New(Group,"Drop only",mSet,self._UnloadSingleCrateSet,self,Group,Unit,setIndex)
             i=i+needed
           else
             local chunk={}
@@ -5094,7 +5095,7 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID)
         return self
       end
 
-      -- Drop ONLY the FIRST cargo in that chunk
+      -- Drop the FIRST cargo in that chunk
       local foundCargo = chunk[1]
       if not foundCargo then
         self:_SendMessage(string.format("No troop cargo at chunk %d!", chunkID), 10, false, Group)
