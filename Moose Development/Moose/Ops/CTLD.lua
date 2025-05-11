@@ -5981,6 +5981,7 @@ function CTLD:SmokeZoneNearBy(Unit, Flare)
         end
       end
       local zonecoord = zone:GetCoordinate()
+    if zonecoord then
       local active = CZone.active
       local color = CZone.color
       local distance = self:_GetDistance(zonecoord,unitcoord)
@@ -5997,6 +5998,7 @@ function CTLD:SmokeZoneNearBy(Unit, Flare)
         self:_SendMessage(string.format("Roger, %s zone %s!",txt, zonename), 10, false, Group)
         smoked = true
       end
+     end
     end
   end
   if not smoked then
