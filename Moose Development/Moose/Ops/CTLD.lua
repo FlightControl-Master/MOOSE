@@ -7217,13 +7217,17 @@ end
           -- right subtype?
           if Event == subtype and not task:IsDone() then
             local targetzone = task.Target:GetObject() -- Core.Zone#ZONE should be a zone in this case ....
-            --self:T2({Name=Groupname,Property=task:GetProperty("ExtractName")})
-            local okaygroup = string.find(Groupname,task:GetProperty("ExtractName"),1,true)
-            if targetzone and targetzone.ClassName and string.match(targetzone.ClassName,"ZONE") and okaygroup then
-              if task.Clients:HasUniqueID(playername) then
-                -- success
-                task:__Success(-1)
+            self:T2({Name=Groupname,Property=task:GetProperty("ExtractName")})
+            if task:GetProperty("ExtractName") then
+              local okaygroup = string.find(Groupname,task:GetProperty("ExtractName"),1,true)
+              if targetzone and targetzone.ClassName and string.match(targetzone.ClassName,"ZONE") and okaygroup then
+                if task.Clients:HasUniqueID(playername) then
+                  -- success
+                  task:__Success(-1)
+                end
               end
+            else
+              self:T({Text="'ExtractName' Property not set",Name=Groupname,Property=task.Type})
             end
           end
         end
