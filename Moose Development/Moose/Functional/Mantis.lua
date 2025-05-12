@@ -74,10 +74,9 @@
 -- 
 -- * Moose derived  Modular, Automatic and Network capable Targeting and Interception System.
 -- * Controls a network of SAM sites. Uses detection to switch on the SAM site closest to the enemy.
--- * **Automatic mode** (default since 0.8) will set-up your SAM site network automatically for you
--- * **Classic mode** behaves like before
--- * Leverage evasiveness from SEAD, leverage attack range setting
--- * Automatic setup of SHORAD based on groups of the class "short-range"
+-- * **Automatic mode** (default) will set-up your SAM site network automatically for you.
+-- * Leverage evasiveness from SEAD, leverage attack range setting.
+-- * Automatic setup of SHORAD based on groups of the class "short-range".
 --
 -- # 0. Base considerations and naming conventions
 -- 
@@ -136,7 +135,8 @@
 -- Set up your SAM sites in the mission editor. Name the groups using a systematic approach like above.
 -- Set up your EWR system in the mission editor. Name the groups using a systematic approach like above. Can be e.g. AWACS or a combination of AWACS and Search Radars like e.g. EWR 1L13 etc. 
 -- Search Radars usually have "SR" or "STR" in their names. Use the encyclopedia in the mission editor to inform yourself.
--- Set up your SHORAD systems. They need to be **close** to (i.e. around) the SAM sites to be effective. Use **one** group per SAM location. SA-15 TOR systems offer a good missile defense.
+-- Set up your SHORAD systems. They need to be **close** to (i.e. around) the SAM sites to be effective. Use **one unit ** per group (multiple groups) for the SAM location. 
+-- Else, evasive manoevers might club up all defenders in one place. Red SA-15 TOR systems offer a good missile defense.
 -- 
 -- [optional] Set up your HQ. Can be any group, e.g. a command vehicle.
 --
@@ -188,7 +188,7 @@
 -- 
 -- ## 2.1 Auto mode features
 -- 
--- ### 2.1.1 You can now add Accept-, Reject- and Conflict-Zones to your setup, e.g. to consider borders or de-militarized zones:   
+-- ### 2.1.1 You can add Accept-, Reject- and Conflict-Zones to your setup, e.g. to consider borders or de-militarized zones:   
 -- 
 --        -- Parameters are tables of Core.Zone#ZONE objects!   
 --        -- This is effectively a 3-stage filter allowing for zone overlap. A coordinate is accepted first when   
@@ -205,9 +205,6 @@
 -- ### 2.1.3 SHORAD/Point defense will automatically be added from SAM sites of type "point" or if the range is less than 5km or if the type is AAA. 
 --        
 -- ### 2.1.4 Advanced features   
--- 
---        -- Option to switch off auto mode **before** you start MANTIS (not recommended)   
---        mybluemantis.automode = false
 --        
 --        -- Option to set the scale of the activation range, i.e. don't activate at the fringes of max range, defaults below.   
 --        -- also see engagerange below.   
@@ -220,6 +217,12 @@
 -- 
 --        -- For some scenarios, like Cold War, it might be useful not to activate SAMs if friendly aircraft are around to avoid death by friendly fire.
 --        mybluemantis.checkforfriendlies = true  
+--        
+-- ### 2.1.6 Shoot & Scoot
+-- 
+--        -- Option to make the (driveable) SHORAD units drive around and shuffle positions
+--        -- We use a SET_ZONE for that, number of zones to consider defaults to three, Random is true for random coordinates and Formation is e.g. "Vee".
+--        mybluemantis:AddScootZones(ZoneSet, Number, Random, Formation)
 -- 
 -- # 3. Default settings [both modes unless stated otherwise]
 --
@@ -242,26 +245,8 @@
 --  E.g.        mymantis:SetAdvancedMode( true, 90 )
 --
 --  Use this option if you want to make use of or allow advanced SEAD tactics.
---
--- # 5. Integrate SHORAD [classic mode, not necessary in automode, not recommended for manual setup]
---
---  You can also choose to integrate Mantis with @{Functional.Shorad#SHORAD} for protection against HARMs and AGMs manually. When SHORAD detects a missile fired at one of MANTIS' SAM sites, it will activate SHORAD systems in
---  the given defense checkradius around that SAM site. Create a SHORAD object first, then integrate with MANTIS like so:
---
---          local SamSet = SET_GROUP:New():FilterPrefixes("Blue SAM"):FilterCoalitions("blue"):FilterStart()
---          myshorad = SHORAD:New("BlueShorad", "Blue SHORAD", SamSet, 22000, 600, "blue")
---          -- now set up MANTIS
---          mymantis = MANTIS:New("BlueMantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
---          mymantis:AddShorad(myshorad,720)
---          mymantis:Start()
 --  
---  If you systematically name your SHORAD groups starting with "Blue SHORAD" you'll need exactly **one** SHORAD instance to manage all SHORAD groups.
---  
---  (Optionally) you can remove the link later on with
---
---          mymantis:RemoveShorad()
---
--- # 6. Integrated SEAD
+-- # 5. Integrated SEAD
 --  
 --  MANTIS is using @{Functional.Sead#SEAD} internally to both detect and evade HARM attacks. No extra efforts needed to set this up! 
 --  Once a HARM attack is detected, MANTIS (via SEAD) will shut down the radars of the attacked SAM site and take evasive action by moving the SAM
