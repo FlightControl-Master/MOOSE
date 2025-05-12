@@ -1953,7 +1953,7 @@ local function refct_from_id(id) -- refct = refct_from_id(CTypeID)
       unsigned = refct.unsigned,
       size = bit.band(bit.rshift(ctype.info, 16), 127),
     }
-    refct.bool, refct.const, refct.volatile, refct.unsigned = nil
+    refct.bool, refct.const, refct.volatile, refct.unsigned = nil, nil, nil, nil
   end
 
   if CT[4] then -- Merge sibling attributes onto this type.
