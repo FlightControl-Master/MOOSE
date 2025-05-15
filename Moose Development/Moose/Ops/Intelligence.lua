@@ -2384,15 +2384,15 @@ function INTEL_DLINK:New(Intels, Alias, Interval, Cachetime)
     self.alias="SPECTRE"
   end
 
-  -- Cache time
-  self:SetDLinkCacheTime(Cachetime or 120)
-
   -- Interval
   self.interval = Interval or 20
 
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("INTEL_DLINK %s | ", self.alias)
 
+  -- Cache time
+  self:SetDLinkCacheTime(Cachetime or 120)
+  
     -- Start State.
   self:SetStartState("Stopped")
 
