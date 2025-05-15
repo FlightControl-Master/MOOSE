@@ -70,6 +70,7 @@
 -- @field #boolean DespawnAfterLanding
 -- @field #boolean DespawnAfterHolding
 -- @field #list<Ops.Auftrag#AUFTRAG> ListOfAuftrag
+-- @field #string defaulttakeofftype Take off type
 -- @extends Core.Fsm#FSM
 
 --- *“Airspeed, altitude, and brains. Two are always needed to successfully complete the flight.”* -- Unknown.
@@ -223,7 +224,8 @@ EASYGCICAP = {
   ReadyFlightGroups = {},
   DespawnAfterLanding = false,
   DespawnAfterHolding = true,
-  ListOfAuftrag = {}
+  ListOfAuftrag = {},
+  defaulttakeofftype = "hot",
 }
 
 --- Internal Squadron data type
@@ -259,7 +261,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.20"
+EASYGCICAP.version="0.1.21"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -312,6 +314,7 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.DespawnAfterLanding = false
   self.DespawnAfterHolding = true
   self.ListOfAuftrag = {}
+  self.defaulttakeofftype = "hot"
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("EASYGCICAP %s | ", self.alias)
@@ -397,6 +400,16 @@ end
 function EASYGCICAP:SetDefaultRepeatOnFailure(Retries)
   self:T(self.lid.."SetDefaultRepeatOnFailure")
   self.repeatsonfailure = Retries or 3
+  return self
+end
+
+--- Add default take off type for the airwings.
+-- @param #EASYGCICAP self
+-- @param #string Takeoff Can be "hot", "cold", or "air" - default is "hot".
+-- @return #EASYGCICAP self 
+function EASYGCICAP:SetDefaultTakeOffType(Takeoff)
+  self:T(self.lid.."SetDefaultTakeOffType")
+  self.defaulttakeofftype = Takeoff or "hot"
   return self
 end
 
@@ -596,9 +609,8 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   if #self.ManagedREC > 0 then
     CAP_Wing:SetNumberRecon(1)
   end
-  --local PatrolCoordinateKutaisi = ZONE:New(CapZoneName):GetCoordinate()
-  --CAP_Wing:AddPatrolPointCAP(PatrolCoordinateKutaisi,self.capalt,UTILS.KnotsToAltKIAS(self.capspeed,self.capalt),self.capdir,self.capleg)
-  CAP_Wing:SetTakeoffHot()
+
+  CAP_Wing:SetTakeoffType(self.defaulttakeofftype)
   CAP_Wing:SetLowFuelThreshold(0.3)
   CAP_Wing.RandomAssetScore = math.random(50,100)
   CAP_Wing:Start()
