@@ -2324,7 +2324,7 @@ INTEL_DLINK = {
   verbose         =     0,
   lid             =   nil,
   alias           =   nil,
-  cachetime       =   300,
+  cachetime       =   120,
   interval        =   20,
   contacts        =   {},
   clusters        =   {},
@@ -2333,7 +2333,7 @@ INTEL_DLINK = {
 
 --- Version string
 -- @field #string version
-INTEL_DLINK.version = "0.0.1"
+INTEL_DLINK.version = "0.0.2"
 
 --- Function to instantiate a new object
 -- @param #INTEL_DLINK self
@@ -2385,7 +2385,7 @@ function INTEL_DLINK:New(Intels, Alias, Interval, Cachetime)
   end
 
   -- Cache time
-  self.cachetime = Cachetime or 300
+  self:SetDLinkCacheTime(Cachetime or 120)
 
   -- Interval
   self.interval = Interval or 20
@@ -2476,6 +2476,16 @@ function INTEL_DLINK:onafterStart(From, Event, To)
   self:__Collect(-math.random(1,10))
   return self
 end
+
+  --- Function to set how long INTEL DLINK remembers contacts.
+  -- @param #INTEL_DLINK self
+  -- @param #number seconds Remember this many seconds. Defaults to 180.
+  -- @return #INTEL_DLINK self
+  function INTEL_DLINK:SetDLinkCacheTime(seconds)
+    self.cachetime = math.abs(seconds or 120)
+    self:I(self.lid.."Caching for "..self.cachetime.." seconds.")
+    return self
+  end
 
 --- Function to collect data from the various #INTEL
 -- @param #INTEL_DLINK self
