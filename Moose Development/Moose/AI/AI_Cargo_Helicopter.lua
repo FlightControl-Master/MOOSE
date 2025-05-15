@@ -15,6 +15,8 @@
 
 --- Brings a dynamic cargo handling capability for an AI helicopter group.
 --  
+--  ![Banner Image](..\Images\deprecated.png)
+--  
 -- Helicopter carriers can be mobilized to intelligently transport infantry and other cargo within the simulation.
 -- 
 -- The AI_CARGO_HELICOPTER class uses the @{Cargo.Cargo} capabilities within the MOOSE framework.

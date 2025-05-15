@@ -1,6 +1,8 @@
 --- (SP) (MP) (FSM) Accept or reject process for player (task) assignments.
 --
 -- ===
+-- 
+-- ![Banner Image](..\Images\deprecated.png)
 --
 -- # @{#ACT_ASSIGN} FSM template class, extends @{Core.Fsm#FSM_PROCESS}
 --

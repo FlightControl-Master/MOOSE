@@ -15,6 +15,8 @@
 --- The AI_AIR_PATROL class implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Group}
 -- and automatically engage any airborne enemies that are within a certain range or within a certain zone.
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- ![Process](..\Presentations\AI_CAP\Dia3.JPG)
 -- 
 -- The AI_AIR_PATROL is assigned a @{Wrapper.Group} and this must be done before the AI_AIR_PATROL process can be started using the **Start** event.

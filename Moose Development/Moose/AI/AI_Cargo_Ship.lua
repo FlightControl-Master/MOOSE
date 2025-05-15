@@ -14,6 +14,8 @@
 
 --- Brings a dynamic cargo handling capability for an AI naval group.
 --
+-- ![Banner Image](..\Images\deprecated.png)
+--
 -- Naval ships can be utilized to transport cargo around the map following naval shipping lanes.
 -- The AI_CARGO_SHIP class uses the @{Cargo.Cargo} capabilities within the MOOSE framework. 
 -- @{Cargo.Cargo} must be declared within the mission or warehouse to make the AI_CARGO_SHIP recognize the cargo.

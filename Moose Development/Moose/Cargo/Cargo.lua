@@ -2,6 +2,8 @@
 --
 -- ===
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- # 1) MOOSE Cargo System.
 -- 
 -- #### Those who have used the mission editor, know that the DCS mission editor provides cargo facilities.

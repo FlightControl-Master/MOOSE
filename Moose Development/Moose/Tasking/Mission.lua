@@ -28,6 +28,8 @@
 
 --- Models goals to be achieved and can contain multiple tasks to be executed to achieve the goals.
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- A mission contains multiple tasks and can be of different task types.
 -- These tasks need to be assigned to human players to be executed.
 -- 

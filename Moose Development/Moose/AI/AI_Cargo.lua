@@ -9,11 +9,13 @@
 -- @module AI.AI_Cargo
 -- @image Cargo.JPG
 
--- @type AI_CARGO
+--- @type AI_CARGO
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 
 --- Base class for the dynamic cargo handling capability for AI groups.
+-- 
+-- ![Banner Image](..\Images\deprecated.png)
 -- 
 -- Carriers can be mobilized to intelligently transport infantry and other cargo within the simulation.
 -- The AI_CARGO module uses the @{Cargo.Cargo} capabilities within the MOOSE framework.

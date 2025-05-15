@@ -36,6 +36,8 @@
 -- 
 -- # QUICK START GUIDE
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- The following class is available to model an A2G defense system.
 -- 
 -- AI_A2G_DISPATCHER is the main A2G defense class that models the A2G defense system.

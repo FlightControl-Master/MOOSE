@@ -15,6 +15,8 @@
 
 --- Implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Group} or @{Wrapper.Group}.
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- ![Process](..\Presentations\AI_PATROL\Dia3.JPG)
 -- 
 -- The AI_A2A_PATROL is assigned a @{Wrapper.Group} and this must be done before the AI_A2A_PATROL process can be started using the **Start** event.

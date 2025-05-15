@@ -15,7 +15,9 @@
 -- @extends AI.AI_A2A_Engage#AI_A2A_Engage -- TODO: Documentation. This class does not exist, unable to determine what it extends.
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.
---
+-- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- # Developer Note
 -- 
 -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE

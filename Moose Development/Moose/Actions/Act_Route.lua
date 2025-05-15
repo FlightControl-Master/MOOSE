@@ -2,6 +2,8 @@
 --
 -- ===
 --
+-- ![Banner Image](..\Images\deprecated.png)
+--
 -- # @{#ACT_ROUTE} FSM class, extends @{Core.Fsm#FSM_PROCESS}
 --
 -- ## ACT_ROUTE state machine:
