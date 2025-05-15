@@ -30,6 +30,8 @@
 
 --- Brings a dynamic cargo handling capability for AI groups.
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- Airplanes can be mobilized to intelligently transport infantry and other cargo within the simulation.
 -- 
 -- The AI_CARGO_DISPATCHER_AIRPLANE module is derived from the AI_CARGO_DISPATCHER module.

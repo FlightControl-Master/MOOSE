@@ -12,6 +12,8 @@
 -- 
 -- ===
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- # 1) Tasking from a player perspective.
 -- 
 -- Tasking can be controlled by using the "other" menu in the radio menu of the player group.

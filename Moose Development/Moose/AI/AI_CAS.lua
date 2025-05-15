@@ -38,6 +38,9 @@
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
 
 --- Implements the core functions to provide Close Air Support in an Engage @{Core.Zone} by an AIR @{Wrapper.Controllable} or @{Wrapper.Group}.
+-- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- The AI_CAS_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.
 -- 
 -- ![HoldAndEngage](..\Presentations\AI_CAS\Dia3.JPG)

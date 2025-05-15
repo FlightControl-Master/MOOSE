@@ -48,6 +48,8 @@
 
 --- Implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Controllable} or @{Wrapper.Group}.
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- ![Process](..\Presentations\AI_PATROL\Dia3.JPG)
 -- 
 -- The AI_PATROL_ZONE is assigned a @{Wrapper.Group} and this must be done before the AI_PATROL_ZONE process can be started using the **Start** event.

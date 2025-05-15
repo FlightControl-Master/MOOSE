@@ -1,5 +1,7 @@
 --- **Tasking** - Models tasks for players to transport cargo.
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- **Specific features:**
 -- 
 --   * Creates a task to transport #Cargo.Cargo to and between deployment zones.

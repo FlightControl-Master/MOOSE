@@ -15,6 +15,7 @@
 
 --- The AI_AIR class implements the core functions to operate an AI @{Wrapper.Group}.
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
 -- 
 -- # 1) AI_AIR constructor
 --   

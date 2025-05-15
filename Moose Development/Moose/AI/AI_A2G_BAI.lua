@@ -16,7 +16,9 @@
 -- @extends AI.AI_Air_Engage#AI_AIR_ENGAGE
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.
---
+-- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- # Developer Note
 -- 
 -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE

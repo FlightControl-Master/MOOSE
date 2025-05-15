@@ -29,6 +29,8 @@
 
 
 --- Governs multiple missions, the tasking and the reporting.
+-- 
+-- ![Banner Image](..\Images\deprecated.png)
 --  
 -- Command centers govern missions, communicates the task assignments between human players of the coalition, and manages the menu flow.
 -- It can assign a random task to a player when requested.

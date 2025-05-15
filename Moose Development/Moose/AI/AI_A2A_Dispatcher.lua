@@ -32,7 +32,9 @@
 -- [DCS WORLD - MOOSE - A2A GCICAP - Build an automatic A2A Defense System](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0S4KMNUUJpaUs6zZHjLKNx)
 --
 -- ===
---
+-- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- # QUICK START GUIDE
 --
 -- There are basically two classes available to model an A2A defense system.

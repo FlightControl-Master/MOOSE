@@ -33,8 +33,9 @@
 -- @field Wrapper.Group#GROUP Test
 -- @extends Core.Fsm#FSM_SET
 
-
---- Monitors and manages as many replacement AI groups as there are
+--- ![Banner Image](..\Images\deprecated.png)
+-- 
+-- Monitors and manages as many replacement AI groups as there are
 -- CLIENTS in a SET\_CLIENT collection, which are not occupied by human players. 
 -- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.
 -- 

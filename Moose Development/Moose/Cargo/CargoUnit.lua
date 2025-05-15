@@ -30,6 +30,8 @@ do -- CARGO_UNIT
   --
   -- # Developer Note
   -- 
+  -- ![Banner Image](..\Images\deprecated.png)
+  -- 
   -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
   -- Therefore, this class is considered to be deprecated
   --

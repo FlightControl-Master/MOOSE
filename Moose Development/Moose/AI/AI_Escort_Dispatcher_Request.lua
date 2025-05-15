@@ -21,6 +21,8 @@
 
 --- Models the assignment of AI escorts to player flights upon request using the radio menu.
 --
+-- ![Banner Image](..\Images\deprecated.png)
+--
 -- # Developer Note
 -- 
 -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE

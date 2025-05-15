@@ -26,6 +26,8 @@ do -- CARGO_GROUP
   -- @extends Cargo.Cargo#CARGO_REPORTABLE
   
   --- Defines a cargo that is represented by a @{Wrapper.Group} object within the simulator.
+  -- 
+  -- ![Banner Image](..\Images\deprecated.png)
   -- The cargo can be Loaded, UnLoaded, Boarded, UnBoarded to and from Carriers.
   -- 
   -- The above cargo classes are used by the following AI_CARGO_ classes to allow AI groups to transport cargo:

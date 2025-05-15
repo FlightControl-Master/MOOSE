@@ -20,6 +20,9 @@ do -- TASK_A2A
 
   --- Defines Air To Air tasks for a @{Core.Set} of Target Units, 
   -- based on the tasking capabilities defined in @{Tasking.Task#TASK}.
+  -- 
+  -- ![Banner Image](..\Images\deprecated.png)
+  -- 
   -- The TASK_A2A is implemented using a @{Core.Fsm#FSM_TASK}, and has the following statuses:
   -- 
   --   * **None**: Start of the process

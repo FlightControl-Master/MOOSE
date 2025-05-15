@@ -20,6 +20,8 @@ do -- TASK_ZONE_GOAL
 
   --- # TASK_ZONE_GOAL class, extends @{Tasking.Task#TASK}
   -- 
+  -- ![Banner Image](..\Images\deprecated.png)
+  -- 
   -- The TASK_ZONE_GOAL class defines the task to protect or capture a protection zone. 
   -- The TASK_ZONE_GOAL is implemented using a @{Core.Fsm#FSM_TASK}, and has the following statuses:
   -- 

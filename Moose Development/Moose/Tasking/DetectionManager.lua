@@ -5,6 +5,8 @@
 -- The @{#DETECTION_MANAGER} class defines the core functions to report detected objects to groups.
 -- Reportings can be done in several manners, and it is up to the derived classes if DETECTION_MANAGER to model the reporting behaviour.
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- 1.1) DETECTION_MANAGER constructor:
 -- -----------------------------------
 --   * @{#DETECTION_MANAGER.New}(): Create a new DETECTION_MANAGER instance.

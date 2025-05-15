@@ -36,6 +36,8 @@
 -- 
 -- # QUICK START GUIDE
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- The following class is available to model an AIR defense system.
 -- 
 -- AI_AIR_DISPATCHER is the main AIR defense class that models the AIR defense system.
