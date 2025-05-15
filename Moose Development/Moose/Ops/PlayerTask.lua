@@ -556,6 +556,7 @@ end
 -- @param #PLAYERTASK self
 -- @param #SET_BASE CaptureSquadGroupNamePrefix The prefix of the group name that needs to capture the zone.
 -- @param #number Coalition The coalition that needs to capture the zone.
+-- @param #boolean CheckClientInZone If true, a CLIENT assigned to this task also needs to be in the zone for the task to be successful.
 -- @return #PLAYERTASK self
 -- @usage
 -- -- We can use either STATIC, SET_STATIC, SCENERY or SET_SCENERY as target objects.
@@ -570,20 +571,20 @@ end
 --
 -- -- We set CaptureSquadGroupNamePrefix the group name prefix as set in the ME or the spawn of the group that need to be present at the OpsZone like a capture squad,
 -- -- and set the capturing Coalition in order to trigger a successful task.
--- mytask:AddOpsZoneCaptureSuccessCondition("capture-squad", coalition.side.BLUE)
+-- mytask:AddOpsZoneCaptureSuccessCondition("capture-squad", coalition.side.BLUE, false)
 --
 -- playerTaskManager:AddPlayerTaskToQueue(mytask)
-function PLAYERTASK:AddOpsZoneCaptureSuccessCondition(CaptureSquadGroupNamePrefix, Coalition)
+function PLAYERTASK:AddOpsZoneCaptureSuccessCondition(CaptureSquadGroupNamePrefix, Coalition, CheckClientInZone)
     local task = self
     task:AddConditionSuccess(
             function(target)
                 if target:IsInstanceOf("OPSZONE") then
-                    return task:_CheckCaptureOpsZoneSuccess(target, CaptureSquadGroupNamePrefix, Coalition, true)
+                    return task:_CheckCaptureOpsZoneSuccess(target, CaptureSquadGroupNamePrefix, Coalition, CheckClientInZone or true)
                 elseif target:IsInstanceOf("SET_OPSZONE") then
                     local successes = 0
                     local isClientInZone = false
                     target:ForEachZone(function(opszone)
-                        if task:_CheckCaptureOpsZoneSuccess(opszone, CaptureSquadGroupNamePrefix, Coalition) then
+                        if task:_CheckCaptureOpsZoneSuccess(opszone, CaptureSquadGroupNamePrefix, Coalition, CheckClientInZone or true) then
                             successes = successes + 1
                         end
 
