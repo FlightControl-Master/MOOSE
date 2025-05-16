@@ -64,6 +64,7 @@
 -- @field #number SmokeDecoyColor Color to use, defaults to SMOKECOLOR.White
 -- @field #number checkcounter Counter for SAM Table refreshes.
 -- @field #number DLinkCacheTime Seconds after which cached contacts in DLink will decay.
+-- @field #boolean logsamstatus Log SAM status in dcs.log every cycle if true
 -- @extends Core.Base#BASE
 
 
@@ -322,6 +323,7 @@ MANTIS = {
   SmokeDecoyColor       = SMOKECOLOR.White,
   checkcounter          = 1,
   DLinkCacheTime        = 120,
+  logsamstatus          = false,
 }
 
 --- Advanced state enumerator
@@ -647,6 +649,8 @@ do
       table.insert(self.ewr_templates,awacs)
     end
     
+    self.logsamstatus = false
+    
     self:T({self.ewr_templates})
     
     self.SAM_Group = SET_GROUP:New():FilterPrefixes(self.SAM_Templates_Prefix):FilterCoalitions(self.Coalition)
@@ -678,7 +682,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.9.29"
+    self.version="0.9.30"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -1695,7 +1699,9 @@ do
           local grpname = group:GetName()
           local grpcoord = group:GetCoordinate()
           local grprange, grpheight,type,blind  = self:_GetSAMRange(grpname)
-          local radaralive = group:IsSAM()
+          -- TODO the below might stop working at some point after some hours, needs testing
+          --local radaralive = group:IsSAM()
+          local radaralive = true
           table.insert( SAM_Tbl, {grpname, grpcoord, grprange, grpheight, blind, type}) -- make the table lighter, as I don't really use the zone here
           table.insert( SEAD_Grps, grpname )
           if type == MANTIS.SamType.LONG and radaralive then
@@ -1878,8 +1884,9 @@ do
   -- @param #MANTIS self
   -- @param Functional.Detection#DETECTION_AREAS detection Detection object
   -- @param #boolean dlink
+  -- @param #boolean reporttolog
   -- @return #MANTIS self
-  function MANTIS:_Check(detection,dlink)
+  function MANTIS:_Check(detection,dlink,reporttolog)
     self:T(self.lid .. "Check")
     --get detected set
     local detset = detection:GetDetectedItemCoordinates()
@@ -1906,7 +1913,8 @@ do
       local samset = self:_GetSAMTable() -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
       instatusred, instatusgreen, activeshorads = self:_CheckLoop(samset,detset,dlink,self.maxclassic)
     end
-    if self.debug or self.verbose then
+    
+    local function GetReport()
       local statusreport = REPORT:New("\nMANTIS Status "..self.name)
       statusreport:Add("+-----------------------------+")
       statusreport:Add(string.format("+ SAM in RED State: %2d",instatusred))
@@ -1915,7 +1923,15 @@ do
        statusreport:Add(string.format("+ SHORAD active: %2d",activeshorads))  
       end
       statusreport:Add("+-----------------------------+")
+      return statusreport
+    end
+    
+    if self.debug or self.verbose then
+      local statusreport = GetReport()
       MESSAGE:New(statusreport:Text(),10):ToAll():ToLog()
+    elseif reporttolog == true then
+      local statusreport = GetReport()
+      MESSAGE:New(statusreport:Text(),10):ToLog()
     end
     return self
   end
@@ -2023,7 +2039,7 @@ do
     self:T({From, Event, To})
     -- check detection
     if not self.state2flag then
-      self:_Check(self.Detection,self.DLink)
+      self:_Check(self.Detection,self.DLink,self.logsamstatus)
     end
   
     local EWRAlive = self:_CheckAnyEWRAlive()
