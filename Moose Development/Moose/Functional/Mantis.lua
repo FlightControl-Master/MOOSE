@@ -1035,7 +1035,7 @@ do
   
   --- Function to set how long INTEL DLINK remembers contacts.
   -- @param #MANTIS self
-  -- @param #number seconds Remember this many seconds
+  -- @param #number seconds Remember this many seconds, at least 5 seconds.
   -- @return #MANTIS self
   function MANTIS:SetDLinkCacheTime(seconds)
     self.DLinkCacheTime = math.abs(seconds or 120)

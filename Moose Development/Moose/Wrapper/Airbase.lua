@@ -513,6 +513,7 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Hatzor
 -- * AIRBASE.Syria.Palmashim
 -- * AIRBASE.Syria.Tel_Nof
+-- * AIRBASE.Syria.Marka
 --
 --@field Syria
 AIRBASE.Syria={
@@ -586,6 +587,7 @@ AIRBASE.Syria={
   ["Hatzor"] = "Hatzor",
   ["Palmashim"] = "Palmashim",
   ["Tel_Nof"] = "Tel Nof",
+  ["Marka"] = "Marka",
 }
 
 --- Airbases of the Mariana Islands map:
