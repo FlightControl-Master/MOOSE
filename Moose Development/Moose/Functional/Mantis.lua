@@ -1798,7 +1798,7 @@ do
       if self.Shorad and self.Shorad.ActiveGroups and self.Shorad.ActiveGroups[name] then
        activeshorad = true
       end
-      if IsInZone and not suppressed and not activeshorad then --check any target in zone and not currently managed by SEAD
+      if IsInZone and (not suppressed) and (not activeshorad) then --check any target in zone and not currently managed by SEAD
         if samgroup:IsAlive() then
           -- switch on SAM
           local switch = false
