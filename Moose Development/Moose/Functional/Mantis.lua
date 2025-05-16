@@ -1863,7 +1863,7 @@ do
         end --end alive
       end --end check     
     end --for loop
-    if self.debug or self.verbose then
+    if self.debug or self.verbose or self.logsamstatus then
       for _,_status in pairs(self.SamStateTracker) do
         if _status == "GREEN" then
           instatusgreen=instatusgreen+1
