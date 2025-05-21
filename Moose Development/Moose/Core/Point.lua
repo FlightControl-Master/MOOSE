@@ -2992,8 +2992,10 @@ do -- COORDINATE
       local sunrise=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, true, Tdiff)
       local sunset=UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tdiff)
       
-      if sunrise == "N/R" then return false end
-      if sunrise == "N/S" then return true end
+      if type(sunrise) == "string" or type(sunset) == "string" then
+        if sunrise == "N/R" then return false end
+        if sunset == "N/S" then return true end
+      end
       
       local time=UTILS.ClockToSeconds(clock)
 
@@ -3011,6 +3013,11 @@ do -- COORDINATE
 
       -- Todays sun set in sec.
       local sunset=self:GetSunset(true)
+      
+      if type(sunrise) == "string" or type(sunset) == "string" then
+        if sunrise == "N/R" then return false end
+        if sunset == "N/S" then return true end
+      end
 
       -- Seconds passed since midnight.
       local time=UTILS.SecondsOfToday()
