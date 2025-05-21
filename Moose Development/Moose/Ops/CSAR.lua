@@ -313,7 +313,7 @@ CSAR.AircraftType["CH-47Fbl1"] = 31
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.31"
+CSAR.version="1.0.32"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -468,7 +468,7 @@ function CSAR:New(Coalition, Template, Alias)
   -- added 1.0.15
   self.allowbronco = false  -- set to true to use the Bronco mod as a CSAR plane
   
-  self.ADFRadioPwr = 1000
+  self.ADFRadioPwr = 500
   
   -- added 1.0.16
   self.PilotWeight = 80
@@ -2333,9 +2333,9 @@ end
 -- @param #CSAR self
 -- @param Wrapper.Group#GROUP _group Group #GROUP object.
 -- @param #number _freq Frequency to use
--- @param #string _name Beacon Name to use
+-- @param #string BeaconName Beacon Name to use
 -- @return #CSAR self
-function CSAR:_AddBeaconToGroup(_group, _freq, _name)
+function CSAR:_AddBeaconToGroup(_group, _freq, BeaconName)
     self:T(self.lid .. " _AddBeaconToGroup")
     if self.CreateRadioBeacons == false then return end
     local _group = _group   
@@ -2356,10 +2356,11 @@ function CSAR:_AddBeaconToGroup(_group, _freq, _name)
       if _radioUnit then    
         local name = _radioUnit:GetName()
         local Frequency = _freq -- Freq in Hertz
-        local name = _radioUnit:GetName()
+        --local name = _radioUnit:GetName()
         local Sound =  "l10n/DEFAULT/"..self.radioSound
         local vec3 = _radioUnit:GetVec3() or _radioUnit:GetPositionVec3() or {x=0,y=0,z=0}
-        trigger.action.radioTransmission(Sound, vec3, 0, false, Frequency, self.ADFRadioPwr or 1000,_name) -- Beacon in MP only runs for exactly 30secs straight
+        self:I(self.lid..string.format("Added Radio Beacon %d Hertz | Name %s | Position {%d,%d,%d}",Frequency,BeaconName,vec3.x,vec3.y,vec3.z))
+        trigger.action.radioTransmission(Sound, vec3, 0, true, Frequency, self.ADFRadioPwr or 500,BeaconName) -- Beacon in MP only runs for exactly 30secs straight
       end
     end
     
@@ -2380,9 +2381,13 @@ function CSAR:_RefreshRadioBeacons()
         local group = pilot.group
         local frequency = pilot.frequency or 0 -- thanks to @Thrud
         local bname = pilot.BeaconName or pilot.name..math.random(1,100000)
-        trigger.action.stopRadioTransmission(bname)
+        --trigger.action.stopRadioTransmission(bname)
         if group and group:IsAlive() and frequency > 0 then
-          self:_AddBeaconToGroup(group,frequency,bname)
+          --self:_AddBeaconToGroup(group,frequency,bname)
+        else
+          if frequency > 0 then
+            trigger.action.stopRadioTransmission(bname)
+          end
         end
       end
     end
