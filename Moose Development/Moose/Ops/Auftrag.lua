@@ -1717,7 +1717,7 @@ end
 
 --- **[AIR]** Create a STRIKE mission. Flight will attack the closest map object to the specified coordinate.
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT, STATIC or TARGET object.
+-- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT, STATIC, SET_GROUP, SET_UNIT, SET_STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 2000 ft.
 -- @param #number EngageWeaponType Which weapon to use. Defaults to auto, ie ENUMS.WeaponFlag.Auto. See ENUMS.WeaponFlag for options.
 -- @return #AUFTRAG self
@@ -1749,7 +1749,7 @@ end
 --- **[AIR]** Create a BOMBING mission. Flight will drop bombs a specified coordinate.
 -- See [DCS task bombing](https://wiki.hoggitworld.com/view/DCS_task_bombing).
 -- @param #AUFTRAG self
--- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT, STATIC or TARGET object.
+-- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT, STATIC, SET_GROUP, SET_UNIT, SET_STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
 -- @param #number EngageWeaponType Which weapon to use. Defaults to auto, ie ENUMS.WeaponFlag.Auto. See ENUMS.WeaponFlag for options.
 -- @return #AUFTRAG self
@@ -6108,10 +6108,13 @@ function AUFTRAG:GetDCSMissionTask()
     -- BOMBING Mission --
     ---------------------
 
-    local DCStask=CONTROLLABLE.TaskBombing(nil, self:GetTargetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, Divebomb)
+    local coords = self.engageTarget:GetCoordinates()
+    for _, coord in pairs(coords) do
+        local DCStask = CONTROLLABLE.TaskBombing(nil, coord:GetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
 
-    table.insert(DCStasks, DCStask)
-    
+        table.insert(DCStasks, DCStask)
+    end
+
   elseif self.type==AUFTRAG.Type.STRAFING then
 
     ----------------------
@@ -6311,9 +6314,12 @@ function AUFTRAG:GetDCSMissionTask()
     -- STRIKE Mission --
     --------------------
 
-    local DCStask=CONTROLLABLE.TaskAttackMapObject(nil, self:GetTargetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
+    local coords = self.engageTarget:GetCoordinates()
+    for _, coord in pairs(coords) do
+        local DCStask=CONTROLLABLE.TaskAttackMapObject(nil, coord:GetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
 
-    table.insert(DCStasks, DCStask)
+        table.insert(DCStasks, DCStask)
+    end
 
   elseif self.type==AUFTRAG.Type.TANKER or self.type==AUFTRAG.Type.RECOVERYTANKER then
 
