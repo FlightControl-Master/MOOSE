@@ -1715,6 +1715,26 @@ function TARGET:GetAverageCoordinate()
   return nil
 end
 
+
+--- Get coordinates of all targets. (e.g. for a SET_STATIC)
+-- @param #TARGET self
+-- @return #table Table with coordinates of all targets.
+function TARGET:GetCoordinates()
+    local coordinates={}
+
+    for _,_target in pairs(self.targets) do
+        local target=_target --#TARGET.Object
+
+        local coordinate=self:GetTargetCoordinate(target)
+        if coordinate then
+            table.insert(coordinates, coordinate)
+        end
+
+    end
+
+    return coordinates
+end
+
 --- Get heading of target.
 -- @param #TARGET self
 -- @return #number Heading of the target in degrees.
@@ -1966,6 +1986,21 @@ function TARGET:GetObject(RefCoordinate, Coalitions)
   end
 
   return nil
+end
+
+--- Get all target objects.
+-- @param #TARGET self
+-- @return #table List of target objects.
+function TARGET:GetObjects()
+    local objects={}
+
+    for _,_target in pairs(self.targets) do
+        local target=_target --#TARGET.Object
+
+        table.insert(objects, target.Object)
+    end
+
+    return objects
 end
 
 --- Count alive objects.
