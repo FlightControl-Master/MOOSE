@@ -2798,7 +2798,7 @@ function ATIS:onafterBroadcast( From, Event, To )
 
     end
     _RUNACT = subtitle
-    alltext = alltext .. ";\n" .. subtitle
+    --alltext = alltext .. ";\n" .. subtitle
 
     -- Runway length.
     if self.rwylength then
