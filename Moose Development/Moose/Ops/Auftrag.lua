@@ -1738,7 +1738,7 @@ function AUFTRAG:NewSEADInZone(TargetZone, Altitude, TargetTypes, Duration)
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.SEAD
   mission.missionAltitude=mission.engageAltitude
-  mission.missionFraction=0.2
+  mission.missionFraction=0.7
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
 
@@ -6349,11 +6349,26 @@ function AUFTRAG:GetDCSMissionTask()
     
     if self.engageZone then
     
-      local DCStask=CONTROLLABLE.EnRouteTaskSEAD(nil, self.engageTargetTypes)
-      table.insert(self.enrouteTasks, DCStask)  
-      local OrbitTask = CONTROLLABLE.TaskOrbitCircle(nil,self.engageAltitude,self.missionSpeed,self.engageZone:GetCoordinate())
-      table.insert(DCStasks, OrbitTask)
-      
+      --local DCStask=CONTROLLABLE.EnRouteTaskSEAD(nil, self.engageTargetTypes)
+      --table.insert(self.enrouteTasks, DCStask)
+      self.engageZone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT})
+      local ScanUnitSet = self.engageZone:GetScannedSetUnit()
+      local SeadUnitSet = SET_UNIT:New()
+      for _,_unit in pairs (ScanUnitSet.Set) do
+        local unit = _unit -- Wrapper.Unit#UNTI
+        if unit and unit:IsAlive() and unit:HasSEAD() then
+          self:T("Adding UNIT for SEAD: "..unit:GetName())
+          local task = CONTROLLABLE.TaskAttackUnit(nil,unit,GroupAttack,AI.Task.WeaponExpend.ALL,1,Direction,self.engageAltitude,4161536)
+          table.insert(DCStasks, task)
+          SeadUnitSet:AddUnit(unit)
+        end
+      end
+      self.engageTarget = TARGET:New(SeadUnitSet)
+      --local OrbitTask = CONTROLLABLE.TaskOrbitCircle(nil,self.engageAltitude,self.missionSpeed,self.engageZone:GetCoordinate())
+      --local Point = self.engageZone:GetVec2()
+      --local OrbitTask = CONTROLLABLE.TaskOrbitCircleAtVec2(nil,Point,self.engageAltitude,self.missionSpeed)
+      --table.insert(DCStasks, OrbitTask)
+     
     else
     
       self:_GetDCSAttackTask(self.engageTarget, DCStasks)

@@ -1432,7 +1432,7 @@ end
 -- @param #number Speed The speed [m/s] flying when holding the position.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:TaskOrbitCircleAtVec2( Point, Altitude, Speed )
-  self:F2( { self.ControllableName, Point, Altitude, Speed } )
+  --self:F2( { self.ControllableName, Point, Altitude, Speed } )
 
   local DCSTask = {
     id = 'Orbit',
