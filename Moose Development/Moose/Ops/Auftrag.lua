@@ -1715,6 +1715,42 @@ function AUFTRAG:NewSEAD(Target, Altitude)
   return mission
 end
 
+--- **[AIR]** Create a SEAD in Zone mission.
+-- @param #AUFTRAG self
+-- @param Core.Zone#ZONE TargetZone The target zone to attack.
+-- @param #number Altitude Engage altitude in feet. Default 25000 ft.
+-- @param #table TargetTypes Table of string of DCS known target types, defaults to {"Air defence"}. See [DCS Target Attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
+-- @param #number Duration Engage this much time when the AUFTRAG starts executing.
+-- @return #AUFTRAG self
+function AUFTRAG:NewSEADInZone(TargetZone, Altitude, TargetTypes, Duration)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.SEAD)
+
+  mission:_TargetFromObject(TargetZone)
+
+  -- DCS Task options:
+  mission.engageWeaponType=ENUMS.WeaponFlag.Auto
+  mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
+  mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
+  mission.engageZone = TargetZone
+  mission.engageTargetTypes = TargetTypes or {"Air defence"}
+
+  -- Mission options:
+  mission.missionTask=ENUMS.MissionTask.SEAD
+  mission.missionAltitude=mission.engageAltitude
+  mission.missionFraction=0.2
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionROT=ENUMS.ROT.EvadeFire
+
+  mission.categories={AUFTRAG.Category.AIRCRAFT}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission:SetDuration(Duration or 1800)
+
+  return mission
+end
+
 --- **[AIR]** Create a STRIKE mission. Flight will attack the closest map object to the specified coordinate.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target The target coordinate. Can also be given as a GROUP, UNIT, STATIC, SET_GROUP, SET_UNIT, SET_STATIC or TARGET object.
@@ -4822,6 +4858,11 @@ function AUFTRAG:CheckGroupsDone()
     self:T(self.lid..string.format("CheckGroupsDone: Mission is STARTED state %s [FSM=%s] but count of alive OPSGROUP is zero. Mission DONE!", self.status, self:GetState()))
     return true
   end
+  
+  if (self:IsStarted() or self:IsExecuting()) and self:CountOpsGroups()>0 then
+    self:T(self.lid..string.format("CheckGroupsDone: Mission is STARTED state %s [FSM=%s] and count of alive OPSGROUP > zero. Mission NOT DONE!", self.status, self:GetState()))
+    return true
+  end
 
   return true
 end
@@ -6305,9 +6346,20 @@ function AUFTRAG:GetDCSMissionTask()
     -- Add enroute task SEAD. Disabled that here because the group enganges everything on its route.
     --local DCStask=CONTROLLABLE.EnRouteTaskSEAD(nil, self.TargetType)
     --table.insert(self.enrouteTasks, DCStask)
-
-    self:_GetDCSAttackTask(self.engageTarget, DCStasks)
-
+    
+    if self.engageZone then
+    
+      local DCStask=CONTROLLABLE.EnRouteTaskSEAD(nil, self.engageTargetTypes)
+      table.insert(self.enrouteTasks, DCStask)  
+      local OrbitTask = CONTROLLABLE.TaskOrbitCircle(nil,self.engageAltitude,self.missionSpeed,self.engageZone:GetCoordinate())
+      table.insert(DCStasks, OrbitTask)
+      
+    else
+    
+      self:_GetDCSAttackTask(self.engageTarget, DCStasks)
+    
+    end
+    
   elseif self.type==AUFTRAG.Type.STRIKE then
 
     --------------------
