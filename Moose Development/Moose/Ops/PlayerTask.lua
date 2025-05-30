@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update April 2025
+-- @date Last Update May 2025
 
 
 do
@@ -98,7 +98,7 @@ PLAYERTASK = {
 
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.26"
+PLAYERTASK.version="0.1.27"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -1951,7 +1951,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.taskinfomenu = false
   self.activehasinfomenu = false
   self.MenuName = nil
-  self.menuitemlimit = 5
+  self.menuitemlimit = 6
   self.holdmenutime = 30
   
   self.MarkerReadOnly = false
@@ -2581,7 +2581,7 @@ function PLAYERTASKCONTROLLER:SetMenuOptions(InfoMenu,ItemLimit,HoldTime)
   if self.activehasinfomenu then
     self:EnableTaskInfoMenu()
   end
-  self.menuitemlimit = ItemLimit or 5
+  self.menuitemlimit = ItemLimit+1 or 6
   self.holdmenutime = HoldTime or 30
   return self
 end
