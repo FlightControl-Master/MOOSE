@@ -8741,13 +8741,13 @@ function AIRBOSS:OnEventRemoveUnit( EventData )
 
   -- Nil checks.
   if EventData == nil then
-    self:E( self.lid .. "ERROR: EventData=nil in event REMOVEUNIT!" )
-    self:E( EventData )
+    self:T( self.lid .. "ERROR: EventData=nil in event REMOVEUNIT!" )
+    self:T( EventData )
     return
   end
   if EventData.IniUnit == nil then
-    self:E( self.lid .. "ERROR: EventData.IniUnit=nil in event REMOVEUNIT!" )
-    self:E( EventData )
+    self:T( self.lid .. "ERROR: EventData.IniUnit=nil in event REMOVEUNIT!" )
+    self:T( EventData )
     return
   end
 
