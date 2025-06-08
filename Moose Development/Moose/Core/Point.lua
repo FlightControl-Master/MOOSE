@@ -59,6 +59,10 @@ do -- COORDINATE
   --   * @{#COORDINATE.SmokeOrange}(): To smoke the point in orange.
   --   * @{#COORDINATE.SmokeWhite}(): To smoke the point in white.
   --   * @{#COORDINATE.SmokeGreen}(): To smoke the point in green.
+  --   * @{#COORDINATE.SetSmokeOffsetDirection}(): To set an offset point direction for smoke.
+  --   * @{#COORDINATE.SetSmokeOffsetDistance}(): To set an offset point distance for smoke.
+  --   * @{#COORDINATE.SwitchSmokeOffsetOn}(): To set an offset point for smoke to on.
+  --   * @{#COORDINATE.SwitchSmokeOffsetOff}(): To set an offset point for smoke to off.
   --
   -- ## 2.2) Flare
   --
@@ -2124,21 +2128,32 @@ do -- COORDINATE
   -- @param #number Duration (Optional) Duration of the smoke in seconds. DCS stopps the smoke automatically after 5 min.
   -- @param #number Delay (Optional) Delay before the smoke is started in seconds.
   -- @param #string Name (Optional) Name if you want to stop the smoke early (normal duration: 5mins)
+  -- @param #boolean Offset (Optional) If true, offset the smokle a bit.
+  -- @param #number Direction (Optional) If Offset is true this is the direction of the offset, 1-359 (degrees). Default random.
+  -- @param #number Distance (Optional) If Offset is true this is the distance of the offset in meters. Default random 10-20.
   -- @return #COORDINATE self
-  function COORDINATE:Smoke( SmokeColor, Duration, Delay, Name)
-    self:F2( { SmokeColor, Name, Duration, Delay } )
+  function COORDINATE:Smoke( SmokeColor, Duration, Delay, Name, Offset,Direction,Distance)
+    self:F2( { SmokeColor, Name, Duration, Delay, Offset } )
 
     SmokeColor=SmokeColor or SMOKECOLOR.Green
     
     if Delay and Delay>0 then
-      self:ScheduleOnce(Delay, COORDINATE.Smoke, self, SmokeColor, Duration, 0, Name)
+      self:ScheduleOnce(Delay, COORDINATE.Smoke, self, SmokeColor, Duration, 0, Name, Direction,Distance)
     else
     
       -- Create a name which is used to stop the smoke manually
       self.firename = Name or "Smoke-"..math.random(1,100000)
       
       -- Create smoke
-      trigger.action.smoke( self:GetVec3(), SmokeColor, self.firename )
+      if Offset or self.SmokeOffset then
+        local Angle = Direction or self:GetSmokeOffsetDirection()
+        local Distance = Distance or self:GetSmokeOffsetDistance()
+        local newpos = self:Translate(Distance,Angle,true,false)
+        local newvec3 = newpos:GetVec3()
+        trigger.action.smoke( newvec3, SmokeColor, self.firename )
+      else
+        trigger.action.smoke( self:GetVec3(), SmokeColor, self.firename )
+      end
       
       -- Stop smoke
       if Duration and Duration>0 then
@@ -2147,6 +2162,72 @@ do -- COORDINATE
     end
     
     return self
+  end
+  
+  --- Get the offset direction when using `COORDINATE:Smoke()`.
+  -- @param #COORDINATE self
+  -- @return #number Direction in degrees.
+  function COORDINATE:GetSmokeOffsetDirection()
+    local direction = self.SmokeOffsetDirection or math.random(1,359)
+    return direction
+  end
+  
+  --- Set the offset direction when using `COORDINATE:Smoke()`.
+  -- @param #COORDINATE self
+  -- @param #number Direction (Optional) This is the direction of the offset, 1-359 (degrees). Default random.
+  -- @return #COORDINATE self
+  function COORDINATE:SetSmokeOffsetDirection(Direction)
+    if self then
+      self.SmokeOffsetDirection = Direction or math.random(1,359)
+      return self
+    else
+      COORDINATE.SmokeOffsetDirection = Direction or math.random(1,359)
+    end
+  end
+  
+  --- Get the offset distance when using `COORDINATE:Smoke()`.
+  -- @param #COORDINATE self
+  -- @return #number Distance Distance in meters.
+  function COORDINATE:GetSmokeOffsetDistance()
+    local distance = self.SmokeOffsetDistance or math.random(10,20)
+    return distance
+  end
+  
+  --- Set the offset distance when using `COORDINATE:Smoke()`.
+  -- @param #COORDINATE self
+  -- @param #number Distance (Optional) This is the distance of the offset in meters. Default random 10-20.
+  -- @return #COORDINATE self
+  function COORDINATE:SetSmokeOffsetDistance(Distance)
+    if self then
+      self.SmokeOffsetDistance = Distance or math.random(10,20)
+      return self
+    else
+      COORDINATE.SmokeOffsetDistance = Distance or math.random(10,20)
+    end
+  end
+  
+  --- Set the offset on when using `COORDINATE:Smoke()`.
+  -- @param #COORDINATE self
+  -- @return #COORDINATE self
+  function COORDINATE:SwitchSmokeOffsetOn()
+    if self then
+      self.SmokeOffset = true
+      return self
+    else
+      COORDINATE.SmokeOffset = true
+    end
+  end
+  
+  --- Set the offset off when using `COORDINATE:Smoke()`.
+  -- @param #COORDINATE self
+  -- @return #COORDINATE self
+  function COORDINATE:SwitchSmokeOffsetOff()
+    if self then
+      self.SmokeOffset = false
+      return self
+    else
+      COORDINATE.SmokeOffset = false
+    end
   end
 
   --- Stops smoking the point in a color.
