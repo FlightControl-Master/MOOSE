@@ -59,6 +59,10 @@ do -- COORDINATE
   --   * @{#COORDINATE.SmokeOrange}(): To smoke the point in orange.
   --   * @{#COORDINATE.SmokeWhite}(): To smoke the point in white.
   --   * @{#COORDINATE.SmokeGreen}(): To smoke the point in green.
+  --   * @{#COORDINATE.SetSmokeOffsetDirection}(): To set an offset point direction for smoke.
+  --   * @{#COORDINATE.SetSmokeOffsetDistance}(): To set an offset point distance for smoke.
+  --   * @{#COORDINATE.SwitchSmokeOffsetOn}(): To set an offset point for smoke to on.
+  --   * @{#COORDINATE.SwitchSmokeOffsetOff}(): To set an offset point for smoke to off.
   --
   -- ## 2.2) Flare
   --
