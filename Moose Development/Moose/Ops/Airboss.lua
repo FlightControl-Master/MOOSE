@@ -3091,8 +3091,7 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   self.SRS:SetVolume(Volume or 1)
   --self.SRS:SetModulations(Modulations)
   if GoogleCreds then
-    self.SRS:SetProviderOptionsGoogle(GoogleCreds,GoogleCreds)
-    self.SRS:SetProvider(MSRS.Provider.GOOGLE)
+    self.SRS:SetGoogle(GoogleCreds)
   end
   if Voice then
     self.SRS:SetVoice(Voice)
@@ -3642,7 +3641,6 @@ function AIRBOSS:onafterStart( From, Event, To )
   self:HandleEvent( EVENTS.PlayerLeaveUnit, self._PlayerLeft )
   self:HandleEvent( EVENTS.MissionEnd )
   self:HandleEvent( EVENTS.RemoveUnit )
-  self:HandleEvent( EVENTS.UnitLost, self.OnEventRemoveUnit )
 
   -- self.StatusScheduler=SCHEDULER:New(self)
   -- self.StatusScheduler:Schedule(self, self._Status, {}, 1, 0.5)
