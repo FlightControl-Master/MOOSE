@@ -1913,6 +1913,13 @@ end
 function UTILS.GetReportingName(Typename)
 
   local typename = string.lower(Typename)
+  
+  -- special cases - Shark and Manstay have "A-50" in the name
+  if string.find(typename,"ka-50",1,true) then
+    return "Shark"
+  elseif string.find(typename,"a-50",1,true) then
+    return "Mainstay"
+  end
 
   for name, value in pairs(ENUMS.ReportingName.NATO) do
     local svalue = string.lower(value)
