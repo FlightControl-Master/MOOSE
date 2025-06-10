@@ -198,7 +198,7 @@ end -- env
 
 do -- radio
 
-  ---@type radio
+  --@type radio
   -- @field #radio.modulation modulation
   
   ---

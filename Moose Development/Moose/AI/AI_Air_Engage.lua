@@ -13,11 +13,13 @@
 
 
 
--- @type AI_AIR_ENGAGE
+--- @type AI_AIR_ENGAGE
 -- @extends AI.AI_AIR#AI_AIR
 
 
 --- Implements the core functions to intercept intruders. Use the Engage trigger to intercept intruders.
+-- 
+-- ![Banner Image](..\Images\deprecated.png)
 -- 
 -- The AI_AIR_ENGAGE is assigned a @{Wrapper.Group} and this must be done before the AI_AIR_ENGAGE process can be started using the **Start** event.
 -- 

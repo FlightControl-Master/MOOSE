@@ -18,6 +18,8 @@
 --- 
 -- # TASKINFO class, extends @{Core.Base#BASE}
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- ## The TASKINFO class implements the methods to contain information and display information of a task. 
 --
 -- # Developer Note

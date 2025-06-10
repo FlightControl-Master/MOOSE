@@ -40,6 +40,8 @@
 
 
 --- Build large formations, make AI follow a @{Wrapper.Client#CLIENT} (player) leader or a @{Wrapper.Unit#UNIT} (AI) leader.
+-- 
+-- ![Banner Image](..\Images\deprecated.png)
 --
 -- AI_FORMATION makes AI @{Wrapper.Group#GROUP}s fly in formation of various compositions.
 -- The AI_FORMATION class models formations in a different manner than the internal DCS formation logic!!!

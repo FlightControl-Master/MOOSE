@@ -25,6 +25,8 @@
 -- 
 -- Allows you to interact with escorting AI on your flight and take the lead.
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- Each escorting group can be commanded with a complete set of radio commands (radio menu in your flight, and then F10).
 --
 -- The radio commands will vary according the category of the group. The richest set of commands are with helicopters and airPlanes.

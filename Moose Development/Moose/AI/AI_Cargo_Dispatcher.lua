@@ -22,6 +22,8 @@
 -- 
 -- ===
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- # The dispatcher concept.
 -- 
 -- Carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation.

@@ -872,6 +872,8 @@ end
 -- @return Wrapper.Group#GROUP The found GROUP.
 function DATABASE:FindGroup( GroupName )
 
+  if type(GroupName) ~= "string" or GroupName == "" then return end
+
   local GroupFound = self.GROUPS[GroupName]
   
   if GroupFound == nil and GroupName ~= nil and self.Templates.Groups[GroupName] == nil then

@@ -70,6 +70,7 @@
 -- @field #boolean DespawnAfterLanding
 -- @field #boolean DespawnAfterHolding
 -- @field #list<Ops.Auftrag#AUFTRAG> ListOfAuftrag
+-- @field #string defaulttakeofftype Take off type
 -- @extends Core.Fsm#FSM
 
 --- *“Airspeed, altitude, and brains. Two are always needed to successfully complete the flight.”* -- Unknown.
@@ -223,7 +224,8 @@ EASYGCICAP = {
   ReadyFlightGroups = {},
   DespawnAfterLanding = false,
   DespawnAfterHolding = true,
-  ListOfAuftrag = {}
+  ListOfAuftrag = {},
+  defaulttakeofftype = "hot",
 }
 
 --- Internal Squadron data type
@@ -259,7 +261,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.18"
+EASYGCICAP.version="0.1.22"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -312,6 +314,7 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.DespawnAfterLanding = false
   self.DespawnAfterHolding = true
   self.ListOfAuftrag = {}
+  self.defaulttakeofftype = "hot"
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("EASYGCICAP %s | ", self.alias)
@@ -397,6 +400,16 @@ end
 function EASYGCICAP:SetDefaultRepeatOnFailure(Retries)
   self:T(self.lid.."SetDefaultRepeatOnFailure")
   self.repeatsonfailure = Retries or 3
+  return self
+end
+
+--- Add default take off type for the airwings.
+-- @param #EASYGCICAP self
+-- @param #string Takeoff Can be "hot", "cold", or "air" - default is "hot".
+-- @return #EASYGCICAP self 
+function EASYGCICAP:SetDefaultTakeOffType(Takeoff)
+  self:T(self.lid.."SetDefaultTakeOffType")
+  self.defaulttakeofftype = Takeoff or "hot"
   return self
 end
 
@@ -569,6 +582,13 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   local DespawnAfterLanding = self.DespawnAfterLanding
   local DespawnAfterHolding = self.DespawnAfterHolding
   
+  -- Check STATIC name
+  local check = STATIC:FindByName(Airbasename,false)
+  if check == nil then
+    MESSAGE:New(self.lid.."There's no warehouse static on the map (wrong naming?) for airbase "..tostring(Airbasename).."!",30,"CHECK"):ToAllIf(self.debug):ToLog()
+    return
+  end
+  
   -- Create Airwing
   local CAP_Wing = AIRWING:New(Airbasename,Alias)
   CAP_Wing:SetVerbosityLevel(0)
@@ -596,9 +616,8 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   if #self.ManagedREC > 0 then
     CAP_Wing:SetNumberRecon(1)
   end
-  --local PatrolCoordinateKutaisi = ZONE:New(CapZoneName):GetCoordinate()
-  --CAP_Wing:AddPatrolPointCAP(PatrolCoordinateKutaisi,self.capalt,UTILS.KnotsToAltKIAS(self.capspeed,self.capalt),self.capdir,self.capleg)
-  CAP_Wing:SetTakeoffHot()
+
+  CAP_Wing:SetTakeoffType(self.defaulttakeofftype)
   CAP_Wing:SetLowFuelThreshold(0.3)
   CAP_Wing.RandomAssetScore = math.random(50,100)
   CAP_Wing:Start()
@@ -606,6 +625,9 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   local Intel = self.Intel
   
   local TankerInvisible = self.TankerInvisible
+  local engagerange = self.engagerange
+  local GoZoneSet = self.GoZoneSet
+  local NoGoZoneSet = self.NoGoZoneSet
   
   function CAP_Wing:onbeforeFlightOnMission(From, Event, To, Flightgroup, Mission)
     local flightgroup = Flightgroup -- Ops.FlightGroup#FLIGHTGROUP
@@ -619,7 +641,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:GetGroup():SetOptionRadarUsingForContinousSearch()
     if Mission.type ~= AUFTRAG.Type.TANKER and Mission.type ~= AUFTRAG.Type.AWACS and Mission.type ~= AUFTRAG.Type.RECON then
       flightgroup:SetDetection(true)
-      flightgroup:SetEngageDetectedOn(self.engagerange,{"Air"},self.GoZoneSet,self.NoGoZoneSet)
+      flightgroup:SetEngageDetectedOn(engagerange,{"Air"},GoZoneSet,NoGoZoneSet)
       flightgroup:SetOutOfAAMRTB()
       if CapFormation then
         flightgroup:GetGroup():SetOption(AI.Option.Air.id.FORMATION,CapFormation)
@@ -801,6 +823,11 @@ function EASYGCICAP:_SetCAPPatrolPoints()
   self:T(self.lid.."_SetCAPPatrolPoints")
   for _,_data in pairs(self.ManagedCP) do
     local data = _data --#EASYGCICAP.CapPoint
+    self:T("Airbasename = "..data.AirbaseName)
+    if not self.wings[data.AirbaseName] then
+      MESSAGE:New(self.lid.."You are trying to create a CAP point for which there is no wing! "..tostring(data.AirbaseName),30,"CHECK"):ToAllIf(self.debug):ToLog()
+      return
+    end
     local Wing = self.wings[data.AirbaseName][1] -- Ops.Airwing#AIRWING
     local Coordinate = data.Coordinate
     local Altitude = data.Altitude

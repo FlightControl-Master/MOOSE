@@ -53,6 +53,8 @@
 --     
 -- # Developer Note
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE.
 -- Therefore, this class is considered to be deprecated and superseded by the [Functional.Fox](https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Functional.Fox.html) class, which provides the same functionality.
 --

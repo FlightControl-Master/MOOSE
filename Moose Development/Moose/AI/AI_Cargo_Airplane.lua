@@ -14,6 +14,8 @@
 
 
 --- Brings a dynamic cargo handling capability for an AI airplane group.
+-- 
+-- ![Banner Image](..\Images\deprecated.png)
 --  
 -- Airplane carrier equipment can be mobilized to intelligently transport infantry and other cargo within the simulation between airbases.
 -- 

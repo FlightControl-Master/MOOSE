@@ -19,6 +19,8 @@
 
 --- Implements the core functions to SEAD intruders. Use the Engage trigger to intercept intruders.
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- The AI_A2G_SEAD is assigned a @{Wrapper.Group} and this must be done before the AI_A2G_SEAD process can be started using the **Start** event.
 -- 
 -- The AI will fly towards the random 3D point within the patrol zone, using a random speed within the given altitude and speed limits.

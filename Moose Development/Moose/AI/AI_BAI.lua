@@ -38,6 +38,8 @@
 
 --- Implements the core functions to provide BattleGround Air Interdiction in an Engage @{Core.Zone} by an AIR @{Wrapper.Controllable} or @{Wrapper.Group}.
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- The AI_BAI_ZONE runs a process. It holds an AI in a Patrol Zone and when the AI is commanded to engage, it will fly to an Engage Zone.
 -- 
 -- ![HoldAndEngage](..\Presentations\AI_BAI\Dia3.JPG)

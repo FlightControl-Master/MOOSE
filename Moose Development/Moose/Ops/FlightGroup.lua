@@ -259,7 +259,7 @@ function FLIGHTGROUP:New(group)
   local self=BASE:Inherit(self, OPSGROUP:New(group)) -- #FLIGHTGROUP
 
   -- Set some string id for output to DCS.log file.
-  self.lid=string.format("FLIGHTGROUP %s | ", self.groupname)
+  self.lid=string.format("FLIGHTGROUP %s | ", self.groupname or "N/A")
 
   -- Defaults
   self:SetDefaultROE()
@@ -2002,6 +2002,9 @@ function FLIGHTGROUP:onafterElementAirborne(From, Event, To, Element)
 
   -- Debug info.
   self:T2(self.lid..string.format("Element airborne %s", Element.name))
+  
+  -- Set parking spot to free. Also for FC. This is usually done after taxiing but doing it here in case the group is teleported.
+  self:_SetElementParkingFree(Element)  
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.AIRBORNE)

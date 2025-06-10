@@ -897,7 +897,7 @@ function UNIT:GetAmmunition()
                     nAPshells = nAPshells + Nammo
                 end
 
-                if ammotable[w].desc.typeName and string.find(ammotable[w].desc.typeName, "_HE", 1, true) then
+                if ammotable[w].desc.typeName and (string.find(ammotable[w].desc.typeName, "_HE", 1, true) or string.find(ammotable[w].desc.typeName, "HESH", 1, true)) then
                     nHEshells = nHEshells + Nammo
                 end
 
@@ -1107,7 +1107,6 @@ function UNIT:GetUnits()
 
     if DCSUnit then
         Units[1] = UNIT:Find(DCSUnit)
-        - self:T3(Units)
         return Units
     end
 
