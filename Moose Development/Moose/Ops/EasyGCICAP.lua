@@ -261,7 +261,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.21"
+EASYGCICAP.version="0.1.22"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -582,6 +582,13 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   local DespawnAfterLanding = self.DespawnAfterLanding
   local DespawnAfterHolding = self.DespawnAfterHolding
   
+  -- Check STATIC name
+  local check = STATIC:FindByName(Airbasename,false)
+  if check == nil then
+    MESSAGE:New(self.lid.."There's no warehouse static on the map (wrong naming?) for airbase "..tostring(Airbasename).."!",30,"CHECK"):ToAllIf(self.debug):ToLog()
+    return
+  end
+  
   -- Create Airwing
   local CAP_Wing = AIRWING:New(Airbasename,Alias)
   CAP_Wing:SetVerbosityLevel(0)
@@ -816,6 +823,11 @@ function EASYGCICAP:_SetCAPPatrolPoints()
   self:T(self.lid.."_SetCAPPatrolPoints")
   for _,_data in pairs(self.ManagedCP) do
     local data = _data --#EASYGCICAP.CapPoint
+    self:T("Airbasename = "..data.AirbaseName)
+    if not self.wings[data.AirbaseName] then
+      MESSAGE:New(self.lid.."You are trying to create a CAP point for which there is no wing! "..tostring(data.AirbaseName),30,"CHECK"):ToAllIf(self.debug):ToLog()
+      return
+    end
     local Wing = self.wings[data.AirbaseName][1] -- Ops.Airwing#AIRWING
     local Coordinate = data.Coordinate
     local Altitude = data.Altitude
