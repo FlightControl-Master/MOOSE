@@ -1403,6 +1403,8 @@ function AUFTRAG:NewINTERCEPT(Target)
 end
 
 --- **[AIR]** Create a CAP mission.
+-- Assinged groups are tasked to execute a CAP mission. This consists of a DCS orbit task combined with an enroute "search and engage in zone" task. 
+-- **Note** that currently DCS only supports *circular* zones for the task.
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE_RADIUS ZoneCAP Circular CAP zone. Detected targets in this zone will be engaged.
 -- @param #number Altitude Altitude at which to orbit in feet. Default is 10,000 ft.

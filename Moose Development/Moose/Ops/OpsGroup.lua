@@ -5589,10 +5589,13 @@ function OPSGROUP:onafterUnpauseMission(From, Event, To)
     -- Debug info.
     self:T(self.lid..string.format("Unpausing mission %s [%s]", mission:GetName(), mission:GetType()))
     
+    -- Set state of mission, e.g. for not teleporting again
+    mission.unpaused=true
+    
     -- Start mission.
     self:MissionStart(mission)
     
-    -- Remove mission from 
+    -- Remove mission from pausedmissions queue
     for i,mid in pairs(self.pausedmissions) do
       --self:T(self.lid..string.format("Checking paused mission", mid))
       if mid==mission.auftragsnummer then
@@ -6232,7 +6235,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
     
     -- Check if group is mobile. Note that some immobile units report a speed of 1 m/s = 3.6 km/h.
-    if self.speedMax<=3.6 or mission.teleport then
+    if (self.speedMax<=3.6 or mission.teleport) and not mission.unpaused then
 
       -- Teleport to waypoint coordinate. Mission will not be paused.
       self:Teleport(waypointcoord, nil, true)
