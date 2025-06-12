@@ -261,7 +261,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.22"
+EASYGCICAP.version="0.1.23"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -785,6 +785,11 @@ function EASYGCICAP:_SetTankerPatrolPoints()
   self:T(self.lid.."_SetTankerPatrolPoints")
   for _,_data in pairs(self.ManagedTK) do
     local data = _data --#EASYGCICAP.CapPoint
+    self:T("Airbasename = "..data.AirbaseName)
+    if not self.wings[data.AirbaseName] then
+      MESSAGE:New(self.lid.."You are trying to create a TANKER point for which there is no wing! "..tostring(data.AirbaseName),30,"CHECK"):ToAllIf(self.debug):ToLog()
+      return
+    end
     local Wing = self.wings[data.AirbaseName][1] -- Ops.Airwing#AIRWING
     local Coordinate = data.Coordinate
     local Altitude = data.Altitude
@@ -804,6 +809,11 @@ function EASYGCICAP:_SetAwacsPatrolPoints()
   self:T(self.lid.."_SetAwacsPatrolPoints")
   for _,_data in pairs(self.ManagedEWR) do
     local data = _data --#EASYGCICAP.CapPoint
+    self:T("Airbasename = "..data.AirbaseName)
+    if not self.wings[data.AirbaseName] then
+      MESSAGE:New(self.lid.."You are trying to create an AWACS point for which there is no wing! "..tostring(data.AirbaseName),30,"CHECK"):ToAllIf(self.debug):ToLog()
+      return
+    end
     local Wing = self.wings[data.AirbaseName][1] -- Ops.Airwing#AIRWING
     local Coordinate = data.Coordinate
     local Altitude = data.Altitude
@@ -847,6 +857,11 @@ function EASYGCICAP:_SetReconPatrolPoints()
   self:T(self.lid.."_SetReconPatrolPoints")
   for _,_data in pairs(self.ManagedREC) do
     local data = _data --#EASYGCICAP.CapPoint
+    self:T("Airbasename = "..data.AirbaseName)
+    if not self.wings[data.AirbaseName] then
+      MESSAGE:New(self.lid.."You are trying to create a RECON point for which there is no wing! "..tostring(data.AirbaseName),30,"CHECK"):ToAllIf(self.debug):ToLog()
+      return
+    end
     local Wing = self.wings[data.AirbaseName][1] -- Ops.Airwing#AIRWING
     local Coordinate = data.Coordinate
     local Altitude = data.Altitude
