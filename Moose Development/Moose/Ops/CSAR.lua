@@ -2488,8 +2488,8 @@ function CSAR:onafterStart(From, Event, To)
   
   self.mash = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart()
   
-  self.staticmashes = SET_STATIC:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterOnce()
-  self.zonemashes = SET_ZONE:New():FilterPrefixes(self.mashprefix):FilterOnce()
+  self.staticmashes = SET_STATIC:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart()
+  self.zonemashes = SET_ZONE:New():FilterPrefixes(self.mashprefix):FilterStart()
   
   --[[
   if staticmashes:Count() > 0  then
