@@ -691,7 +691,7 @@ AIRBASE.SouthAtlantic={
 -- * AIRBASE.Sinai.Bilbeis_Air_Base
 -- * AIRBASE.Sinai.Bir_Hasanah
 -- * AIRBASE.Sinai.Birma_Air_Base
--- * AIRBASE.Sinai.Borj_El_Arab_International_Airport
+-- * AIRBASE.Sinai.Borg_El_Arab_International_Airport
 -- * AIRBASE.Sinai.Cairo_International_Airport
 -- * AIRBASE.Sinai.Cairo_West
 -- * AIRBASE.Sinai.Difarsuwar_Airfield
@@ -739,7 +739,7 @@ AIRBASE.Sinai = {
   ["Bilbeis_Air_Base"] = "Bilbeis Air Base",
   ["Bir_Hasanah"] = "Bir Hasanah",
   ["Birma_Air_Base"] = "Birma Air Base",
-  ["Borj_El_Arab_International_Airport"] = "Borj El Arab International Airport",
+  ["Borg_El_Arab_International_Airport"] = "Borg El Arab International Airport",
   ["Cairo_International_Airport"] = "Cairo International Airport",
   ["Cairo_West"] = "Cairo West",
   ["Difarsuwar_Airfield"] = "Difarsuwar Airfield",
