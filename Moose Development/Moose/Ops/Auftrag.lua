@@ -1428,7 +1428,7 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   mission:_SetLogID()
 
   -- DCS task parameters:
-  mission.engageZone=ZoneCAP
+  mission.engageZone=ZoneCAP or Coordinate
   mission.engageTargetTypes=TargetTypes or {"Air"}
 
   -- Mission options:
@@ -6191,8 +6191,16 @@ function AUFTRAG:GetDCSMissionTask()
     -----------------
     -- CAP Mission --
     -----------------
-
-    local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(nil, self.engageZone:GetVec2(), self.engageZone:GetRadius(), self.engageTargetTypes, Priority)
+    
+    local Vec2 = self.engageZone:GetVec2()
+    local Radius
+    if self.engageZone:IsInstanceOf("COORDINATE") then
+      Radius = UTILS.NMToMeters(20)
+    else
+      Radius = self.engageZone:GetRadius()
+    end
+        
+    local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(nil, Vec2, Radius, self.engageTargetTypes, Priority)
 
     table.insert(self.enrouteTasks, DCStask)
 
