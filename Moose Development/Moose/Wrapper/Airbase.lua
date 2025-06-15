@@ -449,7 +449,6 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Al_Dumayr
 -- * AIRBASE.Syria.Al_Qusayr
 -- * AIRBASE.Syria.Aleppo
--- * AIRBASE.Syria.Amman
 -- * AIRBASE.Syria.An_Nasiriyah
 -- * AIRBASE.Syria.At_Tanf
 -- * AIRBASE.Syria.Bassel_Al_Assad
@@ -511,7 +510,7 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Wujah_Al_Hajar
 -- * AIRBASE.Syria.Ben_Gurion 
 -- * AIRBASE.Syria.Hatzor
--- * AIRBASE.Syria.Palmashim
+-- * AIRBASE.Syria.Palmachim
 -- * AIRBASE.Syria.Tel_Nof
 -- * AIRBASE.Syria.Marka
 --
@@ -523,7 +522,6 @@ AIRBASE.Syria={
   ["Al_Dumayr"] = "Al-Dumayr",
   ["Al_Qusayr"] = "Al Qusayr",
   ["Aleppo"] = "Aleppo",
-  ["Amman"] = "Amman",
   ["An_Nasiriyah"] = "An Nasiriyah",
   ["At_Tanf"] = "At Tanf",
   ["Bassel_Al_Assad"] = "Bassel Al-Assad",
@@ -555,6 +553,7 @@ AIRBASE.Syria={
   ["Kuweires"] = "Kuweires",
   ["Lakatamia"] = "Lakatamia",
   ["Larnaca"] = "Larnaca",
+  ["Marka"] = "Marka",
   ["Marj_Ruhayyil"] = "Marj Ruhayyil",
   ["Marj_as_Sultan_North"] = "Marj as Sultan North",
   ["Marj_as_Sultan_South"] = "Marj as Sultan South",
@@ -585,9 +584,8 @@ AIRBASE.Syria={
   ["Wujah_Al_Hajar"] = "Wujah Al Hajar",
   ["Ben_Gurion"] = "Ben Gurion",
   ["Hatzor"] = "Hatzor",
-  ["Palmashim"] = "Palmashim",
+  ["Palmachim"] = "Palmachim",
   ["Tel_Nof"] = "Tel Nof",
-  ["Marka"] = "Marka",
 }
 
 --- Airbases of the Mariana Islands map:
