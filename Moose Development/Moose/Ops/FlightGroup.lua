@@ -2002,6 +2002,9 @@ function FLIGHTGROUP:onafterElementAirborne(From, Event, To, Element)
 
   -- Debug info.
   self:T2(self.lid..string.format("Element airborne %s", Element.name))
+  
+  -- Set parking spot to free. Also for FC. This is usually done after taxiing but doing it here in case the group is teleported.
+  self:_SetElementParkingFree(Element)  
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.AIRBORNE)
