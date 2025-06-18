@@ -1830,7 +1830,7 @@ do
           -- link in to SHORAD if available
           -- DONE: Test integration fully
           if self.ShoradLink and (Distance < self.ShoradActDistance or Distance < blind ) then -- don't give SHORAD position away too early
-            local Shorad = self.Shorad
+            local Shorad = self.Shorad  --Functional.Shorad#SHORAD
             local radius = self.checkradius
             local ontime = self.ShoradTime
             Shorad:WakeUpShorad(name, radius, ontime)
