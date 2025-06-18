@@ -2824,7 +2824,11 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
       if cratedistance > self.CrateDistance then cratedistance = self.CrateDistance end
       -- altered heading logic
       -- DONE: right standard deviation?
-      rheading = UTILS.RandomGaussian(0,30,-90,90,100)
+      if self:IsFixedWing(Unit) and self:IsUnitInAir(Unit) then
+        rheading = math.random(20,60) -- fix herc -- leka
+    else
+        rheading = UTILS.RandomGaussian(0, 30, -90, 90, 100)
+     end
       rheading = math.fmod((heading + rheading), 360)
       cratecoord = position:Translate(cratedistance,rheading)
     else
@@ -4888,7 +4892,18 @@ function CTLD:_UnloadSingleCrateSet(Group, Unit, setIndex)
     cObj:SetWasDropped(true)
     cObj:SetHasMoved(true)
   end
-
+-- message was not sent, must have missed it. this portion is when dropping single crate or type, ie truck.
+local cname  = crateObj:GetName() or "Unknown"
+local count  = #chunk
+if needed > 1 then
+    if count == needed then
+        self:_SendMessage(string.format("Dropped %d %s.", 1, cname), 10, false, Group)
+    else
+        self:_SendMessage(string.format("Dropped %d/%d crate(s) of %s.", count, needed, cname), 15, false, Group)
+    end
+else
+    self:_SendMessage(string.format("Dropped %d %s(s).", count, cname), 10, false, Group)
+end
   -- Rebuild the cargo list to remove the dropped crates
   local loadedData = self.Loaded_Cargo[unitName]
   if loadedData and loadedData.Cargo then
