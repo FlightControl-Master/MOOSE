@@ -459,8 +459,9 @@ end
 function SPAWNSTATIC:SpawnFromZone(Zone, Heading, NewName)
 
   -- Spawn the new static at the center of the zone.
-  local Static = self:SpawnFromPointVec2( Zone:GetPointVec2(), Heading, NewName )
-
+  --local Static = self:SpawnFromPointVec2( Zone:GetPointVec2(), Heading, NewName )
+  local Static = self:SpawnFromCoordinate(Zone:GetCoordinate(), Heading, NewName)
+    
   return Static
 end
 
