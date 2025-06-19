@@ -1414,7 +1414,7 @@ CTLD.FixedWingTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.3.34"
+CTLD.version="1.3.35"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -5971,16 +5971,22 @@ function CTLD:SmokeZoneNearBy(Unit, Flare)
     for index,cargozone in pairs(zones[i]) do
       local CZone = cargozone --#CTLD.CargoZone
       local zonename = CZone.name
-      local zone = nil
+      local zone = nil -- Core.Zone#ZONE_RADIUS
+      local airbasezone = false
       if i == 4 then
         zone = UNIT:FindByName(zonename)
       else
         zone = ZONE:FindByName(zonename)
         if not zone then
           zone = AIRBASE:FindByName(zonename):GetZone()
+          airbasezone = true
         end
       end
       local zonecoord = zone:GetCoordinate()
+      -- Avoid smoke/flares on runways
+      if (i==1 or 1==3) and airbasezone==true and zone:IsInstanceOf("ZONE_BASE") then
+        zonecoord = zone:GetRandomCoordinate(inner,outer,{land.SurfaceType.LAND})
+      end
     if zonecoord then
       local active = CZone.active
       local color = CZone.color

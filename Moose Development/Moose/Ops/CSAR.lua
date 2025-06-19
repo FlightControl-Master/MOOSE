@@ -263,6 +263,7 @@ CSAR = {
   rescuedpilots = 0,
   limitmaxdownedpilots = true,
   maxdownedpilots = 10,
+  useFIFOLimitReplacement = false, -- If true, it will remove the oldest downed pilot when a new one is added, if the limit is reached.
   allheligroupset = nil,
   topmenuname = "CSAR",
   ADFRadioPwr = 1000,
@@ -313,7 +314,7 @@ CSAR.AircraftType["CH-47Fbl1"] = 31
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.32"
+CSAR.version="1.0.33"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1144,19 +1145,8 @@ function CSAR:_EventHandler(EventData)
         self:T("Double Ejection!")
         return self
       end
-      
-      -- limit no of pilots in the field.
-      if self.limitmaxdownedpilots and self:_ReachedPilotLimit() then
-        self:T("Maxed Downed Pilot!")
-        return self
-      end
-    
-    
-    -- TODO: Over water check --- EVENTS.LandingAfterEjection NOT triggered by DCS, so handle csarUsePara = true case
-    -- might create dual pilots in edge cases
-    
-    local wetfeet = false
-    
+
+
     local initdcscoord = nil
     local initcoord = nil
     if _event.id == EVENTS.Ejection then
@@ -1168,6 +1158,36 @@ function CSAR:_EventHandler(EventData)
       initcoord = COORDINATE:NewFromVec3(initdcscoord)
       self:T({initdcscoord})
     end
+
+      -- Remove downed pilot if already exists to replace with new one.
+      if _event.IniPlayerName then
+          local PilotTable = self.downedPilots --#CSAR.DownedPilot
+          local _foundPilot = nil
+          for _,_pilot in pairs(PilotTable) do
+            if _pilot.player == _event.IniPlayerName and _pilot.alive == true then
+              _foundPilot = _pilot
+              break
+            end
+          end
+          if _foundPilot then
+              self:T("Downed pilot already exists!")
+              _foundPilot.group:Destroy(false)
+              self:_RemoveNameFromDownedPilots(_foundPilot.name)
+              self:_CheckDownedPilotTable()
+          end
+      end
+
+      -- limit no of pilots in the field.
+      if self.limitmaxdownedpilots and self:_ReachedPilotLimit() then
+        self:T("Maxed Downed Pilot!")
+        return self
+      end
+    
+    
+    -- TODO: Over water check --- EVENTS.LandingAfterEjection NOT triggered by DCS, so handle csarUsePara = true case
+    -- might create dual pilots in edge cases
+    
+    local wetfeet = false
     
     --local surface = _unit:GetCoordinate():GetSurfaceType()
     local surface = initcoord:GetSurfaceType()
@@ -2116,7 +2136,8 @@ end
 --- (Internal) Determine distance to closest MASH.
 -- @param #CSAR self
 -- @param Wrapper.Unit#UNIT _heli Helicopter #UNIT
--- @return #CSAR self
+-- @return #number Distance in meters
+-- @return #string MASH Name as string
 function CSAR:_GetClosestMASH(_heli)
   self:T(self.lid .. " _GetClosestMASH")
   local _mashset = self.mash -- Core.Set#SET_GROUP
@@ -2128,31 +2149,13 @@ function CSAR:_GetClosestMASH(_heli)
   local _shortestDistance = -1
   local _distance = 0
   local _helicoord = _heli:GetCoordinate()
-  
-  local function GetCloseAirbase(coordinate,Coalition,Category)
-      
-      local a=coordinate:GetVec3()
-      local distmin=math.huge
-      local airbase=nil
-      for DCSairbaseID, DCSairbase in pairs(world.getAirbases(Coalition)) do
-        local b=DCSairbase:getPoint()
-  
-        local c=UTILS.VecSubstract(a,b)
-        local dist=UTILS.VecNorm(c)
-  
-        if dist<distmin and (Category==nil or Category==DCSairbase:getDesc().category) then
-          distmin=dist
-          airbase=DCSairbase
-        end
-  
-      end  
-      return distmin
-  end
+  local MashName = nil
   
   if self.allowFARPRescue then
     local position = _heli:GetCoordinate()
     local afb,distance = position:GetClosestAirbase(nil,self.coalition)
     _shortestDistance = distance
+    MashName = (afb ~= nil) and afb:GetName() or "Unknown"
   end
   
   for _,_mashes in pairs(MashSets)  do
@@ -2166,12 +2169,13 @@ function CSAR:_GetClosestMASH(_heli)
         _distance = self:_GetDistance(_helicoord, _mashcoord)
         if _distance ~= nil and (_shortestDistance == -1 or _distance < _shortestDistance) then
           _shortestDistance = _distance
+          MashName = _mashUnit:GetName() or "Unknown"
         end
     end
   end
   
   if _shortestDistance ~= -1 then
-      return _shortestDistance
+      return _shortestDistance, MashName
   else
       return -1
   end
@@ -2417,11 +2421,26 @@ function CSAR:_ReachedPilotLimit()
    local limit = self.maxdownedpilots
    local islimited = self.limitmaxdownedpilots
    local count = self:_CountActiveDownedPilots()
-   if islimited and (count >= limit) then
-      return true
-   else
-      return false
-   end
+    if islimited and (count >= limit) then
+        if self.useFIFOLimitReplacement then
+            local oldIndex  = -1
+            local oldDownedPilot = nil
+            for _index, _downedpilot in pairs(self.downedPilots) do
+                oldIndex = _index
+                oldDownedPilot = _downedpilot
+                break
+            end
+            if oldDownedPilot then
+                oldDownedPilot.group:Destroy(false)
+                oldDownedPilot.alive = false
+                self:_CheckDownedPilotTable()
+                return false
+            end
+        end
+        return true
+    else
+        return false
+    end
 end
 
   --- User - Function to add onw SET_GROUP Set-up for pilot filtering and assignment.
@@ -2469,8 +2488,8 @@ function CSAR:onafterStart(From, Event, To)
   
   self.mash = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart()
   
-  self.staticmashes = SET_STATIC:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterOnce()
-  self.zonemashes = SET_ZONE:New():FilterPrefixes(self.mashprefix):FilterOnce()
+  self.staticmashes = SET_STATIC:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart()
+  self.zonemashes = SET_ZONE:New():FilterPrefixes(self.mashprefix):FilterStart()
   
   --[[
   if staticmashes:Count() > 0  then
