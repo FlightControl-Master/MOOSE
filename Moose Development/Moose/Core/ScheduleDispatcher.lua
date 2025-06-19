@@ -326,7 +326,7 @@ function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
     local Schedule = self.Schedule[Scheduler][CallID] -- #SCHEDULEDISPATCHER.ScheduleData
 
     -- Only stop when there is a ScheduleID defined for the CallID. So, when the scheduler was stopped before, do nothing.
-    if Schedule.ScheduleID then
+    if Schedule and Schedule.ScheduleID then
 
       self:T( string.format( "SCHEDULEDISPATCHER stopping scheduler CallID=%s, ScheduleID=%s", tostring( CallID ), tostring( Schedule.ScheduleID ) ) )
 
