@@ -828,6 +828,12 @@ AIRBASE.Kola = {
   ["Enontekio"] = "Enontekio",
   ["Evenes"] = "Evenes",
   ["Hosio"] = "Hosio",
+  ["Kilpyavr"] = "Kilpyavr",
+  ["Afrikanda"] = "Afrikanda",
+  ["Kalevala"] = "Kalevala",
+  ["Koshka_Yavr"] = "Koshka Yavr",
+  ["Poduzhemye"] = "Poduzhemye",
+  ["Luostari"] = "Luostari",
 }
 
 --- Airbases of the Afghanistan map
