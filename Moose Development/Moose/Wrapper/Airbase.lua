@@ -833,7 +833,7 @@ AIRBASE.Kola = {
   ["Kalevala"] = "Kalevala",
   ["Koshka_Yavr"] = "Koshka Yavr",
   ["Poduzhemye"] = "Poduzhemye",
-  ["Luostari"] = "Luostari",
+  ["Luostari_Pechenga"] = "Luostari Pechenga",
 }
 
 --- Airbases of the Afghanistan map
