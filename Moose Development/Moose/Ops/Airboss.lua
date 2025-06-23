@@ -2874,23 +2874,28 @@ end
 function AIRBOSS:SetGlideslopeErrorThresholds(_max,_min, High, HIGH, Low, LOW)
 
   --Check if V/STOL Carrier
-  if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
+  if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or 
+    self.carriertype == AIRBOSS.CarrierType.HERMES or 
+    self.carriertype == AIRBOSS.CarrierType.TARAWA or 
+    self.carriertype == AIRBOSS.CarrierType.AMERICA or 
+    self.carriertype == AIRBOSS.CarrierType.JCARLOS or 
+    self.carriertype == AIRBOSS.CarrierType.CANBERRA then
 
-  -- allow a larger GSE for V/STOL operations --Pene Testing
-  self.gle._max=_max or  0.7
-  self.gle.High=High or  1.4
-  self.gle.HIGH=HIGH or  1.9
-  self.gle._min=_min or -0.5
-  self.gle.Low=Low   or -1.2
-  self.gle.LOW=LOW   or -1.5
-  -- CVN values
+    -- allow a larger GSE for V/STOL operations --Pene Testing
+    self.gle._max=_max or  0.7
+    self.gle.High=High or  1.4
+    self.gle.HIGH=HIGH or  1.9
+    self.gle._min=_min or -0.5
+    self.gle.Low=Low   or -1.2
+    self.gle.LOW=LOW   or -1.5
   else
-  self.gle._max=_max or  0.4
-  self.gle.High=High or  0.8
-  self.gle.HIGH=HIGH or  1.5
-  self.gle._min=_min or -0.3
-  self.gle.Low=Low   or -0.6
-  self.gle.LOW=LOW   or -0.9
+    -- CVN values    
+    self.gle._max=_max or  0.4
+    self.gle.High=High or  0.8
+    self.gle.HIGH=HIGH or  1.5
+    self.gle._min=_min or -0.3
+    self.gle.Low=Low   or -0.6
+    self.gle.LOW=LOW   or -0.9
   end
 
   return self
