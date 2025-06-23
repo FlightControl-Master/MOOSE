@@ -2075,6 +2075,9 @@ function CTLD:_EventHandler(EventData)
       local _group = event.IniGroup
       local _unit = event.IniUnit
       self:_RefreshLoadCratesMenu(_group, _unit)
+    if self:IsFixedWing(_unit) and self.enableFixedWing then
+      self:_RefreshDropCratesMenu(_group, _unit)
+    end
     end
   elseif event.id == EVENTS.PlayerLeaveUnit or event.id == EVENTS.UnitLost then
     -- remove from pilot table
@@ -4888,7 +4891,17 @@ function CTLD:_UnloadSingleCrateSet(Group, Unit, setIndex)
     cObj:SetWasDropped(true)
     cObj:SetHasMoved(true)
   end
-
+local cname  = crateObj:GetName() or "Unknown"
+local count  = #chunk
+if needed > 1 then
+if count == needed then
+    self:_SendMessage(string.format("Dropped %d %s.", 1, cname), 10, false, Group)
+else
+    self:_SendMessage(string.format("Dropped %d/%d crate(s) of %s.", count, needed, cname), 15, false, Group)
+end
+else
+self:_SendMessage(string.format("Dropped %d %s(s).", count, cname), 10, false, Group)
+end
   -- Rebuild the cargo list to remove the dropped crates
   local loadedData = self.Loaded_Cargo[unitName]
   if loadedData and loadedData.Cargo then
@@ -5007,8 +5020,10 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
       --------------------------------------------------------------------
       local mAll=MENU_GROUP:New(Group,"Drop ALL crates",dropCratesMenu)
       MENU_GROUP_COMMAND:New(Group,"Drop",mAll,self._UnloadCrates,self,Group,Unit)
-      MENU_GROUP_COMMAND:New(Group,"Drop and build",mAll,self._DropAndBuild,self,Group,Unit)
-  
+      if not ( self:IsUnitInAir(Unit) and self:IsFixedWing(Unit) ) then
+        MENU_GROUP_COMMAND:New(Group,"Drop and build",mAll,self._DropAndBuild,self,Group,Unit)
+      end
+
       self.CrateGroupList=self.CrateGroupList or{}
       self.CrateGroupList[Unit:GetName()]={}
   
@@ -5029,7 +5044,9 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
             local setIndex=#self.CrateGroupList[Unit:GetName()]
             local mSet=MENU_GROUP:New(Group,label,dropCratesMenu)
             MENU_GROUP_COMMAND:New(Group,"Drop",mSet,self._UnloadSingleCrateSet,self,Group,Unit,setIndex)
+            if not ( self:IsUnitInAir(Unit) and self:IsFixedWing(Unit) ) then
             MENU_GROUP_COMMAND:New(Group,"Drop and build",mSet,self._DropSingleAndBuild,self,Group,Unit,setIndex)
+            end
             i=i+needed
           else
             local chunk={}
@@ -5156,6 +5173,8 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID)
       foundCargo:SetWasDropped(true)
       if cType == CTLD_CARGO.Enum.ENGINEERS then
         self.Engineers = self.Engineers + 1
+          local grpname = self.DroppedTroops[self.TroopCounter]:GetName()
+        self.EngineersInField[self.Engineers] = CTLD_ENGINEERING:New(name, grpname)
         self:_SendMessage(string.format("Dropped Engineers %s into action!", name), 10, false, Group)
       else
         self:_SendMessage(string.format("Dropped Troops %s into action!", name), 10, false, Group)
