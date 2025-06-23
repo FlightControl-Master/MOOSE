@@ -1403,8 +1403,6 @@ function AUFTRAG:NewINTERCEPT(Target)
 end
 
 --- **[AIR]** Create a CAP mission.
--- Assinged groups are tasked to execute a CAP mission. This consists of a DCS orbit task combined with an enroute "search and engage in zone" task. 
--- **Note** that currently DCS only supports *circular* zones for the task.
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE_RADIUS ZoneCAP Circular CAP zone. Detected targets in this zone will be engaged.
 -- @param #number Altitude Altitude at which to orbit in feet. Default is 10,000 ft.
@@ -1430,7 +1428,7 @@ function AUFTRAG:NewCAP(ZoneCAP, Altitude, Speed, Coordinate, Heading, Leg, Targ
   mission:_SetLogID()
 
   -- DCS task parameters:
-  mission.engageZone=ZoneCAP
+  mission.engageZone=ZoneCAP or Coordinate
   mission.engageTargetTypes=TargetTypes or {"Air"}
 
   -- Mission options:
@@ -4824,6 +4822,11 @@ function AUFTRAG:CheckGroupsDone()
     self:T(self.lid..string.format("CheckGroupsDone: Mission is STARTED state %s [FSM=%s] but count of alive OPSGROUP is zero. Mission DONE!", self.status, self:GetState()))
     return true
   end
+  
+  if (self:IsStarted() or self:IsExecuting()) and self:CountOpsGroups()>0 then
+    self:T(self.lid..string.format("CheckGroupsDone: Mission is STARTED state %s [FSM=%s] and count of alive OPSGROUP > zero. Mission NOT DONE!", self.status, self:GetState()))
+    return true
+  end
 
   return true
 end
@@ -6152,8 +6155,16 @@ function AUFTRAG:GetDCSMissionTask()
     -----------------
     -- CAP Mission --
     -----------------
-
-    local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(nil, self.engageZone:GetVec2(), self.engageZone:GetRadius(), self.engageTargetTypes, Priority)
+    
+    local Vec2 = self.engageZone:GetVec2()
+    local Radius
+    if self.engageZone:IsInstanceOf("COORDINATE") then
+      Radius = UTILS.NMToMeters(20)
+    else
+      Radius = self.engageZone:GetRadius()
+    end
+        
+    local DCStask=CONTROLLABLE.EnRouteTaskEngageTargetsInZone(nil, Vec2, Radius, self.engageTargetTypes, Priority)
 
     table.insert(self.enrouteTasks, DCStask)
 
@@ -6307,9 +6318,35 @@ function AUFTRAG:GetDCSMissionTask()
     -- Add enroute task SEAD. Disabled that here because the group enganges everything on its route.
     --local DCStask=CONTROLLABLE.EnRouteTaskSEAD(nil, self.TargetType)
     --table.insert(self.enrouteTasks, DCStask)
-
-    self:_GetDCSAttackTask(self.engageTarget, DCStasks)
-
+    
+    if self.engageZone then
+    
+      --local DCStask=CONTROLLABLE.EnRouteTaskSEAD(nil, self.engageTargetTypes)
+      --table.insert(self.enrouteTasks, DCStask)
+      self.engageZone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT})
+      local ScanUnitSet = self.engageZone:GetScannedSetUnit()
+      local SeadUnitSet = SET_UNIT:New()
+      for _,_unit in pairs (ScanUnitSet.Set) do
+        local unit = _unit -- Wrapper.Unit#UNTI
+        if unit and unit:IsAlive() and unit:HasSEAD() then
+          self:T("Adding UNIT for SEAD: "..unit:GetName())
+          local task = CONTROLLABLE.TaskAttackUnit(nil,unit,GroupAttack,AI.Task.WeaponExpend.ALL,1,Direction,self.engageAltitude,4161536)
+          table.insert(DCStasks, task)
+          SeadUnitSet:AddUnit(unit)
+        end
+      end
+      self.engageTarget = TARGET:New(SeadUnitSet)
+      --local OrbitTask = CONTROLLABLE.TaskOrbitCircle(nil,self.engageAltitude,self.missionSpeed,self.engageZone:GetCoordinate())
+      --local Point = self.engageZone:GetVec2()
+      --local OrbitTask = CONTROLLABLE.TaskOrbitCircleAtVec2(nil,Point,self.engageAltitude,self.missionSpeed)
+      --table.insert(DCStasks, OrbitTask)
+     
+    else
+    
+      self:_GetDCSAttackTask(self.engageTarget, DCStasks)
+    
+    end
+    
   elseif self.type==AUFTRAG.Type.STRIKE then
 
     --------------------
