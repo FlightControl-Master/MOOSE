@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update Jan 2025
+-- @date Last Update July 2025
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
