@@ -509,7 +509,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.71", -- #string
+  version = "0.2.72", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -1242,6 +1242,8 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self:AddTransition("*",             "Intercept",          "*")
   self:AddTransition("*",             "InterceptSuccess",   "*")
   self:AddTransition("*",             "InterceptFailure",   "*")
+  self:AddTransition("*",             "VIDSuccess",   "*")
+  self:AddTransition("*",             "VIDFailure",   "*")
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
   
   
@@ -1365,18 +1367,38 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   -- @param #string To To state.
   
   --- On After "InterceptSuccess" event. Intercept successful.
-  -- @function [parent=#AWACS] OnAfterIntercept
+  -- @function [parent=#AWACS] OnAfterInterceptSuccess
   -- @param #AWACS self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
   
   --- On After "InterceptFailure" event. Intercept failure.
-  -- @function [parent=#AWACS] OnAfterIntercept
+  -- @function [parent=#AWACS] OnAfterInterceptFailure
   -- @param #AWACS self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
+
+  --- On After "VIDSuccess" event. Intercept successful.
+  -- @function [parent=#AWACS] OnAfterVIDSuccess
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number GID Managed group ID (Player)
+  -- @param Wrapper.Group#GROUP Group (Player) Group done the VID
+  -- @param #AWACS.ManagedContact Contact The contact that was VID'd 
+  
+  --- On After "VIDFailure" event. Intercept failure.
+  -- @function [parent=#AWACS] OnAfterVIDFailure
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number GID Managed group ID (Player)
+  -- @param Wrapper.Group#GROUP Group (Player) Group done the VID
+  -- @param #AWACS.ManagedContact Contact The contact that was VID'd 
   
   return self
 end
@@ -3263,12 +3285,14 @@ function AWACS:_VID(Group,Declaration)
           local vidpos = self.gettext:GetEntry("VIDPOS",self.locale)
           text = string.format(vidpos,Callsign,self.callsigntxt, Declaration)
           self:T(text)
+          self:__VIDSuccess(3,GID,group,cluster)
         else
           -- too far away
           self:T("Contact VID not close enough")
           local vidneg = self.gettext:GetEntry("VIDNEG",self.locale)
           text = string.format(vidneg,Callsign,self.callsigntxt)
           self:T(text)
+          self:__VIDFailure(3,GID,group,cluster)
         end
         self:_NewRadioEntry(text,text,GID,Outcome,true,true,false,true)
       end

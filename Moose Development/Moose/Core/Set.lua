@@ -6690,6 +6690,7 @@ do -- SET_ZONE
     else
       self.objectset = {Objects}
     end
+    
     self:_TriggerCheck(true)
     self:__TriggerRunCheck(self.Checktime)
     return self
