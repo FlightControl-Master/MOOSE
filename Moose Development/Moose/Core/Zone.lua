@@ -3204,12 +3204,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
 
   local vectors = self:GetBoundingSquare()
 
-  local minVec3 = {x=vectors.x1, y=0, z=vectors.y1}
-  local maxVec3 = {x=vectors.x2, y=0, z=vectors.y2}
-
-  local minmarkcoord = COORDINATE:NewFromVec3(minVec3)
-  local maxmarkcoord = COORDINATE:NewFromVec3(maxVec3)
-  local ZoneRadius = minmarkcoord:Get2DDistance(maxmarkcoord)/2
+  local ZoneRadius = UTILS.VecDist2D({x=vectors.x1, y=vectors.y1}, {x=vectors.x2, y=vectors.y2})/2
 --  self:I("Scan Radius:" ..ZoneRadius)
   local CenterVec3 = self:GetCoordinate():GetVec3()
 

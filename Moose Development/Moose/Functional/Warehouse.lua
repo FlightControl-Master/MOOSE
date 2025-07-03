@@ -3153,7 +3153,7 @@ end
 -- @param #WAREHOUSE self
 -- @return Core.Point#COORDINATE The coordinate of the warehouse.
 function WAREHOUSE:GetCoordinate()
-  return self.warehouse:GetCoordinate()
+  return self.warehouse:GetCoord()
 end
 
 --- Get 3D vector of warehouse static.
@@ -6893,7 +6893,7 @@ function WAREHOUSE:_CheckConquered()
     for _,_unit in pairs(units) do
       local unit=_unit --Wrapper.Unit#UNIT
 
-      local distance=coord:Get2DDistance(unit:GetCoordinate())
+      local distance=coord:Get2DDistance(unit:GetCoord())
 
       -- Filter only alive groud units. Also check distance again, because the scan routine might give some larger distances.
       if unit:IsGround() and unit:IsAlive() and distance <= radius then

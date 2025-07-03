@@ -50,7 +50,7 @@ MARKEROPS_BASE = {
   ClassName = "MARKEROPS",
   Tag = "mytag",
   Keywords = {},
-  version = "0.1.3",
+  version = "0.1.4",
   debug = false,
   Casesensitive = true,
 }
@@ -155,9 +155,9 @@ function MARKEROPS_BASE:OnEventMark(Event)
       return true
     end
     --position
-    local vec3={y=Event.pos.y, x=Event.pos.x, z=Event.pos.z}
-    local coord=COORDINATE:NewFromVec3(vec3)
     if self.debug then
+      local vec3={y=Event.pos.y, x=Event.pos.x, z=Event.pos.z}
+      local coord=COORDINATE:NewFromVec3(vec3)
       local coordtext = coord:ToStringLLDDM()
       local text = tostring(Event.text)
       local m = MESSAGE:New(string.format("Mark added at %s with text: %s",coordtext,text),10,"Info",false):ToAll()
@@ -170,7 +170,14 @@ function MARKEROPS_BASE:OnEventMark(Event)
       local Eventtext = tostring(Event.text)
       if Eventtext~=nil then
         if self:_MatchTag(Eventtext) then
+            local coord=COORDINATE:NewFromVec3({y=Event.pos.y, x=Event.pos.x, z=Event.pos.z})
+            if self.debug then
+              local coordtext = coord:ToStringLLDDM()
+              local text = tostring(Event.text)
+              local m = MESSAGE:New(string.format("Mark added at %s with text: %s",coordtext,text),10,"Info",false):ToAll()
+            end
          local matchtable = self:_MatchKeywords(Eventtext)
+         local coord=COORDINATE:NewFromVec3(vec3)
          self:MarkAdded(Eventtext,matchtable,coord,Event.idx,coalition,Event.PlayerName,Event)
         end
       end
@@ -180,7 +187,14 @@ function MARKEROPS_BASE:OnEventMark(Event)
       local Eventtext = tostring(Event.text)
       if Eventtext~=nil then
         if self:_MatchTag(Eventtext) then
+            local coord=COORDINATE:NewFromVec3({y=Event.pos.y, x=Event.pos.x, z=Event.pos.z})
+            if self.debug then
+              local coordtext = coord:ToStringLLDDM()
+              local text = tostring(Event.text)
+              local m = MESSAGE:New(string.format("Mark added at %s with text: %s",coordtext,text),10,"Info",false):ToAll()
+            end
          local matchtable = self:_MatchKeywords(Eventtext)
+         local coord=COORDINATE:NewFromVec3(vec3)
          self:MarkChanged(Eventtext,matchtable,coord,Event.idx,coalition,Event.PlayerName,Event)
         end
       end
