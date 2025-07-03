@@ -156,12 +156,6 @@ function MARKEROPS_BASE:OnEventMark(Event)
     end
     --position
     local vec3={y=Event.pos.y, x=Event.pos.x, z=Event.pos.z}
-    local coord=COORDINATE:NewFromVec3(vec3)
-    if self.debug then
-      local coordtext = coord:ToStringLLDDM()
-      local text = tostring(Event.text)
-      local m = MESSAGE:New(string.format("Mark added at %s with text: %s",coordtext,text),10,"Info",false):ToAll()
-    end
     local coalition = Event.MarkCoalition
     -- decision
     if Event.id==world.event.S_EVENT_MARK_ADDED then
@@ -170,6 +164,12 @@ function MARKEROPS_BASE:OnEventMark(Event)
       local Eventtext = tostring(Event.text)
       if Eventtext~=nil then
         if self:_MatchTag(Eventtext) then
+            local coord=COORDINATE:NewFromVec3(vec3)
+            if self.debug then
+              local coordtext = coord:ToStringLLDDM()
+              local text = tostring(Event.text)
+              local m = MESSAGE:New(string.format("Mark added at %s with text: %s",coordtext,text),10,"Info",false):ToAll()
+            end
          local matchtable = self:_MatchKeywords(Eventtext)
          self:MarkAdded(Eventtext,matchtable,coord,Event.idx,coalition,Event.PlayerName,Event)
         end
@@ -180,6 +180,12 @@ function MARKEROPS_BASE:OnEventMark(Event)
       local Eventtext = tostring(Event.text)
       if Eventtext~=nil then
         if self:_MatchTag(Eventtext) then
+            local coord=COORDINATE:NewFromVec3(vec3)
+            if self.debug then
+              local coordtext = coord:ToStringLLDDM()
+              local text = tostring(Event.text)
+              local m = MESSAGE:New(string.format("Mark added at %s with text: %s",coordtext,text),10,"Info",false):ToAll()
+            end
          local matchtable = self:_MatchKeywords(Eventtext)
          self:MarkChanged(Eventtext,matchtable,coord,Event.idx,coalition,Event.PlayerName,Event)
         end
