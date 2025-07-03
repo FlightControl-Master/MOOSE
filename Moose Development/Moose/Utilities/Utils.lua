@@ -4428,3 +4428,50 @@ end
 function UTILS.Weather.StopFogAnimation()
   return world.weather.setFogAnimation({})
 end
+
+--- Find a ME created zone by its name
+function UTILS.GetEnvZone(name)
+    for _,v in ipairs(env.mission.triggers.zones) do
+        if v.name == name then
+            return v
+        end
+    end
+end
+
+--- Show a helper gate at a DCS#Vec3 position
+-- @param DCS#Vec3 pos The position
+-- @param number heading Heading in degrees, can be 0..359 degrees
+function UTILS.ShowHelperGate(pos, heading)
+    net.dostring_in("mission",string.format("a_show_helper_gate(%s, %s, %s, %f)", pos.x, pos.y, pos.z, math.rad(heading)))
+end
+
+--- Shell a zone, zone must ME created
+-- @param #string name The name of the ME created zone
+-- @param #number power Equals kg of TNT, e.g. 75
+-- @param #count Number of shells simulated
+function UTILS.ShellZone(name, power, count)
+    local z = UTILS.GetEnvZone(name)
+    if z then
+        net.dostring_in("mission",string.format("a_shelling_zone(%d, %d, %d)", z.zoneId, power, count))
+    end
+end
+
+--- Remove objects from a zone, zone must ME created
+-- @param #string name The name of the ME created zone
+-- @param #number type Type of objects to remove can be 0:all, 1: trees, 2:objects
+function UTILS.RemoveObjects(name, type)
+    local z = UTILS.GetEnvZone(name)
+    if z then
+        net.dostring_in("mission",string.format("a_remove_scene_objects(%d, %d)", z.zoneId, type))
+    end
+end
+
+--- Remove scenery objects from a zone, zone must ME created
+-- @param #string name The name of the ME created zone
+-- @param #number level Level of removal
+function UTILS.DestroyScenery(name, level)
+    local z = UTILS.GetEnvZone(name)
+    if z then
+        net.dostring_in("mission",string.format("a_scenery_destruction_zone(%d, %d)", z.zoneId, level))
+    end
+end
