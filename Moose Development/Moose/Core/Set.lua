@@ -958,7 +958,26 @@ do -- SET_BASE
 
     return ObjectNames
   end
+  
+    --- Get a *new* set table that only contains alive objects.
+  -- @param #SET_BASE self
+  -- @return #table Set table of alive objects.
+  function SET_BASE:GetAliveSet()
+    --self:F2()
 
+    local AliveSet = {}
+    -- Clean the Set before returning with only the alive Objects.
+    for ObjectName, Object in pairs( self.Set ) do
+      if Object then
+        if Object:IsAlive() then
+          table.insert(AliveSet, ObjectName, Object)
+        end
+      end
+    end
+
+    return AliveSet or {}
+  end
+  
 end
 
 do 
@@ -1125,25 +1144,25 @@ do
     
   end
   
-  --- Get a *new* set that only contains alive groups.
+  --- Get a *new* set table that only contains alive groups.
   -- @param #SET_GROUP self
-  -- @return #SET_GROUP Set of alive groups.
+  -- @return #table Set of alive groups.
   function SET_GROUP:GetAliveSet()
     --self:F2()
 
-    local AliveSet = SET_GROUP:New()
-
+    --local AliveSet = SET_GROUP:New()
+    local AliveSet = {}
     -- Clean the Set before returning with only the alive Groups.
     for GroupName, GroupObject in pairs( self.Set ) do
       local GroupObject = GroupObject -- Wrapper.Group#GROUP
       if GroupObject then
         if GroupObject:IsAlive() then
-          AliveSet:Add( GroupName, GroupObject )
+          table.insert(AliveSet, GroupName, GroupObject)
         end
       end
     end
 
-    return AliveSet.Set or {}
+    return AliveSet or {}
   end
 
   --- Returns a report of of unit types.
@@ -2595,16 +2614,14 @@ do -- SET_UNIT
   
   --- Gets the alive set.
   -- @param #SET_UNIT self
-  -- @return #table Table of SET objects
+  -- @return #table Table of alive UNIT objects
   -- @return #SET_UNIT AliveSet 
   function SET_UNIT:GetAliveSet()
 
     local AliveSet = SET_UNIT:New()
 
     -- Clean the Set before returning with only the alive Groups.
-    for GroupName, GroupObject in pairs(self.Set) do    
-      local GroupObject=GroupObject --Wrapper.Client#CLIENT
-      
+    for GroupName, GroupObject in pairs(self.Set) do       
       if GroupObject and GroupObject:IsAlive() then      
         AliveSet:Add(GroupName, GroupObject)
       end
@@ -4784,18 +4801,16 @@ do -- SET_CLIENT
   -- @return #table Table of SET objects
   function SET_CLIENT:GetAliveSet()
 
-    local AliveSet = SET_CLIENT:New()
+    local AliveSet = {}
 
     -- Clean the Set before returning with only the alive Groups.
-    for GroupName, GroupObject in pairs(self.Set) do    
-      local GroupObject=GroupObject --Wrapper.Client#CLIENT
-      
+    for GroupName, GroupObject in pairs(self.Set) do      
       if GroupObject and GroupObject:IsAlive() then      
-        AliveSet:Add(GroupName, GroupObject)
+        table.insert(AliveSet, GroupName, GroupObject)
       end
     end
 
-    return AliveSet.Set or {}
+    return AliveSet or {}
   end
 
   --- [User] Add a custom condition function.
