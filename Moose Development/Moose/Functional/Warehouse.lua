@@ -3153,7 +3153,7 @@ end
 -- @param #WAREHOUSE self
 -- @return Core.Point#COORDINATE The coordinate of the warehouse.
 function WAREHOUSE:GetCoordinate()
-  return self.warehouse:GetCoordinate()
+  return self.warehouse:GetCoord()
 end
 
 --- Get 3D vector of warehouse static.
