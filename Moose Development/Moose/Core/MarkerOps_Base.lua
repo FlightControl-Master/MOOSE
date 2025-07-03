@@ -155,7 +155,6 @@ function MARKEROPS_BASE:OnEventMark(Event)
       return true
     end
     --position
-    local vec3={y=Event.pos.y, x=Event.pos.x, z=Event.pos.z}
     local coalition = Event.MarkCoalition
     -- decision
     if Event.id==world.event.S_EVENT_MARK_ADDED then
@@ -164,7 +163,7 @@ function MARKEROPS_BASE:OnEventMark(Event)
       local Eventtext = tostring(Event.text)
       if Eventtext~=nil then
         if self:_MatchTag(Eventtext) then
-            local coord=COORDINATE:NewFromVec3(vec3)
+            local coord=COORDINATE:NewFromVec3({y=Event.pos.y, x=Event.pos.x, z=Event.pos.z})
             if self.debug then
               local coordtext = coord:ToStringLLDDM()
               local text = tostring(Event.text)
@@ -180,7 +179,7 @@ function MARKEROPS_BASE:OnEventMark(Event)
       local Eventtext = tostring(Event.text)
       if Eventtext~=nil then
         if self:_MatchTag(Eventtext) then
-            local coord=COORDINATE:NewFromVec3(vec3)
+            local coord=COORDINATE:NewFromVec3({y=Event.pos.y, x=Event.pos.x, z=Event.pos.z})
             if self.debug then
               local coordtext = coord:ToStringLLDDM()
               local text = tostring(Event.text)
