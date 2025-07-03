@@ -970,7 +970,7 @@ do -- SET_BASE
     for ObjectName, Object in pairs( self.Set ) do
       if Object then
         if Object:IsAlive() then
-          table.insert(AliveSet, ObjectName, Object)
+          AliveSet[#AliveSet+1] = Object
         end
       end
     end
@@ -1157,7 +1157,7 @@ do
       local GroupObject = GroupObject -- Wrapper.Group#GROUP
       if GroupObject then
         if GroupObject:IsAlive() then
-          table.insert(AliveSet, GroupName, GroupObject)
+          AliveSet[GroupName] = GroupObject
         end
       end
     end
@@ -2623,7 +2623,7 @@ do -- SET_UNIT
     -- Clean the Set before returning with only the alive Groups.
     for GroupName, GroupObject in pairs(self.Set) do       
       if GroupObject and GroupObject:IsAlive() then      
-        AliveSet:Add(GroupName, GroupObject)
+        AliveSet[GroupName] = GroupObject
       end
     end
 
@@ -4806,7 +4806,7 @@ do -- SET_CLIENT
     -- Clean the Set before returning with only the alive Groups.
     for GroupName, GroupObject in pairs(self.Set) do      
       if GroupObject and GroupObject:IsAlive() then      
-        table.insert(AliveSet, GroupName, GroupObject)
+        AliveSet[GroupName] = GroupObject
       end
     end
 
