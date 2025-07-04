@@ -1719,7 +1719,7 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE TargetZone The target zone to attack.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
--- @param #table TargetTypes Table of string of DCS known target types, defaults to {"Air defence"}. See [DCS Target Attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
+-- @param #table TargetTypes Table of string of DCS known target types, defaults to {"Air Defence"}. See [DCS Target Attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
 -- @param #number Duration Engage this much time when the AUFTRAG starts executing.
 -- @return #AUFTRAG self
 function AUFTRAG:NewSEADInZone(TargetZone, Altitude, TargetTypes, Duration)
@@ -1733,7 +1733,7 @@ function AUFTRAG:NewSEADInZone(TargetZone, Altitude, TargetTypes, Duration)
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
   mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
   mission.engageZone = TargetZone
-  mission.engageTargetTypes = TargetTypes or {"Air defence"}
+  mission.engageTargetTypes = TargetTypes or {"Air Defence"}
 
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.SEAD
