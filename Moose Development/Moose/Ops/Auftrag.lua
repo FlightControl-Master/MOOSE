@@ -1738,7 +1738,7 @@ function AUFTRAG:NewSEADInZone(TargetZone, Altitude, TargetTypes, Duration)
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.SEAD
   mission.missionAltitude=mission.engageAltitude
-  mission.missionFraction=0.7
+  mission.missionFraction=0.2
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.EvadeFire
 
@@ -6366,7 +6366,7 @@ function AUFTRAG:GetDCSMissionTask()
         local unit = _unit -- Wrapper.Unit#UNTI
         if unit and unit:IsAlive() and unit:HasSEAD() then
           self:T("Adding UNIT for SEAD: "..unit:GetName())
-          local task = CONTROLLABLE.TaskAttackUnit(nil,unit,GroupAttack,AI.Task.WeaponExpend.ALL,1,Direction,self.engageAltitude,4161536)
+          local task = CONTROLLABLE.TaskAttackUnit(nil,unit,GroupAttack,AI.Task.WeaponExpend.ALL,1,Direction,self.engageAltitude,2956984318)
           table.insert(DCStasks, task)
           SeadUnitSet:AddUnit(unit)
         end
