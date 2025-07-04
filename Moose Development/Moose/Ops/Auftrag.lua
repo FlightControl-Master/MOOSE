@@ -4861,10 +4861,10 @@ function AUFTRAG:CheckGroupsDone()
   
   if (self:IsStarted() or self:IsExecuting()) and self:CountOpsGroups()>0 then
     self:T(self.lid..string.format("CheckGroupsDone: Mission is STARTED state %s [FSM=%s] and count of alive OPSGROUP > zero. Mission NOT DONE!", self.status, self:GetState()))
-    return true
+    return false
   end
 
-  return true
+  return false
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
