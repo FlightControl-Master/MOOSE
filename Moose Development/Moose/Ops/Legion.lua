@@ -2514,7 +2514,7 @@ function LEGION._GetCohorts(Legions, Cohorts, Operation, OpsQueue)
       local legion=_legion --Ops.Legion#LEGION
   
       -- Check that runway is operational.    
-      local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
+      local Runway=(legion:IsAirwing() and legion:IsRunwayOperational() and legion.airbase and legion.airbase:GetCoalition() == legion:GetCoalition())or true
       
       -- Legion has to be running.
       if legion:IsRunning() and Runway then
