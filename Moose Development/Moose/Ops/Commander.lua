@@ -1670,9 +1670,12 @@ function COMMANDER:_GetCohorts(Legions, Cohorts, Operation)
     for _,_legion in pairs(Legions or {}) do
       local legion=_legion --Ops.Legion#LEGION
   
-      -- Check that runway is operational.    
-      local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
-      
+      -- Check that runway is operational.
+      local Runway=true
+      if legion:IsAirwing() then
+        Runway=legion:IsRunwayOperational() and legion.airbase and legion.airbase:GetCoalition() == legion:GetCoalition()
+      end
+
       -- Legion has to be running.
       if legion:IsRunning() and Runway then
       
@@ -1703,9 +1706,12 @@ function COMMANDER:_GetCohorts(Legions, Cohorts, Operation)
     for _,_legion in pairs(self.legions) do
       local legion=_legion --Ops.Legion#LEGION
       
-      -- Check that runway is operational.    
-      local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
-      
+      -- Check that runway is operational.
+      local Runway=true
+      if legion:IsAirwing() then
+        Runway=legion:IsRunwayOperational() and legion.airbase and legion.airbase:GetCoalition() == legion:GetCoalition()
+      end
+
       -- Legion has to be running.
       if legion:IsRunning() and Runway then
       
