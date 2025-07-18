@@ -1719,7 +1719,7 @@ end
 -- @param #AUFTRAG self
 -- @param Core.Zone#ZONE TargetZone The target zone to attack.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
--- @param #table TargetTypes Table of string of DCS known target types, defaults to {"Air defence"}. See [DCS Target Attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
+-- @param #table TargetTypes Table of string of DCS known target types, defaults to {"Air Defence"}. See [DCS Target Attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
 -- @param #number Duration Engage this much time when the AUFTRAG starts executing.
 -- @return #AUFTRAG self
 function AUFTRAG:NewSEADInZone(TargetZone, Altitude, TargetTypes, Duration)
@@ -1733,7 +1733,7 @@ function AUFTRAG:NewSEADInZone(TargetZone, Altitude, TargetTypes, Duration)
   mission.engageWeaponExpend=AI.Task.WeaponExpend.ALL
   mission.engageAltitude=UTILS.FeetToMeters(Altitude or 25000)
   mission.engageZone = TargetZone
-  mission.engageTargetTypes = TargetTypes or {"Air defence"}
+  mission.engageTargetTypes = TargetTypes or {"Air Defence"}
 
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.SEAD
@@ -4801,6 +4801,8 @@ end
 -- @return #boolean If `true`, all groups are done with the mission.
 function AUFTRAG:CheckGroupsDone()
 
+  local fsmState = self:GetState()
+
   -- Check status of all OPS groups.
   for groupname,data in pairs(self.groupdata) do
     local groupdata=data --#AUFTRAG.GroupData
@@ -4859,12 +4861,12 @@ function AUFTRAG:CheckGroupsDone()
     return true
   end
   
-  if (self:IsStarted() or self:IsExecuting()) and self:CountOpsGroups()>0 then
+  if (self:IsStarted() or self:IsExecuting()) and (fsmState == AUFTRAG.Status.STARTED or fsmState == AUFTRAG.Status.EXECUTING) and self:CountOpsGroups()>0 then
     self:T(self.lid..string.format("CheckGroupsDone: Mission is STARTED state %s [FSM=%s] and count of alive OPSGROUP > zero. Mission NOT DONE!", self.status, self:GetState()))
     return false
   end
 
-  return false
+  return true
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
