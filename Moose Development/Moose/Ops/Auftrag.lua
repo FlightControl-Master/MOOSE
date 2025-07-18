@@ -4801,6 +4801,8 @@ end
 -- @return #boolean If `true`, all groups are done with the mission.
 function AUFTRAG:CheckGroupsDone()
 
+  local fsmState = self:GetState()
+
   -- Check status of all OPS groups.
   for groupname,data in pairs(self.groupdata) do
     local groupdata=data --#AUFTRAG.GroupData
@@ -4859,12 +4861,12 @@ function AUFTRAG:CheckGroupsDone()
     return true
   end
   
-  if (self:IsStarted() or self:IsExecuting()) and self:CountOpsGroups()>0 then
+  if (self:IsStarted() or self:IsExecuting()) and (fsmState == AUFTRAG.Status.STARTED or fsmState == AUFTRAG.Status.EXECUTING) and self:CountOpsGroups()>0 then
     self:T(self.lid..string.format("CheckGroupsDone: Mission is STARTED state %s [FSM=%s] and count of alive OPSGROUP > zero. Mission NOT DONE!", self.status, self:GetState()))
     return false
   end
 
-  return false
+  return true
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
