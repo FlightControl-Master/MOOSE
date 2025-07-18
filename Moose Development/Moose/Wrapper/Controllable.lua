@@ -3629,6 +3629,26 @@ function CONTROLLABLE:OptionROTPassiveDefense()
   return nil
 end
 
+--- Helicopter - prefer vertical landing.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionPreferVerticalLanding()
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption( AI.Option.Air.id.PREFER_VERTICAL, true )
+    end
+
+    return self
+  end
+
+  return nil
+end
+
 --- Can the CONTROLLABLE evade on enemy fire?
 -- @param #CONTROLLABLE self
 -- @return #boolean
