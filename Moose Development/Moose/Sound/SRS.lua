@@ -632,7 +632,7 @@ end
 -- set the path to the exe file via @{#MSRS.SetPath}.
 --
 -- @param #MSRS self
--- @param #string Path Path to SRS directory. Default `C:\\Program Files\\DCS-SimpleRadio-Standalone`.
+-- @param #string Path Path to SRS directory. Default `C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio`.
 -- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
 -- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a #table of multiple modulations.
 -- @param #string Backend Backend used: `MSRS.Backend.SRSEXE` (default) or `MSRS.Backend.GRPC`.
@@ -767,13 +767,13 @@ end
 
 --- Set path to SRS install directory. More precisely, path to where the `DCS-SR-ExternalAudio.exe` is located.
 -- @param #MSRS self
--- @param #string Path Path to the directory, where the sound file is located. Default is `C:\\Program Files\\DCS-SimpleRadio-Standalone`.
+-- @param #string Path Path to the directory, where the sound file is located. Default is `C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio`.
 -- @return #MSRS self
 function MSRS:SetPath(Path)
   self:F( {Path=Path} )
 
   -- Set path.
-  self.path=Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+  self.path=Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 
   -- Remove (back)slashes.
   local n=1 ; local nmax=1000
@@ -1817,7 +1817,7 @@ end
 --
 --     -- Moose MSRS default Config
 --     MSRS_Config = {
---       Path = "C:\\Program Files\\DCS-SimpleRadio-Standalone", -- Path to SRS install directory.
+--       Path = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio", -- Path to SRS install directory.
 --       Port = 5002,            -- Port of SRS server. Default 5002.
 --       Backend = "srsexe",     -- Interface to SRS: "srsexe" or "grpc".
 --       Frequency = {127, 243}, -- Default frequences. Must be a table 1..n entries!
@@ -1837,7 +1837,7 @@ end
 --       -- Google Cloud
 --       gcloud = {
 --         voice = "en-GB-Standard-A", -- The Google Cloud voice to use (see https://cloud.google.com/text-to-speech/docs/voices).
---         credentials="C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourfilename.json", -- Full path to credentials JSON file (only for SRS-TTS.exe backend)
+--         credentials="C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio\\yourfilename.json", -- Full path to credentials JSON file (only for SRS-TTS.exe backend)
 --         key="Your access Key", -- Google API access key (only for DCS-gRPC backend)
 --       },
 --       -- Amazon Web Service
@@ -1905,7 +1905,7 @@ function MSRS:LoadConfigFile(Path,Filename)
 
       local Self = self or MSRS  --#MSRS
 
-      Self.path = MSRS_Config.Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+      Self.path = MSRS_Config.Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
       Self.port = MSRS_Config.Port or 5002
       Self.backend = MSRS_Config.Backend or MSRS.Backend.SRSEXE
       Self.frequencies = MSRS_Config.Frequency or {127,243}
