@@ -1440,9 +1440,9 @@ do
 --            taskmanager:AddRejectZone(ZONE:FindByName("RejectZone"))
 --            
 --            -- Set up using SRS for messaging
---            local hereSRSPath = "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+--            local hereSRSPath = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 --            local hereSRSPort = 5002
---            -- local hereSRSGoogle = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourkey.json"
+--            -- local hereSRSGoogle = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio\\yourkey.json"
 --            taskmanager:SetSRS({130,255},{radio.modulation.AM,radio.modulation.AM},hereSRSPath,"female","en-GB",hereSRSPort,"Microsoft Hazel Desktop",0.7,hereSRSGoogle)
 --            
 --            -- Controller will announce itself under these broadcast frequencies, handy to use cold-start frequencies here of your aircraft
@@ -4606,7 +4606,7 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}. There needs to be exactly the same number of modulations!
 -- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+-- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 -- @param #string Gender (Optional) Defaults to "male"
 -- @param #string Culture (Optional) Defaults to "en-US"
 -- @param #number Port (Optional) Defaults to 5002
@@ -4620,7 +4620,7 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Coordinate,Backend)
   self:T(self.lid.."SetSRS")
-  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
+  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio" --
   self.Gender = Gender or MSRS.gender or "male" --
   self.Culture = Culture or MSRS.culture or "en-US" --
   self.Port = Port or MSRS.port or 5002 --
