@@ -1536,7 +1536,7 @@ function COMMANDER:CheckMissionQueue()
     end
   end
 
-  local missionsStarted = 0
+  local missionsAssigned = 0
 
   -- Loop over missions in queue.
   for _,_mission in pairs(self.missionqueue) do
@@ -1598,8 +1598,8 @@ function COMMANDER:CheckMissionQueue()
           LEGION.UnRecruitAssets(assets, mission)
         end        
 
-        missionsStarted = missionsStarted + 1
-        if missionsStarted >= self.maxMissionsAssignPerCycle then
+        missionsAssigned = missionsAssigned + 1
+        if missionsAssigned >= self.maxMissionsAssignPerCycle then
             return
         end
 
