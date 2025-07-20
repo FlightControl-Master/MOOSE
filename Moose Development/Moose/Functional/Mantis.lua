@@ -111,7 +111,7 @@
 -- * Silkworm (though strictly speaking this is a surface to ship missile)
 -- * SA-2, SA-3, SA-5, SA-6, SA-7, SA-8, SA-9, SA-10, SA-11, SA-13, SA-15, SA-19
 -- * From IDF mod: STUNNER IDFA, TAMIR IDFA (Note all caps!)
--- * From HDS (see note on HDS below): SA-2, SA-3, SA-10B, SA-10C, SA-12, SA-17, SA-20A, SA-20B, SA-23, HQ-2
+-- * From HDS (see note on HDS below): SA-2, SA-3, SA-10B, SA-10C, SA-12, SA-17, SA-20A, SA-20B, SA-23, HQ-2, SAMP/T Block 1, SAMP/T Block 1INT,  SAMP/T Block2
 -- 
 -- * From SMA: RBS98M, RBS70, RBS90, RBS90M, RBS103A, RBS103B, RBS103AM, RBS103BM, Lvkv9040M 
 -- **NOTE** If you are using the Swedish Military Assets (SMA), please note that the **group name** for RBS-SAM types also needs to contain the keyword "SMA"
@@ -128,7 +128,8 @@
 -- * SA-10B (overlap with other SA-10 types, e.g. "Red SAM SA-10B HDS" with 5P85CE launcher)
 -- * SA-10C (overlap with other SA-10 types, e.g. "Red SAM SA-10C HDS" with 5P85SE launcher)
 -- * SA-12 (launcher dependent range, e.g. "Red SAM SA-12 HDS 2" for the 9A82 variant and "Red SAM SA-12 HDS 1" for the 9A83 variant)
--- * SA-23 (launcher dependent range, e.g. "Red SAM SA-23 HDS 2" for the 9A82ME variant and "Red SAM SA-23 HDS 2" for the 9A83ME variant) 
+-- * SA-23 (launcher dependent range, e.g. "Red SAM SA-23 HDS 2" for the 9A82ME variant and "Red SAM SA-23 HDS 1" for the 9A83ME variant)
+-- * SAMP/T (launcher dependent range, e.g. "Blue SAM SAMPT Block 1 HDS" for Block 1, "Blue SAM SAMPT Block 1INT HDS", "Blue SAM SAMPT Block 2 HDS")
 -- 
 -- The other HDS types work like the rest of the known SAM systems.
 -- 
@@ -274,6 +275,7 @@
 MANTIS = {
   ClassName             = "MANTIS",
   name                  = "mymantis",
+  version               = "0.9.32",
   SAM_Templates_Prefix  = "",
   SAM_Group             = nil,
   EWR_Templates_Prefix  = "",
@@ -385,7 +387,7 @@ MANTIS.SamData = {
   ["HEMTT_C-RAM_Phalanx"] = { Range=2, Blindspot=0, Height=2, Type="Point", Radar="HEMTT_C-RAM_Phalanx", Point="true" },
   -- units from HDS Mod, multi launcher options is tricky
   ["SA-10B"] = { Range=75, Blindspot=0, Height=18, Type="Medium" , Radar="SA-10B"},
-  ["SA-17"] = { Range=50, Blindspot=3, Height=30, Type="Medium", Radar="SA-17" },
+  ["SA-17"] = { Range=50, Blindspot=3, Height=50, Type="Medium", Radar="SA-17" },
   ["SA-20A"] = { Range=150, Blindspot=5, Height=27, Type="Long" , Radar="S-300PMU1"},
   ["SA-20B"] = { Range=200, Blindspot=4, Height=27, Type="Long" , Radar="S-300PMU2"},
   ["HQ-2"] = { Range=50, Blindspot=6, Height=35, Type="Medium", Radar="HQ_2_Guideline_LN" },
@@ -408,11 +410,15 @@ MANTIS.SamDataHDS = {
   ["SA-3 HDS"] = { Range=20, Blindspot=6, Height=30, Type="Short", Radar="V-601P" },  
   ["SA-10B HDS"] = { Range=90, Blindspot=5, Height=25, Type="Long" , Radar="5P85CE ln"}, -- V55RUD
   ["SA-10C HDS"] = { Range=75, Blindspot=5, Height=25, Type="Long" , Radar="5P85SE ln"}, -- V55RUD
+  ["SA-17 HDS"] = { Range=50, Blindspot=3, Height=50, Type="Medium", Radar="SA-17 " },
   ["SA-12 HDS 2"] = { Range=100, Blindspot=13, Height=30, Type="Long" , Radar="S-300V 9A82 l"},
   ["SA-12 HDS 1"] = { Range=75, Blindspot=6, Height=25, Type="Long" , Radar="S-300V 9A83 l"},
   ["SA-23 HDS 2"] = { Range=200, Blindspot=5, Height=37, Type="Long", Radar="S-300VM 9A82ME" },
   ["SA-23 HDS 1"] = { Range=100, Blindspot=1, Height=50, Type="Long", Radar="S-300VM 9A83ME" },
   ["HQ-2 HDS"] = { Range=50, Blindspot=6, Height=35, Type="Medium", Radar="HQ_2_Guideline_LN" },
+  ["SAMPT Block 1 HDS"] = { Range=120, Blindspot=1, Height=20, Type="long", Radar="SAMPT_MLT_Blk1" }, -- Block 1 Launcher
+  ["SAMPT Block 1INT HDS"] = { Range=150, Blindspot=1, Height=25, Type="long", Radar="SAMPT_MLT_Blk1NT" }, -- Block 1-INT Launcher
+  ["SAMPT Block 2 HDS"] = { Range=200, Blindspot=10, Height=70, Type="long", Radar="SAMPT_MLT_Blk2" }, -- Block 2 Launcher
 }
 
 --- SAM data SMA
@@ -680,9 +686,6 @@ do
     -- counter for SAM table updates
     self.checkcounter = 1
     
-    -- TODO Version
-    -- @field #string version
-    self.version="0.9.31"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
