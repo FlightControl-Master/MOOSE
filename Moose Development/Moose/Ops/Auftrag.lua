@@ -397,6 +397,7 @@ AUFTRAG = {
   conditionPush      =    {},
   conditionSuccessSet = false,
   conditionFailureSet = false,
+  repeatDelay = 1,
 }
 
 --- Global mission counter.
@@ -3002,6 +3003,16 @@ function AUFTRAG:SetRepeat(Nrepeat)
   return self
 end
 
+
+--- **[LEGION, COMMANDER, CHIEF]** Set the repeat delay in seconds after a mission is successful/failed. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, FLEET) or higher level.
+-- @param #AUFTRAG self
+-- @param #number Nrepeat Repeat delay in seconds. Default 1.
+-- @return #AUFTRAG self
+function AUFTRAG:SetRepeatDelay(RepeatDelay)
+  self.repeatDelay = RepeatDelay
+  return self
+end
+
 --- **[LEGION, COMMANDER, CHIEF]** Set how many times the mission is repeated if it fails. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, FLEET) or higher level.
 -- @param #AUFTRAG self
 -- @param #number Nrepeat Number of repeats. Default 0.
@@ -5203,7 +5214,7 @@ function AUFTRAG:onafterSuccess(From, Event, To)
 
     -- Repeat mission.
     self:T(self.lid..string.format("Mission SUCCESS! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
-    self:Repeat()
+    self:__Repeat(self.repeatDelay)
 
   else
 
@@ -5245,7 +5256,7 @@ function AUFTRAG:onafterFailed(From, Event, To)
 
     -- Repeat mission.
     self:T(self.lid..string.format("Mission FAILED! Repeating mission for the %d time (max %d times) ==> Repeat mission!", self.repeated+1, N))
-    self:Repeat()
+    self:__Repeat(self.repeatDelay)
 
   else
 

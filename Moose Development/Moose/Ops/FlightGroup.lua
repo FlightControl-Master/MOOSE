@@ -4497,6 +4497,11 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
   -- Airbase.
   airbase=airbase or self:GetClosestAirbase()
 
+  if airbase == nil then
+    self:T(self.lid.."No airbase found for element "..element.name)
+    return nil
+  end
+
   -- Parking table of airbase.
   local parking=airbase.parking --:GetParkingSpotsTable()
 
