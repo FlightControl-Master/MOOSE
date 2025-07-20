@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: May 2025
+-- Last Update: July 2025
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -125,10 +125,10 @@
 -- * SA-2 (with V759 missile, e.g. "Red SAM SA-2 HDS")
 -- * SA-2 (with HQ-2 launcher, use HQ-2 in the group name, e.g. "Red SAM HQ-2" )
 -- * SA-3 (with V601P missile, e.g. "Red SAM SA-3 HDS")
--- * SA-10B (overlap with other SA-10 types, e.g. "Red SAM SA-10B HDS")
--- * SA-10C (overlap with other SA-10 types, e.g. "Red SAM SA-10C HDS")
--- * SA-12 (launcher dependent range, e.g. "Red SAM SA-12 HDS")
--- * SA-23 (launcher dependent range, e.g. "Red SAM SA-23 HDS") 
+-- * SA-10B (overlap with other SA-10 types, e.g. "Red SAM SA-10B HDS" with 5P85CE launcher)
+-- * SA-10C (overlap with other SA-10 types, e.g. "Red SAM SA-10C HDS" with 5P85SE launcher)
+-- * SA-12 (launcher dependent range, e.g. "Red SAM SA-12 HDS 2" for the 9A82 variant and "Red SAM SA-12 HDS 1" for the 9A83 variant)
+-- * SA-23 (launcher dependent range, e.g. "Red SAM SA-23 HDS 2" for the 9A82ME variant and "Red SAM SA-23 HDS 2" for the 9A83ME variant) 
 -- 
 -- The other HDS types work like the rest of the known SAM systems.
 -- 
@@ -406,10 +406,10 @@ MANTIS.SamDataHDS = {
   -- group name MUST contain HDS to ID launcher type correctly!
   ["SA-2 HDS"] = { Range=56, Blindspot=7, Height=30, Type="Medium", Radar="V759" }, 
   ["SA-3 HDS"] = { Range=20, Blindspot=6, Height=30, Type="Short", Radar="V-601P" },  
-  ["SA-10C HDS 2"] = { Range=90, Blindspot=5, Height=25, Type="Long" , Radar="5P85DE ln"}, -- V55RUD
-  ["SA-10C HDS 1"] = { Range=90, Blindspot=5, Height=25, Type="Long" , Radar="5P85CE ln"}, -- V55RUD
-  ["SA-12 HDS 2"] = { Range=100, Blindspot=10, Height=25, Type="Long" , Radar="S-300V 9A82 l"},
-  ["SA-12 HDS 1"] = { Range=75, Blindspot=1, Height=25, Type="Long" , Radar="S-300V 9A83 l"},
+  ["SA-10B HDS"] = { Range=90, Blindspot=5, Height=25, Type="Long" , Radar="5P85CE ln"}, -- V55RUD
+  ["SA-10C HDS"] = { Range=75, Blindspot=5, Height=25, Type="Long" , Radar="5P85SE ln"}, -- V55RUD
+  ["SA-12 HDS 2"] = { Range=100, Blindspot=13, Height=30, Type="Long" , Radar="S-300V 9A82 l"},
+  ["SA-12 HDS 1"] = { Range=75, Blindspot=6, Height=25, Type="Long" , Radar="S-300V 9A83 l"},
   ["SA-23 HDS 2"] = { Range=200, Blindspot=5, Height=37, Type="Long", Radar="S-300VM 9A82ME" },
   ["SA-23 HDS 1"] = { Range=100, Blindspot=1, Height=50, Type="Long", Radar="S-300VM 9A83ME" },
   ["HQ-2 HDS"] = { Range=50, Blindspot=6, Height=35, Type="Medium", Radar="HQ_2_Guideline_LN" },
@@ -682,7 +682,7 @@ do
     
     -- TODO Version
     -- @field #string version
-    self.version="0.9.30"
+    self.version="0.9.31"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -2110,7 +2110,7 @@ do
     if self.debug and self.verbose then
       self:I(self.lid .. "Status Report")
       for _name,_state in pairs(self.SamStateTracker) do
-        self:I(string.format("Site %s\tStatus %s",_name,_state))
+        self:I(string.format("Site %s | Status %s",_name,_state))
       end
     end
     local interval = self.detectinterval * -1
