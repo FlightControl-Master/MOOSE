@@ -136,6 +136,7 @@ COMMANDER = {
   awacsZones      =    {},
   tankerZones     =    {},
   limitMission    =    {},
+  MaxMissionsAssignPerCycle = 1,
 }
 
 --- COMMANDER class version.
@@ -1535,6 +1536,8 @@ function COMMANDER:CheckMissionQueue()
     end
   end
 
+  local missionsStarted = 0
+
   -- Loop over missions in queue.
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
@@ -1594,9 +1597,12 @@ function COMMANDER:CheckMissionQueue()
           -- Recruited assets but no requested escort available. Unrecruit assets!
           LEGION.UnRecruitAssets(assets, mission)
         end        
-    
-        -- Only ONE mission is assigned.
-        return        
+
+        missionsStarted = missionsStarted + 1
+        if missionsStarted >= self.maxMissionsAssignPerCycle then
+            return
+        end
+
       end
       
     else
@@ -1609,6 +1615,16 @@ function COMMANDER:CheckMissionQueue()
   
   end
   
+end
+
+--- Set how many missions can be assigned in a single status iteration. (eg. This is useful for persistent missions where you need to load all AUFTRAGs on mission start and then change it back to default)
+--- Warning: Increasing this value will increase the number of missions started per iteration and thus may lead to performance issues if too many missions are started at once.
+-- @param #COMMANDER self
+-- @param #number Number of missions assigned per status iteration. Default is 1.
+-- @return #COMMANDER self.
+function COMMANDER:SetMaxMissionsAssignPerCycle(MaxMissionsAssignPerCycle)
+  self.maxMissionsAssignPerCycle = MaxMissionsAssignPerCycle or 1
+  return self
 end
 
 --- Get cohorts.
