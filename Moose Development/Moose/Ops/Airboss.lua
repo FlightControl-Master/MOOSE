@@ -3080,12 +3080,12 @@ end
 
 --- Set up SRS for usage without sound files
 -- @param #AIRBOSS self
--- @param #string PathToSRS Path to SRS folder, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone".
+-- @param #string PathToSRS Path to SRS TTS folder, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio".
 -- @param #number Port Port of the SRS server, defaults to 5002.
 -- @param #string Culture (Optional, Airboss Culture)  Culture, defaults to "en-US".
 -- @param #string Gender (Optional, Airboss Gender)  Gender, e.g. "male" or "female". Defaults to "male".
 -- @param #string Voice (Optional, Airboss Voice) Set to use a specific voice. Will **override gender and culture** settings.
--- @param #string GoogleCreds (Optional) Path to Google credentials, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourgooglekey.json".
+-- @param #string GoogleCreds (Optional) Path to Google credentials, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio\\yourgooglekey.json".
 -- @param #number Volume (Optional) E.g. 0.75. Defaults to 1.0 (loudest).
 -- @param #table AltBackend (Optional) See MSRS for details.
 -- @return #AIRBOSS self

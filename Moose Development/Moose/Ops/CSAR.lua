@@ -130,7 +130,7 @@
 -- ## 2.2 SRS Features and Other Features
 -- 
 --       mycsar.useSRS = false -- Set true to use FF\'s SRS integration
---       mycsar.SRSPath = "C:\\Progra~1\\DCS-SimpleRadio-Standalone\\" -- adjust your own path in your SRS installation -- server(!)
+--       mycsar.SRSPath = "C:\\Progra~1\\DCS-SimpleRadio-Standalone\\ExternalAudio\\" -- adjust your own path in your SRS installation -- server(!)
 --       mycsar.SRSchannel = 300 -- radio channel
 --       mycsar.SRSModulation = radio.modulation.AM -- modulation
 --       mycsar.SRSport = 5002  -- and SRS Server port
@@ -481,7 +481,7 @@ function CSAR:New(Coalition, Template, Alias)
   -- for this to work you need to de-sanitize your mission environment in <DCS root>\Scripts\MissionScripting.lua
   -- needs SRS => 1.9.6 to work (works on the *server* side)
   self.useSRS = false -- Use FF\'s SRS integration
-  self.SRSPath = "E:\\Program Files\\DCS-SimpleRadio-Standalone" -- adjust your own path in your server(!)
+  self.SRSPath = "E:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio" -- adjust your own path in your server(!)
   self.SRSchannel = 300 -- radio channel
   self.SRSModulation = radio.modulation.AM -- modulation
   self.SRSport = 5002 -- port

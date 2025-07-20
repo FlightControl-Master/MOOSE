@@ -237,7 +237,7 @@ do
 --            -- Callsign will be "Focus". We'll be a Angels 30, doing 300 knots, orbit leg to 88deg with a length of 25nm.
 --            testawacs:SetAwacsDetails(CALLSIGN.AWACS.Focus,1,30,300,88,25)
 --            -- Set up SRS on port 5010 - change the below to your path and port
---            testawacs:SetSRS("C:\\Program Files\\DCS-SimpleRadio-Standalone","female","en-GB",5010)
+--            testawacs:SetSRS("C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio","female","en-GB",5010)
 --            -- Add a "red" border we don't want to cross, set up in the mission editor with a late activated helo named "Red Border#ZONE_POLYGON"
 --            testawacs:SetRejectionZone(ZONE:FindByName("Red Border"))
 --            -- Our CAP flight will have the callsign "Ford", we want 4 AI planes, Time-On-Station is four hours, doing 300 kn IAS.
@@ -255,7 +255,7 @@ do
 --            -- The CAP station zone is called "Fremont". We will be on 255 AM. Note the Orbit Zone is given as *nil* in the `New()`-Statement
 --            local testawacs = AWACS:New("GCI Senaki",AwacsAW,"blue",AIRBASE.Caucasus.Senaki_Kolkhi,nil,ZONE:FindByName("Rock"),"Fremont",255,radio.modulation.AM )
 --            -- Set up SRS on port 5010 - change the below to your path and port
---            testawacs:SetSRS("C:\\Program Files\\DCS-SimpleRadio-Standalone","female","en-GB",5010)
+--            testawacs:SetSRS("C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio","female","en-GB",5010)
 --            -- Add a "red" border we don't want to cross, set up in the mission editor with a late activated helo named "Red Border#ZONE_POLYGON"
 --            testawacs:SetRejectionZone(ZONE:FindByName("Red Border"))
 --            -- Our CAP flight will have the callsign "Ford", we want 4 AI planes, Time-On-Station is four hours, doing 300 kn IAS.
@@ -1123,7 +1123,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.EscortMissionReplacement = {}
   
   -- SRS
-  self.PathToSRS = "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+  self.PathToSRS = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
   self.Gender = "female"
   self.Culture = "en-GB"
   self.Voice = nil
@@ -2113,7 +2113,7 @@ end
 
 --- [User] Set AWACS SRS TTS details - see @{Sound.SRS} for details. `SetSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
 -- @param #AWACS self
--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+-- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 -- @param #string Gender Defaults to "male"
 -- @param #string Culture Defaults to "en-US"
 -- @param #number Port Defaults to 5002
@@ -2126,7 +2126,7 @@ end
 -- @return #AWACS self
 function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Backend)
   self:T(self.lid.."SetSRS")
-  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone" 
+  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio" 
   self.Gender = Gender or MSRS.gender or "male"
   self.Culture = Culture or MSRS.culture or "en-US"
   self.Port = Port or MSRS.port or 5002

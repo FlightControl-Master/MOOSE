@@ -3079,7 +3079,7 @@ function FLIGHTGROUP:onbeforeLandAtAirbase(From, Event, To, airbase)
     local Tsuspend=nil
 
     if airbase==nil then
-      self:T(self.lid.."ERROR: Airbase is nil in LandAtAirase() call!")
+      self:T(self.lid.."ERROR: Airbase is nil in LandAtAirbase() call!")
       allowed=false
     end
 

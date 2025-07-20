@@ -493,7 +493,7 @@ end
 --- (User) Function enable sending messages via SRS.
 -- @param #AUTOLASE self
 -- @param #boolean OnOff Switch usage on and off
--- @param #string Path Path to SRS directory, e.g. C:\\Program Files\\DCS-SimpleRadio-Standalone
+-- @param #string Path Path to SRS TTS directory, e.g. C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio
 -- @param #number Frequency Frequency to send, e.g. 243
 -- @param #number Modulation Modulation i.e. radio.modulation.AM or radio.modulation.FM
 -- @param #string Label (Optional) Short label to be used on the SRS Client Overlay
@@ -508,7 +508,7 @@ end
 function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
   if OnOff then
     self.useSRS = true
-    self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+    self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
     self.SRSFreq = Frequency or 271
     self.SRSMod = Modulation or radio.modulation.AM
     self.Gender = Gender or MSRS.gender or "male"
