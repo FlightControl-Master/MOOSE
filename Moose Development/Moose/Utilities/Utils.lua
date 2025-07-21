@@ -4267,6 +4267,8 @@ end
 -- @param #string Livery (Optional) The livery of the static CH-47, defaults to dark green.
 -- @param #table Templates (Optional) You can hand in your own template table of numbered(!) entries. Each entry consist of a relative(!) x,y position and data of a 
 -- static, shape_name is optional. Also, livery_id is optional, but is applied to the helicopter static only.
+-- @return #table Table of Wrapper.Static#STATIC objects that were spawned.
+-- @return #string ADFName Name of the ADF Beacon to remove it later.
 -- @usage
 --            -- MASH Template example, this one is the built in one used in the function:
 --            MASHTemplates = {
