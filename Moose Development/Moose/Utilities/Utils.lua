@@ -4265,6 +4265,10 @@ end
 -- @param #number Country Country ID the MASH belongs to, e.g. country.id.USA or country.id.RUSSIA.
 -- @param #number ADF (Optional) ADF Frequency in kHz (Kilohertz), if given activate an ADF Beacon at the location of the MASH.
 -- @param #string Livery (Optional) The livery of the static CH-47, defaults to dark green.
+-- @param #boolean DeployHelo (Optional) If true, deploy the helicopter static.
+-- @param #number MASHRadio MASH Radio Frequency, defaults to 127.5.
+-- @param #number MASHRadioModulation MASH Radio Modulation, defaults to radio.modulation.AM.
+-- @param #number MASHCallsign Defaults to CALLSIGN.FARP.Berlin.
 -- @param #table Templates (Optional) You can hand in your own template table of numbered(!) entries. Each entry consist of a relative(!) x,y position and data of a 
 -- static, shape_name is optional. Also, livery_id is optional, but is applied to the helicopter static only.
 -- @return #table Table of Wrapper.Static#STATIC objects that were spawned.
@@ -4292,7 +4296,7 @@ end
 --              [18]={category='Fortifications',type='Tent04',shape_name='M92_Tent04',heading=0,x=21.220671,y=30.247529,},
 --              }
 --    
-function UTILS.SpawnMASHStatics(Name,Coordinate,Country,ADF,Livery,Templates)
+function UTILS.SpawnMASHStatics(Name,Coordinate,Country,ADF,Livery,DeployHelo,MASHRadio,MASHRadioModulation,MASHCallsign,Templates)
   
   -- Basic objects table
   
@@ -4326,6 +4330,9 @@ function UTILS.SpawnMASHStatics(Name,Coordinate,Country,ADF,Livery,Templates)
   local ReturnStatics = {} 
   local CountryID = Country or country.id.USA
   local livery = "us army dark green"
+  local MASHRadio = MASHRadio or 127.5
+  local MASHRadioModulation = MASHRadioModulation or radio.modulation.AM
+  local MASHCallsign = MASHCallsign or CALLSIGN.FARP.Berlin
   
   -- check for coordinate or zone  
   if type(Coordinate) == "table" then
@@ -4341,7 +4348,7 @@ function UTILS.SpawnMASHStatics(Name,Coordinate,Country,ADF,Livery,Templates)
   -- position
   local BaseX = positionVec2.x
   local BaseY = positionVec2.y
-  
+   
   -- Statics
   for id,object in pairs(MASHTemplates) do
     local NewName = string.format("%s#%3d",name,id)
@@ -4351,14 +4358,22 @@ function UTILS.SpawnMASHStatics(Name,Coordinate,Country,ADF,Livery,Templates)
     if object.shape_name and object.shape_name ~= "none" then
       static:InitShape(object.shape_name)
     end
-    if object.category == "Helicopters" then
+    if object.category == "Helicopters" and DeployHelo == true then 
       if object.livery_id ~= nil then
         livery = object.livery_id
       end
       static:InitLivery(livery)
+      local newstatic = static:SpawnFromCoordinate(Coordinate,object.heading,NewName)
+      table.insert(ReturnStatics,newstatic)
+    elseif object.category == "Heliports" then
+      static:InitFARP(MASHCallsign,MASHRadio,MASHRadioModulation,false,false)
+      local newstatic = static:SpawnFromCoordinate(Coordinate,object.heading,NewName)
+      table.insert(ReturnStatics,newstatic)
+    elseif object.category ~= "Helicopters" and object.category ~= "Heliports" then
+      local newstatic = static:SpawnFromCoordinate(Coordinate,object.heading,NewName)
+      table.insert(ReturnStatics,newstatic)
     end
-    static:SpawnFromCoordinate(Coordinate,object.heading,NewName)
-    table.insert(ReturnStatics,static)
+
   end
   
   -- Beacon
