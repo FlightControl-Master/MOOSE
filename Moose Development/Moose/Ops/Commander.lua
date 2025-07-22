@@ -136,7 +136,7 @@ COMMANDER = {
   awacsZones      =    {},
   tankerZones     =    {},
   limitMission    =    {},
-  MaxMissionsAssignPerCycle = 1,
+  maxMissionsAssignPerCycle = 1,
 }
 
 --- COMMANDER class version.
@@ -1599,7 +1599,7 @@ function COMMANDER:CheckMissionQueue()
         end        
 
         missionsAssigned = missionsAssigned + 1
-        if missionsAssigned >= self.maxMissionsAssignPerCycle then
+        if missionsAssigned >= (self.maxMissionsAssignPerCycle or 1) then
             return
         end
 
