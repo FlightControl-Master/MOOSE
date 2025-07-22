@@ -1756,7 +1756,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.4.0"
+AIRBOSS.version = "1.4.1"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3081,7 +3081,7 @@ end
 
 --- Set up SRS for usage without sound files
 -- @param #AIRBOSS self
--- @param #string PathToSRS Path to SRS folder, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone".
+-- @param #string PathToSRS Path to SRS folder, e.g. "C:\\Program Files\\DCS-SimpleRadio\\ExternalAudio".
 -- @param #number Port Port of the SRS server, defaults to 5002.
 -- @param #string Culture (Optional, Airboss Culture)  Culture, defaults to "en-US".
 -- @param #string Gender (Optional, Airboss Gender)  Gender, e.g. "male" or "female". Defaults to "male".
