@@ -4630,3 +4630,13 @@ function UTILS.DestroyScenery(name, level)
         net.dostring_in("mission",string.format("a_scenery_destruction_zone(%d, %d)", z.zoneId, level))
     end
 end
+
+--- Search for clear zones in a given area. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param DCS##Vec3 Center position vector for the search area.
+-- @param #number SearchRadius Radius of the search area.
+-- @param #number PosRadius Required clear radius around each position.
+-- @param #number NumPositions Number of positions to find.
+-- @return #table A table of DCS#Vec2 positions that are clear of map objects within the given PosRadius.
+function UTILS.GetSimpleZones(Vec3, SearchRadius, PosRadius, NumPositions)
+    return Disposition.getSimpleZones(Vec3, SearchRadius, PosRadius, NumPositions)
+end
