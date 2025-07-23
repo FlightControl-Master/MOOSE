@@ -2991,14 +2991,14 @@ function AIRBASE:GetRunwayData(magvar, mark)
     -- Draw arrow.
     --ri.center:ArrowToAll(rj.center)
 
-    local c0=ri.center
+    local c0=ri.position
 
     -- Vector in the direction of the runway.
     local a=UTILS.VecTranslate(c0, 1000, ri.heading)
 
     -- Vector from runway i to runway j.
-    local b=UTILS.VecSubstract(rj.center, ri.center)
-    b=UTILS.VecAdd(ri.center, b)
+    local b=UTILS.VecSubstract(rj.position, ri.position)
+    b=UTILS.VecAdd(ri.position, b)
 
     -- Check if rj is left of ri.
     local left=isLeft(c0, a, b)
