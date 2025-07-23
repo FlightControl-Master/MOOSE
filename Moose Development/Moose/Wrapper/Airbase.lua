@@ -2634,6 +2634,7 @@ function AIRBASE:_InitRunways(IncludeInverse)
 
     --runway.name=string.format("%02d", tonumber(name))
     runway.magheading=tonumber(runway.name)*10
+    runway.idx=runway.magheading
     runway.heading=heading
     runway.width=width or 0
     runway.length=length or 0
@@ -2946,6 +2947,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
     local runway={} --#AIRBASE.Runway
     runway.heading=hdg
     runway.idx=idx
+    runway.magheading=idx
     runway.length=c1:Get2DDistance(c2)
     runway.position=c1
     runway.endpoint=c2
@@ -2961,6 +2963,57 @@ function AIRBASE:GetRunwayData(magvar, mark)
     -- Add runway.
     table.insert(runways, runway)
 
+  end
+  
+    -- Look for identical (parallel) runways, e.g. 03L and 03R at Nellis.
+  local rpairs={}
+  for i,_ri in pairs(runways) do
+    local ri=_ri --#AIRBASE.Runway
+    for j,_rj in pairs(runways) do
+      local rj=_rj --#AIRBASE.Runway
+      if i<j then
+        if ri.name==rj.name then
+          rpairs[i]=j
+        end
+      end
+    end
+  end
+
+  local function isLeft(a, b, c)
+    --return ((b.x - a.x)*(c.z - a.z) - (b.z - a.z)*(c.x - a.x)) > 0
+    return ((b.z - a.z)*(c.x - a.x) - (b.x - a.x)*(c.z - a.z)) > 0
+  end
+
+  for i,j in pairs(rpairs) do
+    local ri=runways[i] --#AIRBASE.Runway
+    local rj=runways[j] --#AIRBASE.Runway
+
+    -- Draw arrow.
+    --ri.center:ArrowToAll(rj.center)
+
+    local c0=ri.center
+
+    -- Vector in the direction of the runway.
+    local a=UTILS.VecTranslate(c0, 1000, ri.heading)
+
+    -- Vector from runway i to runway j.
+    local b=UTILS.VecSubstract(rj.center, ri.center)
+    b=UTILS.VecAdd(ri.center, b)
+
+    -- Check if rj is left of ri.
+    local left=isLeft(c0, a, b)
+
+    --env.info(string.format("Found pair %s: i=%d, j=%d, left==%s", ri.name, i, j, tostring(left)))
+
+    if left then
+      ri.isLeft=false
+      rj.isLeft=true
+    else
+      ri.isLeft=true
+      rj.isLeft=false
+    end
+
+    --break
   end
 
   return runways
