@@ -3797,6 +3797,22 @@ do -- COORDINATE
   function COORDINATE:GetRandomPointVec3InRadius( OuterRadius, InnerRadius )
     return COORDINATE:NewFromVec3( self:GetRandomVec3InRadius( OuterRadius, InnerRadius ) )
   end
+
+
+--- Search for clear zones in a given area. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param #number SearchRadius Radius of the search area.
+-- @param #number PosRadius Required clear radius around each position.
+-- @param #number NumPositions Number of positions to find.
+-- @return #table A table of Core.Point#COORDINATE that are clear of map objects within the given PosRadius.
+  function COORDINATE:GetSimpleZones(SearchRadius, PosRadius, NumPositions)
+    local clearPositions = UTILS.GetSimpleZones(self:GetVec3(), SearchRadius, PosRadius, NumPositions)
+    local coords = {}
+    for _, pos in ipairs(clearPositions) do
+      local coord = COORDINATE:NewFromVec2(pos)
+      table.insert(coords, coord)
+    end
+    return coords
+  end
   
 end
 
