@@ -1509,6 +1509,43 @@ function ZONE_RADIUS:IsVec3InZone( Vec3 )
   return InZone
 end
 
+--- Search for clear ground spawn zones within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param #number PosRadius Required clear radius around each position.
+-- @param #number NumPositions Number of positions to find.
+-- @return #table A table of DCS#Vec2 positions that are clear of map objects within the given PosRadius. nil if no clear positions are found.
+function ZONE_RADIUS:GetClearZonePositions(PosRadius, NumPositions)
+    local clearPositions = UTILS.GetSimpleZones(self:GetVec3(), self:GetRadius(), PosRadius, NumPositions)
+    if clearPositions or #clearPositions > 0 then
+        local validZones = {}
+        for _, vec2 in pairs(clearPositions) do
+            if self:IsVec2InZone(vec2) then
+                table.insert(validZones, vec2)
+            end
+        end
+        if #validZones > 0 then
+            return validZones
+        end
+    end
+    return nil
+end
+
+
+--- Search for a random clear ground spawn coordinate within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param #number PosRadius (Optional) Required clear radius around each position. (Default is math.min(Radius/10, 200))
+-- @param #number NumPositions (Optional) Number of positions to find. (Default 50)
+-- @return Core.Point#COORDINATE A random coordinate for a clear zone. nil if no clear positions are found.
+-- @return #number Assigned radius for the found zones. nil if no clear positions are found.
+function ZONE_RADIUS:GetRandomClearZoneCoordinate(PosRadius, NumPositions)
+    local radius = PosRadius or math.min(self.Radius/10, 200)
+    local clearPositions = self:GetClearZonePositions(radius, NumPositions or 50)
+    if clearPositions or #clearPositions > 0 then
+        local randomPosition = clearPositions[math.random(1, #clearPositions)]
+        return COORDINATE:NewFromVec2(randomPosition), radius
+    end
+
+    return nil
+end
+
 --- Returns a random Vec2 location within the zone.
 -- @param #ZONE_RADIUS self
 -- @param #number inner (Optional) Minimal distance from the center of the zone. Default is 0.
