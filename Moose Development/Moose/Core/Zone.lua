@@ -1518,7 +1518,7 @@ function ZONE_RADIUS:GetClearZonePositions(PosRadius, NumPositions)
     if clearPositions or #clearPositions > 0 then
         local validZones = {}
         for _, vec2 in pairs(clearPositions) do
-            if self.zone:IsVec2InZone(vec2) then
+            if self:IsVec2InZone(vec2) then
                 table.insert(validZones, vec2)
             end
         end
