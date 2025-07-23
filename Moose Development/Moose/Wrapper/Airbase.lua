@@ -1433,7 +1433,7 @@ AIRBASE.SpotStatus = {
 --- Runway data.
 -- @type AIRBASE.Runway
 -- @field #string name Runway name.
--- @field #string idx Runway ID: heading 070° ==> idx="07".
+-- @field #string idx Runway ID: heading 070° ==> idx="07". Mostly same as magheading.
 -- @field #number heading True heading of the runway in degrees.
 -- @field #number magheading Magnetic heading of the runway in degrees. This is what is marked on the runway.
 -- @field #number length Length of runway in meters.
@@ -2991,14 +2991,14 @@ function AIRBASE:GetRunwayData(magvar, mark)
     -- Draw arrow.
     --ri.center:ArrowToAll(rj.center)
 
-    local c0=ri.center
+    local c0=ri.position
 
     -- Vector in the direction of the runway.
     local a=UTILS.VecTranslate(c0, 1000, ri.heading)
 
     -- Vector from runway i to runway j.
-    local b=UTILS.VecSubstract(rj.center, ri.center)
-    b=UTILS.VecAdd(ri.center, b)
+    local b=UTILS.VecSubstract(rj.position, ri.position)
+    b=UTILS.VecAdd(ri.position, b)
 
     -- Check if rj is left of ri.
     local left=isLeft(c0, a, b)
