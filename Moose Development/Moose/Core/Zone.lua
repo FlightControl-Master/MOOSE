@@ -1542,6 +1542,7 @@ function ZONE_RADIUS:GetRandomClearZoneCoordinate(PosRadius, NumPositions)
         local randomPosition = clearPositions[math.random(1, #clearPositions)]
         return COORDINATE:NewFromVec2(randomPosition), radius
     end
+
     return nil
 end
 
