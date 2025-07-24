@@ -779,6 +779,61 @@ function FLIGHTGROUP:SetJettisonWeapons(Switch)
   return self
 end
 
+--- Set the aircraft to land straight in.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOptionLandingStraightIn()
+  self.OptionLandingStraightIn = true
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOptionLandingStraightIn()
+  end
+  return self
+end
+
+--- Set the aircraft to land in pairs.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOptionLandingForcePair()
+  self.OptionLandingForcePair = true
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOptionLandingForcePair()
+  end
+  return self
+end
+
+--- Set the aircraft to NOT land in pairs.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOptionLandingRestrictPair()
+  self.OptionLandingRestrictPair = true
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOptionLandingRestrictPair()
+  end
+  return self
+end
+
+--- Set the aircraft to land after overhead break.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOptionLandingOverheadBreak()
+  self.OptionLandingOverheadBreak = true
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOptionLandingOverheadBreak()
+  end
+  return self
+end
+
+--- [HELICOPTER] Set the aircraft to prefer takeoff and landing vertically.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOptionPreferVertical()
+  self.OptionPreferVertical = true
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():OptionPreferVerticalLanding()
+  end
+  return self
+end
+
 --- Set if group is ready for taxi/takeoff if controlled by a `FLIGHTCONTROL`.
 -- @param #FLIGHTGROUP self
 -- @param #boolean ReadyTO If `true`, flight is ready for takeoff.

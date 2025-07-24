@@ -974,6 +974,46 @@ function AIRWING:SetTakeoffAir()
   return self
 end
 
+--- Set the aircraft of the AirWing to land straight in.
+-- @param #AIRWING self
+-- @return #FLIGHTGROUP self
+function AIRWING:SetLandingStraightIn()
+  self.OptionLandingStraightIn = true
+  return self
+end
+
+--- Set the aircraft of the AirWing to land in pairs for groups > 1 aircraft.
+-- @param #AIRWING self
+-- @return #AIRWING self
+function AIRWING:SetLandingForcePair()
+  self.OptionLandingForcePair = true
+  return self
+end
+
+--- Set the aircraft of the AirWing to NOT land in pairs.
+-- @param #AIRWING self
+-- @return #AIRWING self
+function AIRWING:SetLandingRestrictPair()
+  self.OptionLandingRestrictPair = true
+  return self
+end
+
+--- Set the aircraft of the AirWing to land after overhead break.
+-- @param #AIRWING self
+-- @return #AIRWING self
+function AIRWING:SetLandingOverheadBreak()
+  self.OptionLandingOverheadBreak = true
+  return self
+end
+
+--- [Helicopter] Set the aircraft of the AirWing to prefer vertical takeoff and landing.
+-- @param #AIRWING self
+-- @return #AIRWING self
+function AIRWING:SetOptionPreferVerticalLanding()
+  self.OptionPreferVerticalLanding = true
+  return self
+end
+
 --- Set despawn after landing. Aircraft will be despawned after the landing event.
 -- Can help to avoid DCS AI taxiing issues.
 -- @param #AIRWING self
@@ -1464,7 +1504,21 @@ function AIRWING:onafterFlightOnMission(From, Event, To, FlightGroup, Mission)
   self:T(self.lid..string.format("Group %s on %s mission %s", FlightGroup:GetName(), Mission:GetType(), Mission:GetName()))
   if self.UseConnectedOpsAwacs and self.ConnectedOpsAwacs then
     self.ConnectedOpsAwacs:__FlightOnMission(2,FlightGroup,Mission)
-  end  
+  end
+  -- Landing Options  
+  if self.OptionLandingForcePair then
+    FlightGroup:SetOptionLandingForcePair()
+  elseif self.OptionLandingOverheadBreak then
+   FlightGroup:SetOptionLandingOverheadBreak()
+  elseif self.OptionLandingRestrictPair then
+   FlightGroup:SetOptionLandingRestrictPair()
+  elseif self.OptionLandingStraightIn then
+    FlightGroup:SetOptionLandingStraightIn()
+  end
+  -- Landing Options Helo
+  if self.OptionPreferVerticalLanding then
+    FlightGroup:SetOptionPreferVertical()
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
