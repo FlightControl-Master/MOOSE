@@ -168,16 +168,25 @@
 --   * @{#CONTROLLABLE.OptionAlarmStateGreen}
 --   * @{#CONTROLLABLE.OptionAlarmStateRed}
 --
--- ## 5.4) Jettison weapons:
+-- ## 5.4) [AIR] Jettison weapons:
 --
 --   * @{#CONTROLLABLE.OptionAllowJettisonWeaponsOnThreat}
 --   * @{#CONTROLLABLE.OptionKeepWeaponsOnThreat}
 --
--- ## 5.5) Air-2-Air missile attack range:
+-- ## 5.5) [AIR] Air-2-Air missile attack range:
 --   * @{#CONTROLLABLE.OptionAAAttackRange}(): Defines the usage of A2A missiles against possible targets.
 --   
 -- # 6) [GROUND] IR Maker Beacons for GROUPs and UNITs
 --  * @{#CONTROLLABLE:NewIRMarker}(): Create a blinking IR Marker on a GROUP or UNIT.
+--  
+-- # 7) [HELICOPTER] Units prefer vertical landing and takeoffs:
+--  * @{#CONTROLLABLE.OptionPreferVerticalLanding}(): Set aircraft to prefer vertical landing and takeoff.
+--  
+-- # 8) [AIRCRAFT] Landing approach options
+--  * @{#CONTROLLABLE.SetOptionLandingStraightIn}(): Landing approach straight in.
+--  * @{#CONTROLLABLE.SetOptionLandingForcePair}(): Landing approach in pairs for groups > 1 unit.
+--  * @{#CONTROLLABLE.SetOptionLandingRestrictPair}(): Landing approach single.
+--  * @{#CONTROLLABLE.SetOptionLandingOverheadBreak}():  Landing approach overhead break.
 --
 -- @field #CONTROLLABLE
 CONTROLLABLE = {
@@ -4201,6 +4210,50 @@ function CONTROLLABLE:OptionEngageRange( EngageRange )
     return self
   end
   return nil
+end
+
+--- [AIR] Set how the AI lands on an airfield. Here: Straight in.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionLandingStraightIn()
+  self:F2( { self.ControllableName } )
+  if self:IsAir() then
+    self:SetOption("36","0")
+  end
+  return self
+end
+
+--- [AIR] Set how the AI lands on an airfield. Here: In pairs (if > 1 aircraft in group)
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionLandingForcePair()
+  self:F2( { self.ControllableName } )
+  if self:IsAir() then
+    self:SetOption("36","1")
+  end
+  return self
+end
+
+--- [AIR] Set how the AI lands on an airfield. Here: No landing in pairs.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionLandingRestrictPair()
+  self:F2( { self.ControllableName } )
+  if self:IsAir() then
+    self:SetOption("36","2")
+  end
+  return self
+end
+
+--- [AIR] Set how the AI lands on an airfield. Here: Overhead break.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:SetOptionLandingOverheadBreak()
+  self:F2( { self.ControllableName } )
+  if self:IsAir() then
+    self:SetOption("36","3")
+  end
+  return self
 end
 
 --- [AIR] Set how the AI uses the onboard radar.
