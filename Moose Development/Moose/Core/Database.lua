@@ -1112,7 +1112,7 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
           self:E("WARNING: Invalid STN "..tostring(UnitTemplate.AddPropAircraft.STN_L16).." for ".. UnitTemplate.name)
         else
           self.STNS[stn] = UnitTemplate.name
-          self:I("Register STN "..tostring(UnitTemplate.AddPropAircraft.STN_L16).." for ".. UnitTemplate.name)
+          self:T("Register STN "..tostring(UnitTemplate.AddPropAircraft.STN_L16).." for ".. UnitTemplate.name)
         end
       end
       if UnitTemplate.AddPropAircraft.SADL_TN then
@@ -1121,7 +1121,7 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
           self:E("WARNING: Invalid SADL "..tostring(UnitTemplate.AddPropAircraft.SADL_TN).." for ".. UnitTemplate.name)
         else
           self.SADL[sadl] = UnitTemplate.name
-          self:I("Register SADL "..tostring(UnitTemplate.AddPropAircraft.SADL_TN).." for ".. UnitTemplate.name)
+          self:T("Register SADL "..tostring(UnitTemplate.AddPropAircraft.SADL_TN).." for ".. UnitTemplate.name)
         end
       end  
     end
@@ -1382,7 +1382,7 @@ function DATABASE:GetCoalitionFromClientTemplate( ClientName )
   if self.Templates.ClientsByName[ClientName] then  
     return self.Templates.ClientsByName[ClientName].CoalitionID
   end
-  self:E("WARNING: Template does not exist for client "..tostring(ClientName))
+  self:T("WARNING: Template does not exist for client "..tostring(ClientName))
   return nil
 end
 
@@ -1394,7 +1394,7 @@ function DATABASE:GetCategoryFromClientTemplate( ClientName )
   if self.Templates.ClientsByName[ClientName] then  
     return self.Templates.ClientsByName[ClientName].CategoryID
   end
-  self:E("WARNING: Template does not exist for client "..tostring(ClientName))
+  self:T("WARNING: Template does not exist for client "..tostring(ClientName))
   return nil
 end
 
@@ -1406,7 +1406,7 @@ function DATABASE:GetCountryFromClientTemplate( ClientName )
   if self.Templates.ClientsByName[ClientName] then  
     return self.Templates.ClientsByName[ClientName].CountryID
   end
-  self:E("WARNING: Template does not exist for client "..tostring(ClientName))
+  self:T("WARNING: Template does not exist for client "..tostring(ClientName))
   return nil  
 end
 
