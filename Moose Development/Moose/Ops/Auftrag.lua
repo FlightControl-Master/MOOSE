@@ -1789,8 +1789,9 @@ end
 -- @param Core.Point#COORDINATE Target Target coordinate. Can also be specified as a GROUP, UNIT, STATIC, SET_GROUP, SET_UNIT, SET_STATIC or TARGET object.
 -- @param #number Altitude Engage altitude in feet. Default 25000 ft.
 -- @param #number EngageWeaponType Which weapon to use. Defaults to auto, ie ENUMS.WeaponFlag.Auto. See ENUMS.WeaponFlag for options.
+-- @param #boolean Divebomb If true, use a dive bombing attack approach.
 -- @return #AUFTRAG self
-function AUFTRAG:NewBOMBING(Target, Altitude, EngageWeaponType)
+function AUFTRAG:NewBOMBING(Target, Altitude, EngageWeaponType, Divebomb)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.BOMBING)
 
@@ -1807,6 +1808,7 @@ function AUFTRAG:NewBOMBING(Target, Altitude, EngageWeaponType)
   mission.missionFraction=0.5
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.NoReaction   -- No reaction is better.
+  mission.optionDivebomb = Divebomb or nil
 
   -- Evaluate result after 5 min. We might need time until the bombs have dropped and targets have been detroyed.
   mission.dTevaluate=5*60
@@ -6164,7 +6166,7 @@ function AUFTRAG:GetDCSMissionTask()
 
     local coords = self.engageTarget:GetCoordinates()
     for _, coord in pairs(coords) do
-        local DCStask = CONTROLLABLE.TaskBombing(nil, coord:GetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
+        local DCStask = CONTROLLABLE.TaskBombing(nil, coord:GetVec2(), self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType, self.optionDivebomb)
 
         table.insert(DCStasks, DCStask)
     end
