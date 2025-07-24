@@ -3803,17 +3803,20 @@ do -- COORDINATE
 -- @param #number SearchRadius Radius of the search area.
 -- @param #number PosRadius Required clear radius around each position.
 -- @param #number NumPositions Number of positions to find.
--- @return #table A table of Core.Point#COORDINATE that are clear of map objects within the given PosRadius.
+-- @return #table A table of Core.Point#COORDINATE that are clear of map objects within the given PosRadius. nil if no positions are found.
   function COORDINATE:GetSimpleZones(SearchRadius, PosRadius, NumPositions)
     local clearPositions = UTILS.GetSimpleZones(self:GetVec3(), SearchRadius, PosRadius, NumPositions)
-    local coords = {}
-    for _, pos in ipairs(clearPositions) do
-      local coord = COORDINATE:NewFromVec2(pos)
-      table.insert(coords, coord)
+    if clearPositions and #clearPositions > 0 then
+        local coords = {}
+        for _, pos in pairs(clearPositions) do
+          local coord = COORDINATE:NewFromVec2(pos)
+          table.insert(coords, coord)
+        end
+        return coords
     end
-    return coords
+    return nil
   end
-  
+
 end
 
 do 

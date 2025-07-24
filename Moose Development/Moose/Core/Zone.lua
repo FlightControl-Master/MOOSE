@@ -1515,7 +1515,7 @@ end
 -- @return #table A table of DCS#Vec2 positions that are clear of map objects within the given PosRadius. nil if no clear positions are found.
 function ZONE_RADIUS:GetClearZonePositions(PosRadius, NumPositions)
     local clearPositions = UTILS.GetSimpleZones(self:GetVec3(), self:GetRadius(), PosRadius, NumPositions)
-    if clearPositions or #clearPositions > 0 then
+    if clearPositions and #clearPositions > 0 then
         local validZones = {}
         for _, vec2 in pairs(clearPositions) do
             if self:IsVec2InZone(vec2) then
@@ -1538,7 +1538,7 @@ end
 function ZONE_RADIUS:GetRandomClearZoneCoordinate(PosRadius, NumPositions)
     local radius = PosRadius or math.min(self.Radius/10, 200)
     local clearPositions = self:GetClearZonePositions(radius, NumPositions or 50)
-    if clearPositions or #clearPositions > 0 then
+    if clearPositions and #clearPositions > 0 then
         local randomPosition = clearPositions[math.random(1, #clearPositions)]
         return COORDINATE:NewFromVec2(randomPosition), radius
     end
