@@ -837,7 +837,7 @@ do -- COORDINATE
     return land.getHeight( Vec2 )
   end
 
-  --- Returns a table of `Vec3` points representing the terrain profile between two points.
+  --- Returns a table of DCS#Vec3 points representing the terrain profile between two points.
   -- @param #COORDINATE self
   -- @param Destination DCS#Vec3 Ending point of the profile.
   -- @return #table DCS#Vec3 table of the profile
@@ -845,7 +845,7 @@ do -- COORDINATE
     return land.profile(self:GetVec3(), Destination)
   end
 
-  --- Returns a table of `Vec3` points representing the terrain profile between two points.
+  --- Returns a table of #COORDINATE representing the terrain profile between two points.
   -- @param #COORDINATE self
   -- @param Destination #COORDINATE Ending coordinate of the profile.
   -- @return #table #COORDINATE table of the profile
