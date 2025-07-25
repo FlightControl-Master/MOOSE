@@ -105,7 +105,7 @@ AUTOLASE = {
   debug = false,
   smokemenu = true,
   RoundingPrecision = 0,
-  increasegroundawareness = true,
+  increasegroundawareness = false,
   MonitorFrequency = 30,
 }
 
@@ -216,7 +216,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.smokemenu = true
   self.threatmenu = true
   self.RoundingPrecision = 0
-  self.increasegroundawareness = true
+  self.increasegroundawareness = false
   self.MonitorFrequency = 30
   
   self:EnableSmokeMenu({Angle=math.random(0,359),Distance=math.random(10,20)})
@@ -1020,7 +1020,7 @@ function AUTOLASE:_Prescient()
            self:T(self.lid.."Checking possibly visible STATICs for Recce "..unit:GetName())
             for _,_static in pairs(Statics) do -- DCS static object here
               local static = STATIC:Find(_static)
-              if static and static:GetCoalition() ~= self.coalition then
+              if static and static:GetCoalition() ~= self.coalition and static:GetCoordinate() then
                 local IsLOS = position:IsLOS(static:GetCoordinate())
                 if IsLOS then
                   unit:KnowUnit(static,true,true)
