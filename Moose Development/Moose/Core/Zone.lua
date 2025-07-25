@@ -1510,6 +1510,7 @@ function ZONE_RADIUS:IsVec3InZone( Vec3 )
 end
 
 --- Search for clear ground spawn zones within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param #ZONE_RADIUS self
 -- @param #number PosRadius Required clear radius around each position.
 -- @param #number NumPositions Number of positions to find.
 -- @return #table A table of DCS#Vec2 positions that are clear of map objects within the given PosRadius. nil if no clear positions are found.
@@ -1519,6 +1520,7 @@ end
 
 
 --- Search for a random clear ground spawn coordinate within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param #ZONE_RADIUS self
 -- @param #number PosRadius (Optional) Required clear radius around each position. (Default is math.min(Radius/10, 200))
 -- @param #number NumPositions (Optional) Number of positions to find. (Default 50)
 -- @return Core.Point#COORDINATE A random coordinate for a clear zone. nil if no clear positions are found.
@@ -2506,6 +2508,7 @@ function ZONE_POLYGON_BASE:Flush()
 end
 
 --- Search for clear ground spawn zones within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param #ZONE_POLYGON_BASE self
 -- @param #number PosRadius Required clear radius around each position.
 -- @param #number NumPositions Number of positions to find.
 -- @return #table A table of DCS#Vec2 positions that are clear of map objects within the given PosRadius. nil if no clear positions are found.
@@ -2515,6 +2518,7 @@ end
 
 
 --- Search for a random clear ground spawn coordinate within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param #ZONE_POLYGON_BASE self
 -- @param #number PosRadius (Optional) Required clear radius around each position. (Default is math.min(Radius/10, 200))
 -- @param #number NumPositions (Optional) Number of positions to find. (Default 50)
 -- @return Core.Point#COORDINATE A random coordinate for a clear zone. nil if no clear positions are found.

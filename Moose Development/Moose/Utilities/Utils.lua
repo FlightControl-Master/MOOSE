@@ -4593,6 +4593,33 @@ function UTILS.GetEnvZone(name)
     end
 end
 
+--- net.dostring_in
+function UTILS.DoStringIn(State,DoString)
+  return net.dostring_in(State,DoString)
+end
+
+--- Show a picture on the screen
+-- @param #string FileName File name of the picture
+-- @param #number Duration Duration in seconds, defaults to 10
+-- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign Horizontal alignment of the picture, defaults to 1 (left), can be 0 (center) or 2 (right)
+-- @param #number VerticalAlign Vertical alignment of the picture, defaults to 1 (top), can be 0 (center) or 2 (bottom)
+-- @param #number Size Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits Size units, defaults to 0 (percent), can be 1 (pixels)
+function UTILS.ShowPicture(FileName, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
+    ClearView = ClearView or false
+    StartDelay = StartDelay or 0
+    HorizontalAlign = HorizontalAlign or 1
+    VerticalAlign = VerticalAlign or 1
+    Size = Size or 100
+    SizeUnits = SizeUnits or 0
+
+    if ClearView then ClearView = "true" else ClearView = "false" end
+
+    net.dostring_in("mission", string.format("a_out_picture(getValueResourceByKey(\"%s\"), %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", FileName, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
+end
+
 --- Show a helper gate at a DCS#Vec3 position
 -- @param DCS#Vec3 pos The position
 -- @param number heading Heading in degrees, can be 0..359 degrees
