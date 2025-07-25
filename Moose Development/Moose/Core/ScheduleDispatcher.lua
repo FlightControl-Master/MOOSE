@@ -175,7 +175,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
     local Name = Info.name or "?"
 
     local ErrorHandler = function( errmsg )
-      env.info( "Error in timer function: " .. errmsg )
+      env.info( "Error in timer function: " .. errmsg or "" )
       if BASE.Debug ~= nil then
         env.info( BASE.Debug.traceback() )
       end
