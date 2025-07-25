@@ -4679,3 +4679,42 @@ function UTILS.GetRandomClearZoneCoordinate(Zone, PosRadius, NumPositions)
 
     return nil
 end
+
+--- Find the point on the radius of a circle closest to a point outside of the radius.
+-- @param DCS#Vec2 Vec1 Simple Vec2 marking the middle of the circle.
+-- @param #number Radius The radius of the circle.
+-- @param DCS#Vec2 Vec2 Simple Vec2 marking the point outside of the circle.
+-- @return DCS#Vec2 Vec2 point on the radius.
+function UTILS.FindNearestPointOnCircle(Vec1,Radius,Vec2)
+    local r = Radius
+    local cx = Vec1.x or 1
+    local cy = Vec1.y or 1
+    local px = Vec2.x or 1
+    local py = Vec2.y or 1
+
+    -- Berechne den Vektor vom Mittelpunkt zum externen Punkt
+    local dx = px - cx
+    local dy = py - cy
+
+    -- Berechne die Länge des Vektors
+    local dist = math.sqrt(dx * dx + dy * dy)
+
+    -- Wenn der Punkt im Mittelpunkt liegt, wähle einen Punkt auf der X-Achse
+    if dist == 0 then
+        return {x=cx + r, y=cy}
+    end
+
+    -- Normalisiere den Vektor (richtungsweise Vektor mit Länge 1)
+    local norm_dx = dx / dist
+    local norm_dy = dy / dist
+
+    -- Berechne den Punkt auf dem Rand des Kreises
+    local qx = cx + r * norm_dx
+    local qy = cy + r * norm_dy
+
+    local shift_factor = 1
+    qx = qx + shift_factor * norm_dx
+    qy = qy + shift_factor * norm_dy
+
+    return {x=qx, y=qy}
+end
