@@ -534,6 +534,19 @@ function ZONE_BASE:GetZoneProbability()
   return self.ZoneProbability
 end
 
+--- Get the coordinate on the radius of the zone nearest to Outsidecoordinate. Useto e.g. find an ingress point.
+-- @param #ZONE_BASE self
+-- @param Core.Point#COORDINATE Outsidecoordinate The coordinate outside of the zone from where to look.
+-- @return Core.Point#COORDINATE CoordinateOnRadius
+function ZONE_BASE:FindNearestCoordinateOnRadius(Outsidecoordinate)
+  local Vec1 = self:GetVec2()
+  local Radius = self:GetRadius()
+  local Vec2 = Outsidecoordinate:GetVec2()
+  local Point = UTILS.FindNearestPointOnCircle(Vec1,Radius,Vec2)
+  local rc = COORDINATE:NewFromVec2(Point)
+  return rc
+end
+
 --- Get the zone taking into account the randomization probability of a zone to be selected.
 -- @param #ZONE_BASE self
 -- @return #ZONE_BASE The zone is selected taking into account the randomization probability factor.
