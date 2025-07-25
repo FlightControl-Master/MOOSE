@@ -4640,3 +4640,42 @@ end
 function UTILS.GetSimpleZones(Vec3, SearchRadius, PosRadius, NumPositions)
     return Disposition.getSimpleZones(Vec3, SearchRadius, PosRadius, NumPositions)
 end
+
+--- Search for clear ground spawn zones within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param Core.Zone#ZONE Zone to search.
+-- @param #number (Optional) PosRadius Required clear radius around each position. (Default is math.min(Radius/10, 200))
+-- @param #number (Optional) NumPositions Number of positions to find. (Default 50)
+-- @return #table A table of DCS#Vec2 positions that are clear of map objects within the given PosRadius. nil if no clear positions are found.
+function UTILS.GetClearZonePositions(Zone, PosRadius, NumPositions)
+    local radius = PosRadius or math.min(Zone:GetRadius()/10, 200)
+    local clearPositions = UTILS.GetSimpleZones(Zone:GetVec3(), Zone:GetRadius(), radius, NumPositions or 50)
+    if clearPositions and #clearPositions > 0 then
+        local validZones = {}
+        for _, vec2 in pairs(clearPositions) do
+            if Zone:IsVec2InZone(vec2) then
+                table.insert(validZones, vec2)
+            end
+        end
+        if #validZones > 0 then
+            return validZones, radius
+        end
+    end
+    return nil
+end
+
+
+--- Search for a random clear ground spawn coordinate within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param Core.Zone#ZONE Zone to search.
+-- @param #number PosRadius (Optional) Required clear radius around each position. (Default is math.min(Radius/10, 200))
+-- @param #number NumPositions (Optional) Number of positions to find. (Default 50)
+-- @return Core.Point#COORDINATE A random coordinate for a clear zone. nil if no clear positions are found.
+-- @return #number Assigned radius for the found zones. nil if no clear positions are found.
+function UTILS.GetRandomClearZoneCoordinate(Zone, PosRadius, NumPositions)
+    local clearPositions = UTILS.GetClearZonePositions(Zone, PosRadius, NumPositions)
+    if clearPositions and #clearPositions > 0 then
+        local randomPosition, radius = clearPositions[math.random(1, #clearPositions)]
+        return COORDINATE:NewFromVec2(randomPosition), radius
+    end
+
+    return nil
+end
