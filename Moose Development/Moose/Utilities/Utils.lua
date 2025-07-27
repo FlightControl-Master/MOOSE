@@ -4620,6 +4620,24 @@ function UTILS.ShowPicture(FileName, Duration, ClearView, StartDelay, Horizontal
     net.dostring_in("mission", string.format("a_out_picture(getValueResourceByKey(\"%s\"), %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", FileName, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
 end
 
+--- Load a mission file. This will replace the current mission with the one given carrying along the online clients.
+-- @param #string FileName Mission filename
+function UTILS.LoadMission(FileName)
+    net.dostring_in("mission", string.format("a_load_mission(\"%s\")", FileName))
+end
+
+--- Set the mission briefing for a coalition.
+-- @param #number Coalition Briefing coalition ID, can be coalition.side.BLUE, coalition.side.RED or coalition.side.NEUTRAL
+-- @param #string Text Briefing text, can contain newlines, will be converted formatted properly for DCS
+-- @param #string Picture Picture filename, can be a file in the DEFAULT folder inside the .miz
+function UTILS.SetMissionBriefing(Coalition, Text, Picture)
+    Text = Text or ""
+    Text = Text:gsub("\n", "\\n")
+    Picture = Picture or ""
+    local coalName = string.lower(UTILS.GetCoalitionName(Coalition))
+    net.dostring_in("mission", string.format("a_set_briefing(\"%s\", getValueResourceByKey(\"%s\"), \"%s\")", coalName, Picture, Text))
+end
+
 --- Show a helper gate at a DCS#Vec3 position
 -- @param DCS#Vec3 pos The position
 -- @param number heading Heading in degrees, can be 0..359 degrees
