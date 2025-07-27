@@ -33,7 +33,7 @@
 -- - @module Functional.Tiresias
 -- - @image Functional.Tiresias.jpg
 
---- Last Update: Dec 2023 (Optimized July 2025)
+--- Last Update: July 2025
 
 --- **TIRESIAS** class, extends Core.Base#BASE
 --  @type TIRESIAS
@@ -55,6 +55,7 @@
 --  @field #boolean SwitchAAA
 --  @field #string lid
 --  @field #table _cached_zones
+--  @field #table _cached_groupsets
 --  @extends Core.Fsm#FSM
 
 ---
@@ -104,7 +105,7 @@
 TIRESIAS = {
   ClassName         = "TIRESIAS",
   debug             = true,
-  version           = " 0.0.6-OPT" ,
+  version           = " 0.0.7-OPT" ,
   Interval          = 20,
   GroundSet         = nil,
   VehicleSet        = nil,
@@ -116,6 +117,7 @@ TIRESIAS = {
   PlaneSwitchRange  = 25, --  NM
   SwitchAAA         = true,
   _cached_zones     = {}, --  Cache for zone objects
+  _cached_groupsets = {}, --  Cache for group_set objects
   }
 
 ---
@@ -418,6 +420,7 @@ function TIRESIAS:_SwitchOnGroups(group, radius)
   local group_name = group:GetName()
   local cache_key = group_name .. " _"  .. radius
   local zone = self._cached_zones[cache_key]
+  local ground = self._cached_groupsets[cache_key]
   
   if not zone then
     zone = ZONE_GROUP:New(" Zone-"  .. group_name, group, UTILS.NMToMeters(radius))
@@ -427,7 +430,13 @@ function TIRESIAS:_SwitchOnGroups(group, radius)
     zone:UpdateFromGroup(group)
   end
   
-  local ground = SET_GROUP:New():FilterCategoryGround():FilterZones({zone}):FilterOnce()
+  if not ground then
+    ground = SET_GROUP:New():FilterCategoryGround():FilterZones({zone}):FilterOnce()
+    self._cached_groupsets[cache_key] = ground
+  else
+    ground:FilterZones({zone},true):FilterOnce()
+  end
+  
   local count = ground:CountAlive()
   
   if self.debug then
