@@ -4231,8 +4231,8 @@ function CTLD:_MoveGroupToZone(Group)
     Group:SetAIOn()
     Group:OptionAlarmStateAuto()
     Group:OptionDisperseOnAttack(30)
-    Group:OptionROEOpenFireWeaponFree()
-    Group:RouteGroundTo(zonecoord,5,formation)
+    Group:OptionROEOpenFire()
+    Group:RouteGroundTo(zonecoord,25,formation)
     end
   return self
 end
