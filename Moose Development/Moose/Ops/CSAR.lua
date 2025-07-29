@@ -31,7 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 ---
--- Last Update May 2025
+-- Last Update July 2025
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -1199,7 +1199,7 @@ function CSAR:_EventHandler(EventData)
     -- all checks passed, get going.
     if self.csarUsePara == false or (self.csarUsePara and wetfeet ) then --shagrat check parameter LandingAfterEjection, if true don't spawn a Pilot from EJECTION event, wait for the Chute to land
       local _freq = self:_GenerateADFFrequency()
-      self:_AddCsar(_coalition, _unit:GetCountry(), initcoord , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, false, "none")
+       self:_AddCsar(_coalition, _unit:GetCountry(), initcoord , _unit:GetTypeName(),  _unit:GetName(), _event.IniPlayerName, _freq, self.suppressmessages, "none")
       return self
     end
 
@@ -1264,8 +1264,8 @@ function CSAR:_EventHandler(EventData)
     if _coalition == self.coalition then
       local _freq = self:_GenerateADFFrequency()
       self:I({coalition=_coalition,country= _country, coord=_LandingPos, name=_unitname, player=_event.IniPlayerName, freq=_freq})
-      self:_AddCsar(_coalition, _country, _LandingPos, nil, _unitname, _event.IniPlayerName, _freq, false, "none")--shagrat add CSAR at Parachute location.
-
+      self:_AddCsar(_coalition, _country, _LandingPos, nil, _unitname, _event.IniPlayerName, _freq, self.suppressmessages, "none")--shagrat add CSAR at Parachute location.
+    
       Unit.destroy(_event.initiator) -- shagrat remove static Pilot model
     end
   end
@@ -3005,8 +3005,8 @@ function CSAR:onafterLoad(From, Event, To, path, filename)
     local typeName = dataset[8]
     local unitName = dataset[9]
     local freq = tonumber(dataset[10])
-
-    self:_AddCsar(coalition, country, point, typeName, unitName, playerName, freq, nil, description, nil)
+    
+    self:_AddCsar(coalition, country, point, typeName, unitName, playerName, freq, false, description, nil)    
   end
 
   return self
