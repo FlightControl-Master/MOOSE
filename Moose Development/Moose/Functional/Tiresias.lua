@@ -105,7 +105,7 @@
 TIRESIAS = {
   ClassName         = "TIRESIAS",
   debug             = true,
-  version           = " 0.0.7-OPT" ,
+  version           = " 0.0.7a-OPT" ,
   Interval          = 20,
   GroundSet         = nil,
   VehicleSet        = nil,
@@ -419,8 +419,8 @@ function TIRESIAS:_SwitchOnGroups(group, radius)
   --  Use cached zones to reduce object creation
   local group_name = group:GetName()
   local cache_key = group_name .. " _"  .. radius
-  local zone = self._cached_zones[cache_key]
-  local ground = self._cached_groupsets[cache_key]
+  local zone = self._cached_zones[cache_key] -- Core.Zone#ZONE_RADIUS
+  --local ground = self._cached_groupsets[cache_key] -- Core.Set#SET_GROUP
   
   if not zone then
     zone = ZONE_GROUP:New(" Zone-"  .. group_name, group, UTILS.NMToMeters(radius))
@@ -430,12 +430,14 @@ function TIRESIAS:_SwitchOnGroups(group, radius)
     zone:UpdateFromGroup(group)
   end
   
-  if not ground then
-    ground = SET_GROUP:New():FilterCategoryGround():FilterZones({zone}):FilterOnce()
-    self._cached_groupsets[cache_key] = ground
-  else
-    ground:FilterZones({zone},true):FilterOnce()
-  end
+  --if not ground then
+    --ground = SET_GROUP:New():FilterCategoryGround():FilterZones({zone}):FilterOnce()
+    --self._cached_groupsets[cache_key] = ground
+  --else
+    --ground:FilterZones({zone},true):FilterOnce()
+  zone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT})
+  local ground = zone:GetScannedSetGroup()
+  --end
   
   local count = ground:CountAlive()
   

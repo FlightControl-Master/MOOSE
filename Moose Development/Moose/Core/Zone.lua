@@ -1280,7 +1280,8 @@ end
 function ZONE_RADIUS:GetScannedSetGroup()
 
   self.ScanSetGroup=self.ScanSetGroup or SET_GROUP:New() --Core.Set#SET_GROUP
-
+  
+  self.ScanSetGroup:Clear(false)
   self.ScanSetGroup.Set={}
 
   if self.ScanData then
