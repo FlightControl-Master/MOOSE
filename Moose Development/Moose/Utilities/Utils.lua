@@ -4603,11 +4603,11 @@ end
 -- @param #number Duration Duration in seconds, defaults to 10
 -- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
 -- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
--- @param #number HorizontalAlign Horizontal alignment of the picture, defaults to 1 (left), can be 0 (center) or 2 (right)
--- @param #number VerticalAlign Vertical alignment of the picture, defaults to 1 (top), can be 0 (center) or 2 (bottom)
+-- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
+-- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
 -- @param #number Size Size of the picture in percent, defaults to 100
--- @param #number SizeUnits Size units, defaults to 0 (percent), can be 1 (pixels)
-function UTILS.ShowPicture(FileName, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
+-- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+function UTILS.ShowPicture(FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
     ClearView = ClearView or false
     StartDelay = StartDelay or 0
     HorizontalAlign = HorizontalAlign or 1
@@ -4617,7 +4617,7 @@ function UTILS.ShowPicture(FileName, Duration, ClearView, StartDelay, Horizontal
 
     if ClearView then ClearView = "true" else ClearView = "false" end
 
-    net.dostring_in("mission", string.format("a_out_picture(getValueResourceByKey(\"%s\"), %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", FileName, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
+    net.dostring_in("mission", string.format("a_out_picture(\"%s\", %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", FilePath, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
 end
 
 --- Load a mission file. This will replace the current mission with the one given carrying along the online clients.
@@ -4629,13 +4629,13 @@ end
 --- Set the mission briefing for a coalition.
 -- @param #number Coalition Briefing coalition ID, can be coalition.side.BLUE, coalition.side.RED or coalition.side.NEUTRAL
 -- @param #string Text Briefing text, can contain newlines, will be converted formatted properly for DCS
--- @param #string Picture Picture filename, can be a file in the DEFAULT folder inside the .miz
+-- @param #string Picture Picture file path, can be a file in the DEFAULT folder inside the .miz
 function UTILS.SetMissionBriefing(Coalition, Text, Picture)
     Text = Text or ""
     Text = Text:gsub("\n", "\\n")
     Picture = Picture or ""
     local coalName = string.lower(UTILS.GetCoalitionName(Coalition))
-    net.dostring_in("mission", string.format("a_set_briefing(\"%s\", getValueResourceByKey(\"%s\"), \"%s\")", coalName, Picture, Text))
+    net.dostring_in("mission", string.format("a_set_briefing(\"%s\", \"%s\", \"%s\")", coalName, Picture, Text))
 end
 
 --- Show a helper gate at a DCS#Vec3 position
