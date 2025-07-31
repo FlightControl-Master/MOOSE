@@ -4746,6 +4746,12 @@ function UTILS.ShowHelperGateForUnit(Unit, Flag)
     net.dostring_in("mission",string.format("a_show_route_gates_for_unit(%d, \"%d\")", Unit:GetID(), Flag))
 end
 
+--- Set the carrier illumination mode. -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+-- @param #number UnitID Carrier unit ID ( UNIT:GetID() )
+-- @param #number Mode Illumination mode, can be -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+function UTILS.SetCarrierIlluminationMode(UnitID, Mode)
+    net.dostring_in("mission",string.format("a_set_carrier_illumination_mode(%d, %d)", UnitID, Mode))
+end
 
 --- Shell a zone, zone must ME created
 -- @param #string name The name of the ME created zone
