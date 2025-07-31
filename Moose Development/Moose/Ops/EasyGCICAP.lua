@@ -71,6 +71,8 @@
 -- @field #boolean DespawnAfterHolding
 -- @field #list<Ops.Auftrag#AUFTRAG> ListOfAuftrag
 -- @field #string defaulttakeofftype Take off type
+-- @field #number FuelLowThreshold
+-- @field #number FuelCriticalThreshold
 -- @extends Core.Fsm#FSM
 
 --- *“Airspeed, altitude, and brains. Two are always needed to successfully complete the flight.”* -- Unknown.
@@ -226,6 +228,8 @@ EASYGCICAP = {
   DespawnAfterHolding = true,
   ListOfAuftrag = {},
   defaulttakeofftype = "hot",
+  FuelLowThreshold = 25,
+  FuelCriticalThreshold = 10,
 }
 
 --- Internal Squadron data type
@@ -261,7 +265,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.23"
+EASYGCICAP.version="0.1.25"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -315,6 +319,8 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.DespawnAfterHolding = true
   self.ListOfAuftrag = {}
   self.defaulttakeofftype = "hot"
+  self.FuelLowThreshold = 25
+  self.FuelCriticalThreshold = 10
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("EASYGCICAP %s | ", self.alias)
@@ -339,6 +345,50 @@ end
 -- Functions
 -------------------------------------------------------------------------
 
+--- Get a specific managed AirWing by name
+-- @param #EASYGCICAP self
+-- @param #string AirbaseName Airbase name of the home of this wing.
+-- @return Ops.AirWing#AIRWING Airwing or nil if not found
+function EASYGCICAP:GetAirwing(AirbaseName)
+  self:T(self.lid.."GetAirwing")
+  if self.wings[AirbaseName] then
+    return self.wings[AirbaseName][1]
+  end
+  return nil
+end
+
+--- Get a table of all managed AirWings
+-- @param #EASYGCICAP self
+-- @return #table Table of Ops.AirWing#AIRWING Airwings
+function EASYGCICAP:GetAirwingTable()
+  self:T(self.lid.."GetAirwingTable")
+  local Wingtable = {}
+  for _,_object in pairs(self.wings or {}) do
+    table.insert(Wingtable,_object[1])
+  end
+  return Wingtable
+end
+
+--- Set "fuel low" threshold for CAP and INTERCEPT flights.
+-- @param #EASYGCICAP self
+-- @param #number Percent RTB if fuel at this percent. Values: 1..100, defaults to 25.
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetFuelLow(Percent)
+  self:T(self.lid.."SetFuelLow")
+  self.FuelLowThreshold = Percent or 25
+  return self
+end
+
+--- Set "fuel critical" threshold for CAP and INTERCEPT flights.
+-- @param #EASYGCICAP self
+-- @param #number Percent RTB if fuel at this percent. Values: 1..100, defaults to 10.
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetFuelCritical(Percent)
+  self:T(self.lid.."SetFuelCritical")
+  self.FuelCriticalThreshold = Percent or 10
+  return self
+end
+
 --- Set CAP formation.
 -- @param #EASYGCICAP self
 -- @param #number Formation Formation to fly, defaults to ENUMS.Formation.FixedWing.FingerFour.Group
@@ -359,7 +409,7 @@ function EASYGCICAP:SetTankerAndAWACSInvisible(Switch)
   return self
 end
 
---- Count alive missions in our internal stack.
+--- (internal) Count alive missions in our internal stack.
 -- @param #EASYGCICAP self
 -- @return #number count
 function EASYGCICAP:_CountAliveAuftrags()
@@ -628,6 +678,8 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   local engagerange = self.engagerange
   local GoZoneSet = self.GoZoneSet
   local NoGoZoneSet = self.NoGoZoneSet
+  local FuelLow = self.FuelLowThreshold or 25
+  local FuelCritical = self.FuelCriticalThreshold or 10
   
   function CAP_Wing:onbeforeFlightOnMission(From, Event, To, Flightgroup, Mission)
     local flightgroup = Flightgroup -- Ops.FlightGroup#FLIGHTGROUP
@@ -639,10 +691,15 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:SetDestinationbase(AIRBASE:FindByName(Airbasename))
     flightgroup:GetGroup():CommandEPLRS(true,5)
     flightgroup:GetGroup():SetOptionRadarUsingForContinousSearch()
+    flightgroup:GetGroup():SetOptionLandingOverheadBreak()
     if Mission.type ~= AUFTRAG.Type.TANKER and Mission.type ~= AUFTRAG.Type.AWACS and Mission.type ~= AUFTRAG.Type.RECON then
       flightgroup:SetDetection(true)
       flightgroup:SetEngageDetectedOn(engagerange,{"Air"},GoZoneSet,NoGoZoneSet)
       flightgroup:SetOutOfAAMRTB()
+      flightgroup:SetFuelLowRTB(true)
+      flightgroup:SetFuelLowThreshold(FuelLow)
+      flightgroup:SetFuelCriticalRTB(true)
+      flightgroup:SetFuelCriticalThreshold(FuelCritical)
       if CapFormation then
         flightgroup:GetGroup():SetOption(AI.Option.Air.id.FORMATION,CapFormation)
       end
@@ -1404,7 +1461,7 @@ function EASYGCICAP:_StartIntel()
 end
 
 -------------------------------------------------------------------------
--- FSM Functions
+-- TODO FSM Functions
 -------------------------------------------------------------------------
 
 --- (Internal) FSM Function onafterStart
@@ -1535,5 +1592,8 @@ end
 function EASYGCICAP:onafterStop(From,Event,To)
   self:T({From,Event,To})
   self.Intel:Stop()
+  for _,_wing in pairs(self.wings or {}) do
+    _wing:Stop()
+  end
   return self
 end
