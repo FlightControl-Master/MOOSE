@@ -4701,7 +4701,7 @@ end
 -- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
 -- @param #number Size Size of the picture in percent, defaults to 100
 -- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
-function UTILS.ShowPictureToGroup(Unit, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
+function UTILS.ShowPictureToUnit(Unit, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
     ClearView = ClearView or false
     StartDelay = StartDelay or 0
     HorizontalAlign = HorizontalAlign or 1
