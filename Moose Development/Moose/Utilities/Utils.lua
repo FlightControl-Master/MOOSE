@@ -4598,16 +4598,16 @@ function UTILS.DoStringIn(State,DoString)
   return net.dostring_in(State,DoString)
 end
 
---- Show a picture on the screen
+--- Show a picture on the screen to all
 -- @param #string FileName File name of the picture
 -- @param #number Duration Duration in seconds, defaults to 10
 -- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
 -- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
--- @param #number HorizontalAlign Horizontal alignment of the picture, defaults to 1 (left), can be 0 (center) or 2 (right)
--- @param #number VerticalAlign Vertical alignment of the picture, defaults to 1 (top), can be 0 (center) or 2 (bottom)
+-- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
+-- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
 -- @param #number Size Size of the picture in percent, defaults to 100
--- @param #number SizeUnits Size units, defaults to 0 (percent), can be 1 (pixels)
-function UTILS.ShowPicture(FileName, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
+-- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+function UTILS.ShowPictureToAll(FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
     ClearView = ClearView or false
     StartDelay = StartDelay or 0
     HorizontalAlign = HorizontalAlign or 1
@@ -4617,7 +4617,101 @@ function UTILS.ShowPicture(FileName, Duration, ClearView, StartDelay, Horizontal
 
     if ClearView then ClearView = "true" else ClearView = "false" end
 
-    net.dostring_in("mission", string.format("a_out_picture(getValueResourceByKey(\"%s\"), %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", FileName, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
+    net.dostring_in("mission", string.format("a_out_picture(\"%s\", %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", FilePath, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
+end
+
+--- Show a picture on the screen to Coalition
+-- @param #number Coalition Coalition ID, can be coalition.side.BLUE, coalition.side.RED or coalition.side.NEUTRAL
+-- @param #string FileName File name of the picture
+-- @param #number Duration Duration in seconds, defaults to 10
+-- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
+-- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
+-- @param #number Size Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+function UTILS.ShowPictureToCoalition(Coalition, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
+    ClearView = ClearView or false
+    StartDelay = StartDelay or 0
+    HorizontalAlign = HorizontalAlign or 1
+    VerticalAlign = VerticalAlign or 1
+    Size = Size or 100
+    SizeUnits = SizeUnits or 0
+
+    if ClearView then ClearView = "true" else ClearView = "false" end
+
+    local coalName = string.lower(UTILS.GetCoalitionName(Coalition))
+
+    net.dostring_in("mission", string.format("a_out_picture_s(\"%s\", \"%s\", %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", coalName, FilePath, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
+end
+
+--- Show a picture on the screen to Country
+-- @param #number Country Country ID, can be country.id.USA, country.id.RUSSIA, etc.
+-- @param #string FileName File name of the picture
+-- @param #number Duration Duration in seconds, defaults to 10
+-- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
+-- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
+-- @param #number Size Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+function UTILS.ShowPictureToCountry(Country, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
+    ClearView = ClearView or false
+    StartDelay = StartDelay or 0
+    HorizontalAlign = HorizontalAlign or 1
+    VerticalAlign = VerticalAlign or 1
+    Size = Size or 100
+    SizeUnits = SizeUnits or 0
+
+    if ClearView then ClearView = "true" else ClearView = "false" end
+
+    net.dostring_in("mission", string.format("a_out_picture_c(%d, \"%s\", %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", Country, FilePath, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
+end
+
+--- Show a picture on the screen to Group
+-- @param Wrapper.Group#GROUP Group Group to show the picture to
+-- @param #string FileName File name of the picture
+-- @param #number Duration Duration in seconds, defaults to 10
+-- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
+-- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
+-- @param #number Size Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+function UTILS.ShowPictureToGroup(Group, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
+    ClearView = ClearView or false
+    StartDelay = StartDelay or 0
+    HorizontalAlign = HorizontalAlign or 1
+    VerticalAlign = VerticalAlign or 1
+    Size = Size or 100
+    SizeUnits = SizeUnits or 0
+
+    if ClearView then ClearView = "true" else ClearView = "false" end
+
+    net.dostring_in("mission", string.format("a_out_picture_g(%d, \"%s\", %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", Group:GetID(), FilePath, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
+end
+
+--- Show a picture on the screen to Unit
+-- @param Wrapper.Unit#UNIT Unit Unit to show the picture to
+-- @param #string FileName File name of the picture
+-- @param #number Duration Duration in seconds, defaults to 10
+-- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
+-- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
+-- @param #number Size Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+function UTILS.ShowPictureToUnit(Unit, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
+    ClearView = ClearView or false
+    StartDelay = StartDelay or 0
+    HorizontalAlign = HorizontalAlign or 1
+    VerticalAlign = VerticalAlign or 1
+    Size = Size or 100
+    SizeUnits = SizeUnits or 0
+
+    if ClearView then ClearView = "true" else ClearView = "false" end
+
+    net.dostring_in("mission", string.format("a_out_picture_u(%d, \"%s\", %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", Unit:GetID(), FilePath, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
 end
 
 --- Load a mission file. This will replace the current mission with the one given carrying along the online clients.
@@ -4629,20 +4723,34 @@ end
 --- Set the mission briefing for a coalition.
 -- @param #number Coalition Briefing coalition ID, can be coalition.side.BLUE, coalition.side.RED or coalition.side.NEUTRAL
 -- @param #string Text Briefing text, can contain newlines, will be converted formatted properly for DCS
--- @param #string Picture Picture filename, can be a file in the DEFAULT folder inside the .miz
+-- @param #string Picture Picture file path, can be a file in the DEFAULT folder inside the .miz
 function UTILS.SetMissionBriefing(Coalition, Text, Picture)
     Text = Text or ""
     Text = Text:gsub("\n", "\\n")
     Picture = Picture or ""
     local coalName = string.lower(UTILS.GetCoalitionName(Coalition))
-    net.dostring_in("mission", string.format("a_set_briefing(\"%s\", getValueResourceByKey(\"%s\"), \"%s\")", coalName, Picture, Text))
+    net.dostring_in("mission", string.format("a_set_briefing(\"%s\", \"%s\", \"%s\")", coalName, Picture, Text))
 end
 
 --- Show a helper gate at a DCS#Vec3 position
 -- @param DCS#Vec3 pos The position
--- @param number heading Heading in degrees, can be 0..359 degrees
+-- @param #number heading Heading in degrees, can be 0..359 degrees
 function UTILS.ShowHelperGate(pos, heading)
     net.dostring_in("mission",string.format("a_show_helper_gate(%s, %s, %s, %f)", pos.x, pos.y, pos.z, math.rad(heading)))
+end
+
+--- Show a helper gate for a unit.
+-- @param Wrapper.Unit#UNIT Unit The unit to show the gate for
+-- @param #number Flag Helper gate flag
+function UTILS.ShowHelperGateForUnit(Unit, Flag)
+    net.dostring_in("mission",string.format("a_show_route_gates_for_unit(%d, \"%d\")", Unit:GetID(), Flag))
+end
+
+--- Set the carrier illumination mode. -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+-- @param #number UnitID Carrier unit ID ( UNIT:GetID() )
+-- @param #number Mode Illumination mode, can be -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+function UTILS.SetCarrierIlluminationMode(UnitID, Mode)
+    net.dostring_in("mission",string.format("a_set_carrier_illumination_mode(%d, %d)", UnitID, Mode))
 end
 
 --- Shell a zone, zone must ME created
