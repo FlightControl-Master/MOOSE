@@ -2412,6 +2412,16 @@ end
 -- USER API Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Set the carrier illumination mode.
+-- @param #AIRBOSS self
+-- @param #number Mode Options are: -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+-- @return #AIRBOSS self
+function AIRBOSS:SetCarrierIllumination(Mode)
+  self.carrier:SetCarrierIlluminationMode(Mode)
+  return self
+end
+
+
 --- Set welcome messages for players.
 -- @param #AIRBOSS self
 -- @param #boolean Switch If true, display welcome message to player.
