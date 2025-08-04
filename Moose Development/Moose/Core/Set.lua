@@ -6691,6 +6691,8 @@ do -- SET_ZONE
   --          
   --          -- Stop watching after 1 hour
   --          zoneset:__TriggerStop(3600)
+  --          -- Call :SetPartlyInside() on any zone (or SET_ZONE) if you want GROUPs to count as inside when any of their units enters even if they are far apart.
+  --          -- Make sure to call :SetPartlyInside() before :Trigger()!.
   function SET_ZONE:Trigger(Objects)
     --self:I("Added Set_Zone Trigger")
     self:AddTransition("*","TriggerStart","TriggerRunning")
@@ -6742,6 +6744,20 @@ do -- SET_ZONE
     -- @param Core.Zone#ZONE_BASE Zone The zone left.
   end
   
+  --- Toggle “partly-inside” handling for every zone in the set when those zones are used with :Trigger().
+  -- * Call with no argument or **true** → enable for all.  
+  -- * Call with **false** → disable again (handy if it was enabled before).
+  -- @param #SET_ZONE self
+  -- @return #SET_ZONE self
+  function SET_ZONE:SetPartlyInside(state)
+    for _,Zone in pairs(self.Set) do
+        if Zone.SetPartlyInside then
+            Zone:SetPartlyInside(state)
+        end
+    end
+    return self
+  end
+  
   --- (Internal) Check the assigned objects for being in/out of the zone
   -- @param #SET_ZONE self
   -- @param #boolean fromstart If true, do the init of the objects
@@ -6777,8 +6793,13 @@ do -- SET_ZONE
               -- has not been tagged previously - wasn't in set! 
               obj.TriggerInZone[_zone.ZoneName] = false 
             end
-            -- is obj in zone?
-            local inzone = _zone:IsCoordinateInZone(obj:GetCoordinate())
+            -- is obj in this zone?
+            local inzone
+            if _zone.PartlyInside and obj.ClassName == "GROUP" then
+                inzone = obj:IsAnyInZone(_zone)                 -- TRUE as soon as any unit is inside
+            else
+                inzone = _zone:IsCoordinateInZone(obj:GetCoordinate())  -- original centroid test
+            end
             --self:I("Object "..obj:GetName().." is in zone: "..tostring(inzone))
             if inzone and not obj.TriggerInZone[_zone.ZoneName] then
               -- wasn't in zone before
