@@ -1025,6 +1025,11 @@ function SCORING:_EventOnHit( Event )
     TargetCategory = Event.TgtCategory
     TargetType = Event.TgtTypeName
 
+    -- Scenery hit
+    if (not TargetCategory) and TargetUNIT ~= nil and TargetUnit:IsInstanceOf("SCENERY") then
+        TargetCategory = Unit.Category.STRUCTURE
+    end
+    
     TargetUnitCoalition = _SCORINGCoalition[TargetCoalition]
     TargetUnitCategory = _SCORINGCategory[TargetCategory]
     TargetUnitType = TargetType
