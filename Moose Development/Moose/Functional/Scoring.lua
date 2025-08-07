@@ -985,6 +985,7 @@ function SCORING:_EventOnHit( Event )
   local TargetUnitCoalition = nil
   local TargetUnitCategory = nil
   local TargetUnitType = nil
+  local TargetIsScenery = false
 
   if Event.IniDCSUnit then
 
@@ -1028,6 +1029,7 @@ function SCORING:_EventOnHit( Event )
     -- Scenery hit
     if (not TargetCategory) and TargetUNIT ~= nil and TargetUnit:IsInstanceOf("SCENERY") then
         TargetCategory = Unit.Category.STRUCTURE
+        TargetIsScenery = true
     end
     
     TargetUnitCoalition = _SCORINGCoalition[TargetCoalition]
@@ -1122,17 +1124,22 @@ function SCORING:_EventOnHit( Event )
                                  MESSAGE.Type.Update )
                        :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
                        :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
-              else
+              elseif TargetIsScenery ~= true then
                 MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit enemy target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.ScoreHit .. " times. " ..
                                  "Score: " .. PlayerHit.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
                                  MESSAGE.Type.Update )
                        :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
                        :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
+              elseif TargetIsScenery == true then
+                MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit scenery object." .. " Score: " .. PlayerHit.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                             MESSAGE.Type.Update )
+                   :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
+                   :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
               end
               self:ScoreCSV( InitPlayerName, TargetPlayerName, "HIT_SCORE", 1, 1, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
             end
           else -- A scenery object was hit.
-            MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit scenery object.",
+            MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit nothing special.",
                              MESSAGE.Type.Update )
                    :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
                    :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
