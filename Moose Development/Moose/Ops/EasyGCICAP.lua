@@ -7,7 +7,7 @@
 -- 
 -------------------------------------------------------------------------
 -- Date: September 2023
--- Last Update: July 2024
+-- Last Update: Aug 2025
 -------------------------------------------------------------------------
 --
 --- **Ops** - Easy GCI & CAP Manager
@@ -265,7 +265,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.25"
+EASYGCICAP.version="0.1.26"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -633,7 +633,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   local DespawnAfterHolding = self.DespawnAfterHolding
   
   -- Check STATIC name
-  local check = STATIC:FindByName(Airbasename,false)
+  local check = STATIC:FindByName(Airbasename,false) or UNIT:FindByName(Airbasename)
   if check == nil then
     MESSAGE:New(self.lid.."There's no warehouse static on the map (wrong naming?) for airbase "..tostring(Airbasename).."!",30,"CHECK"):ToAllIf(self.debug):ToLog()
     return
@@ -967,7 +967,7 @@ end
 -- @param #string SquadName Squadron name - must be unique!
 -- @param #string AirbaseName Name of the airbase the airwing resides on, e.g. AIRBASE.Caucasus.Kutaisi
 -- @param #number AirFrames Number of available airframes, e.g. 20.
--- @param #string Skill(optional) Skill level, e.g. AI.Skill.AVERAGE
+-- @param #string Skill (optional) Skill level, e.g. AI.Skill.AVERAGE
 -- @param #string Modex (optional) Modex to be used,e.g. 402.
 -- @param #string Livery (optional) Livery name to be used.
 -- @return #EASYGCICAP self 
