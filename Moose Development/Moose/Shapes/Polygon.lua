@@ -352,6 +352,7 @@ end
 --- Returns a random Vec2 within the polygon. The Vec2 is weighted by the areas of the triangles that make up the polygon.
 -- @return #table The random Vec2
 function POLYGON:GetRandomVec2()
+
     local weights = {}
     for _, triangle in pairs(self.Triangles) do
         weights[triangle] = triangle.SurfaceArea / self.SurfaceArea
