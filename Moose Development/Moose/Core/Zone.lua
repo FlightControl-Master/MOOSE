@@ -1571,6 +1571,10 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
   local Vec2 = self:GetVec2()
   local _inner = inner or 0
   local _outer = outer or self:GetRadius()
+  
+  math.random()
+  math.random()
+  math.random()
 
   if surfacetypes and type(surfacetypes)~="table" then
     surfacetypes={surfacetypes}
@@ -2936,6 +2940,11 @@ end
 function ZONE_POLYGON_BASE:GetRandomVec2()
     -- make sure we assign weights to the triangles based on their surface area, otherwise
     -- we'll be more likely to generate random points in smaller triangles
+    
+    math.random()
+    math.random()
+    math.random()
+    
     local weights = {}
     for _, triangle in pairs(self._Triangles) do
         weights[triangle] = triangle.SurfaceArea / self.SurfaceArea
