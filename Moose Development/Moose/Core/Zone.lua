@@ -70,6 +70,7 @@
 -- @field #table Table of any trigger zone properties from the ME. The key is the Name of the property, and the value is the property's Value.
 -- @field #number Surface Type of surface. Only determined at the center of the zone!
 -- @field #number Checktime Check every Checktime seconds, used for ZONE:Trigger()
+-- @field #boolean PartlyInside When called, a GROUP is considered inside as soon as any of its units enters the zone even if they are far apart.
 -- @extends Core.Fsm#FSM
 
 
@@ -612,6 +613,8 @@ end
 --
 --            -- Stop watching the zone after 1 hour
 --           triggerzone:__TriggerStop(3600)
+--            -- Call :SetPartlyInside() if you use SET_GROUP to count as inside when any of their units enters even when they are far apart.
+--            -- Make sure to call :SetPartlyInside() before :Trigger()!
 function ZONE_BASE:Trigger(Objects)
   --self:I("Added Zone Trigger")
   self:SetStartState("TriggerStopped")
@@ -680,6 +683,16 @@ function ZONE_BASE:Trigger(Objects)
   
 end
 
+  --- Toggle “partly-inside” handling for this zone. To be used before :Trigger().
+  -- * Default:* flag is **false** until you call the method.  
+  -- * Call with no argument or with **true** → enable.  
+  -- * Call with **false** → disable again (handy if it was enabled before).
+  -- @param #ZONE_BASE self
+  -- @return #ZONE_BASE self
+  function ZONE_BASE:SetPartlyInside(state)
+  self.PartlyInside = state or not ( state == false )
+  return self
+  end
 --- (Internal) Check the assigned objects for being in/out of the zone
 -- @param #ZONE_BASE self
 -- @param #boolean fromstart If true, do the init of the objects
@@ -718,7 +731,12 @@ function ZONE_BASE:_TriggerCheck(fromstart)
           obj.TriggerInZone[self.ZoneName] = false
         end
         -- is obj in zone?
-        local inzone = self:IsCoordinateInZone(obj:GetCoordinate())
+        local inzone
+        if self.PartlyInside and obj.ClassName == "GROUP" then
+            inzone = obj:IsAnyInZone(self)                     -- TRUE if any unit is inside
+        else
+            inzone = self:IsCoordinateInZone(obj:GetCoordinate()) -- original barycentre test
+        end
         --self:I("Object "..obj:GetName().." is in zone: "..tostring(inzone))
         if inzone and obj.TriggerInZone[self.ZoneName] then
           -- just count
@@ -1554,6 +1572,10 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
   local Vec2 = self:GetVec2()
   local _inner = inner or 0
   local _outer = outer or self:GetRadius()
+  
+  math.random()
+  math.random()
+  math.random()
 
   if surfacetypes and type(surfacetypes)~="table" then
     surfacetypes={surfacetypes}
@@ -2919,6 +2941,11 @@ end
 function ZONE_POLYGON_BASE:GetRandomVec2()
     -- make sure we assign weights to the triangles based on their surface area, otherwise
     -- we'll be more likely to generate random points in smaller triangles
+    
+    math.random()
+    math.random()
+    math.random()
+    
     local weights = {}
     for _, triangle in pairs(self._Triangles) do
         weights[triangle] = triangle.SurfaceArea / self.SurfaceArea

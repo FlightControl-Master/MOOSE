@@ -777,7 +777,9 @@ do -- COORDINATE
   -- @return DCS#Vec2 Vec2
   function COORDINATE:GetRandomVec2InRadius( OuterRadius, InnerRadius )
     self:F2( { OuterRadius, InnerRadius } )
-
+    math.random()
+    math.random()
+    math.random()
     local Theta = 2 * math.pi * math.random()
     local Radials = math.random() + math.random()
     if Radials > 1 then
