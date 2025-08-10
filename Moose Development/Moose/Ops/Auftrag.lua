@@ -1727,7 +1727,7 @@ function AUFTRAG:NewSEADInZone(TargetZone, Altitude, TargetTypes, Duration)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.SEAD)
 
-  mission:_TargetFromObject(TargetZone)
+  --mission:_TargetFromObject(TargetZone)
 
   -- DCS Task options:
   mission.engageWeaponType=ENUMS.WeaponFlag.Auto
