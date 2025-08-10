@@ -1,9 +1,14 @@
 -------------------------------------------------------------------------
 -- Easy CAP/GCI Class, based on OPS classes
 -------------------------------------------------------------------------
--- Documentation
+-- 
+-- ## Documentation:
 -- 
 -- https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Ops.EasyGCICAP.html
+-- 
+-- ## Example Missions:
+--
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Ops/EasyGCICAP).
 -- 
 -------------------------------------------------------------------------
 -- Date: September 2023
@@ -73,6 +78,7 @@
 -- @field #string defaulttakeofftype Take off type
 -- @field #number FuelLowThreshold
 -- @field #number FuelCriticalThreshold
+-- @field #boolean showpatrolpointmarks
 -- @extends Core.Fsm#FSM
 
 --- *“Airspeed, altitude, and brains. Two are always needed to successfully complete the flight.”* -- Unknown.
@@ -230,6 +236,7 @@ EASYGCICAP = {
   defaulttakeofftype = "hot",
   FuelLowThreshold = 25,
   FuelCriticalThreshold = 10,
+  showpatrolpointmarks = false,
 }
 
 --- Internal Squadron data type
@@ -265,7 +272,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.26"
+EASYGCICAP.version="0.1.27"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -321,6 +328,7 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.defaulttakeofftype = "hot"
   self.FuelLowThreshold = 25
   self.FuelCriticalThreshold = 10
+  self.showpatrolpointmarks = false
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("EASYGCICAP %s | ", self.alias)
@@ -376,6 +384,19 @@ end
 function EASYGCICAP:SetFuelLow(Percent)
   self:T(self.lid.."SetFuelLow")
   self.FuelLowThreshold = Percent or 25
+  return self
+end
+
+--- Set markers on the map for Patrol Points.
+-- @param #EASYGCICAP self
+-- @param #boolean onoff Set to true to switch markers on.
+-- @return #EASYGCICAP self
+function EASYGCICAP:ShowPatrolPointMarkers(onoff)
+  if onoff then
+    self.showpatrolpointmarks = true
+  else
+    self.showpatrolpointmarks = false
+  end
   return self
 end
 
@@ -648,6 +669,10 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   CAP_Wing:SetRespawnAfterDestroyed()
   CAP_Wing:SetNumberCAP(self.capgrouping)
   CAP_Wing:SetCapCloseRaceTrack(true)
+    
+  if self.showpatrolpointmarks then
+    CAP_Wing:ShowPatrolPointMarkers(true)
+  end
   
   if self.capOptionVaryStartTime then
     CAP_Wing:SetCapStartTimeVariation(self.capOptionVaryStartTime,self.capOptionVaryEndTime)
@@ -738,14 +763,14 @@ end
 --- Add a CAP patrol point to a Wing
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
--- @param Core.Point#COORDINATE Coordinate.
+-- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
 -- @param #number Altitude Defaults to 25000 feet ASL.
 -- @param #number Speed  Defaults to 300 knots TAS.
 -- @param #number Heading Defaults to 90 degrees (East).
 -- @param #number LegLength Defaults to 15 NM.
 -- @return #EASYGCICAP self
 function EASYGCICAP:AddPatrolPointCAP(AirbaseName,Coordinate,Altitude,Speed,Heading,LegLength)
-  self:T(self.lid.."AddPatrolPointCAP "..Coordinate:ToStringLLDDM())
+  self:T(self.lid.."AddPatrolPointCAP")--..Coordinate:ToStringLLDDM())
   local EntryCAP = {} -- #EASYGCICAP.CapPoint
   EntryCAP.AirbaseName = AirbaseName
   EntryCAP.Coordinate = Coordinate
@@ -763,7 +788,7 @@ end
 --- Add a RECON patrol point to a Wing
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
--- @param Core.Point#COORDINATE Coordinate.
+-- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
 -- @param #number Altitude Defaults to 25000 feet.
 -- @param #number Speed  Defaults to 300 knots.
 -- @param #number Heading Defaults to 90 degrees (East).
@@ -788,7 +813,7 @@ end
 --- Add a TANKER patrol point to a Wing
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
--- @param Core.Point#COORDINATE Coordinate.
+-- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
 -- @param #number Altitude Defaults to 25000 feet.
 -- @param #number Speed  Defaults to 300 knots.
 -- @param #number Heading Defaults to 90 degrees (East).
@@ -813,7 +838,7 @@ end
 --- Add an AWACS patrol point to a Wing
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
--- @param Core.Point#COORDINATE Coordinate.
+-- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
 -- @param #number Altitude Defaults to 25000 feet.
 -- @param #number Speed  Defaults to 300 knots.
 -- @param #number Heading Defaults to 90 degrees (East).
