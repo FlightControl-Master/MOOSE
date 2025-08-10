@@ -30,8 +30,8 @@
 ----  #-- Author : **applevangelist ** (Optimized by AI)
 
 ---
--- - @module Functional.Tiresias
--- - @image Functional.Tiresias.jpg
+-- @module Functional.Tiresias
+-- @image Functional.Tiresias.jpg
 
 --- Last Update: July 2025
 
