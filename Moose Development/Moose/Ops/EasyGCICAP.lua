@@ -269,6 +269,7 @@ EASYGCICAP = {
 -- @field #number Speed
 -- @field #number Heading
 -- @field #number LegLength
+-- @field Core.Zone#ZONE_BASE Zone
 
 --- EASYGCICAP class version.
 -- @field #string version
@@ -771,16 +772,22 @@ end
 -- @return #EASYGCICAP self
 function EASYGCICAP:AddPatrolPointCAP(AirbaseName,Coordinate,Altitude,Speed,Heading,LegLength)
   self:T(self.lid.."AddPatrolPointCAP")--..Coordinate:ToStringLLDDM())
-  local EntryCAP = {} -- #EASYGCICAP.CapPoint
+  local coordinate = Coordinate
+  local EntryCAP = {} -- #EASYGCICAP.CapPoint  
+  if Coordinate:IsInstanceOf("ZONE_BASE") then
+    -- adjust coordinate and get the coordinate from the zone
+    coordinate = Coordinate:GetCoordinate()
+    EntryCAP.Zone = Coordinate
+  end
   EntryCAP.AirbaseName = AirbaseName
-  EntryCAP.Coordinate = Coordinate
+  EntryCAP.Coordinate = coordinate
   EntryCAP.Altitude = Altitude or 25000
   EntryCAP.Speed = Speed or 300
   EntryCAP.Heading = Heading or 90
   EntryCAP.LegLength = LegLength or 15
   self.ManagedCP[#self.ManagedCP+1] = EntryCAP
   if self.debug then
-    local mark = MARKER:New(Coordinate,self.lid.."Patrol Point"):ToAll()
+    local mark = MARKER:New(coordinate,self.lid.."Patrol Point"):ToAll()
   end
   return self
 end
@@ -926,7 +933,12 @@ function EASYGCICAP:_SetCAPPatrolPoints()
     local Speed = data.Speed 
     local Heading = data.Heading
     local LegLength = data.LegLength
-    Wing:AddPatrolPointCAP(Coordinate,Altitude,Speed,Heading,LegLength)
+    local Zone = _data.Zone
+    if Zone then
+        Wing:AddPatrolPointCAP(Zone,Altitude,Speed,Heading,LegLength)
+    else
+        Wing:AddPatrolPointCAP(Coordinate,Altitude,Speed,Heading,LegLength)
+    end
   end
   
   return self
@@ -1281,19 +1293,19 @@ end
 -- @return #boolean assigned
 -- @return #number leftover
 function EASYGCICAP:_TryAssignIntercept(ReadyFlightGroups,InterceptAuftrag,Group,WingSize)
-  self:I("_TryAssignIntercept for size "..WingSize or 1)
+  self:T("_TryAssignIntercept for size "..WingSize or 1)
   local assigned = false
   local wingsize = WingSize or 1
   local mindist = 0
   local disttable = {}
   if Group and Group:IsAlive() then
     local gcoord = Group:GetCoordinate() or COORDINATE:New(0,0,0)
-    self:I(self.lid..string.format("Assignment for %s",Group:GetName()))
+    self:T(self.lid..string.format("Assignment for %s",Group:GetName()))
     for _name,_FG in pairs(ReadyFlightGroups or {}) do
       local FG = _FG -- Ops.FlightGroup#FLIGHTGROUP
       local fcoord = FG:GetCoordinate()
       local dist = math.floor(UTILS.Round(fcoord:Get2DDistance(gcoord)/1000,1))
-      self:I(self.lid..string.format("FG %s Distance %dkm",_name,dist))
+      self:T(self.lid..string.format("FG %s Distance %dkm",_name,dist))
       disttable[#disttable+1] = { FG=FG, dist=dist}
       if dist>mindist then mindist=dist end
     end
@@ -1310,7 +1322,7 @@ function EASYGCICAP:_TryAssignIntercept(ReadyFlightGroups,InterceptAuftrag,Group
       local cm = FG:GetMissionCurrent()
       if cm then cm:Cancel() end
       wingsize = wingsize - 1
-      self:I(self.lid..string.format("Assigned to FG %s Distance %dkm",FG:GetName(),_entry.dist))
+      self:T(self.lid..string.format("Assigned to FG %s Distance %dkm",FG:GetName(),_entry.dist))
       if wingsize == 0 then 
         assigned = true
         break 
@@ -1340,7 +1352,7 @@ function EASYGCICAP:_AssignIntercept(Cluster)
   local conflictzoneset = self.ConflictZoneSet
   local ReadyFlightGroups = self.ReadyFlightGroups
   
-    -- Aircraft?
+  -- Aircraft?
   if Cluster.ctype ~= INTEL.Ctype.AIRCRAFT then return end
   -- Threatlevel 0..10
   local contact = self.Intel:GetHighestThreatContact(Cluster)
@@ -1385,6 +1397,10 @@ function EASYGCICAP:_AssignIntercept(Cluster)
       local data = _data -- #EASYGCICAP.CapPoint
       local name = data.AirbaseName
       local zonecoord = data.Coordinate
+      if data.Zone then
+            -- refresh coordinate in case we have a (moving) zone
+            zonecoord = data.Zone:GetCoordinate()
+      end
       local airwing = wings[name][1]
       local coa = AIRBASE:FindByName(name):GetCoalition()
       local samecoalitionab = coa == self.coalition and true or false
@@ -1582,7 +1598,7 @@ function EASYGCICAP:onafterStatus(From,Event,To)
         local engage = FG:IsEngaging()
         local hasmissiles = FG:IsOutOfMissiles() == nil and true or false
         local ready = hasmissiles and FG:IsFuelGood() and FG:IsAirborne()
-        --self:I(string.format("Flightgroup %s Engaging = %s Ready = %s",tostring(name),tostring(engage),tostring(ready)))
+        --self:T(string.format("Flightgroup %s Engaging = %s Ready = %s",tostring(name),tostring(engage),tostring(ready)))
         if ready then
           self.ReadyFlightGroups[name] = FG
         end
