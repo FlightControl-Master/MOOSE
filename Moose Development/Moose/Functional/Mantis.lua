@@ -108,6 +108,10 @@
 -- * Patriot
 -- * Rapier
 -- * Roland
+-- * IRIS-T SLM
+-- * Pantsir S1
+-- * TOR M2
+-- * C-RAM
 -- * Silkworm (though strictly speaking this is a surface to ship missile)
 -- * SA-2, SA-3, SA-5, SA-6, SA-7, SA-8, SA-9, SA-10, SA-11, SA-13, SA-15, SA-19
 -- * From IDF mod: STUNNER IDFA, TAMIR IDFA (Note all caps!)
@@ -276,7 +280,7 @@
 MANTIS = {
   ClassName             = "MANTIS",
   name                  = "mymantis",
-  version               = "0.9.33",
+  version               = "0.9.34",
   SAM_Templates_Prefix  = "",
   SAM_Group             = nil,
   EWR_Templates_Prefix  = "",
@@ -385,7 +389,7 @@ MANTIS.SamData = {
   ["Chaparral"] = { Range=8, Blindspot=0, Height=3, Type="Short", Radar="Chaparral" },
   ["Linebacker"] = { Range=4, Blindspot=0, Height=3, Type="Point", Radar="Linebacker", Point="true" },
   ["Silkworm"] = { Range=90, Blindspot=1, Height=0.2, Type="Long", Radar="Silkworm" },
-  ["HEMTT_C-RAM_Phalanx"] = { Range=2, Blindspot=0, Height=2, Type="Point", Radar="HEMTT_C-RAM_Phalanx", Point="true" },
+  ["C-RAM"] = { Range=2, Blindspot=0, Height=2, Type="Point", Radar="HEMTT_C-RAM_Phalanx", Point="true" },
   -- units from HDS Mod, multi launcher options is tricky
   ["SA-10B"] = { Range=75, Blindspot=0, Height=18, Type="Medium" , Radar="SA-10B"},
   ["SA-17"] = { Range=50, Blindspot=3, Height=50, Type="Medium", Radar="SA-17" },
@@ -396,6 +400,10 @@ MANTIS.SamData = {
   ["STUNNER IDFA"] = { Range=250, Blindspot=1, Height=45, Type="Long", Radar="DAVID_SLING_LN" },
   ["NIKE"] = { Range=155, Blindspot=6, Height=30, Type="Long", Radar="HIPAR" },
   ["Dog Ear"] = { Range=11, Blindspot=0, Height=9, Type="Point", Radar="Dog Ear", Point="true" },
+  -- CH Added to DCS core 2.9.19.x
+  ["Pantsir S1"] = { Range=20, Blindspot=1.2, Height=15, Type="Short", Radar="PantsirS1" }, 
+  ["Tor M2"] = { Range=12, Blindspot=1, Height=10, Type="Short", Radar="TorM2" },
+  ["IRIS-T SLM"] = { Range=40, Blindspot=0.5, Height=20, Type="Medium", Radar="CH_IRIST_SLM" }, 
 }
 
 --- SAM data HDS
@@ -1288,7 +1296,7 @@ do
       end
     end
     -- rejectzones
-    if #self.RejectZones > 0 and inzone then -- maybe in accept zone, but check the overlaps
+    if #self.RejectZones > 0 then 
       for _,_zone in pairs(self.RejectZones) do
         local zone = _zone -- Core.Zone#ZONE
         if zone:IsCoordinateInZone(coord) then
@@ -1299,7 +1307,7 @@ do
       end
     end
     -- conflictzones
-    if #self.ConflictZones > 0 and not inzone then -- if not already accepted, might be in conflict zones
+    if #self.ConflictZones > 0 then
       for _,_zone in pairs(self.ConflictZones) do
         local zone = _zone -- Core.Zone#ZONE
         if zone:IsCoordinateInZone(coord) then
