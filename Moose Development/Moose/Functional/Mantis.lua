@@ -308,7 +308,7 @@ MANTIS = {
   adv_state             = 0,
   AWACS_Prefix          = "",
   advAwacs              = false,
-  verbose               = true,
+  verbose               = false,
   awacsrange            = 250000,
   Shorad                = nil,
   ShoradLink            = false,
@@ -583,7 +583,7 @@ do
     self.advanced = false
     self.adv_ratio = 100
     self.adv_state = 0
-    self.verbose = true
+    self.verbose = false
     self.Adv_EWR_Group = nil
     self.AWACS_Prefix = awacs or nil
     self.awacsrange = 250000      --DONE: 250km, User Function to change
