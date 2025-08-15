@@ -845,7 +845,7 @@ function AIRWING:NewPatrolPoint(Type, Coordinate, Altitude, Speed, Heading, LegL
   local patrolpoint={}  --#AIRWING.PatrolData
   patrolpoint.type=Type or "Unknown"
   patrolpoint.coord=Coordinate or self:GetCoordinate():Translate(UTILS.NMToMeters(math.random(10, 15)), math.random(360))
-  if Coordinate:IsInstanceOf("ZONE_BASE") then
+  if Coordinate and Coordinate:IsInstanceOf("ZONE_BASE") then
     patrolpoint.IsZonePoint = true
     patrolpoint.patrolzone = Coordinate
     patrolpoint.coord = patrolpoint.patrolzone:GetCoordinate()
