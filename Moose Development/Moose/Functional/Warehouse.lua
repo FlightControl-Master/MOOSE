@@ -5975,9 +5975,9 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, late
     template.y   = coord.z
     template.alt = coord.y
 
-  if self.ValidateAndRepositionGroundUnits then
+    if self.ValidateAndRepositionGroundUnits then
       UTILS.ValidateAndRepositionGroundUnits(template.units)
-  end
+    end
 
     -- Spawn group.
     local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP
