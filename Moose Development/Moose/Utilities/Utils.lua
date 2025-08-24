@@ -4872,7 +4872,7 @@ function UTILS.FindNearestPointOnCircle(Vec1,Radius,Vec2)
     return {x=qx, y=qy}
 end
 
---- This function uses Disposition and other fallback logic to find better ground positions for a group of ground units.
+--- This function uses Disposition and other fallback logic to find better ground positions for ground units.
 --- NOTE: This is not a spawn randomizer.
 --- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
 --- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
