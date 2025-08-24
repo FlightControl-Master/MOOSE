@@ -868,7 +868,8 @@ do
 --          my_ctld.showstockinmenuitems = false -- When set to true, the menu lines will also show the remaining items in stock (that is, if you set any), downside is that the menu for all will be build every 30 seconds anew.
 --          my_ctld.onestepmenu = false -- When set to true, the menu will create Drop and build, Get and load, Pack and remove, Pack and load, Pack. it will be a 1 step solution.
 --          my_ctld.VehicleMoveFormation = AI.Task.VehicleFormation.VEE -- When a group moves to a MOVE zone, then it takes this formation. Can be a table of formations, which are then randomly chosen. Defaults to "Vee".
--- 
+--          my_ctld.validateAndRepositionUnits = false -- Uses Disposition and other logic to find better ground positions for ground units avoiding trees, water, roads, runways, map scenery, statics and other units in the area. (Default is false)
+--
 -- ## 2.1 CH-47 Chinook support
 -- 
 -- The Chinook comes with the option to use the ground crew menu to load and unload cargo into the Helicopter itself for better immersion. As well, it can sling-load cargo from ground. The cargo you can actually **create**
@@ -1564,7 +1565,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.FixedMinAngels = 165 -- for troop/cargo drop via chute
   self.FixedMaxAngels = 2000 -- for troop/cargo drop via chute
   self.FixedMaxSpeed = 77 -- 280 kph or 150kn eq 77 mps
-  
+
+  self.validateAndRepositionUnits = false -- 280 kph or 150kn eq 77 mps
+
   -- message suppression
   self.suppressmessages = false
   
@@ -3735,6 +3738,7 @@ function CTLD:_UnloadTroops(Group, Unit)
             self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
               :InitDelayOff()
               :InitSetUnitAbsolutePositions(Positions)
+              :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
               :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
               :SpawnFromVec2(randomcoord:GetVec2())
             self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter],type)
@@ -4181,11 +4185,13 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation,Mult
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
           --:InitRandomizeUnits(true,20,2)
           :InitDelayOff()
+          :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
           :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
           :SpawnFromVec2(randomcoord)
       else -- don't random position of e.g. SAM units build as FOB
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
           :InitDelayOff()
+          :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
           :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
           :SpawnFromVec2(randomcoord)
       end
@@ -5211,6 +5217,7 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID)
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template, alias)
           :InitDelayOff()
           :InitSetUnitAbsolutePositions(Positions)
+          :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
           :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
           :SpawnFromVec2(randomcoord:GetVec2())
         self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter], cType)
