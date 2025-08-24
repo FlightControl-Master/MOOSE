@@ -4247,6 +4247,16 @@ function WAREHOUSE:_AssetItemInfo(asset)
   self:T3({Template=asset.template})
 end
 
+--- This function uses Disposition and other fallback logic to find better ground positions for ground units.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
+--- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+--- Uses UTILS.ValidateAndRepositionGroundUnits.
+-- @param #boolean Enabled Enable/disable the feature.
+function WAREHOUSE:SetValidateAndRepositionGroundUnits(Enabled)
+    self.ValidateAndRepositionGroundUnits = Enabled
+end
+
 --- On after "NewAsset" event. A new asset has been added to the warehouse stock.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
@@ -5964,6 +5974,10 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, late
     template.x   = coord.x
     template.y   = coord.z
     template.alt = coord.y
+
+  if self.ValidateAndRepositionGroundUnits then
+      UTILS.ValidateAndRepositionGroundUnits(template.units)
+  end
 
     -- Spawn group.
     local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP
