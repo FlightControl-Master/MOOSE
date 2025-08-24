@@ -1564,7 +1564,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.FixedMinAngels = 165 -- for troop/cargo drop via chute
   self.FixedMaxAngels = 2000 -- for troop/cargo drop via chute
   self.FixedMaxSpeed = 77 -- 280 kph or 150kn eq 77 mps
-  
+
+  self.validateAndRepositionUnits = false -- 280 kph or 150kn eq 77 mps
+
   -- message suppression
   self.suppressmessages = false
   
@@ -3735,6 +3737,7 @@ function CTLD:_UnloadTroops(Group, Unit)
             self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
               :InitDelayOff()
               :InitSetUnitAbsolutePositions(Positions)
+              :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
               :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
               :SpawnFromVec2(randomcoord:GetVec2())
             self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter],type)
@@ -4181,11 +4184,13 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation,Mult
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
           --:InitRandomizeUnits(true,20,2)
           :InitDelayOff()
+          :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
           :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
           :SpawnFromVec2(randomcoord)
       else -- don't random position of e.g. SAM units build as FOB
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
           :InitDelayOff()
+          :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
           :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
           :SpawnFromVec2(randomcoord)
       end
@@ -5211,6 +5216,7 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID)
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template, alias)
           :InitDelayOff()
           :InitSetUnitAbsolutePositions(Positions)
+          :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
           :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
           :SpawnFromVec2(randomcoord:GetVec2())
         self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter], cType)
