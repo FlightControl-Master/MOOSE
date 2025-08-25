@@ -452,7 +452,7 @@ end
 _MESSAGESRS = {}
 
 --- Set up MESSAGE generally to allow Text-To-Speech via SRS and TTS functions. `SetMSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
--- @param #string PathToSRS (optional) Path to SRS Folder, defaults to "C:\\\\Program Files\\\\DCS-SimpleRadio-Standalone" or your configuration file setting.
+-- @param #string PathToSRS (optional) Path to SRS TTS Folder, defaults to "C:\\\\Program Files\\\\DCS-SimpleRadio-Standalone\\ExternalAudio" or your configuration file setting.
 -- @param #number Port Port (optional) number of SRS, defaults to 5002 or your configuration file setting.
 -- @param #string PathToCredentials (optional) Path to credentials file for Google.
 -- @param #number Frequency Frequency in MHz. Can also be given as a #table of frequencies.
@@ -468,13 +468,13 @@ _MESSAGESRS = {}
 -- @usage
 --          -- Mind the dot here, not using the colon this time around!
 --          -- Needed once only
---          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.BLUE)
+--          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.BLUE)
 --          -- later on in your code
 --          MESSAGE:New("Test message!",15,"SPAWN"):ToSRS()
 --          
 function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,Gender,Culture,Voice,Coalition,Volume,Label,Coordinate,Backend)
   
-  _MESSAGESRS.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+  _MESSAGESRS.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
   
   _MESSAGESRS.frequency = Frequency or MSRS.frequencies or 243
   _MESSAGESRS.modulation = Modulation or MSRS.modulations or radio.modulation.AM
@@ -535,7 +535,7 @@ end
 -- @usage
 --          -- Mind the dot here, not using the colon this time around!
 --          -- Needed once only
---          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.BLUE)
+--          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.BLUE)
 --          -- later on in your code
 --          MESSAGE:New("Test message!",15,"SPAWN"):ToSRS()
 --          
@@ -567,7 +567,7 @@ end
 -- @usage
 --          -- Mind the dot here, not using the colon this time around!
 --          -- Needed once only
---          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.BLUE)
+--          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.BLUE)
 --          -- later on in your code
 --          MESSAGE:New("Test message!",15,"SPAWN"):ToSRSBlue()
 --          
@@ -589,7 +589,7 @@ end
 -- @usage
 --          -- Mind the dot here, not using the colon this time around!
 --          -- Needed once only
---          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.RED)
+--          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.RED)
 --          -- later on in your code
 --          MESSAGE:New("Test message!",15,"SPAWN"):ToSRSRed()
 --          
@@ -611,7 +611,7 @@ end
 -- @usage
 --          -- Mind the dot here, not using the colon this time around!
 --          -- Needed once only
---          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.NEUTRAL)
+--          MESSAGE.SetMSRS("D:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio",5012,nil,127,radio.modulation.FM,"female","en-US",nil,coalition.side.NEUTRAL)
 --          -- later on in your code
 --          MESSAGE:New("Test message!",15,"SPAWN"):ToSRSAll()
 --          

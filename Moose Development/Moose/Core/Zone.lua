@@ -70,6 +70,7 @@
 -- @field #table Table of any trigger zone properties from the ME. The key is the Name of the property, and the value is the property's Value.
 -- @field #number Surface Type of surface. Only determined at the center of the zone!
 -- @field #number Checktime Check every Checktime seconds, used for ZONE:Trigger()
+-- @field #boolean PartlyInside When called, a GROUP is considered inside as soon as any of its units enters the zone even if they are far apart.
 -- @extends Core.Fsm#FSM
 
 
@@ -534,6 +535,19 @@ function ZONE_BASE:GetZoneProbability()
   return self.ZoneProbability
 end
 
+--- Get the coordinate on the radius of the zone nearest to Outsidecoordinate. Useto e.g. find an ingress point.
+-- @param #ZONE_BASE self
+-- @param Core.Point#COORDINATE Outsidecoordinate The coordinate outside of the zone from where to look.
+-- @return Core.Point#COORDINATE CoordinateOnRadius
+function ZONE_BASE:FindNearestCoordinateOnRadius(Outsidecoordinate)
+  local Vec1 = self:GetVec2()
+  local Radius = self:GetRadius()
+  local Vec2 = Outsidecoordinate:GetVec2()
+  local Point = UTILS.FindNearestPointOnCircle(Vec1,Radius,Vec2)
+  local rc = COORDINATE:NewFromVec2(Point)
+  return rc
+end
+
 --- Get the zone taking into account the randomization probability of a zone to be selected.
 -- @param #ZONE_BASE self
 -- @return #ZONE_BASE The zone is selected taking into account the randomization probability factor.
@@ -599,6 +613,8 @@ end
 --
 --            -- Stop watching the zone after 1 hour
 --           triggerzone:__TriggerStop(3600)
+--            -- Call :SetPartlyInside() if you use SET_GROUP to count as inside when any of their units enters even when they are far apart.
+--            -- Make sure to call :SetPartlyInside() before :Trigger()!
 function ZONE_BASE:Trigger(Objects)
   --self:I("Added Zone Trigger")
   self:SetStartState("TriggerStopped")
@@ -667,6 +683,16 @@ function ZONE_BASE:Trigger(Objects)
   
 end
 
+  --- Toggle “partly-inside” handling for this zone. To be used before :Trigger().
+  -- * Default:* flag is **false** until you call the method.  
+  -- * Call with no argument or with **true** → enable.  
+  -- * Call with **false** → disable again (handy if it was enabled before).
+  -- @param #ZONE_BASE self
+  -- @return #ZONE_BASE self
+  function ZONE_BASE:SetPartlyInside(state)
+  self.PartlyInside = state or not ( state == false )
+  return self
+  end
 --- (Internal) Check the assigned objects for being in/out of the zone
 -- @param #ZONE_BASE self
 -- @param #boolean fromstart If true, do the init of the objects
@@ -705,7 +731,12 @@ function ZONE_BASE:_TriggerCheck(fromstart)
           obj.TriggerInZone[self.ZoneName] = false
         end
         -- is obj in zone?
-        local inzone = self:IsCoordinateInZone(obj:GetCoordinate())
+        local inzone
+        if self.PartlyInside and obj.ClassName == "GROUP" then
+            inzone = obj:IsAnyInZone(self)                     -- TRUE if any unit is inside
+        else
+            inzone = self:IsCoordinateInZone(obj:GetCoordinate()) -- original barycentre test
+        end
         --self:I("Object "..obj:GetName().." is in zone: "..tostring(inzone))
         if inzone and obj.TriggerInZone[self.ZoneName] then
           -- just count
@@ -1509,6 +1540,26 @@ function ZONE_RADIUS:IsVec3InZone( Vec3 )
   return InZone
 end
 
+--- Search for clear ground spawn zones within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param #ZONE_RADIUS self
+-- @param #number PosRadius Required clear radius around each position.
+-- @param #number NumPositions Number of positions to find.
+-- @return #table A table of DCS#Vec2 positions that are clear of map objects within the given PosRadius. nil if no clear positions are found.
+function ZONE_RADIUS:GetClearZonePositions(PosRadius, NumPositions)
+    return UTILS.GetClearZonePositions(self, PosRadius, NumPositions)
+end
+
+
+--- Search for a random clear ground spawn coordinate within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param #ZONE_RADIUS self
+-- @param #number PosRadius (Optional) Required clear radius around each position. (Default is math.min(Radius/10, 200))
+-- @param #number NumPositions (Optional) Number of positions to find. (Default 50)
+-- @return Core.Point#COORDINATE A random coordinate for a clear zone. nil if no clear positions are found.
+-- @return #number Assigned radius for the found zones. nil if no clear positions are found.
+function ZONE_RADIUS:GetRandomClearZoneCoordinate(PosRadius, NumPositions)
+    return UTILS.GetRandomClearZoneCoordinate(self, PosRadius, NumPositions)
+end
+
 --- Returns a random Vec2 location within the zone.
 -- @param #ZONE_RADIUS self
 -- @param #number inner (Optional) Minimal distance from the center of the zone. Default is 0.
@@ -1520,6 +1571,10 @@ function ZONE_RADIUS:GetRandomVec2(inner, outer, surfacetypes)
   local Vec2 = self:GetVec2()
   local _inner = inner or 0
   local _outer = outer or self:GetRadius()
+  
+  math.random()
+  math.random()
+  math.random()
 
   if surfacetypes and type(surfacetypes)~="table" then
     surfacetypes={surfacetypes}
@@ -2487,6 +2542,26 @@ function ZONE_POLYGON_BASE:Flush()
   return self
 end
 
+--- Search for clear ground spawn zones within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param #ZONE_POLYGON_BASE self
+-- @param #number PosRadius Required clear radius around each position.
+-- @param #number NumPositions Number of positions to find.
+-- @return #table A table of DCS#Vec2 positions that are clear of map objects within the given PosRadius. nil if no clear positions are found.
+function ZONE_POLYGON_BASE:GetClearZonePositions(PosRadius, NumPositions)
+    return UTILS.GetClearZonePositions(self, PosRadius, NumPositions)
+end
+
+
+--- Search for a random clear ground spawn coordinate within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param #ZONE_POLYGON_BASE self
+-- @param #number PosRadius (Optional) Required clear radius around each position. (Default is math.min(Radius/10, 200))
+-- @param #number NumPositions (Optional) Number of positions to find. (Default 50)
+-- @return Core.Point#COORDINATE A random coordinate for a clear zone. nil if no clear positions are found.
+-- @return #number Assigned radius for the found zones. nil if no clear positions are found.
+function ZONE_POLYGON_BASE:GetRandomClearZoneCoordinate(PosRadius, NumPositions)
+    return UTILS.GetRandomClearZoneCoordinate(self, PosRadius, NumPositions)
+end
+
 --- Smokes the zone boundaries in a color.
 -- @param #ZONE_POLYGON_BASE self
 -- @param #boolean UnBound If true, the tyres will be destroyed.
@@ -2865,6 +2940,11 @@ end
 function ZONE_POLYGON_BASE:GetRandomVec2()
     -- make sure we assign weights to the triangles based on their surface area, otherwise
     -- we'll be more likely to generate random points in smaller triangles
+    
+    math.random()
+    math.random()
+    math.random()
+    
     local weights = {}
     for _, triangle in pairs(self._Triangles) do
         weights[triangle] = triangle.SurfaceArea / self.SurfaceArea
@@ -3204,12 +3284,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
 
   local vectors = self:GetBoundingSquare()
 
-  local minVec3 = {x=vectors.x1, y=0, z=vectors.y1}
-  local maxVec3 = {x=vectors.x2, y=0, z=vectors.y2}
-
-  local minmarkcoord = COORDINATE:NewFromVec3(minVec3)
-  local maxmarkcoord = COORDINATE:NewFromVec3(maxVec3)
-  local ZoneRadius = minmarkcoord:Get2DDistance(maxmarkcoord)/2
+  local ZoneRadius = UTILS.VecDist2D({x=vectors.x1, y=vectors.y1}, {x=vectors.x2, y=vectors.y2})/2
 --  self:I("Scan Radius:" ..ZoneRadius)
   local CenterVec3 = self:GetCoordinate():GetVec3()
 

@@ -611,6 +611,35 @@ AIRBASE.MarianaIslands = {
   ["Tinian_Intl"] = "Tinian Intl",
 }
 
+--- Airbase of the Marianas WWII map
+--
+-- * AIRBASE.MarianaIslandsWWII.Agana
+-- * AIRBASE.MarianaIslandsWWII.Airfield_3
+-- * AIRBASE.MarianaIslandsWWII.Charon_Kanoa
+-- * AIRBASE.MarianaIslandsWWII.Gurguan_Point
+-- * AIRBASE.MarianaIslandsWWII.Isley
+-- * AIRBASE.MarianaIslandsWWII.Kagman
+-- * AIRBASE.MarianaIslandsWWII.Marpi
+-- * AIRBASE.MarianaIslandsWWII.Orote
+-- * AIRBASE.MarianaIslandsWWII.Pagan
+-- * AIRBASE.MarianaIslandsWWII.Rota
+-- * AIRBASE.MarianaIslandsWWII.Ushi
+-- @field AIRBASE.MarianaIslandsWWII
+AIRBASE.MarianaIslandsWWII = 
+{
+  ["Agana"] = "Agana",
+  ["Airfield_3"] = "Airfield 3",
+  ["Charon_Kanoa"] = "Charon Kanoa",
+  ["Gurguan_Point"] = "Gurguan Point",
+  ["Isley"] = "Isley",
+  ["Kagman"] = "Kagman",
+  ["Marpi"] = "Marpi",
+  ["Orote"] = "Orote",
+  ["Pagan"] = "Pagan",
+  ["Rota"] = "Rota",
+  ["Ushi"] = "Ushi",
+}
+
 --- Airbases of the South Atlantic map:
 --
 -- * AIRBASE.SouthAtlantic.Almirante_Schroeders
@@ -707,15 +736,19 @@ AIRBASE.SouthAtlantic={
 -- * AIRBASE.Sinai.Kibrit_Air_Base
 -- * AIRBASE.Sinai.Kom_Awshim
 -- * AIRBASE.Sinai.Melez
+-- * AIRBASE.Sinai.Mezzeh_Air_Base
 -- * AIRBASE.Sinai.Nevatim
 -- * AIRBASE.Sinai.Ovda
 -- * AIRBASE.Sinai.Palmachim
 -- * AIRBASE.Sinai.Quwaysina
+-- * AIRBASE.Sinai.Rafic_Hariri_Intl
+-- * AIRBASE.Sinai.Ramat_David
 -- * AIRBASE.Sinai.Ramon_Airbase
 -- * AIRBASE.Sinai.Ramon_International_Airport
 -- * AIRBASE.Sinai.Sde_Dov
 -- * AIRBASE.Sinai.Sharm_El_Sheikh_International_Airport
 -- * AIRBASE.Sinai.St_Catherine
+-- * AIRBASE.Sinai.Tabuk
 -- * AIRBASE.Sinai.Tel_Nof
 -- * AIRBASE.Sinai.Wadi_Abu_Rish
 -- * AIRBASE.Sinai.Wadi_al_Jandali
@@ -755,15 +788,19 @@ AIRBASE.Sinai = {
   ["Kibrit_Air_Base"] = "Kibrit Air Base",
   ["Kom_Awshim"] = "Kom Awshim",
   ["Melez"] = "Melez",
+  ["Mezzeh_Air_Base"] = "Mezzeh Air Base",
   ["Nevatim"] = "Nevatim",
   ["Ovda"] = "Ovda",
   ["Palmachim"] = "Palmachim",
   ["Quwaysina"] = "Quwaysina",
+  ["Rafic_Hariri_Intl"] = "Rafic Hariri Intl",
+  ["Ramat_David"] = "Ramat David",
   ["Ramon_Airbase"] = "Ramon Airbase",
   ["Ramon_International_Airport"] = "Ramon International Airport",
   ["Sde_Dov"] = "Sde Dov",
   ["Sharm_El_Sheikh_International_Airport"] = "Sharm El Sheikh International Airport",
   ["St_Catherine"] = "St Catherine",
+  ["Tabuk"] = "Tabuk",
   ["Tel_Nof"] = "Tel Nof",
   ["Wadi_Abu_Rish"] = "Wadi Abu Rish",
   ["Wadi_al_Jandali"] = "Wadi al Jandali",
@@ -1438,7 +1475,7 @@ function AIRBASE:Register(AirbaseName)
   self.descriptors=self:GetDesc()
 
   -- Debug info.
-  --self:I({airbase=AirbaseName, descriptors=self.descriptors})
+  --self:T({airbase=AirbaseName, descriptors=self.descriptors})
 
   -- Category.
   self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
@@ -2605,6 +2642,7 @@ function AIRBASE:_InitRunways(IncludeInverse)
 
     --runway.name=string.format("%02d", tonumber(name))
     runway.magheading=tonumber(runway.name)*10
+    runway.idx=runway.magheading
     runway.heading=heading
     runway.width=width or 0
     runway.length=length or 0
@@ -2917,6 +2955,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
     local runway={} --#AIRBASE.Runway
     runway.heading=hdg
     runway.idx=idx
+    runway.magheading=idx
     runway.length=c1:Get2DDistance(c2)
     runway.position=c1
     runway.endpoint=c2
@@ -2932,6 +2971,57 @@ function AIRBASE:GetRunwayData(magvar, mark)
     -- Add runway.
     table.insert(runways, runway)
 
+  end
+  
+    -- Look for identical (parallel) runways, e.g. 03L and 03R at Nellis.
+  local rpairs={}
+  for i,_ri in pairs(runways) do
+    local ri=_ri --#AIRBASE.Runway
+    for j,_rj in pairs(runways) do
+      local rj=_rj --#AIRBASE.Runway
+      if i<j then
+        if ri.name==rj.name then
+          rpairs[i]=j
+        end
+      end
+    end
+  end
+
+  local function isLeft(a, b, c)
+    --return ((b.x - a.x)*(c.z - a.z) - (b.z - a.z)*(c.x - a.x)) > 0
+    return ((b.z - a.z)*(c.x - a.x) - (b.x - a.x)*(c.z - a.z)) > 0
+  end
+
+  for i,j in pairs(rpairs) do
+    local ri=runways[i] --#AIRBASE.Runway
+    local rj=runways[j] --#AIRBASE.Runway
+
+    -- Draw arrow.
+    --ri.center:ArrowToAll(rj.center)
+
+    local c0=ri.position
+
+    -- Vector in the direction of the runway.
+    local a=UTILS.VecTranslate(c0, 1000, ri.heading)
+
+    -- Vector from runway i to runway j.
+    local b=UTILS.VecSubstract(rj.position, ri.position)
+    b=UTILS.VecAdd(ri.position, b)
+
+    -- Check if rj is left of ri.
+    local left=isLeft(c0, a, b)
+
+    --env.info(string.format("Found pair %s: i=%d, j=%d, left==%s", ri.name, i, j, tostring(left)))
+
+    if left then
+      ri.isLeft=false
+      rj.isLeft=true
+    else
+      ri.isLeft=true
+      rj.isLeft=false
+    end
+
+    --break
   end
 
   return runways

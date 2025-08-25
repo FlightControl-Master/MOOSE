@@ -1924,3 +1924,17 @@ function UNIT:IsAAA()
     end
     return false
 end
+
+--- Set the relative life points of a UNIT object
+-- @param #UNIT self
+-- @param #number Percent Percent to set, can be 0..100.
+function UNIT:SetLife(Percent)
+    net.dostring_in("mission",string.format("a_unit_set_life_percentage(%d, %f)", self:GetID(), Percent))
+end
+
+--- Set the carrier illumination mode. -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+-- @param #UNIT self
+-- @param #number Mode Illumination mode, can be -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+function UNIT:SetCarrierIlluminationMode(Mode)
+    UTILS.SetCarrierIlluminationMode(self:GetID(), Mode)
+end

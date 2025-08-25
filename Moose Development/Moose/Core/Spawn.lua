@@ -1049,6 +1049,22 @@ function SPAWN:InitSetUnitAbsolutePositions(Positions)
   return self
 end
 
+
+--- Uses Disposition and other fallback logic to find better ground positions for ground units.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area.
+--- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+-- @param #boolean OnOff Enable/disable the feature.
+-- @param #number MaxRadius (Optional) Max radius to search for valid ground locations in meters. Default is double the max radius of the units.
+-- @param #number Spacing (Optional) Minimum spacing between units in meters. Default is 5% of the search radius or 5 meters, whichever is larger.
+-- @return #SPAWN
+function SPAWN:InitValidateAndRepositionGroundUnits(OnOff, MaxRadius, Spacing)
+    self.SpawnValidateAndRepositionGroundUnits = OnOff
+    self.SpawnValidateAndRepositionGroundUnitsRadius = MaxRadius
+    self.SpawnValidateAndRepositionGroundUnitsSpacing = Spacing
+    return self
+end
+
 --- This method is rather complicated to understand. But I'll try to explain.
 -- This method becomes useful when you need to spawn groups with random templates of groups defined within the mission editor,
 -- but they will all follow the same Template route and have the same prefix name.
@@ -1829,7 +1845,13 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
         if self.SpawnHiddenOnMap then
           SpawnTemplate.hidden=self.SpawnHiddenOnMap
         end
-        
+
+        if self.SpawnValidateAndRepositionGroundUnits then
+            local units = SpawnTemplate.units
+            local gPos = { x = SpawnTemplate.x, y = SpawnTemplate.y }
+            UTILS.ValidateAndRepositionGroundUnits(units, gPos, self.SpawnValidateAndRepositionGroundUnitsRadius, self.SpawnValidateAndRepositionGroundUnitsSpacing)
+        end
+
         -- Set country, coalition and category.
         SpawnTemplate.CategoryID = self.SpawnInitCategory or SpawnTemplate.CategoryID
         SpawnTemplate.CountryID = self.SpawnInitCountry or SpawnTemplate.CountryID

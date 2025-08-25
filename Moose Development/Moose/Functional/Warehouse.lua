@@ -3153,7 +3153,7 @@ end
 -- @param #WAREHOUSE self
 -- @return Core.Point#COORDINATE The coordinate of the warehouse.
 function WAREHOUSE:GetCoordinate()
-  return self.warehouse:GetCoordinate()
+  return self.warehouse:GetCoord()
 end
 
 --- Get 3D vector of warehouse static.
@@ -4245,6 +4245,16 @@ function WAREHOUSE:_AssetItemInfo(asset)
   self:I(self.lid..text)
   self:T({DCSdesc=asset.DCSdesc})
   self:T3({Template=asset.template})
+end
+
+--- This function uses Disposition and other fallback logic to find better ground positions for ground units.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
+--- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+--- Uses UTILS.ValidateAndRepositionGroundUnits.
+-- @param #boolean Enabled Enable/disable the feature.
+function WAREHOUSE:SetValidateAndRepositionGroundUnits(Enabled)
+    self.ValidateAndRepositionGroundUnits = Enabled
 end
 
 --- On after "NewAsset" event. A new asset has been added to the warehouse stock.
@@ -5965,6 +5975,10 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, late
     template.y   = coord.z
     template.alt = coord.y
 
+    if self.ValidateAndRepositionGroundUnits then
+      UTILS.ValidateAndRepositionGroundUnits(template.units)
+    end
+
     -- Spawn group.
     local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP
 
@@ -6893,7 +6907,7 @@ function WAREHOUSE:_CheckConquered()
     for _,_unit in pairs(units) do
       local unit=_unit --Wrapper.Unit#UNIT
 
-      local distance=coord:Get2DDistance(unit:GetCoordinate())
+      local distance=coord:Get2DDistance(unit:GetCoord())
 
       -- Filter only alive groud units. Also check distance again, because the scan routine might give some larger distances.
       if unit:IsGround() and unit:IsAlive() and distance <= radius then

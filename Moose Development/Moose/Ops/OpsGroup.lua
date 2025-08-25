@@ -5730,7 +5730,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   -- Decrease patrol data.
   if Mission.patroldata then
     Mission.patroldata.noccupied=Mission.patroldata.noccupied-1
-    AIRWING.UpdatePatrolPointMarker(Mission.patroldata)
+    AIRWING.UpdatePatrolPointMarker(self,Mission.patroldata)
   end
 
   -- Switch auto engage detected off. This IGNORES that engage detected had been activated for the group!

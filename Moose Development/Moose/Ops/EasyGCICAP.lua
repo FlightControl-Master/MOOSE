@@ -1,13 +1,18 @@
 -------------------------------------------------------------------------
 -- Easy CAP/GCI Class, based on OPS classes
 -------------------------------------------------------------------------
--- Documentation
+-- 
+-- ## Documentation:
 -- 
 -- https://flightcontrol-master.github.io/MOOSE_DOCS_DEVELOP/Documentation/Ops.EasyGCICAP.html
 -- 
+-- ## Example Missions:
+--
+-- Demo missions can be found on [github](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/develop/Ops/EasyGCICAP).
+-- 
 -------------------------------------------------------------------------
 -- Date: September 2023
--- Last Update: July 2024
+-- Last Update: Aug 2025
 -------------------------------------------------------------------------
 --
 --- **Ops** - Easy GCI & CAP Manager
@@ -71,6 +76,9 @@
 -- @field #boolean DespawnAfterHolding
 -- @field #list<Ops.Auftrag#AUFTRAG> ListOfAuftrag
 -- @field #string defaulttakeofftype Take off type
+-- @field #number FuelLowThreshold
+-- @field #number FuelCriticalThreshold
+-- @field #boolean showpatrolpointmarks
 -- @extends Core.Fsm#FSM
 
 --- *“Airspeed, altitude, and brains. Two are always needed to successfully complete the flight.”* -- Unknown.
@@ -226,6 +234,9 @@ EASYGCICAP = {
   DespawnAfterHolding = true,
   ListOfAuftrag = {},
   defaulttakeofftype = "hot",
+  FuelLowThreshold = 25,
+  FuelCriticalThreshold = 10,
+  showpatrolpointmarks = false,
 }
 
 --- Internal Squadron data type
@@ -258,10 +269,11 @@ EASYGCICAP = {
 -- @field #number Speed
 -- @field #number Heading
 -- @field #number LegLength
+-- @field Core.Zone#ZONE_BASE Zone
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.23"
+EASYGCICAP.version="0.1.27"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -315,6 +327,9 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.DespawnAfterHolding = true
   self.ListOfAuftrag = {}
   self.defaulttakeofftype = "hot"
+  self.FuelLowThreshold = 25
+  self.FuelCriticalThreshold = 10
+  self.showpatrolpointmarks = false
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("EASYGCICAP %s | ", self.alias)
@@ -339,6 +354,63 @@ end
 -- Functions
 -------------------------------------------------------------------------
 
+--- Get a specific managed AirWing by name
+-- @param #EASYGCICAP self
+-- @param #string AirbaseName Airbase name of the home of this wing.
+-- @return Ops.AirWing#AIRWING Airwing or nil if not found
+function EASYGCICAP:GetAirwing(AirbaseName)
+  self:T(self.lid.."GetAirwing")
+  if self.wings[AirbaseName] then
+    return self.wings[AirbaseName][1]
+  end
+  return nil
+end
+
+--- Get a table of all managed AirWings
+-- @param #EASYGCICAP self
+-- @return #table Table of Ops.AirWing#AIRWING Airwings
+function EASYGCICAP:GetAirwingTable()
+  self:T(self.lid.."GetAirwingTable")
+  local Wingtable = {}
+  for _,_object in pairs(self.wings or {}) do
+    table.insert(Wingtable,_object[1])
+  end
+  return Wingtable
+end
+
+--- Set "fuel low" threshold for CAP and INTERCEPT flights.
+-- @param #EASYGCICAP self
+-- @param #number Percent RTB if fuel at this percent. Values: 1..100, defaults to 25.
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetFuelLow(Percent)
+  self:T(self.lid.."SetFuelLow")
+  self.FuelLowThreshold = Percent or 25
+  return self
+end
+
+--- Set markers on the map for Patrol Points.
+-- @param #EASYGCICAP self
+-- @param #boolean onoff Set to true to switch markers on.
+-- @return #EASYGCICAP self
+function EASYGCICAP:ShowPatrolPointMarkers(onoff)
+  if onoff then
+    self.showpatrolpointmarks = true
+  else
+    self.showpatrolpointmarks = false
+  end
+  return self
+end
+
+--- Set "fuel critical" threshold for CAP and INTERCEPT flights.
+-- @param #EASYGCICAP self
+-- @param #number Percent RTB if fuel at this percent. Values: 1..100, defaults to 10.
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetFuelCritical(Percent)
+  self:T(self.lid.."SetFuelCritical")
+  self.FuelCriticalThreshold = Percent or 10
+  return self
+end
+
 --- Set CAP formation.
 -- @param #EASYGCICAP self
 -- @param #number Formation Formation to fly, defaults to ENUMS.Formation.FixedWing.FingerFour.Group
@@ -359,7 +431,7 @@ function EASYGCICAP:SetTankerAndAWACSInvisible(Switch)
   return self
 end
 
---- Count alive missions in our internal stack.
+--- (internal) Count alive missions in our internal stack.
 -- @param #EASYGCICAP self
 -- @return #number count
 function EASYGCICAP:_CountAliveAuftrags()
@@ -583,7 +655,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   local DespawnAfterHolding = self.DespawnAfterHolding
   
   -- Check STATIC name
-  local check = STATIC:FindByName(Airbasename,false)
+  local check = STATIC:FindByName(Airbasename,false) or UNIT:FindByName(Airbasename)
   if check == nil then
     MESSAGE:New(self.lid.."There's no warehouse static on the map (wrong naming?) for airbase "..tostring(Airbasename).."!",30,"CHECK"):ToAllIf(self.debug):ToLog()
     return
@@ -598,6 +670,10 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   CAP_Wing:SetRespawnAfterDestroyed()
   CAP_Wing:SetNumberCAP(self.capgrouping)
   CAP_Wing:SetCapCloseRaceTrack(true)
+    
+  if self.showpatrolpointmarks then
+    CAP_Wing:ShowPatrolPointMarkers(true)
+  end
   
   if self.capOptionVaryStartTime then
     CAP_Wing:SetCapStartTimeVariation(self.capOptionVaryStartTime,self.capOptionVaryEndTime)
@@ -628,6 +704,8 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   local engagerange = self.engagerange
   local GoZoneSet = self.GoZoneSet
   local NoGoZoneSet = self.NoGoZoneSet
+  local FuelLow = self.FuelLowThreshold or 25
+  local FuelCritical = self.FuelCriticalThreshold or 10
   
   function CAP_Wing:onbeforeFlightOnMission(From, Event, To, Flightgroup, Mission)
     local flightgroup = Flightgroup -- Ops.FlightGroup#FLIGHTGROUP
@@ -639,10 +717,15 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:SetDestinationbase(AIRBASE:FindByName(Airbasename))
     flightgroup:GetGroup():CommandEPLRS(true,5)
     flightgroup:GetGroup():SetOptionRadarUsingForContinousSearch()
+    flightgroup:GetGroup():SetOptionLandingOverheadBreak()
     if Mission.type ~= AUFTRAG.Type.TANKER and Mission.type ~= AUFTRAG.Type.AWACS and Mission.type ~= AUFTRAG.Type.RECON then
       flightgroup:SetDetection(true)
       flightgroup:SetEngageDetectedOn(engagerange,{"Air"},GoZoneSet,NoGoZoneSet)
       flightgroup:SetOutOfAAMRTB()
+      flightgroup:SetFuelLowRTB(true)
+      flightgroup:SetFuelLowThreshold(FuelLow)
+      flightgroup:SetFuelCriticalRTB(true)
+      flightgroup:SetFuelCriticalThreshold(FuelCritical)
       if CapFormation then
         flightgroup:GetGroup():SetOption(AI.Option.Air.id.FORMATION,CapFormation)
       end
@@ -681,24 +764,30 @@ end
 --- Add a CAP patrol point to a Wing
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
--- @param Core.Point#COORDINATE Coordinate.
+-- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
 -- @param #number Altitude Defaults to 25000 feet ASL.
 -- @param #number Speed  Defaults to 300 knots TAS.
 -- @param #number Heading Defaults to 90 degrees (East).
 -- @param #number LegLength Defaults to 15 NM.
 -- @return #EASYGCICAP self
 function EASYGCICAP:AddPatrolPointCAP(AirbaseName,Coordinate,Altitude,Speed,Heading,LegLength)
-  self:T(self.lid.."AddPatrolPointCAP "..Coordinate:ToStringLLDDM())
-  local EntryCAP = {} -- #EASYGCICAP.CapPoint
+  self:T(self.lid.."AddPatrolPointCAP")--..Coordinate:ToStringLLDDM())
+  local coordinate = Coordinate
+  local EntryCAP = {} -- #EASYGCICAP.CapPoint  
+  if Coordinate:IsInstanceOf("ZONE_BASE") then
+    -- adjust coordinate and get the coordinate from the zone
+    coordinate = Coordinate:GetCoordinate()
+    EntryCAP.Zone = Coordinate
+  end
   EntryCAP.AirbaseName = AirbaseName
-  EntryCAP.Coordinate = Coordinate
+  EntryCAP.Coordinate = coordinate
   EntryCAP.Altitude = Altitude or 25000
   EntryCAP.Speed = Speed or 300
   EntryCAP.Heading = Heading or 90
   EntryCAP.LegLength = LegLength or 15
   self.ManagedCP[#self.ManagedCP+1] = EntryCAP
   if self.debug then
-    local mark = MARKER:New(Coordinate,self.lid.."Patrol Point"):ToAll()
+    local mark = MARKER:New(coordinate,self.lid.."Patrol Point"):ToAll()
   end
   return self
 end
@@ -706,7 +795,7 @@ end
 --- Add a RECON patrol point to a Wing
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
--- @param Core.Point#COORDINATE Coordinate.
+-- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
 -- @param #number Altitude Defaults to 25000 feet.
 -- @param #number Speed  Defaults to 300 knots.
 -- @param #number Heading Defaults to 90 degrees (East).
@@ -731,7 +820,7 @@ end
 --- Add a TANKER patrol point to a Wing
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
--- @param Core.Point#COORDINATE Coordinate.
+-- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
 -- @param #number Altitude Defaults to 25000 feet.
 -- @param #number Speed  Defaults to 300 knots.
 -- @param #number Heading Defaults to 90 degrees (East).
@@ -756,7 +845,7 @@ end
 --- Add an AWACS patrol point to a Wing
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
--- @param Core.Point#COORDINATE Coordinate.
+-- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
 -- @param #number Altitude Defaults to 25000 feet.
 -- @param #number Speed  Defaults to 300 knots.
 -- @param #number Heading Defaults to 90 degrees (East).
@@ -844,7 +933,12 @@ function EASYGCICAP:_SetCAPPatrolPoints()
     local Speed = data.Speed 
     local Heading = data.Heading
     local LegLength = data.LegLength
-    Wing:AddPatrolPointCAP(Coordinate,Altitude,Speed,Heading,LegLength)
+    local Zone = _data.Zone
+    if Zone then
+        Wing:AddPatrolPointCAP(Zone,Altitude,Speed,Heading,LegLength)
+    else
+        Wing:AddPatrolPointCAP(Coordinate,Altitude,Speed,Heading,LegLength)
+    end
   end
   
   return self
@@ -910,7 +1004,7 @@ end
 -- @param #string SquadName Squadron name - must be unique!
 -- @param #string AirbaseName Name of the airbase the airwing resides on, e.g. AIRBASE.Caucasus.Kutaisi
 -- @param #number AirFrames Number of available airframes, e.g. 20.
--- @param #string Skill(optional) Skill level, e.g. AI.Skill.AVERAGE
+-- @param #string Skill (optional) Skill level, e.g. AI.Skill.AVERAGE
 -- @param #string Modex (optional) Modex to be used,e.g. 402.
 -- @param #string Livery (optional) Livery name to be used.
 -- @return #EASYGCICAP self 
@@ -1199,19 +1293,19 @@ end
 -- @return #boolean assigned
 -- @return #number leftover
 function EASYGCICAP:_TryAssignIntercept(ReadyFlightGroups,InterceptAuftrag,Group,WingSize)
-  self:I("_TryAssignIntercept for size "..WingSize or 1)
+  self:T("_TryAssignIntercept for size "..WingSize or 1)
   local assigned = false
   local wingsize = WingSize or 1
   local mindist = 0
   local disttable = {}
   if Group and Group:IsAlive() then
     local gcoord = Group:GetCoordinate() or COORDINATE:New(0,0,0)
-    self:I(self.lid..string.format("Assignment for %s",Group:GetName()))
+    self:T(self.lid..string.format("Assignment for %s",Group:GetName()))
     for _name,_FG in pairs(ReadyFlightGroups or {}) do
       local FG = _FG -- Ops.FlightGroup#FLIGHTGROUP
       local fcoord = FG:GetCoordinate()
       local dist = math.floor(UTILS.Round(fcoord:Get2DDistance(gcoord)/1000,1))
-      self:I(self.lid..string.format("FG %s Distance %dkm",_name,dist))
+      self:T(self.lid..string.format("FG %s Distance %dkm",_name,dist))
       disttable[#disttable+1] = { FG=FG, dist=dist}
       if dist>mindist then mindist=dist end
     end
@@ -1228,7 +1322,7 @@ function EASYGCICAP:_TryAssignIntercept(ReadyFlightGroups,InterceptAuftrag,Group
       local cm = FG:GetMissionCurrent()
       if cm then cm:Cancel() end
       wingsize = wingsize - 1
-      self:I(self.lid..string.format("Assigned to FG %s Distance %dkm",FG:GetName(),_entry.dist))
+      self:T(self.lid..string.format("Assigned to FG %s Distance %dkm",FG:GetName(),_entry.dist))
       if wingsize == 0 then 
         assigned = true
         break 
@@ -1258,7 +1352,7 @@ function EASYGCICAP:_AssignIntercept(Cluster)
   local conflictzoneset = self.ConflictZoneSet
   local ReadyFlightGroups = self.ReadyFlightGroups
   
-    -- Aircraft?
+  -- Aircraft?
   if Cluster.ctype ~= INTEL.Ctype.AIRCRAFT then return end
   -- Threatlevel 0..10
   local contact = self.Intel:GetHighestThreatContact(Cluster)
@@ -1303,6 +1397,10 @@ function EASYGCICAP:_AssignIntercept(Cluster)
       local data = _data -- #EASYGCICAP.CapPoint
       local name = data.AirbaseName
       local zonecoord = data.Coordinate
+      if data.Zone then
+            -- refresh coordinate in case we have a (moving) zone
+            zonecoord = data.Zone:GetCoordinate()
+      end
       local airwing = wings[name][1]
       local coa = AIRBASE:FindByName(name):GetCoalition()
       local samecoalitionab = coa == self.coalition and true or false
@@ -1404,7 +1502,7 @@ function EASYGCICAP:_StartIntel()
 end
 
 -------------------------------------------------------------------------
--- FSM Functions
+-- TODO FSM Functions
 -------------------------------------------------------------------------
 
 --- (Internal) FSM Function onafterStart
@@ -1500,7 +1598,7 @@ function EASYGCICAP:onafterStatus(From,Event,To)
         local engage = FG:IsEngaging()
         local hasmissiles = FG:IsOutOfMissiles() == nil and true or false
         local ready = hasmissiles and FG:IsFuelGood() and FG:IsAirborne()
-        --self:I(string.format("Flightgroup %s Engaging = %s Ready = %s",tostring(name),tostring(engage),tostring(ready)))
+        --self:T(string.format("Flightgroup %s Engaging = %s Ready = %s",tostring(name),tostring(engage),tostring(ready)))
         if ready then
           self.ReadyFlightGroups[name] = FG
         end
@@ -1535,5 +1633,8 @@ end
 function EASYGCICAP:onafterStop(From,Event,To)
   self:T({From,Event,To})
   self.Intel:Stop()
+  for _,_wing in pairs(self.wings or {}) do
+    _wing:Stop()
+  end
   return self
 end

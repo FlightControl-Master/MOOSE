@@ -779,6 +779,61 @@ function FLIGHTGROUP:SetJettisonWeapons(Switch)
   return self
 end
 
+--- Set the aircraft to land straight in.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOptionLandingStraightIn()
+  self.OptionLandingStraightIn = true
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOptionLandingStraightIn()
+  end
+  return self
+end
+
+--- Set the aircraft to land in pairs.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOptionLandingForcePair()
+  self.OptionLandingForcePair = true
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOptionLandingForcePair()
+  end
+  return self
+end
+
+--- Set the aircraft to NOT land in pairs.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOptionLandingRestrictPair()
+  self.OptionLandingRestrictPair = true
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOptionLandingRestrictPair()
+  end
+  return self
+end
+
+--- Set the aircraft to land after overhead break.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOptionLandingOverheadBreak()
+  self.OptionLandingOverheadBreak = true
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():SetOptionLandingOverheadBreak()
+  end
+  return self
+end
+
+--- [HELICOPTER] Set the aircraft to prefer takeoff and landing vertically.
+-- @param #FLIGHTGROUP self
+-- @return #FLIGHTGROUP self
+function FLIGHTGROUP:SetOptionPreferVertical()
+  self.OptionPreferVertical = true
+  if self:GetGroup():IsAlive() then
+    self:GetGroup():OptionPreferVerticalLanding()
+  end
+  return self
+end
+
 --- Set if group is ready for taxi/takeoff if controlled by a `FLIGHTCONTROL`.
 -- @param #FLIGHTGROUP self
 -- @param #boolean ReadyTO If `true`, flight is ready for takeoff.
@@ -3079,7 +3134,7 @@ function FLIGHTGROUP:onbeforeLandAtAirbase(From, Event, To, airbase)
     local Tsuspend=nil
 
     if airbase==nil then
-      self:T(self.lid.."ERROR: Airbase is nil in LandAtAirase() call!")
+      self:T(self.lid.."ERROR: Airbase is nil in LandAtAirbase() call!")
       allowed=false
     end
 
@@ -4497,6 +4552,11 @@ function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)
   -- Airbase.
   airbase=airbase or self:GetClosestAirbase()
 
+  if airbase == nil then
+    self:T(self.lid.."No airbase found for element "..element.name)
+    return nil
+  end
+
   -- Parking table of airbase.
   local parking=airbase.parking --:GetParkingSpotsTable()
 
@@ -4607,10 +4667,12 @@ function FLIGHTGROUP:GetParking(airbase)
     local coords={}
     for clientname, client in pairs(clients) do
       local template=_DATABASE:GetGroupTemplateFromUnitName(clientname)
-      local units=template.units
-      for i,unit in pairs(units) do
-        local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
-        coords[unit.name]=coord
+      if template then
+        local units=template.units
+        for i,unit in pairs(units) do
+          local coord=COORDINATE:New(unit.x, unit.alt, unit.y)
+          coords[unit.name]=coord
+        end
       end
     end
     return coords

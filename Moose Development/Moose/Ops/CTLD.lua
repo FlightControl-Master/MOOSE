@@ -25,7 +25,7 @@
 -- @module Ops.CTLD
 -- @image OPS_CTLD.jpg
 
--- Last Update May 2025
+-- Last Update July 2025
 
 
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -867,7 +867,9 @@ do
 --          my_ctld.TroopUnloadDistHoverHook = 5 -- When hovering, unload troops this far behind the Chinook
 --          my_ctld.showstockinmenuitems = false -- When set to true, the menu lines will also show the remaining items in stock (that is, if you set any), downside is that the menu for all will be build every 30 seconds anew.
 --          my_ctld.onestepmenu = false -- When set to true, the menu will create Drop and build, Get and load, Pack and remove, Pack and load, Pack. it will be a 1 step solution.
--- 
+--          my_ctld.VehicleMoveFormation = AI.Task.VehicleFormation.VEE -- When a group moves to a MOVE zone, then it takes this formation. Can be a table of formations, which are then randomly chosen. Defaults to "Vee".
+--          my_ctld.validateAndRepositionUnits = false -- Uses Disposition and other logic to find better ground positions for ground units avoiding trees, water, roads, runways, map scenery, statics and other units in the area. (Default is false)
+--
 -- ## 2.1 CH-47 Chinook support
 -- 
 -- The Chinook comes with the option to use the ground crew menu to load and unload cargo into the Helicopter itself for better immersion. As well, it can sling-load cargo from ground. The cargo you can actually **create**
@@ -1294,6 +1296,7 @@ CTLD = {
   LoadedGroupsTable = {},
   keeploadtable = true,
   allowCATransport = false,
+  VehicleMoveFormation = AI.Task.VehicleFormation.VEE,
 }
 
 ------------------------------
@@ -1414,7 +1417,7 @@ CTLD.FixedWingTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.3.35"
+CTLD.version="1.3.37"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -1481,6 +1484,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self:AddTransition("*",             "CratesRepaired",      "*")           -- CTLD repair  event.
   self:AddTransition("*",             "CratesBuildStarted",  "*")           -- CTLD build  event.
   self:AddTransition("*",             "CratesRepairStarted", "*")           -- CTLD repair  event.
+  self:AddTransition("*",             "CratesPacked",        "*")           -- CTLD repack  event.
   self:AddTransition("*",             "HelicopterLost",      "*")           -- CTLD lost  event.
   self:AddTransition("*",             "Load",                "*")           -- CTLD load  event.
   self:AddTransition("*",             "Loaded",              "*")           -- CTLD load  event.   
@@ -1553,13 +1557,17 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.movetroopsdistance = 5000
   self.troopdropzoneradius = 100
   
+  self.VehicleMoveFormation = AI.Task.VehicleFormation.VEE
+  
   -- added support Hercules Mod
   self.enableHercules = false -- deprecated
   self.enableFixedWing = false
   self.FixedMinAngels = 165 -- for troop/cargo drop via chute
   self.FixedMaxAngels = 2000 -- for troop/cargo drop via chute
   self.FixedMaxSpeed = 77 -- 280 kph or 150kn eq 77 mps
-  
+
+  self.validateAndRepositionUnits = false -- 280 kph or 150kn eq 77 mps
+
   -- message suppression
   self.suppressmessages = false
   
@@ -1759,6 +1767,17 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
   -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB repaired.
   -- @return #CTLD self
+        
+  --- FSM Function OnBeforeCratesPacked.
+  -- @function [parent=#CTLD] OnBeforeCratesPacked
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param #CTLD_CARGO Cargo Cargo crate that was repacked.
+  -- @return #CTLD self
     
   --- FSM Function OnBeforeTroopsRTB.
   -- @function [parent=#CTLD] OnBeforeTroopsRTB
@@ -1846,6 +1865,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param CargoName The name of the cargo being built.
   -- @return #CTLD self
 
   --- FSM Function OnAfterCratesRepairStarted. Info event that a repair has been started.
@@ -1887,6 +1907,17 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
   -- @param Wrapper.Group#GROUP Vehicle The #GROUP object of the vehicle or FOB repaired.
+  -- @return #CTLD self
+  
+  --- FSM Function OnAfterCratesPacked.
+  -- @function [parent=#CTLD] OnAfterCratesPacked
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param #CTLD_CARGO Cargo Cargo crate that was repacked.
   -- @return #CTLD self
     
   --- FSM Function OnAfterTroopsRTB.
@@ -2827,8 +2858,12 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack)
       if cratedistance > self.CrateDistance then cratedistance = self.CrateDistance end
       -- altered heading logic
       -- DONE: right standard deviation?
-      rheading = UTILS.RandomGaussian(0,30,-90,90,100)
-      rheading = math.fmod((heading + rheading), 360)
+        if self:IsUnitInAir(Unit) and self:IsFixedWing(Unit) then
+          rheading = math.random(20,60)
+        else
+          rheading = UTILS.RandomGaussian(0, 30, -90, 90, 100)
+        end
+      rheading=math.fmod((heading+rheading),360)
       cratecoord = position:Translate(cratedistance,rheading)
     else
       cratedistance = (row-1)*6
@@ -3703,6 +3738,7 @@ function CTLD:_UnloadTroops(Group, Unit)
             self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
               :InitDelayOff()
               :InitSetUnitAbsolutePositions(Positions)
+              :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
               :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
               :SpawnFromVec2(randomcoord:GetVec2())
             self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter],type)
@@ -3965,7 +4001,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
               local buildtimer = TIMER:New(self._BuildObjectFromCrates,self,Group,Unit,build,false,Group:GetCoordinate(),MultiDrop)
               buildtimer:Start(self.buildtime)
               self:_SendMessage(string.format("Build started, ready in %d seconds!",self.buildtime),15,false,Group)
-              self:__CratesBuildStarted(1,Group,Unit)
+              self:__CratesBuildStarted(1,Group,Unit,build.Name) 
               self:_RefreshDropTroopsMenu(Group,Unit)
           else
             self:_BuildObjectFromCrates(Group,Unit,build,false,nil,MultiDrop)
@@ -4007,6 +4043,7 @@ function CTLD:_PackCratesNearby(Group, Unit)
             _Group:Destroy() -- if a match is found destroy the Wrapper.Group#GROUP near the player
             self:_GetCrates(Group, Unit, _entry, nil, false, true) -- spawn the appropriate crates near the player
             self:_RefreshLoadCratesMenu(Group,Unit) -- call the refresher to show the crates in the menu
+            self:__CratesPacked(1,Group,Unit,_entry)
             return true
           end
         end
@@ -4148,11 +4185,13 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation,Mult
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
           --:InitRandomizeUnits(true,20,2)
           :InitDelayOff()
+          :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
           :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
           :SpawnFromVec2(randomcoord)
       else -- don't random position of e.g. SAM units build as FOB
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
           :InitDelayOff()
+          :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
           :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
           :SpawnFromVec2(randomcoord)
       end
@@ -4166,6 +4205,17 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation,Mult
     self:T(self.lid.."Group KIA while building!")
   end
   return self
+end
+
+--- (Internal) Function to get a vehicle formation for a moving group
+-- @param #CTLD self
+-- @return #string Formation
+function CTLD:_GetVehicleFormation()
+  local VehicleMoveFormation = self.VehicleMoveFormation or AI.Task.VehicleFormation.VEE
+  if type(self.VehicleMoveFormation)=="table" then
+    VehicleMoveFormation = self.VehicleMoveFormation[math.random(1,#self.VehicleMoveFormation)]
+  end
+  return VehicleMoveFormation
 end
 
 --- (Internal) Function to move group to WP zone.
@@ -4182,18 +4232,20 @@ function CTLD:_MoveGroupToZone(Group)
     -- yes, we can ;)
     local groupname = Group:GetName()
     local zonecoord = zone:GetRandomCoordinate(20,125) -- Core.Point#COORDINATE
-    local coordinate = zonecoord:GetVec2()
+    local formation = self:_GetVehicleFormation()
+    --local coordinate = zonecoord:GetVec2()
     Group:SetAIOn()
     Group:OptionAlarmStateAuto()
     Group:OptionDisperseOnAttack(30)
-    Group:OptionROEOpenFirePossible()
-    Group:RouteToVec2(coordinate,5)
+    Group:OptionROEOpenFire()
+    Group:RouteGroundTo(zonecoord,25,formation)
     end
   return self
 end
 
 --- (Internal) Housekeeping - Cleanup crates when build
 -- @param #CTLD self
+-- 
 -- @param #table Crates Table of #CTLD_CARGO objects near the unit.
 -- @param #CTLD.Buildable Build Table build object.
 -- @param #number Number Number of objects in Crates (found) to limit search.
@@ -5165,6 +5217,7 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID)
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template, alias)
           :InitDelayOff()
           :InitSetUnitAbsolutePositions(Positions)
+          :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
           :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
           :SpawnFromVec2(randomcoord:GetVec2())
         self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter], cType)
@@ -7105,6 +7158,16 @@ end
       local filepath = self.filepath
       self:__Save(interval,filepath,filename)
     end
+    
+    if type(self.VehicleMoveFormation) == "table" then
+      local Formations = {}
+      for _,_formation in pairs(self.VehicleMoveFormation) do
+        table.insert(Formations,_formation)
+      end
+      self.VehicleMoveFormation = nil
+      self.VehicleMoveFormation = Formations
+    end
+  
     return self
   end
 

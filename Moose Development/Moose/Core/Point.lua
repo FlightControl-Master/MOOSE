@@ -777,7 +777,9 @@ do -- COORDINATE
   -- @return DCS#Vec2 Vec2
   function COORDINATE:GetRandomVec2InRadius( OuterRadius, InnerRadius )
     self:F2( { OuterRadius, InnerRadius } )
-
+    math.random()
+    math.random()
+    math.random()
     local Theta = 2 * math.pi * math.random()
     local Radials = math.random() + math.random()
     if Radials > 1 then
@@ -837,6 +839,26 @@ do -- COORDINATE
     return land.getHeight( Vec2 )
   end
 
+  --- Returns a table of DCS#Vec3 points representing the terrain profile between two points.
+  -- @param #COORDINATE self
+  -- @param Destination DCS#Vec3 Ending point of the profile.
+  -- @return #table DCS#Vec3 table of the profile
+  function COORDINATE:GetLandProfileVec3(Destination)
+    return land.profile(self:GetVec3(), Destination)
+  end
+
+  --- Returns a table of #COORDINATE representing the terrain profile between two points.
+  -- @param #COORDINATE self
+  -- @param Destination #COORDINATE Ending coordinate of the profile.
+  -- @return #table #COORDINATE table of the profile
+  function COORDINATE:GetLandProfileCoordinates(Destination)
+    local points = self:GetLandProfileVec3(Destination:GetVec3())
+    local coords = {}
+    for _, point in ipairs(points) do
+      table.insert(coords, COORDINATE:NewFromVec3(point))
+    end
+    return coords
+  end
 
   --- Set the heading of the coordinate, if applicable.
   -- @param #COORDINATE self
@@ -3797,7 +3819,26 @@ do -- COORDINATE
   function COORDINATE:GetRandomPointVec3InRadius( OuterRadius, InnerRadius )
     return COORDINATE:NewFromVec3( self:GetRandomVec3InRadius( OuterRadius, InnerRadius ) )
   end
-  
+
+
+--- Search for clear zones in a given area. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param #number SearchRadius Radius of the search area.
+-- @param #number PosRadius Required clear radius around each position.
+-- @param #number NumPositions Number of positions to find.
+-- @return #table A table of Core.Point#COORDINATE that are clear of map objects within the given PosRadius. nil if no positions are found.
+  function COORDINATE:GetSimpleZones(SearchRadius, PosRadius, NumPositions)
+    local clearPositions = UTILS.GetSimpleZones(self:GetVec3(), SearchRadius, PosRadius, NumPositions)
+    if clearPositions and #clearPositions > 0 then
+        local coords = {}
+        for _, pos in pairs(clearPositions) do
+          local coord = COORDINATE:NewFromVec2(pos)
+          table.insert(coords, coord)
+        end
+        return coords
+    end
+    return nil
+  end
+
 end
 
 do 

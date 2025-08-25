@@ -73,6 +73,11 @@ end
 -- @param #table points The points of the triangle, or 3 other points if you're just using the TRIANGLE class without an object of it
 -- @return #table The random Vec2
 function TRIANGLE:GetRandomVec2(points)
+
+    math.random()
+    math.random()
+    math.random()
+    
     points = points or self.Points
     local pt = {math.random(), math.random()}
     table.sort(pt)

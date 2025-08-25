@@ -105,7 +105,7 @@ AUTOLASE = {
   debug = false,
   smokemenu = true,
   RoundingPrecision = 0,
-  increasegroundawareness = true,
+  increasegroundawareness = false,
   MonitorFrequency = 30,
 }
 
@@ -216,7 +216,7 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.smokemenu = true
   self.threatmenu = true
   self.RoundingPrecision = 0
-  self.increasegroundawareness = true
+  self.increasegroundawareness = false
   self.MonitorFrequency = 30
   
   self:EnableSmokeMenu({Angle=math.random(0,359),Distance=math.random(10,20)})
@@ -493,7 +493,7 @@ end
 --- (User) Function enable sending messages via SRS.
 -- @param #AUTOLASE self
 -- @param #boolean OnOff Switch usage on and off
--- @param #string Path Path to SRS directory, e.g. C:\\Program Files\\DCS-SimpleRadio-Standalone
+-- @param #string Path Path to SRS TTS directory, e.g. C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio
 -- @param #number Frequency Frequency to send, e.g. 243
 -- @param #number Modulation Modulation i.e. radio.modulation.AM or radio.modulation.FM
 -- @param #string Label (Optional) Short label to be used on the SRS Client Overlay
@@ -508,7 +508,7 @@ end
 function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
   if OnOff then
     self.useSRS = true
-    self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+    self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
     self.SRSFreq = Frequency or 271
     self.SRSMod = Modulation or radio.modulation.AM
     self.Gender = Gender or MSRS.gender or "male"
@@ -1020,7 +1020,7 @@ function AUTOLASE:_Prescient()
            self:T(self.lid.."Checking possibly visible STATICs for Recce "..unit:GetName())
             for _,_static in pairs(Statics) do -- DCS static object here
               local static = STATIC:Find(_static)
-              if static and static:GetCoalition() ~= self.coalition then
+              if static and static:GetCoalition() ~= self.coalition and static:GetCoordinate() then
                 local IsLOS = position:IsLOS(static:GetCoordinate())
                 if IsLOS then
                   unit:KnowUnit(static,true,true)

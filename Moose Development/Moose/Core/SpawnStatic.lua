@@ -149,6 +149,7 @@ function SPAWNSTATIC:NewFromStatic(SpawnTemplateName, SpawnCountryID)
     self.CategoryID          = CategoryID
     self.CoalitionID         = CoalitionID
     self.SpawnIndex          = 0
+    self.StaticCopyFrom      = SpawnTemplateName
   else
     error( "SPAWNSTATIC:New: There is no static declared in the mission editor with SpawnTemplatePrefix = '" .. tostring(SpawnTemplateName) .. "'" )
   end
@@ -302,12 +303,16 @@ end
 -- @param #number CallsignID Callsign ID. Default 1 (="London").
 -- @param #number Frequency Frequency in MHz. Default 127.5 MHz.
 -- @param #number Modulation Modulation 0=AM, 1=FM.
+-- @param #boolean DynamicSpawns If true, allow Dynamic Spawns
+-- @param #boolean DynamicHotStarts If true, and DynamicSpawns is true, then allow Dynamic Spawns with hot starts.
 -- @return #SPAWNSTATIC self
-function SPAWNSTATIC:InitFARP(CallsignID, Frequency, Modulation)
+function SPAWNSTATIC:InitFARP(CallsignID, Frequency, Modulation, DynamicSpawns,DynamicHotStarts)
   self.InitFarp=true
   self.InitFarpCallsignID=CallsignID or 1
   self.InitFarpFreq=Frequency or 127.5
   self.InitFarpModu=Modulation or 0
+  self.InitFarpDynamicSpawns = DynamicSpawns
+  self.InitFarpDynamicHotStarts = (DynamicSpawns == true and DynamicHotStarts == true) and true or nil
   return self
 end
 
@@ -550,6 +555,13 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     TemplateGroup.x=Template.x
     TemplateGroup.y=Template.y
     TemplateGroup.name=Template.name
+    
+    if self.InitFarpDynamicSpawns == true then
+      TemplateGroup.units[1].dynamicSpawn = true
+      if self.InitFarpDynamicHotStarts == true then
+        TemplateGroup.units[1].allowHotStart = true
+      end
+    end
 
     self:T("Spawning FARP")
     self:T({Template=Template})
@@ -557,7 +569,8 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
 
     -- ED's dirty way to spawn FARPS.
     Static=coalition.addGroup(CountryID, -1, TemplateGroup)
-
+    --Static=coalition.addStaticObject(CountryID, Template)
+    
     -- Currently DCS 2.8 does not trigger birth events if FARPS are spawned!
     -- We create such an event. The airbase is registered in Core.Event
     local Event = {
@@ -595,6 +608,19 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     -- delay calling this for .3 seconds so that it hopefully comes after the BIRTH event of the group.
     self:ScheduleOnce(0.3, self.SpawnFunctionHook, mystatic, unpack(self.SpawnFunctionArguments))
   end
-
+  
+  if self.StaticCopyFrom ~= nil then
+    mystatic.StaticCopyFrom = self.StaticCopyFrom
+    if not _DATABASE.Templates.Statics[Template.name] then
+      local TemplateGroup={}
+      TemplateGroup.units={}
+      TemplateGroup.units[1]=Template
+      TemplateGroup.x=Template.x
+      TemplateGroup.y=Template.y
+      TemplateGroup.name=Template.name
+      _DATABASE:_RegisterStaticTemplate( TemplateGroup, self.CoalitionID, self.CategoryID, CountryID )
+    end
+  end
+  
   return mystatic
 end
