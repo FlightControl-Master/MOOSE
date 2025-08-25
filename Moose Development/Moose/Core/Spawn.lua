@@ -1849,7 +1849,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
         if self.SpawnValidateAndRepositionGroundUnits then
             local units = SpawnTemplate.units
             local gPos = { x = SpawnTemplate.x, y = SpawnTemplate.y }
-            UTILS.ValidateAndRepositionGroundUnits(gPos, units, self.SpawnValidateAndRepositionGroundUnitsRadius, self.SpawnValidateAndRepositionGroundUnitsSpacing)
+            UTILS.ValidateAndRepositionGroundUnits(units, gPos, self.SpawnValidateAndRepositionGroundUnitsRadius, self.SpawnValidateAndRepositionGroundUnitsSpacing)
         end
 
         -- Set country, coalition and category.

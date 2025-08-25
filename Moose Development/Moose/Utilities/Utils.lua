@@ -4876,11 +4876,11 @@ end
 --- NOTE: This is not a spawn randomizer.
 --- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
 --- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
--- @param table Positions A table of DCS#Vec2 or DCS#Vec3, can be a units table from the group template.
+-- @param #table Positions A table of DCS#Vec2 or DCS#Vec3, can be a units table from the group template.
 -- @param DCS#Vec2 Anchor (Optional) DCS#Vec2 or DCS#Vec3 as anchor point to calculate offset of the units.
 -- @param #number MaxRadius (Optional) Max radius to search for valid ground locations in meters. Default is double the max radius of the units.
 -- @param #number Spacing (Optional) Minimum spacing between units in meters. Default is 5% of the search radius or 5 meters, whichever is larger.
-function UTILS.ValidateAndRepositionGroundUnits(Anchor, Positions, MaxRadius, Spacing)
+function UTILS.ValidateAndRepositionGroundUnits(Positions, Anchor, MaxRadius, Spacing)
     local units = Positions
     Anchor = Anchor or UTILS.GetCenterPoint(units)
     local gPos = { x = Anchor.x, y = Anchor.z or Anchor.y }
