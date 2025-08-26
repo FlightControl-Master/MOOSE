@@ -7853,6 +7853,7 @@ function OPSGROUP:_Spawn(Delay, Template)
 
     -- Spawn new group.
     self.group=_DATABASE:Spawn(Template)
+    self.group:SetValidateAndRepositionGroundUnits(self.ValidateAndRepositionGroundUnits)
     --local countryID=self.group:GetCountry()
     --local categoryID=self.group:GetCategory()
     --local dcsgroup=coalition.addGroup(countryID, categoryID, Template)
