@@ -2231,6 +2231,10 @@ function GROUP:Respawn( Template, Reset )
 
   --UTILS.PrintTableToLog(Template)
 
+  if self.ValidateAndRepositionGroundUnits then
+    UTILS.ValidateAndRepositionGroundUnits(Template.units)
+  end
+
   -- Spawn new group.
   self:ScheduleOnce(0.1,_DATABASE.Spawn,_DATABASE,Template)
   --_DATABASE:Spawn(Template)
@@ -3191,4 +3195,14 @@ function GROUP:IsAAA()
     end
   end
   return isAAA
+end
+
+--- This function uses Disposition and other fallback logic to find better ground positions for ground units.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
+--- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+--- Uses UTILS.ValidateAndRepositionGroundUnits.
+-- @param #boolean Enabled Enable/disable the feature.
+function GROUP:SetValidateAndRepositionGroundUnits(Enabled)
+    self.ValidateAndRepositionGroundUnits = Enabled
 end
