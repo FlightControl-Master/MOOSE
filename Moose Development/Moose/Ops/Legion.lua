@@ -1823,6 +1823,7 @@ function LEGION:_CreateFlightGroup(asset)
     ---  
   
     opsgroup=ARMYGROUP:New(asset.spawngroupname)
+    opsgroup:SetValidateAndRepositionGroundUnits(self.ValidateAndRepositionGroundUnits)
     
   elseif self:IsFleet() then
 
