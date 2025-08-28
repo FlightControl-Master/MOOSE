@@ -387,7 +387,7 @@ end
 -- @param #number MaxRadius (Optional) Max radius to search for a valid ground location in meters. Default is 10 times the max radius of the static.
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:InitValidateAndRepositionStatic(OnOff, MaxRadius)
-    self.SpawnValidateAndRepositionStatic = OnOff
+    self.ValidateAndRepositionStatic = OnOff
     self.ValidateAndRepositionStaticMaxRadius = MaxRadius
     return self
 end
