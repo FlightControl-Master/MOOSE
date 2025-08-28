@@ -7847,8 +7847,13 @@ function OPSGROUP:_Spawn(Delay, Template)
     -- Debug output.
     self:T2({Template=Template})
 
+    if self:IsArmygroup() and self.ValidateAndRepositionGroundUnits then
+        UTILS.ValidateAndRepositionGroundUnits(Template.units)
+    end
+
     -- Spawn new group.
     self.group=_DATABASE:Spawn(Template)
+    self.group:SetValidateAndRepositionGroundUnits(self.ValidateAndRepositionGroundUnits)
     --local countryID=self.group:GetCountry()
     --local categoryID=self.group:GetCategory()
     --local dcsgroup=coalition.addGroup(countryID, categoryID, Template)
@@ -13955,6 +13960,15 @@ function OPSGROUP:_GetDetectedTarget()
   return targetgroup, targetdist
 end
 
+--- This function uses Disposition and other fallback logic to find better ground positions for ground units.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
+--- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+--- Uses UTILS.ValidateAndRepositionGroundUnits.
+-- @param #boolean Enabled Enable/disable the feature.
+function OPSGROUP:SetValidateAndRepositionGroundUnits(Enabled)
+    self.ValidateAndRepositionGroundUnits = Enabled
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
