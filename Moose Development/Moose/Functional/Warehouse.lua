@@ -6134,6 +6134,7 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
         unit.onboard_num=asset.modex[i]
       end
       if asset.callsign then
+        --UTILS.PrintTableToLog(asset.callsign)
         unit.callsign=asset.callsign[i]
       end
 

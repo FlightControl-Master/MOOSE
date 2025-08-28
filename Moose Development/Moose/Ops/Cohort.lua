@@ -88,7 +88,7 @@ COHORT = {
 
 --- COHORT class version.
 -- @field #string version
-COHORT.version="0.3.6"
+COHORT.version="0.3.7"
 
 --- Global variable to store the unique(!) cohort names
 _COHORTNAMES={}
@@ -100,6 +100,7 @@ _COHORTNAMES={}
 -- DONE: Create FLOTILLA class.
 -- DONE: Added check for properties.
 -- DONE: Make general so that PLATOON and SQUADRON can inherit this class.
+-- DONE: Better setting of call signs.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -515,10 +516,12 @@ end
 -- @param #COHORT self
 -- @param #number Callsign Callsign from CALLSIGN.Aircraft, e.g. "Chevy" for CALLSIGN.Aircraft.CHEVY.
 -- @param #number Index Callsign index, Chevy-**1**.
+-- @param #string CallsignString (optional) Set this for tasks like TANKER, AWACS or KIOWA and the like, which have special names. E.g. "Darkstar" or "Roughneck".
 -- @return #COHORT self
-function COHORT:SetCallsign(Callsign, Index)
+function COHORT:SetCallsign(Callsign, Index, CallsignString)
   self.callsignName=Callsign
   self.callsignIndex=Index
+  self.callsignClearName=CallsignString
   self.callsign={}
   self.callsign.NumberSquad=Callsign
   self.callsign.NumberGroup=Index
@@ -679,7 +682,16 @@ end
 function COHORT:GetCallsign(Asset)
 
   if self.callsignName then
-  
+    --[[
+                    ["callsign"] = 
+                    {
+                      [2] = 1,
+                      ["name"] = "Darkstar11",
+                      [3] = 1,
+                      [1] = 5,
+                      [4] = "Darkstar11",
+                    }, -- end of ["callsign"]
+    ]]
     Asset.callsign={}
   
     for i=1,Asset.nunits do
@@ -695,12 +707,16 @@ function COHORT:GetCallsign(Asset)
       else
         self.callsigncounter=self.callsigncounter+1
       end
+      callsign["name"] = self.callsignClearName or UTILS.GetCallsignName(self.callsignName) or "None"
+      callsign["name"] = string.format("%s%d%d",callsign["name"],callsign[2],callsign[3])
+      callsign[4] = callsign["name"] 
     
       Asset.callsign[i]=callsign
       
       self:T3({callsign=callsign})
     
-      --TODO: there is also a table entry .name, which is a string.
+      --DONE: there is also a table entry .name, which is a string.
+      --UTILS.PrintTableToLog(callsign)
     end
   
   
