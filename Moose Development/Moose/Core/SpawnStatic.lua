@@ -378,6 +378,20 @@ function SPAWNSTATIC:InitLinkToUnit(Unit, OffsetX, OffsetY, OffsetAngle)
   return self
 end
 
+--- Uses Disposition and other fallback logic to find a better and valid ground spawn position.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to a find clear ground location avoiding trees, water, roads, runways, map scenery, other statics and other units in the area.
+--- Uses the initial position if it's a valid location.
+-- @param #SPAWNSTATIC self
+-- @param #boolean OnOff Enable/disable the feature.
+-- @param #number MaxRadius (Optional) Max radius to search for a valid ground location in meters. Default is 10 times the max radius of the static.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitValidateAndRepositionStatic(OnOff, MaxRadius)
+    self.SpawnValidateAndRepositionStatic = OnOff
+    self.ValidateAndRepositionStaticMaxRadius = MaxRadius
+    return self
+end
+
 --- Allows to place a CallFunction hook when a new static spawns.
 -- The provided method will be called when a new group is spawned, including its given parameters.
 -- The first parameter of the SpawnFunction is the @{Wrapper.Static#STATIC} that was spawned.
@@ -543,6 +557,14 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
 
   -- Add static to the game.
   local Static=nil  --DCS#StaticObject
+
+  if self.ValidateAndRepositionStatic then
+    local validPos = UTILS.ValidateAndRepositionStatic(CountryID, Template.category, Template.type, Template, Template.shape_name, self.ValidateAndRepositionStaticMaxRadius)
+    if validPos then
+        Template.x = validPos.x
+        Template.y = validPos.y
+    end
+  end
 
   if self.InitFarp then
 
