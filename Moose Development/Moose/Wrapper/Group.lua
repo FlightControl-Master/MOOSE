@@ -3202,6 +3202,7 @@ end
 --- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
 --- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
 --- Uses UTILS.ValidateAndRepositionGroundUnits.
+-- @param #UNIT self
 -- @param #boolean Enabled Enable/disable the feature.
 function GROUP:SetValidateAndRepositionGroundUnits(Enabled)
     self.ValidateAndRepositionGroundUnits = Enabled

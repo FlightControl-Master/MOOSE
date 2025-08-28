@@ -1054,6 +1054,7 @@ end
 --- NOTE: This is not a spawn randomizer.
 --- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area.
 --- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+-- @param #SPAWN self
 -- @param #boolean OnOff Enable/disable the feature.
 -- @param #number MaxRadius (Optional) Max radius to search for valid ground locations in meters. Default is double the max radius of the units.
 -- @param #number Spacing (Optional) Minimum spacing between units in meters. Default is 5% of the search radius or 5 meters, whichever is larger.
