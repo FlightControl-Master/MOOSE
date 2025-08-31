@@ -39,6 +39,8 @@
 --    * [USS America](https://en.wikipedia.org/wiki/USS_America_\(LHA-6\)) (LHA-6)
 --    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61)
 --    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_\(L02\)) (L02)
+--    * BONHOMMERICHARD [VWV Mod]
+--    * ENTERPRISE66 [VWV Mod]
 --
 -- **Supported Aircraft:**
 --
@@ -1764,7 +1766,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.4.1"
+AIRBOSS.version = "1.4.2"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3126,8 +3128,8 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   self.SRS:SetCulture(Culture or "en-US")
   --self.SRS:SetFrequencies(Frequencies)
   self.SRS:SetGender(Gender or "male")
-  self.SRS:SetPath(PathToSRS)
-  self.SRS:SetPort(Port or 5002)
+  --self.SRS:SetPath(PathToSRS)
+  self.SRS:SetPort(Port or MSRS.port or 5002)
   self.SRS:SetLabel(self.AirbossRadio.alias or "AIRBOSS")
   self.SRS:SetCoordinate(self.carrier:GetCoordinate())
   self.SRS:SetVolume(Volume or 1)
@@ -3138,7 +3140,10 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   if Voice then
     self.SRS:SetVoice(Voice)
   end
-  self.SRS:SetVolume(Volume or 1.0)
+  if (not Voice) and self.SRS and self.SRS:GetProvider() == MSRS.Provider.GOOGLE then
+    self.SRS.voice = MSRS.poptions["gcloud"].voice or MSRS.Voices.Google.Standard.en_US_Standard_B
+  end
+  --self.SRS:SetVolume(Volume or 1.0)
   -- SRSQUEUE
   self.SRSQ = MSRSQUEUE:New("AIRBOSS")
   self.SRSQ:SetTransmitOnlyWithPlayers(true)
