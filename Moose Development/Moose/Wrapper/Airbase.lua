@@ -703,55 +703,56 @@ AIRBASE.SouthAtlantic={
 
 --- Airbases of the Sinai map:
 --
--- * AIRBASE.Sinai.Abu_Rudeis
--- * AIRBASE.Sinai.Abu_Suwayr
--- * AIRBASE.Sinai.Al_Bahr_al_Ahmar
--- * AIRBASE.Sinai.Al_Ismailiyah
--- * AIRBASE.Sinai.Al_Khatatbah
--- * AIRBASE.Sinai.Al_Mansurah
--- * AIRBASE.Sinai.Al_Rahmaniyah_Air_Base
--- * AIRBASE.Sinai.As_Salihiyah
--- * AIRBASE.Sinai.AzZaqaziq
--- * AIRBASE.Sinai.Baluza
--- * AIRBASE.Sinai.Ben_Gurion
--- * AIRBASE.Sinai.Beni_Suef
--- * AIRBASE.Sinai.Bilbeis_Air_Base
--- * AIRBASE.Sinai.Bir_Hasanah
--- * AIRBASE.Sinai.Birma_Air_Base
--- * AIRBASE.Sinai.Borg_El_Arab_International_Airport
--- * AIRBASE.Sinai.Cairo_International_Airport
--- * AIRBASE.Sinai.Cairo_West
--- * AIRBASE.Sinai.Difarsuwar_Airfield
--- * AIRBASE.Sinai.El_Arish
--- * AIRBASE.Sinai.El_Gora
--- * AIRBASE.Sinai.El_Minya
--- * AIRBASE.Sinai.Fayed
--- * AIRBASE.Sinai.Gebel_El_Basur_Air_Base
--- * AIRBASE.Sinai.Hatzerim
--- * AIRBASE.Sinai.Hatzor
--- * AIRBASE.Sinai.Hurghada_International_Airport
--- * AIRBASE.Sinai.Inshas_Airbase
--- * AIRBASE.Sinai.Jiyanklis_Air_Base
--- * AIRBASE.Sinai.Kedem
--- * AIRBASE.Sinai.Kibrit_Air_Base
--- * AIRBASE.Sinai.Kom_Awshim
--- * AIRBASE.Sinai.Melez
--- * AIRBASE.Sinai.Mezzeh_Air_Base
--- * AIRBASE.Sinai.Nevatim
--- * AIRBASE.Sinai.Ovda
--- * AIRBASE.Sinai.Palmachim
--- * AIRBASE.Sinai.Quwaysina
--- * AIRBASE.Sinai.Rafic_Hariri_Intl
--- * AIRBASE.Sinai.Ramat_David
--- * AIRBASE.Sinai.Ramon_Airbase
--- * AIRBASE.Sinai.Ramon_International_Airport
--- * AIRBASE.Sinai.Sde_Dov
--- * AIRBASE.Sinai.Sharm_El_Sheikh_International_Airport
--- * AIRBASE.Sinai.St_Catherine
--- * AIRBASE.Sinai.Tabuk
--- * AIRBASE.Sinai.Tel_Nof
--- * AIRBASE.Sinai.Wadi_Abu_Rish
--- * AIRBASE.Sinai.Wadi_al_Jandali
+-- * AIRBASE.SinaiMap.Abu_Rudeis
+-- * AIRBASE.SinaiMap.Abu_Suwayr
+-- * AIRBASE.SinaiMap.Al_Bahr_al_Ahmar
+-- * AIRBASE.SinaiMap.Al_Ismailiyah
+-- * AIRBASE.SinaiMap.Al_Khatatbah
+-- * AIRBASE.SinaiMap.Al_Mansurah
+-- * AIRBASE.SinaiMap.Al_Rahmaniyah_Air_Base
+-- * AIRBASE.SinaiMap.As_Salihiyah
+-- * AIRBASE.SinaiMap.AzZaqaziq
+-- * AIRBASE.SinaiMap.Baluza
+-- * AIRBASE.SinaiMap.Ben_Gurion
+-- * AIRBASE.SinaiMap.Beni_Suef
+-- * AIRBASE.SinaiMap.Bilbeis_Air_Base
+-- * AIRBASE.SinaiMap.Bir_Hasanah
+-- * AIRBASE.SinaiMap.Birma_Air_Base
+-- * AIRBASE.SinaiMap.Borg_El_Arab_International_Airport
+-- * AIRBASE.SinaiMap.Cairo_International_Airport
+-- * AIRBASE.SinaiMap.Cairo_West
+-- * AIRBASE.SinaiMap.Damascus_Intl
+-- * AIRBASE.SinaiMap.Difarsuwar_Airfield
+-- * AIRBASE.SinaiMap.El_Arish
+-- * AIRBASE.SinaiMap.El_Gora
+-- * AIRBASE.SinaiMap.El_Minya
+-- * AIRBASE.SinaiMap.Fayed
+-- * AIRBASE.SinaiMap.Gebel_El_Basur_Air_Base
+-- * AIRBASE.SinaiMap.Hatzerim
+-- * AIRBASE.SinaiMap.Hatzor
+-- * AIRBASE.SinaiMap.Hurghada_International_Airport
+-- * AIRBASE.SinaiMap.Inshas_Airbase
+-- * AIRBASE.SinaiMap.Jiyanklis_Air_Base
+-- * AIRBASE.SinaiMap.Kedem
+-- * AIRBASE.SinaiMap.Kibrit_Air_Base
+-- * AIRBASE.SinaiMap.Kom_Awshim
+-- * AIRBASE.SinaiMap.Melez
+-- * AIRBASE.SinaiMap.Mezzeh_Air_Base
+-- * AIRBASE.SinaiMap.Nevatim
+-- * AIRBASE.SinaiMap.Ovda
+-- * AIRBASE.SinaiMap.Palmachim
+-- * AIRBASE.SinaiMap.Quwaysina
+-- * AIRBASE.SinaiMap.Rafic_Hariri_Intl
+-- * AIRBASE.SinaiMap.Ramat_David
+-- * AIRBASE.SinaiMap.Ramon_Airbase
+-- * AIRBASE.SinaiMap.Ramon_International_Airport
+-- * AIRBASE.SinaiMap.Sde_Dov
+-- * AIRBASE.SinaiMap.Sharm_El_Sheikh_International_Airport
+-- * AIRBASE.SinaiMap.St_Catherine
+-- * AIRBASE.SinaiMap.Tabuk
+-- * AIRBASE.SinaiMap.Tel_Nof
+-- * AIRBASE.SinaiMap.Wadi_Abu_Rish
+-- * AIRBASE.SinaiMap.Wadi_al_Jandali
 --
 -- @field Sinai
 AIRBASE.Sinai = {
@@ -773,6 +774,7 @@ AIRBASE.Sinai = {
   ["Borg_El_Arab_International_Airport"] = "Borg El Arab International Airport",
   ["Cairo_International_Airport"] = "Cairo International Airport",
   ["Cairo_West"] = "Cairo West",
+  ["Damascus_Intl"] = "Damascus Intl",
   ["Difarsuwar_Airfield"] = "Difarsuwar Airfield",
   ["El_Arish"] = "El Arish",
   ["El_Gora"] = "El Gora",

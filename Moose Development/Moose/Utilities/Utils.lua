@@ -4872,3 +4872,160 @@ function UTILS.FindNearestPointOnCircle(Vec1,Radius,Vec2)
     return {x=qx, y=qy}
 end
 
+--- This function uses Disposition and other fallback logic to find better ground positions for ground units.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
+--- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+-- @param #table Positions A table of DCS#Vec2 or DCS#Vec3, can be a units table from the group template.
+-- @param DCS#Vec2 Anchor (Optional) DCS#Vec2 or DCS#Vec3 as anchor point to calculate offset of the units.
+-- @param #number MaxRadius (Optional) Max radius to search for valid ground locations in meters. Default is double the max radius of the units.
+-- @param #number Spacing (Optional) Minimum spacing between units in meters. Default is 5% of the search radius or 5 meters, whichever is larger.
+function UTILS.ValidateAndRepositionGroundUnits(Positions, Anchor, MaxRadius, Spacing)
+    local units = Positions
+    Anchor = Anchor or UTILS.GetCenterPoint(units)
+    local gPos = { x = Anchor.x, y = Anchor.z or Anchor.y }
+    local maxRadius = 0
+    local unitCount = 0
+    for _, unit in pairs(units) do
+        local pos = { x = unit.x, y = unit.z or unit.y }
+        local dist = UTILS.VecDist2D(pos, gPos)
+        if dist > maxRadius then
+            maxRadius = dist
+        end
+        unitCount = unitCount + 1
+    end
+    maxRadius = MaxRadius or math.max(maxRadius * 2, 10)
+    local spacing = Spacing or math.max(maxRadius * 0.05, 5)
+    if unitCount > 0 and maxRadius > 5 then
+        local spots = UTILS.GetSimpleZones(UTILS.Vec2toVec3(gPos), maxRadius, spacing, 1000)
+        if spots and #spots > 0 then
+            local validSpots = {}
+            for _, spot in pairs(spots) do -- Disposition sometimes returns points on roads, hence this filter.
+                if land.getSurfaceType(spot) == land.SurfaceType.LAND then
+                    table.insert(validSpots, spot)
+                end
+            end
+            spots = validSpots
+        end
+
+        local step = spacing
+        for _, unit in pairs(units) do
+            local pos = { x = unit.x, y = unit.z or unit.y }
+            local isOnLand = land.getSurfaceType(pos) == land.SurfaceType.LAND
+            local isValid = false
+            if spots and #spots > 0 then
+                local si = 1
+                local sid = 0
+                local closestDist = 100000000
+                local closestSpot
+                for _, spot in pairs(spots) do
+                    local dist = UTILS.VecDist2D(pos, spot)
+                    if dist < closestDist then
+                        closestDist = dist
+                        closestSpot = spot
+                        sid = si
+                    end
+                    si = si + 1
+                end
+                if closestSpot then
+                    if closestDist >= spacing then
+                        pos = closestSpot
+                    end
+                    isValid = true
+                    table.remove(spots, sid)
+                end
+            end
+
+            -- Failsafe calculation
+            if not isValid and not isOnLand then
+
+                local h = UTILS.HdgTo(pos, gPos)
+                local retries = 0
+                while not isValid and retries < 500 do
+
+                    local dist = UTILS.VecDist2D(pos, gPos)
+                    pos = UTILS.Vec2Translate(pos, step, h)
+
+                    local skip = false
+                    for _, unit2 in pairs(units) do
+                        if unit ~= unit2 then
+                            local pos2 = { x = unit2.x, y = unit2.z or unit2.y }
+                            local dist2 = UTILS.VecDist2D(pos, pos2)
+                            if dist2 < 12 then
+                                isValid = false
+                                skip = true
+                                break
+                            end
+                        end
+                    end
+
+                    if not skip and dist > step and land.getSurfaceType(pos) == land.SurfaceType.LAND then
+                        isValid = true
+                        break
+                    elseif dist <= step then
+                        break
+                    end
+
+                    retries = retries + 1
+                end
+            end
+
+            if isValid then
+                unit.x = pos.x
+                if unit.z then
+                    unit.z = pos.y
+                else
+                    unit.y = pos.y
+                end
+            end
+        end
+    end
+end
+
+--- This function uses Disposition and other fallback logic to find better ground positions for ground units.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
+--- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+-- @param #table Positions A table of DCS#Vec2 or DCS#Vec3, can be a units table from the group template.
+-- @param DCS#Vec2 Position DCS#Vec2 or DCS#Vec3 initial spawn location.
+-- @param #number MaxRadius (Optional) Max radius to search for valid ground locations in meters. Default is double the max radius of the static.
+-- @return DCS#Vec2 Initial Position if it's valid, else a valid spawn position. nil if no valid position found.
+function UTILS.ValidateAndRepositionStatic(Country, Category, Type, Position, ShapeName, MaxRadius)
+    local coord = COORDINATE:NewFromVec2(Position)
+    local st = SPAWNSTATIC:NewFromType(Type, Category, Country)
+    if ShapeName then
+        st:InitShape(ShapeName)
+    end
+    local sName = "s-"..timer.getTime().."-"..math.random(1,10000)
+    local tempStatic = st:SpawnFromCoordinate(coord, 0, sName)
+    if tempStatic then
+        local sRadius = tempStatic:GetBoundingRadius(2) or 3
+        tempStatic:Destroy()
+        sRadius = sRadius * 0.5
+        MaxRadius = MaxRadius or math.max(sRadius * 10, 100)
+        local positions = UTILS.GetSimpleZones(coord:GetVec3(), MaxRadius, sRadius, 20)
+        if positions and #positions > 0 then
+            local closestSpot
+            local closestDist = math.huge
+            for _, spot in pairs(positions) do -- Disposition sometimes returns points on roads, hence this filter.
+                if land.getSurfaceType(spot) == land.SurfaceType.LAND then
+                    local dist = UTILS.VecDist2D(Position, spot)
+                    if dist < closestDist then
+                        closestDist = dist
+                        closestSpot = spot
+                    end
+                end
+            end
+
+            if closestSpot then
+                if closestDist >= sRadius then
+                    return closestSpot
+                else
+                    return Position
+                end
+            end
+        end
+    end
+
+    return nil
+end
