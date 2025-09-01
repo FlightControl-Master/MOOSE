@@ -1586,12 +1586,12 @@ function UTILS.HdgDiff(h1, h2)
   return math.abs(delta)
 end
 
---- Returns the heading from one vec3 to another vec3.
--- @param DCS#Vec3 a From vec3.
--- @param DCS#Vec3 b To vec3.
+--- Returns the heading from one vec2/vec3 to another vec2/vec3.
+-- @param DCS#Vec3 a From Vec2 or Vec3.
+-- @param DCS#Vec3 b To Vec2 or Vec3.
 -- @return #number Heading in degrees.
 function UTILS.HdgTo(a, b)
-  local dz=b.z-a.z
+  local dz=(b.z or b.y) - (a.z or a.y)
   local dx=b.x-a.x
   local heading=math.deg(math.atan2(dz, dx))
   if heading < 0 then
@@ -4982,7 +4982,7 @@ function UTILS.ValidateAndRepositionGroundUnits(Positions, Anchor, MaxRadius, Sp
     end
 end
 
---- This function uses Disposition and other fallback logic to find better ground positions for ground units.
+--- This function uses Disposition and other fallback logic to find better ground positions for statics.
 --- NOTE: This is not a spawn randomizer.
 --- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
 --- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
