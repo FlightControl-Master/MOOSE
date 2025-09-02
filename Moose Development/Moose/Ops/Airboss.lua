@@ -39,6 +39,8 @@
 --    * [USS America](https://en.wikipedia.org/wiki/USS_America_\(LHA-6\)) (LHA-6)
 --    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61)
 --    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_\(L02\)) (L02)
+--    * BONHOMMERICHARD [VWV Mod]
+--    * ENTERPRISE66 [VWV Mod]
 --
 -- **Supported Aircraft:**
 --
@@ -1764,7 +1766,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.4.1"
+AIRBOSS.version = "1.4.2"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
