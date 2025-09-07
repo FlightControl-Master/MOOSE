@@ -20,7 +20,7 @@
 -- 
 -- @module Core.ClientMenu
 -- @image Core_Menu.JPG
--- last change: Jan 2025
+-- last change: Sept 2025
 
 -- TODO
 ----------------------------------------------------------------------------------------------------------------
@@ -417,7 +417,7 @@ end
 CLIENTMENUMANAGER = {
   ClassName = "CLIENTMENUMANAGER",
   lid = "",
-  version = "0.1.6",
+  version = "0.1.7",
   name = nil,
   clientset = nil,
   menutree = {},
@@ -804,6 +804,16 @@ function CLIENTMENUMANAGER:ResetMenuComplete()
   self.menutree = nil
   self.menutree = {}
   return self
+end
+
+--- Remove the entry and all entries below the given entry from the client's F10 menus.
+-- @param #CLIENTMENUMANAGER self
+-- @param #CLIENTMENU Entry The entry to remove
+-- @param Wrapper.Client#CLIENT Client (optional) If given, make this change only for this client. 
+-- @return #CLIENTMENUMANAGER self
+function CLIENTMENUMANAGER:DeleteEntry(Entry,Client)
+  self:T(self.lid.."DeleteEntry")
+  return self:DeleteF10Entry(Entry,Client)
 end
 
 --- Remove the entry and all entries below the given entry from the client's F10 menus.
