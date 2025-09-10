@@ -6930,6 +6930,7 @@ end
         local alias = string.format("%s-%d", _template, math.random(1,100000))
         self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
           :InitRandomizeUnits(randompositions,20,2)
+          :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
           :InitDelayOff()
           :OnSpawnGroup(function(grp,TimeStamp) grp.spawntime = TimeStamp or timer.getTime() end,TimeStamp)
           :SpawnFromVec2(randomcoord)
@@ -7083,12 +7084,14 @@ end
         if canmove then
           self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
             :InitRandomizeUnits(true,20,2)
+            :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
             :InitDelayOff()
             :OnSpawnGroup(function(grp,TimeStamp) grp.spawntime = TimeStamp or timer.getTime() end,TimeStamp)
             :SpawnFromVec2(randomcoord)
         else -- don't random position of e.g. SAM units build as FOB
           self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template,alias)
             :InitDelayOff()
+            :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
             :OnSpawnGroup(function(grp,TimeStamp) grp.spawntime = TimeStamp or timer.getTime() end,TimeStamp)
             :SpawnFromVec2(randomcoord)
         end
