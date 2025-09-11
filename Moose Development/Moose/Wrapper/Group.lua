@@ -231,6 +231,7 @@ GROUP.Attribute = {
   GROUND_AAA="Ground_AAA",
   GROUND_SAM="Ground_SAM",
   GROUND_SHORAD="Ground_SHORAD",
+  GROUND_BALLISTICMISSILE="Ground_BallisticMissile",
   GROUND_OTHER="Ground_OtherGround",
   NAVAL_AIRCRAFTCARRIER="Naval_AircraftCarrier",
   NAVAL_WARSHIP="Naval_WarShip",
@@ -2643,6 +2644,8 @@ function GROUP:GetAttribute()
     local artillery=self:HasAttribute("Artillery")
     local tank=self:HasAttribute("Old Tanks") or self:HasAttribute("Modern Tanks") or self:HasAttribute("Tanks")
     local aaa=self:HasAttribute("AAA") and (not self:HasAttribute("SAM elements"))
+    local ballisticMissile=artillery and self:HasAttribute("SS_missile")
+    local shorad=self:HasAttribute("SR SAM")
     local ewr=self:HasAttribute("EWR")
     local ifv=self:HasAttribute("IFV")
     local sam=self:HasAttribute("SAM elements") or self:HasAttribute("Optical Tracker")
@@ -2684,6 +2687,8 @@ function GROUP:GetAttribute()
       attribute=GROUP.Attribute.GROUND_SAM
     elseif aaa then
       attribute=GROUP.Attribute.GROUND_AAA
+    elseif artillery and ballisticMissile then
+      attribute=GROUP.Attribute.GROUND_BALLISTICMISSILE
     elseif artillery then
       attribute=GROUP.Attribute.GROUND_ARTILLERY
     elseif tank then
