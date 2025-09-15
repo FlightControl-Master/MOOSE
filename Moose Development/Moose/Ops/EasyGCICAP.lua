@@ -273,7 +273,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.27"
+EASYGCICAP.version="0.1.28"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1209,7 +1209,9 @@ function EASYGCICAP:_AddTankerSquadron(TemplateName, SquadName, AirbaseName, Air
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
   Squadron_One:SetMissionRange(self.missionrange)
   Squadron_One:SetRadio(Frequency,Modulation)
-  Squadron_One:AddTacanChannel(TACAN,TACAN)
+  if TACAN then
+    Squadron_One:AddTacanChannel(TACAN,TACAN)
+  end
   
   local wing = self.wings[AirbaseName][1] -- Ops.Airwing#AIRWING
   
