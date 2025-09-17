@@ -98,7 +98,7 @@ PLAYERTASK = {
 
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.27"
+PLAYERTASK.version="0.1.28"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -1235,7 +1235,10 @@ function PLAYERTASK:onafterFailed(From, Event, To)
       self.TargetMarker:Remove()
     end
     self.FinalState = "Failed"
-    self:__Done(-1)
+    if self.TaskController then
+      self.TaskController:__TaskFailed(-1,self)
+    end
+    self:__Done(-1.5)
   end
   if self.TaskController.Scoring then
     local clients,count = self:GetClientObjects()
