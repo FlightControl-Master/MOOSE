@@ -387,6 +387,14 @@ function PLAYERTASK:_CheckCaptureOpsZoneSuccess(OpsZone, CaptureSquadGroupNamePr
     return OpsZone:GetOwner() == Coalition and isClientInZone and isCaptureGroupInZone
 end
 
+--- [User] Override this function in order to implement custom logic if a player can join a task or not.
+-- @param #PLAYERTASK self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Client#CLIENT Client
+-- @return #boolean Outcome True if player can join the task, false if not
+function PLAYERTASK:CanJoinTask(Group, Client)
+    return true
+end
 
 --- [Internal] Add a PLAYERTASKCONTROLLER for this task
 -- @param #PLAYERTASK self
@@ -3552,6 +3560,10 @@ function PLAYERTASKCONTROLLER:_JoinTask(Task, Force, Group, Client)
   self:T(self.lid.."_JoinTask")
 
   if not self:CanJoinTask(Task, Group, Client) then
+    return self
+  end
+
+  if not Task:CanJoinTask(Group, Client) then
     return self
   end
 
