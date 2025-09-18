@@ -1509,7 +1509,9 @@ function EVENT:onEvent( Event )
         else  
           if Event.place:isExist() and Object.getCategory(Event.place) ~= Object.Category.SCENERY then
             Event.Place=AIRBASE:Find(Event.place)
-            Event.PlaceName=Event.Place:GetName()
+            if Event.Place then
+              Event.PlaceName=Event.Place:GetName()
+            end
           end
         end
       end
