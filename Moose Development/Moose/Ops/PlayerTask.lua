@@ -3533,6 +3533,16 @@ function PLAYERTASKCONTROLLER:AddPlayerTaskToQueue(PlayerTask,Silent,TaskFilter)
   return self
 end
 
+--- [User] Override this function in order to implement custom logic if a player can join a task or not.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Ops.PlayerTask#PLAYERTASK Task
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Client#CLIENT Client
+-- @return #boolean Outcome True if player can join the task, false if not
+function PLAYERTASKCONTROLLER:CanJoinTask(Task, Group, Client)
+    return true
+end
+
 --- [Internal] Join a player to a task
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Ops.PlayerTask#PLAYERTASK Task
@@ -3543,6 +3553,11 @@ end
 function PLAYERTASKCONTROLLER:_JoinTask(Task, Force, Group, Client)
   self:T({Force, Group, Client})
   self:T(self.lid.."_JoinTask")
+
+  if not self:CanJoinTask(Task, Group, Client) then
+    return self
+  end
+
   local force = false
   if type(Force) == "boolean" then
     force = Force
