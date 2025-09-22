@@ -933,37 +933,52 @@ AIRBASE.Afghanistan = {
 
 --- Airbases of the Iraq map
 --
--- * AIRBASE.Iraq.Baghdad_International_Airport
--- * AIRBASE.Iraq.Sulaimaniyah_International_Airport
--- * AIRBASE.Iraq.Al_Sahra_Airport
--- * AIRBASE.Iraq.Erbil_International_Airpor
--- * AIRBASE.Iraq.Al_Taji_Airport
 -- * AIRBASE.Iraq.Al_Asad_Airbase
+-- * AIRBASE.Iraq.Al_Kut_Airbase
+-- * AIRBASE.Iraq.Al_Sahra_Airport
 -- * AIRBASE.Iraq.Al_Salam_Airbase
--- * AIRBASE.Iraq.Balad_Airbase
--- * AIRBASE.Iraq.Kirkuk_International_Airport
--- * AIRBASE.Iraq.Bashur_Airport
+-- * AIRBASE.Iraq.Al_Taji_Airport
 -- * AIRBASE.Iraq.Al_Taquddum_Airport
--- * AIRBASE.Iraq.Qayyarah_Airfield_West
+-- * AIRBASE.Iraq.Baghdad_International_Airport
+-- * AIRBASE.Iraq.Balad_Airbase
+-- * AIRBASE.Iraq.Bashur_Airport
+-- * AIRBASE.Iraq.Erbil_International_Airport
+-- * AIRBASE.Iraq.Sulaimaniyah_International_Airport
+-- * AIRBASE.Iraq.H2_Airbase
+-- * AIRBASE.Iraq.H3_Main_Airbase
+-- * AIRBASE.Iraq.H3_Northwest_Airbase
+-- * AIRBASE.Iraq.H3_Southwest_Airbase
 -- * AIRBASE.Iraq.K1_Base
+-- * AIRBASE.Iraq.Kirkuk_International_Airport
+-- * AIRBASE.Iraq.Mosul_International_Airport
+-- * AIRBASE.Iraq.Qayyarah_Airfield_West
+-- * AIRBASE.Iraq.Sulaimaniyah_International_Airport
 --
 -- @field Iraq
 AIRBASE.Iraq = {
-  ["Baghdad_International_Airport"] = "Baghdad International Airport",
-  ["Sulaimaniyah_International_Airport"] = "Sulaimaniyah International Airport",
-  ["Al_Sahra_Airport"] = "Al-Sahra Airport",
-  ["Erbil_International_Airport"] = "Erbil International Airport",
-  ["Al_Taji_Airport"] = "Al-Taji Airport",
+{
   ["Al_Asad_Airbase"] = "Al-Asad Airbase",
+  ["Al_Kut_Airport"] = "Al-Kut Airport",
+  ["Al_Sahra_Airport"] = "Al-Sahra Airport",
   ["Al_Salam_Airbase"] = "Al-Salam Airbase",
-  ["Balad_Airbase"] = "Balad Airbase",
-  ["Kirkuk_International_Airport"] = "Kirkuk International Airport",
-  ["Bashur_Airport"] = "Bashur Airport",
+  ["Al_Taji_Airport"] = "Al-Taji Airport",
   ["Al_Taquddum_Airport"] = "Al-Taquddum Airport",
-  ["Qayyarah_Airfield_West"] = "Qayyarah Airfield West",
+  ["Baghdad_International_Airport"] = "Baghdad International Airport",
+  ["Balad_Airbase"] = "Balad Airbase",
+  ["Bashur_Airport"] = "Bashur Airport",
+  ["Erbil_International_Airport"] = "Erbil International Airport",
+  ["H2_Airbase"] = "H-2 Airbase",
+  ["H3_Main_Airbase"] = "H-3 Main Airbase",
+  ["H3_Northwest_Airbase"] = "H-3 Northwest Airbase",
+  ["H3_Southwest_Airbase"] = "H-3 Southwest Airbase",
   ["K1_Base"] = "K1 Base",
+  ["Kirkuk_International_Airport"] = "Kirkuk International Airport",
+  ["Mosul_International_Airport"] = "Mosul International Airport",
+  ["Qayyarah_Airfield_West"] = "Qayyarah Airfield West",
+  ["Sulaimaniyah_International_Airport"] = "Sulaimaniyah International Airport",
 }
 
+    
 --- Airbases of the Germany Cold War map  
 -- * AIRBASE.GermanyCW.Airracing_Frankfurt  
 -- * AIRBASE.GermanyCW.Airracing_Frankfurt  
