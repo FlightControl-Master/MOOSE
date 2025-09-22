@@ -956,7 +956,6 @@ AIRBASE.Afghanistan = {
 --
 -- @field Iraq
 AIRBASE.Iraq = {
-{
   ["Al_Asad_Airbase"] = "Al-Asad Airbase",
   ["Al_Kut_Airport"] = "Al-Kut Airport",
   ["Al_Sahra_Airport"] = "Al-Sahra Airport",
