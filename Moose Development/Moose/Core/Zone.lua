@@ -1180,14 +1180,12 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
 
   local function EvaluateZone( ZoneObject )
     --if ZoneObject:isExist() then --FF: isExist always returns false for SCENERY objects since DCS 2.2 and still in DCS 2.5
-    if ZoneObject then
+    if ZoneObject and self:IsVec3InZone(ZoneObject:getPoint()) then
 
       -- Get object category.
       local ObjectCategory = Object.getCategory(ZoneObject)
 
       if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
-
-        local CoalitionDCSUnit = ZoneObject:getCoalition()
 
         local Include = false
         if not UnitCategories then
@@ -3308,13 +3306,11 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
 
   local function EvaluateZone( ZoneObject )
 
-    if ZoneObject then
+    if ZoneObject and self:IsVec3InZone(ZoneObject:getPoint()) then
 
       local ObjectCategory = Object.getCategory(ZoneObject)
 
       if ( ObjectCategory == Object.Category.UNIT and ZoneObject:isExist() and ZoneObject:isActive() ) or (ObjectCategory == Object.Category.STATIC and ZoneObject:isExist()) then
-
-        local CoalitionDCSUnit = ZoneObject:getCoalition()
 
         local Include = false
         if not UnitCategories then
@@ -3347,7 +3343,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
       end
 
       -- trying with box search
-      if ObjectCategory == Object.Category.SCENERY and self:IsVec3InZone(ZoneObject:getPoint()) then
+      if ObjectCategory == Object.Category.SCENERY then
         local SceneryType = ZoneObject:getTypeName()
         local SceneryName = ZoneObject:getName()
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
