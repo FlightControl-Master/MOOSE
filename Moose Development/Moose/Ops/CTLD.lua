@@ -1417,7 +1417,7 @@ CTLD.FixedWingTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.3.37"
+CTLD.version="1.3.38"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -3328,6 +3328,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
       self:_RefreshLoadCratesMenu(Group, Unit)
       -- clean up real world crates
       self:_CleanupTrackedCrates(crateidsloaded)
+      self:__CratesPickedUp(1, Group, Unit, loaded.Cargo) 
     end
   end
   return self
