@@ -2021,7 +2021,9 @@ function AWACS:SetAdditionalZone(Zone, Draw)
   self.BorderZone = Zone
   if self.debug then
     Zone:DrawZone(self.coalition,{1,0.64,0},1,{1,0.64,0},0.2,1,true)
-    MARKER:New(Zone:GetCoordinate(),"Defensive Zone"):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      MARKER:New(Zone:GetCoordinate(),"Defensive Zone"):ToCoalition(self.coalition)
+    end
   elseif Draw then
     Zone:DrawZone(self.coalition,{1,0.64,0},1,{1,0.64,0},0.2,1,true)
   end
@@ -2041,7 +2043,9 @@ function AWACS:SetRejectionZone(Zone,Draw)
     --MARKER:New(Zone:GetCoordinate(),"Rejection Zone"):ToAll()
   elseif self.debug then
     Zone:DrawZone(self.coalition,{1,0.64,0},1,{1,0.64,0},0.2,1,true)
-    MARKER:New(Zone:GetCoordinate(),"Rejection Zone"):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      MARKER:New(Zone:GetCoordinate(),"Rejection Zone"):ToCoalition(self.coalition)
+    end
   end
   return self
 end
@@ -4094,10 +4098,14 @@ function AWACS:_CreateAnchorStackFromMarker(Name,Coord)
   if self.debug then
     AnchorStackOne.StationZone:DrawZone(self.coalition,{0,0,1},1,{0,0,1},0.2,5,true)
     local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-    AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+    end
   else
     local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-    AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+    end
   end
   
   self.AnchorStacks:Push(AnchorStackOne,newname)
@@ -4140,10 +4148,14 @@ function AWACS:_CreateAnchorStack()
       --self.AnchorStacks:Flush()
       AnchorStackOne.StationZone:DrawZone(self.coalition,{0,0,1},1,{0,0,1},0.2,5,true)
       local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-      AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      end
     else
       local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-      AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      end
     end
     self.AnchorStacks:Push(AnchorStackOne,newname)
   else
@@ -4167,10 +4179,14 @@ function AWACS:_CreateAnchorStack()
     if self.debug then
       AnchorStackOne.StationZone:DrawZone(self.coalition,{0,0,1},1,{0,0,1},0.2,5,true)
       local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-      AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      end
     else
       local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-      AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      end
     end
     self.AnchorStacks:Push(AnchorStackOne,newname)
   end
@@ -5102,10 +5118,14 @@ function AWACS:AddCAPAirWing(AirWing,Zone)
           if self.debug then
             AnchorStackOne.StationZone:DrawZone(self.coalition,{0,0,1},1,{0,0,1},0.2,5,true)
             local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-            AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+            if self.AllowMarkers then
+              AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+            end
           else
             local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-            AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+            if self.AllowMarkers then
+              AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+            end
           end
           self.AnchorStacks:Push(AnchorStackOne,newname)
           AirWing.HasOwnStation = true
@@ -5948,23 +5968,35 @@ function AWACS:onafterStart(From, Event, To)
     self.OpsZone:DrawZone(self.coalition,{1,0,0},1,{1,0,0},0.2,5,true)
     local AOCoordString = self.AOCoordinate:ToStringLLDDM()
     local Rocktag = string.format("FEZ: %s\nBulls Coordinate: %s",self.AOName,AOCoordString)
-    MARKER:New(self.AOCoordinate,Rocktag):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      MARKER:New(self.AOCoordinate,Rocktag):ToCoalition(self.coalition)
+    end
     self.StationZone:DrawZone(self.coalition,{0,0,1},1,{0,0,1},0.2,5,true)
     local stationtag = string.format("Station: %s\nCoordinate: %s",self.StationZoneName,self.StationZone:GetCoordinate():ToStringLLDDM())
     if not self.GCI then
-      MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      end
       self.OrbitZone:DrawZone(self.coalition,{0,1,0},1,{0,1,0},0.2,5,true)
-      MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToCoalition(self.coalition)
+      end
     end
   else
     local AOCoordString = self.AOCoordinate:ToStringLLDDM()
     local Rocktag = string.format("FEZ: %s\nBulls Coordinate: %s",self.AOName,AOCoordString)
-    MARKER:New(self.AOCoordinate,Rocktag):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      MARKER:New(self.AOCoordinate,Rocktag):ToCoalition(self.coalition)
+    end
     if not self.GCI then
-      MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToCoalition(self.coalition)
+      end
     end
     local stationtag = string.format("Station: %s\nCoordinate: %s",self.StationZoneName,self.StationZone:GetCoordinate():ToStringLLDDM())
-    MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+    end
   end
   
   if not self.GCI then

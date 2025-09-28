@@ -79,6 +79,7 @@
 -- @field #number FuelLowThreshold
 -- @field #number FuelCriticalThreshold
 -- @field #boolean showpatrolpointmarks
+-- @field #table EngageTargetTypes
 -- @extends Core.Fsm#FSM
 
 --- *“Airspeed, altitude, and brains. Two are always needed to successfully complete the flight.”* -- Unknown.
@@ -237,6 +238,7 @@ EASYGCICAP = {
   FuelLowThreshold = 25,
   FuelCriticalThreshold = 10,
   showpatrolpointmarks = false,
+  EngageTargetTypes = {"Air"},
 }
 
 --- Internal Squadron data type
@@ -273,7 +275,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.27"
+EASYGCICAP.version="0.1.30"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -330,6 +332,7 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.FuelLowThreshold = 25
   self.FuelCriticalThreshold = 10
   self.showpatrolpointmarks = false
+  self.EngageTargetTypes = {"Air"}
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("EASYGCICAP %s | ", self.alias)
@@ -608,6 +611,17 @@ function EASYGCICAP:SetCapStartTimeVariation(Start, End)
   return self
 end
 
+
+--- Set which target types CAP flights will prefer to engage, defaults to {"Air"}
+-- @param #EASYGCICAP self
+-- @param #table types Table of comma separated #string entries, defaults to {"Air"} (everything that flies and is not a weapon). Useful other options are e.g. {"Bombers"}, {"Fighters"}, 
+-- or {"Helicopters"} or combinations like {"Bombers", "Fighters", "UAVs"}. See [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes).
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetCAPEngageTargetTypes(types)
+  self.EngageTargetTypes = types or {"Air"}
+  return self
+end
+
 --- Add an AirWing to the manager
 -- @param #EASYGCICAP self
 -- @param #string Airbasename
@@ -706,6 +720,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   local NoGoZoneSet = self.NoGoZoneSet
   local FuelLow = self.FuelLowThreshold or 25
   local FuelCritical = self.FuelCriticalThreshold or 10
+  local EngageTypes = self.EngageTargetTypes or {"Air"}
   
   function CAP_Wing:onbeforeFlightOnMission(From, Event, To, Flightgroup, Mission)
     local flightgroup = Flightgroup -- Ops.FlightGroup#FLIGHTGROUP
@@ -720,7 +735,7 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     flightgroup:GetGroup():SetOptionLandingOverheadBreak()
     if Mission.type ~= AUFTRAG.Type.TANKER and Mission.type ~= AUFTRAG.Type.AWACS and Mission.type ~= AUFTRAG.Type.RECON then
       flightgroup:SetDetection(true)
-      flightgroup:SetEngageDetectedOn(engagerange,{"Air"},GoZoneSet,NoGoZoneSet)
+      flightgroup:SetEngageDetectedOn(engagerange,EngageTypes,GoZoneSet,NoGoZoneSet)
       flightgroup:SetOutOfAAMRTB()
       flightgroup:SetFuelLowRTB(true)
       flightgroup:SetFuelLowThreshold(FuelLow)
@@ -1209,7 +1224,9 @@ function EASYGCICAP:_AddTankerSquadron(TemplateName, SquadName, AirbaseName, Air
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
   Squadron_One:SetMissionRange(self.missionrange)
   Squadron_One:SetRadio(Frequency,Modulation)
-  Squadron_One:AddTacanChannel(TACAN,TACAN)
+  if TACAN then
+    Squadron_One:AddTacanChannel(TACAN,TACAN)
+  end
   
   local wing = self.wings[AirbaseName][1] -- Ops.Airwing#AIRWING
   

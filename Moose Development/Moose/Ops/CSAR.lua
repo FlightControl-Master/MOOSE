@@ -305,6 +305,7 @@ CSAR.AircraftType["Mi-24P"] = 8
 CSAR.AircraftType["Mi-24V"] = 8
 CSAR.AircraftType["Bell-47"] = 2
 CSAR.AircraftType["UH-60L"] = 10
+CSAR.AircraftType["UH-60L_DAP"] = 2
 CSAR.AircraftType["AH-64D_BLK_II"] = 2
 CSAR.AircraftType["Bronco-OV-10A"] = 2
 CSAR.AircraftType["MH-60R"] = 10

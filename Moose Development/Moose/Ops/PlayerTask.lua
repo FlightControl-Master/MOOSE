@@ -98,7 +98,7 @@ PLAYERTASK = {
 
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.27"
+PLAYERTASK.version="0.1.28"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -387,6 +387,14 @@ function PLAYERTASK:_CheckCaptureOpsZoneSuccess(OpsZone, CaptureSquadGroupNamePr
     return OpsZone:GetOwner() == Coalition and isClientInZone and isCaptureGroupInZone
 end
 
+--- [User] Override this function in order to implement custom logic if a player can join a task or not.
+-- @param #PLAYERTASK self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Client#CLIENT Client
+-- @return #boolean Outcome True if player can join the task, false if not
+function PLAYERTASK:CanJoinTask(Group, Client)
+    return true
+end
 
 --- [Internal] Add a PLAYERTASKCONTROLLER for this task
 -- @param #PLAYERTASK self
@@ -1227,7 +1235,10 @@ function PLAYERTASK:onafterFailed(From, Event, To)
       self.TargetMarker:Remove()
     end
     self.FinalState = "Failed"
-    self:__Done(-1)
+    if self.TaskController then
+      self.TaskController:__TaskFailed(-1,self)
+    end
+    self:__Done(-1.5)
   end
   if self.TaskController.Scoring then
     local clients,count = self:GetClientObjects()
@@ -3530,6 +3541,16 @@ function PLAYERTASKCONTROLLER:AddPlayerTaskToQueue(PlayerTask,Silent,TaskFilter)
   return self
 end
 
+--- [User] Override this function in order to implement custom logic if a player can join a task or not.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Ops.PlayerTask#PLAYERTASK Task
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Client#CLIENT Client
+-- @return #boolean Outcome True if player can join the task, false if not
+function PLAYERTASKCONTROLLER:CanJoinTask(Task, Group, Client)
+    return true
+end
+
 --- [Internal] Join a player to a task
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Ops.PlayerTask#PLAYERTASK Task
@@ -3540,6 +3561,15 @@ end
 function PLAYERTASKCONTROLLER:_JoinTask(Task, Force, Group, Client)
   self:T({Force, Group, Client})
   self:T(self.lid.."_JoinTask")
+
+  if not self:CanJoinTask(Task, Group, Client) then
+    return self
+  end
+
+  if not Task:CanJoinTask(Group, Client) then
+    return self
+  end
+
   local force = false
   if type(Force) == "boolean" then
     force = Force
