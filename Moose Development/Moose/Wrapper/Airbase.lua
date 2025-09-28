@@ -807,100 +807,108 @@ AIRBASE.Sinai = {
 }
 
 --- Airbases of the Kola map
--- 
--- * AIRBASE.Kola.Banak
--- * AIRBASE.Kola.Bodo
--- * AIRBASE.Kola.Ivalo
--- * AIRBASE.Kola.Jokkmokk
--- * AIRBASE.Kola.Kalixfors
--- * AIRBASE.Kola.Kallax
--- * AIRBASE.Kola.Kemi_Tornio
--- * AIRBASE.Kola.Kirkenes
--- * AIRBASE.Kola.Kiruna
--- * AIRBASE.Kola.Kuusamo
--- * AIRBASE.Kola.Monchegorsk
--- * AIRBASE.Kola.Murmansk_International
--- * AIRBASE.Kola.Olenya
--- * AIRBASE.Kola.Rovaniemi
--- * AIRBASE.Kola.Severomorsk_1
--- * AIRBASE.Kola.Severomorsk_3
--- * AIRBASE.Kola.Vidsel
--- * AIRBASE.Kola.Vuojarvi
--- * AIRBASE.Kola.Andoya
--- * AIRBASE.Kola.Alakurtti
--- * AIRBASE.Kola.Kittila
--- * AIRBASE.Kola.Bardufoss
--- * AIRBASE.Kola.Alta
--- * AIRBASE.Kola.Sodankyla
--- * AIRBASE.Kola.Enontekio
--- * AIRBASE.Kola.Evenes
--- * AIRBASE.Kola.Hosio
 --
--- @field Kola
+-- * `AIRBASE.Kola.Afrikanda` Afrikanda
+-- * `AIRBASE.Kola.Alakurtti` Alakurtti
+-- * `AIRBASE.Kola.Alta` Alta
+-- * `AIRBASE.Kola.Andoya` Andoya
+-- * `AIRBASE.Kola.Banak` Banak
+-- * `AIRBASE.Kola.Bardufoss` Bardufoss
+-- * `AIRBASE.Kola.Bodo` Bodo
+-- * `AIRBASE.Kola.Enontekio` Enontekio
+-- * `AIRBASE.Kola.Evenes` Evenes
+-- * `AIRBASE.Kola.Hosio` Hosio
+-- * `AIRBASE.Kola.Ivalo` Ivalo
+-- * `AIRBASE.Kola.Jokkmokk` Jokkmokk
+-- * `AIRBASE.Kola.Kalevala` Kalevala
+-- * `AIRBASE.Kola.Kalixfors` Kalixfors
+-- * `AIRBASE.Kola.Kallax` Kallax
+-- * `AIRBASE.Kola.Kemi_Tornio` Kemi Tornio
+-- * `AIRBASE.Kola.Kilpyavr` Kilpyavr
+-- * `AIRBASE.Kola.Kirkenes` Kirkenes
+-- * `AIRBASE.Kola.Kiruna` Kiruna
+-- * `AIRBASE.Kola.Kittila` Kittila
+-- * `AIRBASE.Kola.Koshka_Yavr` Koshka Yavr
+-- * `AIRBASE.Kola.Kuusamo` Kuusamo
+-- * `AIRBASE.Kola.Luostari_Pechenga` Luostari Pechenga
+-- * `AIRBASE.Kola.Monchegorsk` Monchegorsk
+-- * `AIRBASE.Kola.Murmansk_International` Murmansk International
+-- * `AIRBASE.Kola.Olenya` Olenya
+-- * `AIRBASE.Kola.Poduzhemye` Poduzhemye
+-- * `AIRBASE.Kola.Rovaniemi` Rovaniemi
+-- * `AIRBASE.Kola.Severomorsk_1` Severomorsk-1
+-- * `AIRBASE.Kola.Severomorsk_3` Severomorsk-3
+-- * `AIRBASE.Kola.Sodankyla` Sodankyla
+-- * `AIRBASE.Kola.Vidsel` Vidsel
+-- * `AIRBASE.Kola.Vuojarvi` Vuojarvi
+--
 AIRBASE.Kola = {
-  ["Banak"] = "Banak",
-  ["Bodo"] = "Bodo",
-  ["Ivalo"] = "Ivalo",
-  ["Jokkmokk"] = "Jokkmokk",
-  ["Kalixfors"] = "Kalixfors",
-  ["Kallax"] = "Kallax",
-  ["Kemi_Tornio"] = "Kemi Tornio",
-  ["Kirkenes"] = "Kirkenes",
-  ["Kiruna"] = "Kiruna",
-  ["Kuusamo"] = "Kuusamo",
-  ["Monchegorsk"] = "Monchegorsk",
-  ["Murmansk_International"] = "Murmansk International",
-  ["Olenya"] = "Olenya",
-  ["Rovaniemi"] = "Rovaniemi",
-  ["Severomorsk_1"] = "Severomorsk-1",
-  ["Severomorsk_3"] = "Severomorsk-3",
-  ["Vidsel"] = "Vidsel",
-  ["Vuojarvi"] = "Vuojarvi",
-  ["Andoya"] = "Andoya",
+  ["Afrikanda"] = "Afrikanda",
   ["Alakurtti"] = "Alakurtti",
-  ["Kittila"] = "Kittila",
-  ["Bardufoss"] = "Bardufoss",
   ["Alta"] = "Alta",
-  ["Sodankyla"] = "Sodankyla",
+  ["Andoya"] = "Andoya",
+  ["Banak"] = "Banak",
+  ["Bardufoss"] = "Bardufoss",
+  ["Bodo"] = "Bodo",
   ["Enontekio"] = "Enontekio",
   ["Evenes"] = "Evenes",
   ["Hosio"] = "Hosio",
-  ["Kilpyavr"] = "Kilpyavr",
-  ["Afrikanda"] = "Afrikanda",
+  ["Ivalo"] = "Ivalo",
+  ["Jokkmokk"] = "Jokkmokk",
   ["Kalevala"] = "Kalevala",
+  ["Kalixfors"] = "Kalixfors",
+  ["Kallax"] = "Kallax",
+  ["Kemi_Tornio"] = "Kemi Tornio",
+  ["Kilpyavr"] = "Kilpyavr",
+  ["Kirkenes"] = "Kirkenes",
+  ["Kiruna"] = "Kiruna",
+  ["Kittila"] = "Kittila",
   ["Koshka_Yavr"] = "Koshka Yavr",
-  ["Poduzhemye"] = "Poduzhemye",
+  ["Kuusamo"] = "Kuusamo",
   ["Luostari_Pechenga"] = "Luostari Pechenga",
+  ["Monchegorsk"] = "Monchegorsk",
+  ["Murmansk_International"] = "Murmansk International",
+  ["Olenya"] = "Olenya",
+  ["Poduzhemye"] = "Poduzhemye",
+  ["Rovaniemi"] = "Rovaniemi",
+  ["Severomorsk_1"] = "Severomorsk-1",
+  ["Severomorsk_3"] = "Severomorsk-3",
+  ["Sodankyla"] = "Sodankyla",
+  ["Vidsel"] = "Vidsel",
+  ["Vuojarvi"] = "Vuojarvi",
 }
 
 --- Airbases of the Afghanistan map
--- 
--- * AIRBASE.Afghanistan.Bost
--- * AIRBASE.Afghanistan.Bagram
--- * AIRBASE.Afghanistan.Bamyan
--- * AIRBASE.Afghanistan.Camp_Bastion
--- * AIRBASE.Afghanistan.Camp_Bastion_Heliport
--- * AIRBASE.Afghanistan.Chaghcharan
--- * AIRBASE.Afghanistan.Dwyer
--- * AIRBASE.Afghanistan.Farah
--- * AIRBASE.Afghanistan.Herat
--- * AIRBASE.Afghanistan.Gardez
--- * AIRBASE.Afghanistan.Ghazni_Heliport
--- * AIRBASE.Afghanistan.Jalalabad
--- * AIRBASE.Afghanistan.Kabul
--- * AIRBASE.Afghanistan.Kandahar
--- * AIRBASE.Afghanistan.Kandahar_Heliport
--- * AIRBASE.Afghanistan.Khost
--- * AIRBASE.Afghanistan.Khost_Heliport
--- * AIRBASE.Afghanistan.Maymana_Zahiraddin_Faryabi
--- * AIRBASE.Afghanistan.Nimroz
--- * AIRBASE.Afghanistan.Qala_i_Naw
--- * AIRBASE.Afghanistan.Shindand
--- * AIRBASE.Afghanistan.Shindand_Heliport
--- * AIRBASE.Afghanistan.Tarinkot
--- * AIRBASE.Afghanistan.Urgoon_Heliport
--- 
--- @field Afghanistan
+--
+-- * `AIRBASE.Afghanistan.Bagram` Bagram
+-- * `AIRBASE.Afghanistan.Bamyan` Bamyan
+-- * `AIRBASE.Afghanistan.Bost` Bost
+-- * `AIRBASE.Afghanistan.Camp_Bastion` Camp Bastion
+-- * `AIRBASE.Afghanistan.Camp_Bastion_Heliport` Camp Bastion Heliport
+-- * `AIRBASE.Afghanistan.Chaghcharan` Chaghcharan
+-- * `AIRBASE.Afghanistan.Dwyer` Dwyer
+-- * `AIRBASE.Afghanistan.FOB_Camp_Dubs` FOB Camp Dubs
+-- * `AIRBASE.Afghanistan.FOB_Clark` FOB Clark
+-- * `AIRBASE.Afghanistan.FOB_Salerno` FOB Salerno
+-- * `AIRBASE.Afghanistan.FOB_Thunder` FOB Thunder
+-- * `AIRBASE.Afghanistan.Farah` Farah
+-- * `AIRBASE.Afghanistan.Gardez` Gardez
+-- * `AIRBASE.Afghanistan.Ghazni_Heliport` Ghazni Heliport
+-- * `AIRBASE.Afghanistan.Herat` Herat
+-- * `AIRBASE.Afghanistan.Jalalabad` Jalalabad
+-- * `AIRBASE.Afghanistan.Kabul` Kabul
+-- * `AIRBASE.Afghanistan.Kandahar` Kandahar
+-- * `AIRBASE.Afghanistan.Kandahar_Heliport` Kandahar Heliport
+-- * `AIRBASE.Afghanistan.Khost` Khost
+-- * `AIRBASE.Afghanistan.Maymana_Zahiraddin_Faryabi` Maymana Zahiraddin Faryabi
+-- * `AIRBASE.Afghanistan.Nimroz` Nimroz
+-- * `AIRBASE.Afghanistan.Qala_i_Naw` Qala i Naw
+-- * `AIRBASE.Afghanistan.Sharana` Sharana
+-- * `AIRBASE.Afghanistan.Shindand` Shindand
+-- * `AIRBASE.Afghanistan.Shindand_Heliport` Shindand Heliport
+-- * `AIRBASE.Afghanistan.Tarinkot` Tarinkot
+-- * `AIRBASE.Afghanistan.Urgoon_Heliport` Urgoon Heliport
+--
 AIRBASE.Afghanistan = {
   ["Bagram"] = "Bagram",
   ["Bamyan"] = "Bamyan",
@@ -909,6 +917,10 @@ AIRBASE.Afghanistan = {
   ["Camp_Bastion_Heliport"] = "Camp Bastion Heliport",
   ["Chaghcharan"] = "Chaghcharan",
   ["Dwyer"] = "Dwyer",
+  ["FOB_Camp_Dubs"] = "FOB Camp Dubs",
+  ["FOB_Clark"] = "FOB Clark",
+  ["FOB_Salerno"] = "FOB Salerno",
+  ["FOB_Thunder"] = "FOB Thunder",
   ["Farah"] = "Farah",
   ["Gardez"] = "Gardez",
   ["Ghazni_Heliport"] = "Ghazni Heliport",
@@ -918,7 +930,6 @@ AIRBASE.Afghanistan = {
   ["Kandahar"] = "Kandahar",
   ["Kandahar_Heliport"] = "Kandahar Heliport",
   ["Khost"] = "Khost",
-  ["Khost_Heliport"] = "Khost Heliport",
   ["Maymana_Zahiraddin_Faryabi"] = "Maymana Zahiraddin Faryabi",
   ["Nimroz"] = "Nimroz",
   ["Qala_i_Naw"] = "Qala i Naw",
