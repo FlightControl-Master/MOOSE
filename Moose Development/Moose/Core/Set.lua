@@ -7865,6 +7865,28 @@ do -- SET_OPSGROUP
     return self
   end
 
+  --- Iterate the SET_OPSGROUP and count how many GROUPs and UNITs are alive.
+  -- @param #SET_GROUP self
+  -- @return #number The number of GROUPs alive.
+  -- @return #number The number of UNITs alive.
+  function SET_OPSGROUP:CountAlive()
+    local CountG = 0
+    local CountU = 0
+
+    local Set = self:GetSet()
+
+    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
+      if GroupData and GroupData:IsAlive() then
+        CountG = CountG + 1
+        -- Count Units.
+        CountU = CountU + GroupData:GetGroup():CountAliveUnits()
+      end
+
+    end
+
+    return CountG, CountU
+  end
+
   --- Finds an OPSGROUP based on the group name.
   -- @param #SET_OPSGROUP self
   -- @param #string GroupName Name of the group.
