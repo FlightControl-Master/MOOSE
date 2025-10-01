@@ -581,8 +581,8 @@ do -- Zones and Pathlines
 
             local sinRot = math.sin(-rotation)
             local cosRot = math.cos(-rotation)
-            local dx = w / 2
-            local dy = h / 2
+            local dx = h / 2
+            local dy = w / 2
 
             local points = {
                 { x = -dx * cosRot - (-dy * sinRot) + vec2.x, y = -dx * sinRot + (-dy * cosRot) + vec2.y },
