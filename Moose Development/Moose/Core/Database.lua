@@ -579,13 +579,10 @@ do -- Zones and Pathlines
             local h=objectData.height
             local rotation = UTILS.ToRadian(objectData.angle or 0)
 
-            local dx = vec2.x + math.abs(w)
-            local dy = vec2.y + math.abs(h)
-
             local sinRot = math.sin(-rotation)
             local cosRot = math.cos(-rotation)
-            dx = (dx / 2)
-            dy = (dy / 2)
+            local dx = w / 2
+            local dy = h / 2
 
             local points = {
                 { x = -dx * cosRot - (-dy * sinRot) + vec2.x, y = -dx * sinRot + (-dy * cosRot) + vec2.y },
