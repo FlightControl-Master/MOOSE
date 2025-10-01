@@ -579,8 +579,8 @@ do -- Zones and Pathlines
             local h=objectData.height
             local rotation = UTILS.ToRadian(objectData.angle or 0)
 
-            local sinRot = math.sin(-rotation)
-            local cosRot = math.cos(-rotation)
+            local sinRot = math.sin(rotation)
+            local cosRot = math.cos(rotation)
             local dx = h / 2
             local dy = w / 2
 
