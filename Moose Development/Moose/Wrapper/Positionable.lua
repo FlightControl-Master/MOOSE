@@ -361,15 +361,17 @@ function POSITIONABLE:GetCoord()
     -- Get the current position.
     local PositionableVec3 = self:GetVec3()
 
-    if self.coordinate then
-      -- Update COORDINATE from 3D vector.
-      self.coordinate:UpdateFromVec3( PositionableVec3 )
-    else
-      -- New COORDINATE.
-      self.coordinate = COORDINATE:NewFromVec3( PositionableVec3 )
-    end
+    if PositionableVec3 then
+        if self.coordinate then
+          -- Update COORDINATE from 3D vector.
+          self.coordinate:UpdateFromVec3( PositionableVec3 )
+        else
+          -- New COORDINATE.
+          self.coordinate = COORDINATE:NewFromVec3( PositionableVec3 )
+        end
 
-    return self.coordinate
+        return self.coordinate
+    end
   end
 
   -- Error message.
