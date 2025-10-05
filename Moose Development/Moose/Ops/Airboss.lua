@@ -21,7 +21,7 @@
 --    * Multiple carrier support due to object oriented approach.
 --    * Unlimited number of players.
 --    * Persistence of player results (optional). LSO grading data is saved to csv file.
---    * Trap sheet (optional).
+--    * Trap sheet (optional). 
 --    * Finite State Machine (FSM) implementation.
 --
 -- **Supported Carriers:**
@@ -6870,6 +6870,9 @@ function AIRBOSS:_AddMarshalGroup( flight, stack )
   -- Convert to clock string.
   local Ccharlie = UTILS.SecondsToClock( flight.Tcharlie )
 
+  -- Make sure brc is never above 360
+  brc = brc % 360
+
   -- Combined marshal call.
   self:_MarshalCallArrived( flight.onboard, flight.case, brc, alt, Ccharlie, P )
 
@@ -8062,7 +8065,7 @@ end
 --- Check current player status.
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckPlayerStatus()
-
+ local tomcat = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B
   -- Loop over all players.
   for _playerName, _playerData in pairs( self.players ) do
     local playerData = _playerData -- #AIRBOSS.PlayerData
@@ -8087,9 +8090,13 @@ function AIRBOSS:_CheckPlayerStatus()
               playerData.wrappedUpAtWakeFull = true-- VNAO Edit - Added
             elseif math.abs(playerData.unit:GetRoll()) >45 then-- VNAO Edit - Added
               playerData.wrappedUpAtWakeUnderline = true -- VNAO Edit - Added
-            elseif math.abs(playerData.unit:GetRoll()) <20 and math.abs(playerData.unit:GetRoll()) >=10 then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
+            elseif math.abs(playerData.unit:GetRoll()) <20 and math.abs(playerData.unit:GetRoll()) >=10 and not tomcat then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
               playerData.AAatWakeLittle = true  -- VNAO Edit - Added
-            elseif math.abs(playerData.unit:GetRoll()) <10 and math.abs(playerData.unit:GetRoll()) >=2 then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
+            elseif math.abs(playerData.unit:GetRoll()) <10 and math.abs(playerData.unit:GetRoll()) >=2  and not tomcat then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
+              playerData.AAatWakeFull = true  -- VNAO Edit - Added 
+            elseif math.abs(playerData.unit:GetRoll()) <12 and math.abs(playerData.unit:GetRoll()) >=5 and tomcat then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
+              playerData.AAatWakeLittle = true  -- VNAO Edit - Added
+            elseif math.abs(playerData.unit:GetRoll()) <5 and math.abs(playerData.unit:GetRoll()) >=2  and tomcat then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
               playerData.AAatWakeFull = true  -- VNAO Edit - Added 
             elseif math.abs(playerData.unit:GetRoll()) <2 then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
               playerData.AAatWakeUnderline = true  -- VNAO Edit - Added 
@@ -8335,7 +8342,7 @@ end
 function AIRBOSS:_SetTimeInGroove( playerData )
 
   -- Set time in the groove
-  if playerData.TIG0 then
+  if playerData.TIG0  > 2 then --circuit added to prevent negative groove time
     playerData.Tgroove = timer.getTime() - playerData.TIG0 - 1.5 -- VNAO Edit - Subtracting an extra 1.5
   else
     playerData.Tgroove = 999
@@ -12671,7 +12678,7 @@ function AIRBOSS:_LSOgrade( playerData )
   local TIG =  ""
   -- Analyse flight data and convert to LSO text.
   if playerData.Tgroove and playerData.Tgroove <= 360 and playerData.case < 3 then --Circuit Added
-   TIG = self:_EvalGrooveTime( playerData ) --Circuit Added
+   TIG = self:_EvalGrooveTime( playerData )  or "N/A" --Circuit Added
   end                                               --Circuit Added
   local GXX, nXX = self:_Flightdata2Text( playerData, AIRBOSS.GroovePos.XX )
   local GIM, nIM = self:_Flightdata2Text( playerData, AIRBOSS.GroovePos.IM )
@@ -12865,16 +12872,21 @@ function AIRBOSS:_LSOgrade( playerData )
 
   end
 
-  -- VNAO EDIT: Subtract 1pt from overall grade if it is a 1 wire.  If it's already a 1pt pass, ignore.
-  if playerData.wire == 1 and points > 1 then -- VNAO EDIT: added
-    if points == 4 then -- VNAO EDIT: added
-        points = 3 -- VNAO EDIT: added
-        grade = "(OK)" -- VNAO EDIT: added
-    elseif points == 3 then -- VNAO EDIT: added
-        points = 2 -- VNAO EDIT: added
-        grade = "--" -- VNAO EDIT: added
-    end -- VNAO EDIT: added
-  end -- VNAO EDIT: added
+  -- -- VNAO EDIT: Subtract 1pt from overall grade if it is a 1 wire.  If it's already a 1pt pass, ignore.
+  -- if playerData.wire == 1 and points > 1 then -- VNAO EDIT: added
+  --   if points == 4 then -- VNAO EDIT: added
+  --       points = 3 -- VNAO EDIT: added
+  --       grade = "(OK)" -- VNAO EDIT: added
+  --   elseif points == 3 then -- VNAO EDIT: added
+  --       points = 2 -- VNAO EDIT: added
+  --       grade = "--" -- VNAO EDIT: added
+  --   end -- VNAO EDIT: added
+  -- end -- VNAO EDIT: added
+
+    -- Circuit edit only take points awary from a 1 wire if there are more than 4 other deviations
+  if playerData.wire == 1 and points >= 3 and N > 4 then
+    points = points -1
+  end
 
   env.info("Returning: " .. grade .. "  " .. points .. "  " .. G)
 
@@ -12950,6 +12962,7 @@ function AIRBOSS:_Flightdata2Text( playerData, groovestep )
 
   -- Speed via AoA. Depends on aircraft type.
   local S = nil
+  local A = nil --circuit moved this line to be seen outside of this scope
   if step~=AIRBOSS.PatternStep.GROOVE_IW then -- VNAO Edit - Added To avoid getting an AOA or GS grade in the wires... let's just check left or right in the wires
     if  AIRBOSS.PatternStep.GROOVE_AR and playerData.waveoff == true and playerData.owo == true then -- VNAO Edit - Added
       -- env.info('Adam MOOSE Edit -AR and waved off so do not add AOA or GS errors to comments ') -- VNAO Edit - Added
@@ -12970,7 +12983,7 @@ function AIRBOSS:_Flightdata2Text( playerData, groovestep )
       end
 
       -- Glideslope/altitude. Good [-0.3, 0.4] asymmetric!
-      local A = nil
+
       if GSE > self.gle.HIGH then
         A = underline( "H" )
       elseif GSE > self.gle.High then
