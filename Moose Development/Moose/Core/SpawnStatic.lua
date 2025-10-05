@@ -633,16 +633,15 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
   
   if self.StaticCopyFrom ~= nil then
     mystatic.StaticCopyFrom = self.StaticCopyFrom
-    if not _DATABASE.Templates.Statics[Template.name] then
-      local TemplateGroup={}
-      TemplateGroup.units={}
-      TemplateGroup.units[1]=Template
-      TemplateGroup.x=Template.x
-      TemplateGroup.y=Template.y
-      TemplateGroup.name=Template.name
-      _DATABASE:_RegisterStaticTemplate( TemplateGroup, self.CoalitionID, self.CategoryID, CountryID )
-    end
   end
+
+  local TemplateGroup={}
+  TemplateGroup.units={}
+  TemplateGroup.units[1]=Template
+  TemplateGroup.x=Template.x
+  TemplateGroup.y=Template.y
+  TemplateGroup.name=Template.name
+  _DATABASE:_RegisterStaticTemplate( TemplateGroup, self.CoalitionID, self.CategoryID, CountryID )
   
   return mystatic
 end
