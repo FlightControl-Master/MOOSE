@@ -8145,8 +8145,7 @@ end
 --- Check current player status.
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckPlayerStatus()
- local tomcat = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B
-  -- Loop over all players.
+    -- Loop over all players.
   for _playerName, _playerData in pairs( self.players ) do
     local playerData = _playerData -- #AIRBOSS.PlayerData
 
@@ -8170,13 +8169,9 @@ function AIRBOSS:_CheckPlayerStatus()
               playerData.wrappedUpAtWakeFull = true-- VNAO Edit - Added
             elseif math.abs(playerData.unit:GetRoll()) >45 then-- VNAO Edit - Added
               playerData.wrappedUpAtWakeUnderline = true -- VNAO Edit - Added
-            elseif math.abs(playerData.unit:GetRoll()) <20 and math.abs(playerData.unit:GetRoll()) >=10 and not tomcat then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
+            elseif math.abs(playerData.unit:GetRoll()) <20 and math.abs(playerData.unit:GetRoll()) >=10 then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
               playerData.AAatWakeLittle = true  -- VNAO Edit - Added
-            elseif math.abs(playerData.unit:GetRoll()) <10 and math.abs(playerData.unit:GetRoll()) >=2  and not tomcat then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
-              playerData.AAatWakeFull = true  -- VNAO Edit - Added 
-            elseif math.abs(playerData.unit:GetRoll()) <12 and math.abs(playerData.unit:GetRoll()) >=5 and tomcat then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
-              playerData.AAatWakeLittle = true  -- VNAO Edit - Added
-            elseif math.abs(playerData.unit:GetRoll()) <5 and math.abs(playerData.unit:GetRoll()) >=2  and tomcat then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
+            elseif math.abs(playerData.unit:GetRoll()) <10 and math.abs(playerData.unit:GetRoll()) >=2 then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
               playerData.AAatWakeFull = true  -- VNAO Edit - Added 
             elseif math.abs(playerData.unit:GetRoll()) <2 then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
               playerData.AAatWakeUnderline = true  -- VNAO Edit - Added 
@@ -9651,7 +9646,7 @@ end
 --- Break entry for case I/II recoveries.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
-function AIRBOSS:_BreakEntry( playerData ) --Adam Edits begin 7/24/23
+function AIRBOSS:_BreakEntry( playerData )
 
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local X, Z = self:_GetDistances( playerData.unit )
@@ -9662,111 +9657,16 @@ function AIRBOSS:_BreakEntry( playerData ) --Adam Edits begin 7/24/23
     return
   end
 
-  local stern = self:_GetSternCoord()
-  local coord = playerData.unit:GetCoordinate()
-  local dist = coord:Get2DDistance( stern )
-
-  --adam edits
-  local playerCallsign = playerData.unit:GetCallsign()
-  --trigger.action.outText(' Hornet is hook down on pre-break entry for testing hook argument ', 5)
-  --trigger.action.outText(' Hornet callsign is '..playerCallsign, 5)
-  local playerName = playerData.name
-  local unit = playerData.unit
-  
-  --local playerName = unit:GetName()
-  --trigger.action.outText(' Hornet name is '..playerName, 5)
-  local unitClient = Unit.getByName(unit:GetName())
-  local hookArgument = unitClient:getDrawArgumentValue(25)
-  local hookArgument_Tomcat = unitClient:getDrawArgumentValue(1305)
-  local speedMPS = playerData.unit:GetVelocityMPS()
-  local speedKTS = UTILS.MpsToKnots( speedMPS )
-  local player_alt = playerData.unit:GetAltitude()
-
-  player_alt_feet = player_alt * 3.28
-  player_alt_feet = player_alt_feet/10
-  player_alt_feet = math.floor(player_alt_feet)*10
-  
-  local player_velocity_round = speedKTS * 1.00
-  player_velocity_round = player_velocity_round/10
-  player_velocity_round = math.floor(player_velocity_round)*10
-
-  local player_alt_feet = player_alt * 3.28
-  player_alt_feet = player_alt_feet/10
-  player_alt_feet = math.floor(player_alt_feet)*10
-
-  local Play_SH_Sound = USERSOUND:New( "Airboss Soundfiles/GreatBallsOfFire.ogg" )
-  local Play_666SH_Sound = USERSOUND:New( "Airboss Soundfiles/Runninwiththedevil.ogg" )
-  local playerType = playerData.actype 
-
-  
-
-  if dist <1000 and clientSHBFlag == false  then
-    
-    if speedKTS > 450 and speedKTS < 590 then
-      if player_alt_feet < 1500 then
-        if hookArgument > 0 or hookArgument_Tomcat > 0 then
-          --trigger.action.outText(' 1 - Hornet is hook down so SHB!!!! Hook argument is: '..hookArgument, 5)
-          playerData.shb = true
-          trigger.action.outText(playerName..' performing a Sierra Hotel Break in a '..playerType, 10)
-          local sh_message_to_discord = ('**'..playerName..' is performing a Sierra Hotel Break in a '..playerType..' at '..player_velocity_round..' knots and '..player_alt_feet..' feet!**')
-          HypeMan.sendBotMessage(sh_message_to_discord)
-          Play_SH_Sound:ToAll()  
-          clientSHBFlag = true 
-        else
-          --trigger.action.outText(' Hornet is hook up on initial and just fast so no SHB. Hook argument is: '..hookArgument, 5)
-          playerData.shb = false
-        end
-        -- Next step: Early Break.
-      else
-      end
-    elseif speedKTS > 589 then
-      if player_alt_feet < 625 and player_alt_feet >575 then --SHB 666
-        if hookArgument > 0 or hookArgument_Tomcat > 0 then
-          --trigger.action.outText(' 1 - Hornet is hook down so SHB!!!! Hook argument is: '..hookArgument, 5)
-          playerData.shb = true
-          trigger.action.outText(playerName..' performing a 666 Sierra Hotel Break in a '..playerType, 10)
-          local sh_message_to_discord = ('**'..playerName..' is performing a 666 Sierra Hotel Break in a '..playerType..' at '..player_velocity_round..' knots and '..player_alt_feet..' feet!**')
-          HypeMan.sendBotMessage(sh_message_to_discord)
-          Play_666SH_Sound:ToAll()  
-          clientSHBFlag = true 
-        else
-          --trigger.action.outText(' Hornet is hook up on initial and just fast so no SHB. Hook argument is: '..hookArgument, 5)
-          playerData.shb = false
-        end
-      else
-        if hookArgument > 0 or hookArgument_Tomcat > 0 then
-          --trigger.action.outText(' 1 - Hornet is hook down so SHB!!!! Hook argument is: '..hookArgument, 5)
-          playerData.shb = true
-          trigger.action.outText(playerName..' performing a Sierra Hotel Break in a '..playerType, 10)
-          local sh_message_to_discord = ('**'..playerName..' is performing a Sierra Hotel Break in a '..playerType..' at '..player_velocity_round..' knots and '..player_alt_feet..' feet!**')
-          HypeMan.sendBotMessage(sh_message_to_discord)
-          Play_SH_Sound:ToAll()  
-          clientSHBFlag = true 
-        else
-          --trigger.action.outText(' Hornet is hook up on initial and just fast so no SHB. Hook argument is: '..hookArgument, 5)
-          playerData.shb = false
-        end
-      end
-    else
-      --trigger.action.outText(' Hornet is less than 400 kts so not SHB.... ', 5)
-    end
-  else
-    --trigger.action.outText(' ******TEST OF of Break Entry and distance to CVN is: '..dist, 5)
-
-  end
-
-
   -- Check if we are in front of the boat (diffX > 0).
   if self:_CheckLimits( X, Z, self.BreakEntry ) then
-    --trigger.action.outText(' 2 - Hornet is hook down on break entry for testing hook argument ', 5)
 
     -- Hint for player about altitude, AoA etc.
     self:_PlayerHint( playerData )
+    -- Next step: Early Break.
     self:_SetPlayerStep( playerData, AIRBOSS.PatternStep.EARLYBREAK )
-    clientSHBFlag = false
 
   end
-end--Adam Edits end 7/24/23
+end
 
 --- Break.
 -- @param #AIRBOSS self
@@ -10368,19 +10268,19 @@ function AIRBOSS:_Groove( playerData )
       if rho >= RAR and rho <= RIM then
         if gd.LUE > 0.22 and lineupError < -0.22 then
           env.info " Drift Right across centre ==> DR-"
-          gd.Drift = " DR"
+          gd.Drift = "DR"
           self:T( self.lid .. string.format( "Got Drift Right across centre step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError ) )
         elseif gd.LUE < -0.22 and lineupError > 0.22 then
           env.info " Drift Left ==> DL-"
-          gd.Drift = " DL"
+          gd.Drift = "DL"
           self:T( self.lid .. string.format( "Got Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError ) )
         elseif gd.LUE > 0.13 and lineupError < -0.14 then
           env.info " Little Drift Right across centre ==> (DR-)"
-          gd.Drift = " (DR)"
+          gd.Drift = "(DR)"
           self:T( self.lid .. string.format( "Got Little Drift Right across centre at step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError ) )
         elseif gd.LUE < -0.13 and lineupError > 0.14 then
           env.info " Little Drift Left across centre ==> (DL-)"
-          gd.Drift = " (DL)"
+          gd.Drift = "(DL)"
           self:E( self.lid .. string.format( "Got Little Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError ) )
         end
       end
@@ -12758,7 +12658,7 @@ function AIRBOSS:_LSOgrade( playerData )
   local TIG =  ""
   -- Analyse flight data and convert to LSO text.
   if playerData.Tgroove and playerData.Tgroove <= 360 and playerData.case < 3 then --Circuit Added
-   TIG = self:_EvalGrooveTime( playerData )  or "N/A" --Circuit Added
+   TIG = self:_EvalGrooveTime( playerData ) or "N/A" --Circuit Added
   end                                               --Circuit Added
   local GXX, nXX = self:_Flightdata2Text( playerData, AIRBOSS.GroovePos.XX )
   local GIM, nIM = self:_Flightdata2Text( playerData, AIRBOSS.GroovePos.IM )
