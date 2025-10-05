@@ -377,6 +377,10 @@ function UNIT:ReSpawnAt(Coordinate, Heading)
 
     --self:T( SpawnGroupTemplate )
 
+    if self.ValidateAndRepositionGroundUnits then
+        UTILS.ValidateAndRepositionGroundUnits(SpawnGroupTemplate.units)
+    end
+
     _DATABASE:Spawn(SpawnGroupTemplate)
 end
 
@@ -1930,4 +1934,22 @@ end
 -- @param #number Percent Percent to set, can be 0..100.
 function UNIT:SetLife(Percent)
     net.dostring_in("mission",string.format("a_unit_set_life_percentage(%d, %f)", self:GetID(), Percent))
+end
+
+--- Set the carrier illumination mode. -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+-- @param #UNIT self
+-- @param #number Mode Illumination mode, can be -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+function UNIT:SetCarrierIlluminationMode(Mode)
+    UTILS.SetCarrierIlluminationMode(self:GetID(), Mode)
+end
+
+--- This function uses Disposition and other fallback logic to find better ground positions for ground units.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
+--- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+--- Uses UTILS.ValidateAndRepositionGroundUnits.
+-- @param #UNIT self
+-- @param #boolean Enabled Enable/disable the feature.
+function UNIT:SetValidateAndRepositionGroundUnits(Enabled)
+    self.ValidateAndRepositionGroundUnits = Enabled
 end

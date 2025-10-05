@@ -753,7 +753,7 @@ function STORAGE:LoadFromFile(Path,Filename)
         end
       end
     else
-        self:E("File for Liquids could not be found: "..tostring(Path).."\\"..tostring(Filename"_Liquids.csv"))
+        self:E("File for Liquids could not be found: "..tostring(Path).."\\"..tostring(Filename).."_Liquids.csv")
     end
   end
   
@@ -773,7 +773,7 @@ function STORAGE:LoadFromFile(Path,Filename)
         end
       end
     else
-        self:E("File for Aircraft could not be found: "..tostring(Path).."\\"..tostring(Filename"_Aircraft.csv"))
+        self:E("File for Aircraft could not be found: "..tostring(Path).."\\"..tostring(Filename).."_Aircraft.csv")
     end
   end
   
@@ -805,7 +805,7 @@ function STORAGE:LoadFromFile(Path,Filename)
         end
       end
     else
-        self:E("File for Weapons could not be found: "..tostring(Path).."\\"..tostring(Filename"_Weapons.csv"))
+        self:E("File for Weapons could not be found: "..tostring(Path).."\\"..tostring(Filename).."_Weapons.csv")
     end
   end
    

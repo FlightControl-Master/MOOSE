@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: July 2025
+-- Last Update: August 2025
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -108,10 +108,15 @@
 -- * Patriot
 -- * Rapier
 -- * Roland
+-- * IRIS-T SLM
+-- * Pantsir S1
+-- * TOR M2
+-- * C-RAM
 -- * Silkworm (though strictly speaking this is a surface to ship missile)
 -- * SA-2, SA-3, SA-5, SA-6, SA-7, SA-8, SA-9, SA-10, SA-11, SA-13, SA-15, SA-19
 -- * From IDF mod: STUNNER IDFA, TAMIR IDFA (Note all caps!)
 -- * From HDS (see note on HDS below): SA-2, SA-3, SA-10B, SA-10C, SA-12, SA-17, SA-20A, SA-20B, SA-23, HQ-2, SAMP/T Block 1, SAMP/T Block 1INT,  SAMP/T Block2
+-- * Other Mods: Nike
 -- 
 -- * From SMA: RBS98M, RBS70, RBS90, RBS90M, RBS103A, RBS103B, RBS103AM, RBS103BM, Lvkv9040M 
 -- **NOTE** If you are using the Swedish Military Assets (SMA), please note that the **group name** for RBS-SAM types also needs to contain the keyword "SMA"
@@ -275,7 +280,7 @@
 MANTIS = {
   ClassName             = "MANTIS",
   name                  = "mymantis",
-  version               = "0.9.32",
+  version               = "0.9.34",
   SAM_Templates_Prefix  = "",
   SAM_Group             = nil,
   EWR_Templates_Prefix  = "",
@@ -384,7 +389,7 @@ MANTIS.SamData = {
   ["Chaparral"] = { Range=8, Blindspot=0, Height=3, Type="Short", Radar="Chaparral" },
   ["Linebacker"] = { Range=4, Blindspot=0, Height=3, Type="Point", Radar="Linebacker", Point="true" },
   ["Silkworm"] = { Range=90, Blindspot=1, Height=0.2, Type="Long", Radar="Silkworm" },
-  ["HEMTT_C-RAM_Phalanx"] = { Range=2, Blindspot=0, Height=2, Type="Point", Radar="HEMTT_C-RAM_Phalanx", Point="true" },
+  ["C-RAM"] = { Range=2, Blindspot=0, Height=2, Type="Point", Radar="HEMTT_C-RAM_Phalanx", Point="true" },
   -- units from HDS Mod, multi launcher options is tricky
   ["SA-10B"] = { Range=75, Blindspot=0, Height=18, Type="Medium" , Radar="SA-10B"},
   ["SA-17"] = { Range=50, Blindspot=3, Height=50, Type="Medium", Radar="SA-17" },
@@ -392,7 +397,13 @@ MANTIS.SamData = {
   ["SA-20B"] = { Range=200, Blindspot=4, Height=27, Type="Long" , Radar="S-300PMU2"},
   ["HQ-2"] = { Range=50, Blindspot=6, Height=35, Type="Medium", Radar="HQ_2_Guideline_LN" },
   ["TAMIR IDFA"] = { Range=20, Blindspot=0.6, Height=12.3, Type="Short", Radar="IRON_DOME_LN" },
-  ["STUNNER IDFA"] = { Range=250, Blindspot=1, Height=45, Type="Long", Radar="DAVID_SLING_LN" },   
+  ["STUNNER IDFA"] = { Range=250, Blindspot=1, Height=45, Type="Long", Radar="DAVID_SLING_LN" },
+  ["NIKE"] = { Range=155, Blindspot=6, Height=30, Type="Long", Radar="HIPAR" },
+  ["Dog Ear"] = { Range=11, Blindspot=0, Height=9, Type="Point", Radar="Dog Ear", Point="true" },
+  -- CH Added to DCS core 2.9.19.x
+  ["Pantsir S1"] = { Range=20, Blindspot=1.2, Height=15, Type="Point", Radar="PantsirS1" , Point="true" }, 
+  ["Tor M2"] = { Range=12, Blindspot=1, Height=10, Type="Point", Radar="TorM2", Point="true"  },
+  ["IRIS-T SLM"] = { Range=40, Blindspot=0.5, Height=20, Type="Medium", Radar="CH_IRIST_SLM" }, 
 }
 
 --- SAM data HDS
@@ -458,15 +469,15 @@ MANTIS.SamDataCH = {
     -- https://www.currenthill.com/
     -- group name MUST contain CHM to ID launcher type correctly!
    ["2S38 CHM"] = { Range=6, Blindspot=0.1, Height=4.5, Type="Short", Radar="2S38" },
-   ["PantsirS1 CHM"] = { Range=20, Blindspot=1.2, Height=15, Type="Short", Radar="PantsirS1" }, 
+   ["PantsirS1 CHM"] = { Range=20, Blindspot=1.2, Height=15, Type="Point", Radar="PantsirS1", Point="true"  }, 
    ["PantsirS2 CHM"] = { Range=30, Blindspot=1.2, Height=18, Type="Medium", Radar="PantsirS2" }, 
    ["PGL-625 CHM"] = { Range=10, Blindspot=1, Height=5, Type="Short", Radar="PGL_625" }, 
    ["HQ-17A CHM"] = { Range=15, Blindspot=1.5, Height=10, Type="Short", Radar="HQ17A" }, 
    ["M903PAC2 CHM"] = { Range=120, Blindspot=3, Height=24.5, Type="Long", Radar="MIM104_M903_PAC2" },
    ["M903PAC3 CHM"] = { Range=160, Blindspot=1, Height=40, Type="Long", Radar="MIM104_M903_PAC3" }, 
-   ["TorM2 CHM"] = { Range=12, Blindspot=1, Height=10, Type="Short", Radar="TorM2" },
-   ["TorM2K CHM"] = { Range=12, Blindspot=1, Height=10, Type="Short", Radar="TorM2K" },
-   ["TorM2M CHM"] = { Range=16, Blindspot=1, Height=10, Type="Short", Radar="TorM2M" }, 
+   ["TorM2 CHM"] = { Range=12, Blindspot=1, Height=10, Type="Point", Radar="TorM2", Point="true"  },
+   ["TorM2K CHM"] = { Range=12, Blindspot=1, Height=10, Type="Point", Radar="TorM2K", Point="true"  },
+   ["TorM2M CHM"] = { Range=16, Blindspot=1, Height=10, Type="Point", Radar="TorM2M", Point="true"  }, 
    ["NASAMS3-AMRAAMER CHM"] = { Range=50, Blindspot=2, Height=35.7, Type="Medium", Radar="CH_NASAMS3_LN_AMRAAM_ER" }, 
    ["NASAMS3-AIM9X2 CHM"] = { Range=20, Blindspot=0.2, Height=18, Type="Short", Radar="CH_NASAMS3_LN_AIM9X2" },
    ["C-RAM CHM"] = { Range=2, Blindspot=0, Height=2, Type="Point", Radar="CH_Centurion_C_RAM", Point="true" }, 
@@ -882,7 +893,11 @@ do
     self.AcceptZones = AcceptZones or {}
     self.RejectZones = RejectZones or {}
     self.ConflictZones = ConflictZones or {}
-    if #self.AcceptZones > 0 or #self.RejectZones > 0 or #self.ConflictZones > 0 then
+    self.AcceptZonesNo = UTILS.TableLength(self.AcceptZones)
+    self.RejectZonesNo = UTILS.TableLength(self.RejectZones)
+    self.ConflictZonesNo = UTILS.TableLength(self.ConflictZones)
+    self:T(string.format("AcceptZonesNo = %d | RejectZonesNo = %d | ConflictZonesNo = %d",self.AcceptZonesNo,self.RejectZonesNo,self.ConflictZonesNo))
+    if self.AcceptZonesNo > 0 or self.RejectZonesNo > 0 or self.ConflictZonesNo > 0 then
       self.usezones = true
     end
     return self
@@ -1274,7 +1289,8 @@ do
     self:T(self.lid.."_CheckCoordinateInZones")
     local inzone = false
     -- acceptzones
-    if #self.AcceptZones > 0 then
+    self:T(string.format("AcceptZonesNo = %d | RejectZonesNo = %d | ConflictZonesNo = %d",self.AcceptZonesNo,self.RejectZonesNo,self.ConflictZonesNo))
+    if self.AcceptZonesNo > 0 then
       for _,_zone in pairs(self.AcceptZones) do
         local zone = _zone -- Core.Zone#ZONE
         if zone:IsCoordinateInZone(coord) then
@@ -1285,7 +1301,7 @@ do
       end
     end
     -- rejectzones
-    if #self.RejectZones > 0 and inzone then -- maybe in accept zone, but check the overlaps
+    if self.RejectZonesNo > 0 then 
       for _,_zone in pairs(self.RejectZones) do
         local zone = _zone -- Core.Zone#ZONE
         if zone:IsCoordinateInZone(coord) then
@@ -1296,7 +1312,7 @@ do
       end
     end
     -- conflictzones
-    if #self.ConflictZones > 0 and not inzone then -- if not already accepted, might be in conflict zones
+    if self.ConflictZonesNo > 0 then
       for _,_zone in pairs(self.ConflictZones) do
         local zone = _zone -- Core.Zone#ZONE
         if zone:IsCoordinateInZone(coord) then
@@ -1362,6 +1378,7 @@ do
       end
       -- check accept/reject zones
       local zonecheck = true
+      self:T("self.usezones = "..tostring(self.usezones))
       if self.usezones then
         -- DONE
         zonecheck = self:_CheckCoordinateInZones(coord)

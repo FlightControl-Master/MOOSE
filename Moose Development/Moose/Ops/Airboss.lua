@@ -39,6 +39,8 @@
 --    * [USS America](https://en.wikipedia.org/wiki/USS_America_\(LHA-6\)) (LHA-6)
 --    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61)
 --    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_\(L02\)) (L02)
+--    * BONHOMMERICHARD [VWV Mod]
+--    * ENTERPRISE66 [VWV Mod]
 --
 -- **Supported Aircraft:**
 --
@@ -1317,6 +1319,10 @@ AIRBOSS.AircraftCarrier={
 -- @field #string FORRESTAL USS Forrestal (CV-59) [Heatblur Carrier Module]
 -- @field #string VINSON USS Carl Vinson (CVN-70) [Deprecated!]
 -- @field #string ESSEX Essex class carrier (e.g. USS Yorktown (CV-10)) [Magnitude 3 Carrier Module]
+-- @field #string BONHOMMERICHARD USS Bon Homme Richard carrier [VWV Mod]
+-- @field #string ESSEXSCB125 Generic Essex class carrier with angled deck (SCB-125 upgrade) [VWV Mod]
+-- @field #string ENTERPRISE66 USS Enterprise in the 1966 configuration [VWV Mod]
+-- @field #string ENTERPRISEMODERN USS Enterprise in a modern configuration [Derived VWV Mod]
 -- @field #string HERMES HMS Hermes (R12) [V/STOL Carrier]
 -- @field #string INVINCIBLE HMS Invincible (R05) [V/STOL Carrier]
 -- @field #string TARAWA USS Tarawa (LHA-1) [V/STOL Carrier]
@@ -1331,8 +1337,12 @@ AIRBOSS.CarrierType = {
   TRUMAN = "CVN_75",
   STENNIS = "Stennis",
   FORRESTAL = "Forrestal",
+  ENTERPRISE66 = "USS Enterprise 1966",
+  ENTERPRISEMODERN = "cvn-65",
   VINSON = "VINSON",
   ESSEX = "Essex",
+  BONHOMMERICHARD = "USS Bon Homme Richard",
+  ESSEXSCB125 = "essex_scb125",
   HERMES = "HERMES81",
   INVINCIBLE = "hms_invincible",
   TARAWA = "LHA_Tarawa",
@@ -1756,7 +1766,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.4.0"
+AIRBOSS.version = "1.4.2"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2019,11 +2029,19 @@ function AIRBOSS:New( carriername, alias )
     self:_InitNimitz()
   elseif self.carriertype == AIRBOSS.CarrierType.FORRESTAL then
     self:_InitForrestal()
+  elseif self.carriertype == AIRBOSS.CarrierType.ENTERPRISE66 then
+    self:_InitEnterprise()
+  elseif self.carriertype == AIRBOSS.CarrierType.ENTERPRISEMODERN then
+    self:_InitEnterprise()
   elseif self.carriertype == AIRBOSS.CarrierType.VINSON then
     -- Carl Vinson is legacy now.
     self:_InitStennis()
   elseif self.carriertype == AIRBOSS.CarrierType.ESSEX then
     self:_InitEssex()
+  elseif self.carriertype == AIRBOSS.CarrierType.BONHOMMERICHARD then
+    self:_InitBonHommeRichard()
+  elseif self.carriertype == AIRBOSS.CarrierType.ESSEXSCB125 then
+    self:_InitEssexSCB125()
   elseif self.carriertype == AIRBOSS.CarrierType.HERMES then
     -- Hermes parameters.
     self:_InitHermes()
@@ -2411,6 +2429,16 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- USER API Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Set the carrier illumination mode.
+-- @param #AIRBOSS self
+-- @param #number Mode Options are: -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+-- @return #AIRBOSS self
+function AIRBOSS:SetCarrierIllumination(Mode)
+  self.carrier:SetCarrierIlluminationMode(Mode)
+  return self
+end
+
 
 --- Set welcome messages for players.
 -- @param #AIRBOSS self
@@ -3081,7 +3109,7 @@ end
 
 --- Set up SRS for usage without sound files
 -- @param #AIRBOSS self
--- @param #string PathToSRS Path to SRS folder, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone".
+-- @param #string PathToSRS Path to SRS folder, e.g. "C:\\Program Files\\DCS-SimpleRadio\\ExternalAudio".
 -- @param #number Port Port of the SRS server, defaults to 5002.
 -- @param #string Culture (Optional, Airboss Culture)  Culture, defaults to "en-US".
 -- @param #string Gender (Optional, Airboss Gender)  Gender, e.g. "male" or "female". Defaults to "male".
@@ -3100,8 +3128,8 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   self.SRS:SetCulture(Culture or "en-US")
   --self.SRS:SetFrequencies(Frequencies)
   self.SRS:SetGender(Gender or "male")
-  self.SRS:SetPath(PathToSRS)
-  self.SRS:SetPort(Port or 5002)
+  --self.SRS:SetPath(PathToSRS)
+  self.SRS:SetPort(Port or MSRS.port or 5002)
   self.SRS:SetLabel(self.AirbossRadio.alias or "AIRBOSS")
   self.SRS:SetCoordinate(self.carrier:GetCoordinate())
   self.SRS:SetVolume(Volume or 1)
@@ -3112,7 +3140,10 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   if Voice then
     self.SRS:SetVoice(Voice)
   end
-  self.SRS:SetVolume(Volume or 1.0)
+  if (not Voice) and self.SRS and self.SRS:GetProvider() == MSRS.Provider.GOOGLE then
+    self.SRS.voice = MSRS.poptions["gcloud"].voice or MSRS.Voices.Google.Standard.en_US_Standard_B
+  end
+  --self.SRS:SetVolume(Volume or 1.0)
   -- SRSQUEUE
   self.SRSQ = MSRSQUEUE:New("AIRBOSS")
   self.SRSQ:SetTransmitOnlyWithPlayers(true)
@@ -4643,6 +4674,26 @@ function AIRBOSS:_InitForrestal()
 
 end
 
+--- Init parameters for Enterprise carrier.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitEnterprise()
+  -- Using Forrestal as template
+  self:_InitForrestal()
+
+  self.carrierparam.sterndist = -164.30
+  self.carrierparam.deckheight = 19.52
+
+  self.carrierparam.totlength = 335
+  self.carrierparam.rwylength = 223
+
+  -- Wires.
+  self.carrierparam.wire1 = 57.7
+  self.carrierparam.wire2 = 69.6
+  self.carrierparam.wire3 = 79.5
+  self.carrierparam.wire4 = 90.0
+
+end
+
 --- Init parameters for Essec class carriers.
 -- @param #AIRBOSS self
 function AIRBOSS:_InitEssex()
@@ -4685,6 +4736,35 @@ function AIRBOSS:_InitEssex()
 
   -- Landing distance.
   self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.wire3
+
+end
+
+--- Init parameters for CVA-31 Bon Homme Richard carriers.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitBonHommeRichard()
+  -- Init Essex as default
+  self:_InitEssex()
+
+  self.carrierparam.deckheight = 16.95
+
+  -- Landing runway.
+  -- from BHR EssexRunwayAndRoutes.lua
+  self.carrierparam.rwyangle = -11.4
+  self.carrierparam.rwylength = 97
+  self.carrierparam.rwywidth = 20
+
+  -- Wires.
+  self.carrierparam.wire1 = 40.4 -- Distance from stern to first wire. Original from Frank - 42
+  self.carrierparam.wire2 = 45
+  self.carrierparam.wire3 = 51
+  self.carrierparam.wire4 = 58.1
+end
+
+--- Init parameters for Generic Essex SC125 class carriers.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitEssexSCB125()
+  -- Init Bon Homme Richard as default
+  self:_InitBonHommeRichard()
 
 end
 
