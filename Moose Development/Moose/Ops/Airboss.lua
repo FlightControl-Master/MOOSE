@@ -7606,7 +7606,7 @@ function AIRBOSS:_InitPlayer( playerData, step )
   playerData.landed = false
   playerData.Tlso = timer.getTime()
   playerData.Tgroove = nil
-  playerData.TIG0 = nil
+  playerData.TIG0 = 0 --changed to prevent errors in script when player is not in correct spot
   playerData.wire = nil
   playerData.flag = -100
   playerData.debriefschedulerID = nil
@@ -8417,7 +8417,7 @@ end
 function AIRBOSS:_SetTimeInGroove( playerData )
 
   -- Set time in the groove
-  if playerData.TIG0  > 2 then --circuit added to prevent negative groove time
+  if playerData.TIG0 then 
     playerData.Tgroove = timer.getTime() - playerData.TIG0 - 1.5 -- VNAO Edit - Subtracting an extra 1.5
   else
     playerData.Tgroove = 999
@@ -11958,10 +11958,12 @@ function AIRBOSS:GetHeading( magnetic )
     hdg = hdg - self.magvar
   end
 
-  -- Adjust negative values.
-  if hdg < 0 then
-    hdg = hdg + 360
-  end
+  -- -- Adjust negative values.
+  -- if hdg < 0 then
+  --   hdg = hdg + 360
+  -- end
+
+  hdg = hdg % 360  -- using this to replace the above function to prevent negative values and BRC higher than 360
 
   return hdg
 end
