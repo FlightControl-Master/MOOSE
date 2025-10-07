@@ -1574,6 +1574,17 @@ end
   return self
 end
 
+
+--- Get the true airbase center as seen in the ME. The position returned by the dcs object is is wrong and often at the start of the runway.
+-- @return DCS#Vec2 The center of the true center of the airbase if it contains runways, otherwise the default DCS object position.
+function AIRBASE:GetVec2()
+    local runways = self:GetRunways()
+    if runways and #runways > 0 then
+        return runways[1].center:GetVec2()
+    end
+    return self:GetCoordinate():GetVec2()
+end
+
 --- Get the category of this airbase. This is only a debug function because DCS 2.9 incorrectly returns heliports as airdromes.
 -- @param #AIRBASE self
 function AIRBASE:_GetCategory()
