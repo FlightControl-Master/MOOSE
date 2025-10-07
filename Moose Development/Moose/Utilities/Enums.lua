@@ -606,6 +606,7 @@ ENUMS.Storage = {
     OH58 = {}, -- Kiowa specifics
     UH1H = {}, -- Huey specifics
     AH64D = {}, -- Huey specifics
+    UH60L = {}, -- Blackhawk specifics
   }
 }
 
@@ -1315,6 +1316,15 @@ ENUMS.Storage.weapons.UH1H.M134_MiniGun_Right_Door  =  {4,15,46,175}
 ENUMS.Storage.weapons.UH1H.M60_MG_Right_Door  =  {4,15,46,177}
 ENUMS.Storage.weapons.UH1H.M134_MiniGun_Left_Door  =  {4,15,46,174}
 ENUMS.Storage.weapons.UH1H.M60_MG_Left_Door  =  {4,15,46,176}
+-- UH-60L
+ENUMS.Storage.weapons.UH60L.M151_HYDRA = {4, 7, 33, 147} -- 2.75" Hydra, UnGd Rkts M151, HE
+ENUMS.Storage.weapons.UH60L.M156_HYDRA = {4, 7, 33, 148} -- 2.75" Hydra, UnGd Rkts M156, Wht Phos
+ENUMS.Storage.weapons.UH60L.M229_HYDRA = {4, 7, 33, 148} -- 2.75" Hydra, UnGd Rkts M229, HE
+ENUMS.Storage.weapons.UH60L.M257_HYDRA = {4, 7, 33, 151} -- 2.75" Hydra, UnGd Rkts M257, Para Illum
+ENUMS.Storage.weapons.UH60L.M259_HYDRA = {4, 7, 33, 151} -- 2.75" Hydra, UnGd Rkts M259, Smoke Marker
+ENUMS.Storage.weapons.UH60L.M274_HYDRA = {4, 7, 33, 150} -- 2.75" Hydra, UnGd Rkts M274, Practice Smk
+
+
 -- Kiowa
 ENUMS.Storage.weapons.OH58.FIM92  =  {4,4,7,449}
 ENUMS.Storage.weapons.OH58.MG_M3P100  =  {4,15,46,2611}
