@@ -606,7 +606,7 @@ ENUMS.Storage = {
     OH58 = {}, -- Kiowa specifics
     UH1H = {}, -- Huey specifics
     AH64D = {}, -- Huey specifics
-    UH60L = {}, -- Huey specifics
+    UH60L = {}, -- Blackhawk specifics
   }
 }
 
