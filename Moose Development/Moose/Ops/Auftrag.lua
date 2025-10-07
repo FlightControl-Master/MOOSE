@@ -4016,6 +4016,23 @@ function AUFTRAG:IsOver()
   return over
 end
 
+--- Check if mission is repeatable.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission is repeatable.
+function AUFTRAG:IsRepeatable()
+  local repeatmeS=self.repeatedSuccess<self.NrepeatSuccess or self.repeated<self.Nrepeat
+  local repeatmeF=self.repeatedFailure<self.NrepeatFailure or self.repeated<self.Nrepeat
+  if repeatmeS==true or repeatmeF==true then return true else return false end
+  return false
+end
+
+--- Check if mission is NOT repeatable.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission is NOT repeatable.
+function AUFTRAG:IsNotRepeatable()
+  return not self:IsRepeatable()
+end
+
 --- Check if mission is NOT over.
 -- @param #AUFTRAG self
 -- @return #boolean If true, mission is NOT over yet.
