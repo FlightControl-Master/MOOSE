@@ -7534,7 +7534,7 @@ end
 function OPSGROUP:onafterElementDead(From, Event, To, Element)
 
   -- Debug info.
-  self:I(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
+  self:T(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
@@ -8090,7 +8090,7 @@ function OPSGROUP:onafterStop(From, Event, To)
   _DATABASE.FLIGHTGROUPS[self.groupname]=nil
 
   -- Debug output.
-  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from _DATABASE")
+  self:T(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from _DATABASE")
 end
 
 --- On after "OutOfAmmo" event.
