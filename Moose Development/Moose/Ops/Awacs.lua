@@ -509,7 +509,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.72", -- #string
+  version = "0.2.73", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -1593,6 +1593,16 @@ end
 function AWACS:SetLocale(Locale)
   self:T(self.lid.."SetLocale")
   self.locale = Locale or "en"
+  return self
+end
+
+--- [User] Set own coordinate for BullsEye.
+-- @param #AWACS self
+-- @param Core.Point#COORDINATE
+-- @return #AWACS self
+function AWACS:SetBullsCoordinate(Coordinate)
+  self:T(self.lid.."SetBullsCoordinate")
+  self.AOCoordinate = Coordinate
   return self
 end
 
