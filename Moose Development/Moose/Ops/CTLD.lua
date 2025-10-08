@@ -5670,8 +5670,14 @@ function CTLD:AddCTLDZone(Name, Type, Color, Active, HasBeacon, Shiplength, Ship
     return self
   end
   end
-  
-  local ctldzone = {} -- #CTLD.CargoZone
+
+  local exists = true
+  local ctldzone = self:GetCTLDZone(Name, Type) -- #CTLD.CargoZone
+  if not ctldzone then
+    exists = false
+    ctldzone = {}
+  end
+
   ctldzone.active = Active or false
   ctldzone.color = Color or SMOKECOLOR.Red
   ctldzone.name = Name or "NONE"
@@ -5697,9 +5703,54 @@ function CTLD:AddCTLDZone(Name, Type, Color, Active, HasBeacon, Shiplength, Ship
    ctldzone.shiplength = Shiplength or 100
    ctldzone.shipwidth = Shipwidth or 10
   end
-  
-  self:AddZone(ctldzone)
+
+  if not exists then
+    self:AddZone(ctldzone)
+  end
   return self
+end
+
+
+--- User function - find #CTLD.CargoZone zone by name.
+-- @param #CTLD self
+-- @param #string Name Name of this zone.
+-- @param #string Type Type of this zone, #CTLD.CargoZoneType
+-- @return #CTLD.CargoZone self
+function CTLD:GetCTLDZone(Name, Type)
+
+  if Type == CTLD.CargoZoneType.LOAD then
+    for _, z in pairs(self.pickupZones) do
+        if z.name == Name then
+            return z
+        end
+    end
+  elseif Type == CTLD.CargoZoneType.DROP then
+    for _, z in pairs(self.dropOffZones) do
+        if z.name == Name then
+            return z
+        end
+    end
+  elseif Type == CTLD.CargoZoneType.SHIP then
+    for _, z in pairs(self.shipZones) do
+        if z.name == Name then
+            return z
+        end
+    end
+  elseif Type == CTLD.CargoZoneType.BEACON then
+    for _, z in pairs(self.droppedBeacons) do
+        if z.name == Name then
+            return z
+        end
+    end
+  else
+    for _, z in pairs(self.wpZones) do
+        if z.name == Name then
+            return z
+        end
+    end
+  end
+
+  return nil
 end
 
 --- User function - Creates and adds a #CTLD.CargoZone zone for this CTLD instance from an Airbase or FARP name.
