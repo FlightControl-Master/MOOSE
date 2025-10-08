@@ -1150,11 +1150,11 @@ function CSAR:_EventHandler(EventData)
 
     local initdcscoord = nil
     local initcoord = nil
-    if _event.id == EVENTS.Ejection then
+    if _event.id == EVENTS.Ejection and _event.TgtDCSUnit then
       initdcscoord = _event.TgtDCSUnit:getPoint()
       initcoord = COORDINATE:NewFromVec3(initdcscoord)
       self:T({initdcscoord})
-    else
+    elseif _event.IniDCSUnit then
       initdcscoord = _event.IniDCSUnit:getPoint()
       initcoord = COORDINATE:NewFromVec3(initdcscoord)
       self:T({initdcscoord})
