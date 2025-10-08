@@ -4163,7 +4163,7 @@ function CONTROLLABLE:OptionRestrictBurner( RestrictBurner )
 
 end
 
---- Sets Controllable Option for A2A attack range for AIR FIGHTER units.
+--- [AIR] Sets Controllable Option for A2A attack range for AIR FIGHTER units.
 -- @param #CONTROLLABLE self
 -- @param #number range Defines the range
 -- @return #CONTROLLABLE self
@@ -4186,6 +4186,66 @@ function CONTROLLABLE:OptionAAAttackRange( range )
     return self
   end
   return nil
+end
+
+--- [GROUND/AAA] Sets Controllable Option for Ground AAA minimum firing height.
+-- @param #CONTROLLABLE self
+-- @param #number meters The minimum height in meters.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionAAAMinFiringHeightMeters(meters)
+ self:F2( { self.ControllableName } )
+ local meters = meters or 20
+ local DCSControllable = self:GetDCSObject()
+ if DCSControllable then
+   local Controller = self:_GetController()
+   if Controller then
+     if self:IsGround()() then
+       self:SetOption(27, meters)
+     end
+   end
+   return self
+ end
+ return nil
+end
+
+--- [GROUND/AAA] Sets Controllable Option for Ground AAA maximum firing height.
+-- @param #CONTROLLABLE self
+-- @param #number meters The maximum height in meters.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionAAAMaxFiringHeightMeters(meters)
+ self:F2( { self.ControllableName } )
+ local meters = meters or 1000
+ local DCSControllable = self:GetDCSObject()
+ if DCSControllable then
+   local Controller = self:_GetController()
+   if Controller then
+     if self:IsGround()() then
+       self:SetOption(29, meters)
+     end
+   end
+   return self
+ end
+ return nil
+end
+
+--- [GROUND/AAA] Sets Controllable Option for Ground AAA minimum firing height.
+-- @param #CONTROLLABLE self
+-- @param #number feet The minimum height in feet.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionAAAMinFiringHeightFeet(feet)
+ self:F2( { self.ControllableName } )
+ local feet = feet or 60
+ return self:OptionAAAMinFiringHeightMeters(UTILS.FeetToMeters(feet))
+end
+
+--- [GROUND/AAA] Sets Controllable Option for Ground AAA maximum firing height.
+-- @param #CONTROLLABLE self
+-- @param #number feet The maximum height in feet.
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionAAAMaxFiringHeightfeet(feet)
+ self:F2( { self.ControllableName } )
+ local feet = feet or 3000
+ return self:OptionAAAMaxFiringHeightMeters(UTILS.FeetToMeters(feet))
 end
 
 --- Defines the range at which a GROUND unit/group is allowed to use its weapons automatically.
