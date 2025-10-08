@@ -5543,10 +5543,10 @@ end
 function RAT._ATCInit(airports_map)
 
   if not RAT.ATC.init then
-    local text
-    text="Starting RAT ATC.\nSimultanious = "..RAT.ATC.Nclearance.."\n".."Delay        = "..RAT.ATC.delay
-    BASE:T2(RAT.id..text)
-    RAT.ATC.init=true
+  
+    local text="Starting RAT ATC.\nSimultanious = "..RAT.ATC.Nclearance.."\n".."Delay        = "..RAT.ATC.delay
+    BASE:I(RAT.id..text)
+    
     for _,ap in pairs(airports_map) do
       local airbase=ap --Wrapper.Airbase#AIRBASE
       local name=airbase:GetName()
@@ -5583,12 +5583,18 @@ end
 -- @param #string name Group name of the flight.
 -- @param #string dest Name of the destination airport.
 function RAT:_ATCAddFlight(name, dest)
-  BASE:T2(string.format("%sATC %s: Adding flight %s with destination %s.", RAT.id, dest, name, dest))
-  RAT.ATC.flight[name]={}
-  RAT.ATC.flight[name].destination=dest
-  RAT.ATC.flight[name].Tarrive=-1
-  RAT.ATC.flight[name].holding=-1
-  RAT.ATC.flight[name].Tonfinal=-1
+  -- Debug info
+  BASE:I(RAT.id..string.format("ATC %s: Adding flight %s with destination %s.", dest, name, dest))
+
+  -- Create new flight  
+  local flight={} --#RAT.AtcFlight
+  flight.destination=dest
+  flight.Tarrive=-1
+  flight.holding=-1
+  flight.Tarrive=-1
+  --flight.Tonfinal=-1
+  
+  RAT.ATC.flight[name]=flight
 end
 
 --- Deletes a flight from ATC lists after it landed.
@@ -5607,8 +5613,8 @@ end
 -- @param #RAT self
 -- @param #string name Group name of the flight.
 -- @param #number time Time the fight first registered.
-function RAT:_ATCRegisterFlight(name, time)
-  BASE:T2(RAT.id.."Flight ".. name.." registered at ATC for landing clearance.")
+function RAT._ATCRegisterFlight(name, time)
+  BASE:I(RAT.id..string.format("Flight %s registered at ATC for landing clearance.", name))
   RAT.ATC.flight[name].Tarrive=time
   RAT.ATC.flight[name].holding=0
 end
@@ -5661,27 +5667,6 @@ function RAT._ATCStatus()
       else
         BASE:E(RAT.id.."ERROR: Unknown holding time in RAT:_ATCStatus().")
       end
-      else
-        busy="Runway is currently clear"
-      end
-
-      -- Aircraft is holding.
-      local text=string.format("ATC %s: Flight %s is holding for %i:%02d. %s.", dest, name, hold/60, hold%60, busy)
-      BASE:T2(RAT.id..text)
-
-    elseif hold==RAT.ATC.onfinal then
-
-      -- Aircarft is on final approach for landing.
-      local Tfinal=Tnow-RAT.ATC.flight[name].Tonfinal
-
-      local text=string.format("ATC %s: Flight %s is on final. Waiting %i:%02d for landing event.", dest, name, Tfinal/60, Tfinal%60)
-      BASE:T2(RAT.id..text)
-
-    elseif hold==RAT.ATC.unregistered then
-
-      -- Aircraft has not arrived at holding point.
-      --self:T(string.format("ATC %s: Flight %s is not registered yet (hold %d).", dest, name, hold))
-
     else
       -- Not a RAT.ATC airport (should be managed by a FLIGHTCONTROL)
     end
@@ -5724,13 +5709,15 @@ function RAT._ATCCheck()
         flight.holding=Tnow-flight.Tarrive
 
         -- Debug message.
-        local text=string.format("ATC %s: Flight %s runway is busy. You are #%d of %d in landing queue. Your holding time is %i:%02d.", name, flight,qID, nqueue, RAT.ATC.flight[flight].holding/60, RAT.ATC.flight[flight].holding%60)
-        BASE:T2(RAT.id..text)
+        local text=string.format("ATC %s: Flight %s runway is busy. You are #%d of %d in landing queue. Your holding time is %i:%02d.", 
+        airportname, flightname, qID, nqueue, flight.holding/60, flight.holding%60)
+        BASE:I(RAT.id..text)
 
       else
 
-        local text=string.format("ATC %s: Flight %s was cleared for landing. Your holding time was %i:%02d.", name, flight, RAT.ATC.flight[flight].holding/60, RAT.ATC.flight[flight].holding%60)
-        BASE:T2(RAT.id..text)
+        local text=string.format("ATC %s: Flight %s was cleared for landing. Your holding time was %i:%02d.", 
+        airportname, flightname, flight.holding/60, flight.holding%60)
+        BASE:I(RAT.id..text)
 
         -- Clear flight for landing.
         RAT._ATCClearForLanding(airportname, flightname)
@@ -5796,9 +5783,7 @@ function RAT._ATCClearForLanding(airportname, flightname)
   else
     BASE:E("Could not clear flight for landing!")
   end
-  local text2=string.format("ATC %s: Flight %s you are cleared for landing.", airport, flight)
-  BASE:T2( RAT.id..text1)
-  MESSAGE:New(text2, 10):ToAllIf(RAT.ATC.messages)
+    
 end
 
 --- Takes care of organisational stuff after a plane has landed.
@@ -5838,17 +5823,15 @@ function RAT._ATCFlightLanded(name)
     local TrafficPerHour=airport.traffic/(timer.getTime()-RAT.ATC.T0)*3600
 
     -- Debug info
-    local text1=string.format("ATC %s: Flight %s landed. Tholding = %i:%02d, Tfinal = %i:%02d.", dest, name, Thold/60, Thold%60, Tfinal/60, Tfinal%60)
-    local text2=string.format("ATC %s: Number of flights still on final %d.", dest, RAT.ATC.airport[dest].Nonfinal)
-    local text3=string.format("ATC %s: Traffic report: Number of planes landed in total %d. Flights/hour = %3.2f.", dest, RAT.ATC.airport[dest].traffic, TrafficPerHour)
-  if string.find(name,"#") then
-    name =  string.match(name,"^(.+)#")
-  end
-    local text4=string.format("ATC %s: Flight %s landed. Welcome to %s.", dest, name, dest)
-    BASE:T2(RAT.id..text1)
-    BASE:T2(RAT.id..text2)
-    BASE:T2(RAT.id..text3)
-    MESSAGE:New(text4, 10):ToAllIf(RAT.ATC.messages)
+    BASE:I(RAT.id..string.format("ATC %s: Flight %s landed. Tholding = %i:%02d, Tfinal = %i:%02d.", dest, name, Thold/60, Thold%60, Tfinal/60, Tfinal%60))
+    BASE:I(RAT.id..string.format("ATC %s: Number of flights still on final %d.", dest, airport.Nonfinal))
+    BASE:I(RAT.id..string.format("ATC %s: Traffic report: Number of planes landed in total %d. Flights/hour = %3.2f.", dest, airport.traffic, TrafficPerHour))
+    
+    if string.find(name,"#") then
+      name =  string.match(name,"^(.+)#")
+    end
+    local text=string.format("ATC %s: Flight %s landed. Welcome to %s.", dest, name, dest)    
+    MESSAGE:New(text, 10):ToAllIf(RAT.ATC.messages)
   end
 
 end
