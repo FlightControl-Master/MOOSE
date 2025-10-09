@@ -4199,7 +4199,7 @@ function CONTROLLABLE:OptionAAAMinFiringHeightMeters(meters)
  if DCSControllable then
    local Controller = self:_GetController()
    if Controller then
-     if self:IsGround()() then
+     if self:IsGround() then
        self:SetOption(27, meters)
      end
    end
@@ -4219,7 +4219,7 @@ function CONTROLLABLE:OptionAAAMaxFiringHeightMeters(meters)
  if DCSControllable then
    local Controller = self:_GetController()
    if Controller then
-     if self:IsGround()() then
+     if self:IsGround() then
        self:SetOption(29, meters)
      end
    end
