@@ -1556,6 +1556,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.smokedistance = 2000
   self.movetroopstowpzone = true
   self.movetroopsdistance = 5000
+  self.returntroopstobase = true -- if set to false, troops would stay after deployment inside a load zone.
   self.troopdropzoneradius = 100
   
   self.VehicleMoveFormation = AI.Task.VehicleFormation.VEE
@@ -3676,7 +3677,7 @@ function CTLD:_UnloadTroops(Group, Unit)
     inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.SHIP)
   end
   if inzone then
-    droppingatbase = true
+    droppingatbase = self.returntroopstobase
   end
   -- check for hover unload
   local hoverunload = self:IsCorrectHover(Unit) --if true we\'re hovering in parameters
@@ -5134,7 +5135,7 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID)
     inzone, zonename, zone, distance = self:IsUnitInZone(Unit, CTLD.CargoZoneType.SHIP)
   end
   if inzone then
-    droppingatbase = true
+    droppingatbase = self.returntroopstobase
   end
 
   if self.pilotmustopendoors and not UTILS.IsLoadingDoorOpen(Unit:GetName()) then
