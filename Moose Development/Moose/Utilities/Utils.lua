@@ -2330,6 +2330,16 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           return true
       end
 
+      if type_name == "UH-60L_DAP" and (unit:getDrawArgumentValue(401) == 1 or unit:getDrawArgumentValue(402) == 1) then
+          BASE:T(unit_name .. " cargo door is open")
+          return true
+      end
+
+      if type_name ==  "UH-60L_DAP" and (unit:getDrawArgumentValue(38) > 0 or unit:getDrawArgumentValue(400) == 1 ) then
+          BASE:T(unit_name .. " front door(s) are open")
+          return true
+      end
+
       if type_name == "AH-64D_BLK_II" then
          BASE:T(unit_name .. " front door(s) are open")
          return true -- no doors on this one ;)
