@@ -4559,7 +4559,7 @@ function CTLD:_RefreshF10Menus()
                   end
                 end
               else
-                if self.usesubcats then
+                if self.usesubcats == true then
                   local subcatmenus = {}
                   for catName, _ in pairs(self.subcats) do
                     subcatmenus[catName] = MENU_GROUP:New(_group, catName, cratesmenu)         -- fixed variable case
