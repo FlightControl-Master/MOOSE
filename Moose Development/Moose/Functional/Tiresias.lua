@@ -33,7 +33,7 @@
 -- @module Functional.Tiresias
 -- @image Functional.Tiresias.jpg
 
---- Last Update: July 2025
+--- Last Update: Oct 2025
 
 --- **TIRESIAS** class, extends Core.Base#BASE
 --  @type TIRESIAS
@@ -104,8 +104,8 @@
 --  @field #TIRESIAS
 TIRESIAS = {
   ClassName         = "TIRESIAS",
-  debug             = true,
-  version           = " 0.0.7-OPT" ,
+  debug             = false,
+  version           = " 0.0.8" ,
   Interval          = 20,
   GroundSet         = nil,
   VehicleSet        = nil,
@@ -140,7 +140,7 @@ function TIRESIAS:New()
   self:AddTransition("*",             "Status",                  "*")           -- TIRESIAS status update.
   self:AddTransition("*",             "Stop",                    "Stopped")     -- Stop FSM.
   
-  self.ExceptionSet = nil --SET_GROUP:New():Clear(false)
+  self.ExceptionSet = SET_GROUP:New() --:Clear(false)
   self._cached_zones = {} -- Initialize zone cache
   
   self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
@@ -224,10 +224,10 @@ function TIRESIAS:AddExceptionSet(Set)
 
   Set:ForEachGroupAlive(
     function(grp)
-      local inAAASet = self.AAASet:IsIncludeObject(grp)
-      local inVehSet = self.VehicleSet:IsIncludeObject(grp)
-      local inSAMSet = self.SAMSet:IsIncludeObject(grp)
-      if grp:IsGround() and (not grp.Tiresias) and (not inAAASet) and (not inVehSet) and (not inSAMSet) then
+      --local inAAASet = self.AAASet:IsIncludeObject(grp)
+      --local inVehSet = self.VehicleSet:IsIncludeObject(grp)
+      --local inSAMSet = self.SAMSet:IsIncludeObject(grp)
+      if grp:IsGround() and (not grp.Tiresias) then --and (not inAAASet) and (not inVehSet) and (not inSAMSet) then
         grp.Tiresias = exception_data
         exceptions:AddGroup(grp, true)
         BASE:T(" TIRESIAS: Added exception group: "  .. grp:GetName())
@@ -419,8 +419,8 @@ function TIRESIAS:_SwitchOnGroups(group, radius)
   --  Use cached zones to reduce object creation
   local group_name = group:GetName()
   local cache_key = group_name .. " _"  .. radius
-  local zone = self._cached_zones[cache_key]
-  local ground = self._cached_groupsets[cache_key]
+  local zone = self._cached_zones[cache_key] -- Core.Zone#ZONE_RADIUS
+  --local ground = self._cached_groupsets[cache_key] -- Core.Set#SET_GROUP
   
   if not zone then
     zone = ZONE_GROUP:New(" Zone-"  .. group_name, group, UTILS.NMToMeters(radius))
@@ -430,12 +430,14 @@ function TIRESIAS:_SwitchOnGroups(group, radius)
     zone:UpdateFromGroup(group)
   end
   
-  if not ground then
-    ground = SET_GROUP:New():FilterCategoryGround():FilterZones({zone}):FilterOnce()
-    self._cached_groupsets[cache_key] = ground
-  else
-    ground:FilterZones({zone},true):FilterOnce()
-  end
+  --if not ground then
+    --ground = SET_GROUP:New():FilterCategoryGround():FilterZones({zone}):FilterOnce()
+    --self._cached_groupsets[cache_key] = ground
+  --else
+    --ground:FilterZones({zone},true):FilterOnce()
+  zone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT})
+  local ground = zone:GetScannedSetGroup()
+  --end
   
   local count = ground:CountAlive()
   
