@@ -33,7 +33,7 @@
 -- @module Functional.Tiresias
 -- @image Functional.Tiresias.jpg
 
---- Last Update: July 2025
+--- Last Update: Oct 2025
 
 --- **TIRESIAS** class, extends Core.Base#BASE
 --  @type TIRESIAS
@@ -104,8 +104,8 @@
 --  @field #TIRESIAS
 TIRESIAS = {
   ClassName         = "TIRESIAS",
-  debug             = true,
-  version           = " 0.0.7a-OPT" ,
+  debug             = false,
+  version           = " 0.0.8" ,
   Interval          = 20,
   GroundSet         = nil,
   VehicleSet        = nil,
@@ -140,7 +140,7 @@ function TIRESIAS:New()
   self:AddTransition("*",             "Status",                  "*")           -- TIRESIAS status update.
   self:AddTransition("*",             "Stop",                    "Stopped")     -- Stop FSM.
   
-  self.ExceptionSet = nil --SET_GROUP:New():Clear(false)
+  self.ExceptionSet = SET_GROUP:New() --:Clear(false)
   self._cached_zones = {} -- Initialize zone cache
   
   self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
@@ -224,10 +224,10 @@ function TIRESIAS:AddExceptionSet(Set)
 
   Set:ForEachGroupAlive(
     function(grp)
-      local inAAASet = self.AAASet:IsIncludeObject(grp)
-      local inVehSet = self.VehicleSet:IsIncludeObject(grp)
-      local inSAMSet = self.SAMSet:IsIncludeObject(grp)
-      if grp:IsGround() and (not grp.Tiresias) and (not inAAASet) and (not inVehSet) and (not inSAMSet) then
+      --local inAAASet = self.AAASet:IsIncludeObject(grp)
+      --local inVehSet = self.VehicleSet:IsIncludeObject(grp)
+      --local inSAMSet = self.SAMSet:IsIncludeObject(grp)
+      if grp:IsGround() and (not grp.Tiresias) then --and (not inAAASet) and (not inVehSet) and (not inSAMSet) then
         grp.Tiresias = exception_data
         exceptions:AddGroup(grp, true)
         BASE:T(" TIRESIAS: Added exception group: "  .. grp:GetName())
