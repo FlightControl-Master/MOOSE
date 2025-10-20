@@ -4462,8 +4462,8 @@ end
 end
 end
 
-function CTLD:_UnloadSingleTroopByID(Group, Unit, cargoID)
-  self:T(self.lid .. " _UnloadSingleTroopByID for cargo ID " .. tostring(cargoID))
+function CTLD:_UnloadSingleTroopByName(Group, Unit, CargoName)
+  self:T(self.lid .. " _UnloadSingleTroopByID for cargo ID " .. tostring(CargoName))
 
   -- check if we are in LOAD zone
   local droppingatbase = false
@@ -4511,7 +4511,7 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, cargoID)
       for _, cargoObj in ipairs(cargoList) do
         if (cargoObj:GetType() == CTLD_CARGO.Enum.TROOPS or cargoObj:GetType() == CTLD_CARGO.Enum.ENGINEERS)
            and not cargoObj:WasDropped()
-           and (cargoObj:GetID() == cargoID)
+           and (cargoObj:GetName() == CargoName)
         then
           foundCargo = cargoObj
           break
@@ -4593,7 +4593,7 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, cargoID)
       local cargoList       = loadedCargoData.Cargo or {}
       for _, cObj in ipairs(cargoList) do
         if (cObj:GetType() == CTLD_CARGO.Enum.TROOPS or cObj:GetType() == CTLD_CARGO.Enum.ENGINEERS)
-           and (cObj:GetID() == cargoID)
+           and (cObj:GetName() == CargoName)
         then
           -- Return this one cargo to stock
           local cName  = cObj:GetName()
@@ -4608,6 +4608,7 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, cargoID)
           end
           -- Mark it as dropped so we remove it from the loaded cargo
           cObj:SetWasDropped(true)
+          break
         end
       end
     end
@@ -4671,6 +4672,20 @@ function CTLD:_RefreshDropTroopsMenu(Group, Unit)
   MENU_GROUP_COMMAND:New(theGroup,"Drop ALL troops",dropTroopsMenu,self._UnloadTroops,self,theGroup,theUnit)
   local loadedData=self.Loaded_Cargo[theUnit:GetName()]
   if loadedData and loadedData.Cargo then
+    local loaded = {}
+    for i,cargoObj in ipairs(loadedData.Cargo) do
+      if cargoObj and (cargoObj:GetType()==CTLD_CARGO.Enum.TROOPS or cargoObj:GetType()==CTLD_CARGO.Enum.ENGINEERS)
+         and not cargoObj:WasDropped()
+      then
+        local name=cargoObj:GetName()or"Unknown"
+        loaded[name]=loaded[name] or 0
+      end
+    end
+
+    for name,count in pairs(loaded) do
+      local line=string.format("Drop %s (%d)",name,count)
+      MENU_GROUP_COMMAND:New(theGroup,line,dropTroopsMenu,self._UnloadSingleTroopByID,self,theGroup,theUnit,name)
+    end
     for i,cargoObj in ipairs(loadedData.Cargo) do
       if cargoObj and (cargoObj:GetType()==CTLD_CARGO.Enum.TROOPS or cargoObj:GetType()==CTLD_CARGO.Enum.ENGINEERS)
          and not cargoObj:WasDropped()
