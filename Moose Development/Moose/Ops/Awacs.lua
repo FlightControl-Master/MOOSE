@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update Jan 2025
+-- @date Last Update July 2025
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -237,7 +237,7 @@ do
 --            -- Callsign will be "Focus". We'll be a Angels 30, doing 300 knots, orbit leg to 88deg with a length of 25nm.
 --            testawacs:SetAwacsDetails(CALLSIGN.AWACS.Focus,1,30,300,88,25)
 --            -- Set up SRS on port 5010 - change the below to your path and port
---            testawacs:SetSRS("C:\\Program Files\\DCS-SimpleRadio-Standalone","female","en-GB",5010)
+--            testawacs:SetSRS("C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio","female","en-GB",5010)
 --            -- Add a "red" border we don't want to cross, set up in the mission editor with a late activated helo named "Red Border#ZONE_POLYGON"
 --            testawacs:SetRejectionZone(ZONE:FindByName("Red Border"))
 --            -- Our CAP flight will have the callsign "Ford", we want 4 AI planes, Time-On-Station is four hours, doing 300 kn IAS.
@@ -255,7 +255,7 @@ do
 --            -- The CAP station zone is called "Fremont". We will be on 255 AM. Note the Orbit Zone is given as *nil* in the `New()`-Statement
 --            local testawacs = AWACS:New("GCI Senaki",AwacsAW,"blue",AIRBASE.Caucasus.Senaki_Kolkhi,nil,ZONE:FindByName("Rock"),"Fremont",255,radio.modulation.AM )
 --            -- Set up SRS on port 5010 - change the below to your path and port
---            testawacs:SetSRS("C:\\Program Files\\DCS-SimpleRadio-Standalone","female","en-GB",5010)
+--            testawacs:SetSRS("C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio","female","en-GB",5010)
 --            -- Add a "red" border we don't want to cross, set up in the mission editor with a late activated helo named "Red Border#ZONE_POLYGON"
 --            testawacs:SetRejectionZone(ZONE:FindByName("Red Border"))
 --            -- Our CAP flight will have the callsign "Ford", we want 4 AI planes, Time-On-Station is four hours, doing 300 kn IAS.
@@ -509,7 +509,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.70", -- #string
+  version = "0.2.73", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -1123,7 +1123,7 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self.EscortMissionReplacement = {}
   
   -- SRS
-  self.PathToSRS = "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+  self.PathToSRS = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
   self.Gender = "female"
   self.Culture = "en-GB"
   self.Voice = nil
@@ -1242,6 +1242,8 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   self:AddTransition("*",             "Intercept",          "*")
   self:AddTransition("*",             "InterceptSuccess",   "*")
   self:AddTransition("*",             "InterceptFailure",   "*")
+  self:AddTransition("*",             "VIDSuccess",   "*")
+  self:AddTransition("*",             "VIDFailure",   "*")
   self:AddTransition("*",             "Stop",               "Stopped")     -- Stop FSM.
   
   
@@ -1365,18 +1367,38 @@ function AWACS:New(Name,AirWing,Coalition,AirbaseName,AwacsOrbit,OpsZone,Station
   -- @param #string To To state.
   
   --- On After "InterceptSuccess" event. Intercept successful.
-  -- @function [parent=#AWACS] OnAfterIntercept
+  -- @function [parent=#AWACS] OnAfterInterceptSuccess
   -- @param #AWACS self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
   
   --- On After "InterceptFailure" event. Intercept failure.
-  -- @function [parent=#AWACS] OnAfterIntercept
+  -- @function [parent=#AWACS] OnAfterInterceptFailure
   -- @param #AWACS self
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
+
+  --- On After "VIDSuccess" event. Intercept successful.
+  -- @function [parent=#AWACS] OnAfterVIDSuccess
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number GID Managed group ID (Player)
+  -- @param Wrapper.Group#GROUP Group (Player) Group done the VID
+  -- @param #AWACS.ManagedContact Contact The contact that was VID'd 
+  
+  --- On After "VIDFailure" event. Intercept failure.
+  -- @function [parent=#AWACS] OnAfterVIDFailure
+  -- @param #AWACS self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number GID Managed group ID (Player)
+  -- @param Wrapper.Group#GROUP Group (Player) Group done the VID
+  -- @param #AWACS.ManagedContact Contact The contact that was VID'd 
   
   return self
 end
@@ -1571,6 +1593,16 @@ end
 function AWACS:SetLocale(Locale)
   self:T(self.lid.."SetLocale")
   self.locale = Locale or "en"
+  return self
+end
+
+--- [User] Set own coordinate for BullsEye.
+-- @param #AWACS self
+-- @param Core.Point#COORDINATE
+-- @return #AWACS self
+function AWACS:SetBullsCoordinate(Coordinate)
+  self:T(self.lid.."SetBullsCoordinate")
+  self.AOCoordinate = Coordinate
   return self
 end
 
@@ -1999,7 +2031,9 @@ function AWACS:SetAdditionalZone(Zone, Draw)
   self.BorderZone = Zone
   if self.debug then
     Zone:DrawZone(self.coalition,{1,0.64,0},1,{1,0.64,0},0.2,1,true)
-    MARKER:New(Zone:GetCoordinate(),"Defensive Zone"):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      MARKER:New(Zone:GetCoordinate(),"Defensive Zone"):ToCoalition(self.coalition)
+    end
   elseif Draw then
     Zone:DrawZone(self.coalition,{1,0.64,0},1,{1,0.64,0},0.2,1,true)
   end
@@ -2019,7 +2053,9 @@ function AWACS:SetRejectionZone(Zone,Draw)
     --MARKER:New(Zone:GetCoordinate(),"Rejection Zone"):ToAll()
   elseif self.debug then
     Zone:DrawZone(self.coalition,{1,0.64,0},1,{1,0.64,0},0.2,1,true)
-    MARKER:New(Zone:GetCoordinate(),"Rejection Zone"):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      MARKER:New(Zone:GetCoordinate(),"Rejection Zone"):ToCoalition(self.coalition)
+    end
   end
   return self
 end
@@ -2091,7 +2127,7 @@ end
 
 --- [User] Set AWACS SRS TTS details - see @{Sound.SRS} for details. `SetSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
 -- @param #AWACS self
--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+-- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 -- @param #string Gender Defaults to "male"
 -- @param #string Culture Defaults to "en-US"
 -- @param #number Port Defaults to 5002
@@ -2104,7 +2140,7 @@ end
 -- @return #AWACS self
 function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Backend)
   self:T(self.lid.."SetSRS")
-  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone" 
+  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio" 
   self.Gender = Gender or MSRS.gender or "male"
   self.Culture = Culture or MSRS.culture or "en-US"
   self.Port = Port or MSRS.port or 5002
@@ -2244,9 +2280,9 @@ function AWACS:_StartEscorts(Shiftchange)
   local OffsetY = 500
   local OffsetZ = 500
   if self.OffsetVec then
-    OffsetX = self.OffsetVec.x
-    OffsetY = self.OffsetVec.y
-    OffsetZ = self.OffsetVec.z 
+    OffsetX = self.OffsetVec.x or 500
+    OffsetY = self.OffsetVec.y or 500
+    OffsetZ = self.OffsetVec.z or 500
   end
   
   for i=1,self.EscortNumber do
@@ -3263,12 +3299,14 @@ function AWACS:_VID(Group,Declaration)
           local vidpos = self.gettext:GetEntry("VIDPOS",self.locale)
           text = string.format(vidpos,Callsign,self.callsigntxt, Declaration)
           self:T(text)
+          self:__VIDSuccess(3,GID,group,cluster)
         else
           -- too far away
           self:T("Contact VID not close enough")
           local vidneg = self.gettext:GetEntry("VIDNEG",self.locale)
           text = string.format(vidneg,Callsign,self.callsigntxt)
           self:T(text)
+          self:__VIDFailure(3,GID,group,cluster)
         end
         self:_NewRadioEntry(text,text,GID,Outcome,true,true,false,true)
       end
@@ -4070,10 +4108,14 @@ function AWACS:_CreateAnchorStackFromMarker(Name,Coord)
   if self.debug then
     AnchorStackOne.StationZone:DrawZone(self.coalition,{0,0,1},1,{0,0,1},0.2,5,true)
     local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-    AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+    end
   else
     local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-    AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+    end
   end
   
   self.AnchorStacks:Push(AnchorStackOne,newname)
@@ -4116,10 +4158,14 @@ function AWACS:_CreateAnchorStack()
       --self.AnchorStacks:Flush()
       AnchorStackOne.StationZone:DrawZone(self.coalition,{0,0,1},1,{0,0,1},0.2,5,true)
       local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-      AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      end
     else
       local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-      AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      end
     end
     self.AnchorStacks:Push(AnchorStackOne,newname)
   else
@@ -4143,10 +4189,14 @@ function AWACS:_CreateAnchorStack()
     if self.debug then
       AnchorStackOne.StationZone:DrawZone(self.coalition,{0,0,1},1,{0,0,1},0.2,5,true)
       local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-      AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      end
     else
       local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-      AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      end
     end
     self.AnchorStacks:Push(AnchorStackOne,newname)
   end
@@ -5078,10 +5128,14 @@ function AWACS:AddCAPAirWing(AirWing,Zone)
           if self.debug then
             AnchorStackOne.StationZone:DrawZone(self.coalition,{0,0,1},1,{0,0,1},0.2,5,true)
             local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-            AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+            if self.AllowMarkers then
+              AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+            end
           else
             local stationtag = string.format("Station: %s\nCoordinate: %s",newname,self.StationZone:GetCoordinate():ToStringLLDDM())
-            AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+            if self.AllowMarkers then
+              AnchorStackOne.AnchorMarker=MARKER:New(AnchorStackOne.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+            end
           end
           self.AnchorStacks:Push(AnchorStackOne,newname)
           AirWing.HasOwnStation = true
@@ -5924,23 +5978,35 @@ function AWACS:onafterStart(From, Event, To)
     self.OpsZone:DrawZone(self.coalition,{1,0,0},1,{1,0,0},0.2,5,true)
     local AOCoordString = self.AOCoordinate:ToStringLLDDM()
     local Rocktag = string.format("FEZ: %s\nBulls Coordinate: %s",self.AOName,AOCoordString)
-    MARKER:New(self.AOCoordinate,Rocktag):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      MARKER:New(self.AOCoordinate,Rocktag):ToCoalition(self.coalition)
+    end
     self.StationZone:DrawZone(self.coalition,{0,0,1},1,{0,0,1},0.2,5,true)
     local stationtag = string.format("Station: %s\nCoordinate: %s",self.StationZoneName,self.StationZone:GetCoordinate():ToStringLLDDM())
     if not self.GCI then
-      MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+      end
       self.OrbitZone:DrawZone(self.coalition,{0,1,0},1,{0,1,0},0.2,5,true)
-      MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToCoalition(self.coalition)
+      end
     end
   else
     local AOCoordString = self.AOCoordinate:ToStringLLDDM()
     local Rocktag = string.format("FEZ: %s\nBulls Coordinate: %s",self.AOName,AOCoordString)
-    MARKER:New(self.AOCoordinate,Rocktag):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      MARKER:New(self.AOCoordinate,Rocktag):ToCoalition(self.coalition)
+    end
     if not self.GCI then
-      MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToCoalition(self.coalition)
+      if self.AllowMarkers then
+        MARKER:New(self.OrbitZone:GetCoordinate(),"AIC Orbit Zone"):ToCoalition(self.coalition)
+      end
     end
     local stationtag = string.format("Station: %s\nCoordinate: %s",self.StationZoneName,self.StationZone:GetCoordinate():ToStringLLDDM())
-    MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+    if self.AllowMarkers then
+      MARKER:New(self.StationZone:GetCoordinate(),stationtag):ToCoalition(self.coalition)
+    end
   end
   
   if not self.GCI then

@@ -2,6 +2,8 @@
 -- 
 -- The **TASK_CARGO_DISPATCHER** allows you to setup various tasks for let human
 -- players transport cargo as part of a task. 
+-- 
+-- ![Banner Image](..\Images\deprecated.png)
 --  
 -- The cargo dispatcher will implement for you mechanisms to create cargo transportation tasks:
 --  

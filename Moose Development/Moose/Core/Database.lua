@@ -577,13 +577,19 @@ do -- Zones and Pathlines
             -- For a rectangular polygon drawing, we have the width (y) and height (x).
             local w=objectData.width
             local h=objectData.height
+            local rotation = UTILS.ToRadian(objectData.angle or 0)
 
-            -- Create points from center using with and height (width for y and height for x is a bit confusing, but this is how ED implemented it).
-            local points={}
-            points[1]={x=vec2.x-h/2, y=vec2.y+w/2} --Upper left
-            points[2]={x=vec2.x+h/2, y=vec2.y+w/2} --Upper right
-            points[3]={x=vec2.x+h/2, y=vec2.y-w/2} --Lower right
-            points[4]={x=vec2.x-h/2, y=vec2.y-w/2} --Lower left
+            local sinRot = math.sin(rotation)
+            local cosRot = math.cos(rotation)
+            local dx = h / 2
+            local dy = w / 2
+
+            local points = {
+                { x = -dx * cosRot - (-dy * sinRot) + vec2.x, y = -dx * sinRot + (-dy * cosRot) + vec2.y },
+                { x = dx * cosRot - (-dy * sinRot) + vec2.x, y = dx * sinRot + (-dy * cosRot) + vec2.y },
+                { x = dx * cosRot - (dy * sinRot) + vec2.x, y = dx * sinRot + (dy * cosRot) + vec2.y },
+                { x = -dx * cosRot - (dy * sinRot) + vec2.x, y = -dx * sinRot + (dy * cosRot) + vec2.y },
+            }
 
             --local coord=COORDINATE:NewFromVec2(vec2):MarkToAll("MapX, MapY")
 
@@ -872,6 +878,8 @@ end
 -- @return Wrapper.Group#GROUP The found GROUP.
 function DATABASE:FindGroup( GroupName )
 
+  if type(GroupName) ~= "string" or GroupName == "" then return end
+
   local GroupFound = self.GROUPS[GroupName]
   
   if GroupFound == nil and GroupName ~= nil and self.Templates.Groups[GroupName] == nil then
@@ -1110,7 +1118,7 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
           self:E("WARNING: Invalid STN "..tostring(UnitTemplate.AddPropAircraft.STN_L16).." for ".. UnitTemplate.name)
         else
           self.STNS[stn] = UnitTemplate.name
-          self:I("Register STN "..tostring(UnitTemplate.AddPropAircraft.STN_L16).." for ".. UnitTemplate.name)
+          self:T("Register STN "..tostring(UnitTemplate.AddPropAircraft.STN_L16).." for ".. UnitTemplate.name)
         end
       end
       if UnitTemplate.AddPropAircraft.SADL_TN then
@@ -1119,7 +1127,7 @@ function DATABASE:_RegisterGroupTemplate( GroupTemplate, CoalitionSide, Category
           self:E("WARNING: Invalid SADL "..tostring(UnitTemplate.AddPropAircraft.SADL_TN).." for ".. UnitTemplate.name)
         else
           self.SADL[sadl] = UnitTemplate.name
-          self:I("Register SADL "..tostring(UnitTemplate.AddPropAircraft.SADL_TN).." for ".. UnitTemplate.name)
+          self:T("Register SADL "..tostring(UnitTemplate.AddPropAircraft.SADL_TN).." for ".. UnitTemplate.name)
         end
       end  
     end
@@ -1380,7 +1388,7 @@ function DATABASE:GetCoalitionFromClientTemplate( ClientName )
   if self.Templates.ClientsByName[ClientName] then  
     return self.Templates.ClientsByName[ClientName].CoalitionID
   end
-  self:E("WARNING: Template does not exist for client "..tostring(ClientName))
+  self:T("WARNING: Template does not exist for client "..tostring(ClientName))
   return nil
 end
 
@@ -1392,7 +1400,7 @@ function DATABASE:GetCategoryFromClientTemplate( ClientName )
   if self.Templates.ClientsByName[ClientName] then  
     return self.Templates.ClientsByName[ClientName].CategoryID
   end
-  self:E("WARNING: Template does not exist for client "..tostring(ClientName))
+  self:T("WARNING: Template does not exist for client "..tostring(ClientName))
   return nil
 end
 
@@ -1404,7 +1412,7 @@ function DATABASE:GetCountryFromClientTemplate( ClientName )
   if self.Templates.ClientsByName[ClientName] then  
     return self.Templates.ClientsByName[ClientName].CountryID
   end
-  self:E("WARNING: Template does not exist for client "..tostring(ClientName))
+  self:T("WARNING: Template does not exist for client "..tostring(ClientName))
   return nil  
 end
 
@@ -1697,7 +1705,7 @@ function DATABASE:_EventOnBirth( Event )
       if PlayerName then
 
         -- Debug info.
-        self:I(string.format("Player '%s' joined unit '%s' of group '%s'", tostring(PlayerName), tostring(Event.IniDCSUnitName), tostring(Event.IniDCSGroupName)))
+        self:I(string.format("Player '%s' joined unit '%s' (%s) of group '%s'", tostring(PlayerName), tostring(Event.IniDCSUnitName), tostring(Event.IniTypeName), tostring(Event.IniDCSGroupName)))
               
         -- Add client in case it does not exist already.
         if client == nil or (client and client:CountPlayers() == 0) then

@@ -1,8 +1,6 @@
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Utilities/Enums.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Utilities/Utils.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Utilities/Profiler.lua' )
-__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Utilities/Templates.lua' )
---__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Utilities/STTS.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Utilities/FiFo.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Utilities/Socket.lua' )
 

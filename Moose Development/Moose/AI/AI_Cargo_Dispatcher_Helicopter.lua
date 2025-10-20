@@ -31,6 +31,8 @@
 
 --- A dynamic cargo handling capability for AI helicopter groups.
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- Helicopters can be mobilized to intelligently transport infantry and other cargo within the simulation.
 -- 
 -- 

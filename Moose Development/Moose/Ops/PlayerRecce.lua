@@ -838,7 +838,7 @@ function PLAYERRECCE:_GetTargetSet(unit,camera,laser)
   local minview = 0
   local typename = unit:GetTypeName()
   local playername = unit:GetPlayerName()
-  local maxview = self.MaxViewDistance[typename] or 5000
+  local maxview = self.MaxViewDistance[typename] or 8000
   local heading,nod,maxview,angle = 0,30,8000,10
   local camon = false
   local name = unit:GetName()
@@ -846,24 +846,25 @@ function PLAYERRECCE:_GetTargetSet(unit,camera,laser)
     heading,nod,maxview,camon = self:_GetGazelleVivianneSight(unit)
     angle=10
     -- Model nod and actual TV view don't compute
-    maxview = self.MaxViewDistance[typename] or 5000
+    maxview = self.MaxViewDistance[typename] or 8000
   elseif string.find(typename,"Ka-50") and camera then
     heading = unit:GetHeading()
     nod,maxview,camon = 10,1000,true
     angle = 10
-    maxview = self.MaxViewDistance[typename] or 5000
+    maxview = self.MaxViewDistance[typename] or 8000
   elseif string.find(typename,"OH58") and camera then
     --heading = unit:GetHeading()
     nod,maxview,camon = 0,8000,true
     heading,nod,maxview,camon = self:_GetKiowaMMSSight(unit)
     angle = 8
     if maxview == 0 then
-      maxview = self.MaxViewDistance[typename] or 5000
+      maxview = self.MaxViewDistance[typename] or 8000
     end
   else
     -- visual
     heading = unit:GetHeading()
-    nod,maxview,camon = 10,1000,true
+    nod,maxview,camon = 10,3000,true
+    maxview = self.MaxViewDistance[typename] or 3000
     angle = 45
   end
   if laser then
@@ -1543,7 +1544,7 @@ end
 -- @param #PLAYERRECCE self
 -- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}. There needs to be exactly the same number of modulations!
 -- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+-- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 -- @param #string Gender (Optional) Defaults to "male"
 -- @param #string Culture (Optional) Defaults to "en-US"
 -- @param #number Port (Optional) Defaults to 5002
@@ -1555,7 +1556,7 @@ end
 -- @return #PLAYERRECCE self
 function PLAYERRECCE:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,Backend)
   self:T(self.lid.."SetSRS")
-  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
+  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio" --
   self.Gender = Gender or MSRS.gender or "male" --
   self.Culture = Culture or MSRS.culture or "en-US" --
   self.Port = Port or MSRS.port or 5002 --

@@ -30,6 +30,8 @@ do -- CARGO_UNIT
   --
   -- # Developer Note
   -- 
+  -- ![Banner Image](..\Images\deprecated.png)
+  -- 
   -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
   -- Therefore, this class is considered to be deprecated
   --
@@ -72,7 +74,7 @@ do -- CARGO_UNIT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param Core.Point#COORDINATE ToPointVec2
   -- @param #number NearRadius (optional) Defaut 25 m.
   function CARGO_UNIT:onenterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:T( { From, Event, To, ToPointVec2, NearRadius } )
@@ -145,7 +147,7 @@ do -- CARGO_UNIT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param Core.Point#COORDINATE ToPointVec2
   -- @param #number NearRadius (optional) Defaut 100 m.
   function CARGO_UNIT:onleaveUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:T( { From, Event, To, ToPointVec2, NearRadius } )
@@ -171,7 +173,7 @@ do -- CARGO_UNIT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Core.Point#POINT_VEC2 ToPointVec2
+  -- @param Core.Point#COORDINATE ToPointVec2
   -- @param #number NearRadius (optional) Defaut 100 m.
   function CARGO_UNIT:onafterUnBoarding( From, Event, To, ToPointVec2, NearRadius )
     self:T( { From, Event, To, ToPointVec2, NearRadius } )
@@ -197,7 +199,7 @@ do -- CARGO_UNIT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Core.Point#POINT_VEC2
+  -- @param Core.Point#COORDINATE
   function CARGO_UNIT:onenterUnLoaded( From, Event, To, ToPointVec2 )
     self:T( { ToPointVec2, From, Event, To } )
   

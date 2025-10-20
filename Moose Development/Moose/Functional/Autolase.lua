@@ -74,7 +74,7 @@
 -- @image Designation.JPG
 --
 -- Date: 24 Oct 2021
--- Last Update: Feb 2025
+-- Last Update: Mar 2025
 --
 --- Class AUTOLASE
 -- @type AUTOLASE
@@ -91,6 +91,8 @@
 -- @field #boolean threatmenu
 -- @field #number RoundingPrecision
 -- @field #table smokeoffset
+-- @field #boolean increasegroundawareness
+-- @field #number MonitorFrequency
 -- @extends Ops.Intel#INTEL
 
 ---
@@ -103,6 +105,8 @@ AUTOLASE = {
   debug = false,
   smokemenu = true,
   RoundingPrecision = 0,
+  increasegroundawareness = false,
+  MonitorFrequency = 30,
 }
 
 --- Laser spot info
@@ -121,7 +125,7 @@ AUTOLASE = {
 
 --- AUTOLASE class version.
 -- @field #string version
-AUTOLASE.version = "0.1.28"
+AUTOLASE.version = "0.1.31"
 
 -------------------------------------------------------------------
 -- Begin Functional.Autolase.lua
@@ -212,6 +216,8 @@ function AUTOLASE:New(RecceSet, Coalition, Alias, PilotSet)
   self.smokemenu = true
   self.threatmenu = true
   self.RoundingPrecision = 0
+  self.increasegroundawareness = false
+  self.MonitorFrequency = 30
   
   self:EnableSmokeMenu({Angle=math.random(0,359),Distance=math.random(10,20)})
   
@@ -316,13 +322,38 @@ end
 -- Helper Functions
 -------------------------------------------------------------------
 
+--- [User] When using Monitor, set the frequency here in which the report will appear
+-- @param #AUTOLASE self
+-- @param #number Seconds Run the report loop every number of seconds defined here.
+-- @return #AUTOLASE self
+function AUTOLASE:SetMonitorFrequency(Seconds)
+  self.MonitorFrequency = Seconds or 30
+  return self
+end
+
 --- [User] Set a table of possible laser codes.
--- Each new RECCE can select a code from this table, default is { 1688, 1130, 4785, 6547, 1465, 4578 } .
+-- Each new RECCE can select a code from this table, default is { 1688, 1130, 4785, 6547, 1465, 4578 }.
 -- @param #AUTOLASE self
 -- @param #list<#number> LaserCodes
--- @return #AUTOLASE
+-- @return #AUTOLASE self
 function AUTOLASE:SetLaserCodes( LaserCodes )
   self.LaserCodes = ( type( LaserCodes ) == "table" ) and LaserCodes or { LaserCodes }
+  return self
+end
+
+--- [User] Improve ground unit detection by using a zone scan and LOS check.
+-- @param #AUTOLASE self
+-- @return #AUTOLASE self 
+function AUTOLASE:EnableImproveGroundUnitsDetection()
+  self.increasegroundawareness = true
+  return self
+end
+
+--- [User] Do not improve ground unit detection by using a zone scan and LOS check.
+-- @param #AUTOLASE self
+-- @return #AUTOLASE self 
+function AUTOLASE:DisableImproveGroundUnitsDetection()
+  self.increasegroundawareness = false
   return self
 end
 
@@ -462,7 +493,7 @@ end
 --- (User) Function enable sending messages via SRS.
 -- @param #AUTOLASE self
 -- @param #boolean OnOff Switch usage on and off
--- @param #string Path Path to SRS directory, e.g. C:\\Program Files\\DCS-SimpleRadio-Standalone
+-- @param #string Path Path to SRS TTS directory, e.g. C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio
 -- @param #number Frequency Frequency to send, e.g. 243
 -- @param #number Modulation Modulation i.e. radio.modulation.AM or radio.modulation.FM
 -- @param #string Label (Optional) Short label to be used on the SRS Client Overlay
@@ -477,7 +508,7 @@ end
 function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
   if OnOff then
     self.useSRS = true
-    self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+    self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
     self.SRSFreq = Frequency or 271
     self.SRSMod = Modulation or radio.modulation.AM
     self.Gender = Gender or MSRS.gender or "male"
@@ -694,7 +725,8 @@ function AUTOLASE:CleanCurrentLasing()
       local unit = recce:GetUnit(1)
       local name = unit:GetName()
       if not self.RecceUnits[name] then
-        self.RecceUnits[name] = { name=name, unit=unit, cooldown = false, timestamp = timer.getAbsTime() }
+        local isground = (unit and unit.IsGround) and unit:IsGround() or false
+        self.RecceUnits[name] = { name=name, unit=unit, cooldown = false, timestamp = timer.getAbsTime(), isground=isground }
       end
     end
   end
@@ -944,6 +976,65 @@ function AUTOLASE:CanLase(Recce,Unit)
   return canlase
 end
 
+--- (Internal) Function to do a zone check per ground Recce and make found units and statics "known".
+-- @param #AUTOLASE self
+-- @return #AUTOLASE self 
+function AUTOLASE:_Prescient()
+  -- self.RecceUnits[name] = { name=name, unit=unit, cooldown = false, timestamp = timer.getAbsTime(), isground=isground }
+  for _,_data in pairs(self.RecceUnits) do
+    -- ground units only
+    if _data.isground and _data.unit and _data.unit:IsAlive() then
+      local unit = _data.unit -- Wrapper.Unit#UNIT
+      local position = unit:GetCoordinate() -- Core.Point#COORDINATE
+      local needsinit = false
+      if position then
+        local lastposition = unit:GetProperty("lastposition")
+        -- property initiated?
+        if not lastposition then
+          unit:SetProperty("lastposition",position)
+          lastposition = position
+          needsinit = true
+        end
+        -- has moved?
+        local dist = position:Get2DDistance(lastposition)
+        -- refresh?
+        local TNow = timer.getAbsTime()
+        -- check
+        if dist > 10 or needsinit==true or TNow - _data.timestamp > 29 then
+          -- init scan objects
+          local hasunits,hasstatics,_,Units,Statics = position:ScanObjects(self.LaseDistance,true,true,false)
+          -- loop found units
+          if hasunits then
+            self:T(self.lid.."Checking possibly visible UNITs for Recce "..unit:GetName())
+            for _,_target in pairs(Units) do -- Wrapper.Unit#UNIT object here
+              local target = _target -- Wrapper.Unit#UNIT
+              if target and target:GetCoalition() ~= self.coalition then
+                if unit:IsLOS(target) and (not target:IsUnitDetected(unit))then
+                  unit:KnowUnit(target,true,true)
+                end
+              end
+            end
+          end
+          -- loop found statics
+          if hasstatics then
+           self:T(self.lid.."Checking possibly visible STATICs for Recce "..unit:GetName())
+            for _,_static in pairs(Statics) do -- DCS static object here
+              local static = STATIC:Find(_static)
+              if static and static:GetCoalition() ~= self.coalition and static:GetCoordinate() then
+                local IsLOS = position:IsLOS(static:GetCoordinate())
+                if IsLOS then
+                  unit:KnowUnit(static,true,true)
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+  return self
+end
+
 -------------------------------------------------------------------
 -- FSM Functions
 -------------------------------------------------------------------
@@ -956,6 +1047,9 @@ end
 -- @return #AUTOLASE self
 function AUTOLASE:onbeforeMonitor(From, Event, To)
   self:T({From, Event, To})
+  if self.increasegroundawareness then
+    self:_Prescient()
+  end
   -- Check if group has detected any units.
   self:UpdateIntel()
   return self
@@ -984,7 +1078,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     local grp = contact.group
     local coord = contact.position
     local reccename = contact.recce or "none"
-  local threat = contact.threatlevel or 0
+    local threat = contact.threatlevel or 0
     local reccegrp = UNIT:FindByName(reccename)
     if reccegrp then
       local reccecoord = reccegrp:GetCoordinate()
@@ -1121,7 +1215,8 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     end
   end
   
-  self:__Monitor(-30)
+  local nextloop = -self.MonitorFrequency or -30
+  self:__Monitor(nextloop)
   return self
 end
 

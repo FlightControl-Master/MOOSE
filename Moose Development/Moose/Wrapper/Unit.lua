@@ -377,6 +377,10 @@ function UNIT:ReSpawnAt(Coordinate, Heading)
 
     --self:T( SpawnGroupTemplate )
 
+    if self.ValidateAndRepositionGroundUnits then
+        UTILS.ValidateAndRepositionGroundUnits(SpawnGroupTemplate.units)
+    end
+
     _DATABASE:Spawn(SpawnGroupTemplate)
 end
 
@@ -607,7 +611,7 @@ function UNIT:GetSpeedMax()
     local Desc = self:GetDesc()
 
     if Desc then
-        local SpeedMax = Desc.speedMax
+        local SpeedMax = Desc.speedMax or 0
         return SpeedMax * 3.6
     end
 
@@ -897,7 +901,7 @@ function UNIT:GetAmmunition()
                     nAPshells = nAPshells + Nammo
                 end
 
-                if ammotable[w].desc.typeName and string.find(ammotable[w].desc.typeName, "_HE", 1, true) then
+                if ammotable[w].desc.typeName and (string.find(ammotable[w].desc.typeName, "_HE", 1, true) or string.find(ammotable[w].desc.typeName, "HESH", 1, true)) then
                     nHEshells = nHEshells + Nammo
                 end
 
@@ -1107,7 +1111,6 @@ function UNIT:GetUnits()
 
     if DCSUnit then
         Units[1] = UNIT:Find(DCSUnit)
-        - self:T3(Units)
         return Units
     end
 
@@ -1924,4 +1927,29 @@ function UNIT:IsAAA()
         return true
     end
     return false
+end
+
+--- Set the relative life points of a UNIT object
+-- @param #UNIT self
+-- @param #number Percent Percent to set, can be 0..100.
+function UNIT:SetLife(Percent)
+    net.dostring_in("mission",string.format("a_unit_set_life_percentage(%d, %f)", self:GetID(), Percent))
+end
+
+--- Set the carrier illumination mode. -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+-- @param #UNIT self
+-- @param #number Mode Illumination mode, can be -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+function UNIT:SetCarrierIlluminationMode(Mode)
+    UTILS.SetCarrierIlluminationMode(self:GetID(), Mode)
+end
+
+--- This function uses Disposition and other fallback logic to find better ground positions for ground units.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
+--- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+--- Uses UTILS.ValidateAndRepositionGroundUnits.
+-- @param #UNIT self
+-- @param #boolean Enabled Enable/disable the feature.
+function UNIT:SetValidateAndRepositionGroundUnits(Enabled)
+    self.ValidateAndRepositionGroundUnits = Enabled
 end

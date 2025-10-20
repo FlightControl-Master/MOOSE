@@ -22,7 +22,7 @@
 -- ===
 -- 
 -- ### Author: **Applevangelist**
--- Last Update Sept 2023
+-- Last Update July 2025
 --
 -- ===
 -- @module Functional.AICSAR
@@ -57,6 +57,8 @@
 -- @field #number Speed Default speed setting for the helicopter FLIGHTGROUP is 100kn.
 -- @field #boolean UseEventEject In case Event LandingAfterEjection isn't working, use set this to true.
 -- @field #number Delay In case of UseEventEject wait this long until we spawn a landed pilot.
+-- @field #boolean UseRescueZone If true, use a rescue zone and not the max distance to FARP/MASH
+-- @field Core.Zone#ZONE_RADIUS RescueZone Use this zone as operational area for the AICSAR instance.
 -- @extends Core.Fsm#FSM
 
 
@@ -153,10 +155,10 @@
 -- To set up AICSAR for SRS TTS output, add e.g. the following to your script:
 --              
 --              -- setup for google TTS, radio 243 AM, SRS server port 5002 with a google standard-quality voice (google cloud account required)
---              my_aicsar:SetSRSTTSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",243,radio.modulation.AM,5002,MSRS.Voices.Google.Standard.en_US_Standard_D,"en-US","female","C:\\Program Files\\DCS-SimpleRadio-Standalone\\google.json")
+--              my_aicsar:SetSRSTTSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio",243,radio.modulation.AM,5002,MSRS.Voices.Google.Standard.en_US_Standard_D,"en-US","female","C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio\\google.json")
 --              
 --              -- alternatively for MS Desktop TTS (voices need to be installed locally first!)
---              my_aicsar:SetSRSTTSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",243,radio.modulation.AM,5002,MSRS.Voices.Microsoft.Hazel,"en-GB","female")
+--              my_aicsar:SetSRSTTSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio",243,radio.modulation.AM,5002,MSRS.Voices.Microsoft.Hazel,"en-GB","female")
 --              
 --              -- define a different voice for the downed pilot(s)
 --              my_aicsar:SetPilotTTSVoice(MSRS.Voices.Google.Standard.en_AU_Standard_D,"en-AU","male")
@@ -177,7 +179,7 @@
 --           
 -- Switch on radio transmissions via **either** SRS **or** "normal" DCS radio e.g. like so:
 -- 
---          my_aicsar:SetSRSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone",270,radio.modulation.AM,nil,5002)
+--          my_aicsar:SetSRSRadio(true,"C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio",270,radio.modulation.AM,nil,5002)
 --         
 -- or         
 --          
@@ -191,7 +193,7 @@
 -- @field #AICSAR
 AICSAR = {
   ClassName = "AICSAR",
-  version = "0.1.16",
+  version = "0.1.18",
   lid = "",
   coalition = coalition.side.BLUE,
   template = "",
@@ -236,6 +238,8 @@ AICSAR = {
   Altitude = 1500,
   UseEventEject = false,
   Delay = 100,
+  UseRescueZone = false,
+  RescueZone = nil,
 }
 
 -- TODO Messages
@@ -304,8 +308,9 @@ AICSAR.RadioLength = {
 -- @param #string Helotemplate Helicopter template name.
 -- @param Wrapper.Airbase#AIRBASE FARP FARP object or Airbase from where to start.
 -- @param Core.Zone#ZONE MASHZone Zone where to drop pilots after rescue.
+-- @param #number Helonumber Max number of alive Ai Helos at the same time. Defaults to three.
 -- @return #AICSAR self
-function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
+function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone,Helonumber)
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New())
   
@@ -373,7 +378,7 @@ function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone)
   
   -- limit number of available helos at the same time
   self.limithelos = true
-  self.helonumber = 3
+  self.helonumber = Helonumber or 3
 
   -- localization
   self:InitLocalization()
@@ -524,10 +529,20 @@ function AICSAR:InitLocalization()
   return self
 end
 
+--- [User] Use a defined zone as area of operation and not the distance to FARP.
+-- @param #AICSAR self
+-- @param Core.Zone#ZONE Zone The operational zone to use. Downed pilots in this area will be rescued. Can be any known #ZONE type.
+-- @return #AICSAR self 
+function AICSAR:SetUsingRescueZone(Zone)
+  self.UseRescueZone = true
+  self.RescueZone = Zone
+  return self
+end
+
 --- [User] Switch sound output on and use SRS output for sound files.
 -- @param #AICSAR self
 -- @param #boolean OnOff Switch on (true) or off (false).
--- @param #string Path Path to your SRS Server Component, e.g. "C:\\\\Program Files\\\\DCS-SimpleRadio-Standalone"
+-- @param #string Path Path to your SRS Server External Audio Component, e.g. "C:\\\\Program Files\\\\DCS-SimpleRadio-Standalone\\\\ExternalAudio"
 -- @param #number Frequency Defaults to 243 (guard)
 -- @param #number Modulation Radio modulation. Defaults to radio.modulation.AM
 -- @param #string SoundPath Where to find the audio files. Defaults to nil, i.e. add messages via "Sound to..." in the Mission Editor.
@@ -538,7 +553,7 @@ function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath,Port)
   self.SRSRadio = OnOff and true
   self.SRSTTSRadio = false
   self.SRSFrequency = Frequency or 243
-  self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+  self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
   self.SRS:SetLabel("ACSR")
   self.SRS:SetCoalition(self.coalition)
   self.SRSModulation = Modulation or radio.modulation.AM
@@ -556,7 +571,7 @@ end
 -- See `AICSAR:SetPilotTTSVoice()` and `AICSAR:SetOperatorTTSVoice()`
 -- @param #AICSAR self
 -- @param #boolean OnOff Switch on (true) or off (false).
--- @param #string Path Path to your SRS Server Component, e.g. "E:\\\\Program Files\\\\DCS-SimpleRadio-Standalone"
+-- @param #string Path Path to your SRS Server Component, e.g. "E:\\\\Program Files\\\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 -- @param #number Frequency (Optional) Defaults to 243 (guard)
 -- @param #number Modulation (Optional) Radio modulation. Defaults to radio.modulation.AM
 -- @param #number Port (Optional) Port of the SRS, defaults to 5002.
@@ -570,7 +585,7 @@ function AICSAR:SetSRSTTSRadio(OnOff,Path,Frequency,Modulation,Port,Voice,Cultur
   self.SRSTTSRadio = OnOff and true
   self.SRSRadio = false
   self.SRSFrequency = Frequency or 243
-  self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+  self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
   self.SRSModulation = Modulation or radio.modulation.AM
   self.SRSPort = Port or MSRS.port or 5002
   if OnOff then
@@ -693,7 +708,7 @@ function AICSAR:_EjectEventHandler(EventData)
       local _LandingPos = COORDINATE:NewFromVec3(_event.initiator:getPosition().p)
       local _country = _event.initiator:getCountry()
       local _coalition = coalition.getCountryCoalition( _country )
-      local data = UTILS.DeepCopy(EventData)
+      --local data = UTILS.DeepCopy(EventData)
       Unit.destroy(_event.initiator) -- shagrat remove static Pilot model
       self:ScheduleOnce(self.Delay,self._DelayedSpawnPilot,self,_LandingPos,_coalition)
     end
@@ -708,7 +723,14 @@ end
 -- @return #AICSAR self
 function AICSAR:_DelayedSpawnPilot(_LandingPos,_coalition)
 
-  local distancetofarp = _LandingPos:Get2DDistance(self.farp:GetCoordinate()) 
+  local distancetofarp = _LandingPos:Get2DDistance(self.farp:GetCoordinate())
+  if self.UseRescueZone == true and self.RescueZone ~= nil then
+    if self.RescueZone:IsCoordinateInZone(_LandingPos) then
+      distancetofarp = self.maxdistance - 10
+    else
+      distancetofarp = self.maxdistance + 10
+    end
+  end 
   -- Mayday Message
   local Text,Soundfile,Soundlength,Subtitle = self.gettext:GetEntry("PILOTDOWN",self.locale)
   local text = ""
@@ -795,7 +817,13 @@ function AICSAR:_EventHandler(EventData, FromEject)
 
   -- DONE: add distance check
   local distancetofarp = _LandingPos:Get2DDistance(self.farp:GetCoordinate())
-  
+  if self.UseRescueZone == true and self.RescueZone ~= nil then
+    if self.RescueZone:IsCoordinateInZone(_LandingPos) then
+      distancetofarp = self.maxdistance - 10
+    else
+      distancetofarp = self.maxdistance + 10
+    end
+  end 
   -- Mayday Message
   local Text,Soundfile,Soundlength,Subtitle = self.gettext:GetEntry("PILOTDOWN",self.locale)
   local text = ""
@@ -817,7 +845,6 @@ function AICSAR:_EventHandler(EventData, FromEject)
   if _coalition == self.coalition then
     if self.verbose then
       MESSAGE:New(msgtxt,15,"AICSAR"):ToCoalition(self.coalition)
-     -- MESSAGE:New(msgtxt,15,"AICSAR"):ToLog()
     end
     if self.SRSRadio then
       local sound = SOUNDFILE:New(Soundfile,self.SRSSoundPath,Soundlength)
@@ -869,6 +896,7 @@ function AICSAR:_GetFlight()
     :InitUnControlled(true)
     :OnSpawnGroup(
       function(Group)
+        Group:OptionPreferVerticalLanding()
         self:__HeloOnDuty(1,Group)
       end
     )
@@ -892,7 +920,7 @@ function AICSAR:_InitMission(Pilot,Index)
   --local pilotset = SET_GROUP:New()
   --pilotset:AddGroup(Pilot)
   
-    -- Cargo transport assignment.
+  -- Cargo transport assignment.
   local opstransport=OPSTRANSPORT:New(Pilot, pickupzone, self.farpzone)
   --opstransport:SetVerbosity(3)
   
@@ -932,6 +960,10 @@ function AICSAR:_InitMission(Pilot,Index)
   function helo:OnAfterUnloaded(From,Event,To,OpsGroupCargo)
     AICHeloUnloaded(helo,OpsGroupCargo)
     helo:__UnloadingDone(5)
+  end
+  
+  function helo:OnAfterLandAtAirbase(From,Event,To,airbase)
+    helo:Despawn(2)
   end
   
   self.helos[Index] = helo
@@ -984,7 +1016,9 @@ function AICSAR:_CheckHelos()
       local name = helo:GetName()
       self:T("Helo group "..name.." in state "..state)
       if state == "Arrived" then
-        helo:__Stop(5)
+        --helo:__Stop(5)
+        helo.OnAfterDead = nil
+        helo:Despawn(35)
         self.helos[_index] = nil
       end
     else
@@ -1025,7 +1059,7 @@ function AICSAR:_CheckQueue(OpsGroup)
      if self:_CheckInMashZone(_pilot) then
       self:T("Pilot" .. _pilot.GroupName .. " rescued!")
       if OpsGroup then
-        OpsGroup:Despawn(10)
+        --OpsGroup:Despawn(10)
       else 
         _pilot:Destroy(true,10)
       end

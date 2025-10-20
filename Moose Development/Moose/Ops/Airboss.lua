@@ -21,7 +21,7 @@
 --    * Multiple carrier support due to object oriented approach.
 --    * Unlimited number of players.
 --    * Persistence of player results (optional). LSO grading data is saved to csv file.
---    * Trap sheet (optional).
+--    * Trap sheet (optional). 
 --    * Finite State Machine (FSM) implementation.
 --
 -- **Supported Carriers:**
@@ -32,12 +32,15 @@
 --    * [USS George Washington](https://en.wikipedia.org/wiki/USS_George_Washington_\(CVN-73\)) (CVN-73) [Super Carrier Module]
 --    * [USS Harry S. Truman](https://en.wikipedia.org/wiki/USS_Harry_S._Truman) (CVN-75) [Super Carrier Module]
 --    * [USS Forrestal](https://en.wikipedia.org/wiki/USS_Forrestal_\(CV-59\)) (CV-59) [Heatblur Carrier Module]
+--    * [Essex Class](https://en.wikipedia.org/wiki/Essex-class_aircraft_carrier) (CV-11) [Magnitude 3 Carrier Module]
 --    * [HMS Hermes](https://en.wikipedia.org/wiki/HMS_Hermes_\(R12\)) (R12)
 --    * [HMS Invincible](https://en.wikipedia.org/wiki/HMS_Invincible_\(R05\)) (R05)
 --    * [USS Tarawa](https://en.wikipedia.org/wiki/USS_Tarawa_\(LHA-1\)) (LHA-1)
 --    * [USS America](https://en.wikipedia.org/wiki/USS_America_\(LHA-6\)) (LHA-6)
 --    * [Juan Carlos I](https://en.wikipedia.org/wiki/Spanish_amphibious_assault_ship_Juan_Carlos_I) (L61)
 --    * [HMAS Canberra](https://en.wikipedia.org/wiki/HMAS_Canberra_\(L02\)) (L02)
+--    * BONHOMMERICHARD [VWV Mod]
+--    * ENTERPRISE66 [VWV Mod]
 --
 -- **Supported Aircraft:**
 --
@@ -47,6 +50,7 @@
 --    * [AV-8B N/A Harrier](https://forums.eagle.ru/forumdisplay.php?f=555) (Player & AI)
 --    * [T-45C Goshawk](https://forum.dcs.world/topic/203816-vnao-t-45-goshawk/) (VNAO mod) (Player & AI)
 --    * [FE/A-18E/F/G Superhornet](https://forum.dcs.world/topic/316971-cjs-super-hornet-community-mod-v20-official-thread/) (CJS mod) (Player & AI)
+--    * [F4U-1D Corsair](https://forum.dcs.world/forum/781-f4u-1d/) (Player & AI)
 --    * F/A-18C Hornet (AI)
 --    * F-14A Tomcat (AI)
 --    * E-2D Hawkeye (AI)
@@ -1283,6 +1287,8 @@ AIRBOSS = {
 -- @field #string RHINOE F/A-18E Superhornet (mod).
 -- @field #string RHINOF F/A-18F Superhornet (mod).
 -- @field #string GROWLER FEA-18G Superhornet (mod).
+-- @field #string CORSAIR F4U-1D Corsair.
+-- @field #string CORSAIR_CW F4U-1D Corsair Mk.4 (clipped wing).
 AIRBOSS.AircraftCarrier={
   AV8B="AV8BNA",
   HORNET="FA-18C_hornet",
@@ -1299,6 +1305,8 @@ AIRBOSS.AircraftCarrier={
   RHINOE="FA-18E",
   RHINOF="FA-18F",
   GROWLER="EA-18G",
+  CORSAIR="F4U-1D",
+  CORSAIR_CW="F4U-1D CW",  
 }
 
 --- Carrier types.
@@ -1310,6 +1318,11 @@ AIRBOSS.AircraftCarrier={
 -- @field #string TRUMAN USS Harry S. Truman (CVN-75) [Super Carrier Module]
 -- @field #string FORRESTAL USS Forrestal (CV-59) [Heatblur Carrier Module]
 -- @field #string VINSON USS Carl Vinson (CVN-70) [Deprecated!]
+-- @field #string ESSEX Essex class carrier (e.g. USS Yorktown (CV-10)) [Magnitude 3 Carrier Module]
+-- @field #string BONHOMMERICHARD USS Bon Homme Richard carrier [VWV Mod]
+-- @field #string ESSEXSCB125 Generic Essex class carrier with angled deck (SCB-125 upgrade) [VWV Mod]
+-- @field #string ENTERPRISE66 USS Enterprise in the 1966 configuration [VWV Mod]
+-- @field #string ENTERPRISEMODERN USS Enterprise in a modern configuration [Derived VWV Mod]
 -- @field #string HERMES HMS Hermes (R12) [V/STOL Carrier]
 -- @field #string INVINCIBLE HMS Invincible (R05) [V/STOL Carrier]
 -- @field #string TARAWA USS Tarawa (LHA-1) [V/STOL Carrier]
@@ -1324,7 +1337,12 @@ AIRBOSS.CarrierType = {
   TRUMAN = "CVN_75",
   STENNIS = "Stennis",
   FORRESTAL = "Forrestal",
+  ENTERPRISE66 = "USS Enterprise 1966",
+  ENTERPRISEMODERN = "cvn-65",
   VINSON = "VINSON",
+  ESSEX = "Essex",
+  BONHOMMERICHARD = "USS Bon Homme Richard",
+  ESSEXSCB125 = "essex_scb125",
   HERMES = "HERMES81",
   INVINCIBLE = "hms_invincible",
   TARAWA = "LHA_Tarawa",
@@ -1436,6 +1454,7 @@ AIRBOSS.PatternStep = {
   GROOVE_IC = "Groove In Close",
   GROOVE_AR = "Groove At the Ramp",
   GROOVE_IW = "Groove In the Wires",
+  GROOVE_IWs = "Groove In the Wires stopped?", -- VNAO Edit - Added
   GROOVE_AL = "Groove Abeam Landing Spot",
   GROOVE_LC = "Groove Level Cross",
   BOLTER = "Bolter Pattern",
@@ -1731,10 +1750,10 @@ AIRBOSS.Difficulty = {
 -- @field #table trapsheet Groove data table recorded every 0.5 seconds.
 -- @field #boolean trapon If true, save trap sheets.
 -- @field #string debriefschedulerID Debrief scheduler ID.
--- 
+--
 -- @field Sound.SRS#MSRS SRS
 -- @field Sound.SRS#MSRSQUEUE SRSQ
--- 
+--
 -- @extends #AIRBOSS.FlightGroup
 
 --- Main group level radio menu: F10 Other/Airboss.
@@ -1747,7 +1766,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.3.3"
+AIRBOSS.version = "1.4.2"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1912,6 +1931,9 @@ function AIRBOSS:New( carriername, alias )
   -- Set max section members. Default 2.
   self:SetMaxSectionSize()
 
+  -- Set max section distance. Default 100 meters.
+  self:SetMaxSectionDistance()
+
   -- Set max flights per stack. Default is 2.
   self:SetMaxFlightsPerStack()
 
@@ -2007,9 +2029,19 @@ function AIRBOSS:New( carriername, alias )
     self:_InitNimitz()
   elseif self.carriertype == AIRBOSS.CarrierType.FORRESTAL then
     self:_InitForrestal()
+  elseif self.carriertype == AIRBOSS.CarrierType.ENTERPRISE66 then
+    self:_InitEnterprise()
+  elseif self.carriertype == AIRBOSS.CarrierType.ENTERPRISEMODERN then
+    self:_InitEnterprise()
   elseif self.carriertype == AIRBOSS.CarrierType.VINSON then
     -- Carl Vinson is legacy now.
     self:_InitStennis()
+  elseif self.carriertype == AIRBOSS.CarrierType.ESSEX then
+    self:_InitEssex()
+  elseif self.carriertype == AIRBOSS.CarrierType.BONHOMMERICHARD then
+    self:_InitBonHommeRichard()
+  elseif self.carriertype == AIRBOSS.CarrierType.ESSEXSCB125 then
+    self:_InitEssexSCB125()
   elseif self.carriertype == AIRBOSS.CarrierType.HERMES then
     -- Hermes parameters.
     self:_InitHermes()
@@ -2398,6 +2430,16 @@ end
 -- USER API Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Set the carrier illumination mode.
+-- @param #AIRBOSS self
+-- @param #number Mode Options are: -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+-- @return #AIRBOSS self
+function AIRBOSS:SetCarrierIllumination(Mode)
+  self.carrier:SetCarrierIlluminationMode(Mode)
+  return self
+end
+
+
 --- Set welcome messages for players.
 -- @param #AIRBOSS self
 -- @param #boolean Switch If true, display welcome message to player.
@@ -2539,7 +2581,7 @@ function AIRBOSS:AddRecoveryWindow( starttime, stoptime, case, holdingoffset, tu
     return self
   end
   if Tstop <= Tnow then
-      string.format( "WARNING: Recovery stop time %s already over. Tnow=%s! Recovery window rejected.", UTILS.SecondsToClock( Tstop ), UTILS.SecondsToClock( Tnow ) ) 
+      string.format( "WARNING: Recovery stop time %s already over. Tnow=%s! Recovery window rejected.", UTILS.SecondsToClock( Tstop ), UTILS.SecondsToClock( Tnow ) )
     return self
   end
 
@@ -2863,23 +2905,28 @@ end
 function AIRBOSS:SetGlideslopeErrorThresholds(_max,_min, High, HIGH, Low, LOW)
 
   --Check if V/STOL Carrier
-  if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
+  if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or 
+    self.carriertype == AIRBOSS.CarrierType.HERMES or 
+    self.carriertype == AIRBOSS.CarrierType.TARAWA or 
+    self.carriertype == AIRBOSS.CarrierType.AMERICA or 
+    self.carriertype == AIRBOSS.CarrierType.JCARLOS or 
+    self.carriertype == AIRBOSS.CarrierType.CANBERRA then
 
-  -- allow a larger GSE for V/STOL operations --Pene Testing
-  self.gle._max=_max or  0.7
-  self.gle.High=High or  1.4
-  self.gle.HIGH=HIGH or  1.9
-  self.gle._min=_min or -0.5
-  self.gle.Low=Low   or -1.2
-  self.gle.LOW=LOW   or -1.5
-  -- CVN values
+    -- allow a larger GSE for V/STOL operations --Pene Testing
+    self.gle._max=_max or  0.7
+    self.gle.High=High or  1.4
+    self.gle.HIGH=HIGH or  1.9
+    self.gle._min=_min or -0.5
+    self.gle.Low=Low   or -1.2
+    self.gle.LOW=LOW   or -1.5
   else
-  self.gle._max=_max or  0.4
-  self.gle.High=High or  0.8
-  self.gle.HIGH=HIGH or  1.5
-  self.gle._min=_min or -0.3
-  self.gle.Low=Low   or -0.6
-  self.gle.LOW=LOW   or -0.9
+    -- CVN values    
+    self.gle._max=_max or  0.4
+    self.gle.High=High or  0.8
+    self.gle.HIGH=HIGH or  1.5
+    self.gle._min=_min or -0.3
+    self.gle.Low=Low   or -0.6
+    self.gle.LOW=LOW   or -0.9
   end
 
   return self
@@ -3062,11 +3109,11 @@ end
 
 --- Set up SRS for usage without sound files
 -- @param #AIRBOSS self
--- @param #string PathToSRS Path to SRS folder, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone".
+-- @param #string PathToSRS Path to SRS folder, e.g. "C:\\Program Files\\DCS-SimpleRadio\\ExternalAudio".
 -- @param #number Port Port of the SRS server, defaults to 5002.
 -- @param #string Culture (Optional, Airboss Culture)  Culture, defaults to "en-US".
 -- @param #string Gender (Optional, Airboss Gender)  Gender, e.g. "male" or "female". Defaults to "male".
--- @param #string Voice (Optional, Airboss Voice) Set to use a specific voice. Will **override gender and culture** settings.  
+-- @param #string Voice (Optional, Airboss Voice) Set to use a specific voice. Will **override gender and culture** settings.
 -- @param #string GoogleCreds (Optional) Path to Google credentials, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourgooglekey.json".
 -- @param #number Volume (Optional) E.g. 0.75. Defaults to 1.0 (loudest).
 -- @param #table AltBackend (Optional) See MSRS for details.
@@ -3081,27 +3128,29 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   self.SRS:SetCulture(Culture or "en-US")
   --self.SRS:SetFrequencies(Frequencies)
   self.SRS:SetGender(Gender or "male")
-  self.SRS:SetPath(PathToSRS)
-  self.SRS:SetPort(Port or 5002)
+  --self.SRS:SetPath(PathToSRS)
+  self.SRS:SetPort(Port or MSRS.port or 5002)
   self.SRS:SetLabel(self.AirbossRadio.alias or "AIRBOSS")
   self.SRS:SetCoordinate(self.carrier:GetCoordinate())
   self.SRS:SetVolume(Volume or 1)
   --self.SRS:SetModulations(Modulations)
   if GoogleCreds then
-    self.SRS:SetProviderOptionsGoogle(GoogleCreds,GoogleCreds)
-    self.SRS:SetProvider(MSRS.Provider.GOOGLE)
+    self.SRS:SetGoogle(GoogleCreds)
   end
   if Voice then
     self.SRS:SetVoice(Voice)
   end
-  self.SRS:SetVolume(Volume or 1.0)
+  if (not Voice) and self.SRS and self.SRS:GetProvider() == MSRS.Provider.GOOGLE then
+    self.SRS.voice = MSRS.poptions["gcloud"].voice or MSRS.Voices.Google.Standard.en_US_Standard_B
+  end
+  --self.SRS:SetVolume(Volume or 1.0)
   -- SRSQUEUE
   self.SRSQ = MSRSQUEUE:New("AIRBOSS")
   self.SRSQ:SetTransmitOnlyWithPlayers(true)
-  if not self.PilotRadio then 
+  if not self.PilotRadio then
     self:SetSRSPilotVoice()
   end
-  return self  
+  return self
 end
 
 --- Set LSO radio frequency and modulation. Default frequency is 264 MHz AM.
@@ -3342,6 +3391,22 @@ function AIRBOSS:SetMaxSectionSize( nmax )
   nmax = math.min( nmax, 4 )
   self.NmaxSection = nmax - 1 -- We substract one because internally the section lead is not counted!
   return self
+end
+
+--- Set maximum distance up to which section members are allowed (default: 100 meters).
+-- @param #AIRBOSS self
+-- @param #number dmax Max distance in meters (default 100 m). Minimum is 10 m, maximum is 5000 m.
+-- @return #AIRBOSS self
+function AIRBOSS:SetMaxSectionDistance( dmax )
+    if dmax then
+        if dmax < 10 then
+            dmax = 10
+        elseif dmax > 5000 then
+            dmax = 5000
+        end
+    end
+    self.maxsectiondistance = dmax or 100
+    return self
 end
 
 --- Set max number of flights per stack. All members of a section count as one "flight".
@@ -3623,7 +3688,6 @@ function AIRBOSS:onafterStart( From, Event, To )
   self:HandleEvent( EVENTS.PlayerLeaveUnit, self._PlayerLeft )
   self:HandleEvent( EVENTS.MissionEnd )
   self:HandleEvent( EVENTS.RemoveUnit )
-  self:HandleEvent( EVENTS.UnitLost, self.OnEventRemoveUnit )
 
   -- self.StatusScheduler=SCHEDULER:New(self)
   -- self.StatusScheduler:Schedule(self, self._Status, {}, 1, 0.5)
@@ -4470,7 +4534,7 @@ function AIRBOSS:_InitStennis()
   -- Early break.
   self.BreakEarly.name = "Early Break"
   self.BreakEarly.Xmin = -UTILS.NMToMeters( 1 ) -- Not more than 1 NM behind the boat. Last check was at 0.
-  self.BreakEarly.Xmax = UTILS.NMToMeters( 5 ) -- Not more than 5 NM in front of the boat. Enough for late breaks?
+  self.BreakEarly.Xmax = UTILS.NMToMeters( 7 ) -- Not more than 5 NM in front of the boat. Enough for late breaks? -- VNAO EDIT - original value 5
   self.BreakEarly.Zmin = -UTILS.NMToMeters( 2 ) -- Not more than 2 NM port.
   self.BreakEarly.Zmax = UTILS.NMToMeters( 1 ) -- Not more than 1 NM starboard.
   self.BreakEarly.LimitXmin = 0 -- Check and next step 0.2 NM port and in front of boat.
@@ -4481,7 +4545,7 @@ function AIRBOSS:_InitStennis()
   -- Late break.
   self.BreakLate.name = "Late Break"
   self.BreakLate.Xmin = -UTILS.NMToMeters( 1 ) -- Not more than 1 NM behind the boat. Last check was at 0.
-  self.BreakLate.Xmax = UTILS.NMToMeters( 5 ) -- Not more than 5 NM in front of the boat. Enough for late breaks?
+  self.BreakLate.Xmax = UTILS.NMToMeters( 7 ) -- Not more than 5 NM in front of the boat. Enough for late breaks? -- VNAO EDIT - original value 5
   self.BreakLate.Zmin = -UTILS.NMToMeters( 2 ) -- Not more than 2 NM port.
   self.BreakLate.Zmax = UTILS.NMToMeters( 1 ) -- Not more than 1 NM starboard.
   self.BreakLate.LimitXmin = 0 -- Check and next step 0.8 NM port and in front of boat.
@@ -4492,7 +4556,7 @@ function AIRBOSS:_InitStennis()
   -- Abeam position.
   self.Abeam.name = "Abeam Position"
   self.Abeam.Xmin = -UTILS.NMToMeters( 5 ) -- Not more then 5 NM astern of boat. Should be LIG call anyway.
-  self.Abeam.Xmax = UTILS.NMToMeters( 5 ) -- Not more then 5 NM ahead of boat.
+    self.Abeam.Xmax = UTILS.NMToMeters( 7 ) -- Not more then 5 NM ahead of boat.    --VNAO EDIT  - original value 5
   self.Abeam.Zmin = -UTILS.NMToMeters( 2 ) -- Not more than 2 NM port.
   self.Abeam.Zmax = 500 -- Not more than 500 m starboard. Must be port!
   self.Abeam.LimitXmin = -200 -- Check and next step 200 meters behind the ship.
@@ -4571,7 +4635,7 @@ function AIRBOSS:_InitNimitz()
   self.carrierparam.wire1 = 55 -- Distance from stern to first wire.
   self.carrierparam.wire2 = 67
   self.carrierparam.wire3 = 79
-  self.carrierparam.wire4 = 92
+  self.carrierparam.wire4 = 96 -- VNAO Edit - original value was 92
 
   -- Landing distance.
   self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.wire3
@@ -4607,6 +4671,100 @@ function AIRBOSS:_InitForrestal()
 
   -- Landing distance.
   self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.wire3
+
+end
+
+--- Init parameters for Enterprise carrier.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitEnterprise()
+  -- Using Forrestal as template
+  self:_InitForrestal()
+
+  self.carrierparam.sterndist = -164.30
+  self.carrierparam.deckheight = 19.52
+
+  self.carrierparam.totlength = 335
+  self.carrierparam.rwylength = 223
+
+  -- Wires.
+  self.carrierparam.wire1 = 57.7
+  self.carrierparam.wire2 = 69.6
+  self.carrierparam.wire3 = 79.5
+  self.carrierparam.wire4 = 90.0
+
+end
+
+--- Init parameters for Essec class carriers.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitEssex()
+
+  -- Init Nimitz as default.
+  self:_InitNimitz()
+
+  -- Carrier Parameters.
+  self.carrierparam.sterndist = -126
+  self.carrierparam.deckheight = 19.27 --DCS World\CoreMods\tech\M3 WWII PTO units\Database\Essex_Class_Carrier_1944.lua
+
+  -- Total size of the carrier (approx as rectangle).
+  self.carrierparam.totlength = 268
+  self.carrierparam.totwidthport = 23
+  self.carrierparam.totwidthstarboard = 23
+
+  -- Landing runway.
+  self.carrierparam.rwyangle = 0.0
+  self.carrierparam.rwylength = 265
+  self.carrierparam.rwywidth = 20
+
+  -- Wires.
+  self.carrierparam.wire1  = 21.9
+  self.carrierparam.wire2  = 28.3
+  self.carrierparam.wire3  = 34.7
+  self.carrierparam.wire4  = 41.1
+  self.carrierparam.wire5  = 47.4
+  self.carrierparam.wire6  = 53.7
+  self.carrierparam.wire7  = 59.0
+
+  self.carrierparam.wire8  = 64.1
+  self.carrierparam.wire9  = 72.7
+  self.carrierparam.wire10 = 78.0
+  self.carrierparam.wire11 = 85.5
+
+  self.carrierparam.wire12 = 105.9
+  self.carrierparam.wire13 = 113.3
+  self.carrierparam.wire14 = 121.0
+  self.carrierparam.wire15 = 128.5
+
+  -- Landing distance.
+  self.carrierparam.landingdist = self.carrierparam.sterndist+self.carrierparam.wire3
+
+end
+
+--- Init parameters for CVA-31 Bon Homme Richard carriers.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitBonHommeRichard()
+  -- Init Essex as default
+  self:_InitEssex()
+
+  self.carrierparam.deckheight = 16.95
+
+  -- Landing runway.
+  -- from BHR EssexRunwayAndRoutes.lua
+  self.carrierparam.rwyangle = -11.4
+  self.carrierparam.rwylength = 97
+  self.carrierparam.rwywidth = 20
+
+  -- Wires.
+  self.carrierparam.wire1 = 40.4 -- Distance from stern to first wire. Original from Frank - 42
+  self.carrierparam.wire2 = 45
+  self.carrierparam.wire3 = 51
+  self.carrierparam.wire4 = 58.1
+end
+
+--- Init parameters for Generic Essex SC125 class carriers.
+-- @param #AIRBOSS self
+function AIRBOSS:_InitEssexSCB125()
+  -- Init Bon Homme Richard as default
+  self:_InitBonHommeRichard()
 
 end
 
@@ -5019,6 +5177,7 @@ function AIRBOSS:SetVoiceOversLSOByRaynor( mizfolder )
   self.LSOCall.N8.duration = 0.38
   self.LSOCall.N9.duration = 0.34
   self.LSOCall.PADDLESCONTACT.duration = 0.91
+  self.LSOCall.POWERsoft.duration=0.9 -- VNAO Edit - Added
   self.LSOCall.POWER.duration = 0.45
   self.LSOCall.RADIOCHECK.duration = 0.90
   self.LSOCall.RIGHTFORLINEUP.duration = 0.70
@@ -5077,6 +5236,7 @@ function AIRBOSS:SetVoiceOversLSOByFF( mizfolder )
   self.LSOCall.N9.duration = 0.40
   self.LSOCall.PADDLESCONTACT.duration = 1.00
   self.LSOCall.POWER.duration = 0.50
+  self.LSOCall.POWERsoft.duration=0.9 -- VNAO Edit - Added
   self.LSOCall.RADIOCHECK.duration = 1.10
   self.LSOCall.RIGHTFORLINEUP.duration = 0.80
   self.LSOCall.ROGERBALL.duration = 1.00
@@ -5169,6 +5329,7 @@ function AIRBOSS:_InitVoiceOvers()
     HIGH = { file = "LSO-High", suffix = "ogg", loud = true, subtitle = "You're high", duration = 0.65, subduration = 1 },
     LOW = { file = "LSO-Low", suffix = "ogg", loud = true, subtitle = "You're low", duration = 0.50, subduration = 1 },
     POWER = { file = "LSO-Power", suffix = "ogg", loud = true, subtitle = "Power", duration = 0.50, subduration = 1 }, -- duration 0.45 was too short
+    POWERsoft={ file="LSO-Power-soft", suffix="ogg", loud=false, subtitle="Power-soft", duration=0.90, subduration=1 }, -- VNAO Edit - Added
     SLOW = { file = "LSO-Slow", suffix = "ogg", loud = true, subtitle = "You're slow", duration = 0.65, subduration = 1 },
     FAST = { file = "LSO-Fast", suffix = "ogg", loud = true, subtitle = "You're fast", duration = 0.70, subduration = 1 },
     ROGERBALL = { file = "LSO-RogerBall", suffix = "ogg", loud = false, subtitle = "Roger ball", duration = 1.00, subduration = 2 },
@@ -5312,7 +5473,8 @@ function AIRBOSS:_GetAircraftAoA( playerData )
   local goshawk = playerData.actype == AIRBOSS.AircraftCarrier.T45C
   local skyhawk = playerData.actype == AIRBOSS.AircraftCarrier.A4EC
   local harrier = playerData.actype == AIRBOSS.AircraftCarrier.AV8B
-  local tomcat = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B
+  local tomcat  = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B
+  local corsair = playerData.actype == AIRBOSS.AircraftCarrier.CORSAIR or playerData.actype == AIRBOSS.AircraftCarrier.CORSAIR_CW
 
   -- Table with AoA values.
   local aoa = {} -- #AIRBOSS.AircraftAoA
@@ -5329,13 +5491,13 @@ function AIRBOSS:_GetAircraftAoA( playerData )
   elseif tomcat then
     -- F-14A/B Tomcat parameters (taken from NATOPS). Converted from units 0-30 to degrees.
     -- Currently assuming a linear relationship with 0=-10 degrees and 30=+40 degrees as stated in NATOPS.
-    aoa.SLOW = self:_AoAUnit2Deg( playerData, 17.0 ) -- 18.33 --17.0 units
-    aoa.Slow = self:_AoAUnit2Deg( playerData, 16.0 ) -- 16.67 --16.0 units
-    aoa.OnSpeedMax = self:_AoAUnit2Deg( playerData, 15.5 ) -- 15.83 --15.5 units
+    aoa.SLOW = self:_AoAUnit2Deg( playerData, 17.5 ) -- 18.33 --17.0 units -- VNAO Edit - Original value 17
+    aoa.Slow = self:_AoAUnit2Deg( playerData, 16.5 ) -- 16.67 --16.0 units -- VNAO Edit - Original value 16
+    aoa.OnSpeedMax = self:_AoAUnit2Deg( playerData, 16.0 ) -- 15.83 --15.5 units -- VNAO Edit - Original value 15.5 
     aoa.OnSpeed = self:_AoAUnit2Deg( playerData, 15.0 ) -- 15.0  --15.0 units
-    aoa.OnSpeedMin = self:_AoAUnit2Deg( playerData, 14.5 ) -- 14.17 --14.5 units
-    aoa.Fast = self:_AoAUnit2Deg( playerData, 14.0 ) -- 13.33 --14.0 units
-    aoa.FAST = self:_AoAUnit2Deg( playerData, 13.0 ) -- 11.67 --13.0 units
+    aoa.OnSpeedMin = self:_AoAUnit2Deg( playerData, 14.0 ) -- 14.17 --14.5 units -- VNAO Edit - Original value 14.5
+    aoa.Fast = self:_AoAUnit2Deg( playerData, 13.5 ) -- 13.33 --14.0 units -- VNAO Edit - Original value 14
+    aoa.FAST = self:_AoAUnit2Deg( playerData, 12.5 ) -- 11.67 --13.0 units -- VNAO Edit - Original value 13
   elseif goshawk then
     -- T-45C Goshawk parameters.
     aoa.SLOW = 8.00 -- 19
@@ -5349,15 +5511,14 @@ function AIRBOSS:_GetAircraftAoA( playerData )
     -- A-4E-C Skyhawk parameters from https://forums.eagle.ru/showpost.php?p=3703467&postcount=390
     -- Note that these are arbitrary UNITS and not degrees. We need a conversion formula!
     -- Github repo suggests they simply use a factor of two to get from degrees to units.
-    aoa.SLOW = 9.50 -- =19.0/2
-    aoa.Slow = 9.25 -- =18.5/2
-    aoa.OnSpeedMax = 9.00 -- =18.0/2
-    aoa.OnSpeed = 8.75 -- =17.5/2 8.1
-    aoa.OnSpeedMin = 8.50 -- =17.0/2
-    aoa.Fast = 8.25 -- =17.5/2
-    aoa.FAST = 8.00 -- =16.5/2
+    aoa.SLOW = 10.50 -- =19.0/2 -- VNAO Edit - Original value 9.50
+    aoa.Slow = 9.50 -- =18.5/2 -- VNAO Edit - Original value 9.25
+    aoa.OnSpeedMax = 9.25 -- =18.0/2 -- VNAO Edit - Original value 9.00
+    aoa.OnSpeed = 8.75 -- =17.5/2 8.1 -- VNAO Edit - Original value 8.75
+    aoa.OnSpeedMin = 8.25 -- =17.0/2 -- VNAO Edit - Original value 8.50
+    aoa.Fast = 8.00 -- =17.5/2 -- VNAO Edit - Original value 8.25
+    aoa.FAST = 7.00 -- =16.5/2 -- VNAO Edit - Original value 8.0
   elseif harrier then
-
     -- AV-8B Harrier parameters. Tuning done on the Fast AoA to allow for abeam and ninety at Nozzles 55. Pene testing
     aoa.SLOW       = 16.0
     aoa.Slow       = 13.5
@@ -5366,7 +5527,15 @@ function AIRBOSS:_GetAircraftAoA( playerData )
     aoa.OnSpeedMin =  9.5
     aoa.Fast       =  8.0
     aoa.FAST       =  7.5
-
+  elseif corsair then
+    -- F4U-1D Corsair parameters.
+    aoa.SLOW       = 16.0
+    aoa.Slow       = 13.5
+    aoa.OnSpeedMax = 12.5
+    aoa.OnSpeed    = 10.0
+    aoa.OnSpeedMin =  9.5
+    aoa.Fast       =  8.0
+    aoa.FAST       =  7.5
   end
 
   return aoa
@@ -5479,6 +5648,7 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
   local tomcat = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B
   local harrier = playerData.actype == AIRBOSS.AircraftCarrier.AV8B
   local goshawk = playerData.actype == AIRBOSS.AircraftCarrier.T45C
+  local corsair = playerData.actype == AIRBOSS.AircraftCarrier.CORSAIR or playerData.actype == AIRBOSS.AircraftCarrier.CORSAIR_CW
 
   -- Return values.
   local alt
@@ -5538,6 +5708,9 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
     elseif goshawk then
       alt = UTILS.FeetToMeters( 800 )
       speed = UTILS.KnotsToMps( 300 )
+    elseif corsair then
+      alt = UTILS.FeetToMeters( 300 )
+      speed = UTILS.KnotsToMps( 120 )
     end
 
   elseif step == AIRBOSS.PatternStep.BREAKENTRY then
@@ -5551,6 +5724,9 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
     elseif goshawk then
       alt = UTILS.FeetToMeters( 800 )
       speed = UTILS.KnotsToMps( 300 )
+    elseif corsair then
+      alt = UTILS.FeetToMeters( 200 )
+      speed = UTILS.KnotsToMps( 110 )
     end
 
   elseif step == AIRBOSS.PatternStep.EARLYBREAK then
@@ -5559,6 +5735,9 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
       alt = UTILS.FeetToMeters( 800 )
     elseif skyhawk then
       alt = UTILS.FeetToMeters( 600 )
+    elseif corsair then
+      alt = UTILS.FeetToMeters( 200 )
+      speed = UTILS.KnotsToMps( 100 )
     end
 
   elseif step == AIRBOSS.PatternStep.LATEBREAK then
@@ -5567,6 +5746,9 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
       alt = UTILS.FeetToMeters( 800 )
     elseif skyhawk then
       alt = UTILS.FeetToMeters( 600 )
+    elseif corsair then
+      alt = UTILS.FeetToMeters( 150 )
+      speed = UTILS.KnotsToMps( 100 )
     end
 
   elseif step == AIRBOSS.PatternStep.ABEAM then
@@ -5575,6 +5757,9 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
       alt = UTILS.FeetToMeters( 600 )
     elseif skyhawk then
       alt = UTILS.FeetToMeters( 500 )
+    elseif corsair then
+      alt = UTILS.FeetToMeters( 150 )
+      speed = UTILS.KnotsToMps( 90 )
     end
 
     aoa = aoaac.OnSpeed
@@ -5599,6 +5784,9 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
       alt = UTILS.FeetToMeters( 500 )
     elseif harrier then
       alt = UTILS.FeetToMeters( 425 )
+    elseif corsair then
+      alt = UTILS.FeetToMeters( 90 )
+      speed = UTILS.KnotsToMps( 90 )      
     end
 
     aoa = aoaac.OnSpeed
@@ -5611,6 +5799,8 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
       alt = UTILS.FeetToMeters( 430 ) -- Tomcat should be a bit higher as it intercepts the GS a bit higher.
     elseif skyhawk then
       alt = UTILS.FeetToMeters( 370 ) -- ?
+    elseif corsair then
+      alt = UTILS.FeetToMeters( 80 )
     end
     -- Harrier wont get into wake pos. Runway is not angled and it stays port.
 
@@ -5626,6 +5816,8 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
       alt = UTILS.FeetToMeters( 300 ) -- ?
     elseif harrier then
       alt=UTILS.FeetToMeters(312)-- 300-325 ft
+    elseif corsair then
+      alt = UTILS.FeetToMeters( 80 )      
     end
 
     aoa = aoaac.OnSpeed
@@ -6502,6 +6694,8 @@ function AIRBOSS:_LandAI( flight )
     Speed = UTILS.KnotsToKmph( 175 )
   elseif flight.actype == AIRBOSS.AircraftCarrier.S3B or flight.actype == AIRBOSS.AircraftCarrier.S3BTANKER then
     Speed = UTILS.KnotsToKmph( 140 )
+  elseif flight.actype == AIRBOSS.AircraftCarrier.CORSAIR or flight.actype == AIRBOSS.AircraftCarrier.CORSAIR_CW then
+    Speed = UTILS.KnotsToKmph( 100 )
   end
 
   -- Carrier position.
@@ -6755,6 +6949,9 @@ function AIRBOSS:_AddMarshalGroup( flight, stack )
 
   -- Convert to clock string.
   local Ccharlie = UTILS.SecondsToClock( flight.Tcharlie )
+
+  -- Make sure brc is never above 360
+  brc = brc % 360
 
   -- Combined marshal call.
   self:_MarshalCallArrived( flight.onboard, flight.case, brc, alt, Ccharlie, P )
@@ -7409,7 +7606,7 @@ function AIRBOSS:_InitPlayer( playerData, step )
   playerData.landed = false
   playerData.Tlso = timer.getTime()
   playerData.Tgroove = nil
-  playerData.TIG0 = nil
+  playerData.TIG0 = 0 --changed to prevent errors in script when player is not in correct spot
   playerData.wire = nil
   playerData.flag = -100
   playerData.debriefschedulerID = nil
@@ -7948,8 +8145,7 @@ end
 --- Check current player status.
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckPlayerStatus()
-
-  -- Loop over all players.
+    -- Loop over all players.
   for _playerName, _playerData in pairs( self.players ) do
     local playerData = _playerData -- #AIRBOSS.PlayerData
 
@@ -7964,6 +8160,32 @@ function AIRBOSS:_CheckPlayerStatus()
         -- Check if player is in carrier controlled area (zone with R=50 NM around the carrier).
         -- TODO: This might cause problems if the CCA is set to be very small!
         if unit:IsInZone( self.zoneCCA ) then
+
+          -- VNAO Edit - Added wrapped up call to LSO grading
+          if playerData.step==AIRBOSS.PatternStep.WAKE then-- VNAO Edit - Added
+            if math.abs(playerData.unit:GetRoll())>35 and math.abs(playerData.unit:GetRoll())<=40 then-- VNAO Edit - Added
+              playerData.wrappedUpAtWakeLittle = true -- VNAO Edit - Added
+            elseif math.abs(playerData.unit:GetRoll()) >40 and math.abs(playerData.unit:GetRoll())<=45 then-- VNAO Edit - Added
+              playerData.wrappedUpAtWakeFull = true-- VNAO Edit - Added
+            elseif math.abs(playerData.unit:GetRoll()) >45 then-- VNAO Edit - Added
+              playerData.wrappedUpAtWakeUnderline = true -- VNAO Edit - Added
+            elseif math.abs(playerData.unit:GetRoll()) <20 and math.abs(playerData.unit:GetRoll()) >=10 then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
+              playerData.AAatWakeLittle = true  -- VNAO Edit - Added
+            elseif math.abs(playerData.unit:GetRoll()) <10 and math.abs(playerData.unit:GetRoll()) >=2 then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
+              playerData.AAatWakeFull = true  -- VNAO Edit - Added 
+            elseif math.abs(playerData.unit:GetRoll()) <2 then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
+              playerData.AAatWakeUnderline = true  -- VNAO Edit - Added 
+            else  -- VNAO Edit - Added 
+            end -- VNAO Edit - Added
+
+            if math.abs(playerData.unit:GetAoA())>= 15 then  -- VNAO Edit - Added 
+              playerData.AFU = true  -- VNAO Edit - Added 
+            elseif math.abs(playerData.unit:GetAoA())<= 5 then  -- VNAO Edit - Added 
+              playerData.AFU = true  -- VNAO Edit - Added 
+            else  -- VNAO Edit - Added 
+            end  -- VNAO Edit - Added 
+          end-- VNAO Edit - Added
+
 
           -- Display aircraft attitude and other parameters as message text.
           if playerData.attitudemonitor then
@@ -8195,8 +8417,8 @@ end
 function AIRBOSS:_SetTimeInGroove( playerData )
 
   -- Set time in the groove
-  if playerData.TIG0 then
-    playerData.Tgroove = timer.getTime() - playerData.TIG0
+  if playerData.TIG0 then 
+    playerData.Tgroove = timer.getTime() - playerData.TIG0 - 1.5 -- VNAO Edit - Subtracting an extra 1.5
   else
     playerData.Tgroove = 999
   end
@@ -8724,13 +8946,13 @@ function AIRBOSS:OnEventRemoveUnit( EventData )
 
   -- Nil checks.
   if EventData == nil then
-    self:E( self.lid .. "ERROR: EventData=nil in event REMOVEUNIT!" )
-    self:E( EventData )
+    self:T( self.lid .. "ERROR: EventData=nil in event REMOVEUNIT!" )
+    self:T( EventData )
     return
   end
   if EventData.IniUnit == nil then
-    self:E( self.lid .. "ERROR: EventData.IniUnit=nil in event REMOVEUNIT!" )
-    self:E( EventData )
+    self:T( self.lid .. "ERROR: EventData.IniUnit=nil in event REMOVEUNIT!" )
+    self:T( EventData )
     return
   end
 
@@ -9317,7 +9539,19 @@ function AIRBOSS:_DirtyUp( playerData )
   if inzone then
 
     -- Hint for player about altitude, AoA etc.
-    self:_PlayerHint( playerData )
+    playerData.Tgroove = timer.getTime() - playerData.TIG0 - 1.5 -- VNAO Edit - Subtracting an extra 1.5
+
+    -- VNAO Edit - Added wrapped up call to LSO grading
+    playerData.wrappedUpAtWakeLittle = false -- VNAO Edit - Added
+    playerData.wrappedUpAtWakeFull = false -- VNAO Edit - Added
+    playerData.wrappedUpAtWakeUnderline = false -- VNAO Edit - Added
+    playerData.wrappedUpAtStartLittle = false -- VNAO Edit - Added 
+    playerData.wrappedUpAtStartFull = false -- VNAO Edit - Added
+    playerData.wrappedUpAtStartUnderline = false -- VNAO Edit - Added
+    playerData.AAatWakeLittle = false -- VNAO Edit - Added
+    playerData.AAatWakeFull = false -- VNAO Edit - Added
+    playerData.AAatWakeUnderline = false -- VNAO Edit - Added
+    playerData.AFU = false -- VNAO Edit - Added
 
     -- Radio call "Say/Fly needles". Delayed by 10/15 seconds.
     if   playerData.actype == AIRBOSS.AircraftCarrier.HORNET
@@ -9428,7 +9662,6 @@ function AIRBOSS:_BreakEntry( playerData )
 
     -- Hint for player about altitude, AoA etc.
     self:_PlayerHint( playerData )
-
     -- Next step: Early Break.
     self:_SetPlayerStep( playerData, AIRBOSS.PatternStep.EARLYBREAK )
 
@@ -9569,6 +9802,18 @@ end
 -- @param #AIRBOSS.PlayerData playerData Player data table.
 function AIRBOSS:_Ninety( playerData )
 
+  -- VNAO Edit - Added wrapped up call to LSO grading
+  playerData.wrappedUpAtWakeLittle = false -- VNAO Edit - Added
+  playerData.wrappedUpAtWakeFull = false -- VNAO Edit - Added 
+  playerData.wrappedUpAtWakeUnderline = false -- VNAO Edit - Added
+  playerData.wrappedUpAtStartLittle = false -- VNAO Edit - Added
+  playerData.wrappedUpAtStartFull = false  -- VNAO Edit - Added
+  playerData.wrappedUpAtStartUnderline = false -- VNAO Edit - Added
+  playerData.AAatWakeLittle = false -- VNAO Edit - Added
+  playerData.AAatWakeFull = false -- VNAO Edit - Added
+  playerData.AAatWakeUnderline = false -- VNAO Edit - Added
+  playerData.AFU = false -- VNAO Edit - Added
+
   -- Get distances between carrier and player unit (parallel and perpendicular to direction of movement of carrier)
   local X, Z = self:_GetDistances( playerData.unit )
 
@@ -9672,6 +9917,9 @@ function AIRBOSS:_GetGrooveData( playerData )
   groovedata.AoA = playerData.unit:GetAoA()
   groovedata.GSE = self:_Glideslope( playerData.unit )
   groovedata.LUE = self:_Lineup( playerData.unit, true )
+  groovedata.LUEwire = self:_LineupWIRE( playerData.unit, true ) -- VNAO Edit - Added
+  groovedata.LeftNozzle = self:_NozzleArgumentLeft( playerData.unit ) -- VNAO Edit - Added
+  groovedata.RightNozzle = self:_NozzleArgumentRight( playerData.unit ) -- VNAO Edit - Added
   groovedata.Roll = playerData.unit:GetRoll()
   groovedata.Pitch = playerData.unit:GetPitch()
   groovedata.Yaw = playerData.unit:GetYaw()
@@ -9753,6 +10001,7 @@ function AIRBOSS:_Groove( playerData )
   local RIM = UTILS.NMToMeters( 0.500 ) -- In the Middle          0.50  =  926 m (middle one third of the glideslope)
   local RIC = UTILS.NMToMeters( 0.250 ) -- In Close               0.25  =  463 m (last one third of the glideslope)
   local RAR = UTILS.NMToMeters( 0.040 ) -- At the Ramp.           0.04  =   75 m
+  local RIW = UTILS.NMToMeters( -0.020 ) -- In the wires.           0.04  =   75 m -- VNAO Edit - Added
 
   -- Groove data.
   local groovedata = self:_GetGrooveData( playerData )
@@ -9776,7 +10025,8 @@ function AIRBOSS:_Groove( playerData )
   local glideslopeError = groovedata.GSE
   local AoA = groovedata.AoA
 
-  if rho <= RXX and playerData.step == AIRBOSS.PatternStep.GROOVE_XX and (math.abs( groovedata.Roll ) <= 4.0 and playerData.unit:IsInZone( self:_GetZoneLineup() )) then
+  -- if rho <= RXX and playerData.step == AIRBOSS.PatternStep.GROOVE_XX and (math.abs( groovedata.Roll ) <= 4.0 or playerData.unit:IsInZone( self:_GetZoneLineup() )) then -- VNAO Edit - Commented out
+  if rho <= RXX and playerData.step == AIRBOSS.PatternStep.GROOVE_XX and (math.abs( groovedata.Roll ) <= 3.5 or playerData.unit:IsInZone( self:_GetZoneLineup() )) then -- VNAO Edit - Added
 
     -- Start time in groove
     playerData.TIG0 = timer.getTime()
@@ -9826,7 +10076,8 @@ function AIRBOSS:_Groove( playerData )
     else
       self:_SetPlayerStep( playerData, AIRBOSS.PatternStep.GROOVE_IW )
     end
-
+  elseif rho <= RIW and playerData.step == AIRBOSS.PatternStep.GROOVE_IW then -- VNAO Edit - Added
+    playerData.groove.IW = UTILS.DeepCopy( groovedata ) -- VNAO Edit - Added
   elseif rho <= RAR and playerData.step == AIRBOSS.PatternStep.GROOVE_AL then
 
     -- Store data.
@@ -9961,23 +10212,75 @@ function AIRBOSS:_Groove( playerData )
       -- Distance in NM.
       local d = UTILS.MetersToNM( rho )
 
+      -- VNAO Edit - Added wrapped up call to LSO grading
+      if playerData.case ~=3 then -- VNAO Edit - Added
+        -- env.info("ADAM AIRBOSS EDIT- function AIRBOSS:_Groove(playerData) - playerData.case ~= 3, proceeding with checks") -- VNAO Edit - Added
+        if playerData.wrappedUpAtWakeUnderline == true or playerData.wrappedUpAtStartUnderline == true then -- VNAO Edit - Added
+          gd.WrappedUp="_WU_" -- VNAO Edit - Added
+          -- env.info("ADAM AIRBOSS EDIT- function AIRBOSS:_Groove(playerData) - UNDERLINE WU comment should be added for player: "..playerData.name) -- VNAO Edit - Added
+        elseif playerData.wrappedUpAtWakeUnderline == false and playerData.wrappedUpAtStartUnderline == false then -- VNAO Edit - Added
+          if playerData.wrappedUpAtWakeFull == true or playerData.wrappedUpAtStartFull == true then -- VNAO Edit - Added
+            gd.WrappedUp="WU" -- VNAO Edit - Added
+            -- env.info("ADAM AIRBOSS EDIT- function AIRBOSS:_Groove(playerData) - FULL WU comment should be added for player: "..playerData.name) -- VNAO Edit - Added
+          elseif playerData.wrappedUpAtStartFull == false then -- VNAO Edit - Added
+            if playerData.wrappedUpAtWakeLittle == true or playerData.wrappedUpAtStartLittle == true then -- VNAO Edit - Added
+              gd.WrappedUp="(WU)" -- VNAO Edit - Added
+              -- env.info("ADAM AIRBOSS EDIT- function AIRBOSS:_Groove(playerData) -  little WU comment should be added for player: "..playerData.name) -- VNAO Edit - Added
+            end -- VNAO Edit - Added
+          end -- VNAO Edit - Added
+        else -- VNAO Edit - Added
+          -- gd.WrappedUp="" -- VNAO Edit - Added
+          -- env.info("ADAM AIRBOSS EDIT- function AIRBOSS:_Groove(playerData) -  NO WU comment should be added for player: "..playerData.name) -- VNAO Edit - Added
+        end -- VNAO Edit - Added
+
+        if playerData.AAatWakeUnderline == true then -- VNAO Edit - Added
+          gd.AngledApch="_AA_" -- VNAO Edit - Added
+          -- env.info("ADAM AIRBOSS EDIT- function AIRBOSS:_Groove(playerData) - UNDERLINE AA comment should be added for player: "..playerData.name)  -- VNAO Edit - Added
+        elseif playerData.AAatWakeUnderline == false then -- VNAO Edit - Added
+          if playerData.AAatWakeFull == true then  -- VNAO Edit - Added
+            gd.AngledApch="AA" -- VNAO Edit - Added
+            -- env.info("ADAM AIRBOSS EDIT- function AIRBOSS:_Groove(playerData) - FULL AA comment should be added for player: "..playerData.name)  -- VNAO Edit - Added
+          elseif playerData.AAatWakeFull == false then  -- VNAO Edit - Added
+            if playerData.AAatWakeLittle == true then  -- VNAO Edit - Added
+              gd.AngledApch="(AA)" -- VNAO Edit - Added
+              -- env.info("ADAM AIRBOSS EDIT- function AIRBOSS:_Groove(playerData) -  little AA comment should be added for player: "..playerData.name)  -- VNAO Edit - Added
+            end -- VNAO Edit - Added
+          end -- VNAO Edit - Added
+        else -- VNAO Edit - Added
+          -- gd.AngledApch="" -- VNAO Edit - Added
+          -- env.info("ADAM AIRBOSS EDIT- function AIRBOSS:_Groove(playerData) -  NO AA comment should be added for player: "..playerData.name)  -- VNAO Edit - Added
+        end -- VNAO Edit - Added
+
+        if playerData.AFU == true then -- VNAO Edit - Added
+          gd.AFU="AFU" -- VNAO Edit - Added
+          -- env.info("ADAM AIRBOSS EDIT- function AIRBOSS:_Groove(playerData) -  AFU comment should be added for player: "..playerData.name)  -- VNAO Edit - Added
+        else  -- VNAO Edit - Added
+          -- env.info("ADAM AIRBOSS EDIT- function AIRBOSS:_Groove(playerData) -  NO AFU comment should be added for player: "..playerData.name)  -- VNAO Edit - Added
+        end -- VNAO Edit - Added
+      else  -- VNAO Edit - Added
+        -- gd.WrappedUp="" -- VNAO Edit - Added
+        -- gd.AngledApch="" -- VNAO Edit - Added
+        --gd.AFU="" -- VNAO Edit - Added
+        -- env.info("ADAM AIRBOSS EDIT- function AIRBOSS:_Groove(playerData) -  CASE 3, don't add WU, AA or AFU comments at all for player: "..playerData.name)  -- VNAO Edit - Added
+      end
+
       -- Drift on lineup.
       if rho >= RAR and rho <= RIM then
         if gd.LUE > 0.22 and lineupError < -0.22 then
           env.info " Drift Right across centre ==> DR-"
-          gd.Drift = " DR"
+          gd.Drift = "DR"
           self:T( self.lid .. string.format( "Got Drift Right across centre step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError ) )
         elseif gd.LUE < -0.22 and lineupError > 0.22 then
           env.info " Drift Left ==> DL-"
-          gd.Drift = " DL"
+          gd.Drift = "DL"
           self:T( self.lid .. string.format( "Got Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError ) )
         elseif gd.LUE > 0.13 and lineupError < -0.14 then
           env.info " Little Drift Right across centre ==> (DR-)"
-          gd.Drift = " (DR)"
+          gd.Drift = "(DR)"
           self:T( self.lid .. string.format( "Got Little Drift Right across centre at step %s, d=%.3f: Max LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError ) )
         elseif gd.LUE < -0.13 and lineupError > 0.14 then
           env.info " Little Drift Left across centre ==> (DL-)"
-          gd.Drift = " (DL)"
+          gd.Drift = "(DL)"
           self:E( self.lid .. string.format( "Got Little Drift Left across centre at step %s, d=%.3f: Min LUE=%.3f, lower LUE=%.3f", gs, d, gd.LUE, lineupError ) )
         end
       end
@@ -10297,6 +10600,9 @@ function AIRBOSS:_GetSternCoord()
   elseif self.carriertype == AIRBOSS.CarrierType.FORRESTAL then
     -- Forrestal
     self.sterncoord:Translate( self.carrierparam.sterndist, hdg, true, true ):Translate( 7.5, FB + 90, true, true )
+  elseif self.carriertype == AIRBOSS.CarrierType.ESSEX then
+    -- Forrestal
+    self.sterncoord:Translate( self.carrierparam.sterndist, hdg, true, true ):Translate( -1, FB + 90, true, true )
   else
     -- Nimitz SC: translate 8 meters starboard wrt Final bearing.
     self.sterncoord:Translate( self.carrierparam.sterndist, hdg, true, true ):Translate( 9.5, FB + 90, true, true )
@@ -10495,13 +10801,13 @@ function AIRBOSS:_Trapped( playerData )
     -- Message to player.
     local text = string.format( "Trapped %d-wire.", wire )
     if wire == 3 then
-      text = text .. " Well done!"
+      text = text .. " " -- VNAO Edit - Removed comment text
     elseif wire == 2 then
-      text = text .. " Not bad, maybe you even get the 3rd next time."
+      text = text .. " " -- VNAO Edit - Removed comment text
     elseif wire == 4 then
-      text = text .. " That was scary. You can do better than this!"
+      text = text .. " " -- VNAO Edit - Removed comment text
     elseif wire == 1 then
-      text = text .. " Try harder next time!"
+      text = text .. " " -- VNAO Edit - Removed comment text
     end
 
     -- Message to player.
@@ -11250,6 +11556,41 @@ function AIRBOSS:_AttitudeMonitor( playerData )
     text = text .. string.format( "\nGamma=%.1f° | Rho=%.1f°", relhead, phi )
   end
 
+  -- VNAO Edit: for testing the damn line up in the wires!
+  -- VNAO Edit: F-14A Nozzle: R-433, L-434, R Burner- 435, L Burner - 436
+  local lueWire = self:_LineupWIRE( playerData.unit, true )
+  text = text .. string.format( "\nLineUpForWireCalls=%.2f° | lineup for Groove calls=%.2f°", lueWire or 0, lue or 0)-- VNAO Edit - Added
+
+  local unitClient = Unit.getByName(unit:GetName()) -- VNAO Edit - Added
+  local hornet = playerData.actype == AIRBOSS.AircraftCarrier.HORNET -- VNAO Edit - Added
+  local tomcat = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B -- VNAO Edit - Added
+
+  if hornet then -- VNAO Edit - Added
+    local nozzlePosL = 0  -- VNAO Edit - Added
+    local burnerPosL = unitClient:getDrawArgumentValue(28)  -- VNAO Edit - Added
+      if burnerPosL < 0.2 then -- VNAO Edit - Added
+        nozzlePosL = unitClient:getDrawArgumentValue(89) -- VNAO Edit - Added
+      else -- VNAO Edit - Added
+        nozzlePosL = 0 -- VNAO Edit - Added
+      end -- VNAO Edit - Added
+
+    local nozzlePosR = 0 -- VNAO Edit - Added
+    local burnerPosR = unitClient:getDrawArgumentValue(29) -- VNAO Edit - Added
+    if burnerPosR < 0.2 then -- VNAO Edit - Added
+      nozzlePosR = unitClient:getDrawArgumentValue(90) -- VNAO Edit - Added
+    else -- VNAO Edit - Added
+      nozzlePosR = 0 -- VNAO Edit - Added
+    end -- VNAO Edit - Added
+
+    text = text .. string.format( "\n Left Nozzle position=%.2f | Right Nozzle position=%.2f ", nozzlePosL, nozzlePosR ) -- VNAO Edit - Added
+  end -- VNAO Edit - Added
+
+  if tomcat then -- VNAO Edit - Added
+    local nozzlePosL = unitClient:getDrawArgumentValue(434) -- VNAO Edit - Added
+    local nozzlePosR = unitClient:getDrawArgumentValue(433) -- VNAO Edit - Added
+    text = text .. string.format( "\n Left Nozzle position=%.2f | Right Nozzle position=%.2f ", nozzlePosL, nozzlePosR ) -- VNAO Edit - Added
+  end -- VNAO Edit - Added
+
   MESSAGE:New( text, 1, nil, true ):ToClient( playerData.client )
 end
 
@@ -11382,6 +11723,111 @@ function AIRBOSS:_Lineup( unit, runway )
   return lineup
 end
 
+-- VNAO Edit - Added this function
+--- Get line up of player wrt to carrier.
+-- @param #AIRBOSS self
+-- @param Wrapper.Unit#UNIT unit Aircraft unit.
+-- @param #boolean runway If true, include angled runway.
+-- @return #number Line up with runway heading in degrees. 0 degrees = perfect line up. +1 too far left. -1 too far right.
+function AIRBOSS:_LineupWIRE( unit, runway ) -- VNAO Edit - Added
+
+  -- Landing coordinate
+  local landingcoord = self:_GetOptLandingCoordinateWIRE() -- VNAO Edit - Added
+
+  -- Vector to landing coord.
+  local A = landingcoord:GetVec3() -- VNAO Edit - Added
+
+  -- Vector to player.
+  local B = unit:GetVec3() -- VNAO Edit - Added
+
+  -- Vector from player to carrier.
+  local C = UTILS.VecSubstract( A, B ) -- VNAO Edit - Added
+
+  -- Only in 2D plane.
+  C.y = 0.0 -- VNAO Edit - Added
+
+  -- Orientation of carrier.
+  local X = self.carrier:GetOrientationX() -- VNAO Edit - Added
+  X.y = 0.0 -- VNAO Edit - Added
+
+  -- Rotate orientation to angled runway.
+  if runway then -- VNAO Edit - Added
+    X = UTILS.Rotate2D( X, -self.carrierparam.rwyangle ) -- VNAO Edit - Added
+  end -- VNAO Edit - Added
+
+  -- Projection of player pos on x component.
+  local x = UTILS.VecDot( X, C ) -- VNAO Edit - Added
+
+  -- Orientation of carrier.
+  local Z = self.carrier:GetOrientationZ() -- VNAO Edit - Added
+  Z.y = 0.0 -- VNAO Edit - Added
+
+  -- Rotate orientation to angled runway.
+  if runway then -- VNAO Edit - Added
+    Z = UTILS.Rotate2D( Z, -self.carrierparam.rwyangle ) -- VNAO Edit - Added
+  end -- VNAO Edit - Added
+
+  -- Projection of player pos on z component.
+  local z = UTILS.VecDot( Z, C ) -- VNAO Edit - Added
+
+  ---
+  local lineup = math.deg( math.atan2( z, x ) ) -- VNAO Edit - Added
+
+  return lineup -- VNAO Edit - Added
+end -- VNAO Edit - Added
+
+-- VNAO Edit - Added this function
+--- Get L/R Nozzle Position from Argument and L/R Burner Argument
+-- @param #AIRBOSS self
+-- @param Wrapper.Unit#UNIT unit Aircraft unit.
+-- @return #number Left Nozzle position argument
+function AIRBOSS:_NozzleArgumentLeft( unit ) -- VNAO Edit - Added
+  --Arguments for HORNET L burner and R burner are 28 and 29 respectively and >.2 indicates burner active
+  --Nozzle position greater than 0.3 for the hornet indicates either idle or burner
+  --if Lnoz > 0.6 and Rnoz > 0.6  is current check for EG
+  local unitClient = Unit.getByName(unit:GetName()) -- VNAO Edit - Added
+  local typeName = unit:GetTypeName() -- VNAO Edit - Added
+  local nozzlePosL = 0 -- VNAO Edit - Added
+  local burnerPosL = 0 -- VNAO Edit - Added
+  if typeName == "FA-18C_hornet" then -- VNAO Edit - Added
+    burnerPosL = unitClient:getDrawArgumentValue(28) -- VNAO Edit - Added
+    if burnerPosL < 0.2 then -- VNAO Edit - Added
+      nozzlePosL = unitClient:getDrawArgumentValue(89) -- VNAO Edit - Added
+    else -- VNAO Edit - Added
+      nozzlePosL = 0 -- VNAO Edit - Added
+    end -- VNAO Edit - Added
+  elseif typeName == "F-14A-135-GR" or typeName == "F-14B" then -- VNAO Edit - Added
+    nozzlePosL = unitClient:getDrawArgumentValue(434) -- VNAO Edit - Added
+  end -- VNAO Edit - Added
+  
+  return nozzlePosL -- VNAO Edit - Added
+end -- VNAO Edit - Added
+
+-- VNAO Edit - Added this function
+--- Get L/R Nozzle Position from Argument and L/R Burner Argument
+-- @param #AIRBOSS self
+-- @param Wrapper.Unit#UNIT unit Aircraft unit.
+-- @return #number Right Nozzle position argument
+function AIRBOSS:_NozzleArgumentRight( unit ) -- VNAO Edit - Added
+  local unitClient = Unit.getByName(unit:GetName()) -- VNAO Edit - Added
+  local typeName = unit:GetTypeName() -- VNAO Edit - Added
+  local nozzlePosR = 0 -- VNAO Edit - Added
+  local burnerPosR = 0 -- VNAO Edit - Added
+
+  if typeName == "FA-18C_hornet" then -- VNAO Edit - Added
+    burnerPosR = unitClient:getDrawArgumentValue(29) -- VNAO Edit - Added
+    if burnerPosR < 0.2 then -- VNAO Edit - Added
+      nozzlePosR = unitClient:getDrawArgumentValue(90) -- VNAO Edit - Added
+    else -- VNAO Edit - Added
+      nozzlePosR = 0 -- VNAO Edit - Added
+    end -- VNAO Edit - Added
+  elseif typeName == "F-14A-135-GR" or typeName == "F-14B" then -- VNAO Edit - Added
+    nozzlePosR = unitClient:getDrawArgumentValue(433) -- VNAO Edit - Added
+  end -- VNAO Edit - Added
+  return nozzlePosR -- VNAO Edit - Added
+end -- VNAO Edit - Added
+
+
 --- Get altitude of aircraft wrt carrier deck. Should give zero when the aircraft touched down.
 -- @param #AIRBOSS self
 -- @param Wrapper.Unit#UNIT unit Aircraft unit.
@@ -11447,6 +11893,39 @@ function AIRBOSS:_GetOptLandingCoordinate()
   return self.landingcoord
 end
 
+-- VNAO Edit - dded this whole function
+--- Get optimal landing position of the aircraft. Usually between second and third wire. In case of Tarawa, Canberrra, Juan Carlos and America we take the abeam landing spot 120 ft above and 21 ft abeam the 7.5 position, for the Juan Carlos I, HMS Invincible, and HMS Hermes and Invincible it is 120 ft above and 21 ft abeam the 5 position. For CASE III it is 120ft directly above the landing spot.
+-- @param #AIRBOSS self
+-- @return Core.Point#COORDINATE Optimal landing coordinate.
+function AIRBOSS:_GetOptLandingCoordinateWIRE()
+
+  -- Start with stern coordiante.
+  self.landingcoord:UpdateFromCoordinate( self:_GetSternCoord() )
+
+  -- Final bearing.
+  local FB=self:GetFinalBearing(false)
+
+  -- Cse
+  local case=self.case
+
+  -- set Case III V/STOL abeam landing spot over deck -- Pene Testing
+  
+  
+
+  -- Ideally we want to land between 2nd and 3rd wire.
+  if self.carrierparam.wire3 then
+    -- We take the position of the 3rd wire to approximately account for the length of the aircraft.
+    self.landingcoord:Translate( self.carrierparam.wire3 + 500, FB, true, true )-- adding 80 meter to wire to see if this is far enough to keep tracking a good lineup error (50 meters not enough), went from 250 meters to 500 meters 12/23/23, the more distance out front the less the error sensitivity down deck. I've checked the location of the landing spot 500 meters out front of 3 wire on CL with flares and smoke, appears to be dead on. Not sure why there's still this small difference between lined up left and right differences. 
+  end
+
+  -- Add 2 meters to account for aircraft height.
+  self.landingcoord.y = self.landingcoord.y + 2
+
+  
+  --self.landingcoord:FlareGreen() --for testing the lineup spot translated out in front of the carrier landing area by 500 meters. Appears good.
+  return self.landingcoord
+end
+
 --- Get landing spot on Tarawa and others.
 -- @param #AIRBOSS self
 -- @return Core.Point#COORDINATE Primary landing spot coordinate.
@@ -11479,10 +11958,12 @@ function AIRBOSS:GetHeading( magnetic )
     hdg = hdg - self.magvar
   end
 
-  -- Adjust negative values.
-  if hdg < 0 then
-    hdg = hdg + 360
-  end
+  -- -- Adjust negative values.
+  -- if hdg < 0 then
+  --   hdg = hdg + 360
+  -- end
+
+  hdg = hdg % 360  -- using this to replace the above function to prevent negative values and BRC higher than 360
 
   return hdg
 end
@@ -11598,7 +12079,7 @@ function AIRBOSS:GetHeadingIntoWind_old( vdeck, magnetic, coord )
   local function adjustDegreesForWindSpeed(windSpeed)
     local degreesAdjustment = 0
   -- the windspeeds are in m/s
-  
+
   -- +0 degrees at 15m/s = 37kts
   -- +0 degrees at 14m/s = 35kts
   -- +0 degrees at 13m/s = 33kts
@@ -11613,7 +12094,7 @@ function AIRBOSS:GetHeadingIntoWind_old( vdeck, magnetic, coord )
   -- +20 degrees at 4m/s = 26kts
   -- +20 degrees at 3m/s = 26kts
   -- +30 degrees at 2m/s = 26kts 1s
-  
+
     if windSpeed > 0 and windSpeed < 3 then
       degreesAdjustment = 30
     elseif windSpeed >= 3 and windSpeed < 5 then
@@ -11625,7 +12106,7 @@ function AIRBOSS:GetHeadingIntoWind_old( vdeck, magnetic, coord )
     elseif windSpeed >= 13 then
       degreesAdjustment = 0
     end
-  
+
     return degreesAdjustment
   end
 
@@ -11684,60 +12165,60 @@ function AIRBOSS:GetHeadingIntoWind_new( vdeck, magnetic, coord )
     local h=self:GetHeading(magnetic)
     return h, math.min(vdeck, Vmax)
   end
-  
+
   -- Convert wind speed to knots.
   vwind=UTILS.MpsToKnots(vwind)
-  
+
   -- Wind to in knots.
   local windto=(windfrom+180)%360
-  
+
   -- Offset angle in rad. We also define the rotation to be clock-wise, which requires a minus sign.
   local alpha=math.rad(-Offset)
-    
+
   -- Constant.
   local C = math.sqrt(math.cos(alpha)^2 / math.sin(alpha)^2 + 1)
-  
+
 
   -- Upper limit of desired speed due to max boat speed.
   local vdeckMax=vwind + math.cos(alpha) * Vmax
-  
+
   -- Lower limit of desired speed due to min boat speed.
   local vdeckMin=vwind + math.cos(alpha) * Vmin
-  
-  
+
+
   -- Speed of ship so it matches the desired speed.
   local v=0
-  
-  -- Angle wrt. to wind TO-direction 
+
+  -- Angle wrt. to wind TO-direction
   local theta=0
 
   if vdeck>vdeckMax then
     -- Boat cannot go fast enough
-    
+
     -- Set max speed.
     v=Vmax
-    
+
     -- Calculate theta.
     theta = math.asin(v/(vwind*C)) - math.asin(-1/C)
-  
+
   elseif vdeck<vdeckMin then
     -- Boat cannot go slow enought
-  
+
     -- Set min speed.
     v=Vmin
-    
+
     -- Calculatge theta.
     theta = math.asin(v/(vwind*C)) - math.asin(-1/C)
-  
+
   elseif vdeck*math.sin(alpha)>vwind then
     -- Too little wind
-    
+
     -- Set theta to 90°
     theta=math.pi/2
-    
+
     -- Set speed.
     v = math.sqrt(vdeck^2 - vwind^2)
-  
+
   else
     -- Normal case
     theta = math.asin(vdeck * math.sin(alpha) / vwind)
@@ -11746,9 +12227,10 @@ function AIRBOSS:GetHeadingIntoWind_new( vdeck, magnetic, coord )
 
   -- Magnetic heading.
   local magvar= magnetic and self.magvar or 0
-  
+
   -- Ship heading so cross wind is min for the given wind.
-  local intowind = (540 + (windto - magvar + math.deg(theta) )) % 360  
+  -- local intowind = (540 + (windto - magvar + math.deg(theta) )) % 360 -- VNAO Edit: Using old heading into wind algorithm
+  local intowind = self:GetHeadingIntoWind_old(vdeck) -- VNAO Edit: Using old heading into wind algorithm
 
   return intowind, v
 end
@@ -12024,6 +12506,10 @@ function AIRBOSS:_LSOadvice( playerData, glideslopeError, lineupError )
     -- "Power."
     self:RadioTransmission( self.LSORadio, self.LSOCall.POWER, false, nil, nil, true )
     advice = advice + self.LSOCall.POWER.duration
+  elseif glideslopeError<self.gle._min then  -- -0.3 then -- VNAO Edit - Added
+    -- "power." -- VNAO Edit - Added
+    self:RadioTransmission(self.LSORadio, self.LSOCall.POWER, false, nil, nil, true) -- VNAO Edit - Added
+    advice=advice+self.LSOCall.POWERsoft.duration -- VNAO Edit - Added
   else
     -- "Good altitude."
   end
@@ -12118,16 +12604,23 @@ function AIRBOSS:_EvalGrooveTime( playerData )
 
   -- Time in groove.
   local t = playerData.Tgroove
-
   local grade = ""
-  if t < 9 then
-    grade = "_NESA_"
-  elseif t < 15 then
-    grade = "NESA"
-  elseif t < 19 then
-    grade = "OK Groove"
-  elseif t <= 24 then
-    grade = "(LIG)"
+
+  if t < 9 then      --Circuit edit was 15
+    grade = "_NESA_"  --Circuit edit was (NESA)
+  elseif t < 12 then  --Circuit added
+    grade = "NESA"    --Circuit added
+  elseif t < 15 then  --Circuit added
+    grade = "(NESA)"  --Circuit added
+  elseif t < 19  then 
+    grade = ""
+  elseif t < 22 then    --Circuit added
+    grade = "(LIG)"     --Circuit added
+  elseif t < 25 then    --Circuit added
+    grade = "LIG"       --Circuit added
+  elseif t >= 25 then   --Circuit added
+    grade = "_LIG_"     --Circuit added
+
     -- Time in groove for AV-8B
   elseif playerData.actype == AIRBOSS.AircraftCarrier.AV8B and t < 55 then -- VSTOL Late Hover stop selection too fast to Abeam LDG Spot AV-8B.
     grade = "FAST V/STOL Groove"
@@ -12140,7 +12633,7 @@ function AIRBOSS:_EvalGrooveTime( playerData )
   end
 
   -- The unicorn!
-  if t >= 16.4 and t <= 16.6 then
+  if t >= 16.49 and t <= 16.6 then 
     grade = "_OK_"
   end
 
@@ -12164,21 +12657,28 @@ function AIRBOSS:_LSOgrade( playerData )
   local function count( base, pattern )
     return select( 2, string.gsub( base, pattern, "" ) )
   end
-
+  local TIG =  ""
   -- Analyse flight data and convert to LSO text.
+  if playerData.Tgroove and playerData.Tgroove <= 360 and playerData.case < 3 then --Circuit Added
+   TIG = self:_EvalGrooveTime( playerData ) or "N/A" --Circuit Added
+  end                                               --Circuit Added
   local GXX, nXX = self:_Flightdata2Text( playerData, AIRBOSS.GroovePos.XX )
   local GIM, nIM = self:_Flightdata2Text( playerData, AIRBOSS.GroovePos.IM )
   local GIC, nIC = self:_Flightdata2Text( playerData, AIRBOSS.GroovePos.IC )
   local GAR, nAR = self:_Flightdata2Text( playerData, AIRBOSS.GroovePos.AR )
+  local GIW, nIW = self:_Flightdata2Text( playerData, AIRBOSS.GroovePos.IW ) -- VNAO Edit - Added
 
   -- VTOL approach, which is graded differently (currently only Harrier).
   local vtol=playerData.actype==AIRBOSS.AircraftCarrier.AV8B
 
   -- Put everything together.
-  local G = GXX .. " " .. GIM .. " " .. " " .. GIC .. " " .. GAR
+  local G = GXX .. " " .. GIM .. " " .. " " .. GIC .. " " .. GAR .. " " .. GIW .. " " .. TIG -- VNAO Edit - Added .. " " .. GIW Circuit added TIG
+
+  local gradeWithDeviations = GXX .. "[" .. nXX .. "] " .. GIM .. "[" .. nIM .. "] " .. GIC .. "[" .. nIC .. "] " .. GAR .. "[" .. nAR .. "] " .. GIW .. "[" .. nIW .. "]" -- VNAO Edit - Added
+  env.info("LSO Grade [with deviation count]: " .. gradeWithDeviations) -- VNAO Edit - Added
 
   -- Count number of minor/small nS, normal nN and major/large deviations nL.
-  local N=nXX+nIM+nIC+nAR
+  local N=nXX+nIM+nIC+nAR+nIW -- VNAO Edit - Added +nIW
   local nL=count(G, '_')/2
   local nS=count(G, '%(')
   local nN=N-nS-nL
@@ -12186,17 +12686,30 @@ function AIRBOSS:_LSOgrade( playerData )
 
   -- Groove time 15-18.99 sec for a unicorn. Or 60-65 for V/STOL unicorn.
   local Tgroove=playerData.Tgroove
-  local TgrooveUnicorn=Tgroove and (Tgroove>=15.0 and Tgroove<=18.99) or false
+  local TgrooveUnicorn=Tgroove and (Tgroove>=16.49 and Tgroove<=16.59) or false -- VNAO Edit - Original values 15.0/18.99
   local TgrooveVstolUnicorn=Tgroove and (Tgroove>=60.0 and Tgroove<=65.0)and playerData.actype==AIRBOSS.AircraftCarrier.AV8B or false
 
   local grade
   local points
-  if N == 0 and (TgrooveUnicorn or TgrooveVstolUnicorn or playerData.case==3) then
-    -- No deviations, should be REALLY RARE!
-    grade = "_OK_"
-    points = 5.0
-    G = "Unicorn"
-  else
+  -- if N == 0 and (TgrooveUnicorn or TgrooveVstolUnicorn or playerData.case==3) then -- VNAO Edit - Removed TgrooveUnicorn and case 3 as a factor
+    if N == 0 and TgrooveVstolUnicorn then -- VNAO Edit - Removed TgrooveUnicorn and case 3 as a factor
+      -- No deviations, should be REALLY RARE!
+      grade = "_OK_"
+      points = 5.0
+      G = "Unicorn"
+    end -- VNAO Edit - Added
+    if N==0 and TgrooveUnicorn then  -- VNAO Edit - Added
+      -- No deviations, should be REALLY RARE! -- VNAO Edit - Added
+      if playerData.wire == 3 then -- VNAO Edit - Added
+        grade="_OK_" -- VNAO Edit - Added
+        points=5.0 -- VNAO Edit - Added
+        G="Unicorn" -- VNAO Edit - Added
+      else -- VNAO Edit - Added
+        grade="OK" -- VNAO Edit - Added
+        points=4.0 -- VNAO Edit - Added
+      end -- VNAO Edit - Added
+  
+    else
 
     if vtol then
 
@@ -12206,7 +12719,7 @@ function AIRBOSS:_LSOgrade( playerData )
       -- Normal laning part at the beginning
       local Gb = GXX .. " " .. GIM
 
-      -- Number of deviations that occurred at the the beginning of the landing (XX or IM). These are graded like in non-VTOL landings, i.e. on deviations is 
+      -- Number of deviations that occurred at the the beginning of the landing (XX or IM). These are graded like in non-VTOL landings, i.e. on deviations is
       local N=nXX+nIM
       local nL=count(Gb, '_')/2
       local nS=count(Gb, '%(')
@@ -12224,7 +12737,7 @@ function AIRBOSS:_LSOgrade( playerData )
 
       if nL>0 or nLv>1 then
           -- Larger deviations at XX or IM or at least one larger deviation IC or AR==> "No grade" 2.0 points.
-          -- In other words, we allow one larger deviation at IC+AR 
+          -- In other words, we allow one larger deviation at IC+AR
           grade="--"
           points=2.0
       elseif nN>0 or nNv>1 or nLv==1 then
@@ -12271,6 +12784,7 @@ function AIRBOSS:_LSOgrade( playerData )
   text = text .. "# of normal deviations  = " .. nN .. "\n"
   text = text .. "# of small deviations ( = " .. nS .. "\n"
   self:T2( self.lid .. text )
+  env.info(text)-- VNAO Edit - Added
 
   -- Special cases.
   if playerData.wop then
@@ -12339,6 +12853,25 @@ function AIRBOSS:_LSOgrade( playerData )
     end
 
   end
+
+  -- -- VNAO EDIT: Subtract 1pt from overall grade if it is a 1 wire.  If it's already a 1pt pass, ignore.
+  -- if playerData.wire == 1 and points > 1 then -- VNAO EDIT: added
+  --   if points == 4 then -- VNAO EDIT: added
+  --       points = 3 -- VNAO EDIT: added
+  --       grade = "(OK)" -- VNAO EDIT: added
+  --   elseif points == 3 then -- VNAO EDIT: added
+  --       points = 2 -- VNAO EDIT: added
+  --       grade = "--" -- VNAO EDIT: added
+  --   end -- VNAO EDIT: added
+  -- end -- VNAO EDIT: added
+
+    -- Circuit edit only take points awary from a 1 wire if there are more than 4 other deviations
+  if playerData.wire == 1 and points >= 3 and N > 4 then
+    points = points -1
+  end
+
+  env.info("Returning: " .. grade .. "  " .. points .. "  " .. G)
+
   return grade, points, G
 end
 
@@ -12372,26 +12905,34 @@ function AIRBOSS:_Flightdata2Text( playerData, groovestep )
   local AOA = fdata.AoA
   local GSE = fdata.GSE
   local LUE = fdata.LUE
+  local LUEwire = fdata.LUEwire -- VNAO Edit - Added
+  local Lnoz = fdata.LeftNozzle -- VNAO Edit - Added
+  local Rnoz = fdata.RightNozzle -- VNAO Edit - Added
   local ROL = fdata.Roll
+  local GT = fdata.GT -- Circuit Added
 
   -- Aircraft specific AoA values.
   local acaoa = self:_GetAircraftAoA( playerData )
 
   -- Angled Approach.
-  local P = nil
-  if step == AIRBOSS.PatternStep.GROOVE_XX and ROL <= 4.0 and playerData.case < 3 then
-    if LUE > self.lue.RIGHT then
-      P = underline( "AA" )
-    elseif LUE > self.lue.RightMed then
-      P = "AA "
-    elseif LUE > self.lue.Right then
-      P = little( "AA" )
+  -- VNAO Edit - changed this to regualr LUL at X, made my own Angled Approach check starting at the wake based on angle of bank less than 15 degrees/10 degrees/2 degrees
+  local P = nil -- VNAO Edit - Added
+  if step == AIRBOSS.PatternStep.GROOVE_XX and ROL <= 3.5 and playerData.case < 3 then -- VNAO Edit - Changed, original ROL val 4.0
+    if LUE > 3.2 then -- VNAO Edit - Original value self.lue.RIGHT
+      -- P = underline( "AA" )
+      P = underline( "LUL") -- VNAO Edit - Added
+    elseif LUE > 2.2 then -- VNAO Edit - Original value self.lue.RightMed
+      -- P = "AA "
+      P="LUL" -- VNAO Edit - Added
+    elseif LUE > 1.2 then -- VNAO Edit - Original value self.lue.Right
+      -- P = little( "AA" )
+      P= little( "LUL") -- VNAO Edit - Added
     end
   end
 
   -- Overshoot Start.
   local O = nil
-  if step == AIRBOSS.PatternStep.GROOVE_XX then
+  if step == AIRBOSS.PatternStep.GROOVE_XX and playerData.case < 3 then -- VNAO Edit - Added case 3 check
     if LUE < self.lue.LEFT then
       O = underline( "OS" )
     elseif LUE < self.lue.Left then
@@ -12403,99 +12944,262 @@ function AIRBOSS:_Flightdata2Text( playerData, groovestep )
 
   -- Speed via AoA. Depends on aircraft type.
   local S = nil
-  if AOA > acaoa.SLOW then
-    S = underline( "SLO" )
-  elseif AOA > acaoa.Slow then
-    S = "SLO"
-  elseif AOA > acaoa.OnSpeedMax then
-    S = little( "SLO" )
-  elseif AOA < acaoa.FAST then
-    S = underline( "F" )
-  elseif AOA < acaoa.Fast then
-    S = "F"
-  elseif AOA < acaoa.OnSpeedMin then
-    S = little( "F" )
-  end
+  local A = nil --circuit moved this line to be seen outside of this scope
+  if step~=AIRBOSS.PatternStep.GROOVE_IW then -- VNAO Edit - Added To avoid getting an AOA or GS grade in the wires... let's just check left or right in the wires
+    if  AIRBOSS.PatternStep.GROOVE_AR and playerData.waveoff == true and playerData.owo == true then -- VNAO Edit - Added
+      -- env.info('Adam MOOSE Edit -AR and waved off so do not add AOA or GS errors to comments ') -- VNAO Edit - Added
+    else -- VNAO Edit - Added
+      -- Speed via AoA. Depends on aircraft type.
+      if AOA > acaoa.SLOW then
+        S = underline( "SLO" )
+      elseif AOA > acaoa.Slow then
+        S = "SLO"
+      elseif AOA > acaoa.OnSpeedMax then
+        S = little( "SLO" )
+      elseif AOA < acaoa.FAST then
+        S = underline( "F" )
+      elseif AOA < acaoa.Fast then
+        S = "F"
+      elseif AOA < acaoa.OnSpeedMin then
+        S = little( "F" )
+      end
 
-  -- Glideslope/altitude. Good [-0.3, 0.4] asymmetric!
-  local A = nil
-  if GSE > self.gle.HIGH then
-    A = underline( "H" )
-  elseif GSE > self.gle.High then
-    A = "H"
-  elseif GSE > self.gle._max then
-    A = little( "H" )
-  elseif GSE < self.gle.LOW then
-    A = underline( "LO" )
-  elseif GSE < self.gle.Low then
-    A = "LO"
-  elseif GSE < self.gle._min then
-    A = little( "LO" )
-  end
+      -- Glideslope/altitude. Good [-0.3, 0.4] asymmetric!
 
-  -- Line up. XX Step replaced by Overshoot start (OS). Good [-0.5, 0.5]
+      if GSE > self.gle.HIGH then
+        A = underline( "H" )
+      elseif GSE > self.gle.High then
+        A = "H"
+      elseif GSE > self.gle._max then
+        A = little( "H" )
+      elseif GSE < self.gle.LOW then
+        A = underline( "LO" )
+      elseif GSE < self.gle.Low then
+        A = "LO"
+      elseif GSE < self.gle._min then
+        A = little( "LO" )
+      end
+    end -- VNAO Edit - Added
+  end -- VNAO Edit - Added
+
+  local stepMod=self:_GS(step) -- VNAO Edit - Added
+
   local D = nil
-  if LUE > self.lue.RIGHT then
-    D = underline( "LUL" )
-  elseif LUE > self.lue.Right then
-    D = "LUL"
-  elseif LUE > self.lue._max then
-    D = little( "LUL" )
-  elseif playerData.case < 3 then
-    if LUE < self.lue.LEFT and step ~= AIRBOSS.PatternStep.GROOVE_XX then
-      D = underline( "LUR" )
-    elseif LUE < self.lue.Left and step ~= AIRBOSS.PatternStep.GROOVE_XX then
-      D = "LUR"
-    elseif LUE < self.lue._min and step ~= AIRBOSS.PatternStep.GROOVE_XX then
-      D = little( "LUR" )
-    end
-  elseif playerData.case == 3 then
-    if LUE < self.lue.LEFT then
-      D = underline( "LUR" )
-    elseif LUE < self.lue.Left then
-      D = "LUR"
-    elseif LUE < self.lue._min then
-      D = little( "LUR" )
-    end
+  local DW = nil
+  local Rol = nil -- VNAO Edit - Added
+  local Noz = nil -- VNAO Edit - Added
+  -- VNAO Edit - Now replacing LUL with AA at Groove start for case 1 and 2, to fix problem with getting a full LUL with an (AA) and still getting a 4.0 OK
+  -- if playerData.case < 3 then -- VNAO Edit - Added
+  if AIRBOSS.PatternStep.GROOVE_AR and playerData.waveoff == true and playerData.owo == true then
+    -- env.info('Adam MOOSE Edit -AR and waved off so do not add LU errors to comments ')
+  else
+    if LUE > self.lue.RIGHT and step ~= AIRBOSS.PatternStep.GROOVE_XX and step~=AIRBOSS.PatternStep.GROOVE_IW then -- VNAO Edit - Changed
+      D = underline( "LUL" ) -- VNAO Edit - Changed
+    elseif LUE > self.lue.Right and step ~= AIRBOSS.PatternStep.GROOVE_XX and step~=AIRBOSS.PatternStep.GROOVE_IW then -- VNAO Edit - Changed
+      D = "LUL" -- VNAO Edit - Changed
+    elseif LUE > self.lue._max and step ~= AIRBOSS.PatternStep.GROOVE_XX and step~=AIRBOSS.PatternStep.GROOVE_IW then -- VNAO Edit - Changed
+      D = little( "LUL" ) -- VNAO Edit - Changed
+    elseif LUE < self.lue.LEFT and step ~= AIRBOSS.PatternStep.GROOVE_XX and step~=AIRBOSS.PatternStep.GROOVE_IW then -- VNAO Edit - Changed
+      D = underline( "LUR" ) -- VNAO Edit - Changed
+    elseif LUE < self.lue.Left and step ~= AIRBOSS.PatternStep.GROOVE_XX and step~=AIRBOSS.PatternStep.GROOVE_IW then -- VNAO Edit - Changed
+      D = "LUR" -- VNAO Edit - Changed
+    elseif LUE < self.lue._min and step ~= AIRBOSS.PatternStep.GROOVE_XX and step~=AIRBOSS.PatternStep.GROOVE_IW then -- VNAO Edit - Changed
+      D = little( "LUR" ) -- VNAO Edit - Changed
+    end -- VNAO Edit - Changed
   end
+  --[[
+  elseif playerData.case == 3 then -- VNAO Edit - Changed
+    if LUE>self.lue.RIGHT then -- VNAO Edit - Changed
+      D=underline("LUL") -- VNAO Edit - Changed
+    elseif LUE>self.lue.Right then -- VNAO Edit - Changed
+      D="LUL" -- VNAO Edit - Changed
+    elseif LUE>self.lue._max then -- VNAO Edit - Changed
+      D=little("LUL") -- VNAO Edit - Changed
+    elseif LUE < self.lue.LEFT then -- VNAO Edit - Changed
+      D = underline( "LUR" ) -- VNAO Edit - Changed
+    elseif LUE < self.lue.Left then -- VNAO Edit - Changed
+      D = "LUR" -- VNAO Edit - Changed
+    elseif LUE < self.lue._min then -- VNAO Edit - Changed
+      D = little( "LUR" ) -- VNAO Edit - Changed
+    end -- VNAO Edit - Changed
+  end -- VNAO Edit - Changed 
+--]]
+  if step == AIRBOSS.PatternStep.GROOVE_IW and playerData.waveoff == false and playerData.owo == false then -- VNAO Edit - Added check for waveoff so we don't get any IN THE WIRE comments if its a WO
+    -- env.info('Adam MOOSE Edit -IW code: checking for Landing Left or Landing Right, lue: '..LUEwire)
+    -- env.info("Adam MOOSE Edit -IW code: ROLL IN THE WIRES: "..ROL)
+
+    if LUEwire>1.2 then -- VNAO Edit - Added by using real time attitude monitor and using the ladders as a reference for distance down the deck, focusing on ladder rungs 4-8 but using specifiically values at ((rung 4 12/24/23) 12/24/23), average rung 3 and 4 after testing 12/27
+      -- env.info("Adam MOOSE Edit -IW code: Line up > 1.2, _LL_")
+      DW=underline("LL")-- VNAO Edit - Added 
+    elseif LUEwire>0.4 then -- VNAO Edit - Added  by using real time attitude monitor and using the ladders as a reference for distance down the deck, focusing on ladder rungs 4-8 but using specifiically values at (rung 4 12/24/23), average rung 3 and 4 after testing 12/27
+      -- env.info("Adam MOOSE Edit -IW code: Line up > 0.4, LL")
+      DW="LL"-- VNAO Edit - Added 
+    elseif LUEwire>0.25 then -- VNAO Edit - Added  by using real time attitude monitor and using the ladders as a reference for distance down the deck, focusing on ladder rungs 4-8 but using specifiically values at (rung 4 12/24/23), average rung 3 and 4 after testing 12/27
+      -- env.info("Adam MOOSE Edit -IW code: Line up > 0.25, (LL)")
+      DW=little("LL")-- VNAO Edit - Added 
+    elseif LUEwire<-1.17 then -- VNAO Edit - Added  by using real time attitude monitor and using the ladders as a reference for distance down the deck, focusing on ladder rungs 4-8 but using specifiically values at (rung 4 12/24/23), average rung 3 and 4 after testing 12/27
+      -- env.info("Adam MOOSE Edit -IW code: Line up < -1.17, _LR_")
+      DW=underline("LR")-- VNAO Edit - Added 
+    elseif LUEwire<-0.46 then -- VNAO Edit - Added  by using real time attitude monitor and using the ladders as a reference for distance down the deck, focusing on ladder rungs 4-8 but using specifiically values at (rung 4 12/24/23), average rung 3 and 4 after testing 12/27
+      -- env.info("Adam MOOSE Edit -IW code: Line up < -0.46, LR")
+      DW="LR"-- VNAO Edit - Added 
+    elseif LUEwire<-0.25 then -- VNAO Edit - Added  by using real time attitude monitor and using the ladders as a reference for distance down the deck, focusing on ladder rungs 4-8 but using specifiically values at (rung 4 12/24/23), average rung 3 and 4 after testing 12/27
+      -- env.info("Adam MOOSE Edit -IW code: Line up < -0.25, (LR)")
+      DW=little("LR")-- VNAO Edit - Added 
+    else-- VNAO Edit - Added 
+      -- env.info('Adam MOOSE Edit -IW code: checking for Landing Left or Landing Right: NO LINEUP ERROR DECTECTED ')
+      -- env.info("Adam MOOSE Edit -IW code: NO LINEUP ERORR DECTECTED ")
+    end-- VNAO Edit - Added 
+
+    if ROL > 5 and ROL <= 10 then-- VNAO Edit - Added 
+      -- env.info("Adam MOOSE Edit -IW code: ROLL GREATER THAN 5 DEGREES, maybe a (LRWD) ")
+      Rol=little("LRWD")-- VNAO Edit - Added 
+    elseif ROL > 10 and ROL <= 15 then-- VNAO Edit - Added 
+      -- env.info("Adam MOOSE Edit -IW code: ROLL GREATER THAN 10 DEGREES, maybe a LRWD ")
+      Rol=("LRWD")-- VNAO Edit - Added 
+    elseif ROL > 15 then-- VNAO Edit - Added 
+      -- env.info("Adam MOOSE Edit -IW code: ROLL GREATER THAN 20 DEGREES, maybe a _LRWD_ ")
+      Rol=underline("LRWD")-- VNAO Edit - Added 
+    elseif ROL < -5 and ROL >= -10 then-- VNAO Edit - Added 
+      -- env.info("Adam MOOSE Edit -IW code: ROLL GREATER THAN 5 DEGREES, maybe a (LLWD) ")
+      Rol=little("LLWD")-- VNAO Edit - Added 
+    elseif ROL < -10 and ROL >= -15 then-- VNAO Edit - Added 
+      -- env.info("Adam MOOSE Edit -IW code: ROLL GREATER THAN 10 DEGREES, maybe a LLWD ")
+      Rol=("LLWD")-- VNAO Edit - Added 
+    elseif ROL < -15 then-- VNAO Edit - Added 
+      -- env.info("Adam MOOSE Edit -IW code: ROLL GREATER THAN 20 DEGREES, maybe a _LLWD_ ")
+      Rol=underline("LLWD")-- VNAO Edit - Added 
+    else-- VNAO Edit - Added 
+      -- env.info("Adam MOOSE Edit -IW code: ROLL is acceptable, less than 5 degrees left or right ")
+    end-- VNAO Edit - Added 
+
+
+
+    local hornet =   playerData.actype == AIRBOSS.AircraftCarrier.HORNET-- VNAO Edit - Added 
+    local tomcat = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B-- VNAO Edit - Added 
+
+    if hornet then-- VNAO Edit - Added 
+      if Lnoz > 0.6 and Rnoz > 0.6 then -- VNAO Edit - Added check them both, it's possilbe there could be a single engine landing and one is in idle perhaps?
+        -- env.info("Adam MOOSE Edit -IW code: Throttles maybe close to idle? EGIW?  L:"..Lnoz.." R: "..Rnoz)
+        Noz = underline("EG")-- VNAO Edit - Added 
+      else-- VNAO Edit - Added 
+        -- env.info("Adam MOOSE Edit -IW code: Throttles ok position- L:"..Lnoz.." R: "..Rnoz)
+      end-- VNAO Edit - Added 
+    end-- VNAO Edit - Added 
+
+   --[[ if tomcat then-- VNAO Edit - Added 
+      if Lnoz > 0.9 and Rnoz > 0.9 then -- VNAO Edit - Added Appears that when engines are idle nozzle arguments are Zero. Anything more than idle is close to 1 (0.95 to be exact) and Burner reduces to 0.3
+        -- env.info("Adam MOOSE Edit -IW code: Throttles maybe close to idle? EGIW?  L:"..Lnoz.." R: "..Rnoz)
+        Noz = underline("EG")-- VNAO Edit - Added 
+      else-- VNAO Edit - Added 
+        -- env.info("Adam MOOSE Edit -IW code: Throttles ok position- L:"..Lnoz.." R: "..Rnoz)
+      end-- VNAO Edit - Added 
+    end-- VNAO Edit - Added ]]
+
+    if playerData.Tgroove and playerData.Tgroove <= 360 and playerData.case < 3 then  --Circuit Added
+      local grooveTime = playerData.Tgroove --Circuit Added
+      if grooveTime > 19 or grooveTime < 15 then --Circuit Added
+        GT = "" --Circuit Added
+      end --Circuit Added
+    end --Circuit Added
+
+  end-- VNAO Edit - Added 
 
   -- Compile.
   local G = ""
   local n = 0
-  -- Fly trough.
+
+  -- VNAO Edit - Added WU, AA and AFU calls to LSO grading
+  if stepMod == "XX" then -- VNAO Edit - Added
+    if playerData.case < 3 then -- VNAO Edit - Added
+      if fdata.WrappedUp then -- VNAO Edit - Added
+        env.info("Adding WrappedUp deviation.")
+        G=G..fdata.WrappedUp -- VNAO Edit - Added
+        n=n + 1 -- VNAO Edit - Added
+        -- env.info('MOOSE/AIRBOSS- MOD - GRADE.... you`RE GETTING WU`D')
+      end -- VNAO Edit - Added
+      if fdata.AngledApch then  -- VNAO Edit - Added
+        env.info("Adding AngledApch deviation.")
+        G=G..fdata.AngledApch  -- VNAO Edit - Added
+        n=n+1   -- VNAO Edit - Added
+        -- env.info('Adam MOOSE Edit -AA code: Function- _Flightdata2Text: Trying to add AA comment only to the "Start" in comments for player: '..playerData.name)
+        -- env.info('MOOSE/AIRBOSS- MOD - GRADE.... you`RE GETTING AA`D')
+      end  -- VNAO Edit - Added
+      if fdata.AFU then  -- VNAO Edit - Added
+        env.info("Adding AFU deviation.")
+        G=G..fdata.AFU  -- VNAO Edit - Added
+        n=n+1   -- VNAO Edit - Added
+        -- env.info('Adam MOOSE Edit -AFU code: Function- _Flightdata2Text: Trying to add AFU comment only to the "Start" in comments for player: '..playerData.name)
+        -- env.info('MOOSE/AIRBOSS- MOD - GRADE....you`RE GETTING AFU`D')
+      end
+    end -- VNAO Edit - Added
+  end  -- VNAO Edit - Added
+
+  -- Fly through.
   if fdata.FlyThrough then
     G = G .. fdata.FlyThrough
   end
   -- Angled Approach - doesn't affect score, advisory only.
-  if P then
-    G = G .. P
-    n = n
-  end
+  -- if P then -- VNAO Edit - Commented out
+    -- G = G .. P -- VNAO Edit - Commented out
+  --   n = n + 1 -- VNAO Edit - Added + 1 -- VNAO Edit - Commented out
+  -- end -- VNAO Edit - Commented out
   -- Speed.
   if S then
+    env.info("Adding speed deviation.")--VNAO Added
     G = G .. S
     n = n + 1
   end
   -- Glide slope.
   if A then
+    env.info("Adding altitude deviation.")--VNAO Added
     G = G .. A
     n = n + 1
   end
   -- Line up.
   if D then
+    env.info("Adding line up deviation.")--VNAO Added
     G = G .. D
     n = n + 1
   end
   -- Drift in Lineup
   if fdata.Drift then
+    env.info("Adding drift deviation.")--VNAO Added
     G = G .. fdata.Drift
     n = n -- Drift doesn't affect score, advisory only.
   end
   -- Overshoot.
   if O then
+    env.info("Adding overshoot deviation.")--VNAO Added
     G = G .. O
     n = n + 1
   end
+
+  if DW then  -- VNAO Edit - Added
+    -- env.info("Adam MOOSE Edit -IW code:TRYING TO ADD COMMENT LANDED LEFT/RIGHT OF CENTER LINE ")  -- VNAO Edit - Added
+    env.info("Adding landed L/R deviation.")
+    G = G .. DW  -- VNAO Edit - Added
+    n = n + 1  -- VNAO Edit - Added
+  end  -- VNAO Edit - Added
+
+  if Rol then  -- VNAO Edit - Added
+    -- env.info("Adam MOOSE Edit -IW code:TRYING TO ADD COMMENT LANDED LEFT/RIGHT WING DOWN ")  -- VNAO Edit - Added
+    env.info("Adding landed rol deviation.")
+    G = G .. Rol  -- VNAO Edit - Added
+    n = n + 1  -- VNAO Edit - Added
+  end  -- VNAO Edit - Added
+
+  if Noz then  -- VNAO Edit - Added
+    -- env.info("Adam MOOSE Edit -IW code:TRYING TO ADD COMMENT EG ")  -- VNAO Edit - Added
+    env.info("Adding eased guns deviation.")
+    G = G .. Noz  -- VNAO Edit - Added
+    n = n + 1-- try to add 3 to get an automatic no grade.  -- VNAO Edit - Added
+  end  -- VNAO Edit - Added
+
+  if GT then  --Circuit Added
+    G = G .. GT --Circuit Added
+    n = n + 1 --Circuit Added
+  end --Circuit Added
 
   -- Add current step.
   local step = self:_GS( step )
@@ -13211,6 +13915,7 @@ function AIRBOSS:_Debrief( playerData )
     Points = points
   end
 
+
   -- My LSO grade.
   local mygrade = {} -- #AIRBOSS.LSOgrade
   mygrade.grade = grade
@@ -13267,7 +13972,8 @@ function AIRBOSS:_Debrief( playerData )
 
     -- Time in the groove. Only Case I/II and not pattern WO.
     if playerData.Tgroove and playerData.Tgroove <= 360 and playerData.case < 3 then
-      text = text .. string.format( "\nTime in the groove %.1f seconds: %s", playerData.Tgroove, self:_EvalGrooveTime( playerData ) )
+      -- text = text .. string.format( "\nTime in the groove %.1f seconds: %s", playerData.Tgroove, self:_EvalGrooveTime( playerData ) ) --Circuit changed removed groove comment
+      text = text .. string.format( "\nTime in the groove %.1f seconds.", playerData.Tgroove ) 
     end
 
   end
@@ -13720,7 +14426,7 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
   local deltaH = self:_GetDeltaHeading( hdg, hiw )
 
   -- Debug output
-  self:I( self.lid .. string.format( "Carrier steaming into the wind (%.1f kts). Heading=%03d-->%03d (Delta=%.1f), Speed=%.1f knots, Distance=%.1f NM, Time=%d sec", 
+  self:I( self.lid .. string.format( "Carrier steaming into the wind (%.1f kts). Heading=%03d-->%03d (Delta=%.1f), Speed=%.1f knots, Distance=%.1f NM, Time=%d sec",
   UTILS.MpsToKnots( vwind ), hdg, hiw, deltaH, speedknots, distNM, speedknots, time ) )
 
   -- Current coordinate.
@@ -14932,12 +15638,12 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
   if radio == nil or call == nil then
     return
   end
-  
+
   if not self.SRS then
-  
+
     -- Create a new radio transmission item.
     local transmission = {} -- #AIRBOSS.Radioitem
-  
+
     transmission.radio = radio
     transmission.call = call
     transmission.Tplay = timer.getAbsTime() + (delay or 0)
@@ -14945,49 +15651,49 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
     transmission.isplaying = false
     transmission.Tstarted = nil
     transmission.loud = loud and call.loud
-  
+
     -- Player onboard number if sender has one.
     if self:_IsOnboard( call.modexsender ) then
       self:_Number2Radio( radio, call.modexsender, delay, 0.3, pilotcall )
     end
-  
+
     -- Play onboard number if receiver has one.
     if self:_IsOnboard( call.modexreceiver ) then
       self:_Number2Radio( radio, call.modexreceiver, delay, 0.3, pilotcall )
     end
-  
+
     -- Add transmission to the right queue.
     local caller = ""
     if radio.alias == "LSO" then
-  
+
       table.insert( self.RQLSO, transmission )
-  
+
       caller = "LSOCall"
-  
+
       -- Schedule radio queue checks.
       if not self.RQLid then
         self:T( self.lid .. string.format( "Starting LSO radio queue." ) )
         self.RQLid = self.radiotimer:Schedule( nil, AIRBOSS._CheckRadioQueue, { self, self.RQLSO, "LSO" }, 0.02, 0.05 )
       end
-  
+
     elseif radio.alias == "MARSHAL" then
-  
+
       table.insert( self.RQMarshal, transmission )
-  
+
       caller = "MarshalCall"
-  
+
       if not self.RQMid then
         self:T( self.lid .. string.format( "Starting Marhal radio queue." ) )
         self.RQMid = self.radiotimer:Schedule( nil, AIRBOSS._CheckRadioQueue, { self, self.RQMarshal, "MARSHAL" }, 0.02, 0.05 )
       end
-  
+
     end
-  
+
     -- Append radio click sound at the end of the transmission.
     if click then
       self:RadioTransmission( radio, self[caller].CLICK, false, delay )
     end
-  
+
   else
 
     -- SRS transmission
@@ -14998,7 +15704,7 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
       local voice = nil
       local gender = nil
       local culture = nil
-      
+
       if radio.alias == "AIRBOSS" then
         frequency = self.AirbossRadio.frequency
         modulation = self.AirbossRadio.modulation
@@ -15006,13 +15712,13 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
         gender = self.AirbossRadio.gender
         culture = self.AirbossRadio.culture
       end
-      
+
       if radio.alias == "MARSHAL" then
         voice = self.MarshalRadio.voice
         gender = self.MarshalRadio.gender
         culture = self.MarshalRadio.culture
       end
-      
+
       if radio.alias == "LSO" then
         frequency = self.LSORadio.frequency
         modulation = self.LSORadio.modulation
@@ -15020,7 +15726,7 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
         gender = self.LSORadio.gender
         culture = self.LSORadio.culture
       end
-      
+
       if pilotcall then
         voice = self.PilotRadio.voice
         gender = self.PilotRadio.gender
@@ -15034,16 +15740,16 @@ function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, p
         modulation = self.AirbossRadio.modulation
         radio.alias = "AIRBOSS"
       end
-      
+
       local volume = nil
-      
+
       if loud then
         volume = 1.0
       end
-      
+
       --local text = tostring(call.modexreceiver).."; "..radio.alias.."; "..call.subtitle
       local text = call.subtitle
-      self:T(self.lid..text) 
+      self:T(self.lid..text)
       local srstext = self:_GetNiceSRSText(text)
       self.SRSQ:NewTransmission(srstext, call.duration, self.SRS, nil, 0.1, nil, call.subtitle, call.subduration, frequency, modulation, gender, culture, voice, volume, radio.alias)
     end
@@ -15063,11 +15769,11 @@ function AIRBOSS:SetSRSPilotVoice( Voice, Gender, Culture )
   self.PilotRadio.voice = Voice or MSRS.Voices.Microsoft.David
   self.PilotRadio.gender = Gender or "male"
   self.PilotRadio.culture = Culture or "en-US"
-  
+
   if (not Voice) and self.SRS and self.SRS:GetProvider() == MSRS.Provider.GOOGLE then
     self.PilotRadio.voice = MSRS.Voices.Google.Standard.en_US_Standard_J
   end
-  
+
   return self
 end
 
@@ -15381,44 +16087,44 @@ function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duratio
       -- SCHEDULER:New(nil, self.MessageToPlayer, {self, playerData, message, sender, receiver, duration, clear}, delay)
       self:ScheduleOnce( delay, self.MessageToPlayer, self, playerData, message, sender, receiver, duration, clear )
     else
-      
+
       if not self.SRS then
         -- Wait until previous sound finished.
         local wait = 0
-  
+
         -- Onboard number to get the attention.
         if receiver == playerData.onboard then
-  
+
           -- Which voice over number to use.
           if sender and (sender == "LSO" or sender == "MARSHAL" or sender == "AIRBOSS") then
-  
+
             -- User sound of board number.
             wait = wait + self:_Number2Sound( playerData, sender, receiver )
-  
+
           end
         end
-  
+
         -- Negative.
         if string.find( text:lower(), "negative" ) then
           local filename = self:_RadioFilename( self.MarshalCall.NEGATIVE, false, "MARSHAL" )
           USERSOUND:New( filename ):ToGroup( playerData.group, wait )
           wait = wait + self.MarshalCall.NEGATIVE.duration
         end
-  
+
         -- Affirm.
         if string.find( text:lower(), "affirm" ) then
           local filename = self:_RadioFilename( self.MarshalCall.AFFIRMATIVE, false, "MARSHAL" )
           USERSOUND:New( filename ):ToGroup( playerData.group, wait )
           wait = wait + self.MarshalCall.AFFIRMATIVE.duration
         end
-  
+
         -- Roger.
         if string.find( text:lower(), "roger" ) then
           local filename = self:_RadioFilename( self.MarshalCall.ROGER, false, "MARSHAL" )
           USERSOUND:New( filename ):ToGroup( playerData.group, wait )
           wait = wait + self.MarshalCall.ROGER.duration
         end
-  
+
         -- Play click sound to end message.
         if wait > 0 then
           local filename = self:_RadioFilename( self.MarshalCall.CLICK )
@@ -15431,7 +16137,7 @@ function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duratio
         local voice = self.MarshalRadio.voice
         local gender = self.MarshalRadio.gender
         local culture = self.MarshalRadio.culture
-        
+
         if not sender then sender = "AIRBOSS" end
 
         if string.find(sender,"AIRBOSS" ) then
@@ -16722,6 +17428,17 @@ function AIRBOSS:_RequestEmergency( _unitName )
         -- Cleared.
         text = "affirmative, you can bypass the pattern and are cleared for final approach!"
 
+        -- VNAO Edit - Added wrapped up call to LSO grading
+        playerData.wrappedUpAtWakeLittle = false -- VNAO Edit - Added
+        playerData.wrappedUpAtWakeFull = false -- VNAO Edit - Added
+        playerData.wrappedUpAtWakeUnderline = false -- VNAO Edit - Added
+        playerData.wrappedUpAtStartLittle = false -- VNAO Edit - Added
+        playerData.wrappedUpAtStartFull = false -- VNAO Edit - Added
+        playerData.wrappedUpAtStartUnderline = false -- VNAO Edit - Added
+        playerData.AAatWakeLittle = false -- VNAO Edit - Added
+        playerData.AAatWakeFull = false -- VNAO Edit - Added
+        playerData.AAatWakeUnderline = false -- VNAO Edit - Added
+
         -- Now, if player is in the marshal or waiting queue he will be removed. But the new leader should stay in or not.
         local lead = self:_GetFlightLead( playerData )
 
@@ -17049,7 +17766,7 @@ function AIRBOSS:_RemoveSectionMember( playerData, sectionmember )
   return false
 end
 
---- Set all flights within 100 meters to be part of my section.
+--- Set all flights within maxsectiondistance meters to be part of my section (default: 100 meters).
 -- @param #AIRBOSS self
 -- @param #string _unitName Name of the player unit.
 function AIRBOSS:_SetSection( _unitName )
@@ -17067,7 +17784,7 @@ function AIRBOSS:_SetSection( _unitName )
       local mycoord = _unit:GetCoordinate()
 
       -- Max distance up to which section members are allowed.
-      local dmax = 100
+      local dmax = self.maxsectiondistance
 
       -- Check if player is in Marshal or pattern queue already.
       local text
@@ -18605,7 +19322,3 @@ function AIRBOSS:onafterLSOGrade(From, Event, To, playerData, grade)
   end
 
 end
-
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

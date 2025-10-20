@@ -1,6 +1,6 @@
 --- **Actions** - ACT_ACCOUNT_ classes **account for** (detect, count & report) various DCS events occurring on UNITs.
 --
--- ![Banner Image](..\Presentations\ACT_ACCOUNT\Dia1.JPG)
+-- ![Banner Image](..\Images\deprecated.png)
 --
 -- ===
 --
@@ -8,9 +8,11 @@
 -- @image MOOSE.JPG
 
 do -- ACT_ACCOUNT
-
+  
   --- # @{#ACT_ACCOUNT} FSM class, extends @{Core.Fsm#FSM_PROCESS}
-  --
+  -- 
+  -- ![Banner Image](..\Images\deprecated.png)
+  -- 
   -- ## ACT_ACCOUNT state machine:
   --
   -- This class is a state machine: it manages a process that is triggered by events causing state transitions to occur.
@@ -133,7 +135,7 @@ do -- ACT_ACCOUNT
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  function ACT_ACCOUNT:onafterEvent( ProcessUnit, From, Event, To, Event )
+  function ACT_ACCOUNT:onafterEvent( ProcessUnit, From, Event, To )
 
     self:__NoMore( 1 )
   end

@@ -207,10 +207,10 @@ function NET:_EventHandler(EventData)
     local PlayerID = self:GetPlayerIDByName(name) or "none"
     local PlayerSide, PlayerSlot = self:GetSlot(data.IniUnit)
     if not PlayerSide then PlayerSide = EventData.IniCoalition end
-    if not PlayerSlot then PlayerSlot = EventData.IniUnit:GetID() end
+    if not PlayerSlot then PlayerSlot = EventData.IniUnit:GetID() or -1 end
     local TNow = timer.getTime()
     
-    self:T(self.lid.."Event for: "..name.." | UCID: "..ucid .. " | ID/SIDE/SLOT "..PlayerID.."/"..PlayerSide.."/"..PlayerSlot)
+    --self:T(self.lid.."Event for: "..name.." | UCID: "..ucid .. " | ID/SIDE/SLOT "..PlayerID.."/"..PlayerSide.."/"..PlayerSlot)
     
     -- Joining
     if data.id == EVENTS.PlayerEnterUnit or data.id == EVENTS.PlayerEnterAircraft then

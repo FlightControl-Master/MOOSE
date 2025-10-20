@@ -387,6 +387,8 @@ function TARGET:AddObject(Object)
   
     if Object:IsInstanceOf("OPSGROUP") then
       self:_AddObject(Object:GetGroup()) -- We add the MOOSE GROUP object not the OPSGROUP object.
+    --elseif Object:IsInstanceOf("OPSZONE") then
+      --self:_AddObject(Object:GetZone())
     else
       self:_AddObject(Object)
     end
@@ -1296,11 +1298,27 @@ function TARGET:GetTargetThreatLevelMax(Target)
     return 0
 
   elseif Target.Type==TARGET.ObjectType.ZONE then
+    
+    local zone = Target.Object -- Core.Zone#ZONE_RADIUS
+    local foundunits = {}
+    if zone:IsInstanceOf("ZONE_RADIUS") or zone:IsInstanceOf("ZONE_POLYGON") then
+      zone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT,Unit.Category.SHIP})
+      foundunits = zone:GetScannedSetUnit()
+    else
+      foundunits = SET_UNIT:New():FilterZones({zone}):FilterOnce()
+    end
+    local ThreatMax = foundunits:GetThreatLevelMax() or 0
+    return ThreatMax
   
-    return 0
+  elseif Target.Type==TARGET.ObjectType.OPSZONE then
+    
+    local unitset = Target.Object:GetScannedUnitSet() -- Core.Set#SET_UNIT
+    local ThreatMax = unitset:GetThreatLevelMax()
+    return ThreatMax
     
   else
     self:E("ERROR: unknown target object type in GetTargetThreatLevel!")
+    return 0
   end
   
   return self
@@ -1697,6 +1715,26 @@ function TARGET:GetAverageCoordinate()
   return nil
 end
 
+
+--- Get coordinates of all targets. (e.g. for a SET_STATIC)
+-- @param #TARGET self
+-- @return #table Table with coordinates of all targets.
+function TARGET:GetCoordinates()
+    local coordinates={}
+
+    for _,_target in pairs(self.targets) do
+        local target=_target --#TARGET.Object
+
+        local coordinate=self:GetTargetCoordinate(target)
+        if coordinate then
+            table.insert(coordinates, coordinate)
+        end
+
+    end
+
+    return coordinates
+end
+
 --- Get heading of target.
 -- @param #TARGET self
 -- @return #number Heading of the target in degrees.
@@ -1948,6 +1986,21 @@ function TARGET:GetObject(RefCoordinate, Coalitions)
   end
 
   return nil
+end
+
+--- Get all target objects.
+-- @param #TARGET self
+-- @return #table List of target objects.
+function TARGET:GetObjects()
+    local objects={}
+
+    for _,_target in pairs(self.targets) do
+        local target=_target --#TARGET.Object
+
+        table.insert(objects, target.Object)
+    end
+
+    return objects
 end
 
 --- Count alive objects.

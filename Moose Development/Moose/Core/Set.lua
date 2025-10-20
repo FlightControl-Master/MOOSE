@@ -289,7 +289,14 @@ do -- SET_BASE
   
     -- Debug info.
     --self:T2( { ObjectName = ObjectName, Object = Object } )
-
+    
+    -- Error ahndling
+    if not ObjectName or ObjectName == "" then
+      self:E("SET_BASE:Add - Invalid ObjectName handed")
+      self:E({ObjectName=ObjectName, Object=Object})
+      return self
+    end
+    
     -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
     if self.Set[ObjectName] then
       self:Remove( ObjectName, true )
@@ -524,6 +531,21 @@ do -- SET_BASE
 
     return self.SomeIteratorLimit or self:Count()
   end
+  
+  --- Get max threat level of all objects in the SET.
+  -- @param #SET_BASE self
+  -- @return #number Max threat level found.
+  function SET_BASE:GetThreatLevelMax()
+    local ThreatMax = 0
+    for _,_unit in pairs(self.Set or {}) do
+      local unit = _unit -- Wrapper.Unit#UNIT
+      local threat = unit.GetThreatLevel and unit:GetThreatLevel() or 0
+      if threat > ThreatMax then
+        ThreatMax = threat
+      end
+    end
+    return ThreatMax
+  end
 
   --- Filters for the defined collection.
   -- @param #SET_BASE self
@@ -607,14 +629,14 @@ do -- SET_BASE
     return self
   end
 
-  --- Iterate the SET_BASE while identifying the nearest object in the set from a @{Core.Point#POINT_VEC2}.
+  --- Iterate the SET_BASE while identifying the nearest object in the set from a @{Core.Point#COORDINATE}.
   -- @param #SET_BASE self
-  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#COORDINATE} or @{Core.Point#POINT_VEC2} object (but **not** a simple DCS#Vec2!) from where to evaluate the closest object in the set.
+  -- @param Core.Point#COORDINATE Coordinate A @{Core.Point#COORDINATE} object (but **not** a simple DCS#Vec2!) from where to evaluate the closest object in the set.
   -- @return Core.Base#BASE The closest object.
   -- @usage
   --          myset:FindNearestObjectFromPointVec2( ZONE:New("Test Zone"):GetCoordinate() )
-  function SET_BASE:FindNearestObjectFromPointVec2( PointVec2 )
-    --self:F2( PointVec2 )
+  function SET_BASE:FindNearestObjectFromPointVec2( Coordinate )
+    --self:F2( Coordinate )
 
     local NearestObject = nil
     local ClosestDistance = nil
@@ -622,9 +644,9 @@ do -- SET_BASE
     for ObjectID, ObjectData in pairs( self.Set ) do
       if NearestObject == nil then
         NearestObject = ObjectData
-        ClosestDistance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
+        ClosestDistance = Coordinate:DistanceFromPointVec2( ObjectData:GetCoordinate() )
       else
-        local Distance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
+        local Distance = Coordinate:DistanceFromPointVec2( ObjectData:GetCoordinate() )
         if Distance < ClosestDistance then
           NearestObject = ObjectData
           ClosestDistance = Distance
@@ -936,7 +958,26 @@ do -- SET_BASE
 
     return ObjectNames
   end
+  
+    --- Get a *new* set table that only contains alive objects.
+  -- @param #SET_BASE self
+  -- @return #table Set table of alive objects.
+  function SET_BASE:GetAliveSet()
+    --self:F2()
 
+    local AliveSet = {}
+    -- Clean the Set before returning with only the alive Objects.
+    for ObjectName, Object in pairs( self.Set ) do
+      if Object then
+        if Object:IsAlive() then
+          AliveSet[#AliveSet+1] = Object
+        end
+      end
+    end
+
+    return AliveSet or {}
+  end
+  
 end
 
 do 
@@ -1103,25 +1144,25 @@ do
     
   end
   
-  --- Get a *new* set that only contains alive groups.
+  --- Get a *new* set table that only contains alive groups.
   -- @param #SET_GROUP self
-  -- @return #SET_GROUP Set of alive groups.
+  -- @return #table Set of alive groups.
   function SET_GROUP:GetAliveSet()
     --self:F2()
 
-    local AliveSet = SET_GROUP:New()
-
+    --local AliveSet = SET_GROUP:New()
+    local AliveSet = {}
     -- Clean the Set before returning with only the alive Groups.
     for GroupName, GroupObject in pairs( self.Set ) do
       local GroupObject = GroupObject -- Wrapper.Group#GROUP
       if GroupObject then
         if GroupObject:IsAlive() then
-          AliveSet:Add( GroupName, GroupObject )
+          AliveSet[GroupName] = GroupObject
         end
       end
     end
 
-    return AliveSet.Set or {}
+    return AliveSet or {}
   end
 
   --- Returns a report of of unit types.
@@ -1220,12 +1261,12 @@ do
     return GroupFound
   end
 
-  --- Iterate the SET_GROUP while identifying the nearest object from a @{Core.Point#POINT_VEC2}.
+  --- Iterate the SET_GROUP while identifying the nearest object from a @{Core.Point#COORDINATE}.
   -- @param #SET_GROUP self
-  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest object in the set.
+  -- @param Core.Point#COORDINATE Coordinate A @{Core.Point#COORDINATE} object from where to evaluate the closest object in the set.
   -- @return Wrapper.Group#GROUP The closest group.
-  function SET_GROUP:FindNearestGroupFromPointVec2( PointVec2 )
-    --self:F2( PointVec2 )
+  function SET_GROUP:FindNearestGroupFromPointVec2( Coordinate )
+    --self:F2( Coordinate )
 
     local NearestGroup = nil -- Wrapper.Group#GROUP
     local ClosestDistance = nil
@@ -1235,9 +1276,9 @@ do
     for ObjectID, ObjectData in pairs( Set ) do
       if NearestGroup == nil then
         NearestGroup = ObjectData
-        ClosestDistance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
+        ClosestDistance = Coordinate:DistanceFromPointVec2( ObjectData:GetCoordinate() )
       else
-        local Distance = PointVec2:DistanceFromPointVec2( ObjectData:GetCoordinate() )
+        local Distance = Coordinate:DistanceFromPointVec2( ObjectData:GetCoordinate() )
         if Distance < ClosestDistance then
           NearestGroup = ObjectData
           ClosestDistance = Distance
@@ -2497,6 +2538,35 @@ do -- SET_UNIT
     )
     return self
   end
+  
+  --- Builds a set of units which belong to groups with certain **group names**.
+  -- @param #SET_UNIT self
+  -- @param #string Prefixes The (partial) group names to look for. Can be a single string or a table of strings.
+  -- @return #SET_UNIT self
+  function SET_UNIT:FilterGroupPrefixes(Prefixes)
+    if type(Prefixes) == "string" then
+      Prefixes = {Prefixes}
+    end
+    self:FilterFunction(
+      function(unit,prefixes)
+        local outcome = false
+        if unit then
+          local grp = unit:GetGroup()
+          local gname = grp ~= nil and grp:GetName() or "none"
+          for _,_fix in pairs(prefixes or {}) do
+            if string.find(gname,_fix) then
+              outcome = true
+              break
+            end
+          end
+        else
+          return false
+        end
+        return outcome
+      end, Prefixes
+    )
+    return self
+  end
 
   --- Builds a set of units having a radar of give types.
   -- All the units having a radar of a given type will be included within the set.
@@ -2544,18 +2614,16 @@ do -- SET_UNIT
   
   --- Gets the alive set.
   -- @param #SET_UNIT self
-  -- @return #table Table of SET objects
+  -- @return #table Table of alive UNIT objects
   -- @return #SET_UNIT AliveSet 
   function SET_UNIT:GetAliveSet()
 
     local AliveSet = SET_UNIT:New()
 
     -- Clean the Set before returning with only the alive Groups.
-    for GroupName, GroupObject in pairs(self.Set) do    
-      local GroupObject=GroupObject --Wrapper.Client#CLIENT
-      
+    for GroupName, GroupObject in pairs(self.Set) do       
       if GroupObject and GroupObject:IsAlive() then      
-        AliveSet:Add(GroupName, GroupObject)
+        AliveSet[GroupName] = GroupObject
       end
     end
 
@@ -4412,6 +4480,35 @@ do -- SET_CLIENT
     end
     return self
   end
+  
+  --- Builds a set of clients which belong to groups with certain **group names**.
+  -- @param #SET_CLIENT self
+  -- @param #string Prefixes The (partial) group names to look for. Can be anywhere in the group name. Can be a single string or a table of strings.
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:FilterGroupPrefixes(Prefixes)
+    if type(Prefixes) == "string" then
+      Prefixes = {Prefixes}
+    end
+    self:FilterFunction(
+      function(unit,prefixes)
+        local outcome = false
+        if unit then
+          local grp = unit:GetGroup()
+          local gname = grp ~= nil and grp:GetName() or "none"
+          for _,_fix in pairs(prefixes or {}) do
+            if string.find(gname,_fix) then
+              outcome = true
+              break
+            end
+          end
+        else
+          return false
+        end
+        return outcome
+      end, Prefixes
+    )
+    return self
+  end
 
   --- Builds a set of clients that are only active.
   -- Only the clients that are active will be included within the set.
@@ -4589,6 +4686,16 @@ do -- SET_CLIENT
     end
     return self
   end
+  
+  --- Make the SET handle CA slots **only** (GROUND units used by any player). Needs active filtering with `FilterStart()`
+  -- @param #SET_CLIENT self
+  -- @return #SET_CLIENT self
+  function SET_CLIENT:HandleCASlots()
+    self:HandleEvent(EVENTS.PlayerEnterUnit,SET_CLIENT._EventPlayerEnterUnit)
+    self:HandleEvent(EVENTS.PlayerLeaveUnit,SET_CLIENT._EventPlayerLeaveUnit)
+    self:FilterFunction(function(client) if client and client:IsAlive() and client:IsGround() then return true else return false end end)
+    return self
+  end  
 
   --- Handles the Database to check on an event (birth) that the Object was added in the Database.
   -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
@@ -4694,18 +4801,16 @@ do -- SET_CLIENT
   -- @return #table Table of SET objects
   function SET_CLIENT:GetAliveSet()
 
-    local AliveSet = SET_CLIENT:New()
+    local AliveSet = {}
 
     -- Clean the Set before returning with only the alive Groups.
-    for GroupName, GroupObject in pairs(self.Set) do    
-      local GroupObject=GroupObject --Wrapper.Client#CLIENT
-      
+    for GroupName, GroupObject in pairs(self.Set) do      
       if GroupObject and GroupObject:IsAlive() then      
-        AliveSet:Add(GroupName, GroupObject)
+        AliveSet[GroupName] = GroupObject
       end
     end
 
-    return AliveSet.Set or {}
+    return AliveSet or {}
   end
 
   --- [User] Add a custom condition function.
@@ -5371,6 +5476,7 @@ do -- SET_AIRBASE
     Airbases = {},
     Filter = {
       Coalitions = nil,
+      Zones = nil,
     },
     FilterMeta = {
       Coalitions = {
@@ -5522,6 +5628,31 @@ do -- SET_AIRBASE
     end
     return self
   end
+  
+  --- Builds a set of airbase objects in zones.
+  -- @param #SET_AIRBASE self
+  -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
+  -- @return #SET_AIRBASE self
+  function SET_AIRBASE:FilterZones( Zones )
+    if not self.Filter.Zones then
+      self.Filter.Zones = {}
+    end
+    local zones = {}
+    if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
+      zones = Zones.Set
+    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
+      return self     
+    else
+      zones = Zones
+    end
+    for _,Zone in pairs( zones ) do
+      local zonename = Zone:GetName()
+      --self:T((zonename)
+      self.Filter.Zones[zonename] = Zone
+    end
+    return self
+  end  
 
   --- Starts the filtering.
   -- @param #SET_AIRBASE self
@@ -5612,14 +5743,14 @@ do -- SET_AIRBASE
     return self
   end
 
-  --- Iterate the SET_AIRBASE while identifying the nearest @{Wrapper.Airbase#AIRBASE} from a @{Core.Point#POINT_VEC2}.
+  --- Iterate the SET_AIRBASE while identifying the nearest @{Wrapper.Airbase#AIRBASE} from a @{Core.Point#COORDINATE}.
   -- @param #SET_AIRBASE self
-  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest @{Wrapper.Airbase#AIRBASE}.
+  -- @param Core.Point#COORDINATE Coordinate A @{Core.Point#COORDINATE} object from where to evaluate the closest @{Wrapper.Airbase#AIRBASE}.
   -- @return Wrapper.Airbase#AIRBASE The closest @{Wrapper.Airbase#AIRBASE}.
-  function SET_AIRBASE:FindNearestAirbaseFromPointVec2( PointVec2 )
-    --self:F2( PointVec2 )
+  function SET_AIRBASE:FindNearestAirbaseFromPointVec2( Coordinate )
+    --self:F2( Coordinate )
 
-    local NearestAirbase = self:FindNearestObjectFromPointVec2( PointVec2 )
+    local NearestAirbase = self:FindNearestObjectFromPointVec2( Coordinate )
     return NearestAirbase
   end
 
@@ -5660,6 +5791,20 @@ do -- SET_AIRBASE
         --self:T(( { "Evaluated Category", MAirbaseCategory } )
         MAirbaseInclude = MAirbaseInclude and MAirbaseCategory
       end
+      
+      if self.Filter.Zones and MAirbaseInclude then
+        local MAirbaseZone = false
+        for ZoneName, Zone in pairs( self.Filter.Zones ) do
+          --self:T(( "Zone:", ZoneName )
+          local coord = MAirbase:GetCoordinate()
+          if coord and Zone:IsCoordinateInZone(coord) then
+            MAirbaseZone = true
+          end
+          --self:T(( { "Evaluated Zone", MSceneryZone } )
+        end
+        MAirbaseInclude = MAirbaseInclude and MAirbaseZone
+      end      
+      
     end
     
     if self.Filter.Functions and MAirbaseInclude then
@@ -5935,17 +6080,19 @@ do -- SET_CARGO
     return self
   end
 
-  --- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo.Cargo#CARGO} from a @{Core.Point#POINT_VEC2}.
+  --- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo.Cargo#CARGO} from a @{Core.Point#COORDINATE}.
   -- @param #SET_CARGO self
-  -- @param Core.Point#POINT_VEC2 PointVec2 A @{Core.Point#POINT_VEC2} object from where to evaluate the closest @{Cargo.Cargo#CARGO}.
+  -- @param Core.Point#COORDINATE Coordinate A @{Core.Point#COORDINATE} object from where to evaluate the closest @{Cargo.Cargo#CARGO}.
   -- @return Cargo.Cargo#CARGO The closest @{Cargo.Cargo#CARGO}.
-  function SET_CARGO:FindNearestCargoFromPointVec2( PointVec2 ) -- R2.1
-    --self:F2( PointVec2 )
+  function SET_CARGO:FindNearestCargoFromPointVec2( Coordinate ) -- R2.1
+    --self:F2( Coordinate )
 
-    local NearestCargo = self:FindNearestObjectFromPointVec2( PointVec2 )
+    local NearestCargo = self:FindNearestObjectFromPointVec2( Coordinate )
     return NearestCargo
   end
-
+  
+  ---
+  -- @param #SET_CARGO self
   function SET_CARGO:FirstCargoWithState( State )
 
     local FirstCargo = nil
@@ -5960,6 +6107,8 @@ do -- SET_CARGO
     return FirstCargo
   end
 
+  ---
+  -- @param #SET_CARGO self
   function SET_CARGO:FirstCargoWithStateAndNotDeployed( State )
 
     local FirstCargo = nil
@@ -6542,6 +6691,8 @@ do -- SET_ZONE
   --          
   --          -- Stop watching after 1 hour
   --          zoneset:__TriggerStop(3600)
+  --          -- Call :SetPartlyInside() on any zone (or SET_ZONE) if you want GROUPs to count as inside when any of their units enters even if they are far apart.
+  --          -- Make sure to call :SetPartlyInside() before :Trigger()!.
   function SET_ZONE:Trigger(Objects)
     --self:I("Added Set_Zone Trigger")
     self:AddTransition("*","TriggerStart","TriggerRunning")
@@ -6592,6 +6743,20 @@ do -- SET_ZONE
     -- @param Core.Zone#ZONE_BASE Zone The zone left.
   end
   
+  --- Toggle “partly-inside” handling for every zone in the set when those zones are used with :Trigger().
+  -- * Call with no argument or **true** → enable for all.  
+  -- * Call with **false** → disable again (handy if it was enabled before).
+  -- @param #SET_ZONE self
+  -- @return #SET_ZONE self
+  function SET_ZONE:SetPartlyInside(state)
+    for _,Zone in pairs(self.Set) do
+        if Zone.SetPartlyInside then
+            Zone:SetPartlyInside(state)
+        end
+    end
+    return self
+  end
+  
   --- (Internal) Check the assigned objects for being in/out of the zone
   -- @param #SET_ZONE self
   -- @param #boolean fromstart If true, do the init of the objects
@@ -6627,8 +6792,13 @@ do -- SET_ZONE
               -- has not been tagged previously - wasn't in set! 
               obj.TriggerInZone[_zone.ZoneName] = false 
             end
-            -- is obj in zone?
-            local inzone = _zone:IsCoordinateInZone(obj:GetCoordinate())
+            -- is obj in this zone?
+            local inzone
+            if _zone.PartlyInside and obj.ClassName == "GROUP" then
+                inzone = obj:IsAnyInZone(_zone)                 -- TRUE as soon as any unit is inside
+            else
+                inzone = _zone:IsCoordinateInZone(obj:GetCoordinate())  -- original centroid test
+            end
             --self:I("Object "..obj:GetName().." is in zone: "..tostring(inzone))
             if inzone and not obj.TriggerInZone[_zone.ZoneName] then
               -- wasn't in zone before
@@ -7695,6 +7865,28 @@ do -- SET_OPSGROUP
     return self
   end
 
+  --- Iterate the SET_OPSGROUP and count how many GROUPs and UNITs are alive.
+  -- @param #SET_GROUP self
+  -- @return #number The number of GROUPs alive.
+  -- @return #number The number of UNITs alive.
+  function SET_OPSGROUP:CountAlive()
+    local CountG = 0
+    local CountU = 0
+
+    local Set = self:GetSet()
+
+    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
+      if GroupData and GroupData:IsAlive() then
+        CountG = CountG + 1
+        -- Count Units.
+        CountU = CountU + GroupData:GetGroup():CountAliveUnits()
+      end
+
+    end
+
+    return CountG, CountU
+  end
+
   --- Finds an OPSGROUP based on the group name.
   -- @param #SET_OPSGROUP self
   -- @param #string GroupName Name of the group.
@@ -8621,7 +8813,6 @@ do -- SET_DYNAMICCARGO
   -- @field #SET_DYNAMICCARGO SET_DYNAMICCARGO
   SET_DYNAMICCARGO = {
     ClassName = "SET_DYNAMICCARGO",
-    Filter = {},
     Set = {},
     List = {},
     Index = {},

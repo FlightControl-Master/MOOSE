@@ -16,7 +16,7 @@
 
 --- @type POSITIONABLE
 -- @field Core.Point#COORDINATE coordinate Coordinate object.
--- @field Core.Point#POINT_VEC3 pointvec3 Point Vec3 object.
+-- @field Core.Point#COORDINATE pointvec3 Point Vec3 object.
 -- @extends Wrapper.Identifiable#IDENTIFIABLE
 
 
@@ -246,18 +246,20 @@ end
 function POSITIONABLE:GetVec3()
   local DCSPositionable = self:GetDCSObject()
   if DCSPositionable then
-    --local status, vec3 = pcall(
-      -- function()
-        --  local vec3 = DCSPositionable:getPoint()
-        --  return vec3
-       --end
-    --)
+
     local vec3 = DCSPositionable:getPoint()
-    --if status then
-      return vec3
-    --else
-      --self:E( { "Cannot get Vec3 from DCS Object", Positionable = self, Alive = self:IsAlive() } )
-    --end
+    
+    if not vec3 then 
+      local pos = DCSPositionable:getPosition()
+      if pos and pos.p then 
+       vec3 = pos.p
+      else
+        self:E( { "Cannot get the position from DCS Object for GetVec3", Positionable = self, Alive = self:IsAlive() } )
+      end
+    end
+
+    return vec3
+
   end
   -- ERROR!
   self:E( { "Cannot get the Positionable DCS Object for GetVec3", Positionable = self, Alive = self:IsAlive() } )
@@ -284,9 +286,9 @@ function POSITIONABLE:GetVec2()
   return nil
 end
 
---- Returns a POINT_VEC2 object indicating the point in 2D of the POSITIONABLE within the mission.
+--- Returns a COORDINATE object indicating the point in 2D of the POSITIONABLE within the mission.
 -- @param #POSITIONABLE self
--- @return Core.Point#POINT_VEC2 The 2D point vector of the POSITIONABLE.
+-- @return Core.Point#COORDINATE The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetPointVec2()
   self:F2( self.PositionableName )
@@ -296,20 +298,20 @@ function POSITIONABLE:GetPointVec2()
   if DCSPositionable then
     local PositionableVec3 = DCSPositionable:getPosition().p
 
-    local PositionablePointVec2 = POINT_VEC2:NewFromVec3( PositionableVec3 )
+    local PositionablePointVec2 = COORDINATE:NewFromVec3( PositionableVec3 )
 
     -- self:F( PositionablePointVec2 )
     return PositionablePointVec2
   end
 
-  self:E( { "Cannot GetPointVec2", Positionable = self, Alive = self:IsAlive() } )
+  self:E( { "Cannot Coordinate", Positionable = self, Alive = self:IsAlive() } )
 
   return nil
 end
 
---- Returns a POINT_VEC3 object indicating the point in 3D of the POSITIONABLE within the mission.
+--- Returns a COORDINATE object indicating the point in 3D of the POSITIONABLE within the mission.
 -- @param #POSITIONABLE self
--- @return Core.Point#POINT_VEC3 The 3D point vector of the POSITIONABLE.
+-- @return Core.Point#COORDINATE The 3D point vector of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
 function POSITIONABLE:GetPointVec3()
 
@@ -329,8 +331,8 @@ function POSITIONABLE:GetPointVec3()
 
     else
 
-      -- Create a new POINT_VEC3 object.
-      self.pointvec3 = POINT_VEC3:NewFromVec3( PositionableVec3 )
+      -- Create a new COORDINATE object.
+      self.pointvec3 = COORDINATE:NewFromVec3( PositionableVec3 )
 
     end
 
@@ -359,15 +361,17 @@ function POSITIONABLE:GetCoord()
     -- Get the current position.
     local PositionableVec3 = self:GetVec3()
 
-    if self.coordinate then
-      -- Update COORDINATE from 3D vector.
-      self.coordinate:UpdateFromVec3( PositionableVec3 )
-    else
-      -- New COORDINATE.
-      self.coordinate = COORDINATE:NewFromVec3( PositionableVec3 )
-    end
+    if PositionableVec3 then
+        if self.coordinate then
+          -- Update COORDINATE from 3D vector.
+          self.coordinate:UpdateFromVec3( PositionableVec3 )
+        else
+          -- New COORDINATE.
+          self.coordinate = COORDINATE:NewFromVec3( PositionableVec3 )
+        end
 
-    return self.coordinate
+        return self.coordinate
+    end
   end
 
   -- Error message.
@@ -388,13 +392,13 @@ function POSITIONABLE:GetCoordinate()
 
     -- Get the current position.
     local PositionableVec3 = self:GetVec3()
-
-    local coord=COORDINATE:NewFromVec3(PositionableVec3)
-    local heading = self:GetHeading()
-    coord.Heading = heading
-    -- Return a new coordiante object.
-    return coord
-
+    if PositionableVec3 then
+      local coord=COORDINATE:NewFromVec3(PositionableVec3)
+      local heading = self:GetHeading()
+      coord.Heading = heading
+      -- Return a new coordiante object.
+      return coord
+    end
   end
 
   -- Error message.

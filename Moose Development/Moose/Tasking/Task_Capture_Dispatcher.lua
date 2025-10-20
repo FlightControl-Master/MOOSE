@@ -76,6 +76,8 @@ do -- TASK_CAPTURE_DISPATCHER
 
   --- Implements the dynamic dispatching of capture zone tasks.
   -- 
+  -- ![Banner Image](..\Images\deprecated.png)
+  -- 
   -- The **TASK_CAPTURE_DISPATCHER** allows you to setup various tasks for let human
   -- players capture zones in a co-operation effort. 
   --  

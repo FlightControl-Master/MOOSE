@@ -40,6 +40,8 @@
 
 
 --- Build large formations, make AI follow a @{Wrapper.Client#CLIENT} (player) leader or a @{Wrapper.Unit#UNIT} (AI) leader.
+-- 
+-- ![Banner Image](..\Images\deprecated.png)
 --
 -- AI_FORMATION makes AI @{Wrapper.Group#GROUP}s fly in formation of various compositions.
 -- The AI_FORMATION class models formations in a different manner than the internal DCS formation logic!!!
@@ -725,7 +727,7 @@ function AI_FORMATION:onafterFormationLine( FollowGroupSet, From , Event , To, X
   
   for FollowID, FollowGroup in pairs( FollowSet ) do
   
-    local PointVec3 = POINT_VEC3:New()
+    local PointVec3 = COORDINATE:New()
     PointVec3:SetX( XStart + i * XSpace )
     PointVec3:SetY( YStart + i * YSpace )
     PointVec3:SetZ( ZStart + i * ZSpace )
@@ -877,7 +879,7 @@ function AI_FORMATION:onafterFormationCenterWing( FollowGroupSet, From , Event ,
   
   for FollowID, FollowGroup in pairs( FollowSet ) do
   
-    local PointVec3 = POINT_VEC3:New()
+    local PointVec3 = COORDINATE:New()
     
     local Side = ( i % 2 == 0 ) and 1 or -1
     local Row = i / 2 + 1
@@ -936,7 +938,7 @@ function AI_FORMATION:onafterFormationBox( FollowGroupSet, From , Event , To, XS
   
   for FollowID, FollowGroup in pairs( FollowSet ) do
   
-    local PointVec3 = POINT_VEC3:New()
+    local PointVec3 = COORDINATE:New()
     
     local ZIndex = i % ZLevels
     local XIndex = math.floor( i / ZLevels )

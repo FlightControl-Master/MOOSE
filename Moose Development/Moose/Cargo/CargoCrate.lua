@@ -22,6 +22,9 @@ do -- CARGO_CRATE
   -- @type CARGO_CRATE
   -- @extends Cargo.Cargo#CARGO_REPRESENTABLE
   
+  ---
+  -- ![Banner Image](..\Images\deprecated.png)
+  --
   --- Defines a cargo that is represented by a UNIT object within the simulator, and can be transported by a carrier.
   -- Use the event functions as described above to Load, UnLoad, Board, UnBoard the CARGO\_CRATE objects to and from carriers.
   -- 
@@ -114,7 +117,7 @@ do -- CARGO_CRATE
   -- @param #string Event
   -- @param #string From
   -- @param #string To
-  -- @param Core.Point#POINT_VEC2
+  -- @param Core.Point#COORDINATE
   function CARGO_CRATE:onenterUnLoaded( From, Event, To, ToPointVec2 )
     --self:T( { ToPointVec2, From, Event, To } )
   

@@ -445,6 +445,21 @@ function LEGION:DelCohort(Cohort)
   return self
 end
 
+--- Remove specific asset from legion.
+-- @param #LEGION self
+-- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset.
+-- @return #LEGION self
+function LEGION:DelAsset(Asset)
+
+  if Asset.cohort then
+    Asset.cohort:DelAsset(Asset)
+  else
+    self:E(self.lid..string.format("ERROR: Asset has not cohort attached. Cannot remove it from legion!"))
+  end
+  
+  return self
+end
+
 
 --- Relocate a cohort to another legion.
 -- Assets in stock are spawned and routed to the new legion.
@@ -647,6 +662,15 @@ function LEGION:CheckMissionQueue()
     if mission:IsNotOver() and mission:IsReadyToCancel() then
       mission:Cancel()
     end
+    
+    -- Housekeeping
+    local TNow = timer.getTime()
+    if mission:IsOver() and mission:IsNotRepeatable() and mission.DeletionTimstamp == nil then
+      mission.DeletionTimstamp = TNow
+    end
+    if mission.DeletionTimstamp ~= nil and TNow - mission.DeletionTimstamp > 1800 then
+      mission = nil
+    end
   end
   
   -- Check that runway is operational and that carrier is not recovering.
@@ -746,7 +770,7 @@ function LEGION:CheckMissionQueue()
           -- Reduce number of reinforcements.
           if reinforce then
             mission.reinforce=mission.reinforce-#assets
-            self:I(self.lid..string.format("Reinforced with N=%d Nreinforce=%d", #assets, mission.reinforce))
+            self:T(self.lid..string.format("Reinforced with N=%d Nreinforce=%d", #assets, mission.reinforce))
           end
           
           return true
@@ -1643,6 +1667,9 @@ function LEGION:onafterAssetDead(From, Event, To, asset, request)
   if self.commander and self.commander.chief then
     self.commander.chief.detectionset:RemoveGroupsByName({asset.spawngroupname})
   end
+  
+  -- Remove asset from cohort and legion.
+  self:DelAsset(asset)
 
   -- Remove asset from mission is done via Mission:AssetDead() call from flightgroup onafterFlightDead function
   -- Remove asset from squadron same
@@ -1805,6 +1832,7 @@ function LEGION:_CreateFlightGroup(asset)
     ---  
   
     opsgroup=ARMYGROUP:New(asset.spawngroupname)
+    opsgroup:SetValidateAndRepositionGroundUnits(self.ValidateAndRepositionGroundUnits)
     
   elseif self:IsFleet() then
 
@@ -2495,9 +2523,12 @@ function LEGION._GetCohorts(Legions, Cohorts, Operation, OpsQueue)
     for _,_legion in pairs(Legions or {}) do
       local legion=_legion --Ops.Legion#LEGION
   
-      -- Check that runway is operational.    
-      local Runway=legion:IsAirwing() and legion:IsRunwayOperational() or true
-      
+      -- Check that runway is operational.
+      local Runway=true
+      if legion:IsAirwing() then
+        Runway=legion:IsRunwayOperational() and legion.airbase and legion.airbase:GetCoalition() == legion:GetCoalition()
+      end
+
       -- Legion has to be running.
       if legion:IsRunning() and Runway then
       

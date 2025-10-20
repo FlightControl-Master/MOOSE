@@ -33,8 +33,9 @@
 -- @field Wrapper.Group#GROUP Test
 -- @extends Core.Fsm#FSM_SET
 
-
---- Monitors and manages as many replacement AI groups as there are
+--- ![Banner Image](..\Images\deprecated.png)
+-- 
+-- Monitors and manages as many replacement AI groups as there are
 -- CLIENTS in a SET\_CLIENT collection, which are not occupied by human players. 
 -- In other words, use AI_BALANCER to simulate human behaviour by spawning in replacement AI in multi player missions.
 -- 
@@ -220,16 +221,9 @@ function AI_BALANCER:onenterReturning( SetGroup, From, Event, To, AIGroup )
       AIGroup:MessageToRed( "Returning to home base ...", 30 )
     else
       -- Okay, we need to send this Group back to the nearest base of the Coalition of the AI.
-      --TODO: i need to rework the POINT_VEC2 thing.
-      local PointVec2 = POINT_VEC2:New( AIGroup:GetVec2().x, AIGroup:GetVec2().y  )
+      local PointVec2 = COORDINATE:New(AIGroup:GetVec2().x, 0, AIGroup:GetVec2().y)
       local ClosestAirbase = self.ReturnAirbaseSet:FindNearestAirbaseFromPointVec2( PointVec2 )
       self:T( ClosestAirbase.AirbaseName )
-      --[[
-      AIGroup:MessageToRed( "Returning to " .. ClosestAirbase:GetName().. " ...", 30 )
-      local RTBRoute = AIGroup:RouteReturnToAirbase( ClosestAirbase )
-      AIGroupTemplate.route = RTBRoute
-      AIGroup:Respawn( AIGroupTemplate )
-      ]]
       AIGroup:RouteRTB(ClosestAirbase)
     end
 

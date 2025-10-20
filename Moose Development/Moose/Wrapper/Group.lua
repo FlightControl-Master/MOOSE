@@ -230,6 +230,8 @@ GROUP.Attribute = {
   GROUND_EWR="Ground_EWR",
   GROUND_AAA="Ground_AAA",
   GROUND_SAM="Ground_SAM",
+  GROUND_SHORAD="Ground_SHORAD",
+  GROUND_BALLISTICMISSILE="Ground_BallisticMissile",
   GROUND_OTHER="Ground_OtherGround",
   NAVAL_AIRCRAFTCARRIER="Naval_AircraftCarrier",
   NAVAL_WARSHIP="Naval_WarShip",
@@ -912,15 +914,18 @@ function GROUP:GetVelocityVec3()
 
   if DCSGroup and DCSGroup:isExist() then
     local GroupUnits = DCSGroup:getUnits()
-    local GroupCount = #GroupUnits
+    local GroupCount = 0
 
     local VelocityVec3 = { x = 0, y = 0, z = 0 }
 
     for _, DCSUnit in pairs( GroupUnits ) do
-      local UnitVelocityVec3 = DCSUnit:getVelocity()
-      VelocityVec3.x = VelocityVec3.x + UnitVelocityVec3.x
-      VelocityVec3.y = VelocityVec3.y + UnitVelocityVec3.y
-      VelocityVec3.z = VelocityVec3.z + UnitVelocityVec3.z
+        if DCSUnit:isExist() and DCSUnit:isActive() then
+          local UnitVelocityVec3 = DCSUnit:getVelocity()
+          VelocityVec3.x = VelocityVec3.x + UnitVelocityVec3.x
+          VelocityVec3.y = VelocityVec3.y + UnitVelocityVec3.y
+          VelocityVec3.z = VelocityVec3.z + UnitVelocityVec3.z
+            GroupCount = GroupCount + 1
+        end
     end
 
     VelocityVec3.x = VelocityVec3.x / GroupCount
@@ -1179,9 +1184,9 @@ function GROUP:GetAverageVec3()
   end
 end
 
---- Returns a POINT_VEC2 object indicating the point in 2D of the first UNIT of the GROUP within the mission.
+--- Returns a COORDINATE object indicating the point in 2D of the first UNIT of the GROUP within the mission.
 -- @param #GROUP self
--- @return Core.Point#POINT_VEC2 The 2D point vector of the first DCS Unit of the GROUP.
+-- @return Core.Point#COORDINATE The 3D point vector of the first DCS Unit of the GROUP.
 -- @return #nil The first UNIT is not existing or alive.
 function GROUP:GetPointVec2()
   --self:F2(self.GroupName)
@@ -1194,7 +1199,7 @@ function GROUP:GetPointVec2()
     return FirstUnitPointVec2
   end
 
-  BASE:E( { "Cannot GetPointVec2", Group = self, Alive = self:IsAlive() } )
+  BASE:E( { "Cannot get COORDINATE", Group = self, Alive = self:IsAlive() } )
 
   return nil
 end
@@ -1227,11 +1232,14 @@ function GROUP:GetCoordinate()
 
   -- First try to get the 3D vector of the group. This uses 
   local vec3=self:GetVec3()
+  local coord
   if vec3 then
-    local coord=COORDINATE:NewFromVec3(vec3)
+    coord=COORDINATE:NewFromVec3(vec3)
+    coord.Heading = self:GetHeading() or 0
     return coord
   end
 
+  -- No luck try units and add Heading data
   local Units = self:GetUnits() or {}
 
   for _,_unit in pairs(Units) do
@@ -1242,15 +1250,15 @@ function GROUP:GetCoordinate()
       local FirstUnitCoordinate = FirstUnit:GetCoordinate()
 
       if FirstUnitCoordinate then
-        local Heading = self:GetHeading()
+        local Heading = self:GetHeading() or 0
         FirstUnitCoordinate.Heading = Heading
         return FirstUnitCoordinate
       end
 
     end
   end
-  -- no luck, try the API way
   
+  -- no luck, try the API way  
   local DCSGroup = Group.getByName(self.GroupName)
   if DCSGroup then
     local DCSUnits = DCSGroup:getUnits() or {}
@@ -1261,14 +1269,19 @@ function GROUP:GetCoordinate()
         if point then
           --self:I(point)
           local coord = COORDINATE:NewFromVec3(point)
+          coord.Heading = 0
+          local munit = UNIT:Find(_unit)
+          if munit then
+            coord.Heading = munit:GetHeading() or 0
+          end
           return coord
         end
       end
     end
   end
-  
+    
   BASE:E( { "Cannot GetCoordinate", Group = self, Alive = self:IsAlive() } )
-
+  
 end
 
 
@@ -1746,11 +1759,13 @@ function GROUP:GetMaxVelocity()
 
     for Index, UnitData in pairs( DCSGroup:getUnits() ) do
 
-      local UnitVelocityVec3 = UnitData:getVelocity()
-      local UnitVelocity = math.abs( UnitVelocityVec3.x ) + math.abs( UnitVelocityVec3.y ) + math.abs( UnitVelocityVec3.z )
+        if UnitData:isExist() and UnitData:isActive() then
+          local UnitVelocityVec3 = UnitData:getVelocity()
+          local UnitVelocity = math.abs( UnitVelocityVec3.x ) + math.abs( UnitVelocityVec3.y ) + math.abs( UnitVelocityVec3.z )
 
-      if UnitVelocity > GroupVelocityMax then
-        GroupVelocityMax = UnitVelocity
+          if UnitVelocity > GroupVelocityMax then
+            GroupVelocityMax = UnitVelocity
+          end
       end
     end
 
@@ -1835,7 +1850,10 @@ end
 -- @return #table
 function GROUP:GetTemplateRoutePoints()
   local GroupName = self:GetName()
-  return UTILS.DeepCopy( _DATABASE:GetGroupTemplate( GroupName ).route.points )
+  local template = _DATABASE:GetGroupTemplate(GroupName)
+  if template and template.route and template.route.points then
+    return UTILS.DeepCopy(template.route.points)
+  end
 end
 
 
@@ -2085,7 +2103,7 @@ function GROUP:Respawn( Template, Reset )
               GroupUnitVec3 = Zone:GetRandomVec3()
             else
               if self.InitRespawnRandomizePositionInner and self.InitRespawnRandomizePositionOuter then
-                GroupUnitVec3 = POINT_VEC3:NewFromVec2( From ):GetRandomPointVec3InRadius( self.InitRespawnRandomizePositionsOuter, self.InitRespawnRandomizePositionsInner )
+                GroupUnitVec3 = COORDINATE:NewFromVec3(From):GetRandomVec3InRadius(self.InitRespawnRandomizePositionsOuter, self.InitRespawnRandomizePositionsInner)
               else
                 GroupUnitVec3 = Zone:GetVec3()
               end
@@ -2136,7 +2154,7 @@ function GROUP:Respawn( Template, Reset )
             GroupUnitVec3 = Zone:GetRandomVec3()
           else
             if self.InitRespawnRandomizePositionInner and self.InitRespawnRandomizePositionOuter then
-              GroupUnitVec3 = POINT_VEC3:NewFromVec2( From ):GetRandomPointVec3InRadius( self.InitRespawnRandomizePositionsOuter, self.InitRespawnRandomizePositionsInner )
+              GroupUnitVec3 = COORDINATE:NewFromVec2( From ):GetRandomPointVec3InRadius( self.InitRespawnRandomizePositionsOuter, self.InitRespawnRandomizePositionsInner )
             else
               GroupUnitVec3 = Zone:GetVec3()
             end
@@ -2213,6 +2231,10 @@ function GROUP:Respawn( Template, Reset )
   self:Destroy(false)
 
   --UTILS.PrintTableToLog(Template)
+
+  if self.ValidateAndRepositionGroundUnits then
+    UTILS.ValidateAndRepositionGroundUnits(Template.units)
+  end
 
   -- Spawn new group.
   self:ScheduleOnce(0.1,_DATABASE.Spawn,_DATABASE,Template)
@@ -2622,6 +2644,8 @@ function GROUP:GetAttribute()
     local artillery=self:HasAttribute("Artillery")
     local tank=self:HasAttribute("Old Tanks") or self:HasAttribute("Modern Tanks") or self:HasAttribute("Tanks")
     local aaa=self:HasAttribute("AAA") and (not self:HasAttribute("SAM elements"))
+    local ballisticMissile=artillery and self:HasAttribute("SS_missile")
+    local shorad=self:HasAttribute("SR SAM")
     local ewr=self:HasAttribute("EWR")
     local ifv=self:HasAttribute("IFV")
     local sam=self:HasAttribute("SAM elements") or self:HasAttribute("Optical Tracker")
@@ -2663,6 +2687,8 @@ function GROUP:GetAttribute()
       attribute=GROUP.Attribute.GROUND_SAM
     elseif aaa then
       attribute=GROUP.Attribute.GROUND_AAA
+    elseif artillery and ballisticMissile then
+      attribute=GROUP.Attribute.GROUND_BALLISTICMISSILE
     elseif artillery then
       attribute=GROUP.Attribute.GROUND_ARTILLERY
     elseif tank then
@@ -2808,7 +2834,7 @@ do -- Event Handling
 
     self:EventDispatcher():Reset( self )
 
-    for UnitID, UnitData in pairs( self:GetUnits() ) do
+    for UnitID, UnitData in pairs( self:GetUnits() or {}) do
       UnitData:ResetEvents()
     end
 
@@ -3174,4 +3200,61 @@ function GROUP:IsAAA()
     end
   end
   return isAAA
+end
+
+--- This function uses Disposition and other fallback logic to find better ground positions for ground units.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
+--- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+--- Uses UTILS.ValidateAndRepositionGroundUnits.
+-- @param #GROUP self
+-- @param #boolean Enabled Enable/disable the feature.
+function GROUP:SetValidateAndRepositionGroundUnits(Enabled)
+    self.ValidateAndRepositionGroundUnits = Enabled
+end
+
+
+--- Get the bounding box of the group combining UNIT:GetBoundingBox() units.
+-- @param #GROUP self
+-- @return DCS#Box3 The bounding box of the GROUP.
+-- @return #nil The GROUP does not have any alive units.
+function GROUP:GetBoundingBox()
+    local bbox = { min = { x = math.huge, y = math.huge, z = math.huge },
+                   max = { x = -math.huge, y = -math.huge, z = -math.huge }
+    }
+
+    local Units = self:GetUnits() or {}
+    if #Units == 0 then
+        return nil
+    end
+
+    for _, unit in pairs(Units) do
+        if unit and unit:IsAlive() then
+            local ubox = unit:GetBoundingBox()
+
+            if ubox then
+                if ubox.min.x < bbox.min.x then
+                    bbox.min.x = ubox.min.x
+                end
+                if ubox.min.y < bbox.min.y then
+                    bbox.min.y = ubox.min.y
+                end
+                if ubox.min.z < bbox.min.z then
+                    bbox.min.z = ubox.min.z
+                end
+
+                if ubox.max.x > bbox.max.x then
+                    bbox.max.x = ubox.max.x
+                end
+                if ubox.max.y > bbox.max.y then
+                    bbox.max.y = ubox.max.y
+                end
+                if ubox.max.z > bbox.max.z then
+                    bbox.max.z = ubox.max.z
+                end
+            end
+        end
+    end
+
+    return bbox
 end

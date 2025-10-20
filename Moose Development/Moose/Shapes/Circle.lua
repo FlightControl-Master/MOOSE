@@ -72,7 +72,7 @@ end
 
 --- Checks if a point is contained within the circle.
 -- @param #table point The point to check
--- @return #bool True if the point is contained, false otherwise
+-- @return #boolean True if the point is contained, false otherwise
 function CIRCLE:ContainsPoint(point)
     if ((point.x - self.CenterVec2.x) ^ 2 + (point.y - self.CenterVec2.y) ^ 2) ^ 0.5 <= self.Radius then
         return true
@@ -226,6 +226,11 @@ end
 --- Returns a random Vec2 within the circle.
 -- @return #table The random Vec2
 function CIRCLE:GetRandomVec2()
+
+    math.random()
+    math.random()
+    math.random()
+    
     local angle = math.random() * 2 * math.pi
 
     local rx = math.random(0, self.Radius) * math.cos(angle) + self.CenterVec2.x
@@ -237,6 +242,11 @@ end
 --- Returns a random Vec2 on the border of the circle.
 -- @return #table The random Vec2
 function CIRCLE:GetRandomVec2OnBorder()
+    
+    math.random()
+    math.random()
+    math.random()
+
     local angle = math.random() * 2 * math.pi
 
     local rx = self.Radius * math.cos(angle) + self.CenterVec2.x

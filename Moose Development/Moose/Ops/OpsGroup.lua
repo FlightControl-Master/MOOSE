@@ -5589,10 +5589,13 @@ function OPSGROUP:onafterUnpauseMission(From, Event, To)
     -- Debug info.
     self:T(self.lid..string.format("Unpausing mission %s [%s]", mission:GetName(), mission:GetType()))
     
+    -- Set state of mission, e.g. for not teleporting again
+    mission.unpaused=true
+    
     -- Start mission.
     self:MissionStart(mission)
     
-    -- Remove mission from 
+    -- Remove mission from pausedmissions queue
     for i,mid in pairs(self.pausedmissions) do
       --self:T(self.lid..string.format("Checking paused mission", mid))
       if mid==mission.auftragsnummer then
@@ -5727,7 +5730,7 @@ function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
   -- Decrease patrol data.
   if Mission.patroldata then
     Mission.patroldata.noccupied=Mission.patroldata.noccupied-1
-    AIRWING.UpdatePatrolPointMarker(Mission.patroldata)
+    AIRWING.UpdatePatrolPointMarker(self,Mission.patroldata)
   end
 
   -- Switch auto engage detected off. This IGNORES that engage detected had been activated for the group!
@@ -6232,7 +6235,7 @@ function OPSGROUP:RouteToMission(mission, delay)
     end
     
     -- Check if group is mobile. Note that some immobile units report a speed of 1 m/s = 3.6 km/h.
-    if self.speedMax<=3.6 or mission.teleport then
+    if (self.speedMax<=3.6 or mission.teleport) and not mission.unpaused then
 
       -- Teleport to waypoint coordinate. Mission will not be paused.
       self:Teleport(waypointcoord, nil, true)
@@ -7531,7 +7534,7 @@ end
 function OPSGROUP:onafterElementDead(From, Event, To, Element)
 
   -- Debug info.
-  self:I(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
+  self:T(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
@@ -7844,8 +7847,13 @@ function OPSGROUP:_Spawn(Delay, Template)
     -- Debug output.
     self:T2({Template=Template})
 
+    if self:IsArmygroup() and self.ValidateAndRepositionGroundUnits then
+        UTILS.ValidateAndRepositionGroundUnits(Template.units)
+    end
+
     -- Spawn new group.
     self.group=_DATABASE:Spawn(Template)
+    self.group:SetValidateAndRepositionGroundUnits(self.ValidateAndRepositionGroundUnits)
     --local countryID=self.group:GetCountry()
     --local categoryID=self.group:GetCategory()
     --local dcsgroup=coalition.addGroup(countryID, categoryID, Template)
@@ -8082,7 +8090,7 @@ function OPSGROUP:onafterStop(From, Event, To)
   _DATABASE.FLIGHTGROUPS[self.groupname]=nil
 
   -- Debug output.
-  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from _DATABASE")
+  self:T(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from _DATABASE")
 end
 
 --- On after "OutOfAmmo" event.
@@ -9045,7 +9053,7 @@ function OPSGROUP:AddWeightCargo(UnitName, Weight)
     self:T(self.lid..string.format("%s: Adding %.1f kg cargo weight. New cargo weight=%.1f kg", UnitName, Weight, element.weightCargo))
 
     -- For airborne units, we set the weight in game.
-    if self.isFlightgroup then
+    if self.isFlightgroup and element.unit and element.unit:IsAlive() then -- #2272 trying to deduct cargo weight from possibly dead units
       trigger.action.setUnitInternalCargo(element.name, element.weightCargo)  --https://wiki.hoggitworld.com/view/DCS_func_setUnitInternalCargo
     end
 
@@ -13952,6 +13960,15 @@ function OPSGROUP:_GetDetectedTarget()
   return targetgroup, targetdist
 end
 
+--- This function uses Disposition and other fallback logic to find better ground positions for ground units.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
+--- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+--- Uses UTILS.ValidateAndRepositionGroundUnits.
+-- @param #boolean Enabled Enable/disable the feature.
+function OPSGROUP:SetValidateAndRepositionGroundUnits(Enabled)
+    self.ValidateAndRepositionGroundUnits = Enabled
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

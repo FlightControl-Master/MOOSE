@@ -12,27 +12,35 @@
 -- @module Utilities.Utils
 -- @image MOOSE.JPG
 
----
+--- Smoke color enum `trigger.smokeColor`.
 -- @type SMOKECOLOR
--- @field Green
--- @field Red
--- @field White
--- @field Orange
--- @field Blue
+-- @field #number Green Green smoke (0)
+-- @field #number Red Red smoke (1)
+-- @field #number White White smoke (2)
+-- @field #number Orange Orange smoke (3)
+-- @field #number Blue Blue smoke (4)
 
 SMOKECOLOR = trigger.smokeColor -- #SMOKECOLOR
 
----
+--- Flare colur enum `trigger.flareColor`.
 -- @type FLARECOLOR
--- @field Green
--- @field Red
--- @field White
--- @field Yellow
+-- @field #number Green (0)
+-- @field #number Red Red flare (1)
+-- @field #number White White flare (2)
+-- @field #number Yellow Yellow flare (3)
 
 FLARECOLOR = trigger.flareColor -- #FLARECOLOR
 
 --- Big smoke preset enum.
 -- @type BIGSMOKEPRESET
+-- @field #number SmallSmokeAndFire Small moke and fire (1)
+-- @field #number MediumSmokeAndFire Medium smoke and fire (2)
+-- @field #number LargeSmokeAndFire Large smoke and fire (3)
+-- @field #number HugeSmokeAndFire Huge smoke and fire (4)
+-- @field #number SmallSmoke Small smoke (5)
+-- @field #number MediumSmoke Medium smoke (6)
+-- @field #number LargeSmoke Large smoke (7)
+-- @field #number HugeSmoke Huge smoke (8)
 BIGSMOKEPRESET = {
   SmallSmokeAndFire=1,
   MediumSmokeAndFire=2,
@@ -58,6 +66,7 @@ BIGSMOKEPRESET = {
 -- @field #string Kola Kola map.
 -- @field #string Afghanistan Afghanistan map
 -- @field #string Iraq Iraq map
+-- @field #string GermanyCW Germany Cold War map
 DCSMAP = {
   Caucasus="Caucasus",
   NTTR="Nevada",
@@ -70,7 +79,8 @@ DCSMAP = {
   Sinai="SinaiMap",
   Kola="Kola",
   Afghanistan="Afghanistan",
-  Iraq="Iraq"
+  Iraq="Iraq",
+  GermanyCW="GermanyCW",
 }
 
 
@@ -349,7 +359,7 @@ end
 -- @return #string Table as a string.
 UTILS.OneLineSerialize = function( tbl )  -- serialization of a table all on a single line, no comments, made to replace old get_table_string function
 
-  lookup_table = {}
+  local lookup_table = {}
 
   local function _Serialize( tbl )
 
@@ -488,7 +498,7 @@ end
 
 --- Counts the number of elements in a table.
 -- @param #table T Table to count
--- @return #int Number of elements in the table
+-- @return #number Number of elements in the table
 function UTILS.TableLength(T)
   local count = 0
   for _ in pairs(T or {}) do count = count + 1 end
@@ -514,7 +524,7 @@ function UTILS.PrintTableToLog(table, indent, noprint)
         env.info(string.rep("  ", indent) .. tostring(k) .. " = {")
       end
       text = text ..string.rep("  ", indent) .. tostring(k) .. " = {\n"
-      text = text .. tostring(UTILS.PrintTableToLog(v, indent + 1)).."\n"
+      text = text .. tostring(UTILS.PrintTableToLog(v, indent + 1), noprint).."\n"
       if not noprint then
         env.info(string.rep("  ", indent) .. "},")
       end
@@ -1576,12 +1586,12 @@ function UTILS.HdgDiff(h1, h2)
   return math.abs(delta)
 end
 
---- Returns the heading from one vec3 to another vec3.
--- @param DCS#Vec3 a From vec3.
--- @param DCS#Vec3 b To vec3.
+--- Returns the heading from one vec2/vec3 to another vec2/vec3.
+-- @param DCS#Vec3 a From Vec2 or Vec3.
+-- @param DCS#Vec3 b To Vec2 or Vec3.
 -- @return #number Heading in degrees.
 function UTILS.HdgTo(a, b)
-  local dz=b.z-a.z
+  local dz=(b.z or b.y) - (a.z or a.y)
   local dx=b.x-a.x
   local heading=math.deg(math.atan2(dz, dx))
   if heading < 0 then
@@ -1759,7 +1769,9 @@ end
 -- * Sinai +4.8 (East)
 -- * Kola +15 (East) - note there is a lot of deviation across the map (-1° to +24°), as we are close to the North pole
 -- * Afghanistan +3 (East) - actually +3.6 (NW) to +2.3 (SE)
--- @param #string map (Optional) Map for which the declination is returned. Default is from env.mission.theatre
+-- * Iraq +4.4 (East)
+-- * Germany Cold War +0.1 (East) - near Fulda
+-- @param #string map (Optional) Map for which the declination is returned. Default is from `env.mission.theatre`.
 -- @return #number Declination in degrees.
 function UTILS.GetMagneticDeclination(map)
 
@@ -1791,6 +1803,8 @@ function UTILS.GetMagneticDeclination(map)
     declination=3
   elseif map==DCSMAP.Iraq then
     declination=4.4
+  elseif map==DCSMAP.GermanyCW then
+    declination=0.1
   else
     declination=0
   end
@@ -1899,6 +1913,13 @@ end
 function UTILS.GetReportingName(Typename)
 
   local typename = string.lower(Typename)
+  
+  -- special cases - Shark and Manstay have "A-50" in the name
+  if string.find(typename,"ka-50",1,true) then
+    return "Shark"
+  elseif string.find(typename,"a-50",1,true) then
+    return "Mainstay"
+  end
 
   for name, value in pairs(ENUMS.ReportingName.NATO) do
     local svalue = string.lower(value)
@@ -2024,6 +2045,10 @@ function UTILS.GMTToLocalTimeDifference()
     return 3   -- Currently map is +2 but should be +3 (DCS bug?)
   elseif theatre==DCSMAP.Afghanistan then
     return 4.5   -- UTC +4:30
+  elseif theatre==DCSMAP.Iraq then
+    return 3.0   -- UTC +3
+  elseif theatre==DCSMAP.GermanyCW then
+    return 1.0   -- UTC +1 Central European Time (not summer time)  
   else
     BASE:E(string.format("ERROR: Unknown Map %s in UTILS.GMTToLocal function. Returning 0", tostring(theatre)))
     return 0
@@ -2127,9 +2152,9 @@ function UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, Rising, Tlocal)
    local cosH = (cos(zenith) - (sinDec * sin(latitude))) / (cosDec * cos(latitude))
 
    if rising and cosH > 1 then
-      return "N/S" -- The sun never rises on this location on the specified date
+      return "N/R" -- The sun never rises on this location on the specified date
    elseif cosH < -1 then
-      return "N/R" -- The sun never sets on this location on the specified date
+      return "N/S" -- The sun never sets on this location on the specified date
    end
 
    -- Finish calculating H and convert into hours
@@ -2305,6 +2330,16 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           return true
       end
 
+      if type_name == "UH-60L_DAP" and (unit:getDrawArgumentValue(401) == 1 or unit:getDrawArgumentValue(402) == 1) then
+          BASE:T(unit_name .. " cargo door is open")
+          return true
+      end
+
+      if type_name ==  "UH-60L_DAP" and (unit:getDrawArgumentValue(38) > 0 or unit:getDrawArgumentValue(400) == 1 ) then
+          BASE:T(unit_name .. " front door(s) are open")
+          return true
+      end
+
       if type_name == "AH-64D_BLK_II" then
          BASE:T(unit_name .. " front door(s) are open")
          return true -- no doors on this one ;)
@@ -2329,8 +2364,12 @@ function UTILS.IsLoadingDoorOpen( unit_name )
         BASE:T(unit_name .. " rear cargo door is open")
         return true
       end
-
-      return false
+      
+      -- ground
+      local UnitDescriptor = unit:getDesc()
+      local IsGroundResult = (UnitDescriptor.category == Unit.Category.GROUND_UNIT)
+      
+      return IsGroundResult
 
   end -- nil
 
@@ -4114,9 +4153,14 @@ end
 -- @param #string VehicleTemplate, template name for additional vehicles. Can be nil for no additional vehicles.
 -- @param #number Liquids Tons of fuel to be added initially to the FARP. Defaults to 10 (tons). Set to 0 for no fill.
 -- @param #number Equipment Number of equipment items per known item to be added initially to the FARP. Defaults to 10 (items). Set to 0 for no fill.
+-- @param #number Airframes Number of helicopter airframes per known type in Ops.CSAR#CSAR.AircraftType to be added initially to the FARP. Set to 0 for no airframes.
+-- @param #string F10Text Text to display on F10 map if given. Handy to post things like the ADF beacon Frequency, Callsign and ATC Frequency.
+-- @param #boolean DynamicSpawns If true, allow Dynamic Spawns from this FARP.
+-- @param #boolean HotStart If true and DynamicSpawns is true, allow hot starts for Dynamic Spawns from this FARP.
 -- @return #list<Wrapper.Static#STATIC> Table of spawned objects and vehicle object (if given).
 -- @return #string ADFBeaconName Name of the ADF beacon, to be able to remove/stop it later.
-function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,Country,CallSign,Frequency,Modulation,ADF,SpawnRadius,VehicleTemplate,Liquids,Equipment)
+-- @return #number MarkerID ID of the F10 Text, to be able to remove it later.
+function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,Country,CallSign,Frequency,Modulation,ADF,SpawnRadius,VehicleTemplate,Liquids,Equipment,Airframes,F10Text,DynamicSpawns,HotStart)
   
   -- Set Defaults
   local farplocation = Coordinate
@@ -4130,6 +4174,7 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
   local liquids = Liquids or 10
   liquids = liquids * 1000 -- tons to kg
   local equip = Equipment or 10
+  local airframes = Airframes or 10
   local statictypes = ENUMS.FARPObjectTypeNamesAndShape[farptype] or {TypeName="FARP", ShapeName="FARPS"}
   local STypeName = statictypes.TypeName
   local SShapeName = statictypes.ShapeName
@@ -4139,7 +4184,7 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
   -- Spawn FARP
   local newfarp = SPAWNSTATIC:NewFromType(STypeName,"Heliports",Country) --  "Invisible FARP" "FARP"
   newfarp:InitShape(SShapeName) -- "invisiblefarp" "FARPS"
-  newfarp:InitFARP(callsign,freq,mod)
+  newfarp:InitFARP(callsign,freq,mod,DynamicSpawns,HotStart)
   local spawnedfarp = newfarp:SpawnFromCoordinate(farplocation,0,Name)
   table.insert(ReturnObjects,spawnedfarp)
   -- Spawn Objects
@@ -4192,6 +4237,12 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
     end
   end
   
+  if airframes and airframes > 0 then
+    for typename in pairs (CSAR.AircraftType) do
+      newWH:SetItem(typename,airframes)
+    end
+  end
+  
   local ADFName
   if ADF and type(ADF) == "number" then
     local ADFFreq = ADF*1000 -- KHz to Hz
@@ -4202,7 +4253,150 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
     trigger.action.radioTransmission(Sound, vec3, 0, true, ADFFreq, 250, ADFName)
   end
   
-  return ReturnObjects, ADFName
+  local MarkerID = nil
+  if F10Text then
+    local Color = {0,0,1}
+    if Coalition == coalition.side.RED then
+      Color = {1,0,0}
+    elseif Coalition == coalition.side.NEUTRAL then
+      Color = {0,1,0}
+    end
+    local Alpha = 0.75
+    local coordinate = Coordinate:Translate(600,0)
+    MarkerID = coordinate:TextToAll(F10Text,Coalition,Color,1,{1,1,1},Alpha,14,true)
+  end
+  
+  return ReturnObjects, ADFName, MarkerID
+end
+
+--- Spawn a MASH at a given coordinate, optionally, add an ADF Beacon.
+-- @param #string Name Unique Name of the Mash.
+-- @param Core.Point#COORDINATE Coordinate Coordinate where to spawn the MASH. Can be given as a Core.Zone#ZONE object, in this case we take the center coordinate.
+-- @param #number Country Country ID the MASH belongs to, e.g. country.id.USA or country.id.RUSSIA.
+-- @param #number ADF (Optional) ADF Frequency in kHz (Kilohertz), if given activate an ADF Beacon at the location of the MASH.
+-- @param #string Livery (Optional) The livery of the static CH-47, defaults to dark green.
+-- @param #boolean DeployHelo (Optional) If true, deploy the helicopter static.
+-- @param #number MASHRadio MASH Radio Frequency, defaults to 127.5.
+-- @param #number MASHRadioModulation MASH Radio Modulation, defaults to radio.modulation.AM.
+-- @param #number MASHCallsign Defaults to CALLSIGN.FARP.Berlin.
+-- @param #table Templates (Optional) You can hand in your own template table of numbered(!) entries. Each entry consist of a relative(!) x,y position and data of a 
+-- static, shape_name is optional. Also, livery_id is optional, but is applied to the helicopter static only.
+-- @return #table Table of Wrapper.Static#STATIC objects that were spawned.
+-- @return #string ADFName Name of the ADF Beacon to remove it later.
+-- @usage
+--            -- MASH Template example, this one is the built in one used in the function:
+--            MASHTemplates = {
+--              [1]={category='Infantry',type='Soldier M4',shape_name='none',heading=0,x=0.000000,y=0.000000,},
+--              [2]={category='Infantry',type='Soldier M4',shape_name='none',heading=0,x=0.313533,y=8.778935,},
+--              [3]={category='Infantry',type='Soldier M4',shape_name='none',heading=0,x=16.303737,y=20.379671,},
+--              [4]={category='Helicopters',type='CH-47Fbl1',shape_name='none',heading=0,x=-20.047735,y=-63.166179,livery_id = "us army dark green",},
+--              [5]={category='Infantry',type='Soldier M4',shape_name='none',heading=0,x=26.650339,y=20.066138,},
+--              [6]={category='Heliports',type='FARP_SINGLE_01',shape_name='FARP_SINGLE_01',heading=0,x=-25.432292,y=9.077099,},
+--              [7]={category='Heliports',type='FARP_SINGLE_01',shape_name='FARP_SINGLE_01',heading=0,x=-12.717421,y=-3.216114,},
+--              [8]={category='Heliports',type='FARP_SINGLE_01',shape_name='FARP_SINGLE_01',heading=0,x=-25.439281,y=-3.216114,},
+--              [9]={category='Heliports',type='FARP_SINGLE_01',shape_name='FARP_SINGLE_01',heading=0,x=-12.717421,y=9.155603,},
+--              [10]={category='Fortifications',type='TACAN_beacon',shape_name='none',heading=0,x=-2.329847,y=-16.579903,},
+--              [11]={category='Fortifications',type='FARP Fuel Depot',shape_name='GSM Rus',heading=0,x=2.222011,y=4.487030,},
+--              [12]={category='Fortifications',type='APFC fuel',shape_name='M92_APFCfuel',heading=0,x=3.614927,y=0.367838,},
+--              [13]={category='Fortifications',type='Camouflage03',shape_name='M92_Camouflage03',heading=0,x=21.544148,y=21.998879,},
+--              [14]={category='Fortifications',type='Container_generator',shape_name='M92_Container_generator',heading=0,x=20.989192,y=37.314334,},
+--              [15]={category='Fortifications',type='FireExtinguisher02',shape_name='M92_FireExtinguisher02',heading=0,x=3.988003,y=8.362333,},
+--              [16]={category='Fortifications',type='FireExtinguisher02',shape_name='M92_FireExtinguisher02',heading=0,x=-3.953195,y=12.945844,},
+--              [17]={category='Fortifications',type='Windsock',shape_name='H-Windsock_RW',heading=0,x=-18.944173,y=-33.042196,},
+--              [18]={category='Fortifications',type='Tent04',shape_name='M92_Tent04',heading=0,x=21.220671,y=30.247529,},
+--              }
+--    
+function UTILS.SpawnMASHStatics(Name,Coordinate,Country,ADF,Livery,DeployHelo,MASHRadio,MASHRadioModulation,MASHCallsign,Templates)
+  
+  -- Basic objects table
+  
+  local MASHTemplates = {
+    [1]={category='Infantry',type='Soldier M4',shape_name='none',heading=0,x=0.000000,y=0.000000,},
+    [2]={category='Infantry',type='Soldier M4',shape_name='none',heading=0,x=0.313533,y=8.778935,},
+    [3]={category='Infantry',type='Soldier M4',shape_name='none',heading=0,x=16.303737,y=20.379671,},
+    [4]={category='Helicopters',type='CH-47Fbl1',shape_name='none',heading=0,x=-20.047735,y=-63.166179,livery_id = "us army dark green",},
+    [5]={category='Infantry',type='Soldier M4',shape_name='none',heading=0,x=26.650339,y=20.066138,},
+    [6]={category='Heliports',type='FARP_SINGLE_01',shape_name='FARP_SINGLE_01',heading=0,x=-25.432292,y=9.077099,},
+    [7]={category='Heliports',type='FARP_SINGLE_01',shape_name='FARP_SINGLE_01',heading=0,x=-12.717421,y=-3.216114,},
+    [8]={category='Heliports',type='FARP_SINGLE_01',shape_name='FARP_SINGLE_01',heading=0,x=-25.439281,y=-3.216114,},
+    [9]={category='Heliports',type='FARP_SINGLE_01',shape_name='FARP_SINGLE_01',heading=0,x=-12.717421,y=9.155603,},
+    [10]={category='Fortifications',type='TACAN_beacon',shape_name='none',heading=0,x=-2.329847,y=-16.579903,},
+    [11]={category='Fortifications',type='FARP Fuel Depot',shape_name='GSM Rus',heading=0,x=2.222011,y=4.487030,},
+    [12]={category='Fortifications',type='APFC fuel',shape_name='M92_APFCfuel',heading=0,x=3.614927,y=0.367838,},
+    [13]={category='Fortifications',type='Camouflage03',shape_name='M92_Camouflage03',heading=0,x=21.544148,y=21.998879,},
+    [14]={category='Fortifications',type='Container_generator',shape_name='M92_Container_generator',heading=0,x=20.989192,y=37.314334,},
+    [15]={category='Fortifications',type='FireExtinguisher02',shape_name='M92_FireExtinguisher02',heading=0,x=3.988003,y=8.362333,},
+    [16]={category='Fortifications',type='FireExtinguisher02',shape_name='M92_FireExtinguisher02',heading=0,x=-3.953195,y=12.945844,},
+    [17]={category='Fortifications',type='Windsock',shape_name='H-Windsock_RW',heading=0,x=-18.944173,y=-33.042196,},
+    [18]={category='Fortifications',type='Tent04',shape_name='M92_Tent04',heading=0,x=21.220671,y=30.247529,},
+    }
+
+  if Templates then MASHTemplates=Templates end
+  
+  -- locals
+  local name = Name or "Florence Nightingale"
+  local positionVec2
+  local positionVec3
+  local ReturnStatics = {} 
+  local CountryID = Country or country.id.USA
+  local livery = "us army dark green"
+  local MASHRadio = MASHRadio or 127.5
+  local MASHRadioModulation = MASHRadioModulation or radio.modulation.AM
+  local MASHCallsign = MASHCallsign or CALLSIGN.FARP.Berlin
+  
+  -- check for coordinate or zone  
+  if type(Coordinate) == "table" then
+    if Coordinate:IsInstanceOf("COORDINATE") or Coordinate:IsInstanceOf("ZONE_BASE") then
+      positionVec2 = Coordinate:GetVec2()
+      positionVec3 = Coordinate:GetVec3()  
+    end
+  else
+      BASE:E("Spawn MASH - no ZONE or COORDINATE handed!")
+      return
+  end
+  
+  -- position
+  local BaseX = positionVec2.x
+  local BaseY = positionVec2.y
+   
+  -- Statics
+  for id,object in pairs(MASHTemplates) do
+    local NewName = string.format("%s#%3d",name,id)
+    local vec2 = {x=BaseX+object.x,y=BaseY+object.y}
+    local Coordinate=COORDINATE:NewFromVec2(vec2)
+    local static = SPAWNSTATIC:NewFromType(object.type,object.category,CountryID)
+    if object.shape_name and object.shape_name ~= "none" then
+      static:InitShape(object.shape_name)
+    end
+    if object.category == "Helicopters" and DeployHelo == true then 
+      if object.livery_id ~= nil then
+        livery = object.livery_id
+      end
+      static:InitLivery(livery)
+      local newstatic = static:SpawnFromCoordinate(Coordinate,object.heading,NewName)
+      table.insert(ReturnStatics,newstatic)
+    elseif object.category == "Heliports" then
+      static:InitFARP(MASHCallsign,MASHRadio,MASHRadioModulation,false,false)
+      local newstatic = static:SpawnFromCoordinate(Coordinate,object.heading,NewName)
+      table.insert(ReturnStatics,newstatic)
+    elseif object.category ~= "Helicopters" and object.category ~= "Heliports" then
+      local newstatic = static:SpawnFromCoordinate(Coordinate,object.heading,NewName)
+      table.insert(ReturnStatics,newstatic)
+    end
+
+  end
+  
+  -- Beacon
+  local ADFName
+  if ADF and type(ADF) == "number" then
+    local ADFFreq = ADF*1000 -- KHz to Hz
+    local Sound =  "l10n/DEFAULT/beacon.ogg"
+    ADFName = Name .. " ADF "..tostring(ADF).."KHz"
+    --BASE:I(string.format("Adding MASH Beacon %d KHz Name %s",ADF,ADFName))
+    trigger.action.radioTransmission(Sound, positionVec3, 0, true, ADFFreq, 250, ADFName)
+  end
+  
+  return ReturnStatics, ADFName
 end
 
 --- Converts a Vec2 to a Vec3.
@@ -4398,4 +4592,450 @@ end
 --- The fog animation will be discarded and whatever the current thickness and visibility are set to will remain
 function UTILS.Weather.StopFogAnimation()
   return world.weather.setFogAnimation({})
+end
+
+--- Find a ME created zone by its name
+function UTILS.GetEnvZone(name)
+    for _,v in ipairs(env.mission.triggers.zones) do
+        if v.name == name then
+            return v
+        end
+    end
+end
+
+--- net.dostring_in
+function UTILS.DoStringIn(State,DoString)
+  return net.dostring_in(State,DoString)
+end
+
+--- Show a picture on the screen to all
+-- @param #string FileName File name of the picture
+-- @param #number Duration Duration in seconds, defaults to 10
+-- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
+-- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
+-- @param #number Size Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+function UTILS.ShowPictureToAll(FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
+    ClearView = ClearView or false
+    StartDelay = StartDelay or 0
+    HorizontalAlign = HorizontalAlign or 1
+    VerticalAlign = VerticalAlign or 1
+    Size = Size or 100
+    SizeUnits = SizeUnits or 0
+
+    if ClearView then ClearView = "true" else ClearView = "false" end
+
+    net.dostring_in("mission", string.format("a_out_picture(\"%s\", %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", FilePath, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
+end
+
+--- Show a picture on the screen to Coalition
+-- @param #number Coalition Coalition ID, can be coalition.side.BLUE, coalition.side.RED or coalition.side.NEUTRAL
+-- @param #string FileName File name of the picture
+-- @param #number Duration Duration in seconds, defaults to 10
+-- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
+-- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
+-- @param #number Size Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+function UTILS.ShowPictureToCoalition(Coalition, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
+    ClearView = ClearView or false
+    StartDelay = StartDelay or 0
+    HorizontalAlign = HorizontalAlign or 1
+    VerticalAlign = VerticalAlign or 1
+    Size = Size or 100
+    SizeUnits = SizeUnits or 0
+
+    if ClearView then ClearView = "true" else ClearView = "false" end
+
+    local coalName = string.lower(UTILS.GetCoalitionName(Coalition))
+
+    net.dostring_in("mission", string.format("a_out_picture_s(\"%s\", \"%s\", %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", coalName, FilePath, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
+end
+
+--- Show a picture on the screen to Country
+-- @param #number Country Country ID, can be country.id.USA, country.id.RUSSIA, etc.
+-- @param #string FileName File name of the picture
+-- @param #number Duration Duration in seconds, defaults to 10
+-- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
+-- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
+-- @param #number Size Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+function UTILS.ShowPictureToCountry(Country, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
+    ClearView = ClearView or false
+    StartDelay = StartDelay or 0
+    HorizontalAlign = HorizontalAlign or 1
+    VerticalAlign = VerticalAlign or 1
+    Size = Size or 100
+    SizeUnits = SizeUnits or 0
+
+    if ClearView then ClearView = "true" else ClearView = "false" end
+
+    net.dostring_in("mission", string.format("a_out_picture_c(%d, \"%s\", %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", Country, FilePath, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
+end
+
+--- Show a picture on the screen to Group
+-- @param Wrapper.Group#GROUP Group Group to show the picture to
+-- @param #string FileName File name of the picture
+-- @param #number Duration Duration in seconds, defaults to 10
+-- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
+-- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
+-- @param #number Size Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+function UTILS.ShowPictureToGroup(Group, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
+    ClearView = ClearView or false
+    StartDelay = StartDelay or 0
+    HorizontalAlign = HorizontalAlign or 1
+    VerticalAlign = VerticalAlign or 1
+    Size = Size or 100
+    SizeUnits = SizeUnits or 0
+
+    if ClearView then ClearView = "true" else ClearView = "false" end
+
+    net.dostring_in("mission", string.format("a_out_picture_g(%d, \"%s\", %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", Group:GetID(), FilePath, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
+end
+
+--- Show a picture on the screen to Unit
+-- @param Wrapper.Unit#UNIT Unit Unit to show the picture to
+-- @param #string FileName File name of the picture
+-- @param #number Duration Duration in seconds, defaults to 10
+-- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
+-- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
+-- @param #number Size Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+function UTILS.ShowPictureToUnit(Unit, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
+    ClearView = ClearView or false
+    StartDelay = StartDelay or 0
+    HorizontalAlign = HorizontalAlign or 1
+    VerticalAlign = VerticalAlign or 1
+    Size = Size or 100
+    SizeUnits = SizeUnits or 0
+
+    if ClearView then ClearView = "true" else ClearView = "false" end
+
+    net.dostring_in("mission", string.format("a_out_picture_u(%d, \"%s\", %d, %s, %d, \"%d\", \"%d\", %d, \"%d\")", Unit:GetID(), FilePath, Duration or 10, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits))
+end
+
+--- Load a mission file. This will replace the current mission with the one given carrying along the online clients.
+-- @param #string FileName Mission filename
+function UTILS.LoadMission(FileName)
+    net.dostring_in("mission", string.format("a_load_mission(\"%s\")", FileName))
+end
+
+--- Set the mission briefing for a coalition.
+-- @param #number Coalition Briefing coalition ID, can be coalition.side.BLUE, coalition.side.RED or coalition.side.NEUTRAL
+-- @param #string Text Briefing text, can contain newlines, will be converted formatted properly for DCS
+-- @param #string Picture Picture file path, can be a file in the DEFAULT folder inside the .miz
+function UTILS.SetMissionBriefing(Coalition, Text, Picture)
+    Text = Text or ""
+    Text = Text:gsub("\n", "\\n")
+    Picture = Picture or ""
+    local coalName = string.lower(UTILS.GetCoalitionName(Coalition))
+    net.dostring_in("mission", string.format("a_set_briefing(\"%s\", \"%s\", \"%s\")", coalName, Picture, Text))
+end
+
+--- Show a helper gate at a DCS#Vec3 position
+-- @param DCS#Vec3 pos The position
+-- @param #number heading Heading in degrees, can be 0..359 degrees
+function UTILS.ShowHelperGate(pos, heading)
+    net.dostring_in("mission",string.format("a_show_helper_gate(%s, %s, %s, %f)", pos.x, pos.y, pos.z, math.rad(heading)))
+end
+
+--- Show a helper gate for a unit.
+-- @param Wrapper.Unit#UNIT Unit The unit to show the gate for
+-- @param #number Flag Helper gate flag
+function UTILS.ShowHelperGateForUnit(Unit, Flag)
+    net.dostring_in("mission",string.format("a_show_route_gates_for_unit(%d, \"%d\")", Unit:GetID(), Flag))
+end
+
+--- Set the carrier illumination mode. -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+-- @param #number UnitID Carrier unit ID ( UNIT:GetID() )
+-- @param #number Mode Illumination mode, can be -2: OFF, -1: AUTO, 0: NAVIGATION, 1: AC LAUNCH, 2: AC RECOVERY
+function UTILS.SetCarrierIlluminationMode(UnitID, Mode)
+    net.dostring_in("mission",string.format("a_set_carrier_illumination_mode(%d, %d)", UnitID, Mode))
+end
+
+--- Shell a zone, zone must ME created
+-- @param #string name The name of the ME created zone
+-- @param #number power Equals kg of TNT, e.g. 75
+-- @param #count Number of shells simulated
+function UTILS.ShellZone(name, power, count)
+    local z = UTILS.GetEnvZone(name)
+    if z then
+        net.dostring_in("mission",string.format("a_shelling_zone(%d, %d, %d)", z.zoneId, power, count))
+    end
+end
+
+--- Remove objects from a zone, zone must ME created
+-- @param #string name The name of the ME created zone
+-- @param #number type Type of objects to remove can be 0:all, 1: trees, 2:objects
+function UTILS.RemoveObjects(name, type)
+    local z = UTILS.GetEnvZone(name)
+    if z then
+        net.dostring_in("mission",string.format("a_remove_scene_objects(%d, %d)", z.zoneId, type))
+    end
+end
+
+--- Remove scenery objects from a zone, zone must ME created
+-- @param #string name The name of the ME created zone
+-- @param #number level Level of removal
+function UTILS.DestroyScenery(name, level)
+    local z = UTILS.GetEnvZone(name)
+    if z then
+        net.dostring_in("mission",string.format("a_scenery_destruction_zone(%d, %d)", z.zoneId, level))
+    end
+end
+
+--- Search for clear zones in a given area. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param DCS##Vec3 Center position vector for the search area.
+-- @param #number SearchRadius Radius of the search area.
+-- @param #number PosRadius Required clear radius around each position.
+-- @param #number NumPositions Number of positions to find.
+-- @return #table A table of DCS#Vec2 positions that are clear of map objects within the given PosRadius.
+function UTILS.GetSimpleZones(Vec3, SearchRadius, PosRadius, NumPositions)
+    return Disposition.getSimpleZones(Vec3, SearchRadius, PosRadius, NumPositions)
+end
+
+--- Search for clear ground spawn zones within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param Core.Zone#ZONE Zone to search.
+-- @param #number (Optional) PosRadius Required clear radius around each position. (Default is math.min(Radius/10, 200))
+-- @param #number (Optional) NumPositions Number of positions to find. (Default 50)
+-- @return #table A table of DCS#Vec2 positions that are clear of map objects within the given PosRadius. nil if no clear positions are found.
+function UTILS.GetClearZonePositions(Zone, PosRadius, NumPositions)
+    local radius = PosRadius or math.min(Zone:GetRadius()/10, 200)
+    local clearPositions = UTILS.GetSimpleZones(Zone:GetVec3(), Zone:GetRadius(), radius, NumPositions or 50)
+    if clearPositions and #clearPositions > 0 then
+        local validZones = {}
+        for _, vec2 in pairs(clearPositions) do
+            if Zone:IsVec2InZone(vec2) then
+                table.insert(validZones, vec2)
+            end
+        end
+        if #validZones > 0 then
+            return validZones, radius
+        end
+    end
+    return nil
+end
+
+
+--- Search for a random clear ground spawn coordinate within this zone. A powerful and efficient function using Disposition to find clear areas for spawning ground units avoiding trees, water and map scenery.
+-- @param Core.Zone#ZONE Zone to search.
+-- @param #number PosRadius (Optional) Required clear radius around each position. (Default is math.min(Radius/10, 200))
+-- @param #number NumPositions (Optional) Number of positions to find. (Default 50)
+-- @return Core.Point#COORDINATE A random coordinate for a clear zone. nil if no clear positions are found.
+-- @return #number Assigned radius for the found zones. nil if no clear positions are found.
+function UTILS.GetRandomClearZoneCoordinate(Zone, PosRadius, NumPositions)
+    local clearPositions = UTILS.GetClearZonePositions(Zone, PosRadius, NumPositions)
+    if clearPositions and #clearPositions > 0 then
+        local randomPosition, radius = clearPositions[math.random(1, #clearPositions)]
+        return COORDINATE:NewFromVec2(randomPosition), radius
+    end
+
+    return nil
+end
+
+--- Find the point on the radius of a circle closest to a point outside of the radius.
+-- @param DCS#Vec2 Vec1 Simple Vec2 marking the middle of the circle.
+-- @param #number Radius The radius of the circle.
+-- @param DCS#Vec2 Vec2 Simple Vec2 marking the point outside of the circle.
+-- @return DCS#Vec2 Vec2 point on the radius.
+function UTILS.FindNearestPointOnCircle(Vec1,Radius,Vec2)
+    local r = Radius
+    local cx = Vec1.x or 1
+    local cy = Vec1.y or 1
+    local px = Vec2.x or 1
+    local py = Vec2.y or 1
+
+    -- Berechne den Vektor vom Mittelpunkt zum externen Punkt
+    local dx = px - cx
+    local dy = py - cy
+
+    -- Berechne die Länge des Vektors
+    local dist = math.sqrt(dx * dx + dy * dy)
+
+    -- Wenn der Punkt im Mittelpunkt liegt, wähle einen Punkt auf der X-Achse
+    if dist == 0 then
+        return {x=cx + r, y=cy}
+    end
+
+    -- Normalisiere den Vektor (richtungsweise Vektor mit Länge 1)
+    local norm_dx = dx / dist
+    local norm_dy = dy / dist
+
+    -- Berechne den Punkt auf dem Rand des Kreises
+    local qx = cx + r * norm_dx
+    local qy = cy + r * norm_dy
+
+    local shift_factor = 1
+    qx = qx + shift_factor * norm_dx
+    qy = qy + shift_factor * norm_dy
+
+    return {x=qx, y=qy}
+end
+
+--- This function uses Disposition and other fallback logic to find better ground positions for ground units.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
+--- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+-- @param #table Positions A table of DCS#Vec2 or DCS#Vec3, can be a units table from the group template.
+-- @param DCS#Vec2 Anchor (Optional) DCS#Vec2 or DCS#Vec3 as anchor point to calculate offset of the units.
+-- @param #number MaxRadius (Optional) Max radius to search for valid ground locations in meters. Default is double the max radius of the units.
+-- @param #number Spacing (Optional) Minimum spacing between units in meters. Default is 5% of the search radius or 5 meters, whichever is larger.
+function UTILS.ValidateAndRepositionGroundUnits(Positions, Anchor, MaxRadius, Spacing)
+    local units = Positions
+    Anchor = Anchor or UTILS.GetCenterPoint(units)
+    local gPos = { x = Anchor.x, y = Anchor.z or Anchor.y }
+    local maxRadius = 0
+    local unitCount = 0
+    for _, unit in pairs(units) do
+        local pos = { x = unit.x, y = unit.z or unit.y }
+        local dist = UTILS.VecDist2D(pos, gPos)
+        if dist > maxRadius then
+            maxRadius = dist
+        end
+        unitCount = unitCount + 1
+    end
+    maxRadius = MaxRadius or math.max(maxRadius * 2, 10)
+    local spacing = Spacing or math.max(maxRadius * 0.05, 5)
+    if unitCount > 0 and maxRadius > 5 then
+        local spots = UTILS.GetSimpleZones(UTILS.Vec2toVec3(gPos), maxRadius, spacing, 1000)
+        if spots and #spots > 0 then
+            local validSpots = {}
+            for _, spot in pairs(spots) do -- Disposition sometimes returns points on roads, hence this filter.
+                if land.getSurfaceType(spot) == land.SurfaceType.LAND then
+                    table.insert(validSpots, spot)
+                end
+            end
+            spots = validSpots
+        end
+
+        local step = spacing
+        for _, unit in pairs(units) do
+            local pos = { x = unit.x, y = unit.z or unit.y }
+            local isOnLand = land.getSurfaceType(pos) == land.SurfaceType.LAND
+            local isValid = false
+            if spots and #spots > 0 then
+                local si = 1
+                local sid = 0
+                local closestDist = 100000000
+                local closestSpot
+                for _, spot in pairs(spots) do
+                    local dist = UTILS.VecDist2D(pos, spot)
+                    if dist < closestDist then
+                        closestDist = dist
+                        closestSpot = spot
+                        sid = si
+                    end
+                    si = si + 1
+                end
+                if closestSpot then
+                    if closestDist >= spacing then
+                        pos = closestSpot
+                    end
+                    isValid = true
+                    table.remove(spots, sid)
+                end
+            end
+
+            -- Failsafe calculation
+            if not isValid and not isOnLand then
+
+                local h = UTILS.HdgTo(pos, gPos)
+                local retries = 0
+                while not isValid and retries < 500 do
+
+                    local dist = UTILS.VecDist2D(pos, gPos)
+                    pos = UTILS.Vec2Translate(pos, step, h)
+
+                    local skip = false
+                    for _, unit2 in pairs(units) do
+                        if unit ~= unit2 then
+                            local pos2 = { x = unit2.x, y = unit2.z or unit2.y }
+                            local dist2 = UTILS.VecDist2D(pos, pos2)
+                            if dist2 < 12 then
+                                isValid = false
+                                skip = true
+                                break
+                            end
+                        end
+                    end
+
+                    if not skip and dist > step and land.getSurfaceType(pos) == land.SurfaceType.LAND then
+                        isValid = true
+                        break
+                    elseif dist <= step then
+                        break
+                    end
+
+                    retries = retries + 1
+                end
+            end
+
+            if isValid then
+                unit.x = pos.x
+                if unit.z then
+                    unit.z = pos.y
+                else
+                    unit.y = pos.y
+                end
+            end
+        end
+    end
+end
+
+--- This function uses Disposition and other fallback logic to find better ground positions for statics.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to find clear ground locations avoiding trees, water, roads, runways, map scenery, statics and other units in the area and modifies the provided positions table.
+--- Maintains the original layout and unit positions as close as possible by searching for the next closest valid position to each unit.
+-- @param #table Positions A table of DCS#Vec2 or DCS#Vec3, can be a units table from the group template.
+-- @param DCS#Vec2 Position DCS#Vec2 or DCS#Vec3 initial spawn location.
+-- @param #number MaxRadius (Optional) Max radius to search for valid ground locations in meters. Default is double the max radius of the static.
+-- @return DCS#Vec2 Initial Position if it's valid, else a valid spawn position. nil if no valid position found.
+function UTILS.ValidateAndRepositionStatic(Country, Category, Type, Position, ShapeName, MaxRadius)
+    local coord = COORDINATE:NewFromVec2(Position)
+    local st = SPAWNSTATIC:NewFromType(Type, Category, Country)
+    if ShapeName then
+        st:InitShape(ShapeName)
+    end
+    local sName = "s-"..timer.getTime().."-"..math.random(1,10000)
+    local tempStatic = st:SpawnFromCoordinate(coord, 0, sName)
+    if tempStatic then
+        local sRadius = tempStatic:GetBoundingRadius(2) or 3
+        tempStatic:Destroy()
+        sRadius = sRadius * 0.5
+        MaxRadius = MaxRadius or math.max(sRadius * 10, 100)
+        local positions = UTILS.GetSimpleZones(coord:GetVec3(), MaxRadius, sRadius, 20)
+        if positions and #positions > 0 then
+            local closestSpot
+            local closestDist = math.huge
+            for _, spot in pairs(positions) do -- Disposition sometimes returns points on roads, hence this filter.
+                if land.getSurfaceType(spot) == land.SurfaceType.LAND then
+                    local dist = UTILS.VecDist2D(Position, spot)
+                    if dist < closestDist then
+                        closestDist = dist
+                        closestSpot = spot
+                    end
+                end
+            end
+
+            if closestSpot then
+                if closestDist >= sRadius then
+                    return closestSpot
+                else
+                    return Position
+                end
+            end
+        end
+    end
+
+    return nil
 end

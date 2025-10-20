@@ -267,6 +267,135 @@ MSRS.version="0.3.3"
 --- Voices
 -- @type MSRS.Voices
 MSRS.Voices = {
+  Amazon = {
+    Generative = {
+      en_AU = {
+        Olivia = "Olivia",
+      },
+      en_GB = {
+        Amy = "Amy",
+      },
+      en_US = {
+        Danielle = "Danielle",
+        Joanna = "Joanna",
+        Ruth = "Ruth",
+        Stephen = "Stephen",
+        },
+      fr_FR = {
+        ["Léa"] = "Léa",
+        ["Rémi"] = "Rémi",
+      },
+      de_DE = {
+        Vicki = "Vicki",
+        Daniel = "Daniel",
+      },
+      it_IT = {
+        Bianca = "Bianca",
+        Adriano = "Adriano",
+      },
+      es_ES = {
+        Lucia = "Lucia",
+        Sergio = "Sergio",    
+      },
+    },
+    LongForm = {
+      en_US = {
+        Danielle = "Danielle",
+        Gregory = "Gregory",
+        Ivy = "Ivy",
+        Ruth = "Ruth",
+        Patrick = "Patrick",
+      },
+      es_ES = {
+        Alba = "Alba",
+        ["Raúl"] = "Raúl",    
+      },
+    },
+    Neural = {
+      en_AU = {
+        Olivia = "Olivia",
+      },
+      en_GB = {
+        Amy = "Amy",
+        Emma = "Emma",
+        Brian = "Brian",
+        Arthur = "Arthur",
+      },
+      en_US = {
+        Danielle = "Danielle",
+        Gregory = "Gregory",
+        Ivy = "Ivy",
+        Joanna = "Joanna",
+        Kendra = "Kendra",
+        Kimberly = "Kimberly",
+        Salli = "Salli",
+        Joey = "Joey",
+        Kevin = "Kevin",  
+        Ruth = "Ruth",
+        Stephen = "Stephen",       
+      },
+      fr_FR = {
+        ["Léa"] = "Léa",
+        ["Rémi"] = "Rémi",
+      },
+      de_DE = {
+        Vicki = "Vicki",
+        Daniel = "Daniel",
+      },
+      it_IT = {
+        Bianca = "Bianca",
+        Adriano = "Adriano",
+      },
+      es_ES = {
+        Lucia = "Lucia",
+        Sergio = "Sergio",    
+      },
+    },
+    Standard = {
+      en_AU = {
+        Nicole = "Nicole",
+        Russel = "Russel",
+      },
+      en_GB = {
+        Amy = "Amy",
+        Emma = "Emma",
+        Brian = "Brian",
+      },
+      en_IN = {
+        Aditi = "Aditi",
+        Raveena = "Raveena",
+      },
+      en_US = {
+        Ivy = "Ivy",
+        Joanna = "Joanna",
+        Kendra = "Kendra",
+        Kimberly = "Kimberly",
+        Salli = "Salli",
+        Joey = "Joey",
+        Kevin = "Kevin",       
+      },
+      fr_FR = {
+        Celine = "Celine",
+        ["Léa"] = "Léa",
+        Mathieu = "Mathieu",
+      },
+      de_DE = {
+        Marlene = "Marlene",
+        Vicki = "Vicki",
+        Hans = "Hans",
+      },
+      it_IT = {
+        Carla = "Carla",
+        Bianca = "Bianca",
+        Giorgio = "Giorgio",
+      },
+      es_ES = {
+        Conchita = "Conchita",
+        Lucia = "Lucia",
+        Enrique = "Enrique",     
+      },
+    },
+  },
   Microsoft = { -- working ones if not using gRPC and MS
     ["Hedda"] = "Microsoft Hedda Desktop", -- de-DE
     ["Hazel"] = "Microsoft Hazel Desktop", -- en-GB
@@ -314,28 +443,32 @@ MSRS.Voices = {
        ["en_AU_Standard_B"] = 'en-AU-Standard-B', -- [2] MALE
        ["en_AU_Standard_C"] = 'en-AU-Standard-C', -- [3] FEMALE
        ["en_AU_Standard_D"] = 'en-AU-Standard-D', -- [4] MALE
-       ["en_IN_Standard_A"] = 'en-IN-Standard-A', -- [5] FEMALE
-       ["en_IN_Standard_B"] = 'en-IN-Standard-B', -- [6] MALE
-       ["en_IN_Standard_C"] = 'en-IN-Standard-C', -- [7] MALE
-       ["en_IN_Standard_D"] = 'en-IN-Standard-D', -- [8] FEMALE
+       -- IN
+        ["en_IN_Standard_A"] = 'en-IN-Standard-A', -- Female
+        ["en_IN_Standard_B"] = 'en-IN-Standard-B', -- Male
+        ["en_IN_Standard_C"] = 'en-IN-Standard-C', -- Male
+        ["en_IN_Standard_D"] = 'en-IN-Standard-D', -- Female
+        ["en_IN_Standard_E"] = 'en-IN-Standard-E', -- Female
+        ["en_IN_Standard_F"] = 'en-IN-Standard-F', -- Male
        -- 2025 changes
-       ["en_GB_Standard_A"] = 'en-GB-Standard-N', -- [9] FEMALE
-       ["en_GB_Standard_B"] = 'en-GB-Standard-O', -- [10] MALE
-       ["en_GB_Standard_C"] = 'en-GB-Standard-N', -- [11] FEMALE
-       ["en_GB_Standard_D"] = 'en-GB-Standard-O', -- [12] MALE
-       ["en_GB_Standard_F"] = 'en-GB-Standard-N', -- [13] FEMALE
-       ["en_GB_Standard_O"] = 'en-GB-Standard-O', -- [12] MALE
-       ["en_GB_Standard_N"] = 'en-GB-Standard-N', -- [13] FEMALE
-       ["en_US_Standard_A"] = 'en-US-Standard-A', -- [14] MALE
-       ["en_US_Standard_B"] = 'en-US-Standard-B', -- [15] MALE
-       ["en_US_Standard_C"] = 'en-US-Standard-C', -- [16] FEMALE
-       ["en_US_Standard_D"] = 'en-US-Standard-D', -- [17] MALE
-       ["en_US_Standard_E"] = 'en-US-Standard-E', -- [18] FEMALE
-       ["en_US_Standard_F"] = 'en-US-Standard-F', -- [19] FEMALE
-       ["en_US_Standard_G"] = 'en-US-Standard-G', -- [20] FEMALE
-       ["en_US_Standard_H"] = 'en-US-Standard-H', -- [21] FEMALE
-       ["en_US_Standard_I"] = 'en-US-Standard-I', -- [22] MALE
-       ["en_US_Standard_J"] = 'en-US-Standard-J', -- [23] MALE
+       ["en_GB_Standard_A"] = 'en-GB-Standard-A', -- Female
+       ["en_GB_Standard_B"] = 'en-GB-Standard-B', -- Male
+       ["en_GB_Standard_C"] = 'en-GB-Standard-C', -- Female
+       ["en_GB_Standard_D"] = 'en-GB-Standard-D', -- Male
+       ["en_GB_Standard_F"] = 'en-GB-Standard-F', -- Female
+       ["en_GB_Standard_N"] = 'en-GB-Standard-N', -- Female
+       ["en_GB_Standard_O"] = 'en-GB-Standard-O', -- Male
+       -- US
+       ["en_US_Standard_A"] = 'en-US-Standard-A', -- Male
+       ["en_US_Standard_B"] = 'en-US-Standard-B', -- Male
+       ["en_US_Standard_C"] = 'en-US-Standard-C', -- Female
+       ["en_US_Standard_D"] = 'en-US-Standard-D', -- Male
+       ["en_US_Standard_E"] = 'en-US-Standard-E', -- Female
+       ["en_US_Standard_F"] = 'en-US-Standard-F', -- Female
+       ["en_US_Standard_G"] = 'en-US-Standard-G', -- Female
+       ["en_US_Standard_H"] = 'en-US-Standard-H', -- Female
+       ["en_US_Standard_I"] = 'en-US-Standard-I', -- Male
+       ["en_US_Standard_J"] = 'en-US-Standard-J', -- Male
        -- 2025 catalog changes
        ["fr_FR_Standard_A"] = "fr-FR-Standard-F", -- Female
        ["fr_FR_Standard_B"] = "fr-FR-Standard-G", -- Male
@@ -345,14 +478,15 @@ MSRS.Voices = {
        ["fr_FR_Standard_G"] = "fr-FR-Standard-G", -- Male
        ["fr_FR_Standard_F"] = "fr-FR-Standard-F", -- Female
        -- 2025 catalog changes
-       ["de_DE_Standard_A"] = "de-DE-Standard-G", -- Female
-       ["de_DE_Standard_B"] = "de-DE-Standard-H", -- Male
-       ["de_DE_Standard_C"] = "de-DE-Standard-G", -- Female
-       ["de_DE_Standard_D"] = "de-DE-Standard-H", -- Male
-       ["de_DE_Standard_E"] = "de-DE-Standard-H", -- Male
-       ["de_DE_Standard_F"] = "de-DE-Standard-G", -- Female
-       ["de_DE_Standard_H"] = "de-DE-Standard-H", -- Male
-       ["de_DE_Standard_G"] = "de-DE-Standard-G", -- Female
+      ["de_DE_Standard_A"] = 'de-DE-Standard-A', -- Female
+      ["de_DE_Standard_B"] = 'de-DE-Standard-B', -- Male
+      ["de_DE_Standard_C"] = 'de-DE-Standard-C', -- Female
+      ["de_DE_Standard_D"] = 'de-DE-Standard-D', -- Male
+      ["de_DE_Standard_E"] = 'de-DE-Standard-E', -- Male
+      ["de_DE_Standard_F"] = 'de-DE-Standard-F', -- Female
+      ["de_DE_Standard_G"] = 'de-DE-Standard-G', -- Female
+      ["de_DE_Standard_H"] = 'de-DE-Standard-H', -- Male
+      -- ES
        ["es_ES_Standard_A"] = "es-ES-Standard-E", -- Female
        ["es_ES_Standard_B"] = "es-ES-Standard-F", -- Male
        ["es_ES_Standard_C"] = "es-ES-Standard-E", -- Female
@@ -368,32 +502,36 @@ MSRS.Voices = {
        ["it_IT_Standard_F"] = "it-IT-Standard-F", -- Male
       },
       Wavenet = {
-       ["en_AU_Wavenet_A"] = 'en-AU-Wavenet-A', -- [1] FEMALE
-       ["en_AU_Wavenet_B"] = 'en-AU-Wavenet-B', -- [2] MALE
-       ["en_AU_Wavenet_C"] = 'en-AU-Wavenet-C', -- [3] FEMALE
-       ["en_AU_Wavenet_D"] = 'en-AU-Wavenet-D', -- [4] MALE
-       ["en_IN_Wavenet_A"] = 'en-IN-Wavenet-A', -- [5] FEMALE
-       ["en_IN_Wavenet_B"] = 'en-IN-Wavenet-B', -- [6] MALE
-       ["en_IN_Wavenet_C"] = 'en-IN-Wavenet-C', -- [7] MALE
-       ["en_IN_Wavenet_D"] = 'en-IN-Wavenet-D', -- [8] FEMALE
+       ["en_AU_Wavenet_A"] = 'en-AU-Wavenet-A', -- Female
+       ["en_AU_Wavenet_B"] = 'en-AU-Wavenet-B', -- Male
+       ["en_AU_Wavenet_C"] = 'en-AU-Wavenet-C', -- Female
+       ["en_AU_Wavenet_D"] = 'en-AU-Wavenet-D', -- Male
+       -- IN
+        ["en_IN_Wavenet_A"] = 'en-IN-Wavenet-A', -- Female
+        ["en_IN_Wavenet_B"] = 'en-IN-Wavenet-B', -- Male
+        ["en_IN_Wavenet_C"] = 'en-IN-Wavenet-C', -- Male
+        ["en_IN_Wavenet_D"] = 'en-IN-Wavenet-D', -- Female
+        ["en_IN_Wavenet_E"] = 'en-IN-Wavenet-E', -- Female
+        ["en_IN_Wavenet_F"] = 'en-IN-Wavenet-F', -- Male
        -- 2025 changes
-       ["en_GB_Wavenet_A"] = 'en-GB-Wavenet-N', -- [9] FEMALE
-       ["en_GB_Wavenet_B"] = 'en-GB-Wavenet-O', -- [10] MALE
-       ["en_GB_Wavenet_C"] = 'en-GB-Wavenet-N', -- [11] FEMALE
-       ["en_GB_Wavenet_D"] = 'en-GB-Wavenet-O', -- [12] MALE
-       ["en_GB_Wavenet_F"] = 'en-GB-Wavenet-N', -- [13] FEMALE
+       ["en_GB_Wavenet_A"] = 'en-GB-Wavenet-A', -- [9] FEMALE
+       ["en_GB_Wavenet_B"] = 'en-GB-Wavenet-B', -- [10] MALE
+       ["en_GB_Wavenet_C"] = 'en-GB-Wavenet-C', -- [11] FEMALE
+       ["en_GB_Wavenet_D"] = 'en-GB-Wavenet-D', -- [12] MALE
+       ["en_GB_Wavenet_F"] = 'en-GB-Wavenet-F', -- [13] FEMALE
        ["en_GB_Wavenet_O"] = 'en-GB-Wavenet-O', -- [12] MALE
-       ["en_GB_Wavenet_N"] = 'en-GB-Wavenet-N', -- [13] FEMALE     
-       ["en_US_Wavenet_A"] = 'en-US-Wavenet-N', -- [14] MALE
-       ["en_US_Wavenet_B"] = 'en-US-Wavenet-B', -- [15] MALE
-       ["en_US_Wavenet_C"] = 'en-US-Wavenet-C', -- [16] FEMALE
-       ["en_US_Wavenet_D"] = 'en-US-Wavenet-D', -- [17] MALE
-       ["en_US_Wavenet_E"] = 'en-US-Wavenet-E', -- [18] FEMALE
-       ["en_US_Wavenet_F"] = 'en-US-Wavenet-F', -- [19] FEMALE
-       ["en_US_Wavenet_G"] = 'en-US-Wavenet-G', -- [20] FEMALE
-       ["en_US_Wavenet_H"] = 'en-US-Wavenet-H', -- [21] FEMALE
-       ["en_US_Wavenet_I"] = 'en-US-Wavenet-I', -- [22] MALE
-       ["en_US_Wavenet_J"] = 'en-US-Wavenet-J', -- [23] MALE
+       ["en_GB_Wavenet_N"] = 'en-GB-Wavenet-N', -- [13] FEMALE  
+       -- US   
+       ["en_US_Wavenet_A"] = 'en-US-Wavenet-A', -- Male
+       ["en_US_Wavenet_B"] = 'en-US-Wavenet-B', -- Male
+       ["en_US_Wavenet_C"] = 'en-US-Wavenet-C', -- Female
+       ["en_US_Wavenet_D"] = 'en-US-Wavenet-D', -- Male
+       ["en_US_Wavenet_E"] = 'en-US-Wavenet-E', -- Female
+       ["en_US_Wavenet_F"] = 'en-US-Wavenet-F', -- Female
+       ["en_US_Wavenet_G"] = 'en-US-Wavenet-G', -- Female
+       ["en_US_Wavenet_H"] = 'en-US-Wavenet-H', -- Female
+       ["en_US_Wavenet_I"] = 'en-US-Wavenet-I', -- Male
+       ["en_US_Wavenet_J"] = 'en-US-Wavenet-J', -- Male
        -- 2025 catalog changes
        ["fr_FR_Wavenet_A"] = "fr-FR-Wavenet-F", -- Female
        ["fr_FR_Wavenet_B"] = "fr-FR-Wavenet-G", -- Male
@@ -403,14 +541,15 @@ MSRS.Voices = {
        ["fr_FR_Wavenet_G"] = "fr-FR-Wavenet-G", -- Male
        ["fr_FR_Wavenet_F"] = "fr-FR-Wavenet-F", -- Female
        -- 2025 catalog changes
-       ["de_DE_Wavenet_A"] = "de-DE-Wavenet-G", -- Female
-       ["de_DE_Wavenet_B"] = "de-DE-Wavenet-H", -- Male
-       ["de_DE_Wavenet_C"] = "de-DE-Wavenet-G", -- Female
-       ["de_DE_Wavenet_D"] = "de-DE-Wavenet-H", -- Male
-       ["de_DE_Wavenet_E"] = "de-DE-Wavenet-H", -- Male
-       ["de_DE_Wavenet_F"] = "de-DE-Wavenet-G", -- Female
-       ["de_DE_Wavenet_H"] = "de-DE-Wavenet-H", -- Male
-       ["de_DE_Wavenet_G"] = "de-DE-Wavenet-G", -- Female
+        ["de_DE_Wavenet_A"] = 'de-DE-Wavenet-A', -- Female
+        ["de_DE_Wavenet_B"] = 'de-DE-Wavenet-B', -- Male
+        ["de_DE_Wavenet_C"] = 'de-DE-Wavenet-C', -- Female
+        ["de_DE_Wavenet_D"] = 'de-DE-Wavenet-D', -- Male
+        ["de_DE_Wavenet_E"] = 'de-DE-Wavenet-E', -- Male
+        ["de_DE_Wavenet_F"] = 'de-DE-Wavenet-F', -- Female
+        ["de_DE_Wavenet_G"] = 'de-DE-Wavenet-G', -- Female
+        ["de_DE_Wavenet_H"] = 'de-DE-Wavenet-H', -- Male
+       -- ES
        ["es_ES_Wavenet_B"] = "es-ES-Wavenet-E", -- Male
        ["es_ES_Wavenet_C"] = "es-ES-Wavenet-F", -- Female
        ["es_ES_Wavenet_D"] = "es-ES-Wavenet-E", -- Female
@@ -424,6 +563,134 @@ MSRS.Voices = {
        ["it_IT_Wavenet_E"] = "it-IT-Wavenet-E", -- Female
        ["it_IT_Wavenet_F"] = "it-IT-Wavenet-F", -- Male
       } ,
+      Chirp3HD = {
+       ["en_GB_Chirp3_HD_Aoede"] = 'en-GB-Chirp3-HD-Aoede', -- Female
+       ["en_GB_Chirp3_HD_Charon"] = 'en-GB-Chirp3-HD-Charon', -- Male
+       ["en_GB_Chirp3_HD_Fenrir"] = 'en-GB-Chirp3-HD-Fenrir', -- Male
+       ["en_GB_Chirp3_HD_Kore"] = 'en-GB-Chirp3-HD-Kore', -- Female
+       ["en_GB_Chirp3_HD_Leda"] = 'en-GB-Chirp3-HD-Leda', -- Female
+       ["en_GB_Chirp3_HD_Orus"] = 'en-GB-Chirp3-HD-Orus', -- Male
+       ["en_GB_Chirp3_HD_Puck"] = 'en-GB-Chirp3-HD-Puck', -- Male
+       ["en_GB_Chirp3_HD_Zephyr"] = 'en-GB-Chirp3-HD-Zephyr', -- Female
+       --["de_DE_Chirp3_HD_Aoede"] = 'de-DE-Chirp3-HD-Aoede', -- Female (Datenfehler im Original)
+       ["en_US_Chirp3_HD_Charon"] = 'en-US-Chirp3-HD-Charon', -- Male
+       ["en_US_Chirp3_HD_Fenrir"] = 'en-US-Chirp3-HD-Fenrir', -- Male
+       ["en_US_Chirp3_HD_Kore"] = 'en-US-Chirp3-HD-Kore', -- Female
+       ["en_US_Chirp3_HD_Leda"] = 'en-US-Chirp3-HD-Leda', -- Female
+       ["en_US_Chirp3_HD_Orus"] = 'en-US-Chirp3-HD-Orus', -- Male
+       ["en_US_Chirp3_HD_Puck"] = 'en-US-Chirp3-HD-Puck', -- Male
+       --["de_DE_Chirp3_HD_Zephyr"] = 'de-DE-Chirp3-HD-Zephyr', -- Female (Datenfehler im Original)
+       -- DE
+       ["de_DE_Chirp3_HD_Aoede"] = 'de-DE-Chirp3-HD-Aoede', -- Female
+       ["de_DE_Chirp3_HD_Charon"] = 'de-DE-Chirp3-HD-Charon', -- Male
+       ["de_DE_Chirp3_HD_Fenrir"] = 'de-DE-Chirp3-HD-Fenrir', -- Male
+       ["de_DE_Chirp3_HD_Kore"] = 'de-DE-Chirp3-HD-Kore', -- Female
+       ["de_DE_Chirp3_HD_Leda"] = 'de-DE-Chirp3-HD-Leda', -- Female
+       ["de_DE_Chirp3_HD_Orus"] = 'de-DE-Chirp3-HD-Orus', -- Male
+       ["de_DE_Chirp3_HD_Puck"] = 'de-DE-Chirp3-HD-Puck', -- Male
+       ["de_DE_Chirp3_HD_Zephyr"] = 'de-DE-Chirp3-HD-Zephyr', -- Female
+       -- AU
+       ["en_AU_Chirp3_HD_Aoede"] = 'en-AU-Chirp3-HD-Aoede', -- Female
+       ["en_AU_Chirp3_HD_Charon"] = 'en-AU-Chirp3-HD-Charon', -- Male
+       ["en_AU_Chirp3_HD_Fenrir"] = 'en-AU-Chirp3-HD-Fenrir', -- Male
+       ["en_AU_Chirp3_HD_Kore"] = 'en-AU-Chirp3-HD-Kore', -- Female
+       ["en_AU_Chirp3_HD_Leda"] = 'en-AU-Chirp3-HD-Leda', -- Female
+       ["en_AU_Chirp3_HD_Orus"] = 'en-AU-Chirp3-HD-Orus', -- Male
+       ["en_AU_Chirp3_HD_Puck"] = 'en-AU-Chirp3-HD-Puck', -- Male
+       ["en_AU_Chirp3_HD_Zephyr"] = 'en-AU-Chirp3-HD-Zephyr', -- Female
+       -- IN
+       ["en_IN_Chirp3_HD_Aoede"] = 'en-IN-Chirp3-HD-Aoede', -- Female
+       ["en_IN_Chirp3_HD_Charon"] = 'en-IN-Chirp3-HD-Charon', -- Male
+       ["en_IN_Chirp3_HD_Fenrir"] = 'en-IN-Chirp3-HD-Fenrir', -- Male
+       ["en_IN_Chirp3_HD_Kore"] = 'en-IN-Chirp3-HD-Kore', -- Female
+       ["en_IN_Chirp3_HD_Leda"] = 'en-IN-Chirp3-HD-Leda', -- Female
+       ["en_IN_Chirp3_HD_Orus"] = 'en-IN-Chirp3-HD-Orus', -- Male
+      },
+      ChirpHD = {
+       ["en_US_Chirp_HD_D"] = 'en-US-Chirp-HD-D', -- Male
+       ["en_US_Chirp_HD_F"] = 'en-US-Chirp-HD-F', -- Female
+       ["en_US_Chirp_HD_O"] = 'en-US-Chirp-HD-O', -- Female
+       -- DE
+       ["de_DE_Chirp_HD_D"] = 'de-DE-Chirp-HD-D', -- Male
+       ["de_DE_Chirp_HD_F"] = 'de-DE-Chirp-HD-F', -- Female
+       ["de_DE_Chirp_HD_O"] = 'de-DE-Chirp-HD-O', -- Female
+       -- AU
+       ["en_AU_Chirp_HD_D"] = 'en-AU-Chirp-HD-D', -- Male
+       ["en_AU_Chirp_HD_F"] = 'en-AU-Chirp-HD-F', -- Female
+       ["en_AU_Chirp_HD_O"] = 'en-AU-Chirp-HD-O', -- Female
+       -- IN
+       ["en_IN_Chirp_HD_D"] = 'en-IN-Chirp-HD-D', -- Male
+       ["en_IN_Chirp_HD_F"] = 'en-IN-Chirp-HD-F', -- Female
+       ["en_IN_Chirp_HD_O"] = 'en-IN-Chirp-HD-O', -- Female
+      },
+    },
+    Neural2 = {
+       ["en_GB_Neural2_A"] = 'en-GB-Neural2-A', -- Female
+       ["en_GB_Neural2_B"] = 'en-GB-Neural2-B', -- Male
+       ["en_GB_Neural2_C"] = 'en-GB-Neural2-C', -- Female
+       ["en_GB_Neural2_D"] = 'en-GB-Neural2-D', -- Male
+       ["en_GB_Neural2_F"] = 'en-GB-Neural2-F', -- Female
+       ["en_GB_Neural2_N"] = 'en-GB-Neural2-N', -- Female
+       ["en_GB_Neural2_O"] = 'en-GB-Neural2-O', -- Male
+       -- US
+       ["en_US_Neural2_A"] = 'en-US-Neural2-A', -- Male
+       ["en_US_Neural2_C"] = 'en-US-Neural2-C', -- Female
+       ["en_US_Neural2_D"] = 'en-US-Neural2-D', -- Male
+       ["en_US_Neural2_E"] = 'en-US-Neural2-E', -- Female
+       ["en_US_Neural2_F"] = 'en-US-Neural2-F', -- Female
+       ["en_US_Neural2_G"] = 'en-US-Neural2-G', -- Female
+       ["en_US_Neural2_H"] = 'en-US-Neural2-H', -- Female
+       ["en_US_Neural2_I"] = 'en-US-Neural2-I', -- Male
+       ["en_US_Neural2_J"] = 'en-US-Neural2-J', -- Male
+       -- DE
+       ["de_DE_Neural2_G"] = 'de-DE-Neural2-G', -- Female
+       ["de_DE_Neural2_H"] = 'de-DE-Neural2-H', -- Male
+       -- AU
+       ["en_AU_Neural2_A"] = 'en-AU-Neural2-A', -- Female
+       ["en_AU_Neural2_B"] = 'en-AU-Neural2-B', -- Male
+       ["en_AU_Neural2_C"] = 'en-AU-Neural2-C', -- Female
+       ["en_AU_Neural2_D"] = 'en-AU-Neural2-D', -- Male
+       -- IN
+       ["en_IN_Neural2_A"] = 'en-IN-Neural2-A', -- Female
+       ["en_IN_Neural2_B"] = 'en-IN-Neural2-B', -- Male
+       ["en_IN_Neural2_C"] = 'en-IN-Neural2-C', -- Male
+       ["en_IN_Neural2_D"] = 'en-IN-Neural2-D', -- Female
+    },
+    News = {
+       ["en_GB_News_G"] = 'en-GB-News-G', -- Female
+       ["en_GB_News_H"] = 'en-GB-News-H', -- Female
+       ["en_GB_News_I"] = 'en-GB-News-I', -- Female
+       ["en_GB_News_J"] = 'en-GB-News-J', -- Male
+       ["en_GB_News_K"] = 'en-GB-News-K', -- Male
+       ["en_GB_News_L"] = 'en-GB-News-L', -- Male
+       ["en_GB_News_M"] = 'en-GB-News-M', -- Male
+       -- US
+       ["en_US_News_K"] = 'en-US-News-K', -- Female
+       ["en_US_News_L"] = 'en-US-News-L', -- Female
+       ["en_US_News_N"] = 'en-US-News-N', -- Male
+       -- AU
+       ["en_AU_News_E"] = 'en-AU-News-E', -- Female
+       ["en_AU_News_F"] = 'en-AU-News-F', -- Female
+       ["en_AU_News_G"] = 'en-AU-News-G', -- Male
+    },
+    Casual = {
+       ["en_US_Casual_K"] = 'en-US-Casual-K', -- Male
+    },
+    Polyglot = {
+       ["en_US_Polyglot_1"] = 'en-US-Polyglot-1', -- Male
+       ["de_DE_Polyglot_1"] = 'de-DE-Polyglot-1', -- Male
+       ["en_AU_Polyglot_1"] = 'en-AU-Polyglot-1', -- Male
+    },
+    Studio = {
+       -- Englisch (UK) - Studio
+       ["en_GB_Studio_B"] = 'en-GB-Studio-B', -- Male
+       ["en_GB_Studio_C"] = 'en-GB-Studio-C', -- Female
+       -- Englisch (USA) - Studio
+       ["en_US_Studio_O"] = 'en-US-Studio-O', -- Female
+       ["en_US_Studio_Q"] = 'en-US-Studio-Q', -- Male
+       -- DE
+       ["de_DE_Studio_B"] = 'de-DE-Studio-B', -- Male
+       ["de_DE_Studio_C"] = 'de-DE-Studio-C', -- Female
     },
   }
 
@@ -503,7 +770,7 @@ end
 -- set the path to the exe file via @{#MSRS.SetPath}.
 --
 -- @param #MSRS self
--- @param #string Path Path to SRS directory. Default `C:\\Program Files\\DCS-SimpleRadio-Standalone`.
+-- @param #string Path Path to SRS directory. Default `C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio`.
 -- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
 -- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a #table of multiple modulations.
 -- @param #string Backend Backend used: `MSRS.Backend.SRSEXE` (default) or `MSRS.Backend.GRPC`.
@@ -638,13 +905,13 @@ end
 
 --- Set path to SRS install directory. More precisely, path to where the `DCS-SR-ExternalAudio.exe` is located.
 -- @param #MSRS self
--- @param #string Path Path to the directory, where the sound file is located. Default is `C:\\Program Files\\DCS-SimpleRadio-Standalone`.
+-- @param #string Path Path to the directory, where the sound file is located. Default is `C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio`.
 -- @return #MSRS self
 function MSRS:SetPath(Path)
   self:F( {Path=Path} )
 
   -- Set path.
-  self.path=Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+  self.path=Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 
   -- Remove (back)slashes.
   local n=1 ; local nmax=1000
@@ -974,7 +1241,7 @@ end
 -- - `MSRS.Provider.WINDOWS`: Microsoft Windows (default)
 -- - `MSRS.Provider.GOOGLE`: Google Cloud
 -- - `MSRS.Provider.AZURE`: Microsoft Azure (only with DCS-gRPC backend)
--- - `MSRS.Provier.AMAZON`: Amazone Web Service (only with DCS-gRPC backend)
+-- - `MSRS.Provier.AMAZON`: Amazon Web Service (only with DCS-gRPC backend)
 --
 -- Note that all providers except Microsoft Windows need as additonal information the credentials of your account.
 --
@@ -1184,7 +1451,8 @@ function MSRS:PlaySoundFile(Soundfile, Delay)
 
     -- Append file.
     command=command..' --file="'..tostring(soundfile)..'"'
-
+    command=string.gsub(command,"--ssml","-h")    
+    
     -- Execute command.
     self:_ExecCommand(command)
 
@@ -1442,7 +1710,7 @@ function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, sp
   elseif self.provider==MSRS.Provider.WINDOWS then
     -- Nothing to do.
   else
-    self:E("ERROR: SRS only supports WINWOWS and GOOGLE as TTS providers! Use DCS-gRPC backend for other providers such as ")
+    self:E("ERROR: SRS only supports WINDOWS and GOOGLE as TTS providers! Use DCS-gRPC backend for other providers such as AWS and Azure.")
   end
 
   if not UTILS.FileExists(fullPath) then
@@ -1477,7 +1745,7 @@ function MSRS:_ExecCommand(command)
   if self.UsePowerShell == true then
    filename=os.getenv('TMP').."\\MSRS-"..MSRS.uuid()..".ps1"
    batContent = command .. "\'"
-   self:I({batContent=batContent})
+   self:T({batContent=batContent})
   end
   
   local script=io.open(filename, "w+")
@@ -1660,7 +1928,7 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
       ssml=string.format("<voice%s%s>%s</voice>", gender, language, Text)
     end
   end
-
+  
   for _,freq in pairs(Frequencies) do
     self:T("Calling GRPC.tts with the following parameter:")
     self:T({ssml=ssml, freq=freq, options=options})
@@ -1687,7 +1955,7 @@ end
 --
 --     -- Moose MSRS default Config
 --     MSRS_Config = {
---       Path = "C:\\Program Files\\DCS-SimpleRadio-Standalone", -- Path to SRS install directory.
+--       Path = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio", -- Path to SRS install directory.
 --       Port = 5002,            -- Port of SRS server. Default 5002.
 --       Backend = "srsexe",     -- Interface to SRS: "srsexe" or "grpc".
 --       Frequency = {127, 243}, -- Default frequences. Must be a table 1..n entries!
@@ -1707,7 +1975,7 @@ end
 --       -- Google Cloud
 --       gcloud = {
 --         voice = "en-GB-Standard-A", -- The Google Cloud voice to use (see https://cloud.google.com/text-to-speech/docs/voices).
---         credentials="C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourfilename.json", -- Full path to credentials JSON file (only for SRS-TTS.exe backend)
+--         credentials="C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio\\yourfilename.json", -- Full path to credentials JSON file (only for SRS-TTS.exe backend)
 --         key="Your access Key", -- Google API access key (only for DCS-gRPC backend)
 --       },
 --       -- Amazon Web Service
@@ -1775,7 +2043,7 @@ function MSRS:LoadConfigFile(Path,Filename)
 
       local Self = self or MSRS  --#MSRS
 
-      Self.path = MSRS_Config.Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+      Self.path = MSRS_Config.Path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
       Self.port = MSRS_Config.Port or 5002
       Self.backend = MSRS_Config.Backend or MSRS.Backend.SRSEXE
       Self.frequencies = MSRS_Config.Frequency or {127,243}
@@ -1986,7 +2254,7 @@ end
 -- @param Core.Point#COORDINATE coordinate Coordinate to be used
 -- @return #MSRSQUEUE.Transmission Radio transmission table.
 function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label,coordinate)
-
+  self:T({Text=text, Dur=duration, start=tstart, int=interval, sub=subgroups, subt=subtitle, sudb=subduration, F=frequency, M=modulation, G=gender, C=culture, V=voice, Vol=volume, L=label})
   if self.TransmitOnlyWithPlayers then
     if self.PlayerSet and self.PlayerSet:CountAlive() == 0 then
       return self
@@ -2026,7 +2294,7 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   transmission.volume = volume or msrs.volume
   transmission.label = label or msrs.Label
   transmission.coordinate = coordinate or msrs.coordinate
-
+ 
   -- Add transmission to queue.
   self:AddTransmission(transmission)
 

@@ -33,6 +33,8 @@ do -- TASK_A2G_DISPATCHER
   -- @extends Tasking.DetectionManager#DETECTION_MANAGER
 
   --- Orchestrates dynamic **A2G Task Dispatching** based on the detection results of a linked @{Functional.Detection} object.
+  -- 
+  -- ![Banner Image](..\Images\deprecated.png)
   --
   -- It uses the Tasking System within the MOOSE framework, which is a multi-player Tasking Orchestration system.
   -- It provides a truly dynamic battle environment for pilots and ground commanders to engage upon,
