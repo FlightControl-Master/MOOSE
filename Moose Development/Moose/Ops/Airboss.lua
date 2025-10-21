@@ -12682,7 +12682,8 @@ function AIRBOSS:_LSOgrade( playerData )
   local nL=count(G, '_')/2
   local nS=count(G, '%(')
   local nN=N-nS-nL
-
+  
+  if TIG=="_OK_" then nL = nL -1 --Circuit added to prevent grade deduction for perfect groove
 
   -- Groove time 15-18.99 sec for a unicorn. Or 60-65 for V/STOL unicorn.
   local Tgroove=playerData.Tgroove
