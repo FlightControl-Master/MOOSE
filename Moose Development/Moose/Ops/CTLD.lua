@@ -120,6 +120,7 @@ CTLD_CARGO = {
   -- @param Core.Zone#ZONE Location (optional) Where the cargo is available (one location only).
   -- @return #CTLD_CARGO self
   function CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock, Subcategory, DontShowInMenu, Location)
+  function CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock, Subcategory, DontShowInMenu, Location)
     -- Inherit everything from BASE class.
     local self=BASE:Inherit(self, BASE:New()) -- #CTLD_CARGO
     self:T({ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped})
@@ -147,6 +148,7 @@ CTLD_CARGO = {
       Location = ZONE:New(Location)
     end
     self.Location = Location
+    self.NoMoveToZone = false
     return self
   end
   
@@ -5460,8 +5462,8 @@ function CTLD:AddCratesCargoNoMove(Name,Templates,Type,NoCrates,PerCrateMass,Sto
     return self
   end
   self.CargoCounter = self.CargoCounter + 1
-  -- Crates are not directly loadable
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Templates,Type,false,false,NoCrates,nil,nil,PerCrateMass,Stock,SubCategory,DontShowInMenu,Location)
+  cargo.NoMoveToZone = true
   if UnitTypes then
     cargo:AddUnitTypeName(UnitTypes)
   end
@@ -5470,13 +5472,15 @@ function CTLD:AddCratesCargoNoMove(Name,Templates,Type,NoCrates,PerCrateMass,Sto
     cargo:SetStaticTypeAndShape(Category,TypeName,ShapeName)
   end
   table.insert(self.Cargo_Crates,cargo)
-  if SubCategory and self.usesubcats ~= true then self.usesubcats=true end
-  self.nomovetozone_templates = self.nomovetozone_templates or {}
+  self.templateToCargoName = self.templateToCargoName or {}
   if type(Templates)=="table" then
-    for _,t in pairs(Templates) do self.nomovetozone_templates[t] = true end
+    for _,t in pairs(Templates) do self.templateToCargoName[t] = Name end
   else
-    self.nomovetozone_templates[Templates] = true
+  self.templateToCargoName[Templates] = Name
   end
+  self.nomovetozone_names = self.nomovetozone_names or {}
+  self.nomovetozone_names[Name] = true
+  if SubCategory and self.usesubcats ~= true then self.usesubcats=true end
   return self
 end
 
@@ -7548,15 +7552,11 @@ end
   -- @return #CTLD self
   function CTLD:onafterCratesBuild(From, Event, To, Group, Unit, Vehicle)
     self:T({From, Event, To})
-    if self.movetroopstowpzone then
-      local gname = Vehicle and Vehicle:GetName() or nil
-      local block = false
-      if gname and self.nomovetozone_templates then
-        for t,_ in pairs(self.nomovetozone_templates) do
-          if gname==t or string.sub(gname,1,#t+1)==t.."-" then block = true break end
-        end
+    if self.movetroopstowpzone and Vehicle then
+      local cg = self:GetGenericCargoObjectFromGroupName(Vehicle:GetName())
+      if not (cg and (cg.NoMoveToZone or (self.nomovetozone_names and self.nomovetozone_names[cg:GetName()]))) then
+        self:_MoveGroupToZone(Vehicle)
       end
-      if not block then self:_MoveGroupToZone(Vehicle) end
     end
     return self
   end
