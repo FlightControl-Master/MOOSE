@@ -159,6 +159,8 @@ AIRWING = {
 -- @field #number refuelsystem Refueling system type: `0=Unit.RefuelingSystem.BOOM_AND_RECEPTACLE`, `1=Unit.RefuelingSystem.PROBE_AND_DROGUE`.
 -- @field #number noccupied Number of flights on this patrol point.
 -- @field Wrapper.Marker#MARKER marker F10 marker.
+-- @field #boolean IsZonePoint flag for using a (moving) zone as point for patrol etc.
+-- @field Core.Zone#ZONE_BASE patrolzone in case Patrol coordinate was handed as zone, store here.
 
 --- Patrol zone.
 -- @type AIRWING.PatrolZone
@@ -187,13 +189,14 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.9.6"
+AIRWING.version="0.9.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Check that airbase has enough parking spots if a request is BIG.
+-- DONE: Allow (moving) zones as base for patrol points.
 -- DONE: Spawn in air ==> Needs WAREHOUSE update.
 -- DONE: Spawn hot.
 -- DONE: Make special request to transfer squadrons to anther airwing (or warehouse).
@@ -807,13 +810,22 @@ function AIRWING:_PatrolPointMarkerText(point)
 end
 
 --- Update marker of the patrol point.
+-- @param #AIRWING self
 -- @param #AIRWING.PatrolData point Patrol point table.
 function AIRWING:UpdatePatrolPointMarker(point)
-  if self.markpoints then -- sometimes there's a direct call from #OPSGROUP
+
+  if self and self.markpoints then -- sometimes there's a direct call from #OPSGROUP
     local text=string.format("%s Occupied=%d\nheading=%03d, leg=%d NM, alt=%d ft, speed=%d kts",
     point.type, point.noccupied, point.heading, point.leg, point.altitude, point.speed)
-
-    point.marker:UpdateText(text, 1)
+ 
+    if point.IsZonePoint and point.IsZonePoint == true and point.patrolzone then
+      -- update position
+      local Coordinate = point.patrolzone:GetCoordinate()
+      point.marker:UpdateCoordinate(Coordinate)
+      point.marker:UpdateText(text, 1.5)
+    else
+      point.marker:UpdateText(text, 1)
+    end
   end
 end
 
@@ -821,7 +833,7 @@ end
 --- Create a new generic patrol point.
 -- @param #AIRWING self
 -- @param #string Type Patrol point type, e.g. "CAP" or "AWACS". Default "Unknown".
--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point. Default 10-15 NM away from the location of the airwing.
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point. Default 10-15 NM away from the location of the airwing. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
 -- @param #number Altitude Orbit altitude in feet. Default random between Angels 10 and 20.
 -- @param #number Heading Heading in degrees. Default random (0, 360] degrees.
 -- @param #number LegLength Length of race-track orbit in NM. Default 15 NM.
@@ -830,14 +842,16 @@ end
 -- @return #AIRWING.PatrolData Patrol point table.
 function AIRWING:NewPatrolPoint(Type, Coordinate, Altitude, Speed, Heading, LegLength, RefuelSystem)
 
-  -- Check if a zone was passed instead of a coordinate.
-  if Coordinate and Coordinate:IsInstanceOf("ZONE_BASE") then
-    Coordinate=Coordinate:GetCoordinate()
-  end
-
   local patrolpoint={}  --#AIRWING.PatrolData
   patrolpoint.type=Type or "Unknown"
   patrolpoint.coord=Coordinate or self:GetCoordinate():Translate(UTILS.NMToMeters(math.random(10, 15)), math.random(360))
+  if Coordinate and Coordinate:IsInstanceOf("ZONE_BASE") then
+    patrolpoint.IsZonePoint = true
+    patrolpoint.patrolzone = Coordinate
+    patrolpoint.coord = patrolpoint.patrolzone:GetCoordinate()
+  else
+    patrolpoint.IsZonePoint = false
+  end
   patrolpoint.heading=Heading or math.random(360)
   patrolpoint.leg=LegLength or 15
   patrolpoint.altitude=Altitude or math.random(10,20)*1000
@@ -847,7 +861,7 @@ function AIRWING:NewPatrolPoint(Type, Coordinate, Altitude, Speed, Heading, LegL
 
   if self.markpoints then
     patrolpoint.marker=MARKER:New(Coordinate, "New Patrol Point"):ToAll()
-    AIRWING.UpdatePatrolPointMarker(patrolpoint)
+    self:UpdatePatrolPointMarker(patrolpoint)
   end
 
   return patrolpoint
@@ -855,7 +869,7 @@ end
 
 --- Add a patrol Point for CAP missions.
 -- @param #AIRWING self
--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
 -- @param #number Altitude Orbit altitude in feet.
 -- @param #number Speed Orbit speed in knots.
 -- @param #number Heading Heading in degrees.
@@ -872,7 +886,7 @@ end
 
 --- Add a patrol Point for RECON missions.
 -- @param #AIRWING self
--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
 -- @param #number Altitude Orbit altitude in feet.
 -- @param #number Speed Orbit speed in knots.
 -- @param #number Heading Heading in degrees.
@@ -889,7 +903,7 @@ end
 
 --- Add a patrol Point for TANKER missions.
 -- @param #AIRWING self
--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
 -- @param #number Altitude Orbit altitude in feet.
 -- @param #number Speed Orbit speed in knots.
 -- @param #number Heading Heading in degrees.
@@ -907,7 +921,7 @@ end
 
 --- Add a patrol Point for AWACS missions.
 -- @param #AIRWING self
--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point.
+-- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
 -- @param #number Altitude Orbit altitude in feet.
 -- @param #number Speed Orbit speed in knots.
 -- @param #number Heading Heading in degrees.
@@ -971,6 +985,46 @@ end
 -- @return #AIRWING self
 function AIRWING:SetTakeoffAir()
   self:SetTakeoffType("Air")
+  return self
+end
+
+--- Set the aircraft of the AirWing to land straight in.
+-- @param #AIRWING self
+-- @return #FLIGHTGROUP self
+function AIRWING:SetLandingStraightIn()
+  self.OptionLandingStraightIn = true
+  return self
+end
+
+--- Set the aircraft of the AirWing to land in pairs for groups > 1 aircraft.
+-- @param #AIRWING self
+-- @return #AIRWING self
+function AIRWING:SetLandingForcePair()
+  self.OptionLandingForcePair = true
+  return self
+end
+
+--- Set the aircraft of the AirWing to NOT land in pairs.
+-- @param #AIRWING self
+-- @return #AIRWING self
+function AIRWING:SetLandingRestrictPair()
+  self.OptionLandingRestrictPair = true
+  return self
+end
+
+--- Set the aircraft of the AirWing to land after overhead break.
+-- @param #AIRWING self
+-- @return #AIRWING self
+function AIRWING:SetLandingOverheadBreak()
+  self.OptionLandingOverheadBreak = true
+  return self
+end
+
+--- [Helicopter] Set the aircraft of the AirWing to prefer vertical takeoff and landing.
+-- @param #AIRWING self
+-- @return #AIRWING self
+function AIRWING:SetOptionPreferVerticalLanding()
+  self.OptionPreferVerticalLanding = true
   return self
 end
 
@@ -1136,6 +1190,10 @@ function AIRWING:_GetPatrolData(PatrolPoints, RefuelSystem)
 
     for _,_patrolpoint in pairs(PatrolPoints) do
       local patrolpoint=_patrolpoint --#AIRWING.PatrolData
+      if patrolpoint.IsZonePoint and patrolpoint.IsZonePoint == true and patrolpoint.patrolzone then
+        -- update
+        patrolpoint.coord = patrolpoint.patrolzone:GetCoordinate()
+      end
       if (RefuelSystem and patrolpoint.refuelsystem and RefuelSystem==patrolpoint.refuelsystem) or RefuelSystem==nil or patrolpoint.refuelsystem==nil then
         return patrolpoint
       end
@@ -1195,7 +1253,7 @@ function AIRWING:CheckCAP()
 
     patrol.noccupied=patrol.noccupied+1
 
-    if self.markpoints then AIRWING.UpdatePatrolPointMarker(patrol) end
+    if self.markpoints then self:UpdatePatrolPointMarker(patrol) end
 
     self:AddMission(missionCAP)
 
@@ -1247,7 +1305,7 @@ function AIRWING:CheckRECON()
 
     patrol.noccupied=patrol.noccupied+1
 
-    if self.markpoints then AIRWING.UpdatePatrolPointMarker(patrol) end
+    if self.markpoints then self:UpdatePatrolPointMarker(patrol) end
 
     self:AddMission(missionRECON)
 
@@ -1292,7 +1350,7 @@ function AIRWING:CheckTANKER()
 
     patrol.noccupied=patrol.noccupied+1
 
-    if self.markpoints then AIRWING.UpdatePatrolPointMarker(patrol) end
+    if self.markpoints then self:UpdatePatrolPointMarker(patrol) end
 
     self:AddMission(mission)
 
@@ -1311,7 +1369,7 @@ function AIRWING:CheckTANKER()
 
     patrol.noccupied=patrol.noccupied+1
 
-    if self.markpoints then AIRWING.UpdatePatrolPointMarker(patrol) end
+    if self.markpoints then self:UpdatePatrolPointMarker(patrol) end
 
     self:AddMission(mission)
 
@@ -1349,7 +1407,7 @@ function AIRWING:CheckAWACS()
 
     patrol.noccupied=patrol.noccupied+1
 
-    if self.markpoints then AIRWING.UpdatePatrolPointMarker(patrol) end
+    if self.markpoints then self:UpdatePatrolPointMarker(patrol) end
 
     self:AddMission(mission)
 
@@ -1464,7 +1522,21 @@ function AIRWING:onafterFlightOnMission(From, Event, To, FlightGroup, Mission)
   self:T(self.lid..string.format("Group %s on %s mission %s", FlightGroup:GetName(), Mission:GetType(), Mission:GetName()))
   if self.UseConnectedOpsAwacs and self.ConnectedOpsAwacs then
     self.ConnectedOpsAwacs:__FlightOnMission(2,FlightGroup,Mission)
-  end  
+  end
+  -- Landing Options  
+  if self.OptionLandingForcePair then
+    FlightGroup:SetOptionLandingForcePair()
+  elseif self.OptionLandingOverheadBreak then
+   FlightGroup:SetOptionLandingOverheadBreak()
+  elseif self.OptionLandingRestrictPair then
+   FlightGroup:SetOptionLandingRestrictPair()
+  elseif self.OptionLandingStraightIn then
+    FlightGroup:SetOptionLandingStraightIn()
+  end
+  -- Landing Options Helo
+  if self.OptionPreferVerticalLanding then
+    FlightGroup:SetOptionPreferVertical()
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

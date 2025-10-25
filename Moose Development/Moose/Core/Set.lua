@@ -958,7 +958,26 @@ do -- SET_BASE
 
     return ObjectNames
   end
+  
+    --- Get a *new* set table that only contains alive objects.
+  -- @param #SET_BASE self
+  -- @return #table Set table of alive objects.
+  function SET_BASE:GetAliveSet()
+    --self:F2()
 
+    local AliveSet = {}
+    -- Clean the Set before returning with only the alive Objects.
+    for ObjectName, Object in pairs( self.Set ) do
+      if Object then
+        if Object:IsAlive() then
+          AliveSet[#AliveSet+1] = Object
+        end
+      end
+    end
+
+    return AliveSet or {}
+  end
+  
 end
 
 do 
@@ -1125,25 +1144,25 @@ do
     
   end
   
-  --- Get a *new* set that only contains alive groups.
+  --- Get a *new* set table that only contains alive groups.
   -- @param #SET_GROUP self
-  -- @return #SET_GROUP Set of alive groups.
+  -- @return #table Set of alive groups.
   function SET_GROUP:GetAliveSet()
     --self:F2()
 
-    local AliveSet = SET_GROUP:New()
-
+    --local AliveSet = SET_GROUP:New()
+    local AliveSet = {}
     -- Clean the Set before returning with only the alive Groups.
     for GroupName, GroupObject in pairs( self.Set ) do
       local GroupObject = GroupObject -- Wrapper.Group#GROUP
       if GroupObject then
         if GroupObject:IsAlive() then
-          AliveSet:Add( GroupName, GroupObject )
+          AliveSet[GroupName] = GroupObject
         end
       end
     end
 
-    return AliveSet.Set or {}
+    return AliveSet or {}
   end
 
   --- Returns a report of of unit types.
@@ -2595,18 +2614,16 @@ do -- SET_UNIT
   
   --- Gets the alive set.
   -- @param #SET_UNIT self
-  -- @return #table Table of SET objects
+  -- @return #table Table of alive UNIT objects
   -- @return #SET_UNIT AliveSet 
   function SET_UNIT:GetAliveSet()
 
     local AliveSet = SET_UNIT:New()
 
     -- Clean the Set before returning with only the alive Groups.
-    for GroupName, GroupObject in pairs(self.Set) do    
-      local GroupObject=GroupObject --Wrapper.Client#CLIENT
-      
+    for GroupName, GroupObject in pairs(self.Set) do       
       if GroupObject and GroupObject:IsAlive() then      
-        AliveSet:Add(GroupName, GroupObject)
+        AliveSet[GroupName] = GroupObject
       end
     end
 
@@ -4784,18 +4801,16 @@ do -- SET_CLIENT
   -- @return #table Table of SET objects
   function SET_CLIENT:GetAliveSet()
 
-    local AliveSet = SET_CLIENT:New()
+    local AliveSet = {}
 
     -- Clean the Set before returning with only the alive Groups.
-    for GroupName, GroupObject in pairs(self.Set) do    
-      local GroupObject=GroupObject --Wrapper.Client#CLIENT
-      
+    for GroupName, GroupObject in pairs(self.Set) do      
       if GroupObject and GroupObject:IsAlive() then      
-        AliveSet:Add(GroupName, GroupObject)
+        AliveSet[GroupName] = GroupObject
       end
     end
 
-    return AliveSet.Set or {}
+    return AliveSet or {}
   end
 
   --- [User] Add a custom condition function.
@@ -6676,6 +6691,8 @@ do -- SET_ZONE
   --          
   --          -- Stop watching after 1 hour
   --          zoneset:__TriggerStop(3600)
+  --          -- Call :SetPartlyInside() on any zone (or SET_ZONE) if you want GROUPs to count as inside when any of their units enters even if they are far apart.
+  --          -- Make sure to call :SetPartlyInside() before :Trigger()!.
   function SET_ZONE:Trigger(Objects)
     --self:I("Added Set_Zone Trigger")
     self:AddTransition("*","TriggerStart","TriggerRunning")
@@ -6726,6 +6743,20 @@ do -- SET_ZONE
     -- @param Core.Zone#ZONE_BASE Zone The zone left.
   end
   
+  --- Toggle “partly-inside” handling for every zone in the set when those zones are used with :Trigger().
+  -- * Call with no argument or **true** → enable for all.  
+  -- * Call with **false** → disable again (handy if it was enabled before).
+  -- @param #SET_ZONE self
+  -- @return #SET_ZONE self
+  function SET_ZONE:SetPartlyInside(state)
+    for _,Zone in pairs(self.Set) do
+        if Zone.SetPartlyInside then
+            Zone:SetPartlyInside(state)
+        end
+    end
+    return self
+  end
+  
   --- (Internal) Check the assigned objects for being in/out of the zone
   -- @param #SET_ZONE self
   -- @param #boolean fromstart If true, do the init of the objects
@@ -6761,8 +6792,13 @@ do -- SET_ZONE
               -- has not been tagged previously - wasn't in set! 
               obj.TriggerInZone[_zone.ZoneName] = false 
             end
-            -- is obj in zone?
-            local inzone = _zone:IsCoordinateInZone(obj:GetCoordinate())
+            -- is obj in this zone?
+            local inzone
+            if _zone.PartlyInside and obj.ClassName == "GROUP" then
+                inzone = obj:IsAnyInZone(_zone)                 -- TRUE as soon as any unit is inside
+            else
+                inzone = _zone:IsCoordinateInZone(obj:GetCoordinate())  -- original centroid test
+            end
             --self:I("Object "..obj:GetName().." is in zone: "..tostring(inzone))
             if inzone and not obj.TriggerInZone[_zone.ZoneName] then
               -- wasn't in zone before
@@ -7827,6 +7863,28 @@ do -- SET_OPSGROUP
     end
 
     return self
+  end
+
+  --- Iterate the SET_OPSGROUP and count how many GROUPs and UNITs are alive.
+  -- @param #SET_GROUP self
+  -- @return #number The number of GROUPs alive.
+  -- @return #number The number of UNITs alive.
+  function SET_OPSGROUP:CountAlive()
+    local CountG = 0
+    local CountU = 0
+
+    local Set = self:GetSet()
+
+    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
+      if GroupData and GroupData:IsAlive() then
+        CountG = CountG + 1
+        -- Count Units.
+        CountU = CountU + GroupData:GetGroup():CountAliveUnits()
+      end
+
+    end
+
+    return CountG, CountU
   end
 
   --- Finds an OPSGROUP based on the group name.

@@ -603,7 +603,7 @@ RANGE.MenuF10Root = nil
 
 --- Range script version.
 -- @field #string version
-RANGE.version = "2.8.0"
+RANGE.version = "2.8.1"
 
 -- TODO list:
 -- TODO: Verbosity level for messages.
@@ -2032,10 +2032,10 @@ function RANGE._OnImpact(weapon, self, playerData, attackHdg, attackAlt, attackV
 
   -- Smoke impact point of bomb.
   if playerData and playerData.smokebombimpact and insidezone then
-    if playerData and playerData.delaysmoke then
-      timer.scheduleFunction( self._DelayedSmoke, { coord = impactcoord, color = playerData.smokecolor }, timer.getTime() + self.TdelaySmoke )
+    if playerData.delaysmoke then
+      impactcoord:Smoke(playerData.smokecolor, 30, self.TdelaySmoke)
     else
-      impactcoord:Smoke( playerData.smokecolor )
+      impactcoord:Smoke(playerData.smokecolor, 30)
     end
   end
 
@@ -2102,7 +2102,12 @@ function RANGE._OnImpact(weapon, self, playerData, attackHdg, attackAlt, attackV
     result.attackHdg = attackHdg
     result.attackVel = attackVel
     result.attackAlt = attackAlt
-    result.date=os and os.date() or "n/a"
+    if os and os.date then
+        result.date=os.date()
+    else
+        self:E(self.lid.."os or os.date() not available")
+        result.date = "n/a"
+    end
 
     -- Add to table.
     table.insert( _results, result )
@@ -2634,13 +2639,6 @@ end
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Display Messages
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Start smoking a coordinate with a delay.
--- @param #table _args Argements passed.
-function RANGE._DelayedSmoke( _args )
-  _args.coord:Smoke(_args.color)
-  --trigger.action.smoke( _args.coord:GetVec3(), _args.color )
-end
 
 --- Display top 10 stafing results of a specific player.
 -- @param #RANGE self

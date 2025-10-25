@@ -2,6 +2,8 @@
 -- 
 -- ===
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- 1) @{Tasking.Task_Manager#TASK_MANAGER} class, extends @{Core.Fsm#FSM}
 -- ===
 -- The @{Tasking.Task_Manager#TASK_MANAGER} class defines the core functions to report tasks to groups.

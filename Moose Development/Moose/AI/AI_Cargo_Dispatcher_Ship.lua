@@ -29,6 +29,8 @@
 
 --- A dynamic cargo transportation capability for AI groups.
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- Naval vessels can be mobilized to semi-intelligently transport cargo within the simulation.
 --
 -- The AI_CARGO_DISPATCHER_SHIP module is derived from the AI_CARGO_DISPATCHER module.

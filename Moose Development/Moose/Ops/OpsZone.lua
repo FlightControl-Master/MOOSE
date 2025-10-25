@@ -53,7 +53,8 @@
 -- @field #number threatlevelCapture Threat level necessary to capture a zone.
 -- @field Core.Set#SET_UNIT ScanUnitSet Set of scanned units.
 -- @field Core.Set#SET_GROUP ScanGroupSet Set of scanned groups.
--- @extends Core.Fsm#FSM
+-- @field #number UpdateSeconds Run status every this many seconds.
+-- @extends Core.Fsm#FSM 
 
 --- *Gentlemen, when the enemy is committed to a mistake we must not interrupt him too soon.* --- Horation Nelson
 --
@@ -77,6 +78,7 @@ OPSZONE = {
   Tnut           =     0,
   chiefs         =    {},
   Missions       =    {},
+  UpdateSeconds  =    120,
 }
 
 --- OPSZONE.MISSION
@@ -97,7 +99,7 @@ OPSZONE.ZoneType={
 
 --- OPSZONE class version.
 -- @field #string version
-OPSZONE.version="0.6.1"
+OPSZONE.version="0.6.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -733,7 +735,8 @@ function OPSZONE:onafterStart(From, Event, To)
   self.timerStatus=self.timerStatus or TIMER:New(OPSZONE.Status, self)
   
   -- Status update.
-  self.timerStatus:Start(1, 120)
+  local EveryUpdateIn = self.UpdateSeconds or 120
+  self.timerStatus:Start(1, EveryUpdateIn)
   
   -- Handle base captured event.
   if self.airbase then

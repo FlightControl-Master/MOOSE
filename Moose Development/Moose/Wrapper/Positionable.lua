@@ -246,18 +246,20 @@ end
 function POSITIONABLE:GetVec3()
   local DCSPositionable = self:GetDCSObject()
   if DCSPositionable then
-    --local status, vec3 = pcall(
-      -- function()
-        --  local vec3 = DCSPositionable:getPoint()
-        --  return vec3
-       --end
-    --)
+
     local vec3 = DCSPositionable:getPoint()
-    --if status then
-      return vec3
-    --else
-      --self:E( { "Cannot get Vec3 from DCS Object", Positionable = self, Alive = self:IsAlive() } )
-    --end
+    
+    if not vec3 then 
+      local pos = DCSPositionable:getPosition()
+      if pos and pos.p then 
+       vec3 = pos.p
+      else
+        self:E( { "Cannot get the position from DCS Object for GetVec3", Positionable = self, Alive = self:IsAlive() } )
+      end
+    end
+
+    return vec3
+
   end
   -- ERROR!
   self:E( { "Cannot get the Positionable DCS Object for GetVec3", Positionable = self, Alive = self:IsAlive() } )
@@ -359,15 +361,17 @@ function POSITIONABLE:GetCoord()
     -- Get the current position.
     local PositionableVec3 = self:GetVec3()
 
-    if self.coordinate then
-      -- Update COORDINATE from 3D vector.
-      self.coordinate:UpdateFromVec3( PositionableVec3 )
-    else
-      -- New COORDINATE.
-      self.coordinate = COORDINATE:NewFromVec3( PositionableVec3 )
-    end
+    if PositionableVec3 then
+        if self.coordinate then
+          -- Update COORDINATE from 3D vector.
+          self.coordinate:UpdateFromVec3( PositionableVec3 )
+        else
+          -- New COORDINATE.
+          self.coordinate = COORDINATE:NewFromVec3( PositionableVec3 )
+        end
 
-    return self.coordinate
+        return self.coordinate
+    end
   end
 
   -- Error message.
@@ -388,13 +392,13 @@ function POSITIONABLE:GetCoordinate()
 
     -- Get the current position.
     local PositionableVec3 = self:GetVec3()
-
-    local coord=COORDINATE:NewFromVec3(PositionableVec3)
-    local heading = self:GetHeading()
-    coord.Heading = heading
-    -- Return a new coordiante object.
-    return coord
-
+    if PositionableVec3 then
+      local coord=COORDINATE:NewFromVec3(PositionableVec3)
+      local heading = self:GetHeading()
+      coord.Heading = heading
+      -- Return a new coordiante object.
+      return coord
+    end
   end
 
   -- Error message.

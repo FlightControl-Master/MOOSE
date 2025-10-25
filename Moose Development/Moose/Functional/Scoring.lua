@@ -321,7 +321,9 @@ function SCORING:New( GameName, SavePath, AutoSave )
   -- Create the CSV file.
   self.AutoSavePath = SavePath
   self.AutoSave = AutoSave or true
-  self:OpenCSV( GameName )
+  if self.AutoSave == true then
+    self:OpenCSV( GameName )
+  end
 
   return self
 
@@ -985,6 +987,7 @@ function SCORING:_EventOnHit( Event )
   local TargetUnitCoalition = nil
   local TargetUnitCategory = nil
   local TargetUnitType = nil
+  local TargetIsScenery = false
 
   if Event.IniDCSUnit then
 
@@ -1025,6 +1028,12 @@ function SCORING:_EventOnHit( Event )
     TargetCategory = Event.TgtCategory
     TargetType = Event.TgtTypeName
 
+    -- Scenery hit
+    if (not TargetCategory) and TargetUNIT ~= nil and TargetUnit:IsInstanceOf("SCENERY") then
+        TargetCategory = Unit.Category.STRUCTURE
+        TargetIsScenery = true
+    end
+    
     TargetUnitCoalition = _SCORINGCoalition[TargetCoalition]
     TargetUnitCategory = _SCORINGCategory[TargetCategory]
     TargetUnitType = TargetType
@@ -1117,17 +1126,22 @@ function SCORING:_EventOnHit( Event )
                                  MESSAGE.Type.Update )
                        :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
                        :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
-              else
+              elseif TargetIsScenery ~= true then
                 MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit enemy target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " .. PlayerHit.ScoreHit .. " times. " ..
                                  "Score: " .. PlayerHit.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
                                  MESSAGE.Type.Update )
                        :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
                        :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
+              elseif TargetIsScenery == true then
+                MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit scenery object." .. " Score: " .. PlayerHit.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                             MESSAGE.Type.Update )
+                   :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
+                   :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
               end
               self:ScoreCSV( InitPlayerName, TargetPlayerName, "HIT_SCORE", 1, 1, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
             end
           else -- A scenery object was hit.
-            MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit scenery object.",
+            MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. InitPlayerName .. "' hit nothing special.",
                              MESSAGE.Type.Update )
                    :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
                    :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
@@ -1923,7 +1937,7 @@ function SCORING:ScoreCSV( PlayerName, TargetPlayerName, ScoreType, ScoreTimes, 
   TargetUnitType = TargetUnitType or ""
   TargetUnitName = TargetUnitName or ""
 
-  if lfs and io and os and self.AutoSave then
+  if lfs and io and os and self.AutoSave == true and self.CSVFile ~= nil then
     self.CSVFile:write(
       '"' .. self.GameName        .. '"' .. ',' ..
       '"' .. self.RunTime         .. '"' .. ',' ..

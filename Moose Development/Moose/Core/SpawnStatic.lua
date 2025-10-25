@@ -149,6 +149,7 @@ function SPAWNSTATIC:NewFromStatic(SpawnTemplateName, SpawnCountryID)
     self.CategoryID          = CategoryID
     self.CoalitionID         = CoalitionID
     self.SpawnIndex          = 0
+    self.StaticCopyFrom      = SpawnTemplateName
   else
     error( "SPAWNSTATIC:New: There is no static declared in the mission editor with SpawnTemplatePrefix = '" .. tostring(SpawnTemplateName) .. "'" )
   end
@@ -302,12 +303,16 @@ end
 -- @param #number CallsignID Callsign ID. Default 1 (="London").
 -- @param #number Frequency Frequency in MHz. Default 127.5 MHz.
 -- @param #number Modulation Modulation 0=AM, 1=FM.
+-- @param #boolean DynamicSpawns If true, allow Dynamic Spawns
+-- @param #boolean DynamicHotStarts If true, and DynamicSpawns is true, then allow Dynamic Spawns with hot starts.
 -- @return #SPAWNSTATIC self
-function SPAWNSTATIC:InitFARP(CallsignID, Frequency, Modulation)
+function SPAWNSTATIC:InitFARP(CallsignID, Frequency, Modulation, DynamicSpawns,DynamicHotStarts)
   self.InitFarp=true
   self.InitFarpCallsignID=CallsignID or 1
   self.InitFarpFreq=Frequency or 127.5
   self.InitFarpModu=Modulation or 0
+  self.InitFarpDynamicSpawns = DynamicSpawns
+  self.InitFarpDynamicHotStarts = (DynamicSpawns == true and DynamicHotStarts == true) and true or nil
   return self
 end
 
@@ -371,6 +376,20 @@ function SPAWNSTATIC:InitLinkToUnit(Unit, OffsetX, OffsetY, OffsetAngle)
   self.InitOffsetAngle=OffsetAngle or 0
 
   return self
+end
+
+--- Uses Disposition and other fallback logic to find a better and valid ground spawn position.
+--- NOTE: This is not a spawn randomizer.
+--- It will try to a find clear ground location avoiding trees, water, roads, runways, map scenery, other statics and other units in the area.
+--- Uses the initial position if it's a valid location.
+-- @param #SPAWNSTATIC self
+-- @param #boolean OnOff Enable/disable the feature.
+-- @param #number MaxRadius (Optional) Max radius to search for a valid ground location in meters. Default is 10 times the max radius of the static.
+-- @return #SPAWNSTATIC self
+function SPAWNSTATIC:InitValidateAndRepositionStatic(OnOff, MaxRadius)
+    self.ValidateAndRepositionStatic = OnOff
+    self.ValidateAndRepositionStaticMaxRadius = MaxRadius
+    return self
 end
 
 --- Allows to place a CallFunction hook when a new static spawns.
@@ -459,8 +478,9 @@ end
 function SPAWNSTATIC:SpawnFromZone(Zone, Heading, NewName)
 
   -- Spawn the new static at the center of the zone.
-  local Static = self:SpawnFromPointVec2( Zone:GetPointVec2(), Heading, NewName )
-
+  --local Static = self:SpawnFromPointVec2( Zone:GetPointVec2(), Heading, NewName )
+  local Static = self:SpawnFromCoordinate(Zone:GetCoordinate(), Heading, NewName)
+    
   return Static
 end
 
@@ -538,6 +558,14 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
   -- Add static to the game.
   local Static=nil  --DCS#StaticObject
 
+  if self.ValidateAndRepositionStatic then
+    local validPos = UTILS.ValidateAndRepositionStatic(CountryID, Template.category, Template.type, Template, Template.shape_name, self.ValidateAndRepositionStaticMaxRadius)
+    if validPos then
+        Template.x = validPos.x
+        Template.y = validPos.y
+    end
+  end
+
   if self.InitFarp then
 
     local TemplateGroup={}
@@ -549,6 +577,13 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     TemplateGroup.x=Template.x
     TemplateGroup.y=Template.y
     TemplateGroup.name=Template.name
+    
+    if self.InitFarpDynamicSpawns == true then
+      TemplateGroup.units[1].dynamicSpawn = true
+      if self.InitFarpDynamicHotStarts == true then
+        TemplateGroup.units[1].allowHotStart = true
+      end
+    end
 
     self:T("Spawning FARP")
     self:T({Template=Template})
@@ -556,7 +591,8 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
 
     -- ED's dirty way to spawn FARPS.
     Static=coalition.addGroup(CountryID, -1, TemplateGroup)
-
+    --Static=coalition.addStaticObject(CountryID, Template)
+    
     -- Currently DCS 2.8 does not trigger birth events if FARPS are spawned!
     -- We create such an event. The airbase is registered in Core.Event
     local Event = {
@@ -594,6 +630,18 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
     -- delay calling this for .3 seconds so that it hopefully comes after the BIRTH event of the group.
     self:ScheduleOnce(0.3, self.SpawnFunctionHook, mystatic, unpack(self.SpawnFunctionArguments))
   end
+  
+  if self.StaticCopyFrom ~= nil then
+    mystatic.StaticCopyFrom = self.StaticCopyFrom
+  end
 
+  local TemplateGroup={}
+  TemplateGroup.units={}
+  TemplateGroup.units[1]=Template
+  TemplateGroup.x=Template.x
+  TemplateGroup.y=Template.y
+  TemplateGroup.name=Template.name
+  _DATABASE:_RegisterStaticTemplate( TemplateGroup, self.CoalitionID, self.CategoryID, CountryID )
+  
   return mystatic
 end

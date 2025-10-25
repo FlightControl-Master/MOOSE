@@ -10,6 +10,8 @@
 -- 
 -- ===
 -- 
+-- ![Banner Image](..\Images\deprecated.png)
+-- 
 -- ## Test Missions:
 -- 
 -- Test missions can be located on the main GITHUB site.
@@ -1176,7 +1178,7 @@ do -- TASK_CARGO
     end
     
 
-    ---@param Color Might be SMOKECOLOR.Blue, SMOKECOLOR.Red SMOKECOLOR.Orange, SMOKECOLOR.White or SMOKECOLOR.Green
+    --@param Color Might be SMOKECOLOR.Blue, SMOKECOLOR.Red SMOKECOLOR.Orange, SMOKECOLOR.White or SMOKECOLOR.Green
     function TASK_CARGO:SetSmokeColor(SmokeColor)
        -- Makes sure Coloe is set
        if SmokeColor == nil then

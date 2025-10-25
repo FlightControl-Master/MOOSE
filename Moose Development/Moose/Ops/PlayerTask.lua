@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update Jan 2025
+-- @date Last Update May 2025
 
 
 do
@@ -98,7 +98,7 @@ PLAYERTASK = {
 
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.25"
+PLAYERTASK.version="0.1.28"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -387,6 +387,14 @@ function PLAYERTASK:_CheckCaptureOpsZoneSuccess(OpsZone, CaptureSquadGroupNamePr
     return OpsZone:GetOwner() == Coalition and isClientInZone and isCaptureGroupInZone
 end
 
+--- [User] Override this function in order to implement custom logic if a player can join a task or not.
+-- @param #PLAYERTASK self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Client#CLIENT Client
+-- @return #boolean Outcome True if player can join the task, false if not
+function PLAYERTASK:CanJoinTask(Group, Client)
+    return true
+end
 
 --- [Internal] Add a PLAYERTASKCONTROLLER for this task
 -- @param #PLAYERTASK self
@@ -556,6 +564,7 @@ end
 -- @param #PLAYERTASK self
 -- @param #SET_BASE CaptureSquadGroupNamePrefix The prefix of the group name that needs to capture the zone.
 -- @param #number Coalition The coalition that needs to capture the zone.
+-- @param #boolean CheckClientInZone If true, a CLIENT assigned to this task also needs to be in the zone for the task to be successful.
 -- @return #PLAYERTASK self
 -- @usage
 -- -- We can use either STATIC, SET_STATIC, SCENERY or SET_SCENERY as target objects.
@@ -570,20 +579,20 @@ end
 --
 -- -- We set CaptureSquadGroupNamePrefix the group name prefix as set in the ME or the spawn of the group that need to be present at the OpsZone like a capture squad,
 -- -- and set the capturing Coalition in order to trigger a successful task.
--- mytask:AddOpsZoneCaptureSuccessCondition("capture-squad", coalition.side.BLUE)
+-- mytask:AddOpsZoneCaptureSuccessCondition("capture-squad", coalition.side.BLUE, false)
 --
 -- playerTaskManager:AddPlayerTaskToQueue(mytask)
-function PLAYERTASK:AddOpsZoneCaptureSuccessCondition(CaptureSquadGroupNamePrefix, Coalition)
+function PLAYERTASK:AddOpsZoneCaptureSuccessCondition(CaptureSquadGroupNamePrefix, Coalition, CheckClientInZone)
     local task = self
     task:AddConditionSuccess(
             function(target)
                 if target:IsInstanceOf("OPSZONE") then
-                    return task:_CheckCaptureOpsZoneSuccess(target, CaptureSquadGroupNamePrefix, Coalition, true)
+                    return task:_CheckCaptureOpsZoneSuccess(target, CaptureSquadGroupNamePrefix, Coalition, CheckClientInZone or true)
                 elseif target:IsInstanceOf("SET_OPSZONE") then
                     local successes = 0
                     local isClientInZone = false
                     target:ForEachZone(function(opszone)
-                        if task:_CheckCaptureOpsZoneSuccess(opszone, CaptureSquadGroupNamePrefix, Coalition) then
+                        if task:_CheckCaptureOpsZoneSuccess(opszone, CaptureSquadGroupNamePrefix, Coalition, CheckClientInZone or true) then
                             successes = successes + 1
                         end
 
@@ -979,6 +988,12 @@ function PLAYERTASK:onafterStatus(From, Event, To)
   
   if status == "Stopped" then return self end
   
+  -- update marker in case target is moving
+  if self.TargetMarker then
+    local coordinate = self.Target:GetCoordinate() 
+    self.TargetMarker:UpdateCoordinate(coordinate,0.5) 
+  end
+  
   -- Check Target status
   local targetdead = false
   
@@ -1220,7 +1235,10 @@ function PLAYERTASK:onafterFailed(From, Event, To)
       self.TargetMarker:Remove()
     end
     self.FinalState = "Failed"
-    self:__Done(-1)
+    if self.TaskController then
+      self.TaskController:__TaskFailed(-1,self)
+    end
+    self:__Done(-1.5)
   end
   if self.TaskController.Scoring then
     local clients,count = self:GetClientObjects()
@@ -1433,9 +1451,9 @@ do
 --            taskmanager:AddRejectZone(ZONE:FindByName("RejectZone"))
 --            
 --            -- Set up using SRS for messaging
---            local hereSRSPath = "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+--            local hereSRSPath = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 --            local hereSRSPort = 5002
---            -- local hereSRSGoogle = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourkey.json"
+--            -- local hereSRSGoogle = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio\\yourkey.json"
 --            taskmanager:SetSRS({130,255},{radio.modulation.AM,radio.modulation.AM},hereSRSPath,"female","en-GB",hereSRSPort,"Microsoft Hazel Desktop",0.7,hereSRSGoogle)
 --            
 --            -- Controller will announce itself under these broadcast frequencies, handy to use cold-start frequencies here of your aircraft
@@ -1902,7 +1920,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.69"
+PLAYERTASKCONTROLLER.version="0.1.70"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -1944,7 +1962,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self.taskinfomenu = false
   self.activehasinfomenu = false
   self.MenuName = nil
-  self.menuitemlimit = 5
+  self.menuitemlimit = 6
   self.holdmenutime = 30
   
   self.MarkerReadOnly = false
@@ -2415,7 +2433,7 @@ function PLAYERTASKCONTROLLER:EnablePrecisionBombing(FlightGroup,LaserCode,Holdi
         end  
       )
     else
-      self:E(self.lid.."No FLIGHTGROUP object passed or FLIGHTGROUP is not alive!")
+      self:E(self.lid.."No OPSGROUP/SET_OPSGROUP object passed or object is not alive!")
     end
   else
     self.autolase = nil
@@ -2574,7 +2592,7 @@ function PLAYERTASKCONTROLLER:SetMenuOptions(InfoMenu,ItemLimit,HoldTime)
   if self.activehasinfomenu then
     self:EnableTaskInfoMenu()
   end
-  self.menuitemlimit = ItemLimit or 5
+  self.menuitemlimit = ItemLimit+1 or 6
   self.holdmenutime = HoldTime or 30
   return self
 end
@@ -3479,7 +3497,7 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Ops.PlayerTask#PLAYERTASK PlayerTask
 -- @param #boolean Silent If true, make no "has new task" announcement
--- @param #boolen TaskFilter If true, apply the white/black-list task filters here, also
+-- @param #boolean TaskFilter If true, apply the white/black-list task filters here, also
 -- @return #PLAYERTASKCONTROLLER self
 -- @usage
 -- Example to create a PLAYERTASK of type CTLD and give Players 10 minutes to complete:
@@ -3523,6 +3541,16 @@ function PLAYERTASKCONTROLLER:AddPlayerTaskToQueue(PlayerTask,Silent,TaskFilter)
   return self
 end
 
+--- [User] Override this function in order to implement custom logic if a player can join a task or not.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Ops.PlayerTask#PLAYERTASK Task
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Client#CLIENT Client
+-- @return #boolean Outcome True if player can join the task, false if not
+function PLAYERTASKCONTROLLER:CanJoinTask(Task, Group, Client)
+    return true
+end
+
 --- [Internal] Join a player to a task
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Ops.PlayerTask#PLAYERTASK Task
@@ -3533,6 +3561,15 @@ end
 function PLAYERTASKCONTROLLER:_JoinTask(Task, Force, Group, Client)
   self:T({Force, Group, Client})
   self:T(self.lid.."_JoinTask")
+
+  if not self:CanJoinTask(Task, Group, Client) then
+    return self
+  end
+
+  if not Task:CanJoinTask(Group, Client) then
+    return self
+  end
+
   local force = false
   if type(Force) == "boolean" then
     force = Force
@@ -3703,6 +3740,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     else
       CoordText = Coordinate:ToStringA2A(Client,nil,self.ShowMagnetic)
     end
+    --self:I("CoordText = "..CoordText)
     -- Threat Level
     local ThreatLevel = task.Target:GetThreatLevelMax()
     --local ThreatLevelText = "high"
@@ -3837,7 +3875,8 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
         Text = string.gsub(Text,"9","niner")
         CoordText = "MGRS;"..Text
         if self.PathToGoogleKey then
-          CoordText = string.format("<say-as interpret-as='characters'>%s</say-as>",CoordText)
+          --CoordText = string.format("<say-as interpret-as=\'characters\'>%s</say-as>",CoordText)
+          --doesn't seem to work any longer
         end
         --self:I(self.lid.." | ".. CoordText)
       end
@@ -3855,10 +3894,12 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
         CoordText = string.gsub(ttstext," BR, "," Bee, Arr, ")
        end
       elseif task:HasFreetext() then
+      
         -- add tts freetext
         local brieftxt = self.gettext:GetEntry("BRIEFING",self.locale)
         ttstext = ttstext .. string.format("; %s: ",brieftxt)..task:GetFreetextTTS()
       end
+      --self:I("**** TTS Text ****\n"..ttstext.."\n*****")
       self.SRSQueue:NewTransmission(ttstext,nil,self.SRS,nil,2)
     end  
   else
@@ -4357,7 +4398,7 @@ function PLAYERTASKCONTROLLER:SwitchDetectStatics(OnOff)
   return self
 end
 
---- [User] Add accept zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+--- [User] Add an accept zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -4371,7 +4412,7 @@ function PLAYERTASKCONTROLLER:AddAcceptZone(AcceptZone)
   return self
 end
 
---- [User] Add accept SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+--- [User] Add an accept SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Set#SET_ZONE AcceptZoneSet Add a SET_ZONE to the accept zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -4385,7 +4426,7 @@ function PLAYERTASKCONTROLLER:AddAcceptZoneSet(AcceptZoneSet)
   return self
 end
 
---- [User] Add reject zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+--- [User] Add a reject zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -4399,7 +4440,7 @@ function PLAYERTASKCONTROLLER:AddRejectZone(RejectZone)
   return self
 end
 
---- [User] Add reject SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+--- [User] Add a reject SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Core.Set#SET_ZONE  RejectZoneSet Add a zone to the reject zone set.
 -- @return #PLAYERTASKCONTROLLER self
@@ -4413,9 +4454,37 @@ function PLAYERTASKCONTROLLER:AddRejectZoneSet(RejectZoneSet)
   return self
 end
 
---- [User] Remove accept zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+--- [User] Add a conflict zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
--- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
+-- @param Core.Zone#ZONE ConflictZone Add a zone to the conflict zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddConflictZone(ConflictZone)
+  self:T(self.lid.."AddConflictZone")
+  if self.Intel then
+    self.Intel:AddConflictZone(ConflictZone)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Add a conflict SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Set#SET_ZONE ConflictZoneSet Add a zone to the conflict zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddConflictZoneSet(ConflictZoneSet)
+  self:T(self.lid.."AddConflictZoneSet")
+  if self.Intel then
+    self.Intel.conflictzoneset:AddSet(ConflictZoneSet)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Remove an accept zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Zone#ZONE AcceptZone Remove this zone from the accept zone set.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:RemoveAcceptZone(AcceptZone)
   self:T(self.lid.."RemoveAcceptZone")
@@ -4427,14 +4496,28 @@ function PLAYERTASKCONTROLLER:RemoveAcceptZone(AcceptZone)
   return self
 end
 
---- [User] Remove reject zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+--- [User] Remove a reject zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
 -- @param #PLAYERTASKCONTROLLER self
--- @param Core.Zone#ZONE RejectZone Add a zone to the reject zone set.
+-- @param Core.Zone#ZONE RejectZone Remove this zone from the reject zone set.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:RemoveRejectZoneSet(RejectZone)
+function PLAYERTASKCONTROLLER:RemoveRejectZone(RejectZone)
   self:T(self.lid.."RemoveRejectZone")
   if self.Intel then
     self.Intel:RemoveRejectZone(RejectZone)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Remove a conflict zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Zone#ZONE ConflictZone Remove this zone from the conflict zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:RemoveConflictZone(ConflictZone)
+  self:T(self.lid.."RemoveConflictZone")
+  if self.Intel then
+    self.Intel:RemoveConflictZone(ConflictZone)
   else
     self:E(self.lid.."*****NO detection has been set up (yet)!")
   end
@@ -4553,7 +4636,7 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}. There needs to be exactly the same number of modulations!
 -- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone"
+-- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 -- @param #string Gender (Optional) Defaults to "male"
 -- @param #string Culture (Optional) Defaults to "en-US"
 -- @param #number Port (Optional) Defaults to 5002
@@ -4567,7 +4650,7 @@ end
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Coordinate,Backend)
   self:T(self.lid.."SetSRS")
-  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone" --
+  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio" --
   self.Gender = Gender or MSRS.gender or "male" --
   self.Culture = Culture or MSRS.culture or "en-US" --
   self.Port = Port or MSRS.port or 5002 --

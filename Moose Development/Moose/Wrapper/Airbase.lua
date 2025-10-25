@@ -451,7 +451,6 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Al_Dumayr
 -- * AIRBASE.Syria.Al_Qusayr
 -- * AIRBASE.Syria.Aleppo
--- * AIRBASE.Syria.Amman
 -- * AIRBASE.Syria.An_Nasiriyah
 -- * AIRBASE.Syria.At_Tanf
 -- * AIRBASE.Syria.Bassel_Al_Assad
@@ -513,8 +512,9 @@ AIRBASE.TheChannel = {
 -- * AIRBASE.Syria.Wujah_Al_Hajar
 -- * AIRBASE.Syria.Ben_Gurion 
 -- * AIRBASE.Syria.Hatzor
--- * AIRBASE.Syria.Palmashim
+-- * AIRBASE.Syria.Palmachim
 -- * AIRBASE.Syria.Tel_Nof
+-- * AIRBASE.Syria.Marka
 --
 --@field Syria
 AIRBASE.Syria={
@@ -524,7 +524,6 @@ AIRBASE.Syria={
   ["Al_Dumayr"] = "Al-Dumayr",
   ["Al_Qusayr"] = "Al Qusayr",
   ["Aleppo"] = "Aleppo",
-  ["Amman"] = "Amman",
   ["An_Nasiriyah"] = "An Nasiriyah",
   ["At_Tanf"] = "At Tanf",
   ["Bassel_Al_Assad"] = "Bassel Al-Assad",
@@ -556,6 +555,7 @@ AIRBASE.Syria={
   ["Kuweires"] = "Kuweires",
   ["Lakatamia"] = "Lakatamia",
   ["Larnaca"] = "Larnaca",
+  ["Marka"] = "Marka",
   ["Marj_Ruhayyil"] = "Marj Ruhayyil",
   ["Marj_as_Sultan_North"] = "Marj as Sultan North",
   ["Marj_as_Sultan_South"] = "Marj as Sultan South",
@@ -586,7 +586,7 @@ AIRBASE.Syria={
   ["Wujah_Al_Hajar"] = "Wujah Al Hajar",
   ["Ben_Gurion"] = "Ben Gurion",
   ["Hatzor"] = "Hatzor",
-  ["Palmashim"] = "Palmashim",
+  ["Palmachim"] = "Palmachim",
   ["Tel_Nof"] = "Tel Nof",
 }
 
@@ -611,6 +611,35 @@ AIRBASE.MarianaIslands = {
   ["Rota_Intl"] = "Rota Intl",
   ["Saipan_Intl"] = "Saipan Intl",
   ["Tinian_Intl"] = "Tinian Intl",
+}
+
+--- Airbase of the Marianas WWII map
+--
+-- * AIRBASE.MarianaIslandsWWII.Agana
+-- * AIRBASE.MarianaIslandsWWII.Airfield_3
+-- * AIRBASE.MarianaIslandsWWII.Charon_Kanoa
+-- * AIRBASE.MarianaIslandsWWII.Gurguan_Point
+-- * AIRBASE.MarianaIslandsWWII.Isley
+-- * AIRBASE.MarianaIslandsWWII.Kagman
+-- * AIRBASE.MarianaIslandsWWII.Marpi
+-- * AIRBASE.MarianaIslandsWWII.Orote
+-- * AIRBASE.MarianaIslandsWWII.Pagan
+-- * AIRBASE.MarianaIslandsWWII.Rota
+-- * AIRBASE.MarianaIslandsWWII.Ushi
+-- @field AIRBASE.MarianaIslandsWWII
+AIRBASE.MarianaIslandsWWII = 
+{
+  ["Agana"] = "Agana",
+  ["Airfield_3"] = "Airfield 3",
+  ["Charon_Kanoa"] = "Charon Kanoa",
+  ["Gurguan_Point"] = "Gurguan Point",
+  ["Isley"] = "Isley",
+  ["Kagman"] = "Kagman",
+  ["Marpi"] = "Marpi",
+  ["Orote"] = "Orote",
+  ["Pagan"] = "Pagan",
+  ["Rota"] = "Rota",
+  ["Ushi"] = "Ushi",
 }
 
 --- Airbases of the South Atlantic map:
@@ -676,51 +705,56 @@ AIRBASE.SouthAtlantic={
 
 --- Airbases of the Sinai map:
 --
--- * AIRBASE.Sinai.Abu_Rudeis
--- * AIRBASE.Sinai.Abu_Suwayr
--- * AIRBASE.Sinai.Al_Bahr_al_Ahmar
--- * AIRBASE.Sinai.Al_Ismailiyah
--- * AIRBASE.Sinai.Al_Khatatbah
--- * AIRBASE.Sinai.Al_Mansurah
--- * AIRBASE.Sinai.Al_Rahmaniyah_Air_Base
--- * AIRBASE.Sinai.As_Salihiyah
--- * AIRBASE.Sinai.AzZaqaziq
--- * AIRBASE.Sinai.Baluza
--- * AIRBASE.Sinai.Ben_Gurion
--- * AIRBASE.Sinai.Beni_Suef
--- * AIRBASE.Sinai.Bilbeis_Air_Base
--- * AIRBASE.Sinai.Bir_Hasanah
--- * AIRBASE.Sinai.Birma_Air_Base
--- * AIRBASE.Sinai.Borj_El_Arab_International_Airport
--- * AIRBASE.Sinai.Cairo_International_Airport
--- * AIRBASE.Sinai.Cairo_West
--- * AIRBASE.Sinai.Difarsuwar_Airfield
--- * AIRBASE.Sinai.El_Arish
--- * AIRBASE.Sinai.El_Gora
--- * AIRBASE.Sinai.El_Minya
--- * AIRBASE.Sinai.Fayed
--- * AIRBASE.Sinai.Gebel_El_Basur_Air_Base
--- * AIRBASE.Sinai.Hatzerim
--- * AIRBASE.Sinai.Hatzor
--- * AIRBASE.Sinai.Hurghada_International_Airport
--- * AIRBASE.Sinai.Inshas_Airbase
--- * AIRBASE.Sinai.Jiyanklis_Air_Base
--- * AIRBASE.Sinai.Kedem
--- * AIRBASE.Sinai.Kibrit_Air_Base
--- * AIRBASE.Sinai.Kom_Awshim
--- * AIRBASE.Sinai.Melez
--- * AIRBASE.Sinai.Nevatim
--- * AIRBASE.Sinai.Ovda
--- * AIRBASE.Sinai.Palmachim
--- * AIRBASE.Sinai.Quwaysina
--- * AIRBASE.Sinai.Ramon_Airbase
--- * AIRBASE.Sinai.Ramon_International_Airport
--- * AIRBASE.Sinai.Sde_Dov
--- * AIRBASE.Sinai.Sharm_El_Sheikh_International_Airport
--- * AIRBASE.Sinai.St_Catherine
--- * AIRBASE.Sinai.Tel_Nof
--- * AIRBASE.Sinai.Wadi_Abu_Rish
--- * AIRBASE.Sinai.Wadi_al_Jandali
+-- * AIRBASE.SinaiMap.Abu_Rudeis
+-- * AIRBASE.SinaiMap.Abu_Suwayr
+-- * AIRBASE.SinaiMap.Al_Bahr_al_Ahmar
+-- * AIRBASE.SinaiMap.Al_Ismailiyah
+-- * AIRBASE.SinaiMap.Al_Khatatbah
+-- * AIRBASE.SinaiMap.Al_Mansurah
+-- * AIRBASE.SinaiMap.Al_Rahmaniyah_Air_Base
+-- * AIRBASE.SinaiMap.As_Salihiyah
+-- * AIRBASE.SinaiMap.AzZaqaziq
+-- * AIRBASE.SinaiMap.Baluza
+-- * AIRBASE.SinaiMap.Ben_Gurion
+-- * AIRBASE.SinaiMap.Beni_Suef
+-- * AIRBASE.SinaiMap.Bilbeis_Air_Base
+-- * AIRBASE.SinaiMap.Bir_Hasanah
+-- * AIRBASE.SinaiMap.Birma_Air_Base
+-- * AIRBASE.SinaiMap.Borg_El_Arab_International_Airport
+-- * AIRBASE.SinaiMap.Cairo_International_Airport
+-- * AIRBASE.SinaiMap.Cairo_West
+-- * AIRBASE.SinaiMap.Damascus_Intl
+-- * AIRBASE.SinaiMap.Difarsuwar_Airfield
+-- * AIRBASE.SinaiMap.El_Arish
+-- * AIRBASE.SinaiMap.El_Gora
+-- * AIRBASE.SinaiMap.El_Minya
+-- * AIRBASE.SinaiMap.Fayed
+-- * AIRBASE.SinaiMap.Gebel_El_Basur_Air_Base
+-- * AIRBASE.SinaiMap.Hatzerim
+-- * AIRBASE.SinaiMap.Hatzor
+-- * AIRBASE.SinaiMap.Hurghada_International_Airport
+-- * AIRBASE.SinaiMap.Inshas_Airbase
+-- * AIRBASE.SinaiMap.Jiyanklis_Air_Base
+-- * AIRBASE.SinaiMap.Kedem
+-- * AIRBASE.SinaiMap.Kibrit_Air_Base
+-- * AIRBASE.SinaiMap.Kom_Awshim
+-- * AIRBASE.SinaiMap.Melez
+-- * AIRBASE.SinaiMap.Mezzeh_Air_Base
+-- * AIRBASE.SinaiMap.Nevatim
+-- * AIRBASE.SinaiMap.Ovda
+-- * AIRBASE.SinaiMap.Palmachim
+-- * AIRBASE.SinaiMap.Quwaysina
+-- * AIRBASE.SinaiMap.Rafic_Hariri_Intl
+-- * AIRBASE.SinaiMap.Ramat_David
+-- * AIRBASE.SinaiMap.Ramon_Airbase
+-- * AIRBASE.SinaiMap.Ramon_International_Airport
+-- * AIRBASE.SinaiMap.Sde_Dov
+-- * AIRBASE.SinaiMap.Sharm_El_Sheikh_International_Airport
+-- * AIRBASE.SinaiMap.St_Catherine
+-- * AIRBASE.SinaiMap.Tabuk
+-- * AIRBASE.SinaiMap.Tel_Nof
+-- * AIRBASE.SinaiMap.Wadi_Abu_Rish
+-- * AIRBASE.SinaiMap.Wadi_al_Jandali
 --
 -- @field Sinai
 AIRBASE.Sinai = {
@@ -739,9 +773,10 @@ AIRBASE.Sinai = {
   ["Bilbeis_Air_Base"] = "Bilbeis Air Base",
   ["Bir_Hasanah"] = "Bir Hasanah",
   ["Birma_Air_Base"] = "Birma Air Base",
-  ["Borj_El_Arab_International_Airport"] = "Borj El Arab International Airport",
+  ["Borg_El_Arab_International_Airport"] = "Borg El Arab International Airport",
   ["Cairo_International_Airport"] = "Cairo International Airport",
   ["Cairo_West"] = "Cairo West",
+  ["Damascus_Intl"] = "Damascus Intl",
   ["Difarsuwar_Airfield"] = "Difarsuwar Airfield",
   ["El_Arish"] = "El Arish",
   ["El_Gora"] = "El Gora",
@@ -757,15 +792,19 @@ AIRBASE.Sinai = {
   ["Kibrit_Air_Base"] = "Kibrit Air Base",
   ["Kom_Awshim"] = "Kom Awshim",
   ["Melez"] = "Melez",
+  ["Mezzeh_Air_Base"] = "Mezzeh Air Base",
   ["Nevatim"] = "Nevatim",
   ["Ovda"] = "Ovda",
   ["Palmachim"] = "Palmachim",
   ["Quwaysina"] = "Quwaysina",
+  ["Rafic_Hariri_Intl"] = "Rafic Hariri Intl",
+  ["Ramat_David"] = "Ramat David",
   ["Ramon_Airbase"] = "Ramon Airbase",
   ["Ramon_International_Airport"] = "Ramon International Airport",
   ["Sde_Dov"] = "Sde Dov",
   ["Sharm_El_Sheikh_International_Airport"] = "Sharm El Sheikh International Airport",
   ["St_Catherine"] = "St Catherine",
+  ["Tabuk"] = "Tabuk",
   ["Tel_Nof"] = "Tel Nof",
   ["Wadi_Abu_Rish"] = "Wadi Abu Rish",
   ["Wadi_al_Jandali"] = "Wadi al Jandali",
@@ -792,9 +831,14 @@ AIRBASE.Sinai = {
 -- * AIRBASE.Kola.Vidsel
 -- * AIRBASE.Kola.Vuojarvi
 -- * AIRBASE.Kola.Andoya
--- * AIRBASE.Kola.Alakourtti
+-- * AIRBASE.Kola.Alakurtti
 -- * AIRBASE.Kola.Kittila
 -- * AIRBASE.Kola.Bardufoss
+-- * AIRBASE.Kola.Alta
+-- * AIRBASE.Kola.Sodankyla
+-- * AIRBASE.Kola.Enontekio
+-- * AIRBASE.Kola.Evenes
+-- * AIRBASE.Kola.Hosio
 --
 -- @field Kola
 AIRBASE.Kola = {
@@ -817,9 +861,20 @@ AIRBASE.Kola = {
   ["Vidsel"] = "Vidsel",
   ["Vuojarvi"] = "Vuojarvi",
   ["Andoya"] = "Andoya",
-  ["Alakourtti"] = "Alakourtti",
+  ["Alakurtti"] = "Alakurtti",
   ["Kittila"] = "Kittila",
   ["Bardufoss"] = "Bardufoss",
+  ["Alta"] = "Alta",
+  ["Sodankyla"] = "Sodankyla",
+  ["Enontekio"] = "Enontekio",
+  ["Evenes"] = "Evenes",
+  ["Hosio"] = "Hosio",
+  ["Kilpyavr"] = "Kilpyavr",
+  ["Afrikanda"] = "Afrikanda",
+  ["Kalevala"] = "Kalevala",
+  ["Koshka_Yavr"] = "Koshka Yavr",
+  ["Poduzhemye"] = "Poduzhemye",
+  ["Luostari_Pechenga"] = "Luostari Pechenga",
 }
 
 --- Airbases of the Afghanistan map
@@ -880,43 +935,57 @@ AIRBASE.Afghanistan = {
 
 --- Airbases of the Iraq map
 --
--- * AIRBASE.Iraq.Baghdad_International_Airport
--- * AIRBASE.Iraq.Sulaimaniyah_International_Airport
--- * AIRBASE.Iraq.Al_Sahra_Airport
--- * AIRBASE.Iraq.Erbil_International_Airpor
--- * AIRBASE.Iraq.Al_Taji_Airport
 -- * AIRBASE.Iraq.Al_Asad_Airbase
+-- * AIRBASE.Iraq.Al_Kut_Airbase
+-- * AIRBASE.Iraq.Al_Sahra_Airport
 -- * AIRBASE.Iraq.Al_Salam_Airbase
--- * AIRBASE.Iraq.Balad_Airbase
--- * AIRBASE.Iraq.Kirkuk_International_Airport
--- * AIRBASE.Iraq.Bashur_Airport
+-- * AIRBASE.Iraq.Al_Taji_Airport
 -- * AIRBASE.Iraq.Al_Taquddum_Airport
--- * AIRBASE.Iraq.Qayyarah_Airfield_West
+-- * AIRBASE.Iraq.Baghdad_International_Airport
+-- * AIRBASE.Iraq.Balad_Airbase
+-- * AIRBASE.Iraq.Bashur_Airport
+-- * AIRBASE.Iraq.Erbil_International_Airport
+-- * AIRBASE.Iraq.Sulaimaniyah_International_Airport
+-- * AIRBASE.Iraq.H2_Airbase
+-- * AIRBASE.Iraq.H3_Main_Airbase
+-- * AIRBASE.Iraq.H3_Northwest_Airbase
+-- * AIRBASE.Iraq.H3_Southwest_Airbase
 -- * AIRBASE.Iraq.K1_Base
+-- * AIRBASE.Iraq.Kirkuk_International_Airport
+-- * AIRBASE.Iraq.Mosul_International_Airport
+-- * AIRBASE.Iraq.Qayyarah_Airfield_West
+-- * AIRBASE.Iraq.Sulaimaniyah_International_Airport
 --
 -- @field Iraq
 AIRBASE.Iraq = {
-  ["Baghdad_International_Airport"] = "Baghdad International Airport",
-  ["Sulaimaniyah_International_Airport"] = "Sulaimaniyah International Airport",
-  ["Al_Sahra_Airport"] = "Al-Sahra Airport",
-  ["Erbil_International_Airport"] = "Erbil International Airport",
-  ["Al_Taji_Airport"] = "Al-Taji Airport",
   ["Al_Asad_Airbase"] = "Al-Asad Airbase",
+  ["Al_Kut_Airport"] = "Al-Kut Airport",
+  ["Al_Sahra_Airport"] = "Al-Sahra Airport",
   ["Al_Salam_Airbase"] = "Al-Salam Airbase",
-  ["Balad_Airbase"] = "Balad Airbase",
-  ["Kirkuk_International_Airport"] = "Kirkuk International Airport",
-  ["Bashur_Airport"] = "Bashur Airport",
+  ["Al_Taji_Airport"] = "Al-Taji Airport",
   ["Al_Taquddum_Airport"] = "Al-Taquddum Airport",
-  ["Qayyarah_Airfield_West"] = "Qayyarah Airfield West",
+  ["Baghdad_International_Airport"] = "Baghdad International Airport",
+  ["Balad_Airbase"] = "Balad Airbase",
+  ["Bashur_Airport"] = "Bashur Airport",
+  ["Erbil_International_Airport"] = "Erbil International Airport",
+  ["H2_Airbase"] = "H-2 Airbase",
+  ["H3_Main_Airbase"] = "H-3 Main Airbase",
+  ["H3_Northwest_Airbase"] = "H-3 Northwest Airbase",
+  ["H3_Southwest_Airbase"] = "H-3 Southwest Airbase",
   ["K1_Base"] = "K1 Base",
+  ["Kirkuk_International_Airport"] = "Kirkuk International Airport",
+  ["Mosul_International_Airport"] = "Mosul International Airport",
+  ["Qayyarah_Airfield_West"] = "Qayyarah Airfield West",
+  ["Sulaimaniyah_International_Airport"] = "Sulaimaniyah International Airport",
 }
 
+    
 --- Airbases of the Germany Cold War map  
+-- * AIRBASE.GermanyCW.Airracing_Frankfurt  
 -- * AIRBASE.GermanyCW.Airracing_Frankfurt  
 -- * AIRBASE.GermanyCW.Airracing_Koblenz  
 -- * AIRBASE.GermanyCW.Airracing_Luebeck  
 -- * AIRBASE.GermanyCW.Allstedt  
--- * AIRBASE.GermanyCW.Alt_Daber  
 -- * AIRBASE.GermanyCW.Altes_Lager  
 -- * AIRBASE.GermanyCW.Bad_Duerkheim  
 -- * AIRBASE.GermanyCW.Barth  
@@ -939,14 +1008,13 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Fritzlar  
 -- * AIRBASE.GermanyCW.Fulda  
 -- * AIRBASE.GermanyCW.Gardelegen  
+-- * AIRBASE.GermanyCW.Garz  
 -- * AIRBASE.GermanyCW.Gatow  
 -- * AIRBASE.GermanyCW.Gelnhausen  
 -- * AIRBASE.GermanyCW.Giebelstadt  
--- * AIRBASE.GermanyCW.Glindbruchkippe  
--- * AIRBASE.GermanyCW.Gross_Doelln  
+-- * AIRBASE.GermanyCW.Glindbruchkippe
 -- * AIRBASE.GermanyCW.Gross_Mohrdorf  
 -- * AIRBASE.GermanyCW.Grosse_Wiese  
--- * AIRBASE.GermanyCW.Gaerz  
 -- * AIRBASE.GermanyCW.Guetersloh  
 -- * AIRBASE.GermanyCW.H_FRG_01  
 -- * AIRBASE.GermanyCW.H_FRG_02  
@@ -996,7 +1064,7 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.H_GDR_04  
 -- * AIRBASE.GermanyCW.H_GDR_05  
 -- * AIRBASE.GermanyCW.H_GDR_06  
--- * AIRBASE.GermanyCW.H_GDR_07   
+-- * AIRBASE.GermanyCW.H_GDR_07  
 -- * AIRBASE.GermanyCW.H_GDR_08  
 -- * AIRBASE.GermanyCW.H_GDR_09  
 -- * AIRBASE.GermanyCW.H_GDR_10  
@@ -1018,10 +1086,11 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.H_GDR_31  
 -- * AIRBASE.GermanyCW.H_GDR_32  
 -- * AIRBASE.GermanyCW.H_GDR_33  
+-- * AIRBASE.GermanyCW.H_GDR_34  
+-- * AIRBASE.GermanyCW.H_Med_FRG_01  
 -- * AIRBASE.GermanyCW.H_Med_FRG_02  
 -- * AIRBASE.GermanyCW.H_Med_FRG_04  
 -- * AIRBASE.GermanyCW.H_Med_FRG_06  
--- * AIRBASE.GermanyCW.H_Med_FRG_09  
 -- * AIRBASE.GermanyCW.H_Med_FRG_11  
 -- * AIRBASE.GermanyCW.H_Med_FRG_12  
 -- * AIRBASE.GermanyCW.H_Med_FRG_13  
@@ -1069,9 +1138,9 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Koethen  
 -- * AIRBASE.GermanyCW.Laage  
 -- * AIRBASE.GermanyCW.Langenselbold  
+-- * AIRBASE.GermanyCW.Laerz  
 -- * AIRBASE.GermanyCW.Leipzig_Halle  
 -- * AIRBASE.GermanyCW.Leipzig_Mockau  
--- * AIRBASE.GermanyCW.Laerz  
 -- * AIRBASE.GermanyCW.Luebeck  
 -- * AIRBASE.GermanyCW.Lueneburg  
 -- * AIRBASE.GermanyCW.Mahlwinkel  
@@ -1089,14 +1158,15 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Pottschutthoehe  
 -- * AIRBASE.GermanyCW.Ramstein  
 -- * AIRBASE.GermanyCW.Rinteln  
--- * AIRBASE.GermanyCW.Schweinfurt  
 -- * AIRBASE.GermanyCW.Schoenefeld  
+-- * AIRBASE.GermanyCW.Schweinfurt  
 -- * AIRBASE.GermanyCW.Sembach  
 -- * AIRBASE.GermanyCW.Spangdahlem  
 -- * AIRBASE.GermanyCW.Sperenberg  
 -- * AIRBASE.GermanyCW.Stendal  
 -- * AIRBASE.GermanyCW.Tegel  
 -- * AIRBASE.GermanyCW.Tempelhof  
+-- * AIRBASE.GermanyCW.Templin  
 -- * AIRBASE.GermanyCW.Tutow  
 -- * AIRBASE.GermanyCW.Uelzen  
 -- * AIRBASE.GermanyCW.Uetersen  
@@ -1108,6 +1178,7 @@ AIRBASE.Iraq = {
 -- * AIRBASE.GermanyCW.Weser_Wuemme  
 -- * AIRBASE.GermanyCW.Wiesbaden  
 -- * AIRBASE.GermanyCW.Wismar  
+-- * AIRBASE.GermanyCW.Wittstock  
 -- * AIRBASE.GermanyCW.Worms  
 -- * AIRBASE.GermanyCW.Wunstorf  
 -- * AIRBASE.GermanyCW.Zerbst  
@@ -1119,7 +1190,6 @@ AIRBASE.GermanyCW = {
   ["Airracing_Koblenz"] = "Airracing Koblenz",
   ["Airracing_Luebeck"] = "Airracing Lubeck",
   ["Allstedt"] = "Allstedt",
-  ["Alt_Daber"] = "Alt Daber",
   ["Altes_Lager"] = "Altes Lager",
   ["Bad_Duerkheim"] = "Bad Durkheim",
   ["Barth"] = "Barth",
@@ -1142,14 +1212,13 @@ AIRBASE.GermanyCW = {
   ["Fritzlar"] = "Fritzlar",
   ["Fulda"] = "Fulda",
   ["Gardelegen"] = "Gardelegen",
+  ["Garz"] = "Garz",
   ["Gatow"] = "Gatow",
   ["Gelnhausen"] = "Gelnhausen",
   ["Giebelstadt"] = "Giebelstadt",
-  ["Glindbruchkippe_"] = "Glindbruchkippe ",
-  ["Gross_Doelln"] = "Gross Dolln",
+  ["Glindbruchkippe"] = "Glindbruchkippe ",
   ["Gross_Mohrdorf"] = "Gross Mohrdorf",
   ["Grosse_Wiese"] = "Grosse Wiese",
-  ["Gaerz"] = "Garz",
   ["Guetersloh"] = "Gutersloh",
   ["H_FRG_01"] = "H FRG 01",
   ["H_FRG_02"] = "H FRG 02",
@@ -1221,10 +1290,11 @@ AIRBASE.GermanyCW = {
   ["H_GDR_31"] = "H GDR 31",
   ["H_GDR_32"] = "H GDR 32",
   ["H_GDR_33"] = "H GDR 33",
+  ["H_GDR_34"] = "H GDR 34",
+  ["H_Med_FRG_01"] = "H Med FRG 01",
   ["H_Med_FRG_02"] = "H Med FRG 02",
   ["H_Med_FRG_04"] = "H Med FRG 04",
   ["H_Med_FRG_06"] = "H Med FRG 06",
-  ["H_Med_FRG_09"] = "H Med FRG 09",
   ["H_Med_FRG_11"] = "H Med FRG 11",
   ["H_Med_FRG_12"] = "H Med FRG 12",
   ["H_Med_FRG_13"] = "H Med FRG 13",
@@ -1272,9 +1342,9 @@ AIRBASE.GermanyCW = {
   ["Koethen"] = "Kothen",
   ["Laage"] = "Laage",
   ["Langenselbold"] = "Langenselbold",
+  ["Laerz"] = "Larz",
   ["Leipzig_Halle"] = "Leipzig Halle",
   ["Leipzig_Mockau"] = "Leipzig Mockau",
-  ["Laerz"] = "Larz",
   ["Luebeck"] = "Lubeck",
   ["Lueneburg"] = "Luneburg",
   ["Mahlwinkel"] = "Mahlwinkel",
@@ -1292,14 +1362,15 @@ AIRBASE.GermanyCW = {
   ["Pottschutthoehe"] = "Pottschutthohe",
   ["Ramstein"] = "Ramstein",
   ["Rinteln"] = "Rinteln",
-  ["Schweinfurt"] = "Schweinfurt",
   ["Schoenefeld"] = "Schonefeld",
+  ["Schweinfurt"] = "Schweinfurt",
   ["Sembach"] = "Sembach",
   ["Spangdahlem"] = "Spangdahlem",
   ["Sperenberg"] = "Sperenberg",
   ["Stendal"] = "Stendal",
   ["Tegel"] = "Tegel",
   ["Tempelhof"] = "Tempelhof",
+  ["Templin"] = "Templin",
   ["Tutow"] = "Tutow",
   ["Uelzen"] = "Uelzen",
   ["Uetersen"] = "Uetersen",
@@ -1311,6 +1382,7 @@ AIRBASE.GermanyCW = {
   ["Weser_Wuemme"] = "Weser Wumme",
   ["Wiesbaden"] = "Wiesbaden",
   ["Wismar"] = "Wismar",
+  ["Wittstock"] = "Wittstock",
   ["Worms"] = "Worms",
   ["Wunstorf"] = "Wunstorf",
   ["Zerbst"] = "Zerbst",
@@ -1447,7 +1519,7 @@ function AIRBASE:Register(AirbaseName)
   self.descriptors=self:GetDesc()
 
   -- Debug info.
-  --self:I({airbase=AirbaseName, descriptors=self.descriptors})
+  --self:T({airbase=AirbaseName, descriptors=self.descriptors})
 
   -- Category.
   self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
@@ -1528,6 +1600,17 @@ end
   self:T2(string.format("Registered airbase %s", tostring(self.AirbaseName)))
 
   return self
+end
+
+
+--- Get the true airbase center as seen in the ME. The position returned by the dcs object is is wrong and often at the start of the runway.
+-- @return DCS#Vec2 The center of the true center of the airbase if it contains runways, otherwise the default DCS object position.
+function AIRBASE:GetVec2()
+    local runways = self:GetRunways()
+    if runways and #runways > 0 then
+        return runways[1].center:GetVec2()
+    end
+    return self:GetCoordinate():GetVec2()
 end
 
 --- Get the category of this airbase. This is only a debug function because DCS 2.9 incorrectly returns heliports as airdromes.
@@ -2765,11 +2848,12 @@ function AIRBASE:_InitRunways(IncludeInverse)
       runway.name=string.format("%02d", tonumber(namefromheading))
     else
      runway.name=string.format("%02d", tonumber(name))
-     self:I("RunwayName: "..runway.name)
+     --self:I("RunwayName: "..runway.name)
     end
 
     --runway.name=string.format("%02d", tonumber(name))
     runway.magheading=tonumber(runway.name)*10
+    runway.idx=runway.magheading
     runway.heading=heading
     runway.width=width or 0
     runway.length=length or 0
@@ -3082,6 +3166,7 @@ function AIRBASE:GetRunwayData(magvar, mark)
     local runway={} --#AIRBASE.Runway
     runway.heading=hdg
     runway.idx=idx
+    runway.magheading=idx
     runway.length=c1:Get2DDistance(c2)
     runway.position=c1
     runway.endpoint=c2
@@ -3097,6 +3182,57 @@ function AIRBASE:GetRunwayData(magvar, mark)
     -- Add runway.
     table.insert(runways, runway)
 
+  end
+  
+    -- Look for identical (parallel) runways, e.g. 03L and 03R at Nellis.
+  local rpairs={}
+  for i,_ri in pairs(runways) do
+    local ri=_ri --#AIRBASE.Runway
+    for j,_rj in pairs(runways) do
+      local rj=_rj --#AIRBASE.Runway
+      if i<j then
+        if ri.name==rj.name then
+          rpairs[i]=j
+        end
+      end
+    end
+  end
+
+  local function isLeft(a, b, c)
+    --return ((b.x - a.x)*(c.z - a.z) - (b.z - a.z)*(c.x - a.x)) > 0
+    return ((b.z - a.z)*(c.x - a.x) - (b.x - a.x)*(c.z - a.z)) > 0
+  end
+
+  for i,j in pairs(rpairs) do
+    local ri=runways[i] --#AIRBASE.Runway
+    local rj=runways[j] --#AIRBASE.Runway
+
+    -- Draw arrow.
+    --ri.center:ArrowToAll(rj.center)
+
+    local c0=ri.position
+
+    -- Vector in the direction of the runway.
+    local a=UTILS.VecTranslate(c0, 1000, ri.heading)
+
+    -- Vector from runway i to runway j.
+    local b=UTILS.VecSubstract(rj.position, ri.position)
+    b=UTILS.VecAdd(ri.position, b)
+
+    -- Check if rj is left of ri.
+    local left=isLeft(c0, a, b)
+
+    --env.info(string.format("Found pair %s: i=%d, j=%d, left==%s", ri.name, i, j, tostring(left)))
+
+    if left then
+      ri.isLeft=false
+      rj.isLeft=true
+    else
+      ri.isLeft=true
+      rj.isLeft=false
+    end
+
+    --break
   end
 
   return runways

@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: Mar 2025
+-- Last Update: August 2025
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -62,7 +62,9 @@
 -- @field #table FilterZones Table of Core.Zone#ZONE Zones Consider SAM groups in this zone(s) only for this MANTIS instance, must be handed as #table of Zone objects.
 -- @field #boolean SmokeDecoy If true, smoke short range SAM units as decoy if a plane is in firing range.
 -- @field #number SmokeDecoyColor Color to use, defaults to SMOKECOLOR.White
--- @field #number checkcounter Counter for SAM Table refreshes
+-- @field #number checkcounter Counter for SAM Table refreshes.
+-- @field #number DLinkCacheTime Seconds after which cached contacts in DLink will decay.
+-- @field #boolean logsamstatus Log SAM status in dcs.log every cycle if true
 -- @extends Core.Base#BASE
 
 
@@ -74,10 +76,9 @@
 -- 
 -- * Moose derived  Modular, Automatic and Network capable Targeting and Interception System.
 -- * Controls a network of SAM sites. Uses detection to switch on the SAM site closest to the enemy.
--- * **Automatic mode** (default since 0.8) will set-up your SAM site network automatically for you
--- * **Classic mode** behaves like before
--- * Leverage evasiveness from SEAD, leverage attack range setting
--- * Automatic setup of SHORAD based on groups of the class "short-range"
+-- * **Automatic mode** (default) will set-up your SAM site network automatically for you.
+-- * Leverage evasiveness from SEAD, leverage attack range setting.
+-- * Automatic setup of SHORAD based on groups of the class "short-range".
 --
 -- # 0. Base considerations and naming conventions
 -- 
@@ -107,10 +108,15 @@
 -- * Patriot
 -- * Rapier
 -- * Roland
+-- * IRIS-T SLM
+-- * Pantsir S1
+-- * TOR M2
+-- * C-RAM
 -- * Silkworm (though strictly speaking this is a surface to ship missile)
 -- * SA-2, SA-3, SA-5, SA-6, SA-7, SA-8, SA-9, SA-10, SA-11, SA-13, SA-15, SA-19
 -- * From IDF mod: STUNNER IDFA, TAMIR IDFA (Note all caps!)
--- * From HDS (see note on HDS below): SA-2, SA-3, SA-10B, SA-10C, SA-12, SA-17, SA-20A, SA-20B, SA-23, HQ-2
+-- * From HDS (see note on HDS below): SA-2, SA-3, SA-10B, SA-10C, SA-12, SA-17, SA-20A, SA-20B, SA-23, HQ-2, SAMP/T Block 1, SAMP/T Block 1INT,  SAMP/T Block2
+-- * Other Mods: Nike
 -- 
 -- * From SMA: RBS98M, RBS70, RBS90, RBS90M, RBS103A, RBS103B, RBS103AM, RBS103BM, Lvkv9040M 
 -- **NOTE** If you are using the Swedish Military Assets (SMA), please note that the **group name** for RBS-SAM types also needs to contain the keyword "SMA"
@@ -124,19 +130,20 @@
 -- * SA-2 (with V759 missile, e.g. "Red SAM SA-2 HDS")
 -- * SA-2 (with HQ-2 launcher, use HQ-2 in the group name, e.g. "Red SAM HQ-2" )
 -- * SA-3 (with V601P missile, e.g. "Red SAM SA-3 HDS")
--- * SA-10B (overlap with other SA-10 types, e.g. "Red SAM SA-10B HDS")
--- * SA-10C (overlap with other SA-10 types, e.g. "Red SAM SA-10C HDS")
--- * SA-12 (launcher dependent range, e.g. "Red SAM SA-12 HDS")
--- * SA-23 (launcher dependent range, e.g. "Red SAM SA-23 HDS") 
+-- * SA-10B (overlap with other SA-10 types, e.g. "Red SAM SA-10B HDS" with 5P85CE launcher)
+-- * SA-10C (overlap with other SA-10 types, e.g. "Red SAM SA-10C HDS" with 5P85SE launcher)
+-- * SA-12 (launcher dependent range, e.g. "Red SAM SA-12 HDS 2" for the 9A82 variant and "Red SAM SA-12 HDS 1" for the 9A83 variant)
+-- * SA-23 (launcher dependent range, e.g. "Red SAM SA-23 HDS 2" for the 9A82ME variant and "Red SAM SA-23 HDS 1" for the 9A83ME variant)
+-- * SAMP/T (launcher dependent range, e.g. "Blue SAM SAMPT Block 1 HDS" for Block 1, "Blue SAM SAMPT Block 1INT HDS", "Blue SAM SAMPT Block 2 HDS")
 -- 
 -- The other HDS types work like the rest of the known SAM systems.
 -- 
 -- # 0.1 Set-up in the mission editor
 -- 
--- Set up your SAM sites in the mission editor. Name the groups using a systematic approach like above.
--- Set up your EWR system in the mission editor. Name the groups using a systematic approach like above. Can be e.g. AWACS or a combination of AWACS and Search Radars like e.g. EWR 1L13 etc. 
+-- Set up your SAM sites in the mission editor. Name the groups using a systematic approach like above.Can be e.g. AWACS or a combination of AWACS and Search Radars like e.g. EWR 1L13 etc. 
 -- Search Radars usually have "SR" or "STR" in their names. Use the encyclopedia in the mission editor to inform yourself.
--- Set up your SHORAD systems. They need to be **close** to (i.e. around) the SAM sites to be effective. Use **one** group per SAM location. SA-15 TOR systems offer a good missile defense.
+-- Set up your SHORAD systems. They need to be **close** to (i.e. around) the SAM sites to be effective. Use **one unit ** per group (multiple groups) for the SAM location. 
+-- Else, evasive manoevers might club up all defenders in one place. Red SA-15 TOR systems offer a good missile defense.
 -- 
 -- [optional] Set up your HQ. Can be any group, e.g. a command vehicle.
 --
@@ -188,7 +195,7 @@
 -- 
 -- ## 2.1 Auto mode features
 -- 
--- ### 2.1.1 You can now add Accept-, Reject- and Conflict-Zones to your setup, e.g. to consider borders or de-militarized zones:   
+-- ### 2.1.1 You can add Accept-, Reject- and Conflict-Zones to your setup, e.g. to consider borders or de-militarized zones:   
 -- 
 --        -- Parameters are tables of Core.Zone#ZONE objects!   
 --        -- This is effectively a 3-stage filter allowing for zone overlap. A coordinate is accepted first when   
@@ -205,9 +212,6 @@
 -- ### 2.1.3 SHORAD/Point defense will automatically be added from SAM sites of type "point" or if the range is less than 5km or if the type is AAA. 
 --        
 -- ### 2.1.4 Advanced features   
--- 
---        -- Option to switch off auto mode **before** you start MANTIS (not recommended)   
---        mybluemantis.automode = false
 --        
 --        -- Option to set the scale of the activation range, i.e. don't activate at the fringes of max range, defaults below.   
 --        -- also see engagerange below.   
@@ -220,6 +224,12 @@
 -- 
 --        -- For some scenarios, like Cold War, it might be useful not to activate SAMs if friendly aircraft are around to avoid death by friendly fire.
 --        mybluemantis.checkforfriendlies = true  
+--        
+-- ### 2.1.6 Shoot & Scoot
+-- 
+--        -- Option to make the (driveable) SHORAD units drive around and shuffle positions
+--        -- We use a SET_ZONE for that, number of zones to consider defaults to three, Random is true for random coordinates and Formation is e.g. "Vee".
+--        mybluemantis:AddScootZones(ZoneSet, Number, Random, Formation)
 -- 
 -- # 3. Default settings [both modes unless stated otherwise]
 --
@@ -242,26 +252,8 @@
 --  E.g.        mymantis:SetAdvancedMode( true, 90 )
 --
 --  Use this option if you want to make use of or allow advanced SEAD tactics.
---
--- # 5. Integrate SHORAD [classic mode, not necessary in automode, not recommended for manual setup]
---
---  You can also choose to integrate Mantis with @{Functional.Shorad#SHORAD} for protection against HARMs and AGMs manually. When SHORAD detects a missile fired at one of MANTIS' SAM sites, it will activate SHORAD systems in
---  the given defense checkradius around that SAM site. Create a SHORAD object first, then integrate with MANTIS like so:
---
---          local SamSet = SET_GROUP:New():FilterPrefixes("Blue SAM"):FilterCoalitions("blue"):FilterStart()
---          myshorad = SHORAD:New("BlueShorad", "Blue SHORAD", SamSet, 22000, 600, "blue")
---          -- now set up MANTIS
---          mymantis = MANTIS:New("BlueMantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
---          mymantis:AddShorad(myshorad,720)
---          mymantis:Start()
 --  
---  If you systematically name your SHORAD groups starting with "Blue SHORAD" you'll need exactly **one** SHORAD instance to manage all SHORAD groups.
---  
---  (Optionally) you can remove the link later on with
---
---          mymantis:RemoveShorad()
---
--- # 6. Integrated SEAD
+-- # 5. Integrated SEAD
 --  
 --  MANTIS is using @{Functional.Sead#SEAD} internally to both detect and evade HARM attacks. No extra efforts needed to set this up! 
 --  Once a HARM attack is detected, MANTIS (via SEAD) will shut down the radars of the attacked SAM site and take evasive action by moving the SAM
@@ -288,6 +280,7 @@
 MANTIS = {
   ClassName             = "MANTIS",
   name                  = "mymantis",
+  version               = "0.9.34",
   SAM_Templates_Prefix  = "",
   SAM_Group             = nil,
   EWR_Templates_Prefix  = "",
@@ -336,6 +329,8 @@ MANTIS = {
   SmokeDecoy            = false,
   SmokeDecoyColor       = SMOKECOLOR.White,
   checkcounter          = 1,
+  DLinkCacheTime        = 120,
+  logsamstatus          = false,
 }
 
 --- Advanced state enumerator
@@ -374,7 +369,7 @@ MANTIS.radiusscale[MANTIS.SamType.POINT] = 3
 MANTIS.SamData = {
   ["Hawk"] = { Range=35, Blindspot=0, Height=12, Type="Medium", Radar="Hawk" }, -- measures in km
   ["NASAMS"] = { Range=14, Blindspot=0, Height=7, Type="Short", Radar="NSAMS" }, -- AIM 120B
-  ["Patriot"] = { Range=99, Blindspot=0, Height=25, Type="Long", Radar="Patriot" },
+  ["Patriot"] = { Range=99, Blindspot=0, Height=25, Type="Long", Radar="Patriot str" },
   ["Rapier"] = { Range=10, Blindspot=0, Height=3, Type="Short", Radar="rapier" },
   ["SA-2"] = { Range=40, Blindspot=7, Height=25, Type="Medium", Radar="S_75M_Volhov" },
   ["SA-3"] = { Range=18, Blindspot=6, Height=18, Type="Short", Radar="5p73 s-125 ln" },
@@ -382,7 +377,8 @@ MANTIS.SamData = {
   ["SA-6"] = { Range=25, Blindspot=0, Height=8, Type="Medium", Radar="1S91" },
   ["SA-10"] = { Range=119, Blindspot=0, Height=18, Type="Long" , Radar="S-300PS 4"},
   ["SA-11"] = { Range=35, Blindspot=0, Height=20, Type="Medium", Radar="SA-11" },
-  ["Roland"] = { Range=5, Blindspot=0, Height=5, Type="Point", Radar="Roland" },
+  ["Roland"] = { Range=6, Blindspot=0, Height=5, Type="Short", Radar="Roland" },
+  ["Gepard"] = { Range=5, Blindspot=0, Height=4, Type="Point", Radar="Gepard" },
   ["HQ-7"] = { Range=12, Blindspot=0, Height=3, Type="Short", Radar="HQ-7" },
   ["SA-9"] = { Range=4, Blindspot=0, Height=3, Type="Point", Radar="Strela", Point="true" },
   ["SA-8"] = { Range=10, Blindspot=0, Height=5, Type="Short", Radar="Osa 9A33" },
@@ -393,14 +389,21 @@ MANTIS.SamData = {
   ["Chaparral"] = { Range=8, Blindspot=0, Height=3, Type="Short", Radar="Chaparral" },
   ["Linebacker"] = { Range=4, Blindspot=0, Height=3, Type="Point", Radar="Linebacker", Point="true" },
   ["Silkworm"] = { Range=90, Blindspot=1, Height=0.2, Type="Long", Radar="Silkworm" },
+  ["C-RAM"] = { Range=2, Blindspot=0, Height=2, Type="Point", Radar="HEMTT_C-RAM_Phalanx", Point="true" },
   -- units from HDS Mod, multi launcher options is tricky
   ["SA-10B"] = { Range=75, Blindspot=0, Height=18, Type="Medium" , Radar="SA-10B"},
-  ["SA-17"] = { Range=50, Blindspot=3, Height=30, Type="Medium", Radar="SA-17" },
+  ["SA-17"] = { Range=50, Blindspot=3, Height=50, Type="Medium", Radar="SA-17" },
   ["SA-20A"] = { Range=150, Blindspot=5, Height=27, Type="Long" , Radar="S-300PMU1"},
   ["SA-20B"] = { Range=200, Blindspot=4, Height=27, Type="Long" , Radar="S-300PMU2"},
   ["HQ-2"] = { Range=50, Blindspot=6, Height=35, Type="Medium", Radar="HQ_2_Guideline_LN" },
   ["TAMIR IDFA"] = { Range=20, Blindspot=0.6, Height=12.3, Type="Short", Radar="IRON_DOME_LN" },
-  ["STUNNER IDFA"] = { Range=250, Blindspot=1, Height=45, Type="Long", Radar="DAVID_SLING_LN" },   
+  ["STUNNER IDFA"] = { Range=250, Blindspot=1, Height=45, Type="Long", Radar="DAVID_SLING_LN" },
+  ["NIKE"] = { Range=155, Blindspot=6, Height=30, Type="Long", Radar="HIPAR" },
+  ["Dog Ear"] = { Range=11, Blindspot=0, Height=9, Type="Point", Radar="Dog Ear", Point="true" },
+  -- CH Added to DCS core 2.9.19.x
+  ["Pantsir S1"] = { Range=20, Blindspot=1.2, Height=15, Type="Point", Radar="PantsirS1" , Point="true" }, 
+  ["Tor M2"] = { Range=12, Blindspot=1, Height=10, Type="Point", Radar="TorM2", Point="true"  },
+  ["IRIS-T SLM"] = { Range=40, Blindspot=0.5, Height=20, Type="Medium", Radar="CH_IRIST_SLM" }, 
 }
 
 --- SAM data HDS
@@ -416,13 +419,17 @@ MANTIS.SamDataHDS = {
   -- group name MUST contain HDS to ID launcher type correctly!
   ["SA-2 HDS"] = { Range=56, Blindspot=7, Height=30, Type="Medium", Radar="V759" }, 
   ["SA-3 HDS"] = { Range=20, Blindspot=6, Height=30, Type="Short", Radar="V-601P" },  
-  ["SA-10C HDS 2"] = { Range=90, Blindspot=5, Height=25, Type="Long" , Radar="5P85DE ln"}, -- V55RUD
-  ["SA-10C HDS 1"] = { Range=90, Blindspot=5, Height=25, Type="Long" , Radar="5P85CE ln"}, -- V55RUD
-  ["SA-12 HDS 2"] = { Range=100, Blindspot=10, Height=25, Type="Long" , Radar="S-300V 9A82 l"},
-  ["SA-12 HDS 1"] = { Range=75, Blindspot=1, Height=25, Type="Long" , Radar="S-300V 9A83 l"},
+  ["SA-10B HDS"] = { Range=90, Blindspot=5, Height=25, Type="Long" , Radar="5P85CE ln"}, -- V55RUD
+  ["SA-10C HDS"] = { Range=75, Blindspot=5, Height=25, Type="Long" , Radar="5P85SE ln"}, -- V55RUD
+  ["SA-17 HDS"] = { Range=50, Blindspot=3, Height=50, Type="Medium", Radar="SA-17 " },
+  ["SA-12 HDS 2"] = { Range=100, Blindspot=13, Height=30, Type="Long" , Radar="S-300V 9A82 l"},
+  ["SA-12 HDS 1"] = { Range=75, Blindspot=6, Height=25, Type="Long" , Radar="S-300V 9A83 l"},
   ["SA-23 HDS 2"] = { Range=200, Blindspot=5, Height=37, Type="Long", Radar="S-300VM 9A82ME" },
   ["SA-23 HDS 1"] = { Range=100, Blindspot=1, Height=50, Type="Long", Radar="S-300VM 9A83ME" },
   ["HQ-2 HDS"] = { Range=50, Blindspot=6, Height=35, Type="Medium", Radar="HQ_2_Guideline_LN" },
+  ["SAMPT Block 1 HDS"] = { Range=120, Blindspot=1, Height=20, Type="long", Radar="SAMPT_MLT_Blk1" }, -- Block 1 Launcher
+  ["SAMPT Block 1INT HDS"] = { Range=150, Blindspot=1, Height=25, Type="long", Radar="SAMPT_MLT_Blk1NT" }, -- Block 1-INT Launcher
+  ["SAMPT Block 2 HDS"] = { Range=200, Blindspot=10, Height=70, Type="long", Radar="SAMPT_MLT_Blk2" }, -- Block 2 Launcher
 }
 
 --- SAM data SMA
@@ -462,15 +469,15 @@ MANTIS.SamDataCH = {
     -- https://www.currenthill.com/
     -- group name MUST contain CHM to ID launcher type correctly!
    ["2S38 CHM"] = { Range=6, Blindspot=0.1, Height=4.5, Type="Short", Radar="2S38" },
-   ["PantsirS1 CHM"] = { Range=20, Blindspot=1.2, Height=15, Type="Short", Radar="PantsirS1" }, 
+   ["PantsirS1 CHM"] = { Range=20, Blindspot=1.2, Height=15, Type="Point", Radar="PantsirS1", Point="true"  }, 
    ["PantsirS2 CHM"] = { Range=30, Blindspot=1.2, Height=18, Type="Medium", Radar="PantsirS2" }, 
    ["PGL-625 CHM"] = { Range=10, Blindspot=1, Height=5, Type="Short", Radar="PGL_625" }, 
    ["HQ-17A CHM"] = { Range=15, Blindspot=1.5, Height=10, Type="Short", Radar="HQ17A" }, 
    ["M903PAC2 CHM"] = { Range=120, Blindspot=3, Height=24.5, Type="Long", Radar="MIM104_M903_PAC2" },
    ["M903PAC3 CHM"] = { Range=160, Blindspot=1, Height=40, Type="Long", Radar="MIM104_M903_PAC3" }, 
-   ["TorM2 CHM"] = { Range=12, Blindspot=1, Height=10, Type="Short", Radar="TorM2" },
-   ["TorM2K CHM"] = { Range=12, Blindspot=1, Height=10, Type="Short", Radar="TorM2K" },
-   ["TorM2M CHM"] = { Range=16, Blindspot=1, Height=10, Type="Short", Radar="TorM2M" }, 
+   ["TorM2 CHM"] = { Range=12, Blindspot=1, Height=10, Type="Point", Radar="TorM2", Point="true"  },
+   ["TorM2K CHM"] = { Range=12, Blindspot=1, Height=10, Type="Point", Radar="TorM2K", Point="true"  },
+   ["TorM2M CHM"] = { Range=16, Blindspot=1, Height=10, Type="Point", Radar="TorM2M", Point="true"  }, 
    ["NASAMS3-AMRAAMER CHM"] = { Range=50, Blindspot=2, Height=35.7, Type="Medium", Radar="CH_NASAMS3_LN_AMRAAM_ER" }, 
    ["NASAMS3-AIM9X2 CHM"] = { Range=20, Blindspot=0.2, Height=18, Type="Short", Radar="CH_NASAMS3_LN_AIM9X2" },
    ["C-RAM CHM"] = { Range=2, Blindspot=0, Height=2, Type="Point", Radar="CH_Centurion_C_RAM", Point="true" }, 
@@ -625,7 +632,8 @@ do
       self.advAwacs = false
     end
     
-
+    self:SetDLinkCacheTime()
+    
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("MANTIS %s | ", self.name)
 
@@ -658,6 +666,8 @@ do
       table.insert(self.ewr_templates,awacs)
     end
     
+    self.logsamstatus = false
+    
     self:T({self.ewr_templates})
     
     self.SAM_Group = SET_GROUP:New():FilterPrefixes(self.SAM_Templates_Prefix):FilterCoalitions(self.Coalition)
@@ -687,9 +697,6 @@ do
     -- counter for SAM table updates
     self.checkcounter = 1
     
-    -- TODO Version
-    -- @field #string version
-    self.version="0.9.27"
     self:I(string.format("***** Starting MANTIS Version %s *****", self.version))
 
     --- FSM Functions ---
@@ -886,7 +893,11 @@ do
     self.AcceptZones = AcceptZones or {}
     self.RejectZones = RejectZones or {}
     self.ConflictZones = ConflictZones or {}
-    if #self.AcceptZones > 0 or #self.RejectZones > 0 or #self.ConflictZones > 0 then
+    self.AcceptZonesNo = UTILS.TableLength(self.AcceptZones)
+    self.RejectZonesNo = UTILS.TableLength(self.RejectZones)
+    self.ConflictZonesNo = UTILS.TableLength(self.ConflictZones)
+    self:T(string.format("AcceptZonesNo = %d | RejectZonesNo = %d | ConflictZonesNo = %d",self.AcceptZonesNo,self.RejectZonesNo,self.ConflictZonesNo))
+    if self.AcceptZonesNo > 0 or self.RejectZonesNo > 0 or self.ConflictZonesNo > 0 then
       self.usezones = true
     end
     return self
@@ -1037,6 +1048,16 @@ do
         self.HQ_Template_CC = group:GetName()
       end
     end
+    return self
+  end
+  
+  --- Function to set how long INTEL DLINK remembers contacts.
+  -- @param #MANTIS self
+  -- @param #number seconds Remember this many seconds, at least 5 seconds.
+  -- @return #MANTIS self
+  function MANTIS:SetDLinkCacheTime(seconds)
+    self.DLinkCacheTime = math.abs(seconds or 120)
+    if self.DLinkCacheTime < 5 then self.DLinkCacheTime = 5 end
     return self
   end
 
@@ -1268,7 +1289,8 @@ do
     self:T(self.lid.."_CheckCoordinateInZones")
     local inzone = false
     -- acceptzones
-    if #self.AcceptZones > 0 then
+    self:T(string.format("AcceptZonesNo = %d | RejectZonesNo = %d | ConflictZonesNo = %d",self.AcceptZonesNo,self.RejectZonesNo,self.ConflictZonesNo))
+    if self.AcceptZonesNo > 0 then
       for _,_zone in pairs(self.AcceptZones) do
         local zone = _zone -- Core.Zone#ZONE
         if zone:IsCoordinateInZone(coord) then
@@ -1279,7 +1301,7 @@ do
       end
     end
     -- rejectzones
-    if #self.RejectZones > 0 and inzone then -- maybe in accept zone, but check the overlaps
+    if self.RejectZonesNo > 0 then 
       for _,_zone in pairs(self.RejectZones) do
         local zone = _zone -- Core.Zone#ZONE
         if zone:IsCoordinateInZone(coord) then
@@ -1290,7 +1312,7 @@ do
       end
     end
     -- conflictzones
-    if #self.ConflictZones > 0 and not inzone then -- if not already accepted, might be in conflict zones
+    if self.ConflictZonesNo > 0 then
       for _,_zone in pairs(self.ConflictZones) do
         local zone = _zone -- Core.Zone#ZONE
         if zone:IsCoordinateInZone(coord) then
@@ -1356,6 +1378,7 @@ do
       end
       -- check accept/reject zones
       local zonecheck = true
+      self:T("self.usezones = "..tostring(self.usezones))
       if self.usezones then
         -- DONE
         zonecheck = self:_CheckCoordinateInZones(coord)
@@ -1431,7 +1454,9 @@ do
     --IntelTwo:SetClusterRadius(5000)
     IntelTwo:Start()
     
-    local IntelDlink = INTEL_DLINK:New({IntelOne,IntelTwo},self.name.." DLINK",22,300)
+    local CacheTime = self.DLinkCacheTime or 120
+    local IntelDlink = INTEL_DLINK:New({IntelOne,IntelTwo},self.name.." DLINK",22,CacheTime)
+    
     IntelDlink:__Start(1)
     
     self:SetUsingDLink(IntelDlink)
@@ -1493,7 +1518,7 @@ do
     elseif chm then
       SAMData = self.SamDataCH
     end
-    --self:T("Looking to auto-match for "..grpname)
+    --self:I("Looking to auto-match for "..grpname)
     for _,_unit in pairs(units) do
       local unit = _unit -- Wrapper.Unit#UNIT
       local type = string.lower(unit:GetTypeName())
@@ -1694,7 +1719,9 @@ do
           local grpname = group:GetName()
           local grpcoord = group:GetCoordinate()
           local grprange, grpheight,type,blind  = self:_GetSAMRange(grpname)
-          local radaralive = group:IsSAM()
+          -- TODO the below might stop working at some point after some hours, needs testing
+          --local radaralive = group:IsSAM()
+          local radaralive = true
           table.insert( SAM_Tbl, {grpname, grpcoord, grprange, grpheight, blind, type}) -- make the table lighter, as I don't really use the zone here
           table.insert( SEAD_Grps, grpname )
           if type == MANTIS.SamType.LONG and radaralive then
@@ -1791,7 +1818,7 @@ do
       if self.Shorad and self.Shorad.ActiveGroups and self.Shorad.ActiveGroups[name] then
        activeshorad = true
       end
-      if IsInZone and not suppressed and not activeshorad then --check any target in zone and not currently managed by SEAD
+      if IsInZone and (not suppressed) and (not activeshorad) then --check any target in zone and not currently managed by SEAD
         if samgroup:IsAlive() then
           -- switch on SAM
           local switch = false
@@ -1823,7 +1850,7 @@ do
           -- link in to SHORAD if available
           -- DONE: Test integration fully
           if self.ShoradLink and (Distance < self.ShoradActDistance or Distance < blind ) then -- don't give SHORAD position away too early
-            local Shorad = self.Shorad
+            local Shorad = self.Shorad  --Functional.Shorad#SHORAD
             local radius = self.checkradius
             local ontime = self.ShoradTime
             Shorad:WakeUpShorad(name, radius, ontime)
@@ -1856,7 +1883,7 @@ do
         end --end alive
       end --end check     
     end --for loop
-    if self.debug or self.verbose then
+    if self.debug or self.verbose or self.logsamstatus then
       for _,_status in pairs(self.SamStateTracker) do
         if _status == "GREEN" then
           instatusgreen=instatusgreen+1
@@ -1877,8 +1904,9 @@ do
   -- @param #MANTIS self
   -- @param Functional.Detection#DETECTION_AREAS detection Detection object
   -- @param #boolean dlink
+  -- @param #boolean reporttolog
   -- @return #MANTIS self
-  function MANTIS:_Check(detection,dlink)
+  function MANTIS:_Check(detection,dlink,reporttolog)
     self:T(self.lid .. "Check")
     --get detected set
     local detset = detection:GetDetectedItemCoordinates()
@@ -1905,7 +1933,8 @@ do
       local samset = self:_GetSAMTable() -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
       instatusred, instatusgreen, activeshorads = self:_CheckLoop(samset,detset,dlink,self.maxclassic)
     end
-    if self.debug or self.verbose then
+    
+    local function GetReport()
       local statusreport = REPORT:New("\nMANTIS Status "..self.name)
       statusreport:Add("+-----------------------------+")
       statusreport:Add(string.format("+ SAM in RED State: %2d",instatusred))
@@ -1914,7 +1943,15 @@ do
        statusreport:Add(string.format("+ SHORAD active: %2d",activeshorads))  
       end
       statusreport:Add("+-----------------------------+")
+      return statusreport
+    end
+    
+    if self.debug or self.verbose then
+      local statusreport = GetReport()
       MESSAGE:New(statusreport:Text(),10):ToAll():ToLog()
+    elseif reporttolog == true then
+      local statusreport = GetReport()
+      MESSAGE:New(statusreport:Text(),10):ToLog()
     end
     return self
   end
@@ -2022,7 +2059,7 @@ do
     self:T({From, Event, To})
     -- check detection
     if not self.state2flag then
-      self:_Check(self.Detection,self.DLink)
+      self:_Check(self.Detection,self.DLink,self.logsamstatus)
     end
   
     local EWRAlive = self:_CheckAnyEWRAlive()
@@ -2093,7 +2130,7 @@ do
     if self.debug and self.verbose then
       self:I(self.lid .. "Status Report")
       for _name,_state in pairs(self.SamStateTracker) do
-        self:I(string.format("Site %s\tStatus %s",_name,_state))
+        self:I(string.format("Site %s | Status %s",_name,_state))
       end
     end
     local interval = self.detectinterval * -1
