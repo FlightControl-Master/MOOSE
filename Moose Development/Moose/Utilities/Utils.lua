@@ -4301,8 +4301,8 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
         groupData.y = gridpoint.y
       end   
     end
-    BASE:I("Spawning FARP")
-    UTILS.PrintTableToLog(groupData,1)
+    --BASE:I("Spawning FARP")
+    --UTILS.PrintTableToLog(groupData,1)
     local Static=coalition.addGroup(Country, -1, groupData)
     -- Currently DCS >= 2.8 does not trigger birth events if FARPS are spawned!
     -- We create such an event. The airbase is registered in Core.Event
