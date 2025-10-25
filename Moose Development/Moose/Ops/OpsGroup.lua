@@ -4631,7 +4631,12 @@ function OPSGROUP:_UpdateTask(Task, Mission)
           self:T(self.lid..string.format("Zone %s captured ==> Task DONE!", zoneCurr:GetName()))
           
           -- Task done.
-          self:TaskDone(Task)
+          if Task.StayInZoneTime then
+            local stay = Task.StayInZoneTime
+            self:__TaskDone(stay,Task)
+          else
+            self:TaskDone(Task)
+          end
           
         else        
           -- Current zone NOT captured yet ==> Find Target
