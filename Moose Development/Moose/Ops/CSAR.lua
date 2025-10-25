@@ -31,7 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 ---
--- Last Update July 2025
+-- Last Update Oct 2025
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -315,7 +315,7 @@ CSAR.AircraftType["CH-47Fbl1"] = 31
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.33"
+CSAR.version="1.0.34"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -1150,11 +1150,11 @@ function CSAR:_EventHandler(EventData)
 
     local initdcscoord = nil
     local initcoord = nil
-    if _event.id == EVENTS.Ejection then
+    if _event.id == EVENTS.Ejection and _event.TgtDCSUnit then
       initdcscoord = _event.TgtDCSUnit:getPoint()
       initcoord = COORDINATE:NewFromVec3(initdcscoord)
       self:T({initdcscoord})
-    else
+    elseif _event.IniDCSUnit then
       initdcscoord = _event.IniDCSUnit:getPoint()
       initcoord = COORDINATE:NewFromVec3(initdcscoord)
       self:T({initdcscoord})
@@ -1244,7 +1244,10 @@ function CSAR:_EventHandler(EventData)
 
       if _place:GetCoalition() == self.coalition or _place:GetCoalition() == coalition.side.NEUTRAL then
         self:__Landed(2,_event.IniUnitName, _place)
-        self:_ScheduledSARFlight(_event.IniUnitName,_event.IniGroupName,true,true)
+        local IsHeloBase = false
+        local ABName = _place:GetName()
+        if ABName and string.find(ABName,"^H") then IsHeloBase = true end -- if name starts with an H it's an (possibly elevated) helo base on current maps
+        self:_ScheduledSARFlight(_event.IniUnitName,_event.IniGroupName,true,true,IsHeloBase)
       else
         self:T(string.format("Airfield %d, Unit %d", _place:GetCoalition(), _unit:GetCoalition()))
       end
@@ -1731,8 +1734,9 @@ end
 -- @param #string heliname Heli name
 -- @param #string groupname Group name
 -- @param #boolean isairport If true, EVENT.Landing took place at an airport or FARP
--- @param #boolean noreschedule If true, do not try to reschedule this is distances are not ok (coming from landing event)
-function CSAR:_ScheduledSARFlight(heliname,groupname, isairport, noreschedule)
+-- @param #boolean noreschedule If true, do not try to reschedule this if distances are not ok (coming from landing event)
+-- @param #boolean IsHeloBase If true, landing took place at a Helo Base  (name "H ..." on current maps)
+function CSAR:_ScheduledSARFlight(heliname,groupname, isairport, noreschedule, IsHeloBase)
   self:T(self.lid .. " _ScheduledSARFlight")
   self:T({heliname,groupname})
   local _heliUnit = self:_GetSARHeli(heliname)
@@ -1758,7 +1762,7 @@ function CSAR:_ScheduledSARFlight(heliname,groupname, isairport, noreschedule)
 
   self:T(self.lid.."[Drop off debug] Check distance to MASH for "..heliname.." Distance km: "..math.floor(_dist/1000))
 
-  if ( _dist < self.FARPRescueDistance or isairport ) and _heliUnit:InAir() == false then
+  if ( _dist < self.FARPRescueDistance or isairport ) and ((_heliUnit:InAir() == false) or (IsHeloBase == true)) then
     self:T(self.lid.."[Drop off debug] Distance ok, door check")
     if self.pilotmustopendoors and self:_IsLoadingDoorOpen(heliname) == false then
       self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me out!", self.messageTime, true, true)
@@ -1773,7 +1777,7 @@ function CSAR:_ScheduledSARFlight(heliname,groupname, isairport, noreschedule)
   --queue up
   if not noreschedule then
     self:__Returning(5,heliname,_woundedGroupName, isairport)
-    self:ScheduleOnce(5,self._ScheduledSARFlight,self,heliname,groupname, isairport, noreschedule)
+    self:ScheduleOnce(5,self._ScheduledSARFlight,self,heliname,groupname, isairport, noreschedule, IsHeloBase)
   end
   return self
 end

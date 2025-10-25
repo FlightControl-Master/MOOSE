@@ -5029,7 +5029,7 @@ function FLIGHTGROUP:_UpdateMenu(delay)
       
         -- Message to group.
         MESSAGE:New(text, 5):ToGroup(self.group)
-        self:I(self.lid..text)
+        self:T(self.lid..text)
       end
     
       -- Get current position of player.

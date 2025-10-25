@@ -4631,7 +4631,12 @@ function OPSGROUP:_UpdateTask(Task, Mission)
           self:T(self.lid..string.format("Zone %s captured ==> Task DONE!", zoneCurr:GetName()))
           
           -- Task done.
-          self:TaskDone(Task)
+          if Task.StayInZoneTime then
+            local stay = Task.StayInZoneTime
+            self:__TaskDone(stay,Task)
+          else
+            self:TaskDone(Task)
+          end
           
         else        
           -- Current zone NOT captured yet ==> Find Target
@@ -7534,7 +7539,7 @@ end
 function OPSGROUP:onafterElementDead(From, Event, To, Element)
 
   -- Debug info.
-  self:I(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
+  self:T(self.lid..string.format("Element dead %s at t=%.3f", Element.name, timer.getTime()))
 
   -- Set element status.
   self:_UpdateStatus(Element, OPSGROUP.ElementStatus.DEAD)
@@ -8090,7 +8095,7 @@ function OPSGROUP:onafterStop(From, Event, To)
   _DATABASE.FLIGHTGROUPS[self.groupname]=nil
 
   -- Debug output.
-  self:I(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from _DATABASE")
+  self:T(self.lid.."STOPPED! Unhandled events, cleared scheduler and removed from _DATABASE")
 end
 
 --- On after "OutOfAmmo" event.

@@ -2324,8 +2324,9 @@ end
 -- @param #number Speed Speed in knots.
 -- @param #number Altitude Altitude in feet. Only for airborne units. Default 2000 feet ASL.
 -- @param #string Formation Formation used by ground units during patrol. Default "Off Road".
+-- @param #number StayInZoneTime Stay this many seconds in the zone when done, only then drive back.
 -- @return #AUFTRAG self
-function AUFTRAG:NewCAPTUREZONE(OpsZone, Coalition, Speed, Altitude, Formation)
+function AUFTRAG:NewCAPTUREZONE(OpsZone, Coalition, Speed, Altitude, Formation, StayInZoneTime)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.CAPTUREZONE)
 
@@ -2339,6 +2340,7 @@ function AUFTRAG:NewCAPTUREZONE(OpsZone, Coalition, Speed, Altitude, Formation)
   mission.optionROE=ENUMS.ROE.ReturnFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
   mission.optionAlarm=ENUMS.AlarmState.Auto
+  mission.StayInZoneTime = StayInZoneTime
 
   mission.missionFraction=0.1
   mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
@@ -4014,6 +4016,23 @@ end
 function AUFTRAG:IsOver()
   local over = self.status==AUFTRAG.Status.DONE or self.status==AUFTRAG.Status.CANCELLED or self.status==AUFTRAG.Status.SUCCESS or self.status==AUFTRAG.Status.FAILED
   return over
+end
+
+--- Check if mission is repeatable.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission is repeatable.
+function AUFTRAG:IsRepeatable()
+  local repeatmeS=self.repeatedSuccess<self.NrepeatSuccess or self.repeated<self.Nrepeat
+  local repeatmeF=self.repeatedFailure<self.NrepeatFailure or self.repeated<self.Nrepeat
+  if repeatmeS==true or repeatmeF==true then return true else return false end
+  return false
+end
+
+--- Check if mission is NOT repeatable.
+-- @param #AUFTRAG self
+-- @return #boolean If true, mission is NOT repeatable.
+function AUFTRAG:IsNotRepeatable()
+  return not self:IsRepeatable()
 end
 
 --- Check if mission is NOT over.

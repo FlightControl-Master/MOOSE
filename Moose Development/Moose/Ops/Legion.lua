@@ -662,6 +662,15 @@ function LEGION:CheckMissionQueue()
     if mission:IsNotOver() and mission:IsReadyToCancel() then
       mission:Cancel()
     end
+    
+    -- Housekeeping
+    local TNow = timer.getTime()
+    if mission:IsOver() and mission:IsNotRepeatable() and mission.DeletionTimstamp == nil then
+      mission.DeletionTimstamp = TNow
+    end
+    if mission.DeletionTimstamp ~= nil and TNow - mission.DeletionTimstamp > 1800 then
+      mission = nil
+    end
   end
   
   -- Check that runway is operational and that carrier is not recovering.
@@ -761,7 +770,7 @@ function LEGION:CheckMissionQueue()
           -- Reduce number of reinforcements.
           if reinforce then
             mission.reinforce=mission.reinforce-#assets
-            self:I(self.lid..string.format("Reinforced with N=%d Nreinforce=%d", #assets, mission.reinforce))
+            self:T(self.lid..string.format("Reinforced with N=%d Nreinforce=%d", #assets, mission.reinforce))
           end
           
           return true

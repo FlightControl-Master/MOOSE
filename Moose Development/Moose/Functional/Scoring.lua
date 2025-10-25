@@ -321,7 +321,9 @@ function SCORING:New( GameName, SavePath, AutoSave )
   -- Create the CSV file.
   self.AutoSavePath = SavePath
   self.AutoSave = AutoSave or true
-  self:OpenCSV( GameName )
+  if self.AutoSave == true then
+    self:OpenCSV( GameName )
+  end
 
   return self
 
@@ -1935,7 +1937,7 @@ function SCORING:ScoreCSV( PlayerName, TargetPlayerName, ScoreType, ScoreTimes, 
   TargetUnitType = TargetUnitType or ""
   TargetUnitName = TargetUnitName or ""
 
-  if lfs and io and os and self.AutoSave then
+  if lfs and io and os and self.AutoSave == true and self.CSVFile ~= nil then
     self.CSVFile:write(
       '"' .. self.GameName        .. '"' .. ',' ..
       '"' .. self.RunTime         .. '"' .. ',' ..
