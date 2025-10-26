@@ -4255,9 +4255,33 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
   local FarpVec2 = Coordinate:GetVec2()
   
   if NumberPads > 1 then
-    local Grid = UTILS.GenerateGridPoints(FarpVec2, NumberPads, SpacingX, SpacingY) 
+    local Grid = UTILS.GenerateGridPoints(FarpVec2, NumberPads, SpacingX, SpacingY)
+    local groupData = {
+    ["visible"] = true,
+    ["hidden"] = false,
+    ["units"] = {},
+    ["y"] = 0,  -- Group center latitude
+    ["x"] = 0,  -- Group center longitude
+    ["name"] = Name,
+    } 
+    local unitData = {
+            ["category"] = "Heliports",
+            ["type"] = STypeName,  -- FARP type
+            ["y"] = 0,  -- Latitude coordinate (meters)
+            ["x"] = 0,  -- Longitude coordinate (meters)
+            ["name"] = Name,
+            ["heading"] = 0,  -- Heading in radians
+            ["heliport_modulation"] = mod,  -- 0 = AM, 1 = FM
+            ["heliport_frequency"] = freq,  -- Radio frequency in MHz
+            ["heliport_callsign_id"] = callsign,  -- Callsign ID
+            ["dead"] = false,
+            ["shape_name"] = SShapeName,
+            ["dynamicSpawn"] = DynamicSpawns,
+            ["allowHotStart"] = HotStart,
+    }
     for id,gridpoint in ipairs(Grid) do
       -- Spawn FARP
+      --[[
       local location = COORDINATE:NewFromVec2(gridpoint)
       local newfarp = SPAWNSTATIC:NewFromType(STypeName,"Heliports",Country) --  "Invisible FARP" "FARP"
       newfarp:InitShape(SShapeName) -- "invisiblefarp" "FARPS"
@@ -4265,8 +4289,32 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
       local spawnedfarp = newfarp:SpawnFromCoordinate(location,0,Name.."-"..id)
       table.insert(ReturnObjects,spawnedfarp)
       
-      PopulateStorage(Name.."-"..id,liquids,equip,airframes)   
-    end    
+      PopulateStorage(Name.."-"..id,liquids,equip,airframes)
+      --]]
+      local UnitTemplate = UTILS.DeepCopy(unitData)
+      UnitTemplate.x = gridpoint.x
+      UnitTemplate.y = gridpoint.y
+      UnitTemplate.name = Name.."-"..id
+      table.insert(groupData.units,UnitTemplate)
+      if id==1 then
+        groupData.x = gridpoint.x
+        groupData.y = gridpoint.y
+      end   
+    end
+    --BASE:I("Spawning FARP")
+    --UTILS.PrintTableToLog(groupData,1)
+    local Static=coalition.addGroup(Country, -1, groupData)
+    -- Currently DCS >= 2.8 does not trigger birth events if FARPS are spawned!
+    -- We create such an event. The airbase is registered in Core.Event
+    local Event = {
+      id = EVENTS.Birth,
+      time = timer.getTime(),
+      initiator = Static
+      }
+    -- Create BIRTH event.
+    world.onEvent(Event)
+    
+    PopulateStorage(Name.."-1",liquids,equip,airframes)
   else
     -- Spawn FARP
     local newfarp = SPAWNSTATIC:NewFromType(STypeName,"Heliports",Country) --  "Invisible FARP" "FARP"
