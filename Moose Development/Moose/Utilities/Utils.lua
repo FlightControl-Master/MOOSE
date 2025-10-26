@@ -3307,10 +3307,12 @@ end
 -- @return #number Adjust heading in [0,360).
 function UTILS.AdjustHeading360(Heading)
 
-  if Heading>=360 then
-    Heading=Heading-360
-  elseif Heading<0 then
-    Heading=Heading+360
+  while Heading>=360 or Heading<0 do
+    if Heading>=360 then
+      Heading=Heading-360
+    elseif Heading<0 then
+      Heading=Heading+360
+    end
   end
 
   return Heading
