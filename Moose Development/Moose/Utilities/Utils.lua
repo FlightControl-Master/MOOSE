@@ -4281,20 +4281,10 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
     }
     for id,gridpoint in ipairs(Grid) do
       -- Spawn FARP
-      --[[
-      local location = COORDINATE:NewFromVec2(gridpoint)
-      local newfarp = SPAWNSTATIC:NewFromType(STypeName,"Heliports",Country) --  "Invisible FARP" "FARP"
-      newfarp:InitShape(SShapeName) -- "invisiblefarp" "FARPS"
-      newfarp:InitFARP(callsign,freq,mod,DynamicSpawns,HotStart)
-      local spawnedfarp = newfarp:SpawnFromCoordinate(location,0,Name.."-"..id)
-      table.insert(ReturnObjects,spawnedfarp)
-      
-      PopulateStorage(Name.."-"..id,liquids,equip,airframes)
-      --]]
       local UnitTemplate = UTILS.DeepCopy(unitData)
       UnitTemplate.x = gridpoint.x
       UnitTemplate.y = gridpoint.y
-      UnitTemplate.name = Name.."-"..id
+      if id > 1 then UnitTemplate.name = Name.."-"..id end
       table.insert(groupData.units,UnitTemplate)
       if id==1 then
         groupData.x = gridpoint.x
