@@ -1152,6 +1152,23 @@ function GROUP:GetVec3()
   return nil
 end
 
+--- Returns the current {@Core.Vector#VECTOR} of the first Unit in the GROUP.
+-- @param #GROUP self
+-- @return Core.Vector#VECTOR Vector of the first Unit of the GROUP or nil if cannot be found.
+function GROUP:GetVector()
+
+  -- Get first unit.
+  local unit=self:GetUnit(1)
+
+  if unit then
+    local vector=unit:GetVector()
+    return vector
+  end
+
+  self:E("ERROR: Cannot get Vector of group "..tostring(self.GroupName))
+  return nil
+end
+
 --- Returns the average Vec3 vector of the Units in the GROUP.
 -- @param #GROUP self
 -- @return DCS#Vec3 Current Vec3 of the GROUP  or nil if cannot be found.

@@ -286,6 +286,27 @@ function POSITIONABLE:GetVec2()
   return nil
 end
 
+--- Returns the @{Core.Vector#VECTOR} indicating the 3D position of the object on the map.
+-- @param #POSITIONABLE self
+-- @return Core.Vector#VECTOR The 3D vector.
+function POSITIONABLE:GetVector()
+
+  local DCSPositionable = self:GetDCSObject()
+
+  if DCSPositionable then
+
+    local Vec3 = DCSPositionable:getPoint() -- DCS#Vec3
+    
+    local vector=VECTOR:NewFromVec(Vec3)
+
+    return vector
+  end
+
+  self:E( { "Cannot GetVec2", Positionable = self, Alive = self:IsAlive() } )
+
+  return nil
+end
+
 --- Returns a COORDINATE object indicating the point in 2D of the POSITIONABLE within the mission.
 -- @param #POSITIONABLE self
 -- @return Core.Point#COORDINATE The 3D point vector of the POSITIONABLE.

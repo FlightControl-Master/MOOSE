@@ -133,7 +133,7 @@ VECTOR = {
 
 --- VECTOR class version.
 -- @field #string version
-VECTOR.version="0.0.2"
+VECTOR.version="0.0.3"
 
 --- VECTOR private index.
 -- @field #VECTOR __index
@@ -528,16 +528,25 @@ end
 
 --- Get MGRS coordinates of this vector.
 -- @param #VECTOR self
--- @param #VECTOR Vector Vector from which the heading is requested.
--- @return #number Latitude
--- @return #number Longitude
+-- @return #number Easting
+-- @return #number Northing
 function VECTOR:GetMGRS()
 
   local lat, long=self:GetLatitudeLongitude()
 
   local mrgs=coord.LLtoMGRS(lat, long)
+
+  -- Example table returned by coord.LLtoMGRS
+  --[[
+  MGRS = {
+    UTMZone = string,
+    MGRSDigraph = string,
+    Easting = number,
+    Northing = number
+  }
+  ]]
   
-  return mrgs.Easing, mrgs.Northing
+  return mrgs.Easting, mrgs.Northing
 end
 
 --- Get the difference of the heading of this vector w.
@@ -857,7 +866,7 @@ end
 -- * RUNWAY = 5
 -- 
 -- @param #VECTOR self
--- @return #number Surface Type
+-- @return #number Surface type
 function VECTOR:GetSurfaceType()
 
   local vec2=self:GetVec2()
@@ -865,6 +874,32 @@ function VECTOR:GetSurfaceType()
   local s=land.getSurfaceType(vec2)
    
   return s
+end
+
+
+--- Get the name of surface type at the vector.
+-- 
+-- * LAND = 1
+-- * SHALLOW_WATER = 2
+-- * WATER = 3
+-- * ROAD = 4
+-- * RUNWAY = 5
+-- 
+-- @param #VECTOR self
+-- @return #string Surface type name
+function VECTOR:GetSurfaceTypeName()
+
+  local vec2=self:GetVec2()
+  
+  local s=land.getSurfaceType(vec2)
+  
+  for name,id in land.SurfaceType() do
+    if id==s then
+      return name
+    end
+  end
+   
+  return "unknown"
 end
 
 --- Check if a given vector has line of sight with this vector.
@@ -1052,6 +1087,7 @@ function VECTOR:IlluminationBomb(Power)
 
   trigger.action.illuminationBomb(vec3, Power or 1000)
 
+  return self
 end
 
 --- Creates an explosion at a given point at the specified power.
@@ -1085,14 +1121,28 @@ end
 --- Creates a arrow from this VECTOR to another vector on the F10 map.
 -- @param #VECTOR self
 -- @param #VECTOR Vector The vector defining the endpoint.
--- @return #VECTOR self
-function VECTOR:ArrowToAll(Vector)
+-- @param #number Coalition Coalition Id: -1=All, 0=Neutral, 1=Red, 2=Blue. Default -1.
+-- @param #table Color RGB color with alpha {r, g, b, alpha}. Default {1, 0, 0, 0.7}.
+-- @param #table FillColor RGB color with alpha {r, g, b, alpha}. Default {1, 0, 0, 0.5}.
+-- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot Dash, 5=Long Dash, 6=Two Dash. Default 1.
+-- @return #number Marker ID. Can be used to remove the drawing.
+function VECTOR:ArrowToAll(Vector, Coalition, Color, FillColor, LineType)
 
   local vec3Start=self:GetVec3()
+  local vec3End=Vector:GetVec3()
   
-  trigger.action.arrowToAll(coalition , id, vec3Start, vec3End, color, fillColor , lineType, readOnly, "")
+  local id=UTILS.GetMarkID()
+  
+  Coalition=Coalition or -1
+  Color=Color or {1,0,0,0.7}
+  FillColor=FillColor or {1,0,0,0.5}
+  LineType=LineType or 1
+  
+  local readOnly=false
+  
+  trigger.action.arrowToAll(Coalition , id, vec3Start, vec3End, Color, FillColor , LineType, readOnly, "")
 
-  return self
+  return id
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
