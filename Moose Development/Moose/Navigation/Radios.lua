@@ -162,12 +162,18 @@ function RADIOS:NewFromFile(FileName)
     self:E(string.format("ERROR: file with radios info does not exist! File=%s", tostring(FileName)))
     return nil
   end
+  
+  -- Backup DCS radio table
+  local radiobak=UTILS.DeepCopy(radio)
 
   -- This will create a global table `radio`  
   dofile(FileName)
 
   -- Get radios from table.
   self=self:NewFromTable(radio)
+  
+  -- Restore DCS radio table
+  radio=UTILS.DeepCopy(radiobak)
   
   return self
 end
