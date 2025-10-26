@@ -4137,6 +4137,45 @@ function UTILS.LCGRandom()
   return UTILS.lcg.seed / UTILS.lcg.m
 end
 
+--- Create a table of grid-points for n points.
+-- @param #number startVec2 Starting DCS#Vec2 map coordinate, e.g. `{x=63598575,y=-63598575}`
+-- @param #number n Number of points to generate.
+-- @param #number spacingX Horizonzal spacing (meters).
+-- @param #number spacingY Vertical spacing (meters).
+-- @return #table Grid Table of DCS#Vec2 entries.
+function UTILS.GenerateGridPoints(startVec2, n, spacingX, spacingY)
+    local points = {}
+    local gridSize = math.ceil(math.sqrt(n))
+    local count = 0
+    local n = n or 1
+    local spacingX = spacingX or 100
+    local spacingY = spacingY or 100
+    local startX = startVec2.x or 100
+    local startY = startVec2.y or 100
+      
+    for row = 0, gridSize - 1 do
+        for col = 0, gridSize - 1 do
+            if count >= n then
+                break
+            end
+            
+            local point = {
+                x = startX + (col * spacingX),
+                y = startY + (row * spacingY)
+            }
+            
+            table.insert(points, point)
+            count = count + 1
+        end
+        
+        if count >= n then
+            break
+        end
+    end
+    
+    return points
+end
+
 --- Spawns a new FARP of a defined type and coalition and functional statics (fuel depot, ammo storage, tent, windsock) around that FARP to make it operational.
 -- Adds vehicles from template if given. Fills the FARP warehouse with liquids and known materiels.
 -- References: [DCS Forum Topic](https://forum.dcs.world/topic/282989-farp-equipment-to-run-it)
@@ -4157,10 +4196,38 @@ end
 -- @param #string F10Text Text to display on F10 map if given. Handy to post things like the ADF beacon Frequency, Callsign and ATC Frequency.
 -- @param #boolean DynamicSpawns If true, allow Dynamic Spawns from this FARP.
 -- @param #boolean HotStart If true and DynamicSpawns is true, allow hot starts for Dynamic Spawns from this FARP.
+-- @param #number NumberPads If given, spawn this number of pads.
+-- @param #number SpacingX For NumberPads > 1, space this many meters horizontally. Defaults to 100.
+-- @param #number SpacingY For NumberPads > 1, space this many meters vertically. Defaults to 100.
 -- @return #list<Wrapper.Static#STATIC> Table of spawned objects and vehicle object (if given).
 -- @return #string ADFBeaconName Name of the ADF beacon, to be able to remove/stop it later.
 -- @return #number MarkerID ID of the F10 Text, to be able to remove it later.
-function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,Country,CallSign,Frequency,Modulation,ADF,SpawnRadius,VehicleTemplate,Liquids,Equipment,Airframes,F10Text,DynamicSpawns,HotStart)
+function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,Country,CallSign,Frequency,Modulation,ADF,SpawnRadius,VehicleTemplate,Liquids,Equipment,Airframes,F10Text,DynamicSpawns,HotStart,NumberPads,SpacingX,SpacingY)
+  
+  local function PopulateStorage(Name,liquids,equip,airframes)
+    local newWH = STORAGE:New(Name)
+    if liquids and liquids > 0 then
+      -- Storage fill-up
+      newWH:SetLiquid(STORAGE.Liquid.DIESEL,liquids) -- kgs to tons
+      newWH:SetLiquid(STORAGE.Liquid.GASOLINE,liquids)
+      newWH:SetLiquid(STORAGE.Liquid.JETFUEL,liquids)
+      newWH:SetLiquid(STORAGE.Liquid.MW50,liquids)
+    end
+    
+    if equip and equip > 0 then
+      for cat,nitem in pairs(ENUMS.Storage.weapons) do
+        for name,item in pairs(nitem) do
+          newWH:SetItem(item,equip)
+        end
+      end
+    end
+    
+    if airframes and airframes > 0 then
+      for typename in pairs (CSAR.AircraftType) do
+        newWH:SetItem(typename,airframes)
+      end
+    end
+  end
   
   -- Set Defaults
   local farplocation = Coordinate
@@ -4181,12 +4248,36 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
   local Country = Country or (Coalition == coalition.side.BLUE and country.id.USA or country.id.RUSSIA)
   local ReturnObjects = {}
   
-  -- Spawn FARP
-  local newfarp = SPAWNSTATIC:NewFromType(STypeName,"Heliports",Country) --  "Invisible FARP" "FARP"
-  newfarp:InitShape(SShapeName) -- "invisiblefarp" "FARPS"
-  newfarp:InitFARP(callsign,freq,mod,DynamicSpawns,HotStart)
-  local spawnedfarp = newfarp:SpawnFromCoordinate(farplocation,0,Name)
-  table.insert(ReturnObjects,spawnedfarp)
+  -- many FARPs
+  local NumberPads = NumberPads or 1
+  local SpacingX = SpacingX or 100
+  local SpacingY = SpacingY or 100
+  local FarpVec2 = Coordinate:GetVec2()
+  
+  if NumberPads > 1 then
+    local Grid = UTILS.GenerateGridPoints(FarpVec2, NumberPads, SpacingX, SpacingY) 
+    for id,gridpoint in ipairs(Grid) do
+      -- Spawn FARP
+      local location = COORDINATE:NewFromVec2(gridpoint)
+      local newfarp = SPAWNSTATIC:NewFromType(STypeName,"Heliports",Country) --  "Invisible FARP" "FARP"
+      newfarp:InitShape(SShapeName) -- "invisiblefarp" "FARPS"
+      newfarp:InitFARP(callsign,freq,mod,DynamicSpawns,HotStart)
+      local spawnedfarp = newfarp:SpawnFromCoordinate(location,0,Name.."-"..id)
+      table.insert(ReturnObjects,spawnedfarp)
+      
+      PopulateStorage(Name.."-"..id,liquids,equip,airframes)   
+    end    
+  else
+    -- Spawn FARP
+    local newfarp = SPAWNSTATIC:NewFromType(STypeName,"Heliports",Country) --  "Invisible FARP" "FARP"
+    newfarp:InitShape(SShapeName) -- "invisiblefarp" "FARPS"
+    newfarp:InitFARP(callsign,freq,mod,DynamicSpawns,HotStart)
+    local spawnedfarp = newfarp:SpawnFromCoordinate(farplocation,0,Name)
+    table.insert(ReturnObjects,spawnedfarp)
+    
+    PopulateStorage(Name,liquids,equip,airframes)  
+  end
+  
   -- Spawn Objects
   local FARPStaticObjectsNato = {
     ["FUEL"] = { TypeName = "FARP Fuel Depot", ShapeName = "GSM Rus", Category = "Fortifications"},
@@ -4218,29 +4309,6 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
     vehicles:InitDelayOff()
     local spawnedvehicle = vehicles:SpawnFromCoordinate(vcoordinate)
     table.insert(ReturnObjects,spawnedvehicle)
-  end
-  
-  local newWH = STORAGE:New(Name)
-  if liquids and liquids > 0 then
-    -- Storage fill-up
-    newWH:SetLiquid(STORAGE.Liquid.DIESEL,liquids) -- kgs to tons
-    newWH:SetLiquid(STORAGE.Liquid.GASOLINE,liquids)
-    newWH:SetLiquid(STORAGE.Liquid.JETFUEL,liquids)
-    newWH:SetLiquid(STORAGE.Liquid.MW50,liquids)
-  end
-  
-  if equip and equip > 0 then
-    for cat,nitem in pairs(ENUMS.Storage.weapons) do
-      for name,item in pairs(nitem) do
-        newWH:SetItem(item,equip)
-      end
-    end
-  end
-  
-  if airframes and airframes > 0 then
-    for typename in pairs (CSAR.AircraftType) do
-      newWH:SetItem(typename,airframes)
-    end
   end
   
   local ADFName

@@ -12230,7 +12230,7 @@ function AIRBOSS:GetHeadingIntoWind_new( vdeck, magnetic, coord )
 
   -- Ship heading so cross wind is min for the given wind.
   -- local intowind = (540 + (windto - magvar + math.deg(theta) )) % 360 -- VNAO Edit: Using old heading into wind algorithm
-  local intowind = self:GetHeadingIntoWind_old(vdeck) -- VNAO Edit: Using old heading into wind algorithm
+  local intowind = self:GetHeadingIntoWind_old(vdeck,magnetic) -- VNAO Edit: Using old heading into wind algorithm
 
   return intowind, v
 end
