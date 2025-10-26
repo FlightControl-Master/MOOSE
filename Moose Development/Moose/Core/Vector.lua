@@ -135,6 +135,9 @@ VECTOR = {
 -- @field #string version
 VECTOR.version="0.0.3"
 
+--- VECTOR unique ID
+_VECTORID=0
+
 --- VECTOR private index.
 -- @field #VECTOR __index
 VECTOR.__index = VECTOR
@@ -168,6 +171,10 @@ function VECTOR:New(x, y, z)
   else
     self=setmetatable({x=x or 0, y=y or 0, z=z or 0}, VECTOR)
   end
+  
+  _VECTORID=_VECTORID+1
+  
+  self.uid=_VECTORID
 
   return self
 end
@@ -578,7 +585,7 @@ end
 -- @param #VECTOR Vector The destination vector.
 -- @param #number Fraction The fraction (0,1) where the new vector is created. Default 0.5, *i.e.* in the middle.
 -- @return #VECTOR Vector between this and the other vector.
-function VECTOR:GetIntermediateCoordinate(Vector, Fraction)
+function VECTOR:GetIntermediateVector(Vector, Fraction)
 
   local f=Fraction or 0.5
 
@@ -590,13 +597,7 @@ function VECTOR:GetIntermediateCoordinate(Vector, Fraction)
   
   -- Set/scale the length.
   vec:SetLength(f*length)
-  
-  --TODO: Not sure what this was supposed to do?!
---  if f>1 then
---    local norm=UTILS.VecNorm(vec)
---    f=Fraction/norm
---  end  
-  
+ 
   -- Get to the desired position.
   vec=self+vec
   
@@ -675,7 +676,7 @@ function VECTOR:AddVec(Vec)
   return self
 end
 
---- Substract a vector from this one. This function works for DCS#Vec2, DCS#Vec3, VECTOR, COORDINATE objects.
+--- Subtract a vector from this one. This function works for DCS#Vec2, DCS#Vec3, VECTOR, COORDINATE objects.
 -- Note that if you want to add a VECTOR, you can also simply use the `-` operator.
 -- @param #VECTOR self
 -- @param DCS#Vec3 Vec Vector to substract. Can also be a DCS#Vec2, DCS#Vec3, COORDINATE or VECTOR object.
@@ -1057,8 +1058,61 @@ function VECTOR:GetTemperaturAndPressure()
   return t,p
 end
 
+--- Creates a smoke at this vector.
+-- @param #VECTOR self
+-- @param #number Color Color of the smoke: 0=Green, 1=Red, 2=White, 3=Orange, 4=Blue. Default 0.
+-- @param #number Duration (Optional) Duration of the smoke in seconds. Default nil. 
+function VECTOR:Smoke(Color, Duration)
+
+  local vec3=self:GetVec3()
+  
+  Color=Color or 0
+
+  self.nameSmoke=string.format("Vector-Smoke-%d", self.uid)
+
+  trigger.action.smoke(vec3, Color, self.nameSmoke)
+  
+  
+  if Duration and Duration>0 then
+    self:StopSmoke(Duration)
+  end
+
+  return self
+end
+
+
+--- Stops smoke.
+-- @param #VECTOR self
+-- @return #VECTOR self
+function VECTOR:StopSmoke(Delay)
+
+  printf("stop smoke")
+
+  if Delay and Delay>0 then
+    timer.scheduleFunction(VECTOR.StopSmoke, self, timer.getTime()+Delay)
+    printf("stop smoke scheduled")
+  else
+    if self.nameSmoke then
+      trigger.action.effectSmokeStop(self.nameSmoke)
+      self.nameSmoke=nil
+      printf("stop smoke NOW")
+    end
+  end
+  
+  return self
+end
 
 --- Creates a large smoke and fire effect of a specified type and density at this vector.
+-- 
+-- * 1 = small smoke and fire
+-- * 2 = medium smoke and fire
+-- * 3 = large smoke and fire
+-- * 4 = huge smoke and fire
+-- * 5 = small smoke
+-- * 6 = medium smoke 
+-- * 7 = large smoke
+-- * 8 = huge smoke
+-- 
 -- @param #VECTOR self
 -- @param #number Preset Preset of smoke. Default `BIGSMOKEPRESET.LargeSmokeAndFire`.
 -- @param #number Density Density between [0,1]. Default 0.5.
@@ -1126,10 +1180,10 @@ end
 -- @param #table FillColor RGB color with alpha {r, g, b, alpha}. Default {1, 0, 0, 0.5}.
 -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot Dash, 5=Long Dash, 6=Two Dash. Default 1.
 -- @return #number Marker ID. Can be used to remove the drawing.
-function VECTOR:ArrowToAll(Vector, Coalition, Color, FillColor, LineType)
+function VECTOR:ArrowTo(Vector, Coalition, Color, FillColor, LineType)
 
-  local vec3Start=self:GetVec3()
-  local vec3End=Vector:GetVec3()
+  local vec3End=self:GetVec3()
+  local vec3Start=Vector:GetVec3()
   
   local id=UTILS.GetMarkID()
   
@@ -1169,7 +1223,7 @@ function VECTOR.__add(a,b)
   return c
 end
 
---- Meta function to substract vectors.
+--- Meta function to subtract vectors.
 -- @param #VECTOR a Vector a.
 -- @param #VECTOR b Vector b.
 -- @return #VECTOR Returns a new VECTOR c with c[i]=a[i]-b[i] for i=x,y,z.
