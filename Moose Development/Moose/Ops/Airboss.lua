@@ -12229,8 +12229,8 @@ function AIRBOSS:GetHeadingIntoWind_new( vdeck, magnetic, coord )
   local magvar= magnetic and self.magvar or 0
 
   -- Ship heading so cross wind is min for the given wind.
-  -- local intowind = (540 + (windto - magvar + math.deg(theta) )) % 360 -- VNAO Edit: Using old heading into wind algorithm
-  local intowind = self:GetHeadingIntoWind_old(vdeck,magnetic) -- VNAO Edit: Using old heading into wind algorithm
+  local intowind = (540 + (windto - magvar + math.deg(theta) )) % 360
+
 
   return intowind, v
 end
@@ -12682,7 +12682,8 @@ function AIRBOSS:_LSOgrade( playerData )
   local nL=count(G, '_')/2
   local nS=count(G, '%(')
   local nN=N-nS-nL
-
+  
+  if TIG=="_OK_" then nL = nL -1 end --Circuit added to prevent grade deduction for perfect groove
 
   -- Groove time 15-18.99 sec for a unicorn. Or 60-65 for V/STOL unicorn.
   local Tgroove=playerData.Tgroove
@@ -12712,7 +12713,6 @@ function AIRBOSS:_LSOgrade( playerData )
     else
 
     if vtol then
-
       -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe.--Pene testing
       -- Large devaitions still result in a No Grade, A Unicorn still requires a clean pass with no deviation.
 
