@@ -1637,6 +1637,7 @@ do -- COORDINATE
       if AirbaseCategory == Airbase.Category.SHIP or AirbaseCategory == Airbase.Category.HELIPAD then
         RoutePoint.linkUnit = AirbaseID
         RoutePoint.helipadId = AirbaseID
+        RoutePoint.airdromeId = airbase:IsAirdrome() and AirbaseID or nil
       elseif AirbaseCategory == Airbase.Category.AIRDROME then
         RoutePoint.airdromeId = AirbaseID
       else
