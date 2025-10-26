@@ -191,5 +191,7 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Beacons.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Point.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Procedure.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/FlightPlan.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Radios.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Towns.lua' )
 
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Globals.lua' )

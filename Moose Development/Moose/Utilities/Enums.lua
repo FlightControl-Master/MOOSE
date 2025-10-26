@@ -1386,3 +1386,28 @@ ENUMS.FARPObjectTypeNamesAndShape ={
   [ENUMS.FARPType.PADSINGLE] = { TypeName="FARP_SINGLE_01", ShapeName="FARP_SINGLE_01"},
 }
 
+--- Radio frequency bands (HF, VHF, UHF)
+-- @type ENUMS.FrequencyBand
+-- @field #number HF High frequency
+-- @field #number VHF_LOW Very high frequency
+-- @field #number VHF_HI Very high frequency
+-- @field #number UHF Ultra high frequency
+ENUMS.FrequencyBand = {
+  HF = 0,
+  VHF_LOW = 1,
+  VHF_HI = 2,
+  UHF = 3,
+}
+
+--- Radio modulation types (AM, FM)
+-- @type ENUMS.ModulationType
+-- @field #number AM Amplitude modulation
+-- @field #number FM Frequency modulation
+-- @field #number AMFM Amplitude and frequency modulation
+-- @field #number DISCARD Discard modulation
+ENUMS.ModulationType = {
+  AM = 0,
+  FM = 1,
+  AMFM = 2,
+  DISCARD = -1,
+}
