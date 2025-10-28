@@ -219,6 +219,25 @@ function POSITIONABLE:GetOrientationZ()
   end
 end
 
+--- Returns the vectors of the orientation of the object:
+-- X is the orientation parallel to the movement of the object, Z perpendicular and Y vertical orientation.
+-- @param #POSITIONABLE self
+-- @return Core.Vector#VECTOR X orientation, i.e. parallel to the direction of movement.
+-- @return Core.Vector#VECTOR Y orientation, i.e. vertical.
+-- @return Core.Vector#VECTOR Z orientation, i.e. perpendicular to the direction of movement.
+function POSITIONABLE:GetOrientationVectors()
+  local position = self:GetPosition()
+  if position then
+    local vecx=VECTOR:NewFromVec(position.x)
+    local vecy=VECTOR:NewFromVec(position.y)
+    local vecz=VECTOR:NewFromVec(position.z)
+    return vecx, vecy, vecz
+  else
+    BASE:E( { "Cannot GetOrientation", Positionable = self, Alive = self:IsAlive() } )
+    return nil, nil, nil
+  end
+end
+
 --- Returns the @{DCS#Position3} position vectors indicating the point and direction vectors in 3D of the POSITIONABLE within the mission.
 -- @param #POSITIONABLE self
 -- @return DCS#Position The 3D position vectors of the POSITIONABLE.
@@ -931,6 +950,24 @@ function POSITIONABLE:GetVelocityVec3()
   end
 
   BASE:E( { "Cannot GetVelocityVec3", Positionable = self, Alive = self:IsAlive() } )
+
+  return nil
+end
+
+--- Returns the velocity vector.
+-- @param #POSITIONABLE self
+-- @return Core.Vector#VECTOR The velocity vector or `nil` if the object does not exist.
+function POSITIONABLE:GetVelocityVector()
+
+  local DCSPositionable = self:GetDCSObject()
+
+  if DCSPositionable and DCSPositionable:isExist() then
+    local vec3 = DCSPositionable:getVelocity()
+    local vector=VECTOR:NewFromVec(vec3)
+    return vector
+  end
+
+  BASE:E( { "Cannot GetVelocityVector", Positionable = self, Alive = self:IsAlive() } )
 
   return nil
 end
