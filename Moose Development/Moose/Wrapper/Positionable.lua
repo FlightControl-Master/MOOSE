@@ -1865,6 +1865,7 @@ do -- Cargo
       ["HL_DSHK"] = 6*POSITIONABLE.DefaultInfantryWeight,
       ["CCKW_353"] = 16*POSITIONABLE.DefaultInfantryWeight, --GMC CCKW 2½-ton 6×6 truck, estimating 16 soldiers,
       ["MaxxPro_MRAP"] = 7*POSITIONABLE.DefaultInfantryWeight,
+      ["Sd_Kfz_251"] = 10*POSITIONABLE.DefaultInfantryWeight,
     }
   }
 
