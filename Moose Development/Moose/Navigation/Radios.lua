@@ -3,6 +3,8 @@
 -- **Main Features:**
 --
 --    * Get radio frequencies of airbases
+--    * Find closest airbase radios
+--    * Mark radio frequencies on F10 map
 -- 
 -- ===
 --
@@ -64,7 +66,7 @@
 -- @field #RADIOS
 RADIOS = {
   ClassName  = "RADIOS",
-  verbose    =         0,
+  verbose    =        0,
   radios    =        {},
 }
 
@@ -78,6 +80,9 @@ RADIOS = {
 -- @field #table sceneObjects Scenery objects.
 -- @field #string name Name of the airbase.
 -- @field Wrapper.Airbase#AIRBASE airbase Airbase.
+-- @field Core.Point#COORDINATE coordinate The COORDINATE of the radio.
+-- @field DCS#Vec3 vec3 3D vector.
+-- @field #number markerID Marker ID.
 
 --- Radio item data structure.
 -- @type RADIOS.Frequency
@@ -87,7 +92,7 @@ RADIOS = {
 
 --- RADIOS class version.
 -- @field #string version
-RADIOS.version="0.0.0"
+RADIOS.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -112,9 +117,7 @@ function RADIOS:NewFromTable(RadioTable)
   
   for _,_radio in pairs(RadioTable) do
     local radio=_radio --#RADIOS.Radio
-    
-    --UTILS.PrintTableToLog(radio)
-    --UTILS.PrintTableToLog(radio.callsign)
+
     
     -- The table structure of callsign is a bit awkward. We need to get the airbase name.
     local cs=radio.callsign[1]
@@ -126,7 +129,6 @@ function RADIOS:NewFromTable(RadioTable)
       radio.name="Unknown"
     end
     
-    --UTILS.PrintTableToLog(radio.callsign)
     
     radio.name=self:_GetAirbaseName(airbasenames, radio.name)
     
@@ -134,6 +136,7 @@ function RADIOS:NewFromTable(RadioTable)
     
     if radio.airbase then
       radio.coordinate=radio.airbase:GetCoordinate()
+      radio.vec3=radio.airbase:GetVec3()
     end
     
     -- Add to table
@@ -197,6 +200,66 @@ end
 function RADIOS:GetCoordinate(radio)
   return radio.coordinate
 end
+
+
+--- Find closest radio to a given coordinate.
+-- @param #RADIOS self
+-- @param Core.Point#COORDINATE Coordinate The reference coordinate.
+-- @param #number DistMax (Optional) Max search distance in meters.
+-- @param #table ExcludeList (Optional) List of radios to exclude.
+-- @return #RADIOS.Radio The closest radio.
+function RADIOS:GetClosestRadio(Coordinate, DistMax, ExcludeList)
+
+  local radio=nil --#RADIOS.Radio
+  local distmin=math.huge
+  
+  ExcludeList=ExcludeList or {}
+  
+  for _,_radio in pairs(self.radios) do
+    local ra=_radio --#RADIOS.Radio
+    
+    if (not UTILS.IsInTable(ExcludeList, ra, "radioId")) then
+    
+      local dist=Coordinate:Get2DDistance(ra.coordinate)
+      
+      if dist<distmin and (DistMax==nil or dist<=DistMax) then
+        distmin=dist
+        radio=ra
+      end
+      
+    end
+    
+  end  
+  
+  return radio
+end
+
+--- Find closest radios to a given coordinate.
+-- @param #RADIOS self
+-- @param Core.Point#COORDINATE Coordinate The reference coordinate.
+-- @param #number Nmax Max number of radios. Default 5.
+-- @param #number DistMax (Optional) Max search distance in meters.
+-- @return #table Table of #RADIOS.Radio closest radios.
+function RADIOS:GetClosestRadios(Coordinate, Nmax, DistMax)
+
+    Nmax=Nmax or 5
+    
+    local closest={}
+    for i=1,Nmax do
+    
+      local radio=self:GetClosestRadio(Coordinate, DistMax, closest)
+      
+      if radio then
+        table.insert(closest, radio)
+      else
+        break
+      end
+      
+    end
+
+  return closest
+end
+
 
 --- Add markers for all radios on the F10 map.
 -- @param #RADIOS self

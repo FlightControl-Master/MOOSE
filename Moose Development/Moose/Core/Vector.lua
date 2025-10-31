@@ -133,7 +133,7 @@ VECTOR = {
 
 --- VECTOR class version.
 -- @field #string version
-VECTOR.version="0.0.3"
+VECTOR.version="0.1.0"
 
 --- VECTOR unique ID
 _VECTORID=0
@@ -147,7 +147,7 @@ VECTOR.__index = VECTOR
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: 3D rotation
--- TODO: Markers
+-- DONE: Markers
 -- TODO: Documentation
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -966,10 +966,9 @@ function VECTOR:GetPathOnRoad(Vec)
   local vec1=self:GetVec2()
   local vec2=Vec:GetVec2()
   
-  local path=nil
-
   local vec2points=land.findPathOnRoads("roads", vec1.x , vec1.y, vec2.x, vec2.y)
   
+  local path=nil  
   if vec2points then    
     path=PATHLINE:NewFromVec2Array("Road", vec2points)
   end
@@ -1365,10 +1364,6 @@ end
 -- @param #VECTOR b Vector b.
 -- @return #boolean If `true`, both vectors are equal
 function VECTOR.__eq(a, b)
-  --assert(VECTOR._IsVector(a) and VECTOR._IsVector(b), "ERROR in VECTOR.__eq: wrong argument types: (expected <vector> and <vector>)")
-  env.info("FF __eq",showMessageBox)
-  BASE:I(a)
-  BASE:I(b)
   return a.x==b.x and a.y==b.y and a.z==b.z
 end
 

@@ -90,7 +90,7 @@ BEACONS = {
 
 --- BEACONS class version.
 -- @field #string version
-BEACONS.version="0.0.4"
+BEACONS.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -236,6 +236,33 @@ function BEACONS:GetClosestBeacon(Coordinate, TypeID, DistMax, ExcludeList)
   end  
   
   return beacon
+end
+
+--- Find closest beacons to a given coordinate.
+-- @param #BEACONS self
+-- @param Core.Point#COORDINATE Coordinate The reference coordinate.
+-- @param #number Nmax Max number of beacons. Default 5.
+-- @param #number TypeID (Optional) Only search for specific beacon types, *e.g.* `BEACON.Type.TACAN`.
+-- @param #number DistMax (Optional) Max search distance in meters.
+-- @return #table Table of #BEACONS.Beacon closest beacons.
+function BEACONS:GetClosestBeacons(Coordinate, Nmax, TypeID, DistMax)
+
+    Nmax=Nmax or 5
+    
+    local closest={}
+    for i=1,Nmax do
+    
+      local beacon=self:GetClosestBeacon(Coordinate, TypeID, DistMax, closest)
+      
+      if beacon then
+        table.insert(closest, beacon)
+      else
+        break
+      end
+      
+    end
+
+  return closest
 end
 
 --- Get table of all beacons, optionally of a given type.
