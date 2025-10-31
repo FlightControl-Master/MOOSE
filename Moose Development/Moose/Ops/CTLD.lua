@@ -4778,6 +4778,7 @@ function CTLD:_RefreshF10Menus()
     for _, _unitName in pairs(self.CtldUnits) do
       if (not self.MenusDone[_unitName]) or (self.showstockinmenuitems == true) then
         self:T(self.lid.."Menu not done yet for ".._unitName)
+        local firstBuild = not self.MenusDone[_unitName]
         local _unit  = UNIT:FindByName(_unitName)
         if not _unit and self.allowCATransport then
           _unit = CLIENT:FindByName(_unitName)
@@ -5026,6 +5027,7 @@ function CTLD:_RefreshF10Menus()
             self.MenusDone[_unitName] = true
             self:_RefreshLoadCratesMenu(_group,_unit)
             self:_RefreshDropCratesMenu(_group,_unit)
+            if firstBuild then menucount=menucount+1 end
   
           end -- if _group
         end -- if _unit
@@ -5033,7 +5035,7 @@ function CTLD:_RefreshF10Menus()
         self:T(self.lid .. " Menus already done for this group!")
       end
     end -- for all pilot units
-    self:_RefreshQuantityMenusForGroup()
+    if menucount>0 and not self.showstockinmenuitems then self:_RefreshQuantityMenusForGroup() end
     return self
   end
   
