@@ -5033,7 +5033,7 @@ function CTLD:_RefreshF10Menus()
         self:T(self.lid .. " Menus already done for this group!")
       end
     end -- for all pilot units
-  
+    self:_RefreshQuantityMenusForGroup()
     return self
   end
   
