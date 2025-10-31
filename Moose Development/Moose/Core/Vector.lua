@@ -924,8 +924,7 @@ end
 
 --- Get a vector on the closest road.
 -- @param #VECTOR self
--- @param #VECTOR Vec The other vector.
--- @return #VECTOR Closest vector on a road.
+-- @return #VECTOR Closest vector to a road.
 function VECTOR:GetClosestRoad()
 
   local vec2=self:GetVec2()
@@ -940,18 +939,36 @@ function VECTOR:GetClosestRoad()
   return road
 end
 
+--- Get a vector on the closest railroad.
+-- @param #VECTOR self
+-- @return #VECTOR Closest vector to a railroad.
+function VECTOR:GetClosestRailroad()
+
+  local vec2=self:GetVec2()
+
+  local x,y=land.getClosestPointOnRoads('railroads', vec2.x, vec2.y)
+  
+  local road=nil  
+  if x and y then
+    road=VECTOR:New(x, y)
+  end
+
+  return road
+end
+
 
 --- Get the path on road from this vector to a given other vector.
 -- @param #VECTOR self
 -- @param #VECTOR Vec The destination vector.
--- @return Core.Path#PATHLINE Pathline with points on road.
+-- @return Core.Pathline#PATHLINE Pathline with points on road.
 function VECTOR:GetPathOnRoad(Vec)
 
-  local vec2=self:GetVec2()
+  local vec1=self:GetVec2()
+  local vec2=Vec:GetVec2()
   
   local path=nil
 
-  local vec2points=land.findPathOnRoads("roads", vec2.x , vec2.y, vec2.x, vec2.y)
+  local vec2points=land.findPathOnRoads("roads", vec1.x , vec1.y, vec2.x, vec2.y)
   
   if vec2points then    
     path=PATHLINE:NewFromVec2Array("Road", vec2points)
@@ -964,7 +981,7 @@ end
 --- Get profile of the land between the two passed points.
 -- @param #VECTOR self
 -- @param #VECTOR Vec3 The 3D destination vector. If a 2D vector is passed, `y` is set to the land height.
--- @return Core.Path#PATHLINE Pathline with points of the profile.
+-- @return Core.Pathline#PATHLINE Pathline with points of the profile.
 function VECTOR:GetProfile(Vec3)
 
   local vec3=self:GetVec3()

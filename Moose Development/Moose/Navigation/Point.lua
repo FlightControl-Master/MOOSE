@@ -2,8 +2,8 @@
 --
 -- **Main Features:**
 --
---    * Stuff
---    * More Stuff
+--    * Navigation Fixes
+--    * Navigation Aids
 -- 
 -- ===
 --
