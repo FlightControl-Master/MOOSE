@@ -113,30 +113,41 @@ function RADIOS:NewFromTable(RadioTable)
   -- Inherit everything from BASE class.
   self=BASE:Inherit(self, BASE:New()) -- #RADIOS
   
-  local airbasenames=AIRBASE.GetAllAirbaseNames()
+  --local airbasenames=AIRBASE.GetAllAirbaseNames()
+  
+  -- Get all airdromes
+  local airdromes=AIRBASE.GetAllAirbases(nil, Airbase.Category.AIRDROME)
   
   for _,_radio in pairs(RadioTable) do
     local radio=_radio --#RADIOS.Radio
 
-    
     -- The table structure of callsign is a bit awkward. We need to get the airbase name.
-    local cs=radio.callsign[1]
-    if cs and cs.common then
-      radio.name=cs.common[1]
-    elseif cs and cs.nato then
-      radio.name=cs.nato[1]
-    else
-      radio.name="Unknown"
+    -- Note that unfortunately, the callsign does not always correspond to the airbase name.
+    if false then
+      local cs=radio.callsign[1]
+      if cs and cs.common then
+        radio.name=cs.common[1]
+      elseif cs and cs.nato then
+        radio.name=cs.nato[1]
+      else
+        radio.name="Unknown"
+      end
+      radio.name=self:_GetAirbaseName(airbasenames, radio.name)    
+      radio.airbase=AIRBASE:FindByName(radio.name)
     end
     
+    -- Each radio item has a key radioId = 'airfield106_0', where 106 is the UID of the airbase.
+    -- So we can use that to get the airbase.
+    local aid = tonumber(string.match(radio.radioId, "airfield(%d+)_"))
     
-    radio.name=self:_GetAirbaseName(airbasenames, radio.name)
+    -- Get airbase
+    radio.airbase=self:_GetAirbaseByID(airdromes, aid)
     
-    radio.airbase=AIRBASE:FindByName(radio.name)
-    
+    -- Set other stuff
     if radio.airbase then
       radio.coordinate=radio.airbase:GetCoordinate()
       radio.vec3=radio.airbase:GetVec3()
+      radio.name=radio.airbase:GetName()
     end
     
     -- Add to table
@@ -386,6 +397,24 @@ function RADIOS:_GetAirbaseName(airbasenames, name)
   end
 
   return "Unknown"
+end
+
+--- Get name of frequency band.
+-- @param #RADIOS self
+-- @param #table airbases Table of airbases.
+-- @param #number aid Airbase ID.
+-- @return Wrapper.Airbase#AIRBASE Airbase matching the ID or nil.
+function RADIOS:_GetAirbaseByID(airbases, aid)
+
+  for _,_airbase in pairs(airbases) do
+    local airbase=_airbase --Wrapper.Airbase#AIRBASE
+    local id=airbase:GetID(true)
+    if id==aid then
+      return airbase
+    end
+  end
+
+  return nil
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
