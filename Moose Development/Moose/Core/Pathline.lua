@@ -337,7 +337,7 @@ function PATHLINE:MarkPoints(Switch)
     if Switch==false then
       
       if point.markerID then
-        UTILS.RemoveMark(point.markerID, Delay)
+        UTILS.RemoveMark(point.markerID)
       end
       
     else
