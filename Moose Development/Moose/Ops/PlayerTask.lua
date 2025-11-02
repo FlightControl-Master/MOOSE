@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update May 2025
+-- @date Last Update Oct 2025
 
 
 do
@@ -59,6 +59,8 @@ do
 -- @field #string FinalState
 -- @field #string TypeName
 -- @field #number PreviousCount
+-- @field #boolean CanSmoke
+-- @field #boolean ShowThreatDetails
 -- @extends Core.Fsm#FSM
 
 
@@ -94,11 +96,13 @@ PLAYERTASK = {
   NextTaskFailure    =   {},
   FinalState         =   "none",
   PreviousCount      =   0,
+  CanSmoke           =   true,
+  ShowThreatDetails  =   true,
   }
 
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.28"
+PLAYERTASK.version="0.1.29"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -231,6 +235,7 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
+  -- @param #boolen Silent If true, suppress message output on cancel.
 
   --- On After "Planned" event. Task has been planned.
   -- @function [parent=#PLAYERTASK] OnAfterPilotPlanned
@@ -465,6 +470,26 @@ end
 function PLAYERTASK:SetSubType(Type)
   self:T(self.lid.."AddSubType")
   self.TaskSubType = Type
+  return self
+end
+
+--- [USER] Set if a task can have a smoke marker.
+-- @param #PLAYERTASK self
+-- @param #boolean OnOff If true (default) it can be smoke, false if not.
+-- @return #PLAYERTASK self
+function PLAYERTASK:SetCanSmoke(OnOff)
+  self:T(self.lid.."AddSSetCanSmokeubType")
+  self.CanSmoke = OnOff
+  return self
+end
+
+--- [USER] Set if a task can show threat details.
+-- @param #PLAYERTASK self
+-- @param #boolean OnOff If true (default) it can be shown, false if not.
+-- @return #PLAYERTASK self
+function PLAYERTASK:SetShowThreatDetails(OnOff)
+  self:T(self.lid.."SetShowThreatDetails")
+  self.ShowThreatDetails = OnOff
   return self
 end
 
@@ -1173,11 +1198,12 @@ end
 -- @param #string From
 -- @param #string Event
 -- @param #string To
+-- @param #boolean Silent
 -- @return #PLAYERTASK self
-function PLAYERTASK:onafterCancel(From, Event, To)
+function PLAYERTASK:onafterCancel(From, Event, To, Silent)
   self:T({From, Event, To})
   if self.TaskController then
-    self.TaskController:__TaskCancelled(-1,self)
+    self.TaskController:__TaskCancelled(-1,self, Silent)
   end
   self.timestamp = timer.getAbsTime()
   self.FinalState = "Cancelled"
@@ -1606,7 +1632,7 @@ do
 --      
 -- The event is triggered when a task was cancelled manually. Use @{#PLAYERTASKCONTROLLER.OnAfterTaskCancelled}()` to link into this event:
 --      
---              function taskmanager:OnAfterTaskCancelled(From, Event, To, Task)
+--              function taskmanager:OnAfterTaskCancelled(From, Event, To, Task, Silent)
 --                ... your code here ...
 --              end
 --          
@@ -1770,12 +1796,15 @@ PLAYERTASKCONTROLLER.Messages = {
     THREATMEDIUM = "medium",
     THREATLOW = "low",
     THREATTEXT = "%s\nThreat: %s\nTargets left: %d\nCoord: %s",
+    NOTHREATTEXT = "%s\nNo target information available.",
     ELEVATION = "\nTarget Elevation: %s %s",
     METER = "meter",
     FEET = "feet",
     THREATTEXTTTS = "%s, %s. Target information for %s. Threat level %s. Targets left %d. Target location %s.",
+    NOTHREATTEXTTTS = "%s, %s. No target information available.",
     MARKTASK = "%s, %s, copy, task %03d location marked on map!",
     SMOKETASK = "%s, %s, copy, task %03d location smoked!",
+    NOSMOKETASK = "%s, %s, negative, task %03d location cannot be smoked!",
     FLARETASK = "%s, %s, copy, task %03d location illuminated!",
     ABORTTASK = "All stations, %s, %s has aborted %s task %03d!",
     UNKNOWN = "Unknown",
@@ -1854,12 +1883,15 @@ PLAYERTASKCONTROLLER.Messages = {
     THREATMEDIUM = "mittel",
     THREATLOW = "niedrig",
     THREATTEXT = "%s\nGefahrstufe: %s\nZiele: %d\nKoord: %s",
+    NOTHREATTEXT = "%s\nKeine Zielinformation verfügbar.",
     ELEVATION = "\nZiel Höhe: %s %s",
     METER = "Meter",
     FEET = "Fuss",
     THREATTEXTTTS = "%s, %s. Zielinformation zu %s. Gefahrstufe %s. Ziele %d. Zielposition %s.",
+    NOTHREATTEXTTTS = "%s, %s. Keine Zielinformation verfügbar.",
     MARKTASK = "%s, %s, verstanden, Zielposition %03d auf der Karte markiert!",
     SMOKETASK = "%s, %s, verstanden, Zielposition %03d mit Rauch markiert!",
+    NOSMOKETASK = "%s, %s, negativ, Zielposition %03d kann nicht markiert werden!",
     FLARETASK = "%s, %s, verstanden, Zielposition %03d beleuchtet!",
     ABORTTASK = "%s, an alle, %s hat Auftrag %s %03d abgebrochen!",
     UNKNOWN = "Unbekannt",
@@ -1920,7 +1952,7 @@ PLAYERTASKCONTROLLER.Messages = {
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.70"
+PLAYERTASKCONTROLLER.version="0.1.71"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -2061,6 +2093,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   -- @param #string Event Event.
   -- @param #string To To state.
   -- @param Ops.PlayerTask#PLAYERTASK Task
+  -- @param #boolean Silent If true suppress message output.
    
   --- On After "TaskFailed" event. Task has failed.
   -- @function [parent=#PLAYERTASKCONTROLLER] OnAfterTaskFailed
@@ -2741,11 +2774,12 @@ end
 
 --- [User] Manually cancel a specific task
 -- @param #PLAYERTASKCONTROLLER self
--- @param Ops.PlayerTask#PLAYERTASK Task The task to be cancelled
+-- @param Ops.PlayerTask#PLAYERTASK Task The task to be cancelled.
+-- @param #boolean Silent If true suppress message output.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:CancelTask(Task)
+function PLAYERTASKCONTROLLER:CancelTask(Task,Silent)
   self:T(self.lid.."CancelTask")
-  Task:__Cancel(-1)
+  Task:__Cancel(-1,Silent)
   return self
 end
 
@@ -3734,6 +3768,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     local Elevation = Coordinate:GetLandHeight() or 0 -- meters
     local CoordText = ""
     local CoordTextLLDM = nil
+    local ShowThreatInfo = task.ShowThreatDetails
     local LasingDrone = self:_FindLasingDroneForTaskID(task.PlayerTaskNr)
     if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
       CoordText = Coordinate:ToStringA2G(Client,nil,self.ShowMagnetic)
@@ -3757,7 +3792,12 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     local clientlist, clientcount = task:GetClients()
     local ThreatGraph = "[" .. string.rep(  "■", ThreatLevel ) .. string.rep(  "□", 10 - ThreatLevel ) .. "]: "..ThreatLevel
     local ThreatLocaleText = self.gettext:GetEntry("THREATTEXT",self.locale)
-    text = string.format(ThreatLocaleText, taskname, ThreatGraph, targets, CoordText)
+    if ShowThreatInfo == true then
+      text = string.format(ThreatLocaleText, taskname, ThreatGraph, targets, CoordText)
+    else
+      ThreatLocaleText = self.gettext:GetEntry("NOTHREATTEXT",self.locale)
+      text = string.format(ThreatLocaleText, taskname)
+    end
     local settings = _DATABASE:GetPlayerSettings(playername) or _SETTINGS -- Core.Settings#SETTINGS
     local elevationmeasure = self.gettext:GetEntry("FEET",self.locale)
     if settings:IsMetric() then
@@ -3880,9 +3920,19 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
         end
         --self:I(self.lid.." | ".. CoordText)
       end
+      local ttstext
       local ThreatLocaleTextTTS = self.gettext:GetEntry("THREATTEXTTTS",self.locale)
-      local ttstext = string.format(ThreatLocaleTextTTS,ttsplayername,self.MenuName or self.Name,ttstaskname,ThreatLevelText, targets, CoordText)
+      --                THREATTEXT = "%s\nThreat: %s\nTargets left: %d\nCoord: %s",
+      --                THREATTEXTTTS = "%s, %s. Target information for %s. Threat level %s. Targets left %d. Target location %s.",
+      if ShowThreatInfo == true then
+        ttstext = string.format(ThreatLocaleTextTTS,ttsplayername,self.MenuName or self.Name,ttstaskname,ThreatLevelText, targets, CoordText)
+      else
+       ThreatLocaleTextTTS = self.gettext:GetEntry("NOTHREATTEXTTTS",self.locale)
+       ttstext = string.format(ThreatLocaleTextTTS,ttsplayername,self.MenuName or self.Name)
+      end
+      
       -- POINTERTARGETLASINGTTS = ". Pointer over target and lasing."
+      
       if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.precisionbombing then
         if LasingDrone and  LasingDrone.playertask.inreach and LasingDrone:IsLasing() then
           local lasingtext = self.gettext:GetEntry("POINTERTARGETLASINGTTS",self.locale)
@@ -3951,15 +4001,25 @@ function PLAYERTASKCONTROLLER:_SmokeTask(Group, Client)
   local text = ""
   if self.TasksPerPlayer:HasUniqueID(playername) then
     local task = self.TasksPerPlayer:ReadByID(playername) -- Ops.PlayerTask#PLAYERTASK
-    task:SmokeTarget()
-    local textmark = self.gettext:GetEntry("SMOKETASK",self.locale)
-    text = string.format(textmark, ttsplayername, self.MenuName or self.Name, task.PlayerTaskNr)
-    self:T(self.lid..text)
-    --local m=MESSAGE:New(text,"10","Tasking"):ToAll()
-    if self.UseSRS then
-      self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
+    if task.CanSmoke == true then
+      task:SmokeTarget()
+      local textmark = self.gettext:GetEntry("SMOKETASK",self.locale)
+      text = string.format(textmark, ttsplayername, self.MenuName or self.Name, task.PlayerTaskNr)
+      self:T(self.lid..text)
+      --local m=MESSAGE:New(text,"10","Tasking"):ToAll()
+      if self.UseSRS then
+        self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
+      end
+      self:__TaskTargetSmoked(5,task)
+    else
+      local textmark = self.gettext:GetEntry("NOSMOKETASK",self.locale)
+      text = string.format(textmark, ttsplayername, self.MenuName or self.Name, task.PlayerTaskNr)
+      self:T(self.lid..text)
+      --local m=MESSAGE:New(text,"10","Tasking"):ToAll()
+      if self.UseSRS then
+        self.SRSQueue:NewTransmission(text,nil,self.SRS,nil,2)
+      end
     end
-    self:__TaskTargetSmoked(5,task)
   else
     text = self.gettext:GetEntry("NOACTIVETASK",self.locale)
   end
@@ -4793,22 +4853,27 @@ end
 -- @param #string Event
 -- @param #string To
 -- @param Ops.PlayerTask#PLAYERTASK Task
+-- @param #boolean Silent If true, suppress message output on cancel.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:onafterTaskCancelled(From, Event, To, Task)
+function PLAYERTASKCONTROLLER:onafterTaskCancelled(From, Event, To, Task, Silent)
   self:T({From, Event, To})
   self:T(self.lid.."TaskCancelled")
-  local canceltxt = self.gettext:GetEntry("TASKCANCELLED",self.locale)
-  local canceltxttts = self.gettext:GetEntry("TASKCANCELLEDTTS",self.locale)
-  local taskname = string.format(canceltxt, Task.PlayerTaskNr, tostring(Task.Type))
-  if not self.NoScreenOutput then
-    self:_SendMessageToClients(taskname,15)
-    --local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
+  if Silent ~= true then
+    local canceltxt = self.gettext:GetEntry("TASKCANCELLED",self.locale)
+    local canceltxttts = self.gettext:GetEntry("TASKCANCELLEDTTS",self.locale)
+    local taskname = string.format(canceltxt, Task.PlayerTaskNr, tostring(Task.Type))
+
+    if self.NoScreenOutput ~= true then
+      self:_SendMessageToClients(taskname,15)
+      --local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
+    end
+    
+    if self.UseSRS then
+      taskname = string.format(canceltxttts, self.MenuName or self.Name, Task.PlayerTaskNr, tostring(Task.TTSType))
+      self.SRSQueue:NewTransmission(taskname,nil,self.SRS,nil,2)
+    end
+    
   end
-  if self.UseSRS then
-    taskname = string.format(canceltxttts, self.MenuName or self.Name, Task.PlayerTaskNr, tostring(Task.TTSType))
-    self.SRSQueue:NewTransmission(taskname,nil,self.SRS,nil,2)
-  end
-  
   local clients=Task:GetClientObjects()
   for _,client in pairs(clients) do
     self:_RemoveMenuEntriesForTask(Task,client)
