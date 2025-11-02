@@ -1232,7 +1232,7 @@ function CSAR:_EventHandler(EventData)
       local _place = _event.Place -- Wrapper.Airbase#AIRBASE
 
       if _place == nil then
-        self:T(self.lid .. " Landing Place Nil")
+        self:T(self.lid .. " Landing Place nil")
         return self -- error!
       end
 
