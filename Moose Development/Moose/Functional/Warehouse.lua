@@ -3918,7 +3918,7 @@ end
 -- @param #string assignment A free to choose string specifying an assignment for the asset. This can be used with the @{#WAREHOUSE.OnAfterNewAsset} function.
 -- @param #table other (Optional) Table of other useful data. Can be collected via WAREHOUSE.OnAfterNewAsset() function for example
 function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribute, forcecargobay, forceweight, loadradius, skill, liveries, assignment, other)
-  self:T({group=group, ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
+  --self:T({group=group:GetName(), ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
 
   -- Set default.
   local n=ngroups or 1
@@ -6154,7 +6154,7 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
     template.uncontrolled=uncontrolled
 
     -- Debug info.
-    self:T2({airtemplate=template})
+    --self:T2({airtemplate=template})
 
     -- Spawn group.
     local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP

@@ -1571,7 +1571,7 @@ end
 -- @param Core.Zone#ZONE Zone The zone to return to.
 -- @param #number Formation Formation of the group.
 function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
-  self:T2(self.lid.."onafterRTZ")
+  self:T(self.lid.."onafterRTZ")
 
   -- Zone.
   local zone=Zone or self.homezone

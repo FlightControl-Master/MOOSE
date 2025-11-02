@@ -4440,7 +4440,7 @@ function AUFTRAG:Evaluate()
   local owndamage=self.Ncasualties/self.Nelements*100
 
   -- Current number of mission targets.
-  local Ntargets=self:CountMissionTargets()
+  local Ntargets=self:CountMissionTargets(true)
   local Ntargets0=self:GetTargetInitialNumber()
 
   local Life=self:GetTargetLife()
@@ -4891,16 +4891,25 @@ function AUFTRAG:CheckGroupsDone()
     self:T2(self.lid..string.format("CheckGroupsDone: Mission is still in state %s [FSM=%s] and reinfoce=%d. Mission NOT DONE!", self.status, self:GetState(), self.reinforce))
     return false  
   end
+  
+  local NopsgroupsAlive=self:CountOpsGroups()
+  local NopsgroupsDone=self:CountOpsGroupsInStatus(AUFTRAG.GroupStatus.DONE)+self:CountOpsGroupsInStatus(AUFTRAG.GroupStatus.CANCELLED)
 
   -- It could be that all groups were destroyed on the way to the mission execution waypoint.
   -- TODO: would be better to check if everybody is dead by now.
-  if self:IsStarted() and self:CountOpsGroups()==0 then
+  if self:IsStarted() and NopsgroupsAlive==0 then
     self:T(self.lid..string.format("CheckGroupsDone: Mission is STARTED state %s [FSM=%s] but count of alive OPSGROUP is zero. Mission DONE!", self.status, self:GetState()))
     return true
   end
   
-  if (self:IsStarted() or self:IsExecuting()) and (fsmState == AUFTRAG.Status.STARTED or fsmState == AUFTRAG.Status.EXECUTING) and self:CountOpsGroups()>0 then
-    self:T(self.lid..string.format("CheckGroupsDone: Mission is STARTED state %s [FSM=%s] and count of alive OPSGROUP > zero. Mission NOT DONE!", self.status, self:GetState()))
+  -- Every group alive is done or cancelled
+  if NopsgroupsAlive==NopsgroupsDone then
+    self:T(self.lid..string.format("CheckGroupsDone: Mission is in state %s [FSM=%s] but all groups [=%d] are done or cancelled. Mission DONE!", self.status, self:GetState(), NopsgroupsAlive))
+    return true
+  end
+  
+  if (self:IsStarted() or self:IsExecuting()) and (fsmState == AUFTRAG.Status.STARTED or fsmState == AUFTRAG.Status.EXECUTING) and NopsgroupsAlive>0 then
+    self:T(self.lid..string.format("CheckGroupsDone: Mission is in state %s [FSM=%s] and count of alive OPSGROUP > zero. Mission NOT DONE!", self.status, self:GetState()))
     return false
   end
 
@@ -5494,8 +5503,9 @@ end
 
 --- Count alive mission targets.
 -- @param #AUFTRAG self
+-- @param #boolean OnlyReallyAlive (Optional) If `true`, count only really alive targets (units, groups) but not coordinates or zones.
 -- @return #number Number of alive target units.
-function AUFTRAG:CountMissionTargets()
+function AUFTRAG:CountMissionTargets(OnlyReallyAlive)
 
   local N=0
 
@@ -5503,7 +5513,7 @@ function AUFTRAG:CountMissionTargets()
   local Coalitions=self.coalition and UTILS.GetCoalitionEnemy(self.coalition, true) or nil
 
   if self.engageTarget then
-    N=self.engageTarget:CountTargets(Coalitions)
+    N=self.engageTarget:CountTargets(Coalitions, OnlyReallyAlive)
   end
 
   return N

@@ -5718,7 +5718,7 @@ end
 function OPSGROUP:onafterMissionDone(From, Event, To, Mission)
 
   -- Debug info.
-  local text=string.format("Mission %s DONE!", Mission.name)
+  local text=string.format("Mission DONE %s!", Mission.name)
   self:T(self.lid..text)
 
   -- Set group status.
@@ -6231,11 +6231,12 @@ function OPSGROUP:RouteToMission(mission, delay)
       self:T(self.lid.."Already in mission zone ==> TaskExecute()")
       self:TaskExecute(waypointtask)
       -- TODO: Calling PassingWaypoint here is probably better as it marks the mission waypoint as passed!
-      --self:PassingWaypoint(waypoint)
+      self:PassingWaypoint(waypoint)
       return
     elseif d<25 then
       self:T(self.lid.."Already within 25 meters of mission waypoint ==> TaskExecute()")
       self:TaskExecute(waypointtask)
+      self:PassingWaypoint(waypoint)
       return
     end
     
@@ -7850,7 +7851,7 @@ function OPSGROUP:_Spawn(Delay, Template)
     self:ScheduleOnce(Delay, OPSGROUP._Spawn, self, 0, Template)
   else
     -- Debug output.
-    self:T2({Template=Template})
+    --self:T2({Template=Template})
 
     if self:IsArmygroup() and self.ValidateAndRepositionGroundUnits then
         UTILS.ValidateAndRepositionGroundUnits(Template.units)
