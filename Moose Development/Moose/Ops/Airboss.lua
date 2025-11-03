@@ -5498,11 +5498,15 @@ function AIRBOSS:_GetAircraftAoA( playerData )
     aoa.OnSpeedMin = self:_AoAUnit2Deg( playerData, 14.0 ) -- 14.17 --14.5 units -- VNAO Edit - Original value 14.5
     aoa.Fast = self:_AoAUnit2Deg( playerData, 13.5 ) -- 13.33 --14.0 units -- VNAO Edit - Original value 14
     aoa.FAST = self:_AoAUnit2Deg( playerData, 12.5 ) -- 11.67 --13.0 units -- VNAO Edit - Original value 13
-      local hornet =   playerData.actype == AIRBOSS.AircraftCarrier.HORNET
-                    or playerData.actype == AIRBOSS.AircraftCarrier.RHINOE
-                    or playerData.actype == AIRBOSS.AircraftCarrier.RHINOF
-                    or playerData.actype == AIRBOSS.AircraftCarrier.GROWLER
-      local tomcat  = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B
+  elseif goshawk then --These parameters edited by CIRCUIT to support new VNAO flight model
+    -- T-45C Goshawk parameters.
+    aoa.SLOW = 9.5 -- 8.00 -- 19
+    aoa.Slow = 9.25 -- 7.75 -- 18
+    aoa.OnSpeedMax = 9.0 --7.25 -- 17.5
+    aoa.OnSpeed = 8.5 -- 7.00 -- 17
+    aoa.OnSpeedMin = 8.25 -- 6.75 -- 16.5
+    aoa.Fast = 7.75 -- 6.25 -- 16
+    aoa.FAST = 5.5 -- 6.00 -- 15
   elseif skyhawk then
     -- A-4E-C Skyhawk parameters from https://forums.eagle.ru/showpost.php?p=3703467&postcount=390
     -- Note that these are arbitrary UNITS and not degrees. We need a conversion formula!
