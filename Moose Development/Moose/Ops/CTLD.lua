@@ -1560,7 +1560,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.movetroopsdistance = 5000
   self.returntroopstobase = true -- if set to false, troops would stay after deployment inside a load zone.
   self.troopdropzoneradius = 100
-  
+
+  self.loadSavedCrates = true
+
   self.VehicleMoveFormation = AI.Task.VehicleFormation.VEE
   
   -- added support Hercules Mod
@@ -8469,7 +8471,7 @@ end
           local injecttroops = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)      
           self:InjectTroops(dropzone,injecttroops,self.surfacetypes,self.useprecisecoordloads,structure,timestamp)
         end
-      elseif (type(groupname) == "string" and groupname == "STATIC") or cargotype == CTLD_CARGO.Enum.REPAIR then
+      elseif self.loadSavedCrates and ((type(groupname) == "string" and groupname == "STATIC") or cargotype == CTLD_CARGO.Enum.REPAIR) then
         local dropzone = ZONE_RADIUS:New("DropZone",vec2,20)
         local injectstatic = nil
         if cargotype == CTLD_CARGO.Enum.VEHICLE or cargotype == CTLD_CARGO.Enum.FOB then
