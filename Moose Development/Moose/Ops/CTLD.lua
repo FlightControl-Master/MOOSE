@@ -871,6 +871,7 @@ do
 --          my_ctld.onestepmenu = false -- When set to true, the menu will create Drop and build, Get and load, Pack and remove, Pack and load, Pack. it will be a 1 step solution.
 --          my_ctld.VehicleMoveFormation = AI.Task.VehicleFormation.VEE -- When a group moves to a MOVE zone, then it takes this formation. Can be a table of formations, which are then randomly chosen. Defaults to "Vee".
 --          my_ctld.validateAndRepositionUnits = false -- Uses Disposition and other logic to find better ground positions for ground units avoiding trees, water, roads, runways, map scenery, statics and other units in the area. (Default is false)
+--          my_ctld.loadSavedCrates = true -- Load back crates (STATIC) from the save file. Useful for mission restart cleanup. (Default is true)
 --
 -- ## 2.1 CH-47 Chinook support
 -- 
@@ -1560,7 +1561,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.movetroopsdistance = 5000
   self.returntroopstobase = true -- if set to false, troops would stay after deployment inside a load zone.
   self.troopdropzoneradius = 100
-  
+
+  self.loadSavedCrates = true
+
   self.VehicleMoveFormation = AI.Task.VehicleFormation.VEE
   
   -- added support Hercules Mod
@@ -8469,7 +8472,7 @@ end
           local injecttroops = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)      
           self:InjectTroops(dropzone,injecttroops,self.surfacetypes,self.useprecisecoordloads,structure,timestamp)
         end
-      elseif (type(groupname) == "string" and groupname == "STATIC") or cargotype == CTLD_CARGO.Enum.REPAIR then
+      elseif self.loadSavedCrates and ((type(groupname) == "string" and groupname == "STATIC") or cargotype == CTLD_CARGO.Enum.REPAIR) then
         local dropzone = ZONE_RADIUS:New("DropZone",vec2,20)
         local injectstatic = nil
         if cargotype == CTLD_CARGO.Enum.VEHICLE or cargotype == CTLD_CARGO.Enum.FOB then
