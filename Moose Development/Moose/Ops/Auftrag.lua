@@ -2210,7 +2210,7 @@ end
 -- **Note** that it is recommended to set the weapon range via the `OPSGROUP:AddWeaponRange()` function as this cannot be retrieved from the DCS API.
 -- @param #AUFTRAG self
 -- @param Core.Point#COORDINATE Target Center of the firing solution.
--- @param #number Nshots Number of shots to be fired. Default `#nil`.
+-- @param #number Nshots Number of shots to be fired. Default `#nil`. If value is in (0,1), it is interpreted as per cent of available ammo.
 -- @param #number Radius Radius of the shells in meters. Default 100 meters.
 -- @param #number Altitude Altitude in meters. Can be used to setup a Barrage. Default `#nil`.
 -- @return #AUFTRAG self
@@ -2705,33 +2705,33 @@ function AUFTRAG:NewFromTarget(Target, MissionType)
   local mission=nil --#AUFTRAG
 
   if MissionType==AUFTRAG.Type.ANTISHIP then
-    mission=self:NewANTISHIP(Target, Altitude)
+    mission=self:NewANTISHIP(Target)
   elseif MissionType==AUFTRAG.Type.ARTY then
-    mission=self:NewARTY(Target, Nshots, Radius)
+    mission=self:NewARTY(Target, 0.3) -- use 30% of the available ammo
   elseif MissionType==AUFTRAG.Type.BAI then
-    mission=self:NewBAI(Target, Altitude)
+    mission=self:NewBAI(Target)
   elseif MissionType==AUFTRAG.Type.BOMBCARPET then
-    mission=self:NewBOMBCARPET(Target, Altitude, CarpetLength)
+    mission=self:NewBOMBCARPET(Target)
   elseif MissionType==AUFTRAG.Type.BOMBING then
-    mission=self:NewBOMBING(Target, Altitude)
+    mission=self:NewBOMBING(Target)
   elseif MissionType==AUFTRAG.Type.BOMBRUNWAY then
-    mission=self:NewBOMBRUNWAY(Target, Altitude)
+    mission=self:NewBOMBRUNWAY(Target)
   elseif MissionType==AUFTRAG.Type.STRAFING then
-    mission=self:NewSTRAFING(Target, Altitude)    
+    mission=self:NewSTRAFING(Target)    
   elseif MissionType==AUFTRAG.Type.CAS then
-    mission=self:NewCAS(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000), Altitude, Speed, Target:GetAverageCoordinate(), Heading, Leg, TargetTypes)
+    mission=self:NewCAS(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000), nil, nil, Target:GetAverageCoordinate())
   elseif MissionType==AUFTRAG.Type.CASENHANCED then
-    mission=self:NewCASENHANCED(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000), Altitude, Speed, RangeMax, NoEngageZoneSet, TargetTypes)
+    mission=self:NewCASENHANCED(ZONE_RADIUS:New(Target:GetName(),Target:GetVec2(),1000))
   elseif MissionType==AUFTRAG.Type.INTERCEPT then
     mission=self:NewINTERCEPT(Target)
   elseif MissionType==AUFTRAG.Type.SEAD then
-    mission=self:NewSEAD(Target, Altitude)
+    mission=self:NewSEAD(Target)
   elseif MissionType==AUFTRAG.Type.STRIKE then
-    mission=self:NewSTRIKE(Target, Altitude)
+    mission=self:NewSTRIKE(Target)
   elseif MissionType==AUFTRAG.Type.ARMORATTACK then
-    mission=self:NewARMORATTACK(Target, Speed)
+    mission=self:NewARMORATTACK(Target)
   elseif MissionType==AUFTRAG.Type.GROUNDATTACK then
-    mission=self:NewGROUNDATTACK(Target, Speed, Formation)
+    mission=self:NewGROUNDATTACK(Target)
   else
     return nil
   end
@@ -2848,7 +2848,7 @@ function AUFTRAG:NewAUTO(EngageGroup)
   if auftrag==AUFTRAG.Type.ANTISHIP then
     mission=AUFTRAG:NewANTISHIP(Target)
   elseif auftrag==AUFTRAG.Type.ARTY then
-    mission=AUFTRAG:NewARTY(Target)
+    mission=AUFTRAG:NewARTY(Target, 0.2)
   elseif auftrag==AUFTRAG.Type.AWACS then
     mission=AUFTRAG:NewAWACS(Coordinate, Altitude,Speed,Heading,Leg)
   elseif auftrag==AUFTRAG.Type.BAI then
@@ -4399,7 +4399,7 @@ function AUFTRAG:onafterStatus(From, Event, To)
   -- Group info.
   if self.verbose>=3 then
     -- Data on assigned groups.
-    local text=string.format("Assets [N=%d,Nassigned=%s, Ndead=%s]:", self.Nassets or 0, self.Nassigned or 0, self.Ndead or 0)
+    local text=string.format("Assets [N=%d, Nassigned=%s, Ndead=%s]:", self.Nassets or 0, self.Nassigned or 0, self.Ndead or 0)
     for i,_asset in pairs(self.assets or {}) do
       local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
       text=text..string.format("\n[%d] %s: spawned=%s, requested=%s, reserved=%s", i, asset.spawngroupname, tostring(asset.spawned), tostring(asset.requested), tostring(asset.reserved))
