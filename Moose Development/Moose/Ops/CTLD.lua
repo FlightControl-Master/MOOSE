@@ -4240,12 +4240,12 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
         local build = _build -- #CTLD.Buildable
         if build.CanBuild then
           self:_CleanUpCrates(crates,build,number)
+          self:_RefreshLoadCratesMenu(Group,Unit)
           if self.buildtime and self.buildtime > 0 then
               local buildtimer = TIMER:New(self._BuildObjectFromCrates,self,Group,Unit,build,false,Group:GetCoordinate(),MultiDrop)
               buildtimer:Start(self.buildtime)
               self:_SendMessage(string.format("Build started, ready in %d seconds!",self.buildtime),15,false,Group)
-              self:__CratesBuildStarted(1,Group,Unit,build.Name) 
-              self:_RefreshDropTroopsMenu(Group,Unit)
+              self:__CratesBuildStarted(1,Group,Unit,build.Name)
           else
             self:_BuildObjectFromCrates(Group,Unit,build,false,nil,MultiDrop)
           end
