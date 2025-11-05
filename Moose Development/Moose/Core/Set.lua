@@ -4691,8 +4691,8 @@ do -- SET_CLIENT
   -- @param #SET_CLIENT self
   -- @return #SET_CLIENT self
   function SET_CLIENT:HandleCASlots()
-    self:HandleEvent(EVENTS.PlayerEnterUnit,SET_CLIENT._EventPlayerEnterUnit)
-    self:HandleEvent(EVENTS.PlayerLeaveUnit,SET_CLIENT._EventPlayerLeaveUnit)
+    self:HandleEvent(EVENTS.PlayerEnterUnit,self._EventPlayerEnterUnit)
+    --self:HandleEvent(EVENTS.PlayerLeaveUnit,self._EventPlayerLeaveUnit) -- Already set in :FilterStart()
     self:FilterFunction(function(client) if client and client:IsAlive() and client:IsGround() then return true else return false end end)
     return self
   end  
