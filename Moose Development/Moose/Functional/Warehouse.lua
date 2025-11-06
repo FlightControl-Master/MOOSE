@@ -3340,7 +3340,6 @@ function WAREHOUSE:FindAssetInDB(group)
   if aid~=nil then
 
     local asset=_WAREHOUSEDB.Assets[aid]
-    self:T2({asset=asset})
     if asset==nil then
       self:_ErrorMessage(string.format("ERROR: Asset for group %s not found in the data base!", group:GetName()), 0)
     end
@@ -4446,7 +4445,6 @@ end
 -- @param #WAREHOUSE.Queueitem Request Information table of the request.
 -- @return #boolean If true, request is granted.
 function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
-  self:T3({warehouse=self.alias, request=Request})
 
   -- Distance from warehouse to requesting warehouse.
   local distance=self:GetCoordinate():Get2DDistance(Request.warehouse:GetCoordinate())
@@ -6152,9 +6150,6 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
 
     -- Uncontrolled spawning.
     template.uncontrolled=uncontrolled
-
-    -- Debug info.
-    --self:T2({airtemplate=template})
 
     -- Spawn group.
     local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP

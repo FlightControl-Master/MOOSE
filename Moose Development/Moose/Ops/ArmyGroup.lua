@@ -1841,8 +1841,6 @@ function ARMYGROUP:_UpdateEngageTarget()
       -- Check if target moved more than 100 meters or we do not have line of sight.
       if dist>100 or los==false then
 
-        --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
-
         -- Update new position.
         self.engage.Coordinate:UpdateFromVec3(vec3)
 
@@ -1852,13 +1850,14 @@ function ARMYGROUP:_UpdateEngageTarget()
         -- Remove current waypoint
         self:RemoveWaypointByID(self.engage.Waypoint.uid)
 
-        local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+        -- Get new coordinate where to go.
+        local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.95)
 
           -- Add waypoint after current.
         self.engage.Waypoint=self:AddWaypoint(intercoord, self.engage.Speed, uid, self.engage.Formation, true)
 
         -- Set if we want to resume route after reaching the detour waypoint.
-        self.engage.Waypoint.detour=0
+        self.engage.Waypoint.detour=1
 
       end
 

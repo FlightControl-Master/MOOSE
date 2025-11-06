@@ -1189,8 +1189,8 @@ function OPSGROUP:GetDCSObject()
   return self.dcsgroup
 end
 
---- Set detection on or off.
--- If detection is on, detected targets of the group will be evaluated and FSM events triggered.
+--- Make a target (unit, group, opsgroup) known to this group.
+-- This is useing the DCS function `controller.knowTarget`. 
 -- @param #OPSGROUP self
 -- @param Wrapper.Positionable#POSITIONABLE TargetObject The target object.
 -- @param #boolean KnowType Make type known.
@@ -4513,6 +4513,25 @@ function OPSGROUP:_UpdateTask(Task, Mission)
     if target then
       self:EngageTarget(target, speed, Task.dcstask.params.formation)
     end
+
+  elseif Task.dcstask.id==AUFTRAG.SpecialTask.NAVALENGAGEMENT then
+
+    ---
+    -- Task "Naval Engagement" Mission.
+    ---
+    
+    -- Engage target.
+    local target=Task.dcstask.params.target --Ops.Target#TARGET
+    
+    -- Set speed. Default max.
+    local speed=self.speedMax and UTILS.KmphToKnots(self.speedMax) or nil
+    if Task.dcstask.params.speed then
+      speed=UTILS.MpsToKnots(Task.dcstask.params.speed)
+    end
+    
+    if target then
+      self:EngageTarget(target, speed, Task.dcstask.params.altitude)
+    end
   
   elseif Task.dcstask.id==AUFTRAG.SpecialTask.PATROLRACETRACK then
   
@@ -4886,7 +4905,7 @@ function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
         done=true
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.ONGUARD or Task.dcstask.id==AUFTRAG.SpecialTask.ARMOREDGUARD then
         done=true
-      elseif Task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK or Task.dcstask.id==AUFTRAG.SpecialTask.ARMORATTACK then
+      elseif Task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK or Task.dcstask.id==AUFTRAG.SpecialTask.ARMORATTACK or Task.dcstask.id==AUFTRAG.SpecialTask.NAVALENGAGEMENT then
         done=true
       elseif Task.dcstask.id==AUFTRAG.SpecialTask.NOTHING then
         done=true        

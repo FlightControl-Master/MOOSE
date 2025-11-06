@@ -324,6 +324,10 @@
 --
 -- A ground attack mission can be created with the @{#AUFTRAG.NewGROUNDATTACK}() function.
 --
+-- ## NAVALENGAGEMENT
+--
+-- A naval engagement mission can be created with the @{#AUFTRAG.NewNAVALENGAGEMENT}() function.
+--
 -- # Assigning Missions
 --
 -- An AUFTRAG can be assigned to groups (FLIGHTGROUP, ARMYGROUP, NAVYGROUP), legions (AIRWING, BRIGADE, FLEET) or to a COMMANDER.
@@ -443,6 +447,7 @@ _AUFTRAGSNR=0
 -- @field #string HOVER Hover.
 -- @field #string LANDATCOORDINATE Land at coordinate.
 -- @field #string GROUNDATTACK Ground attack.
+-- @field #string NAVALENGAGEMENT Naval engagement (similar to GROUNDATTACK).
 -- @field #string CARGOTRANSPORT Cargo transport.
 -- @field #string RELOCATECOHORT Relocate a cohort from one legion to another.
 -- @field #string AIRDEFENSE Air defense.
@@ -491,6 +496,7 @@ AUFTRAG.Type={
   HOVER="Hover",
   LANDATCOORDINATE="Land at Coordinate",
   GROUNDATTACK="Ground Attack",
+  NAVALENGAGEMENT="Naval Engagement",
   CARGOTRANSPORT="Cargo Transport",
   RELOCATECOHORT="Relocate Cohort",
   AIRDEFENSE="Air Defence",
@@ -515,6 +521,7 @@ AUFTRAG.Type={
 -- @field #string BARRAGE Barrage.
 -- @field #string HOVER Hover.
 -- @field #string GROUNDATTACK Ground attack.
+-- @field #string NAVALENGAGEMENT Naval engagement.
 -- @field #string FERRY Ferry mission.
 -- @field #string RELOCATECOHORT Relocate cohort.
 -- @field #string AIRDEFENSE Air defense.
@@ -537,6 +544,7 @@ AUFTRAG.SpecialTask={
   ARMORATTACK="AmorAttack",
   HOVER="Hover",
   GROUNDATTACK="Ground Attack",
+  NAVALENGAGEMENT="Naval Engagement",
   FERRY="Ferry",
   RELOCATECOHORT="Relocate Cohort",
   AIRDEFENSE="Air Defense",
@@ -666,7 +674,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="1.2.1"
+AUFTRAG.version="1.3.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2382,11 +2390,13 @@ function AUFTRAG:NewARMORATTACK(Target, Speed, Formation)
   return mission
 end
 
---- **[GROUND]** Create a GROUNDATTACK mission. Ground group(s) will go to a target object and attack.
+--- **[GROUND]** Create a GROUNDATTACK mission. Ground group(s) will go to a target object and attack at their own discretion.
+-- Unfortunately, the "Attack Group" and "Attack Unit" tasks do not work for ground and naval groups (only for aircraft).
+-- Therefore, we resort to this workaround, which guides the attacking group to the vicinity of the target. Then they start shooting on their own, once they detect the target.
 -- @param #AUFTRAG self
 -- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
 -- @param #number Speed Speed in knots. Default max.
--- @param #string Formation The attack formation, e.g. "Wedge", "Vee" etc. Default `ENUMS.Formation.Vehicle.Vee`.
+-- @param #string Formation The attack formation, e.g. "Wedge", "Vee" etc. Default `ENUMS.Formation.Vehicle.Vee`. Only working for ground, not naval!
 -- @return #AUFTRAG self
 function AUFTRAG:NewGROUNDATTACK(Target, Speed, Formation)
 
@@ -2409,6 +2419,38 @@ function AUFTRAG:NewGROUNDATTACK(Target, Speed, Formation)
   
   mission.DCStask.params.speed=mission.missionSpeed and UTILS.KmphToMps(mission.missionSpeed) or nil
   mission.DCStask.params.formation=Formation or ENUMS.Formation.Vehicle.Vee
+  
+  return mission
+end
+
+--- **[NAVAL]** Create a NAVALENGAGEMENT mission. Naval group(s) will go to a target object and attack at their own discretion.
+-- Unfortunately, the "Attack Group" and "Attack Unit" tasks do not work for ground and naval groups (only for aircraft).
+-- Therefore, we resort to this workaround, which guides the attacking group to the vicinity of the target. Then they start shooting on their own, once they detect the target.
+-- @param #AUFTRAG self
+-- @param Wrapper.Positionable#POSITIONABLE Target The target to attack. Can be a GROUP, UNIT or STATIC object.
+-- @param #number Speed Speed in knots. Default max.
+-- @param #number Depth The attack depth in meters. Only for submarines!
+-- @return #AUFTRAG self
+function AUFTRAG:NewNAVALENGAGEMENT(Target, Speed, Depth)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.NAVALENGAGEMENT)
+
+  mission:_TargetFromObject(Target)
+
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.NAVALENGAGEMENT)
+
+  -- Defaults.
+  mission.optionROE=ENUMS.ROE.OpenFire
+  mission.optionAlarm=ENUMS.AlarmState.Auto
+  mission.missionFraction=0.70
+  mission.missionSpeed=Speed and UTILS.KnotsToKmph(Speed) or nil
+  mission.missionAltitude=Depth or 0
+
+  mission.categories={AUFTRAG.Category.NAVAL}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.DCStask.params.speed=mission.missionSpeed and UTILS.KmphToMps(mission.missionSpeed) or nil
   
   return mission
 end
@@ -6647,6 +6689,26 @@ function AUFTRAG:GetDCSMissionTask()
     param.target=self:GetTargetData()
     param.action="Wedge"
     param.speed=self.missionSpeed and UTILS.KmphToMps(self.missionSpeed) or nil
+
+    DCStask.params=param
+
+    table.insert(DCStasks, DCStask)
+
+   elseif self.type==AUFTRAG.Type.NAVALENGAGEMENT then
+
+    ---------------------------
+    -- NAVAL ENGAGEMENT Mission --
+    ---------------------------
+
+    local DCStask={}
+
+    DCStask.id=AUFTRAG.SpecialTask.NAVALENGAGEMENT
+
+    -- We create a "fake" DCS task and pass the parameters to the NAVYGROUP.
+    local param={}
+    param.target=self:GetTargetData()
+    param.speed=self.missionSpeed and UTILS.KmphToMps(self.missionSpeed) or nil
+    param.altitude=self.missionAltitude or 0
 
     DCStask.params=param
 
