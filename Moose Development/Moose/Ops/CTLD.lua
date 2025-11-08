@@ -5689,7 +5689,6 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
   
     else
       --------------------------------------------------------------------
-      --------------------------------------------------------------------
       -- one-step (enhanced) menu
       --------------------------------------------------------------------
       local mAll=MENU_GROUP:New(Group,"Drop ALL crates",dropCratesMenu)
