@@ -89,11 +89,23 @@ do -- SET_BASE
     Index = {},
     Database = nil,
     CallScheduler = nil,
-    
+    Filter = {},
+    FilterCoalitionNumbers = {
+      [coalition.side.RED+1] = "red",
+      [coalition.side.BLUE+1] = "blue",
+      [coalition.side.NEUTRAL+1] = "neutral",
+    },
+    FilterMeta = {
+      Coalitions = {
+        ["red"] = coalition.side.RED,
+        ["blue"] = coalition.side.BLUE,
+        ["neutral"] = coalition.side.NEUTRAL,
+        },
+      },
   }
 
   --- Filters
-  -- @type SET_BASE.Filters
+  -- @type SET_BASE.Filter
   -- @field #table Coalition Coalitions
   -- @field #table Prefix Prefixes.
 
@@ -196,6 +208,32 @@ do -- SET_BASE
     end
 
     return self
+  end
+  
+  --- Builds a set of objects of same coalitions.
+  -- Possible current coalitions are red, blue and neutral.
+  -- @param #SET_BASE self
+  -- @param #string Coalitions Can take the following values: "red", "blue", "neutral" and coalition.side.RED, coalition.side.BLUE,coalition.side.NEUTRAL
+  -- @param #boolean Clear If `true`, clear any previously defined filters.
+  -- @return #SET_BASE self
+  function SET_BASE:FilterCoalitions( Coalitions, Clear )
+    
+    if Clear or (not self.Filter.Coalitions) then
+      self.Filter.Coalitions = {}
+    end
+    
+    -- Ensure table.
+    if type(Coalitions) ~= "table" then Coalitions = {Coalitions} end
+    for CoalitionID, Coalition in pairs( Coalitions ) do
+      local coalition = Coalition
+      if type(Coalition) == "number" then
+        coalition = self.FilterCoalitionNumbers[Coalition+1] or "unknown"
+        --self:I("Filter Coaltion for "..coalition)
+      end
+      self.Filter.Coalitions[coalition] = coalition
+    end
+    
+    return self 
   end
 
   --- Finds an @{Core.Base#BASE} object based on the object Name.
@@ -1343,21 +1381,6 @@ do
   -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
   -- @param #boolean Clear If `true`, clear any previously defined filters.
   -- @return #SET_GROUP self
-  function SET_GROUP:FilterCoalitions( Coalitions, Clear )
-  
-    if Clear or (not self.Filter.Coalitions) then
-      self.Filter.Coalitions = {}
-    end
-    
-    -- Ensure table.
-    Coalitions = UTILS.EnsureTable(Coalitions, false)
-    
-    for CoalitionID, Coalition in pairs( Coalitions ) do
-      self.Filter.Coalitions[Coalition] = Coalition
-    end
-    
-    return self
-  end
 
   --- Builds a set of groups out of categories.
   -- Possible current categories are plane, helicopter, ground, ship.
@@ -2381,25 +2404,13 @@ do -- SET_UNIT
     local UnitFound = self.Set[UnitName]
     return UnitFound
   end
-
+  
   --- Builds a set of units of coalitions.
   -- Possible current coalitions are red, blue and neutral.
   -- @param #SET_UNIT self
   -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
   -- @return #SET_UNIT self
-  function SET_UNIT:FilterCoalitions( Coalitions )
 
-    self.Filter.Coalitions = {}
-    if type( Coalitions ) ~= "table" then
-      Coalitions = { Coalitions }
-    end
-    
-    for CoalitionID, Coalition in pairs( Coalitions ) do
-      self.Filter.Coalitions[Coalition] = Coalition
-    end
-    
-    return self
-  end
 
   --- Builds a set of units out of categories.
   -- Possible current categories are plane, helicopter, ground, ship.
@@ -3597,25 +3608,13 @@ do -- SET_STATIC
     local StaticFound = self.Set[StaticName]
     return StaticFound
   end
-
+  
   --- Builds a set of units of coalitions.
   -- Possible current coalitions are red, blue and neutral.
   -- @param #SET_STATIC self
   -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
   -- @return #SET_STATIC self
-  function SET_STATIC:FilterCoalitions( Coalitions )
-    if not self.Filter.Coalitions then
-      self.Filter.Coalitions = {}
-    end
-    if type( Coalitions ) ~= "table" then
-      Coalitions = { Coalitions }
-    end
-    for CoalitionID, Coalition in pairs( Coalitions ) do
-      self.Filter.Coalitions[Coalition] = Coalition
-    end
-    return self
-  end
-  
+
   
    --- Builds a set of statics in zones.
   -- @param #SET_STATIC self
@@ -4390,25 +4389,13 @@ do -- SET_CLIENT
     end
     return self
   end
-
+  
   --- Builds a set of clients of coalitions.
   -- Possible current coalitions are red, blue and neutral.
   -- @param #SET_CLIENT self
   -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
   -- @return #SET_CLIENT self
-  function SET_CLIENT:FilterCoalitions( Coalitions )
-    if not self.Filter.Coalitions then
-      self.Filter.Coalitions = {}
-    end
-    if type( Coalitions ) ~= "table" then
-      Coalitions = { Coalitions }
-    end
-    for CoalitionID, Coalition in pairs( Coalitions ) do
-      self.Filter.Coalitions[Coalition] = Coalition
-    end
-    return self
-  end
-
+  
   --- Builds a set of clients out of categories.
   -- Possible current categories are plane, helicopter, ground, ship.
   -- @param #SET_CLIENT self
@@ -5106,24 +5093,12 @@ do -- SET_PLAYER
     local ClientFound = self.Set[PlayerName]
     return ClientFound
   end
-
+  
   --- Builds a set of clients of coalitions joined by specific players.
   -- Possible current coalitions are red, blue and neutral.
   -- @param #SET_PLAYER self
   -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
   -- @return #SET_PLAYER self
-  function SET_PLAYER:FilterCoalitions( Coalitions )
-    if not self.Filter.Coalitions then
-      self.Filter.Coalitions = {}
-    end
-    if type( Coalitions ) ~= "table" then
-      Coalitions = { Coalitions }
-    end
-    for CoalitionID, Coalition in pairs( Coalitions ) do
-      self.Filter.Coalitions[Coalition] = Coalition
-    end
-    return self
-  end
   
   --- Builds a set of players in zones.
   -- @param #SET_PLAYER self
@@ -5592,24 +5567,12 @@ do -- SET_AIRBASE
 
     return RandomAirbase
   end
-
+  
   --- Builds a set of airbases of coalitions.
   -- Possible current coalitions are red, blue and neutral.
   -- @param #SET_AIRBASE self
   -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
   -- @return #SET_AIRBASE self
-  function SET_AIRBASE:FilterCoalitions( Coalitions )
-    if not self.Filter.Coalitions then
-      self.Filter.Coalitions = {}
-    end
-    if type( Coalitions ) ~= "table" then
-      Coalitions = { Coalitions }
-    end
-    for CoalitionID, Coalition in pairs( Coalitions ) do
-      self.Filter.Coalitions[Coalition] = Coalition
-    end
-    return self
-  end
 
   --- Builds a set of airbases out of categories.
   -- Possible current categories are plane, helicopter, ground, ship.
@@ -5896,7 +5859,7 @@ do -- SET_CARGO
     return self
   end
 
-  --- (R2.1) Add CARGO to SET_CARGO.
+  --- Add CARGO to SET_CARGO.
   -- @param Core.Set#SET_CARGO self
   -- @param Cargo.Cargo#CARGO Cargo A single cargo.
   -- @return  Core.Set#SET_CARGO self
@@ -5907,7 +5870,7 @@ do -- SET_CARGO
     return self
   end
 
-  --- (R2.1) Add CARGOs to SET_CARGO.
+  --- Add CARGOs to SET_CARGO.
   -- @param Core.Set#SET_CARGO self
   -- @param #string AddCargoNames A single name or an array of CARGO names.
   -- @return  Core.Set#SET_CARGO self
@@ -5922,7 +5885,7 @@ do -- SET_CARGO
     return self
   end
 
-  --- (R2.1) Remove CARGOs from SET_CARGO.
+  --- Remove CARGOs from SET_CARGO.
   -- @param Core.Set#SET_CARGO self
   -- @param Cargo.Cargo#CARGO RemoveCargoNames A single name or an array of CARGO names.
   -- @return Core.Set#SET_CARGO self
@@ -5937,7 +5900,7 @@ do -- SET_CARGO
     return self
   end
 
-  --- (R2.1) Finds a Cargo based on the Cargo Name.
+  --- Finds a Cargo based on the Cargo Name.
   -- @param #SET_CARGO self
   -- @param #string CargoName
   -- @return Cargo.Cargo#CARGO The found Cargo.
@@ -5946,26 +5909,14 @@ do -- SET_CARGO
     local CargoFound = self.Set[CargoName]
     return CargoFound
   end
-
-  --- (R2.1) Builds a set of cargos of coalitions.
+  
+  --- Builds a set of cargos of coalitions.
   -- Possible current coalitions are red, blue and neutral.
   -- @param #SET_CARGO self
   -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
   -- @return #SET_CARGO self
-  function SET_CARGO:FilterCoalitions( Coalitions ) -- R2.1
-    if not self.Filter.Coalitions then
-      self.Filter.Coalitions = {}
-    end
-    if type( Coalitions ) ~= "table" then
-      Coalitions = { Coalitions }
-    end
-    for CoalitionID, Coalition in pairs( Coalitions ) do
-      self.Filter.Coalitions[Coalition] = Coalition
-    end
-    return self
-  end
-
-  --- (R2.1) Builds a set of cargos of defined cargo types.
+  
+  --- Builds a set of cargos of defined cargo types.
   -- Possible current types are those types known within DCS world.
   -- @param #SET_CARGO self
   -- @param #string Types Can take those type strings known within DCS world.
@@ -5983,7 +5934,7 @@ do -- SET_CARGO
     return self
   end
 
-  --- (R2.1) Builds a set of cargos of defined countries.
+  --- Builds a set of cargos of defined countries.
   -- Possible current countries are those known within DCS world.
   -- @param #SET_CARGO self
   -- @param #string Countries Can take those country strings known within DCS world.
@@ -6019,7 +5970,7 @@ do -- SET_CARGO
     return self
   end
 
-  --- (R2.1) Starts the filtering.
+  --- Starts the filtering.
   -- @param #SET_CARGO self
   -- @return #SET_CARGO self
   function SET_CARGO:FilterStart() -- R2.1
@@ -6044,7 +5995,7 @@ do -- SET_CARGO
     return self
   end
 
-  --- (R2.1) Handles the Database to check on an event (birth) that the Object was added in the Database.
+  --- Handles the Database to check on an event (birth) that the Object was added in the Database.
   -- This is required, because sometimes the _DATABASE birth event gets called later than the SET_BASE birth event!
   -- @param #SET_CARGO self
   -- @param Core.Event#EVENTDATA Event
@@ -6056,7 +6007,7 @@ do -- SET_CARGO
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
 
-  --- (R2.1) Handles the Database to check on any event that Object exists in the Database.
+  --- Handles the Database to check on any event that Object exists in the Database.
   -- This is required, because sometimes the _DATABASE event gets called later than the SET_BASE event or vise versa!
   -- @param #SET_CARGO self
   -- @param Core.Event#EVENTDATA Event
@@ -6068,7 +6019,7 @@ do -- SET_CARGO
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
 
-  --- (R2.1) Iterate the SET_CARGO and call an iterator function for each CARGO, providing the CARGO and optional parameters.
+  --- Iterate the SET_CARGO and call an iterator function for each CARGO, providing the CARGO and optional parameters.
   -- @param #SET_CARGO self
   -- @param #function IteratorFunction The function that will be called when there is an alive CARGO in the SET_CARGO. The function needs to accept a CARGO parameter.
   -- @return #SET_CARGO self
@@ -6080,7 +6031,7 @@ do -- SET_CARGO
     return self
   end
 
-  --- (R2.1) Iterate the SET_CARGO while identifying the nearest @{Cargo.Cargo#CARGO} from a @{Core.Point#COORDINATE}.
+  --- Iterate the SET_CARGO while identifying the nearest @{Cargo.Cargo#CARGO} from a @{Core.Point#COORDINATE}.
   -- @param #SET_CARGO self
   -- @param Core.Point#COORDINATE Coordinate A @{Core.Point#COORDINATE} object from where to evaluate the closest @{Cargo.Cargo#CARGO}.
   -- @return Cargo.Cargo#CARGO The closest @{Cargo.Cargo#CARGO}.
@@ -6155,7 +6106,7 @@ do -- SET_CARGO
     return FirstCargo
   end
 
-  --- (R2.1)
+  --- 
   -- @param #SET_CARGO self
   -- @param AI.AI_Cargo#AI_CARGO MCargo
   -- @return #SET_CARGO self
@@ -6214,7 +6165,7 @@ do -- SET_CARGO
     return MCargoInclude
   end
 
-  --- (R2.1) Handles the OnEventNewCargo event for the Set.
+  --- Handles the OnEventNewCargo event for the Set.
   -- @param #SET_CARGO self
   -- @param Core.Event#EVENTDATA EventData
   function SET_CARGO:OnEventNewCargo( EventData ) -- R2.1
@@ -6228,7 +6179,7 @@ do -- SET_CARGO
     end
   end
 
-  --- (R2.1) Handles the OnDead or OnCrash event for alive units set.
+  --- Handles the OnDead or OnCrash event for alive units set.
   -- @param #SET_CARGO self
   -- @param Core.Event#EVENTDATA EventData
   function SET_CARGO:OnEventDeleteCargo( EventData ) -- R2.1
@@ -7315,28 +7266,11 @@ do -- SET_OPSZONE
     
     return self
   end
-  
+   
   --- Builds a set of groups of coalitions. Possible current coalitions are red, blue and neutral.
   -- @param #SET_OPSZONE self
   -- @param #string Coalitions Can take the following values: "red", "blue", "neutral" or combinations as a table, for example `{"red", "neutral"}`.
   -- @return #SET_OPSZONE self
-  function SET_OPSZONE:FilterCoalitions(Coalitions)
-  
-    -- Create an empty set.
-    if not self.Filter.Coalitions then
-      self.Filter.Coalitions={}
-    end
-    
-    -- Ensure we got a table.
-    Coalitions=UTILS.EnsureTable(Coalitions, false)
-    
-    -- Set filter.
-    for CoalitionID, Coalition in pairs( Coalitions ) do
-      self.Filter.Coalitions[Coalition] = Coalition
-    end
-    
-    return self
-  end  
 
   --- Filters for the defined collection.
   -- @param #SET_OPSZONE self
@@ -7930,26 +7864,6 @@ do -- SET_OPSGROUP
   -- @param #string Coalitions Can take the following values: "red", "blue", "neutral" or combinations as a table, for example `{"red", "neutral"}`.
   -- @param #boolean Clear If `true`, clear any previously defined filters.
   -- @return #SET_OPSGROUP self
-  function SET_OPSGROUP:FilterCoalitions(Coalitions, Clear)
-  
-    -- Create an empty set.
-    if Clear or not self.Filter.Coalitions then
-      self.Filter.Coalitions={}
-    end
-    
-    -- Ensure we got a table.
-    if type(Coalitions)~="table" then
-      Coalitions = {Coalitions}
-    end
-    
-    -- Set filter.
-    for CoalitionID, Coalition in pairs( Coalitions ) do
-      self.Filter.Coalitions[Coalition] = Coalition
-    end
-    
-    return self
-  end
-
 
   --- Builds a set of groups out of categories.
   -- 
@@ -8921,24 +8835,12 @@ do -- SET_DYNAMICCARGO
     --self:T2( DCargoInclude )
     return DCargoInclude
   end
-  
+
   --- Builds a set of dynamic cargo of defined coalitions.
   -- Possible current coalitions are red, blue and neutral.
   -- @param #SET_DYNAMICCARGO self
   -- @param #string Coalitions Can take the following values: "red", "blue", "neutral".
   -- @return #SET_DYNAMICCARGO self
-  function SET_DYNAMICCARGO:FilterCoalitions( Coalitions )
-    if not self.Filter.Coalitions then
-      self.Filter.Coalitions = {}
-    end
-    if type( Coalitions ) ~= "table" then
-      Coalitions = { Coalitions }
-    end
-    for CoalitionID, Coalition in pairs( Coalitions ) do
-      self.Filter.Coalitions[Coalition] = Coalition
-    end
-    return self
-  end
   
   --- Builds a set of dynamic cargo of defined dynamic cargo type names.
   -- @param #SET_DYNAMICCARGO self
