@@ -170,6 +170,27 @@ function IDENTIFIABLE:GetCoalition()
   return nil
 end
 
+--- Returns true if identifiable is of RED coalition.
+-- @param #IDENTIFIABLE self
+-- @return #boolean If the identifiable is red.
+function IDENTIFIABLE:IsRed()
+  return self:GetCoalition() == coalition.side.RED
+end
+
+--- Returns true if identifiable is of BLUE coalition.
+-- @param #IDENTIFIABLE self
+-- @return #boolean If the identifiable is blue.
+function IDENTIFIABLE:IsBlue()
+  return self:GetCoalition() == coalition.side.BLUE
+end
+
+--- Returns true if identifiable is of NEUTRAL coalition.
+-- @param #IDENTIFIABLE self
+-- @return #boolean If the identifiable is neutral.
+function IDENTIFIABLE:IsNeutral()
+  return self:GetCoalition() == coalition.side.NEUTRAL
+end
+
 --- Returns the name of the coalition of the Identifiable.
 -- @param #IDENTIFIABLE self
 -- @return #string The name of the coalition.
