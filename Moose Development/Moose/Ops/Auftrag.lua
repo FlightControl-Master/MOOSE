@@ -2774,6 +2774,8 @@ function AUFTRAG:NewFromTarget(Target, MissionType)
     mission=self:NewARMORATTACK(Target)
   elseif MissionType==AUFTRAG.Type.GROUNDATTACK then
     mission=self:NewGROUNDATTACK(Target)
+  elseif MissionType==AUFTRAG.Type.NAVALENGAGEMENT then
+    mission=self:NewNAVALENGAGEMENT(Target)
   else
     return nil
   end
