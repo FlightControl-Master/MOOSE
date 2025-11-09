@@ -839,8 +839,8 @@ function ARMYGROUP:Status()
       local ammo=self:GetAmmoElement(element)
 
       -- Output text for element.
-      text=text..string.format("\n[%d] %s: status=%s, life=%.1f/%.1f, guns=%d, rockets=%d, bombs=%d, missiles=%d, cargo=%d/%d kg",
-      i, name, status, life, life0, ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles, element.weightCargo, element.weightMaxCargo)
+      text=text..string.format("\n[%d] %s: status=%s, life=%.1f/%.1f, guns=%d, cannons=%d, rockets=%d, missiles=%d, cargo=%d/%d kg",
+      i, name, status, life, life0, ammo.Guns, ammo.Cannons, ammo.Rockets, ammo.Missiles, element.weightCargo, element.weightMaxCargo)
     end
     if #self.elements==0 then
       text=text.." none!"

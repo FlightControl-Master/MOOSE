@@ -405,7 +405,9 @@ OPSGROUP.TaskType={
 --- Ammo data.
 -- @type OPSGROUP.Ammo
 -- @field #number Total Total amount of ammo.
--- @field #number Guns Amount of gun shells.
+-- @field #number Shells Amount of shells (guns + cannons).
+-- @field #number Guns Amount of gun shells (caliber < 25).
+-- @field #number Cannons Amount of cannon shells (caliber >= 25).
 -- @field #number Bombs Amount of bombs.
 -- @field #number Rockets Amount of rockets.
 -- @field #number Torpedos Amount of torpedos.
@@ -4758,7 +4760,7 @@ function OPSGROUP:_UpdateTask(Task, Mission)
         elseif weaponType==ENUMS.WeaponFlag.AnyRocket then
           nAmmo=ammo.Rockets
         elseif weaponType==ENUMS.WeaponFlag.Cannons then
-          nAmmo=ammo.Guns
+          nAmmo=ammo.Cannons
         end
         
         --TODO: Update target location while we're at it anyway.
@@ -11210,11 +11212,11 @@ function OPSGROUP:_CheckAmmoStatus()
       self:OutOfAmmo()
     end
 
-    -- Guns.
-    if self.outofGuns and ammo.Guns>0 then
+    -- Guns (changed to shells)
+    if self.outofGuns and ammo.Shells>0 then
       self.outofGuns=false
     end
-    if ammo.Guns==0 and self.ammo.Guns>0 and not self.outofGuns then
+    if ammo.Shells==0 and self.ammo.Shells>0 and not self.outofGuns then
       self.outofGuns=true
       self:OutOfGuns()
     end
@@ -13390,7 +13392,9 @@ function OPSGROUP:GetAmmoTot()
 
   local Ammo={} --#OPSGROUP.Ammo
   Ammo.Total=0
+  Ammo.Shells=0
   Ammo.Guns=0
+  Ammo.Cannons=0
   Ammo.Rockets=0
   Ammo.Bombs=0
   Ammo.Torpedos=0
@@ -13411,7 +13415,9 @@ function OPSGROUP:GetAmmoTot()
 
       -- Add up total.
       Ammo.Total=Ammo.Total+ammo.Total
+      Ammo.Shells=Ammo.Shells+ammo.Shells
       Ammo.Guns=Ammo.Guns+ammo.Guns
+      Ammo.Cannons=Ammo.Cannons+ammo.Cannons
       Ammo.Rockets=Ammo.Rockets+ammo.Rockets
       Ammo.Bombs=Ammo.Bombs+ammo.Bombs
       Ammo.Torpedos=Ammo.Torpedos+ammo.Torpedos
@@ -13444,6 +13450,8 @@ function OPSGROUP:GetAmmoUnit(unit, display)
   -- Init counter.
   local nammo=0
   local nshells=0
+  local nguns=0
+  local ncannons=0
   local nrockets=0
   local nmissiles=0
   local nmissilesAA=0
@@ -13468,8 +13476,8 @@ function OPSGROUP:GetAmmoUnit(unit, display)
     if ammotable then
       local weapons=#ammotable
     
-		--self:I(ammotable)
-		--UTILS.PrintTableToLog(ammotable)
+		  --self:I(ammotable)
+		  --UTILS.PrintTableToLog(ammotable)
 
       -- Loop over all weapons.
       for w=1,weapons do
@@ -13477,9 +13485,9 @@ function OPSGROUP:GetAmmoUnit(unit, display)
         -- Number of current weapon.
         local Nammo=ammotable[w]["count"]
       
-		-- Range in meters. Seems only to exist for missiles (not shells).
-		local rmin=ammotable[w]["desc"]["rangeMin"] or 0
-		local rmax=ammotable[w]["desc"]["rangeMaxAltMin"] or 0
+		    -- Range in meters. Seems only to exist for missiles (not shells).
+		    local rmin=ammotable[w]["desc"]["rangeMin"] or 0
+		    local rmax=ammotable[w]["desc"]["rangeMaxAltMin"] or 0
 
         -- Type name of current weapon.
         local Tammo=ammotable[w]["desc"]["typeName"]
@@ -13501,6 +13509,16 @@ function OPSGROUP:GetAmmoUnit(unit, display)
 
           -- Add up all shells.
           nshells=nshells+Nammo
+		  
+          -- Add small and large caliber shells for guns and cannons
+          if ammotable[w]["desc"]["warhead"] and ammotable[w]["desc"]["warhead"]["caliber"] then
+            local caliber=ammotable[w]["desc"]["warhead"]["caliber"]
+            if caliber<25 then
+              nguns=nguns+Nammo
+            else
+              ncannons=ncannons+Nammo
+            end
+          end
 
           -- Debug info.
           text=text..string.format("- %d shells of type %s, range=%d - %d meters\n", Nammo, _weaponName, rmin, rmax)
@@ -13579,7 +13597,9 @@ function OPSGROUP:GetAmmoUnit(unit, display)
 
   local ammo={} --#OPSGROUP.Ammo
   ammo.Total=nammo
-  ammo.Guns=nshells
+  ammo.Shells=nshells
+  ammo.Guns=nguns
+  ammo.Cannons=ncannons
   ammo.Rockets=nrockets
   ammo.Bombs=nbombs
   ammo.Torpedos=ntorps
