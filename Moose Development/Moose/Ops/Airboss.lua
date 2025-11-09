@@ -5498,15 +5498,15 @@ function AIRBOSS:_GetAircraftAoA( playerData )
     aoa.OnSpeedMin = self:_AoAUnit2Deg( playerData, 14.0 ) -- 14.17 --14.5 units -- VNAO Edit - Original value 14.5
     aoa.Fast = self:_AoAUnit2Deg( playerData, 13.5 ) -- 13.33 --14.0 units -- VNAO Edit - Original value 14
     aoa.FAST = self:_AoAUnit2Deg( playerData, 12.5 ) -- 11.67 --13.0 units -- VNAO Edit - Original value 13
-  elseif goshawk then
+  elseif goshawk then --These parameters edited by CIRCUIT to support new VNAO flight model
     -- T-45C Goshawk parameters.
-    aoa.SLOW = 8.00 -- 19
-    aoa.Slow = 7.75 -- 18
-    aoa.OnSpeedMax = 7.25 -- 17.5
-    aoa.OnSpeed = 7.00 -- 17
-    aoa.OnSpeedMin = 6.75 -- 16.5
-    aoa.Fast = 6.25 -- 16
-    aoa.FAST = 6.00 -- 15
+    aoa.SLOW = 9.5 -- 8.00 -- 19
+    aoa.Slow = 9.25 -- 7.75 -- 18
+    aoa.OnSpeedMax = 9.0 --7.25 -- 17.5
+    aoa.OnSpeed = 8.5 -- 7.00 -- 17
+    aoa.OnSpeedMin = 8.25 -- 6.75 -- 16.5
+    aoa.Fast = 7.75 -- 6.25 -- 16
+    aoa.FAST = 5.5 -- 6.00 -- 15
   elseif skyhawk then
     -- A-4E-C Skyhawk parameters from https://forums.eagle.ru/showpost.php?p=3703467&postcount=390
     -- Note that these are arbitrary UNITS and not degrees. We need a conversion formula!
@@ -8161,8 +8161,14 @@ function AIRBOSS:_CheckPlayerStatus()
         -- TODO: This might cause problems if the CCA is set to be very small!
         if unit:IsInZone( self.zoneCCA ) then
 
-          -- VNAO Edit - Added wrapped up call to LSO grading
-          if playerData.step==AIRBOSS.PatternStep.WAKE then-- VNAO Edit - Added
+          local hornet =   playerData.actype == AIRBOSS.AircraftCarrier.HORNET
+                    or playerData.actype == AIRBOSS.AircraftCarrier.RHINOE
+                    or playerData.actype == AIRBOSS.AircraftCarrier.RHINOF
+                    or playerData.actype == AIRBOSS.AircraftCarrier.GROWLER
+          local tomcat  = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B
+
+          -- VNAO Edit - Added wrapped up call to LSO grading Hornet
+          if playerData.step==AIRBOSS.PatternStep.WAKE and hornet then-- VNAO Edit - Added
             if math.abs(playerData.unit:GetRoll())>35 and math.abs(playerData.unit:GetRoll())<=40 then-- VNAO Edit - Added
               playerData.wrappedUpAtWakeLittle = true -- VNAO Edit - Added
             elseif math.abs(playerData.unit:GetRoll()) >40 and math.abs(playerData.unit:GetRoll())<=45 then-- VNAO Edit - Added
@@ -8186,6 +8192,30 @@ function AIRBOSS:_CheckPlayerStatus()
             end  -- VNAO Edit - Added 
           end-- VNAO Edit - Added
 
+          -- VNAO Edit - Added wrapped up call to LSO grading Tomcat
+          if playerData.step==AIRBOSS.PatternStep.WAKE and tomcat then-- VNAO Edit - Added
+            if math.abs(playerData.unit:GetRoll())>35 and math.abs(playerData.unit:GetRoll())<=40 then-- VNAO Edit - Added
+              playerData.wrappedUpAtWakeLittle = true -- VNAO Edit - Added
+            elseif math.abs(playerData.unit:GetRoll()) >40 and math.abs(playerData.unit:GetRoll())<=45 then-- VNAO Edit - Added
+              playerData.wrappedUpAtWakeFull = true-- VNAO Edit - Added
+            elseif math.abs(playerData.unit:GetRoll()) >45 then-- VNAO Edit - Added
+              playerData.wrappedUpAtWakeUnderline = true -- VNAO Edit - Added
+            elseif math.abs(playerData.unit:GetRoll()) <12 and math.abs(playerData.unit:GetRoll()) >=5 then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
+              playerData.AAatWakeLittle = true  -- VNAO Edit - Added
+            elseif math.abs(playerData.unit:GetRoll()) <5 and math.abs(playerData.unit:GetRoll()) >=2 then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
+              playerData.AAatWakeFull = true  -- VNAO Edit - Added 
+            elseif math.abs(playerData.unit:GetRoll()) <2 then  -- VNAO Edit - Added a new AA comment based on discussion with Lipps today, and going to replace the AA at the X with the original LUL comments
+              playerData.AAatWakeUnderline = true  -- VNAO Edit - Added 
+            else  -- VNAO Edit - Added 
+            end -- VNAO Edit - Added
+
+            if math.abs(playerData.unit:GetAoA())>= 15 then  -- VNAO Edit - Added 
+              playerData.AFU = true  -- VNAO Edit - Added 
+            elseif math.abs(playerData.unit:GetAoA())<= 5 then  -- VNAO Edit - Added 
+              playerData.AFU = true  -- VNAO Edit - Added 
+            else  -- VNAO Edit - Added 
+            end  -- VNAO Edit - Added 
+          end-- VNAO Edit - Added
 
           -- Display aircraft attitude and other parameters as message text.
           if playerData.attitudemonitor then
@@ -12229,8 +12259,8 @@ function AIRBOSS:GetHeadingIntoWind_new( vdeck, magnetic, coord )
   local magvar= magnetic and self.magvar or 0
 
   -- Ship heading so cross wind is min for the given wind.
-  -- local intowind = (540 + (windto - magvar + math.deg(theta) )) % 360 -- VNAO Edit: Using old heading into wind algorithm
-  local intowind = self:GetHeadingIntoWind_old(vdeck,magnetic) -- VNAO Edit: Using old heading into wind algorithm
+  local intowind = (540 + (windto - magvar + math.deg(theta) )) % 360
+
 
   return intowind, v
 end
@@ -12682,7 +12712,8 @@ function AIRBOSS:_LSOgrade( playerData )
   local nL=count(G, '_')/2
   local nS=count(G, '%(')
   local nN=N-nS-nL
-
+  
+  if TIG=="_OK_" then nL = nL -1 end --Circuit added to prevent grade deduction for perfect groove
 
   -- Groove time 15-18.99 sec for a unicorn. Or 60-65 for V/STOL unicorn.
   local Tgroove=playerData.Tgroove
@@ -12712,7 +12743,6 @@ function AIRBOSS:_LSOgrade( playerData )
     else
 
     if vtol then
-
       -- Add AV-8B Harrier devation allowances due to lower groundspeed and 3x conventional groove time, this allows to maintain LSO tolerances while respecting the deviations are not unsafe.--Pene testing
       -- Large devaitions still result in a No Grade, A Unicorn still requires a clean pass with no deviation.
 
