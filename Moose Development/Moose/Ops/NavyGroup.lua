@@ -86,12 +86,14 @@ NAVYGROUP = {
 -- @field Ops.Target#TARGET Target The target.
 -- @field Core.Point#COORDINATE Coordinate Last known coordinate of the target.
 -- @field Ops.OpsGroup#OPSGROUP.Waypoint Waypoint the waypoint created to go to the target.
+-- @field #number Speed Speed in knots.
+-- @field #number Depth Depth of the engagement (submarines).
 -- @field #number roe ROE backup.
 -- @field #number alarmstate Alarm state backup.
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="1.0.3"
+NAVYGROUP.version="1.0.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -1081,7 +1083,7 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
     text=text..string.format("Elements     = %d\n", #self.elements)
     text=text..string.format("Waypoints    = %d\n", #self.waypoints)
     text=text..string.format("Radio        = %.1f MHz %s %s\n", self.radio.Freq, UTILS.GetModulationName(self.radio.Modu), tostring(self.radio.On))
-    text=text..string.format("Ammo         = %d (G=%d/R=%d/M=%d/T=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Rockets, self.ammo.Missiles, self.ammo.Torpedos)
+    text=text..string.format("Ammo         = %d (G=%d/C=%d/R=%d/M=%d/T=%d)\n", self.ammo.Total, self.ammo.Guns, self.ammo.Cannons, self.ammo.Rockets, self.ammo.Missiles, self.ammo.Torpedos)
     text=text..string.format("FSM state    = %s\n", self:GetState())
     text=text..string.format("Is alive     = %s\n", tostring(self:IsAlive()))
     text=text..string.format("LateActivate = %s\n", tostring(self:IsLateActivated()))
@@ -1602,8 +1604,10 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Wrapper.Group#GROUP Group the group to be engaged.
-function NAVYGROUP:onafterEngageTarget(From, Event, To, Target)
+-- @param Ops.Target#TARGET Target The target to be engaged. Can also be a GROUP or UNIT object.
+-- @param #number Speed Attack speed in knots.
+-- @param #number Depth The depth in meters. Only for submarins.
+function NAVYGROUP:onafterEngageTarget(From, Event, To, Target, Speed, Depth)
   self:T(self.lid.."Engaging Target")
 
   if Target:IsInstanceOf("TARGET") then
@@ -1615,11 +1619,9 @@ function NAVYGROUP:onafterEngageTarget(From, Event, To, Target)
   -- Target coordinate.
   self.engage.Coordinate=UTILS.DeepCopy(self.engage.Target:GetCoordinate()) 
  
-  
-  local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+  -- Get a coordinate close to the target.
+  local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.8)
 
-
-  
   -- Backup ROE and alarm state.
   self.engage.roe=self:GetROE()
   self.engage.alarmstate=self:GetAlarmstate()
@@ -1629,11 +1631,17 @@ function NAVYGROUP:onafterEngageTarget(From, Event, To, Target)
   self:SwitchROE(ENUMS.ROE.OpenFire)
 
   -- ID of current waypoint.
-  local uid=self:GetWaypointCurrent().uid
+  local uid=self:GetWaypointCurrentUID()
+
+  -- Set formation.
+  self.engage.Depth=Depth or 0
+
+  -- Set speed.
+  self.engage.Speed=Speed  
   
   -- Add waypoint after current.
-  self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
-  
+  self.engage.Waypoint=self:AddWaypoint(intercoord, Speed, uid, Depth, true)
+    
   -- Set if we want to resume route after reaching the detour waypoint.
   self.engage.Waypoint.detour=1
 
@@ -1656,24 +1664,22 @@ function NAVYGROUP:_UpdateEngageTarget()
       -- Check if target moved more than 100 meters.
       if dist>100 then
       
-        --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
-      
         -- Update new position.
         self.engage.Coordinate:UpdateFromVec3(vec3)
   
         -- ID of current waypoint.
-        local uid=self:GetWaypointCurrent().uid
+        local uid=self:GetWaypointCurrentUID()
       
         -- Remove current waypoint
         self:RemoveWaypointByID(self.engage.Waypoint.uid)
         
-        local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+        local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.8)
     
           -- Add waypoint after current.
-        self.engage.Waypoint=self:AddWaypoint(intercoord, nil, uid, Formation, true)
+        self.engage.Waypoint=self:AddWaypoint(intercoord, self.engage.Speed, uid, self.engage.Depth, true)
       
         -- Set if we want to resume route after reaching the detour waypoint.
-        self.engage.Waypoint.detour=0      
+        self.engage.Waypoint.detour=1
       
       end
       
@@ -1709,8 +1715,8 @@ function NAVYGROUP:onafterDisengage(From, Event, To)
   local task=self:GetTaskCurrent()
 
   -- Get if current task is ground attack.
-  if task and task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK then
-    self:T(self.lid.."Disengage with current task GROUNDATTACK ==> Task Done!")
+  if task and (task.dcstask.id==AUFTRAG.SpecialTask.GROUNDATTACK or task.dcstask.id==AUFTRAG.SpecialTask.NAVALENGAGEMENT) then
+    self:T(self.lid.."Disengage with current task GROUNDATTACK/NAVALENGAGEMENT ==> Task Done!")
     self:TaskDone(task)
   end    
   

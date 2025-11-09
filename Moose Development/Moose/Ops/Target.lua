@@ -2006,9 +2006,10 @@ end
 --- Count alive objects.
 -- @param #TARGET self
 -- @param #TARGET.Object Target Target objective.
--- @param #table Coalitions (Optional) Only count targets of the given coalition(s). 
+-- @param #table Coalitions (Optional) Only count targets of the given coalition(s).
+-- @param #boolean OnlyReallyAlive (Optional) If `true`, count only really alive targets (units, groups) but not coordinates or zones.
 -- @return #number Number of alive target objects.
-function TARGET:CountObjectives(Target, Coalitions)
+function TARGET:CountObjectives(Target, Coalitions, OnlyReallyAlive)
 
   local N=0
 
@@ -2067,13 +2068,17 @@ function TARGET:CountObjectives(Target, Coalitions)
   
     -- No target, where we can check the alive status, so we assume it is alive. Changed this because otherwise target count is 0 if we pass a coordinate.
     -- This is also more consitent with the life and is alive status.
-    N=N+1
+    if not OnlyReallyAlive then
+      N=N+1
+    end
 
   elseif Target.Type==TARGET.ObjectType.ZONE then
   
     -- No target, where we can check the alive status, so we assume it is alive. Changed this because otherwise target count is 0 if we pass a coordinate.
     -- This is also more consitent with the life and is alive status.
-    N=N+1
+    if not OnlyReallyAlive then
+      N=N+1
+    end
         
   elseif Target.Type==TARGET.ObjectType.OPSZONE then
     
@@ -2093,15 +2098,16 @@ end
 --- Count alive targets.
 -- @param #TARGET self
 -- @param #table Coalitions (Optional) Only count targets of the given coalition(s). 
+-- @param #boolean OnlyReallyAlive (Optional) If `true`, count only really alive targets (units, groups) but not coordinates or zones.
 -- @return #number Number of alive target objects.
-function TARGET:CountTargets(Coalitions)
+function TARGET:CountTargets(Coalitions, OnlyReallyAlive)
   
   local N=0
   
   for _,_target in pairs(self.targets) do
     local Target=_target --#TARGET.Object
   
-    N=N+self:CountObjectives(Target, Coalitions)
+    N=N+self:CountObjectives(Target, Coalitions, OnlyReallyAlive)
     
   end
   

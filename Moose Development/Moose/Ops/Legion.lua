@@ -1901,7 +1901,7 @@ function LEGION:_TacticalOverview()
     for _,mtype in pairs(AUFTRAG.Type) do
       local n=self:CountMissionsInQueue(mtype)
       if n>0 then
-        local N=self:CountMissionsInQueue(mtype)
+        local N=self:CountMissionsInQueue(mtype, true)
         text=text..string.format("  - %s: %d [Running=%d]\n", mtype, n, N)
       end
     end
@@ -2057,18 +2057,23 @@ end
 --- Count missions in mission queue.
 -- @param #LEGION self
 -- @param #table MissionTypes Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
+-- @param #boolean OnlyRunning If `true`, only count running missions.
 -- @return #number Number of missions that are not over yet.
-function LEGION:CountMissionsInQueue(MissionTypes)
+function LEGION:CountMissionsInQueue(MissionTypes, OnlyRunning)
 
   MissionTypes=MissionTypes or AUFTRAG.Type
 
   local N=0
   for _,_mission in pairs(self.missionqueue) do
     local mission=_mission --Ops.Auftrag#AUFTRAG
+    
+    if (not OnlyRunning) or (mission.statusLegion~=AUFTRAG.Status.PLANNED) then
 
-    -- Check if this mission type is requested.
-    if mission:IsNotOver() and AUFTRAG.CheckMissionType(mission.type, MissionTypes) then
-      N=N+1
+      -- Check if this mission type is requested.
+      if mission:IsNotOver() and AUFTRAG.CheckMissionType(mission.type, MissionTypes) then
+        N=N+1
+      end
+      
     end
 
   end

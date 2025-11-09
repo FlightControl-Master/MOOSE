@@ -49,7 +49,7 @@
 -- 
 -- # Mark on F10 map
 -- 
--- The ponints of the PATHLINE can be marked on the F10 map with the @{#PATHLINE.MarkPoints}(`true`) function. The mark points contain information of the surface type, land height and 
+-- The points of the PATHLINE can be marked on the F10 map with the @{#PATHLINE.MarkPoints}(`true`) function. The mark points contain information of the surface type, land height and 
 -- water depth.
 -- 
 -- To remove the marks, use @{#PATHLINE.MarkPoints}(`false`).
@@ -69,11 +69,12 @@ PATHLINE = {
 -- @field #number landHeight Land height in meters.
 -- @field #number depth Water depth in meters.
 -- @field #number markerID Marker ID.
+-- @field #number lineID Line marker ID.
 
 
 --- PATHLINE class version.
 -- @field #string version
-PATHLINE.version="0.1.1"
+PATHLINE.version="0.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -301,18 +302,42 @@ function PATHLINE:GetPoint2DFromIndex(n)
   return nil
 end
 
+--- Calculate the length of the line.
+-- @param #PATHLINE self
+-- @param #boolean Project2D Calculate 2D distance between points.
+-- @return #number Length in meters.
+function PATHLINE:GetLength(Project2D)
+  local l=0
+
+  local np=#self.points
+
+  for i=1,np-1 do
+    local p1=self.points[i]   --#PATHLINE.Point
+    local p2=self.points[i+1] --#PATHLINE.Point
+    
+    if Project2D then
+      l=l+UTILS.VecDist2D(p1.vec2, p2.vec2)
+    else
+      l=l+UTILS.VecDist3D(p1.vec3, p2.vec3)
+    end
+    
+  end
+  
+  return l
+end
+
 
 --- Mark points on F10 map.
 -- @param #PATHLINE self
 -- @param #boolean Switch If `true` or nil, set marks. If `false`, remove marks.
--- @return <DCS#Vec3> List of DCS#Vec3 points.
+-- @return #PATHLINE self
 function PATHLINE:MarkPoints(Switch)
   for i,_point in pairs(self.points) do
     local point=_point --#PATHLINE.Point
     if Switch==false then
       
       if point.markerID then
-        UTILS.RemoveMark(point.markerID, Delay)
+        UTILS.RemoveMark(point.markerID)
       end
       
     else
@@ -329,6 +354,56 @@ function PATHLINE:MarkPoints(Switch)
     
     end
   end
+  return self
+end
+
+--- Draw line on F10 map.
+-- @param #PATHLINE self
+-- @param #number Recipient Recipent of the line: -1=All.
+-- @param #table Color Color as RGB table plus alpha value. Default {1, 0, 0, 1.0}.
+-- @param #number LineType Line type: 1=Solid (default).
+-- @return #PATHLINE self
+function PATHLINE:DrawLine(Recipient, Color, LineType)
+  
+  -- Input
+  Recipient= Recipient or -1
+  Color= Color or {1,0,0, 1.0}
+  LineType=LineType or 1
+  local ReadOnly=false
+  
+
+  local np=#self.points
+
+  for i=1,np-1 do
+    local p1=self.points[i]   --#PATHLINE.Point
+    local p2=self.points[i+1] --#PATHLINE.Point
+    
+    p1.lineID = UTILS.GetMarkID()
+    
+    trigger.action.lineToAll(Recipient, p1.lineID, p1.vec3, p2.vec3, Color, LineType, ReadOnly, "")
+    
+  end
+
+  return self
+end
+
+--- Remove line on F10 map.
+-- @param #PATHLINE self
+-- @param #number Delay Delay in seconds before line is removed.
+-- @return #PATHLINE self
+function PATHLINE:UnDrawLine(Delay)
+  
+
+  local np=#self.points
+
+  for _,_point in pairs(self.points) do
+    local p=_point   --#PATHLINE.Point
+    if p.lineID then
+      UTILS.RemoveMark(p.lineID, Delay)
+    end    
+  end
+
+  return self
 end
 
 
