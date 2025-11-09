@@ -13466,10 +13466,10 @@ function OPSGROUP:GetAmmoUnit(unit, display)
     local ammotable=unit:GetAmmo()
 
     if ammotable then
-
       local weapons=#ammotable
     
-    --self:I(ammotable)
+		--self:I(ammotable)
+		--UTILS.PrintTableToLog(ammotable)
 
       -- Loop over all weapons.
       for w=1,weapons do
@@ -13477,9 +13477,9 @@ function OPSGROUP:GetAmmoUnit(unit, display)
         -- Number of current weapon.
         local Nammo=ammotable[w]["count"]
       
-      -- Range in meters. Seems only to exist for missiles (not shells).
-      local rmin=ammotable[w]["desc"]["rangeMin"] or 0
-      local rmax=ammotable[w]["desc"]["rangeMaxAltMin"] or 0
+		-- Range in meters. Seems only to exist for missiles (not shells).
+		local rmin=ammotable[w]["desc"]["rangeMin"] or 0
+		local rmax=ammotable[w]["desc"]["rangeMaxAltMin"] or 0
 
         -- Type name of current weapon.
         local Tammo=ammotable[w]["desc"]["typeName"]

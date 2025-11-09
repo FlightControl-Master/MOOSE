@@ -79,6 +79,7 @@
 
 do -- FSM
 
+  --- FSM class
   -- @type FSM
   -- @field #string ClassName Name of the class.
   -- @field Core.Scheduler#SCHEDULER CallScheduler Call scheduler.
