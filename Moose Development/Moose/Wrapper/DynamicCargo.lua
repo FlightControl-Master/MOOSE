@@ -108,8 +108,9 @@ DYNAMICCARGO.State = {
 -- @type DYNAMICCARGO.AircraftTypes
 DYNAMICCARGO.AircraftTypes = {
   ["CH-47Fbl1"] = "CH-47Fbl1",
-  ["Mi-8MTV2"] = "CH-47Fbl1",
-  ["Mi-8MT"] = "CH-47Fbl1",
+  ["Mi-8MTV2"] = "Mi-8MTV2",
+  ["Mi-8MT"] = "Mi-8MT",
+  ["C-130J-30"] = "C-130J-30",
 }
 
 --- Helo types possible.
@@ -122,23 +123,29 @@ DYNAMICCARGO.AircraftDimensions = {
     ["length"] = 11,
     ["ropelength"] = 30,
   },
-    ["Mi-8MTV2"] = {
+  ["Mi-8MTV2"] = {
     ["width"] = 6,
     ["height"] = 6,
     ["length"] = 15,
     ["ropelength"] = 30,
   },
-    ["Mi-8MT"] = {
+  ["Mi-8MT"] = {
     ["width"] = 6,
     ["height"] = 6,
     ["length"] = 15,
     ["ropelength"] = 30,
+  },
+  ["C-130J-30"] = {
+    ["width"] = 4,
+    ["height"] = 12,
+    ["length"] = 35,
+    ["ropelength"] = 0,
   },
 }
 
 --- DYNAMICCARGO class version.
 -- @field #string version
-DYNAMICCARGO.version="0.0.9"
+DYNAMICCARGO.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list

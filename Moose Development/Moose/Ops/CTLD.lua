@@ -913,7 +913,7 @@ do
 --        -- Make a Gazelle into a heavy truck, this type can load both crates and troops and eight of each type, up to 4000 kgs:
 --        my_ctld:SetUnitCapabilities("SA342L", true, true, 8, 8, 12, 4000)
 --        
---        -- Default unit type capabilities are: 
+--        -- Default unit type capabilities are e.g. (list might be incomplete) 
 --        ["SA342Mistral"] = {type="SA342Mistral", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12, cargoweightlimit = 400},
 --        ["SA342L"] = {type="SA342L", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 12, cargoweightlimit = 400},
 --        ["SA342M"] = {type="SA342M", crates=false, troops=true, cratelimit = 0, trooplimit = 4, length = 12, cargoweightlimit = 400},
@@ -1396,7 +1396,8 @@ CTLD.UnitTypeCapabilities = {
     ["Ka-50_3"] = {type="Ka-50_3", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 15, cargoweightlimit = 0},
     ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18, cargoweightlimit = 700},
     ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18, cargoweightlimit = 700},
-    ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25, cargoweightlimit = 19000}, -- 19t cargo, 64 paratroopers. 
+    ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25, cargoweightlimit = 19000}, -- 19t cargo, 64 paratroopers.
+    ["C-130J-30"] = {type="C-130J-30", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 35, cargoweightlimit = 21500}, -- 19t cargo, 64 paratroopers. 
     --Actually it's longer, but the center coord is off-center of the model.
     ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
     ["UH-60L_DAP"] = {type="UH-60L_DAP", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 16, cargoweightlimit = 500}, -- UH-60L DAP is an attack helo but can do limited CSAR and CTLD
@@ -1417,11 +1418,12 @@ CTLD.FixedWingTypes = {
   ["Hercules"] = "Hercules",
   ["Bronco"] = "Bronco",
   ["Mosquito"] = "Mosquito",
+  ["C-130J-30"] = "C-130J-30",
 }
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.3.38"
+CTLD.version="1.3.39"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
