@@ -3340,7 +3340,6 @@ function WAREHOUSE:FindAssetInDB(group)
   if aid~=nil then
 
     local asset=_WAREHOUSEDB.Assets[aid]
-    self:T2({asset=asset})
     if asset==nil then
       self:_ErrorMessage(string.format("ERROR: Asset for group %s not found in the data base!", group:GetName()), 0)
     end
@@ -3918,7 +3917,7 @@ end
 -- @param #string assignment A free to choose string specifying an assignment for the asset. This can be used with the @{#WAREHOUSE.OnAfterNewAsset} function.
 -- @param #table other (Optional) Table of other useful data. Can be collected via WAREHOUSE.OnAfterNewAsset() function for example
 function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribute, forcecargobay, forceweight, loadradius, skill, liveries, assignment, other)
-  self:T({group=group, ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
+  --self:T({group=group:GetName(), ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
 
   -- Set default.
   local n=ngroups or 1
@@ -4446,7 +4445,6 @@ end
 -- @param #WAREHOUSE.Queueitem Request Information table of the request.
 -- @return #boolean If true, request is granted.
 function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
-  self:T3({warehouse=self.alias, request=Request})
 
   -- Distance from warehouse to requesting warehouse.
   local distance=self:GetCoordinate():Get2DDistance(Request.warehouse:GetCoordinate())
@@ -6152,9 +6150,6 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
 
     -- Uncontrolled spawning.
     template.uncontrolled=uncontrolled
-
-    -- Debug info.
-    self:T2({airtemplate=template})
 
     -- Spawn group.
     local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP
@@ -8601,6 +8596,8 @@ function WAREHOUSE:_DeleteStockItem(stockitem)
     local item=self.stock[i] --#WAREHOUSE.Assetitem
     if item.uid==stockitem.uid then
       table.remove(self.stock,i)
+      -- remove also from warehouse DB
+      _WAREHOUSEDB.Assets[stockitem.uid]=nil
       break
     end
   end

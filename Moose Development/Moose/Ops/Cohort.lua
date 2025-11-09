@@ -629,32 +629,42 @@ end
 --- Remove assets from pool. Not that assets must not be spawned or already reserved or requested.
 -- @param #COHORT self
 -- @param #number N Number of assets to be removed. Default 1.
+-- @param #number Delay Delay in seconds before assets are removed.
 -- @return #COHORT self
-function COHORT:RemoveAssets(N)
+function COHORT:RemoveAssets(N, Delay)
   self:T2(self.lid..string.format("Remove %d assets of Cohort", N))
-
-  N=N or 1
   
-  local n=0
-  for i=#self.assets,1,-1 do
-    local asset=self.assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+  if Delay and Delay>0 then
+    -- Delayed call
+    self:ScheduleOnce(Delay, COHORT.RemoveAssets, self, N, 0)
+  else
   
-    self:T2(self.lid..string.format("Checking removing asset %s", asset.spawngroupname))
-    if not (asset.requested or asset.spawned or asset.isReserved) then
-      self:T2(self.lid..string.format("Removing asset %s", asset.spawngroupname))
-      table.remove(self.assets, i)
-      n=n+1
-    else
-      self:T2(self.lid..string.format("Could NOT Remove asset %s", asset.spawngroupname))
+    N=N or 1
+    
+    local n=0
+    for i=#self.assets,1,-1 do
+      local asset=self.assets[i] --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+      self:T2(self.lid..string.format("Checking removing asset %s", asset.spawngroupname))
+      if not (asset.requested or asset.spawned or asset.isReserved) then
+        self:T2(self.lid..string.format("Removing asset %s", asset.spawngroupname))
+        -- Remove from warehouse and warehouse DB
+        asset.legion:_DeleteStockItem(asset)
+        table.remove(self.assets, i)
+        n=n+1
+      else
+        self:T2(self.lid..string.format("Could NOT Remove asset %s", asset.spawngroupname))
+      end
+      
+      if n>=N then
+        break
+      end
+    
     end
     
-    if n>=N then
-      break
-    end
+    self:T(self.lid..string.format("Removed %d/%d assets. New asset count=%d", n, N, #self.assets))
   
   end
-  
-  self:T(self.lid..string.format("Removed %d/%d assets. New asset count=%d", n, N, #self.assets))
 
   return self
 end
