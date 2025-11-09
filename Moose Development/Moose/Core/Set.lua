@@ -115,14 +115,14 @@ do -- SET_BASE
   -- @usage
   -- -- Define a new SET_BASE Object. This DBObject will contain a reference to all Group and Unit Templates defined within the ME and the DCSRTE.
   -- DBObject = SET_BASE:New()
-  function SET_BASE:New( Database )
+  function SET_BASE:New(Database)
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, FSM:New() ) -- Core.Set#SET_BASE
+    local self = BASE:Inherit(self, FSM:New()) -- Core.Set#SET_BASE
 
     self.Database = Database
 
-    self:SetStartState( "Started" )
+    self:SetStartState("Started")
 
     --- Added Handler OnAfter for SET_BASE
     -- @function [parent=#SET_BASE] OnAfterAdded
@@ -133,7 +133,7 @@ do -- SET_BASE
     -- @param #string ObjectName The name of the object.
     -- @param Object The object.
 
-    self:AddTransition( "*", "Added", "*" )
+    self:AddTransition("*", "Added", "*")
 
     --- Removed Handler OnAfter for SET_BASE
     -- @function [parent=#SET_BASE] OnAfterRemoved
@@ -144,7 +144,7 @@ do -- SET_BASE
     -- @param #string ObjectName The name of the object.
     -- @param Object The object.
 
-    self:AddTransition( "*", "Removed", "*" )
+    self:AddTransition("*", "Removed", "*")
 
     self.YieldInterval = 10
     self.TimeInterval = 0.001
@@ -152,9 +152,9 @@ do -- SET_BASE
     self.Set = {}
     self.Index = {}
 
-    self.CallScheduler = SCHEDULER:New( self )
+    self.CallScheduler = SCHEDULER:New(self)
 
-    self:SetEventPriority( 2 )
+    self:SetEventPriority(2)
 
     return self
   end
@@ -203,8 +203,8 @@ do -- SET_BASE
   -- @return #SET_BASE self
   function SET_BASE:Clear(TriggerEvent)
 
-    for Name, Object in pairs( self.Set ) do
-      self:Remove( Name, not TriggerEvent )
+    for Name, Object in pairs(self.Set) do
+      self:Remove(Name, not TriggerEvent)
     end
 
     return self
@@ -216,7 +216,7 @@ do -- SET_BASE
   -- @param #string Coalitions Can take the following values: "red", "blue", "neutral" and coalition.side.RED, coalition.side.BLUE,coalition.side.NEUTRAL
   -- @param #boolean Clear If `true`, clear any previously defined filters.
   -- @return #SET_BASE self
-  function SET_BASE:FilterCoalitions( Coalitions, Clear )
+  function SET_BASE:FilterCoalitions(Coalitions, Clear)
     
     if Clear or (not self.Filter.Coalitions) then
       self.Filter.Coalitions = {}
@@ -224,7 +224,7 @@ do -- SET_BASE
     
     -- Ensure table.
     if type(Coalitions) ~= "table" then Coalitions = {Coalitions} end
-    for CoalitionID, Coalition in pairs( Coalitions ) do
+    for CoalitionID, Coalition in pairs(Coalitions) do
       local coalition = Coalition
       if type(Coalition) == "number" then
         coalition = self.FilterCoalitionNumbers[Coalition+1] or "unknown"
@@ -240,7 +240,7 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param #string ObjectName
   -- @return Core.Base#BASE The Object found.
-  function SET_BASE:_Find( ObjectName )
+  function SET_BASE:_Find(ObjectName)
 
     local ObjectFound = self.Set[ObjectName]
     return ObjectFound
@@ -263,8 +263,8 @@ do -- SET_BASE
 
     local Names = {}
 
-    for Name, Object in pairs( self.Set ) do
-      table.insert( Names, Name )
+    for Name, Object in pairs(self.Set) do
+      table.insert(Names, Name)
     end
 
     return Names
@@ -278,8 +278,8 @@ do -- SET_BASE
 
     local Objects = {}
 
-    for Name, Object in pairs( self.Set ) do
-      table.insert( Objects, Object )
+    for Name, Object in pairs(self.Set) do
+      table.insert(Objects, Object)
     end
 
     return Objects
@@ -289,8 +289,8 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param #string ObjectName
   -- @param #boolean NoTriggerEvent (Optional) When `true`, the :Remove() method will not trigger a **Removed** event.
-  function SET_BASE:Remove( ObjectName, NoTriggerEvent )
-    --self:F2( { ObjectName = ObjectName } )
+  function SET_BASE:Remove(ObjectName, NoTriggerEvent)
+    --self:F2({ ObjectName = ObjectName })
     
     local TriggerEvent = true
     if NoTriggerEvent then 
@@ -303,9 +303,9 @@ do -- SET_BASE
 
     if Object then
     
-      for Index, Key in ipairs( self.Index ) do
+      for Index, Key in ipairs(self.Index) do
         if Key == ObjectName then
-          table.remove( self.Index, Index )
+          table.remove(self.Index, Index)
           self.Set[ObjectName] = nil
           break
         end
@@ -313,7 +313,7 @@ do -- SET_BASE
       
       -- When NoTriggerEvent is true, then no Removed event will be triggered.
       if TriggerEvent then
-        self:Removed( ObjectName, Object )
+        self:Removed(ObjectName, Object)
       end
     end
   end
@@ -323,10 +323,10 @@ do -- SET_BASE
   -- @param #string ObjectName The name of the object.
   -- @param Core.Base#BASE Object The object itself.
   -- @return Core.Base#BASE The added BASE Object.
-  function SET_BASE:Add( ObjectName, Object )
+  function SET_BASE:Add(ObjectName, Object)
   
     -- Debug info.
-    --self:T2( { ObjectName = ObjectName, Object = Object } )
+    --self:T2({ ObjectName = ObjectName, Object = Object })
     
     -- Error ahndling
     if not ObjectName or ObjectName == "" then
@@ -337,17 +337,17 @@ do -- SET_BASE
     
     -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
     if self.Set[ObjectName] then
-      self:Remove( ObjectName, true )
+      self:Remove(ObjectName, true)
     end
 
     -- Add object to set.
     self.Set[ObjectName] = Object
 
     -- Add Object name to Index.
-    table.insert( self.Index, ObjectName )
+    table.insert(self.Index, ObjectName)
 
     -- Trigger Added event.
-    self:Added( ObjectName, Object )
+    self:Added(ObjectName, Object)
     
     return self
   end
@@ -356,12 +356,12 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param Wrapper.Object#OBJECT Object
   -- @return Core.Base#BASE The added BASE Object.
-  function SET_BASE:AddObject( Object )
-    --self:F2( Object.ObjectName )
+  function SET_BASE:AddObject(Object)
+    --self:F2(Object.ObjectName)
 
-    --self:T( Object.UnitName )
-    --self:T( Object.ObjectName )
-    self:Add( Object.ObjectName, Object )
+    --self:T(Object.UnitName)
+    --self:T(Object.ObjectName)
+    self:Add(Object.ObjectName, Object)
 
   end
 
@@ -398,16 +398,16 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param Core.Set#SET_BASE SetB Set *B*.
   -- @return Core.Set#SET_BASE The union set, i.e. contains objects that are in set *A* **or** in set *B*.
-  function SET_BASE:GetSetUnion( SetB )
+  function SET_BASE:GetSetUnion(SetB)
 
     local union = SET_BASE:New()
 
-    for _, ObjectA in pairs( self.Set ) do
-      union:AddObject( ObjectA )
+    for _, ObjectA in pairs(self.Set) do
+      union:AddObject(ObjectA)
     end
 
-    for _, ObjectB in pairs( SetB.Set ) do
-      union:AddObject( ObjectB )
+    for _, ObjectB in pairs(SetB.Set) do
+      union:AddObject(ObjectB)
     end
 
     return union
@@ -436,7 +436,7 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param Core.Set#SET_BASE SetB Set other set, called *B*.
   -- @return Core.Set#SET_BASE The set of objects that are in set *B* but **not** in this set *A*.
-  function SET_BASE:GetSetComplement( SetB )
+  function SET_BASE:GetSetComplement(SetB)
 
     local complement = self:GetSetUnion(SetB)
     local intersection = self:GetSetIntersection(SetB)
@@ -453,11 +453,11 @@ do -- SET_BASE
   -- @param Core.Set#SET_BASE SetA First set.
   -- @param Core.Set#SET_BASE SetB Set to be merged into first set.
   -- @return Core.Set#SET_BASE The set of objects that are included in SetA and SetB.
-  function SET_BASE:CompareSets( SetA, SetB )
+  function SET_BASE:CompareSets(SetA, SetB)
 
-    for _, ObjectB in pairs( SetB.Set ) do
-      if SetA:IsIncludeObject( ObjectB ) then
-        SetA:Add( ObjectB )
+    for _, ObjectB in pairs(SetB.Set) do
+      if SetA:IsIncludeObject(ObjectB) then
+        SetA:Add(ObjectB)
       end
     end
 
@@ -468,12 +468,12 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param #string ObjectName
   -- @return Core.Base#BASE
-  function SET_BASE:Get( ObjectName )
-    --self:F( ObjectName )
+  function SET_BASE:Get(ObjectName)
+    --self:F(ObjectName)
 
     local Object = self.Set[ObjectName]
 
-    --self:T3( { ObjectName, Object } )
+    --self:T3({ ObjectName, Object })
     return Object
   end
 
@@ -483,7 +483,7 @@ do -- SET_BASE
   function SET_BASE:GetFirst()
     local ObjectName = self.Index[1]
     local FirstObject = self.Set[ObjectName]
-    --self:T3( { FirstObject } )
+    --self:T3({ FirstObject })
     return FirstObject
   end
 
@@ -494,7 +494,7 @@ do -- SET_BASE
     local tablemax = table.maxn(self.Index)
     local ObjectName = self.Index[tablemax]
     local LastObject = self.Set[ObjectName]
-    --self:T3( { LastObject } )
+    --self:T3({ LastObject })
     return LastObject
   end
 
@@ -508,7 +508,7 @@ do -- SET_BASE
     end
     --local tablemax = table.maxn(self.Index)
     local RandomItem = self.Set[self.Index[math.random(1,tablemax)]]
-    --self:T3( { RandomItem } )
+    --self:T3({ RandomItem })
     return RandomItem
   end
   
@@ -525,7 +525,7 @@ do -- SET_BASE
     --local tablemax = table.maxn(self.Index)
     --local RandomItem = self.Set[self.Index[math.random(1,tablemax)]]
     local RandomItem = sorted[math.random(1,tablemax)]
-    --self:T3( { RandomItem } )
+    --self:T3({ RandomItem })
     return RandomItem
   end
 
@@ -540,10 +540,10 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param #SET_BASE BaseSet
   -- @return #SET_BASE
-  function SET_BASE:SetDatabase( BaseSet )
+  function SET_BASE:SetDatabase(BaseSet)
 
     -- Copy the filter criteria of the BaseSet
-    local OtherFilter = UTILS.DeepCopy( BaseSet.Filter )
+    local OtherFilter = UTILS.DeepCopy(BaseSet.Filter)
     self.Filter = OtherFilter
 
     -- Now base the new Set on the BaseSet
@@ -555,7 +555,7 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param #number Limit Defines how many objects are evaluated of the set as part of the Some iterators. The default is 1.
   -- @return #SET_BASE self
-  function SET_BASE:SetSomeIteratorLimit( Limit )
+  function SET_BASE:SetSomeIteratorLimit(Limit)
 
     self.SomeIteratorLimit = Limit or 1
 
@@ -592,10 +592,10 @@ do -- SET_BASE
   
     --self:Clear()
 
-    for ObjectName, Object in pairs( self.Database ) do
+    for ObjectName, Object in pairs(self.Database) do
 
-      if self:IsIncludeObject( Object ) then
-        self:Add( ObjectName, Object )
+      if self:IsIncludeObject(Object) then
+        self:Add(ObjectName, Object)
       else
         self:Remove(ObjectName, true)
       end
@@ -621,16 +621,16 @@ do -- SET_BASE
   -- @return #SET_BASE self
   function SET_BASE:_FilterStart()
 
-    for ObjectName, Object in pairs( self.Database ) do
+    for ObjectName, Object in pairs(self.Database) do
 
-      if self:IsIncludeObject( Object ) then
-        self:Add( ObjectName, Object )
+      if self:IsIncludeObject(Object) then
+        self:Add(ObjectName, Object)
       end
     end
 
     -- Follow alive players and clients
-    -- self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit )
-    -- self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit )
+    -- self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit)
+    -- self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventOnPlayerLeaveUnit)
 
     return self
   end
@@ -640,7 +640,7 @@ do -- SET_BASE
   -- @return #SET_BASE self
   function SET_BASE:FilterDeads() -- R2.1 allow deads to be filtered to automatically handle deads in the collection.
 
-    self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
+    self:HandleEvent(EVENTS.Dead, self._EventOnDeadOrCrash)
 
     return self
   end
@@ -650,7 +650,7 @@ do -- SET_BASE
   -- @return #SET_BASE self
   function SET_BASE:FilterCrashes() -- R2.1 allow crashes to be filtered to automatically handle crashes in the collection.
 
-    self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
+    self:HandleEvent(EVENTS.Crash, self._EventOnDeadOrCrash)
 
     return self
   end
@@ -660,9 +660,9 @@ do -- SET_BASE
   -- @return #SET_BASE self
   function SET_BASE:FilterStop()
 
-    self:UnHandleEvent( EVENTS.Birth )
-    self:UnHandleEvent( EVENTS.Dead )
-    self:UnHandleEvent( EVENTS.Crash )
+    self:UnHandleEvent(EVENTS.Birth)
+    self:UnHandleEvent(EVENTS.Dead)
+    self:UnHandleEvent(EVENTS.Crash)
 
     return self
   end
@@ -672,19 +672,19 @@ do -- SET_BASE
   -- @param Core.Point#COORDINATE Coordinate A @{Core.Point#COORDINATE} object (but **not** a simple DCS#Vec2!) from where to evaluate the closest object in the set.
   -- @return Core.Base#BASE The closest object.
   -- @usage
-  --          myset:FindNearestObjectFromPointVec2( ZONE:New("Test Zone"):GetCoordinate() )
-  function SET_BASE:FindNearestObjectFromPointVec2( Coordinate )
-    --self:F2( Coordinate )
+  --          myset:FindNearestObjectFromPointVec2(ZONE:New("Test Zone"):GetCoordinate())
+  function SET_BASE:FindNearestObjectFromPointVec2(Coordinate)
+    --self:F2(Coordinate)
 
     local NearestObject = nil
     local ClosestDistance = nil
 
-    for ObjectID, ObjectData in pairs( self.Set ) do
+    for ObjectID, ObjectData in pairs(self.Set) do
       if NearestObject == nil then
         NearestObject = ObjectData
-        ClosestDistance = Coordinate:DistanceFromPointVec2( ObjectData:GetCoordinate() )
+        ClosestDistance = Coordinate:DistanceFromPointVec2(ObjectData:GetCoordinate())
       else
-        local Distance = Coordinate:DistanceFromPointVec2( ObjectData:GetCoordinate() )
+        local Distance = Coordinate:DistanceFromPointVec2(ObjectData:GetCoordinate())
         if Distance < ClosestDistance then
           NearestObject = ObjectData
           ClosestDistance = Distance
@@ -700,15 +700,15 @@ do -- SET_BASE
   --- Handles the OnBirth event for the Set.
   -- @param #SET_BASE self
   -- @param Core.Event#EVENTDATA Event
-  function SET_BASE:_EventOnBirth( Event )
-    --self:F3( { Event } )
+  function SET_BASE:_EventOnBirth(Event)
+    --self:F3({ Event })
 
     if Event.IniDCSUnit then
-      local ObjectName, Object = self:AddInDatabase( Event )
-      --self:T3( ObjectName, Object )
-      if Object and self:IsIncludeObject( Object ) then
-        self:Add( ObjectName, Object )
-        -- self:_EventOnPlayerEnterUnit( Event )
+      local ObjectName, Object = self:AddInDatabase(Event)
+      --self:T3(ObjectName, Object)
+      if Object and self:IsIncludeObject(Object) then
+        self:Add(ObjectName, Object)
+        -- self:_EventOnPlayerEnterUnit(Event)
       end
     end
   end
@@ -716,13 +716,13 @@ do -- SET_BASE
   --- Handles the OnDead or OnCrash event for alive units set.
   -- @param #SET_BASE self
   -- @param Core.Event#EVENTDATA Event
-  function SET_BASE:_EventOnDeadOrCrash( Event )
-    --self:F( { Event } )
+  function SET_BASE:_EventOnDeadOrCrash(Event)
+    --self:F({ Event })
 
     if Event.IniDCSUnit then
-      local ObjectName, Object = self:FindInDatabase( Event )
+      local ObjectName, Object = self:FindInDatabase(Event)
       if ObjectName then
-        self:Remove( ObjectName )
+        self:Remove(ObjectName)
       end
     end
   end
@@ -730,15 +730,15 @@ do -- SET_BASE
   --- Handles the OnPlayerEnterUnit event to fill the active players table (with the unit filter applied).
   -- @param #SET_BASE self
   -- @param Core.Event#EVENTDATA Event
-  -- function SET_BASE:_EventOnPlayerEnterUnit( Event )
-  --  --self:F3( { Event } )
+  -- function SET_BASE:_EventOnPlayerEnterUnit(Event)
+  --  --self:F3({ Event })
   --
   --  if Event.IniDCSUnit then
-  --    local ObjectName, Object = self:AddInDatabase( Event )
-  --    self:T3( ObjectName, Object )
-  --    if self:IsIncludeObject( Object ) then
-  --      self:Add( ObjectName, Object )
-  --      --self:_EventOnPlayerEnterUnit( Event )
+  --    local ObjectName, Object = self:AddInDatabase(Event)
+  --    self:T3(ObjectName, Object)
+  --    if self:IsIncludeObject(Object) then
+  --      self:Add(ObjectName, Object)
+  --      --self:_EventOnPlayerEnterUnit(Event)
   --    end
   --  end
   -- end
@@ -746,15 +746,15 @@ do -- SET_BASE
   --- Handles the OnPlayerLeaveUnit event to clean the active players table.
   -- @param #SET_BASE self
   -- @param Core.Event#EVENTDATA Event
-  -- function SET_BASE:_EventOnPlayerLeaveUnit( Event )
-  --  --self:F3( { Event } )
+  -- function SET_BASE:_EventOnPlayerLeaveUnit(Event)
+  --  --self:F3({ Event })
   --
   --  local ObjectName = Event.IniDCSUnit
   --  if Event.IniDCSUnit then
   --    if Event.IniDCSGroup then
   --      local GroupUnits = Event.IniDCSGroup:getUnits()
   --      local PlayerCount = 0
-  --      for _, DCSUnit in pairs( GroupUnits ) do
+  --      for _, DCSUnit in pairs(GroupUnits) do
   --        if DCSUnit ~= Event.IniDCSUnit then
   --          if DCSUnit:getPlayerName() ~= nil then
   --            PlayerCount = PlayerCount + 1
@@ -763,7 +763,7 @@ do -- SET_BASE
   --      end
   --      self:E(PlayerCount)
   --      if PlayerCount == 0 then
-  --        self:Remove( Event.IniDCSGroupName )
+  --        self:Remove(Event.IniDCSGroupName)
   --      end
   --    end
   --  end
@@ -779,43 +779,43 @@ do -- SET_BASE
   -- @param #function Function (Optional) A function returning a #boolean true/false. Only if true, the IteratorFunction is called.
   -- @param #table FunctionArguments (Optional) Function arguments.
   -- @return #SET_BASE self
-  function SET_BASE:ForEach( IteratorFunction, arg, Set, Function, FunctionArguments )
-    --self:F3( arg )
+  function SET_BASE:ForEach(IteratorFunction, arg, Set, Function, FunctionArguments)
+    --self:F3(arg)
 
     Set = Set or self:GetSet()
     arg = arg or {}
 
     local function CoRoutine()
       local Count = 0
-      for ObjectID, ObjectData in pairs( Set ) do
+      for ObjectID, ObjectData in pairs(Set) do
         local Object = ObjectData
-        --self:T3( Object )
+        --self:T3(Object)
         if Function then
-          if Function( unpack( FunctionArguments or {} ), Object ) == true then
-            IteratorFunction( Object, unpack( arg ) )
+          if Function(unpack(FunctionArguments or {}), Object) == true then
+            IteratorFunction(Object, unpack(arg))
           end
         else
-          IteratorFunction( Object, unpack( arg ) )
+          IteratorFunction(Object, unpack(arg))
         end
         Count = Count + 1
         --        if Count % self.YieldInterval == 0 then
-        --          coroutine.yield( false )
+        --          coroutine.yield(false)
         --        end
       end
       return true
     end
 
-    --  local co = coroutine.create( CoRoutine )
+    --  local co = coroutine.create(CoRoutine)
     local co = CoRoutine
 
     local function Schedule()
 
-      --    local status, res = coroutine.resume( co )
+      --    local status, res = coroutine.resume(co)
       local status, res = co()
-      --self:T3( { status, res } )
+      --self:T3({ status, res })
 
       if status == false then
-        error( res )
+        error(res)
       end
       if res == false then
         return true -- resume next time the loop
@@ -824,7 +824,7 @@ do -- SET_BASE
       return false
     end
 
-    -- self.CallScheduler:Schedule( self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0 )
+    -- self.CallScheduler:Schedule(self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0)
     Schedule()
 
     return self
@@ -834,8 +834,8 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param #function IteratorFunction The function that will be called.
   -- @return #SET_BASE self
-  function SET_BASE:ForSome( IteratorFunction, arg, Set, Function, FunctionArguments )
-    --self:F3( arg )
+  function SET_BASE:ForSome(IteratorFunction, arg, Set, Function, FunctionArguments)
+    --self:F3(arg)
 
     Set = Set or self:GetSet()
     arg = arg or {}
@@ -844,38 +844,38 @@ do -- SET_BASE
 
     local function CoRoutine()
       local Count = 0
-      for ObjectID, ObjectData in pairs( Set ) do
+      for ObjectID, ObjectData in pairs(Set) do
         local Object = ObjectData
-        --self:T3( Object )
+        --self:T3(Object)
         if Function then
-          if Function( unpack( FunctionArguments ), Object ) == true then
-            IteratorFunction( Object, unpack( arg ) )
+          if Function(unpack(FunctionArguments), Object) == true then
+            IteratorFunction(Object, unpack(arg))
           end
         else
-          IteratorFunction( Object, unpack( arg ) )
+          IteratorFunction(Object, unpack(arg))
         end
         Count = Count + 1
         if Count >= Limit then
           break
         end
         --        if Count % self.YieldInterval == 0 then
-        --          coroutine.yield( false )
+        --          coroutine.yield(false)
         --        end
       end
       return true
     end
 
-    --  local co = coroutine.create( CoRoutine )
+    --  local co = coroutine.create(CoRoutine)
     local co = CoRoutine
 
     local function Schedule()
 
-      --    local status, res = coroutine.resume( co )
+      --    local status, res = coroutine.resume(co)
       local status, res = co()
-      --self:T3( { status, res } )
+      --self:T3({ status, res })
 
       if status == false then
-        error( res )
+        error(res)
       end
       if res == false then
         return true -- resume next time the loop
@@ -884,7 +884,7 @@ do -- SET_BASE
       return false
     end
 
-    -- self.CallScheduler:Schedule( self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0 )
+    -- self.CallScheduler:Schedule(self, Schedule, {}, self.TimeInterval, self.TimeInterval, 0)
     Schedule()
 
     return self
@@ -895,10 +895,10 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param #function IteratorFunction The function that will be called when there is an alive unit in the SET_BASE. The function needs to accept a UNIT parameter.
   ---- @return #SET_BASE self
-  -- function SET_BASE:ForEachDCSUnitAlive( IteratorFunction, ... )
-  --  --self:F3( arg )
+  -- function SET_BASE:ForEachDCSUnitAlive(IteratorFunction, ...)
+  --  --self:F3(arg)
   --
-  --  self:ForEach( IteratorFunction, arg, self.DCSUnitsAlive )
+  --  self:ForEach(IteratorFunction, arg, self.DCSUnitsAlive)
   --
   --  return self
   -- end
@@ -907,10 +907,10 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a UNIT parameter.
   ---- @return #SET_BASE self
-  -- function SET_BASE:ForEachPlayer( IteratorFunction, ... )
-  --  --self:F3( arg )
+  -- function SET_BASE:ForEachPlayer(IteratorFunction, ...)
+  --  --self:F3(arg)
   --
-  --  self:ForEach( IteratorFunction, arg, self.PlayersAlive )
+  --  self:ForEach(IteratorFunction, arg, self.PlayersAlive)
   --
   --  return self
   -- end
@@ -920,10 +920,10 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_BASE. The function needs to accept a CLIENT parameter.
   ---- @return #SET_BASE self
-  -- function SET_BASE:ForEachClient( IteratorFunction, ... )
-  --  --self:F3( arg )
+  -- function SET_BASE:ForEachClient(IteratorFunction, ...)
+  --  --self:F3(arg)
   --
-  --  self:ForEach( IteratorFunction, arg, self.Clients )
+  --  self:ForEach(IteratorFunction, arg, self.Clients)
   --
   --  return self
   -- end
@@ -932,8 +932,8 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param #table Object
   -- @return #SET_BASE self
-  function SET_BASE:IsIncludeObject( Object )
-    --self:F3( Object )
+  function SET_BASE:IsIncludeObject(Object)
+    --self:F3(Object)
 
     return true
   end
@@ -942,8 +942,8 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param #table Object
   -- @return #boolean `true` if object is in set and `false` otherwise.
-  function SET_BASE:IsInSet( Object )
-    --self:F3( Object )
+  function SET_BASE:IsInSet(Object)
+    --self:F3(Object)
     local outcome = false
     local name = Object:GetName()
     --self:I("SET_BASE: Objectname = "..name)
@@ -954,7 +954,7 @@ do -- SET_BASE
           outcome = true
         end
       end
-    )
+   )
     return outcome
   end
   
@@ -962,8 +962,8 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param #table Object
   -- @return #SET_BASE self
-  function SET_BASE:IsNotInSet( Object )
-    --self:F3( Object )
+  function SET_BASE:IsNotInSet(Object)
+    --self:F3(Object)
     return not self:IsInSet(Object)
   end
 
@@ -974,7 +974,7 @@ do -- SET_BASE
     --self:F3()
 
     local ObjectNames = ""
-    for ObjectName, Object in pairs( self.Set ) do
+    for ObjectName, Object in pairs(self.Set) do
       ObjectNames = ObjectNames .. ObjectName .. ", "
     end
 
@@ -985,14 +985,14 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param Core.Base#BASE MasterObject (Optional) The master object as a reference.
   -- @return #string A string with the names of the objects.
-  function SET_BASE:Flush( MasterObject )
+  function SET_BASE:Flush(MasterObject)
     --self:F3()
 
     local ObjectNames = ""
-    for ObjectName, Object in pairs( self.Set ) do
+    for ObjectName, Object in pairs(self.Set) do
       ObjectNames = ObjectNames .. ObjectName .. ", "
     end
-    --self:F( { MasterObject = MasterObject and MasterObject:GetClassNameAndID(), "Objects in Set:", ObjectNames } )
+    --self:F({ MasterObject = MasterObject and MasterObject:GetClassNameAndID(), "Objects in Set:", ObjectNames })
 
     return ObjectNames
   end
@@ -1005,7 +1005,7 @@ do -- SET_BASE
 
     local AliveSet = {}
     -- Clean the Set before returning with only the alive Objects.
-    for ObjectName, Object in pairs( self.Set ) do
+    for ObjectName, Object in pairs(self.Set) do
       if Object then
         if Object:IsAlive() then
           AliveSet[#AliveSet+1] = Object
@@ -1098,12 +1098,12 @@ do
   --
   --        -- Create the SetCarrier SET_GROUP collection.
   --
-  --        local SetHelicopter = SET_GROUP:New():FilterPrefixes( "Helicopter" ):FilterStart()
+  --        local SetHelicopter = SET_GROUP:New():FilterPrefixes("Helicopter"):FilterStart()
   --
   --        -- Put a Dead event handler on SetCarrier, to ensure that when a carrier is destroyed, that all internal parameters are reset.
   --
-  --        function SetHelicopter:OnAfterDead( From, Event, To, GroupObject )
-  --          --self:F( { GroupObject = GroupObject:GetName() } )
+  --        function SetHelicopter:OnAfterDead(From, Event, To, GroupObject)
+  --          --self:F({ GroupObject = GroupObject:GetName() })
   --        end
   --
   -- While this is a good example, there is a catch.
@@ -1115,15 +1115,15 @@ do
   --        -- Within that constructor, we want to set an enclosed event handler OnAfterDead for SetHelicopter.
   --        -- But within the OnAfterDead method, we want to refer to the self variable of the AI_CARGO_DISPATCHER.
   --
-  --        function AI_CARGO_DISPATCHER:New( SetCarrier, SetCargo, SetDeployZones )
+  --        function AI_CARGO_DISPATCHER:New(SetCarrier, SetCargo, SetDeployZones)
   --
-  --          local self = BASE:Inherit( self, FSM:New() ) -- #AI_CARGO_DISPATCHER
+  --          local self = BASE:Inherit(self, FSM:New()) -- #AI_CARGO_DISPATCHER
   --
   --          -- Put a Dead event handler on SetCarrier, to ensure that when a carrier is destroyed, that all internal parameters are reset.
   --          -- Note the "." notation, and the explicit declaration of SetHelicopter, which would be using the ":" notation the implicit self variable declaration.
   --
-  --          function SetHelicopter.OnAfterDead( SetHelicopter, From, Event, To, GroupObject )
-  --            SetHelicopter:F( { GroupObject = GroupObject:GetName() } )
+  --          function SetHelicopter.OnAfterDead(SetHelicopter, From, Event, To, GroupObject)
+  --            SetHelicopter:F({ GroupObject = GroupObject:GetName() })
   --            self.PickupCargo[GroupObject] = nil  -- So here I clear the PickupCargo table entry of the self object AI_CARGO_DISPATCHER.
   --            self.CarrierHome[GroupObject] = nil
   --          end
@@ -1168,9 +1168,9 @@ do
   function SET_GROUP:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.GROUPS ) ) -- #SET_GROUP
+    local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.GROUPS)) -- #SET_GROUP
 
-    self:FilterActive( false )
+    self:FilterActive(false)
 
     return self
        
@@ -1191,7 +1191,7 @@ do
     --local AliveSet = SET_GROUP:New()
     local AliveSet = {}
     -- Clean the Set before returning with only the alive Groups.
-    for GroupName, GroupObject in pairs( self.Set ) do
+    for GroupName, GroupObject in pairs(self.Set) do
       local GroupObject = GroupObject -- Wrapper.Group#GROUP
       if GroupObject then
         if GroupObject:IsAlive() then
@@ -1214,9 +1214,9 @@ do
 
     local ReportUnitTypes = REPORT:New()
 
-    for GroupID, GroupData in pairs( self:GetSet() ) do
+    for GroupID, GroupData in pairs(self:GetSet()) do
       local Units = GroupData:GetUnits()
-      for UnitID, UnitData in pairs( Units ) do
+      for UnitID, UnitData in pairs(Units) do
         if UnitData:IsAlive() then
           local UnitType = UnitData:GetTypeName()
 
@@ -1229,8 +1229,8 @@ do
       end
     end
 
-    for UnitTypeID, UnitType in pairs( UnitTypes ) do
-      ReportUnitTypes:Add( UnitType .. " of " .. UnitTypeID )
+    for UnitTypeID, UnitType in pairs(UnitTypes) do
+      ReportUnitTypes:Add(UnitType .. " of " .. UnitTypeID)
     end
 
     return ReportUnitTypes
@@ -1242,14 +1242,14 @@ do
   -- @param Wrapper.Group#GROUP group The group which should be added to the set.
   -- @param #boolean DontSetCargoBayLimit If true, do not attempt to auto-add the cargo bay limit per unit in this group.
   -- @return Core.Set#SET_GROUP self
-  function SET_GROUP:AddGroup( group, DontSetCargoBayLimit )
+  function SET_GROUP:AddGroup(group, DontSetCargoBayLimit)
 
-    self:Add( group:GetName(), group )
+    self:Add(group:GetName(), group)
     
     if not DontSetCargoBayLimit then
       -- I set the default cargo bay weight limit each time a new group is added to the set.
       -- TODO Why is this here in the first place?
-      for UnitID, UnitData in pairs( group:GetUnits() or {} ) do
+      for UnitID, UnitData in pairs(group:GetUnits() or {}) do
         if UnitData and UnitData:IsAlive() then
           UnitData:SetCargoBayWeightLimit()
         end
@@ -1263,12 +1263,12 @@ do
   -- @param Core.Set#SET_GROUP self
   -- @param #string AddGroupNames A single name or an array of GROUP names.
   -- @return Core.Set#SET_GROUP self
-  function SET_GROUP:AddGroupsByName( AddGroupNames )
+  function SET_GROUP:AddGroupsByName(AddGroupNames)
 
-    local AddGroupNamesArray = (type( AddGroupNames ) == "table") and AddGroupNames or { AddGroupNames }
+    local AddGroupNamesArray = (type(AddGroupNames) == "table") and AddGroupNames or { AddGroupNames }
 
-    for AddGroupID, AddGroupName in pairs( AddGroupNamesArray ) do
-      self:Add( AddGroupName, GROUP:FindByName( AddGroupName ) )
+    for AddGroupID, AddGroupName in pairs(AddGroupNamesArray) do
+      self:Add(AddGroupName, GROUP:FindByName(AddGroupName))
     end
 
     return self
@@ -1278,12 +1278,12 @@ do
   -- @param Core.Set#SET_GROUP self
   -- @param Wrapper.Group#GROUP RemoveGroupNames A single name or an array of GROUP names.
   -- @return Core.Set#SET_GROUP self
-  function SET_GROUP:RemoveGroupsByName( RemoveGroupNames )
+  function SET_GROUP:RemoveGroupsByName(RemoveGroupNames)
 
-    local RemoveGroupNamesArray = (type( RemoveGroupNames ) == "table") and RemoveGroupNames or { RemoveGroupNames }
+    local RemoveGroupNamesArray = (type(RemoveGroupNames) == "table") and RemoveGroupNames or { RemoveGroupNames }
 
-    for RemoveGroupID, RemoveGroupName in pairs( RemoveGroupNamesArray ) do
-      self:Remove( RemoveGroupName )
+    for RemoveGroupID, RemoveGroupName in pairs(RemoveGroupNamesArray) do
+      self:Remove(RemoveGroupName)
     end
 
     return self
@@ -1293,7 +1293,7 @@ do
   -- @param #SET_GROUP self
   -- @param #string GroupName
   -- @return Wrapper.Group#GROUP The found Group.
-  function SET_GROUP:FindGroup( GroupName )
+  function SET_GROUP:FindGroup(GroupName)
 
     local GroupFound = self.Set[GroupName]
     return GroupFound
@@ -1303,20 +1303,20 @@ do
   -- @param #SET_GROUP self
   -- @param Core.Point#COORDINATE Coordinate A @{Core.Point#COORDINATE} object from where to evaluate the closest object in the set.
   -- @return Wrapper.Group#GROUP The closest group.
-  function SET_GROUP:FindNearestGroupFromPointVec2( Coordinate )
-    --self:F2( Coordinate )
+  function SET_GROUP:FindNearestGroupFromPointVec2(Coordinate)
+    --self:F2(Coordinate)
 
     local NearestGroup = nil -- Wrapper.Group#GROUP
     local ClosestDistance = nil
     
     local Set = self:GetAliveSet()
     
-    for ObjectID, ObjectData in pairs( Set ) do
+    for ObjectID, ObjectData in pairs(Set) do
       if NearestGroup == nil then
         NearestGroup = ObjectData
-        ClosestDistance = Coordinate:DistanceFromPointVec2( ObjectData:GetCoordinate() )
+        ClosestDistance = Coordinate:DistanceFromPointVec2(ObjectData:GetCoordinate())
       else
-        local Distance = Coordinate:DistanceFromPointVec2( ObjectData:GetCoordinate() )
+        local Distance = Coordinate:DistanceFromPointVec2(ObjectData:GetCoordinate())
         if Distance < ClosestDistance then
           NearestGroup = ObjectData
           ClosestDistance = Distance
@@ -1332,7 +1332,7 @@ do
   -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
   -- @param #boolean Clear If `true`, clear any previously defined filters.
   -- @return #SET_GROUP self
-  function SET_GROUP:FilterZones( Zones, Clear )
+  function SET_GROUP:FilterZones(Zones, Clear)
   
     if Clear or not self.Filter.Zones then
       self.Filter.Zones = {}
@@ -1341,14 +1341,14 @@ do
     local zones = {}
     if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
       zones = Zones.Set
-    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName) then
-      self:E( "***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!" )
+    elseif type(Zones) ~= "table" or (type(Zones) == "table" and Zones.ClassName) then
+      self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
       return self
     else
       zones = Zones
     end
     
-    for _, Zone in pairs( zones ) do
+    for _, Zone in pairs(zones) do
       local zonename = Zone:GetName()
       self.Filter.Zones[zonename] = Zone
     end
@@ -1371,7 +1371,7 @@ do
   --              if grp:GetName() == "Exclude Me" then isinclude = false end
   --              return isinclude
   --          end
-  --          ):FilterOnce()
+  --         ):FilterOnce()
   --          BASE:I(groundset:Flush())
 
   
@@ -1388,17 +1388,17 @@ do
   -- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship".
   -- @param #boolean Clear If `true`, clear any previously defined filters.
   -- @return #SET_GROUP self
-  function SET_GROUP:FilterCategories( Categories, Clear )
+  function SET_GROUP:FilterCategories(Categories, Clear)
   
     if Clear or not self.Filter.Categories then
       self.Filter.Categories = {}
     end
     
-    if type( Categories ) ~= "table" then
+    if type(Categories) ~= "table" then
       Categories = { Categories }
     end
     
-    for CategoryID, Category in pairs( Categories ) do
+    for CategoryID, Category in pairs(Categories) do
       self.Filter.Categories[Category] = Category
     end
     
@@ -1409,7 +1409,7 @@ do
   -- @param #SET_GROUP self
   -- @return #SET_GROUP self
   function SET_GROUP:FilterCategoryGround()
-    self:FilterCategories( "ground" )
+    self:FilterCategories("ground")
     return self
   end
 
@@ -1417,7 +1417,7 @@ do
   -- @param #SET_GROUP self
   -- @return #SET_GROUP self
   function SET_GROUP:FilterCategoryAirplane()
-    self:FilterCategories( "plane" )
+    self:FilterCategories("plane")
     return self
   end
 
@@ -1425,7 +1425,7 @@ do
   -- @param #SET_GROUP self
   -- @return #SET_GROUP self
   function SET_GROUP:FilterCategoryHelicopter()
-    self:FilterCategories( "helicopter" )
+    self:FilterCategories("helicopter")
     return self
   end
 
@@ -1433,7 +1433,7 @@ do
   -- @param #SET_GROUP self
   -- @return #SET_GROUP self
   function SET_GROUP:FilterCategoryShip()
-    self:FilterCategories( "ship" )
+    self:FilterCategories("ship")
     return self
   end
 
@@ -1441,7 +1441,7 @@ do
   -- @param #SET_GROUP self
   -- @return #SET_GROUP self
   function SET_GROUP:FilterCategoryStructure()
-    self:FilterCategories( "structure" )
+    self:FilterCategories("structure")
     return self
   end
 
@@ -1450,14 +1450,14 @@ do
   -- @param #SET_GROUP self
   -- @param #string Countries Can take those country strings known within DCS world.
   -- @return #SET_GROUP self
-  function SET_GROUP:FilterCountries( Countries )
+  function SET_GROUP:FilterCountries(Countries)
     if not self.Filter.Countries then
       self.Filter.Countries = {}
     end
-    if type( Countries ) ~= "table" then
+    if type(Countries) ~= "table" then
       Countries = { Countries }
     end
-    for CountryID, Country in pairs( Countries ) do
+    for CountryID, Country in pairs(Countries) do
       self.Filter.Countries[Country] = Country
     end
     return self
@@ -1468,14 +1468,14 @@ do
   -- @param #SET_GROUP self
   -- @param #string Prefixes The string pattern(s) that needs to be contained in the group name. Can also be passed as a `#table` of strings.
   -- @return #SET_GROUP self
-  function SET_GROUP:FilterPrefixes( Prefixes )
+  function SET_GROUP:FilterPrefixes(Prefixes)
     if not self.Filter.GroupPrefixes then
       self.Filter.GroupPrefixes = {}
     end
-    if type( Prefixes ) ~= "table" then
+    if type(Prefixes) ~= "table" then
       Prefixes = { Prefixes }
     end
-    for PrefixID, Prefix in pairs( Prefixes ) do
+    for PrefixID, Prefix in pairs(Prefixes) do
       self.Filter.GroupPrefixes[Prefix] = Prefix
     end
     return self
@@ -1488,10 +1488,10 @@ do
     
     local Database = _DATABASE.GROUPS
     
-    for ObjectName, Object in pairs( Database ) do
-      if self:IsIncludeObject( Object ) and self:IsNotInSet(Object) then
-        self:Add( ObjectName, Object )
-      elseif (not self:IsIncludeObject( Object )) and self:IsInSet(Object) then
+    for ObjectName, Object in pairs(Database) do
+      if self:IsIncludeObject(Object) and self:IsNotInSet(Object) then
+        self:Add(ObjectName, Object)
+      elseif (not self:IsIncludeObject(Object)) and self:IsInSet(Object) then
         self:Remove(ObjectName)
       end
     end
@@ -1512,15 +1512,15 @@ do
   -- GroupSet = SET_GROUP:New():FilterActive():FilterStart()
   --
   -- -- Include only active groups to the set of the blue coalition, and filter one time.
-  -- GroupSet = SET_GROUP:New():FilterActive():FilterCoalition( "blue" ):FilterOnce()
+  -- GroupSet = SET_GROUP:New():FilterActive():FilterCoalition("blue"):FilterOnce()
   --
   -- -- Include only active groups to the set of the blue coalition, and filter one time.
   -- -- Later, reset to include back inactive groups to the set.
-  -- GroupSet = SET_GROUP:New():FilterActive():FilterCoalition( "blue" ):FilterOnce()
+  -- GroupSet = SET_GROUP:New():FilterActive():FilterCoalition("blue"):FilterOnce()
   -- ... logic ...
-  -- GroupSet = SET_GROUP:New():FilterActive( false ):FilterCoalition( "blue" ):FilterOnce()
+  -- GroupSet = SET_GROUP:New():FilterActive(false):FilterCoalition("blue"):FilterOnce()
   --
-  function SET_GROUP:FilterActive( Active )
+  function SET_GROUP:FilterActive(Active)
     Active = Active or not (Active == false)
     self.Filter.Active = Active
     return self
@@ -1541,12 +1541,12 @@ do
 
     if _DATABASE then
       self:_FilterStart()
-      self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
-      self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.UnitLost, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnDeadOrCrash )
+      self:HandleEvent(EVENTS.Birth, self._EventOnBirth)
+      self:HandleEvent(EVENTS.Dead, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.Crash, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.RemoveUnit, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.UnitLost, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventOnDeadOrCrash)
       if self.Filter.Zones then
         self.ZoneTimer = TIMER:New(self._ContinousZoneFilter,self)
         local timing = self.ZoneTimerInterval or 30
@@ -1593,11 +1593,11 @@ do
   -- Note: The GROUP object in the SET_GROUP collection will only be removed if the last unit is destroyed of the GROUP.
   -- @param #SET_GROUP self
   -- @param Core.Event#EVENTDATA Event
-  function SET_GROUP:_EventOnDeadOrCrash( Event )
-    --self:F( { Event } )
+  function SET_GROUP:_EventOnDeadOrCrash(Event)
+    --self:F({ Event })
 
     if Event.IniDCSUnit then
-      local ObjectName, Object = self:FindInDatabase( Event )
+      local ObjectName, Object = self:FindInDatabase(Event)
       if ObjectName then
         local size = 1
         if Event.IniDCSGroup then
@@ -1611,7 +1611,7 @@ do
           size = Object:CountAliveUnits()
         end
         if size == 1 then -- Only remove if the last unit of the group was destroyed.
-          self:Remove( ObjectName )
+          self:Remove(ObjectName)
         end
       end
     end
@@ -1623,13 +1623,13 @@ do
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the GROUP
   -- @return #table The GROUP
-  function SET_GROUP:AddInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_GROUP:AddInDatabase(Event)
+    --self:F3({ Event })
 
     if Event.IniObjectCategory == Object.Category.UNIT then
       if not self.Database[Event.IniDCSGroupName] then
-        self.Database[Event.IniDCSGroupName] = GROUP:Register( Event.IniDCSGroupName )
-        --self:T(3( self.Database[Event.IniDCSGroupName] )
+        self.Database[Event.IniDCSGroupName] = GROUP:Register(Event.IniDCSGroupName)
+        --self:T(3(self.Database[Event.IniDCSGroupName])
       end
     end
 
@@ -1642,8 +1642,8 @@ do
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the GROUP
   -- @return #table The GROUP
-  function SET_GROUP:FindInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_GROUP:FindInDatabase(Event)
+    --self:F3({ Event })
 
     return Event.IniDCSGroupName, self.Database[Event.IniDCSGroupName]
   end
@@ -1652,10 +1652,10 @@ do
   -- @param #SET_GROUP self
   -- @param #function IteratorFunction The function that will be called for all GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
   -- @return #SET_GROUP self
-  function SET_GROUP:ForEachGroup( IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_GROUP:ForEachGroup(IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet() )
+    self:ForEach(IteratorFunction, arg, self:GetSet())
 
     return self
   end
@@ -1664,10 +1664,10 @@ do
   -- @param #SET_GROUP self
   -- @param #function IteratorFunction The function that will be called for some GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
   -- @return #SET_GROUP self
-  function SET_GROUP:ForSomeGroup( IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_GROUP:ForSomeGroup(IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForSome( IteratorFunction, arg, self:GetSet() )
+    self:ForSome(IteratorFunction, arg, self:GetSet())
 
     return self
   end
@@ -1676,10 +1676,10 @@ do
   -- @param #SET_GROUP self
   -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
   -- @return #SET_GROUP self
-  function SET_GROUP:ForEachGroupAlive( IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_GROUP:ForEachGroupAlive(IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetAliveSet() )
+    self:ForEach(IteratorFunction, arg, self:GetAliveSet())
 
     return self
   end
@@ -1688,10 +1688,10 @@ do
   -- @param #SET_GROUP self
   -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
   -- @return #SET_GROUP self
-  function SET_GROUP:ForSomeGroupAlive( IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_GROUP:ForSomeGroupAlive(IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForSome( IteratorFunction, arg, self:GetAliveSet() )
+    self:ForSome(IteratorFunction, arg, self:GetAliveSet())
 
     return self
   end
@@ -1717,19 +1717,19 @@ do
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
   -- @return #SET_GROUP self
-  function SET_GROUP:ForEachGroupCompletelyInZone( ZoneObject, IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_GROUP:ForEachGroupCompletelyInZone(ZoneObject, IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet(),
+    self:ForEach(IteratorFunction, arg, self:GetSet(),
       -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Group#GROUP GroupObject
-      function( ZoneObject, GroupObject )
-        if GroupObject:IsCompletelyInZone( ZoneObject ) then
+      function(ZoneObject, GroupObject)
+        if GroupObject:IsCompletelyInZone(ZoneObject) then
           return true
         else
           return false
         end
-      end, { ZoneObject } )
+      end, { ZoneObject })
 
     return self
   end
@@ -1739,19 +1739,19 @@ do
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
   -- @return #SET_GROUP self
-  function SET_GROUP:ForEachGroupPartlyInZone( ZoneObject, IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_GROUP:ForEachGroupPartlyInZone(ZoneObject, IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet(),
+    self:ForEach(IteratorFunction, arg, self:GetSet(),
       -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Group#GROUP GroupObject
-      function( ZoneObject, GroupObject )
-        if GroupObject:IsPartlyInZone( ZoneObject ) then
+      function(ZoneObject, GroupObject)
+        if GroupObject:IsPartlyInZone(ZoneObject) then
           return true
         else
           return false
         end
-      end, { ZoneObject } )
+      end, { ZoneObject })
 
     return self
   end
@@ -1761,19 +1761,19 @@ do
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
   -- @return #SET_GROUP self
-  function SET_GROUP:ForEachGroupNotInZone( ZoneObject, IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_GROUP:ForEachGroupNotInZone(ZoneObject, IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet(),
+    self:ForEach(IteratorFunction, arg, self:GetSet(),
       -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Group#GROUP GroupObject
-      function( ZoneObject, GroupObject )
-        if GroupObject:IsNotInZone( ZoneObject ) then
+      function(ZoneObject, GroupObject)
+        if GroupObject:IsNotInZone(ZoneObject) then
           return true
         else
           return false
         end
-      end, { ZoneObject } )
+      end, { ZoneObject })
 
     return self
   end
@@ -1792,11 +1792,11 @@ do
   -- else
   --   MESSAGE:New("Some or all SET's GROUP are outside zone !", 10):ToAll()
   -- end
-  function SET_GROUP:AllCompletelyInZone( Zone )
-    --self:F2( Zone )
+  function SET_GROUP:AllCompletelyInZone(Zone)
+    --self:F2(Zone)
     local Set = self:GetSet()
-    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
-      if not GroupData:IsCompletelyInZone( Zone ) then
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+      if not GroupData:IsCompletelyInZone(Zone) then
         return false
       end
     end
@@ -1808,19 +1808,19 @@ do
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive GROUP in the SET_GROUP. The function needs to accept a GROUP parameter.
   -- @return #SET_GROUP self
-  function SET_GROUP:ForEachGroupAnyInZone( ZoneObject, IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_GROUP:ForEachGroupAnyInZone(ZoneObject, IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet(),
+    self:ForEach(IteratorFunction, arg, self:GetSet(),
       -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Group#GROUP GroupObject
-      function( ZoneObject, GroupObject )
-        if GroupObject:IsAnyInZone( ZoneObject ) then
+      function(ZoneObject, GroupObject)
+        if GroupObject:IsAnyInZone(ZoneObject) then
           return true
         else
           return false
         end
-      end, { ZoneObject } )
+      end, { ZoneObject })
 
     return self
   end
@@ -1839,11 +1839,11 @@ do
   -- else
   --   MESSAGE:New("No GROUP is completely in zone !", 10):ToAll()
   -- end
-  function SET_GROUP:AnyCompletelyInZone( Zone )
-    --self:F2( Zone )
+  function SET_GROUP:AnyCompletelyInZone(Zone)
+    --self:F2(Zone)
     local Set = self:GetSet()
-    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
-      if GroupData:IsCompletelyInZone( Zone ) then
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+      if GroupData:IsCompletelyInZone(Zone) then
         return true
       end
     end
@@ -1864,11 +1864,11 @@ do
   -- else
   --   MESSAGE:New("No UNIT of any GROUP is in zone !", 10):ToAll()
   -- end
-  function SET_GROUP:AnyInZone( Zone )
-    --self:F2( Zone )
+  function SET_GROUP:AnyInZone(Zone)
+    --self:F2(Zone)
     local Set = self:GetSet()
-    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
-      if GroupData:IsPartlyInZone( Zone ) or GroupData:IsCompletelyInZone( Zone ) then
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+      if GroupData:IsPartlyInZone(Zone) or GroupData:IsCompletelyInZone(Zone) then
         return true
       end
     end
@@ -1890,14 +1890,14 @@ do
   -- else
   --   MESSAGE:New("No GROUP are in zone, or one (or more) GROUP is completely in it !", 10):ToAll()
   -- end
-  function SET_GROUP:AnyPartlyInZone( Zone )
-    --self:F2( Zone )
+  function SET_GROUP:AnyPartlyInZone(Zone)
+    --self:F2(Zone)
     local IsPartlyInZone = false
     local Set = self:GetSet()
-    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
-      if GroupData:IsCompletelyInZone( Zone ) then
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+      if GroupData:IsCompletelyInZone(Zone) then
         return false
-      elseif GroupData:IsPartlyInZone( Zone ) then
+      elseif GroupData:IsPartlyInZone(Zone) then
         IsPartlyInZone = true -- at least one GROUP is partly in zone
       end
     end
@@ -1925,11 +1925,11 @@ do
   -- else
   --   MESSAGE:New("No UNIT of any GROUP is in zone !", 10):ToAll()
   -- end
-  function SET_GROUP:NoneInZone( Zone )
-    --self:F2( Zone )
+  function SET_GROUP:NoneInZone(Zone)
+    --self:F2(Zone)
     local Set = self:GetSet()
-    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
-      if not GroupData:IsNotInZone( Zone ) then -- If the GROUP is in Zone in any way
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+      if not GroupData:IsNotInZone(Zone) then -- If the GROUP is in Zone in any way
         return false
       end
     end
@@ -1948,12 +1948,12 @@ do
   -- MySetGroup:AddGroupsByName({"Group1", "Group2"})
   --
   -- MESSAGE:New("There are " .. MySetGroup:CountInZone(MyZone) .. " GROUPs in the Zone !", 10):ToAll()
-  function SET_GROUP:CountInZone( Zone )
-    --self:F2( Zone )
+  function SET_GROUP:CountInZone(Zone)
+    --self:F2(Zone)
     local Count = 0
     local Set = self:GetSet()
-    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
-      if GroupData:IsCompletelyInZone( Zone ) then
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+      if GroupData:IsCompletelyInZone(Zone) then
         Count = Count + 1
       end
     end
@@ -1970,12 +1970,12 @@ do
   -- MySetGroup:AddGroupsByName({"Group1", "Group2"})
   --
   -- MESSAGE:New("There are " .. MySetGroup:CountUnitInZone(MyZone) .. " UNITs in the Zone !", 10):ToAll()
-  function SET_GROUP:CountUnitInZone( Zone )
-    --self:F2( Zone )
+  function SET_GROUP:CountUnitInZone(Zone)
+    --self:F2(Zone)
     local Count = 0
     local Set = self:GetSet()
-    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
-      Count = Count + GroupData:CountInZone( Zone )
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+      Count = Count + GroupData:CountInZone(Zone)
     end
     return Count
   end
@@ -1990,13 +1990,13 @@ do
 
     local Set = self:GetSet()
 
-    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
       if GroupData and GroupData:IsAlive() then
 
         CountG = CountG + 1
 
         -- Count Units.
-        for _, _unit in pairs( GroupData:GetUnits() ) do
+        for _, _unit in pairs(GroupData:GetUnits()) do
           local unit = _unit -- Wrapper.Unit#UNIT
           if unit and unit:IsAlive() then
             CountU = CountU + 1
@@ -2013,10 +2013,10 @@ do
   -- @param #SET_GROUP self
   -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a GROUP parameter.
   ---- @return #SET_GROUP self
-  -- function SET_GROUP:ForEachPlayer( IteratorFunction, ... )
-  --  --self:F2( arg )
+  -- function SET_GROUP:ForEachPlayer(IteratorFunction, ...)
+  --  --self:F2(arg)
   --
-  --  self:ForEach( IteratorFunction, arg, self.PlayersAlive )
+  --  self:ForEach(IteratorFunction, arg, self.PlayersAlive)
   --
   --  return self
   -- end
@@ -2026,10 +2026,10 @@ do
   -- @param #SET_GROUP self
   -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_GROUP. The function needs to accept a CLIENT parameter.
   ---- @return #SET_GROUP self
-  -- function SET_GROUP:ForEachClient( IteratorFunction, ... )
-  --  --self:F2( arg )
+  -- function SET_GROUP:ForEachClient(IteratorFunction, ...)
+  --  --self:F2(arg)
   --
-  --  self:ForEach( IteratorFunction, arg, self.Clients )
+  --  self:ForEach(IteratorFunction, arg, self.Clients)
   --
   --  return self
   -- end
@@ -2038,13 +2038,13 @@ do
   -- @param #SET_GROUP self
   -- @param Wrapper.Group#GROUP MGroup The group that is checked for inclusion.
   -- @return #SET_GROUP self
-  function SET_GROUP:IsIncludeObject( MGroup )
-    --self:F2( MGroup )
+  function SET_GROUP:IsIncludeObject(MGroup)
+    --self:F2(MGroup)
     local MGroupInclude = true
     
     if self.Filter.Alive == true then
       local MGroupAlive = false
-      --self:F( { Active = self.Filter.Active } )
+      --self:F({ Active = self.Filter.Active })
       if MGroup and MGroup:IsAlive() then
         MGroupAlive = true
       end
@@ -2053,7 +2053,7 @@ do
     
     if self.Filter.Active ~= nil then
       local MGroupActive = false
-      --self:F( { Active = self.Filter.Active } )
+      --self:F({ Active = self.Filter.Active })
       if self.Filter.Active == false or (self.Filter.Active == true and MGroup:IsActive() == true) then
         MGroupActive = true
       end
@@ -2062,8 +2062,8 @@ do
 
     if self.Filter.Coalitions and MGroupInclude then
       local MGroupCoalition = false
-      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-        --self:T3( { "Coalition:", MGroup:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+      for CoalitionID, CoalitionName in pairs(self.Filter.Coalitions) do
+        --self:T3({ "Coalition:", MGroup:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName })
         if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MGroup:GetCoalition() then
           MGroupCoalition = true
         end
@@ -2073,8 +2073,8 @@ do
 
     if self.Filter.Categories and MGroupInclude then
       local MGroupCategory = false
-      for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-        --self:I( { "Category:", MGroup:GetCategory(), self.FilterMeta.Categories[CategoryName], CategoryName } )
+      for CategoryID, CategoryName in pairs(self.Filter.Categories) do
+        --self:I({ "Category:", MGroup:GetCategory(), self.FilterMeta.Categories[CategoryName], CategoryName })
         if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MGroup:GetCategory() then
           MGroupCategory = true
         end
@@ -2085,8 +2085,8 @@ do
 
     if self.Filter.Countries and MGroupInclude then
       local MGroupCountry = false
-      for CountryID, CountryName in pairs( self.Filter.Countries ) do
-        --self:T3( { "Country:", MGroup:GetCountry(), CountryName } )
+      for CountryID, CountryName in pairs(self.Filter.Countries) do
+        --self:T3({ "Country:", MGroup:GetCountry(), CountryName })
         if country.id[CountryName] == MGroup:GetCountry() then
           MGroupCountry = true
         end
@@ -2096,8 +2096,8 @@ do
 
     if self.Filter.GroupPrefixes and MGroupInclude then
       local MGroupPrefix = false
-      for GroupPrefixId, GroupPrefix in pairs( self.Filter.GroupPrefixes ) do
-        --self:I( { "Prefix:", MGroup:GetName(), GroupPrefix } )
+      for GroupPrefixId, GroupPrefix in pairs(self.Filter.GroupPrefixes) do
+        --self:I({ "Prefix:", MGroup:GetName(), GroupPrefix })
         if string.find(MGroup:GetName(), string.gsub(GroupPrefix,"-","%%-"),1) then
           MGroupPrefix = true
         end
@@ -2108,8 +2108,8 @@ do
     
     if self.Filter.Zones and MGroupInclude then
       local MGroupZone = false
-      for ZoneName, Zone in pairs( self.Filter.Zones ) do
-        --self:T( "Zone:", ZoneName )
+      for ZoneName, Zone in pairs(self.Filter.Zones) do
+        --self:T("Zone:", ZoneName)
         if MGroup:IsInZone(Zone) then
           MGroupZone = true
         end
@@ -2123,7 +2123,7 @@ do
       MGroupInclude = MGroupInclude and MGroupFunc
     end
      
-    --self:I( MGroupInclude )
+    --self:I(MGroupInclude)
     return MGroupInclude
   end
 
@@ -2140,7 +2140,7 @@ do
     local dmin=math.huge
     local gmin=nil
     
-    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
       local group=GroupData --Wrapper.Group#GROUP
       
       if group and group:IsAlive() and (Coalitions==nil or UTILS.IsAnyInTable(Coalitions, group:GetCoalition())) then
@@ -2174,8 +2174,8 @@ do
   -- MySetGroup:SetCargoBayWeightLimit()
   function SET_GROUP:SetCargoBayWeightLimit()
     local Set = self:GetSet()
-    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
-      for UnitName, UnitData in pairs( GroupData:GetUnits() ) do
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
+      for UnitName, UnitData in pairs(GroupData:GetUnits()) do
         -- local UnitData = UnitData -- Wrapper.Unit#UNIT
         UnitData:SetCargoBayWeightLimit()
       end
@@ -2261,12 +2261,12 @@ do -- SET_UNIT
   --
   --        -- Create the SetCarrier SET_UNIT collection.
   --
-  --        local SetHelicopter = SET_UNIT:New():FilterPrefixes( "Helicopter" ):FilterStart()
+  --        local SetHelicopter = SET_UNIT:New():FilterPrefixes("Helicopter"):FilterStart()
   --
   --        -- Put a Dead event handler on SetCarrier, to ensure that when a carrier unit is destroyed, that all internal parameters are reset.
   --
-  --        function SetHelicopter:OnAfterDead( From, Event, To, UnitObject )
-  --          --self:F( { UnitObject = UnitObject:GetName() } )
+  --        function SetHelicopter:OnAfterDead(From, Event, To, UnitObject)
+  --          --self:F({ UnitObject = UnitObject:GetName() })
   --        end
   --
   -- While this is a good example, there is a catch.
@@ -2278,15 +2278,15 @@ do -- SET_UNIT
   --        -- Within that constructor, we want to set an enclosed event handler OnAfterDead for SetHelicopter.
   --        -- But within the OnAfterDead method, we want to refer to the self variable of the AI_CARGO_DISPATCHER.
   --
-  --        function ACLASS:New( SetCarrier, SetCargo, SetDeployZones )
+  --        function ACLASS:New(SetCarrier, SetCargo, SetDeployZones)
   --
-  --          local self = BASE:Inherit( self, FSM:New() ) -- #AI_CARGO_DISPATCHER
+  --          local self = BASE:Inherit(self, FSM:New()) -- #AI_CARGO_DISPATCHER
   --
   --          -- Put a Dead event handler on SetCarrier, to ensure that when a carrier is destroyed, that all internal parameters are reset.
   --          -- Note the "." notation, and the explicit declaration of SetHelicopter, which would be using the ":" notation the implicit self variable declaration.
   --
-  --          function SetHelicopter.OnAfterDead( SetHelicopter, From, Event, To, UnitObject )
-  --            SetHelicopter:F( { UnitObject = UnitObject:GetName() } )
+  --          function SetHelicopter.OnAfterDead(SetHelicopter, From, Event, To, UnitObject)
+  --            SetHelicopter:F({ UnitObject = UnitObject:GetName() })
   --            self.array[UnitObject] = nil  -- So here I clear the array table entry of the self object ACLASS.
   --          end
   --
@@ -2335,9 +2335,9 @@ do -- SET_UNIT
   function SET_UNIT:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.UNITS ) ) -- #SET_UNIT
+    local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.UNITS)) -- #SET_UNIT
 
-    self:FilterActive( false )
+    self:FilterActive(false)
     
     --- Count Alive Units
     -- @function [parent=#SET_UNIT] CountAlive
@@ -2351,10 +2351,10 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param Wrapper.Unit#UNIT Unit A single UNIT.
   -- @return #SET_UNIT self
-  function SET_UNIT:AddUnit( Unit )
-    --self:F2( Unit:GetName() )
+  function SET_UNIT:AddUnit(Unit)
+    --self:F2(Unit:GetName())
 
-    self:Add( Unit:GetName(), Unit )
+    self:Add(Unit:GetName(), Unit)
     
     if Unit:IsInstanceOf("UNIT") then
       -- Set the default cargo bay limit each time a new unit is added to the set.
@@ -2368,13 +2368,13 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param #string AddUnitNames A single name or an array of UNIT names.
   -- @return #SET_UNIT self
-  function SET_UNIT:AddUnitsByName( AddUnitNames )
+  function SET_UNIT:AddUnitsByName(AddUnitNames)
 
-    local AddUnitNamesArray = (type( AddUnitNames ) == "table") and AddUnitNames or { AddUnitNames }
+    local AddUnitNamesArray = (type(AddUnitNames) == "table") and AddUnitNames or { AddUnitNames }
 
-    --self:T( AddUnitNamesArray )
-    for AddUnitID, AddUnitName in pairs( AddUnitNamesArray ) do
-      self:Add( AddUnitName, UNIT:FindByName( AddUnitName ) )
+    --self:T(AddUnitNamesArray)
+    for AddUnitID, AddUnitName in pairs(AddUnitNamesArray) do
+      self:Add(AddUnitName, UNIT:FindByName(AddUnitName))
     end
 
     return self
@@ -2384,12 +2384,12 @@ do -- SET_UNIT
   -- @param Core.Set#SET_UNIT self
   -- @param #table RemoveUnitNames A single name or an array of UNIT names.
   -- @return Core.Set#SET_UNIT self
-  function SET_UNIT:RemoveUnitsByName( RemoveUnitNames )
+  function SET_UNIT:RemoveUnitsByName(RemoveUnitNames)
 
-    local RemoveUnitNamesArray = (type( RemoveUnitNames ) == "table") and RemoveUnitNames or { RemoveUnitNames }
+    local RemoveUnitNamesArray = (type(RemoveUnitNames) == "table") and RemoveUnitNames or { RemoveUnitNames }
 
-    for RemoveUnitID, RemoveUnitName in pairs( RemoveUnitNamesArray ) do
-      self:Remove( RemoveUnitName )
+    for RemoveUnitID, RemoveUnitName in pairs(RemoveUnitNamesArray) do
+      self:Remove(RemoveUnitName)
     end
 
     return self
@@ -2399,7 +2399,7 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param #string UnitName
   -- @return Wrapper.Unit#UNIT The found Unit.
-  function SET_UNIT:FindUnit( UnitName )
+  function SET_UNIT:FindUnit(UnitName)
 
     local UnitFound = self.Set[UnitName]
     return UnitFound
@@ -2417,14 +2417,14 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship".
   -- @return #SET_UNIT self
-  function SET_UNIT:FilterCategories( Categories )
+  function SET_UNIT:FilterCategories(Categories)
     if not self.Filter.Categories then
       self.Filter.Categories = {}
     end
-    if type( Categories ) ~= "table" then
+    if type(Categories) ~= "table" then
       Categories = { Categories }
     end
-    for CategoryID, Category in pairs( Categories ) do
+    for CategoryID, Category in pairs(Categories) do
       self.Filter.Categories[Category] = Category
     end
     return self
@@ -2435,14 +2435,14 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param #string Types Can take those type strings known within DCS world.
   -- @return #SET_UNIT self
-  function SET_UNIT:FilterTypes( Types )
+  function SET_UNIT:FilterTypes(Types)
     if not self.Filter.Types then
       self.Filter.Types = {}
     end
-    if type( Types ) ~= "table" then
+    if type(Types) ~= "table" then
       Types = { Types }
     end
-    for TypeID, Type in pairs( Types ) do
+    for TypeID, Type in pairs(Types) do
       self.Filter.Types[Type] = Type
     end
     return self
@@ -2453,14 +2453,14 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param #string Countries Can take those country strings known within DCS world.
   -- @return #SET_UNIT self
-  function SET_UNIT:FilterCountries( Countries )
+  function SET_UNIT:FilterCountries(Countries)
     if not self.Filter.Countries then
       self.Filter.Countries = {}
     end
-    if type( Countries ) ~= "table" then
+    if type(Countries) ~= "table" then
       Countries = { Countries }
     end
-    for CountryID, Country in pairs( Countries ) do
+    for CountryID, Country in pairs(Countries) do
       self.Filter.Countries[Country] = Country
     end
     return self
@@ -2471,14 +2471,14 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param #string Prefixes The string pattern(s) that needs to be contained in the unit name. Can also be passed as a `#table` of strings.
   -- @return #SET_UNIT self
-  function SET_UNIT:FilterPrefixes( Prefixes )
+  function SET_UNIT:FilterPrefixes(Prefixes)
     if not self.Filter.UnitPrefixes then
       self.Filter.UnitPrefixes = {}
     end
-    if type( Prefixes ) ~= "table" then
+    if type(Prefixes) ~= "table" then
       Prefixes = { Prefixes }
     end
-    for PrefixID, Prefix in pairs( Prefixes ) do
+    for PrefixID, Prefix in pairs(Prefixes) do
       self.Filter.UnitPrefixes[Prefix] = Prefix
     end
     return self
@@ -2488,20 +2488,20 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
   -- @return #SET_UNIT self
-  function SET_UNIT:FilterZones( Zones )
+  function SET_UNIT:FilterZones(Zones)
     if not self.Filter.Zones then
       self.Filter.Zones = {}
     end
     local zones = {}
     if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
       zones = Zones.Set
-    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+    elseif type(Zones) ~= "table" or (type(Zones) == "table" and Zones.ClassName) then
       self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
       return self     
     else
       zones = Zones
     end
-    for _,Zone in pairs( zones ) do
+    for _,Zone in pairs(zones) do
       local zonename = Zone:GetName()
       self.Filter.Zones[zonename] = Zone
     end
@@ -2520,15 +2520,15 @@ do -- SET_UNIT
   -- UnitSet = SET_UNIT:New():FilterActive():FilterStart()
   --
   -- -- Include only active units to the set of the blue coalition, and filter one time.
-  -- UnitSet = SET_UNIT:New():FilterActive():FilterCoalition( "blue" ):FilterOnce()
+  -- UnitSet = SET_UNIT:New():FilterActive():FilterCoalition("blue"):FilterOnce()
   --
   -- -- Include only active units to the set of the blue coalition, and filter one time.
   -- -- Later, reset to include back inactive units to the set.
-  -- UnitSet = SET_UNIT:New():FilterActive():FilterCoalition( "blue" ):FilterOnce()
+  -- UnitSet = SET_UNIT:New():FilterActive():FilterCoalition("blue"):FilterOnce()
   -- ... logic ...
-  -- UnitSet = SET_UNIT:New():FilterActive( false ):FilterCoalition( "blue" ):FilterOnce()
+  -- UnitSet = SET_UNIT:New():FilterActive(false):FilterCoalition("blue"):FilterOnce()
   --
-  function SET_UNIT:FilterActive( Active )
+  function SET_UNIT:FilterActive(Active)
     Active = Active or not (Active == false)
     self.Filter.Active = Active
     return self
@@ -2546,7 +2546,7 @@ do -- SET_UNIT
           return false
         end
       end
-    )
+   )
     return self
   end
   
@@ -2575,7 +2575,7 @@ do -- SET_UNIT
         end
         return outcome
       end, Prefixes
-    )
+   )
     return self
   end
 
@@ -2584,13 +2584,13 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param #table RadarTypes The radar types.
   -- @return #SET_UNIT self
-  function SET_UNIT:FilterHasRadar( RadarTypes )
+  function SET_UNIT:FilterHasRadar(RadarTypes)
 
     self.Filter.RadarTypes = self.Filter.RadarTypes or {}
-    if type( RadarTypes ) ~= "table" then
+    if type(RadarTypes) ~= "table" then
       RadarTypes = { RadarTypes }
     end
-    for RadarTypeID, RadarType in pairs( RadarTypes ) do
+    for RadarTypeID, RadarType in pairs(RadarTypes) do
       self.Filter.RadarTypes[RadarType] = RadarType
     end
     return self
@@ -2613,7 +2613,7 @@ do -- SET_UNIT
     local Set = self:GetSet()
 
     local CountU = 0
-    for UnitID, UnitData in pairs( Set ) do -- For each GROUP in SET_GROUP
+    for UnitID, UnitData in pairs(Set) do -- For each GROUP in SET_GROUP
       if UnitData and UnitData:IsAlive() then
         CountU = CountU + 1
       end
@@ -2648,10 +2648,10 @@ do -- SET_UNIT
     
     local Database = _DATABASE.UNITS
     
-    for ObjectName, Object in pairs( Database ) do
-      if self:IsIncludeObject( Object ) and self:IsNotInSet(Object) then
-        self:Add( ObjectName, Object )
-      elseif (not self:IsIncludeObject( Object )) and self:IsInSet(Object) then
+    for ObjectName, Object in pairs(Database) do
+      if self:IsIncludeObject(Object) and self:IsNotInSet(Object) then
+        self:Add(ObjectName, Object)
+      elseif (not self:IsIncludeObject(Object)) and self:IsInSet(Object) then
         self:Remove(ObjectName)
       end
     end
@@ -2697,11 +2697,11 @@ do -- SET_UNIT
 
     if _DATABASE then
       self:_FilterStart()
-      self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
-      self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.UnitLost, self._EventOnDeadOrCrash )
+      self:HandleEvent(EVENTS.Birth, self._EventOnBirth)
+      self:HandleEvent(EVENTS.Dead, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.Crash, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.RemoveUnit, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.UnitLost, self._EventOnDeadOrCrash)
       if self.Filter.Zones then
         self.ZoneTimer = TIMER:New(self._ContinousZoneFilter,self)
         local timing = self.ZoneTimerInterval or 30
@@ -2727,7 +2727,7 @@ do -- SET_UNIT
   --              if unit:GetName() == "Exclude Me" then isinclude = false end
   --              return isinclude
   --          end
-  --          ):FilterOnce()
+  --         ):FilterOnce()
   --          BASE:I(groundset:Flush())
 
 
@@ -2737,13 +2737,13 @@ do -- SET_UNIT
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the UNIT
   -- @return #table The UNIT
-  function SET_UNIT:AddInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_UNIT:AddInDatabase(Event)
+    --self:F3({ Event })
 
     if Event.IniObjectCategory == Object.Category.UNIT then
       if not self.Database[Event.IniDCSUnitName] then
-        self.Database[Event.IniDCSUnitName] = UNIT:Register( Event.IniDCSUnitName )
-        --self:T3( self.Database[Event.IniDCSUnitName] )
+        self.Database[Event.IniDCSUnitName] = UNIT:Register(Event.IniDCSUnitName)
+        --self:T3(self.Database[Event.IniDCSUnitName])
       end
     end
 
@@ -2756,8 +2756,8 @@ do -- SET_UNIT
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the UNIT
   -- @return #table The UNIT
-  function SET_UNIT:FindInDatabase( Event )
-    --self:F2( { Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event } )
+  function SET_UNIT:FindInDatabase(Event)
+    --self:F2({ Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event })
 
     return Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName]
   end
@@ -2768,24 +2768,24 @@ do -- SET_UNIT
     -- @param #SET_UNIT self
     -- @param Core.Zone#ZONE ZoneTest The Zone to be tested for.
     -- @return #boolean
-    function SET_UNIT:IsPartiallyInZone( ZoneTest )
+    function SET_UNIT:IsPartiallyInZone(ZoneTest)
 
       local IsPartiallyInZone = false
 
-      local function EvaluateZone( ZoneUnit )
+      local function EvaluateZone(ZoneUnit)
 
         local ZoneUnitName = ZoneUnit:GetName()
-        --self:F( { ZoneUnitName = ZoneUnitName } )
-        if self:FindUnit( ZoneUnitName ) then
+        --self:F({ ZoneUnitName = ZoneUnitName })
+        if self:FindUnit(ZoneUnitName) then
           IsPartiallyInZone = true
-          --self:F( { Found = true } )
+          --self:F({ Found = true })
           return false
         end
 
         return true
       end
 
-      ZoneTest:SearchZone( EvaluateZone )
+      ZoneTest:SearchZone(EvaluateZone)
 
       return IsPartiallyInZone
     end
@@ -2794,14 +2794,14 @@ do -- SET_UNIT
     -- @param #SET_UNIT self
     -- @param Core.Zone#ZONE Zone The Zone to be tested for.
     -- @return #boolean
-    function SET_UNIT:IsNotInZone( Zone )
+    function SET_UNIT:IsNotInZone(Zone)
 
       local IsNotInZone = true
 
-      local function EvaluateZone( ZoneUnit )
+      local function EvaluateZone(ZoneUnit)
 
         local ZoneUnitName = ZoneUnit:GetName()
-        if self:FindUnit( ZoneUnitName ) then
+        if self:FindUnit(ZoneUnitName) then
           IsNotInZone = false
           return false
         end
@@ -2809,7 +2809,7 @@ do -- SET_UNIT
         return true
       end
 
-      Zone:SearchZone( EvaluateZone )
+      Zone:SearchZone(EvaluateZone)
 
       return IsNotInZone
     end
@@ -2821,10 +2821,10 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
   -- @return #SET_UNIT self
-  function SET_UNIT:ForEachUnit( IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_UNIT:ForEachUnit(IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet() )
+    self:ForEach(IteratorFunction, arg, self:GetSet())
 
     return self
   end
@@ -2835,20 +2835,20 @@ do -- SET_UNIT
   -- @param #number FromThreatLevel The TreatLevel to start the evaluation **From** (this must be a value between 0 and 10).
   -- @param #number ToThreatLevel The TreatLevel to stop the evaluation **To** (this must be a value between 0 and 10).
   -- @return #SET_UNIT self
-  function SET_UNIT:GetSetPerThreatLevel( FromThreatLevel, ToThreatLevel )
-    --self:F2( arg )
+  function SET_UNIT:GetSetPerThreatLevel(FromThreatLevel, ToThreatLevel)
+    --self:F2(arg)
 
     local ThreatLevelSet = {}
 
     if self:Count() ~= 0 then
-      for UnitName, UnitObject in pairs( self.Set ) do
+      for UnitName, UnitObject in pairs(self.Set) do
         local Unit = UnitObject -- Wrapper.Unit#UNIT
 
         local ThreatLevel = Unit:GetThreatLevel()
         ThreatLevelSet[ThreatLevel] = ThreatLevelSet[ThreatLevel] or {}
         ThreatLevelSet[ThreatLevel].Set = ThreatLevelSet[ThreatLevel].Set or {}
         ThreatLevelSet[ThreatLevel].Set[UnitName] = UnitObject
-        --self:F( { ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set } )
+        --self:F({ ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set })
       end
 
       local OrderedPerThreatLevelSet = {}
@@ -2856,11 +2856,11 @@ do -- SET_UNIT
       local ThreatLevelIncrement = FromThreatLevel <= ToThreatLevel and 1 or -1
 
       for ThreatLevel = FromThreatLevel, ToThreatLevel, ThreatLevelIncrement do
-        --self:F( { ThreatLevel = ThreatLevel } )
+        --self:F({ ThreatLevel = ThreatLevel })
         local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
         if ThreatLevelItem then
-          for UnitName, UnitObject in pairs( ThreatLevelItem.Set ) do
-            table.insert( OrderedPerThreatLevelSet, UnitObject )
+          for UnitName, UnitObject in pairs(ThreatLevelItem.Set) do
+            table.insert(OrderedPerThreatLevelSet, UnitObject)
           end
         end
       end
@@ -2880,36 +2880,36 @@ do -- SET_UNIT
   -- @return #SET_UNIT self
   -- @usage
   --
-  --     UnitSet:ForEachUnitPerThreatLevel( 10, 0,
+  --     UnitSet:ForEachUnitPerThreatLevel(10, 0,
   --       -- @param Wrapper.Unit#UNIT UnitObject The UNIT object in the UnitSet, that will be passed to the local function for evaluation.
-  --       function( UnitObject )
+  --       function(UnitObject)
   --         .. logic ..
   --       end
-  --     )
+  --    )
   --
-  function SET_UNIT:ForEachUnitPerThreatLevel( FromThreatLevel, ToThreatLevel, IteratorFunction, ... ) -- R2.1 Threat Level implementation
-    --self:F2( arg )
+  function SET_UNIT:ForEachUnitPerThreatLevel(FromThreatLevel, ToThreatLevel, IteratorFunction, ...) -- R2.1 Threat Level implementation
+    --self:F2(arg)
 
     local ThreatLevelSet = {}
 
     if self:Count() ~= 0 then
-      for UnitName, UnitObject in pairs( self.Set ) do
+      for UnitName, UnitObject in pairs(self.Set) do
         local Unit = UnitObject -- Wrapper.Unit#UNIT
 
         local ThreatLevel = Unit:GetThreatLevel()
         ThreatLevelSet[ThreatLevel] = ThreatLevelSet[ThreatLevel] or {}
         ThreatLevelSet[ThreatLevel].Set = ThreatLevelSet[ThreatLevel].Set or {}
         ThreatLevelSet[ThreatLevel].Set[UnitName] = UnitObject
-        --self:F( { ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set } )
+        --self:F({ ThreatLevel = ThreatLevel, ThreatLevelSet = ThreatLevelSet[ThreatLevel].Set })
       end
 
       local ThreatLevelIncrement = FromThreatLevel <= ToThreatLevel and 1 or -1
 
       for ThreatLevel = FromThreatLevel, ToThreatLevel, ThreatLevelIncrement do
-        --self:F( { ThreatLevel = ThreatLevel } )
+        --self:F({ ThreatLevel = ThreatLevel })
         local ThreatLevelItem = ThreatLevelSet[ThreatLevel]
         if ThreatLevelItem then
-          self:ForEach( IteratorFunction, arg, ThreatLevelItem.Set )
+          self:ForEach(IteratorFunction, arg, ThreatLevelItem.Set)
         end
       end
     end
@@ -2922,19 +2922,19 @@ do -- SET_UNIT
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
   -- @return #SET_UNIT self
-  function SET_UNIT:ForEachUnitCompletelyInZone( ZoneObject, IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_UNIT:ForEachUnitCompletelyInZone(ZoneObject, IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet(),
+    self:ForEach(IteratorFunction, arg, self:GetSet(),
       -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Unit#UNIT UnitObject
-      function( ZoneObject, UnitObject )
-        if UnitObject:IsInZone( ZoneObject ) then
+      function(ZoneObject, UnitObject)
+        if UnitObject:IsInZone(ZoneObject) then
           return true
         else
           return false
         end
-      end, { ZoneObject } )
+      end, { ZoneObject })
 
     return self
   end
@@ -2944,19 +2944,19 @@ do -- SET_UNIT
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive UNIT in the SET_UNIT. The function needs to accept a UNIT parameter.
   -- @return #SET_UNIT self
-  function SET_UNIT:ForEachUnitNotInZone( ZoneObject, IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_UNIT:ForEachUnitNotInZone(ZoneObject, IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet(),
+    self:ForEach(IteratorFunction, arg, self:GetSet(),
       -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Unit#UNIT UnitObject
-      function( ZoneObject, UnitObject )
-        if UnitObject:IsNotInZone( ZoneObject ) then
+      function(ZoneObject, UnitObject)
+        if UnitObject:IsNotInZone(ZoneObject) then
           return true
         else
           return false
         end
-      end, { ZoneObject } )
+      end, { ZoneObject })
 
     return self
   end
@@ -2970,7 +2970,7 @@ do -- SET_UNIT
     local MT = {} -- Message Text
     local UnitTypes = {}
 
-    for UnitID, UnitData in pairs( self:GetSet() ) do
+    for UnitID, UnitData in pairs(self:GetSet()) do
       local TextUnit = UnitData -- Wrapper.Unit#UNIT
       if TextUnit:IsAlive() then
         local UnitType = TextUnit:GetTypeName()
@@ -2983,7 +2983,7 @@ do -- SET_UNIT
       end
     end
 
-    for UnitTypeID, UnitType in pairs( UnitTypes ) do
+    for UnitTypeID, UnitType in pairs(UnitTypes) do
       MT[#MT + 1] = UnitType .. " of " .. UnitTypeID
     end
 
@@ -2999,11 +2999,11 @@ do -- SET_UNIT
     local MT = {} -- Message Text
     local UnitTypes = self:GetUnitTypes()
 
-    for UnitTypeID, UnitType in pairs( UnitTypes ) do
+    for UnitTypeID, UnitType in pairs(UnitTypes) do
       MT[#MT + 1] = UnitType .. " of " .. UnitTypeID
     end
 
-    return table.concat( MT, ", " )
+    return table.concat(MT, ", ")
   end
 
   --- Returns map of unit threat levels.
@@ -3014,7 +3014,7 @@ do -- SET_UNIT
 
     local UnitThreatLevels = {}
 
-    for UnitID, UnitData in pairs( self:GetSet() ) do
+    for UnitID, UnitData in pairs(self:GetSet()) do
       local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
       if ThreatUnit:IsAlive() then
         local UnitThreatLevel, UnitThreatLevelText = ThreatUnit:GetThreatLevel()
@@ -3037,7 +3037,7 @@ do -- SET_UNIT
 
     local MaxThreatLevelA2G = 0
     local MaxThreatText = ""
-    for UnitName, UnitData in pairs( self:GetSet() ) do
+    for UnitName, UnitData in pairs(self:GetSet()) do
       local ThreatUnit = UnitData -- Wrapper.Unit#UNIT
       local ThreatLevelA2G, ThreatText = ThreatUnit:GetThreatLevel()
       if ThreatLevelA2G > MaxThreatLevelA2G then
@@ -3046,7 +3046,7 @@ do -- SET_UNIT
       end
     end
 
-    --self:F( { MaxThreatLevelA2G = MaxThreatLevelA2G, MaxThreatText = MaxThreatText } )
+    --self:F({ MaxThreatLevelA2G = MaxThreatLevelA2G, MaxThreatText = MaxThreatText })
     return MaxThreatLevelA2G, MaxThreatText
 
   end
@@ -3094,8 +3094,8 @@ do -- SET_UNIT
     if Coordinate then
       local heading = self:GetHeading() or 0
       local velocity = self:GetVelocity() or 0
-      Coordinate:SetHeading( heading )
-      Coordinate:SetVelocity( velocity )
+      Coordinate:SetHeading(heading)
+      Coordinate:SetVelocity(velocity)
       --self:T(UTILS.PrintTableToLog(Coordinate))
     end
 
@@ -3111,7 +3111,7 @@ do -- SET_UNIT
 
     local MaxVelocity = 0
 
-    for UnitName, UnitData in pairs( self:GetSet() ) do
+    for UnitName, UnitData in pairs(self:GetSet()) do
 
       local Unit = UnitData -- Wrapper.Unit#UNIT
       local Coordinate = Unit:GetCoordinate()
@@ -3122,7 +3122,7 @@ do -- SET_UNIT
       end
     end
 
-    --self:F( { MaxVelocity = MaxVelocity } )
+    --self:F({ MaxVelocity = MaxVelocity })
     return MaxVelocity
 
   end
@@ -3135,7 +3135,7 @@ do -- SET_UNIT
     local HeadingSet = nil
     local MovingCount = 0
 
-    for UnitName, UnitData in pairs( self:GetSet() ) do
+    for UnitName, UnitData in pairs(self:GetSet()) do
 
       local Unit = UnitData -- Wrapper.Unit#UNIT
       local Coordinate = Unit:GetCoordinate()
@@ -3147,7 +3147,7 @@ do -- SET_UNIT
           HeadingSet = Heading
         else
           local HeadingDiff = (HeadingSet - Heading + 180 + 360) % 360 - 180
-          HeadingDiff = math.abs( HeadingDiff )
+          HeadingDiff = math.abs(HeadingDiff)
           if HeadingDiff > 5 then
             HeadingSet = nil
             break
@@ -3164,19 +3164,19 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param DCS#Unit.RadarType RadarType
   -- @return #number The amount of radars in the Set with the given type
-  function SET_UNIT:HasRadar( RadarType )
-    --self:F2( RadarType )
+  function SET_UNIT:HasRadar(RadarType)
+    --self:F2(RadarType)
 
     local RadarCount = 0
-    for UnitID, UnitData in pairs( self:GetSet() ) do
+    for UnitID, UnitData in pairs(self:GetSet()) do
       local UnitSensorTest = UnitData -- Wrapper.Unit#UNIT
       local HasSensors
       if RadarType then
-        HasSensors = UnitSensorTest:HasSensors( Unit.SensorType.RADAR, RadarType )
+        HasSensors = UnitSensorTest:HasSensors(Unit.SensorType.RADAR, RadarType)
       else
-        HasSensors = UnitSensorTest:HasSensors( Unit.SensorType.RADAR )
+        HasSensors = UnitSensorTest:HasSensors(Unit.SensorType.RADAR)
       end
-      --self:T3( HasSensors )
+      --self:T3(HasSensors)
       if HasSensors then
         RadarCount = RadarCount + 1
       end
@@ -3192,14 +3192,14 @@ do -- SET_UNIT
     --self:F2()
 
     local SEADCount = 0
-    for UnitID, UnitData in pairs( self:GetSet() ) do
+    for UnitID, UnitData in pairs(self:GetSet()) do
       local UnitSEAD = UnitData -- Wrapper.Unit#UNIT
       if UnitSEAD:IsAlive() then
         local UnitSEADAttributes = UnitSEAD:GetDesc().attributes
 
         local HasSEAD = UnitSEAD:HasSEAD()
 
-        --self:T3( HasSEAD )
+        --self:T3(HasSEAD)
         if HasSEAD then
           SEADCount = SEADCount + 1
         end
@@ -3216,7 +3216,7 @@ do -- SET_UNIT
     --self:F2()
 
     local GroundUnitCount = 0
-    for UnitID, UnitData in pairs( self:GetSet() ) do
+    for UnitID, UnitData in pairs(self:GetSet()) do
       local UnitTest = UnitData -- Wrapper.Unit#UNIT
       if UnitTest:IsGround() then
         GroundUnitCount = GroundUnitCount + 1
@@ -3233,7 +3233,7 @@ do -- SET_UNIT
     --self:F2()
 
     local AirUnitCount = 0
-    for UnitID, UnitData in pairs( self:GetSet() ) do
+    for UnitID, UnitData in pairs(self:GetSet()) do
       local UnitTest = UnitData -- Wrapper.Unit#UNIT
       if UnitTest:IsAir() then
         AirUnitCount = AirUnitCount + 1
@@ -3246,13 +3246,13 @@ do -- SET_UNIT
   --- Returns if the @{Core.Set} has friendly ground units.
   -- @param #SET_UNIT self
   -- @return #number The amount of ground targets in the Set.
-  function SET_UNIT:HasFriendlyUnits( FriendlyCoalition )
+  function SET_UNIT:HasFriendlyUnits(FriendlyCoalition)
     --self:F2()
 
     local FriendlyUnitCount = 0
-    for UnitID, UnitData in pairs( self:GetSet() ) do
+    for UnitID, UnitData in pairs(self:GetSet()) do
       local UnitTest = UnitData -- Wrapper.Unit#UNIT
-      if UnitTest:IsFriendly( FriendlyCoalition ) then
+      if UnitTest:IsFriendly(FriendlyCoalition) then
         FriendlyUnitCount = FriendlyUnitCount + 1
       end
     end
@@ -3266,10 +3266,10 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a UNIT parameter.
   ---- @return #SET_UNIT self
-  -- function SET_UNIT:ForEachPlayer( IteratorFunction, ... )
-  --  --self:F2( arg )
+  -- function SET_UNIT:ForEachPlayer(IteratorFunction, ...)
+  --  --self:F2(arg)
   --
-  --  self:ForEach( IteratorFunction, arg, self.PlayersAlive )
+  --  self:ForEach(IteratorFunction, arg, self.PlayersAlive)
   --
   --  return self
   -- end
@@ -3279,10 +3279,10 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param #function IteratorFunction The function that will be called when there is an alive player in the SET_UNIT. The function needs to accept a CLIENT parameter.
   ---- @return #SET_UNIT self
-  -- function SET_UNIT:ForEachClient( IteratorFunction, ... )
-  --  --self:F2( arg )
+  -- function SET_UNIT:ForEachClient(IteratorFunction, ...)
+  --  --self:F2(arg)
   --
-  --  self:ForEach( IteratorFunction, arg, self.Clients )
+  --  self:ForEach(IteratorFunction, arg, self.Clients)
   --
   --  return self
   -- end
@@ -3291,8 +3291,8 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param Wrapper.Unit#UNIT MUnit
   -- @return #SET_UNIT self
-  function SET_UNIT:IsIncludeObject( MUnit )
-    --self:F2( {MUnit} )
+  function SET_UNIT:IsIncludeObject(MUnit)
+    --self:F2({MUnit})
 
     local MUnitInclude = false
 
@@ -3310,8 +3310,8 @@ do -- SET_UNIT
 
       if self.Filter.Coalitions and MUnitInclude then
         local MUnitCoalition = false
-        for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-          --self:F( { "Coalition:", MUnit:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        for CoalitionID, CoalitionName in pairs(self.Filter.Coalitions) do
+          --self:F({ "Coalition:", MUnit:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName })
           if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MUnit:GetCoalition() then
             MUnitCoalition = true
           end
@@ -3321,8 +3321,8 @@ do -- SET_UNIT
 
       if self.Filter.Categories and MUnitInclude then
         local MUnitCategory = false
-        for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-          --self:T3( { "Category:", MUnit:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
+        for CategoryID, CategoryName in pairs(self.Filter.Categories) do
+          --self:T3({ "Category:", MUnit:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName })
           if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MUnit:GetDesc().category then
             MUnitCategory = true
           end
@@ -3332,8 +3332,8 @@ do -- SET_UNIT
 
       if self.Filter.Types and MUnitInclude then
         local MUnitType = false
-        for TypeID, TypeName in pairs( self.Filter.Types ) do
-          --self:T3( { "Type:", MUnit:GetTypeName(), TypeName } )
+        for TypeID, TypeName in pairs(self.Filter.Types) do
+          --self:T3({ "Type:", MUnit:GetTypeName(), TypeName })
           if TypeName == MUnit:GetTypeName() then
             MUnitType = true
           end
@@ -3343,8 +3343,8 @@ do -- SET_UNIT
 
       if self.Filter.Countries and MUnitInclude then
         local MUnitCountry = false
-        for CountryID, CountryName in pairs( self.Filter.Countries ) do
-          --self:T3( { "Country:", MUnit:GetCountry(), CountryName } )
+        for CountryID, CountryName in pairs(self.Filter.Countries) do
+          --self:T3({ "Country:", MUnit:GetCountry(), CountryName })
           if country.id[CountryName] == MUnit:GetCountry() then
             MUnitCountry = true
           end
@@ -3354,9 +3354,9 @@ do -- SET_UNIT
 
       if self.Filter.UnitPrefixes and MUnitInclude then
         local MUnitPrefix = false
-        for UnitPrefixId, UnitPrefix in pairs( self.Filter.UnitPrefixes ) do
-          --self:T3( { "Prefix:", string.find( MUnit:GetName(), UnitPrefix, 1 ), UnitPrefix } )
-          if string.find( MUnit:GetName(), UnitPrefix, 1 ) then
+        for UnitPrefixId, UnitPrefix in pairs(self.Filter.UnitPrefixes) do
+          --self:T3({ "Prefix:", string.find(MUnit:GetName(), UnitPrefix, 1), UnitPrefix })
+          if string.find(MUnit:GetName(), UnitPrefix, 1) then
             MUnitPrefix = true
           end
         end
@@ -3365,11 +3365,11 @@ do -- SET_UNIT
 
       if self.Filter.RadarTypes and MUnitInclude then
         local MUnitRadar = false
-        for RadarTypeID, RadarType in pairs( self.Filter.RadarTypes ) do
-          --self:T3( { "Radar:", RadarType } )
-          if MUnit:HasSensors( Unit.SensorType.RADAR, RadarType ) == true then
+        for RadarTypeID, RadarType in pairs(self.Filter.RadarTypes) do
+          --self:T3({ "Radar:", RadarType })
+          if MUnit:HasSensors(Unit.SensorType.RADAR, RadarType) == true then
             if MUnit:GetRadar() == true then -- This call is necessary to evaluate the SEAD capability.
-              --self:T3( "RADAR Found" )
+              --self:T3("RADAR Found")
             end
             MUnitRadar = true
           end
@@ -3380,7 +3380,7 @@ do -- SET_UNIT
       if self.Filter.SEAD and MUnitInclude then
         local MUnitSEAD = false
         if MUnit:HasSEAD() == true then
-          --self:T3( "SEAD Found" )
+          --self:T3("SEAD Found")
           MUnitSEAD = true
         end
         MUnitInclude = MUnitInclude and MUnitSEAD
@@ -3389,8 +3389,8 @@ do -- SET_UNIT
     
     if self.Filter.Zones and MUnitInclude then
       local MGroupZone = false
-      for ZoneName, Zone in pairs( self.Filter.Zones ) do
-        --self:T3( "Zone:", ZoneName )
+      for ZoneName, Zone in pairs(self.Filter.Zones) do
+        --self:T3("Zone:", ZoneName)
         if MUnit:IsInZone(Zone) then
           MGroupZone = true
         end
@@ -3403,7 +3403,7 @@ do -- SET_UNIT
       MUnitInclude = MUnitInclude  and MUnitFunc
     end
     
-    --self:T2( MUnitInclude )
+    --self:T2(MUnitInclude)
     return MUnitInclude
   end
 
@@ -3411,24 +3411,24 @@ do -- SET_UNIT
   -- @param #SET_UNIT self
   -- @param #string Delimiter (Optional) The delimiter, which is default a comma.
   -- @return #string The types of the @{Wrapper.Unit}s delimited.
-  function SET_UNIT:GetTypeNames( Delimiter )
+  function SET_UNIT:GetTypeNames(Delimiter)
 
     Delimiter = Delimiter or ", "
     local TypeReport = REPORT:New()
     local Types = {}
 
-    for UnitName, UnitData in pairs( self:GetSet() ) do
+    for UnitName, UnitData in pairs(self:GetSet()) do
 
       local Unit = UnitData -- Wrapper.Unit#UNIT
       local UnitTypeName = Unit:GetTypeName()
 
       if not Types[UnitTypeName] then
         Types[UnitTypeName] = UnitTypeName
-        TypeReport:Add( UnitTypeName )
+        TypeReport:Add(UnitTypeName)
       end
     end
 
-    return TypeReport:Text( Delimiter )
+    return TypeReport:Text(Delimiter)
   end
 
   --- Iterate the SET_UNIT and set for each unit the default cargo bay weight limit.
@@ -3439,7 +3439,7 @@ do -- SET_UNIT
   -- MySetUnit:SetCargoBayWeightLimit()
   function SET_UNIT:SetCargoBayWeightLimit()
     local Set = self:GetSet()
-    for UnitID, UnitData in pairs( Set ) do -- For each UNIT in SET_UNIT
+    for UnitID, UnitData in pairs(Set) do -- For each UNIT in SET_UNIT
       -- local UnitData = UnitData -- Wrapper.Unit#UNIT
       UnitData:SetCargoBayWeightLimit()
     end
@@ -3551,7 +3551,7 @@ do -- SET_STATIC
   function SET_STATIC:New()
 
     -- Inherits from BASE
-    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.STATICS ) ) -- Core.Set#SET_STATIC
+    local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.STATICS)) -- Core.Set#SET_STATIC
 
     return self
   end
@@ -3560,10 +3560,10 @@ do -- SET_STATIC
   -- @param #SET_STATIC self
   -- @param Wrapper.Static#STATIC AddStatic A single STATIC.
   -- @return #SET_STATIC self
-  function SET_STATIC:AddStatic( AddStatic )
-    --self:F2( AddStatic:GetName() )
+  function SET_STATIC:AddStatic(AddStatic)
+    --self:F2(AddStatic:GetName())
 
-    self:Add( AddStatic:GetName(), AddStatic )
+    self:Add(AddStatic:GetName(), AddStatic)
 
     return self
   end
@@ -3572,13 +3572,13 @@ do -- SET_STATIC
   -- @param #SET_STATIC self
   -- @param #string AddStaticNames A single name or an array of STATIC names.
   -- @return #SET_STATIC self
-  function SET_STATIC:AddStaticsByName( AddStaticNames )
+  function SET_STATIC:AddStaticsByName(AddStaticNames)
 
-    local AddStaticNamesArray = (type( AddStaticNames ) == "table") and AddStaticNames or { AddStaticNames }
+    local AddStaticNamesArray = (type(AddStaticNames) == "table") and AddStaticNames or { AddStaticNames }
 
-    --self:T(( AddStaticNamesArray )
-    for AddStaticID, AddStaticName in pairs( AddStaticNamesArray ) do
-      self:Add( AddStaticName, STATIC:FindByName( AddStaticName ) )
+    --self:T((AddStaticNamesArray)
+    for AddStaticID, AddStaticName in pairs(AddStaticNamesArray) do
+      self:Add(AddStaticName, STATIC:FindByName(AddStaticName))
     end
 
     return self
@@ -3588,12 +3588,12 @@ do -- SET_STATIC
   -- @param Core.Set#SET_STATIC self
   -- @param Wrapper.Static#STATIC RemoveStaticNames A single name or an array of STATIC names.
   -- @return self
-  function SET_STATIC:RemoveStaticsByName( RemoveStaticNames )
+  function SET_STATIC:RemoveStaticsByName(RemoveStaticNames)
 
-    local RemoveStaticNamesArray = (type( RemoveStaticNames ) == "table") and RemoveStaticNames or { RemoveStaticNames }
+    local RemoveStaticNamesArray = (type(RemoveStaticNames) == "table") and RemoveStaticNames or { RemoveStaticNames }
 
-    for RemoveStaticID, RemoveStaticName in pairs( RemoveStaticNamesArray ) do
-      self:Remove( RemoveStaticName )
+    for RemoveStaticID, RemoveStaticName in pairs(RemoveStaticNamesArray) do
+      self:Remove(RemoveStaticName)
     end
 
     return self
@@ -3603,7 +3603,7 @@ do -- SET_STATIC
   -- @param #SET_STATIC self
   -- @param #string StaticName
   -- @return Wrapper.Static#STATIC The found Static.
-  function SET_STATIC:FindStatic( StaticName )
+  function SET_STATIC:FindStatic(StaticName)
 
     local StaticFound = self.Set[StaticName]
     return StaticFound
@@ -3620,20 +3620,20 @@ do -- SET_STATIC
   -- @param #SET_STATIC self
   -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
   -- @return #SET_STATIC self
-  function SET_STATIC:FilterZones( Zones )
+  function SET_STATIC:FilterZones(Zones)
     if not self.Filter.Zones then
       self.Filter.Zones = {}
     end
     local zones = {}
     if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
       zones = Zones.Set
-    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+    elseif type(Zones) ~= "table" or (type(Zones) == "table" and Zones.ClassName) then
       self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
       return self     
     else
       zones = Zones
     end
-    for _,Zone in pairs( zones ) do
+    for _,Zone in pairs(zones) do
       local zonename = Zone:GetName()
       self.Filter.Zones[zonename] = Zone
     end
@@ -3645,14 +3645,14 @@ do -- SET_STATIC
   -- @param #SET_STATIC self
   -- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship".
   -- @return #SET_STATIC self
-  function SET_STATIC:FilterCategories( Categories )
+  function SET_STATIC:FilterCategories(Categories)
     if not self.Filter.Categories then
       self.Filter.Categories = {}
     end
-    if type( Categories ) ~= "table" then
+    if type(Categories) ~= "table" then
       Categories = { Categories }
     end
-    for CategoryID, Category in pairs( Categories ) do
+    for CategoryID, Category in pairs(Categories) do
       self.Filter.Categories[Category] = Category
     end
     return self
@@ -3663,14 +3663,14 @@ do -- SET_STATIC
   -- @param #SET_STATIC self
   -- @param #string Types Can take those type strings known within DCS world.
   -- @return #SET_STATIC self
-  function SET_STATIC:FilterTypes( Types )
+  function SET_STATIC:FilterTypes(Types)
     if not self.Filter.Types then
       self.Filter.Types = {}
     end
-    if type( Types ) ~= "table" then
+    if type(Types) ~= "table" then
       Types = { Types }
     end
-    for TypeID, Type in pairs( Types ) do
+    for TypeID, Type in pairs(Types) do
       self.Filter.Types[Type] = Type
     end
     return self
@@ -3691,7 +3691,7 @@ do -- SET_STATIC
   --              if static:GetName() == "Exclude Me" then isinclude = false end
   --              return isinclude
   --          end
-  --          ):FilterOnce()
+  --         ):FilterOnce()
   --          BASE:I(groundset:Flush())
   
   --- Builds a set of units of defined countries.
@@ -3699,14 +3699,14 @@ do -- SET_STATIC
   -- @param #SET_STATIC self
   -- @param #string Countries Can take those country strings known within DCS world.
   -- @return #SET_STATIC self
-  function SET_STATIC:FilterCountries( Countries )
+  function SET_STATIC:FilterCountries(Countries)
     if not self.Filter.Countries then
       self.Filter.Countries = {}
     end
-    if type( Countries ) ~= "table" then
+    if type(Countries) ~= "table" then
       Countries = { Countries }
     end
-    for CountryID, Country in pairs( Countries ) do
+    for CountryID, Country in pairs(Countries) do
       self.Filter.Countries[Country] = Country
     end
     return self
@@ -3717,14 +3717,14 @@ do -- SET_STATIC
   -- @param #SET_STATIC self
   -- @param #string Prefixes The string pattern(s) that need to be contained in the static name. Can also be passed as a `#table` of strings.
   -- @return #SET_STATIC self
-  function SET_STATIC:FilterPrefixes( Prefixes )
+  function SET_STATIC:FilterPrefixes(Prefixes)
     if not self.Filter.StaticPrefixes then
       self.Filter.StaticPrefixes = {}
     end
-    if type( Prefixes ) ~= "table" then
+    if type(Prefixes) ~= "table" then
       Prefixes = { Prefixes }
     end
-    for PrefixID, Prefix in pairs( Prefixes ) do
+    for PrefixID, Prefix in pairs(Prefixes) do
       self.Filter.StaticPrefixes[Prefix] = Prefix
     end
     return self
@@ -3737,9 +3737,9 @@ do -- SET_STATIC
 
     if _DATABASE then
       self:_FilterStart()
-      self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
-      self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.UnitLost, self._EventOnDeadOrCrash )
+      self:HandleEvent(EVENTS.Birth, self._EventOnBirth)
+      self:HandleEvent(EVENTS.Dead, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.UnitLost, self._EventOnDeadOrCrash)
     end
 
     return self
@@ -3753,7 +3753,7 @@ do -- SET_STATIC
     local Set = self:GetSet()
 
     local CountU = 0
-    for UnitID, UnitData in pairs( Set ) do
+    for UnitID, UnitData in pairs(Set) do
       if UnitData and UnitData:IsAlive() then
         CountU = CountU + 1
       end
@@ -3769,13 +3769,13 @@ do -- SET_STATIC
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the STATIC
   -- @return #table The STATIC
-  function SET_STATIC:AddInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_STATIC:AddInDatabase(Event)
+    --self:F3({ Event })
 
     if Event.IniObjectCategory == Object.Category.STATIC then
       if not self.Database[Event.IniDCSUnitName] then
-        self.Database[Event.IniDCSUnitName] = STATIC:Register( Event.IniDCSUnitName )
-        --self:T(3( self.Database[Event.IniDCSUnitName] )
+        self.Database[Event.IniDCSUnitName] = STATIC:Register(Event.IniDCSUnitName)
+        --self:T(3(self.Database[Event.IniDCSUnitName])
       end
     end
 
@@ -3788,8 +3788,8 @@ do -- SET_STATIC
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the STATIC
   -- @return #table The STATIC
-  function SET_STATIC:FindInDatabase( Event )
-    --self:F2( { Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event } )
+  function SET_STATIC:FindInDatabase(Event)
+    --self:F2({ Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName], Event })
 
     return Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName]
   end
@@ -3800,14 +3800,14 @@ do -- SET_STATIC
     -- @param #SET_STATIC self
     -- @param Core.Zone#ZONE Zone The Zone to be tested for.
     -- @return #boolean
-    function SET_STATIC:IsPartiallyInZone( Zone )
+    function SET_STATIC:IsPartiallyInZone(Zone)
 
       local IsPartiallyInZone = false
 
-      local function EvaluateZone( ZoneStatic )
+      local function EvaluateZone(ZoneStatic)
 
         local ZoneStaticName = ZoneStatic:GetName()
-        if self:FindStatic( ZoneStaticName ) then
+        if self:FindStatic(ZoneStaticName) then
           IsPartiallyInZone = true
           return false
         end
@@ -3822,14 +3822,14 @@ do -- SET_STATIC
     -- @param #SET_STATIC self
     -- @param Core.Zone#ZONE Zone The Zone to be tested for.
     -- @return #boolean
-    function SET_STATIC:IsNotInZone( Zone )
+    function SET_STATIC:IsNotInZone(Zone)
 
       local IsNotInZone = true
 
-      local function EvaluateZone( ZoneStatic )
+      local function EvaluateZone(ZoneStatic)
 
         local ZoneStaticName = ZoneStatic:GetName()
-        if self:FindStatic( ZoneStaticName ) then
+        if self:FindStatic(ZoneStaticName) then
           IsNotInZone = false
           return false
         end
@@ -3837,7 +3837,7 @@ do -- SET_STATIC
         return true
       end
 
-      Zone:Search( EvaluateZone )
+      Zone:Search(EvaluateZone)
 
       return IsNotInZone
     end
@@ -3846,10 +3846,10 @@ do -- SET_STATIC
     -- @param #SET_STATIC self
     -- @param #function IteratorFunction The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.
     -- @return #SET_STATIC self
-    function SET_STATIC:ForEachStaticInZone( IteratorFunction, ... )
-      --self:F2( arg )
+    function SET_STATIC:ForEachStaticInZone(IteratorFunction, ...)
+      --self:F2(arg)
 
-      self:ForEach( IteratorFunction, arg, self:GetSet() )
+      self:ForEach(IteratorFunction, arg, self:GetSet())
 
       return self
     end
@@ -3861,10 +3861,10 @@ do -- SET_STATIC
   -- @param #SET_STATIC self
   -- @param #function IteratorFunction The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.
   -- @return #SET_STATIC self
-  function SET_STATIC:ForEachStatic( IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_STATIC:ForEachStatic(IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet() )
+    self:ForEach(IteratorFunction, arg, self:GetSet())
 
     return self
   end
@@ -3874,19 +3874,19 @@ do -- SET_STATIC
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.
   -- @return #SET_STATIC self
-  function SET_STATIC:ForEachStaticCompletelyInZone( ZoneObject, IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_STATIC:ForEachStaticCompletelyInZone(ZoneObject, IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet(),
+    self:ForEach(IteratorFunction, arg, self:GetSet(),
       -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Static#STATIC StaticObject
-      function( ZoneObject, StaticObject )
-        if StaticObject:IsInZone( ZoneObject ) then
+      function(ZoneObject, StaticObject)
+        if StaticObject:IsInZone(ZoneObject) then
           return true
         else
           return false
         end
-      end, { ZoneObject } )
+      end, { ZoneObject })
 
     return self
   end
@@ -3896,19 +3896,19 @@ do -- SET_STATIC
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive STATIC in the SET_STATIC. The function needs to accept a STATIC parameter.
   -- @return #SET_STATIC self
-  function SET_STATIC:ForEachStaticNotInZone( ZoneObject, IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_STATIC:ForEachStaticNotInZone(ZoneObject, IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet(),
+    self:ForEach(IteratorFunction, arg, self:GetSet(),
       -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Static#STATIC StaticObject
-      function( ZoneObject, StaticObject )
-        if StaticObject:IsNotInZone( ZoneObject ) then
+      function(ZoneObject, StaticObject)
+        if StaticObject:IsNotInZone(ZoneObject) then
           return true
         else
           return false
         end
-      end, { ZoneObject } )
+      end, { ZoneObject })
 
     return self
   end
@@ -3922,7 +3922,7 @@ do -- SET_STATIC
     local MT = {} -- Message Text
     local StaticTypes = {}
 
-    for StaticID, StaticData in pairs( self:GetSet() ) do
+    for StaticID, StaticData in pairs(self:GetSet()) do
       local TextStatic = StaticData -- Wrapper.Static#STATIC
       if TextStatic:IsAlive() then
         local StaticType = TextStatic:GetTypeName()
@@ -3935,7 +3935,7 @@ do -- SET_STATIC
       end
     end
 
-    for StaticTypeID, StaticType in pairs( StaticTypes ) do
+    for StaticTypeID, StaticType in pairs(StaticTypes) do
       MT[#MT + 1] = StaticType .. " of " .. StaticTypeID
     end
 
@@ -3951,11 +3951,11 @@ do -- SET_STATIC
     local MT = {} -- Message Text
     local StaticTypes = self:GetStaticTypes()
 
-    for StaticTypeID, StaticType in pairs( StaticTypes ) do
+    for StaticTypeID, StaticType in pairs(StaticTypes) do
       MT[#MT + 1] = StaticType .. " of " .. StaticTypeID
     end
 
-    return table.concat( MT, ", " )
+    return table.concat(MT, ", ")
   end
 
   --- Get the center coordinate of the SET_STATIC.
@@ -3975,7 +3975,7 @@ do -- SET_STATIC
     local AvgHeading = nil
     local MovingCount = 0
 
-    for StaticName, StaticData in pairs( self:GetSet() ) do
+    for StaticName, StaticData in pairs(self:GetSet()) do
 
       local Static = StaticData -- Wrapper.Static#STATIC
       local Coordinate = Static:GetCoordinate()
@@ -4001,10 +4001,10 @@ do -- SET_STATIC
     Coordinate.x = (x2 - x1) / 2 + x1
     Coordinate.y = (y2 - y1) / 2 + y1
     Coordinate.z = (z2 - z1) / 2 + z1
-    Coordinate:SetHeading( AvgHeading )
-    Coordinate:SetVelocity( MaxVelocity )
+    Coordinate:SetHeading(AvgHeading)
+    Coordinate:SetVelocity(MaxVelocity)
 
-    --self:F( { Coordinate = Coordinate } )
+    --self:F({ Coordinate = Coordinate })
     return Coordinate
 
   end
@@ -4026,7 +4026,7 @@ do -- SET_STATIC
     local HeadingSet = nil
     local MovingCount = 0
 
-    for StaticName, StaticData in pairs( self:GetSet() ) do
+    for StaticName, StaticData in pairs(self:GetSet()) do
 
       local Static = StaticData -- Wrapper.Static#STATIC
       local Coordinate = Static:GetCoordinate()
@@ -4038,7 +4038,7 @@ do -- SET_STATIC
           HeadingSet = Heading
         else
           local HeadingDiff = (HeadingSet - Heading + 180 + 360) % 360 - 180
-          HeadingDiff = math.abs( HeadingDiff )
+          HeadingDiff = math.abs(HeadingDiff)
           if HeadingDiff > 5 then
             HeadingSet = nil
             break
@@ -4058,7 +4058,7 @@ do -- SET_STATIC
 
     local MaxThreatLevelA2G = 0
     local MaxThreatText = ""
-    for StaticName, StaticData in pairs( self:GetSet() ) do
+    for StaticName, StaticData in pairs(self:GetSet()) do
       local ThreatStatic = StaticData -- Wrapper.Static#STATIC
       local ThreatLevelA2G, ThreatText = ThreatStatic:GetThreatLevel()
       if ThreatLevelA2G > MaxThreatLevelA2G then
@@ -4067,7 +4067,7 @@ do -- SET_STATIC
       end
     end
 
-    --self:F( { MaxThreatLevelA2G = MaxThreatLevelA2G, MaxThreatText = MaxThreatText } )
+    --self:F({ MaxThreatLevelA2G = MaxThreatLevelA2G, MaxThreatText = MaxThreatText })
     return MaxThreatLevelA2G, MaxThreatText
 
   end
@@ -4076,14 +4076,14 @@ do -- SET_STATIC
   -- @param #SET_STATIC self
   -- @param Wrapper.Static#STATIC MStatic
   -- @return #SET_STATIC self
-  function SET_STATIC:IsIncludeObject( MStatic )
-    --self:F2( MStatic )
+  function SET_STATIC:IsIncludeObject(MStatic)
+    --self:F2(MStatic)
     local MStaticInclude = true
 
     if self.Filter.Coalitions then
       local MStaticCoalition = false
-      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-        --self:T(3( { "Coalition:", MStatic:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+      for CoalitionID, CoalitionName in pairs(self.Filter.Coalitions) do
+        --self:T(3({ "Coalition:", MStatic:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName })
         if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == MStatic:GetCoalition() then
           MStaticCoalition = true
         end
@@ -4093,8 +4093,8 @@ do -- SET_STATIC
 
     if self.Filter.Categories then
       local MStaticCategory = false
-      for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-        --self:T(3( { "Category:", MStatic:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName } )
+      for CategoryID, CategoryName in pairs(self.Filter.Categories) do
+        --self:T(3({ "Category:", MStatic:GetDesc().category, self.FilterMeta.Categories[CategoryName], CategoryName })
         if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == MStatic:GetDesc().category then
           MStaticCategory = true
         end
@@ -4104,8 +4104,8 @@ do -- SET_STATIC
 
     if self.Filter.Types then
       local MStaticType = false
-      for TypeID, TypeName in pairs( self.Filter.Types ) do
-        --self:T(3( { "Type:", MStatic:GetTypeName(), TypeName } )
+      for TypeID, TypeName in pairs(self.Filter.Types) do
+        --self:T(3({ "Type:", MStatic:GetTypeName(), TypeName })
         if TypeName == MStatic:GetTypeName() then
           MStaticType = true
         end
@@ -4115,8 +4115,8 @@ do -- SET_STATIC
 
     if self.Filter.Countries then
       local MStaticCountry = false
-      for CountryID, CountryName in pairs( self.Filter.Countries ) do
-        --self:T(3( { "Country:", MStatic:GetCountry(), CountryName } )
+      for CountryID, CountryName in pairs(self.Filter.Countries) do
+        --self:T(3({ "Country:", MStatic:GetCountry(), CountryName })
         if country.id[CountryName] == MStatic:GetCountry() then
           MStaticCountry = true
         end
@@ -4126,9 +4126,9 @@ do -- SET_STATIC
 
     if self.Filter.StaticPrefixes then
       local MStaticPrefix = false
-      for StaticPrefixId, StaticPrefix in pairs( self.Filter.StaticPrefixes ) do
-        --self:T(3( { "Prefix:", string.find( MStatic:GetName(), StaticPrefix, 1 ), StaticPrefix } )
-        if string.find( MStatic:GetName(), StaticPrefix, 1 ) then
+      for StaticPrefixId, StaticPrefix in pairs(self.Filter.StaticPrefixes) do
+        --self:T(3({ "Prefix:", string.find(MStatic:GetName(), StaticPrefix, 1), StaticPrefix })
+        if string.find(MStatic:GetName(), StaticPrefix, 1) then
           MStaticPrefix = true
         end
       end
@@ -4137,8 +4137,8 @@ do -- SET_STATIC
     
     if self.Filter.Zones then
       local MStaticZone = false
-      for ZoneName, Zone in pairs( self.Filter.Zones ) do
-        --self:T(3( "Zone:", ZoneName )
+      for ZoneName, Zone in pairs(self.Filter.Zones) do
+        --self:T(3("Zone:", ZoneName)
         if MStatic and MStatic:IsInZone(Zone) then
           MStaticZone = true
         end
@@ -4151,7 +4151,7 @@ do -- SET_STATIC
       MStaticInclude = MStaticInclude and MClientFunc
     end
     
-    --self:T(2( MStaticInclude )
+    --self:T(2(MStaticInclude)
     return MStaticInclude
   end
 
@@ -4159,24 +4159,24 @@ do -- SET_STATIC
   -- @param #SET_STATIC self
   -- @param #string Delimiter (Optional) The delimiter, which is default a comma.
   -- @return #string The types of the @{Wrapper.Static}s delimited.
-  function SET_STATIC:GetTypeNames( Delimiter )
+  function SET_STATIC:GetTypeNames(Delimiter)
 
     Delimiter = Delimiter or ", "
     local TypeReport = REPORT:New()
     local Types = {}
 
-    for StaticName, StaticData in pairs( self:GetSet() ) do
+    for StaticName, StaticData in pairs(self:GetSet()) do
 
       local Static = StaticData -- Wrapper.Static#STATIC
       local StaticTypeName = Static:GetTypeName()
 
       if not Types[StaticTypeName] then
         Types[StaticTypeName] = StaticTypeName
-        TypeReport:Add( StaticTypeName )
+        TypeReport:Add(StaticTypeName)
       end
     end
 
-    return TypeReport:Text( Delimiter )
+    return TypeReport:Text(Delimiter)
   end
 
   --- Get the closest static of the set with respect to a given reference coordinate. Optionally, only statics of given coalitions are considered in the search.
@@ -4191,7 +4191,7 @@ do -- SET_STATIC
     local dmin=math.huge
     local gmin=nil
     
-    for GroupID, GroupData in pairs( Set ) do -- For each STATIC in SET_STATIC
+    for GroupID, GroupData in pairs(Set) do -- For each STATIC in SET_STATIC
       local group=GroupData --Wrapper.Static#STATIC
       
       if group and group:IsAlive() and (Coalitions==nil or UTILS.IsAnyInTable(Coalitions, group:GetCoalition())) then
@@ -4309,9 +4309,9 @@ do -- SET_CLIENT
   -- DBObject = SET_CLIENT:New()
   function SET_CLIENT:New()
     -- Inherits from BASE
-    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.CLIENTS ) ) -- #SET_CLIENT
+    local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.CLIENTS)) -- #SET_CLIENT
 
-    self:FilterActive( false )
+    self:FilterActive(false)
 
     return self
   end
@@ -4320,12 +4320,12 @@ do -- SET_CLIENT
   -- @param Core.Set#SET_CLIENT self
   -- @param #string AddClientNames A single name or an array of CLIENT names.
   -- @return self
-  function SET_CLIENT:AddClientsByName( AddClientNames )
+  function SET_CLIENT:AddClientsByName(AddClientNames)
 
-    local AddClientNamesArray = (type( AddClientNames ) == "table") and AddClientNames or { AddClientNames }
+    local AddClientNamesArray = (type(AddClientNames) == "table") and AddClientNames or { AddClientNames }
 
-    for AddClientID, AddClientName in pairs( AddClientNamesArray ) do
-      self:Add( AddClientName, CLIENT:FindByName( AddClientName ) )
+    for AddClientID, AddClientName in pairs(AddClientNamesArray) do
+      self:Add(AddClientName, CLIENT:FindByName(AddClientName))
     end
 
     return self
@@ -4335,12 +4335,12 @@ do -- SET_CLIENT
   -- @param Core.Set#SET_CLIENT self
   -- @param Wrapper.Client#CLIENT RemoveClientNames A single object or an array of CLIENT objects.
   -- @return self
-  function SET_CLIENT:RemoveClientsByName( RemoveClientNames )
+  function SET_CLIENT:RemoveClientsByName(RemoveClientNames)
 
-    local RemoveClientNamesArray = (type( RemoveClientNames ) == "table") and RemoveClientNames or { RemoveClientNames }
+    local RemoveClientNamesArray = (type(RemoveClientNames) == "table") and RemoveClientNames or { RemoveClientNames }
 
-    for RemoveClientID, RemoveClientName in pairs( RemoveClientNamesArray ) do
-      self:Remove( RemoveClientName.ClientName )
+    for RemoveClientID, RemoveClientName in pairs(RemoveClientNamesArray) do
+      self:Remove(RemoveClientName.ClientName)
     end
 
     return self
@@ -4350,7 +4350,7 @@ do -- SET_CLIENT
   -- @param #SET_CLIENT self
   -- @param #string ClientName
   -- @return Wrapper.Client#CLIENT The found Client.
-  function SET_CLIENT:FindClient( ClientName )
+  function SET_CLIENT:FindClient(ClientName)
 
     local ClientFound = self.Set[ClientName]
     return ClientFound
@@ -4360,14 +4360,14 @@ do -- SET_CLIENT
   -- @param #SET_CLIENT self
   -- @param #string Callsigns Can be a single string e.g. "Ford", or a table of strings e.g. {"Uzi","Enfield","Chevy"}. Refers to the callsigns as they can be set in the mission editor.
   -- @return #SET_CLIENT self
-  function SET_CLIENT:FilterCallsigns( Callsigns )
+  function SET_CLIENT:FilterCallsigns(Callsigns)
     if not self.Filter.Callsigns then
       self.Filter.Callsigns = {}
     end
-    if type( Callsigns ) ~= "table" then
+    if type(Callsigns) ~= "table" then
       Callsigns = { Callsigns }
     end
-    for callsignID, callsign in pairs( Callsigns ) do
+    for callsignID, callsign in pairs(Callsigns) do
       self.Filter.Callsigns[callsign] = callsign
     end
     return self
@@ -4377,14 +4377,14 @@ do -- SET_CLIENT
   -- @param #SET_CLIENT self
   -- @param #string Playernames Can be a single string e.g. "Apple", or a table of strings e.g. {"Walter","Hermann","Gonzo"}. Useful if you have e.g. a common squadron prefix.
   -- @return #SET_CLIENT self
-  function SET_CLIENT:FilterPlayernames( Playernames )
+  function SET_CLIENT:FilterPlayernames(Playernames)
     if not self.Filter.Playernames then
       self.Filter.Playernames = {}
     end
-    if type( Playernames ) ~= "table" then
+    if type(Playernames) ~= "table" then
       Playernames = { Playernames }
     end
-    for PlayernameID, playername in pairs( Playernames ) do
+    for PlayernameID, playername in pairs(Playernames) do
       self.Filter.Playernames[playername] = playername
     end
     return self
@@ -4401,14 +4401,14 @@ do -- SET_CLIENT
   -- @param #SET_CLIENT self
   -- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship".
   -- @return #SET_CLIENT self
-  function SET_CLIENT:FilterCategories( Categories )
+  function SET_CLIENT:FilterCategories(Categories)
     if not self.Filter.Categories then
       self.Filter.Categories = {}
     end
-    if type( Categories ) ~= "table" then
+    if type(Categories) ~= "table" then
       Categories = { Categories }
     end
-    for CategoryID, Category in pairs( Categories ) do
+    for CategoryID, Category in pairs(Categories) do
       self.Filter.Categories[Category] = Category
     end
     return self
@@ -4419,14 +4419,14 @@ do -- SET_CLIENT
   -- @param #SET_CLIENT self
   -- @param #string Types Can take those type strings known within DCS world.
   -- @return #SET_CLIENT self
-  function SET_CLIENT:FilterTypes( Types )
+  function SET_CLIENT:FilterTypes(Types)
     if not self.Filter.Types then
       self.Filter.Types = {}
     end
-    if type( Types ) ~= "table" then
+    if type(Types) ~= "table" then
       Types = { Types }
     end
-    for TypeID, Type in pairs( Types ) do
+    for TypeID, Type in pairs(Types) do
       self.Filter.Types[Type] = Type
     end
     return self
@@ -4437,14 +4437,14 @@ do -- SET_CLIENT
   -- @param #SET_CLIENT self
   -- @param #string Countries Can take those country strings known within DCS world.
   -- @return #SET_CLIENT self
-  function SET_CLIENT:FilterCountries( Countries )
+  function SET_CLIENT:FilterCountries(Countries)
     if not self.Filter.Countries then
       self.Filter.Countries = {}
     end
-    if type( Countries ) ~= "table" then
+    if type(Countries) ~= "table" then
       Countries = { Countries }
     end
-    for CountryID, Country in pairs( Countries ) do
+    for CountryID, Country in pairs(Countries) do
       self.Filter.Countries[Country] = Country
     end
     return self
@@ -4455,14 +4455,14 @@ do -- SET_CLIENT
   -- @param #SET_CLIENT self
   -- @param #string Prefixes The string pattern(s) that needs to be contained in the unit/pilot name. Can also be passed as a `#table` of strings.
   -- @return #SET_CLIENT self
-  function SET_CLIENT:FilterPrefixes( Prefixes )
+  function SET_CLIENT:FilterPrefixes(Prefixes)
     if not self.Filter.ClientPrefixes then
       self.Filter.ClientPrefixes = {}
     end
-    if type( Prefixes ) ~= "table" then
+    if type(Prefixes) ~= "table" then
       Prefixes = { Prefixes }
     end
-    for PrefixID, Prefix in pairs( Prefixes ) do
+    for PrefixID, Prefix in pairs(Prefixes) do
       self.Filter.ClientPrefixes[Prefix] = Prefix
     end
     return self
@@ -4493,7 +4493,7 @@ do -- SET_CLIENT
         end
         return outcome
       end, Prefixes
-    )
+   )
     return self
   end
 
@@ -4509,15 +4509,15 @@ do -- SET_CLIENT
   -- ClientSet = SET_CLIENT:New():FilterActive():FilterStart()
   --
   -- -- Include only active clients to the set of the blue coalition, and filter one time.
-  -- ClientSet = SET_CLIENT:New():FilterActive():FilterCoalition( "blue" ):FilterOnce()
+  -- ClientSet = SET_CLIENT:New():FilterActive():FilterCoalition("blue"):FilterOnce()
   --
   -- -- Include only active clients to the set of the blue coalition, and filter one time.
   -- -- Later, reset to include back inactive clients to the set.
-  -- ClientSet = SET_CLIENT:New():FilterActive():FilterCoalition( "blue" ):FilterOnce()
+  -- ClientSet = SET_CLIENT:New():FilterActive():FilterCoalition("blue"):FilterOnce()
   -- ... logic ...
-  -- ClientSet = SET_CLIENT:New():FilterActive( false ):FilterCoalition( "blue" ):FilterOnce()
+  -- ClientSet = SET_CLIENT:New():FilterActive(false):FilterCoalition("blue"):FilterOnce()
   --
-  function SET_CLIENT:FilterActive( Active )
+  function SET_CLIENT:FilterActive(Active)
     Active = Active or not (Active == false)
     self.Filter.Active = Active
     return self
@@ -4535,7 +4535,7 @@ do -- SET_CLIENT
           return false
         end
       end
-    )
+   )
     return self
   end
 
@@ -4544,20 +4544,20 @@ do -- SET_CLIENT
   -- @param #SET_CLIENT self
   -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
   -- @return #SET_CLIENT self
-  function SET_CLIENT:FilterZones( Zones )
+  function SET_CLIENT:FilterZones(Zones)
     if not self.Filter.Zones then
       self.Filter.Zones = {}
     end
     local zones = {}
     if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
       zones = Zones.Set
-    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+    elseif type(Zones) ~= "table" or (type(Zones) == "table" and Zones.ClassName) then
       self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
       return self     
     else
       zones = Zones
     end
-    for _,Zone in pairs( zones ) do
+    for _,Zone in pairs(zones) do
       local zonename = Zone:GetName()
       self.Filter.Zones[zonename] = Zone
     end
@@ -4571,10 +4571,10 @@ do -- SET_CLIENT
     
     local Database = _DATABASE.CLIENTS
     
-    for ObjectName, Object in pairs( Database ) do
-      if self:IsIncludeObject( Object ) and self:IsNotInSet(Object) then
-        self:Add( ObjectName, Object )
-      elseif (not self:IsIncludeObject( Object )) and self:IsInSet(Object) then
+    for ObjectName, Object in pairs(Database) do
+      if self:IsIncludeObject(Object) and self:IsNotInSet(Object) then
+        self:Add(ObjectName, Object)
+      elseif (not self:IsIncludeObject(Object)) and self:IsInSet(Object) then
         self:Remove(ObjectName)
       end
     end
@@ -4620,11 +4620,11 @@ do -- SET_CLIENT
   function SET_CLIENT:FilterStart()
 
     if _DATABASE then
-      self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
-      self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
-      --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventPlayerEnterUnit)
-      self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventPlayerLeaveUnit)
+      self:HandleEvent(EVENTS.Birth, self._EventOnBirth)
+      self:HandleEvent(EVENTS.Dead, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.Crash, self._EventOnDeadOrCrash)
+      --self:HandleEvent(EVENTS.PlayerEnterUnit, self._EventPlayerEnterUnit)
+      self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventPlayerLeaveUnit)
       --self:SetEventPriority(1)
       if self.Filter.Zones then
         self.ZoneTimer = TIMER:New(self._ContinousZoneFilter,self)
@@ -4642,14 +4642,14 @@ do -- SET_CLIENT
   -- @param Core.Event#EVENTDATA Event
   -- @return #SET_CLIENT self
   function SET_CLIENT:_EventPlayerEnterUnit(Event)
-    --self:I( "_EventPlayerEnterUnit" )
+    --self:I("_EventPlayerEnterUnit")
     if Event.IniDCSUnit then
       if Event.IniObjectCategory == Object.Category.UNIT and Event.IniGroup and Event.IniGroup:IsGround() then
         -- CA Slot entered
-        local ObjectName, Object = self:AddInDatabase( Event )
-        --self:T(( ObjectName, UTILS.PrintTableToLog(Object) )
-        if Object and self:IsIncludeObject( Object ) then
-          self:Add( ObjectName, Object )
+        local ObjectName, Object = self:AddInDatabase(Event)
+        --self:T((ObjectName, UTILS.PrintTableToLog(Object))
+        if Object and self:IsIncludeObject(Object) then
+          self:Add(ObjectName, Object)
         end
       end
     end
@@ -4661,13 +4661,13 @@ do -- SET_CLIENT
   -- @param Core.Event#EVENTDATA Event
   -- @return #SET_CLIENT self
   function SET_CLIENT:_EventPlayerLeaveUnit(Event)
-    --self:I( "_EventPlayerLeaveUnit" )
+    --self:I("_EventPlayerLeaveUnit")
     if Event.IniDCSUnit then
       if Event.IniObjectCategory == Object.Category.UNIT and Event.IniGroup then --and Event.IniGroup:IsGround() then
         -- CA Slot left
-        local ObjectName, Object = self:FindInDatabase( Event )
+        local ObjectName, Object = self:FindInDatabase(Event)
         if ObjectName then
-          self:Remove( ObjectName )
+          self:Remove(ObjectName)
         end
       end
     end
@@ -4690,8 +4690,8 @@ do -- SET_CLIENT
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the CLIENT
   -- @return #table The CLIENT
-  function SET_CLIENT:AddInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_CLIENT:AddInDatabase(Event)
+    --self:F3({ Event })
 
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
@@ -4702,8 +4702,8 @@ do -- SET_CLIENT
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the CLIENT
   -- @return #table The CLIENT
-  function SET_CLIENT:FindInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_CLIENT:FindInDatabase(Event)
+    --self:F3({ Event })
 
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
@@ -4712,10 +4712,10 @@ do -- SET_CLIENT
   -- @param #SET_CLIENT self
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
   -- @return #SET_CLIENT self
-  function SET_CLIENT:ForEachClient( IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_CLIENT:ForEachClient(IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet() )
+    self:ForEach(IteratorFunction, arg, self:GetSet())
 
     return self
   end
@@ -4725,19 +4725,19 @@ do -- SET_CLIENT
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
   -- @return #SET_CLIENT self
-  function SET_CLIENT:ForEachClientInZone( ZoneObject, IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_CLIENT:ForEachClientInZone(ZoneObject, IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet(),
+    self:ForEach(IteratorFunction, arg, self:GetSet(),
       -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Client#CLIENT ClientObject
-      function( ZoneObject, ClientObject )
-        if ClientObject:IsInZone( ZoneObject ) then
+      function(ZoneObject, ClientObject)
+        if ClientObject:IsInZone(ZoneObject) then
           return true
         else
           return false
         end
-      end, { ZoneObject } )
+      end, { ZoneObject })
 
     return self
   end
@@ -4747,19 +4747,19 @@ do -- SET_CLIENT
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_CLIENT. The function needs to accept a CLIENT parameter.
   -- @return #SET_CLIENT self
-  function SET_CLIENT:ForEachClientNotInZone( ZoneObject, IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_CLIENT:ForEachClientNotInZone(ZoneObject, IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet(),
+    self:ForEach(IteratorFunction, arg, self:GetSet(),
       -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Client#CLIENT ClientObject
-      function( ZoneObject, ClientObject )
-        if ClientObject:IsNotInZone( ZoneObject ) then
+      function(ZoneObject, ClientObject)
+        if ClientObject:IsNotInZone(ZoneObject) then
           return true
         else
           return false
         end
-      end, { ZoneObject } )
+      end, { ZoneObject })
 
     return self
   end
@@ -4772,7 +4772,7 @@ do -- SET_CLIENT
     local Set = self:GetSet()
 
     local CountU = 0
-    for UnitID, UnitData in pairs( Set ) do -- For each GROUP in SET_GROUP
+    for UnitID, UnitData in pairs(Set) do -- For each GROUP in SET_GROUP
       if UnitData and UnitData:IsAlive() then
         CountU = CountU + 1
       end
@@ -4815,7 +4815,7 @@ do -- SET_CLIENT
   --              if client:GetPlayerName() == "Exclude Me" then isinclude = false end
   --              return isinclude
   --          end
-  --          ):FilterOnce()
+  --         ):FilterOnce()
   --          BASE:I(groundset:Flush())
 
 
@@ -4823,8 +4823,8 @@ do -- SET_CLIENT
   -- @param #SET_CLIENT self
   -- @param Wrapper.Client#CLIENT MClient
   -- @return #SET_CLIENT self
-  function SET_CLIENT:IsIncludeObject( MClient )
-    --self:F2( MClient )
+  function SET_CLIENT:IsIncludeObject(MClient)
+    --self:F2(MClient)
 
     local MClientInclude = true
 
@@ -4836,94 +4836,94 @@ do -- SET_CLIENT
         if self.Filter.Active == false or (self.Filter.Active == true and MClient:IsActive() == true and MClient:IsAlive() == true) then
           MClientActive = true
         end
-        --self:T( { "Evaluated Active", MClientActive } )
+        --self:T({ "Evaluated Active", MClientActive })
         MClientInclude = MClientInclude and MClientActive
       end
 
       if self.Filter.Coalitions and MClientInclude then
         local MClientCoalition = false
-        for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-          local ClientCoalitionID = _DATABASE:GetCoalitionFromClientTemplate( MClientName )
+        for CoalitionID, CoalitionName in pairs(self.Filter.Coalitions) do
+          local ClientCoalitionID = _DATABASE:GetCoalitionFromClientTemplate(MClientName)
           if ClientCoalitionID==nil and MClient:IsAlive()~=nil then
             ClientCoalitionID=MClient:GetCoalition()
           end
-          --self:T3( { "Coalition:", ClientCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+          --self:T3({ "Coalition:", ClientCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName })
           if self.FilterMeta.Coalitions[CoalitionName] and ClientCoalitionID and self.FilterMeta.Coalitions[CoalitionName] == ClientCoalitionID then
             MClientCoalition = true
           end
         end
-        --self:T( { "Evaluated Coalition", MClientCoalition } )
+        --self:T({ "Evaluated Coalition", MClientCoalition })
         MClientInclude = MClientInclude and MClientCoalition
       end
       
       if self.Filter.Categories and MClientInclude then
         local MClientCategory = false
-        for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-          local ClientCategoryID = _DATABASE:GetCategoryFromClientTemplate( MClientName )
+        for CategoryID, CategoryName in pairs(self.Filter.Categories) do
+          local ClientCategoryID = _DATABASE:GetCategoryFromClientTemplate(MClientName)
           local UnitCategory = 0
           if ClientCategoryID==nil and MClient:IsExist() then
             ClientCategoryID,UnitCategory=MClient:GetCategory()
             --self:T3("Applying Category Workaround .. Outcome: Obj is "..tostring(ClientCategoryID).." Unit is "..tostring(UnitCategory))
-            --self:T(3( { "Category:", UnitCategory, self.FilterMeta.Categories[CategoryName], CategoryName } )
+            --self:T(3({ "Category:", UnitCategory, self.FilterMeta.Categories[CategoryName], CategoryName })
             if self.FilterMeta.Categories[CategoryName] and UnitCategory and self.FilterMeta.Categories[CategoryName] == UnitCategory then
               MClientCategory = true
             end
             --self:T3("Filter Outcome is "..tostring(MClientCategory))
           else
-            --self:T3( { "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
+            --self:T3({ "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName })
             if self.FilterMeta.Categories[CategoryName] and ClientCategoryID and self.FilterMeta.Categories[CategoryName] == ClientCategoryID then
               MClientCategory = true
             end
           end
         end
-        --self:T( { "Evaluated Category", MClientCategory } )
+        --self:T({ "Evaluated Category", MClientCategory })
         MClientInclude = MClientInclude and MClientCategory
       end
 
       if self.Filter.Types and MClientInclude then
         local MClientType = false
-        for TypeID, TypeName in pairs( self.Filter.Types ) do
-          --self:T3( { "Type:", MClient:GetTypeName(), TypeName } )
+        for TypeID, TypeName in pairs(self.Filter.Types) do
+          --self:T3({ "Type:", MClient:GetTypeName(), TypeName })
           if TypeName == MClient:GetTypeName() then
             MClientType = true
           end
         end
-        --self:T(( { "Evaluated Type", MClientType } )
+        --self:T(({ "Evaluated Type", MClientType })
         MClientInclude = MClientInclude and MClientType
       end
 
       if self.Filter.Countries and MClientInclude then
         local MClientCountry = false
-        for CountryID, CountryName in pairs( self.Filter.Countries ) do
-          local ClientCountryID = _DATABASE:GetCountryFromClientTemplate( MClientName )
+        for CountryID, CountryName in pairs(self.Filter.Countries) do
+          local ClientCountryID = _DATABASE:GetCountryFromClientTemplate(MClientName)
           if ClientCountryID==nil and MClient:IsAlive()~=nil then
             ClientCountryID=MClient:GetCountry()
           end
-          --self:T(3( { "Country:", ClientCountryID, country.id[CountryName], CountryName } )
+          --self:T(3({ "Country:", ClientCountryID, country.id[CountryName], CountryName })
           if country.id[CountryName] and ClientCountryID and country.id[CountryName] == ClientCountryID then
             MClientCountry = true
           end
         end
-        --self:T(( { "Evaluated Country", MClientCountry } )
+        --self:T(({ "Evaluated Country", MClientCountry })
         MClientInclude = MClientInclude and MClientCountry
       end
 
       if self.Filter.ClientPrefixes and MClientInclude then
         local MClientPrefix = false
-        for ClientPrefixId, ClientPrefix in pairs( self.Filter.ClientPrefixes ) do
-          --self:T3( { "Prefix:", string.find( MClient.UnitName, ClientPrefix, 1 ), ClientPrefix } )
-          if string.find( MClient.UnitName, ClientPrefix, 1 ) then
+        for ClientPrefixId, ClientPrefix in pairs(self.Filter.ClientPrefixes) do
+          --self:T3({ "Prefix:", string.find(MClient.UnitName, ClientPrefix, 1), ClientPrefix })
+          if string.find(MClient.UnitName, ClientPrefix, 1) then
             MClientPrefix = true
           end
         end
-        --self:T( { "Evaluated Prefix", MClientPrefix } )
+        --self:T({ "Evaluated Prefix", MClientPrefix })
         MClientInclude = MClientInclude and MClientPrefix
       end
 
     if self.Filter.Zones and MClientInclude then
       local MClientZone = false
-      for ZoneName, Zone in pairs( self.Filter.Zones ) do
-      --self:T3( "Zone:", ZoneName )
+      for ZoneName, Zone in pairs(self.Filter.Zones) do
+      --self:T3("Zone:", ZoneName)
       local unit = MClient:GetClientGroupUnit()
       if unit and unit:IsInZone(Zone) then
         MClientZone = true
@@ -4941,7 +4941,7 @@ do -- SET_CLIENT
           MClientPlayername = true
         end
       end
-      --self:T( { "Evaluated Playername", MClientPlayername } )
+      --self:T({ "Evaluated Playername", MClientPlayername })
       MClientInclude = MClientInclude and MClientPlayername
     end
     
@@ -4954,7 +4954,7 @@ do -- SET_CLIENT
           MClientCallsigns = true
         end
       end
-      --self:T( { "Evaluated Callsign", MClientCallsigns } )
+      --self:T({ "Evaluated Callsign", MClientCallsigns })
       MClientInclude = MClientInclude and MClientCallsigns
     end
     
@@ -4964,7 +4964,7 @@ do -- SET_CLIENT
     end
     
   end
-    --self:T2( MClientInclude )
+    --self:T2(MClientInclude)
     return MClientInclude
   end
 
@@ -5049,7 +5049,7 @@ do -- SET_PLAYER
   -- DBObject = SET_PLAYER:New()
   function SET_PLAYER:New()
     -- Inherits from BASE
-    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.PLAYERS ) )
+    local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.PLAYERS))
 
     return self
   end
@@ -5058,12 +5058,12 @@ do -- SET_PLAYER
   -- @param Core.Set#SET_PLAYER self
   -- @param #string AddClientNames A single name or an array of CLIENT names.
   -- @return self
-  function SET_PLAYER:AddClientsByName( AddClientNames )
+  function SET_PLAYER:AddClientsByName(AddClientNames)
 
-    local AddClientNamesArray = (type( AddClientNames ) == "table") and AddClientNames or { AddClientNames }
+    local AddClientNamesArray = (type(AddClientNames) == "table") and AddClientNames or { AddClientNames }
 
-    for AddClientID, AddClientName in pairs( AddClientNamesArray ) do
-      self:Add( AddClientName, CLIENT:FindByName( AddClientName ) )
+    for AddClientID, AddClientName in pairs(AddClientNamesArray) do
+      self:Add(AddClientName, CLIENT:FindByName(AddClientName))
     end
 
     return self
@@ -5073,12 +5073,12 @@ do -- SET_PLAYER
   -- @param Core.Set#SET_PLAYER self
   -- @param Wrapper.Client#CLIENT RemoveClientNames A single name or an array of CLIENT names.
   -- @return self
-  function SET_PLAYER:RemoveClientsByName( RemoveClientNames )
+  function SET_PLAYER:RemoveClientsByName(RemoveClientNames)
 
-    local RemoveClientNamesArray = (type( RemoveClientNames ) == "table") and RemoveClientNames or { RemoveClientNames }
+    local RemoveClientNamesArray = (type(RemoveClientNames) == "table") and RemoveClientNames or { RemoveClientNames }
 
-    for RemoveClientID, RemoveClientName in pairs( RemoveClientNamesArray ) do
-      self:Remove( RemoveClientName.ClientName )
+    for RemoveClientID, RemoveClientName in pairs(RemoveClientNamesArray) do
+      self:Remove(RemoveClientName.ClientName)
     end
 
     return self
@@ -5088,7 +5088,7 @@ do -- SET_PLAYER
   -- @param #SET_PLAYER self
   -- @param #string PlayerName
   -- @return Wrapper.Client#CLIENT The found Client.
-  function SET_PLAYER:FindClient( PlayerName )
+  function SET_PLAYER:FindClient(PlayerName)
 
     local ClientFound = self.Set[PlayerName]
     return ClientFound
@@ -5104,20 +5104,20 @@ do -- SET_PLAYER
   -- @param #SET_PLAYER self
   -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
   -- @return #SET_PLAYER self
-  function SET_PLAYER:FilterZones( Zones )
+  function SET_PLAYER:FilterZones(Zones)
     if not self.Filter.Zones then
       self.Filter.Zones = {}
     end
     local zones = {}
     if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
       zones = Zones.Set
-    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+    elseif type(Zones) ~= "table" or (type(Zones) == "table" and Zones.ClassName) then
       self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
       return self     
     else
       zones = Zones
     end
-    for _,Zone in pairs( zones ) do
+    for _,Zone in pairs(zones) do
       local zonename = Zone:GetName()
       self.Filter.Zones[zonename] = Zone
     end
@@ -5130,14 +5130,14 @@ do -- SET_PLAYER
   -- @param #SET_PLAYER self
   -- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship".
   -- @return #SET_PLAYER self
-  function SET_PLAYER:FilterCategories( Categories )
+  function SET_PLAYER:FilterCategories(Categories)
     if not self.Filter.Categories then
       self.Filter.Categories = {}
     end
-    if type( Categories ) ~= "table" then
+    if type(Categories) ~= "table" then
       Categories = { Categories }
     end
-    for CategoryID, Category in pairs( Categories ) do
+    for CategoryID, Category in pairs(Categories) do
       self.Filter.Categories[Category] = Category
     end
     return self
@@ -5148,14 +5148,14 @@ do -- SET_PLAYER
   -- @param #SET_PLAYER self
   -- @param #string Types Can take those type strings known within DCS world.
   -- @return #SET_PLAYER self
-  function SET_PLAYER:FilterTypes( Types )
+  function SET_PLAYER:FilterTypes(Types)
     if not self.Filter.Types then
       self.Filter.Types = {}
     end
-    if type( Types ) ~= "table" then
+    if type(Types) ~= "table" then
       Types = { Types }
     end
-    for TypeID, Type in pairs( Types ) do
+    for TypeID, Type in pairs(Types) do
       self.Filter.Types[Type] = Type
     end
     return self
@@ -5166,14 +5166,14 @@ do -- SET_PLAYER
   -- @param #SET_PLAYER self
   -- @param #string Countries Can take those country strings known within DCS world.
   -- @return #SET_PLAYER self
-  function SET_PLAYER:FilterCountries( Countries )
+  function SET_PLAYER:FilterCountries(Countries)
     if not self.Filter.Countries then
       self.Filter.Countries = {}
     end
-    if type( Countries ) ~= "table" then
+    if type(Countries) ~= "table" then
       Countries = { Countries }
     end
-    for CountryID, Country in pairs( Countries ) do
+    for CountryID, Country in pairs(Countries) do
       self.Filter.Countries[Country] = Country
     end
     return self
@@ -5184,14 +5184,14 @@ do -- SET_PLAYER
   -- @param #SET_PLAYER self
   -- @param #string Prefixes The string pattern(s) that needs to be contained in the unit/pilot name. Can also be passed as a `#table` of strings.
   -- @return #SET_PLAYER self
-  function SET_PLAYER:FilterPrefixes( Prefixes )
+  function SET_PLAYER:FilterPrefixes(Prefixes)
     if not self.Filter.ClientPrefixes then
       self.Filter.ClientPrefixes = {}
     end
-    if type( Prefixes ) ~= "table" then
+    if type(Prefixes) ~= "table" then
       Prefixes = { Prefixes }
     end
-    for PrefixID, Prefix in pairs( Prefixes ) do
+    for PrefixID, Prefix in pairs(Prefixes) do
       self.Filter.ClientPrefixes[Prefix] = Prefix
     end
     return self
@@ -5204,10 +5204,10 @@ do -- SET_PLAYER
 
     if _DATABASE then
       self:_FilterStart()
-      self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
-      self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.PlayerLeaveUnit, self._EventOnDeadOrCrash )
+      self:HandleEvent(EVENTS.Birth, self._EventOnBirth)
+      self:HandleEvent(EVENTS.Dead, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.Crash, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.PlayerLeaveUnit, self._EventOnDeadOrCrash)
     end
 
     return self
@@ -5219,8 +5219,8 @@ do -- SET_PLAYER
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the CLIENT
   -- @return #table The CLIENT
-  function SET_PLAYER:AddInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_PLAYER:AddInDatabase(Event)
+    --self:F3({ Event })
 
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
@@ -5231,8 +5231,8 @@ do -- SET_PLAYER
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the CLIENT
   -- @return #table The CLIENT
-  function SET_PLAYER:FindInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_PLAYER:FindInDatabase(Event)
+    --self:F3({ Event })
 
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
@@ -5241,10 +5241,10 @@ do -- SET_PLAYER
   -- @param #SET_PLAYER self
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.
   -- @return #SET_PLAYER self
-  function SET_PLAYER:ForEachPlayer( IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_PLAYER:ForEachPlayer(IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet() )
+    self:ForEach(IteratorFunction, arg, self:GetSet())
 
     return self
   end
@@ -5254,19 +5254,19 @@ do -- SET_PLAYER
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.
   -- @return #SET_PLAYER self
-  function SET_PLAYER:ForEachPlayerInZone( ZoneObject, IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_PLAYER:ForEachPlayerInZone(ZoneObject, IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet(),
+    self:ForEach(IteratorFunction, arg, self:GetSet(),
       -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Client#CLIENT ClientObject
-      function( ZoneObject, ClientObject )
-        if ClientObject:IsInZone( ZoneObject ) then
+      function(ZoneObject, ClientObject)
+        if ClientObject:IsInZone(ZoneObject) then
           return true
         else
           return false
         end
-      end, { ZoneObject } )
+      end, { ZoneObject })
 
     return self
   end
@@ -5276,19 +5276,19 @@ do -- SET_PLAYER
   -- @param Core.Zone#ZONE ZoneObject The Zone to be tested for.
   -- @param #function IteratorFunction The function that will be called when there is an alive CLIENT in the SET_PLAYER. The function needs to accept a CLIENT parameter.
   -- @return #SET_PLAYER self
-  function SET_PLAYER:ForEachPlayerNotInZone( ZoneObject, IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_PLAYER:ForEachPlayerNotInZone(ZoneObject, IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet(),
+    self:ForEach(IteratorFunction, arg, self:GetSet(),
       -- @param Core.Zone#ZONE_BASE ZoneObject
       -- @param Wrapper.Client#CLIENT ClientObject
-      function( ZoneObject, ClientObject )
-        if ClientObject:IsNotInZone( ZoneObject ) then
+      function(ZoneObject, ClientObject)
+        if ClientObject:IsNotInZone(ZoneObject) then
           return true
         else
           return false
         end
-      end, { ZoneObject } )
+      end, { ZoneObject })
 
     return self
   end
@@ -5297,8 +5297,8 @@ do -- SET_PLAYER
   -- @param #SET_PLAYER self
   -- @param Wrapper.Client#CLIENT MClient
   -- @return #SET_PLAYER self
-  function SET_PLAYER:IsIncludeObject( MClient )
-    --self:F2( MClient )
+  function SET_PLAYER:IsIncludeObject(MClient)
+    --self:F2(MClient)
 
     local MClientInclude = true
 
@@ -5307,84 +5307,84 @@ do -- SET_PLAYER
 
       if self.Filter.Coalitions and MClientInclude then
         local MClientCoalition = false
-        for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-          local ClientCoalitionID = _DATABASE:GetCoalitionFromClientTemplate( MClientName )
+        for CoalitionID, CoalitionName in pairs(self.Filter.Coalitions) do
+          local ClientCoalitionID = _DATABASE:GetCoalitionFromClientTemplate(MClientName)
           if ClientCoalitionID==nil and MClient:IsAlive()~=nil then
             ClientCoalitionID=MClient:GetCoalition()
           end
-          --self:T(3( { "Coalition:", ClientCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+          --self:T(3({ "Coalition:", ClientCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName })
           if self.FilterMeta.Coalitions[CoalitionName] and ClientCoalitionID and self.FilterMeta.Coalitions[CoalitionName] == ClientCoalitionID then
             MClientCoalition = true
           end
         end
-        --self:T(( { "Evaluated Coalition", MClientCoalition } )
+        --self:T(({ "Evaluated Coalition", MClientCoalition })
         MClientInclude = MClientInclude and MClientCoalition
       end
 
       if self.Filter.Categories and MClientInclude then
         local MClientCategory = false
-        for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-          local ClientCategoryID = _DATABASE:GetCategoryFromClientTemplate( MClientName )
+        for CategoryID, CategoryName in pairs(self.Filter.Categories) do
+          local ClientCategoryID = _DATABASE:GetCategoryFromClientTemplate(MClientName)
           local UnitCategory = 0
           if ClientCategoryID==nil and MClient:IsExist() then
             ClientCategoryID,UnitCategory=MClient:GetCategory()
-            --self:T(3( { "Category:", UnitCategory, self.FilterMeta.Categories[CategoryName], CategoryName } )
+            --self:T(3({ "Category:", UnitCategory, self.FilterMeta.Categories[CategoryName], CategoryName })
             if self.FilterMeta.Categories[CategoryName] and UnitCategory and self.FilterMeta.Categories[CategoryName] == UnitCategory then
               MClientCategory = true
             end
           else
-            --self:T(3( { "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
+            --self:T(3({ "Category:", ClientCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName })
             if self.FilterMeta.Categories[CategoryName] and ClientCategoryID and self.FilterMeta.Categories[CategoryName] == ClientCategoryID then
               MClientCategory = true
             end
           end
         end
-        --self:T(( { "Evaluated Category", MClientCategory } )
+        --self:T(({ "Evaluated Category", MClientCategory })
         MClientInclude = MClientInclude and MClientCategory
       end
 
       if self.Filter.Types then
         local MClientType = false
-        for TypeID, TypeName in pairs( self.Filter.Types ) do
-          --self:T(3( { "Type:", MClient:GetTypeName(), TypeName } )
+        for TypeID, TypeName in pairs(self.Filter.Types) do
+          --self:T(3({ "Type:", MClient:GetTypeName(), TypeName })
           if TypeName == MClient:GetTypeName() then
             MClientType = true
           end
         end
-        --self:T(( { "Evaluated Type", MClientType } )
+        --self:T(({ "Evaluated Type", MClientType })
         MClientInclude = MClientInclude and MClientType
       end
 
       if self.Filter.Countries then
         local MClientCountry = false
-        for CountryID, CountryName in pairs( self.Filter.Countries ) do
-          local ClientCountryID = _DATABASE:GetCountryFromClientTemplate( MClientName )
-          --self:T(3( { "Country:", ClientCountryID, country.id[CountryName], CountryName } )
+        for CountryID, CountryName in pairs(self.Filter.Countries) do
+          local ClientCountryID = _DATABASE:GetCountryFromClientTemplate(MClientName)
+          --self:T(3({ "Country:", ClientCountryID, country.id[CountryName], CountryName })
           if country.id[CountryName] and country.id[CountryName] == ClientCountryID then
             MClientCountry = true
           end
         end
-        --self:T(( { "Evaluated Country", MClientCountry } )
+        --self:T(({ "Evaluated Country", MClientCountry })
         MClientInclude = MClientInclude and MClientCountry
       end
 
       if self.Filter.ClientPrefixes then
         local MClientPrefix = false
-        for ClientPrefixId, ClientPrefix in pairs( self.Filter.ClientPrefixes ) do
-          --self:T(3( { "Prefix:", string.find( MClient.UnitName, ClientPrefix, 1 ), ClientPrefix } )
-          if string.find( MClient.UnitName, ClientPrefix, 1 ) then
+        for ClientPrefixId, ClientPrefix in pairs(self.Filter.ClientPrefixes) do
+          --self:T(3({ "Prefix:", string.find(MClient.UnitName, ClientPrefix, 1), ClientPrefix })
+          if string.find(MClient.UnitName, ClientPrefix, 1) then
             MClientPrefix = true
           end
         end
-        --self:T(( { "Evaluated Prefix", MClientPrefix } )
+        --self:T(({ "Evaluated Prefix", MClientPrefix })
         MClientInclude = MClientInclude and MClientPrefix
       end
     end
     
     if self.Filter.Zones then
       local MClientZone = false
-      for ZoneName, Zone in pairs( self.Filter.Zones ) do
-        --self:T(3( "Zone:", ZoneName )
+      for ZoneName, Zone in pairs(self.Filter.Zones) do
+        --self:T(3("Zone:", ZoneName)
         local unit = MClient:GetClientGroupUnit()
         if unit and unit:IsInZone(Zone) then
           MClientZone = true
@@ -5398,7 +5398,7 @@ do -- SET_PLAYER
       MClientInclude = MClientInclude and MClientFunc
     end
     
-    --self:T(2( MClientInclude )
+    --self:T(2(MClientInclude)
     return MClientInclude
   end
 
@@ -5475,7 +5475,7 @@ do -- SET_AIRBASE
   -- DatabaseSet = SET_AIRBASE:New()
   function SET_AIRBASE:New()
     -- Inherits from BASE
-    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.AIRBASES ) )
+    local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.AIRBASES))
 
     return self
   end
@@ -5484,9 +5484,9 @@ do -- SET_AIRBASE
   -- @param Core.Set#SET_AIRBASE self
   -- @param Wrapper.Airbase#AIRBASE airbase Airbase that should be added to the set.
   -- @return self
-  function SET_AIRBASE:AddAirbase( airbase )
+  function SET_AIRBASE:AddAirbase(airbase)
 
-    self:Add( airbase:GetName(), airbase )
+    self:Add(airbase:GetName(), airbase)
 
     return self
   end
@@ -5495,12 +5495,12 @@ do -- SET_AIRBASE
   -- @param Core.Set#SET_AIRBASE self
   -- @param #string AddAirbaseNames A single name or an array of AIRBASE names.
   -- @return self
-  function SET_AIRBASE:AddAirbasesByName( AddAirbaseNames )
+  function SET_AIRBASE:AddAirbasesByName(AddAirbaseNames)
 
-    local AddAirbaseNamesArray = (type( AddAirbaseNames ) == "table") and AddAirbaseNames or { AddAirbaseNames }
+    local AddAirbaseNamesArray = (type(AddAirbaseNames) == "table") and AddAirbaseNames or { AddAirbaseNames }
 
-    for AddAirbaseID, AddAirbaseName in pairs( AddAirbaseNamesArray ) do
-      self:Add( AddAirbaseName, AIRBASE:FindByName( AddAirbaseName ) )
+    for AddAirbaseID, AddAirbaseName in pairs(AddAirbaseNamesArray) do
+      self:Add(AddAirbaseName, AIRBASE:FindByName(AddAirbaseName))
     end
 
     return self
@@ -5510,12 +5510,12 @@ do -- SET_AIRBASE
   -- @param Core.Set#SET_AIRBASE self
   -- @param Wrapper.Airbase#AIRBASE RemoveAirbaseNames A single name or an array of AIRBASE names.
   -- @return self
-  function SET_AIRBASE:RemoveAirbasesByName( RemoveAirbaseNames )
+  function SET_AIRBASE:RemoveAirbasesByName(RemoveAirbaseNames)
 
-    local RemoveAirbaseNamesArray = (type( RemoveAirbaseNames ) == "table") and RemoveAirbaseNames or { RemoveAirbaseNames }
+    local RemoveAirbaseNamesArray = (type(RemoveAirbaseNames) == "table") and RemoveAirbaseNames or { RemoveAirbaseNames }
 
-    for RemoveAirbaseID, RemoveAirbaseName in pairs( RemoveAirbaseNamesArray ) do
-      self:Remove( RemoveAirbaseName )
+    for RemoveAirbaseID, RemoveAirbaseName in pairs(RemoveAirbaseNamesArray) do
+      self:Remove(RemoveAirbaseName)
     end
 
     return self
@@ -5525,7 +5525,7 @@ do -- SET_AIRBASE
   -- @param #SET_AIRBASE self
   -- @param #string AirbaseName
   -- @return Wrapper.Airbase#AIRBASE The found Airbase.
-  function SET_AIRBASE:FindAirbase( AirbaseName )
+  function SET_AIRBASE:FindAirbase(AirbaseName)
 
     local AirbaseFound = self.Set[AirbaseName]
     return AirbaseFound
@@ -5536,16 +5536,16 @@ do -- SET_AIRBASE
   -- @param Core.Point#COORDINATE Coordinate
   -- @param #number Range
   -- @return Wrapper.Airbase#AIRBASE The found Airbase.
-  function SET_AIRBASE:FindAirbaseInRange( Coordinate, Range )
+  function SET_AIRBASE:FindAirbaseInRange(Coordinate, Range)
 
     local AirbaseFound = nil
 
-    for AirbaseName, AirbaseObject in pairs( self.Set ) do
+    for AirbaseName, AirbaseObject in pairs(self.Set) do
 
       local AirbaseCoordinate = AirbaseObject:GetCoordinate()
-      local Distance = Coordinate:Get2DDistance( AirbaseCoordinate )
+      local Distance = Coordinate:Get2DDistance(AirbaseCoordinate)
 
-      --self:F( { Distance = Distance } )
+      --self:F({ Distance = Distance })
 
       if Distance <= Range then
         AirbaseFound = AirbaseObject
@@ -5563,7 +5563,7 @@ do -- SET_AIRBASE
   function SET_AIRBASE:GetRandomAirbase()
 
     local RandomAirbase = self:GetRandom()
-    --self:F( { RandomAirbase = RandomAirbase:GetName() } )
+    --self:F({ RandomAirbase = RandomAirbase:GetName() })
 
     return RandomAirbase
   end
@@ -5579,14 +5579,14 @@ do -- SET_AIRBASE
   -- @param #SET_AIRBASE self
   -- @param #string Categories Can take the following values: "airdrome", "helipad", "ship".
   -- @return #SET_AIRBASE self
-  function SET_AIRBASE:FilterCategories( Categories )
+  function SET_AIRBASE:FilterCategories(Categories)
     if not self.Filter.Categories then
       self.Filter.Categories = {}
     end
-    if type( Categories ) ~= "table" then
+    if type(Categories) ~= "table" then
       Categories = { Categories }
     end
-    for CategoryID, Category in pairs( Categories ) do
+    for CategoryID, Category in pairs(Categories) do
       self.Filter.Categories[Category] = Category
     end
     return self
@@ -5596,20 +5596,20 @@ do -- SET_AIRBASE
   -- @param #SET_AIRBASE self
   -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
   -- @return #SET_AIRBASE self
-  function SET_AIRBASE:FilterZones( Zones )
+  function SET_AIRBASE:FilterZones(Zones)
     if not self.Filter.Zones then
       self.Filter.Zones = {}
     end
     local zones = {}
     if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
       zones = Zones.Set
-    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+    elseif type(Zones) ~= "table" or (type(Zones) == "table" and Zones.ClassName) then
       self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
       return self     
     else
       zones = Zones
     end
-    for _,Zone in pairs( zones ) do
+    for _,Zone in pairs(zones) do
       local zonename = Zone:GetName()
       --self:T((zonename)
       self.Filter.Zones[zonename] = Zone
@@ -5625,15 +5625,15 @@ do -- SET_AIRBASE
     if _DATABASE then
 
       -- We use the BaseCaptured event, which is generated by DCS when a base got captured.
-      self:HandleEvent( EVENTS.BaseCaptured )
-      self:HandleEvent( EVENTS.Dead )
+      self:HandleEvent(EVENTS.BaseCaptured)
+      self:HandleEvent(EVENTS.Dead)
 
       -- We initialize the first set.
-      for ObjectName, Object in pairs( self.Database ) do
-        if self:IsIncludeObject( Object ) then
-          self:Add( ObjectName, Object )
+      for ObjectName, Object in pairs(self.Database) do
+        if self:IsIncludeObject(Object) then
+          self:Add(ObjectName, Object)
         else
-          self:RemoveAirbasesByName( ObjectName )
+          self:RemoveAirbasesByName(ObjectName)
         end
       end
     end
@@ -5644,16 +5644,16 @@ do -- SET_AIRBASE
   --- Base capturing event.
   -- @param #SET_AIRBASE self
   -- @param Core.Event#EVENT EventData
-  function SET_AIRBASE:OnEventBaseCaptured( EventData )
+  function SET_AIRBASE:OnEventBaseCaptured(EventData)
 
     -- When a base got captured, we reevaluate the set.
-    for ObjectName, Object in pairs( self.Database ) do
-      if self:IsIncludeObject( Object ) then
+    for ObjectName, Object in pairs(self.Database) do
+      if self:IsIncludeObject(Object) then
         -- We add captured bases on yet in the set.
-        self:Add( ObjectName, Object )
+        self:Add(ObjectName, Object)
       else
         -- We remove captured bases that are not anymore part of the set.
-        self:RemoveAirbasesByName( ObjectName )
+        self:RemoveAirbasesByName(ObjectName)
       end
     end
 
@@ -5662,12 +5662,12 @@ do -- SET_AIRBASE
   --- Dead event.
   -- @param #SET_AIRBASE self
   -- @param Core.Event#EVENT EventData
-  function SET_AIRBASE:OnEventDead( EventData )
+  function SET_AIRBASE:OnEventDead(EventData)
 
-    local airbaseName, airbase = self:FindInDatabase( EventData )
+    local airbaseName, airbase = self:FindInDatabase(EventData)
 
     if airbase and (airbase:IsShip() or airbase:IsHelipad()) then
-      self:RemoveAirbasesByName( airbaseName )
+      self:RemoveAirbasesByName(airbaseName)
     end
 
   end
@@ -5678,7 +5678,7 @@ do -- SET_AIRBASE
   -- @param Core.Event#EVENTDATA Event Event data.
   -- @return #string The name of the AIRBASE.
   -- @return Wrapper.Airbase#AIRBASE The AIRBASE object.
-  function SET_AIRBASE:AddInDatabase( Event )
+  function SET_AIRBASE:AddInDatabase(Event)
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
 
@@ -5688,8 +5688,8 @@ do -- SET_AIRBASE
   -- @param Core.Event#EVENTDATA Event Event data.
   -- @return #string The name of the AIRBASE.
   -- @return Wrapper.Airbase#AIRBASE The AIRBASE object.
-  function SET_AIRBASE:FindInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_AIRBASE:FindInDatabase(Event)
+    --self:F3({ Event })
 
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
@@ -5698,10 +5698,10 @@ do -- SET_AIRBASE
   -- @param #SET_AIRBASE self
   -- @param #function IteratorFunction The function that will be called when there is an alive AIRBASE in the SET_AIRBASE. The function needs to accept a AIRBASE parameter.
   -- @return #SET_AIRBASE self
-  function SET_AIRBASE:ForEachAirbase( IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_AIRBASE:ForEachAirbase(IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet() )
+    self:ForEach(IteratorFunction, arg, self:GetSet())
 
     return self
   end
@@ -5710,10 +5710,10 @@ do -- SET_AIRBASE
   -- @param #SET_AIRBASE self
   -- @param Core.Point#COORDINATE Coordinate A @{Core.Point#COORDINATE} object from where to evaluate the closest @{Wrapper.Airbase#AIRBASE}.
   -- @return Wrapper.Airbase#AIRBASE The closest @{Wrapper.Airbase#AIRBASE}.
-  function SET_AIRBASE:FindNearestAirbaseFromPointVec2( Coordinate )
-    --self:F2( Coordinate )
+  function SET_AIRBASE:FindNearestAirbaseFromPointVec2(Coordinate)
+    --self:F2(Coordinate)
 
-    local NearestAirbase = self:FindNearestObjectFromPointVec2( Coordinate )
+    local NearestAirbase = self:FindNearestObjectFromPointVec2(Coordinate)
     return NearestAirbase
   end
 
@@ -5721,8 +5721,8 @@ do -- SET_AIRBASE
   -- @param #SET_AIRBASE self
   -- @param Wrapper.Airbase#AIRBASE MAirbase
   -- @return #SET_AIRBASE self
-  function SET_AIRBASE:IsIncludeObject( MAirbase )
-    --self:F2( MAirbase )
+  function SET_AIRBASE:IsIncludeObject(MAirbase)
+    --self:F2(MAirbase)
 
     local MAirbaseInclude = true
 
@@ -5731,39 +5731,39 @@ do -- SET_AIRBASE
 
       if self.Filter.Coalitions then
         local MAirbaseCoalition = false
-        for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-          local AirbaseCoalitionID = _DATABASE:GetCoalitionFromAirbase( MAirbaseName )
-          --self:T(3( { "Coalition:", AirbaseCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+        for CoalitionID, CoalitionName in pairs(self.Filter.Coalitions) do
+          local AirbaseCoalitionID = _DATABASE:GetCoalitionFromAirbase(MAirbaseName)
+          --self:T(3({ "Coalition:", AirbaseCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName })
           if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == AirbaseCoalitionID then
             MAirbaseCoalition = true
           end
         end
-        --self:T(( { "Evaluated Coalition", MAirbaseCoalition } )
+        --self:T(({ "Evaluated Coalition", MAirbaseCoalition })
         MAirbaseInclude = MAirbaseInclude and MAirbaseCoalition
       end
 
       if self.Filter.Categories and MAirbaseInclude then
         local MAirbaseCategory = false
-        for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
-          local AirbaseCategoryID = _DATABASE:GetCategoryFromAirbase( MAirbaseName )
-          --self:T(3( { "Category:", AirbaseCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName } )
+        for CategoryID, CategoryName in pairs(self.Filter.Categories) do
+          local AirbaseCategoryID = _DATABASE:GetCategoryFromAirbase(MAirbaseName)
+          --self:T(3({ "Category:", AirbaseCategoryID, self.FilterMeta.Categories[CategoryName], CategoryName })
           if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName] == AirbaseCategoryID then
             MAirbaseCategory = true
           end
         end
-        --self:T(( { "Evaluated Category", MAirbaseCategory } )
+        --self:T(({ "Evaluated Category", MAirbaseCategory })
         MAirbaseInclude = MAirbaseInclude and MAirbaseCategory
       end
       
       if self.Filter.Zones and MAirbaseInclude then
         local MAirbaseZone = false
-        for ZoneName, Zone in pairs( self.Filter.Zones ) do
-          --self:T(( "Zone:", ZoneName )
+        for ZoneName, Zone in pairs(self.Filter.Zones) do
+          --self:T(("Zone:", ZoneName)
           local coord = MAirbase:GetCoordinate()
           if coord and Zone:IsCoordinateInZone(coord) then
             MAirbaseZone = true
           end
-          --self:T(( { "Evaluated Zone", MSceneryZone } )
+          --self:T(({ "Evaluated Zone", MSceneryZone })
         end
         MAirbaseInclude = MAirbaseInclude and MAirbaseZone
       end      
@@ -5775,7 +5775,7 @@ do -- SET_AIRBASE
       MAirbaseInclude = MAirbaseInclude and MClientFunc
     end
 
-    --self:T(2( MAirbaseInclude )
+    --self:T(2(MAirbaseInclude)
     return MAirbaseInclude
   end
 
@@ -5854,7 +5854,7 @@ do -- SET_CARGO
   -- DatabaseSet = SET_CARGO:New()
   function SET_CARGO:New() -- R2.1
     -- Inherits from BASE
-    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.CARGOS ) ) -- #SET_CARGO
+    local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.CARGOS)) -- #SET_CARGO
 
     return self
   end
@@ -5863,9 +5863,9 @@ do -- SET_CARGO
   -- @param Core.Set#SET_CARGO self
   -- @param Cargo.Cargo#CARGO Cargo A single cargo.
   -- @return  Core.Set#SET_CARGO self
-  function SET_CARGO:AddCargo( Cargo ) -- R2.4
+  function SET_CARGO:AddCargo(Cargo) -- R2.4
 
-    self:Add( Cargo:GetName(), Cargo )
+    self:Add(Cargo:GetName(), Cargo)
 
     return self
   end
@@ -5874,12 +5874,12 @@ do -- SET_CARGO
   -- @param Core.Set#SET_CARGO self
   -- @param #string AddCargoNames A single name or an array of CARGO names.
   -- @return  Core.Set#SET_CARGO self
-  function SET_CARGO:AddCargosByName( AddCargoNames ) -- R2.1
+  function SET_CARGO:AddCargosByName(AddCargoNames) -- R2.1
 
-    local AddCargoNamesArray = (type( AddCargoNames ) == "table") and AddCargoNames or { AddCargoNames }
+    local AddCargoNamesArray = (type(AddCargoNames) == "table") and AddCargoNames or { AddCargoNames }
 
-    for AddCargoID, AddCargoName in pairs( AddCargoNamesArray ) do
-      self:Add( AddCargoName, CARGO:FindByName( AddCargoName ) )
+    for AddCargoID, AddCargoName in pairs(AddCargoNamesArray) do
+      self:Add(AddCargoName, CARGO:FindByName(AddCargoName))
     end
 
     return self
@@ -5889,12 +5889,12 @@ do -- SET_CARGO
   -- @param Core.Set#SET_CARGO self
   -- @param Cargo.Cargo#CARGO RemoveCargoNames A single name or an array of CARGO names.
   -- @return Core.Set#SET_CARGO self
-  function SET_CARGO:RemoveCargosByName( RemoveCargoNames ) -- R2.1
+  function SET_CARGO:RemoveCargosByName(RemoveCargoNames) -- R2.1
 
-    local RemoveCargoNamesArray = (type( RemoveCargoNames ) == "table") and RemoveCargoNames or { RemoveCargoNames }
+    local RemoveCargoNamesArray = (type(RemoveCargoNames) == "table") and RemoveCargoNames or { RemoveCargoNames }
 
-    for RemoveCargoID, RemoveCargoName in pairs( RemoveCargoNamesArray ) do
-      self:Remove( RemoveCargoName.CargoName )
+    for RemoveCargoID, RemoveCargoName in pairs(RemoveCargoNamesArray) do
+      self:Remove(RemoveCargoName.CargoName)
     end
 
     return self
@@ -5904,7 +5904,7 @@ do -- SET_CARGO
   -- @param #SET_CARGO self
   -- @param #string CargoName
   -- @return Cargo.Cargo#CARGO The found Cargo.
-  function SET_CARGO:FindCargo( CargoName ) -- R2.1
+  function SET_CARGO:FindCargo(CargoName) -- R2.1
 
     local CargoFound = self.Set[CargoName]
     return CargoFound
@@ -5921,14 +5921,14 @@ do -- SET_CARGO
   -- @param #SET_CARGO self
   -- @param #string Types Can take those type strings known within DCS world.
   -- @return #SET_CARGO self
-  function SET_CARGO:FilterTypes( Types ) -- R2.1
+  function SET_CARGO:FilterTypes(Types) -- R2.1
     if not self.Filter.Types then
       self.Filter.Types = {}
     end
-    if type( Types ) ~= "table" then
+    if type(Types) ~= "table" then
       Types = { Types }
     end
-    for TypeID, Type in pairs( Types ) do
+    for TypeID, Type in pairs(Types) do
       self.Filter.Types[Type] = Type
     end
     return self
@@ -5939,14 +5939,14 @@ do -- SET_CARGO
   -- @param #SET_CARGO self
   -- @param #string Countries Can take those country strings known within DCS world.
   -- @return #SET_CARGO self
-  function SET_CARGO:FilterCountries( Countries ) -- R2.1
+  function SET_CARGO:FilterCountries(Countries) -- R2.1
     if not self.Filter.Countries then
       self.Filter.Countries = {}
     end
-    if type( Countries ) ~= "table" then
+    if type(Countries) ~= "table" then
       Countries = { Countries }
     end
-    for CountryID, Country in pairs( Countries ) do
+    for CountryID, Country in pairs(Countries) do
       self.Filter.Countries[Country] = Country
     end
     return self
@@ -5957,14 +5957,14 @@ do -- SET_CARGO
   -- @param #SET_CARGO self
   -- @param #string Prefixes The string pattern(s) that need to be in the cargo name. Can also be passed as a `#table` of strings.
   -- @return #SET_CARGO self
-  function SET_CARGO:FilterPrefixes( Prefixes ) -- R2.1
+  function SET_CARGO:FilterPrefixes(Prefixes) -- R2.1
     if not self.Filter.CargoPrefixes then
       self.Filter.CargoPrefixes = {}
     end
-    if type( Prefixes ) ~= "table" then
+    if type(Prefixes) ~= "table" then
       Prefixes = { Prefixes }
     end
-    for PrefixID, Prefix in pairs( Prefixes ) do
+    for PrefixID, Prefix in pairs(Prefixes) do
       self.Filter.CargoPrefixes[Prefix] = Prefix
     end
     return self
@@ -5977,8 +5977,8 @@ do -- SET_CARGO
 
     if _DATABASE then
       self:_FilterStart()
-      self:HandleEvent( EVENTS.NewCargo )
-      self:HandleEvent( EVENTS.DeleteCargo )
+      self:HandleEvent(EVENTS.NewCargo)
+      self:HandleEvent(EVENTS.DeleteCargo)
     end
 
     return self
@@ -5989,8 +5989,8 @@ do -- SET_CARGO
   -- @return #SET_CARGO self
   function SET_CARGO:FilterStop()
 
-    self:UnHandleEvent( EVENTS.NewCargo )
-    self:UnHandleEvent( EVENTS.DeleteCargo )
+    self:UnHandleEvent(EVENTS.NewCargo)
+    self:UnHandleEvent(EVENTS.DeleteCargo)
 
     return self
   end
@@ -6001,8 +6001,8 @@ do -- SET_CARGO
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the CARGO
   -- @return #table The CARGO
-  function SET_CARGO:AddInDatabase( Event ) -- R2.1
-    --self:F3( { Event } )
+  function SET_CARGO:AddInDatabase(Event) -- R2.1
+    --self:F3({ Event })
 
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
@@ -6013,8 +6013,8 @@ do -- SET_CARGO
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the CARGO
   -- @return #table The CARGO
-  function SET_CARGO:FindInDatabase( Event ) -- R2.1
-    --self:F3( { Event } )
+  function SET_CARGO:FindInDatabase(Event) -- R2.1
+    --self:F3({ Event })
 
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
@@ -6023,10 +6023,10 @@ do -- SET_CARGO
   -- @param #SET_CARGO self
   -- @param #function IteratorFunction The function that will be called when there is an alive CARGO in the SET_CARGO. The function needs to accept a CARGO parameter.
   -- @return #SET_CARGO self
-  function SET_CARGO:ForEachCargo( IteratorFunction, ... ) -- R2.1
-    --self:F2( arg )
+  function SET_CARGO:ForEachCargo(IteratorFunction, ...) -- R2.1
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet() )
+    self:ForEach(IteratorFunction, arg, self:GetSet())
 
     return self
   end
@@ -6035,21 +6035,21 @@ do -- SET_CARGO
   -- @param #SET_CARGO self
   -- @param Core.Point#COORDINATE Coordinate A @{Core.Point#COORDINATE} object from where to evaluate the closest @{Cargo.Cargo#CARGO}.
   -- @return Cargo.Cargo#CARGO The closest @{Cargo.Cargo#CARGO}.
-  function SET_CARGO:FindNearestCargoFromPointVec2( Coordinate ) -- R2.1
-    --self:F2( Coordinate )
+  function SET_CARGO:FindNearestCargoFromPointVec2(Coordinate) -- R2.1
+    --self:F2(Coordinate)
 
-    local NearestCargo = self:FindNearestObjectFromPointVec2( Coordinate )
+    local NearestCargo = self:FindNearestObjectFromPointVec2(Coordinate)
     return NearestCargo
   end
   
   ---
   -- @param #SET_CARGO self
-  function SET_CARGO:FirstCargoWithState( State )
+  function SET_CARGO:FirstCargoWithState(State)
 
     local FirstCargo = nil
 
-    for CargoName, Cargo in pairs( self.Set ) do
-      if Cargo:Is( State ) then
+    for CargoName, Cargo in pairs(self.Set) do
+      if Cargo:Is(State) then
         FirstCargo = Cargo
         break
       end
@@ -6060,12 +6060,12 @@ do -- SET_CARGO
 
   ---
   -- @param #SET_CARGO self
-  function SET_CARGO:FirstCargoWithStateAndNotDeployed( State )
+  function SET_CARGO:FirstCargoWithStateAndNotDeployed(State)
 
     local FirstCargo = nil
 
-    for CargoName, Cargo in pairs( self.Set ) do
-      if Cargo:Is( State ) and not Cargo:IsDeployed() then
+    for CargoName, Cargo in pairs(self.Set) do
+      if Cargo:Is(State) and not Cargo:IsDeployed() then
         FirstCargo = Cargo
         break
       end
@@ -6078,7 +6078,7 @@ do -- SET_CARGO
   -- @param #SET_CARGO self
   -- @return Cargo.Cargo#CARGO The first @{Cargo.Cargo#CARGO}.
   function SET_CARGO:FirstCargoUnLoaded()
-    local FirstCargo = self:FirstCargoWithState( "UnLoaded" )
+    local FirstCargo = self:FirstCargoWithState("UnLoaded")
     return FirstCargo
   end
 
@@ -6086,7 +6086,7 @@ do -- SET_CARGO
   -- @param #SET_CARGO self
   -- @return Cargo.Cargo#CARGO The first @{Cargo.Cargo#CARGO}.
   function SET_CARGO:FirstCargoUnLoadedAndNotDeployed()
-    local FirstCargo = self:FirstCargoWithStateAndNotDeployed( "UnLoaded" )
+    local FirstCargo = self:FirstCargoWithStateAndNotDeployed("UnLoaded")
     return FirstCargo
   end
 
@@ -6094,7 +6094,7 @@ do -- SET_CARGO
   -- @param #SET_CARGO self
   -- @return Cargo.Cargo#CARGO The first @{Cargo.Cargo#CARGO}.
   function SET_CARGO:FirstCargoLoaded()
-    local FirstCargo = self:FirstCargoWithState( "Loaded" )
+    local FirstCargo = self:FirstCargoWithState("Loaded")
     return FirstCargo
   end
 
@@ -6102,7 +6102,7 @@ do -- SET_CARGO
   -- @param #SET_CARGO self
   -- @return Cargo.Cargo#CARGO The first @{Cargo.Cargo#CARGO}.
   function SET_CARGO:FirstCargoDeployed()
-    local FirstCargo = self:FirstCargoWithState( "Deployed" )
+    local FirstCargo = self:FirstCargoWithState("Deployed")
     return FirstCargo
   end
 
@@ -6110,8 +6110,8 @@ do -- SET_CARGO
   -- @param #SET_CARGO self
   -- @param AI.AI_Cargo#AI_CARGO MCargo
   -- @return #SET_CARGO self
-  function SET_CARGO:IsIncludeObject( MCargo ) -- R2.1
-    --self:F2( MCargo )
+  function SET_CARGO:IsIncludeObject(MCargo) -- R2.1
+    --self:F2(MCargo)
 
     local MCargoInclude = true
 
@@ -6120,38 +6120,38 @@ do -- SET_CARGO
 
       if self.Filter.Coalitions then
         local MCargoCoalition = false
-        for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+        for CoalitionID, CoalitionName in pairs(self.Filter.Coalitions) do
           local CargoCoalitionID = MCargo:GetCoalition()
-          --self:T(3( { "Coalition:", CargoCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+          --self:T(3({ "Coalition:", CargoCoalitionID, self.FilterMeta.Coalitions[CoalitionName], CoalitionName })
           if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == CargoCoalitionID then
             MCargoCoalition = true
           end
         end
-        --self:F( { "Evaluated Coalition", MCargoCoalition } )
+        --self:F({ "Evaluated Coalition", MCargoCoalition })
         MCargoInclude = MCargoInclude and MCargoCoalition
       end
 
       if self.Filter.Types then
         local MCargoType = false
-        for TypeID, TypeName in pairs( self.Filter.Types ) do
-          --self:T(3( { "Type:", MCargo:GetType(), TypeName } )
+        for TypeID, TypeName in pairs(self.Filter.Types) do
+          --self:T(3({ "Type:", MCargo:GetType(), TypeName })
           if TypeName == MCargo:GetType() then
             MCargoType = true
           end
         end
-        --self:F( { "Evaluated Type", MCargoType } )
+        --self:F({ "Evaluated Type", MCargoType })
         MCargoInclude = MCargoInclude and MCargoType
       end
 
       if self.Filter.CargoPrefixes then
         local MCargoPrefix = false
-        for CargoPrefixId, CargoPrefix in pairs( self.Filter.CargoPrefixes ) do
-          --self:T(3( { "Prefix:", string.find( MCargo.Name, CargoPrefix, 1 ), CargoPrefix } )
-          if string.find( MCargo.Name, CargoPrefix, 1 ) then
+        for CargoPrefixId, CargoPrefix in pairs(self.Filter.CargoPrefixes) do
+          --self:T(3({ "Prefix:", string.find(MCargo.Name, CargoPrefix, 1), CargoPrefix })
+          if string.find(MCargo.Name, CargoPrefix, 1) then
             MCargoPrefix = true
           end
         end
-        --self:F( { "Evaluated Prefix", MCargoPrefix } )
+        --self:F({ "Evaluated Prefix", MCargoPrefix })
         MCargoInclude = MCargoInclude and MCargoPrefix
       end
     end
@@ -6161,20 +6161,20 @@ do -- SET_CARGO
       MCargoInclude = MCargoInclude and MClientFunc
     end
 
-    --self:T(2( MCargoInclude )
+    --self:T(2(MCargoInclude)
     return MCargoInclude
   end
 
   --- Handles the OnEventNewCargo event for the Set.
   -- @param #SET_CARGO self
   -- @param Core.Event#EVENTDATA EventData
-  function SET_CARGO:OnEventNewCargo( EventData ) -- R2.1
+  function SET_CARGO:OnEventNewCargo(EventData) -- R2.1
 
-    --self:F( { "New Cargo", EventData } )
+    --self:F({ "New Cargo", EventData })
 
     if EventData.Cargo then
-      if EventData.Cargo and self:IsIncludeObject( EventData.Cargo ) then
-        self:Add( EventData.Cargo.Name, EventData.Cargo )
+      if EventData.Cargo and self:IsIncludeObject(EventData.Cargo) then
+        self:Add(EventData.Cargo.Name, EventData.Cargo)
       end
     end
   end
@@ -6182,11 +6182,11 @@ do -- SET_CARGO
   --- Handles the OnDead or OnCrash event for alive units set.
   -- @param #SET_CARGO self
   -- @param Core.Event#EVENTDATA EventData
-  function SET_CARGO:OnEventDeleteCargo( EventData ) -- R2.1
-    --self:F3( { EventData } )
+  function SET_CARGO:OnEventDeleteCargo(EventData) -- R2.1
+    --self:F3({ EventData })
 
     if EventData.Cargo then
-      local Cargo = _DATABASE:FindCargo( EventData.Cargo.Name )
+      local Cargo = _DATABASE:FindCargo(EventData.Cargo.Name)
       if Cargo and Cargo.Name then
 
         -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
@@ -6195,10 +6195,10 @@ do -- SET_CARGO
         -- To prevent this from happening, the Cargo object has a flag NoDestroy.
         -- When true, the SET_CARGO won't Remove the Cargo object from the set.
         -- This flag is switched off after the event handlers have been called in the EVENT class.
-        --self:F( { CargoNoDestroy = Cargo.NoDestroy } )
+        --self:F({ CargoNoDestroy = Cargo.NoDestroy })
         if Cargo.NoDestroy then
         else
-          self:Remove( Cargo.Name )
+          self:Remove(Cargo.Name)
         end
       end
     end
@@ -6266,7 +6266,7 @@ do -- SET_ZONE
   -- DatabaseSet = SET_ZONE:New()
   function SET_ZONE:New()
     -- Inherits from BASE
-    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.ZONES ) )
+    local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.ZONES))
 
     return self
   end
@@ -6275,12 +6275,12 @@ do -- SET_ZONE
   -- @param Core.Set#SET_ZONE self
   -- @param #string AddZoneNames A single name or an array of ZONE_BASE names.
   -- @return self
-  function SET_ZONE:AddZonesByName( AddZoneNames )
+  function SET_ZONE:AddZonesByName(AddZoneNames)
 
-    local AddZoneNamesArray = (type( AddZoneNames ) == "table") and AddZoneNames or { AddZoneNames }
+    local AddZoneNamesArray = (type(AddZoneNames) == "table") and AddZoneNames or { AddZoneNames }
 
-    for AddAirbaseID, AddZoneName in pairs( AddZoneNamesArray ) do
-      self:Add( AddZoneName, ZONE:FindByName( AddZoneName ) )
+    for AddAirbaseID, AddZoneName in pairs(AddZoneNamesArray) do
+      self:Add(AddZoneName, ZONE:FindByName(AddZoneName))
     end
 
     return self
@@ -6290,9 +6290,9 @@ do -- SET_ZONE
   -- @param Core.Set#SET_ZONE self
   -- @param Core.Zone#ZONE_BASE Zone A ZONE_BASE object.
   -- @return self
-  function SET_ZONE:AddZone( Zone )
+  function SET_ZONE:AddZone(Zone)
 
-    self:Add( Zone:GetName(), Zone )
+    self:Add(Zone:GetName(), Zone)
 
     return self
   end
@@ -6301,12 +6301,12 @@ do -- SET_ZONE
   -- @param Core.Set#SET_ZONE self
   -- @param Core.Zone#ZONE_BASE RemoveZoneNames A single name or an array of ZONE_BASE names.
   -- @return self
-  function SET_ZONE:RemoveZonesByName( RemoveZoneNames )
+  function SET_ZONE:RemoveZonesByName(RemoveZoneNames)
 
-    local RemoveZoneNamesArray = (type( RemoveZoneNames ) == "table") and RemoveZoneNames or { RemoveZoneNames }
+    local RemoveZoneNamesArray = (type(RemoveZoneNames) == "table") and RemoveZoneNames or { RemoveZoneNames }
 
-    for RemoveZoneID, RemoveZoneName in pairs( RemoveZoneNamesArray ) do
-      self:Remove( RemoveZoneName )
+    for RemoveZoneID, RemoveZoneName in pairs(RemoveZoneNamesArray) do
+      self:Remove(RemoveZoneName)
     end
 
     return self
@@ -6316,7 +6316,7 @@ do -- SET_ZONE
   -- @param #SET_ZONE self
   -- @param #string ZoneName
   -- @return Core.Zone#ZONE_BASE The found Zone.
-  function SET_ZONE:FindZone( ZoneName )
+  function SET_ZONE:FindZone(ZoneName)
 
     local ZoneFound = self.Set[ZoneName]
     return ZoneFound
@@ -6327,7 +6327,7 @@ do -- SET_ZONE
   -- @param #number margin Number of tries to find a zone
   -- @return Core.Zone#ZONE_BASE The random Zone.
   -- @return #nil if no zone in the collection.
-  function SET_ZONE:GetRandomZone( margin )
+  function SET_ZONE:GetRandomZone(margin)
 
     local margin = margin or 100
     if self:Count() ~= 0 then
@@ -6340,7 +6340,7 @@ do -- SET_ZONE
       -- If the zone is not selected, then nil is returned by :GetZoneMaybe() and the loop continues!
       local counter = 0
       while (not ZoneFound) or (counter < margin) do
-        local ZoneRandom = math.random( 1, #Index )
+        local ZoneRandom = math.random(1, #Index)
         ZoneFound = self.Set[Index[ZoneRandom]]:GetZoneMaybe()
         counter = counter + 1
       end
@@ -6354,9 +6354,9 @@ do -- SET_ZONE
   --- Set a zone probability.
   -- @param #SET_ZONE self
   -- @param #string ZoneName The name of the zone.
-  function SET_ZONE:SetZoneProbability( ZoneName, ZoneProbability )
-    local Zone = self:FindZone( ZoneName )
-    Zone:SetZoneProbability( ZoneProbability )
+  function SET_ZONE:SetZoneProbability(ZoneName, ZoneProbability)
+    local Zone = self:FindZone(ZoneName)
+    Zone:SetZoneProbability(ZoneProbability)
   end
 
   --- Builds a set of ZONEs that contain the given string in their name.
@@ -6364,14 +6364,14 @@ do -- SET_ZONE
   -- @param #SET_ZONE self
   -- @param #string Prefixes The string pattern(s) that need to be contained in the zone name. Can also be passed as a `#table` of strings.
   -- @return #SET_ZONE self
-  function SET_ZONE:FilterPrefixes( Prefixes )
+  function SET_ZONE:FilterPrefixes(Prefixes)
     if not self.Filter.Prefixes then
       self.Filter.Prefixes = {}
     end
-    if type( Prefixes ) ~= "table" then
+    if type(Prefixes) ~= "table" then
       Prefixes = { Prefixes }
     end
-    for PrefixID, Prefix in pairs( Prefixes ) do
+    for PrefixID, Prefix in pairs(Prefixes) do
       self.Filter.Prefixes[Prefix] = Prefix
     end
     return self
@@ -6385,17 +6385,17 @@ do -- SET_ZONE
     if _DATABASE then
 
       -- We initialize the first set.
-      for ObjectName, Object in pairs( self.Database ) do
-        if self:IsIncludeObject( Object ) then
-          self:Add( ObjectName, Object )
+      for ObjectName, Object in pairs(self.Database) do
+        if self:IsIncludeObject(Object) then
+          self:Add(ObjectName, Object)
         else
-          self:RemoveZonesByName( ObjectName )
+          self:RemoveZonesByName(ObjectName)
         end
       end
     end
 
-    self:HandleEvent( EVENTS.NewZone )
-    self:HandleEvent( EVENTS.DeleteZone )
+    self:HandleEvent(EVENTS.NewZone)
+    self:HandleEvent(EVENTS.DeleteZone)
 
     return self
   end
@@ -6405,8 +6405,8 @@ do -- SET_ZONE
   -- @return #SET_ZONE self
   function SET_ZONE:FilterStop()
 
-    self:UnHandleEvent( EVENTS.NewZone )
-    self:UnHandleEvent( EVENTS.DeleteZone )
+    self:UnHandleEvent(EVENTS.NewZone)
+    self:UnHandleEvent(EVENTS.DeleteZone)
 
     return self
   end
@@ -6417,8 +6417,8 @@ do -- SET_ZONE
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the AIRBASE
   -- @return #table The AIRBASE
-  function SET_ZONE:AddInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_ZONE:AddInDatabase(Event)
+    --self:F3({ Event })
 
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
@@ -6429,8 +6429,8 @@ do -- SET_ZONE
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the AIRBASE
   -- @return #table The AIRBASE
-  function SET_ZONE:FindInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_ZONE:FindInDatabase(Event)
+    --self:F3({ Event })
 
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
@@ -6439,10 +6439,10 @@ do -- SET_ZONE
   -- @param #SET_ZONE self
   -- @param #function IteratorFunction The function that will be called when there is an alive ZONE in the SET_ZONE. The function needs to accept a AIRBASE parameter.
   -- @return #SET_ZONE self
-  function SET_ZONE:ForEachZone( IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_ZONE:ForEachZone(IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet() )
+    self:ForEach(IteratorFunction, arg, self:GetSet())
 
     return self
   end
@@ -6494,8 +6494,8 @@ do -- SET_ZONE
   -- @param #SET_ZONE self
   -- @param Core.Zone#ZONE_BASE MZone
   -- @return #SET_ZONE self
-  function SET_ZONE:IsIncludeObject( MZone )
-    --self:F2( MZone )
+  function SET_ZONE:IsIncludeObject(MZone)
+    --self:F2(MZone)
 
     local MZoneInclude = true
 
@@ -6504,13 +6504,13 @@ do -- SET_ZONE
 
       if self.Filter.Prefixes then
         local MZonePrefix = false
-        for ZonePrefixId, ZonePrefix in pairs( self.Filter.Prefixes ) do
-          --self:T(2( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
-          if string.find( MZoneName, ZonePrefix, 1 ) then
+        for ZonePrefixId, ZonePrefix in pairs(self.Filter.Prefixes) do
+          --self:T(2({ "Prefix:", string.find(MZoneName, ZonePrefix, 1), ZonePrefix })
+          if string.find(MZoneName, ZonePrefix, 1) then
             MZonePrefix = true
           end
         end
-        --self:T(( { "Evaluated Prefix", MZonePrefix } )
+        --self:T(({ "Evaluated Prefix", MZonePrefix })
         MZoneInclude = MZoneInclude and MZonePrefix
       end
     end
@@ -6520,20 +6520,20 @@ do -- SET_ZONE
       MZoneInclude = MZoneInclude and MClientFunc
     end
 
-    --self:T(2( MZoneInclude )
+    --self:T(2(MZoneInclude)
     return MZoneInclude
   end
 
   --- Handles the OnEventNewZone event for the Set.
   -- @param #SET_ZONE self
   -- @param Core.Event#EVENTDATA EventData
-  function SET_ZONE:OnEventNewZone( EventData ) -- R2.1
+  function SET_ZONE:OnEventNewZone(EventData) -- R2.1
 
-    --self:F( { "New Zone", EventData } )
+    --self:F({ "New Zone", EventData })
 
     if EventData.Zone then
-      if EventData.Zone and self:IsIncludeObject( EventData.Zone ) then
-        self:Add( EventData.Zone.ZoneName, EventData.Zone )
+      if EventData.Zone and self:IsIncludeObject(EventData.Zone) then
+        self:Add(EventData.Zone.ZoneName, EventData.Zone)
       end
     end
   end
@@ -6541,11 +6541,11 @@ do -- SET_ZONE
   --- Handles the OnDead or OnCrash event for alive units set.
   -- @param #SET_ZONE self
   -- @param Core.Event#EVENTDATA EventData
-  function SET_ZONE:OnEventDeleteZone( EventData ) -- R2.1
-    --self:F3( { EventData } )
+  function SET_ZONE:OnEventDeleteZone(EventData) -- R2.1
+    --self:F3({ EventData })
 
     if EventData.Zone then
-      local Zone = _DATABASE:FindZone( EventData.Zone.ZoneName )
+      local Zone = _DATABASE:FindZone(EventData.Zone.ZoneName)
       if Zone and Zone.ZoneName then
 
         -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
@@ -6554,10 +6554,10 @@ do -- SET_ZONE
         -- To prevent this from happening, the Zone object has a flag NoDestroy.
         -- When true, the SET_ZONE won't Remove the Zone object from the set.
         -- This flag is switched off after the event handlers have been called in the EVENT class.
-        --self:F( { ZoneNoDestroy = Zone.NoDestroy } )
+        --self:F({ ZoneNoDestroy = Zone.NoDestroy })
         if Zone.NoDestroy then
         else
-          self:Remove( Zone.ZoneName )
+          self:Remove(Zone.ZoneName)
         end
       end
     end
@@ -6569,11 +6569,11 @@ do -- SET_ZONE
   -- @param #SET_ZONE self
   -- @param Core.Point#COORDINATE Coordinate The coordinate to be searched.
   -- @return Core.Zone#ZONE_BASE The zone (if any) that validates the coordinate location.
-  function SET_ZONE:IsCoordinateInZone( Coordinate )
+  function SET_ZONE:IsCoordinateInZone(Coordinate)
 
-    for _, Zone in pairs( self:GetSet() ) do
+    for _, Zone in pairs(self:GetSet()) do
       local Zone = Zone -- Core.Zone#ZONE_BASE
-      if Zone:IsCoordinateInZone( Coordinate ) then
+      if Zone:IsCoordinateInZone(Coordinate) then
         return Zone
       end
     end
@@ -6586,11 +6586,11 @@ do -- SET_ZONE
   -- @param Core.Point#COORDINATE Coordinate The reference coordinate from which the closest zone is determined.
   -- @return Core.Zone#ZONE_BASE The closest zone (if any).
   -- @return #number Distance to ref coordinate in meters.
-  function SET_ZONE:GetClosestZone( Coordinate )
+  function SET_ZONE:GetClosestZone(Coordinate)
 
     local dmin=math.huge
     local zmin=nil
-    for _, Zone in pairs( self:GetSet() ) do
+    for _, Zone in pairs(self:GetSet()) do
       local Zone = Zone -- Core.Zone#ZONE_BASE
       local d=Zone:Get2DDistance(Coordinate)
       if d<dmin then
@@ -6628,7 +6628,7 @@ do -- SET_ZONE
   --            function(zone)
   --              zone:DrawZone(-1, {0,1,0}, Alpha, FillColor, FillAlpha, 4, ReadOnly)
   --            end 
-  --          )
+  --         )
   --          
   --          -- This FSM function will be called for entering objects
   --          function zoneset:OnAfterEnteredZone(From,Event,To,Controllable,Zone)
@@ -6847,7 +6847,7 @@ do -- SET_ZONE_GOAL
   -- DatabaseSet = SET_ZONE_GOAL:New()
   function SET_ZONE_GOAL:New()
     -- Inherits from BASE
-    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.ZONES_GOAL ) )
+    local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.ZONES_GOAL))
 
     return self
   end
@@ -6856,9 +6856,9 @@ do -- SET_ZONE_GOAL
   -- @param Core.Set#SET_ZONE_GOAL self
   -- @param Core.Zone#ZONE_BASE Zone A ZONE_BASE object.
   -- @return self
-  function SET_ZONE_GOAL:AddZone( Zone )
+  function SET_ZONE_GOAL:AddZone(Zone)
 
-    self:Add( Zone:GetName(), Zone )
+    self:Add(Zone:GetName(), Zone)
 
     return self
   end
@@ -6867,12 +6867,12 @@ do -- SET_ZONE_GOAL
   -- @param Core.Set#SET_ZONE_GOAL self
   -- @param Core.Zone#ZONE_BASE RemoveZoneNames A single name or an array of ZONE_BASE names.
   -- @return self
-  function SET_ZONE_GOAL:RemoveZonesByName( RemoveZoneNames )
+  function SET_ZONE_GOAL:RemoveZonesByName(RemoveZoneNames)
 
-    local RemoveZoneNamesArray = (type( RemoveZoneNames ) == "table") and RemoveZoneNames or { RemoveZoneNames }
+    local RemoveZoneNamesArray = (type(RemoveZoneNames) == "table") and RemoveZoneNames or { RemoveZoneNames }
 
-    for RemoveZoneID, RemoveZoneName in pairs( RemoveZoneNamesArray ) do
-      self:Remove( RemoveZoneName )
+    for RemoveZoneID, RemoveZoneName in pairs(RemoveZoneNamesArray) do
+      self:Remove(RemoveZoneName)
     end
 
     return self
@@ -6882,7 +6882,7 @@ do -- SET_ZONE_GOAL
   -- @param #SET_ZONE_GOAL self
   -- @param #string ZoneName
   -- @return Core.Zone#ZONE_BASE The found Zone.
-  function SET_ZONE_GOAL:FindZone( ZoneName )
+  function SET_ZONE_GOAL:FindZone(ZoneName)
 
     local ZoneFound = self.Set[ZoneName]
     return ZoneFound
@@ -6903,7 +6903,7 @@ do -- SET_ZONE_GOAL
       -- The :GetZoneMaybe() call will evaluate the probability for the zone to be selected.
       -- If the zone is not selected, then nil is returned by :GetZoneMaybe() and the loop continues!
       while not ZoneFound do
-        local ZoneRandom = math.random( 1, #Index )
+        local ZoneRandom = math.random(1, #Index)
         ZoneFound = self.Set[Index[ZoneRandom]]:GetZoneMaybe()
       end
 
@@ -6916,9 +6916,9 @@ do -- SET_ZONE_GOAL
   --- Set a zone probability.
   -- @param #SET_ZONE_GOAL self
   -- @param #string ZoneName The name of the zone.
-  function SET_ZONE_GOAL:SetZoneProbability( ZoneName, ZoneProbability )
-    local Zone = self:FindZone( ZoneName )
-    Zone:SetZoneProbability( ZoneProbability )
+  function SET_ZONE_GOAL:SetZoneProbability(ZoneName, ZoneProbability)
+    local Zone = self:FindZone(ZoneName)
+    Zone:SetZoneProbability(ZoneProbability)
   end
 
   --- Builds a set of ZONE_GOALs that contain the given string in their name.
@@ -6926,14 +6926,14 @@ do -- SET_ZONE_GOAL
   -- @param #SET_ZONE_GOAL self
   -- @param #string Prefixes The string pattern(s) that needs to be contained in the zone name. Can also be passed as a `#table` of strings.
   -- @return #SET_ZONE_GOAL self
-  function SET_ZONE_GOAL:FilterPrefixes( Prefixes )
+  function SET_ZONE_GOAL:FilterPrefixes(Prefixes)
     if not self.Filter.Prefixes then
       self.Filter.Prefixes = {}
     end
-    if type( Prefixes ) ~= "table" then
+    if type(Prefixes) ~= "table" then
       Prefixes = { Prefixes }
     end
-    for PrefixID, Prefix in pairs( Prefixes ) do
+    for PrefixID, Prefix in pairs(Prefixes) do
       self.Filter.Prefixes[Prefix] = Prefix
     end
     return self
@@ -6947,17 +6947,17 @@ do -- SET_ZONE_GOAL
     if _DATABASE then
 
       -- We initialize the first set.
-      for ObjectName, Object in pairs( self.Database ) do
-        if self:IsIncludeObject( Object ) then
-          self:Add( ObjectName, Object )
+      for ObjectName, Object in pairs(self.Database) do
+        if self:IsIncludeObject(Object) then
+          self:Add(ObjectName, Object)
         else
-          self:RemoveZonesByName( ObjectName )
+          self:RemoveZonesByName(ObjectName)
         end
       end
     end
 
-    self:HandleEvent( EVENTS.NewZoneGoal )
-    self:HandleEvent( EVENTS.DeleteZoneGoal )
+    self:HandleEvent(EVENTS.NewZoneGoal)
+    self:HandleEvent(EVENTS.DeleteZoneGoal)
 
     return self
   end
@@ -6967,8 +6967,8 @@ do -- SET_ZONE_GOAL
   -- @return #SET_ZONE_GOAL self
   function SET_ZONE_GOAL:FilterStop()
 
-    self:UnHandleEvent( EVENTS.NewZoneGoal )
-    self:UnHandleEvent( EVENTS.DeleteZoneGoal )
+    self:UnHandleEvent(EVENTS.NewZoneGoal)
+    self:UnHandleEvent(EVENTS.DeleteZoneGoal)
 
     return self
   end
@@ -6979,8 +6979,8 @@ do -- SET_ZONE_GOAL
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the AIRBASE
   -- @return #table The AIRBASE
-  function SET_ZONE_GOAL:AddInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_ZONE_GOAL:AddInDatabase(Event)
+    --self:F3({ Event })
 
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
@@ -6991,8 +6991,8 @@ do -- SET_ZONE_GOAL
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the AIRBASE
   -- @return #table The AIRBASE
-  function SET_ZONE_GOAL:FindInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_ZONE_GOAL:FindInDatabase(Event)
+    --self:F3({ Event })
 
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
@@ -7001,10 +7001,10 @@ do -- SET_ZONE_GOAL
   -- @param #SET_ZONE_GOAL self
   -- @param #function IteratorFunction The function that will be called when there is an alive ZONE in the SET_ZONE_GOAL. The function needs to accept a AIRBASE parameter.
   -- @return #SET_ZONE_GOAL self
-  function SET_ZONE_GOAL:ForEachZone( IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_ZONE_GOAL:ForEachZone(IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet() )
+    self:ForEach(IteratorFunction, arg, self:GetSet())
 
     return self
   end
@@ -7013,8 +7013,8 @@ do -- SET_ZONE_GOAL
   -- @param #SET_ZONE_GOAL self
   -- @param Core.Zone#ZONE_BASE MZone
   -- @return #SET_ZONE_GOAL self
-  function SET_ZONE_GOAL:IsIncludeObject( MZone )
-    --self:F2( MZone )
+  function SET_ZONE_GOAL:IsIncludeObject(MZone)
+    --self:F2(MZone)
 
     local MZoneInclude = true
 
@@ -7023,13 +7023,13 @@ do -- SET_ZONE_GOAL
 
       if self.Filter.Prefixes then
         local MZonePrefix = false
-        for ZonePrefixId, ZonePrefix in pairs( self.Filter.Prefixes ) do
-          --self:T(3( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
-          if string.find( MZoneName, ZonePrefix, 1 ) then
+        for ZonePrefixId, ZonePrefix in pairs(self.Filter.Prefixes) do
+          --self:T(3({ "Prefix:", string.find(MZoneName, ZonePrefix, 1), ZonePrefix })
+          if string.find(MZoneName, ZonePrefix, 1) then
             MZonePrefix = true
           end
         end
-        --self:T(( { "Evaluated Prefix", MZonePrefix } )
+        --self:T(({ "Evaluated Prefix", MZonePrefix })
         MZoneInclude = MZoneInclude and MZonePrefix
       end
     end
@@ -7039,23 +7039,23 @@ do -- SET_ZONE_GOAL
       MZoneInclude = MZoneInclude and MClientFunc
     end
 
-    --self:T(2( MZoneInclude )
+    --self:T(2(MZoneInclude)
     return MZoneInclude
   end
 
   --- Handles the OnEventNewZone event for the Set.
   -- @param #SET_ZONE_GOAL self
   -- @param Core.Event#EVENTDATA EventData
-  function SET_ZONE_GOAL:OnEventNewZoneGoal( EventData )
+  function SET_ZONE_GOAL:OnEventNewZoneGoal(EventData)
 
     -- Debug info.
-    --self:T(( { "New Zone Capture Coalition", EventData } )
-    --self:T(( { "Zone Capture Coalition", EventData.ZoneGoal } )
+    --self:T(({ "New Zone Capture Coalition", EventData })
+    --self:T(({ "Zone Capture Coalition", EventData.ZoneGoal })
 
     if EventData.ZoneGoal then
-      if EventData.ZoneGoal and self:IsIncludeObject( EventData.ZoneGoal ) then
-        --self:T(( { "Adding Zone Capture Coalition", EventData.ZoneGoal.ZoneName, EventData.ZoneGoal } )
-        self:Add( EventData.ZoneGoal.ZoneName, EventData.ZoneGoal )
+      if EventData.ZoneGoal and self:IsIncludeObject(EventData.ZoneGoal) then
+        --self:T(({ "Adding Zone Capture Coalition", EventData.ZoneGoal.ZoneName, EventData.ZoneGoal })
+        self:Add(EventData.ZoneGoal.ZoneName, EventData.ZoneGoal)
       end
     end
   end
@@ -7063,11 +7063,11 @@ do -- SET_ZONE_GOAL
   --- Handles the OnDead or OnCrash event for alive units set.
   -- @param #SET_ZONE_GOAL self
   -- @param Core.Event#EVENTDATA EventData
-  function SET_ZONE_GOAL:OnEventDeleteZoneGoal( EventData ) -- R2.1
-    --self:F3( { EventData } )
+  function SET_ZONE_GOAL:OnEventDeleteZoneGoal(EventData) -- R2.1
+    --self:F3({ EventData })
 
     if EventData.ZoneGoal then
-      local Zone = _DATABASE:FindZone( EventData.ZoneGoal.ZoneName )
+      local Zone = _DATABASE:FindZone(EventData.ZoneGoal.ZoneName)
       if Zone and Zone.ZoneName then
 
         -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
@@ -7076,10 +7076,10 @@ do -- SET_ZONE_GOAL
         -- To prevent this from happening, the Zone object has a flag NoDestroy.
         -- When true, the SET_ZONE_GOAL won't Remove the Zone object from the set.
         -- This flag is switched off after the event handlers have been called in the EVENT class.
-        --self:F( { ZoneNoDestroy = Zone.NoDestroy } )
+        --self:F({ ZoneNoDestroy = Zone.NoDestroy })
         if Zone.NoDestroy then
         else
-          self:Remove( Zone.ZoneName )
+          self:Remove(Zone.ZoneName)
         end
       end
     end
@@ -7092,11 +7092,11 @@ do -- SET_ZONE_GOAL
   -- @param Core.Point#COORDINATE Coordinate The coordinate to be searched.
   -- @return Core.Zone#ZONE_BASE The zone that validates the coordinate location.
   -- @return #nil No zone has been found.
-  function SET_ZONE_GOAL:IsCoordinateInZone( Coordinate )
+  function SET_ZONE_GOAL:IsCoordinateInZone(Coordinate)
 
-    for _, Zone in pairs( self:GetSet() ) do
+    for _, Zone in pairs(self:GetSet()) do
       local Zone = Zone -- Core.Zone#ZONE_BASE
-      if Zone:IsCoordinateInZone( Coordinate ) then
+      if Zone:IsCoordinateInZone(Coordinate) then
         return Zone
       end
     end
@@ -7169,7 +7169,7 @@ do -- SET_OPSZONE
   function SET_OPSZONE:New()
   
     -- Inherits from BASE
-    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.OPSZONES ) )
+    local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.OPSZONES))
 
     return self
   end
@@ -7178,9 +7178,9 @@ do -- SET_OPSZONE
   -- @param Core.Set#SET_OPSZONE self
   -- @param Ops.OpsZone#OPSZONE Zone The OPSZONE object.
   -- @return #SET_OPSZONE self
-  function SET_OPSZONE:AddZone( Zone )
+  function SET_OPSZONE:AddZone(Zone)
 
-    self:Add( Zone:GetName(), Zone )
+    self:Add(Zone:GetName(), Zone)
 
     return self
   end 
@@ -7189,14 +7189,14 @@ do -- SET_OPSZONE
   -- @param Core.Set#SET_OPSZONE self
   -- @param #table RemoveZoneNames A single name or an array of OPSZONE names.
   -- @return #SET_OPSZONE  self
-  function SET_OPSZONE:RemoveZonesByName( RemoveZoneNames )
+  function SET_OPSZONE:RemoveZonesByName(RemoveZoneNames)
 
-    local RemoveZoneNamesArray = (type( RemoveZoneNames ) == "table") and RemoveZoneNames or { RemoveZoneNames }
+    local RemoveZoneNamesArray = (type(RemoveZoneNames) == "table") and RemoveZoneNames or { RemoveZoneNames }
     
     --UTILS.EnsureTable(Object,ReturnNil)
 
-    for RemoveZoneID, RemoveZoneName in pairs( RemoveZoneNamesArray ) do
-      self:Remove( RemoveZoneName )
+    for RemoveZoneID, RemoveZoneName in pairs(RemoveZoneNamesArray) do
+      self:Remove(RemoveZoneName)
     end
 
     return self
@@ -7206,7 +7206,7 @@ do -- SET_OPSZONE
   -- @param #SET_OPSZONE self
   -- @param #string ZoneName
   -- @return Ops.OpsZone#OPSZONE The found Zone.
-  function SET_OPSZONE:FindZone( ZoneName )
+  function SET_OPSZONE:FindZone(ZoneName)
 
     local ZoneFound = self.Set[ZoneName]
     
@@ -7227,7 +7227,7 @@ do -- SET_OPSZONE
       -- The :GetZoneMaybe() call will evaluate the probability for the zone to be selected.
       -- If the zone is not selected, then nil is returned by :GetZoneMaybe() and the loop continues!
       while not ZoneFound do
-        local ZoneRandom = math.random( 1, #Index )
+        local ZoneRandom = math.random(1, #Index)
         ZoneFound = self.Set[Index[ZoneRandom]]:GetZoneMaybe()
       end
 
@@ -7241,9 +7241,9 @@ do -- SET_OPSZONE
   -- @param #SET_OPSZONE self
   -- @param #string ZoneName The name of the zone.
   -- @param #number Probability The probability in percent.
-  function SET_OPSZONE:SetZoneProbability( ZoneName, Probability )
-    local Zone = self:FindZone( ZoneName )
-    Zone:SetZoneProbability( Probability )
+  function SET_OPSZONE:SetZoneProbability(ZoneName, Probability)
+    local Zone = self:FindZone(ZoneName)
+    Zone:SetZoneProbability(Probability)
     return self
   end
 
@@ -7252,7 +7252,7 @@ do -- SET_OPSZONE
   -- @param #SET_OPSZONE self
   -- @param #string Prefixes The string pattern(s) that needs to be contained in the zone name. Can also be passed as a `#table` of strings.
   -- @return #SET_OPSZONE self
-  function SET_OPSZONE:FilterPrefixes( Prefixes )
+  function SET_OPSZONE:FilterPrefixes(Prefixes)
   
     if not self.Filter.Prefixes then
       self.Filter.Prefixes = {}
@@ -7260,7 +7260,7 @@ do -- SET_OPSZONE
     
     Prefixes=UTILS.EnsureTable(Prefixes, false)
     
-    for PrefixID, Prefix in pairs( Prefixes ) do
+    for PrefixID, Prefix in pairs(Prefixes) do
       self.Filter.Prefixes[Prefix] = Prefix
     end
     
@@ -7277,13 +7277,13 @@ do -- SET_OPSZONE
   -- @return #SET_OPSZONE self
   function SET_OPSZONE:FilterOnce()
 
-    for ObjectName, Object in pairs( self.Database ) do
+    for ObjectName, Object in pairs(self.Database) do
     
       -- First remove the object (without creating an event).
       self:Remove(ObjectName, true)
 
-      if self:IsIncludeObject( Object ) then
-        self:Add( ObjectName, Object )
+      if self:IsIncludeObject(Object) then
+        self:Add(ObjectName, Object)
       end
       
     end
@@ -7312,17 +7312,17 @@ do -- SET_OPSZONE
     if _DATABASE then
 
       -- We initialize the first set.
-      for ObjectName, Object in pairs( self.Database ) do
-        if self:IsIncludeObject( Object ) then
-          self:Add( ObjectName, Object )
+      for ObjectName, Object in pairs(self.Database) do
+        if self:IsIncludeObject(Object) then
+          self:Add(ObjectName, Object)
         else
-          self:RemoveZonesByName( ObjectName )
+          self:RemoveZonesByName(ObjectName)
         end
       end
     end
 
-    self:HandleEvent( EVENTS.NewZoneGoal )
-    self:HandleEvent( EVENTS.DeleteZoneGoal )
+    self:HandleEvent(EVENTS.NewZoneGoal)
+    self:HandleEvent(EVENTS.DeleteZoneGoal)
 
     return self
   end
@@ -7332,8 +7332,8 @@ do -- SET_OPSZONE
   -- @return #SET_OPSZONE self
   function SET_OPSZONE:FilterStop()
 
-    self:UnHandleEvent( EVENTS.NewZoneGoal )
-    self:UnHandleEvent( EVENTS.DeleteZoneGoal )
+    self:UnHandleEvent(EVENTS.NewZoneGoal)
+    self:UnHandleEvent(EVENTS.DeleteZoneGoal)
 
     return self
   end
@@ -7344,8 +7344,8 @@ do -- SET_OPSZONE
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the AIRBASE
   -- @return #table The AIRBASE
-  function SET_OPSZONE:AddInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_OPSZONE:AddInDatabase(Event)
+    --self:F3({ Event })
 
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
@@ -7356,8 +7356,8 @@ do -- SET_OPSZONE
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the AIRBASE
   -- @return #table The AIRBASE
-  function SET_OPSZONE:FindInDatabase( Event )
-    --self:F3( { Event } )
+  function SET_OPSZONE:FindInDatabase(Event)
+    --self:F3({ Event })
 
     return Event.IniDCSUnitName, self.Database[Event.IniDCSUnitName]
   end
@@ -7366,10 +7366,10 @@ do -- SET_OPSZONE
   -- @param #SET_OPSZONE self
   -- @param #function IteratorFunction The function that will be called when there is an alive ZONE in the SET_OPSZONE. The function needs to accept a AIRBASE parameter.
   -- @return #SET_OPSZONE self
-  function SET_OPSZONE:ForEachZone( IteratorFunction, ... )
-    --self:F2( arg )
+  function SET_OPSZONE:ForEachZone(IteratorFunction, ...)
+    --self:F2(arg)
 
-    self:ForEach( IteratorFunction, arg, self:GetSet() )
+    self:ForEach(IteratorFunction, arg, self:GetSet())
 
     return self
   end
@@ -7378,8 +7378,8 @@ do -- SET_OPSZONE
   -- @param #SET_OPSZONE self
   -- @param Ops.OpsZone#OPSZONE MZone The OPSZONE object.
   -- @return #SET_OPSZONE self
-  function SET_OPSZONE:IsIncludeObject( MZone )
-    --self:F2( MZone )
+  function SET_OPSZONE:IsIncludeObject(MZone)
+    --self:F2(MZone)
 
     local MZoneInclude = true
 
@@ -7392,10 +7392,10 @@ do -- SET_OPSZONE
         local MZonePrefix = false
         
         -- Loop over prefixes.
-        for ZonePrefixId, ZonePrefix in pairs( self.Filter.Prefixes ) do
+        for ZonePrefixId, ZonePrefix in pairs(self.Filter.Prefixes) do
         
           -- Prifix
-          --self:T(3( { "Prefix:", string.find( MZoneName, ZonePrefix, 1 ), ZonePrefix } )
+          --self:T(3({ "Prefix:", string.find(MZoneName, ZonePrefix, 1), ZonePrefix })
           
           if string.find(MZoneName, ZonePrefix, 1) then
             MZonePrefix = true
@@ -7404,7 +7404,7 @@ do -- SET_OPSZONE
           
         end
         
-        --self:T(( { "Evaluated Prefix", MZonePrefix } )
+        --self:T(({ "Evaluated Prefix", MZonePrefix })
         
         MZoneInclude = MZoneInclude and MZonePrefix
       end
@@ -7416,7 +7416,7 @@ do -- SET_OPSZONE
         
         local coalition=MZone:GetOwner()
         
-        for _, CoalitionName in pairs( self.Filter.Coalitions ) do
+        for _, CoalitionName in pairs(self.Filter.Coalitions) do
         
           if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName]==coalition then
             MGroupCoalition = true
@@ -7435,23 +7435,23 @@ do -- SET_OPSZONE
       MZoneInclude = MZoneInclude and MClientFunc
     end
     
-    --self:T(2( MZoneInclude )
+    --self:T(2(MZoneInclude)
     return MZoneInclude
   end
 
   --- Handles the OnEventNewZone event for the Set.
   -- @param #SET_OPSZONE self
   -- @param Core.Event#EVENTDATA EventData
-  function SET_OPSZONE:OnEventNewZoneGoal( EventData )
+  function SET_OPSZONE:OnEventNewZoneGoal(EventData)
 
     -- Debug info.
-    --self:T(( { "New Zone Capture Coalition", EventData } )
-    --self:T(( { "Zone Capture Coalition", EventData.ZoneGoal } )
+    --self:T(({ "New Zone Capture Coalition", EventData })
+    --self:T(({ "Zone Capture Coalition", EventData.ZoneGoal })
 
     if EventData.ZoneGoal then
-      if EventData.ZoneGoal and self:IsIncludeObject( EventData.ZoneGoal ) then
-        --self:T(( { "Adding Zone Capture Coalition", EventData.ZoneGoal.ZoneName, EventData.ZoneGoal } )
-        self:Add( EventData.ZoneGoal.ZoneName, EventData.ZoneGoal )
+      if EventData.ZoneGoal and self:IsIncludeObject(EventData.ZoneGoal) then
+        --self:T(({ "Adding Zone Capture Coalition", EventData.ZoneGoal.ZoneName, EventData.ZoneGoal })
+        self:Add(EventData.ZoneGoal.ZoneName, EventData.ZoneGoal)
       end
     end
   end
@@ -7459,11 +7459,11 @@ do -- SET_OPSZONE
   --- Handles the OnDead or OnCrash event for alive units set.
   -- @param #SET_OPSZONE self
   -- @param Core.Event#EVENTDATA EventData
-  function SET_OPSZONE:OnEventDeleteZoneGoal( EventData ) -- R2.1
-    --self:F3( { EventData } )
+  function SET_OPSZONE:OnEventDeleteZoneGoal(EventData) -- R2.1
+    --self:F3({ EventData })
 
     if EventData.ZoneGoal then
-      local Zone = _DATABASE:FindZone( EventData.ZoneGoal.ZoneName )
+      local Zone = _DATABASE:FindZone(EventData.ZoneGoal.ZoneName)
       if Zone and Zone.ZoneName then
 
         -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
@@ -7472,10 +7472,10 @@ do -- SET_OPSZONE
         -- To prevent this from happening, the Zone object has a flag NoDestroy.
         -- When true, the SET_OPSZONE won't Remove the Zone object from the set.
         -- This flag is switched off after the event handlers have been called in the EVENT class.
-        --self:F( { ZoneNoDestroy = Zone.NoDestroy } )
+        --self:F({ ZoneNoDestroy = Zone.NoDestroy })
         if Zone.NoDestroy then
         else
-          self:Remove( Zone.ZoneName )
+          self:Remove(Zone.ZoneName)
         end
       end
     end
@@ -7486,7 +7486,7 @@ do -- SET_OPSZONE
   -- @return #SET_OPSZONE self
   function SET_OPSZONE:Start()
 
-    for _,_Zone in pairs( self:GetSet() ) do
+    for _,_Zone in pairs(self:GetSet()) do
       local Zone = _Zone --Ops.OpsZone#OPSZONE
       if Zone:IsStopped() then
         Zone:Start()
@@ -7503,11 +7503,11 @@ do -- SET_OPSZONE
   -- @param Core.Point#COORDINATE Coordinate The coordinate to be searched.
   -- @return Core.Zone#ZONE_BASE The zone that validates the coordinate location.
   -- @return #nil No zone has been found.
-  function SET_OPSZONE:IsCoordinateInZone( Coordinate )
+  function SET_OPSZONE:IsCoordinateInZone(Coordinate)
 
-    for _,_Zone in pairs( self:GetSet() ) do
+    for _,_Zone in pairs(self:GetSet()) do
       local Zone = _Zone --Ops.OpsZone#OPSZONE
-      if Zone:GetZone():IsCoordinateInZone( Coordinate ) then
+      if Zone:GetZone():IsCoordinateInZone(Coordinate) then
         return Zone
       end
     end
@@ -7522,7 +7522,7 @@ do -- SET_OPSZONE
   -- @param #table Coalitions Only consider the given coalition(s), *e.g.* `{coaliton.side.RED}` to find the closest red zone.
   -- @return Ops.OpsZone#OPSZONE The closest OPSZONE (if any).
   -- @return #number Distance to ref coordinate in meters.
-  function SET_OPSZONE:GetClosestZone( Coordinate, Coalitions )
+  function SET_OPSZONE:GetClosestZone(Coordinate, Coalitions)
    
     Coalitions=UTILS.EnsureTable(Coalitions, true)
 
@@ -7624,12 +7624,12 @@ do -- SET_OPSGROUP
   --
   --        -- Create the SetCarrier SET_OPSGROUP collection.
   --
-  --        local SetHelicopter = SET_OPSGROUP:New():FilterPrefixes( "Helicopter" ):FilterStart()
+  --        local SetHelicopter = SET_OPSGROUP:New():FilterPrefixes("Helicopter"):FilterStart()
   --
   --        -- Put a Dead event handler on SetCarrier, to ensure that when a carrier is destroyed, that all internal parameters are reset.
   --
-  --        function SetHelicopter:OnAfterDead( From, Event, To, GroupObject )
-  --          --self:F( { GroupObject = GroupObject:GetName() } )
+  --        function SetHelicopter:OnAfterDead(From, Event, To, GroupObject)
+  --          --self:F({ GroupObject = GroupObject:GetName() })
   --        end
   --
   --
@@ -7670,7 +7670,7 @@ do -- SET_OPSGROUP
     local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.GROUPS)) -- #SET_OPSGROUP
 
     -- Include non activated 
-    self:FilterActive( false )
+    self:FilterActive(false)
 
     return self
   end
@@ -7700,7 +7700,7 @@ do -- SET_OPSGROUP
   -- @param Core.Base#BASE Object The object itself.
   -- @return Core.Base#BASE The added BASE Object.
   function SET_OPSGROUP:Add(ObjectName, Object)
-    --self:T(( { ObjectName = ObjectName, Object = Object } )
+    --self:T(({ ObjectName = ObjectName, Object = Object })
 
     -- Ensure that the existing element is removed from the Set before a new one is inserted to the Set
     if self.Set[ObjectName] then
@@ -7764,7 +7764,7 @@ do -- SET_OPSGROUP
   
     local groupname=group:GetName()
     
-    self:Add(groupname, group )
+    self:Add(groupname, group)
 
     return self
   end
@@ -7773,11 +7773,11 @@ do -- SET_OPSGROUP
   -- @param Core.Set#SET_OPSGROUP self
   -- @param #string AddGroupNames A single name or an array of GROUP names.
   -- @return Core.Set#SET_OPSGROUP self
-  function SET_OPSGROUP:AddGroupsByName( AddGroupNames )
+  function SET_OPSGROUP:AddGroupsByName(AddGroupNames)
 
-    local AddGroupNamesArray = ( type( AddGroupNames ) == "table" ) and AddGroupNames or { AddGroupNames }
+    local AddGroupNamesArray = (type(AddGroupNames) == "table") and AddGroupNames or { AddGroupNames }
 
-    for AddGroupID, AddGroupName in pairs( AddGroupNamesArray ) do
+    for AddGroupID, AddGroupName in pairs(AddGroupNamesArray) do
       self:Add(AddGroupName, GROUP:FindByName(AddGroupName))
     end
 
@@ -7788,12 +7788,12 @@ do -- SET_OPSGROUP
   -- @param Core.Set#SET_OPSGROUP self
   -- @param Wrapper.Group#GROUP RemoveGroupNames A single name or an array of GROUP names.
   -- @return Core.Set#SET_OPSGROUP self
-  function SET_OPSGROUP:RemoveGroupsByName( RemoveGroupNames )
+  function SET_OPSGROUP:RemoveGroupsByName(RemoveGroupNames)
 
-    local RemoveGroupNamesArray = ( type( RemoveGroupNames ) == "table" ) and RemoveGroupNames or { RemoveGroupNames }
+    local RemoveGroupNamesArray = (type(RemoveGroupNames) == "table") and RemoveGroupNames or { RemoveGroupNames }
 
-    for RemoveGroupID, RemoveGroupName in pairs( RemoveGroupNamesArray ) do
-      self:Remove( RemoveGroupName )
+    for RemoveGroupID, RemoveGroupName in pairs(RemoveGroupNamesArray) do
+      self:Remove(RemoveGroupName)
     end
 
     return self
@@ -7809,7 +7809,7 @@ do -- SET_OPSGROUP
 
     local Set = self:GetSet()
 
-    for GroupID, GroupData in pairs( Set ) do -- For each GROUP in SET_GROUP
+    for GroupID, GroupData in pairs(Set) do -- For each GROUP in SET_GROUP
       if GroupData and GroupData:IsAlive() then
         CountG = CountG + 1
         -- Count Units.
@@ -7878,7 +7878,7 @@ do -- SET_OPSGROUP
   -- @param #string Categories Can take the following values: "plane", "helicopter", "ground", "ship" or combinations as a table, for example `{"plane", "helicopter"}`.
   -- @param #boolean Clear If `true`, clear any previously defined filters.
   -- @return #SET_OPSGROUP self
-  function SET_OPSGROUP:FilterCategories( Categories, Clear )
+  function SET_OPSGROUP:FilterCategories(Categories, Clear)
   
     if Clear or not self.Filter.Categories then
       self.Filter.Categories={}
@@ -7888,7 +7888,7 @@ do -- SET_OPSGROUP
       Categories={Categories}
     end
     
-    for CategoryID, Category in pairs( Categories ) do
+    for CategoryID, Category in pairs(Categories) do
       self.Filter.Categories[Category] = Category
     end
     
@@ -7923,7 +7923,7 @@ do -- SET_OPSGROUP
   -- @param #SET_OPSGROUP self
   -- @return #SET_OPSGROUP self
   function SET_OPSGROUP:FilterCategoryHelicopter()
-    self:FilterCategories( "helicopter" )
+    self:FilterCategories("helicopter")
     return self
   end
 
@@ -7953,7 +7953,7 @@ do -- SET_OPSGROUP
     end
     
     -- Set filter.
-    for CountryID, Country in pairs( Countries ) do
+    for CountryID, Country in pairs(Countries) do
       self.Filter.Countries[Country] = Country
     end
     
@@ -7999,16 +7999,16 @@ do -- SET_OPSGROUP
   -- GroupSet = SET_OPSGROUP:New():FilterActive():FilterStart()
   --
   -- -- Include only active groups to the set of the blue coalition, and filter one time.
-  -- GroupSet = SET_OPSGROUP:New():FilterActive():FilterCoalition( "blue" ):FilterOnce()
+  -- GroupSet = SET_OPSGROUP:New():FilterActive():FilterCoalition("blue"):FilterOnce()
   --
   -- -- Include only active groups to the set of the blue coalition, and filter one time.
   -- -- Later, reset to include back inactive groups to the set.
-  -- GroupSet = SET_OPSGROUP:New():FilterActive():FilterCoalition( "blue" ):FilterOnce()
+  -- GroupSet = SET_OPSGROUP:New():FilterActive():FilterCoalition("blue"):FilterOnce()
   -- ... logic ...
-  -- GroupSet = SET_OPSGROUP:New():FilterActive( false ):FilterCoalition( "blue" ):FilterOnce()
+  -- GroupSet = SET_OPSGROUP:New():FilterActive(false):FilterCoalition("blue"):FilterOnce()
   --
-  function SET_OPSGROUP:FilterActive( Active )
-    Active = Active or not ( Active == false )
+  function SET_OPSGROUP:FilterActive(Active)
+    Active = Active or not (Active == false)
     self.Filter.Active = Active
     return self
   end
@@ -8021,11 +8021,11 @@ do -- SET_OPSGROUP
 
     if _DATABASE then
       self:_FilterStart()
-      self:HandleEvent( EVENTS.Birth, self._EventOnBirth )
-      self:HandleEvent( EVENTS.Dead, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.Crash, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
-      self:HandleEvent( EVENTS.UnitLost, self._EventOnDeadOrCrash )
+      self:HandleEvent(EVENTS.Birth, self._EventOnBirth)
+      self:HandleEvent(EVENTS.Dead, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.Crash, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.RemoveUnit, self._EventOnDeadOrCrash)
+      self:HandleEvent(EVENTS.UnitLost, self._EventOnDeadOrCrash)
     end
 
     return self
@@ -8050,7 +8050,7 @@ do -- SET_OPSGROUP
   -- @param #SET_OPSGROUP self
   -- @param Core.Event#EVENTDATA Event Event data.
 function SET_OPSGROUP:_EventOnBirth(Event)
-    --self:F3( { Event } )
+    --self:F3({ Event })
 
     if Event.IniDCSUnit and Event.IniDCSGroup then
         local DCSgroup = Event.IniDCSGroup --DCS#Group
@@ -8081,14 +8081,14 @@ function SET_OPSGROUP:_EventOnBirth(Event)
   -- Note: The GROUP object in the SET_OPSGROUP collection will only be removed if the last unit is destroyed of the GROUP.
   -- @param #SET_OPSGROUP self
   -- @param Core.Event#EVENTDATA Event
-  function SET_OPSGROUP:_EventOnDeadOrCrash( Event )
-    --self:F( { Event } )
+  function SET_OPSGROUP:_EventOnDeadOrCrash(Event)
+    --self:F({ Event })
 
     if Event.IniDCSGroup then
-      local ObjectName, Object = self:FindInDatabase( Event )
+      local ObjectName, Object = self:FindInDatabase(Event)
       if ObjectName then
         if Event.IniDCSGroup:getSize() == 1 then -- Only remove if the last unit of the group was destroyed.
-          self:Remove( ObjectName )
+          self:Remove(ObjectName)
         end
       end
     end
@@ -8100,12 +8100,12 @@ function SET_OPSGROUP:_EventOnBirth(Event)
   -- @param Core.Event#EVENTDATA Event Event data.
   -- @return #string The name of the GROUP.
   -- @return Wrapper.Group#GROUP The GROUP object.
-  function SET_OPSGROUP:AddInDatabase( Event )
+  function SET_OPSGROUP:AddInDatabase(Event)
   
     if Event.IniObjectCategory==Object.Category.UNIT then
     
       if not self.Database[Event.IniDCSGroupName] then
-        self.Database[Event.IniDCSGroupName] = GROUP:Register( Event.IniDCSGroupName )
+        self.Database[Event.IniDCSGroupName] = GROUP:Register(Event.IniDCSGroupName)
       end
       
     end
@@ -8128,7 +8128,7 @@ function SET_OPSGROUP:_EventOnBirth(Event)
   -- @param #function IteratorFunction The function that will be called for all OPSGROUPs in the set. **NOTE** that the function must have the OPSGROUP as first parameter!
   -- @param ... (Optional) arguments passed to the `IteratorFunction`.
   -- @return #SET_OPSGROUP self
-  function SET_OPSGROUP:ForEachGroup( IteratorFunction, ... )
+  function SET_OPSGROUP:ForEachGroup(IteratorFunction, ...)
 
     self:ForEach(IteratorFunction, arg, self:GetSet())
 
@@ -8161,7 +8161,7 @@ function SET_OPSGROUP:_EventOnBirth(Event)
     
       local MGroupCoalition = false
       
-      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
+      for CoalitionID, CoalitionName in pairs(self.Filter.Coalitions) do
         if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName]==MGroup:GetCoalition() then
           MGroupCoalition = true      
         end
@@ -8175,7 +8175,7 @@ function SET_OPSGROUP:_EventOnBirth(Event)
     
       local MGroupCategory = false
       
-      for CategoryID, CategoryName in pairs( self.Filter.Categories ) do
+      for CategoryID, CategoryName in pairs(self.Filter.Categories) do
         if self.FilterMeta.Categories[CategoryName] and self.FilterMeta.Categories[CategoryName]==MGroup:GetCategory() then
           MGroupCategory = true
         end
@@ -8187,7 +8187,7 @@ function SET_OPSGROUP:_EventOnBirth(Event)
     -- Filter countries.
     if self.Filter.Countries and MGroupInclude then
       local MGroupCountry = false
-      for CountryID, CountryName in pairs( self.Filter.Countries ) do
+      for CountryID, CountryName in pairs(self.Filter.Countries) do
         if country.id[CountryName] == MGroup:GetCountry() then
           MGroupCountry = true
         end
@@ -8200,8 +8200,8 @@ function SET_OPSGROUP:_EventOnBirth(Event)
     
       local MGroupPrefix = false
       
-      for GroupPrefixId, GroupPrefix in pairs( self.Filter.GroupPrefixes ) do
-        if string.find( MGroup:GetName(), GroupPrefix:gsub ("-", "%%-"), 1 ) then --Not sure why "-" is replaced by "%-" ?! - So we can still match group names with a dash in them
+      for GroupPrefixId, GroupPrefix in pairs(self.Filter.GroupPrefixes) do
+        if string.find(MGroup:GetName(), GroupPrefix:gsub ("-", "%%-"), 1) then --Not sure why "-" is replaced by "%-" ?! - So we can still match group names with a dash in them
           MGroupPrefix = true
         end
       end
@@ -8280,7 +8280,7 @@ do -- SET_SCENERY
   
     local zoneset = {}  
       -- Inherits from BASE
-    local self = BASE:Inherit( self, SET_BASE:New( zoneset ) ) -- Core.Set#SET_SCENERY
+    local self = BASE:Inherit(self, SET_BASE:New(zoneset)) -- Core.Set#SET_SCENERY
     
     local zonenames = {}
     
@@ -8312,10 +8312,10 @@ do -- SET_SCENERY
   -- @param #SET_SCENERY self
   -- @param Wrapper.Scenery#SCENERY AddScenery A single SCENERY object.
   -- @return #SET_SCENERY self
-  function SET_SCENERY:AddScenery( AddScenery )
-    --self:F2( AddScenery:GetName() )
+  function SET_SCENERY:AddScenery(AddScenery)
+    --self:F2(AddScenery:GetName())
 
-    self:Add( AddScenery:GetName(), AddScenery )
+    self:Add(AddScenery:GetName(), AddScenery)
 
     return self
   end
@@ -8325,13 +8325,13 @@ do -- SET_SCENERY
   -- @param #SET_SCENERY self
   -- @param #string AddSceneryNames A single name or an array of SCENERY zone names.
   -- @return #SET_SCENERY self
-  function SET_SCENERY:AddSceneryByName( AddSceneryNames )
+  function SET_SCENERY:AddSceneryByName(AddSceneryNames)
 
-    local AddSceneryNamesArray = ( type( AddSceneryNames ) == "table" ) and AddSceneryNames or { AddSceneryNames }
+    local AddSceneryNamesArray = (type(AddSceneryNames) == "table") and AddSceneryNames or { AddSceneryNames }
 
-    --self:T(( AddSceneryNamesArray )
-    for AddSceneryID, AddSceneryName in pairs( AddSceneryNamesArray ) do
-      self:Add( AddSceneryName, SCENERY:FindByZoneName( AddSceneryName ) )
+    --self:T((AddSceneryNamesArray)
+    for AddSceneryID, AddSceneryName in pairs(AddSceneryNamesArray) do
+      self:Add(AddSceneryName, SCENERY:FindByZoneName(AddSceneryName))
     end
 
     return self
@@ -8341,12 +8341,12 @@ do -- SET_SCENERY
   -- @param Core.Set#SET_SCENERY self
   -- @param Wrapper.Scenery#SCENERY RemoveSceneryNames A single name or an array of SCENERY zone names.
   -- @return self
-  function SET_SCENERY:RemoveSceneryByName( RemoveSceneryNames )
+  function SET_SCENERY:RemoveSceneryByName(RemoveSceneryNames)
 
-    local RemoveSceneryNamesArray = ( type( RemoveSceneryNames ) == "table" ) and RemoveSceneryNames or { RemoveSceneryNames }
+    local RemoveSceneryNamesArray = (type(RemoveSceneryNames) == "table") and RemoveSceneryNames or { RemoveSceneryNames }
 
-    for RemoveSceneryID, RemoveSceneryName in pairs( RemoveSceneryNamesArray ) do
-      self:Remove( RemoveSceneryName )
+    for RemoveSceneryID, RemoveSceneryName in pairs(RemoveSceneryNamesArray) do
+      self:Remove(RemoveSceneryName)
     end
 
     return self
@@ -8356,7 +8356,7 @@ do -- SET_SCENERY
   -- @param #SET_SCENERY self
   -- @param #string SceneryName
   -- @return Wrapper.Scenery#SCENERY The found Scenery.
-  function SET_SCENERY:FindScenery( SceneryName )
+  function SET_SCENERY:FindScenery(SceneryName)
     local SceneryFound = self.Set[SceneryName]
     return SceneryFound
   end
@@ -8365,20 +8365,20 @@ do -- SET_SCENERY
   -- @param #SET_SCENERY self
   -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
   -- @return #SET_SCENERY self
-  function SET_SCENERY:FilterZones( Zones )
+  function SET_SCENERY:FilterZones(Zones)
     if not self.Filter.Zones then
       self.Filter.Zones = {}
     end
     local zones = {}
     if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
       zones = Zones.Set
-    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+    elseif type(Zones) ~= "table" or (type(Zones) == "table" and Zones.ClassName) then
       self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
       return self     
     else
       zones = Zones
     end
-    for _,Zone in pairs( zones ) do
+    for _,Zone in pairs(zones) do
       local zonename = Zone:GetName()
       --self:T((zonename)
       self.Filter.Zones[zonename] = Zone
@@ -8391,14 +8391,14 @@ do -- SET_SCENERY
   -- @param #SET_SCENERY self
   -- @param #string Prefixes The string pattern(s) that need to be contained in the scenery name. Can also be passed as a `#table` of strings.
   -- @return #SET_SCENERY self
-  function SET_SCENERY:FilterPrefixes( Prefixes )
+  function SET_SCENERY:FilterPrefixes(Prefixes)
     if not self.Filter.SceneryPrefixes then
       self.Filter.SceneryPrefixes = {}
     end
-    if type( Prefixes ) ~= "table" then
+    if type(Prefixes) ~= "table" then
       Prefixes = { Prefixes }
     end
-    for PrefixID, Prefix in pairs( Prefixes ) do
+    for PrefixID, Prefix in pairs(Prefixes) do
       --self:T((Prefix)
       self.Filter.SceneryPrefixes[Prefix] = Prefix
     end
@@ -8409,14 +8409,14 @@ do -- SET_SCENERY
   -- @param #SET_SCENERY self
   -- @param #string Role The string pattern(s) that needs to exactly match the scenery "ROLE" property from the ME quad-zone properties. Can also be passed as a `#table` of strings.
   -- @return #SET_SCENERY self
-  function SET_SCENERY:FilterRoles( Role )
+  function SET_SCENERY:FilterRoles(Role)
     if not self.Filter.SceneryRoles then
       self.Filter.SceneryRoles = {}
     end
-    if type( Role ) ~= "table" then
+    if type(Role) ~= "table" then
       Role = { Role }
     end
-    for PrefixID, Prefix in pairs( Role ) do
+    for PrefixID, Prefix in pairs(Role) do
       --self:T(Prefix)
       self.Filter.SceneryRoles[Prefix] = Prefix
     end
@@ -8451,11 +8451,11 @@ do -- SET_SCENERY
     local AliveSet = SET_SCENERY:New()
 
     -- Clean the Set before returning with only the alive Groups.
-    for GroupName, GroupObject in pairs( self.Set ) do
+    for GroupName, GroupObject in pairs(self.Set) do
       local GroupObject = GroupObject -- Wrapper.Group#GROUP
       if GroupObject then
         if GroupObject:IsAlive() then
-          AliveSet:Add( GroupName, GroupObject )
+          AliveSet:Add(GroupName, GroupObject)
         end
       end
     end
@@ -8467,9 +8467,9 @@ do -- SET_SCENERY
   -- @param #SET_SCENERY self
   -- @param #function IteratorFunction The function that will be called when there is an alive SCENERY in the SET_SCENERY. The function needs to accept a SCENERY parameter.
   -- @return #SET_SCENERY self
-  function SET_SCENERY:ForEachScenery( IteratorFunction, ... )
-    --self:F2( arg )
-    self:ForEach( IteratorFunction, arg, self:GetSet() )
+  function SET_SCENERY:ForEachScenery(IteratorFunction, ...)
+    --self:F2(arg)
+    self:ForEach(IteratorFunction, arg, self:GetSet())
     return self
   end
 
@@ -8496,25 +8496,25 @@ do -- SET_SCENERY
     local z1 = Coordinate.z
     local z2 = Coordinate.z
 
-    for SceneryName, SceneryData in pairs( self:GetSet() ) do
+    for SceneryName, SceneryData in pairs(self:GetSet()) do
 
       local Scenery = SceneryData -- Wrapper.Scenery#SCENERY
       local Coordinate = Scenery:GetCoordinate()
 
-      x1 = ( Coordinate.x < x1 ) and Coordinate.x or x1
-      x2 = ( Coordinate.x > x2 ) and Coordinate.x or x2
-      y1 = ( Coordinate.y < y1 ) and Coordinate.y or y1
-      y2 = ( Coordinate.y > y2 ) and Coordinate.y or y2
-      z1 = ( Coordinate.y < z1 ) and Coordinate.z or z1
-      z2 = ( Coordinate.y > z2 ) and Coordinate.z or z2
+      x1 = (Coordinate.x < x1) and Coordinate.x or x1
+      x2 = (Coordinate.x > x2) and Coordinate.x or x2
+      y1 = (Coordinate.y < y1) and Coordinate.y or y1
+      y2 = (Coordinate.y > y2) and Coordinate.y or y2
+      z1 = (Coordinate.y < z1) and Coordinate.z or z1
+      z2 = (Coordinate.y > z2) and Coordinate.z or z2
 
     end
 
-    Coordinate.x = ( x2 - x1 ) / 2 + x1
-    Coordinate.y = ( y2 - y1 ) / 2 + y1
-    Coordinate.z = ( z2 - z1 ) / 2 + z1
+    Coordinate.x = (x2 - x1) / 2 + x1
+    Coordinate.y = (y2 - y1) / 2 + y1
+    Coordinate.z = (z2 - z1) / 2 + z1
 
-    --self:F( { Coordinate = Coordinate } )
+    --self:F({ Coordinate = Coordinate })
     return Coordinate
 
   end
@@ -8523,8 +8523,8 @@ do -- SET_SCENERY
   -- @param #SET_SCENERY self
   -- @param Wrapper.Scenery#SCENERY MScenery
   -- @return #SET_SCENERY self
-  function SET_SCENERY:IsIncludeObject( MScenery )
-    --self:T(( MScenery.SceneryName )
+  function SET_SCENERY:IsIncludeObject(MScenery)
+    --self:T((MScenery.SceneryName)
 
     local MSceneryInclude = true
     
@@ -8534,25 +8534,25 @@ do -- SET_SCENERY
       -- Filter Prefixes
       if self.Filter.Prefixes then
         local MSceneryPrefix = false
-        for ZonePrefixId, ZonePrefix in pairs( self.Filter.Prefixes ) do
-          --self:T(( { "Prefix:", string.find( MSceneryName, ZonePrefix, 1 ), ZonePrefix } )
-          if string.find( MSceneryName, ZonePrefix, 1 ) then
+        for ZonePrefixId, ZonePrefix in pairs(self.Filter.Prefixes) do
+          --self:T(({ "Prefix:", string.find(MSceneryName, ZonePrefix, 1), ZonePrefix })
+          if string.find(MSceneryName, ZonePrefix, 1) then
             MSceneryPrefix = true
           end
         end
-        --self:T(( { "Evaluated Prefix", MSceneryPrefix } )
+        --self:T(({ "Evaluated Prefix", MSceneryPrefix })
         MSceneryInclude = MSceneryInclude and MSceneryPrefix
       end
       
       if self.Filter.Zones then
         local MSceneryZone = false
-        for ZoneName, Zone in pairs( self.Filter.Zones ) do
-          --self:T(( "Zone:", ZoneName )
+        for ZoneName, Zone in pairs(self.Filter.Zones) do
+          --self:T(("Zone:", ZoneName)
           local coord = MScenery:GetCoordinate()
           if coord and Zone:IsCoordinateInZone(coord) then
             MSceneryZone = true
           end
-          --self:T(( { "Evaluated Zone", MSceneryZone } )
+          --self:T(({ "Evaluated Zone", MSceneryZone })
         end
         MSceneryInclude = MSceneryInclude and MSceneryZone
       end
@@ -8561,13 +8561,13 @@ do -- SET_SCENERY
       if self.Filter.SceneryRoles then
         local MSceneryRole = false
         local Role = MScenery:GetProperty("ROLE") or "none"
-        for ZoneRoleId, ZoneRole in pairs( self.Filter.SceneryRoles ) do
-          --self:T(( { "Role:", ZoneRole, Role } )
+        for ZoneRoleId, ZoneRole in pairs(self.Filter.SceneryRoles) do
+          --self:T(({ "Role:", ZoneRole, Role })
           if ZoneRole == Role then
             MSceneryRole = true
           end
         end
-        --self:T(( { "Evaluated Role ", MSceneryRole } )
+        --self:T(({ "Evaluated Role ", MSceneryRole })
         MSceneryInclude = MSceneryInclude and MSceneryRole
       end
     end
@@ -8577,7 +8577,7 @@ do -- SET_SCENERY
       MSceneryInclude = MSceneryInclude and MClientFunc
     end
     
-    --self:T(2( MSceneryInclude )
+    --self:T(2(MSceneryInclude)
     return MSceneryInclude
   end
   
@@ -8586,10 +8586,10 @@ do -- SET_SCENERY
   -- @return #SET_SCENERY self
   function SET_SCENERY:FilterOnce()
 
-    for ObjectName, Object in pairs( self:GetSet() ) do
+    for ObjectName, Object in pairs(self:GetSet()) do
       --self:T((ObjectName)
-      if self:IsIncludeObject( Object ) then
-        self:Add( ObjectName, Object )
+      if self:IsIncludeObject(Object) then
+        self:Add(ObjectName, Object)
       else
         self:Remove(ObjectName, true)
       end
@@ -8609,7 +8609,7 @@ do -- SET_SCENERY
         local Obj = obj -- Wrapper.Scenery#SCENERY
         life0 = life0 + Obj:GetLife0()
       end
-    )
+   )
     return life0
   end
   
@@ -8623,7 +8623,7 @@ do -- SET_SCENERY
         local Obj = obj -- Wrapper.Scenery#SCENERY
         life = life + Obj:GetLife()
       end
-    )
+   )
     return life
   end
   
@@ -8759,7 +8759,7 @@ do -- SET_DYNAMICCARGO
   function SET_DYNAMICCARGO:New()
 
     --- Inherits from BASE
-    local self = BASE:Inherit( self, SET_BASE:New( _DATABASE.DYNAMICCARGO ) ) -- Core.Set#SET_DYNAMICCARGO
+    local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.DYNAMICCARGO)) -- Core.Set#SET_DYNAMICCARGO
 
     return self
   end
@@ -8768,14 +8768,14 @@ do -- SET_DYNAMICCARGO
   -- @param #SET_DYNAMICCARGO self
   -- @param Wrapper.DynamicCargo#DYNAMICCARGO DCargo
   -- @return #SET_DYNAMICCARGO self
-  function SET_DYNAMICCARGO:IsIncludeObject( DCargo )
-    --self:F2( DCargo )
+  function SET_DYNAMICCARGO:IsIncludeObject(DCargo)
+    --self:F2(DCargo)
     local DCargoInclude = true
 
     if self.Filter.Coalitions then
       local DCargoCoalition = false
-      for CoalitionID, CoalitionName in pairs( self.Filter.Coalitions ) do
-        --self:T2( { "Coalition:", DCargo:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName } )
+      for CoalitionID, CoalitionName in pairs(self.Filter.Coalitions) do
+        --self:T2({ "Coalition:", DCargo:GetCoalition(), self.FilterMeta.Coalitions[CoalitionName], CoalitionName })
         if self.FilterMeta.Coalitions[CoalitionName] and self.FilterMeta.Coalitions[CoalitionName] == DCargo:GetCoalition() then
           DCargoCoalition = true
         end
@@ -8785,8 +8785,8 @@ do -- SET_DYNAMICCARGO
 
     if self.Filter.Types then
       local DCargoType = false
-      for TypeID, TypeName in pairs( self.Filter.Types ) do
-        --self:T2( { "Type:", DCargo:GetTypeName(), TypeName } )
+      for TypeID, TypeName in pairs(self.Filter.Types) do
+        --self:T2({ "Type:", DCargo:GetTypeName(), TypeName })
         if TypeName == DCargo:GetTypeName() then
           DCargoType = true
         end
@@ -8796,8 +8796,8 @@ do -- SET_DYNAMICCARGO
 
     if self.Filter.Countries then
       local DCargoCountry = false
-      for CountryID, CountryName in pairs( self.Filter.Countries ) do
-        --self:T2( { "Country:", DCargo:GetCountry(), CountryName } )
+      for CountryID, CountryName in pairs(self.Filter.Countries) do
+        --self:T2({ "Country:", DCargo:GetCountry(), CountryName })
         if country.id[CountryName] == DCargo:GetCountry() then
           DCargoCountry = true
         end
@@ -8807,9 +8807,9 @@ do -- SET_DYNAMICCARGO
 
     if self.Filter.StaticPrefixes then
       local DCargoPrefix = false
-      for StaticPrefixId, StaticPrefix in pairs( self.Filter.StaticPrefixes ) do
-        --self:T2( { "Prefix:", string.find( DCargo:GetName(), StaticPrefix, 1 ), StaticPrefix } )
-        if string.find( DCargo:GetName(), StaticPrefix, 1 ) then
+      for StaticPrefixId, StaticPrefix in pairs(self.Filter.StaticPrefixes) do
+        --self:T2({ "Prefix:", string.find(DCargo:GetName(), StaticPrefix, 1), StaticPrefix })
+        if string.find(DCargo:GetName(), StaticPrefix, 1) then
           DCargoPrefix = true
         end
       end
@@ -8818,8 +8818,8 @@ do -- SET_DYNAMICCARGO
     
     if self.Filter.Zones then
       local DCargoZone = false
-      for ZoneName, Zone in pairs( self.Filter.Zones ) do
-        --self:T2( "In zone: "..ZoneName )
+      for ZoneName, Zone in pairs(self.Filter.Zones) do
+        --self:T2("In zone: "..ZoneName)
         if DCargo and DCargo:IsInZone(Zone) then
           DCargoZone = true
         end
@@ -8832,7 +8832,7 @@ do -- SET_DYNAMICCARGO
       DCargoInclude = DCargoInclude and MClientFunc
     end
     
-    --self:T2( DCargoInclude )
+    --self:T2(DCargoInclude)
     return DCargoInclude
   end
 
@@ -8846,14 +8846,14 @@ do -- SET_DYNAMICCARGO
   -- @param #SET_DYNAMICCARGO self
   -- @param #string Types Can take those type name strings known within DCS world.
   -- @return #SET_DYNAMICCARGO self
-  function SET_DYNAMICCARGO:FilterTypes( Types )
+  function SET_DYNAMICCARGO:FilterTypes(Types)
     if not self.Filter.Types then
       self.Filter.Types = {}
     end
-    if type( Types ) ~= "table" then
+    if type(Types) ~= "table" then
       Types = { Types }
     end
-    for TypeID, Type in pairs( Types ) do
+    for TypeID, Type in pairs(Types) do
       self.Filter.Types[Type] = Type
     end
     return self
@@ -8874,7 +8874,7 @@ do -- SET_DYNAMICCARGO
   --              if dynamiccargo:GetName() == "Exclude Me" then isinclude = false end
   --              return isinclude
   --          end
-  --          ):FilterOnce()
+  --         ):FilterOnce()
   --          BASE:I(cargoset:Flush())
   
   --- Builds a set of dynamic cargo of defined countries.
@@ -8882,14 +8882,14 @@ do -- SET_DYNAMICCARGO
   -- @param #SET_DYNAMICCARGO self
   -- @param #string Countries Can take those country strings known within DCS world.
   -- @return #SET_DYNAMICCARGO self
-  function SET_DYNAMICCARGO:FilterCountries( Countries )
+  function SET_DYNAMICCARGO:FilterCountries(Countries)
     if not self.Filter.Countries then
       self.Filter.Countries = {}
     end
-    if type( Countries ) ~= "table" then
+    if type(Countries) ~= "table" then
       Countries = { Countries }
     end
-    for CountryID, Country in pairs( Countries ) do
+    for CountryID, Country in pairs(Countries) do
       self.Filter.Countries[Country] = Country
     end
     return self
@@ -8900,14 +8900,14 @@ do -- SET_DYNAMICCARGO
   -- @param #SET_DYNAMICCARGO self
   -- @param #string Prefixes The string pattern(s) that need to be contained in the dynamic cargo name. Can also be passed as a `#table` of strings.
   -- @return #SET_DYNAMICCARGO self
-  function SET_DYNAMICCARGO:FilterPrefixes( Prefixes )
+  function SET_DYNAMICCARGO:FilterPrefixes(Prefixes)
     if not self.Filter.StaticPrefixes then
       self.Filter.StaticPrefixes = {}
     end
-    if type( Prefixes ) ~= "table" then
+    if type(Prefixes) ~= "table" then
       Prefixes = { Prefixes }
     end
-    for PrefixID, Prefix in pairs( Prefixes ) do
+    for PrefixID, Prefix in pairs(Prefixes) do
       self.Filter.StaticPrefixes[Prefix] = Prefix
     end
     return self
@@ -8918,7 +8918,7 @@ do -- SET_DYNAMICCARGO
   -- @param #SET_DYNAMICCARGO self
   -- @param #string Patterns The string pattern(s) that need to be contained in the dynamic cargo name. Can also be passed as a `#table` of strings.
   -- @return #SET_DYNAMICCARGO self
-  function SET_DYNAMICCARGO:FilterNamePattern( Patterns )
+  function SET_DYNAMICCARGO:FilterNamePattern(Patterns)
     return self:FilterPrefixes(Patterns)
   end
    
@@ -8934,7 +8934,7 @@ do -- SET_DYNAMICCARGO
           return false
         end
       end
-    )
+   )
     return self
   end
   
@@ -8950,7 +8950,7 @@ do -- SET_DYNAMICCARGO
           return false
         end
       end
-    )
+   )
     return self
   end
   
@@ -8966,7 +8966,7 @@ do -- SET_DYNAMICCARGO
           return false
         end
       end
-    )
+   )
     return self
   end
   
@@ -8983,7 +8983,7 @@ do -- SET_DYNAMICCARGO
           return false
         end
       end
-    )
+   )
     return self
   end
   
@@ -8991,20 +8991,20 @@ do -- SET_DYNAMICCARGO
   -- @param #SET_DYNAMICCARGO self
   -- @param #table Zones Table of Core.Zone#ZONE Zone objects, or a Core.Set#SET_ZONE
   -- @return #SET_DYNAMICCARGO self
-  function SET_DYNAMICCARGO:FilterZones( Zones )
+  function SET_DYNAMICCARGO:FilterZones(Zones)
     if not self.Filter.Zones then
       self.Filter.Zones = {}
     end
     local zones = {}
     if Zones.ClassName and Zones.ClassName == "SET_ZONE" then
       zones = Zones.Set
-    elseif type( Zones ) ~= "table" or (type( Zones ) == "table" and Zones.ClassName ) then
+    elseif type(Zones) ~= "table" or (type(Zones) == "table" and Zones.ClassName) then
       self:E("***** FilterZones needs either a table of ZONE Objects or a SET_ZONE as parameter!")
       return self     
     else
       zones = Zones
     end
-    for _,Zone in pairs( zones ) do
+    for _,Zone in pairs(zones) do
       local zonename = Zone:GetName()
       self.Filter.Zones[zonename] = Zone
     end
@@ -9016,8 +9016,8 @@ do -- SET_DYNAMICCARGO
   -- @return #SET_DYNAMICCARGO self
   function SET_DYNAMICCARGO:FilterStart()
     if _DATABASE then
-      self:HandleEvent( EVENTS.NewDynamicCargo, self._EventHandlerDCAdd )
-      self:HandleEvent( EVENTS.DynamicCargoRemoved, self._EventHandlerDCRemove )
+      self:HandleEvent(EVENTS.NewDynamicCargo, self._EventHandlerDCAdd)
+      self:HandleEvent(EVENTS.DynamicCargoRemoved, self._EventHandlerDCRemove)
       if self.Filter.Zones then
         self.ZoneTimer = TIMER:New(self._ContinousZoneFilter,self)
         local timing = self.ZoneTimerInterval or 30
@@ -9034,8 +9034,8 @@ do -- SET_DYNAMICCARGO
   -- @return #SET_DYNAMICCARGO self
   function SET_DYNAMICCARGO:FilterStop()
     if _DATABASE then
-      self:UnHandleEvent( EVENTS.NewDynamicCargo)
-      self:UnHandleEvent( EVENTS.DynamicCargoRemoved )
+      self:UnHandleEvent(EVENTS.NewDynamicCargo)
+      self:UnHandleEvent(EVENTS.DynamicCargoRemoved)
       if self.ZoneTimer and self.ZoneTimer:IsRunning() then
         self.ZoneTimer:Stop()
       end
@@ -9049,10 +9049,10 @@ do -- SET_DYNAMICCARGO
   -- @return #SET_DYNAMICCARGO self
   function SET_DYNAMICCARGO:_ContinousZoneFilter()   
     local Database = _DATABASE.DYNAMICCARGO  
-    for ObjectName, Object in pairs( Database ) do
-      if self:IsIncludeObject( Object ) and self:IsNotInSet(Object) then
-        self:Add( ObjectName, Object )
-      elseif (not self:IsIncludeObject( Object )) and self:IsInSet(Object) then
+    for ObjectName, Object in pairs(Database) do
+      if self:IsIncludeObject(Object) and self:IsNotInSet(Object) then
+        self:Add(ObjectName, Object)
+      elseif (not self:IsIncludeObject(Object)) and self:IsInSet(Object) then
         self:Remove(ObjectName)
       end
     end
@@ -9063,14 +9063,14 @@ do -- SET_DYNAMICCARGO
   --- Handles the events for the Set.
   -- @param #SET_DYNAMICCARGO self
   -- @param Core.Event#EVENTDATA Event
-  function SET_DYNAMICCARGO:_EventHandlerDCAdd( Event )
+  function SET_DYNAMICCARGO:_EventHandlerDCAdd(Event)
     if Event.IniDynamicCargo and Event.IniDynamicCargoName then
       if not _DATABASE.DYNAMICCARGO[Event.IniDynamicCargoName] then
-        _DATABASE:AddDynamicCargo( Event.IniDynamicCargoName )
+        _DATABASE:AddDynamicCargo(Event.IniDynamicCargoName)
       end
-      local ObjectName, Object = self:FindInDatabase( Event )
-      if Object and self:IsIncludeObject( Object ) then
-        self:Add( ObjectName, Object )
+      local ObjectName, Object = self:FindInDatabase(Event)
+      if Object and self:IsIncludeObject(Object) then
+        self:Add(ObjectName, Object)
       end
     end
     
@@ -9080,11 +9080,11 @@ do -- SET_DYNAMICCARGO
    --- Handles the remove event for dynamic cargo set.
   -- @param #SET_DYNAMICCARGO self
   -- @param Core.Event#EVENTDATA Event
-  function SET_DYNAMICCARGO:_EventHandlerDCRemove( Event )
+  function SET_DYNAMICCARGO:_EventHandlerDCRemove(Event)
     if Event.IniDCSUnitName then
-      local ObjectName, Object = self:FindInDatabase( Event )
+      local ObjectName, Object = self:FindInDatabase(Event)
       if ObjectName then
-        self:Remove( ObjectName )
+        self:Remove(ObjectName)
       end
     end
     
@@ -9097,7 +9097,7 @@ do -- SET_DYNAMICCARGO
   -- @param Core.Event#EVENTDATA Event
   -- @return #string The name of the DYNAMICCARGO
   -- @return Wrapper.DynamicCargo#DYNAMICCARGO The DYNAMICCARGO object
-  function SET_DYNAMICCARGO:FindInDatabase( Event )
+  function SET_DYNAMICCARGO:FindInDatabase(Event)
     return Event.IniDCSUnitName, self.Set[Event.IniDCSUnitName]
   end
   
@@ -9136,7 +9136,7 @@ do -- SET_DYNAMICCARGO
           table.insert(owners, cargo.Owner, cargo.Owner)
         end
       end
-    )  
+  )  
     return owners
   end
   
@@ -9151,7 +9151,7 @@ do -- SET_DYNAMICCARGO
           table.insert(owners, cargo.StaticName, cargo.warehouse)
         end
       end
-    )  
+  )  
     return owners
   end
   
@@ -9169,7 +9169,7 @@ do -- SET_DYNAMICCARGO
           end
         end
       end
-    )  
+  )  
     return owners
   end
 
