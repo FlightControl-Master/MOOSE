@@ -5655,9 +5655,8 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
             table.insert(self.CrateGroupList[Unit:GetName()],chunk)
             i=i+needed
           end
-          for q=1,sets do
-            local qm=MENU_GROUP:New(Group,string.format("Drop %d Set%s",q,q>1 and "s" or ""),parentMenu)
-            MENU_GROUP_COMMAND:New(Group,"Drop",qm,function(selfArg,GroupArg,UnitArg,cNameArg,neededArg,qty)
+          if sets==1 then
+            MENU_GROUP_COMMAND:New(Group,"Drop",parentMenu,function(selfArg,GroupArg,UnitArg,cNameArg,neededArg,qty)
               local uName=UnitArg:GetName()
               for k=1,qty do
                 local lst=selfArg.CrateGroupList and selfArg.CrateGroupList[uName]
@@ -5671,7 +5670,26 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
                 if not idx then break end
                 selfArg:_UnloadSingleCrateSet(GroupArg,UnitArg,idx)
               end
-            end,self,Group,Unit,cName,needed,q)
+            end,self,Group,Unit,cName,needed,1)
+          else
+            for q=1,sets do
+              local qm=MENU_GROUP:New(Group,string.format("Drop %d Set%s",q,q>1 and "s" or ""),parentMenu)
+              MENU_GROUP_COMMAND:New(Group,"Drop",qm,function(selfArg,GroupArg,UnitArg,cNameArg,neededArg,qty)
+                local uName=UnitArg:GetName()
+                for k=1,qty do
+                  local lst=selfArg.CrateGroupList and selfArg.CrateGroupList[uName]
+                  if not lst then break end
+                  local idx=nil
+                  for j=1,#lst do
+                    local ch=lst[j]
+                    local first=ch and ch[1]
+                    if first and (not first:WasDropped()) and first:GetName()==cNameArg and #ch>=neededArg then idx=j break end
+                  end
+                  if not idx then break end
+                  selfArg:_UnloadSingleCrateSet(GroupArg,UnitArg,idx)
+                end
+              end,self,Group,Unit,cName,needed,q)
+            end
           end
           lineIndex=lineIndex+1
         end
@@ -5715,9 +5733,8 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
             table.insert(self.CrateGroupList[Unit:GetName()],chunk)
             i=i+needed
           end
-          for q=1,sets do
-            local qm=MENU_GROUP:New(Group,string.format("Drop %d Set%s",q,q>1 and "s" or ""),parentMenu)
-            MENU_GROUP_COMMAND:New(Group,"Drop",qm,function(selfArg,GroupArg,UnitArg,cNameArg,neededArg,qty)
+          if sets==1 then
+            MENU_GROUP_COMMAND:New(Group,"Drop",parentMenu,function(selfArg,GroupArg,UnitArg,cNameArg,neededArg,qty)
               local uName=UnitArg:GetName()
               for k=1,qty do
                 local lst=selfArg.CrateGroupList and selfArg.CrateGroupList[uName]
@@ -5731,9 +5748,9 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
                 if not idx then break end
                 selfArg:_UnloadSingleCrateSet(GroupArg,UnitArg,idx)
               end
-            end,self,Group,Unit,cName,needed,q)
+            end,self,Group,Unit,cName,needed,1)
             if not ( self:IsUnitInAir(Unit) and self:IsFixedWing(Unit) ) then
-              MENU_GROUP_COMMAND:New(Group,"Drop and build",qm,function(selfArg,GroupArg,UnitArg,cNameArg,neededArg,qty)
+              MENU_GROUP_COMMAND:New(Group,"Drop and build",parentMenu,function(selfArg,GroupArg,UnitArg,cNameArg,neededArg,qty)
                 local uName=UnitArg:GetName()
                 for k=1,qty do
                   local lst=selfArg.CrateGroupList and selfArg.CrateGroupList[uName]
@@ -5748,7 +5765,44 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
                   selfArg:_UnloadSingleCrateSet(GroupArg,UnitArg,idx)
                 end
                 selfArg:_BuildCrates(GroupArg,UnitArg)
+              end,self,Group,Unit,cName,needed,1)
+            end
+          else
+            for q=1,sets do
+              local qm=MENU_GROUP:New(Group,string.format("Drop %d Set%s",q,q>1 and "s" or ""),parentMenu)
+              MENU_GROUP_COMMAND:New(Group,"Drop",qm,function(selfArg,GroupArg,UnitArg,cNameArg,neededArg,qty)
+                local uName=UnitArg:GetName()
+                for k=1,qty do
+                  local lst=selfArg.CrateGroupList and selfArg.CrateGroupList[uName]
+                  if not lst then break end
+                  local idx=nil
+                  for j=1,#lst do
+                    local ch=lst[j]
+                    local first=ch and ch[1]
+                    if first and (not first:WasDropped()) and first:GetName()==cNameArg and #ch>=neededArg then idx=j break end
+                  end
+                  if not idx then break end
+                  selfArg:_UnloadSingleCrateSet(GroupArg,UnitArg,idx)
+                end
               end,self,Group,Unit,cName,needed,q)
+              if not ( self:IsUnitInAir(Unit) and self:IsFixedWing(Unit) ) then
+                MENU_GROUP_COMMAND:New(Group,"Drop and build",qm,function(selfArg,GroupArg,UnitArg,cNameArg,neededArg,qty)
+                  local uName=UnitArg:GetName()
+                  for k=1,qty do
+                    local lst=selfArg.CrateGroupList and selfArg.CrateGroupList[uName]
+                    if not lst then break end
+                    local idx=nil
+                    for j=1,#lst do
+                      local ch=lst[j]
+                      local first=ch and ch[1]
+                      if first and (not first:WasDropped()) and first:GetName()==cNameArg and #ch>=neededArg then idx=j break end
+                    end
+                    if not idx then break end
+                    selfArg:_UnloadSingleCrateSet(GroupArg,UnitArg,idx)
+                  end
+                  selfArg:_BuildCrates(GroupArg,UnitArg)
+                end,self,Group,Unit,cName,needed,q)
+              end
             end
           end
           lineIndex=lineIndex+1
