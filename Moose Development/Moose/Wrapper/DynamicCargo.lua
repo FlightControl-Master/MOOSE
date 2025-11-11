@@ -534,12 +534,33 @@ function DYNAMICCARGO:_UpdatePosition()
     ---------------
     -- REMOVED Cargo
     --------------- 
-    if self.timer and self.timer:IsRunning() then self.timer:Stop() end
+    if self.timer and self.timer:IsRunning() then 
+            self.timer:Stop()
+            self.timer=nil
+    end
     self:T(self.lid.." dead! " ..self.CargoState.."-> REMOVED")
     self.CargoState = DYNAMICCARGO.State.REMOVED
     _DATABASE:CreateEventDynamicCargoRemoved(self)
   end
   return self
+end
+
+--- [USER] Destroy a DYNAMICCARGO object.
+-- @param #DYNAMICCARGO self
+-- @param #boolean GenerateEvent Set to false to remove an item silently. Defaults to true.
+-- @return #boolean Return Returns nil if the object could not be found, else returns true.
+function DYNAMICCARGO:Destroy(GenerateEvent)
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    local GenerateEvent = (GenerateEvent ~= nil and GenerateEvent == false) and false or true
+    if GenerateEvent and GenerateEvent == true then
+        self:CreateEventDead( timer.getTime(), DCSObject )
+    end  
+    DCSObject:destroy()
+    self:_UpdatePosition()
+    return true
+  end
+  return nil
 end
 
 --- [Internal] Track helos for loaded/unloaded decision making.
