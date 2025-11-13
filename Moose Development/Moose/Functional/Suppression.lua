@@ -308,7 +308,7 @@ SUPPRESSION.version="0.9.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Creates a new AI_suppression object.
+--- Creates a new suppression object.
 -- @param #SUPPRESSION self
 -- @param Wrapper.Group#GROUP group The GROUP object for which suppression should be applied.
 -- @return #SUPPRESSION self

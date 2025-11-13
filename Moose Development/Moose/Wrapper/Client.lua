@@ -516,28 +516,6 @@ function CLIENT:IsTransport()
   return self.ClientTransport
 end
 
---- Shows the @{AI.AI_Cargo#CARGO} contained within the CLIENT to the player as a message.
--- The @{AI.AI_Cargo#CARGO} is shown using the @{Core.Message#MESSAGE} distribution system.
--- @param #CLIENT self
-function CLIENT:ShowCargo()
-  self:F()
-
-  local CargoMsg = ""
-  
-  for CargoName, Cargo in pairs( CARGOS ) do
-    if self == Cargo:IsLoadedInClient() then
-      CargoMsg = CargoMsg .. Cargo.CargoName .. " Type:" ..  Cargo.CargoType .. " Weight: " .. Cargo.CargoWeight .. "\n"
-    end
-  end
-  
-  if CargoMsg == "" then
-    CargoMsg = "empty"
-  end
-  
-  self:Message( CargoMsg, 15, "Co-Pilot: Cargo Status", 30 )
-
-end
-
 --- The main message driver for the CLIENT.
 -- This function displays various messages to the Player logged into the CLIENT through the DCS World Messaging system.
 -- @param #CLIENT self
