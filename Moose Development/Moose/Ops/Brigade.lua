@@ -599,7 +599,80 @@ function BRIGADE:onafterStatus(From, Event, To)
       text=text..string.format("\n* %s: spawned=%s", asset.spawngroupname, tostring(asset.spawned))      
     end
     self:I(self.lid..text)
-  end    
+  end
+
+  if self.verbose>=3 then
+  
+    -- Count numbers
+    local Ntotal=0
+    local Nspawned=0
+    local Nrequested=0
+    local Nreserved=0
+    local Nstock=0
+    
+    local text="\n===========================================\n"
+    text=text.."Assets:"
+    local legion=self --Ops.Legion#LEGION
+
+    for _,_cohort in pairs(legion.cohorts) do
+      local cohort=_cohort --Ops.Cohort#COHORT
+      
+      for _,_asset in pairs(cohort.assets) do
+        local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+
+        local state="In Stock"
+        if asset.flightgroup then
+          state=asset.flightgroup:GetState()
+          local mission=legion:GetAssetCurrentMission(asset)
+          if mission then
+            state=state..string.format(", Mission \"%s\" [%s]", mission:GetName(), mission:GetType())
+          end
+        else
+          if asset.spawned then
+            env.info("FF ERROR: asset has opsgroup but is NOT spawned!")
+          end
+          if asset.requested and asset.isReserved then
+            env.info("FF ERROR: asset is requested and reserved. Should not be both!")
+            state="Reserved+Requested!"
+          elseif asset.isReserved then
+            state="Reserved"
+          elseif asset.requested then
+            state="Requested"
+          end
+        end
+                    
+        -- Text.
+        text=text..string.format("\n[UID=%03d] %s Legion=%s [%s]: State=%s [RID=%s]", 
+        asset.uid, asset.spawngroupname, legion.alias, cohort.name, state, tostring(asset.rid))
+        
+        
+        if asset.spawned then
+          Nspawned=Nspawned+1
+        end            
+        if asset.requested then
+          Nrequested=Nrequested+1
+        end  
+        if asset.isReserved then
+          Nreserved=Nreserved+1
+        end                      
+        if not (asset.spawned or asset.requested or asset.isReserved) then
+          Nstock=Nstock+1
+        end
+        
+        Ntotal=Ntotal+1
+        
+      end
+  
+    end
+    text=text.."\n-------------------------------------------"
+    text=text..string.format("\nNstock     = %d", Nstock)
+    text=text..string.format("\nNreserved  = %d", Nreserved)
+    text=text..string.format("\nNrequested = %d", Nrequested)
+    text=text..string.format("\nNspawned   = %d", Nspawned)
+    text=text..string.format("\nNtotal     = %d (=%d)", Ntotal, Nstock+Nspawned+Nrequested+Nreserved)
+    text=text.."\n==========================================="
+    self:I(self.lid..text)
+  end  
 
 end
 

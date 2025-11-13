@@ -20,6 +20,13 @@ _DATABASE:_RegisterCargos()
 _DATABASE:_RegisterZones()
 _DATABASE:_RegisterAirbases()
 
+--- Function that writes to DCS log file
+-- @param #string text Formatted text.
+-- @param ... Format passed to string.format().
+function printf(text, ...)
+  env.info(string.format(text, ...))
+end
+
 --- Check if os etc is available.
 BASE:I("Checking de-sanitization of os, io and lfs:")
 local __na = false
