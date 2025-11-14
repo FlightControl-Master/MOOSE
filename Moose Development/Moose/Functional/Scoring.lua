@@ -325,6 +325,8 @@ function SCORING:New( GameName, SavePath, AutoSave )
     self:OpenCSV( GameName )
   end
 
+  self:I("SCORING "..tostring(GameName).." started! v"..self.version)
+
   return self
 
 end
@@ -398,6 +400,11 @@ end
 -- @param #number Score The Score value.
 -- @return #SCORING
 function SCORING:AddStaticScore( ScoreStatic, Score )
+
+  if ScoreStatic == nil then
+    BASE:E("SCORING.AddStaticScore: Parameter ScoreStatic is nil!")
+    return self
+  end
 
   local StaticName = ScoreStatic:GetName()
 
@@ -1305,7 +1312,7 @@ function SCORING:_EventOnDeadOrCrash( Event )
       local Destroyed = false
 
       -- What is the player destroying?
-      if Player and Player.Hit and Player.Hit[TargetCategory] and Player.Hit[TargetCategory][TargetUnitName] and Player.Hit[TargetCategory][TargetUnitName].TimeStamp ~= 0 and (TargetUnit.BirthTime == nil or Player.Hit[TargetCategory][TargetUnitName].TimeStamp > TargetUnit.BirthTime) then -- Was there a hit for this unit for this player before registered???
+      if Player and Player.Hit and Player.Hit[TargetCategory] and Player.Hit[TargetCategory][TargetUnitName] and Player.Hit[TargetCategory][TargetUnitName].TimeStamp ~= 0 and TargetUnit and (TargetUnit.BirthTime == nil or Player.Hit[TargetCategory][TargetUnitName].TimeStamp > TargetUnit.BirthTime) then -- Was there a hit for this unit for this player before registered???
 
         local TargetThreatLevel = Player.Hit[TargetCategory][TargetUnitName].ThreatLevel
         local TargetThreatType = Player.Hit[TargetCategory][TargetUnitName].ThreatType
