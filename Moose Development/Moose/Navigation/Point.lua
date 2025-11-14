@@ -231,6 +231,21 @@ function NAVFIX:NewFromNavFix(Name, Type, NavFix, Distance, Bearing, Reciprocal)
   return self
 end
 
+--- Create a new NAVFIX class instance from  BEACONS.Beacon data.
+-- @param #NAVFIX self
+-- @param Navigation.Beacons#BEACONS.Beacon Beacon The beacon data.
+-- @return #NAVFIX self
+function NAVFIX:NewFromBeacon(Beacon)
+  local frequency, unit = BEACONS:_GetFrequency(Beacon.frequency)
+  frequency = string.format("%.3f",frequency)
+  if Beacon.typeName == "TACAN" then
+    frequency = Beacon.channel
+    unit = "X"
+  end
+  self = NAVFIX:NewFromVector(string.format("%s %s %s",Beacon.typeName,frequency,unit),Beacon.typeName,Beacon.vec3)
+  return self
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -348,7 +363,7 @@ end
 
 --- Set whether this fix is compulsory.
 -- @param #NAVFIX self
--- @param #boolean Compulsory If `true`, this is a compusory fix. If `false` or nil, it is non-compulsory.
+-- @param #boolean Compulsory If `true`, this is a compulsory fix. If `false` or nil, it is non-compulsory.
 -- @return #NAVFIX self
 function NAVFIX:SetCompulsory(Compulsory)
   self.isCompulsory=Compulsory
