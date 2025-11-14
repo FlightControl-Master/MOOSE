@@ -2855,7 +2855,7 @@ do -- Route methods
   -- @param Core.Zone#ZONE Zone The zone where to route to.
   -- @param #boolean Randomize Defines whether to target point gets randomized within the Zone.
   -- @param #number Speed The speed in m/s. Default is 5.555 m/s = 20 km/h.
-  -- @param Core.Base#FORMATION Formation The formation string.
+  -- @param DCS#FORMATION Formation The formation string.
   function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
     self:F2( Zone )
 
@@ -2915,7 +2915,7 @@ do -- Route methods
   -- @param #CONTROLLABLE self
   -- @param DCS#Vec2 Vec2 The Vec2 where to route to.
   -- @param #number Speed The speed in m/s. Default is 5.555 m/s = 20 km/h.
-  -- @param Core.Base#FORMATION Formation The formation string.
+  -- @param DCS#FORMATION Formation The formation string.
   function CONTROLLABLE:TaskRouteToVec2( Vec2, Speed, Formation )
 
     local DCSControllable = self:GetDCSObject()
