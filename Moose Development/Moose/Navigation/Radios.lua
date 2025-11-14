@@ -39,7 +39,7 @@
 --
 -- # The RADIOS Concept
 --
--- This class is desinged to make information about radios of a map/theatre easier accessible. The information contains mostly the frequencies of airbases of the map.
+-- This class is designed to make information about radios of a map/theatre easier accessible. The information contains mostly the frequencies of airbases of the map.
 -- 
 -- **Note** that try to avoid hard coding stuff in Moose since DCS is updated frequently and things change. Therefore, the main source of information is either a file `radio.lua` that can be
 -- found in the installation directory of DCS for each map or a table that the user needs to provide.
@@ -48,7 +48,7 @@
 -- 
 -- A new `RADIOS` object can be created with the @{#RADIOS.NewFromFile}(*radio_lua_file*) function.
 -- 
---     local radios=RADIOS:NewFromFile("<DCS_Install_Directory>\Mods\terrains\<Map_Name>\radios.lua")
+--     local radios=RADIOS:NewFromFile("<DCS_Install_Directory>\Mods\terrains\<Map_Name>\radio.lua")
 --     radios:MarkerShow()
 -- 
 -- This will load the radios from the `<DCS_Install_Directory>` for the specific map and place markers on the F10 map. This is the first step you should do to ensure that the file
