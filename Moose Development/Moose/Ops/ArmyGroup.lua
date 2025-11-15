@@ -839,8 +839,8 @@ function ARMYGROUP:Status()
       local ammo=self:GetAmmoElement(element)
 
       -- Output text for element.
-      text=text..string.format("\n[%d] %s: status=%s, life=%.1f/%.1f, guns=%d, rockets=%d, bombs=%d, missiles=%d, cargo=%d/%d kg",
-      i, name, status, life, life0, ammo.Guns, ammo.Rockets, ammo.Bombs, ammo.Missiles, element.weightCargo, element.weightMaxCargo)
+      text=text..string.format("\n[%d] %s: status=%s, life=%.1f/%.1f, guns=%d, cannons=%d, rockets=%d, missiles=%d, cargo=%d/%d kg",
+      i, name, status, life, life0, ammo.Guns, ammo.Cannons, ammo.Rockets, ammo.Missiles, element.weightCargo, element.weightMaxCargo)
     end
     if #self.elements==0 then
       text=text.." none!"
@@ -1571,7 +1571,7 @@ end
 -- @param Core.Zone#ZONE Zone The zone to return to.
 -- @param #number Formation Formation of the group.
 function ARMYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
-  self:T2(self.lid.."onafterRTZ")
+  self:T(self.lid.."onafterRTZ")
 
   -- Zone.
   local zone=Zone or self.homezone
@@ -1841,8 +1841,6 @@ function ARMYGROUP:_UpdateEngageTarget()
       -- Check if target moved more than 100 meters or we do not have line of sight.
       if dist>100 or los==false then
 
-        --env.info("FF Update Engage Target Moved "..self.engage.Target:GetName())
-
         -- Update new position.
         self.engage.Coordinate:UpdateFromVec3(vec3)
 
@@ -1852,13 +1850,14 @@ function ARMYGROUP:_UpdateEngageTarget()
         -- Remove current waypoint
         self:RemoveWaypointByID(self.engage.Waypoint.uid)
 
-        local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.9)
+        -- Get new coordinate where to go.
+        local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.95)
 
           -- Add waypoint after current.
         self.engage.Waypoint=self:AddWaypoint(intercoord, self.engage.Speed, uid, self.engage.Formation, true)
 
         -- Set if we want to resume route after reaching the detour waypoint.
-        self.engage.Waypoint.detour=0
+        self.engage.Waypoint.detour=1
 
       end
 

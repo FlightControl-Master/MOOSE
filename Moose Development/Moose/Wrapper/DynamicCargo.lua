@@ -108,8 +108,9 @@ DYNAMICCARGO.State = {
 -- @type DYNAMICCARGO.AircraftTypes
 DYNAMICCARGO.AircraftTypes = {
   ["CH-47Fbl1"] = "CH-47Fbl1",
-  ["Mi-8MTV2"] = "CH-47Fbl1",
-  ["Mi-8MT"] = "CH-47Fbl1",
+  ["Mi-8MTV2"] = "Mi-8MTV2",
+  ["Mi-8MT"] = "Mi-8MT",
+  ["C-130J-30"] = "C-130J-30",
 }
 
 --- Helo types possible.
@@ -122,23 +123,29 @@ DYNAMICCARGO.AircraftDimensions = {
     ["length"] = 11,
     ["ropelength"] = 30,
   },
-    ["Mi-8MTV2"] = {
+  ["Mi-8MTV2"] = {
     ["width"] = 6,
     ["height"] = 6,
     ["length"] = 15,
     ["ropelength"] = 30,
   },
-    ["Mi-8MT"] = {
+  ["Mi-8MT"] = {
     ["width"] = 6,
     ["height"] = 6,
     ["length"] = 15,
     ["ropelength"] = 30,
+  },
+  ["C-130J-30"] = {
+    ["width"] = 4,
+    ["height"] = 12,
+    ["length"] = 35,
+    ["ropelength"] = 0,
   },
 }
 
 --- DYNAMICCARGO class version.
 -- @field #string version
-DYNAMICCARGO.version="0.0.9"
+DYNAMICCARGO.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -527,12 +534,33 @@ function DYNAMICCARGO:_UpdatePosition()
     ---------------
     -- REMOVED Cargo
     --------------- 
-    if self.timer and self.timer:IsRunning() then self.timer:Stop() end
+    if self.timer and self.timer:IsRunning() then 
+            self.timer:Stop()
+            self.timer=nil
+    end
     self:T(self.lid.." dead! " ..self.CargoState.."-> REMOVED")
     self.CargoState = DYNAMICCARGO.State.REMOVED
     _DATABASE:CreateEventDynamicCargoRemoved(self)
   end
   return self
+end
+
+--- [USER] Destroy a DYNAMICCARGO object.
+-- @param #DYNAMICCARGO self
+-- @param #boolean GenerateEvent Set to false to remove an item silently. Defaults to true.
+-- @return #boolean Return Returns nil if the object could not be found, else returns true.
+function DYNAMICCARGO:Destroy(GenerateEvent)
+  local DCSObject = self:GetDCSObject()
+  if DCSObject then
+    local GenerateEvent = (GenerateEvent ~= nil and GenerateEvent == false) and false or true
+    if GenerateEvent and GenerateEvent == true then
+        self:CreateEventDead( timer.getTime(), DCSObject )
+    end  
+    DCSObject:destroy()
+    self:_UpdatePosition()
+    return true
+  end
+  return nil
 end
 
 --- [Internal] Track helos for loaded/unloaded decision making.

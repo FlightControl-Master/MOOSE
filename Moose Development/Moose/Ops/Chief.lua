@@ -35,7 +35,7 @@
 -- @field #number Nsuccess Number of successful missions.
 -- @field #number Nfailure Number of failed mission.
 -- @field #table assetNumbers Asset numbers. Each entry is a table of data type `#CHIEF.AssetNumber`.
--- @extends Ops.Intel#INTEL
+-- @extends Ops.Intelligence#INTEL
 
 --- *In preparing for battle I have always found that plans are useless, but planning is indispensable* -- Dwight D Eisenhower
 --
@@ -48,7 +48,7 @@
 -- 
 -- # Territory
 -- 
--- The chief class allows you to define boarder zones, conflict zones and attack zones.
+-- The chief class allows you to define border zones, conflict zones and attack zones.
 -- 
 -- ## Border Zones
 -- 
@@ -332,7 +332,7 @@ CHIEF.Strategy = {
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.6.1"
+CHIEF.version="0.7.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2897,6 +2897,8 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
         
       else
+      
+        -- Everything else
 
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.BAI, 100))
         table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.GROUNDATTACK, 50))
@@ -2912,6 +2914,8 @@ function CHIEF:_GetMissionPerformanceFromTarget(Target)
       ---
     
       table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ANTISHIP, 100))
+      table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.NAVALENGAGEMENT, 50)) 
+      table.insert(missionperf, self:_CreateMissionPerformance(AUFTRAG.Type.ARTY, 30))
   
     else
       self:E(self.lid.."ERROR: Unknown Group category!")

@@ -3,6 +3,8 @@
 -- **Main Features:**
 --
 --    * Get radio frequencies of airbases
+--    * Find closest airbase radios
+--    * Mark radio frequencies on F10 map
 -- 
 -- ===
 --
@@ -37,7 +39,7 @@
 --
 -- # The RADIOS Concept
 --
--- This class is desinged to make information about radios of a map/theatre easier accessible. The information contains mostly the frequencies of airbases of the map.
+-- This class is designed to make information about radios of a map/theatre easier accessible. The information contains mostly the frequencies of airbases of the map.
 -- 
 -- **Note** that try to avoid hard coding stuff in Moose since DCS is updated frequently and things change. Therefore, the main source of information is either a file `radio.lua` that can be
 -- found in the installation directory of DCS for each map or a table that the user needs to provide.
@@ -46,7 +48,7 @@
 -- 
 -- A new `RADIOS` object can be created with the @{#RADIOS.NewFromFile}(*radio_lua_file*) function.
 -- 
---     local radios=RADIOS:NewFromFile("<DCS_Install_Directory>\Mods\terrains\<Map_Name>\radios.lua")
+--     local radios=RADIOS:NewFromFile("<DCS_Install_Directory>\Mods\terrains\<Map_Name>\radio.lua")
 --     radios:MarkerShow()
 -- 
 -- This will load the radios from the `<DCS_Install_Directory>` for the specific map and place markers on the F10 map. This is the first step you should do to ensure that the file
@@ -64,7 +66,7 @@
 -- @field #RADIOS
 RADIOS = {
   ClassName  = "RADIOS",
-  verbose    =         0,
+  verbose    =        0,
   radios    =        {},
 }
 
@@ -78,6 +80,9 @@ RADIOS = {
 -- @field #table sceneObjects Scenery objects.
 -- @field #string name Name of the airbase.
 -- @field Wrapper.Airbase#AIRBASE airbase Airbase.
+-- @field Core.Point#COORDINATE coordinate The COORDINATE of the radio.
+-- @field DCS#Vec3 vec3 3D vector.
+-- @field #number markerID Marker ID.
 
 --- Radio item data structure.
 -- @type RADIOS.Frequency
@@ -87,7 +92,7 @@ RADIOS = {
 
 --- RADIOS class version.
 -- @field #string version
-RADIOS.version="0.0.0"
+RADIOS.version="0.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -108,32 +113,41 @@ function RADIOS:NewFromTable(RadioTable)
   -- Inherit everything from BASE class.
   self=BASE:Inherit(self, BASE:New()) -- #RADIOS
   
-  local airbasenames=AIRBASE.GetAllAirbaseNames()
+  --local airbasenames=AIRBASE.GetAllAirbaseNames()
+  
+  -- Get all airdromes
+  local airdromes=AIRBASE.GetAllAirbases(nil, Airbase.Category.AIRDROME)
   
   for _,_radio in pairs(RadioTable) do
     local radio=_radio --#RADIOS.Radio
-    
-    --UTILS.PrintTableToLog(radio)
-    --UTILS.PrintTableToLog(radio.callsign)
-    
+
     -- The table structure of callsign is a bit awkward. We need to get the airbase name.
-    local cs=radio.callsign[1]
-    if cs and cs.common then
-      radio.name=cs.common[1]
-    elseif cs and cs.nato then
-      radio.name=cs.nato[1]
-    else
-      radio.name="Unknown"
+    -- Note that unfortunately, the callsign does not always correspond to the airbase name.
+    if false then
+      local cs=radio.callsign[1]
+      if cs and cs.common then
+        radio.name=cs.common[1]
+      elseif cs and cs.nato then
+        radio.name=cs.nato[1]
+      else
+        radio.name="Unknown"
+      end
+      radio.name=self:_GetAirbaseName(airbasenames, radio.name)    
+      radio.airbase=AIRBASE:FindByName(radio.name)
     end
     
-    --UTILS.PrintTableToLog(radio.callsign)
+    -- Each radio item has a key radioId = 'airfield106_0', where 106 is the UID of the airbase.
+    -- So we can use that to get the airbase.
+    local aid = tonumber(string.match(radio.radioId, "airfield(%d+)_"))
     
-    radio.name=self:_GetAirbaseName(airbasenames, radio.name)
+    -- Get airbase
+    radio.airbase=self:_GetAirbaseByID(airdromes, aid)
     
-    radio.airbase=AIRBASE:FindByName(radio.name)
-    
+    -- Set other stuff
     if radio.airbase then
       radio.coordinate=radio.airbase:GetCoordinate()
+      radio.vec3=radio.airbase:GetVec3()
+      radio.name=radio.airbase:GetName()
     end
     
     -- Add to table
@@ -197,6 +211,66 @@ end
 function RADIOS:GetCoordinate(radio)
   return radio.coordinate
 end
+
+
+--- Find closest radio to a given coordinate.
+-- @param #RADIOS self
+-- @param Core.Point#COORDINATE Coordinate The reference coordinate.
+-- @param #number DistMax (Optional) Max search distance in meters.
+-- @param #table ExcludeList (Optional) List of radios to exclude.
+-- @return #RADIOS.Radio The closest radio.
+function RADIOS:GetClosestRadio(Coordinate, DistMax, ExcludeList)
+
+  local radio=nil --#RADIOS.Radio
+  local distmin=math.huge
+  
+  ExcludeList=ExcludeList or {}
+  
+  for _,_radio in pairs(self.radios) do
+    local ra=_radio --#RADIOS.Radio
+    
+    if (not UTILS.IsInTable(ExcludeList, ra, "radioId")) then
+    
+      local dist=Coordinate:Get2DDistance(ra.coordinate)
+      
+      if dist<distmin and (DistMax==nil or dist<=DistMax) then
+        distmin=dist
+        radio=ra
+      end
+      
+    end
+    
+  end  
+  
+  return radio
+end
+
+--- Find closest radios to a given coordinate.
+-- @param #RADIOS self
+-- @param Core.Point#COORDINATE Coordinate The reference coordinate.
+-- @param #number Nmax Max number of radios. Default 5.
+-- @param #number DistMax (Optional) Max search distance in meters.
+-- @return #table Table of #RADIOS.Radio closest radios.
+function RADIOS:GetClosestRadios(Coordinate, Nmax, DistMax)
+
+    Nmax=Nmax or 5
+    
+    local closest={}
+    for i=1,Nmax do
+    
+      local radio=self:GetClosestRadio(Coordinate, DistMax, closest)
+      
+      if radio then
+        table.insert(closest, radio)
+      else
+        break
+      end
+      
+    end
+
+  return closest
+end
+
 
 --- Add markers for all radios on the F10 map.
 -- @param #RADIOS self
@@ -323,6 +397,24 @@ function RADIOS:_GetAirbaseName(airbasenames, name)
   end
 
   return "Unknown"
+end
+
+--- Get name of frequency band.
+-- @param #RADIOS self
+-- @param #table airbases Table of airbases.
+-- @param #number aid Airbase ID.
+-- @return Wrapper.Airbase#AIRBASE Airbase matching the ID or nil.
+function RADIOS:_GetAirbaseByID(airbases, aid)
+
+  for _,_airbase in pairs(airbases) do
+    local airbase=_airbase --Wrapper.Airbase#AIRBASE
+    local id=airbase:GetID(true)
+    if id==aid then
+      return airbase
+    end
+  end
+
+  return nil
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

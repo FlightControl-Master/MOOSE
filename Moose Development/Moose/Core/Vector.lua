@@ -133,7 +133,10 @@ VECTOR = {
 
 --- VECTOR class version.
 -- @field #string version
-VECTOR.version="0.0.2"
+VECTOR.version="0.1.0"
+
+--- VECTOR unique ID
+_VECTORID=0
 
 --- VECTOR private index.
 -- @field #VECTOR __index
@@ -144,7 +147,7 @@ VECTOR.__index = VECTOR
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: 3D rotation
--- TODO: Markers
+-- DONE: Markers
 -- TODO: Documentation
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -168,6 +171,10 @@ function VECTOR:New(x, y, z)
   else
     self=setmetatable({x=x or 0, y=y or 0, z=z or 0}, VECTOR)
   end
+  
+  _VECTORID=_VECTORID+1
+  
+  self.uid=_VECTORID
 
   return self
 end
@@ -275,7 +282,7 @@ end
 -- @param #VECTOR self
 -- @param #number Latitude Latitude in decimal degrees.
 -- @param #number Longitude Longitude in decimal degrees.
--- @param #number altitude (Optional) Altitude in meters. Default is the land height at the 2D position.
+-- @param #number Altitude (Optional) Altitude in meters. Default is the land height at the 2D position.
 -- @return #VECTOR self
 function VECTOR:NewFromLLDD(Latitude, Longitude, Altitude)
 
@@ -284,13 +291,11 @@ function VECTOR:NewFromLLDD(Latitude, Longitude, Altitude)
 
   -- Convert vec3 to coordinate object.
   self=VECTOR:NewFromVec(vec3)
-
---  -- Adjust height
---  if Altitude==nil then
---    self.y=self:GetSurfaceHeight()
---  else
---    self.y=Altitude
---  end
+  
+  -- Adjust height
+  if Altitude then
+    self.y=Altitude
+  end
 
   return self
 end
@@ -526,18 +531,29 @@ function VECTOR:GetLatitudeLongitude()
 end
 
 
---- Get MGRS coordinates of this vector.
+--- Get MGRS information of this vector.
+-- 
+-- `MGRS = {UTMZone = string, MGRSDigraph = string, Easting = number, Northing = number}`
+-- 
 -- @param #VECTOR self
--- @param #VECTOR Vector Vector from which the heading is requested.
--- @return #number Latitude
--- @return #number Longitude
+-- @return #table MGRS table with `UTMZone`, `MGRSDiGraph`, `Easting` and `Northing` keys.
 function VECTOR:GetMGRS()
 
   local lat, long=self:GetLatitudeLongitude()
 
-  local mrgs=coord.LLtoMGRS(lat, long)
+  local mgrs=coord.LLtoMGRS(lat, long)
+
+  -- Example table returned by coord.LLtoMGRS
+  --[[
+  MGRS = {
+    UTMZone = string,
+    MGRSDigraph = string,
+    Easting = number,
+    Northing = number
+  }
+  ]]
   
-  return mrgs.Easing, mrgs.Northing
+  return mgrs
 end
 
 --- Get the difference of the heading of this vector w.
@@ -569,7 +585,7 @@ end
 -- @param #VECTOR Vector The destination vector.
 -- @param #number Fraction The fraction (0,1) where the new vector is created. Default 0.5, *i.e.* in the middle.
 -- @return #VECTOR Vector between this and the other vector.
-function VECTOR:GetIntermediateCoordinate(Vector, Fraction)
+function VECTOR:GetIntermediateVector(Vector, Fraction)
 
   local f=Fraction or 0.5
 
@@ -581,13 +597,7 @@ function VECTOR:GetIntermediateCoordinate(Vector, Fraction)
   
   -- Set/scale the length.
   vec:SetLength(f*length)
-  
-  --TODO: Not sure what this was supposed to do?!
---  if f>1 then
---    local norm=UTILS.VecNorm(vec)
---    f=Fraction/norm
---  end  
-  
+ 
   -- Get to the desired position.
   vec=self+vec
   
@@ -638,12 +648,11 @@ end
 --- Set z-component of vector. The z-axis points to the East.
 -- @param #VECTOR self
 -- @param #number z Value of z. Default 0.
--- @param #VECTOR self
+-- @return #VECTOR self
 function VECTOR:SetZ(z)
   self.z=z or 0
   return self
 end
-
 
 
 --- Add a vector to this. This function works for DCS#Vec2, DCS#Vec3, VECTOR, COORDINATE objects.
@@ -666,8 +675,9 @@ function VECTOR:AddVec(Vec)
   return self
 end
 
---- Substract a vector from this one. This function works for DCS#Vec2, DCS#Vec3, VECTOR, COORDINATE objects.
--- Note that if you want to add a VECTOR, you can also simply use the `-` operator.
+--- Subtract a vector from this one. This function works for DCS#Vec2, DCS#Vec3, VECTOR, COORDINATE objects.
+-- 
+-- **Note** that if you want to add a VECTOR, you can also simply use the `-` operator.
 -- @param #VECTOR self
 -- @param DCS#Vec3 Vec Vector to substract. Can also be a DCS#Vec2, DCS#Vec3, COORDINATE or VECTOR object.
 -- @return #VECTOR self
@@ -818,10 +828,14 @@ function VECTOR:Rotate2D(Angle, Copy)
   local x = X*sinPhi + Y*cosPhi
   
   -- Create new vector.
-  -- TODO: Copy argument
-  local vector=VECTOR:New(x, self.y, z)
-  
-  return vector
+  if Copy then
+    local vector=VECTOR:New(x, self.y, z)
+    return vector
+  else
+    self:SetX(x)
+    self:SetZ(z)
+    return self
+  end
 end
 
 
@@ -857,7 +871,7 @@ end
 -- * RUNWAY = 5
 -- 
 -- @param #VECTOR self
--- @return #number Surface Type
+-- @return #number Surface type
 function VECTOR:GetSurfaceType()
 
   local vec2=self:GetVec2()
@@ -865,6 +879,32 @@ function VECTOR:GetSurfaceType()
   local s=land.getSurfaceType(vec2)
    
   return s
+end
+
+
+--- Get the name of surface type at the vector.
+-- 
+-- * LAND = 1
+-- * SHALLOW_WATER = 2
+-- * WATER = 3
+-- * ROAD = 4
+-- * RUNWAY = 5
+-- 
+-- @param #VECTOR self
+-- @return #string Surface type name
+function VECTOR:GetSurfaceTypeName()
+
+  local vec2=self:GetVec2()
+  
+  local s=land.getSurfaceType(vec2)
+  
+  for name,id in land.SurfaceType() do
+    if id==s then
+      return name
+    end
+  end
+   
+  return "unknown"
 end
 
 --- Check if a given vector has line of sight with this vector.
@@ -884,8 +924,7 @@ end
 
 --- Get a vector on the closest road.
 -- @param #VECTOR self
--- @param #VECTOR Vec The other vector.
--- @return #VECTOR Closest vector on a road.
+-- @return #VECTOR Closest vector to a road.
 function VECTOR:GetClosestRoad()
 
   local vec2=self:GetVec2()
@@ -900,19 +939,36 @@ function VECTOR:GetClosestRoad()
   return road
 end
 
+--- Get a vector on the closest railroad.
+-- @param #VECTOR self
+-- @return #VECTOR Closest vector to a railroad.
+function VECTOR:GetClosestRailroad()
+
+  local vec2=self:GetVec2()
+
+  local x,y=land.getClosestPointOnRoads('railroads', vec2.x, vec2.y)
+  
+  local road=nil  
+  if x and y then
+    road=VECTOR:New(x, y)
+  end
+
+  return road
+end
+
 
 --- Get the path on road from this vector to a given other vector.
 -- @param #VECTOR self
 -- @param #VECTOR Vec The destination vector.
--- @return Core.Path#PATHLINE Pathline with points on road.
+-- @return Core.Pathline#PATHLINE Pathline with points on road.
 function VECTOR:GetPathOnRoad(Vec)
 
-  local vec2=self:GetVec2()
+  local vec1=self:GetVec2()
+  local vec2=Vec:GetVec2()
   
-  local path=nil
-
-  local vec2points=land.findPathOnRoads("roads", vec2.x , vec2.y, vec2.x, vec2.y)
+  local vec2points=land.findPathOnRoads("roads", vec1.x , vec1.y, vec2.x, vec2.y)
   
+  local path=nil  
   if vec2points then    
     path=PATHLINE:NewFromVec2Array("Road", vec2points)
   end
@@ -924,7 +980,7 @@ end
 --- Get profile of the land between the two passed points.
 -- @param #VECTOR self
 -- @param #VECTOR Vec3 The 3D destination vector. If a 2D vector is passed, `y` is set to the land height.
--- @return Core.Path#PATHLINE Pathline with points of the profile.
+-- @return Core.Pathline#PATHLINE Pathline with points of the profile.
 function VECTOR:GetProfile(Vec3)
 
   local vec3=self:GetVec3()
@@ -1022,36 +1078,104 @@ function VECTOR:GetTemperaturAndPressure()
   return t,p
 end
 
+--- Creates a smoke at this vector.
+-- @param #VECTOR self
+-- @param #number Color Color of the smoke: 0=Green, 1=Red, 2=White, 3=Orange, 4=Blue. Default 0.
+-- @param #number Duration (Optional) Duration of the smoke in seconds. Default nil.
+-- @return #string Name of the smoke object. Can be used to stop it. 
+function VECTOR:Smoke(Color, Duration)
+
+  local vec3=self:GetVec3()
+  
+  Color=Color or 0
+
+  -- Create a name for the smoke object
+  local name=string.format("Vector-Smoke-%d", self.uid)
+  
+  -- Create smoke at this position
+  trigger.action.smoke(vec3, Color, name)
+  
+  if Duration and Duration>0 then
+    self:StopSmoke(name, Duration)
+  end
+
+  return name
+end
+
 
 --- Creates a large smoke and fire effect of a specified type and density at this vector.
+-- 
+-- * 1 = small smoke and fire
+-- * 2 = medium smoke and fire
+-- * 3 = large smoke and fire
+-- * 4 = huge smoke and fire
+-- * 5 = small smoke
+-- * 6 = medium smoke 
+-- * 7 = large smoke
+-- * 8 = huge smoke
+-- 
 -- @param #VECTOR self
 -- @param #number Preset Preset of smoke. Default `BIGSMOKEPRESET.LargeSmokeAndFire`.
 -- @param #number Density Density between [0,1]. Default 0.5.
--- @return #string Name of the smoke. Can be used to stop it.
-function VECTOR:SmokeAndFire(Preset, Density)
+-- @param #number Duration (Optional) Duration of the smoke and fire in seconds.
+-- @return #string Name of the smoke. Can be used to stop it. 
+function VECTOR:SmokeAndFire(Preset, Density, Duration)
 
   Preset=Preset or BIGSMOKEPRESET.LargeSmokeAndFire
   Density=Density or 0.5
 
   local vec3=self:GetVec3()
   
-  --TODO: Get a unique name or pass name as parameter?
+  -- Get a name of this smoke & fire object
+  local name=string.format("Vector-Fire-%d", self.uid)
 
-  trigger.action.effectSmokeBig(vec3, Preset, Density, Name)
+  trigger.action.effectSmokeBig(vec3, Preset, Density, name)
+  
+  if Duration and Duration>0 then
+    self:StopSmoke(name, Duration)
+  end  
 
-  return Name
+  return name
 end
+
+--- Stop smoke or fire effect.
+-- @param #VECTOR self
+-- @param #string Name Name of the smoke object.
+-- @param #number Delay Delay in seconds before the smoke is stopped.
+-- @return #VECTOR self
+function VECTOR:StopSmoke(Name, Delay)
+
+  if Delay and Delay>0 then
+    TIMER:New(VECTOR.StopSmoke, self, Name):Start(Delay)
+  else
+    if Name then
+      trigger.action.effectSmokeStop(Name)
+    else
+      env.error(string.format("No name provided in VECTOR.StopSmoke function!"))
+    end
+  end
+  
+  return self
+end
+
 
 --- Creates an illumination bomb at the specified point.
 -- @param #VECTOR self
 -- @param #number Power The power in Candela (cd). Should be between 1 and 1000000. Default 1000 cd.
+-- @param #number Altitude (Optional) Altitude [m] at which the illumination bomb is created.
 -- @return #VECTOR self
-function VECTOR:IlluminationBomb(Power)
+function VECTOR:IlluminationBomb(Power, Altitude)
 
   local vec3=self:GetVec3()
+  
+  if Altitude then
+    vec3.y=Altitude
+  end
 
+  -- Create an illumination bomb.
   trigger.action.illuminationBomb(vec3, Power or 1000)
 
+  return self
 end
 
 --- Creates an explosion at a given point at the specified power.
@@ -1085,15 +1209,72 @@ end
 --- Creates a arrow from this VECTOR to another vector on the F10 map.
 -- @param #VECTOR self
 -- @param #VECTOR Vector The vector defining the endpoint.
--- @return #VECTOR self
-function VECTOR:ArrowToAll(Vector)
+-- @param #number Coalition Coalition Id: -1=All, 0=Neutral, 1=Red, 2=Blue. Default -1.
+-- @param #table Color RGB color with alpha {r, g, b, alpha}. Default {1, 0, 0, 0.7}.
+-- @param #table FillColor RGB color with alpha {r, g, b, alpha}. Default {1, 0, 0, 0.5}.
+-- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot Dash, 5=Long Dash, 6=Two Dash. Default 1.
+-- @return #number Marker ID. Can be used to remove the drawing.
+function VECTOR:ArrowTo(Vector, Coalition, Color, FillColor, LineType)
 
-  local vec3Start=self:GetVec3()
+  local vec3End=self:GetVec3()
+  local vec3Start=Vector:GetVec3()
   
-  trigger.action.arrowToAll(coalition , id, vec3Start, vec3End, color, fillColor , lineType, readOnly, "")
+  local id=UTILS.GetMarkID()
+  
+  Coalition=Coalition or -1
+  Color=Color or {1,0,0,0.7}
+  FillColor=FillColor or {1,0,0,0.5}
+  LineType=LineType or 1
+  
+  local readOnly=false
+  
+  trigger.action.arrowToAll(Coalition , id, vec3Start, vec3End, Color, FillColor , LineType, readOnly, "")
 
-  return self
+  return id
 end
+
+
+--- Create mark on F10 map.
+-- @param #VECTOR self
+-- @param #string MarkText Free format text that shows the marking clarification.
+-- @param #number Recipient Recipient of the mark: -1=All (default), 0=Neutral, 1=Red, 2=Blue. Can also be a `GROUP` object.
+-- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
+-- @return #number Mark ID.
+function VECTOR:Mark(MarkText, Recipient, ReadOnly)
+
+  Recipient=Recipient or -1
+
+  if type(Recipient)=="number" then
+  
+    local MarkID = UTILS.GetMarkID()
+  
+    if Recipient==-1 then
+      trigger.action.markToAll(MarkID, MarkText, self:GetVec3(), ReadOnly, "")
+    elseif Recipient==0 then
+      trigger.action.markToCoalition(MarkID, MarkText, self:GetVec3(), coalition.side.NEUTRAL, ReadOnly, "")
+    elseif Recipient==1 then
+      trigger.action.markToCoalition(MarkID, MarkText, self:GetVec3(), coalition.side.RED, ReadOnly, "")
+    elseif Recipient==2 then
+      trigger.action.markToCoalition(MarkID, MarkText, self:GetVec3(), coalition.side.BLUE, ReadOnly, "")
+    end
+  
+    return MarkID
+      
+  elseif type(Recipient)=="table" then
+  
+    local MarkID = UTILS.GetMarkID()
+    
+    local group=Recipient --Wrapper.Group#GROUP
+    
+    trigger.action.markToGroup( MarkID, MarkText, self:GetVec3(), group:GetID(), ReadOnly, "")
+    
+    return MarkID
+    
+  end
+
+  return nil
+end
+
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Private Functions
@@ -1119,7 +1300,7 @@ function VECTOR.__add(a,b)
   return c
 end
 
---- Meta function to substract vectors.
+--- Meta function to subtract vectors.
 -- @param #VECTOR a Vector a.
 -- @param #VECTOR b Vector b.
 -- @return #VECTOR Returns a new VECTOR c with c[i]=a[i]-b[i] for i=x,y,z.
@@ -1152,17 +1333,21 @@ function VECTOR.__mul(a, b)
   return c
 end
 
---- Meta function for dividing vectors by scalars.
+--- Meta function for dividing a vector by a scalar or by another vector.
 -- @param #VECTOR a Vector a.
--- @param #number b Number by which the components of the vector are divided.
--- @return #VECTOR Returns a new VECTOR c with c[i]=a[i]/b for i=x,y,z.
+-- @param #VECTOR b Vector b. Can also be a #number.
+-- @return #VECTOR Returns a new VECTOR c with c[i]=a[i]/b or c[i]=a[i]/b[i] for i=x,y,z.
 function VECTOR.__div(a, b)
 
-  assert(VECTOR._IsVector(a) and type(b) == "number", "div: wrong argument types (expected <vector> and <number>)")
-  
-  env.info("FF __div")
+  assert(VECTOR._IsVector(a) and (type(b) == "number" or VECTOR._IsVector(b)), "div: wrong argument types (expected <vector> and (<number> or <vector>))")
 
-  local c=VECTOR:New(a.x/b, a.y/b, a.z/b)
+  local c=nil --#VECTOR
+
+  if type(b) == "number" then
+    c=VECTOR:New(a.x/b, a.y/b, a.z/b)
+  else
+    c=VECTOR:New(a.x/b.x, a.y/b.y, a.z/b.z)
+  end
 
   return c
 end
@@ -1179,10 +1364,6 @@ end
 -- @param #VECTOR b Vector b.
 -- @return #boolean If `true`, both vectors are equal
 function VECTOR.__eq(a, b)
-  --assert(VECTOR._IsVector(a) and VECTOR._IsVector(b), "ERROR in VECTOR.__eq: wrong argument types: (expected <vector> and <vector>)")
-  env.info("FF __eq",showMessageBox)
-  BASE:I(a)
-  BASE:I(b)
   return a.x==b.x and a.y==b.y and a.z==b.z
 end
 
@@ -1191,7 +1372,7 @@ end
 -- @param #VECTOR self
 -- @return #string String representation of vector.
 function VECTOR:__tostring()
-  local text=string.format("(x=%.1f, y=%.1f, z=%.1f) |v|=%.1f Phi=%4.1f°", self.x, self.y, self.z, self:GetLength(), self:GetHeading(false))
+  local text=string.format("VECTOR: x=%.1f, y=%.1f, z=%.1f |v|=%.1f Phi=%4.1f°", self.x, self.y, self.z, self:GetLength(), self:GetHeading(false))
   return text
 end
 

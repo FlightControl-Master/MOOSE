@@ -1654,6 +1654,7 @@ do -- COORDINATE
       if AirbaseCategory == Airbase.Category.SHIP or AirbaseCategory == Airbase.Category.HELIPAD then
         RoutePoint.linkUnit = AirbaseID
         RoutePoint.helipadId = AirbaseID
+        RoutePoint.airdromeId = airbase:IsAirdrome() and AirbaseID or nil
       elseif AirbaseCategory == Airbase.Category.AIRDROME then
         RoutePoint.airdromeId = AirbaseID
       else
@@ -2076,6 +2077,40 @@ do -- COORDINATE
 
     return Path, Way, GotPath
   end
+  
+  --- Returns a table of coordinates to a destination using only roads or railroads.
+  -- The first point is the closest point on road of the given coordinate.
+  -- By default, the last point is the closest point on road of the ToCoord. Hence, the coordinate itself and the final ToCoord are not necessarily included in the path.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE ToCoord Coordinate of destination.
+  -- @param #boolean IncludeEndpoints (Optional) Include the coordinate itself and the ToCoordinate in the path.
+  -- @param #boolean Railroad (Optional) If true, path on railroad is returned. Default false.
+  -- @return Core.Pathline#PATHLINE Pathline containing the points on road. If no path on road can be found, nil is returned or just the endpoints.
+  function COORDINATE:GetPathlineOnRoad(ToCoord, IncludeEndpoints, Railroad)
+
+    -- Set road type.
+    local RoadType="roads"
+    if Railroad==true then
+      RoadType="railroads"
+    end
+
+    -- DCS API function returning a table of vec2.
+    local path = land.findPathOnRoads(RoadType, self.x, self.z, ToCoord.x, ToCoord.z)
+    
+    if IncludeEndpoints then
+      path=path or {}
+      table.insert(path, 1, self:GetVec2())
+      table.insert(path, ToCoord:GetVec2())
+    end    
+    
+    local pathline=nil
+    if path then
+      pathline=PATHLINE:NewFromVec2Array(RoadType, path)
+    end
+    
+    return pathline    
+  end
+  
 
   --- Gets the surface type at the coordinate.
   -- @param #COORDINATE self

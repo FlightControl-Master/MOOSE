@@ -320,8 +320,8 @@ function SCORING:New( GameName, SavePath, AutoSave )
 
   -- Create the CSV file.
   self.AutoSavePath = SavePath
-  self.AutoSave = AutoSave or true
-  if self.AutoSave == true then
+  self.AutoSave = (AutoSave == nil or AutoSave == true) and true or false
+  if self.AutoSavePath and self.AutoSave == true then
     self:OpenCSV( GameName )
   end
 

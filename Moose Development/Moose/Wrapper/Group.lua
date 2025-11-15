@@ -1058,9 +1058,12 @@ function GROUP:GetTypeName()
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local GroupTypeName = DCSGroup:getUnit(1):getTypeName()
-    --self:T3( GroupTypeName )
-    return( GroupTypeName )
+    local unit = DCSGroup:getUnit(1)
+    if unit then
+        local GroupTypeName = unit:getTypeName()
+        --self:T3( GroupTypeName )
+        return( GroupTypeName )
+    end
   end
 
   return nil
@@ -1075,9 +1078,12 @@ function GROUP:GetNatoReportingName()
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local GroupTypeName = DCSGroup:getUnit(1):getTypeName()
-    --self:T3( GroupTypeName )
-    return UTILS.GetReportingName(GroupTypeName)
+    local unit = DCSGroup:getUnit(1)
+    if unit then
+        local GroupTypeName = unit:getTypeName()
+        --self:T3( GroupTypeName )
+        return UTILS.GetReportingName(GroupTypeName)
+    end
   end
 
   return "Bogey"
@@ -1093,9 +1099,12 @@ function GROUP:GetPlayerName()
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local PlayerName = DCSGroup:getUnit(1):getPlayerName()
-    --self:T3( PlayerName )
-    return( PlayerName )
+    local unit = DCSGroup:getUnit(1)
+    if unit then
+        local PlayerName = unit:getPlayerName()
+        --self:T3( PlayerName )
+        return( PlayerName )
+    end
   end
 
   return nil
@@ -1111,9 +1120,12 @@ function GROUP:GetCallsign()
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local GroupCallSign = DCSGroup:getUnit(1):getCallsign()
-    --self:T3( GroupCallSign )
-    return GroupCallSign
+    local unit = DCSGroup:getUnit(1)
+    if unit then
+        local GroupCallSign = unit:getCallsign()
+        --self:T3( GroupCallSign )
+        return GroupCallSign
+    end
   end
 
   BASE:E( { "Cannot GetCallsign", Positionable = self, Alive = self:IsAlive() } )
@@ -1149,6 +1161,23 @@ function GROUP:GetVec3()
   end
 
   self:E("ERROR: Cannot get Vec3 of group "..tostring(self.GroupName))
+  return nil
+end
+
+--- Returns the current {@Core.Vector#VECTOR} of the first Unit in the GROUP.
+-- @param #GROUP self
+-- @return Core.Vector#VECTOR Vector of the first Unit of the GROUP or nil if cannot be found.
+function GROUP:GetVector()
+
+  -- Get first unit.
+  local unit=self:GetUnit(1)
+
+  if unit then
+    local vector=unit:GetVector()
+    return vector
+  end
+
+  self:E("ERROR: Cannot get Vector of group "..tostring(self.GroupName))
   return nil
 end
 
