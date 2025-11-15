@@ -4311,7 +4311,7 @@ function OPSGROUP:_UpdateTask(Task, Mission)
     local followUnit=UNIT:FindByName(param.unitname)
 
     -- Define AI Formation object.
-    Task.formation=AI_FORMATION:New(followUnit, followSet, AUFTRAG.SpecialTask.FORMATION, "Follow X at given parameters.")
+    Task.formation=FORMATION:New(followUnit, followSet, AUFTRAG.SpecialTask.FORMATION)
 
     -- Formation parameters.
     Task.formation:FormationCenterWing(-param.offsetX, 50, math.abs(param.altitude), 50, param.offsetZ, 50)
