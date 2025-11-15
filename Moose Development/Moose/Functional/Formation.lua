@@ -11,13 +11,12 @@
 -- ## Additional Material:
 --
 -- * **Demo Missions:** [GitHub](https://github.com/FlightControl-Master/MOOSE_MISSIONS/tree/master/AI/FORMATION)
--- * **YouTube videos:** [Playlist](https://www.youtube.com/playlist?list=PL7ZUrU4zZUl0bFIJ9jIdYM22uaWmIN4oz)
 -- * **Guides:** None
 --
 -- ===
 --
 -- ### Author: **FlightControl**
--- ### Contributions: **Applevangelist**
+-- ### Contributions: **Applevangelist** (refactor)
 --
 -- ===
 --
