@@ -193,7 +193,7 @@ ESCORT = {
 function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   
   local self = BASE:Inherit( self, BASE:New() ) -- #ESCORT
-  self:F( { EscortClient, EscortGroup, EscortName } )
+  --self:F( { EscortClient, EscortGroup, EscortName } )
 
   self.EscortClient = EscortClient -- Wrapper.Client#CLIENT
   self.EscortGroup = EscortGroup -- Wrapper.Group#GROUP
@@ -202,7 +202,7 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
  
   self.EscortSetGroup = SET_GROUP:New()
   self.EscortSetGroup:AddObject( self.EscortGroup )
-  self.EscortSetGroup:Flush()
+  --self.EscortSetGroup:Flush()
   self.Detection = DETECTION_UNITS:New( self.EscortSetGroup, 15000 )
   
   self.EscortGroup.Detection = self.Detection
@@ -242,12 +242,11 @@ function ESCORT:New( EscortClient, EscortGroup, EscortName, EscortBriefing )
   self.CT1 = 0
   self.GT1 = 0
 
-  self.FollowScheduler, self.FollowSchedule = SCHEDULER:New( self, self._FollowScheduler, {}, 1, .5, .01 )
+  self.FollowScheduler, self.FollowSchedule = SCHEDULER:New( self, self._FollowScheduler, {}, 1, 2, .01 )
   self.FollowScheduler:Stop( self.FollowSchedule )
 
   self.EscortMode = ESCORT.MODE.MISSION
-  
- 
+   
   return self
 end
 
@@ -273,12 +272,11 @@ function ESCORT:TestSmokeDirectionVector( SmokeDirection )
   self.SmokeDirectionVector = ( SmokeDirection == true ) and true or false
 end
 
-
 --- Defines the default menus
 -- @param #ESCORT self
--- @return #ESCORT
+-- @return #ESCORT self
 function ESCORT:Menus()
-  self:F()
+  --self:F()
 
   self:MenuFollowAt( 100 )
   self:MenuFollowAt( 200 )
@@ -299,19 +297,16 @@ function ESCORT:Menus()
   self:MenuEvasion()
   self:MenuResumeMission()
 
-
   return self
 end
-
-
 
 --- Defines a menu slot to let the escort Join and Follow you at a certain distance.
 -- This menu will appear under **Navigation**.
 -- @param #ESCORT self
 -- @param DCS#Distance Distance The distance in meters that the escort needs to follow the client.
--- @return #ESCORT
+-- @return #ESCORT self
 function ESCORT:MenuFollowAt( Distance )
-  self:F(Distance)
+  --self:F(Distance)
 
   if self.EscortGroup:IsAir() then
     if not self.EscortMenuReportNavigation then
@@ -336,10 +331,10 @@ end
 -- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
 -- @param DCS#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
--- @return #ESCORT
+-- @return #ESCORT self
 -- TODO: Implement Seconds parameter. Challenge is to first develop the "continue from last activity" function.
 function ESCORT:MenuHoldAtEscortPosition( Height, Seconds, MenuTextFormat )
-  self:F( { Height, Seconds, MenuTextFormat } )
+  --self:F( { Height, Seconds, MenuTextFormat } )
 
   if self.EscortGroup:IsAir() then
 
@@ -390,17 +385,16 @@ function ESCORT:MenuHoldAtEscortPosition( Height, Seconds, MenuTextFormat )
   return self
 end
 
-
 --- Defines a menu slot to let the escort hold at the client position and stay low with a specified height during a specified time in seconds.
 -- This menu will appear under **Navigation**.
 -- @param #ESCORT self
 -- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
 -- @param DCS#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain one or two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
--- @return #ESCORT
+-- @return #ESCORT self
 -- TODO: Implement Seconds parameter. Challenge is to first develop the "continue from last activity" function.
 function ESCORT:MenuHoldAtLeaderPosition( Height, Seconds, MenuTextFormat )
-  self:F( { Height, Seconds, MenuTextFormat } )
+  --self:F( { Height, Seconds, MenuTextFormat } )
 
   if self.EscortGroup:IsAir() then
 
@@ -458,9 +452,9 @@ end
 -- @param DCS#Distance Height Optional parameter that sets the height in meters to let the escort orbit at the current location. The default value is 30 meters.
 -- @param DCS#Time Seconds Optional parameter that lets the escort orbit at the current position for a specified time. (not implemented yet). The default value is 0 seconds, meaning, that the escort will orbit forever until a sequent command is given.
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. The text string is formatted, and should contain one or two %d tokens in the string. The first for the Height, the second for the Time (if given). If no text is given, the default text will be displayed.
--- @return #ESCORT
+-- @return #ESCORT self
 function ESCORT:MenuScanForTargets( Height, Seconds, MenuTextFormat )
-  self:F( { Height, Seconds, MenuTextFormat } )
+  --self:F( { Height, Seconds, MenuTextFormat } )
 
   if self.EscortGroup:IsAir() then
     if not self.EscortMenuScan then
@@ -508,16 +502,14 @@ function ESCORT:MenuScanForTargets( Height, Seconds, MenuTextFormat )
   return self
 end
 
-
-
 --- Defines a menu slot to let the escort disperse a flare in a certain color.
 -- This menu will appear under **Navigation**.
 -- The flare will be fired from the first unit in the group.
 -- @param #ESCORT self
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. If no text is given, the default text will be displayed.
--- @return #ESCORT
+-- @return #ESCORT self
 function ESCORT:MenuFlare( MenuTextFormat )
-  self:F()
+  ----self:F()
 
   if not self.EscortMenuReportNavigation then
     self.EscortMenuReportNavigation = MENU_GROUP:New( self.EscortClient:GetGroup(), "Navigation", self.EscortMenu )
@@ -547,9 +539,9 @@ end
 -- The smoke will be fired from the first unit in the group.
 -- @param #ESCORT self
 -- @param #string MenuTextFormat Optional parameter that shows the menu option text. If no text is given, the default text will be displayed.
--- @return #ESCORT
+-- @return #ESCORT self
 function ESCORT:MenuSmoke( MenuTextFormat )
-  self:F()
+  ----self:F()
 
   if not self.EscortGroup:IsAir() then
     if not self.EscortMenuReportNavigation then
@@ -581,9 +573,9 @@ end
 -- Note that if a report targets menu is not specified, no targets will be detected by the escort, and the attack and assisted attack menus will not be displayed.
 -- @param #ESCORT self
 -- @param DCS#Time Seconds Optional parameter that lets the escort report their current detected targets after specified time interval in seconds. The default time is 30 seconds.
--- @return #ESCORT
+-- @return #ESCORT self
 function ESCORT:MenuReportTargets( Seconds )
-  self:F( { Seconds } )
+  --self:F( { Seconds } )
 
   if not self.EscortMenuReportNearbyTargets then
     self.EscortMenuReportNearbyTargets = MENU_GROUP:New( self.EscortClient:GetGroup(), "Report targets", self.EscortMenu )
@@ -601,7 +593,6 @@ function ESCORT:MenuReportTargets( Seconds )
   -- Attack Targets
   self.EscortMenuAttackNearbyTargets = MENU_GROUP:New( self.EscortClient:GetGroup(), "Attack targets", self.EscortMenu )
 
-
   self.ReportTargetsScheduler, self.ReportTargetsSchedulerID = SCHEDULER:New( self, self._ReportTargetsScheduler, {}, 1, Seconds )
 
   return self
@@ -611,9 +602,9 @@ end
 -- This menu will appear under **Request assistance from**.
 -- Note that this method needs to be preceded with the method MenuReportTargets.
 -- @param #ESCORT self
--- @return #ESCORT
+-- @return #ESCORT self
 function ESCORT:MenuAssistedAttack()
-  self:F()
+  --self:F()
 
   -- Request assistance from other escorts.
   -- This is very useful to let f.e. an escorting ship attack a target detected by an escorting plane...
@@ -625,9 +616,9 @@ end
 --- Defines a menu to let the escort set its rules of engagement.
 -- All rules of engagement will appear under the menu **ROE**.
 -- @param #ESCORT self
--- @return #ESCORT
+-- @return #ESCORT self
 function ESCORT:MenuROE( MenuTextFormat )
-  self:F( MenuTextFormat )
+  --self:F( MenuTextFormat )
 
   if not self.EscortMenuROE then
     -- Rules of Engagement
@@ -649,13 +640,12 @@ function ESCORT:MenuROE( MenuTextFormat )
   return self
 end
 
-
 --- Defines a menu to let the escort set its evasion when under threat.
 -- All rules of engagement will appear under the menu **Evasion**.
 -- @param #ESCORT self
--- @return #ESCORT
+-- @return #ESCORT self
 function ESCORT:MenuEvasion( MenuTextFormat )
-  self:F( MenuTextFormat )
+  --self:F( MenuTextFormat )
 
   if self.EscortGroup:IsAir() then
     if not self.EscortMenuEvasion then
@@ -682,9 +672,9 @@ end
 --- Defines a menu to let the escort resume its mission from a waypoint on its route.
 -- All rules of engagement will appear under the menu **Resume mission from**.
 -- @param #ESCORT self
--- @return #ESCORT
+-- @return #ESCORT self
 function ESCORT:MenuResumeMission()
-  self:F()
+  --self:F()
 
   if not self.EscortMenuResumeMission then
     -- Mission Resume Menu Root
@@ -694,7 +684,8 @@ function ESCORT:MenuResumeMission()
   return self
 end
 
-
+---
+-- @param #ESCORT self
 -- @param #MENUPARAM MenuParam
 function ESCORT:_HoldPosition( OrbitGroup, OrbitHeight, OrbitSeconds )
 
@@ -735,6 +726,8 @@ function ESCORT:_HoldPosition( OrbitGroup, OrbitHeight, OrbitSeconds )
 
 end
 
+---
+-- @param #ESCORT self
 -- @param #MENUPARAM MenuParam
 function ESCORT:_JoinUpAndFollow( Distance )
 
@@ -752,7 +745,7 @@ end
 -- @param Wrapper.Client#CLIENT EscortClient
 -- @param DCS#Distance Distance
 function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
-  self:F( { EscortGroup, EscortClient, Distance } )
+  --self:F( { EscortGroup, EscortClient, Distance } )
 
   self.FollowScheduler:Stop( self.FollowSchedule )
 
@@ -768,6 +761,8 @@ function ESCORT:JoinUpAndFollow( EscortGroup, EscortClient, Distance )
   EscortGroup:MessageToClient( "Rejoining and Following at " .. Distance .. "!", 30, EscortClient )
 end
 
+---
+-- @param #ESCORT self
 -- @param #MENUPARAM MenuParam
 function ESCORT:_Flare( Color, Message )
 
@@ -778,6 +773,8 @@ function ESCORT:_Flare( Color, Message )
   EscortGroup:MessageToClient( Message, 10, EscortClient )
 end
 
+---
+-- @param #ESCORT self
 -- @param #MENUPARAM MenuParam
 function ESCORT:_Smoke( Color, Message )
 
@@ -788,7 +785,8 @@ function ESCORT:_Smoke( Color, Message )
   EscortGroup:MessageToClient( Message, 10, EscortClient )
 end
 
-
+---
+-- @param #ESCORT self
 -- @param #MENUPARAM MenuParam
 function ESCORT:_ReportNearbyTargetsNow()
 
@@ -799,6 +797,8 @@ function ESCORT:_ReportNearbyTargetsNow()
 
 end
 
+---
+-- @param #ESCORT self
 function ESCORT:_SwitchReportNearbyTargets( ReportTargets )
 
   local EscortGroup = self.EscortGroup
@@ -816,6 +816,8 @@ function ESCORT:_SwitchReportNearbyTargets( ReportTargets )
   end
 end
 
+---
+-- @param #ESCORT self
 -- @param #MENUPARAM MenuParam
 function ESCORT:_ScanTargets( ScanDuration )
 
@@ -846,24 +848,27 @@ function ESCORT:_ScanTargets( ScanDuration )
 
 end
 
+---
+-- @param #ESCORT self
 -- @param Wrapper.Group#GROUP EscortGroup
 function _Resume( EscortGroup )
-  env.info( '_Resume' )
+  --env.info( '_Resume' )
 
   local Escort = EscortGroup:GetState( EscortGroup, "Escort" )
-  env.info( "EscortMode = "  .. Escort.EscortMode )
+  --env.info( "EscortMode = "  .. Escort.EscortMode )
   if Escort.EscortMode == ESCORT.MODE.FOLLOW then
     Escort:JoinUpAndFollow( EscortGroup, Escort.EscortClient, Escort.Distance )
   end
 
 end
 
+---
 -- @param #ESCORT self
 -- @param Functional.Detection#DETECTION_BASE.DetectedItem DetectedItem
 function ESCORT:_AttackTarget( DetectedItem )
 
   local EscortGroup = self.EscortGroup -- Wrapper.Group#GROUP
-  self:F( EscortGroup )
+  --self:F( EscortGroup )
   
   local EscortClient = self.EscortClient
 
@@ -983,6 +988,8 @@ function ESCORT:_AssistTarget( EscortGroupAttack, DetectedItem )
 
 end
 
+---
+-- @param #ESCORT self
 -- @param #MENUPARAM MenuParam
 function ESCORT:_ROE( EscortROEFunction, EscortROEMessage )
 
@@ -993,6 +1000,8 @@ function ESCORT:_ROE( EscortROEFunction, EscortROEMessage )
   EscortGroup:MessageToClient( EscortROEMessage, 10, EscortClient )
 end
 
+---
+-- @param #ESCORT self
 -- @param #MENUPARAM MenuParam
 function ESCORT:_ROT( EscortROTFunction, EscortROTMessage )
 
@@ -1003,6 +1012,8 @@ function ESCORT:_ROT( EscortROTFunction, EscortROTMessage )
   EscortGroup:MessageToClient( EscortROTMessage, 10, EscortClient )
 end
 
+---
+-- @param #ESCORT self
 -- @param #MENUPARAM MenuParam
 function ESCORT:_ResumeMission( WayPoint )
 
@@ -1027,7 +1038,7 @@ end
 -- @param #ESCORT self
 -- @return #table
 function ESCORT:RegisterRoute()
-  self:F()
+  --self:F()
 
   local EscortGroup = self.EscortGroup -- Wrapper.Group#GROUP
 
@@ -1038,9 +1049,11 @@ function ESCORT:RegisterRoute()
   return TaskPoints
 end
 
+---
+-- @param #ESCORT self
 -- @param Functional.Escort#ESCORT self
 function ESCORT:_FollowScheduler()
-  self:F( { self.FollowDistance } )
+  --self:F( { self.FollowDistance } )
 
   self:T( {self.EscortClient.UnitName, self.EscortGroup.GroupName } )
   if self.EscortGroup:IsAlive() and self.EscortClient:IsAlive() then
@@ -1146,11 +1159,10 @@ function ESCORT:_FollowScheduler()
   return false
 end
 
-
 --- Report Targets Scheduler.
 -- @param #ESCORT self
 function ESCORT:_ReportTargetsScheduler()
-  self:F( self.EscortGroup:GetName() )
+  --self:F( self.EscortGroup:GetName() )
 
   if self.EscortGroup:IsAlive() and self.EscortClient:IsAlive() then
 
@@ -1163,7 +1175,7 @@ function ESCORT:_ReportTargetsScheduler()
       end
 
       local DetectedItems = self.Detection:GetDetectedItems()
-      self:F( DetectedItems )
+      --self:F( DetectedItems )
 
       local DetectedTargets = false
   
@@ -1175,7 +1187,7 @@ function ESCORT:_ReportTargetsScheduler()
         --local EscortUnit = EscortGroupData:GetUnit( 1 )
 
         for DetectedItemIndex, DetectedItem in pairs( DetectedItems ) do
-          self:F( { DetectedItemIndex, DetectedItem } )
+          --self:F( { DetectedItemIndex, DetectedItem } )
           -- Remove the sub menus of the Attack menu of the Escort for the EscortGroup.
   
           local DetectedItemReportSummary = self.Detection:DetectedItemReportSummary( DetectedItem, EscortGroupData.EscortGroup, _DATABASE:GetPlayerSettings( self.EscortClient:GetPlayerName() ) )
@@ -1216,7 +1228,7 @@ function ESCORT:_ReportTargetsScheduler()
                   
         end
       end
-      self:F( DetectedMsgs )
+      --self:F( DetectedMsgs )
       if DetectedTargets then
         self.EscortGroup:MessageToClient( "Reporting detected targets:\n" .. table.concat( DetectedMsgs, "\n" ), 20, self.EscortClient )
       else

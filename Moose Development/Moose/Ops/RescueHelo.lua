@@ -870,15 +870,24 @@ function RESCUEHELO:onafterStart(From, Event, To)
   
   -- Delay before formation is started.
   local delay=120
-    
-  -- Spawn helo. We need to introduce an alias in case this class is used twice. This would confuse the spawn routine.
-  local Spawn=SPAWN:NewWithAlias(self.helogroupname, self.alias)
   
-  -- Set modex for spawn.
-  Spawn:InitModex(self.modex)
-
+  local UsesAliveGroup=false
+  local Spawn = GROUP:FindByName(self.helogroupname)
+  if Spawn and Spawn:IsAlive() then
+    self.helo=Spawn
+    UsesAliveGroup = true 
+  else
+    
+    -- Spawn helo. We need to introduce an alias in case this class is used twice. This would confuse the spawn routine.
+    local Spawn=SPAWN:NewWithAlias(self.helogroupname, self.alias)
+  
+    -- Set modex for spawn.
+    Spawn:InitModex(self.modex)
+  
+  end
+  
   -- Spawn in air or at airbase.
-  if self.takeoff==SPAWN.Takeoff.Air then
+  if UsesAliveGroup==false and self.takeoff==SPAWN.Takeoff.Air then
   
     -- Carrier heading
     local hdg=self.carrier:GetHeading()
@@ -898,7 +907,7 @@ function RESCUEHELO:onafterStart(From, Event, To)
     -- Start formation in 1 seconds
     delay=1
     
-  else  
+  elseif UsesAliveGroup==false then  
  
     -- Check if an uncontrolled helo group was requested.
     if self.uncontrolledac then

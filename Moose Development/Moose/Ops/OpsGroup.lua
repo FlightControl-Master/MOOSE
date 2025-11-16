@@ -4302,7 +4302,16 @@ function OPSGROUP:_UpdateTask(Task, Mission)
   Mission=Mission or self:GetMissionByTaskID(self.taskcurrent)
 
   if Task.dcstask.id==AUFTRAG.SpecialTask.FORMATION then
-
+      
+    if Mission.Type == AUFTRAG.Type.RESCUEHELO then
+      local param=Task.dcstask.params
+      local followUnit=UNIT:FindByName(param.unitname)
+      local helogroupname = self:GetGroup():GetName()
+      Task.formation = RESCUEHELO:New(followUnit,helogroupname)
+      -- Start formation FSM.
+      Task.formation:Start()
+    else  
+      
     -- Set of group(s) to follow Mother.
     local followSet=SET_GROUP:New():AddGroup(self.group)
 
@@ -4324,7 +4333,9 @@ function OPSGROUP:_UpdateTask(Task, Mission)
 
     -- Start formation FSM.
     Task.formation:Start()
-
+    
+    end
+    
   elseif Task.dcstask.id==AUFTRAG.SpecialTask.PATROLZONE then
 
     ---
