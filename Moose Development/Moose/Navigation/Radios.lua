@@ -43,6 +43,7 @@
 -- 
 -- **Note** that try to avoid hard coding stuff in Moose since DCS is updated frequently and things change. Therefore, the main source of information is either a file `radio.lua` that can be
 -- found in the installation directory of DCS for each map or a table that the user needs to provide.
+-- **Note** your `MissionScripting` environment needs to be desanitized to read this data.
 -- 
 -- # Basic Setup
 -- 
