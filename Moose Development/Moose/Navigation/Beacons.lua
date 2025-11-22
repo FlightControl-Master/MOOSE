@@ -18,7 +18,7 @@
 -- 
 -- ===
 -- @module Navigation.Beacons
--- @image NAVIGATION_Beacons.png
+-- @image MOOSE.JPG
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -39,10 +39,11 @@
 --
 -- # The BEACONS Concept
 --
--- This class is desinged to make information about beacons of a map/theatre easier accessible. The information contains location, type and frequencies of all or specific beacons of the map.
+-- This class is designed to make information about beacons of a map/theatre easier accessible. The information contains location, type and frequencies of all or specific beacons of the map.
 -- 
 -- **Note** that try to avoid hard coding stuff in Moose since DCS is updated frequently and things change. Therefore, the main source of information is either a file `beacons.lua` that can be
 -- found in the installation directory of DCS for each map or a table that the user needs to provide.
+-- **Note** your `MissionScripting` environment needs to be desanitized to read this data. `Package` als needs to be available.
 -- 
 -- # Basic Setup
 -- 
@@ -104,7 +105,7 @@ BEACONS.version="0.1.0"
 -- Constructor(s)
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new BECAONS class instance from a given table.
+--- Create a new BEACONS class instance from a given table.
 -- @param #BEACONS self
 -- @param #table BeaconTable Table with beacon info.
 -- @return #BEACONS self
@@ -159,7 +160,7 @@ function BEACONS:NewFromTable(BeaconTable)
 end
 
 
---- Create a new BECAONS class instance from a given file.
+--- Create a new BEACONS class instance from a given file.
 -- @param #BEACONS self
 -- @param #string FileName Full path to the file containing the map beacons.
 -- @return #BEACONS self
@@ -267,16 +268,27 @@ end
 
 --- Get table of all beacons, optionally of a given type.
 -- @param #BEACONS self
--- @param #number TypeID (Optional) Only return specific beacon types, *e.g.* `BEACON.Type.TACAN`.
+-- @param #number TypeID (Optional) Only return specific beacon types, *e.g.* `BEACON.Type.TACAN`. Can be handed in as tanle of beacon types.
 -- @return #table Table of beacons. Each element is of type #BEACON.Beacon.
 function BEACONS:GetBeacons(TypeID)
-  
+
   local beacons={}
+  local keys = {}
   
+  if TypeID~=nil and type(TypeID) ~= "table" then 
+    TypeID = {TypeID}
+  end
+  
+  for _,_typeid in pairs(TypeID or {}) do
+    if _typeid ~= nil then
+      keys[_typeid] = _typeid
+    end
+  end
+
   for _,_beacon in pairs(self.beacons) do
     local bc=_beacon --#BEACONS.Beacon
     
-    if TypeID==nil or TypeID==bc.type then
+    if TypeID==nil or keys[bc.type] ~= nil then
       table.insert(beacons, bc)
     end
     

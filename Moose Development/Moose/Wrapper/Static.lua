@@ -64,6 +64,9 @@ function STATIC:Register( StaticName )
   else
     self:E(string.format("Static object %s does not exist!", tostring(self.StaticName)))
   end
+
+  -- Cache position
+  self._vec3 = self:GetVec3()
   
   return self
 end
@@ -84,6 +87,30 @@ function STATIC:GetLife()
     return DCSStatic:getLife() or 1
   end
   return nil
+end
+
+--- Get the position of the STATIC even if it is not alive.
+-- @param #STATIC self
+-- @return DCS#Vec2 The 2D point vector of the POSITIONABLE.
+-- @return #nil The position was not cached.
+function STATIC:GetVec2Cached()
+  local vec2 = self:GetVec2()
+  if not vec2 and self._vec3 then
+    vec2 = {x = self._vec3.x, y = self._vec3.z }
+  end
+  return vec2
+end
+
+--- Get the position of the STATIC even if it is not alive.
+-- @param #STATIC self
+-- @return DCS#Vec3 The 3D point vector of the POSITIONABLE.
+-- @return #nil The position was not cached.
+function STATIC:GetVec3Cached()
+  local vec3 = self:GetVec3()
+  if not vec3 and self._vec3 then
+    vec3 = self._vec3
+  end
+  return vec3
 end
 
 --- Finds a STATIC from the _DATABASE using a DCSStatic object.
@@ -232,6 +259,8 @@ function STATIC:SpawnAt(Coordinate, Heading, Delay)
     local SpawnStatic=SPAWNSTATIC:NewFromStatic(self.StaticName)
   
     SpawnStatic:SpawnFromPointVec2( Coordinate, Heading, self.StaticName )
+    -- Cache position
+    self._vec3 = self:GetVec3()
     
   end
   
@@ -255,6 +284,8 @@ function STATIC:ReSpawn(CountryID, Delay)
     local SpawnStatic=SPAWNSTATIC:NewFromStatic(self.StaticName, CountryID)
     
     SpawnStatic:Spawn(nil, self.StaticName)
+    -- Cache position
+    self._vec3 = self:GetVec3()
     
   end
   
@@ -278,6 +309,8 @@ function STATIC:ReSpawnAt(Coordinate, Heading, Delay)
     local SpawnStatic=SPAWNSTATIC:NewFromStatic(self.StaticName, self:GetCountry())
     
     SpawnStatic:SpawnFromCoordinate(Coordinate, Heading, self.StaticName)
+    -- Cache position
+    self._vec3 = self:GetVec3()
     
   end
   

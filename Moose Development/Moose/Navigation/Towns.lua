@@ -18,7 +18,7 @@
 -- 
 -- ===
 -- @module Navigation.Towns
--- @image NAVIGATION_Towns.png
+-- @image MOOSE.JPG
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -39,16 +39,17 @@
 --
 -- # The TOWNS Concept
 --
--- This class is desinged to make information about towns of a map/theatre easier accessible. The information contains location and road/rail connections of the towns.
+-- This class is designed to make information about towns of a map/theatre easier accessible. The information contains location and road/rail connections of the towns.
 -- 
 -- **Note** that try to avoid hard coding stuff in Moose since DCS is updated frequently and things change. Therefore, the main source of information is either a file `towns.lua` that can be
 -- found in the installation directory of DCS for each map or a table that the user needs to provide.
+-- **Note** your `MissionScripting` environment needs to be desanitized to read this data.
 -- 
 -- # Basic Setup
 -- 
 -- A new `TOWNS` object can be created with the @{#TOWNS.NewFromFile}(*towns_lua_file*) function.
 -- 
---     local towns=TOWNS:NewFromFile("<DCS_Install_Directory>\Mods\terrains\<Map_Name>\towns.lua")
+--     local towns=TOWNS:NewFromFile("<DCS_Install_Directory>\Mods\terrains\<Map_Name>\map\towns.lua")
 --     towns:MarkerShow()
 -- 
 -- This will load the towns from the `<DCS_Install_Directory>` for the specific map and place markers on the F10 map. This is the first step you should do to ensure that the file
