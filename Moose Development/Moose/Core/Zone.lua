@@ -1165,10 +1165,10 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
   self.ScanData.SceneryTable = {}
   self.ScanData.Units = {}
 
-  local ZoneCoord = self:GetCoordinate()
+  local ZoneCoord = self:GetCoordinate():SetAlt()
   local ZoneRadius = self:GetRadius()
 
-  --self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+  --self:I({x = ZoneCoord.x, y=ZoneCoord.y, z=ZoneCoord.z, ZoneRadius = ZoneRadius})
 
   local SphereSearch = {
     id = world.VolumeType.SPHERE,
@@ -1180,6 +1180,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
 
   local function EvaluateZone( ZoneObject )
     --if ZoneObject:isExist() then --FF: isExist always returns false for SCENERY objects since DCS 2.2 and still in DCS 2.5
+
     if ZoneObject and self:IsVec3InZone(ZoneObject:getPoint()) then
 
       -- Get object category.
@@ -3381,7 +3382,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
         self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
         table.insert(self.ScanData.SceneryTable,self.ScanData.Scenery[SceneryType][SceneryName])
-        --self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
+        --self:I( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
 
     end
