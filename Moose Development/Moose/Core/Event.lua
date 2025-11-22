@@ -1446,12 +1446,14 @@ function EVENT:onEvent( Event )
           -- SCENERY
           ---
           Event.TgtDCSUnit = Event.target
-          Event.TgtDCSUnitName = Event.TgtDCSUnit.getName and Event.TgtDCSUnit.getName() or nil
+          Event.TgtDCSUnitName = Event.TgtDCSUnit.getName and Event.TgtDCSUnit:getName() or nil
           if Event.TgtDCSUnitName~=nil then
             Event.TgtUnitName = Event.TgtDCSUnitName
             Event.TgtUnit = SCENERY:Register( Event.TgtDCSUnitName, Event.target )
             Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
             Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
+            --self:I("Event Registered for Scenery Object ".. Event.TgtDCSUnitName)
+            --UTILS.PrintTableToLog(Event.TgtUnit)
           end
         end
       end
