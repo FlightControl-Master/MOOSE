@@ -945,7 +945,8 @@ do -- SET_BASE
   function SET_BASE:IsInSet(Object)
     --self:F3(Object)
     local outcome = false
-    local name = Object:GetName()
+    if Object == nil then return false end
+    local name = (Object ~= nil and Object.GetName) and Object:GetName() or "none"
     --self:I("SET_BASE: Objectname = "..name)
     self:ForEach(
       function(object)
@@ -7859,7 +7860,7 @@ do -- SET_SCENERY
 
     local AddSceneryNamesArray = (type(AddSceneryNames) == "table") and AddSceneryNames or { AddSceneryNames }
 
-    --self:T((AddSceneryNamesArray)
+    --UTILS.PrintTableToLog(AddSceneryNamesArray)
     for AddSceneryID, AddSceneryName in pairs(AddSceneryNamesArray) do
       self:Add(AddSceneryName, SCENERY:FindByZoneName(AddSceneryName))
     end
