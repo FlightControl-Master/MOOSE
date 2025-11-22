@@ -90,7 +90,8 @@
 -- @image Scoring.JPG
 
 --- @type SCORING
--- @field Players A collection of the current players that have joined the game.
+-- @field #table Players A collection of the current players that have joined the game.
+-- @field Core.Set#SET_SCENERY ScoringScenery 
 -- @extends Core.Base#BASE
 
 --- SCORING class
@@ -229,7 +230,8 @@ SCORING = {
   ClassID = 0,
   Players = {},
   AutoSave = true,
-  version = "1.18.4"
+  version = "1.18.4",
+  ScoringScenery = nil, -- Core.Set#SET_SCENERY
 }
 
 local _SCORINGCoalition = {
@@ -379,7 +381,7 @@ function SCORING:AddUnitScore( ScoreUnit, Score )
   return self
 end
 
---- Removes a @{Wrapper.Unit} for additional scoring when the @{Wrapper.Unit} is destroyed.
+--- Removes a @{Wrapper.Unit} for scoring when the @{Wrapper.Unit} is destroyed.
 -- @param #SCORING self
 -- @param Wrapper.Unit#UNIT ScoreUnit The @{Wrapper.Unit} for which the Score needs to be given.
 -- @return #SCORING
@@ -396,10 +398,21 @@ end
 -- Note that if there was already a @{Wrapper.Static} declared within the scoring with the same name,
 -- then the old @{Wrapper.Static}  will be replaced with the new @{Wrapper.Static}.
 -- @param #SCORING self
--- @param Wrapper.Static#UNIT ScoreStatic The @{Wrapper.Static} for which the Score needs to be given.
+-- @param Wrapper.Static#STATIC ScoreStatic The @{Wrapper.Static} for which the Score needs to be given.
 -- @param #number Score The Score value.
 -- @return #SCORING
 function SCORING:AddStaticScore( ScoreStatic, Score )
+  return self:AddScoreStatic( ScoreStatic, Score ) 
+end
+
+--- Add a @{Wrapper.Static} for additional scoring when the @{Wrapper.Static} is destroyed.
+-- Note that if there was already a @{Wrapper.Static} declared within the scoring with the same name,
+-- then the old @{Wrapper.Static}  will be replaced with the new @{Wrapper.Static}.
+-- @param #SCORING self
+-- @param Wrapper.Static#STATIC ScoreStatic The @{Wrapper.Static} for which the Score needs to be given.
+-- @param #number Score The Score value.
+-- @return #SCORING
+function SCORING:AddScoreStatic( ScoreStatic, Score )
 
   if ScoreStatic == nil then
     BASE:E("SCORING.AddStaticScore: Parameter ScoreStatic is nil!")
@@ -413,7 +426,61 @@ function SCORING:AddStaticScore( ScoreStatic, Score )
   return self
 end
 
---- Removes a @{Wrapper.Static} for additional scoring when the @{Wrapper.Static} is destroyed.
+--- Add a @{Wrapper.Scenery} for additional scoring when the @{Wrapper.Scenery} is destroyed.
+-- @param #SCORING self
+-- @param Wrapper.Scenery#SCENERY ScoreScenery The @{Wrapper.Scenery} for which the Score needs to be given.
+-- @param #number Score The Score value.
+-- @return #SCORING
+function SCORING:AddScoreScenery( ScoreScenery, Score )
+
+  if ScoreScenery == nil then
+    self:E("SCORING.ScoreScenery: Parameter ScoreScenery is nil!")
+    return self
+  end
+  
+  if not self.ScoringScenery then
+    self.ScoringScenery = SET_SCENERY:New() -- Core.Set#SET_SCENERY
+  end
+  
+  local StaticName = ScoreScenery:GetName()
+  self:T("Scenery name = ".. StaticName)
+
+  self.ScoringScenery:AddScenery(ScoreScenery)
+
+  return self
+end
+
+--- Removes a @{Wrapper.Scenery} for scoring when the @{Wrapper.Scenery} is destroyed.
+-- @param #SCORING self
+-- @param Wrapper.Scenery#SCENERY ScoreStatic The @{Wrapper.Scenery} for which the Score needs to be given.
+-- @return #SCORING
+function SCORING:RemoveSceneryScore( ScoreScenery )
+
+  local StaticName = ScoreScenery:GetName()
+
+  self.ScoringObjects[StaticName] = nil
+
+  return self
+end
+
+--- Specify a special additional score for a @{Core.Set#SET_SCENERY}.
+-- @param #SCORING self
+-- @param Core.Set#SET_SCENERY Set The @{Core.Set#SET_SCENERY} for which each @{Wrapper.Scenery} in the SET a Score is given.
+-- @param #number Score The Score value.
+-- @return #SCORING
+function SCORING:AddScoreSetScenery(Set, Score)
+  local set = Set.Set
+  
+  for _,_static in pairs (set) do
+    if _static ~= nil then
+      self:AddScoreScenery(_static,Score)
+    end
+  end
+ 
+  return self
+end
+
+--- Removes a @{Wrapper.Static} for scoring when the @{Wrapper.Static} is destroyed.
 -- @param #SCORING self
 -- @param Wrapper.Static#UNIT ScoreStatic The @{Wrapper.Static} for which the Score needs to be given.
 -- @return #SCORING
@@ -468,6 +535,31 @@ function SCORING:AddScoreSetGroup(Set, Score)
   return self
 end
 
+--- Specify a special additional score for a @{Core.Set#SET_STATIC}.
+-- @param #SCORING self
+-- @param Core.Set#SET_STATIC Set The @{Core.Set#SET_STATIC} for which each @{Wrapper.Static} in the SET a Score is given.
+-- @param #number Score The Score value.
+-- @return #SCORING
+function SCORING:AddScoreSetStatic(Set, Score)
+  local set = Set:GetSetObjects()
+  
+  for _,_static in pairs (set) do
+    if _static and _static:IsAlive() then
+      self:AddStaticScore(_static,Score)
+    end
+  end
+  
+  local function AddScore(static)
+    self:AddStaticScore(static,Score)
+  end
+  
+  function Set:OnAfterAdded(From,Event,To,ObjectName,Object)
+    AddScore(Object)
+  end
+  
+  return self
+end
+
 --- Add a @{Core.Zone} to define additional scoring when any object is destroyed in that zone.
 -- Note that if a @{Core.Zone} with the same name is already within the scoring added, the @{Core.Zone} (type) and Score will be replaced!
 -- This allows for a dynamic destruction zone evolution within your mission.
@@ -487,7 +579,24 @@ function SCORING:AddZoneScore( ScoreZone, Score )
   return self
 end
 
---- Remove a @{Core.Zone} for additional scoring.
+--- Add a @{Core.Set#SET_ZONE} to define additional scoring when any object is destroyed in that zone.
+-- Note that if a @{Core.Zone} with the same name is already within the scoring added, the @{Core.Zone} (type) and Score will be replaced!
+-- This allows for a dynamic destruction zone evolution within your mission.
+-- @param #SCORING self
+-- @param Core.Set#SET_ZONE ScoreZoneSet The @{Core.Set#SET_ZONE} which defines the destruction score perimeters.
+-- Note that a zone can be a polygon or a moving zone.
+-- @param #number Score The Score value.
+-- @return #SCORING
+function SCORING:AddZoneScoreSet( ScoreZoneSet, Score )
+  
+  for _,_zone in pairs(ScoreZoneSet.Set or {}) do
+    self:AddZoneScore(_zone,Score)
+  end
+ 
+  return self
+end
+
+--- Remove a @{Core.Zone} for scoring.
 -- The scoring will search if any @{Core.Zone} is added with the given name, and will remove that zone from the scoring.
 -- This allows for a dynamic destruction zone evolution within your mission.
 -- @param #SCORING self
@@ -965,7 +1074,7 @@ end
 -- @param #SCORING self
 -- @param Core.Event#EVENTDATA Event
 function SCORING:_EventOnHit( Event )
-  self:F( { Event } )
+  --self:F( { Event } )
 
   local InitUnit = nil
   local InitUNIT = nil
@@ -995,6 +1104,7 @@ function SCORING:_EventOnHit( Event )
   local TargetUnitCategory = nil
   local TargetUnitType = nil
   local TargetIsScenery = false
+  local TargetSceneryObject = nil
 
   if Event.IniDCSUnit then
 
@@ -1016,7 +1126,7 @@ function SCORING:_EventOnHit( Event )
     InitUnitCategory = _SCORINGCategory[InitCategory]
     InitUnitType = InitType
 
-    self:T( { InitUnitName, InitGroupName, InitPlayerName, InitCoalition, InitCategory, InitType, InitUnitCoalition, InitUnitCategory, InitUnitType } )
+    --self:T( { InitUnitName, InitGroupName, InitPlayerName, InitCoalition, InitCategory, InitType, InitUnitCoalition, InitUnitCategory, InitUnitType } )
   end
 
   if Event.TgtDCSUnit then
@@ -1034,18 +1144,23 @@ function SCORING:_EventOnHit( Event )
     -- TargetCategory = TargetUnit:getDesc().category
     TargetCategory = Event.TgtCategory
     TargetType = Event.TgtTypeName
+    
 
     -- Scenery hit
-    if (not TargetCategory) and TargetUNIT ~= nil and TargetUnit:IsInstanceOf("SCENERY") then
+    if TargetUNIT ~= nil and TargetUNIT:IsInstanceOf("SCENERY") then
         TargetCategory = Unit.Category.STRUCTURE
         TargetIsScenery = true
+        TargetType = "Scenery"
+        TargetSceneryObject = TargetUNIT
+        self:T("***** Target is Scenery and TargetUNIT is SCENERY object!")
+        UTILS.PrintTableToLog(TargetSceneryObject)
     end
     
     TargetUnitCoalition = _SCORINGCoalition[TargetCoalition]
     TargetUnitCategory = _SCORINGCategory[TargetCategory]
     TargetUnitType = TargetType
 
-    self:T( { TargetUnitName, TargetGroupName, TargetPlayerName, TargetCoalition, TargetCategory, TargetType, TargetUnitCoalition, TargetUnitCategory, TargetUnitType } )
+    --self:T( { TargetUnitName=TargetUnitName, TargetGroupName=TargetGroupName, TargetPlayerName=TargetPlayerName, TargetCoalition=TargetCoalition, TargetCategory=TargetCategory, TargetType=TargetType, TargetUnitCoalition=TargetUnitCoalition, TargetUnitCategory=TargetUnitCategory, TargetUnitType=TargetUnitType } )
   end
 
   if InitPlayerName ~= nil then -- It is a player that is hitting something
@@ -1058,7 +1173,7 @@ function SCORING:_EventOnHit( Event )
       self:T( "Hitting Something" )
 
       -- What is he hitting?
-      if TargetCategory then
+      if (TargetCategory ~=nil) and (TargetIsScenery == false) then
 
         -- A target got hit, score it.
         -- Player contains the score data from self.Players[InitPlayerName]
@@ -1078,7 +1193,7 @@ function SCORING:_EventOnHit( Event )
         PlayerHit.TimeStamp = PlayerHit.TimeStamp or 0
         PlayerHit.UNIT = PlayerHit.UNIT or TargetUNIT
         -- After an instant kill we can't compute the threat level anymore. To fix this we compute at OnEventBirth
-        if PlayerHit.UNIT.ThreatType == nil then
+        if PlayerHit.UNIT and PlayerHit.UNIT.ThreatType == nil then
           PlayerHit.ThreatLevel, PlayerHit.ThreatType = PlayerHit.UNIT:GetThreatLevel()
           -- if this fails for some reason, set a good default value
           if PlayerHit.ThreatType == nil or PlayerHit.ThreatType == "" then
@@ -1164,21 +1279,21 @@ function SCORING:_EventOnHit( Event )
 
   -- It is a weapon initiated by a player, that is hitting something
   -- This seems to occur only with scenery and static objects.
-  if Event.WeaponPlayerName ~= nil then
-    self:_AddPlayerFromUnit( Event.WeaponUNIT )
-    if self.Players[Event.WeaponPlayerName] then -- This should normally not happen, but i'll test it anyway.
-      if TargetPlayerName ~= nil then -- It is a player hitting another player ...
-        self:_AddPlayerFromUnit( TargetUNIT )
-      end
+  if Event.WeaponPlayerName ~= nil or TargetIsScenery == true then
+    
+    local playername = Event.WeaponPlayerName or Event.IniPlayerName or "Ghost"
+  
+    --self:_AddPlayerFromUnit( Event.WeaponUNIT )
+    if self.Players[playername] then -- This should normally not happen, but i'll test it anyway.
 
-      self:T( "Hitting Scenery" )
+      self:T( "Hitting Scenery or Static" )
 
       -- What is he hitting?
-      if TargetCategory then
+      if Event.TgtObjectCategory then
 
         -- A scenery or static got hit, score it.
         -- Player contains the score data from self.Players[WeaponPlayerName]
-        local Player = self.Players[Event.WeaponPlayerName]
+        local Player = self.Players[playername]
 
         -- Ensure there is a hit table per TargetCategory and TargetUnitName.
         Player.Hit[TargetCategory] = Player.Hit[TargetCategory] or {}
@@ -1186,15 +1301,17 @@ function SCORING:_EventOnHit( Event )
 
         -- PlayerHit contains the score counters and data per unit that was hit.
         local PlayerHit = Player.Hit[TargetCategory][TargetUnitName]
-
+        
+        -- Init player scores
         PlayerHit.Score = PlayerHit.Score or 0
         PlayerHit.Penalty = PlayerHit.Penalty or 0
         PlayerHit.ScoreHit = PlayerHit.ScoreHit or 0
         PlayerHit.PenaltyHit = PlayerHit.PenaltyHit or 0
         PlayerHit.TimeStamp = PlayerHit.TimeStamp or 0
         PlayerHit.UNIT = PlayerHit.UNIT or TargetUNIT
+        
         -- After an instant kill we can't compute the threat level anymore. To fix this we compute at OnEventBirth
-        if PlayerHit.UNIT.ThreatType == nil then
+        if PlayerHit.UNIT and PlayerHit.UNIT.ThreatType == nil then
           PlayerHit.ThreatLevel, PlayerHit.ThreatType = PlayerHit.UNIT:GetThreatLevel()
           -- if this fails for some reason, set a good default value
           if PlayerHit.ThreatType == nil then
@@ -1202,8 +1319,8 @@ function SCORING:_EventOnHit( Event )
             PlayerHit.ThreatType = "Unknown"
           end
         else
-          PlayerHit.ThreatLevel = PlayerHit.UNIT.ThreatLevel
-          PlayerHit.ThreatType = PlayerHit.UNIT.ThreatType
+          PlayerHit.ThreatLevel = PlayerHit.UNIT and PlayerHit.UNIT.ThreatLevel or 1
+          PlayerHit.ThreatType = PlayerHit.UNIT and PlayerHit.UNIT.ThreatType or "Unknown"
         end
 
         -- Only grant hit scores if there was more than one second between the last hit.        
@@ -1211,50 +1328,68 @@ function SCORING:_EventOnHit( Event )
           PlayerHit.TimeStamp = timer.getTime()
 
           local Score = 0
-
-          if InitCoalition then -- A coalition object was hit, probably a static.
-            if InitCoalition == TargetCoalition then
-              -- TODO: Penalty according scale
-              local Penalty = 10
-              Player.Penalty = Player.Penalty + Penalty --* self.ScaleDestroyPenalty
-              PlayerHit.Penalty = PlayerHit.Penalty + Penalty --* self.ScaleDestroyPenalty
-              PlayerHit.PenaltyHit = PlayerHit.PenaltyHit + 1 * self.ScaleDestroyPenalty
-      
-              MESSAGE
-                :NewType( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit friendly target " .. 
-                      TargetUnitCategory .. " ( " .. TargetType .. " ) " .. 
-                      "Penalty: -" .. Penalty .. " = " .. Player.Score - Player.Penalty,
-                      MESSAGE.Type.Update
-                    )
-                :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
-                :ToCoalitionIf( Event.WeaponCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
-              self:ScoreCSV( Event.WeaponPlayerName, TargetPlayerName, "HIT_PENALTY", 1, -10, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
-            else
+          
+          local TgtName = Event.TgtDCSUnit and Event.TgtDCSUnit.getName and Event.TgtDCSUnit:getName() or "Unknown"
+          
+          --if InitCoalition then -- A coalition object was hit, probably a static.
+            if TargetIsScenery == true and self.ScoringScenery:IsInSet(TargetSceneryObject) then
               Player.Score = Player.Score + self.ScoreIncrementOnHit
               PlayerHit.Score = PlayerHit.Score + self.ScoreIncrementOnHit
               PlayerHit.ScoreHit = PlayerHit.ScoreHit + 1
-              MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit enemy target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+              MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. playername .. "' hit scenery target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
                                "Score: " .. PlayerHit.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
                                MESSAGE.Type.Update )
                      :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
                      :ToCoalitionIf( Event.WeaponCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
 
-              self:ScoreCSV( Event.WeaponPlayerName, TargetPlayerName, "HIT_SCORE", 1, 1, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
-            end
-          else -- A scenery object was hit.
-            MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. Event.WeaponPlayerName .. "' hit scenery object.",
-                             MESSAGE.Type.Update )
-                   :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
-                   :ToCoalitionIf( InitCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
+              self:ScoreCSV( playername, TargetPlayerName, "HIT_SCORE", 1, 1, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+           elseif TargetIsScenery == false and Event.TgtObjectCategory == Object.Category.STATIC and self.ScoringObjects[TgtName] then
+              Player.Score = Player.Score + self.ScoreIncrementOnHit
+              PlayerHit.Score = PlayerHit.Score + self.ScoreIncrementOnHit
+              PlayerHit.ScoreHit = PlayerHit.ScoreHit + 1
+              MESSAGE:NewType( self.DisplayMessagePrefix .. "Player '" .. playername .. "' hit static target " .. TargetUnitCategory .. " ( " .. TargetType .. " ) " ..
+                               "Score: " .. PlayerHit.Score .. ".  Score Total:" .. Player.Score - Player.Penalty,
+                               MESSAGE.Type.Update )
+                     :ToAllIf( self:IfMessagesHit() and self:IfMessagesToAll() )
+                     :ToCoalitionIf( Event.WeaponCoalition, self:IfMessagesHit() and self:IfMessagesToCoalition() )
 
-            self:ScoreCSV( Event.WeaponPlayerName, "", "HIT_SCORE", 1, 0, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, "", "Scenery", TargetUnitType )
-          end
+              self:ScoreCSV( playername, TargetPlayerName, "HIT_SCORE", 1, 1, Event.WeaponName, Event.WeaponCoalition, Event.WeaponCategory, Event.WeaponTypeName, TargetUnitName, TargetUnitCoalition, TargetUnitCategory, TargetUnitType )
+            
+            else
+              self:E("Hit unregistered scenery or static object - NO target! ("..TgtName..")")
+            end
+          --end
         end
       end
     end
+  
+    -- Check if there are Zones where the destruction happened.
+  for ZoneName, ScoreZoneData in pairs( self.ScoringZones ) do
+    self:F( { ScoringZone = ScoreZoneData } )
+    local hit=Event.TgtUnit
+    local ScoreZone = ScoreZoneData.ScoreZone -- Core.Zone#ZONE_BASE
+    local Score = ScoreZoneData.Score
+    if TargetUNIT and ScoreZone:IsVec2InZone( TargetUNIT:GetVec2() ) then
+      -- A scenery or static got hit, score it.
+      -- Player contains the score data from self.Players[WeaponPlayerName]
+      local PlayerName = Event.IniPlayerName or "Ghost"
+      local Player = self.Players[PlayerName]
+        
+      Player.Score = Player.Score + Score
+      Player.Score = Player.Score + self.ScoreIncrementOnHit
+      MESSAGE:NewType( self.DisplayMessagePrefix .. "hit in zone '" .. ScoreZone:GetName() .. "'." ..
+                       "Player '" .. PlayerName .. "' receives an extra " .. Score .. " points! " .. "Total: " .. Player.Score - Player.Penalty,
+                       MESSAGE.Type.Information )
+             :ToAllIf( self:IfMessagesZone() and self:IfMessagesToAll() )
+             :ToCoalitionIf( InitCoalition, self:IfMessagesZone() and self:IfMessagesToCoalition() )
+  
+      self:ScoreCSV( PlayerName, "", "HIT_SCORE", 1, Score, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, "", "Zone", TargetUnitType )
+      end
+    end
   end
-end
-
+  
+ end
+ 
 --- Track  DEAD or CRASH events for the scoring.
 -- @param #SCORING self
 -- @param Core.Event#EVENTDATA Event
