@@ -1165,7 +1165,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
   self.ScanData.SceneryTable = {}
   self.ScanData.Units = {}
 
-  local ZoneCoord = self:GetCoordinate()
+  local ZoneCoord = self:GetCoordinate():SetAlt()
   local ZoneRadius = self:GetRadius()
 
   --self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
