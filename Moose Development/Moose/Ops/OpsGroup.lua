@@ -8019,14 +8019,16 @@ function OPSGROUP:onafterDead(From, Event, To)
     
       -- Get asset.
       local asset=self.legion:GetAssetByName(self.groupname)
-      
-      -- Get request.
-      local request=self.legion:GetRequestByID(asset.rid)
-      
-      -- Trigger asset dead event.
-      self.legion:AssetDead(asset, request)
+
+      if asset then
+          -- Get request.
+          local request=self.legion:GetRequestByID(asset.rid)
+
+          -- Trigger asset dead event.
+          self.legion:AssetDead(asset, request)
+      end
     end
-  
+
     -- Stop in 5 sec to give possible respawn attempts a chance.  
     self:__Stop(-5)
     
