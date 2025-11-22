@@ -20,7 +20,6 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- ### Contributions: Flightcontrol (@{AI.AI_Formation} class being used here)
 --
 -- @module Ops.RescueHelo
 -- @image Ops_RescueHelo.png
@@ -37,7 +36,7 @@
 -- @field #number takeoff Takeoff type.
 -- @field Wrapper.Airbase#AIRBASE airbase The airbase object acting as home base of the helo.
 -- @field Core.Set#SET_GROUP followset Follow group set.
--- @field AI.AI_Formation#AI_FORMATION formation AI_FORMATION object.
+-- @field Functional.Formation#FORMATION formation FORMATION object.
 -- @field #number lowfuel Low fuel threshold of helo in percent.
 -- @field #number altitude Altitude of helo in meters.
 -- @field #number offsetX Offset in meters to carrier in longitudinal direction.
@@ -947,16 +946,12 @@ function RESCUEHELO:onafterStart(From, Event, To)
   self.HeloFuel0=self.helo:GetFuel()
   
   -- Define AI Formation object.
-  self.formation=AI_FORMATION:New(self.carrier, self.followset, "Helo Formation with Carrier", "Follow Carrier at given parameters.")
-  
+  self.formation=FORMATION:New(self.carrier, self.followset, "Helo Formation with Carrier")
   -- Formation parameters.
   self.formation:FormationCenterWing(-self.offsetX, 50, math.abs(self.altitude), 50, self.offsetZ, 50)
   
   -- Set follow time interval.
   self.formation:SetFollowTimeInterval(self.dtFollow)
-  
-  -- Formation mode.
-  self.formation:SetFlightModeFormation(self.helo)
   
   -- Start formation FSM.
   self.formation:__Start(delay)

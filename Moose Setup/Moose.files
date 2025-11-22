@@ -75,6 +75,7 @@ Functional/ZoneGoalCargo.lua
 Functional/Tiresias.lua
 Functional/Stratego.lua
 Functional/ClientWatch.lua
+Functional/Formation.lua
 
 Ops/Airboss.lua
 Ops/RecoveryTanker.lua

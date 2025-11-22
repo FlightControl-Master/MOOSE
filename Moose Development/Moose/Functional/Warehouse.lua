@@ -1132,7 +1132,7 @@
 -- specify an "Assignment". This can be later used to identify the request and take the right actions.
 --
 -- Once the request is processed, the @{#WAREHOUSE.OnAfterSelfRequest} function is called. This is where we hook in and postprocess the spawned assets.
--- In particular, we use the @{AI.AI_Formation#AI_FORMATION} class to make some nice escorts for our carrier.
+-- In particular, we use the @{Functional.Formation#FORMATION} class to make some nice escorts for our carrier.
 --
 -- When the resue helo is spawned, we can check that this is the correct asset and make the helo go into formation with the carrier.
 -- Once the helo runs out of fuel, it will automatically return to the ship and land. For the warehouse, this means that the "cargo", i.e. the helicopter
@@ -1175,7 +1175,7 @@
 --
 --         -- Define AI Formation object.
 --         -- Note that this has to be a global variable or the garbage collector will remove it for some reason!
---         CarrierFormationLeft = AI_FORMATION:New(Mother, groupset, "Left Formation with Carrier", "Escort Carrier.")
+--         CarrierFormationLeft = FORMATION:New(Mother, groupset, "Left Formation with Carrier")
 --
 --         -- Formation parameters.
 --         CarrierFormationLeft:FormationLeftWing(200 ,50, 0, 0, 500, 50)
@@ -1190,7 +1190,7 @@
 --
 --         -- Define AI Formation object.
 --         -- Note that this has to be a global variable or the garbage collector will remove it for some reason!
---         CarrierFormationRight = AI_FORMATION:New(Mother, groupset, "Right Formation with Carrier", "Escort Carrier.")
+--         CarrierFormationRight = FORMATION:New(Mother, groupset, "Right Formation with Carrier")
 --
 --         -- Formation parameters.
 --         CarrierFormationRight:FormationRightWing(200 ,50, 0, 0, 500, 50)
@@ -1208,7 +1208,7 @@
 --         group:StartUncontrolled()
 --
 --         -- Define AI Formation object.
---         CarrierFormationHelo = AI_FORMATION:New(Mother, groupset, "Helo Formation with Carrier", "Fly Formation.")
+--         CarrierFormationHelo = FORMATION:New(Mother, groupset, "Helo Formation with Carrier")
 --
 --         -- Formation parameters.
 --         CarrierFormationHelo:FormationCenterWing(-150, 50, 20, 50, 100, 50)
