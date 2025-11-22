@@ -2037,7 +2037,7 @@ function AUFTRAG:NewRESCUEHELO(Carrier)
 
   -- Mission options:
   mission.missionTask=ENUMS.MissionTask.NOTHING
-  mission.missionFraction=0.5
+  mission.missionFraction=0.9
   mission.optionROE=ENUMS.ROE.WeaponHold
   mission.optionROT=ENUMS.ROT.NoReaction
 

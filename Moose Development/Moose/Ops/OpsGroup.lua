@@ -4303,13 +4303,24 @@ function OPSGROUP:_UpdateTask(Task, Mission)
 
   if Task.dcstask.id==AUFTRAG.SpecialTask.FORMATION then
       
-    if Mission.Type == AUFTRAG.Type.RESCUEHELO then
+    if Mission.type == AUFTRAG.Type.RESCUEHELO then
+      self:I("**********")
+      self:I("** RESCUEHELO USED")
+      self:I("**********")
       local param=Task.dcstask.params
       local followUnit=UNIT:FindByName(param.unitname)
       local helogroupname = self:GetGroup():GetName()
       Task.formation = RESCUEHELO:New(followUnit,helogroupname)
+      Task.formation:SetRespawnOnOff(false)
+      Task.formation.respawninair=false
+      Task.formation:SetTakeoffCold()
+      Task.formation:SetHomeBase(followUnit)
+      Task.formation.helo = self:GetGroup() 
       -- Start formation FSM.
       Task.formation:Start()
+      if self:IsFlightgroup() then
+        self:SetDespawnAfterLanding()
+      end
     else  
       
     -- Set of group(s) to follow Mother.
@@ -4329,7 +4340,7 @@ function OPSGROUP:_UpdateTask(Task, Mission)
     Task.formation:SetFollowTimeInterval(param.dtFollow)
 
     -- Formation mode.
-    Task.formation:SetFlightModeFormation(self.group)
+    --Task.formation:SetFlightModeFormation(self.group)
 
     -- Start formation FSM.
     Task.formation:Start()
@@ -8031,11 +8042,16 @@ function OPSGROUP:onafterDead(From, Event, To)
       -- Get asset.
       local asset=self.legion:GetAssetByName(self.groupname)
       
+      if asset then
+      
       -- Get request.
       local request=self.legion:GetRequestByID(asset.rid)
       
       -- Trigger asset dead event.
       self.legion:AssetDead(asset, request)
+      
+      end
+      
     end
   
     -- Stop in 5 sec to give possible respawn attempts a chance.  
@@ -12728,7 +12744,7 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
 
-  self:T(self.lid..string.format("Setting Default callsing %s-%s", tostring(CallsignName), tostring(CallsignNumber)))
+  self:T(self.lid..string.format("Setting Default callsign %s-%s", tostring(CallsignName), tostring(CallsignNumber)))
 
   self.callsignDefault={} --#OPSGROUP.Callsign
   self.callsignDefault.NumberSquad=CallsignName
