@@ -807,70 +807,81 @@ AIRBASE.Sinai = {
 }
 
 --- Airbases of the Kola map
--- 
--- * AIRBASE.Kola.Banak
--- * AIRBASE.Kola.Bodo
--- * AIRBASE.Kola.Ivalo
--- * AIRBASE.Kola.Jokkmokk
--- * AIRBASE.Kola.Kalixfors
--- * AIRBASE.Kola.Kallax
--- * AIRBASE.Kola.Kemi_Tornio
--- * AIRBASE.Kola.Kirkenes
--- * AIRBASE.Kola.Kiruna
--- * AIRBASE.Kola.Kuusamo
--- * AIRBASE.Kola.Monchegorsk
--- * AIRBASE.Kola.Murmansk_International
--- * AIRBASE.Kola.Olenya
--- * AIRBASE.Kola.Rovaniemi
--- * AIRBASE.Kola.Severomorsk_1
--- * AIRBASE.Kola.Severomorsk_3
--- * AIRBASE.Kola.Vidsel
--- * AIRBASE.Kola.Vuojarvi
--- * AIRBASE.Kola.Andoya
--- * AIRBASE.Kola.Alakurtti
--- * AIRBASE.Kola.Kittila
--- * AIRBASE.Kola.Bardufoss
--- * AIRBASE.Kola.Alta
--- * AIRBASE.Kola.Sodankyla
--- * AIRBASE.Kola.Enontekio
--- * AIRBASE.Kola.Evenes
--- * AIRBASE.Kola.Hosio
 --
--- @field Kola
+-- * `AIRBASE.Kola.Afrikanda` Afrikanda
+-- * `AIRBASE.Kola.Alakurtti` Alakurtti
+-- * `AIRBASE.Kola.Alta` Alta
+-- * `AIRBASE.Kola.Andoya` Andoya
+-- * `AIRBASE.Kola.Arvidsjaur` Arvidsjaur
+-- * `AIRBASE.Kola.Banak` Banak
+-- * `AIRBASE.Kola.Bardufoss` Bardufoss
+-- * `AIRBASE.Kola.Boden_Heli_Base` Boden Heli Base
+-- * `AIRBASE.Kola.Bodo` Bodo
+-- * `AIRBASE.Kola.Enontekio` Enontekio
+-- * `AIRBASE.Kola.Evenes` Evenes
+-- * `AIRBASE.Kola.Hemavan` Hemavan
+-- * `AIRBASE.Kola.Hosio` Hosio
+-- * `AIRBASE.Kola.Ivalo` Ivalo
+-- * `AIRBASE.Kola.Jokkmokk` Jokkmokk
+-- * `AIRBASE.Kola.Kalevala` Kalevala
+-- * `AIRBASE.Kola.Kalixfors` Kalixfors
+-- * `AIRBASE.Kola.Kallax` Kallax
+-- * `AIRBASE.Kola.Kemi_Tornio` Kemi Tornio
+-- * `AIRBASE.Kola.Kilpyavr` Kilpyavr
+-- * `AIRBASE.Kola.Kirkenes` Kirkenes
+-- * `AIRBASE.Kola.Kiruna` Kiruna
+-- * `AIRBASE.Kola.Kittila` Kittila
+-- * `AIRBASE.Kola.Koshka_Yavr` Koshka Yavr
+-- * `AIRBASE.Kola.Kuusamo` Kuusamo
+-- * `AIRBASE.Kola.Luostari_Pechenga` Luostari Pechenga
+-- * `AIRBASE.Kola.Monchegorsk` Monchegorsk
+-- * `AIRBASE.Kola.Murmansk_International` Murmansk International
+-- * `AIRBASE.Kola.Olenya` Olenya
+-- * `AIRBASE.Kola.Poduzhemye` Poduzhemye
+-- * `AIRBASE.Kola.Rovaniemi` Rovaniemi
+-- * `AIRBASE.Kola.Severomorsk_1` Severomorsk-1
+-- * `AIRBASE.Kola.Severomorsk_3` Severomorsk-3
+-- * `AIRBASE.Kola.Sodankyla` Sodankyla
+-- * `AIRBASE.Kola.Vidsel` Vidsel
+-- * `AIRBASE.Kola.Vuojarvi` Vuojarvi
+--
 AIRBASE.Kola = {
+  ["Afrikanda"] = "Afrikanda",
+  ["Alakurtti"] = "Alakurtti",
+  ["Alta"] = "Alta",
+  ["Andoya"] = "Andoya",
+  ["Arvidsjaur"] = "Arvidsjaur",
   ["Banak"] = "Banak",
+  ["Bardufoss"] = "Bardufoss",
+  ["Boden_Heli_Base"] = "Boden Heli Base",
   ["Bodo"] = "Bodo",
+  ["Enontekio"] = "Enontekio",
+  ["Evenes"] = "Evenes",
+  ["Hemavan"] = "Hemavan",
+  ["Hosio"] = "Hosio",
   ["Ivalo"] = "Ivalo",
   ["Jokkmokk"] = "Jokkmokk",
+  ["Kalevala"] = "Kalevala",
   ["Kalixfors"] = "Kalixfors",
   ["Kallax"] = "Kallax",
   ["Kemi_Tornio"] = "Kemi Tornio",
+  ["Kilpyavr"] = "Kilpyavr",
   ["Kirkenes"] = "Kirkenes",
   ["Kiruna"] = "Kiruna",
+  ["Kittila"] = "Kittila",
+  ["Koshka_Yavr"] = "Koshka Yavr",
   ["Kuusamo"] = "Kuusamo",
+  ["Luostari_Pechenga"] = "Luostari Pechenga",
   ["Monchegorsk"] = "Monchegorsk",
   ["Murmansk_International"] = "Murmansk International",
   ["Olenya"] = "Olenya",
+  ["Poduzhemye"] = "Poduzhemye",
   ["Rovaniemi"] = "Rovaniemi",
   ["Severomorsk_1"] = "Severomorsk-1",
   ["Severomorsk_3"] = "Severomorsk-3",
+  ["Sodankyla"] = "Sodankyla",
   ["Vidsel"] = "Vidsel",
   ["Vuojarvi"] = "Vuojarvi",
-  ["Andoya"] = "Andoya",
-  ["Alakurtti"] = "Alakurtti",
-  ["Kittila"] = "Kittila",
-  ["Bardufoss"] = "Bardufoss",
-  ["Alta"] = "Alta",
-  ["Sodankyla"] = "Sodankyla",
-  ["Enontekio"] = "Enontekio",
-  ["Evenes"] = "Evenes",
-  ["Hosio"] = "Hosio",
-  ["Kilpyavr"] = "Kilpyavr",
-  ["Afrikanda"] = "Afrikanda",
-  ["Kalevala"] = "Kalevala",
-  ["Koshka_Yavr"] = "Koshka Yavr",
-  ["Poduzhemye"] = "Poduzhemye",
-  ["Luostari_Pechenga"] = "Luostari Pechenga",
 }
 
 --- Airbases of the Afghanistan map
