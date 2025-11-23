@@ -876,32 +876,36 @@ AIRBASE.Kola = {
 }
 
 --- Airbases of the Afghanistan map
--- 
--- * AIRBASE.Afghanistan.Bost
--- * AIRBASE.Afghanistan.Bagram
--- * AIRBASE.Afghanistan.Bamyan
--- * AIRBASE.Afghanistan.Camp_Bastion
--- * AIRBASE.Afghanistan.Camp_Bastion_Heliport
--- * AIRBASE.Afghanistan.Chaghcharan
--- * AIRBASE.Afghanistan.Dwyer
--- * AIRBASE.Afghanistan.Farah
--- * AIRBASE.Afghanistan.Herat
--- * AIRBASE.Afghanistan.Gardez
--- * AIRBASE.Afghanistan.Ghazni_Heliport
--- * AIRBASE.Afghanistan.Jalalabad
--- * AIRBASE.Afghanistan.Kabul
--- * AIRBASE.Afghanistan.Kandahar
--- * AIRBASE.Afghanistan.Kandahar_Heliport
--- * AIRBASE.Afghanistan.Khost
--- * AIRBASE.Afghanistan.Khost_Heliport
--- * AIRBASE.Afghanistan.Maymana_Zahiraddin_Faryabi
--- * AIRBASE.Afghanistan.Nimroz
--- * AIRBASE.Afghanistan.Qala_i_Naw
--- * AIRBASE.Afghanistan.Shindand
--- * AIRBASE.Afghanistan.Shindand_Heliport
--- * AIRBASE.Afghanistan.Tarinkot
--- * AIRBASE.Afghanistan.Urgoon_Heliport
--- 
+--
+-- * `AIRBASE.Afghanistan.Bagram` Bagram
+-- * `AIRBASE.Afghanistan.Bamyan` Bamyan
+-- * `AIRBASE.Afghanistan.Bost` Bost
+-- * `AIRBASE.Afghanistan.Camp_Bastion` Camp Bastion
+-- * `AIRBASE.Afghanistan.Camp_Bastion_Heliport` Camp Bastion Heliport
+-- * `AIRBASE.Afghanistan.Chaghcharan` Chaghcharan
+-- * `AIRBASE.Afghanistan.Dwyer` Dwyer
+-- * `AIRBASE.Afghanistan.FOB_Camp_Dubs` FOB Camp Dubs
+-- * `AIRBASE.Afghanistan.FOB_Clark` FOB Clark
+-- * `AIRBASE.Afghanistan.FOB_Salerno` FOB Salerno
+-- * `AIRBASE.Afghanistan.FOB_Thunder` FOB Thunder
+-- * `AIRBASE.Afghanistan.Farah` Farah
+-- * `AIRBASE.Afghanistan.Gardez` Gardez
+-- * `AIRBASE.Afghanistan.Ghazni_Heliport` Ghazni Heliport
+-- * `AIRBASE.Afghanistan.Herat` Herat
+-- * `AIRBASE.Afghanistan.Jalalabad` Jalalabad
+-- * `AIRBASE.Afghanistan.Kabul` Kabul
+-- * `AIRBASE.Afghanistan.Kandahar` Kandahar
+-- * `AIRBASE.Afghanistan.Kandahar_Heliport` Kandahar Heliport
+-- * `AIRBASE.Afghanistan.Khost` Khost
+-- * `AIRBASE.Afghanistan.Maymana_Zahiraddin_Faryabi` Maymana Zahiraddin Faryabi
+-- * `AIRBASE.Afghanistan.Nimroz` Nimroz
+-- * `AIRBASE.Afghanistan.Qala_i_Naw` Qala i Naw
+-- * `AIRBASE.Afghanistan.Sharana` Sharana
+-- * `AIRBASE.Afghanistan.Shindand` Shindand
+-- * `AIRBASE.Afghanistan.Shindand_Heliport` Shindand Heliport
+-- * `AIRBASE.Afghanistan.Tarinkot` Tarinkot
+-- * `AIRBASE.Afghanistan.Urgoon_Heliport` Urgoon Heliport
+--
 -- @field Afghanistan
 AIRBASE.Afghanistan = {
   ["Bagram"] = "Bagram",
@@ -911,6 +915,10 @@ AIRBASE.Afghanistan = {
   ["Camp_Bastion_Heliport"] = "Camp Bastion Heliport",
   ["Chaghcharan"] = "Chaghcharan",
   ["Dwyer"] = "Dwyer",
+  ["FOB_Camp_Dubs"] = "FOB Camp Dubs",
+  ["FOB_Clark"] = "FOB Clark",
+  ["FOB_Salerno"] = "FOB Salerno",
+  ["FOB_Thunder"] = "FOB Thunder",
   ["Farah"] = "Farah",
   ["Gardez"] = "Gardez",
   ["Ghazni_Heliport"] = "Ghazni Heliport",
@@ -920,7 +928,6 @@ AIRBASE.Afghanistan = {
   ["Kandahar"] = "Kandahar",
   ["Kandahar_Heliport"] = "Kandahar Heliport",
   ["Khost"] = "Khost",
-  ["Khost_Heliport"] = "Khost Heliport",
   ["Maymana_Zahiraddin_Faryabi"] = "Maymana Zahiraddin Faryabi",
   ["Nimroz"] = "Nimroz",
   ["Qala_i_Naw"] = "Qala i Naw",
