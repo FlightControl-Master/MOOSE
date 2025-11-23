@@ -424,20 +424,20 @@ AIRBASE.PersianGulf = {
   ["Tunb_Kochak"] = "Tunb Kochak",
 }
 
---- Airbases of The Channel Map:
+--- Airbases of the The Channel map
 --
--- * AIRBASE.TheChannel.Abbeville_Drucat
--- * AIRBASE.TheChannel.Biggin_Hill
--- * AIRBASE.TheChannel.Detling
--- * AIRBASE.TheChannel.Dunkirk_Mardyck
--- * AIRBASE.TheChannel.Eastchurch
--- * AIRBASE.TheChannel.Hawkinge
--- * AIRBASE.TheChannel.Headcorn
--- * AIRBASE.TheChannel.High_Halden
--- * AIRBASE.TheChannel.Lympne
--- * AIRBASE.TheChannel.Manston
--- * AIRBASE.TheChannel.Merville_Calonne
--- * AIRBASE.TheChannel.Saint_Omer_Longuenesse
+-- * `AIRBASE.TheChannel.Abbeville_Drucat` Abbeville Drucat
+-- * `AIRBASE.TheChannel.Biggin_Hill` Biggin Hill
+-- * `AIRBASE.TheChannel.Detling` Detling
+-- * `AIRBASE.TheChannel.Dunkirk_Mardyck` Dunkirk Mardyck
+-- * `AIRBASE.TheChannel.Eastchurch` Eastchurch
+-- * `AIRBASE.TheChannel.Hawkinge` Hawkinge
+-- * `AIRBASE.TheChannel.Headcorn` Headcorn
+-- * `AIRBASE.TheChannel.High_Halden` High Halden
+-- * `AIRBASE.TheChannel.Lympne` Lympne
+-- * `AIRBASE.TheChannel.Manston` Manston
+-- * `AIRBASE.TheChannel.Merville_Calonne` Merville Calonne
+-- * `AIRBASE.TheChannel.Saint_Omer_Longuenesse` Saint Omer Longuenesse
 --
 -- @field TheChannel
 AIRBASE.TheChannel = {
@@ -1049,7 +1049,7 @@ AIRBASE.Iraq = {
 -- * `AIRBASE.GermanyCW.Damgarten` Damgarten
 -- * `AIRBASE.GermanyCW.Dedelow` Dedelow
 -- * `AIRBASE.GermanyCW.Dessau` Dessau
--- * `AIRBASE.GermanyCW.Dusseldorf` Dusseldorf
+-- * `AIRBASE.GermanyCW.Duesseldorf` Dusseldorf
 -- * `AIRBASE.GermanyCW.Falkenberg` Falkenberg
 -- * `AIRBASE.GermanyCW.Fassberg` Fassberg
 -- * `AIRBASE.GermanyCW.Finow` Finow
@@ -1204,7 +1204,7 @@ AIRBASE.Iraq = {
 -- * `AIRBASE.GermanyCW.Neuruppin` Neuruppin
 -- * `AIRBASE.GermanyCW.Nordholz` Nordholz
 -- * `AIRBASE.GermanyCW.Northeim` Northeim
--- * `AIRBASE.GermanyCW.Norvenich` Norvenich
+-- * `AIRBASE.GermanyCW.Noervenich` Norvenich
 -- * `AIRBASE.GermanyCW.Ober_Moerlen` Ober-Morlen
 -- * `AIRBASE.GermanyCW.Obermehler_Schlotheim` Obermehler Schlotheim
 -- * `AIRBASE.GermanyCW.Oranienburg` Oranienburg
@@ -1248,7 +1248,7 @@ AIRBASE.Iraq = {
 -- * `AIRBASE.GermanyCW.Worms` Worms
 -- * `AIRBASE.GermanyCW.Wunstorf` Wunstorf
 -- * `AIRBASE.GermanyCW.Zerbst` Zerbst
--- * `AIRBASE.GermanyCW.Zollschen` Zollschen
+-- * `AIRBASE.GermanyCW.Zoellschen` Zollschen
 -- * `AIRBASE.GermanyCW.Zweibruecken` Zweibrucken
 --
 -- @field GermanyCW
@@ -1279,7 +1279,7 @@ AIRBASE.GermanyCW = {
   ["Damgarten"] = "Damgarten",
   ["Dedelow"] = "Dedelow",
   ["Dessau"] = "Dessau",
-  ["Dusseldorf"] = "Dusseldorf",
+  ["Duesseldorf"] = "Dusseldorf",
   ["Falkenberg"] = "Falkenberg",
   ["Fassberg"] = "Fassberg",
   ["Finow"] = "Finow",
@@ -1434,7 +1434,7 @@ AIRBASE.GermanyCW = {
   ["Neuruppin"] = "Neuruppin",
   ["Nordholz"] = "Nordholz",
   ["Northeim"] = "Northeim",
-  ["Norvenich"] = "Norvenich",
+  ["Noervenich"] = "Norvenich",
   ["Ober_Moerlen"] = "Ober-Morlen",
   ["Obermehler_Schlotheim"] = "Obermehler Schlotheim",
   ["Oranienburg"] = "Oranienburg",
@@ -1478,7 +1478,7 @@ AIRBASE.GermanyCW = {
   ["Worms"] = "Worms",
   ["Wunstorf"] = "Wunstorf",
   ["Zerbst"] = "Zerbst",
-  ["Zollschen"] = "Zollschen",
+  ["Zoellschen"] = "Zollschen",
   ["Zweibruecken"] = "Zweibrucken",
 }
 

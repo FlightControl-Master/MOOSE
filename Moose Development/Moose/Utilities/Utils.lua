@@ -5194,6 +5194,8 @@ function UTILS.CreateAirbaseEnum()
         key="Buechel"
       elseif name=="Buckeburg" then
         key="Bueckeburg"
+      elseif name=="Dusseldorf" then
+        key="Duesseldorf"        
       elseif name=="Gutersloh" then
         key="Guetersloh"
       elseif name=="Kothen" then
@@ -5204,6 +5206,8 @@ function UTILS.CreateAirbaseEnum()
         key="Luebeck"                
       elseif name=="Luneburg" then
         key="Lueneburg"
+      elseif name=="Norvenich" then
+        key="Noervenich"        
       elseif name=="Ober-Morlen" then
         key="Ober_Moerlen"
       elseif name=="Peenemunde" then
@@ -5214,8 +5218,10 @@ function UTILS.CreateAirbaseEnum()
         key="Schoenefeld"
       elseif name=="Weser Wumme" then
         key="Weser_Wuemme"
+      elseif name=="Zollschen" then
+        key="Zoellschen"
       elseif name=="Zweibrucken" then
-        key="Zweibruecken"
+        key="Zweibruecken"                
       end
       
       -- Replace blanks, hyphens by underscores 
