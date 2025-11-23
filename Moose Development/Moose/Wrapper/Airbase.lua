@@ -455,91 +455,92 @@ AIRBASE.TheChannel = {
   ["Saint_Omer_Longuenesse"] = "Saint Omer Longuenesse",
 }
 
---- Airbases of the Syria map:
+--- Airbases of the Syria map
 --
--- * AIRBASE.Syria.Abu_al_Duhur
--- * AIRBASE.Syria.Adana_Sakirpasa
--- * AIRBASE.Syria.Akrotiri
--- * AIRBASE.Syria.Al_Dumayr
--- * AIRBASE.Syria.Al_Qusayr
--- * AIRBASE.Syria.Aleppo
--- * AIRBASE.Syria.An_Nasiriyah
--- * AIRBASE.Syria.At_Tanf
--- * AIRBASE.Syria.Bassel_Al_Assad
--- * AIRBASE.Syria.Beirut_Rafic_Hariri
--- * AIRBASE.Syria.Damascus
--- * AIRBASE.Syria.Deir_ez_Zor
--- * AIRBASE.Syria.Ercan
--- * AIRBASE.Syria.Eyn_Shemer
--- * AIRBASE.Syria.Gaziantep
--- * AIRBASE.Syria.Gazipasa
--- * AIRBASE.Syria.Gecitkale
--- * AIRBASE.Syria.H
--- * AIRBASE.Syria.H3
--- * AIRBASE.Syria.H3_Northwest
--- * AIRBASE.Syria.H3_Southwest
--- * AIRBASE.Syria.H4
--- * AIRBASE.Syria.Haifa
--- * AIRBASE.Syria.Hama
--- * AIRBASE.Syria.Hatay
--- * AIRBASE.Syria.Herzliya
--- * AIRBASE.Syria.Incirlik
--- * AIRBASE.Syria.Jirah
--- * AIRBASE.Syria.Khalkhalah
--- * AIRBASE.Syria.Kharab_Ishk
--- * AIRBASE.Syria.King_Abdullah_II
--- * AIRBASE.Syria.King_Hussein_Air_College
--- * AIRBASE.Syria.Kingsfield
--- * AIRBASE.Syria.Kiryat_Shmona
--- * AIRBASE.Syria.Kuweires
--- * AIRBASE.Syria.Lakatamia
--- * AIRBASE.Syria.Larnaca
--- * AIRBASE.Syria.Marj_Ruhayyil
--- * AIRBASE.Syria.Marj_as_Sultan_North
--- * AIRBASE.Syria.Marj_as_Sultan_South
--- * AIRBASE.Syria.Megiddo
--- * AIRBASE.Syria.Mezzeh
--- * AIRBASE.Syria.Minakh
--- * AIRBASE.Syria.Muwaffaq_Salti
--- * AIRBASE.Syria.Naqoura
--- * AIRBASE.Syria.Nicosia
--- * AIRBASE.Syria.Palmyra
--- * AIRBASE.Syria.Paphos
--- * AIRBASE.Syria.Pinarbashi
--- * AIRBASE.Syria.Prince_Hassan
--- * AIRBASE.Syria.Qabr_as_Sitt
--- * AIRBASE.Syria.Ramat_David
--- * AIRBASE.Syria.Rayak
--- * AIRBASE.Syria.Rene_Mouawad
--- * AIRBASE.Syria.Rosh_Pina
--- * AIRBASE.Syria.Ruwayshid
--- * AIRBASE.Syria.Sanliurfa
--- * AIRBASE.Syria.Sayqal
--- * AIRBASE.Syria.Shayrat
--- * AIRBASE.Syria.Tabqa
--- * AIRBASE.Syria.Taftanaz
--- * AIRBASE.Syria.Tal_Siman
--- * AIRBASE.Syria.Tha_lah
--- * AIRBASE.Syria.Tiyas
--- * AIRBASE.Syria.Wujah_Al_Hajar
--- * AIRBASE.Syria.Ben_Gurion 
--- * AIRBASE.Syria.Hatzor
--- * AIRBASE.Syria.Palmachim
--- * AIRBASE.Syria.Tel_Nof
--- * AIRBASE.Syria.Marka
+-- * `AIRBASE.Syria.Abu_al_Duhur` Abu al-Duhur
+-- * `AIRBASE.Syria.Adana_Sakirpasa` Adana Sakirpasa
+-- * `AIRBASE.Syria.Akrotiri` Akrotiri
+-- * `AIRBASE.Syria.Al_Qusayr` Al Qusayr
+-- * `AIRBASE.Syria.Al_Dumayr` Al-Dumayr
+-- * `AIRBASE.Syria.Aleppo` Aleppo
+-- * `AIRBASE.Syria.An_Nasiriyah` An Nasiriyah
+-- * `AIRBASE.Syria.At_Tanf` At Tanf
+-- * `AIRBASE.Syria.Bassel_Al_Assad` Bassel Al-Assad
+-- * `AIRBASE.Syria.Beirut_Rafic_Hariri` Beirut-Rafic Hariri
+-- * `AIRBASE.Syria.Ben_Gurion` Ben Gurion
+-- * `AIRBASE.Syria.Damascus` Damascus
+-- * `AIRBASE.Syria.Deir_ez_Zor` Deir ez-Zor
+-- * `AIRBASE.Syria.Ercan` Ercan
+-- * `AIRBASE.Syria.Eyn_Shemer` Eyn Shemer
+-- * `AIRBASE.Syria.Gaziantep` Gaziantep
+-- * `AIRBASE.Syria.Gazipasa` Gazipasa
+-- * `AIRBASE.Syria.Gecitkale` Gecitkale
+-- * `AIRBASE.Syria.H` H
+-- * `AIRBASE.Syria.H3` H3
+-- * `AIRBASE.Syria.H3_Northwest` H3 Northwest
+-- * `AIRBASE.Syria.H3_Southwest` H3 Southwest
+-- * `AIRBASE.Syria.H4` H4
+-- * `AIRBASE.Syria.Haifa` Haifa
+-- * `AIRBASE.Syria.Hama` Hama
+-- * `AIRBASE.Syria.Hatay` Hatay
+-- * `AIRBASE.Syria.Hatzor` Hatzor
+-- * `AIRBASE.Syria.Herzliya` Herzliya
+-- * `AIRBASE.Syria.Incirlik` Incirlik
+-- * `AIRBASE.Syria.Jirah` Jirah
+-- * `AIRBASE.Syria.Khalkhalah` Khalkhalah
+-- * `AIRBASE.Syria.Kharab_Ishk` Kharab Ishk
+-- * `AIRBASE.Syria.King_Abdullah_II` King Abdullah II
+-- * `AIRBASE.Syria.King_Hussein_Air_College` King Hussein Air College
+-- * `AIRBASE.Syria.Kingsfield` Kingsfield
+-- * `AIRBASE.Syria.Kiryat_Shmona` Kiryat Shmona
+-- * `AIRBASE.Syria.Kuweires` Kuweires
+-- * `AIRBASE.Syria.Lakatamia` Lakatamia
+-- * `AIRBASE.Syria.Larnaca` Larnaca
+-- * `AIRBASE.Syria.Marj_Ruhayyil` Marj Ruhayyil
+-- * `AIRBASE.Syria.Marj_as_Sultan_North` Marj as Sultan North
+-- * `AIRBASE.Syria.Marj_as_Sultan_South` Marj as Sultan South
+-- * `AIRBASE.Syria.Marka` Marka
+-- * `AIRBASE.Syria.Megiddo` Megiddo
+-- * `AIRBASE.Syria.Mezzeh` Mezzeh
+-- * `AIRBASE.Syria.Minakh` Minakh
+-- * `AIRBASE.Syria.Muwaffaq_Salti` Muwaffaq Salti
+-- * `AIRBASE.Syria.Naqoura` Naqoura
+-- * `AIRBASE.Syria.Nicosia` Nicosia
+-- * `AIRBASE.Syria.Palmachim` Palmachim
+-- * `AIRBASE.Syria.Palmyra` Palmyra
+-- * `AIRBASE.Syria.Paphos` Paphos
+-- * `AIRBASE.Syria.Pinarbashi` Pinarbashi
+-- * `AIRBASE.Syria.Prince_Hassan` Prince Hassan
+-- * `AIRBASE.Syria.Qabr_as_Sitt` Qabr as Sitt
+-- * `AIRBASE.Syria.Ramat_David` Ramat David
+-- * `AIRBASE.Syria.Rayak` Rayak
+-- * `AIRBASE.Syria.Rene_Mouawad` Rene Mouawad
+-- * `AIRBASE.Syria.Rosh_Pina` Rosh Pina
+-- * `AIRBASE.Syria.Ruwayshid` Ruwayshid
+-- * `AIRBASE.Syria.Sanliurfa` Sanliurfa
+-- * `AIRBASE.Syria.Sayqal` Sayqal
+-- * `AIRBASE.Syria.Shayrat` Shayrat
+-- * `AIRBASE.Syria.Tabqa` Tabqa
+-- * `AIRBASE.Syria.Taftanaz` Taftanaz
+-- * `AIRBASE.Syria.Tal_Siman` Tal Siman
+-- * `AIRBASE.Syria.Tel_Nof` Tel Nof
+-- * `AIRBASE.Syria.Tha_lah` Tha'lah
+-- * `AIRBASE.Syria.Tiyas` Tiyas
+-- * `AIRBASE.Syria.Wujah_Al_Hajar` Wujah Al Hajar
 --
---@field Syria
-AIRBASE.Syria={
+-- @field Syria
+AIRBASE.Syria = {
   ["Abu_al_Duhur"] = "Abu al-Duhur",
   ["Adana_Sakirpasa"] = "Adana Sakirpasa",
   ["Akrotiri"] = "Akrotiri",
-  ["Al_Dumayr"] = "Al-Dumayr",
   ["Al_Qusayr"] = "Al Qusayr",
+  ["Al_Dumayr"] = "Al-Dumayr",
   ["Aleppo"] = "Aleppo",
   ["An_Nasiriyah"] = "An Nasiriyah",
   ["At_Tanf"] = "At Tanf",
   ["Bassel_Al_Assad"] = "Bassel Al-Assad",
   ["Beirut_Rafic_Hariri"] = "Beirut-Rafic Hariri",
+  ["Ben_Gurion"] = "Ben Gurion",
   ["Damascus"] = "Damascus",
   ["Deir_ez_Zor"] = "Deir ez-Zor",
   ["Ercan"] = "Ercan",
@@ -555,6 +556,7 @@ AIRBASE.Syria={
   ["Haifa"] = "Haifa",
   ["Hama"] = "Hama",
   ["Hatay"] = "Hatay",
+  ["Hatzor"] = "Hatzor",
   ["Herzliya"] = "Herzliya",
   ["Incirlik"] = "Incirlik",
   ["Jirah"] = "Jirah",
@@ -567,16 +569,17 @@ AIRBASE.Syria={
   ["Kuweires"] = "Kuweires",
   ["Lakatamia"] = "Lakatamia",
   ["Larnaca"] = "Larnaca",
-  ["Marka"] = "Marka",
   ["Marj_Ruhayyil"] = "Marj Ruhayyil",
   ["Marj_as_Sultan_North"] = "Marj as Sultan North",
   ["Marj_as_Sultan_South"] = "Marj as Sultan South",
+  ["Marka"] = "Marka",
   ["Megiddo"] = "Megiddo",
   ["Mezzeh"] = "Mezzeh",
   ["Minakh"] = "Minakh",
   ["Muwaffaq_Salti"] = "Muwaffaq Salti",
   ["Naqoura"] = "Naqoura",
   ["Nicosia"] = "Nicosia",
+  ["Palmachim"] = "Palmachim",
   ["Palmyra"] = "Palmyra",
   ["Paphos"] = "Paphos",
   ["Pinarbashi"] = "Pinarbashi",
@@ -593,13 +596,10 @@ AIRBASE.Syria={
   ["Tabqa"] = "Tabqa",
   ["Taftanaz"] = "Taftanaz",
   ["Tal_Siman"] = "Tal Siman",
+  ["Tel_Nof"] = "Tel Nof",
   ["Tha_lah"] = "Tha'lah",
   ["Tiyas"] = "Tiyas",
   ["Wujah_Al_Hajar"] = "Wujah Al Hajar",
-  ["Ben_Gurion"] = "Ben Gurion",
-  ["Hatzor"] = "Hatzor",
-  ["Palmachim"] = "Palmachim",
-  ["Tel_Nof"] = "Tel Nof",
 }
 
 --- Airbases of the Mariana Islands map
