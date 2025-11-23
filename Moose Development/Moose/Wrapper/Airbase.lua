@@ -357,48 +357,48 @@ AIRBASE.Normandy = {
   ["West_Malling"] = "West Malling",
 }
 
---- Airbases of the Persion Gulf Map:
+--- Airbases of the Persian Gulf map
 --
--- * AIRBASE.PersianGulf.Abu_Dhabi_Intl
--- * AIRBASE.PersianGulf.Abu_Musa_Island
--- * AIRBASE.PersianGulf.Al_Ain_Intl
--- * AIRBASE.PersianGulf.Al_Bateen
--- * AIRBASE.PersianGulf.Al_Dhafra_AFB
--- * AIRBASE.PersianGulf.Al_Maktoum_Intl
--- * AIRBASE.PersianGulf.Al_Minhad_AFB
--- * AIRBASE.PersianGulf.Bandar_Abbas_Intl
--- * AIRBASE.PersianGulf.Bandar_Lengeh
--- * AIRBASE.PersianGulf.Bandar_e_Jask
--- * AIRBASE.PersianGulf.Dubai_Intl
--- * AIRBASE.PersianGulf.Fujairah_Intl
--- * AIRBASE.PersianGulf.Havadarya
--- * AIRBASE.PersianGulf.Jiroft
--- * AIRBASE.PersianGulf.Kerman
--- * AIRBASE.PersianGulf.Khasab
--- * AIRBASE.PersianGulf.Kish_Intl
--- * AIRBASE.PersianGulf.Lar
--- * AIRBASE.PersianGulf.Lavan_Island
--- * AIRBASE.PersianGulf.Liwa_AFB
--- * AIRBASE.PersianGulf.Qeshm_Island
--- * AIRBASE.PersianGulf.Quasoura_airport
--- * AIRBASE.PersianGulf.Ras_Al_Khaimah_Intl
--- * AIRBASE.PersianGulf.Sas_Al_Nakheel
--- * AIRBASE.PersianGulf.Sharjah_Intl
--- * AIRBASE.PersianGulf.Shiraz_Intl
--- * AIRBASE.PersianGulf.Sir_Abu_Nuayr
--- * AIRBASE.PersianGulf.Sirri_Island
--- * AIRBASE.PersianGulf.Tunb_Island_AFB
--- * AIRBASE.PersianGulf.Tunb_Kochak
+-- * `AIRBASE.PersianGulf.Abu_Dhabi_Intl` Abu Dhabi Intl
+-- * `AIRBASE.PersianGulf.Abu_Musa_Island` Abu Musa Island
+-- * `AIRBASE.PersianGulf.Al_Ain_Intl` Al Ain Intl
+-- * `AIRBASE.PersianGulf.Al_Dhafra_AFB` Al Dhafra AFB
+-- * `AIRBASE.PersianGulf.Al_Maktoum_Intl` Al Maktoum Intl
+-- * `AIRBASE.PersianGulf.Al_Minhad_AFB` Al Minhad AFB
+-- * `AIRBASE.PersianGulf.Al_Bateen` Al-Bateen
+-- * `AIRBASE.PersianGulf.Bandar_Abbas_Intl` Bandar Abbas Intl
+-- * `AIRBASE.PersianGulf.Bandar_Lengeh` Bandar Lengeh
+-- * `AIRBASE.PersianGulf.Bandar_e_Jask` Bandar-e-Jask
+-- * `AIRBASE.PersianGulf.Dubai_Intl` Dubai Intl
+-- * `AIRBASE.PersianGulf.Fujairah_Intl` Fujairah Intl
+-- * `AIRBASE.PersianGulf.Havadarya` Havadarya
+-- * `AIRBASE.PersianGulf.Jiroft` Jiroft
+-- * `AIRBASE.PersianGulf.Kerman` Kerman
+-- * `AIRBASE.PersianGulf.Khasab` Khasab
+-- * `AIRBASE.PersianGulf.Kish_Intl` Kish Intl
+-- * `AIRBASE.PersianGulf.Lar` Lar
+-- * `AIRBASE.PersianGulf.Lavan_Island` Lavan Island
+-- * `AIRBASE.PersianGulf.Liwa_AFB` Liwa AFB
+-- * `AIRBASE.PersianGulf.Qeshm_Island` Qeshm Island
+-- * `AIRBASE.PersianGulf.Quasoura_airport` Quasoura_airport
+-- * `AIRBASE.PersianGulf.Ras_Al_Khaimah_Intl` Ras Al Khaimah Intl
+-- * `AIRBASE.PersianGulf.Sas_Al_Nakheel` Sas Al Nakheel
+-- * `AIRBASE.PersianGulf.Sharjah_Intl` Sharjah Intl
+-- * `AIRBASE.PersianGulf.Shiraz_Intl` Shiraz Intl
+-- * `AIRBASE.PersianGulf.Sir_Abu_Nuayr` Sir Abu Nuayr
+-- * `AIRBASE.PersianGulf.Sirri_Island` Sirri Island
+-- * `AIRBASE.PersianGulf.Tunb_Island_AFB` Tunb Island AFB
+-- * `AIRBASE.PersianGulf.Tunb_Kochak` Tunb Kochak
 --
 -- @field PersianGulf
 AIRBASE.PersianGulf = {
   ["Abu_Dhabi_Intl"] = "Abu Dhabi Intl",
   ["Abu_Musa_Island"] = "Abu Musa Island",
   ["Al_Ain_Intl"] = "Al Ain Intl",
-  ["Al_Bateen"] = "Al-Bateen",
   ["Al_Dhafra_AFB"] = "Al Dhafra AFB",
   ["Al_Maktoum_Intl"] = "Al Maktoum Intl",
   ["Al_Minhad_AFB"] = "Al Minhad AFB",
+  ["Al_Bateen"] = "Al-Bateen",
   ["Bandar_Abbas_Intl"] = "Bandar Abbas Intl",
   ["Bandar_Lengeh"] = "Bandar Lengeh",
   ["Bandar_e_Jask"] = "Bandar-e-Jask",
