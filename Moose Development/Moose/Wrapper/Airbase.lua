@@ -638,38 +638,38 @@ AIRBASE.MarianaIslandsWWII =
   ["Ushi"] = "Ushi",
 }
 
---- Airbases of the South Atlantic map:
+--- Airbases of the South Atlantic (Falklands) map
 --
--- * AIRBASE.SouthAtlantic.Almirante_Schroeders
--- * AIRBASE.SouthAtlantic.Comandante_Luis_Piedrabuena
--- * AIRBASE.SouthAtlantic.Cullen
--- * AIRBASE.SouthAtlantic.El_Calafate
--- * AIRBASE.SouthAtlantic.Franco_Bianco
--- * AIRBASE.SouthAtlantic.Gobernador_Gregores
--- * AIRBASE.SouthAtlantic.Goose_Green
--- * AIRBASE.SouthAtlantic.Gull_Point
--- * AIRBASE.SouthAtlantic.Hipico_Flying_Club
--- * AIRBASE.SouthAtlantic.Mount_Pleasant
--- * AIRBASE.SouthAtlantic.O_Higgins
--- * AIRBASE.SouthAtlantic.Pampa_Guanaco
--- * AIRBASE.SouthAtlantic.Port_Stanley
--- * AIRBASE.SouthAtlantic.Porvenir
--- * AIRBASE.SouthAtlantic.Puerto_Natales
--- * AIRBASE.SouthAtlantic.Puerto_Santa_Cruz
--- * AIRBASE.SouthAtlantic.Puerto_Williams
--- * AIRBASE.SouthAtlantic.Punta_Arenas
--- * AIRBASE.SouthAtlantic.Rio_Chico
--- * AIRBASE.SouthAtlantic.Rio_Gallegos
--- * AIRBASE.SouthAtlantic.Rio_Grande
--- * AIRBASE.SouthAtlantic.Rio_Turbio
--- * AIRBASE.SouthAtlantic.San_Carlos_FOB
--- * AIRBASE.SouthAtlantic.San_Julian
--- * AIRBASE.SouthAtlantic.Tolhuin
--- * AIRBASE.SouthAtlantic.Ushuaia
--- * AIRBASE.SouthAtlantic.Ushuaia_Helo_Port
+-- * `AIRBASE.SouthAtlantic.Almirante_Schroeders` Almirante Schroeders
+-- * `AIRBASE.SouthAtlantic.Comandante_Luis_Piedrabuena` Comandante Luis Piedrabuena
+-- * `AIRBASE.SouthAtlantic.Cullen` Cullen
+-- * `AIRBASE.SouthAtlantic.El_Calafate` El Calafate
+-- * `AIRBASE.SouthAtlantic.Franco_Bianco` Franco Bianco
+-- * `AIRBASE.SouthAtlantic.Gobernador_Gregores` Gobernador Gregores
+-- * `AIRBASE.SouthAtlantic.Goose_Green` Goose Green
+-- * `AIRBASE.SouthAtlantic.Gull_Point` Gull Point
+-- * `AIRBASE.SouthAtlantic.Hipico_Flying_Club` Hipico Flying Club
+-- * `AIRBASE.SouthAtlantic.Mount_Pleasant` Mount Pleasant
+-- * `AIRBASE.SouthAtlantic.O_Higgins` O'Higgins
+-- * `AIRBASE.SouthAtlantic.Pampa_Guanaco` Pampa Guanaco
+-- * `AIRBASE.SouthAtlantic.Port_Stanley` Port Stanley
+-- * `AIRBASE.SouthAtlantic.Porvenir` Porvenir
+-- * `AIRBASE.SouthAtlantic.Puerto_Natales` Puerto Natales
+-- * `AIRBASE.SouthAtlantic.Puerto_Santa_Cruz` Puerto Santa Cruz
+-- * `AIRBASE.SouthAtlantic.Puerto_Williams` Puerto Williams
+-- * `AIRBASE.SouthAtlantic.Punta_Arenas` Punta Arenas
+-- * `AIRBASE.SouthAtlantic.Rio_Chico` Rio Chico
+-- * `AIRBASE.SouthAtlantic.Rio_Gallegos` Rio Gallegos
+-- * `AIRBASE.SouthAtlantic.Rio_Grande` Rio Grande
+-- * `AIRBASE.SouthAtlantic.Rio_Turbio` Rio Turbio
+-- * `AIRBASE.SouthAtlantic.San_Carlos_FOB` San Carlos FOB
+-- * `AIRBASE.SouthAtlantic.San_Julian` San Julian
+-- * `AIRBASE.SouthAtlantic.Tolhuin` Tolhuin
+-- * `AIRBASE.SouthAtlantic.Ushuaia` Ushuaia
+-- * `AIRBASE.SouthAtlantic.Ushuaia_Helo_Port` Ushuaia Helo Port
 --
---@field SouthAtlantic
-AIRBASE.SouthAtlantic={
+-- @field SouthAtlantic
+AIRBASE.SouthAtlantic = {
   ["Almirante_Schroeders"] = "Almirante Schroeders",
   ["Comandante_Luis_Piedrabuena"] = "Comandante Luis Piedrabuena",
   ["Cullen"] = "Cullen",

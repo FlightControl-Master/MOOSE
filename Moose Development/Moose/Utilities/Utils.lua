@@ -5220,7 +5220,9 @@ function UTILS.CreateAirbaseEnum()
       
       -- Replace blanks, hyphens by underscores 
       key=key:gsub(" ", "_")
-      key=key:gsub("-", "_")      
+      key=key:gsub("-", "_")
+      key=key:gsub("'", "_")
+      key=UTILS.ReplaceIllegalCharacters(key, "_")
       
       local entry={}
       entry.key=key
