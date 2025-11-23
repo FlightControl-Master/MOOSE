@@ -4308,7 +4308,27 @@ function OPSGROUP:_UpdateTask(Task, Mission)
   Mission=Mission or self:GetMissionByTaskID(self.taskcurrent)
 
   if Task.dcstask.id==AUFTRAG.SpecialTask.FORMATION then
-
+      
+    if Mission.type == AUFTRAG.Type.RESCUEHELO then
+      self:T("**********")
+      self:T("** RESCUEHELO USED")
+      self:T("**********")
+      local param=Task.dcstask.params
+      local followUnit=UNIT:FindByName(param.unitname)
+      local helogroupname = self:GetGroup():GetName()
+      Task.formation = RESCUEHELO:New(followUnit,helogroupname)
+      Task.formation:SetRespawnOnOff(false)
+      Task.formation.respawninair=false
+      Task.formation:SetTakeoffCold()
+      Task.formation:SetHomeBase(followUnit)
+      Task.formation.helo = self:GetGroup() 
+      -- Start formation FSM.
+      Task.formation:Start()
+      if self:IsFlightgroup() then
+        self:SetDespawnAfterLanding()
+      end
+    else  
+      
     -- Set of group(s) to follow Mother.
     local followSet=SET_GROUP:New():AddGroup(self.group)
 
@@ -4317,7 +4337,7 @@ function OPSGROUP:_UpdateTask(Task, Mission)
     local followUnit=UNIT:FindByName(param.unitname)
 
     -- Define AI Formation object.
-    Task.formation=AI_FORMATION:New(followUnit, followSet, AUFTRAG.SpecialTask.FORMATION, "Follow X at given parameters.")
+    Task.formation=FORMATION:New(followUnit, followSet, AUFTRAG.SpecialTask.FORMATION)
 
     -- Formation parameters.
     Task.formation:FormationCenterWing(-param.offsetX, 50, math.abs(param.altitude), 50, param.offsetZ, 50)
@@ -4326,11 +4346,13 @@ function OPSGROUP:_UpdateTask(Task, Mission)
     Task.formation:SetFollowTimeInterval(param.dtFollow)
 
     -- Formation mode.
-    Task.formation:SetFlightModeFormation(self.group)
+    --Task.formation:SetFlightModeFormation(self.group)
 
     -- Start formation FSM.
     Task.formation:Start()
-
+    
+    end
+    
   elseif Task.dcstask.id==AUFTRAG.SpecialTask.PATROLZONE then
 
     ---
@@ -8026,11 +8048,16 @@ function OPSGROUP:onafterDead(From, Event, To)
       -- Get asset.
       local asset=self.legion:GetAssetByName(self.groupname)
       
+      if asset then
+      
       -- Get request.
       local request=self.legion:GetRequestByID(asset.rid)
       
       -- Trigger asset dead event.
       self.legion:AssetDead(asset, request)
+      
+      end
+      
     end
   
     -- Stop in 5 sec to give possible respawn attempts a chance.  
@@ -12723,7 +12750,7 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
 
-  self:T(self.lid..string.format("Setting Default callsing %s-%s", tostring(CallsignName), tostring(CallsignNumber)))
+  self:T(self.lid..string.format("Setting Default callsign %s-%s", tostring(CallsignName), tostring(CallsignNumber)))
 
   self.callsignDefault={} --#OPSGROUP.Callsign
   self.callsignDefault.NumberSquad=CallsignName
@@ -13482,8 +13509,8 @@ function OPSGROUP:GetAmmoUnit(unit, display)
     if ammotable then
       local weapons=#ammotable
     
-		  --self:I(ammotable)
-		  --UTILS.PrintTableToLog(ammotable)
+      --self:I(ammotable)
+      --UTILS.PrintTableToLog(ammotable)
 
       -- Loop over all weapons.
       for w=1,weapons do
@@ -13491,9 +13518,9 @@ function OPSGROUP:GetAmmoUnit(unit, display)
         -- Number of current weapon.
         local Nammo=ammotable[w]["count"]
       
-		    -- Range in meters. Seems only to exist for missiles (not shells).
-		    local rmin=ammotable[w]["desc"]["rangeMin"] or 0
-		    local rmax=ammotable[w]["desc"]["rangeMaxAltMin"] or 0
+        -- Range in meters. Seems only to exist for missiles (not shells).
+        local rmin=ammotable[w]["desc"]["rangeMin"] or 0
+        local rmax=ammotable[w]["desc"]["rangeMaxAltMin"] or 0
 
         -- Type name of current weapon.
         local Tammo=ammotable[w]["desc"]["typeName"]
@@ -13515,7 +13542,7 @@ function OPSGROUP:GetAmmoUnit(unit, display)
 
           -- Add up all shells.
           nshells=nshells+Nammo
-		  
+      
           -- Add small and large caliber shells for guns and cannons
           if ammotable[w]["desc"]["warhead"] and ammotable[w]["desc"]["warhead"]["caliber"] then
             local caliber=ammotable[w]["desc"]["warhead"]["caliber"]
