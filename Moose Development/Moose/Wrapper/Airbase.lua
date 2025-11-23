@@ -80,31 +80,29 @@ AIRBASE = {
   activerwyno = nil,
 }
 
---- Enumeration to identify the airbases in the Caucasus region.
+--- Airbases of the Caucasus map
 --
--- Airbases of the Caucasus map:
---
--- * AIRBASE.Caucasus.Anapa_Vityazevo
--- * AIRBASE.Caucasus.Batumi
--- * AIRBASE.Caucasus.Beslan
--- * AIRBASE.Caucasus.Gelendzhik
--- * AIRBASE.Caucasus.Gudauta
--- * AIRBASE.Caucasus.Kobuleti
--- * AIRBASE.Caucasus.Krasnodar_Center
--- * AIRBASE.Caucasus.Krasnodar_Pashkovsky
--- * AIRBASE.Caucasus.Krymsk
--- * AIRBASE.Caucasus.Kutaisi
--- * AIRBASE.Caucasus.Maykop_Khanskaya
--- * AIRBASE.Caucasus.Mineralnye_Vody
--- * AIRBASE.Caucasus.Mozdok
--- * AIRBASE.Caucasus.Nalchik
--- * AIRBASE.Caucasus.Novorossiysk
--- * AIRBASE.Caucasus.Senaki_Kolkhi
--- * AIRBASE.Caucasus.Sochi_Adler
--- * AIRBASE.Caucasus.Soganlug
--- * AIRBASE.Caucasus.Sukhumi_Babushara
--- * AIRBASE.Caucasus.Tbilisi_Lochini
--- * AIRBASE.Caucasus.Vaziani
+-- * `AIRBASE.Caucasus.Anapa_Vityazevo` Anapa-Vityazevo
+-- * `AIRBASE.Caucasus.Batumi` Batumi
+-- * `AIRBASE.Caucasus.Beslan` Beslan
+-- * `AIRBASE.Caucasus.Gelendzhik` Gelendzhik
+-- * `AIRBASE.Caucasus.Gudauta` Gudauta
+-- * `AIRBASE.Caucasus.Kobuleti` Kobuleti
+-- * `AIRBASE.Caucasus.Krasnodar_Center` Krasnodar-Center
+-- * `AIRBASE.Caucasus.Krasnodar_Pashkovsky` Krasnodar-Pashkovsky
+-- * `AIRBASE.Caucasus.Krymsk` Krymsk
+-- * `AIRBASE.Caucasus.Kutaisi` Kutaisi
+-- * `AIRBASE.Caucasus.Maykop_Khanskaya` Maykop-Khanskaya
+-- * `AIRBASE.Caucasus.Mineralnye_Vody` Mineralnye Vody
+-- * `AIRBASE.Caucasus.Mozdok` Mozdok
+-- * `AIRBASE.Caucasus.Nalchik` Nalchik
+-- * `AIRBASE.Caucasus.Novorossiysk` Novorossiysk
+-- * `AIRBASE.Caucasus.Senaki_Kolkhi` Senaki-Kolkhi
+-- * `AIRBASE.Caucasus.Sochi_Adler` Sochi-Adler
+-- * `AIRBASE.Caucasus.Soganlug` Soganlug
+-- * `AIRBASE.Caucasus.Sukhumi_Babushara` Sukhumi-Babushara
+-- * `AIRBASE.Caucasus.Tbilisi_Lochini` Tbilisi-Lochini
+-- * `AIRBASE.Caucasus.Vaziani` Vaziani
 --
 -- @field Caucasus
 AIRBASE.Caucasus = {
