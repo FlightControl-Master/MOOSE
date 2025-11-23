@@ -74,6 +74,13 @@ function SCENERY:Register( SceneryName, SceneryObject, SceneryZone )
     self.Vec2 = SceneryZone:GetVec2()
     self.Vector = (self.Vec3 and VECTOR) and VECTOR:NewFromVec(self.Vec3) or nil
   end
+
+  if SceneryObject then
+    local vec3 = SceneryObject:getPoint()
+    self.Vec3 = { x = vec3.x, y = vec3.y, y = vec3.z }
+    self.Vec2 = { x = vec3.x, y = vec3.z }
+    self.Vector = (self.Vec3 and VECTOR) and VECTOR:NewFromVec(self.Vec3) or nil
+  end
   
   if self.SceneryObject and self.SceneryObject.getLife then -- fix some objects do not have all functions
     self.Life0 = self.SceneryObject:getLife() or 1
