@@ -715,58 +715,64 @@ AIRBASE.SouthAtlantic = {
   ["Ushuaia_Helo_Port"] = "Ushuaia Helo Port",
 }
 
---- Airbases of the Sinai map:
+--- Airbases of the Sinai map
 --
--- * AIRBASE.SinaiMap.Abu_Rudeis
--- * AIRBASE.SinaiMap.Abu_Suwayr
--- * AIRBASE.SinaiMap.Al_Bahr_al_Ahmar
--- * AIRBASE.SinaiMap.Al_Ismailiyah
--- * AIRBASE.SinaiMap.Al_Khatatbah
--- * AIRBASE.SinaiMap.Al_Mansurah
--- * AIRBASE.SinaiMap.Al_Rahmaniyah_Air_Base
--- * AIRBASE.SinaiMap.As_Salihiyah
--- * AIRBASE.SinaiMap.AzZaqaziq
--- * AIRBASE.SinaiMap.Baluza
--- * AIRBASE.SinaiMap.Ben_Gurion
--- * AIRBASE.SinaiMap.Beni_Suef
--- * AIRBASE.SinaiMap.Bilbeis_Air_Base
--- * AIRBASE.SinaiMap.Bir_Hasanah
--- * AIRBASE.SinaiMap.Birma_Air_Base
--- * AIRBASE.SinaiMap.Borg_El_Arab_International_Airport
--- * AIRBASE.SinaiMap.Cairo_International_Airport
--- * AIRBASE.SinaiMap.Cairo_West
--- * AIRBASE.SinaiMap.Damascus_Intl
--- * AIRBASE.SinaiMap.Difarsuwar_Airfield
--- * AIRBASE.SinaiMap.El_Arish
--- * AIRBASE.SinaiMap.El_Gora
--- * AIRBASE.SinaiMap.El_Minya
--- * AIRBASE.SinaiMap.Fayed
--- * AIRBASE.SinaiMap.Gebel_El_Basur_Air_Base
--- * AIRBASE.SinaiMap.Hatzerim
--- * AIRBASE.SinaiMap.Hatzor
--- * AIRBASE.SinaiMap.Hurghada_International_Airport
--- * AIRBASE.SinaiMap.Inshas_Airbase
--- * AIRBASE.SinaiMap.Jiyanklis_Air_Base
--- * AIRBASE.SinaiMap.Kedem
--- * AIRBASE.SinaiMap.Kibrit_Air_Base
--- * AIRBASE.SinaiMap.Kom_Awshim
--- * AIRBASE.SinaiMap.Melez
--- * AIRBASE.SinaiMap.Mezzeh_Air_Base
--- * AIRBASE.SinaiMap.Nevatim
--- * AIRBASE.SinaiMap.Ovda
--- * AIRBASE.SinaiMap.Palmachim
--- * AIRBASE.SinaiMap.Quwaysina
--- * AIRBASE.SinaiMap.Rafic_Hariri_Intl
--- * AIRBASE.SinaiMap.Ramat_David
--- * AIRBASE.SinaiMap.Ramon_Airbase
--- * AIRBASE.SinaiMap.Ramon_International_Airport
--- * AIRBASE.SinaiMap.Sde_Dov
--- * AIRBASE.SinaiMap.Sharm_El_Sheikh_International_Airport
--- * AIRBASE.SinaiMap.St_Catherine
--- * AIRBASE.SinaiMap.Tabuk
--- * AIRBASE.SinaiMap.Tel_Nof
--- * AIRBASE.SinaiMap.Wadi_Abu_Rish
--- * AIRBASE.SinaiMap.Wadi_al_Jandali
+-- * `AIRBASE.SinaiMap.Abu_Rudeis` Abu Rudeis
+-- * `AIRBASE.SinaiMap.Abu_Suwayr` Abu Suwayr
+-- * `AIRBASE.SinaiMap.Al_Bahr_al_Ahmar` Al Bahr al Ahmar
+-- * `AIRBASE.SinaiMap.Al_Ismailiyah` Al Ismailiyah
+-- * `AIRBASE.SinaiMap.Al_Khatatbah` Al Khatatbah
+-- * `AIRBASE.SinaiMap.Al_Mansurah` Al Mansurah
+-- * `AIRBASE.SinaiMap.Al_Rahmaniyah_Air_Base` Al Rahmaniyah Air Base
+-- * `AIRBASE.SinaiMap.As_Salihiyah` As Salihiyah
+-- * `AIRBASE.SinaiMap.AzZaqaziq` AzZaqaziq
+-- * `AIRBASE.SinaiMap.Baluza` Baluza
+-- * `AIRBASE.SinaiMap.Ben_Gurion` Ben-Gurion
+-- * `AIRBASE.SinaiMap.Beni_Suef` Beni Suef
+-- * `AIRBASE.SinaiMap.Bilbeis_Air_Base` Bilbeis Air Base
+-- * `AIRBASE.SinaiMap.Bir_Hasanah` Bir Hasanah
+-- * `AIRBASE.SinaiMap.Birma_Air_Base` Birma Air Base
+-- * `AIRBASE.SinaiMap.Borg_El_Arab_International_Airport` Borg El Arab International Airport
+-- * `AIRBASE.SinaiMap.Cairo_International_Airport` Cairo International Airport
+-- * `AIRBASE.SinaiMap.Cairo_West` Cairo West
+-- * `AIRBASE.SinaiMap.Damascus_Intl` Damascus Intl
+-- * `AIRBASE.SinaiMap.Difarsuwar_Airfield` Difarsuwar Airfield
+-- * `AIRBASE.SinaiMap.Ein_Shamer` Ein Shamer
+-- * `AIRBASE.SinaiMap.El_Arish` El Arish
+-- * `AIRBASE.SinaiMap.El_Gora` El Gora
+-- * `AIRBASE.SinaiMap.El_Minya` El Minya
+-- * `AIRBASE.SinaiMap.Fayed` Fayed
+-- * `AIRBASE.SinaiMap.Gebel_El_Basur_Air_Base` Gebel El Basur Air Base
+-- * `AIRBASE.SinaiMap.Hatzerim` Hatzerim
+-- * `AIRBASE.SinaiMap.Hatzor` Hatzor
+-- * `AIRBASE.SinaiMap.Hurghada_International_Airport` Hurghada International Airport
+-- * `AIRBASE.SinaiMap.Inshas_Airbase` Inshas Airbase
+-- * `AIRBASE.SinaiMap.Jiyanklis_Air_Base` Jiyanklis Air Base
+-- * `AIRBASE.SinaiMap.Kedem` Kedem
+-- * `AIRBASE.SinaiMap.Khalkhalah_Air_Base` Khalkhalah Air Base
+-- * `AIRBASE.SinaiMap.Kibrit_Air_Base` Kibrit Air Base
+-- * `AIRBASE.SinaiMap.King_Feisal_Air_Base` King Feisal Air Base
+-- * `AIRBASE.SinaiMap.Kom_Awshim` Kom Awshim
+-- * `AIRBASE.SinaiMap.Megiddo` Megiddo
+-- * `AIRBASE.SinaiMap.Melez` Melez
+-- * `AIRBASE.SinaiMap.Mezzeh_Air_Base` Mezzeh Air Base
+-- * `AIRBASE.SinaiMap.Nevatim` Nevatim
+-- * `AIRBASE.SinaiMap.Ovda` Ovda
+-- * `AIRBASE.SinaiMap.Palmachim` Palmachim
+-- * `AIRBASE.SinaiMap.Quwaysina` Quwaysina
+-- * `AIRBASE.SinaiMap.Rafic_Hariri_Intl` Rafic Hariri Intl
+-- * `AIRBASE.SinaiMap.Ramat_David` Ramat David
+-- * `AIRBASE.SinaiMap.Ramon_Airbase` Ramon Airbase
+-- * `AIRBASE.SinaiMap.Ramon_International_Airport` Ramon International Airport
+-- * `AIRBASE.SinaiMap.Sde_Dov` Sde Dov
+-- * `AIRBASE.SinaiMap.Sharm_El_Sheikh_International_Airport` Sharm El Sheikh International Airport
+-- * `AIRBASE.SinaiMap.St_Catherine` St Catherine
+-- * `AIRBASE.SinaiMap.Taba_International_Airport` Taba International Airport
+-- * `AIRBASE.SinaiMap.Tabuk` Tabuk
+-- * `AIRBASE.SinaiMap.TabukHeliBase` TabukHeliBase
+-- * `AIRBASE.SinaiMap.Tel_Nof` Tel Nof
+-- * `AIRBASE.SinaiMap.Wadi_Abu_Rish` Wadi Abu Rish
+-- * `AIRBASE.SinaiMap.Wadi_al_Jandali` Wadi al Jandali
 --
 -- @field Sinai
 AIRBASE.Sinai = {
@@ -790,6 +796,7 @@ AIRBASE.Sinai = {
   ["Cairo_West"] = "Cairo West",
   ["Damascus_Intl"] = "Damascus Intl",
   ["Difarsuwar_Airfield"] = "Difarsuwar Airfield",
+  ["Ein_Shamer"] = "Ein Shamer",
   ["El_Arish"] = "El Arish",
   ["El_Gora"] = "El Gora",
   ["El_Minya"] = "El Minya",
@@ -801,8 +808,11 @@ AIRBASE.Sinai = {
   ["Inshas_Airbase"] = "Inshas Airbase",
   ["Jiyanklis_Air_Base"] = "Jiyanklis Air Base",
   ["Kedem"] = "Kedem",
+  ["Khalkhalah_Air_Base"] = "Khalkhalah Air Base",
   ["Kibrit_Air_Base"] = "Kibrit Air Base",
+  ["King_Feisal_Air_Base"] = "King Feisal Air Base",
   ["Kom_Awshim"] = "Kom Awshim",
+  ["Megiddo"] = "Megiddo",
   ["Melez"] = "Melez",
   ["Mezzeh_Air_Base"] = "Mezzeh Air Base",
   ["Nevatim"] = "Nevatim",
@@ -816,7 +826,9 @@ AIRBASE.Sinai = {
   ["Sde_Dov"] = "Sde Dov",
   ["Sharm_El_Sheikh_International_Airport"] = "Sharm El Sheikh International Airport",
   ["St_Catherine"] = "St Catherine",
+  ["Taba_International_Airport"] = "Taba International Airport",
   ["Tabuk"] = "Tabuk",
+  ["TabukHeliBase"] = "TabukHeliBase",
   ["Tel_Nof"] = "Tel Nof",
   ["Wadi_Abu_Rish"] = "Wadi Abu Rish",
   ["Wadi_al_Jandali"] = "Wadi al Jandali",
