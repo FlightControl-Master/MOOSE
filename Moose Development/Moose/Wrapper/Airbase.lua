@@ -170,94 +170,103 @@ AIRBASE.Nevada = {
   ["Tonopah_Test_Range"] = "Tonopah Test Range",
 }
 
---- Airbases of the Normandy map:
+--- Airbases of the Normandy map
 --
--- * AIRBASE.Normandy.Abbeville_Drucat
--- * AIRBASE.Normandy.Amiens_Glisy
--- * AIRBASE.Normandy.Argentan
--- * AIRBASE.Normandy.Avranches_Le_Val_Saint_Pere
--- * AIRBASE.Normandy.Azeville
--- * AIRBASE.Normandy.Barville
--- * AIRBASE.Normandy.Bazenville
--- * AIRBASE.Normandy.Beaumont_le_Roger
--- * AIRBASE.Normandy.Beauvais_Tille
--- * AIRBASE.Normandy.Beny_sur_Mer
--- * AIRBASE.Normandy.Bernay_Saint_Martin
--- * AIRBASE.Normandy.Beuzeville
--- * AIRBASE.Normandy.Biggin_Hill
--- * AIRBASE.Normandy.Biniville
--- * AIRBASE.Normandy.Broglie
--- * AIRBASE.Normandy.Brucheville
--- * AIRBASE.Normandy.Cardonville
--- * AIRBASE.Normandy.Carpiquet
--- * AIRBASE.Normandy.Chailey
--- * AIRBASE.Normandy.Chippelle
--- * AIRBASE.Normandy.Conches
--- * AIRBASE.Normandy.Cormeilles_en_Vexin
--- * AIRBASE.Normandy.Creil
--- * AIRBASE.Normandy.Cretteville
--- * AIRBASE.Normandy.Cricqueville_en_Bessin
--- * AIRBASE.Normandy.Deanland
--- * AIRBASE.Normandy.Deauville
--- * AIRBASE.Normandy.Detling
--- * AIRBASE.Normandy.Deux_Jumeaux
--- * AIRBASE.Normandy.Dinan_Trelivan
--- * AIRBASE.Normandy.Dunkirk_Mardyck
--- * AIRBASE.Normandy.Essay
--- * AIRBASE.Normandy.Evreux
--- * AIRBASE.Normandy.Farnborough
--- * AIRBASE.Normandy.Fecamp_Benouville
--- * AIRBASE.Normandy.Flers
--- * AIRBASE.Normandy.Ford
--- * AIRBASE.Normandy.Friston
--- * AIRBASE.Normandy.Funtington
--- * AIRBASE.Normandy.Goulet
--- * AIRBASE.Normandy.Gravesend
--- * AIRBASE.Normandy.Guyancourt
--- * AIRBASE.Normandy.Hauterive
--- * AIRBASE.Normandy.Heathrow
--- * AIRBASE.Normandy.High_Halden
--- * AIRBASE.Normandy.Kenley
--- * AIRBASE.Normandy.Lantheuil
--- * AIRBASE.Normandy.Le_Molay
--- * AIRBASE.Normandy.Lessay
--- * AIRBASE.Normandy.Lignerolles
--- * AIRBASE.Normandy.Longues_sur_Mer
--- * AIRBASE.Normandy.Lonrai
--- * AIRBASE.Normandy.Lymington
--- * AIRBASE.Normandy.Lympne
--- * AIRBASE.Normandy.Manston
--- * AIRBASE.Normandy.Maupertus
--- * AIRBASE.Normandy.Meautis
--- * AIRBASE.Normandy.Merville_Calonne
--- * AIRBASE.Normandy.Needs_Oar_Point
--- * AIRBASE.Normandy.Odiham
--- * AIRBASE.Normandy.Orly
--- * AIRBASE.Normandy.Picauville
--- * AIRBASE.Normandy.Poix
--- * AIRBASE.Normandy.Ronai
--- * AIRBASE.Normandy.Rouen_Boos
--- * AIRBASE.Normandy.Rucqueville
--- * AIRBASE.Normandy.Saint_Andre_de_lEure
--- * AIRBASE.Normandy.Saint_Aubin
--- * AIRBASE.Normandy.Saint_Omer_Wizernes
--- * AIRBASE.Normandy.Saint_Pierre_du_Mont
--- * AIRBASE.Normandy.Sainte_Croix_sur_Mer
--- * AIRBASE.Normandy.Sainte_Laurent_sur_Mer
--- * AIRBASE.Normandy.Sommervieu
--- * AIRBASE.Normandy.Stoney_Cross
--- * AIRBASE.Normandy.Tangmere
--- * AIRBASE.Normandy.Triqueville
--- * AIRBASE.Normandy.Villacoublay
--- * AIRBASE.Normandy.Vrigny
--- * AIRBASE.Normandy.West_Malling
--- * AIRBASE.Normandy.Eastchurch
--- * AIRBASE.Normandy.Headcorn
--- * AIRBASE.Normandy.Hawkinge
+-- * `AIRBASE.Normandy.Abbeville_Drucat` Abbeville Drucat
+-- * `AIRBASE.Normandy.Alderney` Alderney
+-- * `AIRBASE.Normandy.Amiens_Glisy` Amiens-Glisy
+-- * `AIRBASE.Normandy.Argentan` Argentan
+-- * `AIRBASE.Normandy.Avranches_Le_Val_Saint_Pere` Avranches Le Val-Saint-Pere
+-- * `AIRBASE.Normandy.Azeville` Azeville
+-- * `AIRBASE.Normandy.Barville` Barville
+-- * `AIRBASE.Normandy.Bazenville` Bazenville
+-- * `AIRBASE.Normandy.Beaumont_le_Roger` Beaumont-le-Roger
+-- * `AIRBASE.Normandy.Beauvais_Tille` Beauvais-Tille
+-- * `AIRBASE.Normandy.Bembridg` Bembridg
+-- * `AIRBASE.Normandy.Beny_sur_Mer` Beny-sur-Mer
+-- * `AIRBASE.Normandy.Bernay_Saint_Martin` Bernay Saint Martin
+-- * `AIRBASE.Normandy.Beuzeville` Beuzeville
+-- * `AIRBASE.Normandy.Biggin_Hill` Biggin Hill
+-- * `AIRBASE.Normandy.Biniville` Biniville
+-- * `AIRBASE.Normandy.Broglie` Broglie
+-- * `AIRBASE.Normandy.Brucheville` Brucheville
+-- * `AIRBASE.Normandy.Cardonville` Cardonville
+-- * `AIRBASE.Normandy.Carpiquet` Carpiquet
+-- * `AIRBASE.Normandy.Chailey` Chailey
+-- * `AIRBASE.Normandy.Chippelle` Chippelle
+-- * `AIRBASE.Normandy.Conches` Conches
+-- * `AIRBASE.Normandy.Cormeilles_en_Vexin` Cormeilles-en-Vexin
+-- * `AIRBASE.Normandy.Creil` Creil
+-- * `AIRBASE.Normandy.Cretteville` Cretteville
+-- * `AIRBASE.Normandy.Cricqueville_en_Bessin` Cricqueville-en-Bessin
+-- * `AIRBASE.Normandy.Deanland` Deanland
+-- * `AIRBASE.Normandy.Deauville` Deauville
+-- * `AIRBASE.Normandy.Detling` Detling
+-- * `AIRBASE.Normandy.Deux_Jumeaux` Deux Jumeaux
+-- * `AIRBASE.Normandy.Dinan_Trelivan` Dinan-Trelivan
+-- * `AIRBASE.Normandy.Dunkirk_Mardyck` Dunkirk-Mardyck
+-- * `AIRBASE.Normandy.Eastchurch` Eastchurch
+-- * `AIRBASE.Normandy.Essay` Essay
+-- * `AIRBASE.Normandy.Evreux` Evreux
+-- * `AIRBASE.Normandy.Farnborough` Farnborough
+-- * `AIRBASE.Normandy.Fecamp_Benouville` Fecamp-Benouville
+-- * `AIRBASE.Normandy.Flers` Flers
+-- * `AIRBASE.Normandy.Ford` Ford
+-- * `AIRBASE.Normandy.Friston` Friston
+-- * `AIRBASE.Normandy.Funtington` Funtington
+-- * `AIRBASE.Normandy.Goulet` Goulet
+-- * `AIRBASE.Normandy.Gravesend` Gravesend
+-- * `AIRBASE.Normandy.Guernsey` Guernsey
+-- * `AIRBASE.Normandy.Guyancourt` Guyancourt
+-- * `AIRBASE.Normandy.Hauterive` Hauterive
+-- * `AIRBASE.Normandy.Hawkinge` Hawkinge
+-- * `AIRBASE.Normandy.Headcorn` Headcorn
+-- * `AIRBASE.Normandy.Heathrow` Heathrow
+-- * `AIRBASE.Normandy.High_Halden` High Halden
+-- * `AIRBASE.Normandy.Holmsley_South` Holmsley South
+-- * `AIRBASE.Normandy.Jersey` Jersey
+-- * `AIRBASE.Normandy.Kenley` Kenley
+-- * `AIRBASE.Normandy.Lantheuil` Lantheuil
+-- * `AIRBASE.Normandy.Lashenden` Lashenden
+-- * `AIRBASE.Normandy.Le_Molay` Le Molay
+-- * `AIRBASE.Normandy.Lessay` Lessay
+-- * `AIRBASE.Normandy.Lignerolles` Lignerolles
+-- * `AIRBASE.Normandy.Longues_sur_Mer` Longues-sur-Mer
+-- * `AIRBASE.Normandy.Lonrai` Lonrai
+-- * `AIRBASE.Normandy.Lymington` Lymington
+-- * `AIRBASE.Normandy.Lympne` Lympne
+-- * `AIRBASE.Normandy.Manston` Manston
+-- * `AIRBASE.Normandy.Maupertus` Maupertus
+-- * `AIRBASE.Normandy.Meautis` Meautis
+-- * `AIRBASE.Normandy.Merville_Calonne` Merville Calonne
+-- * `AIRBASE.Normandy.Needs_Oar_Point` Needs Oar Point
+-- * `AIRBASE.Normandy.Northolt` Northolt
+-- * `AIRBASE.Normandy.Odiham` Odiham
+-- * `AIRBASE.Normandy.Orly` Orly
+-- * `AIRBASE.Normandy.Picauville` Picauville
+-- * `AIRBASE.Normandy.Poix` Poix
+-- * `AIRBASE.Normandy.Ronai` Ronai
+-- * `AIRBASE.Normandy.Rouen_Boos` Rouen-Boos
+-- * `AIRBASE.Normandy.Rucqueville` Rucqueville
+-- * `AIRBASE.Normandy.Saint_Pierre_du_Mont` Saint Pierre du Mont
+-- * `AIRBASE.Normandy.Saint_Andre_de_lEure` Saint-Andre-de-lEure
+-- * `AIRBASE.Normandy.Saint_Aubin` Saint-Aubin
+-- * `AIRBASE.Normandy.Saint_Omer_Wizernes` Saint-Omer Wizernes
+-- * `AIRBASE.Normandy.Saint_Pol_Bryas` Saint-Pol-Bryas
+-- * `AIRBASE.Normandy.Sainte_Croix_sur_Mer` Sainte-Croix-sur-Mer
+-- * `AIRBASE.Normandy.Sainte_Laurent_sur_Mer` Sainte-Laurent-sur-Mer
+-- * `AIRBASE.Normandy.Sommervieu` Sommervieu
+-- * `AIRBASE.Normandy.Stoney_Cross` Stoney Cross
+-- * `AIRBASE.Normandy.Tangmere` Tangmere
+-- * `AIRBASE.Normandy.Triqueville` Triqueville
+-- * `AIRBASE.Normandy.Villacoublay` Villacoublay
+-- * `AIRBASE.Normandy.Vrigny` Vrigny
+-- * `AIRBASE.Normandy.West_Malling` West Malling
 --
 -- @field Normandy
 AIRBASE.Normandy = {
   ["Abbeville_Drucat"] = "Abbeville Drucat",
+  ["Alderney"] = "Alderney",
   ["Amiens_Glisy"] = "Amiens-Glisy",
   ["Argentan"] = "Argentan",
   ["Avranches_Le_Val_Saint_Pere"] = "Avranches Le Val-Saint-Pere",
@@ -266,6 +275,7 @@ AIRBASE.Normandy = {
   ["Bazenville"] = "Bazenville",
   ["Beaumont_le_Roger"] = "Beaumont-le-Roger",
   ["Beauvais_Tille"] = "Beauvais-Tille",
+  ["Bembridg"] = "Bembridg",
   ["Beny_sur_Mer"] = "Beny-sur-Mer",
   ["Bernay_Saint_Martin"] = "Bernay Saint Martin",
   ["Beuzeville"] = "Beuzeville",
@@ -288,6 +298,7 @@ AIRBASE.Normandy = {
   ["Deux_Jumeaux"] = "Deux Jumeaux",
   ["Dinan_Trelivan"] = "Dinan-Trelivan",
   ["Dunkirk_Mardyck"] = "Dunkirk-Mardyck",
+  ["Eastchurch"] = "Eastchurch",
   ["Essay"] = "Essay",
   ["Evreux"] = "Evreux",
   ["Farnborough"] = "Farnborough",
@@ -298,12 +309,18 @@ AIRBASE.Normandy = {
   ["Funtington"] = "Funtington",
   ["Goulet"] = "Goulet",
   ["Gravesend"] = "Gravesend",
+  ["Guernsey"] = "Guernsey",
   ["Guyancourt"] = "Guyancourt",
   ["Hauterive"] = "Hauterive",
+  ["Hawkinge"] = "Hawkinge",
+  ["Headcorn"] = "Headcorn",
   ["Heathrow"] = "Heathrow",
   ["High_Halden"] = "High Halden",
+  ["Holmsley_South"] = "Holmsley South",
+  ["Jersey"] = "Jersey",
   ["Kenley"] = "Kenley",
   ["Lantheuil"] = "Lantheuil",
+  ["Lashenden"] = "Lashenden",
   ["Le_Molay"] = "Le Molay",
   ["Lessay"] = "Lessay",
   ["Lignerolles"] = "Lignerolles",
@@ -316,6 +333,7 @@ AIRBASE.Normandy = {
   ["Meautis"] = "Meautis",
   ["Merville_Calonne"] = "Merville Calonne",
   ["Needs_Oar_Point"] = "Needs Oar Point",
+  ["Northolt"] = "Northolt",
   ["Odiham"] = "Odiham",
   ["Orly"] = "Orly",
   ["Picauville"] = "Picauville",
@@ -323,10 +341,11 @@ AIRBASE.Normandy = {
   ["Ronai"] = "Ronai",
   ["Rouen_Boos"] = "Rouen-Boos",
   ["Rucqueville"] = "Rucqueville",
+  ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
   ["Saint_Andre_de_lEure"] = "Saint-Andre-de-lEure",
   ["Saint_Aubin"] = "Saint-Aubin",
   ["Saint_Omer_Wizernes"] = "Saint-Omer Wizernes",
-  ["Saint_Pierre_du_Mont"] = "Saint Pierre du Mont",
+  ["Saint_Pol_Bryas"] = "Saint-Pol-Bryas",
   ["Sainte_Croix_sur_Mer"] = "Sainte-Croix-sur-Mer",
   ["Sainte_Laurent_sur_Mer"] = "Sainte-Laurent-sur-Mer",
   ["Sommervieu"] = "Sommervieu",
@@ -336,9 +355,6 @@ AIRBASE.Normandy = {
   ["Villacoublay"] = "Villacoublay",
   ["Vrigny"] = "Vrigny",
   ["West_Malling"] = "West Malling",
-  ["Eastchurch"] = "Eastchurch",
-  ["Headcorn"] = "Headcorn",
-  ["Hawkinge"] = "Hawkinge",
 }
 
 --- Airbases of the Persion Gulf Map:
