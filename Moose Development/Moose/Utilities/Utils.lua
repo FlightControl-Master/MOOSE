@@ -5145,3 +5145,116 @@ function UTILS.ValidateAndRepositionStatic(Country, Category, Type, Position, Sh
 
     return nil
 end
+
+---
+-- This function can be used to scan all airdromes of a map and write the Moose enums to a file.
+function UTILS.CreateAirbaseEnum()
+
+  -- Save file function
+  local function _savefile( filename, data )
+    local file=lfs.writedir() .. filename
+    local f = io.open(file , "wb")
+    if f then
+      f:write( data )
+      f:close()
+      env.info(string.format("Saving to file %s", tostring(file) ))
+    else
+      env.info(string.format("ERROR: Could not save results to file %s", tostring(file) ))
+    end
+  end
+
+  -- Get all airbases
+  local airbases=world.getAirbases()
+  
+  -- Get map name
+  local mapname=env.mission.theatre
+  
+  -- Put airbases in a table
+  local myab={}
+  for i,_airbase in pairs(airbases) do
+    local airbase=_airbase --DCS#Airbase
+    
+    
+    local cat=airbase:getDesc().category
+    
+    if cat==Airbase.Category.AIRDROME then
+        
+      -- Get airbase name
+      local name=airbase:getName()
+      
+      -- Key is the name with illigal characters replaced
+      local key=name
+      
+      -- Germany map specifics
+      if name=="Airracing Lubeck" then
+        key="Airracing_Luebeck"      
+      elseif name=="Bad Durkheim" then
+        key="Bad_Duerkheim"
+      elseif name=="Buchel" then
+        key="Buechel"
+      elseif name=="Buckeburg" then
+        key="Bueckeburg"
+      elseif name=="Dusseldorf" then
+        key="Duesseldorf"        
+      elseif name=="Gutersloh" then
+        key="Guetersloh"
+      elseif name=="Kothen" then
+        key="Koethen"
+      elseif name=="Larz" then
+        key="Laerz"
+      elseif name=="Lubeck" then
+        key="Luebeck"                
+      elseif name=="Luneburg" then
+        key="Lueneburg"
+      elseif name=="Norvenich" then
+        key="Noervenich"        
+      elseif name=="Ober-Morlen" then
+        key="Ober_Moerlen"
+      elseif name=="Peenemunde" then
+        key="Peenemuende"
+      elseif name=="Pottschutthohe" then
+        key="Pottschutthoehe"
+      elseif name=="Schonefeld" then
+        key="Schoenefeld"
+      elseif name=="Weser Wumme" then
+        key="Weser_Wuemme"
+      elseif name=="Zollschen" then
+        key="Zoellschen"
+      elseif name=="Zweibrucken" then
+        key="Zweibruecken"                
+      end
+      
+      -- Replace blanks, hyphens by underscores 
+      key=key:gsub(" ", "_")
+      key=key:gsub("-", "_")
+      key=key:gsub("'", "_")
+      key=UTILS.ReplaceIllegalCharacters(key, "_")
+      
+      local entry={}
+      entry.key=key
+      entry.name=name
+      table.insert(myab, entry)
+      
+    end
+    
+  end
+  
+  -- Sort by name
+  table.sort(myab, function(a,b) return a.name < b.name end)
+
+  local text=string.format("\n--- Airbases of the %s map", mapname)
+  text=text.."\n--"
+  for _,ab in pairs(myab) do
+    text=text..string.format("\n-- * `AIRBASE.%s.%s` %s", mapname, ab.key, ab.name)
+  end
+  text=text.."\n--"
+  text=text..string.format("\n-- @field %s", mapname)
+  text=text..string.format("\nAIRBASE.%s = {", mapname)
+  for _,ab in pairs(myab) do
+    text=text..string.format('\n\t["%s"] = "%s",', ab.key, ab.name)
+  end
+  text=text.."\n}"
+  
+  _savefile(string.format("%s-enums.txt", env.mission.theatre), text)
+  --env.info(text)
+end
