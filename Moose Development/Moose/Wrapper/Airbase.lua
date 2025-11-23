@@ -129,25 +129,25 @@ AIRBASE.Caucasus = {
   ["Vaziani"] = "Vaziani",
 }
 
---- Airbases of the Nevada map:
+--- Airbases of the Nevada map
 --
--- * AIRBASE.Nevada.Beatty
--- * AIRBASE.Nevada.Boulder_City
--- * AIRBASE.Nevada.Creech
--- * AIRBASE.Nevada.Echo_Bay
--- * AIRBASE.Nevada.Groom_Lake
--- * AIRBASE.Nevada.Henderson_Executive
--- * AIRBASE.Nevada.Jean
--- * AIRBASE.Nevada.Laughlin
--- * AIRBASE.Nevada.Lincoln_County
--- * AIRBASE.Nevada.McCarran_International
--- * AIRBASE.Nevada.Mesquite
--- * AIRBASE.Nevada.Mina
--- * AIRBASE.Nevada.Nellis
--- * AIRBASE.Nevada.North_Las_Vegas
--- * AIRBASE.Nevada.Pahute_Mesa
--- * AIRBASE.Nevada.Tonopah
--- * AIRBASE.Nevada.Tonopah_Test_Range
+-- * `AIRBASE.Nevada.Beatty` Beatty
+-- * `AIRBASE.Nevada.Boulder_City` Boulder City
+-- * `AIRBASE.Nevada.Creech` Creech
+-- * `AIRBASE.Nevada.Echo_Bay` Echo Bay
+-- * `AIRBASE.Nevada.Groom_Lake` Groom Lake
+-- * `AIRBASE.Nevada.Henderson_Executive` Henderson Executive
+-- * `AIRBASE.Nevada.Jean` Jean
+-- * `AIRBASE.Nevada.Laughlin` Laughlin
+-- * `AIRBASE.Nevada.Lincoln_County` Lincoln County
+-- * `AIRBASE.Nevada.McCarran_International` McCarran International
+-- * `AIRBASE.Nevada.Mesquite` Mesquite
+-- * `AIRBASE.Nevada.Mina` Mina
+-- * `AIRBASE.Nevada.Nellis` Nellis
+-- * `AIRBASE.Nevada.North_Las_Vegas` North Las Vegas
+-- * `AIRBASE.Nevada.Pahute_Mesa` Pahute Mesa
+-- * `AIRBASE.Nevada.Tonopah` Tonopah
+-- * `AIRBASE.Nevada.Tonopah_Test_Range` Tonopah Test Range
 --
 -- @field Nevada
 AIRBASE.Nevada = {
