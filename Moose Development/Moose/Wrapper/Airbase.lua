@@ -586,21 +586,21 @@ AIRBASE.Syria={
   ["Tel_Nof"] = "Tel Nof",
 }
 
---- Airbases of the Mariana Islands map:
+--- Airbases of the Mariana Islands map
 --
--- * AIRBASE.MarianaIslands.Andersen_AFB
--- * AIRBASE.MarianaIslands.Antonio_B_Won_Pat_Intl
--- * AIRBASE.MarianaIslands.North_West_Field
--- * AIRBASE.MarianaIslands.Olf_Orote
--- * AIRBASE.MarianaIslands.Pagan_Airstrip
--- * AIRBASE.MarianaIslands.Rota_Intl
--- * AIRBASE.MarianaIslands.Saipan_Intl
--- * AIRBASE.MarianaIslands.Tinian_Intl
+-- * `AIRBASE.MarianaIslands.Andersen_AFB` Andersen AFB
+-- * `AIRBASE.MarianaIslands.Antonio_B._Won_Pat_Intl` Antonio B. Won Pat Intl
+-- * `AIRBASE.MarianaIslands.North_West_Field` North West Field
+-- * `AIRBASE.MarianaIslands.Olf_Orote` Olf Orote
+-- * `AIRBASE.MarianaIslands.Pagan_Airstrip` Pagan Airstrip
+-- * `AIRBASE.MarianaIslands.Rota_Intl` Rota Intl
+-- * `AIRBASE.MarianaIslands.Saipan_Intl` Saipan Intl
+-- * `AIRBASE.MarianaIslands.Tinian_Intl` Tinian Intl
 --
 -- @field MarianaIslands
 AIRBASE.MarianaIslands = {
   ["Andersen_AFB"] = "Andersen AFB",
-  ["Antonio_B_Won_Pat_Intl"] = "Antonio B. Won Pat Intl",
+  ["Antonio_B._Won_Pat_Intl"] = "Antonio B. Won Pat Intl",
   ["North_West_Field"] = "North West Field",
   ["Olf_Orote"] = "Olf Orote",
   ["Pagan_Airstrip"] = "Pagan Airstrip",
@@ -609,22 +609,22 @@ AIRBASE.MarianaIslands = {
   ["Tinian_Intl"] = "Tinian Intl",
 }
 
---- Airbase of the Marianas WWII map
+--- Airbases of the MarianaIslandsWWII map
 --
--- * AIRBASE.MarianaIslandsWWII.Agana
--- * AIRBASE.MarianaIslandsWWII.Airfield_3
--- * AIRBASE.MarianaIslandsWWII.Charon_Kanoa
--- * AIRBASE.MarianaIslandsWWII.Gurguan_Point
--- * AIRBASE.MarianaIslandsWWII.Isley
--- * AIRBASE.MarianaIslandsWWII.Kagman
--- * AIRBASE.MarianaIslandsWWII.Marpi
--- * AIRBASE.MarianaIslandsWWII.Orote
--- * AIRBASE.MarianaIslandsWWII.Pagan
--- * AIRBASE.MarianaIslandsWWII.Rota
--- * AIRBASE.MarianaIslandsWWII.Ushi
--- @field AIRBASE.MarianaIslandsWWII
-AIRBASE.MarianaIslandsWWII = 
-{
+-- * `AIRBASE.MarianaIslandsWWII.Agana` Agana
+-- * `AIRBASE.MarianaIslandsWWII.Airfield_3` Airfield 3
+-- * `AIRBASE.MarianaIslandsWWII.Charon_Kanoa` Charon Kanoa
+-- * `AIRBASE.MarianaIslandsWWII.Gurguan_Point` Gurguan Point
+-- * `AIRBASE.MarianaIslandsWWII.Isley` Isley
+-- * `AIRBASE.MarianaIslandsWWII.Kagman` Kagman
+-- * `AIRBASE.MarianaIslandsWWII.Marpi` Marpi
+-- * `AIRBASE.MarianaIslandsWWII.Orote` Orote
+-- * `AIRBASE.MarianaIslandsWWII.Pagan` Pagan
+-- * `AIRBASE.MarianaIslandsWWII.Rota` Rota
+-- * `AIRBASE.MarianaIslandsWWII.Ushi` Ushi
+--
+-- @field MarianaIslandsWWII
+AIRBASE.MarianaIslandsWWII = {
   ["Agana"] = "Agana",
   ["Airfield_3"] = "Airfield 3",
   ["Charon_Kanoa"] = "Charon Kanoa",
