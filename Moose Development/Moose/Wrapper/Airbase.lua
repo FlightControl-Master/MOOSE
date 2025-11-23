@@ -978,212 +978,239 @@ AIRBASE.Iraq = {
 }
 
     
---- Airbases of the Germany Cold War map  
--- * AIRBASE.GermanyCW.Airracing_Frankfurt  
--- * AIRBASE.GermanyCW.Airracing_Frankfurt  
--- * AIRBASE.GermanyCW.Airracing_Koblenz  
--- * AIRBASE.GermanyCW.Airracing_Luebeck  
--- * AIRBASE.GermanyCW.Allstedt  
--- * AIRBASE.GermanyCW.Altes_Lager  
--- * AIRBASE.GermanyCW.Bad_Duerkheim  
--- * AIRBASE.GermanyCW.Barth  
--- * AIRBASE.GermanyCW.Bienenfarm  
--- * AIRBASE.GermanyCW.Bindersleben  
--- * AIRBASE.GermanyCW.Bitburg  
--- * AIRBASE.GermanyCW.Braunschweig  
--- * AIRBASE.GermanyCW.Bremen  
--- * AIRBASE.GermanyCW.Briest  
--- * AIRBASE.GermanyCW.Buechel  
--- * AIRBASE.GermanyCW.Bueckeburg  
--- * AIRBASE.GermanyCW.Celle  
--- * AIRBASE.GermanyCW.Cochstedt  
--- * AIRBASE.GermanyCW.Damgarten  
--- * AIRBASE.GermanyCW.Dedelow  
--- * AIRBASE.GermanyCW.Dessau  
--- * AIRBASE.GermanyCW.Fassberg  
--- * AIRBASE.GermanyCW.Finow  
--- * AIRBASE.GermanyCW.Frankfurt  
--- * AIRBASE.GermanyCW.Fritzlar  
--- * AIRBASE.GermanyCW.Fulda  
--- * AIRBASE.GermanyCW.Gardelegen  
--- * AIRBASE.GermanyCW.Garz  
--- * AIRBASE.GermanyCW.Gatow  
--- * AIRBASE.GermanyCW.Gelnhausen  
--- * AIRBASE.GermanyCW.Giebelstadt  
--- * AIRBASE.GermanyCW.Glindbruchkippe
--- * AIRBASE.GermanyCW.Gross_Mohrdorf  
--- * AIRBASE.GermanyCW.Grosse_Wiese  
--- * AIRBASE.GermanyCW.Guetersloh  
--- * AIRBASE.GermanyCW.H_FRG_01  
--- * AIRBASE.GermanyCW.H_FRG_02  
--- * AIRBASE.GermanyCW.H_FRG_03  
--- * AIRBASE.GermanyCW.H_FRG_04  
--- * AIRBASE.GermanyCW.H_FRG_05  
--- * AIRBASE.GermanyCW.H_FRG_06  
--- * AIRBASE.GermanyCW.H_FRG_07  
--- * AIRBASE.GermanyCW.H_FRG_08  
--- * AIRBASE.GermanyCW.H_FRG_09  
--- * AIRBASE.GermanyCW.H_FRG_10  
--- * AIRBASE.GermanyCW.H_FRG_11  
--- * AIRBASE.GermanyCW.H_FRG_12  
--- * AIRBASE.GermanyCW.H_FRG_13  
--- * AIRBASE.GermanyCW.H_FRG_14  
--- * AIRBASE.GermanyCW.H_FRG_15  
--- * AIRBASE.GermanyCW.H_FRG_16  
--- * AIRBASE.GermanyCW.H_FRG_17  
--- * AIRBASE.GermanyCW.H_FRG_18  
--- * AIRBASE.GermanyCW.H_FRG_19  
--- * AIRBASE.GermanyCW.H_FRG_20  
--- * AIRBASE.GermanyCW.H_FRG_21  
--- * AIRBASE.GermanyCW.H_FRG_23  
--- * AIRBASE.GermanyCW.H_FRG_25  
--- * AIRBASE.GermanyCW.H_FRG_27  
--- * AIRBASE.GermanyCW.H_FRG_30  
--- * AIRBASE.GermanyCW.H_FRG_31  
--- * AIRBASE.GermanyCW.H_FRG_32  
--- * AIRBASE.GermanyCW.H_FRG_34  
--- * AIRBASE.GermanyCW.H_FRG_38  
--- * AIRBASE.GermanyCW.H_FRG_39  
--- * AIRBASE.GermanyCW.H_FRG_40  
--- * AIRBASE.GermanyCW.H_FRG_41  
--- * AIRBASE.GermanyCW.H_FRG_42  
--- * AIRBASE.GermanyCW.H_FRG_43  
--- * AIRBASE.GermanyCW.H_FRG_44  
--- * AIRBASE.GermanyCW.H_FRG_45  
--- * AIRBASE.GermanyCW.H_FRG_46  
--- * AIRBASE.GermanyCW.H_FRG_47  
--- * AIRBASE.GermanyCW.H_FRG_48  
--- * AIRBASE.GermanyCW.H_FRG_49  
--- * AIRBASE.GermanyCW.H_FRG_50  
--- * AIRBASE.GermanyCW.H_FRG_51  
--- * AIRBASE.GermanyCW.H_GDR_01  
--- * AIRBASE.GermanyCW.H_GDR_02  
--- * AIRBASE.GermanyCW.H_GDR_03  
--- * AIRBASE.GermanyCW.H_GDR_04  
--- * AIRBASE.GermanyCW.H_GDR_05  
--- * AIRBASE.GermanyCW.H_GDR_06  
--- * AIRBASE.GermanyCW.H_GDR_07  
--- * AIRBASE.GermanyCW.H_GDR_08  
--- * AIRBASE.GermanyCW.H_GDR_09  
--- * AIRBASE.GermanyCW.H_GDR_10  
--- * AIRBASE.GermanyCW.H_GDR_11  
--- * AIRBASE.GermanyCW.H_GDR_12  
--- * AIRBASE.GermanyCW.H_GDR_13  
--- * AIRBASE.GermanyCW.H_GDR_14  
--- * AIRBASE.GermanyCW.H_GDR_15  
--- * AIRBASE.GermanyCW.H_GDR_16  
--- * AIRBASE.GermanyCW.H_GDR_17  
--- * AIRBASE.GermanyCW.H_GDR_18  
--- * AIRBASE.GermanyCW.H_GDR_19  
--- * AIRBASE.GermanyCW.H_GDR_21  
--- * AIRBASE.GermanyCW.H_GDR_22  
--- * AIRBASE.GermanyCW.H_GDR_24  
--- * AIRBASE.GermanyCW.H_GDR_25  
--- * AIRBASE.GermanyCW.H_GDR_26  
--- * AIRBASE.GermanyCW.H_GDR_30  
--- * AIRBASE.GermanyCW.H_GDR_31  
--- * AIRBASE.GermanyCW.H_GDR_32  
--- * AIRBASE.GermanyCW.H_GDR_33  
--- * AIRBASE.GermanyCW.H_GDR_34  
--- * AIRBASE.GermanyCW.H_Med_FRG_01  
--- * AIRBASE.GermanyCW.H_Med_FRG_02  
--- * AIRBASE.GermanyCW.H_Med_FRG_04  
--- * AIRBASE.GermanyCW.H_Med_FRG_06  
--- * AIRBASE.GermanyCW.H_Med_FRG_11  
--- * AIRBASE.GermanyCW.H_Med_FRG_12  
--- * AIRBASE.GermanyCW.H_Med_FRG_13  
--- * AIRBASE.GermanyCW.H_Med_FRG_14  
--- * AIRBASE.GermanyCW.H_Med_FRG_15  
--- * AIRBASE.GermanyCW.H_Med_FRG_16  
--- * AIRBASE.GermanyCW.H_Med_FRG_17  
--- * AIRBASE.GermanyCW.H_Med_FRG_21  
--- * AIRBASE.GermanyCW.H_Med_FRG_24  
--- * AIRBASE.GermanyCW.H_Med_FRG_26  
--- * AIRBASE.GermanyCW.H_Med_FRG_27  
--- * AIRBASE.GermanyCW.H_Med_FRG_29  
--- * AIRBASE.GermanyCW.H_Med_GDR_01  
--- * AIRBASE.GermanyCW.H_Med_GDR_02  
--- * AIRBASE.GermanyCW.H_Med_GDR_03  
--- * AIRBASE.GermanyCW.H_Med_GDR_08  
--- * AIRBASE.GermanyCW.H_Med_GDR_09  
--- * AIRBASE.GermanyCW.H_Med_GDR_10  
--- * AIRBASE.GermanyCW.H_Med_GDR_11  
--- * AIRBASE.GermanyCW.H_Med_GDR_12  
--- * AIRBASE.GermanyCW.H_Med_GDR_13  
--- * AIRBASE.GermanyCW.H_Med_GDR_14  
--- * AIRBASE.GermanyCW.H_Med_GDR_16  
--- * AIRBASE.GermanyCW.H_Radar_FRG_02  
--- * AIRBASE.GermanyCW.H_Radar_GDR_01  
--- * AIRBASE.GermanyCW.H_Radar_GDR_02  
--- * AIRBASE.GermanyCW.H_Radar_GDR_03  
--- * AIRBASE.GermanyCW.H_Radar_GDR_04  
--- * AIRBASE.GermanyCW.H_Radar_GDR_05  
--- * AIRBASE.GermanyCW.H_Radar_GDR_06  
--- * AIRBASE.GermanyCW.H_Radar_GDR_07  
--- * AIRBASE.GermanyCW.H_Radar_GDR_08  
--- * AIRBASE.GermanyCW.H_Radar_GDR_09  
--- * AIRBASE.GermanyCW.Hahn  
--- * AIRBASE.GermanyCW.Haina  
--- * AIRBASE.GermanyCW.Hamburg  
--- * AIRBASE.GermanyCW.Hamburg_Finkenwerder  
--- * AIRBASE.GermanyCW.Hannover  
--- * AIRBASE.GermanyCW.Hasselfelde  
--- * AIRBASE.GermanyCW.Herrenteich  
--- * AIRBASE.GermanyCW.Hildesheim  
--- * AIRBASE.GermanyCW.Hockenheim  
--- * AIRBASE.GermanyCW.Holzdorf  
--- * AIRBASE.GermanyCW.Kammermark  
--- * AIRBASE.GermanyCW.Koethen  
--- * AIRBASE.GermanyCW.Laage  
--- * AIRBASE.GermanyCW.Langenselbold  
--- * AIRBASE.GermanyCW.Laerz  
--- * AIRBASE.GermanyCW.Leipzig_Halle  
--- * AIRBASE.GermanyCW.Leipzig_Mockau  
--- * AIRBASE.GermanyCW.Luebeck  
--- * AIRBASE.GermanyCW.Lueneburg  
--- * AIRBASE.GermanyCW.Mahlwinkel  
--- * AIRBASE.GermanyCW.Mendig  
--- * AIRBASE.GermanyCW.Merseburg  
--- * AIRBASE.GermanyCW.Neubrandenburg  
--- * AIRBASE.GermanyCW.Neuruppin  
--- * AIRBASE.GermanyCW.Northeim  
--- * AIRBASE.GermanyCW.Ober_Moerlen  
--- * AIRBASE.GermanyCW.Obermehler_Schlotheim  
--- * AIRBASE.GermanyCW.Parchim  
--- * AIRBASE.GermanyCW.Peenemuende  
--- * AIRBASE.GermanyCW.Pferdsfeld  
--- * AIRBASE.GermanyCW.Pinnow  
--- * AIRBASE.GermanyCW.Pottschutthoehe  
--- * AIRBASE.GermanyCW.Ramstein  
--- * AIRBASE.GermanyCW.Rinteln  
--- * AIRBASE.GermanyCW.Schoenefeld  
--- * AIRBASE.GermanyCW.Schweinfurt  
--- * AIRBASE.GermanyCW.Sembach  
--- * AIRBASE.GermanyCW.Spangdahlem  
--- * AIRBASE.GermanyCW.Sperenberg  
--- * AIRBASE.GermanyCW.Stendal  
--- * AIRBASE.GermanyCW.Tegel  
--- * AIRBASE.GermanyCW.Tempelhof  
--- * AIRBASE.GermanyCW.Templin  
--- * AIRBASE.GermanyCW.Tutow  
--- * AIRBASE.GermanyCW.Uelzen  
--- * AIRBASE.GermanyCW.Uetersen  
--- * AIRBASE.GermanyCW.Ummern  
--- * AIRBASE.GermanyCW.Verden_Scharnhorst  
--- * AIRBASE.GermanyCW.Walldorf  
--- * AIRBASE.GermanyCW.Waren_Vielist  
--- * AIRBASE.GermanyCW.Werneuchen  
--- * AIRBASE.GermanyCW.Weser_Wuemme  
--- * AIRBASE.GermanyCW.Wiesbaden  
--- * AIRBASE.GermanyCW.Wismar  
--- * AIRBASE.GermanyCW.Wittstock  
--- * AIRBASE.GermanyCW.Worms  
--- * AIRBASE.GermanyCW.Wunstorf  
--- * AIRBASE.GermanyCW.Zerbst  
--- * AIRBASE.GermanyCW.Zweibruecken  
+--- Airbases of the GermanyCW map
+--
+-- * `AIRBASE.GermanyCW.Adelsheim` Adelsheim
+-- * `AIRBASE.GermanyCW.Airracing_Frankfurt` Airracing Frankfurt
+-- * `AIRBASE.GermanyCW.Airracing_Koblenz` Airracing Koblenz
+-- * `AIRBASE.GermanyCW.Airracing_Luebeck` Airracing Lubeck
+-- * `AIRBASE.GermanyCW.Allstedt` Allstedt
+-- * `AIRBASE.GermanyCW.Altes_Lager` Altes Lager
+-- * `AIRBASE.GermanyCW.Bad_Duerkheim` Bad Durkheim
+-- * `AIRBASE.GermanyCW.Barth` Barth
+-- * `AIRBASE.GermanyCW.Bienenfarm` Bienenfarm
+-- * `AIRBASE.GermanyCW.Bindersleben` Bindersleben
+-- * `AIRBASE.GermanyCW.Bitburg` Bitburg
+-- * `AIRBASE.GermanyCW.Bornholm` Bornholm
+-- * `AIRBASE.GermanyCW.Brand` Brand
+-- * `AIRBASE.GermanyCW.Brandis` Brandis
+-- * `AIRBASE.GermanyCW.Braunschweig` Braunschweig
+-- * `AIRBASE.GermanyCW.Bremen` Bremen
+-- * `AIRBASE.GermanyCW.Briest` Briest
+-- * `AIRBASE.GermanyCW.Buechel` Buchel
+-- * `AIRBASE.GermanyCW.Bueckeburg` Buckeburg
+-- * `AIRBASE.GermanyCW.Celle` Celle
+-- * `AIRBASE.GermanyCW.Chojna` Chojna
+-- * `AIRBASE.GermanyCW.Cochstedt` Cochstedt
+-- * `AIRBASE.GermanyCW.Cologne` Cologne
+-- * `AIRBASE.GermanyCW.Damgarten` Damgarten
+-- * `AIRBASE.GermanyCW.Dedelow` Dedelow
+-- * `AIRBASE.GermanyCW.Dessau` Dessau
+-- * `AIRBASE.GermanyCW.Dusseldorf` Dusseldorf
+-- * `AIRBASE.GermanyCW.Falkenberg` Falkenberg
+-- * `AIRBASE.GermanyCW.Fassberg` Fassberg
+-- * `AIRBASE.GermanyCW.Finow` Finow
+-- * `AIRBASE.GermanyCW.Frankfurt` Frankfurt
+-- * `AIRBASE.GermanyCW.Fritzlar` Fritzlar
+-- * `AIRBASE.GermanyCW.Fulda` Fulda
+-- * `AIRBASE.GermanyCW.Gardelegen` Gardelegen
+-- * `AIRBASE.GermanyCW.Garz` Garz
+-- * `AIRBASE.GermanyCW.Gatow` Gatow
+-- * `AIRBASE.GermanyCW.Gelnhausen` Gelnhausen
+-- * `AIRBASE.GermanyCW.Giebelstadt` Giebelstadt
+-- * `AIRBASE.GermanyCW.Glindbruchkippe` Glindbruchkippe
+-- * `AIRBASE.GermanyCW.Gross_Mohrdorf` Gross Mohrdorf
+-- * `AIRBASE.GermanyCW.Grosse_Wiese` Grosse Wiese
+-- * `AIRBASE.GermanyCW.Guetersloh` Gutersloh
+-- * `AIRBASE.GermanyCW.H_FRG_01` H FRG 01
+-- * `AIRBASE.GermanyCW.H_FRG_02` H FRG 02
+-- * `AIRBASE.GermanyCW.H_FRG_03` H FRG 03
+-- * `AIRBASE.GermanyCW.H_FRG_04` H FRG 04
+-- * `AIRBASE.GermanyCW.H_FRG_05` H FRG 05
+-- * `AIRBASE.GermanyCW.H_FRG_06` H FRG 06
+-- * `AIRBASE.GermanyCW.H_FRG_07` H FRG 07
+-- * `AIRBASE.GermanyCW.H_FRG_08` H FRG 08
+-- * `AIRBASE.GermanyCW.H_FRG_09` H FRG 09
+-- * `AIRBASE.GermanyCW.H_FRG_10` H FRG 10
+-- * `AIRBASE.GermanyCW.H_FRG_11` H FRG 11
+-- * `AIRBASE.GermanyCW.H_FRG_12` H FRG 12
+-- * `AIRBASE.GermanyCW.H_FRG_13` H FRG 13
+-- * `AIRBASE.GermanyCW.H_FRG_14` H FRG 14
+-- * `AIRBASE.GermanyCW.H_FRG_15` H FRG 15
+-- * `AIRBASE.GermanyCW.H_FRG_16` H FRG 16
+-- * `AIRBASE.GermanyCW.H_FRG_17` H FRG 17
+-- * `AIRBASE.GermanyCW.H_FRG_18` H FRG 18
+-- * `AIRBASE.GermanyCW.H_FRG_19` H FRG 19
+-- * `AIRBASE.GermanyCW.H_FRG_20` H FRG 20
+-- * `AIRBASE.GermanyCW.H_FRG_21` H FRG 21
+-- * `AIRBASE.GermanyCW.H_FRG_23` H FRG 23
+-- * `AIRBASE.GermanyCW.H_FRG_25` H FRG 25
+-- * `AIRBASE.GermanyCW.H_FRG_27` H FRG 27
+-- * `AIRBASE.GermanyCW.H_FRG_30` H FRG 30
+-- * `AIRBASE.GermanyCW.H_FRG_31` H FRG 31
+-- * `AIRBASE.GermanyCW.H_FRG_32` H FRG 32
+-- * `AIRBASE.GermanyCW.H_FRG_34` H FRG 34
+-- * `AIRBASE.GermanyCW.H_FRG_38` H FRG 38
+-- * `AIRBASE.GermanyCW.H_FRG_39` H FRG 39
+-- * `AIRBASE.GermanyCW.H_FRG_40` H FRG 40
+-- * `AIRBASE.GermanyCW.H_FRG_41` H FRG 41
+-- * `AIRBASE.GermanyCW.H_FRG_42` H FRG 42
+-- * `AIRBASE.GermanyCW.H_FRG_43` H FRG 43
+-- * `AIRBASE.GermanyCW.H_FRG_44` H FRG 44
+-- * `AIRBASE.GermanyCW.H_FRG_45` H FRG 45
+-- * `AIRBASE.GermanyCW.H_FRG_46` H FRG 46
+-- * `AIRBASE.GermanyCW.H_FRG_47` H FRG 47
+-- * `AIRBASE.GermanyCW.H_FRG_48` H FRG 48
+-- * `AIRBASE.GermanyCW.H_FRG_49` H FRG 49
+-- * `AIRBASE.GermanyCW.H_FRG_50` H FRG 50
+-- * `AIRBASE.GermanyCW.H_FRG_51` H FRG 51
+-- * `AIRBASE.GermanyCW.H_GDR_01` H GDR 01
+-- * `AIRBASE.GermanyCW.H_GDR_02` H GDR 02
+-- * `AIRBASE.GermanyCW.H_GDR_03` H GDR 03
+-- * `AIRBASE.GermanyCW.H_GDR_04` H GDR 04
+-- * `AIRBASE.GermanyCW.H_GDR_05` H GDR 05
+-- * `AIRBASE.GermanyCW.H_GDR_06` H GDR 06
+-- * `AIRBASE.GermanyCW.H_GDR_07` H GDR 07
+-- * `AIRBASE.GermanyCW.H_GDR_08` H GDR 08
+-- * `AIRBASE.GermanyCW.H_GDR_09` H GDR 09
+-- * `AIRBASE.GermanyCW.H_GDR_10` H GDR 10
+-- * `AIRBASE.GermanyCW.H_GDR_11` H GDR 11
+-- * `AIRBASE.GermanyCW.H_GDR_12` H GDR 12
+-- * `AIRBASE.GermanyCW.H_GDR_13` H GDR 13
+-- * `AIRBASE.GermanyCW.H_GDR_14` H GDR 14
+-- * `AIRBASE.GermanyCW.H_GDR_15` H GDR 15
+-- * `AIRBASE.GermanyCW.H_GDR_16` H GDR 16
+-- * `AIRBASE.GermanyCW.H_GDR_17` H GDR 17
+-- * `AIRBASE.GermanyCW.H_GDR_18` H GDR 18
+-- * `AIRBASE.GermanyCW.H_GDR_19` H GDR 19
+-- * `AIRBASE.GermanyCW.H_GDR_21` H GDR 21
+-- * `AIRBASE.GermanyCW.H_GDR_22` H GDR 22
+-- * `AIRBASE.GermanyCW.H_GDR_24` H GDR 24
+-- * `AIRBASE.GermanyCW.H_GDR_25` H GDR 25
+-- * `AIRBASE.GermanyCW.H_GDR_26` H GDR 26
+-- * `AIRBASE.GermanyCW.H_GDR_30` H GDR 30
+-- * `AIRBASE.GermanyCW.H_GDR_31` H GDR 31
+-- * `AIRBASE.GermanyCW.H_GDR_32` H GDR 32
+-- * `AIRBASE.GermanyCW.H_GDR_33` H GDR 33
+-- * `AIRBASE.GermanyCW.H_GDR_34` H GDR 34
+-- * `AIRBASE.GermanyCW.H_Med_FRG_01` H Med FRG 01
+-- * `AIRBASE.GermanyCW.H_Med_FRG_02` H Med FRG 02
+-- * `AIRBASE.GermanyCW.H_Med_FRG_04` H Med FRG 04
+-- * `AIRBASE.GermanyCW.H_Med_FRG_06` H Med FRG 06
+-- * `AIRBASE.GermanyCW.H_Med_FRG_11` H Med FRG 11
+-- * `AIRBASE.GermanyCW.H_Med_FRG_12` H Med FRG 12
+-- * `AIRBASE.GermanyCW.H_Med_FRG_13` H Med FRG 13
+-- * `AIRBASE.GermanyCW.H_Med_FRG_14` H Med FRG 14
+-- * `AIRBASE.GermanyCW.H_Med_FRG_15` H Med FRG 15
+-- * `AIRBASE.GermanyCW.H_Med_FRG_16` H Med FRG 16
+-- * `AIRBASE.GermanyCW.H_Med_FRG_17` H Med FRG 17
+-- * `AIRBASE.GermanyCW.H_Med_FRG_21` H Med FRG 21
+-- * `AIRBASE.GermanyCW.H_Med_FRG_24` H Med FRG 24
+-- * `AIRBASE.GermanyCW.H_Med_FRG_26` H Med FRG 26
+-- * `AIRBASE.GermanyCW.H_Med_FRG_27` H Med FRG 27
+-- * `AIRBASE.GermanyCW.H_Med_FRG_29` H Med FRG 29
+-- * `AIRBASE.GermanyCW.H_Med_GDR_01` H Med GDR 01
+-- * `AIRBASE.GermanyCW.H_Med_GDR_02` H Med GDR 02
+-- * `AIRBASE.GermanyCW.H_Med_GDR_03` H Med GDR 03
+-- * `AIRBASE.GermanyCW.H_Med_GDR_08` H Med GDR 08
+-- * `AIRBASE.GermanyCW.H_Med_GDR_09` H Med GDR 09
+-- * `AIRBASE.GermanyCW.H_Med_GDR_10` H Med GDR 10
+-- * `AIRBASE.GermanyCW.H_Med_GDR_11` H Med GDR 11
+-- * `AIRBASE.GermanyCW.H_Med_GDR_12` H Med GDR 12
+-- * `AIRBASE.GermanyCW.H_Med_GDR_13` H Med GDR 13
+-- * `AIRBASE.GermanyCW.H_Med_GDR_14` H Med GDR 14
+-- * `AIRBASE.GermanyCW.H_Med_GDR_16` H Med GDR 16
+-- * `AIRBASE.GermanyCW.H_Radar_FRG_02` H Radar FRG 02
+-- * `AIRBASE.GermanyCW.H_Radar_GDR_01` H Radar GDR 01
+-- * `AIRBASE.GermanyCW.H_Radar_GDR_02` H Radar GDR 02
+-- * `AIRBASE.GermanyCW.H_Radar_GDR_03` H Radar GDR 03
+-- * `AIRBASE.GermanyCW.H_Radar_GDR_04` H Radar GDR 04
+-- * `AIRBASE.GermanyCW.H_Radar_GDR_05` H Radar GDR 05
+-- * `AIRBASE.GermanyCW.H_Radar_GDR_06` H Radar GDR 06
+-- * `AIRBASE.GermanyCW.H_Radar_GDR_07` H Radar GDR 07
+-- * `AIRBASE.GermanyCW.H_Radar_GDR_08` H Radar GDR 08
+-- * `AIRBASE.GermanyCW.H_Radar_GDR_09` H Radar GDR 09
+-- * `AIRBASE.GermanyCW.Hahn` Hahn
+-- * `AIRBASE.GermanyCW.Haina` Haina
+-- * `AIRBASE.GermanyCW.Hamburg` Hamburg
+-- * `AIRBASE.GermanyCW.Hamburg_Finkenwerder` Hamburg Finkenwerder
+-- * `AIRBASE.GermanyCW.Hannover` Hannover
+-- * `AIRBASE.GermanyCW.Hasselfelde` Hasselfelde
+-- * `AIRBASE.GermanyCW.Heidelberg` Heidelberg
+-- * `AIRBASE.GermanyCW.Herrenteich` Herrenteich
+-- * `AIRBASE.GermanyCW.Hildesheim` Hildesheim
+-- * `AIRBASE.GermanyCW.Hockenheim` Hockenheim
+-- * `AIRBASE.GermanyCW.Holzdorf` Holzdorf
+-- * `AIRBASE.GermanyCW.Kammermark` Kammermark
+-- * `AIRBASE.GermanyCW.Kastrup` Kastrup
+-- * `AIRBASE.GermanyCW.Kiel` Kiel
+-- * `AIRBASE.GermanyCW.Koethen` Kothen
+-- * `AIRBASE.GermanyCW.Laage` Laage
+-- * `AIRBASE.GermanyCW.Landstuhl` Landstuhl
+-- * `AIRBASE.GermanyCW.Langenselbold` Langenselbold
+-- * `AIRBASE.GermanyCW.Laerz` Larz
+-- * `AIRBASE.GermanyCW.Leipzig_Mockau` Leipzig Mockau
+-- * `AIRBASE.GermanyCW.Luebeck` Lubeck
+-- * `AIRBASE.GermanyCW.Lueneburg` Luneburg
+-- * `AIRBASE.GermanyCW.Mahlwinkel` Mahlwinkel
+-- * `AIRBASE.GermanyCW.Mainz_Finthen` Mainz Finthen
+-- * `AIRBASE.GermanyCW.Marxwalde` Marxwalde
+-- * `AIRBASE.GermanyCW.Mendig` Mendig
+-- * `AIRBASE.GermanyCW.Merseburg` Merseburg
+-- * `AIRBASE.GermanyCW.Neubrandenburg` Neubrandenburg
+-- * `AIRBASE.GermanyCW.Neuruppin` Neuruppin
+-- * `AIRBASE.GermanyCW.Nordholz` Nordholz
+-- * `AIRBASE.GermanyCW.Northeim` Northeim
+-- * `AIRBASE.GermanyCW.Norvenich` Norvenich
+-- * `AIRBASE.GermanyCW.Ober_Moerlen` Ober-Morlen
+-- * `AIRBASE.GermanyCW.Obermehler_Schlotheim` Obermehler Schlotheim
+-- * `AIRBASE.GermanyCW.Oranienburg` Oranienburg
+-- * `AIRBASE.GermanyCW.Parchim` Parchim
+-- * `AIRBASE.GermanyCW.Peenemuende` Peenemunde
+-- * `AIRBASE.GermanyCW.Perwenitz` Perwenitz
+-- * `AIRBASE.GermanyCW.Pferdsfeld` Pferdsfeld
+-- * `AIRBASE.GermanyCW.Pinnow` Pinnow
+-- * `AIRBASE.GermanyCW.Pottschutthoehe` Pottschutthohe
+-- * `AIRBASE.GermanyCW.Ramstein` Ramstein
+-- * `AIRBASE.GermanyCW.Revinge` Revinge
+-- * `AIRBASE.GermanyCW.Rinteln` Rinteln
+-- * `AIRBASE.GermanyCW.Schkeuditz` Schkeuditz
+-- * `AIRBASE.GermanyCW.Schoenefeld` Schonefeld
+-- * `AIRBASE.GermanyCW.Schweinfurt` Schweinfurt
+-- * `AIRBASE.GermanyCW.Sembach` Sembach
+-- * `AIRBASE.GermanyCW.Sittensen` Sittensen
+-- * `AIRBASE.GermanyCW.Spangdahlem` Spangdahlem
+-- * `AIRBASE.GermanyCW.Sperenberg` Sperenberg
+-- * `AIRBASE.GermanyCW.Sprendlingen` Sprendlingen
+-- * `AIRBASE.GermanyCW.Stendal` Stendal
+-- * `AIRBASE.GermanyCW.Sturup` Sturup
+-- * `AIRBASE.GermanyCW.Szczecin_Goleniow` Szczecin-Goleniow
+-- * `AIRBASE.GermanyCW.Tagra` Tagra
+-- * `AIRBASE.GermanyCW.Tegel` Tegel
+-- * `AIRBASE.GermanyCW.Tempelhof` Tempelhof
+-- * `AIRBASE.GermanyCW.Templin` Templin
+-- * `AIRBASE.GermanyCW.Thurland` Thurland
+-- * `AIRBASE.GermanyCW.Tutow` Tutow
+-- * `AIRBASE.GermanyCW.Uelzen` Uelzen
+-- * `AIRBASE.GermanyCW.Uetersen` Uetersen
+-- * `AIRBASE.GermanyCW.Ummern` Ummern
+-- * `AIRBASE.GermanyCW.Verden_Scharnhorst` Verden-Scharnhorst
+-- * `AIRBASE.GermanyCW.Walldorf` Walldorf
+-- * `AIRBASE.GermanyCW.Waren_Vielist` Waren Vielist
+-- * `AIRBASE.GermanyCW.Werneuchen` Werneuchen
+-- * `AIRBASE.GermanyCW.Weser_Wuemme` Weser Wumme
+-- * `AIRBASE.GermanyCW.Wiesbaden` Wiesbaden
+-- * `AIRBASE.GermanyCW.Wismar` Wismar
+-- * `AIRBASE.GermanyCW.Wittstock` Wittstock
+-- * `AIRBASE.GermanyCW.Worms` Worms
+-- * `AIRBASE.GermanyCW.Wunstorf` Wunstorf
+-- * `AIRBASE.GermanyCW.Zerbst` Zerbst
+-- * `AIRBASE.GermanyCW.Zollschen` Zollschen
+-- * `AIRBASE.GermanyCW.Zweibruecken` Zweibrucken
 --
 -- @field GermanyCW
 AIRBASE.GermanyCW = {
+  ["Adelsheim"] = "Adelsheim",
   ["Airracing_Frankfurt"] = "Airracing Frankfurt",
   ["Airracing_Koblenz"] = "Airracing Koblenz",
   ["Airracing_Luebeck"] = "Airracing Lubeck",
@@ -1194,16 +1221,23 @@ AIRBASE.GermanyCW = {
   ["Bienenfarm"] = "Bienenfarm",
   ["Bindersleben"] = "Bindersleben",
   ["Bitburg"] = "Bitburg",
+  ["Bornholm"] = "Bornholm",
+  ["Brand"] = "Brand",
+  ["Brandis"] = "Brandis",
   ["Braunschweig"] = "Braunschweig",
   ["Bremen"] = "Bremen",
   ["Briest"] = "Briest",
   ["Buechel"] = "Buchel",
   ["Bueckeburg"] = "Buckeburg",
   ["Celle"] = "Celle",
+  ["Chojna"] = "Chojna",
   ["Cochstedt"] = "Cochstedt",
+  ["Cologne"] = "Cologne",
   ["Damgarten"] = "Damgarten",
   ["Dedelow"] = "Dedelow",
   ["Dessau"] = "Dessau",
+  ["Dusseldorf"] = "Dusseldorf",
+  ["Falkenberg"] = "Falkenberg",
   ["Fassberg"] = "Fassberg",
   ["Finow"] = "Finow",
   ["Frankfurt"] = "Frankfurt",
@@ -1214,7 +1248,7 @@ AIRBASE.GermanyCW = {
   ["Gatow"] = "Gatow",
   ["Gelnhausen"] = "Gelnhausen",
   ["Giebelstadt"] = "Giebelstadt",
-  ["Glindbruchkippe"] = "Glindbruchkippe ",
+  ["Glindbruchkippe"] = "Glindbruchkippe",
   ["Gross_Mohrdorf"] = "Gross Mohrdorf",
   ["Grosse_Wiese"] = "Grosse Wiese",
   ["Guetersloh"] = "Gutersloh",
@@ -1332,43 +1366,60 @@ AIRBASE.GermanyCW = {
   ["Hamburg_Finkenwerder"] = "Hamburg Finkenwerder",
   ["Hannover"] = "Hannover",
   ["Hasselfelde"] = "Hasselfelde",
+  ["Heidelberg"] = "Heidelberg",
   ["Herrenteich"] = "Herrenteich",
   ["Hildesheim"] = "Hildesheim",
   ["Hockenheim"] = "Hockenheim",
   ["Holzdorf"] = "Holzdorf",
   ["Kammermark"] = "Kammermark",
+  ["Kastrup"] = "Kastrup",
+  ["Kiel"] = "Kiel",
   ["Koethen"] = "Kothen",
   ["Laage"] = "Laage",
+  ["Landstuhl"] = "Landstuhl",
   ["Langenselbold"] = "Langenselbold",
   ["Laerz"] = "Larz",
-  ["Leipzig_Halle"] = "Leipzig Halle",
   ["Leipzig_Mockau"] = "Leipzig Mockau",
   ["Luebeck"] = "Lubeck",
   ["Lueneburg"] = "Luneburg",
   ["Mahlwinkel"] = "Mahlwinkel",
+  ["Mainz_Finthen"] = "Mainz Finthen",
+  ["Marxwalde"] = "Marxwalde",
   ["Mendig"] = "Mendig",
   ["Merseburg"] = "Merseburg",
   ["Neubrandenburg"] = "Neubrandenburg",
   ["Neuruppin"] = "Neuruppin",
+  ["Nordholz"] = "Nordholz",
   ["Northeim"] = "Northeim",
+  ["Norvenich"] = "Norvenich",
   ["Ober_Moerlen"] = "Ober-Morlen",
   ["Obermehler_Schlotheim"] = "Obermehler Schlotheim",
+  ["Oranienburg"] = "Oranienburg",
   ["Parchim"] = "Parchim",
   ["Peenemuende"] = "Peenemunde",
+  ["Perwenitz"] = "Perwenitz",
   ["Pferdsfeld"] = "Pferdsfeld",
   ["Pinnow"] = "Pinnow",
   ["Pottschutthoehe"] = "Pottschutthohe",
   ["Ramstein"] = "Ramstein",
+  ["Revinge"] = "Revinge",
   ["Rinteln"] = "Rinteln",
+  ["Schkeuditz"] = "Schkeuditz",
   ["Schoenefeld"] = "Schonefeld",
   ["Schweinfurt"] = "Schweinfurt",
   ["Sembach"] = "Sembach",
+  ["Sittensen"] = "Sittensen",
   ["Spangdahlem"] = "Spangdahlem",
   ["Sperenberg"] = "Sperenberg",
+  ["Sprendlingen"] = "Sprendlingen",
   ["Stendal"] = "Stendal",
+  ["Sturup"] = "Sturup",
+  ["Szczecin_Goleniow"] = "Szczecin-Goleniow",
+  ["Tagra"] = "Tagra",
   ["Tegel"] = "Tegel",
   ["Tempelhof"] = "Tempelhof",
   ["Templin"] = "Templin",
+  ["Thurland"] = "Thurland",
   ["Tutow"] = "Tutow",
   ["Uelzen"] = "Uelzen",
   ["Uetersen"] = "Uetersen",
@@ -1384,6 +1435,7 @@ AIRBASE.GermanyCW = {
   ["Worms"] = "Worms",
   ["Wunstorf"] = "Wunstorf",
   ["Zerbst"] = "Zerbst",
+  ["Zollschen"] = "Zollschen",
   ["Zweibruecken"] = "Zweibrucken",
 }
 
