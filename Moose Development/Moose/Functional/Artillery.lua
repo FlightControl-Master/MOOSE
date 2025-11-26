@@ -27,7 +27,7 @@
 --
 -- ### Author: **funkyfranky**
 --
--- ### Contributions: FlightControl
+-- ### Contributions: FlightControl, Applevangelist
 --
 -- ====
 -- @module Functional.Artillery
@@ -780,7 +780,7 @@ ARTY.db={
 
 --- Arty script version.
 -- @field #string version
-ARTY.version="1.3.3"
+ARTY.version="1.3.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -2268,7 +2268,7 @@ function ARTY._FuncTrack(weapon, self, target)
     if _dist<target.radius then
   
       -- Get random coordinate within a certain radius.
-      local _cr=_coord:GetRandomCoordinateInRadius(_data.target.radius)
+      local _cr=_coord:GetRandomCoordinateInRadius(target.radius)
   
       -- Fire smoke at this coordinate.
       _cr:Smoke(self.smokeColor)
