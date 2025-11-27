@@ -2300,6 +2300,21 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           return true
       end
 
+      if type_name=="C-130J-30" and (unit:getDrawArgumentValue(86)==1)then
+        BASE:T(unit_name.." rear doors are open")
+        return true
+      end
+
+      if type_name=="C-130J-30" and (unit:getDrawArgumentValue(87)==1)then
+        BASE:T(unit_name.." Side door(s) are open")
+        return true
+      end
+
+      if type_name=="C-130J-30" and (unit:getDrawArgumentValue(88)==1)then
+        BASE:T(unit_name.." Paratroop door(s) are open")
+        return true
+      end
+
       if string.find(type_name, "Hercules") and (unit:getDrawArgumentValue(1215) == 1 and unit:getDrawArgumentValue(1216) == 1) then
           BASE:T(unit_name .. " rear doors are open")
           return true
