@@ -3227,6 +3227,22 @@ function UTILS.BearingToCardinal(Heading)
   end
 end
 
+--- Adjust given heading so that is is in [0, 360).
+-- @param #number Heading The heading in degrees.
+-- @return #number Adjust heading in [0,360).
+function UTILS.AdjustHeading360(Heading)
+
+  while Heading>=360 or Heading<0 do
+    if Heading>=360 then
+      Heading=Heading-360
+    elseif Heading<0 then
+      Heading=Heading+360
+    end
+  end
+
+  return Heading
+end
+
 --- Create a BRAA NATO call string BRAA between two GROUP objects
 -- @param Wrapper.Group#GROUP FromGrp GROUP object
 -- @param Wrapper.Group#GROUP ToGrp GROUP object
@@ -4206,25 +4222,27 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
   
   local function PopulateStorage(Name,liquids,equip,airframes)
     local newWH = STORAGE:New(Name)
-    if liquids and liquids > 0 then
-      -- Storage fill-up
-      newWH:SetLiquid(STORAGE.Liquid.DIESEL,liquids) -- kgs to tons
-      newWH:SetLiquid(STORAGE.Liquid.GASOLINE,liquids)
-      newWH:SetLiquid(STORAGE.Liquid.JETFUEL,liquids)
-      newWH:SetLiquid(STORAGE.Liquid.MW50,liquids)
-    end
-    
-    if equip and equip > 0 then
-      for cat,nitem in pairs(ENUMS.Storage.weapons) do
-        for name,item in pairs(nitem) do
-          newWH:SetItem(item,equip)
+    if newWH then
+      if liquids and liquids > 0 then
+        -- Storage fill-up
+        newWH:SetLiquid(STORAGE.Liquid.DIESEL,liquids) -- kgs to tons
+        newWH:SetLiquid(STORAGE.Liquid.GASOLINE,liquids)
+        newWH:SetLiquid(STORAGE.Liquid.JETFUEL,liquids)
+        newWH:SetLiquid(STORAGE.Liquid.MW50,liquids)
+      end
+      
+      if equip and equip > 0 then
+        for cat,nitem in pairs(ENUMS.Storage.weapons) do
+          for name,item in pairs(nitem) do
+            newWH:SetItem(item,equip)
+          end
         end
       end
-    end
-    
-    if airframes and airframes > 0 then
-      for typename in pairs (CSAR.AircraftType) do
-        newWH:SetItem(typename,airframes)
+      
+      if airframes and airframes > 0 then
+        for typename in pairs (CSAR.AircraftType) do
+          newWH:SetItem(typename,airframes)
+        end
       end
     end
   end
@@ -4303,8 +4321,6 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
       }
     -- Create BIRTH event.
     world.onEvent(Event)
-    
-    PopulateStorage(Name.."-1",liquids,equip,airframes)
   else
     -- Spawn FARP
     local newfarp = SPAWNSTATIC:NewFromType(STypeName,"Heliports",Country) --  "Invisible FARP" "FARP"
@@ -4312,10 +4328,11 @@ function UTILS.SpawnFARPAndFunctionalStatics(Name,Coordinate,FARPType,Coalition,
     newfarp:InitFARP(callsign,freq,mod,DynamicSpawns,HotStart)
     local spawnedfarp = newfarp:SpawnFromCoordinate(farplocation,0,Name)
     table.insert(ReturnObjects,spawnedfarp)
-    
-    PopulateStorage(Name,liquids,equip,airframes)  
+
   end
-  
+    
+  PopulateStorage(Name,liquids,equip,airframes)  
+     
   -- Spawn Objects
   local FARPStaticObjectsNato = {
     ["FUEL"] = { TypeName = "FARP Fuel Depot", ShapeName = "GSM Rus", Category = "Fortifications"},

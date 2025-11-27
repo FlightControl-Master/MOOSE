@@ -109,7 +109,6 @@
 -- @field Core.Menu#MENU_MISSION menuF10root Specific user defined root F10 menu.
 -- @field #number ceilingaltitude Range ceiling altitude in ft MSL.  Aircraft above this altitude are not considered to be in the range. Default is 20000 ft.
 -- @field #boolean ceilingenabled Range has a ceiling and is not unlimited.  Default is false.
-
 -- @extends Core.Fsm#FSM
 
 --- *Don't only practice your art, but force your way into its secrets; art deserves that, for it and knowledge can raise man to the Divine.* - Ludwig van Beethoven
@@ -1271,6 +1270,9 @@ function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume,
     self.controlmsrs:SetCoalition(Coalition or coalition.side.BLUE)
     self.controlmsrs:SetLabel("RANGEC")
     self.controlmsrs:SetVolume(Volume or 1.0)
+    if self.rangezone then
+      self.controlmsrs:SetCoordinate(self.rangezone:GetCoordinate())
+    end
     self.controlsrsQ = MSRSQUEUE:New("CONTROL")
 
     self.instructmsrs=MSRS:New(PathToSRS or MSRS.path, Frequency or 305, Modulation or radio.modulation.AM)
@@ -1278,6 +1280,9 @@ function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume,
     self.instructmsrs:SetCoalition(Coalition or coalition.side.BLUE)
     self.instructmsrs:SetLabel("RANGEI")
     self.instructmsrs:SetVolume(Volume or 1.0)
+    if self.rangezone then
+      self.instructmsrs:SetCoordinate(self.rangezone:GetCoordinate())
+    end
     self.instructsrsQ = MSRSQUEUE:New("INSTRUCT")
     
     if PathToGoogleKey then 
@@ -1316,8 +1321,13 @@ function RANGE:SetSRSRangeControl( frequency, modulation, voice, culture, gender
   self.rangecontrol = true
   if relayunitname then
     local unit = UNIT:FindByName(relayunitname)
-    local Coordinate = unit:GetCoordinate()
-    self.rangecontrolrelayname = relayunitname
+    if unit then
+      local Coordinate = unit:GetCoordinate()
+      self.rangecontrolrelayname = relayunitname
+      self.controlmsrs:SetCoordinate(Coordinate)
+    else
+      MESSAGE:New("RANGE: Control Relay Unit "..relayunitname.." not found!",15,"ERROR"):ToAllIf(self.Debug):ToLog()
+    end
   end
   return self
 end
@@ -1345,9 +1355,13 @@ function RANGE:SetSRSRangeInstructor( frequency, modulation, voice, culture, gen
   self.instructor = true
   if relayunitname then
     local unit = UNIT:FindByName(relayunitname)
-    local Coordinate = unit:GetCoordinate()
-    self.instructmsrs:SetCoordinate(Coordinate)
-    self.instructorrelayname = relayunitname
+    if unit then
+      local Coordinate = unit:GetCoordinate()
+      self.instructmsrs:SetCoordinate(Coordinate)
+      self.instructorrelayname = relayunitname
+    else
+      MESSAGE:New("RANGE: Instructor Relay Unit "..relayunitname.." not found!",15,"ERROR"):ToAllIf(self.Debug):ToLog()
+    end
   end
   return self
 end
