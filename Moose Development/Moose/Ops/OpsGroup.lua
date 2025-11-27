@@ -4304,9 +4304,9 @@ function OPSGROUP:_UpdateTask(Task, Mission)
   if Task.dcstask.id==AUFTRAG.SpecialTask.FORMATION then
       
     if Mission.type == AUFTRAG.Type.RESCUEHELO then
-      self:I("**********")
-      self:I("** RESCUEHELO USED")
-      self:I("**********")
+      self:T("**********")
+      self:T("** RESCUEHELO USED")
+      self:T("**********")
       local param=Task.dcstask.params
       local followUnit=UNIT:FindByName(param.unitname)
       local helogroupname = self:GetGroup():GetName()
@@ -13503,8 +13503,8 @@ function OPSGROUP:GetAmmoUnit(unit, display)
     if ammotable then
       local weapons=#ammotable
     
-		  --self:I(ammotable)
-		  --UTILS.PrintTableToLog(ammotable)
+      --self:I(ammotable)
+      --UTILS.PrintTableToLog(ammotable)
 
       -- Loop over all weapons.
       for w=1,weapons do
@@ -13512,9 +13512,9 @@ function OPSGROUP:GetAmmoUnit(unit, display)
         -- Number of current weapon.
         local Nammo=ammotable[w]["count"]
       
-		    -- Range in meters. Seems only to exist for missiles (not shells).
-		    local rmin=ammotable[w]["desc"]["rangeMin"] or 0
-		    local rmax=ammotable[w]["desc"]["rangeMaxAltMin"] or 0
+        -- Range in meters. Seems only to exist for missiles (not shells).
+        local rmin=ammotable[w]["desc"]["rangeMin"] or 0
+        local rmax=ammotable[w]["desc"]["rangeMaxAltMin"] or 0
 
         -- Type name of current weapon.
         local Tammo=ammotable[w]["desc"]["typeName"]
@@ -13536,7 +13536,7 @@ function OPSGROUP:GetAmmoUnit(unit, display)
 
           -- Add up all shells.
           nshells=nshells+Nammo
-		  
+      
           -- Add small and large caliber shells for guns and cannons
           if ammotable[w]["desc"]["warhead"] and ammotable[w]["desc"]["warhead"]["caliber"] then
             local caliber=ammotable[w]["desc"]["warhead"]["caliber"]
