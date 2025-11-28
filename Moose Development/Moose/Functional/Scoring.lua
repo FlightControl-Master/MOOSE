@@ -1153,7 +1153,7 @@ function SCORING:_EventOnHit( Event )
         TargetType = "Scenery"
         TargetSceneryObject = TargetUNIT
         self:T("***** Target is Scenery and TargetUNIT is SCENERY object!")
-        UTILS.PrintTableToLog(TargetSceneryObject)
+        --UTILS.PrintTableToLog(TargetSceneryObject)
     end
     
     TargetUnitCoalition = _SCORINGCoalition[TargetCoalition]
@@ -1374,17 +1374,18 @@ function SCORING:_EventOnHit( Event )
       -- Player contains the score data from self.Players[WeaponPlayerName]
       local PlayerName = Event.IniPlayerName or "Ghost"
       local Player = self.Players[PlayerName]
-        
-      Player.Score = Player.Score + Score
-      Player.Score = Player.Score + self.ScoreIncrementOnHit
-      MESSAGE:NewType( self.DisplayMessagePrefix .. "hit in zone '" .. ScoreZone:GetName() .. "'." ..
-                       "Player '" .. PlayerName .. "' receives an extra " .. Score .. " points! " .. "Total: " .. Player.Score - Player.Penalty,
-                       MESSAGE.Type.Information )
-             :ToAllIf( self:IfMessagesZone() and self:IfMessagesToAll() )
-             :ToCoalitionIf( InitCoalition, self:IfMessagesZone() and self:IfMessagesToCoalition() )
-  
-      self:ScoreCSV( PlayerName, "", "HIT_SCORE", 1, Score, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, "", "Zone", TargetUnitType )
-      end
+      if Player then  
+        Player.Score = Player.Score + Score
+        Player.Score = Player.Score + self.ScoreIncrementOnHit
+        MESSAGE:NewType( self.DisplayMessagePrefix .. "hit in zone '" .. ScoreZone:GetName() .. "'." ..
+                         "Player '" .. PlayerName .. "' receives an extra " .. Score .. " points! " .. "Total: " .. Player.Score - Player.Penalty,
+                         MESSAGE.Type.Information )
+               :ToAllIf( self:IfMessagesZone() and self:IfMessagesToAll() )
+               :ToCoalitionIf( InitCoalition, self:IfMessagesZone() and self:IfMessagesToCoalition() )
+    
+        self:ScoreCSV( PlayerName, "", "HIT_SCORE", 1, Score, InitUnitName, InitUnitCoalition, InitUnitCategory, InitUnitType, TargetUnitName, "", "Zone", TargetUnitType )
+        end
+        end
     end
   end
   
