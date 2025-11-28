@@ -4785,26 +4785,26 @@ function CTLD:_RefreshCrateQuantityMenus(Group, Unit, CargoObj)
       end
     end
   end
-	if CargoObj and Group and Unit then
-		local uname = Unit:GetName() or "none"
-		local cap = (self:_GetUnitCapabilities(Unit).cratelimit or 0)
-		local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Cratesloaded) or 0
-		local avail = math.max(0, cap - loaded)
-		local per = CargoObj:GetCratesNeeded() or 1
-		if per < 1 then per = 1 end
-		local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
-		local s = CargoObj:GetStock()
-		self._qtySnap = self._qtySnap or {}
-		self._qtySnap[uname] = self._qtySnap[uname] or {}
-		local k = "C:"..(CargoObj:GetName() or "none")
-		local snap = tostring(type(s)=="number" and s or -1)..":"..tostring(unitAvail)
-		if self._qtySnap[uname][k] ~= snap then
-			self._qtySnap[uname][k] = snap
-			if type(s)=="number" and s>=0 and s<unitAvail then
-				self:_RefreshQuantityMenusForGroup(Group, Unit)
-			end
-		end
-	end
+  if CargoObj and Group and Unit then
+    local uname = Unit:GetName() or "none"
+    local cap = (self:_GetUnitCapabilities(Unit).cratelimit or 0)
+    local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Cratesloaded) or 0
+    local avail = math.max(0, cap - loaded)
+    local per = CargoObj:GetCratesNeeded() or 1
+    if per < 1 then per = 1 end
+    local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
+    local s = CargoObj:GetStock()
+    self._qtySnap = self._qtySnap or {}
+    self._qtySnap[uname] = self._qtySnap[uname] or {}
+    local k = "C:"..(CargoObj:GetName() or "none")
+    local snap = tostring(type(s)=="number" and s or -1)..":"..tostring(unitAvail)
+    if self._qtySnap[uname][k] ~= snap then
+      self._qtySnap[uname][k] = snap
+      if type(s)=="number" and s>=0 and s<unitAvail then
+        self:_RefreshQuantityMenusForGroup(Group, Unit)
+      end
+    end
+  end
   return self
 end
 
@@ -4835,26 +4835,26 @@ function CTLD:_RefreshTroopQuantityMenus(Group, Unit, CargoObj)
       end
     end
   end
-	if CargoObj and Group and Unit then
-		local uname = Unit:GetName() or "none"
-		local cap = (self:_GetUnitCapabilities(Unit).trooplimit or 0)
-		local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Troopsloaded) or 0
-		local avail = math.max(0, cap - loaded)
-		local per = CargoObj:GetCratesNeeded() or 1
-		if per < 1 then per = 1 end
-		local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
-		local s = CargoObj:GetStock()
-		self._qtySnap = self._qtySnap or {}
-		self._qtySnap[uname] = self._qtySnap[uname] or {}
-		local k = "T:"..(CargoObj:GetName() or "none")
-		local snap = tostring(type(s)=="number" and s or -1)..":"..tostring(unitAvail)
-		if self._qtySnap[uname][k] ~= snap then
-			self._qtySnap[uname][k] = snap
-			if type(s)=="number" and s>=0 and s<unitAvail then
-				self:_RefreshQuantityMenusForGroup(Group, Unit)
-			end
-		end
-	end
+  if CargoObj and Group and Unit then
+    local uname = Unit:GetName() or "none"
+    local cap = (self:_GetUnitCapabilities(Unit).trooplimit or 0)
+    local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Troopsloaded) or 0
+    local avail = math.max(0, cap - loaded)
+    local per = CargoObj:GetCratesNeeded() or 1
+    if per < 1 then per = 1 end
+    local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
+    local s = CargoObj:GetStock()
+    self._qtySnap = self._qtySnap or {}
+    self._qtySnap[uname] = self._qtySnap[uname] or {}
+    local k = "T:"..(CargoObj:GetName() or "none")
+    local snap = tostring(type(s)=="number" and s or -1)..":"..tostring(unitAvail)
+    if self._qtySnap[uname][k] ~= snap then
+      self._qtySnap[uname][k] = snap
+      if type(s)=="number" and s>=0 and s<unitAvail then
+        self:_RefreshQuantityMenusForGroup(Group, Unit)
+      end
+    end
+  end
   return self
 end
 
@@ -4887,81 +4887,81 @@ function CTLD:_RefreshQuantityMenusForGroup(_group, _unit)
     return self
   end
 
-		self._qtySnap=self._qtySnap or {}
-		for uname,_ in pairs(self._qtySnap) do
-			if not (self.CtldUnits and self.CtldUnits[uname]) then
-				self._qtySnap[uname]=nil
-			end
-		end
+    self._qtySnap=self._qtySnap or {}
+    for uname,_ in pairs(self._qtySnap) do
+      if not (self.CtldUnits and self.CtldUnits[uname]) then
+        self._qtySnap[uname]=nil
+      end
+    end
 
-		for name,_ in pairs(self.CtldUnits or {}) do
-		local u = UNIT:FindByName(name) or CLIENT:FindByName(name)
-		if u and u:IsAlive() then
-			local g = u:GetGroup()
-			if g then
-				local caps = self:_GetUnitCapabilities(u)
-				local needCrate, needTroop = false, false
+    for name,_ in pairs(self.CtldUnits or {}) do
+    local u = UNIT:FindByName(name) or CLIENT:FindByName(name)
+    if u and u:IsAlive() then
+      local g = u:GetGroup()
+      if g then
+        local caps = self:_GetUnitCapabilities(u)
+        local needCrate, needTroop = false, false
 
-				if g.CTLD_CrateMenus then
-					local cap = caps.cratelimit or 0
-					for item,_ in pairs(g.CTLD_CrateMenus) do
-						local obj = self:_FindCratesCargoObject(item)
-						if obj then
-							local per = obj:GetCratesNeeded() or 1
-							if per < 1 then per = 1 end
-							local uname = u:GetName() or "none"
-							local cap = caps.cratelimit or 0
-							local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Cratesloaded) or 0
-							local avail = math.max(0, cap - loaded)
-							local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
-							local s = obj:GetStock()
-							if type(s)=="number" and s>=0 and s<unitAvail then needCrate = true break end
-						end
-					end
-				end
+        if g.CTLD_CrateMenus then
+          local cap = caps.cratelimit or 0
+          for item,_ in pairs(g.CTLD_CrateMenus) do
+            local obj = self:_FindCratesCargoObject(item)
+            if obj then
+              local per = obj:GetCratesNeeded() or 1
+              if per < 1 then per = 1 end
+              local uname = u:GetName() or "none"
+              local cap = caps.cratelimit or 0
+              local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Cratesloaded) or 0
+              local avail = math.max(0, cap - loaded)
+              local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
+              local s = obj:GetStock()
+              if type(s)=="number" and s>=0 and s<unitAvail then needCrate = true break end
+            end
+          end
+        end
 
-				if g.CTLD_TroopMenus then
-					local cap = caps.trooplimit or 0
-					for item,_ in pairs(g.CTLD_TroopMenus) do
-						local obj = self:_FindTroopsCargoObject(item)
-						if obj then
-							local per = obj:GetCratesNeeded() or 1
-							if per < 1 then per = 1 end
-							local uname = u:GetName() or "none"
-							local cap = caps.trooplimit or 0
-							local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Troopsloaded) or 0
-							local avail = math.max(0, cap - loaded)
-							local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
-							local s = obj:GetStock()
-							if type(s)=="number" and s>=0 and s<unitAvail then needTroop = true break end
-						end
-					end
-				end
+        if g.CTLD_TroopMenus then
+          local cap = caps.trooplimit or 0
+          for item,_ in pairs(g.CTLD_TroopMenus) do
+            local obj = self:_FindTroopsCargoObject(item)
+            if obj then
+              local per = obj:GetCratesNeeded() or 1
+              if per < 1 then per = 1 end
+              local uname = u:GetName() or "none"
+              local cap = caps.trooplimit or 0
+              local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Troopsloaded) or 0
+              local avail = math.max(0, cap - loaded)
+              local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
+              local s = obj:GetStock()
+              if type(s)=="number" and s>=0 and s<unitAvail then needTroop = true break end
+            end
+          end
+        end
 
-				if needCrate or needTroop then
-					local stockSummary = self.showstockinmenuitems and self:_CountStockPlusInHeloPlusAliveGroups(false) or nil
-					if needCrate and g.CTLD_CrateMenus then
-						for item,menu in pairs(g.CTLD_CrateMenus) do
-							if menu and menu.RemoveSubMenus then
-								menu:RemoveSubMenus()
-								local obj = self:_FindCratesCargoObject(item)
-								if obj then self:_AddCrateQuantityMenus(g, u, menu, obj, stockSummary) end
-							end
-						end
-					end
-					if needTroop and g.CTLD_TroopMenus then
-						for item,menu in pairs(g.CTLD_TroopMenus) do
-							if menu and menu.RemoveSubMenus then
-								menu:RemoveSubMenus()
-								local obj = self:_FindTroopsCargoObject(item)
-								if obj then self:_AddTroopQuantityMenus(g, u, menu, obj) end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
+        if needCrate or needTroop then
+          local stockSummary = self.showstockinmenuitems and self:_CountStockPlusInHeloPlusAliveGroups(false) or nil
+          if needCrate and g.CTLD_CrateMenus then
+            for item,menu in pairs(g.CTLD_CrateMenus) do
+              if menu and menu.RemoveSubMenus then
+                menu:RemoveSubMenus()
+                local obj = self:_FindCratesCargoObject(item)
+                if obj then self:_AddCrateQuantityMenus(g, u, menu, obj, stockSummary) end
+              end
+            end
+          end
+          if needTroop and g.CTLD_TroopMenus then
+            for item,menu in pairs(g.CTLD_TroopMenus) do
+              if menu and menu.RemoveSubMenus then
+                menu:RemoveSubMenus()
+                local obj = self:_FindTroopsCargoObject(item)
+                if obj then self:_AddTroopQuantityMenus(g, u, menu, obj) end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
   return self
 end
 --- (Internal) Housekeeping - Function to refresh F10 menus.
