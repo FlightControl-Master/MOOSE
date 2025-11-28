@@ -884,7 +884,7 @@ function RESCUEHELO:onafterStart(From, Event, To)
   else
     
     -- Spawn helo. We need to introduce an alias in case this class is used twice. This would confuse the spawn routine.
-    local Spawn=SPAWN:NewWithAlias(self.helogroupname, self.alias)
+    Spawn=SPAWN:NewWithAlias(self.helogroupname, self.alias)
   
     -- Set modex for spawn.
     Spawn:InitModex(self.modex)
@@ -933,8 +933,8 @@ function RESCUEHELO:onafterStart(From, Event, To)
         self:E(string.format("ERROR: No uncontrolled (alive) rescue helo group with name %s could be found!", self.helogroupname))
         return
       end  
-       
-    elseif UsesAliveGroup==false then   
+    end   
+  elseif UsesAliveGroup==false then   
 
       -- Spawn at airbase.
       self.helo=Spawn:SpawnAtAirbase(self.airbase, self.takeoff, nil, AIRBASE.TerminalType.HelicopterUsable)
@@ -948,9 +948,8 @@ function RESCUEHELO:onafterStart(From, Event, To)
         delay=60
       end
       
-    end
-    
   end
+    
   
   -- Set of group(s) to follow Mother.
   self.followset=SET_GROUP:New()
