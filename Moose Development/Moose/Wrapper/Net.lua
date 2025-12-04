@@ -485,7 +485,7 @@ function NET:GetPlayerIDByName(Name)
   if not Name then return nil end
   local playerList = net.get_player_list()
   for i=1,#playerList do
-    local playerName = net.get_name(i)
+    local playerName = net.get_name(playerList[i])
       if playerName == Name then
         return playerList[i]
       end

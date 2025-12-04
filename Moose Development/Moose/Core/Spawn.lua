@@ -1667,6 +1667,9 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
 
         -- If RandomizeUnits, then Randomize the formation at the start point.
         if self.SpawnRandomizeUnits then
+          if self.SpawnRandomizePosition then
+            PointVec3 = COORDINATE:New( SpawnTemplate.x, SpawnTemplate.route.points[1].alt, SpawnTemplate.y )
+          end
           for UnitID = 1, #SpawnTemplate.units do
             local RandomVec2 = PointVec3:GetRandomVec2InRadius( self.SpawnOuterRadius, self.SpawnInnerRadius )
             if (SpawnZone) then

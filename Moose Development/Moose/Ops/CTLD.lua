@@ -1423,7 +1423,7 @@ CTLD.FixedWingTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.3.39"
+CTLD.version="1.3.40"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2273,6 +2273,12 @@ function CTLD:_FindCratesCargoObject(Name)
       return cargo
     end
   end
+  for _,_cargo in pairs(self.Cargo_Statics)do
+    local cargo = _cargo -- #CTLD_CARGO
+    if cargo.Name == Name then
+      return cargo
+    end
+  end
   return nil
 end
 
@@ -2840,14 +2846,16 @@ end
 -- @param #table stockSummary Optional pooled stock summary.
 -- @return #CTLD self
 function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSummary)
+  self:T("_AddCrateQuantityMenus "..cargoObj.Name)
   local needed = cargoObj:GetCratesNeeded() or 1
   local stockEntry = self:_GetCrateStockEntry(cargoObj, stockSummary)
-  local stock = nil
+  local stock = 0
   if stockEntry and type(stockEntry.Stock) == "number" then
     stock = stockEntry.Stock
   else
     stock = cargoObj:GetStock()
   end
+  self:T("_AddCrateQuantityMenus "..cargoObj.Name.." Stock: "..tostring(stock))
   local maxQuantity = self.maxCrateMenuQuantity or 1
   local availableSets = nil
   if type(stock) == "number" and stock >= 0 then
@@ -2861,6 +2869,7 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
     end
   end
   maxQuantity = math.floor(maxQuantity)
+  self:T("_AddCrateQuantityMenus maxQuantity "..maxQuantity)
   if maxQuantity < 1 then
     return self
   end
@@ -2896,6 +2905,7 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
       maxQuantity = 1
     end
   end
+  self:T("_AddCrateQuantityMenus maxQuantity "..maxQuantity.." allowLoad "..tostring(allowLoad))
   local maxMassSets = nil
   if Unit then
     local maxload = self:_GetMaxLoadableMass(Unit)
@@ -2911,10 +2921,14 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
       end
     end
   end
+  self:T("_AddCrateQuantityMenus maxQuantity "..maxQuantity.." allowLoad "..tostring(allowLoad))
   if maxQuantity < 1 then
     return self
   end
+
   if maxQuantity == 1 then
+    self:T("_AddCrateQuantityMenus maxQuantity "..maxQuantity.." Menu for MaxQ=1 ".."parentMenu.MenuText = "..parentMenu.MenuText)
+    --parentMenu.MenuText
     MENU_GROUP_COMMAND:New(Group, "Get", parentMenu, self._GetCrateQuantity, self, Group, Unit, cargoObj, 1)
     local canLoad = (allowLoad and (not capacitySets or capacitySets >= 1) and (not maxMassSets or maxMassSets >= 1))
     if canLoad then
@@ -2928,10 +2942,14 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
       end
       MENU_GROUP_COMMAND:New(Group, msg, parentMenu, self._SendMessage, self, msg, 10, false, Group)
     end
+    parentMenu:Refresh()
     return self
   end
+
   for quantity = 1, maxQuantity do
+    self:T("_AddCrateQuantityMenus maxQuantity "..maxQuantity.." Menu for MaxQ>1")
     local label = tostring(quantity)
+    self:T("_AddCrateQuantityMenus Label "..label)
     local qMenu = MENU_GROUP:New(Group, label, parentMenu)
     MENU_GROUP_COMMAND:New(Group, "Get", qMenu, self._GetCrateQuantity, self, Group, Unit, cargoObj, quantity)
     local canLoad = (allowLoad and (not capacitySets or capacitySets >= quantity) and (not maxMassSets or maxMassSets >= quantity))
@@ -4767,26 +4785,26 @@ function CTLD:_RefreshCrateQuantityMenus(Group, Unit, CargoObj)
       end
     end
   end
-	if CargoObj and Group and Unit then
-		local uname = Unit:GetName() or "none"
-		local cap = (self:_GetUnitCapabilities(Unit).cratelimit or 0)
-		local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Cratesloaded) or 0
-		local avail = math.max(0, cap - loaded)
-		local per = CargoObj:GetCratesNeeded() or 1
-		if per < 1 then per = 1 end
-		local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
-		local s = CargoObj:GetStock()
-		self._qtySnap = self._qtySnap or {}
-		self._qtySnap[uname] = self._qtySnap[uname] or {}
-		local k = "C:"..(CargoObj:GetName() or "none")
-		local snap = tostring(type(s)=="number" and s or -1)..":"..tostring(unitAvail)
-		if self._qtySnap[uname][k] ~= snap then
-			self._qtySnap[uname][k] = snap
-			if type(s)=="number" and s>=0 and s<unitAvail then
-				self:_RefreshQuantityMenusForGroup(Group, Unit)
-			end
-		end
-	end
+  if CargoObj and Group and Unit then
+    local uname = Unit:GetName() or "none"
+    local cap = (self:_GetUnitCapabilities(Unit).cratelimit or 0)
+    local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Cratesloaded) or 0
+    local avail = math.max(0, cap - loaded)
+    local per = CargoObj:GetCratesNeeded() or 1
+    if per < 1 then per = 1 end
+    local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
+    local s = CargoObj:GetStock()
+    self._qtySnap = self._qtySnap or {}
+    self._qtySnap[uname] = self._qtySnap[uname] or {}
+    local k = "C:"..(CargoObj:GetName() or "none")
+    local snap = tostring(type(s)=="number" and s or -1)..":"..tostring(unitAvail)
+    if self._qtySnap[uname][k] ~= snap then
+      self._qtySnap[uname][k] = snap
+      if type(s)=="number" and s>=0 and s<unitAvail then
+        self:_RefreshQuantityMenusForGroup(Group, Unit)
+      end
+    end
+  end
   return self
 end
 
@@ -4817,26 +4835,26 @@ function CTLD:_RefreshTroopQuantityMenus(Group, Unit, CargoObj)
       end
     end
   end
-	if CargoObj and Group and Unit then
-		local uname = Unit:GetName() or "none"
-		local cap = (self:_GetUnitCapabilities(Unit).trooplimit or 0)
-		local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Troopsloaded) or 0
-		local avail = math.max(0, cap - loaded)
-		local per = CargoObj:GetCratesNeeded() or 1
-		if per < 1 then per = 1 end
-		local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
-		local s = CargoObj:GetStock()
-		self._qtySnap = self._qtySnap or {}
-		self._qtySnap[uname] = self._qtySnap[uname] or {}
-		local k = "T:"..(CargoObj:GetName() or "none")
-		local snap = tostring(type(s)=="number" and s or -1)..":"..tostring(unitAvail)
-		if self._qtySnap[uname][k] ~= snap then
-			self._qtySnap[uname][k] = snap
-			if type(s)=="number" and s>=0 and s<unitAvail then
-				self:_RefreshQuantityMenusForGroup(Group, Unit)
-			end
-		end
-	end
+  if CargoObj and Group and Unit then
+    local uname = Unit:GetName() or "none"
+    local cap = (self:_GetUnitCapabilities(Unit).trooplimit or 0)
+    local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Troopsloaded) or 0
+    local avail = math.max(0, cap - loaded)
+    local per = CargoObj:GetCratesNeeded() or 1
+    if per < 1 then per = 1 end
+    local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
+    local s = CargoObj:GetStock()
+    self._qtySnap = self._qtySnap or {}
+    self._qtySnap[uname] = self._qtySnap[uname] or {}
+    local k = "T:"..(CargoObj:GetName() or "none")
+    local snap = tostring(type(s)=="number" and s or -1)..":"..tostring(unitAvail)
+    if self._qtySnap[uname][k] ~= snap then
+      self._qtySnap[uname][k] = snap
+      if type(s)=="number" and s>=0 and s<unitAvail then
+        self:_RefreshQuantityMenusForGroup(Group, Unit)
+      end
+    end
+  end
   return self
 end
 
@@ -4869,81 +4887,81 @@ function CTLD:_RefreshQuantityMenusForGroup(_group, _unit)
     return self
   end
 
-		self._qtySnap=self._qtySnap or {}
-		for uname,_ in pairs(self._qtySnap) do
-			if not (self.CtldUnits and self.CtldUnits[uname]) then
-				self._qtySnap[uname]=nil
-			end
-		end
+    self._qtySnap=self._qtySnap or {}
+    for uname,_ in pairs(self._qtySnap) do
+      if not (self.CtldUnits and self.CtldUnits[uname]) then
+        self._qtySnap[uname]=nil
+      end
+    end
 
-		for name,_ in pairs(self.CtldUnits or {}) do
-		local u = UNIT:FindByName(name) or CLIENT:FindByName(name)
-		if u and u:IsAlive() then
-			local g = u:GetGroup()
-			if g then
-				local caps = self:_GetUnitCapabilities(u)
-				local needCrate, needTroop = false, false
+    for name,_ in pairs(self.CtldUnits or {}) do
+    local u = UNIT:FindByName(name) or CLIENT:FindByName(name)
+    if u and u:IsAlive() then
+      local g = u:GetGroup()
+      if g then
+        local caps = self:_GetUnitCapabilities(u)
+        local needCrate, needTroop = false, false
 
-				if g.CTLD_CrateMenus then
-					local cap = caps.cratelimit or 0
-					for item,_ in pairs(g.CTLD_CrateMenus) do
-						local obj = self:_FindCratesCargoObject(item)
-						if obj then
-							local per = obj:GetCratesNeeded() or 1
-							if per < 1 then per = 1 end
-							local uname = u:GetName() or "none"
-							local cap = caps.cratelimit or 0
-							local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Cratesloaded) or 0
-							local avail = math.max(0, cap - loaded)
-							local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
-							local s = obj:GetStock()
-							if type(s)=="number" and s>=0 and s<unitAvail then needCrate = true break end
-						end
-					end
-				end
+        if g.CTLD_CrateMenus then
+          local cap = caps.cratelimit or 0
+          for item,_ in pairs(g.CTLD_CrateMenus) do
+            local obj = self:_FindCratesCargoObject(item)
+            if obj then
+              local per = obj:GetCratesNeeded() or 1
+              if per < 1 then per = 1 end
+              local uname = u:GetName() or "none"
+              local cap = caps.cratelimit or 0
+              local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Cratesloaded) or 0
+              local avail = math.max(0, cap - loaded)
+              local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
+              local s = obj:GetStock()
+              if type(s)=="number" and s>=0 and s<unitAvail then needCrate = true break end
+            end
+          end
+        end
 
-				if g.CTLD_TroopMenus then
-					local cap = caps.trooplimit or 0
-					for item,_ in pairs(g.CTLD_TroopMenus) do
-						local obj = self:_FindTroopsCargoObject(item)
-						if obj then
-							local per = obj:GetCratesNeeded() or 1
-							if per < 1 then per = 1 end
-							local uname = u:GetName() or "none"
-							local cap = caps.trooplimit or 0
-							local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Troopsloaded) or 0
-							local avail = math.max(0, cap - loaded)
-							local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
-							local s = obj:GetStock()
-							if type(s)=="number" and s>=0 and s<unitAvail then needTroop = true break end
-						end
-					end
-				end
+        if g.CTLD_TroopMenus then
+          local cap = caps.trooplimit or 0
+          for item,_ in pairs(g.CTLD_TroopMenus) do
+            local obj = self:_FindTroopsCargoObject(item)
+            if obj then
+              local per = obj:GetCratesNeeded() or 1
+              if per < 1 then per = 1 end
+              local uname = u:GetName() or "none"
+              local cap = caps.trooplimit or 0
+              local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Troopsloaded) or 0
+              local avail = math.max(0, cap - loaded)
+              local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
+              local s = obj:GetStock()
+              if type(s)=="number" and s>=0 and s<unitAvail then needTroop = true break end
+            end
+          end
+        end
 
-				if needCrate or needTroop then
-					local stockSummary = self.showstockinmenuitems and self:_CountStockPlusInHeloPlusAliveGroups(false) or nil
-					if needCrate and g.CTLD_CrateMenus then
-						for item,menu in pairs(g.CTLD_CrateMenus) do
-							if menu and menu.RemoveSubMenus then
-								menu:RemoveSubMenus()
-								local obj = self:_FindCratesCargoObject(item)
-								if obj then self:_AddCrateQuantityMenus(g, u, menu, obj, stockSummary) end
-							end
-						end
-					end
-					if needTroop and g.CTLD_TroopMenus then
-						for item,menu in pairs(g.CTLD_TroopMenus) do
-							if menu and menu.RemoveSubMenus then
-								menu:RemoveSubMenus()
-								local obj = self:_FindTroopsCargoObject(item)
-								if obj then self:_AddTroopQuantityMenus(g, u, menu, obj) end
-							end
-						end
-					end
-				end
-			end
-		end
-	end
+        if needCrate or needTroop then
+          local stockSummary = self.showstockinmenuitems and self:_CountStockPlusInHeloPlusAliveGroups(false) or nil
+          if needCrate and g.CTLD_CrateMenus then
+            for item,menu in pairs(g.CTLD_CrateMenus) do
+              if menu and menu.RemoveSubMenus then
+                menu:RemoveSubMenus()
+                local obj = self:_FindCratesCargoObject(item)
+                if obj then self:_AddCrateQuantityMenus(g, u, menu, obj, stockSummary) end
+              end
+            end
+          end
+          if needTroop and g.CTLD_TroopMenus then
+            for item,menu in pairs(g.CTLD_TroopMenus) do
+              if menu and menu.RemoveSubMenus then
+                menu:RemoveSubMenus()
+                local obj = self:_FindTroopsCargoObject(item)
+                if obj then self:_AddTroopQuantityMenus(g, u, menu, obj) end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
   return self
 end
 --- (Internal) Housekeeping - Function to refresh F10 menus.
@@ -5105,7 +5123,12 @@ function CTLD:_RefreshF10Menus()
                     return
                   end
                   local needed = cargoObj:GetCratesNeeded() or 1
-                  local txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                  local txt
+                  if needed > 1 then
+                    txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                  else
+                    txt = string.format("%s (%dkg)",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                  end
                   if cargoObj.Location then txt = txt.."[R]" end
                   if self.showstockinmenuitems then
                     local suffix = self:_FormatCrateStockSuffix(cargoObj,crateStockSummary)
@@ -5116,7 +5139,7 @@ function CTLD:_RefreshF10Menus()
                   self:_AddCrateQuantityMenus(_group,_unit,mSet,cargoObj,crateStockSummary)
                 end
 
-                if self.usesubcats then
+                if self.usesubcats == true then
                   local subcatmenus = {}
                   for catName,_ in pairs(self.subcats) do
                     subcatmenus[catName] = MENU_GROUP:New(_group,catName,cratesmenu)
@@ -5144,7 +5167,12 @@ function CTLD:_RefreshF10Menus()
                   for _, cargoObj in pairs(self.Cargo_Crates) do
                     if not cargoObj.DontShowInMenu then
                       local needed = cargoObj:GetCratesNeeded() or 1
-                      local txt = string.format("%d crate%s %s (%dkg)", needed, needed==1 and "" or "s", cargoObj.Name, cargoObj.PerCrateMass or 0)
+                      local txt
+                      if needed > 1 then
+                        txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                      else
+                        txt = string.format("%s (%dkg)",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                      end
                       if cargoObj.Location then txt = txt.."[R]" end
                       local stock = cargoObj:GetStock()
                       if stock >= 0 and self.showstockinmenuitems then txt = txt.."["..stock.."]" end
@@ -5154,7 +5182,12 @@ function CTLD:_RefreshF10Menus()
                   for _, cargoObj in pairs(self.Cargo_Statics) do
                     if not cargoObj.DontShowInMenu then
                       local needed = cargoObj:GetCratesNeeded() or 1
-                      local txt = string.format("%d crate%s %s (%dkg)", needed, needed==1 and "" or "s", cargoObj.Name, cargoObj.PerCrateMass or 0)
+                      local txt
+                      if needed > 1 then
+                        txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                      else
+                        txt = string.format("%s (%dkg)",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                      end
                       if cargoObj.Location then txt = txt.."[R]" end
                       local stock = cargoObj:GetStock()
                       if stock >= 0 and self.showstockinmenuitems then txt = txt.."["..stock.."]" end
@@ -5165,7 +5198,12 @@ function CTLD:_RefreshF10Menus()
                   for _, cargoObj in pairs(self.Cargo_Crates) do
                     if not cargoObj.DontShowInMenu then
                       local needed = cargoObj:GetCratesNeeded() or 1
-                      local txt = string.format("%d crate%s %s (%dkg)", needed, needed==1 and "" or "s", cargoObj.Name, cargoObj.PerCrateMass or 0)
+                      local txt
+                      if needed > 1 then
+                        txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                      else
+                        txt = string.format("%s (%dkg)",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                      end
                       if cargoObj.Location then txt = txt.."[R]" end
                       local stock = cargoObj:GetStock()
                       if stock >= 0 and self.showstockinmenuitems then txt = txt.."["..stock.."]" end
@@ -5175,7 +5213,12 @@ function CTLD:_RefreshF10Menus()
                   for _, cargoObj in pairs(self.Cargo_Statics) do
                     if not cargoObj.DontShowInMenu then
                       local needed = cargoObj:GetCratesNeeded() or 1
-                      local txt = string.format("%d crate%s %s (%dkg)", needed, needed==1 and "" or "s", cargoObj.Name, cargoObj.PerCrateMass or 0)
+                      local txt
+                      if needed > 1 then
+                        txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                      else
+                        txt = string.format("%s (%dkg)",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                      end
                       if cargoObj.Location then txt = txt.."[R]" end
                       local stock = cargoObj:GetStock()
                       if stock >= 0 and self.showstockinmenuitems then txt = txt.."["..stock.."]" end
@@ -8655,10 +8698,11 @@ do
 -- TODO CTLD_HERCULES
 ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- This script will only work for the Herculus mod by Anubis, and only for **Air Dropping** cargo from the Hercules. 
+-- It *DOES NOT* work with the purchaseable Hercules module from ED.
 -- Use the standard Moose CTLD if you want to unload on the ground.
 -- Payloads carried by pylons 11, 12 and 13 need to be declared in the Herculus_Loadout.lua file
 -- Except for Ammo pallets, this script will spawn whatever payload gets launched from pylons 11, 12 and 13
--- Pylons 11, 12 and 13 are moveable within the Herculus cargobay area
+-- Pylons 11, 12 and 13 are moveable within the Hercules cargobay area
 -- Ammo pallets can only be jettisoned from these pylons with no benefit to DCS world
 -- To benefit DCS world, Ammo pallets need to be off/on loaded using DCS arming and refueling window
 -- Cargo_Container_Enclosed = true: Cargo enclosed in container with parachute, need to be dropped from 100m (300ft) or more, except when parked on ground
