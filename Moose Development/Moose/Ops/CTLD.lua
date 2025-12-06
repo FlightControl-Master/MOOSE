@@ -7297,10 +7297,10 @@ end
           local type = cargo.CargoType
           local gname = cargo.Name
           local gcargo = self:_FindCratesCargoObject(gname) or self:_FindTroopsCargoObject(gname)
-          self:T("Looking at " .. gname .. " in the helo - type = " .. type)
+          self:T("Looking at " .. gname .. " in the helo - type = "..tostring(type))
           if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS or type == CTLD_CARGO.Enum.VEHICLE or type == CTLD_CARGO.Enum.FOB) then
             if gcargo and gcargo:GetStock0() > 0 then
-              self:T("Adding " .. gname .. " in the helo - type = " .. type)
+              self:T("Adding " .. gname .. " in the helo - type = "..tostring(type))
               if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS) then
                 Troopstable[gname].Inhelo = Troopstable[gname].Inhelo + 1
               end
