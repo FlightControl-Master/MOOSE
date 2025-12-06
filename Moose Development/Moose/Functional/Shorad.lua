@@ -684,6 +684,7 @@ do
     local ShootingWeapon = EventData.Weapon -- Identify the weapon fired
     local ShootingWeaponName = EventData.WeaponName -- return weapon type
     -- get firing coalition
+    if not EventData.IniGroup then return self end
     local weaponcoalition = EventData.IniGroup:GetCoalition()
     -- get detection probability
     if self:_CheckCoalition(weaponcoalition) then --avoid overhead on friendly fire
