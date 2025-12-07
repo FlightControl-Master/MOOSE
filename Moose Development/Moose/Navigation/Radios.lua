@@ -49,7 +49,7 @@
 -- 
 -- A new `RADIOS` object can be created with the @{#RADIOS.NewFromFile}(*radio_lua_file*) function.
 -- 
---     local radios=RADIOS:NewFromFile("<DCS_Install_Directory>\Mods\terrains\<Map_Name>\radio.lua")
+--     local radios=RADIOS:NewFromFile("<DCS_Install_Directory>\Mods\terrains\<Map_Name>\Radio.lua")
 --     radios:MarkerShow()
 -- 
 -- This will load the radios from the `<DCS_Install_Directory>` for the specific map and place markers on the F10 map. This is the first step you should do to ensure that the file
