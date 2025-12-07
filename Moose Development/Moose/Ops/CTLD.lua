@@ -1423,7 +1423,7 @@ CTLD.FixedWingTypes = {
 
 --- CTLD class version.
 -- @field #string version
-CTLD.version="1.3.40"
+CTLD.version="1.3.41"
 
 --- Instantiate a new CTLD.
 -- @param #CTLD self
@@ -2611,7 +2611,7 @@ end
     self:T(self.lid .. " _ExtractTroops")
     -- landed or hovering over load zone?
     local grounded = not self:IsUnitInAir(Unit)
-    local hoverload = self:CanHoverLoad(Unit)
+    local hoverload = self:IsCorrectHover(Unit) -- correct call now for extracting troops while hovering
     local hassecondaries = false
     
     if not grounded and not hoverload then
@@ -7007,6 +7007,7 @@ end
   -- @return #boolean Outcome
   function CTLD:IsCorrectHover(Unit)
     self:T(self.lid .. " IsCorrectHover")
+    if self:IsFixedWing(Unit) then return false end -- FW cannot hover
     local outcome = false
     -- see if we are in air and within parameters.
     if self:IsUnitInAir(Unit) then
