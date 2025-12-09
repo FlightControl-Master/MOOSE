@@ -266,8 +266,12 @@ CTLD_CARGO = {
   
   --- Query was dropped.
   -- @param #CTLD_CARGO self
+  -- @param #boolean hercOnly If true, only treat Herc drops as 'dropped'.
   -- @return #boolean Has been dropped.
-  function CTLD_CARGO:WasDropped()
+  function CTLD_CARGO:WasDropped(hercOnly)
+    if hercOnly then
+      return self.HasBeenDropped and self.IsHercDrop==true
+    end
     return self.HasBeenDropped
   end
   
@@ -320,8 +324,10 @@ CTLD_CARGO = {
   --- Set WasDropped.
   -- @param #CTLD_CARGO self
   -- @param #boolean dropped
-  function CTLD_CARGO:SetWasDropped(dropped)
+  -- @param #boolean isHercDrop set when _GetCrates is used by the herc
+  function CTLD_CARGO:SetWasDropped(dropped, isHercDrop)
     self.HasBeenDropped = dropped or false
+    self.IsHercDrop = isHercDrop or false
   end
   
   --- Get Stock.
@@ -788,6 +794,10 @@ do
 --        
 --        -- add infantry unit called "Forward Ops Base" using template "FOB", of type FOB, size 4, i.e. needs four crates to be build:
 --        my_ctld:AddCratesCargo("Forward Ops Base",{"FOB"},CTLD_CARGO.Enum.FOB,4)
+--
+--        -- add **unit** instead of **crates** called "Humvee" for the C-130J-30 Manage Units menu, using template "Humvee", of type VEHICLE
+--        -- units are spawned directly behind the aircraft in a LOAD zone, without crates or building
+--        my_ctld:AddUnits("Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE,10,"ANTI TANK")
 --        
 --        -- add crates to repair FOB or VEHICLE type units - the 2nd parameter needs to match the template you want to repair,
 --        -- e.g. the "Humvee" here refers back to the "Humvee" crates cargo added above (same template!)
@@ -852,6 +862,7 @@ do
 --          my_ctld.SmokeColor = SMOKECOLOR.Red -- default color to use when dropping smoke from heli 
 --          my_ctld.FlareColor = FLARECOLOR.Red -- color to use when flaring from heli
 --          my_ctld.basetype = "container_cargo" -- default shape of the cargo container
+--          my_ctld.C130basetype = "cds_crate" -- default shape for the C-130J-30 of the cargo container
 --          my_ctld.droppedbeacontimeout = 600 -- dropped beacon lasts 10 minutes
 --          my_ctld.usesubcats = false -- use sub-category names for crates, adds an extra menu layer in "Get Crates", useful if you have > 10 crate types.
 --          my_ctld.placeCratesAhead = false -- place crates straight ahead of the helicopter, in a random way. If true, crates are more neatly sorted.
@@ -872,7 +883,7 @@ do
 --          my_ctld.VehicleMoveFormation = AI.Task.VehicleFormation.VEE -- When a group moves to a MOVE zone, then it takes this formation. Can be a table of formations, which are then randomly chosen. Defaults to "Vee".
 --          my_ctld.validateAndRepositionUnits = false -- Uses Disposition and other logic to find better ground positions for ground units avoiding trees, water, roads, runways, map scenery, statics and other units in the area. (Default is false)
 --          my_ctld.loadSavedCrates = true -- Load back crates (STATIC) from the save file. Useful for mission restart cleanup. (Default is true)
---
+--          my_ctld.self.UseC130LoadAndUnload = false -- Forces the C-130 player to use the C-130J built system to load the cargo onboard and to unload. (Default is false)
 -- ## 2.1 CH-47 Chinook support
 -- 
 -- The Chinook comes with the option to use the ground crew menu to load and unload cargo into the Helicopter itself for better immersion. As well, it can sling-load cargo from ground. The cargo you can actually **create**
@@ -889,11 +900,13 @@ do
 --      * M117 bomb crate (type name "m117_cargo")
 --      * Dual shell fuel barrels (type name "barrels")
 --      * UH-1H net (type name "uh1h_cargo")
+--      * C-130J-30 (type name "cds_crate")
 --      
 -- All other kinds of cargo can be sling-loaded.
 --      
 -- ## 2.1.2 Recommended settings
 --          
+--          my_ctld.C130basetype = "cds_crate" -- This can be changed to other cargo
 --          my_ctld.basetype = "container_cargo" -- **DO NOT** change this to a base type which could also be loaded by F8/GC to avoid logic problems!
 --          my_ctld.forcehoverload = false -- no hover autoload, leads to cargo complications with ground crew created cargo items
 --          my_ctld.pilotmustopendoors = true -- crew must open back loading door 50% (horizontal) or more - watch out for NOT adding a back door gunner!
@@ -1037,7 +1050,15 @@ do
 --        function my_ctld:OnAfterCratesRepaired(From, Event, To, Group, Unit, Vehicle)
 --          ... your code here ...
 --        end
- --  
+--
+-- ## 3.6 OnAfterUnitsSpawn
+--
+--   This function is called when a player spawn units using the Get unit, only available for the C-130J-30
+--
+--        function my_ctld:OnAfterUnitsSpawn(From, Event, To, Group, Unit, Units)
+--          -- Units is a table of Wrapper.Group#GROUP objects that were spawned
+--        end
+ --
 -- ## 3.7 A simple SCORING example:
 --  
 --    To award player with points, using the SCORING Class (SCORING: my_Scoring, CTLD: CTLD_Cargotransport)
@@ -1487,6 +1508,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self:AddTransition("*",             "TroopsRTB",           "*")           -- CTLD deploy  event.   
   self:AddTransition("*",             "CratesDropped",       "*")           -- CTLD deploy  event.  
   self:AddTransition("*",             "CratesBuild",         "*")           -- CTLD build  event.
+  self:AddTransition("*",             "UnitsSpawn",          "*")           -- CTLD Unit spawned.
   self:AddTransition("*",             "CratesRepaired",      "*")           -- CTLD repair  event.
   self:AddTransition("*",             "CratesBuildStarted",  "*")           -- CTLD build  event.
   self:AddTransition("*",             "CratesRepairStarted", "*")           -- CTLD repair  event.
@@ -1633,6 +1655,11 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- slingload
   self.enableslingload = false
   self.basetype = "container_cargo" -- shape of the container
+
+  self.C130basetype = "cds_crate" -- shape of the C-130J-30 container
+
+  -- use C-130J-30 load and unload method, false by default.
+  self.UseC130LoadAndUnload = false
   
   -- Smokes and Flares
   self.SmokeColor = SMOKECOLOR.Red
@@ -2091,6 +2118,15 @@ function CTLD:_EventHandler(EventData)
     -- check is Helicopter
     local _unit = event.IniUnit
     local _group = event.IniGroup
+    self.C130JUnits = self.C130JUnits or {}
+    local utype =_unit:GetTypeName()
+    if self.C130JTypes and self.C130JTypes[utype] then
+      self.C130JUnits[unitname] = true
+    elseif utype == "C-130J-30" then
+      self.C130JUnits[unitname] = true
+    else
+      self.C130JUnits[unitname] = false
+    end
     if _unit:IsHelicopter() or _group:IsHelicopter() then
       local unitname = event.IniUnitName or "none"
       self.Loaded_Cargo[unitname] = nil
@@ -2129,6 +2165,7 @@ function CTLD:_EventHandler(EventData)
     self.CtldUnits[unitname] = nil
     self.Loaded_Cargo[unitname] = nil
     self.MenusDone[unitname] = nil
+    if self.C130JUnits then self.C130JUnits[unitname]=nil end
   --elseif event.id == EVENTS.NewDynamicCargo and event.IniObjectCategory == 6 and string.match(event.IniUnitName,".+|%d%d:%d%d|PKG%d+") then
   elseif event.id == EVENTS.NewDynamicCargo then
     self:T(self.lid.."GC New Event "..event.IniDynamicCargoName)
@@ -2228,6 +2265,16 @@ function CTLD:_EventHandler(EventData)
     --------------
   end
   return self
+end
+
+--- (Internal) Function to check if a unit is a C-130J
+-- @param #CTLD self
+function CTLD:IsC130J(Unit)
+  if not Unit then return false end
+  if not self.UseC130LoadAndUnload then return false end
+  self.C130JUnits = self.C130JUnits or {}
+  local unitname = Unit:GetName() or "none"
+  return self.C130JUnits[unitname] == true
 end
 
 --- (Internal) Function to message a group.
@@ -2833,7 +2880,7 @@ function CTLD:_GetCrateQuantity(Group, Unit, cargoObj, quantity)
   local needed = cargoObj and cargoObj:GetCratesNeeded() or 1
   local count = math.max(1, tonumber(quantity) or 1)
   local total = needed * count
-  self:_GetCrates(Group, Unit, cargoObj, total, false, false, true)
+  self:_GetCrates(Group, Unit, cargoObj, total, false, false)
   return self
 end
 
@@ -2931,11 +2978,14 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
     --parentMenu.MenuText
     MENU_GROUP_COMMAND:New(Group, "Get", parentMenu, self._GetCrateQuantity, self, Group, Unit, cargoObj, 1)
     local canLoad = (allowLoad and (not capacitySets or capacitySets >= 1) and (not maxMassSets or maxMassSets >= 1))
-    if canLoad then
+    local isHerc = self:IsC130J(Unit)
+    if canLoad and not isHerc then
       MENU_GROUP_COMMAND:New(Group, "Get and Load", parentMenu, self._GetAndLoad, self, Group, Unit, cargoObj, 1)
     else
       local msg
-      if maxMassSets and (not capacitySets or capacitySets >= 1) and maxMassSets < 1 then
+      if isHerc then
+      msg="Use C-130 system to load"
+      elseif maxMassSets and (not capacitySets or capacitySets >= 1) and maxMassSets < 1 then
         msg = "Weight limit reached"
       else
         msg = "Crate limit reached"
@@ -2953,11 +3003,14 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
     local qMenu = MENU_GROUP:New(Group, label, parentMenu)
     MENU_GROUP_COMMAND:New(Group, "Get", qMenu, self._GetCrateQuantity, self, Group, Unit, cargoObj, quantity)
     local canLoad = (allowLoad and (not capacitySets or capacitySets >= quantity) and (not maxMassSets or maxMassSets >= quantity))
-    if canLoad then
+    local isHerc = self:IsC130J(Unit)
+    if canLoad and not isHerc then
       MENU_GROUP_COMMAND:New(Group, "Get and Load", qMenu, self._GetAndLoad, self, Group, Unit, cargoObj, quantity)
     else
       local msg
-      if maxMassSets and (not capacitySets or capacitySets >= quantity) and maxMassSets < quantity then
+      if isHerc then
+        msg="Use C-130 system to load"
+      elseif maxMassSets and (not capacitySets or capacitySets >= quantity) and maxMassSets < quantity then
         msg = "Weight limit reached"
       else
         msg = "Crate limit reached"
@@ -2965,6 +3018,92 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
       MENU_GROUP_COMMAND:New(Group, msg, qMenu, self._SendMessage, self, msg, 10, false, Group)
     end
   end
+  return self
+end
+
+--- (Internal) Spawn a “Get units” entry for a C-130J-30 at load zone.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Unit#UNIT Unit
+-- @param #string Name Name of the configured unit entry.
+-- @return #CTLD self
+function CTLD:_C130GetUnits(Group, Unit, Name)
+  self:T(self.lid .. " _C130GetUnits")
+  if not Group or not Unit then return self end
+  local cfg = nil
+  for _,entry in ipairs(self.C130GetUnits or {}) do
+    if entry.Name == Name then
+      cfg = entry
+      break
+    end
+  end
+  if not cfg then
+    self:_SendMessage("No unit configuration found for "..tostring(Name),10,false,Group)
+    return self
+  end
+  local stock = cfg.Stock
+  if type(stock) == "number" and stock ~= -1 and stock <= 0 then
+    self:_SendMessage(string.format("Sorry, all %s are gone!",cfg.Name or "units"),10,false,Group)
+    return self
+  end
+  local inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
+  if not inzone then
+    self:_SendMessage("You are not close enough to a logistics zone!",10,false,Group)
+    return self
+  end
+  local temptable = cfg.Templates or {}
+  if type(temptable) == "string" then
+    temptable = {temptable}
+  end
+  local coord = Unit:GetCoordinate() or Group:GetCoordinate()
+  local capabilities = self:_GetUnitCapabilities(Unit)
+  local length = capabilities.length or 30
+  local heading = (Unit:GetHeading() + 180) % 360
+  local canmove = cfg.CanMove ~= false
+  local spawnedUnits = {}
+  local coord = Unit:GetCoordinate() or Group:GetCoordinate()
+  local capabilities = self:_GetUnitCapabilities(Unit)
+  local length = capabilities.length or 30
+  local heading = (Unit:GetHeading() + 180) % 360
+  local idx = 1
+  for _,_template in pairs(temptable) do
+    local cratedistance = (idx-1)*2.5 + length
+    local spawncoord = coord:Translate(cratedistance,heading)
+    local randomcoord = spawncoord:GetVec2()
+    self.TroopCounter = self.TroopCounter + 1
+    local tc = self.TroopCounter
+    local alias = string.format("%s-%d",_template,math.random(1,100000))
+    if canmove then
+      SPAWN:NewWithAlias(_template,alias)
+        :InitRandomizeUnits(true,20,2)
+        :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
+        :InitDelayOff()
+        :OnSpawnGroup(function(grp,TimeStamp)
+          grp.spawntime = TimeStamp or timer.getTime()
+          self.DroppedTroops[tc] = grp
+          table.insert(spawnedUnits,grp)
+          self:__UnitsSpawn(1,Group,Unit,spawnedUnits)
+        end)
+        :SpawnFromVec2(randomcoord)
+    else
+      SPAWN:NewWithAlias(_template,alias)
+        :InitDelayOff()
+        :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
+        :OnSpawnGroup(function(grp,TimeStamp)
+          grp.spawntime = TimeStamp or timer.getTime()
+          self.DroppedTroops[tc] = grp
+          table.insert(spawnedUnits,grp)
+          self:__UnitsSpawn(1,Group,Unit,spawnedUnits)
+        end)
+        :SpawnFromVec2(randomcoord)
+    end
+    idx = idx + 1
+  end
+  if type(stock) == "number" and stock ~= -1 then
+    cfg.Stock = stock - 1
+  end
+  self:_SendMessage(string.format("%s have been deployed near you!",cfg.Name or "selection"),10,false,Group)
+  
   return self
 end
 
@@ -3123,8 +3262,12 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet)
     local CCat, CType, CShape = Cargo:GetStaticTypeAndShape()
     local basetype = CType or self.basetype or "container_cargo"
     CCat = CCat or "Cargos"
-    if isstatic then
-      basetype = cratetemplate
+    if not isstatic and self:IsC130J(Unit) then
+      if Cargo.C130TypeName then
+        basetype = Cargo.C130TypeName
+      elseif self.C130basetype and (not CType or CType == self.basetype) then
+        basetype = self.C130basetype
+      end
     end
     if type(ship) == "string" then
       self:T("Spawning on ship "..ship)
@@ -3183,7 +3326,10 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet)
       realcargo:SetStaticResourceMap(map) 
       if cargotype.TypeNames then
         realcargo.TypeNames = UTILS.DeepCopy(cargotype.TypeNames)
-      end   
+      end
+      if self.UseC130LoadAndUnload and self:IsC130J(Unit) then
+        realcargo:SetWasDropped(true,true) -- we mark here that the crates was dropped even though we just got them because of the herc.
+      end
     end
     local CCat4, CType4, CShape4 = cargotype:GetStaticTypeAndShape()
     realcargo:SetStaticTypeAndShape(CCat4,CType4,CShape4)
@@ -3327,7 +3473,47 @@ function CTLD:_ListCratesNearby( _group, _unit)
   return self
 end
 
--- (Internal) Function to find and Remove nearby crates.
+--- (Internal) Function to find and remove nearby C-130 managed units.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Unit#UNIT Unit
+-- @return #CTLD self
+function CTLD:_C130RemoveUnitsNearby(_group,_unit)
+  self:T(self.lid .. " _C130RemoveUnitsNearby")
+  if not _group or not _unit then return self end
+  local location = _group:GetCoordinate()
+  if not location then return self end
+  local finddist = self.PackDistance or (self.CrateDistance or 35)
+  local zone = ZONE_RADIUS:New("CTLD_C130RemoveZone",location:GetVec2(),finddist,false)
+  local nearestGroups = SET_GROUP:New():FilterCoalitions("blue"):FilterZones({zone}):FilterOnce()
+  local removedAny = false
+  for _, gr in pairs(nearestGroups.Set) do
+    local didRemoveThis = false
+    for _, cfg in pairs(self.C130GetUnits or {}) do
+      local templ = cfg.Templates or {}
+      if type(templ) == "string" then
+        templ = {templ}
+      end
+      for _, tName in pairs(templ) do
+        if string.match(gr:GetName(),tName) then
+          local cname = cfg.Name or "Unit"
+          gr:Destroy(false)
+          self:_SendMessage(cname.." have been removed",10,false,_group)
+          removedAny = true
+          didRemoveThis = true
+          break
+        end
+      end
+      if didRemoveThis then break end
+    end
+  end
+  if not removedAny then
+    self:_SendMessage("Nothing to remove at this distance pilot!",10,false,_group)
+  end
+  return self
+end
+
+--- (Internal) Function to find and Remove nearby crates.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
@@ -3407,7 +3593,7 @@ end
 -- @return #number Number Number of crates found
 -- @return #table CratesGC Table of crates possibly loaded by GC
 -- @return #number NumberGC Number of crates possibly loaded by GC
-function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight, ignoretype)
+function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight, ignoretype, ignoreHercInner)
   self:T(self.lid .. " _FindCratesNearby")
   local finddist = _dist
   local location = _group:GetCoordinate()
@@ -3445,9 +3631,17 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight, ignoretype
       if ignoretype == true then cando = true end
       self:T(self.lid .. " Unit can carry: " .. tostring(cando))
       --- Testing
-      local distance = self:_GetDistance(location,staticpos)
-      self:T(self.lid .. string.format("Dist %dm/%dm | weight %dkg | maxloadable %dkg",distance,finddist,weight,maxloadable))
-      if distance <= finddist and (weight <= maxloadable or _ignoreweight) and restricted == false and cando == true then 
+      local distance=self:_GetDistance(location,staticpos)
+      local hercInnerBlocked=false
+      if self.UseC130LoadAndUnload and ignoreHercInner and _unit and self:IsC130J(_unit) then
+      local capabilities=self:_GetUnitCapabilities(_unit) -- #CTLD.UnitTypeCapabilities
+      local innerDist= capabilities.length and (capabilities.length/2) or 4
+      if distance<innerDist then
+      hercInnerBlocked=true
+      end
+      end
+      self:T(self.lid..string.format("Dist %dm/%dm | weight %dkg | maxloadable %dkg",distance,finddist,weight,maxloadable))
+      if distance<=finddist and(weight<=maxloadable or _ignoreweight)and restricted==false and cando==true and not hercInnerBlocked then
         index = index + 1
         table.insert(found, staticid, cargo)
         maxloadable = maxloadable - weight
@@ -3692,9 +3886,18 @@ function CTLD:_ListCargo(Group, Unit)
   local loadedmass = self:_GetUnitCargoMass(Unit) -- #number
   local maxloadable = self:_GetMaxLoadableMass(Unit)
   local finddist = self.CrateDistance or 35
+  local hercInnerCrates = nil
+  local hercInnerCount = 0
+  if self:IsC130J(Unit) or self:IsHook(Unit) then
+  local innerDist = (capabilities.length and capabilities.length/2) or 15
+  local innerCrates,innerCount = self:_FindCratesNearby(Group,Unit,innerDist,true,true)
+  hercInnerCrates = innerCrates
+  hercInnerCount = innerCount or 0
+  end
+
   --local _,_,loadedgc,loadedno = self:_FindCratesNearby(Group,Unit,finddist,true)
 
-  if self.Loaded_Cargo[unitname] then
+  if self.Loaded_Cargo[unitname] or hercInnerCount > 0 then
     local no_troops = loadedcargo.Troopsloaded or 0
     local no_crates = loadedcargo.Cratesloaded or 0
     local cargotable = loadedcargo.Cargo or {} -- #table
@@ -3737,6 +3940,18 @@ function CTLD:_ListCargo(Group, Unit)
     end
     if cratecount == 0 then
       report:Add("        N O N E")
+    end
+    if hercInnerCount > 0 then
+	  local hercMass = 0
+      for _,_cargo in pairs(hercInnerCrates or {}) do
+        local cargo = _cargo
+        local type = cargo:GetType()
+        if type ~= CTLD_CARGO.Enum.TROOPS and type ~= CTLD_CARGO.Enum.ENGINEERS then
+          report:Add(string.format("Crate: %s size 1",cargo:GetName()))
+		  hercMass = hercMass + cargo:GetMass()
+        end
+      end
+	  loadedmass = loadedmass + hercMass
     end
     --[[
     if loadedno > 0 then
@@ -4185,7 +4400,13 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
     end
   end
   -- get nearby crates
-  local finddist = self.CrateDistance or 35
+  local baseDist = self.CrateDistance or 35
+  local finddist=baseDist
+  --if Engineering and self.EngineerSearch and self.EngineerSearch>baseDist then 
+    if self.EngineerSearch and self.EngineerSearch>baseDist then -- this make also helicopter to be able to crates that are further away due to herc airdrop
+      finddist=self.EngineerSearch
+  finddist=self.EngineerSearch
+  end
   local crates,number = self:_FindCratesNearby(Group,Unit, finddist,true,true) -- #table
   local buildables = {}
   local foundbuilds = false
@@ -4201,6 +4422,16 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
         local template = Crate:GetTemplates()
         local ctype = Crate:GetType()
         local ccoord = Crate:GetPositionable():GetCoordinate() -- Core.Point#COORDINATE
+        local distToUnit=Unit and ccoord:Get2DDistance(Unit:GetCoordinate())or 0
+        local isHercDrop=Crate:WasDropped(true)
+        if not isHercDrop and distToUnit>baseDist then
+      elseif self.UseC130LoadAndUnload and self:IsC130J(Unit) and distToUnit<15 then
+        self:_SendMessage("Please unload crates from the C-130 before building!",10,false,Group)
+        return self
+      elseif self.UseC130LoadAndUnload and self:IsHook(Unit) and distToUnit<5 then
+        self:_SendMessage("Please unload crates from the CH-47 before building!",10,false,Group)
+        return self
+      else
         --local testmarker = ccoord:MarkToAll("Crate found",true,"Build Position")
         if not buildables[name] then
           local object = {} -- #CTLD.Buildable
@@ -4222,6 +4453,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
            canbuild = true
         end
         self:T({buildables = buildables})
+      end  
       end -- end dropped
     end -- end crate loop
     -- ok let\'s list what we have
@@ -5273,7 +5505,46 @@ function CTLD:_RefreshF10Menus()
                 end
               end
             end
-  
+            if self:IsC130J(_unit) then
+              local topunits    = MENU_GROUP:New(_group,"Manage Units",topmenu)
+              local getunits    = MENU_GROUP:New(_group,"Get Units",topunits)
+              MENU_GROUP_COMMAND:New(_group,"Remove units nearby",topunits,self._C130RemoveUnitsNearby,self,_group,_unit)
+
+              local unitentries = self.C130GetUnits or {}
+              local unittype    = _unit:GetTypeName() or "none"
+              local subcatmenus = self.usesubcats and {} or nil
+
+              for _,cargoObj in ipairs(unitentries) do
+                local ok = true
+                if cargoObj.UnitTypes then
+                  ok = false
+                  if type(cargoObj.UnitTypes) == "string" then
+                    if unittype == cargoObj.UnitTypes then ok = true end
+                  else
+                    for _,ut in pairs(cargoObj.UnitTypes) do
+                      if unittype == ut then ok = true break end
+                    end
+                  end
+                end
+                if ok and (not cargoObj.Stock or cargoObj.Stock == -1 or cargoObj.Stock > 0) then
+                  local parent = getunits
+                  if self.usesubcats == true and cargoObj.SubCategory then
+                    local sub = subcatmenus[cargoObj.SubCategory]
+                    if not sub then
+                      sub = MENU_GROUP:New(_group,cargoObj.SubCategory,getunits)
+                      subcatmenus[cargoObj.SubCategory] = sub
+                    end
+                    parent = sub
+                  end
+                  local menutext = cargoObj.Name
+                  if type(cargoObj.Stock) == "number" and cargoObj.Stock >= 0 and self.showstockinmenuitems then
+                    menutext = menutext.."["..cargoObj.Stock.."]"
+                  end
+                  MENU_GROUP_COMMAND:New(_group,menutext,parent,self._C130GetUnits,self,_group,_unit,cargoObj.Name)
+                end
+              end
+            end
+
             -----------------------------------------------------
             -- Misc sub‐menus
             -----------------------------------------------------
@@ -5323,7 +5594,10 @@ function CTLD:_RefreshF10Menus()
 function CTLD:_RefreshLoadCratesMenu(Group,Unit)
     if not Group.MyLoadCratesMenu then return end
     Group.MyLoadCratesMenu:RemoveSubMenus()
-  
+    if self:IsC130J(Unit) then
+      MENU_GROUP_COMMAND:New(Group,"Use C-130 Load system",Group.MyLoadCratesMenu,function() end)
+      return
+    end
     local d=self.CrateDistance or 35
     local nearby,n=self:_FindCratesNearby(Group,Unit,d,true,true)
     if n==0 then
@@ -6139,6 +6413,62 @@ function CTLD:AddTroopsCargo(Name,Templates,Type,NoTroops,PerTroopMass,Stock,Sub
   return self
 end
 
+--- User function - Add *generic* unit-type entry for the C-130J-30 Manage Units menu. This type will spawn units that can move.
+-- @param #CTLD self
+-- @param #string Name Unique name of this type of unit. E.g. "Humvee".
+-- @param #table Templates Table of #string names of late activated Wrapper.Group#GROUP used to spawn this unit.
+-- @param #CTLD_CARGO.Enum Type Type of unit. I.e. VEHICLE or FOB. VEHICLE will move when spawned, FOB stays put.
+-- @param #number Stock Number of units in stock. Nil or -1 for unlimited.
+-- @param #string SubCategory Name of sub-category (optional), used for sub-menus when self.usesubcats == true.
+-- @param #string UnitTypes Unit type names (optional). If set, only these unit types can use this entry, e.g. "C-130J-30" or {"C-130J-30"}.
+-- @return #CTLD self
+function CTLD:AddUnits(Name,Templates,Type,Stock,SubCategory,UnitTypes)
+  self:T(self.lid .. " AddUnits")
+  if not self:_CheckTemplates(Templates) then
+    self:E(self.lid .. "Units for " .. Name .. " has missing template(s)!")
+    return self
+  end
+  self.C130GetUnits = self.C130GetUnits or {}
+  local entry = {}
+  entry.Name = Name
+  entry.Templates = Templates
+  entry.Type = Type
+  entry.Stock = Stock
+  entry.SubCategory = SubCategory
+  entry.UnitTypes = UnitTypes
+  entry.CanMove = true
+  table.insert(self.C130GetUnits,entry)
+  return self
+end
+
+--- User function - Add *generic* unit-type entry for the C-130J-30 Manage Units menu. This type will spawn units that stay in place.
+-- @param #CTLD self
+-- @param #string Name Unique name of this type of unit. E.g. "Humvee".
+-- @param #table Templates Table of #string names of late activated Wrapper.Group#GROUP used to spawn this unit.
+-- @param #CTLD_CARGO.Enum Type Type of unit. I.e. VEHICLE or FOB. VEHICLE will be treated as non-moving here, FOB stays put.
+-- @param #number Stock Number of units in stock. Nil or -1 for unlimited.
+-- @param #string SubCategory Name of sub-category (optional), used for sub-menus when self.usesubcats == true.
+-- @param #string UnitTypes Unit type names (optional). If set, only these unit types can use this entry, e.g. "C-130J-30" or {"C-130J-30"}.
+-- @return #CTLD self
+function CTLD:AddUnitsNoMove(Name,Templates,Type,Stock,SubCategory,UnitTypes)
+  self:T(self.lid .. " AddUnitsNoMove")
+  if not self:_CheckTemplates(Templates) then
+    self:E(self.lid .. "UnitsNoMove for " .. Name .. " has missing template(s)!")
+    return self
+  end
+  self.C130GetUnits = self.C130GetUnits or {}
+  local entry = {}
+  entry.Name = Name
+  entry.Templates = Templates
+  entry.Type = Type
+  entry.Stock = Stock
+  entry.SubCategory = SubCategory
+  entry.UnitTypes = UnitTypes
+  entry.CanMove = false
+  table.insert(self.C130GetUnits,entry)
+  return self
+end
+
 --- User function - Add *generic* crate-type loadable as cargo. This type will create crates that need to be loaded, moved, dropped and built.
 -- @param #CTLD self
 -- @param #string Name Unique name of this type of cargo. E.g. "Humvee".
@@ -6154,8 +6484,9 @@ end
 -- @param #string Category Static category name (optional). If set, spawn cargo crate with an alternate category type, e.g. "Cargos".
 -- @param #string TypeName Static type name (optional). If set, spawn cargo crate with an alternate type shape, e.g. "iso_container".
 -- @param #string ShapeName Static shape name (optional). If set, spawn cargo crate with an alternate type sub-shape, e.g. "iso_container_cargo".
+-- @param #string TypeName Static type name (optional). If set, it will overwride even though TypeName is passed. this is only for the C-130J-30. Can be used with other TypeName for other modules.
 -- @return #CTLD self
-function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes,Category,TypeName,ShapeName)
+function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes,Category,TypeName,ShapeName,C130TypeName)
   self:T(self.lid .. " AddCratesCargo")
   if not self:_CheckTemplates(Templates) then
     self:E(self.lid .. "Crates Cargo for " .. Name .. " has missing template(s)!" )
@@ -6171,6 +6502,7 @@ function CTLD:AddCratesCargo(Name,Templates,Type,NoCrates,PerCrateMass,Stock,Sub
   if TypeName then
     cargo:SetStaticTypeAndShape(Category,TypeName,ShapeName)
   end
+  cargo.C130TypeName = C130TypeName
   table.insert(self.Cargo_Crates,cargo)
   if SubCategory and self.usesubcats ~= true then self.usesubcats=true end
   return self
@@ -6192,8 +6524,9 @@ end
 -- @param #string Category Static category name (optional). If set, spawn cargo crate with an alternate category type, e.g. "Cargos".
 -- @param #string TypeName Static type name (optional). If set, spawn cargo crate with an alternate type shape, e.g. "iso_container".
 -- @param #string ShapeName Static shape name (optional). If set, spawn cargo crate with an alternate type sub-shape, e.g. "iso_container_cargo".
+-- @param #string TypeName Static type name (optional). If set, it will overwride even though TypeName is passed. this is only for the C-130J-30. Can be used with other TypeName for other modules.
 -- @return #CTLD self
-function CTLD:AddCratesCargoNoMove(Name,Templates,Type,NoCrates,PerCrateMass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes,Category,TypeName,ShapeName)
+function CTLD:AddCratesCargoNoMove(Name,Templates,Type,NoCrates,PerCrateMass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes,Category,TypeName,ShapeName,C130TypeName)
   self:T(self.lid .. " AddCratesCargoNoMove")
   if not self:_CheckTemplates(Templates) then
     self:E(self.lid .. "Crates Cargo for " .. Name .. " has missing template(s)!" )
@@ -6209,6 +6542,7 @@ function CTLD:AddCratesCargoNoMove(Name,Templates,Type,NoCrates,PerCrateMass,Sto
   if TypeName then
     cargo:SetStaticTypeAndShape(Category,TypeName,ShapeName)
   end
+  cargo.C130TypeName = C130TypeName
   table.insert(self.Cargo_Crates,cargo)
   self.templateToCargoName = self.templateToCargoName or {}
   if type(Templates)=="table" then
@@ -7371,6 +7705,63 @@ end
     return Troopstable
   end
   
+--- User - function to add stock of a certain units type
+-- @param #CTLD self
+-- @param #string Name Name as defined in the generic unit entry.
+-- @param #number Number Number of units/groups to add.
+-- @return #CTLD self
+function CTLD:AddStockUnits(Name, Number)
+  local name = Name or "none"
+  local number = Number or 1
+  local units = self.C130GetUnits or {}
+  for _id,_unit in pairs(units) do
+    if _unit.Name == name then
+      local stock = _unit.Stock
+      if stock == nil or stock == -1 then
+        _unit.Stock = -1
+      else
+        _unit.Stock = stock + number
+      end
+      break
+    end
+  end
+  return self
+end
+
+--- User - function to set the stock of a certain units type
+-- @param #CTLD self
+-- @param #string Name Name as defined in the generic unit entry.
+-- @param #number Number Number of units/groups to be available. Nil or -1 equals unlimited
+-- @return #CTLD self
+function CTLD:SetStockUnits(Name, Number)
+  local name = Name or "none"
+  local number = Number
+  local units = self.C130GetUnits or {}
+  for _id,_unit in pairs(units) do
+    if _unit.Name == name then
+      if number == nil or number == -1 then
+        _unit.Stock = -1
+      else
+        _unit.Stock = number
+      end
+      break
+    end
+  end
+  return self
+end
+
+  --- User - function to get a table of units in stock (C-130 "Get units")
+  -- @param #CTLD self
+  -- @return #table Table Table of Stock, indexed by unit type name
+  function CTLD:GetStockUnits()
+    local Stock = {}
+    local units = self.C130GetUnits or {}
+    for _id,_unit in pairs(units) do
+        Stock[_unit.Name] = _unit.Stock or -1
+    end
+    return Stock
+  end
+
 
   --- User - function to add stock of a certain troops type
   -- @param #CTLD self
