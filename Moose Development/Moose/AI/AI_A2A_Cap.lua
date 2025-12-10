@@ -11,7 +11,7 @@
 -- @module AI.AI_A2A_Cap
 -- @image AI_Combat_Air_Patrol.JPG
 
---- @type AI_A2A_CAP
+-- @type AI_A2A_CAP
 -- @extends AI.AI_Air_Patrol#AI_AIR_PATROL
 -- @extends AI.AI_Air_Engage#AI_AIR_ENGAGE
 

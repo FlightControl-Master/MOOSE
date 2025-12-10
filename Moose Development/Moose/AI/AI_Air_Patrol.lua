@@ -9,7 +9,7 @@
 -- @module AI.AI_Air_Patrol
 -- @image AI_Air_To_Ground_Patrol.JPG
 
---- @type AI_AIR_PATROL
+-- @type AI_AIR_PATROL
 -- @extends AI.AI_Air#AI_AIR
 
 --- The AI_AIR_PATROL class implements the core functions to patrol a @{Core.Zone} by an AI @{Wrapper.Group}

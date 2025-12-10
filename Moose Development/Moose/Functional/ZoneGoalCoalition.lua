@@ -1,4 +1,4 @@
---- **Functional** - Base class that models processes to achieve goals involving a Zone for a Coalition.
+--- **Functional (WIP)** - Base class modeling processes to achieve goals involving coalition zones.
 --
 -- ===
 --
@@ -16,7 +16,7 @@
 
 do -- ZoneGoal
 
-  --- @type ZONE_GOAL_COALITION
+  -- @type ZONE_GOAL_COALITION
   -- @field #string ClassName Name of the Class.
   -- @field #number Coalition The current coalition ID of the zone owner.
   -- @field #number PreviousCoalition The previous owner of the zone.
@@ -48,7 +48,7 @@ do -- ZoneGoal
     ObjectCategories = nil,
   }
 
-  --- @field #table ZONE_GOAL_COALITION.States
+  -- @field #table ZONE_GOAL_COALITION.States
   ZONE_GOAL_COALITION.States = {}
 
   --- ZONE_GOAL_COALITION Constructor.

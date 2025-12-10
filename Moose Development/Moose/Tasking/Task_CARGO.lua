@@ -411,7 +411,7 @@
 
 do -- TASK_CARGO
 
-  --- @type TASK_CARGO
+  -- @type TASK_CARGO
   -- @extends Tasking.Task#TASK
 
   --- Model tasks for players to transport Cargo.
@@ -622,7 +622,7 @@ do -- TASK_CARGO
     Fsm:AddTransition( "Rejected", "Reject", "Aborted" )
     Fsm:AddTransition( "Failed", "Fail", "Failed" )
 
-    ---- @param #FSM_PROCESS self
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param #TASK_CARGO Task
     function Fsm:OnAfterAssigned( TaskUnit, Task )
@@ -645,7 +645,7 @@ do -- TASK_CARGO
       
       Task.SetCargo:ForEachCargo(
         
-        --- @param Cargo.Cargo#CARGO Cargo
+        -- @param Cargo.Cargo#CARGO Cargo
         function( Cargo ) 
         
           if Cargo:IsAlive() then
@@ -839,7 +839,7 @@ do -- TASK_CARGO
     --#Wrapper.Unit#UNIT
 
     
-    --- @param #FSM_PROCESS self
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     -- @param From
@@ -859,7 +859,7 @@ do -- TASK_CARGO
 
 
 
-    --- @param #FSM_PROCESS self
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterArriveAtPickup( TaskUnit, Task )
@@ -875,7 +875,7 @@ do -- TASK_CARGO
     end
 
 
-    --- @param #FSM_PROCESS self
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterCancelRouteToPickup( TaskUnit, Task )
@@ -886,7 +886,7 @@ do -- TASK_CARGO
     end
 
 
-    --- @param #FSM_PROCESS self
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     function Fsm:onafterRouteToDeploy( TaskUnit, Task, From, Event, To, DeployZone )
       self:F( { TaskUnit = TaskUnit, Task = Task and Task:GetClassNameAndID() } )
@@ -898,7 +898,7 @@ do -- TASK_CARGO
     end
 
 
-    --- @param #FSM_PROCESS self
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterArriveAtDeploy( TaskUnit, Task )
@@ -913,7 +913,7 @@ do -- TASK_CARGO
     end
 
 
-    --- @param #FSM_PROCESS self
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterCancelRouteToDeploy( TaskUnit, Task )
@@ -925,7 +925,7 @@ do -- TASK_CARGO
 
 
 
-    --- @param #FSM_PROCESS self
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterLand( TaskUnit, Task, From, Event, To, Action )
@@ -960,7 +960,7 @@ do -- TASK_CARGO
       end
     end
 
-    --- @param #FSM_PROCESS self
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterLanded( TaskUnit, Task, From, Event, To, Action )
@@ -993,7 +993,7 @@ do -- TASK_CARGO
       end
     end
     
-    --- @param #FSM_PROCESS self
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterPrepareBoarding( TaskUnit, Task, From, Event, To, Cargo )
@@ -1005,7 +1005,7 @@ do -- TASK_CARGO
     end
 
     
-    --- @param #FSM_PROCESS self
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterBoard( TaskUnit, Task, From, Event, To, Cargo  )
@@ -1033,7 +1033,7 @@ do -- TASK_CARGO
     end
 
 
-    --- @param #FSM_PROCESS self
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterBoarded( TaskUnit, Task, From, Event, To, Cargo  )
@@ -1048,7 +1048,7 @@ do -- TASK_CARGO
     end
     
 
-    --- @param #FSM_PROCESS self
+    -- @param #FSM_PROCESS self
     -- @param Wrapper.Unit#UNIT TaskUnit
     -- @param Tasking.Task_Cargo#TASK_CARGO Task
     function Fsm:onafterLoad( TaskUnit, Task, From, Event, To, Cargo )
@@ -1197,26 +1197,26 @@ do -- TASK_CARGO
       return self.SmokeColor
     end
   
-  --- @param #TASK_CARGO self
+  -- @param #TASK_CARGO self
   function TASK_CARGO:GetPlannedMenuText()
     return self:GetStateString() .. " - " .. self:GetTaskName() .. " ( " .. self.TargetSetUnit:GetUnitTypesText() .. " )"
   end
 
-  --- @param #TASK_CARGO self
+  -- @param #TASK_CARGO self
   -- @return Core.Set#SET_CARGO The Cargo Set.
   function TASK_CARGO:GetCargoSet()
   
     return self.SetCargo
   end
   
-  --- @param #TASK_CARGO self
+  -- @param #TASK_CARGO self
   -- @return #list<Core.Zone#ZONE_BASE> The Deployment Zones.
   function TASK_CARGO:GetDeployZones()
   
     return self.DeployZones
   end
 
-  --- @param #TASK_CARGO self
+  -- @param #TASK_CARGO self
   -- @param AI.AI_Cargo#AI_CARGO Cargo The cargo.
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_CARGO
@@ -1239,7 +1239,7 @@ do -- TASK_CARGO
   end
   
 
-  --- @param #TASK_CARGO self
+  -- @param #TASK_CARGO self
   -- @param Core.Zone#ZONE DeployZone
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_CARGO
@@ -1260,7 +1260,7 @@ do -- TASK_CARGO
   end
    
   
-  --- @param #TASK_CARGO self
+  -- @param #TASK_CARGO self
   -- @param Core.Zone#ZONE DeployZone
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_CARGO
@@ -1271,7 +1271,7 @@ do -- TASK_CARGO
     return self
   end
   
-  --- @param #TASK_CARGO self
+  -- @param #TASK_CARGO self
   -- @param Core.Zone#ZONE DeployZone
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_CARGO
@@ -1282,7 +1282,7 @@ do -- TASK_CARGO
     return self
   end
   
-  --- @param #TASK_CARGO self
+  -- @param #TASK_CARGO self
   -- @param #list<Core.Zone#ZONE> DeployZones
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return #TASK_CARGO
@@ -1297,7 +1297,7 @@ do -- TASK_CARGO
   
   
 
-  --- @param #TASK_CARGO self
+  -- @param #TASK_CARGO self
   -- @param Wrapper.Unit#UNIT TaskUnit
   -- @return Core.Zone#ZONE_BASE The Zone object where the Target is located on the map.
   function TASK_CARGO:GetTargetZone( TaskUnit )
@@ -1366,7 +1366,7 @@ do -- TASK_CARGO
     return self.GoalTotal
   end
   
-  --- @param #TASK_CARGO self
+  -- @param #TASK_CARGO self
   function TASK_CARGO:UpdateTaskInfo()
   
     if self:IsStatePlanned() or self:IsStateAssigned() then

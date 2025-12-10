@@ -1132,7 +1132,7 @@
 -- specify an "Assignment". This can be later used to identify the request and take the right actions.
 --
 -- Once the request is processed, the @{#WAREHOUSE.OnAfterSelfRequest} function is called. This is where we hook in and postprocess the spawned assets.
--- In particular, we use the @{AI.AI_Formation#AI_FORMATION} class to make some nice escorts for our carrier.
+-- In particular, we use the @{Functional.Formation#FORMATION} class to make some nice escorts for our carrier.
 --
 -- When the resue helo is spawned, we can check that this is the correct asset and make the helo go into formation with the carrier.
 -- Once the helo runs out of fuel, it will automatically return to the ship and land. For the warehouse, this means that the "cargo", i.e. the helicopter
@@ -1175,7 +1175,7 @@
 --
 --         -- Define AI Formation object.
 --         -- Note that this has to be a global variable or the garbage collector will remove it for some reason!
---         CarrierFormationLeft = AI_FORMATION:New(Mother, groupset, "Left Formation with Carrier", "Escort Carrier.")
+--         CarrierFormationLeft = FORMATION:New(Mother, groupset, "Left Formation with Carrier")
 --
 --         -- Formation parameters.
 --         CarrierFormationLeft:FormationLeftWing(200 ,50, 0, 0, 500, 50)
@@ -1190,7 +1190,7 @@
 --
 --         -- Define AI Formation object.
 --         -- Note that this has to be a global variable or the garbage collector will remove it for some reason!
---         CarrierFormationRight = AI_FORMATION:New(Mother, groupset, "Right Formation with Carrier", "Escort Carrier.")
+--         CarrierFormationRight = FORMATION:New(Mother, groupset, "Right Formation with Carrier")
 --
 --         -- Formation parameters.
 --         CarrierFormationRight:FormationRightWing(200 ,50, 0, 0, 500, 50)
@@ -1208,7 +1208,7 @@
 --         group:StartUncontrolled()
 --
 --         -- Define AI Formation object.
---         CarrierFormationHelo = AI_FORMATION:New(Mother, groupset, "Helo Formation with Carrier", "Fly Formation.")
+--         CarrierFormationHelo = FORMATION:New(Mother, groupset, "Helo Formation with Carrier")
 --
 --         -- Formation parameters.
 --         CarrierFormationHelo:FormationCenterWing(-150, 50, 20, 50, 100, 50)
@@ -3340,7 +3340,6 @@ function WAREHOUSE:FindAssetInDB(group)
   if aid~=nil then
 
     local asset=_WAREHOUSEDB.Assets[aid]
-    self:T2({asset=asset})
     if asset==nil then
       self:_ErrorMessage(string.format("ERROR: Asset for group %s not found in the data base!", group:GetName()), 0)
     end
@@ -3918,7 +3917,7 @@ end
 -- @param #string assignment A free to choose string specifying an assignment for the asset. This can be used with the @{#WAREHOUSE.OnAfterNewAsset} function.
 -- @param #table other (Optional) Table of other useful data. Can be collected via WAREHOUSE.OnAfterNewAsset() function for example
 function WAREHOUSE:onafterAddAsset(From, Event, To, group, ngroups, forceattribute, forcecargobay, forceweight, loadradius, skill, liveries, assignment, other)
-  self:T({group=group, ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
+  --self:T({group=group:GetName(), ngroups=ngroups, forceattribute=forceattribute, forcecargobay=forcecargobay, forceweight=forceweight})
 
   -- Set default.
   local n=ngroups or 1
@@ -4446,7 +4445,6 @@ end
 -- @param #WAREHOUSE.Queueitem Request Information table of the request.
 -- @return #boolean If true, request is granted.
 function WAREHOUSE:onbeforeRequest(From, Event, To, Request)
-  self:T3({warehouse=self.alias, request=Request})
 
   -- Distance from warehouse to requesting warehouse.
   local distance=self:GetCoordinate():Get2DDistance(Request.warehouse:GetCoordinate())
@@ -6152,9 +6150,6 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
 
     -- Uncontrolled spawning.
     template.uncontrolled=uncontrolled
-
-    -- Debug info.
-    self:T2({airtemplate=template})
 
     -- Spawn group.
     local group=_DATABASE:Spawn(template) --Wrapper.Group#GROUP
@@ -8601,6 +8596,8 @@ function WAREHOUSE:_DeleteStockItem(stockitem)
     local item=self.stock[i] --#WAREHOUSE.Assetitem
     if item.uid==stockitem.uid then
       table.remove(self.stock,i)
+      -- remove also from warehouse DB
+      _WAREHOUSEDB.Assets[stockitem.uid]=nil
       break
     end
   end

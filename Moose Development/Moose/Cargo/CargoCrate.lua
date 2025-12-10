@@ -81,7 +81,7 @@ do -- CARGO_CRATE
     return self
   end
   
-  --- @param #CARGO_CRATE self
+  -- @param #CARGO_CRATE self
   -- @param Core.Event#EVENTDATA EventData 
   function CARGO_CRATE:OnEventCargoDead( EventData )
 

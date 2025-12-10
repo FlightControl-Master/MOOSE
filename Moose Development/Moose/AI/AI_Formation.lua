@@ -34,8 +34,8 @@
 -- @field Core.Scheduler#SCHEDULER FollowScheduler The instance of the SCHEDULER class.
 -- @field #number FollowDistance The current follow distance.
 -- @field #boolean ReportTargets If true, nearby targets are reported.
--- @field DCS#AI.Option.Air.val.ROE OptionROE Which ROE is set to the FollowGroup.
--- @field DCS#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the FollowGroup.
+-- @Field DCSTypes#AI.Option.Air.val.ROE OptionROE Which ROE is set to the FollowGroup.
+-- @field DCSTypes#AI.Option.Air.val.REACTION_ON_THREAT OptionReactionOnThreat Which REACTION_ON_THREAT is set to the FollowGroup.
 -- @field #number dtFollow Time step between position updates.
 
 
@@ -94,12 +94,12 @@
 -- local LargeFormation = AI_FORMATION:New( LeaderUnit, FollowGroupSet, "Center Wing Formation", "Briefing" )
 -- LargeFormation:FormationCenterWing( 500, 50, 0, 250, 250 )
 -- LargeFormation:__Start( 1 )
---
--- # Developer Note
--- 
--- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
--- Therefore, this class is considered to be deprecated
---
+  --
+  -- # Developer Note
+  -- 
+  -- Note while this class still works, it is no longer supported as the original author stopped active development of MOOSE
+  -- Therefore, this class is considered to be deprecated
+  --
 -- @field #AI_FORMATION 
 AI_FORMATION = {
   ClassName = "AI_FORMATION",
@@ -119,7 +119,7 @@ AI_FORMATION = {
 
 AI_FORMATION.__Enum = {}
 
---- @type AI_FORMATION.__Enum.Formation
+-- @type AI_FORMATION.__Enum.Formation
 -- @field #number None
 -- @field #number Line
 -- @field #number Trail
@@ -144,7 +144,7 @@ AI_FORMATION.__Enum.Formation = {
   Box = 10,
 }
 
---- @type AI_FORMATION.__Enum.Mode
+-- @type AI_FORMATION.__Enum.Mode
 -- @field #number Mission
 -- @field #number Formation
 AI_FORMATION.__Enum.Mode = {
@@ -154,12 +154,13 @@ AI_FORMATION.__Enum.Mode = {
   Reconnaissance = "R",
 }
 
---- @type AI_FORMATION.__Enum.ReportType
+-- @type AI_FORMATION.__Enum.ReportType
 -- @field #number All
 -- @field #number Airborne
 -- @field #number GroundRadar
 -- @field #number Ground
 AI_FORMATION.__Enum.ReportType = {
+  All = "*",
   Airborne = "A",
   GroundRadar = "R",
   Ground = "G",
@@ -997,7 +998,7 @@ function AI_FORMATION:SetFlightModeMission( FollowGroup )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
   else
     self.FollowGroupSet:ForSomeGroupAlive(
-      --- @param Wrapper.Group#GROUP EscortGroup
+      -- @param Core.Group#GROUP EscortGroup
       function( FollowGroup )
         FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Mission )
@@ -1021,7 +1022,7 @@ function AI_FORMATION:SetFlightModeAttack( FollowGroup )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Attack )
   else
     self.FollowGroupSet:ForSomeGroupAlive(
-      --- @param Wrapper.Group#GROUP EscortGroup
+      -- @param Core.Group#GROUP EscortGroup
       function( FollowGroup )
         FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Attack )
@@ -1045,7 +1046,7 @@ function AI_FORMATION:SetFlightModeFormation( FollowGroup )
     FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
   else
     self.FollowGroupSet:ForSomeGroupAlive(
-      --- @param Wrapper.Group#GROUP EscortGroup
+      -- @param Core.Group#GROUP EscortGroup
       function( FollowGroup )
         FollowGroup:SetState( FollowGroup, "PreviousMode", FollowGroup:GetState( FollowGroup, "Mode" ) )
         FollowGroup:SetState( FollowGroup, "Mode", self.__Enum.Mode.Formation )
@@ -1223,6 +1224,7 @@ function AI_FORMATION:FollowMe(FollowGroup, ClientUnit, CT1, CV1, CT2, CV2)
         local CVI = { 
           x = CV2.x + CS * 10 * math.sin(Ca),
           y = GH2.y + Inclination, -- + FollowFormation.y,
+          --y = GH2.y,
           z = CV2.z + CS * 10 * math.cos(Ca),
         }
   

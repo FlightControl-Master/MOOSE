@@ -5584,7 +5584,7 @@ end
 -- @param #string dest Name of the destination airport.
 function RAT:_ATCAddFlight(name, dest)
   -- Debug info
-  BASE:I(RAT.id..string.format("ATC %s: Adding flight %s with destination %s.", dest, name, dest))
+  BASE:T(RAT.id..string.format("ATC %s: Adding flight %s with destination %s.", dest, name, dest))
 
   -- Create new flight  
   local flight={} --#RAT.AtcFlight
@@ -5603,7 +5603,7 @@ end
 function RAT._ATCDelFlight(t,entry)
   for k,_ in pairs(t) do
     if k==entry then
-      BASE:I(RAT.id..string.format("Removing flight %s from queue", entry))
+      BASE:T(RAT.id..string.format("Removing flight %s from queue", entry))
       t[entry]=nil
     end
   end
@@ -5614,7 +5614,7 @@ end
 -- @param #string name Group name of the flight.
 -- @param #number time Time the fight first registered.
 function RAT._ATCRegisterFlight(name, time)
-  BASE:I(RAT.id..string.format("Flight %s registered at ATC for landing clearance.", name))
+  BASE:T(RAT.id..string.format("Flight %s registered at ATC for landing clearance.", name))
   RAT.ATC.flight[name].Tarrive=time
   RAT.ATC.flight[name].holding=0
 end
@@ -5649,15 +5649,16 @@ function RAT._ATCStatus()
   
         -- Aircraft is holding.
         local text=string.format("ATC %s: Flight %s is holding for %i:%02d. %s.", dest, name, hold/60, hold%60, busy)
-        BASE:I(RAT.id..text)
+        BASE:T(RAT.id..text)
   
       elseif hold==RAT.ATC.onfinal then
   
         -- Aircarft is on final approach for landing.
-        local Tfinal=Tnow-flight.Tonfinal
+        local Tonfinal = flight.Tonfinal or timer.getTime()-1
+        local Tfinal=Tnow-Tonfinal
   
         local text=string.format("ATC %s: Flight %s is on final. Waiting %i:%02d for landing event.", dest, name, Tfinal/60, Tfinal%60)
-        BASE:I(RAT.id..text)
+        BASE:T(RAT.id..text)
   
       elseif hold==RAT.ATC.unregistered then
   
@@ -5711,13 +5712,13 @@ function RAT._ATCCheck()
         -- Debug message.
         local text=string.format("ATC %s: Flight %s runway is busy. You are #%d of %d in landing queue. Your holding time is %i:%02d.", 
         airportname, flightname, qID, nqueue, flight.holding/60, flight.holding%60)
-        BASE:I(RAT.id..text)
+        BASE:T(RAT.id..text)
 
       else
 
         local text=string.format("ATC %s: Flight %s was cleared for landing. Your holding time was %i:%02d.", 
         airportname, flightname, flight.holding/60, flight.holding%60)
-        BASE:I(RAT.id..text)
+        BASE:T(RAT.id..text)
 
         -- Clear flight for landing.
         RAT._ATCClearForLanding(airportname, flightname)
@@ -5772,7 +5773,7 @@ function RAT._ATCClearForLanding(airportname, flightname)
 
   
     -- Debug message.
-    BASE:I(RAT.id..string.format("ATC %s: Flight %s cleared for landing", airportname, flightname))
+    BASE:T(RAT.id..string.format("ATC %s: Flight %s cleared for landing", airportname, flightname))
   
     if string.find(flightname,"#") then
       flightname =  string.match(flightname,"^(.+)#")
@@ -5799,8 +5800,9 @@ function RAT._ATCFlightLanded(name)
 
     -- Times for holding and final approach.
     local Tnow=timer.getTime()
-    local Tfinal=Tnow-flight.Tonfinal
-    local Thold=flight.Tonfinal-flight.Tarrive
+    local Tonfinal = flight.Tonfinal or timer.getTime()-1
+    local Tfinal=Tnow-Tonfinal
+    local Thold=Tonfinal-flight.Tarrive
     
     local airport=RAT.ATC.airport[dest] --#RAT.AtcAirport
 
@@ -5823,9 +5825,9 @@ function RAT._ATCFlightLanded(name)
     local TrafficPerHour=airport.traffic/(timer.getTime()-RAT.ATC.T0)*3600
 
     -- Debug info
-    BASE:I(RAT.id..string.format("ATC %s: Flight %s landed. Tholding = %i:%02d, Tfinal = %i:%02d.", dest, name, Thold/60, Thold%60, Tfinal/60, Tfinal%60))
-    BASE:I(RAT.id..string.format("ATC %s: Number of flights still on final %d.", dest, airport.Nonfinal))
-    BASE:I(RAT.id..string.format("ATC %s: Traffic report: Number of planes landed in total %d. Flights/hour = %3.2f.", dest, airport.traffic, TrafficPerHour))
+    BASE:T(RAT.id..string.format("ATC %s: Flight %s landed. Tholding = %i:%02d, Tfinal = %i:%02d.", dest, name, Thold/60, Thold%60, Tfinal/60, Tfinal%60))
+    BASE:T(RAT.id..string.format("ATC %s: Number of flights still on final %d.", dest, airport.Nonfinal))
+    BASE:T(RAT.id..string.format("ATC %s: Traffic report: Number of planes landed in total %d. Flights/hour = %3.2f.", dest, airport.traffic, TrafficPerHour))
     
     if string.find(name,"#") then
       name =  string.match(name,"^(.+)#")

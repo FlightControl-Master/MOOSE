@@ -20,7 +20,6 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- ### Contributions: Flightcontrol (@{AI.AI_Formation} class being used here)
 --
 -- @module Ops.RescueHelo
 -- @image Ops_RescueHelo.png
@@ -37,7 +36,7 @@
 -- @field #number takeoff Takeoff type.
 -- @field Wrapper.Airbase#AIRBASE airbase The airbase object acting as home base of the helo.
 -- @field Core.Set#SET_GROUP followset Follow group set.
--- @field AI.AI_Formation#AI_FORMATION formation AI_FORMATION object.
+-- @field Functional.Formation#FORMATION formation FORMATION object.
 -- @field #number lowfuel Low fuel threshold of helo in percent.
 -- @field #number altitude Altitude of helo in meters.
 -- @field #number offsetX Offset in meters to carrier in longitudinal direction.
@@ -235,7 +234,7 @@ _RESCUEHELOID=0
 
 --- Class version.
 -- @field #string version
-RESCUEHELO.version="1.1.0"
+RESCUEHELO.version="1.2.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -248,6 +247,7 @@ RESCUEHELO.version="1.1.0"
 -- DONE: Possibility to add already present/spawned aircraft, e.g. for warehouse.
 -- DONE: Add rescue event when aircraft crashes.
 -- DONE: Make offset input parameter.
+-- DONE: Make useable for AUFTRAG
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -336,6 +336,9 @@ function RESCUEHELO:New(carrierunit, helogroupname)
   self:AddTransition("Returned",      "Run",        "Running")
   self:AddTransition("*",             "Status",     "*")
   self:AddTransition("*",             "Stop",       "Stopped")
+
+  
+  self:I(self.lid.."Started.")
 
 
   --- Triggers the FSM event "Start" that starts the rescue helo. Initializes parameters and starts event handlers.
@@ -871,15 +874,25 @@ function RESCUEHELO:onafterStart(From, Event, To)
   
   -- Delay before formation is started.
   local delay=120
-    
-  -- Spawn helo. We need to introduce an alias in case this class is used twice. This would confuse the spawn routine.
-  local Spawn=SPAWN:NewWithAlias(self.helogroupname, self.alias)
   
-  -- Set modex for spawn.
-  Spawn:InitModex(self.modex)
-
+  local UsesAliveGroup=false
+  local Spawn = GROUP:FindByName(self.helogroupname)
+  if Spawn and Spawn:IsAlive() then
+    self.helo=Spawn
+    UsesAliveGroup = true
+    delay = 1 
+  else
+    
+    -- Spawn helo. We need to introduce an alias in case this class is used twice. This would confuse the spawn routine.
+    Spawn=SPAWN:NewWithAlias(self.helogroupname, self.alias)
+  
+    -- Set modex for spawn.
+    Spawn:InitModex(self.modex)
+  
+  end
+  
   -- Spawn in air or at airbase.
-  if self.takeoff==SPAWN.Takeoff.Air then
+  if UsesAliveGroup==false and self.takeoff==SPAWN.Takeoff.Air then
   
     -- Carrier heading
     local hdg=self.carrier:GetHeading()
@@ -899,7 +912,7 @@ function RESCUEHELO:onafterStart(From, Event, To)
     -- Start formation in 1 seconds
     delay=1
     
-  else  
+  elseif UsesAliveGroup==false and self.uncontrolledac then  
  
     -- Check if an uncontrolled helo group was requested.
     if self.uncontrolledac then
@@ -919,9 +932,9 @@ function RESCUEHELO:onafterStart(From, Event, To)
         -- No group of that name!
         self:E(string.format("ERROR: No uncontrolled (alive) rescue helo group with name %s could be found!", self.helogroupname))
         return
-      end
-       
-    else    
+      end  
+    end   
+  elseif UsesAliveGroup==false then   
 
       -- Spawn at airbase.
       self.helo=Spawn:SpawnAtAirbase(self.airbase, self.takeoff, nil, AIRBASE.TerminalType.HelicopterUsable)
@@ -935,9 +948,8 @@ function RESCUEHELO:onafterStart(From, Event, To)
         delay=60
       end
       
-    end
-    
   end
+    
   
   -- Set of group(s) to follow Mother.
   self.followset=SET_GROUP:New()
@@ -947,16 +959,12 @@ function RESCUEHELO:onafterStart(From, Event, To)
   self.HeloFuel0=self.helo:GetFuel()
   
   -- Define AI Formation object.
-  self.formation=AI_FORMATION:New(self.carrier, self.followset, "Helo Formation with Carrier", "Follow Carrier at given parameters.")
-  
+  self.formation=FORMATION:New(self.carrier, self.followset, "Helo Formation with Carrier")
   -- Formation parameters.
   self.formation:FormationCenterWing(-self.offsetX, 50, math.abs(self.altitude), 50, self.offsetZ, 50)
   
   -- Set follow time interval.
   self.formation:SetFollowTimeInterval(self.dtFollow)
-  
-  -- Formation mode.
-  self.formation:SetFlightModeFormation(self.helo)
   
   -- Start formation FSM.
   self.formation:__Start(delay)

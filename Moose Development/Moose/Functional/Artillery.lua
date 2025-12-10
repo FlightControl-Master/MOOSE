@@ -2386,12 +2386,12 @@ function ARTY:OnEventShot(EventData)
           self.Nukes=self.Nukes-1
         end
 
-        -- Decrease available illuminatin shells because we just fired one.
+        -- Decrease available illumination shells because we just fired one.
         if self.currentTarget.weapontype==ARTY.WeaponType.IlluminationShells then
           self.Nillu=self.Nillu-1
         end
 
-        -- Decrease available illuminatin shells because we just fired one.
+        -- Decrease available smoke shells because we just fired one.
         if self.currentTarget.weapontype==ARTY.WeaponType.SmokeShells then
           self.Nsmoke=self.Nsmoke-1
         end
@@ -3803,51 +3803,6 @@ function ARTY:_NuclearBlast(_coord)
   if self.nukefire==true then
     ignite(_fires)
   end
-
---[[
-  local ZoneNuke=ZONE_RADIUS:New("Nukezone", _coord:GetVec2(), 2000)
-
-  -- Scan for Scenery objects.
-  ZoneNuke:Scan(Object.Category.SCENERY)
-
-  -- Array with all possible hideouts, i.e. scenery objects in the vicinity of the group.
-  local scenery={}
-
-  for SceneryTypeName, SceneryData in pairs(ZoneNuke:GetScannedScenery()) do
-    for SceneryName, SceneryObject in pairs(SceneryData) do
-
-      local SceneryObject = SceneryObject -- Wrapper.Scenery#SCENERY
-
-      -- Position of the scenery object.
-      local spos=SceneryObject:GetCoordinate()
-
-      -- Distance from group to impact point.
-      local distance= spos:Get2DDistance(_coord)
-
-      -- Place markers on every possible scenery object.
-      if self.Debug then
-        local MarkerID=spos:MarkToAll(string.format("%s scenery object %s", self.Controllable:GetName(), SceneryObject:GetTypeName()))
-        local text=string.format("%s scenery: %s, Coord %s", self.Controllable:GetName(), SceneryObject:GetTypeName(), SceneryObject:GetCoordinate():ToStringLLDMS())
-        self:T2(SUPPRESSION.id..text)
-      end
-
-      -- Add to table.
-      table.insert(scenery, {object=SceneryObject, distance=distance})
-
-      --SceneryObject:Destroy()
-    end
-  end
-
-  -- Sort scenery wrt to distance from impact point.
---  local _sort = function(a,b) return a.distance < b.distance end
---  table.sort(scenery,_sort)
-
---  for _,object in pairs(scenery) do
---    local sobject=object -- Wrapper.Scenery#SCENERY
---    sobject:Destroy()
---  end
-
-]]
 
 end
 

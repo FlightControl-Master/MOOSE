@@ -28,6 +28,13 @@ local.properties
 .buildpath
 
 
+#####################
+## Visual Studio Code
+#####################
+*.code-workspace
+.vscode/
+
+
 #################
 ## Visual Studio
 #################

@@ -9,7 +9,7 @@
 -- @module AI.AI_Cargo_Airplane
 -- @image AI_Cargo_Dispatching_For_Airplanes.JPG
 
---- @type AI_CARGO_AIRPLANE
+-- @type AI_CARGO_AIRPLANE
 -- @extends Core.Fsm#FSM_CONTROLLABLE
 
 

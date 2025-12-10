@@ -222,7 +222,8 @@
 -- @module Tasking.Task
 -- @image MOOSE.JPG
 
---- @type TASK
+---
+-- @type TASK
 -- @field Core.Scheduler#SCHEDULER TaskScheduler
 -- @field Tasking.Mission#MISSION Mission
 -- @field Core.Set#SET_GROUP SetGroup The Set of Groups assigned to the Task
@@ -728,7 +729,7 @@ function TASK:AddGroups( GroupSet )
   GroupSet = GroupSet or SET_GROUP:New()
  
   self.SetGroup:ForEachGroup(
-    --- @param Wrapper.Group#GROUP GroupSet
+    -- @param Wrapper.Group#GROUP GroupSet
     function( GroupItem )
       GroupSet:Add( GroupItem:GetName(), GroupItem)
     end
@@ -821,7 +822,7 @@ end
 
 do -- Group Assignment
 
-  --- @param #TASK self
+  -- @param #TASK self
   -- @param Actions.Act_Assign#ACT_ASSIGN AcceptClass
   function TASK:SetAssignMethod( AcceptClass )
   
@@ -1201,7 +1202,7 @@ function TASK:RemoveAssignedMenuForGroup( TaskGroup )
   
 end
 
---- @param #TASK self
+-- @param #TASK self
 -- @param Wrapper.Group#GROUP TaskGroup
 function TASK:MenuAssignToGroup( TaskGroup )
 
@@ -1210,7 +1211,7 @@ function TASK:MenuAssignToGroup( TaskGroup )
   self:AssignToGroup( TaskGroup )
 end
 
---- @param #TASK self
+-- @param #TASK self
 -- @param Wrapper.Group#GROUP TaskGroup
 function TASK:MenuMarkToGroup( TaskGroup )
   self:F()

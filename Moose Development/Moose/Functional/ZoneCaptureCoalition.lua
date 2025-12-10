@@ -48,7 +48,7 @@
 
 do -- ZONE_CAPTURE_COALITION
 
-  --- @type ZONE_CAPTURE_COALITION
+  -- @type ZONE_CAPTURE_COALITION
   -- @field #string ClassName Name of the class.
   -- @field #number MarkBlue ID of blue F10 mark.
   -- @field #number MarkRed ID of red F10 mark.
@@ -161,7 +161,7 @@ do -- ZONE_CAPTURE_COALITION
   -- The mission designer can use these values to alter the logic.
   -- For example:
   -- 
-  --     --- @param Functional.ZoneCaptureCoalition#ZONE_CAPTURE_COALITION self
+  --     -- @param Functional.ZoneCaptureCoalition#ZONE_CAPTURE_COALITION self
   --     function ZoneCaptureCoalition:OnEnterGuarded( From, Event, To )
   --       if From ~= "Empty" then
   --         -- Display a message
@@ -172,7 +172,7 @@ do -- ZONE_CAPTURE_COALITION
   -- 
   -- ## Example Event Handler.
   -- 
-  --     --- @param Functional.ZoneCaptureCoalition#ZONE_CAPTURE_COALITION self
+  --     -- @param Functional.ZoneCaptureCoalition#ZONE_CAPTURE_COALITION self
   --     function ZoneCaptureCoalition:OnEnterGuarded( From, Event, To )
   --       if From ~= To then
   --         local Coalition = self:GetCoalition()
@@ -273,7 +273,7 @@ do -- ZONE_CAPTURE_COALITION
   -- Depending on the zone ownership, different messages are sent.
   -- Note the methods `ZoneCaptureCoalition:GetZoneName()`.
   --      
-  --      --- @param Functional.ZoneCaptureCoalition#ZONE_CAPTURE_COALITION self
+  --      -- @param Functional.ZoneCaptureCoalition#ZONE_CAPTURE_COALITION self
   --      function ZoneCaptureCoalition:OnEnterGuarded( From, Event, To )
   --        if From ~= To then
   --          local Coalition = self:GetCoalition()
@@ -294,7 +294,7 @@ do -- ZONE_CAPTURE_COALITION
   -- Next is the Event Handler when the **Empty** state transition is triggered.
   -- Now we smoke the ZoneCaptureCoalition with a green color, using `self:Smoke( SMOKECOLOR.Green )`.
   --      
-  --      --- @param Functional.Protect#ZONE_CAPTURE_COALITION self
+  --      -- @param Functional.Protect#ZONE_CAPTURE_COALITION self
   --      function ZoneCaptureCoalition:OnEnterEmpty()
   --        self:Smoke( SMOKECOLOR.Green )
   --        US_CC:MessageTypeToCoalition( string.format( "%s is unprotected, and can be captured!", ZoneCaptureCoalition:GetZoneName() ), MESSAGE.Type.Information )
@@ -304,7 +304,7 @@ do -- ZONE_CAPTURE_COALITION
   -- The next Event Handlers speak for itself.
   -- When the zone is Attacked, we smoke the zone white and send some messages to each coalition.     
   --      
-  --      --- @param Functional.Protect#ZONE_CAPTURE_COALITION self
+  --      -- @param Functional.Protect#ZONE_CAPTURE_COALITION self
   --      function ZoneCaptureCoalition:OnEnterAttacked()
   --        ZoneCaptureCoalition:Smoke( SMOKECOLOR.White )
   --        local Coalition = self:GetCoalition()
@@ -321,7 +321,7 @@ do -- ZONE_CAPTURE_COALITION
   -- When the zone is Captured, we send some victory or loss messages to the correct coalition.
   -- And we add some score.
   -- 
-  --      --- @param Functional.Protect#ZONE_CAPTURE_COALITION self
+  --      -- @param Functional.Protect#ZONE_CAPTURE_COALITION self
   --      function ZoneCaptureCoalition:OnEnterCaptured()
   --        local Coalition = self:GetCoalition()
   --        self:E({Coalition = Coalition})
@@ -641,7 +641,7 @@ do -- ZONE_CAPTURE_COALITION
   -- 
   -- @usage
   -- -- For example, one could stop the monitoring when the zone was captured!
-  -- --- @param Functional.Protect#ZONE_CAPTURE_COALITION self
+  -- -- @param Functional.Protect#ZONE_CAPTURE_COALITION self
   -- function ZoneCaptureCoalition:OnEnterCaptured()
   --   local Coalition = self:GetCoalition()
   --   self:E({Coalition = Coalition})
