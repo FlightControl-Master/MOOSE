@@ -31,7 +31,7 @@
 -- @module AI.AI_CAP
 -- @image AI_Combat_Air_Patrol.JPG
 
--- @type AI_CAP_ZONE
+--- @type AI_CAP_ZONE
 -- @field Wrapper.Controllable#CONTROLLABLE AIControllable The @{Wrapper.Controllable} patrolling.
 -- @field Core.Zone#ZONE_BASE TargetZone The @{Core.Zone} where the patrol needs to be executed.
 -- @extends AI.AI_Patrol#AI_PATROL_ZONE
