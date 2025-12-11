@@ -2741,6 +2741,15 @@ function OPSGROUP:IsOutOfTorpedos()
   return self.outofTorpedos
 end
 
+--- Check if the group is out of A2G Ammo
+-- @param #OPSGROUP self
+-- @return #boolean If `true`, group is out of torpedos.
+function OPSGROUP:IsOutOfA2GAmmo()
+  if (self.outofMissilesAG and self.outofBombs and self.outofGuns) or self.outofAmmo then
+    return true
+  end
+  return false
+end
 
 --- Check if the group has currently switched a LASER on.
 -- @param #OPSGROUP self

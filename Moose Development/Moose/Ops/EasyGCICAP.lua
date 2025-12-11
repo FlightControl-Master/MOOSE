@@ -109,7 +109,7 @@
 -- ### Prerequisites
 -- 
 -- You have to put a **STATIC WAREHOUSE** object on the airbase with the UNIT name according to the name of the airbase. **Do not put any other static type or it creates a conflict with the airbase name!** 
--- E.g. for Kuitaisi this has to have the unit name Kutaisi. This object symbolizes the AirWing HQ.
+-- E.g. for Kutaisi this has to have the unit name Kutaisi. This object symbolizes the AirWing HQ.
 -- Next put a late activated template group for your CAP/GCI Squadron on the map. Last, put a zone on the map for the CAP operations, let's name it "Blue Zone 1". Size of the zone plays no role.
 -- Put an EW radar system on the map and name it aptly, like "Blue EWR".
 -- 
@@ -763,8 +763,13 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     end
   end
   
-  if self.noalert5 > 0 then  
-    local alert = AUFTRAG:NewALERT5(AUFTRAG.Type.INTERCEPT) 
+  if self.noalert5 > 0 then
+    local alert
+    if self.ClassName == "EASYGCICAP" then  
+      alert = AUFTRAG:NewALERT5(AUFTRAG.Type.INTERCEPT) 
+    elseif self.ClassName == "EASYA2G" then
+      alert = AUFTRAG:NewALERT5(AUFTRAG.Type.BAI) 
+    end
     alert:SetRequiredAssets(self.noalert5)
     alert:SetRepeat(99) 
     CAP_Wing:AddMission(alert)
@@ -1470,6 +1475,14 @@ function EASYGCICAP:_AssignIntercept(Cluster)
             )
           end
           
+          InterceptAuftrag:AddConditionFailure(
+          function()
+            local failure = false
+            if InterceptAuftrag:CountOpsGroups()==0 and InterceptAuftrag:IsExecuting() then failure = true end
+            return failure
+          end          
+          )
+          
         table.insert(self.ListOfAuftrag,InterceptAuftrag)
         local assigned, rest = self:_TryAssignIntercept(ReadyFlightGroups,InterceptAuftrag,contact.group,wingsize)
         if not assigned  then
@@ -1605,7 +1618,7 @@ function EASYGCICAP:onafterStatus(From,Event,To)
     tankermission = tankermission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.TANKER})
     assets = assets + count
     instock = instock + count2
-    local assetsonmission = _wing[1]:GetAssetsOnMission({AUFTRAG.Type.GCICAP,AUFTRAG.Type.PATROLRACETRACK})
+    local assetsonmission = _wing[1]:GetAssetsOnMission({AUFTRAG.Type.ALERT5, AUFTRAG.Type.GCICAP,AUFTRAG.Type.PATROLRACETRACK})
     -- update ready groups
     self.ReadyFlightGroups = nil
     self.ReadyFlightGroups = {}
@@ -1616,7 +1629,8 @@ function EASYGCICAP:onafterStatus(From,Event,To)
         local name = FG:GetName()
         local engage = FG:IsEngaging()
         local hasmissiles = FG:IsOutOfMissiles() == nil and true or false
-        local ready = hasmissiles and FG:IsFuelGood() and FG:IsAirborne()
+        local isalert5 = (FG:GetMissionCurrent() ~= nil and FG:GetMissionCurrent().type == AUFTRAG.Type.ALERT5) and true or false 
+        local ready = hasmissiles and FG:IsFuelGood() and (FG:IsAirborne() or isalert5)
         --self:T(string.format("Flightgroup %s Engaging = %s Ready = %s",tostring(name),tostring(engage),tostring(ready)))
         if ready then
           self.ReadyFlightGroups[name] = FG

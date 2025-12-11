@@ -3060,7 +3060,7 @@ end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set the repeat delay in seconds after a mission is successful/failed. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, FLEET) or higher level.
 -- @param #AUFTRAG self
--- @param #number Nrepeat Repeat delay in seconds. Default 1.
+-- @param #number RepeatDelay Repeat delay in seconds. Default 1.
 -- @return #AUFTRAG self
 function AUFTRAG:SetRepeatDelay(RepeatDelay)
   self.repeatDelay = RepeatDelay

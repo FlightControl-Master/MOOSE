@@ -88,7 +88,7 @@
 --
 -- # The EasyAG Concept
 -- 
--- The idea of this class is partially to make the OPS classes easier operational for an A2Gdefense network, and to replace the legacy AI_A2G_Dispatcher system - not to it's
+-- The idea of this class is partially to make the OPS classes easier operational for an A2G defense network, and to replace the legacy AI_A2G_Dispatcher system - not to it's
 -- full extent, but make a basic system work very quickly.
 --
 -- # Setup
@@ -96,38 +96,49 @@
 -- ## Basic understanding
 -- 
 -- The basics are, there is **one** and only **one** AirWing per airbase. Each AirWing has **at least** one Squadron, who will do A2G tasks. Squadrons will be randomly chosen for the task at hand.
--- Each AirWing has **at least** one Defense Point that it manages. Defense Points will be covered by the AirWing automatically as long as airframes are available. Detected enemy ground forces will be assigned to **one**
+-- Each AirWing has **at least** one Conflict Zone that it manages. COnflict Zones will be covered by the AirWing automatically as long as airframes are available. Detected enemy ground forces will be assigned to **one**
 -- AirWing based on proximity (that is, if you have more than one). 
 -- 
 -- ## Assignment of tasks for enemies
 -- 
--- An exisiting plane or a newly spawned plane will take care of the intruders. Standard overhead is 0.75, i.e. a group of 3 intrudes will
--- be managed by 2 planes from the assigned AirWing. There is an maximum missions limitation per AirWing, so we do not spam the skies.
+-- An exisiting plane or a newly spawned plane will take care of the intruders. Standard overhead is 0.1, i.e. a group of 10 intrudes will
+-- be managed by one planes from the assigned AirWing. There is an maximum missions limitation per AirWing, so we do not spam the skies.
 -- 
 -- ## Basic set-up code
 -- 
 -- ### Prerequisites
 -- 
 -- You have to put a **STATIC WAREHOUSE** object on the airbase with the UNIT name according to the name of the airbase. **Do not put any other static type or it creates a conflict with the airbase name!** 
--- E.g. for Kuitaisi this has to have the unit name Kutaisi. This object symbolizes the AirWing HQ.
+-- E.g. for Kutaisi this has to have the unit name Kutaisi. This object symbolizes the AirWing HQ.
 -- Next put a late activated template group for your A2G Squadron on the map. Last, put a zone on the map for the Defense operations, let's name it "Blue Zone 1". Size of the zone plays no role.
 -- Put a scout system on the map and name it aptly, like "Blue SCOUT".
 -- 
 -- ### Zones
 -- 
 -- For our example, you create a RED and a BLUE border, as a closed polygonal zone representing the borderlines. You can also have conflict zone, where - for our example - BLUE will attack
--- RED groups, despite being on RED territory. Think of a no-fly zone or an limited area of engagement. Conflict zones take precedence over borders, i.e. they can overlap all borders.
+-- RED groups, despite being on or close to RED territory. Think of a no-fly zone or an limited area of engagement. Conflict zones take precedence over borders, i.e. they can overlap all borders.
 -- 
 -- ### Code it
 -- 
 --          -- Set up a basic system for the blue side, we'll reside on Kutaisi, and use GROUP objects with "Blue SCOUT" in the name as Detecting Systems.
---          local mywing = EASYA2G:New("Blue A2G Operations",AIRBASE.Caucasus.Kutaisi,"blue","Blue SCOUT")
+--          local mywing = EASYA2G:New("A2G",AIRBASE.Caucasus.Kutaisi,"blue","SCOUT")
 --          
---          -- Add a patrol point belonging to our airbase, we'll be at 15k ft doing 200 kn, initial direction 90 degrees (East), leg 20NM
---          mywing:AddPatrolPointA2G(AIRBASE.Caucasus.Kutaisi,ZONE:FindByName("Blue Zone 1"):GetCoordinate(),15000,200,90,20)
+--          -- Add a holding/ingress point belonging to our airbase, we'll be at 5k ft doing 250 kn, initial direction 225 degrees (West), leg 5NM
+--          -- This will effectively be the ingress coordinate into the cnflict zone
+--          local Coordinate = ZONE:New("A2G Loitering"):GetCoordinate()
+--          mywing:AddHoldingPointA2G(AIRBASE.Caucasus.Kutaisi,Coordinate,5000,250,225,5)
 --          
---          -- Add a Squadron with template "Blue Sq1 M2000c", 20 airframes, skill good, Modex starting with 102 and skin "Vendee Jeanne"
---          mywing:AddSquadron("Blue Sq1 M2000c","A2G Kutaisi",AIRBASE.Caucasus.Kutaisi,20,AI.Skill.GOOD,102,"ec1.5_Vendee_Jeanne_clean")
+--          -- Add a recon point over the conflict zone, we'll use a reaper for recon
+--          local Coordinate2 = ZONE:New("A2G Recon"):GetCoordinate()
+--          mywing:AddPatrolPointRecon(AIRBASE.Caucasus.Kutaisi,Coordinate2,15000,225,225,5)
+--          
+--          -- Add three Squadrons with templates "Hero 1" and "Hero 2", 20 airframes, skill as set
+--          mywing:AddSquadron("A2G Flight", "Hero 1", AIRBASE.Caucasus.Kutaisi, 5, AI.Skill.GOOD, Modex, Livery)
+--          mywing:AddSquadron("A2G Helo", "Hero 2", AIRBASE.Caucasus.Kutaisi, 5, AI.Skill.HIGH, Modex, Livery)
+--          mywing:AddReconSquadron("Recon Drone", "SpyInTheSky SCOUT", AIRBASE.Caucasus.Kutaisi, 5, AI.Skill.EXCELLENT, Modex, Livery)
+--          
+--          -- Ensure our reaper doesn't get immediately killed
+--          mywing:SetTankerAndScoutsInvisible(true)
 --          
 --          -- Add a couple of zones
 --          -- We'll defend our own border
@@ -177,11 +188,11 @@
 -- ## Change Defaults
 -- 
 -- * @{#EASYA2G.SetDefaultResurrection}: Set how many seconds the AirWing stays inoperable after the AirWing STATIC HQ ist destroyed, default 900 secs. 
--- * @{#EASYA2G.SetDefaultA2GSpeed}: Set how many knots the A2G flights should do (will be altitude corrected), default 300 kn.
--- * @{#EASYA2G.SetDefaultA2GAlt}: Set at which altitude (ASL) the A2G planes will fly, default 25,000 ft.
+-- * @{#EASYA2G.SetDefaultA2GSpeed}: Set how many knots the A2G flights should do (will be altitude corrected), default 225 kn.
+-- * @{#EASYA2G.SetDefaultA2GAlt}: Set at which altitude (ASL) the A2G planes will fly, default 10,000 ft.
 -- * @{#EASYA2G.SetDefaultA2GDirection}: Set the initial direction from the A2G point the planes will fly in degrees, default is 90°.
--- * @{#EASYA2G.SetDefaultA2GLeg}: Set the length of the A2G leg, default is 15 NM.
--- * @{#EASYA2G.SetDefaultA2GGrouping}: Set how many planes will be spawned per mission (CVAP/GCI), defaults to 2.
+-- * @{#EASYA2G.SetDefaultA2GLeg}: Set the length of the A2G leg, default is 5 NM.
+-- * @{#EASYA2G.SetDefaultA2GGrouping}: Set how many planes will be spawned per mission (CVAP/GCI), defaults to 1.
 -- * @{#EASYA2G.SetDefaultMissionRange}: Set how many NM the planes can go from the home base, defaults to 100.
 -- * @{#EASYA2G.SetDefaultNumberAlert5Standby}: Set how many planes will be spawned on cold standby (Alert5), default 2.
 -- * @{#EASYA2G.SetDefaultEngageRange}: Set max engage range for A2G flights if they detect intruders, defaults to 50.
@@ -198,8 +209,8 @@
 -- @field #EASYA2G
 EASYA2G = {
   ClassName = "EASYA2G",
-  overhead = 0.75,
-  capgrouping = 2,
+  overhead = 0.2,
+  capgrouping = 1,
   airbasename = nil,
   airbase = nil,
   coalition = "blue",
@@ -210,10 +221,10 @@ EASYA2G = {
   capspeed = 300,
   capalt = 25000,
   capdir = 45,
-  capleg = 15,
+  capleg = 5,
   maxinterceptsize = 2,
   missionrange = 100,
-  noalert5 = 4,
+  noalert5 = 2,
   ManagedAW = {},
   ManagedSQ = {},
   ManagedCP = {},
@@ -221,7 +232,7 @@ EASYA2G = {
   ManagedEWR = {},
   ManagedREC = {},
   MaxAliveMissions = 8,
-  debug = false,
+  debug = true,
   engagerange = 50,
   repeatsonfailure = 3,
   GoZoneSet = nil,
@@ -304,7 +315,7 @@ function EASYA2G:New(Alias, AirbaseName, Coalition, ScoutName)
   self.coalitionname = string.lower(Coalition) or "blue"
   self.coalition = self.coalitionname == "blue" and coalition.side.BLUE or coalition.side.RED
   self.wings = {}
-  if type(ScoutName) == "string" then EWRName = {EWRName} end
+  if type(ScoutName) == "string" then ScoutName = {ScoutName} end
   self.EWRName = ScoutName --or self.coalitionname.." EWR"
   --self.CapZoneName = CapZoneName
   self.airbasename = AirbaseName
@@ -314,9 +325,9 @@ function EASYA2G:New(Alias, AirbaseName, Coalition, ScoutName)
   self.ConflictZoneSet = SET_ZONE:New()
   self.resurrection = 900
   self.capspeed = 225
-  self.capalt = 15000
+  self.capalt = 5000
   self.capdir = 90
-  self.capleg = 15
+  self.capleg = 5
   self.capgrouping = 2
   self.missionrange = 100
   self.noalert5 = 2
@@ -410,11 +421,11 @@ end
 
 --- Set default leg length in NM
 -- @param #EASYA2G self
--- @param #number Leg Leg defaults to 15
+-- @param #number Leg Leg defaults to 5
 -- @return #EASYA2G self
 function EASYA2G:SetDefaultA2GLeg(Leg)
   self:T(self.lid.."SetDefaultLeg")
- self.capleg = Leg or 15
+ self.capleg = Leg or 5
  return self
 end
 
@@ -449,7 +460,7 @@ function EASYA2G:SetA2GEngageTargetTypes(types)
   return self
 end
 
---- Add a A2G patrol point to a Wing
+--- Add a A2G patrol/holding point to a Wing
 -- @param #EASYA2G self
 -- @param #string AirbaseName Name of the Wing's airbase
 -- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
@@ -458,8 +469,8 @@ end
 -- @param #number Heading Defaults to 90 degrees (East).
 -- @param #number LegLength Defaults to 15 NM.
 -- @return #EASYA2G self
-function EASYA2G:AddPatrolPointA2G(AirbaseName,Coordinate,Altitude,Speed,Heading,LegLength)
-  self:T(self.lid.."AddPatrolPointA2G")--..Coordinate:ToStringLLDDM())
+function EASYA2G:AddHoldingPointA2G(AirbaseName,Coordinate,Altitude,Speed,Heading,LegLength)
+  self:T(self.lid.."AddHoldingPointA2G")--..Coordinate:ToStringLLDDM())
   local coordinate = Coordinate
   local EntryCAP = {} -- #EASYGCICAP.CapPoint  
   if Coordinate:IsInstanceOf("ZONE_BASE") then
@@ -472,13 +483,14 @@ function EASYA2G:AddPatrolPointA2G(AirbaseName,Coordinate,Altitude,Speed,Heading
   EntryCAP.Altitude = Altitude or 25000
   EntryCAP.Speed = Speed or 300
   EntryCAP.Heading = Heading or 90
-  EntryCAP.LegLength = LegLength or 15
+  EntryCAP.LegLength = LegLength or 5
   self.ManagedCP[#self.ManagedCP+1] = EntryCAP
   if self.debug then
-    local mark = MARKER:New(coordinate,self.lid.."Patrol Point"):ToAll()
+    local mark = MARKER:New(coordinate,self.lid.."Holding Point"):ToAll()
   end
   return self
 end
+
 
 --- (Internal) Add a Squadron to an Airwing of the manager
 -- @param #EASYA2G self
@@ -508,7 +520,7 @@ function EASYA2G:_AddSquadron(TemplateName, SquadName, AirbaseName, AirFrames, S
   local wing = self.wings[AirbaseName][1] -- Ops.Airwing#AIRWING
   
   wing:AddSquadron(Squadron_One)
-  wing:NewPayload(TemplateName,-1,{{AUFTRAG.Type.CAS, AUFTRAG.Type.CASENHANCED, AUFTRAG.Type.BAI, AUFTRAG.Type.ALERT5, AUFTRAG.Type.BOMBING, AUFTRAG.Type.STRIKE}},75)
+  wing:NewPayload(TemplateName,-1,{AUFTRAG.Type.CAS, AUFTRAG.Type.CASENHANCED, AUFTRAG.Type.BAI, AUFTRAG.Type.ALERT5, AUFTRAG.Type.BOMBING, AUFTRAG.Type.STRIKE},75)
   
   return self
 end
@@ -562,15 +574,39 @@ function EASYA2G:_TryAssignMission(ReadyFlightGroups,Auftrag,Group,WingSize)
   return assigned, wingsize
 end
 
+--- Find a holding point closest to the group to be attacked (if any set)
+-- @param #EASYA2G self
+-- @param Wrapper.Group#GROUP Group
+-- @return Core.Point#COORDINATE Point (can be nil!)
+function EASYA2G:_GetClosestHoldingPoint(Group)
+  local point = nil
+  local mindist = 0
+  if Group and Group:IsAlive() then
+    local gcoord = Group:GetCoordinate() or COORDINATE:New(0,0,0)
+    for _,_data in pairs(self.ManagedCP or {}) do
+      local data = _data -- #EASYGCICAP.CapPoint 
+      --data.Coordinate
+      local dist = math.floor(UTILS.Round(data.Coordinate:Get2DDistance(gcoord)/1000,1))
+      self:T(self.lid..string.format("Holding Point Distance %dkm",dist))
+      if dist>mindist then 
+        mindist=dist
+        point=data.Coordinate
+      end
+    end
+  end
+  return point
+end
+
 --- Here, we'll decide if we need to launch an attacking flight, and from where
 -- @param #EASYA2G self
 -- @param Ops.Intel#INTEL.Cluster Cluster
 -- @return #EASYA2G self 
 function EASYA2G:_AssignMission(Cluster)
+  self:I(self.lid.."_AssignMission")
    -- Here, we'll decide if we need to launch an attacking flight, and from where
   local overhead = self.overhead
   local capspeed = self.capspeed + 100
-  local capalt = self.capalt
+  local capalt = self.capalt or 5000
   local maxsize = self.maxinterceptsize
   local repeatsonfailure = self.repeatsonfailure
   
@@ -582,7 +618,7 @@ function EASYA2G:_AssignMission(Cluster)
   local ReadyFlightGroups = self.ReadyFlightGroups
   
   -- Aircraft?
-  if Cluster.ctype ~= INTEL.Ctype.AIRCRAFT then return end
+  if Cluster.ctype == INTEL.Ctype.AIRCRAFT then return end
   -- Threatlevel 0..10
   local contact = self.Intel:GetHighestThreatContact(Cluster)
   local name = contact.groupname --#string
@@ -601,7 +637,7 @@ function EASYA2G:_AssignMission(Cluster)
     retrymission = false
   end
   if (retrymission) and (wingsize >= 1) then
-   MESSAGE:New(string.format("**** %s Interceptors need wingsize %d", UTILS.GetCoalitionName(self.coalition), wingsize),15,"CAPGCI"):ToAllIf(self.debug):ToLog()
+   MESSAGE:New(string.format("**** %s Attackers need wingsize %d", UTILS.GetCoalitionName(self.coalition), wingsize),15,"A2G"):ToAllIf(self.debug):ToLog()
     for _,_data in pairs (wings) do
       local airwing = _data[1] -- Ops.Airwing#AIRWING
       local zone = _data[2] -- Core.Zone#ZONE
@@ -651,13 +687,26 @@ function EASYA2G:_AssignMission(Cluster)
       self:T(self.lid.." Assets on Mission "..AssetCount)
       if missioncount < MaxAliveMissions then
         local repeats = repeatsonfailure
+        local Vec1 = contact.group:GetVec2()
+        local Vec2 = targetairwing:GetVec2()
+        --local HoldingVec2 = UTILS.FindNearestPointOnCircle(Vec1,UTILS.NMToMeters(10),Vec2)
+        local IngressCoordinate = self:_GetClosestHoldingPoint(contact.group)
+        if IngressCoordinate == nil then
+          local IngressVec2 = UTILS.FindNearestPointOnCircle(Vec1,UTILS.NMToMeters(10),Vec2)
+          IngressCoordinate = COORDINATE:NewFromVec2(IngressVec2)
+        end
         local InterceptAuftrag = AUFTRAG:NewBAI(contact.group,capalt)
           :SetMissionRange(150)
           :SetPriority(1,true,1)
+          :SetRepeatDelay(300)
           --:SetRequiredAssets(wingsize)
           :SetRepeatOnFailure(repeats)
           :SetMissionSpeed(UTILS.KnotsToAltKIAS(capspeed,capalt))
           :SetMissionAltitude(capalt)
+          -- TODO: Refine this
+          --:SetMissionHoldingCoord(COORDINATE:NewFromVec2(HoldingVec2),capalt,capspeed,120)
+          :SetMissionIngressCoord(IngressCoordinate,capalt,capspeed)
+          --:SetMissionEgressCoord(COORDINATE:NewFromVec2(HoldingVec2),capalt,capspeed)
           
           if nogozoneset:Count() > 0 then
             InterceptAuftrag:AddConditionSuccess(
@@ -682,6 +731,14 @@ function EASYA2G:_AssignMission(Cluster)
             )
           end
           
+          InterceptAuftrag:AddConditionFailure(
+          function()
+            local failure = false
+            if InterceptAuftrag:CountOpsGroups()==0 and InterceptAuftrag:IsExecuting() then failure = true end
+            return failure
+          end          
+          )
+                    
         table.insert(self.ListOfAuftrag,InterceptAuftrag)
         local assigned, rest = self:_TryAssignMission(ReadyFlightGroups,InterceptAuftrag,contact.group,wingsize)
         if not assigned  then
@@ -729,6 +786,121 @@ function EASYA2G:_StartIntel()
   end
   
   self.Intel = BlueIntel  
+  return self
+end
+
+-------------------------------------------------------------------------
+-- TODO FSM Functions
+-------------------------------------------------------------------------
+
+--- (Internal) FSM Function onafterStart
+-- @param #EASYA2G self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @return #EASYA2G self
+function EASYA2G:onafterStart(From,Event,To)
+  self:T({From,Event,To})
+  self:_StartIntel()
+  self:_CreateAirwings()
+  self:_CreateSquads()
+  --self:_SetCAPPatrolPoints()
+  self:_SetTankerPatrolPoints()
+  self:_SetAwacsPatrolPoints()
+  self:_SetReconPatrolPoints()
+  self:__Status(-10)
+  return self
+end
+
+--- (Internal) FSM Function onafterStatus
+-- @param #EASYA2G self
+-- @param #string From
+-- @param #string Event
+-- @param #string To
+-- @return #EASYGCICAP self
+function EASYA2G:onafterStatus(From,Event,To)
+  self:T({From,Event,To})
+  -- cleanup
+  local cleaned = false
+  local cleanlist = {}
+  for _,_auftrag in pairs(self.ListOfAuftrag) do
+    local auftrag = _auftrag -- Ops.Auftrag#AUFTRAG
+    if auftrag and (not (auftrag:IsCancelled() or auftrag:IsDone() or auftrag:IsOver())) then
+      table.insert(cleanlist,auftrag)
+      cleaned = true
+    end
+  end
+  if cleaned == true then
+    self.ListOfAuftrag = nil
+    self.ListOfAuftrag = cleanlist
+  end
+  -- Gather Some Stats
+  local function counttable(tbl)
+    local count = 0
+    for _,_data in pairs(tbl) do
+      count = count + 1
+    end
+    return count
+  end
+  local wings = counttable(self.ManagedAW)
+  local squads = counttable(self.ManagedSQ)
+  local caps = counttable(self.ManagedCP)
+  local assets = 0
+  local instock = 0
+  local capmission = 0
+  local interceptmission = 0
+  local reconmission = 0
+  local awacsmission = 0
+  local tankermission = 0
+  local alert5mission = 0
+  for _,_wing in pairs(self.wings) do
+    local count = _wing[1]:CountAssetsOnMission(MissionTypes,Cohort)
+    local count2 = _wing[1]:CountAssets(true,MissionTypes,Attributes)
+    --capmission = capmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.PATROLRACETRACK})
+    interceptmission = interceptmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.BAI})
+    reconmission = reconmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.RECON})
+    awacsmission = awacsmission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.AWACS})
+    tankermission = tankermission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.TANKER})
+    alert5mission = alert5mission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.ALERT5})
+    assets = assets + count
+    instock = instock + count2
+    local assetsonmission = _wing[1]:GetAssetsOnMission({AUFTRAG.Type.BAI,AUFTRAG.Type.ALERT5})
+    -- update ready groups
+    self.ReadyFlightGroups = nil
+    self.ReadyFlightGroups = {}
+    for _,_asset in pairs(assetsonmission or {}) do
+      local asset = _asset -- Functional.Warehouse#WAREHOUSE.Assetitem
+      local FG = asset.flightgroup -- Ops.FlightGroup#FLIGHTGROUP
+      if FG then
+        local name = FG:GetName()
+        local engage = FG:IsEngaging()
+        local hasmissiles = FG:CanAirToGround()
+        self:T("Is Alert5? "..tostring(FG:GetMissionCurrent().type))
+        local isalert5 = (FG:GetMissionCurrent() ~= nil and FG:GetMissionCurrent().type == AUFTRAG.Type.ALERT5) and true or false 
+        local ready = hasmissiles and FG:IsFuelGood() and (FG:IsAirborne() or isalert5)
+        self:T(string.format("Flightgroup %s Engaging = %s Ready = %s (HasAmmo = %s HasFuel = %s Alert5 = %s)",tostring(name),tostring(engage),tostring(ready),tostring(hasmissiles),tostring(FG:IsFuelGood()), tostring(isalert5)))
+        if ready then
+          self.ReadyFlightGroups[name] = FG
+        end
+      end
+    end
+  end
+  if self.Monitor then
+    local threatcount = #self.Intel.Clusters or 0
+    local text =  self.alias
+    text = text.."\nWings: "..wings.."\nSquads: "..squads.."\nHoldPoints: "..caps.."\nAssets on Mission: "..assets.."\nAssets in Stock: "..instock
+    text = text.."\nThreats: "..threatcount
+    text = text.."\nAirWing alive Missions: "..capmission+awacsmission+tankermission+reconmission+interceptmission+alert5mission
+    --text = text.."\n - A2G Holding: "..capmission
+    text = text.."\n - A2G Attack: "..interceptmission
+    text = text.."\n - AWACS: "..awacsmission
+    text = text.."\n - TANKER: "..tankermission
+    text = text.."\n - Recon: "..reconmission
+    text = text.."\n - Alert5 "..alert5mission
+    text = text.."\nMission Limit: "..self.MaxAliveMissions   
+    MESSAGE:New(text,15,"A2G"):ToAll():ToLogIf(self.debug)
+  end
+  self:__Status(30)
   return self
 end
 

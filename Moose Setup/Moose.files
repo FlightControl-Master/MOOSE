@@ -104,6 +104,7 @@ Ops/FlightControl.lua
 Ops/PlayerTask.lua
 Ops/PlayerRecce.lua
 Ops/EasyGCICAP.lua
+Ops/EasyA2G.lua
 Ops/OpsZone.lua
 Ops/ArmyGroup.lua
 Ops/OpsTransport.lua

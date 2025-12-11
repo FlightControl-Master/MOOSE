@@ -115,6 +115,7 @@ __Moose.Include( 'Ops\\Operation.lua' )
 __Moose.Include( 'Ops\\FlightControl.lua' )
 __Moose.Include( 'Ops\\PlayerRecce.lua' )
 __Moose.Include( 'Ops\\EasyGCICAP.lua' )
+__Moose.Include( 'Ops\\EasyA2G.lua' )
 
 __Moose.Include( 'Sound\\UserSound.lua' )
 __Moose.Include( 'Sound\\SoundOutput.lua' )
