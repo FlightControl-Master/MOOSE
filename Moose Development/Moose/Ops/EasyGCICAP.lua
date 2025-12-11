@@ -278,7 +278,8 @@ EASYGCICAP = {
 EASYGCICAP.version="0.1.30"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO list
+-- 
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: TBD
@@ -611,7 +612,6 @@ function EASYGCICAP:SetCapStartTimeVariation(Start, End)
   return self
 end
 
-
 --- Set which target types CAP flights will prefer to engage, defaults to {"Air"}
 -- @param #EASYGCICAP self
 -- @param #table types Table of comma separated #string entries, defaults to {"Air"} (everything that flies and is not a weapon). Useful other options are e.g. {"Bombers"}, {"Fighters"}, 
@@ -656,7 +656,7 @@ function EASYGCICAP:_CreateAirwings()
   return self
 end
 
---- (internal) Create and add another AirWing to the manager
+--- (Internal) Create and add another AirWing to the manager
 -- @param #EASYGCICAP self
 -- @param #string Airbasename
 -- @param #string Alias
@@ -1459,6 +1459,8 @@ function EASYGCICAP:_AssignIntercept(Cluster)
                   if coord and conflictset:Count() > 0 and conflictset:IsCoordinateInZone(coord) then
                     success = false
                   end
+                else
+                  success = true
                 end
                 return success
               end,

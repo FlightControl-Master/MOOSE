@@ -1019,7 +1019,8 @@ function PSEUDOATC:SetUsingRadioInformationFromMap(path)
   if RADIOS and lfs and io then
     self.radios = RADIOS:NewFromFile(path)
   else
-    self:E("PSEUDOATC:SetUsingRadioInformationFromMap Needs `lfs`and `io` to be desanitized in the `MissionScripting.lua` in `<DCS_Install_Directory>\Scripts`")
+    self:E("PSEUDOATC:SetUsingRadioInformationFromMap Needs `lfs`and `io` to be desanitized in the `MissionScripting.lua` in `<DCS_Install_Directory>/Scripts`")
   end
   return self
 end
+
