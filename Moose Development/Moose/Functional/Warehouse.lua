@@ -4112,8 +4112,8 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
 
   -- Get name of template group.
   local templategroupname=group:GetName()
-
-  local Descriptors=group:GetUnit(1):GetDesc()
+  local unit = group:GetUnit(1)
+  local Descriptors= (unit and unit:IsAlive()) and unit:GetDesc() or {}
   local Category=group:GetCategory()
   local TypeName=group:GetTypeName()
   local SpeedMax=group:GetSpeedMax()
@@ -6132,6 +6132,7 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
         unit.onboard_num=asset.modex[i]
       end
       if asset.callsign then
+        --UTILS.PrintTableToLog(asset.callsign)
         unit.callsign=asset.callsign[i]
       end
 
