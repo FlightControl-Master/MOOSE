@@ -772,14 +772,14 @@ do
 --        -- if you want to add weight to your Heli, troops can have a weight in kg **per person**. Currently no max weight checked. Fly carefully.
 --        my_ctld:AddTroopsCargo("Anti-Tank Small",{"ATS"},CTLD_CARGO.Enum.TROOPS,3,80)
 --        
---        -- add infantry unit called "Anti-Tank" using templates "AA" and "AA"", of type TROOP with size 4. No weight. We only have 2 in stock:
+--        -- add infantry unit called "Anti-Air" using templates "AA" and "AA2", of type TROOP with size 4. No weight. We only have 2 in stock:
 --        my_ctld:AddTroopsCargo("Anti-Air",{"AA","AA2"},CTLD_CARGO.Enum.TROOPS,4,nil,2)
 --        
 --        -- add an engineers unit called "Wrenches" using template "Engineers", of type ENGINEERS with size 2. Engineers can be loaded, dropped,
 --        -- and extracted like troops. However, they will seek to build and/or repair crates found in a given radius. Handy if you can\'t stay
 --        -- to build or repair or under fire.
 --        my_ctld:AddTroopsCargo("Wrenches",{"Engineers"},CTLD_CARGO.Enum.ENGINEERS,4)
---        myctld.EngineerSearch = 2000 -- teams will search for crates in this radius.
+--        my_ctld.EngineerSearch = 2000 -- teams will search for crates in this radius.
 --        
 --        -- add vehicle called "Humvee" using template "Humvee", of type VEHICLE, size 2, i.e. needs two crates to be build
 --        -- vehicles and FOB will be spawned as crates in a LOAD zone first. Once transported to DROP zones, they can be build into the objects
@@ -795,9 +795,9 @@ do
 --        -- add infantry unit called "Forward Ops Base" using template "FOB", of type FOB, size 4, i.e. needs four crates to be build:
 --        my_ctld:AddCratesCargo("Forward Ops Base",{"FOB"},CTLD_CARGO.Enum.FOB,4)
 --
---        -- add **unit** instead of **crates** called "Humvee" for the C-130J-30 Manage Units menu, using template "Humvee", of type VEHICLE
+--        -- Add **unit** instead of **crates** called "Humvee" for the C-130J-30 Manage Units menu, using template "Humvee", of type VEHICLE
 --        -- units are spawned directly behind the aircraft in a LOAD zone, without crates or building
---        my_ctld:AddUnits("Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE,10,"ANTI TANK")
+--        my_ctld:AddUnits("Humvee",{"Humvee"},CTLD_CARGO.Enum.VEHICLE)
 --        
 --        -- add crates to repair FOB or VEHICLE type units - the 2nd parameter needs to match the template you want to repair,
 --        -- e.g. the "Humvee" here refers back to the "Humvee" crates cargo added above (same template!)
@@ -841,6 +841,8 @@ do
 --
 --          my_ctld.useprefix = true -- (DO NOT SWITCH THIS OFF UNLESS YOU KNOW WHAT YOU ARE DOING!) Adjust **before** starting CTLD. If set to false, *all* choppers of the coalition side will be enabled for CTLD.
 --          my_ctld.CrateDistance = 35 -- List and Load crates in this radius only.
+--          my_ctld.UnitDistance = 90 -- List units in this radius only. This will only be used for the C-130J-30 and the option my_ctld.UseC130LoadAndUnload = true.
+--          my_ctld.maxUnitsNearby = 3 -- Max units allowed to be spawned using Get units function for the C-130J-30. It will exclude what's inside the C-130J-30.
 --          my_ctld.PackDistance = 35 -- Pack crates in this radius only
 --          my_ctld.dropcratesanywhere = false -- Option to allow crates to be dropped anywhere.
 --          my_ctld.dropAsCargoCrate = false -- Hercules only: Parachuted herc cargo is not unpacked automatically but placed as crate to be unpacked. Needs a cargo with the same name defined like the cargo that was dropped.
@@ -851,7 +853,6 @@ do
 --          my_ctld.smokedistance = 2000 -- Smoke or flares can be request for zones this far away (in meters).
 --          my_ctld.movetroopstowpzone = true -- Troops and vehicles will move to the nearest MOVE zone...
 --          my_ctld.movetroopsdistance = 5000 -- .. but only if this far away (in meters)
---          my_ctld.smokedistance = 2000 -- Only smoke or flare zones if requesting player unit is this far away (in meters)
 --          my_ctld.suppressmessages = false -- Set to true if you want to script your own messages.
 --          my_ctld.repairtime = 300 -- Number of seconds it takes to repair a unit.
 --          my_ctld.buildtime = 300 -- Number of seconds it takes to build a unit. Set to zero or nil to build instantly.
@@ -883,7 +884,8 @@ do
 --          my_ctld.VehicleMoveFormation = AI.Task.VehicleFormation.VEE -- When a group moves to a MOVE zone, then it takes this formation. Can be a table of formations, which are then randomly chosen. Defaults to "Vee".
 --          my_ctld.validateAndRepositionUnits = false -- Uses Disposition and other logic to find better ground positions for ground units avoiding trees, water, roads, runways, map scenery, statics and other units in the area. (Default is false)
 --          my_ctld.loadSavedCrates = true -- Load back crates (STATIC) from the save file. Useful for mission restart cleanup. (Default is true)
---          my_ctld.self.UseC130LoadAndUnload = false -- Forces the C-130 player to use the C-130J built system to load the cargo onboard and to unload. (Default is false)
+--          my_ctld.UseC130LoadAndUnload = false -- When set to true, forces the C-130 player to use the C-130J built system to load the cargo onboard and to unload. (Default is false)
+--
 -- ## 2.1 CH-47 Chinook support
 -- 
 -- The Chinook comes with the option to use the ground crew menu to load and unload cargo into the Helicopter itself for better immersion. As well, it can sling-load cargo from ground. The cargo you can actually **create**
@@ -901,12 +903,16 @@ do
 --      * Dual shell fuel barrels (type name "barrels")
 --      * UH-1H net (type name "uh1h_cargo")
 --      * C-130J-30 (type name "cds_crate")
+--      * C-130J-30 (type name "cds_barrels")
+--      * Small container (type name "iso_container_small") -- 4 of these will fit inside the C-130J-30
+--      * Big container (type name "iso_container") -- 2 of these will fit inside the C-130J-30
 --      
 -- All other kinds of cargo can be sling-loaded.
 --      
 -- ## 2.1.2 Recommended settings
 --          
---          my_ctld.C130basetype = "cds_crate" -- This can be changed to other cargo
+--          my_ctld.onestepmenu = true -- This will enable Get and load, drop and build, etc. All will be done in one step. works for every module except the C-130J-30 with my_ctld.UseC130LoadAndUnload = true
+--          my_ctld.C130basetype = "cds_crate" -- This can be changed to other cargo. This is only for the C-130J-30
 --          my_ctld.basetype = "container_cargo" -- **DO NOT** change this to a base type which could also be loaded by F8/GC to avoid logic problems!
 --          my_ctld.forcehoverload = false -- no hover autoload, leads to cargo complications with ground crew created cargo items
 --          my_ctld.pilotmustopendoors = true -- crew must open back loading door 50% (horizontal) or more - watch out for NOT adding a back door gunner!
@@ -938,6 +944,7 @@ do
 --        ["Mi-24P"] = {type="Mi-24P", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18, cargoweightlimit = 700},
 --        ["Mi-24V"] = {type="Mi-24V", crates=true, troops=true, cratelimit = 2, trooplimit = 8, length = 18, cargoweightlimit = 700},
 --        ["Hercules"] = {type="Hercules", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 25, cargoweightlimit = 19000},
+--        ["C-130J-30"] = {type="C-130J-30", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 35, cargoweightlimit = 21500},
 --        ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500},
 --        ["AH-64D_BLK_II"] = {type="AH-64D_BLK_II", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 17, cargoweightlimit = 200}, 
 --        ["MH-60R"] = {type="MH-60R", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
@@ -975,6 +982,10 @@ do
 --              -- Troops
 --              my_ctld:AddStockTroops("Anti-Air", 2)
 --              my_ctld:RemoveStockTroops("Anti-Air", 2)
+--              
+--              -- Units for the C-130J-30
+--              my_ctld:AddStockUnits("Vulcan", 2)
+--              my_ctld:RemoveStockUnits("Vulcan", 2)
 --  
 --  Notes:
 --  Troops dropped back into a LOAD zone will effectively be added to the stock. Crates lost in e.g. a heli crash are just that - lost.
@@ -1031,17 +1042,17 @@ do
 --          ... your code here ...
 --        end
 --
---- ## 3.6 OnAfterHelicopterLost
+-- ## 3.6 A OnAfterHelicopterLost
 --  
---    This function is called when a player has deployed left a unit or crashed/died:
+--    This function is called when a player has left the helicopter or crashed/died:
 --
 --        function my_ctld:OnAfterHelicopterLost(From, Event, To, Unitname, Cargotable)
 --          ... your code here ...
 --        end  
 --  
--- ## 3.6 OnAfterCratesBuild, OnAfterCratesRepaired
+-- ## 3.6 B OnAfterCratesBuild, OnAfterCratesRepaired
 --  
---    This function is called when a player has build a vehicle or FOB:
+--    This function is called when a player has built a vehicle or FOB:
 --
 --        function my_ctld:OnAfterCratesBuild(From, Event, To, Group, Unit, Vehicle)
 --          ... your code here ...
@@ -1051,9 +1062,9 @@ do
 --          ... your code here ...
 --        end
 --
--- ## 3.6 OnAfterUnitsSpawn
+-- ## 3.6 C OnAfterUnitsSpawn
 --
---   This function is called when a player spawn units using the Get unit, only available for the C-130J-30
+--   This function is called when a player spawns units using the Get Unit menu, only available for the C-130J-30 when my_ctld.UseC130LoadAndUnload = true
 --
 --        function my_ctld:OnAfterUnitsSpawn(From, Event, To, Group, Unit, Units)
 --          -- Units is a table of Wrapper.Group#GROUP objects that were spawned
@@ -1094,7 +1105,7 @@ do
 -- ## 4.2 Manage Troops
 -- 
 -- Use this entry to load, drop and extract troops. NOTE - with extract you can only load troops from the field that were deployed prior. 
--- Currently limited CTLD_CARGO troops, which are build from **one** template. Also, this will heal/complete your units as they are respawned.
+-- Currently limited to CTLD_CARGO troops, which are built from **one** template. Also, this will heal/complete your units as they are respawned.
 -- 
 -- ## 4.3 List boarded cargo
 -- 
@@ -1110,7 +1121,7 @@ do
 -- 
 -- ## 4.6 Show hover parameters
 -- 
--- Lists hover parameters and indicates if these are curently fulfilled. Also @see options on hover heights.
+-- Lists hover parameters and indicates if these are currently fulfilled. Also @see options on hover heights.
 -- 
 -- ## 4.7 List Inventory
 -- 
@@ -1120,29 +1131,30 @@ do
 -- 
 -- Basic support for the Hercules mod By Anubis has been build into CTLD, as well as Bronco and Mosquito - that is you can load/drop/build the same way and for the same objects as 
 -- the helicopters (main method). 
--- To cover objects and troops which can be loaded from the groud crew Rearm/Refuel menu (F8), you need to use @{#CTLD_HERCULES.New}() and link
+-- To cover objects and troops which can be loaded from the ground crew Rearm/Refuel menu (F8), you need to use @{#CTLD_HERCULES.New}() and link
 -- this object to your CTLD setup (alternative method). In this case, do **not** use the `Hercules_Cargo.lua` or `Hercules_Cargo_CTLD.lua` which are part of the mod 
 -- in your mission!
 -- 
 -- ### 5.1 Create an own CTLD instance and allow the usage of the Hercules mod (main method)
+-- 
 --
---              local my_ctld = CTLD:New(coalition.side.BLUE,{"Helicargo", "Hercules"},"Lufttransportbrigade I")
+--              local my_ctld = CTLD:New(coalition.side.BLUE,{"Helicargo", "Hercules"},"Lufttransportbrigade I") -- This is only needed for the Hercules mod and not the C-130J-30
 -- 
 -- Enable these options for Hercules support:
 --  
---              my_ctld.enableFixedWing = true
+--              my_ctld.enableFixedWing = true -- false by default.
 --              my_ctld.FixedMinAngels = 155 -- for troop/cargo drop via chute in meters, ca 470 ft
 --              my_ctld.FixedMaxAngels = 2000 -- for troop/cargo drop via chute in meters, ca 6000 ft
 --              my_ctld.FixedMaxSpeed = 77 -- 77mps or 270kph or 150kn
 -- 
--- Hint: you can **only** airdrop from the Hercules if you are "in parameters", i.e. at or below `FixedMaxSpeed` and in the AGLFixedMinAngelseen
+-- Hint: you can **only** airdrop from the Hercules if you are "in parameters", i.e. at or below `FixedMaxSpeed` and in the AGL range between
 -- `FixedMinAngels` and `FixedMaxAngels`!
 -- 
 -- Also, the following options need to be set to `true`:
 -- 
 --              my_ctld.useprefix = true -- this is true by default and MUST BE ON. 
 -- 
--- ### 5.2 Integrate Hercules ground crew (F8 Menu) loadable objects (alternative method, use either the above OR this method, NOT both!)
+-- ### 5.2 Integrate Hercules ground crew (F8 Menu) loadable objects (alternative method, use either the above OR this method, NOT both!) -- Only needed for the Hercules mod!
 -- 
 -- Taking another approach, integrate to your CTLD instance like so, where `my_ctld` is a previously created CTLD instance:
 --            
@@ -1185,18 +1197,53 @@ do
 -- Cargo can be defined to be automatically dropped as crates.
 --              my_ctld.dropAsCargoCrate = true -- default is false
 --
--- The idea is, to have those crate behave like brought in with a helo. So any unpack restictions apply.
+-- The idea is to have those crates behave like brought in with a helo, so any unpack restrictions apply.
 -- To enable those cargo drops, the cargo types must be added manually in the CTLD configuration. So when the above defined template for "Vulcan" should be used
 -- as CTLD_Cargo, the following line has to be added. NoCrates, PerCrateMass, Stock, SubCategory can be configured freely.
 --              my_ctld:AddCratesCargo("Vulcan",      {"Vulcan"}, CTLD_CARGO.Enum.VEHICLE, 6, 2000, nil, "SAM/AAA")
 --
 -- So if the Vulcan in the example now needs six crates to complete, you have to bring two Hercs with three Vulcan crates each and drop them very close together...
 --
--- ## 6. Save and load back units - persistance
+--  ### 5.4 C-130J-30 support
+--
+--  The C130-J-30 will work only by setting up
+--
+--              my_ctld.enableFixedWing = true -- false by default.
+--
+--              -- The rest below is default values but can be changed to something else.
+--
+--              my_ctld.C130basetype = "cds_crate" -- this is default.
+--              my_ctld.FixedMinAngels = 155 -- for troop/cargo drop via chute in meters, ca 470 ft
+--              my_ctld.FixedMaxAngels = 2000 -- for troop/cargo drop via chute in meters, ca 6000 ft
+--              my_ctld.FixedMaxSpeed = 77 -- 77mps or 270kph or 150kn
+--
+--
+--  You can also enable my_ctld.UseC130LoadAndUnload and set it to true, false is default, this means you will not be able to get and load items but rather "Get" only.
+--  Those crates will be then placed at the back of the C-130J-30 and you'll have to use the built in loading system to load those crates.
+--  With that option enabled, you'll even get a new menu called Manage Units where you can get real units instead of crates. Those units is not limited to what fits inside
+--  the C-130J-30, but rather by what you add.
+--
+--  Example: 
+--
+--             my_ctld:AddUnits("Humvee",{"CTLD_CARGO_HMMWV"},CTLD_CARGO.Enum.VEHICLE,10, "ANTI TANK")
+--             my_ctld:AddUnits("Mephisto",{"CTLD_CARGO_Mephisto"},CTLD_CARGO.Enum.VEHICLE,10, "ANTI TANK")
+--             my_ctld:AddUnits("Vulcan",{"CTLD_CARGO_Vulcan"}, CTLD_CARGO.Enum.VEHICLE, 10, "SAM/AAA")
+--             my_ctld:AddUnits("Avenger",{"CTLD_CARGO_Avenger"}, CTLD_CARGO.Enum.VEHICLE, 10, "SAM/AAA")
+--             my_ctld:AddUnits("Humvee scout",{"CTLD_CARGO_Scout"}, CTLD_CARGO.Enum.VEHICLE, 10, "Support")
+--             my_ctld:AddUnits("FV-107 Scimitar",{"CTLD_CARGO_Scimitar"}, CTLD_CARGO.Enum.VEHICLE, 10, "Support")
+--             my_ctld:AddUnits("FV-101 Scorpion",{"CTLD_CARGO_Scorpion"}, CTLD_CARGO.Enum.VEHICLE, 10, "Support")
+--
+--             With the example above, we have my_ctld.usesubcats = true, which enables sub menus for categories. like the Anti tank units and support units, etc.
+--             the 10 before that is how many we shall have in stock. Once that stock amount is reached, those items will not be available anymore.
+--
+--
+-- ## 6. Save and load back units - persistence
 -- 
 -- You can save and later load back units dropped or build to make your mission persistent.
--- For this to work, you need to de-sanitize **io** and **lfs** in your MissionScripting.lua, which is located in your DCS installtion folder under Scripts.
+-- For this to work, you need to de-sanitize **io** and **lfs** in your MissionScripting.lua, which is located in your DCS installation folder under Scripts.
 -- There is a risk involved in doing that; if you do not know what that means, this is possibly not for you.
+--
+--
 -- 
 -- Use the following options to manage your saves:
 -- 
@@ -1205,14 +1252,14 @@ do
 --              my_ctld.filename = "missionsave.csv" -- example filename
 --              my_ctld.filepath = "C:\\Users\\myname\\Saved Games\\DCS\Missions\\MyMission" -- example path
 --              my_ctld.eventoninject = true -- fire OnAfterCratesBuild and OnAfterTroopsDeployed events when loading (uses Inject functions)
---              my_ctld.useprecisecoordloads = true -- Instead if slightly varyiing the group position, try to maintain it as is
+--              my_ctld.useprecisecoordloads = true -- Instead if slightly varying the group position, try to maintain it as is
 --  
 --  Then use an initial load at the beginning of your mission:
 --  
 --            my_ctld:__Load(10)
 --            
 -- **Caveat:**
--- If you use units build by multiple templates, they will effectively double on loading. Dropped crates are not saved. Current stock is not saved.
+-- If you use units built by multiple templates, they will effectively double on loading. Dropped crates are not saved. Current stock is not saved.
 -- 
 -- ## 7. Complex example - Build a complete FARP from a CTLD crate drop
 -- 
@@ -1243,7 +1290,7 @@ do
 --            local coord = Coordinate  --Core.Point#COORDINATE
 --
 --            local FarpNameNumber = ((FARPName-1)%10)+1 -- make sure 11 becomes 1 etc
---            local FName = FARPClearnames[FarpNameNumber] -- get clear namee
+--            local FName = FARPClearnames[FarpNameNumber] -- get clear name
 --  
 --            FARPFreq = FARPFreq + 1
 --            FARPName = FARPName + 1
@@ -1272,7 +1319,7 @@ do
 -- 
 -- ## 8. Transport crates and troops with CA (Combined Arms) trucks
 -- 
--- You can optionally also allow to CTLD with CA trucks and other vehicles:
+-- You can optionally also allow CTLD with CA trucks and other vehicles:
 -- 
 --          -- Create a SET_CLIENT to capture CA vehicles steered by players
 --          local truckers = SET_CLIENT:New():HandleCASlots():FilterCoalitions("blue"):FilterPrefixes("Truck"):FilterStart()
@@ -1567,7 +1614,9 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.nobuildmenu = false -- enfore engineer build only?
   
   -- setup
-  self.CrateDistance = 35 -- list/load crates in this radius
+  self.CrateDistance = 35 -- list/load crates in this radius (meters)
+  self.UnitDistance = 90 -- Units in this radius for the C-130J-30 to check for nearby units (meters)
+  self.maxUnitsNearby = 3 -- Max units allowed to be build if the amount of the default 3 is exceeded when looking what's nearby
   self.PackDistance = 35 -- pack objects in this radius
   self.ExtractFactor = 3.33 -- factor for troops extraction, i.e. CrateDistance * Extractfactor
   self.prefixes = Prefixes or {"Cargoheli"}
@@ -2983,14 +3032,14 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
       MENU_GROUP_COMMAND:New(Group, "Get and Load", parentMenu, self._GetAndLoad, self, Group, Unit, cargoObj, 1)
     else
       local msg
-      if isHerc then
-      msg="Use C-130 system to load"
-      elseif maxMassSets and (not capacitySets or capacitySets >= 1) and maxMassSets < 1 then
-        msg = "Weight limit reached"
-      else
-        msg = "Crate limit reached"
+      if not isHerc then
+        if maxMassSets and (not capacitySets or capacitySets >= 1) and maxMassSets < 1 then
+          msg = "Weight limit reached"
+        else
+          msg = "Crate limit reached"
+        end
+        MENU_GROUP_COMMAND:New(Group, msg, parentMenu, self._SendMessage, self, msg, 10, false, Group)
       end
-      MENU_GROUP_COMMAND:New(Group, msg, parentMenu, self._SendMessage, self, msg, 10, false, Group)
     end
     parentMenu:Refresh()
     return self
@@ -3008,14 +3057,14 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
       MENU_GROUP_COMMAND:New(Group, "Get and Load", qMenu, self._GetAndLoad, self, Group, Unit, cargoObj, quantity)
     else
       local msg
-      if isHerc then
-        msg="Use C-130 system to load"
-      elseif maxMassSets and (not capacitySets or capacitySets >= quantity) and maxMassSets < quantity then
-        msg = "Weight limit reached"
-      else
-        msg = "Crate limit reached"
+      if not isHerc then
+        if maxMassSets and (not capacitySets or capacitySets >= quantity) and maxMassSets < quantity then
+          msg = "Weight limit reached"
+        else
+          msg = "Crate limit reached"
+        end
+        MENU_GROUP_COMMAND:New(Group, msg, qMenu, self._SendMessage, self, msg, 10, false, Group)
       end
-      MENU_GROUP_COMMAND:New(Group, msg, qMenu, self._SendMessage, self, msg, 10, false, Group)
     end
   end
   return self
@@ -3051,20 +3100,52 @@ function CTLD:_C130GetUnits(Group, Unit, Name)
     self:_SendMessage("You are not close enough to a logistics zone!",10,false,Group)
     return self
   end
+
+  local coord = Unit:GetCoordinate() or Group:GetCoordinate()
+  local capabilities = self:_GetUnitCapabilities(Unit)
+  local innerDist = (capabilities.length and capabilities.length/2) or 15
+  local maxUnitsNearby = self.maxUnitsNearby or 3
+  local searchRadius = self.UnitDistance or 90
+  local checkZone = ZONE_RADIUS:New("CTLD_C130UnitsZone",coord:GetVec2(),searchRadius,false)
+  local nearGroups = SET_GROUP:New():FilterCoalitions("blue"):FilterZones({checkZone}):FilterOnce()
+  local nearbyCount = 0
+  for _,gr in pairs(nearGroups.Set) do
+    local gc = gr:GetCoordinate()
+    if gc then
+      local dist = coord:Get2DDistance(gc)
+      if dist > innerDist then
+        for _,ucfg in pairs(self.C130GetUnits or {}) do
+          local templ = ucfg.Templates or {}
+          if type(templ) == "string" then
+            templ = {templ}
+          end
+          local matched = false
+          for _,tName in pairs(templ) do
+            if string.match(gr:GetName(),tName) then
+              nearbyCount = nearbyCount + 1
+              matched = true
+              break
+            end
+          end
+          if matched or nearbyCount >= maxUnitsNearby then break end
+        end
+      end
+    end
+    if nearbyCount >= maxUnitsNearby then break end
+  end
+  if nearbyCount >= maxUnitsNearby then
+    self:_SendMessage(string.format("You already have %d units nearby!",maxUnitsNearby),10,false,Group)
+    return self
+  end
+
   local temptable = cfg.Templates or {}
   if type(temptable) == "string" then
     temptable = {temptable}
   end
-  local coord = Unit:GetCoordinate() or Group:GetCoordinate()
-  local capabilities = self:_GetUnitCapabilities(Unit)
-  local length = capabilities.length or 30
+  local length = (capabilities.length + 5) or 30
   local heading = (Unit:GetHeading() + 180) % 360
   local canmove = cfg.CanMove ~= false
   local spawnedUnits = {}
-  local coord = Unit:GetCoordinate() or Group:GetCoordinate()
-  local capabilities = self:_GetUnitCapabilities(Unit)
-  local length = capabilities.length or 30
-  local heading = (Unit:GetHeading() + 180) % 360
   local idx = 1
   for _,_template in pairs(temptable) do
     local cratedistance = (idx-1)*2.5 + length
@@ -3075,7 +3156,7 @@ function CTLD:_C130GetUnits(Group, Unit, Name)
     local alias = string.format("%s-%d",_template,math.random(1,100000))
     if canmove then
       SPAWN:NewWithAlias(_template,alias)
-        :InitRandomizeUnits(true,20,2)
+        :InitRandomizeUnits(true,10,2)
         :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
         :InitDelayOff()
         :OnSpawnGroup(function(grp,TimeStamp)
@@ -3087,6 +3168,7 @@ function CTLD:_C130GetUnits(Group, Unit, Name)
         :SpawnFromVec2(randomcoord)
     else
       SPAWN:NewWithAlias(_template,alias)
+        :InitRandomizeUnits(true,10,2)
         :InitDelayOff()
         :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
         :OnSpawnGroup(function(grp,TimeStamp)
@@ -3483,28 +3565,36 @@ function CTLD:_C130RemoveUnitsNearby(_group,_unit)
   if not _group or not _unit then return self end
   local location = _group:GetCoordinate()
   if not location then return self end
+  local capabilities = self:_GetUnitCapabilities(_unit)
+  local innerDist = (capabilities.length and capabilities.length/2) or 15
   local finddist = self.PackDistance or (self.CrateDistance or 35)
   local zone = ZONE_RADIUS:New("CTLD_C130RemoveZone",location:GetVec2(),finddist,false)
   local nearestGroups = SET_GROUP:New():FilterCoalitions("blue"):FilterZones({zone}):FilterOnce()
   local removedAny = false
   for _, gr in pairs(nearestGroups.Set) do
-    local didRemoveThis = false
-    for _, cfg in pairs(self.C130GetUnits or {}) do
-      local templ = cfg.Templates or {}
-      if type(templ) == "string" then
-        templ = {templ}
-      end
-      for _, tName in pairs(templ) do
-        if string.match(gr:GetName(),tName) then
-          local cname = cfg.Name or "Unit"
-          gr:Destroy(false)
-          self:_SendMessage(cname.." have been removed",10,false,_group)
-          removedAny = true
-          didRemoveThis = true
-          break
+    local gc = gr:GetCoordinate()
+    if gc then
+      local dist = location:Get2DDistance(gc)
+      if dist > innerDist then
+        local didRemoveThis = false
+        for _, cfg in pairs(self.C130GetUnits or {}) do
+          local templ = cfg.Templates or {}
+          if type(templ) == "string" then
+            templ = {templ}
+          end
+          for _, tName in pairs(templ) do
+            if string.match(gr:GetName(),tName) then
+              local cname = cfg.Name or "Unit"
+              gr:Destroy(false)
+              self:_SendMessage(cname.." have been removed",10,false,_group)
+              removedAny = true
+              didRemoveThis = true
+              break
+            end
+          end
+          if didRemoveThis then break end
         end
       end
-      if didRemoveThis then break end
     end
   end
   if not removedAny then
@@ -6433,8 +6523,9 @@ function CTLD:AddUnits(Name,Templates,Type,Stock,SubCategory,UnitTypes)
   entry.Name = Name
   entry.Templates = Templates
   entry.Type = Type
-  entry.Stock = Stock
-  entry.SubCategory = SubCategory
+  entry.Stock = Stock or nil
+  entry.Stock0 = Stock or nil
+  entry.SubCategory = SubCategory or "Other"
   entry.UnitTypes = UnitTypes
   entry.CanMove = true
   table.insert(self.C130GetUnits,entry)
@@ -6462,7 +6553,8 @@ function CTLD:AddUnitsNoMove(Name,Templates,Type,Stock,SubCategory,UnitTypes)
   entry.Templates = Templates
   entry.Type = Type
   entry.Stock = Stock
-  entry.SubCategory = SubCategory
+  entry.Stock0 = Stock
+  entry.SubCategory = SubCategory or "Other"
   entry.UnitTypes = UnitTypes
   entry.CanMove = false
   table.insert(self.C130GetUnits,entry)
@@ -7588,6 +7680,23 @@ end
         end
       end
     end
+    for _id,_unit in pairs(self.C130GetUnits or {}) do
+      local genname = _unit.Name
+      local stock0  = _unit.Stock0 or 0
+      if stock0 > 0 and not Troopstable[genname] then
+        local stock = _unit.Stock or 0
+        local rel   = stock0 > 0 and math.floor((stock/stock0)*100) or 100
+        Troopstable[genname] = {
+          Stock0 = stock0,
+          Stock = stock,
+          StockR = rel,
+          Infield = 0,
+          Inhelo = 0,
+          CratesInfield = 0,
+          Sum = stock,
+        }
+      end
+    end
     for _id, _cargo in pairs(self.Cargo_Troops) do
       local generic = _cargo
       local genname = generic:GetName()
@@ -7605,7 +7714,7 @@ end
           Troopstable[genname].GenericCargo = generic
         end
       end
-    end   
+    end
     for _index, _group in pairs(self.DroppedTroops) do
       if _group and _group:IsAlive() then
         self:T("Looking at " .. _group:GetName() .. " in the field")
@@ -7618,7 +7727,28 @@ end
             Troopstable[genname].Sum = Troopstable[genname].Infield + Troopstable[genname].Stock + Troopstable[genname].Inhelo
           end
         else
-          self:E(self.lid .. "Group without Cargo Generic: " .. _group:GetName())
+          local gname = _group:GetName()
+          local uName = nil
+          for _,cfg in pairs(self.C130GetUnits or {}) do
+            local templ = cfg.Templates or {}
+            if type(templ) == "string" then
+              templ = {templ}
+            end
+            for _,tName in pairs(templ) do
+              if string.find(gname,tName,1,true) then
+                uName = cfg.Name
+                break
+              end
+            end
+            if uName then break end
+          end
+          if uName and Troopstable[uName] then
+            self:T("Found C-130 unit " .. uName .. " in the field. Adding.")
+            Troopstable[uName].Infield = Troopstable[uName].Infield + 1
+            Troopstable[uName].Sum = Troopstable[uName].Infield + Troopstable[uName].Stock + Troopstable[uName].Inhelo
+          else
+            self:E(self.lid .. "Group without Cargo Generic: " .. _group:GetName())
+          end
         end
       end
     end
@@ -7995,6 +8125,32 @@ end
       if _troop.Name == name then
         _troop:RemoveStock(number)
         self:_RefreshQuantityMenusForGroup()
+      end
+    end
+    return self
+  end
+
+  --- User - function to remove stock of a certain Units
+  -- @param #CTLD self
+  -- @param #string Name Name as defined in the AddUnits.
+  -- @param #number Number Number of units/groups to add.
+  -- @return #CTLD self
+  function CTLD:RemoveStockUnits(Name, Number)
+    local name = Name or "none"
+    local number = Number or 1
+    local units = self.C130GetUnits or {}
+    for _id,_unit in pairs(units) do
+      if _unit.Name == name then
+        local stock = _unit.Stock
+        if stock == nil or stock == -1 then
+          _unit.Stock = -1
+        else
+          _unit.Stock = stock - number
+          if _unit.Stock < 0 then
+            _unit.Stock = 0
+          end
+        end
+        break
       end
     end
     return self
@@ -8749,7 +8905,7 @@ end
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #string path Path where the file is saved. If nil, file is saved in the DCS root installtion directory or your "Saved Games" folder if lfs was desanitized.
+  -- @param #string path Path where the file is saved. If nil, file is saved in the DCS root installation directory or your "Saved Games" folder if lfs was desanitized.
   -- @param #string filename (Optional) File name for saving. Default is Default is "CTLD_<alias>_Persist.csv".
   function CTLD:onafterSave(From, Event, To, path, filename)
     self:T({From, Event, To, path, filename})
@@ -9052,6 +9208,17 @@ end
           local injectvehicle = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)
           injectvehicle:SetStaticTypeAndShape(StaticCategory,StaticType,StaticShape)      
           self:InjectVehicles(dropzone,injectvehicle,self.surfacetypes,self.useprecisecoordloads,structure,timestamp)
+          if self.C130GetUnits then
+            for _,_unit in pairs(self.C130GetUnits) do
+              if _unit.Name == cargoname then
+                if type(_unit.Stock) == "number" and _unit.Stock ~= -1 then
+                  _unit.Stock0 = _unit.Stock0 or _unit.Stock
+                  _unit.Stock = math.max(0,(_unit.Stock or 0)-1)
+                end
+                break
+              end
+            end
+          end
         elseif cargotype == CTLD_CARGO.Enum.TROOPS or cargotype == CTLD_CARGO.Enum.ENGINEERS then
           local injecttroops = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)      
           self:InjectTroops(dropzone,injecttroops,self.surfacetypes,self.useprecisecoordloads,structure,timestamp)
