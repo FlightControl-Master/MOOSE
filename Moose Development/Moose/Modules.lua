@@ -118,6 +118,7 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Ops/PlayerRecce.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Ops/Squadron.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Ops/Target.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Ops/EasyGCICAP.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Ops/EasyA2G.lua' )
 
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/AI/AI_Balancer.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/AI/AI_Air.lua' )
