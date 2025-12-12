@@ -2467,7 +2467,7 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
 
   --self:T3( { GroupName } )
 
-  local Template = _DATABASE.Templates.Groups[GroupName].Template
+  local Template = _DATABASE.Templates.Groups[GroupName] and _DATABASE.Templates.Groups[GroupName].Template or nil
 
   if Template then
     if not Begin then
@@ -2491,7 +2491,7 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
     end
     return Points
   else
-    error( "Template not found for Group : " .. GroupName )
+    BASE:E( "Template not found for Group : " .. GroupName )
   end
 
   return nil
