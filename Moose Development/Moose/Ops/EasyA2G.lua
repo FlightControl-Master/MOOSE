@@ -80,7 +80,7 @@
 -- @field #number FuelCriticalThreshold
 -- @field #boolean showpatrolpointmarks
 -- @field #table EngageTargetTypes
--- @extends Ops.EasyGCIA2G#EASYGCICAP
+-- @extends Ops.EasyGCICAP#EASYGCICAP
 
 --- *“High-Threat Close-Air-Support is a Myth.”* -- Mike “Starbaby” Pietrucha.
 --
@@ -286,7 +286,7 @@ EASYA2G = {
 
 --- EASYA2G class version.
 -- @field #string version
-EASYA2G.version="0.0.1"
+EASYA2G.version="0.0.2"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -355,6 +355,34 @@ function EASYA2G:New(Alias, AirbaseName, Coalition, ScoutName)
   self:AddTransition("Stopped", "Start",  "Running")
   self:AddTransition("Running", "Stop",   "Stopped")
   self:AddTransition("*",       "Status", "*")  
+  
+  --- On Before "Start" event.
+  -- @function [parent=#EASYA2G] OnBeforeStart
+  -- @param #EASYA2G self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "Start" event.
+  -- @function [parent=#EASYA2G] OnAfterStart
+  -- @param #EASYA2G self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- On Before "Status" event.
+  -- @function [parent=#EASYA2G] OnBeforeStatus
+  -- @param #EASYA2G self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "Status" event.
+  -- @function [parent=#EASYA2G] OnAfterStatus
+  -- @param #EASYA2G self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
   
   self:AddAirwing(self.airbasename,self.alias,self.CapZoneName)
   
@@ -817,7 +845,7 @@ end
 -- @param #string From
 -- @param #string Event
 -- @param #string To
--- @return #EASYGCICAP self
+-- @return #EASYA2G self
 function EASYA2G:onafterStatus(From,Event,To)
   self:T({From,Event,To})
   -- cleanup
