@@ -1,3 +1,12 @@
+--- **Ops** - Create your A2A Defenses.
+--
+-- **Main Features:**
+--
+--    * Automatically create and manage A2A defenses using an AirWing and Squadrons for one coalition
+--    * Easy set-up
+--
+-- ===
+--
 -------------------------------------------------------------------------
 -- Easy CAP/GCI Class, based on OPS classes
 -------------------------------------------------------------------------

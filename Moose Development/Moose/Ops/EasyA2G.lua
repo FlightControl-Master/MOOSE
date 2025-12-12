@@ -1,3 +1,12 @@
+--- **Ops** - Create your A2G Defenses.
+--
+-- **Main Features:**
+--
+--    * Automatically create and manage A2G defenses using an AirWing and Squadrons for one coalition
+--    * Easy set-up
+--
+-- ===
+--
 -------------------------------------------------------------------------
 -- Easy A2G Engagement Class, based on OPS classes
 -------------------------------------------------------------------------
@@ -14,8 +23,6 @@
 -- Date: Dec 2025
 -- Last Update: Dec 2025
 -------------------------------------------------------------------------
---
---- **Ops** - Easy A2G Manager
 --
 -- ===
 --
