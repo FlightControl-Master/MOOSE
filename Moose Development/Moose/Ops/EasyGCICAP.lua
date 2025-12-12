@@ -205,7 +205,7 @@ EASYGCICAP = {
   coalition = "blue",
   alias = nil,
   wings = {},
-  Intel = nil,
+  Intel = nil, -- Ops.Intel#INTEL
   resurrection = 900,
   capspeed = 300,
   capalt = 25000,
@@ -275,7 +275,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.30"
+EASYGCICAP.version="0.1.32"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- 
@@ -351,6 +351,34 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   
   self:__Start(math.random(6,12))
   
+  --- On Before "Start" event.
+  -- @function [parent=#EASYGCICAP] OnBeforeStart
+  -- @param #EASYGCICAP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "Start" event.
+  -- @function [parent=#EASYGCICAP] OnAfterStart
+  -- @param #EASYGCICAP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- On Before "Status" event.
+  -- @function [parent=#EASYGCICAP] OnBeforeStatus
+  -- @param #EASYGCICAP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "Status" event.
+  -- @function [parent=#EASYGCICAP] OnAfterStatus
+  -- @param #EASYGCICAP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
   return self
 end
 
@@ -368,6 +396,28 @@ function EASYGCICAP:GetAirwing(AirbaseName)
     return self.wings[AirbaseName][1]
   end
   return nil
+end
+
+--- Add an agent to the underlying INTEL detection - caution, we need to be started first for this to work! 
+-- Normally this isn't necessary when the Group name is correctly filled (see EWRName in `New()`).
+-- @param #EASYGCICAP self
+-- @param Wrapper.Group#GROUP Group The group object to be added as Intel Agent.
+-- @return #EASYGCICAP self
+function EASYGCICAP:AddAgent(Group)
+  self:T(self.lid.."AddAgent")
+  if Group:IsInstanceOf("GROUP") and self.Intel ~= nil then
+    self.Intel:AddAgent(Group)
+    if self.TankerInvisible == true then
+      Group:SetCommandInvisible(true)
+      Group:OptionROEHoldFire()
+      if Group:IsAir() then
+        Group:OptionROTEvadeFire()
+      else
+        Group:OptionDisperseOnAttack(30)
+      end
+    end
+  end
+  return self
 end
 
 --- Get a table of all managed AirWings
