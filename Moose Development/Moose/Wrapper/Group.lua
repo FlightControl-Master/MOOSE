@@ -2944,6 +2944,16 @@ function GROUP:EnableEmission(switch)
   return self
 end
 
+
+--- Set a formation for this group.
+-- @param #GROUP self
+-- @param #number Formation See. ENUMS.Formation or [Formations](https://wiki.hoggitworld.com/view/DCS_enum_formation) for options.
+-- @return #GROUP self
+function GROUP:SetFormation(Formation)
+  self:SetOption(AI.Option.Air.id.FORMATION,Formation)
+  return self
+end
+
 --- Switch on/off invisible flag for the group.
 -- @param #GROUP self
 -- @param #boolean switch If true, Invisible is enabled. If false, Invisible is disabled.
