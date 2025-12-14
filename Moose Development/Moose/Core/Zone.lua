@@ -1158,7 +1158,7 @@ end
 --    myzone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT})
 --    local IsAttacked = myzone:IsSomeInZoneOfCoalition( self.Coalition )
 function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
-
+  
   self.ScanData = {}
   self.ScanData.Coalitions = {}
   self.ScanData.Scenery = {}
@@ -1266,8 +1266,9 @@ end
 
 --- Get a set of scanned units.
 -- @param #ZONE_RADIUS self
+-- @param #number Coalition (optional) Filter for this coalition only.
 -- @return Core.Set#SET_UNIT Set of units and statics inside the zone.
-function ZONE_RADIUS:GetScannedSetUnit()
+function ZONE_RADIUS:GetScannedSetUnit(Coalition)
 
   local SetUnit = SET_UNIT:New()
 
@@ -1276,7 +1277,12 @@ function ZONE_RADIUS:GetScannedSetUnit()
       local UnitObject = UnitObject -- DCS#Unit
       if UnitObject:isExist() then
         local FoundUnit = UNIT:FindByName( UnitObject:getName() )
-        if FoundUnit then
+        local FoundCoalition = FoundUnit and FoundUnit:GetCoalition() or nil
+        local includeoncoalition = true
+        if Coalition ~= nil and FoundCoalition==Coalition then includeoncoalition = true else includeoncoalition = false end
+        if Coalition == nil then includeoncoalition = true end
+        --self:I(string.format("Unit name %s coalition %s filter coalition = %s include = %s",FoundUnit:GetName(),tostring(FoundCoalition),tostring(Coalition),tostring(includeoncoalition)))
+        if FoundUnit and includeoncoalition then
           SetUnit:AddUnit( FoundUnit )
         else
           local FoundStatic = STATIC:FindByName( UnitObject:getName(), false )
@@ -1293,8 +1299,9 @@ end
 
 --- Get a set of scanned groups.
 -- @param #ZONE_RADIUS self
+-- @param #number Coalition (optional) Filter for this coalition only.
 -- @return Core.Set#SET_GROUP Set of groups.
-function ZONE_RADIUS:GetScannedSetGroup()
+function ZONE_RADIUS:GetScannedSetGroup(Coalition)
 
   self.ScanSetGroup=self.ScanSetGroup or SET_GROUP:New() --Core.Set#SET_GROUP
   
@@ -1307,7 +1314,12 @@ function ZONE_RADIUS:GetScannedSetGroup()
       if UnitObject:isExist() then
 
         local FoundUnit=UNIT:FindByName(UnitObject:getName())
-        if FoundUnit then
+        local FoundCoalition = FoundUnit and FoundUnit:GetCoalition() or nil
+        local includeoncoalition = true
+        if Coalition ~= nil and FoundCoalition==Coalition then includeoncoalition = true else includeoncoalition = false end
+        if Coalition == nil then includeoncoalition = true end
+        --self:I(string.format("Unit name %s coalition %s filter coalition = %s include = %s",FoundUnit:GetName(),tostring(FoundCoalition),tostring(Coalition),tostring(includeoncoalition)))
+        if FoundUnit and includeoncoalition then
           local group=FoundUnit:GetGroup()
           self.ScanSetGroup:AddGroup(group)
         end
