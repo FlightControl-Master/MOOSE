@@ -39,6 +39,9 @@
 -- @field #number prediction Seconds default to be used with CalcClusterFuturePosition.
 -- @field #boolean detectStatics If `true`, detect STATIC objects. Default `false`.
 -- @field #number statusupdate Time interval in seconds after which the status is refreshed. Default 60 sec. Should be negative.
+-- @field #boolean DetectAccoustic If true, also detect by sound (ie proximity).
+-- @field #number DetectAccousticRadius Radius dfor accoustic detection, defaults to 2000 meters.
+-- @field #table DetectAccousticUnitTypes Types of units we can detect accousticly. Defaults to {Unit.Category.GROUND_UNIT,Unit.Category.HELICOPTER}
 -- @extends Core.Fsm#FSM
 
 --- Top Secret!
@@ -102,6 +105,9 @@ INTEL = {
   clusterarrows   = false,
   prediction      =   300,
   detectStatics   = false,
+  DetectAccoustic = false,
+  DetectAccousticRadius = 1000,
+  DetectAccousticUnitTypes =  {Unit.Category.GROUND_UNIT,Unit.Category.HELICOPTER},
 }
 
 --- Detected item info.
@@ -160,7 +166,7 @@ INTEL.Ctype={
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.3.6"
+INTEL.version="0.3.7"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -395,6 +401,26 @@ end
 -- @return #INTEL self
 function INTEL:SetAcceptZones(AcceptZoneSet)
   self.acceptzoneset=AcceptZoneSet or SET_ZONE:New()
+  return self
+end
+
+--- Set to accept accoustic detection.
+-- @param #INTEL self
+-- @param #number Radius Radius in which we can "hear" units. Defaults to 1000 meters.
+-- @param #table UnitCategories Set what Unit Categories we can "hear". Defaults to `{Unit.Category.GROUND_UNIT,Unit.Category.HELICOPTER}`
+-- @return #INTEL self
+function INTEL:SetAccousticDetectionOn(Radius,UnitCategories)
+  self.DetectAccoustic = true
+  self.DetectAccousticRadius = Radius or 1000
+  self.DetectAccousticUnitTypes =  UnitCategories or {Unit.Category.GROUND_UNIT,Unit.Category.HELICOPTER}
+  return self
+end
+
+--- Switch off accoustic detection.
+-- @param #INTEL self
+-- @return #INTEL self
+function INTEL:SetAccousticDetectionOff()
+  self.DetectAccoustic = false
   return self
 end
 
@@ -831,6 +857,18 @@ function INTEL:UpdateIntel()
         self:GetDetectedUnits(recce, DetectedUnits, RecceDetecting, self.DetectVisual, self.DetectOptical, self.DetectRadar, self.DetectIRST, self.DetectRWR, self.DetectDLINK)
 
       end
+      
+      if self.DetectAccoustic then
+        local recce = group:GetFirstUnitAlive()
+        local detectionzone = group:GetProperty("INTEL_DETECT_ACCZONE")
+        if not detectionzone then
+          detectionzone = ZONE_GROUP:New(group.IdentifiableName.."INTEL_DETECT_ACCZONE",group,self.DetectAccousticRadius or 2000)
+          group:SetProperty("INTEL_DETECT_ACCZONE",detectionzone)
+        end
+        if recce then
+          self:GetDetectedUnitsAccoustic(recce,DetectedUnits,RecceDetecting,detectionzone)
+        end
+      end
 
     end
   end
@@ -1106,7 +1144,7 @@ function INTEL:CreateDetectedItems(DetectedGroups, DetectedStatics, RecceDetecti
   return self
 end
 
---- (Internal) Return the detected target groups of the controllable as a @{Core.Set#SET_GROUP}.
+--- (Internal) Return the detected target groups of the controllable as a table.
 -- The optional parameters specify the detection methods that can be applied.
 -- If no detection method is given, the detection will use all the available methods by default.
 -- @param #INTEL self
@@ -1199,6 +1237,33 @@ function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisua
         self:T(self.lid..string.format("WARNING: Could not get name of detected object ID=%s! Detected by %s", DetectedObject.id_, reccename))
       end
     end
+  end
+end
+
+--- (Internal) Return the detected target groups of the controllable as a @{Core.Set#SET_GROUP}.
+-- @param #INTEL self
+-- @param Wrapper.Unit#UNIT Recce The unit detecting.
+-- @param #table DetectedUnits Table of detected units to be filled.
+-- @param #table RecceDetecting Table of recce per unit to be filled.
+-- @param Core.Zone#ZONE_GROUP detectionzone The zone where to look.
+function INTEL:GetDetectedUnitsAccoustic(Recce,DetectedUnits,RecceDetecting,detectionzone)
+  local othercoalition = self.coalition == coalition.side.BLUE and coalition.side.RED or coalition.side.BLUE
+  self:T("Other coalition = "..othercoalition)
+  if detectionzone then
+    -- Get detected units
+    local reccename = Recce:GetName()
+    detectionzone:Scan({Object.Category.UNIT},self.DetectAccousticUnitTypes)
+    local unitset = detectionzone:GetScannedSetUnit(othercoalition) -- Core.Set#SET_UNIT
+    self:T("Accoustic detection found #Units "..unitset:CountAlive())
+    for _,_unit in pairs(unitset.Set or {}) do
+      if _unit and _unit:IsAlive() then
+        local name = _unit:GetName() or "none"
+        DetectedUnits[name]=_unit
+        RecceDetecting[name]=reccename
+        self:T("Unit name = "..name)
+      end
+    end
+    unitset = nil
   end
 end
 

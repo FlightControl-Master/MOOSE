@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: August 2025
+-- Last Update: December 2025
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -61,10 +61,13 @@
 -- @field #boolean checkforfriendlies If true, do not activate a SAM installation if a friendly aircraft is in firing range.
 -- @field #table FilterZones Table of Core.Zone#ZONE Zones Consider SAM groups in this zone(s) only for this MANTIS instance, must be handed as #table of Zone objects.
 -- @field #boolean SmokeDecoy If true, smoke short range SAM units as decoy if a plane is in firing range.
--- @field #number SmokeDecoyColor Color to use, defaults to SMOKECOLOR.White
+-- @field #number SmokeDecoyColor Color to use, defaults to SMOKECOLOR.White.
 -- @field #number checkcounter Counter for SAM Table refreshes.
 -- @field #number DLinkCacheTime Seconds after which cached contacts in DLink will decay.
--- @field #boolean logsamstatus Log SAM status in dcs.log every cycle if true
+-- @field #boolean logsamstatus Log SAM status in dcs.log every cycle if true.
+-- @field #boolean DetectAccoustic Set if we can also detect units accousticly.
+-- @field #number DetectAccousticRadius We can hear in this range.
+-- @field #table DetectAccousticCategories We can hear these categories.
 -- @extends Core.Base#BASE
 
 
@@ -280,7 +283,7 @@
 MANTIS = {
   ClassName             = "MANTIS",
   name                  = "mymantis",
-  version               = "0.9.34",
+  version               = "0.9.41",
   SAM_Templates_Prefix  = "",
   SAM_Group             = nil,
   EWR_Templates_Prefix  = "",
@@ -331,6 +334,9 @@ MANTIS = {
   checkcounter          = 1,
   DLinkCacheTime        = 120,
   logsamstatus          = false,
+  DetectAccoustic       = false,
+  DetectAccousticRadius = 2000,
+  DetectAccousticCategories = {Unit.Category.HELICOPTER},
 }
 
 --- Advanced state enumerator
@@ -561,6 +567,7 @@ do
     -- DONE: Treat Awacs separately, since they might be >80km off site
     -- DONE: Allow tables of prefixes for the setup
     -- DONE: Auto-Mode with range setups for various known SAM types.
+    -- DONE: Added reaction on HIT and UNIT LOST events.
     
     self.name = name or "mymantis"
     self.SAM_Templates_Prefix = samprefix or "Red SAM"
@@ -716,6 +723,8 @@ do
   self:AddTransition("*",             "SeadSuppressionStart",    "*")           -- SEAD has switched off one group.
   self:AddTransition("*",             "SeadSuppressionEnd",      "*")           -- SEAD has switched on one group.
   self:AddTransition("*",             "SeadSuppressionPlanned",  "*")           -- SEAD has planned a suppression.
+  self:AddTransition("*",             "SAMUnitHit",              "*")           -- A SAM unit was hit
+  self:AddTransition("*",             "SAMUnitLost",             "*")           -- A SAM Unit was lost
   self:AddTransition("*",             "Stop",                    "Stopped")     -- Stop FSM.
 
   ------------------------
@@ -826,12 +835,169 @@ do
   -- @param Wrapper.Group#GROUP Group The suppressed GROUP object
   -- @param #string Name Name of the suppressed group
   
+  --- On After "SAMUnitHit" event. A SAM Unit was hit.
+  -- @function [parent=#MANTIS] OnAfterSeadSuppressionEnd
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The GROUP of the hit UNIT object
+  -- @param #string Name Name of the suppressed group
+  
+  --- On After "SAMUnitLoast" event. A SAM Unit was lost.
+  -- @function [parent=#MANTIS] OnAfterSeadSuppressionEnd
+  -- @param #MANTIS self
+  -- @param #string From The From State
+  -- @param #string Event The Event
+  -- @param #string To The To State
+  -- @param Wrapper.Group#GROUP Group The GROUP of the lost UNIT object
+  -- @param #string Name Name of the suppressed group
+  
   return self
  end
 
 -----------------------------------------------------------------------
 -- MANTIS helper functions
 -----------------------------------------------------------------------
+
+  --- Set to accept accoustic detection. Set this *before* MANTIS starts!
+  -- @param #MANTIS self
+  -- @param #number Radius Radius in which we can "hear" units. Defaults to 2000 meters.
+  -- @param #table UnitCategories Set what Unit Categories we can "hear". Defaults to `{Unit.Category.HELICOPTER}`
+  -- @return #MANTIS self
+  function MANTIS:SetAccousticDetectionOn(Radius,UnitCategories)
+    self.DetectAccoustic = true
+    self.DetectAccousticRadius = Radius or 2000
+    self.DetectAccousticCategories = UnitCategories or {Unit.Category.HELICOPTER}
+    return self
+  end
+  
+  --- Switch off accoustic detection.
+  -- @param #MANTIS self
+  -- @return #MANTIS self
+  function MANTIS:SetAccousticDetectionOff()
+    self.DetectAccoustic = false
+    return self
+  end
+  
+  --- [Internal] Function to manage hits on SAM units
+  -- @param #MANTIS self
+  -- @param Core.Event#EVENTDATA EventData The EVENT data
+  -- @return #MANTIS self
+  function MANTIS:_EventHandler(EventData)
+   self:T(self.lid .. "_EventHandler")
+   
+   local function IsOneOfOurs(name)
+      for _,_name in pairs(self.ewr_templates) do
+        if string.find(name,_name,1,true) then
+          return true
+        end
+      end
+      return false
+   end
+   
+   local function SwitchSAMOn(Name,Group)
+    local suppressed = self.SuppressedGroups[Name] or false
+    if not suppressed and self.SamStateTracker[Name] == "GREEN" then
+      self.SamStateTracker[Name] = "RED"
+      if self.UseEmOnOff then
+        -- DONE: add emissions on/off
+        Group:EnableEmission(true)
+      elseif (not self.UseEmOnOff) then
+        Group:OptionAlarmStateRed()          
+      end
+      self:__RedState(1,Group)
+      if self.SmokeDecoy == true then --shortsam == true and 
+        self:T("Smoking")
+        local units = Group:GetUnits() or {}
+        local smoke = self.SmokeDecoyColor or SMOKECOLOR.White
+        for _,unit in pairs(units) do
+          if unit and unit:IsAlive() then
+            unit:GetCoordinate():Smoke(smoke)
+          end
+        end
+      end
+    end
+   end
+   
+   local coordinate -- Core.Point#COORDINATE
+   local Name -- #string
+   local Group -- Wrapper.Group#GROUP
+   local lasthit = 0
+   local firsthit = false
+   local alerton = false
+   
+   -- Check if we can get a location
+   
+   local data = EventData -- Core.Event#EVENTDATA
+   if data.id == EVENTS.Hit then
+    -- Unit hit, one of ours?
+    if data.TgtGroupName and IsOneOfOurs(data.TgtGroupName) then
+      self:T("Unit hit in group: "..data.TgtGroupName)
+      if data.TgtGroup then
+        lasthit = data.TgtGroup:GetProperty("MANTIS_LASTHIT")
+        firsthit = (lasthit==nil) and true or false
+        if firsthit == true then alerton = true end
+        if lasthit ~= nil and timer.getTime()-lasthit > self.ShoradTime then alerton = true end
+        coordinate = data.TgtGroup:GetCoordinate()
+        Name = data.TgtGroupName
+        Group = data.TgtGroup
+        if alerton == true then
+          self:__SAMUnitHit(1,Group,Name)
+          SwitchSAMOn(Name,Group) 
+        end
+        if coordinate and self.debug then
+          local text = coordinate:ToStringMGRS()
+          self:I("Location: "..text)
+        end
+      end
+    end
+   end
+      
+   if data.id == EVENTS.UnitLost then 
+    if data.IniGroupName and IsOneOfOurs(data.IniGroupName) then
+      self:T("Unit lost in group: "..data.IniGroupName)
+      if data.IniGroup then
+        lasthit = data.IniGroup:GetProperty("MANTIS_LASTHIT")
+        firsthit = (lasthit==nil) and true or false
+        if firsthit == true then alerton = true end
+        if lasthit ~= nil and timer.getTime()-lasthit > self.ShoradTime then alerton = true end
+        coordinate = data.IniGroup:GetCoordinate()
+        Name = data.IniGroupName
+        Group = data.IniGroup
+        alerton = true
+        SwitchSAMOn(Name,Group) 
+        self:__SAMUnitLost(1,Group,Name)    
+        if coordinate and self.debug then
+          local text = coordinate:ToStringMGRS()
+          self:I("Location: "..text)
+        end
+      end
+    end
+   end
+   
+   if firsthit == true or alerton == true then
+    Group:SetProperty("MANTIS_LASTHIT",timer.getTime())
+   end
+   
+   
+   if coordinate ~= nil and Name ~= nil and Group ~=nil and alerton == true then
+    if self.ShoradLink then
+      self:T("Shorad activated for: "..Name)
+      local Shorad = self.Shorad -- Functional.Shorad#SHORAD
+      local radius = self.checkradius
+      local ontime = self.ShoradTime
+      Shorad:WakeUpShorad(Name, radius, ontime, nil, true)
+      self:__ShoradActivated(1,Name, radius, ontime)
+    end
+    if self.autorelocate and Group then
+      Group:RelocateGroundRandomInRadius(20,500,true,true,nil,true)
+    end
+   end
+   
+   return self
+  end
+
 
   --- [Internal] Function to get the self.SAM_Table
   -- @param #MANTIS self
@@ -1445,13 +1611,15 @@ do
     self.intelset = {}
     
     local IntelOne = INTEL:New(groupset,self.Coalition,self.name.." IntelOne")
-    --IntelOne:SetClusterAnalysis(true,true)
-    --IntelOne:SetClusterRadius(5000)
+    IntelOne.DetectAccoustic = self.DetectAccoustic
+    IntelOne.DetectAccousticRadius = self.DetectAccousticRadius or 2000
+    IntelOne.DetectAccousticUnitTypes = self.DetectAccousticCategories or {Unit.Category.HELICOPTER}
     IntelOne:Start()
     
     local IntelTwo = INTEL:New(samset,self.Coalition,self.name.." IntelTwo")
-    --IntelTwo:SetClusterAnalysis(true,true)
-    --IntelTwo:SetClusterRadius(5000)
+    IntelTwo.DetectAccoustic = self.DetectAccoustic
+    IntelTwo.DetectAccousticRadius = self.DetectAccousticRadius or 2000
+    IntelTwo.DetectAccousticUnitTypes = self.DetectAccousticCategories or {Unit.Category.HELICOPTER}
     IntelTwo:Start()
     
     local CacheTime = self.DLinkCacheTime or 120
@@ -1807,7 +1975,7 @@ do
       local radius = _data[3]
       local height = _data[4]
       local blind = _data[5] * 1.25 + 1
-      local shortsam = (_data[6] == MANTIS.SamType.SHORT) and true or false
+      local shortsam = (_data[6] ~= MANTIS.SamType.LONG) and true or false
       if not shortsam then
         shortsam = (_data[6] == MANTIS.SamType.POINT) and true or false
       end
@@ -1834,10 +2002,9 @@ do
           end
           if self.SamStateTracker[name] ~= "RED" and switch then
             self:__RedState(1,samgroup)
-            self.SamStateTracker[name] = "RED"
           end
-          -- TODO doesn't work
-          if shortsam == true and self.SmokeDecoy == true then
+          -- TODO Check doesn't work
+          if shortsam == true and self.SmokeDecoy == true then 
             self:T("Smoking")
             local units = samgroup:GetUnits() or {}
             local smoke = self.SmokeDecoyColor or SMOKECOLOR.White
@@ -2045,6 +2212,10 @@ do
     if self.shootandscoot and self.SkateZones and self.Shorad then
       self.Shorad:AddScootZones(self.SkateZones,self.SkateNumber or 3,self.ScootRandom,self.ScootFormation)
     end
+    
+    self:HandleEvent(EVENTS.Hit,self._EventHandler)
+    self:HandleEvent(EVENTS.UnitLost,self._EventHandler)
+    
     self:__Status(-math.random(1,10))
     return self
   end
