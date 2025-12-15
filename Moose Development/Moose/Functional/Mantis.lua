@@ -404,7 +404,7 @@ MANTIS.SamData = {
   ["HQ-2"] = { Range=50, Blindspot=6, Height=35, Type="Medium", Radar="HQ_2_Guideline_LN" },
   ["TAMIR IDFA"] = { Range=20, Blindspot=0.6, Height=12.3, Type="Short", Radar="IRON_DOME_LN" },
   ["STUNNER IDFA"] = { Range=250, Blindspot=1, Height=45, Type="Long", Radar="DAVID_SLING_LN" },
-  ["NIKE"] = { Range=155, Blindspot=6, Height=30, Type="Long", Radar="HIPAR" },
+  ["Nike"] = { Range=155, Blindspot=6, Height=30, Type="Long", Radar="HIPAR" },
   ["Dog Ear"] = { Range=11, Blindspot=0, Height=9, Type="Point", Radar="Dog Ear", Point="true" },
   -- CH Added to DCS core 2.9.19.x
   ["Pantsir S1"] = { Range=20, Blindspot=1.2, Height=15, Type="Point", Radar="PantsirS1" , Point="true" }, 
@@ -530,7 +530,7 @@ do
   --@param #string samprefix Prefixes for the SAM groups from the ME, e.g. all groups starting with "Red Sam..."
   --@param #string ewrprefix Prefixes for the EWR groups from the ME, e.g. all groups starting with "Red EWR..."
   --@param #string hq Group name of your HQ (optional)
-  --@param #string coalition Coalition side of your setup, e.g. "blue", "red" or "neutral"
+  --@param #string Coalition Coalition side of your setup, e.g. "blue", "red" or "neutral"
   --@param #boolean dynamic Use constant (true) filtering or just filter once (false, default) (optional)
   --@param #string awacs Group name of your Awacs (optional)
   --@param #boolean EmOnOff Make MANTIS switch Emissions on and off instead of changing the alarm state between RED and GREEN (optional)
@@ -554,7 +554,7 @@ do
   --        mybluemantis = MANTIS:New("bluemantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
   --        mybluemantis:Start()
   --
-  function MANTIS:New(name,samprefix,ewrprefix,hq,coalition,dynamic,awacs, EmOnOff, Padding, Zones)
+  function MANTIS:New(name,samprefix,ewrprefix,hq,Coalition,dynamic,awacs, EmOnOff, Padding, Zones)
     
     
     -- Inherit everything from BASE class.
@@ -573,7 +573,8 @@ do
     self.SAM_Templates_Prefix = samprefix or "Red SAM"
     self.EWR_Templates_Prefix = ewrprefix or "Red EWR"
     self.HQ_Template_CC = hq or nil
-    self.Coalition = coalition or "red"
+    self.Coalition = Coalition or "red"
+    self.coalition = Coalition == "blue" and coalition.side.BLUE or coalition.side.RED
     self.SAM_Table = {}
     self.SAM_Table_Long = {}
     self.SAM_Table_Medium = {}
@@ -1501,11 +1502,19 @@ do
         local coord = grp:GetCoordinate()
         local dist = 0
         local include = true
+        if grp:IsGround() then include = false end
+        if grp:GetCoalition() == self.coalition then include = false end
         if coord and SamCoordinate and grp:IsHelicopter() then
           dist = coord:Get2DDistance(SamCoordinate) or 0
           if dist > self.ShoradActDistance then include = false end -- we do not want long range shooting at helos
         end
-        if grp:GetHeight(true) < height and include == true then          
+        if self.debug then
+          local text = "Looking at Group: "..grp:GetName() or "N/A"
+          text = text .. " Include = "..tostring(include)
+          MESSAGE:New(text,10,"MANTIS"):ToAllIf(self.verbose):ToLog()
+        end
+        local grpalt = grp:GetHeight(true)
+        if grpalt < height and grpalt > 10 and include == true then          
           table.insert(set,coord)
         end
       end
@@ -1610,16 +1619,18 @@ do
     
     self.intelset = {}
     
-    local IntelOne = INTEL:New(groupset,self.Coalition,self.name.." IntelOne")
+    local IntelOne = INTEL:New(groupset,self.coalition,self.name.." IntelOne")
     IntelOne.DetectAccoustic = self.DetectAccoustic
     IntelOne.DetectAccousticRadius = self.DetectAccousticRadius or 2000
     IntelOne.DetectAccousticUnitTypes = self.DetectAccousticCategories or {Unit.Category.HELICOPTER}
+    --IntelOne:SetClusterAnalysis(true,true,true)
     IntelOne:Start()
     
-    local IntelTwo = INTEL:New(samset,self.Coalition,self.name.." IntelTwo")
+    local IntelTwo = INTEL:New(samset,self.coalition,self.name.." IntelTwo")
     IntelTwo.DetectAccoustic = self.DetectAccoustic
     IntelTwo.DetectAccousticRadius = self.DetectAccousticRadius or 2000
     IntelTwo.DetectAccousticUnitTypes = self.DetectAccousticCategories or {Unit.Category.HELICOPTER}
+    --IntelTwo:SetClusterAnalysis(true,true,true)
     IntelTwo:Start()
     
     local CacheTime = self.DLinkCacheTime or 120
@@ -2025,7 +2036,7 @@ do
             self:__RedState(1,samgroup)
           end
           -- DONE Restrict on Distance
-          if shortsam == true and self.SmokeDecoy == true and Distance < self.DetectAccousticRadius*2 then 
+          if shortsam == true and self.SmokeDecoy == true and Distance < self.DetectAccousticRadius*1.5 then 
             self:T("Smoking")
             self:_SmokeUnits(samgroup)
           end
@@ -2218,7 +2229,7 @@ do
     end
     --]]
     if self.autoshorad then
-      self.Shorad = SHORAD:New(self.name.."-SHORAD","SHORAD",self.SAM_Group,self.ShoradActDistance,self.ShoradTime,self.coalition,self.UseEmOnOff)
+      self.Shorad = SHORAD:New(self.name.."-SHORAD","SHORAD",self.SAM_Group,self.ShoradActDistance,self.ShoradTime,self.Coalition,self.UseEmOnOff,self.SmokeDecoy,self.SmokeDecoyColor)
       self.Shorad:SetDefenseLimits(80,95)
       self.ShoradLink = true
       self.Shorad.Groupset=self.ShoradGroupSet

@@ -1270,8 +1270,10 @@ end
 -- @return Core.Set#SET_UNIT Set of units and statics inside the zone.
 function ZONE_RADIUS:GetScannedSetUnit(Coalition)
 
-  local SetUnit = SET_UNIT:New()
-
+  self.SetUnit = self.SetUnit or SET_UNIT:New()
+  self.SetUnit:Clear(false)
+  self.SetUnit.Set={}
+  
   if self.ScanData then
     for ObjectID, UnitObject in pairs( self.ScanData.Units ) do
       local UnitObject = UnitObject -- DCS#Unit
@@ -1283,18 +1285,18 @@ function ZONE_RADIUS:GetScannedSetUnit(Coalition)
         if Coalition == nil then includeoncoalition = true end
         --self:I(string.format("Unit name %s coalition %s filter coalition = %s include = %s",FoundUnit:GetName(),tostring(FoundCoalition),tostring(Coalition),tostring(includeoncoalition)))
         if FoundUnit and includeoncoalition then
-          SetUnit:AddUnit( FoundUnit )
+          self.SetUnit:AddUnit( FoundUnit )
         else
           local FoundStatic = STATIC:FindByName( UnitObject:getName(), false )
           if FoundStatic then
-            SetUnit:AddUnit( FoundStatic )
+            self.SetUnit:AddUnit( FoundStatic )
           end
         end
       end
     end
   end
 
-  return SetUnit
+  return self.SetUnit
 end
 
 --- Get a set of scanned groups.
