@@ -907,15 +907,8 @@ do
         Group:OptionAlarmStateRed()          
       end
       self:__RedState(1,Group)
-      if self.SmokeDecoy == true then --shortsam == true and 
-        self:T("Smoking")
-        local units = Group:GetUnits() or {}
-        local smoke = self.SmokeDecoyColor or SMOKECOLOR.White
-        for _,unit in pairs(units) do
-          if unit and unit:IsAlive() then
-            unit:GetCoordinate():Smoke(smoke)
-          end
-        end
+      if self.SmokeDecoy == true then
+        self:_SmokeUnits(Group)
       end
     end
    end
@@ -1491,11 +1484,12 @@ do
     return inzone
   end
   
-  --- [Internal] Function to prefilter height based
+  --- [Internal] Function to prefilter height based and check for Helo activity.
   -- @param #MANTIS self
   -- @param #number height
+  -- @param Core.Point#COORDINATE SamCoordinate
   -- @return #table set
-  function MANTIS:_PreFilterHeight(height)
+  function MANTIS:_PreFilterHeight(height,SamCoordinate)
     self:T(self.lid.."_PreFilterHeight")   
     local set = {}
     local dlink = self.Detection -- Ops.Intel#INTEL_DLINK
@@ -1504,8 +1498,14 @@ do
       local contact = _contact -- Ops.Intel#INTEL.Contact
       local grp = contact.group -- Wrapper.Group#GROUP
       if grp:IsAlive() then
-        if grp:GetHeight(true) < height then
-          local coord = grp:GetCoordinate()
+        local coord = grp:GetCoordinate()
+        local dist = 0
+        local include = true
+        if coord and SamCoordinate and grp:IsHelicopter() then
+          dist = coord:Get2DDistance(SamCoordinate) or 0
+          if dist > self.ShoradActDistance then include = false end -- we do not want long range shooting at helos
+        end
+        if grp:GetHeight(true) < height and include == true then          
           table.insert(set,coord)
         end
       end
@@ -1529,7 +1529,7 @@ do
     local set = dectset
     if dlink then
       -- DEBUG
-      set = self:_PreFilterHeight(height)
+      set = self:_PreFilterHeight(height,samcoordinate)
     end
     --self.friendlyset -- Core.Set#SET_GROUP
     if self.checkforfriendlies == true and self.friendlyset == nil then
@@ -1948,6 +1948,27 @@ do
     self.ShoradLink = false
     return self
   end
+  
+   --- [Internal] Function to smoke a group in decoy.
+  -- @param #MANTIS self
+  -- @param Wrapper.Group#GROUP Group
+  -- @return #MANTIS self
+  function MANTIS:_SmokeUnits(Group)
+    self:T("Smoking")
+    local LastSmoketime=Group:GetProperty("MANTIS_LASTSMOKE_TIME") or 0
+    local TNow = timer.getTime()
+    if TNow - LastSmoketime > 290 then -- Smoking lasts 5 minutes
+      Group:SetProperty("MANTIS_LASTSMOKE_TIME",TNow)
+      local units = Group:GetUnits() or {}
+      local smoke = self.SmokeDecoyColor or SMOKECOLOR.White
+      for _,unit in pairs(units) do
+        if unit and unit:IsAlive() then
+          unit:GetCoordinate():Smoke(smoke)
+        end
+      end
+    end
+    return self
+  end
 
 -----------------------------------------------------------------------
 -- MANTIS main functions
@@ -2003,16 +2024,10 @@ do
           if self.SamStateTracker[name] ~= "RED" and switch then
             self:__RedState(1,samgroup)
           end
-          -- TODO Check doesn't work
-          if shortsam == true and self.SmokeDecoy == true then 
+          -- DONE Restrict on Distance
+          if shortsam == true and self.SmokeDecoy == true and Distance < self.DetectAccousticRadius*2 then 
             self:T("Smoking")
-            local units = samgroup:GetUnits() or {}
-            local smoke = self.SmokeDecoyColor or SMOKECOLOR.White
-            for _,unit in pairs(units) do
-              if unit and unit:IsAlive() then
-                unit:GetCoordinate():Smoke(smoke)
-              end
-            end
+            self:_SmokeUnits(samgroup)
           end
           -- link in to SHORAD if available
           -- DONE: Test integration fully
