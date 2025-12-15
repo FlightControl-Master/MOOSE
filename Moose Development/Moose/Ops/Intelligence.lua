@@ -41,7 +41,7 @@
 -- @field #number statusupdate Time interval in seconds after which the status is refreshed. Default 60 sec. Should be negative.
 -- @field #boolean DetectAccoustic If true, also detect by sound (ie proximity).
 -- @field #number DetectAccousticRadius Radius dfor accoustic detection, defaults to 2000 meters.
--- @field #table DetectAccousticUnitTypes Types of units we can detect accousticly. Defaults to {Unit.Category.GROUND_UNIT,Unit.Category.HELICOPTER}
+-- @field #table DetectAccousticUnitTypes Types of units we can detect accousticly. Defaults to {Unit.Category.HELICOPTER}
 -- @extends Core.Fsm#FSM
 
 --- Top Secret!
@@ -107,7 +107,7 @@ INTEL = {
   detectStatics   = false,
   DetectAccoustic = false,
   DetectAccousticRadius = 1000,
-  DetectAccousticUnitTypes =  {Unit.Category.GROUND_UNIT,Unit.Category.HELICOPTER},
+  DetectAccousticUnitTypes =  {Unit.Category.HELICOPTER},
 }
 
 --- Detected item info.
@@ -412,7 +412,7 @@ end
 function INTEL:SetAccousticDetectionOn(Radius,UnitCategories)
   self.DetectAccoustic = true
   self.DetectAccousticRadius = Radius or 1000
-  self.DetectAccousticUnitTypes =  UnitCategories or {Unit.Category.GROUND_UNIT,Unit.Category.HELICOPTER}
+  self.DetectAccousticUnitTypes =  UnitCategories or {Unit.Category.HELICOPTER}
   return self
 end
 
@@ -865,7 +865,7 @@ function INTEL:UpdateIntel()
           detectionzone = ZONE_GROUP:New(group.IdentifiableName.."INTEL_DETECT_ACCZONE",group,self.DetectAccousticRadius or 2000)
           group:SetProperty("INTEL_DETECT_ACCZONE",detectionzone)
         end
-        if recce then
+        if recce and recce:IsGround() then
           self:GetDetectedUnitsAccoustic(recce,DetectedUnits,RecceDetecting,detectionzone)
         end
       end
@@ -1252,18 +1252,18 @@ function INTEL:GetDetectedUnitsAccoustic(Recce,DetectedUnits,RecceDetecting,dete
   if detectionzone then
     -- Get detected units
     local reccename = Recce:GetName()
-    detectionzone:Scan({Object.Category.UNIT},self.DetectAccousticUnitTypes)
+    local DetectAccousticUnitTypes = self.DetectAccousticUnitTypes or {Unit.Category.HELICOPTER}
+    detectionzone:Scan({Object.Category.UNIT},DetectAccousticUnitTypes)
     local unitset = detectionzone:GetScannedSetUnit(othercoalition) -- Core.Set#SET_UNIT
     self:T("Accoustic detection found #Units "..unitset:CountAlive())
     for _,_unit in pairs(unitset.Set or {}) do
-      if _unit and _unit:IsAlive() then
+      if _unit and _unit:IsAlive() and _unit:GetCoalition() ~= self.coalition then
         local name = _unit:GetName() or "none"
         DetectedUnits[name]=_unit
         RecceDetecting[name]=reccename
         self:T("Unit name = "..name)
       end
     end
-    unitset = nil
   end
 end
 
