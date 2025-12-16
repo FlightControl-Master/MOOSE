@@ -9238,8 +9238,12 @@ end
         elseif cargotype == CTLD_CARGO.Enum.STATIC or cargotype == CTLD_CARGO.Enum.REPAIR then
           injectstatic = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)
           injectstatic:SetStaticTypeAndShape(StaticCategory,StaticType,StaticShape)
-          local map=cargotype:GetStaticResourceMap()
-          injectstatic:SetStaticResourceMap(map) 
+          local unittemplate = _DATABASE:GetStaticUnitTemplate(cargoname)
+          local ResourceMap = nil
+          if unittemplate and unittemplate.resourcePayload then
+            ResourceMap = UTILS.DeepCopy(unittemplate.resourcePayload)
+          end
+          injectstatic:SetStaticResourceMap(ResourceMap) 
         end
         if injectstatic then
           self:InjectStatics(dropzone,injectstatic,false,true)
