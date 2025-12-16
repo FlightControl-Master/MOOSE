@@ -48,7 +48,9 @@
 -- @field #number minscootdist Min distance of the next zone
 -- @field #number maxscootdist Max distance of the next zone
 -- @field #boolean scootrandomcoord If true, use a random coordinate in the zone and not the center
--- @field #string scootformation Formation to take for scooting, e.g. "Vee" or "Cone"  
+-- @field #string scootformation Formation to take for scooting, e.g. "Vee" or "Cone" 
+-- @field #boolean SmokeDecoy = false,
+-- @field #number SmokeDecoyColor = SMOKECOLOR.White  
 -- @extends Core.Base#BASE
 
 
@@ -114,7 +116,9 @@ SHORAD = {
   SkateZones = nil,
   minscootdist = 100,
   maxscootdist = 3000,
-  scootrandomcoord = false,  
+  scootrandomcoord = false, 
+  SmokeDecoy = false,
+  SmokeDecoyColor = SMOKECOLOR.White 
 }
 
 -----------------------------------------------------------------------
@@ -161,8 +165,10 @@ do
   -- @param #number ActiveTimer Determines how many seconds the systems stay on red alert after wake-up call
   -- @param #string Coalition Coalition, i.e. "blue", "red", or "neutral"
   -- @param #boolean UseEmOnOff Use Emissions On/Off rather than Alarm State Red/Green (default: use Emissions switch)
+  -- @param #boolean SmokeDecoy Throw smoke decoy when getting activated. Defaults to false.
+  -- @param #number SmokeDecoyColor SMOLECOLOR to use. Defaults to SMOLECOLOR.White
   -- @return #SHORAD self
-  function SHORAD:New(Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition, UseEmOnOff) 
+  function SHORAD:New(Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition, UseEmOnOff, SmokeDecoy, SmokeDecoyColor) 
     local self = BASE:Inherit( self, FSM:New() )
     self:T({Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition})
     
@@ -171,6 +177,7 @@ do
     self.name = Name or "MyShorad"
     self.Prefixes = ShoradPrefix or "SAM SHORAD"
     self.Radius = Radius or 20000
+    if type(Coalition) == "number" then Coalition = string.lower(UTILS.GetCoalitionName(Coalition)) end
     self.Coalition = Coalition or "blue"
     self.Samset = Samset or GroupSet
     self.ActiveTimer = ActiveTimer or 600
@@ -181,8 +188,15 @@ do
     self.DefenseLowProb = 70 -- probability to detect a missile shot, low margin
     self.DefenseHighProb = 90  -- probability to detect a missile shot, high margin
     self.UseEmOnOff = true -- Decide if we are using Emission on/off (default) or AlarmState red/green
+    
     if UseEmOnOff == false then self.UseEmOnOff = UseEmOnOff end
-    self:I("*** SHORAD - Started Version 0.3.4")
+    
+    if SmokeDecoy then
+      self.SmokeDecoy = SmokeDecoy
+      self.SmokeDecoyColor = SmokeDecoyColor or SMOKECOLOR.White
+    end
+    
+    self:I("*** SHORAD - Started Version 0.3.5")
     -- Set the string id for output to DCS.log file.
     self.lid=string.format("SHORAD %s | ", self.name)
     self:_InitState()
@@ -451,6 +465,32 @@ do
     return returnname
   end
   
+  --- Smoke a SHORAD Group
+  -- @param #SHORAD self
+  -- @param Wrapper.Group#GROUP Group The Shorad Group to Smoke
+  -- @return self
+  function SHORAD:_SmokeUnits(Group)
+    if self.SmokeDecoy == true then
+      if Group and Group:IsAlive() then
+        local units = Group:GetUnits()
+        for _,_unit in pairs(units) do
+          local unit = _unit -- Wrapper.Unit#UNIT
+          if unit and unit:IsAlive() then
+            local coordinate = unit:GetCoordinate()
+            if coordinate then
+              coordinate:SwitchSmokeOffsetOn()
+              coordinate:Smoke(self.SmokeDecoyColor,Duration,nil,Name,true,1,20)
+              coordinate:Smoke(self.SmokeDecoyColor,Duration,nil,Name,true,180,20)
+              coordinate:Smoke(self.SmokeDecoyColor,Duration,nil,Name,true,270,20)
+              coordinate:Smoke(self.SmokeDecoyColor,Duration,nil,Name,true,90,20)
+            end
+          end
+        end
+      end
+    end
+    return self
+  end
+  
   --- Calculate if the missile shot is detected
   -- @param #SHORAD self
   -- @return #boolean Returns true for a detection, else false
@@ -537,7 +577,7 @@ do
         local text = string.format("Shot at SHORAD %s! Evading!", _group:GetName())
         self:T(text)
         local m = MESSAGE:New(text,10,"SHORAD"):ToAllIf(self.debug)
-        
+        self:_SmokeUnits(_group)
         --Shoot and Scoot
         if self.shootandscoot then
           self:__ShootAndScoot(1,_group)
@@ -552,6 +592,7 @@ do
           _group:EnableEmission(true)
         end
         _group:OptionAlarmStateRed()
+        self:_SmokeUnits(_group)
         if self.ActiveGroups[groupname] == nil then -- no timer yet for this group
           self.ActiveGroups[groupname] = { Timing = ActiveTimer }
           local endtime = timer.getTime() + (ActiveTimer * math.random(75,100) / 100 ) -- randomize wakeup a bit
