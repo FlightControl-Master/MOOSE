@@ -1820,7 +1820,7 @@ function DATABASE:_EventOnPlayerEnterUnit( Event )
 
   if Event.IniDCSUnit then
     -- Player entering a CA slot
-    if Event.IniObjectCategory == 1 and Event.IniGroup and Event.IniGroup:IsGround() then
+    if Event.IniObjectCategory == 1 and Event.IniUnit and Event.IniUnit:IsGround() then
         
       local IsPlayer = Event.IniDCSUnit:getPlayerName()
       if IsPlayer then
