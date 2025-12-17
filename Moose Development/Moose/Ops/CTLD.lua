@@ -140,6 +140,9 @@ CTLD_CARGO = {
     self.DontShowInMenu = DontShowInMenu or false
     self.ResourceMap = nil
     self.StaticType = "container_cargo" -- "container_cargo"
+    if self:IsStatic() then
+      self.StaticType = self.Templates
+    end
     self.StaticShape = nil
     self.TypeNames = nil
     self.StaticCategory = "Cargos"
@@ -7760,7 +7763,7 @@ end
         for _, _cgo in pairs(loadedcargo) do
           local cargo = _cgo
           local type = cargo.CargoType
-          local gname = cargo.Name
+          local gname = cargo:GetName()
           local gcargo = self:_FindCratesCargoObject(gname) or self:_FindTroopsCargoObject(gname)
           self:T("Looking at " .. gname .. " in the helo - type = "..tostring(type))
           if (type == CTLD_CARGO.Enum.TROOPS or type == CTLD_CARGO.Enum.ENGINEERS or type == CTLD_CARGO.Enum.VEHICLE or type == CTLD_CARGO.Enum.FOB) then
@@ -9235,8 +9238,12 @@ end
         elseif cargotype == CTLD_CARGO.Enum.STATIC or cargotype == CTLD_CARGO.Enum.REPAIR then
           injectstatic = CTLD_CARGO:New(nil,cargoname,cargotemplates,cargotype,true,true,size,nil,true,mass)
           injectstatic:SetStaticTypeAndShape(StaticCategory,StaticType,StaticShape)
-          local map=cargotype:GetStaticResourceMap()
-          injectstatic:SetStaticResourceMap(map) 
+          local unittemplate = _DATABASE:GetStaticUnitTemplate(cargoname)
+          local ResourceMap = nil
+          if unittemplate and unittemplate.resourcePayload then
+            ResourceMap = UTILS.DeepCopy(unittemplate.resourcePayload)
+          end
+          injectstatic:SetStaticResourceMap(ResourceMap) 
         end
         if injectstatic then
           self:InjectStatics(dropzone,injectstatic,false,true)
