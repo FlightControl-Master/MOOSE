@@ -4747,7 +4747,7 @@ function UTILS.DoStringIn(State,DoString)
 end
 
 --- Show a picture on the screen to all
--- @param #string FileName File name of the picture
+-- @param #string FilePath File name of the picture
 -- @param #number Duration Duration in seconds, defaults to 10
 -- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
 -- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
@@ -4770,7 +4770,7 @@ end
 
 --- Show a picture on the screen to Coalition
 -- @param #number Coalition Coalition ID, can be coalition.side.BLUE, coalition.side.RED or coalition.side.NEUTRAL
--- @param #string FileName File name of the picture
+-- @param #string FilePath File name of the picture
 -- @param #number Duration Duration in seconds, defaults to 10
 -- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
 -- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
@@ -4795,7 +4795,7 @@ end
 
 --- Show a picture on the screen to Country
 -- @param #number Country Country ID, can be country.id.USA, country.id.RUSSIA, etc.
--- @param #string FileName File name of the picture
+-- @param #string FilePath File name of the picture
 -- @param #number Duration Duration in seconds, defaults to 10
 -- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
 -- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
@@ -4818,7 +4818,7 @@ end
 
 --- Show a picture on the screen to Group
 -- @param Wrapper.Group#GROUP Group Group to show the picture to
--- @param #string FileName File name of the picture
+-- @param #string FilePath File name of the picture
 -- @param #number Duration Duration in seconds, defaults to 10
 -- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
 -- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
@@ -4841,7 +4841,7 @@ end
 
 --- Show a picture on the screen to Unit
 -- @param Wrapper.Unit#UNIT Unit Unit to show the picture to
--- @param #string FileName File name of the picture
+-- @param #string FilePath File name of the picture
 -- @param #number Duration Duration in seconds, defaults to 10
 -- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
 -- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
