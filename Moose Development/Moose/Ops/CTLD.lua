@@ -140,6 +140,9 @@ CTLD_CARGO = {
     self.DontShowInMenu = DontShowInMenu or false
     self.ResourceMap = nil
     self.StaticType = "container_cargo" -- "container_cargo"
+    if self:IsStatic() then
+      self.StaticType = Templates or "container_cargo"
+    end
     self.StaticShape = nil
     self.TypeNames = nil
     self.StaticCategory = "Cargos"
