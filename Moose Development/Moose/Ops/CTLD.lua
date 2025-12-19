@@ -1045,6 +1045,25 @@ do
 --          ... your code here ...
 --        end
 --
+-- ## 3.5 A OnAfterGetCrates
+--  
+--    This function is called after a player has spawned crates via the "Get" menu (but not when using "Get and Load"):
+--
+--        function my_ctld:OnAfterGetCrates(From, Event, To, Group, Unit, Cargotable)
+--          ... your code here ...
+--        end
+--
+-- ## 3.5 b OnAfterRemoveCratesNearby
+--  
+--    This function is called after a player has removed things nearby via CTLD “Remove … nearby”.
+--    It can be triggered from:
+--      - Removing crates (“Remove crates nearby” menu)
+--      - Removing C-130 managed unit-groups (“Remove units nearby”)
+--
+--        function my_ctld:OnAfterRemoveCratesNearby(From, Event, To, Group, Unit, Cargotable)
+--          ... your code here ...
+--        end
+--
 -- ## 3.6 A OnAfterHelicopterLost
 --  
 --    This function is called when a player has left the helicopter or crashed/died:
@@ -1556,7 +1575,8 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self:AddTransition("*",             "CratesPickedUp",      "*")           -- CTLD pickup  event.  
   self:AddTransition("*",             "TroopsDeployed",      "*")           -- CTLD deploy  event. 
   self:AddTransition("*",             "TroopsRTB",           "*")           -- CTLD deploy  event.   
-  self:AddTransition("*",             "CratesDropped",       "*")           -- CTLD deploy  event.  
+  self:AddTransition("*",             "CratesDropped",       "*")           -- CTLD deploy  event.
+  self:AddTransition("*",             "GetCrates",           "*")           -- CTLD getcrates event.
   self:AddTransition("*",             "CratesBuild",         "*")           -- CTLD build  event.
   self:AddTransition("*",             "UnitsSpawn",          "*")           -- CTLD Unit spawned.
   self:AddTransition("*",             "CratesRepaired",      "*")           -- CTLD repair  event.
@@ -1564,6 +1584,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self:AddTransition("*",             "CratesRepairStarted", "*")           -- CTLD repair  event.
   self:AddTransition("*",             "CratesPacked",        "*")           -- CTLD repack  event.
   self:AddTransition("*",             "HelicopterLost",      "*")           -- CTLD lost  event.
+  self:AddTransition("*",             "RemoveCratesNearby",  "*")           -- CTLD players remove crates or units nearby.
   self:AddTransition("*",             "Load",                "*")           -- CTLD load  event.
   self:AddTransition("*",             "Loaded",              "*")           -- CTLD load  event.   
   self:AddTransition("*",             "Save",                "*")           -- CTLD save  event.      
@@ -1934,6 +1955,28 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #table Cargotable Table of #CTLD_CARGO objects dropped. Can be a Wrapper.DynamicCargo#DYNAMICCARGO object, if ground crew unloaded!
   -- @return #CTLD self
   
+  --- FSM Function OnAfterGetCrates.
+  -- @function [parent=#CTLD] OnAfterGetCrates
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param #table Cargotable Table of #CTLD_CARGO objects spawned via "Get".
+  -- @return #CTLD self
+
+  --- FSM Function OnAfterRemoveCratesNearby.
+  -- @function [parent=#CTLD] OnAfterRemoveCratesNearby
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param #table Cargotable Table of #CTLD_CARGO objects removed nearby.
+  -- @return #CTLD self
+
   --- FSM Function OnAfterCratesBuild.
   -- @function [parent=#CTLD] OnAfterCratesBuild
   -- @param #CTLD self
@@ -2948,7 +2991,7 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
   self:T("_AddCrateQuantityMenus "..cargoObj.Name)
   local needed = cargoObj:GetCratesNeeded() or 1
   local stockEntry = self:_GetCrateStockEntry(cargoObj, stockSummary)
-  local stock = 0
+  local stock = nil
   if stockEntry and type(stockEntry.Stock) == "number" then
     stock = stockEntry.Stock
   else
@@ -2973,6 +3016,7 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
     return self
   end
   local capacitySets = nil
+  local capacityCrates = nil
   if Unit then
     local capabilities = self:_GetUnitCapabilities(Unit)
     local capacity = capabilities and capabilities.cratelimit or 0
@@ -2989,6 +3033,7 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
       if space < 0 then
         space = 0
       end
+      capacityCrates = space
       local perSet = needed > 0 and needed or 1
       capacitySets = math.floor(space / perSet)
     end
@@ -3006,6 +3051,7 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
   end
   self:T("_AddCrateQuantityMenus maxQuantity "..maxQuantity.." allowLoad "..tostring(allowLoad))
   local maxMassSets = nil
+  local maxMassCrates = nil
   if Unit then
     local maxload = self:_GetMaxLoadableMass(Unit)
     local perCrateMass = (cargoObj.GetMass and cargoObj:GetMass()) or cargoObj.PerCrateMass or 0
@@ -3019,8 +3065,11 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
         maxQuantity = maxMassSets
       end
     end
+    if type(maxload)=="number"and maxload>0 and perCrateMass>0 then
+      maxMassCrates=math.floor(maxload/perCrateMass)
+    end
   end
-  self:T("_AddCrateQuantityMenus maxQuantity "..maxQuantity.." allowLoad "..tostring(allowLoad))
+    self:T("_AddCrateQuantityMenus maxQuantity "..maxQuantity.." allowLoad "..tostring(allowLoad))
   if maxQuantity < 1 then
     return self
   end
@@ -3031,20 +3080,28 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
     MENU_GROUP_COMMAND:New(Group, "Get", parentMenu, self._GetCrateQuantity, self, Group, Unit, cargoObj, 1)
     local canLoad = (allowLoad and (not capacitySets or capacitySets >= 1) and (not maxMassSets or maxMassSets >= 1))
     local isHerc = self:IsC130J(Unit)
-    if canLoad and not isHerc then
+    local isHook = self:IsHook(Unit)
+    local cgotype = cargoObj:GetType() or nil
+    local suppressGetAndLoad = (self.enableChinookGCLoading == true) and isHook and (cgotype == CTLD_CARGO.Enum.STATIC)
+    local canPartiallyLoad=((not capacityCrates or capacityCrates>=1)and(not maxMassCrates or maxMassCrates>=1))
+    if canLoad and not isHerc and not suppressGetAndLoad then
       MENU_GROUP_COMMAND:New(Group, "Get and Load", parentMenu, self._GetAndLoad, self, Group, Unit, cargoObj, 1)
     else
       local msg
-      if not isHerc then
+      if not isHerc and not suppressGetAndLoad then
         if maxMassSets and (not capacitySets or capacitySets >= 1) and maxMassSets < 1 then
           msg = "Weight limit reached"
         else
           msg = "Crate limit reached"
         end
         MENU_GROUP_COMMAND:New(Group, msg, parentMenu, self._SendMessage, self, msg, 10, false, Group)
+
+        if canPartiallyLoad and (cgotype ~= CTLD_CARGO.Enum.STATIC) and (not suppressGetAndLoad) then
+          MENU_GROUP_COMMAND:New(Group, "Partially load", parentMenu, self._GetAndLoad, self, Group, Unit, cargoObj, 1,true)
+        end
       end
     end
-    parentMenu:Refresh()
+   
     return self
   end
 
@@ -3056,17 +3113,24 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
     MENU_GROUP_COMMAND:New(Group, "Get", qMenu, self._GetCrateQuantity, self, Group, Unit, cargoObj, quantity)
     local canLoad = (allowLoad and (not capacitySets or capacitySets >= quantity) and (not maxMassSets or maxMassSets >= quantity))
     local isHerc = self:IsC130J(Unit)
-    if canLoad and not isHerc then
+    local isHook = self:IsHook(Unit)
+    local cgotype = cargoObj:GetType() or nil
+    local suppressGetAndLoad = (self.enableChinookGCLoading == true) and isHook and (cgotype == CTLD_CARGO.Enum.STATIC)
+    local canPartiallyLoad=((not capacityCrates or capacityCrates>=1)and(not maxMassCrates or maxMassCrates>=1))
+    if canLoad and not isHerc and not suppressGetAndLoad  then
       MENU_GROUP_COMMAND:New(Group, "Get and Load", qMenu, self._GetAndLoad, self, Group, Unit, cargoObj, quantity)
     else
       local msg
-      if not isHerc then
+      if not isHerc and not suppressGetAndLoad then
         if maxMassSets and (not capacitySets or capacitySets >= quantity) and maxMassSets < quantity then
           msg = "Weight limit reached"
         else
           msg = "Crate limit reached"
         end
         MENU_GROUP_COMMAND:New(Group, msg, qMenu, self._SendMessage, self, msg, 10, false, Group)
+        if canPartiallyLoad and (cgotype ~= CTLD_CARGO.Enum.STATIC) and (not suppressGetAndLoad) then
+          MENU_GROUP_COMMAND:New(Group, "Partially load", qMenu, self._GetAndLoad, self, Group, Unit, cargoObj, quantity, true)
+        end
       end
     end
   end
@@ -3200,7 +3264,7 @@ end
 -- @param #number number Number of crates to generate (for dropping)
 -- @param #boolean drop If true we\'re dropping from heli rather than loading.
 -- @param #boolean pack If true we\'re packing crates from a template rather than loading or dropping
-function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet)
+function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppressGetEvent)
   self:T(self.lid .. " _GetCrates")
 
   -- check if we have stock
@@ -3228,6 +3292,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet)
   -- check if we are in LOAD zone
   local inzone = false 
   local drop = drop or false
+  local suppressGetEvent = suppressGetEvent or false
   local ship = nil
   local width = 20
   local distance = nil
@@ -3298,6 +3363,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet)
   local heading = Unit:GetHeading() + 1
   local height = Unit:GetHeight()
   local droppedcargo = {}
+  local obtainedcargo = {}
   local cratedistance = 0
   local rheading = 0
   local angleOffNose = 0
@@ -3416,6 +3482,9 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet)
         realcargo:SetWasDropped(true,true) -- we mark here that the crates was dropped even though we just got them because of the herc.
       end
     end
+    if not drop and not pack then
+      table.insert(obtainedcargo, realcargo)
+    end
     local CCat4, CType4, CShape4 = cargotype:GetStaticTypeAndShape()
     realcargo:SetStaticTypeAndShape(CCat4,CType4,CShape4)
     table.insert(self.Spawned_Cargo, realcargo)
@@ -3432,6 +3501,9 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet)
   else
     if not quiet then
       self:_SendMessage(text, 10, false, Group)
+    end
+    if not pack and not suppressGetEvent and #obtainedcargo > 0 then
+      self:__GetCrates(1, Group, Unit, obtainedcargo)
     end
   end
   self:_RefreshLoadCratesMenu(Group, Unit)
@@ -3574,6 +3646,7 @@ function CTLD:_C130RemoveUnitsNearby(_group,_unit)
   local zone = ZONE_RADIUS:New("CTLD_C130RemoveZone",location:GetVec2(),finddist,false)
   local nearestGroups = SET_GROUP:New():FilterCoalitions("blue"):FilterZones({zone}):FilterOnce()
   local removedAny = false
+  local removedTable = {}
   for _, gr in pairs(nearestGroups.Set) do
     local gc = gr:GetCoordinate()
     if gc then
@@ -3588,6 +3661,7 @@ function CTLD:_C130RemoveUnitsNearby(_group,_unit)
           for _, tName in pairs(templ) do
             if string.match(gr:GetName(),tName) then
               local cname = cfg.Name or "Unit"
+              table.insert(removedTable, { groupName = gr:GetName(), name = cname, template = tName, coordinate = gr:GetCoordinate() })
               gr:Destroy(false)
               self:_SendMessage(cname.." have been removed",10,false,_group)
               removedAny = true
@@ -3602,6 +3676,9 @@ function CTLD:_C130RemoveUnitsNearby(_group,_unit)
   end
   if not removedAny then
     self:_SendMessage("Nothing to remove at this distance pilot!",10,false,_group)
+  else
+    -- Trigger FSM event for removed units (C-130 managed groups).
+    self:__RemoveCratesNearby(1, _group, _unit, removedTable)
   end
   return self
 end
@@ -3623,8 +3700,11 @@ function CTLD:_RemoveCratesNearby(_group, _unit)
       local entry=_entry
       local name=entry:GetName()or"none"
       text:Add(string.format("Crate for %s, %dkg removed",name,entry.PerCrateMass))
-      if entry:GetPositionable()then
-        entry:GetPositionable():Destroy(false)
+      local pos = entry:GetPositionable()
+      if pos then
+        -- Store removal position before destroying so callbacks can use it.
+        entry.coordinate = pos:GetCoordinate()
+        pos:Destroy(false)
       end
       table.insert(removedIDs,entry:GetID())
     end
@@ -3643,6 +3723,9 @@ function CTLD:_RemoveCratesNearby(_group, _unit)
     end
     end
     self:_RefreshLoadCratesMenu(_group,_unit)
+
+    -- Trigger FSM event for removed crates.
+    self:__RemoveCratesNearby(1, _group, _unit, crates)
   else
     self:_SendMessage(string.format("No (loadable) crates within %d meters!",finddist),10,false,_group)
   end
@@ -4977,7 +5060,7 @@ end
 -- @param Wrapper.Unit#UNIT  Unit    The calling unit
 -- @param #CTLD_CARGO cargoObj
 -- @param #number quantity
-function CTLD:_GetAndLoad(Group, Unit, cargoObj, quantity)
+function CTLD:_GetAndLoad(Group, Unit, cargoObj, quantity, LoadAnyWay)
   if self.pilotmustopendoors and not UTILS.IsLoadingDoorOpen(Unit:GetName()) then
     self:_SendMessage("You need to open the door(s) to load cargo!", 10, false, Group)
     return self
@@ -4994,20 +5077,25 @@ function CTLD:_GetAndLoad(Group, Unit, cargoObj, quantity)
     if space < 0 then space = 0 end
     local perSet = needed > 0 and needed or 1
     capacitySets = math.floor(space / perSet)
-    if capacitySets < 1 then
+    if capacitySets < 1 and not LoadAnyWay then
       self:_SendMessage("No capacity to load more now!", 10, false, Group)
       return self
     end
-    if count > capacitySets then count = capacitySets end
+    if capacitySets < 1 and LoadAnyWay then
+      count = 1
+    elseif count > capacitySets then
+      count = capacitySets
+    end
   end
   local total = needed * count
-  local ok = self:_GetCrates(Group, Unit, cargoObj, total, false, false, true)
+  local ok = self:_GetCrates(Group, Unit, cargoObj, total, false, false, true, true)
   if ok then
     local uname = Unit:GetName()
     self._batchCrateLoad = self._batchCrateLoad or {}
     self._batchCrateLoad[uname] = { remaining = count, group = Group, cname = cargoObj.Name, loaded = 0, partials = 0 }
+    local details = (LoadAnyWay == true)
     for i = 1, count do
-      timer.scheduleFunction(function() self:_LoadSingleCrateSet(Group, Unit, cargoObj.Name) end, {}, timer.getTime() + 0.2 * i)
+      timer.scheduleFunction(function() self:_LoadSingleCrateSet(Group, Unit, cargoObj.Name, details) end, {}, timer.getTime() + 0.2 * i)
     end
   end
   return self
@@ -5443,11 +5531,34 @@ function CTLD:_RefreshF10Menus()
                   crateStockSummary = self:_CountStockPlusInHeloPlusAliveGroups(false)
                 end
 
-                local function addCrateMenuEntry(cargoObj,parentMenu)
+                local function addCrateMenuEntry(cargoObj,parentMenu,subcatmenus)
                   if cargoObj.DontShowInMenu then
                     return
                   end
+
+                  local isStaticCargo = false
+                  if (cargoObj.GetType and cargoObj:GetType() == CTLD_CARGO.Enum.STATIC) or cargoObj.CargoType == CTLD_CARGO.Enum.STATIC then
+                    isStaticCargo = true
+                  end
+
+                  -- Only restrict CTLD menu visibility by unit type for STATIC cargo.
+                  -- Crates/troops should remain visible "as-is" like before.
+                  if isStaticCargo and cargoObj.UnitCanCarry and not cargoObj:UnitCanCarry(_unit) then
+                    return
+                  end
+
+                  -- If sub-categories are enabled, create the sub-menu only when we actually add something to it.
+                  local parent = parentMenu
+                  if subcatmenus and cargoObj.Subcategory then
+                    parent = subcatmenus[cargoObj.Subcategory]
+                    if not parent then
+                      parent = MENU_GROUP:New(_group, cargoObj.Subcategory, cratesmenu)
+                      subcatmenus[cargoObj.Subcategory] = parent
+                    end
+                  end
+
                   local needed = cargoObj:GetCratesNeeded() or 1
+
                   local txt
                   if needed > 1 then
                     txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoObj.Name,cargoObj.PerCrateMass or 0)
@@ -5459,21 +5570,21 @@ function CTLD:_RefreshF10Menus()
                     local suffix = self:_FormatCrateStockSuffix(cargoObj,crateStockSummary)
                     if suffix then txt = txt..suffix end
                   end
-                  local mSet = MENU_GROUP:New(_group,txt,parentMenu)
+                  local mSet = MENU_GROUP:New(_group,txt,parent)
                   _group.CTLD_CrateMenus[cargoObj.Name] = mSet
                   self:_AddCrateQuantityMenus(_group,_unit,mSet,cargoObj,crateStockSummary)
                 end
 
-                if self.usesubcats == true then
+                if self.usesubcats then
                   local subcatmenus = {}
-                  for catName,_ in pairs(self.subcats) do
-                    subcatmenus[catName] = MENU_GROUP:New(_group,catName,cratesmenu)
-                  end
+	  
+	  
+   
                   for _,cargoObj in pairs(self.Cargo_Crates) do
-                    addCrateMenuEntry(cargoObj,subcatmenus[cargoObj.Subcategory] or cratesmenu)
+                    addCrateMenuEntry(cargoObj,cratesmenu,subcatmenus)
                   end
                   for _,cargoObj in pairs(self.Cargo_Statics) do
-                    addCrateMenuEntry(cargoObj,subcatmenus[cargoObj.Subcategory] or cratesmenu)
+                    addCrateMenuEntry(cargoObj,cratesmenu,subcatmenus)
                   end
                 else
                   for _,cargoObj in pairs(self.Cargo_Crates) do
@@ -5486,8 +5597,12 @@ function CTLD:_RefreshF10Menus()
               else
                 if self.usesubcats == true then
                   local subcatmenus = {}
-                  for catName, _ in pairs(self.subcats) do
-                    subcatmenus[catName] = MENU_GROUP:New(_group, catName, cratesmenu)         -- fixed variable case
+                  local function getSubcatMenu(catName)
+                    if not catName then return cratesmenu end
+                    if not subcatmenus[catName] then
+                      subcatmenus[catName] = MENU_GROUP:New(_group, catName, cratesmenu)
+                    end
+                    return subcatmenus[catName]
                   end
                   for _, cargoObj in pairs(self.Cargo_Crates) do
                     if not cargoObj.DontShowInMenu then
@@ -5501,11 +5616,11 @@ function CTLD:_RefreshF10Menus()
                       if cargoObj.Location then txt = txt.."[R]" end
                       local stock = cargoObj:GetStock()
                       if stock >= 0 and self.showstockinmenuitems then txt = txt.."["..stock.."]" end
-                      MENU_GROUP_COMMAND:New(_group, txt, subcatmenus[cargoObj.Subcategory], self._GetCrates, self, _group, _unit, cargoObj)
+                      MENU_GROUP_COMMAND:New(_group, txt, getSubcatMenu(cargoObj.Subcategory), self._GetCrates, self, _group, _unit, cargoObj)
                     end
                   end
                   for _, cargoObj in pairs(self.Cargo_Statics) do
-                    if not cargoObj.DontShowInMenu then
+                    if (not cargoObj.DontShowInMenu) and (not cargoObj.UnitCanCarry or cargoObj:UnitCanCarry(_unit)) then
                       local needed = cargoObj:GetCratesNeeded() or 1
                       local txt
                       if needed > 1 then
@@ -5516,7 +5631,7 @@ function CTLD:_RefreshF10Menus()
                       if cargoObj.Location then txt = txt.."[R]" end
                       local stock = cargoObj:GetStock()
                       if stock >= 0 and self.showstockinmenuitems then txt = txt.."["..stock.."]" end
-                      MENU_GROUP_COMMAND:New(_group, txt, subcatmenus[cargoObj.Subcategory], self._GetCrates, self, _group, _unit, cargoObj)
+                      MENU_GROUP_COMMAND:New(_group, txt, getSubcatMenu(cargoObj.Subcategory), self._GetCrates, self, _group, _unit, cargoObj)
                     end
                   end
                 else
@@ -5536,7 +5651,7 @@ function CTLD:_RefreshF10Menus()
                     end
                   end
                   for _, cargoObj in pairs(self.Cargo_Statics) do
-                    if not cargoObj.DontShowInMenu then
+                    if (not cargoObj.DontShowInMenu) and (not cargoObj.UnitCanCarry or cargoObj:UnitCanCarry(_unit)) then
                       local needed = cargoObj:GetCratesNeeded() or 1
                       local txt
                       if needed > 1 then
@@ -5735,7 +5850,7 @@ function CTLD:_RefreshLoadCratesMenu(Group,Unit)
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
 -- @param #string cargoName The cargo name, e.g. "Ammo Truck"
-function CTLD:_LoadSingleCrateSet(Group, Unit, cargoName)
+function CTLD:_LoadSingleCrateSet(Group, Unit, cargoName, details)
   self:T(self.lid .. " _LoadSingleCrateSet cargoName=" .. (cargoName or "nil"))
 
   -- 1) Must be landed or hovering
@@ -5776,7 +5891,7 @@ function CTLD:_LoadSingleCrateSet(Group, Unit, cargoName)
   local found = #matchingCrates
   local batch = self._batchCrateLoad and self._batchCrateLoad[Unit:GetName()] or nil
   local prevSuppress = self.suppressmessages
-  if batch and batch.cname == cargoName then self.suppressmessages = true end
+  if batch and (not details) and batch.cname == cargoName then self.suppressmessages = true end
 
   -- 4) Check capacity
   local unitName = Unit:GetName()
@@ -5785,6 +5900,7 @@ function CTLD:_LoadSingleCrateSet(Group, Unit, cargoName)
   local capacity = capabilities.cratelimit or 0
   if loadedData.Cratesloaded >= capacity then
     self:_SendMessage("No more capacity to load crates!", 10, false, Group)
+    self.suppressmessages = prevSuppress
     return self
   end
 
@@ -5793,6 +5909,7 @@ function CTLD:_LoadSingleCrateSet(Group, Unit, cargoName)
   local toLoad = math.min(found, needed, spaceLeft)
   if toLoad < 1 then
     self:_SendMessage("Cannot load crates: either none found or no capacity left.", 10, false, Group)
+    self.suppressmessages = prevSuppress
     return self
   end
 
@@ -5831,7 +5948,7 @@ function CTLD:_LoadSingleCrateSet(Group, Unit, cargoName)
 
   -- 7) Show final message, including a special note if capacity is now reached
   local loadedHere = toLoad
-  if not batch then
+  if details or (not batch) then
     if loadedHere < needed and loadedData.Cratesloaded >= capacity then
       self:_SendMessage(string.format("Loaded only %d/%d crate(s) of %s. Cargo limit is now reached!", loadedHere, needed, cargoName), 10, false, Group)
     else
@@ -5862,11 +5979,13 @@ function CTLD:_LoadSingleCrateSet(Group, Unit, cargoName)
     batch.remaining = (batch.remaining or 1) - 1
     if batch.remaining <= 0 then
       self.suppressmessages = prevSuppress
+    if not details then
       local txt = string.format("Loaded %d %s.", batch.loaded, cargoName)
       if batch.partials and batch.partials > 0 then
         txt = txt .. " Some sets could not be fully loaded."
       end
       self:_SendMessage(txt, 10, false, batch.group)
+    end
       self._batchCrateLoad[Unit:GetName()] = nil
     else
       self.suppressmessages = prevSuppress
@@ -6660,7 +6779,7 @@ end
 -- @param #boolean DontShowInMenu (optional) If set to "true" this won't show up in the menu.
 -- @param Core.Zone#ZONE Location (optional) If set, the cargo item is **only** available here. Can be a #ZONE object or the name of a zone as #string.
 -- @return #CTLD_CARGO CargoObject
-function CTLD:AddStaticsCargo(Name,Mass,Stock,SubCategory,DontShowInMenu,Location)
+function CTLD:AddStaticsCargo(Name,Mass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes)
   self:T(self.lid .. " AddStaticsCargo")
   self.CargoCounter = self.CargoCounter + 1
   local type = CTLD_CARGO.Enum.STATIC
@@ -6672,6 +6791,9 @@ function CTLD:AddStaticsCargo(Name,Mass,Stock,SubCategory,DontShowInMenu,Locatio
   end
   -- Crates are not directly loadable
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,template,type,false,false,1,nil,nil,Mass,Stock,SubCategory,DontShowInMenu,Location)
+  if UnitTypes then
+    cargo:AddUnitTypeName(UnitTypes)
+  end
   cargo:SetStaticResourceMap(ResourceMap)
   table.insert(self.Cargo_Statics,cargo)
   if SubCategory and self.usesubcats ~= true then self.usesubcats=true end
@@ -8801,6 +8923,34 @@ end
   -- @param #table Cargotable Table of #CTLD_CARGO objects dropped. Can be a Wrapper.DynamicCargo#DYNAMICCARGO object, if ground crew unloaded!
   -- @return #CTLD self
   function CTLD:onbeforeCratesDropped(From, Event, To, Group, Unit, Cargotable)
+    self:T({From, Event, To})
+    return self
+  end
+  
+  --- (Internal) FSM Function onafterGetCrates.
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param #table Cargotable Table of #CTLD_CARGO objects spawned via "Get".
+  -- @return #CTLD self
+  function CTLD:onaftergetcrates(From, Event, To, Group, Unit, Cargotable)
+    self:T({From, Event, To})
+    return self
+  end
+
+  --- (Internal) FSM Function onafterGetCrates.
+  -- @param #CTLD self
+  -- @param #string From State.
+  -- @param #string Event Trigger.
+  -- @param #string To State.
+  -- @param Wrapper.Group#GROUP Group Group Object.
+  -- @param Wrapper.Unit#UNIT Unit Unit Object.
+  -- @param #table Cargotable Table of #CTLD_CARGO objects spawned via "Get".
+  -- @return #CTLD self
+  function CTLD:onafterremovecratesnearby(From, Event, To, Group, Unit, Cargotable)
     self:T({From, Event, To})
     return self
   end
