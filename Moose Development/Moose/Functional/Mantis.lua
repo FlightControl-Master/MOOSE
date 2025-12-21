@@ -1067,13 +1067,111 @@ do
     return self
   end
   
+  --- Add a single reject zone to MANTIS.
+  -- @param #MANTIS self
+  -- @param Core.Zone#ZONE Zone The zone to be added
+  -- @return #MANTIS self
+  function MANTIS:AddRejectZone(Zone)
+    if Zone and Zone:IsInstanceOf("ZONE_BASE") then
+      table.insert(self.RejectZones,Zone)
+      self.usezones = true
+    end
+    return self
+  end
+  
+  --- Add a single accept zone to MANTIS.
+  -- @param #MANTIS self
+  -- @param Core.Zone#ZONE Zone The zone to be added
+  -- @return #MANTIS self
+  function MANTIS:AddAcceptZone(Zone)
+    if Zone and Zone:IsInstanceOf("ZONE_BASE") then
+      table.insert(self.AcceptZones,Zone)
+      self.usezones = true
+    end
+    return self
+  end
+  
+  --- Add a single conflict zone to MANTIS.
+  -- @param #MANTIS self
+  -- @param Core.Zone#ZONE Zone The zone to be added
+  -- @return #MANTIS self
+  function MANTIS:AddConflictZone(Zone)
+    if Zone and Zone:IsInstanceOf("ZONE_BASE") then
+      table.insert(self.ConflictZones,Zone)
+      self.usezones = true
+    end
+    return self
+  end
+  
+  --- Function to set corridor zones.
+  -- @param #MANTIS self
+  -- @param Core.Set#SET_ZONE CorridorZones Can be handed in as SET\_ZONE or single ZONE object.
+  -- @return #MANTIS self
+  function MANTIS:SetCorridorZones(CorridorZones)
+    self:T(self.lid .. "SetCorridorZones")
+    if CorridorZones and CorridorZones:IsInstanceOf("SET_ZONE") then
+      self.corridorzones = CorridorZones
+      self.usecorridors = true
+    elseif CorridorZones and CorridorZones:IsInstanceOf("ZONE_BASE") then
+      if not self.corridorzones then self.corridorzones = SET_ZONE:New() end
+      self.corridorzones:AddZone(CorridorZones)
+      self.usecorridors = true
+    end
+    if self.intelset then
+      for _,_intel in pairs(self.intelset) do
+        _intel:SetCorridorZones(self.corridorzones)
+      end
+    end
+    return self
+  end
+  
+  --- Function to add one corridor zone.
+  -- @param #MANTIS self
+  -- @param Core.Zone#ZONE CorridorZone The ZONE object to be added.
+  -- @return #MANTIS self
+  function MANTIS:AddCorridorZone(CorridorZone)
+    self:T(self.lid .. "AddCorridorZone")
+    self:SetCorridorZones(CorridorZone)
+    return self
+  end
+  
+  --- Function to set corridor zone floor and ceiling in FEET.
+  -- @param #MANTIS self
+  -- @param #number Floor Floor altitude ASL in feet.
+  -- @param #number Ceiling Ceiling altitude ASL in feet.
+  -- @return #MANTIS self
+  function MANTIS:SetCorridorZoneFloorAndCeiling(Floor,Ceiling)
+    self.corridorfloor = UTILS.FeetToMeters(Floor)
+    self.corridorceiling = UTILS.FeetToMeters(Ceiling)
+    if self.intelset then
+      for _,_intel in pairs(self.intelset) do
+        _intel:SetCorridorLimits(self.corridorfloor,self.corridorceiling)
+      end
+    end
+    return self
+  end
+  
+  --- Function to set corridor zone floor and ceiling in METERS.
+  -- @param #MANTIS self
+  -- @param #number Floor Floor altitude ASL in meters.
+  -- @param #number Ceiling Ceiling altitude ASL in meters.
+  -- @return #MANTIS self
+  function MANTIS:SetCorridorZoneFloorAndCeilingMeters(Floor,Ceiling)
+    self.corridorfloor = Floor    
+    self.corridorceiling = Ceiling
+    if self.intelset then
+      for _,_intel in pairs(self.intelset) do
+        _intel:SetCorridorLimits(self.corridorfloor,self.corridorceiling)
+      end
+    end
+    return self
+  end
+  
   --- Function to set the detection radius of the EWR in meters. (Deprecated, SAM range is used)
   -- @param #MANTIS self
   -- @param #number radius Radius of the EWR detection zone
   function MANTIS:SetEWRRange(radius)
     self:T(self.lid .. "SetEWRRange")
-    --local radius = radius or 80000
-    -- self.acceptrange = radius
     return self
   end
 
@@ -1628,6 +1726,12 @@ do
     IntelOne.DetectAccousticRadius = self.DetectAccousticRadius or 2000
     IntelOne.DetectAccousticUnitTypes = self.DetectAccousticCategories or {Unit.Category.HELICOPTER}
     --IntelOne:SetClusterAnalysis(true,true,true)
+    if self.usecorridors == true then
+      IntelOne:SetCorrdidorZones(self.corridorzones)
+      if self.corridorfloor or self.corridorceiling then
+        IntelOne:SetCooridorLimits(self.corridorfloor,self.corridorceiling)
+      end
+    end
     IntelOne:Start()
     
     local IntelTwo = INTEL:New(samset,self.coalition,self.name.." IntelTwo")
@@ -1635,6 +1739,12 @@ do
     IntelTwo.DetectAccousticRadius = self.DetectAccousticRadius or 2000
     IntelTwo.DetectAccousticUnitTypes = self.DetectAccousticCategories or {Unit.Category.HELICOPTER}
     --IntelTwo:SetClusterAnalysis(true,true,true)
+    if self.usecorridors == true then
+      IntelTwo:SetCorrdidorZones(self.corridorzones)
+      if self.corridorfloor or self.corridorceiling then
+        IntelTwo:SetCooridorLimits(self.corridorfloor,self.corridorceiling)
+      end
+    end
     IntelTwo:Start()
     
     local CacheTime = self.DLinkCacheTime or 120
@@ -2227,11 +2337,7 @@ do
     else
       self.Detection = self:StartIntelDetection()
     end
-    --[[
-    if self.advAwacs and not self.automode then
-      self.AWACS_Detection = self:StartAwacsDetection()
-    end
-    --]]
+
     if self.autoshorad then
       self.Shorad = SHORAD:New(self.name.."-SHORAD","SHORAD",self.SAM_Group,self.ShoradActDistance,self.ShoradTime,self.Coalition,self.UseEmOnOff,self.SmokeDecoy,self.SmokeDecoyColor)
       self.Shorad:SetDefenseLimits(80,95)
