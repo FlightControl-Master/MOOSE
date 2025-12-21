@@ -1474,7 +1474,7 @@ function COHORT:_CheckAmmo()
         
         -- Descriptors.
         local Desc=weapon["desc"]
-        
+
         -- Warhead.
         local Warhead=Desc["warhead"]
   
