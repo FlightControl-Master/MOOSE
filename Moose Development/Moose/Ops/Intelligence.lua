@@ -986,14 +986,18 @@ function INTEL:UpdateIntel()
     
     -- Check if unit is in any of the corridor zones.
     if self.corridorzoneset:Count()>0 then
+      self:T("Corridorzone Check for unit "..unit:GetName())
       local inzone = false
       for _,_zone in pairs(self.corridorzoneset.Set) do
         local zone=_zone --Core.Zone#ZONE
         if unit:IsInZone(zone) then
+          local debugtext = "Corridorzone Check for unit "..unit:GetName().."\n"
+          debugtext = debugtext .. string.format("IsAir %s | Alt %dm | Floor %dm | Ceil %dm",tostring(unit:IsAir()),tonumber(unit:GetAltitude()),tonumber(self.corridorfloor),tonumber(self.corridorceiling))
+          MESSAGE:New(debugtext,15,"INTEL"):ToAllIf(self.verbose>1):ToLogIf(self.verbose>1)
           if unit:IsAir() and (self.corridorfloor ~= nil or self.corridorceiling ~= nil) then
             local alt = unit:GetAltitude()
             if self.corridorfloor and alt > self.corridorfloor then inzone = true end
-            if self.corridorceiling and alt < self.corridorceiling then inzone = true end
+            if self.corridorceiling and (inzone == true or self.corridorfloor == nil) and alt < self.corridorceiling then inzone = true else inzone = false end
             if inzone == true then break end
           else  
             inzone=true

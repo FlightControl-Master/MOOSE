@@ -1727,9 +1727,9 @@ do
     IntelOne.DetectAccousticUnitTypes = self.DetectAccousticCategories or {Unit.Category.HELICOPTER}
     --IntelOne:SetClusterAnalysis(true,true,true)
     if self.usecorridors == true then
-      IntelOne:SetCorrdidorZones(self.corridorzones)
+      IntelOne:SetCorridorZones(self.corridorzones)
       if self.corridorfloor or self.corridorceiling then
-        IntelOne:SetCooridorLimits(self.corridorfloor,self.corridorceiling)
+        IntelOne:SetCorridorLimits(self.corridorfloor,self.corridorceiling)
       end
     end
     IntelOne:Start()
@@ -1740,9 +1740,9 @@ do
     IntelTwo.DetectAccousticUnitTypes = self.DetectAccousticCategories or {Unit.Category.HELICOPTER}
     --IntelTwo:SetClusterAnalysis(true,true,true)
     if self.usecorridors == true then
-      IntelTwo:SetCorrdidorZones(self.corridorzones)
+      IntelTwo:SetCorridorZones(self.corridorzones)
       if self.corridorfloor or self.corridorceiling then
-        IntelTwo:SetCooridorLimits(self.corridorfloor,self.corridorceiling)
+        IntelTwo:SetCorridorLimits(self.corridorfloor,self.corridorceiling)
       end
     end
     IntelTwo:Start()
