@@ -31,7 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 ---
--- Last Update Oct 2025
+-- Last Update Dec 2025
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -81,7 +81,7 @@
 --
 --         mycsar.allowDownedPilotCAcontrol = false -- Set to false if you don\'t want to allow control by Combined Arms.
 --         mycsar.allowFARPRescue = true -- allows pilots to be rescued by landing at a FARP or Airbase. Else MASH only!
---         mycsar.FARPRescueDistance = 1000 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
+--         mycsar.FARPRescueDistance = 500 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
 --         mycsar.autosmoke = false -- automatically smoke a downed pilot\'s location when a heli is near.
 --         mycsar.autosmokedistance = 1000 -- distance for autosmoke
 --         mycsar.coordtype = 1 -- Use Lat/Long DDM (0), Lat/Long DMS (1), MGRS (2), Bullseye imperial (3) or Bullseye metric (4) for coordinates.
@@ -119,6 +119,7 @@
 --         mycsar.PilotWeight = 80 --  Loaded pilots weigh 80kgs each
 --         mycsar.AllowIRStrobe = false -- Allow a menu item to request an IR strobe to find a downed pilot at night (requires NVGs to see it).
 --         mycsar.IRStrobeRuntime = 300 -- If an IR Strobe is activated, it runs for 300 seconds (5 mins).
+--         mycsar.EnableMenuSmokeMASH = true -- Allow a menu item to request smoke at the closest MASH/AFB for rescue.
 --
 -- ## 2.1 Create own SET_GROUP to manage CTLD Pilot groups
 --
@@ -272,6 +273,8 @@ CSAR = {
   UserSetGroup = nil,
   AllowIRStrobe = false,
   IRStrobeRuntime = 300,
+  FARPRescueDistance = 500,
+  EnableMenuSmokeMASH = true,
 }
 
 --- Downed pilots info.
@@ -431,12 +434,13 @@ function CSAR:New(Coalition, Template, Alias)
   self.radioSound = "beacon.ogg" -- the name of the sound file to use for the Pilot radio beacons. If this isnt added to the mission BEACONS WONT WORK!
   self.beaconRefresher = 29 -- seconds
   self.allowFARPRescue = true --allows pilot to be rescued by landing at a FARP or Airbase
-  self.FARPRescueDistance = 1000 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
+  self.FARPRescueDistance = 500 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
   self.max_units = 6 --max number of pilots that can be carried
   self.useprefix = true  -- Use the Prefixed defined below, Requires Unit have the Prefix defined below
   self.csarPrefix = { "helicargo", "MEDEVAC"} -- prefixes used for useprefix=true - DON\'T use # in names!
   self.template = Template or "generic" -- template for downed pilot
   self.mashprefix = {"MASH"} -- prefixes used to find MASHes
+  self.EnableMenuSmokeMASH = true
 
   self.autosmoke = false -- automatically smoke location when heli is near
   self.autosmokedistance = 2000 -- distance for autosmoke
@@ -1232,7 +1236,7 @@ function CSAR:_EventHandler(EventData)
       local _place = _event.Place -- Wrapper.Airbase#AIRBASE
 
       if _place == nil then
-        self:T(self.lid .. " Landing Place Nil")
+        self:T(self.lid .. " Landing Place nil")
         return self -- error!
       end
 
@@ -1761,7 +1765,14 @@ function CSAR:_ScheduledSARFlight(heliname,groupname, isairport, noreschedule, I
   end
 
   self:T(self.lid.."[Drop off debug] Check distance to MASH for "..heliname.." Distance km: "..math.floor(_dist/1000))
-
+  
+  if self.verbose>0 then
+    local debugtext = string.format("Distance %dm | Rescuedist %dm | IsAirport %s | IsInAir %s | IsHeloBase %s\n",_dist,self.FARPRescueDistance,tostring(isairport),tostring(_heliUnit:InAir()),tostring(IsHeloBase))
+    self:T("*******************************")
+    self:T(debugtext)
+    self:T("*******************************")
+  end
+  
   if ( _dist < self.FARPRescueDistance or isairport ) and ((_heliUnit:InAir() == false) or (IsHeloBase == true)) then
     self:T(self.lid.."[Drop off debug] Distance ok, door check")
     if self.pilotmustopendoors and self:_IsLoadingDoorOpen(heliname) == false then
@@ -2138,11 +2149,47 @@ function CSAR:_Reqsmoke( _unitName )
   return self
 end
 
+---(Internal) Request smoke at closest MASH/AFB.
+--@param #CSAR self
+--@param #string _unitName Name of the helicopter
+function CSAR:_ReqsmokeMash( _unitName )
+  self:T(self.lid .. " _ReqsmokeMash")
+  local _heli = self:_GetSARHeli(_unitName)
+  if _heli == nil then
+    return
+  end
+  local smokedist = 8000
+  if smokedist < self.approachdist_far then smokedist = self.approachdist_far end
+  local distance, name, coordinate = self:_GetClosestMASH(_heli)
+  if coordinate and distance then  
+    local disttext
+    if _SETTINGS:IsImperial() then
+      disttext = string.format("%.1fnm",UTILS.MetersToNM(distance))
+    else
+      disttext = string.format("%.1fkm",distance/1000)
+    end
+    local _msg = string.format("%s - Popping smoke at the closest rescue point: %s", self:_GetCustomCallSign(_unitName), disttext)
+    self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
+    local color = self.smokecolor
+    coordinate:Smoke(color)    
+  else
+    local _distance = string.format("%.1fkm",smokedist/1000)
+    if _SETTINGS:IsImperial() then
+      _distance = string.format("%.1fnm",UTILS.MetersToNM(smokedist))
+    else
+      _distance = string.format("%.1fkm",smokedist/1000)
+    end
+    self:_DisplayMessageToSAR(_heli, string.format("No rescue point within %s",_distance), self.messageTime, false, false, true)
+  end
+  return self
+end
+
 --- (Internal) Determine distance to closest MASH.
 -- @param #CSAR self
 -- @param Wrapper.Unit#UNIT _heli Helicopter #UNIT
 -- @return #number Distance in meters
 -- @return #string MASH Name as string
+-- @return Core.Point#COORDINATE Coordinate The MASH/AFB Coordinate (for smoke)
 function CSAR:_GetClosestMASH(_heli)
   self:T(self.lid .. " _GetClosestMASH")
   local _mashset = self.mash -- Core.Set#SET_GROUP
@@ -2155,12 +2202,23 @@ function CSAR:_GetClosestMASH(_heli)
   local _distance = 0
   local _helicoord = _heli:GetCoordinate()
   local MashName = nil
+  local Coordinate =  nil -- Core.Point#COORDINATE
 
   if self.allowFARPRescue then
     local position = _heli:GetCoordinate()
     local afb,distance = position:GetClosestAirbase(nil,self.coalition)
     _shortestDistance = distance
     MashName = (afb ~= nil) and afb:GetName() or "Unknown"
+    Coordinate = (afb ~= nil) and afb:GetCoordinate()
+    if afb then
+      local afbzone = afb:GetZone()
+      if afbzone then
+        --afbzone:DrawZone(-1,{0,1,0},1,{0,1,0},0.2,6)
+        if afbzone:IsCoordinateInZone(Coordinate) and distance > self.FARPRescueDistance then
+          distance = 100
+        end
+      end
+    end
   end
 
   for _,_mashes in pairs(MashSets)  do
@@ -2175,12 +2233,13 @@ function CSAR:_GetClosestMASH(_heli)
       if _distance ~= nil and (_shortestDistance == -1 or _distance < _shortestDistance) then
         _shortestDistance = _distance
         MashName = _mashUnit:GetName() or "Unknown"
+        Coordinate = _mashcoord
       end
     end
   end
 
   if _shortestDistance ~= -1 then
-    return _shortestDistance, MashName
+    return _shortestDistance, MashName, Coordinate
   else
     return -1
   end
@@ -2249,6 +2308,9 @@ function CSAR:_AddMedevacMenuItem()
           local _rootMenu4 = MENU_GROUP_COMMAND:New(_group,"Request Smoke",_rootPath, self._Reqsmoke,self,_unitName)
           if self.AllowIRStrobe then
             local _rootMenu5 = MENU_GROUP_COMMAND:New(_group,"Request IR Strobe",_rootPath, self._ReqIRStrobe,self,_unitName):Refresh()
+          end
+          if self.EnableMenuSmokeMASH then
+            local _rootMenu6 = MENU_GROUP_COMMAND:New(_group,"Smoke Closest MASH",_rootPath, self._ReqsmokeMash,self,_unitName)
           else
             _rootMenu4:Refresh()
           end
@@ -2979,7 +3041,7 @@ function CSAR:onafterLoad(From, Event, To, path, filename)
 
   -- Info message.
   local text=string.format("Loading CSAR state from file %s", filename)
-  MESSAGE:New(text,10):ToAllIf(self.Debug)
+  MESSAGE:New(text,10):ToAllIf(self.verbose>0)
   self:I(self.lid..text)
 
   local file=assert(io.open(filename, "rb"))
