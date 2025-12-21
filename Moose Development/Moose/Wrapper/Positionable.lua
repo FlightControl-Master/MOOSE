@@ -729,16 +729,23 @@ end
 
 --- Returns the altitude above sea level of the POSITIONABLE.
 -- @param #POSITIONABLE self
+-- @param #boolean FromGround Measure from the ground or from sea level (ASL). Provide **true** for measuring from the ground (AGL). **false** or **nil** if you measure from sea level.
 -- @return DCS#Distance The altitude of the POSITIONABLE.
 -- @return #nil The POSITIONABLE is not existing or alive.
-function POSITIONABLE:GetAltitude()
+function POSITIONABLE:GetAltitude(FromGround)
   self:F2()
 
   local DCSPositionable = self:GetDCSObject()
 
   if DCSPositionable then
-    local PositionablePointVec3 = DCSPositionable:getPoint() -- DCS#Vec3
-    return PositionablePointVec3.y
+    local altitude = 0
+    local point = DCSPositionable:getPoint() --DCS#Vec3
+    altitude = point.y
+    if FromGround then
+        local land = land.getHeight({ x = point.x, y = point.z }) or 0
+        altitude = altitude - land
+    end
+    return altitude
   end
 
   BASE:E( { "Cannot GetAltitude", Positionable = self, Alive = self:IsAlive() } )

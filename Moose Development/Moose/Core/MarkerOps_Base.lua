@@ -202,9 +202,9 @@ end
 -- @return #boolean
 function MARKEROPS_BASE:_MatchTag(Eventtext)
   local matches = false
-  self:I(self.lid .. "Casesensitive "..tostring(self.Casesensitive))
+  --self:I(self.lid .. "Casesensitive "..tostring(self.Casesensitive))
   if self.Casesensitive == false then
-    self:I(self.lid .. "Marker non-casesensitive "..Eventtext)
+    --self:I(self.lid .. "Marker non-casesensitive "..Eventtext)
     local type = string.lower(self.Tag) -- #string
     if string.find(string.lower(Eventtext),type,1,true) then
       matches = true --event text contains tag
