@@ -284,7 +284,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.32"
+EASYGCICAP.version="0.1.33"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- 
@@ -1364,6 +1364,54 @@ function EASYGCICAP:AddConflictZone(Zone)
   return self
 end
 
+--- Function to set corridor zones.
+-- @param #EASYGCICAP self
+-- @param Core.Set#SET_ZONE CorridorZones Can be handed in as SET\_ZONE or single ZONE object.
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetCorridorZones(CorridorZones)
+  self:T(self.lid .. "SetCorridorZones")
+  if CorridorZones and CorridorZones:IsInstanceOf("SET_ZONE") then
+    self.corridorzones = CorridorZones
+    self.usecorridors = true
+  elseif CorridorZones and CorridorZones:IsInstanceOf("ZONE_BASE") then
+    if not self.corridorzones then self.corridorzones = SET_ZONE:New() end
+    self.corridorzones:AddZone(CorridorZones)
+    self.usecorridors = true
+  end
+  return self
+end
+
+--- Function to add one corridor zone.
+-- @param #EASYGCICAP self
+-- @param Core.Zone#ZONE CorridorZone The ZONE object to be added.
+-- @return #EASYGCICAP self
+function EASYGCICAP:AddCorridorZone(CorridorZone)
+  self:T(self.lid .. "AddCorridorZone")
+  self:SetCorridorZones(CorridorZone)
+  return self
+end
+
+--- Function to set corridor zone floor and ceiling in FEET.
+-- @param #EASYGCICAP self
+-- @param #number Floor Floor altitude ASL in feet.
+-- @param #number Ceiling Ceiling altitude ASL in feet.
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetCorridorZoneFloorAndCeiling(Floor,Ceiling)
+  self.corridorfloor = UTILS.FeetToMeters(Floor)
+  self.corridorceiling = UTILS.FeetToMeters(Ceiling)
+  return self
+end
+
+--- Function to set corridor zone floor and ceiling in METERS.
+-- @param #EASYGCICAP self
+-- @param #number Floor Floor altitude ASL in meters.
+-- @param #number Ceiling Ceiling altitude ASL in meters.
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetCorridorZoneFloorAndCeilingMeters(Floor,Ceiling)
+  self.corridorfloor = Floor    
+  self.corridorceiling = Ceiling
+  return self
+end
 
 --- (Internal) Try to assign the intercept to a FlightGroup already in air and ready.
 -- @param #EASYGCICAP self
@@ -1574,6 +1622,14 @@ function EASYGCICAP:_StartIntel()
   BlueIntel:SetRejectZones(self.NoGoZoneSet)
   BlueIntel:SetConflictZones(self.ConflictZoneSet)
   BlueIntel:SetVerbosity(0)
+  
+  if self.usecorridors == true then
+    BlueIntel:SetCorridorZones(self.corridorzones)
+    if self.corridorfloor or self.corridorceiling then
+      BlueIntel:SetCorridorLimitsFeet(self.corridorfloor,self.corridorceiling)
+    end
+  end
+  
   BlueIntel:Start()
   
   if self.debug then 

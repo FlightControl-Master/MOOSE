@@ -293,7 +293,7 @@ EASYA2G = {
 
 --- EASYA2G class version.
 -- @field #string version
-EASYA2G.version="0.0.2"
+EASYA2G.version="0.1.3"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -806,6 +806,14 @@ function EASYA2G:_StartIntel()
   BlueIntel:SetRejectZones(self.NoGoZoneSet)
   BlueIntel:SetConflictZones(self.ConflictZoneSet)
   BlueIntel:SetVerbosity(0)
+  
+  if self.usecorridors == true then
+    BlueIntel:SetCorridorZones(self.corridorzones)
+    if self.corridorfloor or self.corridorceiling then
+      BlueIntel:SetCorridorLimitsFeet(self.corridorfloor,self.corridorceiling)
+    end
+  end
+  
   BlueIntel:Start()
   
   if self.debug then 

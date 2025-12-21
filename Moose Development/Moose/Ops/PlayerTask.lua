@@ -61,6 +61,7 @@ do
 -- @field #number PreviousCount
 -- @field #boolean CanSmoke
 -- @field #boolean ShowThreatDetails
+-- @field #boolean PersistMe 
 -- @extends Core.Fsm#FSM
 
 
@@ -98,11 +99,12 @@ PLAYERTASK = {
   PreviousCount      =   0,
   CanSmoke           =   true,
   ShowThreatDetails  =   true,
+  PersistMe          =   false,
   }
 
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.29"
+PLAYERTASK.version="0.1.31"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -401,8 +403,17 @@ function PLAYERTASK:CanJoinTask(Group, Client)
     return true
 end
 
+--- [User] Set this task for persistance, if persistance is enabled on the PLAYERTASKCONTROLLER instance.
+-- @param #PLAYERTASK self
+-- @return #PLAYERTASK self 
+function PLAYERTASK:EnablePersistance()
+  self.PersistMe = true
+  return self
+end
+
 --- [Internal] Add a PLAYERTASKCONTROLLER for this task
 -- @param #PLAYERTASK self
+-- 
 -- @param Ops.PlayerTask#PLAYERTASKCONTROLLER Controller
 -- @return #PLAYERTASK self
 function PLAYERTASK:_SetController(Controller)
@@ -1088,7 +1099,6 @@ function PLAYERTASK:onafterStatus(From, Event, To)
   return self
 end
 
-
 --- [Internal] On after progress call
 -- @param #PLAYERTASK self
 -- @param #string From
@@ -1363,6 +1373,12 @@ do
 -- @field Core.ClientMenu#CLIENTMENU MenuNoTask
 -- @field #boolean InformationMenu Show Radio Info Menu
 -- @field #number TaskInfoDuration How long to show the briefing info on the screen
+-- @field #table TaskPersistance Table for persistance data
+-- @field #boolean TaskPersistanceSwitch Switch for persisting tasks
+-- @field #string TaskPersistancePath File path for persisting tasks
+-- @field #string TaskPersistanceFilename File name for persisting tasks
+-- @field #table TasksPersistable List of persistable tasks
+-- @field #number SceneryExplosivesAmount Kgs of TNT to explode scenery on task persistance loading
 -- @extends Core.Fsm#FSM
 
 ---
@@ -1669,8 +1685,28 @@ do
 --            
 -- Set a marker on the map and add the following text to create targets from it: "TARGET". This is effectively the same as adding a COORDINATE object as target.
 -- The marker can be deleted any time.
---         
--- ## 9 Discussion
+-- 
+-- ## 9 Single Task Persistence for mission designer added tasks
+-- 
+-- The class can persist the state of single tasks of type BOMBING, PRECISIONBOMBING, ARTY and SEAD, i.e. tasks which have a GROUND(!) GROUP, UNIT, STATIC or SCENERY as target.
+-- This requires the task to have a unique(!) menu name set, a TARGET which already exists on the map at mission start(!), and a flag that this task is actually to be persisted.
+-- Also, you need to desanitize the mission scripting environment, i.e. "lfs" and "io" must be available so we can write to disk.
+-- 
+--            -- First, we need to enable on the PLAYERTASKCONTROLLER itself
+--            taskmanager:EnableTaskPersistance([[C:\Users\myname\Saved Games\DCS\Missions\MyMisionFolder\]],"Mission Tasks.csv") -- Path and Filename
+--            
+--            -- Then, we can design a task marking mission progress that we want to persist
+--            local RussianRadios = SET_STATIC:New():FilterPrefixes("Comms Tower Russia"):FilterOnce()
+--            
+--            local RadioTask = PLAYERTASK:New(AUFTRAG.Type.BOMBING,RussianRadios,true,5,"Bombing")
+--            RadioTask:SetMenuName("Neutralize Comms Towers") -- UNIQUE menu name so we can find the task later!
+--            RadioTask:AddFreetext("Find and neutralize the two communication towers near NB70 East of Fulda on Streufelsberg!")
+--            RadioTask:AddFreetextTTS("Find and neutralize the two communication towers naer N;B;7;zero; East of Fulda on Streufelsberg!")
+--            RadioTask:EnablePersistance() -- Enable persistence for this task
+--            
+--            taskmanager:AddPlayerTaskToQueue(RadioTask,true,false)
+--                       
+-- ## 10 Discussion
 --
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-playertask channel.  
 -- 
@@ -1720,6 +1756,12 @@ PLAYERTASKCONTROLLER = {
   MenuNoTask         = nil,
   InformationMenu    = false,
   TaskInfoDuration   = 30,
+  TaskPersistance    = {},
+  TaskPersistanceSwitch = false,
+  TaskPersistancePath = nil,
+  TaskPersistanceFilename = nil,
+  TasksPersistable = {},
+  SceneryExplosivesAmount = 300,
   }
 
 ---
@@ -1740,6 +1782,7 @@ AUFTRAG.Type.PRECISIONBOMBING = "Precision Bombing"
 AUFTRAG.Type.CTLD = "Combat Transport"
 AUFTRAG.Type.CSAR = "Combat Rescue"
 AUFTRAG.Type.CONQUER = "Conquer"
+
 ---
 -- @type Scores
 PLAYERTASKCONTROLLER.Scores = {
@@ -1759,6 +1802,24 @@ PLAYERTASKCONTROLLER.Scores = {
   [AUFTRAG.Type.CAP] = 100,
   [AUFTRAG.Type.CAPTUREZONE] = 100,
 }
+
+---
+-- @type TasksPersistable
+PLAYERTASKCONTROLLER.TasksPersistable = {
+  [AUFTRAG.Type.PRECISIONBOMBING] = true,
+  [AUFTRAG.Type.BOMBING] = true,
+  [AUFTRAG.Type.ARTY] = true,
+  [AUFTRAG.Type.SEAD] = true,
+}
+
+---
+-- @type PersistenceData
+-- @field #number ID
+-- @field #string Name
+-- @field #string Type
+-- @field #number InitialTargets
+-- @field #number Targetsleft
+-- @field #boolean updated
  
 --- 
 -- @type SeadAttributes
@@ -2172,6 +2233,30 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   -- @param Wrapper.Client#CLIENT Client The player client object
   -- @param Ops.PlayerTask#PLAYERTASK Task
   
+end
+
+--- [User] Enable Task persistance (for specific gound target tasks)
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #string Path Path where to save the task data
+-- @param #string Filename File name under which to save the task data
+-- @param #number KgsOfTNT (Optional) Explosives kgs used to remove scenery for persistence, defaults to 300
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:EnableTaskPersistance(Path,Filename,KgsOfTNT)
+  self.TaskPersistanceSwitch = true
+  self.TaskPersistancePath = Path
+  self.TaskPersistanceFilename = Filename
+  self.SceneryExplosivesAmount = KgsOfTNT or 300
+  return self
+end
+
+--- [User] Disable Task persistance (for specific gound target tasks)
+-- @param #PLAYERTASKCONTROLLER self
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:DisableTaskPersistance()
+  self.TaskPersistanceSwitch = false
+  self.TaskPersistancePath = nil
+  self.TaskPersistanceFilename = nil
+  return self
 end
 
 --- [User] Set or create a SCORING object for this taskcontroller
@@ -2860,15 +2945,6 @@ function PLAYERTASKCONTROLLER:_GetTasksPerType()
       table.insert(tasktypes[type],task)
     end
   end
-  
-  --[[
-  for _type,_data in pairs(tasktypes) do
-    self:I("Task Type: ".._type)
-    for _id,_task in pairs(_data) do
-      self:I("Task Name: ".._task.Target:GetName())
-    end
-  end
-  --]]
   
   return tasktypes
 end
@@ -3566,9 +3642,9 @@ function PLAYERTASKCONTROLLER:AddPlayerTaskToQueue(PlayerTask,Silent,TaskFilter)
     PlayerTask:_SetController(self)
     PlayerTask:SetCoalition(self.Coalition)
     self.TaskQueue:Push(PlayerTask)
-    if not Silent then
-      self:__TaskAdded(10,PlayerTask)
-    end
+    --if not Silent then
+      self:__TaskAdded(10,PlayerTask,Silent)
+    --end
   else
     self:E(self.lid.."***** NO valid PAYERTASK object sent!")
   end
@@ -4584,6 +4660,76 @@ function PLAYERTASKCONTROLLER:RemoveConflictZone(ConflictZone)
   return self
 end
 
+--- [User] Add an corridor zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Zone#ZONE CorridorZone Add a zone to the corridor zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddCorridorZone(CorridorZone)
+  self:T(self.lid.."AddCorridorZone")
+  if self.Intel then
+    self.Intel:AddCorridorZone(CorridorZone)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Add an corridor SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Set#SET_ZONE CorridorZoneSet Add a SET_ZONE to the corridor zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddCorridorZoneSet(CorridorZoneSet)
+  self:T(self.lid.."AddCorridorZoneSet")
+  if self.Intel then
+    self.Intel.corridorzoneset:AddSet(CorridorZoneSet)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Remove an corridor zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Zone#ZONE CorridorZone Remove this zone from the corridor zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:RemoveCorridorZone(CorridorZone)
+  self:T(self.lid.."RemoveCorridorZone")
+  if self.Intel then
+    self.Intel:RemoveCorridorZone(CorridorZone)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- Function to set corridor zone floor and ceiling in FEET.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #number Floor Floor altitude ASL in feet.
+-- @param #number Ceiling Ceiling altitude ASL in feet.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetCorridorZoneFloorAndCeiling(Floor,Ceiling)
+  if self.Intel then
+    self.Intel:SetCorridorLimitsFeet(Floor,Ceiling)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- Function to set corridor zone floor and ceiling in METERS.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #number Floor Floor altitude ASL in meters.
+-- @param #number Ceiling Ceiling altitude ASL in meters.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetCorridorZoneFloorAndCeilingMeters(Floor,Ceiling)
+  if self.Intel then
+    self.Intel:SetCorridorLimits(Floor,Ceiling)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
 --- [User] Set the top menu name to a custom string.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string Name The name to use as the top menu designation.
@@ -4765,6 +4911,128 @@ function PLAYERTASKCONTROLLER:SetSRSBroadcast(Frequency,Modulation)
   return self
 end
 
+
+---
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Ops.PlayerTask#PLASERTASK Task
+-- @param #number TargetsLeft
+function PLAYERTASKCONTROLLER:_UpdateTargetsAlive(Task,TargetsLeft)
+  self:T(self.lid.."_UpdateTargetsAlive")
+  local delta = Task.Target:CountTargets() - TargetsLeft
+  if delta > 0 then
+    self:T("Delta targets to be removed: "..delta)
+    local count = 0
+    local targets = Task.Target:GetObjects()
+    for _,_object in pairs(targets or {}) do
+      if _object and _object.ClassName and (_object:IsInstanceOf("GROUP") or _object:IsInstanceOf("UNIT") or _object:IsInstanceOf("STATIC") or _object:IsInstanceOf("SCENERY")) then
+        if count < delta then
+          count = count + 1
+          if not _object:IsInstanceOf("SCENERY") then
+            _object:Destroy(true)
+          else
+            _object:Explode(self.SceneryExplosivesAmount)
+          end
+        end
+      end
+    end
+  end
+  return self
+end
+
+---
+-- @param #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:_LoadTasksPersisted()
+  self:T(self.lid.."_LoadTasksPersisted")
+  
+  local function MatchTask(Type,Name)
+    local foundtask
+    self.TaskQueue:ForEach(
+      function(_task)
+        local task = _task -- #PLAYERTASK
+        if task.Type == Type and task.Target.name and task.Target.name  == Name then
+          foundtask = task
+        end
+      end
+    )
+    return foundtask
+  end
+  
+  if lfs and io then
+    local ok,data = UTILS.LoadFromFile(self.TaskPersistancePath,self.TaskPersistanceFilename)
+    if ok == true then
+      table.remove(data, 1)
+      for _,_entry in pairs(data) do
+        -- "--ID;;Name;;InitialTargets;;Targetsleft;;Type\n"
+        local dataset = UTILS.Split(_entry,";;")
+        local Taskdata = {} -- #PersistenceData
+        Taskdata.ID = tonumber(dataset[1])
+        Taskdata.Name = tostring(dataset[2])
+        Taskdata.InitialTargets = tonumber(dataset[3])
+        Taskdata.Targetsleft = tonumber(dataset[4])
+        Taskdata.Type = tostring(dataset[5])
+        Taskdata.Task = MatchTask(Taskdata.Type,Taskdata.Name)
+        if Taskdata.Task == nil then
+          self:E(self.lid.."No actual task found for "..Taskdata.Name)
+        else
+          self:T(self.lid.."Task loaded and match found for "..Taskdata.Name)
+        end
+        Taskdata.updated = Taskdata.InitialTargets == Taskdata.Targetsleft and true or false
+        if Taskdata.Task and Taskdata.updated == false then
+          self:_UpdateTargetsAlive(Taskdata.Task,Taskdata.Targetsleft)
+          Taskdata.updated = true
+        end
+        self.TaskPersistance[Taskdata.ID] = Taskdata
+      end
+    end
+  end
+  return self
+end
+
+---
+-- @param #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:ClearPersistedData()
+  if lfs and io then
+    local text = "-- Data Cleared\n"
+    UTILS.SaveToFile(self.TaskPersistancePath,self.TaskPersistanceFilename,text)
+  end
+  return self
+end
+
+---
+-- @param #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:_SaveTasksPersisted()
+  if lfs and io then
+    local text = "--ID;;Name;;InitialTargets;;Targetsleft;;Type\n"
+    for _,_data in pairs(self.TaskPersistance) do
+      local data = _data -- #PersistenceData
+      data.Targetsleft = data.Task.Target:CountTargets() -- recount
+      if data.Task and data.Task:IsDone() then data.Targetsleft = 0 end
+      local tasktext = string.format("%d;;%s;;%d;;%d;;%s\n",data.ID,data.Name,data.InitialTargets,data.Targetsleft,data.Type)
+      text = text..tasktext
+    end
+    UTILS.SaveToFile(self.TaskPersistancePath,self.TaskPersistanceFilename,text)
+  end
+  return self
+end
+
+---
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #PLAYERTASK Task
+function PLAYERTASKCONTROLLER:_AddPersistenceData(Task)
+  local Taskdata = {} -- #PersistenceData
+  if not self.TaskPersistance[Task.PlayerTaskNr] then
+    Taskdata.ID = Task.PlayerTaskNr
+    Taskdata.Name = Task.Target.name or "none"
+    Taskdata.InitialTargets = Task.Target:CountTargets()
+    Taskdata.Targetsleft = Taskdata.InitialTargets
+    Taskdata.Type = Task.Type
+    Taskdata.updated = true
+    Taskdata.Task = Task
+    self.TaskPersistance[Task.PlayerTaskNr] = Taskdata
+  end
+  return self
+end
+
 -------------------------------------------------------------------------------------------------------------------
 -- FSM Functions PLAYERTASKCONTROLLER
 -- TODO: FSM Functions PLAYERTASKCONTROLLER
@@ -4788,7 +5056,11 @@ function PLAYERTASKCONTROLLER:onafterStart(From, Event, To)
   self:HandleEvent(EVENTS.PilotDead, self._EventHandler)
   self:HandleEvent(EVENTS.PlayerEnterAircraft, self._EventHandler)
   self:HandleEvent(EVENTS.UnitLost, self._EventHandler)
-  self:SetEventPriority(5)          
+  self:SetEventPriority(5)   
+  -- Persistence
+  if self.TaskPersistanceSwitch == true then
+    self:_LoadTasksPersisted()
+  end       
   return self
 end
 
@@ -4827,6 +5099,11 @@ function PLAYERTASKCONTROLLER:onafterStatus(From, Event, To)
     local text = string.format("%s | New Targets: %02d | Active Tasks: %02d | Active Players: %02d | Assigned Tasks: %02d",self.MenuName, targetcount,taskcount,playercount,assignedtasks)
     self:I(text)
   end
+  
+    -- Persistence
+  if self.TaskPersistanceSwitch == true then
+    self:_SaveTasksPersisted()
+  end 
   
   if self:GetState() ~= "Stopped" then
     self:__Status(-30)
@@ -4983,19 +5260,26 @@ end
 -- @param #string Event
 -- @param #string To
 -- @param Ops.PlayerTask#PLAYERTASK Task
+-- @param #boolean Silent
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:onafterTaskAdded(From, Event, To, Task)
+function PLAYERTASKCONTROLLER:onafterTaskAdded(From, Event, To, Task, Silent)
   self:T({From, Event, To})
   self:T(self.lid.."TaskAdded")
   local addtxt = self.gettext:GetEntry("TASKADDED",self.locale)
   local taskname = string.format(addtxt, self.MenuName or self.Name, tostring(Task.Type))
-  if not self.NoScreenOutput then
-    self:_SendMessageToClients(taskname,15)
-    --local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
+  if not Silent then
+    if not self.NoScreenOutput then
+      self:_SendMessageToClients(taskname,15)
+      --local m = MESSAGE:New(taskname,15,"Tasking"):ToCoalition(self.Coalition)
+    end
+    if self.UseSRS then
+      taskname = string.format(addtxt, self.MenuName or self.Name, tostring(Task.TTSType))
+      self.SRSQueue:NewTransmission(taskname,nil,self.SRS,nil,2)
+    end
   end
-  if self.UseSRS then
-    taskname = string.format(addtxt, self.MenuName or self.Name, tostring(Task.TTSType))
-    self.SRSQueue:NewTransmission(taskname,nil,self.SRS,nil,2)
+  self:T(self.lid..string.format("Pers = %s | Type = %s | TypePers = %s | TaskFlag = %s",tostring(self.TaskPersistanceSwitch),tostring(Task.Type),tostring(self.TasksPersistable[Task.Type]),tostring(Task.PersistMe)))
+  if self.TaskPersistanceSwitch == true and self.TasksPersistable[Task.Type] == true and Task.PersistMe == true then
+    self:_AddPersistenceData(Task)
   end
   return self
 end
