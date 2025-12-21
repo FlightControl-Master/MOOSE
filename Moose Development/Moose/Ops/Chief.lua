@@ -332,7 +332,7 @@ CHIEF.Strategy = {
 
 --- CHIEF class version.
 -- @field #string version
-CHIEF.version="0.7.0"
+CHIEF.version="0.7.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -388,6 +388,8 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   self:SetBorderZones()
   self:SetConflictZones()
   self:SetAttackZones()
+  self:SetCorridorZones()
+  self:SetRejectZones()
   self:SetThreatLevelRange()
   
   -- Init stuff.

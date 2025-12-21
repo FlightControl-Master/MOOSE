@@ -27,6 +27,9 @@
 -- @field Core.Set#SET_ZONE acceptzoneset Set of accept zones. If defined, only contacts in these zones are considered.
 -- @field Core.Set#SET_ZONE rejectzoneset Set of reject zones. Contacts in these zones are not considered, even if they are in accept zones.
 -- @field Core.Set#SET_ZONE conflictzoneset Set of conflict zones. Contacts in these zones are considered, even if they are not in accept zones or if they are in reject zones.
+-- @field Core.Set#SET_ZONE corridorzoneset Set of corridor zones. Contacts in these zones are never considered. Also see corridorfloorheight and corridorfloorceiling.
+-- @field #number corridorfloor [Air] Contacts below this height (ASL!) are considered, even if they are in a corridor zone.
+-- @field #number corridorceiling [Air] Contacts above this height (ASL!) are considered, even if they are in a corridor zone.
 -- @field #table Contacts Table of detected items.
 -- @field #table ContactsLost Table of lost detected items.
 -- @field #table ContactsUnknown Table of new detected items.
@@ -166,7 +169,7 @@ INTEL.Ctype={
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.3.7"
+INTEL.version="0.3.9"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -181,6 +184,7 @@ INTEL.version="0.3.7"
 -- NOGO: SetAttributeZone --> return groups of generalized attributes in a zone.
 -- DONE: Loose units only if they remain undetected for a given time interval. We want to avoid fast oscillation between detected/lost states. Maybe 1-5 min would be a good time interval?!
 -- DONE: Combine units to groups for all, new and lost.
+-- DONE: Add corridor zones.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -272,6 +276,7 @@ function INTEL:New(DetectionSet, Coalition, Alias)
   self:SetForgetTime()
   self:SetAcceptZones()
   self:SetRejectZones()
+  self:SetCorridorZones()
   self:SetConflictZones()
 
   ------------------------
@@ -501,7 +506,63 @@ function INTEL:RemoveConflictZone(ConflictZone)
   return self
 end
 
---- **OBSOLETE, will be removed in next version!**  Set forget contacts time interval.
+--- Set corrdidor zones. Contacts detected in this/these zone(s) are never reported by the detection.
+-- Note that corrdidor zones overrule all other zones, for exceptions see corridor floor and corridor ceiling heights.
+-- @param #INTEL self
+-- @param Core.Set#SET_ZONE CorridorZoneSet Set of corrdidor zone(s).
+-- @return #INTEL self
+function INTEL:SetCorridorZones(CorridorZoneSet)
+  self.corridorzoneset=CorridorZoneSet or SET_ZONE:New()
+  return self
+end
+
+--- Add a corrdidor zone. Contacts detected in this zone are corrdidored and not reported by the detection.
+-- Note that corrdidor zones overrule all other zones, for exceptions see corridor floor and corridor ceiling heights.
+-- @param #INTEL self
+-- @param Core.Zone#ZONE CorridorZone Add a zone to the corrdidor zone set.
+-- @return #INTEL self
+function INTEL:AddCorridorZone(CorridorZone)
+  self.corridorzoneset:AddZone(CorridorZone)
+  return self
+end
+
+--- Remove a corrdidor zone from the corrdidor zone set.
+-- Note that corrdidor zones overrule all other zones, for exceptions see corridor floor and corridor ceiling heights.
+-- @param #INTEL self
+-- @param Core.Zone#ZONE CorridorZone Remove a zone from the corrdidor zone set.
+-- @return #INTEL self
+function INTEL:RemoveCorridorZone(CorridorZone)
+  self.corridorzoneset:Remove(CorridorZone:GetName(), true)
+  return self
+end
+
+--- [Air] Add corrdidor zone floor and height. Are considered as ASL (above sea level or barometric) values.
+-- Overrides corridor exception for objects flying outside this limitations.
+-- @param #INTEL self
+-- @param #number Floor Floor altitude in meters.
+-- @param #number Ceiling Ceiling altitude in meters.
+-- @return #INTEL self
+function INTEL:SetCorridorLimits(Floor,Ceiling)
+  self.corridorceiling = Ceiling or 10000
+  self.corridorfloor = Floor or 1
+  return self
+end
+
+--- [Air] Add corrdidor zone floor and height. Are considered as ASL (above sea level or barometric) values.
+-- Overrides corridor exception for objects flying outside this limitations.
+-- @param #INTEL self
+-- @param #number Floor Floor altitude in feet.
+-- @param #number Ceiling Ceiling altitude in feet.
+-- @return #INTEL self
+function INTEL:SetCorridorLimitsFeet(Floor,Ceiling)
+  local Ceiling = Ceiling or 25000
+  local Floor = Floor or 15000
+  self.corridorceiling = UTILS.FeetToMeters(Ceiling)
+  self.corridorfloor = UTILS.FeetToMeters(Floor)
+  return self
+end
+
+--- **OBSOLETE, not functional!**  Set forget contacts time interval.
 -- Previously known contacts that are not detected any more, are "lost" after this time.
 -- This avoids fast oscillations between a contact being detected and undetected.
 -- @param #INTEL self
@@ -919,6 +980,29 @@ function INTEL:UpdateIntel()
 
       -- Unit is inside a reject zone ==> remove!
       if inzone and (not inconflictzone) then
+        table.insert(remove, unitname)
+      end
+    end
+    
+    -- Check if unit is in any of the corridor zones.
+    if self.corridorzoneset:Count()>0 then
+      local inzone = false
+      for _,_zone in pairs(self.corridorzoneset.Set) do
+        local zone=_zone --Core.Zone#ZONE
+        if unit:IsInZone(zone) then
+          if unit:IsAir() and (self.corridorfloor ~= nil or self.corridorceiling ~= nil) then
+            local alt = unit:GetAltitude()
+            if self.corridorfloor and alt > self.corridorfloor then inzone = true end
+            if self.corridorceiling and alt < self.corridorceiling then inzone = true end
+            if inzone == true then break end
+          else  
+            inzone=true
+            break
+          end
+        end
+      end
+      -- Unit is inside a corridor zone ==> remove!
+      if inzone then
         table.insert(remove, unitname)
       end
     end
@@ -2209,7 +2293,7 @@ function INTEL:GetClusterCoordinate(Cluster, Update)
   return Cluster.coordinate
 end
 
---- Check if the coorindate of the cluster changed.
+--- Check if the coordindate of the cluster changed.
 -- @param #INTEL self
 -- @param #INTEL.Cluster Cluster The cluster.
 -- @param #number Threshold in meters. Default 100 m.

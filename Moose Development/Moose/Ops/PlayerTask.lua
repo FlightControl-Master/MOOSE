@@ -104,7 +104,7 @@ PLAYERTASK = {
 
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASK.version="0.1.30"
+PLAYERTASK.version="0.1.31"
 
 --- Generic task condition.
 -- @type PLAYERTASK.Condition
@@ -1685,8 +1685,28 @@ do
 --            
 -- Set a marker on the map and add the following text to create targets from it: "TARGET". This is effectively the same as adding a COORDINATE object as target.
 -- The marker can be deleted any time.
---         
--- ## 9 Discussion
+-- 
+-- ## 9 Single Task Persistence for mission designer added tasks
+-- 
+-- The class can persist the state of single tasks of type BOMBING, PRECISIONBOMBING, ARTY and SEAD, i.e. tasks which have a GROUND(!) GROUP, UNIT, STATIC or SCENERY as target.
+-- This requires the task to have a unique(!) menu name set, a TARGET which already exists on the map at mission start(!), and a flag that this task is actually to be persisted.
+-- Also, you need to desanitize the mission scripting environment, i.e. "lfs" and "io" must be available so we can write to disk.
+-- 
+--            -- First, we need to enable on the PLAYERTASKCONTROLLER itself
+--            taskmanager:EnableTaskPersistance([[C:\Users\myname\Saved Games\DCS\Missions\MyMisionFolder\]],"Mission Tasks.csv") -- Path and Filename
+--            
+--            -- Then, we can design a task marking mission progress that we want to persist
+--            local RussianRadios = SET_STATIC:New():FilterPrefixes("Comms Tower Russia"):FilterOnce()
+--            
+--            local RadioTask = PLAYERTASK:New(AUFTRAG.Type.BOMBING,RussianRadios,true,5,"Bombing")
+--            RadioTask:SetMenuName("Neutralize Comms Towers") -- UNIQUE menu name so we can find the task later!
+--            RadioTask:AddFreetext("Find and neutralize the two communication towers near NB70 East of Fulda on Streufelsberg!")
+--            RadioTask:AddFreetextTTS("Find and neutralize the two communication towers naer N;B;7;zero; East of Fulda on Streufelsberg!")
+--            RadioTask:EnablePersistance() -- Enable persistence for this task
+--            
+--            taskmanager:AddPlayerTaskToQueue(RadioTask,true,false)
+--                       
+-- ## 10 Discussion
 --
 -- If you have questions or suggestions, please visit the [MOOSE Discord](https://discord.gg/AeYAkHP) #ops-playertask channel.  
 -- 
@@ -1789,6 +1809,7 @@ PLAYERTASKCONTROLLER.TasksPersistable = {
   [AUFTRAG.Type.PRECISIONBOMBING] = true,
   [AUFTRAG.Type.BOMBING] = true,
   [AUFTRAG.Type.ARTY] = true,
+  [AUFTRAG.Type.SEAD] = true,
 }
 
 ---
@@ -4633,6 +4654,76 @@ function PLAYERTASKCONTROLLER:RemoveConflictZone(ConflictZone)
   self:T(self.lid.."RemoveConflictZone")
   if self.Intel then
     self.Intel:RemoveConflictZone(ConflictZone)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Add an corridor zone to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Zone#ZONE CorridorZone Add a zone to the corridor zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddCorridorZone(CorridorZone)
+  self:T(self.lid.."AddCorridorZone")
+  if self.Intel then
+    self.Intel:AddCorridorZone(CorridorZone)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Add an corridor SET_ZONE to INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Set#SET_ZONE CorridorZoneSet Add a SET_ZONE to the corridor zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:AddCorridorZoneSet(CorridorZoneSet)
+  self:T(self.lid.."AddCorridorZoneSet")
+  if self.Intel then
+    self.Intel.corridorzoneset:AddSet(CorridorZoneSet)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- [User] Remove an corridor zone from INTEL detection. You need to set up detection with @{#PLAYERTASKCONTROLLER.SetupIntel}() **before** using this.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Core.Zone#ZONE CorridorZone Remove this zone from the corridor zone set.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:RemoveCorridorZone(CorridorZone)
+  self:T(self.lid.."RemoveCorridorZone")
+  if self.Intel then
+    self.Intel:RemoveCorridorZone(CorridorZone)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- Function to set corridor zone floor and ceiling in FEET.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #number Floor Floor altitude ASL in feet.
+-- @param #number Ceiling Ceiling altitude ASL in feet.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetCorridorZoneFloorAndCeiling(Floor,Ceiling)
+  if self.Intel then
+    self.Intel:SetCorridorLimitsFeet(Floor,Ceiling)
+  else
+    self:E(self.lid.."*****NO detection has been set up (yet)!")
+  end
+  return self
+end
+
+--- Function to set corridor zone floor and ceiling in METERS.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param #number Floor Floor altitude ASL in meters.
+-- @param #number Ceiling Ceiling altitude ASL in meters.
+-- @return #PLAYERTASKCONTROLLER self
+function PLAYERTASKCONTROLLER:SetCorridorZoneFloorAndCeilingMeters(Floor,Ceiling)
+  if self.Intel then
+    self.Intel:SetCorridorLimits(Floor,Ceiling)
   else
     self:E(self.lid.."*****NO detection has been set up (yet)!")
   end
