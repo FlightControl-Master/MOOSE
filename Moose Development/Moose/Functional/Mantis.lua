@@ -116,7 +116,7 @@
 -- * TOR M2
 -- * C-RAM
 -- * Silkworm (though strictly speaking this is a surface to ship missile)
--- * SA-2, SA-3, SA-5, SA-6, SA-7, SA-8, SA-9, SA-10, SA-11, SA-13, SA-15, SA-19
+-- * SA-2, SA-3, SA-5, SA-6, SA-7, SA-8, SA-9, SA-10, SA-11, SA-13, SA-15, SA-19, SA-21, S-300VM, S-300V4, S-400
 -- * From IDF mod: STUNNER IDFA, TAMIR IDFA (Note all caps!)
 -- * From HDS (see note on HDS below): SA-2, SA-3, SA-10B, SA-10C, SA-12, SA-17, SA-20A, SA-20B, SA-23, HQ-2, SAMP/T Block 1, SAMP/T Block 1INT,  SAMP/T Block2
 -- * Other Mods: Nike
@@ -283,7 +283,7 @@
 MANTIS = {
   ClassName             = "MANTIS",
   name                  = "mymantis",
-  version               = "0.9.41",
+  version               = "0.9.42",
   SAM_Templates_Prefix  = "",
   SAM_Group             = nil,
   EWR_Templates_Prefix  = "",
@@ -401,6 +401,10 @@ MANTIS.SamData = {
   ["SA-17"] = { Range=50, Blindspot=3, Height=50, Type="Medium", Radar="SA-17" },
   ["SA-20A"] = { Range=150, Blindspot=5, Height=27, Type="Long" , Radar="S-300PMU1"},
   ["SA-20B"] = { Range=200, Blindspot=4, Height=27, Type="Long" , Radar="S-300PMU2"},
+  ["SA-21"] = { Range=380, Blindspot=5, Height=30, Type="Long" , Radar="92N6E"},
+  ["S-300VM"] = { Range=200, Blindspot=5, Height=30, Type="Long" , Radar="9S32M"},
+  ["S-300V4"] = { Range=380, Blindspot=5, Height=30, Type="Long" , Radar="9S32M"},
+  ["S-400"] = { Range=250, Blindspot=5, Height=27, Type="Long" , Radar="92N6E"},
   ["HQ-2"] = { Range=50, Blindspot=6, Height=35, Type="Medium", Radar="HQ_2_Guideline_LN" },
   ["TAMIR IDFA"] = { Range=20, Blindspot=0.6, Height=12.3, Type="Short", Radar="IRON_DOME_LN" },
   ["STUNNER IDFA"] = { Range=250, Blindspot=1, Height=45, Type="Long", Radar="DAVID_SLING_LN" },
