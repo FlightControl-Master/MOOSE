@@ -509,7 +509,7 @@ do
 -- @field #AWACS
 AWACS = {
   ClassName = "AWACS", -- #string
-  version = "0.2.73", -- #string
+  version = "0.2.74", -- #string
   lid = "", -- #string
   coalition = coalition.side.BLUE, -- #number
   coalitiontxt = "blue", -- #string
@@ -2057,6 +2057,55 @@ function AWACS:SetRejectionZone(Zone,Draw)
       MARKER:New(Zone:GetCoordinate(),"Rejection Zone"):ToCoalition(self.coalition)
     end
   end
+  return self
+end
+
+--- Function to set corridor zones.
+-- @param #AWACS self
+-- @param Core.Set#SET_ZONE CorridorZones Can be handed in as SET\_ZONE or single ZONE object.
+-- @return #AWACS self
+function AWACS:SetCorridorZones(CorridorZones)
+  self:T(self.lid .. "SetCorridorZones")
+  if CorridorZones and CorridorZones:IsInstanceOf("SET_ZONE") then
+    self.corridorzones = CorridorZones
+    self.usecorridors = true
+  elseif CorridorZones and CorridorZones:IsInstanceOf("ZONE_BASE") then
+    if not self.corridorzones then self.corridorzones = SET_ZONE:New() end
+    self.corridorzones:AddZone(CorridorZones)
+    self.usecorridors = true
+  end
+  return self
+end
+
+--- Function to add one corridor zone.
+-- @param #AWACS self
+-- @param Core.Zone#ZONE CorridorZone The ZONE object to be added.
+-- @return #AWACS self
+function AWACS:AddCorridorZone(CorridorZone)
+  self:T(self.lid .. "AddCorridorZone")
+  self:SetCorridorZones(CorridorZone)
+  return self
+end
+
+--- Function to set corridor zone floor and ceiling in FEET.
+-- @param #AWACS self
+-- @param #number Floor Floor altitude ASL in feet.
+-- @param #number Ceiling Ceiling altitude ASL in feet.
+-- @return #AWACS self
+function AWACS:SetCorridorZoneFloorAndCeiling(Floor,Ceiling)
+  self.corridorfloor = UTILS.FeetToMeters(Floor)
+  self.corridorceiling = UTILS.FeetToMeters(Ceiling)
+  return self
+end
+
+--- Function to set corridor zone floor and ceiling in METERS.
+-- @param #AWACS self
+-- @param #number Floor Floor altitude ASL in meters.
+-- @param #number Ceiling Ceiling altitude ASL in meters.
+-- @return #AWACS self
+function AWACS:SetCorridorZoneFloorAndCeilingMeters(Floor,Ceiling)
+  self.corridorfloor = Floor    
+  self.corridorceiling = Ceiling
   return self
 end
 
@@ -4334,6 +4383,14 @@ function AWACS:_StartIntel(awacs)
     intel:SetFilterCategory({Unit.Category.AIRPLANE})
   else
     intel:SetFilterCategory({Unit.Category.AIRPLANE,Unit.Category.HELICOPTER})
+  end
+  
+  -- Corridors
+  if self.usecorridors == true then
+    intel:SetCorridorZones(self.corridorzones)
+    if self.corridorceiling or self.corridorfloor then
+      intel:SetCorridorLimits(self.corridorfloor,self.corridorceiling)
+    end
   end
   
   -- Callbacks
