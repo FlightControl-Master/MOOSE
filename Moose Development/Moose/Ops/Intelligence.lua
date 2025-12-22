@@ -992,7 +992,8 @@ function INTEL:UpdateIntel()
         local zone=_zone --Core.Zone#ZONE
         if unit:IsInZone(zone) then
           local debugtext = "Corridorzone Check for unit "..unit:GetName().."\n"
-          debugtext = debugtext .. string.format("IsAir %s | Alt %dm | Floor %dm | Ceil %dm",tostring(unit:IsAir()),tonumber(unit:GetAltitude()),tonumber(self.corridorfloor),tonumber(self.corridorceiling))
+          debugtext = debugtext .. string.format("IsAir %s | Alt %dft | Floor %dft | Ceil %dft",tostring(unit:IsAir()),tonumber(UTILS.MetersToFeet(unit:GetAltitude())),
+          tonumber(UTILS.MetersToFeet(self.corridorfloor)),tonumber(UTILS.MetersToFeet(self.corridorceiling)))
           MESSAGE:New(debugtext,15,"INTEL"):ToAllIf(self.verbose>1):ToLogIf(self.verbose>1)
           if unit:IsAir() and (self.corridorfloor ~= nil or self.corridorceiling ~= nil) then
             local alt = unit:GetAltitude()
