@@ -21,7 +21,7 @@
 -- ===
 -- @module Ops.PlayerTask
 -- @image OPS_PlayerTask.jpg
--- @date Last Update Oct 2025
+-- @date Last Update Dec 2025
 
 
 do
@@ -4988,7 +4988,7 @@ function PLAYERTASKCONTROLLER:_LoadTasksPersisted()
   return self
 end
 
----
+--- [User] Clear persisted data on disk.
 -- @param #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:ClearPersistedData()
   if lfs and io then
