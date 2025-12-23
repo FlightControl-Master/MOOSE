@@ -1930,7 +1930,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo crate. Can be a Wrapper.DynamicCargo#DYNAMICCARGO object, if ground crew loaded!
+  -- @param #table Cargotable Table of #CTLD_CARGO cargo crates. Can be a Wrapper.DynamicCargo#DYNAMICCARGO objects, if ground crew loaded!
   -- @return #CTLD self
   
    --- FSM Function OnAfterTroopsDeployed.
@@ -8924,10 +8924,36 @@ end
   -- @return #CTLD self
   function CTLD:onbeforeCratesDropped(From, Event, To, Group, Unit, Cargotable)
     self:T({From, Event, To})
+    if Unit and Unit:IsPlayer() and self.PlayerTaskQueue then
+      local playername = Unit:GetPlayerName()
+      for _,_cargo in pairs(Cargotable) do
+        local Vehicle = _cargo.Positionable
+        if Vehicle then
+          local dropcoord = Vehicle:GetCoordinate() or COORDINATE:New(0,0,0)
+          local dropvec2 = dropcoord:GetVec2()
+          self.PlayerTaskQueue:ForEach(
+            function (Task)
+              local task = Task -- Ops.PlayerTask#PLAYERTASK
+              local subtype = task:GetSubType()
+              -- right subtype?
+              if Event == subtype and not task:IsDone() then
+                local targetzone = task.Target:GetObject() -- Core.Zone#ZONE should be a zone in this case ....
+                if targetzone and targetzone.ClassName and string.match(targetzone.ClassName,"ZONE") and targetzone:IsVec2InZone(dropvec2) then
+                  if task.Clients:HasUniqueID(playername) then
+                    -- success
+                    task:__Success(-1)
+                  end
+                end
+              end
+            end
+          )
+        end
+      end
+    end
     return self
   end
   
-  --- (Internal) FSM Function onafterGetCrates.
+  --- (Internal) FSM Function OnAfterGetCrates.
   -- @param #CTLD self
   -- @param #string From State.
   -- @param #string Event Trigger.
@@ -8936,12 +8962,12 @@ end
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
   -- @param #table Cargotable Table of #CTLD_CARGO objects spawned via "Get".
   -- @return #CTLD self
-  function CTLD:onaftergetcrates(From, Event, To, Group, Unit, Cargotable)
+  function CTLD:OnAfterGetCrates(From, Event, To, Group, Unit, Cargotable)
     self:T({From, Event, To})
     return self
   end
 
-  --- (Internal) FSM Function onafterGetCrates.
+  --- (Internal) FSM Function OnAfterRemoveCratesNearby.
   -- @param #CTLD self
   -- @param #string From State.
   -- @param #string Event Trigger.
@@ -8950,7 +8976,7 @@ end
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
   -- @param #table Cargotable Table of #CTLD_CARGO objects spawned via "Get".
   -- @return #CTLD self
-  function CTLD:onafterremovecratesnearby(From, Event, To, Group, Unit, Cargotable)
+  function CTLD:OnAfterRemoveCratesNearby(From, Event, To, Group, Unit, Cargotable)
     self:T({From, Event, To})
     return self
   end
