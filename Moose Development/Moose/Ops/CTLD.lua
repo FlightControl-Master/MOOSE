@@ -3256,6 +3256,23 @@ function CTLD:_C130GetUnits(Group, Unit, Name)
   return self
 end
 
+--- (User) Hook to allow mission-specific crate restrictions.
+-- Override this in your mission to perform custom checks (e.g. warehouse stock) before crates spawn.
+-- Return `true` to allow the request, or `false` to block it. When blocked, `_GetCrates` exits silently.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group Requesting player group.
+-- @param Wrapper.Unit#UNIT Unit Requesting unit.
+-- @param #CTLD_CARGO Cargo Cargo type being requested.
+-- @param #number number Number of crates requested (raw quantity, not sets).
+-- @param #boolean drop Drop-mode request flag.
+-- @param #boolean pack Pack-mode request flag.
+-- @param #boolean quiet Quiet flag from menu call.
+-- @param #boolean suppressGetEvent If true, `_GetCrates` will not emit the `GetCrates` event.
+-- @return #boolean Allow crate spawning.
+function CTLD:CanGetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppressGetEvent)
+  return true
+end
+
 --- (Internal) Function to spawn crates in front of the heli.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
@@ -3326,7 +3343,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
       if not location:IsCoordinateInZone(unitcoord) then
         -- no we're not at the right spot
         self:_SendMessage("The requested cargo is not available in this zone!", 10, false, Group)
-        if not self.debug then return self end
+        if not self.debug then return false end
       end
     end
   end
@@ -3341,6 +3358,9 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
     return false
   end
 
+  if not self:CanGetCrates(Group, Unit, Cargo, requestNumber, drop, pack, quiet, suppressGetEvent) then
+    return false
+  end
   -- spawn crates in front of helicopter
   local IsHerc = self:IsFixedWing(Unit) -- Herc, Bronco and Hook load from behind
   local IsHook = self:IsHook(Unit) -- Herc, Bronco and Hook load from behind
@@ -4551,6 +4571,21 @@ function CTLD:_UnloadCrates(Group, Unit)
     return self
   end
 
+--- (User) Hook to allow mission-specific build restrictions.
+-- Override this in your mission to perform custom checks (e.g. warehouse/credits rules) before crates are built.
+-- Return `true` to allow the build, or `false` to block it. When blocked, `_BuildCrates` exits silently.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group Requesting player group.
+-- @param Wrapper.Unit#UNIT Unit Requesting unit.
+-- @param #table crates Table of nearby crate cargo objects returned by `_FindCratesNearby`.
+-- @param #number number Number of nearby crates.
+-- @param #boolean Engineering If true build is by an engineering team.
+-- @param #boolean MultiDrop If true and not engineering or FOB, vary position a bit.
+-- @return #boolean Allow building.
+function CTLD:CanBuildCrates(Group, Unit, crates, number, Engineering, MultiDrop)
+  return true
+end
+
 --- (Internal) Function to build nearby crates.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
@@ -4587,6 +4622,11 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
   local buildables = {}
   local foundbuilds = false
   local canbuild = false
+
+  if not self:CanBuildCrates(Group, Unit, crates, number, Engineering, MultiDrop) then
+    return self
+  end
+
   if number > 0 then
     -- get dropped crates
     for _,_crate in pairs(crates) do
@@ -5086,6 +5126,18 @@ function CTLD:_GetAndLoad(Group, Unit, cargoObj, quantity, LoadAnyWay)
     elseif count > capacitySets then
       count = capacitySets
     end
+  end
+  local inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
+  if not inzone then
+    local ship = nil
+    local width = 20
+    local distance = nil
+    local zone = nil
+    inzone, ship, zone, distance, width  = self:IsUnitInZone(Unit,CTLD.CargoZoneType.SHIP)
+  end
+  if not inzone then
+    self:_SendMessage("You are not close enough to a logistics zone!", 10, false, Group)
+    return self
   end
   local total = needed * count
   local ok = self:_GetCrates(Group, Unit, cargoObj, total, false, false, true, true)
