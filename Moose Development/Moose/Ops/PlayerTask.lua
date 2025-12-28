@@ -2120,7 +2120,7 @@ function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   self:AddTransition("*",            "Stop",                  "Stopped")
   
   self:__Start(2)
-  local starttime = math.random(5,10)
+  local starttime = math.random(10,15)
   self:__Status(starttime)
   
   self:I(self.lid..self.version.." Started.")
@@ -3787,7 +3787,7 @@ function PLAYERTASKCONTROLLER:_FlashInfo()
         local task = self.TasksPerPlayer:ReadByID(_playername) -- Ops.PlayerTask#PLAYERTASK
         local Coordinate = task.Target:GetCoordinate()
         local CoordText = ""
-        if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
+        if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A and task.Type~=AUFTRAG.Type.INTERCEPT then
           CoordText = Coordinate:ToStringA2G(_client, nil, self.ShowMagnetic)
         else
           CoordText = Coordinate:ToStringA2A(_client, nil, self.ShowMagnetic)
@@ -3846,7 +3846,7 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
     local CoordTextLLDM = nil
     local ShowThreatInfo = task.ShowThreatDetails
     local LasingDrone = self:_FindLasingDroneForTaskID(task.PlayerTaskNr)
-    if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A then
+    if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A and task.Type~=AUFTRAG.Type.INTERCEPT then
       CoordText = Coordinate:ToStringA2G(Client,nil,self.ShowMagnetic)
     else
       CoordText = Coordinate:ToStringA2A(Client,nil,self.ShowMagnetic)
@@ -5059,7 +5059,8 @@ function PLAYERTASKCONTROLLER:onafterStart(From, Event, To)
   self:SetEventPriority(5)   
   -- Persistence
   if self.TaskPersistanceSwitch == true then
-    self:_LoadTasksPersisted()
+    self:ScheduleOnce(5,self._LoadTasksPersisted,self)
+    --self:_LoadTasksPersisted()
   end       
   return self
 end
