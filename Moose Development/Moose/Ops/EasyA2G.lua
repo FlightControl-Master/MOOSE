@@ -918,7 +918,7 @@ function EASYA2G:onafterStatus(From,Event,To)
         local name = FG:GetName()
         local engage = FG:IsEngaging()
         local hasmissiles = FG:CanAirToGround()
-        self:T("Is Alert5? "..tostring(FG:GetMissionCurrent().type))
+        --self:T("Is Alert5? "..tostring(FG:GetMissionCurrent().type))
         local isalert5 = (FG:GetMissionCurrent() ~= nil and FG:GetMissionCurrent().type == AUFTRAG.Type.ALERT5) and true or false 
         local ready = hasmissiles and FG:IsFuelGood() and (FG:IsAirborne() or isalert5)
         self:T(string.format("Flightgroup %s Engaging = %s Ready = %s (HasAmmo = %s HasFuel = %s Alert5 = %s)",tostring(name),tostring(engage),tostring(ready),tostring(hasmissiles),tostring(FG:IsFuelGood()), tostring(isalert5)))
