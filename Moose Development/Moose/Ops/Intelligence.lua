@@ -169,14 +169,14 @@ INTEL.Ctype={
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.3.9"
+INTEL.version="0.3.10"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Add min cluster size. Only create new clusters if they have a certain group size.
--- TODO: process detected set asynchroniously for better performance.
+-- NODO: process detected set asynchroniously for better performance.
 -- DONE: Add statics.
 -- DONE: Filter detection methods.
 -- DONE: Accept zones.
@@ -536,8 +536,11 @@ function INTEL:RemoveCorridorZone(CorridorZone)
   return self
 end
 
---- [Air] Add corrdidor zone floor and height. Are considered as ASL (above sea level or barometric) values.
+--- [Air] Add corrdidor zone floor and height. This is generally applicable to all(!) corridor zones. Considered as ASL (above sea level or barometric) values.
 -- Overrides corridor exception for objects flying outside this limitations.
+-- To set an individual ceiling/floor on any Core.Zone#ZONE you wish to use, set these properties on the Core.Zone#ZONE object:
+-- `mycorridorzone:SetProperty("CorridorFloor",500)` -- meters, case sensitivity matters!
+-- `mycorridorzone:SetProperty("CorridorCeiling",10000)` -- meters, case sensitivity matters!
 -- @param #INTEL self
 -- @param #number Floor Floor altitude in meters.
 -- @param #number Ceiling Ceiling altitude in meters.
@@ -548,8 +551,11 @@ function INTEL:SetCorridorLimits(Floor,Ceiling)
   return self
 end
 
---- [Air] Add corrdidor zone floor and height. Are considered as ASL (above sea level or barometric) values.
+--- [Air] Add corrdidor zone floor and height. This is generally applicable to all(!) corridor zones. Considered as ASL (above sea level or barometric) values.
 -- Overrides corridor exception for objects flying outside this limitations.
+-- To set an individual ceiling/floor on any Core.Zone#ZONE you wish to use, set these properties on the Core.Zone#ZONE object:
+-- `mycorridorzone:SetProperty("CorridorFloor",UTILS.FeetToMeters(5000))` -- feet, case sensitivity matters!
+-- `mycorridorzone:SetProperty("CorridorCeiling",UTILS.FeetToMeters(20000))` -- feet, case sensitivity matters!
 -- @param #INTEL self
 -- @param #number Floor Floor altitude in feet.
 -- @param #number Ceiling Ceiling altitude in feet.
@@ -991,14 +997,16 @@ function INTEL:UpdateIntel()
       for _,_zone in pairs(self.corridorzoneset.Set) do
         local zone=_zone --Core.Zone#ZONE
         if unit:IsInZone(zone) then
+          local corridorfloor = zone:GetProperty("CorridorFloor") or self.corridorfloor
+          local corridorceiling = zone:GetProperty("CorridorCeiling") or self.corridorceiling
           local debugtext = "Corridorzone Check for unit "..unit:GetName().."\n"
           debugtext = debugtext .. string.format("IsAir %s | Alt %dft | Floor %dft | Ceil %dft",tostring(unit:IsAir()),tonumber(UTILS.MetersToFeet(unit:GetAltitude())),
-          tonumber(UTILS.MetersToFeet(self.corridorfloor)),tonumber(UTILS.MetersToFeet(self.corridorceiling)))
+          tonumber(UTILS.MetersToFeet(corridorfloor)),tonumber(UTILS.MetersToFeet(corridorceiling)))
           MESSAGE:New(debugtext,15,"INTEL"):ToAllIf(self.verbose>1):ToLogIf(self.verbose>1)
-          if unit:IsAir() and (self.corridorfloor ~= nil or self.corridorceiling ~= nil) then
+          if unit:IsAir() and (corridorfloor ~= nil or corridorceiling ~= nil) then
             local alt = unit:GetAltitude()
-            if self.corridorfloor and alt > self.corridorfloor then inzone = true end
-            if self.corridorceiling and (inzone == true or self.corridorfloor == nil) and alt < self.corridorceiling then inzone = true else inzone = false end
+            if corridorfloor and alt > corridorfloor then inzone = true end
+            if corridorceiling and (inzone == true or corridorfloor == nil) and alt < corridorceiling then inzone = true else inzone = false end
             if inzone == true then break end
           else  
             inzone=true
