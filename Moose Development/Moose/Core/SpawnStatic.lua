@@ -338,7 +338,7 @@ end
 -- @param #SPAWN self
 -- @param #boolean OnOff Defaults to true
 -- @return #SPAWN The SPAWN object
-function SPAWN:InitHiddenOnMap(OnOff)
+function SPAWNSTATIC:InitHiddenOnMap(OnOff)
   self.SpawnHiddenOnMap = OnOff == false and false or true
   return self
 end
@@ -346,7 +346,7 @@ end
 --- Hide the static on MFDs (visible to game master slots!).
 -- @param #SPAWN self
 -- @return #SPAWN The SPAWN object
-function SPAWN:InitHiddenOnMFD()
+function SPAWNSTATIC:InitHiddenOnMFD()
   self.SpawnHiddenOnMFD = true
   return self
 end
@@ -354,7 +354,7 @@ end
 --- Hide the static on planner (visible to game master slots!).
 -- @param #SPAWN self
 -- @return #SPAWN The SPAWN object
-function SPAWN:InitHiddenOnPlanner()
+function SPAWNSTATIC:InitHiddenOnPlanner()
   self.SpawnHiddenOnPlanner = true
   return self
 end
