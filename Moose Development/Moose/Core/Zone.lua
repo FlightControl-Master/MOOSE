@@ -783,7 +783,7 @@ end
 -- @param #ZONE_BASE self
 -- @param #string From
 -- @param #string Event
--- @param #string to
+-- @param #string To
 -- @return #ZONE_BASE self
 function ZONE_BASE:onafterTriggerRunCheck(From,Event,To)
   if self:GetState() ~= "TriggerStopped" then
