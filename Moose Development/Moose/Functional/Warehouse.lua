@@ -4115,7 +4115,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
   local unit = group:GetUnit(1)
   local Descriptors= (unit and unit:IsAlive()) and unit:GetDesc() or {}
   local Category=group:GetCategory()
-  local TypeName=group:GetTypeName()
+  local TypeName=group:GetTypeName() or "none"
   local SpeedMax=group:GetSpeedMax()
   local RangeMin=group:GetRange()
   local smax,sx,sy,sz=_GetObjectSize(Descriptors)
