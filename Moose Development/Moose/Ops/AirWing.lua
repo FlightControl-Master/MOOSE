@@ -326,6 +326,27 @@ function AIRWING:AddSquadron(Squadron)
   if Squadron:IsStopped() then
     Squadron:Start()
   end
+  
+  -- if storage is limited, add the amount of aircraft needed
+  local airbasename = self:GetAirbaseName()
+  
+  if airbasename then
+    local group = GROUP:FindByName(Squadron.templategroup)
+    local Nunits = 1
+    local units
+    if group then units = group:GetUnits() end
+    if units then Nunits = #units end
+    local typename = Squadron.aircrafttype or "none"
+    local NAssets = Squadron.Ngroups * Nunits
+    local storage = STORAGE:New(airbasename)
+    --self:T(self.lid.."Adding "..typename.." #"..NAssets)
+    if storage and storage:IsLimitedAircraft() and typename ~= "none" then
+      local NInStore = storage:GetItemAmount(typename) or 0
+      if NAssets > NInStore then
+        storage:AddItem(typename,NAssets)
+      end
+    end
+  end
 
   return self
 end
