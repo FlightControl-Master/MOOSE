@@ -1275,7 +1275,7 @@ function CSAR:_EventHandler(EventData)
     self:T("Country = ".._country.." Coalition = ".._coalition)
     if _coalition == self.coalition then
       local _freq = self:_GenerateADFFrequency()
-      self:I({coalition=_coalition,country= _country, coord=_LandingPos, name=_unitname, player=_event.IniPlayerName, freq=_freq})
+      self:T({coalition=_coalition,country= _country, coord=_LandingPos, name=_unitname, player=_event.IniPlayerName, freq=_freq})
       self:_AddCsar(_coalition, _country, _LandingPos, nil, _unitname, _event.IniPlayerName, _freq, self.suppressmessages, "none")--shagrat add CSAR at Parachute location.
     
       Unit.destroy(_event.initiator) -- shagrat remove static Pilot model
@@ -2207,23 +2207,17 @@ function CSAR:_GetClosestMASH(_heli)
   local _distance = 0
   local _helicoord = _heli:GetCoordinate()
   local MashName = nil
-  local Coordinate =  nil -- Core.Point#COORDINATE
+  local Coordinate =  nil -- Core.Point#COORDINATE 
 
   if self.allowFARPRescue then
-    local position = _heli:GetCoordinate()
-    local afb,distance = position:GetClosestAirbase(nil,self.coalition)
+    local afb,distance = _helicoord:GetClosestAirbase(nil,self.coalition)
     _shortestDistance = distance
     MashName = (afb ~= nil) and afb:GetName() or "Unknown"
     Coordinate = (afb ~= nil) and afb:GetCoordinate()
     if afb then
-      local afbzone = afb:GetZone()
+      local afbzone = afb:GetMinimumBoundingCircleFromParkingSpots()
       if afbzone then
-        local zoneradius = afbzone:GetRadius()
-        if zoneradius < 2000 then afbzone:SetRadius(2000) end
-        if self.verbose > 1 then
-          afbzone:DrawZone(-1,{0,1,0},1,{0,1,0},0.2,6)
-        end
-        if afbzone:IsCoordinateInZone(Coordinate) and distance > self.FARPRescueDistance then
+        if afbzone:IsCoordinateInZone(_helicoord) and distance > self.FARPRescueDistance*1.1 then
           _shortestDistance = 100
         end
       end
@@ -2440,7 +2434,7 @@ function CSAR:_AddBeaconToGroup(_group, _freq, BeaconName)
       --local name = _radioUnit:GetName()
       local Sound =  "l10n/DEFAULT/"..self.radioSound
       local vec3 = _radioUnit:GetVec3() or _radioUnit:GetPositionVec3() or {x=0,y=0,z=0}
-      self:I(self.lid..string.format("Added Radio Beacon %d Hertz | Name %s | Position {%d,%d,%d}",Frequency,BeaconName,vec3.x,vec3.y,vec3.z))
+      self:T(self.lid..string.format("Added Radio Beacon %d Hertz | Name %s | Position {%d,%d,%d}",Frequency,BeaconName,vec3.x,vec3.y,vec3.z))
       trigger.action.radioTransmission(Sound, vec3, 0, true, Frequency, self.ADFRadioPwr or 500,BeaconName) -- Beacon in MP only runs for exactly 30secs straight
     end
   end
@@ -2567,22 +2561,6 @@ function CSAR:onafterStart(From, Event, To)
 
   self.staticmashes = SET_STATIC:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart()
   self.zonemashes = SET_ZONE:New():FilterPrefixes(self.mashprefix):FilterStart()
-
-  --[[
-  if staticmashes:Count() > 0  then
-    for _,_mash in pairs(staticmashes.Set) do
-      self.mash:AddObject(_mash)
-    end
-  end
-  
-  if zonemashes:Count() > 0  then
-    self:T("Adding zones to self.mash SET")
-    for _,_mash in pairs(zonemashes.Set) do
-      self.mash:AddObject(_mash)
-    end
-    self:T("Objects in SET: "..self.mash:Count())
-  end
-  --]]
 
   if not self.coordinate then
     local csarhq = self.mash:GetRandom()
@@ -2937,7 +2915,7 @@ function CSAR:onafterSave(From, Event, To, path, filename)
       local unitName = DownedPilot.originalUnit
       local txt = string.format("%s,%d,%d,%d,%s,%s,%s,%s,%s,%d\n",playerName,location.x,location.y,location.z,coalition,country,description,typeName,unitName,freq)
 
-      self:I(self.lid.."Saving to CSAR File: " .. txt)
+      self:T(self.lid.."Saving to CSAR File: " .. txt)
 
       data = data .. txt
     end
@@ -3053,7 +3031,7 @@ function CSAR:onafterLoad(From, Event, To, path, filename)
   -- Info message.
   local text=string.format("Loading CSAR state from file %s", filename)
   MESSAGE:New(text,10):ToAllIf(self.verbose>0)
-  self:I(self.lid..text)
+  self:T(self.lid..text)
 
   local file=assert(io.open(filename, "rb"))
 
