@@ -5312,3 +5312,147 @@ function UTILS.CreateAirbaseEnum()
   _savefile(string.format("%s-enums.txt", env.mission.theatre), text)
   --env.info(text)
 end
+
+--- Calculate then center and radius of a circle enclosing a list if DCS#Vec2 points.
+-- @param #table points Table of DCS#Vec2 entries
+-- @return DCS#Vec2 center DCS#Vec2
+-- @return #number radius
+function UTILS.GetCenterAndRadius(points)
+    if #points == 0 then
+        return nil, nil
+    end
+    
+    -- Calculate centroid (average of all points)
+    local sumX, sumY = 0, 0
+    for _, p in ipairs(points) do
+        sumX = sumX + p.x
+        sumY = sumY + p.y
+    end
+    
+    local center = {
+        x = sumX / #points,
+        y = sumY / #points
+    }
+    
+    -- Find maximum distance from center to any point
+    local maxDist = 0
+    for _, p in ipairs(points) do
+        local dx = p.x - center.x
+        local dy = p.y - center.y
+        local dist = math.sqrt(dx*dx + dy*dy)
+        if dist > maxDist then
+            maxDist = dist
+        end
+    end
+    
+    return center, maxDist
+end
+
+--- More accurate: Minimum bounding circle (Welzl's algorithm), calculate then center and radius of a circle enclosing a list if DCS#Vec2 points.
+-- @param #table points Table of DCS#Vec2 entries
+-- @return DCS#Vec2 center DCS#Vec2
+-- @return #number radius
+function UTILS.GetMinimumBoundingCircle(points)
+    if #points == 0 then
+        return nil, nil
+    end
+    
+    -- Calculate distance between two points
+    local function distance(p1, p2)
+        local dx = p2.x - p1.x
+        local dy = p2.y - p1.y
+        return math.sqrt(dx*dx + dy*dy)
+    end
+    
+    -- Circle from 2 points (diameter)
+    local function circleFrom2Points(p1, p2)
+        local center = {
+            x = (p1.x + p2.x) / 2,
+            y = (p1.y + p2.y) / 2
+        }
+        local radius = distance(p1, p2) / 2
+        return center, radius
+    end
+    
+    -- Circle from 3 points (circumcircle)
+    local function circleFrom3Points(p1, p2, p3)
+        local ax, ay = p1.x, p1.y
+        local bx, by = p2.x, p2.y
+        local cx, cy = p3.x, p3.y
+        
+        local d = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by))
+        
+        if math.abs(d) < 0.0001 then
+            -- Points are collinear, use 2-point circle
+            return circleFrom2Points(p1, p3)
+        end
+        
+        local aSq = ax*ax + ay*ay
+        local bSq = bx*bx + by*by
+        local cSq = cx*cx + cy*cy
+        
+        local ux = (aSq * (by - cy) + bSq * (cy - ay) + cSq * (ay - by)) / d
+        local uy = (aSq * (cx - bx) + bSq * (ax - cx) + cSq * (bx - ax)) / d
+        
+        local center = {x = ux, y = uy}
+        local radius = distance(center, p1)
+        
+        return center, radius
+    end
+    
+    -- Check if point is inside circle
+    local function isInside(center, radius, point, tolerance)
+        tolerance = tolerance or 0.0001
+        return distance(center, point) <= radius + tolerance
+    end
+    
+    -- Welzl's algorithm (recursive)
+    local function welzlHelper(pts, n, boundary)
+        -- Base cases
+        if n == 0 or #boundary == 3 then
+            if #boundary == 0 then
+                return {x = 0, y = 0}, 0
+            elseif #boundary == 1 then
+                return {x = boundary[1].x, y = boundary[1].y}, 0
+            elseif #boundary == 2 then
+                return circleFrom2Points(boundary[1], boundary[2])
+            else
+                return circleFrom3Points(boundary[1], boundary[2], boundary[3])
+            end
+        end
+        
+        -- Pick a random point
+        local p = pts[n]
+        
+        -- Get circle without this point
+        local center, radius = welzlHelper(pts, n - 1, boundary)
+        
+        -- If point is inside, we're done
+        if isInside(center, radius, p) then
+            return center, radius
+        end
+        
+        -- Otherwise, point must be on the boundary
+        local newBoundary = {}
+        for i = 1, #boundary do
+            newBoundary[i] = boundary[i]
+        end
+        table.insert(newBoundary, p)
+        
+        return welzlHelper(pts, n - 1, newBoundary)
+    end
+    
+    -- Shuffle points for better average performance
+    local pts = {}
+    for i, p in ipairs(points) do
+        pts[i] = {x = p.x, y = p.y}
+    end
+    
+    -- Simple shuffle
+    for i = #pts, 2, -1 do
+        local j = math.random(1, i)
+        pts[i], pts[j] = pts[j], pts[i]
+    end
+    
+    return welzlHelper(pts, #pts, {})
+end
