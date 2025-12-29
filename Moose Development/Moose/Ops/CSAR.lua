@@ -318,7 +318,7 @@ CSAR.AircraftType["CH-47Fbl1"] = 31
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.34"
+CSAR.version="1.0.35"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -677,7 +677,7 @@ function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Descript
   DownedPilot.alive = true
   DownedPilot.wetfeet = Wetfeet or false
   DownedPilot.BeaconName = BeaconName
-
+  
   -- Add Pilot
   local PilotTable = self.downedPilots
   local counter = self.downedpilotcounter
@@ -854,6 +854,10 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
     BeaconName = _unitName..math.random(1,10000)
   else
     BeaconName = "Ghost-1-1"..math.random(1,10000)
+  end
+  
+  if _playerName == nil or _playerName == "" then
+    _playerName = "AI MIA"
   end
 
   if (_freq and _freq ~= 0) then --shagrat only add beacon if _freq is NOT 0
@@ -2922,6 +2926,7 @@ function CSAR:onafterSave(From, Event, To, path, filename)
     if DownedPilot and DownedPilot.alive then
       -- get downed pilot data for saving
       local playerName = DownedPilot.player
+      if playerName == nil or playerName == "" then playerName = "AI MIA" end 
       local group = DownedPilot.group
       local coalition = group:GetCoalition()
       local country = group:GetCountry()
