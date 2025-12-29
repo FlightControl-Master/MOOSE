@@ -529,6 +529,7 @@ ENUMS.ReportingName =
     Orion = "P-3C",
     Viking = "S-3B",
     Osprey = "V-22",
+    Intruder = "A6E",
     -- Bomber Rus
     Badger = "H6-J",
     Bear_J = "Tu-142", -- also Tu-95

@@ -340,7 +340,7 @@ function AIRWING:AddSquadron(Squadron)
     local NAssets = Squadron.Ngroups * Nunits
     local storage = STORAGE:New(airbasename)
     --self:T(self.lid.."Adding "..typename.." #"..NAssets)
-    if storage and storage:IsLimitedAircraft() and typename ~= "none" then
+    if storage and storage.warehouse and storage:IsLimitedAircraft() and typename ~= "none" then
       local NInStore = storage:GetItemAmount(typename) or 0
       if NAssets > NInStore then
         storage:AddItem(typename,NAssets)

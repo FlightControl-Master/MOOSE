@@ -334,6 +334,31 @@ function SPAWNSTATIC:InitCargo(IsCargo)
   return self
 end
 
+--- Hide the static on the map view (visible to game master slots!).
+-- @param #SPAWN self
+-- @param #boolean OnOff Defaults to true
+-- @return #SPAWN The SPAWN object
+function SPAWNSTATIC:InitHiddenOnMap(OnOff)
+  self.SpawnHiddenOnMap = OnOff == false and false or true
+  return self
+end
+
+--- Hide the static on MFDs (visible to game master slots!).
+-- @param #SPAWN self
+-- @return #SPAWN The SPAWN object
+function SPAWNSTATIC:InitHiddenOnMFD()
+  self.SpawnHiddenOnMFD = true
+  return self
+end
+
+--- Hide the static on planner (visible to game master slots!).
+-- @param #SPAWN self
+-- @return #SPAWN The SPAWN object
+function SPAWNSTATIC:InitHiddenOnPlanner()
+  self.SpawnHiddenOnPlanner = true
+  return self
+end
+
 --- Initialize as dead.
 -- @param #SPAWNSTATIC self
 -- @param #boolean IsDead If true, this static is dead.
@@ -532,6 +557,19 @@ function SPAWNSTATIC:_SpawnStatic(Template, CountryID)
   if self.InitStaticCargoMass~=nil then
     Template.mass=self.InitStaticCargoMass
   end
+
+    -- hiding options
+    if self.SpawnHiddenOnPlanner then
+      Template.hiddenOnPlanner=true
+    end
+
+    if self.SpawnHiddenOnMFD then
+      Template.hiddenOnMFD=true
+    end
+
+    if self.SpawnHiddenOnMap then
+      Template.hidden=self.SpawnHiddenOnMap
+    end
 
   if self.InitLinkUnit then
     Template.linkUnit=self.InitLinkUnit:GetID()
