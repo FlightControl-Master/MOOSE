@@ -249,7 +249,23 @@ CALLSIGN={
     Stetson = 22,
     Wrath = 23,
   },
-  
+  Intruder = {
+    Raygun = 4,
+    Heartless = 5,
+    Viceroy = 6,
+    Cupcake = 7,
+    ["Flying Tiger"] = 8,
+    ["Flying Ace"]  = 9,
+    Buckeye = 10,
+    Goldplate = 11,
+    Phoenix = 12,
+    Electron = 13,
+    Rustler = 14,
+    Vixen = 15,
+    Jackal = 16,
+    Milestone = 17,
+    Devil = 18,
+  },
 } --#CALLSIGN
 
 --- Utilities static class.
@@ -2009,6 +2025,12 @@ function UTILS.GetCallsignName(Callsign)
   end
   
   for name, value in pairs(CALLSIGN.Kiowa) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.Intruder) do
     if value==Callsign then
       return name
     end
