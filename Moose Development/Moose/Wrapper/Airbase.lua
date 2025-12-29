@@ -27,6 +27,7 @@
 -- @field #table parkingByID Parking spot data table with ID as key.
 -- @field #table parkingWhitelist List of parking spot terminal IDs considered for spawning.
 -- @field #table parkingBlacklist List of parking spot terminal IDs **not** considered for spawning.
+-- @field Core.Zone#ZONE_RADIUS parkingCircle Minimum bounding circle enclosing all parking spots.
 -- @field #table runways Runways of airdromes.
 -- @field #AIRBASE.Runway runwayLanding Runway used for landing.
 -- @field #AIRBASE.Runway runwayTakeoff Runway used for takeoff.
@@ -1552,7 +1553,7 @@ AIRBASE.SpotStatus = {
 --- Runway data.
 -- @type AIRBASE.Runway
 -- @field #string name Runway name.
--- @field #string idx Runway ID: heading 070° ==> idx="07".
+-- @field #string idx Runway ID: heading 070° ==> idx="07". Mostly same as magheading.
 -- @field #number heading True heading of the runway in degrees.
 -- @field #number magheading Magnetic heading of the runway in degrees. This is what is marked on the runway.
 -- @field #number length Length of runway in meters.
@@ -1662,6 +1663,8 @@ end
   else
     self:E(string.format("ERROR: Cound not get position Vec2 of airbase %s", AirbaseName))
   end
+  
+  self:GetMinimumBoundingCircleFromParkingSpots( )
 
   -- Debug info.
   self:T2(string.format("Registered airbase %s", tostring(self.AirbaseName)))
@@ -2189,6 +2192,54 @@ function AIRBASE:GetParkingSpotsCoordinates(termtype)
   end
 
   return spots
+end
+
+--- Get the DCS#Vec2s of all parking spots at an airbase. Optionally only those of a specific terminal type. Spots on runways are excluded if not explicitly requested by terminal type.
+-- @param #AIRBASE self
+-- @param #AIRBASE.TerminalType termtype (Optional) Terminal type. Default all.
+-- @return #table Table of DCS#Vec2 of parking spots.
+function AIRBASE:GetParkingSpotsVec2s(termtype)
+
+  -- Get all parking spots data.
+  local parkingdata=self:GetParkingData(false)
+
+  -- Put coordinates of free spots into table.
+  local spots={}
+  for _,parkingspot in ipairs(parkingdata) do
+
+    -- Coordinates on runway are not returned unless explicitly requested.
+    if AIRBASE._CheckTerminalType(parkingspot.Term_Type, termtype) then
+
+      -- Get coordinate from Vec3 terminal position.
+      local vec2 = { x = parkingspot.vTerminalPos.x, y = parkingspot.vTerminalPos.z }
+
+      -- Add to table.
+      table.insert(spots, vec2)
+    end
+
+  end
+
+  return spots
+end
+
+--- Get the the bounding circular zone around all parking spots of an airbase.
+-- @param #AIRBASE self
+-- @param #boolean mark (Optional) Draw zone on map on first call of this function.
+-- @return Core.Zone#ZONE_RADIUS BoundingZone
+function AIRBASE:GetMinimumBoundingCircleFromParkingSpots(mark)
+  if self.isAirdrome then
+    if not self.parkingCircle then
+      local spots = self:GetParkingSpotsVec2s()
+      local center, radius = UTILS.GetMinimumBoundingCircle(spots)
+      self.parkingCircle = ZONE_RADIUS:New(self.AirbaseName.." ParkingCircle",center,radius+50)
+      if mark == true then
+         self.parkingCircle:DrawZone(-1,{1,0,0},1,{0,1,0},0.2,3)
+      end
+    end
+    return self.parkingCircle
+  else
+    return self.AirbaseZone
+  end
 end
 
 --- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.

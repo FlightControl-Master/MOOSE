@@ -3521,6 +3521,11 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
         max = 18 
         ctable = CALLSIGN.F15E
       end
+      if SpawnTemplate.units[1].type == "A6E" then
+        min = 4
+        max = 18 
+        ctable = CALLSIGN.Intruder
+      end
       local callsignnr = math.random(min,max)
       local callsignname = "Enfield"
       for name, value in pairs(ctable) do
