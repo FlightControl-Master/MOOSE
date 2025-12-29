@@ -2193,7 +2193,8 @@ end
 function CSAR:_GetClosestMASH(_heli)
   self:T(self.lid .. " _GetClosestMASH")
   local _mashset = self.mash -- Core.Set#SET_GROUP
-  local MashSets = {}
+  local MashSets = {} 
+  
   --local _mashes = _mashset.Set-- #table
   table.insert(MashSets,_mashset.Set)
   table.insert(MashSets,self.zonemashes.Set)
@@ -2213,9 +2214,13 @@ function CSAR:_GetClosestMASH(_heli)
     if afb then
       local afbzone = afb:GetZone()
       if afbzone then
-        --afbzone:DrawZone(-1,{0,1,0},1,{0,1,0},0.2,6)
+        local zoneradius = afbzone:GetRadius()
+        if zoneradius < 2000 then afbzone:SetRadius(2000) end
+        if self.verbose > 1 then
+          afbzone:DrawZone(-1,{0,1,0},1,{0,1,0},0.2,6)
+        end
         if afbzone:IsCoordinateInZone(Coordinate) and distance > self.FARPRescueDistance then
-          distance = 100
+          _shortestDistance = 100
         end
       end
     end
@@ -2331,6 +2336,7 @@ function CSAR:_GetDistance(_point1, _point2)
   if _point1 and _point2 then
     local distance1 = _point1:Get2DDistance(_point2)
     local distance2 = _point1:DistanceFromPointVec2(_point2)
+    MESSAGE:New(string.format("_GetDistance: d1 = %dm | d2 = %dm",distance1,distance2)):ToAllIf(self.verbose>1):ToLogIf(self.verbose>1)
     if distance1 and type(distance1) == "number" then
       return distance1
     elseif distance2 and type(distance2) == "number" then
