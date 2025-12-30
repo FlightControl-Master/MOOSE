@@ -1664,7 +1664,9 @@ end
     self:E(string.format("ERROR: Cound not get position Vec2 of airbase %s", AirbaseName))
   end
   
-  self:GetMinimumBoundingCircleFromParkingSpots( )
+  if Nrunways>0 then
+    self:GetMinimumBoundingCircleFromParkingSpots()
+  end
 
   -- Debug info.
   self:T2(string.format("Registered airbase %s", tostring(self.AirbaseName)))
@@ -2230,6 +2232,7 @@ function AIRBASE:GetMinimumBoundingCircleFromParkingSpots(mark)
   if self.isAirdrome then
     if not self.parkingCircle then
       local spots = self:GetParkingSpotsVec2s()
+      if #spots == 0 then return self.AirbaseZone  end
       local center, radius = UTILS.GetMinimumBoundingCircle(spots)
       self.parkingCircle = ZONE_RADIUS:New(self.AirbaseName.." ParkingCircle",center,radius+50)
       if mark == true then
