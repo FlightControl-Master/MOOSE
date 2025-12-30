@@ -1953,3 +1953,26 @@ end
 function UNIT:SetValidateAndRepositionGroundUnits(Enabled)
     self.ValidateAndRepositionGroundUnits = Enabled
 end
+
+--- Get the max kgs of fuel this unit can hold in its *internal* tank(s) and overall (with ext. tanks) in kgs.
+-- @param #UNIT self
+-- @return #number InternalFuel Max internal fuel in kgs. Zero if it cannot be determined.
+-- @return #number Overall Fuel Overall max in case there are external tanks in kgs. Zero if it cannot be determined.
+function UNIT:GetFuelMassMax()
+  local Desc = self:GetDesc() or {}
+  local massFuelMax=Desc.fuelMassMax or 0
+  local relFuel=math.min(self:GetFuel() or 1.0, 1.0)  -- We take 1.0 as max in case of external fuel tanks.
+  local massFuel=massFuelMax*relFuel
+  return massFuel, massFuelMax
+end
+
+--- Get the current kgs of fuel this unit holds in all of its tanks.
+-- @param #UNIT self
+-- @param #number Filling Fuel in kgs.
+function UNIT:GetCurrentFuelKgs()
+  local fuel, maxfuel = self:GetFuelMassMax()
+  local relfuel = self:GetFuel()
+  local maxfilling = math.max(fuel,maxfuel)
+  local mass = maxfilling*relfuel
+  return mass
+end
