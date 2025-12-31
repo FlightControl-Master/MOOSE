@@ -8597,8 +8597,8 @@ function WAREHOUSE:_DeleteStockItem(stockitem)
     local item=self.stock[i] --#WAREHOUSE.Assetitem
     if item.uid==stockitem.uid then
       table.remove(self.stock,i)
-      -- remove also from warehouse DB
-      _WAREHOUSEDB.Assets[stockitem.uid]=nil
+      -- remove also from warehouse DB (not good! causes an error if the asset needs to be added to a requesting wherehouse)
+      --_WAREHOUSEDB.Assets[stockitem.uid]=nil
       break
     end
   end
