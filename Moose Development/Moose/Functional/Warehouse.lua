@@ -5924,7 +5924,7 @@ function WAREHOUSE:_SpawnAssetGroundNaval(alias, asset, request, spawnzone, late
   if asset and (asset.category==Group.Category.GROUND or asset.category==Group.Category.SHIP or asset.category==Group.Category.TRAIN) then
 
     -- Prepare spawn template.
-    local template=self:_SpawnAssetPrepareTemplate(asset, alias)
+    local template=self:_SpawnAssetPrepareTemplate(asset, alias, request)
 
     -- Initial spawn point.
     template.route.points[1]={}
@@ -6000,7 +6000,7 @@ function WAREHOUSE:_SpawnAssetAircraft(alias, asset, request, parking, uncontrol
   if asset and asset.category==Group.Category.AIRPLANE or asset.category==Group.Category.HELICOPTER then
 
     -- Prepare the spawn template.
-    local template=self:_SpawnAssetPrepareTemplate(asset, alias)
+    local template=self:_SpawnAssetPrepareTemplate(asset, alias, request)
 
     -- Cold start (default).
     local _type=COORDINATE.WaypointType.TakeOffParking
@@ -6167,13 +6167,13 @@ end
 -- @param #WAREHOUSE.Assetitem asset Ground asset that will be spawned.
 -- @param #string alias Alias name of the group.
 -- @return #table Prepared new spawn template.
-function WAREHOUSE:_SpawnAssetPrepareTemplate(asset, alias)
+function WAREHOUSE:_SpawnAssetPrepareTemplate(asset, alias, request)
 
   -- Create an own copy of the template!
   local template=UTILS.DeepCopy(asset.template)
 
-  -- Set unique name.
-  template.name=alias
+  -- Set unique name and include RID.
+  template.name=string.format("%s_RID-%d", alias, request.uid)
 
   -- Set current(!) coalition and country.
   template.CoalitionID=self:GetCoalition()
