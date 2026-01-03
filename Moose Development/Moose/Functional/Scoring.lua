@@ -2212,7 +2212,11 @@ function SCORING:ScoreCSV( PlayerName, TargetPlayerName, ScoreType, ScoreTimes, 
     local data = self:ReportScoreAllSummary("",true)
     local text = "-- Playername;;Score;;Penalty\n"
     for _playername,_data in pairs(data or {}) do
-      text = text..string.format("%s;;%d;;%d\n")
+      -- ReportTable[PlayerName] = {["Score"]=PlayerScore,["Penalty"]=PlayerPenalty}
+      local Playername = _playername or "Ghost"
+      local Score = _data.Score or 0
+      local Penalty = _data.Penalty or 0
+      text = text..string.format("%s;;%d;;%d\n",Playername,Score,Penalty)
     end
     UTILS.SaveToFile(path,filename,text)
   end
