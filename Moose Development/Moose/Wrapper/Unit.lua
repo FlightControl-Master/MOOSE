@@ -1954,7 +1954,7 @@ function UNIT:SetValidateAndRepositionGroundUnits(Enabled)
     self.ValidateAndRepositionGroundUnits = Enabled
 end
 
---- Get the max kgs of fuel this unit can hold in its *internal* tank(s) and overall (with ext. tanks) in kgs.
+--- Get the max kgs of fuel this unit can hold in its *internal* tank(s) and overall (with external tanks) in kgs.
 -- @param #UNIT self
 -- @return #number InternalFuel Max internal fuel in kgs. Zero if it cannot be determined.
 -- @return #number Overall Fuel Overall max in case there are external tanks in kgs. Zero if it cannot be determined.

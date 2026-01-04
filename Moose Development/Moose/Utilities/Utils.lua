@@ -1507,6 +1507,14 @@ function UTILS.VecSubstract(a, b)
   return {x=a.x-b.x, y=a.y-b.y, z=a.z-b.z}
 end
 
+--- Scale a 3D vectors by multiplication with s.
+-- @param DCS#Vec3 v A Vector in 3D with x, y, z components.
+-- @param #number s Scale
+-- @return DCS#Vec3 Vec3
+function UTILS.VecScale(v, s)
+    return {x = v.x * s, y = v.y * s, z = v.z * s}
+end
+
 --- Substract is not a word, don't want to rename the original function because it's been around since forever
 function UTILS.VecSubtract(a, b)
   return UTILS.VecSubstract(a, b)
@@ -1518,6 +1526,14 @@ end
 -- @return DCS#Vec2 Vector c=a-b with c(i)=a(i)-b(i), i=x,y.
 function UTILS.Vec2Substract(a, b)
   return {x=a.x-b.x, y=a.y-b.y}
+end
+
+--- Calculate the difference between two 3D vectors by substracting the x,y,z components from each other.
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return DCS#Vec3 Vector in 3D.
+function UTILS.Vec3Substract(a, b)
+  return {x = a.x - b.x, y = a.y - b.y, z = a.z - b.z}
 end
 
 --- Substract is not a word, don't want to rename the original function because it's been around since forever
@@ -1647,6 +1663,13 @@ function UTILS.Vec2Translate(a, distance, angle)
   local TY=distance*math.sin(Radians)+SY
 
   return {x=TX, y=TY}
+end
+
+--- Calculate the lenght of a 3D vector
+-- @param DCS#Vec3 v A Vector in 3D with x, y, z components.
+-- @return #number length
+function UTILS.Vec3Length(v)
+    return math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z)
 end
 
 --- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged.
@@ -5455,4 +5478,98 @@ function UTILS.GetMinimumBoundingCircle(points)
     end
     
     return welzlHelper(pts, #pts, {})
+end
+
+--- Calculated optimal intercepting course (Bearing)
+-- @param DCS#Vec3 A1 Position of flight one
+-- @param DCS#Vec3 V1 VelocityVector of flight one
+-- @param DCS#Vec3 A2 Position of flight two
+-- @param #number V2_speed Speed of A2 in m/s
+-- @return #number Bearing Bearing course for A2 to take for an intercept of A1 or nil if aspect is hot/cold.
+function UTILS.CalculateInterceptBearing(A1, V1, A2, V2_speed)
+    
+    local function berechne_bearing(richtung)
+      local bearing = math.deg(math.atan2(richtung.x, richtung.y))
+      if bearing < 0 then
+          bearing = bearing + 360
+      end
+      return bearing
+    end
+    
+    local function vec_normalize(v)
+      local len = UTILS.Vec3Length(v)
+      if len == 0 then return {x = 0, y = 0, z = 0} end
+      return {x = v.x / len, y = v.y / len, z = v.z / len}
+    end
+
+
+    -- Relative Position von F1 zu F2
+    local rel_pos = UTILS.Vec3Substract(A1, A2)
+    local distance = UTILS.Vec3Length(rel_pos)
+    
+    if distance == 0 then
+        return nil  -- Bereits am gleichen Ort
+    end
+    
+    -- Richtungsvektor von F2 zu F1 (normalisiert)
+    local richtung_zu_f1 = vec_normalize(rel_pos)
+    
+    -- Prüfe HOT: F1 fliegt direkt auf F2 zu
+    -- Das ist der Fall wenn V1 in die entgegengesetzte Richtung von rel_pos zeigt
+    local v1_normalisiert = vec_normalize(V1)
+    local annaeherung = UTILS.VecDot(v1_normalisiert, richtung_zu_f1)
+    
+    if annaeherung < -0.95 then  -- F1 fliegt fast direkt auf F2 zu (Winkel > ~162°)
+        return nil  -- Hot
+    end
+    
+    -- Prüfe COLD: F1 fliegt parallel weg von F2
+    -- Berechne die Geschwindigkeitsdifferenz
+    local rel_velocity = UTILS.VecSubstract(V1, {x=0, y=0, z=0})  -- V1 relativ zu F2 (falls F2 stillsteht)
+    local flucht_komponente = UTILS.VecDot(vec_normalize(rel_velocity), richtung_zu_f1)
+    
+    if flucht_komponente > 0.95 then  -- F1 fliegt fast parallel weg (Winkel < ~18°)
+        return nil  -- Cold
+    end
+    
+    -- Geschwindigkeiten
+    local v1 = UTILS.Vec3Length(V1)
+    local v2 = V2_speed
+    
+    -- Löse quadratische Gleichung für Abfangzeit t
+    local a = UTILS.VecDot(V1, V1) - v2 * v2
+    local b = 2 * UTILS.VecDot(rel_pos, V1)
+    local c = UTILS.VecDot(rel_pos, rel_pos)
+    
+    local discriminant = b * b - 4 * a * c
+    
+    if discriminant < 0 then
+        return nil  -- Keine Lösung möglich
+    end
+    
+    -- Wähle die positive, kleinste Lösung
+    local t1 = (-b + math.sqrt(discriminant)) / (2 * a)
+    local t2 = (-b - math.sqrt(discriminant)) / (2 * a)
+    
+    local t = nil
+    if t1 > 0 and t2 > 0 then
+        t = math.min(t1, t2)
+    elseif t1 > 0 then
+        t = t1
+    elseif t2 > 0 then
+        t = t2
+    else
+        return nil  -- Keine positive Lösung
+    end
+    
+    -- Berechne Treffpunkt
+    local treffpunkt = UTILS.VecAdd(A1, UTILS.VecScale(V1, t))
+    
+    -- Berechne Richtung zum Treffpunkt
+    local richtung = UTILS.VecSubstract(treffpunkt, A2)
+    
+    -- Berechne Bearing
+    local bearing = berechne_bearing(richtung)
+    
+    return UTILS.Round(bearing,0)
 end
