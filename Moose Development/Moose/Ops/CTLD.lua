@@ -193,6 +193,7 @@ CTLD_CARGO = {
   -- @param Wrapper.Unit#UNIT Unit
   -- @return #boolean Outcome
   function CTLD_CARGO:UnitCanCarry(Unit)
+    if not Unit then return false end
     if self.TypeNames == nil then return true end
     local typename = Unit:GetTypeName() or "none"
     if self.TypeNames[typename] then
@@ -3137,6 +3138,17 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
   return self
 end
 
+--- User overrideable function to determine if a unit can get crates.
+  -- @param #CTLD self
+  -- @param Wrapper.Group#GROUP Group
+  -- @param Wrapper.Unit#UNIT Unit
+  -- @param #table Config Configuration entry for the unit.
+  -- @param #number quantity Number of crate sets requested.
+  -- @param #boolean quiet If true, do not send messages to the user.
+  function CTLD:CanGetUnits(Group, Unit, Config, quantity, quiet)
+    return true
+  end
+
 --- (Internal) Spawn a “Get units” entry for a C-130J-30 at load zone.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
@@ -3165,6 +3177,9 @@ function CTLD:_C130GetUnits(Group, Unit, Name)
   local inzone = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
   if not inzone then
     self:_SendMessage("You are not close enough to a logistics zone!",10,false,Group)
+    return self
+  end
+  if not self:CanGetUnits(Group, Unit, cfg, 1, false) then
     return self
   end
 
@@ -3514,9 +3529,9 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
     Cargo:RemoveStock(requestedSets)
     self:_RefreshCrateQuantityMenus(Group, Unit, Cargo)
   end
-  local text = string.format("Crates for %s have been positioned near you!",cratename)
+  local text = string.format("%d crates for %s have been positioned near you!",number,cratename)
   if drop then
-    text = string.format("Crates for %s have been dropped!",cratename)
+    text = string.format("%d crates for %s have been dropped!",number,cratename)
     self:__CratesDropped(1, Group, Unit, droppedcargo)
   else
     if not quiet then
@@ -3612,7 +3627,7 @@ end
 function CTLD:_ListCratesNearby( _group, _unit)
   self:T(self.lid .. " _ListCratesNearby")
   local finddist = self.CrateDistance or 35
-  local crates,number,loadedbygc,indexgc = self:_FindCratesNearby(_group,_unit, finddist,true,true) -- #table
+  local crates,number,loadedbygc,indexgc = self:_FindCratesNearby(_group,_unit, finddist,true,true,true) -- #table
   if number > 0 or indexgc > 0 then
     local text = REPORT:New("Crates Found Nearby:")
     text:Add("------------------------------------------------------------")
@@ -3711,7 +3726,7 @@ end
 function CTLD:_RemoveCratesNearby(_group, _unit)
   self:T(self.lid.." _RemoveCratesNearby")
   local finddist=self.CrateDistance or 35
-  local crates,number=self:_FindCratesNearby(_group,_unit,finddist,true,true)
+  local crates,number=self:_FindCratesNearby(_group,_unit,finddist,true,true,true)
   if number>0 then
     local removedIDs={}
     local text=REPORT:New("Removing Crates Found Nearby:")
@@ -3824,7 +3839,7 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight, ignoretype
       self:T(self.lid .. " Loading restricted: " .. tostring(restricted))
       local staticpos = static:GetCoordinate() --or dcsunitpos
       local cando = cargo:UnitCanCarry(_unit)
-      if ignoretype == true then cando = true end
+      if ignoretype == true then cando = true restricted = false end
       self:T(self.lid .. " Unit can carry: " .. tostring(cando))
       --- Testing
       local distance=self:_GetDistance(location,staticpos)
@@ -4618,7 +4633,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
       finddist=self.EngineerSearch
   finddist=self.EngineerSearch
   end
-  local crates,number = self:_FindCratesNearby(Group,Unit, finddist,true,true) -- #table
+  local crates,number = self:_FindCratesNearby(Group,Unit,finddist,true,true,not Engineering) -- #table
   local buildables = {}
   local foundbuilds = false
   local canbuild = false
@@ -6411,8 +6426,10 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
 -- @param Wrapper.Unit#UNIT Unit The calling unit.
 -- @param #number chunkID the Cargo ID
 -- @return #CTLD self
-function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID)
+function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID, qty)
   self:T(self.lid .. " _UnloadSingleTroopByID chunkID=" .. tostring(chunkID))
+
+  qty = qty or 1
 
   local droppingatbase = false
   local inzone, zonename, zone, distance = self:IsUnitInZone(Unit, CTLD.CargoZoneType.LOAD)
@@ -6453,77 +6470,76 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID)
       end
 
       -- Drop the FIRST cargo in that chunk
-      local foundCargo = chunk[1]
-      if not foundCargo then
-        self:_SendMessage(string.format("No troop cargo at chunk %d!", chunkID), 10, false, Group)
-        if not self.debug then return self end
-        return self
-      end
+      for n = 1, qty do
+        local foundCargo = chunk[1]
+        if not foundCargo then break end
 
-      local cType = foundCargo:GetType()
-      local name  = foundCargo:GetName() or "none"
-      local tmpl  = foundCargo:GetTemplates() or {}
-      local zoneradius = self.troopdropzoneradius or 100
-      local factor = 1
-      if isHerc then
-        factor = foundCargo:GetCratesNeeded() or 1
-        zoneradius = Unit:GetVelocityMPS() or 100
-      end
-      local zone = ZONE_GROUP:New(string.format("Unload zone-%s", unitName), Group, zoneradius * factor)
-      local randomcoord = zone:GetRandomCoordinate(10, 30 * factor)
-      local heading = Group:GetHeading() or 0
-
-      if grounded or hoverunload then
-        randomcoord = Group:GetCoordinate()
-        local Angle = (heading + 270) % 360
-        if isHerc or isHook then
-          Angle = (heading + 180) % 360
-        end
-        local offset = hoverunload and self.TroopUnloadDistHover or self.TroopUnloadDistGround
+        local cType = foundCargo:GetType()
+        local name  = foundCargo:GetName() or "none"
+        local tmpl  = foundCargo:GetTemplates() or {}
+        local zoneradius = self.troopdropzoneradius or 100
+        local factor = 1
         if isHerc then
-          offset = self.TroopUnloadDistGroundHerc or 25
+          factor = foundCargo:GetCratesNeeded() or 1
+          zoneradius = Unit:GetVelocityMPS() or 100
         end
-        if isHook then
-          offset = self.TroopUnloadDistGroundHook or 15
-          if hoverunload and self.TroopUnloadDistHoverHook then
-            offset = self.TroopUnloadDistHoverHook or 5
+        local zone = ZONE_GROUP:New(string.format("Unload zone-%s", unitName), Group, zoneradius * factor)
+        local randomcoord = zone:GetRandomCoordinate(10, 30 * factor)
+        local heading = Group:GetHeading() or 0
+
+        if grounded or hoverunload then
+          randomcoord = Group:GetCoordinate()
+          local Angle = (heading + 270) % 360
+          if isHerc or isHook then
+            Angle = (heading + 180) % 360
           end
+          local offset = hoverunload and self.TroopUnloadDistHover or self.TroopUnloadDistGround
+          if isHerc then
+            offset = self.TroopUnloadDistGroundHerc or 25
+          end
+          if isHook then
+            offset = self.TroopUnloadDistGroundHook or 15
+            if hoverunload and self.TroopUnloadDistHoverHook then
+              offset = self.TroopUnloadDistHoverHook or 5
+            end
+          end
+          randomcoord:Translate(offset, Angle, nil, true)
         end
-        randomcoord:Translate(offset, Angle, nil, true)
-      end
 
-      local tempcount = 0
-      if isHook then
-        tempcount = self.ChinookTroopCircleRadius or 5
-      end
-      for _, _template in pairs(tmpl) do
-        self.TroopCounter = self.TroopCounter + 1
-        tempcount = tempcount + 1
-        local alias = string.format("%s-%d", _template, math.random(1,100000))
-        local rad   = 2.5 + (tempcount * 2)
-        local Positions = self:_GetUnitPositions(randomcoord, rad, heading, _template)
-        self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template, alias)
-          :InitDelayOff()
-          :InitSetUnitAbsolutePositions(Positions)
-          :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
-          :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
-          :SpawnFromVec2(randomcoord:GetVec2())
-        self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter], cType)
-      end
-      
-      foundCargo:SetWasDropped(true)
-      if cType == CTLD_CARGO.Enum.ENGINEERS then
-        self.Engineers = self.Engineers + 1
-          local grpname = self.DroppedTroops[self.TroopCounter]:GetName()
-        self.EngineersInField[self.Engineers] = CTLD_ENGINEERING:New(name, grpname)
-        self:_SendMessage(string.format("Dropped Engineers %s into action!", name), 10, false, Group)
-      else
-        self:_SendMessage(string.format("Dropped Troops %s into action!", name), 10, false, Group)
-      end
+        local tempcount = 0
+        if isHook then
+          tempcount = self.ChinookTroopCircleRadius or 5
+        end
+        for _, _template in pairs(tmpl) do
+          self.TroopCounter = self.TroopCounter + 1
+          tempcount = tempcount + 1
+          local alias = string.format("%s-%d", _template, math.random(1,100000))
+          local rad   = 2.5 + (tempcount * 2)
+          local Positions = self:_GetUnitPositions(randomcoord, rad, heading, _template)
+          self.DroppedTroops[self.TroopCounter] = SPAWN:NewWithAlias(_template, alias)
+            :InitDelayOff()
+            :InitSetUnitAbsolutePositions(Positions)
+            :InitValidateAndRepositionGroundUnits(self.validateAndRepositionUnits)
+            :OnSpawnGroup(function(grp) grp.spawntime = timer.getTime() end)
+            :SpawnFromVec2(randomcoord:GetVec2())
+          self:__TroopsDeployed(1, Group, Unit, self.DroppedTroops[self.TroopCounter], cType)
+        end
+        
+        foundCargo:SetWasDropped(true)
+        if cType == CTLD_CARGO.Enum.ENGINEERS then
+          self.Engineers = self.Engineers + 1
+            local grpname = self.DroppedTroops[self.TroopCounter]:GetName()
+          self.EngineersInField[self.Engineers] = CTLD_ENGINEERING:New(name, grpname)
+          self:_SendMessage(string.format("Dropped Engineers %s into action!", name), 10, false, Group)
+        else
+          self:_SendMessage(string.format("Dropped Troops %s into action!", name), 10, false, Group)
+        end
 
-      table.remove(chunk, 1)
-      if #chunk == 0 then
-        self.TroopsIDToChunk[chunkID] = nil
+        table.remove(chunk, 1)
+        if #chunk == 0 then
+          self.TroopsIDToChunk[chunkID] = nil
+          break
+        end
       end
 
     else
@@ -6533,7 +6549,8 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID)
 
       if self.TroopsIDToChunk and self.TroopsIDToChunk[chunkID] then
         local chunk = self.TroopsIDToChunk[chunkID]
-        if #chunk > 0 then
+        for n = 1, qty do
+          if #chunk == 0 then break end
           local firstObj = chunk[1]
           local cName = firstObj:GetName()
           local gentroops = self.Cargo_Troops
@@ -6548,9 +6565,9 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID)
           end
           firstObj:SetWasDropped(true)
           table.remove(chunk, 1)
-          if #chunk == 0 then
-            self.TroopsIDToChunk[chunkID] = nil
-          end
+        end
+        if #chunk == 0 then
+          self.TroopsIDToChunk[chunkID] = nil
         end
       end
     end
@@ -6625,15 +6642,22 @@ function CTLD:_RefreshDropTroopsMenu(Group, Unit)
   for tName, objList in pairs(troopsByName) do
     table.sort(objList, function(a,b) return a:GetID() < b:GetID() end)
     local count = #objList
+    if count > 0 then
+      local chunkID = objList[1]:GetID()
+      self.TroopsIDToChunk[chunkID] = objList
 
-    local chunkID = objList[1]:GetID()
-    self.TroopsIDToChunk[chunkID] = objList
-
-    local label = string.format("Drop %s (%d)", tName, count)
-    MENU_GROUP_COMMAND:New(theGroup, label, dropTroopsMenu, self._UnloadSingleTroopByID, self, theGroup, theUnit, chunkID)
+      local label = string.format("Drop %s (%d)", tName, count)
+      if count == 1 then
+        MENU_GROUP_COMMAND:New(theGroup, label, dropTroopsMenu, self._UnloadSingleTroopByID, self, theGroup, theUnit, chunkID, 1)
+      else
+        local parentMenu = MENU_GROUP:New(theGroup, label, dropTroopsMenu)
+        for q = 1, count do
+          MENU_GROUP_COMMAND:New(theGroup, string.format("Drop (%d) %s", q, tName), parentMenu, self._UnloadSingleTroopByID, self, theGroup, theUnit, chunkID, q)
+        end
+      end
+    end
   end
 end
-
 --- [Internal] Function to check if a template exists in the mission.
 -- @param #CTLD self
 -- @param #table temptable Table of string names
