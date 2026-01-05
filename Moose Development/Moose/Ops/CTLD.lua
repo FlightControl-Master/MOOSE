@@ -2911,6 +2911,28 @@ end
 -- @return #CTLD self
 function CTLD:_LoadTroopsQuantity(Group, Unit, Cargo, quantity)
   local n = math.max(1, tonumber(quantity) or 1)
+
+  -- landed or hovering over load zone?
+  local grounded = not self:IsUnitInAir(Unit)
+  local hoverload = self:CanHoverLoad(Unit)
+
+  -- check if we are in LOAD zone
+  local inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.LOAD)
+  if not inzone then
+    inzone, zonename, zone, distance = self:IsUnitInZone(Unit,CTLD.CargoZoneType.SHIP)
+  end
+
+  if not inzone then
+    self:_SendMessage("You are not close enough to a logistics zone!", 10, false, Group)
+    if not self.debug then return self end
+  elseif not grounded and not hoverload then
+    self:_SendMessage("You need to land or hover in position to load!", 10, false, Group)
+    if not self.debug then return self end
+  elseif self.pilotmustopendoors and not UTILS.IsLoadingDoorOpen(Unit:GetName()) then
+    self:_SendMessage("You need to open the door(s) to load troops!", 10, false, Group)
+    if not self.debug then return self end  
+  end
+
   local prevSuppress = self.suppressmessages
   self.suppressmessages = true
   for i = 1, n do
@@ -2955,11 +2977,10 @@ function CTLD:_AddTroopQuantityMenus(Group, Unit, parentMenu, cargoObj)
     if capacitySets < maxQuantity then maxQuantity = capacitySets end
   end
   for quantity = 1, maxQuantity do
-    local m = MENU_GROUP:New(Group, tostring(quantity), parentMenu)
     if quantity == 1 then
-      MENU_GROUP_COMMAND:New(Group, "Load", m, self._LoadTroops, self, Group, Unit, cargoObj)
+      MENU_GROUP_COMMAND:New(Group, tostring(quantity), parentMenu, self._LoadTroops, self, Group, Unit, cargoObj)
     else
-      MENU_GROUP_COMMAND:New(Group, "Load", m, self._LoadTroopsQuantity, self, Group, Unit, cargoObj, quantity)
+      MENU_GROUP_COMMAND:New(Group, tostring(quantity), parentMenu, self._LoadTroopsQuantity, self, Group, Unit, cargoObj, quantity)
     end
   end
   return self
@@ -6469,6 +6490,9 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID, qty)
         return self
       end
 
+      local deployedTroopsByName = {}
+      local deployedEngineersByName = {}
+
       -- Drop the FIRST cargo in that chunk
       for n = 1, qty do
         local foundCargo = chunk[1]
@@ -6530,9 +6554,9 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID, qty)
           self.Engineers = self.Engineers + 1
             local grpname = self.DroppedTroops[self.TroopCounter]:GetName()
           self.EngineersInField[self.Engineers] = CTLD_ENGINEERING:New(name, grpname)
-          self:_SendMessage(string.format("Dropped Engineers %s into action!", name), 10, false, Group)
+          deployedEngineersByName[name] = (deployedEngineersByName[name] or 0) + 1
         else
-          self:_SendMessage(string.format("Dropped Troops %s into action!", name), 10, false, Group)
+          deployedTroopsByName[name] = (deployedTroopsByName[name] or 0) + 1
         end
 
         table.remove(chunk, 1)
@@ -6542,6 +6566,16 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID, qty)
         end
       end
 
+      local parts = {}
+      for nName,nCount in pairs(deployedTroopsByName) do
+        parts[#parts + 1] = tostring(nCount).."x Troops "..nName
+      end
+      for nName,nCount in pairs(deployedEngineersByName) do
+        parts[#parts + 1] = tostring(nCount).."x Engineers "..nName
+      end
+      if #parts > 0 then
+        self:_SendMessage("Dropped "..table.concat(parts, ", ").." into action!", 10, false, Group)
+      end
     else
       -- Return to base logic, remove ONLY the first cargo
       self:_SendMessage("Troops have returned to base!", 10, false, Group)
