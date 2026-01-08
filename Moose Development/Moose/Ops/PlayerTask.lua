@@ -237,7 +237,7 @@ function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #boolen Silent If true, suppress message output on cancel.
+  -- @param #boolean Silent If true, suppress message output on cancel.
 
   --- On After "Planned" event. Task has been planned.
   -- @function [parent=#PLAYERTASK] OnAfterPilotPlanned
@@ -1921,6 +1921,7 @@ PLAYERTASKCONTROLLER.Messages = {
     DESTROYER = "Destroyer",
     CARRIER = "Aircraft Carrier",
     RADIOS = "Radios",
+    INTERCEPTCOURSE = "Intercept course",
   },
   DE = {
     TASKABORT = "Auftrag abgebrochen!",
@@ -2008,12 +2009,13 @@ PLAYERTASKCONTROLLER.Messages = {
     DESTROYER = "Zerstörer",
     CARRIER = "Flugzeugträger",
     RADIOS = "Frequenzen",
+    INTERCEPTCOURSE = "Abfangkurs",
   },
 }
   
 --- PLAYERTASK class version.
 -- @field #string version
-PLAYERTASKCONTROLLER.version="0.1.71"
+PLAYERTASKCONTROLLER.version="0.1.73"
 
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
@@ -3776,6 +3778,41 @@ function PLAYERTASKCONTROLLER:_ShowRadioInfo(Group, Client)
   return self
 end
 
+--- Calculate group future position after given seconds.
+-- @param #PLAYERTASKCONTROLLER self
+-- @param Wrapper.Group#GROUP group The group to calculate for.
+-- @param #number seconds Time interval in seconds. Default is `self.prediction`.
+-- @return Core.Point#COORDINATE Calculated future position of the cluster.
+function PLAYERTASKCONTROLLER:_CalcGroupFuturePosition(group, seconds)
+
+  -- Get current position of the cluster.
+  local p=group:GetCoordinate()
+
+  -- Velocity vector in m/s.
+  local v=group:GetVelocityVec3()
+
+  -- Time in seconds.
+  local t=seconds or self.prediction
+
+  -- Extrapolated vec3.
+  local Vec3={x=p.x+v.x*t, y=p.y+v.y*t, z=p.z+v.z*t}
+
+  -- Future position.
+  local futureposition=COORDINATE:NewFromVec3(Vec3)
+
+  -- Create an arrow pointing in the direction of the movement.
+  if self.verbose == true then
+    local markerID = group:GetProperty("PLAYERTASK_ARROW")
+    if markerID then
+      COORDINATE:RemoveMark(markerID)
+    end
+    markerID = p:ArrowToAll(futureposition, self.coalition, {1,0,0}, 1, {1,1,0}, 0.5, 2, true, "Position Calc")
+    group:SetProperty("PLAYERTASK_ARROW",markerID)
+  end
+
+  return futureposition
+end
+
 --- [Internal] Flashing directional info for a client
 -- @param #PLAYERTASKCONTROLLER self
 -- @return #PLAYERTASKCONTROLLER self
@@ -3785,16 +3822,34 @@ function PLAYERTASKCONTROLLER:_FlashInfo()
     if _client and _client:IsAlive() then
       if self.TasksPerPlayer:HasUniqueID(_playername) then
         local task = self.TasksPerPlayer:ReadByID(_playername) -- Ops.PlayerTask#PLAYERTASK
-        local Coordinate = task.Target:GetCoordinate()
+        local Coordinate = task.Target:GetCoordinate() -- Core.Point#COORDINATE
         local CoordText = ""
         if self.Type ~= PLAYERTASKCONTROLLER.Type.A2A and task.Type~=AUFTRAG.Type.INTERCEPT then
           CoordText = Coordinate:ToStringA2G(_client, nil, self.ShowMagnetic)
+          local targettxt = self.gettext:GetEntry("TARGET",self.locale)
+          local text = targettxt..": "..CoordText
+          local m = MESSAGE:New(text,10,"Tasking"):ToClient(_client)
         else
           CoordText = Coordinate:ToStringA2A(_client, nil, self.ShowMagnetic)
+          local targettxt = self.gettext:GetEntry("TARGET",self.locale)
+          local text = targettxt..": "..CoordText
+          -- calc intercept position
+          local name=task.Target:GetName()
+          local group = GROUP:FindByName(name)
+          local clientcoord = _client:GetCoordinate()
+          if group and clientcoord and group:IsAlive() and task.Type==AUFTRAG.Type.INTERCEPT then
+            local speed = math.max(UTILS.KnotsToMps(350) or _client:GetVelocityMPS())
+            local dist = Coordinate:Get3DDistance(clientcoord)
+            local iTime = math.floor(dist/speed)+5
+            if iTime < 10 then iTime = 10 
+            elseif iTime > 600 then iTime = 600 end 
+            local npos = self:_CalcGroupFuturePosition(group,iTime)
+            local BR = npos:ToStringBearing(clientcoord,nil,self.ShowMagnetic,0 )
+            local Intercepttext = self.gettext:GetEntry("INTERCEPTCOURSE",self.locale)
+            text = text .. "\n"..Intercepttext.." "..BR
+          end
+          local m = MESSAGE:New(text,10,"Tasking"):ToClient(_client)
         end
-        local targettxt = self.gettext:GetEntry("TARGET",self.locale)
-        local text = "Target: "..CoordText
-        local m = MESSAGE:New(text,10,"Tasking"):ToClient(_client)
       end
     end
   end
@@ -3883,8 +3938,10 @@ function PLAYERTASKCONTROLLER:_ActiveTaskInfo(Task, Group, Client)
       Elevation = math.floor(UTILS.MetersToFeet(Elevation))
     end
     -- ELEVATION = "\nTarget Elevation: %s %s",
-    local elev = self.gettext:GetEntry("ELEVATION",self.locale)
-    text = text .. string.format(elev,tostring(math.floor(Elevation)),elevationmeasure)
+    if task.Type ~= AUFTRAG.Type.INTERCEPT then
+      local elev = self.gettext:GetEntry("ELEVATION",self.locale)
+      text = text .. string.format(elev,tostring(math.floor(Elevation)),elevationmeasure)
+    end
     -- Prec bombing
     if task.Type == AUFTRAG.Type.PRECISIONBOMBING and self.precisionbombing then
       if LasingDrone and LasingDrone.playertask then

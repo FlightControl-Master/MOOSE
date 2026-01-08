@@ -3281,7 +3281,6 @@ do -- COORDINATE
     return delta/60
   end
 
-
   --- Return a BR string from a COORDINATE to the COORDINATE.
   -- @param #COORDINATE self
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
@@ -3294,6 +3293,20 @@ do -- COORDINATE
     local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = self:Get2DDistance( FromCoordinate )
     return "BR, " .. self:GetBRText( AngleRadians, Distance, Settings, nil, MagVar, Precision )
+  end
+  
+  --- Return a Bearing string from a COORDINATE to the (self) COORDINATE.
+  -- @param #COORDINATE self
+  -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
+  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param #boolean MagVar If true, also get angle in MagVar for BR/BRA
+  -- @param #number Precision Rounding precision, currently full km as default (=0)
+  -- @return #string The BR text.
+  function COORDINATE:ToStringBearing( FromCoordinate, Settings, MagVar, Precision )
+    local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
+    local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
+    --local Distance = self:Get2DDistance( FromCoordinate )
+    return self:GetBearingText(AngleRadians,Precision,Settings,MagVar)
   end
 
   --- Return a BRA string from a COORDINATE to the COORDINATE.
