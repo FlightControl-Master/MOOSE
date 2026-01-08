@@ -1599,6 +1599,7 @@ do
 --                ELEVATION = "\nTarget Elevation: %s %s",
 --                METER = "meter",
 --                FEET = "feet",
+--                INTERCEPTCOURSE = "Intercept course",
 --              },
 -- 
 -- e.g.

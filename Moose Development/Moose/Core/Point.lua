@@ -3886,5 +3886,3 @@ do -- COORDINATE
   end
 
 end
-
-
