@@ -1626,7 +1626,7 @@ function EASYGCICAP:_StartIntel()
   if self.usecorridors == true then
     BlueIntel:SetCorridorZones(self.corridorzones)
     if self.corridorfloor or self.corridorceiling then
-      BlueIntel:SetCorridorLimitsFeet(self.corridorfloor,self.corridorceiling)
+      BlueIntel:SetCorridorLimits(self.corridorfloor,self.corridorceiling)
     end
   end
   
