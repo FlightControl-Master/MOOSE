@@ -2109,7 +2109,7 @@ end
 function AIRBASE:GetParkingSpotsNumber(termtype)
 
   -- Get free parking spots data.
-  local parkingdata=self:GetParkingData(false)
+  local parkingdata=self:GetParkingData(false) or {}
 
   local nspots=0
   for _,parkingspot in pairs(parkingdata) do
@@ -2129,7 +2129,7 @@ end
 function AIRBASE:GetFreeParkingSpotsNumber(termtype, allowTOAC)
 
   -- Get free parking spots data.
-  local parkingdata=self:GetParkingData(true)
+  local parkingdata=self:GetParkingData(true) or {}
 
   local nfree=0
   for _,parkingspot in pairs(parkingdata) do
@@ -2152,7 +2152,7 @@ end
 function AIRBASE:GetFreeParkingSpotsCoordinates(termtype, allowTOAC)
 
   -- Get free parking spots data.
-  local parkingdata=self:GetParkingData(true)
+  local parkingdata=self:GetParkingData(true) or {}
 
   -- Put coordinates of free spots into table.
   local spots={}
@@ -2251,7 +2251,7 @@ end
 function AIRBASE:_InitParkingSpots()
 
   -- Get parking data of all spots (free or occupied)
-  local parkingdata=self:GetParkingData(false)
+  local parkingdata=self:GetParkingData(false) or {}
 
   -- Init table.
   self.parking={}
@@ -2327,10 +2327,10 @@ end
 function AIRBASE:GetParkingSpotsTable(termtype)
 
   -- Get parking data of all spots (free or occupied)
-  local parkingdata=self:GetParkingData(false)
+  local parkingdata=self:GetParkingData(false) or {}
 
   -- Get parking data of all free spots.
-  local parkingfree=self:GetParkingData(true)
+  local parkingfree=self:GetParkingData(true) or {}
 
   -- Function to ckeck if any parking spot is free.
   local function _isfree(_tocheck)
@@ -2379,7 +2379,7 @@ end
 function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
 
   -- Get parking data of all free spots.
-  local parkingfree=self:GetParkingData(true)
+  local parkingfree=self:GetParkingData(true) or {}
 
   -- Put coordinates of free spots into table.
   local freespots={}
@@ -2409,7 +2409,7 @@ end
 function AIRBASE:GetParkingSpotData(TerminalID)
 
   -- Get parking data.
-  local parkingdata=self:GetParkingSpotsTable()
+  local parkingdata=self:GetParkingSpotsTable() or {}
 
   for _,_spot in pairs(parkingdata) do
     local spot=_spot --#AIRBASE.ParkingSpot
@@ -2435,7 +2435,7 @@ function AIRBASE:MarkParkingSpots(termtype, mark)
   end
 
   -- Get parking data from getParking() wrapper function.
-  local parkingdata=self:GetParkingSpotsTable(termtype)
+  local parkingdata=self:GetParkingSpotsTable(termtype) or {}
 
   -- Get airbase name.
   local airbasename=self:GetName()
@@ -2550,7 +2550,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   local markobstacles=false
 
   -- Loop over all known parking spots
-  for _,parkingspot in pairs(parkingdata) do
+  for _,parkingspot in pairs(parkingdata or {}) do
 
     -- Coordinate of the parking spot.
     local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE
