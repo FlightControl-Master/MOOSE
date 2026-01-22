@@ -2938,7 +2938,7 @@ function CTLD:_LoadTroopsQuantity(Group, Unit, Cargo, quantity)
   local prevSuppress = self.suppressmessages
   self.suppressmessages = true
   for i = 1, n do
-    timer.scheduleFunction(function() self:_LoadTroops(Group, Unit, Cargo, true) end, {}, timer.getTime() + 0.2 * i)
+    timer.scheduleFunction(function() self:_LoadTroops(Group, Unit, Cargo) end, {}, timer.getTime() + 0.2 * i)
   end
   timer.scheduleFunction(function()
     self.suppressmessages = prevSuppress
@@ -3390,7 +3390,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
   local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitTypeCapabilities
   local canloadcratesno = capabilities.cratelimit
   local loaddist = self.CrateDistance or 35
-  local nearcrates, numbernearby = self:_FindCratesNearby(Group,Unit,loaddist,true,true)
+  local nearcrates, numbernearby = self:_FindCratesNearby(Group,Unit,loaddist,true,true,true) -- to ignore what's inside
   if numbernearby >= canloadcratesno and not drop then
     self:_SendMessage("There are enough crates nearby already! Take care of those first!", 10, false, Group)
     return false
@@ -4399,6 +4399,8 @@ function CTLD:_UnloadTroops(Group, Unit)
       local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
       -- looking for troops
       local cargotable = loadedcargo.Cargo
+      local deployedTroopsByName = {}
+      local deployedEngineersByName = {}
       for _,_cargo in pairs (cargotable) do
         local cargo = _cargo -- #CTLD_CARGO
         local type = cargo:GetType() -- #CTLD_CARGO.Enum
@@ -4455,12 +4457,22 @@ function CTLD:_UnloadTroops(Group, Unit)
             self.Engineers = self.Engineers + 1
             local grpname = self.DroppedTroops[self.TroopCounter]:GetName()
             self.EngineersInField[self.Engineers] = CTLD_ENGINEERING:New(name, grpname)
-            self:_SendMessage(string.format("Dropped Engineers %s into action!",name), 10, false, Group)
+            deployedEngineersByName[name] = (deployedEngineersByName[name] or 0) + 1
           else
-            self:_SendMessage(string.format("Dropped Troops %s into action!",name), 10, false, Group)
+            deployedTroopsByName[name] = (deployedTroopsByName[name] or 0) + 1
           end
         end -- if type end
       end  -- cargotable loop
+      local parts = {}
+      for nName,nCount in pairs(deployedTroopsByName) do
+        parts[#parts + 1] = tostring(nCount).."x Troops "..nName
+      end
+      for nName,nCount in pairs(deployedEngineersByName) do
+        parts[#parts + 1] = tostring(nCount).."x Engineers "..nName
+      end
+      if #parts > 0 then
+        self:_SendMessage("Dropped "..table.concat(parts, ", ").." into action!", 10, false, Group)
+      end
     else -- droppingatbase
         self:_SendMessage("Troops have returned to base!", 10, false, Group) 
         self:__TroopsRTB(1, Group, Unit, zonename, zone)
@@ -4652,9 +4664,8 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
   local baseDist = self.CrateDistance or 35
   local finddist=baseDist
   --if Engineering and self.EngineerSearch and self.EngineerSearch>baseDist then 
-    if self.EngineerSearch and self.EngineerSearch>baseDist then -- this make also helicopter to be able to crates that are further away due to herc airdrop
+    if Engineering and self.EngineerSearch and self.EngineerSearch>baseDist then -- this make also helicopter to be able to crates that are further away due to herc airdrop
       finddist=self.EngineerSearch
-  finddist=self.EngineerSearch
   end
   local crates,number = self:_FindCratesNearby(Group,Unit,finddist,true,true,not Engineering) -- #table
   local buildables = {}
@@ -4680,11 +4691,12 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
         local isHercDrop=Crate:WasDropped(true)
         if not isHercDrop and distToUnit>baseDist then
       elseif self.UseC130LoadAndUnload and self:IsC130J(Unit) and distToUnit<15 then
-        self:_SendMessage("Please unload crates from the C-130 before building!",10,false,Group)
-        return self
+        -- self:_SendMessage("Please unload crates from the C-130 before building!",10,false,Group)
+        -- return self
       elseif self.UseC130LoadAndUnload and self:IsHook(Unit) and distToUnit<5 then
-        self:_SendMessage("Please unload crates from the CH-47 before building!",10,false,Group)
-        return self
+        -- self:_SendMessage("Please unload crates from the CH-47 before building!",10,false,Group)
+        -- return self
+      elseif self.UseC130LoadAndUnload and (Unit:GetTypeName()=="Mi-8MTV2" or Unit:GetTypeName()=="Mi-8MT") and distToUnit<8 then
       else
         --local testmarker = ccoord:MarkToAll("Crate found",true,"Build Position")
         if not buildables[name] then
@@ -4756,7 +4768,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
           local base = Unit:GetCoordinate():Translate(20,hdg)
 
           if full == 1 then
-            local cratesNow, numberNow = self:_FindCratesNearby(Group,Unit, finddist,true,true)
+            local cratesNow, numberNow = self:_FindCratesNearby(Group,Unit, finddist,true,true, not Engineering)
             self:_CleanUpCrates(cratesNow,build,numberNow)
             self:_RefreshLoadCratesMenu(Group,Unit)
             if self.buildtime and self.buildtime > 0 then
@@ -4773,7 +4785,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
           else
             local start = -((full-1)*sep)/2
             for n=1,full do
-              local cratesNow, numberNow = self:_FindCratesNearby(Group,Unit, finddist,true,true)
+              local cratesNow, numberNow = self:_FindCratesNearby(Group,Unit, finddist,true,true, not Engineering)
               self:_CleanUpCrates(cratesNow,build,numberNow)
               self:_RefreshLoadCratesMenu(Group,Unit)
               local off   = start + (n-1)*sep
@@ -5567,13 +5579,25 @@ function CTLD:_RefreshF10Menus()
               _group.CTLD_TroopMenus = {}
               if self.usesubcats then
                 local subcatmenus = {}
+                local subcatcount = 0
+                local onlycat = nil
                 for catName, _ in pairs(self.subcatsTroop) do
-                  subcatmenus[catName] = MENU_GROUP:New(_group, catName, troopsmenu)
+                  subcatcount = subcatcount + 1
+                  onlycat = catName
+                end
+                local useTroopSubcats = subcatcount > 1 or (subcatcount == 1 and onlycat ~= "Other")
+                if useTroopSubcats then
+                  for catName, _ in pairs(self.subcatsTroop) do
+                    subcatmenus[catName] = MENU_GROUP:New(_group, catName, troopsmenu)
+                  end
                 end
                 for _, cargoObj in pairs(self.Cargo_Troops) do
                   if not cargoObj.DontShowInMenu then
                     local menutext = cargoObj.Name
-                    local parent = subcatmenus[cargoObj.Subcategory] or troopsmenu
+                    local parent = troopsmenu
+                    if useTroopSubcats and cargoObj.Subcategory and subcatmenus[cargoObj.Subcategory] then
+                      parent = subcatmenus[cargoObj.Subcategory]
+                    end
                     local mSet = MENU_GROUP:New(_group, menutext, parent)
                     _group.CTLD_TroopMenus[cargoObj.Name] = mSet
                     self:_AddTroopQuantityMenus(_group,_unit,mSet,cargoObj)
