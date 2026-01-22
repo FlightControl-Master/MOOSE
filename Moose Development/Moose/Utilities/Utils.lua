@@ -4598,6 +4598,18 @@ function UTILS.Vec2toVec3(vec,y)
   end
 end
 
+-- Converts a Vec3 to a Vec2
+-- @param vec3 the Vec3 to convert
+-- @return Vec2 The Vec2 output
+function UTILS.Vec3toVec2(Vec3)
+    if Vec3 and type(Vec3)=="table" then
+        local Vec2 = {}
+        Vec2.x = Vec3.x or 0
+        Vec2.y = Vec3.z or 0
+        return Vec2
+    end
+end
+
 --- Get the correction needed for true north in radians
 -- @param gPoint The map point vec2 or vec3
 -- @return number correction
