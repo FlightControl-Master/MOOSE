@@ -31,7 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 ---
--- Last Update Dec 2025
+-- Last Update Jan 2026
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -315,10 +315,12 @@ CSAR.AircraftType["MH-60R"] = 10
 CSAR.AircraftType["OH-6A"] = 2
 CSAR.AircraftType["OH58D"] = 2
 CSAR.AircraftType["CH-47Fbl1"] = 31
+CSAR.AircraftType["AH-6J"] = 2
+CSAR.AircraftType["MH-6J"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.35"
+CSAR.version="1.0.36"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
