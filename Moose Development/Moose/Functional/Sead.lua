@@ -318,7 +318,7 @@ function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADG
     elseif height <= 12500 then
       Ropt = Ropt * 0.98
     end
-    
+    local WeaponWrapper = WEAPON:New(SEADWeapon)
     -- look at a couple of zones across the trajectory
     for n=1,3 do
       local dist = Ropt - ((n-1)*20000)
@@ -342,7 +342,7 @@ function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADG
             _targetgroupname = tgtgrp:GetName() -- group name
             _targetskill = tgtgrp:GetUnit(1):GetSkill()
             self:T("*** Found Target = ".. _targetgroupname)
-            self:ManageEvasion(_targetskill,_targetgroup,pos0,"AGM_88",SEADGroup, 20)
+            self:ManageEvasion(_targetskill,_targetgroup,pos0,"AGM_88",SEADGroup, 20, WeaponWrapper)
           end
         --end
       end
