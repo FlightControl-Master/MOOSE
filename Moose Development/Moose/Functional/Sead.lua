@@ -19,7 +19,7 @@
 --
 -- ### Authors: **applevangelist**, **FlightControl**
 --
--- Last Update: Dec 2024
+-- Last Update: January 2026
 --
 -- ===
 --
@@ -157,7 +157,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   self:AddTransition("*",             "ManageEvasion",                "*")
   self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  self:I("*** SEAD - Started Version 0.4.9")
+  self:I("*** SEAD - Started Version 0.4.10")
   return self
 end
 
@@ -443,6 +443,24 @@ function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADP
         local SuppressionEndTime = timer.getTime() + delay + _tti + self.Padding + delay
         local _targetgroupname = _targetgroup:GetName()
         if not self.SuppressedGroups[_targetgroupname] then
+          -- TODO: ask callback if suppression is allowed BEFORE scheduling timers
+          local allow = true
+          if self.UseCallBack and self.CallBack and self.CallBack.SeadAllowSuppression then
+            allow = self.CallBack:SeadAllowSuppression(
+              _targetgroup,
+              _targetgroupname,
+              SEADGroup,
+              SEADWeaponName,
+              Weapon,
+              _tti,
+              delay
+            )
+          end
+          if not allow then
+            self:T(string.format("*** SEAD - %s | Suppression vetoed by callback", _targetgroupname))
+            -- Important: do NOT schedule SuppressionStart/Stop and do NOT flip SuppressedGroups true.
+            return self
+          end
           self:T(string.format("*** SEAD - %s | Parameters TTI %ds | Switch-Off in %ds",_targetgroupname,_tti,delay))
           timer.scheduleFunction(SuppressionStart,{_targetgroup,_targetgroupname, SEADGroup},SuppressionStartTime)
           timer.scheduleFunction(SuppressionStop,{_targetgroup,_targetgroupname},SuppressionEndTime)

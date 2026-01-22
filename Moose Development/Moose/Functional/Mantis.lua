@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: December 2025
+-- Last Update: January 2026
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -283,7 +283,7 @@
 MANTIS = {
   ClassName             = "MANTIS",
   name                  = "mymantis",
-  version               = "0.9.42",
+  version               = "0.9.43",
   SAM_Templates_Prefix  = "",
   SAM_Group             = nil,
   EWR_Templates_Prefix  = "",
@@ -337,6 +337,8 @@ MANTIS = {
   DetectAccoustic       = false,
   DetectAccousticRadius = 2000,
   DetectAccousticCategories = {Unit.Category.HELICOPTER},
+  ARMWeaponSeen = {},
+  InboundARMs = {},
 }
 
 --- Advanced state enumerator
@@ -372,24 +374,25 @@ MANTIS.radiusscale[MANTIS.SamType.POINT] = 3
 -- @field #string Type #MANTIS.SamType of SAM, i.e. SHORT, MEDIUM or LONG (range)
 -- @field #string Radar Radar typename on unit level (used as key)
 -- @field #string Point Point defense capable
+-- @field ARMCapacit ARMCapacity ie how many (H)ARMs the system can defend at the same time
 MANTIS.SamData = {
   ["Hawk"] = { Range=35, Blindspot=0, Height=12, Type="Medium", Radar="Hawk" }, -- measures in km
-  ["NASAMS"] = { Range=14, Blindspot=0, Height=7, Type="Short", Radar="NSAMS" }, -- AIM 120B
+  ["NASAMS"] = { Range=14, Blindspot=0, Height=7, Type="Short", Radar="NSAMS", ARMCapacity=1 }, -- AIM 120B
   ["Patriot"] = { Range=99, Blindspot=0, Height=25, Type="Long", Radar="Patriot str" },
   ["Rapier"] = { Range=10, Blindspot=0, Height=3, Type="Short", Radar="rapier" },
   ["SA-2"] = { Range=40, Blindspot=7, Height=25, Type="Medium", Radar="S_75M_Volhov" },
   ["SA-3"] = { Range=18, Blindspot=6, Height=18, Type="Short", Radar="5p73 s-125 ln" },
   ["SA-5"] = { Range=250, Blindspot=7, Height=40, Type="Long", Radar="5N62V" },
   ["SA-6"] = { Range=25, Blindspot=0, Height=8, Type="Medium", Radar="1S91" },
-  ["SA-10"] = { Range=119, Blindspot=0, Height=18, Type="Long" , Radar="S-300PS 4"},
+  ["SA-10"] = { Range=119, Blindspot=0, Height=18, Type="Long" , Radar="S-300PS 4", ARMCapacity=4},
   ["SA-11"] = { Range=35, Blindspot=0, Height=20, Type="Medium", Radar="SA-11" },
-  ["Roland"] = { Range=6, Blindspot=0, Height=5, Type="Short", Radar="Roland" },
+  ["Roland"] = { Range=6, Blindspot=0, Height=5, Type="Short", Radar="Roland", ARMCapacity=1 },
   ["Gepard"] = { Range=5, Blindspot=0, Height=4, Type="Point", Radar="Gepard" },
   ["HQ-7"] = { Range=12, Blindspot=0, Height=3, Type="Short", Radar="HQ-7" },
   ["SA-9"] = { Range=4, Blindspot=0, Height=3, Type="Point", Radar="Strela", Point="true" },
   ["SA-8"] = { Range=10, Blindspot=0, Height=5, Type="Short", Radar="Osa 9A33" },
   ["SA-19"] = { Range=8, Blindspot=0, Height=3, Type="Short", Radar="Tunguska" },
-  ["SA-15"] = { Range=11, Blindspot=0, Height=6, Type="Point", Radar="Tor 9A331", Point="true" },
+  ["SA-15"] = { Range=11, Blindspot=0, Height=6, Type="Point", Radar="Tor 9A331", Point="true", ARMCapacity=2 },
   ["SA-13"] = { Range=5, Blindspot=0, Height=3, Type="Point", Radar="Strela", Point="true" },
   ["Avenger"] = { Range=4, Blindspot=0, Height=3, Type="Short", Radar="Avenger" },
   ["Chaparral"] = { Range=8, Blindspot=0, Height=3, Type="Short", Radar="Chaparral" },
@@ -398,13 +401,13 @@ MANTIS.SamData = {
   ["C-RAM"] = { Range=2, Blindspot=0, Height=2, Type="Point", Radar="HEMTT_C-RAM_Phalanx", Point="true" },
   -- units from HDS Mod, multi launcher options is tricky
   ["SA-10B"] = { Range=75, Blindspot=0, Height=18, Type="Medium" , Radar="SA-10B"},
-  ["SA-17"] = { Range=50, Blindspot=3, Height=50, Type="Medium", Radar="SA-17" },
+  ["SA-17"] = { Range=50, Blindspot=3, Height=50, Type="Medium", Radar="SA-17", ARMCapacity=3 },
   ["SA-20A"] = { Range=150, Blindspot=5, Height=27, Type="Long" , Radar="S-300PMU1"},
   ["SA-20B"] = { Range=200, Blindspot=4, Height=27, Type="Long" , Radar="S-300PMU2"},
   ["SA-21"] = { Range=380, Blindspot=5, Height=30, Type="Long" , Radar="92N6E"},
-  ["S-300VM"] = { Range=200, Blindspot=5, Height=30, Type="Long" , Radar="9S32M"},
-  ["S-300V4"] = { Range=380, Blindspot=5, Height=30, Type="Long" , Radar="9S32M"},
-  ["S-400"] = { Range=250, Blindspot=5, Height=27, Type="Long" , Radar="92N6E"},
+  ["S-300VM"] = { Range=200, Blindspot=5, Height=30, Type="Long" , Radar="9S32M", ARMCapacity=4},
+  ["S-300V4"] = { Range=380, Blindspot=5, Height=30, Type="Long" , Radar="9S32M", ARMCapacity=4},
+  ["S-400"] = { Range=250, Blindspot=5, Height=27, Type="Long" , Radar="92N6E", ARMCapacity=4},
   ["HQ-2"] = { Range=50, Blindspot=6, Height=35, Type="Medium", Radar="HQ_2_Guideline_LN" },
   ["TAMIR IDFA"] = { Range=20, Blindspot=0.6, Height=12.3, Type="Short", Radar="IRON_DOME_LN" },
   ["STUNNER IDFA"] = { Range=250, Blindspot=1, Height=45, Type="Long", Radar="DAVID_SLING_LN" },
@@ -412,7 +415,7 @@ MANTIS.SamData = {
   ["Dog Ear"] = { Range=11, Blindspot=0, Height=9, Type="Point", Radar="Dog Ear", Point="true" },
   -- CH Added to DCS core 2.9.19.x
   ["Pantsir S1"] = { Range=20, Blindspot=1.2, Height=15, Type="Point", Radar="PantsirS1" , Point="true" }, 
-  ["Tor M2"] = { Range=12, Blindspot=1, Height=10, Type="Point", Radar="TorM2", Point="true"  },
+  ["Tor M2"] = { Range=12, Blindspot=1, Height=10, Type="Point", Radar="TorM2", Point="true", ARMCapacity=4  },
   ["IRIS-T SLM"] = { Range=40, Blindspot=0.5, Height=20, Type="Medium", Radar="CH_IRIST_SLM" }, 
 }
 
@@ -430,7 +433,7 @@ MANTIS.SamDataHDS = {
   ["SA-2 HDS"] = { Range=56, Blindspot=7, Height=30, Type="Medium", Radar="V759" }, 
   ["SA-3 HDS"] = { Range=20, Blindspot=6, Height=30, Type="Short", Radar="V-601P" },  
   ["SA-10B HDS"] = { Range=90, Blindspot=5, Height=25, Type="Long" , Radar="5P85CE ln"}, -- V55RUD
-  ["SA-10C HDS"] = { Range=75, Blindspot=5, Height=25, Type="Long" , Radar="5P85SE ln"}, -- V55RUD
+  ["SA-10C HDS"] = { Range=75, Blindspot=5, Height=25, Type="Long" , Radar="5P85SE ln", ARMCapacity=3}, -- V55RUD
   ["SA-17 HDS"] = { Range=50, Blindspot=3, Height=50, Type="Medium", Radar="SA-17 " },
   ["SA-12 HDS 2"] = { Range=100, Blindspot=13, Height=30, Type="Long" , Radar="S-300V 9A82 l"},
   ["SA-12 HDS 1"] = { Range=75, Blindspot=6, Height=25, Type="Long" , Radar="S-300V 9A83 l"},
@@ -479,7 +482,7 @@ MANTIS.SamDataCH = {
     -- https://www.currenthill.com/
     -- group name MUST contain CHM to ID launcher type correctly!
    ["2S38 CHM"] = { Range=6, Blindspot=0.1, Height=4.5, Type="Short", Radar="2S38" },
-   ["PantsirS1 CHM"] = { Range=20, Blindspot=1.2, Height=15, Type="Point", Radar="PantsirS1", Point="true"  }, 
+   ["PantsirS1 CHM"] = { Range=20, Blindspot=1.2, Height=15, Type="Point", Radar="PantsirS1", Point="true", ARMCapacity=3 }, 
    ["PantsirS2 CHM"] = { Range=30, Blindspot=1.2, Height=18, Type="Medium", Radar="PantsirS2" }, 
    ["PGL-625 CHM"] = { Range=10, Blindspot=1, Height=5, Type="Short", Radar="PGL_625" }, 
    ["HQ-17A CHM"] = { Range=15, Blindspot=1.5, Height=10, Type="Short", Radar="HQ17A" }, 
@@ -625,6 +628,8 @@ do
     self.autoshorad = true
     self.ShoradGroupSet = SET_GROUP:New() -- Core.Set#SET_GROUP
     self.FilterZones = Zones
+    self.ARMWeaponSeen = {}
+    self.InboundARMs = {}
     
     self.SkateZones = nil
     self.SkateNumber =  3
@@ -1868,6 +1873,7 @@ do
     local HDSmod = false
     local SMAMod = false
     local CHMod = false
+    local ARMCapacity = 0
     if string.find(grpname,"HDS",1,true) then
       HDSmod = true
     elseif string.find(grpname,"SMA",1,true) then
@@ -1885,6 +1891,7 @@ do
           range = _entry.Range * 1000 * radiusscale -- max firing range
           height = _entry.Height * 1000 -- max firing height        
           blind = _entry.Blindspot 
+          ARMCapacity = _entry.ARMCapacity or 0
           self:T("Matching Groupname = " .. grpname .. " Range= " .. range)
           found = true
           break
@@ -1911,7 +1918,7 @@ do
     if found and string.find(grpname,"SHORAD",1,true) then
       type = MANTIS.SamType.POINT -- force short on match
     end
-    return range, height, type, blind
+    return range, height, type, blind, ARMCapacity
   end
   
   --- [Internal] Function to set the SAM start state
@@ -1946,8 +1953,8 @@ do
         group:OptionEngageRange(engagerange)  --default engagement will be 95% of firing range
         local grpname = group:GetName()
         local grpcoord = group:GetCoordinate()
-        local grprange,grpheight,type,blind  = self:_GetSAMRange(grpname)
-        table.insert( SAM_Tbl, {grpname, grpcoord, grprange, grpheight, blind, type})
+        local grprange,grpheight,type,blind,ARMCapacity  = self:_GetSAMRange(grpname)
+        table.insert( SAM_Tbl, {grpname, grpcoord, grprange, grpheight, blind, type, ARMCapacity})
         --table.insert( SEAD_Grps, grpname )
         if type == MANTIS.SamType.LONG then
           table.insert( SAM_Tbl_lg, {grpname, grpcoord, grprange, grpheight, blind, type})
@@ -2011,11 +2018,11 @@ do
         if group:IsGround() and group:IsAlive() then
           local grpname = group:GetName()
           local grpcoord = group:GetCoordinate()
-          local grprange, grpheight,type,blind  = self:_GetSAMRange(grpname)
+          local grprange, grpheight,type,blind, ARMCapacity  = self:_GetSAMRange(grpname)
           -- TODO the below might stop working at some point after some hours, needs testing
           --local radaralive = group:IsSAM()
           local radaralive = true
-          table.insert( SAM_Tbl, {grpname, grpcoord, grprange, grpheight, blind, type}) -- make the table lighter, as I don't really use the zone here
+          table.insert( SAM_Tbl, {grpname, grpcoord, grprange, grpheight, blind, type, ARMCapacity}) -- make the table lighter, as I don't really use the zone here
           table.insert( SEAD_Grps, grpname )
           if type == MANTIS.SamType.LONG and radaralive then
             table.insert( SAM_Tbl_lg, {grpname, grpcoord, grprange, grpheight, blind, type})
@@ -2098,6 +2105,77 @@ do
 -----------------------------------------------------------------------
 -- MANTIS main functions
 -----------------------------------------------------------------------
+
+--- [Internal] Check if a system can and should defend for HARMs itself
+-- @param #MANTIS self
+-- @param Wrapper.Group#GROUP targetGroup
+-- @param #string targetName
+-- @param Wrapper.Group#GROUPattackerGroup
+-- @param #string weaponName
+-- @param Wrapper.Weapon#WEAPON weaponWrapper
+-- @param #number tti
+-- @param #number delay
+-- @return #boolean Outcome
+function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, weaponName, weaponWrapper, tti, delay)
+  
+    -- Init per-SAM weapon tracking
+    self.ARMWeaponSeen = self.ARMWeaponSeen or {}
+    self.ARMWeaponSeen[targetName] = self.ARMWeaponSeen[targetName] or {}
+  
+    -- Extract weapon ID
+    local wid = nil
+    if weaponWrapper and weaponWrapper.GetDCSObject then
+      local wpn = weaponWrapper:GetDCSObject()
+      if wpn then
+        wid = wpn:getID()
+      end
+    end
+  
+    -- Ignore duplicate evaluations of the same missile
+    if wid and self.ARMWeaponSeen[targetName][wid] then
+      self:T(string.format(
+        "MANTIS: Duplicate ARM ignored for %s (weapon %d)",
+        targetName, wid
+      ))
+      return false
+    end
+  
+    -- Mark weapon as seen
+    if wid then
+      self.ARMWeaponSeen[targetName][wid] = true
+    end
+  
+    -- NOW increment ARM counter (once per weapon)
+    self.InboundARMs[targetName] = (self.InboundARMs[targetName] or 0) + 1
+  
+    -- Lookup ARM capacity
+    local samdata
+    for _, sam in pairs(self.SAM_Table or {}) do
+      if sam[1] == targetName then
+        samdata = sam
+        break
+      end
+    end
+  
+    local armcap = samdata and samdata[7]
+  
+    if not armcap or armcap == 0 then
+      return true
+    end
+    
+    if targetGroup and targetGroup:IsAlive() then
+      local AmmotT, AmmoS, _, _,AmmoM = targetGroup:GetAmmunition()
+      if AmmoM and AmmoM == 0 then
+        return true
+      end
+    end
+  
+    if self.InboundARMs[targetName] > armcap then
+      return true
+    end
+  
+    return false
+  end
   
   --- [Internal] Check detection function
   -- @param #MANTIS self
@@ -2549,6 +2627,8 @@ do
   function MANTIS:onafterSeadSuppressionEnd(From, Event, To, Group, Name)
     self:T({From, Event, To, Name})
     self.SuppressedGroups[Name] = false
+    self.InboundARMs[Name] = 0
+    self.ARMWeaponSeen[Name] = nil
     return self
   end
   
