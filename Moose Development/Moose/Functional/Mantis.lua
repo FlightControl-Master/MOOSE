@@ -628,7 +628,7 @@ do
     self.autoshorad = true
     self.ShoradGroupSet = SET_GROUP:New() -- Core.Set#SET_GROUP
     self.FilterZones = Zones
-    self.ARMWeaponSeen = {}
+    self.LastThreatEval = {}
     self.InboundARMs = {}
     
     self.SkateZones = nil
@@ -2117,64 +2117,82 @@ do
 -- @param #number delay
 -- @return #boolean Outcome
 function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, weaponName, weaponWrapper, tti, delay)
+  self:T(self.lid.."SeadAllowSuppression")
   
-    -- Init per-SAM weapon tracking
-    self.ARMWeaponSeen = self.ARMWeaponSeen or {}
-    self.ARMWeaponSeen[targetName] = self.ARMWeaponSeen[targetName] or {}
-  
-    -- Extract weapon ID
-    local wid = nil
-    if weaponWrapper and weaponWrapper.GetDCSObject then
-      local wpn = weaponWrapper:GetDCSObject()
-      if wpn then
-        wid = wpn:getID()
-      end
+  --- Thanks to @Goon Jan 2026
+  ----------------------------------------------------------------
+  -- LOG INCOMING REQUEST
+  ----------------------------------------------------------------
+  self:T(string.format("MANTIS:SeadAllowSuppression REQUEST | target=%s | weapon=%s | tti=%s | delay=%s",tostring(targetName),
+    tostring(weaponName),tostring(tti),tostring(delay)))
+
+  ----------------------------------------------------------------
+  -- LOOK UP ARM CAPACITY FOR THIS SAM
+  ----------------------------------------------------------------
+  local armcap = nil
+
+  for _, sam in pairs(self.SAM_Table or {}) do
+    if sam[1] == targetName then
+      armcap = sam[7] -- ARMCapacity
+      break
     end
+  end
+
+  self:T(string.format("MANTIS:SeadAllowSuppression SAM DATA | target=%s | ARMCapacity=%s",tostring(targetName),armcap and tostring(armcap) or "nil"))
+
+  ----------------------------------------------------------------
+  -- TRACK SEAD THREATS (PER TARGET)
+  ----------------------------------------------------------------
+  local THREAT_WINDOW = 0.1  -- seconds 
   
-    -- Ignore duplicate evaluations of the same missile
-    if wid and self.ARMWeaponSeen[targetName][wid] then
-      self:T(string.format(
-        "MANTIS: Duplicate ARM ignored for %s (weapon %d)",
-        targetName, wid
-      ))
-      return false
-    end
+  self.LastThreatEval = self.LastThreatEval or {}
+  self.InboundARMs    = self.InboundARMs or {}
   
-    -- Mark weapon as seen
-    if wid then
-      self.ARMWeaponSeen[targetName][wid] = true
-    end
+  local now = timer.getTime()
+  local last = self.LastThreatEval[targetName] or 0
   
-    -- NOW increment ARM counter (once per weapon)
+  if (now - last) >= THREAT_WINDOW then
     self.InboundARMs[targetName] = (self.InboundARMs[targetName] or 0) + 1
+    self.LastThreatEval[targetName] = now
+    self:T(string.format("MANTIS:SeadAllowSuppression NEW threat accepted | Δt=%.3f",now - last))
+  else
+    self:T(string.format("MANTIS:SeadAllowSuppression duplicate evaluation ignored | Δt=%.3f",now - last))
+  end
+
+  local inbound = self.InboundARMs[targetName] or 0
+
+  self:T(string.format("MANTIS:SeadAllowSuppression THREAT COUNT | target=%s | inboundThreats=%d",tostring(targetName),inbound))
+
+  ----------------------------------------------------------------
+  -- DECISION GATE
+  ----------------------------------------------------------------
   
-    -- Lookup ARM capacity
-    local samdata
-    for _, sam in pairs(self.SAM_Table or {}) do
-      if sam[1] == targetName then
-        samdata = sam
-        break
-      end
-    end
-  
-    local armcap = samdata and samdata[7]
-  
-    if not armcap or armcap == 0 then
+  -- No missiles left over → legacy behavior
+  if targetGroup and targetGroup:IsAlive() then
+    local AmmotT, AmmoS, _, _,AmmoM = targetGroup:GetAmmunition()
+    -- TODO Check C-RAM probably needs an exception as it is a gun, need to check its effectiveness
+    if AmmoM and AmmoM == 0 then
+      self:T(string.format("MANTIS:SeadAllowSuppression DECISION -> APPROVED (no MISSILES) | target=%s",tostring(targetName)))
       return true
     end
-    
-    if targetGroup and targetGroup:IsAlive() then
-      local AmmotT, AmmoS, _, _,AmmoM = targetGroup:GetAmmunition()
-      if AmmoM and AmmoM == 0 then
-        return true
-      end
-    end
+  end
   
-    if self.InboundARMs[targetName] > armcap then
-      return true
-    end
-  
-    return false
+  -- No ARM capacity defined → legacy behavior
+  if (not armcap) or armcap == 0 then
+    self:T(string.format("MANTIS:SeadAllowSuppression DECISION -> APPROVED (no ARMCAP) | target=%s",tostring(targetName)))
+    return true
+  end
+
+  -- Suppress only once enough threats accumulated
+  if inbound >= armcap then
+    self:T(string.format("MANTIS:SeadAllowSuppression DECISION -> APPROVED (inbound %d >= cap %d) | target=%s",inbound,armcap,tostring(targetName)))
+    return true
+  end
+
+  self:T(string.format("MANTIS:SeadAllowSuppression DECISION -> DENIED (inbound %d < cap %d) | target=%s",inbound,armcap,tostring(targetName)))
+
+  return false
+
   end
   
   --- [Internal] Check detection function
@@ -2225,6 +2243,7 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
             switch = true           
           end
           if self.SamStateTracker[name] ~= "RED" and switch then
+            self.SamStateTracker[name] = "RED"
             self:__RedState(1,samgroup)
           end
           -- DONE Restrict on Distance
@@ -2257,8 +2276,8 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
             samgroup:OptionAlarmStateGreen()
           end
           if self.SamStateTracker[name] ~= "GREEN" then
-            self:__GreenState(1,samgroup)
             self.SamStateTracker[name] = "GREEN"
+            self:__GreenState(1,samgroup)
           end
           if self.debug or self.verbose then
             local text = string.format("SAM %s in alarm state GREEN!", name)
@@ -2268,12 +2287,13 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
         end --end alive
       end --end check     
     end --for loop
+    --[[
     if self.debug or self.verbose or self.logsamstatus then
       for _,_status in pairs(self.SamStateTracker) do
         if _status == "GREEN" then
           instatusgreen=instatusgreen+1
         elseif _status == "RED" then
-          instatusred=instatusred+1
+         instatusred=instatusred+1
         end
       end
       if self.Shorad then
@@ -2282,6 +2302,8 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
         end
       end
     end
+    self:T(self.lid..string.format("SAM State Count: GREEN %d | RED %d | SHORAD %d",instatusred, instatusgreen, activeshorads))
+    --]]
     return instatusred, instatusgreen, activeshorads
   end
   
@@ -2313,13 +2335,29 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
       local samset = self.SAM_Table_Short -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
       local instatusreds, instatusgreens, activeshoradss = self:_CheckLoop(samset,detset,dlink,self.maxshortrange)
       local samset = self.SAM_Table_PointDef -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
-      instatusred, instatusgreen, activeshorads = self:_CheckLoop(samset,detset,dlink,self.maxpointdefrange)
+      local instatusred, instatusgreen, activeshorads = self:_CheckLoop(samset,detset,dlink,self.maxpointdefrange)
     else
       local samset = self:_GetSAMTable() -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
-      instatusred, instatusgreen, activeshorads = self:_CheckLoop(samset,detset,dlink,self.maxclassic)
+      local instatusred, instatusgreen, activeshorads = self:_CheckLoop(samset,detset,dlink,self.maxclassic)
     end
     
     local function GetReport()
+      
+      if self.debug or self.verbose or self.logsamstatus then
+        for _,_status in pairs(self.SamStateTracker) do
+          if _status == "GREEN" then
+            instatusgreen=instatusgreen+1
+          elseif _status == "RED" then
+           instatusred=instatusred+1
+          end
+        end
+        if self.Shorad then
+          for _,_name in pairs(self.Shorad.ActiveGroups or {}) do
+            activeshorads=activeshorads+1
+          end
+        end
+      end
+      
       local statusreport = REPORT:New("\nMANTIS Status "..self.name)
       statusreport:Add("+-----------------------------+")
       statusreport:Add(string.format("+ SAM in RED State: %2d",instatusred))
@@ -2628,7 +2666,6 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
     self:T({From, Event, To, Name})
     self.SuppressedGroups[Name] = false
     self.InboundARMs[Name] = 0
-    self.ARMWeaponSeen[Name] = nil
     return self
   end
   
