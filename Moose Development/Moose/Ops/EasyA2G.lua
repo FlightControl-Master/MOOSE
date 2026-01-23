@@ -21,7 +21,7 @@
 -- 
 -------------------------------------------------------------------------
 -- Date: Dec 2025
--- Last Update: Dec 2025
+-- Last Update: Jan 2026
 -------------------------------------------------------------------------
 --
 -- ===
@@ -293,7 +293,7 @@ EASYA2G = {
 
 --- EASYA2G class version.
 -- @field #string version
-EASYA2G.version="0.1.3"
+EASYA2G.version="0.1.4"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -352,6 +352,7 @@ function EASYA2G:New(Alias, AirbaseName, Coalition, ScoutName)
   self.FuelCriticalThreshold = 10
   self.showpatrolpointmarks = false
   self.EngageTargetTypes = {"Ground"}
+  self:SetDefaultTurnoverTime()
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("EASYA2G %s | ", self.alias)
@@ -546,7 +547,7 @@ function EASYA2G:_AddSquadron(TemplateName, SquadName, AirbaseName, AirFrames, S
   Squadron_One:AddMissionCapability({AUFTRAG.Type.CAS, AUFTRAG.Type.CASENHANCED, AUFTRAG.Type.BAI, AUFTRAG.Type.ALERT5, AUFTRAG.Type.BOMBING, AUFTRAG.Type.STRIKE})
   --Squadron_One:SetFuelLowRefuel(true)
   Squadron_One:SetFuelLowThreshold(0.3)
-  Squadron_One:SetTurnoverTime(10,20)
+  Squadron_One:SetTurnoverTime(self.maintenancetime,self.repairtime)
   Squadron_One:SetModex(Modex)
   Squadron_One:SetLivery(Livery)
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)

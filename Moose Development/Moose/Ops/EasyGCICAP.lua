@@ -21,7 +21,7 @@
 -- 
 -------------------------------------------------------------------------
 -- Date: September 2023
--- Last Update: Aug 2025
+-- Last Update: Jan 2026
 -------------------------------------------------------------------------
 --
 --- **Ops** - Easy GCI & CAP Manager
@@ -89,6 +89,8 @@
 -- @field #number FuelCriticalThreshold
 -- @field #boolean showpatrolpointmarks
 -- @field #table EngageTargetTypes
+-- @field #number maintenancetime
+-- @field #number repairtime
 -- @extends Core.Fsm#FSM
 
 --- *“Airspeed, altitude, and brains. Two are always needed to successfully complete the flight.”* -- Unknown.
@@ -284,7 +286,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.33"
+EASYGCICAP.version="0.1.34"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- 
@@ -343,6 +345,7 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.FuelCriticalThreshold = 10
   self.showpatrolpointmarks = false
   self.EngageTargetTypes = {"Air"}
+  self:SetDefaultTurnoverTime()
   
   -- Set some string id for output to DCS.log file.
   self.lid=string.format("EASYGCICAP %s | ", self.alias)
@@ -605,6 +608,18 @@ end
 function EASYGCICAP:SetDefaultMissionRange(Range)
   self:T(self.lid.."SetDefaultMissionRange")
   self.missionrange = Range or 100
+  return self
+end
+
+--- Set default turnover times for squadrons in minutes
+-- @param #EASYGCICAP self
+-- @param #number MaintenanceTime Time in minutes it takes until a flight is combat ready again. Default is 5 min.
+-- @param #number RepairTime Time in minutes it takes to repair a flight for each life point taken. Default is 10 min.
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetDefaultTurnoverTime(MaintenanceTime,RepairTime)
+  self:T(self.lid.."SetDefaultTurnoverTime")
+  self.maintenancetime=MaintenanceTime or 5
+  self.repairtime=RepairTime or 10
   return self
 end
 
@@ -1217,7 +1232,7 @@ function EASYGCICAP:_AddSquadron(TemplateName, SquadName, AirbaseName, AirFrames
   Squadron_One:AddMissionCapability({AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.PATROLRACETRACK, AUFTRAG.Type.ALERT5})
   --Squadron_One:SetFuelLowRefuel(true)
   Squadron_One:SetFuelLowThreshold(0.3)
-  Squadron_One:SetTurnoverTime(10,20)
+  Squadron_One:SetTurnoverTime(self.maintenancetime,self.repairtime)
   Squadron_One:SetModex(Modex)
   Squadron_One:SetLivery(Livery)
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
@@ -1248,7 +1263,7 @@ function EASYGCICAP:_AddReconSquadron(TemplateName, SquadName, AirbaseName, AirF
   Squadron_One:AddMissionCapability({AUFTRAG.Type.RECON})
   --Squadron_One:SetFuelLowRefuel(true)
   Squadron_One:SetFuelLowThreshold(0.3)
-  Squadron_One:SetTurnoverTime(10,20)
+  Squadron_One:SetTurnoverTime(self.maintenancetime,self.repairtime)
   Squadron_One:SetModex(Modex)
   Squadron_One:SetLivery(Livery)
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
@@ -1282,7 +1297,7 @@ function EASYGCICAP:_AddTankerSquadron(TemplateName, SquadName, AirbaseName, Air
   Squadron_One:AddMissionCapability({AUFTRAG.Type.TANKER})
   --Squadron_One:SetFuelLowRefuel(true)
   Squadron_One:SetFuelLowThreshold(0.3)
-  Squadron_One:SetTurnoverTime(10,20)
+  Squadron_One:SetTurnoverTime(self.maintenancetime,self.repairtime)
   Squadron_One:SetModex(Modex)
   Squadron_One:SetLivery(Livery)
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
@@ -1319,7 +1334,7 @@ function EASYGCICAP:_AddAWACSSquadron(TemplateName, SquadName, AirbaseName, AirF
   Squadron_One:AddMissionCapability({AUFTRAG.Type.AWACS})
   --Squadron_One:SetFuelLowRefuel(true)
   Squadron_One:SetFuelLowThreshold(0.3)
-  Squadron_One:SetTurnoverTime(10,20)
+  Squadron_One:SetTurnoverTime(self.maintenancetime,self.repairtime)
   Squadron_One:SetModex(Modex)
   Squadron_One:SetLivery(Livery)
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
