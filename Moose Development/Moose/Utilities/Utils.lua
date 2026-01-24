@@ -2923,16 +2923,27 @@ end
 -- @param #boolean Cinematic (Optional, needs Structured = true) If true, place a fire/smoke effect on the dead static position.
 -- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
 -- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
+-- @param #boolean Resurrection If true, dead units can be restored on load. Defaults to false.
+-- @param #number ResurrectPercentage Use this percentage of probability to resurrect a unit. [0..100], defaults to 25.
+-- @param #number Healmin If set, life points of a resurrected unit will be randomly restored to min this percentage. [0..100], defaults to 25.
+-- @param #number Healmax If set, life points of a resurrected unit will be randomly restored to max this percentage. [0..100], defaults to 75.
 -- @return #table Table of data objects (tables) containing groupname, coordinate and group object. Returns nil when file cannot be read.
 -- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
-function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinematic,Effect,Density)
-
+function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinematic,Effect,Density,Resurrection,ResurrectPercentage,Healmin,Healmax)
+    
+  local healmin = Healmin or 25
+  local healmax = Healmax or 75
+  local resurrection = (Resurrection == true) and true or false  
+  local resurrectpercentage = ResurrectPercentage or 25
+  
   local fires = {}
 
+  ---
+  -- @param Core.Point#COORDINATE coord
   local function Smokers(name,coord,effect,density)
     local eff = math.random(8)
     if type(effect) == "number" then eff = effect end
-    coord:BigSmokeAndFire(eff,density,name)
+    coord:BigSmokeAndFire( eff, Density, 300, 1, name )
     table.insert(fires,name)
   end
 
@@ -2947,7 +2958,16 @@ function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinema
           local name = _unit:GetName()
           Smokers(name,coordinate,Effect,Density)
         end
-        _unit:Destroy(false)
+        -- TODO Resurrection logic
+        local resurectok = math.random(1,100)
+        BASE:E(string.format("Load Group | Resurrection | Resurrect %s | Thresh %d | Random %d",tostring(resurrection),resurrectpercentage,resurectok))
+        if resurrection == true and (resurectok < resurrectpercentage) then
+          local heallife = math.random(healmin,healmax)
+          BASE:E("Load Group | Resurrection | Life "..heallife)
+          _unit:SetLife(heallife)
+        else
+          _unit:Destroy(false)
+        end
         reduced = reduced + 1
         if reduced == anzahl then break end
       end

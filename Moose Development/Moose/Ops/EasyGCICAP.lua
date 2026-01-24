@@ -312,6 +312,10 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   
   -- defaults
   self.alias = Alias or AirbaseName.." CAP Wing"
+      
+  -- Set some string id for output to DCS.log file.
+  self.lid=string.format("EASYGCICAP %s | ", self.alias)
+  
   self.coalitionname = string.lower(Coalition) or "blue"
   self.coalition = self.coalitionname == "blue" and coalition.side.BLUE or coalition.side.RED
   self.wings = {}
@@ -347,9 +351,6 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.EngageTargetTypes = {"Air"}
   self:SetDefaultTurnoverTime()
   
-  -- Set some string id for output to DCS.log file.
-  self.lid=string.format("EASYGCICAP %s | ", self.alias)
-
   -- Add FSM transitions.
   --               From State  -->   Event      -->      To State
   self:SetStartState("Stopped")

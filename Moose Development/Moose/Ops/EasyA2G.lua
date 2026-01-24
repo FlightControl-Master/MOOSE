@@ -319,6 +319,10 @@ function EASYA2G:New(Alias, AirbaseName, Coalition, ScoutName)
   
   -- defaults
   self.alias = Alias or AirbaseName.." A2G Wing"
+  
+  -- Set some string id for output to DCS.log file.
+  self.lid=string.format("EASYA2G %s | ", self.alias)
+  
   self.coalitionname = string.lower(Coalition) or "blue"
   self.coalition = self.coalitionname == "blue" and coalition.side.BLUE or coalition.side.RED
   self.wings = {}
@@ -354,9 +358,6 @@ function EASYA2G:New(Alias, AirbaseName, Coalition, ScoutName)
   self.EngageTargetTypes = {"Ground"}
   self:SetDefaultTurnoverTime()
   
-  -- Set some string id for output to DCS.log file.
-  self.lid=string.format("EASYA2G %s | ", self.alias)
-
   -- Add FSM transitions.
   --               From State  -->   Event      -->      To State
   self:SetStartState("Stopped")
