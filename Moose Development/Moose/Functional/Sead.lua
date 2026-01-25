@@ -157,7 +157,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   self:AddTransition("*",             "ManageEvasion",                "*")
   self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  self:I("*** SEAD - Started Version 0.4.10")
+  self:I("*** SEAD - Started Version 0.4.11")
   return self
 end
 
@@ -442,19 +442,12 @@ function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADP
         local SuppressionStartTime = timer.getTime() + delay
         local SuppressionEndTime = timer.getTime() + delay + _tti + self.Padding + delay
         local _targetgroupname = _targetgroup:GetName()
-        if not self.SuppressedGroups[_targetgroupname] then
+        local shoradactive = _targetgroup:GetProperty("SHORAD_ACTIVE")
+        if not self.SuppressedGroups[_targetgroupname] and shoradactive ~= true then
           -- TODO: ask callback if suppression is allowed BEFORE scheduling timers
           local allow = true
           if self.UseCallBack and self.CallBack and self.CallBack.SeadAllowSuppression then
-            allow = self.CallBack:SeadAllowSuppression(
-              _targetgroup,
-              _targetgroupname,
-              SEADGroup,
-              SEADWeaponName,
-              Weapon,
-              _tti,
-              delay
-            )
+            allow = self.CallBack:SeadAllowSuppression(_targetgroup,_targetgroupname,SEADGroup,SEADWeaponName,Weapon,_tti,delay)
           end
           if not allow then
             self:T(string.format("*** SEAD - %s | Suppression vetoed by callback", _targetgroupname))

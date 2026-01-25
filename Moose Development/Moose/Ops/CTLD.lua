@@ -6674,11 +6674,13 @@ function CTLD:_RefreshDropTroopsMenu(Group, Unit)
   if not theGroup.CTLDTopmenu then return end
   local topTroops = theGroup.MyTopTroopsMenu
   if not topTroops then return end
-  if topTroops.DropTroopsMenu then
-    topTroops.DropTroopsMenu:Remove()
+  local dropTroopsMenu = topTroops.DropTroopsMenu
+  if dropTroopsMenu then
+    dropTroopsMenu:RemoveSubMenus()
+  else
+    dropTroopsMenu = MENU_GROUP:New(theGroup, "Drop Troops", topTroops)
+    topTroops.DropTroopsMenu = dropTroopsMenu
   end
-  local dropTroopsMenu = MENU_GROUP:New(theGroup, "Drop Troops", topTroops)
-  topTroops.DropTroopsMenu = dropTroopsMenu
   MENU_GROUP_COMMAND:New(theGroup, "Drop ALL troops", dropTroopsMenu, self._UnloadTroops, self, theGroup, theUnit)
 
   local loadedData = self.Loaded_Cargo[theUnit:GetName()]
