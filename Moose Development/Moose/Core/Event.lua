@@ -184,6 +184,7 @@ EVENT = {
   ClassName = "EVENT",
   ClassID = 0,
   MissionEnd = false,
+  RegisterSceneryOnEvent = true,
 }
 
 world.event.S_EVENT_NEW_CARGO = world.event.S_EVENT_MAX + 1000
@@ -1374,7 +1375,9 @@ function EVENT:onEvent( Event )
           Event.IniDCSUnit = Event.initiator
           Event.IniDCSUnitName = ( Event.IniDCSUnit and Event.IniDCSUnit.getName ) and Event.IniDCSUnit:getName() or "Scenery no name "..math.random(1,20000)
           Event.IniUnitName = Event.IniDCSUnitName
-          Event.IniUnit = SCENERY:Register( Event.IniDCSUnitName, Event.initiator )
+            if self.RegisterSceneryOnEvent then
+                Event.IniUnit = SCENERY:Register( Event.IniDCSUnitName, Event.initiator )
+            end
           Event.IniCategory =  (Event.IniDCSUnit and Event.IniDCSUnit.getDesc ) and Event.IniDCSUnit:getDesc().category
           Event.IniTypeName = (Event.initiator and Event.initiator.isExist          
           and Event.initiator:isExist() and Event.IniDCSUnit and Event.IniDCSUnit.getTypeName) and Event.IniDCSUnit:getTypeName() or "SCENERY"
@@ -1478,7 +1481,9 @@ function EVENT:onEvent( Event )
           Event.TgtDCSUnitName = Event.TgtDCSUnit.getName and Event.TgtDCSUnit:getName() or nil
           if Event.TgtDCSUnitName~=nil then
             Event.TgtUnitName = Event.TgtDCSUnitName
-            Event.TgtUnit = SCENERY:Register( Event.TgtDCSUnitName, Event.target )
+            if self.RegisterSceneryOnEvent then
+              Event.TgtUnit = SCENERY:Register( Event.TgtDCSUnitName, Event.target )
+            end
             Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
             Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
           end
