@@ -1519,7 +1519,6 @@ function EVENT:onEvent( Event )
       if Event.idx then
         Event.MarkID=Event.idx
         Event.MarkVec3=Event.pos
-        Event.MarkCoordinate=COORDINATE:NewFromVec3(Event.pos)
         Event.MarkText=Event.text
         Event.MarkCoalition=Event.coalition
         Event.IniCoalition=Event.coalition
