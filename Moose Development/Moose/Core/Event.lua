@@ -185,7 +185,7 @@ EVENT = {
   ClassID = 0,
   MissionEnd = false,
   RegisterSceneryOnEvent = true,
-  CreateMarkCoordinates = true,
+  CreateMarkCoordinateOnEvent = true,
 }
 
 world.event.S_EVENT_NEW_CARGO = world.event.S_EVENT_MAX + 1000
@@ -1525,7 +1525,7 @@ function EVENT:onEvent( Event )
       if Event.idx then
         Event.MarkID=Event.idx
         Event.MarkVec3=Event.pos
-        if self.CreateMarkCoordinates then
+        if self.CreateMarkCoordinateOnEvent then
             Event.MarkCoordinate=COORDINATE:NewFromVec3(Event.pos)
         end
         Event.MarkText=Event.text
