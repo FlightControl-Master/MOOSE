@@ -3358,6 +3358,15 @@ function CHIEF._CheckAssetProperties(Asset, Properties)
   return false
 end
 
+
+--- Checks whether or not any of the legions con run a mission.
+-- @param #CHIEF self
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+-- @return #boolean If `true`, one of the cohorts can run the mission.
+function CHIEF:CanMission(Mission)
+    return self.commander and self.commander:CanStartMission(Mission)
+end
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
