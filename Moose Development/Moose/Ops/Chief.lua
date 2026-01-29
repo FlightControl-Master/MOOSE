@@ -398,6 +398,7 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   -- Create a new COMMANDER.
   self.commander=COMMANDER:New(Coalition, Alias)
 
+
   -- Add FSM transitions.
   --                 From State   -->    Event                     -->    To State
   self:AddTransition("*",                "MissionAssign",                 "*")   -- Assign mission to a COMMANDER.  
