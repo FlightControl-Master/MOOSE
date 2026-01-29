@@ -396,7 +396,7 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   self.TransportCategories = {Group.Category.HELICOPTER}
   
   -- Create a new COMMANDER.
-  self.commander=COMMANDER:New(Coalition)  
+  self.commander=COMMANDER:New(Coalition, Alias)
 
   -- Add FSM transitions.
   --                 From State   -->    Event                     -->    To State
