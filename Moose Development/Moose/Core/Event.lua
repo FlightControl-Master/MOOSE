@@ -340,14 +340,18 @@ EVENTS = {
 -- @field #string WeaponName Name of the weapon.
 -- @field DCS#Unit WeaponTgtDCSUnit Target DCS unit of the weapon.
 --
--- @field Cargo.Cargo#CARGO Cargo The cargo object.
--- @field #string CargoName The name of the cargo object.
---
 -- @field Core.Zone#ZONE Zone The zone object.
 -- @field #string ZoneName The name of the zone.
 -- 
 -- @field Wrapper.DynamicCargo#DYNAMICCARGO IniDynamicCargo The dynamic cargo object.
 -- @field #string IniDynamicCargoName The dynamic cargo unit name.
+-- 
+-- @field #number MarkCoalition Coalition of a marker (if any)
+-- @field DCS#Vec3 MarkVec3 Position of a marker
+-- @field #string MarkText Text content of a marker, if any
+-- @field #number MarkID ID of the marker, for deletion
+-- @field #number MarkGroupID Group ID of the group that created the marker
+-- @field Core.Point#COORDINATE Coordinate object of the marker, only filled if EVENT.CreateMarkCoordinateOnEvent is set to true (off by default)
 
 
 
