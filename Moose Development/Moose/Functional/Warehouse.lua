@@ -4605,6 +4605,14 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
 end
 
+function WAREHOUSE:_CallbackLoaded()
+  MESSAGE:New("TaskEmbarking",30,"Task"):ToAll()
+end
+
+function WAREHOUSE:_CallbackUnloaded()
+  MESSAGE:New("TaskDisembarking",30,"Task"):ToAll()
+end
+
 --- On after "RequestSpawned" event. Initiates the transport of the assets to the requesting warehouse.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
@@ -4616,7 +4624,7 @@ end
 function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet, TransportGroupSet)
 
   -- General type and category.
-  local _cargotype=Request.cargoattribute    --#WAREHOUSE.Attribute
+  local _cargotype=Request.cargoattribute    --#WAREHOUSE.Attribute 
   local _cargocategory=Request.cargocategory --DCS#Group.Category
 
   -- Add groups to pending item.
@@ -4712,57 +4720,35 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
       or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then
     _boardradius=6000
   end
-
-  -- Empty cargo group set.
-  local CargoGroups=SET_CARGO:New()
-
-  -- Add cargo groups to set.
-  for _,_group in pairs(CargoGroupSet:GetSetObjects()) do
-
-    -- Find asset belonging to this group.
-    local asset=self:FindAssetInDB(_group)
-    -- New cargo group object.
-    local cargogroup=CARGO_GROUP:New(_group, _cargotype,_group:GetName(),_boardradius, asset.loadradius)
-
-    -- Set weight for this group.
-    cargogroup:SetWeight(asset.weight)
-
-    -- Add group to group set.
-    CargoGroups:AddCargo(cargogroup)
-
-  end
-
+  
   ------------------------
   -- Create Dispatchers --
   ------------------------
 
   -- Cargo dispatcher.
-  local CargoTransport --AI.AI_Cargo_Dispatcher#AI_CARGO_DISPATCHER
+  local CargoTransport --Ops.Auftrag#AUFTRAG
 
-  if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
-
-    -- Pickup and deploy zones.
-    local PickupAirbaseSet = SET_ZONE:New():AddZone(ZONE_AIRBASE:New(self.airbase:GetName()))
-    local DeployAirbaseSet = SET_ZONE:New():AddZone(ZONE_AIRBASE:New(Request.airbase:GetName()))
-
-    -- Define dispatcher for this task.
-    CargoTransport = AI_CARGO_DISPATCHER_AIRPLANE:New(TransportGroupSet, CargoGroups, PickupAirbaseSet, DeployAirbaseSet)
-
-    -- Set home zone.
-    CargoTransport:SetHomeZone(ZONE_AIRBASE:New(self.airbase:GetName()))
-
-  elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
+  if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE or Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
 
     -- Pickup and deploy zones.
-    local PickupZoneSet = SET_ZONE:New():AddZone(self.spawnzone)
-    local DeployZoneSet = SET_ZONE:New():AddZone(Request.warehouse.spawnzone)
+    local PickupZone = ZONE_AIRBASE:New(self.airbase:GetName())
+    local DeployZone = ZONE_AIRBASE:New(Request.airbase:GetName())
+    
+    local DropoffCoordinate = DeployZone:GetRandomCoordinate(50,200,{land.SurfaceType.LAND, land.SurfaceType.ROAD})
+    local PickupCoordinate = PickupZone:GetRandomCoordinate(50,200,{land.SurfaceType.LAND, land.SurfaceType.ROAD})
+    
+    local Auftrag = AUFTRAG:NewTROOPTRANSPORT(CargoGroupSet,DropoffCoordinate,PickupCoordinate,500)
 
-    -- Define dispatcher for this task.
-    CargoTransport = AI_CARGO_DISPATCHER_HELICOPTER:New(TransportGroupSet, CargoGroups, PickupZoneSet, DeployZoneSet)
+    CargoGroupSet:SetProperty("WAREHOUSE_REQUEST",Request)
 
-    -- Home zone.
-    CargoTransport:SetHomeZone(self.spawnzone)
-
+    for _,_Group in pairs (TransportGroupSet.Set) do
+      local FlightGroup = FLIGHTGROUP:New(_Group)
+      FlightGroup:AddMission(Auftrag)
+      Auftrag:AddOpsGroup(FlightGroup)
+      FlightGroup:SetHomebase(self.airbase)
+    end
+    CargoTransport=Auftrag 
+    
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
 
     -- Pickup and deploy zones.
@@ -4824,8 +4810,6 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
       deployinner=20
     end
   end
-  CargoTransport:SetPickupRadius(pickupouter, pickupinner)
-  CargoTransport:SetDeployRadius(deployouter, deployinner)
 
 
   -- Adjust carrier units. This has to come AFTER the dispatchers have been defined because they set the cargobay free weight!
@@ -4851,106 +4835,76 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
   -- Dispatcher Event Functions --
   --------------------------------
 
-  --- Function called after carrier picked up something.
-  function CargoTransport:OnAfterPickedUp(From, Event, To, Carrier, PickupZone)
-
+  --- Function called when cargo is loading.
+  function CargoTransport:OnBeforeExecuting(From,Event,To)
+    -- Cargo loaded
     -- Get warehouse state.
-    local warehouse=Carrier:GetState(Carrier, "WAREHOUSE") --#WAREHOUSE
-
-    -- Debug message.
-    local text=string.format("Carrier group %s picked up at pickup zone %s.", Carrier:GetName(), PickupZone:GetName())
-    warehouse:T(warehouse.lid..text)
-
+    local opsgroups = CargoTransport:GetOpsGroups()
+    
+    for _,_group in pairs(opsgroups) do
+      
+      local Carrier = _group:GetGroup()
+      local Element = Carrier:GetUnit(1)
+      local warehouse=Carrier:GetProperty("WAREHOUSE") --#WAREHOUSE
+      
+      for _,Cargo in pairs(CargoGroupSet.Set) do
+      
+        -- Debug message.
+        local text=string.format("Carrier group %s loaded cargo %s into unit %s in pickup zone", Carrier:GetName(), Cargo:GetName(), Element.UnitName)
+        warehouse:T(warehouse.lid..text)
+        
+        -- Get cargo group object.
+        local group=Cargo --Wrapper.Group#GROUP
+    
+        -- Get request.
+        local request = CargoGroupSet:GetProperty("WAREHOUSE_REQUEST")
+        
+        -- Add cargo group to this carrier.
+        table.insert(request.carriercargo[Element.UnitName], warehouse:_GetNameWithOut(Cargo:GetName()))     
+      
+      end
+    end
   end
-
-  --- Function called if something was deployed.
-  function CargoTransport:OnAfterDeployed(From, Event, To, Carrier, DeployZone)
-
-    -- Get warehouse state.
-    local warehouse=Carrier:GetState(Carrier, "WAREHOUSE") --#WAREHOUSE
-
-    -- Debug message.
-    -- TODO: Depoloy zone is nil!
-    --local text=string.format("Carrier group %s deployed at deploy zone %s.", Carrier:GetName(), DeployZone:GetName())
-    --warehouse:T(warehouse.lid..text)
-
-  end
-
-  --- Function called if carrier group is going home.
-  function CargoTransport:OnAfterHome(From, Event, To, Carrier, Coordinate, Speed, Height, HomeZone)
-
-    -- Get warehouse state.
-    local warehouse=Carrier:GetState(Carrier, "WAREHOUSE") --#WAREHOUSE
-
-    -- Debug message.
-    local text=string.format("Carrier group %s going home to zone %s.", Carrier:GetName(), HomeZone:GetName())
-    warehouse:T(warehouse.lid..text)
-
-  end
-
-  --- Function called when a carrier unit has loaded a cargo group.
-  function CargoTransport:OnAfterLoaded(From, Event, To, Carrier, Cargo, CarrierUnit, PickupZone)
-
-    -- Get warehouse state.
-    local warehouse=Carrier:GetState(Carrier, "WAREHOUSE") --#WAREHOUSE
-
-    -- Debug message.
-    local text=string.format("Carrier group %s loaded cargo %s into unit %s in pickup zone %s", Carrier:GetName(), Cargo:GetName(), CarrierUnit:GetName(), PickupZone:GetName())
-    warehouse:T(warehouse.lid..text)
-
-    -- Get cargo group object.
-    local group=Cargo:GetObject() --Wrapper.Group#GROUP
-
-     -- Get request.
-    local request=warehouse:_GetRequestOfGroup(group, warehouse.pending)
-
-    -- Add cargo group to this carrier.
-    table.insert(request.carriercargo[CarrierUnit:GetName()], warehouse:_GetNameWithOut(Cargo:GetName()))
-
-  end
-
+  
   --- Function called when cargo has arrived and was unloaded.
-  function CargoTransport:OnAfterUnloaded(From, Event, To, Carrier, Cargo, CarrierUnit, DeployZone)
-
+  function CargoTransport:OnBeforeDone(From,Event,To)
+    
+    -- Cargo unloading
     -- Get warehouse state.
-    local warehouse=Carrier:GetState(Carrier, "WAREHOUSE") --#WAREHOUSE
+    local opsgroups = CargoTransport:GetOpsGroups()
+    
+    for _,_group in pairs(opsgroups) do
+  
+      local Carrier = _group:GetGroup()
+      local Element = Carrier:GetUnit(1)
+      local warehouse=Carrier:GetProperty("WAREHOUSE") --#WAREHOUSE
+      
+      for _,Cargo in pairs(CargoGroupSet.Set) do
 
-    -- Get group obejet.
-    local group=Cargo:GetObject() --Wrapper.Group#GROUP
-
-    -- Debug message.
-    local text=string.format("Cargo group %s was unloaded from carrier unit %s.", tostring(group:GetName()), tostring(CarrierUnit:GetName()))
-    warehouse:T(warehouse.lid..text)
-
-    -- Load the cargo in the warehouse.
-    --Cargo:Load(warehouse.warehouse)
-
-    -- Trigger Arrived event.
-    warehouse:Arrived(group)
+        -- Debug message.
+        local text=string.format("Cargo group %s was unloaded from carrier unit", tostring(Element:GetName()))
+        warehouse:T(warehouse.lid..text)
+    
+        -- Trigger Arrived event.
+        warehouse:Arrived(Cargo)
+      
+      end
+      
+      function _group:OnAfterLanded(From,Event,To,airbase)
+        local mybase = warehouse.airbasename
+        if airbase:GetName() == mybase then 
+          -- Debug info.
+          local text=string.format("Carrier %s is back home at warehouse %s.", tostring(Carrier:GetName()), tostring(warehouse.warehouse:GetName()))
+          MESSAGE:New(text, 5):ToAllIf(warehouse.Debug)
+          warehouse:I(warehouse.lid..text)
+      
+          -- Call arrived event for carrier.
+          warehouse:__Arrived(1, Carrier)      
+        end
+      end
+      
+    end  
   end
-
-  --- On after BackHome event.
-  function CargoTransport:OnAfterBackHome(From, Event, To, Carrier)
-
-    -- Intellisense.
-    local carrier=Carrier --Wrapper.Group#GROUP
-
-    -- Get warehouse state.
-    local warehouse=carrier:GetState(carrier, "WAREHOUSE") --#WAREHOUSE
-    carrier:SmokeWhite()
-
-    -- Debug info.
-    local text=string.format("Carrier %s is back home at warehouse %s.", tostring(Carrier:GetName()), tostring(warehouse.warehouse:GetName()))
-    MESSAGE:New(text, 5):ToAllIf(warehouse.Debug)
-    warehouse:I(warehouse.lid..text)
-
-    -- Call arrived event for carrier.
-    warehouse:__Arrived(1, Carrier)
-
-  end
-
-  -- Start dispatcher.
-  CargoTransport:__Start(5)
 
 end
 
@@ -5453,7 +5407,8 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
   end
 
   -- Set warehouse state.
-  group:SetState(group, "WAREHOUSE", self)  
+  --group:SetState(group, "WAREHOUSE", self)
+  group:SetProperty("WAREHOUSE",self)  
 
   -- Check if all assets groups are spawned and trigger events.
   local n=0

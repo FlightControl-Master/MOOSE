@@ -3725,25 +3725,6 @@ do -- COORDINATE
 
     local ModeA2A = nil
     
-    --[[
-    if Task then
-      if Task:IsInstanceOf( TASK_A2A ) then
-        ModeA2A = true
-      else
-        if Task:IsInstanceOf( TASK_A2G ) then
-          ModeA2A = false
-        else
-          if Task:IsInstanceOf( TASK_CARGO ) then
-            ModeA2A = false
-          end
-            if Task:IsInstanceOf( TASK_CAPTURE_ZONE ) then
-              ModeA2A = false
-            end
-        end
-      end
-    end
-    --]]
-
     if ModeA2A == nil then
       local IsAir = Controllable and ( Controllable:IsAirPlane() or Controllable:IsHelicopter() ) or false
       if IsAir  then

@@ -511,7 +511,7 @@ function OPSTRANSPORT:New(CargoGroups, PickupZone, DeployZone)
   -- @param Ops.OpsGroup#OPSGROUP OpsGroupCarrier Carrier OPSGROUP that unloaded the cargo.
 
   
-  --TODO: Psydofunctions
+  --TODO: Pseudofunctions
 
   -- Call status update.
   self:__StatusUpdate(-1)
