@@ -1200,7 +1200,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
           coordinate = unit:GetCoord(),
           }
        if self.smoketargets then
-          local coord = unit:GetCoord()
+          local coord = unit:GetCoordinate()
           if self.smokeoffset then
             coord:Translate(self.smokeoffset.Distance,self.smokeoffset.Angle,true,true)
           end
