@@ -5053,7 +5053,6 @@ end
 
 --- (Internal) Housekeeping - Cleanup crates when build
 -- @param #CTLD self
--- 
 -- @param #table Crates Table of #CTLD_CARGO objects near the unit.
 -- @param #CTLD.Buildable Build Table build object.
 -- @param #number Number Number of objects in Crates (found) to limit search.
