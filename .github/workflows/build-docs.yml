@@ -155,7 +155,7 @@ jobs:
           git config user.email "MooseBotter@users.noreply.github.com"
           git add .
           git commit --allow-empty -m "Auto commit by GitHub Actions Workflow"
-          git push --set-upstream origin master-ng
+          git push --set-upstream origin 'master-ng'
 
         working-directory: ${{ github.workspace }}/build/MOOSE_DOCS
 
