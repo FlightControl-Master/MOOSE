@@ -1805,6 +1805,17 @@ function RAT:SetMaxCruiseSpeed(speed)
   return self
 end
 
+--- Set the minimum cruise speed of the aircraft.
+-- @param #RAT self
+-- @param #number speed Speed in km/h.
+-- @return #RAT RAT self object.
+function RAT:SetMinCruiseSpeed(speed)
+  self:F2(speed)
+  -- Convert to m/s.
+  self.Vcruisemin=speed/3.6
+  return self
+end
+
 --- Set the climb rate. This automatically sets the climb angle.
 -- @param #RAT self
 -- @param #number rate Climb rate in ft/min. Default is 1500 ft/min. Minimum is 100 ft/min. Maximum is 15,000 ft/min.
@@ -2135,10 +2146,18 @@ function RAT:_InitAircraft(DCSgroup)
     self.aircraft.length=16
     self.aircraft.height=5
     self.aircraft.width=9
-  elseif DCStype == "Saab340" then      --   <- These lines added
-    self.aircraft.length=19.73          --   <- These lines added
-    self.aircraft.height=6.97           --   <- These lines added
-    self.aircraft.width=21.44           --   <- These lines added
+  elseif DCStype == "Saab340" then
+    self.aircraft.length=19.73
+    self.aircraft.height=6.97
+    self.aircraft.width=21.44
+  elseif DCStype == "vwv_l-1049" then
+    self.aircraft.length=35.41
+    self.aircraft.height=7.54
+    self.aircraft.width=38.47
+  elseif DCStype == "uh2b" then
+    self.aircraft.length=11.48          
+    self.aircraft.height=4.11
+    self.aircraft.width=13.41
   end
 
   self.aircraft.box=math.max(self.aircraft.length,self.aircraft.width)
@@ -2813,9 +2832,15 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
     -- Max cruise speed 90% of Vmax or 900 km/h whichever is lower.
     VxCruiseMax = math.min(self.aircraft.Vmax*0.90, 250)
   end
-
-  -- Min cruise speed 70% of max cruise or 600 km/h whichever is lower.
-  local VxCruiseMin = math.min(VxCruiseMax*0.70, 166)
+  
+    -- Min cruise speed.
+  local VxCruiseMin
+  if self.Vcruisemin then
+    VxCruiseMin = self.Vcruisemin
+  else
+    -- Min cruise speed 70% of max cruise or 600 km/h whichever is lower.
+    VxCruiseMin = math.min(VxCruiseMax*0.70, 166)
+  end
 
   -- Cruise speed (randomized). Expectation value at midpoint between min and max.
   local VxCruise = UTILS.RandomGaussian((VxCruiseMax-VxCruiseMin)/2+VxCruiseMin, (VxCruiseMax-VxCruiseMax)/4, VxCruiseMin, VxCruiseMax)

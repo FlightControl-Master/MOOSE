@@ -8,7 +8,7 @@ name: Deploy Jekyll site to Pages
 
 on:
   push:
-    branches: ["master"]
+    branches: ["master-ng"]
     paths:
       - 'docs/**'
       - '.github/workflows/gh-pages.yml'
