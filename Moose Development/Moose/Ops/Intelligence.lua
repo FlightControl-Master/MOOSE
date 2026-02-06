@@ -1175,7 +1175,7 @@ function INTEL:_CreateContact(Positionable, RecceName)
       item.category=3 --static:GetCategory()
       item.categoryname=static:GetCategoryName() or "Unknown"
       item.threatlevel=static:GetThreatLevel() or 0
-      item.position=static:GetCoordinate()
+      item.position=static:GetCoord()
       item.velocity=static:GetVelocityVec3()
       item.speed=0
       item.recce=RecceName
@@ -1282,15 +1282,15 @@ function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisua
           local DetectionAccepted = true
           
           if self.RadarAcceptRange then
-            local reccecoord = Unit:GetCoordinate()
-            local coord = unit:GetCoordinate()
+            local reccecoord = Unit:GetCoord()
+            local coord = unit:GetCoord()
             local dist = math.floor(coord:Get2DDistance(reccecoord)/1000) -- km
             if dist > self.RadarAcceptRangeKilometers then DetectionAccepted = false end
           end
           
           if self.RadarBlur then
-            local reccecoord = Unit:GetCoordinate()
-            local coord = unit:GetCoordinate()
+            local reccecoord = Unit:GetCoord()
+            local coord = unit:GetCoord()
             local dist = math.floor(coord:Get2DDistance(reccecoord)/1000) -- km
             local AGL = unit:GetAltitude(true)
             local minheight = self.RadarBlurMinHeight or 250 -- meters

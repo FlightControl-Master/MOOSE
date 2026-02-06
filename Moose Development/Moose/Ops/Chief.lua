@@ -398,7 +398,8 @@ function CHIEF:New(Coalition, AgentSet, Alias)
   self.TransportCategories = {Group.Category.HELICOPTER}
   
   -- Create a new COMMANDER.
-  self.commander=COMMANDER:New(Coalition)  
+  self.commander=COMMANDER:New(Coalition, Alias)
+
 
   -- Add FSM transitions.
   --                 From State   -->    Event                     -->    To State
@@ -3357,6 +3358,15 @@ function CHIEF._CheckAssetProperties(Asset, Properties)
   end
 
   return false
+end
+
+
+--- Checks whether or not any of the legions con run a mission.
+-- @param #CHIEF self
+-- @param Ops.Auftrag#AUFTRAG Mission The mission.
+-- @return #boolean If `true`, one of the cohorts can run the mission.
+function CHIEF:CanMission(Mission)
+    return self.commander and self.commander:CanMission(Mission)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

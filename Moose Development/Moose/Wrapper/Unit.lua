@@ -1352,9 +1352,7 @@ function UNIT:GetThreatLevel()
             end
 
             ThreatText = ThreatLevels[ThreatLevel + 1]
-        end
-
-        if self:IsAir() then
+        elseif self:IsAir() then
 
             local ThreatLevels = {
                 [1] = "Unarmed",
@@ -1397,9 +1395,7 @@ function UNIT:GetThreatLevel()
             end
 
             ThreatText = ThreatLevels[ThreatLevel + 1]
-        end
-
-        if self:IsShip() then
+        elseif self:IsShip() then
 
             --["Aircraft Carriers"] = {"Heavy armed ships",},
             --["Cruisers"] = {"Heavy armed ships",},

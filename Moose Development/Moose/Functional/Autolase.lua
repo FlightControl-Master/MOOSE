@@ -693,7 +693,7 @@ end
 function AUTOLASE:GetLosFromUnit(Unit)
   local lasedistance = self.LaseDistance
   local unitheight = Unit:GetHeight()
-  local coord = Unit:GetCoordinate()
+  local coord = Unit:GetCoord()
   local landheight = coord:GetLandHeight()
   local asl = unitheight - landheight
   if asl > 100 then
@@ -845,7 +845,7 @@ function AUTOLASE:ShowStatus(Group,Unit)
          locationstring = entry.coordinate:ToStringLLDDM(settings)
         elseif settings:IsA2G_BR() then
           -- attention this is the distance from the ASKING unit to target, not from RECCE to target!
-          local startcoordinate = Unit:GetCoordinate() or Group:GetCoordinate()
+          local startcoordinate = Unit:GetCoord() or Group:GetCoord()
           locationstring = entry.coordinate:ToStringBR(startcoordinate,settings,false,self.RoundingPrecision)
         end
       end
@@ -963,8 +963,8 @@ function AUTOLASE:CanLase(Recce,Unit)
       end
     end
     -- calculate LOS
-    local reccecoord = Recce:GetCoordinate()
-    local unitcoord = Unit:GetCoordinate()
+    local reccecoord = Recce:GetCoord()
+    local unitcoord = Unit:GetCoord()
     local islos = reccecoord:IsLOS(unitcoord,2.5)
     -- calculate distance
     local distance = math.floor(reccecoord:Get3DDistance(unitcoord))
@@ -1020,8 +1020,8 @@ function AUTOLASE:_Prescient()
            self:T(self.lid.."Checking possibly visible STATICs for Recce "..unit:GetName())
             for _,_static in pairs(Statics) do -- DCS static object here
               local static = STATIC:Find(_static)
-              if static and static:GetCoalition() ~= self.coalition and static:GetCoordinate() then
-                local IsLOS = position:IsLOS(static:GetCoordinate())
+              if static and static:GetCoalition() ~= self.coalition and static:GetCoord() then
+                local IsLOS = position:IsLOS(static:GetCoord())
                 if IsLOS then
                   unit:KnowUnit(static,true,true)
                 end
@@ -1081,7 +1081,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
     local threat = contact.threatlevel or 0
     local reccegrp = UNIT:FindByName(reccename)
     if reccegrp then
-      local reccecoord = reccegrp:GetCoordinate()
+      local reccecoord = reccegrp:GetCoord()
       local distance = math.floor(reccecoord:Get3DDistance(coord))
       local text = string.format("%s of %s | Distance %d km | Threatlevel %d",contact.attribute, contact.groupname, math.floor(distance/1000), contact.threatlevel)
       report:Add(text)
@@ -1120,7 +1120,6 @@ function AUTOLASE:onafterMonitor(From, Event, To)
         local unit = _unit -- Wrapper.Unit#UNIT
         if unit and unit:IsAlive() then
           local threat = unit:GetThreatLevel()
-          local coord = unit:GetCoordinate()
           if threat >= self.minthreatlevel then
             local unitname = unit:GetName()
             -- prefer radar units
@@ -1176,16 +1175,16 @@ function AUTOLASE:onafterMonitor(From, Event, To)
         local code = self:GetLaserCode(reccename)
         local spot = SPOT:New(recce)
         spot:LaseOn(unit,code,self.LaseDuration)
-        local locationstring = unit:GetCoordinate():ToStringLLDDM()    
+        local locationstring = unit:GetCoord():ToStringLLDDM()
         if _SETTINGS:IsA2G_MGRS() then
           local precision = _SETTINGS:GetMGRS_Accuracy()
           local settings = {}
           settings.MGRS_Accuracy = precision
-          locationstring = unit:GetCoordinate():ToStringMGRS(settings)
+          locationstring = unit:GetCoord():ToStringMGRS(settings)
         elseif _SETTINGS:IsA2G_LL_DMS() then
-          locationstring = unit:GetCoordinate():ToStringLLDMS(_SETTINGS)
+          locationstring = unit:GetCoord():ToStringLLDMS(_SETTINGS)
         elseif _SETTINGS:IsA2G_BR() then
-          locationstring = unit:GetCoordinate():ToStringBULLS(self.coalition,_SETTINGS)
+          locationstring = unit:GetCoord():ToStringBULLS(self.coalition,_SETTINGS)
         end
   
         local laserspot = { -- #AUTOLASE.LaserSpot
@@ -1198,7 +1197,7 @@ function AUTOLASE:onafterMonitor(From, Event, To)
           unitname = unitname,
           reccename = reccename,
           unittype = unit:GetTypeName(),
-          coordinate = unit:GetCoordinate(),
+          coordinate = unit:GetCoord(),
           }
        if self.smoketargets then
           local coord = unit:GetCoordinate()

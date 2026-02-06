@@ -638,7 +638,7 @@ CTLD_ENGINEERING = {
       local crate = ctable[1] -- Ops.CTLD#CTLD_CARGO
       local static = crate:GetPositionable() -- Wrapper.Static#STATIC
       local crate_pos = static:GetCoordinate() -- Core.Point#COORDINATE
-      local gpos = group:GetCoordinate() -- Core.Point#COORDINATE
+      local gpos = group:GetCoord() -- Core.Point#COORDINATE
       -- see how far we are from the crate
       local distance = self:_GetDistance(gpos,crate_pos)
       self:T(string.format("%s Distance to crate: %d", self.lid, distance))
@@ -667,7 +667,7 @@ CTLD_ENGINEERING = {
     --local COps = self.C_Ops -- Ops.CTLD#CTLD
     local group = self.Group -- Wrapper.Group#GROUP
     local tgtpos = self.currwpt -- Core.Point#COORDINATE
-    local gpos = group:GetCoordinate() -- Core.Point#COORDINATE
+    local gpos = group:GetCoord() -- Core.Point#COORDINATE
     -- see how far we are from the crate
     local distance = self:_GetDistance(gpos,tgtpos)
     self:T(string.format("%s Distance remaining: %d", self.lid, distance))
