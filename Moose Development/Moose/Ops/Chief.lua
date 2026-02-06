@@ -3364,7 +3364,7 @@ end
 -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 -- @return #boolean If `true`, one of the cohorts can run the mission.
 function CHIEF:CanMission(Mission)
-    return self.commander and self.commander:CanStartMission(Mission)
+    return self.commander and self.commander:CanMission(Mission)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
