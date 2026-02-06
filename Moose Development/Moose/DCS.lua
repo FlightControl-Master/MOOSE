@@ -1672,6 +1672,9 @@ do -- AI
   -- @field OPTION_RADIO_USAGE_KILL
   -- @field JETT_TANKS_IF_EMPTY
   -- @field FORCED_ATTACK
+  -- @field PREFER_VERTICAL
+  -- @field ALLOW_FORMATION_SIDE_SWAP  
+  -- @field AI_RUNWAY_LINE_UP
 
   ---
   -- @type AI.Option.Air.val
