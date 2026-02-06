@@ -1068,6 +1068,38 @@ end
 
 do -- Event Creation
 
+  -- TODO Remove old Cargo event  
+  --- Creation of a New Cargo Event.
+  -- @param #EVENT self
+  -- @param AI.AI_Cargo#AI_CARGO Cargo The Cargo created.
+  function EVENT:CreateEventNewCargo( Cargo )
+    self:F( { Cargo } )
+
+    local Event = {
+      id = EVENTS.NewCargo,
+      time = timer.getTime(),
+      cargo = Cargo,
+      }
+
+    world.onEvent( Event )
+  end
+  
+  -- TODO Remove old Cargo event  
+  --- Creation of a Cargo Deletion Event.
+  -- @param #EVENT self
+  -- @param AI.AI_Cargo#AI_CARGO Cargo The Cargo created.
+  function EVENT:CreateEventDeleteCargo( Cargo )
+    self:F( { Cargo } )
+
+    local Event = {
+      id = EVENTS.DeleteCargo,
+      time = timer.getTime(),
+      cargo = Cargo,
+      }
+
+    world.onEvent( Event )
+  end
+  
   --- Creation of a New Zone Event.
   -- @param #EVENT self
   -- @param Core.Zone#ZONE_BASE Zone The Zone created.
