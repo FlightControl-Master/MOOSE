@@ -113,7 +113,7 @@ jobs:
 
       - name: Check replacement of head tag
         run: |
-          head -10 ${{ github.workspace }}/build/doc/AI.AI_A2A_Cap.html
+          head -10 ${{ github.workspace }}/build/doc/Core.Menu.html
 
       #########################################################################
       # Push to MOOSE_DOCS
