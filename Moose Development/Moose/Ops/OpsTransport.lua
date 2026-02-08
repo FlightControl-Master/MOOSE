@@ -244,7 +244,7 @@ _OPSTRANSPORTID=0
 
 --- Army Group version.
 -- @field #string version
-OPSTRANSPORT.version="0.8.0"
+OPSTRANSPORT.version="0.9.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2127,7 +2127,9 @@ function OPSTRANSPORT:_CheckRequiredCargos(TransportZoneCombo, CarrierGroup)
     requiredCargos={}
     for _,_cargo in pairs(TransportZoneCombo.Cargos) do
       local cargo=_cargo --Ops.OpsGroup#OPSGROUP.CargoGroup
-      table.insert(requiredCargos, cargo.opsgroup)
+      if not cargo.delivered then
+        table.insert(requiredCargos, cargo.opsgroup)
+      end
     end
   end 
   
