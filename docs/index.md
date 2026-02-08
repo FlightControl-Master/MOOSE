@@ -28,14 +28,11 @@ It is the ambition to grow this framework as a de-facto standard for mission des
 
 ## Two branches - Choose wisely
 
-In [DCS World] there is a `Stable` version and an `OpenBeta`. New features are released to the `OpenBeta` first and applied to `Stable` later.
-People who choose to use `OpenBeta` can use the newest featuest and module, but accept the risk of bugs and unstable updates.
-In MOOSE there is a `master` branch, which is comparable to the `Stable` version.
-And there is the `development` branch, which is more like the `OpenBeta`.
-New modules (called classes in [Lua], like [OPS.Auftrag]) will only available in the `development` branch.
+In MOOSE there is a `master-ng` branch, which is the current `stable` version, and the `develop` branch.
+New modules (called classes in [Lua], like [OPS.Auftrag]) will first only be available in the `development` branch.
 
 Releases are the most stable approach to use MOOSE.
-From time to time the current state of the `master` branch is used to create release.
+From time to time the current state of the `master-ng` branch is used to create release.
 A release gets a spefific version number and will not be changed later on.
 
 ## Documentation
