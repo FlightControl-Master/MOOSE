@@ -514,7 +514,7 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="1.0.4"
+OPSGROUP.version="1.0.5"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2741,6 +2741,15 @@ function OPSGROUP:IsOutOfTorpedos()
   return self.outofTorpedos
 end
 
+--- Check if the group is out of A2G Ammo
+-- @param #OPSGROUP self
+-- @return #boolean If `true`, group is out of torpedos.
+function OPSGROUP:IsOutOfA2GAmmo()
+  if (self.outofMissilesAG and self.outofBombs and self.outofGuns) or self.outofAmmo then
+    return true
+  end
+  return false
+end
 
 --- Check if the group has currently switched a LASER on.
 -- @param #OPSGROUP self
@@ -5091,7 +5100,7 @@ function OPSGROUP:onafterTaskDone(From, Event, To, Task)
     
     if Task.description=="Task_Land_At" then
       self:T(self.lid.."Taske DONE Task_Land_At ==> Wait")
-      self:Cruise()
+      -- After the land task, we set the helo to wait. This is because of an issue that the passing waypoint function is triggered immidiately if we do not do this!
       self:Wait(20, 100)
     else
       self:T(self.lid.."Task Done but NO mission found ==> _CheckGroupDone in 1 sec")
@@ -8322,7 +8331,8 @@ function OPSGROUP:_CheckCargoTransport()
       end
 
       -- Boarding finished ==> Transport cargo.
-      if gotcargo and self.cargoTransport:_CheckRequiredCargos(self.cargoTZC, self) and not boarding then
+	  local required=self.cargoTransport:_CheckRequiredCargos(self.cargoTZC, self)
+      if gotcargo and required and not boarding then
         self:T(self.lid.."Boarding/loading finished ==> Loaded")
         self.Tloading=nil
         self:LoadingDone()
@@ -9958,6 +9968,10 @@ function OPSGROUP:onafterTransport(From, Event, To)
           self:T(self.lid.."ERROR: No current task but landed at?!")
         end
       end
+	  
+      if self:IsWaiting() then
+        self:__Cruise(-10)
+      end	  
 
     elseif self:IsArmygroup() then
 

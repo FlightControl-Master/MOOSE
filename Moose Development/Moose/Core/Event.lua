@@ -184,6 +184,7 @@ EVENT = {
   ClassName = "EVENT",
   ClassID = 0,
   MissionEnd = false,
+  CreateMarkCoordinateOnEvent = false,
 }
 
 world.event.S_EVENT_NEW_CARGO = world.event.S_EVENT_MAX + 1000
@@ -339,14 +340,18 @@ EVENTS = {
 -- @field #string WeaponName Name of the weapon.
 -- @field DCS#Unit WeaponTgtDCSUnit Target DCS unit of the weapon.
 --
--- @field Cargo.Cargo#CARGO Cargo The cargo object.
--- @field #string CargoName The name of the cargo object.
---
 -- @field Core.Zone#ZONE Zone The zone object.
 -- @field #string ZoneName The name of the zone.
 -- 
 -- @field Wrapper.DynamicCargo#DYNAMICCARGO IniDynamicCargo The dynamic cargo object.
 -- @field #string IniDynamicCargoName The dynamic cargo unit name.
+-- 
+-- @field #number MarkCoalition Coalition of a marker (if any)
+-- @field DCS#Vec3 MarkVec3 Position of a marker
+-- @field #string MarkText Text content of a marker, if any
+-- @field #number MarkID ID of the marker, for deletion
+-- @field #number MarkGroupID Group ID of the group that created the marker
+-- @field Core.Point#COORDINATE Coordinate object of the marker, only filled if EVENT.CreateMarkCoordinateOnEvent is set to true (off by default)
 
 
 
@@ -1063,6 +1068,7 @@ end
 
 do -- Event Creation
 
+  -- TODO Remove old Cargo event  
   --- Creation of a New Cargo Event.
   -- @param #EVENT self
   -- @param AI.AI_Cargo#AI_CARGO Cargo The Cargo created.
@@ -1077,7 +1083,8 @@ do -- Event Creation
 
     world.onEvent( Event )
   end
-
+  
+  -- TODO Remove old Cargo event  
   --- Creation of a Cargo Deletion Event.
   -- @param #EVENT self
   -- @param AI.AI_Cargo#AI_CARGO Cargo The Cargo created.
@@ -1092,7 +1099,7 @@ do -- Event Creation
 
     world.onEvent( Event )
   end
-
+  
   --- Creation of a New Zone Event.
   -- @param #EVENT self
   -- @param Core.Zone#ZONE_BASE Zone The Zone created.
@@ -1361,7 +1368,8 @@ function EVENT:onEvent( Event )
             Event.IniDynamicCargoName = Event.IniUnitName
             Event.IniPlayerName = string.match(Event.IniUnitName,"^(.+)|%d%d:%d%d|PKG%d+")
           else
-            Event.IniUnit = CARGO:FindByName( Event.IniDCSUnitName )
+            --Event.IniUnit = CARGO:FindByName( Event.IniDCSUnitName )
+            Event.IniUnit = STATIC:FindByName( Event.IniDCSUnitName, false )
           end
           Event.IniCoalition = Event.IniDCSUnit:getCoalition()
           Event.IniCategory = Event.IniDCSUnit:getDesc().category
@@ -1374,7 +1382,9 @@ function EVENT:onEvent( Event )
           Event.IniDCSUnit = Event.initiator
           Event.IniDCSUnitName = ( Event.IniDCSUnit and Event.IniDCSUnit.getName ) and Event.IniDCSUnit:getName() or "Scenery no name "..math.random(1,20000)
           Event.IniUnitName = Event.IniDCSUnitName
-          Event.IniUnit = SCENERY:Register( Event.IniDCSUnitName, Event.initiator )
+          local ID = (Event.IniDCSUnit and Event.IniDCSUnit.getID) and Event.IniDCSUnit:getID() or Event.IniDCSUnitName
+          Event.IniUnit = (_SCENERY ~= nil) and _SCENERY[ID] or nil
+          --Event.IniUnit = SCENERY:Register( Event.IniDCSUnitName, Event.initiator )
           Event.IniCategory =  (Event.IniDCSUnit and Event.IniDCSUnit.getDesc ) and Event.IniDCSUnit:getDesc().category
           Event.IniTypeName = (Event.initiator and Event.initiator.isExist          
           and Event.initiator:isExist() and Event.IniDCSUnit and Event.IniDCSUnit.getTypeName) and Event.IniDCSUnit:getTypeName() or "SCENERY"
@@ -1478,7 +1488,9 @@ function EVENT:onEvent( Event )
           Event.TgtDCSUnitName = Event.TgtDCSUnit.getName and Event.TgtDCSUnit:getName() or nil
           if Event.TgtDCSUnitName~=nil then
             Event.TgtUnitName = Event.TgtDCSUnitName
-            Event.TgtUnit = SCENERY:Register( Event.TgtDCSUnitName, Event.target )
+            local ID = (Event.TgtDCSUnit and Event.TgtDCSUnit.getID) and Event.TgtDCSUnit:getID() or Event.TgtDCSUnitName
+            --Event.TgtUnit = SCENERY:Register( Event.TgtDCSUnitName, Event.target )
+            Event.TgtUnit = (_SCENERY ~= nil) and _SCENERY[ID] or nil
             Event.TgtCategory = Event.TgtDCSUnit:getDesc().category
             Event.TgtTypeName = Event.TgtDCSUnit:getTypeName()
           end
@@ -1519,7 +1531,9 @@ function EVENT:onEvent( Event )
       if Event.idx then
         Event.MarkID=Event.idx
         Event.MarkVec3=Event.pos
-        Event.MarkCoordinate=COORDINATE:NewFromVec3(Event.pos)
+        if self.CreateMarkCoordinateOnEvent == true then
+          Event.MarkCoordinate=COORDINATE:NewFromVec3(Event.pos)
+        end
         Event.MarkText=Event.text
         Event.MarkCoalition=Event.coalition
         Event.IniCoalition=Event.coalition

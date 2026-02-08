@@ -89,7 +89,6 @@ do -- SET_BASE
     Index = {},
     Database = nil,
     CallScheduler = nil,
-    Filter = {},
     FilterCoalitionNumbers = {
       [coalition.side.RED+1] = "red",
       [coalition.side.BLUE+1] = "blue",

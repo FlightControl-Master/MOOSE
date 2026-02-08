@@ -350,7 +350,7 @@ end
 -- myweapon:SetFuncImpact(OnImpact)
 --
 -- -- Start tracking.
--- myweapon:Track()
+-- myweapon:StartTrack()
 --
 function WEAPON:SetFuncImpact(FuncImpact, ...)
   self.impactFunc=FuncImpact

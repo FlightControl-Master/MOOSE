@@ -27,6 +27,9 @@
 -- @field Core.Set#SET_ZONE acceptzoneset Set of accept zones. If defined, only contacts in these zones are considered.
 -- @field Core.Set#SET_ZONE rejectzoneset Set of reject zones. Contacts in these zones are not considered, even if they are in accept zones.
 -- @field Core.Set#SET_ZONE conflictzoneset Set of conflict zones. Contacts in these zones are considered, even if they are not in accept zones or if they are in reject zones.
+-- @field Core.Set#SET_ZONE corridorzoneset Set of corridor zones. Contacts in these zones are never considered. Also see corridorfloorheight and corridorfloorceiling.
+-- @field #number corridorfloor [Air] Contacts below this height (ASL!) are considered, even if they are in a corridor zone.
+-- @field #number corridorceiling [Air] Contacts above this height (ASL!) are considered, even if they are in a corridor zone.
 -- @field #table Contacts Table of detected items.
 -- @field #table ContactsLost Table of lost detected items.
 -- @field #table ContactsUnknown Table of new detected items.
@@ -39,6 +42,9 @@
 -- @field #number prediction Seconds default to be used with CalcClusterFuturePosition.
 -- @field #boolean detectStatics If `true`, detect STATIC objects. Default `false`.
 -- @field #number statusupdate Time interval in seconds after which the status is refreshed. Default 60 sec. Should be negative.
+-- @field #boolean DetectAccoustic If true, also detect by sound (ie proximity).
+-- @field #number DetectAccousticRadius Radius dfor accoustic detection, defaults to 2000 meters.
+-- @field #table DetectAccousticUnitTypes Types of units we can detect accousticly. Defaults to {Unit.Category.HELICOPTER}
 -- @extends Core.Fsm#FSM
 
 --- Top Secret!
@@ -102,6 +108,9 @@ INTEL = {
   clusterarrows   = false,
   prediction      =   300,
   detectStatics   = false,
+  DetectAccoustic = false,
+  DetectAccousticRadius = 1000,
+  DetectAccousticUnitTypes =  {Unit.Category.HELICOPTER},
 }
 
 --- Detected item info.
@@ -160,14 +169,14 @@ INTEL.Ctype={
 
 --- INTEL class version.
 -- @field #string version
-INTEL.version="0.3.6"
+INTEL.version="0.3.10"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Add min cluster size. Only create new clusters if they have a certain group size.
--- TODO: process detected set asynchroniously for better performance.
+-- NODO: process detected set asynchroniously for better performance.
 -- DONE: Add statics.
 -- DONE: Filter detection methods.
 -- DONE: Accept zones.
@@ -175,6 +184,7 @@ INTEL.version="0.3.6"
 -- NOGO: SetAttributeZone --> return groups of generalized attributes in a zone.
 -- DONE: Loose units only if they remain undetected for a given time interval. We want to avoid fast oscillation between detected/lost states. Maybe 1-5 min would be a good time interval?!
 -- DONE: Combine units to groups for all, new and lost.
+-- DONE: Add corridor zones.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -266,6 +276,7 @@ function INTEL:New(DetectionSet, Coalition, Alias)
   self:SetForgetTime()
   self:SetAcceptZones()
   self:SetRejectZones()
+  self:SetCorridorZones()
   self:SetConflictZones()
 
   ------------------------
@@ -398,6 +409,26 @@ function INTEL:SetAcceptZones(AcceptZoneSet)
   return self
 end
 
+--- Set to accept accoustic detection.
+-- @param #INTEL self
+-- @param #number Radius Radius in which we can "hear" units. Defaults to 1000 meters.
+-- @param #table UnitCategories Set what Unit Categories we can "hear". Defaults to `{Unit.Category.GROUND_UNIT,Unit.Category.HELICOPTER}`
+-- @return #INTEL self
+function INTEL:SetAccousticDetectionOn(Radius,UnitCategories)
+  self.DetectAccoustic = true
+  self.DetectAccousticRadius = Radius or 1000
+  self.DetectAccousticUnitTypes =  UnitCategories or {Unit.Category.HELICOPTER}
+  return self
+end
+
+--- Switch off accoustic detection.
+-- @param #INTEL self
+-- @return #INTEL self
+function INTEL:SetAccousticDetectionOff()
+  self.DetectAccoustic = false
+  return self
+end
+
 --- Add an accept zone. Only contacts detected in this zone are considered.
 -- @param #INTEL self
 -- @param Core.Zone#ZONE AcceptZone Add a zone to the accept zone set.
@@ -475,7 +506,69 @@ function INTEL:RemoveConflictZone(ConflictZone)
   return self
 end
 
---- **OBSOLETE, will be removed in next version!**  Set forget contacts time interval.
+--- Set corrdidor zones. Contacts detected in this/these zone(s) are never reported by the detection.
+-- Note that corrdidor zones overrule all other zones, for exceptions see corridor floor and corridor ceiling heights.
+-- @param #INTEL self
+-- @param Core.Set#SET_ZONE CorridorZoneSet Set of corrdidor zone(s).
+-- @return #INTEL self
+function INTEL:SetCorridorZones(CorridorZoneSet)
+  self.corridorzoneset=CorridorZoneSet or SET_ZONE:New()
+  return self
+end
+
+--- Add a corrdidor zone. Contacts detected in this zone are corrdidored and not reported by the detection.
+-- Note that corrdidor zones overrule all other zones, for exceptions see corridor floor and corridor ceiling heights.
+-- @param #INTEL self
+-- @param Core.Zone#ZONE CorridorZone Add a zone to the corrdidor zone set.
+-- @return #INTEL self
+function INTEL:AddCorridorZone(CorridorZone)
+  self.corridorzoneset:AddZone(CorridorZone)
+  return self
+end
+
+--- Remove a corrdidor zone from the corrdidor zone set.
+-- Note that corrdidor zones overrule all other zones, for exceptions see corridor floor and corridor ceiling heights.
+-- @param #INTEL self
+-- @param Core.Zone#ZONE CorridorZone Remove a zone from the corrdidor zone set.
+-- @return #INTEL self
+function INTEL:RemoveCorridorZone(CorridorZone)
+  self.corridorzoneset:Remove(CorridorZone:GetName(), true)
+  return self
+end
+
+--- [Air] Add corrdidor zone floor and height. This is generally applicable to all(!) corridor zones. Considered as ASL (above sea level or barometric) values.
+-- Overrides corridor exception for objects flying outside this limitations.
+-- To set an individual ceiling/floor on any Core.Zone#ZONE you wish to use, set these properties on the Core.Zone#ZONE object:
+-- `mycorridorzone:SetProperty("CorridorFloor",500)` -- meters, case sensitivity matters!
+-- `mycorridorzone:SetProperty("CorridorCeiling",10000)` -- meters, case sensitivity matters!
+-- @param #INTEL self
+-- @param #number Floor Floor altitude in meters.
+-- @param #number Ceiling Ceiling altitude in meters.
+-- @return #INTEL self
+function INTEL:SetCorridorLimits(Floor,Ceiling)
+  self.corridorceiling = Ceiling or 10000
+  self.corridorfloor = Floor or 1
+  return self
+end
+
+--- [Air] Add corrdidor zone floor and height. This is generally applicable to all(!) corridor zones. Considered as ASL (above sea level or barometric) values.
+-- Overrides corridor exception for objects flying outside this limitations.
+-- To set an individual ceiling/floor on any Core.Zone#ZONE you wish to use, set these properties on the Core.Zone#ZONE object:
+-- `mycorridorzone:SetProperty("CorridorFloor",UTILS.FeetToMeters(5000))` -- feet, case sensitivity matters!
+-- `mycorridorzone:SetProperty("CorridorCeiling",UTILS.FeetToMeters(20000))` -- feet, case sensitivity matters!
+-- @param #INTEL self
+-- @param #number Floor Floor altitude in feet.
+-- @param #number Ceiling Ceiling altitude in feet.
+-- @return #INTEL self
+function INTEL:SetCorridorLimitsFeet(Floor,Ceiling)
+  local Ceiling = Ceiling or 25000
+  local Floor = Floor or 15000
+  self.corridorceiling = UTILS.FeetToMeters(Ceiling)
+  self.corridorfloor = UTILS.FeetToMeters(Floor)
+  return self
+end
+
+--- **OBSOLETE, not functional!**  Set forget contacts time interval.
 -- Previously known contacts that are not detected any more, are "lost" after this time.
 -- This avoids fast oscillations between a contact being detected and undetected.
 -- @param #INTEL self
@@ -831,6 +924,18 @@ function INTEL:UpdateIntel()
         self:GetDetectedUnits(recce, DetectedUnits, RecceDetecting, self.DetectVisual, self.DetectOptical, self.DetectRadar, self.DetectIRST, self.DetectRWR, self.DetectDLINK)
 
       end
+      
+      if self.DetectAccoustic then
+        local recce = group:GetFirstUnitAlive()
+        local detectionzone = group:GetProperty("INTEL_DETECT_ACCZONE")
+        if not detectionzone then
+          detectionzone = ZONE_GROUP:New(group.IdentifiableName.."INTEL_DETECT_ACCZONE",group,self.DetectAccousticRadius or 2000)
+          group:SetProperty("INTEL_DETECT_ACCZONE",detectionzone)
+        end
+        if recce and recce:IsGround() then
+          self:GetDetectedUnitsAccoustic(recce,DetectedUnits,RecceDetecting,detectionzone)
+        end
+      end
 
     end
   end
@@ -881,6 +986,36 @@ function INTEL:UpdateIntel()
 
       -- Unit is inside a reject zone ==> remove!
       if inzone and (not inconflictzone) then
+        table.insert(remove, unitname)
+      end
+    end
+    
+    -- Check if unit is in any of the corridor zones.
+    if self.corridorzoneset:Count()>0 then
+      self:T("Corridorzone Check for unit "..unit:GetName())
+      local inzone = false
+      for _,_zone in pairs(self.corridorzoneset.Set) do
+        local zone=_zone --Core.Zone#ZONE
+        if unit:IsInZone(zone) then
+          local corridorfloor = zone:GetProperty("CorridorFloor") or self.corridorfloor
+          local corridorceiling = zone:GetProperty("CorridorCeiling") or self.corridorceiling
+          local debugtext = "Corridorzone Check for unit "..unit:GetName().."\n"
+          debugtext = debugtext .. string.format("IsAir %s | Alt %dft | Floor %dft | Ceil %dft",tostring(unit:IsAir()),tonumber(UTILS.MetersToFeet(unit:GetAltitude())),
+          tonumber(UTILS.MetersToFeet(corridorfloor)),tonumber(UTILS.MetersToFeet(corridorceiling)))
+          MESSAGE:New(debugtext,15,"INTEL"):ToAllIf(self.verbose>1):ToLogIf(self.verbose>1)
+          if unit:IsAir() and (corridorfloor ~= nil or corridorceiling ~= nil) then
+            local alt = unit:GetAltitude()
+            if corridorfloor and alt > corridorfloor then inzone = true end
+            if corridorceiling and (inzone == true or corridorfloor == nil) and alt < corridorceiling then inzone = true else inzone = false end
+            if inzone == true then break end
+          else  
+            inzone=true
+            break
+          end
+        end
+      end
+      -- Unit is inside a corridor zone ==> remove!
+      if inzone then
         table.insert(remove, unitname)
       end
     end
@@ -1040,7 +1175,7 @@ function INTEL:_CreateContact(Positionable, RecceName)
       item.category=3 --static:GetCategory()
       item.categoryname=static:GetCategoryName() or "Unknown"
       item.threatlevel=static:GetThreatLevel() or 0
-      item.position=static:GetCoordinate()
+      item.position=static:GetCoord()
       item.velocity=static:GetVelocityVec3()
       item.speed=0
       item.recce=RecceName
@@ -1106,7 +1241,7 @@ function INTEL:CreateDetectedItems(DetectedGroups, DetectedStatics, RecceDetecti
   return self
 end
 
---- (Internal) Return the detected target groups of the controllable as a @{Core.Set#SET_GROUP}.
+--- (Internal) Return the detected target groups of the controllable as a table.
 -- The optional parameters specify the detection methods that can be applied.
 -- If no detection method is given, the detection will use all the available methods by default.
 -- @param #INTEL self
@@ -1147,15 +1282,15 @@ function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisua
           local DetectionAccepted = true
           
           if self.RadarAcceptRange then
-            local reccecoord = Unit:GetCoordinate()
-            local coord = unit:GetCoordinate()
+            local reccecoord = Unit:GetCoord()
+            local coord = unit:GetCoord()
             local dist = math.floor(coord:Get2DDistance(reccecoord)/1000) -- km
             if dist > self.RadarAcceptRangeKilometers then DetectionAccepted = false end
           end
           
           if self.RadarBlur then
-            local reccecoord = Unit:GetCoordinate()
-            local coord = unit:GetCoordinate()
+            local reccecoord = Unit:GetCoord()
+            local coord = unit:GetCoord()
             local dist = math.floor(coord:Get2DDistance(reccecoord)/1000) -- km
             local AGL = unit:GetAltitude(true)
             local minheight = self.RadarBlurMinHeight or 250 -- meters
@@ -1197,6 +1332,33 @@ function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisua
       else
         -- Warning!
         self:T(self.lid..string.format("WARNING: Could not get name of detected object ID=%s! Detected by %s", DetectedObject.id_, reccename))
+      end
+    end
+  end
+end
+
+--- (Internal) Return the detected target groups of the controllable as a @{Core.Set#SET_GROUP}.
+-- @param #INTEL self
+-- @param Wrapper.Unit#UNIT Recce The unit detecting.
+-- @param #table DetectedUnits Table of detected units to be filled.
+-- @param #table RecceDetecting Table of recce per unit to be filled.
+-- @param Core.Zone#ZONE_GROUP detectionzone The zone where to look.
+function INTEL:GetDetectedUnitsAccoustic(Recce,DetectedUnits,RecceDetecting,detectionzone)
+  local othercoalition = self.coalition == coalition.side.BLUE and coalition.side.RED or coalition.side.BLUE
+  self:T("Other coalition = "..othercoalition)
+  if detectionzone then
+    -- Get detected units
+    local reccename = Recce:GetName()
+    local DetectAccousticUnitTypes = self.DetectAccousticUnitTypes or {Unit.Category.HELICOPTER}
+    detectionzone:Scan({Object.Category.UNIT},DetectAccousticUnitTypes)
+    local unitset = detectionzone:GetScannedSetUnit(othercoalition) -- Core.Set#SET_UNIT
+    self:T("Accoustic detection found #Units "..unitset:CountAlive())
+    for _,_unit in pairs(unitset.Set or {}) do
+      if _unit and _unit:IsAlive() and _unit:GetCoalition() ~= self.coalition then
+        local name = _unit:GetName() or "none"
+        DetectedUnits[name]=_unit
+        RecceDetecting[name]=reccename
+        self:T("Unit name = "..name)
       end
     end
   end
@@ -2144,7 +2306,7 @@ function INTEL:GetClusterCoordinate(Cluster, Update)
   return Cluster.coordinate
 end
 
---- Check if the coorindate of the cluster changed.
+--- Check if the coordindate of the cluster changed.
 -- @param #INTEL self
 -- @param #INTEL.Cluster Cluster The cluster.
 -- @param #number Threshold in meters. Default 100 m.

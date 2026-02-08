@@ -31,7 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 ---
--- Last Update Oct 2025
+-- Last Update Jan 2026
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -81,7 +81,7 @@
 --
 --         mycsar.allowDownedPilotCAcontrol = false -- Set to false if you don\'t want to allow control by Combined Arms.
 --         mycsar.allowFARPRescue = true -- allows pilots to be rescued by landing at a FARP or Airbase. Else MASH only!
---         mycsar.FARPRescueDistance = 1000 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
+--         mycsar.FARPRescueDistance = 500 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
 --         mycsar.autosmoke = false -- automatically smoke a downed pilot\'s location when a heli is near.
 --         mycsar.autosmokedistance = 1000 -- distance for autosmoke
 --         mycsar.coordtype = 1 -- Use Lat/Long DDM (0), Lat/Long DMS (1), MGRS (2), Bullseye imperial (3) or Bullseye metric (4) for coordinates.
@@ -119,6 +119,7 @@
 --         mycsar.PilotWeight = 80 --  Loaded pilots weigh 80kgs each
 --         mycsar.AllowIRStrobe = false -- Allow a menu item to request an IR strobe to find a downed pilot at night (requires NVGs to see it).
 --         mycsar.IRStrobeRuntime = 300 -- If an IR Strobe is activated, it runs for 300 seconds (5 mins).
+--         mycsar.EnableMenuSmokeMASH = true -- Allow a menu item to request smoke at the closest MASH/AFB for rescue.
 --
 -- ## 2.1 Create own SET_GROUP to manage CTLD Pilot groups
 --
@@ -272,6 +273,8 @@ CSAR = {
   UserSetGroup = nil,
   AllowIRStrobe = false,
   IRStrobeRuntime = 300,
+  FARPRescueDistance = 500,
+  EnableMenuSmokeMASH = true,
 }
 
 --- Downed pilots info.
@@ -312,10 +315,12 @@ CSAR.AircraftType["MH-60R"] = 10
 CSAR.AircraftType["OH-6A"] = 2
 CSAR.AircraftType["OH58D"] = 2
 CSAR.AircraftType["CH-47Fbl1"] = 31
+CSAR.AircraftType["AH-6J"] = 2
+CSAR.AircraftType["MH-6J"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.34"
+CSAR.version="1.0.36"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -431,12 +436,13 @@ function CSAR:New(Coalition, Template, Alias)
   self.radioSound = "beacon.ogg" -- the name of the sound file to use for the Pilot radio beacons. If this isnt added to the mission BEACONS WONT WORK!
   self.beaconRefresher = 29 -- seconds
   self.allowFARPRescue = true --allows pilot to be rescued by landing at a FARP or Airbase
-  self.FARPRescueDistance = 1000 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
+  self.FARPRescueDistance = 500 -- you need to be this close to a FARP or Airport for the pilot to be rescued.
   self.max_units = 6 --max number of pilots that can be carried
   self.useprefix = true  -- Use the Prefixed defined below, Requires Unit have the Prefix defined below
   self.csarPrefix = { "helicargo", "MEDEVAC"} -- prefixes used for useprefix=true - DON\'T use # in names!
   self.template = Template or "generic" -- template for downed pilot
   self.mashprefix = {"MASH"} -- prefixes used to find MASHes
+  self.EnableMenuSmokeMASH = true
 
   self.autosmoke = false -- automatically smoke location when heli is near
   self.autosmokedistance = 2000 -- distance for autosmoke
@@ -673,7 +679,7 @@ function CSAR:_CreateDownedPilotTrack(Group,Groupname,Side,OriginalUnit,Descript
   DownedPilot.alive = true
   DownedPilot.wetfeet = Wetfeet or false
   DownedPilot.BeaconName = BeaconName
-
+  
   -- Add Pilot
   local PilotTable = self.downedPilots
   local counter = self.downedpilotcounter
@@ -850,6 +856,10 @@ function CSAR:_AddCsar(_coalition , _country, _point, _typeName, _unitName, _pla
     BeaconName = _unitName..math.random(1,10000)
   else
     BeaconName = "Ghost-1-1"..math.random(1,10000)
+  end
+  
+  if _playerName == nil or _playerName == "" then
+    _playerName = "AI MIA"
   end
 
   if (_freq and _freq ~= 0) then --shagrat only add beacon if _freq is NOT 0
@@ -1232,7 +1242,7 @@ function CSAR:_EventHandler(EventData)
       local _place = _event.Place -- Wrapper.Airbase#AIRBASE
 
       if _place == nil then
-        self:T(self.lid .. " Landing Place Nil")
+        self:T(self.lid .. " Landing Place nil")
         return self -- error!
       end
 
@@ -1267,7 +1277,7 @@ function CSAR:_EventHandler(EventData)
     self:T("Country = ".._country.." Coalition = ".._coalition)
     if _coalition == self.coalition then
       local _freq = self:_GenerateADFFrequency()
-      self:I({coalition=_coalition,country= _country, coord=_LandingPos, name=_unitname, player=_event.IniPlayerName, freq=_freq})
+      self:T({coalition=_coalition,country= _country, coord=_LandingPos, name=_unitname, player=_event.IniPlayerName, freq=_freq})
       self:_AddCsar(_coalition, _country, _LandingPos, nil, _unitname, _event.IniPlayerName, _freq, self.suppressmessages, "none")--shagrat add CSAR at Parachute location.
     
       Unit.destroy(_event.initiator) -- shagrat remove static Pilot model
@@ -1761,7 +1771,14 @@ function CSAR:_ScheduledSARFlight(heliname,groupname, isairport, noreschedule, I
   end
 
   self:T(self.lid.."[Drop off debug] Check distance to MASH for "..heliname.." Distance km: "..math.floor(_dist/1000))
-
+  
+  if self.verbose>0 then
+    local debugtext = string.format("Distance %dm | Rescuedist %dm | IsAirport %s | IsInAir %s | IsHeloBase %s\n",_dist,self.FARPRescueDistance,tostring(isairport),tostring(_heliUnit:InAir()),tostring(IsHeloBase))
+    self:T("*******************************")
+    self:T(debugtext)
+    self:T("*******************************")
+  end
+  
   if ( _dist < self.FARPRescueDistance or isairport ) and ((_heliUnit:InAir() == false) or (IsHeloBase == true)) then
     self:T(self.lid.."[Drop off debug] Distance ok, door check")
     if self.pilotmustopendoors and self:_IsLoadingDoorOpen(heliname) == false then
@@ -2138,15 +2155,52 @@ function CSAR:_Reqsmoke( _unitName )
   return self
 end
 
+---(Internal) Request smoke at closest MASH/AFB.
+--@param #CSAR self
+--@param #string _unitName Name of the helicopter
+function CSAR:_ReqsmokeMash( _unitName )
+  self:T(self.lid .. " _ReqsmokeMash")
+  local _heli = self:_GetSARHeli(_unitName)
+  if _heli == nil then
+    return
+  end
+  local smokedist = 8000
+  if smokedist < self.approachdist_far then smokedist = self.approachdist_far end
+  local distance, name, coordinate = self:_GetClosestMASH(_heli)
+  if coordinate and distance then  
+    local disttext
+    if _SETTINGS:IsImperial() then
+      disttext = string.format("%.1fnm",UTILS.MetersToNM(distance))
+    else
+      disttext = string.format("%.1fkm",distance/1000)
+    end
+    local _msg = string.format("%s - Popping smoke at the closest rescue point: %s", self:_GetCustomCallSign(_unitName), disttext)
+    self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
+    local color = self.smokecolor
+    coordinate:Smoke(color)    
+  else
+    local _distance = string.format("%.1fkm",smokedist/1000)
+    if _SETTINGS:IsImperial() then
+      _distance = string.format("%.1fnm",UTILS.MetersToNM(smokedist))
+    else
+      _distance = string.format("%.1fkm",smokedist/1000)
+    end
+    self:_DisplayMessageToSAR(_heli, string.format("No rescue point within %s",_distance), self.messageTime, false, false, true)
+  end
+  return self
+end
+
 --- (Internal) Determine distance to closest MASH.
 -- @param #CSAR self
 -- @param Wrapper.Unit#UNIT _heli Helicopter #UNIT
 -- @return #number Distance in meters
 -- @return #string MASH Name as string
+-- @return Core.Point#COORDINATE Coordinate The MASH/AFB Coordinate (for smoke)
 function CSAR:_GetClosestMASH(_heli)
   self:T(self.lid .. " _GetClosestMASH")
   local _mashset = self.mash -- Core.Set#SET_GROUP
-  local MashSets = {}
+  local MashSets = {} 
+  
   --local _mashes = _mashset.Set-- #table
   table.insert(MashSets,_mashset.Set)
   table.insert(MashSets,self.zonemashes.Set)
@@ -2155,12 +2209,21 @@ function CSAR:_GetClosestMASH(_heli)
   local _distance = 0
   local _helicoord = _heli:GetCoordinate()
   local MashName = nil
+  local Coordinate =  nil -- Core.Point#COORDINATE 
 
   if self.allowFARPRescue then
-    local position = _heli:GetCoordinate()
-    local afb,distance = position:GetClosestAirbase(nil,self.coalition)
+    local afb,distance = _helicoord:GetClosestAirbase(nil,self.coalition)
     _shortestDistance = distance
     MashName = (afb ~= nil) and afb:GetName() or "Unknown"
+    Coordinate = (afb ~= nil) and afb:GetCoordinate()
+    if afb then
+      local afbzone = afb:GetMinimumBoundingCircleFromParkingSpots()
+      if afbzone then
+        if afbzone:IsCoordinateInZone(_helicoord) and distance > self.FARPRescueDistance*1.1 then
+          _shortestDistance = 100
+        end
+      end
+    end
   end
 
   for _,_mashes in pairs(MashSets)  do
@@ -2175,12 +2238,13 @@ function CSAR:_GetClosestMASH(_heli)
       if _distance ~= nil and (_shortestDistance == -1 or _distance < _shortestDistance) then
         _shortestDistance = _distance
         MashName = _mashUnit:GetName() or "Unknown"
+        Coordinate = _mashcoord
       end
     end
   end
 
   if _shortestDistance ~= -1 then
-    return _shortestDistance, MashName
+    return _shortestDistance, MashName, Coordinate
   else
     return -1
   end
@@ -2249,6 +2313,9 @@ function CSAR:_AddMedevacMenuItem()
           local _rootMenu4 = MENU_GROUP_COMMAND:New(_group,"Request Smoke",_rootPath, self._Reqsmoke,self,_unitName)
           if self.AllowIRStrobe then
             local _rootMenu5 = MENU_GROUP_COMMAND:New(_group,"Request IR Strobe",_rootPath, self._ReqIRStrobe,self,_unitName):Refresh()
+          end
+          if self.EnableMenuSmokeMASH then
+            local _rootMenu6 = MENU_GROUP_COMMAND:New(_group,"Smoke Closest MASH",_rootPath, self._ReqsmokeMash,self,_unitName)
           else
             _rootMenu4:Refresh()
           end
@@ -2269,6 +2336,7 @@ function CSAR:_GetDistance(_point1, _point2)
   if _point1 and _point2 then
     local distance1 = _point1:Get2DDistance(_point2)
     local distance2 = _point1:DistanceFromPointVec2(_point2)
+    MESSAGE:New(string.format("_GetDistance: d1 = %dm | d2 = %dm",distance1,distance2)):ToAllIf(self.verbose>1):ToLogIf(self.verbose>1)
     if distance1 and type(distance1) == "number" then
       return distance1
     elseif distance2 and type(distance2) == "number" then
@@ -2368,7 +2436,7 @@ function CSAR:_AddBeaconToGroup(_group, _freq, BeaconName)
       --local name = _radioUnit:GetName()
       local Sound =  "l10n/DEFAULT/"..self.radioSound
       local vec3 = _radioUnit:GetVec3() or _radioUnit:GetPositionVec3() or {x=0,y=0,z=0}
-      self:I(self.lid..string.format("Added Radio Beacon %d Hertz | Name %s | Position {%d,%d,%d}",Frequency,BeaconName,vec3.x,vec3.y,vec3.z))
+      self:T(self.lid..string.format("Added Radio Beacon %d Hertz | Name %s | Position {%d,%d,%d}",Frequency,BeaconName,vec3.x,vec3.y,vec3.z))
       trigger.action.radioTransmission(Sound, vec3, 0, true, Frequency, self.ADFRadioPwr or 500,BeaconName) -- Beacon in MP only runs for exactly 30secs straight
     end
   end
@@ -2495,22 +2563,6 @@ function CSAR:onafterStart(From, Event, To)
 
   self.staticmashes = SET_STATIC:New():FilterCoalitions(self.coalitiontxt):FilterPrefixes(self.mashprefix):FilterStart()
   self.zonemashes = SET_ZONE:New():FilterPrefixes(self.mashprefix):FilterStart()
-
-  --[[
-  if staticmashes:Count() > 0  then
-    for _,_mash in pairs(staticmashes.Set) do
-      self.mash:AddObject(_mash)
-    end
-  end
-  
-  if zonemashes:Count() > 0  then
-    self:T("Adding zones to self.mash SET")
-    for _,_mash in pairs(zonemashes.Set) do
-      self.mash:AddObject(_mash)
-    end
-    self:T("Objects in SET: "..self.mash:Count())
-  end
-  --]]
 
   if not self.coordinate then
     local csarhq = self.mash:GetRandom()
@@ -2854,6 +2906,7 @@ function CSAR:onafterSave(From, Event, To, path, filename)
     if DownedPilot and DownedPilot.alive then
       -- get downed pilot data for saving
       local playerName = DownedPilot.player
+      if playerName == nil or playerName == "" then playerName = "AI MIA" end 
       local group = DownedPilot.group
       local coalition = group:GetCoalition()
       local country = group:GetCountry()
@@ -2864,7 +2917,7 @@ function CSAR:onafterSave(From, Event, To, path, filename)
       local unitName = DownedPilot.originalUnit
       local txt = string.format("%s,%d,%d,%d,%s,%s,%s,%s,%s,%d\n",playerName,location.x,location.y,location.z,coalition,country,description,typeName,unitName,freq)
 
-      self:I(self.lid.."Saving to CSAR File: " .. txt)
+      self:T(self.lid.."Saving to CSAR File: " .. txt)
 
       data = data .. txt
     end
@@ -2979,8 +3032,8 @@ function CSAR:onafterLoad(From, Event, To, path, filename)
 
   -- Info message.
   local text=string.format("Loading CSAR state from file %s", filename)
-  MESSAGE:New(text,10):ToAllIf(self.Debug)
-  self:I(self.lid..text)
+  MESSAGE:New(text,10):ToAllIf(self.verbose>0)
+  self:T(self.lid..text)
 
   local file=assert(io.open(filename, "rb"))
 

@@ -2184,7 +2184,8 @@ function CONTROLLABLE:TaskFunction( FunctionString, ... )
     local ArgumentKey = '_' .. tostring( arg ):match( "table: (.*)" )
     self:SetState( self, ArgumentKey, arg )
     DCSScript[#DCSScript + 1] = "local Arguments = MissionControllable:GetState( MissionControllable, '" .. ArgumentKey .. "' ) "
-    DCSScript[#DCSScript + 1] = FunctionString .. "( MissionControllable, unpack( Arguments ) )"
+    --DCSScript[#DCSScript + 1] = FunctionString .. "( MissionControllable, unpack( Arguments ) )"
+    DCSScript[#DCSScript + 1] = FunctionString .. "( MissionControllable, ((type(Arguments)=='table') and unpack(Arguments) or nil))"
   else
     DCSScript[#DCSScript + 1] = FunctionString .. "( MissionControllable )"
   end
@@ -3650,6 +3651,46 @@ function CONTROLLABLE:OptionPreferVerticalLanding()
 
     if self:IsAir() then
       Controller:setOption( AI.Option.Air.id.PREFER_VERTICAL, true )
+    end
+
+    return self
+  end
+
+  return nil
+end
+
+--- Air - Allow formation side swap
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionAllowFormationSideSwap()
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption( AI.Option.Air.id.ALLOW_FORMATION_SIDE_SWAP, true )
+    end
+
+    return self
+  end
+
+  return nil
+end
+
+--- Air - Allow formation takeoff, if enough space
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:OptionAIRunwayLineUp()
+  self:F2( { self.ControllableName } )
+
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = self:_GetController()
+
+    if self:IsAir() then
+      Controller:setOption( 37, true )
     end
 
     return self

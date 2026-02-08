@@ -19,7 +19,7 @@
 --
 -- ### Authors: **applevangelist**, **FlightControl**
 --
--- Last Update: Dec 2024
+-- Last Update: January 2026
 --
 -- ===
 --
@@ -157,7 +157,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   self:AddTransition("*",             "ManageEvasion",                "*")
   self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  self:I("*** SEAD - Started Version 0.4.9")
+  self:I("*** SEAD - Started Version 0.4.11")
   return self
 end
 
@@ -318,7 +318,7 @@ function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADG
     elseif height <= 12500 then
       Ropt = Ropt * 0.98
     end
-    
+    local WeaponWrapper = WEAPON:New(SEADWeapon)
     -- look at a couple of zones across the trajectory
     for n=1,3 do
       local dist = Ropt - ((n-1)*20000)
@@ -342,7 +342,7 @@ function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADG
             _targetgroupname = tgtgrp:GetName() -- group name
             _targetskill = tgtgrp:GetUnit(1):GetSkill()
             self:T("*** Found Target = ".. _targetgroupname)
-            self:ManageEvasion(_targetskill,_targetgroup,pos0,"AGM_88",SEADGroup, 20)
+            self:ManageEvasion(_targetskill,_targetgroup,pos0,"AGM_88",SEADGroup, 20, WeaponWrapper)
           end
         --end
       end
@@ -442,7 +442,18 @@ function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADP
         local SuppressionStartTime = timer.getTime() + delay
         local SuppressionEndTime = timer.getTime() + delay + _tti + self.Padding + delay
         local _targetgroupname = _targetgroup:GetName()
-        if not self.SuppressedGroups[_targetgroupname] then
+        local shoradactive = _targetgroup:GetProperty("SHORAD_ACTIVE")
+        if not self.SuppressedGroups[_targetgroupname] and shoradactive ~= true then
+          -- TODO: ask callback if suppression is allowed BEFORE scheduling timers
+          local allow = true
+          if self.UseCallBack and self.CallBack and self.CallBack.SeadAllowSuppression then
+            allow = self.CallBack:SeadAllowSuppression(_targetgroup,_targetgroupname,SEADGroup,SEADWeaponName,Weapon,_tti,delay)
+          end
+          if not allow then
+            self:T(string.format("*** SEAD - %s | Suppression vetoed by callback", _targetgroupname))
+            -- Important: do NOT schedule SuppressionStart/Stop and do NOT flip SuppressedGroups true.
+            return self
+          end
           self:T(string.format("*** SEAD - %s | Parameters TTI %ds | Switch-Off in %ds",_targetgroupname,_tti,delay))
           timer.scheduleFunction(SuppressionStart,{_targetgroup,_targetgroupname, SEADGroup},SuppressionStartTime)
           timer.scheduleFunction(SuppressionStop,{_targetgroup,_targetgroupname},SuppressionEndTime)

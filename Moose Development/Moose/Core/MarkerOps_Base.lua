@@ -50,7 +50,7 @@ MARKEROPS_BASE = {
   ClassName = "MARKEROPS",
   Tag = "mytag",
   Keywords = {},
-  version = "0.1.4",
+  version = "0.1.5",
   debug = false,
   Casesensitive = true,
 }
@@ -59,9 +59,8 @@ MARKEROPS_BASE = {
 -- @param #MARKEROPS_BASE self
 -- @param #string Tagname Name to identify us from the event text.
 -- @param #table Keywords Table of keywords  recognized from the event text.
--- @param #boolean Casesensitive (Optional) Switch case sensitive identification of Tagname. Defaults to true.
 -- @return #MARKEROPS_BASE self
-function MARKEROPS_BASE:New(Tagname,Keywords,Casesensitive)
+function MARKEROPS_BASE:New(Tagname,Keywords)
    -- Inherit FSM
   local self=BASE:Inherit(self, FSM:New()) -- #MARKEROPS_BASE
   
@@ -72,11 +71,7 @@ function MARKEROPS_BASE:New(Tagname,Keywords,Casesensitive)
   self.Keywords = Keywords or {} -- #table - might want to use lua regex here, too
   self.debug = false
   self.Casesensitive = true
-  
-  if Casesensitive and Casesensitive == false then
-    self.Casesensitive = false
-  end
-  
+
   -----------------------
   --- FSM Transitions ---
   -----------------------
@@ -145,7 +140,7 @@ function MARKEROPS_BASE:New(Tagname,Keywords,Casesensitive)
 
 end
 
---- (internal) Handle events.
+--- (Internal) Handle events.
 -- @param #MARKEROPS_BASE self
 -- @param Core.Event#EVENTDATA Event
 function MARKEROPS_BASE:OnEventMark(Event)
@@ -201,15 +196,17 @@ function MARKEROPS_BASE:OnEventMark(Event)
     end
 end
 
---- (internal) Match tag.
+--- (Internal) Match tag.
 -- @param #MARKEROPS_BASE self
 -- @param #string Eventtext Text added to the marker.
 -- @return #boolean
 function MARKEROPS_BASE:_MatchTag(Eventtext)
   local matches = false
-  if not self.Casesensitive then
+  --self:I(self.lid .. "Casesensitive "..tostring(self.Casesensitive))
+  if self.Casesensitive == false then
+    --self:I(self.lid .. "Marker non-casesensitive "..Eventtext)
     local type = string.lower(self.Tag) -- #string
-    if string.find(string.lower(Eventtext),type) then
+    if string.find(string.lower(Eventtext),type,1,true) then
       matches = true --event text contains tag
     end
   else
@@ -221,7 +218,7 @@ function MARKEROPS_BASE:_MatchTag(Eventtext)
   return matches
 end
 
---- (internal) Match keywords table.
+--- (Internal) Match keywords table.
 -- @param #MARKEROPS_BASE self
 -- @param #string Eventtext Text added to the marker.
 -- @return #table
@@ -284,6 +281,22 @@ function MARKEROPS_BASE:onenterStopped(From,Event,To)
   self:UnHandleEvent(EVENTS.MarkAdded)
   self:UnHandleEvent(EVENTS.MarkChange)
   self:UnHandleEvent(EVENTS.MarkRemoved)
+end
+
+--- Switch off case sensitive matching
+ -- @param #MARKEROPS_BASE self
+ -- @return self
+function MARKEROPS_BASE:SwitchCaseSensitiveOff()
+  self.Casesensitive = false
+  return self
+end
+
+--- Switch on case sensitive matching
+ -- @param #MARKEROPS_BASE self
+ -- @return self
+function MARKEROPS_BASE:SwitchCaseSensitiveOn()
+  self.Casesensitive = true
+  return self
 end
 
 --------------------------------------------------------------------------

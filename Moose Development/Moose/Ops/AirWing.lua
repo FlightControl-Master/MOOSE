@@ -326,6 +326,42 @@ function AIRWING:AddSquadron(Squadron)
   if Squadron:IsStopped() then
     Squadron:Start()
   end
+  
+  -- if storage is limited, add the amount of aircraft needed
+  local airbasename = self:GetAirbaseName()
+  
+  if airbasename then
+    local group = Squadron.templategroup
+      if group then
+      local Nunits = 1
+      local units
+      if group then units = group:GetUnits() end
+      if units then Nunits = #units end
+      local typename = Squadron.aircrafttype or "none"
+      local NAssets = Squadron.Ngroups * Nunits
+      local storage = STORAGE:New(airbasename)
+      
+      self:T(self.lid.."Adding "..typename.." #"..NAssets)
+      if storage and storage.warehouse and storage:IsLimitedAircraft() and typename ~= "none" then
+        local NInStore = storage:GetItemAmount(typename) or 0
+        if NAssets > NInStore then
+          storage:AddItem(typename,NAssets)
+        end
+      end
+      
+      local unit = group:GetUnit(1)
+      -- if storage is limited, add the amount of liquids needed
+      if unit and storage and storage.warehouse and storage:IsLimitedLiquids() and typename ~= "none" then
+        local fuel = unit:GetFuelMassMax()
+        local neededfuel = (fuel*NAssets) -- kgs of fuel
+        local NInStore = storage:GetLiquidAmount(STORAGE.Liquid.JETFUEL) or 0
+        self:T(string.format(self.lid.."Fuel Needed: %dt | Fuel in store: %dt",neededfuel/1000,NInStore/1000))
+        if neededfuel > NInStore then
+          storage:AddLiquid(STORAGE.Liquid.JETFUEL,neededfuel)
+        end
+      end
+    end
+  end
 
   return self
 end

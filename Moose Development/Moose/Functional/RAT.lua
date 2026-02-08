@@ -1805,6 +1805,17 @@ function RAT:SetMaxCruiseSpeed(speed)
   return self
 end
 
+--- Set the minimum cruise speed of the aircraft.
+-- @param #RAT self
+-- @param #number speed Speed in km/h.
+-- @return #RAT RAT self object.
+function RAT:SetMinCruiseSpeed(speed)
+  self:F2(speed)
+  -- Convert to m/s.
+  self.Vcruisemin=speed/3.6
+  return self
+end
+
 --- Set the climb rate. This automatically sets the climb angle.
 -- @param #RAT self
 -- @param #number rate Climb rate in ft/min. Default is 1500 ft/min. Minimum is 100 ft/min. Maximum is 15,000 ft/min.
@@ -2135,10 +2146,18 @@ function RAT:_InitAircraft(DCSgroup)
     self.aircraft.length=16
     self.aircraft.height=5
     self.aircraft.width=9
-  elseif DCStype == "Saab340" then      --   <- These lines added
-    self.aircraft.length=19.73          --   <- These lines added
-    self.aircraft.height=6.97           --   <- These lines added
-    self.aircraft.width=21.44           --   <- These lines added
+  elseif DCStype == "Saab340" then
+    self.aircraft.length=19.73
+    self.aircraft.height=6.97
+    self.aircraft.width=21.44
+  elseif DCStype == "vwv_l-1049" then
+    self.aircraft.length=35.41
+    self.aircraft.height=7.54
+    self.aircraft.width=38.47
+  elseif DCStype == "uh2b" then
+    self.aircraft.length=11.48          
+    self.aircraft.height=4.11
+    self.aircraft.width=13.41
   end
 
   self.aircraft.box=math.max(self.aircraft.length,self.aircraft.width)
@@ -2813,9 +2832,15 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
     -- Max cruise speed 90% of Vmax or 900 km/h whichever is lower.
     VxCruiseMax = math.min(self.aircraft.Vmax*0.90, 250)
   end
-
-  -- Min cruise speed 70% of max cruise or 600 km/h whichever is lower.
-  local VxCruiseMin = math.min(VxCruiseMax*0.70, 166)
+  
+    -- Min cruise speed.
+  local VxCruiseMin
+  if self.Vcruisemin then
+    VxCruiseMin = self.Vcruisemin
+  else
+    -- Min cruise speed 70% of max cruise or 600 km/h whichever is lower.
+    VxCruiseMin = math.min(VxCruiseMax*0.70, 166)
+  end
 
   -- Cruise speed (randomized). Expectation value at midpoint between min and max.
   local VxCruise = UTILS.RandomGaussian((VxCruiseMax-VxCruiseMin)/2+VxCruiseMin, (VxCruiseMax-VxCruiseMax)/4, VxCruiseMin, VxCruiseMax)
@@ -3017,6 +3042,14 @@ function RAT:_SetRoute(takeoff, landing, _departure, _destination, _waypoint)
   if landing==RAT.wp.air then
     local vec2=destination:GetRandomVec2()
     Pdestination=COORDINATE:NewFromVec2(vec2)
+  elseif destination:IsShip() then
+    -- Crudely predict where the ship will be
+    local _ship = UNIT:FindByName(destination:GetName())
+    local _shipHeading = _ship:GetHeading()
+    Pdestination=destination:GetCoordinate()
+    local _transitTime = Pdeparture:Get2DDistance(Pdestination) / VxCruise
+    Pdestination.x = Pdestination.x + (_ship:GetGroundSpeed() * math.cos(math.rad(_shipHeading)) * _transitTime)
+    Pdestination.z = Pdestination.z + (_ship:GetGroundSpeed() * math.sin(math.rad(_shipHeading)) * _transitTime)
   else
     Pdestination=destination:GetCoordinate()
   end
@@ -5584,7 +5617,7 @@ end
 -- @param #string dest Name of the destination airport.
 function RAT:_ATCAddFlight(name, dest)
   -- Debug info
-  BASE:I(RAT.id..string.format("ATC %s: Adding flight %s with destination %s.", dest, name, dest))
+  BASE:T(RAT.id..string.format("ATC %s: Adding flight %s with destination %s.", dest, name, dest))
 
   -- Create new flight  
   local flight={} --#RAT.AtcFlight
@@ -5603,7 +5636,7 @@ end
 function RAT._ATCDelFlight(t,entry)
   for k,_ in pairs(t) do
     if k==entry then
-      BASE:I(RAT.id..string.format("Removing flight %s from queue", entry))
+      BASE:T(RAT.id..string.format("Removing flight %s from queue", entry))
       t[entry]=nil
     end
   end
@@ -5614,7 +5647,7 @@ end
 -- @param #string name Group name of the flight.
 -- @param #number time Time the fight first registered.
 function RAT._ATCRegisterFlight(name, time)
-  BASE:I(RAT.id..string.format("Flight %s registered at ATC for landing clearance.", name))
+  BASE:T(RAT.id..string.format("Flight %s registered at ATC for landing clearance.", name))
   RAT.ATC.flight[name].Tarrive=time
   RAT.ATC.flight[name].holding=0
 end
@@ -5649,15 +5682,16 @@ function RAT._ATCStatus()
   
         -- Aircraft is holding.
         local text=string.format("ATC %s: Flight %s is holding for %i:%02d. %s.", dest, name, hold/60, hold%60, busy)
-        BASE:I(RAT.id..text)
+        BASE:T(RAT.id..text)
   
       elseif hold==RAT.ATC.onfinal then
   
         -- Aircarft is on final approach for landing.
-        local Tfinal=Tnow-flight.Tonfinal
+        local Tonfinal = flight.Tonfinal or timer.getTime()-1
+        local Tfinal=Tnow-Tonfinal
   
         local text=string.format("ATC %s: Flight %s is on final. Waiting %i:%02d for landing event.", dest, name, Tfinal/60, Tfinal%60)
-        BASE:I(RAT.id..text)
+        BASE:T(RAT.id..text)
   
       elseif hold==RAT.ATC.unregistered then
   
@@ -5711,13 +5745,13 @@ function RAT._ATCCheck()
         -- Debug message.
         local text=string.format("ATC %s: Flight %s runway is busy. You are #%d of %d in landing queue. Your holding time is %i:%02d.", 
         airportname, flightname, qID, nqueue, flight.holding/60, flight.holding%60)
-        BASE:I(RAT.id..text)
+        BASE:T(RAT.id..text)
 
       else
 
         local text=string.format("ATC %s: Flight %s was cleared for landing. Your holding time was %i:%02d.", 
         airportname, flightname, flight.holding/60, flight.holding%60)
-        BASE:I(RAT.id..text)
+        BASE:T(RAT.id..text)
 
         -- Clear flight for landing.
         RAT._ATCClearForLanding(airportname, flightname)
@@ -5772,7 +5806,7 @@ function RAT._ATCClearForLanding(airportname, flightname)
 
   
     -- Debug message.
-    BASE:I(RAT.id..string.format("ATC %s: Flight %s cleared for landing", airportname, flightname))
+    BASE:T(RAT.id..string.format("ATC %s: Flight %s cleared for landing", airportname, flightname))
   
     if string.find(flightname,"#") then
       flightname =  string.match(flightname,"^(.+)#")
@@ -5799,8 +5833,9 @@ function RAT._ATCFlightLanded(name)
 
     -- Times for holding and final approach.
     local Tnow=timer.getTime()
-    local Tfinal=Tnow-flight.Tonfinal
-    local Thold=flight.Tonfinal-flight.Tarrive
+    local Tonfinal = flight.Tonfinal or timer.getTime()-1
+    local Tfinal=Tnow-Tonfinal
+    local Thold=Tonfinal-flight.Tarrive
     
     local airport=RAT.ATC.airport[dest] --#RAT.AtcAirport
 
@@ -5823,9 +5858,9 @@ function RAT._ATCFlightLanded(name)
     local TrafficPerHour=airport.traffic/(timer.getTime()-RAT.ATC.T0)*3600
 
     -- Debug info
-    BASE:I(RAT.id..string.format("ATC %s: Flight %s landed. Tholding = %i:%02d, Tfinal = %i:%02d.", dest, name, Thold/60, Thold%60, Tfinal/60, Tfinal%60))
-    BASE:I(RAT.id..string.format("ATC %s: Number of flights still on final %d.", dest, airport.Nonfinal))
-    BASE:I(RAT.id..string.format("ATC %s: Traffic report: Number of planes landed in total %d. Flights/hour = %3.2f.", dest, airport.traffic, TrafficPerHour))
+    BASE:T(RAT.id..string.format("ATC %s: Flight %s landed. Tholding = %i:%02d, Tfinal = %i:%02d.", dest, name, Thold/60, Thold%60, Tfinal/60, Tfinal%60))
+    BASE:T(RAT.id..string.format("ATC %s: Number of flights still on final %d.", dest, airport.Nonfinal))
+    BASE:T(RAT.id..string.format("ATC %s: Traffic report: Number of planes landed in total %d. Flights/hour = %3.2f.", dest, airport.traffic, TrafficPerHour))
     
     if string.find(name,"#") then
       name =  string.match(name,"^(.+)#")

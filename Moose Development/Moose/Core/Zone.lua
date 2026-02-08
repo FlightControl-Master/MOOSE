@@ -783,7 +783,7 @@ end
 -- @param #ZONE_BASE self
 -- @param #string From
 -- @param #string Event
--- @param #string to
+-- @param #string To
 -- @return #ZONE_BASE self
 function ZONE_BASE:onafterTriggerRunCheck(From,Event,To)
   if self:GetState() ~= "TriggerStopped" then
@@ -1158,7 +1158,7 @@ end
 --    myzone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT})
 --    local IsAttacked = myzone:IsSomeInZoneOfCoalition( self.Coalition )
 function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
-
+  
   self.ScanData = {}
   self.ScanData.Coalitions = {}
   self.ScanData.Scenery = {}
@@ -1168,7 +1168,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
   local ZoneCoord = self:GetCoordinate():SetAlt()
   local ZoneRadius = self:GetRadius()
 
-  --self:F({ZoneCoord = ZoneCoord, ZoneRadius = ZoneRadius, ZoneCoordLL = ZoneCoord:ToStringLLDMS()})
+  --self:I({x = ZoneCoord.x, y=ZoneCoord.y, z=ZoneCoord.z, ZoneRadius = ZoneRadius})
 
   local SphereSearch = {
     id = world.VolumeType.SPHERE,
@@ -1180,6 +1180,7 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
 
   local function EvaluateZone( ZoneObject )
     --if ZoneObject:isExist() then --FF: isExist always returns false for SCENERY objects since DCS 2.2 and still in DCS 2.5
+
     if ZoneObject and self:IsVec3InZone(ZoneObject:getPoint()) then
 
       -- Get object category.
@@ -1265,38 +1266,48 @@ end
 
 --- Get a set of scanned units.
 -- @param #ZONE_RADIUS self
+-- @param #number Coalition (optional) Filter for this coalition only.
 -- @return Core.Set#SET_UNIT Set of units and statics inside the zone.
-function ZONE_RADIUS:GetScannedSetUnit()
+function ZONE_RADIUS:GetScannedSetUnit(Coalition)
 
-  local SetUnit = SET_UNIT:New()
-
+  self.SetUnit = self.SetUnit or SET_UNIT:New()
+  self.SetUnit:Clear(false)
+  self.SetUnit.Set={}
+  
   if self.ScanData then
     for ObjectID, UnitObject in pairs( self.ScanData.Units ) do
       local UnitObject = UnitObject -- DCS#Unit
       if UnitObject:isExist() then
         local FoundUnit = UNIT:FindByName( UnitObject:getName() )
-        if FoundUnit then
-          SetUnit:AddUnit( FoundUnit )
+        local FoundCoalition = FoundUnit and FoundUnit:GetCoalition() or nil
+        local includeoncoalition = true
+        if Coalition ~= nil and FoundCoalition==Coalition then includeoncoalition = true else includeoncoalition = false end
+        if Coalition == nil then includeoncoalition = true end
+        --self:I(string.format("Unit name %s coalition %s filter coalition = %s include = %s",FoundUnit:GetName(),tostring(FoundCoalition),tostring(Coalition),tostring(includeoncoalition)))
+        if FoundUnit and includeoncoalition then
+          self.SetUnit:AddUnit( FoundUnit )
         else
           local FoundStatic = STATIC:FindByName( UnitObject:getName(), false )
           if FoundStatic then
-            SetUnit:AddUnit( FoundStatic )
+            self.SetUnit:AddUnit( FoundStatic )
           end
         end
       end
     end
   end
 
-  return SetUnit
+  return self.SetUnit
 end
 
 --- Get a set of scanned groups.
 -- @param #ZONE_RADIUS self
+-- @param #number Coalition (optional) Filter for this coalition only.
 -- @return Core.Set#SET_GROUP Set of groups.
-function ZONE_RADIUS:GetScannedSetGroup()
+function ZONE_RADIUS:GetScannedSetGroup(Coalition)
 
   self.ScanSetGroup=self.ScanSetGroup or SET_GROUP:New() --Core.Set#SET_GROUP
-
+  
+  self.ScanSetGroup:Clear(false)
   self.ScanSetGroup.Set={}
 
   if self.ScanData then
@@ -1305,7 +1316,12 @@ function ZONE_RADIUS:GetScannedSetGroup()
       if UnitObject:isExist() then
 
         local FoundUnit=UNIT:FindByName(UnitObject:getName())
-        if FoundUnit then
+        local FoundCoalition = FoundUnit and FoundUnit:GetCoalition() or nil
+        local includeoncoalition = true
+        if Coalition ~= nil and FoundCoalition==Coalition then includeoncoalition = true else includeoncoalition = false end
+        if Coalition == nil then includeoncoalition = true end
+        --self:I(string.format("Unit name %s coalition %s filter coalition = %s include = %s",FoundUnit:GetName(),tostring(FoundCoalition),tostring(Coalition),tostring(includeoncoalition)))
+        if FoundUnit and includeoncoalition then
           local group=FoundUnit:GetGroup()
           self.ScanSetGroup:AddGroup(group)
         end
@@ -3380,7 +3396,7 @@ function ZONE_POLYGON:Scan( ObjectCategories, UnitCategories )
         self.ScanData.Scenery[SceneryType] = self.ScanData.Scenery[SceneryType] or {}
         self.ScanData.Scenery[SceneryType][SceneryName] = SCENERY:Register( SceneryName, ZoneObject )
         table.insert(self.ScanData.SceneryTable,self.ScanData.Scenery[SceneryType][SceneryName])
-        --self:T( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
+        --self:I( { SCENERY =  self.ScanData.Scenery[SceneryType][SceneryName] } )
       end
 
     end

@@ -249,7 +249,23 @@ CALLSIGN={
     Stetson = 22,
     Wrath = 23,
   },
-  
+  Intruder = {
+    Raygun = 4,
+    Heartless = 5,
+    Viceroy = 6,
+    Cupcake = 7,
+    ["Flying Tiger"] = 8,
+    ["Flying Ace"]  = 9,
+    Buckeye = 10,
+    Goldplate = 11,
+    Phoenix = 12,
+    Electron = 13,
+    Rustler = 14,
+    Vixen = 15,
+    Jackal = 16,
+    Milestone = 17,
+    Devil = 18,
+  },
 } --#CALLSIGN
 
 --- Utilities static class.
@@ -1491,6 +1507,14 @@ function UTILS.VecSubstract(a, b)
   return {x=a.x-b.x, y=a.y-b.y, z=a.z-b.z}
 end
 
+--- Scale a 3D vectors by multiplication with s.
+-- @param DCS#Vec3 v A Vector in 3D with x, y, z components.
+-- @param #number s Scale
+-- @return DCS#Vec3 Vec3
+function UTILS.VecScale(v, s)
+    return {x = v.x * s, y = v.y * s, z = v.z * s}
+end
+
 --- Substract is not a word, don't want to rename the original function because it's been around since forever
 function UTILS.VecSubtract(a, b)
   return UTILS.VecSubstract(a, b)
@@ -1502,6 +1526,14 @@ end
 -- @return DCS#Vec2 Vector c=a-b with c(i)=a(i)-b(i), i=x,y.
 function UTILS.Vec2Substract(a, b)
   return {x=a.x-b.x, y=a.y-b.y}
+end
+
+--- Calculate the difference between two 3D vectors by substracting the x,y,z components from each other.
+-- @param DCS#Vec3 a Vector in 3D with x, y, z components.
+-- @param DCS#Vec3 b Vector in 3D with x, y, z components.
+-- @return DCS#Vec3 Vector in 3D.
+function UTILS.Vec3Substract(a, b)
+  return {x = a.x - b.x, y = a.y - b.y, z = a.z - b.z}
 end
 
 --- Substract is not a word, don't want to rename the original function because it's been around since forever
@@ -1631,6 +1663,13 @@ function UTILS.Vec2Translate(a, distance, angle)
   local TY=distance*math.sin(Radians)+SY
 
   return {x=TX, y=TY}
+end
+
+--- Calculate the lenght of a 3D vector
+-- @param DCS#Vec3 v A Vector in 3D with x, y, z components.
+-- @return #number length
+function UTILS.Vec3Length(v)
+    return math.sqrt(v.x * v.x + v.y * v.y + v.z * v.z)
 end
 
 --- Rotate 3D vector in the 2D (x,z) plane. y-component (usually altitude) unchanged.
@@ -2009,6 +2048,12 @@ function UTILS.GetCallsignName(Callsign)
   end
   
   for name, value in pairs(CALLSIGN.Kiowa) do
+    if value==Callsign then
+      return name
+    end
+  end
+  
+  for name, value in pairs(CALLSIGN.Intruder) do
     if value==Callsign then
       return name
     end
@@ -2878,16 +2923,27 @@ end
 -- @param #boolean Cinematic (Optional, needs Structured = true) If true, place a fire/smoke effect on the dead static position.
 -- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
 -- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
+-- @param #boolean Resurrection If true, dead units can be restored on load. Defaults to false.
+-- @param #number ResurrectPercentage Use this percentage of probability to resurrect a unit. [0..100], defaults to 25.
+-- @param #number Healmin If set, life points of a resurrected unit will be randomly restored to min this percentage. [0..100], defaults to 25.
+-- @param #number Healmax If set, life points of a resurrected unit will be randomly restored to max this percentage. [0..100], defaults to 75.
 -- @return #table Table of data objects (tables) containing groupname, coordinate and group object. Returns nil when file cannot be read.
 -- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
-function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinematic,Effect,Density)
-
+function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinematic,Effect,Density,Resurrection,ResurrectPercentage,Healmin,Healmax)
+    
+  local healmin = Healmin or 25
+  local healmax = Healmax or 75
+  local resurrection = (Resurrection == true) and true or false  
+  local resurrectpercentage = ResurrectPercentage or 25
+  
   local fires = {}
 
+  ---
+  -- @param Core.Point#COORDINATE coord
   local function Smokers(name,coord,effect,density)
     local eff = math.random(8)
     if type(effect) == "number" then eff = effect end
-    coord:BigSmokeAndFire(eff,density,name)
+    coord:BigSmokeAndFire( eff, Density, 300, 1, name )
     table.insert(fires,name)
   end
 
@@ -2902,7 +2958,16 @@ function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinema
           local name = _unit:GetName()
           Smokers(name,coordinate,Effect,Density)
         end
-        _unit:Destroy(false)
+        -- TODO Resurrection logic
+        local resurectok = math.random(1,100)
+        BASE:E(string.format("Load Group | Resurrection | Resurrect %s | Thresh %d | Random %d",tostring(resurrection),resurrectpercentage,resurectok))
+        if resurrection == true and (resurectok < resurrectpercentage) then
+          local heallife = math.random(healmin,healmax)
+          BASE:E("Load Group | Resurrection | Life "..heallife)
+          _unit:SetLife(heallife)
+        else
+          _unit:Destroy(false)
+        end
         reduced = reduced + 1
         if reduced == anzahl then break end
       end
@@ -4553,6 +4618,18 @@ function UTILS.Vec2toVec3(vec,y)
   end
 end
 
+-- Converts a Vec3 to a Vec2
+-- @param vec3 the Vec3 to convert
+-- @return Vec2 The Vec2 output
+function UTILS.Vec3toVec2(Vec3)
+    if Vec3 and type(Vec3)=="table" then
+        local Vec2 = {}
+        Vec2.x = Vec3.x or 0
+        Vec2.y = Vec3.z or 0
+        return Vec2
+    end
+end
+
 --- Get the correction needed for true north in radians
 -- @param gPoint The map point vec2 or vec3
 -- @return number correction
@@ -5289,4 +5366,242 @@ function UTILS.CreateAirbaseEnum()
   
   _savefile(string.format("%s-enums.txt", env.mission.theatre), text)
   --env.info(text)
+end
+
+--- Calculate then center and radius of a circle enclosing a list if DCS#Vec2 points.
+-- @param #table points Table of DCS#Vec2 entries
+-- @return DCS#Vec2 center DCS#Vec2
+-- @return #number radius
+function UTILS.GetCenterAndRadius(points)
+    if #points == 0 then
+        return nil, nil
+    end
+    
+    -- Calculate centroid (average of all points)
+    local sumX, sumY = 0, 0
+    for _, p in ipairs(points) do
+        sumX = sumX + p.x
+        sumY = sumY + p.y
+    end
+    
+    local center = {
+        x = sumX / #points,
+        y = sumY / #points
+    }
+    
+    -- Find maximum distance from center to any point
+    local maxDist = 0
+    for _, p in ipairs(points) do
+        local dx = p.x - center.x
+        local dy = p.y - center.y
+        local dist = math.sqrt(dx*dx + dy*dy)
+        if dist > maxDist then
+            maxDist = dist
+        end
+    end
+    
+    return center, maxDist
+end
+
+--- More accurate: Minimum bounding circle (Welzl's algorithm), calculate then center and radius of a circle enclosing a list if DCS#Vec2 points.
+-- @param #table points Table of DCS#Vec2 entries
+-- @return DCS#Vec2 center DCS#Vec2
+-- @return #number radius
+function UTILS.GetMinimumBoundingCircle(points)
+    if #points == 0 then
+        return nil, nil
+    end
+    
+    -- Calculate distance between two points
+    local function distance(p1, p2)
+        local dx = p2.x - p1.x
+        local dy = p2.y - p1.y
+        return math.sqrt(dx*dx + dy*dy)
+    end
+    
+    -- Circle from 2 points (diameter)
+    local function circleFrom2Points(p1, p2)
+        local center = {
+            x = (p1.x + p2.x) / 2,
+            y = (p1.y + p2.y) / 2
+        }
+        local radius = distance(p1, p2) / 2
+        return center, radius
+    end
+    
+    -- Circle from 3 points (circumcircle)
+    local function circleFrom3Points(p1, p2, p3)
+        local ax, ay = p1.x, p1.y
+        local bx, by = p2.x, p2.y
+        local cx, cy = p3.x, p3.y
+        
+        local d = 2 * (ax * (by - cy) + bx * (cy - ay) + cx * (ay - by))
+        
+        if math.abs(d) < 0.0001 then
+            -- Points are collinear, use 2-point circle
+            return circleFrom2Points(p1, p3)
+        end
+        
+        local aSq = ax*ax + ay*ay
+        local bSq = bx*bx + by*by
+        local cSq = cx*cx + cy*cy
+        
+        local ux = (aSq * (by - cy) + bSq * (cy - ay) + cSq * (ay - by)) / d
+        local uy = (aSq * (cx - bx) + bSq * (ax - cx) + cSq * (bx - ax)) / d
+        
+        local center = {x = ux, y = uy}
+        local radius = distance(center, p1)
+        
+        return center, radius
+    end
+    
+    -- Check if point is inside circle
+    local function isInside(center, radius, point, tolerance)
+        tolerance = tolerance or 0.0001
+        return distance(center, point) <= radius + tolerance
+    end
+    
+    -- Welzl's algorithm (recursive)
+    local function welzlHelper(pts, n, boundary)
+        -- Base cases
+        if n == 0 or #boundary == 3 then
+            if #boundary == 0 then
+                return {x = 0, y = 0}, 0
+            elseif #boundary == 1 then
+                return {x = boundary[1].x, y = boundary[1].y}, 0
+            elseif #boundary == 2 then
+                return circleFrom2Points(boundary[1], boundary[2])
+            else
+                return circleFrom3Points(boundary[1], boundary[2], boundary[3])
+            end
+        end
+        
+        -- Pick a random point
+        local p = pts[n]
+        
+        -- Get circle without this point
+        local center, radius = welzlHelper(pts, n - 1, boundary)
+        
+        -- If point is inside, we're done
+        if isInside(center, radius, p) then
+            return center, radius
+        end
+        
+        -- Otherwise, point must be on the boundary
+        local newBoundary = {}
+        for i = 1, #boundary do
+            newBoundary[i] = boundary[i]
+        end
+        table.insert(newBoundary, p)
+        
+        return welzlHelper(pts, n - 1, newBoundary)
+    end
+    
+    -- Shuffle points for better average performance
+    local pts = {}
+    for i, p in ipairs(points) do
+        pts[i] = {x = p.x, y = p.y}
+    end
+    
+    -- Simple shuffle
+    for i = #pts, 2, -1 do
+        local j = math.random(1, i)
+        pts[i], pts[j] = pts[j], pts[i]
+    end
+    
+    return welzlHelper(pts, #pts, {})
+end
+
+--- Calculated optimal intercepting course (Bearing)
+-- @param DCS#Vec3 A1 Position of flight one
+-- @param DCS#Vec3 V1 VelocityVector of flight one
+-- @param DCS#Vec3 A2 Position of flight two
+-- @param #number V2_speed Speed of A2 in m/s
+-- @return #number Bearing Bearing course for A2 to take for an intercept of A1 or nil if aspect is hot/cold.
+function UTILS.CalculateInterceptBearing(A1, V1, A2, V2_speed)
+    
+    local function berechne_bearing(richtung)
+      local bearing = math.deg(math.atan2(richtung.x, richtung.y))
+      if bearing < 0 then
+          bearing = bearing + 360
+      end
+      return bearing
+    end
+    
+    local function vec_normalize(v)
+      local len = UTILS.Vec3Length(v)
+      if len == 0 then return {x = 0, y = 0, z = 0} end
+      return {x = v.x / len, y = v.y / len, z = v.z / len}
+    end
+
+
+    -- Relative Position von F1 zu F2
+    local rel_pos = UTILS.Vec3Substract(A1, A2)
+    local distance = UTILS.Vec3Length(rel_pos)
+    
+    if distance == 0 then
+        return nil  -- Bereits am gleichen Ort
+    end
+    
+    -- Richtungsvektor von F2 zu F1 (normalisiert)
+    local richtung_zu_f1 = vec_normalize(rel_pos)
+    
+    -- Prüfe HOT: F1 fliegt direkt auf F2 zu
+    -- Das ist der Fall wenn V1 in die entgegengesetzte Richtung von rel_pos zeigt
+    local v1_normalisiert = vec_normalize(V1)
+    local annaeherung = UTILS.VecDot(v1_normalisiert, richtung_zu_f1)
+    
+    if annaeherung < -0.95 then  -- F1 fliegt fast direkt auf F2 zu (Winkel > ~162°)
+        return nil  -- Hot
+    end
+    
+    -- Prüfe COLD: F1 fliegt parallel weg von F2
+    -- Berechne die Geschwindigkeitsdifferenz
+    local rel_velocity = UTILS.VecSubstract(V1, {x=0, y=0, z=0})  -- V1 relativ zu F2 (falls F2 stillsteht)
+    local flucht_komponente = UTILS.VecDot(vec_normalize(rel_velocity), richtung_zu_f1)
+    
+    if flucht_komponente > 0.95 then  -- F1 fliegt fast parallel weg (Winkel < ~18°)
+        return nil  -- Cold
+    end
+    
+    -- Geschwindigkeiten
+    local v1 = UTILS.Vec3Length(V1)
+    local v2 = V2_speed
+    
+    -- Löse quadratische Gleichung für Abfangzeit t
+    local a = UTILS.VecDot(V1, V1) - v2 * v2
+    local b = 2 * UTILS.VecDot(rel_pos, V1)
+    local c = UTILS.VecDot(rel_pos, rel_pos)
+    
+    local discriminant = b * b - 4 * a * c
+    
+    if discriminant < 0 then
+        return nil  -- Keine Lösung möglich
+    end
+    
+    -- Wähle die positive, kleinste Lösung
+    local t1 = (-b + math.sqrt(discriminant)) / (2 * a)
+    local t2 = (-b - math.sqrt(discriminant)) / (2 * a)
+    
+    local t = nil
+    if t1 > 0 and t2 > 0 then
+        t = math.min(t1, t2)
+    elseif t1 > 0 then
+        t = t1
+    elseif t2 > 0 then
+        t = t2
+    else
+        return nil  -- Keine positive Lösung
+    end
+    
+    -- Berechne Treffpunkt
+    local treffpunkt = UTILS.VecAdd(A1, UTILS.VecScale(V1, t))
+    
+    -- Berechne Richtung zum Treffpunkt
+    local richtung = UTILS.VecSubstract(treffpunkt, A2)
+    
+    -- Berechne Bearing
+    local bearing = berechne_bearing(richtung)
+    
+    return UTILS.Round(bearing,0)
 end

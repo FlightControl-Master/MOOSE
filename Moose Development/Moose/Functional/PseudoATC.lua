@@ -100,7 +100,7 @@ PSEUDOATC.id="PseudoATC | "
 
 --- PSEUDOATC version.
 -- @field #number version
-PSEUDOATC.version="0.10.5"
+PSEUDOATC.version="0.10.6"
 
 -----------------------------------------------------------------------------------------------------------------------------------------
 
@@ -579,6 +579,9 @@ function PSEUDOATC:MenuAirports(GID,UID)
     -- Create menu reporting commands
     missionCommands.addCommandForGroup(GID, "Weather Report", submenu, self.ReportWeather, self, GID, UID, pos, name)
     missionCommands.addCommandForGroup(GID, "Request BR", submenu, self.ReportBR, self, GID, UID, pos, name)
+    if self.radios then
+      missionCommands.addCommandForGroup(GID, "Radios", submenu, self.ReportRadios, self, GID, UID, pos, name)
+    end
     
     -- Debug message.
     self:T(string.format(PSEUDOATC.id.."Creating airport menu item %s for ID %d", name, GID))
@@ -705,7 +708,30 @@ function PSEUDOATC:ReportWeather(GID, UID, position, location)
   
 end
 
---- Report absolute bearing and range form player unit to airport.
+--- Report airport radio information.
+-- @param #PSEUDOATC self
+-- @param #number GID Group id of player unit.
+-- @param #number UID Unit id of player. 
+-- @param Core.Point#COORDINATE position Coordinate of the airport.
+-- @param #string location Name of the airport.
+function PSEUDOATC:ReportRadios(GID, UID, position, location)
+  self:F({GID=GID, UID=UID, position=position, location=location})
+  if self.radios then
+    local Text=""
+    local radio = self.radios:GetClosestRadio(position,9) --Navigation.Radios#RADIOS.Radio
+    if radio then 
+      Text=self.radios:_GetMarkerText(radio)
+    else
+      Text=self.group[GID].player[UID].playername..", no radio information found!"
+    end
+    -- Send message
+    self:_DisplayMessageToGroup(self.group[GID].player[UID].unit, Text, self.mdur, true)
+  end
+  return self
+end
+
+
+--- Report absolute bearing and range from player unit to airport.
 -- @param #PSEUDOATC self
 -- @param #number GID Group id of player unit.
 -- @param #number UID Unit id of player. 
@@ -979,3 +1005,22 @@ function PSEUDOATC:_myname(unitname)
   
   return string.format("%s (%s)", csign, pname)
 end
+
+--- Returns a string which consits of this callsign and the player name.  
+-- @param #PSEUDOATC self
+-- @param #string path Path to map data, e.g. `[[<DCS_Install_Directory>\Mods\terrains\<Map_Name>\Radio.lua]]` (replace with correct path).
+-- Needs `lfs` and `io` to be desanitized in the `MissionScripting.lua` in `<DCS_Install_Directory>\Scripts`
+-- @return #PSEUDOATC self
+-- @usage
+-- 
+--          mypseudoatc:SetUsingRadioInformationFromMap([[C:\Program Files\Eagle Dynamics\DCS World.Openbeta\Mods\terrains\Caucasus\Radio.lua]])
+--  
+function PSEUDOATC:SetUsingRadioInformationFromMap(path)
+  if RADIOS and lfs and io then
+    self.radios = RADIOS:NewFromFile(path)
+  else
+    self:E("PSEUDOATC:SetUsingRadioInformationFromMap Needs `lfs`and `io` to be desanitized in the `MissionScripting.lua` in `<DCS_Install_Directory>/Scripts`")
+  end
+  return self
+end
+

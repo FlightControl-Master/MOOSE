@@ -2439,7 +2439,7 @@ end
 -- @return #table The mission route defined by points.
 function GROUP:GetTaskRoute()
   --self:F2( self.GroupName )
-  if _DATABASE.Templates.Groups[self.GroupName].Template and _DATABASE.Templates.Groups[self.GroupName].Template.route and _DATABASE.Templates.Groups[self.GroupName].Template.route.points then
+  if _DATABASE.Templates.Groups[self.GroupName] and _DATABASE.Templates.Groups[self.GroupName].Template and _DATABASE.Templates.Groups[self.GroupName].Template.route and _DATABASE.Templates.Groups[self.GroupName].Template.route.points then
     return UTILS.DeepCopy( _DATABASE.Templates.Groups[self.GroupName].Template.route.points )
   else
     return {}
@@ -2467,7 +2467,7 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
 
   --self:T3( { GroupName } )
 
-  local Template = _DATABASE.Templates.Groups[GroupName].Template
+  local Template = _DATABASE.Templates.Groups[GroupName] and _DATABASE.Templates.Groups[GroupName].Template or nil
 
   if Template then
     if not Begin then
@@ -2491,7 +2491,7 @@ function GROUP:CopyRoute( Begin, End, Randomize, Radius )
     end
     return Points
   else
-    error( "Template not found for Group : " .. GroupName )
+    BASE:E( "Template not found for Group : " .. GroupName )
   end
 
   return nil
@@ -2941,6 +2941,16 @@ function GROUP:EnableEmission(switch)
 
   end
 
+  return self
+end
+
+
+--- Set a formation for this group.
+-- @param #GROUP self
+-- @param #number Formation See. ENUMS.Formation or [Formations](https://wiki.hoggitworld.com/view/DCS_enum_formation) for options.
+-- @return #GROUP self
+function GROUP:SetFormation(Formation)
+  self:SetOption(AI.Option.Air.id.FORMATION,Formation)
   return self
 end
 

@@ -27,6 +27,7 @@
 -- @field #table parkingByID Parking spot data table with ID as key.
 -- @field #table parkingWhitelist List of parking spot terminal IDs considered for spawning.
 -- @field #table parkingBlacklist List of parking spot terminal IDs **not** considered for spawning.
+-- @field Core.Zone#ZONE_RADIUS parkingCircle Minimum bounding circle enclosing all parking spots.
 -- @field #table runways Runways of airdromes.
 -- @field #AIRBASE.Runway runwayLanding Runway used for landing.
 -- @field #AIRBASE.Runway runwayTakeoff Runway used for takeoff.
@@ -717,65 +718,125 @@ AIRBASE.SouthAtlantic = {
 
 --- Airbases of the Sinai map
 --
--- * `AIRBASE.SinaiMap.Abu_Rudeis` Abu Rudeis
--- * `AIRBASE.SinaiMap.Abu_Suwayr` Abu Suwayr
--- * `AIRBASE.SinaiMap.Al_Bahr_al_Ahmar` Al Bahr al Ahmar
--- * `AIRBASE.SinaiMap.Al_Ismailiyah` Al Ismailiyah
--- * `AIRBASE.SinaiMap.Al_Khatatbah` Al Khatatbah
--- * `AIRBASE.SinaiMap.Al_Mansurah` Al Mansurah
--- * `AIRBASE.SinaiMap.Al_Rahmaniyah_Air_Base` Al Rahmaniyah Air Base
--- * `AIRBASE.SinaiMap.As_Salihiyah` As Salihiyah
--- * `AIRBASE.SinaiMap.AzZaqaziq` AzZaqaziq
--- * `AIRBASE.SinaiMap.Baluza` Baluza
--- * `AIRBASE.SinaiMap.Ben_Gurion` Ben-Gurion
--- * `AIRBASE.SinaiMap.Beni_Suef` Beni Suef
--- * `AIRBASE.SinaiMap.Bilbeis_Air_Base` Bilbeis Air Base
--- * `AIRBASE.SinaiMap.Bir_Hasanah` Bir Hasanah
--- * `AIRBASE.SinaiMap.Birma_Air_Base` Birma Air Base
--- * `AIRBASE.SinaiMap.Borg_El_Arab_International_Airport` Borg El Arab International Airport
--- * `AIRBASE.SinaiMap.Cairo_International_Airport` Cairo International Airport
--- * `AIRBASE.SinaiMap.Cairo_West` Cairo West
--- * `AIRBASE.SinaiMap.Damascus_Intl` Damascus Intl
--- * `AIRBASE.SinaiMap.Difarsuwar_Airfield` Difarsuwar Airfield
--- * `AIRBASE.SinaiMap.Ein_Shamer` Ein Shamer
--- * `AIRBASE.SinaiMap.El_Arish` El Arish
--- * `AIRBASE.SinaiMap.El_Gora` El Gora
--- * `AIRBASE.SinaiMap.El_Minya` El Minya
--- * `AIRBASE.SinaiMap.Fayed` Fayed
--- * `AIRBASE.SinaiMap.Gebel_El_Basur_Air_Base` Gebel El Basur Air Base
--- * `AIRBASE.SinaiMap.Hatzerim` Hatzerim
--- * `AIRBASE.SinaiMap.Hatzor` Hatzor
--- * `AIRBASE.SinaiMap.Hurghada_International_Airport` Hurghada International Airport
--- * `AIRBASE.SinaiMap.Inshas_Airbase` Inshas Airbase
--- * `AIRBASE.SinaiMap.Jiyanklis_Air_Base` Jiyanklis Air Base
--- * `AIRBASE.SinaiMap.Kedem` Kedem
--- * `AIRBASE.SinaiMap.Khalkhalah_Air_Base` Khalkhalah Air Base
--- * `AIRBASE.SinaiMap.Kibrit_Air_Base` Kibrit Air Base
--- * `AIRBASE.SinaiMap.King_Feisal_Air_Base` King Feisal Air Base
--- * `AIRBASE.SinaiMap.Kom_Awshim` Kom Awshim
--- * `AIRBASE.SinaiMap.Megiddo` Megiddo
--- * `AIRBASE.SinaiMap.Melez` Melez
--- * `AIRBASE.SinaiMap.Mezzeh_Air_Base` Mezzeh Air Base
--- * `AIRBASE.SinaiMap.Nevatim` Nevatim
--- * `AIRBASE.SinaiMap.Ovda` Ovda
--- * `AIRBASE.SinaiMap.Palmachim` Palmachim
--- * `AIRBASE.SinaiMap.Quwaysina` Quwaysina
--- * `AIRBASE.SinaiMap.Rafic_Hariri_Intl` Rafic Hariri Intl
--- * `AIRBASE.SinaiMap.Ramat_David` Ramat David
--- * `AIRBASE.SinaiMap.Ramon_Airbase` Ramon Airbase
--- * `AIRBASE.SinaiMap.Ramon_International_Airport` Ramon International Airport
--- * `AIRBASE.SinaiMap.Sde_Dov` Sde Dov
--- * `AIRBASE.SinaiMap.Sharm_El_Sheikh_International_Airport` Sharm El Sheikh International Airport
--- * `AIRBASE.SinaiMap.St_Catherine` St Catherine
--- * `AIRBASE.SinaiMap.Taba_International_Airport` Taba International Airport
--- * `AIRBASE.SinaiMap.Tabuk` Tabuk
--- * `AIRBASE.SinaiMap.TabukHeliBase` TabukHeliBase
--- * `AIRBASE.SinaiMap.Tel_Nof` Tel Nof
--- * `AIRBASE.SinaiMap.Wadi_Abu_Rish` Wadi Abu Rish
--- * `AIRBASE.SinaiMap.Wadi_al_Jandali` Wadi al Jandali
+-- * `AIRBASE.Sinai.Abu_Rudeis` Abu Rudeis
+-- * `AIRBASE.Sinai.Abu_Suwayr` Abu Suwayr
+-- * `AIRBASE.Sinai.Al_Bahr_al_Ahmar` Al Bahr al Ahmar
+-- * `AIRBASE.Sinai.Al_Ismailiyah` Al Ismailiyah
+-- * `AIRBASE.Sinai.Al_Khatatbah` Al Khatatbah
+-- * `AIRBASE.Sinai.Al_Mansurah` Al Mansurah
+-- * `AIRBASE.Sinai.Al_Rahmaniyah_Air_Base` Al Rahmaniyah Air Base
+-- * `AIRBASE.Sinai.As_Salihiyah` As Salihiyah
+-- * `AIRBASE.Sinai.AzZaqaziq` AzZaqaziq
+-- * `AIRBASE.Sinai.Baluza` Baluza
+-- * `AIRBASE.Sinai.Ben_Gurion` Ben-Gurion
+-- * `AIRBASE.Sinai.Beni_Suef` Beni Suef
+-- * `AIRBASE.Sinai.Bilbeis_Air_Base` Bilbeis Air Base
+-- * `AIRBASE.Sinai.Bir_Hasanah` Bir Hasanah
+-- * `AIRBASE.Sinai.Birma_Air_Base` Birma Air Base
+-- * `AIRBASE.Sinai.Borg_El_Arab_International_Airport` Borg El Arab International Airport
+-- * `AIRBASE.Sinai.Cairo_International_Airport` Cairo International Airport
+-- * `AIRBASE.Sinai.Cairo_West` Cairo West
+-- * `AIRBASE.Sinai.Damascus_Intl` Damascus Intl
+-- * `AIRBASE.Sinai.Difarsuwar_Airfield` Difarsuwar Airfield
+-- * `AIRBASE.Sinai.Ein_Shamer` Ein Shamer
+-- * `AIRBASE.Sinai.El_Arish` El Arish
+-- * `AIRBASE.Sinai.El_Gora` El Gora
+-- * `AIRBASE.Sinai.El_Minya` El Minya
+-- * `AIRBASE.Sinai.Fayed` Fayed
+-- * `AIRBASE.Sinai.Gebel_El_Basur_Air_Base` Gebel El Basur Air Base
+-- * `AIRBASE.Sinai.Hatzerim` Hatzerim
+-- * `AIRBASE.Sinai.Hatzor` Hatzor
+-- * `AIRBASE.Sinai.Hurghada_International_Airport` Hurghada International Airport
+-- * `AIRBASE.Sinai.Inshas_Airbase` Inshas Airbase
+-- * `AIRBASE.Sinai.Jiyanklis_Air_Base` Jiyanklis Air Base
+-- * `AIRBASE.Sinai.Kedem` Kedem
+-- * `AIRBASE.Sinai.Khalkhalah_Air_Base` Khalkhalah Air Base
+-- * `AIRBASE.Sinai.Kibrit_Air_Base` Kibrit Air Base
+-- * `AIRBASE.Sinai.King_Feisal_Air_Base` King Feisal Air Base
+-- * `AIRBASE.Sinai.Kom_Awshim` Kom Awshim
+-- * `AIRBASE.Sinai.Megiddo` Megiddo
+-- * `AIRBASE.Sinai.Melez` Melez
+-- * `AIRBASE.Sinai.Mezzeh_Air_Base` Mezzeh Air Base
+-- * `AIRBASE.Sinai.Nevatim` Nevatim
+-- * `AIRBASE.Sinai.Ovda` Ovda
+-- * `AIRBASE.Sinai.Palmachim` Palmachim
+-- * `AIRBASE.Sinai.Quwaysina` Quwaysina
+-- * `AIRBASE.Sinai.Rafic_Hariri_Intl` Rafic Hariri Intl
+-- * `AIRBASE.Sinai.Ramat_David` Ramat David
+-- * `AIRBASE.Sinai.Ramon_Airbase` Ramon Airbase
+-- * `AIRBASE.Sinai.Ramon_International_Airport` Ramon International Airport
+-- * `AIRBASE.Sinai.Sde_Dov` Sde Dov
+-- * `AIRBASE.Sinai.Sharm_El_Sheikh_International_Airport` Sharm El Sheikh International Airport
+-- * `AIRBASE.Sinai.St_Catherine` St Catherine
+-- * `AIRBASE.Sinai.Taba_International_Airport` Taba International Airport
+-- * `AIRBASE.Sinai.Tabuk` Tabuk
+-- * `AIRBASE.Sinai.TabukHeliBase` TabukHeliBase
+-- * `AIRBASE.Sinai.Tel_Nof` Tel Nof
+-- * `AIRBASE.Sinai.Wadi_Abu_Rish` Wadi Abu Rish
+-- * `AIRBASE.Sinai.Wadi_al_Jandali` Wadi al Jandali
 --
 -- @field Sinai
 AIRBASE.Sinai = {
+  ["Abu_Rudeis"] = "Abu Rudeis",
+  ["Abu_Suwayr"] = "Abu Suwayr",
+  ["Al_Bahr_al_Ahmar"] = "Al Bahr al Ahmar",
+  ["Al_Ismailiyah"] = "Al Ismailiyah",
+  ["Al_Khatatbah"] = "Al Khatatbah",
+  ["Al_Mansurah"] = "Al Mansurah",
+  ["Al_Rahmaniyah_Air_Base"] = "Al Rahmaniyah Air Base",
+  ["As_Salihiyah"] = "As Salihiyah",
+  ["AzZaqaziq"] = "AzZaqaziq",
+  ["Baluza"] = "Baluza",
+  ["Ben_Gurion"] = "Ben-Gurion",
+  ["Beni_Suef"] = "Beni Suef",
+  ["Bilbeis_Air_Base"] = "Bilbeis Air Base",
+  ["Bir_Hasanah"] = "Bir Hasanah",
+  ["Birma_Air_Base"] = "Birma Air Base",
+  ["Borg_El_Arab_International_Airport"] = "Borg El Arab International Airport",
+  ["Cairo_International_Airport"] = "Cairo International Airport",
+  ["Cairo_West"] = "Cairo West",
+  ["Damascus_Intl"] = "Damascus Intl",
+  ["Difarsuwar_Airfield"] = "Difarsuwar Airfield",
+  ["Ein_Shamer"] = "Ein Shamer",
+  ["El_Arish"] = "El Arish",
+  ["El_Gora"] = "El Gora",
+  ["El_Minya"] = "El Minya",
+  ["Fayed"] = "Fayed",
+  ["Gebel_El_Basur_Air_Base"] = "Gebel El Basur Air Base",
+  ["Hatzerim"] = "Hatzerim",
+  ["Hatzor"] = "Hatzor",
+  ["Hurghada_International_Airport"] = "Hurghada International Airport",
+  ["Inshas_Airbase"] = "Inshas Airbase",
+  ["Jiyanklis_Air_Base"] = "Jiyanklis Air Base",
+  ["Kedem"] = "Kedem",
+  ["Khalkhalah_Air_Base"] = "Khalkhalah Air Base",
+  ["Kibrit_Air_Base"] = "Kibrit Air Base",
+  ["King_Feisal_Air_Base"] = "King Feisal Air Base",
+  ["Kom_Awshim"] = "Kom Awshim",
+  ["Megiddo"] = "Megiddo",
+  ["Melez"] = "Melez",
+  ["Mezzeh_Air_Base"] = "Mezzeh Air Base",
+  ["Nevatim"] = "Nevatim",
+  ["Ovda"] = "Ovda",
+  ["Palmachim"] = "Palmachim",
+  ["Quwaysina"] = "Quwaysina",
+  ["Rafic_Hariri_Intl"] = "Rafic Hariri Intl",
+  ["Ramat_David"] = "Ramat David",
+  ["Ramon_Airbase"] = "Ramon Airbase",
+  ["Ramon_International_Airport"] = "Ramon International Airport",
+  ["Sde_Dov"] = "Sde Dov",
+  ["Sharm_El_Sheikh_International_Airport"] = "Sharm El Sheikh International Airport",
+  ["St_Catherine"] = "St Catherine",
+  ["Taba_International_Airport"] = "Taba International Airport",
+  ["Tabuk"] = "Tabuk",
+  ["TabukHeliBase"] = "TabukHeliBase",
+  ["Tel_Nof"] = "Tel Nof",
+  ["Wadi_Abu_Rish"] = "Wadi Abu Rish",
+  ["Wadi_al_Jandali"] = "Wadi al Jandali",
+}
+---
+-- @field SinaiMap
+AIRBASE.SinaiMap = {
   ["Abu_Rudeis"] = "Abu Rudeis",
   ["Abu_Suwayr"] = "Abu Suwayr",
   ["Al_Bahr_al_Ahmar"] = "Al Bahr al Ahmar",
@@ -1552,7 +1613,7 @@ AIRBASE.SpotStatus = {
 --- Runway data.
 -- @type AIRBASE.Runway
 -- @field #string name Runway name.
--- @field #string idx Runway ID: heading 070° ==> idx="07".
+-- @field #string idx Runway ID: heading 070° ==> idx="07". Mostly same as magheading.
 -- @field #number heading True heading of the runway in degrees.
 -- @field #number magheading Magnetic heading of the runway in degrees. This is what is marked on the runway.
 -- @field #number length Length of runway in meters.
@@ -1661,6 +1722,10 @@ end
     end
   else
     self:E(string.format("ERROR: Cound not get position Vec2 of airbase %s", AirbaseName))
+  end
+  
+  if Nrunways>0 then
+    self:GetMinimumBoundingCircleFromParkingSpots()
   end
 
   -- Debug info.
@@ -2104,7 +2169,7 @@ end
 function AIRBASE:GetParkingSpotsNumber(termtype)
 
   -- Get free parking spots data.
-  local parkingdata=self:GetParkingData(false)
+  local parkingdata=self:GetParkingData(false) or {}
 
   local nspots=0
   for _,parkingspot in pairs(parkingdata) do
@@ -2124,7 +2189,7 @@ end
 function AIRBASE:GetFreeParkingSpotsNumber(termtype, allowTOAC)
 
   -- Get free parking spots data.
-  local parkingdata=self:GetParkingData(true)
+  local parkingdata=self:GetParkingData(true) or {}
 
   local nfree=0
   for _,parkingspot in pairs(parkingdata) do
@@ -2147,7 +2212,7 @@ end
 function AIRBASE:GetFreeParkingSpotsCoordinates(termtype, allowTOAC)
 
   -- Get free parking spots data.
-  local parkingdata=self:GetParkingData(true)
+  local parkingdata=self:GetParkingData(true) or {}
 
   -- Put coordinates of free spots into table.
   local spots={}
@@ -2191,13 +2256,62 @@ function AIRBASE:GetParkingSpotsCoordinates(termtype)
   return spots
 end
 
+--- Get the DCS#Vec2s of all parking spots at an airbase. Optionally only those of a specific terminal type. Spots on runways are excluded if not explicitly requested by terminal type.
+-- @param #AIRBASE self
+-- @param #AIRBASE.TerminalType termtype (Optional) Terminal type. Default all.
+-- @return #table Table of DCS#Vec2 of parking spots.
+function AIRBASE:GetParkingSpotsVec2s(termtype)
+
+  -- Get all parking spots data.
+  local parkingdata=self:GetParkingData(false)
+
+  -- Put coordinates of free spots into table.
+  local spots={}
+  for _,parkingspot in ipairs(parkingdata) do
+
+    -- Coordinates on runway are not returned unless explicitly requested.
+    if AIRBASE._CheckTerminalType(parkingspot.Term_Type, termtype) then
+
+      -- Get coordinate from Vec3 terminal position.
+      local vec2 = { x = parkingspot.vTerminalPos.x, y = parkingspot.vTerminalPos.z }
+
+      -- Add to table.
+      table.insert(spots, vec2)
+    end
+
+  end
+
+  return spots
+end
+
+--- Get the the bounding circular zone around all parking spots of an airbase.
+-- @param #AIRBASE self
+-- @param #boolean mark (Optional) Draw zone on map on first call of this function.
+-- @return Core.Zone#ZONE_RADIUS BoundingZone
+function AIRBASE:GetMinimumBoundingCircleFromParkingSpots(mark)
+  if self.isAirdrome then
+    if not self.parkingCircle then
+      local spots = self:GetParkingSpotsVec2s()
+      if #spots == 0 then return self.AirbaseZone  end
+      local center, radius = UTILS.GetMinimumBoundingCircle(spots)
+      self.parkingCircle = ZONE_RADIUS:New(self.AirbaseName.." ParkingCircle",center,radius+50)
+      if mark == true then
+         self.parkingCircle:DrawZone(-1,{1,0,0},1,{0,1,0},0.2,3)
+      end
+    end
+    return self.parkingCircle
+  else
+    return self.AirbaseZone
+  end
+end
+
 --- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
 -- @param #AIRBASE self
 -- @return#AIRBASE self
 function AIRBASE:_InitParkingSpots()
 
   -- Get parking data of all spots (free or occupied)
-  local parkingdata=self:GetParkingData(false)
+  local parkingdata=self:GetParkingData(false) or {}
 
   -- Init table.
   self.parking={}
@@ -2273,10 +2387,10 @@ end
 function AIRBASE:GetParkingSpotsTable(termtype)
 
   -- Get parking data of all spots (free or occupied)
-  local parkingdata=self:GetParkingData(false)
+  local parkingdata=self:GetParkingData(false) or {}
 
   -- Get parking data of all free spots.
-  local parkingfree=self:GetParkingData(true)
+  local parkingfree=self:GetParkingData(true) or {}
 
   -- Function to ckeck if any parking spot is free.
   local function _isfree(_tocheck)
@@ -2325,7 +2439,7 @@ end
 function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
 
   -- Get parking data of all free spots.
-  local parkingfree=self:GetParkingData(true)
+  local parkingfree=self:GetParkingData(true) or {}
 
   -- Put coordinates of free spots into table.
   local freespots={}
@@ -2355,7 +2469,7 @@ end
 function AIRBASE:GetParkingSpotData(TerminalID)
 
   -- Get parking data.
-  local parkingdata=self:GetParkingSpotsTable()
+  local parkingdata=self:GetParkingSpotsTable() or {}
 
   for _,_spot in pairs(parkingdata) do
     local spot=_spot --#AIRBASE.ParkingSpot
@@ -2381,7 +2495,7 @@ function AIRBASE:MarkParkingSpots(termtype, mark)
   end
 
   -- Get parking data from getParking() wrapper function.
-  local parkingdata=self:GetParkingSpotsTable(termtype)
+  local parkingdata=self:GetParkingSpotsTable(termtype) or {}
 
   -- Get airbase name.
   local airbasename=self:GetName()
@@ -2496,7 +2610,7 @@ function AIRBASE:FindFreeParkingSpotForAircraft(group, terminaltype, scanradius,
   local markobstacles=false
 
   -- Loop over all known parking spots
-  for _,parkingspot in pairs(parkingdata) do
+  for _,parkingspot in pairs(parkingdata or {}) do
 
     -- Coordinate of the parking spot.
     local _spot=parkingspot.Coordinate   -- Core.Point#COORDINATE

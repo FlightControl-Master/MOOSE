@@ -372,7 +372,7 @@ CARGOS = {}
 
 do -- CARGO
 
-  -- @type CARGO
+  --- @type CARGO
   -- @extends Core.Fsm#FSM_PROCESS
   -- @field #string Type A string defining the type of the cargo. eg. Engineers, Equipment, Screwdrivers.
   -- @field #string Name A string defining the name of the cargo. The name is the unique identifier of the cargo.

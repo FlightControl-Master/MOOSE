@@ -1,3 +1,12 @@
+--- **Ops** - Create your A2A Defenses.
+--
+-- **Main Features:**
+--
+--    * Automatically create and manage A2A defenses using an AirWing and Squadrons for one coalition
+--    * Easy set-up
+--
+-- ===
+--
 -------------------------------------------------------------------------
 -- Easy CAP/GCI Class, based on OPS classes
 -------------------------------------------------------------------------
@@ -12,7 +21,7 @@
 -- 
 -------------------------------------------------------------------------
 -- Date: September 2023
--- Last Update: Aug 2025
+-- Last Update: Jan 2026
 -------------------------------------------------------------------------
 --
 --- **Ops** - Easy GCI & CAP Manager
@@ -80,6 +89,8 @@
 -- @field #number FuelCriticalThreshold
 -- @field #boolean showpatrolpointmarks
 -- @field #table EngageTargetTypes
+-- @field #number maintenancetime
+-- @field #number repairtime
 -- @extends Core.Fsm#FSM
 
 --- *“Airspeed, altitude, and brains. Two are always needed to successfully complete the flight.”* -- Unknown.
@@ -109,7 +120,7 @@
 -- ### Prerequisites
 -- 
 -- You have to put a **STATIC WAREHOUSE** object on the airbase with the UNIT name according to the name of the airbase. **Do not put any other static type or it creates a conflict with the airbase name!** 
--- E.g. for Kuitaisi this has to have the unit name Kutaisi. This object symbolizes the AirWing HQ.
+-- E.g. for Kutaisi this has to have the unit name Kutaisi. This object symbolizes the AirWing HQ.
 -- Next put a late activated template group for your CAP/GCI Squadron on the map. Last, put a zone on the map for the CAP operations, let's name it "Blue Zone 1". Size of the zone plays no role.
 -- Put an EW radar system on the map and name it aptly, like "Blue EWR".
 -- 
@@ -205,7 +216,7 @@ EASYGCICAP = {
   coalition = "blue",
   alias = nil,
   wings = {},
-  Intel = nil,
+  Intel = nil, -- Ops.Intel#INTEL
   resurrection = 900,
   capspeed = 300,
   capalt = 25000,
@@ -275,10 +286,11 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.30"
+EASYGCICAP.version="0.1.34"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO list
+-- 
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: TBD
@@ -300,6 +312,10 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   
   -- defaults
   self.alias = Alias or AirbaseName.." CAP Wing"
+      
+  -- Set some string id for output to DCS.log file.
+  self.lid=string.format("EASYGCICAP %s | ", self.alias)
+  
   self.coalitionname = string.lower(Coalition) or "blue"
   self.coalition = self.coalitionname == "blue" and coalition.side.BLUE or coalition.side.RED
   self.wings = {}
@@ -333,10 +349,8 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self.FuelCriticalThreshold = 10
   self.showpatrolpointmarks = false
   self.EngageTargetTypes = {"Air"}
+  self:SetDefaultTurnoverTime()
   
-  -- Set some string id for output to DCS.log file.
-  self.lid=string.format("EASYGCICAP %s | ", self.alias)
-
   -- Add FSM transitions.
   --               From State  -->   Event      -->      To State
   self:SetStartState("Stopped")
@@ -349,6 +363,34 @@ function EASYGCICAP:New(Alias, AirbaseName, Coalition, EWRName)
   self:I(self.lid.."Created new instance (v"..self.version..")")
   
   self:__Start(math.random(6,12))
+  
+  --- On Before "Start" event.
+  -- @function [parent=#EASYGCICAP] OnBeforeStart
+  -- @param #EASYGCICAP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "Start" event.
+  -- @function [parent=#EASYGCICAP] OnAfterStart
+  -- @param #EASYGCICAP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+
+  --- On Before "Status" event.
+  -- @function [parent=#EASYGCICAP] OnBeforeStatus
+  -- @param #EASYGCICAP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  
+  --- On After "Status" event.
+  -- @function [parent=#EASYGCICAP] OnAfterStatus
+  -- @param #EASYGCICAP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
   
   return self
 end
@@ -367,6 +409,28 @@ function EASYGCICAP:GetAirwing(AirbaseName)
     return self.wings[AirbaseName][1]
   end
   return nil
+end
+
+--- Add an agent to the underlying INTEL detection - caution, we need to be started first for this to work! 
+-- Normally this isn't necessary when the Group name is correctly filled (see EWRName in `New()`).
+-- @param #EASYGCICAP self
+-- @param Wrapper.Group#GROUP Group The group object to be added as Intel Agent.
+-- @return #EASYGCICAP self
+function EASYGCICAP:AddAgent(Group)
+  self:T(self.lid.."AddAgent")
+  if Group:IsInstanceOf("GROUP") and self.Intel ~= nil then
+    self.Intel:AddAgent(Group)
+    if self.TankerInvisible == true then
+      Group:SetCommandInvisible(true)
+      Group:OptionROEHoldFire()
+      if Group:IsAir() then
+        Group:OptionROTEvadeFire()
+      else
+        Group:OptionDisperseOnAttack(30)
+      end
+    end
+  end
+  return self
 end
 
 --- Get a table of all managed AirWings
@@ -548,6 +612,18 @@ function EASYGCICAP:SetDefaultMissionRange(Range)
   return self
 end
 
+--- Set default turnover times for squadrons in minutes
+-- @param #EASYGCICAP self
+-- @param #number MaintenanceTime Time in minutes it takes until a flight is combat ready again. Default is 5 min.
+-- @param #number RepairTime Time in minutes it takes to repair a flight for each life point taken. Default is 10 min.
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetDefaultTurnoverTime(MaintenanceTime,RepairTime)
+  self:T(self.lid.."SetDefaultTurnoverTime")
+  self.maintenancetime=MaintenanceTime or 5
+  self.repairtime=RepairTime or 10
+  return self
+end
+
 --- Set default number of airframes standing by for intercept tasks (visible on the airfield)
 -- @param #EASYGCICAP self
 -- @param #number Airframes defaults to 2
@@ -611,7 +687,6 @@ function EASYGCICAP:SetCapStartTimeVariation(Start, End)
   return self
 end
 
-
 --- Set which target types CAP flights will prefer to engage, defaults to {"Air"}
 -- @param #EASYGCICAP self
 -- @param #table types Table of comma separated #string entries, defaults to {"Air"} (everything that flies and is not a weapon). Useful other options are e.g. {"Bombers"}, {"Fighters"}, 
@@ -656,7 +731,7 @@ function EASYGCICAP:_CreateAirwings()
   return self
 end
 
---- (internal) Create and add another AirWing to the manager
+--- (Internal) Create and add another AirWing to the manager
 -- @param #EASYGCICAP self
 -- @param #string Airbasename
 -- @param #string Alias
@@ -763,8 +838,13 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
     end
   end
   
-  if self.noalert5 > 0 then  
-    local alert = AUFTRAG:NewALERT5(AUFTRAG.Type.INTERCEPT) 
+  if self.noalert5 > 0 then
+    local alert
+    if self.ClassName == "EASYGCICAP" then  
+      alert = AUFTRAG:NewALERT5(AUFTRAG.Type.INTERCEPT) 
+    elseif self.ClassName == "EASYA2G" then
+      alert = AUFTRAG:NewALERT5(AUFTRAG.Type.BAI) 
+    end
     alert:SetRequiredAssets(self.noalert5)
     alert:SetRepeat(99) 
     CAP_Wing:AddMission(alert)
@@ -1153,7 +1233,7 @@ function EASYGCICAP:_AddSquadron(TemplateName, SquadName, AirbaseName, AirFrames
   Squadron_One:AddMissionCapability({AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.PATROLRACETRACK, AUFTRAG.Type.ALERT5})
   --Squadron_One:SetFuelLowRefuel(true)
   Squadron_One:SetFuelLowThreshold(0.3)
-  Squadron_One:SetTurnoverTime(10,20)
+  Squadron_One:SetTurnoverTime(self.maintenancetime,self.repairtime)
   Squadron_One:SetModex(Modex)
   Squadron_One:SetLivery(Livery)
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
@@ -1184,7 +1264,7 @@ function EASYGCICAP:_AddReconSquadron(TemplateName, SquadName, AirbaseName, AirF
   Squadron_One:AddMissionCapability({AUFTRAG.Type.RECON})
   --Squadron_One:SetFuelLowRefuel(true)
   Squadron_One:SetFuelLowThreshold(0.3)
-  Squadron_One:SetTurnoverTime(10,20)
+  Squadron_One:SetTurnoverTime(self.maintenancetime,self.repairtime)
   Squadron_One:SetModex(Modex)
   Squadron_One:SetLivery(Livery)
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
@@ -1218,7 +1298,7 @@ function EASYGCICAP:_AddTankerSquadron(TemplateName, SquadName, AirbaseName, Air
   Squadron_One:AddMissionCapability({AUFTRAG.Type.TANKER})
   --Squadron_One:SetFuelLowRefuel(true)
   Squadron_One:SetFuelLowThreshold(0.3)
-  Squadron_One:SetTurnoverTime(10,20)
+  Squadron_One:SetTurnoverTime(self.maintenancetime,self.repairtime)
   Squadron_One:SetModex(Modex)
   Squadron_One:SetLivery(Livery)
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
@@ -1255,7 +1335,7 @@ function EASYGCICAP:_AddAWACSSquadron(TemplateName, SquadName, AirbaseName, AirF
   Squadron_One:AddMissionCapability({AUFTRAG.Type.AWACS})
   --Squadron_One:SetFuelLowRefuel(true)
   Squadron_One:SetFuelLowThreshold(0.3)
-  Squadron_One:SetTurnoverTime(10,20)
+  Squadron_One:SetTurnoverTime(self.maintenancetime,self.repairtime)
   Squadron_One:SetModex(Modex)
   Squadron_One:SetLivery(Livery)
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
@@ -1300,6 +1380,54 @@ function EASYGCICAP:AddConflictZone(Zone)
   return self
 end
 
+--- Function to set corridor zones.
+-- @param #EASYGCICAP self
+-- @param Core.Set#SET_ZONE CorridorZones Can be handed in as SET\_ZONE or single ZONE object.
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetCorridorZones(CorridorZones)
+  self:T(self.lid .. "SetCorridorZones")
+  if CorridorZones and CorridorZones:IsInstanceOf("SET_ZONE") then
+    self.corridorzones = CorridorZones
+    self.usecorridors = true
+  elseif CorridorZones and CorridorZones:IsInstanceOf("ZONE_BASE") then
+    if not self.corridorzones then self.corridorzones = SET_ZONE:New() end
+    self.corridorzones:AddZone(CorridorZones)
+    self.usecorridors = true
+  end
+  return self
+end
+
+--- Function to add one corridor zone.
+-- @param #EASYGCICAP self
+-- @param Core.Zone#ZONE CorridorZone The ZONE object to be added.
+-- @return #EASYGCICAP self
+function EASYGCICAP:AddCorridorZone(CorridorZone)
+  self:T(self.lid .. "AddCorridorZone")
+  self:SetCorridorZones(CorridorZone)
+  return self
+end
+
+--- Function to set corridor zone floor and ceiling in FEET.
+-- @param #EASYGCICAP self
+-- @param #number Floor Floor altitude ASL in feet.
+-- @param #number Ceiling Ceiling altitude ASL in feet.
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetCorridorZoneFloorAndCeiling(Floor,Ceiling)
+  self.corridorfloor = UTILS.FeetToMeters(Floor)
+  self.corridorceiling = UTILS.FeetToMeters(Ceiling)
+  return self
+end
+
+--- Function to set corridor zone floor and ceiling in METERS.
+-- @param #EASYGCICAP self
+-- @param #number Floor Floor altitude ASL in meters.
+-- @param #number Ceiling Ceiling altitude ASL in meters.
+-- @return #EASYGCICAP self
+function EASYGCICAP:SetCorridorZoneFloorAndCeilingMeters(Floor,Ceiling)
+  self.corridorfloor = Floor    
+  self.corridorceiling = Ceiling
+  return self
+end
 
 --- (Internal) Try to assign the intercept to a FlightGroup already in air and ready.
 -- @param #EASYGCICAP self
@@ -1459,6 +1587,8 @@ function EASYGCICAP:_AssignIntercept(Cluster)
                   if coord and conflictset:Count() > 0 and conflictset:IsCoordinateInZone(coord) then
                     success = false
                   end
+                else
+                  success = true
                 end
                 return success
               end,
@@ -1467,6 +1597,14 @@ function EASYGCICAP:_AssignIntercept(Cluster)
               conflictzoneset
             )
           end
+          
+          InterceptAuftrag:AddConditionFailure(
+          function()
+            local failure = false
+            if InterceptAuftrag:CountOpsGroups()==0 and InterceptAuftrag:IsExecuting() then failure = true end
+            return failure
+          end          
+          )
           
         table.insert(self.ListOfAuftrag,InterceptAuftrag)
         local assigned, rest = self:_TryAssignIntercept(ReadyFlightGroups,InterceptAuftrag,contact.group,wingsize)
@@ -1500,6 +1638,14 @@ function EASYGCICAP:_StartIntel()
   BlueIntel:SetRejectZones(self.NoGoZoneSet)
   BlueIntel:SetConflictZones(self.ConflictZoneSet)
   BlueIntel:SetVerbosity(0)
+  
+  if self.usecorridors == true then
+    BlueIntel:SetCorridorZones(self.corridorzones)
+    if self.corridorfloor or self.corridorceiling then
+      BlueIntel:SetCorridorLimits(self.corridorfloor,self.corridorceiling)
+    end
+  end
+  
   BlueIntel:Start()
   
   if self.debug then 
@@ -1603,7 +1749,7 @@ function EASYGCICAP:onafterStatus(From,Event,To)
     tankermission = tankermission + _wing[1]:CountMissionsInQueue({AUFTRAG.Type.TANKER})
     assets = assets + count
     instock = instock + count2
-    local assetsonmission = _wing[1]:GetAssetsOnMission({AUFTRAG.Type.GCICAP,AUFTRAG.Type.PATROLRACETRACK})
+    local assetsonmission = _wing[1]:GetAssetsOnMission({AUFTRAG.Type.ALERT5, AUFTRAG.Type.GCICAP,AUFTRAG.Type.PATROLRACETRACK})
     -- update ready groups
     self.ReadyFlightGroups = nil
     self.ReadyFlightGroups = {}
@@ -1614,7 +1760,8 @@ function EASYGCICAP:onafterStatus(From,Event,To)
         local name = FG:GetName()
         local engage = FG:IsEngaging()
         local hasmissiles = FG:IsOutOfMissiles() == nil and true or false
-        local ready = hasmissiles and FG:IsFuelGood() and FG:IsAirborne()
+        local isalert5 = (FG:GetMissionCurrent() ~= nil and FG:GetMissionCurrent().type == AUFTRAG.Type.ALERT5) and true or false 
+        local ready = hasmissiles and FG:IsFuelGood() and (FG:IsAirborne() or isalert5)
         --self:T(string.format("Flightgroup %s Engaging = %s Ready = %s",tostring(name),tostring(engage),tostring(ready)))
         if ready then
           self.ReadyFlightGroups[name] = FG
