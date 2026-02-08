@@ -35,7 +35,6 @@
 -- ===
 --
 -- ### Author: **funkyfranky**
--- ### Co-author: FlightControl (cargo dispatcher classes)
 --
 -- ===
 --
@@ -132,14 +131,7 @@
 -- a reasonable degree in DCS at the moment and hence cannot be used yet.
 --
 -- Furthermore, ground assets can be transferred between warehouses by transport units. These are APCs, helicopters and airplanes. The transportation process is modeled
--- in a realistic way by using the corresponding cargo dispatcher classes, i.e.
---
--- * @{AI.AI_Cargo_Dispatcher_APC#AI_DISPATCHER_APC}
--- * @{AI.AI_Cargo_Dispatcher_Helicopter#AI_DISPATCHER_HELICOPTER}
--- * @{AI.AI_Cargo_Dispatcher_Airplane#AI_DISPATCHER_AIRPLANE}
---
--- Depending on which cargo dispatcher is used (ground or airbore), similar considerations like in the self propelled case are necessary. Howver, note that
--- the dispatchers as of yet cannot use user defined off road paths for example since they are classes of their own and use a different routing logic.
+-- in a realistic way by using the @{Ops.OpsTransport#OPSTRANSPORT} class.
 --
 -- ===
 --
@@ -230,18 +222,6 @@
 --  of 630 kg. This is important as groups cannot be split between carrier units when transporting, i.e. the total weight of the whole group must be smaller than the
 --  cargo bay of the transport carrier.
 --
--- ### Setting the Load Radius
--- Boading and loading of cargo into a carrier is modeled in a realistic fashion in the AI\_CARGO\DISPATCHER classes, which are used inernally by the WAREHOUSE class.
--- Meaning that troops (cargo) will board, i.e. run or drive to the carrier, and only once they are in close proximity to the transporter they will be loaded (disappear).
---
--- Unfortunately, there are some situations where problems can occur. For example, in DCS tanks have the strong tentendcy not to drive around obstacles but rather to roll over them.
--- I have seen cases where an aircraft of the same coalition as the tank was in its way and the tank drove right through the plane waiting on a parking spot and destroying it.
---
--- As a workaround it is possible to set a larger load radius so that the cargo units are despawned further away from the carrier via the optional **loadradius** parameter:
---
---     warehouseBatumi:AddAsset("Leopard 2", nil, nil, nil, nil, 250)
---
--- Adding the asset like this will cause the units to be loaded into the carrier already at a distance of 250 meters.
 --
 -- ### Setting the AI Skill
 --
@@ -486,7 +466,7 @@
 -- and the road connection is less than 3 km.
 --
 -- The user can set the road connection manually with the @{#WAREHOUSE.SetRoadConnection} function. This is only functional for self propelled assets at the moment
--- and not if using the AI dispatcher classes since these have a different logic to find the route.
+-- and not if using the OPSTRANSPORT class since this has a different logic to find the route.
 --
 -- ## Off Road Connections
 --
@@ -595,7 +575,7 @@
 --
 -- ## Cargo Bay and Weight Limitations
 --
--- The transportation of cargo is handled by the AI\_Dispatcher classes. These take the cargo bay of a carrier and the weight of
+-- The transportation of cargo is handled by the `OPSTRANSPORT` class. This takes the cargo bay of a carrier and the weight of
 -- the cargo into account so that a carrier can only load a realistic amount of cargo.
 --
 -- However, if troops are supposed to be transported between warehouses, there is one important limitations one has to keep in mind.
@@ -1798,12 +1778,13 @@ _WAREHOUSEDB  = {
 
 --- Warehouse class version.
 -- @field #string version
-WAREHOUSE.version="1.0.2a"
+WAREHOUSE.version="2.0.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO: Warehouse todo list.
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+-- DONE: Switch from AI Dispatchers to OPSTRANSPORT
 -- TODO: Add check if assets "on the move" are stationary. Can happen if ground units get stuck in buildings. If stationary auto complete transport by adding assets to request warehouse? Time?
 -- TODO: Optimize findpathonroad. Do it only once (first time) and safe paths between warehouses similar to off-road paths.
 -- NOGO: Spawn assets only virtually, i.e. remove requested assets from stock but do NOT spawn them ==> Interface to A2A dispatcher! Maybe do a negative sign on asset number?
@@ -3743,12 +3724,15 @@ function WAREHOUSE:_JobDone()
   
               -- Check conditions for being back home.
               local ishome=false
-              if category==Group.Category.GROUND or category==Group.Category.HELICOPTER then
-                -- Units go back to the spawn zone, helicopters land and they should not move any more.
-                ishome=inspawnzone and onground and notmoving
+              if category==Group.Category.GROUND then
+                -- Ground units go back to the spawn zone and they should not move any more.
+                ishome=inspawnzone and notmoving
               elseif category==Group.Category.AIRPLANE then
                 -- Planes need to be on ground at their home airbase and should not move any more.
                 ishome=athomebase and onground and notmoving
+              elseif category==Group.Category.HELICOPTER then
+                -- Helicopters go back to their airbase or spawn zone and should not move any more.
+                ishome=(athomebase or inspawnzone) and onground and notmoving
               end
   
               -- Debug text.
@@ -4605,14 +4589,6 @@ function WAREHOUSE:onafterRequest(From, Event, To, Request)
 
 end
 
-function WAREHOUSE:_CallbackLoaded()
-  MESSAGE:New("TaskEmbarking",30,"Task"):ToAll()
-end
-
-function WAREHOUSE:_CallbackUnloaded()
-  MESSAGE:New("TaskDisembarking",30,"Task"):ToAll()
-end
-
 --- On after "RequestSpawned" event. Initiates the transport of the assets to the requesting warehouse.
 -- @param #WAREHOUSE self
 -- @param #string From From state.
@@ -4624,7 +4600,7 @@ end
 function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet, TransportGroupSet)
 
   -- General type and category.
-  local _cargotype=Request.cargoattribute    --#WAREHOUSE.Attribute 
+  local _cargotype=Request.cargoattribute    --#WAREHOUSE.Attribute
   local _cargocategory=Request.cargocategory --DCS#Group.Category
 
   -- Add groups to pending item.
@@ -4705,110 +4681,46 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
   ------------------------------------------------------------------------------------------------------------------------------------
   -- Prepare cargo groups for transport
   ------------------------------------------------------------------------------------------------------------------------------------
+  
+  -- TODO: set asset.weight for cargos
 
-  -- Board radius, i.e. when the cargo will begin to board the carrier
-  local _boardradius=500
+  -------------------------
+  -- Create OPSTRANSPORT --
+  -------------------------
+
+  -- OPSTRANSPORT
+  local CargoTransport --Ops.OpsTransport#OPSTRANSPORT
 
   if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE then
-    _boardradius=5000
+
+    CargoTransport = OPSTRANSPORT:New(CargoGroupSet, ZONE_AIRBASE:New(self.airbase:GetName()), ZONE_AIRBASE:New(Request.airbase:GetName()))
+    CargoTransport:SetEmbarkZone(self.spawnzone)
+    CargoTransport:SetDisembarkZone(Request.warehouse.spawnzone)
+
   elseif Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
-    --_loadradius=1000
-    --_boardradius=nil
-  elseif Request.transporttype==WAREHOUSE.TransportType.APC then
-    --_boardradius=nil
-  elseif Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.AIRCRAFTCARRIER 
-      or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then
-    _boardradius=6000
-  end
-  
-  ------------------------
-  -- Create Dispatchers --
-  ------------------------
-
-  -- Cargo dispatcher.
-  local CargoTransport --Ops.Auftrag#AUFTRAG
-
-  if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE or Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
-
-    -- Pickup and deploy zones.
-    local PickupZone = ZONE_AIRBASE:New(self.airbase:GetName())
-    local DeployZone = ZONE_AIRBASE:New(Request.airbase:GetName())
     
-    local DropoffCoordinate = DeployZone:GetRandomCoordinate(50,200,{land.SurfaceType.LAND, land.SurfaceType.ROAD})
-    local PickupCoordinate = PickupZone:GetRandomCoordinate(50,200,{land.SurfaceType.LAND, land.SurfaceType.ROAD})
-    
-    local Auftrag = AUFTRAG:NewTROOPTRANSPORT(CargoGroupSet,DropoffCoordinate,PickupCoordinate,500)
+    CargoTransport = OPSTRANSPORT:New(CargoGroupSet, self.spawnzone, Request.warehouse.spawnzone)
 
-    CargoGroupSet:SetProperty("WAREHOUSE_REQUEST",Request)
-
-    for _,_Group in pairs (TransportGroupSet.Set) do
-      local FlightGroup = FLIGHTGROUP:New(_Group)
-      FlightGroup:AddMission(Auftrag)
-      Auftrag:AddOpsGroup(FlightGroup)
-      FlightGroup:SetHomebase(self.airbase)
-    end
-    CargoTransport=Auftrag 
-    
   elseif Request.transporttype==WAREHOUSE.TransportType.APC then
 
-    -- Pickup and deploy zones.
-    local PickupZoneSet = SET_ZONE:New():AddZone(self.spawnzone)
-    local DeployZoneSet = SET_ZONE:New():AddZone(Request.warehouse.spawnzone)
-
-    -- Define dispatcher for this task.
-    CargoTransport = AI_CARGO_DISPATCHER_APC:New(TransportGroupSet, CargoGroups, PickupZoneSet, DeployZoneSet, 0)
-
-    -- Set home zone.
-    CargoTransport:SetHomeZone(self.spawnzone)
+    CargoTransport = OPSTRANSPORT:New(CargoGroupSet, self.spawnzone, Request.warehouse.spawnzone)
 
   elseif Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.AIRCRAFTCARRIER 
-      or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then
-
-    -- Pickup and deploy zones.
-    local PickupZoneSet = SET_ZONE:New():AddZone(self.portzone)
-    PickupZoneSet:AddZone(self.harborzone)
-    local DeployZoneSet = SET_ZONE:New():AddZone(Request.warehouse.harborzone)
-
+      or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then    
+    
+    CargoTransport = OPSTRANSPORT:New(CargoGroupSet, self.portzone, Request.warehouse.portzone)
+    CargoTransport:SetEmbarkZone(self.spawnzone)
+    CargoTransport:SetDisembarkZone(Request.warehouse.spawnzone)    
 
     -- Get the shipping lane to use and pass it to the Dispatcher
     local remotename = Request.warehouse.warehouse:GetName()
     local ShippingLane = self.shippinglanes[remotename][math.random(#self.shippinglanes[remotename])]
-
-    -- Define dispatcher for this task.
-    CargoTransport = AI_CARGO_DISPATCHER_SHIP:New(TransportGroupSet, CargoGroups, PickupZoneSet, DeployZoneSet, ShippingLane)
-
-    -- Set home zone
-    CargoTransport:SetHomeZone(self.portzone)
+    
+    -- TODO: Add shipping lane
+    -- CargoTransport:AddPathTransport(PathGroup)
 
   else
     self:E(self.lid.."ERROR: Unknown transporttype!")
-  end
-
-  -- Set pickup and deploy radii.
-  -- The 20 m inner radius are to ensure that the helo does not land on the warehouse itself in the middle of the default spawn zone.
-  local pickupouter = 200
-  local pickupinner = 0
-  local deployouter = 200
-  local deployinner = 0
-  if Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.AIRCRAFTCARRIER 
-    or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then
-    pickupouter=1000
-    pickupinner=20
-    deployouter=1000
-    deployinner=0
-  else 
-    pickupouter=200
-    pickupinner=0
-    if self.spawnzone.Radius~=nil then
-      pickupouter=self.spawnzone.Radius
-      pickupinner=20
-    end
-    deployouter=200
-    deployinner=0
-    if self.spawnzone.Radius~=nil then
-      deployouter=Request.warehouse.spawnzone.Radius
-      deployinner=20
-    end
   end
 
 
@@ -4831,79 +4743,61 @@ function WAREHOUSE:onafterRequestSpawned(From, Event, To, Request, CargoGroupSet
     end
   end
 
-  --------------------------------
-  -- Dispatcher Event Functions --
-  --------------------------------
+  ----------------------------------
+  -- Opstransport Event Functions --
+  ----------------------------------
 
-  --- Function called when cargo is loading.
-  function CargoTransport:OnBeforeExecuting(From,Event,To)
-    -- Cargo loaded
+  CargoTransport.warehouse = self
+
+  --- Function called when a carrier unit has loaded a cargo group.
+  function CargoTransport:OnAfterLoaded(From, Event, To, OpsGroupCargo, OpsGroupCarrier, CarrierElement)
+
     -- Get warehouse state.
-    local opsgroups = CargoTransport:GetOpsGroups()
-    
-    for _,_group in pairs(opsgroups) do
-      
-      local Carrier = _group:GetGroup()
-      local Element = Carrier:GetUnit(1)
-      local warehouse=Carrier:GetProperty("WAREHOUSE") --#WAREHOUSE
-      
-      for _,Cargo in pairs(CargoGroupSet.Set) do
-      
-        -- Debug message.
-        local text=string.format("Carrier group %s loaded cargo %s into unit %s in pickup zone", Carrier:GetName(), Cargo:GetName(), Element.UnitName)
-        warehouse:T(warehouse.lid..text)
-        
-        -- Get cargo group object.
-        local group=Cargo --Wrapper.Group#GROUP
-    
-        -- Get request.
-        local request = CargoGroupSet:GetProperty("WAREHOUSE_REQUEST")
-        
-        -- Add cargo group to this carrier.
-        table.insert(request.carriercargo[Element.UnitName], warehouse:_GetNameWithOut(Cargo:GetName()))     
-      
-      end
-    end
+    local warehouse=CargoTransport.warehouse --#WAREHOUSE
+
+    -- Get cargo group object.
+    local group=OpsGroupCargo:GetGroup() --Cargo:GetObject() --Wrapper.Group#GROUP
+
+     -- Get request.
+    local request=warehouse:_GetRequestOfGroup(group, warehouse.pending)
+
+    -- Add cargo group to this carrier.
+    table.insert(request.carriercargo[CarrierElement.name], warehouse:_GetNameWithOut(group:GetName()))
+
+  end
+
+  --- Function called when cargo has arrived and was unloaded.
+  function CargoTransport:OnAfterUnloaded(From, Event, To, OpsGroupCargo, OpsGroupCarrier)
+
+    -- Get warehouse state.
+    local warehouse=CargoTransport.warehouse --Carrier:GetState(Carrier, "WAREHOUSE") --#WAREHOUSE
+
+    -- Get group obejet.
+    local group=OpsGroupCargo:GetGroup() --Cargo:GetObject() --Wrapper.Group#GROUP
+
+    -- Debug message.
+    local text=string.format("Cargo group %s was unloaded from carrier group %s.", tostring(group:GetName()), tostring(OpsGroupCarrier:GetName()))
+    warehouse:T(warehouse.lid..text)
+
+    -- Trigger Arrived event.
+    warehouse:Arrived(group)
   end
   
-  --- Function called when cargo has arrived and was unloaded.
-  function CargoTransport:OnBeforeDone(From,Event,To)
-    
-    -- Cargo unloading
-    -- Get warehouse state.
-    local opsgroups = CargoTransport:GetOpsGroups()
-    
-    for _,_group in pairs(opsgroups) do
-  
-      local Carrier = _group:GetGroup()
-      local Element = Carrier:GetUnit(1)
-      local warehouse=Carrier:GetProperty("WAREHOUSE") --#WAREHOUSE
-      
-      for _,Cargo in pairs(CargoGroupSet.Set) do
+  -- TODO: Probably can also add some cargo/carrier dead functions here to simplify things at other places
 
-        -- Debug message.
-        local text=string.format("Cargo group %s was unloaded from carrier unit", tostring(Element:GetName()))
-        warehouse:T(warehouse.lid..text)
-    
-        -- Trigger Arrived event.
-        warehouse:Arrived(Cargo)
-      
-      end
-      
-      function _group:OnAfterLanded(From,Event,To,airbase)
-        local mybase = warehouse.airbasename
-        if airbase:GetName() == mybase then 
-          -- Debug info.
-          local text=string.format("Carrier %s is back home at warehouse %s.", tostring(Carrier:GetName()), tostring(warehouse.warehouse:GetName()))
-          MESSAGE:New(text, 5):ToAllIf(warehouse.Debug)
-          warehouse:I(warehouse.lid..text)
-      
-          -- Call arrived event for carrier.
-          warehouse:__Arrived(1, Carrier)      
-        end
-      end
-      
+
+  -- Assign cargo to carriers  
+  for _,carriergroup in pairs(TransportGroupSet:GetSetObjects()) do
+    local opsgroup=nil
+    if Request.transporttype==WAREHOUSE.TransportType.AIRPLANE or Request.transporttype==WAREHOUSE.TransportType.HELICOPTER then
+      opsgroup=FLIGHTGROUP:New(carriergroup)
+    elseif Request.transporttype==WAREHOUSE.TransportType.APC then
+      opsgroup=ARMYGROUP:New(carriergroup)
+    elseif Request.transporttype==WAREHOUSE.TransportType.SHIP or Request.transporttype==WAREHOUSE.TransportType.AIRCRAFTCARRIER 
+        or Request.transporttype==WAREHOUSE.TransportType.ARMEDSHIP or Request.transporttype==WAREHOUSE.TransportType.WARSHIP then
+      opsgroup=NAVYGROUP:New(carriergroup)
     end  
+    opsgroup:AddOpsTransport(CargoTransport)
   end
 
 end
@@ -5407,8 +5301,7 @@ function WAREHOUSE:onafterAssetSpawned(From, Event, To, group, asset, request)
   end
 
   -- Set warehouse state.
-  --group:SetState(group, "WAREHOUSE", self)
-  group:SetProperty("WAREHOUSE",self)  
+  group:SetState(group, "WAREHOUSE", self)  
 
   -- Check if all assets groups are spawned and trigger events.
   local n=0

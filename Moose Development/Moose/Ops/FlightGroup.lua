@@ -2782,7 +2782,7 @@ function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n, N)
   -- Set current waypoint or we get problem that the _PassingWaypoint function is triggered too early, i.e. right now and not when passing the next WP.
   local current=self:GetCoordinate():WaypointAir(COORDINATE.WaypointAltType.BARO, waypointType, waypointAction, speed, true, nil, {}, "Current")
   table.insert(wp, current)
-
+  
   -- Add remaining waypoints to route.
   for i=n, N do
     table.insert(wp, self.waypoints[i])
