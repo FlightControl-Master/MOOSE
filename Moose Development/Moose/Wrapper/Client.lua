@@ -148,7 +148,7 @@ function CLIENT:FindByName( ClientName, ClientBriefing, Error )
   end
 end
 
---- Transport defines that the Client is a Transport. Transports show cargo.
+--- Register a client.
 -- @param #CLIENT self
 -- @param #string ClientName Name of the client unit.
 -- @return #CLIENT self
@@ -505,15 +505,6 @@ function CLIENT:GetClientGroupDCSUnit()
     self:T2( ClientDCSUnit )
     return ClientDCSUnit
   end
-end
-
-
---- Evaluates if the CLIENT is a transport.
--- @param #CLIENT self
--- @return #boolean true is a transport.
-function CLIENT:IsTransport()
-  self:F()
-  return self.ClientTransport
 end
 
 --- The main message driver for the CLIENT.

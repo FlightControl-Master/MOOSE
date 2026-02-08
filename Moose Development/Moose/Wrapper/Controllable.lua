@@ -2185,7 +2185,7 @@ function CONTROLLABLE:TaskFunction( FunctionString, ... )
     self:SetState( self, ArgumentKey, arg )
     DCSScript[#DCSScript + 1] = "local Arguments = MissionControllable:GetState( MissionControllable, '" .. ArgumentKey .. "' ) "
     DCSScript[#DCSScript + 1] = FunctionString .. "( MissionControllable, unpack( Arguments ) )"
-    --DCSScript[#DCSScript + 1] = FunctionString .. "( MissionControllable, ((type(Arguments)=='table') and unpack(Arguments) or nil))"
+    --DCSScript[#DCSScript + 1] = FunctionString .. "( MissionControllable, ((type(Arguments)=='table') and unpack(Arguments) or nil))" -- this doesn't work
   else
     DCSScript[#DCSScript + 1] = FunctionString .. "( MissionControllable )"
   end

@@ -503,6 +503,7 @@
 --     -- Start ARTY process.
 --     normandy:Start()
 --
+--
 -- @field #ARTY
 ARTY={
   ClassName="ARTY",
@@ -1202,37 +1203,6 @@ function ARTY:New(group, alias)
 
   return self
 end
-
---- Creates a new ARTY object from a MOOSE CARGO_GROUP object.
--- @param #ARTY self
--- @param Cargo.CargoGroup#CARGO_GROUP cargogroup The CARGO GROUP object for which artillery tasks should be assigned.
--- @param alias (Optional) Alias name the group will be calling itself when sending messages. Default is the group name.
--- @return #ARTY ARTY object or nil if group does not exist or is not a ground or naval group.
-function ARTY:NewFromCargoGroup(cargogroup, alias)
-
-  if cargogroup then
-    BASE:T(string.format("ARTY script version %s. Added CARGO group %s.", ARTY.version, cargogroup:GetName()))
-  else
-    BASE:E("ERROR: Requested ARTY CARGO GROUP does not exist! (Has to be a MOOSE CARGO(!) group.)")
-    return nil
-  end
-
-  -- Get group belonging to the cargo group.
-  local group=cargogroup:GetObject()
-
-  -- Create ARTY object.
-  local arty=ARTY:New(group,alias)
-
-  -- Set iscargo flag.
-  arty.iscargo=true
-
-  -- Set cargo group object.
-  arty.cargogroup=cargogroup
-
-  return arty
-end
-
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User Functions

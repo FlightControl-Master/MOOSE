@@ -1798,6 +1798,8 @@ ENUMS.Storage.weapons.missiles.Igla_S = 'weapons.missiles.Igla_S'
 ENUMS.Storage.weapons.gunmounts.AKAN_NO_TRC = 'weapons.gunmounts.{AKAN_NO_TRC}'
 ENUMS.Storage.weapons.gunmounts.AKAN = 'weapons.gunmounts.{AKAN}'
 ENUMS.Storage.weapons.shells.M882_9x19 = 'weapons.shells.9x19_m882'
+ENUMS.Storage.weapons.droptanks.fuel_tank_370gal = "weapons.droptanks.fuel_tank_370gal"
+ENUMS.Storage.weapons.droptanks.fuel_tank_300gal  = "weapons.droptanks.fuel_tank_300gal"
 
 -- UH-60L Mod
 ENUMS.Storage.weapons.gunmounts.UH60LGAU19 = 'weapons.gunmounts.UH-60L GAU-19'

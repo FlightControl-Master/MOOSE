@@ -24,7 +24,6 @@
 --   * @{#SET_STATIC}: Defines a collection of @{Wrapper.Static}s filtered by filter criteria.
 --   * @{#SET_CLIENT}: Defines a collection of @{Wrapper.Client}s filtered by filter criteria.
 --   * @{#SET_AIRBASE}: Defines a collection of @{Wrapper.Airbase}s filtered by filter criteria.
---   * @{#SET_CARGO}: Defines a collection of @{Cargo.Cargo}s filtered by filter criteria.
 --   * @{#SET_ZONE}: Defines a collection of @{Core.Zone}s filtered by filter criteria.
 --   * @{#SET_SCENERY}: Defines a collection of @{Wrapper.Scenery}s added via a filtered @{#SET_ZONE}.
 --   * @{#SET_DYNAMICCARGO}: Defines a collection of @{Wrapper.DynamicCargo}s filtered by filter criteria.
@@ -6077,14 +6076,6 @@ do -- SET_ZONE
     if EventData.Zone then
       local Zone = _DATABASE:FindZone(EventData.Zone.ZoneName)
       if Zone and Zone.ZoneName then
-
-        -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
-        -- However, in the loading logic, an S_EVENT_DEAD is also generated after a Destroy() call.
-        -- And this is a problem because it will remove all entries from the SET_ZONEs.
-        -- To prevent this from happening, the Zone object has a flag NoDestroy.
-        -- When true, the SET_ZONE won't Remove the Zone object from the set.
-        -- This flag is switched off after the event handlers have been called in the EVENT class.
-        --self:F({ ZoneNoDestroy = Zone.NoDestroy })
         if Zone.NoDestroy then
         else
           self:Remove(Zone.ZoneName)
@@ -6599,14 +6590,6 @@ do -- SET_ZONE_GOAL
     if EventData.ZoneGoal then
       local Zone = _DATABASE:FindZone(EventData.ZoneGoal.ZoneName)
       if Zone and Zone.ZoneName then
-
-        -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
-        -- However, in the loading logic, an S_EVENT_DEAD is also generated after a Destroy() call.
-        -- And this is a problem because it will remove all entries from the SET_ZONE_GOALs.
-        -- To prevent this from happening, the Zone object has a flag NoDestroy.
-        -- When true, the SET_ZONE_GOAL won't Remove the Zone object from the set.
-        -- This flag is switched off after the event handlers have been called in the EVENT class.
-        --self:F({ ZoneNoDestroy = Zone.NoDestroy })
         if Zone.NoDestroy then
         else
           self:Remove(Zone.ZoneName)
@@ -6995,14 +6978,6 @@ do -- SET_OPSZONE
     if EventData.ZoneGoal then
       local Zone = _DATABASE:FindZone(EventData.ZoneGoal.ZoneName)
       if Zone and Zone.ZoneName then
-
-        -- When cargo was deleted, it may probably be because of an S_EVENT_DEAD.
-        -- However, in the loading logic, an S_EVENT_DEAD is also generated after a Destroy() call.
-        -- And this is a problem because it will remove all entries from the SET_OPSZONEs.
-        -- To prevent this from happening, the Zone object has a flag NoDestroy.
-        -- When true, the SET_OPSZONE won't Remove the Zone object from the set.
-        -- This flag is switched off after the event handlers have been called in the EVENT class.
-        --self:F({ ZoneNoDestroy = Zone.NoDestroy })
         if Zone.NoDestroy then
         else
           self:Remove(Zone.ZoneName)
