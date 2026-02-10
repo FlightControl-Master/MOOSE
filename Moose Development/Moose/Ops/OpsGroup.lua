@@ -6150,6 +6150,11 @@ function OPSGROUP:RouteToMission(mission, delay)
         end
 
       end
+	  
+	elseif mission.type==AUFTRAG.Type.FREIGHTTRANSPORT then
+	
+		-- Refresh DCS task with the known controllable.
+		mission.DCStask=mission:GetDCSMissionTask(self.group)
 
     elseif mission.type==AUFTRAG.Type.ARTY then
 

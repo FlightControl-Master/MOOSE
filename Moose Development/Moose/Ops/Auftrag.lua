@@ -458,6 +458,7 @@ _AUFTRAGSNR=0
 -- @field #string NOTHING Nothing.
 -- @field #string PATROLRACETRACK Patrol Racetrack.
 -- @field #string STRAFING Strafing run.
+-- @field #string FREIGHTTRANSPORT Freight transport.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",
@@ -506,6 +507,7 @@ AUFTRAG.Type={
   NOTHING="Nothing",
   PATROLRACETRACK="Patrol Racetrack",
   STRAFING="Strafing",
+  FREIGHTTRANSPORT="FREIGHTTRANSPORT",
 }
 
 --- Special task description.
@@ -2167,6 +2169,33 @@ function AUFTRAG:NewCARGOTRANSPORT(StaticCargo, DropZone)
   mission.DCStask.params.groupId=StaticCargo:GetID()
   mission.DCStask.params.zoneId=DropZone.ZoneID
   mission.DCStask.params.zone=DropZone
+  mission.DCStask.params.cargo=StaticCargo
+  
+  return mission
+end
+
+--- **[AIR]** Create a FREIGHT TRANSPORT mission.
+-- @param #AUFTRAG self
+-- @param Wrapper.Static#STATIC StaticCargo Static cargo object.
+-- @param Wrapper.Airbase#AIRBASE Destination Destination airbase, where the cargo is unloaded.
+-- @return #AUFTRAG self
+function AUFTRAG:NewFREIGHTTRANSPORT(StaticCargo, Destination)
+
+  local mission=AUFTRAG:New(AUFTRAG.Type.FREIGHTTRANSPORT)
+
+  mission:_TargetFromObject(StaticCargo)
+
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.FREIGHTTRANSPORT)
+
+  -- Set ROE and ROT.
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+
+  mission.categories={AUFTRAG.Category.HELICOPTER, AUFTRAG.Category.AIRCRAFT}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.DCStask.params.groupId=StaticCargo:GetID()
   mission.DCStask.params.cargo=StaticCargo
   
   return mission
@@ -6201,8 +6230,9 @@ end
 
 --- Get DCS task table for the given mission.
 -- @param #AUFTRAG self
+-- @param Wrapper.Group#GROUP MissionGroup (Optional) Group that is supposed to carry out the mission. This might not exist when the AUFTRAG is created but only when the AUFTRAG is passed to a certain group.
 -- @return DCS#Task The DCS task table. If multiple tasks are necessary, this is returned as a combo task.
-function AUFTRAG:GetDCSMissionTask()
+function AUFTRAG:GetDCSMissionTask(MissionGroup)
 
   local DCStasks={}
 
@@ -6541,6 +6571,36 @@ function AUFTRAG:GetDCSMissionTask()
     local TaskCargoTransportation={
       id = "CargoTransportation",
       params = {}
+    }
+    
+    table.insert(DCStasks, TaskCargoTransportation)
+
+  elseif self.type==AUFTRAG.Type.FREIGHTTRANSPORT then
+
+    ------------------------------
+    -- FREIGHTTRANSPORT Mission --
+    ------------------------------
+    
+    local x=nil; local y=nil; local unitIdTransport=nil
+    if MissionGroup then
+      local vec2=MissionGroup:GetVec2()
+      x=vec2.x
+      y=vec2.y
+      unitIdTransport=MissionGroup:GetFirstUnit():GetID()
+    end
+    
+    local static=self.engageTarget:GetObject() --Wrapper.Static#STATIC
+
+    -- Task to transport cargo.
+    local TaskCargoTransportation={
+      id = "CargoTransportationPlane",
+      params = {
+        x=x,
+        y=y,
+        unitIdTransport=nil,
+        groupId=static:GetID(),
+        unitId=static:GetID(),
+      }
     }
     
     table.insert(DCStasks, TaskCargoTransportation)
@@ -7109,6 +7169,8 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
     mtask=ENUMS.MissionTask.TRANSPORT
   elseif MissionType==AUFTRAG.Type.CARGOTRANSPORT then
     mtask=ENUMS.MissionTask.TRANSPORT
+  elseif MissionType==AUFTRAG.Type.FREIGHTTRANSPORT then
+    mtask=ENUMS.MissionTask.TRANSPORT    
   elseif MissionType==AUFTRAG.Type.ARMORATTACK then
     mtask=ENUMS.MissionTask.NOTHING
   elseif MissionType==AUFTRAG.Type.HOVER then
