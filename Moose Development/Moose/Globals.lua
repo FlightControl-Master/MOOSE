@@ -13,9 +13,6 @@ _DATABASE = DATABASE:New() -- Core.Database#DATABASE
 _SETTINGS = SETTINGS:Set() -- Core.Settings#SETTINGS
 _SETTINGS:SetPlayerMenuOn()
 
---- Register cargos.
-_DATABASE:_RegisterCargos()
-
 --- Register zones.
 _DATABASE:_RegisterZones()
 _DATABASE:_RegisterAirbases()

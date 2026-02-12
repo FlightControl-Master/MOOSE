@@ -54,7 +54,6 @@
 --  * AIRBASES
 --  * PLAYERSJOINED
 --  * PLAYERS
---  * CARGOS
 --  * STORAGES (DCS warehouses)
 --  * DYNAMICCARGO
 --
@@ -81,7 +80,6 @@ DATABASE = {
   PLAYERSJOINED = {},
   PLAYERUNITS = {},
   CLIENTS = {},
-  CARGOS = {},
   AIRBASES = {},
   COUNTRY_ID = {},
   COUNTRY_NAME = {},
@@ -141,8 +139,6 @@ function DATABASE:New()
   self:HandleEvent( EVENTS.RemoveUnit, self._EventOnDeadOrCrash )
   self:HandleEvent( EVENTS.UnitLost, self._EventOnDeadOrCrash )  -- DCS 2.7.1 for Aerial units no dead event ATM
   self:HandleEvent( EVENTS.Hit, self.AccountHits )
-  self:HandleEvent( EVENTS.NewCargo )
-  self:HandleEvent( EVENTS.DeleteCargo )
   self:HandleEvent( EVENTS.NewZone )
   self:HandleEvent( EVENTS.DeleteZone )
   --self:HandleEvent( EVENTS.PlayerEnterUnit, self._EventOnPlayerEnterUnit ) -- This is not working anymore!, handling this through the birth event.
@@ -745,102 +741,6 @@ do -- OpsZone
   end
 
 end -- OpsZone
-
-do -- cargo
-
-  --- Adds a Cargo based on the Cargo Name in the DATABASE.
-  -- @param #DATABASE self
-  -- @param #string CargoName The name of the airbase
-  function DATABASE:AddCargo( Cargo )
-
-    if not self.CARGOS[Cargo.Name] then
-      self.CARGOS[Cargo.Name] = Cargo
-    end
-  end
-
-
-  --- Deletes a Cargo from the DATABASE based on the Cargo Name.
-  -- @param #DATABASE self
-  -- @param #string CargoName The name of the airbase
-  function DATABASE:DeleteCargo( CargoName )
-
-    self.CARGOS[CargoName] = nil
-  end
-
-  --- Finds an CARGO based on the CargoName.
-  -- @param #DATABASE self
-  -- @param #string CargoName
-  -- @return Cargo.Cargo#CARGO The found CARGO.
-  function DATABASE:FindCargo( CargoName )
-
-    local CargoFound = self.CARGOS[CargoName]
-    return CargoFound
-  end
-
-  --- Checks if the Template name has a #CARGO tag.
-  -- If yes, the group is a cargo.
-  -- @param #DATABASE self
-  -- @param #string TemplateName
-  -- @return #boolean
-  function DATABASE:IsCargo( TemplateName )
-
-    TemplateName = env.getValueDictByKey( TemplateName )
-
-    local Cargo = TemplateName:match( "#(CARGO)" )
-
-    return Cargo and Cargo == "CARGO"
-  end
-
-  --- Private method that registers new Static Templates within the DATABASE Object.
-  -- @param #DATABASE self
-  -- @return #DATABASE self
-  function DATABASE:_RegisterCargos()
-
-    local Groups = UTILS.DeepCopy( self.GROUPS ) -- This is a very important statement. CARGO_GROUP:New creates a new _DATABASE.GROUP entry, which will confuse the loop. I searched 4 hours on this to find the bug!
-
-    for CargoGroupName, CargoGroup in pairs( Groups ) do
-      if self:IsCargo( CargoGroupName ) then
-        local CargoInfo = CargoGroupName:match("#CARGO(.*)")
-        local CargoParam = CargoInfo and CargoInfo:match( "%((.*)%)")
-        local CargoName1 = CargoGroupName:match("(.*)#CARGO%(.*%)")
-        local CargoName2 = CargoGroupName:match(".*#CARGO%(.*%)(.*)")
-        local CargoName = CargoName1 .. ( CargoName2 or "" )
-        local Type = CargoParam and CargoParam:match( "T=([%a%d ]+),?")
-        local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?") or CargoName
-        local LoadRadius = CargoParam and tonumber( CargoParam:match( "RR=([%a%d]+),?") )
-        local NearRadius = CargoParam and tonumber( CargoParam:match( "NR=([%a%d]+),?") )
-
-        self:I({"Register CargoGroup:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
-        CARGO_GROUP:New( CargoGroup, Type, Name, LoadRadius, NearRadius )
-      end
-    end
-
-    for CargoStaticName, CargoStatic in pairs( self.STATICS ) do
-      if self:IsCargo( CargoStaticName ) then
-        local CargoInfo = CargoStaticName:match("#CARGO(.*)")
-        local CargoParam = CargoInfo and CargoInfo:match( "%((.*)%)")
-        local CargoName = CargoStaticName:match("(.*)#CARGO")
-        local Type = CargoParam and CargoParam:match( "T=([%a%d ]+),?")
-        local Category = CargoParam and CargoParam:match( "C=([%a%d ]+),?")
-        local Name = CargoParam and CargoParam:match( "N=([%a%d]+),?") or CargoName
-        local LoadRadius = CargoParam and tonumber( CargoParam:match( "RR=([%a%d]+),?") )
-        local NearRadius = CargoParam and tonumber( CargoParam:match( "NR=([%a%d]+),?") )
-
-        if Category == "SLING" then
-          self:I({"Register CargoSlingload:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
-          CARGO_SLINGLOAD:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
-        else
-          if Category == "CRATE" then
-            self:I({"Register CargoCrate:",Type=Type,Name=Name,LoadRadius=LoadRadius,NearRadius=NearRadius})
-            CARGO_CRATE:New( CargoStatic, Type, Name, LoadRadius, NearRadius )
-          end
-        end
-      end
-    end
-
-  end
-
-end -- cargo
 
 --- Finds a CLIENT based on the ClientName.
 -- @param #DATABASE self
@@ -2049,19 +1949,6 @@ function DATABASE:ForEachClient( IteratorFunction, FinalizeFunction, ... )
 
   return self
 end
-
---- Iterate the DATABASE and call an iterator function for each CARGO, providing the CARGO object to the function and optional parameters.
--- @param #DATABASE self
--- @param #function IteratorFunction The function that will be called for each object in the database. The function needs to accept a CLIENT parameter.
--- @return #DATABASE self
-function DATABASE:ForEachCargo( IteratorFunction, FinalizeFunction, ... )
-  self:F2( arg )
-
-  self:ForEach( IteratorFunction, FinalizeFunction, arg, self.CARGOS )
-
-  return self
-end
-
 
 --- Handles the OnEventNewCargo event.
 -- @param #DATABASE self

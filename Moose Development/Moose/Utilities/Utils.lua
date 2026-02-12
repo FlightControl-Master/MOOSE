@@ -5521,7 +5521,7 @@ end
 function UTILS.CalculateInterceptBearing(A1, V1, A2, V2_speed)
     
     local function berechne_bearing(richtung)
-      local bearing = math.deg(math.atan2(richtung.x, richtung.y))
+      local bearing = math.deg(math.atan2(richtung.x, richtung.z))
       if bearing < 0 then
           bearing = bearing + 360
       end
