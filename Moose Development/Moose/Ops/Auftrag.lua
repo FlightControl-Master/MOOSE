@@ -2197,6 +2197,7 @@ function AUFTRAG:NewFREIGHTTRANSPORT(StaticCargo, Destination)
   
   mission.DCStask.params.groupId=StaticCargo:GetID()
   mission.DCStask.params.cargo=StaticCargo
+  mission.DCStask.params.destination=Destination
   
   return mission
 end

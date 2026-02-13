@@ -6153,9 +6153,24 @@ function OPSGROUP:RouteToMission(mission, delay)
 	  
 	elseif mission.type==AUFTRAG.Type.FREIGHTTRANSPORT then
 	
+		---
+		-- FREIGHTTRANSPORT
+		---
+	
+		local destination=mission.DCStask.params.destination
+		local cargo=mission.DCStask.params.cargo
+		
+		-- Set the waypoint coordinate directly above the airbase.
+		-- The only way to ensure the cargo is delivered there, because when the task is executed, the cargo is delivered to the closest airbase.
+		-- Hopefully, ED will change the behaviour of this task but at the moment, it is what it is.
+		waypointcoord=destination:GetCoordinate()
+		
 		-- Refresh DCS task with the known controllable.
 		mission.DCStask=mission:GetDCSMissionTask(self.group)
-
+		
+		mission.DCStask.params.destination=destination
+		mission.DCStask.params.cargo=cargo
+		
     elseif mission.type==AUFTRAG.Type.ARTY then
 
       ---
