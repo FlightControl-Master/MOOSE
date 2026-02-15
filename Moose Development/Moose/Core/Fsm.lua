@@ -833,6 +833,16 @@ do -- FSM
       return self._handler( self, EventName, ... )
     end
   end
+  
+  --- Clear scheduled FSM event.
+  -- @param #FSM self
+  -- @param #string EventName Event name.
+  function FSM:_ClearFSMEvent( EventName )
+    if self._EventSchedules[EventName] then
+      self.CallScheduler:Remove( self._EventSchedules[EventName] )
+      self._EventSchedules[EventName]=nil
+    end  
+  end  
 
   --- Go sub.
   -- @param #FSM self
