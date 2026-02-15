@@ -40,6 +40,7 @@ do
 -- @field #string ClassName Class name.
 -- @field #number ID ID of this cargo.
 -- @field #string Name Name for menu.
+-- @field #string DisplayName Display name for menu/messages.
 -- @field #table Templates Table of #POSITIONABLE objects.
 -- @field #string CargoType Enumerator of Type.
 -- @field #boolean HasBeenMoved Flag for moving.
@@ -66,6 +67,7 @@ CTLD_CARGO = {
   ClassName = "CTLD_CARGO",
   ID = 0,
   Name = "none",
+  DisplayName = "none",
   Templates = {},
   CargoType = "none",
   HasBeenMoved = false,
@@ -125,6 +127,7 @@ CTLD_CARGO = {
     self:T({ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped})
     self.ID = ID or math.random(100000,1000000)
     self.Name = Name or "none" -- #string
+    self.DisplayName = Name or "none" -- #string
     self.Templates = Templates or {} -- #table
     self.CargoType = Sorte or "type" -- #CTLD_CARGO.Enum
     self.HasBeenMoved = HasBeenMoved or false -- #boolean
@@ -252,6 +255,26 @@ CTLD_CARGO = {
   -- @return #string Name
   function CTLD_CARGO:GetName()
     return self.Name
+  end
+
+  --- Set display name.
+  -- @param #CTLD_CARGO self
+  -- @param #string DisplayName Display label used in menus/messages (optional).
+  -- @return #CTLD_CARGO self
+  function CTLD_CARGO:SetDisplayName(DisplayName)
+    if type(DisplayName) == "string" and DisplayName ~= "" then
+      self.DisplayName = DisplayName
+    else
+      self.DisplayName = self.Name
+    end
+    return self
+  end
+
+  --- Query display name.
+  -- @param #CTLD_CARGO self
+  -- @return #string Display name, or Name if not set
+  function CTLD_CARGO:GetDisplayName()
+    return self.DisplayName or self.Name
   end
   
   --- Query Templates.
@@ -2137,6 +2160,35 @@ function CTLD:_GetUnitCapabilities(Unit)
   return capabilities
 end
 
+--- (Internal) Resolve cargo label for menus/messages.
+-- @param #CTLD self
+-- @param #CTLD_CARGO Cargo Cargo object or cargo name.
+-- @return #string Cargo label
+function CTLD:_GetCargoDisplayName(Cargo)
+  if type(Cargo) == "table" then
+    if Cargo.GetDisplayName then
+      local dname = Cargo:GetDisplayName()
+      if type(dname) == "string" and dname ~= "" then
+        return dname
+      end
+    end
+    if Cargo.GetName then
+      local name = Cargo:GetName()
+      if type(name) == "string" and name ~= "" then
+        return name
+      end
+    end
+    if type(Cargo.Name) == "string" and Cargo.Name ~= "" then
+      return Cargo.Name
+    end
+    return "Unknown"
+  end
+  if type(Cargo) == "string" and Cargo ~= "" then
+    return Cargo
+  end
+  return "Unknown"
+end
+
 --- (User) Function to allow transport via Combined Arms Trucks.
 -- @param #CTLD self
 -- @param #boolean OnOff Switch on (true) or off (false).
@@ -3335,7 +3387,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
   local requestedSets = math.floor((requestNumber + perSet - 1) / perSet)
   if requestedSets < 1 then requestedSets = 1 end
   if not drop and not pack then
-    local cgoname = Cargo:GetName()
+    local cgoname = self:_GetCargoDisplayName(Cargo)
     local instock = Cargo:GetStock()
     if type(instock) == "number" and tonumber(instock) <= 0 and tonumber(instock) ~= -1 then
       -- nothing left over
@@ -3396,7 +3448,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
     return false
   end
 
-  if not self:CanGetCrates(Group, Unit, Cargo, requestNumber, drop, pack, quiet, suppressGetEvent) then
+  if not drop and not self:CanGetCrates(Group, Unit, Cargo, requestNumber, drop, pack, quiet, suppressGetEvent) then
     return false
   end
   -- spawn crates in front of helicopter
@@ -3407,6 +3459,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
   local number = requestNumber --#number
   local cratesneeded = cargotype:GetCratesNeeded() --#number
   local cratename = cargotype:GetName()
+  local cratedisplayname = self:_GetCargoDisplayName(cargotype)
   local cratetemplate = "Container"-- #string
   local cgotype = cargotype:GetType()
   local cgomass = cargotype:GetMass()
@@ -3521,6 +3574,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
     if drop then
                 --CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock, Subcategory)
       realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,true,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],true,cargotype.PerCrateMass,nil,subcat) -- #CTLD_CARGO
+      realcargo:SetDisplayName(cargotype:GetDisplayName())
       local map=cargotype:GetStaticResourceMap()
       realcargo:SetStaticResourceMap(map)
       local CCat3, CType3, CShape3 = cargotype:GetStaticTypeAndShape()
@@ -3531,6 +3585,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
       table.insert(droppedcargo,realcargo)
     else
       realcargo = CTLD_CARGO:New(self.CargoCounter,cratename,templ,sorte,false,false,cratesneeded,self.Spawned_Crates[self.CrateCounter],false,cargotype.PerCrateMass,nil,subcat)
+      realcargo:SetDisplayName(cargotype:GetDisplayName())
       local map=cargotype:GetStaticResourceMap()
       realcargo:SetStaticResourceMap(map) 
       if cargotype.TypeNames then
@@ -3552,9 +3607,9 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
     Cargo:RemoveStock(requestedSets)
     self:_RefreshCrateQuantityMenus(Group, Unit, Cargo)
   end
-  local text = string.format("%d crates for %s have been positioned near you!",number,cratename)
+  local text = string.format("%d crates for %s have been positioned near you!",number,cratedisplayname)
   if drop then
-    text = string.format("%d crates for %s have been dropped!",number,cratename)
+    text = string.format("%d crates for %s have been dropped!",number,cratedisplayname)
     self:__CratesDropped(1, Group, Unit, droppedcargo)
   else
     if not quiet then
@@ -5592,7 +5647,7 @@ function CTLD:_RefreshF10Menus()
                 end
                 for _, cargoObj in pairs(self.Cargo_Troops) do
                   if not cargoObj.DontShowInMenu then
-                    local menutext = cargoObj.Name
+                    local menutext = self:_GetCargoDisplayName(cargoObj)
                     local parent = troopsmenu
                     if useTroopSubcats and cargoObj.Subcategory and subcatmenus[cargoObj.Subcategory] then
                       parent = subcatmenus[cargoObj.Subcategory]
@@ -5605,7 +5660,7 @@ function CTLD:_RefreshF10Menus()
               else
                 for _, cargoObj in pairs(self.Cargo_Troops) do
                   if not cargoObj.DontShowInMenu then
-                    local menutext = cargoObj.Name
+                    local menutext = self:_GetCargoDisplayName(cargoObj)
                     local mSet = MENU_GROUP:New(_group, menutext, troopsmenu)
                     _group.CTLD_TroopMenus[cargoObj.Name] = mSet
                     self:_AddTroopQuantityMenus(_group,_unit,mSet,cargoObj)
@@ -5620,7 +5675,7 @@ function CTLD:_RefreshF10Menus()
               if loadedData and loadedData.Cargo then
                 for i,cargoObj in ipairs(loadedData.Cargo) do
                   if cargoObj and (cargoObj:GetType()==CTLD_CARGO.Enum.TROOPS or cargoObj:GetType()==CTLD_CARGO.Enum.ENGINEERS) and not cargoObj:WasDropped() then
-                    local name=cargoObj:GetName() or "Unknown"
+                      local name=self:_GetCargoDisplayName(cargoObj)
                     local needed=cargoObj:GetCratesNeeded() or 1
                     local cID=cargoObj:GetID()
                     local line=string.format("Drop: %s",name,needed,cID)
@@ -5673,10 +5728,11 @@ function CTLD:_RefreshF10Menus()
                   local needed = cargoObj:GetCratesNeeded() or 1
 
                   local txt
+                  local cargoLabel = self:_GetCargoDisplayName(cargoObj)
                   if needed > 1 then
-                    txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                    txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoLabel,cargoObj.PerCrateMass or 0)
                   else
-                    txt = string.format("%s (%dkg)",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                    txt = string.format("%s (%dkg)",cargoLabel,cargoObj.PerCrateMass or 0)
                   end
                   if cargoObj.Location then txt = txt.."[R]" end
                   if self.showstockinmenuitems then
@@ -5721,10 +5777,11 @@ function CTLD:_RefreshF10Menus()
                     if not cargoObj.DontShowInMenu then
                       local needed = cargoObj:GetCratesNeeded() or 1
                       local txt
+                      local cargoLabel = self:_GetCargoDisplayName(cargoObj)
                       if needed > 1 then
-                        txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                        txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoLabel,cargoObj.PerCrateMass or 0)
                       else
-                        txt = string.format("%s (%dkg)",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                        txt = string.format("%s (%dkg)",cargoLabel,cargoObj.PerCrateMass or 0)
                       end
                       if cargoObj.Location then txt = txt.."[R]" end
                       local stock = cargoObj:GetStock()
@@ -5736,10 +5793,11 @@ function CTLD:_RefreshF10Menus()
                     if (not cargoObj.DontShowInMenu) and (not cargoObj.UnitCanCarry or cargoObj:UnitCanCarry(_unit)) then
                       local needed = cargoObj:GetCratesNeeded() or 1
                       local txt
+                      local cargoLabel = self:_GetCargoDisplayName(cargoObj)
                       if needed > 1 then
-                        txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                        txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoLabel,cargoObj.PerCrateMass or 0)
                       else
-                        txt = string.format("%s (%dkg)",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                        txt = string.format("%s (%dkg)",cargoLabel,cargoObj.PerCrateMass or 0)
                       end
                       if cargoObj.Location then txt = txt.."[R]" end
                       local stock = cargoObj:GetStock()
@@ -5752,10 +5810,11 @@ function CTLD:_RefreshF10Menus()
                     if not cargoObj.DontShowInMenu then
                       local needed = cargoObj:GetCratesNeeded() or 1
                       local txt
+                      local cargoLabel = self:_GetCargoDisplayName(cargoObj)
                       if needed > 1 then
-                        txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                        txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoLabel,cargoObj.PerCrateMass or 0)
                       else
-                        txt = string.format("%s (%dkg)",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                        txt = string.format("%s (%dkg)",cargoLabel,cargoObj.PerCrateMass or 0)
                       end
                       if cargoObj.Location then txt = txt.."[R]" end
                       local stock = cargoObj:GetStock()
@@ -5767,10 +5826,11 @@ function CTLD:_RefreshF10Menus()
                     if (not cargoObj.DontShowInMenu) and (not cargoObj.UnitCanCarry or cargoObj:UnitCanCarry(_unit)) then
                       local needed = cargoObj:GetCratesNeeded() or 1
                       local txt
+                      local cargoLabel = self:_GetCargoDisplayName(cargoObj)
                       if needed > 1 then
-                        txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                        txt = string.format("%d crate%s %s (%dkg)",needed,needed==1 and "" or "s",cargoLabel,cargoObj.PerCrateMass or 0)
                       else
-                        txt = string.format("%s (%dkg)",cargoObj.Name,cargoObj.PerCrateMass or 0)
+                        txt = string.format("%s (%dkg)",cargoLabel,cargoObj.PerCrateMass or 0)
                       end
                       if cargoObj.Location then txt = txt.."[R]" end
                       local stock = cargoObj:GetStock()
@@ -5816,12 +5876,13 @@ function CTLD:_RefreshF10Menus()
                   if cgo and (not cgo:WasDropped()) then
                     local cname   = cgo:GetName()
                     local cneeded = cgo:GetCratesNeeded()
-                    cargoByName[cname] = cargoByName[cname] or { count=0, needed=cneeded }
+                    local cdisplay = self:_GetCargoDisplayName(cgo)
+                    cargoByName[cname] = cargoByName[cname] or { count=0, needed=cneeded, display=cdisplay }
                     cargoByName[cname].count = cargoByName[cname].count + 1
                   end
                 end
                 for name, info in pairs(cargoByName) do
-                  local line = string.format("Drop %s (%d/%d)", name, info.count, info.needed)
+                  local line = string.format("Drop %s (%d/%d)", info.display or name, info.count, info.needed)
                   MENU_GROUP_COMMAND:New(_group, line, dropCratesMenu, self._UnloadSingleCrateSet, self, _group, _unit, name)
                 end
               end
@@ -5857,7 +5918,7 @@ function CTLD:_RefreshF10Menus()
                     end
                     parent = sub
                   end
-                  local menutext = cargoObj.Name
+                  local menutext = self:_GetCargoDisplayName(cargoObj)
                   if type(cargoObj.Stock) == "number" and cargoObj.Stock >= 0 and self.showstockinmenuitems then
                     menutext = menutext.."["..cargoObj.Stock.."]"
                   end
@@ -6915,8 +6976,10 @@ end
 -- @param #string SubCategory Name of sub-category (optional).
 -- @param #boolean DontShowInMenu (optional) If set to "true" this won't show up in the menu.
 -- @param Core.Zone#ZONE Location (optional) If set, the cargo item is **only** available here. Can be a #ZONE object or the name of a zone as #string.
+-- @param #string UnitTypes Unit type names (optional). If set, only these unit types can pick up the cargo, e.g. "UH-1H" or {"UH-1H","OH58D"}.
+-- @param #string DisplayName Display name shown in menus/messages (optional). Falls back to `Name`.
 -- @return #CTLD_CARGO CargoObject
-function CTLD:AddStaticsCargo(Name,Mass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes)
+function CTLD:AddStaticsCargo(Name,Mass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes,DisplayName)
   self:T(self.lid .. " AddStaticsCargo")
   self.CargoCounter = self.CargoCounter + 1
   local type = CTLD_CARGO.Enum.STATIC
@@ -6931,6 +6994,43 @@ function CTLD:AddStaticsCargo(Name,Mass,Stock,SubCategory,DontShowInMenu,Locatio
   if UnitTypes then
     cargo:AddUnitTypeName(UnitTypes)
   end
+  cargo:SetDisplayName(DisplayName or Name)
+  cargo:SetStaticResourceMap(ResourceMap)
+  table.insert(self.Cargo_Statics,cargo)
+  if SubCategory and self.usesubcats ~= true then self.usesubcats=true end
+  return cargo
+end
+
+--- User function - Add *generic* static-type loadable as cargo from a static **type name**.
+-- This variant does **not** require a matching mission-editor static template.
+-- @param #CTLD self
+-- @param #string Name Unique cargo identifier for this type.
+-- @param #string TypeName Static type name to spawn, e.g. "ammo_cargo", "iso_container_small".
+-- @param #number Mass Mass in kg of each static in kg, e.g. 100.
+-- @param #number Stock Number of groups in stock. Nil for unlimited.
+-- @param #string SubCategory Name of sub-category (optional).
+-- @param #boolean DontShowInMenu (optional) If set to "true" this won't show up in the menu.
+-- @param Core.Zone#ZONE Location (optional) If set, the cargo item is **only** available here. Can be a #ZONE object or the name of a zone as #string.
+-- @param #string UnitTypes Unit type names (optional). If set, only these unit types can pick up the cargo, e.g. "UH-1H" or {"UH-1H","OH58D"}.
+-- @param #string Category Static category name (optional). Default is "Cargos".
+-- @param #string ShapeName Static shape name (optional). If set, force a specific shape, e.g. "iso_container_small_cargo".
+-- @param #table ResourceMap Resource map payload (optional) for static cargo.
+-- @param #string DisplayName Display name shown in menus/messages (optional). Falls back to `Name`.
+-- @return #CTLD_CARGO CargoObject
+function CTLD:AddStaticsCargoFromType(Name,TypeName,Mass,Stock,SubCategory,DontShowInMenu,Location,UnitTypes,Category,ShapeName,ResourceMap,DisplayName)
+  self:T(self.lid .. " AddStaticsCargoFromType")
+  self.CargoCounter = self.CargoCounter + 1
+  local type = CTLD_CARGO.Enum.STATIC
+  local template = TypeName or self.basetype or "container_cargo"
+  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,template,type,false,false,1,nil,nil,Mass,Stock,SubCategory,DontShowInMenu,Location)
+  if UnitTypes then
+    cargo:AddUnitTypeName(UnitTypes)
+  end
+  cargo:SetStaticTypeAndShape(Category or "Cargos", template, ShapeName)
+  cargo:SetDisplayName(DisplayName or Name)
+  if ResourceMap then
+    ResourceMap = UTILS.DeepCopy(ResourceMap)
+  end
   cargo:SetStaticResourceMap(ResourceMap)
   table.insert(self.Cargo_Statics,cargo)
   if SubCategory and self.usesubcats ~= true then self.usesubcats=true end
@@ -6941,8 +7041,9 @@ end
 -- @param #CTLD self
 -- @param #string Name Unique Unit(!) name of this type of cargo as set in the mission editor (not: GROUP name!), e.g. "Ammunition-1".
 -- @param #number Mass Mass in kg of each static in kg, e.g. 100.
+-- @param #string DisplayName Display name shown in menus/messages (optional). Falls back to `Name`.
 -- @return #CTLD_CARGO Cargo object
-function CTLD:GetStaticsCargoFromTemplate(Name,Mass)
+function CTLD:GetStaticsCargoFromTemplate(Name,Mass,DisplayName)
   self:T(self.lid .. " GetStaticsCargoFromTemplate")
   self.CargoCounter = self.CargoCounter + 1
   local type = CTLD_CARGO.Enum.STATIC
@@ -6954,8 +7055,34 @@ function CTLD:GetStaticsCargoFromTemplate(Name,Mass)
   end
   -- Crates are not directly loadable
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,template,type,false,false,1,nil,nil,Mass,1)
+  cargo:SetDisplayName(DisplayName or Name)
   cargo:SetStaticResourceMap(ResourceMap)
   --table.insert(self.Cargo_Statics,cargo)
+  return cargo
+end
+
+--- User function - Get a *generic* static-type loadable cargo from a static **type name**.
+-- @param #CTLD self
+-- @param #string Name Unique name of this type of cargo.
+-- @param #string TypeName Static type name, e.g. "ammo_cargo", "iso_container_small".
+-- @param #number Mass Mass in kg of each static in kg, e.g. 100.
+-- @param #string Category Static category name (optional). Default is "Cargos".
+-- @param #string ShapeName Static shape name (optional).
+-- @param #table ResourceMap Resource map payload (optional) for static cargo.
+-- @param #string DisplayName Display name shown in menus/messages (optional). Falls back to `Name`.
+-- @return #CTLD_CARGO Cargo object
+function CTLD:GetStaticsCargoFromType(Name,TypeName,Mass,Category,ShapeName,ResourceMap,DisplayName)
+  self:T(self.lid .. " GetStaticsCargoFromType")
+  self.CargoCounter = self.CargoCounter + 1
+  local type = CTLD_CARGO.Enum.STATIC
+  local template = TypeName or self.basetype or "container_cargo"
+  local cargo = CTLD_CARGO:New(self.CargoCounter,Name,template,type,false,false,1,nil,nil,Mass,1)
+  cargo:SetStaticTypeAndShape(Category or "Cargos", template, ShapeName)
+  cargo:SetDisplayName(DisplayName or Name)
+  if ResourceMap then
+    ResourceMap = UTILS.DeepCopy(ResourceMap)
+  end
+  cargo:SetStaticResourceMap(ResourceMap)
   return cargo
 end
 
