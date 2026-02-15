@@ -5946,6 +5946,9 @@ function OPSGROUP:RouteToMission(mission, delay)
 
     -- Debug info.
     self:T(self.lid..string.format("Route To Mission"))
+	
+	-- Delay in seconds before cruise or updateroute is called.
+	local delayGo=-1
 
     -- Catch dead or stopped groups.
     if self:IsDead() or self:IsStopped() then
@@ -6164,13 +6167,51 @@ function OPSGROUP:RouteToMission(mission, delay)
 		-- The only way to ensure the cargo is delivered there, because when the task is executed, the cargo is delivered to the closest airbase.
 		-- Hopefully, ED will change the behaviour of this task but at the moment, it is what it is.
 		waypointcoord=destination:GetCoordinate()
+				
+		-- Get additional parameters
+		mission.DCStask.params.destination=destination --Wrapper.Airbase#AIRBASE
+		mission.DCStask.params.cargo=cargo --Core.Set#SET_STATIC
 		
-		-- Refresh DCS task with the known controllable.
-		mission.DCStask=mission:GetDCSMissionTask(self.group)
+		-- Get transport unit
+		local unit=self.group:GetFirstUnit()
+		local unitIdTransport=unit:GetID()
+		local vec2=unit:GetVec2()
 		
-		mission.DCStask.params.destination=destination
-		mission.DCStask.params.cargo=cargo
+		-- Create tasks to load/transport statics cargos
+		local tasks={}		
+		for StaticName, StaticObject in pairs(cargo:GetSet()) do
+      local static=StaticObject --Wrapper.Static#STATIC
+  		
+  		-- Task to transport cargo.
+  		local TaskCargoTransportation={
+        id = "CargoTransportationPlane",
+        params = {
+          x=vec2.x,
+          y=vec2.y,
+          unitIdTransport=unitIdTransport,
+          groupId=static:GetID(),
+          unitId=static:GetID(),
+        }
+      }
+      
+      table.insert(tasks, TaskCargoTransportation)
+		end
 		
+		-- If we have multiple tasks, we create a combo task
+		local TaskCargo=nil
+		if #tasks==1 then
+		  TaskCargo=tasks[1]
+		else
+		  TaskCargo=CONTROLLABLE.TaskCombo(nil, tasks)
+		end
+		
+		-- We set the task to load the cargo into the aircraft.
+		-- We must be careful when calling updateroute because there the task is overwritten.
+		-- We also clear present "UpdateRoute" FSM events
+		self:_ClearFSMEvent( "UpdateRoute" )
+		delayGo=-30
+		self.group:SetTask(TaskCargo)
+				
     elseif mission.type==AUFTRAG.Type.ARTY then
 
       ---
@@ -6329,7 +6370,7 @@ function OPSGROUP:RouteToMission(mission, delay)
       elseif self:IsNavygroup() then
         self:Cruise(SpeedToMission)
       elseif self:IsFlightgroup() then
-        self:UpdateRoute()
+        self:__UpdateRoute(delayGo)
       end
           
     end

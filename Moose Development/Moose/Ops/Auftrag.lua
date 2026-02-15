@@ -2175,12 +2175,37 @@ function AUFTRAG:NewCARGOTRANSPORT(StaticCargo, DropZone)
 end
 
 --- **[AIR]** Create a FREIGHT TRANSPORT mission.
+-- This mission type can be used to transport cargo items internally via suitable transport aircraft (planes and helicopters), e.g. C-130 or CH-47.
+-- It supports transporting one or multiple cargos (weight limits are not checked).
 -- @param #AUFTRAG self
--- @param Wrapper.Static#STATIC StaticCargo Static cargo object.
+-- @param Wrapper.Static#STATIC StaticCargo Static cargo object. Can also be passed as a `SET_STATIC` object.
 -- @param Wrapper.Airbase#AIRBASE Destination Destination airbase, where the cargo is unloaded.
 -- @return #AUFTRAG self
 function AUFTRAG:NewFREIGHTTRANSPORT(StaticCargo, Destination)
 
+  -- Check if Destination is given
+  if Destination==nil then
+    self:E(self.lid..string.format("ERROR: Destination is nil for AUFTRAG:NewFREIGHTTRANSPORT! You must specify the destination airbase"))
+    return nil
+  elseif type(Destination)=="string" then
+    Destination=AIRBASE:FindByName(Destination)
+  end
+  
+  -- Check if Cargo is given
+  if StaticCargo==nil then
+    self:E(self.lid..string.format("ERROR: StaticCargo is nil for AUFTRAG:NewFREIGHTTRANSPORT! You must specify the static object that represents the cargo"))
+    return nil  
+  elseif type(StaticCargo)=="string" then
+    StaticCargo=STATIC:FindByName(StaticCargo)
+  end
+  
+  -- Convert static to a set if necessary
+  if StaticCargo:IsInstanceOf("STATIC") then
+    local StaticCargoSet=SET_STATIC:New() --Core.Set#SET_STATIC
+    StaticCargoSet:AddCargo(StaticCargo)
+    StaticCargo=StaticCargoSet
+  end
+  
   local mission=AUFTRAG:New(AUFTRAG.Type.FREIGHTTRANSPORT)
 
   mission:_TargetFromObject(StaticCargo)
@@ -2195,7 +2220,6 @@ function AUFTRAG:NewFREIGHTTRANSPORT(StaticCargo, Destination)
 
   mission.DCStask=mission:GetDCSMissionTask()
   
-  mission.DCStask.params.groupId=StaticCargo:GetID()
   mission.DCStask.params.cargo=StaticCargo
   mission.DCStask.params.destination=Destination
   
@@ -6581,30 +6605,28 @@ function AUFTRAG:GetDCSMissionTask(MissionGroup)
     ------------------------------
     -- FREIGHTTRANSPORT Mission --
     ------------------------------
+        
+    local statics=self.engageTarget:GetObjects()
     
-    local x=nil; local y=nil; local unitIdTransport=nil
-    if MissionGroup then
-      local vec2=MissionGroup:GetVec2()
-      x=vec2.x
-      y=vec2.y
-      unitIdTransport=MissionGroup:GetFirstUnit():GetID()
+    for _, StaticObject in pairs(statics) do
+      local static=StaticObject --Wrapper.Static#STATIC
+      
+      self:T(static)
+    
+      -- Task to unload the cargo     
+      local TaskCargoUnload={
+        ["id"] = "CargoUnloadPlane",
+        ["params"] = 
+        {
+          ["groupId"] = static:GetID(),
+          ["unitId"]  = static:GetID(),
+        }
+      }        
+    
+    
+      table.insert(DCStasks, TaskCargoUnload)
+      
     end
-    
-    local static=self.engageTarget:GetObject() --Wrapper.Static#STATIC
-
-    -- Task to transport cargo.
-    local TaskCargoTransportation={
-      id = "CargoTransportationPlane",
-      params = {
-        x=x,
-        y=y,
-        unitIdTransport=nil,
-        groupId=static:GetID(),
-        unitId=static:GetID(),
-      }
-    }
-    
-    table.insert(DCStasks, TaskCargoTransportation)
 
   elseif self.type==AUFTRAG.Type.RESCUEHELO then
 
