@@ -4227,6 +4227,28 @@ function AUFTRAG:IsReadyToGo()
   if not startme then
     return false
   end
+  
+  if self.type==AUFTRAG.Type.FREIGHTTRANSPORT then
+  
+    local cargoset=self.DCStask.params.cargo --Core.Set#SET_STATIC
+    
+    for _,_opsgroup in pairs(self:GetOpsGroups()) do
+      local opsgroup=_opsgroup --Ops.OpsGroup#OPSGROUP
+      
+      local vec2=opsgroup.group:GetFirstUnitAlive():GetVec2()
+      
+      local zone=ZONE_RADIUS:New("Bla", vec2, 40, true)
+    
+      local inzone=cargoset:IsInZone(zone)
+      
+      if not inzone then
+        printf("FF cargo is not inside zone")
+        return false
+      end
+      
+    end
+    
+  end
 
 
   -- We're good to go!
