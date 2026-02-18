@@ -606,7 +606,7 @@ AIRBASE.Syria = {
 --- Airbases of the Mariana Islands map
 --
 -- * `AIRBASE.MarianaIslands.Andersen_AFB` Andersen AFB
--- * `AIRBASE.MarianaIslands.Antonio_B._Won_Pat_Intl` Antonio B. Won Pat Intl
+-- * `AIRBASE.MarianaIslands.Antonio_B_Won_Pat_Intl` Antonio B. Won Pat Intl
 -- * `AIRBASE.MarianaIslands.North_West_Field` North West Field
 -- * `AIRBASE.MarianaIslands.Olf_Orote` Olf Orote
 -- * `AIRBASE.MarianaIslands.Pagan_Airstrip` Pagan Airstrip
@@ -617,7 +617,7 @@ AIRBASE.Syria = {
 -- @field MarianaIslands
 AIRBASE.MarianaIslands = {
   ["Andersen_AFB"] = "Andersen AFB",
-  ["Antonio_B._Won_Pat_Intl"] = "Antonio B. Won Pat Intl",
+  ["Antonio_B_Won_Pat_Intl"] = "Antonio B. Won Pat Intl",
   ["North_West_Field"] = "North West Field",
   ["Olf_Orote"] = "Olf Orote",
   ["Pagan_Airstrip"] = "Pagan Airstrip",
