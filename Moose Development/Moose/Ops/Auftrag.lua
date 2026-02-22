@@ -676,7 +676,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="1.3.0"
+AUFTRAG.version="1.4.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2177,6 +2177,11 @@ end
 --- **[AIR]** Create a FREIGHT TRANSPORT mission.
 -- This mission type can be used to transport cargo items internally via suitable transport aircraft (planes and helicopters), e.g. C-130 or CH-47.
 -- It supports transporting one or multiple cargos (weight limits are not checked).
+-- 
+-- All cargo must be within a 40 meter radius around the transport aircraft for the mission to start.
+-- The mission is successful if any cargo item is delivered to the destination.
+-- 
+-- This mission type uses the underlying DCS tasks: "Cargo Transportation (internal)", "Cargo Unload"
 -- @param #AUFTRAG self
 -- @param Wrapper.Static#STATIC StaticCargo Static cargo object. Can also be passed as a `SET_STATIC` object.
 -- @param Wrapper.Airbase#AIRBASE Destination Destination airbase, where the cargo is unloaded.
@@ -4237,12 +4242,12 @@ function AUFTRAG:IsReadyToGo()
       
       local vec2=opsgroup.group:GetFirstUnitAlive():GetVec2()
       
-      local zone=ZONE_RADIUS:New("Bla", vec2, 40, true)
+      local zone=ZONE_RADIUS:New("Freighttransport", vec2, 40, true)
     
       local inzone=cargoset:IsInZone(zone)
       
       if not inzone then
-        printf("FF cargo is not inside zone")
+        self:T(self.lid.."FREIGHTTRANSPORT: cargo is not inside zone ==> mission not ready to start yet!")
         return false
       end
       
@@ -4591,6 +4596,22 @@ function AUFTRAG:Evaluate()
       if cargo and zone then
         failed=not cargo:IsInZone(zone)
       else
+        failed=true
+      end
+      
+    elseif self.type==AUFTRAG.Type.FREIGHTTRANSPORT then
+    
+      local cargoset=self.DCStask.params.cargo --Core.Set#SET_STATIC
+      
+      -- Get the destination airbase zone
+      local dest=self.DCStask.params.destination --Wrapper.Airbase#AIRBASE
+      local zone=dest:GetZone()
+    
+      -- Check if ANY cargo is inside the zone (might want to make it optional that all cargo needs to be)
+      local inzone=cargoset:IsInZone(zone, true)
+      
+      if not inzone then
+        self:I(self.lid.."FF Freight/cargo not delivered to airbase zone")
         failed=true
       end
 
