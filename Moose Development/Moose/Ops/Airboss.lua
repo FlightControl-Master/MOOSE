@@ -3143,7 +3143,10 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
     self.SRS:SetVoice(Voice)
   end
   if (not Voice) and self.SRS and self.SRS:GetProvider() == MSRS.Provider.GOOGLE then
-    self.SRS.voice = MSRS.poptions["gcloud"].voice or MSRS.Voices.Google.Standard.en_US_Standard_B
+    self.SRS.voice = MSRS.Voices.Google.Standard.en_US_Standard_B
+    if MSRS.poptions and MSRS.poptions["gcloud"] and MSRS.poptions["gcloud"].voice then
+      self.SRS.voice = MSRS.poptions["gcloud"].voice
+    end
   end
   --self.SRS:SetVolume(Volume or 1.0)
   -- SRSQUEUE
