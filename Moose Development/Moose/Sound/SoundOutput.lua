@@ -24,7 +24,7 @@
 
 do -- Sound Base
 
-  -- @type SOUNDBASE
+  --- @type SOUNDBASE
   -- @field #string ClassName Name of the class.
   -- @extends Core.Base#BASE
 
@@ -100,7 +100,7 @@ end
 
 do -- Sound File
 
-  -- @type SOUNDFILE
+  --- @type SOUNDFILE
   -- @field #string ClassName Name of the class
   -- @field #string filename Name of the flag.
   -- @field #string path Directory path, where the sound file is located. This includes the final slash "/".
@@ -291,7 +291,8 @@ do -- Sound File
 end
 
 do -- Text-To-Speech
-
+  
+  ---
   -- @type SOUNDTEXT
   -- @field #string ClassName Name of the class
   -- @field #string text Text to speak.
@@ -299,6 +300,7 @@ do -- Text-To-Speech
   -- @field #string gender Gender: "male", "female".
   -- @field #string culture Culture, e.g. "en-GB".
   -- @field #string voice Specific voice to use. Overrules `gender` and `culture` settings.
+  -- @field #number speed Specific speed to be used.
   -- @extends Core.Base#BASE
 
 
@@ -362,7 +364,7 @@ do -- Text-To-Speech
     self:SetDuration(Duration or MSRS.getSpeechTime(Text))
     --self:SetGender()
     --self:SetCulture()
-    
+    self:SetSpeed()
     -- Debug info:
     self:T(string.format("New SOUNDTEXT: text=%s, duration=%.1f sec", self.text, self.duration))
 
@@ -421,6 +423,17 @@ do -- Text-To-Speech
   function SOUNDTEXT:SetVoice(VoiceName)
     
     self.voice=VoiceName
+                  
+    return self
+  end
+  
+    --- Set to use a specific speed.
+  -- @param #SOUNDTEXT self
+  -- @param #number Speed
+  -- @return #SOUNDTEXT self
+  function SOUNDTEXT:SetSpeed(Speed)
+    
+    self.speed = Speed or 1.0
                   
     return self
   end
