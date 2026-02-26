@@ -2143,6 +2143,7 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
 end
 
 --- **[AIR ROTARY]** Create a CARGO TRANSPORT mission.
+-- This mission is for helicopters only, which transport cargo externally via slingload.
 -- **Important Note:**
 -- The dropoff zone has to be a zone defined in the Mission Editor. This is due to a restriction in the used DCS task, which takes the zone ID as input.
 -- Only ME zones have an ID that can be referenced.
@@ -5708,6 +5709,27 @@ function AUFTRAG:GetTargetLife()
   else
     return 0
   end
+end
+
+--- Get cargo items as set SET object.
+-- This returns the cargo item(s) as set `SET` object for mission types `CARGOTRANSPORT`, `TROOPTRANSPORT` and `FREIGHTTRANSPORT`.
+-- @param #AUFTRAG self
+-- @return Core.Set#SET_BASE The cargo set.
+function AUFTRAG:GetCargoSet()
+
+  if self.type==AUFTRAG.Type.CARGOTRANSPORT then
+    local set=SET_STATIC:New()
+    set:AddObject(self.DCStask.params.cargo)
+    return set  
+  elseif self.type==AUFTRAG.Type.TROOPTRANSPORT then
+    return self.transportGroupSet  
+  elseif self.type==AUFTRAG.Type.FREIGHTTRANSPORT then
+    return self.DCStask.params.cargo  
+  else
+    self:E(self.lid.."ERROR: GetCargoSet() is only for transport types!")
+    return nil
+  end
+
 end
 
 --- Get target.
