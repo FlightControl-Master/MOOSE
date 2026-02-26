@@ -559,14 +559,14 @@ MSRS.Voices = {
        ["fr_FR_Wavenet_G"] = "fr-FR-Wavenet-G", -- Male
        ["fr_FR_Wavenet_F"] = "fr-FR-Wavenet-F", -- Female
        -- 2025 catalog changes
-        ["de_DE_Wavenet_A"] = 'de-DE-Wavenet-A', -- Female
-        ["de_DE_Wavenet_B"] = 'de-DE-Wavenet-B', -- Male
-        ["de_DE_Wavenet_C"] = 'de-DE-Wavenet-C', -- Female
-        ["de_DE_Wavenet_D"] = 'de-DE-Wavenet-D', -- Male
-        ["de_DE_Wavenet_E"] = 'de-DE-Wavenet-E', -- Male
-        ["de_DE_Wavenet_F"] = 'de-DE-Wavenet-F', -- Female
-        ["de_DE_Wavenet_G"] = 'de-DE-Wavenet-G', -- Female
-        ["de_DE_Wavenet_H"] = 'de-DE-Wavenet-H', -- Male
+       ["de_DE_Wavenet_A"] = 'de-DE-Wavenet-A', -- Female
+       ["de_DE_Wavenet_B"] = 'de-DE-Wavenet-B', -- Male
+       ["de_DE_Wavenet_C"] = 'de-DE-Wavenet-C', -- Female
+       ["de_DE_Wavenet_D"] = 'de-DE-Wavenet-D', -- Male
+       ["de_DE_Wavenet_E"] = 'de-DE-Wavenet-E', -- Male
+       ["de_DE_Wavenet_F"] = 'de-DE-Wavenet-F', -- Female
+       ["de_DE_Wavenet_G"] = 'de-DE-Wavenet-G', -- Female
+       ["de_DE_Wavenet_H"] = 'de-DE-Wavenet-H', -- Male
        -- ES
        ["es_ES_Wavenet_B"] = "es-ES-Wavenet-E", -- Male
        ["es_ES_Wavenet_C"] = "es-ES-Wavenet-F", -- Female
@@ -2033,12 +2033,18 @@ end
 function MSRS:_HoundTextToSpeech(Message,Frequencies,Modulations,Volume,Label,Coalition,Point,Speed,Gender,Culture,Voice,UseGoogle)
   self:I(self.lid.."_HoundTextToSpeech")
   
+  Frequencies = UTILS.EnsureTable(Frequencies)
+  Modulations = UTILS.EnsureTable(Modulations)
+    
   local ffs = {}
   for _,_f in pairs(Frequencies or self.frequencies) do
     table.insert(ffs,string.format("%.1f",_f))
   end
   
   local freqs = table.concat(ffs, ",")
+  
+
+  
   local modus = table.concat(Modulations or self.modulations, ",")
 
   local coal=Coalition or self.coalition
@@ -2134,6 +2140,9 @@ end
 --  @param #number Coalition The coalition to use.
 function MSRS:_HoundTestTone(Frequencies, Modulations, Coalition)
  self:I(self.lid.."_HoundTestTone")
+ 
+ Frequencies = UTILS.EnsureTable(Frequencies)
+ Modulations = UTILS.EnsureTable(Modulations)
  
  local ffs = {}
   for _,_f in pairs(Frequencies or self.frequencies) do

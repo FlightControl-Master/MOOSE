@@ -31,7 +31,7 @@
 -- @image OPS_CSAR.jpg
 
 ---
--- Last Update Jan 2026
+-- Last Update Feb 2026
 
 -------------------------------------------------------------------------
 --- **CSAR** class, extends Core.Base#BASE, Core.Fsm#FSM
@@ -137,7 +137,10 @@
 --       mycsar.SRSport = 5002  -- and SRS Server port
 --       mycsar.SRSCulture = "en-GB" -- SRS voice culture
 --       mycsar.SRSVoice = nil -- SRS voice for downed pilot, relevant for Google TTS
---       mycsar.SRSGPathToCredentials = nil -- Path to your Google credentials json file, set this if you want to use Google TTS
+--       mycsar.SRSGPathToCredentials = nil -- Path to your Google credentials json file, set this if you want to use Google TTS as provider
+--       mycsar.SRSBackend = MSRS.Backend.SRSEXE -- default backend is windows
+--       mycsar.SRSProvider = MSRS.Provider.WINDOWS -- default TTS provider is windows
+--       mycsar.SRSSpeed = 1.0 -- default speech speed - does not work with all providers
 --       mycsar.SRSVolume = 1 -- Volume, between 0 and 1
 --       mycsar.SRSGender = "male" -- male or female voice
 --       mycsar.CSARVoice = MSRS.Voices.Google.Standard.en_US_Standard_A -- SRS voice for CSAR Controller, relevant for Google TTS
@@ -231,6 +234,57 @@
 --  **Caveat:**
 -- Dropped troop noMessage and forcedesc parameters aren't saved.
 --
+-- ## 6. Message localization
+-- 
+-- Use the following option to use one of the build-in translations,"en" is the default one:
+-- 
+--              mycsar.locale = "fr" -- available are "en", "de" and "fr" (English, German, French)
+-- 
+-- To add your own text, you can do this by adding your locale and translations for these texts before calling `CSAR:New()`:
+-- (NOTE - the lua placeholders like %s, %d must remain the same in type and number!)
+-- 
+--  CSAR.Messages.EN = {
+--      HEARYOULONG = "%s: %s. I hear you! Finally, that is music in my ears!\nI'll pop a smoke when you are %s away.\nLand or hover by the smoke.",
+--      HEARYOUSHORT = "%s: %s. I hear you! Finally, that is music in my ears!\nRequest a flare or smoke if you need.",
+--      WEARECRAMMED = "%s, %s. We\'re already crammed with %d guys! Sorry!",
+--      IAMINHELO = "%s: %s I\'m in! Get to the MASH ASAP! ",
+--      YOUARECLOSE = "%s: %s. You\'re close now! Land or hover at the smoke.",
+--      YOUARECLOSELONG = "%s: %s. You\'re close now! Land in a safe place, I will go there ",
+--      WAITMORE = "Wait till %s gets in. \nETA %d more seconds.",
+--      OPENTHEDOORIN = "Open the door to let me in!",
+--      HOVERABOVE = "Hovering above %s. \n\nHold hover for %d seconds to winch them up. \n\nIf the countdown stops you\'re too far away!",
+--      TOOHIGHWINCH = "Too high to winch %s \nReduce height and hover for 10 seconds!",
+--      OPENTHEDOOROUT = "Open the door to let me out!",
+--      TAKECLINIC = "%s: The %d pilot(s) have been taken to the\nmedical clinic. Good job!",
+--      KILOMETERS = " kilometer",
+--      NAUTMILES = " nautical miles",
+--      FIRINGFLARE = "%s - Firing signal flare at your %s o\'clock. Distance %s",
+--      NOPILOTSINRANGE = "No Pilots within %s",
+--      IRSTROBE = "%s - IR Strobe active at your %s o\'clock. Distance %s",
+--      POPPINGSMOKE = "%s - Popping smoke at your %s o\'clock. Distance %s",
+--      POPPINGSMOKEMASH = "%s - Popping smoke at the closest rescue point: %s",
+--      NORESCUEPOINTWITHIN = "No rescue point within %s",
+--      NOPILOTSONBOARD = "No Rescued Pilots onboard",
+--      MENUTOP = "CSAR",
+--      MENUACTIVE = "List Active CSAR",
+--      MENUCHECK = "Check Onboard",
+--      MENUFLARE = "Request Signal Flare",
+--      MENUSMOKE = "Request Smoke",
+--      MENUSTROBE = "Request IR Strobe",
+--      MENUMASH = "Smoke Closest MASH",
+--      BOARDED = "Onboard - RTB to FARP/Airfield or MASH: ",
+--    },
+--
+-- e.g. for Spanish:
+-- 
+--      CSAR.Messages.ES = {
+--      HEARYOULONG = "%s: %s. ¡Te escucho! ¡Por fin, eso es música para mis oídos!\nLanzaré una señal de humo cuando estés a %s de distancia.\nAterrice o quédese en vuelo estacionario junto al humo.",
+--      HEARYOUSHORT = "%s: %s. ¡Te escucho! ¡Por fin, eso es música para mis oídos!\nSolicite una bengala o humo si lo necesita.",
+--      WEARECRAMMED = "%s, %s. ¡Ya estamos abarrotados con %d personas! ¡Lo siento!",
+--      IAMINHELO = "%s: %s ¡Estoy dentro! ¡Dirígete al MASH lo antes posible!",
+--      ...
+--      }
+--      
 -- @field #CSAR
 CSAR = {
   ClassName       = "CSAR",
@@ -275,6 +329,105 @@ CSAR = {
   IRStrobeRuntime = 300,
   FARPRescueDistance = 500,
   EnableMenuSmokeMASH = true,
+  locale = "en",
+}
+
+---
+-- @field Messages 
+CSAR.Messages = {
+  EN = {
+    HEARYOULONG = "%s: %s. I hear you! Finally, that is music in my ears!\nI'll pop a smoke when you are %s away.\nLand or hover by the smoke.",
+    HEARYOUSHORT = "%s: %s. I hear you! Finally, that is music in my ears!\nRequest a flare or smoke if you need.",
+    WEARECRAMMED = "%s, %s. We\'re already crammed with %d guys! Sorry!",
+    IAMINHELO = "%s: %s I\'m in! Get to the MASH ASAP! ",
+    YOUARECLOSE = "%s: %s. You\'re close now! Land or hover at the smoke.",
+    YOUARECLOSELONG = "%s: %s. You\'re close now! Land in a safe place, I will go there ",
+    WAITMORE = "Wait till %s gets in. \nETA %d more seconds.",
+    OPENTHEDOORIN = "Open the door to let me in!",
+    HOVERABOVE = "Hovering above %s. \n\nHold hover for %d seconds to winch them up. \n\nIf the countdown stops you\'re too far away!",
+    TOOHIGHWINCH = "Too high to winch %s \nReduce height and hover for 10 seconds!",
+    OPENTHEDOOROUT = "Open the door to let me out!",
+    TAKECLINIC = "%s: The %d pilot(s) have been taken to the\nmedical clinic. Good job!",
+    KILOMETERS = " kilometer",
+    NAUTMILES = " nautical miles",
+    FIRINGFLARE = "%s - Firing signal flare at your %s o\'clock. Distance %s",
+    NOPILOTSINRANGE = "No Pilots within %s",
+    IRSTROBE = "%s - IR Strobe active at your %s o\'clock. Distance %s",
+    POPPINGSMOKE = "%s - Popping smoke at your %s o\'clock. Distance %s",
+    POPPINGSMOKEMASH = "%s - Popping smoke at the closest rescue point: %s",
+    NORESCUEPOINTWITHIN = "No rescue point within %s",
+    NOPILOTSONBOARD = "No Rescued Pilots onboard",
+    MENUTOP = "CSAR",
+    MENUACTIVE = "List Active CSAR",
+    MENUCHECK = "Check Onboard",
+    MENUFLARE = "Request Signal Flare",
+    MENUSMOKE = "Request Smoke",
+    MENUSTROBE = "Request IR Strobe",
+    MENUMASH = "Smoke Closest MASH",
+    BOARDED = "Onboard - RTB to FARP/Airfield or MASH: ",
+  },
+  DE = {
+    HEARYOULONG = "%s: %s. Ich höre Sie! Endlich, das ist Musik in meinen Ohren!\nIch zünde eine Rauchgranate, wenn Sie %s entfernt sind.\nLanden Sie oder hovern Sie beim Rauch.",
+    HEARYOUSHORT = "%s: %s. Ich höre Sie! Endlich, das ist Musik in meinen Ohren!\nFordern Sie eine Leuchtrakete oder Rauch an, falls nötig.",
+    IAMINHELO = "%s: %s Ich bin drin! Jetzt sofort zum Lazarett! ",
+    YOUARECLOSE = "%s: %s. Sie sind jetzt nah dran! Landen Sie oder hovern Sie beim Rauch.",
+    YOUARECLOSELONG = "%s: %s. Sie sind jetzt nah dran! Landen Sie an einem sicheren Ort, ich komme dorthin.",
+    WAITMORE = "Warten Sie, bis %s eingestiegen ist. \nNoch %d Sekunden.",
+    OPENTHEDOORIN = "Öffnen Sie die Tür, damit ich einsteigen kann!",
+    HOVERABOVE = "Hovere über %s. \n\nPositon für %d Sekunden halten, um zu winschen. \n\nWenn der Countdown stoppt, sind Sie zu weit entfernt!",
+    TOOHIGHWINCH = "Zu hoch, um %s zu winschen. \nHöhe reduzieren und %d Sekunden halten!",
+    OPENTHEDOOROUT = "Öffnen Sie die Tür, damit ich aussteigen kann!",
+    FIRINGFLARE = "%s - Feuere Signalrakete auf Ihrer %s-Uhr-Position ab. Entfernung %s",
+    NOPILOTSINRANGE = "Keine Piloten in %s Reichweite",
+    IRSTROBE = "%s - IR-Blinklicht aktiv auf Ihrer %s-Uhr-Position. Entfernung %s",
+    POPPINGSMOKE = "%s - Zünde Rauchgranate auf Ihrer %s-Uhr-Position. Entfernung %s",
+    POPPINGSMOKEMASH = "%s - Zünde Rauchgranate am nächsten Rettungspunkt: %s",
+    NORESCUEPOINTWITHIN = "Kein Rettungspunkt innerhalb von %s",
+    NOPILOTSONBOARD = "Keine geretteten Piloten an Bord",
+    MENUTOP = "CSAR",
+    MENUACTIVE = "Aktive CSAR",
+    MENUCHECK = "Ladung prüfen",
+    MENUFLARE = "Signalrakete anfordern",
+    MENUSMOKE = "Rauch anfordern",
+    MENUSTROBE = "IR-Blinklicht anfordern",
+    MENUMASH = "Nächstes MASH markieren",
+    WEARECRAMMED = "%s, %s. Wir sind bereits voll mit %d Mann! Tut mir leid!",
+    TAKECLINIC = "%s: Die %d Pilot(en) wurden ins\nLazarett gebracht. Gute Arbeit!",
+    KILOMETERS = " Kilometer",
+    NAUTMILES = " Meilen",
+    BOARDED = "An Bord - RTB zu FARP/Flugplatz oder Lazarett: ",
+  },
+  FR = {
+    HEARYOULONG = "%s: %s. Je vous entends! Enfin, c'est de la musique dans mes oreilles!\nJe lancerai une fumée quand vous serez à %s.\nAtterrissez ou survolez la fumée.",
+    HEARYOUSHORT = "%s: %s. Je vous entends! Enfin, c'est de la musique dans mes oreilles!\nDemandez une fusée éclairante ou de la fumée si nécessaire.",
+    IAMINHELO = "%s: %s Je suis à bord! Direction le MASH immédiatement! ",
+    YOUARECLOSE = "%s: %s. Vous êtes proche maintenant! Atterrissez ou survolez la fumée.",
+    YOUARECLOSELONG = "%s: %s. Vous êtes proche maintenant! Atterrissez dans un endroit sûr, j'y vais.",
+    WAITMORE = "Attendez que %s monte à bord. \nEncore %d secondes.",
+    OPENTHEDOORIN = "Ouvrez la porte pour me laisser entrer!",
+    HOVERABOVE = "En vol stationnaire au-dessus de %s. \n\nMaintenir la position pendant %d secondes pour hélitreuiller. \n\nSi le compte à rebours s'arrête, vous êtes trop loin!",
+    TOOHIGHWINCH = "Trop haut pour hélitreuiller %s. \nRéduisez l'altitude et maintenez la position pendant %d secondes!",
+    OPENTHEDOOROUT = "Ouvrez la porte pour me laisser sortir!",
+    FIRINGFLARE = "%s - Tir d'une fusée éclairante à vos %s heures. Distance %s",
+    NOPILOTSINRANGE = "Aucun pilote dans un rayon de %s",
+    IRSTROBE = "%s - Stroboscope IR actif à vos %s heures. Distance %s",
+    POPPINGSMOKE = "%s -  Lancement de fumée à vos %s heures. Distance %s",
+    POPPINGSMOKEMASH = "%s - Lancement de fumée au point de sauvetage le plus proche: %s",
+    NORESCUEPOINTWITHIN = "Aucun point de sauvetage dans un rayon de %s",
+    NOPILOTSONBOARD = "Aucun pilote secouru à bord",
+    MENUTOP = "CSAR",
+    MENUACTIVE = "Lister les CSAR actifs",
+    MENUCHECK = "Vérifier qui est à bord",
+    MENUFLARE = "Demander une fusée éclairante",
+    MENUSMOKE = "Demander un fumigène",
+    MENUSTROBE = "Demander un stroboscope IR",
+    MENUMASH = "Fumée au MASH le plus proche",
+    WEARECRAMMED = "%s, %s. Nous sommes déjà pleins avec %d hommes! Désolé!",
+    TAKECLINIC = "%s: Les %d pilote(s) ont été transportés à \n l'hôpital. Bon travail!",
+    KILOMETERS = " kilomètres",
+    NAUTMILES = " milles nautiques",
+    BOARDED = "À bord - RTB vers FARP/Aérodrome ou MASH: ",
+  },
 }
 
 --- Downed pilots info.
@@ -320,7 +473,7 @@ CSAR.AircraftType["MH-6J"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.0.36"
+CSAR.version="1.1.37"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -329,6 +482,7 @@ CSAR.version="1.0.36"
 -- DONE: SRS Integration (to be tested)
 -- TODO: Maybe - add option to smoke/flare closest MASH
 -- DONE: shagrat Add cargoWeight to helicopter when pilot boarded
+-- DONE: Localization
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -499,7 +653,11 @@ function CSAR:New(Coalition, Template, Alias)
   self.SRSGender = "male" -- male or female
   self.CSARVoice = MSRS.Voices.Google.Standard.en_US_Standard_A
   self.CSARVoiceMS = MSRS.Voices.Microsoft.Hedda
+  self.SRSBackend = MSRS.Backend.SRSEXE
+  self.SRSProvider = MSRS.Provider.WINDOWS
+  self.SRSSpeed = 1.0
   self.coordinate = nil -- Core.Point#COORDINATE
+  self.locale = "en"
 
   local AliaS = string.gsub(self.alias," ","_")
   self.filename = string.format("CSAR_%s_Persist.csv",AliaS)
@@ -648,6 +806,23 @@ end
 ------------------------
 --- Helper Functions ---
 ------------------------
+
+--- [Internal] Init localization
+-- @param #CSAR self
+-- @return #CSAR self
+function CSAR:_InitLocalization()
+  self:T(self.lid.."_InitLocalization")
+  self.gettext = TEXTANDSOUND:New("CSAR","en") -- Core.TextAndSound#TEXTANDSOUND
+  for locale,table in pairs(self.Messages) do
+    local Locale = string.lower(tostring(locale))
+    self:T("**** Adding locale: "..Locale)
+    for ID,Text in pairs(table) do
+      self:T(string.format('Adding ID %s',tostring(ID)))
+      self.gettext:AddEntry(Locale,tostring(ID),Text)
+    end
+  end
+  return self
+end
 
 --- (Internal) Function to insert downed pilot tracker object.
 -- @param #CSAR self
@@ -1459,9 +1634,11 @@ function CSAR:_CheckWoundedGroupStatus(heliname,woundedgroupname)
             local dist = UTILS.MetersToNM(self.autosmokedistance)
             disttext = string.format("%.0fnm",dist)
           end
-          self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Finally, that is music in my ears!\nI'll pop a smoke when you are %s away.\nLand or hover by the smoke.", self:_GetCustomCallSign(_heliName), _pilotName, disttext), self.messageTime,false,true)
+          local text = self.gettext:GetEntry("HEARYOULONG",self.locale)
+          self:_DisplayMessageToSAR(_heliUnit, string.format(text, self:_GetCustomCallSign(_heliName), _pilotName, disttext), self.messageTime,false,true)
         else
-          self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. I hear you! Finally, that is music in my ears!\nRequest a flare or smoke if you need.", self:_GetCustomCallSign(_heliName), _pilotName), self.messageTime,false,true)
+          local text = self.gettext:GetEntry("HEARYOUSHORT",self.locale)
+          self:_DisplayMessageToSAR(_heliUnit, string.format(text, self:_GetCustomCallSign(_heliName), _pilotName), self.messageTime,false,true)
         end
         --mark as shown for THIS heli and THIS group
         self.heliVisibleMessage[_lookupKeyHeli] = true
@@ -1525,7 +1702,8 @@ function CSAR:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupNam
     _maxUnits = self.max_units
   end
   if _unitsInHelicopter + 1 > _maxUnits then
-    self:_DisplayMessageToSAR(_heliUnit, string.format("%s, %s. We\'re already crammed with %d guys! Sorry!", _pilotName, self:_GetCustomCallSign(_heliName), _unitsInHelicopter, _unitsInHelicopter), self.messageTime,false,false,true)
+    local text = self.gettext:GetEntry("WEARECRAMMED",self.locale)
+    self:_DisplayMessageToSAR(_heliUnit, string.format(text, _pilotName, self:_GetCustomCallSign(_heliName), _unitsInHelicopter, _unitsInHelicopter), self.messageTime,false,false,true)
     return self
   end
 
@@ -1542,8 +1720,9 @@ function CSAR:_PickupUnit(_heliUnit, _pilotName, _woundedGroup, _woundedGroupNam
 
   _woundedGroup:Destroy(false)
   self:_RemoveNameFromDownedPilots(_woundedGroupName,true)
-
-  self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s I\'m in! Get to the MASH ASAP! ", self:_GetCustomCallSign(_heliName), _pilotName), self.messageTime,true,true)
+  
+  local text = self.gettext:GetEntry("IAMINHELO",self.locale)  
+  self:_DisplayMessageToSAR(_heliUnit, string.format(text, self:_GetCustomCallSign(_heliName), _pilotName), self.messageTime,true,true)
 
   self:_UpdateUnitCargoMass(_heliName)
 
@@ -1613,9 +1792,11 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
     self:T(self.lid .. "[Pickup Debug] Helo closer than 500m: ".._lookupKeyHeli)
     if self.heliCloseMessage[_lookupKeyHeli] == nil then
       if self.autosmoke == true then
-        self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land or hover at the smoke.", self:_GetCustomCallSign(_heliName), _pilotName), self.messageTime,false,true)
+        local text = self.gettext:GetEntry("YOUARECLOSE",self.locale)
+        self:_DisplayMessageToSAR(_heliUnit, string.format(text, self:_GetCustomCallSign(_heliName), _pilotName), self.messageTime,false,true)
       else
-        self:_DisplayMessageToSAR(_heliUnit, string.format("%s: %s. You\'re close now! Land in a safe place, I will go there ", self:_GetCustomCallSign(_heliName), _pilotName), self.messageTime,false,true)
+        local text = self.gettext:GetEntry("YOUARECLOSELONG",self.locale)
+        self:_DisplayMessageToSAR(_heliUnit, string.format(text, self:_GetCustomCallSign(_heliName), _pilotName), self.messageTime,false,true)
       end
       self.heliCloseMessage[_lookupKeyHeli] = true
     end
@@ -1633,7 +1814,9 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
             _time = self.landedStatus[_lookupKeyHeli]
             _woundedGroup:OptionAlarmStateGreen()
             self:_OrderGroupToMoveToPoint(_woundedGroup, _heliUnit:GetCoordinate())
-            self:_DisplayMessageToSAR(_heliUnit, "Wait till " .. _pilotName .. " gets in. \nETA " .. _time .. " more seconds.", self.messageTime, false)
+            local text = self.gettext:GetEntry("WAITMORE",self.locale)
+            text = string.format(text,_pilotName, _time)
+            self:_DisplayMessageToSAR(_heliUnit, text, self.messageTime, false)
           else
             _time = self.landedStatus[_lookupKeyHeli] - 10
             self.landedStatus[_lookupKeyHeli] = _time
@@ -1643,7 +1826,8 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
           if _distance < self.loadDistance + 5 or _distance <= 13 then
             self:T(self.lid .. "[Pickup Debug] Pilot close enough - YES ".._lookupKeyHeli)
             if self.pilotmustopendoors and (self:_IsLoadingDoorOpen(_heliName) == false) then
-              self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true, true)
+              local text = self.gettext:GetEntry("OPENTHEDOORIN",self.locale)
+              self:_DisplayMessageToSAR(_heliUnit, text, self.messageTime, true, true)
               self:T(self.lid .. "[Pickup Debug] Door closed, try again next loop ".._lookupKeyHeli)
               return false
             else
@@ -1660,7 +1844,8 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
           self:T(self.lid .. "[Pickup Debug] Helo close enough, door check ".._lookupKeyHeli)
           if self.pilotmustopendoors and (self:_IsLoadingDoorOpen(_heliName) == false) then
             self:T(self.lid .. "[Pickup Debug] Door closed, try again next loop ".._lookupKeyHeli)
-            self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true, true)
+            local text = self.gettext:GetEntry("OPENTHEDOORIN",self.locale)
+            self:_DisplayMessageToSAR(_heliUnit, text, self.messageTime, true, true)
             return false
           else
             self:T(self.lid .. "[Pickup Debug] Pick up Pilot ".._lookupKeyHeli)
@@ -1701,11 +1886,14 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
             self:T(self.lid .. "[Pickup Debug] Check hover timer ".._lookupKeyHeli)
             if _time > 0 then
               self:T(self.lid .. "[Pickup Debug] Helo hovering not long enough ".._lookupKeyHeli)
-              self:_DisplayMessageToSAR(_heliUnit, "Hovering above " .. _pilotName .. ". \n\nHold hover for " .. _time .. " seconds to winch them up. \n\nIf the countdown stops you\'re too far away!", self.messageTime, true)
+              local text = self.gettext:GetEntry("HOVERABOVE",self.locale)
+              text = string.format(text,_pilotName,_time)
+              self:_DisplayMessageToSAR(_heliUnit, text, self.messageTime, true)
             else
               self:T(self.lid .. "[Pickup Debug] Helo hovering long enough - door check ".._lookupKeyHeli)
               if self.pilotmustopendoors and (self:_IsLoadingDoorOpen(_heliName) == false) then
-                self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me in!", self.messageTime, true, true)
+                local text = self.gettext:GetEntry("OPENTHEDOORIN",self.locale)
+                self:_DisplayMessageToSAR(_heliUnit, text, self.messageTime, true, true)
                 self:T(self.lid .. "[Pickup Debug] Door closed, try again next loop ".._lookupKeyHeli)
                 return false
               else
@@ -1718,7 +1906,8 @@ function CSAR:_CheckCloseWoundedGroup(_distance, _heliUnit, _heliName, _woundedG
             _reset = false
           else
             self:T(self.lid .. "[Pickup Debug] Helo hovering too high ".._lookupKeyHeli)
-            self:_DisplayMessageToSAR(_heliUnit, "Too high to winch " .. _pilotName .. " \nReduce height and hover for 10 seconds!", self.messageTime, true,true)
+            local text = self.gettext:GetEntry("TOOHIGHWINCH",self.locale)        
+            self:_DisplayMessageToSAR(_heliUnit,string.format(text,_pilotName), self.messageTime, true,true)
             self:T(self.lid .. "[Pickup Debug] Hovering too high, try again next loop ".._lookupKeyHeli)
             return false
           end
@@ -1782,7 +1971,8 @@ function CSAR:_ScheduledSARFlight(heliname,groupname, isairport, noreschedule, I
   if ( _dist < self.FARPRescueDistance or isairport ) and ((_heliUnit:InAir() == false) or (IsHeloBase == true)) then
     self:T(self.lid.."[Drop off debug] Distance ok, door check")
     if self.pilotmustopendoors and self:_IsLoadingDoorOpen(heliname) == false then
-      self:_DisplayMessageToSAR(_heliUnit, "Open the door to let me out!", self.messageTime, true, true)
+      local text = self.gettext:GetEntry("OPENTHEDOOROUT",self.locale)
+      self:_DisplayMessageToSAR(_heliUnit, text, self.messageTime, true, true)
       self:T(self.lid.."[Drop off debug] Door closed, try again next loop")
     else
       self:T(self.lid.."[Drop off debug] Rescued!")
@@ -1815,8 +2005,9 @@ function CSAR:_RescuePilots(_heliUnit)
   local PilotsSaved = self:_PilotsOnboard(_heliName)
 
   self.inTransitGroups[_heliName] = nil
-
-  local _txt = string.format("%s: The %d pilot(s) have been taken to the\nmedical clinic. Good job!", self:_GetCustomCallSign(_heliName), PilotsSaved)
+  
+  local text = self.gettext:GetEntry("OPENTHEDOOROUT",self.locale)
+  local _txt = string.format(text, self:_GetCustomCallSign(_heliName), PilotsSaved)
 
   self:_DisplayMessageToSAR(_heliUnit, _txt, self.messageTime)
 
@@ -1863,8 +2054,10 @@ function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak, _overrid
     if coord then
       self.msrs:SetCoordinate(coord)
     end
-    _text = string.gsub(_text,"km"," kilometer")
-    _text = string.gsub(_text,"nm"," nautical miles")
+    local km = self.gettext:GetEntry("KILOMETERS",self.locale)
+    local nm = self.gettext:GetEntry("NAUTMILES",self.locale)
+    _text = string.gsub(_text,"km",km)
+    _text = string.gsub(_text,"nm",nm)
     self.SRSQueue:NewTransmission(_text,duration,self.msrs,tstart,2,subgroups,subtitle,subduration,self.SRSchannel,self.SRSModulation,gender,culture,self.SRSVoice,volume,label,coord)
   end
   return self
@@ -2035,7 +2228,8 @@ function CSAR:_SignalFlare(_unitName)
     else
       _distance = string.format("%.1fkm",_closest.distance/1000)
     end
-    local _msg = string.format("%s - Firing signal flare at your %s o\'clock. Distance %s", self:_GetCustomCallSign(_unitName), _clockDir, _distance)
+    local text = self.gettext:GetEntry("FIRINGFLARE",self.locale)
+    local _msg = string.format(text, self:_GetCustomCallSign(_unitName), _clockDir, _distance)
     self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
 
     local _coord = _closest.pilot:GetCoordinate()
@@ -2048,7 +2242,8 @@ function CSAR:_SignalFlare(_unitName)
     else
       dtext = string.format("%.1fkm",smokedist/1000)
     end
-    self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",dtext), self.messageTime, false, false, true)
+    local text = self.gettext:GetEntry("NOPILOTSINRANGE",self.locale)
+    self:_DisplayMessageToSAR(_heli, string.format(text,dtext), self.messageTime, false, false, true)
   end
   return self
 end
@@ -2103,7 +2298,8 @@ function CSAR:_ReqIRStrobe( _unitName )
     else
       _distance = string.format("%.1fkm",_closest.distance/1000)
     end
-    local _msg = string.format("%s - IR Strobe active at your %s o\'clock. Distance %s", self:_GetCustomCallSign(_unitName), _clockDir, _distance)
+    local text = self.gettext:GetEntry("IRSTROBE",self.locale)
+    local _msg = string.format(text, self:_GetCustomCallSign(_unitName), _clockDir, _distance)
     self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
     _closest.pilot:NewIRMarker(true,self.IRStrobeRuntime or 300)
   else
@@ -2113,7 +2309,8 @@ function CSAR:_ReqIRStrobe( _unitName )
     else
       _distance = string.format("%.1fkm",smokedist/1000)
     end
-    self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",_distance), self.messageTime, false, false, true)
+    local text = self.gettext:GetEntry("NOPILOTSINRANGE",self.locale)
+    self:_DisplayMessageToSAR(_heli, string.format(text,_distance), self.messageTime, false, false, true)
   end
   return self
 end
@@ -2138,7 +2335,8 @@ function CSAR:_Reqsmoke( _unitName )
     else
       _distance = string.format("%.1fkm",_closest.distance/1000)
     end
-    local _msg = string.format("%s - Popping smoke at your %s o\'clock. Distance %s", self:_GetCustomCallSign(_unitName), _clockDir, _distance)
+    local text = self.gettext:GetEntry("POPPINGSMOKE",self.locale)
+    local _msg = string.format(text, self:_GetCustomCallSign(_unitName), _clockDir, _distance)
     self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
     local _coord = _closest.pilot:GetCoordinate()
     local color = self.smokecolor
@@ -2150,7 +2348,8 @@ function CSAR:_Reqsmoke( _unitName )
     else
       _distance = string.format("%.1fkm",smokedist/1000)
     end
-    self:_DisplayMessageToSAR(_heli, string.format("No Pilots within %s",_distance), self.messageTime, false, false, true)
+    local text = self.gettext:GetEntry("NOPILOTSINRANGE",self.locale)
+    self:_DisplayMessageToSAR(_heli, string.format(text,_distance), self.messageTime, false, false, true)
   end
   return self
 end
@@ -2174,7 +2373,8 @@ function CSAR:_ReqsmokeMash( _unitName )
     else
       disttext = string.format("%.1fkm",distance/1000)
     end
-    local _msg = string.format("%s - Popping smoke at the closest rescue point: %s", self:_GetCustomCallSign(_unitName), disttext)
+    local text = self.gettext:GetEntry("POPPINGSMOKEMASH",self.locale)
+    local _msg = string.format(text, self:_GetCustomCallSign(_unitName), disttext)
     self:_DisplayMessageToSAR(_heli, _msg, self.messageTime, false, true, true)
     local color = self.smokecolor
     coordinate:Smoke(color)    
@@ -2185,7 +2385,8 @@ function CSAR:_ReqsmokeMash( _unitName )
     else
       _distance = string.format("%.1fkm",smokedist/1000)
     end
-    self:_DisplayMessageToSAR(_heli, string.format("No rescue point within %s",_distance), self.messageTime, false, false, true)
+    local text = self.gettext:GetEntry("NORESCUEPOINTWITHIN",self.locale)
+    self:_DisplayMessageToSAR(_heli, string.format(text,_distance), self.messageTime, false, false, true)
   end
   return self
 end
@@ -2263,9 +2464,10 @@ function CSAR:_CheckOnboard(_unitName)
   --list onboard pilots
   local _inTransit = self.inTransitGroups[_unitName]
   if _inTransit == nil then
-    self:_DisplayMessageToSAR(_unit, "No Rescued Pilots onboard", self.messageTime, false, false, true)
+    local text = self.gettext:GetEntry("NOPILOTSONBOARD",self.locale)
+    self:_DisplayMessageToSAR(_unit, text, self.messageTime, false, false, true)
   else
-    local _text = "Onboard - RTB to FARP/Airfield or MASH: "
+    local _text = self.gettext:GetEntry("BOARDED",self.locale)
     for _, _onboard in pairs(self.inTransitGroups[_unitName]) do
       _text = _text .. "\n" .. _onboard.desc
     end
@@ -2305,17 +2507,24 @@ function CSAR:_AddMedevacMenuItem()
         local groupname = _group:GetName()
         if self.addedTo[groupname] == nil then
           self.addedTo[groupname] = true
-          local menuname = self.topmenuname or "CSAR"
+          local menuname = self.gettext:GetEntry("MENUTOP",self.locale)
+          menuname = self.topmenuname or menuname
+          local Menu1T = self.gettext:GetEntry("MENUACTIVE",self.locale)
+          local Menu2T = self.gettext:GetEntry("MENUCHECK",self.locale)
+          local Menu3T = self.gettext:GetEntry("MENUFLARE",self.locale)
+          local Menu4T = self.gettext:GetEntry("MENUSMOKE",self.locale)
+          local Menu5T = self.gettext:GetEntry("MENUSTROBE",self.locale)
+          local Menu6T = self.gettext:GetEntry("MENUMASH",self.locale)
           local _rootPath = MENU_GROUP:New(_group,menuname)
-          local _rootMenu1 = MENU_GROUP_COMMAND:New(_group,"List Active CSAR",_rootPath, self._DisplayActiveSAR,self,_unitName)
-          local _rootMenu2 = MENU_GROUP_COMMAND:New(_group,"Check Onboard",_rootPath, self._CheckOnboard,self,_unitName)
-          local _rootMenu3 = MENU_GROUP_COMMAND:New(_group,"Request Signal Flare",_rootPath, self._SignalFlare,self,_unitName)
-          local _rootMenu4 = MENU_GROUP_COMMAND:New(_group,"Request Smoke",_rootPath, self._Reqsmoke,self,_unitName)
+          local _rootMenu1 = MENU_GROUP_COMMAND:New(_group,Menu1T,_rootPath, self._DisplayActiveSAR,self,_unitName)
+          local _rootMenu2 = MENU_GROUP_COMMAND:New(_group,Menu2T,_rootPath, self._CheckOnboard,self,_unitName)
+          local _rootMenu3 = MENU_GROUP_COMMAND:New(_group,Menu3T,_rootPath, self._SignalFlare,self,_unitName)
+          local _rootMenu4 = MENU_GROUP_COMMAND:New(_group,Menu4T,_rootPath, self._Reqsmoke,self,_unitName)
           if self.AllowIRStrobe then
-            local _rootMenu5 = MENU_GROUP_COMMAND:New(_group,"Request IR Strobe",_rootPath, self._ReqIRStrobe,self,_unitName):Refresh()
+            local _rootMenu5 = MENU_GROUP_COMMAND:New(_group,Menu5T,_rootPath, self._ReqIRStrobe,self,_unitName):Refresh()
           end
           if self.EnableMenuSmokeMASH then
-            local _rootMenu6 = MENU_GROUP_COMMAND:New(_group,"Smoke Closest MASH",_rootPath, self._ReqsmokeMash,self,_unitName)
+            local _rootMenu6 = MENU_GROUP_COMMAND:New(_group,Menu6T,_rootPath, self._ReqsmokeMash,self,_unitName)
           else
             _rootMenu4:Refresh()
           end
@@ -2580,6 +2789,9 @@ function CSAR:onafterStart(From, Event, To)
     self.msrs = MSRS:New(path,channel,modulation) -- Sound.SRS#MSRS
     self.msrs:SetPort(self.SRSport)
     self.msrs:SetLabel("CSAR")
+    self.msrs:SetBackend(self.SRSBackend)
+    self.msrs:SetProvider(self.SRSProvider)
+    self.msrs.speed = self.SRSSpeed
     self.msrs:SetCulture(self.SRSCulture)
     self.msrs:SetCoalition(self.coalition)
     self.msrs:SetVoice(self.SRSVoice)
@@ -2601,7 +2813,9 @@ function CSAR:onafterStart(From, Event, To)
     local filepath = self.filepath
     self:__Save(interval,filepath,filename)
   end
-
+  
+  self:_InitLocalization(self.locale)
+  
   return self
 end
 
