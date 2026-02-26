@@ -458,6 +458,7 @@ _AUFTRAGSNR=0
 -- @field #string NOTHING Nothing.
 -- @field #string PATROLRACETRACK Patrol Racetrack.
 -- @field #string STRAFING Strafing run.
+-- @field #string FREIGHTTRANSPORT Freight transport.
 AUFTRAG.Type={
   ANTISHIP="Anti Ship",
   AWACS="AWACS",
@@ -506,6 +507,7 @@ AUFTRAG.Type={
   NOTHING="Nothing",
   PATROLRACETRACK="Patrol Racetrack",
   STRAFING="Strafing",
+  FREIGHTTRANSPORT="FREIGHTTRANSPORT",
 }
 
 --- Special task description.
@@ -674,7 +676,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="1.3.0"
+AUFTRAG.version="1.4.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2141,6 +2143,7 @@ function AUFTRAG:NewTROOPTRANSPORT(TransportGroupSet, DropoffCoordinate, PickupC
 end
 
 --- **[AIR ROTARY]** Create a CARGO TRANSPORT mission.
+-- This mission is for helicopters only, which transport cargo externally via slingload.
 -- **Important Note:**
 -- The dropoff zone has to be a zone defined in the Mission Editor. This is due to a restriction in the used DCS task, which takes the zone ID as input.
 -- Only ME zones have an ID that can be referenced.
@@ -2168,6 +2171,63 @@ function AUFTRAG:NewCARGOTRANSPORT(StaticCargo, DropZone)
   mission.DCStask.params.zoneId=DropZone.ZoneID
   mission.DCStask.params.zone=DropZone
   mission.DCStask.params.cargo=StaticCargo
+  
+  return mission
+end
+
+--- **[AIR]** Create a FREIGHT TRANSPORT mission.
+-- This mission type can be used to transport cargo items internally via suitable transport aircraft (planes and helicopters), e.g. C-130 or CH-47.
+-- It supports transporting one or multiple cargos (weight limits are not checked).
+-- 
+-- All cargo must be within a 40 meter radius around the transport aircraft for the mission to start.
+-- The mission is successful if any cargo item is delivered to the destination.
+-- 
+-- This mission type uses the underlying DCS tasks: "Cargo Transportation (internal)", "Cargo Unload"
+-- @param #AUFTRAG self
+-- @param Wrapper.Static#STATIC StaticCargo Static cargo object. Can also be passed as a `SET_STATIC` object.
+-- @param Wrapper.Airbase#AIRBASE Destination Destination airbase, where the cargo is unloaded.
+-- @return #AUFTRAG self
+function AUFTRAG:NewFREIGHTTRANSPORT(StaticCargo, Destination)
+
+  -- Check if Destination is given
+  if Destination==nil then
+    self:E(self.lid..string.format("ERROR: Destination is nil for AUFTRAG:NewFREIGHTTRANSPORT! You must specify the destination airbase"))
+    return nil
+  elseif type(Destination)=="string" then
+    Destination=AIRBASE:FindByName(Destination)
+  end
+  
+  -- Check if Cargo is given
+  if StaticCargo==nil then
+    self:E(self.lid..string.format("ERROR: StaticCargo is nil for AUFTRAG:NewFREIGHTTRANSPORT! You must specify the static object that represents the cargo"))
+    return nil  
+  elseif type(StaticCargo)=="string" then
+    StaticCargo=STATIC:FindByName(StaticCargo)
+  end
+  
+  -- Convert static to a set if necessary
+  if StaticCargo:IsInstanceOf("STATIC") then
+    local StaticCargoSet=SET_STATIC:New() --Core.Set#SET_STATIC
+    StaticCargoSet:AddCargo(StaticCargo)
+    StaticCargo=StaticCargoSet
+  end
+  
+  local mission=AUFTRAG:New(AUFTRAG.Type.FREIGHTTRANSPORT)
+
+  mission:_TargetFromObject(StaticCargo)
+
+  mission.missionTask=mission:GetMissionTaskforMissionType(AUFTRAG.Type.FREIGHTTRANSPORT)
+
+  -- Set ROE and ROT.
+  mission.optionROE=ENUMS.ROE.ReturnFire
+  mission.optionROT=ENUMS.ROT.PassiveDefense
+
+  mission.categories={AUFTRAG.Category.HELICOPTER, AUFTRAG.Category.AIRCRAFT}
+
+  mission.DCStask=mission:GetDCSMissionTask()
+  
+  mission.DCStask.params.cargo=StaticCargo
+  mission.DCStask.params.destination=Destination
   
   return mission
 end
@@ -3060,7 +3120,7 @@ end
 
 --- **[LEGION, COMMANDER, CHIEF]** Set the repeat delay in seconds after a mission is successful/failed. Only valid if the mission is handled by a LEGION (AIRWING, BRIGADE, FLEET) or higher level.
 -- @param #AUFTRAG self
--- @param #number Nrepeat Repeat delay in seconds. Default 1.
+-- @param #number RepeatDelay Repeat delay in seconds. Default 1.
 -- @return #AUFTRAG self
 function AUFTRAG:SetRepeatDelay(RepeatDelay)
   self.repeatDelay = RepeatDelay
@@ -4173,6 +4233,28 @@ function AUFTRAG:IsReadyToGo()
   if not startme then
     return false
   end
+  
+  if self.type==AUFTRAG.Type.FREIGHTTRANSPORT then
+  
+    local cargoset=self.DCStask.params.cargo --Core.Set#SET_STATIC
+    
+    for _,_opsgroup in pairs(self:GetOpsGroups()) do
+      local opsgroup=_opsgroup --Ops.OpsGroup#OPSGROUP
+      
+      local vec2=opsgroup.group:GetFirstUnitAlive():GetVec2()
+      
+      local zone=ZONE_RADIUS:New("Freighttransport", vec2, 40, true)
+    
+      local inzone=cargoset:IsInZone(zone)
+      
+      if not inzone then
+        self:T(self.lid.."FREIGHTTRANSPORT: cargo is not inside zone ==> mission not ready to start yet!")
+        return false
+      end
+      
+    end
+    
+  end
 
 
   -- We're good to go!
@@ -4515,6 +4597,22 @@ function AUFTRAG:Evaluate()
       if cargo and zone then
         failed=not cargo:IsInZone(zone)
       else
+        failed=true
+      end
+      
+    elseif self.type==AUFTRAG.Type.FREIGHTTRANSPORT then
+    
+      local cargoset=self.DCStask.params.cargo --Core.Set#SET_STATIC
+      
+      -- Get the destination airbase zone
+      local dest=self.DCStask.params.destination --Wrapper.Airbase#AIRBASE
+      local zone=dest:GetZone()
+    
+      -- Check if ANY cargo is inside the zone (might want to make it optional that all cargo needs to be)
+      local inzone=cargoset:IsInZone(zone, true)
+      
+      if not inzone then
+        self:I(self.lid.."FF Freight/cargo not delivered to airbase zone")
         failed=true
       end
 
@@ -5613,6 +5711,27 @@ function AUFTRAG:GetTargetLife()
   end
 end
 
+--- Get cargo items as set SET object.
+-- This returns the cargo item(s) as set `SET` object for mission types `CARGOTRANSPORT`, `TROOPTRANSPORT` and `FREIGHTTRANSPORT`.
+-- @param #AUFTRAG self
+-- @return Core.Set#SET_BASE The cargo set.
+function AUFTRAG:GetCargoSet()
+
+  if self.type==AUFTRAG.Type.CARGOTRANSPORT then
+    local set=SET_STATIC:New()
+    set:AddObject(self.DCStask.params.cargo)
+    return set  
+  elseif self.type==AUFTRAG.Type.TROOPTRANSPORT then
+    return self.transportGroupSet  
+  elseif self.type==AUFTRAG.Type.FREIGHTTRANSPORT then
+    return self.DCStask.params.cargo  
+  else
+    self:E(self.lid.."ERROR: GetCargoSet() is only for transport types!")
+    return nil
+  end
+
+end
+
 --- Get target.
 -- @param #AUFTRAG self
 -- @return Ops.Target#TARGET The target object. Could be many things.
@@ -6201,8 +6320,9 @@ end
 
 --- Get DCS task table for the given mission.
 -- @param #AUFTRAG self
+-- @param Wrapper.Group#GROUP MissionGroup (Optional) Group that is supposed to carry out the mission. This might not exist when the AUFTRAG is created but only when the AUFTRAG is passed to a certain group.
 -- @return DCS#Task The DCS task table. If multiple tasks are necessary, this is returned as a combo task.
-function AUFTRAG:GetDCSMissionTask()
+function AUFTRAG:GetDCSMissionTask(MissionGroup)
 
   local DCStasks={}
 
@@ -6544,6 +6664,34 @@ function AUFTRAG:GetDCSMissionTask()
     }
     
     table.insert(DCStasks, TaskCargoTransportation)
+
+  elseif self.type==AUFTRAG.Type.FREIGHTTRANSPORT then
+
+    ------------------------------
+    -- FREIGHTTRANSPORT Mission --
+    ------------------------------
+        
+    local statics=self.engageTarget:GetObjects()
+    
+    for _, StaticObject in pairs(statics) do
+      local static=StaticObject --Wrapper.Static#STATIC
+      
+      self:T(static)
+    
+      -- Task to unload the cargo     
+      local TaskCargoUnload={
+        ["id"] = "CargoUnloadPlane",
+        ["params"] = 
+        {
+          ["groupId"] = static:GetID(),
+          ["unitId"]  = static:GetID(),
+        }
+      }        
+    
+    
+      table.insert(DCStasks, TaskCargoUnload)
+      
+    end
 
   elseif self.type==AUFTRAG.Type.RESCUEHELO then
 
@@ -7109,6 +7257,8 @@ function AUFTRAG:GetMissionTaskforMissionType(MissionType)
     mtask=ENUMS.MissionTask.TRANSPORT
   elseif MissionType==AUFTRAG.Type.CARGOTRANSPORT then
     mtask=ENUMS.MissionTask.TRANSPORT
+  elseif MissionType==AUFTRAG.Type.FREIGHTTRANSPORT then
+    mtask=ENUMS.MissionTask.TRANSPORT    
   elseif MissionType==AUFTRAG.Type.ARMORATTACK then
     mtask=ENUMS.MissionTask.NOTHING
   elseif MissionType==AUFTRAG.Type.HOVER then

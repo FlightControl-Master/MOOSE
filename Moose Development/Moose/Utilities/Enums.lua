@@ -131,14 +131,24 @@ ENUMS.WeaponFlag={
   Cannons              =  805306368, -- GUN_POD + BuiltInCannon
   --- Torpedo
   Torpedo              = 4294967296,
+  --- Decoy
+  Decoys               = 8589934592,
+  --- Shell  
+  SmokeShell                =  17179869184,
+  IlluminationShell         =  34359738368,
+  MarkerShell               =  51539607552,
+  MarkerWeapon              =  51539620864,
+  SubmunitionDispenserShell =  68719476736,
+  ConventionalShell         = 206963736576,
   ---
   -- Even More Genral
-  Auto                 = 3221225470, -- Any Weapon (AnyBomb + AnyRocket + AnyMissile + Cannons)
-  AutoDCS              = 1073741822, -- Something if often see
-  AnyAG                = 2956984318, -- Any Air-To-Ground Weapon
-  AnyAA                =  264241152, -- Any Air-To-Air Weapon
-  AnyUnguided          = 2952822768, -- Any Unguided Weapon
-  AnyGuided            =  268402702, -- Any Guided Weapon
+  Auto                 = 265214230526, -- Any Weapon (AnyBomb + AnyRocket + AnyMissile + Cannons + Torpedos)
+  AutoDCS              =   1073741822, -- Something if often see
+  AnyAG                =   2956984318, -- Any Air-To-Ground Weapon
+  AnyAA                =    264241152, -- Any Air-To-Air Weapon
+  AnyUnguided          =   2952822768, -- Any Unguided Weapon
+  AnyGuided            =    268402702, -- Any Guided Weapon
+  AnyShell             = 258503344128, -- Any Shell
 }
 
 --- Weapon types by category. See the [Weapon Flag](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag) enumerator on hoggit wiki.
@@ -220,11 +230,11 @@ ENUMS.WeaponType.Torpedo={
 }
 ENUMS.WeaponType.Any={
   -- General combinations
-  Weapon               = 3221225470, -- Any Weapon (AnyBomb + AnyRocket + AnyMissile + Cannons)
-  AG                   = 2956984318, -- Any Air-To-Ground Weapon
-  AA                   =  264241152, -- Any Air-To-Air Weapon
-  Unguided             = 2952822768, -- Any Unguided Weapon
-  Guided               =  268402702, -- Any Guided Weapon
+  Weapon               = 265214230526, -- Any Weapon (AnyBomb + AnyRocket + AnyMissile + Cannons + Torpedos)
+  AG                   =   2956984318, -- Any Air-To-Ground Weapon
+  AA                   =    264241152, -- Any Air-To-Air Weapon
+  Unguided             =   2952822768, -- Any Unguided Weapon
+  Guided               =    268402702, -- Any Guided Weapon
 }
 
 

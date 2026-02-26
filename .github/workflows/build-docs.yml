@@ -77,11 +77,11 @@ jobs:
 
       - name: Install markdown (prereq for LuaDocumentor)
         run: |
-          sudo luarocks install markdown 0.32-2
+          sudo luarocks install markdown 0.33-1
 
       - name: Install penlight (prereq for LuaDocumentor)
         run: |
-          sudo luarocks install penlight 1.11.0-1
+          sudo luarocks install penlight 1.14.0-3
 
       - name: Install metalua-compiler (prereq for LuaDocumentor)
         run: |
