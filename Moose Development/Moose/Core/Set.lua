@@ -979,6 +979,28 @@ do -- SET_BASE
 
     return ObjectNames
   end
+  
+  --- Checks whether all or optionally any objects is inside a given zone.
+  -- @param #SET_BASE self
+  -- @param Core.Zone#ZONE Zone The zone.
+  -- @param #boolean Any If `true`, at least one object has to be inside the zone. If `false` or `nil`, all objects need to be in the zone.
+  -- @return #boolean Retruns `true` if objects are in the zone and `false` otherwise.
+  function SET_BASE:IsInZone(Zone, Any)
+  
+    for ObjectName, Object in pairs(self.Set) do
+      local object=Object --Wrapper.Positionable#POSITIONABLE
+      local inzone=object:IsInZone(Zone)
+      if inzone and Any then
+        -- We want at least one and this one is
+        return true
+      elseif not inzone then
+        -- We want all but at least one is not
+        return false
+      end
+    end    
+  
+    return true
+  end  
 
   --- Flushes the current SET_BASE contents in the log ... (for debugging reasons).
   -- @param #SET_BASE self
