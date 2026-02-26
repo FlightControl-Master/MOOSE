@@ -50,8 +50,8 @@
 -- @field #string ConfigFilePath Path to the standard config file.
 -- @field #boolean ConfigLoaded If `true` if config file was loaded.
 -- @field #table poptions Provider options. Each element is a data structure of type `MSRS.ProvierOptions`.
--- @field #string provider Provider of TTS (win, gcloud, azure, amazon).
--- @field #string backend Backend used as interface to SRS (MSRS.Backend.SRSEXE or MSRS.Backend.GRPC).
+-- @field #string provider Provider of TTS (win, gcloud, azure, amazon, ...).
+-- @field #string backend Backend used as interface to SRS (MSRS.Backend.SRSEXE, MSRS.Backend.HOUND or MSRS.Backend.GRPC).
 -- @field #boolean UsePowerShell Use PowerShell to execute the command and not cmd.exe
 -- @extends Core.Base#BASE
 
@@ -67,7 +67,8 @@
 --
 -- * This script needs SRS version >= 1.9.6
 -- * You need to de-sanitize os, io and lfs in the missionscripting.lua
--- * Optional: DCS-gRPC as backend to communicate with SRS (vide infra)
+-- * Optional: DCS-gRPC as backend to communicate with SRS (via infra)
+-- * Optional: HOUNDTTS as backend to communicate with SRS (via infra)
 --
 -- ## Knwon Issues
 --
@@ -77,7 +78,7 @@
 -- expecially in VR but unavoidable (if you have a solution, please feel free to share!).
 --
 -- NOTE that this is not an issue if the mission is running on a server.
--- Also NOTE that using DCS-gRPC as backend will avoid the pop-up window.
+-- Also NOTE that using DCS-gRPC and Hound-TTS as backend create no pop-up window.
 --
 -- # Play Sound Files
 --
@@ -188,14 +189,31 @@
 -- The default interface to SRS is via calling the 'DCS-SR-ExternalAudio.exe'. As noted above, this has the unavoidable drawback that a pop-up briefly appears
 -- and DCS might be put out of focus.
 --
+-- ## Hound TTS as an alternative to 'DCS-SR-ExternalAudio.exe' for TTS
+-- 
+-- An alternative interface to SRS is [Hound-TTS](https://github.com/uriba107/HoundTTS/releases). This does not call an exe file and therefore avoids the annoying pop-up window.
+-- In addition to Windows and Google cloud, it also offers Piper local voice creation and others as providers for TTS.
+--
+-- Use @{#MSRS.SetDefaultBackendHound} to enable [Hound-TTS](https://github.com/uriba107/HoundTTS/releases) as an alternate backend.
+-- This can be useful if the popup should be avoided or to use Piper or others for TTS. Please note, only text-to-speech is supported and it it cannot be used to transmit audio files.
+--
+-- Hound TTS must be installed and configured per the [Hound TTS](https://github.com/uriba107/HoundTTS#installation) prior to use. 
+-- If a cloud TTS provider is being used, the API key(s) must be set as per the documentation.
+-- Hound TTS can be used both with DCS dedicated server and regular DCS installations.
+--
+-- To use the default local Windows TTS with Hound TTS, Windows 2019 Server (or newer) or Windows 10/11 are required.  Voices for non-local languages and dialects may need to
+-- be explicitly installed.
+--
+-- To set the MSRS class to use the Hound TTS backend for all future instances, call the function `MSRS.SetDefaultBackendHound()`.
+-- 
 -- ## DCS-gRPC as an alternative to 'DCS-SR-ExternalAudio.exe' for TTS
 --
 -- Another interface to SRS is [DCS-gRPC](https://github.com/DCS-gRPC/rust-server). This does not call an exe file and therefore avoids the annoying pop-up window.
 -- In addition to Windows and Google cloud, it also offers Microsoft Azure and Amazon Web Service as providers for TTS.
 --
--- Use @{#MSRS.SetDefaultBackendGRPC} to enable [DCS-gRPC](https://github.com/DCS-gRPC/rust-server) as an alternate backend for transmitting text-to-speech over SRS.
--- This can be useful if 'DCS-SR-ExternalAudio.exe' cannot be used in the environment or to use Azure or AWS clouds for TTS.  Note that DCS-gRPC does not (yet?) support
--- all of the features and options available with 'DCS-SR-ExternalAudio.exe'. Of note, only text-to-speech is supported and it it cannot be used to transmit audio files.
+-- Use @{#MSRS.SetDefaultBackendGRPC} to enable [DCS-gRPC](https://github.com/DCS-gRPC/rust-server) as an alternate backend.
+-- This can be useful if 'DCS-SR-ExternalAudio.exe' cannot be used in the environment or to use Azure or AWS clouds for TTS.  Note that DCS-gRPC does not support
+-- all of the features and options available with 'DCS-SR-ExternalAudio.exe'. Also note, only text-to-speech is supported and it it cannot be used to transmit audio files.
 --
 -- DCS-gRPC must be installed and configured per the [DCS-gRPC documentation](https://github.com/DCS-gRPC/rust-server) and already running via either the 'autostart' mechanism
 -- or a Lua call to 'GRPC.load()' prior to use of the alternate DCS-gRPC backend. If a cloud TTS provider is being used, the API key must be set via the 'Config\dcs-grpc.lua'
@@ -212,20 +230,20 @@
 -- Basic Play Text-To-Speech example using alternate DCS-gRPC backend (DCS-gRPC not previously started):
 --
 --     -- Start DCS-gRPC
---     GRPC.load()
+--     GRPC.load() -- not needed if you set gRPC to auto-start
 --     -- Select the alternate DCS-gRPC backend for new MSRS instances
 --     MSRS.SetDefaultBackendGRPC()
 --     -- Create a SOUNDTEXT object.
 --     local text=SOUNDTEXT:New("All Enemies destroyed")
 --     -- MOOSE SRS
---     local msrs=MSRS:New('', 305.0)
+--     local msrs=MSRS:New('ExampleInstance', 305.0)
 --     -- Text-to speech with default voice after 30 seconds.
 --     msrs:PlaySoundText(text, 30)
 --
 -- Basic example of using another class (ATIS) with SRS and the DCS-gRPC backend (DCS-gRPC not previously started):
 --
 --     -- Start DCS-gRPC
---     GRPC.load()
+--     GRPC.load() -- not needed if you set gRPC to auto-start
 --     -- Select the alternate DCS-gRPC backend for new MSRS instances
 --     MSRS.SetDefaultBackendGRPC()
 --     -- Create new ATIS as usual
@@ -262,7 +280,7 @@ MSRS = {
 
 --- MSRS class version.
 -- @field #string version
-MSRS.version="0.3.3"
+MSRS.version="0.3.4"
 
 --- Voices
 -- @type MSRS.Voices
@@ -699,9 +717,11 @@ MSRS.Voices = {
 -- @type MSRS.Backend
 -- @field #string SRSEXE Use `DCS-SR-ExternalAudio.exe`.
 -- @field #string GRPC Use DCS-gRPC.
+-- @field #string GRPC Use Hound-TTS.
 MSRS.Backend = {
   SRSEXE = "srsexe",
   GRPC   = "grpc",
+  HOUND  = "hound",
 }
 
 --- Text-to-speech providers. These are compatible with the DCS-gRPC conventions.
@@ -710,11 +730,13 @@ MSRS.Backend = {
 -- @field #string GOOGLE Google (`gcloud`).
 -- @field #string AZURE Microsoft Azure (`azure`). Only possible with DCS-gRPC backend.
 -- @field #string AMAZON Amazon Web Service (`aws`). Only possible with DCS-gRPC backend.
+-- @field #string PIPER Piper local voice service. Only possible with Hound-TTS backend.
 MSRS.Provider = {
   WINDOWS = "win",
   GOOGLE  = "gcloud",
   AZURE   = "azure",
   AMAZON  = "aws",
+  PIPER   = "piper",
 }
 
 --- Function for UUID.
@@ -760,6 +782,7 @@ end
 -- DONE: Add google.
 -- DONE: Add gRPC google options
 -- DONE: Add loading default config file
+-- DONE: Add Hound TTS
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -874,6 +897,16 @@ function MSRS:SetBackendGRPC()
   return self
 end
 
+--- Set Hound-TTS as backend to communicate with SRS.
+-- @param #MSRS self
+-- @return #MSRS self
+function MSRS:SetBackendHound()
+  self:F()
+  self:SetBackend(MSRS.Backend.HOUND)
+
+  return self
+end
+
 --- Set `DCS-SR-ExternalAudio.exe` as backend to communicate with SRS.
 -- @param #MSRS self
 -- @return #MSRS self
@@ -894,6 +927,12 @@ end
 -- @param #MSRS self
 function MSRS.SetDefaultBackendGRPC()
   MSRS.backend=MSRS.Backend.GRPC
+end
+
+--- Set Hound-TTS to be the default backend.
+-- @param #MSRS self
+function MSRS.SetDefaultBackendHound()
+  MSRS.backend=MSRS.Backend.HOUND
 end
 
 --- Get currently set backend.
@@ -1147,6 +1186,16 @@ function MSRS:SetVoiceGoogle(Voice)
   return self
 end
 
+--- Set to use a specific voice if Piper is used as provider (only Hound-TTS backend). Note that this will override any gender and culture settings.
+-- @param #MSRS self
+-- @param #string Voice [Piper Voices](https://rhasspy.github.io/piper-samples/). Default `"en_US-ryan-low"`.
+-- @return #MSRS self
+function MSRS:SetVoicePiper(Voice)
+  self:F( {Voice=Voice} )
+  self:SetVoiceProvider(Voice or "en_US-ryan-low", MSRS.Provider.PIPER)
+
+  return self
+end
 
 --- Set to use a specific voice if Microsoft Azure is use as provider (only DCS-gRPC backend). Note that this will override any gender and culture settings.
 -- @param #MSRS self
@@ -1241,9 +1290,10 @@ end
 -- - `MSRS.Provider.WINDOWS`: Microsoft Windows (default)
 -- - `MSRS.Provider.GOOGLE`: Google Cloud
 -- - `MSRS.Provider.AZURE`: Microsoft Azure (only with DCS-gRPC backend)
--- - `MSRS.Provier.AMAZON`: Amazon Web Service (only with DCS-gRPC backend)
+-- - `MSRS.Provider.AMAZON`: Amazon Web Service (only with DCS-gRPC backend)
+-- - `MSRS.Provider.PIPER`: Piper Voices (only with Hound-TTS backend)
 --
--- Note that all providers except Microsoft Windows need as additonal information the credentials of your account.
+-- Note that all providers except Microsoft Windows and Piper need as additonal information the credentials of your account.
 --
 -- @param #MSRS self
 -- @param #string Provider
@@ -1390,6 +1440,15 @@ function MSRS:SetTTSProviderAmazon()
   return self
 end
 
+--- Use Piper to provide text-to-speech. Only supported if used in combination with Hound-TTS as backend.
+-- @param #MSRS self
+-- @return #MSRS self
+function MSRS:SetTTSProviderPiper()
+  self:F()
+  self:SetProvider(MSRS.Provider.PIPER)
+  return self
+end
+
 
 --- Print SRS help to DCS log file.
 -- @param #MSRS self
@@ -1472,9 +1531,12 @@ function MSRS:PlaySoundText(SoundText, Delay)
   if Delay and Delay>0 then
     self:ScheduleOnce(Delay, MSRS.PlaySoundText, self, SoundText, 0)
   else
-
+    
+    -- TODO Insert HOUND option
     if self.backend==MSRS.Backend.GRPC then
       self:_DCSgRPCtts(SoundText.text, nil, SoundText.gender, SoundText.culture, SoundText.voice, SoundText.volume, SoundText.label, SoundText.coordinate)
+    elseif self.backend == MSRS.Backend.HOUND then
+      self:_HoundTextToSpeech(SoundText.text,nil,nil,SoundText.volume,SoundText.label,self.coalition,SoundText.coordinate,SoundText.Speed,SoundText.gender,SoundText.culture,SoundText.voice)
     else
 
       -- Get command.
@@ -1498,8 +1560,9 @@ end
 -- @param #string Text Text message.
 -- @param #number Delay Delay in seconds, before the message is played.
 -- @param Core.Point#COORDINATE Coordinate Coordinate.
+-- @param #number Speed
 -- @return #MSRS self
-function MSRS:PlayText(Text, Delay, Coordinate)
+function MSRS:PlayText(Text, Delay, Coordinate, Speed)
   self:F( {Text, Delay, Coordinate} )
 
   if Delay and Delay>0 then
@@ -1509,8 +1572,10 @@ function MSRS:PlayText(Text, Delay, Coordinate)
     if self.backend==MSRS.Backend.GRPC then
       self:T(self.lid.."Transmitting")
       self:_DCSgRPCtts(Text, nil, nil , nil, nil, nil, nil, Coordinate)
+    elseif self.backend==MSRS.Backend.HOUND then
+      self:_HoundTextToSpeech(Text,nil,nil,nil,nil,nil,Coordinate,Speed)
     else
-      self:PlayTextExt(Text, Delay, nil, nil, nil, nil, nil, nil, nil, Coordinate)
+      self:PlayTextExt(Text, Delay, nil, nil, nil, nil, nil, nil, nil, Coordinate, Speed)
     end
 
   end
@@ -1530,12 +1595,13 @@ end
 -- @param #number Volume Volume.
 -- @param #string Label Label.
 -- @param Core.Point#COORDINATE Coordinate Coordinate.
+-- @param #number Speed Speed.
 -- @return #MSRS self
-function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
-  self:T({Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate} )
+function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate,Speed)
+  self:T({Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate, Speed} )
 
   if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, self.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate)
+    self:ScheduleOnce(Delay, self.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate, Speed)
   else
 
     Frequencies = Frequencies or self:GetFrequencies()
@@ -1556,7 +1622,14 @@ function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture
       --BASE:I("MSRS.Backend.GRPC")
 
       self:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate)
-
+      
+    elseif self.backend==MSRS.Backend.HOUND then
+      -- BASE:I("MSRS.Backend.HOUND")
+      
+      local UseGoogle = (self.provider == MSRS.Provider.GOOGLE) and true or nil
+      
+      self:_HoundTextToSpeech(Text,Frequencies,Modulations,Volume,Label,self.coalition,Coordinate,Speed,Gender,Culture,Voice,UseGoogle)
+      
     end
 
   end
@@ -1871,7 +1944,7 @@ end
 function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate)
 
   -- Debug info.
-  self:T("MSRS_BACKEND_DCSGRPC:_DCSgRPCtts()")
+  self:T("MSRS_BACKEND_DCSGRPC:_DCSgRPCtts")
   self:T({Text, Frequencies, Gender, Culture, Voice, Volume, Label, Coordinate})
 
   local options = {} -- #MSRS.GRPCOptions
@@ -1881,7 +1954,7 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
   -- Get frequenceies.
   Frequencies = UTILS.EnsureTable(Frequencies, true) or self:GetFrequencies()
 
-  -- Plain text (not really used.
+  -- Plain text - not really used.
   options.plaintext=Text
 
   -- Name shows as sender.
@@ -1939,6 +2012,156 @@ function MSRS:_DCSgRPCtts(Text, Frequencies, Gender, Culture, Voice, Volume, Lab
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Hound-TTS Backend Functions
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Hound TTS Function Wrapper
+-- @param #MSRS self
+-- @param #string Message The text to speak.
+-- @param #table Frequencies The table of frequencies to use.
+-- @param #table Modulations The table of modulations to use.
+-- @param #number Volume The volume to use, defaults to 1.0.
+-- @param #string Label The label to use, defaults to "MSRS".
+-- @param #number Coalition The coalition to use.
+-- @param Core.Point#COORDINATE Point (Optional) The point from which the voice is sent.
+-- @param #number Speed (Optional) How fast to speak, defaults to 1.0.
+-- @param #string Gender (Optional) Gender to use.
+-- @param #string Culture (Optional) Culture to use.
+-- @param #string Voice (Optional) Voice to use.
+-- @param #boolean UseGoogle (Optional) If to use Google TTS.
+-- @return SpeechTime Speech time in seconds.
+function MSRS:_HoundTextToSpeech(Message,Frequencies,Modulations,Volume,Label,Coalition,Point,Speed,Gender,Culture,Voice,UseGoogle)
+  self:I(self.lid.."_HoundTextToSpeech")
+  
+  local ffs = {}
+  for _,_f in pairs(Frequencies or self.frequencies) do
+    table.insert(ffs,string.format("%.1f",_f))
+  end
+  
+  local freqs = table.concat(ffs, ",")
+  local modus = table.concat(Modulations or self.modulations, ",")
+
+  local coal=Coalition or self.coalition
+  local gender=Gender or self.gender
+  local voice=Voice or self:GetVoice(self.provider) or self.voice
+  local culture=Culture or self.culture
+  local volume=Volume or self.volume or 1.0
+  local speed=Speed or self.speed or 1.0
+  local label=Label or self.Label or "MSRS"
+  local coordinate=Point or self.coordinate
+  local point = (coordinate ~= nil) and coordinate:GetVec3() or nil
+  local port = self.port or 5002
+
+  -- Replace modulation
+  modus=modus:gsub("0", "AM")
+  modus=modus:gsub("1", "FM")
+  
+  self:I({T=Message,F=freqs,M=modus,V=voice,Vx=volume,L=label,C=coal,GGL=tostring(UseGoogle)})
+  
+  if (UseGoogle ~= true) and self.provider == MSRS.Provider.GOOGLE then
+    UseGoogle = true
+  end
+  
+  local provider = self.provider
+  provider=provider:gsub("gcloud", "google")
+  provider=provider:gsub("win", "sapi")
+  
+  local TransmissionP = {
+    freqs = freqs,
+    modulations = modus,
+    coalition = coal,
+    name = label,
+    point = point,
+    volume = volume,
+    port = port,
+  }
+  local ProviderP = {
+    provider = provider,
+    voice = voice,
+    speed = speed,
+    culture = culture,
+    gender = gender,
+  }
+  
+  local speechtime = HoundTTS.Transmit(Message, TransmissionP, ProviderP)
+  
+  return speechtime
+end
+
+--- Hound Transmit Function Wrapper
+-- @param #MSRS self
+-- @param #string Message The message to speak
+-- @param #table Transmission_params Transmission parameter table, see below
+-- @param #table Provider_params Provider parameter table, see below
+-- @return SpeechTime Speech time in seconds.
+-- @usage
+-- -- #table Transmission_params
+--   | Field       | Type     | Default             | Description                              |
+--   | ----------- | -------- | ------------------- | ---------------------------------------- |
+--   | transmitter | string   | `"srs"`             | Transmitter type. Currently only `"srs"` |
+--   | freqs       | string   | `"251.0"`           | Frequency in MHz, comma-separated        |
+--   | modulations | string   | `"AM"`              | `AM` or `FM`, comma-separated            |
+--   | coalition   | number   | `0`                 | 0=spectator, 1=red, 2=blue               |
+--   | name        | string   | `"HoundTTS"`        | Client name shown in SRS                 |
+--   | point       | Vec3/nil | `nil`               | DCS position for geo-location            |
+--   | volume      | number   | `1.0`               | 0.0 – 1.0                                |
+--   | encrypt     | boolean  | `false`             | Enable SRS encryption                    |
+--   | encKey      | number   | `0`                 | Encryption key (0–255, must match SRS)   |
+--   | host        | string   | `HoundTTS.SRS_HOST` | SRS server IP                            |
+--   | port        | number   | `HoundTTS.SRS_PORT` | SRS server port                          |
+--
+-- -- #table Provider_params
+--   | Field    | Type   | Default                     | Description                                                                        |
+--   | -------- | ------ | --------------------------- | ---------------------------------------------------------------------------------- |
+--   | provider | string | `HoundTTS.DEFAULT_PROVIDER` | `"piper"` / `"sapi"` / `"azure"` / `"google"` / `"elevenlabs"`                     |
+--   | voice    | string | `HoundTTS.DEFAULT_VOICE`    | Piper model name, SAPI voice name, Azure/Google voice name, or ElevenLabs voice ID |
+--   | culture  | string | `HoundTTS.DEFAULT_CULTURE`  | BCP-47 locale e.g. `"en-US"`, `"en-GB"` (used by SAPI, Azure, Google)              |
+--   | gender   | string | `HoundTTS.DEFAULT_GENDER`   | `"male"` / `"female"` (used by SAPI, Google)                                       |
+--   | speed    | number | `1.0`                       | Speech rate (0.5 = half speed, 1.0 = normal, 2.0 = double speed)                   |
+--   
+function MSRS:_HoundTransmit(Message, Transmission_params, Provider_params)
+  self:I(self.lid.."_HoundTransmit")
+  self:I({Message,Transmission_params,Provider_params})
+  local speechtime = HoundTTS.Transmit(Message, Transmission_params, Provider_params)
+  return speechtime
+end
+
+--- Hound Test Tone function, sends a 2-second 440 Hz sine wave tone directly over SRS, bypassing the TTS engine entirely. 
+-- Use this to verify the SRS connection is working before debugging TTS issues.
+--  @param MSRS self
+--  @param #table Frequencies The table of frequencies to use.
+--  @param #table Modulations The table of modulations to use.
+--  @param #number Coalition The coalition to use.
+function MSRS:_HoundTestTone(Frequencies, Modulations, Coalition)
+ self:I(self.lid.."_HoundTestTone")
+ 
+ local ffs = {}
+  for _,_f in pairs(Frequencies or self.frequencies) do
+    table.insert(ffs,string.format("%.1f",_f))
+  end
+  
+ local freqs = table.concat(ffs, ",")
+ local modus = table.concat(Modulations or self.modulations, ",")
+ -- Replace modulation
+ modus=modus:gsub("0", "AM")
+ modus=modus:gsub("1", "FM")
+ local coal=Coalition or self.coalition
+ HoundTTS.TestTone(freqs, modus, coal)
+ return self
+end
+
+--- Hound speech time calculator. Use to determine how long it takes to speak something out.
+--  @param MSRS self
+--  @param #string Message The message to measure. Can also be handed as string lenght.
+--  @param #number Speed The speed to use, defaults to 1.0.
+--  @param #boolean UseGoogle If to use google. Default: no.
+function MSRS:_HoundSpeechTime(Message,Speed,UseGoogle)
+  local speed = Speed or 1.0
+  local speechtime = HoundTTS.getSpeechTime(Message, speed, UseGoogle)
+  return speechtime
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Config File
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
@@ -1957,7 +2180,7 @@ end
 --     MSRS_Config = {
 --       Path = "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio", -- Path to SRS install directory.
 --       Port = 5002,            -- Port of SRS server. Default 5002.
---       Backend = "srsexe",     -- Interface to SRS: "srsexe" or "grpc".
+--       Backend = "srsexe",     -- Interface to SRS: "srsexe" or "grpc" or "hound".
 --       Frequency = {127, 243}, -- Default frequences. Must be a table 1..n entries!
 --       Modulation = {0,0},     -- Default modulations. Must be a table, 1..n entries, one for each frequency!
 --       Volume = 1.0,           -- Default volume [0,1].
@@ -1967,7 +2190,7 @@ end
 --       Gender = "male",
 --       Voice = "Microsoft Hazel Desktop", -- Voice that is used if no explicit provider voice is specified.
 --       Label = "MSRS",   
---       Provider = "win", --Provider for generating TTS (win, gcloud, azure, aws).      
+--       Provider = "win", --Provider for generating TTS (win, gcloud, azure, aws, piper).      
 --       -- Windows
 --       win = {
 --         voice = "Microsoft Hazel Desktop",
@@ -2092,31 +2315,38 @@ end
 -- @param #boolean isGoogle We're using Google TTS
 function MSRS.getSpeechTime(length,speed,isGoogle)
 
-  local maxRateRatio = 3
-
-  speed = speed or 1.0
-  isGoogle = isGoogle or false
-
-  local speedFactor = 1.0
-  if isGoogle then
-    speedFactor = speed
+  if MSRS.backend == MSRS.Backend.HOUND then
+    local speechtime = HoundTTS.getSpeechTime(length, speed, isGoogle)
+    return speechtime
   else
-    if speed ~= 0 then
-      speedFactor = math.abs( speed ) * (maxRateRatio - 1) / 10 + 1
+
+    local maxRateRatio = 3
+  
+    speed = speed or 1.0
+    isGoogle = isGoogle or false
+  
+    local speedFactor = 1.0
+    if isGoogle then
+      speedFactor = speed
+    else
+      if speed ~= 0 then
+        speedFactor = math.abs( speed ) * (maxRateRatio - 1) / 10 + 1
+      end
+      if speed < 0 then
+        speedFactor = 1 / speedFactor
+      end
     end
-    if speed < 0 then
-      speedFactor = 1 / speedFactor
+  
+    local wpm = math.ceil( 100 * speedFactor )
+    local cps = math.floor( (wpm * 5) / 60 )
+  
+    if type( length ) == "string" then
+      length = string.len( length )
     end
+  
+    return length/cps --math.ceil(length/cps)
+  
   end
-
-  local wpm = math.ceil( 100 * speedFactor )
-  local cps = math.floor( (wpm * 5) / 60 )
-
-  if type( length ) == "string" then
-    length = string.len( length )
-  end
-
-  return length/cps --math.ceil(length/cps)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2168,6 +2398,7 @@ MSRSQUEUE = {
 -- @field #number volume Volume
 -- @field #string label Label to be used
 -- @field Core.Point#COORDINATE coordinate Coordinate for this transmission
+-- @field #number speed Speed to be used
 
 --- Create a new MSRSQUEUE object for a given radio frequency/modulation.
 -- @param #MSRSQUEUE self
@@ -2252,9 +2483,10 @@ end
 -- @param #number volume Volume setting
 -- @param #string label Label to be used
 -- @param Core.Point#COORDINATE coordinate Coordinate to be used
+-- @param #number speed Speed to be used
 -- @return #MSRSQUEUE.Transmission Radio transmission table.
-function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label,coordinate)
-  self:T({Text=text, Dur=duration, start=tstart, int=interval, sub=subgroups, subt=subtitle, sudb=subduration, F=frequency, M=modulation, G=gender, C=culture, V=voice, Vol=volume, L=label})
+function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label,coordinate,speed)
+  self:T({Text=text, Dur=duration, start=tstart, int=interval, sub=subgroups, subt=subtitle, sudb=subduration, F=frequency, M=modulation, G=gender, C=culture, V=voice, Vol=volume, L=label, S=speed})
   if self.TransmitOnlyWithPlayers then
     if self.PlayerSet and self.PlayerSet:CountAlive() == 0 then
       return self
@@ -2294,6 +2526,7 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   transmission.volume = volume or msrs.volume
   transmission.label = label or msrs.Label
   transmission.coordinate = coordinate or msrs.coordinate
+  transmission.speed = speed or 1.0
  
   -- Add transmission to queue.
   self:AddTransmission(transmission)
@@ -2308,9 +2541,9 @@ function MSRSQUEUE:Broadcast(transmission)
   self:T(self.lid.."Broadcast")
   
   if transmission.frequency then
-    transmission.msrs:PlayTextExt(transmission.text, nil, transmission.frequency, transmission.modulation, transmission.gender, transmission.culture, transmission.voice, transmission.volume, transmission.label, transmission.coordinate)
+    transmission.msrs:PlayTextExt(transmission.text, nil, transmission.frequency, transmission.modulation, transmission.gender, transmission.culture, transmission.voice, transmission.volume, transmission.label, transmission.coordinate, transmission.speed)
   else
-    transmission.msrs:PlayText(transmission.text,nil,transmission.coordinate)
+    transmission.msrs:PlayText(transmission.text,nil,transmission.coordinate,transmission.speed)
   end
 
   local function texttogroup(gid)
