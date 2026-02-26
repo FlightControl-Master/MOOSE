@@ -17,7 +17,7 @@
 -- ===
 --
 -- ### Author: **applevangelist**
--- @date Last Update July 2025
+-- @date Last Update Feb 2026
 -- @module Ops.AWACS
 -- @image OPS_AWACS.jpg
 
@@ -6855,7 +6855,7 @@ function AWACS:onafterCheckTacticalQueue(From,Event,To)
     end
     -- AI AWACS Speaking
     local gtext = RadioEntry.TextTTS
-    if self.PathToGoogleKey then
+    if self.PathToGoogleKey and self.Backend ~= MSRS.Backend.HOUND then
       gtext = string.format("<speak><prosody rate='medium'>%s</prosody></speak>",gtext)
     end
     self.TacticalSRSQ:NewTransmission(gtext,nil,self.TacticalSRS,nil,0.5,nil,nil,nil,frequency,self.TacticalModulation)
@@ -6914,7 +6914,7 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
   
   if not RadioEntry.FromAI then
     -- AI AWACS Speaking
-    if self.PathToGoogleKey then
+    if self.PathToGoogleKey and self.Backend ~= MSRS.Backend.HOUND then
       local gtext = RadioEntry.TextTTS
       gtext = string.format("<speak><prosody rate='medium'>%s</prosody></speak>",gtext)
       self.AwacsSRS:PlayTextExt(gtext,nil,self.MultiFrequency,self.MultiModulation,self.Gender,self.Culture,self.Voice,self.Volume,"AWACS")
@@ -6927,7 +6927,7 @@ function AWACS:onafterCheckRadioQueue(From,Event,To)
     if RadioEntry.GroupID and RadioEntry.GroupID ~= 0 then
       local managedgroup = self.ManagedGrps[RadioEntry.GroupID] -- #AWACS.ManagedGroup
       if managedgroup and managedgroup.FlightGroup and managedgroup.FlightGroup:IsAlive() then
-        if self.PathToGoogleKey then
+        if self.PathToGoogleKey and self.Backend ~= MSRS.Backend.HOUND then
           local gtext = RadioEntry.TextTTS
           gtext = string.format("<speak><prosody rate='medium'>%s</prosody></speak>",gtext)
           managedgroup.FlightGroup:RadioTransmission(gtext,1,false)

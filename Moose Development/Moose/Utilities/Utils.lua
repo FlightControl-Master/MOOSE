@@ -4112,9 +4112,10 @@ end
 
 --- Get a NATO abbreviated MGRS text for SRS use, optionally with prosody slow tag
 -- @param #string Text The input string, e.g. "MGRS 4Q FJ 12345 67890"
--- @param #boolean Slow Optional - add slow tags
+-- @param #boolean Slow Optional - add slow tags, if the backend is not Hound
+-- @param #string Backend The TTS Backend used
 -- @return #string Output for (Slow) spelling in SRS TTS e.g. "MGRS;<prosody rate="slow">4;Quebec;Foxtrot;Juliett;1;2;3;4;5;6;7;8;niner;zero;</prosody>"
-function UTILS.MGRSStringToSRSFriendly(Text,Slow)
+function UTILS.MGRSStringToSRSFriendly(Text,Slow,Backend)
     local Text = string.gsub(Text,"MGRS ","")
     Text = string.gsub(Text,"%s+","")
     Text = string.gsub(Text,"([%a%d])","%1;") -- "0;5;1;"
@@ -4146,7 +4147,7 @@ function UTILS.MGRSStringToSRSFriendly(Text,Slow)
     Text = string.gsub(Text,"Z","Zulu")
     Text = string.gsub(Text,"0","zero")
     Text = string.gsub(Text,"9","niner")
-    if Slow then
+    if Slow and Backend ~= nil and Backend ~= MSRS.Backend.HOUND then
       Text = '<prosody rate="slow">'..Text..'</prosody>'
     end
     Text = "MGRS;"..Text
