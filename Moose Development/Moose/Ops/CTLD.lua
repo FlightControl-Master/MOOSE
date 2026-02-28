@@ -199,7 +199,7 @@ do
 --          my_ctld.validateAndRepositionUnits = false -- Uses Disposition and other logic to find better ground positions for ground units avoiding trees, water, roads, runways, map scenery, statics and other units in the area. (Default is false)
 --          my_ctld.loadSavedCrates = true -- Load back crates (STATIC) from the save file. Useful for mission restart cleanup. (Default is true)
 --          my_ctld.UseC130LoadAndUnload = false -- When set to true, forces the C-130 player to use the C-130J built system to load the cargo onboard and to unload. (Default is false)
---          my_ctld.local = "en" -- Language locale to use, available are "en" (default), "de" and "fr"
+--          my_ctld.locale = "en" -- Language locale to use, available are "en" (default), "de" and "fr"
 --
 -- ## 2.1 CH-47 Chinook support
 -- 
@@ -1488,6 +1488,7 @@ function CTLD:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Vo
   self.SRS:SetCulture(self.Culture)
   self.SRS:SetPort(self.Port)
   self.SRS:SetVolume(self.Volume)
+  self.SRS.Label = "CTLD"
   if Provider then
     self.SRS:SetProvider(Provider)
   end
@@ -1507,6 +1508,7 @@ function CTLD:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Vo
   self.SRS:SetVoice(self.Voice)
   self.SRSQueue = MSRSQUEUE:New(self.Label)
   self.SRSQueue:SetTransmitOnlyWithPlayers(true)
+  self.SRSQueue.Label = "CTLD"
   return self
 end
 
@@ -6581,7 +6583,7 @@ function CTLD:_RefreshDropTroopsMenu(Group, Unit)
       local chunkID = objList[1]:GetID()
       self.TroopsIDToChunk[chunkID] = objList
 
-      local label = string.format(self.gettext:GetEntry("MENU_DROP_N_TROOPS",self.locale), tName, count)
+      local label = string.format(self.gettext:GetEntry("MENU_DROP_N_TROOPS",self.locale), count, tName)
       if count == 1 then
         MENU_GROUP_COMMAND:New(theGroup, label, dropTroopsMenu, self._UnloadSingleTroopByID, self, theGroup, theUnit, chunkID, 1)
       else
