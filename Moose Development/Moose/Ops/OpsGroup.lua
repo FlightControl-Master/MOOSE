@@ -4767,7 +4767,7 @@ function OPSGROUP:_UpdateTask(Task, Mission)
         local tvec2=UTILS.Vec2Translate(vec2, distance, heading)
         
         -- Debug info.
-        self:T(self.lid..string.format("Barrage: Shots=%s, Altitude=%d m, Angle=%dÂ°, heading=%03dÂ°, distance=%d m", tostring(param.shots), Altitude, Alpha, heading, distance))
+        self:T(self.lid..string.format("Barrage: Shots=%s, Altitude=%d m, Angle=%d°, heading=%03d°, distance=%d m", tostring(param.shots), Altitude, Alpha, heading, distance))
         
         -- Set fire at point task.
         DCSTask=CONTROLLABLE.TaskFireAtPoint(nil, tvec2, param.radius, param.shots, param.weaponType, Altitude)
