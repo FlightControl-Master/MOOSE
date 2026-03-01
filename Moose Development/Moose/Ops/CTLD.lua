@@ -5744,11 +5744,12 @@ function CTLD:_RefreshLoadCratesMenu(Group,Unit)
       while i<=#list do
         local left=#list-i+1
         local label
-        if left>=needed then
-          label=string.format("%d. Load %s",lineIndex,cName)
+        local loadkey = self.gettext:GetEntry("MENU_LOAD_SINGLE",self.locale)
+        if left>=needed then          
+          label=string.format("%d. %s %s",lineIndex,loadkey, cName)
           i=i+needed
         else
-          label=string.format("%d. Load %s (%d/%d)",lineIndex,cName,left,needed)
+          label=string.format("%d. %s %s (%d/%d)",lineIndex,loadkey, cName,left,needed)
           i=#list+1
         end
         MENU_GROUP_COMMAND:New(Group,label,Group.MyLoadCratesMenu,self._LoadSingleCrateSet,self,Group,Unit,cName)

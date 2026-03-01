@@ -279,6 +279,8 @@
 --      REQUESTSAR = "%s requests SAR at %s, beacon at %.2f KHz!",
 --      REQUESTSARBEACON = "%s requests SAR at %s, beacon at %.2f KHz!",
 --      KHZ = "kilo hertz",
+--      FILLAT = "at",
+--      FILLFOR = "for",
 --    },
 --
 -- e.g. for Spanish:
@@ -377,6 +379,8 @@ CSAR.Messages = {
     REQUESTSAR = "%s requests SAR at %s, beacon at %.2f KHz!",
     REQUESTSARBEACON = "%s requests SAR at %s, beacon at %.2f KHz!",
     KHZ = "kilo hertz",
+    FILLAT = "at",
+    FILLFOR = "for",
     },
   DE = {
     HEARYOULONG = "%s: %s. Ich höre Sie! Endlich, das ist Musik in meinen Ohren!\nIch zünde eine Rauchgranate, wenn Sie %s entfernt sind.\nLanden Sie oder hovern Sie beim Rauch.",
@@ -414,6 +418,8 @@ CSAR.Messages = {
     REQUESTSAR = "%s fordert SAR bei %s an, ADF %.2f KHz!",
     REQUESTSARBEACON = "%s fordert SAR bei %s an, ADF %.2f KHz!",
     KHZ = "Kilohertz",
+    FILLAT = "bei",
+    FILLFOR = "für",
   },
   FR = {
     HEARYOULONG = "%s: %s. Je vous entends! Enfin, c'est de la musique dans mes oreilles!\nJe lancerai une fumée quand vous serez à %s.\nAtterrissez ou survolez la fumée.",
@@ -451,6 +457,8 @@ CSAR.Messages = {
     REQUESTSAR = "%s demande un SAR à %s, balise à %.2f KHz!",
     REQUESTSARBEACON = "%s demande un SAR à %s, balise à %.2f KHz!",
     KHZ = "kilohertz",
+    FILLAT = "au",
+    FILLFOR = "pour",
   },
 }
 
@@ -1513,10 +1521,10 @@ function CSAR:_InitSARForPilot(_downedGroup, _GroupName, _freq, _nomessage, _pla
         self:_DisplayToAllSAR(_text,self.coalition,self.messageTime)
       else
         self:_DisplayToAllSAR(_text,self.coalition,self.messageTime,false,true)
-        local coordtext = UTILS.MGRSStringToSRSFriendly(_coordinatesText,true)
+        local coordtext = UTILS.MGRSStringToSRSFriendly(_coordinatesText,true,self.SRSBackend)
         local request = self.gettext:GetEntry("REQUESTSARBEACON",self.locale)
         local _text = string.format(request, _groupName, coordtext, _freqk)
-        self:_DisplayToAllSAR(_text,self.coalition,self.messageTime,true,false)
+        self:_DisplayToAllSAR(_text,self.coalition,self.messageTime,true,false,self.SRSBackend)
       end
     else --shagrat CASEVAC msg
       local request = self.gettext:GetEntry("PICKUPZONE",self.locale)
@@ -1525,7 +1533,7 @@ function CSAR:_InitSARForPilot(_downedGroup, _GroupName, _freq, _nomessage, _pla
         self:_DisplayToAllSAR(_text,self.coalition,self.messageTime)
       else
         self:_DisplayToAllSAR(_text,self.coalition,self.messageTime,false,true)
-        local coordtext = UTILS.MGRSStringToSRSFriendly(_coordinatesText,true)
+        local coordtext = UTILS.MGRSStringToSRSFriendly(_coordinatesText,true,self.SRSBackend)
         local _text = string.format(request, coordtext )
         self:_DisplayToAllSAR(_text,self.coalition,self.messageTime,true,false)
       end
@@ -2130,6 +2138,8 @@ function CSAR:_GetPositionOfWounded(_woundedGroup,_Unit)
           -- attention this is the distance from the ASKING unit to target, not from RECCE to target!
           local startcoordinate = _Unit:GetCoordinate()
           _coordinatesText = _coordinate:ToStringBR(startcoordinate,settings)
+          local fillfor = self.gettext:GetEntry("FILLFOR",self.locale)
+          _coordinatesText = string.gsub(_coordinatesText,"for","")
         end
       end
     end
@@ -2174,10 +2184,11 @@ function CSAR:_DisplayActiveSAR(_unitName)
       else
         distancetext = string.format("%.1fkm", _distance/1000.0)
       end
+      local fillat = self.gettext:GetEntry("FILLAT",self.locale)
       if _value.frequency == 0 or self.CreateRadioBeacons == false then--shagrat insert CASEVAC without Frequency
-        table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %s ", _value.desc, _coordinatesText, distancetext) })
+        table.insert(_csarList, { dist = _distance, msg = string.format("%s %s %s - %s ", _value.desc, fillat, _coordinatesText, distancetext) })
       else
-        table.insert(_csarList, { dist = _distance, msg = string.format("%s at %s - %.2f KHz ADF - %s ", _value.desc, _coordinatesText, _value.frequency / 1000, distancetext) })
+        table.insert(_csarList, { dist = _distance, msg = string.format("%s %s %s - %.2f KHz ADF - %s ", _value.desc, fillat, _coordinatesText, _value.frequency / 1000, distancetext) })
       end
     end
   end
