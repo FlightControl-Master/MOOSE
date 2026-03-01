@@ -514,7 +514,7 @@ OPSGROUP.CargoStatus={
 
 --- OpsGroup version.
 -- @field #string version
-OPSGROUP.version="1.0.5"
+OPSGROUP.version="1.0.6"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -6154,63 +6154,63 @@ function OPSGROUP:RouteToMission(mission, delay)
 
       end
 	  
-	elseif mission.type==AUFTRAG.Type.FREIGHTTRANSPORT then
+    elseif mission.type==AUFTRAG.Type.FREIGHTTRANSPORT then
 	
-		---
-		-- FREIGHTTRANSPORT
-		---
-	
-		local destination=mission.DCStask.params.destination
-		local cargo=mission.DCStask.params.cargo
-		
-		-- Set the waypoint coordinate directly above the airbase.
-		-- The only way to ensure the cargo is delivered there, because when the task is executed, the cargo is delivered to the closest airbase.
-		-- Hopefully, ED will change the behaviour of this task but at the moment, it is what it is.
-		waypointcoord=destination:GetCoordinate()
-				
-		-- Get additional parameters
-		mission.DCStask.params.destination=destination --Wrapper.Airbase#AIRBASE
-		mission.DCStask.params.cargo=cargo --Core.Set#SET_STATIC
-		
-		-- Get transport unit
-		local unit=self.group:GetFirstUnit()
-		local unitIdTransport=unit:GetID()
-		local vec2=unit:GetVec2()
-		
-		-- Create tasks to load/transport statics cargos
-		local tasks={}		
-		for StaticName, StaticObject in pairs(cargo:GetSet()) do
-      local static=StaticObject --Wrapper.Static#STATIC
+  		---
+  		-- FREIGHTTRANSPORT
+  		---
+  	
+  		local destination=mission.DCStask.params.destination
+  		local cargo=mission.DCStask.params.cargo
   		
-  		-- Task to transport cargo.
-  		local TaskCargoTransportation={
-        id = "CargoTransportationPlane",
-        params = {
-          x=vec2.x,
-          y=vec2.y,
-          unitIdTransport=unitIdTransport,
-          groupId=static:GetID(),
-          unitId=static:GetID(),
+  		-- Set the waypoint coordinate directly above the airbase.
+  		-- The only way to ensure the cargo is delivered there, because when the task is executed, the cargo is delivered to the closest airbase.
+  		-- Hopefully, ED will change the behaviour of this task but at the moment, it is what it is.
+  		waypointcoord=destination:GetCoordinate()
+  				
+  		-- Get additional parameters
+  		mission.DCStask.params.destination=destination --Wrapper.Airbase#AIRBASE
+  		mission.DCStask.params.cargo=cargo --Core.Set#SET_STATIC
+  		
+  		-- Get transport unit
+  		local unit=self.group:GetFirstUnit()
+  		local unitIdTransport=unit:GetID()
+  		local vec2=unit:GetVec2()
+  		
+  		-- Create tasks to load/transport statics cargos
+  		local tasks={}		
+  		for StaticName, StaticObject in pairs(cargo:GetSet()) do
+        local static=StaticObject --Wrapper.Static#STATIC
+    		
+    		-- Task to transport cargo.
+    		local TaskCargoTransportation={
+          id = "CargoTransportationPlane",
+          params = {
+            x=vec2.x,
+            y=vec2.y,
+            unitIdTransport=unitIdTransport,
+            groupId=static:GetID(),
+            unitId=static:GetID(),
+          }
         }
-      }
-      
-      table.insert(tasks, TaskCargoTransportation)
-		end
-		
-		-- If we have multiple tasks, we create a combo task
-		local TaskCargo=nil
-		if #tasks==1 then
-		  TaskCargo=tasks[1]
-		else
-		  TaskCargo=CONTROLLABLE.TaskCombo(nil, tasks)
-		end
-		
-		-- We set the task to load the cargo into the aircraft.
-		-- We must be careful when calling updateroute because there the task is overwritten.
-		-- We also clear present "UpdateRoute" FSM events
-		self:_ClearFSMEvent( "UpdateRoute" )
-		delayGo=-30
-		self.group:SetTask(TaskCargo)
+        
+        table.insert(tasks, TaskCargoTransportation)
+  		end
+  		
+  		-- If we have multiple tasks, we create a combo task
+  		local TaskCargo=nil
+  		if #tasks==1 then
+  		  TaskCargo=tasks[1]
+  		else
+  		  TaskCargo=CONTROLLABLE.TaskCombo(nil, tasks)
+  		end
+  		
+  		-- We set the task to load the cargo into the aircraft.
+  		-- We must be careful when calling updateroute because there the task is overwritten.
+  		-- We also clear present "UpdateRoute" FSM events
+  		self:_ClearFSMEvent( "UpdateRoute" )
+  		delayGo=-50  --30 sec was not enough for CH-47 to load more than one cargo item
+  		self.group:SetTask(TaskCargo)
 				
     elseif mission.type==AUFTRAG.Type.ARTY then
 

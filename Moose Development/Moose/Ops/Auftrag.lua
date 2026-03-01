@@ -676,7 +676,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="1.4.0"
+AUFTRAG.version="1.4.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -2191,7 +2191,7 @@ function AUFTRAG:NewFREIGHTTRANSPORT(StaticCargo, Destination)
 
   -- Check if Destination is given
   if Destination==nil then
-    self:E(self.lid..string.format("ERROR: Destination is nil for AUFTRAG:NewFREIGHTTRANSPORT! You must specify the destination airbase"))
+    BASE:E(self.lid..string.format("ERROR: Destination is nil for AUFTRAG:NewFREIGHTTRANSPORT! You must specify the destination airbase"))
     return nil
   elseif type(Destination)=="string" then
     Destination=AIRBASE:FindByName(Destination)
@@ -2199,7 +2199,7 @@ function AUFTRAG:NewFREIGHTTRANSPORT(StaticCargo, Destination)
   
   -- Check if Cargo is given
   if StaticCargo==nil then
-    self:E(self.lid..string.format("ERROR: StaticCargo is nil for AUFTRAG:NewFREIGHTTRANSPORT! You must specify the static object that represents the cargo"))
+    BASE:E(self.lid..string.format("ERROR: StaticCargo is nil for AUFTRAG:NewFREIGHTTRANSPORT! You must specify the static object that represents the cargo"))
     return nil  
   elseif type(StaticCargo)=="string" then
     StaticCargo=STATIC:FindByName(StaticCargo)
@@ -2213,6 +2213,15 @@ function AUFTRAG:NewFREIGHTTRANSPORT(StaticCargo, Destination)
   end
   
   local mission=AUFTRAG:New(AUFTRAG.Type.FREIGHTTRANSPORT)
+  
+  -- Check that the set is not empty
+  local Ncargo=StaticCargo:Count()
+  if Ncargo==0 then
+    mission:E(mission.lid..string.format("ERROR: No cargo items in set!"))
+    return nil
+  else
+    mission:T(mission.lid..string.format("FREIGHTTRANSPORT with N=%d cargo items in set", Ncargo))
+  end  
 
   mission:_TargetFromObject(StaticCargo)
 
