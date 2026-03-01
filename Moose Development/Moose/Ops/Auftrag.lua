@@ -7192,7 +7192,7 @@ function AUFTRAG:_GetDCSAttackTask(Target, DCStasks)
 
     elseif target.Type==TARGET.ObjectType.UNIT or target.Type==TARGET.ObjectType.STATIC then
 
-      local DCStask=CONTROLLABLE.TaskAttackUnit(nil, target.Object, self.engageAsGroup, self.WeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
+      local DCStask=CONTROLLABLE.TaskAttackUnit(nil, target.Object, self.engageAsGroup, self.engageWeaponExpend, self.engageQuantity, self.engageDirection, self.engageAltitude, self.engageWeaponType)
 
       table.insert(DCStasks, DCStask)
 

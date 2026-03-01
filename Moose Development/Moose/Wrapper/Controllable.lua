@@ -1099,11 +1099,9 @@ end
 -- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aircraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aircraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param DCS#Distance Altitude (optional) Desired attack start altitude. Controllable/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/controllable will choose closest altitude to the desired attack start altitude. If the desired altitude is defined controllable/aircraft will not attack from safe altitude.
--- @param #boolean AttackQtyLimit (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.
 -- @param #boolean GroupAttack (Optional) If true, attack as group.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit, GroupAttack )
-  -- self:F2( { self.ControllableName, AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
+function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, GroupAttack )
 
   --  AttackGroup = {
   --   id = 'AttackGroup',
@@ -1124,7 +1122,7 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
   local DCSTask = { id = 'AttackGroup',
     params = {
       groupId          = AttackGroup:GetID(),
-      weaponType       = WeaponType or 1073741822,
+      weaponType       = WeaponType or ENUMS.WeaponFlag.Auto,
       expend           = WeaponExpend or "Auto",
       attackQtyLimit   = AttackQty and true or false,
       attackQty        = AttackQty or 1,
@@ -1163,7 +1161,7 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, GroupAttack, WeaponExpend, Att
       altitude         = Altitude,
       attackQtyLimit   = AttackQty and true or false,
       attackQty        = AttackQty,
-      weaponType       = WeaponType or 1073741822,
+      weaponType       = WeaponType or ENUMS.WeaponFlag.Auto,
     },
   }
 
@@ -1197,7 +1195,7 @@ function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, D
       direction        = Direction and math.rad(Direction) or 0,
       altitudeEnabled  = Altitude and true or false,
       altitude         = Altitude or 2000,
-      weaponType       = WeaponType or 1073741822,
+      weaponType       = WeaponType or ENUMS.WeaponFlag.AnyBomb,
       attackType       = Divebomb and "Dive" or nil,
       },
   }
@@ -1249,7 +1247,7 @@ end
 -- @param #number AttackQty (Optional) This parameter limits maximal quantity of attack. The aircraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aircraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCS#Azimuth Direction (Optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param #number Altitude (Optional) The altitude [meters] from where to attack. Default 30 m.
--- @param #number WeaponType (Optional) The WeaponType. Default Auto=1073741822.
+-- @param #number WeaponType (Optional) The WeaponType. Default `ENUMS.WeaponFlag.Auto`.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType )
 
@@ -1266,7 +1264,7 @@ function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, Atta
       direction        = Direction and math.rad(Direction) or 0,
       altitudeEnabled  = Altitude and true or false,
       altitude         = Altitude,
-      weaponType       = WeaponType or 1073741822,
+      weaponType       = WeaponType or ENUMS.WeaponFlag.Auto,
     },
   }
 
