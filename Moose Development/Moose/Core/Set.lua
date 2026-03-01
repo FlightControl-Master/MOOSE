@@ -251,7 +251,7 @@ do -- SET_BASE
   -- @param #SET_BASE self
   -- @param #string Name The Name of the object.
   -- @param #string Pattern The pattern that is contained in the Name.
-  -- @param #boolean NoRegex If `true`, special characters in the Name are interpreted as plain text and not regular expressions. Default is `self.filterNoregex`. 
+  -- @param #boolean NoRegex (Optional) If `true`, special characters in the Name are interpreted as plain text and not regular expressions. Default is `self.filterNoregex`. 
   -- @param #boolean ReplaceDash If `true`, dashes are not used as regex.
   -- @return #boolean Returns `true`, if the pattern is contained in the name and false otherwise.
   function SET_BASE:_SearchPattern(Name, Pattern, NoRegex, ReplaceDash)
@@ -573,7 +573,7 @@ do -- SET_BASE
 
   --- Define the SET iterator **"limit"**.
   -- @param #SET_BASE self
-  -- @param #number Limit Defines how many objects are evaluated of the set as part of the Some iterators. The default is 1.
+  -- @param #number Limit (Optional) Defines how many objects are evaluated of the set as part of the Some iterators. The default is 1.
   -- @return #SET_BASE self
   function SET_BASE:SetSomeIteratorLimit(Limit)
 
@@ -1602,7 +1602,7 @@ do
   
   --- Set filter timer interval for FilterZones if using active filtering with FilterStart().
   -- @param #SET_GROUP self
-  -- @param #number Seconds Seconds between check intervals, defaults to 30. **Caution** - do not be too agressive with timing! Groups are usually not moving fast enough
+  -- @param #number Seconds (Optional) Seconds between check intervals, defaults to 30. **Caution** - do not be too agressive with timing! Groups are usually not moving fast enough
   -- to warrant a check of below 10 seconds.
   -- @return #SET_GROUP self
   function SET_GROUP:FilterZoneTimer(Seconds)
@@ -2701,7 +2701,7 @@ do -- SET_UNIT
   
   --- Set filter timer interval for FilterZones if using active filtering with FilterStart().
   -- @param #SET_UNIT self
-  -- @param #number Seconds Seconds between check intervals, defaults to 30. **Caution** - do not be too agressive with timing! Groups are usually not moving fast enough
+  -- @param #number Seconds (Optional) Seconds between check intervals, defaults to 30. **Caution** - do not be too agressive with timing! Groups are usually not moving fast enough
   -- to warrant a check of below 10 seconds.
   -- @return #SET_UNIT self
   function SET_UNIT:FilterZoneTimer(Seconds)
@@ -4622,7 +4622,7 @@ do -- SET_CLIENT
 
   --- Set filter timer interval for FilterZones if using active filtering with FilterStart().
   -- @param #SET_CLIENT self
-  -- @param #number Seconds Seconds between check intervals, defaults to 30. **Caution** - do not be too agressive with timing! Groups are usually not moving fast enough
+  -- @param #number Seconds (Optional) Seconds between check intervals, defaults to 30. **Caution** - do not be too agressive with timing! Groups are usually not moving fast enough
   -- to warrant a check of below 10 seconds.
   -- @return #SET_CLIENT self
   function SET_CLIENT:FilterZoneTimer(Seconds)
@@ -6057,12 +6057,12 @@ do -- SET_ZONE
 
   --- Draw all zones in the set on the F10 map.
   -- @param #SET_ZONE self
-  -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+  -- @param #number Coalition (Optional) Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
   -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
-  -- @param #number Alpha Transparency [0,1]. Default 1.
-  -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
-  -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
-  -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+  -- @param #number Alpha (Optional) Transparency [0,1]. Default 1.
+  -- @param #table FillColor (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+  -- @param #number FillAlpha (Optional) Transparency [0,1]. Default 0.15.
+  -- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
   -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
   -- @return #SET_ZONE self
   function SET_ZONE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
@@ -6202,7 +6202,7 @@ do -- SET_ZONE
   
   --- Set the check time for SET_ZONE:Trigger()
   -- @param #SET_ZONE self
-  -- @param #number seconds Check every seconds for objects entering or leaving the zone. Defaults to 5 secs.
+  -- @param #number seconds (Optional) Check every seconds for objects entering or leaving the zone. Defaults to 5 secs.
   -- @return #SET_ZONE self
   function SET_ZONE:SetCheckTime(seconds)
     self.Checktime = seconds or 5
@@ -8676,7 +8676,7 @@ do -- SET_DYNAMICCARGO
   
   --- Set filter timer interval for FilterZones if using active filtering with FilterStart().
   -- @param #SET_DYNAMICCARGO self
-  -- @param #number Seconds Seconds between check intervals, defaults to 30. **Caution** - do not be too agressive with timing! Objects are usually not moving fast enough
+  -- @param #number Seconds (Optional) Seconds between check intervals, defaults to 30. **Caution** - do not be too agressive with timing! Objects are usually not moving fast enough
   -- to warrant a check of below 10 seconds.
   -- @return #SET_DYNAMICCARGO self
   function SET_DYNAMICCARGO:FilterZoneTimer(Seconds) 

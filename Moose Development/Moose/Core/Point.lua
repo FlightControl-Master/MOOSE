@@ -610,7 +610,7 @@ do -- COORDINATE
 
   --- Find the closest static to the COORDINATE within a certain radius.
   -- @param #COORDINATE self
-  -- @param #number radius Scan radius in meters. Default 100 m.
+  -- @param #number radius (Optional) Scan radius in meters. Default 100 m.
   -- @return Wrapper.Static#STATIC The closest static or #nil if no unit is inside the given radius.
   function COORDINATE:FindClosestStatic(radius)
 
@@ -633,7 +633,7 @@ do -- COORDINATE
 
   --- Find the closest unit to the COORDINATE within a certain radius.
   -- @param #COORDINATE self
-  -- @param #number radius Scan radius in meters. Default 100 m.
+  -- @param #number radius (Optional) Scan radius in meters. Default 100 m.
   -- @return Wrapper.Unit#UNIT The closest unit or #nil if no unit is inside the given radius.
   function COORDINATE:FindClosestUnit(radius)
 
@@ -678,7 +678,7 @@ do -- COORDINATE
 
   --- Find the closest scenery to the COORDINATE within a certain radius.
   -- @param #COORDINATE self
-  -- @param #number radius Scan radius in meters. Default 100 m.
+  -- @param #number radius (Optional) Scan radius in meters. Default 100 m.
   -- @return Wrapper.Scenery#SCENERY The closest scenery or #nil if no object is inside the given radius.
   function COORDINATE:FindClosestScenery(radius)
 
@@ -716,8 +716,8 @@ do -- COORDINATE
   --- Add a Distance in meters from the COORDINATE orthonormal plane, with the given angle, and calculate the new COORDINATE.
   -- @param #COORDINATE self
   -- @param DCS#Distance Distance The Distance to be added in meters.
-  -- @param DCS#Angle Angle The Angle in degrees. Defaults to 0 if not specified (nil).
-  -- @param #boolean Keepalt If true, keep altitude of original coordinate. Default is that the new coordinate is created at the translated land height.
+  -- @param DCS#Angle Angle (Optional) The Angle in degrees. Defaults to 0 if not specified (nil).
+  -- @param #boolean Keepalt (Optional) If true, keep altitude of original coordinate. Default is that the new coordinate is created at the translated land height.
   -- @param #boolean Overwrite If true, overwrite the original COORDINATE with the translated one. Otherwise, create a new COORDINATE.
   -- @return #COORDINATE The new calculated COORDINATE.
   function COORDINATE:Translate( Distance, Angle, Keepalt, Overwrite )
@@ -958,7 +958,7 @@ do -- COORDINATE
   --- Return an intermediate COORDINATE between this an another coordinate.
   -- @param #COORDINATE self
   -- @param #COORDINATE ToCoordinate The other coordinate.
-  -- @param #number Fraction The fraction (0,1) where the new coordinate is created. Default 0.5, i.e. in the middle.
+  -- @param #number Fraction (Optional) The fraction (0,1) where the new coordinate is created. Default 0.5, i.e. in the middle.
   -- @return #COORDINATE Coordinate between this and the other coordinate.
   function COORDINATE:GetIntermediateCoordinate( ToCoordinate, Fraction )
 
@@ -1514,7 +1514,7 @@ do -- COORDINATE
   -- @param Core.Settings#SETTINGS Settings
   -- @param #string Language (Optional) Language "en" or "ru"
   -- @param #boolean MagVar If true, also state angle in magnetic
-  -- @param #number Precision Rounding precision, defaults to 0
+  -- @param #number Precision (Optional) Rounding precision, defaults to 0
   -- @return #string The BR Text
   function COORDINATE:GetBRText( AngleRadians, Distance, Settings, Language, MagVar, Precision )
 
@@ -1555,7 +1555,7 @@ do -- COORDINATE
   --- Set altitude.
   -- @param #COORDINATE self
   -- @param #number altitude New altitude in meters.
-  -- @param #boolean asl Altitude above sea level. Default is above ground level.
+  -- @param #boolean asl (Optional) Altitude above sea level. Default is above ground level.
   -- @return #COORDINATE The COORDINATE with adjusted altitude.
   function COORDINATE:SetAltitude(altitude, asl)
     local alt=altitude
@@ -1581,7 +1581,7 @@ do -- COORDINATE
   -- @param #COORDINATE.WaypointAltType AltType The altitude type.
   -- @param #COORDINATE.WaypointType Type The route point type.
   -- @param #COORDINATE.WaypointAction Action The route point action.
-  -- @param DCS#Speed Speed Airspeed in km/h. Default is 500 km/h.
+  -- @param DCS#Speed Speed (Optional) Airspeed in km/h. Default is 500 km/h.
   -- @param #boolean SpeedLocked true means the speed is locked.
   -- @param Wrapper.Airbase#AIRBASE airbase The airbase for takeoff and landing points.
   -- @param #table DCSTasks A table of @{DCS#Task} items which are executed at the waypoint.
@@ -1741,7 +1741,7 @@ do -- COORDINATE
   -- @param #COORDINATE self
   -- @param DCS#Speed Speed Airspeed in km/h.
   -- @param Wrapper.Airbase#AIRBASE airbase The airbase for takeoff and landing points.
-  -- @param #number timeReFuAr Time in minutes, the aircraft stays at the airbase. Default 10 min.
+  -- @param #number timeReFuAr (Optional) Time in minutes, the aircraft stays at the airbase. Default 10 min.
   -- @param #table DCSTasks A table of @{DCS#Task} items which are executed at the waypoint.
   -- @param #string description A text description of the waypoint, which will be shown on the F10 map.
   -- @return #table The route point.
@@ -2148,7 +2148,7 @@ do -- COORDINATE
 
   --- Creates an explosion at the point of a certain intensity.
   -- @param #COORDINATE self
-  -- @param #number ExplosionIntensity Intensity of the explosion in kg TNT. Default 100 kg.
+  -- @param #number ExplosionIntensity (Optional) Intensity of the explosion in kg TNT. Default 100 kg.
   -- @param #number Delay (Optional) Delay before explosion is triggered in seconds.
   -- @return #COORDINATE self
   function COORDINATE:Explosion( ExplosionIntensity, Delay )
@@ -2163,7 +2163,7 @@ do -- COORDINATE
 
   --- Creates an illumination bomb at the point.
   -- @param #COORDINATE self
-  -- @param #number Power Power of illumination bomb in Candela. Default 1000 cd.
+  -- @param #number Power (Optional) Power of illumination bomb in Candela. Default 1000 cd.
   -- @param #number Delay (Optional) Delay before bomb is ignited in seconds.
   -- @return #COORDINATE self
   function COORDINATE:IlluminationBomb(Power, Delay)
@@ -2622,10 +2622,10 @@ do -- COORDINATE
     -- Creates a line on the F10 map from one point to another.
     -- @param #COORDINATE self
     -- @param #COORDINATE Endpoint COORDINATE to where the line is drawn.
-    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
-    -- @param #number Alpha Transparency [0,1]. Default 1.
-    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #number Coalition (Optional) Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha (Optional) Transparency [0,1]. Default 1.
+    -- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
     -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
     -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
@@ -2646,13 +2646,13 @@ do -- COORDINATE
     --- Circle to all.
     -- Creates a circle on the map with a given radius, color, fill color, and outline.
     -- @param #COORDINATE self
-    -- @param #number Radius Radius in meters. Default 1000 m.
-    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
-    -- @param #number Alpha Transparency [0,1]. Default 1.
-    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
-    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
-    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #number Radius (Optional) Radius in meters. Default 1000 m.
+    -- @param #number Coalition (Optional) Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha (Optional) Transparency [0,1]. Default 1.
+    -- @param #table FillColor (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha (Optional) Transparency [0,1]. Default 0.15.
+    -- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
     -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
     -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
@@ -2686,12 +2686,12 @@ do -- COORDINATE
     -- Creates a line on the F10 map from one point to another.
     -- @param #COORDINATE self
     -- @param #COORDINATE Endpoint COORDINATE in the opposite corner.
-    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
-    -- @param #number Alpha Transparency [0,1]. Default 1.
-    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
-    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
-    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #number Coalition (Optional) Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha (Optional) Transparency [0,1]. Default 1.
+    -- @param #table FillColor (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha (Optional) Transparency [0,1]. Default 0.15.
+    -- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
     -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
     -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
@@ -2722,12 +2722,12 @@ do -- COORDINATE
     -- @param #COORDINATE Coord2 Second COORDINATE of the quad shape.
     -- @param #COORDINATE Coord3 Third COORDINATE of the quad shape.
     -- @param #COORDINATE Coord4 Fourth COORDINATE of the quad shape.
-    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
-    -- @param #number Alpha Transparency [0,1]. Default 1.
-    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
-    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
-    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #number Coalition (Optional) Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha (Optional) Transparency [0,1]. Default 1.
+    -- @param #table FillColor (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha (Optional) Transparency [0,1]. Default 0.15.
+    -- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
     -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
     -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
@@ -2759,12 +2759,12 @@ do -- COORDINATE
     --- Creates a free form shape on the F10 map. The first point is the current COORDINATE. The remaining points need to be specified.
     -- @param #COORDINATE self
     -- @param #table Coordinates Table of coordinates of the remaining points of the shape.
-    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
-    -- @param #number Alpha Transparency [0,1]. Default 1.
-    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
-    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
-    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #number Coalition (Optional) Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha (Optional) Transparency [0,1]. Default 1.
+    -- @param #table FillColor (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha (Optional) Transparency [0,1]. Default 0.15.
+    -- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
     -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
     -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
@@ -2865,12 +2865,12 @@ do -- COORDINATE
     --- Text to all. Creates a text imposed on the map at the COORDINATE. Text scales with the map.
     -- @param #COORDINATE self
     -- @param #string Text Text displayed on the F10 map.
-    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
-    -- @param #number Alpha Transparency [0,1]. Default 1.
-    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
-    -- @param #number FillAlpha Transparency [0,1]. Default 0.3.
-    -- @param #number FontSize Font size. Default 14.
+    -- @param #number Coalition (Optional) Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha (Optional) Transparency [0,1]. Default 1.
+    -- @param #table FillColor (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha (Optional) Transparency [0,1]. Default 0.3.
+    -- @param #number FontSize (Optional) Font size. Default 14.
     -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
     -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
     function COORDINATE:TextToAll(Text, Coalition, Color, Alpha, FillColor, FillAlpha, FontSize, ReadOnly)
@@ -2895,12 +2895,12 @@ do -- COORDINATE
     --- Arrow to all. Creates an arrow from the COORDINATE to the endpoint COORDINATE on the F10 map. There is no control over other dimensions of the arrow.
     -- @param #COORDINATE self
     -- @param #COORDINATE Endpoint COORDINATE where the tip of the arrow is pointing at.
-    -- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
-    -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
-    -- @param #number Alpha Transparency [0,1]. Default 1.
-    -- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
-    -- @param #number FillAlpha Transparency [0,1]. Default 0.15.
-    -- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+    -- @param #number Coalition (Optional) Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+    -- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red (default).
+    -- @param #number Alpha (Optional) Transparency [0,1]. Default 1.
+    -- @param #table FillColor (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+    -- @param #number FillAlpha (Optional) Transparency [0,1]. Default 0.15.
+    -- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
     -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
     -- @param #string Text (Optional) Text displayed when mark is added. Default none.
     -- @return #number The resulting Mark ID, which is a number. Can be used to remove the object again.
@@ -2930,7 +2930,7 @@ do -- COORDINATE
   --- Returns if a Coordinate has Line of Sight (LOS) with the ToCoordinate.
   -- @param #COORDINATE self
   -- @param #COORDINATE ToCoordinate
-  -- @param #number Offset Height offset in meters. Default 2 m.
+  -- @param #number Offset (Optional) Height offset in meters. Default 2 m.
   -- @return #boolean true If the ToCoordinate has LOS with the Coordinate, otherwise false.
   function COORDINATE:IsLOS( ToCoordinate, Offset )
 
@@ -3286,7 +3286,7 @@ do -- COORDINATE
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
   -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @param #boolean MagVar If true, also get angle in MagVar for BR/BRA
-  -- @param #number Precision Rounding precision, currently full km as default (=0)
+  -- @param #number Precision (Optional) Rounding precision, currently full km as default (=0)
   -- @return #string The BR text.
   function COORDINATE:ToStringBR( FromCoordinate, Settings, MagVar, Precision )
     local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
@@ -3300,7 +3300,7 @@ do -- COORDINATE
   -- @param #COORDINATE FromCoordinate The coordinate to measure the distance and the bearing from.
   -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @param #boolean MagVar If true, also get angle in MagVar for BR/BRA
-  -- @param #number Precision Rounding precision, currently full km as default (=0)
+  -- @param #number Precision (Optional) Rounding precision, currently full km as default (=0)
   -- @return #string The BR text.
   function COORDINATE:ToStringBearing( FromCoordinate, Settings, MagVar, Precision )
     local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
@@ -3714,8 +3714,8 @@ do -- COORDINATE
   --   * Uses default settings in COORDINATE.
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
   -- @param #COORDINATE self
-  -- @param Wrapper.Controllable#CONTROLLABLE Controllable The controllable to retrieve the settings from, otherwise the default settings will be chosen.
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Wrapper.Controllable#CONTROLLABLE Controllable (Optional) The controllable to retrieve the settings from, otherwise the default settings will be chosen.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The coordinate Text in the configured coordinate system.
   function COORDINATE:ToString( Controllable, Settings )
 
@@ -3750,7 +3750,7 @@ do -- COORDINATE
   --   * Can be overridden if for a GROUP containing x clients, a menu was selected to override the default.
   -- @param #COORDINATE self
   -- @param Wrapper.Controllable#CONTROLLABLE Controllable
-  -- @param Core.Settings#SETTINGS Settings (optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
+  -- @param Core.Settings#SETTINGS Settings (Optional) The settings. Can be nil, and in this case the default settings are used. If you want to specify your own settings, use the _SETTINGS object.
   -- @return #string The pressure text in the configured measurement system.
   function COORDINATE:ToStringPressure( Controllable, Settings ) 
 
