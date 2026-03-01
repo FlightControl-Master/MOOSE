@@ -193,6 +193,7 @@ CTLD.Messages = {
         MENU_SHOW_LOADABLE_CRATES       = "Show loadable crates",
         MENU_NO_CRATES_FOUND_RESCAN     = "No crates found! Rescan?",
         MENU_USE_C130_LOAD              = "Use C-130 Load system",
+        MENU_LOAD_SINGLE                = "Load",
         -- ============================================================
         -- Menu labels - Crates: Drop
         -- ============================================================
@@ -442,6 +443,7 @@ CTLD.Messages = {
         MENU_SHOW_LOADABLE_CRATES       = "Ladbare Kisten anzeigen",
         MENU_NO_CRATES_FOUND_RESCAN     = "Keine Kisten gefunden! Neu scannen?",
         MENU_USE_C130_LOAD              = "C-130-Ladesystem verwenden",
+        MENU_LOAD_SINGLE                = "Lade",
         -- ============================================================
         -- Menübezeichnungen - Kisten: Abwerfen
         -- ============================================================
@@ -691,6 +693,7 @@ FR = {
         MENU_SHOW_LOADABLE_CRATES       = "Afficher caisses chargeables",
         MENU_NO_CRATES_FOUND_RESCAN     = "Aucune caisse trouvée ! Rescanner ?",
         MENU_USE_C130_LOAD              = "Utiliser le système de chargement C-130",
+        MENU_LOAD_SINGLE                = "Charger",
         -- ============================================================
         -- Libellés de menu - Caisses : Larguer
         -- ============================================================
