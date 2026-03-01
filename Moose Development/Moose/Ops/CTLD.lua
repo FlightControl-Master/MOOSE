@@ -199,7 +199,7 @@ do
 --          my_ctld.validateAndRepositionUnits = false -- Uses Disposition and other logic to find better ground positions for ground units avoiding trees, water, roads, runways, map scenery, statics and other units in the area. (Default is false)
 --          my_ctld.loadSavedCrates = true -- Load back crates (STATIC) from the save file. Useful for mission restart cleanup. (Default is true)
 --          my_ctld.UseC130LoadAndUnload = false -- When set to true, forces the C-130 player to use the C-130J built system to load the cargo onboard and to unload. (Default is false)
---          my_ctld.local = "en" -- Language locale to use, available are "en" (default), "de" and "fr"
+--          my_ctld.locale = "en" -- Language locale to use, available are "en" (default), "de" and "fr"
 --
 -- ## 2.1 CH-47 Chinook support
 -- 
@@ -703,6 +703,7 @@ CTLD = {
   allowCATransport = false,
   VehicleMoveFormation = AI.Task.VehicleFormation.VEE,
   locale = "en",
+  usesrs = false
 }
 
 ------------------------------
@@ -1447,6 +1448,69 @@ function CTLD:_InitLocalization()
   return self
 end
 
+--- [User] Set SRS TTS details - see @{Sound.SRS} for details.`SetSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
+-- @param #CTLD self
+-- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 30 or {30,124.5}. Defaults to {30,124.5}. There needs to be exactly the same number of modulations!
+-- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
+-- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
+-- @param #string Gender (Optional) Defaults to "male"
+-- @param #string Culture (Optional) Defaults to "en-US"
+-- @param #number Port (Optional) Defaults to 5002
+-- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS#SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
+-- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS. Or Piper voice types with HOUND backend.
+-- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
+-- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS; if you use a config file for MSRS, hand in nil here.
+-- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
+-- @param #string Backend (Optional) MSRS Backend to be used, can be MSRS.Backend.SRSEXE or MSRS.Backend.GRPC; if you use a config file for MSRS, hand in nil here.
+-- @param #string Provider (Optional) MSRS Provider to be used, can be MSRS.Provider.Google or MSRS.Provider.WINDOWS etc; if you use a config file for MSRS, hand in nil here. 
+-- @return #CTLD self
+function CTLD:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Backend,Provider)
+  self:T(self.lid.."SetSRS")
+  self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio" --
+  self.Gender = Gender or MSRS.gender or "male" --
+  self.Culture = Culture or MSRS.culture or "en-US" --
+  self.Port = Port or MSRS.port or 5002 --
+  self.Voice = Voice or MSRS.voice
+  self.PathToGoogleKey = PathToGoogleKey --
+  self.AccessKey = AccessKey
+  self.Volume = Volume or 1.0 --
+  self.usesrs = true
+  self.Frequency = Frequency or {30,124.5} --
+  self.BCFrequency = self.Frequency
+  self.Modulation = Modulation or {radio.modulation.FM,radio.modulation.AM} --
+  self.BCModulation = self.Modulation
+  -- set up SRS 
+  self.SRS=MSRS:New(self.PathToSRS,self.Frequency,self.Modulation,Backend)
+  self.SRS:SetCoalition(self.Coalition)
+  self.Label = self.MenuName or self.Name
+  self.SRS:SetLabel(self.Label)
+  self.SRS:SetGender(self.Gender)
+  self.SRS:SetCulture(self.Culture)
+  self.SRS:SetPort(self.Port)
+  self.SRS:SetVolume(self.Volume)
+  self.SRS.Label = "CTLD"
+  if Provider then
+    self.SRS:SetProvider(Provider)
+  end
+  if self.PathToGoogleKey then
+    self.SRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
+    self.SRS:SetProvider(Provider or MSRS.Provider.GOOGLE)
+  end
+   -- Pre-configured Google?
+  if (not PathToGoogleKey) and self.SRS:GetProvider() == MSRS.Provider.GOOGLE then
+    self.PathToGoogleKey = MSRS.poptions.gcloud.credentials
+    self.Voice = Voice or MSRS.poptions.gcloud.voice
+    self.AccessKey = AccessKey or MSRS.poptions.gcloud.key
+  end
+  if Backend then
+    self.SRS:SetBackend(Backend)
+  end
+  self.SRS:SetVoice(self.Voice)
+  self.SRSQueue = MSRSQUEUE:New(self.Label)
+  self.SRSQueue:SetTransmitOnlyWithPlayers(true)
+  self.SRSQueue.Label = "CTLD"
+  return self
+end
 
 --- (Internal) Function to get capabilities of a chopper
 -- @param #CTLD self
@@ -1750,10 +1814,15 @@ end
 -- @param #number Time Number of seconds to display the message.
 -- @param #boolean Clearscreen Clear screen or not.
 -- @param Wrapper.Group#GROUP Group The group receiving the message.
-function CTLD:_SendMessage(Text, Time, Clearscreen, Group)
+-- @param #boolean Silent If true, do not speak out messages via SRS/TTS (if SRS is set up)
+function CTLD:_SendMessage(Text, Time, Clearscreen, Group, Silent)
   self:T(self.lid .. " _SendMessage")
   if not self.suppressmessages then
     local m = MESSAGE:New(Text,Time,"CTLD",Clearscreen):ToGroup(Group)
+    if self.usesrs == true and Silent ~= true then
+      self.SRSQueue:NewTransmission(Text,duration,self.SRS,tstart,1,subgroups,subtitle,subduration,self.Frequency,self.Modulation,self.Gender,
+        self.Culture,self.Voice,self.Volume,self.Label,coordinate,self.Speed) 
+    end
   end 
   return self
 end
@@ -2872,7 +2941,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
   local canloadcratesno = capabilities.cratelimit
   local loaddist = self.CrateDistance or 35
   local nearcrates, numbernearby = self:_FindCratesNearby(Group, Unit, loaddist, true, true, true)
-  if numbernearby >= canloadcratesno and not drop then
+  if numbernearby >= canloadcratesno and (not drop) and (not pack) then
     local msg = self.gettext:GetEntry("ENOUGH_CRATES_NEARBY",self.locale)
     self:_SendMessage(msg, 10, false, Group)
     --self:_SendMessage("There are enough crates nearby already! Take care of those first!", 10, false, Group)
@@ -3292,11 +3361,11 @@ function CTLD:_ListCratesNearby( _group, _unit)
         end
       end
     end
-    self:_SendMessage(text:Text(), 30, true, _group) 
+    self:_SendMessage(text:Text(), 30, true, _group,true) 
   else
     local msg = self.gettext:GetEntry("NO_CRATES_WITHIN",self.locale)
     msg = string.format(msg,finddist)
-    self:_SendMessage(msg, 10, false, _group)
+    self:_SendMessage(msg, 10, false, _group,true)
     --self:_SendMessage(string.format("No (loadable) crates within %d meters!",finddist), 10, false, _group) 
   end
   return self
@@ -3389,7 +3458,7 @@ function CTLD:_RemoveCratesNearby(_group, _unit)
       text:Add("        N O N E")
     end
     text:Add("------------------------------------------------------------")
-    self:_SendMessage(text:Text(),30,true,_group)
+    self:_SendMessage(text:Text(),30,true,_group,true)
     local done = {}
     for _, e in pairs(crates) do
     local n = e:GetName() or "none"
@@ -3406,7 +3475,7 @@ function CTLD:_RemoveCratesNearby(_group, _unit)
   else
     local msg = self.gettext:GetEntry("NO_CRATES_WITHIN",self.locale)
     msg = string.format(msg,finddist)
-    self:_SendMessage(msg, 10, false, _group)
+    self:_SendMessage(msg, 10, false, _group,true)
     --self:_SendMessage(string.format("No (loadable) crates within %d meters!",finddist),10,false,_group)
   end
   return self
@@ -3849,11 +3918,11 @@ function CTLD:_ListCargo(Group, Unit)
     report:Add("------------------------------------------------------------")
     report:Add("Total Mass: ".. loadedmass .. " kg. Loadable: "..maxloadable.." kg.")
     local text = report:Text()
-    self:_SendMessage(text, 30, true, Group)
+    self:_SendMessage(text, 30, true, Group,true)
   else
     local msg = self.gettext:GetEntry("NOTHING_LOADED",self.locale)
     msg = string.format(msg,trooplimit, cratelimit, maxloadable)
-    self:_SendMessage(msg, 10, false, Group)
+    self:_SendMessage(msg, 10, false, Group,true)
     --self:_SendMessage(string.format("Nothing loaded!\nTroop limit: %d | Crate limit %d | Weight limit %d kgs", trooplimit, cratelimit, maxloadable), 10, false, Group)
   end
   return self
@@ -3945,10 +4014,10 @@ function CTLD:_ListInventory(Group, Unit)
       report:Add("        N O N E")
     end
     local text = report:Text()
-    self:_SendMessage(text, 30, true, Group) 
+    self:_SendMessage(text, 30, true, Group,true) 
   else
     local msg = self.gettext:GetEntry("NOTHING_IN_STOCK",self.locale)
-    self:_SendMessage(msg, 10, false, Group)
+    self:_SendMessage(msg, 10, false, Group,true)
     --self:_SendMessage(string.format("Nothing in stock!"), 10, false, Group) 
   end
   return self
@@ -4431,7 +4500,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
     report:Add("------------------------------------------------------------")
     local text = report:Text()
     if not Engineering then
-      self:_SendMessage(text, 30, true, Group) 
+      self:_SendMessage(text, 30, true, Group,true) 
     else
       self:T(text)
     end
@@ -4623,7 +4692,7 @@ function CTLD:_RepairCrates(Group, Unit, Engineering)
     report:Add("------------------------------------------------------------")
     local text = report:Text()
     if not Engineering then
-      self:_SendMessage(text, 30, true, Group) 
+      self:_SendMessage(text, 30, true, Group,true) 
     else
       self:T(text)
     end
@@ -4641,7 +4710,7 @@ function CTLD:_RepairCrates(Group, Unit, Engineering)
     if not Engineering then
       local msg = self.gettext:GetEntry("NO_CRATES_WITHIN_PLAIN",self.locale)
       msg = string.format(msg,finddist)
-      self:_SendMessage(msg, 10, false, Group)
+      self:_SendMessage(msg, 10, false, Group,true)
       --self:_SendMessage(string.format("No crates within %d meters!",finddist), 10, false, Group)
     end 
   end -- number > 0
@@ -5675,11 +5744,12 @@ function CTLD:_RefreshLoadCratesMenu(Group,Unit)
       while i<=#list do
         local left=#list-i+1
         local label
-        if left>=needed then
-          label=string.format("%d. Load %s",lineIndex,cName)
+        local loadkey = self.gettext:GetEntry("MENU_LOAD_SINGLE",self.locale)
+        if left>=needed then          
+          label=string.format("%d. %s %s",lineIndex,loadkey, cName)
           i=i+needed
         else
-          label=string.format("%d. Load %s (%d/%d)",lineIndex,cName,left,needed)
+          label=string.format("%d. %s %s (%d/%d)",lineIndex,loadkey, cName,left,needed)
           i=#list+1
         end
         MENU_GROUP_COMMAND:New(Group,label,Group.MyLoadCratesMenu,self._LoadSingleCrateSet,self,Group,Unit,cName)
@@ -6514,7 +6584,7 @@ function CTLD:_RefreshDropTroopsMenu(Group, Unit)
       local chunkID = objList[1]:GetID()
       self.TroopsIDToChunk[chunkID] = objList
 
-      local label = string.format(self.gettext:GetEntry("MENU_DROP_N_TROOPS",self.locale), tName, count)
+      local label = string.format(self.gettext:GetEntry("MENU_DROP_N_TROOPS",self.locale), count, tName)
       if count == 1 then
         MENU_GROUP_COMMAND:New(theGroup, label, dropTroopsMenu, self._UnloadSingleTroopByID, self, theGroup, theUnit, chunkID, 1)
       else
@@ -7287,7 +7357,7 @@ function CTLD:_ListRadioBeacons(Group, Unit)
     report:Add("        N O N E")
   end
   report:Add("------------------------------------------------------------")
-  self:_SendMessage(report:Text(), 30, true, Group) 
+  self:_SendMessage(report:Text(), 30, true, Group,true) 
   return self
 end
 

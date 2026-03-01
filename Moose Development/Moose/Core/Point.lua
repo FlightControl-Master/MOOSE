@@ -3292,7 +3292,7 @@ do -- COORDINATE
     local DirectionVec3 = FromCoordinate:GetDirectionVec3( self )
     local AngleRadians =  self:GetAngleRadians( DirectionVec3 )
     local Distance = self:Get2DDistance( FromCoordinate )
-    return "BR, " .. self:GetBRText( AngleRadians, Distance, Settings, nil, MagVar, Precision )
+    return "BR " .. self:GetBRText( AngleRadians, Distance, Settings, nil, MagVar, Precision )
   end
   
   --- Return a Bearing string from a COORDINATE to the (self) COORDINATE.
