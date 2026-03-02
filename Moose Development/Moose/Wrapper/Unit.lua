@@ -1445,7 +1445,7 @@ end
 
 --- Triggers an explosion at the coordinates of the unit.
 -- @param #UNIT self
--- @param #number power Power of the explosion in kg TNT. Default 100 kg TNT.
+-- @param #number power (Optional) Power of the explosion in kg TNT. Default 100 kg TNT.
 -- @param #number delay (Optional) Delay of explosion in seconds.
 -- @return #UNIT self
 function UNIT:Explode(power, delay)

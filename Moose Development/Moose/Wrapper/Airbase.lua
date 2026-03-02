@@ -2164,7 +2164,7 @@ end
 
 --- Get number of parking spots at an airbase. Optionally, a specific terminal type can be requested.
 -- @param #AIRBASE self
--- @param #AIRBASE.TerminalType termtype Terminal type of which the number of spots is counted. Default all spots but spawn points on runway.
+-- @param #AIRBASE.TerminalType termtype (Optional) Terminal type of which the number of spots is counted. Default all spots but spawn points on runway.
 -- @return #number Number of parking spots at this airbase.
 function AIRBASE:GetParkingSpotsNumber(termtype)
 
@@ -2184,7 +2184,7 @@ end
 --- Get number of free parking spots at an airbase.
 -- @param #AIRBASE self
 -- @param #AIRBASE.TerminalType termtype Terminal type.
--- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
+-- @param #boolean allowTOAC (Optional) If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
 -- @return #number Number of free parking spots at this airbase.
 function AIRBASE:GetFreeParkingSpotsNumber(termtype, allowTOAC)
 
@@ -2207,7 +2207,7 @@ end
 --- Get the coordinates of free parking spots at an airbase.
 -- @param #AIRBASE self
 -- @param #AIRBASE.TerminalType termtype Terminal type.
--- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
+-- @param #boolean allowTOAC (Optional) If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
 -- @return #table Table of coordinates of the free parking spots.
 function AIRBASE:GetFreeParkingSpotsCoordinates(termtype, allowTOAC)
 
@@ -2434,7 +2434,7 @@ end
 --- Get a table containing the coordinates, terminal index and terminal type of free parking spots at an airbase.
 -- @param #AIRBASE self
 -- @param #AIRBASE.TerminalType termtype Terminal type.
--- @param #boolean allowTOAC If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
+-- @param #boolean allowTOAC (Optional) If true, spots are considered free even though TO_AC is true. Default is off which is saver to avoid spawning aircraft on top of each other. Option might be enabled for FARPS and ships.
 -- @return #table Table free parking spots. Table has the elements ".Coordinate, ".TerminalID", ".TerminalType", ".TOAC", ".Free", ".TerminalID0", ".DistToRwy".
 function AIRBASE:GetFreeParkingSpotsTable(termtype, allowTOAC)
 
@@ -2486,7 +2486,7 @@ end
 --- Place markers of parking spots on the F10 map.
 -- @param #AIRBASE self
 -- @param #AIRBASE.TerminalType termtype Terminal type for which marks should be placed.
--- @param #boolean mark If false, do not place markers but only give output to DCS.log file. Default true.
+-- @param #boolean mark (Optional) If false, do not place markers but only give output to DCS.log file. Default true.
 function AIRBASE:MarkParkingSpots(termtype, mark)
 
   -- Default is true.
@@ -3266,7 +3266,7 @@ end
 --- Set the active runway for landing and takeoff.
 -- @param #AIRBASE self
 -- @param #string Name Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
--- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
+-- @param #boolean PreferLeft (Optional) If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
 function AIRBASE:SetActiveRunway(Name, PreferLeft)
 
   self:SetActiveRunwayTakeoff(Name, PreferLeft)
@@ -3278,7 +3278,7 @@ end
 --- Set the active runway for landing.
 -- @param #AIRBASE self
 -- @param #string Name Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
--- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
+-- @param #boolean PreferLeft (Optional) If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
 -- @return #AIRBASE.Runway The active runway for landing.
 function AIRBASE:SetActiveRunwayLanding(Name, PreferLeft)
 
@@ -3326,7 +3326,7 @@ end
 --- Set the active runway for takeoff.
 -- @param #AIRBASE self
 -- @param #string Name Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
--- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
+-- @param #boolean PreferLeft (Optional) If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
 -- @return #AIRBASE.Runway The active runway for landing.
 function AIRBASE:SetActiveRunwayTakeoff(Name, PreferLeft)
 
@@ -3351,7 +3351,7 @@ end
 --- Get the runway where aircraft would be taking of or landing into the direction of the wind.
 -- NOTE that this requires the wind to be non-zero as set in the mission editor.
 -- @param #AIRBASE self
--- @param #boolean PreferLeft If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
+-- @param #boolean PreferLeft (Optional) If `true`, perfer the left runway. If `false`, prefer the right runway. If `nil` (default), do not care about left or right.
 -- @return #AIRBASE.Runway Active runway data table.
 function AIRBASE:GetRunwayIntoWind(PreferLeft)
 
@@ -3407,7 +3407,7 @@ end
 
 --- Get name of a given runway, e.g. "31L".
 -- @param #AIRBASE self
--- @param #AIRBASE.Runway Runway The runway. Default is the active runway.
+-- @param #AIRBASE.Runway Runway (Optional) The runway. Default is the active runway.
 -- @param #boolean LongLeftRight If `true`, return "Left" or "Right" instead of "L" or "R".
 -- @return #string Name of the runway or "XX" if it could not be found.
 function AIRBASE:GetRunwayName(Runway, LongLeftRight)
@@ -3438,7 +3438,7 @@ end
 --- Function that checks if at leat one unit of a group has been spawned close to a spawn point on the runway.
 -- @param #AIRBASE self
 -- @param Wrapper.Group#GROUP group Group to be checked.
--- @param #number radius Radius around the spawn point to be checked. Default is 50 m.
+-- @param #number radius (Optional) Radius around the spawn point to be checked. Default is 50 m.
 -- @param #boolean despawn If true, the group is destroyed.
 -- @return #boolean True if group is within radius around spawn points on runway.
 function AIRBASE:CheckOnRunWay(group, radius, despawn)
