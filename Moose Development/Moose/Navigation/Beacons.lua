@@ -242,7 +242,7 @@ end
 --- Find closest beacons to a given coordinate.
 -- @param #BEACONS self
 -- @param Core.Point#COORDINATE Coordinate The reference coordinate.
--- @param #number Nmax Max number of beacons. Default 5.
+-- @param #number Nmax (Optional) Max number of beacons. Default 5.
 -- @param #number TypeID (Optional) Only search for specific beacon types, *e.g.* `BEACON.Type.TACAN`.
 -- @param #number DistMax (Optional) Max search distance in meters.
 -- @return #table Table of #BEACONS.Beacon closest beacons.

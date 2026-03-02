@@ -249,7 +249,7 @@ end
 --- Find closest radios to a given coordinate.
 -- @param #RADIOS self
 -- @param Core.Point#COORDINATE Coordinate The reference coordinate.
--- @param #number Nmax Max number of radios. Default 5.
+-- @param #number Nmax (Optional) Max number of radios. Default 5.
 -- @param #number DistMax (Optional) Max search distance in meters.
 -- @return #table Table of #RADIOS.Radio closest radios.
 function RADIOS:GetClosestRadios(Coordinate, Nmax, DistMax)
