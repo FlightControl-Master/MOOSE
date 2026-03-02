@@ -522,43 +522,76 @@ function UTILS.TableLength(T)
 end
 
 --- Print a table to log in a nice format
--- @param #table table The table to print
+-- @param #table t The table to print
 -- @param #number indent Number of indents
 -- @param #boolean noprint Don't log but return text
+-- @param #number maxDepth Only cycle this deep, defaults to 5.
 -- @return #string text Text created on the fly of the log output
-function UTILS.PrintTableToLog(table, indent, noprint)
-  local text = "\n"
-  if not table or type(table) ~= "table" then
+function UTILS.PrintTableToLog(t, indent, noprint, maxDepth, seen)
+  maxDepth = maxDepth or 5
+  indent   = indent or 0
+  seen     = seen or {}
+
+  if not t or type(t) ~= "table" then
     env.warning("No table passed!")
     return nil
   end
-  if not indent then indent = 0 end
-  for k, v in pairs(table) do
-    if string.find(k," ") then k='"'..k..'"'end
-    if type(v) == "table" and UTILS.TableLength(v) > 0 then
+
+  -- Max depth guard
+  if indent > maxDepth then
+    local msg = string.rep("  ", indent) .. "<max depth reached>\n"
+    if not noprint then env.info(msg) end
+    return msg
+  end
+
+  -- Cycle / repeated reference guard
+  if seen[t] then
+    local msg = string.rep("  ", indent) .. "<cycle>\n"
+    if not noprint then env.info(msg) end
+    return msg
+  end
+  seen[t] = true
+
+  local text = "\n"
+
+  for k, v in pairs(t) do
+    local key = k
+    if type(key) == "string" and key:find(" ", 1, true) then
+      key = '"' .. key .. '"'
+    else
+      key = tostring(key)
+    end
+
+    if type(v) == "table" and next(v) ~= nil then
       if not noprint then
-        env.info(string.rep("  ", indent) .. tostring(k) .. " = {")
+        env.info(string.rep("  ", indent) .. key .. " = {")
       end
-      text = text ..string.rep("  ", indent) .. tostring(k) .. " = {\n"
-      text = text .. tostring(UTILS.PrintTableToLog(v, indent + 1), noprint).."\n"
+
+      text = text .. string.rep("  ", indent) .. key .. " = {\n"
+      text = text .. UTILS.PrintTableToLog(v, indent + 1, noprint, maxDepth, seen)
+      text = text .. string.rep("  ", indent) .. "},\n"
+
       if not noprint then
         env.info(string.rep("  ", indent) .. "},")
       end
-      text = text .. string.rep("  ", indent) .. "},\n"
+
     elseif type(v) == "function" then
+      -- skip functions (optional: log "<function>")
     else
       local value
-      if tostring(v) == "true" or tostring(v) == "false" or tonumber(v) ~= nil then
-        value=v
+      if type(v) == "boolean" or type(v) == "number" then
+        value = tostring(v)
       else
-        value = '"'..tostring(v)..'"'
+        value = '"' .. tostring(v) .. '"'
       end
+
       if not noprint then
-        env.info(string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(value)..",\n")
+        env.info(string.rep("  ", indent) .. key .. " = " .. value .. ",")
       end
-      text = text .. string.rep("  ", indent) .. tostring(k) .. " = " .. tostring(value)..",\n"
+      text = text .. string.rep("  ", indent) .. key .. " = " .. value .. ",\n"
     end
   end
+
   return text
 end
 
