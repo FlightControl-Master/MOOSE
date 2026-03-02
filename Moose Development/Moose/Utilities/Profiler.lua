@@ -126,8 +126,8 @@ PROFILER = {
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Start profiler.
--- @param #number Delay Delay in seconds before profiler is stated. Default is immediately.
--- @param #number Duration Duration in (game) seconds before the profiler is stopped. Default is when mission ends.
+-- @param #number Delay (Optional) Delay in seconds before profiler is stated. Default is immediately.
+-- @param #number Duration (Optional) Duration in (game) seconds before the profiler is stopped. Default is when mission ends.
 function PROFILER.Start( Delay, Duration )
 
   -- Check if os, io and lfs are available.
