@@ -5732,8 +5732,10 @@ function CTLD:_RefreshLoadCratesMenu(Group,Unit)
     local cargoByName={}
     for _,crate in pairs(nearby) do
       local name=crate:GetName()
-      cargoByName[name]=cargoByName[name] or{}
-      table.insert(cargoByName[name],crate)
+      if name then
+          cargoByName[name]=cargoByName[name] or{}
+          table.insert(cargoByName[name],crate)
+      end
     end
   
     local lineIndex=1
@@ -5746,7 +5748,7 @@ function CTLD:_RefreshLoadCratesMenu(Group,Unit)
         local label
         local loadkey = self.gettext:GetEntry("MENU_LOAD_SINGLE",self.locale)
         if left>=needed then          
-          label=string.format("%d. %s %s",lineIndex,loadkey, cName)
+          label=string.format("%d. %s %s",cName, lineIndex,loadkey)
           i=i+needed
         else
           label=string.format("%d. %s %s (%d/%d)",lineIndex,loadkey, cName,left,needed)
