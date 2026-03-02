@@ -388,7 +388,7 @@ do
   
   --- Set laser start position relative to the lasing unit.
   -- @param #SPOT self
-  -- @param #table position Start position of the laser relative to the lasing unit. Default is { x = 0, y = 2, z = 0 }
+  -- @param #table position (Optional) Start position of the laser relative to the lasing unit. Default is { x = 0, y = 2, z = 0 }
   -- @return #SPOT self
   -- @usage
   --      -- Set lasing position to be the position of the optics of the Gazelle M:

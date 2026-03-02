@@ -1178,10 +1178,10 @@ end
 --- Get a generic static cargo group template from scratch for dynamic cargo spawns register. Does not register the template!
 -- @param #DATABASE self
 -- @param #string Name Name of the static.
--- @param #string Typename Typename of the static. Defaults to "container_cargo".
--- @param #number Mass Mass of the static. Defaults to 0.
--- @param #number Coalition Coalition of the static. Defaults to coalition.side.BLUE.
--- @param #number Country Country of the static. Defaults to country.id.GERMANY.
+-- @param #string Typename (Optional) Typename of the static. Defaults to "container_cargo".
+-- @param #number Mass (Optional) Mass of the static. Defaults to 0.
+-- @param #number Coalition (Optional) Coalition of the static. Defaults to coalition.side.BLUE.
+-- @param #number Country (Optional) Country of the static. Defaults to country.id.GERMANY.
 -- @return #table Static template table.
 function DATABASE:_GetGenericStaticCargoGroupTemplate(Name,Typename,Mass,Coalition,Country)
   local StaticTemplate = {}
