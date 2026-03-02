@@ -583,7 +583,7 @@ end
 --- Return an intermediate VECTOR between this and another given vector.
 -- @param #VECTOR self
 -- @param #VECTOR Vector The destination vector.
--- @param #number Fraction The fraction (0,1) where the new vector is created. Default 0.5, *i.e.* in the middle.
+-- @param #number Fraction (Optional) The fraction (0,1) where the new vector is created. Default 0.5, *i.e.* in the middle.
 -- @return #VECTOR Vector between this and the other vector.
 function VECTOR:GetIntermediateVector(Vector, Fraction)
 
@@ -625,7 +625,7 @@ end
 
 --- Set x-component of vector. The x-axis points to the North.
 -- @param #VECTOR self
--- @param #number x Value of x. Default 0.
+-- @param #number x (Optional) Value of x. Default 0.
 -- @return #VECTOR self
 function VECTOR:SetX(x)
   self.x=x or 0
@@ -634,7 +634,7 @@ end
 
 --- Set y-component of vector. The y-axis points to the upwards and describes the altitude above mean sea level.
 -- @param #VECTOR self
--- @param #number y Value of y. Default land/surface height at this point.
+-- @param #number y (Optional) Value of y. Default land/surface height at this point.
 -- @return #VECTOR self
 function VECTOR:SetY(y)
 
@@ -647,7 +647,7 @@ end
 
 --- Set z-component of vector. The z-axis points to the East.
 -- @param #VECTOR self
--- @param #number z Value of z. Default 0.
+-- @param #number z (Optional) Value of z. Default 0.
 -- @return #VECTOR self
 function VECTOR:SetZ(z)
   self.z=z or 0
@@ -783,8 +783,8 @@ end
 
 --- Translate the vector by a given distance and angle.
 -- @param #VECTOR self
--- @param #number Distance Distance in meters. Default 1000 meters.
--- @param #number Heading Heading angle in degrees. Default 0° = North.
+-- @param #number Distance (Optional) Distance in meters. Default 1000 meters.
+-- @param #number Heading (Optional) Heading angle in degrees. Default 0° = North.
 -- @param #boolean Copy Create a copy of the VECTOR so the original stays unchanged.
 -- @return #VECTOR The translated vector or a copy of it.
 function VECTOR:Translate(Distance, Heading, Copy)
@@ -807,7 +807,7 @@ end
 
 --- Rotate the VECTOR clockwise in the 2D (x,z) plane.
 -- @param #VECTOR self
--- @param #number Angle Rotation angle in degrees). Default 0.
+-- @param #number Angle (Optional) Rotation angle in degrees). Default 0.
 -- @param #boolean Copy Create a copy of the VECTOR so the original stays unchanged.
 -- @return #VECTOR The translated vector or a copy of it.
 function VECTOR:Rotate2D(Angle, Copy)
@@ -1001,7 +1001,7 @@ end
 --- Returns an intercept point at which a ray drawn from the this vector in the passed normalized direction for a specified distance.
 -- @param #VECTOR self
 -- @param DCS#Vec3 DirectionVector Directional vector.
--- @param #number Distance Distance in meters. Default 1000 m.
+-- @param #number Distance (Optional) Distance in meters. Default 1000 m.
 -- @return #VECTOR Intercept vector. Can be `nil` if no intercept point is found.
 function VECTOR:GetInterceptPoint(DirectionVector, Distance)
 
@@ -1080,7 +1080,7 @@ end
 
 --- Creates a smoke at this vector.
 -- @param #VECTOR self
--- @param #number Color Color of the smoke: 0=Green, 1=Red, 2=White, 3=Orange, 4=Blue. Default 0.
+-- @param #number Color (Optional) Color of the smoke: 0=Green, 1=Red, 2=White, 3=Orange, 4=Blue. Default 0.
 -- @param #number Duration (Optional) Duration of the smoke in seconds. Default nil.
 -- @return #string Name of the smoke object. Can be used to stop it. 
 function VECTOR:Smoke(Color, Duration)
@@ -1115,8 +1115,8 @@ end
 -- * 8 = huge smoke
 -- 
 -- @param #VECTOR self
--- @param #number Preset Preset of smoke. Default `BIGSMOKEPRESET.LargeSmokeAndFire`.
--- @param #number Density Density between [0,1]. Default 0.5.
+-- @param #number Preset (Optional) Preset of smoke. Default `BIGSMOKEPRESET.LargeSmokeAndFire`.
+-- @param #number Density (Optional) Density between [0,1]. Default 0.5.
 -- @param #number Duration (Optional) Duration of the smoke and fire in seconds.
 -- @return #string Name of the smoke. Can be used to stop it. 
 function VECTOR:SmokeAndFire(Preset, Density, Duration)
@@ -1161,7 +1161,7 @@ end
 
 --- Creates an illumination bomb at the specified point.
 -- @param #VECTOR self
--- @param #number Power The power in Candela (cd). Should be between 1 and 1000000. Default 1000 cd.
+-- @param #number Power (Optional) The power in Candela (cd). Should be between 1 and 1000000. Default 1000 cd.
 -- @param #number Altitude (Optional) Altitude [m] at which the illumination bomb is created.
 -- @return #VECTOR self
 function VECTOR:IlluminationBomb(Power, Altitude)
@@ -1180,7 +1180,7 @@ end
 
 --- Creates an explosion at a given point at the specified power.
 -- @param #VECTOR self
--- @param #number Power The power in kg TNT. Default 100 kg.
+-- @param #number Power (Optional) The power in kg TNT. Default 100 kg.
 -- @return #VECTOR self
 function VECTOR:Explosion(Power)
 
@@ -1193,8 +1193,8 @@ end
 
 --- Creates a signal flare at the given point in the specified color. The flare will be launched in the direction of the azimuth angle.
 -- @param #VECTOR self
--- @param #number Color Color of flare. Default Green.
--- @param #number Azimuth Azimuth angle in degrees. Default 0.
+-- @param #number Color (Optional) Color of flare. Default Green.
+-- @param #number Azimuth (Optional) Azimuth angle in degrees. Default 0.
 -- @return #VECTOR self
 function VECTOR:Flare(Color, Azimuth)
 
@@ -1209,10 +1209,10 @@ end
 --- Creates a arrow from this VECTOR to another vector on the F10 map.
 -- @param #VECTOR self
 -- @param #VECTOR Vector The vector defining the endpoint.
--- @param #number Coalition Coalition Id: -1=All, 0=Neutral, 1=Red, 2=Blue. Default -1.
--- @param #table Color RGB color with alpha {r, g, b, alpha}. Default {1, 0, 0, 0.7}.
--- @param #table FillColor RGB color with alpha {r, g, b, alpha}. Default {1, 0, 0, 0.5}.
--- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot Dash, 5=Long Dash, 6=Two Dash. Default 1.
+-- @param #number Coalition (Optional) Coalition Id: -1=All, 0=Neutral, 1=Red, 2=Blue. Default -1.
+-- @param #table Color (Optional) RGB color with alpha {r, g, b, alpha}. Default {1, 0, 0, 0.7}.
+-- @param #table FillColor (Optional) RGB color with alpha {r, g, b, alpha}. Default {1, 0, 0, 0.5}.
+-- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot Dash, 5=Long Dash, 6=Two Dash. Default 1.
 -- @return #number Marker ID. Can be used to remove the drawing.
 function VECTOR:ArrowTo(Vector, Coalition, Color, FillColor, LineType)
 
@@ -1237,7 +1237,7 @@ end
 --- Create mark on F10 map.
 -- @param #VECTOR self
 -- @param #string MarkText Free format text that shows the marking clarification.
--- @param #number Recipient Recipient of the mark: -1=All (default), 0=Neutral, 1=Red, 2=Blue. Can also be a `GROUP` object.
+-- @param #number Recipient (Optional) Recipient of the mark: -1=All (default), 0=Neutral, 1=Red, 2=Blue. Can also be a `GROUP` object.
 -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
 -- @return #number Mark ID.
 function VECTOR:Mark(MarkText, Recipient, ReadOnly)

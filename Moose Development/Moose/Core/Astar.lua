@@ -320,9 +320,11 @@ end
 
 --- Set valid neighbours to be in a certain distance.
 -- @param #ASTAR self
--- @param #number MaxDistance Max distance between nodes in meters. Default is 2000 m.
+-- @param #number MaxDistance (Optional) Max distance between nodes in meters. Default is 2000 m.
 -- @return #ASTAR self
 function ASTAR:SetValidNeighbourDistance(MaxDistance)
+
+  MaxDistance = MaxDistance or 2000
 
   self:SetValidNeighbourFunction(ASTAR.DistMax, MaxDistance)
 
@@ -331,9 +333,11 @@ end
 
 --- Set valid neighbours to be in a certain distance.
 -- @param #ASTAR self
--- @param #number MaxDistance Max distance between nodes in meters. Default is 2000 m.
+-- @param #number MaxDistance (Optional) Max distance between nodes in meters. Default is 2000 m.
 -- @return #ASTAR self
 function ASTAR:SetValidNeighbourRoad(MaxDistance)
+
+  MaxDistance = MaxDistance or 2000
 
   self:SetValidNeighbourFunction(ASTAR.Road, MaxDistance)
 
@@ -397,10 +401,10 @@ end
 -- The coordinate system is oriented along the line between start and end point.
 -- @param #ASTAR self
 -- @param #table ValidSurfaceTypes Valid surface types. By default is all surfaces are allowed.
--- @param #number BoxHY Box "height" in meters along the y-coordinate. Default 40000 meters (40 km).
--- @param #number SpaceX Additional space in meters before start and after end coordinate. Default 10000 meters (10 km).
--- @param #number deltaX Increment in the direction of start to end coordinate in meters. Default 2000 meters.
--- @param #number deltaY Increment perpendicular to the direction of start to end coordinate in meters. Default is same as deltaX.
+-- @param #number BoxHY (Optional) Box "height" in meters along the y-coordinate. Default 40000 meters (40 km).
+-- @param #number SpaceX (Optional) Additional space in meters before start and after end coordinate. Default 10000 meters (10 km).
+-- @param #number deltaX (Optional) Increment in the direction of start to end coordinate in meters. Default 2000 meters.
+-- @param #number deltaY (Optional) Increment perpendicular to the direction of start to end coordinate in meters. Default is same as deltaX.
 -- @param #boolean MarkGrid If true, create F10 map markers at grid nodes.
 -- @return #ASTAR self
 function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, MarkGrid)
@@ -547,7 +551,7 @@ end
 --- Function to check if distance between two nodes is less than a threshold distance.
 -- @param #ASTAR.Node nodeA First node.
 -- @param #ASTAR.Node nodeB Other node.
--- @param #number distmax Max distance in meters. Default is 2000 m.
+-- @param #number distmax (Optional) Max distance in meters. Default is 2000 m.
 -- @return #boolean If true, distance between the two nodes is below threshold.
 function ASTAR.DistMax(nodeA, nodeB, distmax)
 

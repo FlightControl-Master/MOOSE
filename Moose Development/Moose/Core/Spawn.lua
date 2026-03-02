@@ -1295,7 +1295,7 @@ end
 
 --- Respawn group after landing.
 -- @param #SPAWN self
--- @param #number WaitingTime Wait this many seconds before despawning the alive group after landing. Defaults to 3 .
+-- @param #number WaitingTime (Optional) Wait this many seconds before despawning the alive group after landing. Defaults to 3 .
 -- @return #SPAWN self
 -- @usage
 --
@@ -1601,7 +1601,7 @@ end
 -- This method can be used to "reset" the spawn counter to a specific index number.
 -- This will actually enable a respawn of groups from the specific index.
 -- @param #SPAWN self
--- @param #string SpawnIndex The index of the group from where the spawning will start again. The default value would be 0, which means a complete reset of the spawnindex.
+-- @param #string SpawnIndex (Optional) The index of the group from where the spawning will start again. The default value would be 0, which means a complete reset of the spawnindex.
 -- @return #SPAWN self
 function SPAWN:SetSpawnIndex( SpawnIndex )
   self.SpawnIndex = SpawnIndex or 0
