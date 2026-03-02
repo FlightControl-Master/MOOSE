@@ -369,7 +369,7 @@ end
 
 --- Set draw coalition of zone.
 -- @param #ZONE_BASE self
--- @param #number (Optional) Coalition Coalition. Default -1.
+-- @param #number Coalition (Optional) Coalition. Default -1.
 -- @return #ZONE_BASE self
 function ZONE_BASE:SetDrawCoalition(Coalition)
   self.drawCoalition=Coalition or -1

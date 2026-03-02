@@ -459,7 +459,7 @@ end
 --- Set explosion power. This is an "artificial" explosion generated when the missile is destroyed. Just for the visual effect.
 -- Don't set the explosion power too big or it will harm the aircraft in the vicinity.
 -- @param #FOX self
--- @param #number power Explosion power in kg TNT. Default 0.1 kg.
+-- @param #number power (Optional) Explosion power in kg TNT. Default 0.1 kg.
 -- @return #FOX self
 function FOX:SetExplosionPower(power)
 
@@ -470,7 +470,7 @@ end
 
 --- Set missile-player distance when missile is destroyed.
 -- @param #FOX self
--- @param #number distance Distance in meters. Default 200 m.
+-- @param #number distance (Optional) Distance in meters. Default 200 m.
 -- @return #FOX self
 function FOX:SetExplosionDistance(distance)
 
@@ -481,8 +481,8 @@ end
 
 --- Set missile-player distance when BIG missiles are destroyed.
 -- @param #FOX self
--- @param #number distance Distance in meters. Default 500 m.
--- @param #number explosivemass Explosive mass of missile threshold in kg TNT. Default 50 kg.
+-- @param #number distance (Optional) Distance in meters. Default 500 m.
+-- @param #number explosivemass (Optional) Explosive mass of missile threshold in kg TNT. Default 50 kg.
 -- @return #FOX self
 function FOX:SetExplosionDistanceBigMissiles(distance, explosivemass)
 
@@ -516,7 +516,7 @@ end
 
 --- Set verbosity level.
 -- @param #FOX self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @param #number VerbosityLevel (Optional) Level of output (higher=more). Default 0.
 -- @return #FOX self
 function FOX:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0

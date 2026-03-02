@@ -158,15 +158,15 @@ do
   
   --- Instantiates a new SHORAD object
   -- @param #SHORAD self
-  -- @param #string Name Name of this SHORAD
-  -- @param #string ShoradPrefix Filter for the Shorad #SET_GROUP
-  -- @param Core.Set#SET_GROUP Samset The #SET_GROUP of SAM sites to defend
-  -- @param #number Radius Defense radius in meters, used to switch on SHORAD groups **within** this radius
-  -- @param #number ActiveTimer Determines how many seconds the systems stay on red alert after wake-up call
+  -- @param #string Name (Optional) Name of this SHORAD. Default "MyShorad"
+  -- @param #string ShoradPrefix (Optional) Filter for the Shorad #SET_GROUP. Default "SAM SHORAD"
+  -- @param Core.Set#SET_GROUP Samset (Optional) The #SET_GROUP of SAM sites to defend. Default is based on default ShoradPrefix and default Coalition.
+  -- @param #number Radius (Optional) Defense radius in meters, used to switch on SHORAD groups **within** this radius. Default is 20000m.
+  -- @param #number ActiveTimer (Optional) Determines how many seconds the systems stay on red alert after wake-up call. Default 600s
   -- @param #string Coalition Coalition, i.e. "blue", "red", or "neutral"
   -- @param #boolean UseEmOnOff Use Emissions On/Off rather than Alarm State Red/Green (default: use Emissions switch)
-  -- @param #boolean SmokeDecoy Throw smoke decoy when getting activated. Defaults to false.
-  -- @param #number SmokeDecoyColor SMOLECOLOR to use. Defaults to SMOLECOLOR.White
+  -- @param #boolean SmokeDecoy (Optional) Throw smoke decoy when getting activated. Defaults to false.
+  -- @param #number SmokeDecoyColor (Optional) SMOLECOLOR to use. Defaults to SMOLECOLOR.White
   -- @return #SHORAD self
   function SHORAD:New(Name, ShoradPrefix, Samset, Radius, ActiveTimer, Coalition, UseEmOnOff, SmokeDecoy, SmokeDecoyColor) 
     local self = BASE:Inherit( self, FSM:New() )
@@ -240,9 +240,9 @@ do
   --- Add a SET_ZONE of zones for Shoot&Scoot
   -- @param #SHORAD self
   -- @param Core.Set#SET_ZONE ZoneSet Set of zones to be used. Units will move around to the next (random) zone between 100m and 3000m away.
-  -- @param #number Number Number of closest zones to be considered, defaults to 3.
+  -- @param #number Number (Optional) Number of closest zones to be considered, defaults to 3.
   -- @param #boolean Random If true, use a random coordinate inside the next zone to scoot to.
-  -- @param #string Formation Formation to use, defaults to "Cone". See mission editor dropdown for options.
+  -- @param #string Formation (Optional) Formation to use, defaults to "Cone". See mission editor dropdown for options.
   -- @return #SHORAD self
   function SHORAD:AddScootZones(ZoneSet, Number, Random, Formation)
     self:T(self.lid .. " AddScootZones")

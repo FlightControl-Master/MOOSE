@@ -1052,9 +1052,9 @@ do -- DETECTION_BASE
     --- Method to make the radar detection less accurate, e.g. for WWII scenarios.
     -- @param #DETECTION_BASE self
     -- @param #number minheight Minimum flight height to be detected, in meters AGL (above ground)
-    -- @param #number thresheight Threshold to escape the radar if flying below minheight, defaults to 90 (90% escape chance)
-    -- @param #number thresblur Threshold to be detected by the radar overall, defaults to 85 (85% chance to be found)
-    -- @param #number closing Closing-in in km - the limit of km from which on it becomes increasingly difficult to escape radar detection if flying towards the radar position. Should be about 1/3 of the radar detection radius in kilometers, defaults to 20.
+    -- @param #number thresheight (Optional) Threshold to escape the radar if flying below minheight, defaults to 90 (90% escape chance)
+    -- @param #number thresblur (Optional) Threshold to be detected by the radar overall, defaults to 85 (85% chance to be found)
+    -- @param #number closing (Optional) Closing-in in km - the limit of km from which on it becomes increasingly difficult to escape radar detection if flying towards the radar position. Should be about 1/3 of the radar detection radius in kilometers, defaults to 20.
     -- @return #DETECTION_BASE self
     function DETECTION_BASE:SetRadarBlur(minheight,thresheight,thresblur,closing)
       self.RadarBlur = true
@@ -1104,11 +1104,13 @@ do -- DETECTION_BASE
 
     --- Set the parameters to calculate to optimal intercept point.
     -- @param #DETECTION_BASE self
-    -- @param #boolean Intercept Intercept is true if an intercept point is calculated. Intercept is false if it is disabled. The default Intercept is false.
+    -- @param #boolean Intercept (Optional) Intercept is true if an intercept point is calculated. Intercept is false if it is disabled. The default Intercept is false.
     -- @param #number InterceptDelay If Intercept is true, then InterceptDelay is the average time it takes to get airplanes airborne.
     -- @return #DETECTION_BASE self
     function DETECTION_BASE:SetIntercept( Intercept, InterceptDelay )
       self:F2()
+
+      Intercept = Intercept or false
 
       self.Intercept = Intercept
       self.InterceptDelay = InterceptDelay
@@ -1611,8 +1613,8 @@ do -- DETECTION_BASE
   -- The DetectedItem is a table and contains a SET_UNIT in the field Set.
   -- @param #DETECTION_BASE self
   -- @param #string ItemPrefix Prefix of detected item.
-  -- @param #number DetectedItemKey The key of the DetectedItem. Default self.DetectedItemMax. Could also be a string in principle.
-  -- @param Core.Set#SET_UNIT Set (optional) The Set of Units to be added.
+  -- @param #number DetectedItemKey (Optional) The key of the DetectedItem. Default self.DetectedItemMax. Could also be a string in principle.
+  -- @param Core.Set#SET_UNIT Set (Optional) The Set of Units to be added.
   -- @return #DETECTION_BASE.DetectedItem
   function DETECTION_BASE:AddDetectedItem( ItemPrefix, DetectedItemKey, Set )
 
@@ -2536,7 +2538,7 @@ do -- DETECTION_AREAS
   --- DETECTION_AREAS constructor.
   -- @param #DETECTION_AREAS self
   -- @param Core.Set#SET_GROUP DetectionSetGroup The @{Core.Set} of GROUPs in the Forward Air Controller role.
-  -- @param #number DetectionZoneRange The range in meters within which targets are grouped upon the first detected target. Default 5000m.
+  -- @param #number DetectionZoneRange (Optional) The range in meters within which targets are grouped upon the first detected target. Default 5000m.
   -- @return #DETECTION_AREAS
   function DETECTION_AREAS:New( DetectionSetGroup, DetectionZoneRange )
 

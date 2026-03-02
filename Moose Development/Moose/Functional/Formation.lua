@@ -515,7 +515,7 @@ end
 
 --- Set time interval between updates of the formation.
 -- @param #FORMATION self
--- @param #number dt Time step in seconds between formation updates. Default is every 0.5 seconds.
+-- @param #number dt (Optional) Time step in seconds between formation updates. Default is every 0.5 seconds.
 -- @return #FORMATION
 function FORMATION:SetFollowTimeInterval(dt)
   self.dtFollow=dt or 0.5
