@@ -109,8 +109,8 @@ _COHORTNAMES={}
 --- Create a new COHORT object and start the FSM.
 -- @param #COHORT self
 -- @param #string TemplateGroupName Name of the template group.
--- @param #number Ngroups Number of asset groups of this Cohort. Default 3.
--- @param #string CohortName Name of the cohort.
+-- @param #number Ngroups (Optional) Number of asset groups of this Cohort. Default 3.
+-- @param #string CohortName (Optional) Name of the cohort. Defaults to TemplateGroupName.
 -- @return #COHORT self
 function COHORT:New(TemplateGroupName, Ngroups, CohortName)
 
@@ -357,7 +357,7 @@ end
 
 --- Set verbosity level.
 -- @param #COHORT self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @param #number VerbosityLevel (Optional) Level of output (higher=more). Default 0.
 -- @return #COHORT self
 function COHORT:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
@@ -366,8 +366,8 @@ end
 
 --- Set turnover and repair time. If an asset returns from a mission, it will need some time until the asset is available for further missions.
 -- @param #COHORT self
--- @param #number MaintenanceTime Time in minutes it takes until a flight is combat ready again. Default is 0 min.
--- @param #number RepairTime Time in minutes it takes to repair a flight for each life point taken. Default is 0 min.
+-- @param #number MaintenanceTime (Optional) Time in minutes it takes until a flight is combat ready again. Default is 0 min.
+-- @param #number RepairTime (Optional) Time in minutes it takes to repair a flight for each life point taken. Default is 0 min.
 -- @return #COHORT self
 function COHORT:SetTurnoverTime(MaintenanceTime, RepairTime)
   self.maintenancetime=MaintenanceTime and MaintenanceTime*60 or 0
@@ -377,8 +377,8 @@ end
 
 --- Set radio frequency and modulation the cohort uses.
 -- @param #COHORT self
--- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
--- @param #number Modulation Radio modulation. Default 0=AM.
+-- @param #number Frequency (Optional) Radio frequency in MHz. Default 251 MHz.
+-- @param #number Modulation (Optional) Radio modulation. Default 0=AM.
 -- @return #COHORT self
 function COHORT:SetRadio(Frequency, Modulation)
   self.radioFreq=Frequency or 251
@@ -388,7 +388,7 @@ end
 
 --- Set number of units in groups.
 -- @param #COHORT self
--- @param #number nunits Number of units. Default 2.
+-- @param #number nunits (Optional) Number of units. Default 2.
 -- @return #COHORT self
 function COHORT:SetGrouping(nunits)
   self.ngrouping=nunits or 2
@@ -398,7 +398,7 @@ end
 --- Set mission types this cohort is able to perform.
 -- @param #COHORT self
 -- @param #table MissionTypes Table of mission types. Can also be passed as a #string if only one type.
--- @param #number Performance Performance describing how good this mission can be performed. Higher is better. Default 50. Max 100.
+-- @param #number Performance (Optional) Performance describing how good this mission can be performed. Higher is better. Default 50. Max 100.
 -- @return #COHORT self
 function COHORT:AddMissionCapability(MissionTypes, Performance)
 
@@ -505,7 +505,7 @@ end
 
 --- Set max mission range. Only missions in a circle of this radius around the cohort base are executed.
 -- @param #COHORT self
--- @param #number Range Range in NM. Default 150 NM.
+-- @param #number Range (Optional) Range in NM. Default 150 NM.
 -- @return #COHORT self
 function COHORT:SetMissionRange(Range)
   self.engageRange=UTILS.NMToMeters(Range or 150)
@@ -628,8 +628,8 @@ end
 
 --- Remove assets from pool. Not that assets must not be spawned or already reserved or requested.
 -- @param #COHORT self
--- @param #number N Number of assets to be removed. Default 1.
--- @param #number Delay Delay in seconds before assets are removed.
+-- @param #number N (Optional) Number of assets to be removed. Default 1.
+-- @param #number Delay (Optional) Delay in seconds before assets are removed. Defaults to 0.
 -- @return #COHORT self
 function COHORT:RemoveAssets(N, Delay)
   self:T2(self.lid..string.format("Remove %d assets of Cohort", N))
@@ -818,9 +818,9 @@ end
 
 --- Add a weapon range for ARTY missions (@{Ops.Auftrag#AUFTRAG}).
 -- @param #COHORT self
--- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
--- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
--- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
+-- @param #number RangeMin (Optional) Minimum range in nautical miles. Default 0 NM.
+-- @param #number RangeMax (Optional) Maximum range in nautical miles. Default 10 NM.
+-- @param #number BitType (Optional) Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
 -- @return #COHORT self
 function COHORT:AddWeaponRange(RangeMin, RangeMax, BitType)
 

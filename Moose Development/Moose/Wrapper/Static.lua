@@ -246,7 +246,7 @@ end
 --- Spawn the @{Wrapper.Static} at a specific coordinate and heading.
 -- @param #STATIC self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to spawn the new Static.
--- @param #number Heading The heading of the static respawn in degrees. Default is 0 deg.
+-- @param #number Heading (Optional) The heading of the static respawn in degrees. Default is 0 deg.
 -- @param #number Delay Delay in seconds before the static is spawned.
 function STATIC:SpawnAt(Coordinate, Heading, Delay)
 

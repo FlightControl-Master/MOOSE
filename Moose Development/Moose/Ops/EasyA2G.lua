@@ -408,7 +408,7 @@ end
 
 --- Set Tanker and Scouts to be invisible to enemy AI eyes
 -- @param #EASYA2G self
--- @param #boolean Switch Set to true or false, by default this is set to true already
+-- @param #boolean Switch (Optional) Set to true or false, by default this is set to true already
 -- @return #EASYA2G self 
 function EASYA2G:SetTankerAndScoutsInvisible(Switch)
   self:T(self.lid.."SetTankerAndScoutsInvisible")
@@ -418,7 +418,7 @@ end
 
 --- Set default A2G Speed in knots
 -- @param #EASYA2G self
--- @param #number Speed Speed defaults to 300
+-- @param #number Speed (Optional) Speed defaults to 300
 -- @return #EASYA2G self
 function EASYA2G:SetDefaultA2GSpeed(Speed)
   self:T(self.lid.."SetDefaultSpeed")
@@ -428,7 +428,7 @@ end
 
 --- Set A2G Flight formation.
 -- @param #EASYA2G self
--- @param #number Formation Formation to fly, defaults to ENUMS.Formation.FixedWing.FingerFour.Group
+-- @param #number Formation (Optional) Formation to fly, defaults to ENUMS.Formation.FixedWing.FingerFour.Group
 -- @return #EASYA2G self
 function EASYA2G:SetA2GFormation(Formation)
   self:T(self.lid.."SetA2GFormation")
@@ -438,7 +438,7 @@ end
 
 --- Set default A2G Altitude in feet
 -- @param #EASYA2G self
--- @param #number Altitude Altitude defaults to 25000
+-- @param #number Altitude (Optional) Altitude defaults to 25000
 -- @return #EASYA2G self
 function EASYA2G:SetDefaultA2GAlt(Altitude)
   self:T(self.lid.."SetDefaultAltitude")
@@ -448,7 +448,7 @@ end
 
 --- Set default A2G lieg initial direction in degrees
 -- @param #EASYA2G self
--- @param #number Direction Direction defaults to 90 (East)
+-- @param #number Direction (Optional) Direction defaults to 90 (East)
 -- @return #EASYA2G self
 function EASYA2G:SetDefaultA2GDirection(Direction)
   self:T(self.lid.."SetDefaultDirection")
@@ -458,7 +458,7 @@ end
 
 --- Set default leg length in NM
 -- @param #EASYA2G self
--- @param #number Leg Leg defaults to 5
+-- @param #number Leg (Optional) Leg defaults to 5
 -- @return #EASYA2G self
 function EASYA2G:SetDefaultA2GLeg(Leg)
   self:T(self.lid.."SetDefaultLeg")
@@ -468,7 +468,7 @@ end
 
 --- Set default grouping, i.e. how many airplanes per A2G point
 -- @param #EASYA2G self
--- @param #number Grouping Grouping defaults to 2
+-- @param #number Grouping (Optional) Grouping defaults to 2
 -- @return #EASYA2G self
 function EASYA2G:SetDefaultA2GGrouping(Grouping)
  self:T(self.lid.."SetDefaultA2GGrouping")
@@ -489,7 +489,7 @@ end
 
 --- Set which target types A2G flights will prefer to engage, defaults to {"Ground"}
 -- @param #EASYA2G self
--- @param #table types Table of comma separated #string entries, defaults to {"Ground"} (everything that is ground and is not a weapon). Useful other options are e.g. {"Armored vehicles"}, {"Tanks"}, 
+-- @param #table types (Optional) Table of comma separated #string entries, defaults to {"Ground"} (everything that is ground and is not a weapon). Useful other options are e.g. {"Armored vehicles"}, {"Tanks"}, 
 -- or {"APC"} or combinations like {"APC", "Tanks", "Artillery"}. See [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes).
 -- @return #EASYA2G self
 function EASYA2G:SetA2GEngageTargetTypes(types)
@@ -501,10 +501,10 @@ end
 -- @param #EASYA2G self
 -- @param #string AirbaseName Name of the Wing's airbase
 -- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
--- @param #number Altitude Defaults to 25000 feet ASL.
--- @param #number Speed  Defaults to 300 knots TAS.
--- @param #number Heading Defaults to 90 degrees (East).
--- @param #number LegLength Defaults to 15 NM.
+-- @param #number Altitude (Optional) Defaults to 25000 feet ASL.
+-- @param #number Speed  (Optional) Defaults to 300 knots TAS.
+-- @param #number Heading (Optional) Defaults to 90 degrees (East).
+-- @param #number LegLength (Optional) Defaults to 15 NM.
 -- @return #EASYA2G self
 function EASYA2G:AddHoldingPointA2G(AirbaseName,Coordinate,Altitude,Speed,Heading,LegLength)
   self:T(self.lid.."AddHoldingPointA2G")--..Coordinate:ToStringLLDDM())

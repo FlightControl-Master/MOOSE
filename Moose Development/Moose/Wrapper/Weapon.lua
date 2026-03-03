@@ -259,7 +259,7 @@ end
 
 --- Set verbosity level.
 -- @param #WEAPON self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @param #number VerbosityLevel (Optional) Level of output (higher=more). Default 0.
 -- @return #WEAPON self
 function WEAPON:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
@@ -268,7 +268,7 @@ end
 
 --- Set track position time step.
 -- @param #WEAPON self
--- @param #number TimeStep Time step in seconds when the position is updated. Default 0.01 sec ==> 100 evaluations per second.
+-- @param #number TimeStep (Optional) Time step in seconds when the position is updated. Default 0.01 sec ==> 100 evaluations per second.
 -- @return #WEAPON self
 function WEAPON:SetTimeStepTrack(TimeStep)
   self.dtTrack=TimeStep or 0.01
@@ -281,7 +281,7 @@ end
 -- a good result on the impact point.
 -- It uses the DCS function [getIP](https://wiki.hoggitworld.com/view/DCS_func_getIP).
 -- @param #WEAPON self
--- @param #number Distance Distance in meters. Default is 50 m. Set to 0 to deactivate.
+-- @param #number Distance (Optional) Distance in meters. Default is 50 m. Set to 0 to deactivate.
 -- @return #WEAPON self
 function WEAPON:SetDistanceInterceptPoint(Distance)
   self.distIP=Distance or 50
@@ -307,7 +307,7 @@ end
 --- Put smoke on impact point. This requires that the tracking has been started.
 -- @param #WEAPON self
 -- @param #boolean Switch If `true` or nil, impact is smoked.
--- @param #number SmokeColor Color of smoke. Default is `SMOKECOLOR.Red`.
+-- @param #number SmokeColor (Optional) Color of smoke. Default is `SMOKECOLOR.Red`.
 -- @return #WEAPON self
 function WEAPON:SetSmokeImpact(Switch, SmokeColor)
 
@@ -718,7 +718,7 @@ end
 -- the (approximate) impact point. Of course, the smaller the time step, the better the position can be determined. However, this can hit the performance as many
 -- calculations per second need to be carried out.
 -- @param #WEAPON self
--- @param #number Delay Delay in seconds before the tracking starts. Default 0.001 sec.
+-- @param #number Delay (Optional) Delay in seconds before the tracking starts. Default 0.001 sec.
 -- @return #WEAPON self
 function WEAPON:StartTrack(Delay)
 
@@ -904,7 +904,7 @@ end
 
 --- Compute estimated intercept/impact point (IP) based on last known position and direction.
 -- @param #WEAPON self
--- @param #number Distance Distance in meters. Default 50 m.
+-- @param #number Distance (Optional) Distance in meters. Default 50 m.
 -- @return DCS#Vec3 Estimated intercept/impact point. Can also return `nil`, if no IP can be determined.
 function WEAPON:_GetIP(Distance)
 

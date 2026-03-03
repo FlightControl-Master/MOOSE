@@ -121,7 +121,7 @@ OPSZONE.version="0.6.2"
 --- Create a new OPSZONE class object.
 -- @param #OPSZONE self
 -- @param Core.Zone#ZONE Zone The zone. Can be passed as ZONE\_RADIUS, ZONE_POLYGON, ZONE\_AIRBASE or simply as the name of the airbase.
--- @param #number CoalitionOwner Initial owner of the coaliton. Default `coalition.side.NEUTRAL`.
+-- @param #number CoalitionOwner (Optional) Initial owner of the coaliton. Default `coalition.side.NEUTRAL`.
 -- @return #OPSZONE self
 -- @usage
 -- myopszone = OPSZONE:New(ZONE:FindByName("OpsZoneOne"), coalition.side.RED) -- base zone from the mission editor
@@ -385,7 +385,7 @@ end
 
 --- Set verbosity level.
 -- @param #OPSZONE self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @param #number VerbosityLevel (Optional) Level of output (higher=more). Default 0.
 -- @return #OPSZONE self
 function OPSZONE:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
@@ -400,7 +400,7 @@ end
 -- Which units can capture zones can be further refined by `:SetUnitCategories()`.
 -- 
 -- @param #OPSZONE self
--- @param #table Categories Object categories. Default is `{Object.Category.UNIT, Object.Category.STATIC}`.
+-- @param #table Categories (Optional) Object categories. Default is `{Object.Category.UNIT, Object.Category.STATIC}`.
 -- @return #OPSZONE self
 function OPSZONE:SetObjectCategories(Categories)
 
@@ -417,7 +417,7 @@ end
 
 --- Set categories of units that can capture or hold the zone. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit).
 -- @param #OPSZONE self
--- @param #table Categories Table of unit categories. Default `{Unit.Category.GROUND_UNIT}`.
+-- @param #table Categories (Optional) Table of unit categories. Default `{Unit.Category.GROUND_UNIT}`.
 -- @return #OPSZONE self
 function OPSZONE:SetUnitCategories(Categories)
 
@@ -435,7 +435,7 @@ end
 --- Set threat level threshold that the offending units must have to capture a zone.
 -- The reason why you might want to set this is that unarmed units (*e.g.* fuel trucks) should not be able to capture a zone as they do not pose a threat.
 -- @param #OPSZONE self
--- @param #number Threatlevel Threat level threshold. Default 0.
+-- @param #number Threatlevel (Optional) Threat level threshold. Default 0.
 -- @return #OPSZONE self
 function OPSZONE:SetCaptureThreatlevel(Threatlevel)
 
@@ -446,7 +446,7 @@ end
 
 --- Set how many units must be present in a zone to capture it. By default, one unit is enough.
 -- @param #OPSZONE self
--- @param #number Nunits Number of units. Default 1.
+-- @param #number Nunits (Optional) Number of units. Default 1.
 -- @return #OPSZONE self
 function OPSZONE:SetCaptureNunits(Nunits)
 
@@ -460,7 +460,7 @@ end
 
 --- Set time how long an attacking coalition must have troops inside a zone before it captures the zone.
 -- @param #OPSZONE self
--- @param #number Tcapture Time in seconds. Default 0.
+-- @param #number Tcapture (Optional) Time in seconds. Default 0.
 -- @return #OPSZONE self
 function OPSZONE:SetCaptureTime(Tcapture)
 

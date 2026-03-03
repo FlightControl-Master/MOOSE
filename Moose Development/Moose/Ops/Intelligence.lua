@@ -411,8 +411,8 @@ end
 
 --- Set to accept accoustic detection.
 -- @param #INTEL self
--- @param #number Radius Radius in which we can "hear" units. Defaults to 1000 meters.
--- @param #table UnitCategories Set what Unit Categories we can "hear". Defaults to `{Unit.Category.GROUND_UNIT,Unit.Category.HELICOPTER}`
+-- @param #number Radius (Optional) Radius in which we can "hear" units. Defaults to 1000 meters.
+-- @param #table UnitCategories(Optional)  Set what Unit Categories we can "hear". Defaults to `{Unit.Category.GROUND_UNIT,Unit.Category.HELICOPTER}`
 -- @return #INTEL self
 function INTEL:SetAccousticDetectionOn(Radius,UnitCategories)
   self.DetectAccoustic = true
@@ -572,7 +572,7 @@ end
 -- Previously known contacts that are not detected any more, are "lost" after this time.
 -- This avoids fast oscillations between a contact being detected and undetected.
 -- @param #INTEL self
--- @param #number TimeInterval Time interval in seconds. Default is 120 sec.
+-- @param #number TimeInterval (Optional) Time interval in seconds. Default is 120 sec.
 -- @return #INTEL self
 function INTEL:SetForgetTime(TimeInterval)
   return self
@@ -607,10 +607,10 @@ end
 
 --- Method to make the radar detection less accurate, e.g. for WWII scenarios.
 -- @param #INTEL self
--- @param #number minheight Minimum flight height to be detected, in meters AGL (above ground)
--- @param #number thresheight Threshold to escape the radar if flying below minheight, defaults to 90 (90% escape chance)
--- @param #number thresblur Threshold to be detected by the radar overall, defaults to 85 (85% chance to be found)
--- @param #number closing Closing-in in km - the limit of km from which on it becomes increasingly difficult to escape radar detection if flying towards the radar position. Should be about 1/3 of the radar detection radius in kilometers, defaults to 20.
+-- @param #number minheight (Optional) Minimum flight height to be detected, in meters AGL (above ground). Defaults to 250m.
+-- @param #number thresheight (Optional) Threshold to escape the radar if flying below minheight, defaults to 90 (90% escape chance)
+-- @param #number thresblur (Optional) Threshold to be detected by the radar overall, defaults to 85 (85% chance to be found)
+-- @param #number closing (Optional) Closing-in in km - the limit of km from which on it becomes increasingly difficult to escape radar detection if flying towards the radar position. Should be about 1/3 of the radar detection radius in kilometers, defaults to 20.
 -- @return #INTEL self
 function INTEL:SetRadarBlur(minheight,thresheight,thresblur,closing)
   self.RadarBlur = true
@@ -737,7 +737,7 @@ end
 
 --- Change radius of the Clusters.
 -- @param #INTEL self
--- @param #number radius The radius of the clusters in kilometers. Default 15 km.
+-- @param #number radius (Optional) The radius of the clusters in kilometers. Default 15 km.
 -- @return #INTEL self
 function INTEL:SetClusterRadius(radius)
   self.clusterradius = (radius or 15)*1000
@@ -1445,7 +1445,7 @@ end
 -- @param #INTEL self
 -- @param Wrapper.Positionable#POSITIONABLE Positionable Group or static object.
 -- @param #string RecceName Name of the recce group that detected this object.
--- @param #number Tdetected Abs. mission time in seconds, when the object is detected. Default now.
+-- @param #number Tdetected (Optional) Abs. mission time in seconds, when the object is detected. Default now.
 -- @return #INTEL self
 function INTEL:KnowObject(Positionable, RecceName, Tdetected)
 
@@ -2016,7 +2016,7 @@ end
 --- Calculate cluster future position after given seconds.
 -- @param #INTEL self
 -- @param #INTEL.Cluster cluster The cluster of contacts.
--- @param #number seconds Time interval in seconds. Default is `self.prediction`.
+-- @param #number seconds (Optional) Time interval in seconds. Default is `self.prediction`.
 -- @return Core.Point#COORDINATE Calculated future position of the cluster.
 function INTEL:CalcClusterFuturePosition(cluster, seconds)
 
@@ -2258,7 +2258,7 @@ end
 --- Get the coordinate of a cluster.
 -- @param #INTEL self
 -- @param #INTEL.Cluster Cluster The cluster.
--- @param #boolean Update If `true`, update the coordinate. Default is to just return the last stored position.
+-- @param #boolean Update (Optional) If `true`, update the coordinate. Default is to just return the last stored position.
 -- @return Core.Point#COORDINATE The coordinate of this cluster.
 function INTEL:GetClusterCoordinate(Cluster, Update)
 
@@ -2309,8 +2309,8 @@ end
 --- Check if the coordindate of the cluster changed.
 -- @param #INTEL self
 -- @param #INTEL.Cluster Cluster The cluster.
--- @param #number Threshold in meters. Default 100 m.
--- @param Core.Point#COORDINATE Coordinate Reference coordinate. Default is the last known coordinate of the cluster.
+-- @param #number (Optional) Threshold in meters. Default 100 m.
+-- @param Core.Point#COORDINATE Coordinate (Optional) Reference coordinate. Default is the last known coordinate of the cluster.
 -- @return #boolean If `true`, the coordinate changed by more than the given threshold.
 function INTEL:_CheckClusterCoordinateChanged(Cluster, Coordinate, Threshold)
 
@@ -2641,7 +2641,7 @@ end
 
   --- Function to set how long INTEL DLINK remembers contacts.
   -- @param #INTEL_DLINK self
-  -- @param #number seconds Remember this many seconds. Defaults to 180.
+  -- @param #number seconds (Optional) Remember this many seconds. Defaults to 120.
   -- @return #INTEL_DLINK self
   function INTEL_DLINK:SetDLinkCacheTime(seconds)
     self.cachetime = math.abs(seconds or 120)

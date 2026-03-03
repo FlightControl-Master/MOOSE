@@ -308,7 +308,7 @@ AICSAR.RadioLength = {
 -- @param #string Helotemplate Helicopter template name.
 -- @param Wrapper.Airbase#AIRBASE FARP FARP object or Airbase from where to start.
 -- @param Core.Zone#ZONE MASHZone Zone where to drop pilots after rescue.
--- @param #number Helonumber Max number of alive Ai Helos at the same time. Defaults to three.
+-- @param #number Helonumber (Optional) Max number of alive Ai Helos at the same time. Defaults to 3.
 -- @return #AICSAR self
 function AICSAR:New(Alias,Coalition,Pilottemplate,Helotemplate,FARP,MASHZone,Helonumber)
   -- Inherit everything from FSM class.
@@ -543,10 +543,10 @@ end
 -- @param #AICSAR self
 -- @param #boolean OnOff Switch on (true) or off (false).
 -- @param #string Path Path to your SRS Server External Audio Component, e.g. "C:\\\\Program Files\\\\DCS-SimpleRadio-Standalone\\\\ExternalAudio"
--- @param #number Frequency Defaults to 243 (guard)
--- @param #number Modulation Radio modulation. Defaults to radio.modulation.AM
--- @param #string SoundPath Where to find the audio files. Defaults to nil, i.e. add messages via "Sound to..." in the Mission Editor.
--- @param #number Port Port of the SRS, defaults to 5002.
+-- @param #number Frequency (Optional) Defaults to 243 (guard)
+-- @param #number Modulation (Optional) Radio modulation. Defaults to radio.modulation.AM
+-- @param #string SoundPath (Optional) Where to find the audio files. Defaults to nil, i.e. add messages via "Sound to..." in the Mission Editor.
+-- @param #number Port (Optional) Port of the SRS, defaults to 5002.
 -- @return #AICSAR self
 function AICSAR:SetSRSRadio(OnOff,Path,Frequency,Modulation,SoundPath,Port)
   self:T(self.lid .. "SetSRSRadio")
@@ -657,8 +657,8 @@ end
 --- [User] Switch sound output on and use normale (DCS) radio
 -- @param #AICSAR self
 -- @param #boolean OnOff Switch on (true) or off (false).
--- @param #number Frequency Defaults to 243 (guard).
--- @param #number Modulation Radio modulation. Defaults to radio.modulation.AM.
+-- @param #number Frequency(Optional)  Defaults to 243 (guard).
+-- @param #number Modulation (Optional) Radio modulation. Defaults to radio.modulation.AM.
 -- @param Wrapper.Group#GROUP Group The group to use as sending station.
 -- @return #AICSAR self
 function AICSAR:SetDCSRadio(OnOff,Frequency,Modulation,Group)

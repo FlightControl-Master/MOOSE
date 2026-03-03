@@ -586,7 +586,7 @@ end
 
 --- Set text that is displayed in the marker panel. Note this does not show the marker.
 -- @param #MARKER self
--- @param #string Text Marker text. Default is an empty string "".
+-- @param #string (Optional) Text Marker text. Default is an empty string "".
 -- @return #MARKER self
 function MARKER:SetText( Text )
   self.text = Text and tostring( Text ) or ""

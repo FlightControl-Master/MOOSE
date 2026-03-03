@@ -1003,8 +1003,8 @@ ATIS.version = "1.0.1"
 --- Create a new ATIS class object for a specific airbase.
 -- @param #ATIS self
 -- @param #string AirbaseName Name of the airbase.
--- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. When using **SRS** this can be passed as a table of multiple frequencies.
--- @param #number Modulation Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. When using **SRS** this can be passed as a table of multiple modulations.
+-- @param #number Frequency (Optional) Radio frequency in MHz. Default 143.00 MHz. When using **SRS** this can be passed as a table of multiple frequencies.
+-- @param #number Modulation (Optional) Radio modulation: 0=AM, 1=FM. Default 0=AM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. When using **SRS** this can be passed as a table of multiple modulations.
 -- @return #ATIS self
 function ATIS:New(AirbaseName, Frequency, Modulation)
 
@@ -1161,9 +1161,9 @@ end
 
 --- Set sound files folder within miz file (not your local hard drive!).
 -- @param #ATIS self
--- @param #string pathMain Path to folder containing main sound files. Default "ATIS Soundfiles/". Mind the slash "/" at the end!
--- @param #string pathAirports Path folder containing the airport names sound files. Default is `"ATIS Soundfiles/<Map Name>"`, *e.g.* `"ATIS Soundfiles/Caucasus/"`.
--- @param #string pathNato Path folder containing the NATO alphabet sound files. Default is "ATIS Soundfiles/NATO Alphabet/".
+-- @param #string pathMain (Optional) Path to folder containing main sound files. Default "ATIS Soundfiles/". Mind the slash "/" at the end!
+-- @param #string pathAirports (Optional) Path folder containing the airport names sound files. Default is `"ATIS Soundfiles/<Map Name>"`, *e.g.* `"ATIS Soundfiles/Caucasus/"`.
+-- @param #string pathNato (Optional) Path folder containing the NATO alphabet sound files. Default is "ATIS Soundfiles/NATO Alphabet/".
 -- @return #ATIS self
 function ATIS:SetSoundfilesPath( pathMain, pathAirports, pathNato )
   self.soundpath = tostring( pathMain or "ATIS Soundfiles/" )
@@ -1283,8 +1283,8 @@ end
 
 --- Set the active runway for landing.
 -- @param #ATIS self
--- @param #string runway : Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
--- @param #boolean preferleft : If true, perfer the left runway. If false, prefer the right runway. If nil (default), do not care about left or right.
+-- @param #string runway (Optional) Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
+-- @param #boolean preferleft (Optional) If true, perfer the left runway. If false, prefer the right runway. If nil (default), do not care about left or right.
 -- @return #ATIS self
 function ATIS:SetActiveRunwayLanding(runway, preferleft)
   self.airbase:SetActiveRunwayLanding(runway,preferleft)
@@ -1294,7 +1294,7 @@ end
 --- Set the active runway for take-off.
 -- @param #ATIS self
 -- @param #string runway : Name of the runway, e.g. "31" or "02L" or "90R". If not given, the runway is determined from the wind direction.
--- @param #boolean preferleft : If true, perfer the left runway. If false, prefer the right runway. If nil (default), do not care about left or right.
+-- @param #boolean preferleft (Optional) If true, perfer the left runway. If false, prefer the right runway. If nil (default), do not care about left or right.
 -- @return #ATIS self
 function ATIS:SetActiveRunwayTakeoff(runway,preferleft)
   self.airbase:SetActiveRunwayTakeoff(runway,preferleft)
@@ -1328,7 +1328,7 @@ end
 
 --- Set radio power. Note that this only applies if no relay unit is used.
 -- @param #ATIS self
--- @param #number power Radio power in Watts. Default 100 W.
+-- @param #number power (Optional) Radio power in Watts. Default 100 W.
 -- @return #ATIS self
 function ATIS:SetRadioPower( power )
   self.power = power or 100
@@ -1337,7 +1337,7 @@ end
 
 --- Use F10 map mark points.
 -- @param #ATIS self
--- @param #boolean switch If *true* or *nil*, marks are placed on F10 map. If *false* this feature is set to off (default).
+-- @param #boolean switch (Optional) If *true* or *nil*, marks are placed on F10 map. If *false* this feature is set to off (default).
 -- @return #ATIS self
 function ATIS:SetMapMarks( switch )
   if switch == nil or switch == true then
@@ -1406,7 +1406,7 @@ end
 
 --- Set duration how long subtitles are displayed.
 -- @param #ATIS self
--- @param #number duration Duration in seconds. Default 10 seconds.
+-- @param #number duration (Optional) Duration in seconds. Default 10 seconds.
 -- @return #ATIS self
 function ATIS:SetSubtitleDuration( duration )
   self.subduration = tonumber( duration or 10 )
@@ -1449,7 +1449,7 @@ end
 --- Set relative humidity. This is used to approximately calculate the dew point.
 -- Note that the dew point is only an artificial information as DCS does not have an atmospheric model that includes humidity (yet).
 -- @param #ATIS self
--- @param #number Humidity Relative Humidity, i.e. a number between 0 and 100 %. Default is 50 %.
+-- @param #number Humidity (Optional) Relative Humidity, i.e. a number between 0 and 100 %. Default is 50 %.
 -- @return #ATIS self
 function ATIS:SetRelativeHumidity( Humidity )
   self.relHumidity = Humidity or 50
@@ -1524,7 +1524,7 @@ end
 -- Or you make your life simple and just include the sign so you don't have to bother about East/West.
 --
 -- @param #ATIS self
--- @param #number magvar Magnetic variation in degrees. Positive for easterly and negative for westerly variation. Default is magnatic declinaton of the used map, c.f. @{Utilities.Utils#UTILS.GetMagneticDeclination}.
+-- @param #number magvar (Optional) Magnetic variation in degrees. Positive for easterly and negative for westerly variation. Default is magnatic declinaton of the used map, c.f. @{Utilities.Utils#UTILS.GetMagneticDeclination}.
 -- @return #ATIS self
 function ATIS:SetMagneticDeclination( magvar )
   self.magvar = magvar or UTILS.GetMagneticDeclination()
@@ -1654,7 +1654,7 @@ end
 
 --- Place marks with runway data on the F10 map.
 -- @param #ATIS self
--- @param #boolean markall If true, mark all runways of the map. By default only the current ATIS runways are marked.
+-- @param #boolean markall (Optional) If true, mark all runways of the map. By default only the current ATIS runways are marked.
 function ATIS:MarkRunways( markall )
   local airbases = AIRBASE.GetAllAirbases()
   for _, _airbase in pairs( airbases ) do
@@ -1667,11 +1667,11 @@ end
 
 --- Use SRS Simple-Text-To-Speech for transmissions. No sound files necessary.`SetSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
 -- @param #ATIS self
--- @param #string PathToSRS Path to SRS directory (only necessary if SRS exe backend is used).
--- @param #string Gender Gender: "male" or "female" (default).
--- @param #string Culture Culture, e.g. "en-GB" (default).
--- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
--- @param #number Port SRS port. Default 5002.
+-- @param #string PathToSRS (Optional) Path to SRS directory (only necessary if SRS exe backend is used).
+-- @param #string Gender (Optional) Gender: "male" or "female" (default).
+-- @param #string Culture (Optional) Culture, e.g. "en-GB" (default).
+-- @param #string Voice (Optional) Specific voice. Overrides `Gender` and `Culture`.
+-- @param #number Port (Optional) SRS port. Default 5002.
 -- @param #string GoogleKey Path to Google JSON-Key (SRS exe backend) or Google API key (DCS-gRPC backend).
 -- @return #ATIS self
 function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
@@ -1727,7 +1727,7 @@ end
 
 --- Set the time interval between radio queue updates.
 -- @param #ATIS self
--- @param #number TimeInterval Interval in seconds. Default 5 sec.
+-- @param #number TimeInterval (Optional) Interval in seconds. Default 5 sec.
 -- @return #ATIS self
 function ATIS:SetQueueUpdateTime( TimeInterval )
   self.dTQueueCheck = TimeInterval or 5
@@ -3195,7 +3195,7 @@ end
 
 --- Get active runway runway.
 -- @param #ATIS self
--- @param #boolean Takeoff If `true`, get runway for takeoff. Default is for landing.
+-- @param #boolean Takeoff (Optional) If `true`, get runway for takeoff. Default is for landing.
 -- @return #string Active runway, e.g. "31" for 310 deg.
 -- @return #boolean Use Left=true, Right=false, or nil.
 function ATIS:GetActiveRunway(Takeoff)
@@ -3305,7 +3305,7 @@ end
 -- @param #ATIS.Soundfile sound ATIS sound object.
 -- @param #number interval Interval in seconds after the last transmission finished.
 -- @param #string subtitle Subtitle of the transmission.
--- @param #string path Path to sound file. Default `self.soundpath`.
+-- @param #string path (Optional) Path to sound file. Default `self.soundpath`.
 function ATIS:Transmission( sound, interval, subtitle, path )
   self.radioqueue:NewTransmission( sound.filename, sound.duration, path or self.soundpath, nil, interval, subtitle, self.subduration )
 end

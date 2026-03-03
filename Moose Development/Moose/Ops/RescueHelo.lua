@@ -455,7 +455,7 @@ end
 
 --- Set low fuel state of helo. When fuel is below this threshold, the helo will RTB or be respawned if takeoff type is in air.
 -- @param #RESCUEHELO self
--- @param #number threshold Low fuel threshold in percent. Default 5%.
+-- @param #number threshold (Optional) Low fuel threshold in percent. Default 5%.
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetLowFuelThreshold(threshold)
   self.lowfuel=threshold or 5
@@ -480,7 +480,7 @@ end
 
 --- Set rescue zone radius. Crashed or ejected units inside this radius of the carrier will be rescued if possible.
 -- @param #RESCUEHELO self
--- @param #number radius Radius of rescue zone in nautical miles. Default is 15 NM.
+-- @param #number radius (Optional) Radius of rescue zone in nautical miles. Default is 15 NM.
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetRescueZone(radius)
   radius=UTILS.NMToMeters(radius or 15)
@@ -490,7 +490,7 @@ end
 
 --- Set rescue hover speed.
 -- @param #RESCUEHELO self
--- @param #number speed Speed in knots. Default 5 kts.
+-- @param #number speed (Optional) Speed in knots. Default 5 kts.
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetRescueHoverSpeed(speed)
   self.rescuespeed=UTILS.KnotsToMps(speed or 5)
@@ -499,7 +499,7 @@ end
 
 --- Set rescue duration. This is the time it takes to rescue a pilot at the crash site.
 -- @param #RESCUEHELO self
--- @param #number duration Duration in minutes. Default 5 min.
+-- @param #number duration (Optional) Duration in minutes. Default 5 min.
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetRescueDuration(duration)
   self.rescueduration=(duration or 5)*60
@@ -541,7 +541,7 @@ end
 
 --- Set takeoff type.
 -- @param #RESCUEHELO self
--- @param #number takeofftype Takeoff type. Default SPAWN.Takeoff.Hot.
+-- @param #number takeofftype (Optional) Takeoff type. Default SPAWN.Takeoff.Hot.
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetTakeoff(takeofftype)
   self.takeoff=takeofftype or SPAWN.Takeoff.Hot
@@ -574,7 +574,7 @@ end
 
 --- Set altitude of helo.
 -- @param #RESCUEHELO self
--- @param #number alt Altitude in meters. Default 70 m.
+-- @param #number alt (Optional) Altitude in meters. Default 70 m.
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetAltitude(alt)
   self.altitude=alt or 70
@@ -583,7 +583,7 @@ end
 
 --- Set offset parallel to orientation of carrier.
 -- @param #RESCUEHELO self
--- @param #number distance Offset distance in meters. Default 200 m (~660 ft).
+-- @param #number distance (Optional) Offset distance in meters. Default 200 m (~660 ft).
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetOffsetX(distance)
   self.offsetX=distance or 200
@@ -592,7 +592,7 @@ end
 
 --- Set offset perpendicular to orientation to carrier.
 -- @param #RESCUEHELO self
--- @param #number distance Offset distance in meters. Default 240 m (~780 ft).
+-- @param #number distance (Optional) Offset distance in meters. Default 240 m (~780 ft).
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetOffsetZ(distance)
   self.offsetZ=distance or 240
@@ -650,7 +650,7 @@ end
 
 --- Set follow time update interval.
 -- @param #RESCUEHELO self
--- @param #number dt Time interval in seconds. Default 1.0 sec.
+-- @param #number dt (Optional) Time interval in seconds. Default 1.0 sec.
 -- @return #RESCUEHELO self
 function RESCUEHELO:SetFollowTimeInterval(dt)
   self.dtFollow=dt or 1.0

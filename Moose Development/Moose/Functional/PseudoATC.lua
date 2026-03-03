@@ -172,7 +172,7 @@ end
 
 --- Set duration how long messages are displayed.
 -- @param #PSEUDOATC self
--- @param #number duration Time in seconds. Default is 30 sec.
+-- @param #number duration (Optional) Time in seconds. Default is 30 sec.
 function PSEUDOATC:SetMessageDuration(duration)
   self.mdur=duration or 30
 end
@@ -186,21 +186,21 @@ end
 
 --- Set time interval after which the F10 radio menu is refreshed.
 -- @param #PSEUDOATC self
--- @param #number interval Interval in seconds. Default is every 120 sec.
+-- @param #number interval (Optional) Interval in seconds. Default is every 120 sec.
 function PSEUDOATC:SetMenuRefresh(interval)
   self.mrefresh=interval or 120
 end
 
 --- [Deprecated] Enable/disable event handling by MOOSE or DCS.
 -- @param #PSEUDOATC self
--- @param #boolean switch If true, events are handled by MOOSE (default). If false, events are handled directly by DCS.
+-- @param #boolean switch (Optional) If true, events are handled by MOOSE (default). If false, events are handled directly by DCS.
 function PSEUDOATC:SetEventsMoose(switch)
   self.eventsmoose=switch
 end
 
 --- Set time interval for reporting altitude until touchdown.
 -- @param #PSEUDOATC self
--- @param #number interval Interval in seconds. Default is every 3 sec.
+-- @param #number interval (Optional) Interval in seconds. Default is every 3 sec.
 function PSEUDOATC:SetReportAltInterval(interval)
   self.talt=interval or 3
 end

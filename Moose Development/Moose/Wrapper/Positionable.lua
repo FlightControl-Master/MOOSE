@@ -449,7 +449,7 @@ end
 
 --- Triggers an explosion at the coordinates of the positionable.
 -- @param #POSITIONABLE self
--- @param #number power Power of the explosion in kg TNT. Default 100 kg TNT.
+-- @param #number power (Optional) Power of the explosion in kg TNT. Default 100 kg TNT.
 -- @param #number delay (Optional) Delay of explosion in seconds.
 -- @return #POSITIONABLE self
 function POSITIONABLE:Explode(power, delay)
@@ -477,9 +477,9 @@ end
 
 --- Returns a COORDINATE object, which is offset with respect to the orientation of the POSITIONABLE.
 -- @param #POSITIONABLE self
--- @param #number x Offset in the direction "the nose" of the unit is pointing in meters. Default 0 m.
--- @param #number y Offset "above" the unit in meters. Default 0 m.
--- @param #number z Offset in the direction "the wing" of the unit is pointing in meters. z>0 starboard, z<0 port. Default 0 m.
+-- @param #number x (Optional) Offset in the direction "the nose" of the unit is pointing in meters. Default 0 m.
+-- @param #number y (Optional) Offset "above" the unit in meters. Default 0 m.
+-- @param #number z(Optional)  Offset in the direction "the wing" of the unit is pointing in meters. z>0 starboard, z<0 port. Default 0 m.
 -- @return Core.Point#COORDINATE The COORDINATE of the offset with respect to the orientation of the  POSITIONABLE.
 function POSITIONABLE:GetOffsetCoordinate( x, y, z )
 
@@ -518,9 +518,9 @@ end
 
 --- Returns a COORDINATE object, which is transformed to be relative to the POSITIONABLE. Inverse of @{#POSITIONABLE.GetOffsetCoordinate}.
 -- @param #POSITIONABLE self
--- @param #number x Offset along the world x-axis in meters. Default 0 m.
--- @param #number y Offset along the world y-axis in meters. Default 0 m.
--- @param #number z Offset along the world z-axis in meters. Default 0 m.
+-- @param #number x (Optional) Offset along the world x-axis in meters. Default 0 m.
+-- @param #number y (Optional) Offset along the world y-axis in meters. Default 0 m.
+-- @param #number z (Optional) Offset along the world z-axis in meters. Default 0 m.
 -- @return Core.Point#COORDINATE The relative COORDINATE with respect to the orientation of the  POSITIONABLE.
 function POSITIONABLE:GetRelativeCoordinate( x, y, z )
 

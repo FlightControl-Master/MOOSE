@@ -523,9 +523,10 @@ end
 
 --- Print a table to log in a nice format
 -- @param #table t The table to print
--- @param #number indent Number of indents
+-- @param #number indent (Optional) Number of indents. Defaults to 0.
 -- @param #boolean noprint Don't log but return text
--- @param #number maxDepth Only cycle this deep, defaults to 5.
+-- @param #number maxDepth (Optional) Only cycle this deep, defaults to 5.
+-- @param #table seen (Optional) 
 -- @return #string text Text created on the fly of the log output
 function UTILS.PrintTableToLog(t, indent, noprint, maxDepth, seen)
   maxDepth = maxDepth or 5
@@ -1372,7 +1373,7 @@ function UTILS.ClockToSeconds(clock)
 end
 
 --- Display clock and mission time on screen as a message to all.
--- @param #number duration Duration in seconds how long the time is displayed. Default is 5 seconds.
+-- @param #number duration (Optional) Duration in seconds how long the time is displayed. Default is 5 seconds.
 function UTILS.DisplayMissionTime(duration)
   duration=duration or 5
   local Tnow=timer.getAbsTime()
@@ -1386,7 +1387,7 @@ end
 
 --- Replace illegal characters [<>|/?*:\\] in a string.
 -- @param #string Text Input text.
--- @param #string ReplaceBy Replace illegal characters by this character or string. Default underscore "_".
+-- @param #string ReplaceBy (Optional) Replace illegal characters by this character or string. Default underscore "_".
 -- @return #string The input text with illegal chars replaced.
 function UTILS.ReplaceIllegalCharacters(Text, ReplaceBy)
   ReplaceBy=ReplaceBy or "_"
@@ -2260,7 +2261,7 @@ function UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, Rising, Tlocal)
 -- @param #number Latitude Latitude.
 -- @param #number Longitude Longitude.
 -- @param #boolean Rising If true, calc sun rise, or sun set otherwise.
--- @param #number Tlocal Local time offset in hours. E.g. +4 for a location which has GMT+4. Default 0.
+-- @param #number Tlocal (Optional) Local time offset in hours. E.g. +4 for a location which has GMT+4. Default 0.
 -- @return #number Sun rise in seconds of the day.
 function UTILS.GetSunrise(Day, Month, Year, Latitude, Longitude, Tlocal)
 
@@ -2276,7 +2277,7 @@ end
 -- @param #number Latitude Latitude.
 -- @param #number Longitude Longitude.
 -- @param #boolean Rising If true, calc sun rise, or sun set otherwise.
--- @param #number Tlocal Local time offset in hours. E.g. +4 for a location which has GMT+4. Default 0.
+-- @param #number Tlocal (Optional) Local time offset in hours. E.g. +4 for a location which has GMT+4. Default 0.
 -- @return #number Sun rise in seconds of the day.
 function UTILS.GetSunset(Day, Month, Year, Latitude, Longitude, Tlocal)
 
@@ -2954,12 +2955,12 @@ end
 -- @param #boolean Reduce If false, existing loaded groups will not be reduced to fit the saved number.
 -- @param #boolean Structured (Optional, needs Reduce = true) If true, and the data has been saved as structure before, remove the correct unit types as per the saved list.
 -- @param #boolean Cinematic (Optional, needs Structured = true) If true, place a fire/smoke effect on the dead static position.
--- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
--- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
--- @param #boolean Resurrection If true, dead units can be restored on load. Defaults to false.
--- @param #number ResurrectPercentage Use this percentage of probability to resurrect a unit. [0..100], defaults to 25.
--- @param #number Healmin If set, life points of a resurrected unit will be randomly restored to min this percentage. [0..100], defaults to 25.
--- @param #number Healmax If set, life points of a resurrected unit will be randomly restored to max this percentage. [0..100], defaults to 75.
+-- @param #number Effect (Optional) (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
+-- @param #number Density (Optional) (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
+-- @param #boolean Resurrection (Optional) If true, dead units can be restored on load. Defaults to false.
+-- @param #number ResurrectPercentage (Optional) Use this percentage of probability to resurrect a unit. [0..100], defaults to 25.
+-- @param #number Healmin (Optional) If set, life points of a resurrected unit will be randomly restored to min this percentage. [0..100], defaults to 25.
+-- @param #number Healmax (Optional) If set, life points of a resurrected unit will be randomly restored to max this percentage. [0..100], defaults to 75.
 -- @return #table Table of data objects (tables) containing groupname, coordinate and group object. Returns nil when file cannot be read.
 -- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
 function UTILS.LoadStationaryListOfGroups(Path,Filename,Reduce,Structured,Cinematic,Effect,Density,Resurrection,ResurrectPercentage,Healmin,Healmax)
@@ -3082,8 +3083,8 @@ end
 -- @param #boolean Spawn If set to false, do not re-spawn the groups loaded in location and reduce to size.
 -- @param #boolean Structured (Optional, needs Spawn=true)If true, and the data has been saved as structure before, remove the correct unit types as per the saved list.
 -- @param #boolean Cinematic (Optional, needs Structured=true) If true, place a fire/smoke effect on the dead static position.
--- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
--- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
+-- @param #number Effect (Optional) (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
+-- @param #number Density (Optional) (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
 -- @return Core.Set#SET_GROUP Set of GROUP objects.
 -- Returns nil when file cannot be read. Returns a table of data entries if Spawn is false: `{ groupname=groupname, size=size, coordinate=coordinate, template=template }`
 -- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
@@ -3268,8 +3269,8 @@ end
 -- @param #boolean Reduce If false, do not destroy the units with size=0.
 -- @param #boolean Dead (Optional, needs Reduce = true) If Dead is true, re-spawn the dead object as dead and do not just delete it.
 -- @param #boolean Cinematic (Optional, needs Dead = true) If true, place a fire/smoke effect on the dead static position.
--- @param #number Effect (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
--- @param #number Density (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
+-- @param #number Effect (Optional) (Optional for Cinematic) What effect to use. Defaults to a random effect. Smoke presets are: 1=small smoke and fire, 2=medium smoke and fire, 3=large smoke and fire, 4=huge smoke and fire, 5=small smoke, 6=medium smoke, 7=large smoke, 8=huge smoke.
+-- @param #number Density (Optional) (Optional for Cinematic) What smoke density to use, can be 0 to 1. Defaults to 0.5.
 -- @return #table Table of data objects (tables) containing staticname, size (0=dead else 1), coordinate and the static object. Dead objects will have coordinate points `{x=0,y=0,z=0}`
 -- @return #table When using Cinematic: table of names of smoke and fire objects, so they can be extinguished with `COORDINATE.StopBigSmokeAndFire( name )`
 -- Returns nil when file cannot be read.
@@ -3438,13 +3439,13 @@ end
 --- Helper function to plot a racetrack on the F10 Map - curtesy of Buur.
 -- @param Core.Point#COORDINATE Coordinate
 -- @param #number Altitude Altitude in feet
--- @param #number Speed Speed in knots
--- @param #number Heading Heading in degrees
--- @param #number Leg Leg in NM
--- @param #number Coalition Coalition side, e.g. coaltion.side.RED or coaltion.side.BLUE
--- @param #table Color Color of the line in RGB, e.g. {1,0,0} for red
--- @param #number Alpha Transparency factor, between 0.1 and 1
--- @param #number LineType Line type to be used, line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+-- @param #number Speed (Optional) Speed in knots. Defaults to 350.
+-- @param #number Heading (Optional) Heading in degrees. Defaults to 270.
+-- @param #number Leg (Optional) Leg in NM. Defaults to 10nm.
+-- @param #number Coalition (Optional) Coalition side, e.g. coaltion.side.RED or coaltion.side.BLUE. Defaults to -1.
+-- @param #table Color (Optional) Color of the line in RGB, e.g. {1,0,0} for red, Defaults to {1,0,0}.
+-- @param #number Alpha (Optional) Transparency factor, between 0.1 and 1. Defaults to 1.
+-- @param #number LineType (Optional) Line type to be used, line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
 -- @param #boolean ReadOnly
 function UTILS.PlotRacetrack(Coordinate, Altitude, Speed, Heading, Leg, Coalition, Color, Alpha, LineType, ReadOnly)
     local fix_coordinate = Coordinate
@@ -4247,7 +4248,7 @@ function UTILS.ReadCSV(filename)
 end
 
 --- Seed the LCG random number generator.
--- @param #number seed Seed value. Default is a random number using math.random()
+-- @param #number seed (Optional) Seed value. Default is a random number using math.random()
 function UTILS.LCGRandomSeed(seed)
   UTILS.lcg = {
     seed = seed or math.random(1, 2^32 - 1),
@@ -4311,24 +4312,24 @@ end
 -- References: [DCS Forum Topic](https://forum.dcs.world/topic/282989-farp-equipment-to-run-it)
 -- @param #string Name Name of this FARP installation. Must be unique. 
 -- @param Core.Point#COORDINATE Coordinate Where to spawn the FARP.
--- @param #string FARPType Type of FARP, can be one of the known types ENUMS.FARPType.FARP, ENUMS.FARPType.INVISIBLE, ENUMS.FARPType.HELIPADSINGLE, ENUMS.FARPType.PADSINGLE. Defaults to ENUMS.FARPType.FARP.
--- @param #number Coalition Coalition of this FARP, i.e. coalition.side.BLUE or coalition.side.RED, defaults to coalition.side.BLUE.
--- @param #number Country Country of this FARP, defaults to country.id.USA (blue) or country.id.RUSSIA (red).
--- @param #number CallSign Callsign of the FARP ATC, defaults to CALLSIGN.FARP.Berlin.
--- @param #number Frequency Frequency of the FARP ATC Radio, defaults to 127.5 (MHz).
--- @param #number Modulation Modulation of the FARP ATC Radio, defaults to radio.modulation.AM.
+-- @param #string FARPType (Optional) Type of FARP, can be one of the known types ENUMS.FARPType.FARP, ENUMS.FARPType.INVISIBLE, ENUMS.FARPType.HELIPADSINGLE, ENUMS.FARPType.PADSINGLE. Defaults to ENUMS.FARPType.FARP.
+-- @param #number Coalition (Optional) Coalition of this FARP, i.e. coalition.side.BLUE or coalition.side.RED, defaults to coalition.side.BLUE.
+-- @param #number Country (Optional) Country of this FARP, defaults to country.id.USA (blue) or country.id.RUSSIA (red).
+-- @param #number CallSign (Optional) Callsign of the FARP ATC, defaults to CALLSIGN.FARP.Berlin.
+-- @param #number Frequency (Optional) Frequency of the FARP ATC Radio, defaults to 127.5 (MHz).
+-- @param #number Modulation (Optional) Modulation of the FARP ATC Radio, defaults to radio.modulation.AM.
 -- @param #number ADF ADF Beacon (FM) Frequency in KHz, e.g. 428. If not nil, creates an VHF/FM ADF Beacon for this FARP. Requires a sound called "beacon.ogg" to be in the mission (trigger "sound to" ...)
--- @param #number SpawnRadius Radius of the FARP, i.e. where the FARP objects will be placed in meters, not more than 150m away. Defaults to 100.
+-- @param #number SpawnRadius (Optional) Radius of the FARP, i.e. where the FARP objects will be placed in meters, not more than 150m away. Defaults to 100.
 -- @param #string VehicleTemplate, template name for additional vehicles. Can be nil for no additional vehicles.
--- @param #number Liquids Tons of fuel to be added initially to the FARP. Defaults to 10 (tons). Set to 0 for no fill.
--- @param #number Equipment Number of equipment items per known item to be added initially to the FARP. Defaults to 10 (items). Set to 0 for no fill.
+-- @param #number Liquids (Optional) Tons of fuel to be added initially to the FARP. Defaults to 10 (tons). Set to 0 for no fill.
+-- @param #number Equipment(Optional)  Number of equipment items per known item to be added initially to the FARP. Defaults to 10 (items). Set to 0 for no fill.
 -- @param #number Airframes Number of helicopter airframes per known type in Ops.CSAR#CSAR.AircraftType to be added initially to the FARP. Set to 0 for no airframes.
 -- @param #string F10Text Text to display on F10 map if given. Handy to post things like the ADF beacon Frequency, Callsign and ATC Frequency.
 -- @param #boolean DynamicSpawns If true, allow Dynamic Spawns from this FARP.
 -- @param #boolean HotStart If true and DynamicSpawns is true, allow hot starts for Dynamic Spawns from this FARP.
 -- @param #number NumberPads If given, spawn this number of pads.
--- @param #number SpacingX For NumberPads > 1, space this many meters horizontally. Defaults to 100.
--- @param #number SpacingY For NumberPads > 1, space this many meters vertically. Defaults to 100.
+-- @param #number SpacingX (Optional) For NumberPads > 1, space this many meters horizontally. Defaults to 100.
+-- @param #number SpacingY (Optional) For NumberPads > 1, space this many meters vertically. Defaults to 100.
 -- @return #list<Wrapper.Static#STATIC> Table of spawned objects and vehicle object (if given).
 -- @return #string ADFBeaconName Name of the ADF beacon, to be able to remove/stop it later.
 -- @return #number MarkerID ID of the F10 Text, to be able to remove it later.
@@ -4513,9 +4514,9 @@ end
 -- @param #number ADF (Optional) ADF Frequency in kHz (Kilohertz), if given activate an ADF Beacon at the location of the MASH.
 -- @param #string Livery (Optional) The livery of the static CH-47, defaults to dark green.
 -- @param #boolean DeployHelo (Optional) If true, deploy the helicopter static.
--- @param #number MASHRadio MASH Radio Frequency, defaults to 127.5.
--- @param #number MASHRadioModulation MASH Radio Modulation, defaults to radio.modulation.AM.
--- @param #number MASHCallsign Defaults to CALLSIGN.FARP.Berlin.
+-- @param #number MASHRadio (Optional) MASH Radio Frequency, defaults to 127.5.
+-- @param #number MASHRadioModulation (Optional) MASH Radio Modulation, defaults to radio.modulation.AM.
+-- @param #number MASHCallsign (Optional) Defaults to CALLSIGN.FARP.Berlin.
 -- @param #table Templates (Optional) You can hand in your own template table of numbered(!) entries. Each entry consist of a relative(!) x,y position and data of a 
 -- static, shape_name is optional. Also, livery_id is optional, but is applied to the helicopter static only.
 -- @return #table Table of Wrapper.Static#STATIC objects that were spawned.
@@ -4859,13 +4860,13 @@ end
 
 --- Show a picture on the screen to all
 -- @param #string FileName File name of the picture
--- @param #number Duration Duration in seconds, defaults to 10
--- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
--- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
--- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
--- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
--- @param #number Size Size of the picture in percent, defaults to 100
--- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+-- @param #number Duration (Optional) Duration in seconds, defaults to 10
+-- @param #boolean ClearView (Optional) If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay (Optional) Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign (Optional) Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right. Defaults to 1.
+-- @param #number VerticalAlign (Optional) Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom. Defaults to 1.
+-- @param #number Size (Optional) Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits (Optional) Size units, 0 for % of original picture size, and 1 for % of window size. Defaults to 0.
 function UTILS.ShowPictureToAll(FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
     ClearView = ClearView or false
     StartDelay = StartDelay or 0
@@ -4882,13 +4883,13 @@ end
 --- Show a picture on the screen to Coalition
 -- @param #number Coalition Coalition ID, can be coalition.side.BLUE, coalition.side.RED or coalition.side.NEUTRAL
 -- @param #string FileName File name of the picture
--- @param #number Duration Duration in seconds, defaults to 10
--- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
--- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
--- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
--- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
--- @param #number Size Size of the picture in percent, defaults to 100
--- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+-- @param #number Duration (Optional) Duration in seconds, defaults to 10
+-- @param #boolean ClearView (Optional) If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay (Optional) Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign (Optional) Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right. Defaults to 1.
+-- @param #number VerticalAlign (Optional) Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom. Defaults to 1.
+-- @param #number Size (Optional) Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits (Optional) Size units, 0 for % of original picture size, and 1 for % of window size. Defaults to 0.
 function UTILS.ShowPictureToCoalition(Coalition, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
     ClearView = ClearView or false
     StartDelay = StartDelay or 0
@@ -4907,13 +4908,13 @@ end
 --- Show a picture on the screen to Country
 -- @param #number Country Country ID, can be country.id.USA, country.id.RUSSIA, etc.
 -- @param #string FileName File name of the picture
--- @param #number Duration Duration in seconds, defaults to 10
--- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
--- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
--- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
--- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
--- @param #number Size Size of the picture in percent, defaults to 100
--- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+-- @param #number Duration (Optional) Duration in seconds, defaults to 10
+-- @param #boolean ClearView (Optional) If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay (Optional) Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign (Optional) Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right. Defaults to 1.
+-- @param #number VerticalAlign (Optional) Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom. Defaults to 1.
+-- @param #number Size(Optional)  Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits (Optional) Size units, 0 for % of original picture size, and 1 for % of window size. Defaults to 0.
 function UTILS.ShowPictureToCountry(Country, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
     ClearView = ClearView or false
     StartDelay = StartDelay or 0
@@ -4930,13 +4931,13 @@ end
 --- Show a picture on the screen to Group
 -- @param Wrapper.Group#GROUP Group Group to show the picture to
 -- @param #string FileName File name of the picture
--- @param #number Duration Duration in seconds, defaults to 10
--- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
--- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
--- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
--- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
--- @param #number Size Size of the picture in percent, defaults to 100
--- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+-- @param #number Duration (Optional) Duration in seconds, defaults to 10
+-- @param #boolean ClearView (Optional) If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay (Optional) Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign (Optional) Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right. Defaults to 1.
+-- @param #number VerticalAlign (Optional) Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom. Defaults to 1.
+-- @param #number Size (Optional) Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits (Optional) Size units, 0 for % of original picture size, and 1 for % of window size. Defaults to 0.
 function UTILS.ShowPictureToGroup(Group, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
     ClearView = ClearView or false
     StartDelay = StartDelay or 0
@@ -4953,13 +4954,13 @@ end
 --- Show a picture on the screen to Unit
 -- @param Wrapper.Unit#UNIT Unit Unit to show the picture to
 -- @param #string FileName File name of the picture
--- @param #number Duration Duration in seconds, defaults to 10
--- @param #boolean ClearView If true, clears the view before showing the picture, defaults to false
--- @param #number StartDelay Delay in seconds before showing the picture, defaults to 0
--- @param #number HorizontalAlign Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right
--- @param #number VerticalAlign Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom
--- @param #number Size Size of the picture in percent, defaults to 100
--- @param #number SizeUnits Size units, 0 for % of original picture size, and 1 for % of window size
+-- @param #number Duration (Optional) Duration in seconds, defaults to 10
+-- @param #boolean ClearView (Optional) If true, clears the view before showing the picture, defaults to false
+-- @param #number StartDelay (Optional) Delay in seconds before showing the picture, defaults to 0
+-- @param #number HorizontalAlign (Optional) Horizontal alignment of the picture, 0: Left, 1: Center, 2: Right. Defaults to 1.
+-- @param #number VerticalAlign (Optional) Vertical alignment of the picture, 0: Top, 1: Center, 2: Bottom. Defaults to 1.
+-- @param #number Size (Optional) Size of the picture in percent, defaults to 100
+-- @param #number SizeUnits (Optional) Size units, 0 for % of original picture size, and 1 for % of window size. Defaults to 0.
 function UTILS.ShowPictureToUnit(Unit, FilePath, Duration, ClearView, StartDelay, HorizontalAlign, VerticalAlign, Size, SizeUnits)
     ClearView = ClearView or false
     StartDelay = StartDelay or 0
@@ -4981,8 +4982,8 @@ end
 
 --- Set the mission briefing for a coalition.
 -- @param #number Coalition Briefing coalition ID, can be coalition.side.BLUE, coalition.side.RED or coalition.side.NEUTRAL
--- @param #string Text Briefing text, can contain newlines, will be converted formatted properly for DCS
--- @param #string Picture Picture file path, can be a file in the DEFAULT folder inside the .miz
+-- @param #string Text Briefing text, can contain newlines, will be converted formatted properly for DCS.
+-- @param #string Picture (Optional) Picture file path, can be a file in the DEFAULT folder inside the .miz. Defaults to "".
 function UTILS.SetMissionBriefing(Coalition, Text, Picture)
     Text = Text or ""
     Text = Text:gsub("\n", "\\n")

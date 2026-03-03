@@ -1450,9 +1450,9 @@ end
 
 --- [User] Set SRS TTS details - see @{Sound.SRS} for details.`SetSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
 -- @param #CTLD self
--- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 30 or {30,124.5}. Defaults to {30,124.5}. There needs to be exactly the same number of modulations!
--- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
+-- @param #number Frequency (Optional) Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 30 or {30,124.5}. Defaults to {30,124.5}. There needs to be exactly the same number of modulations!
+-- @param #number Modulation (Optional) Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
+-- @param #string PathToSRS (Optional) Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 -- @param #string Gender (Optional) Defaults to "male"
 -- @param #string Culture (Optional) Defaults to "en-US"
 -- @param #number Port (Optional) Defaults to 5002
@@ -7639,12 +7639,12 @@ end
   --- User - Function to add/adjust unittype capabilities.
   -- @param #CTLD self
   -- @param #string Unittype The unittype to adjust. If passed as Wrapper.Unit#UNIT, it will search for the unit in the mission.
-  -- @param #boolean Cancrates Unit can load crates. Default false.
-  -- @param #boolean Cantroops Unit can load troops. Default false.
-  -- @param #number Cratelimit Unit can carry number of crates. Default 0.
-  -- @param #number Trooplimit Unit can carry number of troops. Default 0.
-  -- @param #number Length Unit lenght (in metres) for the load radius. Default 20.
-  -- @param #number Maxcargoweight Maxmimum weight in kgs this helo can carry. Default 500.
+  -- @param #boolean Cancrates (Optional) Unit can load crates. Default false.
+  -- @param #boolean Cantroops (Optional) Unit can load troops. Default false.
+  -- @param #number Cratelimit (Optional) Unit can carry number of crates. Default 0.
+  -- @param #number Trooplimit (Optional) Unit can carry number of troops. Default 0.
+  -- @param #number Length (Optional) Unit lenght (in metres) for the load radius. Default 20.
+  -- @param #number Maxcargoweight (Optional) Maxmimum weight in kgs this helo can carry. Default 500.
   function CTLD:SetUnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length, Maxcargoweight)
     self:T(self.lid .. " UnitCapabilities")
     local unittype =  nil
@@ -7689,12 +7689,12 @@ end
   --- [Deprecated] - Function to add/adjust unittype capabilities. Has been replaced with `SetUnitCapabilities()` - pls use the new one going forward!
   -- @param #CTLD self
   -- @param #string Unittype The unittype to adjust. If passed as Wrapper.Unit#UNIT, it will search for the unit in the mission.
-  -- @param #boolean Cancrates Unit can load crates. Default false.
-  -- @param #boolean Cantroops Unit can load troops. Default false.
-  -- @param #number Cratelimit Unit can carry number of crates. Default 0.
-  -- @param #number Trooplimit Unit can carry number of troops. Default 0.
-  -- @param #number Length Unit lenght (in metres) for the load radius. Default 20.
-  -- @param #number Maxcargoweight Maxmimum weight in kgs this helo can carry. Default 500.
+  -- @param #boolean Cancrates (Optional) Unit can load crates. Default false.
+  -- @param #boolean Cantroops (Optional) Unit can load troops. Default false.
+  -- @param #number Cratelimit (Optional) Unit can carry number of crates. Default 0.
+  -- @param #number Trooplimit (Optional) Unit can carry number of troops. Default 0.
+  -- @param #number Length (Optional) Unit lenght (in metres) for the load radius. Default 20.
+  -- @param #number Maxcargoweight (Optional) Maxmimum weight in kgs this helo can carry. Default 500.
   function CTLD:UnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length, Maxcargoweight)
     self:I(self.lid.."This function been replaced with `SetUnitCapabilities()` - pls use the new one going forward!")
     self:SetUnitCapabilities(Unittype, Cancrates, Cantroops, Cratelimit, Trooplimit, Length, Maxcargoweight)
@@ -7924,7 +7924,7 @@ end
   --- User - Count both the stock and groups in the field for available cargo types. Counts only limited cargo items and only troops and vehicle/FOB crates!
   -- @param #CTLD self
   -- @param #boolean Restock If true, restock the cargo and troop items.
-  -- @param #number Threshold Percentage below which to restock, used in conjunction with Restock (must be true). Defaults to 75 (percent).
+  -- @param #number Threshold (Optional) Percentage below which to restock, used in conjunction with Restock (must be true). Defaults to 75 (percent).
   -- @return #table Table A table of contents with numbers.
   -- @usage
   --      The index is the unique cargo name.

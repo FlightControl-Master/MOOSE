@@ -449,7 +449,7 @@ end
 
 --- Set block time in seconds.
 -- @param #NET self
--- @param #number Seconds Numnber of seconds this block will last. Defaults to 600.
+-- @param #number Seconds (Optional) Numnber of seconds this block will last. Defaults to 600.
 -- @return #NET self
 function NET:SetBlockTime(Seconds)
   self.BlockTime = Seconds or 600

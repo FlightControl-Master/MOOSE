@@ -547,7 +547,7 @@ end
 
 --- [USER] Destroy a DYNAMICCARGO object.
 -- @param #DYNAMICCARGO self
--- @param #boolean GenerateEvent Set to false to remove an item silently. Defaults to true.
+-- @param #boolean GenerateEvent (Optional) Set to false to remove an item silently. Defaults to true.
 -- @return #boolean Return Returns nil if the object could not be found, else returns true.
 function DYNAMICCARGO:Destroy(GenerateEvent)
   local DCSObject = self:GetDCSObject()

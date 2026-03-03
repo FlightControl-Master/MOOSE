@@ -1055,7 +1055,7 @@ end
 
 --- Set the friendly coalitions from which the airports can be used as departure and destination.
 -- @param #RAT self
--- @param #string friendly "same"=own coalition+neutral (default), "sameonly"=own coalition only, "neutral"=all neutral airports.
+-- @param #string friendly (Optional) "same"=own coalition+neutral (default), "sameonly"=own coalition only, "neutral"=all neutral airports.
 -- Default is "same", so aircraft will use airports of the coalition their spawn template has plus all neutral airports.
 -- @return #RAT RAT self object.
 -- @usage yak:SetCoalition("neutral") will spawn aircraft randomly on all neutral airports.
@@ -1137,7 +1137,7 @@ end
 
 --- Set the scan radius around parking spots. Parking spot is considered to be occupied if any obstacle is found with the radius.
 -- @param #RAT self
--- @param #number radius Radius in meters. Default 50 m.
+-- @param #number radius (Optional) Radius in meters. Default 50 m.
 -- @return #RAT RAT self object.
 function RAT:SetParkingScanRadius(radius)
   self:F2(radius)
@@ -1503,7 +1503,7 @@ end
 
 --- Set the delay before first group is spawned.
 -- @param #RAT self
--- @param #number delay Delay in seconds. Default is 5 seconds. Minimum delay is 0.5 seconds.
+-- @param #number delay (Optional) Delay in seconds. Default is 5 seconds. Minimum delay is 0.5 seconds.
 -- @return #RAT RAT self object.
 function RAT:SetSpawnDelay(delay)
   self:F2(delay)
@@ -1514,7 +1514,7 @@ end
 
 --- Set the interval between spawnings of the template group.
 -- @param #RAT self
--- @param #number interval Interval in seconds. Default is 5 seconds. Minimum is 0.5 seconds.
+-- @param #number interval (Optional) Interval in seconds. Default is 5 seconds. Minimum is 0.5 seconds.
 -- @return #RAT RAT self object.
 function RAT:SetSpawnInterval(interval)
   self:F2(interval)
@@ -1525,7 +1525,7 @@ end
 
 --- Set max number of groups that will be spawned. When this limit is reached, no more RAT groups are spawned.
 -- @param #RAT self
--- @param #number Nmax Max number of groups. Default `nil`=unlimited.
+-- @param #number Nmax (Optional) Max number of groups. Default `nil`=unlimited.
 -- @return #RAT RAT self object.
 function RAT:SetSpawnLimit(Nmax)
   self.NspawnMax=Nmax
@@ -1545,7 +1545,7 @@ end
 
 --- Sets the delay between despawning and respawning aircraft.
 -- @param #RAT self
--- @param #number delay Delay in seconds until respawn happens. Default is 1 second. Minimum is 1 second.
+-- @param #number delay (Optional) Delay in seconds until respawn happens. Default is 1 second. Minimum is 1 second.
 -- @return #RAT RAT self object.
 function RAT:SetRespawnDelay(delay)
   self:F2(delay)
@@ -1566,7 +1566,7 @@ end
 
 --- Number of tries to respawn an aircraft in case it has accidentally been spawned on runway.
 -- @param #RAT self
--- @param #number n Number of retries. Default is 3.
+-- @param #number n (Optional) Number of retries. Default is 3.
 -- @return #RAT RAT self object.
 function RAT:SetMaxRespawnTriedWhenSpawnedOnRunway(n)
   self:F2(n)
@@ -1624,7 +1624,7 @@ end
 --- Check if aircraft have accidentally been spawned on the runway. If so they will be removed immediately.
 -- @param #RAT self
 -- @param #boolean switch If true, check is performed. If false, this check is omitted.
--- @param #number radius Distance in meters until a unit is considered to have spawned accidentally on the runway. Default is 75 m.
+-- @param #number radius (Optional) Distance in meters until a unit is considered to have spawned accidentally on the runway. Default is 75 m.
 -- @return #RAT RAT self object.
 function RAT:CheckOnRunway(switch, distance)
   self:F2(switch)
@@ -1639,7 +1639,7 @@ end
 --- Check if aircraft have accidentally been spawned on top of each other. If yes, they will be removed immediately.
 -- @param #RAT self
 -- @param #boolean switch If true, check is performed. If false, this check is omitted.
--- @param #number radius Radius in meters until which a unit is considered to be on top of each other. Default is 2 m.
+-- @param #number radius (Optional) Radius in meters until which a unit is considered to be on top of each other. Default is 2 m.
 -- @return #RAT RAT self object.
 function RAT:CheckOnTop(switch, radius)
   self:F2(switch)
@@ -1755,10 +1755,10 @@ end
 
 --- Define how aircraft that are spawned in uncontrolled state are activate.
 -- @param #RAT self
--- @param #number maxactivated Maximal numnber of activated aircraft. Absolute maximum will be the number of spawned groups. Default is 1.
--- @param #number delay Time delay in seconds before (first) aircraft is activated. Default is 1 second.
--- @param #number delta Time difference in seconds before next aircraft is activated. Default is 1 second.
--- @param #number frand Factor [0,...,1] for randomization of time difference between aircraft activations. Default is 0, i.e. no randomization.
+-- @param #number maxactivated (Optional) Maximal numnber of activated aircraft. Absolute maximum will be the number of spawned groups. Default is 1.
+-- @param #number delay (Optional) Time delay in seconds before (first) aircraft is activated. Default is 1 second.
+-- @param #number delta (Optional) Time difference in seconds before next aircraft is activated. Default is 1 second.
+-- @param #number frand (Optional) Factor [0,...,1] for randomization of time difference between aircraft activations. Default is 0, i.e. no randomization.
 -- @return #RAT RAT self object.
 function RAT:ActivateUncontrolled(maxactivated, delay, delta, frand)
   self:F2({max=maxactivated, delay=delay, delta=delta, rand=frand})
@@ -1784,7 +1784,7 @@ end
 
 --- Set the time after which inactive groups will be destroyed.
 -- @param #RAT self
--- @param #number time Time in seconds. Default is 600 seconds = 10 minutes. Minimum is 60 seconds.
+-- @param #number time (Optional) Time in seconds. Default is 600 seconds = 10 minutes. Minimum is 60 seconds.
 -- @return #RAT RAT self object.
 function RAT:TimeDestroyInactive(time)
   self:F2(time)
@@ -1818,7 +1818,7 @@ end
 
 --- Set the climb rate. This automatically sets the climb angle.
 -- @param #RAT self
--- @param #number rate Climb rate in ft/min. Default is 1500 ft/min. Minimum is 100 ft/min. Maximum is 15,000 ft/min.
+-- @param #number rate (Optional) Climb rate in ft/min. Default is 1500 ft/min. Minimum is 100 ft/min. Maximum is 15,000 ft/min.
 -- @return #RAT RAT self object.
 function RAT:SetClimbRate(rate)
   self:F2(rate)
@@ -1912,7 +1912,7 @@ end
 
 --- Max number of planes that get landing clearance of the RAT ATC. This setting effects all RAT objects and groups!
 -- @param #RAT self
--- @param #number n Number of aircraft that are allowed to land simultaniously. Default is 2.
+-- @param #number n (Optional) Number of aircraft that are allowed to land simultaniously. Default is 2.
 -- @return #RAT RAT self object.
 function RAT:ATC_Clearance(n)
   self:F2(n)
@@ -1922,7 +1922,7 @@ end
 
 --- Delay between granting landing clearance for simultanious landings. This setting effects all RAT objects and groups!
 -- @param #RAT self
--- @param #number time Delay time when the next aircraft will get landing clearance event if the previous one did not land yet. Default is 240 sec.
+-- @param #number time (Optional) Delay time when the next aircraft will get landing clearance event if the previous one did not land yet. Default is 240 sec.
 -- @return #RAT RAT self object.
 function RAT:ATC_Delay(time)
   self:F2(time)
@@ -2767,7 +2767,7 @@ end
 --- Despawn group. The `FLIGHTGROUP` is despawned and stopped. The ratcraft is removed from the self.ratcraft table. Menues are removed.
 -- @param #RAT self
 -- @param Wrapper.Group#GROUP group Group to be despawned.
--- @param #number delay Delay in seconds before the despawn happens. Default is immidiately.
+-- @param #number delay (Optional) Delay in seconds before the despawn happens. Default is immidiately.
 function RAT:_Despawn(group, delay)
 
   if delay and delay>0 then
@@ -4705,7 +4705,7 @@ end
 
 --- Anticipated group name from alias and spawn index.
 -- @param #RAT self
--- @param #number index Spawnindex of group if given or self.SpawnIndex+1 by default.
+-- @param #number index (Optional) Spawnindex of group if given or self.SpawnIndex+1 by default.
 -- @return #string Name the group will get after it is spawned.
 function RAT:_AnticipatedGroupName(index)
   local index=index or self.SpawnIndex+1
@@ -6013,7 +6013,7 @@ end
 --- Adds a RAT object to the RAT manager. Parameter min specifies the limit how many RAT groups are at least alive.
 -- @param #RATMANAGER self
 -- @param #RAT ratobject RAT object to be managed.
--- @param #number min Minimum number of groups for this RAT object. Default is 1.
+-- @param #number min (Optional) Minimum number of groups for this RAT object. Default is 1.
 -- @return #RATMANAGER RATMANAGER self object.
 function RATMANAGER:Add(ratobject,min)
 
@@ -6041,7 +6041,7 @@ end
 
 --- Starts the RAT manager and spawns the initial random number RAT groups for each RAT object.
 -- @param #RATMANAGER self
--- @param #number delay Time delay in seconds after which the RAT manager is started. Default is 5 seconds.
+-- @param #number delay (Optional) Time delay in seconds after which the RAT manager is started. Default is 5 seconds.
 -- @return #RATMANAGER RATMANAGER self object.
 function RATMANAGER:Start(delay)
 
@@ -6114,7 +6114,7 @@ end
 
 --- Stops the RAT manager.
 -- @param #RATMANAGER self
--- @param #number delay Delay in seconds before the manager is stopped. Default is 1 second.
+-- @param #number delay (Optional) Delay in seconds before the manager is stopped. Default is 1 second.
 -- @return #RATMANAGER RATMANAGER self object.
 function RATMANAGER:Stop(delay)
   delay=delay or 1
@@ -6150,7 +6150,7 @@ end
 
 --- Sets the time interval between spawning of groups.
 -- @param #RATMANAGER self
--- @param #number dt Time interval in seconds. Default is 1 second.
+-- @param #number dt (Optional) Time interval in seconds. Default is 1 second.
 -- @return #RATMANAGER RATMANAGER self object.
 function RATMANAGER:SetTspawn(dt)
   self.dTspawn=dt or 1.0

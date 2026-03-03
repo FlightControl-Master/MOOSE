@@ -872,8 +872,8 @@ do
 
   --- Set to accept accoustic detection. Set this *before* MANTIS starts!
   -- @param #MANTIS self
-  -- @param #number Radius Radius in which we can "hear" units. Defaults to 2000 meters.
-  -- @param #table UnitCategories Set what Unit Categories we can "hear". Defaults to `{Unit.Category.HELICOPTER}`
+  -- @param #number Radius (Optional) Radius in which we can "hear" units. Defaults to 2000 meters.
+  -- @param #table UnitCategories (Optional) Set what Unit Categories we can "hear". Defaults to `{Unit.Category.HELICOPTER}`
   -- @return #MANTIS self
   function MANTIS:SetAccousticDetectionOn(Radius,UnitCategories)
     self.DetectAccoustic = true
@@ -1032,9 +1032,9 @@ do
   --- Add a SET_ZONE of zones for Shoot&Scoot - SHORAD units will move around
   -- @param #MANTIS self
   -- @param Core.Set#SET_ZONE ZoneSet Set of zones to be used. Units will move around to the next (random) zone between 100m and 3000m away.
-  -- @param #number Number Number of closest zones to be considered, defaults to 3.
+  -- @param #number Number (Optional) Number of closest zones to be considered, defaults to 3.
   -- @param #boolean Random If true, use a random coordinate inside the next zone to scoot to.
-  -- @param #string Formation Formation to use, defaults to "Cone". See mission editor dropdown for options.
+  -- @param #string Formation (Optional) Formation to use, defaults to "Cone". See mission editor dropdown for options.
   -- @return #MANTIS self
   function MANTIS:AddScootZones(ZoneSet, Number, Random, Formation)
     self:T(self.lid .. " AddScootZones")
@@ -1215,11 +1215,11 @@ do
   
     --- Function to set number of SAMs going active on a valid, detected thread
     -- @param #MANTIS self
-    -- @param #number Short Number of short-range systems activated, defaults to 1.
-    -- @param #number Mid Number of mid-range systems activated, defaults to 2.
-    -- @param #number Long Number of long-range systems activated, defaults to 2.
-    -- @param #number Classic (non-automode) Number of overall systems activated, defaults to 6.
-    -- @param #number Point Number of point defense and AAA systems activated, defaults to 6.
+    -- @param #number Short (Optional) Number of short-range systems activated, defaults to 2.
+    -- @param #number Mid (Optional) Number of mid-range systems activated, defaults to 2.
+    -- @param #number Long (Optional) Number of long-range systems activated, defaults to 1.
+    -- @param #number Classic (Optional) (non-automode) Number of overall systems activated, defaults to 6.
+    -- @param #number Point (Optional) Number of point defense and AAA systems activated, defaults to 6.
     -- @return #MANTIS self
   function MANTIS:SetMaxActiveSAMs(Short,Mid,Long,Classic,Point)
     self:T(self.lid .. "SetMaxActiveSAMs")
@@ -1341,7 +1341,7 @@ do
   --- Function to set Advanded Mode
   -- @param #MANTIS self
   -- @param #boolean onoff If true, will activate Advanced Mode
-  -- @param #number ratio [optional] Percentage to use for advanced mode, defaults to 100%
+  -- @param #number ratio (Optional)  Percentage to use for advanced mode, defaults to 100%
   -- @usage Advanced mode will *decrease* reactivity of MANTIS, if HQ and/or EWR network dies.  Set SAMs to RED state if both are dead.  Requires usage of an **HQ** object and the **dynamic** option.
   -- E.g. `mymantis:SetAdvancedMode(true, 90)`
   function MANTIS:SetAdvancedMode(onoff, ratio)

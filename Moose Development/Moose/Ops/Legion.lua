@@ -316,7 +316,7 @@ end
 
 --- Set verbosity level.
 -- @param #LEGION self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @param #number VerbosityLevel (Optional) Level of output (higher=more). Default 0.
 -- @return #LEGION self
 function LEGION:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
@@ -468,10 +468,10 @@ end
 -- @param #LEGION self
 -- @param Ops.Cohort#COHORT Cohort The cohort to be relocated.
 -- @param Ops.Legion#LEGION Legion The legion where the cohort is relocated to.
--- @param #number Delay Delay in seconds before relocation takes place. Default `nil`, *i.e.* ASAP.
--- @param #number NcarriersMin Min number of transport carriers in case the troops should be transported. Default `nil` for no transport.
+-- @param #number Delay (Optional) Delay in seconds before relocation takes place. Default `nil`, *i.e.* ASAP.
+-- @param #number NcarriersMin (Optional) Min number of transport carriers in case the troops should be transported. Default `nil` for no transport.
 -- @param #number NcarriersMax Max number of transport carriers.
--- @param #table TransportLegions Legion(s) assigned for transportation. Default is that transport assets can only be recruited from this legion.
+-- @param #table TransportLegions (Optional) Legion(s) assigned for transportation. Default is that transport assets can only be recruited from this legion.
 -- @return #LEGION self
 function LEGION:RelocateCohort(Cohort, Legion, Delay, NcarriersMin, NcarriersMax, TransportLegions)
 
@@ -1927,7 +1927,7 @@ end
 --- Check if an asset is currently on a mission (STARTED or EXECUTING).
 -- @param #LEGION self
 -- @param Functional.Warehouse#WAREHOUSE.Assetitem asset The asset.
--- @param #table MissionTypes Types on mission to be checked. Default all.
+-- @param #table MissionTypes (Optional) Types on mission to be checked. Default all.
 -- @return #boolean If true, asset has at least one mission of that type in the queue.
 function LEGION:IsAssetOnMission(asset, MissionTypes)
 
@@ -1980,7 +1980,7 @@ end
 
 --- Count payloads in stock.
 -- @param #LEGION self
--- @param #table MissionTypes Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
+-- @param #table MissionTypes (Optional) Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
 -- @param #table UnitTypes Types of units.
 -- @param #table Payloads Specific payloads to be counted only.
 -- @return #number Count of available payloads in stock.
@@ -2056,7 +2056,7 @@ end
 
 --- Count missions in mission queue.
 -- @param #LEGION self
--- @param #table MissionTypes Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
+-- @param #table MissionTypes (Optional) Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
 -- @param #boolean OnlyRunning If `true`, only count running missions.
 -- @return #number Number of missions that are not over yet.
 function LEGION:CountMissionsInQueue(MissionTypes, OnlyRunning)
@@ -2171,8 +2171,8 @@ end
 
 --- Count assets on mission.
 -- @param #LEGION self
--- @param #table MissionTypes Types on mission to be checked. Default all.
--- @param Ops.Cohort#COHORT Cohort Only count assets of this cohort. Default count assets of all cohorts.
+-- @param #table MissionTypes (Optional) Types on mission to be checked. Default all.
+-- @param Ops.Cohort#COHORT Cohort (Optional) Only count assets of this cohort. Default count assets of all cohorts.
 -- @return #number Number of pending and queued assets.
 -- @return #number Number of pending assets.
 -- @return #number Number of queued assets.
@@ -2215,7 +2215,7 @@ end
 
 --- Get assets on mission.
 -- @param #LEGION self
--- @param #table MissionTypes Types on mission to be checked. Default all.
+-- @param #table MissionTypes (Optional) Types on mission to be checked. Default all.
 -- @return #table Assets on pending requests.
 function LEGION:GetAssetsOnMission(MissionTypes)
 
@@ -2248,7 +2248,7 @@ end
 --- Get the unit types of this legion. These are the unit types of all assigned cohorts.
 -- @param #LEGION self
 -- @param #boolean onlyactive Count only the active ones.
--- @param #table cohorts Table of cohorts. Default all.
+-- @param #table cohorts (Optional) Table of cohorts. Default all.
 -- @return #table Table of unit types.
 function LEGION:GetAircraftTypes(onlyactive, cohorts)
 
@@ -2789,7 +2789,7 @@ end
 --- Recruit assets from Cohorts for the given parameters. **NOTE** that we set the `asset.isReserved=true` flag so it cannot be recruited by anyone else.
 -- @param #table Cohorts Cohorts included.
 -- @param #string MissionTypeRecruit Mission type for recruiting the cohort assets.
--- @param #string MissionTypeOpt Mission type for which the assets are optimized. Default is the same as `MissionTypeRecruit`.
+-- @param #string MissionTypeOpt (Optional) Mission type for which the assets are optimized. Default is the same as `MissionTypeRecruit`.
 -- @param #number NreqMin Minimum number of required assets.
 -- @param #number NreqMax Maximum number of required assets.
 -- @param DCS#Vec2 TargetVec2 Target position as 2D vector.

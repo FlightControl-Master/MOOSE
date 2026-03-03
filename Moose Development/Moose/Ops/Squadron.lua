@@ -92,7 +92,7 @@ SQUADRON.version="0.8.1"
 --- Create a new SQUADRON object and start the FSM.
 -- @param #SQUADRON self
 -- @param #string TemplateGroupName Name of the template group.
--- @param #number Ngroups Number of asset groups of this squadron. Default 3.
+-- @param #number Ngroups (Optional) Number of asset groups of this squadron. Default 3.
 -- @param #string SquadronName Name of the squadron, e.g. "VFA-37". Must be **unique**!
 -- @return #SQUADRON self
 function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
@@ -125,7 +125,7 @@ end
 
 --- Set number of units in groups.
 -- @param #SQUADRON self
--- @param #number nunits Number of units. Must be >=1 and <=4. Default 2.
+-- @param #number nunits (Optional) Number of units. Must be >=1 and <=4. Default 2.
 -- @return #SQUADRON self
 function SQUADRON:SetGrouping(nunits)
   self.ngrouping=nunits or 2
@@ -150,7 +150,7 @@ end
 --- Set takeoff type. All assets of this squadron will be spawned with cold (default) or hot engines.
 -- Spawning on runways is not supported.
 -- @param #SQUADRON self
--- @param #string TakeoffType Take off type: "Cold" (default) or "Hot" with engines on or "Air" for spawning in air.
+-- @param #string TakeoffType (Optional) Take off type: "Cold" (default) or "Hot" with engines on or "Air" for spawning in air.
 -- @return #SQUADRON self
 function SQUADRON:SetTakeoffType(TakeoffType)
   TakeoffType=TakeoffType or "Cold"
@@ -193,7 +193,7 @@ end
 --- Set despawn after landing. Aircraft will be despawned after the landing event.
 -- Can help to avoid DCS AI taxiing issues.
 -- @param #SQUADRON self
--- @param #boolean Switch If `true` (default), activate despawn after landing.
+-- @param #boolean Switch (Optional) If `true` (default), activate despawn after landing.
 -- @return #SQUADRON self
 function SQUADRON:SetDespawnAfterLanding(Switch)
   if Switch then
@@ -207,7 +207,7 @@ end
 --- Set despawn after holding. Aircraft will be despawned when they arrive at their holding position at the airbase.
 -- Can help to avoid DCS AI taxiing issues.
 -- @param #SQUADRON self
--- @param #boolean Switch If `true` (default), activate despawn after holding.
+-- @param #boolean Switch (Optional) If `true` (default), activate despawn after holding.
 -- @return #SQUADRON self
 function SQUADRON:SetDespawnAfterHolding(Switch)
   if Switch then
@@ -221,7 +221,7 @@ end
 
 --- Set low fuel threshold.
 -- @param #SQUADRON self
--- @param #number LowFuel Low fuel threshold in percent. Default 25.
+-- @param #number LowFuel (Optional) Low fuel threshold in percent. Default 25.
 -- @return #SQUADRON self
 function SQUADRON:SetFuelLowThreshold(LowFuel)
   self.fuellow=LowFuel or 25

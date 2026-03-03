@@ -302,7 +302,7 @@ end
 -- @param #SPAWNSTATIC self
 -- @param #number CallsignID (Optional) Callsign ID. Default 1 (="London").
 -- @param #number Frequency (Optional) Frequency in MHz. Default 127.5 MHz.
--- @param #number Modulation Modulation 0=AM, 1=FM. Defaults to 0
+-- @param #number Modulation (Optional) Modulation 0=AM, 1=FM. Defaults to 0
 -- @param #boolean DynamicSpawns If true, allow Dynamic Spawns
 -- @param #boolean DynamicHotStarts If true, and DynamicSpawns is true, then allow Dynamic Spawns with hot starts.
 -- @return #SPAWNSTATIC self

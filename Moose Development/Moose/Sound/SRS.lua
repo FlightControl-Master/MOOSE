@@ -793,10 +793,10 @@ end
 -- set the path to the exe file via @{#MSRS.SetPath}.
 --
 -- @param #MSRS self
--- @param #string Path Path to SRS directory. Default `C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio`.
--- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
--- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a #table of multiple modulations.
--- @param #string Backend Backend used: `MSRS.Backend.SRSEXE` (default) or `MSRS.Backend.GRPC`.
+-- @param #string Path (Optional) Path to SRS directory. Default `C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio`.
+-- @param #number Frequency (Optional) Radio frequency in MHz. Default 143.00 MHz. Can also be given as a #table of multiple frequencies.
+-- @param #number Modulation (Optional) Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a #table of multiple modulations.
+-- @param #string Backend (Optional) Backend used: `MSRS.Backend.SRSEXE` (default) or `MSRS.Backend.GRPC`.
 -- @return #MSRS self
 function MSRS:New(Path, Frequency, Modulation, Backend)
 
@@ -866,7 +866,7 @@ end
 -- - `MSRS.Backend.GRPC`: Via DCS-gRPC.
 --
 -- @param #MSRS self
--- @param #string Backend Backend used. Default is `MSRS.Backend.SRSEXE`.
+-- @param #string Backend (Optional) Backend used. Default is `MSRS.Backend.SRSEXE`.
 -- @return #MSRS self
 function MSRS:SetBackend(Backend)
   self:F( {Backend=Backend} )
@@ -944,7 +944,7 @@ end
 
 --- Set path to SRS install directory. More precisely, path to where the `DCS-SR-ExternalAudio.exe` is located.
 -- @param #MSRS self
--- @param #string Path Path to the directory, where the sound file is located. Default is `C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio`.
+-- @param #string Path (Optional) Path to the directory, where the sound file is located. Default is `C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio`.
 -- @return #MSRS self
 function MSRS:SetPath(Path)
   self:F( {Path=Path} )
@@ -993,7 +993,7 @@ end
 
 --- Set label.
 -- @param #MSRS self
--- @param #number Label. Default "ROBOT"
+-- @param #number Label (Optional) Label. Default "ROBOT"
 -- @return #MSRS self
 function MSRS:SetLabel(Label)
   self:F( {Label=Label} )
@@ -1010,7 +1010,7 @@ end
 
 --- Set port.
 -- @param #MSRS self
--- @param #number Port Port. Default 5002.
+-- @param #number Port (Optional) Port. Default 5002.
 -- @return #MSRS self
 function MSRS:SetPort(Port)
   self:F( {Port=Port} )
@@ -1028,7 +1028,7 @@ end
 
 --- Set coalition.
 -- @param #MSRS self
--- @param #number Coalition Coalition. Default 0.
+-- @param #number Coalition (Optional) Coalition. Default 0.
 -- @return #MSRS self
 function MSRS:SetCoalition(Coalition)
   self:F( {Coalition=Coalition} )
@@ -1114,7 +1114,7 @@ end
 
 --- Set gender.
 -- @param #MSRS self
--- @param #string Gender Gender: "male" or "female" (default).
+-- @param #string Gender (Optional) Gender: "male" or "female" (default).
 -- @return #MSRS self
 function MSRS:SetGender(Gender)
   self:F( {Gender=Gender} )
@@ -1153,7 +1153,7 @@ end
 --- Set to use a specific voice for a given provider. Note that this will override any gender and culture settings.
 -- @param #MSRS self
 -- @param #string Voice Voice.
--- @param #string Provider Provider. Default is as set by @{#MSRS.SetProvider}, which itself defaults to `MSRS.Provider.WINDOWS` if not set.
+-- @param #string Provider (Optional) Provider. Default is as set by @{#MSRS.SetProvider}, which itself defaults to `MSRS.Provider.WINDOWS` if not set.
 -- @return #MSRS self
 function MSRS:SetVoiceProvider(Voice, Provider)
   self:F( {Voice=Voice, Provider=Provider} )
@@ -1166,7 +1166,7 @@ end
 
 --- Set to use a specific voice if Microsoft Windows' native TTS is use as provider. Note that this will override any gender and culture settings.
 -- @param #MSRS self
--- @param #string Voice Voice. Default `"Microsoft Hazel Desktop"`.
+-- @param #string Voice (Optional) Voice. Default `"Microsoft Hazel Desktop"`.
 -- @return #MSRS self
 function MSRS:SetVoiceWindows(Voice)
   self:F( {Voice=Voice} )
@@ -1177,7 +1177,7 @@ end
 
 --- Set to use a specific voice if Google is use as provider. Note that this will override any gender and culture settings.
 -- @param #MSRS self
--- @param #string Voice Voice. Default `MSRS.Voices.Google.Standard.en_GB_Standard_A`.
+-- @param #string Voice (Optional) Voice. Default `MSRS.Voices.Google.Standard.en_GB_Standard_A`.
 -- @return #MSRS self
 function MSRS:SetVoiceGoogle(Voice)
   self:F( {Voice=Voice} )
@@ -1188,7 +1188,7 @@ end
 
 --- Set to use a specific voice if Piper is used as provider (only Hound-TTS backend). Note that this will override any gender and culture settings.
 -- @param #MSRS self
--- @param #string Voice [Piper Voices](https://rhasspy.github.io/piper-samples/). Default `"en_US-ryan-low"`.
+-- @param #string Voice (Optional) [Piper Voices](https://rhasspy.github.io/piper-samples/). Default `"en_US-ryan-low"`.
 -- @return #MSRS self
 function MSRS:SetVoicePiper(Voice)
   self:F( {Voice=Voice} )
@@ -1199,7 +1199,7 @@ end
 
 --- Set to use a specific voice if Microsoft Azure is use as provider (only DCS-gRPC backend). Note that this will override any gender and culture settings.
 -- @param #MSRS self
--- @param #string Voice [Azure Voice](https://learn.microsoft.com/azure/cognitive-services/speech-service/language-support). Default `"en-US-AriaNeural"`.
+-- @param #string Voice (Optional) [Azure Voice](https://learn.microsoft.com/azure/cognitive-services/speech-service/language-support). Default `"en-US-AriaNeural"`.
 -- @return #MSRS self
 function MSRS:SetVoiceAzure(Voice)
   self:F( {Voice=Voice} )
@@ -1210,7 +1210,7 @@ end
 
 --- Set to use a specific voice if Amazon Web Service is use as provider (only DCS-gRPC backend). Note that this will override any gender and culture settings.
 -- @param #MSRS self
--- @param #string Voice [AWS Voice](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html). Default `"Brian"`.
+-- @param #string Voice (Optional) [AWS Voice](https://docs.aws.amazon.com/polly/latest/dg/voicelist.html). Default `"Brian"`.
 -- @return #MSRS self
 function MSRS:SetVoiceAmazon(Voice)
   self:F( {Voice=Voice} )
@@ -1221,7 +1221,7 @@ end
 
 --- Get voice.
 -- @param #MSRS self
--- @param #string Provider Provider. Default is the currently set provider (`self.provider`).
+-- @param #string Provider (Optional) Provider. Default is the currently set provider (`self.provider`).
 -- @return #string Voice.
 function MSRS:GetVoice(Provider)
 
@@ -1396,7 +1396,7 @@ end
 
 --- Get provider options.
 -- @param #MSRS self
--- @param #string Provider Provider. Default is as set via @{#MSRS.SetProvider}.
+-- @param #string Provider (Optional) Provider. Default is as set via @{#MSRS.SetProvider}.
 -- @return #MSRS.ProviderOptions Provider options.
 function MSRS:GetProviderOptions(Provider)
   return self.poptions[Provider or self.provider] or {}
@@ -1718,7 +1718,7 @@ end
 -- @param #number volume Volume.
 -- @param #number speed Speed.
 -- @param #number port Port.
--- @param #string label Label, defaults to "ROBOT" (displayed sender name in the radio overlay of SRS) - No spaces allowed!
+-- @param #string label (Optional) Label, defaults to "ROBOT" (displayed sender name in the radio overlay of SRS) - No spaces allowed!
 -- @param Core.Point#COORDINATE coordinate Coordinate.
 -- @return #string Command.
 function MSRS:_GetCommand(freqs, modus, coal, gender, voice, culture, volume, speed, port, label, coordinate)
@@ -2020,9 +2020,9 @@ end
 -- @param #string Message The text to speak.
 -- @param #table Frequencies The table of frequencies to use.
 -- @param #table Modulations The table of modulations to use.
--- @param #number Volume The volume to use, defaults to 1.0.
--- @param #string Label The label to use, defaults to "MSRS".
--- @param #number Coalition The coalition to use.
+-- @param #number Volume (Optional) The volume to use, defaults to 1.0.
+-- @param #string Label (Optional) The label to use, defaults to "MSRS".
+-- @param #number Coalition (Optional) The coalition to use.
 -- @param Core.Point#COORDINATE Point (Optional) The point from which the voice is sent.
 -- @param #number Speed (Optional) How fast to speak, defaults to 1.0.
 -- @param #string Gender (Optional) Gender to use.
@@ -2162,8 +2162,8 @@ end
 --- Hound speech time calculator. Use to determine how long it takes to speak something out.
 --  @param MSRS self
 --  @param #string Message The message to measure. Can also be handed as string lenght.
---  @param #number Speed The speed to use, defaults to 1.0.
---  @param #boolean UseGoogle If to use google. Default: no.
+--  @param #number Speed (Optional) The speed to use, defaults to 1.0.
+--  @param #boolean UseGoogle (Optional) If to use google. Default: no.
 function MSRS:_HoundSpeechTime(Message,Speed,UseGoogle)
   local speed = Speed or 1.0
   local speechtime = HoundTTS.getSpeechTime(Message, speed, UseGoogle)
@@ -2176,8 +2176,8 @@ end
 
 --- Get central SRS configuration to be able to play tts over SRS radio using the `DCS-SR-ExternalAudio.exe`.
 -- @param #MSRS self
--- @param #string Path Path to config file, defaults to "C:\Users\<yourname>\Saved Games\DCS\Config"
--- @param #string Filename File to load, defaults to "Moose_MSRS.lua"
+-- @param #string Path (Optional) Path to config file, defaults to "C:\Users\<yourname>\Saved Games\DCS\Config"
+-- @param #string Filename (Optional) File to load, defaults to "Moose_MSRS.lua"
 -- @return #boolean success
 -- @usage
 --  0) Benefits: Centralize configuration of SRS, keep paths and keys out of the mission source code, making it safer and easier to move missions to/between servers,
@@ -2320,7 +2320,7 @@ end
 -- * (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
 --
 -- @param #number length can also be passed as #string
--- @param #number speed Defaults to 1.0
+-- @param #number speed (Optional) Defaults to 1.0
 -- @param #boolean isGoogle We're using Google TTS
 function MSRS.getSpeechTime(length,speed,isGoogle)
 
@@ -2477,22 +2477,22 @@ end
 --- Create a new transmission and add it to the radio queue.
 -- @param #MSRSQUEUE self
 -- @param #string text Text to play.
--- @param #number duration Duration in seconds the file lasts. Default is determined by number of characters of the text message.
+-- @param #number duration (Optional) Duration in seconds the file lasts. Default is determined by number of characters of the text message.
 -- @param Sound.SRS#MSRS msrs MOOSE SRS object.
--- @param #number tstart Start time (abs) seconds. Default now.
--- @param #number interval Interval in seconds after the last transmission finished.
+-- @param #number tstart (Optional) Start time (abs) seconds. Default now.
+-- @param #number interval (Optional) Interval in seconds after the last transmission finished.
 -- @param #table subgroups Groups that should receive the subtiltle.
 -- @param #string subtitle Subtitle displayed when the message is played.
--- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
--- @param #number frequency Radio frequency if other than MSRS default.
--- @param #number modulation Radio modulation if other then MSRS default.
--- @param #string gender Gender of the voice
--- @param #string culture Culture of the voice
--- @param #string voice Specific voice
--- @param #number volume Volume setting
--- @param #string label Label to be used
--- @param Core.Point#COORDINATE coordinate Coordinate to be used
--- @param #number speed Speed to be used
+-- @param #number subduration (Optional) Duration [sec] of the subtitle being displayed. Default 5 sec.
+-- @param #number frequency (Optional) Radio frequency if other than MSRS default.
+-- @param #number modulation (Optional) Radio modulation if other then MSRS default.
+-- @param #string gender (Optional) Gender of the voice
+-- @param #string culture C(Optional) ulture of the voice
+-- @param #string voice (Optional) Specific voice
+-- @param #number volume (Optional) Volume setting
+-- @param #string label (Optional) Label to be used
+-- @param Core.Point#COORDINATE coordinate (Optional) Coordinate to be used
+-- @param #number speed (Optional) Speed to be used
 -- @return #MSRSQUEUE.Transmission Radio transmission table.
 function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label,coordinate,speed)
   self:T({Text=text, Dur=duration, start=tstart, int=interval, sub=subgroups, subt=subtitle, sudb=subduration, F=frequency, M=modulation, G=gender, C=culture, V=voice, Vol=volume, L=label, S=speed})

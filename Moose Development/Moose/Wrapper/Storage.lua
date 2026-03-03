@@ -292,7 +292,7 @@ end
 
 --- Set verbosity level.
 -- @param #STORAGE self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @param #number VerbosityLevel (Optional) Level of output (higher=more). Default 0.
 -- @return #STORAGE self
 function STORAGE:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
@@ -816,7 +816,7 @@ end
 -- @param #STORAGE self
 -- @param #string Path The path to use. Use double backslashes \\\\ on Windows filesystems.
 -- @param #string Filename The name of the file.
--- @param #number Interval The interval, start after this many seconds and repeat every interval seconds. Defaults to 300.
+-- @param #number Interval (Optional) The interval, start after this many seconds and repeat every interval seconds. Defaults to 300.
 -- @param #boolean LoadOnce If LoadOnce is true or nil, we try to load saved storage first.
 -- @return #STORAGE self
 function STORAGE:StartAutoSave(Path,Filename,Interval,LoadOnce)

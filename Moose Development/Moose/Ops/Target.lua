@@ -400,7 +400,7 @@ end
 
 --- Set priority of the target.
 -- @param #TARGET self
--- @param #number Priority Priority of the target. Default 50.
+-- @param #number Priority (Optional) Priority of the target. Default 50.
 -- @return #TARGET self
 function TARGET:SetPriority(Priority)
   self.prio=Priority or 50
@@ -409,7 +409,7 @@ end
 
 --- Set importance of the target.
 -- @param #TARGET self
--- @param #number Importance Importance of the target. Default `nil`.
+-- @param #number Importance (Optional) Importance of the target. Default `nil`.
 -- @return #TARGET self
 function TARGET:SetImportance(Importance)
   self.importance=Importance
@@ -508,10 +508,10 @@ end
 --- Add mission type and number of required assets to resource.
 -- @param #TARGET self
 -- @param #string MissionType Mission Type.
--- @param #number Nmin Min number of required assets.
--- @param #number Nmax Max number of requried assets.
+-- @param #number Nmin (Optional) Min number of required assets. Default is 1.
+-- @param #number Nmax (Optional) Max number of requried assets. Default is 1.
 -- @param #table Attributes Generalized attribute(s).
--- @param #table Properties DCS attribute(s). Default `nil`.
+-- @param #table Properties (Optional) DCS attribute(s). Default `nil`.
 -- @return #TARGET.Resource The resource table.
 function TARGET:AddResource(MissionType, Nmin, Nmax, Attributes, Properties)
   

@@ -362,8 +362,8 @@ CHIEF.version="0.7.0"
 --- Create a new CHIEF object and start the FSM.
 -- @param #CHIEF self
 -- @param #number Coalition Coalition side, e.g. `coaliton.side.BLUE`. Can also be passed as a string "red", "blue" or "neutral".
--- @param Core.Set#SET_GROUP AgentSet Set of agents (groups) providing intel. Default is an empty set.
--- @param #string Alias An *optional* alias how this object is called in the logs etc.
+-- @param Core.Set#SET_GROUP AgentSet (Optional) Set of agents (groups) providing intel. Default is an empty set.
+-- @param #string Alias (Optional) An *optional* alias how this object is called in the logs etc.
 -- @return #CHIEF self
 function CHIEF:New(Coalition, AgentSet, Alias)
 
@@ -739,8 +739,8 @@ end
 --- Set a threat level range that will be engaged. Threat level is a number between 0 and 10, where 10 is a very dangerous threat.
 -- Targets with threat level 0 are usually harmless.
 -- @param #CHIEF self
--- @param #number ThreatLevelMin Min threat level. Default 1.
--- @param #number ThreatLevelMax Max threat level. Default 10.
+-- @param #number ThreatLevelMin (Optional) Min threat level. Default 1.
+-- @param #number ThreatLevelMax (Optional) Max threat level. Default 10.
 -- @return #CHIEF self
 function CHIEF:SetThreatLevelRange(ThreatLevelMin, ThreatLevelMax)
 
@@ -782,10 +782,10 @@ end
 --- Create a new resource list of required assets.
 -- @param #CHIEF self
 -- @param #string MissionType The mission type.
--- @param #number Nmin Min number of required assets. Default 1.
--- @param #number Nmax Max number of requried assets. Default 1.
--- @param #table Attributes Generalized attribute(s). Default `nil`.
--- @param #table Properties DCS attribute(s). Default `nil`.
+-- @param #number Nmin (Optional) Min number of required assets. Default 1.
+-- @param #number Nmax (Optional) Max number of requried assets. Default 1.
+-- @param #table Attributes (Optional) Generalized attribute(s). Default `nil`.
+-- @param #table Properties (Optional) DCS attribute(s). Default `nil`.
 -- @param #table Categories Group categories.
 -- @return #CHIEF.Resources The newly created resource list table.
 -- @return #CHIEF.Resource The resource object that was added.
@@ -802,8 +802,8 @@ end
 -- @param #CHIEF self
 -- @param #CHIEF.Resources Resource List of resources.
 -- @param #string MissionType Mission Type.
--- @param #number Nmin Min number of required assets. Default 1.
--- @param #number Nmax Max number of requried assets. Default equal `Nmin`.
+-- @param #number Nmin (Optional) Min number of required assets. Default 1.
+-- @param #number Nmax (Optional) Max number of requried assets. Default equal `Nmin`.
 -- @param #table Attributes Generalized attribute(s).
 -- @param #table Properties DCS attribute(s). Default `nil`.
 -- @param #table Categories Group categories.
@@ -845,8 +845,8 @@ end
 --- Define which assets will be transported and define the number and attributes/properties of the cargo carrier assets.
 -- @param #CHIEF self
 -- @param #CHIEF.Resource Resource Resource table.
--- @param #number Nmin Min number of required assets. Default 1.
--- @param #number Nmax Max number of requried assets. Default is equal to `Nmin`.
+-- @param #number Nmin (Optional) Min number of required assets. Default 1.
+-- @param #number Nmax (Optional) Max number of requried assets. Default is equal to `Nmin`.
 -- @param #table CarrierAttributes Generalized attribute(s) of the carrier assets.
 -- @param #table CarrierProperties DCS attribute(s) of the carrier assets.
 -- @param #table CarrierCategories Group categories of the carrier assets.
@@ -884,12 +884,12 @@ end
 
 --- Set number of assets requested for detected targets.
 -- @param #CHIEF self
--- @param #number NassetsMin Min number of assets. Should be at least 1. Default 1.
--- @param #number NassetsMax Max number of assets. Default is same as `NassetsMin`.
--- @param #number ThreatLevel Only apply this setting if the target threat level is greater or equal this number. Default 0.
+-- @param #number NassetsMin (Optional) Min number of assets. Should be at least 1. Default 1.
+-- @param #number NassetsMax (Optional) Max number of assets. Default is same as `NassetsMin`.
+-- @param #number ThreatLevel (Optional) Only apply this setting if the target threat level is greater or equal this number. Default 0.
 -- @param #string TargetCategory Only apply this setting if the target is of this category, e.g. `TARGET.Category.AIRCRAFT`.
 -- @param #string MissionType Only apply this setting for this mission type, e.g. `AUFTRAG.Type.INTERCEPT`.
--- @param #string Nunits Only apply this setting if the number of enemy units is greater or equal this number.
+-- @param #string Nunits (Optional) Only apply this setting if the number of enemy units is greater or equal this number. Defaults to 1.
 -- @param #string Defcon Only apply this setting if this defense condition is in place.
 -- @param #string Strategy Only apply this setting if this strategy is in currently. place.
 -- @return #CHIEF self
@@ -1038,8 +1038,8 @@ end
 
 --- Set limit for number of total or specific missions to be executed simultaniously.
 -- @param #CHIEF self
--- @param #number Limit Number of max. mission of this type. Default 10.
--- @param #string MissionType Type of mission, e.g. `AUFTRAG.Type.BAI`. Default `"Total"` for total number of missions.
+-- @param #number Limit (Optional) Number of max. mission of this type. Default 10.
+-- @param #string MissionType (Optional) Type of mission, e.g. `AUFTRAG.Type.BAI`. Default `"Total"` for total number of missions.
 -- @return #CHIEF self
 function CHIEF:SetLimitMission(Limit, MissionType)
   self.commander:SetLimitMission(Limit, MissionType)
@@ -1065,7 +1065,7 @@ end
 
 --- Set strategy.
 -- @param #CHIEF self
--- @param #string Strategy Strategy. See @{#CHIEF.strategy}, e.g. `CHIEF.Strategy.DEFENSIVE` (default).
+-- @param #string Strategy (Optional) Strategy. See @{#CHIEF.strategy}, e.g. `CHIEF.Strategy.DEFENSIVE` (default).
 -- @return #CHIEF self
 function CHIEF:SetStrategy(Strategy)
 
@@ -1295,8 +1295,8 @@ end
 -- 
 -- @param #CHIEF self
 -- @param Ops.OpsZone#OPSZONE OpsZone OPS zone object.
--- @param #number Priority Priority. Default 50.
--- @param #number Importance Importance. Default `#nil`.
+-- @param #number Priority (Optional) Priority. Default 50.
+-- @param #number Importance (Optional) Importance. Default `#nil`.
 -- @param #CHIEF.Resources ResourceOccupied (Optional) Resources used then zone is occupied by the enemy.
 -- @param #CHIEF.Resources ResourceEmpty (Optional) Resources used then zone is empty.
 -- @return #CHIEF.StrategicZone The strategic zone.
@@ -1393,7 +1393,7 @@ end
 --- Remove strategically important zone. All runing missions are cancelled.
 -- @param #CHIEF self
 -- @param Ops.OpsZone#OPSZONE OpsZone OPS zone object.
--- @param #number Delay Delay in seconds before the zone is removed. Default immidiately.
+-- @param #number Delay (Optional) Delay in seconds before the zone is removed. Default immidiately.
 -- @return #CHIEF self
 function CHIEF:RemoveStrategicZone(OpsZone, Delay)
 
@@ -1467,10 +1467,10 @@ end
 --- Add a CAP zone. Flights will engage detected targets inside this zone. 
 -- @param #CHIEF self
 -- @param Core.Zone#ZONE Zone CAP Zone. Has to be a circular zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @param #number Altitude (Optional) Orbit altitude in feet. Default is 12,000 feet.
+-- @param #number Speed (Optional) Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading(Optional)  Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg (Optional) Length of race-track in NM. Default 30 NM.
 -- @return Ops.Airwing#AIRWING.PatrolZone The CAP zone data.
 function CHIEF:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
 
@@ -1483,10 +1483,10 @@ end
 --- Add a GCI CAP.
 -- @param #CHIEF self
 -- @param Core.Zone#ZONE Zone Zone, where the flight orbits.
--- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @param #number Altitude (Optional) Orbit altitude in feet. Default is 12,000 feet.
+-- @param #number Speed (Optional) Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading (Optional) Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg (Optional) Length of race-track in NM. Default 30 NM.
 -- @return Ops.Airwing#AIRWING.PatrolZone The CAP zone data.
 function CHIEF:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
 
@@ -1510,10 +1510,10 @@ end
 --- Add an AWACS zone.
 -- @param #CHIEF self
 -- @param Core.Zone#ZONE Zone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @param #number Altitude (Optional) Orbit altitude in feet. Default is 12,000 feet.
+-- @param #number Speed (Optional) Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading (Optional) Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg (Optional) Length of race-track in NM. Default 30 NM.
 -- @return Ops.Airwing#AIRWING.PatrolZone The AWACS zone data.
 function CHIEF:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
 
@@ -1537,10 +1537,10 @@ end
 --- Add a refuelling tanker zone.
 -- @param #CHIEF self
 -- @param Core.Zone#ZONE Zone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @param #number Altitude (Optional) Orbit altitude in feet. Default is 12,000 feet.
+-- @param #number Speed (Optional) Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading (Optional) Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg (Optional) Length of race-track in NM. Default 30 NM.
 -- @param #number RefuelSystem Refuelling system.
 -- @return Ops.Airwing#AIRWING.TankerZone The tanker zone data.
 function CHIEF:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSystem)
