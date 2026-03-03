@@ -2456,7 +2456,7 @@ end
 --- Set carrier controlled area (CCA).
 -- This is a large zone around the carrier, which is constantly updated wrt the carrier position.
 -- @param #AIRBOSS self
--- @param #number Radius Radius of zone in nautical miles (NM). Default 50 NM.
+-- @param #number Radius (Optional) Radius of zone in nautical miles (NM). Default 50 NM.
 -- @return #AIRBOSS self
 function AIRBOSS:SetCarrierControlledArea( Radius )
 
@@ -2470,7 +2470,7 @@ end
 --- Set carrier controlled zone (CCZ).
 -- This is a small zone (usually 5 NM radius) around the carrier, which is constantly updated wrt the carrier position.
 -- @param #AIRBOSS self
--- @param #number Radius Radius of zone in nautical miles (NM). Default 5 NM.
+-- @param #number Radius (Optional) Radius of zone in nautical miles (NM). Default 5 NM.
 -- @return #AIRBOSS self
 function AIRBOSS:SetCarrierControlledZone( Radius )
 
@@ -2483,7 +2483,7 @@ end
 
 --- Set distance up to which water ahead is scanned for collisions.
 -- @param #AIRBOSS self
--- @param #number Distance Distance in NM. Default 5 NM.
+-- @param #number Distance (Optional) Distance in NM. Default 5 NM.
 -- @return #AIRBOSS self
 function AIRBOSS:SetCollisionDistance( Distance )
   self.collisiondist = UTILS.NMToMeters( Distance or 5 )
@@ -2492,7 +2492,7 @@ end
 
 --- Set the default recovery case.
 -- @param #AIRBOSS self
--- @param #number Case Case of recovery. Either 1, 2 or 3. Default 1.
+-- @param #number Case (Optional) Case of recovery. Either 1, 2 or 3. Default 1.
 -- @return #AIRBOSS self
 function AIRBOSS:SetRecoveryCase( Case )
 
@@ -2509,7 +2509,7 @@ end
 -- Usually, this is +-15 or +-30 degrees. You should not use and offset angle >= 90 degrees, because this will cause a devision by zero in some of the equations used to calculate the approach corridor.
 -- So best stick to the defaults up to 30 degrees.
 -- @param #AIRBOSS self
--- @param #number Offset Offset angle in degrees. Default 0.
+-- @param #number Offset (Optional) Offset angle in degrees. Default 0.
 -- @return #AIRBOSS self
 function AIRBOSS:SetHoldingOffsetAngle( Offset )
 
@@ -2524,10 +2524,10 @@ end
 
 --- Enable F10 menu to manually start recoveries.
 -- @param #AIRBOSS self
--- @param #number Duration Default duration of the recovery in minutes. Default 30 min.
--- @param #number WindOnDeck Default wind on deck in knots. Default 25 knots.
--- @param #boolean Uturn U-turn after recovery window closes on=true or off=false/nil. Default off.
--- @param #number Offset Relative Marshal radial in degrees for Case II/III recoveries. Default 30°.
+-- @param #number Duration (Optional) Default duration of the recovery in minutes. Default 30 min.
+-- @param #number WindOnDeck(Optional)  Default wind on deck in knots. Default 25 knots.
+-- @param #boolean Uturn (Optional) U-turn after recovery window closes on=true or off=false/nil. Default off.
+-- @param #number Offset (Optional) Relative Marshal radial in degrees for Case II/III recoveries. Default 30°.
 -- @return #AIRBOSS self
 function AIRBOSS:SetMenuRecovery( Duration, WindOnDeck, Uturn, Offset )
 
@@ -2547,13 +2547,13 @@ end
 
 --- Add aircraft recovery time window and recovery case.
 -- @param #AIRBOSS self
--- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
--- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
--- @param #number case Recovery case for that time slot. Number between one and three.
--- @param #number holdingoffset Only for CASE II/III: Angle in degrees the holding pattern is offset.
+-- @param #string starttime (Optional) Start time, e.g. "8:00" for eight o'clock. Default now.
+-- @param #string stoptime (Optional) Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
+-- @param #number case (Optional) Recovery case for that time slot. Number between one and three. Defaults to 1.
+-- @param #number holdingoffset (Optional) Only for CASE II/III: Angle in degrees the holding pattern is offset. Defaults to 0.
 -- @param #boolean turnintowind If true, carrier will turn into the wind 5 minutes before the recovery window opens.
--- @param #number speed Speed in knots during turn into wind leg.
--- @param #boolean uturn If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
+-- @param #number speed (Optional) Speed in knots during turn into wind leg. Default is 20.
+-- @param #boolean uturn (Optional) If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
 -- @return #AIRBOSS.Recovery Recovery window.
 function AIRBOSS:AddRecoveryWindow( starttime, stoptime, case, holdingoffset, turnintowind, speed, uturn )
 
@@ -2735,7 +2735,7 @@ end
 
 --- Set time before carrier turns and recovery window opens.
 -- @param #AIRBOSS self
--- @param #number Interval Time interval in seconds. Default 300 sec.
+-- @param #number Interval (Optional) Time interval in seconds. Default 300 sec.
 -- @return #AIRBOSS self
 function AIRBOSS:SetRecoveryTurnTime( Interval )
   self.dTturn = Interval or 300
@@ -2744,7 +2744,7 @@ end
 
 --- Set multiplayer environment wire correction.
 -- @param #AIRBOSS self
--- @param #number Dcorr Correction distance in meters. Default 12 m.
+-- @param #number Dcorr (Optional) Correction distance in meters. Default 12 m.
 -- @return #AIRBOSS self
 function AIRBOSS:SetMPWireCorrection( Dcorr )
   self.mpWireCorrection = Dcorr or 12
@@ -2753,7 +2753,7 @@ end
 
 --- Set time interval for updating queues and other stuff.
 -- @param #AIRBOSS self
--- @param #number TimeInterval Time interval in seconds. Default 30 sec.
+-- @param #number TimeInterval (Optional) Time interval in seconds. Default 30 sec.
 -- @return #AIRBOSS self
 function AIRBOSS:SetQueueUpdateTime( TimeInterval )
   self.dTqueue = TimeInterval or 30
@@ -2762,7 +2762,7 @@ end
 
 --- Set time interval between LSO calls. Optimal time in the groove is ~16 seconds. So the default of 4 seconds gives around 3-4 correction calls in the groove.
 -- @param #AIRBOSS self
--- @param #number TimeInterval Time interval in seconds between LSO calls. Default 4 sec.
+-- @param #number TimeInterval (Optional) Time interval in seconds between LSO calls. Default 4 sec.
 -- @return #AIRBOSS self
 function AIRBOSS:SetLSOCallInterval( TimeInterval )
   self.LSOdT = TimeInterval or 4
@@ -2835,7 +2835,7 @@ end
 
 --- Give AI aircraft the refueling task if a recovery tanker is present or send them to the nearest divert airfield.
 -- @param #AIRBOSS self
--- @param #number LowFuelThreshold Low fuel threshold in percent. AI will go refueling if their fuel level drops below this value. Default 10 %.
+-- @param #number LowFuelThreshold (Optional) Low fuel threshold in percent. AI will go refueling if their fuel level drops below this value. Default 10 %.
 -- @return #AIRBOSS self
 function AIRBOSS:SetRefuelAI( LowFuelThreshold )
   self.lowfuelAI = LowFuelThreshold or 10
@@ -2844,7 +2844,7 @@ end
 
 --- Set max altitude to register flights in the initial zone. Aircraft above this altitude will not be registerered.
 -- @param #AIRBOSS self
--- @param #number MaxAltitude Max altitude in feet. Default 1300 ft.
+-- @param #number MaxAltitude (Optional) Max altitude in feet. Default 1300 ft.
 -- @return #AIRBOSS self
 function AIRBOSS:SetInitialMaxAlt( MaxAltitude )
   self.initialmaxalt = UTILS.FeetToMeters( MaxAltitude or 1300 )
@@ -2878,7 +2878,7 @@ end
 
 --- Set time interval for updating player status and other things.
 -- @param #AIRBOSS self
--- @param #number TimeInterval Time interval in seconds. Default 0.5 sec.
+-- @param #number TimeInterval (Optional) Time interval in seconds. Default 0.5 sec.
 -- @return #AIRBOSS self
 function AIRBOSS:SetStatusUpdateTime( TimeInterval )
   self.dTstatus = TimeInterval or 0.5
@@ -2887,7 +2887,7 @@ end
 
 --- Set duration how long messages are displayed to players.
 -- @param #AIRBOSS self
--- @param #number Duration Duration in seconds. Default 10 sec.
+-- @param #number Duration (Optional) Duration in seconds. Default 10 sec.
 -- @return #AIRBOSS self
 function AIRBOSS:SetDefaultMessageDuration( Duration )
   self.Tmessage = Duration or 10
@@ -2978,7 +2978,7 @@ end
 --- Set Case I Marshal radius. This is the radius of the valid zone around "the post" aircraft are supposed to be holding in the Case I Marshal stack.
 -- The post is 2.5 NM port of the carrier.
 -- @param #AIRBOSS self
--- @param #number Radius Radius in NM. Default 2.8 NM, which gives a diameter of 5.6 NM.
+-- @param #number Radius (Optional) Radius in NM. Default 2.8 NM, which gives a diameter of 5.6 NM.
 -- @return #AIRBOSS self
 function AIRBOSS:SetMarshalRadius( Radius )
   self.marshalradius = UTILS.NMToMeters( Radius or 2.8 )
@@ -3112,9 +3112,9 @@ end
 --- Set up SRS for usage without sound files
 -- @param #AIRBOSS self
 -- @param #string PathToSRS Path to SRS folder, e.g. "C:\\Program Files\\DCS-SimpleRadio\\ExternalAudio".
--- @param #number Port Port of the SRS server, defaults to 5002.
--- @param #string Culture (Optional, Airboss Culture)  Culture, defaults to "en-US".
--- @param #string Gender (Optional, Airboss Gender)  Gender, e.g. "male" or "female". Defaults to "male".
+-- @param #number Port (Optional) Port of the SRS server, defaults to 5002.
+-- @param #string Culture (Optional) (Optional, Airboss Culture)  Culture, defaults to "en-US".
+-- @param #string Gender (Optional) (Optional, Airboss Gender)  Gender, e.g. "male" or "female". Defaults to "male".
 -- @param #string Voice (Optional, Airboss Voice) Set to use a specific voice. Will **override gender and culture** settings.
 -- @param #string GoogleCreds (Optional) Path to Google credentials, e.g. "C:\\Program Files\\DCS-SimpleRadio-Standalone\\yourgooglekey.json".
 -- @param #number Volume (Optional) E.g. 0.75. Defaults to 1.0 (loudest).
@@ -3362,7 +3362,7 @@ end
 
 --- Set number of aircraft units, which can be in the landing pattern before the pattern is full.
 -- @param #AIRBOSS self
--- @param #number nmax Max number. Default 4. Minimum is 1, maximum is 6.
+-- @param #number nmax (Optional) Max number. Default 4. Minimum is 1, maximum is 6.
 -- @return #AIRBOSS self
 function AIRBOSS:SetMaxLandingPattern( nmax )
   nmax = nmax or 4
@@ -3375,7 +3375,7 @@ end
 --- Set number available Case I Marshal stacks. If Marshal stacks are full, flights requesting Marshal will be told to hold outside 10 NM zone until a stack becomes available again.
 -- Marshal stacks for Case II/III are unlimited.
 -- @param #AIRBOSS self
--- @param #number nmax Max number of stacks available to players and AI flights. Default 3, i.e. angels 2, 3, 4. Minimum is 1.
+-- @param #number nmax (Optional) Max number of stacks available to players and AI flights. Default 3, i.e. angels 2, 3, 4. Minimum is 1.
 -- @return #AIRBOSS self
 function AIRBOSS:SetMaxMarshalStacks( nmax )
   self.Nmaxmarshal = nmax or 3
@@ -3397,7 +3397,7 @@ end
 
 --- Set maximum distance up to which section members are allowed (default: 100 meters).
 -- @param #AIRBOSS self
--- @param #number dmax Max distance in meters (default 100 m). Minimum is 10 m, maximum is 5000 m.
+-- @param #number dmax (Optional) Max distance in meters (default 100 m). Minimum is 10 m, maximum is 5000 m.
 -- @return #AIRBOSS self
 function AIRBOSS:SetMaxSectionDistance( dmax )
     if dmax then
@@ -3413,7 +3413,7 @@ end
 
 --- Set max number of flights per stack. All members of a section count as one "flight".
 -- @param #AIRBOSS self
--- @param #number nmax Number of max allowed flights per stack. Default is two. Minimum is one, maximum is 4.
+-- @param #number nmax (Optional) Number of max allowed flights per stack. Default is two. Minimum is one, maximum is 4.
 -- @return #AIRBOSS self
 function AIRBOSS:SetMaxFlightsPerStack( nmax )
   nmax = nmax or 2
@@ -3433,7 +3433,7 @@ end
 
 --- Will play the inbound calls, commencing, initial, etc. from the player when requesteing marshal
 -- @param #AIRBOSS self
--- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
+-- @param #AIRBOSS status (Optional) Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
 -- @return #AIRBOSS self
 function AIRBOSS:SetExtraVoiceOvers(status)
   self.xtVoiceOvers=status
@@ -3442,7 +3442,7 @@ end
 
 --- Will simulate the inbound call, commencing, initial, etc from the AI when requested by Airboss
 -- @param #AIRBOSS self
--- @param #AIRBOSS status Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
+-- @param #AIRBOSS status (Optional) Boolean to activate (true) / deactivate (false) the radio inbound calls (default is ON)
 -- @return #AIRBOSS self
 function AIRBOSS:SetExtraVoiceOversAI(status)
   self.xtVoiceOversAI=status
@@ -3481,7 +3481,7 @@ end
 -- * "Naval Aviator" = @{#AIRBOSS.Difficulty.Normal}
 -- * "TOPGUN Graduate" = @{#AIRBOSS.Difficulty.Hard}
 -- @param #AIRBOSS self
--- @param #string skill Player skill. Default "Naval Aviator".
+-- @param #string skill (Optional) Player skill. Default "Naval Aviator".
 -- @return #AIRBOSS self
 function AIRBOSS:SetDefaultPlayerSkill( skill )
 
@@ -3507,8 +3507,8 @@ end
 
 --- Enable auto save of player results each time a player is *finally* graded. *Finally* means after the player landed on the carrier! After intermediate passes (bolter or waveoff) the stats are *not* saved.
 -- @param #AIRBOSS self
--- @param #string path Path where to save the asset data file. Default is the DCS root installation directory or your "Saved Games\\DCS" folder if lfs was desanitized.
--- @param #string filename File name. Default is generated automatically from airboss carrier name/alias.
+-- @param #string path (Optional) Path where to save the asset data file. Default is the DCS root installation directory or your "Saved Games\\DCS" folder if lfs was desanitized.
+-- @param #string filename (Optional) File name. Default is generated automatically from airboss carrier name/alias.
 -- @return #AIRBOSS self
 function AIRBOSS:SetAutoSave( path, filename )
   self.autosave = true
@@ -3540,7 +3540,7 @@ end
 
 --- Set the magnetic declination (or variation). By default this is set to the standard declination of the map.
 -- @param #AIRBOSS self
--- @param #number declination Declination in degrees or nil for default declination of the map.
+-- @param #number declination (Optional) Declination in degrees or nil for default declination of the map.
 -- @return #AIRBOSS self
 function AIRBOSS:SetMagneticDeclination( declination )
   self.magvar = declination or UTILS.GetMagneticDeclination()
@@ -3559,8 +3559,8 @@ end
 --- Set FunkMan socket. LSO grades and trap sheets will be send to your Discord bot.
 -- **Requires running FunkMan program**.
 -- @param #AIRBOSS self
--- @param #number Port Port. Default `10042`.
--- @param #string Host Host. Default `"127.0.0.1"`.
+-- @param #number Port (Optional) Port. Default `10042`.
+-- @param #string Host (Optional) Host. Default `"127.0.0.1"`.
 -- @return #AIRBOSS self
 function AIRBOSS:SetFunkManOn(Port, Host)
 
@@ -3571,7 +3571,7 @@ end
 
 --- Get next time the carrier will start recovering aircraft.
 -- @param #AIRBOSS self
--- @param #boolean InSeconds If true, abs. mission time seconds is returned. Default is a clock #string.
+-- @param #boolean InSeconds (Optional) If true, abs. mission time seconds is returned. Default is a clock #string.
 -- @return #string Clock start (or start time in abs. seconds).
 -- @return #string Clock stop (or stop time in abs. seconds).
 function AIRBOSS:GetNextRecoveryTime( InSeconds )
@@ -6734,7 +6734,7 @@ end
 --- Get marshal altitude and two positions of a counter-clockwise race track pattern.
 -- @param #AIRBOSS self
 -- @param #number stack Assigned stack number. Counting starts at one, i.e. stack=1 is the first stack.
--- @param #number case Recovery case. Default is self.case.
+-- @param #number case (Optional) Recovery case. Default is self.case.
 -- @return #number Holding altitude in meters.
 -- @return Core.Point#COORDINATE First race track coordinate.
 -- @return Core.Point#COORDINATE Second race track coordinate.
@@ -7095,8 +7095,8 @@ end
 --- Get next free Marshal stack. Depending on AI/human and recovery case.
 -- @param #AIRBOSS self
 -- @param #boolean ai If true, get a free stack for an AI flight group.
--- @param #number case Recovery case. Default current (self) case in progress.
--- @param #boolean empty Return lowest stack that is completely empty.
+-- @param #number case (Optional) Recovery case. Default current (self) case in progress.
+-- @param #boolean empty (Optional) Return lowest stack that is completely empty.
 -- @return #number Lowest free stack available for the given case or nil if all Case I stacks are taken.
 function AIRBOSS:_GetFreeStack( ai, case, empty )
 
@@ -7185,7 +7185,7 @@ end
 --- Get next free Marshal stack. Depending on AI/human and recovery case.
 -- @param #AIRBOSS self
 -- @param #boolean ai If true, get a free stack for an AI flight group.
--- @param #number case Recovery case. Default current (self) case in progress.
+-- @param #number case (Optional) Recovery case. Default current (self) case in progress.
 -- @param #boolean empty Return lowest stack that is completely empty.
 -- @return #number Lowest free stack available for the given case or nil if all Case I stacks are taken.
 function AIRBOSS:_GetFreeStack_Old( ai, case, empty )
@@ -7253,7 +7253,7 @@ end
 --- Get number of (airborne) units in a flight.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.FlightGroup flight The flight group.
--- @param #boolean onground If true, include units on the ground. By default only airborne units are counted.
+-- @param #boolean onground (Optional) If true, include units on the ground. By default only airborne units are counted.
 -- @return #number Number of units in flight including section members.
 -- @return #number Number of units in flight excluding section members.
 -- @return #number Number of section members.
@@ -10958,9 +10958,9 @@ end
 
 --- Get groove zone.
 -- @param #AIRBOSS self
--- @param #number l Length of the groove in NM. Default 1.5 NM.
--- @param #number w Width of the groove in NM. Default 0.25 NM.
--- @param #number b Width of the beginning in NM. Default 0.10 NM.
+-- @param #number l (Optional) Length of the groove in NM. Default 1.5 NM.
+-- @param #number w (Optional) Width of the groove in NM. Default 0.25 NM.
+-- @param #number b (Optional) Width of the beginning in NM. Default 0.10 NM.
 -- @return Core.Zone#ZONE_POLYGON_BASE Groove zone.
 function AIRBOSS:_GetZoneGroove( l, w, b )
 
@@ -11131,7 +11131,7 @@ end
 --- Get approach corridor zone. Shape depends on recovery case.
 -- @param #AIRBOSS self
 -- @param #number case Recovery case.
--- @param #number l Length of the zone in NM. Default 31 (=21+10) NM.
+-- @param #number l (Optional) Length of the zone in NM. Default 31 (=21+10) NM.
 -- @return Core.Zone#ZONE_POLYGON_BASE Box zone.
 function AIRBOSS:_GetZoneCorridor( case, l )
 
@@ -11977,7 +11977,7 @@ end
 
 --- Get true (or magnetic) heading of carrier.
 -- @param #AIRBOSS self
--- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
+-- @param #boolean magnetic (Optional) If true, calculate magnetic heading. By default true heading is returned.
 -- @return #number Carrier heading in degrees.
 function AIRBOSS:GetHeading( magnetic )
   self:F3( { magnetic = magnetic } )
@@ -12010,8 +12010,8 @@ end
 
 --- Get wind direction and speed at carrier position.
 -- @param #AIRBOSS self
--- @param #number alt Altitude ASL in meters. Default 18 m.
--- @param #boolean magnetic Direction including magnetic declination.
+-- @param #number alt (Optional) Altitude ASL in meters. Default 18 m.
+-- @param #boolean magnetic (Optional) Direction including magnetic declination.
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate at which to get the wind. Default is current carrier position.
 -- @return #number Direction the wind is blowing **from** in degrees.
 -- @return #number Wind speed in m/s.
@@ -12037,7 +12037,7 @@ end
 
 --- Get wind speed on carrier deck parallel and perpendicular to runway.
 -- @param #AIRBOSS self
--- @param #number alt Altitude in meters. Default 18 m.
+-- @param #number alt (Optional) Altitude in meters. Default 18 m.
 -- @return #number Wind component parallel to runway im m/s.
 -- @return #number Wind component perpendicular to runway in m/s.
 -- @return #number Total wind strength in m/s.
@@ -12083,7 +12083,7 @@ end
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
 -- @param #AIRBOSS self
 -- @param #number vdeck Desired wind velocity over deck in knots.
--- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
+-- @param #boolean magnetic (Optional) If true, calculate magnetic heading. By default true heading is returned.
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
 -- @return #number Carrier speed in knots to reach desired wind speed on deck.
@@ -12103,7 +12103,7 @@ end
 --- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
 -- @param #AIRBOSS self
 -- @param #number vdeck Desired wind velocity over deck in knots.
--- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
+-- @param #boolean magnetic (Optional) If true, calculate magnetic heading. By default true heading is returned.
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
 function AIRBOSS:GetHeadingIntoWind_old( vdeck, magnetic, coord )
@@ -12176,7 +12176,7 @@ end
 -- Implementation based on [Mags & Bambi](https://magwo.github.io/carrier-cruise/).
 -- @param #AIRBOSS self
 -- @param #number vdeck Desired wind velocity over deck in knots.
--- @param #boolean magnetic If true, calculate magnetic heading. By default true heading is returned.
+-- @param #boolean magnetic (Optional) If true, calculate magnetic heading. By default true heading is returned.
 -- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
 -- @return #number Carrier speed in knots to reach desired wind speed on deck.
@@ -12307,9 +12307,9 @@ end
 --
 -- @param #AIRBOSS self
 -- @param #number case Recovery case.
--- @param #boolean magnetic If true, magnetic radial is returned. Default is true radial.
--- @param #boolean offset If true, inlcude holding offset.
--- @param #boolean inverse Return inverse, i.e. radial-180 degrees.
+-- @param #boolean magnetic (Optional) If true, magnetic radial is returned. Default is true radial.
+-- @param #boolean offset (Optional) If true, inlcude holding offset.
+-- @param #boolean inverse (Optional) Return inverse, i.e. radial-180 degrees.
 -- @return #number Radial in degrees.
 function AIRBOSS:GetRadial( case, magnetic, offset, inverse )
 
@@ -13255,7 +13255,7 @@ end
 --- Get short name of the grove step.
 -- @param #AIRBOSS self
 -- @param #string step Player step.
--- @param #number n Use -1 for previous or +1 for next. Default 0.
+-- @param #number n (Optional) Use -1 for previous or +1 for next. Default 0.
 -- @return #string Shortcut name "X", "RB", "IM", "AR", "IW".
 function AIRBOSS:_GS( step, n )
   local gp
@@ -13454,7 +13454,7 @@ end
 --- Display hint to player.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data table.
--- @param #number delay Delay before playing sound messages. Default 0 sec.
+-- @param #number delay (Optional) Delay before playing sound messages. Default 0 sec.
 -- @param #boolean soundoff If true, don't play and sound hint.
 function AIRBOSS:_PlayerHint( playerData, delay, soundoff )
 
@@ -14276,7 +14276,7 @@ end
 
 --- Check Collision.
 -- @param #AIRBOSS self
--- @param Core.Point#COORDINATE fromcoord Coordinate from which the path to the next WP is calculated. Default current carrier position.
+-- @param Core.Point#COORDINATE fromcoord (Optional) Coordinate from which the path to the next WP is calculated. Default current carrier position.
 -- @return #boolean If true, surface type ahead is not deep water.
 function AIRBOSS:_CheckFreePathToNextWP( fromcoord )
 
@@ -14354,9 +14354,9 @@ end
 --- Let the carrier make a detour to a given point. When it reaches the point, it will resume its normal route.
 -- @param #AIRBOSS self
 -- @param Core.Point#COORDINATE coord Coordinate of the detour.
--- @param #number speed Speed in knots. Default is current carrier velocity.
+-- @param #number speed (Optional) Speed in knots. Default is current carrier velocity.
 -- @param #boolean uturn (Optional) If true, carrier will go back to where it came from before it resumes its route to the next waypoint.
--- @param #number uspeed Speed in knots after U-turn. Default is same as before.
+-- @param #number uspeed (Optional) Speed in knots after U-turn. Default is same as before.
 -- @param Core.Point#COORDINATE tcoord Additional coordinate to make turn smoother.
 -- @return #AIRBOSS self
 function AIRBOSS:CarrierDetour( coord, speed, uturn, uspeed, tcoord )
@@ -16090,11 +16090,11 @@ end
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.PlayerData playerData Player data.
 -- @param #string message The message to send.
--- @param #string sender The person who sends the message or nil.
--- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
--- @param #number duration Display message duration. Default 10 seconds.
--- @param #boolean clear If true, clear screen from previous messages.
--- @param #number delay Delay in seconds, before the message is displayed.
+-- @param #string sender (Optional) The person who sends the message or nil. Defaults to nil.
+-- @param #string receiver (Optional) The person who receives the message. Default player's onboard number. Set to "" for no receiver.
+-- @param #number duration (Optional) Display message duration. Default 10 seconds.
+-- @param #boolean clear I(Optional) f true, clear screen from previous messages. Defaults to false.
+-- @param #number delay (Optional) Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duration, clear, delay )
   self:T({sender,receiver,message})
   if playerData and message and message ~= "" then
@@ -16218,11 +16218,11 @@ end
 -- Message format will be "SENDER: RECCEIVER, MESSAGE".
 -- @param #AIRBOSS self
 -- @param #string message The message to send.
--- @param #string sender The person who sends the message or nil.
--- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
--- @param #number duration Display message duration. Default 10 seconds.
--- @param #boolean clear If true, clear screen from previous messages.
--- @param #number delay Delay in seconds, before the message is displayed.
+-- @param #string sender (Optional) The person who sends the message or nil. Defaults to "LSO".
+-- @param #string receiver (Optional) The person who receives the message. Default player's onboard number. Set to "" for no receiver.
+-- @param #number duration (Optional) Display message duration. Default 10 seconds.
+-- @param #boolean clear (Optional) If true, clear screen from previous messages.
+-- @param #number delay (Optional) Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToPattern( message, sender, receiver, duration, clear, delay )
 
   -- Create new (fake) radio call to show the subtitile.
@@ -16237,11 +16237,11 @@ end
 -- Message format will be "SENDER: RECCEIVER, MESSAGE".
 -- @param #AIRBOSS self
 -- @param #string message The message to send.
--- @param #string sender The person who sends the message or nil.
--- @param #string receiver The person who receives the message. Default player's onboard number. Set to "" for no receiver.
--- @param #number duration Display message duration. Default 10 seconds.
--- @param #boolean clear If true, clear screen from previous messages.
--- @param #number delay Delay in seconds, before the message is displayed.
+-- @param #string sender (Optional) The person who sends the message or nil. Defaults to "Marshal".
+-- @param #string receiver (Optional) The person who receives the message. Default player's onboard number. Set to "" for no receiver.
+-- @param #number duration (Optional) Display message duration. Default 10 seconds.
+-- @param #boolean clear (Optional) If true, clear screen from previous messages.
+-- @param #number delay (Optional) Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToMarshal( message, sender, receiver, duration, clear, delay )
 
   -- Create new (fake) radio call to show the subtitile.
@@ -16255,11 +16255,11 @@ end
 --- Generate a new radio call (deepcopy) from an existing default call.
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.RadioCall call Radio call to be enhanced.
--- @param #string sender Sender of the message. Default is the radio alias.
--- @param #string subtitle Subtitle of the message. Default from original radio call. Use "" for no subtitle.
--- @param #number subduration Time in seconds the subtitle is displayed. Default 10 seconds.
--- @param #string modexreceiver Onboard number of the receiver or nil.
--- @param #string modexsender Onboard number of the sender or nil.
+-- @param #string sender (Optional) Sender of the message. Default is the radio alias.
+-- @param #string subtitle (Optional) Subtitle of the message. Default from original radio call. Use "" for no subtitle.
+-- @param #number subduration (Optional) Time in seconds the subtitle is displayed. Default 10 seconds.
+-- @param #string modexreceiver (Optional) Onboard number of the receiver or nil.
+-- @param #string modexsender (Optional) Onboard number of the sender or nil.
 function AIRBOSS:_NewRadioCall( call, sender, subtitle, subduration, modexreceiver, modexsender )
 
   -- Create a new call
@@ -19201,7 +19201,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #string path Path where the file is loaded from. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if lfs was desanizied.
+-- @param #string path (Optional) Path where the file is loaded from. Default is the DCS root installation folder or your "Saved Games\\DCS" folder if lfs was desanizied.
 -- @param #string filename (Optional) File name for saving the player grades. Default is "AIRBOSS-<ALIAS>_LSOgrades.csv".
 function AIRBOSS:onafterLoad( From, Event, To, path, filename )
 

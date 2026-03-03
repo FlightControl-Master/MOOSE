@@ -359,11 +359,11 @@ FLIGHTCONTROL.version="0.7.7"
 --- Create a new FLIGHTCONTROL class object for an associated airbase.
 -- @param #FLIGHTCONTROL self
 -- @param #string AirbaseName Name of the airbase.
--- @param #number Frequency Radio frequency in MHz. Default 143.00 MHz. Can also be given as a `#table` of multiple frequencies.
--- @param #number Modulation Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a `#table` of multiple modulations.
--- @param #string PathToSRS Path to the directory, where SRS is located.
--- @param #number Port Port of SRS Server, defaults to 5002
--- @param #string GoogleKey Path to the Google JSON-Key.
+-- @param #number Frequency (Optional) Radio frequency in MHz. Default 143.00 MHz. Can also be given as a `#table` of multiple frequencies.
+-- @param #number Modulation (Optional) Radio modulation: 0=AM (default), 1=FM. See `radio.modulation.AM` and `radio.modulation.FM` enumerators. Can also be given as a `#table` of multiple modulations.
+-- @param #string PathToSRS (Optional) Path to the directory, where SRS is located.
+-- @param #number Port (Optional) Port of SRS Server, defaults to 5002
+-- @param #string GoogleKey (Optional) Path to the Google JSON-Key.
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port, GoogleKey)
 
@@ -570,7 +570,7 @@ end
 
 --- Set verbosity level.
 -- @param #FLIGHTCONTROL self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @param #number VerbosityLevel (Optional) Level of output (higher=more). Default 0.
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
@@ -620,8 +620,8 @@ end
 
 --- Set the tower frequency.
 -- @param #FLIGHTCONTROL self
--- @param #number Frequency Frequency in MHz. Default 305 MHz.
--- @param #number Modulation Modulation `radio.modulation.AM`=0, `radio.modulation.FM`=1. Default `radio.modulation.AM`.
+-- @param #number Frequency (Optional) Frequency in MHz. Default 305 MHz.
+-- @param #number Modulation (Optional) Modulation `radio.modulation.AM`=0, `radio.modulation.FM`=1. Default `radio.modulation.AM`.
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetFrequency(Frequency, Modulation)
 
@@ -643,7 +643,7 @@ end
 
 --- Set the SRS server port.
 -- @param #FLIGHTCONTROL self
--- @param #number Port Port to be used. Defaults to 5002.
+-- @param #number Port (Optional) Port to be used. Defaults to 5002.
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetSRSPort(Port)
   self.Port = Port or 5002
@@ -653,13 +653,13 @@ end
 --- Set SRS options for a given MSRS object.
 -- @param #FLIGHTCONTROL self
 -- @param Sound.SRS#MSRS msrs Moose SRS object.
--- @param #string Gender Gender: "male" or "female" (default).
--- @param #string Culture Culture, e.g. "en-GB" (default).
+-- @param #string Gender (Optional) Gender: "male" or "female" (default).
+-- @param #string Culture (Optional) Culture, e.g. "en-GB" (default).
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
--- @param #number Volume Volume. Default 1.0.
+-- @param #number Volume (Optional) Volume. Default 1.0.
 -- @param #string Label Name under which SRS transmits.
--- @param #string PathToGoogleCredentials Path to google credentials json file.
--- @param #number Port Server port for SRS
+-- @param #string PathToGoogleCredentials (Optional) Path to google credentials json file.
+-- @param #number Port (Optional) Server port for SRS. Defaults to 5002.
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:_SetSRSOptions(msrs, Gender, Culture, Voice, Volume, Label, PathToGoogleCredentials, Port)
 
@@ -683,11 +683,11 @@ end
 
 --- Set SRS options for tower voice.
 -- @param #FLIGHTCONTROL self
--- @param #string Gender Gender: "male" or "female" (default).
--- @param #string Culture Culture, e.g. "en-GB" (default).
+-- @param #string Gender (Optional) Gender: "male" or "female" (default).
+-- @param #string Culture (Optional) Culture, e.g. "en-GB" (default).
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`. See [Google Voices](https://cloud.google.com/text-to-speech/docs/voices).
--- @param #number Volume Volume. Default 1.0.
--- @param #string Label Name under which SRS transmits. Default `self.alias`.
+-- @param #number Volume (Optional) Volume. Default 1.0.
+-- @param #string Label (Optional) Name under which SRS transmits. Default `self.alias`.
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetSRSTower(Gender, Culture, Voice, Volume, Label)
 
@@ -700,11 +700,11 @@ end
 
 --- Set SRS options for pilot voice.
 -- @param #FLIGHTCONTROL self
--- @param #string Gender Gender: "male" (default) or "female".
--- @param #string Culture Culture, e.g. "en-US" (default).
+-- @param #string Gender (Optional) Gender: "male" (default) or "female".
+-- @param #string Culture (Optional) Culture, e.g. "en-US" (default).
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
--- @param #number Volume Volume. Default 1.0.
--- @param #string Label Name under which SRS transmits. Default "Pilot".
+-- @param #number Volume (Optional) Volume. Default 1.0.
+-- @param #string Label (Optional) Name under which SRS transmits. Default "Pilot".
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetSRSPilot(Gender, Culture, Voice, Volume, Label)
 
@@ -726,8 +726,8 @@ end
 -- in cases where simultaneous takeoffs and landings are unproblematic. Note that only because there are multiple runways, it does not mean the AI uses them.
 --  
 -- @param #FLIGHTCONTROL self
--- @param #number Nlanding Max number of aircraft landing simultaneously. Default 2.
--- @param #number Ntakeoff Allowed number of aircraft taking off for groups to get landing clearance. Default 0. 
+-- @param #number Nlanding (Optional) Max number of aircraft landing simultaneously. Default 2.
+-- @param #number Ntakeoff (Optional) Allowed number of aircraft taking off for groups to get landing clearance. Default 0. 
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetLimitLanding(Nlanding, Ntakeoff)
 
@@ -740,7 +740,7 @@ end
 
 --- Set time interval between landing clearance of groups.
 -- @param #FLIGHTCONTROL self
--- @param #number dt Time interval in seconds. Default 180 sec (3 min).
+-- @param #number dt (Optional) Time interval in seconds. Default 180 sec (3 min).
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetLandingInterval(dt)
 
@@ -763,9 +763,9 @@ end
 -- NOTE that human players are *not* restricted as they should behave better (hopefully) than the AI.
 -- 
 -- @param #FLIGHTCONTROL self
--- @param #number Ntaxi Max number of groups allowed to taxi. Default 2.
+-- @param #number Ntaxi (Optional) Max number of groups allowed to taxi. Default 2.
 -- @param #boolean IncludeInbound If `true`, the above
--- @param #number Nlanding Max number of landing flights. Default 0.
+-- @param #number Nlanding (Optional) Max number of landing flights. Default 0.
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetLimitTaxi(Ntaxi, IncludeInbound, Nlanding)
 
@@ -783,10 +783,10 @@ end
 -- @param #FLIGHTCONTROL self
 -- @param Core.Zone#ZONE ArrivalZone Zone where planes arrive.
 -- @param #number Heading Heading in degrees.
--- @param #number Length Length in nautical miles. Default 15 NM.
--- @param #number FlightlevelMin Min flight level. Default 5.
--- @param #number FlightlevelMax Max flight level. Default 15.
--- @param #number Prio Priority. Lower is higher. Default 50.
+-- @param #number Length (Optional) Length in nautical miles. Default 15 NM.
+-- @param #number FlightlevelMin (Optional) Min flight level. Default 5.
+-- @param #number FlightlevelMax (Optional) Max flight level. Default 15.
+-- @param #number Prio (Optional) Priority. Lower is higher. Default 50.
 -- @return #FLIGHTCONTROL.HoldingPattern Holding pattern table.
 function FLIGHTCONTROL:AddHoldingPattern(ArrivalZone, Heading, Length, FlightlevelMin, FlightlevelMax, Prio)
 
@@ -946,7 +946,7 @@ end
 -- Note that this is the time, the DCS engine uses not something we can control on a user level or we could get via scripting.
 -- You need to input the value. On the DCS forum it was stated that this is currently one hour. Hence this is the default value.
 -- @param #FLIGHTCONTROL self
--- @param #number RepairTime Time in seconds until the runway is repaired. Default 3600sec (one hour).
+-- @param #number RepairTime (Optional) Time in seconds until the runway is repaired. Default 3600sec (one hour).
 -- @return #FLIGHTCONTROL self
 function FLIGHTCONTROL:SetRunwayRepairtime(RepairTime)
   self.runwayrepairtime=RepairTime or 3600
@@ -2020,7 +2020,7 @@ end
 -- @param #FLIGHTCONTROL self
 -- @param #string Status Return only flights in this flightcontrol status, e.g. `FLIGHTCONTROL.Status.XXX`.
 -- @param #string GroupStatus Return only flights in this FSM status, e.g. `OPSGROUP.GroupStatus.TAXIING`.
--- @param #boolean AI If `true` only AI flights are returned. If `false`, only flights with clients are returned. If `nil` (default), all flights are returned.
+-- @param #boolean AI (Optional) If `true` only AI flights are returned. If `false`, only flights with clients are returned. If `nil` (default), all flights are returned.
 -- @return #table Table of flights.
 function FLIGHTCONTROL:GetFlights(Status, GroupStatus, AI)
 
@@ -2054,7 +2054,7 @@ end
 -- @param #FLIGHTCONTROL self
 -- @param #string Status Return only flights in this status.
 -- @param #string GroupStatus Count only flights in this FSM status, e.g. `OPSGROUP.GroupStatus.TAXIING`.
--- @param #boolean AI If `true` only AI flights are counted. If `false`, only flights with clients are counted. If `nil` (default), all flights are counted.
+-- @param #boolean AI (Optional) If `true` only AI flights are counted. If `false`, only flights with clients are counted. If `nil` (default), all flights are counted.
 -- @return #number Number of flights.
 function FLIGHTCONTROL:CountFlights(Status, GroupStatus, AI)
   
@@ -2101,7 +2101,7 @@ end
 
 --- Get the name of the active runway.
 -- @param #FLIGHTCONTROL self
--- @param #boolean Takeoff If true, return takeoff runway name. Default is landing.
+-- @param #boolean Takeoff (Optional) If true, return takeoff runway name. Default is landing.
 -- @return #string Runway text, e.g. "31L" or "09".
 function FLIGHTCONTROL:GetActiveRunwayText(Takeoff)
 
@@ -2243,7 +2243,7 @@ end
 --- Set parking spot to RESERVED and update F10 marker.
 -- @param #FLIGHTCONTROL self
 -- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot The parking spot data table.
--- @param #string unitname Name of the unit occupying the spot. Default "unknown". 
+-- @param #string unitname (Optional) Name of the unit occupying the spot. Default "unknown". 
 function FLIGHTCONTROL:SetParkingReserved(spot, unitname)
 
   -- Get spot.
@@ -2263,7 +2263,7 @@ end
 --- Set parking spot to OCCUPIED and update F10 marker.
 -- @param #FLIGHTCONTROL self
 -- @param Wrapper.Airbase#AIRBASE.ParkingSpot spot The parking spot data table.
--- @param #string unitname Name of the unit occupying the spot. Default "unknown".
+-- @param #string unitname (Optional) Name of the unit occupying the spot. Default "unknown".
 function FLIGHTCONTROL:SetParkingOccupied(spot, unitname)
 
   -- Get spot.
@@ -4351,7 +4351,7 @@ end
 -- @param #FLIGHTCONTROL self
 -- @param #string Text The text to transmit.
 -- @param Ops.FlightGroup#FLIGHTGROUP Flight The flight.
--- @param #number Delay Delay in seconds before the text is transmitted. Default 0 sec.
+-- @param #number Delay (Optional) Delay in seconds before the text is transmitted. Default 0 sec.
 function FLIGHTCONTROL:TransmissionTower(Text, Flight, Delay)
 
   if self.radioOnlyIfPlayers==true and self.Nplayers==0 then
@@ -4387,7 +4387,7 @@ end
 -- @param #FLIGHTCONTROL self
 -- @param #string Text The text to transmit.
 -- @param Ops.FlightGroup#FLIGHTGROUP Flight The flight.
--- @param #number Delay Delay in seconds before the text is transmitted. Default 0 sec.
+-- @param #number Delay (Optional) Delay in seconds before the text is transmitted. Default 0 sec.
 function FLIGHTCONTROL:TransmissionPilot(Text, Flight, Delay)
 
   if self.radioOnlyIfPlayers==true and self.Nplayers==0 then
@@ -4445,9 +4445,9 @@ end
 -- @param #FLIGHTCONTROL self
 -- @param #string Text The text to transmit.
 -- @param Ops.FlightGroup#FLIGHTGROUP Flight The flight.
--- @param #number Duration Duration in seconds. Default 5.
+-- @param #number Duration (Optional) Duration in seconds. Default 5.
 -- @param #boolean Clear Clear screen.
--- @param #number Delay Delay in seconds before the text is transmitted. Default 0 sec.
+-- @param #number Delay (Optional) Delay in seconds before the text is transmitted. Default 0 sec.
 function FLIGHTCONTROL:TextMessageToFlight(Text, Flight, Duration, Clear, Delay)
 
   if Delay and Delay>0 then
@@ -4591,8 +4591,8 @@ end
 
 --- [User] Set callsign options for TTS output. See @{Wrapper.Group#GROUP.GetCustomCallSign}() on how to set customized callsigns.
 -- @param #FLIGHTCONTROL self
--- @param #boolean ShortCallsign If true, only call out the major flight number. Default = `true`.
--- @param #boolean Keepnumber If true, keep the **customized callsign** in the #GROUP name for players as-is, no amendments or numbers. Default = `true`.
+-- @param #boolean ShortCallsign (Optional) If true, only call out the major flight number. Default = `true`.
+-- @param #boolean Keepnumber (Optional) If true, keep the **customized callsign** in the #GROUP name for players as-is, no amendments or numbers. Default = `true`.
 -- @param #table CallsignTranslations (optional) Table to translate between DCS standard callsigns and bespoke ones. Does not apply if using customized
 -- callsigns from playername or group name.
 -- @return #FLIGHTCONTROL self

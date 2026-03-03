@@ -1410,9 +1410,9 @@ end
 
 --- [User] Set the tactical information option, create 10 radio channels groups can subscribe and get Bogey Dope on a specific frequency automatically. You **need** to set up SRS first before using this!
 -- @param #AWACS self
--- @param #number BaseFreq Base Frequency to use, defaults to 130.
--- @param #number Increase Increase to use, defaults to 0.5, thus channels created are 130, 130.5, 131 .. etc.
--- @param #number Modulation Modulation to use, defaults to radio.modulation.AM.
+-- @param #number BaseFreq (Optional) Base Frequency to use, defaults to 130.
+-- @param #number Increase (Optional) Increase to use, defaults to 0.5, thus channels created are 130, 130.5, 131 .. etc.
+-- @param #number Modulation (Optional) Modulation to use, defaults to radio.modulation.AM.
 -- @param #number Interval Seconds between each update call.
 -- @param #number Number Number of Frequencies to create, can be 1..10.
 -- @return #AWACS self
@@ -1694,8 +1694,8 @@ end
 
 --- [User] Set TOS Time-on-Station in Hours
 -- @param #AWACS self
--- @param #number AICHours AWACS stays this number of hours on station before shift change, default is 4.
--- @param #number CapHours (optional) CAP stays this number of hours on station before shift change, default is 4.
+-- @param #number AICHours (Optional) AWACS stays this number of hours on station before shift change, default is 4.
+-- @param #number CapHours (Optional) CAP stays this number of hours on station before shift change, default is 4.
 -- @return #AWACS self
 function AWACS:SetTOS(AICHours,CapHours)
   self:T(self.lid.."SetTOS")
@@ -1990,7 +1990,7 @@ end
 
 --- [User] Set AWACS Player Guidance - influences missile callout and the "New" label in group callouts. 
 -- @param #AWACS self
--- @param #boolean Switch If true (default) it is on, if false, it is off.
+-- @param #boolean Switch (Optional) If true (default) it is on, if false, it is off.
 -- @return #AWACS self
 function AWACS:SetPlayerGuidance(Switch)
   if (Switch == nil) or (Switch == true) then
@@ -2010,9 +2010,9 @@ end
 
 --- [User] Set AWACS intercept timeline support distance.
 -- @param #AWACS self
--- @param #number TacDistance Distance for TAC call, default 45nm
--- @param #number MeldDistance Distance for Meld call, default 35nm
--- @param #number ThreatDistance Distance for Threat call, default 25nm
+-- @param #number TacDistance (Optional) Distance for TAC call, default 45nm
+-- @param #number MeldDistance (Optional) Distance for Meld call, default 35nm
+-- @param #number ThreatDistance (Optional) Distance for Threat call, default 25nm
 -- @return #AWACS self
 function AWACS:SetInterceptTimeline(TacDistance, MeldDistance, ThreatDistance)
   self.TacDistance = TacDistance or 45
@@ -2119,12 +2119,12 @@ end
 
 --- [User] Set AWACS flight details
 -- @param #AWACS self
--- @param #number CallSign Defaults to CALLSIGN.AWACS.Magic
--- @param #number CallSignNo Defaults to 1
--- @param #number Angels Defaults to 25 (i.e. 25000 ft)
--- @param #number Speed Defaults to 250kn
--- @param #number Heading Defaults to 0 (North)
--- @param #number Leg Defaults to 25nm
+-- @param #number CallSign (Optional) Defaults to CALLSIGN.AWACS.Magic
+-- @param #number CallSignNo (Optional) Defaults to 1
+-- @param #number Angels (Optional) Defaults to 25 (i.e. 25000 ft)
+-- @param #number Speed (Optional) Defaults to 250kn
+-- @param #number Heading (Optional) Defaults to 0 (North)
+-- @param #number Leg (Optional) Defaults to 25nm
 -- @return #AWACS self
 function AWACS:SetAwacsDetails(CallSign,CallSignNo,Angels,Speed,Heading,Leg)
   self:T(self.lid.."SetAwacsDetails")
@@ -2176,13 +2176,13 @@ end
 
 --- [User] Set AWACS SRS TTS details - see @{Sound.SRS} for details. `SetSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
 -- @param #AWACS self
--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
--- @param #string Gender Defaults to "male"
--- @param #string Culture Defaults to "en-US"
--- @param #number Port Defaults to 5002
+-- @param #string PathToSRS (Optional) Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
+-- @param #string Gender (Optional) Defaults to "male"
+-- @param #string Culture (Optional) Defaults to "en-US"
+-- @param #number Port (Optional) Defaults to 5002
 -- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS#SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
--- @param #number Volume Volume - between 0.0 (silent) and 1.0 (loudest)
+-- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest) Defaults to 1.0.
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS; if you use a config file for MSRS, hand in nil here.
 -- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
 -- @param #string Backend (Optional) Your MSRS Backend if different from your config file settings, e.g. MSRS.Backend.SRSEXE or MSRS.Backend.GRPC
@@ -2223,8 +2223,8 @@ end
 
 --- [User] Set AWACS Voice Details for AI CAP Planes  - SRS TTS - see @{Sound.SRS} for details
 -- @param #AWACS self
--- @param #string Gender Defaults to "male"
--- @param #string Culture Defaults to "en-US"
+-- @param #string Gender (Optional) Defaults to "male"
+-- @param #string Culture (Optional) Defaults to "en-US"
 -- @param #string Voice (Optional) Use a specifc voice with the @{#MSRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
 -- @return #AWACS self
@@ -2238,10 +2238,10 @@ end
 
 --- [User] Set AI CAP Plane Details
 -- @param #AWACS self
--- @param #number Callsign Callsign name of AI CAP, e.g. CALLSIGN.Aircraft.Dodge. Defaults to CALLSIGN.Aircraft.Colt. Note that not all available callsigns work for all plane types.
--- @param #number MaxAICap Maximum number of AI CAP planes on station that AWACS will set up automatically. Default to 4.
--- @param #number TOS Time on station, in  hours. AI planes might go back to base earlier if they run out of fuel or missiles.
--- @param #number Speed Airspeed to be used in knots. Will be adjusted to flight height automatically. Defaults to 270.
+-- @param #number Callsign (Optional) Callsign name of AI CAP, e.g. CALLSIGN.Aircraft.Dodge. Defaults to CALLSIGN.Aircraft.Colt. Note that not all available callsigns work for all plane types.
+-- @param #number MaxAICap (Optional) Maximum number of AI CAP planes on station that AWACS will set up automatically. Default to 4.
+-- @param #number TOS (Optional) Time on station, in  hours. AI planes might go back to base earlier if they run out of fuel or missiles. Defaults to 4.
+-- @param #number Speed (Optional) Airspeed to be used in knots. Will be adjusted to flight height automatically. Defaults to 270.
 -- @return #AWACS self
 function AWACS:SetAICAPDetails(Callsign,MaxAICap,TOS,Speed)
   self:T(self.lid.."SetAICAPDetails")
@@ -2257,7 +2257,7 @@ end
 -- @param #number EscortNumber Number of fighther plane GROUPs to accompany this AWACS. 0 or nil means no escorts. If you want >1 plane in an escort group, you can either set the respective squadron grouping to the desired number, or use a template for escorts with >1 unit.
 -- @param #number Formation Formation the escort should take (if more than one plane), e.g. `ENUMS.Formation.FixedWing.FingerFour.Group`. Formation is used on GROUP level, multiple groups of one unit will NOT conform to this formation.
 -- @param #table OffsetVector Offset the escorts should fly behind the AWACS, given as table, distance in meters, e.g. `{x=-500,y=0,z=500}` - 500m behind (negative value) and to the right (negative for left), no vertical separation (positive over, negative under the AWACS flight). For multiple groups, the vectors will be slightly changed to avoid collisions.
--- @param #number EscortEngageMaxDistance Escorts engage air targets max this NM away, defaults to 45NM.
+-- @param #number EscortEngageMaxDistance (Optional) Escorts engage air targets max this NM away, defaults to 45NM.
 -- @return #AWACS self
 function AWACS:SetEscort(EscortNumber,Formation,OffsetVector,EscortEngageMaxDistance)
   self:T(self.lid.."SetEscort")

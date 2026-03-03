@@ -145,7 +145,7 @@ OPERATION.version="0.2.0"
 
 --- Create a new generic OPERATION object.
 -- @param #OPERATION self
--- @param #string Name Name of the operation. Be creative! Default "Operation-01" where the last number is a running number.
+-- @param #string Name (Optional) Name of the operation. Be creative! Default "Operation-01" where the last number is a running number.
 -- @return #OPERATION self
 function OPERATION:New(Name)
 
@@ -349,7 +349,7 @@ end
 
 --- Set verbosity level.
 -- @param #OPERATION self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @param #number VerbosityLevel (Optional) Level of output (higher=more). Default 0.
 -- @return #OPERATION self
 function OPERATION:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
@@ -358,7 +358,7 @@ end
 
 --- Set start and stop time of the operation.
 -- @param #OPERATION self
--- @param #string ClockStart Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
+-- @param #string ClockStart (Optional) Time the mission is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
 -- @param #string ClockStop (Optional) Time the mission is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
 -- @return #OPERATION self
 function OPERATION:SetTime(ClockStart, ClockStop)
@@ -415,9 +415,9 @@ end
 
 --- Add a new phase to the operation. This is added add the end of all previously added phases (if any).
 -- @param #OPERATION self
--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
--- @param #OPERATION.Branch Branch The branch to which this phase is added. Default is the master branch.
--- @param #number Duration Duration in seconds how long the phase will last. Default `nil`=forever.
+-- @param #string Name (Optional) Name of the phase. Default "Phase-01" where the last number is a running number.
+-- @param #OPERATION.Branch Branch (Optional) The branch to which this phase is added. Default is the master branch.
+-- @param #number Duration (Optional) Duration in seconds how long the phase will last. Default `nil`=forever.
 -- @return #OPERATION.Phase Phase table object.
 function OPERATION:AddPhase(Name, Branch, Duration)
 
@@ -445,7 +445,7 @@ end
 ---Insert a new phase after an already defined phase of the operation.
 -- @param #OPERATION self
 -- @param #OPERATION.Phase PhaseAfter The phase after which the new phase is inserted.
--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
+-- @param #string Name (Optional) Name of the phase. Default "Phase-01" where the last number is a running number.
 -- @return #OPERATION.Phase Phase table object.
 function OPERATION:InsertPhaseAfter(PhaseAfter, Name)
 
@@ -472,7 +472,7 @@ end
 
 --- Get a phase by its name.
 -- @param #OPERATION self
--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
+-- @param #string Name (Optional) Name of the phase. Default "Phase-01" where the last number is a running number.
 -- @return #OPERATION.Phase Phase table object or nil if phase could not be found.
 function OPERATION:GetPhaseByName(Name)
 
@@ -610,7 +610,7 @@ end
 
 --- Get name of a phase.
 -- @param #OPERATION self
--- @param #OPERATION.Phase Phase The phase of which the name is returned. Default is the currently active phase.
+-- @param #OPERATION.Phase Phase (Optional) The phase of which the name is returned. Default is the currently active phase.
 -- @return #string The name of the phase or "None" if no phase is given or active.
 function OPERATION:GetPhaseName(Phase)
 
@@ -752,7 +752,7 @@ end
 
 --- Get name of the branch.
 -- @param #OPERATION self
--- @param #OPERATION.Branch Branch The branch of which the name is requested. Default is the currently active or master branch.
+-- @param #OPERATION.Branch (Optional) Branch The branch of which the name is requested. Default is the currently active or master branch.
 -- @return #string Name Name or "None"
 function OPERATION:GetBranchName(Branch)
   Branch=Branch or self:GetBranchActive()
@@ -1336,7 +1336,7 @@ end
 
 --- Create a new phase object.
 -- @param #OPERATION self
--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
+-- @param #string Name (Optional) Name of the phase. Default "Phase-01" where the last number is a running number.
 -- @return #OPERATION.Phase Phase table object.
 function OPERATION:_CreatePhase(Name)
 
@@ -1356,7 +1356,7 @@ end
 
 --- Create a new branch object.
 -- @param #OPERATION self
--- @param #string Name Name of the phase. Default "Phase-01" where the last number is a running number.
+-- @param #string Name (Optional) Name of the phase. Default "Phase-01" where the last number is a running number.
 -- @return #OPERATION.Branch Branch table object.
 function OPERATION:_CreateBranch(Name)
 

@@ -389,7 +389,7 @@ end
 
 --- Set verbosity level.
 -- @param #COMMANDER self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @param #number VerbosityLevel (Optional) Level of output (higher=more). Default 0.
 -- @return #COMMANDER self
 function COMMANDER:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
@@ -398,8 +398,8 @@ end
 
 --- Set limit for number of total or specific missions to be executed simultaniously.
 -- @param #COMMANDER self
--- @param #number Limit Number of max. mission of this type. Default 10.
--- @param #string MissionType Type of mission, e.g. `AUFTRAG.Type.BAI`. Default `"Total"` for total number of missions.
+-- @param #number Limit (Optional) Number of max. mission of this type. Default 10.
+-- @param #string MissionType (Optional) Type of mission, e.g. `AUFTRAG.Type.BAI`. Default `"Total"` for total number of missions.
 -- @return #COMMANDER self
 function COMMANDER:SetLimitMission(Limit, MissionType)
   MissionType=MissionType or "Total"
@@ -664,10 +664,10 @@ end
 --- Add a CAP zone.
 -- @param #COMMANDER self
 -- @param Core.Zone#ZONE Zone CapZone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @param #number Altitude (Optional) Orbit altitude in feet. Default is 12,000 feet.
+-- @param #number Speed (Optional) Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading (Optional) Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg (Optional) Length of race-track in NM. Default 30 NM.
 -- @return Ops.Airwing#AIRWING.PatrolZone The CAP zone data.
 function COMMANDER:AddCapZone(Zone, Altitude, Speed, Heading, Leg)
 
@@ -690,10 +690,10 @@ end
 --- Add a GCICAP zone.
 -- @param #COMMANDER self
 -- @param Core.Zone#ZONE Zone CapZone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @param #number Altitude (Optional) Orbit altitude in feet. Default is 12,000 feet.
+-- @param #number Speed (Optional) Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading (Optional) Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg (Optional) Length of race-track in NM. Default 30 NM.
 -- @return Ops.Airwing#AIRWING.PatrolZone The CAP zone data.
 function COMMANDER:AddGciCapZone(Zone, Altitude, Speed, Heading, Leg)
 
@@ -736,10 +736,10 @@ end
 --- Add an AWACS zone.
 -- @param #COMMANDER self
 -- @param Core.Zone#ZONE Zone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @param #number Altitude (Optional) Orbit altitude in feet. Default is 12,000 feet.
+-- @param #number Speed (Optional) Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading (Optional) Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg (Optional) Length of race-track in NM. Default 30 NM.
 -- @return Ops.Airwing#AIRWING.PatrolZone The AWACS zone data.
 function COMMANDER:AddAwacsZone(Zone, Altitude, Speed, Heading, Leg)
 
@@ -783,10 +783,10 @@ end
 --- Add a refuelling tanker zone.
 -- @param #COMMANDER self
 -- @param Core.Zone#ZONE Zone Zone.
--- @param #number Altitude Orbit altitude in feet. Default is 12,000 feet.
--- @param #number Speed Orbit speed in KIAS. Default 350 kts.
--- @param #number Heading Heading of race-track pattern in degrees. Default 270 (East to West).
--- @param #number Leg Length of race-track in NM. Default 30 NM.
+-- @param #number Altitude (Optional) Orbit altitude in feet. Default is 12,000 feet.
+-- @param #number Speed (Optional) Orbit speed in KIAS. Default 350 kts.
+-- @param #number Heading (Optional) Heading of race-track pattern in degrees. Default 270 (East to West).
+-- @param #number Leg (Optional) Length of race-track in NM. Default 30 NM.
 -- @param #number RefuelSystem Refuelling system.
 -- @return Ops.Airwing#AIRWING.TankerZone The tanker zone data.
 function COMMANDER:AddTankerZone(Zone, Altitude, Speed, Heading, Leg, RefuelSystem)
@@ -851,10 +851,10 @@ end
 -- @param #COMMANDER self
 -- @param Ops.Cohort#COHORT Cohort The cohort to be relocated.
 -- @param Ops.Legion#LEGION Legion The legion where the cohort is relocated to.
--- @param #number Delay Delay in seconds before relocation takes place. Default `nil`, *i.e.* ASAP.
--- @param #number NcarriersMin Min number of transport carriers in case the troops should be transported. Default `nil` for no transport.
+-- @param #number Delay (Optional) Delay in seconds before relocation takes place. Default `nil`, *i.e.* ASAP.
+-- @param #number NcarriersMin (Optional) Min number of transport carriers in case the troops should be transported. Default `nil` for no transport.
 -- @param #number NcarriersMax Max number of transport carriers.
--- @param #table TransportLegions Legion(s) assigned for transportation. Default is all legions of the commander.
+-- @param #table TransportLegions (Optional) Legion(s) assigned for transportation. Default is all legions of the commander.
 -- @return #COMMANDER self
 function COMMANDER:RelocateCohort(Cohort, Legion, Delay, NcarriersMin, NcarriersMax, TransportLegions)
 
@@ -1620,7 +1620,7 @@ end
 --- Set how many missions can be assigned in a single status iteration. (eg. This is useful for persistent missions where you need to load all AUFTRAGs on mission start and then change it back to default)
 --- Warning: Increasing this value will increase the number of missions started per iteration and thus may lead to performance issues if too many missions are started at once.
 -- @param #COMMANDER self
--- @param #number Number of missions assigned per status iteration. Default is 1.
+-- @param #number MaxMissionsAssignPerCycle (Optional) Number of missions assigned per status iteration. Default is 1.
 -- @return #COMMANDER self.
 function COMMANDER:SetMaxMissionsAssignPerCycle(MaxMissionsAssignPerCycle)
   self.maxMissionsAssignPerCycle = MaxMissionsAssignPerCycle or 1
@@ -2229,7 +2229,7 @@ end
 
 --- Get assets on given mission or missions.
 -- @param #COMMANDER self
--- @param #table MissionTypes Types on mission to be checked. Default all.
+-- @param #table MissionTypes (Optional) Types on mission to be checked. Default all.
 -- @return #table Assets on pending requests.
 function COMMANDER:GetAssetsOnMission(MissionTypes)
 
