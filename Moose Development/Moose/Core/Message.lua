@@ -198,6 +198,37 @@ function MESSAGE:ToClient( Client, Settings )
   return self
 end
 
+--- Sends a MESSAGE to a SET_GROUP, SET_UNIT, or SET_CLIENT.
+-- @param #MESSAGE self
+-- @param Core.Set#SET_GROUP Set The set to send to.
+-- @param Core.Settings#SETTINGS Settings (Optional) Settings for message display.
+-- @return self
+function MESSAGE:ToSet(Set, Settings)
+ for _,_obj in pairs (Set:GetSetObjects() or {}) do
+    if _obj and _obj:IsAlive() then
+        if _obj:IsInstanceOf("SET_GROUP") then
+         self:ToGroup(_obj, Settings)
+        elseif _obj:IsInstanceOf("SET_CLIENT") or _obj:IsInstanceOf("SET_UNIT") then
+         self:ToUnit(_obj, Settings)
+        end
+    end
+ end
+ return self
+end
+
+--- Sends a MESSAGE to a SET_GROUP, SET_UNIT, or SET_CLIENT if a condition is true.
+-- @param #MESSAGE self
+-- @param Core.Set#SET_GROUP Set The set to send to.
+-- @param #boolean Condition The condition which needs to be true.
+-- @param Core.Settings#SETTINGS Settings (Optional) Settings for message display.
+-- @return self
+function MESSAGE:ToSetIf(Set, Condition, Settings)
+    if Set and Condition == true then
+        self:ToSet(Set, Settings)
+    end
+ return self
+end
+
 --- Sends a MESSAGE to a Group.
 -- @param #MESSAGE self
 -- @param Wrapper.Group#GROUP Group to which the message is displayed.
