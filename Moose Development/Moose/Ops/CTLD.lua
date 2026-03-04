@@ -6687,10 +6687,8 @@ function CTLD:_RefreshLoadCratesMenu(Group,Unit)
     local cargoByName={}
     for _,crate in pairs(nearby) do
       local name=crate:GetName()
-      if name then
-          cargoByName[name]=cargoByName[name] or{}
-          table.insert(cargoByName[name],crate)
-      end
+      cargoByName[name]=cargoByName[name] or{}
+      table.insert(cargoByName[name],crate)
     end
   
     local lineIndex=1
