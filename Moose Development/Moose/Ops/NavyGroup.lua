@@ -434,7 +434,7 @@ end
 --- Enable/disable pathfinding.
 -- @param #NAVYGROUP self
 -- @param #boolean Switch If true, enable pathfinding.
--- @param #number CorridorWidth Corridor with in meters. Default 400 m.
+-- @param #number CorridorWidth (Optional) Corridor with in meters. Default 400 m.
 -- @return #NAVYGROUP self
 function NAVYGROUP:SetPathfinding(Switch, CorridorWidth)
   self.pathfindingOn=Switch
@@ -444,7 +444,7 @@ end
 
 --- Enable pathfinding.
 -- @param #NAVYGROUP self
--- @param #number CorridorWidth Corridor with in meters. Default 400 m.
+-- @param #number CorridorWidth (Optional) Corridor with in meters. Default 400 m.
 -- @return #NAVYGROUP self
 function NAVYGROUP:SetPathfindingOn(CorridorWidth)
   self:SetPathfinding(true, CorridorWidth)
@@ -476,9 +476,9 @@ end
 -- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
 -- @param #string Clock Time when to start the attack.
--- @param #number Radius Radius in meters. Default 100 m.
--- @param #number Nshots Number of shots to fire. Default 3.
--- @param #number WeaponType Type of weapon. Default auto.
+-- @param #number Radius (Optional) Radius in meters. Default 100 m.
+-- @param #number Nshots (Optional) Number of shots to fire. Default 3.
+-- @param #number WeaponType (Optional) Type of weapon. Default auto.
 -- @param #number Prio Priority of the task.
 -- @return Ops.OpsGroup#OPSGROUP.Task The task data.
 function NAVYGROUP:AddTaskFireAtPoint(Coordinate, Clock, Radius, Nshots, WeaponType, Prio)
@@ -493,12 +493,12 @@ end
 --- Add a *waypoint* task.
 -- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
--- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint Where the task is executed. Default is next waypoint.
--- @param #number Radius Radius in meters. Default 100 m.
--- @param #number Nshots Number of shots to fire. Default 3.
--- @param #number WeaponType Type of weapon. Default auto.
--- @param #number Prio Priority of the task.
--- @param #number Duration Duration in seconds after which the task is cancelled. Default *never*.
+-- @param Ops.OpsGroup#OPSGROUP.Waypoint (Optional) Waypoint Where the task is executed. Default is next waypoint.
+-- @param #number Radius (Optional) Radius in meters. Default 100 m.
+-- @param #number Nshots (Optional) Number of shots to fire. Default 3.
+-- @param #number WeaponType (Optional) Type of weapon. Default auto.
+-- @param #number Prio (Optional) Priority of the task. Defaults to 50.
+-- @param #number Duration (Optional) Duration in seconds after which the task is cancelled. Default *never*.
 -- @return Ops.OpsGroup#OPSGROUP.Task The task table.
 function NAVYGROUP:AddTaskWaypointFireAtPoint(Coordinate, Waypoint, Radius, Nshots, WeaponType, Prio, Duration)
 
@@ -515,10 +515,10 @@ end
 --- Add a *scheduled* task.
 -- @param #NAVYGROUP self
 -- @param Wrapper.Group#GROUP TargetGroup Target group.
--- @param #number WeaponExpend How much weapons does are used.
--- @param #number WeaponType Type of weapon. Default auto.
--- @param #string Clock Time when to start the attack.
--- @param #number Prio Priority of the task.
+-- @param #number WeaponExpend (Optional) How much weapons does are used.
+-- @param #number WeaponType (Optional) Type of weapon. Default auto.
+-- @param #string Clock (Optional) Time when to start the attack.
+-- @param #number Prio (Optional) Priority of the task. Defaults to 50.
 -- @return Ops.OpsGroup#OPSGROUP.Task The task data.
 function NAVYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clock, Prio)
 
@@ -531,11 +531,11 @@ end
 
 --- Create a turn into wind window. Note that this is not executed as it not added to the queue.
 -- @param #NAVYGROUP self
--- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
--- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
--- @param #number speed Speed in knots during turn into wind leg.
--- @param #boolean uturn If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
--- @param #number offset Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
+-- @param #string starttime (Optional) Start time, e.g. "8:00" for eight o'clock. Default now.
+-- @param #string stoptime (Optional) Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
+-- @param #number speed (Optional) Speed in knots during turn into wind leg. Defaults to 20.
+-- @param #boolean uturn (Optional) If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
+-- @param #number offset (Optional) Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
 -- @return #NAVYGROUP.IntoWind Recovery window.
 function NAVYGROUP:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
@@ -598,11 +598,11 @@ end
 
 --- Add a time window, where the groups steams into the wind.
 -- @param #NAVYGROUP self
--- @param #string starttime Start time, e.g. "8:00" for eight o'clock. Default now.
--- @param #string stoptime Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
--- @param #number speed Wind speed on deck in knots during turn into wind leg. Default 20 knots.
--- @param #boolean uturn If `true` (or `nil`), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
--- @param #number offset Offset angle clock-wise in degrees, *e.g.* to account for an angled runway. Default 0 deg. Use around -9.1° for US carriers.
+-- @param #string starttime (Optional) Start time, e.g. "8:00" for eight o'clock. Default now.
+-- @param #string stoptime (Optional) Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
+-- @param #number speed (Optional) Wind speed on deck in knots during turn into wind leg. Default 20 knots.
+-- @param #boolean uturn (Optional) If `true` (or `nil`), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
+-- @param #number offset (Optional) Offset angle clock-wise in degrees, *e.g.* to account for an angled runway. Default 0 deg. Use around -9.1° for US carriers.
 -- @return #NAVYGROUP.IntoWind Turn into window data table.
 function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
@@ -644,7 +644,7 @@ end
 
 --- Extend duration of turn into wind.
 -- @param #NAVYGROUP self
--- @param #number Duration Duration in seconds. Default 300 sec.
+-- @param #number Duration (Optional) Duration in seconds. Default 300 sec.
 -- @param #NAVYGROUP.IntoWind TurnIntoWind (Optional) Turn into window data table. If not given, the currently open one is used (if there is any).
 -- @return #NAVYGROUP self
 function NAVYGROUP:ExtendTurnIntoWind(Duration, TurnIntoWind)
@@ -1832,10 +1832,10 @@ end
 --- Add an a waypoint to the route.
 -- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use `COORDINATE:SetAltitude()` to define the altitude.
--- @param #number Speed Speed in knots. Default is default cruise speed or 70% of max speed.
--- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #number Depth Depth at waypoint in feet. Only for submarines.
--- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
+-- @param #number Speed (Optional) Speed in knots. Default is default cruise speed or 70% of max speed.
+-- @param #number AfterWaypointWithID (Optional) Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
+-- @param #number Depth (Optional) Depth at waypoint in feet. Only for submarines.
+-- @param #boolean Updateroute (Optional) If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Updateroute)
 
@@ -1875,8 +1875,8 @@ end
 
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #NAVYGROUP self
--- @param #table Template Template used to init the group. Default is `self.template`.
--- @param #number Delay Delay in seconds before group is initialized. Default `nil`, *i.e.* instantaneous. 
+-- @param #table Template (Optional) Template used to init the group. Default is `self.template`.
+-- @param #number Delay (Optional) Delay in seconds before group is initialized. Default `nil`, *i.e.* instantaneous. 
 -- @return #NAVYGROUP self
 function NAVYGROUP:_InitGroup(Template, Delay)
 
@@ -1981,7 +1981,7 @@ end
 
 --- Check for possible collisions between two coordinates.
 -- @param #NAVYGROUP self
--- @param #number DistanceMax Max distance in meters ahead to check. Default 5000.
+-- @param #number DistanceMax (Optional) Max distance in meters ahead to check. Default 5000.
 -- @param #number dx
 -- @return #number Free distance in meters.
 function NAVYGROUP:_CheckFreePath(DistanceMax, dx)
@@ -2167,7 +2167,7 @@ end
 
 --- Get wind direction and speed at current position.
 -- @param #NAVYGROUP self
--- @param #number Altitude Altitude in meters above main sea level at which the wind is calculated. Default 18 meters.
+-- @param #number Altitude (Optional) Altitude in meters above main sea level at which the wind is calculated. Default 18 meters.
 -- @return #number Direction the wind is blowing **from** in degrees.
 -- @return #number Wind speed in m/s.
 function NAVYGROUP:GetWind(Altitude)

@@ -117,7 +117,7 @@ end
 -- @param #CLIENT self
 -- @param #string ClientName Name of the DCS **Unit** as defined within the Mission Editor.
 -- @param #string ClientBriefing Text that describes the briefing of the mission when a Player logs into the Client.
--- @param #boolean Error A flag that indicates whether an error should be raised if the CLIENT cannot be found. By default an error will be raised.
+-- @param #boolean Error (Optional) A flag that indicates whether an error should be raised if the CLIENT cannot be found. By default an error will be raised.
 -- @return #CLIENT
 -- @usage
 -- -- Create new Clients.

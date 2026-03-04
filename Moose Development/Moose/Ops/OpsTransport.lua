@@ -566,7 +566,7 @@ end
 -- @param #OPSTRANSPORT self
 -- @param Core.Set#SET_GROUP GroupSet Set of groups to be transported. Can also be passed as a single GROUP or OPSGROUP object.
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
--- @param #boolean DisembarkActivation If `true`, cargo group is activated when disembarked. If `false`, cargo groups are late activated when disembarked. Default `nil` (usually activated).
+-- @param #boolean DisembarkActivation (Optional) If `true`, cargo group is activated when disembarked. If `false`, cargo groups are late activated when disembarked. Default `nil` (usually activated).
 -- @param Core.Zone#ZONE DisembarkZone Zone where the groups disembark to.
 -- @param Core.Set#SET_OPSGROUP DisembarkCarriers Carrier groups where the cargo directly disembarks to.
 -- @return #OPSTRANSPORT self
@@ -644,8 +644,8 @@ end
 -- @param Wrapper.Storage#STORAGE StorageTo Storage warehouse to which the cargo is delivered.
 -- @param #string CargoType Type of cargo, *e.g.* `"weapons.bombs.Mk_84"` or liquid type as #number.
 -- @param #number CargoAmount Amount of cargo. Liquids in kg.
--- @param #number CargoWeight Weight of a single cargo item in kg. Default 1 kg.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo if other than default.
+-- @param #number CargoWeight (Optional) Weight of a single cargo item in kg. Default 1 kg.
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo (Optional) Transport zone combo if other than default.
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:AddCargoStorage(StorageFrom, StorageTo, CargoType, CargoAmount, CargoWeight, TransportZoneCombo)
 
@@ -1052,8 +1052,8 @@ end
 
 --- Set number of required carrier groups for an OPSTRANSPORT assignment. Only used if transport is assigned at **LEGION** or higher level.
 -- @param #OPSTRANSPORT self
--- @param #number NcarriersMin Number of carriers *at least* required. Default 1.
--- @param #number NcarriersMax Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
+-- @param #number NcarriersMin (Optional) Number of carriers *at least* required. Default 1.
+-- @param #number NcarriersMax (Optional) Number of carriers *at most* used for transportation. Default is same as `NcarriersMin`.
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetRequiredCarriers(NcarriersMin, NcarriersMax)
 
@@ -1258,7 +1258,7 @@ end
 
 --- Set transport start and stop time.
 -- @param #OPSTRANSPORT self
--- @param #string ClockStart Time the transport is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
+-- @param #string ClockStart (Optional) Time the transport is started, e.g. "05:00" for 5 am. If specified as a #number, it will be relative (in seconds) to the current mission time. Default is 5 seconds after mission was added.
 -- @param #string ClockStop (Optional) Time the transport is stopped, e.g. "13:00" for 1 pm. If mission could not be started at that time, it will be removed from the queue. If specified as a #number it will be relative (in seconds) to the current mission time.
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetTime(ClockStart, ClockStop)
@@ -1294,9 +1294,9 @@ end
 
 --- Set mission priority and (optional) urgency. Urgent missions can cancel other running missions. 
 -- @param #OPSTRANSPORT self
--- @param #number Prio Priority 1=high, 100=low. Default 50.
--- @param #number Importance Number 1-10. If missions with lower value are in the queue, these have to be finished first. Default is `nil`.
--- @param #boolean Urgent If *true*, another running mission might be cancelled if it has a lower priority.
+-- @param #number Prio (Optional) Priority 1=high, 100=low. Default 50.
+-- @param #number Importance (Optional) Number 1-10. If missions with lower value are in the queue, these have to be finished first. Default is `nil`.
+-- @param #boolean Urgent (Optional) If *true*, another running mission might be cancelled if it has a lower priority.
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetPriority(Prio, Importance, Urgent)
   self.prio=Prio or 50
@@ -1307,7 +1307,7 @@ end
 
 --- Set verbosity. 
 -- @param #OPSTRANSPORT self
--- @param #number Verbosity Be more verbose. Default 0
+-- @param #number Verbosity (Optional) Be more verbose. Default 0
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:SetVerbosity(Verbosity)
   self.verbose=Verbosity or 0
@@ -1345,8 +1345,8 @@ end
 -- path. 
 -- @param #OPSTRANSPORT self
 -- @param Wrapper.Group#GROUP PathGroup A (late activated) GROUP defining a transport path by their waypoints.
--- @param #number Radius Randomization radius in meters. Default 0 m.
--- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport Zone combo.
+-- @param #number Radius (Optional) Randomization radius in meters. Default 0 m.
+-- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo (Optional) Transport Zone combo.
 -- @return #OPSTRANSPORT self
 function OPSTRANSPORT:AddPathTransport(PathGroup, Reversed, Radius, TransportZoneCombo)
 
@@ -1731,7 +1731,7 @@ end
 
 --- Check if all cargo was delivered (or is dead).
 -- @param #OPSTRANSPORT self
--- @param #number Nmin Number of groups that must be actually delivered (and are not dead). Default 0.
+-- @param #number Nmin (Optional) Number of groups that must be actually delivered (and are not dead). Default 0.
 -- @return #boolean If true, all possible cargo was delivered. 
 function OPSTRANSPORT:IsDelivered(Nmin)
   local is=self:is(OPSTRANSPORT.Status.DELIVERED)
@@ -2298,7 +2298,7 @@ end
 -- @param Wrapper.Storage#STORAGE StorageTo Storage to.
 -- @param #string CargoType Type of cargo.
 -- @param #number CargoAmount Total amount of cargo that should be transported. Liquids in kg.
--- @param #number CargoWeight Weight of a single cargo item in kg. Default 1 kg.
+-- @param #number CargoWeight (Optional) Weight of a single cargo item in kg. Default 1 kg.
 -- @param #OPSTRANSPORT.TransportZoneCombo TransportZoneCombo Transport zone combo.
 -- @return Ops.OpsGroup#OPSGROUP.CargoGroup Cargo group data.
 function OPSTRANSPORT:_CreateCargoStorage(StorageFrom, StorageTo, CargoType, CargoAmount, CargoWeight, TransportZoneCombo)

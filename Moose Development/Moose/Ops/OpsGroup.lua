@@ -1016,7 +1016,7 @@ end
 
 --- Set verbosity level.
 -- @param #OPSGROUP self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @param #number VerbosityLevel (Optional) Level of output (higher=more). Default 0.
 -- @return #OPSGROUP self
 function OPSGROUP:SetVerbosity(VerbosityLevel)
   self.verbose=VerbosityLevel or 0
@@ -1068,7 +1068,7 @@ end
 
 --- Set default cruise altitude.
 -- @param #OPSGROUP self
--- @param #number Altitude Altitude in feet. Default is 10,000 ft for airplanes and 1,500 feet for helicopters.
+-- @param #number Altitude (Optional) Altitude in feet. Default is 10,000 ft for airplanes and 1,500 feet for helicopters.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultAltitude(Altitude)
   if Altitude then
@@ -1097,7 +1097,7 @@ end
 
 --- Set current altitude.
 -- @param #OPSGROUP self
--- @param #number Altitude Altitude in feet. Default is 10,000 ft for airplanes and 1,500 feet for helicopters.
+-- @param #number Altitude (Optional) Altitude in feet. Default is 10,000 ft for airplanes and 1,500 feet for helicopters.
 -- @param #boolean Keep If `true` the group will maintain that speed on passing waypoints. If `nil` or `false` the group will return to the speed as defined by their route.
 -- @return #OPSGROUP self
 function OPSGROUP:SetAltitude(Altitude, Keep, RadarAlt)
@@ -1147,7 +1147,7 @@ end
 
 --- Set current speed.
 -- @param #OPSGROUP self
--- @param #number Speed Speed in knots. Default is 70% of max speed.
+-- @param #number Speed (Optional) Speed in knots. Default is 70% of max speed.
 -- @param #boolean Keep If `true` the group will maintain that speed on passing waypoints. If `nil` or `false` the group will return to the speed as defined by their route.
 -- @param #boolean AltCorrected If `true`, use altitude corrected indicated air speed.
 -- @return #OPSGROUP self
@@ -1176,7 +1176,7 @@ end
 --- Set detection on or off.
 -- If detection is on, detected targets of the group will be evaluated and FSM events triggered.
 -- @param #OPSGROUP self
--- @param #boolean Switch If `true`, detection is on. If `false` or `nil`, detection is off. Default is off.
+-- @param #boolean Switch (Optional) If `true`, detection is on. If `false` or `nil`, detection is off. Default is off.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDetection(Switch)
   self:T(self.lid..string.format("Detection is %s", tostring(Switch)))
@@ -1335,7 +1335,7 @@ end
 -- @param Core.Point#COORDINATE TargetCoord Coordinate of the target.
 -- @param #number WeaponBitType Weapon type.
 -- @param Core.Point#COORDINATE RefCoord Reference coordinate.
--- @param #table SurfaceTypes Valid surfaces types of the coordinate. Default any (nil).
+-- @param #table SurfaceTypes (Optional) Valid surfaces types of the coordinate. Default any (nil).
 -- @return Core.Point#COORDINATE Coordinate in weapon range
 function OPSGROUP:GetCoordinateInRange(TargetCoord, WeaponBitType, RefCoord, SurfaceTypes)
 
@@ -1411,10 +1411,10 @@ end
 
 --- Set LASER parameters.
 -- @param #OPSGROUP self
--- @param #number Code Laser code. Default 1688.
--- @param #boolean CheckLOS Check if lasing unit has line of sight to target coordinate. Default is `true`.
+-- @param #number Code (Optional) Laser code. Default 1688.
+-- @param #boolean CheckLOS (Optional) Check if lasing unit has line of sight to target coordinate. Default is `true`.
 -- @param #boolean IROff If true, then dont switch on the additional IR pointer.
--- @param #number UpdateTime Time interval in seconds the beam gets up for moving targets. Default every 0.5 sec.
+-- @param #number UpdateTime (Optional) Time interval in seconds the beam gets up for moving targets. Default every 0.5 sec.
 -- @return #OPSGROUP self
 function OPSGROUP:SetLaser(Code, CheckLOS, IROff, UpdateTime)
   self.spot.Code=Code or 1688
@@ -1473,10 +1473,10 @@ end
 
 --- Add a weapon range for ARTY auftrag.
 -- @param #OPSGROUP self
--- @param #number RangeMin Minimum range in nautical miles. Default 0 NM.
--- @param #number RangeMax Maximum range in nautical miles. Default 10 NM.
--- @param #number BitType Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
--- @param #function ConversionToMeters Function that converts input units of ranges to meters. Defaul `UTILS.NMToMeters`.
+-- @param #number RangeMin (Optional) Minimum range in nautical miles. Default 0 NM.
+-- @param #number RangeMax (Optional) Maximum range in nautical miles. Default 10 NM.
+-- @param #number BitType (Optional) Bit mask of weapon type for which the given min/max ranges apply. Default is `ENUMS.WeaponFlag.Auto`, i.e. for all weapon types.
+-- @param #function ConversionToMeters (Optional) Function that converts input units of ranges to meters. Defaul `UTILS.NMToMeters`.
 -- @return #OPSGROUP self
 function OPSGROUP:AddWeaponRange(RangeMin, RangeMax, BitType, ConversionToMeters)
 
@@ -1536,8 +1536,8 @@ end
 
 --- Get highest detected threat. Detection must be turned on. The threat level is a number between 0 and 10, where 0 is the lowest, e.g. unarmed units.
 -- @param #OPSGROUP self
--- @param #number ThreatLevelMin Only consider threats with level greater or equal to this number. Default 1 (so unarmed units wont be considered).
--- @param #number ThreatLevelMax Only consider threats with level smaller or queal to this number. Default 10.
+-- @param #number ThreatLevelMin (Optional) Only consider threats with level greater or equal to this number. Default 1 (so unarmed units wont be considered).
+-- @param #number ThreatLevelMax (Optional) Only consider threats with level smaller or queal to this number. Default 10.
 -- @return Wrapper.Unit#UNIT Highest threat unit detected by the group or `nil` if no threat is currently detected.
 -- @return #number Threat level.
 function OPSGROUP:GetThreat(ThreatLevelMin, ThreatLevelMax)
@@ -1593,10 +1593,10 @@ end
 
 --- Enable to automatically engage detected targets.
 -- @param #OPSGROUP self
--- @param #number RangeMax Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
--- @param #table TargetTypes Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
--- @param Core.Set#SET_ZONE EngageZoneSet Set of zones in which targets are engaged. Default is anywhere.
--- @param Core.Set#SET_ZONE NoEngageZoneSet Set of zones in which targets are *not* engaged. Default is nowhere.
+-- @param #number RangeMax (Optional) Max range in NM. Only detected targets within this radius from the group will be engaged. Default is 25 NM.
+-- @param #table TargetTypes (Optional) Types of target attributes that will be engaged. See [DCS enum attributes](https://wiki.hoggitworld.com/view/DCS_enum_attributes). Default "All".
+-- @param Core.Set#SET_ZONE EngageZoneSet (Optional) Set of zones in which targets are engaged. Default is anywhere.
+-- @param Core.Set#SET_ZONE NoEngageZoneSet (Optional) Set of zones in which targets are *not* engaged. Default is nowhere.
 -- @return #OPSGROUP self
 function OPSGROUP:SetEngageDetectedOn(RangeMax, TargetTypes, EngageZoneSet, NoEngageZoneSet)
 
@@ -1783,7 +1783,7 @@ end
 
 --- Get MOOSE UNIT object.
 -- @param #OPSGROUP self
--- @param #number UnitNumber Number of the unit in the group. Default first unit.
+-- @param #number UnitNumber (Optional) Number of the unit in the group. Default first unit.
 -- @return Wrapper.Unit#UNIT The MOOSE UNIT object.
 function OPSGROUP:GetUnit(UnitNumber)
 
@@ -1799,7 +1799,7 @@ end
 
 --- Get DCS GROUP object.
 -- @param #OPSGROUP self
--- @param #number UnitNumber Number of the unit in the group. Default first unit.
+-- @param #number UnitNumber (Optional) Number of the unit in the group. Default first unit.
 -- @return DCS#Unit DCS group object.
 function OPSGROUP:GetDCSUnit(UnitNumber)
 
@@ -2059,8 +2059,8 @@ end
 --- Despawn a unit of the group. A "Remove Unit" event is generated by default.
 -- @param #OPSGROUP self
 -- @param #string UnitName Name of the unit
--- @param #number Delay Delay in seconds before the group will be despawned. Default immediately.
--- @param #boolean NoEventRemoveUnit If true, no event "Remove Unit" is generated.
+-- @param #number Delay (Optional) Delay in seconds before the group will be despawned. Default immediately.
+-- @param #boolean NoEventRemoveUnit (Optional) If true, no event "Remove Unit" is generated.
 -- @return #OPSGROUP self
 function OPSGROUP:DespawnUnit(UnitName, Delay, NoEventRemoveUnit)
 
@@ -2096,8 +2096,8 @@ end
 --- Despawn an element/unit of the group.
 -- @param #OPSGROUP self
 -- @param #OPSGROUP.Element Element The element that will be despawned.
--- @param #number Delay Delay in seconds before the element will be despawned. Default immediately.
--- @param #boolean NoEventRemoveUnit If true, no event "Remove Unit" is generated.
+-- @param #number Delay (Optional) Delay in seconds before the element will be despawned. Default immediately.
+-- @param #boolean NoEventRemoveUnit (Optional) If true, no event "Remove Unit" is generated.
 -- @return #OPSGROUP self
 function OPSGROUP:DespawnElement(Element, Delay, NoEventRemoveUnit)
 
@@ -2133,7 +2133,7 @@ end
 -- If no `Remove Unit` event should be generated, the second optional parameter needs to be set to `true`.
 -- If this group belongs to an AIRWING, BRIGADE or FLEET, it will be added to the warehouse stock if the `NoEventRemoveUnit` parameter is `false` or `nil`.
 -- @param #OPSGROUP self
--- @param #number Delay Delay in seconds before the group will be despawned. Default immediately.
+-- @param #number Delay (Optional) Delay in seconds before the group will be despawned. Default immediately.
 -- @param #boolean NoEventRemoveUnit If `true`, **no** event "Remove Unit" is generated.
 -- @return #OPSGROUP self
 function OPSGROUP:Despawn(Delay, NoEventRemoveUnit)
@@ -2176,7 +2176,7 @@ end
 --- Return group back to the legion it belongs to.
 -- Group is despawned and added back to the stock.
 -- @param #OPSGROUP self
--- @param #number Delay Delay in seconds before the group will be despawned. Default immediately
+-- @param #number Delay (Optional) Delay in seconds before the group will be despawned. Default immediately
 -- @return #OPSGROUP self
 function OPSGROUP:ReturnToLegion(Delay)
 
@@ -2200,7 +2200,7 @@ end
 --- Destroy a unit of the group. A *Unit Lost* for aircraft or *Dead* event for ground/naval units is generated.
 -- @param #OPSGROUP self
 -- @param #string UnitName Name of the unit which should be destroyed.
--- @param #number Delay Delay in seconds before the group will be destroyed. Default immediately.
+-- @param #number Delay (Optional) Delay in seconds before the group will be destroyed. Default immediately.
 -- @return #OPSGROUP self
 function OPSGROUP:DestroyUnit(UnitName, Delay)
 
@@ -2232,7 +2232,7 @@ end
 
 --- Destroy group. The whole group is despawned and a *Unit Lost* for aircraft or *Dead* event for ground/naval units is generated for all current units.
 -- @param #OPSGROUP self
--- @param #number Delay Delay in seconds before the group will be destroyed. Default immediately.
+-- @param #number Delay (Optional) Delay in seconds before the group will be destroyed. Default immediately.
 -- @return #OPSGROUP self
 function OPSGROUP:Destroy(Delay)
 
@@ -2316,9 +2316,9 @@ end
 
 --- Self destruction of group. An explosion is created at the position of each element.
 -- @param #OPSGROUP self
--- @param #number Delay Delay in seconds. Default now.
+-- @param #number Delay (Optional) Delay in seconds. Default now.
 -- @param #number ExplosionPower (Optional) Explosion power in kg TNT. Default 100 kg.
--- @param #string ElementName Name of the element that should be destroyed. Default is all elements.
+-- @param #string ElementName (Optional) Name of the element that should be destroyed. Default is all elements.
 -- @return #OPSGROUP self
 function OPSGROUP:SelfDestruction(Delay, ExplosionPower, ElementName)
 
@@ -2348,13 +2348,13 @@ end
 --- Use SRS Simple-Text-To-Speech for transmissions.
 -- @param #OPSGROUP self
 -- @param #string PathToSRS Path to SRS directory.
--- @param #string Gender Gender: "male" or "female" (default).
--- @param #string Culture Culture, e.g. "en-GB" (default).
--- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
--- @param #number Port SRS port. Default 5002.
--- @param #string PathToGoogleKey Full path to the google credentials JSON file, e.g. `"C:\Users\myUsername\Downloads\key.json"`.
--- @param #string Label Label of the SRS comms for the SRS Radio overlay. Defaults to "ROBOT". No spaces allowed!
--- @param #number Volume Volume to be set, 0.0 = silent, 1.0 = loudest. Defaults to 1.0
+-- @param #string Gender (Optional) Gender: "male" or "female" (default).
+-- @param #string Culture (Optional) Culture, e.g. "en-GB" (default).
+-- @param #string Voice (Optional) Specific voice. Overrides `Gender` and `Culture`.
+-- @param #number Port (Optional) SRS port. Default 5002.
+-- @param #string PathToGoogleKey (Optional) Full path to the google credentials JSON file, e.g. `"C:\Users\myUsername\Downloads\key.json"`.
+-- @param #string Label (Optional) Label of the SRS comms for the SRS Radio overlay. Defaults to "ROBOT". No spaces allowed!
+-- @param #number Volume (Optional) Volume to be set, 0.0 = silent, 1.0 = loudest. Defaults to 1.0
 -- @return #OPSGROUP self
 function OPSGROUP:SetSRS(PathToSRS, Gender, Culture, Voice, Port, PathToGoogleKey, Label, Volume)
   self.useSRS=true
@@ -2379,8 +2379,8 @@ end
 -- @param #OPSGROUP self
 -- @param #string Text Text of transmission.
 -- @param #number Delay Delay in seconds before the transmission is started.
--- @param #boolean SayCallsign If `true`, the callsign is prepended to the given text. Default `false`.
--- @param #number Frequency Override sender frequency, helpful when you need multiple radios from the same sender. Default is the frequency set for the OpsGroup.
+-- @param #boolean SayCallsign (Optional) If `true`, the callsign is prepended to the given text. Default `false`.
+-- @param #number Frequency (Optional) Override sender frequency, helpful when you need multiple radios from the same sender. Default is the frequency set for the OpsGroup.
 -- @return #OPSGROUP self
 function OPSGROUP:RadioTransmission(Text, Delay, SayCallsign, Frequency)
 
@@ -2421,8 +2421,8 @@ end
 
 --- Set that this carrier is an all aspect loader.
 -- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @param #number Length (Optional) Length of loading zone in meters. Default 50 m.
+-- @param #number Width (Optional) Width of loading zone in meters. Default 20 m.
 -- @return #OPSGROUP self
 function OPSGROUP:SetCarrierLoaderAllAspect(Length, Width)
   self.carrierLoader.type="front"
@@ -2433,8 +2433,8 @@ end
 
 --- Set that this carrier is a front loader.
 -- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @param #number Length (Optional) Length of loading zone in meters. Default 50 m.
+-- @param #number Width (Optional) Width of loading zone in meters. Default 20 m.
 -- @return #OPSGROUP self
 function OPSGROUP:SetCarrierLoaderFront(Length, Width)
   self.carrierLoader.type="front"
@@ -2445,8 +2445,8 @@ end
 
 --- Set that this carrier is a back loader.
 -- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @param #number Length (Optional) Length of loading zone in meters. Default 50 m.
+-- @param #number Width (Optional) Width of loading zone in meters. Default 20 m.
 -- @return #OPSGROUP self
 function OPSGROUP:SetCarrierLoaderBack(Length, Width)
   self.carrierLoader.type="back"
@@ -2457,8 +2457,8 @@ end
 
 --- Set that this carrier is a starboard (right side) loader.
 -- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @param #number Length (Optional) Length of loading zone in meters. Default 50 m.
+-- @param #number Width (Optional) Width of loading zone in meters. Default 20 m.
 -- @return #OPSGROUP self
 function OPSGROUP:SetCarrierLoaderStarboard(Length, Width)
   self.carrierLoader.type="right"
@@ -2469,8 +2469,8 @@ end
 
 --- Set that this carrier is a port (left side) loader.
 -- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @param #number Length (Optional) Length of loading zone in meters. Default 50 m.
+-- @param #number Width (Optional) Width of loading zone in meters. Default 20 m.
 -- @return #OPSGROUP self
 function OPSGROUP:SetCarrierLoaderPort(Length, Width)
   self.carrierLoader.type="left"
@@ -2482,8 +2482,8 @@ end
 
 --- Set that this carrier is an all aspect unloader.
 -- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @param #number Length (Optional) Length of loading zone in meters. Default 50 m.
+-- @param #number Width (Optional) Width of loading zone in meters. Default 20 m.
 -- @return #OPSGROUP self
 function OPSGROUP:SetCarrierUnloaderAllAspect(Length, Width)
   self.carrierUnloader.type="front"
@@ -2494,8 +2494,8 @@ end
 
 --- Set that this carrier is a front unloader.
 -- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @param #number Length (Optional) Length of loading zone in meters. Default 50 m.
+-- @param #number Width (Optional) Width of loading zone in meters. Default 20 m.
 -- @return #OPSGROUP self
 function OPSGROUP:SetCarrierUnloaderFront(Length, Width)
   self.carrierUnloader.type="front"
@@ -2506,8 +2506,8 @@ end
 
 --- Set that this carrier is a back unloader.
 -- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @param #number Length (Optional) Length of loading zone in meters. Default 50 m.
+-- @param #number Width (Optional) Width of loading zone in meters. Default 20 m.
 -- @return #OPSGROUP self
 function OPSGROUP:SetCarrierUnloaderBack(Length, Width)
   self.carrierUnloader.type="back"
@@ -2518,8 +2518,8 @@ end
 
 --- Set that this carrier is a starboard (right side) unloader.
 -- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @param #number Length (Optional) Length of loading zone in meters. Default 50 m.
+-- @param #number Width (Optional) Width of loading zone in meters. Default 20 m.
 -- @return #OPSGROUP self
 function OPSGROUP:SetCarrierUnloaderStarboard(Length, Width)
   self.carrierUnloader.type="right"
@@ -2530,8 +2530,8 @@ end
 
 --- Set that this carrier is a port (left side) unloader.
 -- @param #OPSGROUP self
--- @param #number Length Length of loading zone in meters. Default 50 m.
--- @param #number Width Width of loading zone in meters. Default 20 m.
+-- @param #number Length (Optional) Length of loading zone in meters. Default 50 m.
+-- @param #number Width (Optional) Width of loading zone in meters. Default 20 m.
 -- @return #OPSGROUP self
 function OPSGROUP:SetCarrierUnloaderPort(Length, Width)
   self.carrierUnloader.type="left"
@@ -3076,7 +3076,7 @@ end
 
 --- Mark waypoints on F10 map.
 -- @param #OPSGROUP self
--- @param #number Duration Duration in seconds how long the waypoints are displayed before they are automatically removed. Default is that they are never removed.
+-- @param #number Duration (Optional) Duration in seconds how long the waypoints are displayed before they are automatically removed. Default is that they are never removed.
 -- @return #OPSGROUP self
 function OPSGROUP:MarkWaypoints(Duration)
 
@@ -3106,7 +3106,7 @@ end
 
 --- Remove waypoints markers on the F10 map.
 -- @param #OPSGROUP self
--- @param #number Delay Delay in seconds before the markers are removed. Default is immediately.
+-- @param #number Delay (Optional) Delay in seconds before the markers are removed. Default is immediately.
 -- @return #OPSGROUP self
 function OPSGROUP:RemoveWaypointMarkers(Delay)
 
@@ -3196,8 +3196,8 @@ end
 
 --- Get next waypoint index.
 -- @param #OPSGROUP self
--- @param #boolean cyclic If `true`, return first waypoint if last waypoint was reached. Default is patrol ad infinitum value set.
--- @param #number i Waypoint index from which the next index is returned. Default is the last waypoint passed.
+-- @param #boolean cyclic (Optional) If `true`, return first waypoint if last waypoint was reached. Default is patrol ad infinitum value set.
+-- @param #number i (Optional) Waypoint index from which the next index is returned. Default is the last waypoint passed.
 -- @return #number Next waypoint index.
 function OPSGROUP:GetWaypointIndexNext(cyclic, i)
 
@@ -3232,7 +3232,7 @@ end
 
 --- Get waypoint index after waypoint with given ID. So if the waypoint has index 3 it will return 4.
 -- @param #OPSGROUP self
--- @param #number uid Unique ID of the waypoint. Default is new waypoint index after the last current one.
+-- @param #number uid (Optional) Unique ID of the waypoint. Default is new waypoint index after the last current one.
 -- @return #number Index after waypoint with given ID.
 function OPSGROUP:GetWaypointIndexAfterID(uid)
 
@@ -3369,7 +3369,7 @@ end
 
 --- Get distance to waypoint.
 -- @param #OPSGROUP self
--- @param #number indx Waypoint index. Default is the next waypoint.
+-- @param #number indx (Optional) Waypoint index. Default is the next waypoint.
 -- @return #number Distance in meters.
 function OPSGROUP:GetDistanceToWaypoint(indx)
   local dist=0
@@ -3394,7 +3394,7 @@ end
 
 --- Get time to waypoint based on current velocity.
 -- @param #OPSGROUP self
--- @param #number indx Waypoint index. Default is the next waypoint.
+-- @param #number indx (Optional) Waypoint index. Default is the next waypoint.
 -- @return #number Time in seconds. If velocity is 0
 function OPSGROUP:GetTimeToWaypoint(indx)
 
@@ -3847,10 +3847,10 @@ end
 --- Add a *scheduled* task.
 -- @param #OPSGROUP self
 -- @param #table task DCS task table structure.
--- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
+-- @param #string clock (Optional) Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
 -- @param #string description Brief text describing the task, e.g. "Attack SAM".
--- @param #number prio Priority of the task.
--- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
+-- @param #number prio (Optional) Priority of the task. Default is 50.
+-- @param #number duration (Optional) Duration before task is cancelled in seconds counted after task started. Default never.
 -- @return #OPSGROUP.Task The task structure.
 function OPSGROUP:AddTask(task, clock, description, prio, duration)
 
@@ -3869,10 +3869,10 @@ end
 --- Create a *scheduled* task.
 -- @param #OPSGROUP self
 -- @param #table task DCS task table structure.
--- @param #string clock Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
+-- @param #string clock (Optional) Mission time when task is executed. Default in 5 seconds. If argument passed as #number, it defines a relative delay in seconds.
 -- @param #string description Brief text describing the task, e.g. "Attack SAM".
--- @param #number prio Priority of the task.
--- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
+-- @param #number prio (Optional) Priority of the task. Default is 50.
+-- @param #number duration (Optional) Duration before task is cancelled in seconds counted after task started. Default never.
 -- @return #OPSGROUP.Task The task structure.
 function OPSGROUP:NewTaskScheduled(task, clock, description, prio, duration)
 
@@ -3909,10 +3909,10 @@ end
 --- Add a *waypoint* task.
 -- @param #OPSGROUP self
 -- @param #table task DCS task table structure.
--- @param #OPSGROUP.Waypoint Waypoint where the task is executed. Default is the at *next* waypoint.
+-- @param #OPSGROUP.Waypoint Waypoint (Optional) where the task is executed. Default is the at *next* waypoint.
 -- @param #string description Brief text describing the task, e.g. "Attack SAM".
--- @param #number prio Priority of the task. Number between 1 and 100. Default is 50.
--- @param #number duration Duration before task is cancelled in seconds counted after task started. Default never.
+-- @param #number prio (Optional) Priority of the task. Number between 1 and 100. Default is 50.
+-- @param #number duration(Optional)  Duration before task is cancelled in seconds counted after task started. Default never.
 -- @return #OPSGROUP.Task The task structure.
 function OPSGROUP:AddTaskWaypoint(task, Waypoint, description, prio, duration)
 
@@ -4842,8 +4842,8 @@ end
 -- @param #OPSGROUP self
 -- @param DCS#Task DCSTask The DCS task.
 -- @param Ops.OpsGroup#OPSGROUP.Task Task
--- @param #boolean SetTask Set task instead of pushing it.
--- @param #number Delay Delay in seconds. Default nil.
+-- @param #boolean SetTask (Optional) Set task instead of pushing it. Default is to push it.
+-- @param #number Delay (Optional) Delay in seconds. Default nil.
 function OPSGROUP:_SandwitchDCSTask(DCSTask, Task, SetTask, Delay)
 
   if Delay and Delay>0 then
@@ -4896,7 +4896,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #OPSGROUP.Task Task The task to cancel. Default is the current task (if any).
+-- @param #OPSGROUP.Task Task (Optional) The task to cancel. Default is the current task (if any).
 function OPSGROUP:onafterTaskCancel(From, Event, To, Task)
 
   -- Get current task.
@@ -7772,8 +7772,8 @@ end
 --- Teleport the group to a different location.
 -- @param #OPSGROUP self
 -- @param Core.Point#COORDINATE Coordinate Coordinate where the group is teleported to.
--- @param #number Delay Delay in seconds before respawn happens. Default 0.
--- @param #boolean NoPauseMission If `true`, dont pause a running mission.
+-- @param #number Delay (Optional) Delay in seconds before respawn happens. Default 0.
+-- @param #boolean NoPauseMission (Optional) If `true`, dont pause a running mission.
 -- @return #OPSGROUP self
 function OPSGROUP:Teleport(Coordinate, Delay, NoPauseMission)
     
@@ -7861,9 +7861,9 @@ end
 
 --- Respawn the group.
 -- @param #OPSGROUP self
--- @param #number Delay Delay in seconds before respawn happens. Default 0.
--- @param DCS#Template Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
--- @param #boolean Reset Reset waypoints and reinit group if `true`.
+-- @param #number Delay (Optional) Delay in seconds before respawn happens. Default 0.
+-- @param DCS#Template Template (Optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
+-- @param #boolean Reset (Optional) Reset waypoints and reinit group if `true`.
 -- @return #OPSGROUP self
 function OPSGROUP:_Respawn(Delay, Template, Reset)
 
@@ -7956,8 +7956,8 @@ end
 
 --- Spawn group from a given template.
 -- @param #OPSGROUP self
--- @param #number Delay Delay in seconds before respawn happens. Default 0.
--- @param DCS#Template Template (optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
+-- @param #number Delay (Optional) Delay in seconds before respawn happens. Default 0.
+-- @param DCS#Template Template (Optional) The template of the Group retrieved with GROUP:GetTemplate(). If the template is not provided, the template will be retrieved of the group itself.
 -- @return #OPSGROUP self
 function OPSGROUP:_Spawn(Delay, Template)
   if Delay and Delay>0 then
@@ -8960,8 +8960,8 @@ end
 
 --- Get total weight of the group including cargo. Optionally, the total weight of a specific unit can be requested.
 -- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
+-- @param #string UnitName (Optional) Name of the unit. Default is of the whole group.
+-- @param #boolean IncludeReserved (Optional) If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
 -- @return #number Total weight in kg.
 function OPSGROUP:GetWeightTotal(UnitName, IncludeReserved)
 
@@ -8996,8 +8996,8 @@ end
 
 --- Get free cargo bay weight.
 -- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
+-- @param #string UnitName (Optional) Name of the unit. Default is of the whole group.
+-- @param #boolean IncludeReserved (Optional) If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
 -- @return #number Free cargo bay in kg.
 function OPSGROUP:GetFreeCargobay(UnitName, IncludeReserved)
 
@@ -9018,8 +9018,8 @@ end
 
 --- Get relative free cargo bay in percent.
 -- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
+-- @param #string UnitName (Optional) Name of the unit. Default is of the whole group.
+-- @param #boolean IncludeReserved (Optional) If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
 -- @return #number Free cargo bay in percent.
 function OPSGROUP:GetFreeCargobayRelative(UnitName, IncludeReserved)
 
@@ -9034,8 +9034,8 @@ end
 
 --- Get relative used (loaded) cargo bay in percent.
 -- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
+-- @param #string UnitName (Optional) Name of the unit. Default is of the whole group.
+-- @param #boolean IncludeReserved (Optional) If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
 -- @return #number Used cargo bay in percent.
 function OPSGROUP:GetUsedCargobayRelative(UnitName, IncludeReserved)
   local free=self:GetFreeCargobayRelative(UnitName, IncludeReserved)
@@ -9075,8 +9075,8 @@ end
 
 --- Get weight of the internal cargo the group is carriing right now.
 -- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
--- @param #boolean IncludeReserved If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
+-- @param #string UnitName (Optional) Name of the unit. Default is of the whole group.
+-- @param #boolean IncludeReserved (Optional) If `false`, cargo weight that is only *reserved* is **not** counted. By default (`true` or `nil`), the reserved cargo is included.
 -- @return #number Cargo weight in kg.
 function OPSGROUP:GetWeightCargo(UnitName, IncludeReserved)
 
@@ -9125,7 +9125,7 @@ end
 
 --- Get max weight of the internal cargo the group can carry. Optionally, the max cargo weight of a specific unit can be requested.
 -- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
+-- @param #string UnitName (Optional) Name of the unit. Default is of the whole group.
 -- @return #number Max cargo weight in kg. This does **not** include any cargo loaded or reserved currently.
 function OPSGROUP:GetWeightCargoMax(UnitName)
 
@@ -9163,7 +9163,7 @@ end
 
 --- Add weight to the internal cargo of an element of the group.
 -- @param #OPSGROUP self
--- @param #string UnitName Name of the unit. Default is of the whole group.
+-- @param #string UnitName (Optional) Name of the unit. Default is of the whole group.
 -- @param #number Weight Cargo weight to be added in kg.
 function OPSGROUP:AddWeightCargo(UnitName, Weight)
 
@@ -11529,7 +11529,7 @@ end
 --- Initialize Mission Editor waypoints.
 -- @param #OPSGROUP self
 -- @param #OPSGROUP.Waypoint waypoint Waypoint data.
--- @param #number wpnumber Waypoint index/number. Default is as last waypoint.
+-- @param #number wpnumber (Optional) Waypoint index/number. Default is as last waypoint.
 function OPSGROUP:_AddWaypoint(waypoint, wpnumber)
 
   -- Index.
@@ -11999,7 +11999,7 @@ end
 
 --- Set the default ROE for the group. This is the ROE state gets when the group is spawned or to which it defaults back after a mission.
 -- @param #OPSGROUP self
--- @param #number roe ROE of group. Default is `ENUMS.ROE.ReturnFire`.
+-- @param #number roe (Optional) ROE of group. Default is `ENUMS.ROE.ReturnFire`.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultROE(roe)
   self.optionDefault.ROE=roe or ENUMS.ROE.ReturnFire
@@ -12008,7 +12008,7 @@ end
 
 --- Set current ROE for the group.
 -- @param #OPSGROUP self
--- @param #string roe ROE of group. Default is value set in `SetDefaultROE` (usually `ENUMS.ROE.ReturnFire`).
+-- @param #string roe (Optional) ROE of group. Default is value set in `SetDefaultROE` (usually `ENUMS.ROE.ReturnFire`).
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchROE(roe)
 
@@ -12061,7 +12061,7 @@ end
 
 --- Set the default ROT for the group. This is the ROT state gets when the group is spawned or to which it defaults back after a mission.
 -- @param #OPSGROUP self
--- @param #number rot ROT of group. Default is `ENUMS.ROT.PassiveDefense`.
+-- @param #number rot (Optional) ROT of group. Default is `ENUMS.ROT.PassiveDefense`.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultROT(rot)
   self.optionDefault.ROT=rot or ENUMS.ROT.PassiveDefense
@@ -12070,7 +12070,7 @@ end
 
 --- Set ROT for the group.
 -- @param #OPSGROUP self
--- @param #string rot ROT of group. Default is value set in `:SetDefaultROT` (usually `ENUMS.ROT.PassiveDefense`).
+-- @param #string rot (Optional) ROT of group. Default is value set in `:SetDefaultROT` (usually `ENUMS.ROT.PassiveDefense`).
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchROT(rot)
 
@@ -12110,7 +12110,7 @@ end
 
 --- Set the default Alarm State for the group. This is the state gets when the group is spawned or to which it defaults back after a mission.
 -- @param #OPSGROUP self
--- @param #number alarmstate Alarm state of group. Default is `AI.Option.Ground.val.ALARM_STATE.AUTO` (0).
+-- @param #number alarmstate (Optional) Alarm state of group. Default is `AI.Option.Ground.val.ALARM_STATE.AUTO` (0).
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultAlarmstate(alarmstate)
   self.optionDefault.Alarm=alarmstate or 0
@@ -12124,7 +12124,7 @@ end
 -- * 2 = "Red"
 --
 -- @param #OPSGROUP self
--- @param #number alarmstate Alarm state of group. Default is 0="Auto".
+-- @param #number alarmstate (Optional) Alarm state of group. Default is 0="Auto".
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchAlarmstate(alarmstate)
 
@@ -12171,7 +12171,7 @@ end
 
 --- Set the default EPLRS for the group.
 -- @param #OPSGROUP self
--- @param #boolean OnOffSwitch If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
+-- @param #boolean OnOffSwitch (Optional) If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultEPLRS(OnOffSwitch)
 
@@ -12226,7 +12226,7 @@ end
 
 --- Set the default emission state for the group.
 -- @param #OPSGROUP self
--- @param #boolean OnOffSwitch If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
+-- @param #boolean OnOffSwitch (Optional) If `true`, EPLRS is on by default. If `false` default EPLRS setting is off. If `nil`, default is on if group has EPLRS and off if it does not have a datalink.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultEmission(OnOffSwitch)
 
@@ -12281,7 +12281,7 @@ end
 
 --- Set the default invisible for the group.
 -- @param #OPSGROUP self
--- @param #boolean OnOffSwitch If `true`, group is ivisible by default.
+-- @param #boolean OnOffSwitch (Optional) If `true`, group is ivisible by default.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultInvisible(OnOffSwitch)
 
@@ -12330,7 +12330,7 @@ end
 
 --- Set the default immortal for the group.
 -- @param #OPSGROUP self
--- @param #boolean OnOffSwitch If `true`, group is immortal by default.
+-- @param #boolean OnOffSwitch (Optional) If `true`, group is immortal by default.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultImmortal(OnOffSwitch)
 
@@ -12382,11 +12382,11 @@ end
 
 --- Set default TACAN parameters.
 -- @param #OPSGROUP self
--- @param #number Channel TACAN channel. Default is 74.
--- @param #string Morse Morse code. Default "XXX".
+-- @param #number Channel (Optional) TACAN channel. Default is 74.
+-- @param #string Morse(Optional)  Morse code. Default "XXX".
 -- @param #string UnitName Name of the unit acting as beacon.
--- @param #string Band TACAN mode. Default is "X" for ground and "Y" for airborne units.
--- @param #boolean OffSwitch If true, TACAN is off by default.
+-- @param #string Band (Optional) TACAN mode. Default is "X" for ground and "Y" for airborne units.
+-- @param #boolean OffSwitch (Optional) If true, TACAN is off by default.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultTACAN(Channel, Morse, UnitName, Band, OffSwitch)
 
@@ -12415,7 +12415,7 @@ end
 
 --- Activate/switch TACAN beacon settings.
 -- @param #OPSGROUP self
--- @param #OPSGROUP.Beacon Tacan TACAN data table. Default is the default TACAN settings.
+-- @param #OPSGROUP.Beacon Tacan (Optional) TACAN data table. Default is the default TACAN settings.
 -- @return #OPSGROUP self
 function OPSGROUP:_SwitchTACAN(Tacan)
 
@@ -12438,9 +12438,9 @@ end
 --- Activate/switch TACAN beacon settings.
 -- @param #OPSGROUP self
 -- @param #number Channel TACAN Channel.
--- @param #string Morse TACAN morse code. Default is the value set in @{#OPSGROUP.SetDefaultTACAN} or if not set "XXX".
--- @param #string UnitName Name of the unit in the group which should activate the TACAN beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
--- @param #string Band TACAN channel mode "X" or "Y". Default is "Y" for aircraft and "X" for ground and naval groups.
+-- @param #string Morse (Optional) TACAN morse code. Default is the value set in @{#OPSGROUP.SetDefaultTACAN} or if not set "XXX".
+-- @param #string UnitName (Optional) Name of the unit in the group which should activate the TACAN beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
+-- @param #string Band (Optional) TACAN channel mode "X" or "Y". Default is "Y" for aircraft and "X" for ground and naval groups.
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
 
@@ -12547,10 +12547,10 @@ end
 
 --- Set default ICLS parameters.
 -- @param #OPSGROUP self
--- @param #number Channel ICLS channel. Default is 1.
--- @param #string Morse Morse code. Default "XXX".
+-- @param #number Channel (Optional) ICLS channel. Default is 1.
+-- @param #string Morse (Optional) Morse code. Default "XXX".
 -- @param #string UnitName Name of the unit acting as beacon.
--- @param #boolean OffSwitch If true, TACAN is off by default.
+-- @param #boolean OffSwitch (Optional) If true, TACAN is off by default.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultICLS(Channel, Morse, UnitName, OffSwitch)
 
@@ -12593,9 +12593,9 @@ end
 
 --- Activate/switch ICLS beacon settings.
 -- @param #OPSGROUP self
--- @param #number Channel ICLS Channel. Default is what is set in `SetDefaultICLS()` so usually channel 1.
--- @param #string Morse ICLS morse code. Default is what is set in `SetDefaultICLS()` so usually "XXX".
--- @param #string UnitName Name of the unit in the group which should activate the ICLS beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
+-- @param #number Channel (Optional) ICLS Channel. Default is what is set in `SetDefaultICLS()` so usually channel 1.
+-- @param #string Morse (Optional) ICLS morse code. Default is what is set in `SetDefaultICLS()` so usually "XXX".
+-- @param #string UnitName (Optional) Name of the unit in the group which should activate the ICLS beacon. Can also be given as #number to specify the unit number. Default is the first unit of the group.
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
 
@@ -12669,9 +12669,9 @@ end
 
 --- Set default Radio frequency and modulation.
 -- @param #OPSGROUP self
--- @param #number Frequency Radio frequency in MHz. Default 251 MHz.
--- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
--- @param #boolean OffSwitch If true, radio is OFF by default.
+-- @param #number Frequency (Optional) Radio frequency in MHz. Default 251 MHz.
+-- @param #number Modulation (Optional) Radio modulation. Default `radio.modulation.AM`.
+-- @param #boolean OffSwitch (Optional) If true, radio is OFF by default.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultRadio(Frequency, Modulation, OffSwitch)
 
@@ -12698,8 +12698,8 @@ end
 
 --- Turn radio on or switch frequency/modulation.
 -- @param #OPSGROUP self
--- @param #number Frequency Radio frequency in MHz. Default is value set in `SetDefaultRadio` (usually 251 MHz).
--- @param #number Modulation Radio modulation. Default is value set in `SetDefaultRadio` (usually `radio.modulation.AM`).
+-- @param #number Frequency (Optional) Radio frequency in MHz. Default is value set in `SetDefaultRadio` (usually 251 MHz).
+-- @param #number Modulation (Optional) Radio modulation. Default is value set in `SetDefaultRadio` (usually `radio.modulation.AM`).
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchRadio(Frequency, Modulation)
 
@@ -12778,7 +12778,7 @@ end
 
 --- Switch to a specific formation.
 -- @param #OPSGROUP self
--- @param #number Formation New formation the group will fly in. Default is the setting of `SetDefaultFormation()`.
+-- @param #number Formation (Optional) New formation the group will fly in. Default is the setting of `SetDefaultFormation()`.
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchFormation(Formation)
 
@@ -12815,7 +12815,7 @@ end
 --- Set default callsign.
 -- @param #OPSGROUP self
 -- @param #number CallsignName Callsign name.
--- @param #number CallsignNumber Callsign number. Default 1.
+-- @param #number CallsignNumber (Optional) Callsign number. Default 1.
 -- @return #OPSGROUP self
 function OPSGROUP:SetDefaultCallsign(CallsignName, CallsignNumber)
 
@@ -13540,7 +13540,7 @@ end
 --- Get the number of shells a unit or group currently has. For a group the ammo count of all units is summed up.
 -- @param #OPSGROUP self
 -- @param Wrapper.Unit#UNIT unit The unit object.
--- @param #boolean display Display ammo table as message to all. Default false.
+-- @param #boolean display (Optional) Display ammo table as message to all. Default false.
 -- @return #OPSGROUP.Ammo Ammo data.
 function OPSGROUP:GetAmmoUnit(unit, display)
 
@@ -13975,7 +13975,7 @@ end
 
 --- Set the template of the group.
 -- @param #OPSGROUP self
--- @param #table Template Template to set. Default is from the GROUP.
+-- @param #table Template (Optional) Template to set. Default is from the GROUP.
 -- @return #OPSGROUP self
 function OPSGROUP:_SetTemplate(Template)
 
@@ -14012,8 +14012,8 @@ end
 
 --- Clear waypoints.
 -- @param #OPSGROUP self
--- @param #number IndexMin Clear waypoints up to this min WP index. Default 1.
--- @param #number IndexMax Clear waypoints up to this max WP index. Default `#self.waypoints`.
+-- @param #number IndexMin (Optional) Clear waypoints up to this min WP index. Default 1.
+-- @param #number IndexMax (Optional) Clear waypoints up to this max WP index. Default `#self.waypoints`.
 function OPSGROUP:ClearWaypoints(IndexMin, IndexMax)
 
   IndexMin=IndexMin or 1

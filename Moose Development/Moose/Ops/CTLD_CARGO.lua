@@ -88,8 +88,8 @@ CTLD_CARGO = {
   -- @param #number PerCrateMass Mass in kg
   -- @param #number Stock Number of builds available, nil for unlimited
   -- @param #string Subcategory Name of subcategory, handy if using > 10 types to load.
-  -- @param #boolean DontShowInMenu Show this item in menu or not (default: false == show it).
-  -- @param Core.Zone#ZONE Location (optional) Where the cargo is available (one location only).
+  -- @param #boolean DontShowInMenu (Optional) Show this item in menu or not (default: false == show it).
+  -- @param Core.Zone#ZONE Location (Optional) Where the cargo is available (one location only).
   -- @return #CTLD_CARGO self
   function CTLD_CARGO:New(ID, Name, Templates, Sorte, HasBeenMoved, LoadDirectly, CratesNeeded, Positionable, Dropped, PerCrateMass, Stock, Subcategory, DontShowInMenu, Location)
     -- Inherit everything from BASE class.

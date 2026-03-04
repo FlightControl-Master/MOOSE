@@ -251,7 +251,7 @@ STRATEGO.Type = {
 -- @param #STRATEGO self
 -- @param #string Name Name of the Adviser.
 -- @param #number Coalition Coalition, e.g. coalition.side.BLUE.
--- @param #number MaxDist Maximum distance of a single route in kilometers, defaults to 150.
+-- @param #number MaxDist (Optional) Maximum distance of a single route in kilometers, defaults to 150.
 -- @return #STRATEGO self 
 function STRATEGO:New(Name,Coalition,MaxDist)
   -- Inherit everything from FSM class.
@@ -362,7 +362,7 @@ end
 --- [USER] Set up usage of budget and set an initial budget in points.
 -- @param #STRATEGO self
 -- @param #boolean Usebudget If true, use budget for advisory calculations.
--- @param #number StartBudget Initial budget to be used, defaults to 500.
+-- @param #number StartBudget (Optional) Initial budget to be used, defaults to 500.
 function STRATEGO:SetUsingBudget(Usebudget,StartBudget)
   self:T(self.lid.."SetUsingBudget")
   self.usebudget = Usebudget
@@ -394,10 +394,10 @@ end
 
 --- [USER] Set weights for nodes and routes to determine their importance.
 -- @param #STRATEGO self
--- @param #number MaxRunways Set the maximum number of runways the big (equals strategic) airbases on the map have. Defaults to 3. The weight of an airbase node hence equals the number of runways.
--- @param #number PortWeight Set what weight a port node has. Defaults to 3.
--- @param #number POIWeight Set what weight a POI node has. Defaults to 1.
--- @param #number RouteFactor Defines which weight each route between two defined nodes gets: Weight * RouteFactor.
+-- @param #number MaxRunways (Optional) Set the maximum number of runways the big (equals strategic) airbases on the map have. Defaults to 3. The weight of an airbase node hence equals the number of runways.
+-- @param #number PortWeight (Optional) Set what weight a port node has. Defaults to 3.
+-- @param #number POIWeight (Optional) Set what weight a POI node has. Defaults to 1.
+-- @param #number RouteFactor (Optional) Defines which weight each route between two defined nodes gets: Weight * RouteFactor. Defaults to 5.
 -- @return #STRATEGO self
 function STRATEGO:SetWeights(MaxRunways,PortWeight,POIWeight,RouteFactor)
   self:T(self.lid.."SetWeights")
@@ -410,7 +410,7 @@ end
 
 --- [USER] Set neutral benefit, i.e. how many points it is cheaper to decide for a neutral vs an enemy node when taking decisions.
 -- @param #STRATEGO self
--- @param #number NeutralBenefit Pointsm defaults to 100.
+-- @param #number NeutralBenefit (Optional) Pointsm defaults to 100.
 -- @return #STRATEGO self
 function STRATEGO:SetNeutralBenefit(NeutralBenefit)
   self:T(self.lid.."SetNeutralBenefit")
@@ -420,9 +420,9 @@ end
 
 --- [USER] Set how many units of which minimum threat level are needed to capture one node (i.e. the underlying OpsZone).
 -- @param #STRATEGO self
--- @param #number CaptureUnits Number of units needed, defaults to three.
--- @param #number CaptureThreatlevel Threat level needed, can be 0..10, defaults to one.
--- @param #table CaptureCategories Table of object categories which can capture a node, defaults to `{Object.Category.UNIT}`.
+-- @param #number CaptureUnits (Optional) Number of units needed, defaults to 3.
+-- @param #number CaptureThreatlevel (Optional) Threat level needed, can be 0..10, defaults to 1.
+-- @param #table CaptureCategories (Optional) Table of object categories which can capture a node, defaults to `{Object.Category.UNIT}`.
 -- @return #STRATEGO self
 function STRATEGO:SetCaptureOptions(CaptureUnits,CaptureThreatlevel,CaptureCategories)
   self:T(self.lid.."SetCaptureOptions")

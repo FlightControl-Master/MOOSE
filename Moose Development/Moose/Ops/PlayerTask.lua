@@ -115,9 +115,9 @@ PLAYERTASK.version="0.1.31"
 -- @param #PLAYERTASK self
 -- @param Ops.Auftrag#AUFTRAG.Type Type Type of this task
 -- @param Ops.Target#TARGET Target Target for this task
--- @param #boolean Repeat Repeat this task if true (default = false)
--- @param #number Times Repeat on failure this many times if Repeat is true (default = 1)
--- @param #string TTSType TTS friendly task type name
+-- @param #boolean Repeat (Optional) Repeat this task if true (default = false)
+-- @param #number Times (Optional) Repeat on failure this many times if Repeat is true (default = 1)
+-- @param #string TTSType (Optional) TTS friendly task type name. Defaultsto "close air support".
 -- @return #PLAYERTASK self
 function PLAYERTASK:New(Type, Target, Repeat, Times, TTSType)
 
@@ -272,8 +272,8 @@ end
 --- Constructor that automatically determines the task type based on the target.
 -- @param #PLAYERTASK self
 -- @param Ops.Target#TARGET Target Target for this task
--- @param #boolean Repeat Repeat this task if true (default = false)
--- @param #number Times Repeat on failure this many times if Repeat is true (default = 1)
+-- @param #boolean Repeat (Optional) Repeat this task if true (default = false)
+-- @param #number Times (Optional) Repeat on failure this many times if Repeat is true (default = 1)
 -- @param #string TTSType TTS friendly task type name
 -- @return #PLAYERTASK self
 function PLAYERTASK:NewFromTarget(Target, Repeat, Times, TTSType)
@@ -486,7 +486,7 @@ end
 
 --- [USER] Set if a task can have a smoke marker.
 -- @param #PLAYERTASK self
--- @param #boolean OnOff If true (default) it can be smoke, false if not.
+-- @param #boolean OnOff (Optional) If true (default) it can be smoke, false if not.
 -- @return #PLAYERTASK self
 function PLAYERTASK:SetCanSmoke(OnOff)
   self:T(self.lid.."AddSSetCanSmokeubType")
@@ -496,7 +496,7 @@ end
 
 --- [USER] Set if a task can show threat details.
 -- @param #PLAYERTASK self
--- @param #boolean OnOff If true (default) it can be shown, false if not.
+-- @param #boolean OnOff (Optional) If true (default) it can be shown, false if not.
 -- @return #PLAYERTASK self
 function PLAYERTASK:SetShowThreatDetails(OnOff)
   self:T(self.lid.."SetShowThreatDetails")
@@ -686,7 +686,7 @@ end
 
 --- [USER] Adds a time limit for the task to be completed.
 -- @param #PLAYERTASK self
--- @param #number TimeLimit Time limit in seconds for the task to be completed. (Default 0 = no time limit)
+-- @param #number TimeLimit (Optional) Time limit in seconds for the task to be completed. (Default 0 = no time limit)
 -- @return #PLAYERTASK self
 -- @usage
 -- local mytask = PLAYERTASK:New(AUFTRAG.Type.RECON, ZONE:New("WF Zone"), true, 50, "Deep Earth")
@@ -892,7 +892,7 @@ end
 
 --- [User] Smoke Target
 -- @param #PLAYERTASK self
--- @param #number Color, defaults to SMOKECOLOR.Red
+-- @param #number Color (Optional) Color, defaults to SMOKECOLOR.Red
 -- @return #PLAYERTASK self
 function PLAYERTASK:SmokeTarget(Color)
   self:T(self.lid.."SmokeTarget")
@@ -911,7 +911,7 @@ end
 
 --- [User] Flare Target
 -- @param #PLAYERTASK self
--- @param #number Color, defaults to FLARECOLOR.Red
+-- @param #number Color (Optional) Color, defaults to FLARECOLOR.Red
 -- @return #PLAYERTASK self
 function PLAYERTASK:FlareTarget(Color)
   self:T(self.lid.."SmokeTarget")
@@ -927,8 +927,8 @@ end
 
 --- [User] Illuminate Target Area
 -- @param #PLAYERTASK self
--- @param #number Power Power of illumination bomb in Candela. Default 1000 cd.
--- @param #number Height Height above target used to release the bomb, default 150m.
+-- @param #number Power (Optional) Power of illumination bomb in Candela. Default 1000 cd.
+-- @param #number Height (Optional) Height above target used to release the bomb, default 150m.
 -- @return #PLAYERTASK self
 function PLAYERTASK:IlluminateTarget(Power,Height)
   self:T(self.lid.."IlluminateTarget")
@@ -2021,9 +2021,9 @@ PLAYERTASKCONTROLLER.version="0.1.73"
 --- Create and run a new TASKCONTROLLER instance.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #string Name Name of this controller
--- @param #number Coalition of this controller, e.g. coalition.side.BLUE
--- @param #string Type Type of the tasks controlled, defaults to PLAYERTASKCONTROLLER.Type.A2G
--- @param #string ClientFilter (optional) Additional prefix filter for the SET_CLIENT. Can be handed as @{Core.Set#SET_CLIENT} also.
+-- @param #number Coalition (Optional) Coalition of this controller. Defaults to coalition.side.BLUE
+-- @param #string Type (Optional) Type of the tasks controlled, defaults to PLAYERTASKCONTROLLER.Type.A2G
+-- @param #string ClientFilter (Optional) Additional prefix filter for the SET_CLIENT. Can be handed as @{Core.Set#SET_CLIENT} also.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:New(Name, Coalition, Type, ClientFilter)
   
@@ -2317,7 +2317,7 @@ end
 
 --- [User] Set flash directions option for player (player based info)
 -- @param #PLAYERTASKCONTROLLER self
--- @param #boolean OnOff Set to `true` to switch on and `false` to switch off. Default is OFF.
+-- @param #boolean OnOff (Optional) Set to `true` to switch on and `false` to switch off. Default is OFF.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetAllowFlashDirection(OnOff)
   self:T(self.lid.."SetAllowFlashDirection")
@@ -2327,7 +2327,7 @@ end
 
 --- [User] Set to show a menu entry to retrieve the radio frequencies used.
 -- @param #PLAYERTASKCONTROLLER self
--- @param #boolean OnOff Set to `true` to switch on and `false` to switch off. Default is OFF.
+-- @param #boolean OnOff (Optional) Set to `true` to switch on and `false` to switch off. Default is OFF.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetShowRadioInfoMenu(OnOff)
   self:T(self.lid.."SetAllowRadioInfoMenu")
@@ -2436,8 +2436,8 @@ end
 
 --- [User] Set repetition options for tasks.
 -- @param #PLAYERTASKCONTROLLER self
--- @param #boolean OnOff Set to `true` to switch on and `false` to switch off (defaults to true)
--- @param #number Repeats Number of repeats (defaults to 5)
+-- @param #boolean OnOff (Optional) Set to `true` to switch on and `false` to switch off (defaults to true)
+-- @param #number Repeats (Optional) Number of repeats (defaults to 5)
 -- @return #PLAYERTASKCONTROLLER self
 -- @usage `taskmanager:SetTaskRepetition(true, 5)`
 function PLAYERTASKCONTROLLER:SetTaskRepetition(OnOff, Repeats)
@@ -2454,7 +2454,7 @@ end
 
 --- [User] Set how long the briefing is shown on screen.
 -- @param #PLAYERTASKCONTROLLER self
--- @param #number Seconds Duration in seconds. Defaults to 30 seconds.
+-- @param #number Seconds (Optional) Duration in seconds. Defaults to 30 seconds.
 -- @return #PLAYERTASKCONTROLLER self 
 function PLAYERTASKCONTROLLER:SetBriefingDuration(Seconds)
   self:T(self.lid.."SetBriefingDuration")
@@ -2484,7 +2484,7 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FlightGroup (e.g. drone) to be used for lasing (one unit in one group only).
 -- Can optionally be handed as Ops.ArmyGroup#ARMYGROUP - **Note** might not find an LOS spot or get lost on the way. Cannot island-hop.
--- @param #number LaserCode The lasercode to be used. Defaults to 1688.
+-- @param #number LaserCode (Optional) The lasercode to be used. Defaults to 1688.
 -- @param Core.Point#COORDINATE HoldingPoint (Optional) Point where the drone should initially circle. If not set, defaults to BullsEye of the coalition.
 -- @param #number Alt (Optional) Altitude in feet. Only applies if using a FLIGHTGROUP object! Defaults to 10000.
 -- @param #number Speed (Optional) Speed in knots. Only applies if using a FLIGHTGROUP object! Defaults to 120.
@@ -2567,7 +2567,7 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup The FlightGroup (e.g. drone) to be used for lasing (one unit in one group only).
 -- Can optionally be handed as Ops.ArmyGroup#ARMYGROUP - **Note** might not find an LOS spot or get lost on the way. Cannot island-hop.
--- @param #number LaserCode The lasercode to be used. Defaults to 1688.
+-- @param #number LaserCode (Optional) The lasercode to be used. Defaults to 1688.
 -- @param Core.Point#COORDINATE HoldingPoint (Optional) Point where the drone should initially circle. If not set, defaults to BullsEye of the coalition.
 -- @param #number Alt (Optional) Altitude in feet. Only applies if using a FLIGHTGROUP object! Defaults to 10000.
 -- @param #number Speed (Optional) Speed in knots. Only applies if using a FLIGHTGROUP object! Defaults to 120.
@@ -2704,8 +2704,8 @@ end
 -- @param #PLAYERTASKCONTROLLER self
 -- @param #boolean InfoMenu If `true` this option will allow to show the Task Info-Menu also when a player has an active task. 
 -- Since the menu isn't refreshed if a player holds an active task, the info in there might be stale.
--- @param #number ItemLimit Number of items per task type to show, default 5. 
--- @param #number HoldTime Minimum number of seconds between menu refreshes (called every 30 secs) if a player has **no active task**.
+-- @param #number ItemLimit (Optional) Number of items per task type to show, default 5. 
+-- @param #number HoldTime (Optional) Minimum number of seconds between menu refreshes (called every 30 secs) if a player has **no active task**.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetMenuOptions(InfoMenu,ItemLimit,HoldTime)
   self:T(self.lid.."SetMenuOptions")
@@ -2840,7 +2840,7 @@ end
 
 --- [User] Set target radius. Determines the zone radius to distinguish CAS from BAI tasks and to find enemies if the TARGET object is a COORDINATE.
 -- @param #PLAYERTASKCONTROLLER self
--- @param #number Radius Radius to use in meters. Defaults to 500 meters.
+-- @param #number Radius (Optional) Radius to use in meters. Defaults to 500 meters.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetTargetRadius(Radius)
   self:T(self.lid.."SetTargetRadius")
@@ -2851,7 +2851,7 @@ end
 --- [User] Set the cluster radius if you want to use target clusters rather than single group detection. 
 -- Note that for a controller type A2A target clustering is on by default. Also remember that the diameter of the resulting zone is double the radius.
 -- @param #PLAYERTASKCONTROLLER self
--- @param #number Radius Target cluster radius in kilometers. Default is 0.5km.
+-- @param #number Radius (Optional) Target cluster radius in kilometers. Default is 0.5km.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetClusterRadius(Radius)
   self:T(self.lid.."SetClusterRadius")
@@ -2873,7 +2873,7 @@ end
 
 --- [User] Switch usage of target names for menu entries on or off
 -- @param #PLAYERTASKCONTROLLER self
--- @param #boolean OnOff If true, set to on (default), if nil or false, set to off
+-- @param #boolean OnOff (Optional) If true, set to on (default), if nil or false, set to off
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SwitchUseGroupNames(OnOff)
   self:T(self.lid.."SwitchUseGroupNames")
@@ -2887,7 +2887,7 @@ end
 
 --- [User] Switch showing additional magnetic angles
 -- @param #PLAYERTASKCONTROLLER self
--- @param #boolean OnOff If true, set to on (default), if nil or false, set to off
+-- @param #boolean OnOff (Optional) If true, set to on (default), if nil or false, set to off
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SwitchMagenticAngles(OnOff)
   self:T(self.lid.."SwitchMagenticAngles")
@@ -3782,7 +3782,7 @@ end
 --- Calculate group future position after given seconds.
 -- @param #PLAYERTASKCONTROLLER self
 -- @param Wrapper.Group#GROUP group The group to calculate for.
--- @param #number seconds Time interval in seconds. Default is `self.prediction`.
+-- @param #number seconds (Optional) Time interval in seconds. Default is `self.prediction`.
 -- @return Core.Point#COORDINATE Calculated future position of the cluster.
 function PLAYERTASKCONTROLLER:_CalcGroupFuturePosition(group, seconds)
 
@@ -4898,9 +4898,9 @@ end
 
 --- [User] Set SRS TTS details - see @{Sound.SRS} for details.`SetSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
 -- @param #PLAYERTASKCONTROLLER self
--- @param #number Frequency Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}. There needs to be exactly the same number of modulations!
--- @param #number Modulation Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
--- @param #string PathToSRS Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
+-- @param #number Frequency (Optional) Frequency to be used. Can also be given as a table of multiple frequencies, e.g. 271 or {127,251}. There needs to be exactly the same number of modulations!
+-- @param #number Modulation (Optional) Modulation to be used. Can also be given as a table of multiple modulations, e.g. radio.modulation.AM or {radio.modulation.FM,radio.modulation.AM}. There needs to be exactly the same number of frequencies!
+-- @param #string PathToSRS (Optional) Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 -- @param #string Gender (Optional) Defaults to "male"
 -- @param #string Culture (Optional) Defaults to "en-US"
 -- @param #number Port (Optional) Defaults to 5002
@@ -4909,7 +4909,7 @@ end
 -- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS; if you use a config file for MSRS, hand in nil here.
 -- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
--- @param Core.Point#COORDINATE Coordinate Coordinate from which the controller radio is sending
+-- @param Core.Point#COORDINATE Coordinate (Optional) Coordinate from which the controller radio is sending
 -- @param #string Backend (Optional) MSRS Backend to be used, can be MSRS.Backend.SRSEXE or MSRS.Backend.GRPC; if you use a config file for MSRS, hand in nil here.
 -- @return #PLAYERTASKCONTROLLER self
 function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Coordinate,Backend)

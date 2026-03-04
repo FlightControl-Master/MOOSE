@@ -682,7 +682,7 @@ do -- DESIGNATE
   
   --- Set the lase duration for designations.
   -- @param #DESIGNATE self
-  -- @param #number LaseDuration The time in seconds a lase will continue to hold on target. The default is 120 seconds.
+  -- @param #number LaseDuration (Optional) The time in seconds a lase will continue to hold on target. The default is 120 seconds.
   -- @return #DESIGNATE
   function DESIGNATE:SetLaseDuration( LaseDuration )
     self.LaseDuration = LaseDuration or 120

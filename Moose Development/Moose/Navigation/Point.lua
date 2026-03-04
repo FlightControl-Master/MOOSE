@@ -115,7 +115,7 @@ NAVFIX.version="0.1.0"
 --- Create a new NAVFIX class instance from a given VECTOR.
 -- @param #NAVFIX self
 -- @param #string Name Name/ident of the point. Should be unique!
--- @param #string Type Type of the point. Default `NAVFIX.Type.POINT`.
+-- @param #string Type (Optional) Type of the point. Default `NAVFIX.Type.POINT`.
 -- @param Core.Vector#VECTOR Vector Position vector of the navpoint.
 -- @return #NAVFIX self
 function NAVFIX:NewFromVector(Name, Type, Vector)
@@ -150,7 +150,7 @@ end
 --- Create a new NAVFIX class instance from a given COORDINATE.
 -- @param #NAVFIX self
 -- @param #string Name Name of the fix. Should be unique!
--- @param #string Type Type of the point. Default `NAVFIX.Type.POINT`.
+-- @param #string Type (Optional) Type of the point. Default `NAVFIX.Type.POINT`.
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the point.
 -- @return #NAVFIX self
 function NAVFIX:NewFromCoordinate(Name, Type, Coordinate)
@@ -168,7 +168,7 @@ end
 --- Create a new NAVFIX instance from given latitude and longitude in degrees, minutes and seconds (DMS).
 -- @param #NAVFIX self
 -- @param #string Name Name of the fix. Should be unique!
--- @param #string Type Type of the point. Default `NAVFIX.Type.POINT`.
+-- @param #string Type (Optional) Type of the point. Default `NAVFIX.Type.POINT`.
 -- @param #string Latitude Latitude in DMS as string.
 -- @param #string Longitude Longitude in DMS as string.
 -- @return #NAVFIX self
@@ -186,7 +186,7 @@ end
 --- Create a new NAVFIX instance from given latitude and longitude in decimal degrees (DD).
 -- @param #NAVFIX self
 -- @param #string Name Name of the fix. Should be unique!
--- @param #string Type Type of the point. Default `NAVFIX.Type.POINT`.
+-- @param #string Type (Optional) Type of the point. Default `NAVFIX.Type.POINT`.
 -- @param #number Latitude Latitude in DD.
 -- @param #number Longitude Longitude in DD.
 -- @return #NAVFIX self
@@ -523,7 +523,7 @@ NAVAID.version="0.1.0"
 --- Create a new NAVAID class instance.
 -- @param #NAVAID self
 -- @param #string Name Name/ident of this navaid.
--- @param #string Type Type of the point. Default `NAVFIX.Type.POINT`.
+-- @param #string Type (Optional) Type of the point. Default `NAVFIX.Type.POINT`.
 -- @param #string ZoneName Name of the zone to scan the scenery.
 -- @param #string SceneryName Name of the scenery object.
 -- @return #NAVAID self
@@ -579,7 +579,7 @@ end
 --- Set channel of, *e.g.*, TACAN beacons.
 -- @param #NAVAID self
 -- @param #number Channel The channel.
--- @param #string Band The band either `"X"` (default) or `"Y"`. 
+-- @param #string Band (Optional) The band either `"X"` (default) or `"Y"`. 
 -- @return #NAVAID self
 function NAVAID:SetChannel(Channel, Band)
 

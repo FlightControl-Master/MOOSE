@@ -151,7 +151,7 @@ do
 -- 
 -- ## 2. Options
 -- 
--- The following options are available (with their defaults). Only set the ones you want changed:
+-- The following options are available (with their defaults). Don't waste your time adding those in your script if your not going to change the value.
 --
 --          my_ctld.useprefix = true -- (DO NOT SWITCH THIS OFF UNLESS YOU KNOW WHAT YOU ARE DOING!) Adjust **before** starting CTLD. If set to false, *all* choppers of the coalition side will be enabled for CTLD.
 --          my_ctld.CrateDistance = 35 -- List and Load crates in this radius only.
@@ -199,6 +199,8 @@ do
 --          my_ctld.validateAndRepositionUnits = false -- Uses Disposition and other logic to find better ground positions for ground units avoiding trees, water, roads, runways, map scenery, statics and other units in the area. (Default is false)
 --          my_ctld.loadSavedCrates = true -- Load back crates (STATIC) from the save file. Useful for mission restart cleanup. (Default is true)
 --          my_ctld.UseC130LoadAndUnload = false -- When set to true, forces the C-130 player to use the C-130J built system to load the cargo onboard and to unload. (Default is false)
+--          my_ctld.UseC130DynamicCargoAutoBuild = false -- When true (and UseC130LoadAndUnload is true), C-130 DynamicCargo unload completion is bridged to CTLD engineer-path auto-build.
+--          my_ctld.C130DynamicCargoAutoBuildMergeSeconds = 10 -- Merge window in seconds for C-130 auto-build handoff; ready sets from same C-130 are batched into one engineer build call.
 --          my_ctld.locale = "en" -- Language locale to use, available are "en" (default), "de" and "fr"
 --
 -- ## 2.1 CH-47 Chinook support
@@ -224,7 +226,7 @@ do
 --      
 -- All other kinds of cargo can be sling-loaded.
 --      
--- ## 2.1.2 Recommended settings
+-- ## 2.1.3 Recommended settings
 --          
 --          my_ctld.onestepmenu = true -- This will enable Get and load, drop and build, etc. All will be done in one step. works for every module except the C-130J-30 with my_ctld.UseC130LoadAndUnload = true
 --          my_ctld.C130basetype = "cds_crate" -- This can be changed to other cargo. This is only for the C-130J-30
@@ -236,10 +238,53 @@ do
 --          my_ctld.movecratesbeforebuild = true -- leave as is at the pain of building crate still **inside** of the Hook.
 --          my_ctld.nobuildinloadzones = true -- don't build where you load.
 --          my_ctld.ChinookTroopCircleRadius = 5 -- Radius for troops dropping in a nice circle. Adjust to your planned squad size for the Chinook.
---          
--- ## 2.2 User functions
+--          my_ctld.CrateDistance = 65 -- Distance from the aircraft and the max range where we will detect cargo. Default 35.
+--          my_ctld.PackDistance = 65 -- Distance from the aircraft and the max range where we will detect units to pack. Default 35.
+--
+-- ## 2.2 C-130J-30 support and cargo airdrop auto-build.
+--
+-- ### Important
+--  **Important:** This auto-build flow only applies to cargo obtained via CTLD **Get Crates**.
+--  Cargo spawned from the C-130 **Loadsheet** is **not** tracked by this feature.
+--
+-- The C-130J-30 can auto-build airdropped CTLD cargo when this feature is enabled.
+-- This allows players to airdrop build cargo without manually deploying engineers.
+--
+-- CTLD tracks supported C-130 cargo from the moment it is spawned via "Get Crates".
+-- After a valid airdrop and landing, CTLD automatically starts the build.
+--
+-- If multiple compatible cargo sets are dropped close together, CTLD waits briefly
+-- (10 seconds by default) and then processes them together.
+--
+-- ### Required settings
+--
+--          my_ctld.UseC130LoadAndUnload = true -- This option forces C-130 cargo loading/unloading through the C-130J-30 load system.
+--          my_ctld.UseC130DynamicCargoAutoBuild = true -- When true (and UseC130LoadAndUnload is true), C-130 DynamicCargo unload completion is bridged to CTLD engineer-path auto-build.
+--          my_ctld.enableFixedWing = true -- This will activate the fixed-wing related functions, including the auto-build for airdropped cargo.
+--
+-- Adding cargo in your config for the C-130 can be deeply customized. For example you can have a cargo shape only used for the C-130 while all other aircraft will get something else.
+--
+--         my_ctld:AddCratesCargoNoMove("IRIS T System", {"CTLD_CARGO_IRISTSLM_System"}, CTLD_CARGO.Enum.FOB, 3, 2800, 10, "SAM/AAA", nil,nil,nil,nil,"cds_crate",nil, "iso_container_small")
+--
+-- In the example above:
+-- - `AddCratesCargoNoMove` means the built unit/group will not receive an auto-move command after spawn.
+-- - `IRIS T System` is the menu/display name.
+-- - `CTLD_CARGO_IRISTSLM_System` is the mission editor template.
+-- - `CTLD_CARGO.Enum.FOB` defines the cargo/build type. FOB builds keep the mission-editor orientation.
+-- - `3` is crates required, `2800` is per-crate mass (kg), and `10` is stock.
+-- - `SAM/AAA` is the submenu label (used when `my_ctld.usesubcats = true`).
+-- - `cds_crate` is the default cargo shape for non-C130 aircraft when provided; if omitted, CTLD falls back to `my_ctld.basetype`.
+-- - `iso_container_small` is the C-130-specific cargo shape override, even if `my_ctld.C130basetype` is set to something else.
+-- - **Important:** If you do not want to set stock (the `10` parameter), pass `nil` in that position. Keep `nil` placeholders for skipped parameters before later values.
+--
+--
+-- Notes:
+-- - This is a C-130J-30 workflow.
+-- - Regular CTLD behavior for other aircraft remains unchanged.
+--
+-- ## 2.3 User functions
 -- 
--- ### 2.2.1 Adjust or add chopper unit-type capabilities
+-- ### 2.3.1 Adjust or add chopper unit-type capabilities
 --  
 -- Use this function to adjust what a heli type can or cannot do:
 -- 
@@ -269,7 +314,7 @@ do
 --        ["OH58D"] = {type="OH58D", crates=false, troops=false, cratelimit = 0, trooplimit = 0, length = 14, cargoweightlimit = 400},
 --        ["CH-47Fbl1"] = {type="CH-47Fbl1", crates=true, troops=true, cratelimit = 4, trooplimit = 31, length = 20, cargoweightlimit = 8000},
 --        
--- ### 2.2.2 Activate and deactivate zones
+-- ### 2.3.2 Activate and deactivate zones
 -- 
 -- Activate a zone:
 -- 
@@ -281,7 +326,7 @@ do
 --        -- Deactivate zone called Name of type #CTLD.CargoZoneType ZoneType:
 --        my_ctld:DeactivateZone(Name,CTLD.CargoZoneType.DROP)
 -- 
--- ## 2.2.3 Limit and manage available resources
+-- ## 2.3.3 Limit and manage available resources
 --  
 --  When adding generic cargo types, you can effectively limit how many units can be dropped/build by the players, e.g.
 --  
@@ -305,7 +350,7 @@ do
 --  Notes:
 --  Troops dropped back into a LOAD zone will effectively be added to the stock. Crates lost in e.g. a heli crash are just that - lost.
 --  
--- ## 2.2.4 Create own SET_GROUP to manage CTLD Pilot groups
+-- ## 2.3.4 Create own SET_GROUP to manage CTLD Pilot groups
 -- 
 --              -- Parameter: Set The SET_GROUP object created by the mission designer/user to represent the CTLD pilot groups.
 --              -- Needs to be set before starting the CTLD instance.
@@ -538,18 +583,6 @@ do
 --
 -- So if the Vulcan in the example now needs six crates to complete, you have to bring two Hercs with three Vulcan crates each and drop them very close together...
 --
---  ### 5.4 C-130J-30 support
---
---  The C130-J-30 will work only by setting up
---
---              my_ctld.enableFixedWing = true -- false by default.
---
---              -- The rest below is default values but can be changed to something else.
---
---              my_ctld.C130basetype = "cds_crate" -- this is default.
---              my_ctld.FixedMinAngels = 155 -- for troop/cargo drop via chute in meters, ca 470 ft
---              my_ctld.FixedMaxAngels = 2000 -- for troop/cargo drop via chute in meters, ca 6000 ft
---              my_ctld.FixedMaxSpeed = 77 -- 77mps or 270kph or 150kn
 --
 --
 --  You can also enable my_ctld.UseC130LoadAndUnload and set it to true, false is default, this means you will not be able to get and load items but rather "Get" only.
@@ -691,6 +724,8 @@ CTLD = {
   dropOffZones = {},
   pickupZones  = {},
   DynamicCargo = {},
+  UseC130DynamicCargoAutoBuild = false,
+  C130DynamicCargoAutoBuildMergeSeconds = 10,
   ChinookTroopCircleRadius = 5,
   TroopUnloadDistGround = 5,
   TroopUnloadDistGroundHerc = 25,
@@ -943,6 +978,12 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.Loaded_Cargo = {}
   self.Spawned_Crates = {}
   self.Spawned_Cargo = {}
+  self._c130DcAutoSets = {}
+  self._c130DcAutoMap = {}
+  self._c130DcAutoBatches = {}
+  self._c130DcAutoSeq = 0
+  self._c130DcAutoTimer = nil
+  self._c130DcAutoActiveSetId = nil
   self.MenusDone = {}
   self.DroppedTroops = {}
   self.DroppedCrates = {}
@@ -1053,6 +1094,12 @@ function CTLD:New(Coalition, Prefixes, Alias)
 
   -- use C-130J-30 load and unload method, false by default.
   self.UseC130LoadAndUnload = false
+
+  -- when true, bridge DynamicCargo C-130 transport states to CTLD auto-build via engineer path.
+  self.UseC130DynamicCargoAutoBuild = false
+
+  -- merge ready C-130 auto-build sets from the same aircraft for this many seconds.
+  self.C130DynamicCargoAutoBuildMergeSeconds = 10
   
   -- Smokes and Flares
   self.SmokeColor = SMOKECOLOR.Red
@@ -1627,6 +1674,846 @@ function CTLD:AddPlayerTask(PlayerTask)
   return self
 end
 
+--- (Internal) Check whether cargo type is eligible for C-130 DynamicCargo auto-build.
+-- @param #CTLD self
+-- @param #CTLD_CARGO Cargo
+-- @return #boolean Outcome
+function CTLD:_C130DcAutoIsBuildableCargo(Cargo)
+  if not Cargo then return false end
+  local ctype = Cargo:GetType()
+  return ctype == CTLD_CARGO.Enum.VEHICLE or ctype == CTLD_CARGO.Enum.FOB
+end
+
+--- (Internal) Ensure C-130 DynamicCargo auto-build runtime state tables exist.
+-- @param #CTLD self
+-- @return #CTLD self
+function CTLD:_C130DcAutoEnsureState()
+  self._c130DcAutoSets = self._c130DcAutoSets or {}
+  self._c130DcAutoMap = self._c130DcAutoMap or {}
+  self._c130DcAutoBatches = self._c130DcAutoBatches or {}
+  self._c130DcAutoSeq = self._c130DcAutoSeq or 0
+  return self
+end
+
+--- (Internal) Filter crate list to the currently active C-130 auto-build set.
+-- @param #CTLD self
+-- @param #table Crates
+-- @param #string|#table SetIdOrScope
+-- @return #table Filtered
+-- @return #number Count
+function CTLD:_C130DcAutoFilterCrates(Crates, SetIdOrScope)
+  if not SetIdOrScope then
+    local t = Crates or {}
+    local n = 0
+    for _,_ in pairs(t) do
+      n = n + 1
+    end
+    return t, n
+  end
+
+  local scopeIds = {}
+  if type(SetIdOrScope) == "table" then
+    for k,v in pairs(SetIdOrScope) do
+      if type(k) == "number" and type(v) == "string" then
+        scopeIds[v] = true
+      elseif type(k) == "string" and v then
+        scopeIds[k] = true
+      end
+    end
+  elseif type(SetIdOrScope) == "string" then
+    scopeIds[SetIdOrScope] = true
+  end
+  if not next(scopeIds) then
+    return {}, 0
+  end
+
+  local allowedIds = {}
+  local allowedNames = {}
+  for setId,_ in pairs(scopeIds) do
+    local setData = self._c130DcAutoSets and self._c130DcAutoSets[setId] or nil
+    if setData then
+      for _,entry in ipairs(setData.entries or {}) do
+        if entry.cargoId then
+          allowedIds[entry.cargoId] = true
+        end
+        if entry.cargoObject and entry.cargoObject.GetID then
+          local id = entry.cargoObject:GetID()
+          if id then
+            allowedIds[id] = true
+          end
+        end
+        if entry.proxyCargo and entry.proxyCargo.GetID then
+          local id = entry.proxyCargo:GetID()
+          if id then
+            allowedIds[id] = true
+          end
+        end
+        if entry.spawnName then
+          allowedNames[entry.spawnName] = true
+        end
+        if entry.dynamicName then
+          allowedNames[entry.dynamicName] = true
+        end
+      end
+    end
+  end
+
+  local filtered = {}
+  for _,_crate in pairs(Crates or {}) do
+    local crate = _crate -- #CTLD_CARGO
+    local include = false
+    if crate then
+      local cid = crate.GetID and crate:GetID() or nil
+      if cid and allowedIds[cid] then
+        include = true
+      else
+        local pos = crate.GetPositionable and crate:GetPositionable() or nil
+        local pname = pos and pos.GetName and pos:GetName() or nil
+        if pname and allowedNames[pname] then
+          include = true
+        end
+      end
+    end
+    if include then
+      filtered[#filtered + 1] = crate
+    end
+  end
+  return filtered, #filtered
+end
+
+--- (Internal) Register one spawned C-130 CTLD crate in DynamicCargo database and emit NewDynamicCargo.
+-- @param #CTLD self
+-- @param Wrapper.Positionable#POSITIONABLE Positionable
+-- @return Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo
+function CTLD:_C130DcAutoRegisterDynamicCargo(Positionable)
+  if not Positionable or not _DATABASE then return nil end
+  local pname = Positionable.GetName and Positionable:GetName() or nil
+  if not pname or pname == "" then return nil end
+  local dcargo = _DATABASE:FindDynamicCargo(pname)
+  if not dcargo then
+    dcargo = _DATABASE:AddDynamicCargo(pname)
+    if dcargo then
+      self:T(self.lid.." C130DcAuto RegisterDynamicCargo "..pname)
+      _DATABASE:CreateEventNewDynamicCargo(dcargo)
+    end
+  end
+  return dcargo
+end
+
+--- (Internal) Get best-effort unit name from dynamic cargo event.
+-- @param #CTLD self
+-- @param Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo
+-- @return #string Unit name
+function CTLD:_C130DcAutoGetCarrierUnitName(DynamicCargo)
+  if not DynamicCargo then return nil end
+  if DynamicCargo.GetCarrierUnitName then
+    local uname = DynamicCargo:GetCarrierUnitName()
+    if uname and uname ~= "" then
+      return uname
+    end
+  end
+  local owner = DynamicCargo.Owner
+  if owner and owner ~= "" and owner ~= "None" then
+    local byPlayer = CLIENT:FindByPlayerName(owner)
+    if byPlayer and byPlayer:IsAlive() then
+      return byPlayer:GetName()
+    end
+  end
+  return nil
+end
+
+--- (Internal) Get best-effort group name from dynamic cargo event.
+-- @param #CTLD self
+-- @param Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo
+-- @return #string Group name
+function CTLD:_C130DcAutoGetCarrierGroupName(DynamicCargo)
+  if not DynamicCargo then return nil end
+  if DynamicCargo.GetCarrierGroupName then
+    local gname = DynamicCargo:GetCarrierGroupName()
+    if gname and gname ~= "" then
+      return gname
+    end
+  end
+  local uname = self:_C130DcAutoGetCarrierUnitName(DynamicCargo)
+  if uname then
+    local unit = UNIT:FindByName(uname)
+    if unit and unit:IsAlive() then
+      local grp = unit:GetGroup()
+      if grp then
+        return grp:GetName()
+      end
+    end
+  end
+  return nil
+end
+
+--- (Internal) Check whether this dynamic cargo event belongs to C-130J transport.
+-- @param #CTLD self
+-- @param Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo
+-- @return #boolean Outcome
+function CTLD:_C130DcAutoIsC130Event(DynamicCargo)
+  if not DynamicCargo then return false end
+  if DynamicCargo.GetCarrierTypeName then
+    local tname = DynamicCargo:GetCarrierTypeName()
+    if tname and tname ~= "" then
+      return tname == "C-130J-30"
+    end
+  end
+  local uname = self:_C130DcAutoGetCarrierUnitName(DynamicCargo)
+  if uname then
+    local unit = UNIT:FindByName(uname)
+    if unit then
+      local utype = unit:GetTypeName() or "none"
+      if self.C130JTypes and self.C130JTypes[utype] then
+        return true
+      end
+      return utype == "C-130J-30"
+    end
+  end
+  return false
+end
+
+--- (Internal) Register a new C-130 DynamicCargo auto-build set.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Unit#UNIT Unit
+-- @param #CTLD_CARGO Cargo
+-- @param Core.Zone#ZONE PickupZone
+-- @return #string Set id or nil
+function CTLD:_C130DcAutoRegisterSet(Group, Unit, Cargo, PickupZone)
+  if not Group or not Unit or not Cargo then return nil end
+  if not self.UseC130LoadAndUnload or not self.UseC130DynamicCargoAutoBuild then return nil end
+  if not self:IsC130J(Unit) then return nil end
+  if not self:_C130DcAutoIsBuildableCargo(Cargo) then return nil end
+
+  self:_C130DcAutoEnsureState()
+  self._c130DcAutoSeq = self._c130DcAutoSeq + 1
+  local seq = self._c130DcAutoSeq
+  local setId = string.format("%s|%s|%d", Unit:GetName() or "none", Cargo:GetName() or "cargo", seq)
+  local cc, ct, cs = Cargo:GetStaticTypeAndShape()
+  local recipe = {
+    cargoName = Cargo:GetName(),
+    cargoDisplayName = Cargo:GetDisplayName(),
+    templates = UTILS.DeepCopy(Cargo:GetTemplates()),
+    cargoType = Cargo:GetType(),
+    cratesNeeded = Cargo:GetCratesNeeded(),
+    perCrateMass = Cargo:GetMass(),
+    subcategory = Cargo.Subcategory,
+    staticCategory = cc,
+    staticType = ct,
+    staticShape = cs,
+    resourceMap = UTILS.DeepCopy(Cargo:GetStaticResourceMap()),
+    typeNames = UTILS.DeepCopy(Cargo.TypeNames),
+  }
+  local now = timer.getTime()
+  local setData = {
+    id = setId,
+    created = now,
+    ttl = now + 3600,
+    groupName = Group:GetName(),
+    unitName = Unit:GetName(),
+    pickupZoneName = (PickupZone and PickupZone.GetName and PickupZone:GetName()) or (type(PickupZone) == "string" and PickupZone or nil),
+    recipe = recipe,
+    entries = {},
+    completed = false,
+    failed = false,
+    buildStarted = false,
+    handoffClaimed = false,
+    helperGroupName = nil,
+    helperUnitName = nil,
+    cleanupAt = nil,
+  }
+  self._c130DcAutoSets[setId] = setData
+  self:T(self.lid.." C130DcAuto RegisterSet "..setId)
+  return setId
+end
+
+--- (Internal) Register one spawned crate entry inside a C-130 DynamicCargo auto-build set.
+-- @param #CTLD self
+-- @param #string SetId
+-- @param #CTLD_CARGO Cargo
+-- @return #boolean Outcome
+function CTLD:_C130DcAutoRegisterEntry(SetId, Cargo)
+  if not SetId or not Cargo then return false end
+  self:_C130DcAutoEnsureState()
+  local setData = self._c130DcAutoSets[SetId]
+  if not setData then return false end
+
+  local pos = Cargo:GetPositionable()
+  local pname = pos and pos.GetName and pos:GetName() or nil
+  local pcoord = pos and pos.GetCoordinate and pos:GetCoordinate() or nil
+  local entryId = string.format("%s#%d", SetId, #setData.entries + 1)
+  local entry = {
+    id = entryId,
+    state = "pending",
+    cargoId = Cargo:GetID(),
+    cargoObject = Cargo,
+    cargoName = Cargo:GetName(),
+    spawnName = pname,
+    dynamicName = nil,
+    spawnVec2 = pcoord and pcoord:GetVec2() or nil,
+    spawnVec3 = pcoord and pcoord:GetVec3() or nil,
+    landedVec2 = nil,
+    landedVec3 = nil,
+    proxyCargo = nil,
+    proxyAdded = false,
+  }
+  setData.entries[#setData.entries + 1] = entry
+  if pname then
+    self._c130DcAutoMap[pname] = { setId = SetId, entryId = entryId }
+  end
+  return true
+end
+
+--- (Internal) Get mapped C-130 DynamicCargo auto-build entry.
+-- @param #CTLD self
+-- @param #string DynamicCargoName
+-- @return #table SetData
+-- @return #table EntryData
+function CTLD:_C130DcAutoGetMappedEntry(DynamicCargoName)
+  if not DynamicCargoName or not self._c130DcAutoMap then return nil, nil end
+  local link = self._c130DcAutoMap[DynamicCargoName]
+  if not link then return nil, nil end
+  local setData = self._c130DcAutoSets and self._c130DcAutoSets[link.setId] or nil
+  if not setData then return nil, nil end
+  for _,entry in ipairs(setData.entries or {}) do
+    if entry.id == link.entryId then
+      return setData, entry
+    end
+  end
+  return nil, nil
+end
+
+--- (Internal) Resolve closest pending/loaded set entry for a dynamic cargo event.
+-- @param #CTLD self
+-- @param Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo
+-- @param #boolean PreferLoaded If true only loaded-state entries are considered.
+-- @return #table SetData
+-- @return #table EntryData
+function CTLD:_C130DcAutoResolveEntry(DynamicCargo, PreferLoaded)
+  local cargoCoord = DynamicCargo and DynamicCargo.GetLastPosition and DynamicCargo:GetLastPosition() or nil
+  local unitName = self:_C130DcAutoGetCarrierUnitName(DynamicCargo)
+  local groupName = self:_C130DcAutoGetCarrierGroupName(DynamicCargo)
+  local bestSet = nil
+  local bestEntry = nil
+  local bestDist = math.huge
+
+  for _,setData in pairs(self._c130DcAutoSets or {}) do
+    if not setData.completed and not setData.failed then
+      local ownerMatch = false
+      if unitName and setData.unitName and setData.unitName == unitName then
+        ownerMatch = true
+      elseif groupName and setData.groupName and setData.groupName == groupName then
+        ownerMatch = true
+      end
+      if ownerMatch then
+        for _,entry in ipairs(setData.entries or {}) do
+          local stateOk = false
+          if PreferLoaded then
+            stateOk = entry.state == "loaded"
+          else
+            stateOk = entry.state == "pending" or entry.state == "loaded"
+          end
+          if stateOk then
+            local dist = 0
+            if cargoCoord and entry.spawnVec2 then
+              local dx = (cargoCoord.x or 0) - (entry.spawnVec2.x or 0)
+              local dz = (cargoCoord.z or 0) - (entry.spawnVec2.y or 0)
+              dist = math.sqrt(dx*dx + dz*dz)
+            elseif cargoCoord and entry.landedVec2 then
+              local dx = (cargoCoord.x or 0) - (entry.landedVec2.x or 0)
+              local dz = (cargoCoord.z or 0) - (entry.landedVec2.y or 0)
+              dist = math.sqrt(dx*dx + dz*dz)
+            else
+              dist = 999999
+            end
+            if dist < bestDist then
+              bestDist = dist
+              bestSet = setData
+              bestEntry = entry
+            end
+          end
+        end
+      end
+    end
+  end
+  if bestSet and bestEntry and bestDist <= 200 then
+    return bestSet, bestEntry
+  end
+  return nil, nil
+end
+
+--- (Internal) Create CTLD cargo proxy from landed DynamicCargo for build handoff.
+-- @param #CTLD self
+-- @param #table SetData
+-- @param #table Entry
+-- @param Wrapper.DynamicCargo#DYNAMICCARGO DynamicCargo
+-- @return #CTLD_CARGO ProxyCargo
+function CTLD:_C130DcAutoCreateProxyCargo(SetData, Entry, DynamicCargo)
+  if not SetData or not Entry or not DynamicCargo then return nil end
+  if Entry.proxyAdded and Entry.proxyCargo then return Entry.proxyCargo end
+
+  -- Primary path: rebind the original CTLD crate object to landed DynamicCargo.
+  -- This avoids duplicate crate entries in self.Spawned_Cargo.
+  local original = Entry.cargoObject
+  if original then
+    original.Positionable = DynamicCargo
+    original:SetWasDropped(true, true)
+    Entry.proxyCargo = original
+    Entry.proxyAdded = true
+    return original
+  end
+
+  -- Fallback path (should be rare): synthesize a proxy cargo object.
+  local recipe = SetData.recipe or {}
+  self.CargoCounter = self.CargoCounter + 1
+  local proxy = CTLD_CARGO:New(
+    self.CargoCounter,
+    recipe.cargoName,
+    UTILS.DeepCopy(recipe.templates),
+    recipe.cargoType,
+    true,
+    false,
+    recipe.cratesNeeded,
+    DynamicCargo,
+    true,
+    recipe.perCrateMass,
+    nil,
+    recipe.subcategory
+  )
+  proxy:SetDisplayName(recipe.cargoDisplayName)
+  proxy:SetStaticTypeAndShape(recipe.staticCategory, recipe.staticType, recipe.staticShape)
+  proxy:SetStaticResourceMap(UTILS.DeepCopy(recipe.resourceMap))
+  if recipe.typeNames then
+    proxy.TypeNames = UTILS.DeepCopy(recipe.typeNames)
+  end
+  proxy:SetWasDropped(true, true)
+  table.insert(self.Spawned_Cargo, proxy)
+  Entry.proxyCargo = proxy
+  Entry.proxyAdded = true
+  return proxy
+end
+
+--- (Internal) Get C-130 auto-build batch owner key.
+-- @param #CTLD self
+-- @param #table SetData
+-- @return #string Owner key
+function CTLD:_C130DcAutoGetOwnerKey(SetData)
+  if not SetData then return nil end
+  return SetData.unitName or SetData.groupName
+end
+
+--- (Internal) Spawn one helper infantry group and handoff build for multiple sets.
+-- @param #CTLD self
+-- @param #string OwnerKey
+-- @param #table SetIds
+-- @return #boolean Outcome
+function CTLD:_C130DcAutoSpawnBuildHelperForSets(OwnerKey, SetIds)
+  if not SetIds or #SetIds < 1 then return false end
+  local sx = 0
+  local sy = 0
+  local count = 0
+  local validSetIds = {}
+  for _,setId in ipairs(SetIds) do
+    local setData = self._c130DcAutoSets and self._c130DcAutoSets[setId] or nil
+    if setData and not setData.failed and not setData.completed and not setData.buildStarted then
+      validSetIds[#validSetIds + 1] = setId
+      for _,entry in ipairs(setData.entries or {}) do
+        local vec2 = entry.landedVec2 or entry.spawnVec2
+        if vec2 then
+          sx = sx + vec2.x
+          sy = sy + vec2.y
+          count = count + 1
+        end
+      end
+    end
+  end
+  if #validSetIds < 1 or count < 1 then
+    return false
+  end
+
+  local center = { x = sx / count, y = sy / count }
+  local helperGroupName = string.format("CTLD_C130_AUTOBUILD_HELPER_%d", math.random(100000, 999999))
+  local helperUnitName = helperGroupName .. "_1"
+  local isRed = self.coalition == coalition.side.RED
+  local helperCountry = isRed and country.id.RUSSIA or country.id.USA
+  local helperType = isRed and "Infantry AK" or "Soldier M4"
+
+  local groupData = {
+    visible = false,
+    task = "Ground Nothing",
+    tasks = {},
+    route = {
+      points = {
+        [1] = {
+          x = center.x,
+          y = center.y,
+          action = "Off Road",
+          speed = 0,
+          task = { id = "ComboTask", params = { tasks = {} } },
+        }
+      }
+    },
+    units = {
+      [1] = {
+        x = center.x,
+        y = center.y,
+        type = helperType,
+        name = helperUnitName,
+        heading = 0,
+        skill = "Excellent",
+      }
+    },
+    name = helperGroupName,
+  }
+
+  coalition.addGroup(helperCountry, Group.Category.GROUND, groupData)
+  local helperGroup = GROUP:FindByName(helperGroupName)
+  local helperUnit = helperGroup and helperGroup:GetUnit(1) or nil
+  if not helperGroup or not helperUnit then
+    self:T(self.lid.." C130DcAuto helper spawn failed for owner "..tostring(OwnerKey))
+    for _,setId in ipairs(validSetIds) do
+      local setData = self._c130DcAutoSets and self._c130DcAutoSets[setId] or nil
+      if setData then
+        setData.handoffClaimed = false
+      end
+    end
+    return false
+  end
+
+  local cleanupAt = timer.getTime() + math.max(5, (self.buildtime or 0) + 5)
+  for _,setId in ipairs(validSetIds) do
+    local setData = self._c130DcAutoSets and self._c130DcAutoSets[setId] or nil
+    if setData then
+      setData.buildStarted = true
+      setData.completed = true
+      setData.helperGroupName = helperGroupName
+      setData.helperUnitName = helperUnitName
+      setData.cleanupAt = cleanupAt
+    end
+  end
+
+  self:T(self.lid.." C130DcAuto build handoff for owner "..tostring(OwnerKey).." sets="..table.concat(validSetIds,","))
+  local prevScope = self._c130DcAutoActiveSetId
+  self._c130DcAutoActiveSetId = validSetIds
+  self:_BuildCrates(helperGroup, helperUnit, true, true)
+  self._c130DcAutoActiveSetId = prevScope
+  return true
+end
+
+--- (Internal) Flush queued ready sets for a specific owner key.
+-- @param #CTLD self
+-- @param #string OwnerKey
+-- @return #CTLD self
+function CTLD:_C130DcAutoFlushOwnerBatch(OwnerKey)
+  local batch = self._c130DcAutoBatches and self._c130DcAutoBatches[OwnerKey] or nil
+  if not batch then return self end
+
+  if batch.timer and batch.timer.IsRunning and batch.timer:IsRunning() then
+    batch.timer:Stop()
+  end
+  batch.timer = nil
+
+  local setIds = {}
+  local failedSetIds = {}
+  for setId,_ in pairs(batch.setIds or {}) do
+    local setData = self._c130DcAutoSets and self._c130DcAutoSets[setId] or nil
+    if setData and not setData.failed and not setData.completed and not setData.buildStarted then
+      local total = 0
+      local landed = 0
+      local failed = false
+      for _,entry in ipairs(setData.entries or {}) do
+        total = total + 1
+        if entry.state == "failed" then
+          failed = true
+          break
+        end
+        if entry.state == "landed" then
+          landed = landed + 1
+        end
+      end
+      if failed then
+        setData.failed = true
+        failedSetIds[#failedSetIds + 1] = setId
+      elseif total > 0 and landed == total and setData.handoffClaimed then
+        setIds[#setIds + 1] = setId
+      else
+        setData.handoffClaimed = false
+      end
+    end
+  end
+
+  self._c130DcAutoBatches[OwnerKey] = nil
+
+  for _,setId in ipairs(failedSetIds) do
+    self:_C130DcAutoCleanupSet(setId, "failed")
+  end
+
+  if #setIds < 1 then
+    return self
+  end
+
+  table.sort(setIds)
+  local ok = self:_C130DcAutoSpawnBuildHelperForSets(OwnerKey, setIds)
+  if not ok then
+    for _,setId in ipairs(setIds) do
+      local setData = self._c130DcAutoSets and self._c130DcAutoSets[setId] or nil
+      if setData and not setData.failed then
+        setData.handoffClaimed = false
+      end
+    end
+  end
+  return self
+end
+
+--- (Internal) Queue a ready set for merge-window handoff.
+-- @param #CTLD self
+-- @param #string SetId
+-- @return #boolean Outcome
+function CTLD:_C130DcAutoQueueReadySet(SetId)
+  local setData = self._c130DcAutoSets and self._c130DcAutoSets[SetId] or nil
+  if not setData or setData.failed then return false end
+  if setData.completed or setData.buildStarted or setData.handoffClaimed then return true end
+
+  local ownerKey = self:_C130DcAutoGetOwnerKey(setData) or SetId
+  local window = tonumber(self.C130DynamicCargoAutoBuildMergeSeconds) or 10
+  if window < 0 then
+    window = 0
+  end
+
+  setData.handoffClaimed = true
+  setData.readyAt = timer.getTime()
+
+  local batch = self._c130DcAutoBatches[ownerKey]
+  if not batch then
+    batch = {
+      ownerKey = ownerKey,
+      setIds = {},
+      created = timer.getTime(),
+      dueAt = timer.getTime() + window,
+      timer = nil
+    }
+    self._c130DcAutoBatches[ownerKey] = batch
+  end
+  batch.setIds[SetId] = true
+
+  if window <= 0 then
+    self:_C130DcAutoFlushOwnerBatch(ownerKey)
+    return true
+  end
+
+  if not batch.timer or (batch.timer.IsRunning and not batch.timer:IsRunning()) then
+    batch.timer = TIMER:New(CTLD._C130DcAutoFlushOwnerBatch, self, ownerKey)
+    batch.timer:Start(window)
+    self:T(self.lid.." C130DcAuto queue set "..SetId.." owner="..tostring(ownerKey).." merge="..tostring(window))
+  else
+    self:T(self.lid.." C130DcAuto merge set "..SetId.." owner="..tostring(ownerKey))
+  end
+  return true
+end
+
+--- (Internal) Cleanup C-130 DynamicCargo auto-build set.
+-- @param #CTLD self
+-- @param #string SetId
+-- @param #string Result
+-- @return #CTLD self
+function CTLD:_C130DcAutoCleanupSet(SetId, Result)
+  self:_C130DcAutoEnsureState()
+  local setData = self._c130DcAutoSets[SetId]
+  if not setData then return self end
+
+  if setData.helperGroupName then
+    local helper = GROUP:FindByName(setData.helperGroupName)
+    if helper and helper:IsAlive() then
+      helper:Destroy(false)
+    end
+  end
+
+  for _,entry in ipairs(setData.entries or {}) do
+    if entry.spawnName then
+      self._c130DcAutoMap[entry.spawnName] = nil
+    end
+    if entry.dynamicName then
+      self._c130DcAutoMap[entry.dynamicName] = nil
+    end
+  end
+
+  local batchRemove = {}
+  for ownerKey,batch in pairs(self._c130DcAutoBatches or {}) do
+    if batch.setIds and batch.setIds[SetId] then
+      batch.setIds[SetId] = nil
+      if not next(batch.setIds) then
+        if batch.timer and batch.timer.IsRunning and batch.timer:IsRunning() then
+          batch.timer:Stop()
+        end
+        batchRemove[#batchRemove + 1] = ownerKey
+      end
+    end
+  end
+  for _,ownerKey in ipairs(batchRemove) do
+    self._c130DcAutoBatches[ownerKey] = nil
+  end
+
+  self._c130DcAutoSets[SetId] = nil
+  self:T(self.lid.." C130DcAuto CleanupSet "..SetId.." result="..tostring(Result))
+  return self
+end
+
+--- (Internal) Try to complete a C-130 DynamicCargo auto-build set.
+-- @param #CTLD self
+-- @param #string SetId
+-- @return #boolean Outcome
+function CTLD:_C130DcAutoTryCompleteSet(SetId)
+  local setData = self._c130DcAutoSets and self._c130DcAutoSets[SetId] or nil
+  if not setData or setData.failed then return false end
+  if setData.completed or setData.buildStarted or setData.handoffClaimed then return true end
+  local total = 0
+  local landed = 0
+  for _,entry in ipairs(setData.entries or {}) do
+    total = total + 1
+    if entry.state == "failed" then
+      setData.failed = true
+      self:_C130DcAutoCleanupSet(SetId, "failed")
+      return false
+    end
+    if entry.state == "landed" then
+      landed = landed + 1
+    end
+  end
+  if total > 0 and landed == total then
+    return self:_C130DcAutoQueueReadySet(SetId)
+  end
+  return false
+end
+
+--- (Internal) Handle DynamicCargoLoaded for mapped C-130 auto-build sets.
+-- @param #CTLD self
+-- @param Core.Event#EVENTDATA EventData
+-- @return #boolean Handled
+function CTLD:_C130DcAutoOnDynamicLoaded(EventData)
+  self:_C130DcAutoEnsureState()
+  local dcargo = EventData.IniDynamicCargo
+  if not dcargo then return false end
+
+  local setData, entry = self:_C130DcAutoGetMappedEntry(EventData.IniDynamicCargoName)
+  if not setData or not entry then
+    setData, entry = self:_C130DcAutoResolveEntry(dcargo, false)
+  end
+  if not setData or not entry then
+    return false
+  end
+
+  if not self:_C130DcAutoIsC130Event(dcargo) then
+    return false
+  end
+
+  entry.state = "loaded"
+  entry.dynamicName = EventData.IniDynamicCargoName
+  self._c130DcAutoMap[EventData.IniDynamicCargoName] = { setId = setData.id, entryId = entry.id }
+  local unitName = self:_C130DcAutoGetCarrierUnitName(dcargo)
+  local groupName = self:_C130DcAutoGetCarrierGroupName(dcargo)
+  if unitName then setData.unitName = unitName end
+  if groupName then setData.groupName = groupName end
+  setData.ttl = timer.getTime() + 3600
+  self:T(self.lid.." C130DcAuto mapped loaded "..EventData.IniDynamicCargoName.." set="..setData.id)
+  return true
+end
+
+--- (Internal) Handle DynamicCargoUnloaded for mapped C-130 auto-build sets.
+-- @param #CTLD self
+-- @param Core.Event#EVENTDATA EventData
+-- @return #boolean Handled
+function CTLD:_C130DcAutoOnDynamicUnloaded(EventData)
+  self:_C130DcAutoEnsureState()
+  local dcargo = EventData.IniDynamicCargo
+  if not dcargo then return false end
+
+  local setData, entry = self:_C130DcAutoGetMappedEntry(EventData.IniDynamicCargoName)
+  if not setData or not entry then
+    setData, entry = self:_C130DcAutoResolveEntry(dcargo, true)
+  end
+  if not setData or not entry then
+    return false
+  end
+
+  if not self:_C130DcAutoIsC130Event(dcargo) then
+    return false
+  end
+
+  if setData.completed or setData.buildStarted or setData.handoffClaimed then
+    return true
+  end
+  if entry.state == "landed" then
+    -- ignore duplicate unload notifications for already landed entry
+    return true
+  end
+
+  if dcargo.IsDetached and not dcargo:IsDetached() then
+    return false
+  end
+  if dcargo.IsLandedStable and not dcargo:IsLandedStable() then
+    return false
+  end
+  if DYNAMICCARGO and DYNAMICCARGO.C130RequireAirborne and dcargo.WasAirborneTransport and not dcargo:WasAirborneTransport() then
+    return false
+  end
+
+  entry.state = "landed"
+  entry.dynamicName = EventData.IniDynamicCargoName
+  self._c130DcAutoMap[EventData.IniDynamicCargoName] = { setId = setData.id, entryId = entry.id }
+  local dpos = dcargo.GetLastPosition and dcargo:GetLastPosition() or nil
+  if dpos then
+    entry.landedVec2 = dpos:GetVec2()
+    entry.landedVec3 = dpos:GetVec3()
+  end
+  self:_C130DcAutoCreateProxyCargo(setData, entry, dcargo)
+  setData.ttl = timer.getTime() + 3600
+  self:T(self.lid.." C130DcAuto mapped unloaded "..EventData.IniDynamicCargoName.." set="..setData.id)
+  self:_C130DcAutoTryCompleteSet(setData.id)
+  return true
+end
+
+--- (Internal) Handle DynamicCargoRemoved for mapped C-130 auto-build sets.
+-- @param #CTLD self
+-- @param Core.Event#EVENTDATA EventData
+-- @return #boolean Handled
+function CTLD:_C130DcAutoOnDynamicRemoved(EventData)
+  self:_C130DcAutoEnsureState()
+  local setData, entry = self:_C130DcAutoGetMappedEntry(EventData.IniDynamicCargoName)
+  if not setData or not entry then return false end
+  if entry.state ~= "landed" then
+    entry.state = "failed"
+    setData.failed = true
+    self:T(self.lid.." C130DcAuto entry failed/removed "..EventData.IniDynamicCargoName.." set="..setData.id)
+    self:_C130DcAutoCleanupSet(setData.id, "removed")
+  end
+  return true
+end
+
+--- (Internal) C-130 DynamicCargo auto-build housekeeping tick.
+-- @param #CTLD self
+-- @return #CTLD self
+function CTLD:_C130DcAutoTick()
+  self:_C130DcAutoEnsureState()
+  local now = timer.getTime()
+  local cleanup = {}
+  for setId,setData in pairs(self._c130DcAutoSets or {}) do
+    if setData.failed then
+      cleanup[#cleanup + 1] = { setId = setId, reason = "failed" }
+    elseif setData.completed then
+      if setData.cleanupAt and now >= setData.cleanupAt then
+        cleanup[#cleanup + 1] = { setId = setId, reason = "completed" }
+      end
+    elseif setData.ttl and now > setData.ttl then
+      cleanup[#cleanup + 1] = { setId = setId, reason = "ttl" }
+    end
+  end
+  for _,entry in ipairs(cleanup) do
+    self:_C130DcAutoCleanupSet(entry.setId, entry.reason)
+  end
+  return self
+end
+
 --- (Internal) Event handler function
 -- @param #CTLD self
 -- @param Core.Event#EVENTDATA EventData
@@ -1703,6 +2590,12 @@ function CTLD:_EventHandler(EventData)
     --------------
   elseif event.id == EVENTS.DynamicCargoLoaded then
     self:T(self.lid.."GC Loaded Event "..event.IniDynamicCargoName)
+    if self.UseC130LoadAndUnload and self.UseC130DynamicCargoAutoBuild then
+      local handled = self:_C130DcAutoOnDynamicLoaded(event)
+      if handled then
+        return self
+      end
+    end
     ---------------
     -- New dynamic cargo system Handling LOADING
     --------------
@@ -1738,6 +2631,12 @@ function CTLD:_EventHandler(EventData)
     --------------
   elseif event.id == EVENTS.DynamicCargoUnloaded then
     self:T(self.lid.."GC Unload Event "..event.IniDynamicCargoName)
+    if self.UseC130LoadAndUnload and self.UseC130DynamicCargoAutoBuild then
+      local handled = self:_C130DcAutoOnDynamicUnloaded(event)
+      if handled then
+        return self
+      end
+    end
     ---------------
     -- New dynamic cargo system Handling UNLOADING
     --------------
@@ -1787,6 +2686,9 @@ function CTLD:_EventHandler(EventData)
     --------------
   elseif event.id == EVENTS.DynamicCargoRemoved then
     self:T(self.lid.."GC Remove Event "..event.IniDynamicCargoName)
+    if self.UseC130LoadAndUnload and self.UseC130DynamicCargoAutoBuild then
+      self:_C130DcAutoOnDynamicRemoved(event)
+    end
     ---------------
     -- New dynamic cargo system Handling REMOVE
     --------------
@@ -3032,6 +3934,10 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
 
   local fwZeroAngleSetHeading = nil
   local fwNonZeroAngleSetHeading = nil
+  local c130DcAutoSetId = nil
+  if not drop and not pack and self.UseC130LoadAndUnload and self.UseC130DynamicCargoAutoBuild and self:IsC130J(Unit) and self:_C130DcAutoIsBuildableCargo(cargotype) then
+    c130DcAutoSetId = self:_C130DcAutoRegisterSet(Group, Unit, cargotype, zone)
+  end
 
   for i = 1, number do
     local currentAngleOffset = 0
@@ -3217,6 +4123,10 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
     end
     local CCat4, CType4, CShape4 = cargotype:GetStaticTypeAndShape()
     realcargo:SetStaticTypeAndShape(CCat4, CType4, CShape4)
+    if c130DcAutoSetId and realcargo then
+      self:_C130DcAutoRegisterDynamicCargo(realcargo:GetPositionable())
+      self:_C130DcAutoRegisterEntry(c130DcAutoSetId, realcargo)
+    end
     table.insert(self.Spawned_Cargo, realcargo)
   end
 
@@ -4392,7 +5302,8 @@ end
 -- @param Wrapper.Unit#UNIT Unit
 -- @param #boolean Engineering If true build is by an engineering team.
 -- @param #boolean MultiDrop If true and not engineering or FOB, vary position a bit.
-function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
+-- @param Wrapper.Group#GROUP NotifyGroup Optional group to receive engineer/autobuild messages.
+function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
   self:T(self.lid .. " _BuildCrates")
   -- avoid users trying to build from flying Hercs
   if self:IsFixedWing(Unit) and self.enableFixedWing and not Engineering then
@@ -4418,10 +5329,42 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
   local baseDist = self.CrateDistance or 35
   local finddist=baseDist
   --if Engineering and self.EngineerSearch and self.EngineerSearch>baseDist then 
-    if Engineering and self.EngineerSearch and self.EngineerSearch>baseDist then -- this make also helicopter to be able to crates that are further away due to herc airdrop
+  if Engineering and self.EngineerSearch and self.EngineerSearch>baseDist then -- this make also helicopter to be able to crates that are further away due to herc airdrop
       finddist=self.EngineerSearch
   end
   local crates,number = self:_FindCratesNearby(Group,Unit,finddist,true,true,not Engineering) -- #table
+  local activeSetId = Engineering and self._c130DcAutoActiveSetId or nil
+  local notifyGroup = (not Engineering) and Group or nil
+  if activeSetId then
+    crates, number = self:_C130DcAutoFilterCrates(crates, activeSetId)
+    local notifySetId = nil
+    if type(activeSetId) == "table" then
+      notifySetId = activeSetId[1] or next(activeSetId)
+    else
+      notifySetId = activeSetId
+    end
+    local setData = notifySetId and self._c130DcAutoSets and self._c130DcAutoSets[notifySetId] or nil
+    if setData and setData.groupName then
+      notifyGroup = GROUP:FindByName(setData.groupName) or notifyGroup
+    end
+    local scopeText = tostring(activeSetId)
+    if type(activeSetId) == "table" then
+      local ids = {}
+      for k,v in pairs(activeSetId) do
+        if type(k) == "number" then
+          ids[#ids + 1] = tostring(v)
+        else
+          ids[#ids + 1] = tostring(k)
+        end
+      end
+      table.sort(ids)
+      scopeText = table.concat(ids, ",")
+    end
+    self:T(self.lid.." C130DcAuto engineer scope set="..scopeText.." crates="..tostring(number))
+  end
+  if NotifyGroup then
+    notifyGroup = NotifyGroup
+  end
   local buildables = {}
   local foundbuilds = false
   local canbuild = false
@@ -4500,7 +5443,9 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
     report:Add("------------------------------------------------------------")
     local text = report:Text()
     if not Engineering then
-      self:_SendMessage(text, 30, true, Group,true) 
+      self:_SendMessage(text, 30, true, notifyGroup or Group, true)
+    elseif notifyGroup then
+      self:_SendMessage(text, 30, true, notifyGroup,true)
     else
       self:T(text)
     end
@@ -4523,6 +5468,9 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
 
           if full == 1 then
             local cratesNow, numberNow = self:_FindCratesNearby(Group,Unit, finddist,true,true, not Engineering)
+            if activeSetId then
+              cratesNow, numberNow = self:_C130DcAutoFilterCrates(cratesNow, activeSetId)
+            end
             self:_CleanUpCrates(cratesNow,build,numberNow)
             self:_RefreshLoadCratesMenu(Group,Unit)
             if self.buildtime and self.buildtime > 0 then
@@ -4531,7 +5479,8 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
               if not notified then
                 local msg = self.gettext:GetEntry("BUILD_STARTED",self.locale)
                 msg = string.format(msg,self.buildtime)
-                self:_SendMessage(msg, 15, false, Group)
+                local startMsgGroup = (not Engineering and (notifyGroup or Group)) or notifyGroup
+                  self:_SendMessage(msg, 15, false, startMsgGroup)
                 --self:_SendMessage(string.format("Build started, ready in %d seconds!",self.buildtime),15,false,Group)
                 notified=true
               end
@@ -4543,6 +5492,9 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
             local start = -((full-1)*sep)/2
             for n=1,full do
               local cratesNow, numberNow = self:_FindCratesNearby(Group,Unit, finddist,true,true, not Engineering)
+              if activeSetId then
+                cratesNow, numberNow = self:_C130DcAutoFilterCrates(cratesNow, activeSetId)
+              end
               self:_CleanUpCrates(cratesNow,build,numberNow)
               self:_RefreshLoadCratesMenu(Group,Unit)
               local off   = start + (n-1)*sep
@@ -4554,7 +5506,10 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop)
                 if not notified then
                   local msg = self.gettext:GetEntry("BUILD_STARTED",self.locale)
                   msg = string.format(msg,self.buildtime)
-                  self:_SendMessage(msg, 15, false, Group)
+                  local startMsgGroup = (not Engineering and (notifyGroup or Group)) or notifyGroup
+                  if startMsgGroup then
+                    self:_SendMessage(msg, 15, false, startMsgGroup)
+                  end
                   --self:_SendMessage(string.format("Build started, ready in %d seconds!",self.buildtime),15,false,Group)
                   notified=true
                 end
@@ -5746,7 +6701,7 @@ function CTLD:_RefreshLoadCratesMenu(Group,Unit)
         local label
         local loadkey = self.gettext:GetEntry("MENU_LOAD_SINGLE",self.locale)
         if left>=needed then          
-          label=string.format("%d. %s %s",lineIndex,loadkey, cName)
+          label=string.format("%d. %s %s",lineIndex,loadkey,cName)
           i=i+needed
         else
           label=string.format("%d. %s %s (%d/%d)",lineIndex,loadkey, cName,left,needed)
@@ -8843,6 +9798,19 @@ end
     self:HandleEvent(EVENTS.DynamicCargoRemoved, self._EventHandler)     
     self:HandleEvent(EVENTS.Land, self._EventHandler)
     self:HandleEvent(EVENTS.Takeoff, self._EventHandler)
+    self:_C130DcAutoEnsureState()
+    self._c130DcAutoSets = {}
+    self._c130DcAutoMap = {}
+    self._c130DcAutoBatches = {}
+    self._c130DcAutoActiveSetId = nil
+    if self._c130DcAutoTimer and self._c130DcAutoTimer:IsRunning() then
+      self._c130DcAutoTimer:Stop()
+    end
+    self._c130DcAutoTimer = nil
+    if self.UseC130LoadAndUnload and self.UseC130DynamicCargoAutoBuild then
+      self._c130DcAutoTimer = TIMER:New(CTLD._C130DcAutoTick, self)
+      self._c130DcAutoTimer:Start(30, 30)
+    end
     self:__Status(-5)
     
     -- AutoSave
@@ -8937,6 +9905,26 @@ end
   -- @return #CTLD self
   function CTLD:onafterStop(From, Event, To)
     self:T({From, Event, To})
+    if self._c130DcAutoTimer and self._c130DcAutoTimer:IsRunning() then
+      self._c130DcAutoTimer:Stop()
+    end
+    self._c130DcAutoTimer = nil
+    local cleanup = {}
+    for setId,_ in pairs(self._c130DcAutoSets or {}) do
+      cleanup[#cleanup + 1] = setId
+    end
+    for _,setId in ipairs(cleanup) do
+      self:_C130DcAutoCleanupSet(setId, "stop")
+    end
+    for _,batch in pairs(self._c130DcAutoBatches or {}) do
+      if batch.timer and batch.timer.IsRunning and batch.timer:IsRunning() then
+        batch.timer:Stop()
+      end
+    end
+    self._c130DcAutoSets = {}
+    self._c130DcAutoMap = {}
+    self._c130DcAutoBatches = {}
+    self._c130DcAutoActiveSetId = nil
     self:UnHandleEvent(EVENTS.PlayerEnterAircraft)
     self:UnHandleEvent(EVENTS.PlayerEnterUnit)
     self:UnHandleEvent(EVENTS.PlayerLeaveUnit)

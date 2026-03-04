@@ -369,9 +369,9 @@ end
 --- Add a **new** payload to the airwing resources.
 -- @param #AIRWING self
 -- @param Wrapper.Unit#UNIT Unit The unit, the payload is extracted from. Can also be given as *#string* name of the unit.
--- @param #number Npayloads Number of payloads to add to the airwing resources. Default 99 (which should be enough for most scenarios). Set to -1 for unlimited.
+-- @param #number Npayloads (Optional) Number of payloads to add to the airwing resources. Default 99 (which should be enough for most scenarios). Set to -1 for unlimited.
 -- @param #table MissionTypes Mission types this payload can be used for.
--- @param #number Performance A number between 0 (worst) and 100 (best) to describe the performance of the loadout for the given mission types. Default is 50.
+-- @param #number Performance (Optional) A number between 0 (worst) and 100 (best) to describe the performance of the loadout for the given mission types. Default is 50.
 -- @return #AIRWING.Payload The payload table or nil if the unit does not exist.
 function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
 
@@ -454,7 +454,7 @@ end
 --- Set the number of payload available.
 -- @param #AIRWING self
 -- @param #AIRWING.Payload Payload The payload table created by the `:NewPayload` function.
--- @param #number Navailable Number of payloads available to the airwing resources. Default 99 (which should be enough for most scenarios). Set to -1 for unlimited.
+-- @param #number Navailable (Optional) Number of payloads available to the airwing resources. Default 99 (which should be enough for most scenarios). Set to -1 for unlimited.
 -- @return #AIRWING self
 function AIRWING:SetPayloadAmount(Payload, Navailable)
 
@@ -477,7 +477,7 @@ end
 --- Increase or decrease the amount of available payloads. Unlimited playloads first need to be set to a limited number with the `SetPayloadAmount` function.
 -- @param #AIRWING self
 -- @param #AIRWING.Payload Payload The payload table created by the `:NewPayload` function.
--- @param #number N Number of payloads to be added. Use negative number to decrease amount. Default 1.
+-- @param #number N (Optional) Number of payloads to be added. Use negative number to decrease amount. Default 1.
 -- @return #AIRWING self
 function AIRWING:IncreasePayloadAmount(Payload, N)
 
@@ -516,7 +516,7 @@ end
 -- @param #AIRWING self
 -- @param #AIRWING.Payload Payload The payload table to which the capability should be added.
 -- @param #table MissionTypes Mission types to be added.
--- @param #number Performance A number between 0 (worst) and 100 (best) to describe the performance of the loadout for the given mission types. Default is 50.
+-- @param #number Performance (Optional) A number between 0 (worst) and 100 (best) to describe the performance of the loadout for the given mission types. Default is 50.
 -- @return #AIRWING self
 function AIRWING:AddPayloadCapability(Payload, MissionTypes, Performance)
 
@@ -739,7 +739,7 @@ end
 
 --- Set number of CAP flights constantly carried out.
 -- @param #AIRWING self
--- @param #number n Number of flights. Default 1.
+-- @param #number n (Optional) Number of flights. Default 1.
 -- @return #AIRWING self
 function AIRWING:SetNumberCAP(n)
   self.nflightsCAP=n or 1
@@ -757,7 +757,7 @@ end
 
 --- Set CAP close race track.We'll utilize the AUFTRAG PatrolRaceTrack instead of a standard race track orbit task.
 -- @param #AIRWING self
--- @param #boolean OnOff If true, switch this on, else switch off. Off by default.
+-- @param #boolean OnOff (Optional) If true, switch this on, else switch off. Off by default.
 -- @return #AIRWING self
 function AIRWING:SetCapCloseRaceTrack(OnOff)
   self.capOptionPatrolRaceTrack = OnOff
@@ -777,7 +777,7 @@ end
 
 --- Set number of TANKER flights with Boom constantly in the air.
 -- @param #AIRWING self
--- @param #number Nboom Number of flights. Default 1.
+-- @param #number Nboom (Optional) Number of flights. Default 1.
 -- @return #AIRWING self
 function AIRWING:SetNumberTankerBoom(Nboom)
   self.nflightsTANKERboom=Nboom or 1
@@ -799,7 +799,7 @@ end
 
 --- Set number of TANKER flights with Probe constantly in the air.
 -- @param #AIRWING self
--- @param #number Nprobe Number of flights. Default 1.
+-- @param #number Nprobe (Optional) Number of flights. Default 1.
 -- @return #AIRWING self
 function AIRWING:SetNumberTankerProbe(Nprobe)
   self.nflightsTANKERprobe=Nprobe or 1
@@ -808,7 +808,7 @@ end
 
 --- Set number of AWACS flights constantly in the air.
 -- @param #AIRWING self
--- @param #number n Number of flights. Default 1.
+-- @param #number n (Optional) Number of flights. Default 1.
 -- @return #AIRWING self
 function AIRWING:SetNumberAWACS(n)
   self.nflightsAWACS=n or 1
@@ -817,7 +817,7 @@ end
 
 --- Set number of RECON flights constantly in the air.
 -- @param #AIRWING self
--- @param #number n Number of flights. Default 1.
+-- @param #number n (Optional) Number of flights. Default 1.
 -- @return #AIRWING self
 function AIRWING:SetNumberRecon(n)
   self.nflightsRecon=n or 1
@@ -826,7 +826,7 @@ end
 
 --- Set number of Rescue helo flights constantly in the air.
 -- @param #AIRWING self
--- @param #number n Number of flights. Default 1.
+-- @param #number n (Optional) Number of flights. Default 1.
 -- @return #AIRWING self
 function AIRWING:SetNumberRescuehelo(n)
   self.nflightsRescueHelo=n or 1
@@ -868,13 +868,13 @@ end
 
 --- Create a new generic patrol point.
 -- @param #AIRWING self
--- @param #string Type Patrol point type, e.g. "CAP" or "AWACS". Default "Unknown".
--- @param Core.Point#COORDINATE Coordinate Coordinate of the patrol point. Default 10-15 NM away from the location of the airwing. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
--- @param #number Altitude Orbit altitude in feet. Default random between Angels 10 and 20.
--- @param #number Heading Heading in degrees. Default random (0, 360] degrees.
--- @param #number LegLength Length of race-track orbit in NM. Default 15 NM.
--- @param #number Speed Orbit speed in knots. Default 350 knots.
--- @param #number RefuelSystem Refueling system: 0=Boom, 1=Probe. Default nil=any.
+-- @param #string Type (Optional) Patrol point type, e.g. "CAP" or "AWACS". Default "Unknown".
+-- @param Core.Point#COORDINATE Coordinate (Optional) Coordinate of the patrol point. Default 10-15 NM away from the location of the airwing. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
+-- @param #number Altitude (Optional) Orbit altitude in feet. Default random between Angels 10 and 20.
+-- @param #number Heading (Optional) Heading in degrees. Default random (0, 360] degrees.
+-- @param #number LegLength (Optional) Length of race-track orbit in NM. Default 15 NM.
+-- @param #number Speed (Optional) Orbit speed in knots. Default 350 knots.
+-- @param #number RefuelSystem (Optional) Refueling system: 0=Boom, 1=Probe. Default nil=any.
 -- @return #AIRWING.PatrolData Patrol point table.
 function AIRWING:NewPatrolPoint(Type, Coordinate, Altitude, Speed, Heading, LegLength, RefuelSystem)
 
@@ -944,7 +944,7 @@ end
 -- @param #number Speed Orbit speed in knots.
 -- @param #number Heading Heading in degrees.
 -- @param #number LegLength Length of race-track orbit in NM.
--- @param #number RefuelSystem Set refueling system of tanker: 0=boom, 1=probe. Default any (=nil).
+-- @param #number RefuelSystem (Optional) Set refueling system of tanker: 0=boom, 1=probe. Default any (=nil).
 -- @return #AIRWING self
 function AIRWING:AddPatrolPointTANKER(Coordinate, Altitude, Speed, Heading, LegLength, RefuelSystem)
 
@@ -984,7 +984,7 @@ end
 --- Set takeoff type. All assets of this airwing will be spawned with this takeoff type.
 -- Spawning on runways is not supported.
 -- @param #AIRWING self
--- @param #string TakeoffType Take off type: "Cold" (default) or "Hot" with engines on or "Air" for spawning in air.
+-- @param #string TakeoffType (Optional) Take off type: "Cold" (default) or "Hot" with engines on or "Air" for spawning in air.
 -- @return #AIRWING self
 function AIRWING:SetTakeoffType(TakeoffType)
   TakeoffType=TakeoffType or "Cold"
@@ -1067,7 +1067,7 @@ end
 --- Set despawn after landing. Aircraft will be despawned after the landing event.
 -- Can help to avoid DCS AI taxiing issues.
 -- @param #AIRWING self
--- @param #boolean Switch If `true` (default), activate despawn after landing.
+-- @param #boolean Switch (Optional) If `true` (default), activate despawn after landing.
 -- @return #AIRWING self
 function AIRWING:SetDespawnAfterLanding(Switch)
   if Switch then
@@ -1081,7 +1081,7 @@ end
 --- Set despawn after holding. Aircraft will be despawned when they arrive at their holding position at the airbase.
 -- Can help to avoid DCS AI taxiing issues.
 -- @param #AIRWING self
--- @param #boolean Switch If `true` (default), activate despawn after landing.
+-- @param #boolean Switch (Optional) If `true` (default), activate despawn after landing.
 -- @return #AIRWING self
 function AIRWING:SetDespawnAfterHolding(Switch)
   if Switch then
@@ -1581,9 +1581,9 @@ end
 
 --- Count payloads in stock.
 -- @param #AIRWING self
--- @param #table MissionTypes Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
--- @param #table UnitTypes Types of units.
--- @param #table Payloads Specific payloads to be counted only.
+-- @param #table MissionTypes (Optional) Types on mission to be checked. Default *all* possible types `AUFTRAG.Type`.
+-- @param #table UnitTypes (Optional) Types of units.
+-- @param #table Payloads (Optional) Specific payloads to be counted only.
 -- @return #number Count of available payloads in stock.
 function AIRWING:CountPayloadsInStock(MissionTypes, UnitTypes, Payloads)
 

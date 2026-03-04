@@ -447,7 +447,7 @@ end
 
 --- Set "fuel low" threshold for CAP and INTERCEPT flights.
 -- @param #EASYGCICAP self
--- @param #number Percent RTB if fuel at this percent. Values: 1..100, defaults to 25.
+-- @param #number Percent (Optional) RTB if fuel at this percent. Values: 1..100, defaults to 25.
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetFuelLow(Percent)
   self:T(self.lid.."SetFuelLow")
@@ -470,7 +470,7 @@ end
 
 --- Set "fuel critical" threshold for CAP and INTERCEPT flights.
 -- @param #EASYGCICAP self
--- @param #number Percent RTB if fuel at this percent. Values: 1..100, defaults to 10.
+-- @param #number Percent (Optional) RTB if fuel at this percent. Values: 1..100, defaults to 10.
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetFuelCritical(Percent)
   self:T(self.lid.."SetFuelCritical")
@@ -480,7 +480,7 @@ end
 
 --- Set CAP formation.
 -- @param #EASYGCICAP self
--- @param #number Formation Formation to fly, defaults to ENUMS.Formation.FixedWing.FingerFour.Group
+-- @param #number Formation (Optional) Formation to fly, defaults to ENUMS.Formation.FixedWing.FingerFour.Group
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetCAPFormation(Formation)
   self:T(self.lid.."SetCAPFormation")
@@ -514,7 +514,7 @@ end
 
 --- Set Maximum of alive missions created by this instance to stop airplanes spamming the map
 -- @param #EASYGCICAP self
--- @param #number Maxiumum Maxmimum number of parallel missions allowed. Count is Intercept-Missions + Alert5-Missions, default is 8
+-- @param #number Maxiumum (Optional) Maxmimum number of parallel missions allowed. Count is Intercept-Missions + Alert5-Missions, default is 8
 -- @return #EASYGCICAP self 
 function EASYGCICAP:SetMaxAliveMissions(Maxiumum)
   self:T(self.lid.."SetMaxAliveMissions")
@@ -524,7 +524,7 @@ end
 
 --- Add default time to resurrect Airwing building if destroyed
 -- @param #EASYGCICAP self
--- @param #number Seconds Seconds, defaults to 900
+-- @param #number Seconds (Optional) Seconds, defaults to 900
 -- @return #EASYGCICAP self 
 function EASYGCICAP:SetDefaultResurrection(Seconds)
   self:T(self.lid.."SetDefaultResurrection")
@@ -534,7 +534,7 @@ end
 
 --- Add default repeat attempts if an Intruder intercepts fails.
 -- @param #EASYGCICAP self
--- @param #number Retries Retries, defaults to 3
+-- @param #number Retries (Optional) Retries, defaults to 3
 -- @return #EASYGCICAP self 
 function EASYGCICAP:SetDefaultRepeatOnFailure(Retries)
   self:T(self.lid.."SetDefaultRepeatOnFailure")
@@ -544,7 +544,7 @@ end
 
 --- Add default take off type for the airwings.
 -- @param #EASYGCICAP self
--- @param #string Takeoff Can be "hot", "cold", or "air" - default is "hot".
+-- @param #string Takeoff (Optional) Can be "hot", "cold", or "air" - default is "hot".
 -- @return #EASYGCICAP self 
 function EASYGCICAP:SetDefaultTakeOffType(Takeoff)
   self:T(self.lid.."SetDefaultTakeOffType")
@@ -554,7 +554,7 @@ end
 
 --- Set default CAP Speed in knots
 -- @param #EASYGCICAP self
--- @param #number Speed Speed defaults to 300
+-- @param #number Speed (Optional) Speed defaults to 300
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetDefaultCAPSpeed(Speed)
   self:T(self.lid.."SetDefaultSpeed")
@@ -564,7 +564,7 @@ end
 
 --- Set default CAP Altitude in feet
 -- @param #EASYGCICAP self
--- @param #number Altitude Altitude defaults to 25000
+-- @param #number Altitude (Optional) Altitude defaults to 25000
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetDefaultCAPAlt(Altitude)
   self:T(self.lid.."SetDefaultAltitude")
@@ -574,7 +574,7 @@ end
 
 --- Set default CAP lieg initial direction in degrees
 -- @param #EASYGCICAP self
--- @param #number Direction Direction defaults to 90 (East)
+-- @param #number Direction (Optional) Direction defaults to 90 (East)
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetDefaultCAPDirection(Direction)
   self:T(self.lid.."SetDefaultDirection")
@@ -584,7 +584,7 @@ end
 
 --- Set default leg length in NM
 -- @param #EASYGCICAP self
--- @param #number Leg Leg defaults to 15
+-- @param #number Leg (Optional) Leg defaults to 15
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetDefaultCAPLeg(Leg)
   self:T(self.lid.."SetDefaultLeg")
@@ -594,7 +594,7 @@ end
 
 --- Set default grouping, i.e. how many airplanes per CAP point
 -- @param #EASYGCICAP self
--- @param #number Grouping Grouping defaults to 2
+-- @param #number Grouping (Optional) Grouping defaults to 2
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetDefaultCAPGrouping(Grouping)
  self:T(self.lid.."SetDefaultCAPGrouping")
@@ -604,7 +604,7 @@ end
 
 --- Set default range planes can fly from their homebase in NM
 -- @param #EASYGCICAP self
--- @param #number Range Range defaults to 100 NM
+-- @param #number Range (Optional) Range defaults to 100 NM
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetDefaultMissionRange(Range)
   self:T(self.lid.."SetDefaultMissionRange")
@@ -614,8 +614,8 @@ end
 
 --- Set default turnover times for squadrons in minutes
 -- @param #EASYGCICAP self
--- @param #number MaintenanceTime Time in minutes it takes until a flight is combat ready again. Default is 5 min.
--- @param #number RepairTime Time in minutes it takes to repair a flight for each life point taken. Default is 10 min.
+-- @param #number MaintenanceTime (Optional) Time in minutes it takes until a flight is combat ready again. Default is 5 min.
+-- @param #number RepairTime (Optional) Time in minutes it takes to repair a flight for each life point taken. Default is 10 min.
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetDefaultTurnoverTime(MaintenanceTime,RepairTime)
   self:T(self.lid.."SetDefaultTurnoverTime")
@@ -626,7 +626,7 @@ end
 
 --- Set default number of airframes standing by for intercept tasks (visible on the airfield)
 -- @param #EASYGCICAP self
--- @param #number Airframes defaults to 2
+-- @param #number Airframes (Optional) defaults to 2
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetDefaultNumberAlert5Standby(Airframes)
   self:T(self.lid.."SetDefaultNumberAlert5Standby")
@@ -636,7 +636,7 @@ end
 
 --- Set default engage range for intruders detected by CAP flights in NM.
 -- @param #EASYGCICAP self
--- @param #number Range defaults to 50NM
+-- @param #number Range (Optional) defaults to 50NM
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetDefaultEngageRange(Range)
   self:T(self.lid.."SetDefaultEngageRange")
@@ -689,7 +689,7 @@ end
 
 --- Set which target types CAP flights will prefer to engage, defaults to {"Air"}
 -- @param #EASYGCICAP self
--- @param #table types Table of comma separated #string entries, defaults to {"Air"} (everything that flies and is not a weapon). Useful other options are e.g. {"Bombers"}, {"Fighters"}, 
+-- @param #table types (Optional) Table of comma separated #string entries, defaults to {"Air"} (everything that flies and is not a weapon). Useful other options are e.g. {"Bombers"}, {"Fighters"}, 
 -- or {"Helicopters"} or combinations like {"Bombers", "Fighters", "UAVs"}. See [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes).
 -- @return #EASYGCICAP self
 function EASYGCICAP:SetCAPEngageTargetTypes(types)
@@ -860,10 +860,10 @@ end
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
 -- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
--- @param #number Altitude Defaults to 25000 feet ASL.
--- @param #number Speed  Defaults to 300 knots TAS.
--- @param #number Heading Defaults to 90 degrees (East).
--- @param #number LegLength Defaults to 15 NM.
+-- @param #number Altitude (Optional) Defaults to 25000 feet ASL.
+-- @param #number Speed  (Optional) Defaults to 300 knots TAS.
+-- @param #number Heading (Optional) Defaults to 90 degrees (East).
+-- @param #number LegLength(Optional)  Defaults to 15 NM.
 -- @return #EASYGCICAP self
 function EASYGCICAP:AddPatrolPointCAP(AirbaseName,Coordinate,Altitude,Speed,Heading,LegLength)
   self:T(self.lid.."AddPatrolPointCAP")--..Coordinate:ToStringLLDDM())
@@ -891,10 +891,10 @@ end
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
 -- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
--- @param #number Altitude Defaults to 25000 feet.
--- @param #number Speed  Defaults to 300 knots.
--- @param #number Heading Defaults to 90 degrees (East).
--- @param #number LegLength Defaults to 15 NM.
+-- @param #number Altitude (Optional) Defaults to 25000 feet.
+-- @param #number Speed  (Optional) Defaults to 300 knots.
+-- @param #number Heading (Optional) Defaults to 90 degrees (East).
+-- @param #number LegLength (Optional) Defaults to 15 NM.
 -- @return #EASYGCICAP self
 function EASYGCICAP:AddPatrolPointRecon(AirbaseName,Coordinate,Altitude,Speed,Heading,LegLength)
   self:T(self.lid.."AddPatrolPointRecon "..Coordinate:ToStringLLDDM())
@@ -916,10 +916,10 @@ end
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
 -- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
--- @param #number Altitude Defaults to 25000 feet.
--- @param #number Speed  Defaults to 300 knots.
--- @param #number Heading Defaults to 90 degrees (East).
--- @param #number LegLength Defaults to 15 NM.
+-- @param #number Altitude (Optional) Defaults to 25000 feet.
+-- @param #number Speed  (Optional) Defaults to 300 knots.
+-- @param #number Heading (Optional) Defaults to 90 degrees (East).
+-- @param #number LegLength (Optional) Defaults to 15 NM.
 -- @return #EASYGCICAP self
 function EASYGCICAP:AddPatrolPointTanker(AirbaseName,Coordinate,Altitude,Speed,Heading,LegLength)
   self:T(self.lid.."AddPatrolPointTanker "..Coordinate:ToStringLLDDM())
@@ -941,10 +941,10 @@ end
 -- @param #EASYGCICAP self
 -- @param #string AirbaseName Name of the Wing's airbase
 -- @param Core.Point#COORDINATE Coordinate. Can be handed as a Core.Zone#ZONE object (e.g. in case you want  the point to align with a moving zone).
--- @param #number Altitude Defaults to 25000 feet.
--- @param #number Speed  Defaults to 300 knots.
--- @param #number Heading Defaults to 90 degrees (East).
--- @param #number LegLength Defaults to 15 NM.
+-- @param #number Altitude (Optional) Defaults to 25000 feet.
+-- @param #number Speed  (Optional) Defaults to 300 knots.
+-- @param #number Heading (Optional) Defaults to 90 degrees (East).
+-- @param #number LegLength (Optional) Defaults to 15 NM.
 -- @return #EASYGCICAP self
 function EASYGCICAP:AddPatrolPointAwacs(AirbaseName,Coordinate,Altitude,Speed,Heading,LegLength)
   self:T(self.lid.."AddPatrolPointAwacs "..Coordinate:ToStringLLDDM())

@@ -178,7 +178,7 @@ end
 -- Note, one can also use the method @{#CLEANUP_AIRBASE.RemoveAirbase}() to remove the airbase from the control process as a whole,
 -- when an enemy unit is near. That is also an option...
 -- @param #CLEANUP_AIRBASE self
--- @param #string CleanMissiles (Default=true) If true, missiles fired are immediately destroyed. If false missiles are not controlled.
+-- @param #boolean CleanMissiles (Optional) (Default=true) If true, missiles fired are immediately destroyed. If false missiles are not controlled.
 -- @return #CLEANUP_AIRBASE
 function CLEANUP_AIRBASE:SetCleanMissiles( CleanMissiles )
 

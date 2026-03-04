@@ -131,7 +131,7 @@ do -- world
 
   --- Returns a table of DCS airbase objects.
   -- @function [parent=#world] getAirbases
-  -- @param #number coalitionId The coalition side number ID. Default is all airbases are returned.
+  -- @param #number coalitionId (Optional) The coalition side number ID. Default is all airbases are returned.
   -- @return #table Table of DCS airbase objects.
 
 
@@ -1033,7 +1033,7 @@ do -- Spot
   --- Sets the number that is used to define the laser code for which laser designation can track.
   -- @function [parent=#Spot] setCode
   -- @param #Spot self
-  -- @param #number Code The laser code. Default value is 1688.
+  -- @param #number Code (Optional) The laser code. Default value is 1688.
   
   --- Destroys the spot.
   -- @function [parent=#Spot] destroy
