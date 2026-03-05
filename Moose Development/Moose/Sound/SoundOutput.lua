@@ -301,6 +301,7 @@ do -- Text-To-Speech
   -- @field #string culture Culture, e.g. "en-GB".
   -- @field #string voice Specific voice to use. Overrules `gender` and `culture` settings.
   -- @field #number speed Specific speed to be used.
+  -- @field #string speaker (PIPER/HOUND only) sub-voice speaker to be used.
   -- @extends Core.Base#BASE
 
 
@@ -427,13 +428,24 @@ do -- Text-To-Speech
     return self
   end
   
-    --- Set to use a specific speed.
+  --- Set to use a specific speed.
   -- @param #SOUNDTEXT self
   -- @param #number Speed
   -- @return #SOUNDTEXT self
   function SOUNDTEXT:SetSpeed(Speed)
     
     self.speed = Speed or 1.0
+                  
+    return self
+  end
+  
+      --- Set to use a specific speaker (PIPER sub-voice).
+  -- @param #SOUNDTEXT self
+  -- @param #string Speaker
+  -- @return #SOUNDTEXT self
+  function SOUNDTEXT:SetSpeaker(Speaker)
+    
+    self.speaker = Speaker
                   
     return self
   end
