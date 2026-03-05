@@ -1239,10 +1239,11 @@ function EASYGCICAP:_AddSquadron(TemplateName, SquadName, AirbaseName, AirFrames
   Squadron_One:SetSkill(Skill or AI.Skill.AVERAGE)
   Squadron_One:SetMissionRange(self.missionrange)
   
-  local wing = self.wings[AirbaseName][1] -- Ops.Airwing#AIRWING
+  local wing = self.wings[AirbaseName][1] -- Ops.AirWing#AIRWING
   
   wing:AddSquadron(Squadron_One)
-  wing:NewPayload(TemplateName,-1,{AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.PATROLRACETRACK, AUFTRAG.Type.ALERT5},75)
+  --local countsquads = UTILS.TableLength(wing.cohorts)
+  wing:NewPayload(TemplateName,-1,{AUFTRAG.Type.CAP, AUFTRAG.Type.GCICAP, AUFTRAG.Type.INTERCEPT, AUFTRAG.Type.PATROLRACETRACK, AUFTRAG.Type.ALERT5},100)
   
   return self
 end
