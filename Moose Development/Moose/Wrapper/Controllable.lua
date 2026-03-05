@@ -784,7 +784,7 @@ end
 
 --- Activate LINK4 system of the CONTROLLABLE. The controllable should be an aircraft carrier!
 -- @param #CONTROLLABLE self
--- @param #number Frequency (Optional) Link4 Frequency in MHz, e.g. 336 (defaults to 336 MHz)
+-- @param #number Frequency Link4 Frequency in MHz, e.g. 336 (defaults to 336 MHz)
 -- @param #number UnitID (Optional) The DCS UNIT ID of the unit the LINK4 system is attached to. Defaults to the UNIT itself.
 -- @param #string Callsign (Optional) Morse code identification callsign.
 -- @param #number Delay (Optional) Delay in seconds before the LINK4 is activated.
@@ -1101,24 +1101,8 @@ end
 -- @param DCS#Distance Altitude (optional) Desired attack start altitude. Controllable/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/controllable will choose closest altitude to the desired attack start altitude. If the desired altitude is defined controllable/aircraft will not attack from safe altitude.
 -- @param #boolean GroupAttack (Optional) If true, attack as group.
 -- @return DCS#Task The DCS task structure.
-function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, GroupAttack )
-
-  --  AttackGroup = {
-  --   id = 'AttackGroup',
-  --   params = {
-  --     groupId = Group.ID,
-  --     weaponType = number,
-  --     expend = enum AI.Task.WeaponExpend,
-  --     attackQty = number,
-  --     directionEnabled = boolean,
-  --     direction = Azimuth,
-  --     altitudeEnabled = boolean,
-  --     altitude = Distance,
-  --     attackQtyLimit = boolean,
-  --   }
-  -- }
-
-
+function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit, GroupAttack )
+  -- self:F2( { self.ControllableName, AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
   local DCSTask = { id = 'AttackGroup',
     params = {
       groupId          = AttackGroup:GetID(),
@@ -1133,7 +1117,6 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
       groupAttack      = GroupAttack and true or false,
     },
   }
-
   return DCSTask
 end
 
