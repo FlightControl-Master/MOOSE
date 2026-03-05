@@ -837,7 +837,7 @@ end
 --- Set if group is ready for taxi/takeoff if controlled by a `FLIGHTCONTROL`.
 -- @param #FLIGHTGROUP self
 -- @param #boolean ReadyTO If `true`, flight is ready for takeoff.
--- @param #number Delay Delay in seconds before value is set. Default 0 sec.
+-- @param #number Delay (Optional) Delay in seconds before value is set. Default 0 sec.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetReadyForTakeoff(ReadyTO, Delay)
   if Delay and Delay>0 then
@@ -922,7 +922,7 @@ end
 
 --- Set low fuel threshold. Triggers event "FuelLow" and calls event function "OnAfterFuelLow".
 -- @param #FLIGHTGROUP self
--- @param #number threshold Fuel threshold in percent. Default 25 %.
+-- @param #number threshold (Optional) Fuel threshold in percent. Default 25 %.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetFuelLowThreshold(threshold)
   self.fuellowthresh=threshold or 25
@@ -983,7 +983,7 @@ end
 
 --- Set fuel critical threshold. Triggers event "FuelCritical" and event function "OnAfterFuelCritical".
 -- @param #FLIGHTGROUP self
--- @param #number threshold Fuel threshold in percent. Default 10 %.
+-- @param #number threshold (Optional) Fuel threshold in percent. Default 10 %.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:SetFuelCriticalThreshold(threshold)
   self.fuelcriticalthresh=threshold or 10
@@ -2629,8 +2629,8 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
--- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
+-- @param #number n (Optional) Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N(Optional)  Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
 -- @return #boolean Transision allowed?
 function FLIGHTGROUP:onbeforeUpdateRoute(From, Event, To, n, N)
 
@@ -2752,8 +2752,8 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
--- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
+-- @param #number n (Optional) Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N (Optional) Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
 function FLIGHTGROUP:onafterUpdateRoute(From, Event, To, n, N)
 
   -- Update route from this waypoint number onwards.
@@ -3100,9 +3100,9 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Airbase#AIRBASE airbase The airbase to hold at.
--- @param #number SpeedTo Speed used for traveling from current position to holding point in knots. Default 75% of max speed.
--- @param #number SpeedHold Holding speed in knots. Default 250 kts.
--- @param #number SpeedLand Landing speed in knots. Default 170 kts.
+-- @param #number SpeedTo (Optional) Speed used for traveling from current position to holding point in knots. Default 75% of max speed.
+-- @param #number SpeedHold (Optional) Holding speed in knots. Default 250 kts.
+-- @param #number SpeedLand (Optional) Landing speed in knots. Default 170 kts.
 function FLIGHTGROUP:onafterRTB(From, Event, To, airbase, SpeedTo, SpeedHold, SpeedLand)
 
   -- Debug info.
@@ -3195,9 +3195,9 @@ end
 --- Land at an airbase.
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Airbase#AIRBASE airbase Airbase where the group shall land.
--- @param #number SpeedTo Speed used for travelling from current position to holding point in knots.
--- @param #number SpeedHold Holding speed in knots.
--- @param #number SpeedLand Landing speed in knots. Default 170 kts.
+-- @param #number (Optional) SpeedTo Speed used for travelling from current position to holding point in knots. Defaults to speedCruise.
+-- @param #number (Optional) SpeedHold Holding speed in knots. Defaults to 250kts.
+-- @param #number (Optional) SpeedLand Landing speed in knots. Default 170 kts.
 function FLIGHTGROUP:_LandAtAirbase(airbase, SpeedTo, SpeedHold, SpeedLand)
 
   -- Set current airbase.
@@ -3381,9 +3381,9 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number Duration Duration how long the group will be waiting in seconds. Default `nil` (=forever).
--- @param #number Altitude Altitude in feet. Default 10,000 ft for airplanes and 1,000 feet for helos.
--- @param #number Speed Speed in knots. Default 250 kts for airplanes and 20 kts for helos.
+-- @param #number Duration (Optional) Duration how long the group will be waiting in seconds. Default `nil` (=forever).
+-- @param #number Altitude (Optional) Altitude in feet. Default 10,000 ft for airplanes and 1,000 feet for helos.
+-- @param #number Speed (Optional) Speed in knots. Default 250 kts for airplanes and 20 kts for helos.
 function FLIGHTGROUP:onbeforeWait(From, Event, To, Duration, Altitude, Speed)
 
   local allowed=true
@@ -3417,9 +3417,9 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number Duration Duration how long the group will be waiting in seconds. Default `nil` (=forever).
--- @param #number Altitude Altitude in feet. Default 10,000 ft for airplanes and 1,000 feet for helos.
--- @param #number Speed Speed in knots. Default 250 kts for airplanes and 20 kts for helos.
+-- @param #number Duration (Optional) Duration how long the group will be waiting in seconds. Default `nil` (=forever).
+-- @param #number Altitude (Optional) Altitude in feet. Default 10,000 ft for airplanes and 1,000 feet for helos.
+-- @param #number Speed (Optional) Speed in knots. Default 250 kts for airplanes and 20 kts for helos.
 function FLIGHTGROUP:onafterWait(From, Event, To, Duration, Altitude, Speed)
 
   -- Group will orbit at its current position.
@@ -3696,8 +3696,8 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Core.Point#COORDINATE Coordinate The coordinate where to land. Default is current position.
--- @param #number Duration The duration in seconds to remain on ground. Default 600 sec (10 min).
+-- @param Core.Point#COORDINATE (Optional) Coordinate The coordinate where to land. Default is current position.
+-- @param #number Duration (Optional) The duration in seconds to remain on ground. Default 600 sec (10 min).
 function FLIGHTGROUP:onbeforeLandAt(From, Event, To, Coordinate, Duration)
   return self.isHelo
 end
@@ -3707,8 +3707,8 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Core.Point#COORDINATE Coordinate The coordinate where to land. Default is current position.
--- @param #number Duration The duration in seconds to remain on ground. Default `nil` = forever.
+-- @param Core.Point#COORDINATE (Optional) Coordinate The coordinate where to land. Default is current position.
+-- @param #number Duration (Optional) The duration in seconds to remain on ground. Default `nil` = forever.
 function FLIGHTGROUP:onafterLandAt(From, Event, To, Coordinate, Duration)
 
   -- Duration.
@@ -3879,8 +3879,8 @@ end
 
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #FLIGHTGROUP self
--- @param #table Template Template used to init the group. Default is `self.template`.
--- @param #number Delay Delay in seconds before group is initialized. Default `nil`, *i.e.* instantaneous.
+-- @param #table Template (Optional) Template used to init the group. Default is `self.template`.
+-- @param #number Delay (Optional) Delay in seconds before group is initialized. Default `nil`, *i.e.* instantaneous.
 -- @return #FLIGHTGROUP self
 function FLIGHTGROUP:_InitGroup(Template, Delay)
 
@@ -4040,7 +4040,7 @@ end
 
 --- Find the nearest friendly airbase (same or neutral coalition).
 -- @param #FLIGHTGROUP self
--- @param #number Radius Search radius in NM. Default 50 NM.
+-- @param #number Radius (Optional) Search radius in NM. Default 50 NM.
 -- @return Wrapper.Airbase#AIRBASE Closest tanker group #nil.
 function FLIGHTGROUP:FindNearestAirbase(Radius)
 
@@ -4075,7 +4075,7 @@ end
 
 --- Find the nearest tanker.
 -- @param #FLIGHTGROUP self
--- @param #number Radius Search radius in NM. Default 50 NM.
+-- @param #number Radius (Optional) Search radius in NM. Default 50 NM.
 -- @return Wrapper.Group#GROUP Closest tanker group or `nil` if no tanker is in the given radius.
 function FLIGHTGROUP:FindNearestTanker(Radius)
 
@@ -4226,7 +4226,7 @@ end
 
 --- Check if the final waypoint is in the air.
 -- @param #FLIGHTGROUP self
--- @param #table wp Waypoint. Default final waypoint.
+-- @param #table wp (Optional) Waypoint. Default final waypoint.
 -- @return #boolean If `true` final waypoint is a turning or flyover but not a landing type waypoint.
 function FLIGHTGROUP:IsLandingAir(wp)
 
@@ -4247,7 +4247,7 @@ end
 
 --- Check if the final waypoint is at an airbase.
 -- @param #FLIGHTGROUP self
--- @param #table wp Waypoint. Default final waypoint.
+-- @param #table wp (Optional) Waypoint. Default final waypoint.
 -- @return #boolean If `true`, final waypoint is a landing waypoint at an airbase.
 function FLIGHTGROUP:IsLandingAirbase(wp)
 
@@ -4270,10 +4270,10 @@ end
 --- Add an AIR waypoint to the flight plan.
 -- @param #FLIGHTGROUP self
 -- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
--- @param #number Speed Speed in knots. Default is cruise speed.
--- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #number Altitude Altitude in feet. Default is y-component of Coordinate. Note that these altitudes are wrt to sea level (barometric altitude).
--- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
+-- @param #number Speed (Optional) Speed in knots. Default is cruise speed.
+-- @param #number AfterWaypointWithID (Optional) Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
+-- @param #number Altitude (Optional) Altitude in feet. Default is y-component of Coordinate. Note that these altitudes are wrt to sea level (barometric altitude).
+-- @param #boolean Updateroute (Optional) If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitude, Updateroute)
 
@@ -4323,10 +4323,10 @@ end
 --- Add an LANDING waypoint to the flight plan.
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Airbase#AIRBASE Airbase The airbase where the group should land.
--- @param #number Speed Speed in knots. Default 350 kts.
--- @param #number AfterWaypointWithID Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #number Altitude Altitude in feet. Default is y-component of Coordinate. Note that these altitudes are wrt to sea level (barometric altitude).
--- @param #boolean Updateroute If true or nil, call UpdateRoute. If false, no call.
+-- @param #number Speed (Optional) Speed in knots. Default 350 kts.
+-- @param #number AfterWaypointWithID (Optional) Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
+-- @param #number Altitude (Optional) Altitude in feet. Default is y-component of Coordinate. Note that these altitudes are wrt to sea level (barometric altitude).
+-- @param #boolean Updateroute (Optional) If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function FLIGHTGROUP:AddWaypointLanding(Airbase, Speed, AfterWaypointWithID, Altitude, Updateroute)
 
@@ -4541,7 +4541,7 @@ end
 --- Returns the parking spot of the element.
 -- @param #FLIGHTGROUP self
 -- @param Ops.OpsGroup#OPSGROUP.Element element Element of the flight group.
--- @param #number maxdist Distance threshold in meters. Default 5 m.
+-- @param #number maxdist (Optional) Distance threshold in meters. Default 5 m.
 -- @param Wrapper.Airbase#AIRBASE airbase (Optional) The airbase to check for parking. Default is closest airbase to the element.
 -- @return Wrapper.Airbase#AIRBASE.ParkingSpot Parking spot or nil if no spot is within distance threshold.
 function FLIGHTGROUP:GetParkingSpot(element, maxdist, airbase)

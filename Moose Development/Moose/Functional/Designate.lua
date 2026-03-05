@@ -301,12 +301,11 @@ do -- DESIGNATE
 
   --- DESIGNATE Constructor. This class is an abstract class and should not be instantiated.
   -- @param #DESIGNATE self
-  -- @param Tasking.CommandCenter#COMMANDCENTER CC
+  -- @param Wrapper.Group#GROUP CC Group as Commandcenter standin. Currently unused (03/2026)
   -- @param Functional.Detection#DETECTION_BASE Detection
   -- @param Core.Set#SET_GROUP AttackSet The Attack collection of GROUP objects to designate and report for.
-  -- @param Tasking.Mission#MISSION Mission (Optional) The Mission where the menu needs to be attached.
   -- @return #DESIGNATE
-  function DESIGNATE:New( CC, Detection, AttackSet, Mission )
+  function DESIGNATE:New( CC, Detection, AttackSet )
   
     local self = BASE:Inherit( self, FSM:New() ) -- #DESIGNATE
     self:F( { Detection } )
@@ -468,7 +467,7 @@ do -- DESIGNATE
     -- @param #DESIGNATE  self
     -- @param #number Delay
     
-    self.CC = CC
+    --self.CC = CC
     self.Detection = Detection
     self.AttackSet = AttackSet
     self.RecceSet = Detection:GetDetectionSet()
@@ -480,7 +479,7 @@ do -- DESIGNATE
     
     self:SetFlashStatusMenu( false )
     self:SetFlashDetectionMessages( true )
-    self:SetMission( Mission )
+    --self:SetMission( Mission )
     
     self:SetLaserCodes( { 1688, 1130, 4785, 6547, 1465, 4578 } ) -- set self.LaserCodes
     self:SetAutoLase( false, false ) -- set self.Autolase and don't send message.
@@ -682,7 +681,7 @@ do -- DESIGNATE
   
   --- Set the lase duration for designations.
   -- @param #DESIGNATE self
-  -- @param #number LaseDuration The time in seconds a lase will continue to hold on target. The default is 120 seconds.
+  -- @param #number LaseDuration (Optional) The time in seconds a lase will continue to hold on target. The default is 120 seconds.
   -- @return #DESIGNATE
   function DESIGNATE:SetLaseDuration( LaseDuration )
     self.LaseDuration = LaseDuration or 120
@@ -754,10 +753,12 @@ do -- DESIGNATE
     
     if Message then
       local AutoLaseOnOff = ( self.AutoLase == true ) and "On" or "Off"
-      local CC = self.CC:GetPositionable()
-      if CC then
-        CC:MessageToSetGroup( self.DesignateName .. ": Auto Lase " .. AutoLaseOnOff .. ".", 15, self.AttackSet )
-      end
+
+      MESSAGE:New(self.DesignateName .. ": Auto Lase " .. AutoLaseOnOff .. ".",15):ToSet(self.AttackSet)
+      --local CC = self.CC:GetPositionable()
+      --if CC then
+        --CC:MessageToSetGroup( self.DesignateName .. ": Auto Lase " .. AutoLaseOnOff .. ".", 15, self.AttackSet )
+      --end
     end
 
     self:CoordinateLase()
@@ -777,14 +778,14 @@ do -- DESIGNATE
     return self
   end
   
-  --- Set the MISSION object for which designate will function.
+  --- [DEPRECATED DO NOT USE] Set the MISSION object for which designate will function.
   -- When a MISSION object is assigned, the menu for the designation will be located at the Mission Menu.
   -- @param #DESIGNATE self
   -- @param Tasking.Mission#MISSION Mission The MISSION object.
   -- @return #DESIGNATE
   function DESIGNATE:SetMission( Mission ) --R2.2
 
-    self.Mission = Mission
+    --self.Mission = Mission
 
     return self
   end
@@ -830,7 +831,8 @@ do -- DESIGNATE
             function( AttackGroup )
               if AttackGroup:IsAlive() == true then
                 local DetectionText = self.Detection:DetectedItemReportSummary( DetectedItem, AttackGroup ):Text( ", " )
-                self.CC:GetPositionable():MessageToGroup( "Targets out of LOS\n" .. DetectionText, 10, AttackGroup, self.DesignateName )
+                --self.CC:GetPositionable():MessageToGroup( "Targets out of LOS\n" .. DetectionText, 10, AttackGroup, self.DesignateName )
+                MESSAGE:New("Targets out of LOS\n" .. DetectionText,10,self.DesignateName):ToGroup(AttackGroup)
               end
             end
           )
@@ -855,7 +857,8 @@ do -- DESIGNATE
                 function( AttackGroup )
                   if self.FlashDetectionMessage[AttackGroup] == true then
                     local DetectionText = self.Detection:DetectedItemReportSummary( DetectedItem, AttackGroup ):Text( ", " )
-                    self.CC:GetPositionable():MessageToGroup( "Targets detected at \n" .. DetectionText, 10, AttackGroup, self.DesignateName )
+                    --self.CC:GetPositionable():MessageToGroup( "Targets detected at \n" .. DetectionText, 10, AttackGroup, self.DesignateName )
+                    MESSAGE:New( "Targets detected at \n" .. DetectionText,10,self.DesignateName):ToGroup(AttackGroup)
                   end
                 end
               )
@@ -929,9 +932,10 @@ do -- DESIGNATE
             end
           end
           
-          local CC = self.CC:GetPositionable()
+         -- local CC = self.CC:GetPositionable()
       
-          CC:MessageTypeToGroup( DetectedReport:Text( "\n" ), MESSAGE.Type.Information, AttackGroup, self.DesignateName )
+          --CC:MessageTypeToGroup( DetectedReport:Text( "\n" ), MESSAGE.Type.Information, AttackGroup, self.DesignateName )
+          MESSAGE:New( DetectedReport:Text( "\n" ),15,self.DesignateName):ToGroup(AttackGroup)
           
           local DesignationReport = REPORT:New( "Marking Targets:" )
       
@@ -965,10 +969,10 @@ do -- DESIGNATE
     
     local MissionMenu = nil
     
-    if self.Mission then
+    --if self.Mission then
       --MissionMenu = self.Mission:GetRootMenu( AttackGroup )
-      MissionMenu = self.Mission:GetMenu( AttackGroup )
-    end
+      --MissionMenu = self.Mission:GetMenu( AttackGroup )
+    --end
     
     local MenuTime = timer.getTime()
     
@@ -1356,12 +1360,13 @@ do -- DESIGNATE
   -- @param #DESIGNATE self
   -- @return #DESIGNATE
   function DESIGNATE:onafterLaseOff( From, Event, To, Index )
-  
-    local CC = self.CC:GetPositionable()
+
+    MESSAGE:New("Stopped lasing.",5,self.DesignateName):ToSet(self.AttackSet)
+    --local CC = self.CC:GetPositionable()
     
-    if CC then 
-      CC:MessageToSetGroup( "Stopped lasing.", 5, self.AttackSet, self.DesignateName )
-    end
+    --if CC then 
+      --CC:MessageToSetGroup( "Stopped lasing.", 5, self.AttackSet, self.DesignateName )
+    --end
     
     local DetectedItem = self.Detection:GetDetectedItemByIndex( Index )
     local TargetSetUnit = self.Detection:GetDetectedItemSet( DetectedItem )

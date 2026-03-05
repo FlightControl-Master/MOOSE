@@ -875,7 +875,7 @@ end
 --- Set callsign of the CONTROLLABLE. See [DCS command setCallsign](https://wiki.hoggitworld.com/view/DCS_command_setCallsign)
 -- @param #CONTROLLABLE self
 -- @param DCS#CALLSIGN CallName Number corresponding the the callsign identifier you wish this group to be called.
--- @param #number CallNumber The number value the group will be referred to as. Only valid numbers are 1-9. For example Uzi **5**-1. Default 1.
+-- @param #number CallNumber (Optional) The number value the group will be referred to as. Only valid numbers are 1-9. For example Uzi **5**-1. Default 1.
 -- @param #number Delay (Optional) Delay in seconds before the callsign is set. Default is immediately.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandSetCallsign( CallName, CallNumber, Delay )
@@ -953,7 +953,7 @@ end
 --- Set radio frequency. See [DCS command SetFrequency](https://wiki.hoggitworld.com/view/DCS_command_setFrequency)
 -- @param #CONTROLLABLE self
 -- @param #number Frequency Radio frequency in MHz.
--- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
+-- @param #number Modulation (Optional) Radio modulation. Default `radio.modulation.AM`.
 -- @param #number Power (Optional) Power of the Radio in Watts. Defaults to 10.
 -- @param #number Delay (Optional) Delay in seconds before the frequency is set. Default is immediately.
 -- @return #CONTROLLABLE self
@@ -980,7 +980,7 @@ end
 --- [AIR] Set radio frequency. See [DCS command SetFrequencyForUnit](https://wiki.hoggitworld.com/view/DCS_command_setFrequencyForUnit)
 -- @param #CONTROLLABLE self
 -- @param #number Frequency Radio frequency in MHz.
--- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
+-- @param #number Modulation (Optional) Radio modulation. Default `radio.modulation.AM`.
 -- @param #number Power (Optional) Power of the Radio in Watts. Defaults to 10.
 -- @param #number UnitID (Optional, if your object is a UNIT) The UNIT ID this is for.
 -- @param #number Delay (Optional) Delay in seconds before the frequency is set. Default is immediately.
@@ -1005,7 +1005,7 @@ end
 
 --- [AIR] Set smoke on or off. See [DCS command smoke on off](https://wiki.hoggitworld.com/view/DCS_command_smoke_on_off)
 -- @param #CONTROLLABLE self
--- @param #boolean OnOff Set to true for on and false for off. Defaults to true.
+-- @param #boolean OnOff (Optional) Set to true for on and false for off. Defaults to true.
 -- @param #number Delay (Optional) Delay the command by this many seconds.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:CommandSmokeOnOff(OnOff, Delay)
@@ -1065,7 +1065,7 @@ end
 --- Set EPLRS data link on/off.
 -- @param #CONTROLLABLE self
 -- @param #boolean SwitchOnOff If true (or nil) switch EPLRS on. If false switch off.
--- @param #number idx Task index. Default 1.
+-- @param #number idx (Optional) Task index. Default 1.
 -- @return #table Task wrapped action.
 function CONTROLLABLE:TaskEPLRS( SwitchOnOff, idx )
 
@@ -1099,32 +1099,14 @@ end
 -- @param #number AttackQty (optional) This parameter limits maximal quantity of attack. The aircraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aircraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param DCS#Distance Altitude (optional) Desired attack start altitude. Controllable/aircraft will make its attacks from the altitude. If the altitude is too low or too high to use weapon aircraft/controllable will choose closest altitude to the desired attack start altitude. If the desired altitude is defined controllable/aircraft will not attack from safe altitude.
--- @param #boolean AttackQtyLimit (optional) The flag determines how to interpret attackQty parameter. If the flag is true then attackQty is a limit on maximal attack quantity for "AttackGroup" and "AttackUnit" tasks. If the flag is false then attackQty is a desired attack quantity for "Bombing" and "BombingRunway" tasks.
 -- @param #boolean GroupAttack (Optional) If true, attack as group.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit, GroupAttack )
   -- self:F2( { self.ControllableName, AttackGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit } )
-
-  --  AttackGroup = {
-  --   id = 'AttackGroup',
-  --   params = {
-  --     groupId = Group.ID,
-  --     weaponType = number,
-  --     expend = enum AI.Task.WeaponExpend,
-  --     attackQty = number,
-  --     directionEnabled = boolean,
-  --     direction = Azimuth,
-  --     altitudeEnabled = boolean,
-  --     altitude = Distance,
-  --     attackQtyLimit = boolean,
-  --   }
-  -- }
-
-
   local DCSTask = { id = 'AttackGroup',
     params = {
       groupId          = AttackGroup:GetID(),
-      weaponType       = WeaponType or 1073741822,
+      weaponType       = WeaponType or ENUMS.WeaponFlag.Auto,
       expend           = WeaponExpend or "Auto",
       attackQtyLimit   = AttackQty and true or false,
       attackQty        = AttackQty or 1,
@@ -1135,7 +1117,6 @@ function CONTROLLABLE:TaskAttackGroup( AttackGroup, WeaponType, WeaponExpend, At
       groupAttack      = GroupAttack and true or false,
     },
   }
-
   return DCSTask
 end
 
@@ -1163,7 +1144,7 @@ function CONTROLLABLE:TaskAttackUnit( AttackUnit, GroupAttack, WeaponExpend, Att
       altitude         = Altitude,
       attackQtyLimit   = AttackQty and true or false,
       attackQty        = AttackQty,
-      weaponType       = WeaponType or 1073741822,
+      weaponType       = WeaponType or ENUMS.WeaponFlag.Auto,
     },
   }
 
@@ -1197,7 +1178,7 @@ function CONTROLLABLE:TaskBombing( Vec2, GroupAttack, WeaponExpend, AttackQty, D
       direction        = Direction and math.rad(Direction) or 0,
       altitudeEnabled  = Altitude and true or false,
       altitude         = Altitude or 2000,
-      weaponType       = WeaponType or 1073741822,
+      weaponType       = WeaponType or ENUMS.WeaponFlag.AnyBomb,
       attackType       = Divebomb and "Dive" or nil,
       },
   }
@@ -1249,7 +1230,7 @@ end
 -- @param #number AttackQty (Optional) This parameter limits maximal quantity of attack. The aircraft/controllable will not make more attack than allowed even if the target controllable not destroyed and the aircraft/controllable still have ammo. If not defined the aircraft/controllable will attack target until it will be destroyed or until the aircraft/controllable will run out of ammo.
 -- @param DCS#Azimuth Direction (Optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
 -- @param #number Altitude (Optional) The altitude [meters] from where to attack. Default 30 m.
--- @param #number WeaponType (Optional) The WeaponType. Default Auto=1073741822.
+-- @param #number WeaponType (Optional) The WeaponType. Default `ENUMS.WeaponFlag.Auto`.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, AttackQty, Direction, Altitude, WeaponType )
 
@@ -1266,7 +1247,7 @@ function CONTROLLABLE:TaskAttackMapObject( Vec2, GroupAttack, WeaponExpend, Atta
       direction        = Direction and math.rad(Direction) or 0,
       altitudeEnabled  = Altitude and true or false,
       altitude         = Altitude,
-      weaponType       = WeaponType or 1073741822,
+      weaponType       = WeaponType or ENUMS.WeaponFlag.Auto,
     },
   }
 
@@ -1385,7 +1366,7 @@ end
 -- The controllable has to be an infantry group!
 -- @param #CONTROLLABLE self
 -- @param Core.Point#COORDINATE Coordinate Coordinates where AI is expecting to be picked up.
--- @param #number Radius Radius in meters. Default 200 m.
+-- @param #number Radius (Optional) Radius in meters. Default 200 m.
 -- @param #string UnitType The unit type name of the carrier, e.g. "UH-1H". Must not be specified.
 -- @return DCS#Task Embark to transport task.
 function CONTROLLABLE:TaskEmbarkToTransport( Coordinate, Radius, UnitType )
@@ -1459,8 +1440,8 @@ end
 --- (AIR) Orbit at a position with at a given altitude and speed. Optionally, a race track pattern can be specified.
 -- @param #CONTROLLABLE self
 -- @param Core.Point#COORDINATE Coord Coordinate at which the CONTROLLABLE orbits. Can also be given as a `DCS#Vec3` or `DCS#Vec2` object.
--- @param #number Altitude Altitude in meters of the orbit pattern. Default y component of Coord.
--- @param #number Speed Speed [m/s] flying the orbit pattern. Default 128 m/s = 250 knots.
+-- @param #number Altitude (Optional) Altitude in meters of the orbit pattern. Default y component of Coord.
+-- @param #number Speed (Optional) Speed [m/s] flying the orbit pattern. Default 128 m/s = 250 knots.
 -- @param Core.Point#COORDINATE CoordRaceTrack (Optional) If this coordinate is specified, the CONTROLLABLE will fly a race-track pattern using this and the initial coordinate.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:TaskOrbit( Coord, Altitude, Speed, CoordRaceTrack )
@@ -1530,11 +1511,11 @@ end
 --
 -- @param #CONTROLLABLE self
 -- @param Wrapper.Airbase#AIRBASE Airbase Airbase to attack.
--- @param #number WeaponType (optional) Bitmask of weapon types those allowed to use. See [DCS enum weapon flag](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag). Default 2147485694 = AnyBomb (GuidedBomb + AnyUnguidedBomb).
--- @param DCS#AI.Task.WeaponExpend WeaponExpend Enum AI.Task.WeaponExpend that defines how much munitions the AI will expend per attack run. Default "ALL".
--- @param #number AttackQty Number of times the group will attack if the target. Default 1.
--- @param DCS#Azimuth Direction (optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
--- @param #boolean GroupAttack (optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a group and not to a single aircraft.
+-- @param #number WeaponType (Optional) Bitmask of weapon types those allowed to use. See [DCS enum weapon flag](https://wiki.hoggitworld.com/view/DCS_enum_weapon_flag). Default 2147485694 = AnyBomb (GuidedBomb + AnyUnguidedBomb).
+-- @param DCS#AI.Task.WeaponExpend (Optional) WeaponExpend Enum AI.Task.WeaponExpend that defines how much munitions the AI will expend per attack run. Default "ALL".
+-- @param #number AttackQty (Optional) Number of times the group will attack if the target. Default 1.
+-- @param DCS#Azimuth Direction (Optional) Desired ingress direction from the target to the attacking aircraft. Controllable/aircraft will make its attacks from the direction. Of course if there is no way to attack from the direction due the terrain controllable/aircraft will choose another direction.
+-- @param #boolean GroupAttack (Optional) Flag indicates that the target must be engaged by all aircrafts of the controllable. Has effect only if the task is assigned to a group and not to a single aircraft.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskBombingRunway( Airbase, WeaponType, WeaponExpend, AttackQty, Direction, GroupAttack )
 
@@ -1725,7 +1706,7 @@ end
 -- @param DCS#Vec3 Vec3 Position of the unit / lead unit of the controllable relative lead unit of another controllable in frame reference oriented by course of lead unit of another controllable. If another controllable is on land the unit / controllable will orbit around.
 -- @param #number LastWaypointIndex Detach waypoint of another controllable. Once reached the unit / controllable Escort task is finished.
 -- @param #number EngagementDistance Maximal distance from escorted controllable to threat in meters. If the threat is already engaged by escort escort will disengage if the distance becomes greater than 1.5 * engagementDistMax.
--- @param DCS#AttributeNameArray TargetTypes Array of AttributeName that is contains threat categories allowed to engage. Default {"Air"}. See https://wiki.hoggit.us/view/DCS_enum_attributes
+-- @param DCS#AttributeNameArray TargetTypes (Optional) Array of AttributeName that is contains threat categories allowed to engage. Default {"Air"}. See https://wiki.hoggit.us/view/DCS_enum_attributes
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskEscort( FollowControllable, Vec3, LastWaypointIndex, EngagementDistance, TargetTypes )
 
@@ -1765,7 +1746,7 @@ end
 -- @param #number AmmoCount (optional) Quantity of ammunition to expand (omit to fire until ammunition is depleted).
 -- @param #number WeaponType (optional) Enum for weapon type ID. This value is only required if you want the group firing to use a specific weapon, for instance using the task on a ship to force it to fire guided missiles at targets within cannon range. See http://wiki.hoggit.us/view/DCS_enum_weapon_flag
 -- @param #number Altitude (Optional) Altitude in meters.
--- @param #number ASL Altitude is above mean sea level. Default is above ground level.
+-- @param #number ASL (Optional) Altitude is above mean sea level. Default is above ground level.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:TaskFireAtPoint( Vec2, Radius, AmmoCount, WeaponType, Altitude, ASL )
 
@@ -1818,11 +1799,11 @@ end
 -- It's important to note that depending on the type of unit that is being assigned the task (AIR or GROUND), you must choose the correct type of callsign enumerator. For airborne controllables use CALLSIGN.Aircraft and for ground based use CALLSIGN.JTAC enumerators.
 -- @param #CONTROLLABLE self
 -- @param Wrapper.Group#GROUP AttackGroup Target GROUP object.
--- @param #number WeaponType Bitmask of weapon types, which are allowed to use.
--- @param DCS#AI.Task.Designation Designation (Optional) Designation type.
+-- @param #number WeaponType (Optional) Bitmask of weapon types, which are allowed to use. Defaults tp ENUMS.WeaponFlag.AutoDCS.
+-- @param DCS#AI.Task.Designation Designation (Optional) Designation type. Defaults to Auto.
 -- @param #boolean Datalink (Optional) Allows to use datalink to send the target information to attack aircraft. Enabled by default.
--- @param #number Frequency Frequency in MHz used to communicate with the FAC. Default 133 MHz.
--- @param #number Modulation Modulation of radio for communication. Default 0=AM.
+-- @param #number Frequency (Optional) Frequency in MHz used to communicate with the FAC. Default 133 MHz.
+-- @param #number Modulation (Optional) Modulation of radio for communication. Default 0=AM.
 -- @param #number CallsignName Callsign enumerator name of the FAC. (CALLSIGN.Aircraft.{name} for airborne controllables, CALLSIGN.JTACS.{name} for ground units)
 -- @param #number CallsignNumber Callsign number, e.g. Axeman-**1**.
 -- @return DCS#Task The DCS task structure.
@@ -1848,8 +1829,8 @@ end
 --- (AIR) Engaging targets of defined types.
 -- @param #CONTROLLABLE self
 -- @param DCS#Distance Distance Maximal distance from the target to a route leg. If the target is on a greater distance it will be ignored.
--- @param DCS#AttributeNameArray TargetTypes Array of target categories allowed to engage.
--- @param #number Priority All enroute tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
+-- @param DCS#AttributeNameArray TargetTypes (Optional) Array of target categories allowed to engage. Defaults to {"Air"}.
+-- @param #number Priority (Optional) All enroute tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskEngageTargets( Distance, TargetTypes, Priority )
 
@@ -1890,7 +1871,7 @@ end
 
 --- (AIR) Enroute anti-ship task.
 -- @param #CONTROLLABLE self
--- @param DCS#AttributeNameArray TargetTypes Array of target categories allowed to engage. Default `{"Ships"}`.
+-- @param DCS#AttributeNameArray TargetTypes (Optional) Array of target categories allowed to engage. Default `{"Ships"}`.
 -- @param #number Priority (Optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskAntiShip(TargetTypes, Priority)
@@ -1911,7 +1892,7 @@ end
 
 --- (AIR) Enroute SEAD task.
 -- @param #CONTROLLABLE self
--- @param DCS#AttributeNameArray TargetTypes Array of target categories allowed to engage. Default `{"Air Defence"}`.
+-- @param DCS#AttributeNameArray TargetTypes (Optional) Array of target categories allowed to engage. Default `{"Air Defence"}`.
 -- @param #number Priority (Optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskSEAD(TargetTypes, Priority)
@@ -1932,7 +1913,7 @@ end
 
 --- (AIR) Enroute CAP task.
 -- @param #CONTROLLABLE self
--- @param DCS#AttributeNameArray TargetTypes Array of target categories allowed to engage. Default `{"Air"}`.
+-- @param DCS#AttributeNameArray TargetTypes (Optional) Array of target categories allowed to engage. Default `{"Air"}`.
 -- @param #number Priority (Optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Default 0.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskCAP(TargetTypes, Priority)
@@ -2105,11 +2086,11 @@ end
 -- Target designation is set to auto and is dependent on the circumstances.
 -- See [hoggit](https://wiki.hoggitworld.com/view/DCS_task_fac).
 -- @param #CONTROLLABLE self
--- @param #number Frequency Frequency in MHz. Default 133 MHz.
--- @param #number Modulation Radio modulation. Default `radio.modulation.AM`.
+-- @param #number Frequency (Optional) Frequency in MHz. Default 133 MHz.
+-- @param #number Modulation (Optional) Radio modulation. Default `radio.modulation.AM`.
 -- @param #number CallsignID CallsignID, e.g. `CALLSIGN.JTAC.Anvil` for ground or `CALLSIGN.Aircraft.Ford` for air.
 -- @param #number CallsignNumber Callsign first number, e.g. 2 for `Ford-2`.
--- @param #number Priority All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first.
+-- @param #number Priority (Optional) All en-route tasks have the priority parameter. This is a number (less value - higher priority) that determines actions related to what task will be performed first. Defaults to 0.
 -- @return DCS#Task The DCS task structure.
 function CONTROLLABLE:EnRouteTaskFAC( Frequency, Modulation, CallsignID, CallsignNumber, Priority )
 
@@ -2339,8 +2320,8 @@ do -- Patrol methods
   -- @param #table ZoneList Table of zones.
   -- @param #number Speed Speed in km/h the group moves at.
   -- @param #string Formation (Optional) Formation the group should use.
-  -- @param #number DelayMin Delay in seconds before the group progresses to the next route point. Default 1 sec.
-  -- @param #number DelayMax Max. delay in seconds. Actual delay is randomly chosen between DelayMin and DelayMax. Default equal to DelayMin.
+  -- @param #number DelayMin (Optional) Delay in seconds before the group progresses to the next route point. Default 1 sec.
+  -- @param #number DelayMax (Optional) Max. delay in seconds. Actual delay is randomly chosen between DelayMin and DelayMax. Default equal to DelayMin.
   -- @return #CONTROLLABLE
   function CONTROLLABLE:PatrolZones( ZoneList, Speed, Formation, DelayMin, DelayMax )
 
@@ -2855,7 +2836,7 @@ do -- Route methods
   -- @param #CONTROLLABLE self
   -- @param Core.Zone#ZONE Zone The zone where to route to.
   -- @param #boolean Randomize Defines whether to target point gets randomized within the Zone.
-  -- @param #number Speed The speed in m/s. Default is 5.555 m/s = 20 km/h.
+  -- @param #number Speed (Optional) The speed in m/s. Default is 5.555 m/s = 20 km/h.
   -- @param DCS#FORMATION Formation The formation string.
   function CONTROLLABLE:TaskRouteToZone( Zone, Randomize, Speed, Formation )
     self:F2( Zone )
@@ -2915,7 +2896,7 @@ do -- Route methods
   -- A given formation can be given.
   -- @param #CONTROLLABLE self
   -- @param DCS#Vec2 Vec2 The Vec2 where to route to.
-  -- @param #number Speed The speed in m/s. Default is 5.555 m/s = 20 km/h.
+  -- @param #number Speed (Optional) The speed in m/s. Default is 5.555 m/s = 20 km/h.
   -- @param DCS#FORMATION Formation The formation string.
   function CONTROLLABLE:TaskRouteToVec2( Vec2, Speed, Formation )
 
@@ -3847,7 +3828,7 @@ end
 
 --- Set RTB on bingo fuel.
 -- @param #CONTROLLABLE self
--- @param #boolean RTB true if RTB on bingo fuel (default), false if no RTB on bingo fuel.
+-- @param #boolean RTB (Optional) true if RTB on bingo fuel (default), false if no RTB on bingo fuel.
 -- Warning! When you switch this option off, the airborne group will continue to fly until all fuel has been consumed, and will crash.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionRTBBingoFuel( RTB ) -- R2.2
@@ -3974,7 +3955,7 @@ end
 
 --- [Ground] Option that defines the vehicle spacing when in an on road and off road formation. 
 -- @param #CONTROLLABLE self
--- @param #number meters Can be zero to 100 meters. Defaults to 50 meters.
+-- @param #number meters (Optional) Can be zero to 100 meters. Defaults to 50 meters.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionFormationInterval(meters)
   self:F2( { self.ControllableName } )
@@ -3995,7 +3976,7 @@ end
 
 --- [Air] Defines the usage of Electronic Counter Measures by airborne forces.
 -- @param #CONTROLLABLE self
--- @param #number ECMvalue Can be - 0=Never on, 1=if locked by radar, 2=if detected by radar, 3=always on, defaults to 1
+-- @param #number ECMvalue (Optional) Can be - 0=Never on, 1=if locked by radar, 2=if detected by radar, 3=always on, defaults to 1
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionECM( ECMvalue )
   self:F2( { self.ControllableName } )
@@ -4291,7 +4272,7 @@ end
 
 --- Defines the range at which a GROUND unit/group is allowed to use its weapons automatically.
 -- @param #CONTROLLABLE self
--- @param #number EngageRange Engage range limit in percent (a number between 0 and 100). Default 100.
+-- @param #number EngageRange (Optional) Engage range limit in percent (a number between 0 and 100). Default 100.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:OptionEngageRange( EngageRange )
   self:F2( { self.ControllableName } )
@@ -4441,7 +4422,7 @@ end
 
 --- [AIR] Set the AI to report contact for certain types of objects.
 -- @param #CONTROLLABLE self
--- @param #table Objects Table of attribute names for which AI reports contact. Defaults to {"Air"}. See [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
+-- @param #table Objects (Optional) Table of attribute names for which AI reports contact. Defaults to {"Air"}. See [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:SetOptionRadioContact(Objects)
  self:F2( { self.ControllableName } )
@@ -4455,7 +4436,7 @@ end
 
 --- [AIR] Set the AI to report engaging certain types of objects.
 -- @param #CONTROLLABLE self
--- @param #table Objects Table of attribute names for which AI reports contact. Defaults to {"Air"}, see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
+-- @param #table Objects (Optional) Table of attribute names for which AI reports contact. Defaults to {"Air"}, see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:SetOptionRadioEngage(Objects)
  self:F2( { self.ControllableName } )
@@ -4469,7 +4450,7 @@ end
 
 --- [AIR] Set the AI to report killing certain types of objects.
 -- @param #CONTROLLABLE self
--- @param #table Objects Table of attribute names for which AI reports contact. Defaults to {"Air"}, see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
+-- @param #table Objects (Optional) Table of attribute names for which AI reports contact. Defaults to {"Air"}, see [Hoggit Wiki](https://wiki.hoggitworld.com/view/DCS_enum_attributes)
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:SetOptionRadioKill(Objects)
  self:F2( { self.ControllableName } )
@@ -4483,12 +4464,12 @@ end
 
 --- (GROUND) Relocate controllable to a random point within a given radius; use e.g.for evasive actions; Note that not all ground controllables can actually drive, also the alarm state of the controllable might stop it from moving.
 -- @param #CONTROLLABLE self
--- @param #number speed Speed of the controllable, default 20
--- @param #number radius Radius of the relocation zone, default 500
--- @param #boolean onroad If true, route on road (less problems with AI way finding), default true
--- @param #boolean shortcut If true and onroad is set, take a shorter route - if available - off road, default false
--- @param #string formation Formation string as in the mission editor, e.g. "Vee", "Diamond", "Line abreast", etc. Defaults to "Off Road"
--- @param #boolean onland (optional) If true, try up to 50 times to get a coordinate on land.SurfaceType.LAND. Note - this descriptor value is not reliably implemented on all maps.
+-- @param #number speed (Optional) Speed of the controllable, default 20
+-- @param #number radius (Optional) Radius of the relocation zone, default 500
+-- @param #boolean onroad (Optional) If true, route on road (less problems with AI way finding), default true
+-- @param #boolean shortcut (Optional) If true and onroad is set, take a shorter route - if available - off road, default false
+-- @param #string formation (Optional) Formation string as in the mission editor, e.g. "Vee", "Diamond", "Line abreast", etc. Defaults to "Off Road"
+-- @param #boolean onland (Optional) If true, try up to 50 times to get a coordinate on land.SurfaceType.LAND. Note - this descriptor value is not reliably implemented on all maps.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:RelocateGroundRandomInRadius( speed, radius, onroad, shortcut, formation, onland )
   self:F2( { self.ControllableName } )
@@ -5871,8 +5852,8 @@ end
 
 --- [GROUND] Create and enable a new IR Marker for the given controllable UNIT or GROUP.
 -- @param #CONTROLLABLE self
--- @param #boolean EnableImmediately (Optionally) If true start up the IR Marker immediately. Else you need to call `myobject:EnableIRMarker()` later on.
--- @param #number Runtime (Optionally) Run this IR Marker for the given number of seconds, then stop. Use in conjunction with EnableImmediately. Defaults to 60 seconds.
+-- @param #boolean EnableImmediately (Optional) If true start up the IR Marker immediately. Else you need to call `myobject:EnableIRMarker()` later on.
+-- @param #number Runtime (Optional) Run this IR Marker for the given number of seconds, then stop. Use in conjunction with EnableImmediately. Defaults to 60 seconds.
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:NewIRMarker(EnableImmediately, Runtime)
   self:T2("NewIRMarker")

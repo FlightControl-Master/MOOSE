@@ -54,8 +54,8 @@ do -- ZoneGoal
   --- ZONE_GOAL_COALITION Constructor.
   -- @param #ZONE_GOAL_COALITION self
   -- @param Core.Zone#ZONE Zone A @{Core.Zone} object with the goal to be achieved.
-  -- @param #number Coalition The initial coalition owning the zone. Default coalition.side.NEUTRAL.
-  -- @param #table UnitCategories Table of unit categories. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit). Default {Unit.Category.GROUND_UNIT}.
+  -- @param #number Coalition (Optional) The initial coalition owning the zone. Default coalition.side.NEUTRAL.
+  -- @param #table UnitCategories (Optional) Table of unit categories. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit). Default {Unit.Category.GROUND_UNIT}.
   -- @return #ZONE_GOAL_COALITION
   function ZONE_GOAL_COALITION:New( Zone, Coalition, UnitCategories )
 
@@ -90,7 +90,7 @@ do -- ZoneGoal
 
   --- Set the owning coalition of the zone.
   -- @param #ZONE_GOAL_COALITION self
-  -- @param #table UnitCategories Table of unit categories. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit). Default {Unit.Category.GROUND_UNIT}.
+  -- @param #table UnitCategories (Optional) Table of unit categories. See [DCS Class Unit](https://wiki.hoggitworld.com/view/DCS_Class_Unit). Default {Unit.Category.GROUND_UNIT}.
   -- @return #ZONE_GOAL_COALITION
   function ZONE_GOAL_COALITION:SetUnitCategories( UnitCategories )
 
@@ -105,7 +105,7 @@ do -- ZoneGoal
 
   --- Set the owning coalition of the zone.
   -- @param #ZONE_GOAL_COALITION self
-  -- @param #table ObjectCategories Table of unit categories. See [DCS Class Object](https://wiki.hoggitworld.com/view/DCS_Class_Object). Default {Object.Category.UNIT, Object.Category.STATIC}, i.e. all UNITS and STATICS.
+  -- @param #table ObjectCategories (Optional) Table of unit categories. See [DCS Class Object](https://wiki.hoggitworld.com/view/DCS_Class_Object). Default {Object.Category.UNIT, Object.Category.STATIC}, i.e. all UNITS and STATICS.
   -- @return #ZONE_GOAL_COALITION
   function ZONE_GOAL_COALITION:SetObjectCategories( ObjectCategories )
 

@@ -949,7 +949,7 @@ end
 
 --- Set maximal strafing altitude. Player entering a strafe pit above that altitude are not registered for a valid pass.
 -- @param #RANGE self
--- @param #number maxalt Maximum altitude in meters AGL. Default is 914 m = 3000 ft.
+-- @param #number maxalt (Optional) Maximum altitude in meters AGL. Default is 914 m = 3000 ft.
 -- @return #RANGE self
 function RANGE:SetMaxStrafeAlt( maxalt )
   self.strafemaxalt = maxalt or RANGE.Defaults.strafemaxalt
@@ -958,7 +958,7 @@ end
 
 --- Set time interval for tracking bombs. A smaller time step increases accuracy but needs more CPU time.
 -- @param #RANGE self
--- @param #number dt Time interval in seconds. Default is 0.005 s.
+-- @param #number dt (Optional) Time interval in seconds. Default is 0.005 s.
 -- @return #RANGE self
 function RANGE:SetBombtrackTimestep( dt )
   self.dtBombtrack = dt or RANGE.Defaults.dtBombtrack
@@ -967,7 +967,7 @@ end
 
 --- Set time how long (most) messages are displayed.
 -- @param #RANGE self
--- @param #number time Time in seconds. Default is 30 s.
+-- @param #number time (Optional) Time in seconds. Default is 30 s.
 -- @return #RANGE self
 function RANGE:SetMessageTimeDuration( time )
   self.Tmsg = time or RANGE.Defaults.Tmsg
@@ -1009,8 +1009,8 @@ end
 --- Set FunkMan socket. Bombing and strafing results will be send to your Discord bot.
 -- **Requires running FunkMan program**.
 -- @param #RANGE self
--- @param #number Port Port. Default `10042`.
--- @param #string Host Host. Default "127.0.0.1".
+-- @param #number Port (Optional) Port. Default `10042`.
+-- @param #string Host (Optional) Host. Default "127.0.0.1".
 -- @return #RANGE self
 function RANGE:SetFunkManOn(Port, Host)
 
@@ -1032,7 +1032,7 @@ end
 
 --- Set max number of player results that are displayed.
 -- @param #RANGE self
--- @param #number nmax Number of results. Default is 10.
+-- @param #number nmax (Optional) Number of results. Default is 10.
 -- @return #RANGE self
 function RANGE:SetDisplayedMaxPlayerResults( nmax )
   self.ndisplayresult = nmax or RANGE.Defaults.ndisplayresult
@@ -1041,7 +1041,7 @@ end
 
 --- Set range radius. Defines the area in which e.g. bomb impacts are smoked.
 -- @param #RANGE self
--- @param #number radius Radius in km. Default 5 km.
+-- @param #number radius (Optional) Radius in km. Default 5 km.
 -- @return #RANGE self
 function RANGE:SetRangeRadius( radius )
   self.rangeradius = radius * 1000 or RANGE.Defaults.rangeradius
@@ -1050,7 +1050,7 @@ end
 
 --- Set player setting whether bomb impact points are smoked or not.
 -- @param #RANGE self
--- @param #boolean switch If true nor nil default is to smoke impact points of bombs.
+-- @param #boolean switch (Optional) If true nor nil default is to smoke impact points of bombs.
 -- @return #RANGE self
 function RANGE:SetDefaultPlayerSmokeBomb( switch )
   if switch == true or switch == nil then
@@ -1063,7 +1063,7 @@ end
 
 --- Set bomb track threshold distance. Bombs/rockets/missiles are only tracked if player-range distance is less than this distance. Default 25 km.
 -- @param #RANGE self
--- @param #number distance Threshold distance in km. Default 25 km.
+-- @param #number distance (Optional) Threshold distance in km. Default 25 km.
 -- @return #RANGE self
 function RANGE:SetBombtrackThreshold( distance )
   self.BombtrackThreshold = (distance or 25) * 1000
@@ -1110,7 +1110,7 @@ end
 
 --- Enable range ceiling. Aircraft must be below the ceiling altitude to be considered in the range zone. 
 -- @param #RANGE self
--- @param #boolean enabled True if you would like to enable the ceiling check.  If no value give, will Default to false.
+-- @param #boolean enabled (Optional) True if you would like to enable the ceiling check.  If no value give, will Default to false.
 -- @return #RANGE self
 function RANGE:EnableRangeCeiling( enabled )
   self:T(self.lid.."EnableRangeCeiling")
@@ -1126,7 +1126,7 @@ end
 
 --- Set smoke color for marking bomb targets. By default bomb targets are marked by red smoke.
 -- @param #RANGE self
--- @param Utilities.Utils#SMOKECOLOR colorid Color id. Default `SMOKECOLOR.Red`.
+-- @param Utilities.Utils#SMOKECOLOR colorid (Optional) Color id. Default `SMOKECOLOR.Red`.
 -- @return #RANGE self
 function RANGE:SetBombTargetSmokeColor( colorid )
   self.BombSmokeColor = colorid or SMOKECOLOR.Red
@@ -1135,7 +1135,7 @@ end
 
 --- Set score bomb distance.
 -- @param #RANGE self
--- @param #number distance Distance in meters. Default 1000 m.
+-- @param #number distance (Optional) Distance in meters. Default 1000 m.
 -- @return #RANGE self
 function RANGE:SetScoreBombDistance( distance )
   self.scorebombdistance = distance or 1000
@@ -1144,7 +1144,7 @@ end
 
 --- Set smoke color for marking strafe targets. By default strafe targets are marked by green smoke.
 -- @param #RANGE self
--- @param Utilities.Utils#SMOKECOLOR colorid Color id. Default `SMOKECOLOR.Green`.
+-- @param Utilities.Utils#SMOKECOLOR colorid (Optional) Color id. Default `SMOKECOLOR.Green`.
 -- @return #RANGE self
 function RANGE:SetStrafeTargetSmokeColor( colorid )
   self.StrafeSmokeColor = colorid or SMOKECOLOR.Green
@@ -1153,7 +1153,7 @@ end
 
 --- Set smoke color for marking strafe pit approach boxes. By default strafe pit boxes are marked by white smoke.
 -- @param #RANGE self
--- @param Utilities.Utils#SMOKECOLOR colorid Color id. Default `SMOKECOLOR.White`.
+-- @param Utilities.Utils#SMOKECOLOR colorid (Optional) Color id. Default `SMOKECOLOR.White`.
 -- @return #RANGE self
 function RANGE:SetStrafePitSmokeColor( colorid )
   self.StrafePitSmokeColor = colorid or SMOKECOLOR.White
@@ -1162,7 +1162,7 @@ end
 
 --- Set time delay between bomb impact and starting to smoke the impact point.
 -- @param #RANGE self
--- @param #number delay Time delay in seconds. Default is 3 seconds.
+-- @param #number delay (Optional) Time delay in seconds. Default is 3 seconds.
 -- @return #RANGE self
 function RANGE:SetSmokeTimeDelay( delay )
   self.TdelaySmoke = delay or RANGE.Defaults.TdelaySmoke
@@ -1252,11 +1252,11 @@ end
 --- Use SRS Simple-Text-To-Speech for transmissions. No sound files necessary.
 -- @param #RANGE self
 -- @param #string PathToSRS Path to SRS directory.
--- @param #number Port SRS port. Default 5002.
--- @param #number Coalition Coalition side, e.g. `coalition.side.BLUE` or `coalition.side.RED`. Default `coalition.side.BLUE`.
--- @param #number Frequency Frequency to use. Default is 256 MHz for range control and 305 MHz for instructor. If given, both control and instructor get this frequency.
--- @param #number Modulation Modulation to use, defaults to radio.modulation.AM
--- @param #number Volume Volume, between 0.0 and 1.0. Defaults to 1.0
+-- @param #number Port (Optional) SRS port. Default 5002.
+-- @param #number Coalition (Optional) Coalition side, e.g. `coalition.side.BLUE` or `coalition.side.RED`. Default `coalition.side.BLUE`.
+-- @param #number Frequency (Optional) Frequency to use. Default is 256 MHz for range control and 305 MHz for instructor. If given, both control and instructor get this frequency.
+-- @param #number Modulation (Optional) Modulation to use, defaults to radio.modulation.AM
+-- @param #number Volume (Optional) Volume, between 0.0 and 1.0. Defaults to 1.0
 -- @param #string PathToGoogleKey Path to Google TTS credentials.
 -- @return #RANGE self
 function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume, PathToGoogleKey)
@@ -1300,11 +1300,11 @@ end
 
 --- (SRS) Set range control frequency and voice. Use `RANGE:SetSRS()` once first before using this function.
 -- @param #RANGE self
--- @param #number frequency Frequency in MHz. Default 256 MHz.
--- @param #number modulation Modulation, defaults to radio.modulation.AM.
+-- @param #number frequency (Optional) Frequency in MHz. Default 256 MHz.
+-- @param #number modulation (Optional) Modulation, defaults to radio.modulation.AM.
 -- @param #string voice Voice.
--- @param #string culture Culture, defaults to "en-US".
--- @param #string gender Gender, defaults to "female".
+-- @param #string culture (Optional) Culture, defaults to "en-US".
+-- @param #string gender (Optional) Gender, defaults to "female".
 -- @param #string relayunitname Name of the unit used for transmission location.
 -- @return #RANGE self
 function RANGE:SetSRSRangeControl( frequency, modulation, voice, culture, gender, relayunitname )
@@ -1334,11 +1334,11 @@ end
 
 --- (SRS) Set range instructor frequency and voice. Use `RANGE:SetSRS()` once first before using this function.
 -- @param #RANGE self
--- @param #number frequency Frequency in MHz. Default 305 MHz.
--- @param #number modulation Modulation, defaults to radio.modulation.AM.
+-- @param #number frequency (Optional) Frequency in MHz. Default 305 MHz.
+-- @param #number modulation (Optional) Modulation, defaults to radio.modulation.AM.
 -- @param #string voice Voice.
--- @param #string culture Culture, defaults to "en-US".
--- @param #string gender Gender, defaults to "male".
+-- @param #string culture (Optional) Culture, defaults to "en-US".
+-- @param #string gender (Optional) Gender, defaults to "male".
 -- @param #string relayunitname Name of the unit used for transmission location.
 -- @return #RANGE self
 function RANGE:SetSRSRangeInstructor( frequency, modulation, voice, culture, gender, relayunitname )
@@ -1368,7 +1368,7 @@ end
 
 --- Enable range control and set frequency (non-SRS).
 -- @param #RANGE self
--- @param #number frequency Frequency in MHz. Default 256 MHz.
+-- @param #number frequency (Optional) Frequency in MHz. Default 256 MHz.
 -- @param #string relayunitname Name of the unit used for transmission.
 -- @return #RANGE self
 function RANGE:SetRangeControl( frequency, relayunitname )
@@ -1379,7 +1379,7 @@ end
 
 --- Enable instructor radio and set frequency (non-SRS).
 -- @param #RANGE self
--- @param #number frequency Frequency in MHz. Default 305 MHz.
+-- @param #number frequency (Optional) Frequency in MHz. Default 305 MHz.
 -- @param #string relayunitname Name of the unit used for transmission.
 -- @return #RANGE self
 function RANGE:SetInstructorRadio( frequency, relayunitname )
@@ -1390,7 +1390,7 @@ end
 
 --- Set sound files folder within miz file.
 -- @param #RANGE self
--- @param #string path Path for sound files. Default "Range Soundfiles/". Mind the slash "/" at the end!
+-- @param #string path (Optional) Path for sound files. Default "Range Soundfiles/". Mind the slash "/" at the end!
 -- @return #RANGE self
 function RANGE:SetSoundfilesPath( path )
   self.soundpath = tostring( path or "Range Soundfiles/" )
@@ -1630,10 +1630,12 @@ end
 -- @param #RANGE self
 -- @param #table targetnames Single or multiple (Table) names of unit or static objects serving as bomb targets.
 -- @param #number goodhitrange (Optional) Max distance from target unit (in meters) which is considered as a good hit. Default is 25 m.
--- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
+-- @param #boolean randommove (Optional) If true, unit will move randomly within the range. Default is false.
 -- @return #RANGE self
 function RANGE:AddBombingTargets( targetnames, goodhitrange, randommove )
   self:F( { targetnames = targetnames, goodhitrange = goodhitrange, randommove = randommove } )
+
+  randommove = randommove or false
 
   -- Create a table if necessary.
   if type( targetnames ) ~= "table" then
@@ -1669,7 +1671,7 @@ end
 -- @param #RANGE self
 -- @param Wrapper.Positionable#POSITIONABLE unit Positionable (unit or static) of the bombing target.
 -- @param #number goodhitrange Max distance from unit which is considered as a good hit.
--- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
+-- @param #boolean randommove (Optional) If true, unit will move randomly within the range. Default is false.
 -- @return #RANGE self
 function RANGE:AddBombingTargetUnit( unit, goodhitrange, randommove )
   self:F( { unit = unit, goodhitrange = goodhitrange, randommove = randommove } )
@@ -1785,7 +1787,7 @@ end
 -- @param #RANGE self
 -- @param Wrapper.Group#GROUP group Group of bombing targets. Can also be given as group name.
 -- @param #number goodhitrange Max distance from unit which is considered as a good hit.
--- @param #boolean randommove If true, unit will move randomly within the range. Default is false.
+-- @param #boolean randommove (Optional) If true, unit will move randomly within the range. Default is false.
 -- @return #RANGE self
 function RANGE:AddBombingTargetGroup( group, goodhitrange, randommove )
   self:F( { group = group, goodhitrange = goodhitrange, randommove = randommove } )

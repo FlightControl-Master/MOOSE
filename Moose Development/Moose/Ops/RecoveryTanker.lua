@@ -564,7 +564,7 @@ end
 
 --- Set the speed the tanker flys in its orbit pattern.
 -- @param #RECOVERYTANKER self
--- @param #number speed True air speed (TAS) in knots. Default 274 knots, which results in ~250 KIAS.
+-- @param #number speed (Optional) True air speed (TAS) in knots. Default 274 knots, which results in ~250 KIAS.
 -- @return #RECOVERYTANKER self
 function RECOVERYTANKER:SetSpeed(speed)
   self.speed=UTILS.KnotsToMps(speed or 274)
@@ -573,7 +573,7 @@ end
 
 --- Set orbit pattern altitude of the tanker.
 -- @param #RECOVERYTANKER self
--- @param #number altitude Tanker altitude in feet. Default 6000 ft.
+-- @param #number altitude (Optional) Tanker altitude in feet. Default 6000 ft.
 -- @return #RECOVERYTANKER self
 function RECOVERYTANKER:SetAltitude(altitude)
   self.altitude=UTILS.FeetToMeters(altitude or 6000)
@@ -582,8 +582,8 @@ end
 
 --- Set race-track distances.
 -- @param #RECOVERYTANKER self
--- @param #number distbow Distance [NM] in front of the carrier. Default 10 NM.
--- @param #number diststern Distance [NM] behind the carrier. Default 4 NM.
+-- @param #number distbow (Optional) Distance [NM] in front of the carrier. Default 10 NM.
+-- @param #number diststern (Optional) Distance [NM] behind the carrier. Default 4 NM.
 -- @return #RECOVERYTANKER self
 function RECOVERYTANKER:SetRacetrackDistances(distbow, diststern)
   self.distBow=UTILS.NMToMeters(distbow or 10)
@@ -593,7 +593,7 @@ end
 
 --- Set minimum pattern update interval. After a pattern update this time interval has to pass before the next update is allowed.
 -- @param #RECOVERYTANKER self
--- @param #number interval Min interval in minutes. Default is 10 minutes.
+-- @param #number interval(Optional)  Min interval in minutes. Default is 10 minutes.
 -- @return #RECOVERYTANKER self
 function RECOVERYTANKER:SetPatternUpdateInterval(interval)
   self.dTupdate=(interval or 10)*60
@@ -602,7 +602,7 @@ end
 
 --- Set pattern update distance threshold. Tanker will update its pattern when the carrier changes its position by more than this distance.
 -- @param #RECOVERYTANKER self
--- @param #number distancechange Distance threshold in NM. Default 5 NM (=9.62 km).
+-- @param #number distancechange (Optional) Distance threshold in NM. Default 5 NM (=9.62 km).
 -- @return #RECOVERYTANKER self
 function RECOVERYTANKER:SetPatternUpdateDistance(distancechange)
   self.Dupdate=UTILS.NMToMeters(distancechange or 5)
@@ -611,7 +611,7 @@ end
 
 --- Set pattern update heading threshold. Tanker will update its pattern when the carrier changes its heading by more than this value.
 -- @param #RECOVERYTANKER self
--- @param #number headingchange Heading threshold in degrees. Default 5 degrees.
+-- @param #number headingchange (Optional) Heading threshold in degrees. Default 5 degrees.
 -- @return #RECOVERYTANKER self
 function RECOVERYTANKER:SetPatternUpdateHeading(headingchange)
   self.Hupdate=headingchange or 5
@@ -620,7 +620,7 @@ end
 
 --- Set low fuel state of tanker. When fuel is below this threshold, the tanker will RTB or be respawned if takeoff type is in air.
 -- @param #RECOVERYTANKER self
--- @param #number fuelthreshold Low fuel threshold in percent. Default 10 % of max fuel.
+-- @param #number fuelthreshold (Optional) Low fuel threshold in percent. Default 10 % of max fuel.
 -- @return #RECOVERYTANKER self
 function RECOVERYTANKER:SetLowFuelThreshold(fuelthreshold)
   self.lowfuel=fuelthreshold or 10
@@ -794,9 +794,9 @@ end
 
 --- Set TACAN channel of tanker. Note that mode is automatically set to "Y" for AA TACAN since only that works.
 -- @param #RECOVERYTANKER self
--- @param #number channel TACAN channel. Default 1.
--- @param #string morse TACAN morse code identifier. Three letters. Default "TKR".
--- @param #string mode TACAN mode, which can be either "Y" (default) or "X".
+-- @param #number channel (Optional) TACAN channel. Default 1.
+-- @param #string morse (Optional) TACAN morse code identifier. Three letters. Default "TKR".
+-- @param #string mode (Optional) TACAN mode, which can be either "Y" (default) or "X".
 -- @return #RECOVERYTANKER self
 function RECOVERYTANKER:SetTACAN(channel, morse, mode)
   self.TACANchannel=channel or 1
@@ -808,8 +808,8 @@ end
 
 --- Set radio frequency and optionally modulation of the tanker.
 -- @param #RECOVERYTANKER self
--- @param #number frequency Radio frequency in MHz. Default 251 MHz.
--- @param #string modulation Radio modulation, either "AM" or "FM". Default "AM".
+-- @param #number frequency (Optional) Radio frequency in MHz. Default 251 MHz.
+-- @param #string modulation (Optional) Radio modulation, either "AM" or "FM". Default "AM".
 -- @return #RECOVERYTANKER self
 function RECOVERYTANKER:SetRadio(frequency, modulation)
   self.RadioFreq=frequency or 251
@@ -1537,8 +1537,8 @@ end
 
 --- Init waypoint after spawn. Tanker is first guided to a position astern the carrier and starts its racetrack pattern from there.
 -- @param #RECOVERYTANKER self
--- @param #number dist Distance [NM] of initial waypoint astern carrier. Default 8 NM.
--- @param #number delay Delay before routing in seconds. Default 1 second.
+-- @param #number dist (Optional) Distance [NM] of initial waypoint astern carrier. Default 8 NM.
+-- @param #number delay (Optional) Delay before routing in seconds. Default 1 second.
 function RECOVERYTANKER:_InitRoute(dist, delay)
 
   -- Defaults.

@@ -61,7 +61,7 @@ do -- Sound Base
   -- * (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min
   -- 
   -- @param #string Text The text string to analyze.
-  -- @param #number Speed Speed factor. Default 1.
+  -- @param #number Speed (Optional) Speed factor. Default 1.
   -- @param #boolean isGoogle If true, google text-to-speech is used.
   function SOUNDBASE:GetSpeechTime(length,speed,isGoogle)
   
@@ -158,9 +158,9 @@ do -- Sound File
   --- Constructor to create a new SOUNDFILE object.
   -- @param #SOUNDFILE self
   -- @param #string FileName The name of the sound file, e.g. "Hello World.ogg".
-  -- @param #string Path The path of the directory, where the sound file is located. Default is "l10n/DEFAULT/" within the miz file.
-  -- @param #number Duration Duration in seconds, how long it takes to play the sound file. Default is 3 seconds.
-  -- @param #boolean UseSrs Set if SRS should be used to play this file. Default is false.
+  -- @param #string Path (Optional) The path of the directory, where the sound file is located. Default is "l10n/DEFAULT/" within the miz file.
+  -- @param #number Duration (Optional) Duration in seconds, how long it takes to play the sound file. Default is 3 seconds.
+  -- @param #boolean UseSrs (Optional) Set if SRS should be used to play this file. Default is false.
   -- @return #SOUNDFILE self
   function SOUNDFILE:New(FileName, Path, Duration, UseSrs)
 
@@ -187,7 +187,7 @@ do -- Sound File
 
   --- Set path, where the sound file is located.
   -- @param #SOUNDFILE self
-  -- @param #string Path Path to the directory, where the sound file is located. In case this is nil, it defaults to the DCS mission temp directory.
+  -- @param #string Path (Optional) Path to the directory, where the sound file is located. In case this is nil, it defaults to the DCS mission temp directory.
   -- @return #SOUNDFILE self
   function SOUNDFILE:SetPath(Path)
     self:F( {Path} )
@@ -228,7 +228,7 @@ do -- Sound File
 
   --- Set sound file name. This must be a .ogg or .mp3 file!
   -- @param #SOUNDFILE self
-  -- @param #string FileName Name of the file. Default is "Hello World.mp3".
+  -- @param #string FileName (Optional) Name of the file. Default is "Hello World.mp3".
   -- @return #SOUNDFILE self
   function SOUNDFILE:SetFileName(FileName)
     --TODO: check that sound file is really .ogg or .mp3
@@ -246,7 +246,7 @@ do -- Sound File
 
   --- Set duration how long it takes to play the sound file.
   -- @param #SOUNDFILE self
-  -- @param #string Duration Duration in seconds. Default 3 seconds.
+  -- @param #string Duration (Optional) Duration in seconds. Default 3 seconds.
   -- @return #SOUNDFILE self
   function SOUNDFILE:SetDuration(Duration)
     if Duration and type(Duration)=="string" then
@@ -353,7 +353,7 @@ do -- Text-To-Speech
   --- Constructor to create a new SOUNDTEXT object.
   -- @param #SOUNDTEXT self
   -- @param #string Text The text to speak.
-  -- @param #number Duration Duration in seconds, how long it takes to play the text. Default is 3 seconds.
+  -- @param #number Duration (Optional) Duration in seconds, how long it takes to play the text. Default is 3 seconds.
   -- @return #SOUNDTEXT self
   function SOUNDTEXT:New(Text, Duration)
   
@@ -373,7 +373,7 @@ do -- Text-To-Speech
   
   --- Set text.
   -- @param #SOUNDTEXT self
-  -- @param #string Text Text to speak. Default "Hello World!".
+  -- @param #string Text (Optional) Text to speak. Default "Hello World!".
   -- @return #SOUNDTEXT self
   function SOUNDTEXT:SetText(Text)
     
@@ -384,7 +384,7 @@ do -- Text-To-Speech
   
   --- Set duration, how long it takes to speak the text.
   -- @param #SOUNDTEXT self
-  -- @param #number Duration Duration in seconds. Default 3 seconds.
+  -- @param #number Duration (Optional) Duration in seconds. Default 3 seconds.
   -- @return #SOUNDTEXT self
   function SOUNDTEXT:SetDuration(Duration)
     
@@ -395,7 +395,7 @@ do -- Text-To-Speech
   
   --- Set gender.
   -- @param #SOUNDTEXT self
-  -- @param #string Gender Gender: "male" or "female" (default).
+  -- @param #string Gender (Optional) Gender: "male" or "female" (default).
   -- @return #SOUNDTEXT self
   function SOUNDTEXT:SetGender(Gender)
     
@@ -406,7 +406,7 @@ do -- Text-To-Speech
   
   --- Set TTS culture - local for the voice.
   -- @param #SOUNDTEXT self
-  -- @param #string Culture TTS culture. Default "en-GB".
+  -- @param #string Culture (Optional) TTS culture. Default "en-GB".
   -- @return #SOUNDTEXT self
   function SOUNDTEXT:SetCulture(Culture)
     

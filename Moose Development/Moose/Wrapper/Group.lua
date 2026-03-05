@@ -604,7 +604,7 @@ end
 -- See [hoggit documentation](https://wiki.hoggitworld.com/view/DCS_func_hasAttribute).
 -- @param #GROUP self
 -- @param #string attribute The name of the attribute the group is supposed to have. Valid attributes can be found in the "db_attributes.lua" file which is located at in "C:\Program Files\Eagle Dynamics\DCS World\Scripts\Database".
--- @param #boolean all If true, all units of the group must have the attribute in order to return true. Default is only one unit of a heterogenious group needs to have the attribute.
+-- @param #boolean all (Optional) If true, all units of the group must have the attribute in order to return true. Default is only one unit of a heterogenious group needs to have the attribute.
 -- @return #boolean Group has this attribute.
 function GROUP:HasAttribute(attribute, all)
 

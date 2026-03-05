@@ -257,7 +257,7 @@ end
 
 --- Evaluate conditon functions.
 -- @param #CONDITION self
--- @param #boolean AnyTrue If `true`, evaluation return `true` if *any* condition function returns `true`. By default, *all* condition functions must return true.
+-- @param #boolean AnyTrue (Optional) If `true`, evaluation return `true` if *any* condition function returns `true`. By default, *all* condition functions must return true.
 -- @return #boolean Result of condition functions.
 function CONDITION:Evaluate(AnyTrue)
 
@@ -401,7 +401,7 @@ end
 
 --- Condition to check if time is greater than a given threshold time.
 -- @param #number Time Time in seconds.
--- @param #boolean Absolute If `true`, abs. mission time from `timer.getAbsTime()` is checked. Default is relative mission time from `timer.getTime()`.
+-- @param #boolean Absolute (Optional) If `true`, abs. mission time from `timer.getAbsTime()` is checked. Default is relative mission time from `timer.getTime()`.
 -- @return #boolean Returns `true` if time is greater than give the time.
 function CONDITION.IsTimeGreater(Time, Absolute)
 
@@ -424,7 +424,7 @@ end
 
 --- Function that returns `true` (success) with a certain probability. For example, if you specify `Probability=80` there is an 80% chance that `true` is returned.
 -- Technically, a random number between 0 and 100 is created. If the given success probability is less then this number, `true` is returned.
--- @param #number Probability Success probability in percent. Default 50 %.
+-- @param #number Probability (Optional) Success probability in percent. Default 50 %.
 -- @return #boolean Returns `true` for success and `false` otherwise.
 function CONDITION.IsRandomSuccess(Probability)
 

@@ -369,7 +369,7 @@ end
 
 --- Set draw coalition of zone.
 -- @param #ZONE_BASE self
--- @param #number Coalition Coalition. Default -1.
+-- @param #number Coalition (Optional) Coalition. Default -1.
 -- @return #ZONE_BASE self
 function ZONE_BASE:SetDrawCoalition(Coalition)
   self.drawCoalition=Coalition or -1
@@ -385,8 +385,8 @@ end
 
 --- Set color of zone.
 -- @param #ZONE_BASE self
--- @param #table RGBcolor RGB color table. Default `{1, 0, 0}`.
--- @param #number Alpha Transparency between 0 and 1. Default 0.15.
+-- @param #table RGBcolor (Optional) RGB color table. Default `{1, 0, 0}`.
+-- @param #number Alpha (Optional) Transparency between 0 and 1. Default 0.15.
 -- @return #ZONE_BASE self
 function ZONE_BASE:SetColor(RGBcolor, Alpha)
 
@@ -432,8 +432,8 @@ end
 
 --- Set fill color of zone.
 -- @param #ZONE_BASE self
--- @param #table RGBcolor RGB color table. Default `{1, 0, 0}`.
--- @param #number Alpha Transparacy between 0 and 1. Default 0.15.
+-- @param #table RGBcolor (Optional) RGB color table. Default `{1, 0, 0}`.
+-- @param #number Alpha (Optional) Transparacy between 0 and 1. Default 0.15.
 -- @return #ZONE_BASE self
 function ZONE_BASE:SetFillColor(RGBcolor, Alpha)
 
@@ -586,7 +586,7 @@ end
 
 --- Set the check time for ZONE:Trigger()
 -- @param #ZONE_BASE self
--- @param #number seconds Check every seconds for objects entering or leaving the zone. Defaults to 5 secs.
+-- @param #number seconds (Optional) Check every seconds for objects entering or leaving the zone. Defaults to 5 secs.
 -- @return #ZONE_BASE self
 function ZONE_BASE:SetCheckTime(seconds)
   self.Checktime = seconds or 5
@@ -862,7 +862,7 @@ ZONE_RADIUS = {
 -- @param #string ZoneName Name of the zone.
 -- @param DCS#Vec2 Vec2 The location of the zone.
 -- @param DCS#Distance Radius The radius of the zone.
--- @param DCS#Boolean DoNotRegisterZone Determines if the Zone should not be registered in the _Database Table. Default=false
+-- @param DCS#Boolean DoNotRegisterZone (Optional) Determines if the Zone should not be registered in the _Database Table. Default=false
 -- @return #ZONE_RADIUS self
 function ZONE_RADIUS:New( ZoneName, Vec2, Radius, DoNotRegisterZone )
 
@@ -946,12 +946,12 @@ end
 
 --- Draw the zone circle on the F10 map.
 -- @param #ZONE_RADIUS self
--- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
--- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
--- @param #number Alpha Transparency [0,1]. Default 1.
--- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
--- @param #number FillAlpha Transparency [0,1]. Default 0.15.
--- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+-- @param #number Coalition (Optional) Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+-- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red.
+-- @param #number Alpha (Optional) Transparency [0,1]. Default 1.
+-- @param #table FillColor (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value.
+-- @param #number FillAlpha (Optional) Transparency [0,1]. Default 0.15.
+-- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
 -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
 -- @return #ZONE_RADIUS self
 function ZONE_RADIUS:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
@@ -2506,7 +2506,7 @@ end
 
 --- Get a vertex of the polygon.
 -- @param #ZONE_POLYGON_BASE self
--- @param #number Index Index of the vertex. Default 1.
+-- @param #number Index (Optional) Index of the vertex. Default 1.
 -- @return DCS#Vec2 Vertex of the polygon.
 function ZONE_POLYGON_BASE:GetVertexVec2(Index)
   return self._.Polygon[Index or 1]
@@ -2514,7 +2514,7 @@ end
 
 --- Get a vertex of the polygon.
 -- @param #ZONE_POLYGON_BASE self
--- @param #number Index Index of the vertex. Default 1.
+-- @param #number Index (Optional) Index of the vertex. Default 1.
 -- @return DCS#Vec3 Vertex of the polygon.
 function ZONE_POLYGON_BASE:GetVertexVec3(Index)
   local vec2=self:GetVertexVec2(Index)
@@ -2527,7 +2527,7 @@ end
 
 --- Get a vertex of the polygon.
 -- @param #ZONE_POLYGON_BASE self
--- @param #number Index Index of the vertex. Default 1.
+-- @param #number Index (Optional) Index of the vertex. Default 1.
 -- @return Core.Point#COORDINATE Vertex of the polygon.
 function ZONE_POLYGON_BASE:GetVertexCoordinate(Index)
   local vec2=self:GetVertexVec2(Index)
@@ -2657,12 +2657,12 @@ end
 --- Draw the zone on the F10 map.  Infinite number of points supported
 --- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Polygon.lua
 -- @param #ZONE_POLYGON_BASE self
--- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
--- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
--- @param #number Alpha Transparency [0,1]. Default 1.
--- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value. -- doesn't seem to work
--- @param #number FillAlpha Transparency [0,1]. Default 0.15.                                                 -- doesn't seem to work
--- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+-- @param #number Coalition (Optional) Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+-- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red.
+-- @param #number Alpha (Optional) Transparency [0,1]. Default 1.
+-- @param #table FillColor (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value. -- doesn't seem to work
+-- @param #number FillAlpha (Optional) Transparency [0,1]. Default 0.15.                                                 -- doesn't seem to work
+-- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
 -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.s
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, IncludeTriangles)
@@ -2710,7 +2710,7 @@ end
 --- Change/Re-fill a Polygon Zone
 -- @param #ZONE_POLYGON_BASE self
 -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
--- @param #number Alpha Transparency [0,1]. Default 1.
+-- @param #number Alpha (Optional) Transparency [0,1]. Default 1.
 -- @return #ZONE_POLYGON_BASE self
 function ZONE_POLYGON_BASE:ReFill(Color,Alpha)
   local color = Color or self:GetFillColorRGB() or {1,0,0}
@@ -2740,8 +2740,8 @@ end
 --- Change/Re-draw the border of a Polygon Zone
 -- @param #ZONE_POLYGON_BASE self
 -- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
--- @param #number Alpha Transparency [0,1]. Default 1.
--- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+-- @param #number Alpha (Optional) Transparency [0,1]. Default 1.
+-- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
 -- @return #ZONE_POLYGON_BASE
 function ZONE_POLYGON_BASE:ReDrawBorderline(Color, Alpha, LineType)
   local color = Color or self:GetFillColorRGB() or {1,0,0}
@@ -2840,7 +2840,7 @@ end
 
 --- Remove junk inside the zone. Due to DCS limitations, this works only for rectangular zones. So we get the smallest rectangular zone encompassing all points points of the polygon zone.
 -- @param #ZONE_POLYGON_BASE self
--- @param #number Height Height of the box in meters. Default 1000.
+-- @param #number Height (Optional) Height of the box in meters. Default 1000.
 -- @return #number Number of removed objects.
 function ZONE_POLYGON_BASE:RemoveJunk(Height)
 
@@ -3761,8 +3761,8 @@ do -- ZONE_ELASTIC
   --- Update the convex hull of the polygon.
   -- This uses the [Graham scan](https://en.wikipedia.org/wiki/Graham_scan).
   -- @param #ZONE_ELASTIC self
-  -- @param #number Delay Delay in seconds before the zone is updated. Default 0.
-  -- @param #boolean Draw Draw the zone. Default `nil`.
+  -- @param #number Delay (Optional) Delay in seconds before the zone is updated. Default 0.
+  -- @param #boolean Draw (Optional) Draw the zone. Default `nil`.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:Update(Delay, Draw)
 
@@ -3803,9 +3803,9 @@ do -- ZONE_ELASTIC
   --- Start the updating scheduler.
   -- @param #ZONE_ELASTIC self
   -- @param #number Tstart Time in seconds before the updating starts.
-  -- @param #number dT Time interval in seconds between updates. Default 60 sec.
-  -- @param #number Tstop Time in seconds after which the updating stops. Default `nil`.
-  -- @param #boolean Draw Draw the zone. Default `nil`.
+  -- @param #number dT (Optional) Time interval in seconds between updates. Default 60 sec.
+  -- @param #number Tstop (Optional) Time in seconds after which the updating stops. Default `nil`.
+  -- @param #boolean Draw (Optional) Draw the zone. Default `nil`.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:StartUpdate(Tstart, dT, Tstop, Draw)
 
@@ -3816,7 +3816,7 @@ do -- ZONE_ELASTIC
 
   --- Stop the updating scheduler.
   -- @param #ZONE_ELASTIC self
-  -- @param #number Delay Delay in seconds before the scheduler will be stopped. Default 0.
+  -- @param #number Delay (Optional) Delay in seconds before the scheduler will be stopped. Default 0.
   -- @return #ZONE_ELASTIC self
   function ZONE_ELASTIC:StopUpdate(Delay)
 
@@ -4066,12 +4066,12 @@ end
 --- Draw the zone on the F10 map.
 --- ported from https://github.com/nielsvaes/CCMOOSE/blob/master/Moose%20Development/Moose/Shapes/Oval.lua
 -- @param #ZONE_OVAL self
--- @param #number Coalition Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
--- @param #table Color RGB color table {r, g, b}, e.g. {1,0,0} for red.
--- @param #number Alpha Transparency [0,1]. Default 1.
--- @param #table FillColor RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value. -- doesn't seem to work
--- @param #number FillAlpha Transparency [0,1]. Default 0.15.                                                 -- doesn't seem to work
--- @param #number LineType Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
+-- @param #number Coalition (Optional) Coalition: All=-1, Neutral=0, Red=1, Blue=2. Default -1=All.
+-- @param #table Color (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red.
+-- @param #number Alpha (Optional) Transparency [0,1]. Default 1.
+-- @param #table FillColor (Optional) RGB color table {r, g, b}, e.g. {1,0,0} for red. Default is same as `Color` value. -- doesn't seem to work
+-- @param #number FillAlpha (Optional) Transparency [0,1]. Default 0.15.                                                 -- doesn't seem to work
+-- @param #number LineType (Optional) Line type: 0=No line, 1=Solid, 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash. Default 1=Solid.
 -- @param #boolean ReadOnly (Optional) Mark is readonly and cannot be removed by users. Default false.
 -- @return #ZONE_OVAL self
 function ZONE_OVAL:DrawZone(Coalition, Color, Alpha, FillColor, FillAlpha, LineType)

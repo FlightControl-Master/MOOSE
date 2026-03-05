@@ -98,6 +98,9 @@ Ops/Commander.lua
 Ops/Chief.lua
 Ops/CSAR.lua
 Ops/CTLD.lua
+Ops/CTLD_CARGO.lua
+Ops/CTLD_Localization.lua
+Ops/CTLD_Hercules.lua
 Ops/Awacs.lua
 Ops/Operation.lua
 Ops/FlightControl.lua

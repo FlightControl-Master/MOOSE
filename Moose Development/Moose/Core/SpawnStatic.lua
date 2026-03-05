@@ -162,7 +162,7 @@ end
 --- Creates the main object to spawn a @{Wrapper.Static} given a template table.
 -- @param #SPAWNSTATIC self
 -- @param #table SpawnTemplate Template used for spawning.
--- @param DCS#country.id CountryID The ID of the country. Default `country.id.USA`.
+-- @param DCS#country.id CountryID (Optional) The ID of the country. Default `country.id.USA`.
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:NewFromTemplate(SpawnTemplate, CountryID)
 
@@ -180,7 +180,7 @@ end
 -- @param #SPAWNSTATIC self
 -- @param #string StaticType Type of the static.
 -- @param #string StaticCategory Category of the static, e.g. "Planes".
--- @param DCS#country.id CountryID The ID of the country. Default `country.id.USA`.
+-- @param DCS#country.id CountryID (Optional) The ID of the country. Default `country.id.USA`.
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:NewFromType(StaticType, StaticCategory, CountryID)
 
@@ -201,7 +201,7 @@ end
 --- (Internal/Cargo) Init the resource table for STATIC object that should be spawned containing storage objects.
 -- NOTE that you have to init many other parameters as the resources.
 -- @param #SPAWNSTATIC self
--- @param #number CombinedWeight The weight this cargo object should have (some have fixed weights!), defaults to 1kg.
+-- @param #number CombinedWeight (Optional) The weight this cargo object should have (some have fixed weights!), defaults to 1kg.
 -- @return #SPAWNSTATIC self
 function SPAWNSTATIC:_InitResourceTable(CombinedWeight)
   if not self.TemplateStaticUnit.resourcePayload then
@@ -300,9 +300,9 @@ end
 
 --- Initialize parameters for spawning FARPs.
 -- @param #SPAWNSTATIC self
--- @param #number CallsignID Callsign ID. Default 1 (="London").
--- @param #number Frequency Frequency in MHz. Default 127.5 MHz.
--- @param #number Modulation Modulation 0=AM, 1=FM.
+-- @param #number CallsignID (Optional) Callsign ID. Default 1 (="London").
+-- @param #number Frequency (Optional) Frequency in MHz. Default 127.5 MHz.
+-- @param #number Modulation (Optional) Modulation 0=AM, 1=FM. Defaults to 0
 -- @param #boolean DynamicSpawns If true, allow Dynamic Spawns
 -- @param #boolean DynamicHotStarts If true, and DynamicSpawns is true, then allow Dynamic Spawns with hot starts.
 -- @return #SPAWNSTATIC self

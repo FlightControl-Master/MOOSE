@@ -2467,14 +2467,14 @@ function WAREHOUSE:New(warehouse, alias)
   --- Triggers the FSM event "Save" when the warehouse assets are saved to file on disk.
   -- @function [parent=#WAREHOUSE] Save
   -- @param #WAREHOUSE self
-  -- @param #string path Path where the file is saved. Default is the DCS installation root directory.
+  -- @param #string path (Optional) Path where the file is saved. Default is the DCS installation root directory.
   -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
 
   --- Triggers the FSM event "Save" with a delay when the warehouse assets are saved to a file.
   -- @function [parent=#WAREHOUSE] __Save
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
-  -- @param #string path Path where the file is saved. Default is the DCS installation root directory.
+  -- @param #string path (Optional) Path where the file is saved. Default is the DCS installation root directory.
   -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
 
   --- On after "Save" event user function. Called when the warehouse assets are saved to disk.
@@ -2483,21 +2483,21 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #string path Path where the file is saved. Default is the DCS installation root directory.
+  -- @param #string path (Optional) Path where the file is saved. Default is the DCS installation root directory.
   -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
 
 
   --- Triggers the FSM event "Load" when the warehouse is loaded from a file on disk.
   -- @function [parent=#WAREHOUSE] Load
   -- @param #WAREHOUSE self
-  -- @param #string path Path where the file is located. Default is the DCS installation root directory.
+  -- @param #string path (Optional) Path where the file is located. Default is the DCS installation root directory.
   -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
 
   --- Triggers the FSM event "Load" with a delay when the warehouse assets are loaded from disk.
   -- @function [parent=#WAREHOUSE] __Load
   -- @param #WAREHOUSE self
   -- @param #number delay Delay in seconds.
-  -- @param #string path Path where the file is located. Default is the DCS installation root directory.
+  -- @param #string path (Optional) Path where the file is located. Default is the DCS installation root directory.
   -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
 
   --- On after "Load" event user function. Called when the warehouse assets are loaded from disk.
@@ -2506,7 +2506,7 @@ function WAREHOUSE:New(warehouse, alias)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #string path Path where the file is located. Default is the DCS installation root directory.
+  -- @param #string path (Optional) Path where the file is located. Default is the DCS installation root directory.
   -- @param #string filename (Optional) File name. Default is WAREHOUSE-<UID>_<ALIAS>.txt.
 
 
@@ -2576,7 +2576,7 @@ end
 
 --- Set low fuel threshold. If one unit of an asset has less fuel than this number, the event AssetLowFuel will be fired.
 -- @param #WAREHOUSE self
--- @param #number threshold Relative low fuel threshold, i.e. a number in [0,1]. Default 0.15 (15%).
+-- @param #number threshold (Optional) Relative low fuel threshold, i.e. a number in [0,1]. Default 0.15 (15%).
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetLowFuelThreshold(threshold)
   self.lowfuelthresh=threshold or 0.15
@@ -2594,7 +2594,7 @@ end
 
 --- Set verbosity level.
 -- @param #WAREHOUSE self
--- @param #number VerbosityLevel Level of output (higher=more). Default 0.
+-- @param #number VerbosityLevel (Optional) Level of output (higher=more). Default 0.
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetVerbosityLevel(VerbosityLevel)
   self.verbosity=VerbosityLevel or 0
@@ -2705,7 +2705,7 @@ end
 --- Enable auto save of warehouse assets at mission end event.
 -- @param #WAREHOUSE self
 -- @param #string path Path where to save the asset data file.
--- @param #string filename File name. Default is generated automatically from warehouse id.
+-- @param #string filename (Optional) File name. Default is generated automatically from warehouse id.
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetSaveOnMissionEnd(path, filename)
   self.autosave=true
@@ -3349,7 +3349,7 @@ end
 -- Note that this is the time, the DCS engine uses not something we can control on a user level or we could get via scripting.
 -- You need to input the value. On the DCS forum it was stated that this is currently one hour. Hence this is the default value.
 -- @param #WAREHOUSE self
--- @param #number RepairTime Time in seconds until the runway is repaired. Default 3600 sec (one hour).
+-- @param #number RepairTime (Optional) Time in seconds until the runway is repaired. Default 3600 sec (one hour).
 -- @return #WAREHOUSE self
 function WAREHOUSE:SetRunwayRepairtime(RepairTime)
   self.runwayrepairtime=RepairTime or 3600
@@ -3891,7 +3891,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Wrapper.Group#GROUP group Group or template group to be added to the warehouse stock.
--- @param #number ngroups Number of groups to add to the warehouse stock. Default is 1.
+-- @param #number ngroups (Optional) Number of groups to add to the warehouse stock. Default is 1.
 -- @param #WAREHOUSE.Attribute forceattribute (Optional) Explicitly force a generalized attribute for the asset. This has to be an @{#WAREHOUSE.Attribute}.
 -- @param #number forcecargobay (Optional) Explicitly force cargobay weight limit in kg for cargo carriers. This is for each *unit* of the group.
 -- @param #number forceweight (Optional) Explicitly force weight in kg of each unit in the group.
@@ -6226,7 +6226,7 @@ end
 -- @param #WAREHOUSE self
 -- @param Wrapper.Group#GROUP Group The train group.
 -- @param Core.Point#COORDINATE Coordinate of the destination. Tail will be routed to the closest point
--- @param #number Speed Speed in km/h to drive to the destination coordinate. Default is 60% of max possible speed the unit can go.
+-- @param #number Speed (Optional) Speed in km/h to drive to the destination coordinate. Default is 60% of max possible speed the unit can go.
 function WAREHOUSE:_RouteTrain(Group, Coordinate, Speed)
 
   if Group and Group:IsAlive() then
@@ -8783,7 +8783,7 @@ end
 --- Info Message. Message send to coalition if reports or debug mode activated (and duration > 0). Text self:I(text) added to DCS.log file.
 -- @param #WAREHOUSE self
 -- @param #string text The text of the error message.
--- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
+-- @param #number duration (Optional) Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
 function WAREHOUSE:_InfoMessage(text, duration)
   duration=duration or 20
   if duration>0 and self.Debug or self.Report then
@@ -8796,7 +8796,7 @@ end
 --- Debug message. Message send to all if debug mode is activated (and duration > 0). Text self:T(text) added to DCS.log file.
 -- @param #WAREHOUSE self
 -- @param #string text The text of the error message.
--- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
+-- @param #number duration (Optional) Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
 function WAREHOUSE:_DebugMessage(text, duration)
   duration=duration or 20
   if self.Debug and duration>0 then
@@ -8808,7 +8808,7 @@ end
 --- Error message. Message send to all (if duration > 0). Text self:E(text) added to DCS.log file.
 -- @param #WAREHOUSE self
 -- @param #string text The text of the error message.
--- @param #number duration Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
+-- @param #number duration (Optional) Message display duration in seconds. Default 20 sec. If duration is zero, no message is displayed.
 function WAREHOUSE:_ErrorMessage(text, duration)
   duration=duration or 20
   if duration>0 then

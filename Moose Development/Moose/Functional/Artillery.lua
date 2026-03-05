@@ -1391,7 +1391,7 @@ end
 -- @param #ARTY self
 -- @param Core.Point#COORDINATE coord Coordinates of the new position.
 -- @param #string time (Optional) Day time at which the group should start moving. Passed as a string in format "08:13:45". Default is now.
--- @param #number speed (Optinal) Speed in km/h the group should move at. Default 70% of max posible speed of group.
+-- @param #number speed (Optional) Speed in km/h the group should move at. Default 70% of max posible speed of group.
 -- @param #boolean onroad (Optional) If true, group will mainly use roads. Default off, i.e. go directly towards the specified coordinate.
 -- @param #boolean cancel (Optional) If true, cancel any running attack when move should begin. Default is false.
 -- @param #string name (Optional) Name of the coordinate. Default is LL DMS string of the coordinate. If the name was already given, the numbering "#01", "#02",... is appended automatically.
@@ -1502,7 +1502,7 @@ end
 
 --- Set minimum firing range. Targets closer than this distance are not engaged.
 -- @param #ARTY self
--- @param #number range Min range in kilometers. Default is 0.1 km.
+-- @param #number range (Optional) Min range in kilometers. Default is 0.1 km.
 -- @return self
 function ARTY:SetMinFiringRange(range)
   self:F({range=range})
@@ -1512,7 +1512,7 @@ end
 
 --- Set maximum firing range. Targets further away than this distance are not engaged.
 -- @param #ARTY self
--- @param #number range Max range in kilometers. Default is 1000 km.
+-- @param #number range (Optional) Max range in kilometers. Default is 1000 km.
 -- @return self
 function ARTY:SetMaxFiringRange(range)
   self:F({range=range})
@@ -1522,7 +1522,7 @@ end
 
 --- Set time interval between status updates. During the status check, new events are triggered.
 -- @param #ARTY self
--- @param #number interval Time interval in seconds. Default 10 seconds.
+-- @param #number interval (Optional) Time interval in seconds. Default 10 seconds.
 -- @return self
 function ARTY:SetStatusInterval(interval)
   self:F({interval=interval})
@@ -1532,7 +1532,7 @@ end
 
 --- Set time interval for weapon tracking.
 -- @param #ARTY self
--- @param #number interval Time interval in seconds. Default 0.2 seconds.
+-- @param #number interval (Optional) Time interval in seconds. Default 0.2 seconds.
 -- @return self
 function ARTY:SetTrackInterval(interval)
   self.dtTrack=interval or 0.2
@@ -1541,7 +1541,7 @@ end
 
 --- Set time how it is waited a unit the first shot event happens. If no shot is fired after this time, the task to fire is aborted and the target removed.
 -- @param #ARTY self
--- @param #number waittime Time in seconds. Default 300 seconds.
+-- @param #number waittime (Optional) Time in seconds. Default 300 seconds.
 -- @return self
 function ARTY:SetWaitForShotTime(waittime)
   self:F({waittime=waittime})
@@ -1551,7 +1551,7 @@ end
 
 --- Define the safe distance between ARTY group and rearming unit or rearming place at which rearming process is possible.
 -- @param #ARTY self
--- @param #number distance Safe distance in meters. Default is 100 m.
+-- @param #number distance (Optional) Safe distance in meters. Default is 100 m.
 -- @return self
 function ARTY:SetRearmingDistance(distance)
   self:F({distance=distance})
@@ -1813,7 +1813,7 @@ end
 
 --- Set nuclear warhead explosion strength.
 -- @param #ARTY self
--- @param #number strength Explosion strength in kilo tons TNT. Default is 0.075 kt.
+-- @param #number strength (Optional) Explosion strength in kilo tons TNT. Default is 0.075 kt.
 -- @return self
 function ARTY:SetTacNukeWarhead(strength)
   self.nukewarhead=strength or 0.075
@@ -3903,7 +3903,7 @@ end
 
 --- Get the number of shells a unit or group currently has. For a group the ammo count of all units is summed up.
 -- @param #ARTY self
--- @param #boolean display Display ammo table as message to all. Default false.
+-- @param #boolean display (Optional) Display ammo table as message to all. Default false.
 -- @return #number Total amount of ammo the whole group has left.
 -- @return #number Number of shells the group has left.
 -- @return #number Number of rockets the group has left.

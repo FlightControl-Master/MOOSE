@@ -240,7 +240,7 @@ end
 --- Find closest towns to a given coordinate.
 -- @param #TOWNS self
 -- @param Core.Point#COORDINATE Coordinate The reference coordinate.
--- @param #number Nmax Max number of towns. Default 5.
+-- @param #number Nmax (Optional) Max number of towns. Default 5.
 -- @param #number DistMax (Optional) Max search distance in meters.
 -- @return #table Table of #TOWNS.Town closest towns.
 function TOWNS:GetClosestTowns(Coordinate, Nmax, DistMax)

@@ -181,8 +181,8 @@ end
 
 --- [USER] Set activation radius for Helos and Planes in Nautical Miles.
 --  @param #TIRESIAS self
---  @param #number HeloMiles Radius around a Helicopter in which AI ground units will be activated. Defaults to 10NM.
---  @param #number PlaneMiles Radius around an Airplane in which AI ground units will be activated. Defaults to 25NM.
+--  @param #number HeloMiles (Optional) Radius around a Helicopter in which AI ground units will be activated. Defaults to 10NM.
+--  @param #number PlaneMiles (Optional) Radius around an Airplane in which AI ground units will be activated. Defaults to 25NM.
 --  @return #TIRESIAS self
 function TIRESIAS:SetActivationRanges(HeloMiles, PlaneMiles)
   self.HeloSwitchRange = HeloMiles or 10
@@ -194,8 +194,8 @@ end
 
 ---[USER] Set AAA Ranges - AAA equals non-SAM systems which qualify as AAA in DCS world.
 --  @param #TIRESIAS self
---  @param #number FiringRange The engagement range that AAA units will be set to. Can be 0 to 100 (percent). Defaults to 60.
---  @param #boolean SwitchAAA Decide if these system will have their AI switched off, too. Defaults to true.
+--  @param #number FiringRange (Optional) The engagement range that AAA units will be set to. Can be 0 to 100 (percent). Defaults to 60.
+--  @param #boolean SwitchAAA (Optional) Decide if these system will have their AI switched off, too. Defaults to true.
 --  @return #TIRESIAS self
 function TIRESIAS:SetAAARanges(FiringRange, SwitchAAA)
   self.AAARange = FiringRange or 60

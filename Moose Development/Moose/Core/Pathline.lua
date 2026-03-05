@@ -253,7 +253,7 @@ end
 
 --- Get the n-th point of the pathline.
 -- @param #PATHLINE self
--- @param #number n The index of the point. Default is the first point.
+-- @param #number n (optional) The index of the point. Default is the first point.
 -- @return #PATHLINE.Point Point.
 function PATHLINE:GetPointFromIndex(n)
 
@@ -275,7 +275,7 @@ end
 --- Get the 3D position of the n-th point.
 -- @param #PATHLINE self
 -- @param #number n The n-th point.
--- @return DCS#VEC3 Position in 3D.
+-- @return DCS#Vec3 Position in 3D.
 function PATHLINE:GetPoint3DFromIndex(n)
 
   local point=self:GetPointFromIndex(n)
@@ -290,7 +290,7 @@ end
 --- Get the 2D position of the n-th point.
 -- @param #PATHLINE self
 -- @param #number n The n-th point.
--- @return DCS#VEC2 Position in 3D.
+-- @return DCS#Vec2 Position in 3D.
 function PATHLINE:GetPoint2DFromIndex(n)
 
   local point=self:GetPointFromIndex(n)
@@ -360,8 +360,8 @@ end
 --- Draw line on F10 map.
 -- @param #PATHLINE self
 -- @param #number Recipient Recipent of the line: -1=All.
--- @param #table Color Color as RGB table plus alpha value. Default {1, 0, 0, 1.0}.
--- @param #number LineType Line type: 1=Solid (default).
+-- @param #table Color (optional) Color as RGB table plus alpha value. Default {1, 0, 0, 1.0}.
+-- @param #number LineType (optional) Line type: 1=Solid (default).
 -- @return #PATHLINE self
 function PATHLINE:DrawLine(Recipient, Color, LineType)
   

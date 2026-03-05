@@ -231,7 +231,7 @@ end
 -- @param #number Repeat Specifies the time interval in seconds when the scheduler will call the event function.
 -- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
 -- @param #number Stop Time interval in seconds after which the scheduler will be stopped.
--- @param #number TraceLevel Trace level [0,3]. Default 3.
+-- @param #number TraceLevel (Optional) Trace level [0,3]. Default 3.
 -- @param Core.Fsm#FSM Fsm Finite state model.
 -- @return #string The Schedule ID of the planned schedule.
 function SCHEDULER:Schedule( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, TraceLevel, Fsm )

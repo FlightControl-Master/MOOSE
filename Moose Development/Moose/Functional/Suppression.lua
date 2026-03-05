@@ -642,7 +642,7 @@ end
 
 --- Set average, minimum and maximum time a unit is suppressed each time it gets hit.
 -- @param #SUPPRESSION self
--- @param #number Tave Average time [seconds] a group will be suppressed. Default is 15 seconds.
+-- @param #number Tave (Optional) Average time [seconds] a group will be suppressed. Default is 15 seconds.
 -- @param #number Tmin (Optional) Minimum time [seconds] a group will be suppressed. Default is 5 seconds.
 -- @param #number Tmax (Optional) Maximum time a group will be suppressed. Default is 25 seconds.
 function SUPPRESSION:SetSuppressionTime(Tave, Tmin, Tmax)
@@ -697,7 +697,7 @@ end
 
 --- Set the formation a group uses for fall back, hide or retreat.
 -- @param #SUPPRESSION self
--- @param #string formation Formation of the group. Default "Vee".
+-- @param #string formation (Optional) Formation of the group. Default "Vee".
 function SUPPRESSION:SetFormation(formation)
   self:F(formation)
   self.Formation=formation or "Vee"
@@ -705,7 +705,7 @@ end
 
 --- Set speed a group moves at for fall back, hide or retreat.
 -- @param #SUPPRESSION self
--- @param #number speed Speed in km/h of group. Default max speed the group can do.
+-- @param #number speed (Optional) Speed in km/h of group. Default max speed the group can do.
 function SUPPRESSION:SetSpeed(speed)
   self:F(speed)
   self.Speed=speed or self.SpeedMax
@@ -793,7 +793,7 @@ end
 -- If the group consists of only a singe unit, this referrs to the life of the unit.
 -- If the group consists of more than one unit, this referrs to the group strength relative to its initial strength.
 -- @param #SUPPRESSION self
--- @param #number damage Damage in percent. If group gets damaged above this value, the group will retreat. Default 50 %.
+-- @param #number damage (Optional) Damage in percent. If group gets damaged above this value, the group will retreat. Default 50 %.
 function SUPPRESSION:SetRetreatDamage(damage)
   self:F(damage)
   self.RetreatDamage=damage or 50
@@ -801,7 +801,7 @@ end
 
 --- Set time a group waits in the retreat zone before it resumes its mission. Default is two hours.
 -- @param #SUPPRESSION self
--- @param #number time Time in seconds. Default 7200 seconds = 2 hours.
+-- @param #number time (Optional) Time in seconds. Default 7200 seconds = 2 hours.
 function SUPPRESSION:SetRetreatWait(time)
   self:F(time)
   self.RetreatWait=time or 7200
@@ -809,7 +809,7 @@ end
 
 --- Set alarm state a group will get after it returns from a fall back or take cover.
 -- @param #SUPPRESSION self
--- @param #string alarmstate Alarm state. Possible "Auto", "Green", "Red". Default is "Auto".
+-- @param #string alarmstate (Optional) Alarm state. Possible "Auto", "Green", "Red". Default is "Auto".
 function SUPPRESSION:SetDefaultAlarmState(alarmstate)
   self:F(alarmstate)
   if alarmstate:lower()=="auto" then
@@ -825,7 +825,7 @@ end
 
 --- Set Rules of Engagement (ROE) a group will get when it recovers from suppression.
 -- @param #SUPPRESSION self
--- @param #string roe ROE after suppression. Possible "Free", "Hold" or "Return". Default "Free".
+-- @param #string roe (Optional) ROE after suppression. Possible "Free", "Hold" or "Return". Default "Free".
 function SUPPRESSION:SetDefaultROE(roe)
   self:F(roe)
   if roe:lower()=="free" then
@@ -841,7 +841,7 @@ end
 
 --- Create an F10 menu entry for the suppressed group. The menu is mainly for Debugging purposes.
 -- @param #SUPPRESSION self
--- @param #boolean switch Enable=true or disable=false menu group. Default is true.
+-- @param #boolean switch (Optional) Enable=true or disable=false menu group. Default is true.
 function SUPPRESSION:MenuOn(switch)
   self:F(switch)
   if switch==nil then
@@ -1682,9 +1682,9 @@ end
 --- Make group run/drive to a certain point. We put in several intermediate waypoints because sometimes the group stops before it arrived at the desired point.
 --@param #SUPPRESSION self
 --@param Core.Point#COORDINATE fin Coordinate where we want to go.
---@param #number speed Speed of group. Default is 20.
---@param #string formation Formation of group. Default is "Vee".
---@param #number wait Time the group will wait/hold at final waypoint. Default is 30 seconds.
+--@param #number speed (Optional) Speed of group. Default is 20.
+--@param #string formation (Optional) Formation of group. Default is "Vee".
+--@param #number wait (Optional) Time the group will wait/hold at final waypoint. Default is 30 seconds.
 function SUPPRESSION:_Run(fin, speed, formation, wait)
 
   speed=speed or 20
@@ -1946,7 +1946,7 @@ end
 
 --- Sets the ROE for the group and updates the current ROE variable.
 -- @param #SUPPRESSION self
--- @param #string roe ROE the group will get. Possible "Free", "Hold", "Return". Default is self.DefaultROE.
+-- @param #string roe (Optional) ROE the group will get. Possible "Free", "Hold", "Return". Default is self.DefaultROE.
 function SUPPRESSION:_SetROE(roe)
   local group=self.Controllable --Wrapper.Controllable#CONTROLLABLE
   
@@ -1975,7 +1975,7 @@ end
 
 --- Sets the alarm state of the group and updates the current alarm state variable.
 -- @param #SUPPRESSION self
--- @param #string state Alarm state the group will get. Possible "Auto", "Green", "Red". Default is self.DefaultAlarmState.
+-- @param #string state (Optional) Alarm state the group will get. Possible "Auto", "Green", "Red". Default is self.DefaultAlarmState.
 function SUPPRESSION:_SetAlarmState(state)
   local group=self.Controllable --Wrapper.Controllable#CONTROLLABLE
   

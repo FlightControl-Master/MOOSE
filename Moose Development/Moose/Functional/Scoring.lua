@@ -394,7 +394,7 @@ end
 
 --- Set a prefix string that will be displayed at each scoring message sent.
 -- @param #SCORING self
--- @param #string DisplayMessagePrefix (Default="Scoring: ") The scoring prefix string.
+-- @param #string DisplayMessagePrefix (Optional) (Default="Scoring: ") The scoring prefix string.
 -- @return #SCORING
 function SCORING:SetDisplayMessagePrefix( DisplayMessagePrefix )
   self.DisplayMessagePrefix = DisplayMessagePrefix or ""

@@ -182,7 +182,7 @@ end
 
 --- Sets the engagement range of the SAMs. Defaults to 75% to make it more deadly. Feature Request #1355
 -- @param #SEAD self
--- @param #number range Set the engagement range in percent, e.g. 55 (default 75)
+-- @param #number range (Optional) Set the engagement range in percent, e.g. 55 (default 75)
 -- @return #SEAD self
 function SEAD:SetEngagementRange(range)
   self:T( { range } )
@@ -197,7 +197,7 @@ end
 
 --- Set the padding in seconds, which extends the radar off time calculated by SEAD
 -- @param #SEAD self
--- @param #number Padding Extra number of seconds to add for the switch-on (default 10 seconds)
+-- @param #number Padding (Optional) Extra number of seconds to add for the switch-on (default 10 seconds)
 -- @return #SEAD self
 function SEAD:SetPadding(Padding)
   self:T( { Padding } )

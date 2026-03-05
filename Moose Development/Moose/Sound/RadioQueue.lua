@@ -170,7 +170,7 @@ end
 
 --- Set radio power. Note that this only applies if no relay unit is used.
 -- @param #RADIOQUEUE self
--- @param #number power Radio power in Watts. Default 100 W.
+-- @param #number power (Optional) Radio power in Watts. Default 100 W.
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:SetRadioPower(power)
   self.power=power or 100
@@ -179,8 +179,8 @@ end
 
 --- Set SRS.
 -- @param #RADIOQUEUE self
--- @param #string PathToSRS Path to SRS.
--- @param #number Port SRS port. Default 5002.
+-- @param #string PathToSRS (Optional) Path to SRS.
+-- @param #number Port (Optional) SRS port. Default 5002.
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:SetSRS(PathToSRS, Port)
   local path = PathToSRS or MSRS.path
@@ -195,9 +195,9 @@ end
 -- @param #number digit The digit 0-9.
 -- @param #string filename The name of the sound file.
 -- @param #number duration The duration of the sound file in seconds.
--- @param #string path The directory within the miz file where the sound is located. Default "l10n/DEFAULT/".
+-- @param #string path (Optional) The directory within the miz file where the sound is located. Default "l10n/DEFAULT/".
 -- @param #string subtitle Subtitle of the transmission.
--- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
+-- @param #number subduration (Optional) Duration [sec] of the subtitle being displayed. Default 5 sec.
 -- @return #RADIOQUEUE self The RADIOQUEUE object.
 function RADIOQUEUE:SetDigit(digit, filename, duration, path, subtitle, subduration)
 
@@ -245,11 +245,11 @@ end
 -- @param #RADIOQUEUE self
 -- @param #string filename Name of the sound file. Usually an ogg or wav file type.
 -- @param #number duration Duration in seconds the file lasts.
--- @param #number path Directory path inside the miz file where the sound file is located. Default "l10n/DEFAULT/".
--- @param #number tstart Start time (abs) seconds. Default now.
--- @param #number interval Interval in seconds after the last transmission finished.
+-- @param #number path (Optional) Directory path inside the miz file where the sound file is located. Default "l10n/DEFAULT/".
+-- @param #number tstart (Optional) Start time (abs) seconds. Default now.
+-- @param #number interval (Optional) Interval in seconds after the last transmission finished. Defaults to 0.
 -- @param #string subtitle Subtitle of the transmission.
--- @param #number subduration Duration [sec] of the subtitle being displayed. Default 5 sec.
+-- @param #number subduration (Optional) Duration [sec] of the subtitle being displayed. Default 5 sec.
 -- @return #RADIOQUEUE.Transmission Radio transmission table.
 function RADIOQUEUE:NewTransmission(filename, duration, path, tstart, interval, subtitle, subduration)
 
@@ -295,8 +295,8 @@ end
 --- Add a SOUNDFILE to the radio queue.
 -- @param #RADIOQUEUE self
 -- @param Sound.SoundOutput#SOUNDFILE soundfile Sound file object to be added.
--- @param #number tstart Start time (abs) seconds. Default now.
--- @param #number interval Interval in seconds after the last transmission finished.
+-- @param #number tstart (Optional) Start time (abs) seconds. Default now.
+-- @param #number interval (Optional) Interval in seconds after the last transmission finished. Defaults to 0.
 -- @return #RADIOQUEUE self
 function RADIOQUEUE:AddSoundFile(soundfile, tstart, interval)
   --env.info(string.format("FF add soundfile: name=%s%s", soundfile:GetPath(), soundfile:GetFileName()))
@@ -308,8 +308,8 @@ end
 --- Add a SOUNDTEXT to the radio queue.
 -- @param #RADIOQUEUE self
 -- @param Sound.SoundOutput#SOUNDTEXT soundtext Text-to-speech text.
--- @param #number tstart Start time (abs) seconds. Default now.
--- @param #number interval Interval in seconds after the last transmission finished.
+-- @param #number tstart (Optional) Start time (abs) seconds. Default now.
+-- @param #number interval (Optional) Interval in seconds after the last transmission finished. Defaults to 0.
 -- @return #RADIOQUEUE self
 function RADIOQUEUE:AddSoundText(soundtext, tstart, interval)
 

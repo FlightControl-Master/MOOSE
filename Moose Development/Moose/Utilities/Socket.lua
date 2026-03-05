@@ -77,8 +77,8 @@ SOCKET.version="0.3.0"
 
 --- Create a new SOCKET object.
 -- @param #SOCKET self
--- @param #number Port UDP port. Default `10042`.
--- @param #string Host Host. Default `"127.0.0.1"`.
+-- @param #number Port (Optional) UDP port. Default `10042`.
+-- @param #string Host (Optional) Host. Default `"127.0.0.1"`.
 -- @return #SOCKET self
 function SOCKET:New(Port, Host)
 
@@ -103,7 +103,7 @@ end
 
 --- Set port.
 -- @param #SOCKET self
--- @param #number Port Port. Default 10042.
+-- @param #number Port (Optional) Port. Default 10042.
 -- @return #SOCKET self
 function SOCKET:SetPort(Port)
   self.port=Port or 10042
@@ -111,7 +111,7 @@ end
 
 --- Set host.
 -- @param #SOCKET self
--- @param #string Host Host. Default `"127.0.0.1"`.
+-- @param #string Host (Optional) Host. Default `"127.0.0.1"`.
 -- @return #SOCKET self
 function SOCKET:SetHost(Host)
   self.host=Host or "127.0.0.1"
@@ -159,11 +159,11 @@ end
 --- Send a text-to-speech message.
 -- @param #SOCKET self
 -- @param #string Text The text message to speek.
--- @param #number Provider The TTS provider: 0=Microsoft (default), 1=Google.
+-- @param #number Provider (Optional) The TTS provider: 0=Microsoft (default), 1=Google.
 -- @param #string Voice The specific voice to use, e.g. `"Microsoft David Desktop"` or "`en-US-Standard-A`". If not set, the service will choose a voice based on the other parameters such as culture and gender.
 -- @param #string Culture The Culture or language code, *e.g.* `"en-US"`.
--- @param #string Gender The Gender, *i.e.* "male", "female". Default "female".
--- @param #number Volume The volume. Microsoft: [0,100] default 50, Google: [-96, 10] default 0.
+-- @param #string Gender (Optional) The Gender, *i.e.* "male", "female". Default "female".
+-- @param #number Volume (Optional) The volume. Microsoft: [0,100] default 50, Google: [-96, 10] default 0.
 -- @return #SOCKET self
 function SOCKET:SendTextToSpeech(Text, Provider, Voice, Culture, Gender, Volume)
 

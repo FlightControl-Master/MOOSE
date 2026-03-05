@@ -55,7 +55,7 @@ PLATOON.version="0.1.0"
 --- Create a new PLATOON object and start the FSM.
 -- @param #PLATOON self
 -- @param #string TemplateGroupName Name of the template group.
--- @param #number Ngroups Number of asset groups of this platoon. Default 3.
+-- @param #number Ngroups (Optional) Number of asset groups of this platoon. Default 3.
 -- @param #string PlatoonName Name of the platoon. Must be **unique**!
 -- @return #PLATOON self
 function PLATOON:New(TemplateGroupName, Ngroups, PlatoonName)
