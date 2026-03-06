@@ -200,7 +200,7 @@ do
 --          my_ctld.loadSavedCrates = true -- Load back crates (STATIC) from the save file. Useful for mission restart cleanup. (Default is true)
 --          my_ctld.UseC130LoadAndUnload = false -- When set to true, forces the C-130 player to use the C-130J built system to load the cargo onboard and to unload. (Default is false)
 --          my_ctld.UseC130DynamicCargoAutoBuild = false -- When true (and UseC130LoadAndUnload is true), C-130 DynamicCargo unload completion is bridged to CTLD engineer-path auto-build.
---          my_ctld.C130DynamicCargoAutoBuildMergeSeconds = 10 -- Merge window in seconds for C-130 auto-build handoff; ready sets from same C-130 are batched into one engineer build call.
+--          my_ctld.C130DynamicCargoAutoBuildMergeSeconds = 0 -- Merge window in seconds for C-130 auto-build handoff; set to 0 to disable batching (default).
 --          my_ctld.locale = "en" -- Language locale to use, available are "en" (default), "de" and "fr"
 --
 -- ## 2.1 CH-47 Chinook support
@@ -253,7 +253,7 @@ do
 -- After a valid airdrop and landing, CTLD automatically starts the build.
 --
 -- If multiple compatible cargo sets are dropped close together, CTLD waits briefly
--- (10 seconds by default) and then processes them together.
+-- and then processes them together (C130DynamicCargoAutoBuildMergeSeconds; default 0 = no merge delay).
 --
 -- ### Required settings
 --
@@ -722,7 +722,7 @@ CTLD = {
   pickupZones  = {},
   DynamicCargo = {},
   UseC130DynamicCargoAutoBuild = false,
-  C130DynamicCargoAutoBuildMergeSeconds = 10,
+  C130DynamicCargoAutoBuildMergeSeconds = 0,
   ChinookTroopCircleRadius = 5,
   TroopUnloadDistGround = 5,
   TroopUnloadDistGroundHerc = 25,
@@ -1096,7 +1096,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.UseC130DynamicCargoAutoBuild = false
 
   -- merge ready C-130 auto-build sets from the same aircraft for this many seconds.
-  self.C130DynamicCargoAutoBuildMergeSeconds = 10
+  self.C130DynamicCargoAutoBuildMergeSeconds = 0
   
   -- Smokes and Flares
   self.SmokeColor = SMOKECOLOR.Red
@@ -2273,7 +2273,7 @@ function CTLD:_C130DcAutoQueueReadySet(SetId)
   if setData.completed or setData.buildStarted or setData.handoffClaimed then return true end
 
   local ownerKey = self:_C130DcAutoGetOwnerKey(setData) or SetId
-  local window = tonumber(self.C130DynamicCargoAutoBuildMergeSeconds) or 10
+  local window = self.C130DynamicCargoAutoBuildMergeSeconds or 0
   if window < 0 then
     window = 0
   end
@@ -2671,9 +2671,11 @@ function CTLD:_EventHandler(EventData)
         self.Loaded_Cargo[unitname] = loaded
       end
       local Group = client:GetGroup()
+      if not self:IsC130J(client, true) then
       local msg = self.gettext:GetEntry("CRATE_UNLOADED_GROUNDCREW",self.locale)
       msg = string.format(msg,event.IniDynamicCargoName)
       self:_SendMessage(msg, 10, false, Group)
+      end
       --self:_SendMessage(string.format("Crate %s unloaded by ground crew!",event.IniDynamicCargoName), 10, false, Group) 
       self:__CratesDropped(1,Group,client,{dcargo})
       self:_RefreshCrateQuantityMenus(Group, client, nil)
@@ -5331,6 +5333,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
   end
   local crates,number = self:_FindCratesNearby(Group,Unit,finddist,true,true,not Engineering) -- #table
   local activeSetId = Engineering and self._c130DcAutoActiveSetId or nil
+  local isC130Auto = Engineering and activeSetId ~= nil
   local notifyGroup = (not Engineering) and Group or nil
   if activeSetId then
     crates, number = self:_C130DcAutoFilterCrates(crates, activeSetId)
@@ -5417,6 +5420,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
       end -- end dropped
     end -- end crate loop
     -- ok let\'s list what we have
+    if not isC130Auto then
     local report = REPORT:New("Checklist Buildable Crates")
     report:Add("------------------------------------------------------------")
     for _,_build in pairs(buildables) do
@@ -5446,9 +5450,32 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
     else
       self:T(text)
     end
+    end
     -- let\'s get going
     if canbuild then
       local notified=false
+      local function notifyBuildStarted(buildName, etaSeconds)
+        if notified then return end
+        local startMsgGroup = (not Engineering and (notifyGroup or Group)) or notifyGroup
+        if isC130Auto then
+          if startMsgGroup then
+            local msg
+            if etaSeconds and etaSeconds > 0 then
+              msg = string.format("CTLD: Building %s (ETA %ds).", tostring(buildName), math.floor(etaSeconds))
+            else
+              msg = string.format("CTLD: Building %s.", tostring(buildName))
+            end
+            self:_SendMessage(msg, 15, false, startMsgGroup)
+          end
+        else
+          local msg = self.gettext:GetEntry("BUILD_STARTED",self.locale)
+          msg = string.format(msg,self.buildtime)
+          if startMsgGroup then
+            self:_SendMessage(msg, 15, false, startMsgGroup)
+          end
+        end
+        notified=true
+      end
       -- loop again
       for _,_build in pairs(buildables) do
         local build = _build -- #CTLD.Buildable
@@ -5473,16 +5500,13 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
             if self.buildtime and self.buildtime > 0 then
               local buildtimer = TIMER:New(self._BuildObjectFromCrates,self,Group,Unit,build,false,Group:GetCoordinate(),MultiDrop)
               buildtimer:Start(self.buildtime)
-              if not notified then
-                local msg = self.gettext:GetEntry("BUILD_STARTED",self.locale)
-                msg = string.format(msg,self.buildtime)
-                local startMsgGroup = (not Engineering and (notifyGroup or Group)) or notifyGroup
-                  self:_SendMessage(msg, 15, false, startMsgGroup)
-                --self:_SendMessage(string.format("Build started, ready in %d seconds!",self.buildtime),15,false,Group)
-                notified=true
-              end
+              notifyBuildStarted(build.Name, self.buildtime)
+
               self:__CratesBuildStarted(1,Group,Unit,build.Name)
             else
+              if isC130Auto then
+                notifyBuildStarted(build.Name, nil)
+              end
               self:_BuildObjectFromCrates(Group,Unit,build,false,nil,MultiDrop)
             end
           else
@@ -5500,18 +5524,13 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
               if self.buildtime and self.buildtime > 0 then
                 local buildtimer = TIMER:New(self._BuildObjectFromCrates,self,Group,Unit,b,false,Group:GetCoordinate(),MultiDrop)
                 buildtimer:Start(self.buildtime)
-                if not notified then
-                  local msg = self.gettext:GetEntry("BUILD_STARTED",self.locale)
-                  msg = string.format(msg,self.buildtime)
-                  local startMsgGroup = (not Engineering and (notifyGroup or Group)) or notifyGroup
-                  if startMsgGroup then
-                    self:_SendMessage(msg, 15, false, startMsgGroup)
-                  end
-                  --self:_SendMessage(string.format("Build started, ready in %d seconds!",self.buildtime),15,false,Group)
-                  notified=true
-                end
+                notifyBuildStarted(build.Name, self.buildtime)
+
                 self:__CratesBuildStarted(1,Group,Unit,build.Name)
               else
+                if isC130Auto then
+                  notifyBuildStarted(build.Name, nil)
+                end
                 self:_BuildObjectFromCrates(Group,Unit,b,false,nil,MultiDrop)
               end
             end
