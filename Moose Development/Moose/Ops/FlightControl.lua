@@ -667,8 +667,9 @@ end
 -- @param #string Label Name under which SRS transmits.
 -- @param #string PathToGoogleCredentials (Optional) Path to google credentials json file.
 -- @param #number Port (Optional) Server port for SRS. Defaults to 5002.
+-- @param #string Speaker (Optional) Use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @return #FLIGHTCONTROL self
-function FLIGHTCONTROL:_SetSRSOptions(msrs, Gender, Culture, Voice, Volume, Label, PathToGoogleCredentials, Port)
+function FLIGHTCONTROL:_SetSRSOptions(msrs, Gender, Culture, Voice, Volume, Label, PathToGoogleCredentials, Port, Speaker)
 
   -- Defaults:
   Gender=Gender or "female"
@@ -679,6 +680,9 @@ function FLIGHTCONTROL:_SetSRSOptions(msrs, Gender, Culture, Voice, Volume, Labe
     msrs:SetGender(Gender)
     msrs:SetCulture(Culture)
     msrs:SetVoice(Voice)
+    if Speaker then
+      msrs:SetSpeakerPiper(Speaker)
+    end
     msrs:SetVolume(Volume)
     msrs:SetLabel(Label)
     msrs:SetCoalition(self:GetCoalition())
@@ -695,11 +699,12 @@ end
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`. See [Google Voices](https://cloud.google.com/text-to-speech/docs/voices).
 -- @param #number Volume (Optional) Volume. Default 1.0.
 -- @param #string Label (Optional) Name under which SRS transmits. Default `self.alias`.
+-- @param #string Speaker (Optional) Use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @return #FLIGHTCONTROL self
-function FLIGHTCONTROL:SetSRSTower(Gender, Culture, Voice, Volume, Label)
+function FLIGHTCONTROL:SetSRSTower(Gender, Culture, Voice, Volume, Label, Speaker)
 
   if self.msrsTower then
-    self:_SetSRSOptions(self.msrsTower, Gender or "female", Culture or "en-GB", Voice, Volume, Label or self.alias)
+    self:_SetSRSOptions(self.msrsTower, Gender or "female", Culture or "en-GB", Voice, Volume, Label or self.alias,nil,nil,Speaker)
   end
 
   return self
@@ -712,11 +717,12 @@ end
 -- @param #string Voice Specific voice. Overrides `Gender` and `Culture`.
 -- @param #number Volume (Optional) Volume. Default 1.0.
 -- @param #string Label (Optional) Name under which SRS transmits. Default "Pilot".
+-- @param #string Speaker (Optional) Use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @return #FLIGHTCONTROL self
-function FLIGHTCONTROL:SetSRSPilot(Gender, Culture, Voice, Volume, Label)
+function FLIGHTCONTROL:SetSRSPilot(Gender, Culture, Voice, Volume, Label, Speaker)
 
   if self.msrsPilot then
-    self:_SetSRSOptions(self.msrsPilot, Gender or "male", Culture or "en-US", Voice, Volume, Label or "Pilot")
+    self:_SetSRSOptions(self.msrsPilot, Gender or "male", Culture or "en-US", Voice, Volume, Label or "Pilot",nil,nil,Speaker)
   end
 
   return self

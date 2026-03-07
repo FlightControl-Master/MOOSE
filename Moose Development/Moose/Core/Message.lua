@@ -496,7 +496,8 @@ _MESSAGESRS = {}
 -- @param #string Label (optional) Label, defaults to "MESSAGE" or the Message Category set.
 -- @param Core.Point#COORDINATE Coordinate (optional) Coordinate this messages originates from.
 -- @param #string Backend (optional) Backend to be used, can be MSRS.Backend.SRSEXE or MSRS.Backend.GRPC or MSRS.Backend.HOUND etc
--- @param #string Provider (optional) Privider to be used, can be MSRS.Provider.WINDOWS or MSRS.Backend.GOOGLE or MSRS.Backend.PIPER etc
+-- @param #string Provider (optional) Provider to be used, can be MSRS.Provider.WINDOWS or MSRS.Provider.GOOGLE or MSRS.Provider.PIPER etc
+-- @param #string Speaker (optional) Speaker to be used. Only for select provider PIPER TTS Voices, requires HOUND backend.
 -- @usage
 --          -- Mind the dot here, not using the colon this time around!
 --          -- Needed once only
@@ -504,7 +505,7 @@ _MESSAGESRS = {}
 --          -- later on in your code
 --          MESSAGE:New("Test message!",15,"SPAWN"):ToSRS()
 --          
-function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,Gender,Culture,Voice,Coalition,Volume,Label,Coordinate,Backend,Provider)
+function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,Gender,Culture,Voice,Coalition,Volume,Label,Coordinate,Backend,Provider,Speaker)
   
   _MESSAGESRS.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
   
@@ -551,6 +552,7 @@ function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,G
   _MESSAGESRS.MSRS:SetVolume(_MESSAGESRS.volume)
   
   if Voice then _MESSAGESRS.MSRS:SetVoice(Voice) end
+  if Speaker then _MESSAGESRS.MSRS:SetSpeakerPiper(Speaker) end
   
   _MESSAGESRS.voice = Voice or MSRS.voice --or MSRS.Voices.Microsoft.Hedda
   

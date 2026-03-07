@@ -580,8 +580,9 @@ end
 -- @param #string Gender (Optional)  The gender to be used, defaults to "male"
 -- @param #string GoogleCredentials (Optional) Path to google credentials
 -- @param #string Provider (Optional) TTS Provider to be used.
+-- @param #string Speaker (Optional) Use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @return #AICSAR self
-function AICSAR:SetSRSTTSRadio(OnOff,Path,Frequency,Modulation,Port,Voice,Culture,Gender,GoogleCredentials,Provider)
+function AICSAR:SetSRSTTSRadio(OnOff,Path,Frequency,Modulation,Port,Voice,Culture,Gender,GoogleCredentials,Provider,Speaker)
   self:T(self.lid .. "SetSRSTTSRadio")
   self.SRSTTSRadio = OnOff and true
   self.SRSRadio = false
@@ -595,6 +596,9 @@ function AICSAR:SetSRSTTSRadio(OnOff,Path,Frequency,Modulation,Port,Voice,Cultur
     self.SRS:SetCoalition(self.coalition)
     self.SRS:SetLabel("ACSR")
     self.SRS:SetVoice(Voice)
+    if Speaker then
+      self.SRS:SetSpeakerPiper(Speaker)
+    end
     self.SRS:SetCulture(Culture)
     self.SRS:SetGender(Gender)
     if GoogleCredentials and not Provider then
@@ -616,13 +620,17 @@ end
 -- Specific voices override culture and gender!
 -- @param #string Culture (Optional) The culture to be used, defaults to "en-US"
 -- @param #string Gender (Optional)  The gender to be used, defaults to "male"
+-- @param #string Speaker (Optional) Use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @return #AICSAR self
-function AICSAR:SetPilotTTSVoice(Voice,Culture,Gender)
+function AICSAR:SetPilotTTSVoice(Voice,Culture,Gender,Speaker)
  self:T(self.lid .. "SetPilotTTSVoice")
  self.SRSPilotVoice = true
  self.SRSPilot = MSRS:New(self.SRSPath,self.SRSFrequency,self.SRSModulation)
  self.SRSPilot:SetCoalition(self.coalition)
  self.SRSPilot:SetVoice(Voice)
+ if Speaker then
+  self.SRSPilot:SetSpeakerPiper(Speaker)
+ end
  self.SRSPilot:SetCulture(Culture or "en-US")
  self.SRSPilot:SetGender(Gender or "male")
  self.SRSPilot:SetLabel("PILOT")
@@ -640,13 +648,17 @@ end
 -- Specific voices override culture and gender!
 -- @param #string Culture (Optional) The culture to be used, defaults to "en-GB"
 -- @param #string Gender (Optional)  The gender to be used, defaults to "female"
+-- @param #string Speaker (Optional) Use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @return #AICSAR self
-function AICSAR:SetOperatorTTSVoice(Voice,Culture,Gender)
+function AICSAR:SetOperatorTTSVoice(Voice,Culture,Gender,Speaker)
  self:T(self.lid .. "SetOperatorTTSVoice")
  self.SRSOperatorVoice = true
  self.SRSOperator = MSRS:New(self.SRSPath,self.SRSFrequency,self.SRSModulation)
  self.SRSOperator:SetCoalition(self.coalition)
  self.SRSOperator:SetVoice(Voice)
+if Speaker then
+  self.SRSOperator:SetSpeakerPiper(Speaker)
+ end
  self.SRSOperator:SetCulture(Culture or "en-GB")
  self.SRSOperator:SetGender(Gender or "female")
  self.SRSOperator:SetLabel("RESCUE")
