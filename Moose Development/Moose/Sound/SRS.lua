@@ -2034,7 +2034,7 @@ end
 -- @param #string Speaker Speaker (Sub-Voice) for PIPER only
 -- @return SpeechTime Speech time in seconds.
 function MSRS:_HoundTextToSpeech(Message,Frequencies,Modulations,Volume,Label,Coalition,Point,Speed,Gender,Culture,Voice,UseGoogle,Speaker)
-  self:I(self.lid.."_HoundTextToSpeech")
+  self:T(self.lid.."_HoundTextToSpeech")
   
   Frequencies = UTILS.EnsureTable(Frequencies)
   Modulations = UTILS.EnsureTable(Modulations)
@@ -2065,7 +2065,7 @@ function MSRS:_HoundTextToSpeech(Message,Frequencies,Modulations,Volume,Label,Co
   modus=modus:gsub("0", "AM")
   modus=modus:gsub("1", "FM")
   
-  self:I({T=Message,F=freqs,M=modus,V=voice,Vx=volume,L=label,C=coal,GGL=tostring(UseGoogle)})
+  self:T({T=Message,F=freqs,M=modus,V=voice,Vx=volume,L=label,C=coal,GGL=tostring(UseGoogle)})
   
   if (UseGoogle ~= true) and self.provider == MSRS.Provider.GOOGLE then
     UseGoogle = true
@@ -2130,8 +2130,8 @@ end
 --   | speed    | number | `1.0`                       | Speech rate (0.5 = half speed, 1.0 = normal, 2.0 = double speed)                   |
 --   
 function MSRS:_HoundTransmit(Message, Transmission_params, Provider_params)
-  self:I(self.lid.."_HoundTransmit")
-  self:I({Message,Transmission_params,Provider_params})
+  self:T(self.lid.."_HoundTransmit")
+  self:T({Message,Transmission_params,Provider_params})
   local speechtime = HoundTTS.Transmit(Message, Transmission_params, Provider_params)
   return speechtime
 end
@@ -2143,7 +2143,7 @@ end
 --  @param #table Modulations The table of modulations to use.
 --  @param #number Coalition The coalition to use.
 function MSRS:_HoundTestTone(Frequencies, Modulations, Coalition)
- self:I(self.lid.."_HoundTestTone")
+ self:T(self.lid.."_HoundTestTone")
  
  Frequencies = UTILS.EnsureTable(Frequencies)
  Modulations = UTILS.EnsureTable(Modulations)
@@ -2169,6 +2169,7 @@ end
 --  @param #number Speed (Optional) The speed to use, defaults to 1.0.
 --  @param #boolean UseGoogle (Optional) If to use google. Default: no.
 function MSRS:_HoundSpeechTime(Message,Speed,UseGoogle)
+  self:T(self.lid.."_HoundSpeechTime")
   local speed = Speed or 1.0
   local speechtime = HoundTTS.getSpeechTime(Message, speed, UseGoogle)
   return speechtime

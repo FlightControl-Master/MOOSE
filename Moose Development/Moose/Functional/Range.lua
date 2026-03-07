@@ -1258,8 +1258,9 @@ end
 -- @param #number Modulation (Optional) Modulation to use, defaults to radio.modulation.AM
 -- @param #number Volume (Optional) Volume, between 0.0 and 1.0. Defaults to 1.0
 -- @param #string PathToGoogleKey Path to Google TTS credentials.
+-- @param #string Provider (Optional) TTS Provider to be used.
 -- @return #RANGE self
-function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume, PathToGoogleKey)
+function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume, PathToGoogleKey,Provider)
 
   if PathToSRS or MSRS.path then
 
@@ -1291,7 +1292,10 @@ function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume,
       self.instructmsrs:SetProviderOptionsGoogle(PathToGoogleKey,PathToGoogleKey)
       self.instructmsrs:SetProvider(MSRS.Provider.GOOGLE)
     end
-
+    if Provider then
+      self.controlmsrs:SetProvider(Provider)
+      self.instructmsrs:SetProvider(Provider)
+    end
   else
     self:E(self.lid..string.format("ERROR: No SRS path specified!"))
   end

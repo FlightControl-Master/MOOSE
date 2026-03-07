@@ -364,8 +364,9 @@ FLIGHTCONTROL.version="0.7.7"
 -- @param #string PathToSRS (Optional) Path to the directory, where SRS is located.
 -- @param #number Port (Optional) Port of SRS Server, defaults to 5002
 -- @param #string GoogleKey (Optional) Path to the Google JSON-Key.
+-- @param #string Provider (Optional) TTS Provider to be used.
 -- @return #FLIGHTCONTROL self
-function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port, GoogleKey)
+function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port, GoogleKey,Provider)
 
   -- Inherit everything from FSM class.
   local self=BASE:Inherit(self, FSM:New()) -- #FLIGHTCONTROL
@@ -436,6 +437,9 @@ function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port, 
   if GoogleKey then
     self.msrsTower:SetProviderOptionsGoogle(GoogleKey,GoogleKey)
     self.msrsTower:SetProvider(MSRS.Provider.GOOGLE)
+  end
+  if Provider then
+    self.msrsTower:SetProvider(Provider)
   end  
   self.msrsTower:SetCoordinate(self:GetCoordinate())
   self:SetSRSTower()
@@ -446,6 +450,9 @@ function FLIGHTCONTROL:New(AirbaseName, Frequency, Modulation, PathToSRS, Port, 
   if GoogleKey then
     self.msrsPilot:SetProviderOptionsGoogle(GoogleKey,GoogleKey)
     self.msrsPilot:SetProvider(MSRS.Provider.GOOGLE)
+  end
+  if Provider then
+    self.msrsPilot:SetProvider(Provider)
   end  
   self.msrsTower:SetCoordinate(self:GetCoordinate())
   self:SetSRSPilot()
