@@ -1199,13 +1199,13 @@ function MSRS:SetVoicePiper(Voice)
   return self
 end
 
---- Set to use a specific voice if Kitten is used as provider (only Hound-TTS backend). Note that this will override any gender and culture settings.
+--- Set to use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @param #MSRS self
--- @param #string Voice (Optional) [Kitten Voices](https://github.com/uriba107/HoundTTS#installation). Default `"Bella"`.
+-- @param #string Speaker (Optional) [Piper Voices](https://rhasspy.github.io/piper-samples/). Some have speakers as sub-voices.
 -- @return #MSRS self
-function MSRS:SetVoiceKitten(Voice)
-  self:F( {Voice=Voice} )
-  self:SetVoiceProvider(Voice or "Bella", MSRS.Provider.KITTEN)
+function MSRS:SetSpeakerPiper(Speaker)
+  self:F( {Speaker=Speaker} )
+  self.Speaker = Speaker
 
   return self
 end
@@ -1591,14 +1591,16 @@ function MSRS:PlayText(Text, Delay, Coordinate, Speed, Speaker)
     self:ScheduleOnce(Delay, MSRS.PlayText, self, Text, nil, Coordinate, Speed, Speaker)
   else
 
-    if self.backend==MSRS.Backend.GRPC then
-      self:T(self.lid.."Transmitting")
-      self:_DCSgRPCtts(Text, nil, nil , nil, nil, nil, nil, Coordinate)
-    elseif self.backend==MSRS.Backend.HOUND then
-      self:_HoundTextToSpeech(Text,nil,nil,nil,nil,nil,Coordinate,Speed,nil,Speaker)
-    else
-      self:PlayTextExt(Text, Delay, nil, nil, nil, nil, nil, nil, nil, Coordinate, Speed, Speaker)
-    end
+  local speaker = Speaker or self.Speaker
+
+  if self.backend==MSRS.Backend.GRPC then
+    self:T(self.lid.."Transmitting")
+    self:_DCSgRPCtts(Text, nil, nil , nil, nil, nil, nil, Coordinate)
+  elseif self.backend==MSRS.Backend.HOUND then
+    self:_HoundTextToSpeech(Text,nil,nil,nil,nil,nil,Coordinate,Speed,nil,speaker)
+  else
+    self:PlayTextExt(Text, Delay, nil, nil, nil, nil, nil, nil, nil, Coordinate, Speed, speaker)
+  end
 
   end
 
@@ -1621,10 +1623,10 @@ end
 -- @param #string Speaker Speaker (Sub-Voice) for PIPER only
 -- @return #MSRS self
 function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate,Speed,Speaker)
-  self:T({Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate, Speed} )
+  self:T({Text, Delay, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate, Speed, Speaker} )
 
   if Delay and Delay>0 then
-    self:ScheduleOnce(Delay, self.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate, Speed)
+    self:ScheduleOnce(Delay, self.PlayTextExt, self, Text, 0, Frequencies, Modulations, Gender, Culture, Voice, Volume, Label, Coordinate, Speed, Speaker)
   else
 
     Frequencies = Frequencies or self:GetFrequencies()
@@ -1649,9 +1651,11 @@ function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture
     elseif self.backend==MSRS.Backend.HOUND then
       -- BASE:I("MSRS.Backend.HOUND")
       
-      --local UseGoogle = (self.provider == MSRS.Provider.GOOGLE) and true or nil
+      local speaker = Speaker or self.Speaker
       
-      self:_HoundTextToSpeech(Text,Frequencies,Modulations,Volume,Label,self.coalition,Coordinate,Speed,Gender,Culture,Voice,nil,Speaker)
+      local UseGoogle = (self.provider == MSRS.Provider.GOOGLE) and true or nil
+      
+      self:_HoundTextToSpeech(Text,Frequencies,Modulations,Volume,Label,self.coalition,Coordinate,Speed,Gender,Culture,Voice,UseGoogle,speaker)
       
     end
 
@@ -2055,7 +2059,7 @@ end
 -- @param #string Speaker Speaker (Sub-Voice) for PIPER only
 -- @return SpeechTime Speech time in seconds.
 function MSRS:_HoundTextToSpeech(Message,Frequencies,Modulations,Volume,Label,Coalition,Point,Speed,Gender,Culture,Voice,UseGoogle,Speaker)
-  self:I(self.lid.."_HoundTextToSpeech")
+  self:T(self.lid.."_HoundTextToSpeech")
   
   Frequencies = UTILS.EnsureTable(Frequencies)
   Modulations = UTILS.EnsureTable(Modulations)
@@ -2086,8 +2090,8 @@ function MSRS:_HoundTextToSpeech(Message,Frequencies,Modulations,Volume,Label,Co
   modus=modus:gsub("0", "AM")
   modus=modus:gsub("1", "FM")
   
-  --self:I({T=Message,F=freqs,M=modus,V=voice,Vx=volume,L=label,C=coal,GGL=tostring(UseGoogle)})
-  self:I({T=Message})
+  self:T({T=Message,F=freqs,M=modus,V=voice,Vx=volume,L=label,C=coal,GGL=tostring(UseGoogle)})
+  
   --if (UseGoogle ~= true) and self.provider == MSRS.Provider.GOOGLE then
     --UseGoogle = true
   --end
@@ -2111,11 +2115,8 @@ function MSRS:_HoundTextToSpeech(Message,Frequencies,Modulations,Volume,Label,Co
     speed = speed,
     culture = culture,
     gender = gender,
-    speaker = Speaker,
+    speaker = Speaker or self.Speaker,
   }
-  
-  UTILS.PrintTableToLog(TransmissionP,indent,noprint,maxDepth,seen)
-  UTILS.PrintTableToLog(ProviderP,indent,noprint,maxDepth,seen)
   
   local speechtime = HoundTTS.Transmit(Message, TransmissionP, ProviderP)
   
@@ -2154,8 +2155,8 @@ end
 --   | speed    | number | `1.0`                       | Speech rate (0.5 = half speed, 1.0 = normal, 2.0 = double speed)                   |
 --   
 function MSRS:_HoundTransmit(Message, Transmission_params, Provider_params)
-  self:I(self.lid.."_HoundTransmit")
-  self:I({Message,Transmission_params,Provider_params})
+  self:T(self.lid.."_HoundTransmit")
+  self:T({Message,Transmission_params,Provider_params})
   local speechtime = HoundTTS.Transmit(Message, Transmission_params, Provider_params)
   return speechtime
 end
@@ -2167,7 +2168,7 @@ end
 --  @param #table Modulations The table of modulations to use.
 --  @param #number Coalition The coalition to use.
 function MSRS:_HoundTestTone(Frequencies, Modulations, Coalition)
- self:I(self.lid.."_HoundTestTone")
+ self:T(self.lid.."_HoundTestTone")
  
  Frequencies = UTILS.EnsureTable(Frequencies)
  Modulations = UTILS.EnsureTable(Modulations)
@@ -2193,6 +2194,7 @@ end
 --  @param #number Speed (Optional) The speed to use, defaults to 1.0.
 --  @param #boolean UseGoogle (Optional) If to use google. Default: no.
 function MSRS:_HoundSpeechTime(Message,Speed,UseGoogle)
+  self:T(self.lid.."_HoundSpeechTime")
   local speed = Speed or 1.0
   local speechtime = HoundTTS.getSpeechTime(Message, speed, UseGoogle)
   return speechtime
@@ -2569,7 +2571,9 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   transmission.coordinate = coordinate or msrs.coordinate
   transmission.speed = speed or 1.0
   if speaker then
-  transmission.speaker = speaker
+    transmission.speaker = speaker
+  elseif msrs.Speaker then
+   transmission.speaker = msrs.speaker
   end
   -- Add transmission to queue.
   self:AddTransmission(transmission)

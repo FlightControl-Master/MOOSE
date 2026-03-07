@@ -1672,9 +1672,10 @@ end
 -- @param #string Culture (Optional) Culture, e.g. "en-GB" (default).
 -- @param #string Voice (Optional) Specific voice. Overrides `Gender` and `Culture`.
 -- @param #number Port (Optional) SRS port. Default 5002.
--- @param #string GoogleKey Path to Google JSON-Key (SRS exe backend) or Google API key (DCS-gRPC backend).
+-- @param #string GoogleKey (Optional) Path to Google JSON-Key (SRS exe backend) or Google API key (DCS-gRPC backend).
+-- @param #string Provider (Optional) TTS Provider to be used.
 -- @return #ATIS self
-function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
+function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey,Provider)
   --if PathToSRS or MSRS.path then
     self.useSRS=true
 
@@ -1700,6 +1701,9 @@ function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey)
     end
     self.msrs:SetVoice(voice)
     self.msrs:SetCoordinate(self.airbase:GetCoordinate())
+    if Provider then
+      self.msrs:SetProvider(Provider)
+    end
     self.msrsQ = MSRSQUEUE:New("ATIS")
     self.msrsQ:SetTransmitOnlyWithPlayers(self.TransmitOnlyWithPlayers)
     if self.dTQueueCheck<=10 then
