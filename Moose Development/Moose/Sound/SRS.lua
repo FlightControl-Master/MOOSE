@@ -1649,9 +1649,9 @@ function MSRS:PlayTextExt(Text, Delay, Frequencies, Modulations, Gender, Culture
     elseif self.backend==MSRS.Backend.HOUND then
       -- BASE:I("MSRS.Backend.HOUND")
       
-      local UseGoogle = (self.provider == MSRS.Provider.GOOGLE) and true or nil
+      --local UseGoogle = (self.provider == MSRS.Provider.GOOGLE) and true or nil
       
-      self:_HoundTextToSpeech(Text,Frequencies,Modulations,Volume,Label,self.coalition,Coordinate,Speed,Gender,Culture,Voice,UseGoogle,Speaker)
+      self:_HoundTextToSpeech(Text,Frequencies,Modulations,Volume,Label,self.coalition,Coordinate,Speed,Gender,Culture,Voice,nil,Speaker)
       
     end
 
@@ -2086,15 +2086,15 @@ function MSRS:_HoundTextToSpeech(Message,Frequencies,Modulations,Volume,Label,Co
   modus=modus:gsub("0", "AM")
   modus=modus:gsub("1", "FM")
   
-  self:I({T=Message,F=freqs,M=modus,V=voice,Vx=volume,L=label,C=coal,GGL=tostring(UseGoogle)})
-  
-  if (UseGoogle ~= true) and self.provider == MSRS.Provider.GOOGLE then
-    UseGoogle = true
-  end
+  --self:I({T=Message,F=freqs,M=modus,V=voice,Vx=volume,L=label,C=coal,GGL=tostring(UseGoogle)})
+  self:I({T=Message})
+  --if (UseGoogle ~= true) and self.provider == MSRS.Provider.GOOGLE then
+    --UseGoogle = true
+  --end
   
   local provider = self.provider
-  provider=provider:gsub("gcloud", "google")
-  provider=provider:gsub("win", "sapi")
+  --provider=provider:gsub("gcloud", "google")
+  --provider=provider:gsub("win", "sapi")
   
   local TransmissionP = {
     freqs = freqs,
@@ -2113,6 +2113,9 @@ function MSRS:_HoundTextToSpeech(Message,Frequencies,Modulations,Volume,Label,Co
     gender = gender,
     speaker = Speaker,
   }
+  
+  UTILS.PrintTableToLog(TransmissionP,indent,noprint,maxDepth,seen)
+  UTILS.PrintTableToLog(ProviderP,indent,noprint,maxDepth,seen)
   
   local speechtime = HoundTTS.Transmit(Message, TransmissionP, ProviderP)
   
@@ -2524,6 +2527,7 @@ end
 -- @return #MSRSQUEUE.Transmission Radio transmission table.
 function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label,coordinate,speed,speaker)
   self:T({Text=text, Dur=duration, start=tstart, int=interval, sub=subgroups, subt=subtitle, sudb=subduration, F=frequency, M=modulation, G=gender, C=culture, V=voice, Vol=volume, L=label, S=speed})
+  self:I({provider=msrs.provider})
   if self.TransmitOnlyWithPlayers then
     if self.PlayerSet and self.PlayerSet:CountAlive() == 0 then
       return self

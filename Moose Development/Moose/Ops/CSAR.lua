@@ -2833,16 +2833,18 @@ function CSAR:onafterStart(From, Event, To)
     self.msrs = MSRS:New(path,channel,modulation) -- Sound.SRS#MSRS
     self.msrs:SetPort(self.SRSport)
     self.msrs:SetLabel("CSAR")
-    self.msrs:SetBackend(self.SRSBackend)
-    self.msrs:SetProvider(self.SRSProvider)
+    self.msrs:SetBackend(self.SRSBackend)  
     self.msrs.speed = self.SRSSpeed
     self.msrs:SetCulture(self.SRSCulture)
     self.msrs:SetCoalition(self.coalition)
     self.msrs:SetVoice(self.SRSVoice)
     self.msrs:SetGender(self.SRSGender)
-    if self.SRSGPathToCredentials then
+    if self.SRSGPathToCredentials and (not self.SRSProvider) then
       self.msrs:SetProviderOptionsGoogle(self.SRSGPathToCredentials,self.SRSGPathToCredentials)
       self.msrs:SetProvider(MSRS.Provider.GOOGLE)
+    end
+    if self.SRSProvider then
+      self.msrs:SetProvider(self.SRSProvider)
     end
     self.msrs:SetVolume(self.SRSVolume)
     self.msrs:SetLabel("CSAR")
