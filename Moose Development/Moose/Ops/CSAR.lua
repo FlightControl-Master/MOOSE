@@ -136,14 +136,16 @@
 --       mycsar.SRSModulation = radio.modulation.AM -- modulation
 --       mycsar.SRSport = 5002  -- and SRS Server port
 --       mycsar.SRSCulture = "en-GB" -- SRS voice culture
---       mycsar.SRSVoice = nil -- SRS voice for downed pilot, relevant for Google TTS
+--       mycsar.SRSVoice = nil -- TTS voice for downed pilot, relevant for Google TTS
+--       mycsar.SRSSpeaker = nil -- TTS sub-voice, only relevant for Piper TTS with Hound backend
 --       mycsar.SRSGPathToCredentials = nil -- Path to your Google credentials json file, set this if you want to use Google TTS as provider
 --       mycsar.SRSBackend = MSRS.Backend.SRSEXE -- default backend is windows
 --       mycsar.SRSProvider = MSRS.Provider.WINDOWS -- default TTS provider is windows
 --       mycsar.SRSSpeed = 1.0 -- default speech speed - does not work with all providers
 --       mycsar.SRSVolume = 1 -- Volume, between 0 and 1
 --       mycsar.SRSGender = "male" -- male or female voice
---       mycsar.CSARVoice = MSRS.Voices.Google.Standard.en_US_Standard_A -- SRS voice for CSAR Controller, relevant for Google TTS
+--       mycsar.CSARVoice = MSRS.Voices.Google.Standard.en_US_Standard_A -- TTS voice for CSAR Controller, relevant for Google TTS
+--       mycsar.CSARSpeaker = nil -- TTS sub-voice, only relevant for Piper TTS with Hound backend
 --       mycsar.CSARVoiceMS = MSRS.Voices.Microsoft.Hedda -- SRS voice for CSAR Controller, relevant for MS Desktop TTS
 --       mycsar.coordinate -- Coordinate from which CSAR TTS is sending. Defaults to a random MASH object position
 --       --
@@ -505,7 +507,7 @@ CSAR.AircraftType["MH-6J"] = 2
 
 --- CSAR class version.
 -- @field #string version
-CSAR.version="1.1.38"
+CSAR.version="1.1.39"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
@@ -2097,7 +2099,7 @@ function CSAR:_DisplayMessageToSAR(_unit, _text, _time, _clear, _speak, _overrid
     local nm = self.gettext:GetEntry("NAUTMILES",self.locale)
     _text = string.gsub(_text,"km",km)
     _text = string.gsub(_text,"nm",nm)
-    self.SRSQueue:NewTransmission(_text,duration,self.msrs,tstart,2,subgroups,subtitle,subduration,self.SRSchannel,self.SRSModulation,gender,culture,self.SRSVoice,volume,label,coord)
+    self.SRSQueue:NewTransmission(_text,duration,self.msrs,tstart,2,subgroups,subtitle,subduration,self.SRSchannel,self.SRSModulation,gender,culture,self.SRSVoice,volume,label,coord,nil,self.SRSSpeaker)
   end
   return self
 end
@@ -2303,13 +2305,14 @@ function CSAR:_DisplayToAllSAR(_message, _side, _messagetime,ToSRS,ToScreen)
   self:T({_message,ToSRS=ToSRS,ToScreen=ToScreen})
   if self.msrs and (ToSRS == true or ToSRS == nil) then
     local voice = self.CSARVoice or MSRS.Voices.Google.Standard.en_GB_Standard_F
+    local speaker = self.CSARSpeaker
     if self.msrs:GetProvider() == MSRS.Provider.WINDOWS then
       voice = self.CSARVoiceMS or MSRS.Voices.Microsoft.Hedda
     end
     local kilohertz = self.gettext:GetEntry("KHZ",self.locale)
     _message = string.gsub(_message,"KHz",kilohertz)
     --self:F("Voice = "..voice)
-    self.SRSQueue:NewTransmission(_message,duration,self.msrs,tstart,2,subgroups,subtitle,subduration,self.SRSchannel,self.SRSModulation,gender,culture,voice,volume,label,self.coordinate)
+    self.SRSQueue:NewTransmission(_message,duration,self.msrs,tstart,2,subgroups,subtitle,subduration,self.SRSchannel,self.SRSModulation,gender,culture,voice,volume,label,self.coordinate,nil,speaker)
   end
   if ToScreen == true or ToScreen == nil then
     for _, _unitName in pairs(self.csarUnits) do
@@ -2845,6 +2848,9 @@ function CSAR:onafterStart(From, Event, To)
     end
     if self.SRSProvider then
       self.msrs:SetProvider(self.SRSProvider)
+    end
+    if self.SRSSpeaker then
+      self.msrs:SetSpeakerPiper(self.SRSSpeaker)
     end
     self.msrs:SetVolume(self.SRSVolume)
     self.msrs:SetLabel("CSAR")

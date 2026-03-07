@@ -1674,8 +1674,9 @@ end
 -- @param #number Port (Optional) SRS port. Default 5002.
 -- @param #string GoogleKey (Optional) Path to Google JSON-Key (SRS exe backend) or Google API key (DCS-gRPC backend).
 -- @param #string Provider (Optional) TTS Provider to be used.
+-- @param #string Speaker (Optional) Use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @return #ATIS self
-function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey,Provider)
+function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey,Provider,Speaker)
   --if PathToSRS or MSRS.path then
     self.useSRS=true
 
@@ -1703,6 +1704,9 @@ function ATIS:SetSRS(PathToSRS, Gender, Culture, Voice, Port, GoogleKey,Provider
     self.msrs:SetCoordinate(self.airbase:GetCoordinate())
     if Provider then
       self.msrs:SetProvider(Provider)
+    end
+    if Speaker then
+      self.msrs:SetSpeakerPiper(Speaker)
     end
     self.msrsQ = MSRSQUEUE:New("ATIS")
     self.msrsQ:SetTransmitOnlyWithPlayers(self.TransmitOnlyWithPlayers)

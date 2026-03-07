@@ -505,8 +505,9 @@ end
 -- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest).
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS.
 -- @param #string Provider (Optional) TTS Provider to be used.
+-- @param #string Speaker (Optional) Use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @return #AUTOLASE self 
-function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,Provider)
+function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,Provider,Speaker)
   if OnOff then
     self.useSRS = true
     self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
@@ -527,6 +528,9 @@ function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Cultu
     self.SRS:SetCulture(self.Culture)
     self.SRS:SetPort(self.Port)
     self.SRS:SetVoice(self.Voice)
+    if Speaker then
+      self.SRS:SetSpeakerPiper(Speaker)
+    end
     self.SRS:SetCoalition(self.coalition)
     self.SRS:SetVolume(self.Volume)
     if self.PathToGoogleKey and not Provider then

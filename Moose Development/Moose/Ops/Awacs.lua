@@ -1416,8 +1416,9 @@ end
 -- @param #number Interval Seconds between each update call.
 -- @param #number Number Number of Frequencies to create, can be 1..10.
 -- @param #string Provider (Optional) TTS Provider to be used.
+-- @param #string Speaker (Optional) Use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @return #AWACS self
-function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval,Number,Provider)
+function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval,Number,Provider,Speaker)
   self:T(self.lid.."SetTacticalRadios")
   if not self.AwacsSRS then
     MESSAGE:New("AWACS: Setup SRS in your code BEFORE trying to add tactical radios please!",30,"ERROR",true):ToLog():ToAll()
@@ -1441,6 +1442,9 @@ function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval,Number,Pr
     self.TacticalSRS:SetGender(self.Gender)
     self.TacticalSRS:SetCulture(self.Culture)
     self.TacticalSRS:SetVoice(self.Voice)
+    if Speaker then
+      self.TacticalSRS:SetSpeakerPiper(Speaker)
+    end
     self.TacticalSRS:SetPort(self.Port)
     self.TacticalSRS:SetLabel("AWACS")
     self.TacticalSRS:SetVolume(self.Volume)
@@ -2191,8 +2195,9 @@ end
 -- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
 -- @param #string Backend (Optional) Your MSRS Backend if different from your config file settings, e.g. MSRS.Backend.SRSEXE or MSRS.Backend.GRPC
 -- @param #string Provider (Optional) TTS Provider to be used.
+-- @param #string Speaker (Optional) Use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @return #AWACS self
-function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Backend,Provider)
+function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Backend,Provider,Speaker)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio" 
   self.Gender = Gender or MSRS.gender or "male"
@@ -2203,6 +2208,7 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey
   self.AccessKey = AccessKey
   self.Volume = Volume or 1.0
   self.Backend = Backend or MSRS.backend
+  self.Provider = Provider
   BASE:I({backend = self.Backend})
   self.AwacsSRS = MSRS:New(self.PathToSRS,self.MultiFrequency,self.MultiModulation,self.Backend)
   self.AwacsSRS:SetCoalition(self.coalition)
@@ -2211,6 +2217,9 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey
   self.AwacsSRS:SetPort(self.Port)
   self.AwacsSRS:SetLabel("AWACS")
   self.AwacsSRS:SetVolume(Volume)
+  if Speaker then
+    self.AwacsSRS:SetSpeakerPiper(Speaker)
+  end
   if self.PathToGoogleKey then
     --self.AwacsSRS:SetGoogle(self.PathToGoogleKey)
     self.AwacsSRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
@@ -2235,12 +2244,14 @@ end
 -- @param #string Culture (Optional) Defaults to "en-US"
 -- @param #string Voice (Optional) Use a specifc voice with the @{#MSRS.SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
+-- @param #string Speaker (Optional) Use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @return #AWACS self
-function AWACS:SetSRSVoiceCAP(Gender, Culture, Voice)
+function AWACS:SetSRSVoiceCAP(Gender, Culture, Voice, Speaker)
   self:T(self.lid.."SetSRSVoiceCAP")
   self.CAPGender = Gender or "male"
   self.CAPCulture = Culture or "en-US"
   self.CAPVoice = Voice or "en-GB-Standard-B"
+  self.CAPSpeaker = Speaker
   return self
 end
 
@@ -3831,7 +3842,13 @@ function AWACS:_CheckInAI(FlightGroup,Group,AuftragsNr)
       CAPVoice = self.CapVoices[math.floor(math.random(1,10))]
     end
     
-    FlightGroup:SetSRS(self.PathToSRS,self.CAPGender,self.CAPCulture,CAPVoice,self.Port,self.PathToGoogleKey,"FLIGHT",1)
+    FlightGroup:SetSRS(self.PathToSRS,self.CAPGender,self.CAPCulture,CAPVoice,self.Port,self.PathToGoogleKey,"FLIGHT",1,self.Provider)
+    if self.Backend then
+      FlightGroup.srs:SetBackend(self.Backend)
+    end
+    if self.CAPSpeaker then
+      FlightGroup.srs:SetSpeakerPiper(self.CAPSpeaker)
+    end
     
     local checkai = self.gettext:GetEntry("CHECKINAI",self.locale)
     text = string.format(checkai,self.callsigntxt, managedgroup.CallSign, self.CAPTimeOnStation, self.AOName)

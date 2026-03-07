@@ -1259,8 +1259,9 @@ end
 -- @param #number Volume (Optional) Volume, between 0.0 and 1.0. Defaults to 1.0
 -- @param #string PathToGoogleKey Path to Google TTS credentials.
 -- @param #string Provider (Optional) TTS Provider to be used.
+-- @param #string Backend (Optional) TTS Backend to be used.
 -- @return #RANGE self
-function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume, PathToGoogleKey,Provider)
+function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume, PathToGoogleKey,Provider,Backend)
 
   if PathToSRS or MSRS.path then
 
@@ -1273,6 +1274,9 @@ function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume,
     self.controlmsrs:SetVolume(Volume or 1.0)
     if self.rangezone then
       self.controlmsrs:SetCoordinate(self.rangezone:GetCoordinate())
+    end
+    if Backend then
+      self.controlmsrs:SetBackend(Backend)
     end
     self.controlsrsQ = MSRSQUEUE:New("CONTROL")
 
@@ -1292,6 +1296,9 @@ function RANGE:SetSRS(PathToSRS, Port, Coalition, Frequency, Modulation, Volume,
       self.instructmsrs:SetProviderOptionsGoogle(PathToGoogleKey,PathToGoogleKey)
       self.instructmsrs:SetProvider(MSRS.Provider.GOOGLE)
     end
+    if Backend then
+      self.instructmsrs:SetBackend(Backend)
+    end
     if Provider then
       self.controlmsrs:SetProvider(Provider)
       self.instructmsrs:SetProvider(Provider)
@@ -1310,8 +1317,9 @@ end
 -- @param #string culture (Optional) Culture, defaults to "en-US".
 -- @param #string gender (Optional) Gender, defaults to "female".
 -- @param #string relayunitname Name of the unit used for transmission location.
+-- @param #string Speaker (Optional) Use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @return #RANGE self
-function RANGE:SetSRSRangeControl( frequency, modulation, voice, culture, gender, relayunitname )
+function RANGE:SetSRSRangeControl( frequency, modulation, voice, culture, gender, relayunitname, Speaker )
   if not self.instructmsrs then
     self:E(self.lid.."Use myrange:SetSRS() once first before using myrange:SetSRSRangeControl!")
     return self
@@ -1320,6 +1328,9 @@ function RANGE:SetSRSRangeControl( frequency, modulation, voice, culture, gender
   self.controlmsrs:SetFrequencies(self.rangecontrolfreq)
   self.controlmsrs:SetModulations(modulation or radio.modulation.AM)
   self.controlmsrs:SetVoice(voice)
+  if Speaker then
+    self.controlmsrs:SetSpeakerPiper(Speaker)
+  end
   self.controlmsrs:SetCulture(culture or "en-US")
   self.controlmsrs:SetGender(gender or "female")
   self.rangecontrol = true
@@ -1344,8 +1355,9 @@ end
 -- @param #string culture (Optional) Culture, defaults to "en-US".
 -- @param #string gender (Optional) Gender, defaults to "male".
 -- @param #string relayunitname Name of the unit used for transmission location.
+-- @param #string Speaker (Optional) Use a specific speaker for a voice if Piper is used as provider (only Hound-TTS backend).
 -- @return #RANGE self
-function RANGE:SetSRSRangeInstructor( frequency, modulation, voice, culture, gender, relayunitname )
+function RANGE:SetSRSRangeInstructor( frequency, modulation, voice, culture, gender, relayunitname, Speaker )
   if not self.instructmsrs then
     self:E(self.lid.."Use myrange:SetSRS() once first before using myrange:SetSRSRangeInstructor!")
     return self
@@ -1354,6 +1366,9 @@ function RANGE:SetSRSRangeInstructor( frequency, modulation, voice, culture, gen
   self.instructmsrs:SetFrequencies(self.instructorfreq)
   self.instructmsrs:SetModulations(modulation or radio.modulation.AM)
   self.instructmsrs:SetVoice(voice)
+  if Speaker then
+    self.instructmsrs:SetSpeakerPiper(Speaker)
+  end
   self.instructmsrs:SetCulture(culture or "en-US")
   self.instructmsrs:SetGender(gender or "male")
   self.instructor = true
