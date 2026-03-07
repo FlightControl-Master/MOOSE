@@ -1415,11 +1415,12 @@ end
 -- @param #number Modulation (Optional) Modulation to use, defaults to radio.modulation.AM.
 -- @param #number Interval Seconds between each update call.
 -- @param #number Number Number of Frequencies to create, can be 1..10.
+-- @param #string Provider (Optional) TTS Provider to be used.
 -- @return #AWACS self
-function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval,Number)
+function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval,Number,Provider)
   self:T(self.lid.."SetTacticalRadios")
   if not self.AwacsSRS then
-    MESSAGE:New("AWACS: Setup SRS in your code BEFORE trying to add tac radios please!",30,"ERROR",true):ToLog():ToAll()
+    MESSAGE:New("AWACS: Setup SRS in your code BEFORE trying to add tactical radios please!",30,"ERROR",true):ToLog():ToAll()
     return self
   end
   self.TacticalMenu = true
@@ -1447,6 +1448,9 @@ function AWACS:SetTacticalRadios(BaseFreq,Increase,Modulation,Interval,Number)
       --self.TacticalSRS:SetGoogle(self.PathToGoogleKey)
       self.TacticalSRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
       self.TacticalSRS:SetProvider(MSRS.Provider.GOOGLE)
+    end
+    if Provider then
+      self.TacticalSRS:SetProvider(Provider)
     end
     self.TacticalSRSQ = MSRSQUEUE:New("Tactical AWACS")
   end
@@ -2186,8 +2190,9 @@ end
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS; if you use a config file for MSRS, hand in nil here.
 -- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
 -- @param #string Backend (Optional) Your MSRS Backend if different from your config file settings, e.g. MSRS.Backend.SRSEXE or MSRS.Backend.GRPC
+-- @param #string Provider (Optional) TTS Provider to be used.
 -- @return #AWACS self
-function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Backend)
+function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Backend,Provider)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio" 
   self.Gender = Gender or MSRS.gender or "male"
@@ -2210,6 +2215,9 @@ function AWACS:SetSRS(PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey
     --self.AwacsSRS:SetGoogle(self.PathToGoogleKey)
     self.AwacsSRS:SetProviderOptionsGoogle(self.PathToGoogleKey,self.AccessKey)
     self.AwacsSRS:SetProvider(MSRS.Provider.GOOGLE)
+  end
+  if Provider then
+    self.AwacsSRS:SetProvider(Provider)
   end
    -- Pre-configured Google?
   if (not PathToGoogleKey) and self.AwacsSRS:GetProvider() == MSRS.Provider.GOOGLE then

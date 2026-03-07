@@ -2839,7 +2839,7 @@ function CSAR:onafterStart(From, Event, To)
     self.msrs:SetCoalition(self.coalition)
     self.msrs:SetVoice(self.SRSVoice)
     self.msrs:SetGender(self.SRSGender)
-    if self.SRSGPathToCredentials and (not self.SRSProvider) then
+    if self.SRSGPathToCredentials then
       self.msrs:SetProviderOptionsGoogle(self.SRSGPathToCredentials,self.SRSGPathToCredentials)
       self.msrs:SetProvider(MSRS.Provider.GOOGLE)
     end

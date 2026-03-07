@@ -4908,11 +4908,12 @@ end
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
 -- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
 -- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS; if you use a config file for MSRS, hand in nil here.
--- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, hand in nil here.
+-- @param #string AccessKey (Optional) Your Google API access key. This is necessary if DCS-gRPC is used as backend; if you use a config file for MSRS, you can hand in nil here.
 -- @param Core.Point#COORDINATE Coordinate (Optional) Coordinate from which the controller radio is sending
--- @param #string Backend (Optional) MSRS Backend to be used, can be MSRS.Backend.SRSEXE or MSRS.Backend.GRPC; if you use a config file for MSRS, hand in nil here.
+-- @param #string Backend (Optional) MSRS Backend to be used, can be MSRS.Backend.SRSEXE or MSRS.Backend.GRPC; if you use a config file for MSRS, you can hand in nil here.
+-- @param #string Provider (Optional) TTS Provider to be used.
 -- @return #PLAYERTASKCONTROLLER self
-function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Coordinate,Backend)
+function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,AccessKey,Coordinate,Backend,Provider)
   self:T(self.lid.."SetSRS")
   self.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio" --
   self.Gender = Gender or MSRS.gender or "male" --
@@ -4945,6 +4946,9 @@ function PLAYERTASKCONTROLLER:SetSRS(Frequency,Modulation,PathToSRS,Gender,Cultu
     self.PathToGoogleKey = MSRS.poptions.gcloud.credentials
     self.Voice = Voice or MSRS.poptions.gcloud.voice
     self.AccessKey = AccessKey or MSRS.poptions.gcloud.key
+  end
+  if Provider then
+    self.SRS:SetProvider(Provider)
   end
   if Coordinate then
     self.SRS:SetCoordinate(Coordinate)

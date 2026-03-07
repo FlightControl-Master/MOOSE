@@ -579,8 +579,9 @@ end
 -- @param #string Culture (Optional) The culture to be used, defaults to "en-GB"
 -- @param #string Gender (Optional)  The gender to be used, defaults to "male"
 -- @param #string GoogleCredentials (Optional) Path to google credentials
+-- @param #string Provider (Optional) TTS Provider to be used.
 -- @return #AICSAR self
-function AICSAR:SetSRSTTSRadio(OnOff,Path,Frequency,Modulation,Port,Voice,Culture,Gender,GoogleCredentials)
+function AICSAR:SetSRSTTSRadio(OnOff,Path,Frequency,Modulation,Port,Voice,Culture,Gender,GoogleCredentials,Provider)
   self:T(self.lid .. "SetSRSTTSRadio")
   self.SRSTTSRadio = OnOff and true
   self.SRSRadio = false
@@ -596,10 +597,13 @@ function AICSAR:SetSRSTTSRadio(OnOff,Path,Frequency,Modulation,Port,Voice,Cultur
     self.SRS:SetVoice(Voice)
     self.SRS:SetCulture(Culture)
     self.SRS:SetGender(Gender)
-    if GoogleCredentials then
+    if GoogleCredentials and not Provider then
       self.SRS:SetProviderOptionsGoogle(GoogleCredentials,GoogleCredentials)
       self.SRS:SetProvider(MSRS.Provider.GOOGLE)
       self.SRSGoogle = true
+    end
+    if Provider then
+      self.SRS:SetProvider(Provider)
     end
     self.SRSQ = MSRSQUEUE:New(self.alias)
   end

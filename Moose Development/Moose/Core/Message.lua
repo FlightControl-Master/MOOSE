@@ -495,7 +495,8 @@ _MESSAGESRS = {}
 -- @param #number Volume (optional) Volume, can be between 0.0 and 1.0 (loudest).
 -- @param #string Label (optional) Label, defaults to "MESSAGE" or the Message Category set.
 -- @param Core.Point#COORDINATE Coordinate (optional) Coordinate this messages originates from.
--- @param #string Backend (optional) Backend to be used, can be MSRS.Backend.SRSEXE or MSRS.Backend.GRPC
+-- @param #string Backend (optional) Backend to be used, can be MSRS.Backend.SRSEXE or MSRS.Backend.GRPC or MSRS.Backend.HOUND etc
+-- @param #string Provider (optional) Privider to be used, can be MSRS.Provider.WINDOWS or MSRS.Backend.GOOGLE or MSRS.Backend.PIPER etc
 -- @usage
 --          -- Mind the dot here, not using the colon this time around!
 --          -- Needed once only
@@ -503,7 +504,7 @@ _MESSAGESRS = {}
 --          -- later on in your code
 --          MESSAGE:New("Test message!",15,"SPAWN"):ToSRS()
 --          
-function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,Gender,Culture,Voice,Coalition,Volume,Label,Coordinate,Backend)
+function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,Gender,Culture,Voice,Coalition,Volume,Label,Coordinate,Backend,Provider)
   
   _MESSAGESRS.PathToSRS = PathToSRS or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
   
@@ -534,6 +535,10 @@ function MESSAGE.SetMSRS(PathToSRS,Port,PathToCredentials,Frequency,Modulation,G
   if PathToCredentials then
     _MESSAGESRS.MSRS:SetProviderOptionsGoogle(PathToCredentials)
     _MESSAGESRS.MSRS:SetProvider(MSRS.Provider.GOOGLE)
+  end
+  
+  if Provider then
+    _MESSAGESRS.MSRS:SetProvider(Provider)
   end
   
   _MESSAGESRS.label = Label or MSRS.Label or "MESSAGE"

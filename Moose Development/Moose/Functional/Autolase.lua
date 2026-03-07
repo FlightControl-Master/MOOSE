@@ -502,10 +502,11 @@ end
 -- @param #number Port (Optional) Defaults to 5002
 -- @param #string Voice (Optional) Use a specifc voice with the @{Sound.SRS#SetVoice} function, e.g, `:SetVoice("Microsoft Hedda Desktop")`.
 -- Note that this must be installed on your windows system. Can also be Google voice types, if you are using Google TTS.
--- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest)
--- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS
+-- @param #number Volume (Optional) Volume - between 0.0 (silent) and 1.0 (loudest).
+-- @param #string PathToGoogleKey (Optional) Path to your google key if you want to use google TTS.
+-- @param #string Provider (Optional) TTS Provider to be used.
 -- @return #AUTOLASE self 
-function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Culture,Port,Voice,Volume,PathToGoogleKey)
+function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Culture,Port,Voice,Volume,PathToGoogleKey,Provider)
   if OnOff then
     self.useSRS = true
     self.SRSPath = Path or MSRS.path or "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
@@ -528,9 +529,12 @@ function AUTOLASE:SetUsingSRS(OnOff,Path,Frequency,Modulation,Label,Gender,Cultu
     self.SRS:SetVoice(self.Voice)
     self.SRS:SetCoalition(self.coalition)
     self.SRS:SetVolume(self.Volume)
-    if self.PathToGoogleKey then
+    if self.PathToGoogleKey and not Provider then
       self.SRS:SetProviderOptionsGoogle(PathToGoogleKey,PathToGoogleKey)
       self.SRS:SetProvider(MSRS.Provider.GOOGLE)
+    end
+    if Provider then
+      self.SRS:SetProvider(Provider)
     end
     self.SRSQueue = MSRSQUEUE:New(self.alias)
   else
