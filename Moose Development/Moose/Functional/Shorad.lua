@@ -791,10 +791,8 @@ do
         if targetcat == Object.Category.UNIT then -- UNIT
           targetunit = UNIT:Find(targetdata)
         elseif targetcat == Object.Category.STATIC then  -- STATIC
-          if not self.Samset or self.Samset:CountAlive() == 0 then return self end
-
-          if not self.Groupset or self.Groupset:CountAlive() == 0 then return self end
-          
+          if (not self.Samset) or self.Samset:CountAlive() == 0 then return self end
+          if (not self.Groupset) or self.Groupset:CountAlive() == 0 then return self end
           local tgtcoord = COORDINATE:NewFromVec3(targetdata:getPoint())
          local tgtgrp1 = self.Samset:FindNearestGroupFromPointVec2(tgtcoord)
           if not tgtgrp1 then return self end
