@@ -2584,9 +2584,10 @@ end
 -- @param Core.Point#COORDINATE coordinate (Optional) Coordinate to be used
 -- @param #number speed (Optional) Speed to be used
 -- @param #string speaker (Optional) PIPER voice can have various speakers, set this here if you use PIPER/HOUND with a fitting voice.
+-- @param #number priority (Optional) Priority of this transmission. Can be [1..100], default is 50. Higher is taken up earlier from the queue.
 -- @return #MSRSQUEUE.Transmission Radio transmission table.
-function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label,coordinate,speed,speaker)
-  self:T({Text=text, Dur=duration, start=tstart, int=interval, sub=subgroups, subt=subtitle, sudb=subduration, F=frequency, M=modulation, G=gender, C=culture, V=voice, Vol=volume, L=label, S=speed})
+function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label,coordinate,speed,speaker,priority)
+  self:T({Text=text, Dur=duration, start=tstart, int=interval, sub=subgroups, subt=subtitle, sudb=subduration, F=frequency, M=modulation, G=gender, C=culture, V=voice, Vol=volume, L=label, S=speed, P=priority})
   self:I({provider=msrs.provider})
   if self.TransmitOnlyWithPlayers then
     if self.PlayerSet and self.PlayerSet:CountAlive() == 0 then
@@ -2633,6 +2634,7 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   elseif msrs.Speaker then
    transmission.speaker = msrs.speaker
   end
+  transmission.priority = priority or 50
   -- Add transmission to queue.
   self:AddTransmission(transmission)
 
