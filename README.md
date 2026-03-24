@@ -5,7 +5,7 @@
 You can find documentation for MOOSE in the following places:
 
 - Generated documentation of all MOOSE classes:
-  - For the `master` branch: [MOOSE_DOCS]
+  - For the `master-ng` branch: [MOOSE_DOCS]
   - For the `develop` branch: [MOOSE_DOCS_DEVELOP]
 - Documentation:
   - The old Guides can be found in our [archive].
