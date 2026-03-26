@@ -1380,12 +1380,12 @@ function DATABASE:_RegisterDynamicGroup(Groupname)
       local DCSUnitName = DCSUnit:getName()
   
       -- Add unit.
-      self:I(string.format("Register Unit: %s", tostring(DCSUnitName)))
+      self:T(string.format("Register Unit: %s", tostring(DCSUnitName)))
       self:AddUnit( tostring(DCSUnitName), true )
   
     end
   else
-    self:E({"Group does not exist: ", DCSGroup})
+    self:T({"Group does not exist: ", DCSGroup})
   end
   return self
 end

@@ -2102,6 +2102,8 @@ function RAT:_InitAircraft(DCSgroup)
   local DCSdesc=DCSunit:getDesc()
   local DCScategory=DCSgroup:getCategory()
   local DCStype=DCSunit:getTypeName()
+  self:I({typename=DCStype})
+  UTILS.PrintTableToLog(DCSdesc.box,1,noprint,3,seen)
 
   -- set category
   if DCScategory==Group.Category.AIRPLANE then
@@ -2136,7 +2138,12 @@ function RAT:_InitAircraft(DCSgroup)
 
   -- Store all descriptors.
   --self.aircraft.descriptors=DCSdesc
-
+  
+    -- Tomcat sizing as default
+  self.aircraft.length=12          
+  self.aircraft.height=4
+  self.aircraft.width=10.3
+  
   -- aircraft dimensions
   if DCSdesc.box then
     self.aircraft.length=DCSdesc.box.max.x
@@ -2158,6 +2165,10 @@ function RAT:_InitAircraft(DCSgroup)
     self.aircraft.length=11.48          
     self.aircraft.height=4.11
     self.aircraft.width=13.41
+  elseif DCStype == "F-14A-135-GR" then
+    self.aircraft.length=12          
+    self.aircraft.height=4
+    self.aircraft.width=10.3
   end
 
   self.aircraft.box=math.max(self.aircraft.length,self.aircraft.width)

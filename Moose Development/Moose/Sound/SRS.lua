@@ -2124,8 +2124,8 @@ function MSRS:_HoundTextToSpeech(Message,Frequencies,Modulations,Volume,Label,Co
   --end
   
   local provider = self.provider
-  provider=provider:gsub("gcloud", "google")
-  provider=provider:gsub("win", "sapi")
+  --provider=provider:gsub("gcloud", "google")
+  --provider=provider:gsub("win", "sapi")
   
   local TransmissionP = {
     freqs = freqs,
@@ -2584,10 +2584,11 @@ end
 -- @param Core.Point#COORDINATE coordinate (Optional) Coordinate to be used
 -- @param #number speed (Optional) Speed to be used
 -- @param #string speaker (Optional) PIPER voice can have various speakers, set this here if you use PIPER/HOUND with a fitting voice.
+-- @param #number priority (Optional) Priority of this transmission. Can be [1..100], default is 50. Higher is taken up earlier from the queue.
 -- @return #MSRSQUEUE.Transmission Radio transmission table.
-function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label,coordinate,speed,speaker)
-  self:T({Text=text, Dur=duration, start=tstart, int=interval, sub=subgroups, subt=subtitle, sudb=subduration, F=frequency, M=modulation, G=gender, C=culture, V=voice, Vol=volume, L=label, S=speed})
-  self:T({provider=msrs.provider})
+function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgroups, subtitle, subduration, frequency, modulation, gender, culture, voice, volume, label,coordinate,speed,speaker,priority)
+  self:T({Text=text, Dur=duration, start=tstart, int=interval, sub=subgroups, subt=subtitle, sudb=subduration, F=frequency, M=modulation, G=gender, C=culture, V=voice, Vol=volume, L=label, S=speed, P=priority})
+  self:I({provider=msrs.provider})
   if self.TransmitOnlyWithPlayers then
     if self.PlayerSet and self.PlayerSet:CountAlive() == 0 then
       return self
@@ -2633,6 +2634,7 @@ function MSRSQUEUE:NewTransmission(text, duration, msrs, tstart, interval, subgr
   elseif msrs.Speaker then
    transmission.speaker = msrs.speaker
   end
+  transmission.priority = priority or 50
   -- Add transmission to queue.
   self:AddTransmission(transmission)
 
@@ -2700,151 +2702,153 @@ function MSRSQUEUE:CalcTransmisstionDuration()
   return T
 end
 
---- Check radio queue for transmissions to be broadcasted.
+-- Check radio queue for transmissions to be broadcasted.
 -- @param #MSRSQUEUE self
 -- @param #number delay Delay in seconds before checking.
 function MSRSQUEUE:_CheckRadioQueue(delay)
 
   -- Transmissions in queue.
-  local N=#self.queue
+  local N = #self.queue
 
   -- Debug info.
-  self:T2(self.lid..string.format("Check radio queue %s: delay=%.3f sec, N=%d, checking=%s", self.alias, delay or 0, N, tostring(self.checking)))
+  self:T2(self.lid..string.format(
+    "Check radio queue %s: delay=%.3f sec, N=%d, checking=%s",
+    self.alias, delay or 0, N, tostring(self.checking)
+  ))
 
-  if delay and delay>0 then
-
+  if delay and delay > 0 then
     -- Delayed call.
     self:ScheduleOnce(delay, MSRSQUEUE._CheckRadioQueue, self)
 
     -- Checking on.
-    self.checking=true
+    self.checking = true
+    return
+  end
 
-  else
+  -- Check if queue is empty.
+  if N == 0 then
+    -- Debug info.
+    self:T(self.lid..string.format("Check radio queue %s empty ==> disable checking", self.alias))
+    -- Queue is now empty. Nothing else to do. We start checking again if a transmission is added.
+    self.checking = false
+    return
+  end
 
-    -- Check if queue is empty.
-    if N==0 then
+  -- Get current abs time.
+  local time = timer.getAbsTime()
 
-      -- Debug info.
-      self:T(self.lid..string.format("Check radio queue %s empty ==> disable checking", self.alias))
+  -- Checking on.
+  self.checking = true
 
-      -- Queue is now empty. Nothing to else to do. We start checking again, if a transmission is added.
-      self.checking=false
+  -- Set dt.
+  local dt = self.dt
 
-      return
-    end
+  local playing = false
+  local nextTx = nil  -- #MSRSQUEUE.Transmission
+  local remove = nil
 
-    -- Get current abs time.
-    local time=timer.getAbsTime()
+  -- Helper: read priority with default 50; clamp to [1,100]
+  local function getPriority(tx)
+    local p = tx.priority
+    if p == nil then return 50 end
+    if p < 1 then return 1 end
+    if p > 100 then return 100 end
+    return p
+  end
 
-    -- Checking on.
-    self.checking=true
+  -- Scan queue to determine status and pick the next transmission.
+  -- Rules:
+  --   * If something is currently playing and not yet finished -> keep playing, compute dt.
+  --   * Otherwise, among eligible (due and interval-ok, not playing) candidates pick max priority.
+  --   * If tie -> earlier in queue wins automatically by iteration order.
+  local bestPrio = nil
 
-    -- Set dt.
-    local dt=self.dt
+  for i, _transmission in ipairs(self.queue) do
+    local transmission = _transmission  -- #MSRSQUEUE.Transmission
 
+    -- Check if transmission time has passed.
+    if time >= transmission.Tplay then
+      -- Check if transmission is currently playing.
+      if transmission.isplaying then
+        -- Check if transmission is finished.
+        if time >= transmission.Tstarted + transmission.duration then
+          -- Transmission over.
+          transmission.isplaying = false
 
-    local playing=false
-    local next=nil  --#MSRSQUEUE.Transmission
-    local remove=nil
-    for i,_transmission in ipairs(self.queue) do
-      local transmission=_transmission  --#MSRSQUEUE.Transmission
+          -- Remove ith element in queue.
+          remove = i
 
-      -- Check if transmission time has passed.
-      if time>=transmission.Tplay then
-
-        -- Check if transmission is currently playing.
-        if transmission.isplaying then
-
-          -- Check if transmission is finished.
-          if time>=transmission.Tstarted+transmission.duration then
-
-            -- Transmission over.
-            transmission.isplaying=false
-
-            -- Remove ith element in queue.
-            remove=i
-
-            -- Store time last transmission finished.
-            self.Tlast=time
-
-          else -- still playing
-
-            -- Transmission is still playing.
-            playing=true
-
-            dt=transmission.duration-(time-transmission.Tstarted)
-
-          end
-
-        else -- not playing yet
-
-          local Tlast=self.Tlast
-
-          if transmission.interval==nil  then
-
-            -- Not playing ==> this will be next.
-            if next==nil then
-              next=transmission
-            end
-
-          else
-
-            if Tlast==nil or time-Tlast>=transmission.interval then
-              next=transmission
-            else
-
-            end
-          end
-
-          -- We got a transmission or one with an interval that is not due yet. No need for anything else.
-          if next or Tlast then
-            break
-          end
-
+          -- Store time last transmission finished.
+          self.Tlast = time
+        else
+          -- Transmission is still playing.
+          playing = true
+          dt = transmission.duration - (time - transmission.Tstarted)
+          -- While something is playing, we keep scanning to see if it just finished at this exact loop,
+          -- but do not pick a new nextTx until the player finishes.
         end
 
       else
+        -- Not playing yet: evaluate eligibility (interval logic), then consider for priority selection.
+        local Tlast = self.Tlast
+        local eligible = false
 
-          -- Transmission not due yet.
+        if transmission.interval == nil then
+          -- No interval constraint.
+          eligible = true
+        else
+          -- Interval-constrained: only eligible if no last or enough time passed since last finish.
+          if (Tlast == nil) or (time - Tlast >= transmission.interval) then
+            eligible = true
+          end
+        end
 
+        if eligible and not playing then
+          local prio = getPriority(transmission)
+
+          if bestPrio == nil or prio > bestPrio then
+            bestPrio = prio
+            nextTx = transmission
+            -- Earliest in queue preserves tie-breaking (we only replace on strictly higher prio).
+          end
+        end
+        -- Note: do NOT break early—need to scan all to find the true highest priority candidate.
       end
+    else
+      -- Transmission not due yet.
     end
-
-    -- Found a new transmission.
-    if next~=nil and not playing then
-      -- Debug info.
-      self:T(self.lid..string.format("Broadcasting text=\"%s\" at T=%.3f", next.text, time))
-
-      -- Call SRS.
-      self:Broadcast(next)
-
-      next.isplaying=true
-      next.Tstarted=time
-      dt=next.duration
-    end
-
-    -- Remove completed call from queue.
-    if remove then
-      -- Remove from queue.
-      table.remove(self.queue, remove)
-      N=N-1
-
-      -- Check if queue is empty.
-      if #self.queue==0 then
-        -- Debug info.
-        self:T(self.lid..string.format("Check radio queue %s empty ==> disable checking", self.alias))
-
-        self.checking=false
-
-        return
-      end
-    end
-
-    -- Check queue.
-    self:_CheckRadioQueue(dt)
-
   end
 
+  -- Found a new transmission and nothing is currently playing.
+  if nextTx ~= nil and not playing then
+    -- Debug info.
+    self:T(self.lid..string.format('Broadcasting text="%s" at T=%.3f (prio=%d)', nextTx.text, time, (nextTx.priority or 50)))
+
+    -- Call SRS.
+    self:Broadcast(nextTx)
+
+    nextTx.isplaying = true
+    nextTx.Tstarted  = time
+    dt = nextTx.duration
+  end
+
+  -- Remove completed call from queue.
+  if remove then
+    -- Remove from queue.
+    table.remove(self.queue, remove)
+    N = N - 1
+
+    -- Check if queue is empty.
+    if #self.queue == 0 then
+      -- Debug info.
+      self:T(self.lid..string.format("Check radio queue %s empty ==> disable checking", self.alias))
+      self.checking = false
+      return
+    end
+  end
+
+  -- Continue checking.
+  self:_CheckRadioQueue(dt)
 end
 
 MSRS.LoadConfigFile()
