@@ -5391,13 +5391,13 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
         local distToUnit=Unit and ccoord:Get2DDistance(Unit:GetCoordinate())or 0
         local isHercDrop=Crate:WasDropped(true)
         if not isHercDrop and distToUnit>baseDist then
-      elseif self.UseC130LoadAndUnload and self:IsC130J(Unit) and distToUnit<15 then
+      elseif  self:IsC130J(Unit) and distToUnit<15 then
         -- self:_SendMessage("Please unload crates from the C-130 before building!",10,false,Group)
         -- return self
-      elseif self.UseC130LoadAndUnload and self:IsHook(Unit) and distToUnit<5 then
+      elseif self:IsHook(Unit) and distToUnit<5 then
         -- self:_SendMessage("Please unload crates from the CH-47 before building!",10,false,Group)
         -- return self
-      elseif self.UseC130LoadAndUnload and (Unit:GetTypeName()=="Mi-8MTV2" or Unit:GetTypeName()=="Mi-8MT") and distToUnit<8 then
+      elseif (Unit:GetTypeName()=="Mi-8MTV2" or Unit:GetTypeName()=="Mi-8MT") and distToUnit<8 then
       else
         --local testmarker = ccoord:MarkToAll("Crate found",true,"Build Position")
         if not buildables[name] then
@@ -8454,6 +8454,13 @@ end
 -- @return #number distance Distance to closest zone
 -- @return #number width Radius of zone or width of ship
 function CTLD:IsUnitInZone(Unit,Zonetype)
+  if not Unit then
+    if Zonetype == CTLD.CargoZoneType.SHIP then
+      return false, nil, nil, 1000000, nil
+    else
+      return false, nil, nil, 1000000
+    end
+  end
   self:T(self.lid .. " IsUnitInZone")
   self:T(Zonetype)
   local unitname = Unit:GetName()
@@ -8476,6 +8483,13 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
   local zonewret = nil
   local zonenameret = nil
   local unitcoord = Unit:GetCoordinate()
+  if not unitcoord then
+    if Zonetype == CTLD.CargoZoneType.SHIP then
+      return false, nil, nil, 1000000, nil
+    else
+      return false, nil, nil, 1000000
+    end
+  end
   local unitVec2 = unitcoord:GetVec2()
   for _,_cargozone in pairs(zonetable) do
     local czone = _cargozone -- #CTLD.CargoZone
