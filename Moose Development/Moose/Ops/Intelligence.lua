@@ -116,7 +116,7 @@ INTEL = {
   DopplerNotchSin     = math.sin(math.rad(15)),
   DopplerMinSpeedMps  = 50,
   DopplerRCS          = true,
-  RangeM  = 200 * 1000,
+  DopplerRadarRangeM  = 200 * 1000,
 }
 
 --- Detected item info.
@@ -2759,7 +2759,7 @@ function INTEL:_CheckDopplerDetection(TargetUnit, RadarUnit)
     -- Effective detection range = DopplerRadarRangeM × (σ_eff / σ_ref)^0.25
     -- Beyond that range: target not detected (hard cutoff at 100%; soft fade
     -- starts at 80% of R_max to smooth the transition).
-    if self.DopplerRCS and slant > 1 then
+    if self.DopplerRCS == true and slant > 1 then
         local sigma = self:_GetAspectRCS(TargetUnit, rpos, spd, tvel)
         -- (σ/σ_ref)^0.25 — clamp to avoid log of 0 for VLO aircraft
         local scale  = (sigma / INTEL.RCS_Reference) ^ 0.25
