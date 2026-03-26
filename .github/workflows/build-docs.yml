@@ -40,7 +40,7 @@ jobs:
       # Prepare build environment
       #########################################################################
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare build output folders
         run: |
@@ -48,7 +48,7 @@ jobs:
           mkdir -p build/doc
 
       - name: Checkout FlightControls modified luadocumentor
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: Applevangelist/luadocumentor
           path: './build/tools/luadocumentor'
@@ -129,7 +129,7 @@ jobs:
           fi
 
       - name: Checkout ${{ steps.set_doc_repo.outputs.docrepo }} to folder MOOSE_DOCS
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ github.repository_owner }}/${{ steps.set_doc_repo.outputs.docrepo }}
           path: './build/MOOSE_DOCS'

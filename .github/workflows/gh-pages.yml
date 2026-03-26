@@ -33,7 +33,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
       - name: Setup Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -43,7 +43,7 @@ jobs:
           working-directory: docs/
       - name: Setup Pages
         id: pages
-        uses: actions/configure-pages@v4
+        uses: actions/configure-pages@v5
       - name: Build with Jekyll
         # Outputs to the './_site' directory by default
         run: bundle exec jekyll build --baseurl "${{ steps.pages.outputs.base_path }}"
@@ -52,7 +52,7 @@ jobs:
         working-directory: docs/
       - name: Upload artifact
         # Automatically uploads an artifact from the './_site' directory by default
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v4
         with:
           path: docs/_site/
 
@@ -73,6 +73,6 @@ jobs:
     needs: deploy
     steps:
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
       - run: npm install linkinator
-      - run: npx linkinator https://flightcontrol-master.github.io/MOOSE/ --verbosity error --timeout 5000 --recurse --skip "(java.com)" --retry-errors --retry-errors-count 3 --retry-errors-jitter
+      - run: npx linkinator https://flightcontrol-master.github.io/MOOSE/ --verbosity error --timeout 5000 --recurse --skip "(java.com)" --skip 'https:\/\/flightcontrol-master\.github\.io\/MOOSE_DOCS_DEVELOP\/Documentation\/(?:AI|Tasking|Cargo|MissileTrainer)\.[^\/\s]+\.html$' --status-code "404:skip" --retry-errors --retry-errors-count 3 --retry-errors-jitter

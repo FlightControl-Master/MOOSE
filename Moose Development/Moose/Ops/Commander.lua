@@ -1914,10 +1914,11 @@ end
 -- @param #string MissionType Mission Type.
 -- @param #number NassetsMin Min number of required assets.
 -- @param #number NassetsMax Max number of required assets.
+-- @param #number (optional) RangeMin Minimum range to target. (Default is 0, which means no minimum range)
 -- @return #boolean If `true` enough assets could be recruited.
 -- @return #table Assets that have been recruited from all legions.
 -- @return #table Legions that have recruited assets.
-function COMMANDER:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMax)
+function COMMANDER:RecruitAssetsForTarget(Target, MissionType, NassetsMin, NassetsMax, RangeMin)
 
   -- Cohorts.
   local Cohorts=self:_GetCohorts()
@@ -1926,7 +1927,7 @@ function COMMANDER:RecruitAssetsForTarget(Target, MissionType, NassetsMin, Nasse
   local TargetVec2=Target:GetVec2()
   
   -- Recruite assets.
-  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2)
+  local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, MissionType, nil, NassetsMin, NassetsMax, TargetVec2, nil, nil, nil , nil, nil, nil, nil, nil, nil, nil, RangeMin)
 
 
   return recruited, assets, legions

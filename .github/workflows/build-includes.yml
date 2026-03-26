@@ -40,7 +40,7 @@ jobs:
       # Prepare build environment
       #########################################################################
       - name: Check out repository code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Prepare build output folders
         run: |
@@ -115,7 +115,7 @@ jobs:
       # Push to MOOSE_INCLUDE
       #########################################################################
       - name: Checkout MOOSE_INCLUDE
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           repository: ${{ github.repository_owner }}/MOOSE_INCLUDE
           path: './build/MOOSE_INCLUDE'

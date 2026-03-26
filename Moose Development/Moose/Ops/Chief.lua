@@ -257,6 +257,7 @@ CHIEF = {
   tacview        = false,
   Nsuccess       =     0,
   Nfailure       =     0,
+  LegionRecruitMinRange = {}
 }
 
 --- Defence condition.
@@ -2465,9 +2466,9 @@ function CHIEF:CheckTargetQueue()
 
               -- Debug info.
               self:T2(self.lid..string.format("Recruiting assets for mission type %s [performance=%d] of target %s", mp.MissionType, mp.Performance, target:GetName()))
-              
+              local minRange = self.LegionRecruitMinRange[target.category]
               -- Recruit assets.
-              local recruited, assets, legions=self.commander:RecruitAssetsForTarget(target, mp.MissionType, NassetsMin, NassetsMax)
+              local recruited, assets, legions=self.commander:RecruitAssetsForTarget(target, mp.MissionType, NassetsMin, NassetsMax, minRange)
               
               if recruited then
               
@@ -3367,6 +3368,15 @@ end
 -- @return #boolean If `true`, one of the cohorts can run the mission.
 function CHIEF:CanMission(Mission)
     return self.commander and self.commander:CanMission(Mission)
+end
+
+--- Exclude legion recruitment that are below a minimum range to target based on the target category.
+--- Ex. Prevent intercepts from spawning too close to the target.
+-- @param #CHIEF self
+-- @param #string TargetCategory The target category.
+-- @param #number MinRange Minimum range in meters.
+function CHIEF:AddLegionRecruitMinRange(TargetCategory, MinRange)
+  self.LegionRecruitMinRange[TargetCategory] = MinRange
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

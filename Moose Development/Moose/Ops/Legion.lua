@@ -2577,8 +2577,11 @@ end
 -- @param #number RefuelSystem Refueling system (boom or probe).
 -- @param #number CargoWeight Cargo weight [kg]. This checks the cargo bay of the cohort assets and ensures that it is large enough to carry the given cargo weight.
 -- @param #number MaxWeight Max weight [kg]. This checks whether the cohort asset group is not too heavy.
+-- @param RangeMin Min range in meters. (Default is 0, i.e. no minimum range.)
 -- @return #boolean Returns `true` if given cohort can meet all requirements.
-function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properties, WeaponTypes, TargetVec2, RangeMax, RefuelSystem, CargoWeight, MaxWeight)
+function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properties, WeaponTypes, TargetVec2, RangeMax, RefuelSystem, CargoWeight, MaxWeight, RangeMin)
+
+  RangeMin = RangeMin or 0
 
   --- Function to check category.
   local function CheckCategory(_cohort)
@@ -2656,8 +2659,8 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
     -- Is in range?
     local Rmax=cohort:GetMissionRange(WeaponTypes)
     local RangeMax = RangeMax or 0    
-    local InRange=(RangeMax and math.max(RangeMax, Rmax) or Rmax) >= TargetDistance
-    
+    local InRange=(RangeMax and math.max(RangeMax, Rmax) or Rmax) >= TargetDistance and TargetDistance > RangeMin
+
     --env.info(string.format("Range TargetDist=%.1f Rmax=%.1f RangeMax=%.1f InRange=%s", TargetDistance, Rmax, RangeMax, tostring(InRange)))
     
     return InRange    
@@ -2803,10 +2806,11 @@ end
 -- @param #table Attributes Group attributes. See `GROUP.Attribute.`
 -- @param #table Properties DCS attributes.
 -- @param #table WeaponTypes Bit of weapon types.
+-- @param #number RangeMin Min range in meters. (Default is 0, i.e. no minimum range.)
 -- @return #boolean If `true` enough assets could be recruited.
 -- @return #table Recruited assets. **NOTE** that we set the `asset.isReserved=true` flag so it cant be recruited by anyone else.
 -- @return #table Legions of recruited assets.
-function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt, NreqMin, NreqMax, TargetVec2, Payloads, RangeMax, RefuelSystem, CargoWeight, TotalWeight, MaxWeight, Categories, Attributes, Properties, WeaponTypes)
+function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt, NreqMin, NreqMax, TargetVec2, Payloads, RangeMax, RefuelSystem, CargoWeight, TotalWeight, MaxWeight, Categories, Attributes, Properties, WeaponTypes, RangeMin)
 
   -- The recruited assets.
   local Assets={}
@@ -2824,7 +2828,7 @@ function LEGION.RecruitCohortAssets(Cohorts, MissionTypeRecruit, MissionTypeOpt,
     local cohort=_cohort --Ops.Cohort#COHORT
     
     -- Check if cohort can do the mission.
-    local can=LEGION._CohortCan(cohort, MissionTypeRecruit, Categories, Attributes, Properties, WeaponTypes, TargetVec2, RangeMax, RefuelSystem, CargoWeight, MaxWeight)
+    local can=LEGION._CohortCan(cohort, MissionTypeRecruit, Categories, Attributes, Properties, WeaponTypes, TargetVec2, RangeMax, RefuelSystem, CargoWeight, MaxWeight, RangeMin)
 
     --env.info(string.format("RecruitCohortAssets %s Cohort=%s can=%s", MissionTypeRecruit, cohort:GetName(), tostring(can)))
     

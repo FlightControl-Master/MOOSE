@@ -197,6 +197,7 @@ do
 --          my_ctld.onestepmenu = false -- When set to true, the menu will create Drop and build, Get and load, Pack and remove, Pack and load, Pack. it will be a 1 step solution.
 --          my_ctld.VehicleMoveFormation = AI.Task.VehicleFormation.VEE -- When a group moves to a MOVE zone, then it takes this formation. Can be a table of formations, which are then randomly chosen. Defaults to "Vee".
 --          my_ctld.validateAndRepositionUnits = false -- Uses Disposition and other logic to find better ground positions for ground units avoiding trees, water, roads, runways, map scenery, statics and other units in the area. (Default is false)
+--          my_ctld.maxUnloadTroopsAllowed = -1 -- Max troops allowed to be unloaded at once. Set to -1 for unlimited (Default). This is a soft limit, that is, if you have more troops in the heli, it will still unload them. Ex. prevent players from spamming troops on the ground and causing performance issues.
 --          my_ctld.loadSavedCrates = true -- Load back crates (STATIC) from the save file. Useful for mission restart cleanup. (Default is true)
 --          my_ctld.UseC130LoadAndUnload = false -- When set to true, forces the C-130 player to use the C-130J built system to load the cargo onboard and to unload. (Default is false)
 --          my_ctld.UseC130DynamicCargoAutoBuild = false -- When true (and UseC130LoadAndUnload is true), C-130 DynamicCargo unload completion is bridged to CTLD engineer-path auto-build.
@@ -1028,6 +1029,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   self.FixedMaxSpeed = 77 -- 280 kph or 150kn eq 77 mps
 
   self.validateAndRepositionUnits = false -- 280 kph or 150kn eq 77 mps
+  self.maxUnloadTroopsAllowed = -1
 
   -- message suppression
   self.suppressmessages = false
@@ -4994,6 +4996,18 @@ function CTLD:_GetUnitPositions(Coordinate,Radius,Heading,Template)
   return Positions
 end
 
+--- Override this function to check if troops can be unloaded. This does not prevent returning troops to base.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP The group trying to unload
+-- @param Wrapper.Unit#UNIT The unit trying to unload
+-- @param #table LoadedCargo Table of loaded cargo, see #CTLD.LoadedCargo
+-- @param #boolean IsGrounded Is the unit on the ground
+-- @param #boolean IsHoverUnload Is the unit hovering in parameters for hover unload
+-- @return #boolean True if troops can be unloaded, false to prevent unloading
+function CTLD:CanUnloadAllTroops(Group, Unit, LoadedCargo, IsGrounded, IsHoverUnload)
+    return true
+end
+
 --- (Internal) Function to unload troops from heli.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
@@ -5029,8 +5043,13 @@ function CTLD:_UnloadTroops(Group, Unit)
   -- Get what we have loaded
   local unitname = Unit:GetName()
   if self.Loaded_Cargo[unitname] and (grounded or hoverunload) then
+    local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
+    if not self:CanUnloadAllTroops(Group, Unit, loadedcargo, grounded, hoverunload) then
+      -- User can post their own message in the function
+        return self
+    end
     if not droppingatbase or self.debug then
-      local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
+
       -- looking for troops
       local cargotable = loadedcargo.Cargo
       local deployedTroopsByName = {}
@@ -6374,8 +6393,11 @@ function CTLD:_RefreshF10Menus()
                 end
               end
               local dropTroopsMenu=MENU_GROUP:New(_group,self.gettext:GetEntry("MENU_DROP_TROOPS",self.locale),toptroops):Refresh()
-              MENU_GROUP_COMMAND:New(_group,self.gettext:GetEntry("MENU_DROP_ALL_TROOPS",self.locale),dropTroopsMenu,self._UnloadTroops,self,_group,_unit):Refresh()
+              if self.maxUnloadTroopsAllowed == -1 then
+                MENU_GROUP_COMMAND:New(_group,self.gettext:GetEntry("MENU_DROP_ALL_TROOPS",self.locale),dropTroopsMenu,self._UnloadTroops,self,_group,_unit):Refresh()
+              end
               MENU_GROUP_COMMAND:New(_group,self.gettext:GetEntry("MENU_EXTRACT_TROOPS",self.locale),toptroops,self._ExtractTroops,self,_group,_unit):Refresh()
+
               local uName=_unit:GetName()
               local loadedData=self.Loaded_Cargo[uName]
               if loadedData and loadedData.Cargo then
@@ -7300,6 +7322,19 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
     end
   end
 
+--- Override this function to check if we can unload a single Troop group by ID.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group The aircraft group.
+-- @param Wrapper.Unit#UNIT Unit The aircraft unit.
+-- @param #number ChunkID the Cargo ID
+-- @param #number Quantity the quantity to unload
+-- @param #table LoadedCargo the current loaded cargo table for this unit
+-- @param #boolean IsGrounded whether the unit is currently grounded
+-- @param #boolean IsHoverUnload whether the unit is currently in hover-unload state
+-- @return #boolean true if we can unload, false if not
+function CTLD:CanUnloadSingleTroopByID(Group, Unit, ChunkID, Quantity, LoadedCargo, IsGrounded, IsHoverUnload)
+    return true
+end
 
 --- (Internal) Function to unload a single Troop group by ID.
 -- @param #CTLD self
@@ -7338,6 +7373,11 @@ function CTLD:_UnloadSingleTroopByID(Group, Unit, chunkID, qty)
   local unitName = Unit:GetName()
 
   if self.Loaded_Cargo[unitName] and (grounded or hoverunload) then
+    local loadedcargo = self.Loaded_Cargo[unitName] or {} -- #CTLD.LoadedCargo
+    if not self:CanUnloadSingleTroopByID(Group, Unit, chunkID, qty, loadedcargo, grounded, hoverunload) then
+        -- User can post their own message in the function
+        return self
+    end
     if not droppingatbase or self.debug then
       if not self.TroopsIDToChunk or not self.TroopsIDToChunk[chunkID] then
         local msg = self.gettext:GetEntry("NO_TROOP_CHUNK",self.locale)
@@ -7532,7 +7572,9 @@ function CTLD:_RefreshDropTroopsMenu(Group, Unit)
     dropTroopsMenu = MENU_GROUP:New(theGroup, self.gettext:GetEntry("MENU_DROP_TROOPS",self.locale), topTroops)
     topTroops.DropTroopsMenu = dropTroopsMenu
   end
-  MENU_GROUP_COMMAND:New(theGroup, self.gettext:GetEntry("MENU_DROP_ALL_TROOPS",self.locale), dropTroopsMenu, self._UnloadTroops, self, theGroup, theUnit)
+  if self.maxUnloadTroopsAllowed == -1 then
+    MENU_GROUP_COMMAND:New(theGroup, self.gettext:GetEntry("MENU_DROP_ALL_TROOPS",self.locale), dropTroopsMenu, self._UnloadTroops, self, theGroup, theUnit)
+  end
 
   local loadedData = self.Loaded_Cargo[theUnit:GetName()]
   if not loadedData or not loadedData.Cargo then return end
@@ -7565,6 +7607,7 @@ function CTLD:_RefreshDropTroopsMenu(Group, Unit)
       else
         local parentMenu = MENU_GROUP:New(theGroup, label, dropTroopsMenu)
         for q = 1, count do
+          if q > self.maxUnloadTroopsAllowed then break end
           MENU_GROUP_COMMAND:New(theGroup, string.format(self.gettext:GetEntry("MENU_DROP_N_TROOPS",self.locale), q, tName), parentMenu, self._UnloadSingleTroopByID, self, theGroup, theUnit, chunkID, q)
           --MENU_GROUP_COMMAND:New(theGroup, string.format("Drop (%d) %s", q, tName), parentMenu, self._UnloadSingleTroopByID, self, theGroup, theUnit, chunkID, q)
         end
