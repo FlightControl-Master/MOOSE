@@ -1241,6 +1241,16 @@ function SPAWN:InitCallSign(ID,Name,Minor,Major)
   return self
 end
 
+--- [RED AIR only!] This method sets a specific callsign for a spawned group. 
+-- @param #SPAWN self
+-- @param #number ID The number with which to start for the first unit, e.g. 100, further units would then be 101, 102 .. etc.
+-- @return #SPAWN self
+function SPAWN:InitCallSignRed(ID)
+  self.SpawnInitCallSign = true
+  self.SpawnInitCallSignID = ID or 100
+  self.SpawnInitCallSignRED = true 
+end
+
 --- This method sets a spawn position for the group that is different from the location of the template.
 -- @param #SPAWN self
 -- @param Core.Point#COORDINATE Coordinate The position to spawn from
@@ -3550,14 +3560,21 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
   end
   
   if self.SpawnInitCallSign then
-    for UnitID = 1, #SpawnTemplate.units do
-      local Callsign = SpawnTemplate.units[UnitID].callsign
-      if Callsign and type( Callsign ) ~= "number" then
-        SpawnTemplate.units[UnitID].callsign[1] = self.SpawnInitCallSignID 
-        SpawnTemplate.units[UnitID].callsign[2] = self.SpawnInitCallSignMinor
-        SpawnTemplate.units[UnitID].callsign[3] = self.SpawnInitCallSignMajor
-        SpawnTemplate.units[UnitID].callsign["name"] = string.format("%s%d%d",self.SpawnInitCallSignName,self.SpawnInitCallSignMinor,self.SpawnInitCallSignMajor)
-        --UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].callsign,1)
+    if self.SpawnInitCallSignRED == true then
+      for UnitID = 1, #SpawnTemplate.units do
+        SpawnTemplate.units[UnitID].callsign = self.SpawnInitCallSignID
+        self.SpawnInitCallSignID = self.SpawnInitCallSignID + 1
+      end
+    else
+      for UnitID = 1, #SpawnTemplate.units do
+        local Callsign = SpawnTemplate.units[UnitID].callsign
+        if Callsign and type( Callsign ) ~= "number" then
+          SpawnTemplate.units[UnitID].callsign[1] = self.SpawnInitCallSignID 
+          SpawnTemplate.units[UnitID].callsign[2] = self.SpawnInitCallSignMinor
+          SpawnTemplate.units[UnitID].callsign[3] = self.SpawnInitCallSignMajor
+          SpawnTemplate.units[UnitID].callsign["name"] = string.format("%s%d%d",self.SpawnInitCallSignName,self.SpawnInitCallSignMinor,self.SpawnInitCallSignMajor)
+          --UTILS.PrintTableToLog(SpawnTemplate.units[UnitID].callsign,1)
+        end
       end
     end
   end
@@ -3573,7 +3590,7 @@ function SPAWN:_Prepare( SpawnTemplatePrefix, SpawnIndex ) -- R2.2
         local CallsignLen = CallsignName:len()
         SpawnTemplate.units[UnitID].callsign[2] = UnitID
         SpawnTemplate.units[UnitID].callsign["name"] = CallsignName:sub( 1, CallsignLen ) .. SpawnTemplate.units[UnitID].callsign[2] .. SpawnTemplate.units[UnitID].callsign[3]
-      elseif type( Callsign ) == "number" then
+      elseif type( Callsign ) == "number" and self.SpawnInitCallSignRED ~= true then
         SpawnTemplate.units[UnitID].callsign = Callsign + SpawnIndex
       end
     end

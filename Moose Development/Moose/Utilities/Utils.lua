@@ -4262,7 +4262,7 @@ end
 -- @return #number Random number between 0 and 1.
 function UTILS.LCGRandom()
   if UTILS.lcg == nil then
-    UTILS.LCGRandomSeed()
+    UTILS.LCGRandomSeed(timer.getTime())
   end
   UTILS.lcg.seed = (UTILS.lcg.a * UTILS.lcg.seed + UTILS.lcg.c) % UTILS.lcg.m
   return UTILS.lcg.seed / UTILS.lcg.m

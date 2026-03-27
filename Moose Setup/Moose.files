@@ -76,6 +76,10 @@ Functional/Tiresias.lua
 Functional/Stratego.lua
 Functional/ClientWatch.lua
 Functional/Formation.lua
+Functional/REDGCI_KERNEL.lua
+Functional/REDGCI.lua
+Functional/REDGCI2v2.lua
+Functional/REDGCI_DISPATCHER.lua
 
 Ops/Airboss.lua
 Ops/RecoveryTanker.lua
