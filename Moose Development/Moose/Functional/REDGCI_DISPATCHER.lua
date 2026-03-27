@@ -340,8 +340,15 @@ function REDGCI_DISPATCHER:SetLocale(Locale)
     return self
 end
 
---- Configure SRS.
+--- Configure Dispatcher SRS.
 -- @param #REDGCI_DISPATCHER self
+-- @param #string Path (Optional) Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
+-- @param #number Frequency Single Frequency, e.g. 124
+-- @param #number Modulation Modluation e.g. radio.modulation.AM
+-- @param #string Culture The cultrue string e.g. "en-EN"
+-- @param #string Voice The voice name e.g. MSRS.Voices.Google.Wavenet.de_DE_Wavenet_G
+-- @param #number Port The SRS Server port, defaults to 5002.
+-- @param #number Speed Voice speed, defaults to 1.0 (100%)
 -- @return #REDGCI_DISPATCHER self
 function REDGCI_DISPATCHER:SetSRS(Path, Frequency, Modulation, Culture, Voice, Port, Speed)
     self.SRSPath    = Path
