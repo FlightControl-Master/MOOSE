@@ -1814,11 +1814,15 @@ ENUMS.Storage.weapons.droptanks.fuel_tank_300gal  = "weapons.droptanks.fuel_tank
 -- NEW
 ENUMS.Storage.weapons.adapters.HB_F_4E_ORD_LAU_77 = 'weapons.adapters.HB_F-4E_ORD_LAU_77'
 ENUMS.Storage.weapons.adapters.hb_a_6e_lau7_adu299 = 'weapons.adapters.hb_a-6e_lau7_adu299'
+ENUMS.Storage.weapons.adapters.CHAP_AIM92LN = 'weapons.adapters.CHAP_AIM92LN'
+ENUMS.Storage.weapons.adapters.CHAP_HOT3LN = 'weapons.adapters.CHAP_HOT3LN'
+ENUMS.Storage.weapons.adapters.CHAP_FZ225 = 'weapons.adapters.CHAP_FZ225'
 
 ENUMS.Storage.weapons.bombs.AH6_SMOKE_BLUE = 'weapons.bombs.AH6_SMOKE_BLUE'
 ENUMS.Storage.weapons.bombs.AH6_SMOKE_GREEN = 'weapons.bombs.AH6_SMOKE_GREEN'
 ENUMS.Storage.weapons.bombs.AH6_SMOKE_RED = 'weapons.bombs.AH6_SMOKE_RED'
 ENUMS.Storage.weapons.bombs.AH6_SMOKE_YELLOW = 'weapons.bombs.AH6_SMOKE_YELLOW'
+ENUMS.Storage.weapons.bombs.AO_25SL = 'weapons.bombs.AO_25SL'
 
 ENUMS.Storage.weapons.missiles.HB_AGM_78 = 'weapons.missiles.HB_AGM_78'
 ENUMS.Storage.weapons.missiles.V_1 = 'weapons.missiles.V-1'
@@ -1865,6 +1869,10 @@ ENUMS.Storage.weapons.shells.M42A1_HE = 'weapons.shells.M42A1_HE'
 ENUMS.Storage.weapons.shells.HE_20x138B = 'weapons.shells.20x138B_HE'
 ENUMS.Storage.weapons.shells.HE_37x263 = 'weapons.shells.37x263_HE'
 ENUMS.Storage.weapons.shells.HE_2A20_115mm = 'weapons.shells.2A20_115mm_HE'
+ENUMS.Storage.weapons.shells.AP_20x99R = 'weapons.shells.20x99R_AP'
+ENUMS.Storage.weapons.shells.IranFAC_DShK_API_T = 'weapons.shells.IranFAC_DShK_API_T'
+ENUMS.Storage.weapons.shells.IranFAC_DShK_API = 'weapons.shells.IranFAC_DShK_API'
+ENUMS.Storage.weapons.shells.HE_T_20x99R = 'weapons.shells.20x99R_HE_T'
 
 ENUMS.Storage.weapons.gunmounts.B17_TailTurret_M2_L = 'weapons.gunmounts.B17_TailTurret_M2_L'
 ENUMS.Storage.weapons.gunmounts.AH6_M134L = 'weapons.gunmounts.{AH6_M134L}'
@@ -1895,6 +1903,11 @@ ENUMS.Storage.weapons.gunmounts.AH_6_FN_HMP400 = 'weapons.gunmounts.{AH-6_FN_HMP
 ENUMS.Storage.weapons.gunmounts.AH_6_M134L = 'weapons.gunmounts.AH-6_M134L'
 ENUMS.Storage.weapons.gunmounts.AH_6_M134R = 'weapons.gunmounts.AH-6_M134R'
 ENUMS.Storage.weapons.gunmounts.AH_6_HMP400 = 'weapons.gunmounts.AH-6_HMP400'
+ENUMS.Storage.weapons.gunmounts.AKAN_NO_TRC = 'weapons.gunmounts.{AKAN_NO_TRC}'
+ENUMS.Storage.weapons.gunmounts.AKAN = 'weapons.gunmounts.{AKAN}'
+ENUMS.Storage.weapons.gunmounts.CHAP_HMP400LC = 'weapons.gunmounts.{CHAP_HMP400LC}'
+ENUMS.Storage.weapons.gunmounts.HMP400LC = 'weapons.gunmounts.HMP400LC'
+ENUMS.Storage.weapons.gunmounts.SHVAK_GUN = 'weapons.gunmounts.SHVAK_GUN'
 
 ENUMS.Storage.weapons.droptanks.PTB_800 = 'weapons.droptanks.PTB-800'
 ENUMS.Storage.weapons.droptanks.PTB_275 = 'weapons.droptanks.PTB-275'
@@ -1945,6 +1958,7 @@ ENUMS.Storage.weapons.droptanks.S_3_PTB = 'weapons.droptanks.S-3-PTB'
 ENUMS.Storage.weapons.droptanks.fuel_tank_370gal = 'weapons.droptanks.fuel_tank_370gal'
 ENUMS.Storage.weapons.droptanks.MIG_23_PTB = 'weapons.droptanks.MIG-23-PTB'
 ENUMS.Storage.weapons.droptanks.f_18c_ptb = 'weapons.droptanks.f-18c-ptb'
+ENUMS.Storage.weapons.droptanks.CHAP_TigerUHT_fueltank = 'weapons.droptanks.CHAP_TigerUHT_fueltank'
 
 ENUMS.Storage.weapons.containers.FN_HMP400_100 = 'weapons.containers.{FN_HMP400_100}'
 ENUMS.Storage.weapons.containers.AN_M3 = 'weapons.containers.{AN-M3}'
@@ -2076,8 +2090,16 @@ ENUMS.Storage.weapons.containers.GIAT_M621_AP = 'weapons.containers.{GIAT_M621_A
 ENUMS.Storage.weapons.containers.M134_R = 'weapons.containers.M134_R'
 ENUMS.Storage.weapons.containers.OH58D_M3P_L300 = 'weapons.containers.OH58D_M3P_L300'
 ENUMS.Storage.weapons.containers.AH6_M134R = 'weapons.containers.{AH6_M134R}'
+ENUMS.Storage.weapons.containers.CHAP_HMP400LC = 'weapons.containers.{CHAP_HMP400LC}'
+
+ENUMS.Storage.weapons.missiles.C701_AShM = 'weapons.missiles.C701 AShM'
+ENUMS.Storage.weapons.missiles.IGLA_9M39 = 'weapons.missiles.9M39_IGLA'
+ENUMS.Storage.weapons.missiles.CHAP_AIM92 = 'weapons.missiles.CHAP_AIM92'
+ENUMS.Storage.weapons.missiles.AM39 = 'weapons.missiles.AM39'
+ENUMS.Storage.weapons.missiles.Shahed136_LM = 'weapons.missiles.Shahed136_LM'
 
 ENUMS.Storage.weapons.torpedoes.G7A_T1 = 'weapons.torpedoes.G7A_T1'
+
 
 -- UH-60L Mod
 ENUMS.Storage.weapons.gunmounts.UH60LGAU19 = 'weapons.gunmounts.UH-60L GAU-19'
