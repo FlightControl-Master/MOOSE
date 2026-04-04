@@ -14,12 +14,14 @@
 -- @module Functional.REDGCI_DISPATCHER
 -- @image Func_RedGCI.png
 
+
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 --- REDGCI_DISPATCHER class
--- @type REDGCI_DISPATCHER REDGCI\_DISPATCHER
+-- @type REDGCI_DISPATCHER #REDGCI\_DISPATCHER
 -- @field #string ClassName
 -- @field #string version
 -- @extends Core.Fsm#FSM
+
 
 ---
 -- # RedGCI — Soviet GCI Doctrine & Player Guide
@@ -159,10 +161,11 @@
 -- 
 -- **The Soviet system is not inferior** — it is optimized for a different kind of pilot and a different operational context. Mass interception of large NATO strike packages over defended Soviet airspace demanded centralized, efficient, high-throughput GCI control. RedGCI brings that experience to DCS.
 -- 
--- @field REDGCI_DISPATCHER REDGCI\_DISPATCHER
-REDGCI_DISPATCHER = {}
-REDGCI_DISPATCHER.ClassName = "REDGCI_DISPATCHER"
-REDGCI_DISPATCHER.version   = "2.0.0"
+-- @field #REDGCI_DISPATCHER #REDGCI\_DISPATCHER
+REDGCI_DISPATCHER = {
+  ClassName = "REDGCI_DISPATCHER",
+  version   = "2.0.0",
+}
 
 -- ─────────────────────────────────────────────────────────────
 --  Constants
@@ -345,10 +348,10 @@ end
 -- @param #string Path (Optional) Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 -- @param #number Frequency Single Frequency, e.g. 124
 -- @param #number Modulation Modluation e.g. radio.modulation.AM
--- @param #string Culture The cultrue string e.g. "en-EN"
+-- @param #string Culture (Optional) The cultrue string e.g. "en-EN"
 -- @param #string Voice The voice name e.g. MSRS.Voices.Google.Wavenet.de_DE_Wavenet_G
--- @param #number Port The SRS Server port, defaults to 5002.
--- @param #number Speed Voice speed, defaults to 1.0 (100%)
+-- @param #number Port (Optional) The SRS Server port, defaults to 5002.
+-- @param #number Speed (Optional) Voice speed, defaults to 1.0 (100%)
 -- @return #REDGCI_DISPATCHER self
 function REDGCI_DISPATCHER:SetSRS(Path, Frequency, Modulation, Culture, Voice, Port, Speed)
     self.SRSPath    = Path
@@ -359,6 +362,18 @@ function REDGCI_DISPATCHER:SetSRS(Path, Frequency, Modulation, Culture, Voice, P
     self.SRSPort    = Port       or self.SRSPort
     self.SRSSpeed   = Speed      or 1
     return self
+end
+
+--- Configure GCI SRS (the one that guides the pilots).
+-- @param #REDGCI_DISPATCHER self
+-- @param #number Frequency Single Frequency, e.g. 125
+-- @param #string Voice The SRS Voice to be used.
+-- @return #REDGCI_DISPATCHER self 
+function REDGCI_DISPATCHER:SetSRSGCIDetails(StartFrequency,Voice)
+  self:I({F=StartFrequency,V=Voice})
+  self.SRSGCIFrequency = StartFrequency or 124
+  self.SRSGCIVoice = Voice or self.SRSVoice or MSRS.Voices.Google.Wavenet.de_DE_Wavenet_B
+  return self
 end
 
 --- Set SRS provider.
@@ -796,7 +811,6 @@ end
 function REDGCI_DISPATCHER:_AvailableFighters(Centroid)
     local available = {}
     local to_remove = {}
-    local cz = (Centroid and (Centroid.z or Centroid.y)) or 0
 
     for _, entry in pairs(self._pool) do
         if entry.state == REDGCI_DISPATCHER.STATE_CAP then
@@ -804,9 +818,7 @@ function REDGCI_DISPATCHER:_AvailableFighters(Centroid)
             if grp and grp:IsAlive() then
                 if Centroid then
                     local c = grp:GetCoordinate()
-                    local dx = (c and c.x or 0) - (Centroid.x or 0)
-                    local dz = (c and c.z or 0) - cz
-                    entry._dist = math.sqrt(dx*dx + dz*dz)
+                    entry._dist = c and c:Get2DDistance(Centroid) or math.huge
                 else
                     entry._dist = math.huge
                 end
@@ -895,24 +907,24 @@ function REDGCI_DISPATCHER:_ClusterPicture(Cluster)
     end
 
     -- Range to centroid from nearest CAP fighter
+    -- Range to centroid from nearest CAP fighter
     local rng_km = 0
-    local centroid = Cluster.Coordinate or { x=0, z=0 }
-    local cz = centroid.z or centroid.y or 0
-    local min_dist = math.huge
-    for _, entry in pairs(self._pool) do
-        local grp = GROUP:FindByName(entry.groupName)
-        if grp and grp:IsAlive() then
-            local c = grp:GetCoordinate()
-            if c then
-                local dx = c.x - centroid.x
-                local dz = c.z - cz
-                local d  = math.sqrt(dx*dx + dz*dz)
-                if d < min_dist then min_dist = d end
+    local centroid = Cluster.coordinate
+    if centroid then
+        local min_dist = math.huge
+        for _, entry in pairs(self._pool) do
+            local grp = GROUP:FindByName(entry.groupName)
+            if grp and grp:IsAlive() then
+                local c = grp:GetCoordinate()
+                if c then
+                    local d = c:Get2DDistance(centroid)
+                    if d < min_dist then min_dist = d end
+                end
             end
         end
-    end
-    if min_dist < math.huge then
-        rng_km = math.floor(min_dist / 1000 + 0.5)
+        if min_dist < math.huge then
+            rng_km = math.floor(min_dist / 1000 + 0.5)
+        end
     end
 
     return count_str, type_str, rng_km
@@ -971,13 +983,13 @@ function REDGCI_DISPATCHER:_DispatchPair(F1entry, F2entry, Cluster, ClusterKey)
         F2entry.engagement = ClusterKey
     end
 
-    local gci2v2 = REDGCI2v2:New(
+    local gci2v2 = REDGCI2v2:New(-- Functional.RedGCI2v2#REDGCI2v2
         f1, f2 or f1, t1, t2 or t1, cs1, cs2, self.Coalition)
 
     gci2v2:SetLocale(self.Locale)
     gci2v2:SetAIMode(true, self.HomeBaseName)
-    gci2v2:SetSRS(self.SRSPath, self.SRSFreq, self.SRSMod,
-                  self.SRSCulture, self.SRSVoice, self.SRSPort, self.SRSSpeed)
+    gci2v2:SetSRS(self.SRSPath, self.SRSGCIFrequency, self.SRSMod,
+                  self.SRSCulture, self.SRSGCIVoice, self.SRSPort, self.SRSSpeed)
     if self.SRSProvider then gci2v2:SetSRSProvider(self.SRSProvider) end
     gci2v2:SetAltOffset(self.AltOffset)
     gci2v2:SetWFRange(self.WFRange)
@@ -998,7 +1010,7 @@ function REDGCI_DISPATCHER:_DispatchPair(F1entry, F2entry, Cluster, ClusterKey)
     -- Tactic is not known yet at dispatch time (REDGCI2v2 picks it at COMMIT).
     -- We send Count/Type now; the tactic call comes from the GCI itself.
     local count_str, type_str, _ = self:_ClusterPicture(Cluster)
-    local cs_text = cs1 .. (f2 and (" " .. cs2) or "")
+    local cs_text = cs1 .. (f2 and (", " .. cs2) or "")
     self:_Transmit("DISPATCH_CALL", {
         CALLSIGN = cs_text,
         COUNT    = count_str,
@@ -1194,7 +1206,7 @@ function REDGCI_DISPATCHER:onafterStatus(From, Event, To)
             local to_send = math.max(0, needed - active)
 
             if to_send > 0 then
-                local centroid  = cluster.coordinate or { x=0, z=0 }
+                local centroid  = cluster.coordinate
                 local available = self:_AvailableFighters(centroid)
 
                 self:I(self.lid .. string.format(

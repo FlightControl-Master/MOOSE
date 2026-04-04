@@ -159,7 +159,7 @@
 -- 
 -- **The Soviet system is not inferior** — it is optimized for a different kind of pilot and a different operational context. Mass interception of large NATO strike packages over defended Soviet airspace demanded centralized, efficient, high-throughput GCI control. RedGCI brings that experience to DCS.
 -- 
--- @field REDGCI_KERNEL
+-- @field #REDGCI_KERNEL
 REDGCI_KERNEL = {}
 REDGCI_KERNEL.version = "1.0.0"
 

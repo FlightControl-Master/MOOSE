@@ -165,7 +165,7 @@
 -- 
 -- **The Soviet system is not inferior** — it is optimized for a different kind of pilot and a different operational context. Mass interception of large NATO strike packages over defended Soviet airspace demanded centralized, efficient, high-throughput GCI control. RedGCI brings that experience to DCS.
 -- 
--- @field REDGCI2v2
+-- @field #REDGCI2v2
 REDGCI2v2 = {}
 REDGCI2v2.ClassName = "REDGCI2v2"
 REDGCI2v2.version   = "1.0.0"
@@ -336,6 +336,7 @@ function REDGCI2v2:SetSRS(Path, Frequency, Modulation, Culture, Voice, Port, Spe
     self.SRSVoice   = Voice      or self.SRSVoice
     self.SRSPort    = Port       or self.SRSPort
     self.SRSSpeed   = Speed      or 1
+    self:I({F=self.SRSFreq,V=self.SRSVoice})
     return self
 end
 
@@ -479,8 +480,8 @@ function REDGCI2v2:_MakeGCI(FighterGroup, TargetGroup, Callsign, FreqOffSet)
     local grp = GROUP:FindByName(FighterGroup)
     local IsAiPlane = true
     if grp and grp:GetPlayerName() ~= nil then IsAiPlane = false end
-    local FreqOffSet = FreqOffSet or 0
-    local Frequency = self.SRSFreq -- + FreqOffSet
+    FreqOffSet = FreqOffSet or 0
+    local Frequency = self.SRSFreq + FreqOffSet
     local gci = REDGCI:New(FighterGroup, TargetGroup, Callsign, self.Coalition)
     gci:SetLocale(self.Locale)
     gci:SetAIMode(IsAiPlane, self.HomeBaseName)

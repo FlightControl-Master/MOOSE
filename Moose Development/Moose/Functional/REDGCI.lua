@@ -158,7 +158,7 @@
 -- 
 -- **The Soviet system is not inferior** — it is optimized for a different kind of pilot and a different operational context. Mass interception of large NATO strike packages over defended Soviet airspace demanded centralized, efficient, high-throughput GCI control. RedGCI brings that experience to DCS.
 -- 
--- @field REDGCI
+-- @field #REDGCI
 REDGCI = {}
 
 --- Class name
@@ -461,6 +461,7 @@ function REDGCI:SetSRS(Path, Frequency, Modulation, Culture, Voice, Port, Speed)
     self.SRSVoice   = Voice      or self.SRSVoice
     self.SRSPort    = Port       or self.SRSPort
     self.SRSSpeed   = Speed      or 1
+    self:I({F=Frequency,V=Voice})
     return self
 end
 
