@@ -1307,7 +1307,8 @@ function REDGCI:_SetupF10Menu()
             self:Reset()
             self:_Log("GCI Reset via F10 menu")
         end)
-
+    
+    --[[
     missionCommands.addCommandForCoalition(self.Coalition, "Toggle AI Mode", root,
         function()
             self.IsAIPlane = not self.IsAIPlane
@@ -1316,6 +1317,7 @@ function REDGCI:_SetupF10Menu()
                 self.Coalition, "[GCI] AI mode " .. status, 3)
             self:_Log("AI mode: " .. status)
         end)
+   --]]
 end
 
 ---

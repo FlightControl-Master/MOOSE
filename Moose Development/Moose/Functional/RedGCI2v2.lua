@@ -798,17 +798,17 @@ function REDGCI2v2:onafterStart(From, Event, To)
 
     -- Create and start the two REDGCI sub-instances.
     -- They manage their own FSM ticks; we drive formation/tactic logic here.
-    self._gci1 = self:_MakeGCI(self.Fighter1Group, self._assignment[1], self.Callsign1) -- #REDGCI
+    self._gci1 = self:_MakeGCI(self.Fighter1Group, self._assignment[1], self.Callsign1) -- Functional.RedGCI#RedGCI
     local FreqOffset = self.FreqOffset or 0.5
     --if self.IsAIPlane == true then FreqOffset = 0.5 end
     self._gci2 = self:_MakeGCI(self.Fighter2Group, self._assignment[2], self.Callsign2, FreqOffset)
     
     if self.PilotOneCallsign then
-      self._gci1:SetPilotSRS(self.PilotOneCallsign, self.PilotOneSRSCulture, self.PilotOneSRSVoice, self.PilotOneSRSSpeaker)
+      self._gci1:SetPilotSRS(self.Callsign1, self.PilotOneSRSCulture, self.PilotOneSRSVoice, self.PilotOneSRSSpeaker)-- Functional.RedGCI#RedGCI
     end
     
     if self.PilotTwoCallsign then
-      self._gci2:SetPilotSRS(self.PilotTwoCallsign, self.PilotTwoSRSCulture, self.PilotTwoSRSVoice, self.PilotTwoSRSSpeaker)
+      self._gci2:SetPilotSRS(self.Callsign2, self.PilotTwoSRSCulture, self.PilotTwoSRSVoice, self.PilotTwoSRSSpeaker)
     end
     
     self._gci1:Start()
