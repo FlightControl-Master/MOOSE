@@ -27,9 +27,12 @@
 -- 
 -- The fundamental difference between Soviet and NATO GCI is **who makes the tactical decision**.
 -- 
--- In NATO doctrine, the GCI controller provides situational awareness — bearing, range, altitude, aspect — and the pilot decides how to prosecute the intercept. The pilot is an autonomous tactician. GCI is an advisor.
+-- In NATO doctrine, the GCI controller provides situational awareness — bearing, range, altitude, aspect — and the pilot decides how to prosecute the intercept. The pilot is an autonomous tactician. 
+-- GCI is an advisor.
 -- 
--- In Soviet doctrine, the GCI controller **directs**. The pilot executes. The controller selects the intercept geometry, assigns the heading, manages the radar, calls weapons free, and coordinates multi-ship tactics. The pilot's job is to fly the numbers and shoot when told. This is not a flaw — it is the system working as designed. Soviet fighter pilots were trained to be precise executors of GCI instructions, not independent tacticians. The ground radar network (PVO) was the brain; the aircraft was the weapon.
+-- In Soviet doctrine, the GCI controller **directs**. The pilot executes. The controller selects the intercept geometry, assigns the heading, manages the radar, calls weapons free, and coordinates 
+-- multi-ship tactics. The pilot's job is to fly the numbers and shoot when told. This is not a flaw — it is the system working as designed. Soviet fighter pilots were trained to be precise executors 
+-- of GCI instructions, not independent tacticians. The ground radar network (PVO) was the brain; the aircraft was the weapon.
 -- 
 -- RedGCI models this philosophy faithfully.
 -- 
@@ -43,11 +46,13 @@
 -- 
 -- ### The controller manages your radar.
 -- 
--- You do not decide when to turn your radar on. The GCI will tell you when to switch on (`локатор` / `Radar on`). Before that call, you fly cold and silent. This preserves your emissions discipline and prevents the target from getting an early RWR spike.
+-- You do not decide when to turn your radar on. The GCI will tell you when to switch on (`локатор` / `Radar on`). Before that call, you fly cold and silent. This preserves your emissions 
+-- discipline and prevents the target from getting an early RWR spike.
 -- 
 -- ### Weapons free is a controlled event.
 -- 
--- You do not engage until the controller clears you (`цель разрешена` / `WEAPONS FREE`). The controller determines when geometry, range, and aspect are favorable. Shooting early breaks the coordinated intercept and may compromise your wingman's attack.
+-- You do not engage until the controller clears you (`цель разрешена` / `WEAPONS FREE`). The controller determines when geometry, range, and aspect are favorable. Shooting early breaks the 
+-- coordinated intercept and may compromise your wingman's attack.
 -- 
 -- ### Radio calls are short and military.
 -- 
@@ -71,17 +76,21 @@
 -- ```
 -- 
 -- ### VECTOR
--- The controller has a track. You are being vectored onto an intercept geometry. Your radar is off. The controller is solving a collision course and updating your heading every tick. Altitude calls reflect the intercept geometry — you may be sent below the target (classic Soviet shoot-up doctrine for radar-limited types) or level/above (MiG-29/Su-27 lookdown geometry). Expect heading updates every 10–15 seconds.
+-- The controller has a track. You are being vectored onto an intercept geometry. **Your radar is off**. The controller is solving a collision course and updating your heading every tick. 
+-- Altitude calls reflect the intercept geometry — you may be sent below the target (classic Soviet shoot-up doctrine for radar-limited types) or level/above (MiG-29/Su-27 lookdown geometry). 
+-- Expect heading updates every 10–15 seconds.
 -- 
--- **What you should do:** Fly the heading. Don't deviate. Don't turn your radar on yet. Speed is expected at 900kph TAS (depending on airframe)
+-- **What you should do:** Fly the heading. Don't deviate. **Don't turn your radar on yet**. Speed is expected at 900kph TAS (depending on airframe)
 -- 
 -- ### COMMIT
--- Range has closed to approximately 30km. The controller calls the picture: count and type. Your radar comes on. You are now committed to the intercept — turning away is no longer the default option. The controller is building your radar geometry toward a lock.
+-- Range has closed to approximately 30km. The controller calls the picture: count and type. Your radar comes on. You are now committed to the intercept — turning away is no longer the 
+-- default option. The controller is building your radar geometry toward a lock.
 -- 
 -- **What you should do:** Activate your radar. Acquire the target. Do not fire yet.
 -- 
 -- ### RADAR_CONTACT
--- You have radar lock (or the AI has achieved it). The controller confirms lock and calls range. If geometry and range are favorable, weapons free follows immediately. If not — for example if aspect angle is unfavorable for a stern conversion — the controller holds fire and waits for better geometry.
+-- You have radar lock (or the AI has achieved it). The controller confirms lock and calls range. If geometry and range are favorable, weapons free follows immediately. If not — for example 
+-- if aspect angle is unfavorable for a stern conversion — the controller holds fire and waits for better geometry.
 -- 
 -- **What you should do:** Maintain lock. Track the target. Wait for the weapons free call.
 -- 
@@ -91,7 +100,8 @@
 -- **What you should do:** Engage.
 -- 
 -- ### MERGE
--- Inside 2km. The GCI transitions to merge control: bearing to target, overshoot calls, separation instructions, reattack vectors. At this range the controller cannot see fine-grained geometry — merge calls are based on relative bearing and closure.
+-- Inside 2km. The GCI transitions to merge control: bearing to target, overshoot calls, separation instructions, reattack vectors. At this range the controller cannot see fine-grained 
+-- geometry — merge calls are based on relative bearing and closure.
 -- 
 -- **What you should do:** Fight. Listen for overshoot, separation, and reattack calls.
 -- 
@@ -104,7 +114,8 @@
 -- 
 -- ## Multi-Ship (2v2) Tactics (REDGCI2v2)
 -- 
--- When two fighters are dispatched against a threat, the GCI selects a tactic automatically based on the tactical situation. The tactic is applied at COMMIT — until then, both fighters are vectored together toward the intercept midpoint.
+-- When two fighters are dispatched against a threat, the GCI selects a tactic automatically based on the tactical situation. The tactic is applied at COMMIT — until then, both 
+-- fighters are vectored together toward the intercept midpoint.
 -- 
 --           | Tactic       | Description                                                                                                                                                    |   
 --           |--------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------|   
@@ -115,7 +126,8 @@
 --           | **GIRAFFE**  | *(Historical — Iraq/Iran War, Mirage F1 vs F-14A)* F1 attacks at normal altitude, binding the AWG-9 radar. F2 flies nap-of-earth                               |    
 --           |              |                         (300–600m AGL) using ground clutter to degrade radar detection, then pulls up and fires from close range.                              | 
 -- 
--- During a tactic split, you may receive a heading that seems unusual — a large lateral offset or an unexpected altitude change. **Trust the vector.** The controller is positioning you for the tactic geometry. The merge point will bring you back onto the target.
+-- During a tactic split, you may receive a heading that seems unusual — a large lateral offset or an unexpected altitude change. **Trust the vector.** The controller is positioning you for 
+-- the tactic geometry. The merge point will bring you back onto the target.
 -- 
 -- ---
 -- 
@@ -129,7 +141,7 @@
 --     → Transit to CAP zone   
 --     → Orbit in assigned zone (radar cold, weapons safe)   
 --         ↓ INTEL detects threat cluster   
---     → "Attention, radar contact. Pair, fighter, 45 kilometers." (all CAP fighters)   
+--     → "Attention, radar contact. Two, fighter, 45 kilometers." (all CAP fighters)   
 --         ↓ Dispatcher assigns pair   
 --     → "101 102, intercept. Pair, fighter." (dispatched pair)   
 --     → VECTOR → COMMIT → RADAR_CONTACT → VISUAL → MERGE → SPLASH   
@@ -140,7 +152,8 @@
 --     → New AI pair spawns into same CAP zone   
 -- ```
 -- 
--- Human players are dispatched first when available. If a human and AI are both in the CAP pool, the human is always assigned to the next intercept. AI fills gaps. The dispatcher does not send a single fighter if a pair is available — pairing is always preferred.
+-- Human players are dispatched first when available. If a human and AI are both in the CAP pool, the human is always assigned to the next intercept. AI fills gaps. The dispatcher does not 
+-- send a single fighter if a pair is available — pairing is always preferred.
 -- 
 -- ---
 -- 
@@ -156,7 +169,8 @@
 --           | Multi-ship tactics | Centrally planned, applied at COMMIT | Mutually briefed, pilot-executed   |   
 --           | Pilot autonomy     | Low (by design)                      | High                               |   
 -- 
--- **The Soviet system is not inferior** — it is optimized for a different kind of pilot and a different operational context. Mass interception of large NATO strike packages over defended Soviet airspace demanded centralized, efficient, high-throughput GCI control. RedGCI brings that experience to DCS.
+-- **The Soviet system is not inferior** — it is optimized for a different kind of pilot and a different operational context. Mass interception of large NATO strike packages over defended 
+-- Soviet airspace demanded centralized, efficient, high-throughput GCI control. RedGCI brings that experience to DCS.
 -- 
 -- @field #REDGCI
 REDGCI = {}
@@ -1754,7 +1768,7 @@ function REDGCI:onafterStatus(From, Event, To)
  
     -- Weapons free edge: fire once on first transition
     if tx.weapons_free and not self._prev_wf then
-        if not self._prev_radar then
+        if not self._prev_radar == true then
             self:_Transmit("RADAR_ON|delay=1.5", nil, nil)
         end
         self:_Transmit("WEAPONS_FREE|delay=1.5", nil, nil,75)
