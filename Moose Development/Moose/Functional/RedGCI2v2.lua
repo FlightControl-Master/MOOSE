@@ -220,6 +220,21 @@ REDGCI2v2.SPLIT_RANGE = 60000  -- 60km pre-COMMIT split
 -- @field #number OVERRIDE_TICKS
 REDGCI2v2.OVERRIDE_TICKS = 7
 
+---
+--@field #table RadioChannels
+REDGCI2v2.RadioChannels = {
+  [1] = 125,
+  [2] = 125.5,
+  [3] = 126,
+  [4] = 126.5,
+  [5] = 127,
+  [6] = 127.5,
+  [7] = 128,
+  [8] = 128.5,
+  [9] = 129,
+  [10] = 129.5,
+}
+
 -- ─────────────────────────────────────────────────────────────
 --  Constructor
 -- ─────────────────────────────────────────────────────────────
@@ -276,6 +291,7 @@ function REDGCI2v2:New(Fighter1Group, Fighter2Group,
     self.SRSVoice   = MSRS.Voices.Google.Standard.ru_RU_Standard_D
     self.SRSPort    = 5002
     self.FreqOffset = 0.5
+    self.PilotRadios = {}
 
     -- ── Tactic state ──────────────────────────────────────────
     self._tactic          = nil    -- chosen at COMMIT
@@ -338,6 +354,42 @@ function REDGCI2v2:SetSRS(Path, Frequency, Modulation, Culture, Voice, Port, Spe
     self.SRSSpeed   = Speed      or 1
     self:I({F=self.SRSFreq,V=self.SRSVoice})
     return self
+end
+
+--- Enable SRS autotranslation, do not forget to set voices according to language! Requires HOUND as SRS backend!
+-- @param #REDGCI2v2 self
+-- @param #string languagecode Language to translate to, defaults to "fr". Takes [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1) language codes.
+-- @param #string provider (optional) Translation provider, defaults to `MSRS.Provider.GOOGLE`
+-- @return #REDGCI2v2 self
+function REDGCI2v2:EnableSRSAutoTranslate(languagecode,provider)
+  self.translateEnabled = true
+  self.translateLanguage = languagecode or "fr"
+  self.translateProvider = provider or MSRS.Provider.GOOGLE
+  return self
+end
+
+--- Configure available channel numbers and frequencies for pilots.
+-- @param #REDGCI2v2 self
+-- @param #table RadioTable Table of available channel numbers and their frequencies, indexed by channel number
+-- @return #REDGCI2v2 self
+-- @usage
+--  Use as follows, e.g.
+--          local RadioTable = {  
+--            [1] = 125,
+--            [2] = 125.5,
+--            [3] = 126,
+--            [4] = 126.5,
+--            [5] = 127,
+--            [6] = 127.5,
+--            [7] = 128,
+--            [8] = 128.5,
+--            [9] = 129,
+--            [10] = 129.5,
+--               }
+--            dispatch:SetRadioChannelList(RadioTable)
+function REDGCI2v2:SetRadioChannelList(RadioTable)
+  self.RadioChannels = RadioTable
+  return self
 end
 
 --- Set SRS Provider
@@ -492,6 +544,9 @@ function REDGCI2v2:_MakeGCI(FighterGroup, TargetGroup, Callsign, FreqOffSet)
     if self.SRSProvider then
       gci:SetSRSProvider(self.SRSProvider)
     end
+    if self.translateEnabled == true then 
+      self._msrs:SetAutoTranslate(self.translateProvider,self.translateLanguage)
+    end
     if self.WFRange then
       gci:SetWFRange(self.WFRange)
     end
@@ -500,6 +555,7 @@ function REDGCI2v2:_MakeGCI(FighterGroup, TargetGroup, Callsign, FreqOffSet)
     gci:SetAltOffset(self.AltOffset)
     gci:SetDebug(self.Debug)
     gci:SetMissileFiringFlag(self._missilerangeflag)
+    gci:SetRadioChannelList(self.RadioChannels)
     return gci
 end
 

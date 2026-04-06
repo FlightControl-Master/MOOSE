@@ -171,6 +171,21 @@ REDGCI.version = "2.0.0"
 -- @field #number WP_DISTANCE_FACTOR
 REDGCI.WP_DISTANCE_FACTOR = 5.0
 
+---
+--@field #table RadioChannels
+REDGCI.RadioChannels = {
+  [1] = 125,
+  [2] = 125.5,
+  [3] = 126,
+  [4] = 126.5,
+  [5] = 127,
+  [6] = 127.5,
+  [7] = 128,
+  [8] = 128.5,
+  [9] = 129,
+  [10] = 129.5,
+}
+
 -- ─────────────────────────────────────────────────────────────
 --  Localized messages — embedded (gci_messages.lua no longer needed)
 -- ─────────────────────────────────────────────────────────────
@@ -205,6 +220,7 @@ REDGCI.Messages = {
         MERGE_SPLASH        = "{CALLSIGN}, good kill. RTB.",
         RADAR_ON            = "{CALLSIGN}, radar on.",
         WEAPONS_FREE        = "{CALLSIGN}, WEAPONS FREE.",
+        RADIO_SWITCH_CHANNEL = "{CALLSIGN}, switch to channel {CHNL} for GCI.",
         -- Pilot → GCI acknowledgements
         ACK_VECTOR          = "Copy, {HDG}.",
         ACK_COMMIT          = "Copy.",
@@ -228,7 +244,7 @@ REDGCI.Messages = {
         NOTCH_ENTRY         = "{CALLSIGN}, Ziel manövriert. Warten.",
         NOTCH_UPDATE        = "{CALLSIGN}, Ziel {DIR_RL}, {RNG} Kilometer.",
         ABORT_BINGO         = "{CALLSIGN}, BINGO. Abbruch. Kurs {HDG}.",
-        ABORT_THREAT        = "{CALLSIGN}, BEDROHUNG. Abbruch. Kurs {HDG}.",
+        ABORT_THREAT        = "{CALLSIGN}, GEFAHR. Abbruch. Kurs {HDG}.",
         MERGE_ENTRY         = "{CALLSIGN}, Kontakt {DIR_RL}, {ASPECT} Grad. Angriff.",
         MERGE_OVERSHOOT     = "{CALLSIGN}, Überschuss. {DIR_LR} ausbrechen.",
         MERGE_SEPARATION    = "{CALLSIGN}, trennen. Steigen und neu ansetzen.",
@@ -237,6 +253,7 @@ REDGCI.Messages = {
         MERGE_SPLASH        = "{CALLSIGN}, Treffer. Heimkurs.",
         RADAR_ON            = "{CALLSIGN}, Radar an.",
         WEAPONS_FREE        = "{CALLSIGN}, Feuer frei.",
+        RADIO_SWITCH_CHANNEL = "{CALLSIGN}, umschalten auf Kanal {CHNL} für Anweisungen.",
         -- Pilot → GCI acknowledgements
         ACK_VECTOR          = "Verstanden, Kurs {HDG}.",
         ACK_COMMIT          = "Verstanden.",
@@ -269,6 +286,7 @@ REDGCI.Messages = {
         MERGE_SPLASH        = "{CALLSIGN}, молодец. Домой.",
         RADAR_ON            = "{CALLSIGN}, локатор.",
         WEAPONS_FREE        = "{CALLSIGN}, цель разрешена.",
+        RADIO_SWITCH_CHANNEL = "{CALLSIGN}, переключись на канал {CHNL} для указаний.",
         -- Pilot → GCI acknowledgements (kurz und militärisch)
         ACK_VECTOR          = "Понял, курс {HDG}.",
         ACK_COMMIT          = "Понял.",
@@ -299,8 +317,8 @@ REDGCI.DirTokens = {
 -- @field #string de
 -- @field #string ru
 REDGCI.CountTokens = {
-    en = { single="single",       pair="pair",   group="group",       biggroup="big group"     },
-    de = { single="einzeln",      pair="Paar",   group="Gruppe",      biggroup="große Gruppe"  },
+    en = { single="single",       pair="two",    group="group",       biggroup="big group"     },
+    de = { single="einzel",       pair="zwei",   group="Gruppe",      biggroup="große Gruppe"  },
     ru = { single="одиночная",    pair="пара",   group="группа",      biggroup="большая группа"},
 }
 
@@ -465,6 +483,42 @@ function REDGCI:SetSRS(Path, Frequency, Modulation, Culture, Voice, Port, Speed)
     return self
 end
 
+--- Enable SRS autotranslation, do not forget to set voices according to language! Requires HOUND as SRS backend!
+-- @param #REDGCI self
+-- @param #string languagecode Language to translate to, defaults to "fr". Takes [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1) language codes.
+-- @param #string provider (optional) Translation provider, defaults to `MSRS.Provider.GOOGLE`
+-- @return #REDGCI2v2 self
+function REDGCI:EnableSRSAutoTranslate(languagecode,provider)
+  self.translateEnabled = true
+  self.translateLanguage = languagecode or "fr"
+  self.translateProvider = provider or MSRS.Provider.GOOGLE
+  return self
+end
+
+--- Configure available channel numbers and frequencies for pilots.
+-- @param #REDGCI self
+-- @param #table RadioTable Table of available channel numbers and their frequencies, indexed by channel number
+-- @return #REDGCI self
+-- @usage
+--  Use as follows, e.g.
+--          local RadioTable = {  
+--            [1] = 125,
+--            [2] = 125.5,
+--            [3] = 126,
+--            [4] = 126.5,
+--            [5] = 127,
+--            [6] = 127.5,
+--            [7] = 128,
+--            [8] = 128.5,
+--            [9] = 129,
+--            [10] = 129.5,
+--               }
+--            dispatch:SetRadioChannelList(RadioTable)
+function REDGCI:SetRadioChannelList(RadioTable)
+  self.RadioChannels = RadioTable
+  return self
+end
+
 --- Set SRS Provider
 --@param #REDGCI self
 --@param #string Provider
@@ -501,6 +555,8 @@ function REDGCI:SetPilotSRS(PilotCallsign, Culture, Voice, Speaker)
   self.PilotSRSSpeaker = Speaker
   return self
 end
+
+
 
 --- Set the target count manually (used when no INTEL source is attached).
 -- Overridden automatically when INTEL is active.
@@ -688,7 +744,7 @@ end
 -- @param #REDGCI self
 function REDGCI:_InitSRS()
     -- GCI controller voice
-    self._msrs = MSRS:New(self.SRSPath, self.SRSFreq, self.SRSMod) -- Sound.MSRS#MSRS
+    self._msrs = MSRS:New(self.SRSPath, self.SRSFreq, self.SRSMod)
     self._msrs:SetPort(self.SRSPort)
     self._msrs:SetLabel("GCI")
     self._msrs:SetCulture(self.SRSCulture)
@@ -699,6 +755,9 @@ function REDGCI:_InitSRS()
     end
     if self.SRSSpeaker then
       self._msrs:SetSpeakerPiper(self.SRSSpeaker)
+    end
+    if self.translateEnabled == true then 
+      self._msrs:SetAutoTranslate(self.translateProvider,self.translateLanguage)
     end
     self._srs_queue = MSRSQUEUE:New("REDGCI_" .. self.Callsign) -- Sound.MSRS#MSRSQUEUE
 
@@ -714,9 +773,11 @@ function REDGCI:_InitSRS()
             self._pilot_msrs:SetProvider(self.SRSProvider)
         end
         if self.SRSSpeaker then
-            self._msrs:SetSpeakerPiper(self.PilotSRSSpeaker)
+            self._pilot_msrs:SetSpeakerPiper(self.PilotSRSSpeaker)
         end
-        --self._pilot_queue = MSRSQUEUE:New("REDGCI_PILOT_" .. self.PilotCallsign)
+        if self.translateEnabled == true then 
+            self._pilot_msrs:SetAutoTranslate(self.translateProvider,self.translateLanguage)
+        end
         self._pilot_queue = self._srs_queue
         self:_Log("Pilot SRS ready: " .. self.PilotCallsign)
     end
@@ -774,7 +835,7 @@ function REDGCI:_ParseTokens(TokenStr)
             end
         end
     end
-    --UTILS.PrintTableToLog(result)
+    UTILS.PrintTableToLog(result)
     return result
 end
 
@@ -926,6 +987,7 @@ function REDGCI:_Transmit(TokenStr, DirLR, DirRL, Priority)
         BRG    = tok.brg    and string.format("%03d", tok.brg)    or "",
         COUNT    = self:_CountToken(self._target_count),
         TYPE     = self:_TypeToken(self._target_type),
+        CHNL     = tok.channel or 1,
     }
 
     local text = self:_FillTemplate(template, vars)
@@ -1419,7 +1481,21 @@ function REDGCI:onafterStart(From, Event, To)
     self:T(self.lid .. "Ready. Fighter='" .. self.FighterGroupName ..
            "' Target='" .. self.TargetGroupName ..
            "' Mode=" .. (self.IsAIPlane and "AI" or "Human"))
-
+    
+    local function GetChannel(Freq)
+      for key,val in pairs(self.RadioChannels) do
+        if tonumber(val)==tonumber(Freq) then
+          return key
+        end
+      end
+      return 1
+    end
+    
+    local channel = 1
+    if self.RadioChannels then channel = GetChannel(self.SRSFreq) end
+    
+    self:_Transmit("RADIO_SWITCH_CHANNEL|channel="..channel,nil,nil,100)
+    
     -- Schedule first tick after short delay
     self:__Status(-2)
 end

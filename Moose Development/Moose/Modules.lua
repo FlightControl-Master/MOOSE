@@ -80,6 +80,11 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/Stratego.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/ClientWatch.lua')
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/Formation.lua')
 
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/RedGCIKernel.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/RedGCI.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/RedGCI2v2.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/RedGCIDispatcher.lua' )
+
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Ops/Airboss.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Ops/RecoveryTanker.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Ops/RescueHelo.lua' )

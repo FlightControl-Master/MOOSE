@@ -1270,6 +1270,15 @@ function INTEL:_UpdateContact(Contact)
         else
           Contact.maneuvering = false
         end
+        local typename = Contact.group:GetTypeName()
+        local base_rcs = INTEL.RCS_Table[typename]
+    
+        if not base_rcs then
+            -- Fallback: category default
+            local cat = Contact.group:GetCategory()
+            base_rcs = (cat and INTEL.RCS_CategoryDefault[cat]) or INTEL.RCS_Reference
+        end
+        Contact.rcs = base_rcs
       end
     end
 

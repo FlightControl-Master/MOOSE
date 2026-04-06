@@ -11,13 +11,13 @@
 -- ### Author: **Applevangelist**
 --
 -- ===
--- @module Functional.REDGCI_DISPATCHER
+-- @module Functional.REDGCIDISPATCHER
 -- @image Func_RedGCI.png
 
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
---- REDGCI_DISPATCHER class
--- @type REDGCI_DISPATCHER #REDGCI\_DISPATCHER
+--- **REDGCIDISPATCHER** class, extends Core.Fsm#FSM  class
+-- @type REDGCIDISPATCHER
 -- @field #string ClassName
 -- @field #string version
 -- @extends Core.Fsm#FSM
@@ -122,7 +122,7 @@
 -- 
 -- ---
 -- 
--- ## Dispatcher & CAP Flow (REDGCI_DISPATCHER)
+-- ## Dispatcher & CAP Flow (REDGCIDISPATCHER)
 -- 
 -- When using the dispatcher layer, the full operational flow is:
 -- 
@@ -161,9 +161,9 @@
 -- 
 -- **The Soviet system is not inferior** — it is optimized for a different kind of pilot and a different operational context. Mass interception of large NATO strike packages over defended Soviet airspace demanded centralized, efficient, high-throughput GCI control. RedGCI brings that experience to DCS.
 -- 
--- @field #REDGCI_DISPATCHER #REDGCI\_DISPATCHER
-REDGCI_DISPATCHER = {
-  ClassName = "REDGCI_DISPATCHER",
+-- @field #REDGCIDISPATCHER 
+REDGCIDISPATCHER = {
+  ClassName = "REDGCIDISPATCHER",
   version   = "2.0.0",
 }
 
@@ -181,23 +181,24 @@ REDGCI_DISPATCHER = {
 -- @field #string STATE_ENGAGED
 -- @field #string STATE_RTB
 -- @field #string STATE_UNKNOWN
-REDGCI_DISPATCHER.TICK_INTERVAL    = 30.0
-REDGCI_DISPATCHER.UNITS_PER_PAIR   = 2
-REDGCI_DISPATCHER.ORBIT_SPEED_KMPH = 600
-REDGCI_DISPATCHER.ORBIT_ALT_M      = 4500
-REDGCI_DISPATCHER.AI_PER_ZONE      = 2
+REDGCIDISPATCHER.TICK_INTERVAL    = 30.0
+REDGCIDISPATCHER.UNITS_PER_PAIR   = 2
+REDGCIDISPATCHER.ORBIT_SPEED_KMPH = 600
+REDGCIDISPATCHER.ORBIT_ALT_M      = 4500
+REDGCIDISPATCHER.AI_PER_ZONE      = 2
 
-REDGCI_DISPATCHER.STATE_CAP      = "CAP"
-REDGCI_DISPATCHER.STATE_ENGAGED  = "ENGAGED"
-REDGCI_DISPATCHER.STATE_RTB      = "RTB"
-REDGCI_DISPATCHER.STATE_UNKNOWN  = "UNKNOWN"
+REDGCIDISPATCHER.STATE_CAP      = "CAP"
+REDGCIDISPATCHER.STATE_ENGAGED  = "ENGAGED"
+REDGCIDISPATCHER.STATE_RTB      = "RTB"
+REDGCIDISPATCHER.STATE_UNKNOWN  = "UNKNOWN"
 
 -- ─────────────────────────────────────────────────────────────
 --  Localized messages (token system, analogous to REDGCI)
 -- ─────────────────────────────────────────────────────────────
 
---- @type REDGCI_DISPATCHER.Messages
-REDGCI_DISPATCHER.Messages = {
+---
+-- @type Messages
+REDGCIDISPATCHER.Messages = {
     en = {
         RTB_CALL      = "{CALLSIGN}, mission complete. RTB, refuel and rearm.",
         INTEL_CONTACT = "Attention, radar contact. {COUNT}, {TYPE}, {RNG} kilometers.",
@@ -215,21 +216,36 @@ REDGCI_DISPATCHER.Messages = {
     },
 }
 
+---
+--@field #table RadioChannels
+REDGCIDISPATCHER.RadioChannels = {
+  [1] = 125,
+  [2] = 125.5,
+  [3] = 126,
+  [4] = 126.5,
+  [5] = 127,
+  [6] = 127.5,
+  [7] = 128,
+  [8] = 128.5,
+  [9] = 129,
+  [10] = 129.5,
+}
+
 -- ─────────────────────────────────────────────────────────────
 --  Constructor
 -- ─────────────────────────────────────────────────────────────
 
---- Create a new REDGCI_DISPATCHER instance.
--- @param #REDGCI_DISPATCHER self
+--- Create a new REDGCIDISPATCHER instance.
+-- @param #REDGCIDISPATCHER self
 -- @param #string TemplateName     Name of the late-activated template group (1 unit)
 -- @param Core.Set#SET_ZONE ZoneSet SET_ZONE mit CAP-Holding-Zonen
 -- @param Ops.Intel#INTEL Intel     Laufende INTEL-Instanz
 -- @param #number Coalition         coalition.side.RED / BLUE
--- @return #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:New(TemplateName, ZoneSet, Intel, Coalition)
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:New(TemplateName, ZoneSet, Intel, Coalition)
     local self = BASE:Inherit(self, FSM:New())
 
-    self.lid          = "REDGCI_DISPATCHER | "
+    self.lid          = "REDGCIDISPATCHER | "
     self.TemplateName = TemplateName
     self.ZoneSet      = ZoneSet
     self.Intel        = Intel
@@ -241,9 +257,9 @@ function REDGCI_DISPATCHER:New(TemplateName, ZoneSet, Intel, Coalition)
     self.Debug         = true
     self.AltOffset     = -700
     self.WFRange       = 20000
-    self.OrbitAlt      = REDGCI_DISPATCHER.ORBIT_ALT_M
-    self.OrbitSpeed    = REDGCI_DISPATCHER.ORBIT_SPEED_KMPH
-    self.AiPerZone     = REDGCI_DISPATCHER.AI_PER_ZONE
+    self.OrbitAlt      = REDGCIDISPATCHER.ORBIT_ALT_M
+    self.OrbitSpeed    = REDGCIDISPATCHER.ORBIT_SPEED_KMPH
+    self.AiPerZone     = REDGCIDISPATCHER.AI_PER_ZONE
     self.StartCallsign = 100
 
     self.SRSPath     = nil
@@ -254,6 +270,7 @@ function REDGCI_DISPATCHER:New(TemplateName, ZoneSet, Intel, Coalition)
     self.SRSPort     = 5002
     self.SRSSpeed    = 1
     self.SRSProvider = nil
+    self.SRSFreqPilotsStart = self.SRSFreq + 1
 
     self.ClientSet    = nil
 
@@ -275,7 +292,7 @@ function REDGCI_DISPATCHER:New(TemplateName, ZoneSet, Intel, Coalition)
     self:AddTransition("Running", "Status", "Running")
     self:AddTransition("Running", "Stop",   "Stopped")
 
-    self:I(self.lid .. "v" .. REDGCI_DISPATCHER.version .. " created.")
+    self:I(self.lid .. "v" .. REDGCIDISPATCHER.version .. " created.")
     return self
 end
 
@@ -284,10 +301,10 @@ end
 -- ─────────────────────────────────────────────────────────────
 
 --- Set the home plate.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #string BaseName
--- @return #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:SetHomeBase(BaseName)
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:SetHomeBase(BaseName)
     self.HomeBaseName = BaseName
     local ab = AIRBASE:FindByName(BaseName)
     if ab then self.HomeBase = ab
@@ -296,55 +313,55 @@ function REDGCI_DISPATCHER:SetHomeBase(BaseName)
 end
 
 --- Set the client SET.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param Core.Set#SET_CLIENT ClientSet
--- @return #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:SetClientSet(ClientSet)
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:SetClientSet(ClientSet)
     self.ClientSet = ClientSet
     return self
 end
 
 --- Set orbit altitude and speed.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #number AltMSL    Altitude MSL in meters (default 4500)
 -- @param #number SpeedKmph Speed in kph (km/h) (default 600)
--- @return #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:SetOrbitParameters(AltMSL, SpeedKmph)
-    self.OrbitAlt   = AltMSL    or REDGCI_DISPATCHER.ORBIT_ALT_M
-    self.OrbitSpeed = SpeedKmph or REDGCI_DISPATCHER.ORBIT_SPEED_KMPH
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:SetOrbitParameters(AltMSL, SpeedKmph)
+    self.OrbitAlt   = AltMSL    or REDGCIDISPATCHER.ORBIT_ALT_M
+    self.OrbitSpeed = SpeedKmph or REDGCIDISPATCHER.ORBIT_SPEED_KMPH
     return self
 end
 
 --- Set number of AI spawned per CAP zone.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #number N  Default 2
--- @return #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:SetAiPerZone(N)
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:SetAiPerZone(N)
     self.AiPerZone = N or 2
     return self
 end
 
 --- Set starting callsign number.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #number N  Default 100
--- @return #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:SetStartCallsign(N)
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:SetStartCallsign(N)
     self.StartCallsign     = N or 100
     self._callsign_counter = self.StartCallsign
     return self
 end
 
 --- Set locale for radio messages.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #string Locale  "ru", "de", "en"
--- @return #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:SetLocale(Locale)
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:SetLocale(Locale)
     self.Locale = Locale or "ru"
     return self
 end
 
 --- Configure Dispatcher SRS.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #string Path (Optional) Defaults to "C:\\Program Files\\DCS-SimpleRadio-Standalone\\ExternalAudio"
 -- @param #number Frequency Single Frequency, e.g. 124
 -- @param #number Modulation Modluation e.g. radio.modulation.AM
@@ -352,8 +369,8 @@ end
 -- @param #string Voice The voice name e.g. MSRS.Voices.Google.Wavenet.de_DE_Wavenet_G
 -- @param #number Port (Optional) The SRS Server port, defaults to 5002.
 -- @param #number Speed (Optional) Voice speed, defaults to 1.0 (100%)
--- @return #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:SetSRS(Path, Frequency, Modulation, Culture, Voice, Port, Speed)
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:SetSRS(Path, Frequency, Modulation, Culture, Voice, Port, Speed)
     self.SRSPath    = Path
     self.SRSFreq    = Frequency  or self.SRSFreq
     self.SRSMod     = Modulation or self.SRSMod
@@ -361,15 +378,52 @@ function REDGCI_DISPATCHER:SetSRS(Path, Frequency, Modulation, Culture, Voice, P
     self.SRSVoice   = Voice      or self.SRSVoice
     self.SRSPort    = Port       or self.SRSPort
     self.SRSSpeed   = Speed      or 1
+    self.SRSFreqPilotsStart = self.SRSFreq + 1
     return self
 end
 
+--- Enable SRS autotranslation, do not forget to set voices according to language! Requires HOUND as SRS backend!
+-- @param #REDGCIDISPATCHER self
+-- @param #string languagecode Language to translate to, defaults to "fr". Takes [ISO 639-1](https://en.wikipedia.org/wiki/ISO_639-1) language codes.
+-- @param #string provider (optional) Translation provider, defaults to `MSRS.Provider.GOOGLE`
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:EnableSRSAutoTranslate(languagecode,provider)
+  self.translateEnabled = true
+  self.translateLanguage = languagecode or "fr"
+  self.translateProvider = provider or MSRS.Provider.GOOGLE
+  return self
+end
+
+--- Configure available channel numbers and frequencies for pilots.
+-- @param #REDGCIDISPATCHER self
+-- @param #table RadioTable Table of available channel numbers and their frequencies, indexed by channel number
+-- @return #REDGCIDISPATCHER self
+-- @usage
+--  Use as follows, e.g.
+--          local RadioTable = {  
+--            [1] = 125,
+--            [2] = 125.5,
+--            [3] = 126,
+--            [4] = 126.5,
+--            [5] = 127,
+--            [6] = 127.5,
+--            [7] = 128,
+--            [8] = 128.5,
+--            [9] = 129,
+--            [10] = 129.5,
+--               }
+--            dispatch:SetRadioChannelList(RadioTable)
+function REDGCIDISPATCHER:SetRadioChannelList(RadioTable)
+  self.RadioChannels = RadioTable
+  return self
+end
+
 --- Configure GCI SRS (the one that guides the pilots).
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #number Frequency Single Frequency, e.g. 125
 -- @param #string Voice The SRS Voice to be used.
--- @return #REDGCI_DISPATCHER self 
-function REDGCI_DISPATCHER:SetSRSGCIDetails(StartFrequency,Voice)
+-- @return #REDGCIDISPATCHER self 
+function REDGCIDISPATCHER:SetSRSGCIDetails(StartFrequency,Voice)
   self:I({F=StartFrequency,V=Voice})
   self.SRSGCIFrequency = StartFrequency or 124
   self.SRSGCIVoice = Voice or self.SRSVoice or MSRS.Voices.Google.Wavenet.de_DE_Wavenet_B
@@ -377,39 +431,39 @@ function REDGCI_DISPATCHER:SetSRSGCIDetails(StartFrequency,Voice)
 end
 
 --- Set SRS provider.
--- @param #REDGCI_DISPATCHER self
--- @return #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:SetSRSProvider(Provider)
+-- @param #REDGCIDISPATCHER self
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:SetSRSProvider(Provider)
     self.SRSProvider = Provider
     return self
 end
 
 --- Set altitude offset for intercept geometry.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #number Meters  Default -700 (shoot up)
--- @return #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:SetAltOffset(Meters)
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:SetAltOffset(Meters)
     self.AltOffset = Meters or -700
     return self
 end
 
 --- Set weapons-free range.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #number Meters  Default 20000 (20 km)
--- @return #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:SetWFRange(Meters)
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:SetWFRange(Meters)
     self.WFRange = Meters or 20000
     return self
 end
 
 --- Enable or disable automatic respawn after engagement.
 -- New AI will be spawned into the same CAP zone after RespawnDelay seconds.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #boolean Enabled  Default true
 -- @param #number  Delay    Seconds after RTB before respawn (default 300)
 -- @param #number  Count    Number of AI to spawn (default 2)
--- @return #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:SetRespawn(Enabled, Delay, Count)
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:SetRespawn(Enabled, Delay, Count)
     self.RespawnEnabled = Enabled ~= false
     self.RespawnDelay   = Delay or 300
     self.RespawnCount   = Count or 2
@@ -417,10 +471,10 @@ function REDGCI_DISPATCHER:SetRespawn(Enabled, Delay, Count)
 end
 
 --- Enable debug logging.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #boolean OnOff
--- @return #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:SetDebug(OnOff)
+-- @return #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:SetDebug(OnOff)
     self.Debug = OnOff ~= false
     return self
 end
@@ -430,16 +484,16 @@ end
 -- ─────────────────────────────────────────────────────────────
 
 --- [INTERNAL]
--- @param #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:_Log(msg)
+-- @param #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:_Log(msg)
     if self.Debug then env.info(self.lid .. msg) end
 end
 
 --- [INTERNAL] Initialize TEXTANDSOUND localization.
--- @param #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:_InitLocalization()
-    self._gettext = TEXTANDSOUND:New("REDGCI_DISPATCHER", "en")
-    for locale, entries in pairs(REDGCI_DISPATCHER.Messages) do
+-- @param #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:_InitLocalization()
+    self._gettext = TEXTANDSOUND:New("REDGCIDISPATCHER", "en")
+    for locale, entries in pairs(REDGCIDISPATCHER.Messages) do
         local loc = string.lower(tostring(locale))
         for id, text in pairs(entries) do
             self._gettext:AddEntry(loc, tostring(id), text)
@@ -448,11 +502,11 @@ function REDGCI_DISPATCHER:_InitLocalization()
 end
 
 --- [INTERNAL] Fill {PLACEHOLDER} tokens in a template string.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #string Template
 -- @param #table Vars
 -- @return #string
-function REDGCI_DISPATCHER:_FillTemplate(Template, Vars)
+function REDGCIDISPATCHER:_FillTemplate(Template, Vars)
   self:I({T=Template,V=Vars})
     return (string.gsub(Template, "{([%w_]+)}", function(key)
         return tostring(Vars[key] or "")
@@ -460,11 +514,11 @@ function REDGCI_DISPATCHER:_FillTemplate(Template, Vars)
 end
 
 --- [INTERNAL] Dispatch a radio transmission via SRS queue.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #string Key      Message key from Messages table
 -- @param #table  Vars     Token variables
 -- @param #string GroupName For subtitle targeting (optional)
-function REDGCI_DISPATCHER:_Transmit(Key, Vars, GroupName)
+function REDGCIDISPATCHER:_Transmit(Key, Vars, GroupName)
     if not self._gettext or not self._msrs or not self._srs_queue then return end
 
     local template = self._gettext:GetEntry(Key, self.Locale)
@@ -488,19 +542,19 @@ function REDGCI_DISPATCHER:_Transmit(Key, Vars, GroupName)
 end
 
 --- [INTERNAL] Next callsign number.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @return #number
-function REDGCI_DISPATCHER:_NextCallsign()
+function REDGCIDISPATCHER:_NextCallsign()
     local cs = self._callsign_counter
     self._callsign_counter = self._callsign_counter + 1
     return cs
 end
 
 --- [INTERNAL] Localized tactic name for radio.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #string Tactic  "PINCER","HIGH_LOW","STAGGER","TRAIL","GIRAFFE"
 -- @return #string
-function REDGCI_DISPATCHER:_TacticToken(Tactic)
+function REDGCIDISPATCHER:_TacticToken(Tactic)
     local tokens = {
         en = { PINCER="pincer", HIGH_LOW="high-low", STAGGER="stagger",
                TRAIL="trail",   GIRAFFE="giraffe" },
@@ -514,10 +568,10 @@ function REDGCI_DISPATCHER:_TacticToken(Tactic)
 end
 
 --- [INTERNAL] Send transmission to all CAP fighters in pool.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #string Key    Message key
 -- @param #table  Vars   Token variables
-function REDGCI_DISPATCHER:_TransmitToAllCAP(Key, Vars)
+function REDGCIDISPATCHER:_TransmitToAllCAP(Key, Vars)
     if not self._gettext or not self._msrs or not self._srs_queue then return end
 
     local template = self._gettext:GetEntry(Key, self.Locale)
@@ -551,10 +605,10 @@ end
 --- [INTERNAL] Get callsign string from group.
 -- Reads part after '#' in group name, e.g. "TEMPLATE#101" → "101".
 -- Falls back to GetCustomCallSign(), then last part of group name.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param Wrapper.Group#GROUP Grp
 -- @return #string
-function REDGCI_DISPATCHER:_GetCallsign(Grp)
+function REDGCIDISPATCHER:_GetCallsign(Grp)
     if not Grp then return "GCI" end
     local name = Grp:GetName() or "GCI"
     local after_hash = string.match(name, "#(%d+)")
@@ -565,10 +619,10 @@ function REDGCI_DISPATCHER:_GetCallsign(Grp)
 end
 
 --- [INTERNAL] Check if group has a human pilot.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param Wrapper.Group#GROUP Grp
 -- @return #boolean
-function REDGCI_DISPATCHER:_IsHuman(Grp)
+function REDGCIDISPATCHER:_IsHuman(Grp)
     if not Grp then return false end
     if self.ClientSet then
         local found = false
@@ -587,26 +641,29 @@ function REDGCI_DISPATCHER:_IsHuman(Grp)
 end
 
 --- [INTERNAL] Initialize SRS.
--- @param #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:_InitSRS()
-    self._msrs = MSRS:New(self.SRSPath, 121.5, self.SRSMod)
+-- @param #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:_InitSRS()
+    self._msrs = MSRS:New(self.SRSPath, self.SRSFreq, self.SRSMod)
     self._msrs:SetPort(self.SRSPort)
     self._msrs:SetLabel("DISPATCH")
     self._msrs:SetCulture(self.SRSCulture)
     self._msrs:SetVoice(self.SRSVoice)
     self._msrs:SetCoalition(self.Coalition)
+    if self.translateEnabled == true then
+      self._msrs:SetAutoTranslate(self.translateProvider,self.translateLanguage)
+    end
     if self.SRSProvider then self._msrs:SetProvider(self.SRSProvider) end
-    self._srs_queue = MSRSQUEUE:New("REDGCI_DISPATCHER")
+    self._srs_queue = MSRSQUEUE:New("REDGCIDISPATCHER")
 end
 
 --- [INTERNAL] Spawn AI group and assign orbit.
 -- Uses SPAWN:NewWithAlias() so group name contains callsign.
 -- Template controls parking, hot/cold, heading.
 -- OnSpawnGroup callback ensures group is alive before orbit assignment.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param Core.Zone#ZONE Zone
 -- @return Wrapper.Group#GROUP or nil
-function REDGCI_DISPATCHER:_SpawnAI(Zone)
+function REDGCIDISPATCHER:_SpawnAI(Zone)
     local cs    = self:_NextCallsign()
     local alias = self.TemplateName .. "#" .. cs
 
@@ -625,13 +682,13 @@ function REDGCI_DISPATCHER:_SpawnAI(Zone)
 end
 
 --- [INTERNAL] Toggle radar emission on the fighter group.
--- @param #REDGCI self
+-- @param #REDGCIDISPATCHER self
 -- @param #boolean On
 -- @param #number Delay
-function REDGCI_DISPATCHER:_SetRadar(Grp,On,Delay)
+function REDGCIDISPATCHER:_SetRadar(Grp,On,Delay)
     --if not self.IsAIPlane then return end
     if Delay then
-      self:ScheduleOnce(Delay,REDGCI_DISPATCHER._SetRadar,self,Grp,On)
+      self:ScheduleOnce(Delay,REDGCIDISPATCHER._SetRadar,self,Grp,On)
       return
     end
     local grp = Grp
@@ -648,13 +705,13 @@ function REDGCI_DISPATCHER:_SetRadar(Grp,On,Delay)
 end
 
 --- [INTERNAL] Toggle weapons free on the fighter group.
--- @param #REDGCI self
+-- @param #REDGCIDISPATCHER self
 -- @param #boolean On
 -- @param #number Delay Delay in seconds
-function REDGCI_DISPATCHER:_SetWeaponsFree(Grp,On,Delay)
+function REDGCIDISPATCHER:_SetWeaponsFree(Grp,On,Delay)
     --if not self.IsAIPlane then return end
     if Delay then
-      self:ScheduleOnce(Delay,REDGCI_DISPATCHER._SetWeaponsFree,self,Grp,On)
+      self:ScheduleOnce(Delay,REDGCIDISPATCHER._SetWeaponsFree,self,Grp,On)
       return
     end
     local grp = Grp
@@ -677,10 +734,10 @@ end
 --- [INTERNAL] Assign orbit task in CAP zone.
 -- WaypointAir expects speed in kph or km/h; TaskOrbit expects mps or m/s.
 -- Altitude variation prevents all groups flying at exact same level.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param Wrapper.Group#GROUP Grp
 -- @param Core.Zone#ZONE Zone
-function REDGCI_DISPATCHER:_AssignOrbit(Grp, Zone)
+function REDGCIDISPATCHER:_AssignOrbit(Grp, Zone)
     if not Grp or not Grp:IsAlive() then return end
     
     
@@ -733,18 +790,18 @@ function REDGCI_DISPATCHER:_AssignOrbit(Grp, Zone)
 end
 
 --- [INTERNAL] Register fighter in pool.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param Wrapper.Group#GROUP Grp
 -- @param Core.Zone#ZONE Zone
 -- @param #boolean IsHuman
-function REDGCI_DISPATCHER:_RegisterFighter(Grp, Zone, IsHuman)
+function REDGCIDISPATCHER:_RegisterFighter(Grp, Zone, IsHuman)
     local name = Grp:GetName()
     self._pool[name] = {
         groupName  = name,
         group      = Grp,
         zone       = Zone,
         isHuman    = IsHuman or false,
-        state      = REDGCI_DISPATCHER.STATE_CAP,
+        state      = REDGCIDISPATCHER.STATE_CAP,
         pairedWith = nil,
         engagement = nil,
         callsign   = self:_GetCallsign(Grp),
@@ -755,8 +812,8 @@ function REDGCI_DISPATCHER:_RegisterFighter(Grp, Zone, IsHuman)
 end
 
 --- [INTERNAL] Refresh human pool from ClientSet.
--- @param #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:_RefreshHumanPool()
+-- @param #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:_RefreshHumanPool()
     if not self.ClientSet then return end
 
     self.ClientSet:ForEachClient(function(client)
@@ -767,8 +824,8 @@ function REDGCI_DISPATCHER:_RefreshHumanPool()
 
         if self._pool[name] then
             self._pool[name].isHuman = true
-            if self._pool[name].state ~= REDGCI_DISPATCHER.STATE_ENGAGED and
-               self._pool[name].state ~= REDGCI_DISPATCHER.STATE_RTB then
+            if self._pool[name].state ~= REDGCIDISPATCHER.STATE_ENGAGED and
+               self._pool[name].state ~= REDGCIDISPATCHER.STATE_RTB then
                 local in_zone = false
                 if self.ZoneSet then
                     self.ZoneSet:ForEachZone(function(zone)
@@ -779,7 +836,7 @@ function REDGCI_DISPATCHER:_RefreshHumanPool()
                     end)
                 end
                 self._pool[name].state = in_zone and
-                    REDGCI_DISPATCHER.STATE_CAP or REDGCI_DISPATCHER.STATE_UNKNOWN
+                    REDGCIDISPATCHER.STATE_CAP or REDGCIDISPATCHER.STATE_UNKNOWN
             end
             return
         end
@@ -805,15 +862,15 @@ end
 --- [INTERNAL] Return available fighters sorted by priority.
 -- Humans first, then by distance to cluster centroid.
 -- Safe iteration — collects dead groups separately before removing.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #table Centroid  DCS coordinates {x, z}
 -- @return #table
-function REDGCI_DISPATCHER:_AvailableFighters(Centroid)
+function REDGCIDISPATCHER:_AvailableFighters(Centroid)
     local available = {}
     local to_remove = {}
 
     for _, entry in pairs(self._pool) do
-        if entry.state == REDGCI_DISPATCHER.STATE_CAP then
+        if entry.state == REDGCIDISPATCHER.STATE_CAP then
             local grp = GROUP:FindByName(entry.groupName)
             if grp and grp:IsAlive() then
                 if Centroid then
@@ -844,20 +901,20 @@ function REDGCI_DISPATCHER:_AvailableFighters(Centroid)
 end
 
 --- [INTERNAL] Stable cluster key.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #table Cluster
 -- @return #string
-function REDGCI_DISPATCHER:_ClusterKey(Cluster)
+function REDGCIDISPATCHER:_ClusterKey(Cluster)
     local c  = Cluster.coordinate or {}
     local cz = c.z or c.y or 0
     return string.format("C_%.0f_%.0f", (c.x or 0)/1000, cz/1000)
 end
 
 --- [INTERNAL] Count alive units in cluster.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #table Cluster
 -- @return #number
-function REDGCI_DISPATCHER:_ClusterSize(Cluster)
+function REDGCIDISPATCHER:_ClusterSize(Cluster)
     local n = 0
     for _, contact in pairs(Cluster.Contacts or {}) do
         local grp = GROUP:FindByName(contact.groupname)
@@ -868,10 +925,10 @@ end
 
 --- [INTERNAL] Derive localized count and type tokens for a cluster.
 -- Reuses REDGCI CountTokens/TypeTokens tables.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #table Cluster
 -- @return #string count_str, #string type_str, #number rng_km
-function REDGCI_DISPATCHER:_ClusterPicture(Cluster)
+function REDGCIDISPATCHER:_ClusterPicture(Cluster)
     local size = self:_ClusterSize(Cluster)
 
     -- Count token (reuse REDGCI table if available)
@@ -888,7 +945,7 @@ function REDGCI_DISPATCHER:_ClusterPicture(Cluster)
     end
 
     -- Type token from RCS (reuse REDGCI table if available)
-    local type_str = "FIGHTER"
+    local type_str = "fighter"
     local rcs_sum, rcs_n = 0.0, 0
     for _, contact in pairs(Cluster.Contacts or {}) do
         if contact.rcs then
@@ -904,9 +961,11 @@ function REDGCI_DISPATCHER:_ClusterPicture(Cluster)
         elseif avg > (REDGCI.RCS_BOMBER_MIN  or 20.0) then type_str = t.bomber
         else                                                type_str = t.machines
         end
+    elseif REDGCI and REDGCI.TypeTokens then
+      local t   = REDGCI.TypeTokens[self.Locale] or REDGCI.TypeTokens["en"]
+      type_str = t[type_str]
     end
 
-    -- Range to centroid from nearest CAP fighter
     -- Range to centroid from nearest CAP fighter
     local rng_km = 0
     local centroid = Cluster.coordinate
@@ -931,10 +990,10 @@ function REDGCI_DISPATCHER:_ClusterPicture(Cluster)
 end
 
 --- [INTERNAL] Get up to 2 target group names from cluster (closest to centroid).
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #table Cluster
 -- @return #string T1name, #string T2name
-function REDGCI_DISPATCHER:_ClusterTargets(Cluster)
+function REDGCIDISPATCHER:_ClusterTargets(Cluster)
     local c  = Cluster.coordinate or { x=0, z=0, y=0 }
     local cz = c.z or c.y or 0
     local groups = {}
@@ -953,17 +1012,18 @@ function REDGCI_DISPATCHER:_ClusterTargets(Cluster)
 end
 
 --- [INTERNAL] Dispatch one pair against a cluster.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #table F1entry
 -- @param #table F2entry  (may be nil for solo)
 -- @param #table Cluster
 -- @param #string ClusterKey
-function REDGCI_DISPATCHER:_DispatchPair(F1entry, F2entry, Cluster, ClusterKey)
+function REDGCIDISPATCHER:_DispatchPair(F1entry, F2entry, Cluster, ClusterKey)
     local t1, t2 = self:_ClusterTargets(Cluster)
     if not t1 then
         self:_Log("Dispatch: keine Ziele in " .. ClusterKey)
         return
     end
+    if not self.dispatchcount then self.dispatchcount = 0 end
 
     local f1  = F1entry.groupName
     local f2  = F2entry and F2entry.groupName or nil
@@ -974,11 +1034,11 @@ function REDGCI_DISPATCHER:_DispatchPair(F1entry, F2entry, Cluster, ClusterKey)
         "DISPATCH %s(%s)+%s(%s) -> %s/%s [%s]",
         f1, cs1, f2 or "-", cs2, t1, t2 or "-", ClusterKey))
 
-    F1entry.state      = REDGCI_DISPATCHER.STATE_ENGAGED
+    F1entry.state      = REDGCIDISPATCHER.STATE_ENGAGED
     F1entry.pairedWith = f2
     F1entry.engagement = ClusterKey
     if F2entry then
-        F2entry.state      = REDGCI_DISPATCHER.STATE_ENGAGED
+        F2entry.state      = REDGCIDISPATCHER.STATE_ENGAGED
         F2entry.pairedWith = f1
         F2entry.engagement = ClusterKey
     end
@@ -988,13 +1048,14 @@ function REDGCI_DISPATCHER:_DispatchPair(F1entry, F2entry, Cluster, ClusterKey)
 
     gci2v2:SetLocale(self.Locale)
     gci2v2:SetAIMode(true, self.HomeBaseName)
-    gci2v2:SetSRS(self.SRSPath, self.SRSGCIFrequency, self.SRSMod,
+    gci2v2:SetSRS(self.SRSPath, self.SRSGCIFrequency+self.dispatchcount, self.SRSMod,
                   self.SRSCulture, self.SRSGCIVoice, self.SRSPort, self.SRSSpeed)
     if self.SRSProvider then gci2v2:SetSRSProvider(self.SRSProvider) end
     gci2v2:SetAltOffset(self.AltOffset)
     gci2v2:SetWFRange(self.WFRange)
     gci2v2:SetDebug(self.Debug)
     gci2v2.Coalition = self.Coalition
+    gci2v2:SetRadioChannelList(self.RadioChannels)
 
     -- Stop-Hook: release fighters back to pool
     local dr   = self
@@ -1029,16 +1090,19 @@ function REDGCI_DISPATCHER:_DispatchPair(F1entry, F2entry, Cluster, ClusterKey)
         clusterKey = ClusterKey,
         startTime  = timer.getTime(),
     }
+    
+    self.dispatchcount = (self.dispatchcount+1)%11
+    return self
 end
 
 --- [INTERNAL] Called when engagement ends (REDGCI2v2 Stop fires).
 -- AI → RTB waypoint then removed from pool.
 -- Human → RTB radio call, re-enters pool after 5 min.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #string ClusterKey
 -- @param #table F1entry
 -- @param #table F2entry
-function REDGCI_DISPATCHER:_OnEngagementEnd(ClusterKey, F1entry, F2entry)
+function REDGCIDISPATCHER:_OnEngagementEnd(ClusterKey, F1entry, F2entry)
     self:I(self.lid .. "Engagement end: " .. ClusterKey)
     self._engagements[ClusterKey] = nil
 
@@ -1048,19 +1112,19 @@ function REDGCI_DISPATCHER:_OnEngagementEnd(ClusterKey, F1entry, F2entry)
         entry.engagement = nil
 
         if entry.isHuman then
-            entry.state = REDGCI_DISPATCHER.STATE_RTB
+            entry.state = REDGCIDISPATCHER.STATE_RTB
             self:_Transmit("RTB_CALL",
                 { CALLSIGN = entry.callsign or entry.groupName },
                 entry.groupName)
             local name = entry.groupName
             self:ScheduleOnce(300, function()
                 if self._pool[name] then
-                    self._pool[name].state = REDGCI_DISPATCHER.STATE_UNKNOWN
+                    self._pool[name].state = REDGCIDISPATCHER.STATE_UNKNOWN
                     self:I(self.lid .. name .. " [HUMAN] released")
                 end
             end)
         else
-            entry.state = REDGCI_DISPATCHER.STATE_RTB
+            entry.state = REDGCIDISPATCHER.STATE_RTB
             self:_RTBAircraft(entry.groupName)
             local name = entry.groupName
             self:ScheduleOnce(600, function()
@@ -1084,9 +1148,9 @@ end
 
 --- [INTERNAL] Push RTB waypoint for AI group.
 -- WaypointAir expects speed in km/h.
--- @param #REDGCI_DISPATCHER self
+-- @param #REDGCIDISPATCHER self
 -- @param #string GroupName
-function REDGCI_DISPATCHER:_RTBAircraft(GroupName)
+function REDGCIDISPATCHER:_RTBAircraft(GroupName)
     if not self.HomeBase then return end
     local grp = GROUP:FindByName(GroupName)
     if not grp or not grp:IsAlive() then return end
@@ -1114,9 +1178,9 @@ end
 -- ─────────────────────────────────────────────────────────────
 
 --- [INTERNAL] Start handler.
--- @param #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:onafterStart(From, Event, To)
-    self:I(self.lid .. "Start v" .. REDGCI_DISPATCHER.version)
+-- @param #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:onafterStart(From, Event, To)
+    self:I(self.lid .. "Start v" .. REDGCIDISPATCHER.version)
 
     if not self.Intel    then self:E(self.lid .. "ERROR: no INTEL set!")    return end
     if not self.ZoneSet  then self:E(self.lid .. "ERROR: no ZoneSet!")  return end
@@ -1133,12 +1197,12 @@ function REDGCI_DISPATCHER:onafterStart(From, Event, To)
         end
     end)
 
-    self:__Status(-REDGCI_DISPATCHER.TICK_INTERVAL)
+    self:__Status(-REDGCIDISPATCHER.TICK_INTERVAL)
 end
 
 --- [INTERNAL] Main dispatch tick.
--- @param #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:onafterStatus(From, Event, To)
+-- @param #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:onafterStatus(From, Event, To)
 
     self:_RefreshHumanPool()
 
@@ -1148,7 +1212,7 @@ function REDGCI_DISPATCHER:onafterStatus(From, Event, To)
         if not entry.isHuman then
             local grp = GROUP:FindByName(name)
             if (not grp or not grp:IsAlive()) and
-               entry.state ~= REDGCI_DISPATCHER.STATE_RTB then
+               entry.state ~= REDGCIDISPATCHER.STATE_RTB then
                 to_remove[#to_remove + 1] = name
             end
         end
@@ -1160,7 +1224,7 @@ function REDGCI_DISPATCHER:onafterStatus(From, Event, To)
 
     local clusters = self.Intel:GetClusterTable()
     if not clusters then
-        self:__Status(-REDGCI_DISPATCHER.TICK_INTERVAL)
+        self:__Status(-REDGCIDISPATCHER.TICK_INTERVAL)
         return
     end
 
@@ -1202,7 +1266,7 @@ function REDGCI_DISPATCHER:onafterStatus(From, Event, To)
                 if string.find(ek, key, 1, true) then active = active + 1 end
             end
 
-            local needed  = math.ceil(size / REDGCI_DISPATCHER.UNITS_PER_PAIR)
+            local needed  = math.ceil(size / REDGCIDISPATCHER.UNITS_PER_PAIR)
             local to_send = math.max(0, needed - active)
 
             if to_send > 0 then
@@ -1232,12 +1296,12 @@ function REDGCI_DISPATCHER:onafterStatus(From, Event, To)
         end
     end
 
-    self:__Status(-REDGCI_DISPATCHER.TICK_INTERVAL)
+    self:__Status(-REDGCIDISPATCHER.TICK_INTERVAL)
 end
 
 --- [INTERNAL] Stop handler.
--- @param #REDGCI_DISPATCHER self
-function REDGCI_DISPATCHER:onafterStop(From, Event, To)
+-- @param #REDGCIDISPATCHER self
+function REDGCIDISPATCHER:onafterStop(From, Event, To)
     self:I(self.lid .. "Stopped.")
 end
 
