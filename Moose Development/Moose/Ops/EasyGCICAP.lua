@@ -1835,9 +1835,10 @@ function EASYGCICAP:onafterRestart(From,Event,To)
   -- self.wings[Airbasename] = { CAP_Wing, AIRBASE:FindByName(Airbasename):GetZone(), Airbasename }
     for _,_wing in pairs(self.wings or {}) do
       for _,_aw in pairs(_wing) do
-        _wing[1]:Start()
+        _wing[1]:Restart()
       end
     end
   end
+  self:__Status(5)
   return self
 end

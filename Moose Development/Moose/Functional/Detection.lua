@@ -1848,7 +1848,7 @@ do -- DETECTION_BASE
     return self
   end
 
-  --- Validate if the detected item is locked.
+  --- Validate if the detected item is locked (not in the radar sense, though!).
   -- @param #DETECTION_BASE self
   -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
   -- @return #boolean
@@ -1858,7 +1858,7 @@ do -- DETECTION_BASE
 
   end
 
-  --- Lock a detected item.
+  --- Lock a detected item (not in the radar sense, though!).
   -- @param #DETECTION_BASE self
   -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
   -- @return #DETECTION_BASE
@@ -1869,7 +1869,7 @@ do -- DETECTION_BASE
     return self
   end
 
-  --- Unlock a detected item.
+  --- Unlock a detected item (not in the radar sense, though!).
   -- @param #DETECTION_BASE self
   -- @param #DETECTION_BASE.DetectedItem DetectedItem The DetectedItem.
   -- @return #DETECTION_BASE
