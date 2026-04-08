@@ -2581,7 +2581,7 @@ end
 -- @return #boolean Returns `true` if given cohort can meet all requirements.
 function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properties, WeaponTypes, TargetVec2, RangeMax, RefuelSystem, CargoWeight, MaxWeight, RangeMin)
 
-  RangeMin = RangeMin or 0
+  RangeMin = RangeMin or -1
 
   --- Function to check category.
   local function CheckCategory(_cohort)
@@ -2661,7 +2661,7 @@ function LEGION._CohortCan(Cohort, MissionType, Categories, Attributes, Properti
     local RangeMax = RangeMax or 0    
     local InRange=(RangeMax and math.max(RangeMax, Rmax) or Rmax) >= TargetDistance and TargetDistance > RangeMin
 
-    --env.info(string.format("Range TargetDist=%.1f Rmax=%.1f RangeMax=%.1f InRange=%s", TargetDistance, Rmax, RangeMax, tostring(InRange)))
+    --env.info(string.format("Range TargetDist=%.1f Rmax=%.1f RangeMax=%.1f InRange=%s RangeMin=%s", TargetDistance, Rmax, RangeMax, tostring(InRange),tostring(RangeMin)))
     
     return InRange    
   end
