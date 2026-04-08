@@ -160,7 +160,7 @@
 -- For more information on setting up a cloud account, visit: https://cloud.google.com/text-to-speech
 -- Google's supported SSML reference: https://cloud.google.com/text-to-speech/docs/ssml
 --
--- ### Amazon Web Service [Only DCS-gRPC backend]
+-- ### Amazon Web Service [Only HOUDN and DCS-gRPC backend]
 -- 
 -- In order to use Amazon Web Service (AWS) for TTS you need to use @{#MSRS.SetProvider} and @{#MSRS.SetProviderOptionsAmazon} functions:
 -- 
@@ -171,7 +171,7 @@
 -- 
 -- You can set the voice to use with AWS via @{#MSRS.SetVoiceAmazon}.
 -- 
--- ### Microsoft Azure [Only DCS-gRPC backend]
+-- ### Microsoft Azure [Only HOUND and DCS-gRPC backend]
 -- 
 -- In order to use Microsoft Azure for TTS you need to use @{#MSRS.SetProvider} and @{#MSRS.SetProviderOptionsAzure} functions:
 -- 
