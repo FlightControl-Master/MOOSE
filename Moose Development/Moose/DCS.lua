@@ -614,6 +614,7 @@ do -- Object
   -- @field SCENERY
   -- @field CARGO
   
+  ---
   -- @type Object.Desc
   -- @extends #Desc
   -- @field #number life initial life level

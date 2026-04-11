@@ -869,10 +869,21 @@ do
       local MenuTable = {}
       for MenuText, Menu in pairs( self.Menus or {} ) do
         local tag = Menu.MenuTag or math.random(1,10000)
-        MenuTable[#MenuTable+1] = {Tag=tag, Enty=Menu}
+        MenuTable[#MenuTable+1] = {Tag=tag, Entry=Menu}
       end
-      table.sort(MenuTable, function (k1, k2) return k1.tag < k2.tag end )
-      for _, Menu in pairs( MenuTable ) do
+      local function SortTable(k1,k2)
+        if not k1 then
+          if not k2 then return true else return false end
+        elseif not k2 then
+         if not k1 then return true else return false end
+        else
+          return (k1.Tag or 15) <= (k2.Tag or 15)
+        end
+        return false
+      end
+      table.sort(MenuTable, SortTable)
+      --table.sort(MenuTable, function (k1, k2) return (k1.tag or 15) <= (k2.tag or 15) end )
+      for _, Menu in ipairs( MenuTable ) do
         Menu.Entry:Refresh()
       end
     end
