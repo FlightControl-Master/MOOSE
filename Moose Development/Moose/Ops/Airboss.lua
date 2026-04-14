@@ -12903,6 +12903,14 @@ function AIRBOSS:_LSOgrade( playerData )
     -- Circuit edit only take points awary from a 1 wire if there are more than 4 other deviations
   if playerData.wire == 1 and points >= 3 and N > 4 then
     points = points -1
+    -- We also need to change the grade based on the new points.
+    if points == 4 then
+      grade = "OK"
+    elseif points == 3 then
+      grade = "(OK)"
+    elseif points == 2 then 
+      grade = "--"
+    end
   end
 
   env.info("Returning: " .. grade .. "  " .. points .. "  " .. G)
