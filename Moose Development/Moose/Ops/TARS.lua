@@ -180,11 +180,15 @@ TARS_SESSION.debug = false
 --          TARS.detectUnits      = true      -- capture UNIT objects
 --          TARS.detectStatics    = false     -- capture STATIC objects incl. of FARPs
 -- 
--- ### UNIT Filters
+-- ### Target UNIT Filters
 --  
 --        TARS.units = { air=false, ground=true, ship=true }
+--
+-- ### Target UNIT Name Filters
+--
+--        TARS.targetNameFilter = { enabled = true, keywords = { [coalition.side.BLUE] = { "USA" }, [coalition.side.RED]  = { "USSR" },},}    
 --        
--- ### STATIC Filters
+-- ### Target STATIC Filters
 -- 
 --        TARS.statics = {
 --          farps=true,
