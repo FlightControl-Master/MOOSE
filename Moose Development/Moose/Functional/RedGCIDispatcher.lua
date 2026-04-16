@@ -424,7 +424,7 @@ end
 -- @param #string Voice The SRS Voice to be used.
 -- @return #REDGCIDISPATCHER self 
 function REDGCIDISPATCHER:SetSRSGCIDetails(StartFrequency,Voice)
-  self:I({F=StartFrequency,V=Voice})
+  self:T({F=StartFrequency,V=Voice})
   self.SRSGCIFrequency = StartFrequency or 125
   self.SRSGCIVoice = Voice or self.SRSVoice or MSRS.Voices.Google.Wavenet.de_DE_Wavenet_B
   return self
@@ -543,7 +543,7 @@ end
 -- @param #table Vars
 -- @return #string
 function REDGCIDISPATCHER:_FillTemplate(Template, Vars)
-  self:I({T=Template,V=Vars})
+  self:T({T=Template,V=Vars})
     return (string.gsub(Template, "{([%w_]+)}", function(key)
         return tostring(Vars[key] or "")
     end))
@@ -618,7 +618,7 @@ function REDGCIDISPATCHER:_TransmitToAllCAP(Key, Vars)
 
     local text    = self:_FillTemplate(template, Vars or {})
     local srstext = string.gsub(text, "%.", ";")
-    self:I("[TX_ALL/ SRS Text: "..srstext)
+    self:T("[TX_ALL/ SRS Text: "..srstext)
     -- Collect all CAP groups for subtitle
     local subgroups = {}
     for _, entry in pairs(self._pool) do
@@ -708,7 +708,7 @@ function REDGCIDISPATCHER:_SpawnAI(Zone)
     spawner:InitModex(cs)
 
     spawner:OnSpawnGroup(function(grp)
-        self:I(self.lid .. "Gespawnt: " .. grp:GetName() ..
+        self:T(self.lid .. "Gespawnt: " .. grp:GetName() ..
                " CS=" .. cs .. " -> orbit in " .. Zone:GetName())
         self:_RegisterFighter(grp, Zone, false)
         self:_AssignOrbit(grp, Zone)
@@ -790,7 +790,7 @@ function REDGCIDISPATCHER:_AssignOrbit(Grp, Zone)
     local spd_mps   = UTILS.KmphToMps(self.OrbitSpeed)
     local spd_tas   = UTILS.IasToTas(self.OrbitSpeed, alt)
 
-    self:I(self.lid .. "Orbit variation: " .. variation)
+    self:T(self.lid .. "Orbit variation: " .. variation)
 
     -- TaskOrbit requires speed in m/s
     local task = Grp:TaskOrbit(center, alt, spd_mps)
@@ -843,7 +843,7 @@ function REDGCIDISPATCHER:_RegisterFighter(Grp, Zone, IsHuman)
         engagement = nil,
         callsign   = self:_GetCallsign(Grp),
     }
-    self:I(self.lid .. "Pool+: " .. name ..
+    self:T(self.lid .. "Pool+: " .. name ..
            " CS=" .. self._pool[name].callsign ..
            (IsHuman and " [HUMAN]" or " [AI]"))
 end
@@ -1067,7 +1067,7 @@ function REDGCIDISPATCHER:_DispatchPair(F1entry, F2entry, Cluster, ClusterKey)
     local cs1 = F1entry.callsign
     local cs2 = F2entry and F2entry.callsign or cs1
 
-    self:I(self.lid .. string.format(
+    self:T(self.lid .. string.format(
         "DISPATCH %s(%s)+%s(%s) -> %s/%s [%s]",
         f1, cs1, f2 or "-", cs2, t1, t2 or "-", ClusterKey))
 
@@ -1140,7 +1140,7 @@ end
 -- @param #table F1entry
 -- @param #table F2entry
 function REDGCIDISPATCHER:_OnEngagementEnd(ClusterKey, F1entry, F2entry)
-    self:I(self.lid .. "Engagement end: " .. ClusterKey)
+    self:T(self.lid .. "Engagement end: " .. ClusterKey)
     self._engagements[ClusterKey] = nil
 
     local entries = F2entry and { F1entry, F2entry } or { F1entry }
@@ -1157,7 +1157,7 @@ function REDGCIDISPATCHER:_OnEngagementEnd(ClusterKey, F1entry, F2entry)
             self:ScheduleOnce(300, function()
                 if self._pool[name] then
                     self._pool[name].state = REDGCIDISPATCHER.STATE_UNKNOWN
-                    self:I(self.lid .. name .. " [HUMAN] released")
+                    self:T(self.lid .. name .. " [HUMAN] released")
                 end
             end)
         else
@@ -1166,13 +1166,13 @@ function REDGCIDISPATCHER:_OnEngagementEnd(ClusterKey, F1entry, F2entry)
             local name = entry.groupName
             self:ScheduleOnce(600, function()
                 self._pool[name] = nil
-                self:I(self.lid .. name .. " [AI] removed from pool")
+                self:T(self.lid .. name .. " [AI] removed from pool")
             end)
             -- Respawn: spawn new AI into same zone after delay
             if self.RespawnEnabled and entry.zone then
                 local zone = entry.zone
                 self:ScheduleOnce(self.RespawnDelay, function()
-                    self:I(self.lid .. "Respawn: " .. self.RespawnCount ..
+                    self:T(self.lid .. "Respawn: " .. self.RespawnCount ..
                            "× AI → " .. zone:GetName())
                     for i = 1, self.RespawnCount do
                         self:_SpawnAI(zone)
@@ -1207,7 +1207,7 @@ function REDGCIDISPATCHER:_RTBAircraft(GroupName)
             spd_kmh, true, self.HomeBase, {}, "LAND"),
     }, 3)
 
-    self:I(self.lid .. GroupName .. " [AI] RTB -> " .. self.HomeBaseName)
+    self:T(self.lid .. GroupName .. " [AI] RTB -> " .. self.HomeBaseName)
 end
 
 -- ─────────────────────────────────────────────────────────────
@@ -1217,7 +1217,7 @@ end
 --- [INTERNAL] Start handler.
 -- @param #REDGCIDISPATCHER self
 function REDGCIDISPATCHER:onafterStart(From, Event, To)
-    self:I(self.lid .. "Start v" .. REDGCIDISPATCHER.version)
+    self:T(self.lid .. "Start v" .. REDGCIDISPATCHER.version)
 
     if not self.Intel    then self:E(self.lid .. "ERROR: no INTEL set!")    return end
     if not self.ZoneSet  then self:E(self.lid .. "ERROR: no ZoneSet!")  return end
@@ -1227,7 +1227,7 @@ function REDGCIDISPATCHER:onafterStart(From, Event, To)
     self:_InitLocalization()
 
     self.ZoneSet:ForEachZone(function(zone)
-        self:I(self.lid .. "Zone: " .. zone:GetName() ..
+        self:T(self.lid .. "Zone: " .. zone:GetName() ..
                " -> spawning " .. self.AiPerZone .. "x AI")
         for i = 1, self.AiPerZone do
             self:_SpawnAI(zone)
@@ -1295,7 +1295,7 @@ function REDGCIDISPATCHER:onafterStatus(From, Event, To)
                     TYPE  = type_str,
                     RNG   = rng_km,
                 })
-                self:I(self.lid .. "Neuer Cluster " .. key ..
+                self:T(self.lid .. "Neuer Cluster " .. key ..
                        " → INTEL_CONTACT gesendet")
             end
             local active = 0
@@ -1310,7 +1310,7 @@ function REDGCIDISPATCHER:onafterStatus(From, Event, To)
                 local centroid  = cluster.coordinate
                 local available = self:_AvailableFighters(centroid)
 
-                self:I(self.lid .. string.format(
+                self:T(self.lid .. string.format(
                     "Cluster %s size=%d need=%d pairs avail=%d fighter",
                     key, size, needed, #available))
 
@@ -1339,7 +1339,7 @@ end
 --- [INTERNAL] Stop handler.
 -- @param #REDGCIDISPATCHER self
 function REDGCIDISPATCHER:onafterStop(From, Event, To)
-    self:I(self.lid .. "Stopped.")
+    self:T(self.lid .. "Stopped.")
 end
 
 -------------------------------------------------------------------------------

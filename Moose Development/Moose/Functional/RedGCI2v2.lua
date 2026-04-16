@@ -309,7 +309,7 @@ function REDGCI2v2:New(Fighter1Group, Fighter2Group,
     self:AddTransition("Running", "Status", "Running")
     self:AddTransition("Running", "Stop",   "Stopped")
 
-    self:I(self.lid .. "v" .. REDGCI2v2.version .. " created.")
+    self:T(self.lid .. "v" .. REDGCI2v2.version .. " created.")
     return self
 end
 
@@ -352,7 +352,7 @@ function REDGCI2v2:SetSRS(Path, Frequency, Modulation, Culture, Voice, Port, Spe
     self.SRSVoice   = Voice      or self.SRSVoice
     self.SRSPort    = Port       or self.SRSPort
     self.SRSSpeed   = Speed      or 1
-    self:I({F=self.SRSFreq,V=self.SRSVoice})
+    self:T({F=self.SRSFreq,V=self.SRSVoice})
     return self
 end
 
@@ -856,7 +856,7 @@ function REDGCI2v2:onafterStart(From, Event, To)
     
         local safe = angle_deg > 30.0
         if not safe then
-            flight:I(flight.lid .. string.format(
+            flight:T(flight.lid .. string.format(
                 "WF Gate: Wingman zu nah am Schussvektor (%.1f°) — blocke WF", angle_deg))
         end
         return safe

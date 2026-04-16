@@ -493,7 +493,7 @@ function REDGCI:SetSRS(Path, Frequency, Modulation, Culture, Voice, Port, Speed)
     self.SRSVoice   = Voice      or self.SRSVoice
     self.SRSPort    = Port       or self.SRSPort
     self.SRSSpeed   = Speed      or 1
-    self:I({F=Frequency,V=Voice})
+    self:T({F=Frequency,V=Voice})
     return self
 end
 

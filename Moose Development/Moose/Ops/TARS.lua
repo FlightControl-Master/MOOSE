@@ -894,9 +894,9 @@ end
 -- @param #TARS.PlatformParams params
 -- @return DCS#Vec2 `{ x, z }` ahead of the aircraft.
 function TARS_SESSION:_OffsetCalc(unit, params)
-    local pos  = unit:GetPositionVec3()
+    local pos  = unit:GetPosition()
     local vec3 = unit:GetVec3()
-    local rad  = math.atan2(pos.z, pos.x) + 2 * math.pi   -- pos.x = Vorwärts-Vektor
+    local rad  = math.atan2(pos.x.z, pos.x.x) + 2 * math.pi   -- pos.x = Vorwärts-Vektor
     local MSL  = land.getHeight({ x = vec3.x, y = vec3.z })
     local alt  = vec3.y - MSL
     local dist = math.tan(params.offset) * alt
