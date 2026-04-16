@@ -1252,6 +1252,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
   -- @param #CTLD_CARGO Cargo Cargo crate that was repacked.
+  -- @param Wrapper.Group#GROUP PackedGroup Group object that is about to be packed.
   -- @return #CTLD self
     
   --- FSM Function OnBeforeTroopsRTB.
@@ -1414,7 +1415,7 @@ function CTLD:New(Coalition, Prefixes, Alias)
   -- @param #string To State.
   -- @param Wrapper.Group#GROUP Group Group Object.
   -- @param Wrapper.Unit#UNIT Unit Unit Object.
-  -- @param #CTLD_CARGO Cargo Cargo crate that was repacked.
+  -- @param #CTLD_CARGO Cargo Cargo crate that was repacked. For direct C-130 packing this can also be a table of spawned packed cargo objects.
   -- @return #CTLD self
     
   --- FSM Function OnAfterTroopsRTB.
@@ -2566,6 +2567,7 @@ function CTLD:_EventHandler(EventData)
       local _group = event.IniGroup
       local _unit = event.IniUnit
       self:_RefreshLoadCratesMenu(_group, _unit)
+      self:_RefreshPackMenus(_group, _unit)
     if self:IsFixedWing(_unit) and self.enableFixedWing then
       self:_RefreshDropCratesMenu(_group, _unit)
     end
@@ -4160,6 +4162,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
     end
   end
   self:_RefreshLoadCratesMenu(Group, Unit)
+  self:_RefreshPackMenus(Group, Unit)
   return true
 end
 
@@ -4383,7 +4386,9 @@ function CTLD:_RemoveCratesNearby(_group, _unit)
         done[n] = true
     end
     end
+    self:_CleanupTrackedCrates(removedIDs)
     self:_RefreshLoadCratesMenu(_group,_unit)
+    self:_RefreshPackMenus(_group,_unit)
 
     -- Trigger FSM event for removed crates.
     self:__RemoveCratesNearby(1, _group, _unit, crates)
@@ -4639,6 +4644,7 @@ function CTLD:_LoadCratesNearby(Group, Unit)
       self:_UpdateUnitCargoMass(Unit)
       self:_RefreshDropCratesMenu(Group, Unit)
       self:_RefreshLoadCratesMenu(Group, Unit)
+      self:_RefreshPackMenus(Group, Unit)
       -- clean up real world crates
       self:_CleanupTrackedCrates(crateidsloaded)
       self:__CratesPickedUp(1, Group, Unit, loaded.Cargo)
@@ -5520,6 +5526,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
             end
             self:_CleanUpCrates(cratesNow,build,numberNow)
             self:_RefreshLoadCratesMenu(Group,Unit)
+            self:_RefreshPackMenus(Group,Unit)
             if self.buildtime and self.buildtime > 0 then
               local buildtimer = TIMER:New(self._BuildObjectFromCrates,self,Group,Unit,build,false,Group:GetCoordinate(),MultiDrop)
               buildtimer:Start(self.buildtime)
@@ -5541,6 +5548,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
               end
               self:_CleanUpCrates(cratesNow,build,numberNow)
               self:_RefreshLoadCratesMenu(Group,Unit)
+              self:_RefreshPackMenus(Group,Unit)
               local off   = start + (n-1)*sep
               local coord = base:Translate(off,lat):GetVec2()
               local b = { Name=build.Name, Required=build.Required, Template=build.Template, CanBuild=true, Type=build.Type, Coord=coord }
@@ -5573,53 +5581,393 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
   return self
 end
 
---- (Internal) Function to repair nearby vehicles / FOBs
+--- (Internal) Function to find nearby packable groups.
 -- @param #CTLD self
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
+-- @return #table PackableGroups
+-- @return #number Number
+function CTLD:_FindPackableGroupsNearby(Group, Unit)
+  self:T(self.lid .. " _FindPackableGroupsNearby")
+  local location = Group:GetCoordinate()
+  if not location then return {}, 0 end
+  local capabilities = self:_GetUnitCapabilities(Unit)
+  local innerDist = (capabilities.length and capabilities.length/2) or 15
+  local finddist = self.PackDistance or (self.CrateDistance or 35)
+  local zone = ZONE_RADIUS:New("CTLD_PackableZone", location:GetVec2(), finddist, false)
+  local nearestGroups = SET_GROUP:New():FilterCoalitions("blue"):FilterZones({zone}):FilterOnce()
+  local packable = {}
 
-function CTLD:_PackCratesNearby(Group, Unit)
-  self:T(self.lid .. " _PackCratesNearby")
-  -----------------------------------------
-  -- search for nearest group to player
-  -- determine if group is packable
-  -- generate crates and destroy group
-  -----------------------------------------
-
-  -- get nearby vehicles
-  local location = Group:GetCoordinate() -- get coordinate of group using function
-  local nearestGroups = SET_GROUP:New():FilterCoalitions("blue"):FilterZones({ZONE_RADIUS:New("TempZone", location:GetVec2(), self.PackDistance, false)}):FilterOnce()
-
-  local packedAny = false
-
-  -- determine if group is packable
-  for _, _Group in pairs(nearestGroups.Set) do -- convert #SET_GROUP to a list of Wrapper.Group#GROUP
-    local didPackThisGroup = false
-    for _, _Template in pairs(_DATABASE.Templates.Groups) do -- iterate through the database of templates
-      if string.match(_Group:GetName(), _Template.GroupName) then -- check if the Wrapper.Group#GROUP near the player is in the list of templates by name
-        for _, _entry in pairs(self.Cargo_Crates) do -- iterate through #CTLD_CARGO
-          if _entry.Templates[1] == _Template.GroupName then -- check if the #CTLD_CARGO matches the template name
-            _Group:Destroy()
-            self:_GetCrates(Group, Unit, _entry, nil, false, true) -- spawn the appropriate crates near the player
-            self:_RefreshLoadCratesMenu(Group,Unit) -- call the refresher to show the crates in the menu
-            self:__CratesPacked(1,Group,Unit,_entry)
-            packedAny = true
-            didPackThisGroup = true
-            break
+  for _, gr in pairs(nearestGroups.Set) do
+    if gr and gr:GetName() ~= Group:GetName() then
+      local gc = gr:GetCoordinate()
+      if gc then
+        local dist = location:Get2DDistance(gc)
+        if dist > innerDist and dist <= finddist then
+          local generic = self:GetGenericCargoObjectFromGroupName(gr:GetName())
+          local cargo = generic and self:_FindCratesCargoObject(generic:GetName() or generic.Name) or nil
+          if cargo then
+            local display = self:_GetCargoDisplayName(cargo)
+            packable[#packable + 1] = {
+              group = gr,
+              groupName = gr:GetName(),
+              cargo = cargo,
+              distance = dist,
+              display = display,
+            }
           end
         end
       end
-      if didPackThisGroup then break end
+    end
+  end
+
+  table.sort(packable, function(a, b)
+    if a.distance ~= b.distance then
+      return a.distance < b.distance
+    end
+    return a.groupName < b.groupName
+  end)
+
+  return packable, #packable
+end
+
+--- (Internal) Function to pack a selected nearby group into crates.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Unit#UNIT Unit
+-- @param Wrapper.Group#GROUP TargetGroup
+-- @param #boolean EmitPackedEvent
+-- @param #boolean SkipMenuRefresh
+-- @return #table PackedCargo
+-- @return #CTLD_CARGO CargoEntry
+-- @return #boolean Success
+function CTLD:_PackSingleGroupToCrates(Group, Unit, TargetGroup, EmitPackedEvent, SkipMenuRefresh)
+  self:T(self.lid .. " _PackSingleGroupToCrates")
+  local generic = self:GetGenericCargoObjectFromGroupName(TargetGroup:GetName())
+  local cargoEntry = generic and self:_FindCratesCargoObject(generic:GetName() or generic.Name) or nil
+  if not cargoEntry then
+    return nil, nil, false
+  end
+
+  local from = self.current
+  local to = self.current
+  local emitPackedEvent = EmitPackedEvent ~= false
+
+  if emitPackedEvent then
+    local packParams = { from, "CratesPacked", to, Group, Unit, cargoEntry, TargetGroup }
+    if self:_call_handler("onbefore", "CratesPacked", packParams, "CratesPacked") == false then
+      return nil, cargoEntry, false
+    end
+    if self:_call_handler("OnBefore", "CratesPacked", packParams, "CratesPacked") == false then
+      return nil, cargoEntry, false
+    end
+  end
+
+  TargetGroup:Destroy()
+  self.Spawned_Cargo = self.Spawned_Cargo or {}
+  local spawnedCountBefore = #self.Spawned_Cargo
+  local ok = self:_GetCrates(Group, Unit, cargoEntry, nil, false, true)
+  if not ok then
+    if not SkipMenuRefresh then
+      self:_RefreshLoadCratesMenu(Group, Unit)
+      self:_RefreshPackMenus(Group, Unit)
+    end
+    return nil, cargoEntry, false
+  end
+
+  local packedCargo = {}
+  for idx = spawnedCountBefore + 1, #self.Spawned_Cargo do
+    local cargo = self.Spawned_Cargo[idx]
+    if cargo then
+      if self.UseC130LoadAndUnload and self:IsC130J(Unit) then
+        cargo:SetWasDropped(true, true)
+      end
+      packedCargo[#packedCargo + 1] = cargo
+    end
+  end
+
+  if not SkipMenuRefresh then
+    self:_RefreshLoadCratesMenu(Group, Unit)
+    self:_RefreshPackMenus(Group, Unit)
+  end
+
+  if emitPackedEvent then
+    local eventCargo = cargoEntry
+    if self.UseC130LoadAndUnload and self:IsC130J(Unit) and #packedCargo > 0 then
+      eventCargo = packedCargo
+    end
+    local packParams = { from, "CratesPacked", to, Group, Unit, eventCargo }
+    self:_call_handler("onafter", "CratesPacked", packParams, "CratesPacked")
+    self:_call_handler("OnAfter", "CratesPacked", packParams, "CratesPacked")
+  end
+
+  return packedCargo, cargoEntry, true
+end
+
+--- (Internal) Function to load the exact crates created by a selected pack action.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Unit#UNIT Unit
+-- @param #table crateIds
+-- @param #string cargoName
+-- @return #CTLD self
+function CTLD:_LoadPackedCratesByIds(Group, Unit, crateIds, cargoName)
+  self:T(self.lid .. " _LoadPackedCratesByIds cargoName=" .. (cargoName or "nil"))
+  local grounded = not self:IsUnitInAir(Unit)
+  local hover = self:CanHoverLoad(Unit)
+  if not grounded and not hover then
+    local msg = self.gettext:GetEntry("MUST_LAND_OR_HOVER_CRATES",self.locale)
+    self:_SendMessage(msg, 10, false, Group)
+    return self
+  end
+  if self.pilotmustopendoors and not UTILS.IsLoadingDoorOpen(Unit:GetName()) then
+    local msg = self.gettext:GetEntry("OPEN_DOORS_LOAD_CARGO",self.locale)
+    self:_SendMessage(msg, 10, false, Group)
+    return self
+  end
+
+  local idLookup = {}
+  for _, id in pairs(crateIds or {}) do
+    idLookup[id] = true
+  end
+
+  local matchingCrates = {}
+  local finddist = self.CrateDistance or 35
+  local location = Group:GetCoordinate()
+  for _, crateObj in pairs(self.Spawned_Cargo or {}) do
+    if crateObj and idLookup[crateObj:GetID()] then
+      local pos = crateObj:GetPositionable()
+      if pos and pos:IsAlive() then
+        local dist = location:Get2DDistance(pos:GetCoordinate())
+        if dist <= finddist then
+          matchingCrates[#matchingCrates + 1] = crateObj
+        end
+      end
+    end
+  end
+
+  if #matchingCrates == 0 then
+    local msg = self.gettext:GetEntry("NO_NAMED_CRATES_IN_RANGE",self.locale)
+    msg = string.format(msg, cargoName or "selection")
+    self:_SendMessage(msg, 10, false, Group)
+    self:_RefreshPackMenus(Group, Unit)
+    return self
+  end
+
+  table.sort(matchingCrates, function(a, b) return a:GetID() < b:GetID() end)
+  local needed = matchingCrates[1]:GetCratesNeeded() or 1
+  local unitName = Unit:GetName()
+  local loadedData = self.Loaded_Cargo[unitName] or { Troopsloaded = 0, Cratesloaded = 0, Cargo = {} }
+  local capabilities = self:_GetUnitCapabilities(Unit)
+  local capacity = capabilities.cratelimit or 0
+  if loadedData.Cratesloaded >= capacity then
+    local msg = self.gettext:GetEntry("NO_MORE_CAPACITY",self.locale)
+    self:_SendMessage(msg, 10, false, Group)
+    self:_RefreshPackMenus(Group, Unit)
+    return self
+  end
+
+  local spaceLeft = capacity - loadedData.Cratesloaded
+  local toLoad = math.min(#matchingCrates, needed, spaceLeft)
+  if toLoad < 1 then
+    local msg = self.gettext:GetEntry("CANNOT_LOAD_NONE_OR_FULL",self.locale)
+    self:_SendMessage(msg, 10, false, Group)
+    self:_RefreshPackMenus(Group, Unit)
+    return self
+  end
+
+  local crateIDsLoaded = {}
+  for i = 1, toLoad do
+    local crate = matchingCrates[i]
+    crate:SetHasMoved(true)
+    crate:SetWasDropped(false)
+    table.insert(loadedData.Cargo, crate)
+    loadedData.Cratesloaded = loadedData.Cratesloaded + 1
+    local stObj = crate:GetPositionable()
+    if stObj and stObj:IsAlive() then
+      stObj:Destroy(false)
+    end
+    crateIDsLoaded[#crateIDsLoaded + 1] = crate:GetID()
+  end
+
+  self.Loaded_Cargo[unitName] = loadedData
+  self:_UpdateUnitCargoMass(Unit)
+  self:_CleanupTrackedCrates(crateIDsLoaded)
+
+  local loadedHere = toLoad
+  local displayName = cargoName or (matchingCrates[1]:GetName() or "selection")
+  if loadedHere < needed and loadedData.Cratesloaded >= capacity then
+    local msg = self.gettext:GetEntry("LOADED_PARTIAL_LIMIT",self.locale)
+    msg = string.format(msg, loadedHere, needed, displayName)
+    self:_SendMessage(msg, 10, false, Group)
+  else
+    local fullSets = math.floor(loadedHere / needed)
+    local leftover = loadedHere % needed
+    if needed > 1 then
+      if fullSets > 0 and leftover == 0 then
+        local msg = self.gettext:GetEntry("LOADED_FULL",self.locale)
+        msg = string.format(msg, fullSets, displayName)
+        self:_SendMessage(msg, 10, false, Group)
+      elseif fullSets > 0 and leftover > 0 then
+        local msg = self.gettext:GetEntry("LOADED_SETS_LEFTOVER",self.locale)
+        msg = string.format(msg, fullSets, displayName, leftover)
+        self:_SendMessage(msg, 10, false, Group)
+      else
+        local msg = self.gettext:GetEntry("LOADED_PARTIAL",self.locale)
+        msg = string.format(msg, loadedHere, needed, displayName)
+        self:_SendMessage(msg, 15, false, Group)
+      end
+    else
+      local msg = self.gettext:GetEntry("LOADED_SETS",self.locale)
+      msg = string.format(msg, loadedHere, displayName)
+      self:_SendMessage(msg, 10, false, Group)
+    end
+  end
+
+  self:_RefreshLoadCratesMenu(Group, Unit)
+  self:_RefreshDropCratesMenu(Group, Unit)
+  self:_RefreshPackMenus(Group, Unit)
+  if cargoName then
+    self:_RefreshCrateQuantityMenus(Group, Unit, self:_FindCratesCargoObject(cargoName))
+  end
+  return self
+end
+
+--- (Internal) Function to remove the exact crates created by a selected pack action.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Unit#UNIT Unit
+-- @param #table crateIds
+-- @return #CTLD self
+function CTLD:_RemovePackedCratesByIds(Group, Unit, crateIds)
+  self:T(self.lid .. " _RemovePackedCratesByIds")
+  local idLookup = {}
+  for _, id in pairs(crateIds or {}) do
+    idLookup[id] = true
+  end
+
+  local crates = {}
+  local finddist = self.CrateDistance or 35
+  local location = Group:GetCoordinate()
+  for _, entry in pairs(self.Spawned_Cargo or {}) do
+    if entry and idLookup[entry:GetID()] then
+      local pos = entry:GetPositionable()
+      if pos and pos:IsAlive() then
+        local dist = location:Get2DDistance(pos:GetCoordinate())
+        if dist <= finddist then
+          crates[#crates + 1] = entry
+        end
+      end
+    end
+  end
+
+  if #crates == 0 then
+    local msg = self.gettext:GetEntry("NOTHING_TO_REMOVE",self.locale)
+    self:_SendMessage(msg, 10, false, Group)
+    self:_RefreshPackMenus(Group, Unit)
+    return self
+  end
+
+  local text = REPORT:New(self.gettext:GetEntry("REPORT_REMOVING_CRATES",self.locale))
+  text:Add("------------------------------------------------------------")
+  local removedIDs = {}
+  for _, entry in pairs(crates) do
+    local name = entry:GetName() or "none"
+    text:Add(string.format(self.gettext:GetEntry("REPORT_ROW_CRATE_REMOVED",self.locale), name, entry.PerCrateMass))
+    local pos = entry:GetPositionable()
+    if pos then
+      entry.coordinate = pos:GetCoordinate()
+      pos:Destroy(false)
+    end
+    removedIDs[#removedIDs + 1] = entry:GetID()
+  end
+  text:Add("------------------------------------------------------------")
+  self:_SendMessage(text:Text(), 30, true, Group, true)
+
+  local done = {}
+  for _, e in pairs(crates) do
+    local n = e:GetName() or "none"
+    if not done[n] then
+      local object = self:_FindCratesCargoObject(n)
+      if object then self:_RefreshCrateQuantityMenus(Group, Unit, object) end
+      done[n] = true
+    end
+  end
+
+  self:_CleanupTrackedCrates(removedIDs)
+  self:_RefreshLoadCratesMenu(Group, Unit)
+  self:_RefreshPackMenus(Group, Unit)
+  self:__RemoveCratesNearby(1, Group, Unit, crates)
+  return self
+end
+
+--- (Internal) Function to pack a selected nearby group.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Unit#UNIT Unit
+-- @param #string TargetGroupName
+-- @param #string Mode
+-- @return #boolean Success
+function CTLD:_PackSelectedGroupAction(Group, Unit, TargetGroupName, Mode)
+  self:T(self.lid .. " _PackSelectedGroupAction")
+  local targetGroup = GROUP:FindByName(TargetGroupName)
+  if not targetGroup or not targetGroup:IsAlive() then
+    local msg = self.gettext:GetEntry("NOTHING_TO_PACK",self.locale)
+    self:_SendMessage(msg, 10, false, Group)
+    self:_RefreshPackMenus(Group, Unit)
+    return false
+  end
+
+  local emitPackedEvent = Mode == "pack"
+  local packedCargo, cargoEntry, ok = self:_PackSingleGroupToCrates(Group, Unit, targetGroup, emitPackedEvent)
+  if not ok then
+    self:_RefreshPackMenus(Group, Unit)
+    return false
+  end
+
+  if Mode == "load" or Mode == "remove" then
+    local crateIds = {}
+    for _, cargo in ipairs(packedCargo or {}) do
+      crateIds[#crateIds + 1] = cargo:GetID()
+    end
+    local cargoName = cargoEntry and (cargoEntry:GetName() or cargoEntry.Name) or nil
+    if Mode == "load" then
+      timer.scheduleFunction(function() self:_LoadPackedCratesByIds(Group, Unit, crateIds, cargoName) end, {}, timer.getTime() + 1)
+    else
+      timer.scheduleFunction(function() self:_RemovePackedCratesByIds(Group, Unit, crateIds) end, {}, timer.getTime() + 1)
+    end
+  end
+
+  return true
+end
+
+--- (Internal) Function to pack nearby vehicles / FOBs.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group
+-- @param Wrapper.Unit#UNIT Unit
+-- @param #boolean EmitPackedEvent If false, suppress CratesPacked callbacks.
+-- @return #boolean Success
+function CTLD:_PackCratesNearby(Group, Unit, EmitPackedEvent)
+  self:T(self.lid .. " _PackCratesNearby")
+  local packableGroups = self:_FindPackableGroupsNearby(Group, Unit)
+  local packedAny = false
+  local emitPackedEvent = EmitPackedEvent ~= false
+
+  for _, entry in ipairs(packableGroups) do
+    local _, _, ok = self:_PackSingleGroupToCrates(Group, Unit, entry.group, emitPackedEvent, true)
+    if ok then
+      packedAny = true
     end
   end
 
   if not packedAny then
     local msg = self.gettext:GetEntry("NOTHING_TO_PACK",self.locale)
     self:_SendMessage(msg, 10, false, Group)
-    --self:_SendMessage("Nothing to pack at this distance pilot!",10,false,Group)
     return false
   end
 
+  self:_RefreshLoadCratesMenu(Group, Unit)
+  self:_RefreshPackMenus(Group, Unit)
   return true
 end
 
@@ -5775,6 +6123,8 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation,Mult
         self:__CratesBuild(1,Group,Unit,self.DroppedTroops[self.TroopCounter])
       end
     end -- template loop
+    self:_RefreshLoadCratesMenu(Group, Unit)
+    self:_RefreshPackMenus(Group, Unit)
   else
     self:T(self.lid.."Group KIA while building!")
   end
@@ -5898,7 +6248,7 @@ function CTLD:_PackAndLoad(Group,Unit)
       --self:_SendMessage("You need to open the door(s) to load cargo!",10,false,Group)
       return self
     end
-    if not self:_PackCratesNearby(Group,Unit) then
+    if not self:_PackCratesNearby(Group,Unit,false) then
         return self
       end
     timer.scheduleFunction(function() self:_LoadCratesNearby(Group,Unit) end,{},timer.getTime()+1)
@@ -6596,10 +6946,13 @@ function CTLD:_RefreshF10Menus()
               MENU_GROUP_COMMAND:New(_group, self.gettext:GetEntry("MENU_REMOVE_CRATES_NEARBY",self.locale), removecratesmenu, self._RemoveCratesNearby, self, _group, _unit)
   
               if self.onestepmenu then
-                local mPack=MENU_GROUP:New(_group,self.gettext:GetEntry("MENU_PACK_CRATES",self.locale),topcrates)
-                MENU_GROUP_COMMAND:New(_group,self.gettext:GetEntry("MENU_PACK",self.locale),mPack,self._PackCratesNearby,self,_group,_unit)
-                MENU_GROUP_COMMAND:New(_group,self.gettext:GetEntry("MENU_PACK_AND_LOAD",self.locale),mPack,self._PackAndLoad,self,_group,_unit)
-                MENU_GROUP_COMMAND:New(_group,self.gettext:GetEntry("MENU_PACK_AND_REMOVE",self.locale),mPack,self._PackAndRemove,self,_group,_unit)
+                topcrates.PackRootMenu = MENU_GROUP:New(_group, self.gettext:GetEntry("MENU_PACK",self.locale), topcrates)
+                topcrates.PackMenu = MENU_GROUP:New(_group, self.gettext:GetEntry("MENU_PACK",self.locale), topcrates.PackRootMenu)
+                local showPackAndLoad = not (self.UseC130LoadAndUnload and self:IsC130J(_unit))
+                if showPackAndLoad then
+                  topcrates.PackAndLoadMenu = MENU_GROUP:New(_group, self.gettext:GetEntry("MENU_PACK_AND_LOAD",self.locale), topcrates.PackRootMenu)
+                end
+                topcrates.PackAndRemoveMenu = MENU_GROUP:New(_group, self.gettext:GetEntry("MENU_PACK_AND_REMOVE",self.locale), topcrates.PackRootMenu)
                 MENU_GROUP_COMMAND:New(_group, self.gettext:GetEntry("MENU_LIST_CRATES_NEARBY",self.locale), topcrates, self._ListCratesNearby, self, _group, _unit)
               else
                 MENU_GROUP_COMMAND:New(_group, self.gettext:GetEntry("MENU_PACK_CRATES",self.locale), topcrates, self._PackCratesNearby, self, _group, _unit)
@@ -6694,6 +7047,7 @@ function CTLD:_RefreshF10Menus()
             -- Mark we built the menu
             self.MenusDone[_unitName] = true
             self:_RefreshLoadCratesMenu(_group,_unit)
+            self:_RefreshPackMenus(_group,_unit)
             self:_RefreshDropCratesMenu(_group,_unit)
             if firstBuild then menucount=menucount+1 end
             if firstBuild and not self.showstockinmenuitems then self:_RefreshQuantityMenusForGroup(_group,_unit) end
@@ -6754,7 +7108,43 @@ function CTLD:_RefreshLoadCratesMenu(Group,Unit)
       end
     end
   end
-  
+
+--- (Internal) Function to refresh the menu for pack actions. Triggered from land/build/pack and more.
+-- @param #CTLD self
+-- @param Wrapper.Group#GROUP Group The calling group.
+-- @param Wrapper.Unit#UNIT Unit The calling unit.
+-- @return #CTLD self
+function CTLD:_RefreshPackMenus(Group,Unit)
+  if not self.onestepmenu then return end
+  if not Group.CTLDTopmenu then return end
+  local topCrates = Group.MyTopCratesMenu
+  if not topCrates then return end
+  if not topCrates.PackRootMenu and not topCrates.PackMenu and not topCrates.PackAndLoadMenu and not topCrates.PackAndRemoveMenu then return end
+
+  local packableGroups, n = self:_FindPackableGroupsNearby(Group,Unit)
+
+  local function refreshPackMenu(menu, mode, allKey, bulkFunc)
+    if not menu then return end
+    menu:RemoveSubMenus()
+
+    if n > 0 then
+      for idx, entry in ipairs(packableGroups) do
+        local label = string.format("%d. %s (%dm)", idx, entry.display or entry.groupName, math.floor((entry.distance or 0) + 0.5))
+        MENU_GROUP_COMMAND:New(Group, label, menu, self._PackSelectedGroupAction, self, Group, Unit, entry.groupName, mode)
+      end
+    end
+
+    MENU_GROUP_COMMAND:New(Group, self.gettext:GetEntry(allKey,self.locale), menu, bulkFunc, self, Group, Unit)
+    MENU_GROUP_COMMAND:New(Group, self.gettext:GetEntry("MENU_SCAN_PACKABLE_UNITS",self.locale), menu, self._RefreshPackMenus, self, Group, Unit)
+  end
+
+  refreshPackMenu(topCrates.PackMenu, "pack", "MENU_PACK_ALL", self._PackCratesNearby)
+  if topCrates.PackAndLoadMenu then
+    refreshPackMenu(topCrates.PackAndLoadMenu, "load", "MENU_PACK_AND_LOAD_ALL", self._PackAndLoad)
+  end
+  refreshPackMenu(topCrates.PackAndRemoveMenu, "remove", "MENU_PACK_AND_REMOVE_ALL", self._PackAndRemove)
+end
+
 
 ---
 -- Loads exactly `CratesNeeded` crates for one cargoName in range.
@@ -6911,6 +7301,7 @@ function CTLD:_LoadSingleCrateSet(Group, Unit, cargoName, details)
 
   self:_RefreshLoadCratesMenu(Group, Unit)
   self:_RefreshDropCratesMenu(Group, Unit)
+  self:_RefreshPackMenus(Group, Unit)
   self:_RefreshCrateQuantityMenus(Group, Unit, self:_FindCratesCargoObject(cargoName))
 
   if batch and batch.cname == cargoName then
@@ -7081,6 +7472,7 @@ end
   self:_UpdateUnitCargoMass(Unit)
   self:_RefreshDropCratesMenu(Group, Unit)
   self:_RefreshLoadCratesMenu(Group, Unit)
+  self:_RefreshPackMenus(Group, Unit)
   self:_RefreshCrateQuantityMenus(Group, Unit, nil)
   return self
 end

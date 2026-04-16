@@ -117,8 +117,6 @@ Ops/ArmyGroup.lua
 Ops/OpsTransport.lua
 Ops/Target.lua
 Ops/TARS.lua
-Ops/EasyGCICAP.lua
-Ops/EasyA2G.lua
 
 Sound/UserSound.lua
 Sound/SoundOutput.lua

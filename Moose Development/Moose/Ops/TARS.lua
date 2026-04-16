@@ -86,7 +86,6 @@ TARS_SESSION.debug = false
 -- @field #table reconTypes Map of `[typeName] = true` for all recon-capable DCS type names.
 -- @field #table parameters Map of `[typeName] = #TARS.PlatformParams` with per-platform sensor profiles.
 -- @field #table allowedAmmo Map of `[weaponDisplayName] = true` for permitted loadout items.
--- @field #table Locale Map of `[messageID] = TEXTANDSOUND` — populated by `TARS_Locale.lua`.
 -- @field #table instances Runtime map `[unitName] = #TARS_SESSION` of active sorties.
 -- @field #table groundMenus Runtime map `[playerName] = #TARS.MenuData` of open F10 menus.
 -- @field #table detectedTargets Lifetime map `[unitName] = #TARS.Snapshot` of all reported targets.
@@ -181,11 +180,15 @@ TARS_SESSION.debug = false
 --          TARS.detectUnits      = true      -- capture UNIT objects
 --          TARS.detectStatics    = false     -- capture STATIC objects incl. of FARPs
 -- 
--- ### UNIT Filters
+-- ### Target UNIT Filters
 --  
 --        TARS.units = { air=false, ground=true, ship=true }
+--
+-- ### Target UNIT Name Filters
+--
+--        TARS.targetNameFilter = { enabled = true, keywords = { [coalition.side.BLUE] = { "USA" }, [coalition.side.RED]  = { "USSR" },},}    
 --        
--- ### STATIC Filters
+-- ### Target STATIC Filters
 -- 
 --        TARS.statics = {
 --          farps=true,
@@ -279,7 +282,7 @@ TARS = {}
 --- @field #string version
 TARS.version = "v2.2.1"
 
---- Active locale. Set before `TARS:New()`. Populated by `TARS_Locale.lua`.
+--- Active locale.
 -- @field #string locale
 TARS.locale = TARS.locale or "en"
 
@@ -404,78 +407,6 @@ TARS.redMarkCount    = 150000
 TARS.blueMarkCount   = 160000
 TARS.scoring         = nil
 
---- **TARS_Locale — Localization for the Tactical Air Recon System**
---
--- This file defines all player-facing strings for TARS in English (en),
--- German (de), and French (fr) using the MOOSE `TEXTANDSOUND` class.
---
--- ## How to use
--- Load this file **after** TARS.lua:
---
---     dofile(basedir .. "Moose_.lua")
---     dofile(basedir .. "TARS.lua")
---     dofile(basedir .. "TARS_Locale.lua")   -- ← this file
---
--- Then set the desired locale before (or after) calling `TARS:New()`:
---
---     TARS.locale = "de"       -- "en" (default), "de", "fr"
---     TARS_Instance = TARS:New()
---
--- ## Adding a new language
--- Any key without a translation for the chosen locale automatically falls
--- back to English.
---
--- ## Strings with format placeholders
--- Entries that contain `%d` or `%s` are passed through `string.format()`
--- inside `TARS:_T()`. Pass the values as extra arguments:
---
---     self:_MsgUnit( self:_Txt("TARS_FILM_START", self.duration), 5, playerName )
---
--- @module TARS_Locale
--- @author FMD — Fredy
--- @author Applevangelist - Moose migration, Claude.AI
-
--------------------------------------------------
--- LOCALE CONFIGURATION
--------------------------------------------------
-
---- Active locale used by `TARS:_T()`.
--- Set this before `TARS:New()` is called.
--- Supported values: `"en"` (default), `"de"`, `"fr"`.
--- @field #string locale
-TARS.locale = TARS.locale or "en"
-
--------------------------------------------------
--- TODO LOCALE TABLE
--- Each entry is a TEXTANDSOUND object keyed by a message ID string.
--------------------------------------------------
-
---- Map of `[messageID] = TEXTANDSOUND` objects for all player-facing strings.
--- @field #table Locale
---- **TARS.Messages — Localization strings for the Tactical Air Recon System**
---
--- All player-facing strings are stored in a single `TARS.Messages` table,
--- keyed first by locale (`"en"`, `"de"`, `"fr"`) and then by message ID.
---
--- ## Resolving a string
--- Use `TARS:_T(id, ...)` anywhere inside TARS methods.
--- The helper looks up `TARS.Messages[TARS.locale][id]`, falls back to `"en"`,
--- and optionally passes extra arguments through `string.format`:
---
---     self:_MsgUnit( self:_Txt("TARS_FILM_START", self.duration), 5, playerName )
---
--- ## Adding a new language
--- Add a new locale block (e.g. `es = { ... }`) following the same keys as `en`.
--- Any missing key automatically falls back to English at runtime.
---
--- ## Strings with format placeholders
--- `%d` = number, `%s` = string.  The number and order of placeholders must
--- match between all languages for a given key.
---
--- @module TARS_Locale
--- @author FMD — Fredy
--- @author Applevangelist
- 
 -------------------------------------------------
 -- LOCALE CONFIGURATION
 -------------------------------------------------
