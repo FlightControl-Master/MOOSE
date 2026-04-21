@@ -504,6 +504,9 @@ CSAR.AircraftType["OH58D"] = 2
 CSAR.AircraftType["CH-47Fbl1"] = 31
 CSAR.AircraftType["AH-6J"] = 2
 CSAR.AircraftType["MH-6J"] = 2
+CSAR.AircraftType["Ka-50_3"] = 0
+CSAR.AircraftType["Ka-50"] = 0
+CSAR.AircraftType["AV8BNA"] = 0
 
 --- CSAR class version.
 -- @field #string version
@@ -2538,8 +2541,11 @@ function CSAR:_AddMedevacMenuItem()
     if _unit then
       --self:T("Unitname ".._unit:GetName().." IsAlive "..tostring(_unit:IsAlive()).." IsPlayer "..tostring(_unit:IsPlayer()))
       if _unit:IsAlive() and _unit:IsPlayer() then
-        local unitName = _unit:GetName()
-        _UnitList[unitName] = unitName
+        local _maxUnits = self.AircraftType[_unit:GetTypeName()]
+        if _maxUnits == nil or _maxUnits > 0 then
+          local unitName = _unit:GetName()
+          _UnitList[unitName] = unitName
+        end
       end -- end isAlive
     end -- end if _unit
   end -- end for
