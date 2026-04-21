@@ -1620,7 +1620,7 @@ function MSRS:PlayText(Text, Delay, Coordinate, Speed, Speaker)
   else
 
   local speaker = Speaker or self.Speaker
-
+  
   if self.backend==MSRS.Backend.GRPC then
     self:T(self.lid.."Transmitting")
     self:_DCSgRPCtts(Text, nil, nil , nil, nil, nil, nil, Coordinate)
@@ -2103,19 +2103,16 @@ function MSRS:_HoundTextToSpeech(Message,Frequencies,Modulations,Volume,Label,Co
     return
   end
   
-  Frequencies = UTILS.EnsureTable(Frequencies)
-  Modulations = UTILS.EnsureTable(Modulations)
+  Frequencies = UTILS.EnsureTable(Frequencies or self.frequencies)
+  Modulations = UTILS.EnsureTable(Modulations or self.modulations)
     
   local ffs = {}
-  for _,_f in pairs(Frequencies or self.frequencies) do
+  for _,_f in pairs(Frequencies) do
     table.insert(ffs,string.format("%.1f",_f))
   end
   
   local freqs = table.concat(ffs, ",")
-  
-
-  
-  local modus = table.concat(Modulations or self.modulations, ",")
+  local modus = table.concat(Modulations, ",")
 
   local coal=Coalition or self.coalition
   local gender=Gender or self.gender
@@ -2159,7 +2156,7 @@ function MSRS:_HoundTextToSpeech(Message,Frequencies,Modulations,Volume,Label,Co
     gender = gender,
     speaker = Speaker or self.Speaker,
   }
-  
+
   local speechtime = HoundTTS.Transmit(Message, TransmissionP, ProviderP)
   
   return speechtime
