@@ -4097,7 +4097,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
   -- Get name of template group.
   local templategroupname=group:GetName()
   local unit = group:GetUnit(1)
-  local Descriptors= (unit and unit:IsAlive()) and unit:GetDesc() or {}
+  local Descriptors= (unit and unit:IsAlive()~=nil) and unit:GetDesc() or {}
   local Category=group:GetCategory()
   local TypeName=group:GetTypeName() or "none"
   local SpeedMax=group:GetSpeedMax()
@@ -4115,7 +4115,7 @@ function WAREHOUSE:_RegisterAsset(group, ngroups, forceattribute, forcecargobay,
   for _i,_unit in pairs(group:GetUnits()) do
     local unit=_unit --Wrapper.Unit#UNIT
     local Desc=unit:GetDesc()
-
+    
     -- Weight. We sum up all units in the group.
     local unitweight=forceweight or Desc.massEmpty
     if unitweight then
