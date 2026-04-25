@@ -1119,12 +1119,11 @@ function TARS_SESSION:FindTargets()
         local searchzone = self.searchzone  -- Core.Zone#ZONE_BASE
             or ZONE_RADIUS:New("TARS Debug", coordinate:GetVec2(), scan_radius)
 
-        --if searchzone then
-            if searchzone.DrawID then searchzone:UndrawZone() end
-            searchzone:UpdateFromVec2(coordinate:GetVec2(), scan_radius)           
-            searchzone:DrawZone(-1, {0, 0, 1}, 1, {0, 1, 0}, .2, 2, true)
-            self.searchzone = searchzone
-        --end
+        if searchzone.DrawID then searchzone:UndrawZone() end
+        searchzone:UpdateFromVec2(coordinate:GetVec2(), scan_radius)           
+        searchzone:DrawZone(-1, {0, 0, 1}, 1, {0, 1, 0}, .2, 2, true)
+        self.searchzone = searchzone
+        self:ScheduleOnce(30, ZONE_BASE.UndrawZone, searchzone)
     end
     
     if self.PilotParameterHelper == true then
