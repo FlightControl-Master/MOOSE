@@ -202,7 +202,7 @@ do
 --          my_ctld.UseC130LoadAndUnload = false -- When set to true, forces the C-130 player to use the C-130J built system to load the cargo onboard and to unload. (Default is false)
 --          my_ctld.UseC130DynamicCargoAutoBuild = false -- When true (and UseC130LoadAndUnload is true), C-130 DynamicCargo unload completion is bridged to CTLD engineer-path auto-build.
 --          my_ctld.C130DynamicCargoAutoBuildMergeSeconds = 0 -- Merge window in seconds for C-130 auto-build handoff; set to 0 to disable batching (default).
---          my_ctld.locale = "en" -- Language locale to use, available are "en" (default), "de" and "fr"
+--          my_ctld.locale = "en" -- Language locale to use, available are "en" (default), "de", "fr", "es" and "ru"
 --
 -- ## 2.1 CH-47 Chinook support
 -- 
