@@ -2149,6 +2149,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       local parkingspots = {}
       local parkingindex = {}
       local spots
+      local useexplicitspots = false
 
       -- Spawn happens on ground, i.e. at an airbase, a FARP or a ship.
       if spawnonground and not SpawnTemplate.parked then
@@ -2180,8 +2181,6 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
 
         -- Use exact parking data when provided, otherwise let helicopters on ships/FARPs
         -- use the smarter parking search before falling back to the procedural queue path.
-        local useexplicitspots = false
-
         -- Number of free parking spots at the airbase.
         if Parkingdata~=nil then
           -- Parking data explicitly set by user as input parameter.
@@ -2299,6 +2298,10 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           end
         end
 
+        if useexplicitspots and parkingspots[1] then
+          PointVec3 = parkingspots[1]
+        end
+
         -- Not enough spots ==> Prepare airstart.
         if _notenough then
 
@@ -2367,7 +2370,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           if spawnonground then
 
             -- Ships and FARPS seem to have a build in queue.
-            if autoparking then
+            if autoparking and not useexplicitspots then
 
               -- Spawn on ship. We take only the position of the ship.
               SpawnTemplate.units[UnitID].x = PointVec3.x -- TX

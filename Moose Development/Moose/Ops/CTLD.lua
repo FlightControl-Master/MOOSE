@@ -202,7 +202,7 @@ do
 --          my_ctld.UseC130LoadAndUnload = false -- When set to true, forces the C-130 player to use the C-130J built system to load the cargo onboard and to unload. (Default is false)
 --          my_ctld.UseC130DynamicCargoAutoBuild = false -- When true (and UseC130LoadAndUnload is true), C-130 DynamicCargo unload completion is bridged to CTLD engineer-path auto-build.
 --          my_ctld.C130DynamicCargoAutoBuildMergeSeconds = 0 -- Merge window in seconds for C-130 auto-build handoff; set to 0 to disable batching (default).
---          my_ctld.locale = "en" -- Language locale to use, available are "en" (default), "de" and "fr"
+--          my_ctld.locale = "en" -- Language locale to use, available are "en" (default), "de", "fr", "es" and "ru"
 --
 -- ## 2.1 CH-47 Chinook support
 -- 
@@ -1483,6 +1483,7 @@ end
 -- @return #CTLD self
 function CTLD:_InitLocalization()
   self:T(self.lid.."_InitLocalization")
+  self.locale = string.lower(tostring(self.locale or "en"))
   self.gettext = TEXTANDSOUND:New("CTLD","en") -- Core.TextAndSound#TEXTANDSOUND
   for locale,table in pairs(self.Messages) do
     local Locale = string.lower(tostring(locale))
@@ -1493,6 +1494,20 @@ function CTLD:_InitLocalization()
     end
   end
   return self
+end
+
+function CTLD:_GetMenuPluralSuffix(Count, Kind)
+  local count = tonumber(Count) or 0
+  if self.locale == "ru" then
+    local n = math.abs(count) % 100
+    local d = n % 10
+    if n >= 11 and n <= 14 then return "ов" end
+    if d == 1 then return "" end
+    if d >= 2 and d <= 4 then return "а" end
+    return "ов"
+  end
+  if self.locale == "de" and Kind == "crate" then return count > 1 and "n" or "" end
+  return count > 1 and "s" or ""
 end
 
 --- [User] Set SRS TTS details - see @{Sound.SRS} for details.`SetSRS()` will try to use as many attributes configured with @{Sound.SRS#MSRS.LoadConfigFile}() as possible.
@@ -6808,8 +6823,7 @@ function CTLD:_RefreshF10Menus()
                   local txt
                   local cargoLabel = self:_GetCargoDisplayName(cargoObj)
                   if needed > 1 then
-                    local plural = "s"
-                    if self.locale == "de" then plural = "n" end
+                    local plural = self:_GetMenuPluralSuffix(needed, "crate")
                     txt = string.format(self.gettext:GetEntry("MENU_CRATES_NEEDED",self.locale),needed,plural,cargoLabel,cargoObj.PerCrateMass or 0)
                   else
                     txt = string.format("%s (%dkg)",cargoLabel,cargoObj.PerCrateMass or 0)
@@ -6859,8 +6873,7 @@ function CTLD:_RefreshF10Menus()
                       local txt
                       local cargoLabel = self:_GetCargoDisplayName(cargoObj)
                       if needed > 1 then
-                        local plural = "s"
-                        if self.locale == "de" then plural = "n" end
+                        local plural = self:_GetMenuPluralSuffix(needed, "crate")
                         txt = string.format(self.gettext:GetEntry("MENU_CRATES_NEEDED",self.locale),needed,plural,cargoLabel,cargoObj.PerCrateMass or 0)
                       else
                         txt = string.format("%s (%dkg)",cargoLabel,cargoObj.PerCrateMass or 0)
@@ -6877,8 +6890,7 @@ function CTLD:_RefreshF10Menus()
                       local txt
                       local cargoLabel = self:_GetCargoDisplayName(cargoObj)
                       if needed > 1 then
-                        local plural = "s"
-                        if self.locale == "de" then plural = "n" end
+                        local plural = self:_GetMenuPluralSuffix(needed, "crate")
                         txt = string.format(self.gettext:GetEntry("MENU_CRATES_NEEDED",self.locale),needed,plural,cargoLabel,cargoObj.PerCrateMass or 0)
                       else
                         txt = string.format("%s (%dkg)",cargoLabel,cargoObj.PerCrateMass or 0)
@@ -6896,8 +6908,7 @@ function CTLD:_RefreshF10Menus()
                       local txt
                       local cargoLabel = self:_GetCargoDisplayName(cargoObj)
                       if needed > 1 then
-                        local plural = "s"
-                        if self.locale == "de" then plural = "n" end
+                        local plural = self:_GetMenuPluralSuffix(needed, "crate")
                         txt = string.format(self.gettext:GetEntry("MENU_CRATES_NEEDED",self.locale),needed,plural,cargoLabel,cargoObj.PerCrateMass or 0)
                       else
                         txt = string.format("%s (%dkg)",cargoLabel,cargoObj.PerCrateMass or 0)
@@ -6914,8 +6925,7 @@ function CTLD:_RefreshF10Menus()
                       local txt
                       local cargoLabel = self:_GetCargoDisplayName(cargoObj)
                       if needed > 1 then
-                        local plural = "s"
-                        if self.locale == "de" then plural = "n" end
+                        local plural = self:_GetMenuPluralSuffix(needed, "crate")
                         txt = string.format(self.gettext:GetEntry("MENU_CRATES_NEEDED",self.locale),needed,plural,cargoLabel,cargoObj.PerCrateMass or 0)
                       else
                         txt = string.format("%s (%dkg)",cargoLabel,cargoObj.PerCrateMass or 0)
@@ -7564,7 +7574,7 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
             end,self,Group,Unit,cName,needed,1)
           else
             for q=1,sets do
-              local qm=MENU_GROUP:New(Group,string.format(self.gettext:GetEntry("MENU_DROP_N_SETS",self.locale),q,q>1 and "s" or ""),parentMenu)
+              local qm=MENU_GROUP:New(Group,string.format(self.gettext:GetEntry("MENU_DROP_N_SETS",self.locale),q,self:_GetMenuPluralSuffix(q, "set")),parentMenu)
               --local qm=MENU_GROUP:New(Group,string.format("Drop %d Set%s",q,q>1 and "s" or ""),parentMenu)
               MENU_GROUP_COMMAND:New(Group,self.gettext:GetEntry("MENU_DROP",self.locale),qm,function(selfArg,GroupArg,UnitArg,cNameArg,neededArg,qty)
                 local uName=UnitArg:GetName()
@@ -7661,7 +7671,7 @@ function CTLD:_RefreshDropCratesMenu(Group, Unit)
             end
           else
             for q=1,sets do
-              local qm=MENU_GROUP:New(Group,string.format(self.gettext:GetEntry("MENU_DROP_N_SETS",self.locale),q,q>1 and "s" or ""),parentMenu)
+              local qm=MENU_GROUP:New(Group,string.format(self.gettext:GetEntry("MENU_DROP_N_SETS",self.locale),q,self:_GetMenuPluralSuffix(q, "set")),parentMenu)
               --local qm=MENU_GROUP:New(Group,string.format("Drop %d Set%s",q,q>1 and "s" or ""),parentMenu)
               MENU_GROUP_COMMAND:New(Group,self.gettext:GetEntry("MENU_DROP",self.locale),qm,function(selfArg,GroupArg,UnitArg,cNameArg,neededArg,qty)
                 local uName=UnitArg:GetName()
