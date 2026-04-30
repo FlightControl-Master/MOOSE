@@ -1204,7 +1204,7 @@ function SPAWN:InitRandomizeZones( SpawnZoneTable, RandomizePositionInZone )
   
   if not SpawnZoneTable then 
     return self 
-  end;
+  end
   local temptable = {}
   for _,_temp in pairs(SpawnZoneTable) do
     temptable[#temptable+1] = _temp
