@@ -62,7 +62,8 @@ do -- SET_BASE
   -- @field #table List Unused table.
   -- @field Core.Scheduler#SCHEDULER CallScheduler
   -- @field #SET_BASE.Filters Filter Filters
-  -- @field #booleaen filterNoRegex If true, FilterPrefix ignores special characters and evaluates plain string.
+  -- @field #boolean filterNoRegex If true, FilterPrefix ignores special characters and evaluates plain string. Defaults to false.
+  -- @field #boolean filterReplaceDash If true then if filterNoRegex is false, replace dashes with regex pattern friendly pattern. Defaults to true
   -- @extends Core.Base#BASE
 
   --- The @{Core.Set#SET_BASE} class defines the core functions that define a collection of objects.
@@ -102,6 +103,7 @@ do -- SET_BASE
         },
       },
     filterNoRegex=false,
+    filterReplaceDash=true,
   }
 
   --- Filters
@@ -256,7 +258,8 @@ do -- SET_BASE
   -- @return #boolean Returns `true`, if the pattern is contained in the name and false otherwise.
   function SET_BASE:_SearchPattern(Name, Pattern, NoRegex, ReplaceDash)
     NoRegex=NoRegex or self.filterNoRegex
-    if ReplaceDash==true then
+    ReplaceDash=ReplaceDash or self.filterReplaceDash
+    if ReplaceDash==true and NoRegex ~= true then
       -- Not sure why "-" is replaced by "%-" ?! - So we can still match group names with a dash in them
       -- reason is that the string is interpreted as a pattern and "-" is a special character then. For interpreting it as a string, fourth parameter needs to be set to true.
       Pattern=Pattern:gsub("-", "%%-")
@@ -265,6 +268,16 @@ do -- SET_BASE
     return contain
   end  
   
+  ---Set Regex Options for FilterPrefix function.
+  -- @param #SET_BASE self
+  -- @param #boolean NoRegex If true, switch off Regex pattern matching for FilterPrefixes.
+  -- @param #boolean ReplaceDash If false, switch off dash "-" replacement in strings for FilterPrefixes.
+  -- @return #SET_BASE self
+  function SET_BASE:FilterSetRegex(NoRegex,ReplaceDash)
+    if NoRegex ~= nil then self.filterNoRegex = NoRegex end
+    self.filterReplaceDash = ReplaceDash or true
+    return self
+  end
 
   --- Gets the Set.
   -- @param #SET_BASE self
@@ -1198,7 +1211,21 @@ do
     -- @param #SET_GROUP self
     -- @return #SET_GROUP self
     
-    
+    ---Set Regex Options for FilterPrefix function.
+    -- @function [parent=#SET_GROUP] FilterSetRegex
+    -- @param #SET_GROUP self
+    -- @param #boolean NoRegex If true, switch off Regex pattern matching for FilterPrefixes.
+    -- @param #boolean ReplaceDash If false, switch off dash "-" replacement in strings for FilterPrefixes.
+    -- @return #SET_GROUP self
+  
+    --- Builds a set of objects of same coalitions.
+    -- Possible current coalitions are red, blue and neutral.
+    -- @function [parent=#SET_GROUP] FilterCoalitions
+    -- @param #SET_GROUP self
+    -- @param #string Coalitions Can take the following values: "red", "blue", "neutral" and coalition.side.RED, coalition.side.BLUE,coalition.side.NEUTRAL
+    -- @param #boolean Clear If `true`, clear any previously defined filters.
+    -- @return #SET_GROUP self
+  
   end
   
   --- Get a *new* set table that only contains alive groups.
@@ -2116,7 +2143,7 @@ do
     if self.Filter.GroupPrefixes and MGroupInclude then
       local MGroupPrefix = false
       for GroupPrefixId, GroupPrefix in pairs(self.Filter.GroupPrefixes) do
-        if self:_SearchPattern(MGroup:GetName(), GroupPrefix, false, true) then
+        if self:_SearchPattern(MGroup:GetName(), GroupPrefix, self.filterNoRegex, self.filterReplaceDash) then
           MGroupPrefix = true
         end
       end
@@ -2335,6 +2362,26 @@ do -- SET_UNIT
     --- Count Alive Units
     -- @function [parent=#SET_UNIT] CountAlive
     -- @param #SET_UNIT self
+    -- @return #SET_UNIT self
+    
+    --- Filter the set once
+    -- @function [parent=#SET_UNIT] FilterOnce
+    -- @param #SET_UNIT self
+    -- @return #SET_UNIT self
+    
+    ---Set Regex Options for FilterPrefix function.
+    -- @function [parent=#SET_UNIT] FilterSetRegex
+    -- @param #SET_UNIT self
+    -- @param #boolean NoRegex If true, switch off Regex pattern matching for FilterPrefixes.
+    -- @param #boolean ReplaceDash If false, switch off dash "-" replacement in strings for FilterPrefixes.
+    -- @return #SET_UNIT self
+    
+    --- Builds a set of objects of same coalitions.
+    -- Possible current coalitions are red, blue and neutral.
+    -- @function [parent=#SET_UNIT] FilterCoalitions
+    -- @param #SET_UNIT self
+    -- @param #string Coalitions Can take the following values: "red", "blue", "neutral" and coalition.side.RED, coalition.side.BLUE,coalition.side.NEUTRAL
+    -- @param #boolean Clear If `true`, clear any previously defined filters.
     -- @return #SET_UNIT self
     
     return self
@@ -3348,7 +3395,7 @@ do -- SET_UNIT
       if self.Filter.UnitPrefixes and MUnitInclude then
         local MUnitPrefix = false
         for UnitPrefixId, UnitPrefix in pairs(self.Filter.UnitPrefixes) do          
-          if self:_SearchPattern(MUnit:GetName(), UnitPrefix, false, true) then
+          if self:_SearchPattern(MUnit:GetName(), UnitPrefix, self.filterNoRegex, self.filterReplaceDash) then
             MUnitPrefix = true
           end
         end
@@ -3544,7 +3591,27 @@ do -- SET_STATIC
 
     -- Inherits from BASE
     local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.STATICS)) -- Core.Set#SET_STATIC
-
+    
+    --- Filter the set once
+    -- @function [parent=#SET_STATIC] FilterOnce
+    -- @param #SET_STATIC self
+    -- @return #SET_STATIC self
+    
+    ---Set Regex Options for FilterPrefix function.
+    -- @function [parent=#SET_STATIC] FilterSetRegex
+    -- @param #SET_STATIC self
+    -- @param #boolean NoRegex If true, switch off Regex pattern matching for FilterPrefixes.
+    -- @param #boolean ReplaceDash If false, switch off dash "-" replacement in strings for FilterPrefixes.
+    -- @return #SET_STATIC self
+    
+    --- Builds a set of objects of same coalitions.
+    -- Possible current coalitions are red, blue and neutral.
+    -- @function [parent=#SET_STATIC] FilterCoalitions
+    -- @param #SET_STATIC self
+    -- @param #string Coalitions Can take the following values: "red", "blue", "neutral" and coalition.side.RED, coalition.side.BLUE,coalition.side.NEUTRAL
+    -- @param #boolean Clear If `true`, clear any previously defined filters.
+    -- @return #SET_STATIC self
+    
     return self
   end
 
@@ -4119,7 +4186,7 @@ do -- SET_STATIC
     if self.Filter.StaticPrefixes then
       local MStaticPrefix = false
       for StaticPrefixId, StaticPrefix in pairs(self.Filter.StaticPrefixes) do
-        if self:_SearchPattern(MStatic:GetName(), StaticPrefix, false, true) then
+        if self:_SearchPattern(MStatic:GetName(), StaticPrefix, self.filterNoRegex, self.filterReplaceDash) then
           MStaticPrefix = true
         end
       end
@@ -4303,7 +4370,27 @@ do -- SET_CLIENT
     local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.CLIENTS)) -- #SET_CLIENT
 
     self:FilterActive(false)
-
+    
+    --- Filter the set once
+    -- @function [parent=#SET_CLIENT] FilterOnce
+    -- @param #SET_CLIENT self
+    -- @return #SET_CLIENT self
+    
+    ---Set Regex Options for FilterPrefix function.
+    -- @function [parent=#SET_CLIENT] FilterSetRegex
+    -- @param #SET_CLIENT self
+    -- @param #boolean NoRegex If true, switch off Regex pattern matching for FilterPrefixes.
+    -- @param #boolean ReplaceDash If false, switch off dash "-" replacement in strings for FilterPrefixes.
+    -- @return #SET_CLIENT self
+    
+    --- Builds a set of objects of same coalitions.
+    -- Possible current coalitions are red, blue and neutral.
+    -- @function [parent=#SET_CLIENT] FilterCoalitions
+    -- @param #SET_CLIENT self
+    -- @param #string Coalitions Can take the following values: "red", "blue", "neutral" and coalition.side.RED, coalition.side.BLUE,coalition.side.NEUTRAL
+    -- @param #boolean Clear If `true`, clear any previously defined filters.
+    -- @return #SET_CLIENT self
+    
     return self
   end
 
@@ -4902,7 +4989,7 @@ do -- SET_CLIENT
       if self.Filter.ClientPrefixes and MClientInclude then
         local MClientPrefix = false
         for ClientPrefixId, ClientPrefix in pairs(self.Filter.ClientPrefixes) do
-          if self:_SearchPattern(MClient.UnitName, ClientPrefix) then          
+          if self:_SearchPattern(MClient.UnitName, ClientPrefix, self.filterNoRegex, self.filterReplaceDash) then          
             MClientPrefix = true
           end
         end
@@ -4926,7 +5013,7 @@ do -- SET_CLIENT
       local playername = MClient:GetPlayerName() or "Unknown"
       --self:T(playername)
       for _,_Playername in pairs(self.Filter.Playernames) do
-        if playername and self:_SearchPattern(playername,_Playername) then
+        if playername and self:_SearchPattern(playername,_Playername,self.filterNoRegex, self.filterReplaceDash) then
           MClientPlayername = true
         end
       end
@@ -4939,7 +5026,7 @@ do -- SET_CLIENT
       local callsign = MClient:GetCallsign()
       --self:I(callsign)
       for _,_Callsign in pairs(self.Filter.Callsigns) do
-        if callsign and self:_SearchPattern(callsign,_Callsign, true) then
+        if callsign and self:_SearchPattern(callsign,_Callsign, self.filterNoRegex, self.filterReplaceDash) then
           MClientCallsigns = true
         end
       end
@@ -5360,7 +5447,7 @@ do -- SET_PLAYER
       if self.Filter.ClientPrefixes then
         local MClientPrefix = false
         for ClientPrefixId, ClientPrefix in pairs(self.Filter.ClientPrefixes) do
-          if self:_SearchPattern(MClient.UnitName,ClientPrefix) then
+          if self:_SearchPattern(MClient.UnitName,ClientPrefix,self.filterNoRegex, self.filterReplaceDash) then
             MClientPrefix = true
           end
         end
@@ -5830,7 +5917,19 @@ do -- SET_ZONE
   function SET_ZONE:New()
     -- Inherits from BASE
     local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.ZONES))
-
+    
+    --- Filter the set once
+    -- @function [parent=#SET_ZONE] FilterOnce
+    -- @param #SET_ZONE self
+    -- @return #SET_ZONE self
+    
+    ---Set Regex Options for FilterPrefix function.
+    -- @function [parent=#SET_ZONE] FilterSetRegex
+    -- @param #SET_ZONE self
+    -- @param #boolean NoRegex If true, switch off Regex pattern matching for FilterPrefixes.
+    -- @param #boolean ReplaceDash If false, switch off dash "-" replacement in strings for FilterPrefixes.
+    -- @return #SET_ZONE self
+    
     return self
   end
 
@@ -6068,7 +6167,7 @@ do -- SET_ZONE
       if self.Filter.Prefixes then
         local MZonePrefix = false
         for ZonePrefixId, ZonePrefix in pairs(self.Filter.Prefixes) do
-          if self:_SearchPattern(MZoneName, ZonePrefix, false, true) then
+          if self:_SearchPattern(MZoneName, ZonePrefix, self.filterNoRegex, self.filterReplaceDash) then
             MZonePrefix = true
           end
         end
@@ -6577,7 +6676,7 @@ do -- SET_ZONE_GOAL
       if self.Filter.Prefixes then
         local MZonePrefix = false
         for ZonePrefixId, ZonePrefix in pairs(self.Filter.Prefixes) do
-          if self:_SearchPattern(MZoneName, ZonePrefix, false, true) then          
+          if self:_SearchPattern(MZoneName, ZonePrefix, self.filterNoRegex, self.filterReplaceDash) then          
             MZonePrefix = true
           end
         end
@@ -6713,7 +6812,19 @@ do -- SET_OPSZONE
   
     -- Inherits from BASE
     local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.OPSZONES))
-
+    
+    --- Filter the set once
+    -- @function [parent=#SET_OPSZONE] FilterOnce
+    -- @param #SET_OPSZONE self
+    -- @return #SET_OPSZONE self
+    
+    ---Set Regex Options for FilterPrefix function.
+    -- @function [parent=#SET_OPSZONE] FilterSetRegex
+    -- @param #SET_OPSZONE self
+    -- @param #boolean NoRegex If true, switch off Regex pattern matching for FilterPrefixes.
+    -- @param #boolean ReplaceDash If false, switch off dash "-" replacement in strings for FilterPrefixes.
+    -- @return #SET_OPSZONE self
+    
     return self
   end
 
@@ -6938,7 +7049,7 @@ do -- SET_OPSZONE
         for ZonePrefixId, ZonePrefix in pairs(self.Filter.Prefixes) do
         
           -- Prefix
-          if self:_SearchPattern(MZoneName, ZonePrefix, false, true) then
+          if self:_SearchPattern(MZoneName, ZonePrefix, self.filterNoRegex, self.filterReplaceDash) then
             MZonePrefix = true
             break --Break the loop as we found the prefix.
           end
@@ -7732,7 +7843,7 @@ function SET_OPSGROUP:_EventOnBirth(Event)
       local MGroupPrefix = false
       
       for GroupPrefixId, GroupPrefix in pairs(self.Filter.GroupPrefixes) do
-        if self:_SearchPattern(MGroup:GetName(), GroupPrefix, false, true) then
+        if self:_SearchPattern(MGroup:GetName(), GroupPrefix, self.filterNoRegex, self.filterReplaceDash) then
           MGroupPrefix = true
         end
       end
@@ -8066,7 +8177,7 @@ do -- SET_SCENERY
       if self.Filter.Prefixes then
         local MSceneryPrefix = false
         for ZonePrefixId, ZonePrefix in pairs(self.Filter.Prefixes) do
-          if self:_SearchPattern(MSceneryName, ZonePrefix, false, true) then
+          if self:_SearchPattern(MSceneryName, ZonePrefix, self.filterNoRegex, self.filterReplaceDash) then
             MSceneryPrefix = true
           end
         end
@@ -8289,7 +8400,19 @@ do -- SET_DYNAMICCARGO
 
     --- Inherits from BASE
     local self = BASE:Inherit(self, SET_BASE:New(_DATABASE.DYNAMICCARGO)) -- Core.Set#SET_DYNAMICCARGO
-
+      
+    --- Filter the set once
+    -- @function [parent=#SET_DYNAMICCARGO] FilterOnce
+    -- @param #SET_DYNAMICCARGO self
+    -- @return #SET_DYNAMICCARGO self
+    
+    ---Set Regex Options for FilterPrefix function.
+    -- @function [parent=#SET_DYNAMICCARGO] FilterSetRegex
+    -- @param #SET_DYNAMICCARGO self
+    -- @param #boolean NoRegex If true, switch off Regex pattern matching for FilterPrefixes.
+    -- @param #boolean ReplaceDash If false, switch off dash "-" replacement in strings for FilterPrefixes.
+    -- @return #SET_DYNAMICCARGO self
+    
     return self
   end
   
@@ -8337,7 +8460,7 @@ do -- SET_DYNAMICCARGO
     if self.Filter.StaticPrefixes then
       local DCargoPrefix = false
       for StaticPrefixId, StaticPrefix in pairs(self.Filter.StaticPrefixes) do
-        if self:_SearchPattern(DCargo:GetName(), StaticPrefix, false, true) then
+        if self:_SearchPattern(DCargo:GetName(), StaticPrefix, self.filterNoRegex, self.filterReplaceDash) then
           DCargoPrefix = true
         end
       end
@@ -8505,7 +8628,7 @@ do -- SET_DYNAMICCARGO
   function SET_DYNAMICCARGO:FilterCurrentOwner(PlayerName)
     self:FilterFunction(
       function(cargo)
-        if cargo and cargo.Owner and self:_SearchPattern(cargo.Owner, PlayerName, true) then
+        if cargo and cargo.Owner and self:_SearchPattern(cargo.Owner, PlayerName, self.filterNoRegex, self.filterReplaceDash) then
           return true
         else
           return false
