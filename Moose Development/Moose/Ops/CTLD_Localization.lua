@@ -1729,7 +1729,7 @@ FR = {
         BUILD_YES                       = "ДА",
         BUILD_NO                        = "НЕТ",
     },
-    CN = {
+    ["zh-TW"] = {
         -- ============================================================
         -- Crate / Cargo Loading
         -- ============================================================
@@ -1987,4 +1987,272 @@ FR = {
         BUILD_YES                       = "是",
         BUILD_NO                        = "否",
     },
-} 
+    ["zh-CN"] = {
+        -- ============================================================
+        -- Crate / Cargo Loading
+        -- ============================================================
+        CRATE_LOADED_GROUNDCREW         = "地勤已装载货箱 %s！",
+        CRATE_UNLOADED_GROUNDCREW       = "地勤已卸载货箱 %s！",
+        CRATE_LOADED_ID                 = "货箱 ID %d（%s）已装载！",
+        LOADED_FULL                     = "已装载 %d 个 %s。",
+        LOADED_SETS_LEFTOVER            = "已装载 %d 组 %s，剩余 %d 个货箱。",
+        LOADED_SETS                     = "已装载 %d 组 %s。",
+        LOADED_PARTIAL                  = "仅装载 %d/%d 个 %s 的货箱。",
+        LOADED_PARTIAL_LIMIT            = "仅装载 %d/%d 个 %s 的货箱，已达到载重上限！",
+        LOADED_BATCH                    = "已装载 %d 个 %s。",
+        LOADED_BATCH_PARTIAL            = "部分组合未能完整装载。",
+        
+        -- ============================================================
+        -- Dropping / Unloading
+        -- ============================================================
+        DROPPED_FULL                    = "已投放 %d 个 %s。",
+        DROPPED_SETS_LEFTOVER           = "已投放 %d 组 %s，剩余 %d 个货箱。",
+        DROPPED_SETS                    = "已投放 %d 组 %s。",
+        DROPPED_PARTIAL                 = "已投放 %d/%d 个 %s 的货箱。",
+        DROPPED_INTO_ACTION             = "已将 %s 投入作战！",
+        DROPPED_BEACON                  = "已投放 %s | FM %s MHz | VHF %s KHz | UHF %s MHz ",
+        CRATES_POSITIONED               = "已在你附近部署 %d 个 %s 货箱！",
+        CRATES_DROPPED                  = "已投放 %d 个 %s 货箱！",
+        
+        -- ============================================================
+        -- Troops
+        -- ============================================================
+        BOARDED                         = "%s 已登机！",
+        BOARDING                        = "%s 正在登机！",
+        TROOPS_RETURNED                 = "部队已返回基地！",
+        TROOPS_LABEL                    = "部队",
+        ENGINEERS_LABEL                 = "工兵",
+        
+        -- ============================================================
+        -- Deployment
+        -- ============================================================
+        DEPLOYED_NEAR_YOU               = "%s 已在你附近部署！",
+        UNITS_REMOVED                   = "%s 已移除",
+        
+        -- ============================================================
+        -- Build / Repair
+        -- ============================================================
+        BUILD_STARTED                   = "开始建造，%d 秒后完成！",
+        REPAIR_STARTED                  = "使用 %s 开始维修，耗时 %d 秒",
+        NO_UNIT_TO_REPAIR               = "附近没有可维修单位！",
+        CANT_REPAIR_WITH                = "无法使用 %s 修复该单位",
+        CRATES_MOVE_BEFORE_BUILD        = "*** 建造前请先移动货箱！",
+        
+        -- ============================================================
+        -- Errors - Chopper / Weight / Capacity
+        -- ============================================================
+        CHOPPER_CANNOT_CARRY            = "该直升机无法运输货箱！",
+        TOO_HEAVY                       = "重量超限，无法装载！",
+        FULLY_LOADED                    = "已满载！",
+        CRAMMED                         = "空间已满！",
+        NO_CAPACITY_NOW                 = "当前无法继续装载！",
+        NO_MORE_CAPACITY                = "没有剩余空间可装载货箱！",
+        CANNOT_LOAD_NONE_OR_FULL        = "无法装载货箱：未找到或已满载。",
+        
+        -- ============================================================
+        -- Errors - Position
+        -- ============================================================
+        NEED_TO_LAND_OR_HOVER_LOAD      = "需要降落或稳定悬停才能装载！",
+        HOVER_OVER_CRATES               = "请在货箱上方悬停进行拾取！",
+        LAND_OR_HOVER_OVER_CRATES       = "请降落或在货箱上方悬停进行拾取！",
+        MUST_LAND_OR_HOVER_CRATES       = "必须降落或悬停才能装载货箱！",
+        NEED_TO_LAND_BUILD              = "飞行员，请降落或停止后再建造！",
+        NOT_CLOSE_ENOUGH_LOGISTICS      = "距离后勤区域过远！",
+        NOT_CLOSE_ENOUGH_DROP           = "距离投放区域过远！",
+        NOT_CLOSE_ENOUGH_ZONE_NM        = "距离区域必须小于 %d 海里！",
+        CANNOT_BUILD_LOADING_AREA       = "无法在装载区域建造！",
+        
+        -- ============================================================
+        -- Errors - Doors
+        -- ============================================================
+        OPEN_DOORS_LOAD_CARGO           = "需要打开舱门才能装载货物！",
+        OPEN_DOORS_LOAD_TROOPS          = "需要打开舱门才能装载部队！",
+        OPEN_DOORS_EXTRACT_TROOPS       = "需要打开舱门才能撤离部队！",
+        OPEN_DOORS_UNLOAD_TROOPS        = "需要打开舱门才能卸载部队！",
+        OPEN_DOORS_DROP_CARGO           = "需要打开舱门才能投放货物！",
+        
+        -- ============================================================
+        -- Errors - Stock / Availability
+        -- ============================================================
+        ALL_GONE                        = "%s 已全部耗尽！",
+        RAN_OUT_OF                      = "%s 已用完",
+        CARGO_NOT_AVAILABLE_ZONE        = "该区域无法获取此类货物！",
+        ENOUGH_CRATES_NEARBY            = "附近已有足够货箱，请先处理现有货箱！",
+        NO_CRATES_WITHIN                = "%d 米内没有可装载货箱！",
+        NO_CRATES_WITHIN_PLAIN          = "%d 米内没有货箱！",
+        NO_CRATES_IN_RANGE              = "范围内未发现货箱！",
+        NO_NAMED_CRATES_IN_RANGE        = "范围内未发现“%s”货箱！",
+        NO_LOADABLE_CRATES              = "附近没有可装载货箱或已超重！",
+        NO_UNITS_TO_EXTRACT             = "附近没有可撤离单位！",
+        NO_UNIT_CONFIG                  = "未找到 %s 的单位配置",
+        CANT_ONBOARD                    = "无法装载 %s",
+        TOO_MANY_UNITS_NEARBY           = "附近已有 %d 个单位！",
+        NO_CRATE_GROUPS                 = "未找到该单位对应的货箱组！",
+        NO_CRATE_SET                    = "未找到货箱组或索引无效！",
+        NO_CRATE_IN_SET                 = "该组中没有货箱！",
+        NO_TROOP_CHUNK                  = "未找到 ID %d 的部队数据！",
+        TROOP_CHUNK_EMPTY               = "ID %d 的部队数据为空！",
+        
+        -- ============================================================
+        -- Nothing loaded / in stock
+        -- ============================================================
+        NOTHING_LOADED                  = "未装载任何内容！\n部队上限：%d | 货箱上限 %d | 重量上限 %d 公斤",
+        NOTHING_LOADED_AIRDROP          = "未装载或不满足空投条件！",
+        NOTHING_LOADED_HOVER            = "未装载或未满足悬停条件！",
+        NOTHING_IN_STOCK                = "库存为空！",
+        NOTHING_TO_PACK                 = "该范围内没有可打包目标！",
+        NOTHING_TO_REMOVE               = "该范围内没有可移除目标！",
+        
+        -- ============================================================
+        -- Zone / Info
+        -- ============================================================
+        ROGER_ZONE                      = "收到，%s 区域 %s！",
+        -- ============================================================
+        -- Report: Hover / Flight Parameters
+        -- ============================================================
+        HOVER_PARAMS_METRIC             = "悬停参数（自动装载/投放）：\n - 最低高度 %d 米 \n - 最高高度 %d 米 \n - 最大速度 2 米/秒 \n - 是否符合条件：%s",
+        HOVER_PARAMS_IMPERIAL           = "悬停参数（自动装载/投放）：\n - 最低高度 %d 英尺 \n - 最高高度 %d 英尺 \n - 最大速度 6 英尺/秒 \n - 是否符合条件：%s",
+        FLIGHT_PARAMS_IMPERIAL          = "飞行参数（空投）：\n - 最低高度 %d 英尺 \n - 最高高度 %d 英尺 \n - 是否符合条件：%s",
+        FLIGHT_PARAMS_METRIC            = "飞行参数（空投）：\n - 最低高度 %d 米 \n - 最高高度 %d 米 \n - 是否符合条件：%s",
+        -- ============================================================
+        -- Report Titles  (REPORT:New())
+        -- ============================================================
+        REPORT_CRATES_FOUND             = "附近发现货箱：",
+        REPORT_REMOVING_CRATES          = "删除附近货箱：",
+        REPORT_TRANSPORT_CHECKOUT       = "运输检查表",
+        REPORT_INVENTORY                = "库存报表",
+        REPORT_BUILD_CHECKLIST          = "建造检查清单",
+        REPORT_REPAIR_CHECKLIST         = "维修检查清单",
+        REPORT_BEACONS                  = "区域信标状态",
+        -- ============================================================
+        -- Report Section Headers  (report:Add())
+        -- ============================================================
+        REPORT_SECTION_TROOPS           = "        -- 部队 --",
+        REPORT_SECTION_CRATES           = "       -- 货箱 --",
+        REPORT_SECTION_CRATES_GC        = "       -- 地勤装载货箱 --",
+        REPORT_SECTION_NONE             = "        无",
+        REPORT_SECTION_NONE_ALT         = "     --- 未发现 ---",
+        REPORT_SECTION_NONE_REPAIR      = "     --- 未发现 ---",
+        REPORT_GC_LOADABLE_HINT         = "可能可由地勤装载（F8）",
+        REPORT_TOTAL_MASS               = "总重量：%s 公斤，可装载：%s 公斤",
+        REPORT_TROOPS_CRATES_COUNT      = "部队：%d(%d)，货箱：%d(%d)",
+        REPORT_TROOPS_CRATETYPES_COUNT  = "部队：%d，货箱种类：%d",
+        -- ============================================================
+        -- Report Row Templates  (per-item lines in reports)
+        -- ============================================================
+        REPORT_ROW_TROOP                = "部队：%s 人数 %d",
+        REPORT_ROW_CRATE                = "货箱：%s %d/%d",
+        REPORT_ROW_CRATE_SIZE1          = "货箱：%s 尺寸 1",
+        REPORT_ROW_GC_CRATE             = "地勤装载货箱：%s 尺寸 1",
+        REPORT_ROW_DROPPED_CRATE        = "已投放 %s 货箱，%d 公斤",
+        REPORT_ROW_CRATE_KG             = "%s 货箱，%d 公斤",
+        REPORT_ROW_CRATE_REMOVED        = "%s 货箱，%d 公斤 已移除",
+        REPORT_ROW_UNIT_STOCK           = "单位：%s | 士兵：%d | 库存：%s",
+        REPORT_ROW_TYPE_CRATE_STOCK     = "类型：%s | 每组货箱：%d | 库存：%s",
+        REPORT_ROW_TYPE_STOCK           = "类型：%s | 库存：%s",
+        REPORT_ROW_BUILD_CHECK          = "类型：%s | 需求 %d | 已有 %d | 可建造 %s",
+        REPORT_ROW_REPAIR_CHECK         = "类型：%s | 需求 %d | 已有 %d | 可维修 %s",
+        REPORT_ROW_BEACON               = " %s | FM %s MHz | VHF %s KHz | UHF %s MHz ",
+        -- ============================================================
+        -- Weight / Crate limit tokens
+        -- ============================================================
+        WEIGHT_LIMIT                    = "已达重量上限",
+        CRATE_LIMIT                     = "已达货箱上限",
+        -- ============================================================
+        -- Menu labels - Top level
+        -- ============================================================
+        MENU_CTLD                       = "后勤系统(CTLD)",
+        MENU_MANAGE_TROOPS              = "部队管理",
+        MENU_MANAGE_CRATES              = "货箱管理",
+        MENU_MANAGE_UNITS               = "单位管理",
+        -- ============================================================
+        -- Menu labels - Troops
+        -- ============================================================
+        MENU_LOAD_TROOPS                = "装载部队",
+        MENU_DROP_TROOPS                = "投放部队",
+        MENU_DROP_ALL_TROOPS            = "投放全部部队",
+        MENU_EXTRACT_TROOPS             = "撤离部队",
+        MENU_DROP_N_TROOPS              = "投放 (%d) %s",
+        -- ============================================================
+        -- Menu labels - Crates: Get
+        -- ============================================================
+        MENU_GET_CRATES                 = "获取货箱",
+        MENU_GET                        = "获取",
+        MENU_GET_AND_LOAD               = "获取并装载",
+        MENU_GET_ANYWAY                 = "强制获取",
+        MENU_PARTIALLY_LOAD             = "部分装载",
+        MENU_OUT_OF_STOCK               = "无库存",
+        MENU_TROOP_LIMIT                = "已达部队上限",
+        -- ============================================================
+        -- Menu labels - Crates: Load
+        -- ============================================================
+        MENU_LOAD_CRATES                = "装载货箱",
+        MENU_LOAD_ALL                   = "全部装载",
+        MENU_SHOW_LOADABLE_CRATES       = "显示可装载货箱",
+        MENU_NO_CRATES_FOUND_RESCAN     = "未检测到货箱，是否重新扫描？",
+        MENU_USE_C130_LOAD              = "使用 C-130 装载系统",
+        MENU_LOAD_SINGLE                = "装载",
+        -- ============================================================
+        -- Menu labels - Crates: Drop
+        -- ============================================================
+        MENU_DROP_CRATES                = "投放货箱",
+        MENU_DROP_ALL_CRATES            = "投放全部货箱",
+        MENU_DROP                       = "投放",
+        MENU_DROP_AND_BUILD             = "投放并建造",
+        MENU_DROP_N_SETS                = "投放 %d 组%s",
+        MENU_NO_CRATES_TO_DROP          = "无可投放货箱",
+        -- ============================================================
+        -- Menu labels - Crates: Build / Repair / Pack / Remove
+        -- ============================================================
+        MENU_BUILD_CRATES               = "建造货箱",
+        MENU_REPAIR                     = "维修",
+        MENU_PACK_CRATES                = "打包货箱",
+        MENU_PACK                       = "打包",
+        MENU_SCAN_PACKABLE_UNITS        = "扫描可打包单位",
+        MENU_NO_PACKABLE_UNITS_FOUND_RESCAN = "未发现可打包单位，重新扫描？",
+        MENU_PACK_ALL                   = "打包附近单位",
+        MENU_PACK_AND_LOAD              = "打包并装载",
+        MENU_PACK_AND_LOAD_ALL          = "打包并装载附近",
+        MENU_PACK_AND_REMOVE            = "打包并移除",
+        MENU_PACK_AND_REMOVE_ALL        = "打包并移除附近",
+        MENU_REMOVE_CRATES              = "移除货箱",
+        MENU_REMOVE_CRATES_NEARBY       = "删除附近货箱",
+        MENU_LIST_CRATES_NEARBY         = "显示附近货箱",
+        MENU_CRATES_NEEDED              = "%d 个货箱%s %s（%d 公斤）",
+        MENU_CRATE_SINGLE               = "%s（%d 公斤）",
+        -- ============================================================
+        -- Menu labels - Units (C-130)
+        -- ============================================================
+        MENU_GET_UNITS                  = "获取单位",
+        MENU_REMOVE_UNITS_NEARBY        = "移除附近单位",
+        -- ============================================================
+        -- Menu labels - Info / Cargo
+        -- ============================================================
+        MENU_LIST_BOARDED_CARGO         = "查看已装载货物",
+        MENU_INVENTORY                  = "库存",
+        MENU_LIST_ZONE_BEACONS          = "显示区域信标",
+        -- ============================================================
+        -- Menu labels - Smokes / Flares / Beacons
+        -- ============================================================
+        MENU_SMOKES_FLARES_BEACONS      = "烟雾、照明弹、信标",
+        MENU_SMOKE_ZONES_NEARBY         = "标记附近区域",
+        MENU_DROP_SMOKE_NOW             = "立即释放烟雾",
+        MENU_RED_SMOKE                  = "红色烟雾",
+        MENU_BLUE_SMOKE                 = "蓝色烟雾",
+        MENU_GREEN_SMOKE                = "绿色烟雾",
+        MENU_ORANGE_SMOKE               = "橙色烟雾",
+        MENU_WHITE_SMOKE                = "白色烟雾",
+        MENU_FLARE_ZONES_NEARBY         = "标记附近区域（照明弹）",
+        MENU_FIRE_FLARE_NOW             = "立即发射照明弹",
+        MENU_DROP_BEACON_NOW            = "立即投放信标",
+        -- ============================================================
+        -- Menu labels - Parameters
+        -- ============================================================
+        MENU_SHOW_FLIGHT_PARAMS         = "显示飞行参数",
+        MENU_SHOW_HOVER_PARAMS          = "显示悬停参数",
+        STOCK_NONE                      = "无",
+        STOCK_UNLIMITED                 = "无限制",
+        BUILD_YES                       = "是",
+        BUILD_NO                        = "否",
+    },
+}
