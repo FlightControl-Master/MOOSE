@@ -204,7 +204,7 @@ do
 --          my_ctld.C130DynamicCargoAutoBuildMergeSeconds = 0 -- Merge window in seconds for C-130 auto-build handoff; set to 0 to disable batching (default).
 --          my_ctld.locale = "en" -- Language locale to use.
 --                                -- Supported: "en" English (default), "de" German, "fr" French, "es" Spanish,
---                                --            "pt-br" Brazilian Portuguese, "ru" Russian, "tr" Turkish, "cn" Chinese.
+--                                --            "pt-br" Brazilian Portuguese, "ru" Russian, "tr" Turkish, "zh-cn" Simplified Chinese (Mainland China), "zh-tw" Traditional Chinese (Taiwan).
 --
 -- ## 2.1 CH-47 Chinook support
 --
@@ -1499,7 +1499,7 @@ function CTLD:_InitLocalization()
 end
 
 --- [User] Set a resolver used to select a CTLD locale for group-specific menus and messages.
--- Supported locales: "en", "de", "fr", "es", "pt-br", "ru", "tr", "cn".
+-- Supported locales: "en", "de", "fr", "es", "pt-br", "ru", "tr", "zh-cn", "zh-tw".
 -- If unset, CTLD keeps using `self.locale` as before.
 -- @param #CTLD self
 -- @param #function Resolver Function called as `Resolver(self, Group)` and expected to return a locale string.
