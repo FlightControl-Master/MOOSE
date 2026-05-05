@@ -32,6 +32,8 @@ CTLD.Messages = {
         BOARDED                         = "%s boarded!",
         BOARDING                        = "%s boarding!",
         TROOPS_RETURNED                 = "Troops have returned to base!",
+        TROOPS_LABEL                    = "Troops",
+        ENGINEERS_LABEL                 = "Engineers",
         -- ============================================================
         -- Deployment
         -- ============================================================
@@ -221,6 +223,7 @@ CTLD.Messages = {
         MENU_REMOVE_CRATES_NEARBY       = "Remove crates nearby",
         MENU_LIST_CRATES_NEARBY         = "List crates nearby",
         MENU_CRATES_NEEDED              = "%d crate%s %s (%dkg)",
+        MENU_CRATE_SINGLE               = "%s (%dkg)",
         -- ============================================================
         -- Menu labels - Units (C-130)
         -- ============================================================
@@ -287,6 +290,8 @@ CTLD.Messages = {
         BOARDED                         = "%s eingestiegen!",
         BOARDING                        = "%s steigt ein!",
         TROOPS_RETURNED                 = "Truppen zur Basis zurückgekehrt!",
+        TROOPS_LABEL                    = "Truppen",
+        ENGINEERS_LABEL                 = "Pioniere",
         -- ============================================================
         -- Einsatz
         -- ============================================================
@@ -476,6 +481,7 @@ CTLD.Messages = {
         MENU_REMOVE_CRATES_NEARBY       = "Nahe Kisten entfernen",
         MENU_LIST_CRATES_NEARBY         = "Nahe Kisten auflisten",
         MENU_CRATES_NEEDED              = "%d Kiste%s %s (%dkg)",
+        MENU_CRATE_SINGLE               = "%s (%dkg)",
         -- ============================================================
         -- Menübezeichnungen - Einheiten (C-130)
         -- ============================================================
@@ -542,6 +548,8 @@ FR = {
         BOARDED                         = "%s embarqué(s) !",
         BOARDING                        = "%s en cours d'embarquement !",
         TROOPS_RETURNED                 = "Les troupes sont retournées à la base !",
+        TROOPS_LABEL                    = "troupes",
+        ENGINEERS_LABEL                 = "sapeurs",
         -- ============================================================
         -- Déploiement
         -- ============================================================
@@ -731,6 +739,7 @@ FR = {
         MENU_REMOVE_CRATES_NEARBY       = "Retirer caisses proches",
         MENU_LIST_CRATES_NEARBY         = "Lister caisses proches",
         MENU_CRATES_NEEDED              = "%d caisse%s %s (%dkg)",
+        MENU_CRATE_SINGLE               = "%s (%dkg)",
         -- ============================================================
         -- Libellés de menu - Unités (C-130)
         -- ============================================================
@@ -788,6 +797,8 @@ FR = {
       BOARDED="¡%s a bordo!",
       BOARDING="¡%s entrando!",
       TROOPS_RETURNED="¡Las tropas han vuelto a la base!",
+      TROOPS_LABEL="tropas",
+      ENGINEERS_LABEL="ingenieros",
       DEPLOYED_NEAR_YOU="%s han sido servidas cerca de tí.",
       UNITS_REMOVED="%s ha sido eliminado",
       BUILD_STARTED="Construcción comenzada, listo en %d segundos.",
@@ -920,6 +931,7 @@ FR = {
       MENU_REMOVE_CRATES_NEARBY="Eliminar cargas cercanas",
       MENU_LIST_CRATES_NEARBY="Listar cargas cercanas",
       MENU_CRATES_NEEDED="%d contenedor%s %s (%dkg)",
+      MENU_CRATE_SINGLE="%s (%dkg)",
       MENU_GET_UNITS="Obtener unidades",
       MENU_REMOVE_UNITS_NEARBY="Eliminar unidades cercanas",
       MENU_LIST_BOARDED_CARGO="Lista de cargas a bordo",
@@ -943,6 +955,522 @@ FR = {
       BUILD_YES="SI",
       BUILD_NO="NO",
       },
+    ["PT-BR"] = {
+        -- ============================================================
+        -- Carregamento de caixa / carga
+        -- ============================================================
+        CRATE_LOADED_GROUNDCREW         = "Caixa %s carregada pela equipe de solo!",
+        CRATE_UNLOADED_GROUNDCREW       = "Caixa %s descarregada pela equipe de solo!",
+        CRATE_LOADED_ID                 = "Caixa ID %d para %s carregada!",
+        LOADED_FULL                     = "%d %s carregado.",
+        LOADED_SETS_LEFTOVER            = "%d %s carregado(s), com %d caixa(s) sobrando.",
+        LOADED_SETS                     = "%d %s carregado(s).",
+        LOADED_PARTIAL                  = "Carregado apenas %d/%d caixa(s) de %s.",
+        LOADED_PARTIAL_LIMIT            = "Carregado apenas %d/%d caixa(s) de %s. O limite de carga foi atingido!",
+        LOADED_BATCH                    = "%d %s carregado.",
+        LOADED_BATCH_PARTIAL            = "Alguns conjuntos não puderam ser carregados completamente.",
+        -- ============================================================
+        -- Soltar / descarregar
+        -- ============================================================
+        DROPPED_FULL                    = "%d %s solto.",
+        DROPPED_SETS_LEFTOVER           = "%d %s solto(s), com %d caixa(s) sobrando.",
+        DROPPED_SETS                    = "%d %s solto(s).",
+        DROPPED_PARTIAL                 = "%d/%d caixa(s) de %s solta(s).",
+        DROPPED_INTO_ACTION             = "Unidades desembarcadas para a ação: %s!",
+        DROPPED_BEACON                  = "Baliza %s posicionada | FM %s Mhz | VHF %s KHz | UHF %s Mhz ",
+        CRATES_POSITIONED               = "%d caixas para %s foram posicionadas perto de você!",
+        CRATES_DROPPED                  = "%d caixas para %s foram soltas!",
+        -- ============================================================
+        -- Tropas
+        -- ============================================================
+        BOARDED                         = "%s embarcou!",
+        BOARDING                        = "%s embarcando!",
+        TROOPS_RETURNED                 = "As tropas retornaram à base!",
+        TROOPS_LABEL                    = "tropas",
+        ENGINEERS_LABEL                 = "engenheiros",
+        -- ============================================================
+        -- Implantação
+        -- ============================================================
+        DEPLOYED_NEAR_YOU               = "%s foram posicionados perto de você!",
+        UNITS_REMOVED                   = "%s foram removidos",
+        -- ============================================================
+        -- Construir / reparar
+        -- ============================================================
+        BUILD_STARTED                   = "Construção iniciada, pronta em %d segundos!",
+        REPAIR_STARTED                  = "Reparo iniciado usando %s, levando %d segundos",
+        NO_UNIT_TO_REPAIR               = "Nenhuma unidade perto o suficiente para reparar!",
+        CANT_REPAIR_WITH                = "Não é possível reparar esta unidade com %s",
+        CRATES_MOVE_BEFORE_BUILD        = "*** As caixas precisam ser movidas antes da construção!",
+        -- ============================================================
+        -- Erros - Helicóptero / peso / capacidade
+        -- ============================================================
+        CHOPPER_CANNOT_CARRY            = "Desculpe, este helicóptero não pode carregar caixas!",
+        TOO_HEAVY                       = "Desculpe, isso é pesado demais para carregar!",
+        FULLY_LOADED                    = "Desculpe, estamos totalmente carregados!",
+        CRAMMED                         = "Desculpe, já estamos lotados!",
+        NO_CAPACITY_NOW                 = "Sem capacidade para carregar mais agora!",
+        NO_MORE_CAPACITY                = "Não há mais capacidade para carregar caixas!",
+        CANNOT_LOAD_NONE_OR_FULL        = "Não é possível carregar caixas: nenhuma encontrada ou sem capacidade restante.",
+        -- ============================================================
+        -- Erros - posição
+        -- ============================================================
+        NEED_TO_LAND_OR_HOVER_LOAD      = "Você precisa pousar ou pairar na posição para carregar!",
+        HOVER_OVER_CRATES               = "Paire sobre as caixas para pegá-las!",
+        LAND_OR_HOVER_OVER_CRATES       = "Pouse ou paire sobre as caixas para pegá-las!",
+        MUST_LAND_OR_HOVER_CRATES       = "Você deve pousar ou pairar para carregar caixas!",
+        NEED_TO_LAND_BUILD              = "Você precisa pousar / parar para construir algo, piloto!",
+        NOT_CLOSE_ENOUGH_LOGISTICS      = "Você não está perto o suficiente de uma zona logística!",
+        NOT_CLOSE_ENOUGH_DROP           = "Você não está perto o suficiente de uma zona de lançamento!",
+        NOT_CLOSE_ENOUGH_ZONE_NM        = "Negativo, precisa estar a menos de %d nm de uma zona!",
+        CANNOT_BUILD_LOADING_AREA       = "Você não pode construir em uma área de carregamento, piloto!",
+        -- ============================================================
+        -- Erros - portas
+        -- ============================================================
+        OPEN_DOORS_LOAD_CARGO           = "Você precisa abrir a(s) porta(s) para carregar carga!",
+        OPEN_DOORS_LOAD_TROOPS          = "Você precisa abrir a(s) porta(s) para carregar tropas!",
+        OPEN_DOORS_EXTRACT_TROOPS       = "Você precisa abrir a(s) porta(s) para extrair tropas!",
+        OPEN_DOORS_UNLOAD_TROOPS        = "Você precisa abrir a(s) porta(s) para descarregar tropas!",
+        OPEN_DOORS_DROP_CARGO           = "Você precisa abrir a(s) porta(s) para soltar carga!",
+        -- ============================================================
+        -- Erros - estoque / disponibilidade
+        -- ============================================================
+        ALL_GONE                        = "Desculpe, todos os %s acabaram!",
+        RAN_OUT_OF                      = "Desculpe, ficamos sem %s",
+        CARGO_NOT_AVAILABLE_ZONE        = "A carga solicitada não está disponível nesta zona!",
+        ENOUGH_CRATES_NEARBY            = "Já há caixas suficientes por perto! Cuide delas primeiro!",
+        NO_CRATES_WITHIN                = "Nenhuma caixa carregável em um raio de %d metros!",
+        NO_CRATES_WITHIN_PLAIN          = "Nenhuma caixa em um raio de %d metros!",
+        NO_CRATES_IN_RANGE              = "Nenhuma caixa encontrada no alcance!",
+        NO_NAMED_CRATES_IN_RANGE        = "Nenhuma caixa \"%s\" encontrada no alcance!",
+        NO_LOADABLE_CRATES              = "Desculpe, nenhuma caixa carregável por perto ou peso máximo de carga atingido!",
+        NO_UNITS_TO_EXTRACT             = "Nenhuma unidade perto o suficiente para extrair!",
+        NO_UNIT_CONFIG                  = "Nenhuma configuração de unidade encontrada para %s",
+        CANT_ONBOARD                    = "Não é possível embarcar %s",
+        TOO_MANY_UNITS_NEARBY           = "Você já tem %d unidades por perto!",
+        NO_CRATE_GROUPS                 = "Nenhum grupo de caixas encontrado para esta unidade!",
+        NO_CRATE_SET                    = "Nenhum conjunto de caixas encontrado ou índice inválido!",
+        NO_CRATE_IN_SET                 = "Nenhuma caixa encontrada nesse conjunto!",
+        NO_TROOP_CHUNK                  = "Nenhum bloco de carga de tropas encontrado para ID %d!",
+        TROOP_CHUNK_EMPTY               = "O bloco de tropas está vazio para ID %d!",
+        -- ============================================================
+        -- Nada carregado / em estoque
+        -- ============================================================
+        NOTHING_LOADED                  = "Nada carregado!\nLimite de tropas: %d | Limite de caixas %d | Limite de peso %d kg",
+        NOTHING_LOADED_AIRDROP          = "Nada carregado ou fora dos parâmetros de lançamento aéreo!",
+        NOTHING_LOADED_HOVER            = "Nada carregado ou fora dos parâmetros de pairado!",
+        NOTHING_IN_STOCK                = "Nada em estoque!",
+        NOTHING_TO_PACK                 = "Nada para empacotar nesta distância, piloto!",
+        NOTHING_TO_REMOVE               = "Nada para remover nesta distância, piloto!",
+        -- ============================================================
+        -- Zona / informações
+        -- ============================================================
+        ROGER_ZONE                      = "Entendido, zona %s %s!",
+        -- ============================================================
+        -- Relatório: parâmetros de pairado / voo
+        -- ============================================================
+        HOVER_PARAMS_METRIC             = "Parâmetros de pairado (carregamento automático/soltar):\n - Altura mínima %dm \n - Altura máxima %dm \n - Velocidade máxima 2mps \n - Dentro dos parâmetros: %s",
+        HOVER_PARAMS_IMPERIAL           = "Parâmetros de pairado (carregamento automático/soltar):\n - Altura mínima %dft \n - Altura máxima %dft \n - Velocidade máxima 6ftps \n - Dentro dos parâmetros: %s",
+        FLIGHT_PARAMS_IMPERIAL          = "Parâmetros de voo (lançamento aéreo):\n - Altura mínima %dft \n - Altura máxima %dft \n - Dentro dos parâmetros: %s",
+        FLIGHT_PARAMS_METRIC            = "Parâmetros de voo (lançamento aéreo):\n - Altura mínima %dm \n - Altura máxima %dm \n - Dentro dos parâmetros: %s",
+        -- ============================================================
+        -- Títulos de relatório (REPORT:New())
+        -- ============================================================
+        REPORT_CRATES_FOUND             = "Caixas encontradas por perto:",
+        REPORT_REMOVING_CRATES          = "Removendo caixas encontradas por perto:",
+        REPORT_TRANSPORT_CHECKOUT       = "Ficha de verificação de transporte",
+        REPORT_INVENTORY                = "Ficha de inventário",
+        REPORT_BUILD_CHECKLIST          = "Checklist de caixas construíveis",
+        REPORT_REPAIR_CHECKLIST         = "Checklist de reparos",
+        REPORT_BEACONS                  = "Balizas de zona ativas",
+        -- ============================================================
+        -- Cabeçalhos de seção do relatório (report:Add())
+        -- ============================================================
+        REPORT_SECTION_TROOPS           = "        -- TROPAS --",
+        REPORT_SECTION_CRATES           = "       -- CAIXAS --",
+        REPORT_SECTION_CRATES_GC        = "       -- CAIXAS carregadas pela equipe de solo --",
+        REPORT_SECTION_NONE             = "        N E N H U M",
+        REPORT_SECTION_NONE_ALT         = "     --- Nada encontrado! ---",
+        REPORT_SECTION_NONE_REPAIR      = "     --- Nada encontrado ---",
+        REPORT_GC_LOADABLE_HINT         = "Provavelmente carregável pela equipe de solo (F8)",
+        REPORT_TOTAL_MASS               = "Massa total: %s kg. Carregável: %s kg.",
+        REPORT_TROOPS_CRATES_COUNT      = "Tropas: %d(%d), Caixas: %d(%d)",
+        REPORT_TROOPS_CRATETYPES_COUNT  = "Tropas: %d, Tipos de caixas: %d",
+        -- ============================================================
+        -- Modelos de linha do relatório (linhas por item)
+        -- ============================================================
+        REPORT_ROW_TROOP                = "Tropa: %s tamanho %d",
+        REPORT_ROW_CRATE                = "Caixa: %s %d/%d",
+        REPORT_ROW_CRATE_SIZE1          = "Caixa: %s tamanho 1",
+        REPORT_ROW_GC_CRATE             = "Caixa carregada pela equipe de solo: %s tamanho 1",
+        REPORT_ROW_DROPPED_CRATE        = "Caixa solta para %s, %dkg",
+        REPORT_ROW_CRATE_KG             = "Caixa para %s, %dkg",
+        REPORT_ROW_CRATE_REMOVED        = "Caixa para %s, %dkg removida",
+        REPORT_ROW_UNIT_STOCK           = "Unidade: %s | Soldados: %d | Estoque: %s",
+        REPORT_ROW_TYPE_CRATE_STOCK     = "Tipo: %s | Caixas por conjunto: %d | Estoque: %s",
+        REPORT_ROW_TYPE_STOCK           = "Tipo: %s | Estoque: %s",
+        REPORT_ROW_BUILD_CHECK          = "Tipo: %s | Necessário %d | Encontrado %d | Pode construir %s",
+        REPORT_ROW_REPAIR_CHECK         = "Tipo: %s | Necessário %d | Encontrado %d | Pode reparar %s",
+        REPORT_ROW_BEACON               = " %s | FM %s Mhz | VHF %s KHz | UHF %s Mhz ",
+        -- ============================================================
+        -- Tokens de limite de peso / caixas
+        -- ============================================================
+        WEIGHT_LIMIT                    = "Limite de peso atingido",
+        CRATE_LIMIT                     = "Limite de caixas atingido",
+        -- ============================================================
+        -- Rótulos de menu - nível superior
+        -- ============================================================
+        MENU_CTLD                       = "CTLD",
+        MENU_MANAGE_TROOPS              = "Gerenciar tropas",
+        MENU_MANAGE_CRATES              = "Gerenciar caixas",
+        MENU_MANAGE_UNITS               = "Gerenciar unidades",
+        -- ============================================================
+        -- Rótulos de menu - tropas
+        -- ============================================================
+        MENU_LOAD_TROOPS                = "Carregar tropas",
+        MENU_DROP_TROOPS                = "Desembarcar tropas",
+        MENU_DROP_ALL_TROOPS            = "Desembarcar TODAS as tropas",
+        MENU_EXTRACT_TROOPS             = "Extrair tropas",
+        MENU_DROP_N_TROOPS              = "Desembarcar (%d) %s",
+        -- ============================================================
+        -- Rótulos de menu - caixas: obter
+        -- ============================================================
+        MENU_GET_CRATES                 = "Solicitar caixas",
+        MENU_GET                        = "Solicitar",
+        MENU_GET_AND_LOAD               = "Solicitar e carregar",
+        MENU_GET_ANYWAY                 = "Solicitar mesmo assim",
+        MENU_PARTIALLY_LOAD             = "Carregar parcialmente",
+        MENU_OUT_OF_STOCK               = "Sem estoque",
+        MENU_TROOP_LIMIT                = "Limite de tropas atingido",
+        -- ============================================================
+        -- Rótulos de menu - caixas: carregar
+        -- ============================================================
+        MENU_LOAD_CRATES                = "Carregar caixas",
+        MENU_LOAD_ALL                   = "Carregar TUDO",
+        MENU_SHOW_LOADABLE_CRATES       = "Mostrar caixas carregáveis",
+        MENU_NO_CRATES_FOUND_RESCAN     = "Nenhuma caixa encontrada! Procurar novamente?",
+        MENU_USE_C130_LOAD              = "Usar sistema de carga do C-130",
+        MENU_LOAD_SINGLE                = "Carregar",
+        -- ============================================================
+        -- Rótulos de menu - caixas: soltar
+        -- ============================================================
+        MENU_DROP_CRATES                = "Soltar caixas",
+        MENU_DROP_ALL_CRATES            = "Soltar TODAS as caixas",
+        MENU_DROP                       = "Soltar",
+        MENU_DROP_AND_BUILD             = "Soltar e construir",
+        MENU_DROP_N_SETS                = "Soltar %d conjunto%s",
+        MENU_NO_CRATES_TO_DROP          = "Nenhuma caixa para soltar!",
+        -- ============================================================
+        -- Rótulos de menu - caixas: construir / reparar / empacotar / remover
+        -- ============================================================
+        MENU_BUILD_CRATES               = "Construir caixas",
+        MENU_REPAIR                     = "Reparar",
+        MENU_PACK_CRATES                = "Empacotar caixas",
+        MENU_PACK                       = "Empacotar",
+        MENU_SCAN_PACKABLE_UNITS        = "Procurar unidades empacotáveis por perto",
+        MENU_NO_PACKABLE_UNITS_FOUND_RESCAN = "Nenhuma unidade empacotável encontrada! Procurar novamente?",
+        MENU_PACK_ALL                   = "Empacotar próximas",
+        MENU_PACK_AND_LOAD              = "Empacotar e carregar",
+        MENU_PACK_AND_LOAD_ALL          = "Empacotar e carregar próximas",
+        MENU_PACK_AND_REMOVE            = "Empacotar e remover",
+        MENU_PACK_AND_REMOVE_ALL        = "Empacotar e remover próximas",
+        MENU_REMOVE_CRATES              = "Remover caixas",
+        MENU_REMOVE_CRATES_NEARBY       = "Remover caixas próximas",
+        MENU_LIST_CRATES_NEARBY         = "Listar caixas próximas",
+        MENU_CRATES_NEEDED              = "%d caixa%s %s (%dkg)",
+        MENU_CRATE_SINGLE               = "%s (%dkg)",
+        -- ============================================================
+        -- Rótulos de menu - unidades (C-130)
+        -- ============================================================
+        MENU_GET_UNITS                  = "Solicitar unidades",
+        MENU_REMOVE_UNITS_NEARBY        = "Remover unidades próximas",
+        -- ============================================================
+        -- Rótulos de menu - informações / carga
+        -- ============================================================
+        MENU_LIST_BOARDED_CARGO         = "Listar carga embarcada",
+        MENU_INVENTORY                  = "Inventário",
+        MENU_LIST_ZONE_BEACONS          = "Listar balizas de zona ativas",
+        -- ============================================================
+        -- Rótulos de menu - fumaças / sinalizadores / beacons
+        -- ============================================================
+        MENU_SMOKES_FLARES_BEACONS      = "Fumaças, sinalizadores, balizas",
+        MENU_SMOKE_ZONES_NEARBY         = "Fumaça em zonas próximas",
+        MENU_DROP_SMOKE_NOW             = "Lançar fumaça agora",
+        MENU_RED_SMOKE                  = "Fumaça vermelha",
+        MENU_BLUE_SMOKE                 = "Fumaça azul",
+        MENU_GREEN_SMOKE                = "Fumaça verde",
+        MENU_ORANGE_SMOKE               = "Fumaça laranja",
+        MENU_WHITE_SMOKE                = "Fumaça branca",
+        MENU_FLARE_ZONES_NEARBY         = "Sinalizadores em zonas próximas",
+        MENU_FIRE_FLARE_NOW             = "Disparar sinalizador agora",
+        MENU_DROP_BEACON_NOW            = "Posicionar baliza agora",
+        -- ============================================================
+        -- Rótulos de menu - parâmetros
+        -- ============================================================
+        MENU_SHOW_FLIGHT_PARAMS         = "Mostrar parâmetros de voo",
+        MENU_SHOW_HOVER_PARAMS          = "Mostrar parâmetros de pairado",
+        STOCK_NONE                      = "nenhum",
+        STOCK_UNLIMITED                 = "ilimitado",
+        BUILD_YES                       = "SIM",
+        BUILD_NO                        = "NÃO",
+    },
+    TR = {
+        -- ============================================================
+        -- Sandık / kargo yükleme
+        -- ============================================================
+        CRATE_LOADED_GROUNDCREW         = "%s sandığı yer ekibi tarafından yüklendi!",
+        CRATE_UNLOADED_GROUNDCREW       = "%s sandığı yer ekibi tarafından boşaltıldı!",
+        CRATE_LOADED_ID                 = "Sandık ID %d %s için yüklendi!",
+        LOADED_FULL                     = "%d %s yüklendi.",
+        LOADED_SETS_LEFTOVER            = "%d %s yüklendi, %d sandık kaldı.",
+        LOADED_SETS                     = "%d %s yüklendi.",
+        LOADED_PARTIAL                  = "Yalnızca %d/%d sandık %s için yüklendi.",
+        LOADED_PARTIAL_LIMIT            = "Yalnızca %d/%d sandık %s için yüklendi. Kargo limiti artık doldu!",
+        LOADED_BATCH                    = "%d %s yüklendi.",
+        LOADED_BATCH_PARTIAL            = "Bazı setler tamamen yüklenemedi.",
+        -- ============================================================
+        -- Bırakma / boşaltma
+        -- ============================================================
+        DROPPED_FULL                    = "%d %s bırakıldı.",
+        DROPPED_SETS_LEFTOVER           = "%d %s bırakıldı, %d sandık kaldı.",
+        DROPPED_SETS                    = "%d %s bırakıldı.",
+        DROPPED_PARTIAL                 = "%d/%d sandık %s için bırakıldı.",
+        DROPPED_INTO_ACTION             = "Çatışma alanına konuşlandırılanlar: %s!",
+        DROPPED_BEACON                  = "Radyo işaretçisi %s bırakıldı | FM %s Mhz | VHF %s KHz | UHF %s Mhz ",
+        CRATES_POSITIONED               = "%d sandık %s için yakınınıza yerleştirildi!",
+        CRATES_DROPPED                  = "%d sandık %s için bırakıldı!",
+        -- ============================================================
+        -- Birlikler
+        -- ============================================================
+        BOARDED                         = "%s bindirildi!",
+        BOARDING                        = "%s biniyor!",
+        TROOPS_RETURNED                 = "Birlikler üsse döndü!",
+        TROOPS_LABEL                    = "birlik",
+        ENGINEERS_LABEL                 = "mühendis",
+        -- ============================================================
+        -- Konuşlandırma
+        -- ============================================================
+        DEPLOYED_NEAR_YOU               = "%s yakınınıza konuşlandırıldı!",
+        UNITS_REMOVED                   = "%s kaldırıldı",
+        -- ============================================================
+        -- İnşa / onarım
+        -- ============================================================
+        BUILD_STARTED                   = "İnşa başladı, %d saniye içinde hazır!",
+        REPAIR_STARTED                  = "%s kullanılarak onarım başladı, %d saniye sürecek",
+        NO_UNIT_TO_REPAIR               = "Onarmak için yeterince yakın bir birim yok!",
+        CANT_REPAIR_WITH                = "Bu birim %s ile onarılamaz",
+        CRATES_MOVE_BEFORE_BUILD        = "*** İnşa etmeden önce sandıkların taşınması gerekiyor!",
+        -- ============================================================
+        -- Hatalar - helikopter / ağırlık / kapasite
+        -- ============================================================
+        CHOPPER_CANNOT_CARRY            = "Üzgünüm, bu helikopter sandık taşıyamaz!",
+        TOO_HEAVY                       = "Üzgünüm, bu yük çok ağır!",
+        FULLY_LOADED                    = "Üzgünüm, tamamen doluyuz!",
+        CRAMMED                         = "Üzgünüm, zaten tıka basa doluyuz!",
+        NO_CAPACITY_NOW                 = "Şu anda daha fazla yüklemek için kapasite yok!",
+        NO_MORE_CAPACITY                = "Sandık yüklemek için daha fazla kapasite yok!",
+        CANNOT_LOAD_NONE_OR_FULL        = "Sandıklar yüklenemiyor: ya hiç bulunamadı ya da kapasite kalmadı.",
+        -- ============================================================
+        -- Hatalar - konum
+        -- ============================================================
+        NEED_TO_LAND_OR_HOVER_LOAD      = "Yüklemek için inmen veya pozisyonda asılı kalman gerekiyor!",
+        HOVER_OVER_CRATES               = "Sandıkları almak için üzerlerinde asılı kal!",
+        LAND_OR_HOVER_OVER_CRATES       = "Sandıkları almak için in veya üzerlerinde asılı kal!",
+        MUST_LAND_OR_HOVER_CRATES       = "Sandık yüklemek için inmen veya asılı kalman gerekiyor!",
+        NEED_TO_LAND_BUILD              = "Bir şey inşa etmek için inmen / durman gerekiyor, pilot!",
+        NOT_CLOSE_ENOUGH_LOGISTICS      = "Lojistik bölgesine yeterince yakın değilsin!",
+        NOT_CLOSE_ENOUGH_DROP           = "Bırakma bölgesine yeterince yakın değilsin!",
+        NOT_CLOSE_ENOUGH_ZONE_NM        = "Negatif, bir bölgeye %d nm'den daha yakın olmalısın!",
+        CANNOT_BUILD_LOADING_AREA       = "Yükleme alanında inşa yapamazsın, pilot!",
+        -- ============================================================
+        -- Hatalar - kapılar
+        -- ============================================================
+        OPEN_DOORS_LOAD_CARGO           = "Kargo yüklemek için kapı(ları) açman gerekiyor!",
+        OPEN_DOORS_LOAD_TROOPS          = "Birlik yüklemek için kapı(ları) açman gerekiyor!",
+        OPEN_DOORS_EXTRACT_TROOPS       = "Birlik tahliye etmek için kapı(ları) açman gerekiyor!",
+        OPEN_DOORS_UNLOAD_TROOPS        = "Birlik boşaltmak için kapı(ları) açman gerekiyor!",
+        OPEN_DOORS_DROP_CARGO           = "Kargo bırakmak için kapı(ları) açman gerekiyor!",
+        -- ============================================================
+        -- Hatalar - stok / kullanılabilirlik
+        -- ============================================================
+        ALL_GONE                        = "Üzgünüm, tüm %s bitti!",
+        RAN_OUT_OF                      = "Üzgünüm, %s tükendi",
+        CARGO_NOT_AVAILABLE_ZONE        = "İstenen kargo bu bölgede mevcut değil!",
+        ENOUGH_CRATES_NEARBY            = "Yakında zaten yeterince sandık var! Önce onlarla ilgilen!",
+        NO_CRATES_WITHIN                = "%d metre içinde yüklenebilir sandık yok!",
+        NO_CRATES_WITHIN_PLAIN          = "%d metre içinde sandık yok!",
+        NO_CRATES_IN_RANGE              = "Menzilde sandık bulunamadı!",
+        NO_NAMED_CRATES_IN_RANGE        = "Menzilde \"%s\" sandığı bulunamadı!",
+        NO_LOADABLE_CRATES              = "Üzgünüm, yakında yüklenebilir sandık yok veya maksimum kargo ağırlığına ulaşıldı!",
+        NO_UNITS_TO_EXTRACT             = "Tahliye etmek için yeterince yakın birim yok!",
+        NO_UNIT_CONFIG                  = "%s için birim yapılandırması bulunamadı",
+        CANT_ONBOARD                    = "%s bindirilemiyor",
+        TOO_MANY_UNITS_NEARBY           = "Yakında zaten %d birimin var!",
+        NO_CRATE_GROUPS                 = "Bu birim için sandık grubu bulunamadı!",
+        NO_CRATE_SET                    = "Sandık seti bulunamadı veya indeks geçersiz!",
+        NO_CRATE_IN_SET                 = "Bu sette sandık bulunamadı!",
+        NO_TROOP_CHUNK                  = "ID %d için birlik kargo parçası bulunamadı!",
+        TROOP_CHUNK_EMPTY               = "ID %d için birlik parçası boş!",
+        -- ============================================================
+        -- Yüklü bir şey yok / stokta yok
+        -- ============================================================
+        NOTHING_LOADED                  = "Hiçbir şey yüklü değil!\nBirlik limiti: %d | Sandık limiti %d | Ağırlık limiti %d kg",
+        NOTHING_LOADED_AIRDROP          = "Hiçbir şey yüklü değil veya havadan bırakma parametreleri dahilinde değil!",
+        NOTHING_LOADED_HOVER            = "Hiçbir şey yüklü değil veya asılı kalma parametreleri dahilinde değil!",
+        NOTHING_IN_STOCK                = "Stokta hiçbir şey yok!",
+        NOTHING_TO_PACK                 = "Bu mesafede paketlenecek bir şey yok, pilot!",
+        NOTHING_TO_REMOVE               = "Bu mesafede kaldırılacak bir şey yok, pilot!",
+        -- ============================================================
+        -- Bölge / bilgi
+        -- ============================================================
+        ROGER_ZONE                      = "Anlaşıldı, %s bölgesi %s!",
+        -- ============================================================
+        -- Rapor: asılı kalma / uçuş parametreleri
+        -- ============================================================
+        HOVER_PARAMS_METRIC             = "Asılı kalma parametreleri (otomatik yükleme/bırakma):\n - Minimum irtifa %dm \n - Maksimum irtifa %dm \n - Maksimum hız 2mps \n - Parametreler dahilinde: %s",
+        HOVER_PARAMS_IMPERIAL           = "Asılı kalma parametreleri (otomatik yükleme/bırakma):\n - Minimum irtifa %dft \n - Maksimum irtifa %dft \n - Maksimum hız 6ftps \n - Parametreler dahilinde: %s",
+        FLIGHT_PARAMS_IMPERIAL          = "Uçuş parametreleri (havadan bırakma):\n - Minimum irtifa %dft \n - Maksimum irtifa %dft \n - Parametreler dahilinde: %s",
+        FLIGHT_PARAMS_METRIC            = "Uçuş parametreleri (havadan bırakma):\n - Minimum irtifa %dm \n - Maksimum irtifa %dm \n - Parametreler dahilinde: %s",
+        -- ============================================================
+        -- Rapor başlıkları (REPORT:New())
+        -- ============================================================
+        REPORT_CRATES_FOUND             = "Yakında bulunan sandıklar:",
+        REPORT_REMOVING_CRATES          = "Yakında bulunan sandıklar kaldırılıyor:",
+        REPORT_TRANSPORT_CHECKOUT       = "Taşıma kontrol formu",
+        REPORT_INVENTORY                = "Envanter formu",
+        REPORT_BUILD_CHECKLIST          = "İnşa edilebilir sandık kontrol listesi",
+        REPORT_REPAIR_CHECKLIST         = "Onarım kontrol listesi",
+        REPORT_BEACONS                  = "Aktif bölge radyo işaretçileri",
+        -- ============================================================
+        -- Rapor bölüm başlıkları (report:Add())
+        -- ============================================================
+        REPORT_SECTION_TROOPS           = "        -- BİRLİKLER --",
+        REPORT_SECTION_CRATES           = "       -- SANDIKLAR --",
+        REPORT_SECTION_CRATES_GC        = "       -- Yer ekibiyle yüklenen SANDIKLAR --",
+        REPORT_SECTION_NONE             = "        Y O K",
+        REPORT_SECTION_NONE_ALT         = "     --- Hiçbir şey bulunamadı! ---",
+        REPORT_SECTION_NONE_REPAIR      = "     --- Hiçbir şey bulunamadı ---",
+        REPORT_GC_LOADABLE_HINT         = "Muhtemelen yer ekibiyle yüklenebilir (F8)",
+        REPORT_TOTAL_MASS               = "Toplam kütle: %s kg. Yüklenebilir: %s kg.",
+        REPORT_TROOPS_CRATES_COUNT      = "Birlikler: %d(%d), Sandıklar: %d(%d)",
+        REPORT_TROOPS_CRATETYPES_COUNT  = "Birlikler: %d, Sandık tipleri: %d",
+        -- ============================================================
+        -- Rapor satır şablonları (öğe başına satırlar)
+        -- ============================================================
+        REPORT_ROW_TROOP                = "Birlik: %s boyut %d",
+        REPORT_ROW_CRATE                = "Sandık: %s %d/%d",
+        REPORT_ROW_CRATE_SIZE1          = "Sandık: %s boyut 1",
+        REPORT_ROW_GC_CRATE             = "Yer ekibiyle yüklenen sandık: %s boyut 1",
+        REPORT_ROW_DROPPED_CRATE        = "%s için bırakılan sandık, %dkg",
+        REPORT_ROW_CRATE_KG             = "%s için sandık, %dkg",
+        REPORT_ROW_CRATE_REMOVED        = "%s için sandık, %dkg kaldırıldı",
+        REPORT_ROW_UNIT_STOCK           = "Birim: %s | Askerler: %d | Stok: %s",
+        REPORT_ROW_TYPE_CRATE_STOCK     = "Tip: %s | Set başına sandık: %d | Stok: %s",
+        REPORT_ROW_TYPE_STOCK           = "Tip: %s | Stok: %s",
+        REPORT_ROW_BUILD_CHECK          = "Tip: %s | Gerekli %d | Bulunan %d | İnşa edilebilir %s",
+        REPORT_ROW_REPAIR_CHECK         = "Tip: %s | Gerekli %d | Bulunan %d | Onarılabilir %s",
+        REPORT_ROW_BEACON               = " %s | FM %s Mhz | VHF %s KHz | UHF %s Mhz ",
+        -- ============================================================
+        -- Ağırlık / sandık limiti belirteçleri
+        -- ============================================================
+        WEIGHT_LIMIT                    = "Ağırlık limitine ulaşıldı",
+        CRATE_LIMIT                     = "Sandık limitine ulaşıldı",
+        -- ============================================================
+        -- Menü etiketleri - üst seviye
+        -- ============================================================
+        MENU_CTLD                       = "CTLD",
+        MENU_MANAGE_TROOPS              = "Birlikleri yönet",
+        MENU_MANAGE_CRATES              = "Sandıkları yönet",
+        MENU_MANAGE_UNITS               = "Birimleri yönet",
+        -- ============================================================
+        -- Menü etiketleri - birlikler
+        -- ============================================================
+        MENU_LOAD_TROOPS                = "Birlik yükle",
+        MENU_DROP_TROOPS                = "Birlik indir",
+        MENU_DROP_ALL_TROOPS            = "TÜM birlikleri indir",
+        MENU_EXTRACT_TROOPS             = "Birlik tahliye et",
+        MENU_DROP_N_TROOPS              = "(%d) %s indir",
+        -- ============================================================
+        -- Menü etiketleri - sandıklar: al
+        -- ============================================================
+        MENU_GET_CRATES                 = "Sandık talep et",
+        MENU_GET                        = "Talep et",
+        MENU_GET_AND_LOAD               = "Talep et ve yükle",
+        MENU_GET_ANYWAY                 = "Yine de talep et",
+        MENU_PARTIALLY_LOAD             = "Kısmen yükle",
+        MENU_OUT_OF_STOCK               = "Stokta yok",
+        MENU_TROOP_LIMIT                = "Birlik limitine ulaşıldı",
+        -- ============================================================
+        -- Menü etiketleri - sandıklar: yükle
+        -- ============================================================
+        MENU_LOAD_CRATES                = "Sandık yükle",
+        MENU_LOAD_ALL                   = "TÜMÜNÜ yükle",
+        MENU_SHOW_LOADABLE_CRATES       = "Yüklenebilir sandıkları göster",
+        MENU_NO_CRATES_FOUND_RESCAN     = "Sandık bulunamadı! Tekrar tara?",
+        MENU_USE_C130_LOAD              = "C-130 yükleme sistemini kullan",
+        MENU_LOAD_SINGLE                = "Yükle",
+        -- ============================================================
+        -- Menü etiketleri - sandıklar: bırak
+        -- ============================================================
+        MENU_DROP_CRATES                = "Sandık bırak",
+        MENU_DROP_ALL_CRATES            = "TÜM sandıkları bırak",
+        MENU_DROP                       = "Bırak",
+        MENU_DROP_AND_BUILD             = "Bırak ve inşa et",
+        MENU_DROP_N_SETS                = "%d set%.0s bırak",
+        MENU_NO_CRATES_TO_DROP          = "Bırakılacak sandık yok!",
+        -- ============================================================
+        -- Menü etiketleri - sandıklar: inşa / onar / paketle / kaldır
+        -- ============================================================
+        MENU_BUILD_CRATES               = "Sandıkları inşa et",
+        MENU_REPAIR                     = "Onar",
+        MENU_PACK_CRATES                = "Sandıkları paketle",
+        MENU_PACK                       = "Paketle",
+        MENU_SCAN_PACKABLE_UNITS        = "Yakındaki paketlenebilir birimleri tara",
+        MENU_NO_PACKABLE_UNITS_FOUND_RESCAN = "Paketlenebilir birim bulunamadı! Tekrar tara?",
+        MENU_PACK_ALL                   = "Yakındakileri paketle",
+        MENU_PACK_AND_LOAD              = "Paketle ve yükle",
+        MENU_PACK_AND_LOAD_ALL          = "Yakındakileri paketle ve yükle",
+        MENU_PACK_AND_REMOVE            = "Paketle ve kaldır",
+        MENU_PACK_AND_REMOVE_ALL        = "Yakındakileri paketle ve kaldır",
+        MENU_REMOVE_CRATES              = "Sandıkları kaldır",
+        MENU_REMOVE_CRATES_NEARBY       = "Yakındaki sandıkları kaldır",
+        MENU_LIST_CRATES_NEARBY         = "Yakındaki sandıkları listele",
+        MENU_CRATES_NEEDED              = "%d sandık%.0s %s (%dkg)",
+        MENU_CRATE_SINGLE               = "%s (%dkg)",
+        -- ============================================================
+        -- Menü etiketleri - birimler (C-130)
+        -- ============================================================
+        MENU_GET_UNITS                  = "Birim talep et",
+        MENU_REMOVE_UNITS_NEARBY        = "Yakındaki birimleri kaldır",
+        -- ============================================================
+        -- Menü etiketleri - bilgi / kargo
+        -- ============================================================
+        MENU_LIST_BOARDED_CARGO         = "Bindirilmiş kargoyu listele",
+        MENU_INVENTORY                  = "Envanter",
+        MENU_LIST_ZONE_BEACONS          = "Aktif bölge radyo işaretçilerini listele",
+        -- ============================================================
+        -- Menü etiketleri - dumanlar / işaret fişekleri / beaconlar
+        -- ============================================================
+        MENU_SMOKES_FLARES_BEACONS      = "Dumanlar, işaret fişekleri, radyo işaretçileri",
+        MENU_SMOKE_ZONES_NEARBY         = "Yakındaki bölgelerde duman",
+        MENU_DROP_SMOKE_NOW             = "Şimdi duman işareti bırak",
+        MENU_RED_SMOKE                  = "Kırmızı duman",
+        MENU_BLUE_SMOKE                 = "Mavi duman",
+        MENU_GREEN_SMOKE                = "Yeşil duman",
+        MENU_ORANGE_SMOKE               = "Turuncu duman",
+        MENU_WHITE_SMOKE                = "Beyaz duman",
+        MENU_FLARE_ZONES_NEARBY         = "Yakındaki bölgelerde işaret fişekleri",
+        MENU_FIRE_FLARE_NOW             = "Şimdi işaret fişeği ateşle",
+        MENU_DROP_BEACON_NOW            = "Şimdi radyo işaretçisi bırak",
+        -- ============================================================
+        -- Menü etiketleri - parametreler
+        -- ============================================================
+        MENU_SHOW_FLIGHT_PARAMS         = "Uçuş parametrelerini göster",
+        MENU_SHOW_HOVER_PARAMS          = "Asılı kalma parametrelerini göster",
+        STOCK_NONE                      = "yok",
+        STOCK_UNLIMITED                 = "sınırsız",
+        BUILD_YES                       = "EVET",
+        BUILD_NO                        = "HAYIR",
+    },
     RU = {
         -- ============================================================
         -- Crate / Cargo Loading
@@ -974,6 +1502,8 @@ FR = {
         BOARDED                         = "%s на борту!",
         BOARDING                        = "%s грузится!",
         TROOPS_RETURNED                 = "Войска вернулись на базу!",
+        TROOPS_LABEL                    = "войска",
+        ENGINEERS_LABEL                 = "инженеры",
         -- ============================================================
         -- Deployment
         -- ============================================================
@@ -1163,6 +1693,7 @@ FR = {
         MENU_REMOVE_CRATES_NEARBY       = "Удалить ящики поблизости",
         MENU_LIST_CRATES_NEARBY         = "Список ящиков поблизости",
         MENU_CRATES_NEEDED              = "%d ящик%s %s (%dкг)",
+        MENU_CRATE_SINGLE               = "%s (%dкг)",
         -- ============================================================
         -- Menu labels - Units (C-130)
         -- ============================================================
@@ -1198,4 +1729,530 @@ FR = {
         BUILD_YES                       = "ДА",
         BUILD_NO                        = "НЕТ",
     },
-  }
+    ["zh-TW"] = {
+        -- ============================================================
+        -- Crate / Cargo Loading
+        -- ============================================================
+        CRATE_LOADED_GROUNDCREW         = "地勤已裝載貨箱 %s！",
+        CRATE_UNLOADED_GROUNDCREW       = "地勤已卸載貨箱 %s！",
+        CRATE_LOADED_ID                 = "貨箱 ID %d（%s）已裝載！",
+        LOADED_FULL                     = "已裝載 %d 個 %s。",
+        LOADED_SETS_LEFTOVER            = "已裝載 %d 組 %s，剩餘 %d 個貨箱。",
+        LOADED_SETS                     = "已裝載 %d 組 %s。",
+        LOADED_PARTIAL                  = "僅裝載 %d/%d 個 %s 的貨箱。",
+        LOADED_PARTIAL_LIMIT            = "僅裝載 %d/%d 個 %s 的貨箱，已達載運上限！",
+        LOADED_BATCH                    = "已裝載 %d 個 %s。",
+        LOADED_BATCH_PARTIAL            = "部分組合無法完全裝載。",
+        -- ============================================================
+        -- Dropping / Unloading
+        -- ============================================================
+        DROPPED_FULL                    = "已投放 %d 個 %s。",
+        DROPPED_SETS_LEFTOVER           = "已投放 %d 組 %s，剩餘 %d 個貨箱。",
+        DROPPED_SETS                    = "已投放 %d 組 %s。",
+        DROPPED_PARTIAL                 = "已投放 %d/%d 個 %s 的貨箱。",
+        DROPPED_INTO_ACTION             = "已將 %s 投入作戰！",
+        DROPPED_BEACON                  = "已投放 %s | FM %s MHz | VHF %s KHz | UHF %s MHz ",
+        CRATES_POSITIONED               = "已在你附近部署 %d 個 %s 貨箱！",
+        CRATES_DROPPED                  = "已投放 %d 個 %s 貨箱！",
+        -- ============================================================
+        -- Troops
+        -- ============================================================
+        BOARDED                         = "%s 已登機！",
+        BOARDING                        = "%s 正在登機！",
+        TROOPS_RETURNED                 = "部隊已返回基地！",
+        TROOPS_LABEL                    = "部隊",
+        ENGINEERS_LABEL                 = "工程兵",
+        -- ============================================================
+        -- Deployment
+        -- ============================================================
+        DEPLOYED_NEAR_YOU               = "%s 已在你附近部署！",
+        UNITS_REMOVED                   = "%s 已移除",
+        -- ============================================================
+        -- Build / Repair
+        -- ============================================================
+        BUILD_STARTED                   = "建設開始，將於%d 秒後完成！",
+        REPAIR_STARTED                  = "使用 %s 開始維修，需時 %d 秒",
+        NO_UNIT_TO_REPAIR               = "附近沒有可維修單位！",
+        CANT_REPAIR_WITH                = "無法使用 %s 維修此單位",
+        CRATES_MOVE_BEFORE_BUILD        = "*** 建設前需先移動貨箱！",
+        -- ============================================================
+        -- Errors - Chopper / Weight / Capacity
+        -- ============================================================
+        CHOPPER_CANNOT_CARRY            = "此直升機無法運載貨箱！",
+        TOO_HEAVY                       = "重量過重，無法裝載！",
+        FULLY_LOADED                    = "已達滿載！",
+        CRAMMED                         = "空間已滿！",
+        NO_CAPACITY_NOW                 = "目前無法再裝載！",
+        NO_MORE_CAPACITY                = "已無空間裝載貨箱！",
+        CANNOT_LOAD_NONE_OR_FULL        = "無法裝載貨箱：未找到或已無容量。",
+        -- ============================================================
+        -- Errors - Position
+        -- ============================================================
+        NEED_TO_LAND_OR_HOVER_LOAD      = "需降落或穩定懸停才能裝載！",
+        HOVER_OVER_CRATES               = "請懸停於貨箱上方進行拾取！",
+        LAND_OR_HOVER_OVER_CRATES       = "請降落或懸停於貨箱上方進行拾取！",
+        MUST_LAND_OR_HOVER_CRATES       = "必須降落或懸停才能裝載貨箱！",
+        NEED_TO_LAND_BUILD              = "飛行員，需降落或停止才能建設！",
+        NOT_CLOSE_ENOUGH_LOGISTICS      = "距離後勤區域過遠！",
+        NOT_CLOSE_ENOUGH_DROP           = "距離投放區域過遠！",
+        NOT_CLOSE_ENOUGH_ZONE_NM        = "距離區域需小於 %d 海浬！",
+        CANNOT_BUILD_LOADING_AREA       = "無法在裝載區域進行建設！",
+        -- ============================================================
+        -- Errors - Doors
+        -- ============================================================
+        OPEN_DOORS_LOAD_CARGO           = "需開啟艙門才能裝載貨物！",
+        OPEN_DOORS_LOAD_TROOPS          = "需開啟艙門才能裝載部隊！",
+        OPEN_DOORS_EXTRACT_TROOPS       = "需開啟艙門才能撤離部隊！",
+        OPEN_DOORS_UNLOAD_TROOPS        = "需開啟艙門才能卸載部隊！",
+        OPEN_DOORS_DROP_CARGO           = "需開啟艙門才能投放貨物！",
+        -- ============================================================
+        -- Errors - Stock / Availability
+        -- ============================================================
+        ALL_GONE                        = "%s 已全部耗盡！",
+        RAN_OUT_OF                      = "%s 已用盡",
+        CARGO_NOT_AVAILABLE_ZONE        = "此區域無法取得該貨物！",
+        ENOUGH_CRATES_NEARBY            = "附近已有足夠貨箱，請先處理現有貨箱！",
+        NO_CRATES_WITHIN                = "%d 公尺內沒有可裝載貨箱！",
+        NO_CRATES_WITHIN_PLAIN          = "%d 公尺內沒有貨箱！",
+        NO_CRATES_IN_RANGE              = "範圍內未發現貨箱！",
+        NO_NAMED_CRATES_IN_RANGE        = "範圍內未發現「%s」貨箱！",
+        NO_LOADABLE_CRATES              = "附近沒有可裝載貨箱或已達重量上限！",
+        NO_UNITS_TO_EXTRACT             = "附近沒有可撤離單位！",
+        NO_UNIT_CONFIG                  = "未找到 %s 的單位設定",
+        CANT_ONBOARD                    = "無法登載 %s",
+        TOO_MANY_UNITS_NEARBY           = "附近已有 %d 個單位！",
+        NO_CRATE_GROUPS                 = "未找到此單位的貨箱群組！",
+        NO_CRATE_SET                    = "未找到貨箱組或索引無效！",
+        NO_CRATE_IN_SET                 = "該組中沒有貨箱！",
+        NO_TROOP_CHUNK                  = "未找到 ID %d 的部隊資料！",
+        TROOP_CHUNK_EMPTY               = "ID %d 的部隊資料為空！",
+        -- ============================================================
+        -- Nothing loaded / in stock
+        -- ============================================================
+        NOTHING_LOADED                  = "未裝載任何內容！\n部隊上限：%d | 貨箱上限 %d | 重量上限 %d 公斤",
+        NOTHING_LOADED_AIRDROP          = "未裝載或不符合空投條件！",
+        NOTHING_LOADED_HOVER            = "未裝載或未達懸停條件！",
+        NOTHING_IN_STOCK                = "庫存為空！",
+        NOTHING_TO_PACK                 = "此距離內無可打包目標！",
+        NOTHING_TO_REMOVE               = "此距離內無可移除目標！",
+        -- ============================================================
+        -- Zone / Info
+        -- ============================================================
+        ROGER_ZONE                      = "收到，%s 區域 %s！",
+        -- ============================================================
+        -- Report: Hover / Flight Parameters
+        -- ============================================================
+        HOVER_PARAMS_METRIC             = "懸停參數（自動裝載/投放）：\n - 最低高度 %d 公尺 \n - 最高高度 %d 公尺 \n - 最大速度 2 公尺/秒 \n - 是否符合：%s",
+        HOVER_PARAMS_IMPERIAL           = "懸停參數（自動裝載/投放）：\n - 最低高度 %d 英尺 \n - 最高高度 %d 英尺 \n - 最大速度 6 英尺/秒 \n - 是否符合：%s",
+        FLIGHT_PARAMS_IMPERIAL          = "飛行參數（空投）：\n - 最低高度 %d 英尺 \n - 最高高度 %d 英尺 \n - 是否符合：%s",
+        FLIGHT_PARAMS_METRIC            = "飛行參數（空投）：\n - 最低高度 %d 公尺 \n - 最高高度 %d 公尺 \n - 是否符合：%s",
+        -- ============================================================
+        -- Report Titles  (REPORT:New())
+        -- ============================================================
+        REPORT_CRATES_FOUND             = "附近發現貨箱：",
+        REPORT_REMOVING_CRATES          = "移除附近貨箱：",
+        REPORT_TRANSPORT_CHECKOUT       = "運輸檢查表",
+        REPORT_INVENTORY                = "庫存報表",
+        REPORT_BUILD_CHECKLIST          = "建設檢查清單",
+        REPORT_REPAIR_CHECKLIST         = "維修檢查清單",
+        REPORT_BEACONS                  = "區域信標狀態",
+        -- ============================================================
+        -- Report Section Headers  (report:Add())
+        -- ============================================================
+        REPORT_SECTION_TROOPS           = "        -- 部隊 --",
+        REPORT_SECTION_CRATES           = "       -- 貨箱 --",
+        REPORT_SECTION_CRATES_GC        = "       -- 地勤裝載貨箱 --",
+        REPORT_SECTION_NONE             = "        無",
+        REPORT_SECTION_NONE_ALT         = "     --- 未發現 ---",
+        REPORT_SECTION_NONE_REPAIR      = "     --- 未發現 ---",
+        REPORT_GC_LOADABLE_HINT         = "可能可由地勤裝載（F8）",
+        REPORT_TOTAL_MASS               = "總重量：%s 公斤，可裝載：%s 公斤",
+        REPORT_TROOPS_CRATES_COUNT      = "部隊：%d(%d)，貨箱：%d(%d)",
+        REPORT_TROOPS_CRATETYPES_COUNT  = "部隊：%d，貨箱種類：%d",
+        -- ============================================================
+        -- Report Row Templates  (per-item lines in reports)
+        -- ============================================================
+        REPORT_ROW_TROOP                = "部隊：%s 人數 %d",
+        REPORT_ROW_CRATE                = "貨箱：%s %d/%d",
+        REPORT_ROW_CRATE_SIZE1          = "貨箱：%s 尺寸 1",
+        REPORT_ROW_GC_CRATE             = "地勤裝載貨箱：%s 尺寸 1",
+        REPORT_ROW_DROPPED_CRATE        = "已投放 %s 貨箱，%d 公斤",
+        REPORT_ROW_CRATE_KG             = "%s 貨箱，%d 公斤",
+        REPORT_ROW_CRATE_REMOVED        = "%s 貨箱，%d 公斤 已移除",
+        REPORT_ROW_UNIT_STOCK           = "單位：%s | 士兵：%d | 庫存：%s",
+        REPORT_ROW_TYPE_CRATE_STOCK     = "類型：%s | 每組貨箱：%d | 庫存：%s",
+        REPORT_ROW_TYPE_STOCK           = "類型：%s | 庫存：%s",
+        REPORT_ROW_BUILD_CHECK          = "類型：%s | 需求 %d | 已有 %d | 可建設 %s",
+        REPORT_ROW_REPAIR_CHECK         = "類型：%s | 需求 %d | 已有 %d | 可維修 %s",
+        REPORT_ROW_BEACON               = " %s | FM %s MHz | VHF %s KHz | UHF %s MHz ",
+        -- ============================================================
+        -- Weight / Crate limit tokens
+        -- ============================================================
+        WEIGHT_LIMIT                    = "已達重量上限",
+        CRATE_LIMIT                     = "已達貨箱上限",
+        -- ============================================================
+        -- Menu labels - Top level
+        -- ============================================================
+        MENU_CTLD                       = "後勤管理(CTLD)",
+        MENU_MANAGE_TROOPS              = "部隊管理",
+        MENU_MANAGE_CRATES              = "貨箱管理",
+        MENU_MANAGE_UNITS               = "單位管理",
+        -- ============================================================
+        -- Menu labels - Troops
+        -- ============================================================
+        MENU_LOAD_TROOPS                = "裝載部隊",
+        MENU_DROP_TROOPS                = "投放部隊",
+        MENU_DROP_ALL_TROOPS            = "投放全部部隊",
+        MENU_EXTRACT_TROOPS             = "撤離部隊",
+        MENU_DROP_N_TROOPS              = "投放 (%d) %s",
+        -- ============================================================
+        -- Menu labels - Crates: Get
+        -- ============================================================
+        MENU_GET_CRATES                 = "取得貨箱",
+        MENU_GET                        = "取得",
+        MENU_GET_AND_LOAD               = "取得並裝載",
+        MENU_GET_ANYWAY                 = "強制取得",
+        MENU_PARTIALLY_LOAD             = "部分裝載",
+        MENU_OUT_OF_STOCK               = "無庫存",
+        MENU_TROOP_LIMIT                = "已達部隊上限",
+        -- ============================================================
+        -- Menu labels - Crates: Load
+        -- ============================================================
+        MENU_LOAD_CRATES                = "裝載貨箱",
+        MENU_LOAD_ALL                   = "全部裝載",
+        MENU_SHOW_LOADABLE_CRATES       = "顯示可裝載貨箱",
+        MENU_NO_CRATES_FOUND_RESCAN     = "未發現貨箱，重新掃描？",
+        MENU_USE_C130_LOAD              = "使用 C-130 裝載系統",
+        MENU_LOAD_SINGLE                = "裝載",
+        -- ============================================================
+        -- Menu labels - Crates: Drop
+        -- ============================================================
+        MENU_DROP_CRATES                = "投放貨箱",
+        MENU_DROP_ALL_CRATES            = "投放全部貨箱",
+        MENU_DROP                       = "投放",
+        MENU_DROP_AND_BUILD             = "投放並建設",
+        MENU_DROP_N_SETS                = "投放 %d 組%s",
+        MENU_NO_CRATES_TO_DROP          = "沒有可投放貨箱",
+        -- ============================================================
+        -- Menu labels - Crates: Build / Repair / Pack / Remove
+        -- ============================================================
+        MENU_BUILD_CRATES               = "建設貨箱",
+        MENU_REPAIR                     = "維修",
+        MENU_PACK_CRATES                = "打包貨箱",
+        MENU_PACK                       = "打包",
+        MENU_SCAN_PACKABLE_UNITS        = "掃描可打包單位",
+        MENU_NO_PACKABLE_UNITS_FOUND_RESCAN = "未發現可打包單位，重新掃描？",
+        MENU_PACK_ALL                   = "打包附近",
+        MENU_PACK_AND_LOAD              = "打包並裝載",
+        MENU_PACK_AND_LOAD_ALL          = "打包並裝載附近",
+        MENU_PACK_AND_REMOVE            = "打包並移除",
+        MENU_PACK_AND_REMOVE_ALL        = "打包並移除附近",
+        MENU_REMOVE_CRATES              = "移除貨箱",
+        MENU_REMOVE_CRATES_NEARBY       = "移除附近貨箱",
+        MENU_LIST_CRATES_NEARBY         = "列出附近貨箱",
+        MENU_CRATES_NEEDED              = "%d 個貨箱%s %s（%d 公斤）",
+        MENU_CRATE_SINGLE               = "%s（%d 公斤）",
+        -- ============================================================
+        -- Menu labels - Units (C-130)
+        -- ============================================================
+        MENU_GET_UNITS                  = "取得單位",
+        MENU_REMOVE_UNITS_NEARBY        = "移除附近單位",
+        -- ============================================================
+        -- Menu labels - Info / Cargo
+        -- ============================================================
+        MENU_LIST_BOARDED_CARGO         = "查看已裝載貨物",
+        MENU_INVENTORY                  = "庫存",
+        MENU_LIST_ZONE_BEACONS          = "列出區域信標",
+        -- ============================================================
+        -- Menu labels - Smokes / Flares / Beacons
+        -- ============================================================
+        MENU_SMOKES_FLARES_BEACONS      = "煙霧、照明彈、信標",
+        MENU_SMOKE_ZONES_NEARBY         = "標記附近區域",
+        MENU_DROP_SMOKE_NOW             = "立即投放煙霧",
+        MENU_RED_SMOKE                  = "紅色煙霧",
+        MENU_BLUE_SMOKE                 = "藍色煙霧",
+        MENU_GREEN_SMOKE                = "綠色煙霧",
+        MENU_ORANGE_SMOKE               = "橙色煙霧",
+        MENU_WHITE_SMOKE                = "白色煙霧",
+        MENU_FLARE_ZONES_NEARBY         = "標記附近區域（照明彈）",
+        MENU_FIRE_FLARE_NOW             = "立即發射照明彈",
+        MENU_DROP_BEACON_NOW            = "立即投放信標",
+        -- ============================================================
+        -- Menu labels - Parameters
+        -- ============================================================
+        MENU_SHOW_FLIGHT_PARAMS         = "顯示飛行參數",
+        MENU_SHOW_HOVER_PARAMS          = "顯示懸停參數",
+        STOCK_NONE                      = "無",
+        STOCK_UNLIMITED                 = "無限制",
+        BUILD_YES                       = "是",
+        BUILD_NO                        = "否",
+    },
+    ["zh-CN"] = {
+        -- ============================================================
+        -- Crate / Cargo Loading
+        -- ============================================================
+        CRATE_LOADED_GROUNDCREW         = "地勤已装载货箱 %s！",
+        CRATE_UNLOADED_GROUNDCREW       = "地勤已卸载货箱 %s！",
+        CRATE_LOADED_ID                 = "货箱 ID %d（%s）已装载！",
+        LOADED_FULL                     = "已装载 %d 个 %s。",
+        LOADED_SETS_LEFTOVER            = "已装载 %d 组 %s，剩余 %d 个货箱。",
+        LOADED_SETS                     = "已装载 %d 组 %s。",
+        LOADED_PARTIAL                  = "仅装载 %d/%d 个 %s 的货箱。",
+        LOADED_PARTIAL_LIMIT            = "仅装载 %d/%d 个 %s 的货箱，已达到载重上限！",
+        LOADED_BATCH                    = "已装载 %d 个 %s。",
+        LOADED_BATCH_PARTIAL            = "部分组合未能完整装载。",
+        
+        -- ============================================================
+        -- Dropping / Unloading
+        -- ============================================================
+        DROPPED_FULL                    = "已投放 %d 个 %s。",
+        DROPPED_SETS_LEFTOVER           = "已投放 %d 组 %s，剩余 %d 个货箱。",
+        DROPPED_SETS                    = "已投放 %d 组 %s。",
+        DROPPED_PARTIAL                 = "已投放 %d/%d 个 %s 的货箱。",
+        DROPPED_INTO_ACTION             = "已将 %s 投入作战！",
+        DROPPED_BEACON                  = "已投放 %s | FM %s MHz | VHF %s KHz | UHF %s MHz ",
+        CRATES_POSITIONED               = "已在你附近部署 %d 个 %s 货箱！",
+        CRATES_DROPPED                  = "已投放 %d 个 %s 货箱！",
+        
+        -- ============================================================
+        -- Troops
+        -- ============================================================
+        BOARDED                         = "%s 已登机！",
+        BOARDING                        = "%s 正在登机！",
+        TROOPS_RETURNED                 = "部队已返回基地！",
+        TROOPS_LABEL                    = "部队",
+        ENGINEERS_LABEL                 = "工兵",
+        
+        -- ============================================================
+        -- Deployment
+        -- ============================================================
+        DEPLOYED_NEAR_YOU               = "%s 已在你附近部署！",
+        UNITS_REMOVED                   = "%s 已移除",
+        
+        -- ============================================================
+        -- Build / Repair
+        -- ============================================================
+        BUILD_STARTED                   = "开始建造，%d 秒后完成！",
+        REPAIR_STARTED                  = "使用 %s 开始维修，耗时 %d 秒",
+        NO_UNIT_TO_REPAIR               = "附近没有可维修单位！",
+        CANT_REPAIR_WITH                = "无法使用 %s 修复该单位",
+        CRATES_MOVE_BEFORE_BUILD        = "*** 建造前请先移动货箱！",
+        
+        -- ============================================================
+        -- Errors - Chopper / Weight / Capacity
+        -- ============================================================
+        CHOPPER_CANNOT_CARRY            = "该直升机无法运输货箱！",
+        TOO_HEAVY                       = "重量超限，无法装载！",
+        FULLY_LOADED                    = "已满载！",
+        CRAMMED                         = "空间已满！",
+        NO_CAPACITY_NOW                 = "当前无法继续装载！",
+        NO_MORE_CAPACITY                = "没有剩余空间可装载货箱！",
+        CANNOT_LOAD_NONE_OR_FULL        = "无法装载货箱：未找到或已满载。",
+        
+        -- ============================================================
+        -- Errors - Position
+        -- ============================================================
+        NEED_TO_LAND_OR_HOVER_LOAD      = "需要降落或稳定悬停才能装载！",
+        HOVER_OVER_CRATES               = "请在货箱上方悬停进行拾取！",
+        LAND_OR_HOVER_OVER_CRATES       = "请降落或在货箱上方悬停进行拾取！",
+        MUST_LAND_OR_HOVER_CRATES       = "必须降落或悬停才能装载货箱！",
+        NEED_TO_LAND_BUILD              = "飞行员，请降落或停止后再建造！",
+        NOT_CLOSE_ENOUGH_LOGISTICS      = "距离后勤区域过远！",
+        NOT_CLOSE_ENOUGH_DROP           = "距离投放区域过远！",
+        NOT_CLOSE_ENOUGH_ZONE_NM        = "距离区域必须小于 %d 海里！",
+        CANNOT_BUILD_LOADING_AREA       = "无法在装载区域建造！",
+        
+        -- ============================================================
+        -- Errors - Doors
+        -- ============================================================
+        OPEN_DOORS_LOAD_CARGO           = "需要打开舱门才能装载货物！",
+        OPEN_DOORS_LOAD_TROOPS          = "需要打开舱门才能装载部队！",
+        OPEN_DOORS_EXTRACT_TROOPS       = "需要打开舱门才能撤离部队！",
+        OPEN_DOORS_UNLOAD_TROOPS        = "需要打开舱门才能卸载部队！",
+        OPEN_DOORS_DROP_CARGO           = "需要打开舱门才能投放货物！",
+        
+        -- ============================================================
+        -- Errors - Stock / Availability
+        -- ============================================================
+        ALL_GONE                        = "%s 已全部耗尽！",
+        RAN_OUT_OF                      = "%s 已用完",
+        CARGO_NOT_AVAILABLE_ZONE        = "该区域无法获取此类货物！",
+        ENOUGH_CRATES_NEARBY            = "附近已有足够货箱，请先处理现有货箱！",
+        NO_CRATES_WITHIN                = "%d 米内没有可装载货箱！",
+        NO_CRATES_WITHIN_PLAIN          = "%d 米内没有货箱！",
+        NO_CRATES_IN_RANGE              = "范围内未发现货箱！",
+        NO_NAMED_CRATES_IN_RANGE        = "范围内未发现“%s”货箱！",
+        NO_LOADABLE_CRATES              = "附近没有可装载货箱或已超重！",
+        NO_UNITS_TO_EXTRACT             = "附近没有可撤离单位！",
+        NO_UNIT_CONFIG                  = "未找到 %s 的单位配置",
+        CANT_ONBOARD                    = "无法装载 %s",
+        TOO_MANY_UNITS_NEARBY           = "附近已有 %d 个单位！",
+        NO_CRATE_GROUPS                 = "未找到该单位对应的货箱组！",
+        NO_CRATE_SET                    = "未找到货箱组或索引无效！",
+        NO_CRATE_IN_SET                 = "该组中没有货箱！",
+        NO_TROOP_CHUNK                  = "未找到 ID %d 的部队数据！",
+        TROOP_CHUNK_EMPTY               = "ID %d 的部队数据为空！",
+        
+        -- ============================================================
+        -- Nothing loaded / in stock
+        -- ============================================================
+        NOTHING_LOADED                  = "未装载任何内容！\n部队上限：%d | 货箱上限 %d | 重量上限 %d 公斤",
+        NOTHING_LOADED_AIRDROP          = "未装载或不满足空投条件！",
+        NOTHING_LOADED_HOVER            = "未装载或未满足悬停条件！",
+        NOTHING_IN_STOCK                = "库存为空！",
+        NOTHING_TO_PACK                 = "该范围内没有可打包目标！",
+        NOTHING_TO_REMOVE               = "该范围内没有可移除目标！",
+        
+        -- ============================================================
+        -- Zone / Info
+        -- ============================================================
+        ROGER_ZONE                      = "收到，%s 区域 %s！",
+        -- ============================================================
+        -- Report: Hover / Flight Parameters
+        -- ============================================================
+        HOVER_PARAMS_METRIC             = "悬停参数（自动装载/投放）：\n - 最低高度 %d 米 \n - 最高高度 %d 米 \n - 最大速度 2 米/秒 \n - 是否符合条件：%s",
+        HOVER_PARAMS_IMPERIAL           = "悬停参数（自动装载/投放）：\n - 最低高度 %d 英尺 \n - 最高高度 %d 英尺 \n - 最大速度 6 英尺/秒 \n - 是否符合条件：%s",
+        FLIGHT_PARAMS_IMPERIAL          = "飞行参数（空投）：\n - 最低高度 %d 英尺 \n - 最高高度 %d 英尺 \n - 是否符合条件：%s",
+        FLIGHT_PARAMS_METRIC            = "飞行参数（空投）：\n - 最低高度 %d 米 \n - 最高高度 %d 米 \n - 是否符合条件：%s",
+        -- ============================================================
+        -- Report Titles  (REPORT:New())
+        -- ============================================================
+        REPORT_CRATES_FOUND             = "附近发现货箱：",
+        REPORT_REMOVING_CRATES          = "删除附近货箱：",
+        REPORT_TRANSPORT_CHECKOUT       = "运输检查表",
+        REPORT_INVENTORY                = "库存报表",
+        REPORT_BUILD_CHECKLIST          = "建造检查清单",
+        REPORT_REPAIR_CHECKLIST         = "维修检查清单",
+        REPORT_BEACONS                  = "区域信标状态",
+        -- ============================================================
+        -- Report Section Headers  (report:Add())
+        -- ============================================================
+        REPORT_SECTION_TROOPS           = "        -- 部队 --",
+        REPORT_SECTION_CRATES           = "       -- 货箱 --",
+        REPORT_SECTION_CRATES_GC        = "       -- 地勤装载货箱 --",
+        REPORT_SECTION_NONE             = "        无",
+        REPORT_SECTION_NONE_ALT         = "     --- 未发现 ---",
+        REPORT_SECTION_NONE_REPAIR      = "     --- 未发现 ---",
+        REPORT_GC_LOADABLE_HINT         = "可能可由地勤装载（F8）",
+        REPORT_TOTAL_MASS               = "总重量：%s 公斤，可装载：%s 公斤",
+        REPORT_TROOPS_CRATES_COUNT      = "部队：%d(%d)，货箱：%d(%d)",
+        REPORT_TROOPS_CRATETYPES_COUNT  = "部队：%d，货箱种类：%d",
+        -- ============================================================
+        -- Report Row Templates  (per-item lines in reports)
+        -- ============================================================
+        REPORT_ROW_TROOP                = "部队：%s 人数 %d",
+        REPORT_ROW_CRATE                = "货箱：%s %d/%d",
+        REPORT_ROW_CRATE_SIZE1          = "货箱：%s 尺寸 1",
+        REPORT_ROW_GC_CRATE             = "地勤装载货箱：%s 尺寸 1",
+        REPORT_ROW_DROPPED_CRATE        = "已投放 %s 货箱，%d 公斤",
+        REPORT_ROW_CRATE_KG             = "%s 货箱，%d 公斤",
+        REPORT_ROW_CRATE_REMOVED        = "%s 货箱，%d 公斤 已移除",
+        REPORT_ROW_UNIT_STOCK           = "单位：%s | 士兵：%d | 库存：%s",
+        REPORT_ROW_TYPE_CRATE_STOCK     = "类型：%s | 每组货箱：%d | 库存：%s",
+        REPORT_ROW_TYPE_STOCK           = "类型：%s | 库存：%s",
+        REPORT_ROW_BUILD_CHECK          = "类型：%s | 需求 %d | 已有 %d | 可建造 %s",
+        REPORT_ROW_REPAIR_CHECK         = "类型：%s | 需求 %d | 已有 %d | 可维修 %s",
+        REPORT_ROW_BEACON               = " %s | FM %s MHz | VHF %s KHz | UHF %s MHz ",
+        -- ============================================================
+        -- Weight / Crate limit tokens
+        -- ============================================================
+        WEIGHT_LIMIT                    = "已达重量上限",
+        CRATE_LIMIT                     = "已达货箱上限",
+        -- ============================================================
+        -- Menu labels - Top level
+        -- ============================================================
+        MENU_CTLD                       = "后勤系统(CTLD)",
+        MENU_MANAGE_TROOPS              = "部队管理",
+        MENU_MANAGE_CRATES              = "货箱管理",
+        MENU_MANAGE_UNITS               = "单位管理",
+        -- ============================================================
+        -- Menu labels - Troops
+        -- ============================================================
+        MENU_LOAD_TROOPS                = "装载部队",
+        MENU_DROP_TROOPS                = "投放部队",
+        MENU_DROP_ALL_TROOPS            = "投放全部部队",
+        MENU_EXTRACT_TROOPS             = "撤离部队",
+        MENU_DROP_N_TROOPS              = "投放 (%d) %s",
+        -- ============================================================
+        -- Menu labels - Crates: Get
+        -- ============================================================
+        MENU_GET_CRATES                 = "获取货箱",
+        MENU_GET                        = "获取",
+        MENU_GET_AND_LOAD               = "获取并装载",
+        MENU_GET_ANYWAY                 = "强制获取",
+        MENU_PARTIALLY_LOAD             = "部分装载",
+        MENU_OUT_OF_STOCK               = "无库存",
+        MENU_TROOP_LIMIT                = "已达部队上限",
+        -- ============================================================
+        -- Menu labels - Crates: Load
+        -- ============================================================
+        MENU_LOAD_CRATES                = "装载货箱",
+        MENU_LOAD_ALL                   = "全部装载",
+        MENU_SHOW_LOADABLE_CRATES       = "显示可装载货箱",
+        MENU_NO_CRATES_FOUND_RESCAN     = "未检测到货箱，是否重新扫描？",
+        MENU_USE_C130_LOAD              = "使用 C-130 装载系统",
+        MENU_LOAD_SINGLE                = "装载",
+        -- ============================================================
+        -- Menu labels - Crates: Drop
+        -- ============================================================
+        MENU_DROP_CRATES                = "投放货箱",
+        MENU_DROP_ALL_CRATES            = "投放全部货箱",
+        MENU_DROP                       = "投放",
+        MENU_DROP_AND_BUILD             = "投放并建造",
+        MENU_DROP_N_SETS                = "投放 %d 组%s",
+        MENU_NO_CRATES_TO_DROP          = "无可投放货箱",
+        -- ============================================================
+        -- Menu labels - Crates: Build / Repair / Pack / Remove
+        -- ============================================================
+        MENU_BUILD_CRATES               = "建造货箱",
+        MENU_REPAIR                     = "维修",
+        MENU_PACK_CRATES                = "打包货箱",
+        MENU_PACK                       = "打包",
+        MENU_SCAN_PACKABLE_UNITS        = "扫描可打包单位",
+        MENU_NO_PACKABLE_UNITS_FOUND_RESCAN = "未发现可打包单位，重新扫描？",
+        MENU_PACK_ALL                   = "打包附近单位",
+        MENU_PACK_AND_LOAD              = "打包并装载",
+        MENU_PACK_AND_LOAD_ALL          = "打包并装载附近",
+        MENU_PACK_AND_REMOVE            = "打包并移除",
+        MENU_PACK_AND_REMOVE_ALL        = "打包并移除附近",
+        MENU_REMOVE_CRATES              = "移除货箱",
+        MENU_REMOVE_CRATES_NEARBY       = "删除附近货箱",
+        MENU_LIST_CRATES_NEARBY         = "显示附近货箱",
+        MENU_CRATES_NEEDED              = "%d 个货箱%s %s（%d 公斤）",
+        MENU_CRATE_SINGLE               = "%s（%d 公斤）",
+        -- ============================================================
+        -- Menu labels - Units (C-130)
+        -- ============================================================
+        MENU_GET_UNITS                  = "获取单位",
+        MENU_REMOVE_UNITS_NEARBY        = "移除附近单位",
+        -- ============================================================
+        -- Menu labels - Info / Cargo
+        -- ============================================================
+        MENU_LIST_BOARDED_CARGO         = "查看已装载货物",
+        MENU_INVENTORY                  = "库存",
+        MENU_LIST_ZONE_BEACONS          = "显示区域信标",
+        -- ============================================================
+        -- Menu labels - Smokes / Flares / Beacons
+        -- ============================================================
+        MENU_SMOKES_FLARES_BEACONS      = "烟雾、照明弹、信标",
+        MENU_SMOKE_ZONES_NEARBY         = "标记附近区域",
+        MENU_DROP_SMOKE_NOW             = "立即释放烟雾",
+        MENU_RED_SMOKE                  = "红色烟雾",
+        MENU_BLUE_SMOKE                 = "蓝色烟雾",
+        MENU_GREEN_SMOKE                = "绿色烟雾",
+        MENU_ORANGE_SMOKE               = "橙色烟雾",
+        MENU_WHITE_SMOKE                = "白色烟雾",
+        MENU_FLARE_ZONES_NEARBY         = "标记附近区域（照明弹）",
+        MENU_FIRE_FLARE_NOW             = "立即发射照明弹",
+        MENU_DROP_BEACON_NOW            = "立即投放信标",
+        -- ============================================================
+        -- Menu labels - Parameters
+        -- ============================================================
+        MENU_SHOW_FLIGHT_PARAMS         = "显示飞行参数",
+        MENU_SHOW_HOVER_PARAMS          = "显示悬停参数",
+        STOCK_NONE                      = "无",
+        STOCK_UNLIMITED                 = "无限制",
+        BUILD_YES                       = "是",
+        BUILD_NO                        = "否",
+    },
+}
