@@ -1184,6 +1184,7 @@ end
 
 --- This method provides the functionality to randomize the spawning of the Groups at a given list of zones of different types.
 -- @param #SPAWN self
+-- @param #table SpawnZoneTable A table with @{Core.Zone} objects. If nil or empty, the method returns self without effect.
 -- @param #table SpawnZoneTable A table with @{Core.Zone} objects. If this table is given, then each spawn will be executed within the given list of @{Core.Zone}s objects.
 -- @param #boolean RandomizePositionInZone If nil or true, also the position inside the selected random zone will be randomized. Set to false to use the center of the zone.
 -- @return #SPAWN self
@@ -1201,6 +1202,9 @@ end
 function SPAWN:InitRandomizeZones( SpawnZoneTable, RandomizePositionInZone )
   --self:F( { self.SpawnTemplatePrefix, SpawnZoneTable } )
   
+  if not SpawnZoneTable then 
+    return self 
+  end
   local temptable = {}
   for _,_temp in pairs(SpawnZoneTable) do
     temptable[#temptable+1] = _temp
@@ -2149,6 +2153,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       local parkingspots = {}
       local parkingindex = {}
       local spots
+      local useexplicitspots = false
 
       -- Spawn happens on ground, i.e. at an airbase, a FARP or a ship.
       if spawnonground and not SpawnTemplate.parked then
@@ -2180,8 +2185,6 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
 
         -- Use exact parking data when provided, otherwise let helicopters on ships/FARPs
         -- use the smarter parking search before falling back to the procedural queue path.
-        local useexplicitspots = false
-
         -- Number of free parking spots at the airbase.
         if Parkingdata~=nil then
           -- Parking data explicitly set by user as input parameter.
@@ -2299,6 +2302,10 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           end
         end
 
+        if useexplicitspots and parkingspots[1] then
+          PointVec3 = parkingspots[1]
+        end
+
         -- Not enough spots ==> Prepare airstart.
         if _notenough then
 
@@ -2367,7 +2374,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
           if spawnonground then
 
             -- Ships and FARPS seem to have a build in queue.
-            if autoparking then
+            if autoparking and not useexplicitspots then
 
               -- Spawn on ship. We take only the position of the ship.
               SpawnTemplate.units[UnitID].x = PointVec3.x -- TX

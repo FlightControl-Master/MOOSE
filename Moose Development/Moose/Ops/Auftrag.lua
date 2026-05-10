@@ -6610,7 +6610,7 @@ function AUFTRAG:GetDCSMissionTask(MissionGroup)
       local SeadUnitSet = SET_UNIT:New()
       for _,_unit in pairs (ScanUnitSet.Set) do
         local unit = _unit -- Wrapper.Unit#UNTI
-        if unit and unit:IsAlive() and unit:HasSEAD() then
+        if unit and unit:IsAlive() and unit.HasSEAD and unit:HasSEAD() then
           self:T("Adding UNIT for SEAD: "..unit:GetName())
           local task = CONTROLLABLE.TaskAttackUnit(nil,unit,GroupAttack,AI.Task.WeaponExpend.ALL,1,Direction,self.engageAltitude,2956984318)
           table.insert(DCStasks, task)
