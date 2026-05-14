@@ -1485,7 +1485,7 @@ function SUPPRESSION:onafterStop(Controllable, From, Event, To)
       
   local text=string.format("Stopping SUPPRESSION for group %s", self.Controllable:GetName())
   MESSAGE:New(text, 10):ToAllIf(self.Debug)
-  sefl:T(self.lid..text)
+  self:T(self.lid..text)
       
   -- Clear all pending schedules
   self.CallScheduler:Clear()
