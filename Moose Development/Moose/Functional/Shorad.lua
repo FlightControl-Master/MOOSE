@@ -795,15 +795,20 @@ do
          local tgtgrp1 = self.Samset:FindNearestGroupFromPointVec2(tgtcoord)
           local tgtcoord1 = tgtgrp1:GetCoordinate()
           local tgtgrp2 = self.Groupset:FindNearestGroupFromPointVec2(tgtcoord)
-          local tgtcoord2 = tgtgrp2:GetCoordinate()
-          local dist1 = tgtcoord:Get2DDistance(tgtcoord1)
-          local dist2 = tgtcoord:Get2DDistance(tgtcoord2)
-          
-          if dist1 < dist2 then
-            targetunit = tgtgrp1
-            targetcat = Object.Category.UNIT
+          if tgtgrp2 then
+            local tgtcoord2 = tgtgrp2:GetCoordinate()
+            local dist1 = tgtcoord:Get2DDistance(tgtcoord1)
+            local dist2 = tgtcoord:Get2DDistance(tgtcoord2)
+
+            if dist1 < dist2 then
+              targetunit = tgtgrp1
+              targetcat = Object.Category.UNIT
+            else
+              targetunit = tgtgrp2
+              targetcat = Object.Category.UNIT
+            end
           else
-            targetunit = tgtgrp2
+            targetunit = tgtgrp1
             targetcat = Object.Category.UNIT
           end
         end   
