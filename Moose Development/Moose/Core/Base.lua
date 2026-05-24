@@ -855,7 +855,7 @@ end
 -- @param DCS#Time EventTime The time stamp of the event.
 -- @param DCS#Object Initiator The initiating object of the event.
 function BASE:CreateEventTakeoff( EventTime, Initiator )
-  self:F( { EventTime, Initiator } )
+  --self:F( { EventTime, Initiator } )
 
   local Event = {
     id = world.event.S_EVENT_TAKEOFF,

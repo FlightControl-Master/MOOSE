@@ -2331,9 +2331,15 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
 
             Takeoff = GROUP.Takeoff.Air
             spawnonground = false
-          else
+          else       
+           if not Takeoff == GROUP.Takeoff.Runway then
             self:E( string.format( "WARNING: Group %s has no parking spots at %s ==> No emergency air start or uncontrolled spawning ==> No spawn!", self.SpawnTemplatePrefix, SpawnAirbase:GetName() ) )
             return nil
+            else
+            Takeoff = GROUP.Takeoff.Runway
+            spawnonground = false
+            self:E( string.format( "WARNING: Group %s set to runway spawning at %s, this only works in Single Player!", self.SpawnTemplatePrefix, SpawnAirbase:GetName() ) )
+            end
           end
         end
 
@@ -2392,7 +2398,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
 
           else
 
-            -- Spawn in air as requested initially. Original template orientation is perserved, altitude is already correctly set.
+            -- Spawn in air as requested initially. Original template orientation is preserved, altitude is already correctly set.
             SpawnTemplate.units[UnitID].x = TX
             SpawnTemplate.units[UnitID].y = TY
             SpawnTemplate.units[UnitID].alt = PointVec3.y
