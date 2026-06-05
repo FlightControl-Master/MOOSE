@@ -318,6 +318,9 @@ function COHORT:New(TemplateGroupName, Ngroups, CohortName)
   -- @param #string Event Event.
   -- @param #string To To state.
 
+  -- Add cohort to DB
+  _DATABASE:AddCohort(self)
+
   return self
 end
 

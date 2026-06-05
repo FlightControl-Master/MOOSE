@@ -92,6 +92,8 @@ DATABASE = {
   ZONES_GOAL = {},
   WAREHOUSES = {},
   FLIGHTGROUPS = {},
+  COHORTS={},
+  LEGIONS={},
   FLIGHTCONTROLS = {},
   OPSZONES = {},
   PATHLINES = {},
@@ -2085,6 +2087,40 @@ function DATABASE:FindOpsGroupFromUnit(unitname)
     return nil
   end
 end
+
+--
+
+--- Add an OPS COHORT (SQUADRON, PLATOON, FLOTILLA) to the data base.
+-- @param #DATABASE self
+-- @param Ops.Cohort#COHORT cohort The cohort added to the DB.
+function DATABASE:AddCohort(cohort)
+  self.COHORTS[cohort.name]=cohort
+end
+
+--- Find an OPS COHORT (SQUADRON, PLATOON, FLOTILLA) in the data base.
+-- @param #DATABASE self
+-- @param #string cohortname Name of the cohort.
+-- @return Ops.Cohort#COHORT Cohort object.
+function DATABASE:FindCohort(cohortname)
+  return self.COHORTS[cohortname]
+end
+
+--- Add an OPS LEGION (AIRWING, BRIGADE, FLEET) to the data base.
+-- @param #DATABASE self
+-- @param Ops.Legion#LEGION legion The legion added to the DB.
+function DATABASE:AddLegion(legion)
+  self.COHORTS[legion.alias]=legion
+end
+
+--- Find an OPS LEGION (AIRWING, BRIGADE, FLEET) in the data base.
+-- @param #DATABASE self
+-- @param #string legionname Name of the legion.
+-- @return Ops.Legion#LEGION Legion object.
+function DATABASE:FindLegion(legionname)
+  return self.COHORTS[legionname]
+end
+
+--
 
 --- Add a flight control to the data base.
 -- @param #DATABASE self
