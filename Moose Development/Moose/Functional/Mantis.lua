@@ -116,7 +116,7 @@
 -- * TOR M2
 -- * C-RAM
 -- * Silkworm (though strictly speaking this is a surface to ship missile)
--- * SA-2, SA-3, SA-5, SA-6, SA-7, SA-8, SA-9, SA-10, SA-11, SA-13, SA-15, SA-19, SA-21, S-300VM, S-300V4, S-400
+-- * SA-2, SA-3, SA-5, SA-6, SA-7, SA-8, SA-9, SA-10, SA-11, SA-13, SA-15, SA-19, S-300VM, S-300V4, S-400 (SA-21)
 -- * From IDF mod: STUNNER IDFA, TAMIR IDFA (Note all caps!)
 -- * From HDS (see note on HDS below): SA-2, SA-3, SA-10B, SA-10C, SA-12, SA-17, SA-20A, SA-20B, SA-23, HQ-2, SAMP/T Block 1, SAMP/T Block 1INT,  SAMP/T Block2
 -- * Other Mods: Nike
@@ -135,8 +135,8 @@
 -- * SA-3 (with V601P missile, e.g. "Red SAM SA-3 HDS")
 -- * SA-10B (overlap with other SA-10 types, e.g. "Red SAM SA-10B HDS" with 5P85CE launcher)
 -- * SA-10C (overlap with other SA-10 types, e.g. "Red SAM SA-10C HDS" with 5P85SE launcher)
--- * SA-12 (launcher dependent range, e.g. "Red SAM SA-12 HDS 2" for the 9A82 variant and "Red SAM SA-12 HDS 1" for the 9A83 variant)
--- * SA-23 (launcher dependent range, e.g. "Red SAM SA-23 HDS 2" for the 9A82ME variant and "Red SAM SA-23 HDS 1" for the 9A83ME variant)
+-- * SA-12 (e.g. "Red SAM SA-12 HDS")
+-- * SA-23 (e.g. "Red SAM SA-23 HDS")
 -- * SAMP/T (launcher dependent range, e.g. "Blue SAM SAMPT Block 1 HDS" for Block 1, "Blue SAM SAMPT Block 1INT HDS", "Blue SAM SAMPT Block 2 HDS")
 -- 
 -- The other HDS types work like the rest of the known SAM systems.
@@ -376,7 +376,7 @@ MANTIS.radiusscale[MANTIS.SamType.POINT] = 3
 -- @field #string Point Point defense capable
 -- @field ARMCapacit ARMCapacity ie how many (H)ARMs the system can defend at the same time
 MANTIS.SamData = {
-  ["Hawk"] = { Range=45, Blindspot=0, Height=12, Type="Medium", Radar="Hawk" }, -- measures in km
+  ["Hawk"] = { Range=35, Blindspot=0, Height=12, Type="Medium", Radar="Hawk" }, -- measures in km
   ["NASAMS"] = { Range=14, Blindspot=0, Height=7, Type="Short", Radar="NSAMS", ARMCapacity=1 }, -- AIM 120B
   ["Patriot"] = { Range=99, Blindspot=0, Height=25, Type="Long", Radar="Patriot str" },
   ["Rapier"] = { Range=10, Blindspot=0, Height=3, Type="Short", Radar="rapier" },
@@ -404,10 +404,9 @@ MANTIS.SamData = {
   ["SA-17"] = { Range=50, Blindspot=3, Height=50, Type="Medium", Radar="SA-17", ARMCapacity=4 },
   ["SA-20A"] = { Range=150, Blindspot=5, Height=27, Type="Long" , Radar="S-300PMU1", ARMCapacity=16},
   ["SA-20B"] = { Range=200, Blindspot=4, Height=27, Type="Long" , Radar="S-300PMU2", ARMCapacity=18},
-  ["SA-21"] = { Range=380, Blindspot=5, Height=30, Type="Long" , Radar="92N6E"},
-  ["S-300VM"] = { Range=200, Blindspot=5, Height=30, Type="Long" , Radar="9S32M", ARMCapacity=4},
-  ["S-300V4"] = { Range=380, Blindspot=5, Height=30, Type="Long" , Radar="9S32M", ARMCapacity=4},
-  ["S-400"] = { Range=250, Blindspot=5, Height=27, Type="Long" , Radar="92N6E", ARMCapacity=4},
+  ["S-300VM"] = { Range=200, Blindspot=5, Height=30, Type="Long" , Radar="9S32ME", ARMCapacity=4},  -- SA-23 Gladiator/Giant
+  ["S-300V4"] = { Range=380, Blindspot=5, Height=30, Type="Long" , Radar="9S32M-1E", ARMCapacity=4},  -- SA-23B
+  ["S-400"] = { Range=380, Blindspot=5, Height=30, Type="Long" , Radar="92N6E", ARMCapacity=4},  -- SA-21 Growler
   ["HQ-2"] = { Range=50, Blindspot=6, Height=35, Type="Medium", Radar="HQ_2_Guideline_LN" },
   ["TAMIR IDFA"] = { Range=20, Blindspot=0.6, Height=12.3, Type="Short", Radar="IRON_DOME_LN" },
   ["STUNNER IDFA"] = { Range=250, Blindspot=1, Height=45, Type="Long", Radar="DAVID_SLING_LN" },
@@ -417,6 +416,7 @@ MANTIS.SamData = {
   ["Pantsir S1"] = { Range=20, Blindspot=1.2, Height=15, Type="Point", Radar="PantsirS1" , Point="true", ARMCapacity=3 }, 
   ["Tor M2"] = { Range=12, Blindspot=1, Height=10, Type="Point", Radar="TorM2", Point="true", ARMCapacity=4  },
   ["IRIS-T SLM"] = { Range=40, Blindspot=0.5, Height=20, Type="Medium", Radar="CH_IRIST_SLM", ARMCapacity=12  }, -- 4 per starter, usually 3 starters in a battery
+  ["SON-9"] = { Range=20, Blindspot=0, Height=14, Type="Point", Radar="SON_9", Point="true" }, -- Fire Can FCR for S-60/KS-19 AAA
 }
 
 --- SAM data HDS
@@ -435,10 +435,8 @@ MANTIS.SamDataHDS = {
   ["SA-10B HDS"] = { Range=90, Blindspot=5, Height=25, Type="Long" , Radar="5P85CE ln", ARMCapacity=8}, -- V55RUD
   ["SA-10C HDS"] = { Range=75, Blindspot=5, Height=25, Type="Long" , Radar="5P85SE ln", ARMCapacity=3}, -- V55RUD
   ["SA-17 HDS"] = { Range=50, Blindspot=3, Height=50, Type="Medium", Radar="SA-17", ARMCapacity=4 },
-  ["SA-12 HDS 2"] = { Range=100, Blindspot=13, Height=30, Type="Long" , Radar="S-300V 9A82 l", ARMCapacity=12},
-  ["SA-12 HDS 1"] = { Range=75, Blindspot=6, Height=25, Type="Long" , Radar="S-300V 9A83 l", ARMCapacity=12},
-  ["SA-23 HDS 2"] = { Range=200, Blindspot=5, Height=37, Type="Long", Radar="S-300VM 9A82ME", ARMCapacity=14 },
-  ["SA-23 HDS 1"] = { Range=100, Blindspot=1, Height=50, Type="Long", Radar="S-300VM 9A83ME", ARMCapacity=14 },
+  ["SA-12 HDS"] = { Range=100, Blindspot=6, Height=30, Type="Long" , Radar="S-300V 9A82 l", ARMCapacity=12},
+  ["SA-23 HDS"] = { Range=200, Blindspot=1, Height=50, Type="Long", Radar="S-300VM 9A82ME", ARMCapacity=14 },
   ["HQ-2 HDS"] = { Range=50, Blindspot=6, Height=35, Type="Medium", Radar="HQ_2_Guideline_LN" },
   ["SAMPT Block 1 HDS"] = { Range=120, Blindspot=1, Height=20, Type="long", Radar="SAMPT_MLT_Blk1" }, -- Block 1 Launcher
   ["SAMPT Block 1INT HDS"] = { Range=150, Blindspot=1, Height=25, Type="long", Radar="SAMPT_MLT_Blk1NT" }, -- Block 1-INT Launcher
@@ -525,6 +523,157 @@ MANTIS.SamDataCH = {
    ["RBS103BM CHM"] = { Range=120, Blindspot=3, Height=24.5, Type="Long", Radar="LvS-103_Lavett103_HX_Rb103B" },
    ["Lvkv9040M CHM"] = { Range=2, Blindspot=0.1, Height=1.2, Type="Point", Radar="LvKv9040",Point="true" },   
 }
+
+-----------------------------------------------------------------------
+-- MANTIS Jammer Extension v2.0.0
+-- Standoff Jamming (SOJ) aircraft support for MANTIS IADS networks
+-- Physics-based jamming: asymmetric Gaussian rise + exponential decay
+-- Compatible with v7 jammer curves
+-----------------------------------------------------------------------
+
+--- Jammer Loadout Configurations (v8: Max 3 Pods)
+-- @type MANTIS.JammerLoadouts
+MANTIS.JammerLoadouts = {
+  ["1xALQ99"]={name="1x AN/ALQ-99",description="Baseline single pod. Full 64MHz-20GHz spectrum.",mult_LOW=1.12,mult_S=1.10,mult_IJ=1.12,mult_OPT=1.00,bt_mod=1.00,range_mod=1.00,tier="ALQ99"},
+  ["2xALQ99"]={name="2x AN/ALQ-99",description="Two pods. Improved ERP with log stacking.",mult_LOW=1.40,mult_S=1.36,mult_IJ=1.40,mult_OPT=1.02,bt_mod=1.00,range_mod=1.03,tier="ALQ99"},
+  ["3xALQ99"]={name="3x AN/ALQ-99 (Maximum Legacy)",description="Max legacy barrage. Highest broadband ERP.",mult_LOW=1.58,mult_S=1.52,mult_IJ=1.58,mult_OPT=1.04,bt_mod=1.00,range_mod=1.06,tier="ALQ99"},
+  ["1xALQ249"]={name="1x AN/ALQ-249 (AESA)",description="AESA 2-18GHz. High peak+wider window. Blind <2GHz.",mult_LOW=0.15,mult_S=1.82,mult_IJ=1.70,mult_OPT=1.00,bt_mod=1.28,range_mod=1.16,tier="ALQ249"},
+  ["2xALQ249"]={name="2x AN/ALQ-249",description="Two AESA pods. Strong S/IJ dominance.",mult_LOW=0.15,mult_S=2.30,mult_IJ=2.15,mult_OPT=1.00,bt_mod=1.38,range_mod=1.26,tier="ALQ249"},
+  ["3xALQ249"]={name="3x AN/ALQ-249 (Maximum AESA)",description="Max AESA ERP. Extreme S/IJ. No LOW coverage.",mult_LOW=0.15,mult_S=2.75,mult_IJ=2.58,mult_OPT=1.00,bt_mod=1.48,range_mod=1.35,tier="ALQ249"},
+  ["1xALQ99_1xALQ249"]={name="1x ALQ-99 + 1x ALQ-249",description="Balanced coverage. AESA S/IJ + ALQ-99 LOW-band.",mult_LOW=1.14,mult_S=1.90,mult_IJ=1.80,mult_OPT=1.01,bt_mod=1.22,range_mod=1.12,tier="Mixed"},
+  ["1xALQ99_2xALQ249"]={name="1x ALQ-99 + 2x ALQ-249 [Recommended]",description="Best all-around. High AESA ERP + LOW coverage.",mult_LOW=1.10,mult_S=2.38,mult_IJ=2.22,mult_OPT=1.01,bt_mod=1.35,range_mod=1.24,tier="Mixed"},
+  ["2xALQ99_1xALQ249"]={name="2x ALQ-99 + 1x ALQ-249",description="Strong LOW-band + AESA S/IJ boost.",mult_LOW=1.42,mult_S=2.10,mult_IJ=2.04,mult_OPT=1.03,bt_mod=1.25,range_mod=1.15,tier="Mixed"},
+}
+
+--- Tiered loadout keys for F10 menu (v8: 3/3/3)
+-- @type MANTIS.JammerLoadoutTiers
+MANTIS.JammerLoadoutTiers = {
+  ALQ99  = {"1xALQ99","2xALQ99","3xALQ99"},
+  ALQ249 = {"1xALQ249","2xALQ249","3xALQ249"},
+  Mixed  = {"1xALQ99_1xALQ249","1xALQ99_2xALQ249","2xALQ99_1xALQ249"},
+}
+
+--- Jitter configuration: ±10% per evaluation (EW Fundamentals Ch.9)
+-- @type MANTIS.JammerJitterPercent
+MANTIS.JammerJitterPercent = 0.10
+
+--- Jammer SAM Parameters — v8 curves {peak%, mu_nm, sigma_L, tail_dist, band, floor%}
+-- floor: residual effectiveness inside burnthrough (noise injection)
+--   5 = legacy radar, no ECCM | 3 = moderate ECCM | 2 = advanced ECCM/AESA | 0 = optical/IR
+-- @type MANTIS.JammerSAMParams
+MANTIS.JammerSAMParams = {
+  ["Nike"]       ={peak=78,mu=35,sigma_L=14,tail_dist=80, band="S",  floor=5},
+  ["Hawk"]       ={peak=30,mu=15,sigma_L=6, tail_dist=28, band="IJ", floor=3},
+  ["SA-2"]       ={peak=75,mu=40,sigma_L=16,tail_dist=85, band="S",  floor=5},
+  ["SA-3"]       ={peak=45,mu=22,sigma_L=10,tail_dist=50, band="IJ", floor=5},
+  ["SA-5"]       ={peak=52,mu=60,sigma_L=22,tail_dist=110,band="S",  floor=5},
+  ["SA-6"]       ={peak=33,mu=18,sigma_L=8, tail_dist=42, band="IJ", floor=3},
+  ["SA-8"]       ={peak=38,mu=10,sigma_L=4, tail_dist=22, band="IJ", floor=3},
+  ["SA-9"]       ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
+  ["SA-10"]      ={peak=32,mu=50,sigma_L=20,tail_dist=90, band="S",  floor=3},
+  ["SA-11"]      ={peak=52,mu=28,sigma_L=12,tail_dist=55, band="IJ", floor=3},
+  ["SA-13"]      ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
+  ["SA-15"]      ={peak=30,mu=14,sigma_L=6, tail_dist=30, band="IJ", floor=3},
+  ["SA-19"]      ={peak=25,mu=18,sigma_L=7, tail_dist=38, band="IJ", floor=2},
+  ["SA-10B"]     ={peak=30,mu=52,sigma_L=20,tail_dist=95, band="S",  floor=3},
+  ["SA-17"]      ={peak=24,mu=32,sigma_L=14,tail_dist=65, band="IJ", floor=2},
+  ["SA-20A"]     ={peak=22,mu=58,sigma_L=22,tail_dist=95, band="S",  floor=2},
+  ["SA-20B"]     ={peak=20,mu=60,sigma_L=22,tail_dist=100,band="S",  floor=2},
+  ["S-300VM"]    ={peak=16,mu=70,sigma_L=28,tail_dist=110,band="S",  floor=2},
+  ["S-300V4"]    ={peak=14,mu=75,sigma_L=28,tail_dist=115,band="S",  floor=2},
+  ["S-400"]      ={peak=18,mu=65,sigma_L=25,tail_dist=105,band="S",  floor=2},
+  ["SA-21"]      ={peak=18,mu=65,sigma_L=25,tail_dist=105,band="S",  floor=2},
+  -- NATO designation aliases (allow mission designers to use SA-NN naming)
+  ["SA-22"]      ={peak=10,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=0},  -- alias for Pantsir S1
+  ["SA-23"]      ={peak=16,mu=70,sigma_L=28,tail_dist=110,band="S",  floor=2},  -- alias for S-300VM
+  ["SA-23B"]     ={peak=14,mu=75,sigma_L=28,tail_dist=115,band="S",  floor=2},  -- alias for S-300V4
+  ["SA-27"]      ={peak=22,mu=38,sigma_L=16,tail_dist=72, band="IJ", floor=2},  -- alias for Buk-M3
+  ["SA-28"]      ={peak=18,mu=35,sigma_L=15,tail_dist=75, band="IJ", floor=2},  -- alias for S-350
+  ["NASAMS"]     ={peak=25,mu=28,sigma_L=12,tail_dist=55, band="IJ", floor=2},
+  ["Patriot"]    ={peak=32,mu=50,sigma_L=20,tail_dist=90, band="S",  floor=3},
+  ["Rapier"]     ={peak=12,mu=8, sigma_L=3, tail_dist=18, band="IJ", floor=0},
+  ["Gepard"]     ={peak=18,mu=6, sigma_L=2, tail_dist=15, band="IJ", floor=0},
+  ["Roland"]     ={peak=35,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=3},
+  ["HQ-7"]       ={peak=38,mu=10,sigma_L=4, tail_dist=22, band="IJ", floor=3},
+  ["HQ-2"]       ={peak=70,mu=38,sigma_L=15,tail_dist=80, band="S",  floor=5},
+  ["C-RAM"]      ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
+  ["Avenger"]    ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
+  ["Chaparral"]  ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
+  ["Linebacker"] ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
+  ["Silkworm"]   ={peak=35,mu=20,sigma_L=8, tail_dist=40, band="IJ", floor=3},
+  ["Dog Ear"]    ={peak=40,mu=10,sigma_L=4, tail_dist=20, band="IJ", floor=5},
+  ["Pantsir S1"] ={peak=10,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=0},
+  ["Tor M2"]     ={peak=28,mu=14,sigma_L=6, tail_dist=30, band="IJ", floor=3},
+  ["IRIS-T SLM"] ={peak=18,mu=18,sigma_L=8, tail_dist=40, band="IJ", floor=2},
+  ["SON-9"]      ={peak=48,mu=20,sigma_L=9, tail_dist=42, band="IJ", floor=5},
+  ["TAMIR IDFA"]  ={peak=19,mu=25,sigma_L=12,tail_dist=55,band="S",  floor=2},
+  ["STUNNER IDFA"]={peak=16,mu=45,sigma_L=18,tail_dist=80,band="S",  floor=2},
+  ["SA-2 HDS"]           ={peak=75,mu=40,sigma_L=16,tail_dist=85, band="S",  floor=5},
+  ["SA-3 HDS"]           ={peak=45,mu=22,sigma_L=10,tail_dist=50, band="IJ", floor=5},
+  ["SA-10B HDS"]         ={peak=30,mu=52,sigma_L=20,tail_dist=95, band="S",  floor=3},
+  ["SA-10C HDS"]         ={peak=30,mu=50,sigma_L=20,tail_dist=92, band="S",  floor=3},
+  ["SA-17 HDS"]          ={peak=24,mu=32,sigma_L=14,tail_dist=65, band="IJ", floor=2},
+  ["SA-12 HDS"]          ={peak=35,mu=42,sigma_L=16,tail_dist=75, band="S",  floor=3},
+  ["SA-23 HDS"]          ={peak=16,mu=70,sigma_L=28,tail_dist=110,band="S",  floor=2},
+  ["HQ-2 HDS"]           ={peak=70,mu=38,sigma_L=15,tail_dist=80, band="S",  floor=5},
+  ["SAMPT Block 1 HDS"]  ={peak=28,mu=45,sigma_L=18,tail_dist=85, band="S",  floor=3},
+  ["SAMPT Block 1INT HDS"]={peak=26,mu=48,sigma_L=18,tail_dist=88,band="S",  floor=3},
+  ["SAMPT Block 2 HDS"]  ={peak=22,mu=52,sigma_L=20,tail_dist=92, band="S",  floor=2},
+  ["RBS98M SMA"]   ={peak=25,mu=12,sigma_L=5, tail_dist=25,band="IJ", floor=3},
+  ["RBS70 SMA"]    ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
+  ["RBS70M SMA"]   ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
+  ["RBS90 SMA"]    ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
+  ["RBS90M SMA"]   ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
+  ["RBS103A SMA"]  ={peak=20,mu=55,sigma_L=20,tail_dist=90,band="S",  floor=2},
+  ["RBS103B SMA"]  ={peak=22,mu=45,sigma_L=18,tail_dist=80,band="S",  floor=2},
+  ["RBS103AM SMA"] ={peak=20,mu=55,sigma_L=20,tail_dist=90,band="S",  floor=2},
+  ["RBS103BM SMA"] ={peak=22,mu=45,sigma_L=18,tail_dist=80,band="S",  floor=2},
+  ["Lvkv9040M SMA"]={peak=15,mu=3, sigma_L=1, tail_dist=8, band="OPT",floor=0},
+  ["2S38 CHM"]             ={peak=8, mu=3, sigma_L=1, tail_dist=8,  band="OPT",floor=0},
+  ["PantsirS1 CHM"]        ={peak=10,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=0},
+  ["PantsirS2 CHM"]        ={peak=10,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=0},
+  ["PGL-625 CHM"]          ={peak=12,mu=4, sigma_L=2, tail_dist=10, band="OPT",floor=0},
+  ["HQ-17A CHM"]           ={peak=30,mu=14,sigma_L=6, tail_dist=30, band="IJ", floor=3},
+  ["M903PAC2 CHM"]         ={peak=32,mu=50,sigma_L=20,tail_dist=90, band="S",  floor=3},
+  ["M903PAC3 CHM"]         ={peak=15,mu=55,sigma_L=22,tail_dist=95, band="S",  floor=2},
+  ["M903PAC2KAT1 CHM"]     ={peak=32,mu=50,sigma_L=20,tail_dist=90, band="S",  floor=3},
+  ["TorM2 CHM"]            ={peak=28,mu=14,sigma_L=6, tail_dist=30, band="IJ", floor=3},
+  ["TorM2K CHM"]           ={peak=28,mu=14,sigma_L=6, tail_dist=30, band="IJ", floor=3},
+  ["TorM2M CHM"]           ={peak=26,mu=16,sigma_L=6, tail_dist=32, band="IJ", floor=3},
+  ["NASAMS3-AMRAAMER CHM"] ={peak=20,mu=35,sigma_L=14,tail_dist=65, band="IJ", floor=2},
+  ["NASAMS3-AIM9X2 CHM"]   ={peak=10,mu=15,sigma_L=6, tail_dist=30, band="IJ", floor=0},
+  ["C-RAM CHM"]            ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
+  ["PGZ-09 CHM"]           ={peak=22,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=0},
+  ["PGZ-95 CHM"]           ={peak=15,mu=4, sigma_L=2, tail_dist=10, band="OPT",floor=0},
+  ["S350-9M100 CHM"]       ={peak=18,mu=35,sigma_L=15,tail_dist=75, band="IJ", floor=2},
+  ["S350-9M96D CHM"]       ={peak=18,mu=35,sigma_L=15,tail_dist=75, band="IJ", floor=2},
+  ["HQ-22 CHM"]            ={peak=20,mu=58,sigma_L=22,tail_dist=100,band="S",  floor=2},
+  ["LD-3000 CHM"]          ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
+  ["LD-3000M CHM"]         ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
+  ["FlaRakRad CHM"]        ={peak=35,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=3},
+  ["IRIS-T SLM CHM"]       ={peak=18,mu=18,sigma_L=8, tail_dist=40, band="IJ", floor=2},
+  ["Skynex CHM"]           ={peak=12,mu=4, sigma_L=2, tail_dist=10, band="OPT",floor=0},
+  ["Skyshield CHM"]        ={peak=12,mu=4, sigma_L=2, tail_dist=10, band="OPT",floor=0},
+  ["BukM3-9M317M CHM"]     ={peak=22,mu=38,sigma_L=16,tail_dist=72, band="IJ", floor=2},
+  ["BukM3-9M317MA CHM"]    ={peak=22,mu=38,sigma_L=16,tail_dist=72, band="IJ", floor=2},
+  ["SkySabre CHM"]         ={peak=18,mu=18,sigma_L=7, tail_dist=40, band="IJ", floor=2},
+  ["Stormer CHM"]          ={peak=10,mu=5, sigma_L=2, tail_dist=12, band="OPT",floor=0},
+  ["THAAD CHM"]            ={peak=10,mu=80,sigma_L=35,tail_dist=120,band="IJ", floor=0},
+  ["LAV-AD CHM"]           ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
+  ["WieselOzelot CHM"]     ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
+  ["USInfantryFIM92K CHM"] ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
+  ["RBS98M CHM"]   ={peak=25,mu=12,sigma_L=5, tail_dist=25,band="IJ", floor=3},
+  ["RBS70 CHM"]    ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
+  ["RBS70M CHM"]   ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
+  ["RBS90 CHM"]    ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
+  ["RBS90M CHM"]   ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
+  ["RBS103A CHM"]  ={peak=20,mu=55,sigma_L=20,tail_dist=90,band="S",  floor=2},
+  ["RBS103B CHM"]  ={peak=22,mu=45,sigma_L=18,tail_dist=80,band="S",  floor=2},
+  ["RBS103AM CHM"] ={peak=20,mu=55,sigma_L=20,tail_dist=90,band="S",  floor=2},
+  ["RBS103BM CHM"] ={peak=22,mu=45,sigma_L=18,tail_dist=80,band="S",  floor=2},
+  ["Lvkv9040M CHM"]={peak=15,mu=3, sigma_L=1, tail_dist=8, band="OPT",floor=0},
+}
+
 
 -----------------------------------------------------------------------
 -- MANTIS System
@@ -907,7 +1056,8 @@ do
    
    local function SwitchSAMOn(Name,Group)
     local suppressed = self.SuppressedGroups[Name] or false
-    if not suppressed and self.SamStateTracker[Name] == "GREEN" then
+    local jammed = self._jammerEnabled and self._jammedSAMs and self._jammedSAMs[Name] or false
+    if not suppressed and not jammed and self.SamStateTracker[Name] == "GREEN" then
       self.SamStateTracker[Name] = "RED"
       if self.UseEmOnOff then
         -- DONE: add emissions on/off
@@ -2132,6 +2282,18 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
     tostring(weaponName),tostring(tti),tostring(delay)))
 
   ----------------------------------------------------------------
+  -- JAMMER CHECK: if SAM is currently jammed, deny SEAD suppression.
+  -- The jammer is already keeping the SAM off. SEAD suppression would
+  -- cause SuppressionStop to briefly re-enable the radar and relocate
+  -- the SAM (potentially out of jammer range). Let the jammer handle it.
+  ----------------------------------------------------------------
+  if self._jammerEnabled and self._jammedSAMs and self._jammedSAMs[targetName] then
+    self:T(string.format("MANTIS:SeadAllowSuppression DECISION -> DENIED (JAMMED %.0f%%) | target=%s",
+      self._jammedSAMs[targetName] * 100, tostring(targetName)))
+    return false
+  end
+
+  ----------------------------------------------------------------
   -- LOOK UP ARM CAPACITY FOR THIS SAM
   ----------------------------------------------------------------
   local armcap = targetGroup:GetProperty("ARMCapacity")
@@ -2693,6 +2855,657 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
     return self
   end
   
+-----------------------------------------------------------------------
+-- MANTIS Jammer Extension v2.0.0 - Functions
+-----------------------------------------------------------------------
+
+  --- Add client jammer aircraft support. Call BEFORE :Start().
+  -- @param #MANTIS self
+  -- @param Core.Set#SET_GROUP clientSet SET_GROUP of client jammer aircraft, or a prefix string
+  -- @param #string defaultLoadout Default loadout key (default "1xALQ99_2xALQ249")
+  -- @return #MANTIS self
+  function MANTIS:AddJammer(clientSet, defaultLoadout)
+    self:T(self.lid .. "AddJammer")
+    self._jammerEnabled = true
+    -- Allow string prefix shorthand
+    if type(clientSet) == "string" then
+      clientSet = SET_GROUP:New():FilterPrefixes(clientSet):FilterActive(true):FilterStart()
+    end
+    self._jammerClientSet = clientSet
+    self._jammerDefaultLoadout = defaultLoadout or "1xALQ99_2xALQ249"
+    self._jammerAircraft = self._jammerAircraft or {}
+    self._jammerAISets = self._jammerAISets or {}
+    self._jammerSnapshot = self._jammerSnapshot or {}
+    self._jammedSAMs = self._jammedSAMs or {}
+    self._jammerMenusBuilt = self._jammerMenusBuilt or {}
+    if not self._jammerHasTransitions then
+      self:AddTransition("*", "JammerSuppression", "*")
+      self:AddTransition("*", "JammerActivated",   "*")
+      self:AddTransition("*", "JammerDeactivated", "*")
+      self._jammerHasTransitions = true
+    end
+    -- Start fast client menu scheduler (5s interval) so menus appear quickly
+    -- instead of waiting for the next MANTIS Status cycle (~30s)
+    if not self._jammerMenuScheduler then
+      self._jammerMenuScheduler = SCHEDULER:New(nil, function()
+        if not self._jammerEnabled then return end
+        if self._jammerClientSet then
+          self:_IterateJammerSet(self._jammerClientSet, function(unit, group)
+            local unitName = unit:GetName()
+            if not self._jammerAircraft[unitName] then
+              self._jammerAircraft[unitName] = {
+                loadout    = self._jammerDefaultLoadout,
+                active     = false,
+                isClient   = unit:IsPlayer(),
+                hasLoadout = false,
+              }
+            elseif not self._jammerAircraft[unitName].isClient and unit:IsPlayer() then
+              self._jammerAircraft[unitName].isClient = true
+            end
+            if self._jammerAircraft[unitName].isClient and not self._jammerMenusBuilt[unitName] then
+              self:_SetupJammerMenu(unit, group)
+            end
+          end)
+        end
+      end, {}, 2, 5)  -- start in 2s, repeat every 5s
+    end
+    self:I(string.format("%sJammer configured | default=%s", self.lid, self._jammerDefaultLoadout))
+    return self
+  end
+
+  --- Add AI jammer aircraft. Call BEFORE :Start(). Can be called multiple times.
+  -- AI jammers start OFF; use SetJammerActive(unitName, true) to activate via script.
+  -- @param #MANTIS self
+  -- @param Core.Set#SET_GROUP aiSet SET_GROUP or prefix string for AI jammer aircraft
+  -- @param #string loadout Loadout key for these AI aircraft (default "1xALQ99_2xALQ249")
+  -- @return #MANTIS self
+  function MANTIS:AddJammerAI(aiSet, loadout)
+    self:T(self.lid .. "AddJammerAI")
+    self._jammerEnabled = true
+    self._jammerAircraft = self._jammerAircraft or {}
+    self._jammerAISets = self._jammerAISets or {}
+    self._jammerSnapshot = self._jammerSnapshot or {}
+    self._jammedSAMs = self._jammedSAMs or {}
+    self._jammerMenusBuilt = self._jammerMenusBuilt or {}
+    local actualSet = aiSet
+    if type(aiSet) == "string" then
+      actualSet = SET_GROUP:New():FilterPrefixes(aiSet):FilterActive(true):FilterStart()
+    end
+    table.insert(self._jammerAISets, { set = actualSet, loadout = loadout or "1xALQ99_2xALQ249" })
+    if not self._jammerHasTransitions then
+      self:AddTransition("*", "JammerSuppression", "*")
+      self:AddTransition("*", "JammerActivated",   "*")
+      self:AddTransition("*", "JammerDeactivated", "*")
+      self._jammerHasTransitions = true
+    end
+    self:I(string.format("%sJammer AI configured | loadout=%s", self.lid, loadout or "1xALQ99_2xALQ249"))
+    return self
+  end
+
+  --- [Internal] Core jamming probability curve (v8 engine).
+  -- Includes decoupled bt_mod/range_mod, ±10% jitter, and floor.
+  -- @param #MANTIS self
+  -- @param #number d Distance in nautical miles
+  -- @param #table params {peak, mu, sigma_L, tail_dist, band, floor}
+  -- @param #string loadoutKey Key into JammerLoadouts
+  -- @return #number Jamming probability as fraction (0.0-0.95)
+  function MANTIS:_JamGaussianExp(d, params, loadoutKey)
+    if d < 0 or d > 200 then return 0 end
+    if not params then return 0 end
+    local cfg = self.JammerLoadouts[loadoutKey]
+    if not cfg then return 0 end
+    local peak, mu, sigma_L, tail_dist, band = params.peak, params.mu, params.sigma_L, params.tail_dist, params.band
+    local floor = params.floor or 0
+    local bm
+    if     band == "LOW" then bm = cfg.mult_LOW
+    elseif band == "S"   then bm = cfg.mult_S
+    elseif band == "IJ"  then bm = cfg.mult_IJ
+    else                      bm = cfg.mult_OPT end
+    -- Decoupled window modifiers (v8)
+    local eff_sigma_L   = sigma_L   / cfg.bt_mod
+    local eff_tail_dist = tail_dist * cfg.range_mod
+    local eff_peak = math.min(95, peak * bm)
+    local raw
+    if d < mu then
+      raw = eff_peak * math.exp(-0.5 * ((d - mu) / eff_sigma_L) ^ 2)
+    else
+      local lambda = math.log(100.0) / eff_tail_dist
+      raw = eff_peak * math.exp(-lambda * (d - mu))
+    end
+    -- Stochastic jitter ±10% (v8)
+    local jitter = 1.0 + (math.random() * 2 - 1) * (self.JammerJitterPercent or 0.10)
+    raw = raw * jitter
+    -- Minimum effectiveness floor (residual noise injection, v8)
+    local eff_floor = (floor or 0) * bm
+    raw = math.max(eff_floor, raw)
+    return math.max(0, math.min(95, raw)) / 100.0
+  end
+
+  --- [Internal] Build cached sorted key lists for the resolver.
+  -- Called once on first use. Avoids re-scanning/re-sorting JammerSAMParams every cycle.
+  -- @param #MANTIS self
+  -- @return #MANTIS self
+  function MANTIS:_BuildJammerKeyCache()
+    self._jammerSortedHDS = {}
+    self._jammerSortedSMA = {}
+    self._jammerSortedCHM = {}
+    self._jammerSortedBase = {}
+    for key, _ in pairs(self.JammerSAMParams) do
+      if     string.find(key, "HDS", 1, true) then table.insert(self._jammerSortedHDS, key)
+      elseif string.find(key, "SMA", 1, true) then table.insert(self._jammerSortedSMA, key)
+      elseif string.find(key, "CHM", 1, true) then table.insert(self._jammerSortedCHM, key)
+      else                                          table.insert(self._jammerSortedBase, key) end
+    end
+    local byLenDesc = function(a, b) return #a > #b end
+    table.sort(self._jammerSortedHDS,  byLenDesc)
+    table.sort(self._jammerSortedSMA,  byLenDesc)
+    table.sort(self._jammerSortedCHM,  byLenDesc)
+    table.sort(self._jammerSortedBase, byLenDesc)
+    self._jammerResolverCache = {}
+    return self
+  end
+
+  --- [Internal] Resolve a SAM group name to its jammer parameters.
+  -- Uses cached sorted key lists and per-name memoization for performance.
+  -- Substring matching with digit-boundary protection prevents false matches
+  -- (e.g. "SA-22 Pantsir" no longer matches "SA-2").
+  -- @param #MANTIS self
+  -- @param #string grpname The SAM group name
+  -- @return #table params or nil
+  function MANTIS:_ResolveJammerParams(grpname)
+    if not grpname then return nil end
+    -- Lazy-build cache on first use
+    if not self._jammerSortedBase then self:_BuildJammerKeyCache() end
+    -- Memoization: same group name resolves to same params (params don't change at runtime)
+    local cached = self._jammerResolverCache[grpname]
+    if cached ~= nil then
+      if cached == false then return nil end  -- false sentinel = "no match"
+      return cached
+    end
+    -- Helper: check key match with digit-boundary protection
+    local function safeMatch(name, key)
+      local startPos, endPos = string.find(name, key, 1, true)
+      if not startPos then return false end
+      local nextChar = string.sub(name, endPos + 1, endPos + 1)
+      if nextChar == "" then return true end
+      if string.match(nextChar, "%d") then return false end
+      return true
+    end
+    -- Detect mod type and select pre-sorted key list
+    local keyList
+    if     string.find(grpname, "HDS", 1, true) then keyList = self._jammerSortedHDS
+    elseif string.find(grpname, "SMA", 1, true) then keyList = self._jammerSortedSMA
+    elseif string.find(grpname, "CHM", 1, true) then keyList = self._jammerSortedCHM end
+    -- First pass: mod-specific keys
+    if keyList then
+      for i = 1, #keyList do
+        if safeMatch(grpname, keyList[i]) then
+          local params = self.JammerSAMParams[keyList[i]]
+          self._jammerResolverCache[grpname] = params
+          return params
+        end
+      end
+    end
+    -- Second pass: base keys
+    local baseKeys = self._jammerSortedBase
+    for i = 1, #baseKeys do
+      if safeMatch(grpname, baseKeys[i]) then
+        local params = self.JammerSAMParams[baseKeys[i]]
+        self._jammerResolverCache[grpname] = params
+        return params
+      end
+    end
+    self._jammerResolverCache[grpname] = false  -- cache "no match" too
+    return nil
+  end
+
+  --- [Internal] Count table entries
+  function MANTIS:_CountTable(t)
+    local c = 0
+    for _ in pairs(t) do c = c + 1 end
+    return c
+  end
+
+  --- [Internal] Iterate any supported SET type, calling fn(unit, group) for each alive unit.
+  -- Supports SET_GROUP (via ForEachGroupAlive) and SET_CLIENT/SET_PLAYER (via ForEachClient).
+  -- Note: callback receives ALL alive units — caller must check InAir() for snapshot logic.
+  -- Menu setup happens for ground units too so clients see the menu before takeoff.
+  -- @param #MANTIS self
+  -- @param set The SET object (SET_GROUP, SET_CLIENT, or SET_PLAYER)
+  -- @param #function fn Callback receiving (unit, group)
+  -- @return #MANTIS self
+  function MANTIS:_IterateJammerSet(set, fn)
+    if not set then return self end
+    if type(set.ForEachClient) == "function" then
+      set:ForEachClient(function(client)
+        if not client then return end
+        local unit = client:GetClientGroupUnit()
+        if not unit or not unit:IsAlive() then return end
+        local group = unit:GetGroup()
+        if not group then return end
+        fn(unit, group)
+      end)
+    elseif type(set.ForEachGroupAlive) == "function" then
+      set:ForEachGroupAlive(function(group)
+        if not group then return end
+        local units = group:GetUnits()
+        if not units then return end
+        for _, unit in pairs(units) do
+          if unit and unit:IsAlive() then
+            fn(unit, group)
+          end
+        end
+      end)
+    else
+      self:E(self.lid .. "ERROR: jammer set is not SET_GROUP, SET_CLIENT, or SET_PLAYER (no ForEachGroupAlive or ForEachClient method).")
+    end
+    return self
+  end
+
+  --- [Internal] Update jammer aircraft states and build snapshot.
+  -- @param #MANTIS self
+  -- @return #MANTIS self
+  function MANTIS:_UpdateJammers()
+    if not self._jammerEnabled then return self end
+    self._jammerSnapshot = {}
+    -- Process client aircraft
+    if self._jammerClientSet then
+      self:_IterateJammerSet(self._jammerClientSet, function(unit, group)
+        local unitName = unit:GetName()
+        if not self._jammerAircraft[unitName] then
+          self._jammerAircraft[unitName] = {
+            loadout    = self._jammerDefaultLoadout,
+            active     = false,
+            isClient   = unit:IsPlayer(),
+            hasLoadout = false,
+          }
+        else
+          -- Re-check IsPlayer in case a human took the slot after first detection
+          if not self._jammerAircraft[unitName].isClient and unit:IsPlayer() then
+            self._jammerAircraft[unitName].isClient = true
+          end
+        end
+        -- Setup menu for clients (works on ground or airborne)
+        if self._jammerAircraft[unitName].isClient and not self._jammerMenusBuilt[unitName] then
+          self:_SetupJammerMenu(unit, group)
+        end
+        -- Snapshot only includes airborne armed jammers
+        local state = self._jammerAircraft[unitName]
+        if state.active and unit:InAir() then
+          local coord = unit:GetCoordinate()
+          if coord then
+            table.insert(self._jammerSnapshot, { coord = coord, loadout = state.loadout, name = unitName })
+          end
+        end
+      end)
+    end
+    -- Process AI aircraft
+    for _, aiEntry in ipairs(self._jammerAISets or {}) do
+      self:_IterateJammerSet(aiEntry.set, function(unit, group)
+        local unitName = unit:GetName()
+        if not self._jammerAircraft[unitName] then
+          self._jammerAircraft[unitName] = {
+            loadout    = aiEntry.loadout,
+            active     = false,
+            isClient   = false,
+            hasLoadout = true,
+          }
+        end
+        -- Snapshot only includes airborne armed jammers
+        local state = self._jammerAircraft[unitName]
+        if state.active and unit:InAir() then
+          local coord = unit:GetCoordinate()
+          if coord then
+            table.insert(self._jammerSnapshot, { coord = coord, loadout = state.loadout, name = unitName })
+          end
+        end
+      end)
+    end
+    -- Clean up dead units only (keep ground-bound clients so menus persist)
+    -- Respawn detection: when client respawns, slot may briefly disappear then reappear
+    local toRemove = {}
+    for unitName, state in pairs(self._jammerAircraft) do
+      local unit = UNIT:FindByName(unitName)
+      if not unit or not unit:IsAlive() then
+        table.insert(toRemove, unitName)
+      end
+    end
+    for _, unitName in ipairs(toRemove) do
+      if self._jammerAircraft[unitName] and self._jammerAircraft[unitName].active then
+        self:__JammerDeactivated(1, unitName)
+      end
+      self._jammerAircraft[unitName] = nil
+      self._jammerMenusBuilt[unitName] = nil
+    end
+    return self
+  end
+
+  --- [Internal] Compute which SAMs are jammed this cycle.
+  -- @param #MANTIS self
+  -- @return #MANTIS self
+  function MANTIS:_ComputeJammedSAMs()
+    self._jammedSAMs = {}
+    if not self._jammerEnabled then return self end
+    if #self._jammerSnapshot == 0 then return self end
+    local M_TO_NM = 1.0 / 1852.0
+    local allSAMs = {}
+    local tables = self.automode
+      and { self.SAM_Table_Long, self.SAM_Table_Medium, self.SAM_Table_Short, self.SAM_Table_PointDef }
+      or  { self.SAM_Table }
+    for _, samTable in ipairs(tables) do
+      for _, _data in pairs(samTable) do
+        if not allSAMs[_data[1]] then allSAMs[_data[1]] = _data[2] end
+      end
+    end
+    for samName, samCoord in pairs(allSAMs) do
+      local params = self:_ResolveJammerParams(samName)
+      if params then
+        local survival = 1.0
+        for _, jammer in ipairs(self._jammerSnapshot) do
+          local distNM = samCoord:Get2DDistance(jammer.coord) * M_TO_NM
+          local pJam = self:_JamGaussianExp(distNM, params, jammer.loadout)
+          if pJam > 0 then survival = survival * (1.0 - pJam) end
+        end
+        local combinedProb = 1.0 - survival
+        if combinedProb > 0 and math.random() < combinedProb then
+          self._jammedSAMs[samName] = combinedProb
+        end
+      end
+    end
+    -- Cycle debug logging (mirrors JammerDebug output, gated on MANTIS debug/verbose flags)
+    if self.debug or self.verbose then
+      local activeCount = #(self._jammerSnapshot or {})
+      local jamCount = self:_CountTable(self._jammedSAMs)
+      -- Only log if there's something interesting to report
+      if activeCount > 0 or jamCount > 0 then
+        local lines = {}
+        table.insert(lines, string.format("%sJammer cycle: %d active aircraft, %d SAMs jammed",
+          self.lid, activeCount, jamCount))
+        -- List active jammers
+        for _, jammer in ipairs(self._jammerSnapshot) do
+          local cfg = self.JammerLoadouts[jammer.loadout]
+          table.insert(lines, string.format("  ACTIVE: %s | loadout=%s",
+            jammer.name, cfg and cfg.name or jammer.loadout))
+        end
+        -- List jammed SAMs
+        for samName, prob in pairs(self._jammedSAMs) do
+          table.insert(lines, string.format("  JAMMED: %s @ %.0f%%", samName, prob * 100))
+        end
+        local text = table.concat(lines, "\n")
+        self:I(text)
+        if self.debug then
+          MESSAGE:New(text, 10, "MANTIS"):ToAll()
+        end
+      end
+    end
+    return self
+  end
+
+  --- [Internal] Set up tiered F10 jammer menu for a player unit.
+  -- @param #MANTIS self
+  -- @param Wrapper.Unit#UNIT unit
+  -- @param Wrapper.Group#GROUP group
+  -- @return #MANTIS self
+  function MANTIS:_SetupJammerMenu(unit, group)
+    local unitName = unit:GetName()
+    local groupName = group:GetName()
+    if self._jammerMenusBuilt[unitName] then return self end
+    self._jammerMenusBuilt[unitName] = true
+    -- If this group already has a menu tree (e.g. respawn), remove it first
+    if self._jammerGroupMenus and self._jammerGroupMenus[groupName] then
+      self._jammerGroupMenus[groupName]:Remove()
+      self._jammerGroupMenus[groupName] = nil
+    end
+    self._jammerGroupMenus = self._jammerGroupMenus or {}
+    local rootMenu = MENU_GROUP:New(group, "Jammer Controls")
+    self._jammerGroupMenus[groupName] = rootMenu
+    -- Tiered loadout submenus
+    local alq99Menu  = MENU_GROUP:New(group, "ALQ-99 Loadouts", rootMenu)
+    local alq249Menu = MENU_GROUP:New(group, "ALQ-249 Loadouts", rootMenu)
+    local mixedMenu  = MENU_GROUP:New(group, "Mixed Loadouts", rootMenu)
+    local tierMenus = { ALQ99 = alq99Menu, ALQ249 = alq249Menu, Mixed = mixedMenu }
+    for tierName, keys in pairs(self.JammerLoadoutTiers) do
+      local parentMenu = tierMenus[tierName]
+      for _, loadoutKey in ipairs(keys) do
+        local cfg = self.JammerLoadouts[loadoutKey]
+        if cfg then
+          MENU_GROUP_COMMAND:New(group, cfg.name, parentMenu,
+            self._JammerMenuSetLoadout, self, unitName, loadoutKey, group, rootMenu)
+        end
+      end
+    end
+    MESSAGE:New("JAMMER ONLINE\nSelect a loadout from the Jammer Controls menu.", 15, "JAMMER"):ToGroup(group)
+    return self
+  end
+
+  --- [Internal] F10 callback: Set loadout and show Music toggle
+  function MANTIS:_JammerMenuSetLoadout(unitName, loadoutKey, group, rootMenu)
+    local state = self._jammerAircraft[unitName]
+    if not state then return end
+    state.loadout = loadoutKey
+    state.hasLoadout = true
+    local cfg = self.JammerLoadouts[loadoutKey]
+    MESSAGE:New(string.format("LOADOUT SELECTED: %s\n%s", cfg and cfg.name or loadoutKey, cfg and cfg.description or ""), 12, "JAMMER"):ToGroup(group)
+    -- Add Music toggle if not already present
+    if not state._musicMenuAdded then
+      state._musicMenuAdded = true
+      state._musicOnMenu = nil
+      state._musicOffMenu = nil
+      self:_ShowMusicOn(unitName, group, rootMenu)
+    end
+  end
+
+  --- [Internal] Show "Music On" menu entry (jammer is OFF, click to turn ON)
+  function MANTIS:_ShowMusicOn(unitName, group, rootMenu)
+    local state = self._jammerAircraft[unitName]
+    if not state then return end
+    if state._musicOffMenu then state._musicOffMenu:Remove() state._musicOffMenu = nil end
+    state._musicOnMenu = MENU_GROUP_COMMAND:New(group, "Music On", rootMenu,
+      function()
+        local s = self._jammerAircraft[unitName]
+        if not s then return end
+        s.active = true
+        MESSAGE:New(string.format("JAMMER ACTIVE\n%s", self.JammerLoadouts[s.loadout] and self.JammerLoadouts[s.loadout].name or s.loadout), 10, "JAMMER"):ToGroup(group)
+        self:__JammerActivated(1, unitName, s.loadout)
+        self:_ShowMusicOff(unitName, group, rootMenu)
+      end)
+  end
+
+  --- [Internal] Show "Music Off" menu entry (jammer is ON, click to turn OFF)
+  function MANTIS:_ShowMusicOff(unitName, group, rootMenu)
+    local state = self._jammerAircraft[unitName]
+    if not state then return end
+    if state._musicOnMenu then state._musicOnMenu:Remove() state._musicOnMenu = nil end
+    state._musicOffMenu = MENU_GROUP_COMMAND:New(group, "Music Off", rootMenu,
+      function()
+        local s = self._jammerAircraft[unitName]
+        if not s then return end
+        s.active = false
+        MESSAGE:New("JAMMER SAFE", 10, "JAMMER"):ToGroup(group)
+        self:__JammerDeactivated(1, unitName)
+        self:_ShowMusicOn(unitName, group, rootMenu)
+      end)
+  end
+
+  --- On After "JammerSuppression" event
+  function MANTIS:onafterJammerSuppression(From, Event, To, Group, Name, Probability)
+    self:T({From, Event, To, Name, Probability})
+    return self
+  end
+
+  --- On After "JammerActivated" event
+  function MANTIS:onafterJammerActivated(From, Event, To, UnitName, Loadout)
+    self:T({From, Event, To, UnitName, Loadout})
+    return self
+  end
+
+  --- On After "JammerDeactivated" event
+  function MANTIS:onafterJammerDeactivated(From, Event, To, UnitName)
+    self:T({From, Event, To, UnitName})
+    return self
+  end
+
+  --- Get table of currently jammed SAM group names.
+  -- @param #MANTIS self
+  -- @return #table {samName = probability}
+  function MANTIS:GetJammedSAMs()
+    return self._jammedSAMs or {}
+  end
+
+  --- Get number of active jammer aircraft.
+  -- @param #MANTIS self
+  -- @return #number
+  function MANTIS:GetActiveJammerCount()
+    return self._jammerSnapshot and #self._jammerSnapshot or 0
+  end
+
+  --- Print a debug report of the jammer system to dcs.log and screen.
+  -- Lists registered aircraft, their states, snapshot count, and currently
+  -- jammed SAMs with their probabilities. Use this to diagnose menu issues,
+  -- missing aircraft, or unexpected SAM matching.
+  -- @param #MANTIS self
+  -- @param #boolean toScreen If true, also display report on screen (default false)
+  -- @return #MANTIS self
+  function MANTIS:JammerDebug(toScreen)
+    local lines = {}
+    table.insert(lines, "=== MANTIS JAMMER DEBUG REPORT ===")
+    table.insert(lines, string.format("Enabled: %s | Default loadout: %s",
+      tostring(self._jammerEnabled), tostring(self._jammerDefaultLoadout)))
+    table.insert(lines, string.format("Has client set: %s | AI sets: %d",
+      tostring(self._jammerClientSet ~= nil), #(self._jammerAISets or {})))
+    -- Aircraft state
+    local count = 0
+    for unitName, state in pairs(self._jammerAircraft or {}) do
+      count = count + 1
+      table.insert(lines, string.format("  [%s] active=%s isClient=%s loadout=%s hasLoadout=%s",
+        unitName, tostring(state.active), tostring(state.isClient),
+        tostring(state.loadout), tostring(state.hasLoadout)))
+    end
+    table.insert(lines, string.format("Total tracked aircraft: %d", count))
+    table.insert(lines, string.format("Active jammer snapshot: %d aircraft airborne+armed", #(self._jammerSnapshot or {})))
+    -- Jammed SAMs
+    local jcount = 0
+    for samName, prob in pairs(self._jammedSAMs or {}) do
+      jcount = jcount + 1
+      table.insert(lines, string.format("  JAMMED: %s @ %.0f%%", samName, prob * 100))
+    end
+    table.insert(lines, string.format("Currently jammed SAMs: %d", jcount))
+    table.insert(lines, "=== END REPORT ===")
+    local report = table.concat(lines, "\n")
+    self:I(report)
+    if toScreen then
+      MESSAGE:New(report, 30, "JAMMER DEBUG"):ToAll()
+    end
+    return self
+  end
+
+  --- Test the SAM resolver against a hypothetical group name.
+  -- Useful for verifying naming convention before mission start.
+  -- @param #MANTIS self
+  -- @param #string testName The hypothetical SAM group name to test
+  -- @return #string Matched JammerSAMParams key, or "NO MATCH"
+  function MANTIS:JammerTestResolver(testName)
+    local params = self:_ResolveJammerParams(testName)
+    if not params then
+      self:I(string.format("[JammerTestResolver] '%s' -> NO MATCH", testName))
+      return "NO MATCH"
+    end
+    -- Find which key matched
+    for key, p in pairs(self.JammerSAMParams) do
+      if p == params then
+        self:I(string.format("[JammerTestResolver] '%s' -> '%s' {peak=%d, mu=%d, band=%s, floor=%d}",
+          testName, key, params.peak, params.mu, params.band, params.floor or 0))
+        return key
+      end
+    end
+    return "MATCHED (key unknown)"
+  end
+
+  --- Manually set a jammer aircraft loadout (AI scripted control).
+  -- @param #MANTIS self
+  -- @param #string unitName DCS unit name
+  -- @param #string loadoutKey Key into JammerLoadouts
+  -- @return #MANTIS self
+  function MANTIS:SetJammerLoadout(unitName, loadoutKey)
+    if self._jammerAircraft and self._jammerAircraft[unitName] then
+      self._jammerAircraft[unitName].loadout = loadoutKey
+      self._jammerAircraft[unitName].hasLoadout = true
+    end
+    return self
+  end
+
+  --- Manually activate/deactivate a jammer aircraft (AI scripted control).
+  -- @param #MANTIS self
+  -- @param #string unitName DCS unit name
+  -- @param #boolean active true=on, false=off
+  -- @return #MANTIS self
+  function MANTIS:SetJammerActive(unitName, active)
+    if self._jammerAircraft and self._jammerAircraft[unitName] then
+      local wasActive = self._jammerAircraft[unitName].active
+      self._jammerAircraft[unitName].active = active
+      if active and not wasActive then
+        self:__JammerActivated(1, unitName, self._jammerAircraft[unitName].loadout)
+      elseif not active and wasActive then
+        self:__JammerDeactivated(1, unitName)
+      end
+    end
+    return self
+  end
+
+-----------------------------------------------------------------------
+-- MANTIS Jammer Extension - Hook Overrides
+-----------------------------------------------------------------------
+
+  -- Guard: only save originals once (prevents infinite recursion if file loaded twice)
+  if not MANTIS._CheckLoopOriginal then
+    MANTIS._CheckLoopOriginal = MANTIS._CheckLoop
+  end
+  if not MANTIS._onbeforeStatusOriginal then
+    MANTIS._onbeforeStatusOriginal = MANTIS.onbeforeStatus
+  end
+
+  --- [Internal] Override: _CheckLoop with jammer suppression.
+  function MANTIS:_CheckLoop(samset, detset, dlink, limit)
+    local r, g, s = self:_CheckLoopOriginal(samset, detset, dlink, limit)
+    if self._jammerEnabled and self._jammedSAMs then
+      for _, _data in pairs(samset) do
+        local name = _data[1]
+        if self._jammedSAMs[name] and self.SamStateTracker[name] == "RED" then
+          local samgroup = GROUP:FindByName(name)
+          if samgroup and samgroup:IsAlive() then
+            if self.UseEmOnOff then
+              samgroup:EnableEmission(false)
+            else
+              samgroup:OptionAlarmStateGreen()
+            end
+            self.SamStateTracker[name] = "GREEN"
+            self:__JammerSuppression(1, samgroup, name, self._jammedSAMs[name])
+            if self.ShoradLink then
+              local Shorad = self.Shorad
+              local shoradradius = self.checkradius
+              local ontime = self.ShoradTime
+              Shorad:WakeUpShorad(name, shoradradius, ontime, nil, true)
+              self:__ShoradActivated(1, name, shoradradius, ontime)
+            end
+            if self.debug or self.verbose then
+              self:T(string.format("%sJAMMED: %s forced GREEN (%.1f%%)", self.lid, name, self._jammedSAMs[name] * 100))
+            end
+          end
+        end
+      end
+    end
+    return r, g, s
+  end
+
+  --- [Internal] Override: onbeforeStatus with jammer update.
+  function MANTIS:onbeforeStatus(From, Event, To)
+    if self._jammerEnabled then
+      self:_UpdateJammers()
+      self:_ComputeJammedSAMs()
+    end
+    return self:_onbeforeStatusOriginal(From, Event, To)
+  end
+
 end
 -----------------------------------------------------------------------
 -- MANTIS end
