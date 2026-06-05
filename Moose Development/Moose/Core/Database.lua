@@ -2109,7 +2109,7 @@ end
 -- @param #DATABASE self
 -- @param Ops.Legion#LEGION legion The legion added to the DB.
 function DATABASE:AddLegion(legion)
-  self.COHORTS[legion.alias]=legion
+  self.LEGIONS[legion.alias]=legion
 end
 
 --- Find an OPS LEGION (AIRWING, BRIGADE, FLEET) in the data base.
@@ -2117,7 +2117,7 @@ end
 -- @param #string legionname Name of the legion.
 -- @return Ops.Legion#LEGION Legion object.
 function DATABASE:FindLegion(legionname)
-  return self.COHORTS[legionname]
+  return self.LEGIONS[legionname]
 end
 
 --
