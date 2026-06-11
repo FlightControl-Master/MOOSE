@@ -2431,7 +2431,7 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       if Takeoff == GROUP.Takeoff.Air then
         for UnitID, UnitSpawned in pairs( GroupSpawned:GetUnits() ) do
           --SCHEDULER:New( nil, BASE.CreateEventTakeoff, { GroupSpawned, timer.getTime(), UnitSpawned:GetDCSObject() }, 5 )  --No need to create a new SCHEDULER instance every time!
-          self:ScheduleOnce(5, BASE.CreateEventTakeoff, {GroupSpawned, timer.getTime(), UnitSpawned:GetDCSObject()})
+          self:ScheduleOnce(5, BASE.CreateEventTakeoff, GroupSpawned, timer.getTime(), UnitSpawned:GetDCSObject())
         end
       end
 
