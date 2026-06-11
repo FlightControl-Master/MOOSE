@@ -557,44 +557,43 @@ MANTIS.JammerLoadoutTiers = {
 -- @type MANTIS.JammerJitterPercent
 MANTIS.JammerJitterPercent = 0.10
 
---- Jammer SAM Parameters — v8 curves {peak%, mu_nm, sigma_L, tail_dist, band, floor%}
--- floor: residual effectiveness inside burnthrough (noise injection)
+--- Jammer SAM Parameters — v9 curves (v8.1) {peak%, mu_nm, sigma_L, tail_dist, band, floor%}
+-- v9 changes from v8:
+--   * Width rework: curves now track radar detection/track envelope (not just missile range)
+--   * Long-range systems widened (SA-5, SA-21, SA-23, Nike, PAC-2, S-300/400 family)
+--   * Short-range systems tightened (SA-19, SON-9, HQ-7, Rapier)
+--   * HAWK widened to match CW illuminator envelope (~90nm)
+-- floor: residual effectiveness inside burnthrough (now tapers past mu with R^2 falloff)
 --   5 = legacy radar, no ECCM | 3 = moderate ECCM | 2 = advanced ECCM/AESA | 0 = optical/IR
 -- @type MANTIS.JammerSAMParams
 MANTIS.JammerSAMParams = {
-  ["Nike"]       ={peak=78,mu=35,sigma_L=14,tail_dist=80, band="S",  floor=5},
-  ["Hawk"]       ={peak=30,mu=15,sigma_L=6, tail_dist=28, band="IJ", floor=3},
-  ["SA-2"]       ={peak=75,mu=40,sigma_L=16,tail_dist=85, band="S",  floor=5},
-  ["SA-3"]       ={peak=45,mu=22,sigma_L=10,tail_dist=50, band="IJ", floor=5},
-  ["SA-5"]       ={peak=52,mu=60,sigma_L=22,tail_dist=110,band="S",  floor=5},
-  ["SA-6"]       ={peak=33,mu=18,sigma_L=8, tail_dist=42, band="IJ", floor=3},
-  ["SA-8"]       ={peak=38,mu=10,sigma_L=4, tail_dist=22, band="IJ", floor=3},
+  -- Standard SamData (canonical entries — aliases below point to these)
+  ["Nike"]       ={peak=78,mu=55,sigma_L=22,tail_dist=110,band="S",  floor=5},
+  ["Hawk"]       ={peak=30,mu=22,sigma_L=9, tail_dist=55, band="IJ", floor=3},
+  ["SA-2"]       ={peak=75,mu=40,sigma_L=16,tail_dist=90, band="S",  floor=5},
+  ["SA-3"]       ={peak=45,mu=22,sigma_L=10,tail_dist=52, band="IJ", floor=5},
+  ["SA-5"]       ={peak=52,mu=75,sigma_L=26,tail_dist=145,band="S",  floor=5},
+  ["SA-6"]       ={peak=33,mu=18,sigma_L=8, tail_dist=48, band="IJ", floor=3},
+  ["SA-8"]       ={peak=38,mu=10,sigma_L=4, tail_dist=24, band="IJ", floor=3},
   ["SA-9"]       ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
-  ["SA-10"]      ={peak=32,mu=50,sigma_L=20,tail_dist=90, band="S",  floor=3},
-  ["SA-11"]      ={peak=52,mu=28,sigma_L=12,tail_dist=55, band="IJ", floor=3},
+  ["SA-10"]      ={peak=32,mu=50,sigma_L=20,tail_dist=95, band="S",  floor=3},
+  ["SA-10B"]     ={peak=30,mu=52,sigma_L=20,tail_dist=100,band="S",  floor=3},
+  ["SA-11"]      ={peak=52,mu=28,sigma_L=12,tail_dist=58, band="IJ", floor=3},
   ["SA-13"]      ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
-  ["SA-15"]      ={peak=30,mu=14,sigma_L=6, tail_dist=30, band="IJ", floor=3},
-  ["SA-19"]      ={peak=25,mu=18,sigma_L=7, tail_dist=38, band="IJ", floor=2},
-  ["SA-10B"]     ={peak=30,mu=52,sigma_L=20,tail_dist=95, band="S",  floor=3},
-  ["SA-17"]      ={peak=24,mu=32,sigma_L=14,tail_dist=65, band="IJ", floor=2},
-  ["SA-20A"]     ={peak=22,mu=58,sigma_L=22,tail_dist=95, band="S",  floor=2},
-  ["SA-20B"]     ={peak=20,mu=60,sigma_L=22,tail_dist=100,band="S",  floor=2},
-  ["S-300VM"]    ={peak=16,mu=70,sigma_L=28,tail_dist=110,band="S",  floor=2},
-  ["S-300V4"]    ={peak=14,mu=75,sigma_L=28,tail_dist=115,band="S",  floor=2},
-  ["S-400"]      ={peak=18,mu=65,sigma_L=25,tail_dist=105,band="S",  floor=2},
-  ["SA-21"]      ={peak=18,mu=65,sigma_L=25,tail_dist=105,band="S",  floor=2},
-  -- NATO designation aliases (allow mission designers to use SA-NN naming)
-  ["SA-22"]      ={peak=10,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=0},  -- alias for Pantsir S1
-  ["SA-23"]      ={peak=16,mu=70,sigma_L=28,tail_dist=110,band="S",  floor=2},  -- alias for S-300VM
-  ["SA-23B"]     ={peak=14,mu=75,sigma_L=28,tail_dist=115,band="S",  floor=2},  -- alias for S-300V4
-  ["SA-27"]      ={peak=22,mu=38,sigma_L=16,tail_dist=72, band="IJ", floor=2},  -- alias for Buk-M3
-  ["SA-28"]      ={peak=18,mu=35,sigma_L=15,tail_dist=75, band="IJ", floor=2},  -- alias for S-350
-  ["NASAMS"]     ={peak=25,mu=28,sigma_L=12,tail_dist=55, band="IJ", floor=2},
-  ["Patriot"]    ={peak=32,mu=50,sigma_L=20,tail_dist=90, band="S",  floor=3},
-  ["Rapier"]     ={peak=12,mu=8, sigma_L=3, tail_dist=18, band="IJ", floor=0},
-  ["Gepard"]     ={peak=18,mu=6, sigma_L=2, tail_dist=15, band="IJ", floor=0},
+  ["SA-15"]      ={peak=30,mu=11,sigma_L=5, tail_dist=22, band="IJ", floor=3},
+  ["SA-17"]      ={peak=24,mu=32,sigma_L=14,tail_dist=68, band="IJ", floor=2},
+  ["SA-19"]      ={peak=25,mu=8, sigma_L=3.5,tail_dist=16,band="IJ", floor=2},
+  ["SA-20A"]     ={peak=22,mu=65,sigma_L=24,tail_dist=115,band="S",  floor=2},
+  ["SA-20B"]     ={peak=20,mu=68,sigma_L=24,tail_dist=120,band="S",  floor=2},
+  ["S-300VM"]    ={peak=16,mu=80,sigma_L=30,tail_dist=135,band="S",  floor=2}, -- SA-23 canonical
+  ["S-300V4"]    ={peak=14,mu=85,sigma_L=30,tail_dist=145,band="S",  floor=2}, -- SA-23B canonical
+  ["S-400"]      ={peak=18,mu=80,sigma_L=30,tail_dist=150,band="S",  floor=2}, -- SA-21 canonical
+  ["NASAMS"]     ={peak=25,mu=28,sigma_L=12,tail_dist=52, band="IJ", floor=2},
+  ["Patriot"]    ={peak=32,mu=62,sigma_L=24,tail_dist=110,band="S",  floor=3},
+  ["Rapier"]     ={peak=12,mu=6, sigma_L=2.5,tail_dist=14,band="IJ", floor=0},
+  ["Gepard"]     ={peak=18,mu=6, sigma_L=2, tail_dist=18, band="IJ", floor=0},
   ["Roland"]     ={peak=35,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=3},
-  ["HQ-7"]       ={peak=38,mu=10,sigma_L=4, tail_dist=22, band="IJ", floor=3},
+  ["HQ-7"]       ={peak=38,mu=8, sigma_L=3.5,tail_dist=18,band="IJ", floor=3},
   ["HQ-2"]       ={peak=70,mu=38,sigma_L=15,tail_dist=80, band="S",  floor=5},
   ["C-RAM"]      ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
   ["Avenger"]    ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
@@ -602,77 +601,108 @@ MANTIS.JammerSAMParams = {
   ["Linebacker"] ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
   ["Silkworm"]   ={peak=35,mu=20,sigma_L=8, tail_dist=40, band="IJ", floor=3},
   ["Dog Ear"]    ={peak=40,mu=10,sigma_L=4, tail_dist=20, band="IJ", floor=5},
-  ["Pantsir S1"] ={peak=10,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=0},
+  ["Pantsir S1"] ={peak=10,mu=9, sigma_L=4, tail_dist=20, band="IJ", floor=0}, -- SA-22 canonical
   ["Tor M2"]     ={peak=28,mu=14,sigma_L=6, tail_dist=30, band="IJ", floor=3},
-  ["IRIS-T SLM"] ={peak=18,mu=18,sigma_L=8, tail_dist=40, band="IJ", floor=2},
-  ["SON-9"]      ={peak=48,mu=20,sigma_L=9, tail_dist=42, band="IJ", floor=5},
-  ["TAMIR IDFA"]  ={peak=19,mu=25,sigma_L=12,tail_dist=55,band="S",  floor=2},
+  ["IRIS-T SLM"] ={peak=18,mu=22,sigma_L=10,tail_dist=50, band="IJ", floor=2},
+  ["SON-9"]      ={peak=48,mu=14,sigma_L=6, tail_dist=30, band="IJ", floor=5},
+  -- IDF Mod
+  ["TAMIR IDFA"]  ={peak=19,mu=25,sigma_L=12,tail_dist=52,band="S",  floor=2},
   ["STUNNER IDFA"]={peak=16,mu=45,sigma_L=18,tail_dist=80,band="S",  floor=2},
-  ["SA-2 HDS"]           ={peak=75,mu=40,sigma_L=16,tail_dist=85, band="S",  floor=5},
-  ["SA-3 HDS"]           ={peak=45,mu=22,sigma_L=10,tail_dist=50, band="IJ", floor=5},
-  ["SA-10B HDS"]         ={peak=30,mu=52,sigma_L=20,tail_dist=95, band="S",  floor=3},
+  -- HDS Mod (canonical for keys with no base equivalent)
   ["SA-10C HDS"]         ={peak=30,mu=50,sigma_L=20,tail_dist=92, band="S",  floor=3},
-  ["SA-17 HDS"]          ={peak=24,mu=32,sigma_L=14,tail_dist=65, band="IJ", floor=2},
-  ["SA-12 HDS"]          ={peak=35,mu=42,sigma_L=16,tail_dist=75, band="S",  floor=3},
-  ["SA-23 HDS"]          ={peak=16,mu=70,sigma_L=28,tail_dist=110,band="S",  floor=2},
-  ["HQ-2 HDS"]           ={peak=70,mu=38,sigma_L=15,tail_dist=80, band="S",  floor=5},
+  ["SA-12 HDS"]          ={peak=35,mu=50,sigma_L=18,tail_dist=90, band="S",  floor=3},
   ["SAMPT Block 1 HDS"]  ={peak=28,mu=45,sigma_L=18,tail_dist=85, band="S",  floor=3},
   ["SAMPT Block 1INT HDS"]={peak=26,mu=48,sigma_L=18,tail_dist=88,band="S",  floor=3},
   ["SAMPT Block 2 HDS"]  ={peak=22,mu=52,sigma_L=20,tail_dist=92, band="S",  floor=2},
-  ["RBS98M SMA"]   ={peak=25,mu=12,sigma_L=5, tail_dist=25,band="IJ", floor=3},
-  ["RBS70 SMA"]    ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
-  ["RBS70M SMA"]   ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
-  ["RBS90 SMA"]    ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
-  ["RBS90M SMA"]   ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
-  ["RBS103A SMA"]  ={peak=20,mu=55,sigma_L=20,tail_dist=90,band="S",  floor=2},
-  ["RBS103B SMA"]  ={peak=22,mu=45,sigma_L=18,tail_dist=80,band="S",  floor=2},
-  ["RBS103AM SMA"] ={peak=20,mu=55,sigma_L=20,tail_dist=90,band="S",  floor=2},
-  ["RBS103BM SMA"] ={peak=22,mu=45,sigma_L=18,tail_dist=80,band="S",  floor=2},
-  ["Lvkv9040M SMA"]={peak=15,mu=3, sigma_L=1, tail_dist=8, band="OPT",floor=0},
+  -- SMA Mod (canonical for SMA-only keys)
+  ["RBS70 SMA"]    ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},  -- canonical for RBS70 family
+  ["RBS90 SMA"]    ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},  -- canonical for RBS90 family
+  ["RBS98M SMA"]   ={peak=25,mu=12,sigma_L=5, tail_dist=25,band="IJ", floor=3},  -- canonical
+  ["RBS103A SMA"]  ={peak=20,mu=55,sigma_L=20,tail_dist=90,band="S",  floor=2},  -- canonical
+  ["RBS103B SMA"]  ={peak=22,mu=45,sigma_L=18,tail_dist=80,band="S",  floor=2},  -- canonical
+  ["Lvkv9040M SMA"]={peak=15,mu=3, sigma_L=1, tail_dist=8, band="OPT",floor=0},  -- canonical
+  -- CH Mod (canonical for CHM-only keys)
   ["2S38 CHM"]             ={peak=8, mu=3, sigma_L=1, tail_dist=8,  band="OPT",floor=0},
-  ["PantsirS1 CHM"]        ={peak=10,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=0},
-  ["PantsirS2 CHM"]        ={peak=10,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=0},
-  ["PGL-625 CHM"]          ={peak=12,mu=4, sigma_L=2, tail_dist=10, band="OPT",floor=0},
-  ["HQ-17A CHM"]           ={peak=30,mu=14,sigma_L=6, tail_dist=30, band="IJ", floor=3},
-  ["M903PAC2 CHM"]         ={peak=32,mu=50,sigma_L=20,tail_dist=90, band="S",  floor=3},
-  ["M903PAC3 CHM"]         ={peak=15,mu=55,sigma_L=22,tail_dist=95, band="S",  floor=2},
-  ["M903PAC2KAT1 CHM"]     ={peak=32,mu=50,sigma_L=20,tail_dist=90, band="S",  floor=3},
-  ["TorM2 CHM"]            ={peak=28,mu=14,sigma_L=6, tail_dist=30, band="IJ", floor=3},
-  ["TorM2K CHM"]           ={peak=28,mu=14,sigma_L=6, tail_dist=30, band="IJ", floor=3},
-  ["TorM2M CHM"]           ={peak=26,mu=16,sigma_L=6, tail_dist=32, band="IJ", floor=3},
+  ["PGL-625 CHM"]          ={peak=12,mu=6, sigma_L=2.5,tail_dist=14,band="OPT",floor=0}, -- Type-08
+  ["HQ-17A CHM"]           ={peak=30,mu=11,sigma_L=5, tail_dist=24, band="IJ", floor=3},
+  ["M903PAC3 CHM"]         ={peak=15,mu=58,sigma_L=22,tail_dist=105,band="S",  floor=2},
+  ["TorM2M CHM"]           ={peak=26,mu=16,sigma_L=6, tail_dist=32, band="IJ", floor=3}, -- variant
   ["NASAMS3-AMRAAMER CHM"] ={peak=20,mu=35,sigma_L=14,tail_dist=65, band="IJ", floor=2},
   ["NASAMS3-AIM9X2 CHM"]   ={peak=10,mu=15,sigma_L=6, tail_dist=30, band="IJ", floor=0},
-  ["C-RAM CHM"]            ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
-  ["PGZ-09 CHM"]           ={peak=22,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=0},
+  ["PGZ-09 CHM"]           ={peak=22,mu=5, sigma_L=2, tail_dist=14, band="IJ", floor=0}, -- Type-09
   ["PGZ-95 CHM"]           ={peak=15,mu=4, sigma_L=2, tail_dist=10, band="OPT",floor=0},
-  ["S350-9M100 CHM"]       ={peak=18,mu=35,sigma_L=15,tail_dist=75, band="IJ", floor=2},
-  ["S350-9M96D CHM"]       ={peak=18,mu=35,sigma_L=15,tail_dist=75, band="IJ", floor=2},
-  ["HQ-22 CHM"]            ={peak=20,mu=58,sigma_L=22,tail_dist=100,band="S",  floor=2},
-  ["LD-3000 CHM"]          ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
-  ["LD-3000M CHM"]         ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
-  ["FlaRakRad CHM"]        ={peak=35,mu=5, sigma_L=2, tail_dist=12, band="IJ", floor=3},
-  ["IRIS-T SLM CHM"]       ={peak=18,mu=18,sigma_L=8, tail_dist=40, band="IJ", floor=2},
+  ["S350-9M100 CHM"]       ={peak=18,mu=35,sigma_L=15,tail_dist=78, band="IJ", floor=2}, -- SA-28 canonical
+  ["HQ-22 CHM"]            ={peak=20,mu=70,sigma_L=26,tail_dist=120,band="S",  floor=2},
+  ["IRIS-T SLM CHM"]       ={peak=18,mu=22,sigma_L=10,tail_dist=50, band="IJ", floor=2}, -- will be aliased
   ["Skynex CHM"]           ={peak=12,mu=4, sigma_L=2, tail_dist=10, band="OPT",floor=0},
   ["Skyshield CHM"]        ={peak=12,mu=4, sigma_L=2, tail_dist=10, band="OPT",floor=0},
-  ["BukM3-9M317M CHM"]     ={peak=22,mu=38,sigma_L=16,tail_dist=72, band="IJ", floor=2},
-  ["BukM3-9M317MA CHM"]    ={peak=22,mu=38,sigma_L=16,tail_dist=72, band="IJ", floor=2},
+  ["BukM3-9M317M CHM"]     ={peak=22,mu=38,sigma_L=16,tail_dist=75, band="IJ", floor=2}, -- SA-27 canonical
   ["SkySabre CHM"]         ={peak=18,mu=18,sigma_L=7, tail_dist=40, band="IJ", floor=2},
   ["Stormer CHM"]          ={peak=10,mu=5, sigma_L=2, tail_dist=12, band="OPT",floor=0},
-  ["THAAD CHM"]            ={peak=10,mu=80,sigma_L=35,tail_dist=120,band="IJ", floor=0},
-  ["LAV-AD CHM"]           ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
+  ["THAAD CHM"]            ={peak=10,mu=90,sigma_L=38,tail_dist=140,band="IJ", floor=0},
   ["WieselOzelot CHM"]     ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
   ["USInfantryFIM92K CHM"] ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
-  ["RBS98M CHM"]   ={peak=25,mu=12,sigma_L=5, tail_dist=25,band="IJ", floor=3},
-  ["RBS70 CHM"]    ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
-  ["RBS70M CHM"]   ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
-  ["RBS90 CHM"]    ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
-  ["RBS90M CHM"]   ={peak=5, mu=4, sigma_L=2, tail_dist=10,band="OPT",floor=0},
-  ["RBS103A CHM"]  ={peak=20,mu=55,sigma_L=20,tail_dist=90,band="S",  floor=2},
-  ["RBS103B CHM"]  ={peak=22,mu=45,sigma_L=18,tail_dist=80,band="S",  floor=2},
-  ["RBS103AM CHM"] ={peak=20,mu=55,sigma_L=20,tail_dist=90,band="S",  floor=2},
-  ["RBS103BM CHM"] ={peak=22,mu=45,sigma_L=18,tail_dist=80,band="S",  floor=2},
-  ["Lvkv9040M CHM"]={peak=15,mu=3, sigma_L=1, tail_dist=8, band="OPT",floor=0},
 }
+
+-- Alias entries: point alias keys to the canonical entry's table.
+-- Modifying any canonical entry above automatically updates all its aliases.
+-- This prevents parameter drift when updating values.
+do
+  local p = MANTIS.JammerSAMParams
+  -- NATO designation aliases
+  p["SA-21"]  = p["S-400"]      -- SA-21 Growler
+  p["SA-22"]  = p["Pantsir S1"] -- SA-22 Greyhound
+  p["SA-23"]  = p["S-300VM"]    -- SA-23 Gladiator
+  p["SA-23B"] = p["S-300V4"]    -- SA-23B Antey-2500 (improved)
+  p["SA-27"]  = p["BukM3-9M317M CHM"]  -- SA-27 Gollum (Buk-M3)
+  p["SA-28"]  = p["S350-9M100 CHM"]    -- SA-28 Vityaz (S-350)
+  -- Buk-M3 variants (same radar)
+  p["BukM3-9M317MA CHM"] = p["BukM3-9M317M CHM"]
+  -- S-350 variants (same radar)
+  p["S350-9M96D CHM"] = p["S350-9M100 CHM"]
+  -- Pantsir variants
+  p["PantsirS1 CHM"] = p["Pantsir S1"]
+  p["PantsirS2 CHM"] = p["Pantsir S1"]
+  -- Tor-M2 variants
+  p["TorM2 CHM"]  = p["Tor M2"]
+  p["TorM2K CHM"] = p["Tor M2"]
+  -- Patriot PAC-2 (same MPQ-65 radar)
+  p["M903PAC2 CHM"]     = p["Patriot"]
+  p["M903PAC2KAT1 CHM"] = p["Patriot"]
+  -- IRIS-T (base and CHM are same system)
+  p["IRIS-T SLM CHM"] = p["IRIS-T SLM"]
+  -- HDS variants (same radar as base entry)
+  p["SA-2 HDS"]    = p["SA-2"]
+  p["SA-3 HDS"]    = p["SA-3"]
+  p["SA-10B HDS"]  = p["SA-10B"]
+  p["SA-17 HDS"]   = p["SA-17"]
+  p["SA-23 HDS"]   = p["S-300VM"]
+  p["HQ-2 HDS"]    = p["HQ-2"]
+  -- Roland / FlaRakRad (same system)
+  p["FlaRakRad CHM"] = p["Roland"]
+  -- Phalanx-class CIWS (Ka-band, essentially unjammable)
+  p["C-RAM CHM"]    = p["C-RAM"]
+  p["LD-3000 CHM"]  = p["C-RAM"]
+  p["LD-3000M CHM"] = p["C-RAM"]
+  -- SMA / CHM Swedish duplicates (CH mod re-implements SMA assets)
+  p["RBS70 CHM"]    = p["RBS70 SMA"]
+  p["RBS70M SMA"]   = p["RBS70 SMA"]
+  p["RBS70M CHM"]   = p["RBS70 SMA"]
+  p["RBS90 CHM"]    = p["RBS90 SMA"]
+  p["RBS90M SMA"]   = p["RBS90 SMA"]
+  p["RBS90M CHM"]   = p["RBS90 SMA"]
+  p["RBS98M CHM"]   = p["RBS98M SMA"]
+  p["RBS103A CHM"]  = p["RBS103A SMA"]
+  p["RBS103AM SMA"] = p["RBS103A SMA"]
+  p["RBS103AM CHM"] = p["RBS103A SMA"]
+  p["RBS103B CHM"]  = p["RBS103B SMA"]
+  p["RBS103BM SMA"] = p["RBS103B SMA"]
+  p["RBS103BM CHM"] = p["RBS103B SMA"]
+  p["Lvkv9040M CHM"]= p["Lvkv9040M SMA"]
+  -- IR MANPADS (all near-zero, different systems but share params)
+  p["LAV-AD CHM"]           = p["SA-9"]
+  -- NOTE: SA-13, Avenger, Chaparral, Linebacker kept separate (different real systems)
+end
 
 
 -----------------------------------------------------------------------
@@ -2942,8 +2972,8 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
     return self
   end
 
-  --- [Internal] Core jamming probability curve (v8 engine).
-  -- Includes decoupled bt_mod/range_mod, ±10% jitter, and floor.
+  --- [Internal] Core jamming probability curve (v9 / v8.1 engine).
+  -- Features: decoupled bt_mod/range_mod, tapering residual floor, ±10% jitter.
   -- @param #MANTIS self
   -- @param #number d Distance in nautical miles
   -- @param #table params {peak, mu, sigma_L, tail_dist, band, floor}
@@ -2961,7 +2991,7 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
     elseif band == "S"   then bm = cfg.mult_S
     elseif band == "IJ"  then bm = cfg.mult_IJ
     else                      bm = cfg.mult_OPT end
-    -- Decoupled window modifiers (v8)
+    -- Decoupled window modifiers
     local eff_sigma_L   = sigma_L   / cfg.bt_mod
     local eff_tail_dist = tail_dist * cfg.range_mod
     local eff_peak = math.min(95, peak * bm)
@@ -2972,12 +3002,19 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
       local lambda = math.log(100.0) / eff_tail_dist
       raw = eff_peak * math.exp(-lambda * (d - mu))
     end
-    -- Stochastic jitter ±10% (v8)
+    -- Tapering residual floor (v9): floor full inside engagement band (d <= mu),
+    -- attenuates with R^2-like falloff past mu over 2.5x the main decay distance.
+    -- Prevents artificial hard cliff at 200nm cap; matches real radar/jammer physics.
+    local eff_floor = floor * bm
+    if eff_floor > 0 and d > mu then
+      local floorLambda = math.log(100.0) / (eff_tail_dist * 2.5)
+      eff_floor = eff_floor * math.exp(-floorLambda * (d - mu))
+    end
+    raw = math.max(eff_floor, raw)
+    -- Stochastic jitter ±10% applied AFTER floor (v9), so residual also varies.
+    -- Prevents gameable flat long-range value. Reflects S/N, RCS, atmospheric fluctuation.
     local jitter = 1.0 + (math.random() * 2 - 1) * (self.JammerJitterPercent or 0.10)
     raw = raw * jitter
-    -- Minimum effectiveness floor (residual noise injection, v8)
-    local eff_floor = (floor or 0) * bm
-    raw = math.max(eff_floor, raw)
     return math.max(0, math.min(95, raw)) / 100.0
   end
 
