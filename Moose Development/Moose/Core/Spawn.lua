@@ -2430,8 +2430,13 @@ function SPAWN:SpawnAtAirbase( SpawnAirbase, Takeoff, TakeoffAltitude, TerminalT
       -- When spawned in the air, we need to generate a Takeoff Event.
       if Takeoff == GROUP.Takeoff.Air then
         for UnitID, UnitSpawned in pairs( GroupSpawned:GetUnits() ) do
-          --SCHEDULER:New( nil, BASE.CreateEventTakeoff, { GroupSpawned, timer.getTime(), UnitSpawned:GetDCSObject() }, 5 )  --No need to create a new SCHEDULER instance every time!
-          self:ScheduleOnce(5, BASE.CreateEventTakeoff, {GroupSpawned, timer.getTime(), UnitSpawned:GetDCSObject()})
+          -- BASE:ScheduleOnce forwards its trailing args to the scheduled function as
+          -- varargs, so they must NOT be wrapped in a table here (unlike SCHEDULER:New,
+          -- which takes a single argument table). Passing a table made it argument #1,
+          -- i.e. CreateEventTakeoff ran with that table as `self`, so the takeoff event
+          -- never fired and air-spawned groups (e.g. AI_A2A_DISPATCHER GCI defenders)
+          -- never activated.
+          self:ScheduleOnce(5, BASE.CreateEventTakeoff, GroupSpawned, timer.getTime(), UnitSpawned:GetDCSObject())
         end
       end
 
