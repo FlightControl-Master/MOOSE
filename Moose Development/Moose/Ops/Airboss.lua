@@ -2717,17 +2717,27 @@ function AIRBOSS:DeleteRecoveryWindow( Window, Delay )
     self:ScheduleOnce( Delay, self.DeleteRecoveryWindow, self, Window )
   else
 
-    for i, _recovery in pairs( self.recoverytimes ) do
-      local recovery = _recovery -- #AIRBOSS.Recovery
+    if not Window then
+      return
+    end
 
-      if Window and Window.ID == recovery.ID then
-        if Window.OPEN then
-          -- Window is currently open.
-          self:RecoveryStop()
-        else
-          table.remove( self.recoverytimes, i )
-        end
+    -- If this window is currently open, stop recovery first. Mark it OVER so the
+    -- recovery time check cannot re-open it before/while we remove it.
+    if Window.OPEN then
+      Window.OPEN = false
+      Window.OVER = true
+      if self:IsRecovering() then
+        self:RecoveryStop()
+      end
+    end
 
+    -- Remove the window from the queue by its unique ID. Iterate over a numerically
+    -- indexed copy of the keys and remove via ipairs-safe reverse loop so that the
+    -- removal does not corrupt traversal (the window may appear once).
+    for i = #self.recoverytimes, 1, -1 do
+      local recovery = self.recoverytimes[i] -- #AIRBOSS.Recovery
+      if recovery and recovery.ID == Window.ID then
+        table.remove( self.recoverytimes, i )
       end
     end
   end
@@ -4078,15 +4088,23 @@ function AIRBOSS:_CheckRecoveryTimes()
         if self:IsRecovering() then
           -- Carrier is already recovering.
           state = "in progress"
-        else
-          -- Start recovery.
+        elseif not recovery.OVER then
+          -- Start recovery. Only if the window has not already been closed/cancelled.
+          -- The OVER guard prevents a window that was stopped manually (e.g. via the
+          -- Skipper "Stop Recovery" menu) from being immediately re-opened on the next
+          -- status tick while its [START,STOP) range is still active.
           self:RecoveryStart( recovery.CASE, recovery.OFFSET )
           state = "starting now"
           recovery.OPEN = true
+        else
+          -- Window was already closed/cancelled within its active time range.
+          state = "cancelled"
         end
 
-        -- Set current recovery window.
-        currwindow = recovery
+        -- Set current recovery window (unless this window has been cancelled).
+        if not recovery.OVER then
+          currwindow = recovery
+        end
 
       else -- Stop time HAS passed.
 
@@ -4361,11 +4379,20 @@ function AIRBOSS:onafterRecoveryStop( From, Event, To )
     self:CarrierResumeRoute( coord )
   end
 
-  -- Delete current recovery window if open.
-  if self.recoverywindow and self.recoverywindow.OPEN == true then
+  -- Mark the current recovery window closed and cancelled, then remove it from the
+  -- queue. We do NOT gate this on Window.OPEN: that flag is only set by
+  -- _CheckRecoveryTimes (not by RecoveryStart), and the recovery time check nils and
+  -- rebuilds self.recoverywindow every status tick, so OPEN is not a reliable signal
+  -- here. Setting OVER=true is what actually prevents the window from being re-opened
+  -- on the next tick while its [START,STOP) range is still active.
+  --
+  -- The removal is deferred by one tick (Delay>0) so it does not mutate the
+  -- recoverytimes table while _CheckRecoveryTimes may be iterating over it (the natural
+  -- close path calls RecoveryStop() from inside that loop).
+  if self.recoverywindow then
     self.recoverywindow.OPEN = false
     self.recoverywindow.OVER = true
-    self:DeleteRecoveryWindow( self.recoverywindow )
+    self:DeleteRecoveryWindow( self.recoverywindow, 1 )
   end
 
   -- Check recovery windows. This sets self.recoverywindow to the next window.
