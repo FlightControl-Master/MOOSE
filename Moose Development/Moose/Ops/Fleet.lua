@@ -167,6 +167,9 @@ function FLEET:New(WarehouseName, FleetName)
   -- @param Ops.NavyGroup#NAVYGROUP NavyGroup The NAVYGROUP on mission.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
+  -- Add legion to DB
+  _DATABASE:AddLegion(self)
+
   return self
 end
 

@@ -73,6 +73,9 @@ function FLOTILLA:New(TemplateGroupName, Ngroups, FlotillaName)
   -- Get initial ammo.
   self.ammo=self:_CheckAmmo()
 
+  -- Add cohort to DB
+  _DATABASE:AddCohort(self)
+
   return self
 end
 

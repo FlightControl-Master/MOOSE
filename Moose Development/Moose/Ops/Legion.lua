@@ -306,9 +306,6 @@ function LEGION:New(WarehouseName, LegionName)
   -- @param Ops.Cohort#COHORT Cohort The cohort the asset belongs to.
   -- @param Functional.Warehouse#WAREHOUSE.Assetitem Asset The asset that returned.
 
-  -- Add legion to DB
-   _DATABASE:AddLegion(self)
-
   return self
 end
 

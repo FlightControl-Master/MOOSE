@@ -290,6 +290,9 @@ function AIRWING:New(warehousename, airwingname)
   -- @param Ops.FlightGroup#FLIGHTGROUP FlightGroup  The FLIGHTGROUP on mission.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
+  -- Add legion to DB
+  _DATABASE:AddLegion(self)
+
   return self
 end
 

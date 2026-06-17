@@ -116,6 +116,9 @@ function SQUADRON:New(TemplateGroupName, Ngroups, SquadronName)
 
   -- See COHORT class
 
+  -- Add cohort to DB
+  _DATABASE:AddCohort(self)
+
   return self
 end
 

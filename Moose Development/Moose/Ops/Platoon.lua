@@ -71,6 +71,9 @@ function PLATOON:New(TemplateGroupName, Ngroups, PlatoonName)
 
   -- Get ammo.
   self.ammo=self:_CheckAmmo()
+  
+  -- Add cohort to DB
+  _DATABASE:AddCohort(self)  
 
   return self
 end

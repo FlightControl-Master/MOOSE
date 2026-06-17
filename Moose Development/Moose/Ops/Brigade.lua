@@ -150,6 +150,9 @@ function BRIGADE:New(WarehouseName, BrigadeName)
   -- @param Ops.ArmyGroup#ARMYGROUP ArmyGroup The ARMYGROUP on mission.
   -- @param Ops.Auftrag#AUFTRAG Mission The mission.
 
+  -- Add legion to DB
+  _DATABASE:AddLegion(self)
+
   return self
 end
 
