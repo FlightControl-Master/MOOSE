@@ -544,6 +544,47 @@ function AIRWING:AddPayloadCapability(Payload, MissionTypes, Performance)
   return self
 end
 
+--- Filter available payloads for a given aircraft type and mission type.
+-- @param #AIRWING self
+-- @param #string UnitType The type of the unit.
+-- @param #string MissionType The mission type.
+-- @param #table Payloads Specific payloads only to be considered.
+-- @return #AIRWING.Payload Payload table or *nil*.
+function AIRWING:_FilterPlayloads(UnitType, MissionType, Payloads)
+
+  local function _checkPayloads(payload)
+    if Payloads then
+      for _,Payload in pairs(Payloads) do
+        if Payload.uid==payload.uid then
+          return true
+        end
+      end
+    else
+      -- Payload was not specified.
+      return nil
+    end
+    return false
+  end
+
+  -- Pre-selection: filter out only those payloads that are valid for the airframe and mission type and are available.
+  local payloads={}
+  
+  for _,_payload in pairs(self.payloads) do
+    local payload=_payload --#AIRWING.Payload
+
+    local specialpayload=_checkPayloads(payload)
+    local compatible=AUFTRAG.CheckMissionCapability(MissionType, payload.capabilities)
+
+    local goforit = specialpayload or (specialpayload==nil and compatible)
+
+    if payload.aircrafttype==UnitType and payload.navail>0 and goforit then
+      table.insert(payloads, payload)
+    end
+  end
+
+  return payloads
+end
+
 --- Fetch a payload from the airwing resources for a given unit and mission type.
 -- The payload with the highest priority is preferred.
 -- @param #AIRWING self
@@ -592,34 +633,7 @@ function AIRWING:FetchPayloadFromStock(UnitType, MissionType, Payloads)
     end
   end
 
-  local function _checkPayloads(payload)
-    if Payloads then
-      for _,Payload in pairs(Payloads) do
-        if Payload.uid==payload.uid then
-          return true
-        end
-      end
-    else
-      -- Payload was not specified.
-      return nil
-    end
-    return false
-  end
-
-  -- Pre-selection: filter out only those payloads that are valid for the airframe and mission type and are available.
-  local payloads={}
-  for _,_payload in pairs(self.payloads) do
-    local payload=_payload --#AIRWING.Payload
-
-    local specialpayload=_checkPayloads(payload)
-    local compatible=AUFTRAG.CheckMissionCapability(MissionType, payload.capabilities)
-
-    local goforit = specialpayload or (specialpayload==nil and compatible)
-
-    if payload.aircrafttype==UnitType and payload.navail>0 and goforit then
-      table.insert(payloads, payload)
-    end
-  end
+  local payloads=self:_FilterPlayloads(UnitType, MissionType, Payloads)
 
   -- Debug.
   if self.verbose>=4 then

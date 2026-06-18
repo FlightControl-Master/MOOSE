@@ -153,7 +153,7 @@ _TARGETID=0
 
 --- TARGET class version.
 -- @field #string version
-TARGET.version="0.7.1"
+TARGET.version="0.8.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -206,6 +206,9 @@ function TARGET:New(TargetObject)
   self:AddTransition("*",                  "Status",              "*")           -- Status update.
   self:AddTransition("*",                  "Stop",                "Stopped")     -- Stop FSM.
   
+  self:AddTransition("*",                  "ElementDestroyed",     "*")           -- A target element was destroyed.
+  self:AddTransition("*",                  "ElementDead",          "*")           -- A target element is dead (destroyed or despawned).
+    
   self:AddTransition("*",                  "ObjectDamaged",       "*")           -- A target object was damaged.  
   self:AddTransition("*",                  "ObjectDestroyed",     "*")           -- A target object was destroyed.
   self:AddTransition("*",                  "ObjectDead",          "*")           -- A target object is dead (destroyed or despawned).
@@ -243,6 +246,19 @@ function TARGET:New(TargetObject)
   -- @function [parent=#TARGET] __Status
   -- @param #TARGET self
   -- @param #number delay Delay in seconds.
+
+
+  --- Triggers the FSM event "ElementDestroyed".
+  -- @function [parent=#TARGET] ElementDestroyed
+  -- @param #TARGET self
+  -- @param #string ElementName Name of the element.
+  -- @param #TARGET.Object Target Target object.
+
+  --- Triggers the FSM event "ElementDead".
+  -- @function [parent=#TARGET] ElementDead
+  -- @param #TARGET self
+  -- @param #string ElementName Name of the element.
+  -- @param #TARGET.Object Target Target object.
 
 
   --- Triggers the FSM event "ObjectDamaged".
@@ -642,6 +658,19 @@ function TARGET:onafterStatus(From, Event, To)
   
   -- FSM state.
   local fsmstate=self:GetState()
+  
+  -- First we check any target has been destroyed and the dead/unitlost event was not fired
+  for i,_target in pairs(self.targets) do
+    local target=_target --#TARGET.Object
+    local life=self:GetTargetLife(target)
+    if life<1 and target.Status~=TARGET.ObjectStatus.DEAD then
+      self:E(self.lid..string.format("FF life is zero but no object dead event fired ==> waiting for target object %s events!", tostring(target.Name)))
+      -- We wait 60 seconds for the events to occur
+      self:__Status(-60)
+      return self
+    end
+    
+  end  
     
   -- Update damage.
   local damaged=false
@@ -736,6 +765,61 @@ end
 -- FSM Events
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- On after "ElementDestroyed" event.
+-- @param #TARGET self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string Name Name of the element.
+-- @param #TARGET.Object Target Target object.
+function TARGET:onafterElementDestroyed(From, Event, To, Name, Target)
+  -- Debug message.
+  self:T(self.lid..string.format("Element %s of target object %s destroyed", Name, Target.Name))
+  
+  -- Increase destroyed counter.
+  Target.Ndestroyed=Target.Ndestroyed+1
+  
+  -- Increase dead counter.
+  self.Ndestroyed=self.Ndestroyed+1
+  
+  self:ElementDead(Name, Target)
+  
+  return self
+end
+
+
+--- On after "ElementDead" event.
+-- @param #TARGET self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #string Name Name of the element.
+-- @param #TARGET.Object Target Target object.
+function TARGET:onafterElementDead(From, Event, To, Name, Target)
+  -- Debug message.
+  self:T(self.lid..string.format("Element %s of target object %s dead", Name, Target.Name))
+  
+  -- Increase dead counter.
+  Target.Ndead=Target.Ndead+1
+  
+  -- Increase dead counter.
+  self.Ndead=self.Ndead+1
+  
+  -- All dead ==> Trigger event.
+  if Target.Ndestroyed==Target.N0 then
+      
+    self:ObjectDestroyed(Target)
+      
+  elseif Target.Ndead==Target.N0 then
+    
+    self:ObjectDead(Target)
+    
+  end
+  
+  return self
+end
+
+
 --- On after "ObjectDamaged" event.
 -- @param #TARGET self
 -- @param #string From From state.
@@ -761,11 +845,6 @@ function TARGET:onafterObjectDestroyed(From, Event, To, Target)
   -- Debug message.
   self:T(self.lid..string.format("Object %s destroyed", Target.Name))
   
-  -- Increase destroyed counter.
-  self.Ndestroyed=self.Ndestroyed+1
-  
-  Target.Ndestroyed=Target.Ndestroyed+1
-  
   Target.Life=0
   
   -- Call object dead event.
@@ -787,16 +866,10 @@ function TARGET:onafterObjectDead(From, Event, To, Target)
 
   -- Set target status.
   Target.Status=TARGET.ObjectStatus.DEAD
-  
-  -- Increase dead object counter
-  Target.Ndead=Target.Ndead+1
-  
+    
   -- Set target object life to 0.
   Target.Life=0
-  
-  -- Increase dead counter.
-  self.Ndead=self.Ndead+1
-  
+    
   -- Check if anyone is alive?
   local dead=true
   for _,_target in pairs(self.targets) do
@@ -889,54 +962,21 @@ function TARGET:OnEventUnitDeadOrLost(EventData)
     -- Add to the list of casualties.
     table.insert(self.casualties, Name)
         
-    -- Try to get target Group.
-    local target=self:GetTargetByName(EventData.IniGroupName)
-    
-    -- Try unit target.
-    if not target then    
-      target=self:GetTargetByName(EventData.IniUnitName)      
-    end
+    -- Get target from Group or Unit.
+    local target=self:GetTargetByName(EventData.IniGroupName) or self:GetTargetByName(EventData.IniUnitName)
     
     -- Check if we could find a target object.
     if target then
     
-      local Ndead=target.Ndead
-      local Ndestroyed=target.Ndestroyed
+      -- Increase dead/destroyed counter
       if EventData.id==EVENTS.RemoveUnit then
-        Ndead=Ndead+1
+        self:ElementDead(Name, target)
       else
-        Ndestroyed=Ndestroyed+1
-        Ndead=Ndead+1
-      end
-      
-      
-      -- Check if ALL objects are dead
-      if Ndead==target.N0 then
-      
-        if Ndestroyed>=target.N0 then
-
-          -- Debug message.
-          self:T2(self.lid..string.format("EVENT ID=%d: target %s dead/lost ==> destroyed", EventData.id, tostring(target.Name)))
-          
-          target.Life = 0
-          
-          -- Trigger object destroyed event. This sets the Life to zero and increases Ndestroyed
-          self:ObjectDestroyed(target)
-          
-        else
-        
-          -- Debug message.
-          self:T2(self.lid..string.format("EVENT ID=%d: target %s removed ==> dead", EventData.id, tostring(target.Name)))
-          
-          target.Life = 0
-          
-          -- Trigger object dead event.  This sets the Life to zero and increases Ndead counter
-          self:ObjectDead(target)
-        
-        end
-      
+        self:ElementDestroyed(Name, target)
       end
 
+    else
+      self:E(self.lid..string.format("ERROR: Could not get target from IniGroup or IniUnit name when event Dead or UnitLost occured! Stats are not correctly updated :("))
     end -- Event belongs to this TARGET 
     
   end
