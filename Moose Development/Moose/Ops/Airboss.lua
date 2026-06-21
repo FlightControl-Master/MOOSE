@@ -4201,13 +4201,16 @@ function AIRBOSS:_CheckRecoveryTimes()
         -- Time into the wind 1 day or if longer recovery time + the 5 min early.
         local t = math.max( nextwindow.STOP - nextwindow.START + self.dTturn, 60 * 60 * 24 )
 
-        -- Recovery wind on deck in knots.
+         -- Recovery wind on deck in knots.
+        -- NOTE: Do NOT clamp the desired wind-over-deck (WOD) to the carrier's max hull
+        -- speed here. WOD = carrier speed + headwind, so a WOD target above the hull's
+        -- top speed is achievable whenever there is wind. CarrierTurnIntoWind ->
+        -- GetHeadingIntoWind already converts the WOD target into the required hull
+        -- speed and caps THAT at the carrier's max speed (Vmax) internally. Clamping the
+        -- WOD target itself capped achievable WOD at ~30 kts (the supercarrier's max
+        -- hull speed) even in strong wind, which made high-WOD recovery windows fall
+        -- short of their requested value.
         local v = UTILS.KnotsToMps( nextwindow.SPEED )
-
-        -- Check that we do not go above max possible speed.
-        local vmax = self.carrier:GetSpeedMax() / 3.6 -- convert to m/s
-        v = math.min( v, vmax )
-
         -- Route carrier into the wind. Sets self.turnintowind=true
         self:CarrierTurnIntoWind( t, v, uturn )
 
