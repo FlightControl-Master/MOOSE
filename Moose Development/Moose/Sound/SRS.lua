@@ -2108,7 +2108,7 @@ function MSRS:_HoundTextToSpeech(Message,Frequencies,Modulations,Volume,Label,Co
     
   local ffs = {}
   for _,_f in pairs(Frequencies) do
-    table.insert(ffs,string.format("%.1f",_f))
+    table.insert(ffs,string.format("%.3f",_f))
   end
   
   local freqs = table.concat(ffs, ",")
@@ -2214,7 +2214,7 @@ function MSRS:_HoundTestTone(Frequencies, Modulations, Coalition)
  
  local ffs = {}
   for _,_f in pairs(Frequencies or self.frequencies) do
-    table.insert(ffs,string.format("%.1f",_f))
+    table.insert(ffs,string.format("%.3f",_f))
   end
   
  local freqs = table.concat(ffs, ",")
@@ -2291,7 +2291,7 @@ function MSRS:RadioJammerOn(Frequencies, Modulations, Coalition, Noisetype, Volu
  
  local ffs = {}
   for _,_f in pairs(Frequencies or self.frequencies) do
-    table.insert(ffs,string.format("%.1f",_f))
+    table.insert(ffs,string.format("%.3f",_f))
   end
   
  local freqs = table.concat(ffs, ",")
