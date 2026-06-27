@@ -135,6 +135,7 @@
 --          local mywing = EASYGCICAP:New("Blue CAP Operations",AIRBASE.Caucasus.Kutaisi,"blue","Blue EWR")
 --          
 --          -- Add a CAP patrol point belonging to our airbase, we'll be at 30k ft doing 400 kn, initial direction 90 degrees (East), leg 20NM
+--          -- NOTE - Skip this function and do not create CAP Points if you want GCI behaviour only.
 --          mywing:AddPatrolPointCAP(AIRBASE.Caucasus.Kutaisi,ZONE:FindByName("Blue Zone 1"):GetCoordinate(),30000,400,90,20)
 --          
 --          -- Add a Squadron with template "Blue Sq1 M2000c", 20 airframes, skill good, Modex starting with 102 and skin "Vendee Jeanne"
@@ -286,7 +287,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.36"
+EASYGCICAP.version="0.1.37"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- 
@@ -754,6 +755,15 @@ end
 function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   self:T(self.lid.."_AddAirwing "..Airbasename)
   
+    -- Gather Some Stats
+  local function counttable(tbl)
+    local count = 0
+    for _,_data in pairs(tbl) do
+      count = count + 1
+    end
+    return count
+  end
+  
   local CapFormation = self.CapFormation
   local DespawnAfterLanding = self.DespawnAfterLanding
   local DespawnAfterHolding = self.DespawnAfterHolding
@@ -772,7 +782,11 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   CAP_Wing:SetMarker(false)
   CAP_Wing:SetAirbase(AIRBASE:FindByName(Airbasename))
   CAP_Wing:SetRespawnAfterDestroyed()
-  CAP_Wing:SetNumberCAP(self.capgrouping)
+  
+  --- #DONE avoid wings with no CAP points starting CAP anyhow; AirWing uses this to start CAP and creates points when there are none.
+  if counttable(self.ManagedCP) >0 then
+    CAP_Wing:SetNumberCAP(self.capgrouping)
+  end
   CAP_Wing:SetCapCloseRaceTrack(true)
     
   if self.showpatrolpointmarks then
@@ -1039,7 +1053,7 @@ function EASYGCICAP:_SetCAPPatrolPoints()
       MESSAGE:New(self.lid.."You are trying to create a CAP point for which there is no wing! "..tostring(data.AirbaseName),30,"CHECK"):ToAllIf(self.debug):ToLog()
       return
     end
-    local Wing = self.wings[data.AirbaseName][1] -- Ops.Airwing#AIRWING
+    local Wing = self.wings[data.AirbaseName][1] -- Ops.AirWing#AIRWING
     local Coordinate = data.Coordinate
     local Altitude = data.Altitude
     local Speed = data.Speed 
