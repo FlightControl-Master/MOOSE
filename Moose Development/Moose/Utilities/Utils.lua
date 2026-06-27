@@ -2378,6 +2378,11 @@ function UTILS.IsLoadingDoorOpen( unit_name )
           BASE:T(unit_name .. " front door(s) are open or doors removed")
           return true
       end
+        
+      if type_name == "Ka-50_3" and unit:getDrawArgumentValue(38) == 1 then
+          BASE:T(unit_name .. " cockpit door is open")
+          return true
+      end
 
       if type_name=="C-130J-30" and (unit:getDrawArgumentValue(86)==1)then
         BASE:T(unit_name.." rear doors are open")
