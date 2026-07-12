@@ -523,7 +523,7 @@ ENUMS.ReportingName =
     Tornado = "Tornado",
     -- Transport / Bomber / Others
     Atlas = "A400",
-    Lancer = "B1-B",
+    Lancer = "B-1B",
     Stratofortress = "B-52H",
     Herc = "C-130",
     Hercules = "C-130J-30",
@@ -568,7 +568,7 @@ ENUMS.ReportingName =
     Apache = "AH-64",
     Chinook = "CH-47",
     Sea_Stallion = "CH-53",
-    Kiowa = "OH-58",
+    Kiowa = "OH58D",
     Seahawk = "SH-60",
     Blackhawk = "UH-60",
     Sea_King = "S-61",
