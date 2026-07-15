@@ -524,6 +524,137 @@ MANTIS.SamDataCH = {
    ["Lvkv9040M CHM"] = { Range=2, Blindspot=0.1, Height=1.2, Type="Point", Radar="LvKv9040",Point="true" },   
 }
 
+
+--- @type MANTIS.SamDataNaval
+MANTIS.SamDataNaval = {
+  ---------------------------------------------------------------------
+  -- CurrentHill (CH) surface combatants
+  ---------------------------------------------------------------------
+  -- USA -- AEGIS / SM-family, S-band (SPY-1) or S-band AESA (SPY-6)
+  ["Ticonderoga"]        = { Range=150, Blindspot=4, Height=33, Type="Long",   Radar="CH_Ticonderoga" },
+  ["Ticonderoga CMP"]    = { Range=150, Blindspot=4, Height=33, Type="Long",   Radar="CH_Ticonderoga_CMP" },
+  ["Arleigh Burke IIA"]  = { Range=150, Blindspot=4, Height=33, Type="Long",   Radar="CH_Arleigh_Burke_IIA" },
+  ["Arleigh Burke III"]  = { Range=180, Blindspot=3, Height=33, Type="Long",   Radar="CH_Arleigh_Burke_III" },
+  ["Constellation"]      = { Range=120, Blindspot=3, Height=27, Type="Long",   Radar="CH_Constellation" },
+
+  -- UK
+  ["Type 45"]            = { Range=120, Blindspot=3, Height=30, Type="Long",   Radar="Type45" },            -- Aster 15/30, SAMPSON
+  ["Type 26"]            = { Range=25,  Blindspot=1, Height=10, Type="Medium", Radar="CH_Type26" },          -- Sea Ceptor / CAMM
+
+  -- Germany
+  ["F124 Sachsen"]       = { Range=120, Blindspot=3, Height=24, Type="Long",   Radar="CH_F124" },            -- SM-2/ESSM, APAR (X-band)
+
+  -- China
+  ["Type 052D"]          = { Range=100, Blindspot=5, Height=27, Type="Long",   Radar="Type052D" },           -- HHQ-9
+  ["Type 055"]           = { Range=150, Blindspot=5, Height=30, Type="Long",   Radar="Type055" },            -- HHQ-9B
+  ["Type 054B"]          = { Range=70,  Blindspot=2, Height=20, Type="Medium", Radar="CH_Type054B" },         -- HHQ-16
+  ["Type 056A"]          = { Range=9,   Blindspot=0.3, Height=6, Type="Point", Radar="CH_Type056A", Point="true" }, -- HHQ-10 (IR)
+
+  -- Russia
+  ["Admiral Gorshkov"]   = { Range=150, Blindspot=3, Height=30, Type="Long",   Radar="CH_Admiral_Gorshkov" }, -- Poliment-Redut 9M96D
+  ["Grigorovich AShM"]   = { Range=50,  Blindspot=2, Height=15, Type="Medium", Radar="CH_Grigorovich_AShM" }, -- Shtil-1
+  ["Grigorovich LACM"]   = { Range=50,  Blindspot=2, Height=15, Type="Medium", Radar="CH_Grigorovich_LACM" },
+  ["Steregushchiy"]      = { Range=50,  Blindspot=1.5, Height=20, Type="Medium", Radar="CH_Steregushchiy" },  -- Redut 9M96
+  ["Gremyashchiy AShM"]  = { Range=50,  Blindspot=1.5, Height=20, Type="Medium", Radar="CH_Gremyashchiy_AShM" },
+  ["Gremyashchiy LACM"]  = { Range=50,  Blindspot=1.5, Height=20, Type="Medium", Radar="CH_Gremyashchiy_LACM" },
+  ["Karakurt AShM"]      = { Range=20,  Blindspot=1, Height=15, Type="Point",  Radar="CH_Karakurt_AShM", Point="true" }, -- Pantsir-M
+  ["Karakurt LACM"]      = { Range=20,  Blindspot=1, Height=15, Type="Point",  Radar="CH_Karakurt_LACM", Point="true" },
+
+  -- Point-defense / MANPADS-only hulls (treated as close-in; also usable as EWR pickets)
+  ["Type 022 FAC"]       = { Range=5,   Blindspot=0.2, Height=4, Type="Point", Radar="CH_Type022", Point="true" },
+  ["IRGCN FAC AShM"]     = { Range=5,   Blindspot=0.2, Height=4, Type="Point", Radar="CH_IranFAC_MG", Point="true" },       -- MANPADS
+  ["IRGCN FAC Igla"]     = { Range=5,   Blindspot=0.2, Height=4, Type="Point", Radar="CH_IranFAC_MG_AShM", Point="true" },  -- Igla
+  ["Strb 90 FAC"]        = { Range=4,   Blindspot=0.2, Height=3, Type="Point", Radar="Strb90", Point="true" },
+  ["Visby"]              = { Range=4,   Blindspot=0.2, Height=3, Type="Point", Radar="HSwMS_Visby", Point="true" },         -- gun/CIWS
+
+  ---------------------------------------------------------------------
+  -- Base-game DCS surface combatants  (type ids from pydcs / DCS export)
+  -- Only air-defence-capable hulls are listed. Pure-gun / no-AD hulls
+  -- (Leander gun refits, La Combattante, cargo, subs, WWII) are omitted
+  -- on purpose; add them as POINT if you want them to appear at all.
+  ---------------------------------------------------------------------
+  -- USA
+  ["CG Ticonderoga"]        = { Range=120, Blindspot=3, Height=30, Type="Long",   Radar="TICONDEROG" },  -- SM-2/SPY-1  NOTE: id has NO trailing 'E'
+  ["DDG Arleigh Burke IIa"] = { Range=120, Blindspot=3, Height=30, Type="Long",   Radar="USS_Arleigh_Burke_IIa" }, -- SM-2/SPY-1D
+  ["FFG Perry"]             = { Range=38,  Blindspot=2, Height=15, Type="Medium", Radar="PERRY" },        -- SM-1MR (est. real range)
+  ["CVN Roosevelt"]         = { Range=15,  Blindspot=1, Height=8,  Type="Point",  Radar="CVN_71", Point="true" }, -- NSSM/RAM
+  ["CVN Lincoln"]           = { Range=15,  Blindspot=1, Height=8,  Type="Point",  Radar="CVN_72", Point="true" },
+  ["CVN Washington"]        = { Range=15,  Blindspot=1, Height=8,  Type="Point",  Radar="CVN_73", Point="true" },
+  ["CVN Stennis"]           = { Range=15,  Blindspot=1, Height=8,  Type="Point",  Radar="Stennis", Point="true" },
+  ["CVN Truman"]            = { Range=15,  Blindspot=1, Height=8,  Type="Point",  Radar="CVN_75", Point="true" },
+  ["CVN Vinson"]            = { Range=15,  Blindspot=1, Height=8,  Type="Point",  Radar="VINSON", Point="true" },
+  ["LHA Tarawa"]            = { Range=15,  Blindspot=1, Height=8,  Type="Point",  Radar="LHA_Tarawa", Point="true" }, -- RAM/Sea Sparrow
+  -- Russia
+  ["Cruiser Moskva"]        = { Range=75,  Blindspot=5, Height=25, Type="Long",   Radar="MOSCOW" },       -- S-300F (SA-N-6)
+  ["BC Pyotr Velikiy"]      = { Range=150, Blindspot=5, Height=27, Type="Long",   Radar="PIOTR" },        -- S-300F/FM
+  ["Frigate Neustrashimy"]  = { Range=12,  Blindspot=1, Height=6,  Type="Short",  Radar="NEUSTRASH" },    -- Kinzhal (SA-N-9)
+  ["Frigate Rezky"]         = { Range=15,  Blindspot=1, Height=5,  Type="Short",  Radar="REZKY" },        -- OSA-M (SA-N-4)
+  ["Corvette Grisha"]       = { Range=15,  Blindspot=1, Height=5,  Type="Short",  Radar="ALBATROS" },     -- OSA-M (SA-N-4)
+  ["Corvette Molniya"]      = { Range=5,   Blindspot=0.3, Height=3, Type="Point", Radar="MOLNIYA", Point="true" }, -- Strela
+  ["CV Kuznetsov"]          = { Range=12,  Blindspot=1, Height=6,  Type="Short",  Radar="KUZNECOW" },     -- Kinzhal/Kashtan
+  ["CV Kuznetsov 2017"]     = { Range=12,  Blindspot=1, Height=6,  Type="Short",  Radar="CV_1143_5" },
+  ["Patrol Bykov TorM2KM"]  = { Range=15,  Blindspot=1, Height=6,  Type="Short",  Radar="CHAP_Project22160_TorM2KM" }, -- Tor
+  ["Patrol Bykov"]          = { Range=7,   Blindspot=0.3, Height=4, Type="Point", Radar="CHAP_Project22160", Point="true" },
+  -- China
+  ["Type 052C"]             = { Range=100, Blindspot=5, Height=27, Type="Long",   Radar="Type_052C" },    -- HHQ-9
+  ["Type 052B"]             = { Range=30,  Blindspot=2, Height=15, Type="Medium", Radar="Type_052B" },    -- HHQ-16/Shtil
+  ["Type 054A"]             = { Range=45,  Blindspot=2, Height=18, Type="Medium", Radar="Type_054A" },    -- HHQ-16
+  ["Type 071 LPD"]          = { Range=9,   Blindspot=0.5, Height=6, Type="Point", Radar="Type_071", Point="true" }, -- HHQ-10
+  -- UK
+  ["HMS Invincible"]        = { Range=40,  Blindspot=2, Height=18, Type="Medium", Radar="hms_invincible" }, -- Sea Dart
+
+  ---------------------------------------------------------------------
+  -- desdemicabina-simulation 3.2 (Spanish/Australian navies)
+  -- AEGIS hulls: two ship_MK41_SM2 launchers (SM-2, 64 cells) + AEGIS-class
+  -- trackers (150km/30km alt, ECM_K 0.5). NOTE: this pack's airWeaponDist=45km
+  -- UNDERSTATES the fit -- Range below follows the SM-2 launcher (~100km), the
+  -- inverse of the Admiral pack's inflated values.
+  ---------------------------------------------------------------------
+  ["HMAS Hobart DDG-39"]       = { Range=100, Blindspot=3, Height=30, Type="Long",  Radar="DDG39" }, -- AEGIS SPY-1D(V), SM-2
+  ["F100 Alvaro de Bazan"]     = { Range=100, Blindspot=3, Height=30, Type="Long",  Radar="F100" },  -- AEGIS SPY-1D, SM-2
+  ["F105 Cristobal Colon"]     = { Range=100, Blindspot=3, Height=30, Type="Long",  Radar="F105" },  -- AEGIS SPY-1D, SM-2
+  ["LHD Canberra L02"]         = { Range=3,   Blindspot=0.1, Height=2, Type="Point", Radar="L02", Point="true" }, -- 3x Phalanx only
+  ["LPD Castilla L52"]         = { Range=3,   Blindspot=0.1, Height=2, Type="Point", Radar="L52", Point="true" }, -- 2x Phalanx (NO_SAM attr)
+  ["LHD Juan Carlos I L61"]    = { Range=1.5, Blindspot=0.1, Height=0.8, Type="Point", Radar="L61", Point="true" }, -- .50cal mounts only
+
+  ---------------------------------------------------------------------
+  -- Admiral mod surface combatants
+  -- Worked example (USS America LHA-6). Read each field from the ship's
+  -- GT def file:
+  --   Radar     <- GT.Name  (the typeName; the essential, non-guessable key)
+  --   Range     <- GT.airWeaponDist / 1000            (20000 -> 20)
+  --   Height    <- launcher max_trg_alt / 1000        (15000 -> 15)
+  --   Blindspot <- launcher distanceMin / 1000        (400   -> 0.4)
+  --   Type      <- from armament fit (Sea Sparrow => SHORT)
+  ---------------------------------------------------------------------
+  ["USS America LHA-6"] = { Range=20, Blindspot=0.4, Height=15, Type="Short", Radar="USS America LHA-6" }, -- Sea Sparrow + RAM + Phalanx
+
+  -- IMPORTANT: these Range values come from the actual weapon launcher's distanceMax
+  -- / the real system, NOT GT.airWeaponDist (which is unreliable here -- e.g. Blue
+  -- Ridge and Henry Kaiser both claim 100-150km with only CIWS/MGs).
+  -- LONG -- area SAM
+  ["HMS Duncan (Type 45)"]     = { Range=100, Blindspot=3, Height=30, Type="Long",   Radar="HMS Duncan" },             -- Aster/Sea Viper (mod: MK41_SM2)
+  ["Aquitaine D650 (FREMM)"]   = { Range=120, Blindspot=3, Height=27, Type="Long",   Radar="Aquitaine D650" },          -- SYLVER Aster 30 (distanceMax 120km)
+  ["Normandie D651 (FREMM)"]   = { Range=120, Blindspot=3, Height=27, Type="Long",   Radar="D651_Normandie" },          -- SYLVER Aster 30
+  -- MEDIUM
+  ["MEKO-200HN Hydra"]         = { Range=50,  Blindspot=2, Height=20, Type="Medium", Radar="MEKO_HN" },                 -- MK41 (mod SM-2 / real ESSM)
+  ["MEKO-200TN Barbaros"]      = { Range=50,  Blindspot=2, Height=20, Type="Medium", Radar="MEKO_TN" },                 -- MK41 + SeaZenith CIWS
+  ["Sovremenny Adm. Ushakov"]  = { Range=46,  Blindspot=2, Height=15, Type="Medium", Radar="Admiral Ushakov" },         -- SA-N-7 Gadfly
+  -- SHORT
+  ["Udaloy II Chabanenko"]     = { Range=12,  Blindspot=1, Height=6,  Type="Short",  Radar="Udaloy II DDG Admiral Chabanenko" }, -- SA-N-9 Klinok
+  ["USS San Antonio LPD-17"]   = { Range=15,  Blindspot=1, Height=8,  Type="Short",  Radar="USS San Antonio LPD-17" },  -- Sea Sparrow
+  -- POINT -- CIWS / RAM / gun / IR only (no area SAM); unjammable in the jammer table
+  ["USS Oak Hill LSD-51"]      = { Range=9,   Blindspot=0.5, Height=6, Type="Point", Radar="USS_Oak_Hill LSD-51", Point="true" }, -- RAM + Phalanx
+  ["USS Blue Ridge LCC-19"]    = { Range=3,   Blindspot=0.1, Height=2, Type="Point", Radar="USS_Blue_Ridge", Point="true" },      -- Phalanx only
+  ["Sacramento AOE-1"]         = { Range=9,   Blindspot=0.5, Height=6, Type="Point", Radar="USS_Support_Ship_Sacramento_AOE-1", Point="true" }, -- RAM + Phalanx
+  ["Henry Kaiser T-AO-187"]    = { Range=1.5, Blindspot=0.1, Height=0.8,Type="Point", Radar="USNS_Henry_Kaiser", Point="true" },  -- .50cal only (negligible)
+  ["HMS Albion L14"]           = { Range=3,   Blindspot=0.1, Height=2, Type="Point", Radar="HMS_Albion L14", Point="true" },      -- Phalanx only
+  ["LPD Foudre"]               = { Range=6,   Blindspot=0.3, Height=4, Type="Point", Radar="LPD_Foundre", Point="true" },         -- Mistral (IR)
+  ["Osa-I Missile Boat"]       = { Range=4,   Blindspot=0.2, Height=3, Type="Point", Radar="OSA_One", Point="true" },             -- AK-230 (NO_SAM)
+  ["Osa-II Missile Boat"]      = { Range=4,   Blindspot=0.2, Height=3, Type="Point", Radar="OSA_Two", Point="true" },             -- AK-230
+  ["IRIS Alvand"]              = { Range=4,   Blindspot=0.2, Height=3, Type="Point", Radar="IRIS_Alvand", Point="true" },         -- OtoBreda 40mm / 20mm
+}
+
 -----------------------------------------------------------------------
 -- MANTIS Jammer Extension v2.0.0
 -- Standoff Jamming (SOJ) aircraft support for MANTIS IADS networks
@@ -705,6 +836,119 @@ do
 end
 
 
+--- @type MANTIS.JammerSAMParamsNaval
+MANTIS.JammerSAMParamsNaval = {
+  -- Calibration note (research pass): high power-aperture warship radars
+  -- (SPY-1/SPY-6/SAMPSON/Poliment/HHQ-9B) are modeled HARDER to jam than their
+  -- ground peers -- lower peak/floor, mu pushed outward -- reflecting shipboard
+  -- prime power, large multi-face arrays, low sidelobes and sensor redundancy.
+  -- Documented ECM-weak legacy sets (SPG-51 CW illum, Type 909) slightly easier.
+  -- Navalized twins remain anchored to ground counterparts (Shtil=SA-11,
+  -- Klinok=Tor, OSA-M=SA-8, S-300F=SA-10). Open sources support ordering, not
+  -- exact percentages -- tune in-mission as needed.
+  -- USA AEGIS
+  ["CH_Ticonderoga"]        = { peak=17, mu=70, sigma_L=24, tail_dist=115, band="S",  floor=2 },
+  ["CH_Ticonderoga_CMP"]    = { peak=17, mu=70, sigma_L=24, tail_dist=115, band="S",  floor=2 },
+  ["CH_Arleigh_Burke_IIA"]  = { peak=17, mu=70, sigma_L=24, tail_dist=115, band="S",  floor=2 },
+  ["CH_Arleigh_Burke_III"]  = { peak=14, mu=83, sigma_L=28, tail_dist=130, band="S",  floor=2 }, -- SPY-6 AESA
+  ["CH_Constellation"]      = { peak=14, mu=63, sigma_L=22, tail_dist=100, band="S",  floor=2 }, -- SPY-6(V)3
+  -- UK
+  ["Type45"]                = { peak=16, mu=62, sigma_L=24, tail_dist=110, band="S",  floor=2 }, -- SAMPSON
+  ["CH_Type26"]             = { peak=18, mu=18, sigma_L=7,  tail_dist=40,  band="IJ", floor=2 }, -- CAMM active RH
+  -- Germany
+  ["CH_F124"]               = { peak=18, mu=62, sigma_L=24, tail_dist=110, band="IJ", floor=2 }, -- APAR X-band
+  -- China
+  ["Type052D"]              = { peak=20, mu=55, sigma_L=22, tail_dist=110, band="S",  floor=2 },
+  ["Type055"]               = { peak=16, mu=65, sigma_L=24, tail_dist=120, band="S",  floor=2 },
+  ["CH_Type054B"]           = { peak=22, mu=38, sigma_L=16, tail_dist=75,  band="S",  floor=3 },
+  ["CH_Type056A"]           = { peak=8,  mu=5,  sigma_L=2,  tail_dist=12,  band="OPT",floor=0 }, -- HHQ-10 IR
+  -- Russia
+  ["CH_Admiral_Gorshkov"]   = { peak=16, mu=80, sigma_L=30, tail_dist=145, band="S",  floor=2 }, -- Poliment AESA
+  ["CH_Grigorovich_AShM"]   = { peak=50, mu=28, sigma_L=12, tail_dist=58,  band="IJ", floor=3 }, -- Shtil-1
+  ["CH_Grigorovich_LACM"]   = { peak=50, mu=28, sigma_L=12, tail_dist=58,  band="IJ", floor=3 },
+  ["CH_Steregushchiy"]      = { peak=22, mu=35, sigma_L=15, tail_dist=70,  band="S",  floor=2 }, -- Redut
+  ["CH_Gremyashchiy_AShM"]  = { peak=22, mu=35, sigma_L=15, tail_dist=70,  band="S",  floor=2 },
+  ["CH_Gremyashchiy_LACM"]  = { peak=22, mu=35, sigma_L=15, tail_dist=70,  band="S",  floor=2 },
+  ["CH_Karakurt_AShM"]      = { peak=10, mu=9,  sigma_L=4,  tail_dist=20,  band="IJ", floor=0 }, -- Pantsir-M
+  ["CH_Karakurt_LACM"]      = { peak=10, mu=9,  sigma_L=4,  tail_dist=20,  band="IJ", floor=0 },
+  -- CIWS / MANPADS-only hulls -> optical, essentially unjammable (floor 0)
+  ["CH_Type022"]            = { peak=3,  mu=3,  sigma_L=1,  tail_dist=5,   band="OPT",floor=0 },
+  ["CH_IranFAC_MG"]         = { peak=3,  mu=3,  sigma_L=1,  tail_dist=5,   band="OPT",floor=0 },
+  ["CH_IranFAC_MG_AShM"]    = { peak=3,  mu=3,  sigma_L=1,  tail_dist=5,   band="OPT",floor=0 },
+  ["Strb90"]                = { peak=3,  mu=3,  sigma_L=1,  tail_dist=5,   band="OPT",floor=0 },
+  ["HSwMS_Visby"]           = { peak=3,  mu=3,  sigma_L=1,  tail_dist=5,   band="OPT",floor=0 }, -- gun/CIWS: unjammable
+
+  -- Base-game DCS hulls (canonical entries; aliases set in the do-block below)
+  ["TICONDEROG"]            = { peak=17, mu=60, sigma_L=22, tail_dist=110, band="S",  floor=2 }, -- SPY-1  (NO trailing E)
+  ["USS_Arleigh_Burke_IIa"] = { peak=17, mu=60, sigma_L=22, tail_dist=110, band="S",  floor=2 }, -- SPY-1D
+  ["PERRY"]                 = { peak=33, mu=20, sigma_L=9,  tail_dist=48,  band="IJ", floor=3 }, -- SM-1 / SPG-51 (X-band illum)
+  ["MOSCOW"]                = { peak=32, mu=42, sigma_L=18, tail_dist=90,  band="S",  floor=3 }, -- S-300F
+  ["PIOTR"]                 = { peak=28, mu=70, sigma_L=26, tail_dist=130, band="S",  floor=3 }, -- S-300F/FM
+  ["NEUSTRASH"]             = { peak=28, mu=8,  sigma_L=3.5,tail_dist=18,  band="IJ", floor=2 }, -- Kinzhal
+  ["REZKY"]                 = { peak=35, mu=8,  sigma_L=3.5,tail_dist=18,  band="IJ", floor=3 }, -- OSA-M
+  ["MOLNIYA"]               = { peak=3,  mu=3,  sigma_L=1,  tail_dist=5,   band="OPT",floor=0 }, -- Strela
+  ["KUZNECOW"]              = { peak=24, mu=8,  sigma_L=3.5,tail_dist=18,  band="IJ", floor=2 }, -- Kinzhal/Kashtan
+  ["CHAP_Project22160_TorM2KM"] = { peak=28, mu=12, sigma_L=5, tail_dist=28, band="IJ", floor=3 }, -- Tor M2KM
+  ["Type_052C"]             = { peak=20, mu=55, sigma_L=22, tail_dist=110, band="S",  floor=2 }, -- HHQ-9
+  ["Type_052B"]             = { peak=30, mu=20, sigma_L=10, tail_dist=48,  band="S",  floor=3 }, -- HHQ-16/Shtil
+  ["Type_054A"]             = { peak=26, mu=28, sigma_L=12, tail_dist=58,  band="S",  floor=3 }, -- HHQ-16
+  ["hms_invincible"]        = { peak=36, mu=25, sigma_L=11, tail_dist=52,  band="IJ", floor=3 }, -- Sea Dart / Type 909
+  ["CVN_71"]                = { peak=8,  mu=5,  sigma_L=2,  tail_dist=12,  band="OPT",floor=0 }, -- NSSM/RAM (carrier point)
+
+  -- Admiral mod -- worked example (USS America LHA-6):
+  --   band  <- radar band (Sea Sparrow Mk 95 illuminator = X-band => IJ)
+  --   floor <- inverse of GT ECM_K hint (ECM_K 0.65 = moderate => floor ~2-3)
+  --   mu    <- engagement range in nm (20 km ~= 11 nm)
+  --   peak/sigma_L/tail_dist <- copy nearest short-IJ analog (Sea Sparrow ~ NASAMS/SA-11 class)
+  ["USS America LHA-6"] = { peak=22, mu=11, sigma_L=5, tail_dist=25, band="IJ", floor=3 },
+  -- desdemicabina AEGIS hulls: SPY-1 family fingerprint (peak 17 / floor 2 / S),
+  -- mu scaled to the ~100km SM-2 envelope of these units.
+  ["DDG39"]                             = { peak=17, mu=55, sigma_L=22, tail_dist=110, band="S", floor=2 }, -- SPY-1D(V)
+  ["F100"]                              = { peak=17, mu=55, sigma_L=22, tail_dist=110, band="S", floor=2 }, -- SPY-1D
+  ["F105"]                              = { peak=17, mu=55, sigma_L=22, tail_dist=110, band="S", floor=2 }, -- SPY-1D
+  -- Admiral SAM shooters (POINT hulls are aliased to the CIWS OPT entry in the do-block below)
+  ["HMS Duncan"]                        = { peak=16, mu=54, sigma_L=22, tail_dist=110, band="S",  floor=2 }, -- Aster (ECM_K 0.65)
+  ["Aquitaine D650"]                    = { peak=16, mu=65, sigma_L=24, tail_dist=120, band="S",  floor=2 }, -- Aster 30 (mod ECM_K 5.0 - see note)
+  ["D651_Normandie"]                    = { peak=16, mu=65, sigma_L=24, tail_dist=120, band="S",  floor=2 }, -- Aster 30
+  ["MEKO_HN"]                           = { peak=22, mu=27, sigma_L=12, tail_dist=55,  band="IJ", floor=2 }, -- ESSM/SM-2
+  ["MEKO_TN"]                           = { peak=22, mu=27, sigma_L=12, tail_dist=55,  band="IJ", floor=2 },
+  ["Admiral Ushakov"]                   = { peak=48, mu=25, sigma_L=11, tail_dist=55,  band="IJ", floor=3 }, -- SA-N-7 Gadfly
+  ["Udaloy II DDG Admiral Chabanenko"]  = { peak=28, mu=7,  sigma_L=3,  tail_dist=18,  band="IJ", floor=3 }, -- SA-N-9 Klinok
+  ["USS San Antonio LPD-17"]            = { peak=22, mu=8,  sigma_L=4,  tail_dist=20,  band="IJ", floor=3 }, -- Sea Sparrow
+  ["LPD_Foundre"]                       = { peak=10, mu=3,  sigma_L=2,  tail_dist=10,  band="OPT",floor=0 }, -- Mistral (IR, near-unjammable)
+}
+
+-- Naval jammer aliases: variants that share a hull/radar point to one curve,
+-- so tuning the canonical entry updates all of them (mirrors JammerSAMParams).
+do
+  local n = MANTIS.JammerSAMParamsNaval
+  -- US carriers + LHA + Type 071: point self-defence (NSSM/RAM/HHQ-10), optical-grade
+  n["CVN_72"]   = n["CVN_71"]; n["CVN_73"] = n["CVN_71"]; n["CVN_75"] = n["CVN_71"]
+  n["Stennis"]  = n["CVN_71"]; n["VINSON"] = n["CVN_71"]; n["LHA_Tarawa"] = n["CVN_71"]
+  n["Type_071"] = n["CVN_71"]
+  -- Grisha shares the SA-N-4 (OSA-M) curve with Rezky
+  n["ALBATROS"] = n["REZKY"]
+  -- Kuznetsov 2017 variant
+  n["CV_1143_5"] = n["KUZNECOW"]
+  -- Vasily Bykov base (gun) ~ Strela-grade optical
+  n["CHAP_Project22160"] = n["MOLNIYA"]
+  -- Admiral mod CIWS / RAM / gun-only hulls: all optical-grade, essentially unjammable.
+  -- Aliased to the base OPT curve so they resolve without cluttering the table.
+  n["USS_Oak_Hill LSD-51"]                    = n["MOLNIYA"]  -- RAM + Phalanx
+  n["USS_Blue_Ridge"]                         = n["MOLNIYA"]  -- Phalanx
+  n["USS_Support_Ship_Sacramento_AOE-1"]      = n["MOLNIYA"]  -- RAM + Phalanx
+  n["USNS_Henry_Kaiser"]                      = n["MOLNIYA"]  -- .50cal
+  n["HMS_Albion L14"]                         = n["MOLNIYA"]  -- Phalanx
+  n["OSA_One"]                                = n["MOLNIYA"]  -- AK-230 (NO_SAM)
+  n["OSA_Two"]                                = n["MOLNIYA"]  -- AK-230
+  n["IRIS_Alvand"]                            = n["MOLNIYA"]  -- OtoBreda 40mm / 20mm
+  -- desdemicabina amphibs: CIWS / gun-only, optical-grade unjammable
+  n["L02"]                                    = n["MOLNIYA"]  -- 3x Phalanx
+  n["L52"]                                    = n["MOLNIYA"]  -- 2x Phalanx (NO_SAM)
+  n["L61"]                                    = n["MOLNIYA"]  -- .50cal only
+end
+
+
 -----------------------------------------------------------------------
 -- MANTIS System
 -----------------------------------------------------------------------
@@ -741,6 +985,8 @@ do
   --        mybluemantis:Start()
   --
   function MANTIS:New(name,samprefix,ewrprefix,hq,Coalition,dynamic,awacs, EmOnOff, Padding, Zones)
+    -- Inject NAVYGROUP:SetMANTIS convenience API (safe if NAVYGROUP not loaded/already done)
+    MANTIS._InjectNavyGroupAPI()
     
     
     -- Inherit everything from BASE class.
@@ -771,6 +1017,12 @@ do
     self.grouping = 5000
     self.acceptrange = 80000
     self.detectinterval = 30
+    self.SEADNaval = false -- ships hard-kill inbound missiles; they do not go EMCON under SEAD (see SetNavalSEAD)
+    self.NavalSurfaceWakeup = true -- quiet ships go active when enemy surface combatants close (see SetNavalSurfaceWakeup)
+    self.NavalSurfaceWakeupRadius = nil -- meters; nil = each ship uses its own engagement radius
+    self.NavalPerUnit = true -- classify & switch every ship unit individually (see SetNavalPerUnit)
+    self.NavalAutonomy = true -- ship groups outside EWR radar coverage go alarm RED and search autonomously (see SetNavalAutonomy)
+    self.NavalAutonomyRadius = 150000 -- meters; a ship group within this distance of an alive EWR group counts as covered
     self.engagerange = 95
     self.autorelocate = false
     self.autorelocateunits = { HQ = false, EWR = false}
@@ -1086,6 +1338,21 @@ do
    end
    
    local function SwitchSAMOn(Name,Group)
+    if self.NavalPerUnit and Group and Group:IsShip() and self._navalSAMs then
+      -- Per-unit naval: a hit wakes this group's managed radars individually
+      if not self.SuppressedGroups[Name] then
+        for _,_unit in pairs(Group:GetUnits() or {}) do
+          local uname = _unit:GetName()
+          if self._navalSAMs[uname] and self.SamStateTracker[uname] == "GREEN"
+            and not (self._jammerEnabled and self._jammedSAMs and self._jammedSAMs[uname]) then
+            self.SamStateTracker[uname] = "RED"
+          end
+        end
+        self:_ApplyNavalAlarmState() -- apply group alarm state immediately on hit
+        self:__RedState(1,Group)
+      end
+      return
+    end
     local suppressed = self.SuppressedGroups[Name] or false
     local jammed = self._jammerEnabled and self._jammedSAMs and self._jammedSAMs[Name] or false
     if not suppressed and not jammed and self.SamStateTracker[Name] == "GREEN" then
@@ -1790,6 +2057,7 @@ do
         local dist = 0
         local include = true
         if grp:IsGround() then include = false end
+        if grp:IsShip() then include = false end -- MANTIS is anti-air: surface contacts are not engageable targets
         if grp:GetCoalition() == self.coalition then include = false end
         if coord and SamCoordinate and grp:IsHelicopter() then
           dist = coord:Get2DDistance(SamCoordinate) or 0
@@ -1853,7 +2121,29 @@ do
         if targetdistance <= rad then
           inrange = "true"
         end
-        local text = string.format("Checking SAM at %s | Tgtdist %.1fkm | Rad %.1fkm | Inrange %s", samstring, targetdistance/1000, rad/1000, inrange)
+        local text = string.format("Checking SAM at %s | Tgtdist %.1fkm | Rad %.1fkm | Inrange %s | Zonecheck %s", samstring, targetdistance/1000, rad/1000, inrange, tostring(zonecheck))
+        -- Naval per-unit state summary
+        if self._navalSAMs and next(self._navalSAMs) ~= nil then
+          local ntot, nred, njam = 0, 0, 0
+          local detail = ""
+          for uname,_ in pairs(self._navalSAMs) do
+            local u = UNIT:FindByName(uname)
+            if u and u:IsAlive() then
+              ntot = ntot + 1
+              local st = self.SamStateTracker[uname] or "GREEN"
+              if st == "RED" then nred = nred + 1 end
+              local jm = ""
+              if self._jammedSAMs and self._jammedSAMs[uname] then njam = njam + 1 jm = " (JAMMED)" end
+              local pk = ""
+              local parent = self._navalUnitParent and self._navalUnitParent[uname]
+              if parent and self._navalAutonomous and self._navalAutonomous[parent] then pk = " [AUTONOMOUS]" end
+              if self.verbose then detail = detail..string.format("\n  %s: %s%s%s",uname,st,jm,pk) end
+            end
+          end
+          if ntot > 0 then
+            text = text..string.format("\nNaval units: %d | RED %d | GREEN %d | jammed %d",ntot,nred,ntot-nred,njam)..detail
+          end
+        end
         local m = MESSAGE:New(text,10,"Check"):ToAllIf(self.debug)
         self:T(self.lid..text)
       end
@@ -1988,37 +2278,66 @@ do
     local blind = 0
     local group = GROUP:FindByName(grpname) -- Wrapper.Group#GROUP
     local units = group:GetUnits()
-    local SAMData = self.SamData
     local ARMCapacity
+    -- Ordered multi-table search: the mod-tagged table (if any) first, then all
+    -- others. This lets groups classify by radar TYPE NAME alone, so ground SAM
+    -- groups no longer need the designation (or even the mod tag) in their name.
+    local SearchTables
     if mod then
-      SAMData = self.SamDataHDS
+      SearchTables = { {self.SamDataHDS,"HDS"}, {self.SamData,nil}, {self.SamDataSMA,"SMA"}, {self.SamDataCH,"CHM"} }
     elseif sma then
-      SAMData = self.SamDataSMA
+      SearchTables = { {self.SamDataSMA,"SMA"}, {self.SamData,nil}, {self.SamDataHDS,"HDS"}, {self.SamDataCH,"CHM"} }
     elseif chm then
-      SAMData = self.SamDataCH
+      SearchTables = { {self.SamDataCH,"CHM"}, {self.SamData,nil}, {self.SamDataHDS,"HDS"}, {self.SamDataSMA,"SMA"} }
+    else
+      SearchTables = { {self.SamData,nil}, {self.SamDataHDS,"HDS"}, {self.SamDataSMA,"SMA"}, {self.SamDataCH,"CHM"} }
     end
     self:T("Looking to auto-match for "..grpname)
     for _,_unit in pairs(units) do
       local unit = _unit -- Wrapper.Unit#UNIT
       local typename = string.lower(unit:GetTypeName())
       self:T(string.format("Matching typename: %s",typename))
-      for idx,entry in pairs(SAMData) do
-        local _entry = entry -- #MANTIS.SamData
-        local _radar = string.lower(_entry.Radar)
-        self:T(string.format("Trying typename: %s",_radar))
-        if string.find(typename,_radar,1,true) then
-          type = _entry.Type
-          radiusscale = self.radiusscale[type]
-          range = _entry.Range * 1000 * radiusscale -- max firing range used as switch-on
-          height = _entry.Height * 1000 -- max firing height
-          blind = _entry.Blindspot * 100 -- blind spot range
-          ARMCapacity = _entry.ARMCapacity 
-          self:T(string.format("Match: %s - %s",_radar,type))
-          found = true
-          break
+      -- Longest-match wins across ALL tables. This prevents a short Radar key in
+      -- one table (e.g. base "TorM2") from shadowing a more specific key in
+      -- another (e.g. CH "TorM2K"), and makes the typename path deterministic
+      -- (plain pairs() order no longer decides between overlapping keys).
+      -- Table order (mod-tagged table first) breaks exact-length ties.
+      local bestentry, bestidx, besttag, bestlen = nil, nil, nil, 0
+      for _,searchentry in ipairs(SearchTables) do
+        local SAMData, modtag = searchentry[1], searchentry[2]
+        if SAMData then
+          for idx,entry in pairs(SAMData) do
+            local _radar = string.lower(entry.Radar)
+            if #_radar > bestlen and string.find(typename,_radar,1,true) then
+              bestentry, bestidx, besttag, bestlen = entry, idx, modtag, #_radar
+            end
+          end
         end
       end
-      if found then break end
+      if bestentry then
+        local _entry = bestentry -- #MANTIS.SamData
+        type = _entry.Type
+        radiusscale = self.radiusscale[type]
+        range = _entry.Range * 1000 * radiusscale -- max firing range used as switch-on
+        height = _entry.Height * 1000 -- max firing height
+        blind = _entry.Blindspot * 100 -- blind spot range
+        ARMCapacity = _entry.ARMCapacity
+        self:T(string.format("Match: %s - %s",string.lower(_entry.Radar),type))
+        -- Stash the jammer curve by DESIGNATION (table key), so groups named
+        -- without a designation remain jammable. Reuses _ResolveJammerParams
+        -- (aliases, digit-boundary matching, mod bucketing) via a synthetic name.
+        self._samJammerParams = self._samJammerParams or {}
+        if self._samJammerParams[grpname] == nil then
+          local synth = bestidx
+          if besttag and not string.find(bestidx, besttag, 1, true) then
+            synth = bestidx .. " " .. besttag
+          end
+          local jp = self:_ResolveJammerParams(synth)
+          if jp then self._samJammerParams[grpname] = jp end
+        end
+        found = true
+        break
+      end
     end
     --- AAA or Point Defense
     if not found then
@@ -2037,6 +2356,188 @@ do
     return range, height, type, blind, ARMCapacity
   end
   
+  --- [Internal] Function to get SAM firing data for naval (ship) groups.
+  -- Matches the unit type name exactly against #MANTIS.SamDataNaval and, as a side
+  -- effect, stashes the hull's jammer curve in self._samJammerParams[grpname] so the
+  -- SOJ jammer extension can suppress it by type name (not group name).
+  -- @param #MANTIS self
+  -- @param #string grpname Name of the ship group
+  -- @return #number range Max firing range (m)
+  -- @return #number height Max firing height (m)
+  -- @return #string type #MANTIS.SamType
+  -- @return #number blind Blind spot
+  -- @return #number ARMCapacity
+  function MANTIS:_GetNavalSAMData(grpname)
+    self:T(self.lid.."_GetNavalSAMData for "..tostring(grpname))
+    self._navalSAMs = self._navalSAMs or {}
+    self._navalSAMs[grpname] = true
+    self._samJammerParams = self._samJammerParams or {}
+    local range = self.checkradius
+    local height = 3000
+    local type = MANTIS.SamType.POINT
+    local blind = 0
+    local ARMCapacity = 0
+    local group = GROUP:FindByName(grpname)
+    if not group then
+      self._samJammerParams[grpname] = nil
+      return range, height, type, blind, ARMCapacity
+    end
+    local units = group:GetUnits() or {}
+    for _,_unit in pairs(units) do
+      local typename = string.lower(_unit:GetTypeName())
+      for _,entry in pairs(self.SamDataNaval) do
+        if typename == string.lower(entry.Radar) then
+          type = entry.Type
+          local radiusscale = self.radiusscale[type] or 1
+          range = entry.Range * 1000 * radiusscale
+          height = entry.Height * 1000
+          blind = entry.Blindspot
+          ARMCapacity = entry.ARMCapacity or 0
+          self._samJammerParams[grpname] = self.JammerSAMParamsNaval[entry.Radar]
+          self:T(string.format("Naval match: %s -> %s (range %sm)", typename, tostring(type), tostring(range)))
+          return range, height, type, blind, ARMCapacity
+        end
+      end
+    end
+    -- Unmatched ship: conservative point-defence default (mirrors AAA fallback), no jammer curve.
+    self._samJammerParams[grpname] = nil
+    self:E(self.lid..string.format("*****Could not match naval radar data for %s! Defaulting to POINT.",grpname))
+    return 2000, 2000, MANTIS.SamType.POINT, 50, 0
+  end
+
+  --- [Internal] Classify a naval group PER UNIT. Each hull matching #MANTIS.SamDataNaval
+  -- becomes its own SAM-table record keyed by UNIT name, record[8] = parent group name.
+  -- @param #MANTIS self
+  -- @return #boolean handled True if at least one unit was classified.
+  function MANTIS:_BuildNavalUnitEntries(group, grpname, SAM_Tbl, SAM_Tbl_lg, SAM_Tbl_md, SAM_Tbl_sh, SAM_Tbl_pt, SEAD_Grps)
+    self:T(self.lid.."_BuildNavalUnitEntries for "..tostring(grpname))
+    self._navalSAMs = self._navalSAMs or {}
+    self._samJammerParams = self._samJammerParams or {}
+    local entries = 0
+    local seadadded = false
+    local units = group:GetUnits() or {}
+    for _,_unit in pairs(units) do
+      if _unit and _unit:IsAlive() then
+        local typename = string.lower(_unit:GetTypeName())
+        for _,entry in pairs(self.SamDataNaval) do
+          if typename == string.lower(entry.Radar) then
+            local unitname = _unit:GetName()
+            local type = entry.Type
+            local radiusscale = self.radiusscale[type] or 1
+            local range = entry.Range * 1000 * radiusscale
+            local height = entry.Height * 1000
+            local blind = entry.Blindspot
+            local coord = _unit:GetCoordinate()
+            local record = {unitname, coord, range, height, blind, type, nil, grpname}
+            table.insert( SAM_Tbl, record )
+            if type == MANTIS.SamType.LONG then table.insert( SAM_Tbl_lg, record )
+            elseif type == MANTIS.SamType.MEDIUM then table.insert( SAM_Tbl_md, record )
+            elseif type == MANTIS.SamType.SHORT then table.insert( SAM_Tbl_sh, record )
+            elseif type == MANTIS.SamType.POINT then table.insert( SAM_Tbl_pt, record ) end
+            self._navalSAMs[unitname] = true
+            self._navalUnitParent = self._navalUnitParent or {}
+            self._navalUnitParent[unitname] = grpname
+            self._samJammerParams[unitname] = self.JammerSAMParamsNaval[entry.Radar]
+            if self.SamStateTracker[unitname] == nil then self.SamStateTracker[unitname] = "GREEN" end
+            if self.SEADNaval and not seadadded then
+              table.insert( SEAD_Grps, grpname ) -- SEAD keys on GROUP names; add once
+              seadadded = true
+            end
+            entries = entries + 1
+            self:T(string.format("Naval per-unit match: %s (%s) -> %s",unitname,typename,tostring(type)))
+            break
+          end
+        end
+      end
+    end
+    return entries > 0
+  end
+
+  --- [Internal] Group ALARM-STATE arbiter for per-unit naval control.
+  -- DCS reliably honors only GROUP-level alarm state on ships, so per-unit
+  -- tracking decides intent and this function applies ONE alarm state per ship
+  -- group as the final word of each cycle:
+  --   RED   if any managed unit is RED and not jammed (threat / hit / surface
+  --         wake), or the group is outside EWR radar coverage (autonomous
+  --         search, see SetNavalAutonomy) with at least one unjammed unit;
+  --   GREEN otherwise -- including full jamming suppression, which overrides
+  --         autonomy (a fully jammed group cannot search).
+  -- @param #MANTIS self
+  -- @return #MANTIS self
+  function MANTIS:_ApplyNavalAlarmState()
+    if not (self.NavalPerUnit and self._navalUnitParent) then return self end
+    local wants, seen, unjammed = {}, {}, {}
+    for uname, grpname in pairs(self._navalUnitParent) do
+      local u = UNIT:FindByName(uname)
+      if u and u:IsAlive() then
+        seen[grpname] = true
+        local jammed = self._jammerEnabled and self._jammedSAMs and self._jammedSAMs[uname]
+        if not jammed then unjammed[grpname] = true end
+        if self.SamStateTracker[uname] == "RED" and not jammed then
+          wants[grpname] = true
+        end
+      end
+    end
+    -- coverage sources: every alive EWR group (incl. EWR-role ships and AWACS ships in the EWR set)
+    local sources = {}
+    if self.NavalAutonomy then
+      -- Managed naval SAM groups cannot be their own coverage: when GREEN their
+      -- radars are dark, so a "BOTH"-role group must not self-license through
+      -- its EWR-set membership. Only UNMANAGED emitters count as sources:
+      -- land EWR, AWACS, and EWR-only ships (never state-switched, always
+      -- radiating).
+      local managed = {}
+      for _, gname in pairs(self._navalUnitParent) do managed[gname] = true end
+      self.EWR_Group:ForEachGroupAlive(
+        function(grp)
+          if not managed[grp:GetName()] then
+            local c = grp:GetCoordinate()
+            if c then table.insert(sources, c) end
+          end
+        end)
+    end
+    self._navalAutonomous = self._navalAutonomous or {}
+    self._navalGroupState = self._navalGroupState or {}
+    for grpname,_ in pairs(seen) do
+      local grp = GROUP:FindByName(grpname)
+      if grp and grp:IsAlive() then
+        local red = wants[grpname] or false
+        local autonomous = false
+        if self.NavalAutonomy and unjammed[grpname] and not red then
+          local covered = false
+          local gc = grp:GetCoordinate()
+          if gc then
+            for _,c in ipairs(sources) do
+              if c:Get2DDistance(gc) <= self.NavalAutonomyRadius then
+                covered = true
+                break
+              end
+            end
+          end
+          self:T(self.lid..string.format("%s EWR coverage: %s (%d unmanaged source(s), radius %dkm)",grpname,tostring(covered),#sources,self.NavalAutonomyRadius/1000))
+          if not covered then
+            red = true
+            autonomous = true
+          end
+        end
+        self._navalAutonomous[grpname] = autonomous or nil
+        local newstate = red and "RED" or "GREEN"
+        if self._navalGroupState[grpname] ~= newstate then
+          self._navalGroupState[grpname] = newstate
+          if red then
+            grp:OptionAlarmStateRed()
+            self:T(self.lid..grpname.." naval group -> alarm RED"..(autonomous and " (autonomous: no EWR coverage)" or ""))
+          else
+            grp:OptionAlarmStateGreen()
+            self:T(self.lid..grpname.." naval group -> alarm GREEN")
+          end
+        end
+      end
+    end
+    return self
+  end
+
+
   --- [Internal] Function to get SAM firing data
   -- @param #MANTIS self
   -- @param #string grpname Name of the group
@@ -2046,6 +2547,14 @@ do
   -- @return #number blind "blind" spot
   function MANTIS:_GetSAMRange(grpname)
     self:T(self.lid.."_GetSAMRange for "..tostring(grpname))
+    -- Naval hulls: match by exact unit type name against SamDataNaval and stash the
+    -- jammer curve; bypass the ground name-matching below.
+    do
+      local grp = GROUP:FindByName(grpname)
+      if grp and grp:IsShip() then
+        return self:_GetNavalSAMData(grpname)
+      end
+    end
     local range = self.checkradius
     local height = 3000
     local type = MANTIS.SamType.MEDIUM
@@ -2122,10 +2631,16 @@ do
      local engagerange = self.engagerange -- firing range in % of max
      --cycle through groups and set alarm state etc
      for _i,_group in pairs (SAM_Grps) do
-      if _group:IsGround() and _group:IsAlive() then
+      if (_group:IsGround() or _group:IsShip()) and _group:IsAlive() then
         local group = _group -- Wrapper.Group#GROUP
         -- DONE: add emissions on/off
-        if self.UseEmOnOff then
+        if group:IsShip() and self.NavalPerUnit then
+          -- Per-unit naval control: ships are switched by GROUP ALARM STATE only,
+          -- the one mechanism DCS reliably honors on naval groups. Baseline is
+          -- GREEN; the alarm arbiter (_ApplyNavalAlarmState) raises the group RED
+          -- on threat, hit, surface contact, or loss of EWR coverage.
+          group:OptionAlarmStateGreen()
+        elseif self.UseEmOnOff then
           group:OptionAlarmStateRed()
           group:EnableEmission(false)
           --group:SetAIOff()
@@ -2135,30 +2650,47 @@ do
         group:OptionEngageRange(engagerange)  --default engagement will be 95% of firing range
         local grpname = group:GetName()
         local grpcoord = group:GetCoordinate()
+        if group:IsShip() and self.NavalPerUnit
+          and self:_BuildNavalUnitEntries(group, grpname, SAM_Tbl, SAM_Tbl_lg, SAM_Tbl_md, SAM_Tbl_sh, SAM_Tbl_pt, SEAD_Grps) then
+          self:T(grpname.." handled as per-unit naval group")
+        else
         local grprange,grpheight,type,blind,ARMCapacity  = self:_GetSAMRange(grpname)
         if ARMCapacity and ARMCapacity>0 then _group:SetProperty("ARMCapacity",ARMCapacity) end
         table.insert( SAM_Tbl, {grpname, grpcoord, grprange, grpheight, blind, type, ARMCapacity})
         --table.insert( SEAD_Grps, grpname )
         if type == MANTIS.SamType.LONG then
           table.insert( SAM_Tbl_lg, {grpname, grpcoord, grprange, grpheight, blind, type})
-          table.insert( SEAD_Grps, grpname )
+          if (not group:IsShip()) or self.SEADNaval then
+            table.insert( SEAD_Grps, grpname )
+          end
           self:T("SAM "..grpname.." is type LONG")
         elseif type == MANTIS.SamType.MEDIUM then
          table.insert( SAM_Tbl_md, {grpname, grpcoord, grprange, grpheight, blind, type})
-         table.insert( SEAD_Grps, grpname )
+         if (not group:IsShip()) or self.SEADNaval then
+           table.insert( SEAD_Grps, grpname )
+         end
          self:T("SAM "..grpname.." is type MEDIUM")
         elseif type == MANTIS.SamType.SHORT then
           table.insert( SAM_Tbl_sh, {grpname, grpcoord, grprange, grpheight, blind, type})
-          table.insert( SEAD_Grps, grpname )
+          if (not group:IsShip()) or self.SEADNaval then
+            table.insert( SEAD_Grps, grpname )
+          end
           self:T("SAM "..grpname.." is type SHORT")
         elseif type == MANTIS.SamType.POINT then
           table.insert( SAM_Tbl_pt, {grpname, grpcoord, grprange, grpheight, blind, type})
           self:T("SAM "..grpname.." is type POINT")
-          self.ShoradGroupSet:Add(grpname,group)
-          if not self.autoshorad then
-            table.insert( SEAD_Grps, grpname )
-          end  
+          if group:IsShip() then
+            if self.SEADNaval then
+              table.insert( SEAD_Grps, grpname ) -- naval point-defence -> SEAD only when opted in; never SHORAD scoot
+            end
+          else
+            self.ShoradGroupSet:Add(grpname,group)
+            if not self.autoshorad then
+              table.insert( SEAD_Grps, grpname )
+            end
+          end
         end
+        end -- else: per-unit naval group handled above
         self.SamStateTracker[grpname] = "GREEN"
         end
      end
@@ -2198,16 +2730,20 @@ do
      for _i,_group in pairs (SAM_Grps) do
         local group = _group -- Wrapper.Group#GROUP
         group:OptionEngageRange(engagerange)  --engagement will be 95% of firing range
-        if group:IsGround() and group:IsAlive() then
+        if (group:IsGround() or group:IsShip()) and group:IsAlive() then
           local grpname = group:GetName()
           local grpcoord = group:GetCoordinate()
+          if group:IsShip() and self.NavalPerUnit
+            and self:_BuildNavalUnitEntries(group, grpname, SAM_Tbl, SAM_Tbl_lg, SAM_Tbl_md, SAM_Tbl_sh, SAM_Tbl_pt, SEAD_Grps) then
+            self:T(grpname.." handled as per-unit naval group")
+          else
           local grprange, grpheight,type,blind, ARMCapacity  = self:_GetSAMRange(grpname)
           -- TODO the below might stop working at some point after some hours, needs testing
           --local radaralive = group:IsSAM()
           if ARMCapacity and ARMCapacity>0 then _group:SetProperty("ARMCapacity",ARMCapacity) end
           local radaralive = true
           table.insert( SAM_Tbl, {grpname, grpcoord, grprange, grpheight, blind, type, ARMCapacity}) -- make the table lighter, as I don't really use the zone here
-          if type ~= MANTIS.SamType.POINT then
+          if type ~= MANTIS.SamType.POINT and ((not group:IsShip()) or self.SEADNaval) then
             table.insert( SEAD_Grps, grpname )
           end
           if type == MANTIS.SamType.LONG and radaralive then
@@ -2222,11 +2758,18 @@ do
           elseif type == MANTIS.SamType.POINT or (not radaralive) then
             table.insert( SAM_Tbl_pt, {grpname, grpcoord, grprange, grpheight, blind, type})
             self:T({grpname,grprange, grpheight})
-            self.ShoradGroupSet:Add(grpname,group)
-            if self.autoshorad then
-              self.Shorad.Groupset = self.ShoradGroupSet
+            if group:IsShip() then
+              if self.SEADNaval then
+                table.insert( SEAD_Grps, grpname ) -- naval point-defence -> SEAD only when opted in; never SHORAD scoot
+              end
+            else
+              self.ShoradGroupSet:Add(grpname,group)
+              if self.autoshorad then
+                self.Shorad.Groupset = self.ShoradGroupSet
+              end
             end
           end
+          end -- else: per-unit naval group handled above
         end
      end
      self.SAM_Table = SAM_Tbl
@@ -2414,6 +2957,7 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
     for _,_data in pairs (samset) do
       local samcoordinate = _data[2]
       local name = _data[1]
+      local navalparent = _data[8] -- per-unit naval entry: name is a UNIT name
       local radius = _data[3]
       local height = _data[4]
       local blind = _data[5] * 1.25 + 1
@@ -2421,19 +2965,44 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
       if not shortsam then
         shortsam = (_data[6] == MANTIS.SamType.POINT) and true or false
       end
-      local samgroup = GROUP:FindByName(name)
+      local samunit = nil
+      local samgroup = nil
+      if navalparent then
+        samunit = UNIT:FindByName(name)
+        samgroup = (samunit and samunit:GetGroup()) or GROUP:FindByName(navalparent)
+      else
+        samgroup = GROUP:FindByName(name)
+      end
+      local samalive = false
+      if navalparent then samalive = (samunit ~= nil) and samunit:IsAlive() or false
+      elseif samgroup then samalive = samgroup:IsAlive() or false end
       local IsInZone, Distance = self:_CheckObjectInZone(detset, samcoordinate, radius, height, dlink)
-      local suppressed = self.SuppressedGroups[name] or false
+      -- Naval surface wake-up: quiet ships activate when enemy surface combatants
+      -- close within the trigger radius. Jamming has precedence and holds them down.
+      if (not IsInZone) and self.NavalSurfaceWakeup and self._navalSAMs and self._navalSAMs[name]
+        and not (self._jammerEnabled and self._jammedSAMs and self._jammedSAMs[name]) then
+        local wakeradius = self.NavalSurfaceWakeupRadius or radius
+        if self:_EnemySurfaceInRange(samcoordinate, wakeradius) then
+          IsInZone = true
+          Distance = wakeradius -- keep distance-based proximity behaviors (smoke, SHORAD link) inert
+        end
+      end
+      local suppressed = self.SuppressedGroups[name] or (navalparent and self.SuppressedGroups[navalparent]) or false
       local activeshorad = false
       if self.Shorad and self.Shorad.ActiveGroups and self.Shorad.ActiveGroups[name] then
        activeshorad = true
       end
       if samgroup:GetProperty("SHORAD_ACTIVE") == true and activeshorad == false then activeshorad = true end
       if IsInZone and (not suppressed) and (not activeshorad) then --check any target in zone and not currently managed by SEAD
-        if samgroup:IsAlive() then
+        if samalive then
           -- switch on SAM
           local switch = false
-          if self.UseEmOnOff and switchedon < limit then
+          if navalparent and switchedon < limit then
+            -- per-unit naval: mark THIS unit RED; the group alarm arbiter
+            -- (_ApplyNavalAlarmState) applies the group switch at cycle end
+            switchedon = switchedon + 1
+            switch = true
+          elseif self.UseEmOnOff and switchedon < limit then
             -- DONE: add emissions on/off
             samgroup:EnableEmission(true)
             switchedon = switchedon + 1
@@ -2448,13 +3017,13 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
             self:__RedState(1,samgroup)
           end
           -- DONE Restrict on Distance
-          if shortsam == true and self.SmokeDecoy == true and Distance < self.DetectAccousticRadius*1.5 then 
+          if shortsam == true and (not navalparent) and self.SmokeDecoy == true and Distance < self.DetectAccousticRadius*1.5 then 
             self:T("Smoking")
             self:_SmokeUnits(samgroup)
           end
           -- link in to SHORAD if available
           -- DONE: Test integration fully
-          if self.ShoradLink and (Distance < self.ShoradActDistance or Distance < blind ) then -- don't give SHORAD position away too early
+          if self.ShoradLink and (not navalparent) and (Distance < self.ShoradActDistance or Distance < blind ) then -- don't give SHORAD position away too early; ships never SHORAD-link
             local Shorad = self.Shorad  --Functional.Shorad#SHORAD
             local radius = self.checkradius
             local ontime = self.ShoradTime
@@ -2469,9 +3038,11 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
           end
         end --end alive
       else
-        if samgroup:IsAlive() and not suppressed and not activeshorad then
+        if samalive and not suppressed and not activeshorad then
           -- switch off SAM
-          if self.UseEmOnOff  then
+          if navalparent then
+            -- per-unit naval: tracker-only; group alarm state applied by the arbiter
+          elseif self.UseEmOnOff  then
             samgroup:EnableEmission(false)
           else
             samgroup:OptionAlarmStateGreen()
@@ -2570,6 +3141,9 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
       return statusreport
     end
     
+    -- apply naval group alarm states as the final word of this cycle
+    self:_ApplyNavalAlarmState()
+
     if self.debug or self.verbose then
       local statusreport = GetReport()
       MESSAGE:New(statusreport:Text(),10):ToAll():ToLog()
@@ -2605,9 +3179,22 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
         local samset = self:_GetSAMTable() -- table of i.1=names, i.2=coordinates
         for _,_data in pairs (samset) do
           local name = _data[1]
-          local samgroup = GROUP:FindByName(name)
-          if samgroup:IsAlive() then
-            if self.UseEmOnOff then
+          local navalparent = _data[8] -- per-unit naval entry: name is a UNIT name
+          local samunit = nil
+          local samgroup = nil
+          if navalparent then
+            samunit = UNIT:FindByName(name)
+            samgroup = (samunit and samunit:GetGroup()) or GROUP:FindByName(navalparent)
+          else
+            samgroup = GROUP:FindByName(name)
+          end
+          local samalive = false
+          if navalparent then samalive = (samunit ~= nil) and samunit:IsAlive() or false
+          elseif samgroup then samalive = samgroup:IsAlive() or false end
+          if samalive then
+            if navalparent then
+              self.SamStateTracker[name] = "RED" -- arbiter raises the group
+            elseif self.UseEmOnOff then
               -- DONE: add emissions on/off
               --samgroup:SetAIOn()
               samgroup:EnableEmission(true)
@@ -3236,7 +3823,7 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
       end
     end
     for samName, samCoord in pairs(allSAMs) do
-      local params = self:_ResolveJammerParams(samName)
+      local params = (self._samJammerParams and self._samJammerParams[samName]) or self:_ResolveJammerParams(samName)
       if params then
         local survival = 1.0
         for _, jammer in ipairs(self._jammerSnapshot) do
@@ -3508,10 +4095,23 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
     if self._jammerEnabled and self._jammedSAMs then
       for _, _data in pairs(samset) do
         local name = _data[1]
+        local navalparent = _data[8] -- per-unit naval entry: name is a UNIT name
         if self._jammedSAMs[name] and self.SamStateTracker[name] == "RED" then
-          local samgroup = GROUP:FindByName(name)
-          if samgroup and samgroup:IsAlive() then
-            if self.UseEmOnOff then
+          local samunit = nil
+          local samgroup = nil
+          if navalparent then
+            samunit = UNIT:FindByName(name)
+            samgroup = (samunit and samunit:GetGroup()) or GROUP:FindByName(navalparent)
+          else
+            samgroup = GROUP:FindByName(name)
+          end
+          local samalive = false
+          if navalparent then samalive = (samunit ~= nil) and samunit:IsAlive() or false
+          elseif samgroup then samalive = samgroup:IsAlive() or false end
+          if samalive then
+            if navalparent then
+              -- per-unit naval: tracker set GREEN below; arbiter darkens the group if no unit remains RED
+            elseif self.UseEmOnOff then
               samgroup:EnableEmission(false)
             else
               samgroup:OptionAlarmStateGreen()
@@ -3545,6 +4145,214 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
   end
 
 end
+
+-- ===================================================================================================
+-- MANTIS Naval Extension: NAVYGROUP integration
+-- Lets Ops.NavyGroup#NAVYGROUP objects (cruise control, missions, carrier ops) serve as
+-- MANTIS-managed SAM shooters and/or EWR pickets:
+--   mymantis:AddNavyGroup(navygroup, "SAM")     -- managed shooter (or "EWR" = radiating picket)
+--   navygroup:SetMANTIS(mymantis, "SAM")        -- convenience, same effect
+-- The ship group is added to the running set(s) regardless of name prefix; classification
+-- and jamming resolve by hull type name as usual. MANTIS takes over emission/alarm
+-- switching: the NAVYGROUP's default Emission/Alarmstate are neutralized so its
+-- spawn-time option reset does not fight MANTIS.
+-- ===================================================================================================
+do
+  -- Guard MOOSE's ground relocation against ships. SEAD suppression (and any other
+  -- caller) invokes RelocateGroundRandomInRadius on suppressed SAM groups without a
+  -- category check; on a ship this clobbers the sailing route with a ground-formation
+  -- hop (and with onland=true can target a LAND point near a coast). Radar-off
+  -- evasion still applies to ships; only the ground move becomes a no-op.
+  if CONTROLLABLE and CONTROLLABLE.RelocateGroundRandomInRadius and not CONTROLLABLE._MANTISNavalRelocateGuard then
+    CONTROLLABLE._MANTISNavalRelocateGuard = true
+    local _origRelocate = CONTROLLABLE.RelocateGroundRandomInRadius
+    function CONTROLLABLE:RelocateGroundRandomInRadius( speed, radius, onroad, shortcut, formation, onland )
+      if self.IsShip and self:IsShip() then
+        return self
+      end
+      return _origRelocate( self, speed, radius, onroad, shortcut, formation, onland )
+    end
+  end
+
+  --- [Internal] Check if any enemy surface combatant is within radius of a coordinate.
+  -- Builds a live enemy-ship SET_GROUP lazily on first use.
+  -- @param #MANTIS self
+  -- @param Core.Point#COORDINATE coord Ship position.
+  -- @param #number radius Trigger radius in meters.
+  -- @return #boolean found
+  function MANTIS:_EnemySurfaceInRange(coord, radius)
+    if self.NavalThreatSet == nil then
+      local own = string.lower(self.Coalition or "")
+      local enemy = (own == "red" and "blue") or (own == "blue" and "red") or nil
+      if not enemy then
+        self:E(self.lid.."NavalSurfaceWakeup: cannot derive enemy coalition from "..tostring(self.Coalition).." - disabling.")
+        self.NavalSurfaceWakeup = false
+        self.NavalThreatSet = false
+        return false
+      end
+      self.NavalThreatSet = SET_GROUP:New():FilterCoalitions(enemy):FilterCategoryShip():FilterStart()
+    end
+    if self.NavalThreatSet == false or not coord then return false end
+    local found = false
+    self.NavalThreatSet:ForEachGroupAlive(
+      function(grp)
+        if not found then
+          local gc = grp:GetCoordinate()
+          if gc and gc:Get2DDistance(coord) <= radius then found = true end
+        end
+      end)
+    return found
+  end
+
+  --- Configure naval AUTONOMY outside EWR coverage. Default: ENABLED, 150km.
+  -- Ships mirror the ground-SAM umbrella concept: a ship group within CoverageKM
+  -- of any alive EWR group (including EWR-role ships or AWACS ships in the EWR
+  -- set) is managed normally -- alarm GREEN until MANTIS detects a threat inside
+  -- one of its units' envelopes. A group OUTSIDE coverage goes alarm RED and
+  -- searches/engages autonomously on its own radars until coverage is restored.
+  -- Full jamming suppression overrides autonomy and forces the group GREEN.
+  -- @param #MANTIS self
+  -- @param #boolean onoff Enable (true) or disable (false).
+  -- @param #number coveragekm (Optional) Coverage radius in KILOMETERS around each alive EWR (default 150).
+  -- @return #MANTIS self
+  function MANTIS:SetNavalAutonomy(onoff, coveragekm)
+    self.NavalAutonomy = onoff and true or false
+    if coveragekm then self.NavalAutonomyRadius = coveragekm * 1000 end
+    return self
+  end
+
+  --- Enable/disable PER-UNIT classification and switching for naval groups. Default: ENABLED.
+  -- Mixed-hull ship groups (e.g. a carrier escorted by destroyers) get one SAM entry PER
+  -- SHIP -- each hull with its own type, range, state and jamming curve, switched via
+  -- UNIT:EnableEmission while the group stays alarm RED (weapons hot). Disable to revert
+  -- to legacy group-level naval handling (first matched hull defines the whole group).
+  -- @param #MANTIS self
+  -- @param #boolean onoff Enable (true) or disable (false).
+  -- @return #MANTIS self
+  function MANTIS:SetNavalPerUnit(onoff)
+    self.NavalPerUnit = onoff and true or false
+    return self
+  end
+
+  --- Enable/disable the naval surface wake-up and optionally set a fixed trigger radius.
+  -- Default: ENABLED, radius = each ship's own engagement radius from SamDataNaval.
+  -- When enabled, a MANTIS-quiet ship goes active (RED / emissions on) whenever an
+  -- enemy surface combatant closes within the trigger radius, so anti-ship
+  -- engagements are not blocked by EMCON. Jamming still wins: a jammed ship stays
+  -- suppressed. Ships only -- ground SAM behavior is unchanged.
+  -- @param #MANTIS self
+  -- @param #boolean onoff Enable (true) or disable (false).
+  -- @param #number radiuskm (Optional) Fixed trigger radius in KILOMETERS for all ships.
+  -- @return #MANTIS self
+  function MANTIS:SetNavalSurfaceWakeup(onoff, radiuskm)
+    self.NavalSurfaceWakeup = onoff and true or false
+    self.NavalSurfaceWakeupRadius = radiuskm and radiuskm * 1000 or nil
+    return self
+  end
+
+  --- Include or exclude naval SAMs from SEAD emission-shutdown evasion. Default: EXCLUDED.
+  -- Surface combatants engage inbound ARMs/ASMs with hard-kill defenses (SAMs, CIWS);
+  -- going emissions-dark would disable exactly those defenses. Ground SAM behavior is
+  -- unchanged. Takes effect at the next SAM table refresh (every 3rd detection cycle).
+  -- @param #MANTIS self
+  -- @param #boolean onoff If true, ships use SEAD EMCON evasion like ground SAMs.
+  -- @return #MANTIS self
+  function MANTIS:SetNavalSEAD(onoff)
+    self.SEADNaval = onoff and true or false
+    -- SEAD:UpdateSet() only ever ADDS names. When switching OFF mid-mission we
+    -- must actively remove ship groups already registered with the SEAD
+    -- instance, or they would keep evading until mission end.
+    if (not self.SEADNaval) and self.mysead and self.mysead.SEADGroupPrefixes then
+      for name,_ in pairs(self.mysead.SEADGroupPrefixes) do
+        local grp = GROUP:FindByName(name)
+        if grp and grp:IsShip() then
+          self.mysead.SEADGroupPrefixes[name] = nil
+        end
+      end
+    end
+    return self
+  end
+
+  --- Add a NAVYGROUP to this MANTIS as SAM shooter and/or EWR picket.
+  -- IMPORTANT: MANTIS does not change ROE. NAVYGROUP defaults to Return Fire --
+  -- set NavyGroup:SwitchROE(ENUMS.ROE.WeaponFree) in your mission if the ship
+  -- should engage detected targets rather than only return fire.
+  -- @param #MANTIS self
+  -- @param Ops.NavyGroup#NAVYGROUP NavyGroup The navy group to add.
+  -- @param #string Role "SAM" (default) = managed shooter, or "EWR" = unmanaged, always-radiating sensor/picket (coverage source). "BOTH" is deprecated and treated as SAM.
+  -- @return #MANTIS self
+  function MANTIS:AddNavyGroup(NavyGroup, Role)
+    local role = string.upper(Role or "SAM")
+    if role == "BOTH" then
+      -- Deprecated: a MANAGED shooter cannot double as a sensor -- its radars
+      -- are dark whenever MANTIS holds it GREEN, so EWR membership senses
+      -- nothing and only pollutes EWR-alive counting and the advanced-mode
+      -- network ratio. Use a SEPARATE ship group with Role="EWR" as a
+      -- radiating picket instead.
+      self:E(self.lid.."AddNavyGroup: Role BOTH is deprecated -- treating as SAM. Use a separate EWR-role group as a radiating picket.")
+      role = "SAM"
+    end
+    if not (NavyGroup and NavyGroup.ClassName and string.find(NavyGroup.ClassName,"NAVYGROUP",1,true)) then
+      self:E(self.lid.."AddNavyGroup: object passed is not a NAVYGROUP!")
+      return self
+    end
+    local grp = NavyGroup:GetGroup()
+    if not (grp and grp:IsAlive()) then
+      self:E(self.lid.."AddNavyGroup: NAVYGROUP has no alive GROUP (late-activated? Call after activation).")
+      return self
+    end
+    -- Hand emission/alarm control to MANTIS. NAVYGROUP re-applies its default
+    -- Alarmstate/Emission at (re)spawn, which would fight MANTIS switching:
+    -- set defaults to Emission ON / Alarmstate AUTO so the reset is neutral.
+    if NavyGroup.SetDefaultEmission   then NavyGroup:SetDefaultEmission(true) end
+    if NavyGroup.SetDefaultAlarmstate then NavyGroup:SetDefaultAlarmstate(0)  end -- 0 = Auto
+    -- NOTE: MANTIS deliberately does NOT touch ROE -- that is the mission
+    -- designer's call. Be aware OPSGROUP's default ROE is Return Fire: a
+    -- MANTIS-managed NAVYGROUP will radiate when RED but hold its weapons
+    -- unless the mission sets e.g. NavyGroup:SwitchROE(ENUMS.ROE.WeaponFree).
+    self._navyGroups = self._navyGroups or {}
+    self._navyGroups[grp:GetName()] = NavyGroup
+    if role == "SAM" then
+      self.SAM_Group:AddGroup(grp)
+      -- If MANTIS is already up, classify the new ship immediately; otherwise
+      -- SetSAMStartState will pick it up at Start.
+      if self.SAM_Table then
+        self:_RefreshSAMTable()
+      end
+    elseif role == "EWR" then
+      self.EWR_Group:AddGroup(grp)
+      if self.Adv_EWR_Group then
+        self.Adv_EWR_Group:AddGroup(grp)
+      end
+    else
+      self:E(self.lid.."AddNavyGroup: unknown Role "..tostring(Role).." - use SAM or EWR.")
+    end
+    self:I(self.lid..string.format("Added NAVYGROUP %s as %s",grp:GetName(),role))
+    return self
+  end
+
+  --- [Internal, static] Inject NAVYGROUP:SetMANTIS. Idempotent; safe if NAVYGROUP absent.
+  function MANTIS._InjectNavyGroupAPI()
+    if NAVYGROUP and not NAVYGROUP.SetMANTIS then
+      --- Register this NAVYGROUP with a MANTIS instance as SAM shooter and/or EWR picket.
+      -- @param Ops.NavyGroup#NAVYGROUP self
+      -- @param Functional.Mantis#MANTIS Mantis The MANTIS instance.
+      -- @param #string Role "SAM" (default) = managed shooter, or "EWR" = unmanaged, always-radiating sensor/picket (coverage source). "BOTH" is deprecated and treated as SAM.
+      -- @return Ops.NavyGroup#NAVYGROUP self
+      function NAVYGROUP:SetMANTIS(Mantis, Role)
+        if Mantis and Mantis.AddNavyGroup then
+          Mantis:AddNavyGroup(self, Role)
+        else
+          self:E(self.lid.."SetMANTIS: no valid MANTIS instance passed!")
+        end
+        return self
+      end
+    end
+  end
+  -- Try immediately in case NAVYGROUP is already loaded (also runs from MANTIS:New).
+  MANTIS._InjectNavyGroupAPI()
+end
+
 -----------------------------------------------------------------------
 -- MANTIS end
 -----------------------------------------------------------------------
