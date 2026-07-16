@@ -6171,11 +6171,11 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation,Mult
     local ctype = Build.Type -- #CTLD_CARGO.Enum
     local canmove = false
     if ctype == CTLD_CARGO.Enum.VEHICLE then canmove = true end
-    if ctype == CTLD_CARGO.Enum.STATIC then 
-      return self 
+    if ctype == CTLD_CARGO.Enum.STATIC then
+      return self
     end
     local temptable = Build.Template or {}
-    if type(temptable) == "string" then 
+    if type(temptable) == "string" then
       temptable = {temptable}
     end
     local zone = nil -- Core.Zone#ZONE_RADIUS
@@ -6217,8 +6217,11 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation,Mult
         self:__CratesBuild(1,Group,Unit,self.DroppedTroops[self.TroopCounter])
       end
     end -- template loop
-    self:_RefreshLoadCratesMenu(Group, Unit)
-    self:_RefreshPackMenus(Group, Unit)
+
+      if Group and Group:IsAlive() and Group:GetID() then
+          self:_RefreshLoadCratesMenu(Group, Unit)
+          self:_RefreshPackMenus(Group, Unit)
+      end
   else
     self:T(self.lid.."Group KIA while building!")
   end

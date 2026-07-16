@@ -375,3 +375,13 @@ function SCHEDULEDISPATCHER:NoTrace( Scheduler )
   Scheduler.ShowTrace = false
 end
 
+--- Helper for memory cleanup for self stopping schedulers
+-- @param #SCHEDULEDISPATCHER self
+-- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
+-- @param #string CallID (Optional) Scheduler Call ID.
+function SCHEDULEDISPATCHER:_Reclaim( Scheduler, CallID )
+  self:Stop( Scheduler, CallID )                          -- remove DCS timer, nil ScheduleID
+  if self.Schedule[Scheduler] then self.Schedule[Scheduler][CallID] = nil end
+  self.ObjectSchedulers[CallID]     = nil
+  self.PersistentSchedulers[CallID] = nil
+end

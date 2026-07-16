@@ -87,7 +87,8 @@ do -- world
   -- @field S_EVENT_SIMULATION_UNFREEZE = 58 
   -- @field S_EVENT_HUMAN_AIRCRAFT_REPAIR_START = 59 
   -- @field S_EVENT_HUMAN_AIRCRAFT_REPAIR_FINISH = 60   
-  -- @field S_EVENT_MAX = 61
+  -- @field S_EVENT_GROUP_CHANGE_OPTION = 61
+  -- @field S_EVENT_MAX = 62
   
   --- The birthplace enumerator is used to define where an aircraft or helicopter has spawned in association with birth events.
   -- @type world.BirthPlace
