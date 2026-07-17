@@ -3747,16 +3747,16 @@ function CTLD:_C130GetUnits(Group, Unit, Name)
     return self
   end
 
-  local coord = Unit:GetCoordinate() or Group:GetCoordinate()
+  local coord = Unit:GetCoord() or Group:GetCoord()
   local capabilities = self:_GetUnitCapabilities(Unit)
   local innerDist = (capabilities.length and capabilities.length/2) or 15
   local maxUnitsNearby = self.maxUnitsNearby or 3
   local searchRadius = self.UnitDistance or 90
   local checkZone = ZONE_RADIUS:New("CTLD_C130UnitsZone",coord:GetVec2(),searchRadius,false)
-  local nearGroups = SET_GROUP:New():FilterCoalitions("blue"):FilterZones({checkZone}):FilterOnce()
+  local nearGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterZones({checkZone}):FilterOnce()
   local nearbyCount = 0
   for _,gr in pairs(nearGroups.Set) do
-    local gc = gr:GetCoordinate()
+    local gc = gr:GetCoord()
     if gc then
       local dist = coord:Get2DDistance(gc)
       if dist > innerDist then
@@ -3925,7 +3925,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
   -- Check cargo location if available
   local location = Cargo:GetLocation()
   if location then
-    local unitcoord = Unit:GetCoordinate() or Group:GetCoordinate()
+    local unitcoord = Unit:GetCoord() or Group:GetCoord()
     if unitcoord then
       if not location:IsCoordinateInZone(unitcoord) then
         -- no we're not at the right spot
@@ -4136,8 +4136,8 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
     if type(ship) == "string" then
       self:T("Spawning on ship "..ship)
       local Ship = UNIT:FindByName(ship)
-      local shipcoord = Ship:GetCoordinate()
-      local unitcoord = Unit:GetCoordinate()
+      local shipcoord = Ship:GetCoord()
+      local unitcoord = Unit:GetCoord()
       local dist = shipcoord:Get2DDistance(unitcoord)
       dist = dist - (20 + math.random(1, 10))
       local halfwidth = (width or 20) / 2
@@ -4395,11 +4395,11 @@ function CTLD:_C130RemoveUnitsNearby(_group,_unit)
   local innerDist = (capabilities.length and capabilities.length/2) or 15
   local finddist = self.PackDistance or (self.CrateDistance or 35)
   local zone = ZONE_RADIUS:New("CTLD_C130RemoveZone",location:GetVec2(),finddist,false)
-  local nearestGroups = SET_GROUP:New():FilterCoalitions("blue"):FilterZones({zone}):FilterOnce()
+  local nearestGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterZones({zone}):FilterOnce()
   local removedAny = false
   local removedTable = {}
   for _, gr in pairs(nearestGroups.Set) do
-    local gc = gr:GetCoordinate()
+    local gc = gr:GetCoord()
     if gc then
       local dist = location:Get2DDistance(gc)
       if dist > innerDist then
@@ -5683,18 +5683,18 @@ end
 -- @return #number Number
 function CTLD:_FindPackableGroupsNearby(Group, Unit)
   self:T(self.lid .. " _FindPackableGroupsNearby")
-  local location = Group:GetCoordinate()
+  local location = Group:GetCoord()
   if not location then return {}, 0 end
   local capabilities = self:_GetUnitCapabilities(Unit)
   local innerDist = (capabilities.length and capabilities.length/2) or 15
   local finddist = self.PackDistance or (self.CrateDistance or 35)
   local zone = ZONE_RADIUS:New("CTLD_PackableZone", location:GetVec2(), finddist, false)
-  local nearestGroups = SET_GROUP:New():FilterCoalitions("blue"):FilterZones({zone}):FilterOnce()
+  local nearestGroups = SET_GROUP:New():FilterCoalitions(self.coalitiontxt):FilterZones({zone}):FilterOnce()
   local packable = {}
 
   for _, gr in pairs(nearestGroups.Set) do
     if gr and gr:GetName() ~= Group:GetName() then
-      local gc = gr:GetCoordinate()
+      local gc = gr:GetCoord()
       if gc then
         local dist = location:Get2DDistance(gc)
         if dist > innerDist and dist <= finddist then
@@ -6171,11 +6171,11 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation,Mult
     local ctype = Build.Type -- #CTLD_CARGO.Enum
     local canmove = false
     if ctype == CTLD_CARGO.Enum.VEHICLE then canmove = true end
-    if ctype == CTLD_CARGO.Enum.STATIC then 
-      return self 
+    if ctype == CTLD_CARGO.Enum.STATIC then
+      return self
     end
     local temptable = Build.Template or {}
-    if type(temptable) == "string" then 
+    if type(temptable) == "string" then
       temptable = {temptable}
     end
     local zone = nil -- Core.Zone#ZONE_RADIUS
@@ -6217,8 +6217,11 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation,Mult
         self:__CratesBuild(1,Group,Unit,self.DroppedTroops[self.TroopCounter])
       end
     end -- template loop
-    self:_RefreshLoadCratesMenu(Group, Unit)
-    self:_RefreshPackMenus(Group, Unit)
+
+      if Group and Group:IsAlive() and Group:GetID() then
+          self:_RefreshLoadCratesMenu(Group, Unit)
+          self:_RefreshPackMenus(Group, Unit)
+      end
   else
     self:T(self.lid.."Group KIA while building!")
   end
@@ -9008,7 +9011,7 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
   local zoneret = nil
   local zonewret = nil
   local zonenameret = nil
-  local unitcoord = Unit:GetCoordinate()
+  local unitcoord = Unit:GetCoord()
   if not unitcoord then
     if Zonetype == CTLD.CargoZoneType.SHIP then
       return false, nil, nil, 1000000, nil
@@ -9029,7 +9032,7 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
       self:T("Checking Type Ship: "..zonename)
       local ZoneUNIT = UNIT:FindByName(zonename)
       if not ZoneUNIT then return false end
-      zonecoord = ZoneUNIT:GetCoordinate()
+      zonecoord = ZoneUNIT:GetCoord()
       zoneradius = czone.shiplength
       zonewidth = czone.shipwidth
       zone = ZONE_UNIT:New( ZoneUNIT:GetName(), ZoneUNIT, zoneradius/2)
