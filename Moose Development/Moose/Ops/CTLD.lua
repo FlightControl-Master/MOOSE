@@ -2748,16 +2748,14 @@ function CTLD:_EventHandler(EventData)
         loaded = self.Loaded_Cargo[unitname] -- #CTLD.LoadedCargo
         loaded.Cratesloaded = loaded.Cratesloaded - 1
         if loaded.Cratesloaded < 0  then loaded.Cratesloaded = 0 end
-        -- TODO zap cargo from list
         local Loaded = {}
         for _,_item in pairs (loaded.Cargo or {}) do
           self:T(self.lid.."UNLOAD checking: ".._item:GetName())
           self:T(self.lid.."UNLOAD state: ".. tostring(_item:WasDropped()))
-          if _item and _item:GetType() == CTLD_CARGO.Enum.GCLOADABLE and event.IniDynamicCargoName and event.IniDynamicCargoName ~= _item:GetName() and not _item:WasDropped() then
+          local unloadedItem = _item and _item:GetType() == CTLD_CARGO.Enum.GCLOADABLE and event.IniDynamicCargoName and event.IniDynamicCargoName == _item:GetName()
+          if not unloadedItem then
             table.insert(Loaded,_item)
-          else
-            table.insert(Loaded,_item)
-          end 
+          end
         end
         loaded.Cargo = nil
         loaded.Cargo = Loaded
