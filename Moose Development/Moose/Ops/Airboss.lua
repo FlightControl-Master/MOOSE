@@ -45,7 +45,7 @@
 -- **Supported Aircraft:**
 --
 --    * [F/A-18C Hornet Lot 20](https://forums.eagle.ru/forumdisplay.php?f=557) (Player & AI)
---    * [F-14A/B/BU/A Early Tomcat](https://forums.eagle.ru/forumdisplay.php?f=395) (Player & AI)
+--    * [F-14A/B/B(U)/A Early Tomcat](https://forums.eagle.ru/forumdisplay.php?f=395) (Player & AI)
 --    * [A-4E Skyhawk Community Mod](https://forums.eagle.ru/showthread.php?t=224989) (Player & AI)
 --    * [AV-8B N/A Harrier](https://forums.eagle.ru/forumdisplay.php?f=555) (Player & AI)
 --    * [T-45C Goshawk](https://forum.dcs.world/topic/203816-vnao-t-45-goshawk/) (VNAO mod) (Player & AI)
@@ -5510,7 +5510,7 @@ function AIRBOSS:_GetAircraftAoA( playerData )
   local goshawk = playerData.actype == AIRBOSS.AircraftCarrier.T45C
   local skyhawk = playerData.actype == AIRBOSS.AircraftCarrier.A4EC
   local harrier = playerData.actype == AIRBOSS.AircraftCarrier.AV8B
-  local tomcat  = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B or playerData.actype == AIRBOSS.AircraftCarrier.F14A_Early
+  local tomcat  = self:_IsTomcat( playerData.actype )
   local corsair = playerData.actype == AIRBOSS.AircraftCarrier.CORSAIR or playerData.actype == AIRBOSS.AircraftCarrier.CORSAIR_CW
 
   -- Table with AoA values.
@@ -5573,6 +5573,18 @@ function AIRBOSS:_GetAircraftAoA( playerData )
     aoa.OnSpeedMin =  9.5
     aoa.Fast       =  8.0
     aoa.FAST       =  7.5
+  else
+    -- Unknown carrier-capable type: _IsCarrierAircraft() is enum-driven, so a type can
+    -- reach here with no AoA branch. Returning an empty table nil-propagates into
+    -- _GetAircraftParameters() and the AoA waveoff check. Fall back to Hornet values.
+    self:E( self.lid .. string.format( "ERROR: No AoA parameters defined for aircraft type %s! Falling back to F/A-18C values.", tostring( playerData.actype ) ) )
+    aoa.SLOW       = 9.8
+    aoa.Slow       = 9.3
+    aoa.OnSpeedMax = 8.8
+    aoa.OnSpeed    = 8.1
+    aoa.OnSpeedMin = 7.4
+    aoa.Fast       = 6.9
+    aoa.FAST       = 6.3
   end
 
   return aoa
@@ -5589,7 +5601,7 @@ function AIRBOSS:_AoAUnit2Deg( playerData, aoaunits )
   local degrees = aoaunits
 
   -- Check aircraft type of player.
-  if playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B or playerData.actype == AIRBOSS.AircraftCarrier.F14A_Early then
+  if self:_IsTomcat( playerData.actype ) then
 
     -------------
     -- F-14A/B --
@@ -5632,7 +5644,7 @@ function AIRBOSS:_AoADeg2Units( playerData, degrees )
   local aoaunits = degrees
 
   -- Check aircraft type of player.
-  if playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B or playerData.actype == AIRBOSS.AircraftCarrier.F14A_Early then
+  if self:_IsTomcat( playerData.actype ) then
 
     -------------
     -- F-14A/B --
@@ -5682,7 +5694,7 @@ function AIRBOSS:_GetAircraftParameters( playerData, step )
                  or playerData.actype == AIRBOSS.AircraftCarrier.RHINOF
                  or playerData.actype == AIRBOSS.AircraftCarrier.GROWLER
   local skyhawk = playerData.actype == AIRBOSS.AircraftCarrier.A4EC
-  local tomcat = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B
+  local tomcat = self:_IsTomcat( playerData.actype )
   local harrier = playerData.actype == AIRBOSS.AircraftCarrier.AV8B
   local goshawk = playerData.actype == AIRBOSS.AircraftCarrier.T45C
   local corsair = playerData.actype == AIRBOSS.AircraftCarrier.CORSAIR or playerData.actype == AIRBOSS.AircraftCarrier.CORSAIR_CW
@@ -6615,9 +6627,7 @@ function AIRBOSS:_RefuelAI( flight )
   local refuelac=false
   local actype=flight.group:GetTypeName()
   if actype==AIRBOSS.AircraftCarrier.AV8B      or
-     actype==AIRBOSS.AircraftCarrier.F14A      or
-     actype==AIRBOSS.AircraftCarrier.F14B      or
-     actype==AIRBOSS.AircraftCarrier.F14A_AI   or
+     self:_IsTomcat( actype, true )            or
      actype==AIRBOSS.AircraftCarrier.HORNET    or
      actype==AIRBOSS.AircraftCarrier.RHINOE    or
      actype==AIRBOSS.AircraftCarrier.RHINOF    or
@@ -6727,7 +6737,7 @@ function AIRBOSS:_LandAI( flight )
     Speed = UTILS.KnotsToKmph( 200 )
   elseif flight.actype == AIRBOSS.AircraftCarrier.E2D or flight.actype == AIRBOSS.AircraftCarrier.C2A then
     Speed = UTILS.KnotsToKmph( 150 )
-  elseif flight.actype == AIRBOSS.AircraftCarrier.F14A_AI or flight.actype == AIRBOSS.AircraftCarrier.F14A or flight.actype == AIRBOSS.AircraftCarrier.F14B then
+  elseif self:_IsTomcat( flight.actype, true ) then
     Speed = UTILS.KnotsToKmph( 175 )
   elseif flight.actype == AIRBOSS.AircraftCarrier.S3B or flight.actype == AIRBOSS.AircraftCarrier.S3BTANKER then
     Speed = UTILS.KnotsToKmph( 140 )
@@ -8202,7 +8212,7 @@ function AIRBOSS:_CheckPlayerStatus()
                     or playerData.actype == AIRBOSS.AircraftCarrier.RHINOE
                     or playerData.actype == AIRBOSS.AircraftCarrier.RHINOF
                     or playerData.actype == AIRBOSS.AircraftCarrier.GROWLER
-          local tomcat  = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B
+          local tomcat  = self:_IsTomcat( playerData.actype )
 
           -- VNAO Edit - Added wrapped up call to LSO grading Hornet
           if playerData.step==AIRBOSS.PatternStep.WAKE and hornet then-- VNAO Edit - Added
@@ -9457,7 +9467,7 @@ function AIRBOSS:_Initial( playerData )
 
       -- Hook down for students.
       if playerData.difficulty == AIRBOSS.Difficulty.EASY and playerData.actype ~= AIRBOSS.AircraftCarrier.AV8B then
-        if playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B then
+        if self:_IsTomcat( playerData.actype ) then
           hint = hint .. " - Hook down, SAS on, Wing Sweep 68°!"
         else
           hint = hint .. " - Hook down!"
@@ -9622,8 +9632,7 @@ function AIRBOSS:_DirtyUp( playerData )
 
     -- Radio call "Say/Fly needles". Delayed by 10/15 seconds.
     if   playerData.actype == AIRBOSS.AircraftCarrier.HORNET
-      or playerData.actype == AIRBOSS.AircraftCarrier.F14A
-      or playerData.actype == AIRBOSS.AircraftCarrier.F14B
+      or self:_IsTomcat( playerData.actype )
       or playerData.actype == AIRBOSS.AircraftCarrier.RHINOE
       or playerData.actype == AIRBOSS.AircraftCarrier.RHINOF
       or playerData.actype == AIRBOSS.AircraftCarrier.GROWLER
@@ -10817,7 +10826,7 @@ function AIRBOSS:_Trapped( playerData )
       or playerData.actype == AIRBOSS.AircraftCarrier.RHINOF
       or playerData.actype == AIRBOSS.AircraftCarrier.GROWLER then
       dcorr = 100
-    elseif playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B then
+    elseif self:_IsTomcat( playerData.actype ) then
       -- TODO: Check Tomcat.
       dcorr = 100
     elseif playerData.actype == AIRBOSS.AircraftCarrier.A4EC then
@@ -11630,7 +11639,7 @@ function AIRBOSS:_AttitudeMonitor( playerData )
 
   local unitClient = Unit.getByName(unit:GetName()) -- VNAO Edit - Added
   local hornet = playerData.actype == AIRBOSS.AircraftCarrier.HORNET -- VNAO Edit - Added
-  local tomcat = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B or playerData.actype == AIRBOSS.AircraftCarrier.F14A_Early -- VNAO Edit - Added
+  local tomcat = self:_IsTomcat( playerData.actype ) -- VNAO Edit - Added
 
   if hornet then -- VNAO Edit - Added
     local nozzlePosL = 0  -- VNAO Edit - Added
@@ -11863,7 +11872,7 @@ function AIRBOSS:_NozzleArgumentLeft( unit ) -- VNAO Edit - Added
     else -- VNAO Edit - Added
       nozzlePosL = 0 -- VNAO Edit - Added
     end -- VNAO Edit - Added
-  elseif typeName == "F-14A-135-GR" or typeName == "F-14B" or typeName == "F-14A-135-GR-Early" then -- VNAO Edit - Added
+  elseif self:_IsTomcat( typeName ) then -- VNAO Edit - Added
     nozzlePosL = unitClient:getDrawArgumentValue(434) -- VNAO Edit - Added
   end -- VNAO Edit - Added
   
@@ -11888,7 +11897,7 @@ function AIRBOSS:_NozzleArgumentRight( unit ) -- VNAO Edit - Added
     else -- VNAO Edit - Added
       nozzlePosR = 0 -- VNAO Edit - Added
     end -- VNAO Edit - Added
-  elseif typeName == "F-14A-135-GR" or typeName == "F-14B" or typeName == "F-14A-135-GR-Early" then -- VNAO Edit - Added
+  elseif self:_IsTomcat( typeName ) then -- VNAO Edit - Added
     nozzlePosR = unitClient:getDrawArgumentValue(433) -- VNAO Edit - Added
   end -- VNAO Edit - Added
   return nozzlePosR -- VNAO Edit - Added
@@ -13151,7 +13160,7 @@ function AIRBOSS:_Flightdata2Text( playerData, groovestep )
 
 
     local hornet =   playerData.actype == AIRBOSS.AircraftCarrier.HORNET-- VNAO Edit - Added 
-    local tomcat = playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B-- VNAO Edit - Added 
+    local tomcat = self:_IsTomcat( playerData.actype )-- VNAO Edit - Added 
 
     if hornet then-- VNAO Edit - Added 
       if Lnoz > 0.6 and Rnoz > 0.6 then -- VNAO Edit - Added check them both, it's possilbe there could be a single engine landing and one is in idle perhaps?
@@ -13667,7 +13676,7 @@ function AIRBOSS:_StepHint( playerData, step )
 
     -- Late break.
     if step == AIRBOSS.PatternStep.LATEBREAK then
-      if playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B then
+      if self:_IsTomcat( playerData.actype ) then
         hint = hint .. "\nWing Sweep 20°, Gear DOWN < 280 KIAS."
       end
     end
@@ -13676,7 +13685,7 @@ function AIRBOSS:_StepHint( playerData, step )
     if step == AIRBOSS.PatternStep.ABEAM then
       if playerData.actype == AIRBOSS.AircraftCarrier.AV8B then
         hint = hint .. "\nNozzles 50°-60°. Antiskid OFF. Lights OFF."
-      elseif playerData.actype == AIRBOSS.AircraftCarrier.F14A or playerData.actype == AIRBOSS.AircraftCarrier.F14B then
+      elseif self:_IsTomcat( playerData.actype ) then
         hint = hint .. "\nSlats/Flaps EXTENDED < 225 KIAS. DLC SELECTED. Auto Throttle IF DESIRED."
       else
         hint = hint .. "\nDirty up! Gear DOWN, flaps DOWN. Check hook down."
@@ -15111,7 +15120,7 @@ function AIRBOSS:_GetACNickname( actype )
     nickname = "Hawkeye"
   elseif actype == AIRBOSS.AircraftCarrier.C2A then
     nickname = "Greyhound"
-  elseif actype == AIRBOSS.AircraftCarrier.F14A_AI or actype == AIRBOSS.AircraftCarrier.F14A or actype == AIRBOSS.AircraftCarrier.F14B or actype == AIRBOSS.AircraftCarrier.F14A_Early then
+  elseif self:_IsTomcat( actype, true ) then
     nickname = "Tomcat"
   elseif actype == AIRBOSS.AircraftCarrier.FA18C or actype == AIRBOSS.AircraftCarrier.HORNET then
     nickname = "Hornet"
@@ -15246,6 +15255,29 @@ function AIRBOSS:_GetGoodBadScore( playerData )
   end
 
   return lowscore, badscore
+end
+
+--- Check whether an aircraft type name is any F-14 Tomcat variant.
+-- Central predicate so that adding a new Tomcat variant only requires editing
+-- this function and the AIRBOSS.AircraftCarrier enum.
+-- @param #AIRBOSS self
+-- @param #string actype Aircraft type name, e.g. from `unit:GetTypeName()` or `playerData.actype`.
+-- @param #boolean IncludeAI If true, also match the AI-only F-14A (AIRBOSS.AircraftCarrier.F14A_AI).
+-- @return #boolean If true, actype is an F-14 variant.
+function AIRBOSS:_IsTomcat( actype, IncludeAI )
+
+  if actype == AIRBOSS.AircraftCarrier.F14A
+    or actype == AIRBOSS.AircraftCarrier.F14B
+    or actype == AIRBOSS.AircraftCarrier.F14BU
+    or actype == AIRBOSS.AircraftCarrier.F14A_Early then
+    return true
+  end
+
+  if IncludeAI and actype == AIRBOSS.AircraftCarrier.F14A_AI then
+    return true
+  end
+
+  return false
 end
 
 --- Check if aircraft is capable of landing on this aircraft carrier.
