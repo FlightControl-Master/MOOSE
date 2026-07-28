@@ -6207,7 +6207,7 @@ function CTLD:_BuildObjectFromCrates(Group,Unit,Build,Repair,RepairLocation,Mult
       if canmove then
         --spawn:InitRandomizeUnits(true,20,2)
       end
-      if Build.Heading and self.buildcrateswithaircraftheading then
+      if Build.Heading and self.useaircraftheadingforbuilds then
         spawn:InitGroupHeading(Build.Heading)
       end
       local spawnedGroup = spawn:SpawnFromVec2(randomcoord)
