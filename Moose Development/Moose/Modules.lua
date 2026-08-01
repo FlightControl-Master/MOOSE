@@ -79,6 +79,7 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/Tiresias.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/Stratego.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/ClientWatch.lua')
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/Formation.lua')
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Functional/Territory.lua')
 
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Ops/Airboss.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Ops/RecoveryTanker.lua' )

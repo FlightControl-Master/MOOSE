@@ -4691,7 +4691,7 @@ function OPSGROUP:_UpdateTask(Task, Mission)
           self:T(self.lid..string.format("Zone %s captured ==> Task DONE!", zoneCurr:GetName()))
           
           -- Task done.
-          if Task.StayInZoneTime then
+          if Task.StayInZoneTime and Task.StayInZoneTime>0 then
             local stay = Task.StayInZoneTime
             self:__TaskDone(stay,Task)
           else

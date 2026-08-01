@@ -350,6 +350,18 @@ INTEL.RCS_NoseOnFraction = 0.15
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+--- Create a new INTEL object and start the FSM.
+-- @param #INTEL self
+-- @return #INTEL self
+function INTEL:_UpdateAgents()
+
+  -- Filter coalition.
+  if self.coalition then
+    local coalitionname=UTILS.GetCoalitionName(self.coalition):lower()
+    self.detectionset:FilterCoalitions(coalitionname):FilterAlive():FilterOnce()
+  end
+  
+end
 
 --- Create a new INTEL object and start the FSM.
 -- @param #INTEL self
@@ -837,6 +849,20 @@ function INTEL:AddAgent(AgentGroup)
   return self
 end
 
+--- Set whether the detection set, aka agents, are updated periodically. With this all alive groups of the INTEL coalition are included.
+-- @param #INTEL self
+-- @param #boolean switch If `true` or nil, all groups of the coalition will be added automatically to the Agent set.
+-- @return #INTEL self
+function INTEL:SetAgentAuto(switch)
+  if switch==nil then 
+    switch=true 
+  else 
+    switch=false
+  end
+  self.update_detectionset=switch
+  return self
+end
+
 --- Enable or disable cluster analysis of detected targets.
 -- Targets will be grouped in coupled clusters.
 -- @param #INTEL self
@@ -1025,6 +1051,10 @@ function INTEL:onafterStatus(From, Event, To)
 
   -- FSM state.
   local fsmstate=self:GetState()
+  
+  if self.update_detectionset then
+    self:_UpdateAgents()
+  end
 
   -- Fresh arrays.
   self.ContactsLost={}

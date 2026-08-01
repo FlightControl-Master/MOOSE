@@ -1963,6 +1963,25 @@ function AIRBASE:Register(AirbaseName)
 
   -- Category.
   self.category=self.descriptors and self.descriptors.category or Airbase.Category.AIRDROME
+  
+  -- Get DCS object.
+  local airbase=self:GetDCSObject()
+
+  if airbase then
+    self.objectcategory=Object.getCategory(airbase)
+  else
+    self.objectcategory=Object.Category.BASE
+  end
+  
+  if self.objectcategory==Object.Category.BASE then
+    self.objectcategoryName="BASE"
+  elseif self.objectcategory==Object.Category.STATIC then
+    self.objectcategoryName="STATIC"
+  elseif self.objectcategory==Object.Category.UNIT then
+    self.objectcategoryName="UNIT"
+  else
+    self.objectcategoryName="OTHER"
+  end
 
   -- H2 is bugged
   --if self.AirbaseName == "H4" and self.descriptors == nil then
@@ -1971,24 +1990,24 @@ function AIRBASE:Register(AirbaseName)
   --end
 
   -- Set category.
-if self.category==Airbase.Category.AIRDROME then
-  self.isAirdrome=true
-elseif self.category==Airbase.Category.HELIPAD or self.descriptors.typeName=="FARP_SINGLE_01" then
-  self.isHelipad=true
-  self.category=Airbase.Category.HELIPAD
-elseif self.category==Airbase.Category.SHIP then
-  self.isShip=true
-  -- DCS bug: Oil rigs and gas platforms have category=2 (ship). Also they cannot be retrieved by coalition.getStaticObjects()
-  if self.descriptors.typeName=="Oil rig" or self.descriptors.typeName=="Ga" then
+  if self.category==Airbase.Category.AIRDROME then
+    self.isAirdrome=true
+  elseif self.category==Airbase.Category.HELIPAD or self.descriptors.typeName=="FARP_SINGLE_01" then
     self.isHelipad=true
-    self.isShip=false
     self.category=Airbase.Category.HELIPAD
-    _DATABASE:AddStatic(AirbaseName)
+  elseif self.category==Airbase.Category.SHIP then
+    self.isShip=true
+    -- DCS bug: Oil rigs and gas platforms have category=2 (ship). Also they cannot be retrieved by coalition.getStaticObjects()
+    if self.descriptors.typeName=="Oil rig" or self.descriptors.typeName=="Ga" then
+      self.isHelipad=true
+      self.isShip=false
+      self.category=Airbase.Category.HELIPAD
+      _DATABASE:AddStatic(AirbaseName)
+    end
+    if self:GetTypeName() == "Zell" then self.isZell = true end
+  else
+    self:E("ERROR: Unknown airbase category!")
   end
-  if self:GetTypeName() == "Zell" then self.isZell = true end
-else
-  self:E("ERROR: Unknown airbase category!")
-end
 
   -- Init Runways.
   self:_InitRunways()
@@ -2614,7 +2633,7 @@ function AIRBASE:GetMinimumBoundingCircleFromParkingSpots(mark)
       local spots = self:GetParkingSpotsVec2s()
       if #spots == 0 then return self.AirbaseZone  end
       local center, radius = UTILS.GetMinimumBoundingCircle(spots)
-      self.parkingCircle = ZONE_RADIUS:New(self.AirbaseName.." ParkingCircle",center,radius+50)
+      self.parkingCircle = ZONE_RADIUS:New(self.AirbaseName.." ParkingCircle", center, radius+50, true)
       if mark == true then
          self.parkingCircle:DrawZone(-1,{1,0,0},1,{0,1,0},0.2,3)
       end

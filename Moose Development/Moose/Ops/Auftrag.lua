@@ -191,6 +191,8 @@
 -- @field #boolean optionEmission Emission is on or off.
 -- @field #boolean optionInvisible Invisible is on/off.
 -- @field #boolean optionImmortal Immortal is on/off.
+-- 
+-- @field #AUFTRAG.Summary summary Auftrag summary.
 --
 -- @extends Core.Fsm#FSM
 
@@ -656,6 +658,19 @@ AUFTRAG.Category={
 -- @field #string DAMAGED Target was damaged.
 -- @field #string DESTROYED Target was destroyed.
 
+--- Mission summary.
+-- @type AUFTRAG.Summary
+-- @field #boolean success If true, mission was successful.
+-- @field #number Ntargets0 Number of initial targets.
+-- @field #number Ntargets Number of final targets after mission is done.
+-- @field #number damage Target damage in per cent.
+-- @field #number Ndestroyed Number of destroyed targets.
+-- @field #number Nkills Number of kills from assigned groups.
+-- @field #number Nelements Number of elements assigned to mission.
+-- @field #number targetLife Target life points after mission is over.
+-- @field #number category Target category.
+-- @field #number Ncasualties Number of own casualties.
+
 --- Generic mission condition.
 -- @type AUFTRAG.Condition
 -- @field #function func Callback function to check for a condition. Should return a #boolean.
@@ -676,7 +691,7 @@ AUFTRAG.Category={
 
 --- AUFTRAG class version.
 -- @field #string version
-AUFTRAG.version="1.4.2"
+AUFTRAG.version="1.5.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -776,6 +791,7 @@ function AUFTRAG:New(Type)
 
   self:AddTransition("*",                      "Cancel",           AUFTRAG.Status.CANCELLED)   -- Command to cancel the mission.
 
+  self:AddTransition("*",                      "Evaluated",        "*")
   self:AddTransition("*",                      "Success",          AUFTRAG.Status.SUCCESS)
   self:AddTransition("*",                      "Failed",           AUFTRAG.Status.FAILED)
 
@@ -946,6 +962,24 @@ function AUFTRAG:New(Type)
   -- @param #string Event Event.
   -- @param #string To To state.
 
+  --- Triggers the FSM event "Evaluated".
+  -- @function [parent=#AUFTRAG] Evaluated
+  -- @param #AUFTRAG self
+  -- @param #AUFTRAG.Summary
+
+  --- Triggers the FSM event "Evaluated" after a delay.
+  -- @function [parent=#AUFTRAG] __Evaluated
+  -- @param #AUFTRAG self
+  -- @param #number delay Delay in seconds.
+  -- @param #AUFTRAG.Summary Summary Mission summary.
+
+  --- On after "Evaluated" event.
+  -- @function [parent=#AUFTRAG] OnAfterEvaluated
+  -- @param #AUFTRAG self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #AUFTRAG.Summary Summary Mission summary.
 
   --- Triggers the FSM event "Success".
   -- @function [parent=#AUFTRAG] Success
@@ -1750,6 +1784,9 @@ function AUFTRAG:NewBAI(Target, Altitude)
   mission.missionFraction=0.75
   mission.optionROE=ENUMS.ROE.OpenFire
   mission.optionROT=ENUMS.ROT.PassiveDefense
+  
+  -- Evaluate result after 5 min. We might need time until the bombs have dropped and targets have been detroyed.
+  mission.dTevaluate=5*60  
 
   mission.categories={AUFTRAG.Category.AIRCRAFT}
 
@@ -2303,6 +2340,9 @@ end
 function AUFTRAG:NewARTY(Target, Nshots, Radius, Altitude)
 
   local mission=AUFTRAG:New(AUFTRAG.Type.ARTY)
+  
+  printf("FF nshots=%s", tostring(Nshots))
+  printf("FF radius=%s", tostring(Radius))
 
   mission:_TargetFromObject(Target)
 
@@ -2407,7 +2447,7 @@ end
 -- @param #AUFTRAG self
 -- @param Ops.OpsZone#OPSZONE OpsZone The OPS zone to capture.
 -- @param #number Coalition The coalition which should capture the zone for the mission to be successful.
--- @param #number Speed Speed in knots.
+-- @param #number Speed (Optional) Speed in knots.
 -- @param #number Altitude (Optional) Altitude in feet. Only for airborne units. Default 2000 feet ASL.
 -- @param #string Formation (Optional) Formation used by ground units during patrol. Default "Off Road".
 -- @param #number StayInZoneTime Stay this many seconds in the zone when done, only then drive back.
@@ -4689,6 +4729,18 @@ function AUFTRAG:Evaluate()
   elseif successCondition then
     failed=false
   end
+  
+  self.summary={} --#AUFTRAG.Summary
+  self.summary.success=not failed
+  self.summary.damage=targetdamage
+  self.summary.Ntargets=Ntargets
+  self.summary.Ntargets0=Ntargets0
+  self.summary.Ncasualties=self.Ncasualties
+  self.summary.Ndestroyed=self.engageTarget.Ndestroyed
+  self.summary.Nelements=self.Nelements
+  self.summary.Nkills=self.Nkills
+  self.summary.category=self.engageTarget:GetCategory()
+  self.summary.targetLife=Life
 
   -- Debug text.
   if self.verbose > 0 then
@@ -4708,6 +4760,9 @@ function AUFTRAG:Evaluate()
     text=text..string.format("=========================")
     self:I(self.lid..text)
   end
+  
+  -- Trigger evaluated result and pass summary.
+  self:Evaluated(self.summary)
 
   -- Trigger events.
   if failed then
@@ -5429,7 +5484,7 @@ function AUFTRAG:onafterSuccess(From, Event, To)
 
     -- Stop mission.
     self:T(self.lid..string.format("Mission SUCCESS! Number of max repeats %d reached  ==> Stopping mission!", self.repeated+1))
-    self:Stop()
+    self:__Stop(-120)
 
   end
 
@@ -5471,7 +5526,7 @@ function AUFTRAG:onafterFailed(From, Event, To)
 
     -- Stop mission.
     self:T(self.lid..string.format("Mission FAILED! Number of max repeats %d reached ==> Stopping mission!", self.repeated+1))
-    self:Stop()
+    self:__Stop(-120)
 
   end
 
@@ -5584,6 +5639,7 @@ function AUFTRAG:onafterRepeat(From, Event, To)
   self.Ngroups=0
   self.Nassigned=nil
   self.Ndead=0
+  self.summary=nil
 
   -- Update DCS mission task. Could be that the initial task (e.g. for bombing) was destroyed. Then we need to update the coordinate.
   self.DCStask=self:GetDCSMissionTask()
@@ -5634,6 +5690,8 @@ function AUFTRAG:onafterStop(From, Event, To)
 
   -- No group data.
   self.groupdata={}
+  
+  self.summary=nil
 
   -- Clear pending scheduler calls.
   self.CallScheduler:Clear()
