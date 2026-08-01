@@ -246,11 +246,11 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
           -- self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
           return ScheduleTime -- returns the next time the function needs to be called.
         else
-          self:_Reclaim( Scheduler, CallID )
+          self:Stop( Scheduler, CallID )
         end
 
       else
-        self:_Reclaim( Scheduler, CallID )
+        self:Stop( Scheduler, CallID )
       end
     else
       self:I( "<<<>" .. Name .. ":" .. Line .. " (" .. Source .. ")" )
