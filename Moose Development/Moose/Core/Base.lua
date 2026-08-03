@@ -735,6 +735,12 @@ do -- Event Handling
   -- @function [parent=#BASE] OnEventPlayerEnterAircraft
   -- @param #BASE self
   -- @param Core.Event#EVENTDATA EventData The EventData structure.
+
+  --- Occurs when an option is changed for an AI group.
+  -- The event identifies the initiating group, but does not provide the option ID or value.
+  -- @function [parent=#BASE] OnEventGroupChangeOption
+  -- @param #BASE self
+  -- @param Core.Event#EVENTDATA EventData The EventData structure.
   
   --- Occurs when a player creates a dynamic cargo object from the F8 ground crew menu.
   -- *** NOTE *** this is a workarounf for DCS not creating these events as of Aug 2024.
@@ -880,6 +886,22 @@ end
   
     world.onEvent(Event)
   end  
+
+  --- Creation of a `S_EVENT_GROUP_CHANGE_OPTION` event.
+  -- @param #BASE self
+  -- @param DCS#Time EventTime The time stamp of the event.
+  -- @param DCS#Group Initiator The initiating group of the event.
+  function BASE:CreateEventGroupChangeOption( EventTime, Initiator )
+    self:F( { EventTime, Initiator } )
+
+    local Event = {
+      id = EVENTS.GroupChangeOption,
+      time = EventTime,
+      initiator = Initiator,
+    }
+
+    world.onEvent( Event )
+  end
   
     --- Creation of a S_EVENT_NEW_DYNAMIC_CARGO event.
   -- @param #BASE self

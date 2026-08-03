@@ -6466,7 +6466,13 @@ function AUFTRAG:GetDCSMissionTask(MissionGroup)
     -- ESCORT Mission --
     --------------------
 
-    local DCStask=CONTROLLABLE.TaskEscort(nil, self.engageTarget:GetObject(), self.escortVec3, nil, self.engageMaxDistance, self.engageTargetTypes)
+    local FollowGroup=self.engageTarget:GetObject()
+    local DCStask=nil
+    if next(self.engageTargetTypes)==nil then
+      DCStask=FollowGroup:TaskFollow(FollowGroup, self.escortVec3)
+    else
+      DCStask=CONTROLLABLE.TaskEscort(nil, FollowGroup, self.escortVec3, nil, self.engageMaxDistance, self.engageTargetTypes)
+    end
 
     table.insert(DCStasks, DCStask)
     

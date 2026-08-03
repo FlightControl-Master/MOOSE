@@ -513,7 +513,7 @@ ENUMS.ReportingName =
     Tornado = "Tornado",
     -- Transport / Bomber / Others
     Atlas = "A400",
-    Lancer = "B1-B",
+    Lancer = "B-1B",
     Stratofortress = "B-52H",
     Herc = "C-130",
     Hercules = "C-130J-30",
@@ -558,7 +558,7 @@ ENUMS.ReportingName =
     Apache = "AH-64",
     Chinook = "CH-47",
     Sea_Stallion = "CH-53",
-    Kiowa = "OH-58",
+    Kiowa = "OH58D",
     Seahawk = "SH-60",
     Blackhawk = "UH-60",
     Sea_King = "S-61",
@@ -2090,6 +2090,56 @@ ENUMS.Storage.weapons.containers.UH60L_M60_GUNNER = 'weapons.containers.{UH60L_M
 ENUMS.Storage.weapons.containers.UH60_GAU19_RIGHT = 'weapons.containers.{UH60_GAU19_RIGHT}'
 ENUMS.Storage.weapons.containers.UH60_M230_RIGHT = 'weapons.containers.{UH60_M230_RIGHT}'
 ENUMS.Storage.weapons.containers.UH60L_M2_GUNNER = 'weapons.containers.{UH60L_M2_GUNNER}'
+
+
+ENUMS.Storage.weapons.adapters.GD_F100_SUU_13 = 'weapons.adapters.GD_F100_SUU-13'
+ENUMS.Storage.weapons.containers.GPU_5_POD = 'weapons.containers.{GPU_5_POD}'
+ENUMS.Storage.weapons.bombs.BOLT_117 = 'weapons.bombs.BOLT-117'
+ENUMS.Storage.weapons.shells.F100_M39_20_TP_T = 'weapons.shells.F100_M39_20_TP_T'
+ENUMS.Storage.weapons.gunmounts.M_39_F_100 = 'weapons.gunmounts.M-39 F-100'
+ENUMS.Storage.weapons.droptanks.GD_F100_TANK_275_L = 'weapons.droptanks.GD_F100_TANK_275_L'
+ENUMS.Storage.weapons.bombs.BLU_4B_R_GROUP_R = 'weapons.bombs.BLU-4B_R_GROUP_R'
+ENUMS.Storage.weapons.containers.F100_CAMERA_P2 = 'weapons.containers.F100_CAMERA_P2'
+ENUMS.Storage.weapons.containers.HB_ORD_SUU_7 = 'weapons.containers.HB_ORD_SUU_7'
+ENUMS.Storage.weapons.adapters.SidewinderPylon = 'weapons.adapters.SidewinderPylon'
+ENUMS.Storage.weapons.adapters.apu_470 = 'weapons.adapters.apu_470'
+ENUMS.Storage.weapons.droptanks.GD_F100_TANK_335_R = 'weapons.droptanks.GD_F100_TANK_335_R'
+ENUMS.Storage.weapons.bombs.BLU_3B_R_GROUP_R = 'weapons.bombs.BLU-3B_R_GROUP_R'
+ENUMS.Storage.weapons.droptanks.GD_F100_TANK_335_L = 'weapons.droptanks.GD_F100_TANK_335_L'
+ENUMS.Storage.weapons.adapters.mbdz_u2t = 'weapons.adapters.mbdz_u2t'
+ENUMS.Storage.weapons.containers.ZellRocket = 'weapons.containers.ZellRocket'
+ENUMS.Storage.weapons.containers.apu_73 = 'weapons.containers.apu-73'
+ENUMS.Storage.weapons.gunmounts.GAU_13 = 'weapons.gunmounts.GAU-13'
+ENUMS.Storage.weapons.shells.F100_M39_20_TP = 'weapons.shells.F100_M39_20_TP'
+ENUMS.Storage.weapons.shells.F100_M39_20_API = 'weapons.shells.F100_M39_20_API'
+ENUMS.Storage.weapons.adapters.bdz_umk2b = 'weapons.adapters.bdz_umk2b'
+ENUMS.Storage.weapons.droptanks.GD_F100_TANK_450 = 'weapons.droptanks.GD_F100_TANK_450'
+ENUMS.Storage.weapons.droptanks.GD_F100_TANK_275_R = 'weapons.droptanks.GD_F100_TANK_275_R'
+ENUMS.Storage.weapons.bombs.BLU_18_B_GROUP = 'weapons.bombs.BLU-18/B_GROUP'
+ENUMS.Storage.weapons.containers.ZELL_Booster = 'weapons.containers.ZELL Booster'
+ENUMS.Storage.weapons.adapters.apu_60 = 'weapons.adapters.apu_60'
+ENUMS.Storage.weapons.gunmounts.GPU_5_POD = 'weapons.gunmounts.{GPU_5_POD}'
+ENUMS.Storage.weapons.containers.F100_CAMERA_KA71A = 'weapons.containers.F100_CAMERA_KA71A'
+ENUMS.Storage.weapons.bombs.BLU_3_R_GROUP_R = 'weapons.bombs.BLU-3_R_GROUP_R'
+ENUMS.Storage.weapons.shells.F100_M39_20_HEI = 'weapons.shells.F100_M39_20_HEI'
+ENUMS.Storage.weapons.droptanks.GD_F100_TANK_200 = 'weapons.droptanks.GD_F100_TANK_200'
+ENUMS.Storage.weapons.adapters.apu_73 = 'weapons.adapters.apu-73'
+ENUMS.Storage.weapons.gunmounts.AKAN_NO_TRC = 'weapons.gunmounts.AKAN_NO_TRC'
+ENUMS.Storage.weapons.gunmounts.AKAN = 'weapons.gunmounts.AKAN'
+ENUMS.Storage.weapons.shells.F100_M39_20_HEI_T = 'weapons.shells.F100_M39_20_HEI_T'
+ENUMS.Storage.weapons.shells.F100_M39_20_API_T = 'weapons.shells.F100_M39_20_API_T'
+ENUMS.Storage.weapons.containers.GD_F100_STRIKE_CAMERA = 'weapons.containers.GD_F100_STRIKE_CAMERA'
+ENUMS.Storage.weapons.bombs.BLU_49_B = 'weapons.bombs.BLU-49/B'
+
+ENUMS.Storage.weapons.bombs.GBU_24E = 'weapons.bombs.GBU_24E'
+ENUMS.Storage.weapons.containers.GD_F100_SUU_13 = 'weapons.containers.GD_F100_SUU-13'
+ENUMS.Storage.weapons.gunmounts.AKAN = 'weapons.gunmounts.{AKAN}'
+ENUMS.Storage.weapons.gunmounts.AKAN_NO_TRC = 'weapons.gunmounts.{AKAN_NO_TRC}'
+ENUMS.Storage.weapons.gunmounts.SUU_23_POD_Wing = 'weapons.gunmounts.{SUU_23_POD_Wing}'
+ENUMS.Storage.weapons.containers.SUU_23_POD_Wing = 'weapons.containers.{SUU_23_POD_Wing}'
+ENUMS.Storage.weapons.containers.SUU_23_POD_Centerline = 'weapons.containers.{SUU_23_POD_Centerline}'
+ENUMS.Storage.weapons.gunmounts.SUU_23_POD_Centerline = 'weapons.gunmounts.{SUU_23_POD_Centerline}'
+ENUMS.Storage.weapons.containers.HB_F_4E_BRU_42 = 'weapons.containers.HB_F-4E_BRU-42'
 
 ---
 -- @type ENUMS.FARPType
