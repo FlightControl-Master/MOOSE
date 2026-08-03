@@ -10410,7 +10410,7 @@ function AIRBOSS:_Groove( playerData )
 
     -- Wait until player passed the 0.75 NM distance.
     local _advice = true
-    if playerData.TIG0 == nil and playerData.difficulty ~= AIRBOSS.Difficulty.EASY then -- rho>RXX
+    if (playerData.TIG0 == nil or playerData.TIG0 == 0) and playerData.difficulty ~= AIRBOSS.Difficulty.EASY then -- rho>RXX
       _advice = false
     end
 
