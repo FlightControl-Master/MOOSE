@@ -1663,7 +1663,9 @@ function EVENT:onEvent( Event )
       self:T( { EventMeta.Text, Event } )
     end
   else
-    self:E(string.format("WARNING: Could not get EVENTMETA data for event ID=%d! Is this an unknown/new DCS event?", tostring(Event.id)))
+    if Event.id ~= 61 then --- TODO Event 61 is new, but seems to have no real data to be useable, something like option changed.
+      self:E(string.format("WARNING: Could not get EVENTMETA data for event ID=%d! Is this an unknown/new DCS event?", tostring(Event.id)))
+    end
   end
 
   Event = nil
