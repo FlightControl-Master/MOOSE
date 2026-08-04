@@ -2112,6 +2112,22 @@ function COMMANDER:CountAssets(InStock, MissionTypes, Attributes)
   return N
 end
 
+--- Count available assets of all assigned legions, which are in stock. Spawned and reserved assets are not counted.
+-- @param #COMMANDER self
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+-- @return #number Amount of asset groups.
+function COMMANDER:CountAvailableAssets(MissionTypes, Attributes)
+
+  local N=0
+  for _,_legion in pairs(self.legions) do
+    local legion=_legion --Ops.Legion#LEGION
+    N=N+legion:CountAvailableAssets(MissionTypes, Attributes)
+  end
+
+  return N
+end
+
 --- Count assets of all assigned legions.
 -- @param #COMMANDER self
 -- @param #table MissionTypes (Optional) Count only missions of these types. Default is all types.

@@ -2098,6 +2098,23 @@ function LEGION:CountAssets(InStock, MissionTypes, Attributes)
   return N
 end
 
+--- Count total number of available assets in the legion stock.
+-- @param #LEGION self
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `GROUP.Attribute.AIR_BOMBER`.
+-- @return #number Amount of asset groups in stock.
+function LEGION:CountAvailableAssets(MissionTypes, Attributes)
+
+  local N=0
+
+  for _,_cohort in pairs(self.cohorts) do
+    local cohort=_cohort --Ops.Cohort#COHORT
+    N=N+cohort:CountAvailableAssets(MissionTypes,Attributes)
+  end
+
+  return N
+end
+
 --- Get OPSGROUPs that are spawned and alive.
 -- @param #LEGION self
 -- @param #table MissionTypes (Optional) Get only assest that can perform certain mission type(s). Default is all types.

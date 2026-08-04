@@ -1102,6 +1102,31 @@ function COHORT:CountAssets(InStock, MissionTypes, Attributes)
   return N
 end
 
+--- Count available assets in legion warehouse stock. Spawned, requested and reserved assets are not counted. 
+-- @param #COHORT self
+-- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.
+-- @param #table Attributes (Optional) Count only assest that have a certain attribute(s), e.g. `WAREHOUSE.Attribute.AIR_BOMBER`.
+-- @return #number Number of assets.
+function COHORT:CountAvailableAssets(MissionTypes, Attributes)
+
+  local N=0
+  for _,_asset in pairs(self.assets) do
+    local asset=_asset --Functional.Warehouse#WAREHOUSE.Assetitem
+    
+    if not (asset.spawned or asset.requested or asset.isReserved) then
+    
+      if MissionTypes==nil or AUFTRAG.CheckMissionCapability(MissionTypes, self.missiontypes) then
+        if Attributes==nil or self:CheckAttribute(Attributes) then
+          N=N+1 --This is in stock.
+        end
+      end
+    end
+  end
+
+  return N
+end
+
+
 --- Get OPSGROUPs.
 -- @param #COHORT self
 -- @param #table MissionTypes (Optional) Count only assest that can perform certain mission type(s). Default is all types.

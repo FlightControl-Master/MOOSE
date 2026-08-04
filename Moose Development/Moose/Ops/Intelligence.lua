@@ -856,8 +856,6 @@ end
 function INTEL:SetAgentAuto(switch)
   if switch==nil then 
     switch=true 
-  else 
-    switch=false
   end
   self.update_detectionset=switch
   return self
