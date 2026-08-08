@@ -138,4 +138,13 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Beacons.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Radios.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Navigation/Towns.lua' )
 
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Python/MooseBridgeJson.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Python/MooseBridge.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Python/MooseBridgeSocketTuningExtension.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Python/MooseBridgeDcsEventsExtension.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Python/MooseBridgeAuftragExecutionExtension.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Python/MooseBridgeAuftragTraceExtension.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Python/MooseBridgeIntelExtension.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Python/MooseBridgePayloadExtension.lua' )
+
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Globals.lua' )
