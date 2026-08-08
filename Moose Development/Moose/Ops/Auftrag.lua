@@ -5073,7 +5073,7 @@ function AUFTRAG:CheckGroupsDone()
   -- Check status of all OPS groups.
   for groupname,data in pairs(self.groupdata) do
     local groupdata=data --#AUFTRAG.GroupData
-    if groupdata then
+    if groupdata and not groupdata.opsgroup:IsDestroyed() then
       if not (groupdata.status==AUFTRAG.GroupStatus.DONE or groupdata.status==AUFTRAG.GroupStatus.CANCELLED) then
         -- At least this group is not DONE or CANCELLED.
         self:T2(self.lid..string.format("CheckGroupsDone: OPSGROUP %s is not DONE or CANCELLED but in state %s. Mission NOT DONE!", groupdata.opsgroup.groupname, groupdata.status:upper()))
@@ -6037,6 +6037,7 @@ function AUFTRAG:CountOpsGroups()
     local groupdata=_groupdata --#AUFTRAG.GroupData
     if groupdata and groupdata.opsgroup and groupdata.opsgroup:IsAlive() and not groupdata.opsgroup:IsDead() then
       N=N+1
+      printf("FF Count Group N=%d  %s", N, tostring(groupdata.opsgroup.groupname))
     end
   end
   return N

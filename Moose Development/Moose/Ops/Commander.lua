@@ -1882,6 +1882,8 @@ function COMMANDER:RecruitAssetsForMission(Mission)
   -- Recruite assets.
   local recruited, assets, legions=LEGION.RecruitCohortAssets(Cohorts, Mission.type, Mission.alert5MissionType, NreqMin, NreqMax, TargetVec2, Payloads,
    Mission.engageRange, Mission.refuelSystem, nil, nil, MaxWeight, nil, Mission.attributes, Mission.properties, {Mission.engageWeaponType})
+   
+  self:T(self.lid..string.format("Recruited=%s Nassets=%d", tostring(recruited), #assets))
 
   return recruited, assets, legions
 end
