@@ -61,19 +61,9 @@ function SCENERY:Register( SceneryName, SceneryObject, SceneryZone )
   end
   
   if _SCENERY[ID] then return _SCENERY[ID] end
-
-  if SceneryObject == nil and SceneryZone == nil then return nil end -- no object to attach to
     
   local self = BASE:Inherit( self, POSITIONABLE:New( SceneryName ) )
-
-  if SceneryObject == nil and SceneryZone ~= nil then
-    SceneryObject = self:FindByZoneName(SceneryZone)
-    if SceneryObject==nil then 
-        self=nil 
-        return nil 
-    end
-  end
-    
+  
   self.SceneryName = tostring(SceneryName)
   self.ID = ID
   self.SceneryObject = SceneryObject
@@ -297,7 +287,7 @@ function SCENERY:FindByName(Name, Coordinate, Radius, Role, Zone)
   --BASE:I("Coordinate x = "..Coordinate.x .. " y = "..Coordinate.y.." z = "..Coordinate.z)
   
   local findme = self:_FindByName(Name)
-  if findme then return findme end
+  if findme and findme:GetDCSObject() then return findme end
   
   local radius = Radius or 100
   local name = Name or "unknown"
@@ -331,8 +321,6 @@ function SCENERY:FindByName(Name, Coordinate, Radius, Role, Zone)
   if Coordinate then
     scenery = SceneryScan(Coordinate, radius, name)
   end
-  
-  if not scenery then scenery = SCENERY:Register(Name,nil,Zone) end
     
   return scenery  
 end
