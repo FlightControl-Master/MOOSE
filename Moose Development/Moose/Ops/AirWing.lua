@@ -434,7 +434,15 @@ function AIRWING:NewPayload(Unit, Npayloads, MissionTypes,  Performance)
       capability.MissionType=AUFTRAG.Type.RELOCATECOHORT
       capability.Performance=50
       table.insert(payload.capabilities, capability)
-    end    
+    end
+    
+    -- Add OPSTRANSPORT for all.
+    if not AUFTRAG.CheckMissionType(AUFTRAG.Type.OPSTRANSPORT, MissionTypes) then
+      local capability={}  --Ops.Auftrag#AUFTRAG.Capability
+      capability.MissionType=AUFTRAG.Type.OPSTRANSPORT
+      capability.Performance=50
+      table.insert(payload.capabilities, capability)
+    end        
 
     -- Info
     self:T(self.lid..string.format("Adding new payload from unit %s for aircraft type %s: ID=%d, N=%d (unlimited=%s), performance=%d, missions: %s",

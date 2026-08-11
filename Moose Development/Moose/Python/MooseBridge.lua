@@ -62,6 +62,8 @@ function MOOSE_BRIDGE:New(host, port)
   self.Sequence = 0
   self.DebugOverlays = {}
   self.OutQueue = {}
+  self.OutQueueOffset = 1
+  self.ReadBuffer = ""
   self.CommandHandlers = {}
   self.RegisteredZones = {}
   self.RegisteredOpsZones = {}
@@ -118,6 +120,8 @@ function MOOSE_BRIDGE:_Disconnect(reason)
   if reason then self:_Log("Disconnected: " .. safe_tostring(reason)) end
   if self.Socket then self.Socket:close(); self.Socket = nil end
   self.OutQueue = {}
+  self.OutQueueOffset = 1
+  self.ReadBuffer = ""
   self.Connected = false
 end
 
@@ -2010,6 +2014,61 @@ function MOOSE_BRIDGE:RegisterDefaultCommands()
     return {action="coordinates.convert_points", count=#points, points=points}
   end)
 
+  self:RegisterCommand("scenery.search", function(cmd)
+    local p = cmd.params or {}
+    if not world or not world.searchObjects or not world.VolumeType then
+      error("DCS world.searchObjects is not available")
+    end
+    if not Object or not Object.Category or Object.Category.SCENERY == nil then
+      error("DCS scenery object category is not available")
+    end
+    local center = self:_DebugMarkupPoint(p)
+    local radius = tonumber(p.radius_m) or 500
+    local max_results = math.floor(tonumber(p.max_results) or 250)
+    if radius <= 0 or radius > 5000 then error("radius_m must be in range 0..5000") end
+    if max_results <= 0 or max_results > 2000 then error("max_results must be in range 1..2000") end
+    local objects = {}
+    local truncated = false
+    local volume = {id=world.VolumeType.SPHERE, params={point=center, radius=radius}}
+    world.searchObjects(Object.Category.SCENERY, volume, function(object)
+      if #objects >= max_results then
+        truncated = true
+        return false
+      end
+      local point = self:_DcsPoint(object)
+      if point then
+        local coordinates = self:_CoordinatesForPoint(point, "ll")
+        local descriptor = self:_DcsCall(object, "getDesc")
+        local name = self:_DcsCall(object, "getName")
+        local type_name = self:_DcsCall(object, "getTypeName")
+        objects[#objects + 1] = {
+          object_id="SCENERY:" .. safe_tostring(name or (#objects + 1)),
+          name=name and safe_tostring(name) or nil,
+          type_name=type_name and safe_tostring(type_name) or nil,
+          display_name=type(descriptor) == "table" and descriptor.displayName or nil,
+          life=tonumber(self:_DcsCall(object, "getLife")),
+          exists=self:_DcsCall(object, "isExist"),
+          x=coordinates.x,
+          y=coordinates.y,
+          z=coordinates.z,
+          latitude=coordinates.latitude,
+          longitude=coordinates.longitude,
+        }
+      end
+      return true
+    end)
+    local center_coordinates = self:_CoordinatesForPoint(center, "ll")
+    return {
+      action="scenery.search",
+      radius_m=radius,
+      max_results=max_results,
+      count=#objects,
+      truncated=truncated,
+      center=center_coordinates,
+      objects=objects,
+    }
+  end)
+
   self:RegisterCommand("terrain.closest_road_points", function(cmd)
     local p = cmd.params or {}
     if not land or not land.getClosestPointOnRoads then error("DCS land.getClosestPointOnRoads is not available") end
@@ -2043,6 +2102,85 @@ function MOOSE_BRIDGE:RegisterDefaultCommands()
       }
     end
     return {action="terrain.closest_road_points", road_type=road_type, count=#samples, samples=samples}
+  end)
+
+  self:RegisterCommand("terrain.road_route", function(cmd)
+    local total_cpu_started = os and os.clock and os.clock() or nil
+    local p = cmd.params or {}
+    if not land or not land.findPathOnRoads then error("DCS land.findPathOnRoads is not available") end
+    local start_id = self:_OptionalString(p.start_object_id)
+    local end_id = self:_OptionalString(p.end_object_id)
+    if not start_id or not end_id then error("terrain.road_route requires start_object_id and end_object_id") end
+    local road_type = string.lower(tostring(p.road_type or "roads"))
+    if road_type ~= "roads" and road_type ~= "rails" then error("road_type must be roads or rails") end
+    local sample_spacing = tonumber(p.sample_spacing_m) or 100
+    local max_points = math.floor(tonumber(p.max_points) or 500)
+    if sample_spacing < 0 or sample_spacing > 5000 then error("sample_spacing_m must be in range 0..5000") end
+    if max_points < 2 or max_points > 2000 then error("max_points must be in range 2..2000") end
+
+    local start_point = self:_PointForObjectId(start_id)
+    local end_point = self:_PointForObjectId(end_id)
+    local pathfinding_cpu_started = os and os.clock and os.clock() or nil
+    local raw_path = land.findPathOnRoads(
+      road_type,
+      start_point.x,
+      start_point.z,
+      end_point.x,
+      end_point.z
+    )
+    local pathfinding_cpu_ms = pathfinding_cpu_started and (os.clock() - pathfinding_cpu_started) * 1000 or nil
+    if type(raw_path) ~= "table" or #raw_path < 2 then error("DCS returned no connected road route") end
+
+    local distance = 0
+    for index, point in ipairs(raw_path) do
+      if type(point) ~= "table" or type(point.x) ~= "number" or type(point.y) ~= "number" then
+        error("DCS returned an invalid road route point at index " .. safe_tostring(index))
+      end
+      if index > 1 then
+        local previous = raw_path[index - 1]
+        distance = distance + math.sqrt((point.x - previous.x) ^ 2 + (point.y - previous.y) ^ 2)
+      end
+    end
+
+    local effective_spacing = math.max(sample_spacing, distance / math.max(1, max_points - 1))
+    local points = {}
+    local distance_since_sample = 0
+    local function append_route_point(point)
+      local height = land.getHeight and land.getHeight({x=point.x, y=point.y}) or 0
+      local converted = self:_CoordinatesForPoint({x=point.x, y=height or 0, z=point.y}, "ll")
+      points[#points + 1] = {
+        x=converted.x,
+        y=converted.y,
+        z=converted.z,
+        latitude=converted.latitude,
+        longitude=converted.longitude,
+      }
+    end
+    append_route_point(raw_path[1])
+    for index=2,#raw_path do
+      local point = raw_path[index]
+      local previous = raw_path[index - 1]
+      distance_since_sample = distance_since_sample + math.sqrt((point.x - previous.x) ^ 2 + (point.y - previous.y) ^ 2)
+      if distance_since_sample >= effective_spacing and index < #raw_path and #points < max_points - 1 then
+        append_route_point(point)
+        distance_since_sample = 0
+      end
+    end
+    append_route_point(raw_path[#raw_path])
+    local total_cpu_ms = total_cpu_started and (os.clock() - total_cpu_started) * 1000 or nil
+    return {
+      action="terrain.road_route",
+      road_type=road_type,
+      start_object_id=start_id,
+      end_object_id=end_id,
+      distance_m=distance,
+      raw_point_count=#raw_path,
+      sample_spacing_m=effective_spacing,
+      count=#points,
+      pathfinding_cpu_ms=pathfinding_cpu_ms,
+      total_cpu_ms=total_cpu_ms,
+      points=points,
+    }
   end)
 
   self:RegisterCommand("terrain.surface_types", function(cmd)
@@ -2240,9 +2378,15 @@ end
 function MOOSE_BRIDGE:_ReadLine()
   if not self.Socket then return nil, "no_socket" end
   local line, err, partial = self.Socket:receive("*l")
-  if line then return line, nil end
+  if line then
+    line = (self.ReadBuffer or "") .. line
+    self.ReadBuffer = ""
+    return line, nil
+  end
+  if partial and #partial > 0 then
+    self.ReadBuffer = (self.ReadBuffer or "") .. partial
+  end
   if err == "timeout" then return nil, nil end
-  if partial and #partial > 0 then return partial, nil end
   return nil, err
 end
 
@@ -2258,9 +2402,20 @@ end
 function MOOSE_BRIDGE:_FlushOutQueue()
   if not self.Socket or #self.OutQueue == 0 then return end
   while #self.OutQueue > 0 do
-    local line = table.remove(self.OutQueue, 1)
-    local ok, err = self.Socket:send(line .. "\n")
-    if not ok then self:_Disconnect("send failed: " .. safe_tostring(err)); return end
+    local payload = self.OutQueue[1] .. "\n"
+    local offset = self.OutQueueOffset or 1
+    local sent, err, last = self.Socket:send(payload, offset)
+    if sent then
+      table.remove(self.OutQueue, 1)
+      self.OutQueueOffset = 1
+    elseif err == "timeout" then
+      local final_byte = tonumber(last) or (offset - 1)
+      if final_byte >= offset then self.OutQueueOffset = final_byte + 1 end
+      return
+    else
+      self:_Disconnect("send failed: " .. safe_tostring(err))
+      return
+    end
   end
 end
 
