@@ -61,9 +61,19 @@ function SCENERY:Register( SceneryName, SceneryObject, SceneryZone )
   end
   
   if _SCENERY[ID] then return _SCENERY[ID] end
+
+  if SceneryObject == nil and SceneryZone == nil then return nil end -- no object to attach to
     
   local self = BASE:Inherit( self, POSITIONABLE:New( SceneryName ) )
-  
+
+  if SceneryObject == nil and SceneryZone ~= nil then
+    SceneryObject = self:FindByZoneName(SceneryZone)
+    if SceneryObject==nil then 
+        self=nil 
+        return nil 
+    end
+  end
+    
   self.SceneryName = tostring(SceneryName)
   self.ID = ID
   self.SceneryObject = SceneryObject
