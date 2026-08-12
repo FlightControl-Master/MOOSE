@@ -287,7 +287,7 @@ function SCENERY:FindByName(Name, Coordinate, Radius, Role, Zone)
   --BASE:I("Coordinate x = "..Coordinate.x .. " y = "..Coordinate.y.." z = "..Coordinate.z)
   
   local findme = self:_FindByName(Name)
-  if findme then return findme end
+  if findme and findme:GetDCSObject() then return findme end
   
   local radius = Radius or 100
   local name = Name or "unknown"
@@ -321,8 +321,6 @@ function SCENERY:FindByName(Name, Coordinate, Radius, Role, Zone)
   if Coordinate then
     scenery = SceneryScan(Coordinate, radius, name)
   end
-  
-  if not scenery then scenery = SCENERY:Register(Name,nil,Zone) end
     
   return scenery  
 end
