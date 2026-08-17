@@ -418,7 +418,7 @@ do -- Zones and Pathlines
         ---
 
         self:I(string.format("Register ZONE: %s (Polygon, Quad)", ZoneName))
-
+        
         Zone=ZONE_POLYGON:NewFromPointsArray(ZoneName, ZoneData.verticies)
 
         --for i,vec2 in pairs(ZoneData.verticies) do

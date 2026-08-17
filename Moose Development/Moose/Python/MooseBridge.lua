@@ -454,6 +454,30 @@ function MOOSE_BRIDGE:_DcsPoint(object)
   return self:_DcsCall(object, "getPoint")
 end
 
+function MOOSE_BRIDGE:_ScenerySnapshot(object, fallback_point, fallback_name, fallback_type_name, resolution_source)
+  local point = self:_DcsPoint(object) or fallback_point
+  if not point then return nil end
+  local coordinates = self:_CoordinatesForPoint(point, "ll")
+  local descriptor = self:_DcsCall(object, "getDesc")
+  local name = self:_DcsCall(object, "getName") or fallback_name
+  local type_name = self:_DcsCall(object, "getTypeName") or fallback_type_name
+  return {
+    object_id="SCENERY:" .. safe_tostring(name),
+    name=name and safe_tostring(name) or nil,
+    type_name=type_name and safe_tostring(type_name) or nil,
+    display_name=type(descriptor) == "table" and descriptor.displayName or nil,
+    life=tonumber(self:_DcsCall(object, "getLife")),
+    exists=self:_DcsCall(object, "isExist"),
+    queryable=object ~= nil,
+    resolution_source=resolution_source or (object and "world_search" or "reference"),
+    x=coordinates.x,
+    y=coordinates.y,
+    z=coordinates.z,
+    latitude=coordinates.latitude,
+    longitude=coordinates.longitude,
+  }
+end
+
 function MOOSE_BRIDGE:_PointFromMooseObject(object)
   if not object then return nil end
   local coordinate = self:_SafeCall(object, "GetCoordinate")
@@ -755,6 +779,34 @@ function MOOSE_BRIDGE:_MarkPoint(point, text)
     error("No mark implementation available")
   end
   return {x=point.x, y=point.y or 0, z=point.z, text=mark_text}
+end
+
+function MOOSE_BRIDGE:_CreateMapMarker(params)
+  if not trigger or not trigger.action or not trigger.action.markToAll then
+    error("DCS trigger.action.markToAll is not available")
+  end
+  local point = self:_DebugMarkupPoint(params.point or params)
+  local text = self:_OptionalString(params.text) or "MOOSE Bridge marker"
+  if #text > 180 then error("map.marker.create text accepts at most 180 characters") end
+  local coalition_id = self:_DebugMarkupCoalition(params.coalition or "all")
+  local read_only = params.read_only == true
+  local mark_id = self:_NextMarkId()
+  if coalition_id == -1 then
+    trigger.action.markToAll(mark_id, text, point, read_only, "")
+  else
+    if not trigger.action.markToCoalition then error("DCS trigger.action.markToCoalition is not available") end
+    trigger.action.markToCoalition(mark_id, text, point, coalition_id, read_only, "")
+  end
+  return {
+    action="map.marker.create",
+    mark_id=mark_id,
+    text=text,
+    coalition=coalition_id,
+    read_only=read_only,
+    x=point.x,
+    y=point.y or 0,
+    z=point.z,
+  }
 end
 
 function MOOSE_BRIDGE:_CountTable(value)
@@ -1175,6 +1227,20 @@ function MOOSE_BRIDGE:_ZonePolygonVertices(zone)
   return vertices
 end
 
+function MOOSE_BRIDGE:_ZoneProperties(zone)
+  local source = zone and zone.Properties
+  if type(source) ~= "table" then return nil end
+  local properties = {}
+  for key, value in pairs(source) do
+    local value_type = type(value)
+    if value_type == "string" or value_type == "number" or value_type == "boolean" then
+      properties[safe_tostring(key)] = value
+    end
+  end
+  if next(properties) == nil then return nil end
+  return properties
+end
+
 function MOOSE_BRIDGE:_BuildZoneSnapshotItem(zone_name, zone, source)
   local name = self:_ZoneName(zone_name, zone)
   if not name then return nil end
@@ -1187,7 +1253,7 @@ function MOOSE_BRIDGE:_BuildZoneSnapshotItem(zone_name, zone, source)
   local vertices = self:_ZonePolygonVertices(zone)
   local radius = nil
   if not vertices then radius = self:_SafeCall(zone, "GetRadius") or zone.radius end
-  local item = {object_id="ZONE:"..safe_tostring(name),dcs_name=safe_tostring(name),object_type="ZONE",category="ZONE",class_name=zone.ClassName,shape=vertices and "polygon" or "circle",source=source,radius=radius,vertices=vertices}
+  local item = {object_id="ZONE:"..safe_tostring(name),dcs_name=safe_tostring(name),object_type="ZONE",category="ZONE",class_name=zone.ClassName,shape=vertices and "polygon" or "circle",source=source,radius=radius,vertices=vertices,properties=self:_ZoneProperties(zone)}
   if point then self:_AddPointFields(item, point) end
   return item
 end
@@ -1972,6 +2038,10 @@ function MOOSE_BRIDGE:RegisterDefaultCommands()
     return self:_MarkPoint(point, p.text or "MOOSE Bridge mark")
   end)
 
+  self:RegisterCommand("map.marker.create", function(cmd)
+    return self:_CreateMapMarker(cmd.params or {})
+  end)
+
   self:RegisterCommand("map.overlay.draw", function(cmd)
     return self:_DrawDebugOverlay(cmd.params or {})
   end)
@@ -2035,26 +2105,8 @@ function MOOSE_BRIDGE:RegisterDefaultCommands()
         truncated = true
         return false
       end
-      local point = self:_DcsPoint(object)
-      if point then
-        local coordinates = self:_CoordinatesForPoint(point, "ll")
-        local descriptor = self:_DcsCall(object, "getDesc")
-        local name = self:_DcsCall(object, "getName")
-        local type_name = self:_DcsCall(object, "getTypeName")
-        objects[#objects + 1] = {
-          object_id="SCENERY:" .. safe_tostring(name or (#objects + 1)),
-          name=name and safe_tostring(name) or nil,
-          type_name=type_name and safe_tostring(type_name) or nil,
-          display_name=type(descriptor) == "table" and descriptor.displayName or nil,
-          life=tonumber(self:_DcsCall(object, "getLife")),
-          exists=self:_DcsCall(object, "isExist"),
-          x=coordinates.x,
-          y=coordinates.y,
-          z=coordinates.z,
-          latitude=coordinates.latitude,
-          longitude=coordinates.longitude,
-        }
-      end
+      local snapshot = self:_ScenerySnapshot(object)
+      if snapshot then objects[#objects + 1] = snapshot end
       return true
     end)
     local center_coordinates = self:_CoordinatesForPoint(center, "ll")
@@ -2066,6 +2118,93 @@ function MOOSE_BRIDGE:RegisterDefaultCommands()
       truncated=truncated,
       center=center_coordinates,
       objects=objects,
+    }
+  end)
+
+  self:RegisterCommand("scenery.resolve", function(cmd)
+    local p = cmd.params or {}
+    if not world or not world.searchObjects or not world.VolumeType then
+      error("DCS world.searchObjects is not available")
+    end
+    if not Object or not Object.Category or Object.Category.SCENERY == nil then
+      error("DCS scenery object category is not available")
+    end
+    if type(p.references) ~= "table" then error("scenery.resolve requires references") end
+    if #p.references > 500 then error("scenery.resolve accepts at most 500 references") end
+    local radius = tonumber(p.search_radius_m) or 150
+    if radius <= 0 or radius > 500 then error("search_radius_m must be in range 0..500") end
+    local objects = {}
+    local unresolved = {}
+    for index, reference in ipairs(p.references) do
+      if type(reference) ~= "table" then error("Invalid scenery reference at index " .. safe_tostring(index)) end
+      local object_id = self:_OptionalString(reference.object_id)
+      local prefix, expected_name = self:_SplitObjectId(object_id)
+      if prefix ~= "SCENERY" or not expected_name or expected_name == "" then
+        error("Invalid scenery object_id at index " .. safe_tostring(index))
+      end
+      local zone_name = self:_OptionalString(reference.zone_name)
+      local center = nil
+      local zone = nil
+      local assigned_type_name = nil
+      if zone_name then
+        zone = ZONE and ZONE.FindByName and ZONE:FindByName(zone_name) or nil
+        center = self:_PointFromMooseObject(zone)
+        assigned_type_name = zone and self:_SafeCallArg(zone, "GetProperty", "NAME") or nil
+      else
+        local ok, point = pcall(function() return self:_DebugMarkupPoint(reference) end)
+        if ok then center = point end
+      end
+      local found = nil
+      if center then
+        local volume = {id=world.VolumeType.SPHERE, params={point=center, radius=radius}}
+        world.searchObjects(Object.Category.SCENERY, volume, function(object)
+          local name = self:_DcsCall(object, "getName")
+          if name ~= nil and safe_tostring(name) == expected_name then
+            found = object
+            return false
+          end
+          return true
+        end)
+      end
+      local snapshot = nil
+      if found then
+        snapshot = self:_ScenerySnapshot(
+          found,
+          center,
+          expected_name,
+          assigned_type_name,
+          zone_name and "mission_editor_assignment" or "saved_position"
+        )
+      elseif zone_name and center then
+        -- Some fixed map models can be assigned in the Mission Editor but are
+        -- omitted by world.searchObjects. Keep the authoritative assignment as
+        -- baseline evidence while leaving its live state explicitly unknown.
+        snapshot = self:_ScenerySnapshot(
+          nil,
+          center,
+          expected_name,
+          assigned_type_name,
+          "mission_editor_assignment_unqueryable"
+        )
+      end
+      if snapshot then
+        objects[#objects + 1] = snapshot
+      end
+      if not found then
+        unresolved[#unresolved + 1] = {
+          object_id=object_id,
+          zone_name=zone_name,
+          reason=(zone_name and center) and "assigned_object_not_queryable"
+            or (center and "not_found_near_reference" or "reference_position_unavailable"),
+        }
+      end
+    end
+    return {
+      action="scenery.resolve",
+      count=#objects,
+      unresolved_count=#unresolved,
+      objects=objects,
+      unresolved=unresolved,
     }
   end)
 

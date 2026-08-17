@@ -50,7 +50,7 @@ _SCENERY = {}
 --@param Core.Zone#ZONE_POLYGON SceneryZone (optional) The zone object.
 --@return #SCENERY Scenery object.
 function SCENERY:Register( SceneryName, SceneryObject, SceneryZone )
-  
+
   local ID = (SceneryObject and SceneryObject.getID) and SceneryObject:getID() or SceneryName
   
   if _SCENERY[ID] and _SCENERY[ID].SceneryObject == nil then 
@@ -322,7 +322,10 @@ function SCENERY:FindByName(Name, Coordinate, Radius, Role, Zone)
     scenery = SceneryScan(Coordinate, radius, name)
   end
   
-  if not scenery then scenery = SCENERY:Register(Name,nil,Zone) end
+  if not scenery then
+    self:I(string.format("No scenery object %s found ==> Registering MOOSE SCENERY Object without DCS object", tostring(Name))) 
+    scenery = SCENERY:Register(Name,nil,Zone)
+  end
     
   return scenery  
 end

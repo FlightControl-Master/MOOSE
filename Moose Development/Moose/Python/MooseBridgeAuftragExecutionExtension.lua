@@ -304,7 +304,21 @@ function MOOSE_BRIDGE:_ResolveCoordinateFromInputs(inputs)
   local z = inputs.z ~= nil and tonumber(inputs.z) or nil
   local y = inputs.y ~= nil and tonumber(inputs.y) or 0
 
-  if not x or not z then return nil, "Coordinate target requires numeric x and z" end
+  if not x or not z then
+    local latitude = inputs.latitude ~= nil and tonumber(inputs.latitude) or nil
+    local longitude = inputs.longitude ~= nil and tonumber(inputs.longitude) or nil
+    if latitude and longitude then
+      if not coord or not coord.LLtoLO then return nil, "coord.LLtoLO is not available" end
+      local point = coord.LLtoLO({lat=latitude, lon=longitude, alt=0})
+      if point then
+        x = tonumber(point.x)
+        z = tonumber(point.z)
+        y = tonumber(point.y) or y
+      end
+    end
+  end
+
+  if not x or not z then return nil, "Coordinate target requires numeric x/z or latitude/longitude" end
   if not COORDINATE or not COORDINATE.New then return nil, "COORDINATE:New is not available" end
 
   return COORDINATE:New(x, y, z), nil
@@ -456,6 +470,8 @@ function MOOSE_BRIDGE:_CommonAuftragCommandInputs(cmd)
     x=p.x or legacy_params.x,
     y=p.y or legacy_params.y,
     z=p.z or legacy_params.z,
+    latitude=p.latitude or legacy_params.latitude,
+    longitude=p.longitude or legacy_params.longitude,
     dropoff_x=p.dropoff_x or legacy_params.dropoff_x,
     dropoff_y=p.dropoff_y or legacy_params.dropoff_y,
     dropoff_z=p.dropoff_z or legacy_params.dropoff_z,
