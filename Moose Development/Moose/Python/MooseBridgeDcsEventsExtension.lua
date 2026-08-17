@@ -150,19 +150,35 @@ function MOOSE_BRIDGE:OnEventBaseCaptured(EventData)
   end
 end
 
---- Build a tombstone and current group snapshot for a lost DCS object.
-function MOOSE_BRIDGE:_BuildUnitLostPayload(EventData)
-  if type(EventData) ~= "table" then error("UnitLost event data is missing") end
+--- Build a tombstone and current group snapshot for a destroyed DCS object.
+function MOOSE_BRIDGE:_BuildObjectDestroyedPayload(EventData)
+  if type(EventData) ~= "table" then error("Destruction event data is missing") end
   local name = EventData.IniUnitName or EventData.IniDCSUnitName
-  if not name then error("UnitLost event has no initiator name") end
+  if not name then error("Destruction event has no initiator name") end
 
   local is_static = Object and Object.Category
     and EventData.IniObjectCategory == Object.Category.STATIC
-  local object_type = is_static and "STATIC" or "UNIT"
+  local is_scenery = Object and Object.Category
+    and EventData.IniObjectCategory == Object.Category.SCENERY
+  local object_type = is_scenery and "SCENERY" or (is_static and "STATIC" or "UNIT")
   local object_id = object_type .. ":" .. tostring(name)
   local item = nil
 
-  if is_static then
+  if is_scenery then
+    local scenery = EventData.IniDCSUnit or EventData.initiator
+    if scenery then
+      local ok, value = pcall(function()
+        return self:_ScenerySnapshot(
+          scenery,
+          nil,
+          name,
+          EventData.IniTypeName,
+          "destruction_event"
+        )
+      end)
+      if ok then item = value end
+    end
+  elseif is_static then
     local static = EventData.IniUnit
     if not static and _DATABASE and _DATABASE.STATICS then static = _DATABASE.STATICS[name] end
     if static then
@@ -187,13 +203,16 @@ function MOOSE_BRIDGE:_BuildUnitLostPayload(EventData)
   item.object_type = object_type
   item.alive = false
   item.active = false
+  if is_scenery then item.life = 0 end
   item.coalition = item.coalition or self:_CoalitionToName(EventData.IniCoalition)
-  item.category = item.category or (EventData.IniCategory and tostring(EventData.IniCategory) or nil)
-  item.dcs_type = item.dcs_type or (EventData.IniTypeName and tostring(EventData.IniTypeName) or nil)
+  item.category = item.category or (is_scenery and "Scenery"
+    or (EventData.IniCategory and tostring(EventData.IniCategory) or nil))
+  item.dcs_type = item.dcs_type or item.type_name
+    or (EventData.IniTypeName and tostring(EventData.IniTypeName) or nil)
 
   local group_name = EventData.IniGroupName or EventData.IniDCSGroupName or item.group_name
   local group_item = nil
-  if not is_static and group_name then
+  if not is_static and not is_scenery and group_name then
     local group = EventData.IniGroup
     if not group and _DATABASE and _DATABASE.GROUPS then group = _DATABASE.GROUPS[group_name] end
     if group then
@@ -217,7 +236,7 @@ end
 -- and destruction path. Suppress the second event without polling object state.
 function MOOSE_BRIDGE:_ForwardObjectDestroyed(EventData, event_name)
   local ok, err = pcall(function()
-    local payload = self:_BuildUnitLostPayload(EventData)
+    local payload = self:_BuildObjectDestroyedPayload(EventData)
     local event_time = tonumber(EventData.time)
     local dedup_time = event_time or (timer and timer.getTime and timer.getTime()) or 0
     self.DcsDestroyedEventTimes = self.DcsDestroyedEventTimes or {}

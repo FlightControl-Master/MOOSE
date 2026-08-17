@@ -323,7 +323,7 @@ function SCENERY:FindByName(Name, Coordinate, Radius, Role, Zone)
   end
   
   if not scenery then
-    self:I(string.format("No scenery object %s found ==> Registering MOOSE SCENERY Object without DCS object", tostring(Name))) 
+    BASE:I(string.format("No scenery object %s found ==> Registering MOOSE SCENERY Object without DCS object", tostring(Name))) 
     scenery = SCENERY:Register(Name,nil,Zone)
   end
     
