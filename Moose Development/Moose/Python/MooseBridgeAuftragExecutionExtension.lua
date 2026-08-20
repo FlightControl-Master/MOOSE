@@ -309,7 +309,7 @@ function MOOSE_BRIDGE:_ResolveCoordinateFromInputs(inputs)
     local longitude = inputs.longitude ~= nil and tonumber(inputs.longitude) or nil
     if latitude and longitude then
       if not coord or not coord.LLtoLO then return nil, "coord.LLtoLO is not available" end
-      local point = coord.LLtoLO({lat=latitude, lon=longitude, alt=0})
+      local point = coord.LLtoLO(latitude, longitude, 0)
       if point then
         x = tonumber(point.x)
         z = tonumber(point.z)
@@ -439,6 +439,47 @@ function MOOSE_BRIDGE:_ResolveCoordinateAuftragTarget(inputs)
     return self:_CoordinateTargetFromObjectId(inputs.target_id)
   end
   return self:_ResolveCoordinateFromInputs(inputs)
+end
+
+function MOOSE_BRIDGE:_ResolveSceneryAuftragTarget(inputs)
+  local prefix, name = bridge_split_object_id(inputs.target_id)
+  if prefix ~= "SCENERY" or not name then return nil, "Invalid SCENERY target id" end
+  if not SCENERY or not SCENERY.Register then return nil, "MOOSE SCENERY wrapper is not available" end
+
+  local scenery_id = tonumber(name) or name
+  if SCENERY.FindByID then
+    local existing = SCENERY:FindByID(scenery_id)
+    local dcs_object = existing and existing.GetDCSObject and existing:GetDCSObject() or nil
+    if dcs_object then return existing, nil end
+  end
+
+  local coordinate, coordinate_err = self:_ResolveCoordinateFromInputs(inputs)
+  if not coordinate then return nil, coordinate_err end
+  if not world or not world.searchObjects or not world.VolumeType then
+    return nil, "DCS world.searchObjects is not available"
+  end
+  if not Object or not Object.Category or Object.Category.SCENERY == nil then
+    return nil, "DCS scenery object category is not available"
+  end
+
+  local center = coordinate.GetVec3 and coordinate:GetVec3() or nil
+  if not center then return nil, "SCENERY target coordinate is unavailable" end
+  local found = nil
+  local volume = {id=world.VolumeType.SPHERE, params={point=center, radius=150}}
+  world.searchObjects(Object.Category.SCENERY, volume, function(object)
+    local object_name = self:_DcsCall(object, "getName")
+    if object_name ~= nil and bridge_safe_tostring(object_name) == name then
+      found = object
+      return false
+    end
+    return true
+  end)
+  if not found then return nil, "SCENERY target is not live-queryable: " .. name end
+
+  local scenery = SCENERY:Register(name, found)
+  local dcs_object = scenery and scenery.GetDCSObject and scenery:GetDCSObject() or nil
+  if not dcs_object then return nil, "SCENERY wrapper has no DCS object: " .. name end
+  return scenery, nil
 end
 
 function MOOSE_BRIDGE:_CommonAuftragCommandInputs(cmd)
@@ -644,6 +685,22 @@ function MOOSE_BRIDGE:_ResolveArtyTarget(inputs)
 end
 
 function MOOSE_BRIDGE:_ResolveStrikeTarget(inputs)
+  local prefix = inputs.target_id and bridge_split_object_id(inputs.target_id) or nil
+  if prefix == "SCENERY" then
+    local scenery, scenery_err = self:_ResolveSceneryAuftragTarget(inputs)
+    if scenery then
+      inputs.target_resolution = "scenery_object"
+      return scenery, nil
+    end
+    local coordinate, coordinate_err = self:_ResolveCoordinateFromInputs(inputs)
+    if coordinate then
+      inputs.target_resolution = "coordinate_fallback"
+      inputs.target_resolution_error = scenery_err
+      return coordinate, nil
+    end
+    return nil, scenery_err or coordinate_err
+  end
+  inputs.target_resolution = "coordinate"
   return self:_ResolveCoordinateAuftragTarget(inputs)
 end
 
@@ -1053,6 +1110,8 @@ function MOOSE_BRIDGE:_BuildAuftragCommandResult(action, auftrag, inputs)
     required_assets_max=inputs.required_assets_max,
     weapon_type=inputs.weapon_type,
     target=inputs.target_id,
+    target_resolution=inputs.target_resolution,
+    target_resolution_error=inputs.target_resolution_error,
     opszone=inputs.opszone_id,
     capture_coalition=inputs.capture_coalition,
     stay_in_zone_time_s=inputs.stay_in_zone_time_s,

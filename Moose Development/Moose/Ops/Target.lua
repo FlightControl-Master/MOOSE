@@ -952,9 +952,19 @@ end
 function TARGET:OnEventUnitDeadOrLost(EventData)
 
   local Name=EventData and EventData.IniUnitName or nil
+  
+  local isElement=false
+  local isCasualty=nil
+  if Name then
+    isElement=self:IsElement(Name)
+    isCasualty=self:IsCasualty(Name)
+    printf("Dead/unit lost event for %s: isElement=%s, isCascualty=%s", tostring(Name), tostring(isElement), tostring(isCasualty))
+  else
+    self:E(self.lid..string.format("ERROR: Could not get name of Dead Unit"))
+  end
 
   -- Check that this is the right group.
-  if self:IsElement(Name) and not self:IsCasualty(Name) then
+  if isElement and not isCasualty then
   
     -- Debug info.
     self:T(self.lid..string.format("EVENT ID=%d: Unit %s dead or lost!", EventData.id, tostring(Name)))
@@ -1081,6 +1091,7 @@ function TARGET:_AddObject(Object)
     
     target.N0=target.N0+1
     
+    printf("FF target adding element %s", tostring(target.Name))
     table.insert(self.elements, target.Name)
 
   elseif Object:IsInstanceOf("AIRBASE") then
@@ -1957,7 +1968,7 @@ function TARGET:GetTargetByName(ObjectName)
 
   for _,_target in pairs(self.targets) do
     local target=_target --#TARGET.Object
-    if ObjectName==target.Name then
+    if tostring(ObjectName)==tostring(target.Name) then
       return target
     end
   end
@@ -2165,7 +2176,7 @@ function TARGET:IsElement(Name)
   end
 
   for _,name in pairs(self.elements) do
-    if name==Name then
+    if tostring(name)==tostring(Name) then
       return true
     end
   end

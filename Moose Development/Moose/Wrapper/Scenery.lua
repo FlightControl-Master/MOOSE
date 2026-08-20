@@ -60,7 +60,10 @@ function SCENERY:Register( SceneryName, SceneryObject, SceneryZone )
     
   end
   
-  if _SCENERY[ID] then return _SCENERY[ID] end
+  if _SCENERY[ID] then
+    BASE:I("Returning DCS scenery object found in _SCENERY table with ID") 
+    return _SCENERY[ID]
+  end
     
   local self = BASE:Inherit( self, POSITIONABLE:New( SceneryName ) )
   

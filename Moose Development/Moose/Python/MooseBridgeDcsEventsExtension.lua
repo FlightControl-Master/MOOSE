@@ -85,6 +85,21 @@ function MOOSE_BRIDGE:_StartDcsEventForwarding()
     self.DcsRegisteredEvents[#self.DcsRegisteredEvents + 1] = EVENTS.Kill
     self:_Log("DCS Kill event forwarding enabled")
   end
+  if bridge_event_available(EVENTS.MarkAdded) then
+    self:HandleEvent(EVENTS.MarkAdded)
+    self.DcsRegisteredEvents[#self.DcsRegisteredEvents + 1] = EVENTS.MarkAdded
+    self:_Log("DCS MarkAdded event forwarding enabled")
+  end
+  if bridge_event_available(EVENTS.MarkChange) then
+    self:HandleEvent(EVENTS.MarkChange)
+    self.DcsRegisteredEvents[#self.DcsRegisteredEvents + 1] = EVENTS.MarkChange
+    self:_Log("DCS MarkChange event forwarding enabled")
+  end
+  if bridge_event_available(EVENTS.MarkRemoved) then
+    self:HandleEvent(EVENTS.MarkRemoved)
+    self.DcsRegisteredEvents[#self.DcsRegisteredEvents + 1] = EVENTS.MarkRemoved
+    self:_Log("DCS MarkRemoved event forwarding enabled")
+  end
   if bridge_event_available(EVENTS.MissionEnd) then
     self:HandleEvent(EVENTS.MissionEnd)
     self.DcsRegisteredEvents[#self.DcsRegisteredEvents + 1] = EVENTS.MissionEnd
@@ -295,6 +310,49 @@ function MOOSE_BRIDGE:OnEventKill(EventData)
   if not ok then
     self:_Log("Failed to forward Kill event: " .. tostring(err))
   end
+end
+
+--- Forward one DCS F10 map-marker event without interpreting its text.
+-- Marker commands remain a Python concern so the Lua bridge stays semantic
+-- and does not couple mission scripts to verification workflows.
+function MOOSE_BRIDGE:_ForwardMapMarker(EventData, event_name, dcs_event_name)
+  local ok, err = pcall(function()
+    if type(EventData) ~= "table" then error("Map marker event data is missing") end
+    local marker_id = EventData.MarkID or EventData.idx
+    if marker_id == nil then error("Map marker event has no marker ID") end
+    local point = EventData.MarkVec3 or EventData.pos
+    local coordinates = point and self:_CoordinatesForPoint(point, "ll") or {}
+    self:SendEvent(event_name, {
+      dcs_event_id=EventData.id,
+      dcs_event_name=dcs_event_name,
+      dcs_event_time=EventData.time,
+      marker_id=marker_id,
+      text=EventData.MarkText or EventData.text,
+      coalition=self:_CoalitionToName(EventData.MarkCoalition or EventData.coalition),
+      group_id=EventData.MarkGroupID or EventData.groupID,
+      player_name=EventData.PlayerName,
+      x=coordinates.x,
+      y=coordinates.y,
+      z=coordinates.z,
+      latitude=coordinates.latitude,
+      longitude=coordinates.longitude,
+    })
+  end)
+  if not ok then
+    self:_Log("Failed to forward " .. tostring(dcs_event_name) .. " event: " .. tostring(err))
+  end
+end
+
+function MOOSE_BRIDGE:OnEventMarkAdded(EventData)
+  self:_ForwardMapMarker(EventData, "map.marker.added", "S_EVENT_MARK_ADDED")
+end
+
+function MOOSE_BRIDGE:OnEventMarkChange(EventData)
+  self:_ForwardMapMarker(EventData, "map.marker.changed", "S_EVENT_MARK_CHANGE")
+end
+
+function MOOSE_BRIDGE:OnEventMarkRemoved(EventData)
+  self:_ForwardMapMarker(EventData, "map.marker.removed", "S_EVENT_MARK_REMOVED")
 end
 
 --- Forward DCS S_EVENT_MISSION_END as the authoritative Python session boundary.
