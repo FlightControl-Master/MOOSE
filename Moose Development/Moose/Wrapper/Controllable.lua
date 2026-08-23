@@ -14,6 +14,7 @@
 --- @type CONTROLLABLE
 -- @field DCS#Controllable DCSControllable The DCS controllable class.
 -- @field #string ControllableName The name of the controllable.
+-- @field #table ControllableOptions The Cache of controllable options.
 -- @extends Wrapper.Positionable#POSITIONABLE
 
 --- Wrapper class to handle the "DCS Controllable objects", which are Groups and Units:
@@ -203,7 +204,8 @@ function CONTROLLABLE:New( ControllableName )
   local self = BASE:Inherit( self, POSITIONABLE:New( ControllableName ) ) -- #CONTROLLABLE
   -- self:F( ControllableName )
   self.ControllableName = ControllableName
-
+  -- Options Cache for Event ID 61 (ED DCS Release Aug 2026)
+  self.ControllableOptions = {}
   self.TaskScheduler = SCHEDULER:New( self )
   return self
 end
@@ -3281,16 +3283,45 @@ end
 -- @param #number OptionValue Value of the option
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:SetOption( OptionID, OptionValue )
+  
+  local setnewoption = false
 
-  local DCSControllable = self:GetDCSObject()
-  if DCSControllable then
-    local Controller = self:_GetController()
-
-    Controller:setOption( OptionID, OptionValue )
-
-    return self
+  -- Check if option has changed against cached option
+  local ID = tostring(OptionID)
+  if self.ControllableOptions then
+    if (self.ControllableOptions[ID] ~= OptionValue) or (self.ControllableOptions[ID]==nil) then
+      setnewoption = true
+      self.ControllableOptions[ID] = OptionValue
+      --self:I(string.format("CONTROLLABLE %s: Option CHANGE for option %d: New value: %s!",self.ControllableName, OptionID, tostring(OptionValue)))
+    end
   end
+  
+  -- change option if changed
+  if setnewoption == true then    
+    local DCSControllable = self:GetDCSObject()
+    if DCSControllable then
+      local Controller = self:_GetController()
+      --self:I(string.format("CONTROLLABLE %s: Setting OPTION  %d: to value: %s!",self.ControllableName, OptionID, tostring(OptionValue)))
+      Controller:setOption( OptionID, OptionValue )
+      return self
+    end
+  --else
+    --self:I(string.format("CONTROLLABLE %s: Option NO CHANGE for option %d: Same value: %s!",self.ControllableName, OptionID, tostring(OptionValue)))     
+  end
+  
+  return nil
 
+end
+
+--- Query a (cached) option. Requires the option has been set with Moose(!) before.
+-- @param #CONTROLLABLE self
+-- @param #number OptionID ID/Type of the option.
+-- @return #number OptionValue or nil if not chached (yet)
+function CONTROLLABLE:QueryCachedOption(OptionID)
+  local ID = tostring(OptionID)
+  if self.ControllableOptions then
+    return self.ControllableOptions[ID]
+  end
   return nil
 end
 
@@ -3307,11 +3338,11 @@ function CONTROLLABLE:OptionROE( ROEvalue )
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.ROE, ROEvalue )
+      self:SetOption( AI.Option.Air.id.ROE, ROEvalue )
     elseif self:IsGround() then
-      Controller:setOption( AI.Option.Ground.id.ROE, ROEvalue )
+      self:SetOption( AI.Option.Ground.id.ROE, ROEvalue )
     elseif self:IsShip() then
-      Controller:setOption( AI.Option.Naval.id.ROE, ROEvalue )
+      self:SetOption( AI.Option.Naval.id.ROE, ROEvalue )
     end
 
     return self
@@ -3349,11 +3380,11 @@ function CONTROLLABLE:OptionROEHoldFire()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
+      self:SetOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_HOLD )
     elseif self:IsGround() then
-      Controller:setOption( AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.WEAPON_HOLD )
+      self:SetOption( AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.WEAPON_HOLD )
     elseif self:IsShip() then
-      Controller:setOption( AI.Option.Naval.id.ROE, AI.Option.Naval.val.ROE.WEAPON_HOLD )
+      self:SetOption( AI.Option.Naval.id.ROE, AI.Option.Naval.val.ROE.WEAPON_HOLD )
     end
 
     return self
@@ -3391,11 +3422,11 @@ function CONTROLLABLE:OptionROEReturnFire()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.RETURN_FIRE )
+      self:SetOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.RETURN_FIRE )
     elseif self:IsGround() then
-      Controller:setOption( AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.RETURN_FIRE )
+      self:SetOption( AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.RETURN_FIRE )
     elseif self:IsShip() then
-      Controller:setOption( AI.Option.Naval.id.ROE, AI.Option.Naval.val.ROE.RETURN_FIRE )
+      self:SetOption( AI.Option.Naval.id.ROE, AI.Option.Naval.val.ROE.RETURN_FIRE )
     end
 
     return self
@@ -3433,11 +3464,11 @@ function CONTROLLABLE:OptionROEOpenFire()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
+      self:SetOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE )
     elseif self:IsGround() then
-      Controller:setOption( AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.OPEN_FIRE )
+      self:SetOption( AI.Option.Ground.id.ROE, AI.Option.Ground.val.ROE.OPEN_FIRE )
     elseif self:IsShip() then
-      Controller:setOption( AI.Option.Naval.id.ROE, AI.Option.Naval.val.ROE.OPEN_FIRE )
+      self:SetOption( AI.Option.Naval.id.ROE, AI.Option.Naval.val.ROE.OPEN_FIRE )
     end
 
     return self
@@ -3476,7 +3507,7 @@ function CONTROLLABLE:OptionROEOpenFireWeaponFree()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE_WEAPON_FREE )
+      self:SetOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.OPEN_FIRE_WEAPON_FREE )
     end
 
     return self
@@ -3514,7 +3545,7 @@ function CONTROLLABLE:OptionROEWeaponFree()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_FREE )
+      self:SetOption( AI.Option.Air.id.ROE, AI.Option.Air.val.ROE.WEAPON_FREE )
     end
 
     return self
@@ -3552,7 +3583,7 @@ function CONTROLLABLE:OptionROTNoReaction()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION )
+      self:SetOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.NO_REACTION )
     end
 
     return self
@@ -3573,7 +3604,7 @@ function CONTROLLABLE:OptionROT( ROTvalue )
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, ROTvalue )
+      self:SetOption( AI.Option.Air.id.REACTION_ON_THREAT, ROTvalue )
     end
 
     return self
@@ -3611,7 +3642,7 @@ function CONTROLLABLE:OptionROTPassiveDefense()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE )
+      self:SetOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.PASSIVE_DEFENCE )
     end
 
     return self
@@ -3631,7 +3662,7 @@ function CONTROLLABLE:OptionPreferVerticalLanding()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.PREFER_VERTICAL, true )
+      self:SetOption( AI.Option.Air.id.PREFER_VERTICAL, true )
     end
 
     return self
@@ -3651,7 +3682,7 @@ function CONTROLLABLE:OptionAllowFormationSideSwap()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.ALLOW_FORMATION_SIDE_SWAP, true )
+      self:SetOption( AI.Option.Air.id.ALLOW_FORMATION_SIDE_SWAP, true )
     end
 
     return self
@@ -3671,7 +3702,7 @@ function CONTROLLABLE:OptionAIRunwayLineUp()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( 37, true )
+      self:SetOption( 37, true )
     end
 
     return self
@@ -3691,7 +3722,7 @@ function CONTROLLABLE:OptionDisengageAndRTBAfterFormationLoss()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( 38, 1 )
+      self:SetOption( 38, 1 )
     end
 
     return self
@@ -3729,7 +3760,7 @@ function CONTROLLABLE:OptionROTEvadeFire()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
+      self:SetOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.EVADE_FIRE )
     end
 
     return self
@@ -3767,7 +3798,7 @@ function CONTROLLABLE:OptionROTVertical()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.BYPASS_AND_ESCAPE )
+      self:SetOption( AI.Option.Air.id.REACTION_ON_THREAT, AI.Option.Air.val.REACTION_ON_THREAT.BYPASS_AND_ESCAPE )
     end
 
     return self
@@ -3787,10 +3818,10 @@ function CONTROLLABLE:OptionAlarmStateAuto()
     local Controller = self:_GetController()
 
     if self:IsGround() then
-      Controller:setOption( AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.AUTO )
+      self:SetOption( AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.AUTO )
     elseif self:IsShip() then
-      -- Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.AUTO)
-      Controller:setOption( 9, 0 )
+      -- self:SetOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.AUTO)
+      self:SetOption( 9, 0 )
     end
 
     return self
@@ -3810,11 +3841,11 @@ function CONTROLLABLE:OptionAlarmStateGreen()
     local Controller = self:_GetController()
 
     if self:IsGround() then
-      Controller:setOption( AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.GREEN )
+      self:SetOption( AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.GREEN )
     elseif self:IsShip() then
       -- AI.Option.Naval.id.ALARM_STATE does not seem to exist!
-      -- Controller:setOption( AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.GREEN )
-      Controller:setOption( 9, 1 )
+      -- self:SetOption( AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.GREEN )
+      self:SetOption( 9, 1 )
     end
 
     return self
@@ -3834,10 +3865,10 @@ function CONTROLLABLE:OptionAlarmStateRed()
     local Controller = self:_GetController()
 
     if self:IsGround() then
-      Controller:setOption( AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.RED )
+      self:SetOption( AI.Option.Ground.id.ALARM_STATE, AI.Option.Ground.val.ALARM_STATE.RED )
     elseif self:IsShip() then
-      -- Controller:setOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.RED)
-      Controller:setOption( 9, 2 )
+      -- self:SetOption(AI.Option.Naval.id.ALARM_STATE, AI.Option.Naval.val.ALARM_STATE.RED)
+      self:SetOption( 9, 2 )
     end
 
     return self
@@ -3864,7 +3895,7 @@ function CONTROLLABLE:OptionRTBBingoFuel( RTB ) -- R2.2
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.RTB_ON_BINGO, RTB )
+      self:SetOption( AI.Option.Air.id.RTB_ON_BINGO, RTB )
     end
 
     return self
@@ -3885,7 +3916,7 @@ function CONTROLLABLE:OptionRTBAmmo( WeaponsFlag )
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.RTB_ON_OUT_OF_AMMO, WeaponsFlag )
+      self:SetOption( AI.Option.Air.id.RTB_ON_OUT_OF_AMMO, WeaponsFlag )
     end
 
     return self
@@ -3905,7 +3936,7 @@ function CONTROLLABLE:OptionAllowJettisonWeaponsOnThreat()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.PROHIBIT_JETT, false )
+      self:SetOption( AI.Option.Air.id.PROHIBIT_JETT, false )
     end
 
     return self
@@ -3925,7 +3956,7 @@ function CONTROLLABLE:OptionKeepWeaponsOnThreat()
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.PROHIBIT_JETT, true )
+      self:SetOption( AI.Option.Air.id.PROHIBIT_JETT, true )
     end
 
     return self
@@ -3965,7 +3996,7 @@ function CONTROLLABLE:OptionEvasionOfARM(Seconds)
 
     if self:IsGround() then
       if Seconds == nil then Seconds = false end
-      Controller:setOption( AI.Option.Ground.id.EVASION_OF_ARM, Seconds)
+      self:SetOption( AI.Option.Ground.id.EVASION_OF_ARM, Seconds)
     end
 
   end
@@ -3986,7 +4017,7 @@ function CONTROLLABLE:OptionFormationInterval(meters)
 
     if self:IsGround() then
       if meters == nil or meters > 100 or meters < 0 then meters = 50 end
-      Controller:setOption( 30, meters)
+      self:SetOption( 30, meters)
     end
 
   end
@@ -4006,7 +4037,7 @@ function CONTROLLABLE:OptionECM( ECMvalue )
     local Controller = self:_GetController()
 
     if self:IsAir() then
-      Controller:setOption( AI.Option.Air.id.ECM_USING, ECMvalue or 1 )
+      self:SetOption( AI.Option.Air.id.ECM_USING, ECMvalue or 1 )
     end
 
   end
@@ -4192,11 +4223,11 @@ function CONTROLLABLE:OptionRestrictBurner( RestrictBurner )
       -- Issue https://github.com/FlightControl-Master/MOOSE/issues/1216
       if RestrictBurner == true then
         if self:IsAir() then
-          Controller:setOption( 16, true )
+          self:SetOption( 16, true )
         end
       else
         if self:IsAir() then
-          Controller:setOption( 16, false )
+          self:SetOption( 16, false )
         end
       end
 

@@ -4068,8 +4068,8 @@ end
 -- @param #RAT self
 -- @param Core.Event#EVENTDATA EventData
 function RAT:_OnBirth(EventData)
-  self:F3(EventData)
-  self:T3(self.lid.."Captured event birth!")
+  self:F2(EventData)
+  self:T2(self.lid.."Captured event birth!")
 
   local SpawnGroup = EventData.IniGroup --Wrapper.Group#GROUP
 
