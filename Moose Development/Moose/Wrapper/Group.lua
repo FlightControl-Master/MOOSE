@@ -2272,9 +2272,8 @@ function GROUP:Respawn( Template, Reset )
   -- Reset events.
   self:ResetEvents()
   
-    -- Reset options
-  self.ControllableOptions = nil
-  self.ControllableOptions = {}
+  -- Reset options.
+  self:ResetOptionCache()
 
   return self
 end
