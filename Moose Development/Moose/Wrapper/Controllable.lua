@@ -3283,34 +3283,22 @@ end
 -- @param #number OptionValue Value of the option
 -- @return #CONTROLLABLE self
 function CONTROLLABLE:SetOption( OptionID, OptionValue )
-  
-  local setnewoption = false
-
-  -- Check if option has changed against cached option
   local ID = tostring(OptionID)
-  if self.ControllableOptions then
-    if (self.ControllableOptions[ID] ~= OptionValue) or (self.ControllableOptions[ID]==nil) then
-      setnewoption = true
-      self.ControllableOptions[ID] = OptionValue
-      --self:I(string.format("CONTROLLABLE %s: Option CHANGE for option %d: New value: %s!",self.ControllableName, OptionID, tostring(OptionValue)))
-    end
+  if OptionValue ~= nil and self.ControllableOptions and self.ControllableOptions[ID] == OptionValue then
+    return self
   end
-  
-  -- change option if changed
-  if setnewoption == true then    
-    local DCSControllable = self:GetDCSObject()
-    if DCSControllable then
-      local Controller = self:_GetController()
-      --self:I(string.format("CONTROLLABLE %s: Setting OPTION  %d: to value: %s!",self.ControllableName, OptionID, tostring(OptionValue)))
-      Controller:setOption( OptionID, OptionValue )
-      return self
-    end
-  --else
-    --self:I(string.format("CONTROLLABLE %s: Option NO CHANGE for option %d: Same value: %s!",self.ControllableName, OptionID, tostring(OptionValue)))     
-  end
-  
-  return nil
 
+  local DCSControllable = self:GetDCSObject()
+  if DCSControllable then
+    local Controller = DCSControllable:getController()
+    Controller:setOption( OptionID, OptionValue )
+    self.ControllableOptions = self.ControllableOptions or {}
+    self.ControllableOptions[ID] = OptionValue
+    self.ControllableOptionDCSObject = DCSControllable
+    return self
+  end
+
+  return nil
 end
 
 --- Query a (cached) option. Requires the option has been set with Moose(!) before.
@@ -3323,6 +3311,27 @@ function CONTROLLABLE:QueryCachedOption(OptionID)
     return self.ControllableOptions[ID]
   end
   return nil
+end
+
+--- Reset cached options for this controllable.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:ResetOptionCache()
+  self.ControllableOptions = {}
+  self.ControllableOptionDCSObject = self:GetDCSObject()
+  return self
+end
+
+--- Reset cached options when the underlying DCS object has changed.
+-- @param #CONTROLLABLE self
+-- @return #CONTROLLABLE self
+function CONTROLLABLE:ResetOptionCacheIfDCSObjectChanged()
+  local DCSControllable = self:GetDCSObject()
+  if self.ControllableOptionDCSObject ~= DCSControllable then
+    self.ControllableOptions = {}
+    self.ControllableOptionDCSObject = DCSControllable
+  end
+  return self
 end
 
 --- Set option for Rules of Engagement (ROE).
