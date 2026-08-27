@@ -2271,6 +2271,9 @@ function GROUP:Respawn( Template, Reset )
 
   -- Reset events.
   self:ResetEvents()
+  
+  -- Reset options.
+  self:ResetOptionCache()
 
   return self
 end
