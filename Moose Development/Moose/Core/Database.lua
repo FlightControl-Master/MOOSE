@@ -186,6 +186,8 @@ function DATABASE:AddUnit( DCSUnitName, force )
 
     -- Register unit
     self.UNITS[DCSunitName]=UNIT:Register(DCSunitName)
+  else
+    self.UNITS[DCSunitName]:ResetOptionCacheIfDCSObjectChanged()
   end
 
   return self.UNITS[DCSunitName]
@@ -802,6 +804,8 @@ function DATABASE:AddGroup( GroupName, force )
   if not self.GROUPS[GroupName] or force == true then
     self:T( { "Add GROUP:", GroupName } )
     self.GROUPS[GroupName] = GROUP:Register( GroupName )
+  else
+    self.GROUPS[GroupName]:ResetOptionCacheIfDCSObjectChanged()
   end
 
   return self.GROUPS[GroupName]
