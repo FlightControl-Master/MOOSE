@@ -1883,7 +1883,7 @@ function SPAWN:SpawnWithIndex( SpawnIndex, NoBirth )
 
 
         if self.BeforeTemplateSpawnFunc then
-            self.BeforeTemplateSpawnFunc(SpawnTemplate, SpawnIndex)
+            self:BeforeTemplateSpawnFunc(SpawnTemplate, SpawnIndex)
         end
       end
 
@@ -2011,7 +2011,7 @@ end
 --    -- Declare SpawnObject and call a function when a new Group is spawned.
 --    local SpawnObject = SPAWN:New( "SpawnObject" )
 --                             :InitLimit( 2, 10 )
---                             :OnBeforeTemplateSpawnGroup( function( SpawnTemplate )
+--                             :OnBeforeTemplateSpawnGroup( function( Spawn, SpawnTemplate, SpawnIndex )
                                         -- Tweaking the template units
 --                                 end
 --                               )
