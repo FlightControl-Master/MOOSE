@@ -2011,14 +2011,14 @@ end
 --    -- Declare SpawnObject and call a function when a new Group is spawned.
 --    local SpawnObject = SPAWN:New( "SpawnObject" )
 --                             :InitLimit( 2, 10 )
---                             :OnBeforeSpawnGroup( function( SpawnTemplate )
+--                             :OnBeforeTemplateSpawnGroup( function( Spawn, SpawnTemplate, SpawnIndex )
                                         -- Tweaking the template units
 --                                 end
 --                               )
 --                             :SpawnScheduled( 300, 0.3 )
 --
 function SPAWN:OnBeforeTemplateSpawnGroup( BeforeTemplateSpawnFunc )
-  --self:F( "OnBeforeSpawnGroup" )
+  --self:F( "OnBeforeTemplateSpawnGroup" )
 
   self.BeforeTemplateSpawnFunc = BeforeTemplateSpawnFunc
 
