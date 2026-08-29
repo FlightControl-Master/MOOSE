@@ -19,7 +19,7 @@
 -- ### Author: **funkyfranky**
 --
 -- ===
--- @module OPS.FlightControl
+-- @module Ops.FlightControl
 -- @image OPS_FlightControl.png
 
 

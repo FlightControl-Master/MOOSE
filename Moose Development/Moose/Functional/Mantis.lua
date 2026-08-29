@@ -1890,20 +1890,22 @@ do
   --- [Internal] Check if any EWR or AWACS is still alive
   -- @param #MANTIS self
   -- @return #boolean outcome
-  function MANTIS:_CheckAnyEWRAlive()
-    self:T(self.lid .. "_CheckAnyEWRAlive")
-    local alive = false
-    if self.EWR_Group:CountAlive() > 0 then
-      alive = true
-    end
-    if not alive and self.AWACS_Prefix then
-      local awacs = GROUP:FindByName(self.AWACS_Prefix)
-      if awacs and awacs:IsAlive() then
-        alive = true
+    function MANTIS:_CheckAnyEWRAlive()
+      self:T(self.lid .. "_CheckAnyEWRAlive")
+    
+      for _, group in pairs(self.EWR_Group:GetSet()) do
+        if group and group:IsAlive() then
+          return true
+        end
       end
+      if self.AWACS_Prefix then
+        local awacs = GROUP:FindByName(self.AWACS_Prefix)
+        if awacs and awacs:IsAlive() then
+          return true
+        end
+      end
+      return false
     end
-    return alive
-  end
 
   --- [Internal] Function to determine state of the advanced mode
   -- @param #MANTIS self
