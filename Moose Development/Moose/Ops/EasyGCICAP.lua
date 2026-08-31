@@ -288,7 +288,7 @@ EASYGCICAP = {
 
 --- EASYGCICAP class version.
 -- @field #string version
-EASYGCICAP.version="0.1.38"
+EASYGCICAP.version="0.1.39"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- 
@@ -796,8 +796,9 @@ function EASYGCICAP:_AddAirwing(Airbasename, Alias)
   CAP_Wing:SetRespawnAfterDestroyed()
   
   --- #DONE avoid wings with no CAP points starting CAP anyhow; AirWing uses this to start CAP and creates points when there are none.
-  if counttable(self.ManagedCP) >0 then
-    CAP_Wing:SetNumberCAP(self.capgrouping)
+  local nCapPoints = counttable(self.ManagedCP)
+  if nCapPoints >0 then
+    CAP_Wing:SetNumberCAP(nCapPoints,self.capgrouping)
   end
   CAP_Wing:SetCapCloseRaceTrack(true)
     

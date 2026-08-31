@@ -189,13 +189,14 @@ AIRWING = {
 
 --- AIRWING class version.
 -- @field #string version
-AIRWING.version="0.9.7"
+AIRWING.version="0.9.8"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- ToDo list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Check that airbase has enough parking spots if a request is BIG.
+-- DONE: Allow groupping parameter for CAP flights
 -- DONE: Allow (moving) zones as base for patrol points.
 -- DONE: Spawn in air ==> Needs WAREHOUSE update.
 -- DONE: Spawn hot.
@@ -233,6 +234,7 @@ function AIRWING:New(warehousename, airwingname)
   
   -- Defaults:
   self.nflightsCAP=0
+  self.nCAPgrouping=1
   self.nflightsAWACS=0
   self.nflightsRecon=0
   self.nflightsTANKERboom=0
@@ -765,9 +767,11 @@ end
 --- Set number of CAP flights constantly carried out.
 -- @param #AIRWING self
 -- @param #number n (Optional) Number of flights. Default 1.
+-- @param #number grouping (optional) Number of assets per flight. Default 1.
 -- @return #AIRWING self
-function AIRWING:SetNumberCAP(n)
+function AIRWING:SetNumberCAP(n,grouping)
   self.nflightsCAP=n or 1
+  self.nCAPgrouping = grouping or 1
   return self
 end
 
@@ -1295,11 +1299,13 @@ function AIRWING:CheckCAP()
     if self.capOptionPatrolRaceTrack then
       
       missionCAP=AUFTRAG:NewPATROL_RACETRACK(patrol.coord,altitude,patrol.speed,patrol.heading,patrol.leg, self.capFormation)
+      missionCAP:SetRequiredAssets(self.nCAPgrouping,self.nCAPgrouping)
       
     else
         
       missionCAP=AUFTRAG:NewGCICAP(patrol.coord, altitude, patrol.speed, patrol.heading, patrol.leg)
-    
+      missionCAP:SetRequiredAssets(self.nCAPgrouping,self.nCAPgrouping)
+      
     end
     
     if self.capOptionVaryStartTime then
