@@ -563,6 +563,8 @@ function OPSGROUP:New(group)
       self:E(self.lid.."ERROR: GROUP does not exist! Returning nil")
       return nil
     end
+  else
+    self:E(self.lid.."ERROR: GROUP is nil!")
   end
   
   if UTILS.IsInstanceOf(group,"OPSGROUP") then
@@ -575,10 +577,13 @@ function OPSGROUP:New(group)
 
   -- Set DCS group and controller.
   self.dcsgroup=self:GetDCSGroup()
-  self.controller=self.dcsgroup:getController()
+  if self.dcsgroup then
+    self.controller=self.dcsgroup:getController()
+  end
 
   -- Category.
-  self.category=self.dcsgroup:getCategory()
+  --self.category=self.dcsgroup:getCategory()
+  self.category=self.group:GetCategory()
   if self.category==Group.Category.GROUND then
     self.isArmygroup=true
   elseif self.category==Group.Category.TRAIN then

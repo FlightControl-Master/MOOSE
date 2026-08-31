@@ -880,8 +880,9 @@ function MOOSE_BRIDGE:_BuildGroupSnapshotItem(group_name, group)
   local active = self:_SafeCall(group, "IsActive")
   local unit_count = self:_CountGroupUnits(group, false)
   local alive_unit_count = self:_CountGroupUnits(group, true)
+  local threat_level = self:_SafeCall(group, "GetThreatLevel")
   local point = self:_PointForGroupName(name)
-  local item = {object_id="GROUP:"..safe_tostring(name),dcs_name=safe_tostring(name),object_type="GROUP",category=category and safe_tostring(category) or nil,coalition=self:_CoalitionToName(coalition_value),alive=self:_BoolOrFalse(alive),active=self:_BoolOrFalse(active),unit_count=self:_NumberOrZero(unit_count),alive_unit_count=self:_NumberOrZero(alive_unit_count)}
+  local item = {object_id="GROUP:"..safe_tostring(name),dcs_name=safe_tostring(name),object_type="GROUP",category=category and safe_tostring(category) or nil,coalition=self:_CoalitionToName(coalition_value),alive=self:_BoolOrFalse(alive),active=self:_BoolOrFalse(active),unit_count=self:_NumberOrZero(unit_count),alive_unit_count=self:_NumberOrZero(alive_unit_count),threat_level=self:_NumberOrZero(threat_level)}
   if point then self:_AddPointFields(item, point) end
   return item
 end
@@ -1700,6 +1701,7 @@ function MOOSE_BRIDGE:_BuildLegionSnapshotItem(legion_name, legion, source)
   if not name then return nil end
   local point = self:_PointFromMooseObject(legion)
   local airbase = self:_SafeCall(legion, "GetAirbase")
+  local home_base_name = self:_SafeCall(legion, "GetAirbaseName") or self:_ObjectName(airbase)
   local item = {
     object_id="LEGION:"..safe_tostring(name),
     dcs_name=safe_tostring(name),
@@ -1712,7 +1714,9 @@ function MOOSE_BRIDGE:_BuildLegionSnapshotItem(legion_name, legion, source)
     state=string_or_nil(self:_SafeCall(legion, "GetState")),
     coalition=self:_CoalitionToName(self:_SafeCall(legion, "GetCoalition")),
     coalition_name=string_or_nil(self:_SafeCall(legion, "GetCoalitionName")),
-    airbase_name=string_or_nil(self:_SafeCall(legion, "GetAirbaseName") or self:_ObjectName(airbase)),
+    airbase_name=string_or_nil(home_base_name),
+    home_base_id=home_base_name and "AIRBASE:"..safe_tostring(home_base_name) or nil,
+    home_base_name=string_or_nil(home_base_name),
     cohort_ids=self:_CollectCohortIds(legion and legion.cohorts),
     cohorts=self:_BuildCohortSummaries(legion and legion.cohorts),
     n_cohorts=self:_CountTable((legion and legion.cohorts) or {}),
@@ -1980,6 +1984,19 @@ end
 function MOOSE_BRIDGE:RegisterDefaultCommands()
   self:RegisterCommand("time.get", function(cmd)
     return {action="time.get", mission_time=mission_time(), dcs_time=dcs_time(), mission_date=self.MissionDate, wall_time=wall_time()}
+  end)
+
+  self:RegisterCommand("mission.info", function(cmd)
+    local mission = env and env.mission or nil
+    return {
+      action="mission.info",
+      theater_id=mission and mission.theatre or nil,
+      mission_name=mission and mission.name or nil,
+      mission_time=mission_time(),
+      dcs_time=dcs_time(),
+      mission_date=self.MissionDate,
+      wall_time=wall_time(),
+    }
   end)
 
   self:RegisterCommand("message.to_all", function(cmd)
