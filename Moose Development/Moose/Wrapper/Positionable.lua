@@ -1132,6 +1132,95 @@ function POSITIONABLE:GetGroundSpeed()
   return gs
 end
 
+
+--- Returns horizontal ground speed.
+-- The vertical velocity component is excluded.
+-- @param #POSITIONABLE self
+-- @return #number Ground speed in m/s. Returns 0 if velocity is unavailable.
+function POSITIONABLE:GetGroundSpeed()
+  local Velocity = self:GetVelocityVec3()
+  if not Velocity then return 0 end
+
+  return UTILS.Vec2Norm({x=Velocity.x, y=Velocity.z})
+end
+
+
+--- Returns true airspeed relative to the surrounding air.
+-- Uses all three velocity components and wind without turbulence.
+-- @param #POSITIONABLE self
+-- @return #number TAS in m/s. Returns 0 if data is unavailable.
+function POSITIONABLE:GetAirspeedTrue()
+  local Coordinate = self:GetCoord()
+  local Velocity = self:GetVelocityVec3()
+  if not Coordinate or not Velocity then return 0 end
+
+  local Wind = Coordinate:GetWindVec3(Coordinate.y, false)
+  if not Wind then return 0 end
+
+  local AirVelocity = UTILS.VecSubstract(Velocity, Wind)
+  return UTILS.VecNorm(AirVelocity)
+end
+
+
+--- Returns the Mach number using local static air temperature.
+-- Uses wind without turbulence.
+-- @param #POSITIONABLE self
+-- @return #number Mach number, dimensionless.
+-- @return #nil Required data is unavailable or invalid.
+function POSITIONABLE:GetMachNumber()
+  local Coordinate = self:GetCoord()
+  local Velocity = self:GetVelocityVec3()
+  if not Coordinate or not Velocity then return nil end
+
+  local Wind = Coordinate:GetWindVec3(Coordinate.y, false)
+  local SpeedOfSound = UTILS.GetSpeedOfSound(Coordinate:GetTemperature())
+  if not Wind or not SpeedOfSound then return nil end
+
+  -- Read TAS here to distinguish unavailable data from a valid TAS of zero.
+  local AirVelocity = UTILS.VecSubstract(Velocity, Wind)
+  local TAS = UTILS.VecNorm(AirVelocity)
+  if TAS ~= TAS or TAS == math.huge then return nil end
+
+  return TAS / SpeedOfSound
+end
+
+
+--- Returns a CAS-based estimate of indicated airspeed.
+-- Computes ideal calibrated airspeed, including supersonic pitot correction.
+-- This is NOT a cockpit reading and does not model instrument or position errors.
+-- Uses local static pressure, static temperature and wind without turbulence.
+-- @param #POSITIONABLE self
+-- @return #number Estimated IAS in m/s, numerically equal to calculated CAS.
+-- @return #nil Required data is unavailable or invalid.
+function POSITIONABLE:GetAirspeedIndicatedEstimated()
+  local Mach = self:GetMachNumber()
+  if Mach == nil then return nil end
+
+  local Coordinate = self:GetCoord()
+  if not Coordinate then return nil end
+
+  -- MOOSE returns local static pressure in hPa, not Pa.
+  local Pressure = Coordinate:GetPressure()
+  if type(Pressure) ~= "number" or Pressure ~= Pressure
+    or Pressure <= 0 or Pressure == math.huge then
+    return nil
+  end
+
+  local ImpactRatio = UTILS.MachToImpactPressureRatio(Mach)
+  if ImpactRatio == nil then return nil end
+
+  -- Convert qc/p to qc/p0 using ISA sea-level pressure p0 = 1013.25 hPa.
+  local ReferenceRatio = ImpactRatio * (Pressure / 1013.25)
+  local ReferenceMach = UTILS.ImpactPressureRatioToMach(ReferenceRatio)
+  if ReferenceMach == nil then return nil end
+
+  -- ISA sea-level static temperature is 15 degrees Celsius.
+  return ReferenceMach * UTILS.GetSpeedOfSound(15)
+end
+
+
+
+
 --- Returns the Angle of Attack of a POSITIONABLE.
 -- @param #POSITIONABLE self
 -- @return #number Angle of attack in degrees.

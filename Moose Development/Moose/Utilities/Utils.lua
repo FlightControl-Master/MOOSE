@@ -5645,3 +5645,85 @@ function UTILS.CalculateInterceptBearing(A1, V1, A2, V2_speed)
     
     return UTILS.Round(bearing,0)
 end
+
+
+--- Returns the speed of sound in dry air from the static air temperature.
+-- @param #number Temperature Static air temperature in degrees Celsius.
+-- @return #number Speed of sound in m/s.
+-- @return #nil Invalid temperature.
+function UTILS.GetSpeedOfSound( Temperature )
+  if type(Temperature) ~= "number" or Temperature ~= Temperature
+    or Temperature <= -273.15 or Temperature == math.huge then
+    return nil
+  end
+
+  return math.sqrt(1.4 * 287.05287 * (Temperature + 273.15))
+end
+
+
+--- Returns the ideal pitot impact-pressure ratio qc/p from Mach number.
+-- qc is pitot pressure minus static pressure; p is upstream static pressure.
+-- Includes the normal shock ahead of a supersonic pitot probe.
+-- Assumes dry, calorically perfect air with gamma = 1.4.
+-- @param #number Mach Mach number, dimensionless and non-negative.
+-- @return #number Impact-pressure ratio qc/p, dimensionless.
+-- @return #nil Invalid input or non-finite result.
+function UTILS.MachToImpactPressureRatio( Mach )
+  if type(Mach) ~= "number" or Mach ~= Mach
+    or Mach < 0 or Mach == math.huge then
+    return nil
+  end
+
+  local M2 = Mach * Mach
+  local Ratio
+
+  if Mach <= 1 then
+    Ratio = (1 + 0.2 * M2) ^ 3.5 - 1
+  else
+    local PressureRatio = (7 * M2 - 1) / 6
+    local DownstreamMachSquared = (M2 + 5) / (7 * M2 - 1)
+
+    Ratio = PressureRatio
+      * (1 + 0.2 * DownstreamMachSquared) ^ 3.5 - 1
+  end
+
+  if Ratio ~= Ratio or Ratio == math.huge then return nil end
+  return Ratio
+end
+
+
+--- Returns Mach number from the ideal pitot impact-pressure ratio qc/p.
+-- Supports subsonic and supersonic flow; uses bisection above Mach 1.
+-- @param #number PressureRatio Impact-pressure ratio qc/p, dimensionless.
+-- @return #number Mach number, dimensionless.
+-- @return #nil Invalid input or failed numerical evaluation.
+function UTILS.ImpactPressureRatioToMach( PressureRatio )
+  if type(PressureRatio) ~= "number" or PressureRatio ~= PressureRatio
+    or PressureRatio < 0 or PressureRatio == math.huge then
+    return nil
+  end
+
+  if PressureRatio <= UTILS.MachToImpactPressureRatio(1) then
+    return math.sqrt(
+      math.max(0, 5 * ((1 + PressureRatio) ^ (2 / 7) - 1))
+    )
+  end
+
+  local Low, High = 1, math.sqrt(PressureRatio + 1)
+
+  for Iteration = 1, 60 do
+    local Mid = (Low + High) / 2
+    local Ratio = UTILS.MachToImpactPressureRatio(Mid)
+    if Ratio == nil then return nil end
+
+    if Ratio < PressureRatio then
+      Low = Mid
+    else
+      High = Mid
+    end
+  end
+
+  return (Low + High) / 2
+end
+
+
