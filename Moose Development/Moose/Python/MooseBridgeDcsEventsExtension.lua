@@ -380,6 +380,11 @@ function MOOSE_BRIDGE:_GetFlightGroupRoute(params)
     local x = tonumber(waypoint.x)
     local z = tonumber(waypoint.y) -- DCS route Vec2.y is world Vec3.z, not altitude.
     local altitude = tonumber(waypoint.alt)
+    local terrain_elevation
+    if land and type(land.getHeight) == "function" then
+      local terrain_ok, terrain = pcall(land.getHeight, {x=x, y=z})
+      if terrain_ok then terrain_elevation = tonumber(terrain) end
+    end
     if not x or not z then error("Invalid coordinates at waypoint " .. tostring(index)) end
     local coordinates = self:_CoordinatesForPoint({x=x, y=0, z=z}, "ll")
     if not coordinates.latitude or not coordinates.longitude then
@@ -395,6 +400,7 @@ function MOOSE_BRIDGE:_GetFlightGroupRoute(params)
       longitude=coordinates.longitude,
       altitude_m=altitude,
       altitude_type=waypoint.alt_type,
+      terrain_elevation_m=terrain_elevation,
       speed_mps=tonumber(waypoint.speed),
       type=waypoint.type,
       action=waypoint.action,
@@ -1761,7 +1767,8 @@ function MOOSE_BRIDGE:_SyncPlayerTestMenu(group_name, group)
   self.PlayerTestMenus[group_name] = entry -- Also owns a partially built tree.
   if config.mode == "navigation" then
     local actions = {{"Show route", "route_show"}, {"Hide route", "route_hide"},
-      {"Navigation status", "status"}, {"Flight status", "flight_status"}}
+      {"Navigation status", "status"}, {"Flight status", "flight_status"},
+      {"Next waypoint", "waypoint_next"}, {"Previous waypoint", "waypoint_previous"}}
     for _, item in ipairs(actions) do
       local action = item[2] -- One binding per callback, also on Lua 5.1.
       MENU_GROUP_COMMAND:New(group, item[1], entry.menu, function()
@@ -1814,6 +1821,7 @@ function MOOSE_BRIDGE:_OnPlayerTestMenuSelected(group_name, entry, action)
   if entry.mode == "navigation" then
     if action ~= "route_show" and action ~= "route_hide" and action ~= "status"
       and action ~= "flight_status"
+      and action ~= "waypoint_next" and action ~= "waypoint_previous"
       and action ~= "copilot_start" and action ~= "copilot_stop"
       and action ~= "copilot_status" and action ~= "copilot_repeat"
       and action ~= "copilot_text_on" and action ~= "copilot_text_off"
