@@ -178,7 +178,7 @@
 -- @field #AIRBOSS.Checkpoint Platform Case II/III descent at 2000 ft/min at 5000 ft platform.
 -- @field #AIRBOSS.Checkpoint DirtyUp Case II/III dirty up and on speed position at 1200 ft and 10-12 NM from the carrier.
 -- @field #AIRBOSS.Checkpoint Bullseye Case III intercept glideslope and follow ICLS aka "bullseye".
--- @field #number defaultcase Default recovery case. This is the case used if not specified otherwise.
+-- @field #number defaultcase Default recovery case policy: 0 for automatic selection, or a fixed case 1, 2 or 3.
 -- @field #number case Recovery case I, II or III currently in progress.
 -- @field #table recoverytimes List of time windows when aircraft are recovered including the recovery case and holding offset.
 -- @field #number defaultoffset Default holding pattern update if not specified otherwise.
@@ -677,7 +677,7 @@
 --    * ICSL channel is set to 1, see @{#AIRBOSS.SetICLS},
 --    * LSO radio is set to 264 MHz FM, see @{#AIRBOSS.SetLSORadio},
 --    * Marshal radio is set to 305 MHz FM, see @{#AIRBOSS.SetMarshalRadio},
---    * Default recovery case is set to 1, see @{#AIRBOSS.SetRecoveryCase},
+--    * Default recovery case is automatic (0); the active case is resolved to I, II or III, see @{#AIRBOSS.SetRecoveryCase},
 --    * Carrier Controlled Area (CCA) is set to 50 NM, see @{#AIRBOSS.SetCarrierControlledArea},
 --    * Default player skill "Flight Student" (easy), see @{#AIRBOSS.SetDefaultPlayerSkill},
 --    * Once the carrier reaches its final waypoint, it will restart its route, see @{#AIRBOSS.SetPatrolAdInfinitum}.
@@ -694,14 +694,16 @@
 --
 --   * *start*: The start time as a string. For example "8:00" for a window opening at 8 am. Or "13:30+1" for half past one on the next day. Default (nil) is ASAP.
 --   * *stop*: Time when the window closes as a string. Same format as *start*. Default is 90 minutes after start time.
---   * *case*: The recovery case during that window (1, 2 or 3). Default 1.
+--   * *case*: The recovery case during that window (1, 2 or 3), or 0 for automatic selection. If omitted, the configured default case is used (initially 0, automatic).
 --   * *holdingoffset*: Holding offset angle in degrees. Only for Case II or III recoveries. Default 0 deg. Common +-15 deg or +-30 deg.
 --
 -- If recovery is closed, AI flights will be send to marshal stacks and orbit there until the next window opens.
 -- Players can request marshal via the F10 menu and will also be given a marshal stack. Currently, human players can request commence via the F10 radio regardless of
 -- whether a window is open or not and will be allowed to enter the pattern (if not already full). This will probably change in the future.
 --
--- At the moment there is no automatic recovery case set depending on weather or daytime. So it is the AIRBOSS (i.e. you as mission designer) who needs to make that decision.
+-- With case 0, the recovery case is determined when the window is created using UTILS.GetRecoveryCase and the current carrier position and weather.
+-- Night is checked at one-minute intervals through the planned window, including its end; if detected, the entire window uses Case III.
+-- This is a planning decision, not a weather forecast. Later weather changes, carrier movement and automatic window extensions do not trigger recalculation.
 -- It is probably a good idea to synchronize the timing with the waypoints of the carrier. For example, setting up the waypoints such that the carrier
 -- already has turning into the wind, when a recovery window opens.
 --
@@ -1770,7 +1772,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.4.2"
+AIRBOSS.version = "1.5.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1965,7 +1967,7 @@ function AIRBOSS:New( carriername, alias )
   -- Mission uses static weather by default.
   self:SetStaticWeather()
 
-  -- Default recovery case. This sets self.defaultcase and self.case. Default Case I.
+  -- Default recovery case is automatic; initialize the active case to I, II or III.
   self:SetRecoveryCase()
 
   -- Set time the turn starts before the window opens.
@@ -2494,17 +2496,29 @@ end
 
 --- Set the default recovery case.
 -- @param #AIRBOSS self
--- @param #number Case (Optional) Case of recovery. Either 1, 2 or 3. Default 1.
+-- @param #number Case (Optional) Case of recovery: 0 for automatic selection, or 1, 2 or 3. Default 0.
 -- @return #AIRBOSS self
 function AIRBOSS:SetRecoveryCase( Case )
 
-  -- Set default case or 1.
-  self.defaultcase = Case or 1
+  -- Keep the selection policy separate from the active recovery case.
+  self.defaultcase = Case or 0
 
-  -- Current case init.
-  self.case = self.defaultcase
+  -- The active case must always be I, II or III, never the automatic sentinel 0.
+  self.case = self:_ResolveRecoveryCase( self.defaultcase )
 
   return self
+end
+
+--- Resolve an instantaneous recovery case without changing the default policy.
+-- @param #AIRBOSS self
+-- @param #number Case (Optional) 0 for automatic selection, or 1, 2 or 3. Defaults to self.defaultcase.
+-- @return #number Resolved recovery case 1, 2 or 3.
+function AIRBOSS:_ResolveRecoveryCase( Case )
+  Case = Case or self.defaultcase or 0
+  if Case == 0 then
+    return UTILS.GetRecoveryCase( self:GetCoordinate() )
+  end
+  return Case
 end
 
 --- Set holding pattern offset from final bearing for Case II/III recoveries.
@@ -2551,7 +2565,7 @@ end
 -- @param #AIRBOSS self
 -- @param #string starttime (Optional) Start time, e.g. "8:00" for eight o'clock. Default now.
 -- @param #string stoptime (Optional) Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
--- @param #number case (Optional) Recovery case for that time slot. Number between one and three. Defaults to 1.
+-- @param #number case (Optional) Recovery case 1, 2 or 3; 0 selects automatically at creation and uses Case III if night is detected within the planned window (one-minute checks including the end). If omitted, uses the configured default case (initially 0, automatic).
 -- @param #number holdingoffset (Optional) Only for CASE II/III: Angle in degrees the holding pattern is offset. Defaults to 0.
 -- @param #boolean turnintowind If true, carrier will turn into the wind 5 minutes before the recovery window opens.
 -- @param #number speed (Optional) Speed in knots during turn into wind leg. Default is 20.
@@ -2589,8 +2603,26 @@ function AIRBOSS:AddRecoveryWindow( starttime, stoptime, case, holdingoffset, tu
     return self
   end
 
-  -- Case or default value.
+  -- Apply the default policy before testing for automatic window selection.
   case = case or self.defaultcase
+
+  -- CASE 0 enables automatic selection for the planned recovery window.
+  if case == 0 then
+    local coordinate = self:GetCoordinate()
+
+    case = UTILS.GetRecoveryCase( coordinate, UTILS.SecondsToClock( Tstart ) )
+
+    -- Conservatively use CASE III for the entire window if it includes night.
+    -- Check at one-minute intervals, including the planned end time.
+    local time = Tstart
+    while case < 3 and time < Tstop do
+      time = math.min( time + 60, Tstop )
+
+      if coordinate:IsNight( UTILS.SecondsToClock( time ) ) then
+        case = 3
+      end
+    end
+  end
 
   -- Holding offset or default value.
   holdingoffset = holdingoffset or self.defaultoffset
@@ -2668,10 +2700,12 @@ function AIRBOSS:CloseCurrentRecoveryWindow( Delay )
     self:ScheduleOnce( Delay, self.CloseCurrentRecoveryWindow, self )
   else
     if self:IsRecovering() and self.recoverywindow and self.recoverywindow.OPEN then
+      -- RecoveryStop may select another window (or clear self.recoverywindow).
+      local window = self.recoverywindow
       self:RecoveryStop()
-      self.recoverywindow.OPEN = false
-      self.recoverywindow.OVER = true
-      self:DeleteRecoveryWindow( self.recoverywindow )
+      window.OPEN = false
+      window.OVER = true
+      self:DeleteRecoveryWindow( window )
     end
   end
 end
@@ -2682,8 +2716,13 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:DeleteAllRecoveryWindows( Delay )
 
-  -- Loop over all recovery windows.
+  -- Snapshot references: deletion and recovery callbacks can modify the live list.
+  local windows = {}
   for _, recovery in pairs( self.recoverytimes ) do
+    table.insert( windows, recovery )
+  end
+  for i = #windows, 1, -1 do
+    local recovery = windows[i]
     self:I( self.lid .. string.format( "Deleting recovery window ID %s", tostring( recovery.ID ) ) )
     self:DeleteRecoveryWindow( recovery, Delay )
   end
@@ -4269,7 +4308,7 @@ end
 function AIRBOSS:onbeforeRecoveryCase( From, Event, To, Case, Offset )
 
   -- Input or default value.
-  Case = Case or self.defaultcase
+  Case = self:_ResolveRecoveryCase( Case )
 
   -- Input or default value
   Offset = Offset or self.defaultoffset
@@ -4291,7 +4330,7 @@ end
 function AIRBOSS:onafterRecoveryCase( From, Event, To, Case, Offset )
 
   -- Input or default value.
-  Case = Case or self.defaultcase
+  Case = self:_ResolveRecoveryCase( Case )
 
   -- Input or default value
   Offset = Offset or self.defaultoffset
@@ -4345,16 +4384,16 @@ end
 function AIRBOSS:onafterRecoveryStart( From, Event, To, Case, Offset )
 
   -- Input or default value.
-  Case = Case or self.defaultcase
+  Case = self:_ResolveRecoveryCase( Case )
 
   -- Input or default value.
   Offset = Offset or self.defaultoffset
 
+  -- Apply the recovery case and offset before compiling the radio call.
+  self:RecoveryCase( Case, Offset )
+
   -- Radio message: "99, starting aircraft recovery case X ops. (Marshal radial XYZ degrees)"
   self:_MarshalCallRecoveryStart( Case )
-
-  -- Switch to case.
-  self:RecoveryCase( Case, Offset )
 end
 
 --- On after "RecoveryStop" event. Recovery of aircraft is stopped and carrier switches to state "Idle". Running recovery window is deleted.
@@ -4431,7 +4470,7 @@ function AIRBOSS:onafterRecoveryPause( From, Event, To, duration )
     local text = string.format( "aircraft recovery is paused until further notice." )
 
     -- Marshal call: "99, aircraft recovery paused until further notice."
-    self:_MarshalCallRecoveryPausedNotice()
+    self:_MarshalCallRecoveryPausedUntilFurtherNotice()
 
   end
 
@@ -12774,8 +12813,7 @@ function AIRBOSS:_LSOgrade( playerData )
       grade = "_OK_"
       points = 5.0
       G = "Unicorn"
-    end -- VNAO Edit - Added
-    if N==0 and TgrooveUnicorn then  -- VNAO Edit - Added
+    elseif N==0 and TgrooveUnicorn then
       -- No deviations, should be REALLY RARE! -- VNAO Edit - Added
       if playerData.wire == 3 then -- VNAO Edit - Added
         grade="_OK_" -- VNAO Edit - Added
@@ -16907,8 +16945,9 @@ end
 -- @param #AIRBOSS self
 function AIRBOSS:_MarshalCallRecoveryStart( case )
 
-  -- Marshal radial.
-  local radial = self:GetRadial( case, true, true, false )
+  -- Current magnetic navigation data. Normalize after rounding for radio output.
+  local radial = math.floor( self:GetRadial( case, true, true, false ) + 0.5 ) % 360
+  local finalbearing = math.floor( self:GetFinalBearing( true ) + 0.5 ) % 360
 
   -- Debug output.
   local text = string.format( "Starting aircraft recovery Case %d ops.", case )
@@ -16917,7 +16956,7 @@ function AIRBOSS:_MarshalCallRecoveryStart( case )
   elseif case == 2 then
     text = text .. string.format( " Marshal radial %03d°. BRC %03d°.", radial, self:GetBRC() )
   elseif case == 3 then
-    text = text .. string.format( " Marshal radial %03d°. Final heading %03d°.", radial, self:GetFinalBearing( false ) )
+    text = text .. string.format( " Marshal radial %03d°. New final bearing %03d°.", radial, finalbearing )
   end
   self:T( self.lid .. text )
 
@@ -16938,6 +16977,13 @@ function AIRBOSS:_MarshalCallRecoveryStart( case )
     -- XYZ..
     self:_Number2Radio( self.MarshalRadio, string.format( "%03d", radial ), nil, 0.2 )
     -- Degrees.
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.DEGREES, nil, nil, nil, case ~= 3 )
+  end
+
+  if case == 3 then
+    -- Reuse the existing "New final bearing" recording.
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.NEWFB, nil, nil, 0.5 )
+    self:_Number2Radio( self.MarshalRadio, string.format( "%03d", finalbearing ), nil, 0.2 )
     self:RadioTransmission( self.MarshalRadio, self.MarshalCall.DEGREES, nil, nil, nil, true )
   end
 
@@ -16961,8 +17007,28 @@ function AIRBOSS:_MarshalCallArrived( modex, case, brc, altitude, charlie, qfe )
   local clock = UTILS.Split( charlie, "+" )
   local CT = UTILS.Split( clock[1], ":" )
 
+  -- Use current magnetic navigation data, matching the active holding zone.
+  -- The supplied expected BRC remains in use for CASE I/II only.
+  local radial
+  local finalbearing
+  if case > 1 then
+    radial = math.floor( self:GetRadial( case, true, true, false ) + 0.5 ) % 360
+  end
+  if case == 3 then
+    finalbearing = math.floor( self:GetFinalBearing( true ) + 0.5 ) % 360
+  end
+
   -- Subtitle text.
-  local text = string.format( "Case %d, expected BRC %03d°, hold at angels %d. Expected Charlie Time %s. Altimeter %.2f. Report see me.", case, brc, angels, charlie, qfe )
+  local text = string.format( "Case %d.", case )
+  if case == 3 then
+    text = text .. string.format( " New final bearing %03d°.", finalbearing )
+  else
+    text = text .. string.format( " Expected BRC %03d°.", brc )
+  end
+  if radial then
+    text = text .. string.format( " Marshal radial %03d°.", radial )
+  end
+  text = text .. string.format( " Hold at angels %d. Expected Charlie Time %s. Altimeter %.2f. Report see me.", angels, charlie, qfe )
 
   -- Debug message.
   self:T( self.lid .. text )
@@ -16975,14 +17041,23 @@ function AIRBOSS:_MarshalCallArrived( modex, case, brc, altitude, charlie, qfe )
   -- X.
   self:_Number2Radio( self.MarshalRadio, tostring( case ) )
 
-  -- Expected..
-  self:RadioTransmission( self.MarshalRadio, self.MarshalCall.EXPECTED, nil, nil, 0.5 )
-  -- BRC..
-  self:RadioTransmission( self.MarshalRadio, self.MarshalCall.BRC )
-  -- XYZ...
-  self:_Number2Radio( self.MarshalRadio, string.format( "%03d", brc ) )
+  if case == 3 then
+    -- Existing recording: "New final bearing" (without an "Expected" prefix).
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.NEWFB, nil, nil, 0.5 )
+    self:_Number2Radio( self.MarshalRadio, string.format( "%03d", finalbearing ) )
+  else
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.EXPECTED, nil, nil, 0.5 )
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.BRC )
+    self:_Number2Radio( self.MarshalRadio, string.format( "%03d", brc ) )
+  end
   -- Degrees.
   self:RadioTransmission( self.MarshalRadio, self.MarshalCall.DEGREES )
+
+  if radial then
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.MARSHALRADIAL, nil, nil, 0.5 )
+    self:_Number2Radio( self.MarshalRadio, string.format( "%03d", radial ) )
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.DEGREES )
+  end
 
   -- Hold at..
   self:RadioTransmission( self.MarshalRadio, self.MarshalCall.HOLDATANGELS, nil, nil, 0.5 )
