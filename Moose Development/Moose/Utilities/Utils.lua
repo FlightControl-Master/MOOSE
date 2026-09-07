@@ -2286,6 +2286,34 @@ function UTILS.GetSunset(Day, Month, Year, Latitude, Longitude, Tlocal)
   return UTILS.GetSunRiseAndSet(DayOfYear, Latitude, Longitude, false, Tlocal)
 end
 
+--- Determine the carrier recovery case from night, fog visibility and cloud base.
+-- @param Core.Point#COORDINATE Coordinate Observation position.
+-- @param #string Clock Optional mission time "HH:MM:SS+D". Defaults to now.
+-- @return #number Recovery case: 1, 2 or 3.
+function UTILS.GetRecoveryCase(Coordinate, Clock)
+
+  if Coordinate:IsNight(Clock) then
+    return 3
+  end
+
+  local visibility = UTILS.Weather.GetFogVisibilityDistanceMax()
+  local cloudbase = env.mission.weather.clouds.base
+
+  -- Zero means no fog, not zero visibility.
+  -- Boundary values use the more restrictive recovery case.
+  if visibility > 0 and visibility <= UTILS.NMToMeters(5) then
+    return 3
+  end
+
+  if cloudbase <= UTILS.FeetToMeters(1000) then
+    return 3
+  elseif cloudbase <= UTILS.FeetToMeters(3000) then
+    return 2
+  end
+
+  return 1
+end
+
 --- Get OS time. Needs os to be desanitized!
 -- @return #number Os time in seconds.
 function UTILS.GetOSTime()
