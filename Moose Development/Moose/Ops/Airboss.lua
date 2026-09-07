@@ -1772,7 +1772,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.4.2"
+AIRBOSS.version = "1.5.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2700,10 +2700,12 @@ function AIRBOSS:CloseCurrentRecoveryWindow( Delay )
     self:ScheduleOnce( Delay, self.CloseCurrentRecoveryWindow, self )
   else
     if self:IsRecovering() and self.recoverywindow and self.recoverywindow.OPEN then
+      -- RecoveryStop may select another window (or clear self.recoverywindow).
+      local window = self.recoverywindow
       self:RecoveryStop()
-      self.recoverywindow.OPEN = false
-      self.recoverywindow.OVER = true
-      self:DeleteRecoveryWindow( self.recoverywindow )
+      window.OPEN = false
+      window.OVER = true
+      self:DeleteRecoveryWindow( window )
     end
   end
 end
@@ -2714,8 +2716,13 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:DeleteAllRecoveryWindows( Delay )
 
-  -- Loop over all recovery windows.
+  -- Snapshot references: deletion and recovery callbacks can modify the live list.
+  local windows = {}
   for _, recovery in pairs( self.recoverytimes ) do
+    table.insert( windows, recovery )
+  end
+  for i = #windows, 1, -1 do
+    local recovery = windows[i]
     self:I( self.lid .. string.format( "Deleting recovery window ID %s", tostring( recovery.ID ) ) )
     self:DeleteRecoveryWindow( recovery, Delay )
   end
@@ -4463,7 +4470,7 @@ function AIRBOSS:onafterRecoveryPause( From, Event, To, duration )
     local text = string.format( "aircraft recovery is paused until further notice." )
 
     -- Marshal call: "99, aircraft recovery paused until further notice."
-    self:_MarshalCallRecoveryPausedNotice()
+    self:_MarshalCallRecoveryPausedUntilFurtherNotice()
 
   end
 
@@ -12806,8 +12813,7 @@ function AIRBOSS:_LSOgrade( playerData )
       grade = "_OK_"
       points = 5.0
       G = "Unicorn"
-    end -- VNAO Edit - Added
-    if N==0 and TgrooveUnicorn then  -- VNAO Edit - Added
+    elseif N==0 and TgrooveUnicorn then
       -- No deviations, should be REALLY RARE! -- VNAO Edit - Added
       if playerData.wire == 3 then -- VNAO Edit - Added
         grade="_OK_" -- VNAO Edit - Added
