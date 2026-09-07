@@ -58,11 +58,37 @@ function MOOSE_BRIDGE:New(host, port)
   self.Port = port or 42000
   self.Socket = nil
   self.Scheduler = nil
+  self.Started = false
   self.Connected = false
   self.Sequence = 0
+  local instance_token = safe_tostring(self):gsub("[^%w]", "")
+  self.InstanceId = "bridge-" .. tostring(math.floor((dcs_time() or 0) * 1000)) .. "-" .. instance_token
   self.DebugOverlays = {}
   self.OutQueue = {}
+  self.OutQueueHead = 1
+  self.OutQueueTail = 0
+  self.OutQueueCount = 0
+  self.OutQueueBytes = 0
   self.OutQueueOffset = 1
+  self.ReliablePendingMessageIds = {}
+  self.MaxOutQueueMessages = 2000
+  self.MaxOutQueueBytes = 32 * 1024 * 1024
+  self.MaxCommandsPerTick = 50
+  self.MaxOutMessagesPerTick = 100
+  self.CommandResultCache = {}
+  self.CommandResultOrder = {}
+  self.CommandResultCacheLimit = 1000
+  self.ReliableEventJournal = {}
+  self.ReliableEventIds = {}
+  self.ReliableEventJournalLimit = 1000
+  self.ReliableEventNames = {
+    ["airbase.coalition_changed"]=true,
+    ["auftrag.evaluated"]=true,
+    ["mission.ended"]=true,
+    ["object.destroyed"]=true,
+    ["opszone.owner_changed"]=true,
+    ["territory.coalition_changed"]=true,
+  }
   self.ReadBuffer = ""
   self.CommandHandlers = {}
   self.RegisteredZones = {}
@@ -85,10 +111,12 @@ function MOOSE_BRIDGE:_Log(message)
 end
 
 function MOOSE_BRIDGE:Start()
+  if self.Started then return self end
   self:_Log("Starting bridge to " .. self.Host .. ":" .. tostring(self.Port))
   if not SCHEDULER then error("MOOSE_BRIDGE requires MOOSE SCHEDULER") end
   self.Scheduler = SCHEDULER:New(self, self._Tick, {}, 0, self.TickInterval)
   if self._StartDcsEventForwarding then self:_StartDcsEventForwarding() end
+  self.Started = true
   return self
 end
 
@@ -98,6 +126,7 @@ function MOOSE_BRIDGE:Stop()
   if self.Scheduler then self.Scheduler:Stop(); self.Scheduler = nil end
   if self.Socket then self.Socket:close(); self.Socket = nil end
   self.Connected = false
+  self.Started = false
   return self
 end
 
@@ -112,14 +141,14 @@ function MOOSE_BRIDGE:_Connect()
   if not ok then self:_Log("Connect failed: " .. safe_tostring(err)); sock:close(); return end
   sock:settimeout(0)
   self.Socket = sock
-  self.Connected = true
+  self:_OnConnected()
   self:_Log("Connected to Python bridge")
 end
 
 function MOOSE_BRIDGE:_Disconnect(reason)
   if reason then self:_Log("Disconnected: " .. safe_tostring(reason)) end
   if self.Socket then self.Socket:close(); self.Socket = nil end
-  self.OutQueue = {}
+  self:_RetainReliableOutput()
   self.OutQueueOffset = 1
   self.ReadBuffer = ""
   self.Connected = false
@@ -127,7 +156,7 @@ end
 
 function MOOSE_BRIDGE:_NextId(prefix)
   self.Sequence = self.Sequence + 1
-  return (prefix or "msg") .. "-" .. tostring(self.Sequence)
+  return (prefix or "msg") .. "-" .. self.InstanceId .. "-" .. tostring(self.Sequence)
 end
 
 function MOOSE_BRIDGE:_NextMarkId()
@@ -259,11 +288,147 @@ if GROUP and not GROUP.GetAmmoDetailed then
   end
 end
 
-function MOOSE_BRIDGE:Send(message)
-  if not self.Socket then
-    return self
+function MOOSE_BRIDGE:_AdvanceOutQueueHead()
+  while self.OutQueueHead <= self.OutQueueTail and self.OutQueue[self.OutQueueHead] == nil do
+    self.OutQueueHead = self.OutQueueHead + 1
   end
-  self.OutQueue[#self.OutQueue + 1] = json.encode(message)
+  if self.OutQueueCount == 0 or self.OutQueueHead > self.OutQueueTail then
+    self.OutQueue = {}
+    self.OutQueueHead = 1
+    self.OutQueueTail = 0
+    self.OutQueueCount = 0
+    self.OutQueueBytes = 0
+    self.OutQueueOffset = 1
+  end
+end
+
+function MOOSE_BRIDGE:_RemoveOutQueueEntry(index)
+  local entry = self.OutQueue[index]
+  if not entry then return nil end
+  self.OutQueue[index] = nil
+  self.OutQueueCount = math.max(0, self.OutQueueCount - 1)
+  self.OutQueueBytes = math.max(0, self.OutQueueBytes - #entry.payload - 1)
+  if entry.reliable and entry.message_id then self.ReliablePendingMessageIds[entry.message_id] = nil end
+  if index == self.OutQueueHead then self:_AdvanceOutQueueHead() end
+  return entry
+end
+
+function MOOSE_BRIDGE:_MakeOutQueueRoom(payload_size, reliable)
+  if payload_size > self.MaxOutQueueBytes then
+    self:_Log("Bridge output message exceeds queue byte limit")
+    return false
+  end
+  while self.OutQueueCount >= self.MaxOutQueueMessages
+    or self.OutQueueBytes + payload_size > self.MaxOutQueueBytes do
+    local removable = nil
+    for index = self.OutQueueHead, self.OutQueueTail do
+      local entry = self.OutQueue[index]
+      if entry and not entry.reliable then removable = index; break end
+    end
+    if removable then
+      self:_RemoveOutQueueEntry(removable)
+    elseif reliable then
+      self:_Log("Reliable bridge output queue capacity exceeded; dropping oldest retained message")
+      self:_RemoveOutQueueEntry(self.OutQueueHead)
+    else
+      return false
+    end
+  end
+  return true
+end
+
+function MOOSE_BRIDGE:_EnqueueMessage(message, reliable)
+  local message_id = message and message.id and tostring(message.id) or nil
+  if reliable and message_id and self.ReliablePendingMessageIds[message_id] then return true end
+  local payload = json.encode(message)
+  if not self:_MakeOutQueueRoom(#payload + 1, reliable) then return false end
+  self.OutQueueTail = self.OutQueueTail + 1
+  self.OutQueue[self.OutQueueTail] = {
+    payload=payload,
+    reliable=reliable and true or false,
+    message_id=message_id,
+    message=message,
+  }
+  self.OutQueueCount = self.OutQueueCount + 1
+  self.OutQueueBytes = self.OutQueueBytes + #payload + 1
+  if reliable and message_id then self.ReliablePendingMessageIds[message_id] = true end
+  return true
+end
+
+function MOOSE_BRIDGE:_RetainReliableOutput()
+  local retained = {}
+  local count = 0
+  local bytes = 0
+  local pending_ids = {}
+  for index = self.OutQueueHead, self.OutQueueTail do
+    local entry = self.OutQueue[index]
+    if entry and entry.reliable then
+      count = count + 1
+      retained[count] = entry
+      bytes = bytes + #entry.payload + 1
+      if entry.message_id then pending_ids[entry.message_id] = true end
+    end
+  end
+  self.OutQueue = retained
+  self.OutQueueHead = 1
+  self.OutQueueTail = count
+  self.OutQueueCount = count
+  self.OutQueueBytes = bytes
+  self.OutQueueOffset = 1
+  self.ReliablePendingMessageIds = pending_ids
+end
+
+function MOOSE_BRIDGE:_RememberReliableEvent(message)
+  local message_id = message and message.id and tostring(message.id) or nil
+  if not message_id or self.ReliableEventIds[message_id] then return end
+  self.ReliableEventIds[message_id] = true
+  self.ReliableEventJournal[#self.ReliableEventJournal + 1] = message
+  while #self.ReliableEventJournal > self.ReliableEventJournalLimit do
+    local removed = table.remove(self.ReliableEventJournal, 1)
+    if removed and removed.id then self.ReliableEventIds[tostring(removed.id)] = nil end
+  end
+end
+
+function MOOSE_BRIDGE:_ReplayReliableEvents()
+  local pending_non_events = {}
+  for index = self.OutQueueHead, self.OutQueueTail do
+    local entry = self.OutQueue[index]
+    if entry and entry.reliable and entry.message
+      and not (entry.message_id and self.ReliableEventIds[entry.message_id]) then
+      pending_non_events[#pending_non_events + 1] = entry.message
+    end
+  end
+  self.OutQueue = {}
+  self.OutQueueHead = 1
+  self.OutQueueTail = 0
+  self.OutQueueCount = 0
+  self.OutQueueBytes = 0
+  self.OutQueueOffset = 1
+  self.ReliablePendingMessageIds = {}
+  for _, message in ipairs(self.ReliableEventJournal) do self:Send(message, true) end
+  for _, message in ipairs(pending_non_events) do self:Send(message, true) end
+end
+
+function MOOSE_BRIDGE:_OnConnected()
+  self.Connected = true
+  self.OutQueueOffset = 1
+  self:_ReplayReliableEvents()
+end
+
+function MOOSE_BRIDGE:_RememberCommandResult(command, message)
+  local command_id = command and command.id and tostring(command.id) or nil
+  if not command_id or self.CommandResultCache[command_id] then return end
+  self.CommandResultCache[command_id] = {action=command.action, message=message}
+  self.CommandResultOrder[#self.CommandResultOrder + 1] = command_id
+  while #self.CommandResultOrder > self.CommandResultCacheLimit do
+    local removed_id = table.remove(self.CommandResultOrder, 1)
+    self.CommandResultCache[removed_id] = nil
+  end
+end
+
+function MOOSE_BRIDGE:Send(message, reliable)
+  if not self.Socket and reliable ~= true then return self end
+  self:_EnqueueMessage(message, reliable == true)
   return self
 end
 
@@ -277,15 +442,17 @@ function MOOSE_BRIDGE:SendSnapshot(kind, payload)
   local msg = self:_BaseMessage("snapshot")
   msg.kind = kind
   msg.payload = payload or {}
-  self:Send(msg)
+  self:Send(msg, self.ActiveCommand ~= nil)
 end
 
-function MOOSE_BRIDGE:SendEvent(event_name, payload)
+function MOOSE_BRIDGE:SendEvent(event_name, payload, reliable)
   local msg = self:_BaseMessage("event")
   msg.event = event_name
   msg.payload = payload or {}
   if type(msg.payload) == "table" then msg.payload.event = event_name end
-  self:Send(msg)
+  local retained = reliable == true or self.ReliableEventNames[event_name] == true
+  if retained then self:_RememberReliableEvent(msg) end
+  self:Send(msg, retained)
 end
 
 function MOOSE_BRIDGE:SendAck(command, ok, result, error_message)
@@ -294,7 +461,8 @@ function MOOSE_BRIDGE:SendAck(command, ok, result, error_message)
   msg.ok = ok and true or false
   msg.result = result
   msg.error = error_message
-  self:Send(msg)
+  self:_RememberCommandResult(command, msg)
+  self:Send(msg, true)
 end
 
 function MOOSE_BRIDGE:RegisterCommand(action, handler)
@@ -2549,21 +2717,37 @@ end
 function MOOSE_BRIDGE:_HandleCommand(line)
   local ok, command = pcall(function() return json.decode(line) end)
   if not ok or type(command) ~= "table" then self:_Log("Invalid command: " .. safe_tostring(command)); return end
+  local command_id = command.id and tostring(command.id) or nil
+  local cached = command_id and self.CommandResultCache[command_id] or nil
+  if cached then
+    if cached.action ~= command.action then
+      self:_Log("Command id reused with a different action: " .. command_id)
+    end
+    self:Send(cached.message, true)
+    return
+  end
   local handler = self.CommandHandlers[command.action]
   if not handler then self:SendAck(command, false, nil, "Unknown action: " .. safe_tostring(command.action)); return end
+  self.ActiveCommand = command
   local ok_handler, result = pcall(function() return handler(command) end)
+  self.ActiveCommand = nil
   if ok_handler then self:SendAck(command, true, result, nil) else self:SendAck(command, false, nil, safe_tostring(result)) end
 end
 
-function MOOSE_BRIDGE:_FlushOutQueue()
-  if not self.Socket or #self.OutQueue == 0 then return end
-  while #self.OutQueue > 0 do
-    local payload = self.OutQueue[1] .. "\n"
+function MOOSE_BRIDGE:_FlushOutQueue(max_messages)
+  if not self.Socket or self.OutQueueCount == 0 then return end
+  local completed = 0
+  while self.OutQueueCount > 0 and (max_messages == nil or completed < max_messages) do
+    self:_AdvanceOutQueueHead()
+    local entry = self.OutQueue[self.OutQueueHead]
+    if not entry then return end
+    local payload = entry.payload .. "\n"
     local offset = self.OutQueueOffset or 1
     local sent, err, last = self.Socket:send(payload, offset)
     if sent then
-      table.remove(self.OutQueue, 1)
+      self:_RemoveOutQueueEntry(self.OutQueueHead)
       self.OutQueueOffset = 1
+      completed = completed + 1
     elseif err == "timeout" then
       local final_byte = tonumber(last) or (offset - 1)
       if final_byte >= offset then self.OutQueueOffset = final_byte + 1 end
@@ -2578,12 +2762,17 @@ end
 function MOOSE_BRIDGE:_Tick()
   if not self.Socket then self:_Connect() end
   if self.Socket then
-    while true do
+    local handled = 0
+    while handled < self.MaxCommandsPerTick do
       local line, err = self:_ReadLine()
-      if not line then break end
+      if not line then
+        if err then self:_Disconnect("receive failed: " .. safe_tostring(err)) end
+        break
+      end
       self:_HandleCommand(line)
+      handled = handled + 1
     end
-    self:_FlushOutQueue()
+    self:_FlushOutQueue(self.MaxOutMessagesPerTick)
   end
   local now = mission_time() or 0
   if now - self.LastHeartbeat >= self.HeartbeatInterval then

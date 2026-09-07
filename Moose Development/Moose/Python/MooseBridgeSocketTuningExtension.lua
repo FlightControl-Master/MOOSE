@@ -5,6 +5,8 @@
 -- blocking LuaSocket connect timeout and using less aggressive retry defaults.
 
 if not MOOSE_BRIDGE then error("Load MooseBridge.lua before MooseBridgeSocketTuningExtension.lua") end
+if MOOSE_BRIDGE._SocketTuningExtensionLoaded then return end
+MOOSE_BRIDGE._SocketTuningExtensionLoaded = true
 
 local function bridge_tuning_mission_time()
   if timer and timer.getTime then return timer.getTime() end
@@ -68,6 +70,6 @@ function MOOSE_BRIDGE:_Connect()
   -- All regular bridge IO is polled from the scheduler tick and must not block DCS.
   conn:settimeout(0)
   self.Socket = conn
-  self.Connected = true
+  self:_OnConnected()
   self:_Log("Connected to Python bridge")
 end
