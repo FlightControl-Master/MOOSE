@@ -4350,11 +4350,11 @@ function AIRBOSS:onafterRecoveryStart( From, Event, To, Case, Offset )
   -- Input or default value.
   Offset = Offset or self.defaultoffset
 
+  -- Apply the recovery case and offset before compiling the radio call.
+  self:RecoveryCase( Case, Offset )
+
   -- Radio message: "99, starting aircraft recovery case X ops. (Marshal radial XYZ degrees)"
   self:_MarshalCallRecoveryStart( Case )
-
-  -- Switch to case.
-  self:RecoveryCase( Case, Offset )
 end
 
 --- On after "RecoveryStop" event. Recovery of aircraft is stopped and carrier switches to state "Idle". Running recovery window is deleted.
@@ -16907,8 +16907,9 @@ end
 -- @param #AIRBOSS self
 function AIRBOSS:_MarshalCallRecoveryStart( case )
 
-  -- Marshal radial.
-  local radial = self:GetRadial( case, true, true, false )
+  -- Current magnetic navigation data. Normalize after rounding for radio output.
+  local radial = math.floor( self:GetRadial( case, true, true, false ) + 0.5 ) % 360
+  local finalbearing = math.floor( self:GetFinalBearing( true ) + 0.5 ) % 360
 
   -- Debug output.
   local text = string.format( "Starting aircraft recovery Case %d ops.", case )
@@ -16917,7 +16918,7 @@ function AIRBOSS:_MarshalCallRecoveryStart( case )
   elseif case == 2 then
     text = text .. string.format( " Marshal radial %03d°. BRC %03d°.", radial, self:GetBRC() )
   elseif case == 3 then
-    text = text .. string.format( " Marshal radial %03d°. Final heading %03d°.", radial, self:GetFinalBearing( false ) )
+    text = text .. string.format( " Marshal radial %03d°. New final bearing %03d°.", radial, finalbearing )
   end
   self:T( self.lid .. text )
 
@@ -16938,6 +16939,13 @@ function AIRBOSS:_MarshalCallRecoveryStart( case )
     -- XYZ..
     self:_Number2Radio( self.MarshalRadio, string.format( "%03d", radial ), nil, 0.2 )
     -- Degrees.
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.DEGREES, nil, nil, nil, case ~= 3 )
+  end
+
+  if case == 3 then
+    -- Reuse the existing "New final bearing" recording.
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.NEWFB, nil, nil, 0.5 )
+    self:_Number2Radio( self.MarshalRadio, string.format( "%03d", finalbearing ), nil, 0.2 )
     self:RadioTransmission( self.MarshalRadio, self.MarshalCall.DEGREES, nil, nil, nil, true )
   end
 
@@ -16961,8 +16969,28 @@ function AIRBOSS:_MarshalCallArrived( modex, case, brc, altitude, charlie, qfe )
   local clock = UTILS.Split( charlie, "+" )
   local CT = UTILS.Split( clock[1], ":" )
 
+  -- Use current magnetic navigation data, matching the active holding zone.
+  -- The supplied expected BRC remains in use for CASE I/II only.
+  local radial
+  local finalbearing
+  if case > 1 then
+    radial = math.floor( self:GetRadial( case, true, true, false ) + 0.5 ) % 360
+  end
+  if case == 3 then
+    finalbearing = math.floor( self:GetFinalBearing( true ) + 0.5 ) % 360
+  end
+
   -- Subtitle text.
-  local text = string.format( "Case %d, expected BRC %03d°, hold at angels %d. Expected Charlie Time %s. Altimeter %.2f. Report see me.", case, brc, angels, charlie, qfe )
+  local text = string.format( "Case %d.", case )
+  if case == 3 then
+    text = text .. string.format( " New final bearing %03d°.", finalbearing )
+  else
+    text = text .. string.format( " Expected BRC %03d°.", brc )
+  end
+  if radial then
+    text = text .. string.format( " Marshal radial %03d°.", radial )
+  end
+  text = text .. string.format( " Hold at angels %d. Expected Charlie Time %s. Altimeter %.2f. Report see me.", angels, charlie, qfe )
 
   -- Debug message.
   self:T( self.lid .. text )
@@ -16975,14 +17003,23 @@ function AIRBOSS:_MarshalCallArrived( modex, case, brc, altitude, charlie, qfe )
   -- X.
   self:_Number2Radio( self.MarshalRadio, tostring( case ) )
 
-  -- Expected..
-  self:RadioTransmission( self.MarshalRadio, self.MarshalCall.EXPECTED, nil, nil, 0.5 )
-  -- BRC..
-  self:RadioTransmission( self.MarshalRadio, self.MarshalCall.BRC )
-  -- XYZ...
-  self:_Number2Radio( self.MarshalRadio, string.format( "%03d", brc ) )
+  if case == 3 then
+    -- Existing recording: "New final bearing" (without an "Expected" prefix).
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.NEWFB, nil, nil, 0.5 )
+    self:_Number2Radio( self.MarshalRadio, string.format( "%03d", finalbearing ) )
+  else
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.EXPECTED, nil, nil, 0.5 )
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.BRC )
+    self:_Number2Radio( self.MarshalRadio, string.format( "%03d", brc ) )
+  end
   -- Degrees.
   self:RadioTransmission( self.MarshalRadio, self.MarshalCall.DEGREES )
+
+  if radial then
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.MARSHALRADIAL, nil, nil, 0.5 )
+    self:_Number2Radio( self.MarshalRadio, string.format( "%03d", radial ) )
+    self:RadioTransmission( self.MarshalRadio, self.MarshalCall.DEGREES )
+  end
 
   -- Hold at..
   self:RadioTransmission( self.MarshalRadio, self.MarshalCall.HOLDATANGELS, nil, nil, 0.5 )
