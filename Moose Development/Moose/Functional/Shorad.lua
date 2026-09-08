@@ -563,6 +563,8 @@ do
     end
     
     local function WakeUp(_group,groupname)
+      local ammo = _group:GetProperty("MANTIS_AMMO") -- #table
+      if ammo and (ammo.trLost or ammo.canSleep and ammo.empty) then return end
       -- shot at a group we protect
       local text = string.format("Waking up SHORAD %s", _group:GetName())
       self:T(text)

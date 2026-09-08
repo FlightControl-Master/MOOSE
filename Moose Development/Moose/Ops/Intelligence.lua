@@ -22,6 +22,9 @@
 -- @field #number coalition Coalition side number, e.g. `coalition.side.RED`.
 -- @field #string alias Name of the agency.
 -- @field Core.Set#SET_GROUP detectionset Set of detection groups, aka agents.
+-- @field #number _detectionBatchSize [Internal] Optional groups per batch; nil keeps synchronous detection.
+-- @field #number _detectionBatchInterval [Internal] Seconds between batches when batching is enabled.
+-- @field #table _detectionSweep [Internal] Pending sweep membership, detected units, recces, cursor and timer.
 -- @field #table filterCategory Filter for unit categories.
 -- @field #table filterCategoryGroup Filter for group categories.
 -- @field Core.Set#SET_ZONE acceptzoneset Set of accept zones. If defined, only contacts in these zones are considered.
@@ -1016,22 +1019,51 @@ function INTEL:onafterStart(From, Event, To)
   return self
 end
 
---- On after "Status" event.
+--- On after "Status" event. In batch mode, contacts are published when the sweep completes.
 -- @param #INTEL self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 function INTEL:onafterStatus(From, Event, To)
 
-  -- FSM state.
-  local fsmstate=self:GetState()
-
+  local batched=self._detectionSweep or self._detectionBatchSize
   -- Fresh arrays.
-  self.ContactsLost={}
-  self.ContactsUnknown={}
+  if not batched then
+    self.ContactsLost={}
+    self.ContactsUnknown={}
+  end
 
   -- Check if group has detected any units.
   self:UpdateIntel()
+
+  if not batched then self:_ReportIntelStatus() end
+
+  self:__Status(self.statusupdate)
+  return self
+end
+
+--- On after "Stop" event. Cancel an unfinished detection sweep.
+-- @param #INTEL self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @return #INTEL self
+function INTEL:onafterStop(From, Event, To)
+  local sweep=self._detectionSweep --#table
+  if sweep then
+    if sweep.timer then timer.removeFunction(sweep.timer) end
+    self._detectionSweep=nil
+  end
+  return self
+end
+
+--- [Internal] Report the contacts and clusters from a completed detection sweep.
+-- @param #INTEL self
+-- @return #INTEL self
+function INTEL:_ReportIntelStatus()
+
+  -- FSM state.
+  local fsmstate=self:GetState()
 
   -- Number of total contacts.
   local Ncontacts=#self.Contacts
@@ -1058,149 +1090,202 @@ function INTEL:onafterStatus(From, Event, To)
     self:I(self.lid..text)
   end
 
-  self:__Status(self.statusupdate)
   return self
 end
 
 
---- Update detected items.
+--- Update detected items. Optional batches publish contacts after the complete sweep.
 -- @param #INTEL self
 function INTEL:UpdateIntel()
 
+  local sweep=self._detectionSweep --#table
+  if sweep and sweep.waiting then return self end
+  local groups=self.detectionset.Set or {}
+  if sweep or self._detectionBatchSize then
+    if not self:Is("Running") then return self end
+    if not sweep then
+      -- Snapshot membership once; resolve each group from the live set when its batch runs.
+      sweep={groups={},units={},recce={},objects={}}
+      for name in pairs(groups) do sweep.groups[#sweep.groups+1]=name end
+      sweep.interval=self._detectionBatchInterval
+      -- Finish within the status interval, including large detection sets.
+      local batches=math.max(1,math.floor(math.abs(self.statusupdate)/sweep.interval))
+      sweep.batchSize=math.max(self._detectionBatchSize,math.ceil(#sweep.groups/batches))
+      self._detectionSweep=sweep
+    end
+    groups=sweep.groups
+  end
+
   -- Set of all detected units.
-  local DetectedUnits={}
+  local DetectedUnits=sweep and sweep.units or {}
+  local DetectedObjects=sweep and sweep.objects or nil
 
   -- Set of which units was detected by which recce
-  local RecceDetecting = {}
+  local RecceDetecting = sweep and sweep.recce or {}
 
   -- Loop over all units providing intel.
-  for _,_group in pairs(self.detectionset.Set or {}) do
+  local scanned=0
+  for index,_group in next,groups,sweep and sweep.index or nil do
     local group=_group --Wrapper.Group#GROUP
+    if sweep then
+      sweep.index=index
+      group=self.detectionset.Set[_group]
+    end
 
     if group and group:IsAlive() then
 
-      for _,_recce in pairs(group:GetUnits()) do
+      local units = group:GetUnits()
+      for _,_recce in pairs(units) do
         local recce=_recce --Wrapper.Unit#UNIT
 
         -- Get detected units.
         if self.DopplerRadar == true then
-          self:GetDetectedUnitsDoppler(recce, DetectedUnits, RecceDetecting, self.DetectVisual, self.DetectOptical, self.DetectRadar, self.DetectIRST, self.DetectRWR, self.DetectDLINK)
+          self:GetDetectedUnitsDoppler(recce, DetectedUnits, RecceDetecting, self.DetectVisual, self.DetectOptical, self.DetectRadar, self.DetectIRST, self.DetectRWR, self.DetectDLINK, DetectedObjects)
         else
-          self:GetDetectedUnits(recce, DetectedUnits, RecceDetecting, self.DetectVisual, self.DetectOptical, self.DetectRadar, self.DetectIRST, self.DetectRWR, self.DetectDLINK)
+          self:GetDetectedUnits(recce, DetectedUnits, RecceDetecting, self.DetectVisual, self.DetectOptical, self.DetectRadar, self.DetectIRST, self.DetectRWR, self.DetectDLINK, DetectedObjects)
         end
       end
       
       if self.DetectAccoustic then
-        local recce = group:GetFirstUnitAlive()
+        local recce = group:GetFirstUnitAlive(units) --Wrapper.Unit#UNIT
         local detectionzone = group:GetProperty("INTEL_DETECT_ACCZONE")
         if not detectionzone then
           detectionzone = ZONE_GROUP:New(group.IdentifiableName.."INTEL_DETECT_ACCZONE",group,self.DetectAccousticRadius or 2000)
           group:SetProperty("INTEL_DETECT_ACCZONE",detectionzone)
         end
         if recce and recce:IsGround() then
-          self:GetDetectedUnitsAccoustic(recce,DetectedUnits,RecceDetecting,detectionzone)
+          self:GetDetectedUnitsAccoustic(recce,DetectedUnits,RecceDetecting,detectionzone,DetectedObjects)
         end
       end
 
     end
+    if sweep then
+      scanned=scanned+1
+      if scanned>=sweep.batchSize then break end
+    end
+  end
+
+  if sweep then
+    if next(groups,sweep.index) then
+      sweep.waiting=true
+      if not sweep.timer then
+        sweep.timer=timer.scheduleFunction(function(_,time)
+          if self._detectionSweep~=sweep then return nil end
+          if not self:Is("Running") then self._detectionSweep=nil;return nil end
+          sweep.waiting=false
+          self:UpdateIntel()
+          if self._detectionSweep==sweep then return time+sweep.interval end
+          return nil
+        end,nil,timer.getTime()+sweep.interval)
+      end
+      return self
+    end
+    self._detectionSweep=nil
+    -- Keep the published contact state intact until the entire sweep has finished.
+    self.ContactsLost={}
+    self.ContactsUnknown={}
   end
 
   local remove={}
   for unitname,_unit in pairs(DetectedUnits) do
     local unit=_unit --Wrapper.Unit#UNIT
     
-    local inconflictzone=false
-    -- Check if unit is in any of the conflict zones.
-    if self.conflictzoneset:Count()>0 then
-      for _,_zone in pairs(self.conflictzoneset.Set) do
-        local zone=_zone --Core.Zone#ZONE
-        if unit:IsInZone(zone) then
-          inconflictzone=true
-          break
-        end
-      end
-    end
-    
-    -- Check if unit is in any of the accept zones.
-    if self.acceptzoneset:Count()>0 then
-      local inzone=false
-      for _,_zone in pairs(self.acceptzoneset.Set) do
-        local zone=_zone --Core.Zone#ZONE
-        if unit:IsInZone(zone) then
-          inzone=true
-          break
-        end
-      end
-
-      -- Unit is not in accept zone ==> remove!
-      if (not inzone) and (not inconflictzone) then
-        table.insert(remove, unitname)
-      end
-    end
-
-    -- Check if unit is in any of the reject zones.
-    if self.rejectzoneset:Count()>0 then
-      local inzone=false
-      for _,_zone in pairs(self.rejectzoneset.Set) do
-        local zone=_zone --Core.Zone#ZONE
-        if unit:IsInZone(zone) then
-          inzone=true
-          break
-        end
-      end
-
-      -- Unit is inside a reject zone ==> remove!
-      if inzone and (not inconflictzone) then
-        table.insert(remove, unitname)
-      end
-    end
-    
-    -- Check if unit is in any of the corridor zones.
-    if self.corridorzoneset:Count()>0 then
-      self:T("Corridorzone Check for unit "..unit:GetName())
-      local inzone = false
-      for _,_zone in pairs(self.corridorzoneset.Set) do
-        local zone=_zone --Core.Zone#ZONE
-        if unit:IsInZone(zone) then
-          local corridorfloor = zone:GetProperty("CorridorFloor") or self.corridorfloor
-          local corridorceiling = zone:GetProperty("CorridorCeiling") or self.corridorceiling
-          local debugtext = "Corridorzone Check for unit "..unit:GetName().."\n"
-          debugtext = debugtext .. string.format("IsAir %s | Alt %dft | Floor %dft | Ceil %dft",tostring(unit:IsAir()),tonumber(UTILS.MetersToFeet(unit:GetAltitude())),
-          tonumber(UTILS.MetersToFeet(corridorfloor)),tonumber(UTILS.MetersToFeet(corridorceiling)))
-          MESSAGE:New(debugtext,15,"INTEL"):ToAllIf(self.verbose>1):ToLogIf(self.verbose>1)
-          if unit:IsAir() and (corridorfloor ~= nil or corridorceiling ~= nil) then
-            local alt = unit:GetAltitude()
-            if corridorfloor and alt > corridorfloor then inzone = true end
-            if corridorceiling and (inzone == true or corridorfloor == nil) and alt < corridorceiling then inzone = true else inzone = false end
-            if inzone == true then break end
-          else  
-            inzone=true
+    if sweep and (not unit:IsAlive() or unit:GetDCSObject().id_ ~= DetectedObjects[unitname]) then
+      table.insert(remove,unitname)
+    else
+      local inconflictzone=false
+      -- Check if unit is in any of the conflict zones.
+      if self.conflictzoneset:Count()>0 then
+        for _,_zone in pairs(self.conflictzoneset.Set) do
+          local zone=_zone --Core.Zone#ZONE
+          if unit:IsInZone(zone) then
+            inconflictzone=true
             break
           end
         end
       end
-      -- Unit is inside a corridor zone ==> remove!
-      if inzone then
-        table.insert(remove, unitname)
-      end
-    end
+    
+      -- Check if unit is in any of the accept zones.
+      if self.acceptzoneset:Count()>0 then
+        local inzone=false
+        for _,_zone in pairs(self.acceptzoneset.Set) do
+          local zone=_zone --Core.Zone#ZONE
+          if unit:IsInZone(zone) then
+            inzone=true
+            break
+          end
+        end
 
-    -- Filter unit categories. Added check that we have a UNIT and not a STATIC object because :GetUnitCategory() is only available for units.
-    if #self.filterCategory>0 and unit:IsInstanceOf("UNIT") then
-      local unitcategory=unit:GetUnitCategory()
-      local keepit=false
-      for _,filtercategory in pairs(self.filterCategory) do
-        if unitcategory==filtercategory then
-          keepit=true
-          break
+        -- Unit is not in accept zone ==> remove!
+        if (not inzone) and (not inconflictzone) then
+          table.insert(remove, unitname)
         end
       end
-      if not keepit then
-        self:T(self.lid..string.format("Removing unit %s category=%d", unitname, unit:GetCategory()))
-        table.insert(remove, unitname)
-      end
-    end
 
+      -- Check if unit is in any of the reject zones.
+      if self.rejectzoneset:Count()>0 then
+        local inzone=false
+        for _,_zone in pairs(self.rejectzoneset.Set) do
+          local zone=_zone --Core.Zone#ZONE
+          if unit:IsInZone(zone) then
+            inzone=true
+            break
+          end
+        end
+
+        -- Unit is inside a reject zone ==> remove!
+        if inzone and (not inconflictzone) then
+          table.insert(remove, unitname)
+        end
+      end
+
+      -- Check if unit is in any of the corridor zones.
+      if self.corridorzoneset:Count()>0 then
+        self:T("Corridorzone Check for unit "..unit:GetName())
+        local inzone = false
+        for _,_zone in pairs(self.corridorzoneset.Set) do
+          local zone=_zone --Core.Zone#ZONE
+          if unit:IsInZone(zone) then
+            local corridorfloor = zone:GetProperty("CorridorFloor") or self.corridorfloor
+            local corridorceiling = zone:GetProperty("CorridorCeiling") or self.corridorceiling
+            local debugtext = "Corridorzone Check for unit "..unit:GetName().."\n"
+            debugtext = debugtext .. string.format("IsAir %s | Alt %dft | Floor %s | Ceil %s",tostring(unit:IsAir()),tonumber(UTILS.MetersToFeet(unit:GetAltitude())),
+            corridorfloor and string.format("%dft",UTILS.MetersToFeet(corridorfloor)) or "none",corridorceiling and string.format("%dft",UTILS.MetersToFeet(corridorceiling)) or "none")
+            MESSAGE:New(debugtext,15,"INTEL"):ToAllIf(self.verbose>1):ToLogIf(self.verbose>1)
+            if unit:IsAir() and (corridorfloor ~= nil or corridorceiling ~= nil) then
+              local alt = unit:GetAltitude()
+              if corridorfloor and alt > corridorfloor then inzone = true end
+              if (inzone == true or corridorfloor == nil) and (corridorceiling == nil or alt < corridorceiling) then inzone = true else inzone = false end
+              if inzone == true then break end
+            else
+              inzone=true
+              break
+            end
+          end
+        end
+        -- Unit is inside a corridor zone ==> remove!
+        if inzone then
+          table.insert(remove, unitname)
+        end
+      end
+
+      -- Filter unit categories. Added check that we have a UNIT and not a STATIC object because :GetUnitCategory() is only available for units.
+      if #self.filterCategory>0 and unit:IsInstanceOf("UNIT") then
+        local unitcategory=unit:GetUnitCategory()
+        local keepit=false
+        for _,filtercategory in pairs(self.filterCategory) do
+          if unitcategory==filtercategory then
+            keepit=true
+            break
+          end
+        end
+        if not keepit then
+          self:T(self.lid..string.format("Removing unit %s category=%d", unitname, unit:GetCategory()))
+          table.insert(remove, unitname)
+        end
+      end
+
+    end
   end
 
   -- Remove filtered units.
@@ -1237,6 +1322,7 @@ function INTEL:UpdateIntel()
     self:PaintPicture()
   end
 
+  if sweep then self:_ReportIntelStatus() end
   return self
 end
 
@@ -1428,7 +1514,8 @@ end
 -- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
 -- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
 -- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
-function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
+-- @param #table DetectedObjects (Optional) Table of native object IDs for the current sweep.
+function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK, DetectedObjects)
 
   -- Get detected DCS units.
   local reccename = Unit:GetName()
@@ -1489,6 +1576,7 @@ function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisua
            
           if DetectionAccepted then
             DetectedUnits[name]=unit
+            if DetectedObjects then DetectedObjects[name]=DetectedObject.id_ end
             RecceDetecting[name]=reccename
             self:T(string.format("Unit %s detect by %s", name, reccename))
           end
@@ -1498,6 +1586,7 @@ function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisua
             if static then
               --env.info("FF found static "..name)
               DetectedUnits[name]=static
+              if DetectedObjects then DetectedObjects[name]=DetectedObject.id_ end
               RecceDetecting[name]=reccename
             end
           end
@@ -1517,7 +1606,8 @@ end
 -- @param #table DetectedUnits Table of detected units to be filled.
 -- @param #table RecceDetecting Table of recce per unit to be filled.
 -- @param Core.Zone#ZONE_GROUP detectionzone The zone where to look.
-function INTEL:GetDetectedUnitsAccoustic(Recce,DetectedUnits,RecceDetecting,detectionzone)
+-- @param #table DetectedObjects (Optional) Table of native object IDs for the current sweep.
+function INTEL:GetDetectedUnitsAccoustic(Recce,DetectedUnits,RecceDetecting,detectionzone,DetectedObjects)
   local othercoalition = self.coalition == coalition.side.BLUE and coalition.side.RED or coalition.side.BLUE
   self:T("Other coalition = "..othercoalition)
   if detectionzone then
@@ -1531,6 +1621,7 @@ function INTEL:GetDetectedUnitsAccoustic(Recce,DetectedUnits,RecceDetecting,dete
       if _unit and _unit:IsAlive() and _unit:GetCoalition() ~= self.coalition then
         local name = _unit:GetName() or "none"
         DetectedUnits[name]=_unit
+        if DetectedObjects then DetectedObjects[name]=_unit:GetDCSObject().id_ end
         RecceDetecting[name]=reccename
         self:T("Unit name = "..name)
       end
@@ -2808,10 +2899,11 @@ end
 -- @param #boolean DetectIRST (Optional) If *false*, do not include targets detected by IRST.
 -- @param #boolean DetectRWR (Optional) If *false*, do not include targets detected by RWR.
 -- @param #boolean DetectDLINK (Optional) If *false*, do not include targets detected by data link.
-function INTEL:GetDetectedUnitsDoppler(Unit, DetectedUnits, RecceDetecting,DetectVisual, DetectOptical, DetectRadar,DetectIRST, DetectRWR, DetectDLINK)
+-- @param #table DetectedObjects (Optional) Table of native object IDs for the current sweep.
+function INTEL:GetDetectedUnitsDoppler(Unit, DetectedUnits, RecceDetecting,DetectVisual, DetectOptical, DetectRadar,DetectIRST, DetectRWR, DetectDLINK, DetectedObjects)
   self:T(self.lid .. "GetDetectedUnitsDoppler")
     -- Run the original detection
-    self:GetDetectedUnits(Unit,DetectedUnits,RecceDetecting,DetectVisual,DetectOptical,DetectRadar,DetectIRST,DetectRWR,DetectDLINK)
+    self:GetDetectedUnits(Unit,DetectedUnits,RecceDetecting,DetectVisual,DetectOptical,DetectRadar,DetectIRST,DetectRWR,DetectDLINK,DetectedObjects)
 
     -- Apply Doppler post-filter only when radar channel is active
     if self.DopplerRadar == false then return end
