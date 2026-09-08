@@ -422,10 +422,13 @@ function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADP
           self:T(string.format("*** SEAD - %s Radar On",args[2]))
           local grp = args[1]  -- Wrapper.Group#GROUP
           local name = args[2] -- #string Group Name
-          if self.UseEmissionsOnOff then
-            grp:EnableEmission(true)
+          local ammo = grp:GetProperty("MANTIS_AMMO") -- #table
+          if not (ammo and ammo.trLost) then
+            if self.UseEmissionsOnOff then
+              grp:EnableEmission(true)
+            end
+            grp:OptionAlarmStateRed()
           end
-          grp:OptionAlarmStateRed()
           grp:OptionEngageRange(self.EngagementRange)
           self.SuppressedGroups[name] = false
           if self.UseCallBack then
