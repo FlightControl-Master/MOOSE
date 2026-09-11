@@ -40,7 +40,7 @@
 -- @field #number CallID Call ID counter.
 -- @field #table PersistentSchedulers Persistent schedulers.
 -- @field #table ObjectSchedulers Schedulers that only exist as long as the master object exists.
--- @field #table Schedule Meta table setmetatable( {}, { __mode = "k" } ).
+-- @field #table Schedule Weak-key/weak-value index of scheduler-owned call data.
 -- @extends Core.Base#BASE
 
 --- The SCHEDULEDISPATCHER structure
@@ -65,12 +65,19 @@ SCHEDULEDISPATCHER = {
 -- @field #number ScheduleID Schedule ID.
 -- @field #function CallHandler Function to be passed to the DCS timer.scheduleFunction().
 -- @field #boolean ShowTrace If true, show tracing info.
+-- @field #boolean Fsm Automatically reclaim a completed FSM call.
+-- @field #number Generation Identifies a timer run across Stop/Start cycles.
 
 --- Create a new schedule dispatcher object.
 -- @param #SCHEDULEDISPATCHER self
 -- @return #SCHEDULEDISPATCHER self
 function SCHEDULEDISPATCHER:New()
   local self = BASE:Inherit( self, BASE:New() )
+  self.PersistentSchedulers = {}
+  self.ObjectSchedulers = setmetatable( {}, { __mode = "v" } )
+  -- Weak values are essential in Lua 5.1: a strong value referring back to a
+  -- weak key would keep that key alive. SCHEDULER owns these values instead.
+  self.Schedule = setmetatable( {}, { __mode = "kv" } )
   self:F3()
   return self
 end
@@ -88,7 +95,7 @@ end
 -- @param #number Randomize Randomization factor [0,1].
 -- @param #number Stop Stop time in seconds.
 -- @param #number TraceLevel Trace level [0,3].
--- @param Core.Fsm#FSM Fsm Finite state model.
+-- @param #boolean Fsm Whether this call is a disposable FSM event.
 -- @return #string Call ID or nil.
 function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel, Fsm )
   self:F2( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel, Fsm } )
@@ -104,8 +111,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   -- Initialize PersistentSchedulers
   self.PersistentSchedulers = self.PersistentSchedulers or {}
 
-  -- Initialize the ObjectSchedulers array, which is a weakly coupled table.
-  -- If the object used as the key is nil, then the garbage collector will remove the item from the Functions array.
+  -- Object-bound schedulers are weak values; the owner keeps them alive.
   self.ObjectSchedulers = self.ObjectSchedulers or setmetatable( {}, { __mode = "v" } )
 
   if Scheduler.MasterObject then
@@ -118,8 +124,8 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
     self:F3( { CallID = CallID, PersistentScheduler = self.PersistentSchedulers[CallID] } )
   end
 
-  self.Schedule = self.Schedule or setmetatable( {}, { __mode = "k" } )
-  self.Schedule[Scheduler] = self.Schedule[Scheduler] or {}
+  Scheduler._ScheduleData = Scheduler._ScheduleData or {}
+  self.Schedule[Scheduler] = Scheduler._ScheduleData
   self.Schedule[Scheduler][CallID] = {} -- #SCHEDULEDISPATCHER.ScheduleData
   self.Schedule[Scheduler][CallID].Function = ScheduleFunction
   self.Schedule[Scheduler][CallID].Arguments = ScheduleArguments
@@ -128,6 +134,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   self.Schedule[Scheduler][CallID].Repeat = Repeat or 0
   self.Schedule[Scheduler][CallID].Randomize = Randomize or 0
   self.Schedule[Scheduler][CallID].Stop = Stop
+  self.Schedule[Scheduler][CallID].Fsm = Fsm and true or false
 
   -- This section handles the tracing of the scheduled calls.
   -- Because these calls will be executed with a delay, we inspect the place where these scheduled calls are initiated.
@@ -195,7 +202,11 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       local MasterObject = tostring( Scheduler.MasterObject )
 
       -- Schedule object.
-      local Schedule = self.Schedule[Scheduler][CallID] -- #SCHEDULEDISPATCHER.ScheduleData
+      local Schedules = self.Schedule[Scheduler]
+      local Schedule = Schedules and Schedules[CallID] -- #SCHEDULEDISPATCHER.ScheduleData
+      if not Schedule or not Schedule.ScheduleID or Schedule.Generation ~= Params.Generation then
+        return nil -- Removed, stopped, or superseded timer invocation.
+      end
 
       -- self:T3( { Schedule = Schedule } )
 
@@ -209,6 +220,15 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       local Randomize         = Schedule.Randomize or 0
       local Stop              = Schedule.Stop or 0
       local ScheduleID        = Schedule.ScheduleID
+
+      -- Release only THIS pending FSM event, before any user hook runs. A hook
+      -- may schedule the same event again; its new CallID must remain untouched.
+      if Schedule.Fsm and SchedulerObject and SchedulerObject._EventSchedules then
+        local EventName = ScheduleArguments[1]
+        if SchedulerObject._EventSchedules[EventName] == CallID then
+          SchedulerObject._EventSchedules[EventName] = nil
+        end
+      end
 
       local Prefix = (Repeat == 0) and "--->" or "+++>"
 
@@ -233,6 +253,18 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
         Status, Result = xpcall( Timer, ErrorHandler )
       end
 
+      -- Callbacks can remove themselves, clear the scheduler, or stop/restart
+      -- this very CallID. Never repeat or reclaim a newer timer generation.
+      if Schedules[CallID] ~= Schedule or Schedule.Generation ~= Params.Generation then
+        return nil
+      end
+      if Schedule.ScheduleID ~= ScheduleID then
+        if Schedule.Fsm and not Schedule.ScheduleID then
+          self:_Reclaim( Scheduler, CallID )
+        end
+        return nil
+      end
+
       local CurrentTime = timer.getTime()
       local StartTime = Schedule.StartTime
 
@@ -246,11 +278,19 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
           -- self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
           return ScheduleTime -- returns the next time the function needs to be called.
         else
-          self:Stop( Scheduler, CallID )
+          if Schedule.Fsm then
+            self:_Reclaim( Scheduler, CallID )
+          else
+            self:Stop( Scheduler, CallID )
+          end
         end
 
       else
-        self:Stop( Scheduler, CallID )
+        if Schedule.Fsm then
+          self:_Reclaim( Scheduler, CallID )
+        else
+          self:Stop( Scheduler, CallID )
+        end
       end
     else
       self:I( "<<<>" .. Name .. ":" .. Line .. " (" .. Source .. ")" )
@@ -272,8 +312,7 @@ function SCHEDULEDISPATCHER:RemoveSchedule( Scheduler, CallID )
   self:F2( { Remove = CallID, Scheduler = Scheduler } )
 
   if CallID then
-    self:Stop( Scheduler, CallID )
-    self.Schedule[Scheduler][CallID] = nil
+    self:_Reclaim( Scheduler, CallID )
   end
 end
 
@@ -287,7 +326,9 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID, Info )
 
   if CallID then
 
-    local Schedule = self.Schedule[Scheduler][CallID] -- #SCHEDULEDISPATCHER.ScheduleData
+    local Schedules = self.Schedule[Scheduler]
+    local Schedule = Schedules and Schedules[CallID] -- #SCHEDULEDISPATCHER.ScheduleData
+    if not Schedule then return end -- An explicitly removed call cannot restart.
 
     -- Only start when there is no ScheduleID defined!
     -- This prevents to "Start" the scheduler twice with the same CallID...
@@ -299,7 +340,8 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID, Info )
       Schedule.StartTime = Tnow -- Set the StartTime field to indicate when the scheduler started.
 
       -- Start DCS schedule function https://wiki.hoggitworld.com/view/DCS_func_scheduleFunction
-      Schedule.ScheduleID = timer.scheduleFunction( Schedule.CallHandler, { CallID = CallID, Info = Info }, Tnow + Schedule.Start )
+      Schedule.Generation = (Schedule.Generation or 0) + 1
+      Schedule.ScheduleID = timer.scheduleFunction( Schedule.CallHandler, { CallID = CallID, Info = Info, Generation = Schedule.Generation }, Tnow + Schedule.Start )
 
       self:T( string.format( "Starting SCHEDULEDISPATCHER Call ID=%s ==> Schedule ID=%s", tostring( CallID ), tostring( Schedule.ScheduleID ) ) )
     end
@@ -323,7 +365,8 @@ function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
 
   if CallID then
 
-    local Schedule = self.Schedule[Scheduler][CallID] -- #SCHEDULEDISPATCHER.ScheduleData
+    local Schedules = self.Schedule[Scheduler]
+    local Schedule = Schedules and Schedules[CallID] -- #SCHEDULEDISPATCHER.ScheduleData
 
     -- Only stop when there is a ScheduleID defined for the CallID. So, when the scheduler was stopped before, do nothing.
     if Schedule and Schedule.ScheduleID then
@@ -375,13 +418,30 @@ function SCHEDULEDISPATCHER:NoTrace( Scheduler )
   Scheduler.ShowTrace = false
 end
 
---- Helper for memory cleanup for self stopping schedulers
+--- Permanently release a call. Unlike Stop/Clear, it cannot be restarted.
 -- @param #SCHEDULEDISPATCHER self
 -- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
--- @param #string CallID (Optional) Scheduler Call ID.
+-- @param #string CallID Scheduler Call ID.
 function SCHEDULEDISPATCHER:_Reclaim( Scheduler, CallID )
-  self:Stop( Scheduler, CallID )                          -- remove DCS timer, nil ScheduleID
-  if self.Schedule[Scheduler] then self.Schedule[Scheduler][CallID] = nil end
-  self.ObjectSchedulers[CallID]     = nil
-  self.PersistentSchedulers[CallID] = nil
+  if not Scheduler or not CallID then return end
+  local Schedules = self.Schedule[Scheduler]
+  local Schedule = Schedules and Schedules[CallID]
+  self:Stop( Scheduler, CallID )
+  if Schedule and Schedule.Fsm then
+    local Object = Scheduler.MasterObject
+    local EventName = (Schedule.Arguments or {})[1]
+    if Object and Object._EventSchedules and Object._EventSchedules[EventName] == CallID then
+      Object._EventSchedules[EventName] = nil
+    end
+  end
+  if Schedules then
+    Schedules[CallID] = nil
+    if not next( Schedules ) then self.Schedule[Scheduler] = nil end
+  end
+  -- Guard against a caller supplying an ID owned by a different scheduler.
+  if self.ObjectSchedulers[CallID] == Scheduler then self.ObjectSchedulers[CallID] = nil end
+  if self.PersistentSchedulers[CallID] == Scheduler then self.PersistentSchedulers[CallID] = nil end
+  for Index = #(Scheduler.Schedules or {}), 1, -1 do
+    if Scheduler.Schedules[Index] == CallID then table.remove( Scheduler.Schedules, Index ) end
+  end
 end

@@ -214,6 +214,10 @@ function SCHEDULER:New( MasterObject, SchedulerFunction, SchedulerArguments, Sta
 
   self.MasterObject = MasterObject
   self.ShowTrace = false
+  -- Own the call data. The dispatcher only indexes it weakly, so callback/argument
+  -- references back to this scheduler do not prevent collection in Lua 5.1.
+  self._ScheduleData = {}
+  self.Schedules = {}
 
   if SchedulerFunction then
     ScheduleID = self:Schedule( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, 3 )
@@ -232,7 +236,7 @@ end
 -- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
 -- @param #number Stop Time interval in seconds after which the scheduler will be stopped.
 -- @param #number TraceLevel (Optional) Trace level [0,3]. Default 3.
--- @param Core.Fsm#FSM Fsm Finite state model.
+-- @param #boolean Fsm Whether this call is a disposable FSM event. Completed FSM calls cannot be restarted.
 -- @return #string The Schedule ID of the planned schedule.
 function SCHEDULER:Schedule( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, TraceLevel, Fsm )
   self:F2( { Start, Repeat, RandomizeFactor, Stop } )

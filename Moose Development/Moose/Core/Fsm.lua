@@ -614,8 +614,6 @@ do -- FSM
       end
       ]]
 
-      self._EventSchedules[EventName] = nil
-
       -- Error handler.
       local ErrorHandler = function( errmsg )
         env.info( "Error in SCHEDULER function:" .. errmsg )
@@ -769,6 +767,10 @@ do -- FSM
   -- @param #string EventName Event name.
   -- @return #function Function.
   function FSM:_delayed_transition( EventName )
+
+    -- The dispatcher releases a matching _EventSchedules ID when its timer
+    -- starts (or is removed), not in individual hooks. Later hooks and direct
+    -- synchronous events must not clear an already scheduled successor's ID.
 
     return function( self, DelaySeconds, ... )
 
@@ -1069,7 +1071,6 @@ do -- FSM_CONTROLLABLE
 
     if self[handler] then
       self:T( "*** FSM ***    " .. step .. " *** " .. params[1] .. " --> " .. params[2] .. " --> " .. params[3] .. " *** TaskUnit: " .. self.Controllable:GetName() )
-      self._EventSchedules[EventName] = nil
       local Result, Value = xpcall( function()
         return self[handler]( self, self.Controllable, unpack( params ) )
       end, ErrorHandler )
@@ -1131,7 +1132,6 @@ do -- FSM_PROCESS
       if handler ~= "onstatechange" then
         self:T( "*** FSM ***    " .. step .. " *** " .. params[1] .. " --> " .. params[2] .. " --> " .. params[3] .. " *** Task: " .. self.Task:GetName() .. ", TaskUnit: " .. self.Controllable:GetName() )
       end
-      self._EventSchedules[EventName] = nil
       local Result, Value
       if self.Controllable and self.Controllable:IsAlive() == true then
         Result, Value = xpcall( function()
@@ -1365,7 +1365,6 @@ do -- FSM_TASK
 
     if self[handler] then
       self:T( "*** FSM ***    " .. step .. " *** " .. params[1] .. " --> " .. params[2] .. " --> " .. params[3] .. " *** Task: " .. self.TaskName )
-      self._EventSchedules[EventName] = nil
       -- return self[handler]( self, unpack( params ) )
       local Result, Value = xpcall( function()
         return self[handler]( self, unpack( params ) )
@@ -1430,7 +1429,6 @@ do -- FSM_SET
     local handler = step .. trigger
     if self[handler] then
       self:T( "*** FSM ***    " .. step .. " *** " .. params[1] .. " --> " .. params[2] .. " --> " .. params[3] )
-      self._EventSchedules[EventName] = nil
       return self[handler]( self, self.Set, unpack( params ) )
     end
   end
