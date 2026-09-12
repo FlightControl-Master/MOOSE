@@ -2299,7 +2299,7 @@ function UTILS.GetRecoveryCase(Coordinate, Clock)
   local visibility = UTILS.Weather.GetFogVisibilityDistanceMax()
   local cloudbase = env.mission.weather.clouds.base
   
-  env.info(string.format("FF visibility=%.1f  cloudbase=%.1f", visibility, cloudbase))
+  --env.info(string.format("FF visibility=%.1f  cloudbase=%.1f", visibility, cloudbase))
 
   -- Zero means no fog, not zero visibility.
   -- Boundary values use the more restrictive recovery case.
