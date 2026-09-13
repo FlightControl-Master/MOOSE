@@ -84,9 +84,20 @@ local _ClassID = 0
 --
 -- There are basically 3 types of tracing methods available:
 --
---   * @{#BASE.F}: Used to trace the entrance of a function and its given parameters. An F is indicated at column 44 in the DCS.log file.
---   * @{#BASE.T}: Used to trace further logic within a function giving optional variables or parameters. A T is indicated at column 44 in the DCS.log file.
---   * @{#BASE.E}: Used to always trace information giving optional variables or parameters. An E is indicated at column 44 in the DCS.log file.
+--   * @{#BASE.F}: Used to trace the entrance of a function and its given parameters, prefixed with [F].
+--   * @{#BASE.T}: Used to trace further logic within a function giving optional variables or parameters, prefixed with [T].
+--   * @{#BASE.E}: Used to always log errors, prefixed with [E]. @{#BASE.I} always logs information, prefixed with [I].
+--
+-- All log methods use the readable format below, without object IDs:
+--
+--     [T2] AIRBOSS._Status [L1234 <- _Update:L567] | {case=3, active=true}
+--
+-- The fields are log method, class.function, current/calling source lines, and message.
+-- The caller name is included when available; otherwise only its line is shown.
+-- Unknown stack information is shown as ?. T2/T3 and F2/F3 retain their level in the prefix.
+-- Plain messages have no enclosing quotes; strings inside tables remain quoted. Control
+-- characters are escaped to keep one log entry per line. DCS supplies the timestamp.
+-- @{#BASE.SetLogSerializationOptions} controls bounded output and optional object expansion.
 --
 -- ## 2.2 Tracing levels.
 --
@@ -1275,7 +1286,14 @@ local _LogDefaults = {
 }
 local _LogOptions = {}
 for key, value in pairs(_LogDefaults) do _LogOptions[key] = value end
-local _LogObjectNameFields = {"ObjectName", "GroupName", "UnitName", "ControllableName", "ZoneName", "AirbaseName"}
+local _LogObjectNameFields = {"ObjectName", "GroupName", "UnitName", "ControllableName", "PositionableName", "ZoneName", "AirbaseName"}
+local _LogKeywords = {
+  ["and"]=true, ["break"]=true, ["do"]=true, ["else"]=true, ["elseif"]=true,
+  ["end"]=true, ["false"]=true, ["for"]=true, ["function"]=true, ["if"]=true,
+  ["in"]=true, ["local"]=true, ["nil"]=true, ["not"]=true, ["or"]=true,
+  ["repeat"]=true, ["return"]=true, ["then"]=true, ["true"]=true, ["until"]=true,
+  ["while"]=true,
+}
 
 --- Configure bounded serialization for all BASE log methods (F/T/E/I and their levels).
 -- Settings are shared across existing and future instances. Omitted fields retain their values.
@@ -1284,7 +1302,7 @@ local _LogObjectNameFields = {"ObjectName", "GroupName", "UnitName", "Controllab
 -- MaxDepth counts table expansion levels (root is level 1); allowed range is 0 to 32.
 -- MaxEntries limits visited table entries across the entire message, including table keys.
 -- MaxStringLength limits inspected input bytes per string; control characters are escaped.
--- MOOSE objects are compact references unless ExpandObjects is true; limits still apply then.
+-- MOOSE objects show their class and an available name (no object ID) unless ExpandObjects is true; limits still apply then.
 -- Truncated output is diagnostic text, not a reconstructable Lua table.
 -- @param #BASE self
 -- @param #table Options (Optional) MaxLength (default 4096, minimum 128), MaxDepth (3), MaxEntries (100, minimum 1), MaxStringLength (512, minimum 1), ExpandObjects (false).
@@ -1336,7 +1354,7 @@ local function logObjectField(object, key)
   end
 end
 
-local function serializeLogValue(value, maxLength)
+local function serializeLogValue(value, maxLength, plainString)
   local options = _LogOptions
   local chunks, length, full = {}, 0, false
   local seen, references, entries = {}, 0, 0
@@ -1353,13 +1371,13 @@ local function serializeLogValue(value, maxLength)
       length = length + #text
     end
   end
-  local function writeString(text)
-    append('"')
+  local function writeString(text, plain)
+    if not plain then append('"') end
     local limit = math.min(#text, options.MaxStringLength)
     for i = 1, limit do
       if full then break end
       local byte = string.byte(text, i)
-      if byte == 34 then append('\\"')
+      if byte == 34 and not plain then append('\\"')
       elseif byte == 92 then append('\\\\')
       elseif byte == 10 then append('\\n')
       elseif byte == 13 then append('\\r')
@@ -1368,14 +1386,14 @@ local function serializeLogValue(value, maxLength)
       else append(string.char(byte)) end
     end
     if #text > limit then append("<string truncated>") end
-    append('"')
+    if not plain then append('"') end
   end
   local write
   write = function(item, depth)
     if full then return end
     local kind = type(item)
     if kind == "string" then
-      writeString(item)
+      writeString(item, plainString and depth == 0)
     elseif kind == "number" or kind == "boolean" or kind == "nil" then
       append(tostring(item))
     elseif kind ~= "table" then
@@ -1385,9 +1403,8 @@ local function serializeLogValue(value, maxLength)
         local class = logObjectField(item, "ClassName")
         local id = logObjectField(item, "ClassID")
         if type(class) == "string" and type(id) == "number" then
-          append("<MOOSE ")
-          writeString(class)
-          append("#" .. tostring(id))
+          append("<")
+          writeString(class, true)
           for _, key in ipairs(_LogObjectNameFields) do
             if full then break end
             local name = logObjectField(item, key)
@@ -1420,9 +1437,17 @@ local function serializeLogValue(value, maxLength)
             break
           end
           entries = entries + 1
-          append("[")
-          write(key, depth + 1)
-          append("]=")
+          -- Do not scan arbitrarily large keys just to choose their formatting.
+          if type(key) == "string" and #key <= options.MaxStringLength and
+            #key <= maxLength - length and key:match("^[A-Za-z_][A-Za-z0-9_]*$") and
+            not _LogKeywords[key] then
+            append(key)
+            append("=")
+          else
+            append("[")
+            write(key, depth + 1)
+            append("]=")
+          end
           write(child, depth + 1)
           first = false
           if not full then key, child = next(item, key) end
@@ -1440,15 +1465,31 @@ local function serializeLogValue(value, maxLength)
   return text
 end
 
--- Limit the whole MOOSE message, not just its arguments. Preserve the normal
--- header for log parsers. DCS adds its own timestamp/severity outside this limit.
-local function writeLog(prefix, arguments, suffix)
+-- One readable format for all log methods, without object IDs. Bound metadata
+-- before building the prefix as well as the final message. DCS adds its own
+-- timestamp/severity outside this limit; unknown Lua stack fields show '?'.
+local function writeLog(level, object, current, caller, arguments)
   local maxLength = _LogOptions.MaxLength
+  local fieldLimit = math.min(128, math.floor(maxLength / 8))
+  local function field(value)
+    return type(value) == "string" and serializeLogValue(value, fieldLimit, true) or "?"
+  end
+  local function line(info)
+    local value = info and info.currentline
+    return type(value) == "number" and value > 0 and value < 1000000000 and
+      ("L" .. string.format("%.0f", value)) or "L?"
+  end
+  local callerName = caller and caller.name
+  local callerLabel = type(callerName) == "string" and callerName ~= "" and
+    (field(callerName) .. ":" .. line(caller)) or line(caller)
+  local prefix = "[" .. level .. "] " .. field(logObjectField(object, "ClassName")) ..
+    "." .. field(current and current.name) .. " [" .. line(current) ..
+    " <- " .. callerLabel .. "] | "
   local prefixLimit = math.floor(maxLength / 2)
   if #prefix > prefixLimit then
     prefix = string.sub(prefix, 1, prefixLimit - 11) .. "<truncated>"
   end
-  env.info(prefix .. serializeLogValue(arguments, maxLength - #prefix - #suffix) .. suffix)
+  env.info(prefix .. serializeLogValue(arguments, maxLength - #prefix, true))
 end
 
 --- (Internal) Serialize log arguments with bounded work and output, without logging.
@@ -1459,31 +1500,43 @@ function BASE:_Serialize(Arguments)
   return serializeLogValue(Arguments, _LogOptions.MaxLength)
 end
 
+-- Filter before inspecting the Lua stack. Keep getinfo calls in the public
+-- methods themselves so their caller names and line numbers do not shift.
+local function traceEnabled(object, level)
+  if type(BASE.Debug) ~= "table" or type(BASE.Debug.getinfo) ~= "function" or
+    not _TraceOnOff or _TraceLevel < level then
+    return false
+  end
+  local class = _TraceClassMethod[object.ClassName]
+  return _TraceAll == true or _TraceClass[object.ClassName] == true or
+    (class ~= nil and class.Method ~= nil and next(class.Method) ~= nil)
+end
+
+local function traceMethodEnabled(object, name)
+  local class = _TraceClassMethod[object.ClassName]
+  return _TraceAll == true or _TraceClass[object.ClassName] == true or
+    (class ~= nil and class.Method ~= nil and class.Method[name] == true)
+end
+
 --- Trace a function call. This function is private.
 -- @param #BASE self
 -- @param Arguments A #table or any field.
-function BASE:_F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
+-- @param #number TraceLevel (Internal) Originating public method level; defaults to 1.
+function BASE:_F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam, TraceLevel )
 
-  if BASE.Debug and (_TraceAll == true) or (_TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName]) then
+  TraceLevel = TraceLevel or 1
+  if traceEnabled(self, TraceLevel) then
 
-    local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or BASE.Debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or BASE.Debug.getinfo( 3, "l" )
+    local DebugInfoCurrent = DebugInfoCurrentParam or BASE.Debug.getinfo( 2, "nl" ) or {}
 
     local Function = "function"
     if DebugInfoCurrent.name then
       Function = DebugInfoCurrent.name
     end
 
-    if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
-      local LineCurrent = 0
-      if DebugInfoCurrent.currentline then
-        LineCurrent = DebugInfoCurrent.currentline
-      end
-      local LineFrom = 0
-      if DebugInfoFrom then
-        LineFrom = DebugInfoFrom.currentline
-      end
-      writeLog( string.format( "%6d(%6d)/%1s:%30s%05d.%s(", LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function ), Arguments, ")" )
+    if traceMethodEnabled(self, Function) then
+      local DebugInfoFrom = DebugInfoFromParam or BASE.Debug.getinfo( 3, "nl" ) or {}
+      writeLog( TraceLevel == 1 and "F" or "F" .. TraceLevel, self, DebugInfoCurrent, DebugInfoFrom, Arguments )
     end
   end
 end
@@ -1493,11 +1546,11 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F( Arguments )
 
-  if BASE.Debug and _TraceOnOff == true then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
+  if traceEnabled(self, 1) then
+    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" ) or {}
 
-    if _TraceLevel >= 1 then
+    if traceMethodEnabled(self, DebugInfoCurrent.name or "function") then
+      local DebugInfoFrom = BASE.Debug.getinfo( 3, "nl" ) or {}
       self:_F( Arguments, DebugInfoCurrent, DebugInfoFrom )
     end
   end
@@ -1508,12 +1561,12 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F2( Arguments )
 
-  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 2 then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
+  if traceEnabled(self, 2) then
+    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" ) or {}
 
-    if _TraceLevel >= 2 then
-      self:_F( Arguments, DebugInfoCurrent, DebugInfoFrom )
+    if traceMethodEnabled(self, DebugInfoCurrent.name or "function") then
+      local DebugInfoFrom = BASE.Debug.getinfo( 3, "nl" ) or {}
+      self:_F( Arguments, DebugInfoCurrent, DebugInfoFrom, 2 )
     end
   end
 end
@@ -1523,12 +1576,12 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F3( Arguments )
 
-  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 3 then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
+  if traceEnabled(self, 3) then
+    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" ) or {}
 
-    if _TraceLevel >= 3 then
-      self:_F( Arguments, DebugInfoCurrent, DebugInfoFrom )
+    if traceMethodEnabled(self, DebugInfoCurrent.name or "function") then
+      local DebugInfoFrom = BASE.Debug.getinfo( 3, "nl" ) or {}
+      self:_F( Arguments, DebugInfoCurrent, DebugInfoFrom, 3 )
     end
   end
 end
@@ -1536,28 +1589,22 @@ end
 --- Trace a function logic.
 -- @param #BASE self
 -- @param Arguments A #table or any field.
-function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
+-- @param #number TraceLevel (Internal) Originating public method level; defaults to 1.
+function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam, TraceLevel )
 
-  if BASE.Debug and (_TraceAll == true) or (_TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName]) then
+  TraceLevel = TraceLevel or 1
+  if traceEnabled(self, TraceLevel) then
 
-    local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or BASE.Debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or BASE.Debug.getinfo( 3, "l" )
+    local DebugInfoCurrent = DebugInfoCurrentParam or BASE.Debug.getinfo( 2, "nl" ) or {}
 
     local Function = "function"
     if DebugInfoCurrent.name then
       Function = DebugInfoCurrent.name
     end
 
-    if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
-      local LineCurrent = 0
-      if DebugInfoCurrent.currentline then
-        LineCurrent = DebugInfoCurrent.currentline
-      end
-      local LineFrom = 0
-      if DebugInfoFrom then
-        LineFrom = DebugInfoFrom.currentline
-      end
-      writeLog( string.format( "%6d(%6d)/%1s:%30s%05d.", LineCurrent, LineFrom, "T", self.ClassName, self.ClassID ), Arguments, "" )
+    if traceMethodEnabled(self, Function) then
+      local DebugInfoFrom = DebugInfoFromParam or BASE.Debug.getinfo( 3, "nl" ) or {}
+      writeLog( TraceLevel == 1 and "T" or "T" .. TraceLevel, self, DebugInfoCurrent, DebugInfoFrom, Arguments )
     end
   end
 end
@@ -1567,11 +1614,11 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T( Arguments )
 
-  if BASE.Debug and _TraceOnOff == true then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
+  if traceEnabled(self, 1) then
+    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" ) or {}
 
-    if _TraceLevel >= 1 then
+    if traceMethodEnabled(self, DebugInfoCurrent.name or "function") then
+      local DebugInfoFrom = BASE.Debug.getinfo( 3, "nl" ) or {}
       self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom )
     end
   end
@@ -1582,12 +1629,12 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T2( Arguments )
 
-  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 2 then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
+  if traceEnabled(self, 2) then
+    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" ) or {}
 
-    if _TraceLevel >= 2 then
-      self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom )
+    if traceMethodEnabled(self, DebugInfoCurrent.name or "function") then
+      local DebugInfoFrom = BASE.Debug.getinfo( 3, "nl" ) or {}
+      self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom, 2 )
     end
   end
 end
@@ -1597,12 +1644,12 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T3( Arguments )
 
-  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 3 then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
+  if traceEnabled(self, 3) then
+    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" ) or {}
 
-    if _TraceLevel >= 3 then
-      self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom )
+    if traceMethodEnabled(self, DebugInfoCurrent.name or "function") then
+      local DebugInfoFrom = BASE.Debug.getinfo( 3, "nl" ) or {}
+      self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom, 3 )
     end
   end
 end
@@ -1612,25 +1659,12 @@ end
 -- @param Arguments A #table or any field.
 function BASE:E( Arguments )
 
-  if BASE.Debug then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
-
-    local Function = "function"
-    if DebugInfoCurrent.name then
-      Function = DebugInfoCurrent.name
-    end
-
-    local LineCurrent = DebugInfoCurrent.currentline
-    local LineFrom = -1
-    if DebugInfoFrom then
-      LineFrom = DebugInfoFrom.currentline
-    end
-
-    writeLog( string.format( "%6d(%6d)/%1s:%30s%05d.%s(", LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function ), Arguments, ")" )
-  else
-    writeLog( string.format( "%1s:%30s%05d(", "E", self.ClassName, self.ClassID ), Arguments, ")" )
+  local DebugInfoCurrent, DebugInfoFrom
+  if type(BASE.Debug) == "table" and type(BASE.Debug.getinfo) == "function" then
+    DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
+    DebugInfoFrom = BASE.Debug.getinfo( 3, "nl" )
   end
+  writeLog( "E", self, DebugInfoCurrent, DebugInfoFrom, Arguments )
 
 end
 
@@ -1639,24 +1673,11 @@ end
 -- @param Arguments A #table or any field.
 function BASE:I( Arguments )
 
-  if BASE.Debug then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
-
-    local Function = "function"
-    if DebugInfoCurrent.name then
-      Function = DebugInfoCurrent.name
-    end
-
-    local LineCurrent = DebugInfoCurrent.currentline
-    local LineFrom = -1
-    if DebugInfoFrom then
-      LineFrom = DebugInfoFrom.currentline
-    end
-
-    writeLog( string.format( "%6d(%6d)/%1s:%30s%05d.%s(", LineCurrent, LineFrom, "I", self.ClassName, self.ClassID, Function ), Arguments, ")" )
-  else
-    writeLog( string.format( "%1s:%30s%05d(", "I", self.ClassName, self.ClassID ), Arguments, ")" )
+  local DebugInfoCurrent, DebugInfoFrom
+  if type(BASE.Debug) == "table" and type(BASE.Debug.getinfo) == "function" then
+    DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
+    DebugInfoFrom = BASE.Debug.getinfo( 3, "nl" )
   end
+  writeLog( "I", self, DebugInfoCurrent, DebugInfoFrom, Arguments )
 
 end
