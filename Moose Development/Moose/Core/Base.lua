@@ -1265,27 +1265,199 @@ function BASE:TraceClassMethod( Class, Method )
   self:I( "Tracing method " .. Method .. " of class " .. Class )
 end
 
---- (Internal) Serialize arguments
+-- Keep shared logging settings out of BASE instances and their deep copies.
+local _LogDefaults = {
+  MaxLength = 4096,
+  MaxDepth = 3,
+  MaxEntries = 100,
+  MaxStringLength = 512,
+  ExpandObjects = false,
+}
+local _LogOptions = {}
+for key, value in pairs(_LogDefaults) do _LogOptions[key] = value end
+local _LogObjectNameFields = {"ObjectName", "GroupName", "UnitName", "ControllableName", "ZoneName", "AirbaseName"}
+
+--- Configure bounded serialization for all BASE log methods (F/T/E/I and their levels).
+-- Settings are shared across existing and future instances. Omitted fields retain their values.
+-- Pass nil to reset all settings. Invalid options raise an error without changing any settings.
+-- MaxLength limits the complete MOOSE message in bytes, excluding the prefix added by DCS.
+-- MaxDepth counts table expansion levels (root is level 1); allowed range is 0 to 32.
+-- MaxEntries limits visited table entries across the entire message, including table keys.
+-- MaxStringLength limits inspected input bytes per string; control characters are escaped.
+-- MOOSE objects are compact references unless ExpandObjects is true; limits still apply then.
+-- Truncated output is diagnostic text, not a reconstructable Lua table.
 -- @param #BASE self
--- @param #table Arguments
--- @return #string Text
-function BASE:_Serialize(Arguments)
-  local text = UTILS.PrintTableToLog({Arguments}, 0, true)
-  text = string.gsub(text,"(\n+)","")
-  text = string.gsub(text,"%(%(","%(")
-  text = string.gsub(text,"%)%)","%)")
-  text = string.gsub(text,"(%s+)"," ")
+-- @param #table Options (Optional) MaxLength (default 4096, minimum 128), MaxDepth (3), MaxEntries (100, minimum 1), MaxStringLength (512, minimum 1), ExpandObjects (false).
+-- @return #BASE self
+-- @usage
+-- BASE:SetLogSerializationOptions({MaxLength=4096, MaxDepth=3, MaxEntries=100, MaxStringLength=512})
+function BASE:SetLogSerializationOptions(Options)
+  if Options ~= nil and type(Options) ~= "table" then
+    error("Log serialization options must be a table or nil", 2)
+  end
+  local updated = self:GetLogSerializationOptions()
+  local values = Options or _LogDefaults
+  for key, value in next, values do
+    if _LogDefaults[key] == nil then
+      error("Unknown log serialization option", 2)
+    elseif key == "ExpandObjects" then
+      if type(value) ~= "boolean" then error("ExpandObjects must be a boolean", 2) end
+    else
+      local minimum = key == "MaxLength" and 128 or (key == "MaxDepth" and 0 or 1)
+      if type(value) ~= "number" or value ~= value or value == math.huge or
+        value < minimum or value ~= math.floor(value) or (key == "MaxDepth" and value > 32) then
+        error("Invalid log serialization limit: " .. key, 2)
+      end
+    end
+    updated[key] = value
+  end
+  _LogOptions = updated
+  return self
+end
+
+--- Return a copy of the shared log serialization settings.
+-- @param #BASE self
+-- @return #table Options
+function BASE:GetLogSerializationOptions()
+  local options = {}
+  for key, value in pairs(_LogOptions) do options[key] = value end
+  return options
+end
+
+-- Follow only table-based inheritance. Never call object methods, __index
+-- functions or __tostring while logging (they may recurse into the logger).
+local function logObjectField(object, key)
+  for _ = 1, 16 do
+    local value = rawget(object, key)
+    if value ~= nil then return value end
+    local meta = getmetatable(object)
+    object = type(meta) == "table" and rawget(meta, "__index") or nil
+    if type(object) ~= "table" then return nil end
+  end
+end
+
+local function serializeLogValue(value, maxLength)
+  local options = _LogOptions
+  local chunks, length, full = {}, 0, false
+  local seen, references, entries = {}, 0, 0
+  local marker = "<truncated>"
+  local function append(text)
+    if full then return end
+    local remaining = maxLength - length
+    if #text > remaining then
+      if remaining > 0 then chunks[#chunks + 1] = string.sub(text, 1, remaining) end
+      length = maxLength
+      full = true
+    else
+      chunks[#chunks + 1] = text
+      length = length + #text
+    end
+  end
+  local function writeString(text)
+    append('"')
+    local limit = math.min(#text, options.MaxStringLength)
+    for i = 1, limit do
+      if full then break end
+      local byte = string.byte(text, i)
+      if byte == 34 then append('\\"')
+      elseif byte == 92 then append('\\\\')
+      elseif byte == 10 then append('\\n')
+      elseif byte == 13 then append('\\r')
+      elseif byte == 9 then append('\\t')
+      elseif byte < 32 or byte == 127 then append(string.format("\\%03d", byte))
+      else append(string.char(byte)) end
+    end
+    if #text > limit then append("<string truncated>") end
+    append('"')
+  end
+  local write
+  write = function(item, depth)
+    if full then return end
+    local kind = type(item)
+    if kind == "string" then
+      writeString(item)
+    elseif kind == "number" or kind == "boolean" or kind == "nil" then
+      append(tostring(item))
+    elseif kind ~= "table" then
+      append("<" .. kind .. ">")
+    else
+      if not options.ExpandObjects then
+        local class = logObjectField(item, "ClassName")
+        local id = logObjectField(item, "ClassID")
+        if type(class) == "string" and type(id) == "number" then
+          append("<MOOSE ")
+          writeString(class)
+          append("#" .. tostring(id))
+          for _, key in ipairs(_LogObjectNameFields) do
+            if full then break end
+            local name = logObjectField(item, key)
+            if type(name) == "string" then
+              append(" name=")
+              writeString(name)
+              break
+            end
+          end
+          append(">")
+          return
+        end
+      end
+      if seen[item] then
+        append("<ref #" .. seen[item] .. ">")
+      elseif depth >= options.MaxDepth then
+        append("<max depth>")
+      elseif entries >= options.MaxEntries then
+        append("<max entries>")
+      else
+        references = references + 1
+        seen[item] = references
+        append("{")
+        local key, child = next(item)
+        local first = true
+        while key ~= nil and not full do
+          if not first then append(", ") end
+          if entries >= options.MaxEntries then
+            append("<max entries>")
+            break
+          end
+          entries = entries + 1
+          append("[")
+          write(key, depth + 1)
+          append("]=")
+          write(child, depth + 1)
+          first = false
+          if not full then key, child = next(item, key) end
+        end
+        append("}")
+      end
+    end
+  end
+  write(value, 0)
+  local text = table.concat(chunks)
+  if full then
+    if maxLength < #marker then return string.sub(marker, 1, maxLength) end
+    return string.sub(text, 1, maxLength - #marker) .. marker
+  end
   return text
 end
 
------ (Internal) Serialize arguments
----- @param #BASE self
----- @param #table Arguments
----- @return #string Text
---function BASE:_Serialize(Arguments)
---  local text=UTILS.BasicSerialize(Arguments)
---  return text
---end
+-- Limit the whole MOOSE message, not just its arguments. Preserve the normal
+-- header for log parsers. DCS adds its own timestamp/severity outside this limit.
+local function writeLog(prefix, arguments, suffix)
+  local maxLength = _LogOptions.MaxLength
+  local prefixLimit = math.floor(maxLength / 2)
+  if #prefix > prefixLimit then
+    prefix = string.sub(prefix, 1, prefixLimit - 11) .. "<truncated>"
+  end
+  env.info(prefix .. serializeLogValue(arguments, maxLength - #prefix - #suffix) .. suffix)
+end
+
+--- (Internal) Serialize log arguments with bounded work and output, without logging.
+-- @param #BASE self
+-- @param Arguments Value to serialize.
+-- @return #string Text Limited to the configured MaxLength in bytes.
+function BASE:_Serialize(Arguments)
+  return serializeLogValue(Arguments, _LogOptions.MaxLength)
+end
 
 --- Trace a function call. This function is private.
 -- @param #BASE self
@@ -1311,7 +1483,7 @@ function BASE:_F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
       if DebugInfoFrom then
         LineFrom = DebugInfoFrom.currentline
       end
-      env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, BASE:_Serialize(Arguments) ) )
+      writeLog( string.format( "%6d(%6d)/%1s:%30s%05d.%s(", LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function ), Arguments, ")" )
     end
   end
 end
@@ -1385,7 +1557,7 @@ function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
       if DebugInfoFrom then
         LineFrom = DebugInfoFrom.currentline
       end
-      env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s", LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, BASE:_Serialize(Arguments) ) )
+      writeLog( string.format( "%6d(%6d)/%1s:%30s%05d.", LineCurrent, LineFrom, "T", self.ClassName, self.ClassID ), Arguments, "" )
     end
   end
 end
@@ -1455,9 +1627,9 @@ function BASE:E( Arguments )
       LineFrom = DebugInfoFrom.currentline
     end
 
-    env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, UTILS.BasicSerialize( Arguments ) ) )
+    writeLog( string.format( "%6d(%6d)/%1s:%30s%05d.%s(", LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function ), Arguments, ")" )
   else
-    env.info( string.format( "%1s:%30s%05d(%s)", "E", self.ClassName, self.ClassID, UTILS.BasicSerialize(Arguments) ) )
+    writeLog( string.format( "%1s:%30s%05d(", "E", self.ClassName, self.ClassID ), Arguments, ")" )
   end
 
 end
@@ -1482,9 +1654,9 @@ function BASE:I( Arguments )
       LineFrom = DebugInfoFrom.currentline
     end
 
-    env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "I", self.ClassName, self.ClassID, Function, UTILS.BasicSerialize( Arguments ) ) )
+    writeLog( string.format( "%6d(%6d)/%1s:%30s%05d.%s(", LineCurrent, LineFrom, "I", self.ClassName, self.ClassID, Function ), Arguments, ")" )
   else
-    env.info( string.format( "%1s:%30s%05d(%s)", "I", self.ClassName, self.ClassID, UTILS.BasicSerialize(Arguments)) )
+    writeLog( string.format( "%1s:%30s%05d(", "I", self.ClassName, self.ClassID ), Arguments, ")" )
   end
 
 end
