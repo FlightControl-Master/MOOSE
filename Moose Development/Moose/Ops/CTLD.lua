@@ -841,7 +841,7 @@ CTLD.UnitTypeCapabilities = {
     ["C-130J-30"] = {type="C-130J-30", crates=true, troops=true, cratelimit = 7, trooplimit = 64, length = 35, cargoweightlimit = 21500}, -- 19t cargo, 64 paratroopers. 
     --Actually it's longer, but the center coord is off-center of the model.
     ["UH-60L"] = {type="UH-60L", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
-    ["UH-60L_DAP"] = {type="UH-60L_DAP", crates=false, troops=true, cratelimit = 2, trooplimit = 2, length = 16, cargoweightlimit = 3000}, -- UH-60L DAP is an attack helo but can do limited CSAR and CTLD
+    ["UH-60L_DAP"] = {type="UH-60L_DAP", crates=false, troops=true, cratelimit = 2, trooplimit = 2, length = 16, cargoweightlimit = 3500}, -- UH-60L DAP is an attack helo but can do limited CSAR and CTLD
     ["MH-60R"] = {type="MH-60R", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
     ["SH-60B"] = {type="SH-60B", crates=true, troops=true, cratelimit = 2, trooplimit = 20, length = 16, cargoweightlimit = 3500}, -- 4t cargo, 20 (unsec) seats
     ["AH-64D_BLK_II"] = {type="AH-64D_BLK_II", crates=false, troops=true, cratelimit = 0, trooplimit = 2, length = 17, cargoweightlimit = 200}, -- 2 ppl **outside** the helo
@@ -3132,12 +3132,14 @@ function CTLD:_FindRepairNearby(Group, Unit, Repairtype)
     local nearestDistance = 10000
     for k,v in pairs(self.DroppedTroops) do
       local distance = self:_GetDistance(v:GetCoord(),unitcoord)
-      local unit = v:GetUnit(1) -- Wrapper.Unit#UNIT
-      local desc = unit:GetDesc() or nil
-      if distance < nearestDistance and distance ~= -1 and not desc.attributes.Infantry then
-        nearestGroup = v
-        nearestGroupIndex = k
-        nearestDistance = distance
+      if distance < nearestDistance and distance ~= -1 and distance <= self.EngineerSearch then
+        local unit = v:GetUnit(1) -- Wrapper.Unit#UNIT
+        local desc = unit:GetDesc() or nil
+        if not desc.attributes.Infantry then
+          nearestGroup = v
+          nearestGroupIndex = k
+          nearestDistance = distance
+        end
       end
     end
     
@@ -3566,8 +3568,9 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
   end
   local capacitySets = nil
   local capacityCrates = nil
+  local capabilities
   if Unit then
-    local capabilities = self:_GetUnitCapabilities(Unit)
+    capabilities = self:_GetUnitCapabilities(Unit)
     local capacity = capabilities and capabilities.cratelimit or 0
     if capacity > 0 then
       local loadedData = nil
@@ -3602,7 +3605,7 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
   local maxMassSets = nil
   local maxMassCrates = nil
   if Unit then
-    local maxload = self:_GetMaxLoadableMass(Unit)
+    local maxload = self:_GetMaxLoadableMass(Unit, nil, capabilities)
     local perCrateMass = (cargoObj.GetMass and cargoObj:GetMass()) or cargoObj.PerCrateMass or 0
     local setMass = perCrateMass * (needed > 0 and needed or 1)
     if type(maxload) == "number" and maxload > 0 and setMass > 0 then
@@ -4009,8 +4012,8 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
     container_cargo = 2.5,
   }
   local FW_WIDTH_BY_TYPE = { -- spacing between crates in the set.
-    cds_crate = 0.8,
-    cds_barrels = 0.8,
+    cds_crate = 0.7,
+    cds_barrels = 0.7,
     ammo_cargo = 0.4,
     iso_container_small = 2.0,
     iso_container = 2.0,
@@ -4055,9 +4058,10 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
     end
 
     if not self.placeCratesAhead or drop == true then
-      local step = (IsHerc or IsHelo) and (FW_STEP_BY_TYPE[basetype] or 2.6) or 1.6
+      local step = (IsHerc or IsHelo) and (FW_STEP_BY_TYPE[basetype] or 2.6) or 1.5
       if (IsHerc or IsHelo) and not drop then
-        local safeDistance = capabilities.length * 0.9
+        -- Keep Chinook crates closer to the ramp; other aircraft keep their existing offset.
+        local safeDistance = capabilities.length * (IsHook and 0.75 or 0.9)
         local maxDist = self.CrateDistance or 35
         if safeDistance > maxDist then safeDistance = maxDist end
 
@@ -4503,10 +4507,11 @@ function CTLD:_GetDistance(_point1, _point2)
   self:T(self.lid .. " _GetDistance")
   if _point1 and _point2 then
     local distance1 = _point1:Get2DDistance(_point2)
-    local distance2 = _point1:DistanceFromPointVec2(_point2)
     if distance1 and type(distance1) == "number" then
       return distance1
-    elseif distance2 and type(distance2) == "number" then
+    end
+    local distance2 = _point1:DistanceFromPointVec2(_point2)
+    if distance2 and type(distance2) == "number" then
       return distance2
     else
       self:E("*****Cannot calculate distance!")
@@ -4527,15 +4532,17 @@ end
 -- @param #number _dist Distance
 -- @param #boolean _ignoreweight Find everything in range, ignore loadable weight
 -- @param #boolean ignoretype Find everything in range, ignore loadable type name
+-- @param #boolean ignoreHercInner Exclude crates close to the aircraft; C-130 exclusion requires UseC130LoadAndUnload.
 -- @return #table Crates Table of crates
 -- @return #number Number Number of crates found
 -- @return #table CratesGC Table of crates possibly loaded by GC
 -- @return #number NumberGC Number of crates possibly loaded by GC
 function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight, ignoretype, ignoreHercInner)
   self:T(self.lid .. " _FindCratesNearby")
+  local existingcrates = self.Spawned_Cargo -- #table
+  if not next(existingcrates) then return {}, 0, {}, 0 end
   local finddist = _dist
   local location = _group:GetCoord()
-  local existingcrates = self.Spawned_Cargo -- #table
   -- cycle
   local index = 0
   local indexg = 0
@@ -4543,7 +4550,7 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight, ignoretype
   local LoadedbyGC = {}
   local loadedmass = 0
   local unittype = "none"
-  local capabilities = {}
+  local innerDist
   --local maxmass = 2000
   local maxloadable = 2000
   local IsHook = self:IsHook(_unit)
@@ -4565,18 +4572,25 @@ function CTLD:_FindCratesNearby( _group, _unit, _dist, _ignoreweight, ignoretype
       local restricted = cargoisstatic and restricthooktononstatics
       self:T(self.lid .. " Loading restricted: " .. tostring(restricted))
       local staticpos = static:GetCoordinate() --or dcsunitpos
-      local cando = cargo:UnitCanCarry(_unit)
-      if ignoretype == true then cando = true restricted = false end
+      local cando = ignoretype == true or cargo:UnitCanCarry(_unit)
+      if ignoretype == true then restricted = false end
       self:T(self.lid .. " Unit can carry: " .. tostring(cando))
       --- Testing
       local distance=self:_GetDistance(location,staticpos)
       local hercInnerBlocked=false
-      if self.UseC130LoadAndUnload and ignoreHercInner and _unit and self:IsC130J(_unit) then
-      local capabilities=self:_GetUnitCapabilities(_unit) -- #CTLD.UnitTypeCapabilities
-      local innerDist= capabilities.length and (capabilities.length/2) or 4
-      if distance<innerDist then
-      hercInnerBlocked=true
-      end
+      if ignoreHercInner and _unit then
+        if innerDist == nil then
+          -- Identify C-130s even when their special handling is disabled.
+          if self:IsC130J(_unit, true) then
+            innerDist=self.UseC130LoadAndUnload and 15 or false
+          else
+            local capabilities=self:_GetUnitCapabilities(_unit) -- #CTLD.UnitTypeCapabilities
+            innerDist=math.max(4,(capabilities.length or 0)/2)
+          end
+        end
+        if innerDist and distance<innerDist then
+          hercInnerBlocked=true
+        end
       end
       self:T(self.lid..string.format("Dist %dm/%dm | weight %dkg | maxloadable %dkg",distance,finddist,weight,maxloadable))
         if distance<=finddist and(weight<=maxloadable or _ignoreweight)and restricted==false and cando==true and not hercInnerBlocked then
@@ -4595,22 +4609,24 @@ end
 -- @param Wrapper.Group#GROUP Group
 -- @param Wrapper.Unit#UNIT Unit
 -- @return #CTLD self
-function CTLD:_LoadCratesNearby(Group, Unit)
+-- @param #boolean canhoverload Optional hover eligibility from the current synchronous call.
+-- @param #CTLD.UnitTypeCapabilities capabilities Optional resolved aircraft capabilities.
+-- @param #string unitname Optional resolved unit name.
+function CTLD:_LoadCratesNearby(Group, Unit, canhoverload, capabilities, unitname)
   self:T(self.lid .. " _LoadCratesNearby")
     -- load crates into heli
   local group = Group -- Wrapper.Group#GROUP
   local unit = Unit  -- Wrapper.Unit#UNIT
-  local unitname = unit:GetName()
+  unitname = unitname or unit:GetName()
     -- see if this heli can load crates
-  local unittype = unit:GetTypeName()
-  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitTypeCapabilities
+  capabilities = capabilities or self:_GetUnitCapabilities(Unit) -- #CTLD.UnitTypeCapabilities
   local cancrates = capabilities.crates -- #boolean
   local cratelimit = capabilities.cratelimit -- #number
   local grounded = not self:IsUnitInAir(Unit)
-  local canhoverload = self:CanHoverLoad(Unit)
+  if canhoverload == nil then canhoverload = self:CanHoverLoad(Unit) end
 
   -- Door check
-  if self.pilotmustopendoors and not UTILS.IsLoadingDoorOpen(Unit:GetName()) then
+  if self.pilotmustopendoors and not UTILS.IsLoadingDoorOpen(unitname) then
     local msg = self:_GetEntryForGroup("OPEN_DOORS_LOAD_CARGO", Group)
     self:_SendMessage(msg, 10, false, Group)
     --self:_SendMessage("You need to open the door(s) to load cargo!", 10, false, Group)
@@ -4810,13 +4826,15 @@ end
 --- (Internal) Function to calculate max loadable mass left over.
 -- @param #CTLD self
 -- @param Wrapper.Unit#UNIT Unit
+-- @param #number loadedmass Optional mass already measured for this call.
+-- @param #CTLD.UnitTypeCapabilities capabilities Optional resolved aircraft capabilities.
 -- @return #number maxloadable Max loadable mass in kg
-function CTLD:_GetMaxLoadableMass(Unit)
+function CTLD:_GetMaxLoadableMass(Unit, loadedmass, capabilities)
   self:T(self.lid .. " _GetMaxLoadableMass")
   if not Unit then return 0 end
   local loadable = 0
-  local loadedmass = self:_GetUnitCargoMass(Unit)
-  local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitTypeCapabilities
+  loadedmass = loadedmass or self:_GetUnitCargoMass(Unit)
+  capabilities = capabilities or self:_GetUnitCapabilities(Unit) -- #CTLD.UnitTypeCapabilities
   local maxmass = capabilities.cargoweightlimit or 2000 -- max 2 tons
   loadable = maxmass - loadedmass
   return loadable
@@ -4846,7 +4864,7 @@ function CTLD:_ListCargo(Group, Unit)
   local cratelimit = capabilities.cratelimit -- #number
   local loadedcargo = self.Loaded_Cargo[unitname] or {} -- #CTLD.LoadedCargo
   local loadedmass = self:_GetUnitCargoMass(Unit) -- #number
-  local maxloadable = self:_GetMaxLoadableMass(Unit)
+  local maxloadable = self:_GetMaxLoadableMass(Unit, loadedmass, capabilities)
   local finddist = self.CrateDistance or 35
   local hercInnerCrates = nil
   local hercInnerCount = 0
@@ -5601,6 +5619,23 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
         end
         notified=true
       end
+      -- Count all complete builds so different cargo types share the same spacing.
+      local totalBuilds = 0
+      for _,candidate in pairs(buildables) do
+        if candidate.CanBuild then
+          local required = candidate.Required or 1
+          if required < 1 then required = 1 end
+          local full = math.floor((candidate.Found or 0)/required)
+          if full < 1 then full = 1 end
+          totalBuilds = totalBuilds + full
+        end
+      end
+      local sep  = self.buildPairSeparation or 25
+      local hdg  = (Unit:GetHeading()+180)%360
+      local lat  = (hdg+90)%360
+      local base = Unit:GetCoord():Translate(20,hdg)
+      local start = -((totalBuilds-1)*sep)/2
+      local buildIndex = 0 -- Keep the position index across cargo types.
       -- loop again
       for _,_build in pairs(buildables) do
         local build = _build -- #CTLD.Buildable
@@ -5610,12 +5645,7 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
           local full = math.floor((build.Found or 0)/required)
           if full < 1 then full = 1 end
 
-          local sep  = self.buildPairSeparation or 25
-          local hdg  = (Unit:GetHeading()+180)%360
-          local lat  = (hdg+90)%360
-          local base = Unit:GetCoord():Translate(20,hdg)
-
-          if full == 1 then
+          if totalBuilds == 1 then
             local cratesNow, numberNow = self:_FindCratesNearby(Group,Unit, finddist,true,true, not Engineering)
             if activeSetId then
               cratesNow, numberNow = self:_C130DcAutoFilterCrates(cratesNow, activeSetId)
@@ -5636,7 +5666,6 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
               self:_BuildObjectFromCrates(Group,Unit,build,false,nil,MultiDrop)
             end
           else
-            local start = -((full-1)*sep)/2
             for n=1,full do
               local cratesNow, numberNow = self:_FindCratesNearby(Group,Unit, finddist,true,true, not Engineering)
               if activeSetId then
@@ -5645,7 +5674,8 @@ function CTLD:_BuildCrates(Group, Unit,Engineering,MultiDrop,NotifyGroup)
               self:_CleanUpCrates(cratesNow,build,numberNow)
               self:_RefreshLoadCratesMenu(Group,Unit)
               self:_RefreshPackMenus(Group,Unit)
-              local off   = start + (n-1)*sep
+              buildIndex = buildIndex + 1
+              local off   = start + (buildIndex-1)*sep
               local coord = base:Translate(off,lat):GetVec2()
               local b = { Name=build.Name, Required=build.Required, Template=build.Template, CanBuild=true, Type=build.Type, Coord=coord, Heading=build.Heading }
               if self.buildtime and self.buildtime > 0 then
@@ -6640,19 +6670,17 @@ function CTLD:_RefreshQuantityMenusForGroup(_group, _unit)
       local g = u:GetGroup()
       if g then
         local caps = self:_GetUnitCapabilities(u)
+        local loaded = self.Loaded_Cargo[name]
         local needCrate, needTroop = false, false
 
         if g.CTLD_CrateMenus then
           local cap = caps.cratelimit or 0
+          local avail = math.max(0, cap - ((loaded and loaded.Cratesloaded) or 0))
           for item,_ in pairs(g.CTLD_CrateMenus) do
             local obj = self:_FindCratesCargoObject(item)
             if obj then
               local per = obj:GetCratesNeeded() or 1
               if per < 1 then per = 1 end
-              local uname = u:GetName() or "none"
-              local cap = caps.cratelimit or 0
-              local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Cratesloaded) or 0
-              local avail = math.max(0, cap - loaded)
               local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
               local s = obj:GetStock()
               if type(s)=="number" and s>=0 and s<unitAvail then needCrate = true break end
@@ -6662,15 +6690,12 @@ function CTLD:_RefreshQuantityMenusForGroup(_group, _unit)
 
         if g.CTLD_TroopMenus then
           local cap = caps.trooplimit or 0
+          local avail = math.max(0, cap - ((loaded and loaded.Troopsloaded) or 0))
           for item,_ in pairs(g.CTLD_TroopMenus) do
             local obj = self:_FindTroopsCargoObject(item)
             if obj then
               local per = obj:GetCratesNeeded() or 1
               if per < 1 then per = 1 end
-              local uname = u:GetName() or "none"
-              local cap = caps.trooplimit or 0
-              local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Troopsloaded) or 0
-              local avail = math.max(0, cap - loaded)
               local unitAvail = math.max(0, math.min(self.maxCrateMenuQuantity or 1, math.floor(avail/per)))
               local s = obj:GetStock()
               if type(s)=="number" and s>=0 and s<unitAvail then needTroop = true break end
@@ -8129,7 +8154,8 @@ end
 -- @param #number PerTroopMass Mass in kg of each soldier
 -- @param #number Stock Number of groups in stock. Nil for unlimited.
 -- @param #string SubCategory Name of sub-category (optional).
-function CTLD:AddTroopsCargo(Name,Templates,Type,NoTroops,PerTroopMass,Stock,SubCategory) 
+-- @param #boolean NoMoveToZone (Optional) If true, skip automatic movement to a MOVE zone when deployed or restored.
+function CTLD:AddTroopsCargo(Name,Templates,Type,NoTroops,PerTroopMass,Stock,SubCategory,NoMoveToZone)
   self:T(self.lid .. " AddTroopsCargo")
   self:T({Name,Templates,Type,NoTroops,PerTroopMass,Stock})
   if not self:_CheckTemplates(Templates) then
@@ -8139,6 +8165,7 @@ function CTLD:AddTroopsCargo(Name,Templates,Type,NoTroops,PerTroopMass,Stock,Sub
   self.CargoCounter = self.CargoCounter + 1
   -- Troops are directly loadable
   local cargo = CTLD_CARGO:New(self.CargoCounter,Name,Templates,Type,false,true,NoTroops,nil,nil,PerTroopMass,Stock, SubCategory)
+  cargo.NoMoveToZone = NoMoveToZone == true
   table.insert(self.Cargo_Troops,cargo)
   self._troopsByName = self._troopsByName or {}
   self._troopsByName[cargo.Name] = cargo
@@ -8801,10 +8828,11 @@ function CTLD:DropBeaconNow(Unit)
   local FM = FMbeacon.frequency  -- MHz
   local VHF = VHFbeacon.frequency * 1000 -- KHz
   local UHF = UHFbeacon.frequency  -- MHz
-  local text = string.format(self:_GetEntryForGroup("DROPPED_BEACON", Unit:GetGroup()), Name, FM, VHF, UHF)
+  local Group = Unit:GetGroup()
+  local text = string.format(self:_GetEntryForGroup("DROPPED_BEACON", Group), Name, FM, VHF, UHF)
   --local text = string.format("Dropped %s | FM %s Mhz | VHF %s KHz | UHF %s Mhz ", Name, FM, VHF, UHF)
   
-  self:_SendMessage(text,15,false,Unit:GetGroup())
+  self:_SendMessage(text,15,false,Group)
   
   return self
 end
@@ -8992,7 +9020,6 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
   end
   self:T(self.lid .. " IsUnitInZone")
   self:T(Zonetype)
-  local unitname = Unit:GetName()
   local zonetable = {}
   local outcome = false
   if Zonetype == CTLD.CargoZoneType.LOAD then
@@ -9022,43 +9049,45 @@ function CTLD:IsUnitInZone(Unit,Zonetype)
   local unitVec2 = unitcoord:GetVec2()
   for _,_cargozone in pairs(zonetable) do
     local czone = _cargozone -- #CTLD.CargoZone
-    local zonename = czone.name
     local active = czone.active
-    local color = czone.color
-    local zone = nil
-    local zoneradius = 100
-    local zonewidth = 20
-    if Zonetype == CTLD.CargoZoneType.SHIP then
-      self:T("Checking Type Ship: "..zonename)
-      local ZoneUNIT = UNIT:FindByName(zonename)
-      if not ZoneUNIT then return false end
-      zonecoord = ZoneUNIT:GetCoord()
-      zoneradius = czone.shiplength
-      zonewidth = czone.shipwidth
-      zone = ZONE_UNIT:New( ZoneUNIT:GetName(), ZoneUNIT, zoneradius/2)
-    elseif ZONE:FindByName(zonename) then
-      zone = ZONE:FindByName(zonename)
-      self:T("Checking Zone: "..zonename)
-      zonecoord = zone:GetCoordinate()
-      --zoneradius = 1500
-      zonewidth = zoneradius
-    elseif AIRBASE:FindByName(zonename) then
-      zone = AIRBASE:FindByName(zonename):GetZone()
-      self:T("Checking Zone: "..zonename)
-      zonecoord = zone:GetCoordinate()
-      zoneradius = 2000
-      zonewidth = zoneradius
-    end
-    local distance = self:_GetDistance(zonecoord,unitcoord)
-    self:T("Distance Zone: "..distance)
-    self:T("Zone Active: "..tostring(active))
-    if (zone:IsVec2InZone(unitVec2) or Zonetype == CTLD.CargoZoneType.MOVE) and active == true and distance < maxdist then 
-      outcome = true
-      maxdist = distance
-      zoneret = zone 
-      zonenameret = zonename
-      zonewret = zonewidth
-      colorret = color 
+    if active == true or Zonetype == CTLD.CargoZoneType.SHIP then
+      local zonename = czone.name
+      local color = czone.color
+      local zone = Zonetype ~= CTLD.CargoZoneType.SHIP and ZONE:FindByName(zonename) or nil
+      local airbase = not zone and Zonetype ~= CTLD.CargoZoneType.SHIP and AIRBASE:FindByName(zonename) or nil
+      local zoneradius = 100
+      local zonewidth = 20
+      if Zonetype == CTLD.CargoZoneType.SHIP then
+        self:T("Checking Type Ship: "..zonename)
+        local ZoneUNIT = UNIT:FindByName(zonename)
+        if not ZoneUNIT then return false end
+        zonecoord = ZoneUNIT:GetCoord()
+        zoneradius = czone.shiplength
+        zonewidth = czone.shipwidth
+        zone = ZONE_UNIT:New( ZoneUNIT:GetName(), ZoneUNIT, zoneradius/2)
+      elseif zone then
+        self:T("Checking Zone: "..zonename)
+        zonecoord = zone:GetCoordinate()
+        --zoneradius = 1500
+        zonewidth = zoneradius
+      elseif airbase then
+        zone = airbase:GetZone()
+        self:T("Checking Zone: "..zonename)
+        zonecoord = zone:GetCoordinate()
+        zoneradius = 2000
+        zonewidth = zoneradius
+      end
+      local distance = self:_GetDistance(zonecoord,unitcoord)
+      self:T("Distance Zone: "..distance)
+      self:T("Zone Active: "..tostring(active))
+      if (Zonetype == CTLD.CargoZoneType.MOVE or zone:IsVec2InZone(unitVec2)) and active == true and distance < maxdist then
+        outcome = true
+        maxdist = distance
+        zoneret = zone
+        zonenameret = zonename
+        zonewret = zonewidth
+        colorret = color
+      end
     end
   end
   if Zonetype == CTLD.CargoZoneType.SHIP then
@@ -9080,8 +9109,8 @@ function CTLD:SmokePositionNow(Unit, Flare, SmokeColor)
     Smokecolor = SmokeColor
   end
   local FlareColor = self.FlareColor or FLARECOLOR.Red
-  -- table of #CTLD.CargoZone table
-  local unitcoord = Unit:GetCoord() -- Core.Point#COORDINATE
+  -- Use a separate coordinate because smoke changes its height to ground level.
+  local unitcoord = Unit:GetCoordinate() -- Core.Point#COORDINATE
   local Group = Unit:GetGroup()
   if Flare then
     unitcoord:Flare(FlareColor, 90)
@@ -9233,16 +9262,10 @@ end
     if self:IsFixedWing(Unit) then return false end -- FW cannot hover
     local outcome = false
     -- see if we are in air and within parameters.
-    if self:IsUnitInAir(Unit) then
-      -- get speed and height
+    local inair, aheight = self:IsUnitInAir(Unit)
+    if inair then
+      -- get speed; height above ground was measured by IsUnitInAir.
       local uspeed = Unit:GetVelocityMPS()
-      local uheight = Unit:GetHeight()
-      local ucoord = Unit:GetCoord()
-      if not ucoord then
-        return false
-      end
-      local gheight = ucoord:GetLandHeight()
-      local aheight = uheight - gheight -- height above ground
       local maxh = self.maximumHoverHeight -- 15
       local minh =  self.minimumHoverHeight -- 5
       local mspeed = 2 -- 2 m/s
@@ -9262,16 +9285,10 @@ end
     self:T(self.lid .. " IsCorrectFlightParameters")
     local outcome = false
     -- see if we are in air and within parameters.
-    if self:IsUnitInAir(Unit) then
-      -- get speed and height
+    local inair, aheight = self:IsUnitInAir(Unit)
+    if inair then
+      -- get speed; height above ground was measured by IsUnitInAir.
       local uspeed = Unit:GetVelocityMPS()
-      local uheight = Unit:GetHeight()
-      local ucoord = Unit:GetCoord()
-      if not ucoord then
-        return false
-      end
-      local gheight = ucoord:GetLandHeight()
-      local aheight = uheight - gheight -- height above ground
       local minh = self.FixedMinAngels-- 1500m
       local maxh =  self.FixedMaxAngels -- 5000m
       local maxspeed =  self.FixedMaxSpeed -- 77 mps
@@ -9351,23 +9368,23 @@ end
   -- @param #CTLD self
   -- @param Wrapper.Unit#UNIT Unit
   -- @return #boolean Outcome
+  -- @return #number HeightAGL Measured height above ground in meters, or nil if no coordinate is available.
   function CTLD:IsUnitInAir(Unit)
-    -- get speed and height
+    -- Measure height above ground from the current coordinate.
     local minheight = self.minimumHoverHeight
     if self.enableFixedWing and self:IsFixedWing(Unit) then
       minheight = 5.1 -- herc is 5m AGL on the ground
     end
-    local uheight = Unit:GetHeight()
     local ucoord = Unit:GetCoord()
     if not ucoord then
       return false
     end
     local gheight = ucoord:GetLandHeight()
-    local aheight = uheight - gheight -- height above ground
+    local aheight = ucoord.y - gheight -- height above ground
     if aheight >= minheight then
-      return true
+      return true, aheight
     else
-      return false
+      return false, aheight
     end
   end
   
@@ -9378,9 +9395,7 @@ end
   function CTLD:AutoHoverLoad(Unit)
     self:T(self.lid .. " AutoHoverLoad")
     -- get capabilities and current load
-    local unittype = Unit:GetTypeName()
     local unitname = Unit:GetName()
-    local Group = Unit:GetGroup()
     local capabilities = self:_GetUnitCapabilities(Unit) -- #CTLD.UnitTypeCapabilities
     local cancrates = capabilities.crates -- #boolean
     local cratelimit = capabilities.cratelimit -- #number
@@ -9393,9 +9408,11 @@ end
         numberonboard = loaded.Cratesloaded or 0
       end
       local load = cratelimit - numberonboard
-      local canload = self:CanHoverLoad(Unit)
-      if canload and load > 0 then
-        self:_LoadCratesNearby(Group,Unit)
+      if load > 0 then
+        local canload = self:CanHoverLoad(Unit)
+        if canload then
+          self:_LoadCratesNearby(Unit:GetGroup(),Unit,canload,capabilities,unitname)
+        end
       end
     end
     return self
@@ -9408,7 +9425,7 @@ end
     if self.hoverautoloading then
       for _,_pilot in pairs (self.CtldUnits) do
         local Unit = UNIT:FindByName(_pilot)
-        if self:CanHoverLoad(Unit) then self:AutoHoverLoad(Unit) end
+        self:AutoHoverLoad(Unit)
       end
     end
     return self
@@ -10149,7 +10166,8 @@ end
           :InitDelayOff()
           :OnSpawnGroup(function(grp,TimeStamp) grp.spawntime = TimeStamp or timer.getTime() end,TimeStamp)
           :SpawnFromVec2(randomcoord)
-        if self.movetroopstowpzone and type ~= CTLD_CARGO.Enum.ENGINEERS then
+        -- Saved cargo is recreated on load; reuse the registered cargo setting found above.
+        if self.movetroopstowpzone and type ~= CTLD_CARGO.Enum.ENGINEERS and not (CargoObject or cargo).NoMoveToZone then
           self:_MoveGroupToZone(self.DroppedTroops[self.TroopCounter])
         end
       end -- template loop
@@ -10624,7 +10642,11 @@ end
   function CTLD:onafterTroopsDeployed(From, Event, To, Group, Unit, Troops, Type)
     self:T({From, Event, To})
     if self.movetroopstowpzone and Type ~= CTLD_CARGO.Enum.ENGINEERS then
-      self:_MoveGroupToZone(Troops)
+      -- Resolve the registered cargo through the existing template cache.
+      local cg = self:GetGenericCargoObjectFromGroupName(Troops:GetName())
+      if not (cg and cg.NoMoveToZone) then
+        self:_MoveGroupToZone(Troops)
+      end
       if not Group or not Unit then self:_RefreshQuantityMenusForGroup() end
     end
     return self
@@ -10871,7 +10893,7 @@ end
     
       
     --local data = "LoadedData = {\n"
-    local data = "Group,x,y,z,CargoName,CargoTemplates,CargoType,CratesNeeded,CrateMass,Structure,StaticCategory,StaticType,StaticShape,SpawnTime\n"
+    local data = "Group,x,y,z,CargoName,CargoTemplates,CargoType,CratesNeeded,CrateMass,Structure,StaticCategory,StaticType,StaticShape,SpawnTime,Latitude,Longitude\n"
     local n = 0
     for _,_grp in pairs(grouptable) do
       local group = _grp -- Wrapper.Group#GROUP
@@ -10916,8 +10938,10 @@ end
           end
           
           local location = group:GetVec3()
-          local txt = string.format("%s,%d,%d,%d,%s,%s,%s,%d,%d,%s,%s,%s,%s,%f\n"
-              ,template,location.x,location.y,location.z,cgoname,cgotemp,cgotype,cgoneed,cgomass,strucdata,scat,stype,sshape or "none",spawntime)             
+          -- Append geographic coordinates for export; x/y/z remain the saved position used on load.
+          local lat,lon = coord.LOtoLL(location)
+          local txt = string.format("%s,%d,%d,%d,%s,%s,%s,%d,%d,%s,%s,%s,%s,%f,%f,%f\n"
+              ,template,location.x,location.y,location.z,cgoname,cgotemp,cgotype,cgoneed,cgomass,strucdata,scat,stype,sshape or "none",spawntime,lat,lon)
           data = data .. txt
         end
       end

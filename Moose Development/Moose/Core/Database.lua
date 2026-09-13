@@ -1100,7 +1100,7 @@ function DATABASE:GetNextSADL(octal,unitname)
     first = 0
   end
   for i=first+1,4095 do
-    if self.STNS[i] == nil then
+    if self.SADL[i] == nil then
       found = true
       nextoctal = UTILS.DecimalToOctal(i)
       self.SADL[i] = unitname
@@ -2081,7 +2081,10 @@ function DATABASE:FindOpsGroupFromUnit(unitname)
   end
 
   if unit then
-    groupname=unit:GetGroup():GetName()
+    local group=unit:GetGroup()
+    if group then
+      groupname=group:GetName()
+    end
   end
 
   if groupname then
@@ -2169,17 +2172,29 @@ function DATABASE:_RegisterTemplates()
 
                 if ((type(obj_type_data) == 'table') and obj_type_data.group and (type(obj_type_data.group) == 'table') and (#obj_type_data.group > 0)) then  --there's a group!
 
-                  --self.Units[coa_name][countryName][category] = {}
-
                   for group_num, Template in pairs(obj_type_data.group) do
+                  
+                    local CategoryID=_DATABASECategory[string.lower(CategoryName)]
+                  
+                    -- Try to identify if we have a train. They are also under "vehicle" category but have Group.Category.TRAIN=4, which is important for spawning!
+                    if string.lower(CategoryName)=="vehicle" then
+                      if Template.units and #Template.units>0 then
+                        local unit=Template.units[1]
+                        if unit and unit.type then
+                          if unit.type=="Train" then --This is the only usable info to determine, if it is a train or a ground group.
+                            CategoryID=Group.Category.TRAIN
+                          end
+                        end
+                      end                                          
+                    end
 
                     if obj_type_name ~= "static" and Template and Template.units and type(Template.units) == 'table' then  --making sure again- this is a valid group
                       
-                      self:_RegisterGroupTemplate(Template, CoalitionSide, _DATABASECategory[string.lower(CategoryName)], CountryID)
+                      self:_RegisterGroupTemplate(Template, CoalitionSide, CategoryID, CountryID)
 
                     else
 
-                      self:_RegisterStaticTemplate(Template, CoalitionSide, _DATABASECategory[string.lower(CategoryName)], CountryID)
+                      self:_RegisterStaticTemplate(Template, CoalitionSide, CategoryID, CountryID)
 
                     end --if GroupTemplate and GroupTemplate.units then
                   end --for group_num, GroupTemplate in pairs(obj_type_data.group) do

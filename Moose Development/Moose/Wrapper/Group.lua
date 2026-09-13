@@ -871,13 +871,14 @@ end
 
 --- Get the first unit of the group which is alive.
 -- @param #GROUP self
+-- @param #table Units (Optional) Existing list of Wrapper.Unit#UNIT objects from this group.
 -- @return Wrapper.Unit#UNIT First unit alive.
-function GROUP:GetFirstUnitAlive()
+function GROUP:GetFirstUnitAlive(Units)
   --self:F3({self.GroupName})
   local DCSGroup = self:GetDCSObject()
 
   if DCSGroup then
-    local units=self:GetUnits()
+    local units=Units or self:GetUnits()
     for _,_unit in pairs(units) do
       local unit=_unit --Wrapper.Unit#UNIT
       if unit and unit:IsAlive() then
