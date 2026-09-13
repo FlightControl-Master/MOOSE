@@ -21,11 +21,11 @@
 -- @field #number tid Timer ID returned by the DCS API function.
 -- @field #number uid Unique ID of the timer.
 -- @field #function func Timer function.
--- @field #table para Parameters passed to the timer function.
+-- @field #table para Parameters passed to the timer function, with their count in `n`.
 -- @field #number Tstart Relative start time in seconds.
 -- @field #number Tstop Relative stop time in seconds.
 -- @field #number dT Time interval between function calls in seconds.
--- @field #number ncalls Counter of function calls.
+-- @field #number ncalls Counter of function calls in the current run.
 -- @field #number ncallsMax Max number of function calls. If reached, timer is stopped.
 -- @field #boolean isrunning If `true`, timer is running. Else it was not started yet or was stopped.
 -- @extends Core.Base#BASE
@@ -134,8 +134,8 @@ function TIMER:New(Function, ...)
   -- Function to call.
   self.func=Function
   
-  -- Function arguments.
-  self.para=arg or {}
+  -- Preserve all arguments, including trailing nil values.
+  self.para={ n=select("#", ...), ... }
   
   -- Number of function calls.
   self.ncalls=0
@@ -155,13 +155,20 @@ function TIMER:New(Function, ...)
   return self
 end
 
---- Start TIMER object.
+--- Start TIMER object. Replaces any existing run and resets its call counter and stop time.
 -- @param #TIMER self
 -- @param #number Tstart Relative start time in seconds.
 -- @param #number dT Interval between function calls in seconds. If not specified `nil`, the function is called only once.
 -- @param #number Duration Time in seconds for how long the timer is running. If not specified `nil`, the timer runs forever or until stopped manually by the `TIMER:Stop()` function.
 -- @return #TIMER self
 function TIMER:Start(Tstart, dT, Duration)
+
+  -- A TIMER owns only one native timer at a time.
+  if self.tid then
+    self:Stop()
+  end
+  self._generation=(self._generation or 0)+1
+  self.ncalls=0
 
   -- Current time.
   local Tnow=timer.getTime()
@@ -172,10 +179,8 @@ function TIMER:Start(Tstart, dT, Duration)
   -- Set time interval.
   self.dT=dT
   
-  -- Stop time.
-  if Duration then
-    self.Tstop=self.Tstart+Duration
-  end
+  -- Do not carry a previous duration or delayed stop into the new run.
+  self.Tstop=Duration and self.Tstart+Duration or nil
   
   -- Call DCS timer function.
   self.tid=timer.scheduleFunction(self._Function, self, self.Tstart)
@@ -237,7 +242,8 @@ function TIMER:Stop(Delay)
         self:E(self.lid..string.format("WARNING: Could not remove timer function! isrunning=%s", tostring(self.isrunning)))
       end
       
-      -- Not running any more.
+      -- Not running any more. Do not retain an obsolete native timer ID.
+      self.tid=nil
       self.isrunning=false
 
     end
@@ -278,11 +284,23 @@ end
 -- @return #number Time when the function is called again or `nil` if the timer is stopped.
 function TIMER:_Function(time)
 
+  -- The callback may stop or restart this TIMER.
+  local generation=self._generation
+
   -- Call function.
-  self.func(unpack(self.para))
+  self.func(unpack(self.para, 1, self.para.n))
+
+  -- The old callback must not change or reschedule a replacement run.
+  if self._generation~=generation then
+    return nil
+  end
   
   -- Increase number of calls.
   self.ncalls=self.ncalls+1
+
+  if not self.isrunning then
+    return nil
+  end
   
   -- Next time.
   local Tnext=self.dT and time+self.dT or nil
