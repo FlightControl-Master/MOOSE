@@ -424,6 +424,7 @@ do -- Event Handling
   -- @return #BASE self
   function BASE:SetEventPriority( EventPriority )
     self._.EventPriority = EventPriority
+    return self
   end
 
   --- Remove all subscribed events
@@ -1210,7 +1211,8 @@ end
 -- @return #boolean
 function BASE:IsTrace()
 
-  if BASE.Debug and (_TraceAll == true) or (_TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName]) then
+  if BASE.Debug and _TraceOnOff == true and
+    (_TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName]) then
     return true
   else
     return false
@@ -1248,7 +1250,7 @@ end
 -- @param #string Class Class name.
 function BASE:TraceClass( Class )
   _TraceClass[Class] = true
-  _TraceClassMethod[Class] = {}
+  _TraceClassMethod[Class] = _TraceClassMethod[Class] or {}
   self:I( "Tracing class " .. Class )
 end
 
@@ -1257,10 +1259,8 @@ end
 -- @param #string Class Class name.
 -- @param #string Method Method.
 function BASE:TraceClassMethod( Class, Method )
-  if not _TraceClassMethod[Class] then
-    _TraceClassMethod[Class] = {}
-    _TraceClassMethod[Class].Method = {}
-  end
+  _TraceClassMethod[Class] = _TraceClassMethod[Class] or {}
+  _TraceClassMethod[Class].Method = _TraceClassMethod[Class].Method or {}
   _TraceClassMethod[Class].Method[Method] = true
   self:I( "Tracing method " .. Method .. " of class " .. Class )
 end
