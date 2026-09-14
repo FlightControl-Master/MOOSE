@@ -26,6 +26,7 @@ Core/SpawnStatic.lua
 Core/Timer.lua
 Core/Spot.lua
 Core/MarkerOps_Base.lua
+Core/Grid.lua
 Core/Astar.lua
 Core/Condition.lua
 Core/Pathline.lua

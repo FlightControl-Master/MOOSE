@@ -5,6 +5,7 @@ __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Utilities/FiFo.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Utilities/Socket.lua' )
 
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/Base.lua' )
+__Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/Grid.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/Astar.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/Beacon.lua' )
 __Moose.Include( MOOSE_DEVELOPMENT_FOLDER..'/Moose/Core/Condition.lua' )
