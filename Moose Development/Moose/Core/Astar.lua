@@ -19,24 +19,24 @@
 --- ASTAR class.
 -- @type ASTAR
 -- @field #string ClassName Name of the class.
--- @field #boolean Debug Debug mode. Messages to all about status.
+-- @field #boolean Debug Enable the no-path search message to all players. Disabled by default.
 -- @field #string lid Class id string for output to DCS log file.
 -- @field #table nodes Table of nodes.
 -- @field #number counter Node counter.
 -- @field #number Nnodes Number of nodes.
--- @field #number nvalid Number of nvalid calls.
--- @field #number nvalidcache Number of cached valid evals.
--- @field #number ncost Number of cost evaluations.
--- @field #number ncostcache Number of cached cost evals.
+-- @field #number nvalid Number of neighbour validity requests, including cache hits, accumulated across searches.
+-- @field #number nvalidcache Number of neighbour validity cache hits.
+-- @field #number ncost Number of travel cost requests, including cache hits, accumulated across searches.
+-- @field #number ncostcache Number of travel cost cache hits.
 -- @field #ASTAR.Node startNode Start node.
 -- @field #ASTAR.Node endNode End node.
 -- @field Core.Point#COORDINATE startCoord Start coordinate.
 -- @field Core.Point#COORDINATE endCoord End coordinate.
--- @field #function ValidNeighbourFunc Function to check if a node is valid.
+-- @field #function ValidNeighbourFunc Symmetric function to check whether a connection between two nodes is valid.
 -- @field #table ValidNeighbourArg Optional arguments passed to the valid neighbour function.
 -- @field #function CostFunc Function to calculate the travel cost from one node to another.
 -- @field #table CostArg Optional arguments passed to the cost function. 
--- @field #table ValidSurfaceTypes Surface filter used when creating the grid and adding distant endpoints.
+-- @field #table ValidSurfaceTypes Surface filter used when creating the grid and adding distant endpoints; may also be a single numeric surface type.
 -- @extends Core.Base#BASE
 
 --- *When nothing goes right... Go left!*
@@ -44,103 +44,177 @@
 -- ===
 --
 -- # The ASTAR Concept
--- 
--- Pathfinding algorithm.
--- 
--- 
--- # Start and Goal
--- 
--- The first thing we need to define is obviously the place where we want to start and where we want to go eventually.
--- 
--- ## Start
--- 
--- The start
--- 
--- ## Goal 
--- 
--- 
--- # Nodes
--- 
--- ## Rectangular Grid
--- 
--- A rectangular grid can be created using the @{#ASTAR.CreateGrid}(*ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, MarkGrid*), where
--- 
--- * *ValidSurfaceTypes* is a table of valid surface types. By default all surface types are valid.
--- * *BoxXY* is the width of the grid perpendicular the the line between start and end node. Default is 40,000 meters (40 km).
--- * *SpaceX* is the additional space behind the start and end nodes. Default is 10,000 meters (10 km).
--- * *deltaX* is the grid spacing between nodes in the direction of start and end node. Default is 2,000 meters (2 km).
--- * *deltaY* is the grid spacing perpendicular to the direction of start and end node. Default is the same as *deltaX*.
--- * *MarkGrid* If set to *true*, this places marker on the F10 map on each grid node. Note that this can stall DCS if too many nodes are created. 
--- 
--- ## Valid Surfaces
--- 
--- Certain unit types can only travel on certain surfaces types, for example
--- 
--- * Naval units can only travel on water (that also excludes shallow water in DCS currently),
--- * Ground units can only traval on land.
--- 
--- By restricting the surface type in the grid construction, we also reduce the number of nodes, which makes the algorithm more efficient.
--- 
--- ## Box Width (BoxHY)
--- 
--- The box width needs to be large enough to capture all paths you want to consider.
--- 
--- ## Space in X
--- 
--- The space in X value is important if the algorithm needs to to backwards from the start node or needs to extend even further than the end node.
--- 
--- ## Grid Spacing
--- 
--- The grid spacing is an important factor as it determines the number of nodes and hence the performance of the algorithm. It should be as large as possible.
--- However, if the value is too large, the algorithm might fail to get a valid path.
--- 
--- A good estimate of the grid spacing is to set it to be smaller (~ half the size) of the smallest gap you need to path.
--- 
--- # Valid Neighbours
--- 
--- The A* algorithm needs to know if a transition from one node to another is allowed or not. By default, hopping from one node to another is always possible.
--- 
--- ## Line of Sight
--- 
--- For naval
---  
--- 
--- # Heuristic Cost
--- 
--- In order to determine the optimal path, the pathfinding algorithm needs to know, how costly it is to go from one node to another.
--- Often, this can simply be determined by the distance between two nodes. Therefore, the default cost function is set to be the 2D distance between two nodes.
--- The selected cost function is used for each traversed connection. The 2D and 3D distance modes use the matching straight-line distance as a heuristic.
--- Road and custom costs use a zero heuristic (Dijkstra search), so the estimate cannot overestimate the remaining cost.
--- Custom costs must be non-negative and symmetric; return math.huge for an impassable connection.
--- 
--- 
--- # Calculate the Path
--- 
--- Finally, we have to calculate the path. This is done by the @{#GetPath}(*ExcludeStart, ExcludeEnd*) function. This function returns a table of nodes, which
--- describe the optimal path from the start node to the end node.
--- 
--- By default, the start and end node are include in the table that is returned.
--- The nearest grid nodes are used. If an endpoint is more than 1000 meters from the grid, a node at its exact coordinate is added,
--- provided its surface passes the grid filter. Connections to these nodes use the configured neighbour rule as usual.
--- 
--- Note that a valid path must not always exist. So you should check if the function returns *nil*.
--- 
--- Common reasons that a path cannot be found are:
--- 
--- * The grid is too small ==> increase grid size, e.g. *BoxHY* and/or *SpaceX* if you use a rectangular grid.  
--- * The grid spacing is too large ==> decrease *deltaX* and/or *deltaY*
--- * There simply is no valid path ==> you are screwed :(
--- 
--- 
--- # Examples
--- 
--- ## Strait of Hormuz
--- 
--- Carrier Group finds its way through the Stait of Hormuz.
--- 
--- ## 
--- 
 --
+-- ASTAR finds a least-cost path through a set of coordinate nodes. A neighbour rule decides which connections can be used,
+-- and a cost function assigns a travel cost to each connection. The search returns nodes in travel order.
+-- It does not move units or assign DCS routes; the caller must turn the returned coordinates into suitable waypoints.
+-- For example, NAVYGROUP uses ASTAR to calculate intermediate waypoints for detours on water.
+--
+-- The usual setup is:
+--
+-- 1. Create an object with @{#ASTAR.New} and set the start and end coordinates.
+-- 2. Create a rectangular grid or add your own nodes.
+-- 3. Select a neighbour rule and, optionally, a travel cost function.
+-- 4. Call @{#ASTAR.GetPath} and check the result before using its nodes.
+--
+-- # Start and Goal
+--
+-- @{#ASTAR.SetStartCoordinate} and @{#ASTAR.SetEndCoordinate} take MOOSE COORDINATE objects.
+-- Set both coordinates before calling @{#ASTAR.CreateGrid} or @{#ASTAR.GetPath}.
+--
+-- At search time, each endpoint is mapped to the nearest existing node using 2D distance. If the distance is at most
+-- 1000 meters, that node is used. If it is greater, ASTAR adds a node at the requested coordinate, provided its surface
+-- passes the filter from CreateGrid(). Its connections must still pass the neighbour rule.
+-- An empty grid is not populated automatically by GetPath().
+--
+-- Therefore, a returned path does not necessarily begin or end at the exact requested coordinates.
+-- For exact endpoints, explicitly add them with @{#ASTAR.AddNodeFromCoordinate} after checking their suitability.
+-- Manually added nodes are not checked against the grid surface filter.
+--
+-- # Nodes and Grids
+--
+-- Each @{#ASTAR.Node} contains an id, a `coordinate`, the surface type sampled when it was created, and caches for
+-- connection validity and travel cost. Use `node.coordinate` when consuming the path.
+-- @{#ASTAR.AddNodeFromCoordinate} creates and adds a node and returns that node, rather than the ASTAR object.
+-- @{#ASTAR.GetNodeFromCoordinate} only creates a node; call @{#ASTAR.AddNode} to include it in the search.
+--
+-- ## Rectangular Grid
+--
+-- @{#ASTAR.CreateGrid} accepts `ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, MarkGrid`.
+-- The grid is aligned with the line from start to goal. All dimensions are in meters:
+--
+-- * `ValidSurfaceTypes`: a list of accepted surface types, or a single surface type. Nil accepts all types.
+-- * `BoxHY`: total width perpendicular to start-goal, default 40000 (20000 on each side).
+-- * `SpaceX`: extra space before the start and beyond the goal, default 10000 at each end.
+-- * `deltaX`: node spacing along start-goal, default 2000; must be positive.
+-- * `deltaY`: perpendicular node spacing, default the value of deltaX; must be positive.
+-- * `MarkGrid`: set true to mark accepted grid nodes on the F10 map; disabled by default.
+--
+-- Make the width and end margins large enough to contain the detours you want to consider. Finer spacing can represent
+-- narrower passages, but increases the number of nodes. As a starting point, choose spacing smaller than half the width
+-- of the narrowest relevant passage, then check the result in the mission.
+-- CreateGrid() adds to the existing node set. Use a new ASTAR object to build a replacement grid.
+--
+-- ## Surface Filtering
+--
+-- For a water-only grid, pass `{land.SurfaceType.WATER}`. This accepts exactly that type, excluding SHALLOW_WATER.
+-- The filter checks the position of each node, not the terrain along connections. Two water nodes can still have land
+-- between them. A suitable neighbour rule is needed to reject such connections.
+--
+-- # Valid Neighbours
+--
+-- Every other node is a potential neighbour, including distant nodes. Without a neighbour rule, all pairs are allowed.
+-- Each neighbour setter replaces the previous rule; calling two setters does not combine their conditions.
+--
+-- * @{#ASTAR.SetValidNeighbourDistance}: allow connections whose 2D distance is at most MaxDistance (default 2000 m).
+--   This limits step length but does not check terrain. For a square grid with spacing d, diagonal steps need at least `d * math.sqrt(2)`.
+-- * @{#ASTAR.SetValidNeighbourLoS}: use `land.isVisible` at a fixed altitude of 1 meter above sea level.
+--   With a CorridorWidth, also check two parallel lines offset by half that width on either side.
+--   This is intended for water routes; it is not a general visibility test at the nodes' actual altitudes or a full corridor clearance check.
+-- * @{#ASTAR.SetValidNeighbourRoad}: require a DCS road path and a 2D endpoint distance at most MaxDistance (default 2000 m).
+--   The limit is straight-line distance, not the length of the road path. This rule does not select road travel costs.
+-- * @{#ASTAR.SetValidNeighbourFunction}: supply `function(nodeA, nodeB, ...)` returning a boolean.
+--   Extra arguments are forwarded after the two nodes. Pass nil as the function to allow all pairs again.
+--
+-- Rules must be symmetric: A-to-B and B-to-A must give the same result because the result is cached in both directions.
+-- To combine conditions, use one custom function; an example appears below.
+--
+-- # Travel Costs and Heuristics
+--
+-- The search ranks nodes by travel cost accumulated so far plus an estimate of the remaining cost (the heuristic).
+-- The selected travel cost is applied to every traversed connection:
+--
+-- * Default, or @{#ASTAR.SetCostDist2D}: 2D distance in meters; the heuristic is also 2D distance.
+-- * @{#ASTAR.SetCostDist3D}: 3D distance in meters; the heuristic is also 3D distance.
+--   Supply nodes with appropriate altitudes; CreateGrid() does not build a three-dimensional flight grid.
+-- * @{#ASTAR.SetCostRoad}: length of the path returned by `land.findPathOnRoads`; a missing connection costs `math.huge`.
+--   The heuristic is zero. Returned ASTAR nodes do not include the detailed DCS road path between them.
+-- * @{#ASTAR.SetCostFunction}: supply `function(nodeA, nodeB, ...)` returning a non-negative, symmetric numeric travel cost.
+--   Use `math.huge` for an impassable connection, and keep the same cost units for all connections.
+--   Custom functions use a zero heuristic. Pass nil to restore the default 2D distance.
+--
+-- A zero heuristic makes the search equivalent to Dijkstra's algorithm and avoids overestimating unknown custom costs.
+-- The least-cost result is relative to the available nodes, allowed connections, and selected costs, not every possible route through the terrain.
+-- Since version 0.4.1, SetCostFunction() determines actual travel costs; earlier versions applied it only to the heuristic.
+--
+-- # Calculate and Use the Path
+--
+-- @{#ASTAR.GetPath} returns an ordered list of nodes, including start and goal by default.
+-- `GetPath(true, false)` omits the start, `GetPath(false, true)` omits the goal, and `GetPath(true, true)` returns only intermediate nodes.
+-- These options exclude the selected nodes, which may differ from the requested endpoint coordinates.
+-- A successful result can be an empty table when all its nodes were excluded; an empty table is true in Lua.
+--
+-- A nil result means no valid path was found. Check for:
+--
+-- * Missing start or end coordinates, or an empty node set (including a grid rejected entirely by its surface filter).
+-- * A distant endpoint rejected by the grid surface filter.
+-- * A grid that does not cover the required detour, or spacing too coarse to represent a passage.
+-- * A maximum neighbour distance too small to connect the nodes, or other neighbour rules blocking the route.
+-- * Connections with infinite travel cost, such as missing road connections.
+--
+-- # Reuse and Performance
+--
+-- GetPath() runs synchronously and scans all nodes when finding neighbours. Large grids and expensive road/visibility
+-- checks can pause the simulation; start with a small search area and add detail only as needed.
+-- F10 markers for large grids can also be expensive. Set `astar.Debug = true` to enable the no-path message to players;
+-- search statistics are written through the normal MOOSE logging facilities.
+--
+-- Connection validity and travel costs are cached on the nodes. Calling SetValidNeighbourFunction() or one of its convenience
+-- setters clears validity results; calling SetCostFunction() or a cost setter clears travel costs.
+-- If a callback depends on changing mission data, call its setter again before searching to invalidate the corresponding cache.
+-- Merely changing a callback's external data does not invalidate it. Create a new object and nodes when replacing the grid or moving nodes.
+--
+-- # Examples
+--
+-- ## Water Route Between Two Mission Editor Zones
+--
+-- Load MOOSE and create trigger zones named `Astar Start` and `Astar Goal`, with both centers on water.
+-- Adjust the grid dimensions to the area. This example marks the resulting path; it does not assign a route to a group.
+--
+--     local startZone = ZONE:FindByName("Astar Start")
+--     local goalZone = ZONE:FindByName("Astar Goal")
+--     assert(startZone and goalZone, "Create the Astar Start and Astar Goal trigger zones")
+--     local astar = ASTAR:New()
+--     astar:SetStartCoordinate(startZone:GetCoordinate())
+--     astar:SetEndCoordinate(goalZone:GetCoordinate())
+--     astar:CreateGrid({land.SurfaceType.WATER}, 40000, 10000, 2000, 2000, false)
+--     astar:SetValidNeighbourLoS(500)
+--     local path = astar:GetPath()
+--     if path then
+--       for i, node in ipairs(path) do
+--         node.coordinate:MarkToAll(string.format("ASTAR waypoint %d", i))
+--       end
+--     else
+--       env.info("ASTAR: no water route found")
+--     end
+--
+-- ## Combine Distance and Visibility
+--
+-- On an existing `astar` object, replace the neighbour rule with a combined check before calling GetPath():
+--
+--     astar:SetValidNeighbourFunction(function(nodeA, nodeB, maxDistance, corridorWidth)
+--       return ASTAR.DistMax(nodeA, nodeB, maxDistance)
+--         and ASTAR.LoS(nodeA, nodeB, corridorWidth)
+--     end, 3000, 500)
+--
+-- ## Custom Nodes and Costs
+--
+-- This small abstract graph illustrates a penalty on one connection. Its sample coordinates are not a terrain-validated route.
+-- All connections are allowed, but the direct start-goal connection receives an extra cost of 10000.
+-- The cheapest result therefore visits the middle node. Custom cost callbacks receive nodes, not coordinates.
+--
+--     local astar = ASTAR:New()
+--     local start = astar:AddNodeFromCoordinate(COORDINATE:New(0, 0, 0))
+--     local middle = astar:AddNodeFromCoordinate(COORDINATE:New(1000, 0, 1000))
+--     local goal = astar:AddNodeFromCoordinate(COORDINATE:New(2000, 0, 0))
+--     astar:SetStartCoordinate(start.coordinate)
+--     astar:SetEndCoordinate(goal.coordinate)
+--     astar:SetCostFunction(function(nodeA, nodeB, penalty)
+--       local direct = (nodeA == start and nodeB == goal) or (nodeA == goal and nodeB == start)
+--       return ASTAR.Dist2D(nodeA, nodeB) + (direct and penalty or 0)
+--     end, 10000)
+--     local path = astar:GetPath()
+--     assert(path and #path == 3 and path[2] == middle, "Expected the route through the middle node")
 --
 -- @field #ASTAR
 ASTAR = {
@@ -160,9 +234,9 @@ ASTAR = {
 -- @type ASTAR.Node
 -- @field #number id Node id.
 -- @field Core.Point#COORDINATE coordinate Coordinate of the node.
--- @field #number surfacetype Surface type.
--- @field #table valid Cached valid/invalid nodes.
--- @field #table cost Cached cost.
+-- @field #number surfacetype DCS surface type sampled at node creation.
+-- @field #table valid Cached connection validity, indexed by the other node's id.
+-- @field #table cost Cached travel cost, indexed by the other node's id.
 
 --- ASTAR infinity.
 -- @field #number INF
@@ -177,13 +251,12 @@ ASTAR.version="0.4.1"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 -- TODO: Add more valid neighbour functions.
--- TODO: Write docs.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a new ASTAR object.
+--- Create a new ASTAR object with an empty node set, unrestricted neighbours, and 2D distance costs.
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:New()
@@ -200,7 +273,7 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Set coordinate from where to start.
+--- Set the requested start coordinate. Does not create a node or rebuild the grid.
 -- @param #ASTAR self
 -- @param Core.Point#COORDINATE Coordinate Start coordinate.
 -- @return #ASTAR self
@@ -211,7 +284,7 @@ function ASTAR:SetStartCoordinate(Coordinate)
   return self
 end
 
---- Set coordinate where you want to go.
+--- Set the requested goal coordinate. Does not create a node or rebuild the grid.
 -- @param #ASTAR self
 -- @param Core.Point#COORDINATE Coordinate end coordinate.
 -- @return #ASTAR self
@@ -222,7 +295,8 @@ function ASTAR:SetEndCoordinate(Coordinate)
   return self
 end
 
---- Create a node from a given coordinate.
+--- Create a node from a coordinate without adding it to the search node set.
+-- The coordinate reference and its current surface type are stored in the node.
 -- @param #ASTAR self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where to create the node.
 -- @return #ASTAR.Node The node.
@@ -243,7 +317,8 @@ function ASTAR:GetNodeFromCoordinate(Coordinate)
 end
 
 
---- Add a node to the table of grid nodes.
+--- Add a node created by this ASTAR instance to the search node set.
+-- Does not apply the grid surface filter. Adding the same node again does not increase the node count.
 -- @param #ASTAR self
 -- @param #ASTAR.Node Node The node to be added.
 -- @return #ASTAR self
@@ -258,6 +333,7 @@ function ASTAR:AddNode(Node)
 end
 
 --- Add a node to the table of grid nodes specifying its coordinate.
+-- Does not apply the grid surface filter. Returns the new node, not the ASTAR object.
 -- @param #ASTAR self
 -- @param Core.Point#COORDINATE Coordinate The coordinate where the node is created.
 -- @return #ASTAR.Node The node.
@@ -270,10 +346,10 @@ function ASTAR:AddNodeFromCoordinate(Coordinate)
   return node
 end
 
---- Check if the coordinate of a node has is at a valid surface type.
+--- Check the surface type stored in a node against the allowed surface types.
 -- @param #ASTAR self
--- @param #ASTAR.Node Node The node to be added.
--- @param #table SurfaceTypes Surface types, for example `{land.SurfaceType.WATER}`. By default all surface types are valid.
+-- @param #ASTAR.Node Node The node to check.
+-- @param #table SurfaceTypes Allowed surface types, for example `{land.SurfaceType.WATER}`; a single numeric type is also accepted. Nil accepts all types.
 -- @return #boolean If true, surface type of node is valid.
 function ASTAR:CheckValidSurfaceType(Node, SurfaceTypes)
 
@@ -297,10 +373,11 @@ function ASTAR:CheckValidSurfaceType(Node, SurfaceTypes)
 
 end
 
---- Add a function to determine if a neighbour of a node is valid.
+--- Replace the neighbour rule and clear cached validity results on all existing nodes.
+-- The function receives nodeA, nodeB, then the optional arguments. It must be symmetric because results are cached in both directions.
 -- @param #ASTAR self
--- @param #function NeighbourFunction Function that needs to return *true* for a neighbour to be valid.
--- @param ... Condition function arguments if any.
+-- @param #function NeighbourFunction Function returning true for an allowed connection, false otherwise. Nil allows all pairs.
+-- @param ... Additional callback arguments, if any.
 -- @return #ASTAR self
 function ASTAR:SetValidNeighbourFunction(NeighbourFunction, ...)
 
@@ -316,9 +393,10 @@ function ASTAR:SetValidNeighbourFunction(NeighbourFunction, ...)
 end
 
 
---- Set valid neighbours to require line of sight between two nodes.
+--- Replace the neighbour rule with a visibility check at 1 meter above sea level.
+-- Intended for water routes. A corridor adds two parallel visibility checks, not a continuous clearance test.
 -- @param #ASTAR self
--- @param #number CorridorWidth Width of LoS corridor in meters.
+-- @param #number CorridorWidth (Optional) Total corridor width in meters; checks are offset by half this width on each side. Nil checks only the center line.
 -- @return #ASTAR self
 function ASTAR:SetValidNeighbourLoS(CorridorWidth)
 
@@ -327,7 +405,7 @@ function ASTAR:SetValidNeighbourLoS(CorridorWidth)
   return self
 end
 
---- Set valid neighbours to be in a certain distance.
+--- Replace the neighbour rule with a maximum 2D distance check, without checking terrain.
 -- @param #ASTAR self
 -- @param #number MaxDistance (Optional) Max distance between nodes in meters. Default is 2000 m.
 -- @return #ASTAR self
@@ -341,8 +419,9 @@ function ASTAR:SetValidNeighbourDistance(MaxDistance)
 end
 
 --- Set valid neighbours to have a road connection within a maximum 2D distance.
+-- Replaces the previous neighbour rule. Does not change the travel cost function; use SetCostRoad() separately for road costs.
 -- @param #ASTAR self
--- @param #number MaxDistance (Optional) Max distance between nodes in meters. Default is 2000 m.
+-- @param #number MaxDistance (Optional) Maximum straight-line 2D distance between nodes in meters, inclusive. Default is 2000 m.
 -- @return #ASTAR self
 function ASTAR:SetValidNeighbourRoad(MaxDistance)
 
@@ -409,15 +488,16 @@ end
 -- Grid functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create a rectangular grid of nodes between star and end coordinate.
--- The coordinate system is oriented along the line between start and end point.
+--- Add a rectangular grid of nodes aligned with the start-to-goal line.
+-- Both endpoint coordinates must be set first. Existing nodes are retained; use a new ASTAR object for a replacement grid.
+-- The surface filter applies to new grid nodes and automatically added distant endpoints, not to the connections between them.
 -- @param #ASTAR self
--- @param #table ValidSurfaceTypes Valid surface types. By default is all surfaces are allowed.
--- @param #number BoxHY (Optional) Box "height" in meters along the y-coordinate. Default 40000 meters (40 km).
+-- @param #table ValidSurfaceTypes (Optional) Allowed surface types; a single numeric surface type is also accepted. Nil allows all surfaces.
+-- @param #number BoxHY (Optional) Total grid width perpendicular to start-to-goal, in meters. Default 40000 meters (40 km).
 -- @param #number SpaceX (Optional) Additional space in meters before start and after end coordinate. Default 10000 meters (10 km).
--- @param #number deltaX (Optional) Increment in the direction of start to end coordinate in meters. Default 2000 meters.
--- @param #number deltaY (Optional) Increment perpendicular to the direction of start to end coordinate in meters. Default is same as deltaX.
--- @param #boolean MarkGrid If true, create F10 map markers at grid nodes.
+-- @param #number deltaX (Optional) Positive spacing along start-to-goal in meters. Default 2000 meters.
+-- @param #number deltaY (Optional) Positive perpendicular spacing in meters. Default is the same as deltaX.
+-- @param #boolean MarkGrid (Optional) If true, create F10 markers at accepted grid nodes. Disabled by default; large grids can stall DCS.
 -- @return #ASTAR self
 function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, MarkGrid)
 
@@ -504,10 +584,11 @@ end
 -- Valid neighbour functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Function to check if two nodes have line of sight (LoS).
+--- Check visibility between two node positions at a fixed altitude of 1 meter above sea level.
+-- Uses land.isVisible; the nodes' own altitudes are ignored. A corridor checks the center line and two parallel offset lines.
 -- @param #ASTAR.Node nodeA First node.
 -- @param #ASTAR.Node nodeB Other node.
--- @param #number corridor (Optional) Width of corridor in meters.
+-- @param #number corridor (Optional) Total corridor width in meters. Nil checks only the center line.
 -- @return #boolean If true, two nodes have LoS.
 function ASTAR.LoS(nodeA, nodeB, corridor)
 
@@ -546,7 +627,7 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
   return los
 end
 
---- Function to check if two nodes have a road connection.
+--- Check for a DCS road connection between nodes within the maximum straight-line 2D distance.
 -- @param #ASTAR.Node nodeA First node.
 -- @param #ASTAR.Node nodeB Other node.
 -- @param #number distmax (Optional) Maximum 2D distance in meters. Default is 2000 m.
@@ -567,11 +648,11 @@ function ASTAR.Road(nodeA, nodeB, distmax)
 
 end
 
---- Function to check if distance between two nodes is less than a threshold distance.
+--- Check whether the 2D distance between two nodes is at most a threshold.
 -- @param #ASTAR.Node nodeA First node.
 -- @param #ASTAR.Node nodeB Other node.
 -- @param #number distmax (Optional) Max distance in meters. Default is 2000 m.
--- @return #boolean If true, distance between the two nodes is below threshold.
+-- @return #boolean True if the distance is less than or equal to the threshold.
 function ASTAR.DistMax(nodeA, nodeB, distmax)
 
   distmax=distmax or 2000
@@ -582,10 +663,10 @@ function ASTAR.DistMax(nodeA, nodeB, distmax)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Heuristic cost functions
+-- Distance and travel cost functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Heuristic cost is given by the 2D distance between the nodes. 
+--- Return the straight-line 2D distance between two nodes.
 -- @param #ASTAR.Node nodeA First node.
 -- @param #ASTAR.Node nodeB Other node.
 -- @return #number Distance between the two nodes.
@@ -594,7 +675,7 @@ function ASTAR.Dist2D(nodeA, nodeB)
   return dist
 end
 
---- Heuristic cost is given by the 3D distance between the nodes. 
+--- Return the straight-line 3D distance between two nodes, including their altitudes.
 -- @param #ASTAR.Node nodeA First node.
 -- @param #ASTAR.Node nodeB Other node.
 -- @return #number Distance between the two nodes.
@@ -603,10 +684,10 @@ function ASTAR.Dist3D(nodeA, nodeB)
   return dist
 end
 
---- Heuristic cost is given by the distance between the nodes on road. 
+--- Return the length of the road path from land.findPathOnRoads between two nodes.
 -- @param #ASTAR.Node nodeA First node.
 -- @param #ASTAR.Node nodeB Other node.
--- @return #number Distance between the two nodes.
+-- @return #number Road path length in meters, or math.huge if DCS returns no path.
 function ASTAR.DistRoad(nodeA, nodeB)
 
   -- Get the path.
@@ -637,9 +718,9 @@ end
 
 --- Find the closest node from a given coordinate.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate.
--- @return #ASTAR.Node Cloest node to the coordinate.
--- @return #number Distance to closest node in meters.
+-- @param Core.Point#COORDINATE Coordinate Reference coordinate.
+-- @return #ASTAR.Node Closest node by 2D distance, or nil if the node set is empty.
+-- @return #number Distance to the closest node in meters, or math.huge if the node set is empty.
 function ASTAR:FindClosestNode(Coordinate)
 
   local distMin=math.huge
@@ -660,9 +741,9 @@ function ASTAR:FindClosestNode(Coordinate)
   return closeNode, distMin
 end
 
---- Find the start node.
+--- Select the closest start node, or add an exact start node if the closest is more than 1000 meters away.
+-- Sets startNode to nil if the node set is empty or an added endpoint fails the surface filter.
 -- @param #ASTAR self
--- @param #ASTAR.Node Node The node to be added to the nodes table.
 -- @return #ASTAR self
 function ASTAR:FindStartNode()
 
@@ -683,9 +764,9 @@ function ASTAR:FindStartNode()
   return self
 end
 
---- Add a node.
+--- Select the closest goal node, or add an exact goal node if the closest is more than 1000 meters away.
+-- Sets endNode to nil if the node set is empty or an added endpoint fails the surface filter.
 -- @param #ASTAR self
--- @param #ASTAR.Node Node The node to be added to the nodes table.
 -- @return #ASTAR self
 function ASTAR:FindEndNode()
 
@@ -710,11 +791,13 @@ end
 -- Main A* pathfinding function
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- A* pathfinding function. This seaches the path along nodes between start and end nodes/coordinates.
+--- Search synchronously for a least-cost path between the selected start and goal nodes.
+-- Returns nodes in travel order; use each node's coordinate to create waypoints. Does not assign a route to a unit or group.
+-- Endpoint exclusions can produce an empty table for a successful search. Nil indicates failure.
 -- @param #ASTAR self
 -- @param #boolean ExcludeStartNode If *true*, do not include start node in found path. Default is to include it.
 -- @param #boolean ExcludeEndNode If *true*, do not include end node in found path. Default is to include it.
--- @return #table Table of nodes from start to finish, or nil if no valid path or endpoints exist.
+-- @return #table Ordered list of ASTAR.Node entries (possibly empty), or nil for missing coordinates, missing endpoint nodes, or an unreachable goal.
 function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
 
   if not self.startCoord or not self.endCoord then
@@ -933,8 +1016,8 @@ end
 --- Function that calculates the lowest F score.
 -- @param #ASTAR self
 -- @param #table set The set of nodes IDs.
--- @param #number f_score F score.
--- @return #ASTAR.Node Best node.
+-- @param #table f_score Scores indexed by node id.
+-- @return #ASTAR.Node Node with the lowest finite score, or nil if none exists.
 function ASTAR:_LowestFscore(set, f_score)
 
   local lowest, bestNode = ASTAR.INF, nil
@@ -953,9 +1036,9 @@ end
 
 --- Function to get valid neighbours of a node.
 -- @param #ASTAR self
--- @param #ASTAR.Node theNode The node.
+-- @param #ASTAR.Node theNode The node whose neighbours are requested.
 -- @param #table nodes Possible neighbours.
--- @param #table Valid neighbour nodes.
+-- @return #table List of valid neighbour nodes, excluding the input node.
 function ASTAR:_NeighbourNodes(theNode, nodes)
 
   local neighbors = {}
@@ -980,18 +1063,18 @@ end
 --- Function to check if a node is not in a set.
 -- @param #ASTAR self
 -- @param #table set Set of nodes.
--- @param #ASTAR.Node theNode The node to check.
+-- @param #number theNode Node id to check.
 -- @return #boolean If true, the node is not in the set.
 function ASTAR:_NotIn(set, theNode)
   return set[theNode]==nil
 end
 
---- Unwind path function.
+--- Reconstruct the predecessor chain, excluding the current node itself.
 -- @param #ASTAR self
 -- @param #table flat_path Flat path.
 -- @param #table map Map.
 -- @param #ASTAR.Node current_node The current node.
--- @return #table Unwinded path.
+-- @return #table Ordered predecessor nodes.
 function ASTAR:_UnwindPath( flat_path, map, current_node )
 
   if map [current_node] then
