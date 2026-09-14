@@ -83,6 +83,9 @@
 -- ## Devision [MATH] `/`
 -- 
 -- ## Modulo [MATH] `%`
+--
+-- `vector % number` applies Lua modulo to each component. `vector % otherVector` uses the corresponding component as divisor.
+-- The result is a new VECTOR; neither operand is changed. Every divisor must be nonzero.
 -- 
 -- 
 -- # DCS API Interface
@@ -133,7 +136,7 @@ VECTOR = {
 
 --- VECTOR class version.
 -- @field #string version
-VECTOR.version="0.1.0"
+VECTOR.version="0.1.1"
 
 --- VECTOR unique ID
 _VECTORID=0
@@ -210,20 +213,20 @@ function VECTOR:NewFromPolar(r, phi)
   -- sin(0)=0 sin(90)=1, sin(180)=0, sin(270)=-1 ==> y
   -- cos(0)=1 cos(90)=0, cos(180)=-1, cos(270)=0 ==> x
   
-  local x=r*math.cos(phi)
-  local y=r*math.sin(phi)
+  local x=r*math.cos(Phi)
+  local y=r*math.sin(Phi)
   
   -- Create new vector. As z is nil, the 2D character is taken care of.
   local v=VECTOR:New(x, y)
    
-  return self
+  return v
 end
 
 --- Create a new VECTOR class instance from spherical coordinates (r, theta, phi).
 -- @param #VECTOR self
 -- @param #number r Distance in meters with r>=0.
--- @param #number theta Polar angle in Degrees measured from a fixed polar axis or zenith direction. This angle is in [0°, 180°].
--- @param #number phi Azimuthal angle in Degrees. This angle is in [0°, 360°).
+-- @param #number theta Polar angle in Degrees from the upward DCS y-axis: 0° is up, 90° is horizontal, 180° is down.
+-- @param #number phi Azimuthal angle in Degrees: 0° is North (+x), 90° is East (+z).
 -- @return #VECTOR self
 function VECTOR:NewFromSpherical(r, theta, phi)
 
@@ -232,14 +235,14 @@ function VECTOR:NewFromSpherical(r, theta, phi)
   local sinTheta=math.sin(math.rad(theta))
   local cosTheta=math.cos(math.rad(theta))
 
-  --TODO: Check x,y,z convention for DCS.
+  -- DCS uses y for altitude and the x-z plane for horizontal directions.
   local x=r*sinTheta*cosPhi
-  local y=r*sinTheta*sinPhi
-  local z=r*cosTheta
+  local y=r*cosTheta
+  local z=r*sinTheta*sinPhi
   
   local v=VECTOR:New(x, y, z)
    
-  return self
+  return v
 end
 
 --- Get the directional vector that points from a given vector `a` to another given vector `b`.
@@ -713,22 +716,19 @@ function VECTOR:Dot(Vec)
   return dot
 end
 
---- Calculate the rotation or cross product of this VECTOR with another vector. This function works for DCS#Vec2, DCS#Vec3, VECTOR, COORDINATE objects.
+--- Calculate the cross product self x Vec as a new VECTOR, leaving both inputs unchanged.
+-- A DCS#Vec2 is interpreted in the x-z plane with altitude zero.
+-- This is a cross product, not a rotation of the vector.
 -- @param #VECTOR self
 -- @param DCS#Vec3 Vec The other vector. Can also be a DCS#Vec2, DCS#Vec3, COORDINATE or VECTOR object.
 -- @return #VECTOR The cross product vector.
 function VECTOR:Rot(Vec)
 
-  -- TODO:
-  local dot=self.x*Vec.x
-  if Vec.z then
-    dot=dot+self.y*Vec.y+self.z*Vec.z
-  else
-    -- Vec is 2D ==> we take its y-component for z.
-    dot=dot+self.z*Vec.y
-  end
-   
-  return dot
+  local vx=Vec.x
+  local vy=Vec.z~=nil and Vec.y or 0
+  local vz=Vec.z~=nil and Vec.z or Vec.y
+
+  return VECTOR:New(self.y*vz-self.z*vy, self.z*vx-self.x*vz, self.x*vy-self.y*vx)
 end
 
 
@@ -898,7 +898,7 @@ function VECTOR:GetSurfaceTypeName()
   
   local s=land.getSurfaceType(vec2)
   
-  for name,id in land.SurfaceType() do
+  for name,id in pairs(land.SurfaceType) do
     if id==s then
       return name
     end
@@ -909,13 +909,13 @@ end
 
 --- Check if a given vector has line of sight with this vector.
 -- @param #VECTOR self
--- @param #VECTOR Vec The other vector.
--- @return #number Surface Type
+-- @param #VECTOR Vec The other vector. Can also be a DCS#Vec3 or COORDINATE object.
+-- @return #boolean Whether the two positions have line of sight.
 function VECTOR:IsVisible(Vec)
 
   local vec1=self:GetVec3()
   
-  local vec2={x=Vec.x, Vec.y, Vec.z}
+  local vec2={x=Vec.x, y=Vec.y, z=Vec.z}
   
   local los=land.isVisible(vec1, vec2)
 
@@ -1060,7 +1060,7 @@ function VECTOR:GetWindVector(WithTurbulence)
     wind=atmosphere.getWind(vec3)
   end
   
-  local vector=VECTOR:New(wind)
+  local vector=VECTOR:NewFromVec(wind)
 
   return vector
 end
@@ -1350,6 +1350,23 @@ function VECTOR.__div(a, b)
   end
 
   return c
+end
+
+--- Meta function for componentwise modulo by a scalar or another vector.
+-- @param #VECTOR a Vector a.
+-- @param #VECTOR b Vector b. Can also be a #number. Every divisor must be nonzero.
+-- @return #VECTOR A new VECTOR with c[i]=a[i]%b or c[i]=a[i]%b[i] for i=x,y,z.
+function VECTOR.__mod(a, b)
+
+  assert(VECTOR._IsVector(a) and (type(b)=="number" or VECTOR._IsVector(b)), "mod: wrong argument types (expected <vector> and (<number> or <vector>))")
+
+  if type(b)=="number" then
+    assert(b~=0, "mod: divisor must be nonzero")
+    return VECTOR:New(a.x%b, a.y%b, a.z%b)
+  end
+
+  assert(b.x~=0 and b.y~=0 and b.z~=0, "mod: divisor components must be nonzero")
+  return VECTOR:New(a.x%b.x, a.y%b.y, a.z%b.z)
 end
 
 --- Meta function to make vectors negative.
