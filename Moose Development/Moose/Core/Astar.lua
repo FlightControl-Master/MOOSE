@@ -34,8 +34,9 @@
 -- @field Core.Point#COORDINATE endCoord End coordinate.
 -- @field #function ValidNeighbourFunc Function to check if a node is valid.
 -- @field #table ValidNeighbourArg Optional arguments passed to the valid neighbour function.
--- @field #function CostFunc Function to calculate the heuristic "cost" to go from one node to another.
+-- @field #function CostFunc Function to calculate the travel cost from one node to another.
 -- @field #table CostArg Optional arguments passed to the cost function. 
+-- @field #table ValidSurfaceTypes Surface filter used when creating the grid and adding distant endpoints.
 -- @extends Core.Base#BASE
 
 --- *When nothing goes right... Go left!*
@@ -66,7 +67,7 @@
 -- 
 -- * *ValidSurfaceTypes* is a table of valid surface types. By default all surface types are valid.
 -- * *BoxXY* is the width of the grid perpendicular the the line between start and end node. Default is 40,000 meters (40 km).
--- * *SpaceX* is the additional space behind the start and end nodes. Default is 20,000 meters (20 km).
+-- * *SpaceX* is the additional space behind the start and end nodes. Default is 10,000 meters (10 km).
 -- * *deltaX* is the grid spacing between nodes in the direction of start and end node. Default is 2,000 meters (2 km).
 -- * *deltaY* is the grid spacing perpendicular to the direction of start and end node. Default is the same as *deltaX*.
 -- * *MarkGrid* If set to *true*, this places marker on the F10 map on each grid node. Note that this can stall DCS if too many nodes are created. 
@@ -108,6 +109,9 @@
 -- 
 -- In order to determine the optimal path, the pathfinding algorithm needs to know, how costly it is to go from one node to another.
 -- Often, this can simply be determined by the distance between two nodes. Therefore, the default cost function is set to be the 2D distance between two nodes.
+-- The selected cost function is used for each traversed connection. The 2D and 3D distance modes use the matching straight-line distance as a heuristic.
+-- Road and custom costs use a zero heuristic (Dijkstra search), so the estimate cannot overestimate the remaining cost.
+-- Custom costs must be non-negative and symmetric; return math.huge for an impassable connection.
 -- 
 -- 
 -- # Calculate the Path
@@ -116,6 +120,8 @@
 -- describe the optimal path from the start node to the end node.
 -- 
 -- By default, the start and end node are include in the table that is returned.
+-- The nearest grid nodes are used. If an endpoint is more than 1000 meters from the grid, a node at its exact coordinate is added,
+-- provided its surface passes the grid filter. Connections to these nodes use the configured neighbour rule as usual.
 -- 
 -- Note that a valid path must not always exist. So you should check if the function returns *nil*.
 -- 
@@ -164,7 +170,7 @@ ASTAR.INF=1/0
 
 --- ASTAR class version.
 -- @field #string version
-ASTAR.version="0.4.0"
+ASTAR.version="0.4.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -182,7 +188,7 @@ ASTAR.version="0.4.0"
 -- @return #ASTAR self
 function ASTAR:New()
 
-  -- Inherit everything from INTEL class.
+  -- Inherit from BASE.
   local self=BASE:Inherit(self, BASE:New()) --#ASTAR
 
   self.lid="ASTAR | "
@@ -243,8 +249,10 @@ end
 -- @return #ASTAR self
 function ASTAR:AddNode(Node)
 
+  if not self.nodes[Node.id] then
+    self.Nnodes=self.Nnodes+1
+  end
   self.nodes[Node.id]=Node
-  self.Nnodes=self.Nnodes+1 
     
   return self
 end
@@ -298,9 +306,10 @@ function ASTAR:SetValidNeighbourFunction(NeighbourFunction, ...)
 
   self.ValidNeighbourFunc=NeighbourFunction
   
-  self.ValidNeighbourArg={}
-  if arg then
-    self.ValidNeighbourArg=arg
+  self.ValidNeighbourArg={...}
+  self.ValidNeighbourArg.n=select("#", ...)
+  for _,node in pairs(self.nodes) do
+    node.valid={}
   end
   
   return self
@@ -331,7 +340,7 @@ function ASTAR:SetValidNeighbourDistance(MaxDistance)
   return self
 end
 
---- Set valid neighbours to be in a certain distance.
+--- Set valid neighbours to have a road connection within a maximum 2D distance.
 -- @param #ASTAR self
 -- @param #number MaxDistance (Optional) Max distance between nodes in meters. Default is 2000 m.
 -- @return #ASTAR self
@@ -345,25 +354,28 @@ function ASTAR:SetValidNeighbourRoad(MaxDistance)
 end
 
 --- Set the function which calculates the "cost" to go from one to another node.
--- The first to arguments of this function are always the two nodes under consideration. But you can add optional arguments.
+-- The first two arguments of this function are always the two nodes under consideration. But you can add optional arguments.
 -- Very often the distance between nodes is a good measure for the cost.
+-- Costs are used for traversed connections, must be non-negative and symmetric, and may be math.huge for an impassable connection.
+-- Custom functions use a zero heuristic to preserve optimality. Calling this setter also clears previously cached costs.
 -- @param #ASTAR self
--- @param #function CostFunction Function that returns the "cost".
+-- @param #function CostFunction Function that returns the travel cost. Use nil to restore the default 2D distance.
 -- @param ... Condition function arguments if any.
 -- @return #ASTAR self
 function ASTAR:SetCostFunction(CostFunction, ...)
 
   self.CostFunc=CostFunction
   
-  self.CostArg={}
-  if arg then
-    self.CostArg=arg
+  self.CostArg={...}
+  self.CostArg.n=select("#", ...)
+  for _,node in pairs(self.nodes) do
+    node.cost={}
   end
   
   return self
 end
 
---- Set heuristic cost to go from one node to another to be their 2D distance.
+--- Set travel cost and heuristic to the 2D distance between nodes.
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:SetCostDist2D()
@@ -373,7 +385,7 @@ function ASTAR:SetCostDist2D()
   return self
 end
 
---- Set heuristic cost to go from one node to another to be their 3D distance.
+--- Set travel cost and heuristic to the 3D distance between nodes.
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:SetCostDist3D()
@@ -383,12 +395,12 @@ function ASTAR:SetCostDist3D()
   return self
 end
 
---- Set heuristic cost to go from one node to another to be their 3D distance.
+--- Set travel cost to the road distance between nodes, using a zero heuristic.
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:SetCostRoad()
 
-  self:SetCostFunction(ASTAR)
+  self:SetCostFunction(ASTAR.DistRoad)
 
   return self
 end
@@ -408,6 +420,8 @@ end
 -- @param #boolean MarkGrid If true, create F10 map markers at grid nodes.
 -- @return #ASTAR self
 function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, MarkGrid)
+
+  self.ValidSurfaceTypes=ValidSurfaceTypes
 
   -- Note that internally
   -- x coordinate is z: x-->z  Line from start to end
@@ -535,8 +549,13 @@ end
 --- Function to check if two nodes have a road connection.
 -- @param #ASTAR.Node nodeA First node.
 -- @param #ASTAR.Node nodeB Other node.
+-- @param #number distmax (Optional) Maximum 2D distance in meters. Default is 2000 m.
 -- @return #boolean If true, two nodes are connected via a road.
-function ASTAR.Road(nodeA, nodeB)
+function ASTAR.Road(nodeA, nodeB, distmax)
+
+  if not ASTAR.DistMax(nodeA, nodeB, distmax) then
+    return false
+  end
 
   local path=land.findPathOnRoads("roads", nodeA.coordinate.x, nodeA.coordinate.z, nodeB.coordinate.x, nodeB.coordinate.z)
   
@@ -571,7 +590,7 @@ end
 -- @param #ASTAR.Node nodeB Other node.
 -- @return #number Distance between the two nodes.
 function ASTAR.Dist2D(nodeA, nodeB)
-  local dist=nodeA.coordinate:Get2DDistance(nodeB)
+  local dist=nodeA.coordinate:Get2DDistance(nodeB.coordinate)
   return dist
 end
 
@@ -651,9 +670,14 @@ function ASTAR:FindStartNode()
   
   self.startNode=node
   
-  if dist>1000 then
+  if node and dist>1000 then
     self:T(self.lid.."Adding start node to node grid!")
-    self:AddNode(node)
+    local endpoint=self:GetNodeFromCoordinate(self.startCoord)
+    self.startNode=nil
+    if self:CheckValidSurfaceType(endpoint, self.ValidSurfaceTypes) then
+      self:AddNode(endpoint)
+      self.startNode=endpoint
+    end
   end
     
   return self
@@ -669,9 +693,14 @@ function ASTAR:FindEndNode()
 
   self.endNode=node
   
-  if dist>1000 then
+  if node and dist>1000 then
     self:T(self.lid.."Adding end node to node grid!")
-    self:AddNode(node)
+    local endpoint=self:GetNodeFromCoordinate(self.endCoord)
+    self.endNode=nil
+    if self:CheckValidSurfaceType(endpoint, self.ValidSurfaceTypes) then
+      self:AddNode(endpoint)
+      self.endNode=endpoint
+    end
   end
     
   return self
@@ -685,8 +714,13 @@ end
 -- @param #ASTAR self
 -- @param #boolean ExcludeStartNode If *true*, do not include start node in found path. Default is to include it.
 -- @param #boolean ExcludeEndNode If *true*, do not include end node in found path. Default is to include it.
--- @return #table Table of nodes from start to finish.
+-- @return #table Table of nodes from start to finish, or nil if no valid path or endpoints exist.
 function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
+
+  if not self.startCoord or not self.endCoord then
+    self:E(self.lid.."Start and end coordinates are required!")
+    return nil
+  end
 
   self:FindStartNode()
   self:FindEndNode()
@@ -694,6 +728,11 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
   local nodes=self.nodes
   local start=self.startNode
   local goal=self.endNode
+
+  if not start or not goal then
+    self:E(self.lid.."Could NOT find valid start/end nodes!")
+    return nil
+  end
 
   -- Sets.
   local openset   = {}
@@ -723,6 +762,11 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
   
     -- Get current node.
     local current=self:_LowestFscore(openset, f_score)
+
+    -- No finite score remains: all remaining connections are unreachable.
+    if not current then
+      break
+    end
     
     -- Check if we are at the end node.
     if current.id==goal.id then
@@ -733,7 +777,7 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
         table.insert(path, goal)
       end
       
-      if ExcludeStartNode then
+      if ExcludeStartNode and #path>0 then
         table.remove(path, 1)
       end
       
@@ -769,9 +813,9 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
     
       if self:_NotIn(closedset, neighbor.id) then
       
-        local tentative_g_score=g_score[current.id]+self:_DistNodes(current, neighbor)
+        local tentative_g_score=g_score[current.id]+self:_TravelCost(current, neighbor)
          
-        if self:_NotIn(openset, neighbor.id) or tentative_g_score < g_score[neighbor.id] then
+        if tentative_g_score < (g_score[neighbor.id] or ASTAR.INF) then
         
           came_from[neighbor]=current
           
@@ -801,12 +845,28 @@ end
 -- A* pathfinding helper functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Heuristic "cost" function to go from node A to node B. Default is the distance between the nodes.
+--- Lower bound on the remaining travel cost. Custom and road costs use zero.
 -- @param #ASTAR self
 -- @param #ASTAR.Node nodeA Node A.
 -- @param #ASTAR.Node nodeB Node B.
--- @return #number "Cost" to go from node A to node B.
+-- @return #number Estimated remaining cost.
 function ASTAR:_HeuristicCost(nodeA, nodeB)
+
+  if not self.CostFunc or self.CostFunc==ASTAR.Dist2D then
+    return ASTAR.Dist2D(nodeA, nodeB)
+  elseif self.CostFunc==ASTAR.Dist3D then
+    return ASTAR.Dist3D(nodeA, nodeB)
+  end
+
+  return 0
+end
+
+--- Cached travel cost from node A to node B. Defaults to their 2D distance.
+-- @param #ASTAR self
+-- @param #ASTAR.Node nodeA Node A.
+-- @param #ASTAR.Node nodeB Node B.
+-- @return #number Travel cost.
+function ASTAR:_TravelCost(nodeA, nodeB)
   
   -- Counter.
   self.ncost=self.ncost+1
@@ -820,7 +880,7 @@ function ASTAR:_HeuristicCost(nodeA, nodeB)
 
   local cost=nil
   if self.CostFunc then
-    cost=self.CostFunc(nodeA, nodeB, unpack(self.CostArg))
+    cost=self.CostFunc(nodeA, nodeB, unpack(self.CostArg, 1, self.CostArg.n))
   else
     cost=self:_DistNodes(nodeA, nodeB)
   end
@@ -850,7 +910,7 @@ function ASTAR:_IsValidNeighbour(node, neighbor)
 
   local valid=nil
   if self.ValidNeighbourFunc then
-    valid=self.ValidNeighbourFunc(node, neighbor, unpack(self.ValidNeighbourArg))  
+    valid=self.ValidNeighbourFunc(node, neighbor, unpack(self.ValidNeighbourArg, 1, self.ValidNeighbourArg.n))
   else
     valid=true
   end
