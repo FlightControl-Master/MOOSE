@@ -928,9 +928,13 @@ function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, Mark
   if MaxGridNodes and nx>MaxGridNodes/nz then return nil, "node_limit" end
 
   local angle=math.rad(self.startCoord:HeadingTo(self.endCoord))
+  
   local grid={x=self.startCoord.x, z=self.startCoord.z, cos=math.cos(angle), sin=math.sin(angle), along=deltaX/2, across=deltaY/2}
+  
   self.ValidSurfaceTypes=ValidSurfaceTypes
+  
   self:T(self.lid..string.format("Building grid with nx=%d ny=%d => total=%d nodes", nx, nz, nx*nz))
+  
   for i=1,nx do
     for j=1,nz do
       local coordinate=gridCoordinate(grid, -SpaceX+deltaX*(j-1), -BoxHY/2+deltaY*(i-1))
@@ -1203,11 +1207,9 @@ function ASTAR:_StartGridDrawing(Style, DrawOptions)
   local batchSize=DrawOptions.BatchSize or 25
   local interval=DrawOptions.Interval or 0.1
   local maxBatchSeconds=DrawOptions.MaxBatchSeconds or 0.005
-  assert(type(batchSize)=="number" and batchSize>=1 and batchSize<math.huge and batchSize==math.floor(batchSize),
-    "ASTAR: drawing BatchSize must be a positive integer")
+  assert(type(batchSize)=="number" and batchSize>=1 and batchSize<math.huge and batchSize==math.floor(batchSize), "ASTAR: drawing BatchSize must be a positive integer")
   assert(type(interval)=="number" and interval>0 and interval<math.huge, "ASTAR: drawing Interval must be finite and positive")
-  assert(type(maxBatchSeconds)=="number" and maxBatchSeconds>0 and maxBatchSeconds<math.huge,
-    "ASTAR: drawing MaxBatchSeconds must be finite and positive")
+  assert(type(maxBatchSeconds)=="number" and maxBatchSeconds>0 and maxBatchSeconds<math.huge,"ASTAR: drawing MaxBatchSeconds must be finite and positive")
   self:UndrawGrid()
   Style.BatchSize=batchSize
   Style.Interval=interval
