@@ -33,18 +33,18 @@
 -- and the water depth (if over sea).
 -- 
 -- Line drawings created in the mission editor are automatically registered as pathlines and stored in the MOOSE database.
--- They can be accessed with the @{#PATHLINE.FindByName) function.
+-- They can be accessed with the @{#PATHLINE.FindByName} function.
 -- 
 -- # Constructor
 -- 
--- The @{PATHLINE.New) function creates a new PATHLINE object. This does not hold any points. Points can be added with the @{#PATHLINE.AddPointFromVec2} and @{#PATHLINE.AddPointFromVec3}
+-- The @{#PATHLINE.New} function creates a new PATHLINE object. This does not hold any points. Points can be added with the @{#PATHLINE.AddPointFromVec2} and @{#PATHLINE.AddPointFromVec3}
 -- 
 -- For a given table of 2D or 3D positions, a new PATHLINE object can be created with the @{#PATHLINE.NewFromVec2Array} or @{#PATHLINE.NewFromVec3Array}, respectively.
 -- 
 -- # Line Drawings
 -- 
 -- The most convenient way to create a pathline is the draw panel feature in the DCS mission editor. You can select "Line" and then "Segments", "Segment" or "Free" to draw your lines.
--- These line drawings are then automatically added to the MOOSE database as PATHLINE objects and can be retrieved with the @{#PATHLINE.FindByName) function, where the name is the one
+-- These line drawings are then automatically added to the MOOSE database as PATHLINE objects and can be retrieved with the @{#PATHLINE.FindByName} function, where the name is the one
 -- you specify in the draw panel.
 -- 
 -- # Mark on F10 map
@@ -53,6 +53,12 @@
 -- water depth.
 -- 
 -- To remove the marks, use @{#PATHLINE.MarkPoints}(`false`).
+-- DrawLine() replaces the existing line segments; UnDrawLine() removes them independently of point markers.
+--
+-- # Point Access
+--
+-- GetPoints(), GetPoints2D(), GetPoints3D() and the indexed getters return independent copies in path order.
+-- Modifying these results does not change the stored route. GetCoordinates() creates fresh COORDINATE objects.
 --
 -- @field #PATHLINE
 PATHLINE = {
@@ -74,7 +80,7 @@ PATHLINE = {
 
 --- PATHLINE class version.
 -- @field #string version
-PATHLINE.version="0.2.0"
+PATHLINE.version="0.2.1"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -88,16 +94,17 @@ PATHLINE.version="0.2.0"
 
 --- Create a new PATHLINE object. Points need to be added later.
 -- @param #PATHLINE self
--- @param #string Name Name of the path.
+-- @param #string Name (Optional) Name of the path. Default "Unknown Path".
 -- @return #PATHLINE self
 function PATHLINE:New(Name)
 
-  -- Inherit everything from INTEL class.
+  -- Inherit from BASE and start with an independent, empty point list.
   local self=BASE:Inherit(self, BASE:New()) --#PATHLINE
   
+  self.points={}
   self.name=Name or "Unknown Path"
 
-  self.lid=string.format("PATHLINE %s | ", Name)
+  self.lid=string.format("PATHLINE %s | ", self.name)
 
   return self
 end
@@ -168,7 +175,7 @@ end
 
 --- Add a point to the path from a given 3D position.
 -- @param #PATHLINE self
--- @param DCS#Vec3 Vec3 The 3D vector (x,y) to add.
+-- @param DCS#Vec3 Vec3 The 3D vector (x,y,z) to add.
 -- @return #PATHLINE self
 function PATHLINE:AddPointFromVec3(Vec3)
 
@@ -198,38 +205,39 @@ function PATHLINE:GetNumberOfPoints()
   return N
 end
 
---- Get points of pathline. Not that points are tables, that contain more information as just the 2D or 3D position but also the surface type etc.
+--- Get independent copies of all path points, including positions and terrain metadata.
+-- Editing returned tables does not modify the path or its drawing IDs.
 -- @param #PATHLINE self
 -- @return #list <#PATHLINE.Point> List of points.
 function PATHLINE:GetPoints()  
-  return self.points
+  return UTILS.DeepCopy(self.points)
 end
 
---- Get 3D points of pathline.
+--- Get independent 3D position copies in path order.
 -- @param #PATHLINE self
 -- @return <DCS#Vec3> List of DCS#Vec3 points.
 function PATHLINE:GetPoints3D()
 
   local vecs={}
   
-  for _,_point in pairs(self.points) do
+  for _,_point in ipairs(self.points) do
     local point=_point --#PATHLINE.Point
-    table.insert(vecs, point.vec3)
+    table.insert(vecs, UTILS.DeepCopy(point.vec3))
   end
 
   return vecs
 end
 
---- Get 2D points of pathline.
+--- Get independent 2D position copies in path order.
 -- @param #PATHLINE self
 -- @return <DCS#Vec2> List of DCS#Vec2 points.
 function PATHLINE:GetPoints2D()
 
   local vecs={}
   
-  for _,_point in pairs(self.points) do
+  for _,_point in ipairs(self.points) do
     local point=_point --#PATHLINE.Point
-    table.insert(vecs, point.vec2)
+    table.insert(vecs, UTILS.DeepCopy(point.vec2))
   end
 
   return vecs
@@ -242,7 +250,7 @@ function PATHLINE:GetCoordinates()
 
   local vecs={}
   
-  for _,_point in pairs(self.points) do
+  for _,_point in ipairs(self.points) do
     local point=_point --#PATHLINE.Point
     local coord=COORDINATE:NewFromVec3(point.vec3)
     table.insert(vecs,coord)
@@ -251,7 +259,8 @@ function PATHLINE:GetCoordinates()
   return vecs
 end
 
---- Get the n-th point of the pathline.
+--- Get an independent copy of the n-th point of the pathline.
+-- Invalid indices are logged and return nil.
 -- @param #PATHLINE self
 -- @param #number n (optional) The index of the point. Default is the first point.
 -- @return #PATHLINE.Point Point.
@@ -259,12 +268,12 @@ function PATHLINE:GetPointFromIndex(n)
 
   local N=self:GetNumberOfPoints()
   
-  n=n or 1
+  if n==nil then n=1 end
 
   local point=nil --#PATHLINE.Point
   
-  if n>=1 and n<=N then
-    point=self.points[n]
+  if type(n)=="number" and n>=1 and n<=N and n==math.floor(n) then
+    point=UTILS.DeepCopy(self.points[n])
   else
     self:E(self.lid..string.format("ERROR: No point in pathline for N=%s", tostring(n)))
   end
@@ -272,7 +281,7 @@ function PATHLINE:GetPointFromIndex(n)
   return point
 end
 
---- Get the 3D position of the n-th point.
+--- Get an independent copy of the 3D position of the n-th point.
 -- @param #PATHLINE self
 -- @param #number n The n-th point.
 -- @return DCS#Vec3 Position in 3D.
@@ -287,10 +296,10 @@ function PATHLINE:GetPoint3DFromIndex(n)
   return nil
 end
 
---- Get the 2D position of the n-th point.
+--- Get an independent copy of the 2D position of the n-th point.
 -- @param #PATHLINE self
 -- @param #number n The n-th point.
--- @return DCS#Vec2 Position in 3D.
+-- @return DCS#Vec2 Position in 2D.
 function PATHLINE:GetPoint2DFromIndex(n)
 
   local point=self:GetPointFromIndex(n)
@@ -332,34 +341,37 @@ end
 -- @param #boolean Switch If `true` or nil, set marks. If `false`, remove marks.
 -- @return #PATHLINE self
 function PATHLINE:MarkPoints(Switch)
-  for i,_point in pairs(self.points) do
+  for i,_point in ipairs(self.points) do
     local point=_point --#PATHLINE.Point
     if Switch==false then
       
       if point.markerID then
         UTILS.RemoveMark(point.markerID)
+        point.markerID=nil
       end
       
     else
     
       if point.markerID then
         UTILS.RemoveMark(point.markerID)
+        point.markerID=nil
       end
     
       point.markerID=UTILS.GetMarkID()
       
       local text=string.format("Pathline %s: Point #%d\nSurface Type=%d\nHeight=%.1f m\nDepth=%.1f m", self.name, i, point.surfaceType, point.landHeight, point.depth)
       
-      trigger.action.markToAll(point.markerID, text, point.vec3, "")
+      trigger.action.markToAll(point.markerID, text, point.vec3, false)
     
     end
   end
   return self
 end
 
---- Draw line on F10 map.
+--- Draw line on F10 map, replacing this pathline's existing line segments.
+-- Point markers are independent and are retained.
 -- @param #PATHLINE self
--- @param #number Recipient Recipent of the line: -1=All.
+-- @param #number Recipient (Optional) Coalition recipient of the line: -1=All (default).
 -- @param #table Color (optional) Color as RGB table plus alpha value. Default {1, 0, 0, 1.0}.
 -- @param #number LineType (optional) Line type: 1=Solid (default).
 -- @return #PATHLINE self
@@ -370,6 +382,7 @@ function PATHLINE:DrawLine(Recipient, Color, LineType)
   Color= Color or {1,0,0, 1.0}
   LineType=LineType or 1
   local ReadOnly=false
+  self:UnDrawLine()
   
 
   local np=#self.points
@@ -387,19 +400,18 @@ function PATHLINE:DrawLine(Recipient, Color, LineType)
   return self
 end
 
---- Remove line on F10 map.
+--- Remove line on F10 map. Repeated calls without a new drawing have no effect.
+-- Delayed removal captures the current IDs and cannot remove subsequently drawn segments.
 -- @param #PATHLINE self
 -- @param #number Delay Delay in seconds before line is removed.
 -- @return #PATHLINE self
 function PATHLINE:UnDrawLine(Delay)
-  
 
-  local np=#self.points
-
-  for _,_point in pairs(self.points) do
+  for _,_point in ipairs(self.points) do
     local p=_point   --#PATHLINE.Point
     if p.lineID then
       UTILS.RemoveMark(p.lineID, Delay)
+      p.lineID=nil
     end    
   end
 
@@ -411,7 +423,7 @@ end
 -- Private functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Get 3D points of pathline.
+--- Create a point with copied position and sampled terrain metadata.
 -- @param #PATHLINE self
 -- @param DCS#Vec3 Vec Position vector. Can also be a DCS#Vec2 in which case the altitude at landheight is taken.
 -- @return #PATHLINE.Point

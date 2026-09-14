@@ -2407,7 +2407,11 @@ function NAVYGROUP:_FindPathToNextWaypoint()
   local delta=dist/10
   
   -- Create a grid of nodes. We only want nodes of surface type water.
-  astar:CreateGrid({land.SurfaceType.WATER}, boxwidth, spacex, delta, delta, self.verbose>10)
+  astar:SetValidSurfaceTypes(land.SurfaceType.WATER)
+  astar:SetGridOptions({Width=boxwidth, Margin=spacex, Spacing=delta})
+  local grid=astar:CreateGrid()
+  if not grid then return false end
+  if self.verbose>10 then astar:DrawGrid() end
   
   -- Valid neighbour nodes need to have line of sight.
   astar:SetValidNeighbourLoS(self.pathCorridor)
