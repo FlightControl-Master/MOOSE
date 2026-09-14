@@ -38,13 +38,17 @@
 -- @field #table CostArg Optional arguments passed to the cost function. 
 -- @field #table ValidSurfaceTypes Surface filter used by the grid builder and automatically added endpoints; may also be a single numeric surface type.
 -- @field #boolean HexNeighboursOnly Restrict candidates to hex edges and local endpoint attachments. Disabled by default.
--- @field #table hexGrid Hex geometry: origin x/z, heading cos/sin, spacing, rowSpacing, original distance, boxHY, spaceX and candidateCount.
+-- @field #table hexGrid Hex geometry: origin x/z, heading cos/sin, spacing, rowSpacing, original distance, boxHY, spaceX, candidateCount and temporary initialSamples for zone seeds.
 -- @field #table hexIndex Hex nodes indexed by axial q, then r.
 -- @field #table hexLinks Cached candidate adjacency, indexed by node id, then neighbour id. Does not cache rule results.
 -- @field #table hexComponents Connected-component labels for hex candidates. Rebuilt when candidate adjacency changes.
 -- @field #table GridDrawIDs F10 polygon ids owned by DrawGrid(), removed by UndrawGrid().
--- @field #table GridDrawOptions Last DrawGrid() style, used to refresh an expanded grid overlay.
--- @field #string LastPathFailure Reason the last GetPath() failed; nil on success.
+-- @field #table GridDrawOptions Last DrawGrid() style and batch settings, retained for incremental updates.
+-- @field #table GridDrawNodeIDs Drawn polygon ids indexed by grid node id.
+-- @field #table GridDrawJob Pending drawing queue, or nil once completed or cancelled.
+-- @field #table LastGridDrawResult Last drawing job: Status, NodesQueued, NodesDrawn, Batches, CPUSeconds, MaxBatchCPUSeconds, ElapsedSimulationSeconds and optional Error.
+-- @field #table LastSearchTiming Last search attempt: CPUSeconds, Failure and Nodes. CPUSeconds is nil when os.clock is unavailable.
+-- @field #string LastPathFailure Reason the last search attempt failed; nil on success or when no attempt was made.
 -- @field #table LastExpansionResult Attempt history and stop reason from GetPathWithExpansion().
 -- @extends Core.Base#BASE
 
@@ -91,7 +95,7 @@
 --
 -- ## Rectangular Grid
 --
--- @{#ASTAR.CreateGrid} accepts `ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, MarkGrid`.
+-- @{#ASTAR.CreateGrid} accepts `ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, MarkGrid, MaxGridNodes`.
 -- The grid is aligned with the line from start to goal. All dimensions are in meters:
 --
 -- * `ValidSurfaceTypes`: a list of accepted surface types, or a single surface type. Nil accepts all types.
@@ -100,6 +104,12 @@
 -- * `deltaX`: node spacing along start-goal, default 2000; must be positive.
 -- * `deltaY`: perpendicular node spacing, default the value of deltaX; must be positive.
 -- * `MarkGrid`: set true to mark accepted grid nodes on the F10 map; disabled by default.
+-- * `MaxGridNodes`: optional positive integer limit on centers sampled by this call, BEFORE surface filtering. Omitted means no limit.
+--
+-- Both grid builders return `nil, "node_limit"` if this limit would be exceeded, before sampling terrain or changing the object.
+-- On success they return the ASTAR object, as before. When supplying a limit, check the result before chaining further methods.
+-- Existing nodes do not count towards the rectangular builder's per-call limit. Invalid dimensions or limits raise an error.
+-- Grid creation only builds geometry; configure connection rules before calling GetPath() or GetPathWithExpansion().
 --
 -- Make the width and end margins large enough to contain the detours you want to consider. Finer spacing can represent
 -- narrower passages, but increases the number of nodes. As a starting point, choose spacing smaller than half the width
@@ -108,8 +118,8 @@
 --
 -- ## Hexagonal Grid
 --
--- @{#ASTAR.CreateHexGrid} accepts `ValidSurfaceTypes, BoxHY, SpaceX, Spacing, MarkGrid`.
--- The surface filter, search width, end margins and markers have the same meanings and defaults as for CreateGrid().
+-- @{#ASTAR.CreateHexGrid} accepts `ValidSurfaceTypes, BoxHY, SpaceX, Spacing, MarkGrid, MaxGridNodes`.
+-- The surface filter, search width, end margins, markers and optional creation limit have the same meanings and defaults as for CreateGrid().
 -- `Spacing` is the distance between adjacent cell centers, default 2000 meters, not the distance to a hexagon vertex.
 -- The vertex radius would be `Spacing / math.sqrt(3)`. Grid nodes have altitude zero.
 --
@@ -137,6 +147,42 @@
 -- Hex mode does not change the cost functions or heuristic. Paths may contain more waypoints and follow raster directions;
 -- ASTAR does not smooth the result automatically. No MIST installation is required.
 --
+-- ## Initial Grid from a MOOSE Zone
+--
+-- @{#ASTAR.CreateHexGridFromZone} and @{#ASTAR.CreateGridFromZone} restrict initial grid centers to a MOOSE zone.
+-- Supported shapes are circular zones (ZONE / ZONE_RADIUS), square or rectangular mission-editor zones, and ZONE_POLYGON / ZONE_POLYGON_BASE.
+-- MOOSE registers mission-editor quadrilateral zones as polygons; use ZONE:FindByName() to obtain the registered zone object.
+-- Both endpoints must already be set. The lattice is anchored at start and aligned with the start-to-goal line.
+-- Zone membership is checked before creating coordinates or querying terrain, using IsVec2InZone() and the zone's boundary rules.
+-- Polygons may be concave. Only cell centers are clipped; cell outlines and connections may cross the zone boundary.
+--
+-- CreateHexGridFromZone(Zone, ValidSurfaceTypes, Spacing, MarkGrid, MaxGridNodes) requires an empty object, like CreateHexGrid().
+-- CreateGridFromZone(Zone, ValidSurfaceTypes, deltaX, deltaY, MarkGrid, MaxGridNodes) adds rectangular cells to existing non-hex nodes.
+-- Spacing defaults to 2000 m; deltaY defaults to deltaX. All other filter, marker and return conventions match the existing builders.
+-- The optional limit counts candidate centers in the zone bounding box projected into the grid's axes BEFORE either zone or surface filtering.
+-- It therefore also bounds membership-test work. Limit rejection returns nil, "node_limit" before terrain sampling or object mutation.
+--
+-- The zone defines the INITIAL grid, not a permanent movement restriction. Automatically added exact endpoints are only surface-filtered.
+-- GetPathWithExpansion() may enlarge a zone-based hex grid beyond the zone. The first enlargement also fills cells previously omitted by the zone,
+-- including gaps inside its bounding rectangle; previously sampled terrain cells are not queried again. Later zone movement or edits have no effect.
+-- For expansion, boxHY and spaceX describe a symmetric start-to-goal rectangle enclosing the projected zone bounds. Spacing and orientation stay fixed.
+-- Calling ExpandHexGrid() with unchanged dimensions leaves the zone-shaped grid unchanged. Automatic expansion still requires hex-only mode.
+--
+--     local startZone = ZONE:FindByName("Astar Start")
+--     local goalZone = ZONE:FindByName("Astar Goal")
+--     local initialZone = ZONE:FindByName("Astar Grid") -- Circle, quadrilateral or registered polygon.
+--     assert(startZone and goalZone and initialZone, "Create the three ASTAR zones")
+--     local astar = ASTAR:New()
+--     astar:SetStartCoordinate(startZone:GetCoordinate()):SetEndCoordinate(goalZone:GetCoordinate())
+--     local grid, reason = astar:CreateHexGridFromZone(initialZone, {land.SurfaceType.WATER}, 2000, false, 5000)
+--     if not grid then
+--       env.info("ASTAR: initial zone grid rejected: " .. reason)
+--       return
+--     end
+--     astar:SetHexNeighboursOnly(true):SetValidNeighbourLoS(500)
+--     local path = astar:GetPathWithExpansion({MaxGridNodes=5000, Redraw=false})
+--     if path then astar:DrawGridWithPath(path) end
+--
 -- ## Draw the Grid on the F10 Map
 --
 -- @{#ASTAR.DrawGrid} draws the accepted cells as polygons: hexagons for CreateHexGrid(), rectangles for CreateGrid().
@@ -146,14 +192,23 @@
 --
 -- By default, all coalitions see blue solid outlines with no fill. Optional coalition, RGB colors, opacity, line style,
 -- and read-only settings follow the MOOSE coordinate drawing functions. One DCS polygon is created per accepted cell.
--- DrawGrid() first removes its previous polygons, so calling it again updates the display without accumulating duplicates.
--- @{#ASTAR.UndrawGrid} removes only those polygons; it preserves nodes, paths and the separate text markers from MarkGrid=true.
--- Adding nodes or calling ExpandHexGrid() does not redraw automatically. Call DrawGrid() again after changing the node set.
--- GetPathWithExpansion() can refresh an existing overlay automatically once its attempts finish.
+-- DrawGrid() cancels pending drawing and removes its previous polygons, then builds the overlay with the requested style.
+-- Each batch draws at most 25 cells and stops after reaching 0.005 CPU seconds, with 0.1 simulation seconds between batches.
+-- The optional eighth argument is `{BatchSize=25, Interval=0.1, MaxBatchSeconds=0.005}`. Values must be positive; BatchSize must be an integer.
+-- Large jobs defer their first batch. Small jobs start immediately but schedule remaining cells if the time budget is reached.
+-- The budget is checked after each cell: one expensive DCS call can exceed it and cannot be interrupted. Without os.clock, batches use one cell.
+-- Smaller budgets reduce callback work; the complete overlay takes longer to appear. A batch is still synchronous.
+-- @{#ASTAR.UpdateGridDrawing} adds only missing cell polygons with the saved style and extends an active queue without duplicates.
+-- Use it after adding nodes or calling ExpandHexGrid(). GetPathWithExpansion() invokes it automatically after enlargement unless Redraw=false.
+-- Updates also work when the initial overlay is still queued. They do nothing if DrawGrid() has not selected a style.
+-- @{#ASTAR.UndrawGrid} cancels pending batches and synchronously removes owned polygons; it preserves nodes, paths and MarkGrid text markers.
+-- GridDrawIDs contains only completed polygons. LastGridDrawResult tracks the live job: Status (queued, running, complete, cancelled, error),
+-- NodesQueued, NodesDrawn, Batches, CPUSeconds (sum of batches), MaxBatchCPUSeconds, and ElapsedSimulationSeconds (set when the job ends).
+-- A drawing error stops that job and logs the error; UpdateGridDrawing() can retry missing cells in a regular overlay. Request a new snapshot to retry it.
 --
 -- On an existing ASTAR object with a generated grid:
 --
---     astar:DrawGrid()                             -- All coalitions, blue outlines, no fill.
+--     astar:DrawGrid()                             -- Blue outlines; large grids finish in scheduled batches.
 --     astar:DrawGrid(2, {0, 0.5, 1}, 0.8, nil, 0.1) -- Replace with a lightly filled grid for blue coalition.
 --     -- Later, when the overlay is no longer needed:
 --     astar:UndrawGrid()
@@ -164,6 +219,22 @@
 -- The filter checks the position of each node, not the terrain along connections. Two water nodes can still have land
 -- between them. A suitable neighbour rule is needed to reject such connections.
 --
+-- ## One-Time Grid and Path Debug View
+--
+-- @{#ASTAR.DrawGridWithPath} draws the current grid in blue and the supplied path's grid cells with green outlines and translucent green fill.
+-- It uses the existing rectangular or hexagonal cell shapes and draws one polygon per cell. It does not recompute or change the path.
+-- Exact endpoints and manual nodes without a cell polygon are skipped; long connections do not color intermediate cells not present in the path.
+-- The selection is captured when called. Later searches and enlargements do not refresh this debug snapshot, even with Redraw=true.
+-- Call DrawGridWithPath() again for a new snapshot, DrawGrid() to return to a regular overlay, or UndrawGrid() to remove it.
+-- Existing overlays on this object are replaced. Large snapshots finish in scheduled batches and stop once complete.
+-- Options include Coalition, GridColor, PathColor, PathFillAlpha and the same batch settings as DrawGrid().
+--
+--     local path, report = astar:GetPathWithExpansion({Redraw=false})
+--     if path then
+--       astar:DrawGridWithPath(path) -- One-time grid view; path cells are green.
+--     end
+--
+
 -- # Valid Neighbours
 --
 -- By default, every other node is a potential neighbour, including distant nodes. Without a neighbour rule, all candidate pairs are allowed.
@@ -230,7 +301,8 @@
 -- It searches the current grid first, expands its width and both end margins after failure, and retries until an actual path is found
 -- or a limit is reached. Passing the connectivity precheck alone is not enough: the full search must satisfy the configured rules and costs.
 -- Existing nodes, ids, manual points, callbacks, and lattice orientation are retained; newly added cells use the existing surface filter.
--- Old cells, including rejected cells, are not sampled again. Use a new object if the surface filter or the original lattice must change.
+-- A grid created with CreateHexGridFromZone() uses the zone only for its initial cells; enlargement can leave the zone.
+-- Previously sampled cells, including surface-filtered cells, are not sampled again. Use a new object if the surface filter or the original lattice must change.
 --
 -- The first argument is an optional settings table:
 --
@@ -240,24 +312,30 @@
 --   terrain sampling, but excludes manual points and exact endpoint nodes. Expansion is rejected before sampling if it would exceed the limit.
 -- * `MaxBoxHY`: maximum total width, default the larger of the initial width and 200000 meters.
 -- * `MaxSpaceX`: maximum margin at each end, default the larger of the initial margin and 100000 meters.
--- * `Redraw`: refresh an existing DrawGrid() overlay once at completion, with its original style; default true. Set false to manage drawing yourself.
+-- * `Redraw`: append missing cells to an existing or pending DrawGrid() overlay after searching, retaining its style and batch settings; default true.
 --
 -- Width grows by at least two Spacing and margins by at least one Spacing, so zero initial margins can grow as well.
 -- Dimension caps take precedence. Explicit dimension caps cannot be smaller than the current grid; attempt and cell limits must be positive integers.
 -- An initial grid already above MaxGridNodes is rejected without running a search. A rejected expansion leaves the current grid intact.
+-- This search limit cannot protect the earlier initial build: pass MaxGridNodes to CreateHexGrid() as well to bound its terrain sampling.
 --
 -- GetPathWithExpansion(Options, ExcludeStartNode, ExcludeEndNode) returns `path, report`. Endpoint exclusion flags behave as in GetPath().
 -- A successful empty path is still success. The report is also stored in `astar.LastExpansionResult` and contains:
 --
--- * `Attempts`: one entry per search, with BoxHY, SpaceX, accepted Nodes (including extra endpoints), and Failure (nil on success).
+-- * `Attempts`: one entry per search, with BoxHY, SpaceX, accepted Nodes (including extra endpoints), CPUSeconds, and Failure (nil on success).
 -- * `StopReason`: path_found, attempt_limit, size_limit, node_limit, or missing_coordinates.
 -- * `BoxHY`, `SpaceX`, `Nodes`: final dimensions and accepted node count. The expanded grid stays on the same object for drawing or reuse.
+-- * `SearchCPUSeconds`: total CPU time for attempts and grid enlargement, excluding overlay drawing.
+-- * `Drawing`: optional reference to the live drawing result when the overlay was updated. A pending initial job may be included.
+--   Status and counters continue to change after the path is returned; the report does not wait for queued drawing to finish.
 --
 -- `HasPotentialPath()` also returns a second value on failure; GetPath() stores its reason in `LastPathFailure`:
 -- missing_coordinates, no_start_node, no_goal_node, start_unattached, goal_unattached, or disconnected_grid.
 -- The unattached reasons specifically mean a non-grid endpoint has no accepted hex center within one Spacing.
 -- If candidate connectivity exists but the full search fails, LastPathFailure is connections_blocked.
--- Attempts and dimensions are logged, allowing you to see why and how far the search grew.
+-- Attempts, failure reasons and dimensions are trace-logged, allowing you to see why and how far the search grew.
+-- Intermediate failures do not generate error logs or player messages. Only a final unsuccessful result announces failure.
+-- LastPathFailure describes the last search attempt; it is nil when the grid budget rejects the request before any attempt.
 --
 -- This operation is synchronous. Use modest limits in a running mission; no limit guarantees a route exists.
 -- Enlargement cannot fix a passage missed by the fixed spacing, a permanently invalid endpoint, or rules that forbid every route.
@@ -285,7 +363,11 @@
 -- checks can pause the simulation; start with a small search area and add detail only as needed.
 -- F10 markers for large grids can also be expensive. Set `astar.Debug = true` to enable the no-path message to players;
 -- search statistics are written through the normal MOOSE logging facilities.
--- DrawGrid() also runs synchronously and creates one polygon per cell; use it on reasonably sized grids and remove the overlay when finished.
+-- DrawGrid() creates one polygon per cell from plain Vec3 vertices and schedules work in time-limited batches. Enlargement retains existing polygons.
+-- Search completion and drawing completion are logged separately. Search CPU time includes endpoint resolution and connectivity checks.
+-- CPU measurements use os.clock when available; they are not wall-clock durations. In a sanitized environment they are reported as unavailable,
+-- with nil timing fields. Drawing's elapsed simulation time includes scheduler delays and is labelled separately.
+-- Replacing an overlay with DrawGrid() or removing it with UndrawGrid() still removes existing polygons synchronously.
 --
 -- Connection validity and travel costs are cached on the nodes. Calling SetValidNeighbourFunction() or one of its convenience
 -- setters clears validity results; calling SetCostFunction() or a cost setter clears travel costs.
@@ -320,6 +402,7 @@
 --
 -- Use the same two water-based trigger zones as above. This starts with a 40 km wide grid and 10 km end margins.
 -- GetPathWithExpansion() handles the precheck internally; do not abort the script first when HasPotentialPath() is false.
+-- The same 5000-cell budget protects both the initial build and later expansions.
 --
 --     local startZone = ZONE:FindByName("Astar Start")
 --     local goalZone = ZONE:FindByName("Astar Goal")
@@ -327,7 +410,11 @@
 --     local astar = ASTAR:New()
 --     astar:SetStartCoordinate(startZone:GetCoordinate())
 --     astar:SetEndCoordinate(goalZone:GetCoordinate())
---     astar:CreateHexGrid({land.SurfaceType.WATER}, 40000, 10000, 2000, false)
+--     local grid, reason = astar:CreateHexGrid({land.SurfaceType.WATER}, 40000, 10000, 2000, false, 5000)
+--     if not grid then
+--       env.info("ASTAR: initial grid rejected: " .. reason)
+--       return
+--     end
 --     astar:SetHexNeighboursOnly(true)
 --     astar:SetValidNeighbourLoS(500)
 --     local path, report = astar:GetPathWithExpansion({
@@ -430,10 +517,104 @@ ASTAR.INF=1/0
 
 --- ASTAR class version.
 -- @field #string version
-ASTAR.version="0.6.0"
+ASTAR.version="0.7.0"
 
 -- Six axial offsets; adjacent centers are one spacing apart.
 local hexDirections={{1,0}, {0,1}, {-1,1}, {-1,0}, {0,-1}, {1,-1}}
+
+-- DCS may sanitize os. Do not substitute simulation time for sub-second CPU measurements.
+local function startCPUClock()
+  if os and type(os.clock)=="function" then return {read=os.clock, start=os.clock()} end
+end
+
+local function elapsedCPU(clock)
+  if clock then return math.max(0, clock.read()-clock.start) end
+end
+
+local function cpuTimeText(seconds)
+  return seconds and string.format("CPU time %.6f sec", seconds) or "CPU time unavailable"
+end
+
+-- Geometry helpers shared by grid creation, enlargement and drawing.
+local function checkGridDimensions(width, margin)
+  assert(type(width)=="number" and width>=0 and width<math.huge, "ASTAR: BoxHY must be finite and non-negative")
+  assert(type(margin)=="number" and margin>=0 and margin<math.huge, "ASTAR: SpaceX must be finite and non-negative")
+end
+
+local function checkGridNodeLimit(limit)
+  assert(limit==nil or (type(limit)=="number" and limit>=1 and limit<math.huge and limit==math.floor(limit)),
+    "ASTAR: MaxGridNodes must be a positive integer")
+end
+
+local function gridPosition(grid, along, across, origin)
+  origin=origin or grid
+  return origin.x+along*grid.cos-across*grid.sin, origin.z+along*grid.sin+across*grid.cos
+end
+
+local function gridCoordinate(grid, along, across, origin)
+  local x,z=gridPosition(grid, along, across, origin)
+  return COORDINATE:New(x, 0, z)
+end
+
+local function hexRowBounds(grid, width)
+  -- Include centers on a boundary despite floating-point rounding in axial coordinates.
+  return math.ceil(-width/2/grid.rowSpacing-1e-9), math.floor(width/2/grid.rowSpacing+1e-9)
+end
+
+local function hexColumnBounds(grid, margin, r, area)
+  local first=area and area.alongMin or -margin
+  local last=area and area.alongMax or grid.distance+margin
+  return math.ceil(first/grid.spacing-r/2-1e-9), math.floor(last/grid.spacing-r/2+1e-9)
+end
+
+-- Prepare each row once and count all centers, including surface-filtered cells, before mutating the grid.
+local function hexBounds(grid, width, margin, limit, area)
+  local rmin, rmax
+  if area then
+    rmin=math.ceil(area.acrossMin/grid.rowSpacing-1e-9)
+    rmax=math.floor(area.acrossMax/grid.rowSpacing+1e-9)
+  else rmin, rmax=hexRowBounds(grid, width) end
+  local bounds={rmin=rmin, rmax=rmax, count=0}
+  for r=rmin,rmax do
+    local qmin, qmax=hexColumnBounds(grid, margin, r, area)
+    -- Count as floating point to avoid integer overflow in Lua 5.4 before checking a small limit.
+    bounds.count=bounds.count+math.max(0, qmax*1.0-qmin+1)
+    if limit and bounds.count>limit then return nil end
+    bounds[r]={qmin=qmin, qmax=qmax}
+  end
+  return bounds
+end
+
+-- Read MOOSE's polygon bounding box, or construct the missing radius-zone bounding box.
+-- Zone membership itself is delegated to IsVec2InZone, including its boundary conventions.
+local function zoneGridArea(self, zone)
+  assert(self.startCoord and self.endCoord, "ASTAR: start and end coordinates are required for a zone grid")
+  assert(type(zone)=="table" and type(zone.IsVec2InZone)=="function", "ASTAR: a MOOSE zone with IsVec2InZone is required")
+  local box=type(zone.GetBoundingSquare)=="function" and zone:GetBoundingSquare() or nil
+  if not box and type(zone.GetRadius)=="function" and type(zone.GetVec2)=="function" then
+    local center, radius=zone:GetVec2(), zone:GetRadius()
+    assert(type(center)=="table" and type(center.x)=="number" and type(center.y)=="number"
+      and type(radius)=="number" and radius>=0 and radius<math.huge, "ASTAR: invalid radius zone geometry")
+    box={x1=center.x-radius, y1=center.y-radius, x2=center.x+radius, y2=center.y+radius}
+  end
+  assert(type(box)=="table", "ASTAR: zone must provide polygon bounds or a center and radius")
+  for _,key in ipairs({"x1","y1","x2","y2"}) do
+    local value=box[key]
+    assert(type(value)=="number" and value>-math.huge and value<math.huge, "ASTAR: invalid zone bounding box")
+  end
+  assert(box.x1<=box.x2 and box.y1<=box.y2, "ASTAR: invalid zone bounding box order")
+  local distance=self.startCoord:Get2DDistance(self.endCoord)
+  local angle=distance>0 and math.rad(self.startCoord:HeadingTo(self.endCoord)) or 0
+  local grid={x=self.startCoord.x, z=self.startCoord.z, cos=math.cos(angle), sin=math.sin(angle), distance=distance}
+  local area={alongMin=math.huge, alongMax=-math.huge, acrossMin=math.huge, acrossMax=-math.huge}
+  for _,point in ipairs({{box.x1,box.y1},{box.x1,box.y2},{box.x2,box.y1},{box.x2,box.y2}}) do
+    local dx,dz=point[1]-grid.x,point[2]-grid.z
+    local along,across=dx*grid.cos+dz*grid.sin,-dx*grid.sin+dz*grid.cos
+    area.alongMin=math.min(area.alongMin,along) area.alongMax=math.max(area.alongMax,along)
+    area.acrossMin=math.min(area.acrossMin,across) area.acrossMax=math.max(area.acrossMax,across)
+  end
+  return grid,area
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -721,93 +902,49 @@ end
 -- @param #table ValidSurfaceTypes (Optional) Allowed surface types; a single numeric surface type is also accepted. Nil allows all surfaces.
 -- @param #number BoxHY (Optional) Total grid width perpendicular to start-to-goal, in meters. Default 40000 meters (40 km).
 -- @param #number SpaceX (Optional) Additional space in meters before start and after end coordinate. Default 10000 meters (10 km).
--- @param #number deltaX (Optional) Positive spacing along start-to-goal in meters. Default 2000 meters.
--- @param #number deltaY (Optional) Positive perpendicular spacing in meters. Default is the same as deltaX.
+-- @param #number deltaX (Optional) Finite positive spacing along start-to-goal in meters. Default 2000 meters.
+-- @param #number deltaY (Optional) Finite positive perpendicular spacing in meters. Default is the same as deltaX.
 -- @param #boolean MarkGrid (Optional) If true, create F10 markers at accepted grid nodes. Disabled by default; large grids can stall DCS.
--- @return #ASTAR self
-function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, MarkGrid)
+-- @param #number MaxGridNodes (Optional) Positive integer cap on centers sampled by this call before surface filtering. Nil means unlimited.
+-- @return #ASTAR self on success, or nil if the candidate-cell limit would be exceeded. Rejection leaves the object unchanged.
+-- @return #string Failure reason: node_limit, or nil on success.
+function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, MarkGrid, MaxGridNodes)
 
   assert(not self.hexGrid, "ASTAR: use a new object for a rectangular grid after a hex grid")
+  assert(self.startCoord and self.endCoord, "ASTAR: start and end coordinates are required for a grid")
+  BoxHY=BoxHY or 40000
+  SpaceX=SpaceX or 10000
+  deltaX=deltaX or 2000
+  deltaY=deltaY or deltaX
+  checkGridDimensions(BoxHY, SpaceX)
+  assert(type(deltaX)=="number" and deltaX>0 and deltaX<math.huge, "ASTAR: deltaX must be finite and positive")
+  assert(type(deltaY)=="number" and deltaY>0 and deltaY<math.huge, "ASTAR: deltaY must be finite and positive")
+  checkGridNodeLimit(MaxGridNodes)
+
+  local distance=self.startCoord:Get2DDistance(self.endCoord)
+  -- Match the original numeric-for loop counts even when dimensions are not spacing multiples.
+  local nx=math.floor(BoxHY/deltaY+1)
+  local nz=math.floor((distance+2*SpaceX)/deltaX+1)
+  if MaxGridNodes and nx>MaxGridNodes/nz then return nil, "node_limit" end
+
+  local angle=math.rad(self.startCoord:HeadingTo(self.endCoord))
+  local grid={x=self.startCoord.x, z=self.startCoord.z, cos=math.cos(angle), sin=math.sin(angle), along=deltaX/2, across=deltaY/2}
   self.ValidSurfaceTypes=ValidSurfaceTypes
-
-  -- Note that internally
-  -- x coordinate is z: x-->z  Line from start to end
-  -- y coordinate is x: y-->x  Perpendicular
-
-  -- Grid length and width.
-  local Dz=SpaceX or 10000
-  local Dx=BoxHY and BoxHY/2 or 20000
-
-  -- Increments.
-  local dz=deltaX or 2000  
-  local dx=deltaY or dz
-  
-  -- Heading from start to end coordinate.
-  local angle=self.startCoord:HeadingTo(self.endCoord)
-
-  -- Retain each generated grid's orientation and cell size for optional F10 drawing.
-  local rectGrid={along=dz/2, across=dx/2, cos=math.cos(math.rad(angle)), sin=math.sin(math.rad(angle))}
-  
-  --Distance between start and end.
-  local dist=self.startCoord:Get2DDistance(self.endCoord)+2*Dz
-  
-  -- Origin of map. Needed to translate back to wanted position.
-  local co=COORDINATE:New(0, 0, 0)
-  local do1=co:Get2DDistance(self.startCoord)
-  local ho1=co:HeadingTo(self.startCoord)
-  
-  -- Start of grid.
-  local xmin=-Dx
-  local zmin=-Dz
-  
-  -- Number of grid points.
-  local nz=dist/dz+1
-  local nx=2*Dx/dx+1
-  
-  -- Debug info.
-  local text=string.format("Building grid with nx=%d ny=%d => total=%d nodes", nx, nz, nx*nz)
-  self:T(self.lid..text)
-  
-  -- Loop over x and z coordinate to create a 2D grid.
+  self:T(self.lid..string.format("Building grid with nx=%d ny=%d => total=%d nodes", nx, nz, nx*nz))
   for i=1,nx do
-  
-    -- x coordinate perpendicular to z.
-    local x=xmin+dx*(i-1)
-  
     for j=1,nz do
-    
-      -- z coordinate connecting start and end.
-      local z=zmin+dz*(j-1)
-      
-      -- Rotate 2D.
-      local vec3=UTILS.Rotate2D({x=x, y=0, z=z}, angle)
-      
-      -- Coordinate of the node.
-      local c=COORDINATE:New(vec3.z, vec3.y, vec3.x):Translate(do1, ho1, true)
-        
-      -- Create a node at this coordinate.
-      local node=self:GetNodeFromCoordinate(c)
-        
-      -- Check if node has valid surface type.
+      local coordinate=gridCoordinate(grid, -SpaceX+deltaX*(j-1), -BoxHY/2+deltaY*(i-1))
+      local node=self:GetNodeFromCoordinate(coordinate)
       if self:CheckValidSurfaceType(node, ValidSurfaceTypes) then
-          
-        if MarkGrid then
-          c:MarkToAll(string.format("i=%d, j=%d surface=%d", i, j, node.surfacetype))
-        end
-          
-        -- Add node to grid.
-        node.rectGrid=rectGrid
+        node.rectGrid=grid
         self:AddNode(node)
-        
+        if MarkGrid then
+          coordinate:MarkToAll(string.format("i=%d, j=%d surface=%d", i, j, node.surfacetype))
+        end
       end
-    
     end
   end
-    
-  -- Debug info.
-  local text=string.format("Done building grid!")
-  self:T2(self.lid..text)
-
+  self:T2(self.lid.."Done building grid!")
   return self
 end
 
@@ -822,33 +959,113 @@ end
 -- @param #number SpaceX (Optional) Margin before start and after goal in meters, default 10000. Must be finite and non-negative.
 -- @param #number Spacing (Optional) Distance between adjacent hex centers in meters, default 2000. Must be finite and positive.
 -- @param #boolean MarkGrid (Optional) Mark accepted hex centers on the F10 map, default false.
--- @return #ASTAR self
-function ASTAR:CreateHexGrid(ValidSurfaceTypes, BoxHY, SpaceX, Spacing, MarkGrid)
+-- @param #number MaxGridNodes (Optional) Positive integer cap on centers sampled by this call before surface filtering. Nil means unlimited.
+-- @return #ASTAR self on success, or nil if the candidate-cell limit would be exceeded. Rejection leaves the object unchanged.
+-- @return #string Failure reason: node_limit, or nil on success.
+function ASTAR:CreateHexGrid(ValidSurfaceTypes, BoxHY, SpaceX, Spacing, MarkGrid, MaxGridNodes)
 
   BoxHY=BoxHY or 40000
   SpaceX=SpaceX or 10000
   Spacing=Spacing or 2000
   assert(self.startCoord and self.endCoord, "ASTAR: start and end coordinates are required for a hex grid")
   assert(not self.hexGrid and next(self.nodes)==nil, "ASTAR: create a hex grid on an empty ASTAR object")
-  assert(type(BoxHY)=="number" and BoxHY>=0 and BoxHY<math.huge, "ASTAR: BoxHY must be finite and non-negative")
-  assert(type(SpaceX)=="number" and SpaceX>=0 and SpaceX<math.huge, "ASTAR: SpaceX must be finite and non-negative")
+  checkGridDimensions(BoxHY, SpaceX)
   assert(type(Spacing)=="number" and Spacing>0 and Spacing<math.huge, "ASTAR: Spacing must be finite and positive")
+  checkGridNodeLimit(MaxGridNodes)
 
   local distance=self.startCoord:Get2DDistance(self.endCoord)
   local angle=distance>0 and math.rad(self.startCoord:HeadingTo(self.endCoord)) or 0
-  local rowSpacing=Spacing*math.sqrt(3)/2
-  self.hexGrid={x=self.startCoord.x, z=self.startCoord.z, cos=math.cos(angle), sin=math.sin(angle), spacing=Spacing, rowSpacing=rowSpacing,
-    distance=distance, markGrid=MarkGrid}
+  local grid={x=self.startCoord.x, z=self.startCoord.z, cos=math.cos(angle), sin=math.sin(angle), spacing=Spacing,
+    rowSpacing=Spacing*math.sqrt(3)/2, distance=distance, markGrid=MarkGrid}
+  local bounds=hexBounds(grid, BoxHY, SpaceX, MaxGridNodes)
+  if not bounds then return nil, "node_limit" end
+
+  self.hexGrid=grid
   self.hexIndex={}
   self.ValidSurfaceTypes=ValidSurfaceTypes
-
-  self:ExpandHexGrid(BoxHY, SpaceX)
+  self:_PopulateHexGrid(bounds, BoxHY, SpaceX)
   self:T(self.lid..string.format("Built hex grid with %d nodes, spacing %.1f m", self.Nnodes, Spacing))
   return self
 end
 
+--- Create a hex grid whose initial cell centers are restricted to a MOOSE circle, square/rectangle or polygon zone.
+-- Requires both endpoints and an empty node set. The lattice origin and heading still follow start-to-goal.
+-- Uses the zone only during creation. A later enlargement may add cells outside it, including unvisited cells inside its bounding box.
+-- Zone and surface filters apply to centers, not cell outlines or connections. Exact endpoints added by a search are not zone-filtered.
+-- @param #ASTAR self
+-- @param Core.Zone#ZONE_BASE Zone Initial grid zone; mission-editor zones can be obtained with ZONE:FindByName().
+-- @param #table ValidSurfaceTypes (Optional) Allowed surface types; nil accepts all types.
+-- @param #number Spacing (Optional) Finite positive center spacing, default 2000 m.
+-- @param #boolean MarkGrid (Optional) Mark accepted centers, default false.
+-- @param #number MaxGridNodes (Optional) Positive cap on candidate centers in the projected zone bounding box, before zone or surface filtering.
+-- @return #ASTAR self, or nil if the candidate-cell limit is exceeded. A limit rejection leaves the object unchanged.
+-- @return #string Failure reason node_limit, or nil on success.
+function ASTAR:CreateHexGridFromZone(Zone, ValidSurfaceTypes, Spacing, MarkGrid, MaxGridNodes)
+  assert(not self.hexGrid and next(self.nodes)==nil, "ASTAR: create a hex grid on an empty ASTAR object")
+  Spacing=Spacing or 2000
+  assert(type(Spacing)=="number" and Spacing>0 and Spacing<math.huge, "ASTAR: Spacing must be finite and positive")
+  checkGridNodeLimit(MaxGridNodes)
+  local grid,area=zoneGridArea(self,Zone)
+  grid.spacing=Spacing grid.rowSpacing=Spacing*math.sqrt(3)/2 grid.markGrid=MarkGrid
+  local width=2*math.max(math.abs(area.acrossMin),math.abs(area.acrossMax))
+  local margin=math.max(0,-area.alongMin,area.alongMax-grid.distance)
+  checkGridDimensions(width,margin)
+  local bounds=hexBounds(grid,width,margin,MaxGridNodes,area)
+  if not bounds then return nil,"node_limit" end
+  self.hexGrid=grid
+  self.hexIndex={}
+  self.ValidSurfaceTypes=ValidSurfaceTypes
+  self:_PopulateHexGrid(bounds,width,margin,Zone)
+  self:T(self.lid..string.format("Built zone hex grid with %d nodes, spacing %.1f m",self.Nnodes,Spacing))
+  return self
+end
+
+--- Add a rectangular grid whose initial cell centers lie inside a MOOSE circle, square/rectangle or polygon zone.
+-- Requires both endpoints. Preserves existing nodes and aligns the lattice to start-to-goal, with a center at the start if it is in the zone.
+-- Zone membership is checked before terrain sampling. It is not a permanent path constraint. Rectangular automatic enlargement is not supported.
+-- @param #ASTAR self
+-- @param Core.Zone#ZONE_BASE Zone Initial grid zone.
+-- @param #table ValidSurfaceTypes (Optional) Allowed surface types; nil accepts all types.
+-- @param #number deltaX (Optional) Finite positive spacing along start-to-goal, default 2000 m.
+-- @param #number deltaY (Optional) Finite positive perpendicular spacing, default deltaX.
+-- @param #boolean MarkGrid (Optional) Mark accepted centers, default false.
+-- @param #number MaxGridNodes (Optional) Positive cap on candidate centers in the projected bounding box before either filter. Excludes existing nodes.
+-- @return #ASTAR self, or nil if the candidate-cell limit is exceeded. A limit rejection leaves the object unchanged.
+-- @return #string Failure reason node_limit, or nil on success.
+function ASTAR:CreateGridFromZone(Zone, ValidSurfaceTypes, deltaX, deltaY, MarkGrid, MaxGridNodes)
+  assert(not self.hexGrid, "ASTAR: use a new object for a rectangular grid after a hex grid")
+  deltaX=deltaX or 2000 deltaY=deltaY or deltaX
+  assert(type(deltaX)=="number" and deltaX>0 and deltaX<math.huge, "ASTAR: deltaX must be finite and positive")
+  assert(type(deltaY)=="number" and deltaY>0 and deltaY<math.huge, "ASTAR: deltaY must be finite and positive")
+  checkGridNodeLimit(MaxGridNodes)
+  local grid,area=zoneGridArea(self,Zone)
+  local imin,imax=math.ceil(area.acrossMin/deltaY-1e-9),math.floor(area.acrossMax/deltaY+1e-9)
+  local jmin,jmax=math.ceil(area.alongMin/deltaX-1e-9),math.floor(area.alongMax/deltaX+1e-9)
+  local nx,nz=math.max(0,imax*1.0-imin+1),math.max(0,jmax*1.0-jmin+1)
+  if MaxGridNodes and nz>0 and nx>MaxGridNodes/nz then return nil,"node_limit" end
+  grid.along=deltaX/2 grid.across=deltaY/2
+  self.ValidSurfaceTypes=ValidSurfaceTypes
+  for i=imin,imax do
+    for j=jmin,jmax do
+      local x,z=gridPosition(grid,j*deltaX,i*deltaY)
+      if Zone:IsVec2InZone({x=x,y=z}) then
+        local coordinate=COORDINATE:New(x,0,z)
+        local node=self:GetNodeFromCoordinate(coordinate)
+        if self:CheckValidSurfaceType(node,ValidSurfaceTypes) then
+          node.rectGrid=grid
+          self:AddNode(node)
+          if MarkGrid then coordinate:MarkToAll(string.format("i=%d, j=%d surface=%d",i,j,node.surfacetype)) end
+        end
+      end
+    end
+  end
+  self:T(self.lid..string.format("Built zone rectangular grid with %d total nodes",self.Nnodes))
+  return self
+end
+
 --- Enlarge an existing hex lattice without replacing its nodes, origin, orientation or spacing.
--- Adds only centers outside the previous search rectangle, including when the old cells were surface-filtered out.
+-- Adds centers outside the previous search rectangle. The first enlargement of a zone seed also fills previously unvisited cells inside that rectangle.
+-- Previously sampled cells, including surface-filtered ones, are retained without resampling. Identical dimensions leave a zone seed unchanged.
 -- Does not change endpoints or redraw polygons automatically. MarkGrid text markers follow the original grid setting.
 -- @param #ASTAR self
 -- @param #number BoxHY New total perpendicular width in meters; must be finite and at least the current width.
@@ -860,57 +1077,61 @@ function ASTAR:ExpandHexGrid(BoxHY, SpaceX, MaxGridNodes)
 
   local grid=self.hexGrid
   assert(grid, "ASTAR: call CreateHexGrid before expanding")
-  assert(type(BoxHY)=="number" and BoxHY>=0 and BoxHY<math.huge and BoxHY>=(grid.boxHY or 0), "ASTAR: hex width must be finite and cannot shrink")
-  assert(type(SpaceX)=="number" and SpaceX>=0 and SpaceX<math.huge and SpaceX>=(grid.spaceX or 0), "ASTAR: hex margin must be finite and cannot shrink")
-  if MaxGridNodes~=nil then
-    assert(type(MaxGridNodes)=="number" and MaxGridNodes>=1 and MaxGridNodes<math.huge and MaxGridNodes==math.floor(MaxGridNodes), "ASTAR: MaxGridNodes must be a positive integer")
+  checkGridDimensions(BoxHY, SpaceX)
+  assert(BoxHY>=grid.boxHY and SpaceX>=grid.spaceX, "ASTAR: hex width and margin cannot shrink")
+  checkGridNodeLimit(MaxGridNodes)
+  if BoxHY==grid.boxHY and SpaceX==grid.spaceX then
+    if MaxGridNodes and grid.candidateCount>MaxGridNodes then return nil,"node_limit" end
+    return self
   end
+  local bounds=hexBounds(grid, BoxHY, SpaceX, MaxGridNodes)
+  if not bounds then return nil, "node_limit" end
+  return self:_PopulateHexGrid(bounds, BoxHY, SpaceX)
+end
 
-  local Spacing=grid.spacing
-  local rowSpacing=grid.rowSpacing
-  -- Local coordinates: along = spacing * (q + r/2), across = rowSpacing * r.
-  -- The small tolerance includes centers on a boundary despite floating-point rounding.
-  local epsilon=1e-9
-  local rmin=math.ceil(-BoxHY/2/rowSpacing-epsilon)
-  local rmax=math.floor(BoxHY/2/rowSpacing+epsilon)
-  -- Count candidates first; filtered cells still consume sampling work. No DCS queries are needed here.
-  local candidates=0
-  for r=rmin,rmax do
-    local qmin=math.ceil(-SpaceX/Spacing-r/2-epsilon)
-    local qmax=math.floor((grid.distance+SpaceX)/Spacing-r/2+epsilon)
-    candidates=candidates+math.max(0, qmax-qmin+1)
-    if MaxGridNodes and candidates>MaxGridNodes then return nil, "node_limit" end
-  end
+--- Add the new cells from preflighted hex bounds. Used by creation and enlargement.
+-- @param #ASTAR self
+-- @param #table Bounds Axial row ranges and candidate count.
+-- @param #number BoxHY New total width.
+-- @param #number SpaceX New margin.
+-- @param Core.Zone#ZONE_BASE Zone Optional zone filter for the initial build only.
+-- @return #ASTAR self
+function ASTAR:_PopulateHexGrid(Bounds, BoxHY, SpaceX, Zone)
 
-  local oldRmin=grid.boxHY and math.ceil(-grid.boxHY/2/rowSpacing-epsilon)
-  local oldRmax=grid.boxHY and math.floor(grid.boxHY/2/rowSpacing+epsilon)
-  for r=rmin,rmax do
-    local qmin=math.ceil(-SpaceX/Spacing-r/2-epsilon)
-    local qmax=math.floor((grid.distance+SpaceX)/Spacing-r/2+epsilon)
-    local oldQmin=grid.spaceX and math.ceil(-grid.spaceX/Spacing-r/2-epsilon)
-    local oldQmax=grid.spaceX and math.floor((grid.distance+grid.spaceX)/Spacing-r/2+epsilon)
-    for q=qmin,qmax do
+  local grid=self.hexGrid
+  local sampled=Zone and {} or nil
+  local oldRmin, oldRmax
+  if grid.boxHY then oldRmin, oldRmax=hexRowBounds(grid, grid.boxHY) end
+  for r=Bounds.rmin,Bounds.rmax do
+    local row=Bounds[r]
+    local oldQmin, oldQmax
+    if grid.spaceX then oldQmin, oldQmax=hexColumnBounds(grid, grid.spaceX, r) end
+    for q=row.qmin,row.qmax do
       local existingCell=oldRmin and r>=oldRmin and r<=oldRmax and q>=oldQmin and q<=oldQmax
+      -- A zone seed has unsampled holes inside its bounding rectangle. Fill them on the first real enlargement.
+      if grid.initialSamples then existingCell=grid.initialSamples[r] and grid.initialSamples[r][q] end
       if not existingCell then
-        local along=Spacing*(q+r/2)
-        local across=rowSpacing*r
-        local coordinate=COORDINATE:New(grid.x+along*grid.cos-across*grid.sin, 0, grid.z+along*grid.sin+across*grid.cos)
-        local node=self:GetNodeFromCoordinate(coordinate)
-        if self:CheckValidSurfaceType(node, self.ValidSurfaceTypes) then
-          node.q=q
-          node.r=r
-          self:AddNode(node)
-          if grid.markGrid then
-            coordinate:MarkToAll(string.format("Hex q=%d r=%d surface=%d", q, r, node.surfacetype))
+        local x,z=gridPosition(grid, grid.spacing*(q+r/2), grid.rowSpacing*r)
+        if not Zone or Zone:IsVec2InZone({x=x,y=z}) then
+          if sampled then sampled[r]=sampled[r] or {} sampled[r][q]=true end
+          local coordinate=COORDINATE:New(x,0,z)
+          local node=self:GetNodeFromCoordinate(coordinate)
+          if self:CheckValidSurfaceType(node, self.ValidSurfaceTypes) then
+            node.q=q
+            node.r=r
+            self:AddNode(node)
+            if grid.markGrid then
+              coordinate:MarkToAll(string.format("Hex q=%d r=%d surface=%d", q, r, node.surfacetype))
+            end
           end
         end
       end
     end
   end
-
+  grid.initialSamples=sampled
   grid.boxHY=BoxHY
   grid.spaceX=SpaceX
-  grid.candidateCount=candidates
+  grid.candidateCount=Bounds.count
   return self
 end
 
@@ -922,7 +1143,7 @@ end
 -- Draws one polygon per generated node, with the original grid orientation. Manual nodes and extra endpoints are skipped.
 -- Hex vertex radius is Spacing / sqrt(3); rectangular half-sizes are deltaX/2 and deltaY/2.
 -- Cells may extend beyond the search area or cover terrain rejected at other node positions. The overlay does not show connectivity.
--- Does not change pathfinding. Large grids can stall DCS while drawing.
+-- Does not change pathfinding. Large jobs are scheduled in batches; existing polygon removal and each batch run synchronously.
 -- @param #ASTAR self
 -- @param #number Coalition (Optional) All=-1, Neutral=0, Red=1, Blue=2. Default -1.
 -- @param #table Color (Optional) Outline RGB values in [0,1], default {0,0,1} (blue).
@@ -931,67 +1152,234 @@ end
 -- @param #number FillAlpha (Optional) Fill opacity in [0,1], default 0 (transparent).
 -- @param #number LineType (Optional) 0=none, 1=solid, 2=dashed, 3=dotted, 4=dot dash, 5=long dash, 6=two dash. Default 1.
 -- @param #boolean ReadOnly (Optional) Prevent users from removing polygons manually. Default true.
--- @return #ASTAR self
-function ASTAR:DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
-
-  self:UndrawGrid()
-  Coalition=Coalition or -1
+-- @param #table DrawOptions (Optional) BatchSize=25 cells, Interval=0.1 simulation seconds, MaxBatchSeconds=0.005 CPU seconds. No CPU clock means one cell per batch.
+-- @return #ASTAR self; large overlays may still be queued. Inspect LastGridDrawResult for progress.
+function ASTAR:DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions)
   Color=Color or {0,0,1}
   FillColor=FillColor or Color
-  -- COORDINATE drawing functions add alpha to color tables; keep caller-owned RGB tables unchanged.
-  local outline={Color[1], Color[2], Color[3]}
-  local fill={FillColor[1], FillColor[2], FillColor[3]}
-  Alpha=Alpha or 1
-  FillAlpha=FillAlpha or 0
-  LineType=LineType or 1
   if ReadOnly==nil then ReadOnly=true end
+  local style={Coalition=Coalition or -1, Color={Color[1],Color[2],Color[3]}, Alpha=Alpha or 1,
+    FillColor={FillColor[1],FillColor[2],FillColor[3]}, FillAlpha=FillAlpha or 0, LineType=LineType or 1, ReadOnly=ReadOnly}
+  return self:_StartGridDrawing(style, DrawOptions)
+end
 
-  self.GridDrawOptions={Coalition=Coalition, Color={outline[1],outline[2],outline[3]}, Alpha=Alpha,
-    FillColor={fill[1],fill[2],fill[3]}, FillAlpha=FillAlpha, LineType=LineType, ReadOnly=ReadOnly}
+--- Draw a one-time debug snapshot of the current grid, highlighting the supplied path's grid cells in green.
+-- Uses a previously returned path; does not run a search or enable automatic drawing. Replaces this object's previous overlay.
+-- Manual nodes and exact endpoints without grid cells are skipped. An empty successful path draws the grid without highlights.
+-- Later searches, grid additions and UpdateGridDrawing() do not update this snapshot. Call this method again to replace it.
+-- Drawing is batched; UndrawGrid() cancels pending batches and removes the snapshot.
+-- @param #ASTAR self
+-- @param #table Path Ordered node list from a successful search on this ASTAR object. Nil or foreign nodes are rejected before replacing an overlay.
+-- @param #table Options (Optional) Coalition=-1, GridColor={0,0,1}, PathColor={0,1,0}, PathFillAlpha=0.35.
+-- Also accepts BatchSize=25, Interval=0.1 and MaxBatchSeconds=0.005. Colors and the path selection are copied at call time.
+-- @return #ASTAR self; inspect LastGridDrawResult for drawing progress.
+function ASTAR:DrawGridWithPath(Path, Options)
+  assert(type(Path)=="table", "ASTAR: DrawGridWithPath requires a successful path table")
+  Options=Options or {}
+  assert(type(Options)=="table", "ASTAR: path drawing options must be a table")
+  local pathNodes={}
+  for _,node in ipairs(Path) do
+    assert(type(node)=="table" and self.nodes[node.id]==node, "ASTAR: path nodes must belong to this ASTAR object")
+    pathNodes[node.id]=true
+  end
+  local color=Options.GridColor or {0,0,1}
+  local pathColor=Options.PathColor or {0,1,0}
+  local fillAlpha=Options.PathFillAlpha or 0.35
+  assert(type(fillAlpha)=="number" and fillAlpha>=0 and fillAlpha<=1, "ASTAR: PathFillAlpha must be between zero and one")
+  local style={Coalition=Options.Coalition or -1, Color={color[1],color[2],color[3]}, Alpha=1,
+    FillColor={color[1],color[2],color[3]}, FillAlpha=0, LineType=1, ReadOnly=true,
+    Snapshot=true, PathNodeIDs=pathNodes, PathColor={pathColor[1],pathColor[2],pathColor[3]}, PathFillAlpha=fillAlpha}
+  return self:_StartGridDrawing(style, Options)
+end
 
-  for _,node in pairs(self.nodes) do
-    local corners={}
-    local grid=node.rectGrid
-    if self.hexGrid and node.q~=nil and node.r~=nil then
-      grid=self.hexGrid
-      local radius=grid.spacing/math.sqrt(3)
-      for i=0,5 do
-        -- Vertex bearings are 30 degrees from the q axis; sides bisect adjacent node centers.
-        local angle=math.rad(30+60*i)
-        local along=radius*math.cos(angle)
-        local across=radius*math.sin(angle)
-        corners[#corners+1]=COORDINATE:New(node.coordinate.x+along*grid.cos-across*grid.sin, 0,
-          node.coordinate.z+along*grid.sin+across*grid.cos)
-      end
-    elseif grid then
-      for _,offset in ipairs({{grid.along,grid.across}, {-grid.along,grid.across}, {-grid.along,-grid.across}, {grid.along,-grid.across}}) do
-        corners[#corners+1]=COORDINATE:New(node.coordinate.x+offset[1]*grid.cos-offset[2]*grid.sin, 0,
-          node.coordinate.z+offset[1]*grid.sin+offset[2]*grid.cos)
-      end
-    end
+--- Validate batch settings and replace the overlay before starting a regular drawing or debug snapshot.
+-- @param #ASTAR self
+-- @param #table Style Owned style table.
+-- @param #table DrawOptions Optional batch settings.
+-- @return #ASTAR self
+function ASTAR:_StartGridDrawing(Style, DrawOptions)
+  DrawOptions=DrawOptions or {}
+  assert(type(DrawOptions)=="table", "ASTAR: drawing options must be a table")
+  local batchSize=DrawOptions.BatchSize or 25
+  local interval=DrawOptions.Interval or 0.1
+  local maxBatchSeconds=DrawOptions.MaxBatchSeconds or 0.005
+  assert(type(batchSize)=="number" and batchSize>=1 and batchSize<math.huge and batchSize==math.floor(batchSize),
+    "ASTAR: drawing BatchSize must be a positive integer")
+  assert(type(interval)=="number" and interval>0 and interval<math.huge, "ASTAR: drawing Interval must be finite and positive")
+  assert(type(maxBatchSeconds)=="number" and maxBatchSeconds>0 and maxBatchSeconds<math.huge,
+    "ASTAR: drawing MaxBatchSeconds must be finite and positive")
+  self:UndrawGrid()
+  Style.BatchSize=batchSize
+  Style.Interval=interval
+  Style.MaxBatchSeconds=maxBatchSeconds
+  self.GridDrawOptions=Style
+  return self:UpdateGridDrawing()
+end
 
-    if #corners>0 then
-      local first=table.remove(corners, 1)
-      local markID=first:MarkupToAllFreeForm(corners, Coalition, outline, Alpha, fill, FillAlpha, LineType, ReadOnly)
-      self.GridDrawIDs[#self.GridDrawIDs+1]=markID
+--- Add missing cell polygons to the current overlay, retaining its style and existing marks.
+-- Also extends a pending drawing job without duplicating queued cells. Does nothing before DrawGrid() or for an already queued debug snapshot.
+-- @param #ASTAR self
+-- @return #ASTAR self
+function ASTAR:UpdateGridDrawing()
+  local style=self.GridDrawOptions
+  if not style or (style.Snapshot and style.SnapshotQueued) then return self end
+  if style.Snapshot then style.SnapshotQueued=true end
+  local job=self.GridDrawJob
+  if not job then
+    local cpuAvailable=os and type(os.clock)=="function"
+    job={nodes={}, queued={}, index=1, style=style, started=timer.getTime(),
+      result={Status="queued", NodesQueued=0, NodesDrawn=0, Batches=0,
+        CPUSeconds=cpuAvailable and 0 or nil, MaxBatchCPUSeconds=cpuAvailable and 0 or nil}}
+  end
+  for id,node in pairs(self.nodes) do
+    if (node.rectGrid or (self.hexGrid and node.q~=nil and node.r~=nil))
+      and not self.GridDrawNodeIDs[id] and not job.queued[id] then
+      job.nodes[#job.nodes+1]=id
+      job.queued[id]=true
     end
   end
-
+  job.result.NodesQueued=#job.nodes
+  -- An active job will process appended nodes on subsequent ticks.
+  if self.GridDrawJob then return self end
+  self.GridDrawJob=job
+  self.LastGridDrawResult=job.result
+  local pending=true
+  if #job.nodes<=style.BatchSize then pending=self:_ProcessGridDrawJob(job) end
+  if pending then
+    self:T(self.lid..string.format("Grid drawing queued: %d remaining cells, up to %d per batch, %.3f sec CPU budget (one cell without CPU clock)",
+      #job.nodes-job.index+1, style.BatchSize, style.MaxBatchSeconds))
+    job.timerID=timer.scheduleFunction(function(_, time)
+      -- Identity check also protects against an already-dispatched callback after cancellation or replacement.
+      if self.GridDrawJob~=job then return nil end
+      if self:_ProcessGridDrawJob(job) then return timer.getTime()+style.Interval end
+    end, nil, timer.getTime()+style.Interval)
+  end
   return self
 end
 
---- Remove polygons created by DrawGrid() without changing the grid or deleting other F10 marks.
--- Safe to call repeatedly or before drawing. Does not remove text markers created with MarkGrid=true.
+--- Draw one batch, bounded by cell count and a CPU budget checked after each cell. Without a CPU clock draw at most one cell.
+-- @param #ASTAR self
+-- @param #table Job Current drawing job.
+-- @return #boolean Whether the job needs another batch.
+function ASTAR:_ProcessGridDrawJob(Job)
+  if self.GridDrawJob~=Job then return false end
+  Job.result.Status="running"
+  local clock=startCPUClock()
+  local ok, err=pcall(function()
+    -- Count remains an upper limit; with no CPU clock use a conservative one-cell fallback.
+    local batchSize=clock and Job.style.BatchSize or 1
+    local last=math.min(#Job.nodes, Job.index+batchSize-1)
+    while Job.index<=last do
+      local id=Job.nodes[Job.index]
+      local node=self.nodes[id]
+      if node and not self.GridDrawNodeIDs[id] then
+        local markID=self:_DrawGridNode(node, Job.style)
+        if markID then
+          self.GridDrawIDs[#self.GridDrawIDs+1]=markID
+          self.GridDrawNodeIDs[id]=markID
+          Job.result.NodesDrawn=Job.result.NodesDrawn+1
+        end
+      end
+      Job.queued[id]=nil
+      Job.index=Job.index+1
+      -- A DCS call cannot be interrupted; yield before starting the next cell once the budget is exhausted.
+      if clock and elapsedCPU(clock)>=Job.style.MaxBatchSeconds then break end
+    end
+  end)
+  local duration=elapsedCPU(clock)
+  Job.result.Batches=Job.result.Batches+1
+  if duration and Job.result.CPUSeconds then
+    Job.result.CPUSeconds=Job.result.CPUSeconds+duration
+    Job.result.MaxBatchCPUSeconds=math.max(Job.result.MaxBatchCPUSeconds, duration)
+  else
+    Job.result.CPUSeconds=nil
+    Job.result.MaxBatchCPUSeconds=nil
+  end
+  if not ok then
+    self:_FinishGridDrawing(Job, "error", tostring(err))
+  elseif Job.index>#Job.nodes then
+    self:_FinishGridDrawing(Job, "complete")
+  else
+    return true
+  end
+  return false
+end
+
+--- Complete or cancel a drawing job, retaining its result for callers.
+-- @param #ASTAR self
+-- @param #table Job Current drawing job.
+-- @param #string Status complete, cancelled or error.
+-- @param #string Error Optional error message.
+function ASTAR:_FinishGridDrawing(Job, Status, Error)
+  Job.result.Status=Status
+  Job.result.Error=Error
+  Job.result.ElapsedSimulationSeconds=math.max(0, timer.getTime()-Job.started)
+  self.GridDrawJob=nil
+  Job.timerID=nil
+  local text=string.format("Grid drawing %s: %d/%d new cells, %d batches, %s, max batch %s, simulation elapsed %.3f sec",
+    Status, Job.result.NodesDrawn, Job.result.NodesQueued, Job.result.Batches, cpuTimeText(Job.result.CPUSeconds),
+    cpuTimeText(Job.result.MaxBatchCPUSeconds), Job.result.ElapsedSimulationSeconds)
+  if Error then self:E(self.lid..text..": "..Error) else self:T(self.lid..text) end
+end
+
+--- Draw one generated grid cell using the saved style; manual endpoints have no polygon.
+-- @param #ASTAR self
+-- @param #ASTAR.Node Node Grid node.
+-- @param #table Style Drawing options.
+-- @return #number Mark id, or nil for a node without a cell.
+function ASTAR:_DrawGridNode(Node, Style)
+  local corners={}
+  local grid=Node.rectGrid
+  local function corner(along, across)
+    local x,z=gridPosition(grid, along, across, Node.coordinate)
+    corners[#corners+1]={x=x, y=0, z=z}
+  end
+  if self.hexGrid and Node.q~=nil and Node.r~=nil then
+    grid=self.hexGrid
+    local radius=grid.spacing/math.sqrt(3)
+    for i=0,5 do
+      local angle=math.rad(30+60*i)
+      corner(radius*math.cos(angle), radius*math.sin(angle))
+    end
+  elseif grid then
+    corner(grid.along, grid.across)
+    corner(-grid.along, grid.across)
+    corner(-grid.along, -grid.across)
+    corner(grid.along, -grid.across)
+  end
+  if #corners==0 then return nil end
+  -- Match COORDINATE:MarkupToAllFreeForm's DCS call without constructing full MOOSE objects for polygon vertices.
+  local markID=UTILS.GetMarkID()
+  local onPath=Style.PathNodeIDs and Style.PathNodeIDs[Node.id]
+  local color=onPath and Style.PathColor or Style.Color
+  local fillColor=onPath and Style.PathColor or Style.FillColor
+  local fillAlpha=onPath and Style.PathFillAlpha or Style.FillAlpha
+  local outline={color[1],color[2],color[3],Style.Alpha}
+  local fill={fillColor[1],fillColor[2],fillColor[3],fillAlpha}
+  if #corners==6 then
+    trigger.action.markupToAll(7, Style.Coalition, markID, corners[1], corners[2], corners[3], corners[4], corners[5], corners[6],
+      outline, fill, Style.LineType, Style.ReadOnly, "")
+  else
+    trigger.action.markupToAll(7, Style.Coalition, markID, corners[1], corners[2], corners[3], corners[4],
+      outline, fill, Style.LineType, Style.ReadOnly, "")
+  end
+  return markID
+end
+
+--- Cancel pending drawing and remove polygons created by DrawGrid() without changing the grid or deleting other F10 marks.
+-- Removal is synchronous. Safe to call repeatedly or before drawing. Does not remove MarkGrid text markers.
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:UndrawGrid()
-
-  for _,markID in ipairs(self.GridDrawIDs or {}) do
-    COORDINATE:RemoveMark(markID)
+  local job=self.GridDrawJob
+  if job then
+    if job.timerID then timer.removeFunction(job.timerID) end
+    self:_FinishGridDrawing(job, "cancelled")
   end
+  for _,markID in ipairs(self.GridDrawIDs or {}) do COORDINATE:RemoveMark(markID) end
   self.GridDrawIDs={}
+  self.GridDrawNodeIDs={}
   self.GridDrawOptions=nil
-
   return self
 end
 
@@ -1162,22 +1550,7 @@ end
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:FindStartNode()
-
-  local node, dist=self:FindClosestNode(self.startCoord)
-  
-  self.startNode=node
-  
-  local threshold=self.HexNeighboursOnly and 1e-6 or 1000
-  if node and dist>threshold then
-    self:T(self.lid.."Adding start node to node grid!")
-    local endpoint=self:GetNodeFromCoordinate(self.startCoord)
-    self.startNode=nil
-    if self:CheckValidSurfaceType(endpoint, self.ValidSurfaceTypes) then
-      self:AddNode(endpoint)
-      self.startNode=endpoint
-    end
-  end
-    
+  self.startNode=self:_FindEndpoint(self.startCoord, "start")
   return self
 end
 
@@ -1187,23 +1560,41 @@ end
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:FindEndNode()
-
-  local node, dist=self:FindClosestNode(self.endCoord)
-
-  self.endNode=node
-  
-  local threshold=self.HexNeighboursOnly and 1e-6 or 1000
-  if node and dist>threshold then
-    self:T(self.lid.."Adding end node to node grid!")
-    local endpoint=self:GetNodeFromCoordinate(self.endCoord)
-    self.endNode=nil
-    if self:CheckValidSurfaceType(endpoint, self.ValidSurfaceTypes) then
-      self:AddNode(endpoint)
-      self.endNode=endpoint
-    end
-  end
-    
+  self.endNode=self:_FindEndpoint(self.endCoord, "end")
   return self
+end
+
+--- Resolve one endpoint using the current snapping threshold and surface filter.
+-- @param #ASTAR self
+-- @param Core.Point#COORDINATE Coordinate Requested endpoint.
+-- @param #string Label Endpoint name for trace output.
+-- @return #ASTAR.Node Selected or added node, or nil.
+function ASTAR:_FindEndpoint(Coordinate, Label)
+  if not Coordinate then return nil end
+  local node, distance=self:FindClosestNode(Coordinate)
+  local threshold=self.HexNeighboursOnly and 1e-6 or 1000
+  if node and distance>threshold then
+    self:T(self.lid.."Adding "..Label.." node to node grid!")
+    node=self:GetNodeFromCoordinate(Coordinate)
+    if not self:CheckValidSurfaceType(node, self.ValidSurfaceTypes) then return nil end
+    self:AddNode(node)
+  end
+  return node
+end
+
+--- Resolve both endpoints for candidate checks and full searches.
+-- @param #ASTAR self
+-- @return #ASTAR.Node Start node, or nil.
+-- @return #ASTAR.Node Goal node, or nil.
+-- @return #string Failure reason, or nil.
+function ASTAR:_ResolveEndpoints()
+  if not self.startCoord or not self.endCoord then return nil, nil, "missing_coordinates" end
+  self:FindStartNode()
+  self:FindEndNode()
+  local reason
+  if not self.startNode then reason="no_start_node"
+  elseif not self.endNode then reason="no_goal_node" end
+  return self.startNode, self.endNode, reason
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1220,27 +1611,26 @@ end
 -- @return #boolean Whether a path is possible before applying neighbour rules and travel costs.
 -- @return #string Failure reason: missing_coordinates, no_start_node, no_goal_node, start_unattached, goal_unattached or disconnected_grid; nil on success.
 function ASTAR:HasPotentialPath()
-
-  if not self.startCoord or not self.endCoord then return false, "missing_coordinates" end
-  self:FindStartNode()
-  self:FindEndNode()
-  return self:_HasPotentialPath(self.startNode, self.endNode)
+  local start, goal, reason=self:_ResolveEndpoints()
+  if reason then return false, reason end
+  return self:_HasPotentialPath(start, goal)
 end
 
 --- Search for a path, enlarging the hex search rectangle between failed attempts.
 -- Requires a hex grid with SetHexNeighboursOnly(true). Preserves all existing nodes, callback references, spacing and lattice orientation.
--- Each attempt runs GetPath(), including its cheap connectivity precheck. A connected grid still has to pass the real rules and costs.
+-- Uses the same internal search and cheap connectivity precheck as GetPath(). A connected grid still has to pass the real rules and costs.
 -- Grows width and end margins by GrowthFactor, with minimum increments of two Spacing and one Spacing respectively.
 -- Stops at the first actual path (including an empty successful result), or a configured limit. Runs synchronously.
+-- Retries produce trace output; error logs and optional player failure messages are emitted only at final failure.
 -- @param #ASTAR self
 -- @param #table Options (Optional) GrowthFactor=1.5, MaxAttempts=5 (includes initial attempt), MaxGridNodes=5000 (before surface filtering),
 -- MaxBoxHY=at least the initial width or 200000 m, MaxSpaceX=at least the initial margin or 100000 m, Redraw=true.
 -- Explicit dimension limits must not be smaller than the current grid. MaxGridNodes excludes manually added nodes and endpoints.
--- Redraw refreshes an existing DrawGrid() overlay once at completion, preserving its style; it does not create an overlay if none was drawn.
--- @param #boolean ExcludeStartNode (Optional) Forwarded to GetPath().
--- @param #boolean ExcludeEndNode (Optional) Forwarded to GetPath().
+-- Redraw appends missing cells to an existing or pending overlay using its saved batch settings; it does not create an overlay without DrawGrid().
+-- @param #boolean ExcludeStartNode (Optional) Same exclusion behavior as GetPath().
+-- @param #boolean ExcludeEndNode (Optional) Same exclusion behavior as GetPath().
 -- @return #table Path nodes, or nil on failure. The expanded grid remains available for drawing or later searches.
--- @return #table Report with Attempts (BoxHY, SpaceX, Nodes, Failure), StopReason, BoxHY, SpaceX and Nodes.
+-- @return #table Report with Attempts (BoxHY, SpaceX, Nodes, Failure, CPUSeconds), StopReason, BoxHY, SpaceX, Nodes, SearchCPUSeconds and optional live Drawing result.
 -- StopReason is path_found, attempt_limit, size_limit, node_limit or missing_coordinates. Stored in LastExpansionResult as well.
 function ASTAR:GetPathWithExpansion(Options, ExcludeStartNode, ExcludeEndNode)
 
@@ -1255,25 +1645,29 @@ function ASTAR:GetPathWithExpansion(Options, ExcludeStartNode, ExcludeEndNode)
   local maxMargin=Options.MaxSpaceX or math.max(grid.spaceX, 100000)
   assert(type(factor)=="number" and factor>1 and factor<math.huge, "ASTAR: GrowthFactor must be finite and greater than one")
   assert(type(maxAttempts)=="number" and maxAttempts>=1 and maxAttempts<math.huge and maxAttempts==math.floor(maxAttempts), "ASTAR: MaxAttempts must be a positive integer")
-  assert(type(maxNodes)=="number" and maxNodes>=1 and maxNodes<math.huge and maxNodes==math.floor(maxNodes), "ASTAR: MaxGridNodes must be a positive integer")
+  checkGridNodeLimit(maxNodes)
   assert(type(maxWidth)=="number" and maxWidth>=grid.boxHY and maxWidth<math.huge, "ASTAR: MaxBoxHY must be finite and at least the current width")
   assert(type(maxMargin)=="number" and maxMargin>=grid.spaceX and maxMargin<math.huge, "ASTAR: MaxSpaceX must be finite and at least the current margin")
 
+  self.LastPathFailure=nil
+  local searchClock=startCPUClock()
   local report={Attempts={}}
-  local style=self.GridDrawOptions
-  local redraw=Options.Redraw~=false and style and #(self.GridDrawIDs or {})>0
+  local redraw=Options.Redraw~=false and self.GridDrawOptions~=nil and not self.GridDrawOptions.Snapshot
   local expanded=false
   local function finish(path, reason)
     report.StopReason=reason
     report.BoxHY=grid.boxHY
     report.SpaceX=grid.spaceX
     report.Nodes=self.Nnodes
+    report.SearchCPUSeconds=elapsedCPU(searchClock)
     self.LastExpansionResult=report
+    self:T(self.lid..string.format("Expanding search finished: %s after %d attempts, width %.0f m, margin %.0f m, %d nodes, search %s",
+      reason, #report.Attempts, grid.boxHY, grid.spaceX, self.Nnodes, cpuTimeText(report.SearchCPUSeconds)))
+    if not path then self:_ReportPathFailure(self.LastPathFailure or reason, reason) end
     if expanded and redraw then
-      self:DrawGrid(style.Coalition, style.Color, style.Alpha, style.FillColor, style.FillAlpha, style.LineType, style.ReadOnly)
+      self:UpdateGridDrawing()
+      report.Drawing=self.LastGridDrawResult
     end
-    self:T(self.lid..string.format("Expanding search finished: %s after %d attempts, width %.0f m, margin %.0f m, %d nodes",
-      reason, #report.Attempts, grid.boxHY, grid.spaceX, self.Nnodes))
     return path, report
   end
 
@@ -1281,8 +1675,11 @@ function ASTAR:GetPathWithExpansion(Options, ExcludeStartNode, ExcludeEndNode)
   for attempt=1,maxAttempts do
     self:T(self.lid..string.format("Expanding search attempt %d/%d: width %.0f m, margin %.0f m, %d nodes",
       attempt, maxAttempts, grid.boxHY, grid.spaceX, self.Nnodes))
-    local path=self:GetPath(ExcludeStartNode, ExcludeEndNode)
-    report.Attempts[#report.Attempts+1]={BoxHY=grid.boxHY, SpaceX=grid.spaceX, Nodes=self.Nnodes, Failure=self.LastPathFailure}
+    self.LastPathFailure=nil
+    local path, failure=self:_SearchPath(ExcludeStartNode, ExcludeEndNode)
+    self.LastPathFailure=failure
+    if failure then self:T(self.lid.."Search attempt failed: "..failure) end
+    report.Attempts[#report.Attempts+1]={BoxHY=grid.boxHY, SpaceX=grid.spaceX, Nodes=self.Nnodes, Failure=self.LastPathFailure, CPUSeconds=self.LastSearchTiming.CPUSeconds}
     if path then return finish(path, "path_found") end
     if self.LastPathFailure=="missing_coordinates" then return finish(nil, "missing_coordinates") end
     if attempt==maxAttempts then return finish(nil, "attempt_limit") end
@@ -1305,40 +1702,36 @@ end
 -- @param #boolean ExcludeEndNode If *true*, do not include end node in found path. Default is to include it.
 -- @return #table Ordered list of ASTAR.Node entries (possibly empty), or nil for missing coordinates, missing endpoint nodes, or an unreachable goal.
 function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
-
   self.LastPathFailure=nil
-  if not self.startCoord or not self.endCoord then
-    self.LastPathFailure="missing_coordinates"
-    self:E(self.lid.."Start and end coordinates are required!")
-    return nil
+  local path, reason=self:_SearchPath(ExcludeStartNode, ExcludeEndNode)
+  self.LastPathFailure=reason
+  if not path then self:_ReportPathFailure(reason) end
+  return path
+end
+
+--- Run one search without announcing failure; the caller decides whether to retry.
+-- @param #ASTAR self
+-- @param #boolean ExcludeStartNode Exclude the first node.
+-- @param #boolean ExcludeEndNode Exclude the goal node.
+-- @return #table Path, including an empty successful path, or nil.
+-- @return #string Failure reason, or nil on success.
+function ASTAR:_SearchPath(ExcludeStartNode, ExcludeEndNode)
+  local clock=startCPUClock()
+  local function finish(path, reason)
+    local seconds=elapsedCPU(clock)
+    self.LastSearchTiming={CPUSeconds=seconds, Failure=reason, Nodes=self.Nnodes}
+    local text=path and string.format("Found path with %d nodes (%d total)", #path, self.Nnodes)
+      or ("Search attempt ended: "..reason)
+    text=text..", "..cpuTimeText(seconds)
+    text=text..string.format(", Nvalid=%d [%d cached], Ncost=%d [%d cached]", self.nvalid, self.nvalidcache, self.ncost, self.ncostcache)
+    self:T(self.lid..text)
+    return path, reason
   end
-
-  self:FindStartNode()
-  self:FindEndNode()
-
+  local start, goal, reason=self:_ResolveEndpoints()
+  if reason then return finish(nil, reason) end
+  local potential, failure=self:_HasPotentialPath(start, goal)
+  if not potential then return finish(nil, failure) end
   local nodes=self.nodes
-  local start=self.startNode
-  local goal=self.endNode
-
-  if not start or not goal then
-    self.LastPathFailure=not start and "no_start_node" or "no_goal_node"
-    self:E(self.lid.."Could NOT find valid start/end nodes!")
-    return nil
-  end
-
-  if self.HexNeighboursOnly then
-    local potential, reason=self:_HasPotentialPath(start, goal)
-    if not potential then
-      self.LastPathFailure=reason
-      local explanations={start_unattached="start has no hex attachment within one grid spacing",
-        goal_unattached="goal has no hex attachment within one grid spacing",
-        disconnected_grid="start and goal belong to disconnected grid components"}
-      local text="Could NOT find valid path: "..(explanations[reason] or reason).." ["..reason.."]"
-      self:E(self.lid..text)
-      MESSAGE:New(text, 60, "ASTAR"):ToAllIf(self.Debug)
-      return nil
-    end
-  end
 
   -- Sets.
   local openset   = {}
@@ -1354,14 +1747,10 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
   g_score[start.id]=0
   f_score[start.id]=g_score[start.id]+self:_HeuristicCost(start, goal)
   
-  -- Set start time.
-  local T0=timer.getAbsTime()
-
   -- Debug message.
   local text=string.format("Starting A* pathfinding with %d Nodes", self.Nnodes)
   self:T(self.lid..text)
   
-  local Tstart=UTILS.GetOSTime()
 
   -- Loop while we still have an open set.
   while Nopen > 0 do
@@ -1387,23 +1776,7 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
         table.remove(path, 1)
       end
       
-      local Tstop=UTILS.GetOSTime()
-      
-      local dT=nil
-      if Tstart and Tstop then
-        dT=Tstop-Tstart
-      end
-      
-      -- Debug message.
-      local text=string.format("Found path with %d nodes (%d total)", #path, self.Nnodes)
-      if dT then
-        text=text..string.format(", OS Time %.6f sec", dT)
-      end
-      text=text..string.format(", Nvalid=%d [%d cached]", self.nvalid, self.nvalidcache)
-      text=text..string.format(", Ncost=%d [%d cached]", self.ncost, self.ncostcache)
-      self:T(self.lid..text)
-      
-      return path
+      return finish(path)
     end
 
     -- Move Node from open to closed set.
@@ -1439,13 +1812,25 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
     end
   end
 
-  -- Debug message.
-  local text=string.format("WARNING: Could NOT find valid path!")
-  self.LastPathFailure="connections_blocked"
+  return finish(nil, "connections_blocked")
+end
+
+--- Announce a final search failure, optionally with an expansion stop reason.
+-- @param #ASTAR self
+-- @param #string Reason Search failure or expansion limit.
+-- @param #string StopReason Optional expansion stop reason.
+function ASTAR:_ReportPathFailure(Reason, StopReason)
+  local explanations={missing_coordinates="start and end coordinates are required",
+    no_start_node="could not find a valid start node", no_goal_node="could not find a valid goal node",
+    start_unattached="start has no hex attachment within one grid spacing",
+    goal_unattached="goal has no hex attachment within one grid spacing",
+    disconnected_grid="start and goal belong to disconnected grid components",
+    connections_blocked="no route satisfies the connection rules and travel costs",
+    node_limit="the grid exceeds the candidate-cell limit"}
+  local text="Could NOT find valid path: "..(explanations[Reason] or Reason).." ["..Reason.."]"
+  if StopReason then text=text.." (expansion stopped: "..StopReason..")" end
   self:E(self.lid..text)
   MESSAGE:New(text, 60, "ASTAR"):ToAllIf(self.Debug)
-  
-  return nil -- no valid path
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1688,20 +2073,25 @@ function ASTAR:_NotIn(set, theNode)
   return set[theNode]==nil
 end
 
---- Reconstruct the predecessor chain, excluding the current node itself.
+--- Reconstruct the predecessor chain in linear time, excluding the current node itself.
+-- Prepends the ordered predecessors to flat_path, retaining its existing entries and table identity.
 -- @param #ASTAR self
 -- @param #table flat_path Flat path.
 -- @param #table map Map.
 -- @param #ASTAR.Node current_node The current node.
 -- @return #table Ordered predecessor nodes.
-function ASTAR:_UnwindPath( flat_path, map, current_node )
-
-  if map [current_node] then
-    table.insert (flat_path, 1, map[current_node]) 
-    return self:_UnwindPath(flat_path, map, map[current_node])
-  else
-    return flat_path
+function ASTAR:_UnwindPath(flat_path, map, current_node)
+  local reverse={}
+  local previous=map[current_node]
+  while previous do
+    reverse[#reverse+1]=previous
+    previous=map[previous]
   end
+  -- Preserve the existing suffix and table identity without repeatedly inserting at the front.
+  local count=#reverse
+  for i=#flat_path,1,-1 do flat_path[i+count]=flat_path[i] end
+  for i=1,count do flat_path[i]=reverse[count-i+1] end
+  return flat_path
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

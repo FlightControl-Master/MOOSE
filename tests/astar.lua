@@ -18,7 +18,32 @@ function BASE:Inherit(child, parent) return setmetatable(deepcopy(child), {__ind
 function BASE:T() end
 function BASE:T2() end
 function BASE:E() end
-timer = {getAbsTime = function() return 0 end}
+local scheduled, timerNow, nextTimerID = {}, 0, 0
+timer = {getAbsTime = function() return timerNow end, getTime = function() return timerNow end}
+function timer.scheduleFunction(fn, args, at)
+  nextTimerID=nextTimerID+1
+  scheduled[nextTimerID]={fn=fn, args=args, at=at}
+  return nextTimerID
+end
+function timer.removeFunction(id) scheduled[id]=nil end
+local function stepTimer()
+  local id, entry
+  for candidate, task in pairs(scheduled) do
+    if not entry or task.at<entry.at then id,entry=candidate,task end
+  end
+  if not entry then return false end
+  timerNow=entry.at
+  local nextTime=entry.fn(entry.args,timerNow)
+  if scheduled[id]==entry and nextTime then entry.at=nextTime else scheduled[id]=nil end
+  return true
+end
+local function flushTimers()
+  local steps=0
+  while stepTimer() do
+    steps=steps+1
+    assert(steps<10000,"Drawing timer did not terminate")
+  end
+end
 MESSAGE = {New = function() return {ToAllIf = function() end} end}
 land = {SurfaceType = {LAND = 1, WATER = 3}}
 
@@ -63,6 +88,7 @@ local passed, failed = 0, 0
 local function test(name, run)
   local ok, err = pcall(run)
   land.surfaceAt = nil
+  scheduled={} timerNow=0
   if ok then
     passed = passed + 1
     print("PASS " .. name)
@@ -706,6 +732,7 @@ test("F10 hex polygons match rotated cells and share boundary vertices", functio
     local cells = a.Nnodes
     a:AddNodeFromCoordinate(origin:Translate(100, heading))
     equal(a:DrawGrid(), a)
+  flushTimers()
     equal(#a.GridDrawIDs, cells) equal(count(drawings), cells)
     local centerPolygon, adjacentPolygon
     for _, drawing in pairs(drawings) do
@@ -744,6 +771,7 @@ test("F10 rectangles retain each grid's orientation and spacing", function()
   a:SetStartCoordinate(coord(10000)):SetEndCoordinate(coord(10000, 4000))
   a:CreateGrid(nil, 2000, 0, 1000, 2000)
   a:DrawGrid()
+  flushTimers()
   equal(count(drawings), a.Nnodes)
   local firstGridCount = 0
   for _, drawing in pairs(drawings) do
@@ -770,9 +798,11 @@ test("F10 redraw replaces only owned polygons and preserves other marks", functi
   local path = a:GetPath()
   drawings[42] = {text="unrelated mark"}
   a:DrawGrid()
+  flushTimers()
   local old = deepcopy(a.GridDrawIDs)
   local n = #old
   a:DrawGrid()
+  flushTimers()
   equal(count(drawings), n+1) equal(#removals, n)
   for _, id in ipairs(old) do equal(drawings[id], nil) end
   local after = a:GetPath()
@@ -791,6 +821,7 @@ test("F10 styles preserve caller colors and accept zero opacity and neutral coal
   local a = hexgrid(0, 0)
   local outline, fill = {1,0.5,0}, {0.2,0.3,0.4}
   a:DrawGrid(0, outline, 0, fill, 0, 0, false)
+  flushTimers()
   equal(outline[4], nil) equal(fill[4], nil)
   for _, d in pairs(drawings) do
     equal(d.coalition, 0) equal(d.color[4], 0) equal(d.fill[4], 0)
@@ -798,6 +829,7 @@ test("F10 styles preserve caller colors and accept zero opacity and neutral coal
     equal(d.color[1], 1) equal(d.fill[2], 0.3)
   end
   a:DrawGrid(2, outline, 0.8, nil, 0.1, 2)
+  flushTimers()
   for _, d in pairs(drawings) do
     equal(d.coalition, 2) equal(d.color[4], 0.8) equal(d.fill[4], 0.1)
     equal(d.fill[1], outline[1]) equal(d.lineType, 2)
@@ -809,6 +841,7 @@ test("F10 draws only accepted grid nodes, including no cells for a manual-only g
   resetDrawings()
   local manual = pair()
   manual:UndrawGrid():DrawGrid()
+  flushTimers()
   equal(count(drawings), 0)
   land.surfaceAt = function(c) return c.x==2000 and land.SurfaceType.LAND or land.SurfaceType.WATER end
   local a = hexgrid(0, 0)
@@ -816,10 +849,12 @@ test("F10 draws only accepted grid nodes, including no cells for a manual-only g
   equal(accepted, 4)
   a:AddNodeFromCoordinate(coord(2000))
   a:DrawGrid()
+  flushTimers()
   equal(count(drawings), accepted)
   for _, drawing in pairs(drawings) do assert(polygonCenter(drawing.vertices).x ~= 2000) end
   local empty = ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(1000))
   empty:CreateGrid({}, 2000, 0, 1000, 1000):DrawGrid()
+  flushTimers()
   equal(#empty.GridDrawIDs, 0)
 end)
 
@@ -827,6 +862,7 @@ test("F10 overlays from different ASTAR instances are independent", function()
   resetDrawings()
   local a, b = hexgrid(0,0), hexgrid(0,0)
   a:DrawGrid() b:DrawGrid()
+  flushTimers()
   local ids = deepcopy(b.GridDrawIDs)
   a:UndrawGrid()
   equal(count(drawings), #ids)
@@ -964,14 +1000,17 @@ test("rotated enlargement matches a newly built larger lattice", function()
   end
 end)
 
-test("expansion refreshes an existing F10 overlay once and keeps its style", function()
+test("expansion adds missing F10 cells without replacing existing marks or style", function()
   resetDrawings()
   local a=hexgrid(0,0):SetHexNeighboursOnly(true):SetValidNeighbourFunction(function() return false end)
   a:DrawGrid(2,{0,0.5,1},0.8,nil,0.1,2,false)
-  local oldCount=#a.GridDrawIDs
+  flushTimers()
+  local oldIDs=deepcopy(a.GridDrawIDs)
   local path, report=a:GetPathWithExpansion({MaxAttempts=3})
   equal(path,nil) equal(report.StopReason,"attempt_limit")
-  equal(#removals,oldCount)
+  equal(#removals,0)
+  flushTimers()
+  for _,id in ipairs(oldIDs) do assert(drawings[id]) end
   equal(count(drawings),a.Nnodes)
   for _, drawing in pairs(drawings) do
     equal(drawing.coalition,2) equal(drawing.color[4],0.8) equal(drawing.fill[4],0.1)
@@ -979,7 +1018,7 @@ test("expansion refreshes an existing F10 overlay once and keeps its style", fun
   end
   local n=#a.GridDrawIDs
   a:GetPathWithExpansion({MaxAttempts=2,Redraw=false})
-  equal(#a.GridDrawIDs,n) equal(#removals,oldCount)
+  equal(#a.GridDrawIDs,n) equal(#removals,0)
 end)
 
 test("successful empty paths stop expansion immediately", function()
@@ -1002,6 +1041,722 @@ test("expansion rejects invalid limits and handles missing coordinates", functio
   local path, report=a:GetPathWithExpansion()
   equal(path,nil) equal(report.StopReason,"missing_coordinates") equal(#report.Attempts,1)
   equal(a.hexGrid.boxHY,0)
+end)
+
+
+test("initial grid budgets reject before sampling or changing object state", function()
+  for _, builder in ipairs({
+    function(a, limit) return a:CreateGrid({},0,0,1000,1000,true,limit) end,
+    function(a, limit) return a:CreateHexGrid({},0,0,1000,true,limit) end
+  }) do
+    local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+    a.ValidSurfaceTypes=land.SurfaceType.WATER
+    local nodes, counter=a.nodes, a.counter
+    land.surfaceAt=function() error("Rejected creation must not sample terrain") end
+    local result, reason=builder(a,4)
+    equal(result,nil) equal(reason,"node_limit")
+    equal(a.nodes,nodes) equal(a.Nnodes,0) equal(a.counter,counter)
+    equal(a.ValidSurfaceTypes,land.SurfaceType.WATER)
+    equal(a.hexGrid,nil) equal(a.hexIndex,nil)
+    -- A rejected hex build must leave the object reusable, even for a different grid type.
+    land.surfaceAt=nil
+    equal(a:CreateGrid(nil,0,0,1000,1000,false,5),a)
+    equal(a.Nnodes,5)
+  end
+end)
+
+test("initial budgets reject enormous grids without integer overflow or terrain queries", function()
+  local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000000000))
+  land.surfaceAt=function() error("Oversized grid must be rejected before sampling") end
+  local result, reason=a:CreateGrid(nil,4000000000,0,1,1,false,5)
+  equal(result,nil) equal(reason,"node_limit") equal(a.Nnodes,0)
+  result, reason=a:CreateHexGrid(nil,0,9e18,1,false,5)
+  equal(result,nil) equal(reason,"node_limit") equal(a.hexGrid,nil) equal(a.Nnodes,0)
+end)
+
+test("initial grid budgets count filtered cells and allow the exact limit", function()
+  for _, builder in ipairs({
+    function(a, limit) return a:CreateGrid({},0,0,1000,1000,false,limit) end,
+    function(a, limit) return a:CreateHexGrid({},0,0,1000,false,limit) end
+  }) do
+    local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+    local calls=0
+    land.surfaceAt=function() calls=calls+1 return land.SurfaceType.WATER end
+    equal(builder(a,4),nil) equal(calls,0)
+    equal(builder(a,5),a) equal(calls,5) equal(a.Nnodes,0)
+    if a.hexGrid then equal(a.hexGrid.candidateCount,5) end
+  end
+end)
+
+test("rectangular creation budgets apply only to newly sampled cells", function()
+  local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+  local manual=a:AddNodeFromCoordinate(coord(-5000))
+  equal(a:CreateGrid(nil,0,0,1000,1000,false,5),a)
+  equal(a.Nnodes,6) equal(a.nodes[manual.id],manual)
+  local counter=a.counter
+  equal(a:CreateGrid({},0,0,1000,1000,false,4),nil)
+  equal(a.Nnodes,6) equal(a.counter,counter) equal(a.ValidSurfaceTypes,nil)
+end)
+
+test("rectangular fractional dimensions preserve rotated lattice coordinates and order", function()
+  for _, heading in ipairs({0,37,90,180,275}) do
+    local origin=coord(123456,-234567)
+    local a=ASTAR:New():SetStartCoordinate(origin):SetEndCoordinate(origin:Translate(2500,heading))
+    equal(a:CreateGrid(nil,2500,100,1000,1000,false,9),a)
+    equal(a.Nnodes,9)
+    local nodes={}
+    for _, node in pairs(a.nodes) do nodes[#nodes+1]=node end
+    table.sort(nodes,function(u,v) return u.id<v.id end)
+    for i=1,3 do
+      for j=1,3 do
+        local expected=origin:Translate(-100+1000*(j-1),heading):Translate(-1250+1000*(i-1),heading+90)
+        near(nodes[(i-1)*3+j].coordinate:Get2DDistance(expected),0)
+      end
+    end
+  end
+end)
+
+test("grid creation validates dimensions and budgets before mutation", function()
+  local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+  local counter=a.counter
+  for _, limit in ipairs({0,-1,1.5,math.huge,"5",false}) do
+    equal(pcall(function() a:CreateGrid(nil,0,0,1000,1000,false,limit) end),false)
+    equal(pcall(function() a:CreateHexGrid(nil,0,0,1000,false,limit) end),false)
+  end
+  for _, args in ipairs({{-1,0,1000,1000},{0,-1,1000,1000},{0,0,0,1000},{0,0,1000,0},{0,0,math.huge,1000}}) do
+    equal(pcall(function() a:CreateGrid(nil,unpack(args)) end),false)
+  end
+  equal(a.Nnodes,0) equal(a.counter,counter) equal(a.hexGrid,nil)
+end)
+
+-- Capture player messages as well as error logs, restoring the shared stub even if a search throws.
+local function captureSearchReports(a, run)
+  local errors, messages={},{}
+  function a:E(text) errors[#errors+1]=text end
+  a.Debug=true
+  local original=MESSAGE.New
+  MESSAGE.New=function(_,text)
+    return {ToAllIf=function(_,enabled) if enabled then messages[#messages+1]=text end end}
+  end
+  local ok, path, report=pcall(run)
+  MESSAGE.New=original
+  assert(ok,path)
+  return path, report, errors, messages
+end
+
+test("successful expansion reports retries without errors or player failure messages", function()
+  land.surfaceAt=function(c)
+    return c.x>=1500 and c.x<=2500 and math.abs(c.z)<1200 and land.SurfaceType.LAND or land.SurfaceType.WATER
+  end
+  local a=hexgrid(0,0):SetHexNeighboursOnly(true)
+  local path, report, errors, messages=captureSearchReports(a,function() return a:GetPathWithExpansion() end)
+  assert(path and #report.Attempts>1)
+  equal(report.Attempts[1].Failure,"disconnected_grid")
+  equal(report.StopReason,"path_found") equal(a.LastPathFailure,nil)
+  equal(#errors,0) equal(#messages,0)
+end)
+
+test("exhausted expansion announces only the final failure and preserves attempt reasons", function()
+  local a=hexgrid(0,0):SetHexNeighboursOnly(true):SetValidNeighbourFunction(function() return false end)
+  local path, report, errors, messages=captureSearchReports(a,function() return a:GetPathWithExpansion({MaxAttempts=3}) end)
+  equal(path,nil) equal(report.StopReason,"attempt_limit") equal(#report.Attempts,3)
+  for _, attempt in ipairs(report.Attempts) do equal(attempt.Failure,"connections_blocked") end
+  equal(a.LastPathFailure,"connections_blocked") equal(#errors,1) equal(#messages,1)
+  assert(errors[1]:find("connections_blocked",1,true)) assert(errors[1]:find("attempt_limit",1,true))
+  -- Rejecting a later request before searching must not reuse the previous failure reason.
+  path, report, errors, messages=captureSearchReports(a,function() return a:GetPathWithExpansion({MaxGridNodes=1}) end)
+  equal(path,nil) equal(#report.Attempts,0) equal(report.StopReason,"node_limit")
+  equal(a.LastPathFailure,nil) equal(#errors,1) equal(#messages,1)
+  assert(not errors[1]:find("connections_blocked",1,true))
+end)
+
+test("ordinary search still announces failure and resets it after success", function()
+  local a=pair()
+  a:SetValidNeighbourFunction(function() return false end)
+  local path, _, errors, messages=captureSearchReports(a,function() return a:GetPath() end)
+  equal(path,nil) equal(a.LastPathFailure,"connections_blocked") equal(#errors,1) equal(#messages,1)
+  a:SetValidNeighbourFunction(nil)
+  path, _, errors, messages=captureSearchReports(a,function() return a:GetPath() end)
+  equal(#path,2) equal(a.LastPathFailure,nil) equal(#errors,0) equal(#messages,0)
+end)
+
+test("long predecessor paths preserve ordering, suffix and table identity", function()
+  local a=ASTAR:New()
+  local nodes, predecessors={},{}
+  for i=1,12000 do
+    nodes[i]={id=i}
+    predecessors[nodes[i]]=nodes[i-1]
+  end
+  local suffix={id="suffix"}
+  local output={nodes[#nodes],suffix}
+  equal(a:_UnwindPath(output,predecessors,nodes[#nodes]),output)
+  equal(#output,#nodes+1)
+  for i,node in ipairs(nodes) do equal(output[i],node) end
+  equal(output[#output],suffix)
+  local empty={}
+  equal(a:_UnwindPath(empty,predecessors,nodes[1]),empty) equal(#empty,0)
+end)
+
+
+test("large overlays return before drawing and respect batch sizes and intervals", function()
+  resetDrawings()
+  local a=hexgrid()
+  equal(a:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=3,Interval=0.2}),a)
+  equal(count(drawings),0) equal(a.LastGridDrawResult.Status,"queued")
+  equal(a.LastGridDrawResult.NodesQueued,a.Nnodes)
+  local n=0
+  while stepTimer() do
+    local current=count(drawings)
+    assert(current-n<=3 and current>n)
+    n=current
+  end
+  equal(n,a.Nnodes) equal(a.GridDrawJob,nil)
+  equal(a.LastGridDrawResult.Status,"complete")
+  near(a.LastGridDrawResult.ElapsedSimulationSeconds,math.ceil(a.Nnodes/3)*0.2)
+end)
+
+test("updates extend pending drawings exactly once and preserve already drawn polygons", function()
+  resetDrawings()
+  local a=hexgrid():DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=2})
+  stepTimer()
+  local original=deepcopy(a.GridDrawIDs)
+  local result=a.LastGridDrawResult
+  a:ExpandHexGrid(6000,3000)
+  a:UpdateGridDrawing():UpdateGridDrawing()
+  equal(a.LastGridDrawResult,result) equal(result.NodesQueued,a.Nnodes)
+  flushTimers()
+  equal(count(drawings),a.Nnodes) equal(count(a.GridDrawNodeIDs),a.Nnodes)
+  equal(#removals,0)
+  for _,id in ipairs(original) do assert(drawings[id]) end
+  a:UpdateGridDrawing()
+  equal(count(drawings),a.Nnodes) equal(a.LastGridDrawResult.NodesDrawn,0)
+end)
+
+test("undrawing cancels pending callbacks without resurrecting removed polygons", function()
+  resetDrawings()
+  local a=hexgrid():DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=2})
+  local job=a.GridDrawJob
+  local callback=scheduled[job.timerID]
+  stepTimer()
+  equal(count(drawings),2)
+  a:UndrawGrid()
+  equal(job.result.Status,"cancelled") equal(count(drawings),0) equal(next(scheduled),nil)
+  equal(a.GridDrawOptions,nil) equal(a.GridDrawJob,nil)
+  equal(callback.fn(callback.args,timerNow),nil)
+  a:UpdateGridDrawing():UndrawGrid()
+  equal(count(drawings),0) equal(#removals,2)
+end)
+
+test("redrawing mid-job cancels the old style and isolates other instances", function()
+  resetDrawings()
+  local a=hexgrid():DrawGrid(1,nil,nil,nil,nil,nil,nil,{BatchSize=2})
+  local b=hexgrid(0,0):DrawGrid(2)
+  local bIDs=deepcopy(b.GridDrawIDs)
+  local old=a.GridDrawJob
+  local callback=scheduled[old.timerID]
+  stepTimer()
+  a:DrawGrid(0,{0.1,0.2,0.3},0.7,nil,0.2,2,false,{BatchSize=3})
+  equal(old.result.Status,"cancelled")
+  equal(callback.fn(callback.args,timerNow),nil)
+  flushTimers()
+  for _,id in ipairs(a.GridDrawIDs) do
+    local d=drawings[id]
+    equal(d.coalition,0) equal(d.color[1],0.1) equal(d.color[4],0.7) equal(d.readOnly,false)
+  end
+  for _,id in ipairs(bIDs) do equal(drawings[id].coalition,2) end
+  equal(count(drawings),a.Nnodes+b.Nnodes)
+end)
+
+test("expansion returns its path while an initial overlay is still queued", function()
+  resetDrawings()
+  land.surfaceAt=function(c)
+    return c.x>=1500 and c.x<=2500 and math.abs(c.z)<1200 and land.SurfaceType.LAND or land.SurfaceType.WATER
+  end
+  local a=hexgrid(0,0):SetHexNeighboursOnly(true)
+  a:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=1})
+  equal(#a.GridDrawIDs,0)
+  local path, report=a:GetPathWithExpansion()
+  assert(path and #report.Attempts>1)
+  equal(#a.GridDrawIDs,0) equal(report.Drawing.Status,"queued")
+  equal(report.Drawing,a.LastGridDrawResult)
+  flushTimers()
+  equal(report.Drawing.Status,"complete") equal(count(drawings),a.Nnodes)
+  equal(#removals,0)
+end)
+
+test("redraw false leaves a pending initial overlay at its original size", function()
+  resetDrawings()
+  local a=hexgrid(0,0):SetHexNeighboursOnly(true):SetValidNeighbourFunction(function() return false end)
+  local original=a.Nnodes
+  a:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=1})
+  local _, report=a:GetPathWithExpansion({MaxAttempts=2,Redraw=false})
+  equal(report.Drawing,nil)
+  flushTimers()
+  equal(count(drawings),original) assert(a.Nnodes>original)
+end)
+
+test("drawing errors terminate the job and allow missing cells to be retried", function()
+  resetDrawings()
+  local a=hexgrid():DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=3})
+  local original=a._DrawGridNode
+  local calls=0
+  function a:_DrawGridNode(node,style)
+    calls=calls+1
+    if calls==2 then error("Injected drawing error") end
+    return original(self,node,style)
+  end
+  flushTimers()
+  equal(a.LastGridDrawResult.Status,"error") equal(a.LastGridDrawResult.NodesDrawn,1)
+  assert(a.LastGridDrawResult.Error:find("Injected drawing error",1,true))
+  equal(a.GridDrawJob,nil) equal(count(drawings),1)
+  a._DrawGridNode=original
+  a:UpdateGridDrawing()
+  flushTimers()
+  equal(a.LastGridDrawResult.Status,"complete") equal(count(drawings),a.Nnodes) equal(#removals,0)
+end)
+
+test("drawing options are validated before cancelling an existing overlay", function()
+  resetDrawings()
+  local a=hexgrid():DrawGrid()
+  local job=a.GridDrawJob
+  for _,options in ipairs({{BatchSize=0},{BatchSize=1.5},{Interval=0},{Interval=math.huge},{MaxBatchSeconds=0},{MaxBatchSeconds=math.huge},"invalid"}) do
+    equal(pcall(function() a:DrawGrid(nil,nil,nil,nil,nil,nil,nil,options) end),false)
+    equal(a.GridDrawJob,job) equal(job.result.Status,"queued")
+  end
+  flushTimers()
+  equal(count(drawings),a.Nnodes)
+end)
+
+test("search and drawing CPU timings are separate from simulation waits", function()
+  resetDrawings()
+  local originalClock=os.clock
+  local cpu=100
+  os.clock=function() return cpu end
+  local ok, err=pcall(function()
+    local a=hexgrid(0,0):SetHexNeighboursOnly(true)
+    a:SetStartCoordinate(coord(-2500)):SetEndCoordinate(coord(6500))
+    a:SetValidNeighbourFunction(function() cpu=cpu+0.002 return true end)
+    local original=a._DrawGridNode
+    function a:_DrawGridNode(node,style) cpu=cpu+0.01 return original(self,node,style) end
+    a:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=2,Interval=0.1})
+    local path, report=a:GetPathWithExpansion()
+    assert(path and #report.Attempts>1)
+    local search=cpu-100
+    assert(search>0) near(report.SearchCPUSeconds,search)
+    local attempts=0
+    for _,attempt in ipairs(report.Attempts) do attempts=attempts+attempt.CPUSeconds end
+    near(attempts,search)
+    equal(report.Drawing.NodesDrawn,0)
+    flushTimers()
+    near(report.SearchCPUSeconds,search)
+    near(report.Drawing.CPUSeconds,report.Drawing.NodesDrawn*0.01)
+    near(report.Drawing.ElapsedSimulationSeconds,report.Drawing.Batches*0.1)
+    assert(a.LastSearchTiming.CPUSeconds>0)
+  end)
+  os.clock=originalClock
+  assert(ok,err)
+end)
+
+test("sanitized os does not prevent drawing or claim a zero CPU duration", function()
+  resetDrawings()
+  local originalOS=os
+  os=nil
+  local ok, err=pcall(function()
+    local a=hexgrid():SetHexNeighboursOnly(true)
+    local traces={}
+    function a:T(text) traces[#traces+1]=text end
+    a:DrawGrid()
+    local path, report=a:GetPathWithExpansion()
+    assert(path) equal(report.SearchCPUSeconds,nil) equal(a.LastSearchTiming.CPUSeconds,nil)
+    flushTimers()
+    equal(a.LastGridDrawResult.Status,"complete") equal(a.LastGridDrawResult.CPUSeconds,nil)
+    assert(table.concat(traces,"\n"):find("CPU time unavailable",1,true))
+  end)
+  os=originalOS
+  assert(ok,err)
+end)
+
+
+test("CPU budget limits batches before the configured cell count is reached", function()
+  resetDrawings()
+  local a=hexgrid()
+  local originalClock=os.clock
+  local cpu=0
+  os.clock=function() return cpu end
+  local ok, err=pcall(function()
+    local original=a._DrawGridNode
+    function a:_DrawGridNode(node,style) cpu=cpu+0.003 return original(self,node,style) end
+    a:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=25,MaxBatchSeconds=0.005})
+    local countBefore=0
+    while stepTimer() do
+      local n=count(drawings)
+      assert(n-countBefore>=1 and n-countBefore<=2)
+      countBefore=n
+    end
+    equal(countBefore,a.Nnodes)
+    equal(a.LastGridDrawResult.Batches,math.ceil(a.Nnodes/2))
+    near(a.LastGridDrawResult.MaxBatchCPUSeconds,0.006)
+    near(a.LastGridDrawResult.CPUSeconds,a.Nnodes*0.003)
+  end)
+  os.clock=originalClock
+  assert(ok,err)
+end)
+
+test("a small job that exceeds the time budget schedules its remaining cells", function()
+  resetDrawings()
+  local a=hexgrid(0,0)
+  local originalClock=os.clock
+  local cpu=0
+  os.clock=function() return cpu end
+  local ok, err=pcall(function()
+    local original=a._DrawGridNode
+    function a:_DrawGridNode(node,style) cpu=cpu+0.012 return original(self,node,style) end
+    a:DrawGrid()
+    equal(count(drawings),1) assert(a.GridDrawJob and a.GridDrawJob.timerID)
+    flushTimers()
+    equal(count(drawings),a.Nnodes) equal(a.LastGridDrawResult.Status,"complete")
+    equal(a.LastGridDrawResult.Batches,a.Nnodes)
+    near(a.LastGridDrawResult.MaxBatchCPUSeconds,0.012)
+  end)
+  os.clock=originalClock
+  assert(ok,err)
+end)
+
+test("drawing uses one cell per scheduled batch when the CPU clock is sanitized", function()
+  resetDrawings()
+  local a=hexgrid()
+  local originalOS=os
+  os=nil
+  local ok, err=pcall(function()
+    a:DrawGrid()
+    local n=0
+    while stepTimer() do
+      equal(count(drawings),n+1)
+      n=n+1
+    end
+    equal(n,a.Nnodes) equal(a.LastGridDrawResult.MaxBatchCPUSeconds,nil)
+    equal(a.LastGridDrawResult.CPUSeconds,nil) equal(a.LastGridDrawResult.Batches,n)
+  end)
+  os=originalOS
+  assert(ok,err)
+end)
+
+test("grid rendering never constructs MOOSE coordinate objects for vertices", function()
+  resetDrawings()
+  local a=hexgrid()
+  local original=COORDINATE.New
+  COORDINATE.New=function() error("Polygon vertices must be plain Vec3 tables") end
+  local ok, err=pcall(function()
+    a:DrawGrid()
+    flushTimers()
+    equal(a.LastGridDrawResult.Status,"complete") equal(count(drawings),a.Nnodes)
+  end)
+  COORDINATE.New=original
+  assert(ok,err)
+end)
+
+test("direct polygon calls match the existing MOOSE freeform API and global mark ids", function()
+  resetDrawings()
+  local rect=ASTAR:New():SetStartCoordinate(coord(1000,2000)):SetEndCoordinate(coord(2000,3000))
+  rect:CreateGrid(nil,2000,0,1000,1000)
+  for _,a in ipairs({rect,hexgrid()}) do
+    local _,node=next(a.nodes)
+    local style={Coalition=0,Color={0.2,0.3,0.4},Alpha=0,FillColor={0.5,0.6,0.7},FillAlpha=0.3,LineType=5,ReadOnly=false}
+    local id=a:_DrawGridNode(node,style)
+    local drawn=drawings[id]
+    local coords={}
+    for _,v in ipairs(drawn.vertices) do coords[#coords+1]=coord(v.x,v.z,v.y) end
+    local first=table.remove(coords,1)
+    local referenceID=first:MarkupToAllFreeForm(coords,style.Coalition,deepcopy(style.Color),style.Alpha,
+      deepcopy(style.FillColor),style.FillAlpha,style.LineType,style.ReadOnly)
+    equal(referenceID,id+1)
+    local reference=drawings[referenceID]
+    for _,key in ipairs({"coalition","lineType","readOnly","text"}) do equal(drawn[key],reference[key]) end
+    for i=1,4 do equal(drawn.color[i],reference.color[i]) equal(drawn.fill[i],reference.fill[i]) end
+    for i,v in ipairs(drawn.vertices) do
+      near(v.x,reference.vertices[i].x) near(v.y,reference.vertices[i].y) near(v.z,reference.vertices[i].z)
+    end
+    equal(#style.Color,3) equal(#style.FillColor,3)
+  end
+end)
+
+
+test("debug snapshot highlights actual hex and rectangular path cells without searching again", function()
+  local rect=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+  rect:CreateGrid(nil,2000,0,1000,1000):SetValidNeighbourDistance(1100)
+  local hex=hexgrid(2000,0):SetHexNeighboursOnly(true)
+  hex:SetStartCoordinate(coord(100)) -- Exact endpoint has no cell polygon.
+  for _,a in ipairs({rect,hex}) do
+    resetDrawings()
+    local path=a:GetPath()
+    assert(path)
+    local expected={}
+    for _,node in ipairs(path) do expected[node.id]=true end
+    local valid, costs, nodes=a.nvalid,a.ncost,a.Nnodes
+    equal(a:DrawGridWithPath(path,{BatchSize=2}),a)
+    flushTimers()
+    equal(a.nvalid,valid) equal(a.ncost,costs) equal(a.Nnodes,nodes)
+    local green, cells=0,0
+    for id,node in pairs(a.nodes) do
+      if node.rectGrid or node.q~=nil then
+        cells=cells+1
+        local drawing=drawings[a.GridDrawNodeIDs[id]]
+        assert(drawing)
+        equal(#drawing.vertices,a.hexGrid and 6 or 4)
+        equal(drawing.color[1],0)
+        equal(drawing.color[2],expected[id] and 1 or 0)
+        equal(drawing.color[3],expected[id] and 0 or 1)
+        equal(drawing.fill[4],expected[id] and 0.35 or 0)
+        if expected[id] then green=green+1 end
+      else equal(a.GridDrawNodeIDs[id],nil) end
+    end
+    assert(green>0 and green<cells)
+    equal(count(drawings),cells) equal(next(scheduled),nil)
+  end
+end)
+
+test("debug snapshots do not grow during pending or subsequent grid expansions", function()
+  resetDrawings()
+  local a=hexgrid(0,0):SetHexNeighboursOnly(true)
+  local path=a:GetPath()
+  local original=a.Nnodes
+  a:DrawGridWithPath(path,{BatchSize=1})
+  a:ExpandHexGrid(4000,2000):UpdateGridDrawing()
+  equal(a.LastGridDrawResult.NodesQueued,original)
+  flushTimers()
+  equal(count(drawings),original)
+  local marks=deepcopy(a.GridDrawIDs)
+  a:SetValidNeighbourFunction(function() return false end)
+  local _,report=a:GetPathWithExpansion({MaxAttempts=2})
+  equal(report.Drawing,nil) equal(count(drawings),original) equal(next(scheduled),nil)
+  for _,id in ipairs(marks) do assert(drawings[id]) end
+  -- Explicitly requesting a regular grid restores incremental drawing.
+  a:DrawGrid()
+  flushTimers()
+  equal(count(drawings),a.Nnodes) equal(a.GridDrawOptions.Snapshot,nil)
+end)
+
+test("debug snapshots copy path selection and options before deferred drawing", function()
+  resetDrawings()
+  local a=hexgrid():SetHexNeighboursOnly(true)
+  local path=a:GetPath()
+  local expected={}
+  for _,node in ipairs(path) do expected[node.id]=true end
+  local options={Coalition=0,GridColor={0.1,0.2,0.3},PathColor={0.4,0.5,0.6},PathFillAlpha=0,BatchSize=1}
+  a:DrawGridWithPath(path,options)
+  for i=#path,1,-1 do path[i]=nil end
+  options.PathColor[1]=1 options.GridColor[1]=1 options.PathFillAlpha=1 options.Coalition=2
+  flushTimers()
+  for id,markID in pairs(a.GridDrawNodeIDs) do
+    local drawing=drawings[markID]
+    equal(drawing.coalition,0) equal(drawing.color[1],expected[id] and 0.4 or 0.1)
+    equal(drawing.fill[4],0)
+  end
+end)
+
+test("debug redraw and undraw cancel pending snapshots without duplicating polygons", function()
+  resetDrawings()
+  local a=hexgrid():SetHexNeighboursOnly(true)
+  local path=a:GetPath()
+  a:DrawGridWithPath(path,{BatchSize=1})
+  local old=a.GridDrawJob
+  local callback=scheduled[old.timerID]
+  stepTimer()
+  a:DrawGridWithPath({},{BatchSize=2})
+  equal(old.result.Status,"cancelled") equal(callback.fn(callback.args,timerNow),nil)
+  flushTimers()
+  equal(count(drawings),a.Nnodes)
+  for _,drawing in pairs(drawings) do equal(drawing.color[2],0) equal(drawing.fill[4],0) end
+  a:DrawGridWithPath(path,{BatchSize=1})
+  local pending=a.GridDrawJob
+  a:UndrawGrid()
+  equal(pending.result.Status,"cancelled") equal(count(drawings),0) equal(next(scheduled),nil)
+end)
+
+test("invalid debug paths and options leave the existing overlay intact", function()
+  resetDrawings()
+  local a=hexgrid():SetHexNeighboursOnly(true)
+  local path=a:GetPath()
+  a:DrawGrid()
+  local old=a.GridDrawJob
+  local foreign=hexgrid()
+  local _,foreignNode=next(foreign.nodes)
+  equal(pcall(function() a:DrawGridWithPath(nil) end),false)
+  equal(pcall(function() a:DrawGridWithPath({foreignNode}) end),false)
+  for _,options in ipairs({{PathFillAlpha=-1},{PathFillAlpha=2},{BatchSize=0},{MaxBatchSeconds=0},"invalid"}) do
+    equal(pcall(function() a:DrawGridWithPath(path,options) end),false)
+  end
+  equal(a.GridDrawJob,old) equal(old.result.Status,"queued")
+  flushTimers()
+  equal(count(drawings),a.Nnodes)
+end)
+
+
+-- Use the actual MOOSE circle/polygon membership and bounds methods, including polygon edge conventions.
+ZONE_BASE={}
+ZONE_RADIUS=setmetatable({}, {__index=ZONE_BASE})
+ZONE_POLYGON_BASE={}
+local zoneFile=assert(io.open("Moose Development/Moose/Core/Zone.lua","r"))
+local zoneSource=zoneFile:read("*a"):gsub("\r\n","\n") zoneFile:close()
+for _,signature in ipairs({"ZONE_BASE:GetBoundingSquare", "ZONE_RADIUS:GetVec2", "ZONE_RADIUS:GetRadius",
+  "ZONE_RADIUS:IsVec2InZone", "ZONE_POLYGON_BASE:GetBoundingSquare", "ZONE_POLYGON_BASE:IsVec2InZone"}) do
+  local method=assert(zoneSource:match("(function "..signature.."%b().-\nend)"))
+  assert((loadstring or load)(method))()
+end
+local function circleZone(x,z,radius)
+  return setmetatable({Vec2={x=x,y=z},Radius=radius},{__index=ZONE_RADIUS})
+end
+local function polygonZone(origin,heading,points)
+  local vertices={}
+  for _,p in ipairs(points) do
+    local c=origin:Translate(p[1],heading):Translate(p[2],heading+90)
+    vertices[#vertices+1]={x=c.x,y=c.z}
+  end
+  return setmetatable({_={Polygon=vertices}},{__index=ZONE_POLYGON_BASE})
+end
+
+test("zone hex grids match circle, square and concave polygon membership across rotations", function()
+  for _,heading in ipairs({0,37,90,205}) do
+    local origin=coord(123456,-234567)
+    local goal=origin:Translate(4000,heading)
+    local center=origin:Translate(2000,heading)
+    local zones={circleZone(center.x,center.z,2500),
+      polygonZone(origin,heading+23,{{-499,-1499},{4501,-1499},{4501,3501},{-499,3501}}),
+      polygonZone(origin,heading,{{-501,-2001},{4501,-2001},{4501,2001},{2501,2001},{2501,501},{-501,501}})}
+    for _,zone in ipairs(zones) do
+      local a=ASTAR:New():SetStartCoordinate(origin):SetEndCoordinate(goal)
+      land.surfaceAt=function(c) assert(zone:IsVec2InZone({x=c.x,y=c.z})) return land.SurfaceType.WATER end
+      a:CreateHexGridFromZone(zone,nil,1000,false,5000)
+      land.surfaceAt=nil
+      local reference=ASTAR:New():SetStartCoordinate(origin):SetEndCoordinate(goal)
+      reference:CreateHexGrid(nil,20000,10000,1000)
+      local expected=0
+      for _,node in pairs(reference.nodes) do
+        if zone:IsVec2InZone({x=node.coordinate.x,y=node.coordinate.z}) then
+          expected=expected+1
+          local actual=a.hexIndex[node.q] and a.hexIndex[node.q][node.r]
+          assert(actual) near(actual.coordinate:Get2DDistance(node.coordinate),0)
+        end
+      end
+      equal(a.Nnodes,expected) assert(expected>0)
+    end
+  end
+end)
+
+test("rectangular zone grids include exactly the eligible centers and keep cell dimensions", function()
+  local origin=coord(-12000,24000)
+  for _,heading in ipairs({0,37,90}) do
+    local zones={circleZone(origin.x,origin.z,3100),
+      polygonZone(origin,heading,{{-1201,-1201},{3201,-1201},{3201,3201},{-1201,3201}}),
+      polygonZone(origin,heading,{{-1201,-1201},{4201,-1201},{4201,2001},{1801,2001},{1801,201},{-1201,201}})}
+    for _,zone in ipairs(zones) do
+      local a=ASTAR:New():SetStartCoordinate(origin):SetEndCoordinate(origin:Translate(4000,heading))
+      local manual=a:AddNodeFromCoordinate(origin:Translate(10000,heading))
+      land.surfaceAt=function(c) assert(zone:IsVec2InZone({x=c.x,y=c.z})) return land.SurfaceType.WATER end
+      a:CreateGridFromZone(zone,nil,1000,1500,false,5000)
+      land.surfaceAt=nil
+      local expected=0
+      for i=-10,10 do for j=-10,10 do
+        local c=origin:Translate(j*1000,heading):Translate(i*1500,heading+90)
+        if zone:IsVec2InZone({x=c.x,y=c.z}) then
+          expected=expected+1
+          local node,d=a:FindClosestNode(c)
+          near(d,0) equal(node.rectGrid.along,500) equal(node.rectGrid.across,750)
+        end
+      end end
+      equal(a.Nnodes,expected+1) equal(a.nodes[manual.id],manual)
+    end
+  end
+end)
+
+test("zone creation budgets reject before membership, terrain sampling or mutation", function()
+  for _,hex in ipairs({false,true}) do
+    local zone=circleZone(2000,0,3000)
+    function zone:IsVec2InZone() error("Budget must precede membership tests") end
+    local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+    local counter=a.counter
+    a.ValidSurfaceTypes=land.SurfaceType.LAND
+    land.surfaceAt=function() error("Budget must precede terrain sampling") end
+    local result,reason
+    if hex then result,reason=a:CreateHexGridFromZone(zone,nil,1000,false,1)
+    else result,reason=a:CreateGridFromZone(zone,nil,1000,1000,false,1) end
+    equal(result,nil) equal(reason,"node_limit") equal(a.Nnodes,0) equal(a.counter,counter)
+    equal(a.hexGrid,nil) equal(a.hexIndex,nil) equal(a.ValidSurfaceTypes,land.SurfaceType.LAND)
+  end
+end)
+
+test("zone expansion fills unsampled holes while preserving accepted and rejected terrain samples", function()
+  local zone=circleZone(2000,0,2100)
+  local sampled={}
+  local function surface(c) return math.abs(c.x-2000)<1 and math.abs(c.z)<1 and land.SurfaceType.LAND or land.SurfaceType.WATER end
+  land.surfaceAt=function(c)
+    local key=string.format("%.4f %.4f",c.x,c.z)
+    assert(not sampled[key],"Terrain was sampled twice") sampled[key]=true
+    return surface(c)
+  end
+  local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+  a:CreateHexGridFromZone(zone,land.SurfaceType.WATER,1000)
+  local grid=a.hexGrid
+  local initial=grid.initialSamples
+  local oldNodes={}
+  for id,node in pairs(a.nodes) do oldNodes[id]=node end
+  equal(a.hexIndex[2][0],nil)
+  a:ExpandHexGrid(grid.boxHY,grid.spaceX)
+  equal(grid.initialSamples,initial)
+  local width,margin=grid.boxHY+2000,grid.spaceX+1000
+  local result,reason=a:ExpandHexGrid(width,margin,grid.candidateCount)
+  equal(result,nil) equal(reason,"node_limit") equal(grid.initialSamples,initial)
+  function zone:IsVec2InZone() error("Enlargement must not consult the initial zone again") end
+  a:ExpandHexGrid(width,margin,5000)
+  equal(grid.initialSamples,nil) equal(a.hexIndex[2][0],nil)
+  assert(a.hexIndex[-1][2]) -- (0, sqrt(3)*1000): inside old bounds, outside the initial circle.
+  for id,node in pairs(oldNodes) do equal(a.nodes[id],node) end
+  a:ExpandHexGrid(width+2000,margin+1000,5000)
+  land.surfaceAt=surface
+  local reference=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+  reference:CreateHexGrid(land.SurfaceType.WATER,grid.boxHY,grid.spaceX,1000)
+  equal(a.Nnodes,reference.Nnodes)
+  for _,node in pairs(reference.nodes) do assert(a.hexIndex[node.q][node.r]) end
+end)
+
+test("automatic expansion finds paths beyond a zone seed including an empty seed", function()
+  for _,zone in ipairs({circleZone(0,0,100),circleZone(500,500,10)}) do
+    local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+    a:CreateHexGridFromZone(zone,nil,1000):SetHexNeighboursOnly(true)
+    assert(a.Nnodes<=1)
+    local path,report=a:GetPathWithExpansion()
+    assert(path and #report.Attempts>1)
+    equal(report.StopReason,"path_found")
+    local outside=false
+    for _,node in ipairs(path) do if not zone:IsVec2InZone({x=node.coordinate.x,y=node.coordinate.z}) then outside=true end end
+    assert(outside)
+  end
+end)
+
+test("zone setup rejects invalid geometry and preserves objects", function()
+  local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+  for _,zone in ipairs({{},circleZone(0,0,-1),{IsVec2InZone=function() return true end,
+    GetBoundingSquare=function() return {x1=0,x2=math.huge,y1=0,y2=1} end}}) do
+    equal(pcall(function() a:CreateHexGridFromZone(zone) end),false)
+    equal(pcall(function() a:CreateGridFromZone(zone) end),false)
+  end
+  equal(pcall(function() a:CreateHexGridFromZone(nil) end),false)
+  equal(a.Nnodes,0) equal(a.hexGrid,nil)
+end)
+
+
+test("zone creation limits count bounding cells including centers outside a circle", function()
+  local zone=circleZone(0,0,1100)
+  local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+  local queries=0
+  land.surfaceAt=function(c)
+    assert(zone:IsVec2InZone({x=c.x,y=c.z})) queries=queries+1 return land.SurfaceType.WATER
+  end
+  equal(a:CreateGridFromZone(zone,nil,1000,1000,false,8),nil) equal(queries,0)
+  equal(a:CreateGridFromZone(zone,nil,1000,1000,false,9),a) equal(queries,5) equal(a.Nnodes,5)
+  local b=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+  equal(b:CreateHexGridFromZone(zone,nil,1000,false,6),nil) equal(queries,5)
+  equal(b:CreateHexGridFromZone(zone,nil,1000,false,7),b) equal(b.hexGrid.candidateCount,7) equal(queries,12)
 end)
 
 print(string.format("%d passed, %d failed", passed, failed))
