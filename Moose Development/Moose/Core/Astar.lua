@@ -5,7 +5,7 @@
 --    * Find path from A to B.
 --    * Pre-defined as well as custom valid neighbour functions.
 --    * Pre-defined as well as custom cost functions.
---    * Easy rectangular grid setup.
+--    * Rectangular or hexagonal grids, with optional six-neighbour hex search.
 --
 -- ===
 --
@@ -36,7 +36,13 @@
 -- @field #table ValidNeighbourArg Optional arguments passed to the valid neighbour function.
 -- @field #function CostFunc Function to calculate the travel cost from one node to another.
 -- @field #table CostArg Optional arguments passed to the cost function. 
--- @field #table ValidSurfaceTypes Surface filter used when creating the grid and adding distant endpoints; may also be a single numeric surface type.
+-- @field #table ValidSurfaceTypes Surface filter used by the grid builder and automatically added endpoints; may also be a single numeric surface type.
+-- @field #boolean HexNeighboursOnly Restrict candidates to hex edges and local endpoint attachments. Disabled by default.
+-- @field #table hexGrid Hex grid geometry: origin x/z, cos/sin of heading, spacing, and row spacing.
+-- @field #table hexIndex Hex nodes indexed by axial q, then r.
+-- @field #table hexLinks Cached candidate adjacency, indexed by node id, then neighbour id. Does not cache rule results.
+-- @field #table hexComponents Connected-component labels for hex candidates. Rebuilt when candidate adjacency changes.
+-- @field #table GridDrawIDs F10 polygon ids owned by DrawGrid(), removed by UndrawGrid().
 -- @extends Core.Base#BASE
 
 --- *When nothing goes right... Go left!*
@@ -53,19 +59,21 @@
 -- The usual setup is:
 --
 -- 1. Create an object with @{#ASTAR.New} and set the start and end coordinates.
--- 2. Create a rectangular grid or add your own nodes.
+-- 2. Create a rectangular or hexagonal grid, or add your own nodes.
 -- 3. Select a neighbour rule and, optionally, a travel cost function.
 -- 4. Call @{#ASTAR.GetPath} and check the result before using its nodes.
 --
 -- # Start and Goal
 --
 -- @{#ASTAR.SetStartCoordinate} and @{#ASTAR.SetEndCoordinate} take MOOSE COORDINATE objects.
--- Set both coordinates before calling @{#ASTAR.CreateGrid} or @{#ASTAR.GetPath}.
+-- Set both coordinates before calling @{#ASTAR.CreateGrid}, @{#ASTAR.CreateHexGrid}, or @{#ASTAR.GetPath}.
 --
 -- At search time, each endpoint is mapped to the nearest existing node using 2D distance. If the distance is at most
 -- 1000 meters, that node is used. If it is greater, ASTAR adds a node at the requested coordinate, provided its surface
--- passes the filter from CreateGrid(). Its connections must still pass the neighbour rule.
+-- passes the filter from the grid builder. Its connections must still pass the neighbour rule.
 -- An empty grid is not populated automatically by GetPath().
+-- With SetHexNeighboursOnly(true), the 1000-meter snapping threshold is replaced by a 0.000001-meter coincidence tolerance:
+-- endpoints at different 2D positions are added at their requested coordinates, then attached locally as described below.
 --
 -- Therefore, a returned path does not necessarily begin or end at the exact requested coordinates.
 -- For exact endpoints, explicitly add them with @{#ASTAR.AddNodeFromCoordinate} after checking their suitability.
@@ -95,6 +103,56 @@
 -- of the narrowest relevant passage, then check the result in the mission.
 -- CreateGrid() adds to the existing node set. Use a new ASTAR object to build a replacement grid.
 --
+-- ## Hexagonal Grid
+--
+-- @{#ASTAR.CreateHexGrid} accepts `ValidSurfaceTypes, BoxHY, SpaceX, Spacing, MarkGrid`.
+-- The surface filter, search width, end margins and markers have the same meanings and defaults as for CreateGrid().
+-- `Spacing` is the distance between adjacent cell centers, default 2000 meters, not the distance to a hexagon vertex.
+-- The vertex radius would be `Spacing / math.sqrt(3)`. Grid nodes have altitude zero.
+--
+-- The lattice starts at the requested start position and rotates with the start-to-goal heading. Each grid node stores
+-- integer axial coordinates `q` and `r`; the third cube coordinate is `-q-r`. Along and across the search area, centers are at
+-- `Spacing * (q + r/2)` and `Spacing * math.sqrt(3)/2 * r`. Only centers within the search rectangle and on accepted surfaces are added.
+--
+-- CreateHexGrid() requires an empty ASTAR object with both endpoints set. Use a new object to rebuild the lattice or switch
+-- between hexagonal and rectangular grids. Additional manual nodes may be added after creating the hex grid.
+-- Invalid dimensions or a non-empty setup raise an error before creating the grid: Spacing must be finite and positive;
+-- BoxHY and SpaceX must be finite and non-negative. All dimensions are in meters.
+--
+-- By default, hex nodes still use the existing all-pairs candidate search, allowing long direct connections when the neighbour rule permits them.
+-- Call @{#ASTAR.SetHexNeighboursOnly}(true) after creating the grid to restrict grid-to-grid connections to the six adjacent cells.
+-- This mode is separate from the neighbour rule, so it can be combined with SetValidNeighbourLoS(), road checks or a custom rule.
+-- SetHexNeighboursOnly(false) restores all-pairs selection; it does not remove nodes added by previous searches.
+--
+-- Non-grid nodes, including automatically added exact endpoints, attach in both directions to existing grid centers within one Spacing.
+-- These attachments also pass through the configured neighbour rule and cost function. There are no direct connections between two non-grid nodes.
+-- A grid node can therefore have extra endpoint attachments in addition to its six grid neighbours.
+-- A point too far from all accepted centers is disconnected; enlarge the search area or adjust its resolution rather than expecting a long jump.
+-- Filtered-out cells are not recreated by the neighbour lookup. User-added nodes remain the caller's responsibility.
+--
+-- Hex mode does not change the cost functions or heuristic. Paths may contain more waypoints and follow raster directions;
+-- ASTAR does not smooth the result automatically. No MIST installation is required.
+--
+-- ## Draw the Grid on the F10 Map
+--
+-- @{#ASTAR.DrawGrid} draws the accepted cells as polygons: hexagons for CreateHexGrid(), rectangles for CreateGrid().
+-- Each cell is centered on its node and rotates with the grid. Manual nodes and automatically added endpoints have no cell outline.
+-- Only the node center was surface-filtered; a drawn cell may still cover unsuitable terrain or extend beyond the search rectangle.
+-- The outlines show the sampling grid, not the allowed connections or guaranteed traversable areas.
+--
+-- By default, all coalitions see blue solid outlines with no fill. Optional coalition, RGB colors, opacity, line style,
+-- and read-only settings follow the MOOSE coordinate drawing functions. One DCS polygon is created per accepted cell.
+-- DrawGrid() first removes its previous polygons, so calling it again updates the display without accumulating duplicates.
+-- @{#ASTAR.UndrawGrid} removes only those polygons; it preserves nodes, paths and the separate text markers from MarkGrid=true.
+-- Adding nodes does not redraw automatically. Call DrawGrid() again after changing the node set.
+--
+-- On an existing ASTAR object with a generated grid:
+--
+--     astar:DrawGrid()                             -- All coalitions, blue outlines, no fill.
+--     astar:DrawGrid(2, {0, 0.5, 1}, 0.8, nil, 0.1) -- Replace with a lightly filled grid for blue coalition.
+--     -- Later, when the overlay is no longer needed:
+--     astar:UndrawGrid()
+--
 -- ## Surface Filtering
 --
 -- For a water-only grid, pass `{land.SurfaceType.WATER}`. This accepts exactly that type, excluding SHALLOW_WATER.
@@ -103,7 +161,8 @@
 --
 -- # Valid Neighbours
 --
--- Every other node is a potential neighbour, including distant nodes. Without a neighbour rule, all pairs are allowed.
+-- By default, every other node is a potential neighbour, including distant nodes. Without a neighbour rule, all candidate pairs are allowed.
+-- The optional hex-only mode restricts candidates before applying the rule.
 -- Each neighbour setter replaces the previous rule; calling two setters does not combine their conditions.
 --
 -- * @{#ASTAR.SetValidNeighbourDistance}: allow connections whose 2D distance is at most MaxDistance (default 2000 m).
@@ -126,7 +185,7 @@
 --
 -- * Default, or @{#ASTAR.SetCostDist2D}: 2D distance in meters; the heuristic is also 2D distance.
 -- * @{#ASTAR.SetCostDist3D}: 3D distance in meters; the heuristic is also 3D distance.
---   Supply nodes with appropriate altitudes; CreateGrid() does not build a three-dimensional flight grid.
+--   Supply nodes with appropriate altitudes; neither grid builder creates a three-dimensional flight grid.
 -- * @{#ASTAR.SetCostRoad}: length of the path returned by `land.findPathOnRoads`; a missing connection costs `math.huge`.
 --   The heuristic is zero. Returned ASTAR nodes do not include the detailed DCS road path between them.
 -- * @{#ASTAR.SetCostFunction}: supply `function(nodeA, nodeB, ...)` returning a non-negative, symmetric numeric travel cost.
@@ -136,6 +195,28 @@
 -- A zero heuristic makes the search equivalent to Dijkstra's algorithm and avoids overestimating unknown custom costs.
 -- The least-cost result is relative to the available nodes, allowed connections, and selected costs, not every possible route through the terrain.
 -- Since version 0.4.1, SetCostFunction() determines actual travel costs; earlier versions applied it only to the heuristic.
+--
+-- # Fast Connectivity Precheck
+--
+-- @{#ASTAR.HasPotentialPath} checks whether the requested endpoints can be connected before applying neighbour rules and travel costs.
+-- In hex-only mode it traverses the existing hex candidate graph, including local attachments for exact endpoints and manual nodes.
+-- It does not query visibility or roads or execute custom neighbour/cost callbacks.
+-- Like GetPath(), it resolves endpoints and may add nodes at their requested coordinates; newly created nodes sample their surface types.
+--
+-- * False means there is no candidate route in the current graph, or valid endpoints are missing. GetPath() cannot find a route in that state.
+-- * True means a route is possible, not guaranteed. A visibility rule, a missing road or an infinite cost can still prevent the final path.
+--
+-- GetPath() automatically performs this precheck in hex-only mode and returns nil for disconnected endpoints before starting A*.
+-- Call HasPotentialPath() explicitly when you want to decide whether to construct a larger grid first. The precheck does not resize the grid.
+-- Increasing BoxHY or SpaceX may include a missing detour; smaller Spacing may resolve a narrow passage. Rebuild on a new ASTAR object.
+--
+-- Connected components are cached independently of neighbour/cost results. The first check builds candidate adjacency as needed
+-- and visits the start component with a breadth-first traversal, linear in its nodes and candidate edges.
+-- Later checks reuse the complete component labels until nodes change. Endpoint selection still scans the node set.
+-- Changing a neighbour rule or travel cost does not invalidate this cache because neither is used in the connectivity test.
+--
+-- Outside hex-only mode, all node pairs are candidates. HasPotentialPath() therefore returns true whenever both endpoints can be resolved;
+-- it does not use hex adjacency to reject possible long connections. Missing coordinates or an empty node set still return false.
 --
 -- # Calculate and Use the Path
 --
@@ -147,17 +228,20 @@
 -- A nil result means no valid path was found. Check for:
 --
 -- * Missing start or end coordinates, or an empty node set (including a grid rejected entirely by its surface filter).
--- * A distant endpoint rejected by the grid surface filter.
+-- * An automatically added endpoint rejected by the grid surface filter, or disconnected from the hex grid.
 -- * A grid that does not cover the required detour, or spacing too coarse to represent a passage.
 -- * A maximum neighbour distance too small to connect the nodes, or other neighbour rules blocking the route.
 -- * Connections with infinite travel cost, such as missing road connections.
 --
 -- # Reuse and Performance
 --
--- GetPath() runs synchronously and scans all nodes when finding neighbours. Large grids and expensive road/visibility
+-- GetPath() runs synchronously. By default it scans all nodes when finding neighbours; hex-only mode uses an indexed,
+-- sparse candidate graph built once after node additions, then checks only adjacent cells and local attachments.
+-- Selection of the next open node and initial endpoint lookup still use linear scans. Large grids and expensive road/visibility
 -- checks can pause the simulation; start with a small search area and add detail only as needed.
 -- F10 markers for large grids can also be expensive. Set `astar.Debug = true` to enable the no-path message to players;
 -- search statistics are written through the normal MOOSE logging facilities.
+-- DrawGrid() also runs synchronously and creates one polygon per cell; use it on reasonably sized grids and remove the overlay when finished.
 --
 -- Connection validity and travel costs are cached on the nodes. Calling SetValidNeighbourFunction() or one of its convenience
 -- setters clears validity results; calling SetCostFunction() or a cost setter clears travel costs.
@@ -196,6 +280,34 @@
 --       return ASTAR.DistMax(nodeA, nodeB, maxDistance)
 --         and ASTAR.LoS(nodeA, nodeB, corridorWidth)
 --     end, 3000, 500)
+--
+-- ## Hexagonal Water Route
+--
+-- As in the water example, create the `Astar Start` and `Astar Goal` trigger zones on water before running this code.
+-- This enables six-neighbour traversal with a 500-meter visibility corridor. Exact endpoints attach to nearby accepted centers.
+-- The optional explicit precheck distinguishes an insufficiently connected grid from a route blocked by the actual connection rules.
+--
+--     local startZone = ZONE:FindByName("Astar Start")
+--     local goalZone = ZONE:FindByName("Astar Goal")
+--     assert(startZone and goalZone, "Create the Astar Start and Astar Goal trigger zones")
+--     local astar = ASTAR:New()
+--     astar:SetStartCoordinate(startZone:GetCoordinate())
+--     astar:SetEndCoordinate(goalZone:GetCoordinate())
+--     astar:CreateHexGrid({land.SurfaceType.WATER}, 40000, 10000, 2000, false)
+--     astar:SetHexNeighboursOnly(true)
+--     astar:SetValidNeighbourLoS(500)
+--     if not astar:HasPotentialPath() then
+--       env.info("ASTAR: no candidate route; check endpoints, grid extent and spacing")
+--       return
+--     end
+--     local path = astar:GetPath()
+--     if path then
+--       for i, node in ipairs(path) do
+--         node.coordinate:MarkToAll(string.format("Hex route waypoint %d", i))
+--       end
+--     else
+--       env.info("ASTAR: no hex water route found")
+--     end
 --
 -- ## Custom Nodes and Costs
 --
@@ -237,6 +349,9 @@ ASTAR = {
 -- @field #number surfacetype DCS surface type sampled at node creation.
 -- @field #table valid Cached connection validity, indexed by the other node's id.
 -- @field #table cost Cached travel cost, indexed by the other node's id.
+-- @field #number q Axial column for a node created by CreateHexGrid(); nil for manual nodes.
+-- @field #number r Axial row for a node created by CreateHexGrid(); the third cube coordinate is -q-r.
+-- @field #table rectGrid Drawing geometry for a node created by CreateGrid(): half-length, half-width, heading cosine and sine.
 
 --- ASTAR infinity.
 -- @field #number INF
@@ -244,7 +359,10 @@ ASTAR.INF=1/0
 
 --- ASTAR class version.
 -- @field #string version
-ASTAR.version="0.4.1"
+ASTAR.version="0.5.2"
+
+-- Six axial offsets; adjacent centers are one spacing apart.
+local hexDirections={{1,0}, {0,1}, {-1,1}, {-1,0}, {0,-1}, {1,-1}}
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -319,10 +437,29 @@ end
 
 --- Add a node created by this ASTAR instance to the search node set.
 -- Does not apply the grid surface filter. Adding the same node again does not increase the node count.
+-- Invalidates hex candidate adjacency. Do not modify node ids, hex indices or coordinates after adding a node.
 -- @param #ASTAR self
 -- @param #ASTAR.Node Node The node to be added.
 -- @return #ASTAR self
 function ASTAR:AddNode(Node)
+
+  if self.hexGrid then
+    -- Keep the spatial index and candidate graph in sync when nodes are added or replaced.
+    if Node.q~=nil and Node.r~=nil then
+      local column=self.hexIndex[Node.q]
+      local existing=column and column[Node.r]
+      assert(not existing or existing.id==Node.id, "ASTAR: hex cell already contains a node")
+    end
+    local previous=self.nodes[Node.id]
+    if previous and previous.q~=nil and previous.r~=nil then
+      self.hexIndex[previous.q][previous.r]=nil
+    end
+    if Node.q~=nil and Node.r~=nil then
+      self.hexIndex[Node.q]=self.hexIndex[Node.q] or {}
+      self.hexIndex[Node.q][Node.r]=Node
+    end
+    self.hexLinks=nil
+  end
 
   if not self.nodes[Node.id] then
     self.Nnodes=self.Nnodes+1
@@ -392,6 +529,23 @@ function ASTAR:SetValidNeighbourFunction(NeighbourFunction, ...)
   return self
 end
 
+
+--- Limit candidates to six adjacent hex cells and local attachments for non-grid nodes.
+-- Call CreateHexGrid() first. Does not replace the validity rule: LoS, distance, road or custom checks still apply.
+-- In this mode, non-coincident endpoints are added at their exact coordinates if their surfaces are allowed.
+-- Non-grid nodes attach only to existing hex centers within one Spacing, in both directions; they do not connect directly to each other.
+-- @param #ASTAR self
+-- @param #boolean Enabled (Optional) Enable the mode, default true. False restores all-pairs candidate selection.
+-- @return #ASTAR self
+function ASTAR:SetHexNeighboursOnly(Enabled)
+
+  if Enabled==nil then Enabled=true end
+  assert(type(Enabled)=="boolean", "ASTAR: Enabled must be a boolean")
+  assert(not Enabled or self.hexGrid, "ASTAR: call CreateHexGrid before enabling hex neighbours")
+  self.HexNeighboursOnly=Enabled
+
+  return self
+end
 
 --- Replace the neighbour rule with a visibility check at 1 meter above sea level.
 -- Intended for water routes. A corridor adds two parallel visibility checks, not a continuous clearance test.
@@ -490,6 +644,7 @@ end
 
 --- Add a rectangular grid of nodes aligned with the start-to-goal line.
 -- Both endpoint coordinates must be set first. Existing nodes are retained; use a new ASTAR object for a replacement grid.
+-- Cannot be called on an object that already contains a hex lattice.
 -- The surface filter applies to new grid nodes and automatically added distant endpoints, not to the connections between them.
 -- @param #ASTAR self
 -- @param #table ValidSurfaceTypes (Optional) Allowed surface types; a single numeric surface type is also accepted. Nil allows all surfaces.
@@ -501,6 +656,7 @@ end
 -- @return #ASTAR self
 function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, MarkGrid)
 
+  assert(not self.hexGrid, "ASTAR: use a new object for a rectangular grid after a hex grid")
   self.ValidSurfaceTypes=ValidSurfaceTypes
 
   -- Note that internally
@@ -517,6 +673,9 @@ function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, Mark
   
   -- Heading from start to end coordinate.
   local angle=self.startCoord:HeadingTo(self.endCoord)
+
+  -- Retain each generated grid's orientation and cell size for optional F10 drawing.
+  local rectGrid={along=dz/2, across=dx/2, cos=math.cos(math.rad(angle)), sin=math.sin(math.rad(angle))}
   
   --Distance between start and end.
   local dist=self.startCoord:Get2DDistance(self.endCoord)+2*Dz
@@ -566,6 +725,7 @@ function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, Mark
         end
           
         -- Add node to grid.
+        node.rectGrid=rectGrid
         self:AddNode(node)
         
       end
@@ -576,6 +736,143 @@ function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, Mark
   -- Debug info.
   local text=string.format("Done building grid!")
   self:T2(self.lid..text)
+
+  return self
+end
+
+--- Create a hexagonal lattice of nodes within a rectangular start-to-goal search area.
+-- Requires start and goal coordinates and an empty node set; only one hex lattice can be created per object.
+-- The origin is the start position, q follows start-to-goal, and r advances in 60-degree steps from that axis.
+-- Nodes are created at altitude zero and clipped by their centers to the search area. Surface filtering applies before indexing.
+-- Does not enable the six-neighbour mode automatically; call SetHexNeighboursOnly(true) to use local hex edges.
+-- @param #ASTAR self
+-- @param #table ValidSurfaceTypes (Optional) Allowed surfaces, or a single numeric type. Nil allows all types.
+-- @param #number BoxHY (Optional) Total perpendicular search width in meters, default 40000. Must be finite and non-negative.
+-- @param #number SpaceX (Optional) Margin before start and after goal in meters, default 10000. Must be finite and non-negative.
+-- @param #number Spacing (Optional) Distance between adjacent hex centers in meters, default 2000. Must be finite and positive.
+-- @param #boolean MarkGrid (Optional) Mark accepted hex centers on the F10 map, default false.
+-- @return #ASTAR self
+function ASTAR:CreateHexGrid(ValidSurfaceTypes, BoxHY, SpaceX, Spacing, MarkGrid)
+
+  BoxHY=BoxHY or 40000
+  SpaceX=SpaceX or 10000
+  Spacing=Spacing or 2000
+  assert(self.startCoord and self.endCoord, "ASTAR: start and end coordinates are required for a hex grid")
+  assert(not self.hexGrid and next(self.nodes)==nil, "ASTAR: create a hex grid on an empty ASTAR object")
+  assert(type(BoxHY)=="number" and BoxHY>=0 and BoxHY<math.huge, "ASTAR: BoxHY must be finite and non-negative")
+  assert(type(SpaceX)=="number" and SpaceX>=0 and SpaceX<math.huge, "ASTAR: SpaceX must be finite and non-negative")
+  assert(type(Spacing)=="number" and Spacing>0 and Spacing<math.huge, "ASTAR: Spacing must be finite and positive")
+
+  local distance=self.startCoord:Get2DDistance(self.endCoord)
+  local angle=distance>0 and math.rad(self.startCoord:HeadingTo(self.endCoord)) or 0
+  local rowSpacing=Spacing*math.sqrt(3)/2
+  self.hexGrid={x=self.startCoord.x, z=self.startCoord.z, cos=math.cos(angle), sin=math.sin(angle), spacing=Spacing, rowSpacing=rowSpacing}
+  self.hexIndex={}
+  self.ValidSurfaceTypes=ValidSurfaceTypes
+
+  -- Local coordinates: along = spacing * (q + r/2), across = rowSpacing * r.
+  -- The small tolerance includes centers on a boundary despite floating-point rounding.
+  local epsilon=1e-9
+  local rmin=math.ceil(-BoxHY/2/rowSpacing-epsilon)
+  local rmax=math.floor(BoxHY/2/rowSpacing+epsilon)
+  for r=rmin,rmax do
+    local qmin=math.ceil(-SpaceX/Spacing-r/2-epsilon)
+    local qmax=math.floor((distance+SpaceX)/Spacing-r/2+epsilon)
+    for q=qmin,qmax do
+      local along=Spacing*(q+r/2)
+      local across=rowSpacing*r
+      local grid=self.hexGrid
+      local coordinate=COORDINATE:New(grid.x+along*grid.cos-across*grid.sin, 0, grid.z+along*grid.sin+across*grid.cos)
+      local node=self:GetNodeFromCoordinate(coordinate)
+      if self:CheckValidSurfaceType(node, ValidSurfaceTypes) then
+
+        node.q=q
+        node.r=r
+        self:AddNode(node)
+        if MarkGrid then
+          coordinate:MarkToAll(string.format("Hex q=%d r=%d surface=%d", q, r, node.surfacetype))
+        end
+      end
+    end
+  end
+
+  self:T(self.lid..string.format("Built hex grid with %d nodes, spacing %.1f m", self.Nnodes, Spacing))
+  return self
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Grid drawing
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Draw accepted grid cells on the F10 map, replacing the previous DrawGrid() overlay.
+-- Draws one polygon per generated node, with the original grid orientation. Manual nodes and extra endpoints are skipped.
+-- Hex vertex radius is Spacing / sqrt(3); rectangular half-sizes are deltaX/2 and deltaY/2.
+-- Cells may extend beyond the search area or cover terrain rejected at other node positions. The overlay does not show connectivity.
+-- Does not change pathfinding. Large grids can stall DCS while drawing.
+-- @param #ASTAR self
+-- @param #number Coalition (Optional) All=-1, Neutral=0, Red=1, Blue=2. Default -1.
+-- @param #table Color (Optional) Outline RGB values in [0,1], default {0,0,1} (blue).
+-- @param #number Alpha (Optional) Outline opacity in [0,1], default 1.
+-- @param #table FillColor (Optional) Fill RGB values, default the outline color.
+-- @param #number FillAlpha (Optional) Fill opacity in [0,1], default 0 (transparent).
+-- @param #number LineType (Optional) 0=none, 1=solid, 2=dashed, 3=dotted, 4=dot dash, 5=long dash, 6=two dash. Default 1.
+-- @param #boolean ReadOnly (Optional) Prevent users from removing polygons manually. Default true.
+-- @return #ASTAR self
+function ASTAR:DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly)
+
+  self:UndrawGrid()
+  Coalition=Coalition or -1
+  Color=Color or {0,0,1}
+  FillColor=FillColor or Color
+  -- COORDINATE drawing functions add alpha to color tables; keep caller-owned RGB tables unchanged.
+  local outline={Color[1], Color[2], Color[3]}
+  local fill={FillColor[1], FillColor[2], FillColor[3]}
+  Alpha=Alpha or 1
+  FillAlpha=FillAlpha or 0
+  LineType=LineType or 1
+  if ReadOnly==nil then ReadOnly=true end
+
+  for _,node in pairs(self.nodes) do
+    local corners={}
+    local grid=node.rectGrid
+    if self.hexGrid and node.q~=nil and node.r~=nil then
+      grid=self.hexGrid
+      local radius=grid.spacing/math.sqrt(3)
+      for i=0,5 do
+        -- Vertex bearings are 30 degrees from the q axis; sides bisect adjacent node centers.
+        local angle=math.rad(30+60*i)
+        local along=radius*math.cos(angle)
+        local across=radius*math.sin(angle)
+        corners[#corners+1]=COORDINATE:New(node.coordinate.x+along*grid.cos-across*grid.sin, 0,
+          node.coordinate.z+along*grid.sin+across*grid.cos)
+      end
+    elseif grid then
+      for _,offset in ipairs({{grid.along,grid.across}, {-grid.along,grid.across}, {-grid.along,-grid.across}, {grid.along,-grid.across}}) do
+        corners[#corners+1]=COORDINATE:New(node.coordinate.x+offset[1]*grid.cos-offset[2]*grid.sin, 0,
+          node.coordinate.z+offset[1]*grid.sin+offset[2]*grid.cos)
+      end
+    end
+
+    if #corners>0 then
+      local first=table.remove(corners, 1)
+      local markID=first:MarkupToAllFreeForm(corners, Coalition, outline, Alpha, fill, FillAlpha, LineType, ReadOnly)
+      self.GridDrawIDs[#self.GridDrawIDs+1]=markID
+    end
+  end
+
+  return self
+end
+
+--- Remove polygons created by DrawGrid() without changing the grid or deleting other F10 marks.
+-- Safe to call repeatedly or before drawing. Does not remove text markers created with MarkGrid=true.
+-- @param #ASTAR self
+-- @return #ASTAR self
+function ASTAR:UndrawGrid()
+
+  for _,markID in ipairs(self.GridDrawIDs or {}) do
+    COORDINATE:RemoveMark(markID)
+  end
+  self.GridDrawIDs={}
 
   return self
 end
@@ -742,6 +1039,7 @@ function ASTAR:FindClosestNode(Coordinate)
 end
 
 --- Select the closest start node, or add an exact start node if the closest is more than 1000 meters away.
+-- In hex-only mode, any 2D displacement greater than 0.000001 meters creates an exact endpoint instead of snapping.
 -- Sets startNode to nil if the node set is empty or an added endpoint fails the surface filter.
 -- @param #ASTAR self
 -- @return #ASTAR self
@@ -751,7 +1049,8 @@ function ASTAR:FindStartNode()
   
   self.startNode=node
   
-  if node and dist>1000 then
+  local threshold=self.HexNeighboursOnly and 1e-6 or 1000
+  if node and dist>threshold then
     self:T(self.lid.."Adding start node to node grid!")
     local endpoint=self:GetNodeFromCoordinate(self.startCoord)
     self.startNode=nil
@@ -765,6 +1064,7 @@ function ASTAR:FindStartNode()
 end
 
 --- Select the closest goal node, or add an exact goal node if the closest is more than 1000 meters away.
+-- In hex-only mode, any 2D displacement greater than 0.000001 meters creates an exact endpoint instead of snapping.
 -- Sets endNode to nil if the node set is empty or an added endpoint fails the surface filter.
 -- @param #ASTAR self
 -- @return #ASTAR self
@@ -774,7 +1074,8 @@ function ASTAR:FindEndNode()
 
   self.endNode=node
   
-  if node and dist>1000 then
+  local threshold=self.HexNeighboursOnly and 1e-6 or 1000
+  if node and dist>threshold then
     self:T(self.lid.."Adding end node to node grid!")
     local endpoint=self:GetNodeFromCoordinate(self.endCoord)
     self.endNode=nil
@@ -791,9 +1092,26 @@ end
 -- Main A* pathfinding function
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Check whether the candidate graph can connect the requested endpoints, ignoring validity rules and costs.
+-- Resolves endpoints as GetPath() does, including adding exact endpoint nodes when required. Missing coordinates or nodes return false.
+-- In hex-only mode, floods candidate adjacency (including non-grid attachments) and caches complete connected components.
+-- False rules out a path in the current graph. True is only a necessary condition: LoS, road rules or infinite costs may still block the route.
+-- Outside hex-only mode, all node pairs are candidates, so valid endpoint nodes return true without a graph traversal.
+-- Does not call neighbour/cost callbacks or DCS visibility/road queries; newly added endpoints still sample their surface types.
+-- @param #ASTAR self
+-- @return #boolean Whether a path is possible before applying neighbour rules and travel costs.
+function ASTAR:HasPotentialPath()
+
+  if not self.startCoord or not self.endCoord then return false end
+  self:FindStartNode()
+  self:FindEndNode()
+  return self:_HasPotentialPath(self.startNode, self.endNode)
+end
+
 --- Search synchronously for a least-cost path between the selected start and goal nodes.
 -- Returns nodes in travel order; use each node's coordinate to create waypoints. Does not assign a route to a unit or group.
 -- Endpoint exclusions can produce an empty table for a successful search. Nil indicates failure.
+-- In hex-only mode, rejects disconnected candidate components before evaluating any neighbour rule or cost.
 -- @param #ASTAR self
 -- @param #boolean ExcludeStartNode If *true*, do not include start node in found path. Default is to include it.
 -- @param #boolean ExcludeEndNode If *true*, do not include end node in found path. Default is to include it.
@@ -814,6 +1132,13 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
 
   if not start or not goal then
     self:E(self.lid.."Could NOT find valid start/end nodes!")
+    return nil
+  end
+
+  if self.HexNeighboursOnly and not self:_HasPotentialPath(start, goal) then
+    local text="Could NOT find valid path: start and goal are disconnected in the hex grid!"
+    self:E(self.lid..text)
+    MESSAGE:New(text, 60, "ASTAR"):ToAllIf(self.Debug)
     return nil
   end
 
@@ -927,6 +1252,40 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- A* pathfinding helper functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Check connectivity of already resolved nodes, without evaluating validity rules or costs.
+-- A component is fully labelled once so subsequent endpoint checks can reuse it without another flood fill.
+-- @param #ASTAR self
+-- @param #ASTAR.Node start Start node, or nil.
+-- @param #ASTAR.Node goal Goal node, or nil.
+-- @return #boolean Whether the candidate graph connects the nodes.
+function ASTAR:_HasPotentialPath(start, goal)
+
+  if not start or not goal then return false end
+  if not self.HexNeighboursOnly or start.id==goal.id then return true end
+  if not self.hexLinks then self:_BuildHexLinks() end
+
+  local components=self.hexComponents
+  local component=components[start.id]
+  if not component then
+    component=start.id
+    local queue={start.id}
+    local head=1
+    components[start.id]=component
+    while head<=#queue do
+      local nid=queue[head]
+      head=head+1
+      for neighborID in pairs(self.hexLinks[nid] or {}) do
+        if not components[neighborID] then
+          components[neighborID]=component
+          queue[#queue+1]=neighborID
+        end
+      end
+    end
+  end
+
+  return components[goal.id]==component
+end
 
 --- Lower bound on the remaining travel cost. Custom and road costs use zero.
 -- @param #ASTAR self
@@ -1042,6 +1401,17 @@ end
 function ASTAR:_NeighbourNodes(theNode, nodes)
 
   local neighbors = {}
+
+  if self.HexNeighboursOnly then
+    if not self.hexLinks then self:_BuildHexLinks() end
+    for nid in pairs(self.hexLinks[theNode.id] or {}) do
+      local node=nodes[nid]
+      if node and self:_IsValidNeighbour(theNode, node) then
+        table.insert(neighbors, node)
+      end
+    end
+    return neighbors
+  end
   
   for _,node in pairs(nodes) do
   
@@ -1058,6 +1428,51 @@ function ASTAR:_NeighbourNodes(theNode, nodes)
   end
   
   return neighbors
+end
+
+--- Build sparse hex candidate adjacency, without evaluating neighbour rules or travel costs.
+-- Grid nodes connect to their six indexed adjacent cells. Other nodes attach to nearby grid centers within one spacing.
+-- Inverse axial bounds keep each attachment lookup local, including outside the grid or beside filtered cells.
+-- @param #ASTAR self
+-- @return #ASTAR self
+function ASTAR:_BuildHexLinks()
+
+  local links={}
+  for nid in pairs(self.nodes) do links[nid]={} end
+  local grid=self.hexGrid
+  local epsilon=1e-9
+
+  for nid,node in pairs(self.nodes) do
+    if node.q~=nil and node.r~=nil then
+      for _,direction in ipairs(hexDirections) do
+        local column=self.hexIndex[node.q+direction[1]]
+        local neighbor=column and column[node.r+direction[2]]
+        if neighbor then links[nid][neighbor.id]=true end
+      end
+    else
+      local dx=node.coordinate.x-grid.x
+      local dz=node.coordinate.z-grid.z
+      local along=(dx*grid.cos+dz*grid.sin)/grid.spacing
+      local across=(-dx*grid.sin+dz*grid.cos)/grid.spacing
+      local rowScale=math.sqrt(3)/2
+      for r=math.ceil((across-1)/rowScale-epsilon),math.floor((across+1)/rowScale+epsilon) do
+        for q=math.ceil(along-1-r/2-epsilon),math.floor(along+1-r/2+epsilon) do
+          local column=self.hexIndex[q]
+          local neighbor=column and column[r]
+          local dl=q+r/2-along
+          local dt=r*rowScale-across
+          if neighbor and dl*dl+dt*dt<=1+epsilon then
+            links[nid][neighbor.id]=true
+            links[neighbor.id][nid]=true
+          end
+        end
+      end
+    end
+  end
+
+  self.hexLinks=links
+  self.hexComponents={}
+  return self
 end
 
 --- Function to check if a node is not in a set.
