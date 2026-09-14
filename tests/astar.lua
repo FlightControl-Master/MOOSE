@@ -833,5 +833,176 @@ test("F10 overlays from different ASTAR instances are independent", function()
   for _, id in ipairs(ids) do assert(drawings[id]) end
 end)
 
+test("expanding search finds a detour around land and preserves existing nodes", function()
+  land.surfaceAt = function(c)
+    return c.x>=1500 and c.x<=2500 and math.abs(c.z)<1200 and land.SurfaceType.LAND or land.SurfaceType.WATER
+  end
+  local a = hexgrid(0,0):SetHexNeighboursOnly(true)
+  equal(a:HasPotentialPath(), false)
+  local original = {}
+  for id, node in pairs(a.nodes) do original[id]=node end
+  local path, report = a:GetPathWithExpansion()
+  assert(path and #report.Attempts>1)
+  equal(report.Attempts[1].Failure, "disconnected_grid")
+  equal(report.StopReason, "path_found") equal(report, a.LastExpansionResult)
+  equal(a.hexGrid.spacing, 1000) equal(a.LastPathFailure, nil)
+  for id, node in pairs(original) do equal(a.nodes[id], node) end
+  local detour = false
+  for _, node in ipairs(path) do
+    equal(node.surfacetype, land.SurfaceType.WATER)
+    if math.abs(node.coordinate.z)>=1200 then detour=true end
+  end
+  assert(detour)
+end)
+
+test("expanding search continues when LoS blocks an otherwise connected grid", function()
+  local a = hexgrid(0,0):SetHexNeighboursOnly(true):SetValidNeighbourLoS()
+  land.isVisible = function(u,v)
+    if u.x==v.x then return true end
+    local t=(2000-u.x)/(v.x-u.x)
+    if t>=0 and t<=1 then return math.abs(u.z+t*(v.z-u.z))>=1200 end
+    return true
+  end
+  equal(a:HasPotentialPath(), true)
+  local path, report = a:GetPathWithExpansion({GrowthFactor=2, MaxAttempts=5})
+  assert(path)
+  equal(report.Attempts[1].Failure, "connections_blocked")
+  assert(#report.Attempts>1)
+  for i=2,#path do assert(land.isVisible(path[i-1].coordinate, path[i].coordinate)) end
+end)
+
+test("expanding search preserves custom callback references and arguments", function()
+  local a = hexgrid(0,0):SetHexNeighboursOnly(true)
+  local original = a.hexIndex[0][0]
+  local evaluated = false
+  local function cost(u,v,scale)
+    equal(scale, 7)
+    if u==original or v==original then evaluated=true end
+    if math.abs(u.coordinate.z)<1200 and math.abs(v.coordinate.z)<1200 then return math.huge end
+    return ASTAR.Dist2D(u,v)*scale
+  end
+  -- Let the first/last sections reach the outer rows; block only the central crossing.
+  local function constrainedCost(u,v,scale)
+    if (u.coordinate.x<=2000 and v.coordinate.x>=2000) or (v.coordinate.x<=2000 and u.coordinate.x>=2000) then
+      return cost(u,v,scale)
+    end
+    if u==original or v==original then evaluated=true end
+    equal(scale,7)
+    return ASTAR.Dist2D(u,v)*scale
+  end
+  a:SetCostFunction(constrainedCost, 7)
+  local path, report = a:GetPathWithExpansion()
+  assert(path and evaluated)
+  equal(report.Attempts[1].Failure, "connections_blocked")
+  equal(a.CostFunc, constrainedCost) equal(a.hexIndex[0][0], original)
+end)
+
+test("expansion attaches endpoints outside the initial search area", function()
+  local a = hexgrid(0,0):SetHexNeighboursOnly(true)
+  a:SetStartCoordinate(coord(-2500)):SetEndCoordinate(coord(6500))
+  local potential, reason = a:HasPotentialPath()
+  equal(potential, false) equal(reason, "start_unattached")
+  local path, report = a:GetPathWithExpansion()
+  assert(path and #report.Attempts>1)
+  near(path[1].coordinate:Get2DDistance(a.startCoord),0)
+  near(path[#path].coordinate:Get2DDistance(a.endCoord),0)
+  equal(a.hexGrid.x,0) equal(a.hexGrid.distance,4000)
+end)
+
+test("expansion honours attempt and dimension limits", function()
+  for _, limits in ipairs({
+    {options={MaxAttempts=1}, reason="attempt_limit"},
+    {options={MaxBoxHY=0,MaxSpaceX=0}, reason="size_limit"}
+  }) do
+    local a = hexgrid(0,0):SetHexNeighboursOnly(true):SetValidNeighbourFunction(function() return false end)
+    local path, report = a:GetPathWithExpansion(limits.options)
+    equal(path,nil) equal(report.StopReason, limits.reason) equal(#report.Attempts,1)
+    equal(a.hexGrid.boxHY,0) equal(a.hexGrid.spaceX,0)
+  end
+end)
+
+test("expansion checks candidate cell budget before sampling or modifying nodes", function()
+  local a = hexgrid(0,0):SetHexNeighboursOnly(true):SetValidNeighbourFunction(function() return false end)
+  local n, counter = a.Nnodes, a.counter
+  land.surfaceAt = function() error("Budget check must precede new surface sampling") end
+  local path, report = a:GetPathWithExpansion({MaxGridNodes=5})
+  equal(path,nil) equal(report.StopReason,"node_limit") equal(#report.Attempts,1)
+  equal(a.Nnodes,n) equal(a.counter,counter)
+  equal(a.hexGrid.boxHY,0) equal(a.hexGrid.spaceX,0)
+  path, report = a:GetPathWithExpansion({MaxGridNodes=1})
+  equal(path,nil) equal(report.StopReason,"node_limit") equal(#report.Attempts,0)
+end)
+
+test("hex enlargement never resamples old filtered cells or duplicates nodes", function()
+  local sampled = {}
+  land.surfaceAt = function(c)
+    local key=string.format("%.4f %.4f",c.x,c.z)
+    assert(not sampled[key],"Cell sampled twice") sampled[key]=true
+    return c.x==2000 and land.SurfaceType.LAND or land.SurfaceType.WATER
+  end
+  local a = hexgrid(0,0)
+  a:ExpandHexGrid(4000,2000,5000)
+  local candidates, n, counter = a.hexGrid.candidateCount, a.Nnodes, a.counter
+  equal(count(sampled),candidates)
+  a:ExpandHexGrid(4000,2000,5000)
+  equal(a.Nnodes,n) equal(a.counter,counter)
+  a:ExpandHexGrid(6000,3000,5000)
+  equal(count(sampled),a.hexGrid.candidateCount)
+  equal(count(a.nodes),a.Nnodes)
+end)
+
+test("rotated enlargement matches a newly built larger lattice", function()
+  local origin=coord(123456,-234567)
+  local goal=origin:Translate(4000,37)
+  local a=ASTAR:New():SetStartCoordinate(origin):SetEndCoordinate(goal)
+  a:CreateHexGrid(nil,1000,0,1000):ExpandHexGrid(6000,3000)
+  local b=ASTAR:New():SetStartCoordinate(origin):SetEndCoordinate(goal)
+  b:CreateHexGrid(nil,6000,3000,1000)
+  equal(a.Nnodes,b.Nnodes)
+  for _, node in pairs(a.nodes) do
+    near(node.coordinate:Get2DDistance(b.hexIndex[node.q][node.r].coordinate),0)
+  end
+end)
+
+test("expansion refreshes an existing F10 overlay once and keeps its style", function()
+  resetDrawings()
+  local a=hexgrid(0,0):SetHexNeighboursOnly(true):SetValidNeighbourFunction(function() return false end)
+  a:DrawGrid(2,{0,0.5,1},0.8,nil,0.1,2,false)
+  local oldCount=#a.GridDrawIDs
+  local path, report=a:GetPathWithExpansion({MaxAttempts=3})
+  equal(path,nil) equal(report.StopReason,"attempt_limit")
+  equal(#removals,oldCount)
+  equal(count(drawings),a.Nnodes)
+  for _, drawing in pairs(drawings) do
+    equal(drawing.coalition,2) equal(drawing.color[4],0.8) equal(drawing.fill[4],0.1)
+    equal(drawing.lineType,2) equal(drawing.readOnly,false)
+  end
+  local n=#a.GridDrawIDs
+  a:GetPathWithExpansion({MaxAttempts=2,Redraw=false})
+  equal(#a.GridDrawIDs,n) equal(#removals,oldCount)
+end)
+
+test("successful empty paths stop expansion immediately", function()
+  local a=hexgrid(0,0):SetHexNeighboursOnly(true)
+  a:SetEndCoordinate(a.startCoord)
+  local path, report=a:GetPathWithExpansion(nil,true,true)
+  equal(#path,0) equal(report.StopReason,"path_found") equal(#report.Attempts,1)
+  equal(a.hexGrid.boxHY,0)
+end)
+
+test("expansion rejects invalid limits and handles missing coordinates", function()
+  equal(pcall(function() ASTAR:New():GetPathWithExpansion() end),false)
+  for _, options in ipairs({{GrowthFactor=1},{MaxAttempts=0},{MaxGridNodes=0},{MaxBoxHY=-1},{MaxSpaceX=math.huge}}) do
+    local a=hexgrid(0,0):SetHexNeighboursOnly(true)
+    equal(pcall(function() a:GetPathWithExpansion(options) end),false)
+    equal(a.hexGrid.boxHY,0) equal(a.hexGrid.spaceX,0)
+  end
+  local a=hexgrid(0,0):SetHexNeighboursOnly(true)
+  a:SetStartCoordinate(nil)
+  local path, report=a:GetPathWithExpansion()
+  equal(path,nil) equal(report.StopReason,"missing_coordinates") equal(#report.Attempts,1)
+  equal(a.hexGrid.boxHY,0)
+end)
+
 print(string.format("%d passed, %d failed", passed, failed))
 if failed > 0 then os.exit(1) end

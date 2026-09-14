@@ -38,11 +38,14 @@
 -- @field #table CostArg Optional arguments passed to the cost function. 
 -- @field #table ValidSurfaceTypes Surface filter used by the grid builder and automatically added endpoints; may also be a single numeric surface type.
 -- @field #boolean HexNeighboursOnly Restrict candidates to hex edges and local endpoint attachments. Disabled by default.
--- @field #table hexGrid Hex grid geometry: origin x/z, cos/sin of heading, spacing, and row spacing.
+-- @field #table hexGrid Hex geometry: origin x/z, heading cos/sin, spacing, rowSpacing, original distance, boxHY, spaceX and candidateCount.
 -- @field #table hexIndex Hex nodes indexed by axial q, then r.
 -- @field #table hexLinks Cached candidate adjacency, indexed by node id, then neighbour id. Does not cache rule results.
 -- @field #table hexComponents Connected-component labels for hex candidates. Rebuilt when candidate adjacency changes.
 -- @field #table GridDrawIDs F10 polygon ids owned by DrawGrid(), removed by UndrawGrid().
+-- @field #table GridDrawOptions Last DrawGrid() style, used to refresh an expanded grid overlay.
+-- @field #string LastPathFailure Reason the last GetPath() failed; nil on success.
+-- @field #table LastExpansionResult Attempt history and stop reason from GetPathWithExpansion().
 -- @extends Core.Base#BASE
 
 --- *When nothing goes right... Go left!*
@@ -116,6 +119,7 @@
 --
 -- CreateHexGrid() requires an empty ASTAR object with both endpoints set. Use a new object to rebuild the lattice or switch
 -- between hexagonal and rectangular grids. Additional manual nodes may be added after creating the hex grid.
+-- To enlarge the same lattice, use @{#ASTAR.ExpandHexGrid}; to enlarge it automatically while searching, use @{#ASTAR.GetPathWithExpansion}.
 -- Invalid dimensions or a non-empty setup raise an error before creating the grid: Spacing must be finite and positive;
 -- BoxHY and SpaceX must be finite and non-negative. All dimensions are in meters.
 --
@@ -144,7 +148,8 @@
 -- and read-only settings follow the MOOSE coordinate drawing functions. One DCS polygon is created per accepted cell.
 -- DrawGrid() first removes its previous polygons, so calling it again updates the display without accumulating duplicates.
 -- @{#ASTAR.UndrawGrid} removes only those polygons; it preserves nodes, paths and the separate text markers from MarkGrid=true.
--- Adding nodes does not redraw automatically. Call DrawGrid() again after changing the node set.
+-- Adding nodes or calling ExpandHexGrid() does not redraw automatically. Call DrawGrid() again after changing the node set.
+-- GetPathWithExpansion() can refresh an existing overlay automatically once its attempts finish.
 --
 -- On an existing ASTAR object with a generated grid:
 --
@@ -208,7 +213,8 @@
 --
 -- GetPath() automatically performs this precheck in hex-only mode and returns nil for disconnected endpoints before starting A*.
 -- Call HasPotentialPath() explicitly when you want to decide whether to construct a larger grid first. The precheck does not resize the grid.
--- Increasing BoxHY or SpaceX may include a missing detour; smaller Spacing may resolve a narrow passage. Rebuild on a new ASTAR object.
+-- Increasing BoxHY or SpaceX may include a missing detour. GetPathWithExpansion() can do this automatically.
+-- Smaller Spacing may resolve a narrow passage, but changing spacing requires a new ASTAR object.
 --
 -- Connected components are cached independently of neighbour/cost results. The first check builds candidate adjacency as needed
 -- and visits the start component with a breadth-first traversal, linear in its nodes and candidate edges.
@@ -217,6 +223,44 @@
 --
 -- Outside hex-only mode, all node pairs are candidates. HasPotentialPath() therefore returns true whenever both endpoints can be resolved;
 -- it does not use hex adjacency to reject possible long connections. Missing coordinates or an empty node set still return false.
+--
+-- # Search with Automatic Grid Expansion
+--
+-- @{#ASTAR.GetPathWithExpansion} is an opt-in alternative to GetPath() for a hex grid with SetHexNeighboursOnly(true).
+-- It searches the current grid first, expands its width and both end margins after failure, and retries until an actual path is found
+-- or a limit is reached. Passing the connectivity precheck alone is not enough: the full search must satisfy the configured rules and costs.
+-- Existing nodes, ids, manual points, callbacks, and lattice orientation are retained; newly added cells use the existing surface filter.
+-- Old cells, including rejected cells, are not sampled again. Use a new object if the surface filter or the original lattice must change.
+--
+-- The first argument is an optional settings table:
+--
+-- * `GrowthFactor`: multiply width and end margins by this factor, default 1.5; must be finite and greater than 1.
+-- * `MaxAttempts`: maximum number of searches, including the initial grid, default 5.
+-- * `MaxGridNodes`: maximum number of lattice centers BEFORE surface filtering, default 5000. Includes filtered cells because they require
+--   terrain sampling, but excludes manual points and exact endpoint nodes. Expansion is rejected before sampling if it would exceed the limit.
+-- * `MaxBoxHY`: maximum total width, default the larger of the initial width and 200000 meters.
+-- * `MaxSpaceX`: maximum margin at each end, default the larger of the initial margin and 100000 meters.
+-- * `Redraw`: refresh an existing DrawGrid() overlay once at completion, with its original style; default true. Set false to manage drawing yourself.
+--
+-- Width grows by at least two Spacing and margins by at least one Spacing, so zero initial margins can grow as well.
+-- Dimension caps take precedence. Explicit dimension caps cannot be smaller than the current grid; attempt and cell limits must be positive integers.
+-- An initial grid already above MaxGridNodes is rejected without running a search. A rejected expansion leaves the current grid intact.
+--
+-- GetPathWithExpansion(Options, ExcludeStartNode, ExcludeEndNode) returns `path, report`. Endpoint exclusion flags behave as in GetPath().
+-- A successful empty path is still success. The report is also stored in `astar.LastExpansionResult` and contains:
+--
+-- * `Attempts`: one entry per search, with BoxHY, SpaceX, accepted Nodes (including extra endpoints), and Failure (nil on success).
+-- * `StopReason`: path_found, attempt_limit, size_limit, node_limit, or missing_coordinates.
+-- * `BoxHY`, `SpaceX`, `Nodes`: final dimensions and accepted node count. The expanded grid stays on the same object for drawing or reuse.
+--
+-- `HasPotentialPath()` also returns a second value on failure; GetPath() stores its reason in `LastPathFailure`:
+-- missing_coordinates, no_start_node, no_goal_node, start_unattached, goal_unattached, or disconnected_grid.
+-- The unattached reasons specifically mean a non-grid endpoint has no accepted hex center within one Spacing.
+-- If candidate connectivity exists but the full search fails, LastPathFailure is connections_blocked.
+-- Attempts and dimensions are logged, allowing you to see why and how far the search grew.
+--
+-- This operation is synchronous. Use modest limits in a running mission; no limit guarantees a route exists.
+-- Enlargement cannot fix a passage missed by the fixed spacing, a permanently invalid endpoint, or rules that forbid every route.
 --
 -- # Calculate and Use the Path
 --
@@ -270,6 +314,33 @@
 --       end
 --     else
 --       env.info("ASTAR: no water route found")
+--     end
+--
+-- ## Find a Water Route with Automatic Expansion
+--
+-- Use the same two water-based trigger zones as above. This starts with a 40 km wide grid and 10 km end margins.
+-- GetPathWithExpansion() handles the precheck internally; do not abort the script first when HasPotentialPath() is false.
+--
+--     local startZone = ZONE:FindByName("Astar Start")
+--     local goalZone = ZONE:FindByName("Astar Goal")
+--     assert(startZone and goalZone, "Create the Astar Start and Astar Goal trigger zones")
+--     local astar = ASTAR:New()
+--     astar:SetStartCoordinate(startZone:GetCoordinate())
+--     astar:SetEndCoordinate(goalZone:GetCoordinate())
+--     astar:CreateHexGrid({land.SurfaceType.WATER}, 40000, 10000, 2000, false)
+--     astar:SetHexNeighboursOnly(true)
+--     astar:SetValidNeighbourLoS(500)
+--     local path, report = astar:GetPathWithExpansion({
+--       GrowthFactor = 1.5, MaxAttempts = 5, MaxGridNodes = 5000,
+--       MaxBoxHY = 200000, MaxSpaceX = 100000
+--     })
+--     astar:DrawGrid()
+--     if path then
+--       for i, node in ipairs(path) do
+--         node.coordinate:MarkToAll(string.format("Expanded route waypoint %d", i))
+--       end
+--     else
+--       env.info("ASTAR: stopped expanding: " .. report.StopReason)
 --     end
 --
 -- ## Combine Distance and Visibility
@@ -359,7 +430,7 @@ ASTAR.INF=1/0
 
 --- ASTAR class version.
 -- @field #string version
-ASTAR.version="0.5.2"
+ASTAR.version="0.6.0"
 
 -- Six axial offsets; adjacent centers are one spacing apart.
 local hexDirections={{1,0}, {0,1}, {-1,1}, {-1,0}, {0,-1}, {1,-1}}
@@ -766,37 +837,80 @@ function ASTAR:CreateHexGrid(ValidSurfaceTypes, BoxHY, SpaceX, Spacing, MarkGrid
   local distance=self.startCoord:Get2DDistance(self.endCoord)
   local angle=distance>0 and math.rad(self.startCoord:HeadingTo(self.endCoord)) or 0
   local rowSpacing=Spacing*math.sqrt(3)/2
-  self.hexGrid={x=self.startCoord.x, z=self.startCoord.z, cos=math.cos(angle), sin=math.sin(angle), spacing=Spacing, rowSpacing=rowSpacing}
+  self.hexGrid={x=self.startCoord.x, z=self.startCoord.z, cos=math.cos(angle), sin=math.sin(angle), spacing=Spacing, rowSpacing=rowSpacing,
+    distance=distance, markGrid=MarkGrid}
   self.hexIndex={}
   self.ValidSurfaceTypes=ValidSurfaceTypes
 
+  self:ExpandHexGrid(BoxHY, SpaceX)
+  self:T(self.lid..string.format("Built hex grid with %d nodes, spacing %.1f m", self.Nnodes, Spacing))
+  return self
+end
+
+--- Enlarge an existing hex lattice without replacing its nodes, origin, orientation or spacing.
+-- Adds only centers outside the previous search rectangle, including when the old cells were surface-filtered out.
+-- Does not change endpoints or redraw polygons automatically. MarkGrid text markers follow the original grid setting.
+-- @param #ASTAR self
+-- @param #number BoxHY New total perpendicular width in meters; must be finite and at least the current width.
+-- @param #number SpaceX New margin at both ends of the original start-to-goal line; must be finite and at least the current margin.
+-- @param #number MaxGridNodes (Optional) Maximum number of lattice centers before surface filtering. Checked before any additions.
+-- @return #ASTAR self on success, or nil if the candidate-cell limit would be exceeded.
+-- @return #string Failure reason: node_limit, or nil on success.
+function ASTAR:ExpandHexGrid(BoxHY, SpaceX, MaxGridNodes)
+
+  local grid=self.hexGrid
+  assert(grid, "ASTAR: call CreateHexGrid before expanding")
+  assert(type(BoxHY)=="number" and BoxHY>=0 and BoxHY<math.huge and BoxHY>=(grid.boxHY or 0), "ASTAR: hex width must be finite and cannot shrink")
+  assert(type(SpaceX)=="number" and SpaceX>=0 and SpaceX<math.huge and SpaceX>=(grid.spaceX or 0), "ASTAR: hex margin must be finite and cannot shrink")
+  if MaxGridNodes~=nil then
+    assert(type(MaxGridNodes)=="number" and MaxGridNodes>=1 and MaxGridNodes<math.huge and MaxGridNodes==math.floor(MaxGridNodes), "ASTAR: MaxGridNodes must be a positive integer")
+  end
+
+  local Spacing=grid.spacing
+  local rowSpacing=grid.rowSpacing
   -- Local coordinates: along = spacing * (q + r/2), across = rowSpacing * r.
   -- The small tolerance includes centers on a boundary despite floating-point rounding.
   local epsilon=1e-9
   local rmin=math.ceil(-BoxHY/2/rowSpacing-epsilon)
   local rmax=math.floor(BoxHY/2/rowSpacing+epsilon)
+  -- Count candidates first; filtered cells still consume sampling work. No DCS queries are needed here.
+  local candidates=0
   for r=rmin,rmax do
     local qmin=math.ceil(-SpaceX/Spacing-r/2-epsilon)
-    local qmax=math.floor((distance+SpaceX)/Spacing-r/2+epsilon)
-    for q=qmin,qmax do
-      local along=Spacing*(q+r/2)
-      local across=rowSpacing*r
-      local grid=self.hexGrid
-      local coordinate=COORDINATE:New(grid.x+along*grid.cos-across*grid.sin, 0, grid.z+along*grid.sin+across*grid.cos)
-      local node=self:GetNodeFromCoordinate(coordinate)
-      if self:CheckValidSurfaceType(node, ValidSurfaceTypes) then
+    local qmax=math.floor((grid.distance+SpaceX)/Spacing-r/2+epsilon)
+    candidates=candidates+math.max(0, qmax-qmin+1)
+    if MaxGridNodes and candidates>MaxGridNodes then return nil, "node_limit" end
+  end
 
-        node.q=q
-        node.r=r
-        self:AddNode(node)
-        if MarkGrid then
-          coordinate:MarkToAll(string.format("Hex q=%d r=%d surface=%d", q, r, node.surfacetype))
+  local oldRmin=grid.boxHY and math.ceil(-grid.boxHY/2/rowSpacing-epsilon)
+  local oldRmax=grid.boxHY and math.floor(grid.boxHY/2/rowSpacing+epsilon)
+  for r=rmin,rmax do
+    local qmin=math.ceil(-SpaceX/Spacing-r/2-epsilon)
+    local qmax=math.floor((grid.distance+SpaceX)/Spacing-r/2+epsilon)
+    local oldQmin=grid.spaceX and math.ceil(-grid.spaceX/Spacing-r/2-epsilon)
+    local oldQmax=grid.spaceX and math.floor((grid.distance+grid.spaceX)/Spacing-r/2+epsilon)
+    for q=qmin,qmax do
+      local existingCell=oldRmin and r>=oldRmin and r<=oldRmax and q>=oldQmin and q<=oldQmax
+      if not existingCell then
+        local along=Spacing*(q+r/2)
+        local across=rowSpacing*r
+        local coordinate=COORDINATE:New(grid.x+along*grid.cos-across*grid.sin, 0, grid.z+along*grid.sin+across*grid.cos)
+        local node=self:GetNodeFromCoordinate(coordinate)
+        if self:CheckValidSurfaceType(node, self.ValidSurfaceTypes) then
+          node.q=q
+          node.r=r
+          self:AddNode(node)
+          if grid.markGrid then
+            coordinate:MarkToAll(string.format("Hex q=%d r=%d surface=%d", q, r, node.surfacetype))
+          end
         end
       end
     end
   end
 
-  self:T(self.lid..string.format("Built hex grid with %d nodes, spacing %.1f m", self.Nnodes, Spacing))
+  grid.boxHY=BoxHY
+  grid.spaceX=SpaceX
+  grid.candidateCount=candidates
   return self
 end
 
@@ -831,6 +945,9 @@ function ASTAR:DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType,
   FillAlpha=FillAlpha or 0
   LineType=LineType or 1
   if ReadOnly==nil then ReadOnly=true end
+
+  self.GridDrawOptions={Coalition=Coalition, Color={outline[1],outline[2],outline[3]}, Alpha=Alpha,
+    FillColor={fill[1],fill[2],fill[3]}, FillAlpha=FillAlpha, LineType=LineType, ReadOnly=ReadOnly}
 
   for _,node in pairs(self.nodes) do
     local corners={}
@@ -873,6 +990,7 @@ function ASTAR:UndrawGrid()
     COORDINATE:RemoveMark(markID)
   end
   self.GridDrawIDs={}
+  self.GridDrawOptions=nil
 
   return self
 end
@@ -1100,12 +1218,82 @@ end
 -- Does not call neighbour/cost callbacks or DCS visibility/road queries; newly added endpoints still sample their surface types.
 -- @param #ASTAR self
 -- @return #boolean Whether a path is possible before applying neighbour rules and travel costs.
+-- @return #string Failure reason: missing_coordinates, no_start_node, no_goal_node, start_unattached, goal_unattached or disconnected_grid; nil on success.
 function ASTAR:HasPotentialPath()
 
-  if not self.startCoord or not self.endCoord then return false end
+  if not self.startCoord or not self.endCoord then return false, "missing_coordinates" end
   self:FindStartNode()
   self:FindEndNode()
   return self:_HasPotentialPath(self.startNode, self.endNode)
+end
+
+--- Search for a path, enlarging the hex search rectangle between failed attempts.
+-- Requires a hex grid with SetHexNeighboursOnly(true). Preserves all existing nodes, callback references, spacing and lattice orientation.
+-- Each attempt runs GetPath(), including its cheap connectivity precheck. A connected grid still has to pass the real rules and costs.
+-- Grows width and end margins by GrowthFactor, with minimum increments of two Spacing and one Spacing respectively.
+-- Stops at the first actual path (including an empty successful result), or a configured limit. Runs synchronously.
+-- @param #ASTAR self
+-- @param #table Options (Optional) GrowthFactor=1.5, MaxAttempts=5 (includes initial attempt), MaxGridNodes=5000 (before surface filtering),
+-- MaxBoxHY=at least the initial width or 200000 m, MaxSpaceX=at least the initial margin or 100000 m, Redraw=true.
+-- Explicit dimension limits must not be smaller than the current grid. MaxGridNodes excludes manually added nodes and endpoints.
+-- Redraw refreshes an existing DrawGrid() overlay once at completion, preserving its style; it does not create an overlay if none was drawn.
+-- @param #boolean ExcludeStartNode (Optional) Forwarded to GetPath().
+-- @param #boolean ExcludeEndNode (Optional) Forwarded to GetPath().
+-- @return #table Path nodes, or nil on failure. The expanded grid remains available for drawing or later searches.
+-- @return #table Report with Attempts (BoxHY, SpaceX, Nodes, Failure), StopReason, BoxHY, SpaceX and Nodes.
+-- StopReason is path_found, attempt_limit, size_limit, node_limit or missing_coordinates. Stored in LastExpansionResult as well.
+function ASTAR:GetPathWithExpansion(Options, ExcludeStartNode, ExcludeEndNode)
+
+  assert(self.hexGrid and self.HexNeighboursOnly, "ASTAR: expanding search requires a hex grid with hex-only neighbours")
+  Options=Options or {}
+  assert(type(Options)=="table", "ASTAR: expansion options must be a table")
+  local grid=self.hexGrid
+  local factor=Options.GrowthFactor or 1.5
+  local maxAttempts=Options.MaxAttempts or 5
+  local maxNodes=Options.MaxGridNodes or 5000
+  local maxWidth=Options.MaxBoxHY or math.max(grid.boxHY, 200000)
+  local maxMargin=Options.MaxSpaceX or math.max(grid.spaceX, 100000)
+  assert(type(factor)=="number" and factor>1 and factor<math.huge, "ASTAR: GrowthFactor must be finite and greater than one")
+  assert(type(maxAttempts)=="number" and maxAttempts>=1 and maxAttempts<math.huge and maxAttempts==math.floor(maxAttempts), "ASTAR: MaxAttempts must be a positive integer")
+  assert(type(maxNodes)=="number" and maxNodes>=1 and maxNodes<math.huge and maxNodes==math.floor(maxNodes), "ASTAR: MaxGridNodes must be a positive integer")
+  assert(type(maxWidth)=="number" and maxWidth>=grid.boxHY and maxWidth<math.huge, "ASTAR: MaxBoxHY must be finite and at least the current width")
+  assert(type(maxMargin)=="number" and maxMargin>=grid.spaceX and maxMargin<math.huge, "ASTAR: MaxSpaceX must be finite and at least the current margin")
+
+  local report={Attempts={}}
+  local style=self.GridDrawOptions
+  local redraw=Options.Redraw~=false and style and #(self.GridDrawIDs or {})>0
+  local expanded=false
+  local function finish(path, reason)
+    report.StopReason=reason
+    report.BoxHY=grid.boxHY
+    report.SpaceX=grid.spaceX
+    report.Nodes=self.Nnodes
+    self.LastExpansionResult=report
+    if expanded and redraw then
+      self:DrawGrid(style.Coalition, style.Color, style.Alpha, style.FillColor, style.FillAlpha, style.LineType, style.ReadOnly)
+    end
+    self:T(self.lid..string.format("Expanding search finished: %s after %d attempts, width %.0f m, margin %.0f m, %d nodes",
+      reason, #report.Attempts, grid.boxHY, grid.spaceX, self.Nnodes))
+    return path, report
+  end
+
+  if grid.candidateCount>maxNodes then return finish(nil, "node_limit") end
+  for attempt=1,maxAttempts do
+    self:T(self.lid..string.format("Expanding search attempt %d/%d: width %.0f m, margin %.0f m, %d nodes",
+      attempt, maxAttempts, grid.boxHY, grid.spaceX, self.Nnodes))
+    local path=self:GetPath(ExcludeStartNode, ExcludeEndNode)
+    report.Attempts[#report.Attempts+1]={BoxHY=grid.boxHY, SpaceX=grid.spaceX, Nodes=self.Nnodes, Failure=self.LastPathFailure}
+    if path then return finish(path, "path_found") end
+    if self.LastPathFailure=="missing_coordinates" then return finish(nil, "missing_coordinates") end
+    if attempt==maxAttempts then return finish(nil, "attempt_limit") end
+
+    local width=math.min(maxWidth, math.max(grid.boxHY*factor, grid.boxHY+2*grid.spacing))
+    local margin=math.min(maxMargin, math.max(grid.spaceX*factor, grid.spaceX+grid.spacing))
+    if width==grid.boxHY and margin==grid.spaceX then return finish(nil, "size_limit") end
+    local success, reason=self:ExpandHexGrid(width, margin, maxNodes)
+    if not success then return finish(nil, reason) end
+    expanded=true
+  end
 end
 
 --- Search synchronously for a least-cost path between the selected start and goal nodes.
@@ -1118,7 +1306,9 @@ end
 -- @return #table Ordered list of ASTAR.Node entries (possibly empty), or nil for missing coordinates, missing endpoint nodes, or an unreachable goal.
 function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
 
+  self.LastPathFailure=nil
   if not self.startCoord or not self.endCoord then
+    self.LastPathFailure="missing_coordinates"
     self:E(self.lid.."Start and end coordinates are required!")
     return nil
   end
@@ -1131,15 +1321,23 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
   local goal=self.endNode
 
   if not start or not goal then
+    self.LastPathFailure=not start and "no_start_node" or "no_goal_node"
     self:E(self.lid.."Could NOT find valid start/end nodes!")
     return nil
   end
 
-  if self.HexNeighboursOnly and not self:_HasPotentialPath(start, goal) then
-    local text="Could NOT find valid path: start and goal are disconnected in the hex grid!"
-    self:E(self.lid..text)
-    MESSAGE:New(text, 60, "ASTAR"):ToAllIf(self.Debug)
-    return nil
+  if self.HexNeighboursOnly then
+    local potential, reason=self:_HasPotentialPath(start, goal)
+    if not potential then
+      self.LastPathFailure=reason
+      local explanations={start_unattached="start has no hex attachment within one grid spacing",
+        goal_unattached="goal has no hex attachment within one grid spacing",
+        disconnected_grid="start and goal belong to disconnected grid components"}
+      local text="Could NOT find valid path: "..(explanations[reason] or reason).." ["..reason.."]"
+      self:E(self.lid..text)
+      MESSAGE:New(text, 60, "ASTAR"):ToAllIf(self.Debug)
+      return nil
+    end
   end
 
   -- Sets.
@@ -1243,6 +1441,7 @@ function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
 
   -- Debug message.
   local text=string.format("WARNING: Could NOT find valid path!")
+  self.LastPathFailure="connections_blocked"
   self:E(self.lid..text)
   MESSAGE:New(text, 60, "ASTAR"):ToAllIf(self.Debug)
   
@@ -1261,9 +1460,13 @@ end
 -- @return #boolean Whether the candidate graph connects the nodes.
 function ASTAR:_HasPotentialPath(start, goal)
 
-  if not start or not goal then return false end
+  if not start then return false, "no_start_node" end
+  if not goal then return false, "no_goal_node" end
   if not self.HexNeighboursOnly or start.id==goal.id then return true end
   if not self.hexLinks then self:_BuildHexLinks() end
+
+  if start.q==nil and next(self.hexLinks[start.id] or {})==nil then return false, "start_unattached" end
+  if goal.q==nil and next(self.hexLinks[goal.id] or {})==nil then return false, "goal_unattached" end
 
   local components=self.hexComponents
   local component=components[start.id]
@@ -1284,7 +1487,8 @@ function ASTAR:_HasPotentialPath(start, goal)
     end
   end
 
-  return components[goal.id]==component
+  if components[goal.id]==component then return true end
+  return false, "disconnected_grid"
 end
 
 --- Lower bound on the remaining travel cost. Custom and road costs use zero.
