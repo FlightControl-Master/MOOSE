@@ -385,7 +385,8 @@ function VECTOR:GetDistance(Vector, Only2D)
   end
 
   -- Calculate the distance.
-  local dist=math.sqrt( dx*dx + dy*dy + dz*dz )
+  -- Exponentiation keeps squared distances in floating point on Lua versions with integers.
+  local dist=math.sqrt( dx^2 + dy^2 + dz^2 )
   
   return dist
 end

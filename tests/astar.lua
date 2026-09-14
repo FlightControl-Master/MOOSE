@@ -51,9 +51,10 @@ COORDINATE = {ClassName = "COORDINATE"}
 function COORDINATE:New(x, y, z)
   return setmetatable({x = x, y = y, z = z}, {__index = self})
 end
-function COORDINATE:GetSurfaceType()
-  return self.surface or (land.surfaceAt and land.surfaceAt(self)) or land.SurfaceType.WATER
+function land.getSurfaceType(v)
+  return (land.surfaceAt and land.surfaceAt({x=v.x,y=0,z=v.y})) or land.SurfaceType.WATER
 end
+function COORDINATE:NewFromVec3(v) return self:New(v.x,v.y,v.z) end
 function COORDINATE:GetVec3() return {x = self.x, y = self.y, z = self.z} end
 function COORDINATE:Get2DDistance(other)
   return math.sqrt((self.x - other.x)^2 + (self.z - other.z)^2)
@@ -79,8 +80,15 @@ function UTILS.Rotate2D(v, heading)
     z = v.z * math.cos(angle) - v.x * math.sin(angle)}
 end
 function UTILS.VecTranslate(v, distance, heading)
-  return COORDINATE:New(v.x, v.y, v.z):Translate(distance, heading):GetVec3()
+  local angle=math.rad(heading)
+  return {x=v.x+distance*math.cos(angle),y=v.y,z=v.z+distance*math.sin(angle)}
 end
+math.atan2=math.atan2 or atan2
+function UTILS.AdjustHeading360(heading) return heading%360 end
+local textMarkID=0
+function UTILS.GetMarkID() textMarkID=textMarkID+1 return textMarkID end
+trigger={action={markToAll=function() end}}
+dofile("Moose Development/Moose/Core/Vector.lua")
 
 dofile(source)
 
@@ -106,7 +114,7 @@ local function pair()
   local a = ASTAR:New()
   local s = a:AddNodeFromCoordinate(coord(0))
   local g = a:AddNodeFromCoordinate(coord(10))
-  a:SetStartCoordinate(s.coordinate):SetEndCoordinate(g.coordinate)
+  a:SetStartCoordinate(s.vector):SetEndCoordinate(g.vector)
   return a, s, g
 end
 local function alternatives()
@@ -147,7 +155,7 @@ test("changing neighbour rules invalidates both cached directions", function()
   equal(#a:GetPath(), 2)
   a:SetValidNeighbourFunction(function() return false end)
   equal(a:GetPath(), nil)
-  a:SetStartCoordinate(g.coordinate):SetEndCoordinate(s.coordinate)
+  a:SetStartCoordinate(g.vector):SetEndCoordinate(s.vector)
   equal(a:GetPath(), nil)
   a:SetValidNeighbourFunction(nil)
   equal(#a:GetPath(), 2)
@@ -190,7 +198,7 @@ test("custom costs determine route and invalidate cached costs", function()
   equal(a:GetPath()[2], detour)
   a:SetCostFunction(function(u, v) return (u == detour or v == detour) and 100 or 1 end)
   equal(a:GetPath()[2], high)
-  a:SetStartCoordinate(g.coordinate):SetEndCoordinate(s.coordinate)
+  a:SetStartCoordinate(g.vector):SetEndCoordinate(s.vector)
   equal(a:GetPath()[2], high)
   a:SetCostFunction(nil)
   equal(a:GetPath()[2], high)
@@ -262,9 +270,9 @@ test("distant endpoints are added once and obey neighbour rules", function()
   a:SetValidNeighbourDistance(6000)
   local path = a:GetPath()
   equal(#path, 3)
-  equal(path[1].coordinate.x, -5000)
+  equal(path[1].vector.x, -5000)
   equal(path[2], middle)
-  equal(path[3].coordinate.x, 5000)
+  equal(path[3].vector.x, 5000)
   equal(a.Nnodes, 3)
   equal(#a:GetPath(), 3)
   equal(a.Nnodes, 3)
@@ -284,7 +292,7 @@ test("distant endpoints respect the grid surface filter", function()
   a:CreateGrid({land.SurfaceType.WATER}, 2000, 0, 1000, 1000)
   local count = a.Nnodes
   local dry = coord(-5000)
-  dry.surface = land.SurfaceType.LAND
+  land.surfaceAt=function(c) return c.x==dry.x and c.z==dry.z and land.SurfaceType.LAND or land.SurfaceType.WATER end
   a:SetStartCoordinate(dry)
   equal(a:GetPath(), nil)
   equal(a.Nnodes, count)
@@ -307,7 +315,7 @@ test("endpoint exclusion including NAVYGROUP usage", function()
   equal(#path, 2) equal(path[2], g)
   path = a:GetPath(false, true)
   equal(#path, 2) equal(path[1], s)
-  a:SetEndCoordinate(s.coordinate)
+  a:SetEndCoordinate(s.vector)
   equal(#a:GetPath(), 1)
   equal(#a:GetPath(true, true), 0)
 end)
@@ -348,7 +356,7 @@ test("hex geometry has six unique equidistant neighbours", function()
   local seen = {}
   for _, node in ipairs(neighbours) do
     assert(not seen[node.id]) seen[node.id] = true
-    near(center.coordinate:Get2DDistance(node.coordinate), 1000)
+    near(center.vector:GetDistance(node.vector, true), 1000)
     local dq, dr = node.q-center.q, node.r-center.r
     equal(math.max(math.abs(dq), math.abs(dr), math.abs(dq+dr)), 1)
     assert(a.hexLinks[node.id][center.id])
@@ -362,14 +370,14 @@ test("hex defaults, center bounds and markers", function()
   equal(a.hexGrid.spacing, 2000)
   assert(a.hexIndex[-5][0]) assert(a.hexIndex[7][0])
   local marks = 0
-  function COORDINATE:MarkToAll(text) assert(text:match("Hex q=")) marks = marks + 1 end
+  trigger.action.markToAll=function(_,text) assert(text:match("Hex q=")) marks = marks + 1 end
   local b = ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4300))
   b:CreateHexGrid(nil, 3700, 1700, 1000, true)
   equal(marks, b.Nnodes)
   for _, node in pairs(b.nodes) do
-    assert(node.coordinate.x >= -1700-1e-8 and node.coordinate.x <= 6000+1e-8)
-    assert(math.abs(node.coordinate.z) <= 1850+1e-8)
-    equal(node.coordinate.y, 0)
+    assert(node.vector.x >= -1700-1e-8 and node.vector.x <= 6000+1e-8)
+    assert(math.abs(node.vector.z) <= 1850+1e-8)
+    equal(node.vector.y, 0)
   end
 end)
 
@@ -378,12 +386,12 @@ test("hex geometry rotates with heading and translates with the origin", functio
     local origin = coord(123456, -234567)
     local a = ASTAR:New():SetStartCoordinate(origin):SetEndCoordinate(origin:Translate(4000, heading))
     a:CreateHexGrid(nil, 4000, 2000, 1000):SetHexNeighboursOnly(true)
-    near(a.hexIndex[0][0].coordinate:Get2DDistance(origin), 0)
-    near(a.hexIndex[4][0].coordinate:Get2DDistance(a.endCoord), 0)
+    near(a.hexIndex[0][0].vector:GetDistance(origin, true), 0)
+    near(a.hexIndex[4][0].vector:GetDistance(a.endVector, true), 0)
     local center = a.hexIndex[2][0]
     equal(#a:_NeighbourNodes(center, a.nodes), 6)
     for _, node in ipairs(a:_NeighbourNodes(center, a.nodes)) do
-      near(center.coordinate:Get2DDistance(node.coordinate), 1000)
+      near(center.vector:GetDistance(node.vector, true), 1000)
     end
     equal(#a:GetPath(), 5)
   end
@@ -427,7 +435,7 @@ test("hex search detours around a filtered center", function()
   assert(path and #path > 5)
   for i, node in ipairs(path) do
     equal(node.surfacetype, land.SurfaceType.WATER)
-    if i > 1 then near(path[i-1].coordinate:Get2DDistance(node.coordinate), 1000) end
+    if i > 1 then near(path[i-1].vector:GetDistance(node.vector, true), 1000) end
   end
 end)
 
@@ -446,7 +454,7 @@ test("hex attachments match geometric neighbours across rotations", function()
       local expected = 0
       for _, node in pairs(a.nodes) do
         if node.q ~= nil then
-          local close = extra.coordinate:Get2DDistance(node.coordinate) <= 1000+1e-6
+          local close = extra.vector:GetDistance(node.vector, true) <= 1000+1e-6
           equal(not not a.hexLinks[extra.id][node.id], close)
           equal(not not a.hexLinks[node.id][extra.id], close)
           if close then expected = expected+1 end
@@ -465,8 +473,8 @@ test("hex mode keeps nearby endpoints exact and reuses them", function()
   a:SetStartCoordinate(coord(-300, 100)):SetEndCoordinate(coord(4300, 100))
   local path = a:GetPath()
   assert(path)
-  near(path[1].coordinate:Get2DDistance(a.startCoord), 0)
-  near(path[#path].coordinate:Get2DDistance(a.endCoord), 0)
+  near(path[1].vector:GetDistance(a.startVector, true), 0)
+  near(path[#path].vector:GetDistance(a.endVector, true), 0)
   equal(path[1].q, nil) equal(path[#path].q, nil)
   local nodeCount = a.Nnodes
   equal(#a:GetPath(), #path)
@@ -493,7 +501,7 @@ test("hex endpoints outside attachment range or on rejected surfaces fail", func
   a:SetEndCoordinate(coord(20000))
   equal(a:GetPath(), nil)
   local b = hexgrid():SetHexNeighboursOnly(true)
-  local dry = coord(100, 100) dry.surface = land.SurfaceType.LAND
+  local dry = coord(100, 100) land.surfaceAt=function(c) return c.x==dry.x and c.z==dry.z and land.SurfaceType.LAND or land.SurfaceType.WATER end
   b:SetStartCoordinate(dry)
   equal(b:GetPath(), nil)
   local empty = ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
@@ -507,7 +515,7 @@ test("manual nodes added after a search rebuild hex attachments", function()
   local oldLinks = a.hexLinks
   local extra = a:AddNodeFromCoordinate(coord(1700, 250))
   equal(a.hexLinks, nil)
-  a:SetEndCoordinate(extra.coordinate)
+  a:SetEndCoordinate(extra.vector)
   local path = a:GetPath()
   equal(path[#path], extra)
   assert(a.hexLinks ~= oldLinks)
@@ -614,8 +622,8 @@ test("potential path includes exact endpoint attachments in both directions", fu
   local a = hexgrid():SetHexNeighboursOnly(true)
   a:SetStartCoordinate(coord(-300,100)):SetEndCoordinate(coord(4300,100))
   equal(a:HasPotentialPath(), true)
-  near(a.startNode.coordinate:Get2DDistance(a.startCoord), 0)
-  near(a.endNode.coordinate:Get2DDistance(a.endCoord), 0)
+  near(a.startNode.vector:GetDistance(a.startVector, true), 0)
+  near(a.endNode.vector:GetDistance(a.endVector, true), 0)
   local n = a.Nnodes
   local path = a:GetPath()
   assert(path)
@@ -634,14 +642,14 @@ test("potential path caches complete components and invalidates after a bridge i
   local components = a.hexComponents
   local labelled = count(components)
   equal(labelled, 2)
-  a:SetEndCoordinate(a.hexIndex[1][0].coordinate)
+  a:SetEndCoordinate(a.hexIndex[1][0].vector)
   equal(a:HasPotentialPath(), true)
   equal(a.hexComponents, components)
   equal(count(components), labelled)
-  a:SetStartCoordinate(a.hexIndex[4][0].coordinate):SetEndCoordinate(a.hexIndex[3][0].coordinate)
+  a:SetStartCoordinate(a.hexIndex[4][0].vector):SetEndCoordinate(a.hexIndex[3][0].vector)
   equal(a:HasPotentialPath(), true)
   equal(count(components), 4)
-  a:SetStartCoordinate(a.hexIndex[0][0].coordinate):SetEndCoordinate(a.hexIndex[4][0].coordinate)
+  a:SetStartCoordinate(a.hexIndex[0][0].vector):SetEndCoordinate(a.hexIndex[4][0].vector)
   equal(a:HasPotentialPath(), false)
   -- An explicitly supplied node can bridge the gap; manual nodes bypass the grid surface filter.
   a:AddNodeFromCoordinate(coord(2000))
@@ -672,10 +680,10 @@ test("potential path handles missing, rejected and coincident endpoints", functi
   empty:CreateHexGrid({}, 4000, 1000, 1000):SetHexNeighboursOnly(true)
   equal(empty:HasPotentialPath(), false)
   local a = hexgrid():SetHexNeighboursOnly(true)
-  local dry = coord(100,100) dry.surface = land.SurfaceType.LAND
+  local dry = coord(100,100) land.surfaceAt=function(c) return c.x==dry.x and c.z==dry.z and land.SurfaceType.LAND or land.SurfaceType.WATER end
   a:SetStartCoordinate(dry)
   equal(a:HasPotentialPath(), false)
-  a:SetStartCoordinate(a.hexIndex[0][0].coordinate):SetEndCoordinate(a.hexIndex[0][0].coordinate)
+  a:SetStartCoordinate(a.hexIndex[0][0].vector):SetEndCoordinate(a.hexIndex[0][0].vector)
   equal(a:HasPotentialPath(), true)
   equal(#a:GetPath(), 1)
 end)
@@ -886,7 +894,7 @@ test("expanding search finds a detour around land and preserves existing nodes",
   local detour = false
   for _, node in ipairs(path) do
     equal(node.surfacetype, land.SurfaceType.WATER)
-    if math.abs(node.coordinate.z)>=1200 then detour=true end
+    if math.abs(node.vector.z)>=1200 then detour=true end
   end
   assert(detour)
 end)
@@ -904,7 +912,7 @@ test("expanding search continues when LoS blocks an otherwise connected grid", f
   assert(path)
   equal(report.Attempts[1].Failure, "connections_blocked")
   assert(#report.Attempts>1)
-  for i=2,#path do assert(land.isVisible(path[i-1].coordinate, path[i].coordinate)) end
+  for i=2,#path do assert(land.isVisible(path[i-1].vector, path[i].vector)) end
 end)
 
 test("expanding search preserves custom callback references and arguments", function()
@@ -914,12 +922,12 @@ test("expanding search preserves custom callback references and arguments", func
   local function cost(u,v,scale)
     equal(scale, 7)
     if u==original or v==original then evaluated=true end
-    if math.abs(u.coordinate.z)<1200 and math.abs(v.coordinate.z)<1200 then return math.huge end
+    if math.abs(u.vector.z)<1200 and math.abs(v.vector.z)<1200 then return math.huge end
     return ASTAR.Dist2D(u,v)*scale
   end
   -- Let the first/last sections reach the outer rows; block only the central crossing.
   local function constrainedCost(u,v,scale)
-    if (u.coordinate.x<=2000 and v.coordinate.x>=2000) or (v.coordinate.x<=2000 and u.coordinate.x>=2000) then
+    if (u.vector.x<=2000 and v.vector.x>=2000) or (v.vector.x<=2000 and u.vector.x>=2000) then
       return cost(u,v,scale)
     end
     if u==original or v==original then evaluated=true end
@@ -940,8 +948,8 @@ test("expansion attaches endpoints outside the initial search area", function()
   equal(potential, false) equal(reason, "start_unattached")
   local path, report = a:GetPathWithExpansion()
   assert(path and #report.Attempts>1)
-  near(path[1].coordinate:Get2DDistance(a.startCoord),0)
-  near(path[#path].coordinate:Get2DDistance(a.endCoord),0)
+  near(path[1].vector:GetDistance(a.startVector, true),0)
+  near(path[#path].vector:GetDistance(a.endVector, true),0)
   equal(a.hexGrid.x,0) equal(a.hexGrid.distance,4000)
 end)
 
@@ -996,7 +1004,7 @@ test("rotated enlargement matches a newly built larger lattice", function()
   b:CreateHexGrid(nil,6000,3000,1000)
   equal(a.Nnodes,b.Nnodes)
   for _, node in pairs(a.nodes) do
-    near(node.coordinate:Get2DDistance(b.hexIndex[node.q][node.r].coordinate),0)
+    near(node.vector:GetDistance(b.hexIndex[node.q][node.r].vector, true),0)
   end
 end)
 
@@ -1023,7 +1031,7 @@ end)
 
 test("successful empty paths stop expansion immediately", function()
   local a=hexgrid(0,0):SetHexNeighboursOnly(true)
-  a:SetEndCoordinate(a.startCoord)
+  a:SetEndCoordinate(a.startVector)
   local path, report=a:GetPathWithExpansion(nil,true,true)
   equal(#path,0) equal(report.StopReason,"path_found") equal(#report.Attempts,1)
   equal(a.hexGrid.boxHY,0)
@@ -1110,7 +1118,7 @@ test("rectangular fractional dimensions preserve rotated lattice coordinates and
     for i=1,3 do
       for j=1,3 do
         local expected=origin:Translate(-100+1000*(j-1),heading):Translate(-1250+1000*(i-1),heading+90)
-        near(nodes[(i-1)*3+j].coordinate:Get2DDistance(expected),0)
+        near(nodes[(i-1)*3+j].vector:GetDistance(expected, true),0)
       end
     end
   end
@@ -1632,10 +1640,10 @@ test("zone hex grids match circle, square and concave polygon membership across 
       reference:CreateHexGrid(nil,20000,10000,1000)
       local expected=0
       for _,node in pairs(reference.nodes) do
-        if zone:IsVec2InZone({x=node.coordinate.x,y=node.coordinate.z}) then
+        if zone:IsVec2InZone({x=node.vector.x,y=node.vector.z}) then
           expected=expected+1
           local actual=a.hexIndex[node.q] and a.hexIndex[node.q][node.r]
-          assert(actual) near(actual.coordinate:Get2DDistance(node.coordinate),0)
+          assert(actual) near(actual.vector:GetDistance(node.vector, true),0)
         end
       end
       equal(a.Nnodes,expected) assert(expected>0)
@@ -1728,7 +1736,7 @@ test("automatic expansion finds paths beyond a zone seed including an empty seed
     assert(path and #report.Attempts>1)
     equal(report.StopReason,"path_found")
     local outside=false
-    for _,node in ipairs(path) do if not zone:IsVec2InZone({x=node.coordinate.x,y=node.coordinate.z}) then outside=true end end
+    for _,node in ipairs(path) do if not zone:IsVec2InZone({x=node.vector.x,y=node.vector.z}) then outside=true end end
     assert(outside)
   end
 end)
@@ -1757,6 +1765,100 @@ test("zone creation limits count bounding cells including centers outside a circ
   local b=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
   equal(b:CreateHexGridFromZone(zone,nil,1000,false,6),nil) equal(queries,5)
   equal(b:CreateHexGridFromZone(zone,nil,1000,false,7),b) equal(b.hexGrid.candidateCount,7) equal(queries,12)
+end)
+
+test("node vectors accept all position inputs and coordinate conversion is explicit and independent", function()
+  local a=ASTAR:New()
+  local inputs={coord(100,300,200),VECTOR:New(100,200,300),{x=100,y=200,z=300},{x=100,y=300}}
+  for i,input in ipairs(inputs) do
+    local node=a:AddNodeFromCoordinate(input)
+    assert(VECTOR._IsVector(node.vector))
+    equal(rawget(node,"coordinate"),nil)
+    near(node.vector.x,100) near(node.vector.y,i==4 and 0 or 200) near(node.vector.z,300)
+    if VECTOR._IsVector(input) then assert(rawequal(node.vector,input))
+    else assert(not rawequal(node.vector,input)) end
+    local first,second=a:GetNodeCoordinate(node),a:GetNodeCoordinate(node)
+    equal(first.ClassName,"COORDINATE") equal(second.ClassName,"COORDINATE")
+    assert(not rawequal(first,second))
+    near(first.x,node.vector.x) near(first.y,node.vector.y) near(first.z,node.vector.z)
+    first.x=-999 first.y=-999
+    near(second.x,100) near(second.y,node.vector.y) near(node.vector.x,100)
+    equal(rawget(node,"coordinate"),nil)
+  end
+  inputs[1].x=-1000
+  near(a.nodes[1].vector.x,100)
+end)
+
+test("endpoint setters snapshot coordinate and vector inputs and can clear them", function()
+  local a=ASTAR:New()
+  local start,goal=coord(10,30,20),VECTOR:New(40,50,60)
+  a:SetStartCoordinate(start):SetEndCoordinate(goal)
+  assert(VECTOR._IsVector(a.startVector) and VECTOR._IsVector(a.endVector))
+  start.x=-10 goal:SetX(-40)
+  near(a.startVector.x,10) near(a.endVector.x,40)
+  near(a.startVector.y,20) near(a.endVector.y,50)
+  a:SetStartCoordinate(nil):SetEndCoordinate(nil)
+  equal(a:GetPath(),nil) equal(a.LastPathFailure,"missing_coordinates")
+end)
+
+test("grid creation expansion search and debug overlays require no COORDINATE allocations", function()
+  local original=COORDINATE.New
+  COORDINATE.New=function() error("Only GetNodeCoordinate should allocate a COORDINATE") end
+  local ok,err=pcall(function()
+    trigger.action.markToAll=function() end
+    land.isVisible=function() return true end
+    local a=ASTAR:New():SetStartCoordinate({x=0,y=0,z=0}):SetEndCoordinate({x=4000,y=0,z=0})
+    a:CreateHexGrid(nil,2000,1000,1000,true):SetHexNeighboursOnly(true):SetValidNeighbourLoS(100)
+    a:ExpandHexGrid(4000,2000)
+    local path=assert(a:GetPath())
+    a:DrawGridWithPath(path,{BatchSize=100})
+    flushTimers()
+    a:UndrawGrid()
+    local b=ASTAR:New():SetStartCoordinate({x=0,y=0}):SetEndCoordinate({x=2000,y=0})
+    b:CreateGrid(nil,1000,0,1000,1000,true)
+    assert(b:GetPath())
+    b:DrawGridWithPath(b:GetPath(),{BatchSize=100})
+    flushTimers()
+    b:UndrawGrid()
+    local zone=circleZone(0,0,1500)
+    for _,hex in ipairs({false,true}) do
+      local c=ASTAR:New():SetStartCoordinate({x=0,y=0}):SetEndCoordinate({x=1000,y=0})
+      if hex then c:CreateHexGridFromZone(zone,nil,1000,true)
+      else c:CreateGridFromZone(zone,nil,1000,1000,true) end
+      assert(c:GetPath())
+      for _,node in pairs(c.nodes) do
+        assert(VECTOR._IsVector(node.vector)) equal(rawget(node,"coordinate"),nil)
+      end
+    end
+  end)
+  COORDINATE.New=original
+  assert(ok,err)
+end)
+
+test("NAVYGROUP converts ASTAR vectors to coordinates before adding waypoints", function()
+  local file=assert(io.open("Moose Development/Moose/Ops/NavyGroup.lua","r"))
+  local navySource=file:read("*a"):gsub("\r\n","\n") file:close()
+  NAVYGROUP={}
+  local method=assert(navySource:match("(function NAVYGROUP:_FindPathToNextWaypoint%b().-\nend)"))
+  assert((loadstring or load)(method))()
+  local ship=setmetatable({lid="test",verbose=10,pathCorridor=100},{__index=NAVYGROUP})
+  function ship:T3() end
+  function ship:GetCoordinate() return coord(0) end
+  function ship:GetWaypointNext() return {coordinate=coord(5000),speed=10} end
+  function ship:GetWaypointCurrent() return {uid=100} end
+  local added={}
+  function ship:AddWaypoint(position,speed,after)
+    equal(position.ClassName,"COORDINATE") assert(not VECTOR._IsVector(position))
+    equal(after,100+#added)
+    added[#added+1]=position
+    return {uid=100+#added}
+  end
+  UTILS.MpsToKnots=function(speed) return speed*1.9438444924 end
+  land.isVisible=function(a,b) return (a.x-b.x)^2+(a.z-b.z)^2<=800^2 end
+  local marks=0
+  trigger.action.markToAll=function() marks=marks+1 end
+  equal(ship:_FindPathToNextWaypoint(),true)
+  assert(#added>0) equal(marks,#added)
 end)
 
 print(string.format("%d passed, %d failed", passed, failed))

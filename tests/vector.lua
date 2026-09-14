@@ -158,5 +158,11 @@ test("existing arithmetic and scalar product retain their meanings", function()
   vector(a,1,2,3) vector(b,4,5,6)
 end)
 
+test("large integer component distances remain finite without squared integer overflow", function()
+  local a,b=VECTOR:New(0,0,0),VECTOR:New(1000000000000,1000000000000,0)
+  near(a:GetDistance(b,true)/1000000000000,1)
+  near(a:GetDistance(b)/1000000000000,math.sqrt(2))
+end)
+
 print(string.format("%d passed, %d failed",passed,failed))
 if failed>0 then os.exit(1) end

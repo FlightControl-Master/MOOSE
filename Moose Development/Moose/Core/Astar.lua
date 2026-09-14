@@ -30,8 +30,8 @@
 -- @field #number ncostcache Number of travel cost cache hits.
 -- @field #ASTAR.Node startNode Start node.
 -- @field #ASTAR.Node endNode End node.
--- @field Core.Point#COORDINATE startCoord Start coordinate.
--- @field Core.Point#COORDINATE endCoord End coordinate.
+-- @field Core.Vector#VECTOR startVector Snapshot of the requested start position.
+-- @field Core.Vector#VECTOR endVector Snapshot of the requested goal position.
 -- @field #function ValidNeighbourFunc Symmetric function to check whether a connection between two nodes is valid.
 -- @field #table ValidNeighbourArg Optional arguments passed to the valid neighbour function.
 -- @field #function CostFunc Function to calculate the travel cost from one node to another.
@@ -72,7 +72,8 @@
 --
 -- # Start and Goal
 --
--- @{#ASTAR.SetStartCoordinate} and @{#ASTAR.SetEndCoordinate} take MOOSE COORDINATE objects.
+-- @{#ASTAR.SetStartCoordinate} and @{#ASTAR.SetEndCoordinate} accept COORDINATE, VECTOR, DCS Vec2 or Vec3 positions.
+-- They store independent VECTOR snapshots; later changes to the inputs do not move the requested endpoints.
 -- Set both coordinates before calling @{#ASTAR.CreateGrid}, @{#ASTAR.CreateHexGrid}, or @{#ASTAR.GetPath}.
 --
 -- At search time, each endpoint is mapped to the nearest existing node using 2D distance. If the distance is at most
@@ -88,8 +89,12 @@
 --
 -- # Nodes and Grids
 --
--- Each @{#ASTAR.Node} contains an id, a `coordinate`, the surface type sampled when it was created, and caches for
--- connection validity and travel cost. Use `node.coordinate` when consuming the path.
+-- Each @{#ASTAR.Node} contains an id, a `vector`, the surface type sampled when it was created, and caches for
+-- connection validity and travel cost. Use `node.vector` for geometry, Vec2/Vec3 access and lightweight debug marks.
+-- Use `astar:GetNodeCoordinate(node)` when a MOOSE waypoint or another API requires a COORDINATE.
+-- Each call creates a fresh COORDINATE at the node altitude; it is not cached or stored in the node.
+-- For example, `navyGroup:AddWaypoint(astar:GetNodeCoordinate(node), speed)` converts only a selected path node.
+-- Nodes no longer expose a `coordinate` field. Custom callbacks must use `node.vector` or explicitly convert the node.
 -- @{#ASTAR.AddNodeFromCoordinate} creates and adds a node and returns that node, rather than the ASTAR object.
 -- @{#ASTAR.GetNodeFromCoordinate} only creates a node; call @{#ASTAR.AddNode} to include it in the search.
 --
@@ -153,7 +158,7 @@
 -- Supported shapes are circular zones (ZONE / ZONE_RADIUS), square or rectangular mission-editor zones, and ZONE_POLYGON / ZONE_POLYGON_BASE.
 -- MOOSE registers mission-editor quadrilateral zones as polygons; use ZONE:FindByName() to obtain the registered zone object.
 -- Both endpoints must already be set. The lattice is anchored at start and aligned with the start-to-goal line.
--- Zone membership is checked before creating coordinates or querying terrain, using IsVec2InZone() and the zone's boundary rules.
+-- Zone membership is checked before creating vectors or querying terrain, using IsVec2InZone() and the zone's boundary rules.
 -- Polygons may be concave. Only cell centers are clipped; cell outlines and connections may cross the zone boundary.
 --
 -- CreateHexGridFromZone(Zone, ValidSurfaceTypes, Spacing, MarkGrid, MaxGridNodes) requires an empty object, like CreateHexGrid().
@@ -234,7 +239,6 @@
 --       astar:DrawGridWithPath(path) -- One-time grid view; path cells are green.
 --     end
 --
-
 -- # Valid Neighbours
 --
 -- By default, every other node is a potential neighbour, including distant nodes. Without a neighbour rule, all candidate pairs are allowed.
@@ -392,7 +396,7 @@
 --     local path = astar:GetPath()
 --     if path then
 --       for i, node in ipairs(path) do
---         node.coordinate:MarkToAll(string.format("ASTAR waypoint %d", i))
+--         node.vector:Mark(string.format("ASTAR waypoint %d", i))
 --       end
 --     else
 --       env.info("ASTAR: no water route found")
@@ -424,7 +428,7 @@
 --     astar:DrawGrid()
 --     if path then
 --       for i, node in ipairs(path) do
---         node.coordinate:MarkToAll(string.format("Expanded route waypoint %d", i))
+--         node.vector:Mark(string.format("Expanded route waypoint %d", i))
 --       end
 --     else
 --       env.info("ASTAR: stopped expanding: " .. report.StopReason)
@@ -461,7 +465,7 @@
 --     local path = astar:GetPath()
 --     if path then
 --       for i, node in ipairs(path) do
---         node.coordinate:MarkToAll(string.format("Hex route waypoint %d", i))
+--         node.vector:Mark(string.format("Hex route waypoint %d", i))
 --       end
 --     else
 --       env.info("ASTAR: no hex water route found")
@@ -474,11 +478,11 @@
 -- The cheapest result therefore visits the middle node. Custom cost callbacks receive nodes, not coordinates.
 --
 --     local astar = ASTAR:New()
---     local start = astar:AddNodeFromCoordinate(COORDINATE:New(0, 0, 0))
---     local middle = astar:AddNodeFromCoordinate(COORDINATE:New(1000, 0, 1000))
---     local goal = astar:AddNodeFromCoordinate(COORDINATE:New(2000, 0, 0))
---     astar:SetStartCoordinate(start.coordinate)
---     astar:SetEndCoordinate(goal.coordinate)
+--     local start = astar:AddNodeFromCoordinate(VECTOR:New(0, 0, 0))
+--     local middle = astar:AddNodeFromCoordinate(VECTOR:New(1000, 0, 1000))
+--     local goal = astar:AddNodeFromCoordinate(VECTOR:New(2000, 0, 0))
+--     astar:SetStartCoordinate(start.vector)
+--     astar:SetEndCoordinate(goal.vector)
 --     astar:SetCostFunction(function(nodeA, nodeB, penalty)
 --       local direct = (nodeA == start and nodeB == goal) or (nodeA == goal and nodeB == start)
 --       return ASTAR.Dist2D(nodeA, nodeB) + (direct and penalty or 0)
@@ -503,7 +507,7 @@ ASTAR = {
 --- Node data.
 -- @type ASTAR.Node
 -- @field #number id Node id.
--- @field Core.Point#COORDINATE coordinate Coordinate of the node.
+-- @field Core.Vector#VECTOR vector Position of the node. Do not mutate after adding it to ASTAR.
 -- @field #number surfacetype DCS surface type sampled at node creation.
 -- @field #table valid Cached connection validity, indexed by the other node's id.
 -- @field #table cost Cached travel cost, indexed by the other node's id.
@@ -517,7 +521,7 @@ ASTAR.INF=1/0
 
 --- ASTAR class version.
 -- @field #string version
-ASTAR.version="0.7.0"
+ASTAR.version="0.8.0"
 
 -- Six axial offsets; adjacent centers are one spacing apart.
 local hexDirections={{1,0}, {0,1}, {-1,1}, {-1,0}, {0,-1}, {1,-1}}
@@ -551,9 +555,9 @@ local function gridPosition(grid, along, across, origin)
   return origin.x+along*grid.cos-across*grid.sin, origin.z+along*grid.sin+across*grid.cos
 end
 
-local function gridCoordinate(grid, along, across, origin)
+local function gridVector(grid, along, across, origin)
   local x,z=gridPosition(grid, along, across, origin)
-  return COORDINATE:New(x, 0, z)
+  return VECTOR:New(x, 0, z)
 end
 
 local function hexRowBounds(grid, width)
@@ -588,7 +592,7 @@ end
 -- Read MOOSE's polygon bounding box, or construct the missing radius-zone bounding box.
 -- Zone membership itself is delegated to IsVec2InZone, including its boundary conventions.
 local function zoneGridArea(self, zone)
-  assert(self.startCoord and self.endCoord, "ASTAR: start and end coordinates are required for a zone grid")
+  assert(self.startVector and self.endVector, "ASTAR: start and end coordinates are required for a zone grid")
   assert(type(zone)=="table" and type(zone.IsVec2InZone)=="function", "ASTAR: a MOOSE zone with IsVec2InZone is required")
   local box=type(zone.GetBoundingSquare)=="function" and zone:GetBoundingSquare() or nil
   if not box and type(zone.GetRadius)=="function" and type(zone.GetVec2)=="function" then
@@ -603,9 +607,9 @@ local function zoneGridArea(self, zone)
     assert(type(value)=="number" and value>-math.huge and value<math.huge, "ASTAR: invalid zone bounding box")
   end
   assert(box.x1<=box.x2 and box.y1<=box.y2, "ASTAR: invalid zone bounding box order")
-  local distance=self.startCoord:Get2DDistance(self.endCoord)
-  local angle=distance>0 and math.rad(self.startCoord:HeadingTo(self.endCoord)) or 0
-  local grid={x=self.startCoord.x, z=self.startCoord.z, cos=math.cos(angle), sin=math.sin(angle), distance=distance}
+  local distance=self.startVector:GetDistance(self.endVector, true)
+  local angle=distance>0 and math.rad(self.startVector:GetHeadingTo(self.endVector)) or 0
+  local grid={x=self.startVector.x, z=self.startVector.z, cos=math.cos(angle), sin=math.sin(angle), distance=distance}
   local area={alongMin=math.huge, alongMax=-math.huge, acrossMin=math.huge, acrossMax=-math.huge}
   for _,point in ipairs({{box.x1,box.y1},{box.x1,box.y2},{box.x2,box.y1},{box.x2,box.y2}}) do
     local dx,dz=point[1]-grid.x,point[2]-grid.z
@@ -645,37 +649,38 @@ end
 
 --- Set the requested start coordinate. Does not create a node or rebuild the grid.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate Start coordinate.
+-- @param Core.Point#COORDINATE Coordinate Start position; also accepts VECTOR, DCS Vec2 or Vec3. Nil clears it.
 -- @return #ASTAR self
 function ASTAR:SetStartCoordinate(Coordinate)
 
-  self.startCoord=Coordinate
+  self.startVector=Coordinate and VECTOR:NewFromVec(Coordinate) or nil
   
   return self
 end
 
 --- Set the requested goal coordinate. Does not create a node or rebuild the grid.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate end coordinate.
+-- @param Core.Point#COORDINATE Coordinate Goal position; also accepts VECTOR, DCS Vec2 or Vec3. Nil clears it.
 -- @return #ASTAR self
 function ASTAR:SetEndCoordinate(Coordinate)
 
-  self.endCoord=Coordinate
+  self.endVector=Coordinate and VECTOR:NewFromVec(Coordinate) or nil
   
   return self
 end
 
 --- Create a node from a coordinate without adding it to the search node set.
--- The coordinate reference and its current surface type are stored in the node.
+-- Stores a VECTOR and samples its current surface type. A supplied VECTOR is retained by reference;
+-- other position types are copied into a new VECTOR. Do not mutate a retained VECTOR after adding the node.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate The coordinate where to create the node.
+-- @param Core.Point#COORDINATE Coordinate Node position; also accepts VECTOR, DCS Vec2 or Vec3.
 -- @return #ASTAR.Node The node.
 function ASTAR:GetNodeFromCoordinate(Coordinate)
 
   local node={} --#ASTAR.Node
   
-  node.coordinate=Coordinate
-  node.surfacetype=Coordinate:GetSurfaceType()
+  node.vector=VECTOR._IsVector(Coordinate) and Coordinate or VECTOR:NewFromVec(Coordinate)
+  node.surfacetype=node.vector:GetSurfaceType()
   node.id=self.counter
   
   node.valid={}
@@ -686,6 +691,16 @@ function ASTAR:GetNodeFromCoordinate(Coordinate)
   return node
 end
 
+
+--- Create a COORDINATE from a node's VECTOR position.
+-- Each call returns an independent object with the node's exact x, y and z values, including altitude.
+-- The result is not cached. Changing it does not change the node or its search caches.
+-- @param #ASTAR self
+-- @param #ASTAR.Node Node The node to convert.
+-- @return Core.Point#COORDINATE A new coordinate at the node position.
+function ASTAR:GetNodeCoordinate(Node)
+  return Node.vector:GetCoordinate()
+end
 
 --- Add a node created by this ASTAR instance to the search node set.
 -- Does not apply the grid surface filter. Adding the same node again does not increase the node count.
@@ -724,7 +739,7 @@ end
 --- Add a node to the table of grid nodes specifying its coordinate.
 -- Does not apply the grid surface filter. Returns the new node, not the ASTAR object.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate The coordinate where the node is created.
+-- @param Core.Point#COORDINATE Coordinate Node position; also accepts VECTOR, DCS Vec2 or Vec3.
 -- @return #ASTAR.Node The node.
 function ASTAR:AddNodeFromCoordinate(Coordinate)
 
@@ -911,7 +926,7 @@ end
 function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, MarkGrid, MaxGridNodes)
 
   assert(not self.hexGrid, "ASTAR: use a new object for a rectangular grid after a hex grid")
-  assert(self.startCoord and self.endCoord, "ASTAR: start and end coordinates are required for a grid")
+  assert(self.startVector and self.endVector, "ASTAR: start and end coordinates are required for a grid")
   BoxHY=BoxHY or 40000
   SpaceX=SpaceX or 10000
   deltaX=deltaX or 2000
@@ -921,15 +936,15 @@ function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, Mark
   assert(type(deltaY)=="number" and deltaY>0 and deltaY<math.huge, "ASTAR: deltaY must be finite and positive")
   checkGridNodeLimit(MaxGridNodes)
 
-  local distance=self.startCoord:Get2DDistance(self.endCoord)
+  local distance=self.startVector:GetDistance(self.endVector, true)
   -- Match the original numeric-for loop counts even when dimensions are not spacing multiples.
   local nx=math.floor(BoxHY/deltaY+1)
   local nz=math.floor((distance+2*SpaceX)/deltaX+1)
   if MaxGridNodes and nx>MaxGridNodes/nz then return nil, "node_limit" end
 
-  local angle=math.rad(self.startCoord:HeadingTo(self.endCoord))
+  local angle=math.rad(self.startVector:GetHeadingTo(self.endVector))
   
-  local grid={x=self.startCoord.x, z=self.startCoord.z, cos=math.cos(angle), sin=math.sin(angle), along=deltaX/2, across=deltaY/2}
+  local grid={x=self.startVector.x, z=self.startVector.z, cos=math.cos(angle), sin=math.sin(angle), along=deltaX/2, across=deltaY/2}
   
   self.ValidSurfaceTypes=ValidSurfaceTypes
   
@@ -937,13 +952,13 @@ function ASTAR:CreateGrid(ValidSurfaceTypes, BoxHY, SpaceX, deltaX, deltaY, Mark
   
   for i=1,nx do
     for j=1,nz do
-      local coordinate=gridCoordinate(grid, -SpaceX+deltaX*(j-1), -BoxHY/2+deltaY*(i-1))
-      local node=self:GetNodeFromCoordinate(coordinate)
+      local vector=gridVector(grid, -SpaceX+deltaX*(j-1), -BoxHY/2+deltaY*(i-1))
+      local node=self:GetNodeFromCoordinate(vector)
       if self:CheckValidSurfaceType(node, ValidSurfaceTypes) then
         node.rectGrid=grid
         self:AddNode(node)
         if MarkGrid then
-          coordinate:MarkToAll(string.format("i=%d, j=%d surface=%d", i, j, node.surfacetype))
+          vector:Mark(string.format("i=%d, j=%d surface=%d", i, j, node.surfacetype))
         end
       end
     end
@@ -971,15 +986,15 @@ function ASTAR:CreateHexGrid(ValidSurfaceTypes, BoxHY, SpaceX, Spacing, MarkGrid
   BoxHY=BoxHY or 40000
   SpaceX=SpaceX or 10000
   Spacing=Spacing or 2000
-  assert(self.startCoord and self.endCoord, "ASTAR: start and end coordinates are required for a hex grid")
+  assert(self.startVector and self.endVector, "ASTAR: start and end coordinates are required for a hex grid")
   assert(not self.hexGrid and next(self.nodes)==nil, "ASTAR: create a hex grid on an empty ASTAR object")
   checkGridDimensions(BoxHY, SpaceX)
   assert(type(Spacing)=="number" and Spacing>0 and Spacing<math.huge, "ASTAR: Spacing must be finite and positive")
   checkGridNodeLimit(MaxGridNodes)
 
-  local distance=self.startCoord:Get2DDistance(self.endCoord)
-  local angle=distance>0 and math.rad(self.startCoord:HeadingTo(self.endCoord)) or 0
-  local grid={x=self.startCoord.x, z=self.startCoord.z, cos=math.cos(angle), sin=math.sin(angle), spacing=Spacing,
+  local distance=self.startVector:GetDistance(self.endVector, true)
+  local angle=distance>0 and math.rad(self.startVector:GetHeadingTo(self.endVector)) or 0
+  local grid={x=self.startVector.x, z=self.startVector.z, cos=math.cos(angle), sin=math.sin(angle), spacing=Spacing,
     rowSpacing=Spacing*math.sqrt(3)/2, distance=distance, markGrid=MarkGrid}
   local bounds=hexBounds(grid, BoxHY, SpaceX, MaxGridNodes)
   if not bounds then return nil, "node_limit" end
@@ -1053,12 +1068,12 @@ function ASTAR:CreateGridFromZone(Zone, ValidSurfaceTypes, deltaX, deltaY, MarkG
     for j=jmin,jmax do
       local x,z=gridPosition(grid,j*deltaX,i*deltaY)
       if Zone:IsVec2InZone({x=x,y=z}) then
-        local coordinate=COORDINATE:New(x,0,z)
-        local node=self:GetNodeFromCoordinate(coordinate)
+        local vector=VECTOR:New(x,0,z)
+        local node=self:GetNodeFromCoordinate(vector)
         if self:CheckValidSurfaceType(node,ValidSurfaceTypes) then
           node.rectGrid=grid
           self:AddNode(node)
-          if MarkGrid then coordinate:MarkToAll(string.format("i=%d, j=%d surface=%d",i,j,node.surfacetype)) end
+          if MarkGrid then vector:Mark(string.format("i=%d, j=%d surface=%d",i,j,node.surfacetype)) end
         end
       end
     end
@@ -1118,14 +1133,14 @@ function ASTAR:_PopulateHexGrid(Bounds, BoxHY, SpaceX, Zone)
         local x,z=gridPosition(grid, grid.spacing*(q+r/2), grid.rowSpacing*r)
         if not Zone or Zone:IsVec2InZone({x=x,y=z}) then
           if sampled then sampled[r]=sampled[r] or {} sampled[r][q]=true end
-          local coordinate=COORDINATE:New(x,0,z)
-          local node=self:GetNodeFromCoordinate(coordinate)
+          local vector=VECTOR:New(x,0,z)
+          local node=self:GetNodeFromCoordinate(vector)
           if self:CheckValidSurfaceType(node, self.ValidSurfaceTypes) then
             node.q=q
             node.r=r
             self:AddNode(node)
             if grid.markGrid then
-              coordinate:MarkToAll(string.format("Hex q=%d r=%d surface=%d", q, r, node.surfacetype))
+              vector:Mark(string.format("Hex q=%d r=%d surface=%d", q, r, node.surfacetype))
             end
           end
         end
@@ -1333,7 +1348,7 @@ function ASTAR:_DrawGridNode(Node, Style)
   local corners={}
   local grid=Node.rectGrid
   local function corner(along, across)
-    local x,z=gridPosition(grid, along, across, Node.coordinate)
+    local x,z=gridPosition(grid, along, across, Node.vector)
     corners[#corners+1]={x=x, y=0, z=z}
   end
   if self.hexGrid and Node.q~=nil and Node.r~=nil then
@@ -1378,7 +1393,7 @@ function ASTAR:UndrawGrid()
     if job.timerID then timer.removeFunction(job.timerID) end
     self:_FinishGridDrawing(job, "cancelled")
   end
-  for _,markID in ipairs(self.GridDrawIDs or {}) do COORDINATE:RemoveMark(markID) end
+  for _,markID in ipairs(self.GridDrawIDs or {}) do trigger.action.removeMark(markID) end
   self.GridDrawIDs={}
   self.GridDrawNodeIDs={}
   self.GridDrawOptions=nil
@@ -1402,8 +1417,8 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
   local dx=corridor and corridor/2 or nil
   local dy=dx
   
-  local cA=nodeA.coordinate:GetVec3()
-  local cB=nodeB.coordinate:GetVec3()
+  local cA=nodeA.vector:GetVec3()
+  local cB=nodeB.vector:GetVec3()
   cA.y=offset
   cB.y=offset
 
@@ -1412,7 +1427,7 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
   if los and corridor then
   
     -- Heading from A to B.
-    local heading=nodeA.coordinate:HeadingTo(nodeB.coordinate)
+    local heading=nodeA.vector:GetHeadingTo(nodeB.vector)
     
     local Ap=UTILS.VecTranslate(cA, dx, heading+90)
     local Bp=UTILS.VecTranslate(cB, dx, heading+90)
@@ -1443,7 +1458,7 @@ function ASTAR.Road(nodeA, nodeB, distmax)
     return false
   end
 
-  local path=land.findPathOnRoads("roads", nodeA.coordinate.x, nodeA.coordinate.z, nodeB.coordinate.x, nodeB.coordinate.z)
+  local path=land.findPathOnRoads("roads", nodeA.vector.x, nodeA.vector.z, nodeB.vector.x, nodeB.vector.z)
   
   if path then
     return true    
@@ -1462,7 +1477,7 @@ function ASTAR.DistMax(nodeA, nodeB, distmax)
 
   distmax=distmax or 2000
 
-  local dist=nodeA.coordinate:Get2DDistance(nodeB.coordinate)
+  local dist=nodeA.vector:GetDistance(nodeB.vector, true)
   
   return dist<=distmax
 end
@@ -1476,7 +1491,7 @@ end
 -- @param #ASTAR.Node nodeB Other node.
 -- @return #number Distance between the two nodes.
 function ASTAR.Dist2D(nodeA, nodeB)
-  local dist=nodeA.coordinate:Get2DDistance(nodeB.coordinate)
+  local dist=nodeA.vector:GetDistance(nodeB.vector, true)
   return dist
 end
 
@@ -1485,7 +1500,7 @@ end
 -- @param #ASTAR.Node nodeB Other node.
 -- @return #number Distance between the two nodes.
 function ASTAR.Dist3D(nodeA, nodeB)
-  local dist=nodeA.coordinate:Get3DDistance(nodeB.coordinate)
+  local dist=nodeA.vector:GetDistance(nodeB.vector)
   return dist
 end
 
@@ -1496,7 +1511,7 @@ end
 function ASTAR.DistRoad(nodeA, nodeB)
 
   -- Get the path.
-  local path=land.findPathOnRoads("roads", nodeA.coordinate.x, nodeA.coordinate.z, nodeB.coordinate.x, nodeB.coordinate.z)
+  local path=land.findPathOnRoads("roads", nodeA.vector.x, nodeA.vector.z, nodeB.vector.x, nodeB.vector.z)
   
   if path then
   
@@ -1523,7 +1538,7 @@ end
 
 --- Find the closest node from a given coordinate.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate Reference coordinate.
+-- @param Core.Point#COORDINATE Coordinate Reference position; also accepts VECTOR, DCS Vec2 or Vec3.
 -- @return #ASTAR.Node Closest node by 2D distance, or nil if the node set is empty.
 -- @return #number Distance to the closest node in meters, or math.huge if the node set is empty.
 function ASTAR:FindClosestNode(Coordinate)
@@ -1534,7 +1549,7 @@ function ASTAR:FindClosestNode(Coordinate)
   for _,_node in pairs(self.nodes) do
     local node=_node --#ASTAR.Node
     
-    local dist=node.coordinate:Get2DDistance(Coordinate)
+    local dist=node.vector:GetDistance(Coordinate, true)
     
     if dist<distMin then
       distMin=dist
@@ -1552,7 +1567,7 @@ end
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:FindStartNode()
-  self.startNode=self:_FindEndpoint(self.startCoord, "start")
+  self.startNode=self:_FindEndpoint(self.startVector, "start")
   return self
 end
 
@@ -1562,13 +1577,13 @@ end
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:FindEndNode()
-  self.endNode=self:_FindEndpoint(self.endCoord, "end")
+  self.endNode=self:_FindEndpoint(self.endVector, "end")
   return self
 end
 
 --- Resolve one endpoint using the current snapping threshold and surface filter.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate Requested endpoint.
+-- @param Core.Vector#VECTOR Coordinate Requested endpoint.
 -- @param #string Label Endpoint name for trace output.
 -- @return #ASTAR.Node Selected or added node, or nil.
 function ASTAR:_FindEndpoint(Coordinate, Label)
@@ -1590,7 +1605,7 @@ end
 -- @return #ASTAR.Node Goal node, or nil.
 -- @return #string Failure reason, or nil.
 function ASTAR:_ResolveEndpoints()
-  if not self.startCoord or not self.endCoord then return nil, nil, "missing_coordinates" end
+  if not self.startVector or not self.endVector then return nil, nil, "missing_coordinates" end
   self:FindStartNode()
   self:FindEndNode()
   local reason
@@ -1696,7 +1711,8 @@ function ASTAR:GetPathWithExpansion(Options, ExcludeStartNode, ExcludeEndNode)
 end
 
 --- Search synchronously for a least-cost path between the selected start and goal nodes.
--- Returns nodes in travel order; use each node's coordinate to create waypoints. Does not assign a route to a unit or group.
+-- Returns nodes in travel order; use GetNodeCoordinate(node) to obtain COORDINATE objects for waypoints.
+-- Does not assign a route to a unit or group.
 -- Endpoint exclusions can produce an empty table for a successful search. Nil indicates failure.
 -- In hex-only mode, rejects disconnected candidate components before evaluating any neighbour rule or cost.
 -- @param #ASTAR self
@@ -1960,7 +1976,7 @@ end
 -- @param #ASTAR.Node nodeB Node B.
 -- @return #number Distance between nodes in meters.
 function ASTAR:_DistNodes(nodeA, nodeB)
-  return nodeA.coordinate:Get2DDistance(nodeB.coordinate)
+  return nodeA.vector:GetDistance(nodeB.vector, true)
 end
 
 --- Function that calculates the lowest F score.
@@ -2041,8 +2057,8 @@ function ASTAR:_BuildHexLinks()
         if neighbor then links[nid][neighbor.id]=true end
       end
     else
-      local dx=node.coordinate.x-grid.x
-      local dz=node.coordinate.z-grid.z
+      local dx=node.vector.x-grid.x
+      local dz=node.vector.z-grid.z
       local along=(dx*grid.cos+dz*grid.sin)/grid.spacing
       local across=(-dx*grid.sin+dz*grid.cos)/grid.spacing
       local rowScale=math.sqrt(3)/2

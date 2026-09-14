@@ -2427,7 +2427,7 @@ function NAVYGROUP:_FindPathToNextWaypoint()
         local node=_node --Core.Astar#ASTAR.Node
           
         -- Add waypoints along detour path to next waypoint.
-        local wp=self:AddWaypoint(node.coordinate, speed, uid)
+        local wp=self:AddWaypoint(astar:GetNodeCoordinate(node), speed, uid)
         wp.astar=true
         
         -- Update id so the next wp is added after this one.
@@ -2435,7 +2435,7 @@ function NAVYGROUP:_FindPathToNextWaypoint()
 
         -- Debug: smoke and mark path.
         if self.verbose>=10 then
-          node.coordinate:MarkToAll(string.format("Path node #%d", i))
+          node.vector:Mark(string.format("Path node #%d", i))
         end
         
       end
