@@ -172,6 +172,12 @@
 -- SetValidNeighbourFunction(function(nodeA,nodeB,...) ... end, ...) select the connection rule. Setting a rule replaces the previous rule.
 -- Rules must be symmetric. Changing them clears validity caches. The LoS rule checks altitude 1 m above sea level, not the nodes' altitude;
 -- its optional corridor tests the center line and two parallel offset lines. It is not a ship-depth or complete swept-area test.
+-- SetValidNeighbourDepth(20, 1000) selects a naval depth rule: at least 20 meters of water along the center and both edges
+-- of a 1000-meter-wide corridor. With no width, only the center is checked. It uses land.profile() and assumes linear
+-- terrain between its support points. Actual endpoints are checked separately. Land and insufficient depth block an edge.
+-- Direct depth queries at the profile points also apply; the shallower of the profile and direct depth is used.
+-- This rule works without built grid cells and replaces the previous rule. It does not configure cell surface filtering.
+-- Three profiles do not cover every point of the corridor or model a ship's turning arc. Missing terrain data blocks an edge.
 --
 -- Costs default to 2D distance. SetCostDist3D and SetCostRoad select alternatives. SetCostFunction accepts symmetric, non-negative costs;
 -- math.huge makes a connection impassable. Custom and road costs use a zero heuristic; built-in 2D/3D distances use their matching heuristic.
@@ -472,6 +478,47 @@ function ASTAR:SetValidNeighbourLoS(CorridorWidth)
   return self
 end
 
+--- Replace the neighbour rule with a sampled surface corridor check using the grid's configured surface types.
+-- Works with manual nodes and built grids. Includes endpoints; samples can miss obstacles smaller than their spacing.
+-- Like other neighbour setters this replaces the previous rule. Reconfigure after changing external terrain data.
+-- @param #ASTAR self
+-- @param #number Step (Optional) Maximum terrain sample gap in meters; default 100.
+-- @param #number CorridorWidth (Optional) Total corridor width in meters; default 0.
+-- @return #ASTAR self.
+---@param Step? number
+---@param CorridorWidth? number
+---@return ASTAR
+function ASTAR:SetValidNeighbourSurface(Step, CorridorWidth)
+  if Step==nil then Step=100 end
+  if CorridorWidth==nil then CorridorWidth=0 end
+  assert(type(Step)=="number" and Step>0 and Step<math.huge,"ASTAR: surface sample step must be finite and positive")
+  assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
+  return self:SetValidNeighbourFunction(function(a,b)
+    return self.Grid:CheckSurfacePath(a.vector,b.vector,Step,CorridorWidth)
+  end)
+end
+
+--- Replace the neighbour rule with a minimum water depth check using terrain profiles.
+-- Works with manual nodes and built grids, independently of the cell surface filter. WATER and SHALLOW_WATER are accepted
+-- only when deep enough. Node altitude is ignored; depths are relative to the local water surface.
+-- Assumes linear terrain between profile points. Checks actual endpoints separately and uses the shallower of profile
+-- and directly queried depth at profile points. A corridor adds two parallel edge profiles, not a continuous area check.
+-- Clears cached connection validity. Reapply after external terrain data changes. Does not change costs or grid resolution.
+-- @param #ASTAR self
+-- @param #number MinDepth (Optional) Positive finite minimum water depth in meters, inclusive; default 20.
+-- @param #number CorridorWidth (Optional) Non-negative finite total width in meters; default 0 (center line only).
+-- @return #ASTAR self.
+---@param MinDepth? number
+---@param CorridorWidth? number
+---@return ASTAR
+function ASTAR:SetValidNeighbourDepth(MinDepth, CorridorWidth)
+  if MinDepth==nil then MinDepth=20 end
+  if CorridorWidth==nil then CorridorWidth=0 end
+  assert(type(MinDepth)=="number" and MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
+  assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
+  return self:SetValidNeighbourFunction(ASTAR.Depth,MinDepth,CorridorWidth)
+end
+
 --- Replace the neighbour rule with a maximum 2D distance check, without checking terrain.
 -- @param #ASTAR self
 -- @param #number MaxDistance (Optional) Max distance between nodes in meters. Default is 2000 m.
@@ -631,6 +678,64 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
   end
 
   return los
+end
+
+--- Check water depth at an exact position, optionally also applying its terrain-profile height.
+-- Missing or non-finite terrain values reject the position. Land is rejected regardless of its altitude.
+-- @param DCS#Vec3 Point Position to check; y is used only when UseProfile is true.
+-- @param #number MinDepth Required minimum depth in meters.
+-- @param #boolean UseProfile Whether Point.y is a terrain-profile height to check as well.
+-- @return #boolean True when the position is water and all available depth checks meet the minimum.
+function ASTAR._CheckDepthPoint(Point, MinDepth, UseProfile)
+  if type(Point)~="table" or type(Point.x)~="number" or not (math.abs(Point.x)<math.huge)
+    or type(Point.z)~="number" or not (math.abs(Point.z)<math.huge) then return false end
+  if UseProfile and (type(Point.y)~="number" or not (math.abs(Point.y)<math.huge)) then return false end
+  local position={x=Point.x,y=Point.z}
+  local surface=land.getSurfaceType(position)
+  if surface~=land.SurfaceType.WATER and surface~=land.SurfaceType.SHALLOW_WATER then return false end
+  local height,depth=land.getSurfaceHeightWithSeabed(position)
+  if type(height)~="number" or not (math.abs(height)<math.huge)
+    or type(depth)~="number" or not (depth>=MinDepth and depth<math.huge) then return false end
+  return not UseProfile or height-Point.y>=MinDepth
+end
+
+--- Check whether two nodes are connected by sufficiently deep water using land.profile().
+-- Actual endpoints are checked separately because a profile may omit them. All returned points must be water and deep enough.
+-- Assumes linear terrain between profile points. Uses direct depth as an additional bound when it is shallower than the profile.
+-- Positive width checks the center and both parallel edges; it does not check the entire area between them or extend the ends.
+-- Coincident horizontal positions check only that position because there is no corridor direction.
+-- A canonical direction makes the rule symmetric even when DCS returns different profiles for reverse queries.
+-- @param #ASTAR.Node nodeA First node.
+-- @param #ASTAR.Node nodeB Other node.
+-- @param #number MinDepth (Optional) Positive finite minimum water depth in meters, inclusive; default 20.
+-- @param #number CorridorWidth (Optional) Non-negative finite total corridor width in meters; default 0.
+-- @return #boolean True if every check passes; false for blocked, empty or unavailable terrain data.
+function ASTAR.Depth(nodeA, nodeB, MinDepth, CorridorWidth)
+  if MinDepth==nil then MinDepth=20 end
+  if CorridorWidth==nil then CorridorWidth=0 end
+  assert(type(MinDepth)=="number" and MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
+  assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
+  if type(land.profile)~="function" or type(land.getSurfaceHeightWithSeabed)~="function" then return false end
+  local a,b=nodeA.vector,nodeB.vector
+  if a.x>b.x or (a.x==b.x and a.z>b.z) then a,b=b,a end
+  local dx,dz=b.x-a.x,b.z-a.z
+  local distance=math.sqrt(dx*dx+dz*dz)
+  if not (distance<math.huge) then return false end
+  if distance==0 then return ASTAR._CheckDepthPoint(a,MinDepth,false) end
+  local nx,nz=-dz/distance,dx/distance
+  local lines=CorridorWidth>0 and 3 or 1
+  for i=1,lines do
+    local offset=i==1 and 0 or (i==2 and CorridorWidth/2 or -CorridorWidth/2)
+    local start={x=a.x+nx*offset,y=0,z=a.z+nz*offset}
+    local goal={x=b.x+nx*offset,y=0,z=b.z+nz*offset}
+    if not ASTAR._CheckDepthPoint(start,MinDepth,false) or not ASTAR._CheckDepthPoint(goal,MinDepth,false) then return false end
+    local profile=land.profile(start,goal)
+    if type(profile)~="table" or #profile<2 then return false end
+    for j=1,#profile do
+      if not ASTAR._CheckDepthPoint(profile[j],MinDepth,true) then return false end
+    end
+  end
+  return true
 end
 
 --- Check for a DCS road connection between nodes within the maximum straight-line 2D distance.
@@ -1282,6 +1387,11 @@ end
 function ASTAR:_SyncGrid()
   local grid=self.Grid
   if not grid or self._GridRevision==grid.Version then return end
+  -- Track the filter used by validity caches, including changes made through GetGrid() before building.
+  if self._ValiditySurfaceFilter~=grid.ValidSurfaceTypes then
+    for _,node in pairs(self.nodes) do node.valid={} end
+    self._ValiditySurfaceFilter=grid.ValidSurfaceTypes
+  end
   self.hexGrid=grid.hexGrid self.rectGrid=grid.rectGrid
   if grid.GridBuilt and self.GridNeighboursOnly==nil then self.GridNeighboursOnly=true end
   for i=self._CellCursor+1,#grid.CellList do

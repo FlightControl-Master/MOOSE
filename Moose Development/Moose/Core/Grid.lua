@@ -1108,6 +1108,46 @@ end
 -- Grid creation
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Check sampled terrain along a straight corridor, without requiring built grid cells.
+-- Includes both endpoints, the center line and both edges. Longitudinal and transverse sample gaps never exceed Step.
+-- Samples do not guarantee continuous clearance, water depth or sufficient turning room between segments.
+-- @param #GRID self
+-- @param Core.Vector#VECTOR Start Start position; also accepts COORDINATE, Vec2 or Vec3.
+-- @param Core.Vector#VECTOR Goal Goal position; also accepts COORDINATE, Vec2 or Vec3.
+-- @param #number Step (Optional) Positive finite maximum sample gap in meters; default 100.
+-- @param #number CorridorWidth (Optional) Non-negative total corridor width in meters; default 0.
+-- @return #boolean True if all samples satisfy the configured surface filter.
+-- @return #number Distance to the last clear sample row before a blocked row, or the full distance on success.
+-- @return #string sample_limit when more than one million samples would be required; returns false without terrain queries.
+---@param Step? number
+---@param CorridorWidth? number
+function GRID:CheckSurfacePath(Start, Goal, Step, CorridorWidth)
+  if Step==nil then Step=100 end
+  if CorridorWidth==nil then CorridorWidth=0 end
+  assert(type(Step)=="number" and Step>0 and Step<math.huge,"GRID: surface sample step must be finite and positive")
+  assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"GRID: corridor width must be finite and non-negative")
+  local a,b=self:_PositionVector(Start),self:_PositionVector(Goal)
+  local dx,dz=b.x-a.x,b.z-a.z
+  local distance=math.sqrt(dx*dx+dz*dz)
+  assert(distance<math.huge,"GRID: surface path distance must be finite")
+  if not self.ValidSurfaceTypes then return true,distance end
+  local rows=math.max(1,math.ceil(distance/Step))
+  -- An even number of transverse intervals includes the center line as well as both edges.
+  local columns=distance>0 and 2*math.ceil(CorridorWidth/(2*Step)) or 0
+  if (rows+1)*(columns+1)>1000000 then return false,0,"sample_limit" end
+  local nx,nz=0,0
+  if distance>0 then nx=-dz/distance nz=dx/distance end
+  for i=0,rows do
+    local fraction=i/rows
+    for j=0,columns do
+      local offset=columns>0 and CorridorWidth*(j/columns-0.5) or 0
+      local surface=land.getSurfaceType({x=a.x+dx*fraction+nx*offset,y=a.z+dz*fraction+nz*offset})
+      if not self:IsValidSurfaceType(surface) then return false,math.max(0,(i-1)*distance/rows) end
+    end
+  end
+  return true,distance
+end
+
 --- Build the configured geometry in a corridor between two positions.
 -- Uses SetOptions() and SetValidSurfaceTypes(); creates no drawings or markers.
 -- @param #GRID self

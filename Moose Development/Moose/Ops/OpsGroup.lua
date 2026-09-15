@@ -439,6 +439,8 @@ OPSGROUP.TaskType={
 -- @field #number detour Signifies that this waypoint is not part of the normal route: 0=Hold, 1=Resume Route.
 -- @field #boolean intowind If true, this waypoint is a turn into wind route point.
 -- @field #boolean astar If true, this waypint was found by A* pathfinding algorithm.
+-- @field #number astarTargetUID Original naval target associated with a temporary pathfinding waypoint.
+-- @field #boolean astarReplan End of a checked naval into-wind segment; plan the next segment when passed.
 -- @field #boolean temp If true, this is a temporary waypoint and will be deleted when passed. Also the passing waypoint FSM event is not triggered.
 -- @field #number npassed Number of times a groups passed this waypoint.
 -- @field Core.Point#COORDINATE coordinate Waypoint coordinate.
@@ -11827,8 +11829,11 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
       -- Pathfinding Waypoint
       ---
 
-      -- Cruise.
-      opsgroup:Cruise()
+      if opsgroup:IsNavygroup() and opsgroup.pathfindingOn then
+        opsgroup:_ContinuePathfinding(waypoint)
+      else
+        opsgroup:Cruise()
+      end
 
     elseif waypoint.detour then
 
