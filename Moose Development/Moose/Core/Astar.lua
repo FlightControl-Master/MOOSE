@@ -436,6 +436,8 @@ end
 -- @return #ASTAR self
 function ASTAR:SetValidNeighbourFunction(NeighbourFunction, ...)
 
+  assert(NeighbourFunction==nil or type(NeighbourFunction)=="function", "ASTAR: neighbour rule must be a function or nil")
+
   self.ValidNeighbourFunc=NeighbourFunction
   
   self.ValidNeighbourArg={...}
@@ -473,6 +475,9 @@ end
 -- @return #ASTAR self
 function ASTAR:SetValidNeighbourLoS(CorridorWidth)
 
+  assert(CorridorWidth==nil or (type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge),
+    "ASTAR: corridor width must be finite and non-negative")
+
   self:SetValidNeighbourFunction(ASTAR.LoS, CorridorWidth)
 
   return self
@@ -503,6 +508,7 @@ end
 -- only when deep enough. Node altitude is ignored; depths are relative to the local water surface.
 -- Assumes linear terrain between profile points. Checks actual endpoints separately and uses the shallower of profile
 -- and directly queried depth at profile points. A corridor adds two parallel edge profiles, not a continuous area check.
+-- A profile with fewer than two support points uses direct intermediate depth checks at a maximum gap of 100 meters.
 -- Clears cached connection validity. Reapply after external terrain data changes. Does not change costs or grid resolution.
 -- @param #ASTAR self
 -- @param #number MinDepth (Optional) Positive finite minimum water depth in meters, inclusive; default 20.
@@ -512,10 +518,18 @@ end
 ---@param CorridorWidth? number
 ---@return ASTAR
 function ASTAR:SetValidNeighbourDepth(MinDepth, CorridorWidth)
-  if MinDepth==nil then MinDepth=20 end
-  if CorridorWidth==nil then CorridorWidth=0 end
+
+  if MinDepth==nil then
+    MinDepth=20
+  end
+
+  if CorridorWidth==nil then
+    CorridorWidth=0
+  end
+
   assert(type(MinDepth)=="number" and MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
   assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
+
   return self:SetValidNeighbourFunction(ASTAR.Depth,MinDepth,CorridorWidth)
 end
 
@@ -525,7 +539,8 @@ end
 -- @return #ASTAR self
 function ASTAR:SetValidNeighbourDistance(MaxDistance)
 
-  MaxDistance = MaxDistance or 2000
+  if MaxDistance==nil then MaxDistance=2000 end
+  assert(type(MaxDistance)=="number" and MaxDistance>=0 and MaxDistance<math.huge, "ASTAR: maximum distance must be finite and non-negative")
 
   self:SetValidNeighbourFunction(ASTAR.DistMax, MaxDistance)
 
@@ -539,7 +554,8 @@ end
 -- @return #ASTAR self
 function ASTAR:SetValidNeighbourRoad(MaxDistance)
 
-  MaxDistance = MaxDistance or 2000
+  if MaxDistance==nil then MaxDistance=2000 end
+  assert(type(MaxDistance)=="number" and MaxDistance>=0 and MaxDistance<math.huge, "ASTAR: maximum distance must be finite and non-negative")
 
   self:SetValidNeighbourFunction(ASTAR.Road, MaxDistance)
 
@@ -556,6 +572,8 @@ end
 -- @param ... Condition function arguments if any.
 -- @return #ASTAR self
 function ASTAR:SetCostFunction(CostFunction, ...)
+
+  assert(CostFunction==nil or type(CostFunction)=="function", "ASTAR: cost rule must be a function or nil")
 
   self.CostFunc=CostFunction
   
@@ -648,7 +666,6 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
   local offset=1
   
   local dx=corridor and corridor/2 or nil
-  local dy=dx
   
   local cA=nodeA.vector:GetVec3()
   local cB=nodeB.vector:GetVec3()
@@ -657,7 +674,7 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
 
   local los=land.isVisible(cA, cB)
   
-  if los and corridor then
+  if los and corridor and corridor>0 then
   
     -- Heading from A to B.
     local heading=nodeA.vector:GetHeadingTo(nodeB.vector)
@@ -687,21 +704,40 @@ end
 -- @param #boolean UseProfile Whether Point.y is a terrain-profile height to check as well.
 -- @return #boolean True when the position is water and all available depth checks meet the minimum.
 function ASTAR._CheckDepthPoint(Point, MinDepth, UseProfile)
+
   if type(Point)~="table" or type(Point.x)~="number" or not (math.abs(Point.x)<math.huge)
-    or type(Point.z)~="number" or not (math.abs(Point.z)<math.huge) then return false end
-  if UseProfile and (type(Point.y)~="number" or not (math.abs(Point.y)<math.huge)) then return false end
+    or type(Point.z)~="number" or not (math.abs(Point.z)<math.huge) then
+    return false
+  end
+
+  if UseProfile and (type(Point.y)~="number" or not (math.abs(Point.y)<math.huge)) then
+    return false
+  end
+
+  -- Surface classification is still required: terrain below sea level is not necessarily navigable water.
   local position={x=Point.x,y=Point.z}
   local surface=land.getSurfaceType(position)
-  if surface~=land.SurfaceType.WATER and surface~=land.SurfaceType.SHALLOW_WATER then return false end
+
+  if surface~=land.SurfaceType.WATER and surface~=land.SurfaceType.SHALLOW_WATER then
+    return false
+  end
+
   local height,depth=land.getSurfaceHeightWithSeabed(position)
+
   if type(height)~="number" or not (math.abs(height)<math.huge)
-    or type(depth)~="number" or not (depth>=MinDepth and depth<math.huge) then return false end
+    or type(depth)~="number" or not (depth>=MinDepth and depth<math.huge) then
+    return false
+  end
+
+  -- At coastlines the profile and direct seabed query may differ. Both must allow the requested depth.
   return not UseProfile or height-Point.y>=MinDepth
 end
 
 --- Check whether two nodes are connected by sufficiently deep water using land.profile().
 -- Actual endpoints are checked separately because a profile may omit them. All returned points must be water and deep enough.
 -- Assumes linear terrain between profile points. Uses direct depth as an additional bound when it is shallower than the profile.
+-- Profiles with fewer than two points use direct checks with at most 100 m between samples and at least one midpoint.
+-- This fallback is limited to 1000 intervals and cannot resolve obstacles between samples.
 -- Positive width checks the center and both parallel edges; it does not check the entire area between them or extend the ends.
 -- Coincident horizontal positions check only that position because there is no corridor direction.
 -- A canonical direction makes the rule symmetric even when DCS returns different profiles for reverse queries.
@@ -709,32 +745,96 @@ end
 -- @param #ASTAR.Node nodeB Other node.
 -- @param #number MinDepth (Optional) Positive finite minimum water depth in meters, inclusive; default 20.
 -- @param #number CorridorWidth (Optional) Non-negative finite total corridor width in meters; default 0.
--- @return #boolean True if every check passes; false for blocked, empty or unavailable terrain data.
+-- @return #boolean True if every check passes; false for blocked or unavailable terrain data.
+-- @return #string Reason for rejection, or nil on success. Start/goal refer to the canonical query direction.
 function ASTAR.Depth(nodeA, nodeB, MinDepth, CorridorWidth)
-  if MinDepth==nil then MinDepth=20 end
-  if CorridorWidth==nil then CorridorWidth=0 end
+
+  if MinDepth==nil then
+    MinDepth=20
+  end
+
+  if CorridorWidth==nil then
+    CorridorWidth=0
+  end
+
   assert(type(MinDepth)=="number" and MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
   assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
-  if type(land.profile)~="function" or type(land.getSurfaceHeightWithSeabed)~="function" then return false end
+
+  if type(land.profile)~="function" or type(land.getSurfaceHeightWithSeabed)~="function" then
+    return false,"depth_api_unavailable"
+  end
+
+  -- Query each edge in a stable direction so the symmetric connection cache cannot depend on search direction.
   local a,b=nodeA.vector,nodeB.vector
-  if a.x>b.x or (a.x==b.x and a.z>b.z) then a,b=b,a end
+  if a.x>b.x or (a.x==b.x and a.z>b.z) then
+    a,b=b,a
+  end
+
   local dx,dz=b.x-a.x,b.z-a.z
   local distance=math.sqrt(dx*dx+dz*dz)
-  if not (distance<math.huge) then return false end
-  if distance==0 then return ASTAR._CheckDepthPoint(a,MinDepth,false) end
+
+  if not (distance<math.huge) then
+    return false,"invalid_distance"
+  end
+
+  if distance==0 then
+    return ASTAR._CheckDepthPoint(a,MinDepth,false)
+  end
+
   local nx,nz=-dz/distance,dx/distance
   local lines=CorridorWidth>0 and 3 or 1
+
+  -- Check the center first, followed by the two parallel corridor edges.
   for i=1,lines do
-    local offset=i==1 and 0 or (i==2 and CorridorWidth/2 or -CorridorWidth/2)
+    local offset=0
+    if i==2 then
+      offset=CorridorWidth/2
+    elseif i==3 then
+      offset=-CorridorWidth/2
+    end
+
     local start={x=a.x+nx*offset,y=0,z=a.z+nz*offset}
     local goal={x=b.x+nx*offset,y=0,z=b.z+nz*offset}
-    if not ASTAR._CheckDepthPoint(start,MinDepth,false) or not ASTAR._CheckDepthPoint(goal,MinDepth,false) then return false end
+
+    -- DCS may return support points that do not include the exact requested endpoints.
+    if not ASTAR._CheckDepthPoint(start,MinDepth,false) then
+      return false,"start_blocked"
+    end
+
+    if not ASTAR._CheckDepthPoint(goal,MinDepth,false) then
+      return false,"goal_blocked"
+    end
+
     local profile=land.profile(start,goal)
-    if type(profile)~="table" or #profile<2 then return false end
+    if type(profile)~="table" then
+      return false,"profile_unavailable"
+    end
+
     for j=1,#profile do
-      if not ASTAR._CheckDepthPoint(profile[j],MinDepth,true) then return false end
+      if not ASTAR._CheckDepthPoint(profile[j],MinDepth,true) then
+        return false,"profile_blocked"
+      end
+    end
+
+    -- Too few support points do not establish that a short connection is blocked.
+    -- Check its actual terrain directly instead; a missing API result above still rejects the connection.
+    if #profile<2 then
+      local intervals=math.max(2,math.ceil(distance/100))
+      if intervals>1000 then
+        return false,"profile_fallback_limit"
+      end
+
+      for j=1,intervals-1 do
+        local fraction=j/intervals
+        local point={x=start.x+(goal.x-start.x)*fraction,z=start.z+(goal.z-start.z)*fraction}
+
+        if not ASTAR._CheckDepthPoint(point,MinDepth,false) then
+          return false,"profile_fallback_blocked"
+        end
+      end
     end
   end
+
   return true
 end
 
@@ -1010,6 +1110,8 @@ end
 -- @param #boolean ExcludeEndNode If *true*, do not include end node in found path. Default is to include it.
 -- @return #table Ordered list of ASTAR.Node entries (possibly empty), or nil for missing coordinates, missing endpoint nodes, or an unreachable goal.
 function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
+  assert(ExcludeStartNode==nil or type(ExcludeStartNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
+  assert(ExcludeEndNode==nil or type(ExcludeEndNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
   self.LastPathFailure=nil
   local path, reason=self:_SearchPath(ExcludeStartNode, ExcludeEndNode)
   self.LastPathFailure=reason

@@ -3442,13 +3442,14 @@ end
 --- Remove a waypoint with a ceratin UID.
 -- @param #OPSGROUP self
 -- @param #number uid Waypoint UID.
+-- @param #boolean CheckGroupDone (Optional) Default true. False suppresses the completion check while replacing waypoints as one route update.
 -- @return #OPSGROUP self
-function OPSGROUP:RemoveWaypointByID(uid)
+function OPSGROUP:RemoveWaypointByID(uid, CheckGroupDone)
 
   local index=self:GetWaypointIndex(uid)
 
   if index then
-    self:RemoveWaypoint(index)
+    self:RemoveWaypoint(index, CheckGroupDone)
   end
 
   return self
@@ -3457,13 +3458,19 @@ end
 --- Remove a waypoint.
 -- @param #OPSGROUP self
 -- @param #number wpindex Waypoint number.
+-- @param #boolean CheckGroupDone (Optional) Default true. False suppresses the completion check; the caller must finish the route update.
 -- @return #OPSGROUP self
-function OPSGROUP:RemoveWaypoint(wpindex)
+function OPSGROUP:RemoveWaypoint(wpindex, CheckGroupDone)
 
   if self.waypoints then
 
     -- The waypoitn to be removed.
     local wp=self:GetWaypoint(wpindex)
+
+    if not wp then
+      self:T(self.lid.."Cannot remove missing waypoint index="..tostring(wpindex))
+      return self
+    end
 
     -- Is this a temporary waypoint.
     local istemp=wp.temp or wp.detour or wp.astar or wp.missionUID
@@ -3512,7 +3519,9 @@ function OPSGROUP:RemoveWaypoint(wpindex)
       end
 
       -- Check if group is done.
-      self:_CheckGroupDone(1)
+      if CheckGroupDone~=false then
+        self:_CheckGroupDone(1)
+      end
 
     else
 

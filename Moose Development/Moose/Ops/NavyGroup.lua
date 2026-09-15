@@ -41,9 +41,9 @@
 -- @field #number depth Ordered depth in meters.
 -- @field #boolean collisionwarning If true, collition warning.
 -- @field #boolean pathfindingOn If true, enable pathfining.
--- @field #number pathCorridor Path corrdidor width in meters.
+-- @field #number pathCorridor Explicit total width of the checked naval corridor in meters; nil derives it from ship dimensions.
 -- @field #boolean ispathfinding If true, group is following an ASTAR detour.
--- @field #number pathSampleDistance Maximum longitudinal/transverse surface sample gap; default 100 meters.
+-- @field #number pathMinDepth Minimum water depth for planning and collision checks in meters; default 20.
 -- @field #number pathRetryInterval Minimum interval between failed/repeated plans; default 60 seconds.
 -- @field #boolean pathfindingStopped True when navigation stopped the ship after a failed plan.
 -- @field #table LastPathfindingResult Last expansion report or direct-path/failure status.
@@ -67,7 +67,8 @@ NAVYGROUP = {
   intowind        = nil,
   intowindcounter = 0,
   Qintowind       = {},
-  pathCorridor    = 1000,
+  pathCorridor    = nil,
+  pathMinDepth    = 20,
   engage          = {},  
 }
 
@@ -437,37 +438,44 @@ function NAVYGROUP:SetPatrolAdInfinitum(switch)
 end
 
 --- Enable/disable pathfinding.
--- Uses sampled water corridors with clearance beyond both segment ends and bounded grid expansion.
+-- Uses terrain profiles to check minimum water depth along the center and both edges of the corridor.
 -- Failed searches hold the ship until a later plan succeeds.
 -- Search grids use GRID.Resolution.FINE with GRID.Width.NORMAL and GRID.Margin.SMALL; no grid dimensions are required.
--- Sampling does not guarantee water depth, clearance between samples or room for a ship's turning arc.
+-- SetPathfindingMinDepth() configures depth separately. Profiles assume linear terrain between their points;
+-- three parallel checks do not cover the entire corridor or simulate the ship's turning arc.
 -- @param #NAVYGROUP self
 -- @param #boolean Switch If true, enable pathfinding.
--- @param #number CorridorWidth (Optional) Total water corridor width in meters. Default 1000 m (500 m clearance per side and beyond each endpoint).
--- @param #number SampleDistance (Optional) Maximum surface sample gap in meters; default 100.
+-- @param #number CorridorWidth (Optional) Total water corridor width in meters. Default: widest ship plus 10 m on each side; 50 m if dimensions are unavailable. Zero checks only the center line.
 -- @return #NAVYGROUP self
-function NAVYGROUP:SetPathfinding(Switch, CorridorWidth, SampleDistance)
-  if CorridorWidth==nil then CorridorWidth=1000 end
-  if SampleDistance==nil then SampleDistance=100 end
-  assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"NAVYGROUP: corridor width must be finite and non-negative")
-  assert(type(SampleDistance)=="number" and SampleDistance>0 and SampleDistance<math.huge,"NAVYGROUP: sample distance must be finite and positive")
+function NAVYGROUP:SetPathfinding(Switch, CorridorWidth)
+
+  assert(type(Switch)=="boolean", "NAVYGROUP: pathfinding switch must be a boolean")
+
+  if CorridorWidth~=nil then
+    assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"NAVYGROUP: corridor width must be finite and non-negative")
+  end
+
   self.pathfindingOn=Switch
   self.pathCorridor=CorridorWidth
-  self.pathSampleDistance=SampleDistance
+
   if not Switch then
-    self.pathfindingRetryAt=nil self.pathfindingStopped=nil
+    self.pathfindingRetryAt=nil
+    self.pathfindingStopped=nil
     self:_ClearPathfindingDrawing()
   end
+
   return self
 end
 
 --- Enable pathfinding.
+-- Uses the configured minimum depth, or 20 meters by default.
 -- @param #NAVYGROUP self
--- @param #number CorridorWidth (Optional) Total water corridor width in meters. Default 1000 m (500 m clearance per side and beyond each endpoint).
--- @param #number SampleDistance (Optional) Maximum surface sample gap in meters; default 100.
+-- @param #number CorridorWidth (Optional) Total water corridor width in meters. Default: widest ship plus 10 m on each side; 50 m if dimensions are unavailable. Zero checks only the center line.
 -- @return #NAVYGROUP self
-function NAVYGROUP:SetPathfindingOn(CorridorWidth, SampleDistance)
-  self:SetPathfinding(true, CorridorWidth, SampleDistance)
+function NAVYGROUP:SetPathfindingOn(CorridorWidth)
+
+  self:SetPathfinding(true, CorridorWidth)
+
   return self
 end
 
@@ -475,12 +483,34 @@ end
 -- @param #NAVYGROUP self
 -- @return #NAVYGROUP self
 function NAVYGROUP:SetPathfindingOff()
-  self:SetPathfinding(false, self.pathCorridor, self.pathSampleDistance)
+
+  self:SetPathfinding(false, self.pathCorridor)
+
+  return self
+end
+
+--- Set the minimum water depth used by pathfinding, route simplification and collision checks.
+-- An active detour is checked against the new depth on the next status update. Changing depth does not resume a stopped ship.
+-- @param #NAVYGROUP self
+-- @param #number MinDepth (Optional) Positive finite minimum water depth in meters, inclusive; default 20.
+-- @return #NAVYGROUP self.
+function NAVYGROUP:SetPathfindingMinDepth(MinDepth)
+
+  if MinDepth==nil then
+    MinDepth=20
+  end
+
+  assert(type(MinDepth)=="number" and MinDepth>0 and MinDepth<math.huge,"NAVYGROUP: minimum depth must be finite and positive")
+
+  self.pathMinDepth=MinDepth
+
   return self
 end
 
 --- Configure the bounded grid used for automatic naval detours.
 -- Uses GRID.Resolution.FINE with GRID.Width.NORMAL and GRID.Margin.SMALL automatically.
+-- Short connections retain a minimum search width of twice the safety corridor (at least 2000 meters)
+-- and a margin of one safety corridor (at least 1000 meters), so approaching a waypoint does not collapse the grid.
 -- Spacing follows the initial corridor dimensions and remains unchanged during expansion.
 -- Calling this method is optional; only resource and expansion limits need explicit configuration.
 -- @param #NAVYGROUP self
@@ -571,7 +601,8 @@ end
 -- @return Ops.OpsGroup#OPSGROUP.Task The task data.
 function NAVYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clock, Prio)
 
-  local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, WeaponType, WeaponExpend, AttackQty, Direction, Altitude, AttackQtyLimit, GroupAttack)
+  -- Leave optional DCS attack settings to TaskAttackGroup's defaults.
+  local DCStask=CONTROLLABLE.TaskAttackGroup(nil, TargetGroup, WeaponType, WeaponExpend)
 
   local task=self:AddTask(DCStask, Clock, nil, Prio)
   
@@ -585,7 +616,7 @@ end
 -- @param #number speed (Optional) Speed in knots during turn into wind leg. Defaults to 20.
 -- @param #boolean uturn (Optional) If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
 -- @param #number offset (Optional) Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
--- @return #NAVYGROUP.IntoWind Recovery window.
+-- @return #NAVYGROUP.IntoWind Recovery window, or nil when its timing is invalid.
 function NAVYGROUP:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
   -- Absolute mission time in seconds.
@@ -621,11 +652,11 @@ function NAVYGROUP:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset
   -- Consistancy check for timing.
   if Tstart>Tstop then
     self:E(string.format("ERROR:Into wind stop time %s lies before start time %s. Input rejected!", UTILS.SecondsToClock(Tstart), UTILS.SecondsToClock(Tstop)))
-    return self
+    return nil
   end
   if Tstop<=Tnow then
     self:E(string.format("WARNING: Into wind stop time %s already over. Tnow=%s! Input rejected.", UTILS.SecondsToClock(Tstop), UTILS.SecondsToClock(Tnow)))
-    return self
+    return nil
   end
 
   -- Increase counter.
@@ -652,10 +683,15 @@ end
 -- @param #number speed (Optional) Wind speed on deck in knots during turn into wind leg. Default 20 knots.
 -- @param #boolean uturn (Optional) If `true` (or `nil`), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
 -- @param #number offset (Optional) Offset angle clock-wise in degrees, *e.g.* to account for an angled runway. Default 0 deg. Use around -9.1° for US carriers.
--- @return #NAVYGROUP.IntoWind Turn into window data table.
+-- @return #NAVYGROUP.IntoWind Turn into window data table, or nil when its timing is invalid.
 function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
   local recovery=self:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
+
+  -- Rejected windows must not enter the queue: sorting and execution require valid timestamps.
+  if not recovery then
+    return nil
+  end
   
   --TODO: check if window is overlapping with an other and if extend the window.
   
@@ -726,7 +762,7 @@ function NAVYGROUP:RemoveTurnIntoWind(IntoWindData)
   -- Check if this is a window currently open.
   if self.intowind and self.intowind.Id==IntoWindData.Id then
     self:TurnIntoWindStop()
-    return
+    return self
   end  
 
   for i,_tiw in pairs(self.Qintowind) do
@@ -861,7 +897,7 @@ function NAVYGROUP:Status()
     elseif not self:IsTurning() then
 
       -- Check free path ahead.
-      freepath=self:_CheckFreePath(freepath, self.pathSampleDistance or 100)
+      freepath=self:_CheckFreePath(freepath)
       
       if disttoWP>1 and freepath<disttoWP then
       
@@ -1204,7 +1240,7 @@ end
 -- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
 -- @param #number Speed Speed in knots to the next waypoint.
 -- @param #number Depth Depth in meters to the next waypoint.
-function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
+function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Depth)
 
   -- Is transition allowed? We assume yes until proven otherwise.
   local allowed=true
@@ -1276,7 +1312,7 @@ function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, Speed, Depth)
 
   -- Try again?
   if trepeat then
-    self:__UpdateRoute(trepeat, n)
+    self:__UpdateRoute(trepeat, n, N, Speed, Depth)
   end  
   
   return allowed
@@ -1511,12 +1547,14 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
     -- Remove outstanding detours for this window before restoring the normal route.
     for i=#self.waypoints,1,-1 do
       local wp=self.waypoints[i]
-      if wp.astar and wp.astarTargetUID==self.intowind.waypoint.uid then self:RemoveWaypointByID(wp.uid) end
+      if wp.astar and wp.astarTargetUID==self.intowind.waypoint.uid then
+        self:RemoveWaypointByID(wp.uid, false)
+      end
     end
     self.ispathfinding=false
     self:_ClearPathfindingDrawing()
     -- Remove additional waypoint.
-    self:RemoveWaypointByID(self.intowind.waypoint.uid)
+    self:RemoveWaypointByID(self.intowind.waypoint.uid, false)
   
     if self.intowind.Uturn then
 
@@ -1706,7 +1744,7 @@ function NAVYGROUP:onafterEngageTarget(From, Event, To, Target, Speed, Depth)
   self.engage.Speed=Speed  
   
   -- Add waypoint after current.
-  self.engage.Waypoint=self:AddWaypoint(intercoord, Speed, uid, Depth, true)
+  self.engage.Waypoint=self:AddWaypoint(intercoord, Speed, uid, Depth and UTILS.MetersToFeet(Depth), true)
     
   -- Set if we want to resume route after reaching the detour waypoint.
   self.engage.Waypoint.detour=1
@@ -1737,12 +1775,12 @@ function NAVYGROUP:_UpdateEngageTarget()
         local uid=self:GetWaypointCurrentUID()
       
         -- Remove current waypoint
-        self:RemoveWaypointByID(self.engage.Waypoint.uid)
+        self:RemoveWaypointByID(self.engage.Waypoint.uid, false)
         
         local intercoord=self:GetCoordinate():GetIntermediateCoordinate(self.engage.Coordinate, 0.8)
     
-          -- Add waypoint after current.
-        self.engage.Waypoint=self:AddWaypoint(intercoord, self.engage.Speed, uid, self.engage.Depth, true)
+        -- Event depths are meters; AddWaypoint takes feet and converts them for DCS.
+        self.engage.Waypoint=self:AddWaypoint(intercoord, self.engage.Speed, uid, UTILS.MetersToFeet(self.engage.Depth), true)
       
         -- Set if we want to resume route after reaching the detour waypoint.
         self.engage.Waypoint.detour=1
@@ -1788,7 +1826,7 @@ function NAVYGROUP:onafterDisengage(From, Event, To)
   
   -- Remove current waypoint
   if self.engage.Waypoint then
-    self:RemoveWaypointByID(self.engage.Waypoint.uid)
+    self:RemoveWaypointByID(self.engage.Waypoint.uid, false)
   end
 
   -- Check group is done
@@ -1832,7 +1870,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 -- @param Core.Zone#ZONE Zone The zone to return to.
--- @param #number Formation Formation of the group.
+-- @param #number Formation Unused for naval groups; retained as part of the shared RTZ event.
 function NAVYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
   
   -- Zone.
@@ -1856,7 +1894,8 @@ function NAVYGROUP:onafterRTZ(From, Event, To, Zone, Formation)
       local uid=self:GetWaypointCurrentUID()
       
       -- Add waypoint after current.
-      local wp=self:AddWaypoint(Coordinate, nil, uid, Formation, true)
+      -- The shared RTZ formation argument is not a submarine depth.
+      local wp=self:AddWaypoint(Coordinate, nil, uid, nil, true)
       
       -- Set if we want to resume route after reaching the detour waypoint.
       wp.detour=0
@@ -2043,45 +2082,98 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Check a straight water corridor using the same sampled terrain rule as naval ASTAR.
--- Extends the sampled rectangle by half its width beyond both endpoints, reserving water around route corners.
--- No COORDINATE objects or geometric grid cells are constructed. Water depth and turning arcs are not tested.
+--- Resolve the total width used by all naval depth checks.
+-- Uses cached element dimensions, including the widest ship in a group. Formation offsets are not included.
+-- @param #NAVYGROUP self
+-- @return #number Explicit corridor width, or ship width plus 10 meters of clearance on each side, in meters.
+function NAVYGROUP:_GetPathfindingCorridorWidth()
+
+  if self.pathCorridor~=nil then
+    return self.pathCorridor
+  end
+
+  -- Resolve lazily: late-activated ships may not have dimensions when pathfinding is configured.
+  -- Unknown dimensions use a 30-meter beam, giving a 50-meter corridor with the reserve.
+  local beam=0
+
+  for _,element in pairs(self.elements or {}) do
+    local width=element.width
+
+    if type(width)~="number" or not (width>0 and width<math.huge) then
+      width=30
+    end
+
+    beam=math.max(beam,width)
+  end
+
+  if beam==0 then
+    beam=30
+  end
+
+  return beam+20
+end
+
+--- Check a connection using the same terrain-profile depth rule as naval ASTAR.
+-- Includes direct checks at the actual endpoints. No COORDINATE objects or geometric grid cells are constructed.
+-- Checks the center and both corridor edges; areas between these profiles and turning arcs are not covered.
 -- @param #NAVYGROUP self
 -- @param Core.Vector#VECTOR Start Start position; also accepts Vec3 or COORDINATE.
 -- @param Core.Vector#VECTOR Goal Goal position; also accepts Vec3 or COORDINATE.
--- @param #number Step (Optional) Maximum sample gap; defaults to the configured value or 100 meters.
--- @return #boolean True when all samples are water.
--- @return #number Checked free distance before a blocked sample row.
-function NAVYGROUP:_CheckPathSurface(Start, Goal, Step)
-  if not self.pathSurfaceGrid then
-    self.pathSurfaceGrid=GRID:New("Naval surface check",GRID.Type.RECTANGLE):SetValidSurfaceTypes(land.SurfaceType.WATER)
-  end
-  local a=VECTOR._IsVector(Start) and Start or VECTOR:NewFromVec(Start)
-  local b=VECTOR._IsVector(Goal) and Goal or VECTOR:NewFromVec(Goal)
-  local distance=a:GetDistance(b,true)
-  local width=self.pathCorridor or 1000
-  local radius=width/2
-  local dx,dz=1,0
-  if distance>0 then dx=(b.x-a.x)/distance dz=(b.z-a.z)/distance end
-  local start={x=a.x-dx*radius,y=a.y,z=a.z-dz*radius}
-  local goal={x=b.x+dx*radius,y=b.y,z=b.z+dz*radius}
-  local clear,free,reason=self.pathSurfaceGrid:CheckSurfacePath(start,goal,Step or self.pathSampleDistance or 100,width)
-  return clear,math.max(0,math.min(distance,free-radius)),reason
+-- @return #boolean True when the connection satisfies the configured minimum depth.
+function NAVYGROUP:_CheckPathDepth(Start, Goal)
+
+  local start=VECTOR._IsVector(Start) and Start or VECTOR:NewFromVec(Start)
+  local goal=VECTOR._IsVector(Goal) and Goal or VECTOR:NewFromVec(Goal)
+
+  -- Call the same rule used by ASTAR so direct routes and shortcuts cannot bypass its depth requirement.
+  return ASTAR.Depth({vector=start}, {vector=goal}, self.pathMinDepth or 20, self:_GetPathfindingCorridorWidth())
 end
 
---- Check the water corridor ahead along the current heading.
+--- Estimate the navigable distance along the current heading using terrain-profile depth checks.
+-- If the full corridor is blocked, narrow down the last confirmed clear prefix with at most twelve further checks.
+-- Stops refining at 25 meters. The returned distance is a checked prefix, not an exact collision location.
 -- @param #NAVYGROUP self
 -- @param #number DistanceMax (Optional) Maximum lookahead in meters; default 5000.
--- @param #number Step (Optional) Maximum terrain sample gap; default is the configured value or 100 meters.
--- @return #number Free distance in meters. Turning groups return the requested distance without checking.
-function NAVYGROUP:_CheckFreePath(DistanceMax, Step)
+-- @return #number Checked clear distance in meters. Turning groups return the requested distance without heading checks.
+function NAVYGROUP:_CheckFreePath(DistanceMax)
+
   local distance=DistanceMax or 5000
   assert(type(distance)=="number" and distance>=0 and distance<math.huge,"NAVYGROUP: lookahead distance must be finite and non-negative")
-  if self:IsTurning() then return distance end
+
+  -- A straight heading ray does not represent a turn. Status checks the actual next leg of an active detour instead.
+  if self:IsTurning() then
+    return distance
+  end
+
   local position=self:GetVec3()
-  local goal=UTILS.VecTranslate(position,distance,self:GetHeading())
-  local clear,free=self:_CheckPathSurface(position,goal,Step)
-  return free
+  local heading=self:GetHeading()
+  local goal=UTILS.VecTranslate(position,distance,heading)
+
+  if self:_CheckPathDepth(position,goal) then
+    return distance
+  end
+
+  -- Only advance the lower bound after the entire shorter connection has passed the depth rule.
+  -- This avoids reporting a clear distance based solely on a deep point beyond a submerged obstacle.
+  local clearDistance=0
+  local blockedDistance=distance
+
+  for attempt=1,12 do
+    if blockedDistance-clearDistance<=25 then
+      break
+    end
+
+    local candidateDistance=(clearDistance+blockedDistance)/2
+    local candidate=UTILS.VecTranslate(position,candidateDistance,heading)
+
+    if self:_CheckPathDepth(position,candidate) then
+      clearDistance=candidateDistance
+    else
+      blockedDistance=candidateDistance
+    end
+  end
+
+  return clearDistance
 end
 
 --- Check if group is turning.
@@ -2098,11 +2190,19 @@ function NAVYGROUP:_CheckTurning()
     -- Last orientation from 30 seconds ago.
     local vLast=self.orientXLast
   
-    -- We only need the X-Z plane.
-    vNew.y=0 ; vLast.y=0
-  
-    -- Angle between current heading and last time we checked ~30 seconds ago.
-    local deltaLast=math.deg(math.acos(UTILS.VecDot(vNew,vLast)/UTILS.VecNorm(vNew)/UTILS.VecNorm(vLast)))
+    if not vNew or not vLast then
+      return
+    end
+
+    -- Read only the horizontal components without modifying the shared orientation vectors.
+    local magnitude=math.sqrt(vNew.x*vNew.x+vNew.z*vNew.z)*math.sqrt(vLast.x*vLast.x+vLast.z*vLast.z)
+    if magnitude==0 then
+      return
+    end
+
+    -- Roundoff can place a normalized dot product just outside acos's [-1, 1] domain.
+    local cosine=(vNew.x*vLast.x+vNew.z*vLast.z)/magnitude
+    local deltaLast=math.deg(math.acos(math.max(-1,math.min(1,cosine))))
   
     -- Carrier is turning when its heading changed by at least two degrees since last check.
     local turning=math.abs(deltaLast)>=2
@@ -2170,7 +2270,7 @@ function NAVYGROUP:GetTurnIntoWindNext()
     table.sort(self.Qintowind, function(a, b) return a.Tstart<b.Tstart end)
   
     -- Loop over all slots.
-    for _,_recovery in pairs(self.Qintowind) do
+    for _,_recovery in ipairs(self.Qintowind) do
       local recovery=_recovery --#NAVYGROUP.IntoWind
   
       if time>=recovery.Tstart and time<recovery.Tstop and not (recovery.Open or recovery.Over) then
@@ -2299,9 +2399,25 @@ function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck)
   -- Ships min/max speed.
   local Vmin=4
   local Vmax=UTILS.KmphToKnots(self.speedMax)
+
+  -- With no wind its direction is undefined. Keep the current heading and avoid division by zero.
+  if vwind<1e-6 then
+    return self:GetHeading()%360, math.max(Vmin,math.min(Vmax,vdeck))
+  end
+
+  -- An unangled deck requires no crosswind correction; the general formula is singular at zero offset.
+  if math.abs(math.sin(alpha))<1e-12 and math.cos(alpha)>0 then
+    return windfrom%360, math.max(Vmin,math.min(Vmax,vdeck-vwind))
+  end
   
-  -- Constant.
-  local C = math.sqrt(math.cos(alpha)^2 / math.sin(alpha)^2 + 1)
+  -- In very light wind the requested crosswind correction can be unattainable.
+  -- Saturate at the limiting angle instead of producing NaN from asin outside its domain.
+  local function correction(value)
+    return math.asin(math.max(-1,math.min(1,value)))
+  end
+  local sine=math.sin(alpha)
+  local direction=sine<0 and -1 or 1
+  local inverseC=math.abs(sine)
   
 
   -- Upper limit of desired speed due to max boat speed.
@@ -2324,7 +2440,7 @@ function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck)
     v=Vmax
     
     -- Calculate theta.
-    theta = math.asin(v/(vwind*C)) - math.asin(-1/C)
+    theta = direction*(correction(v*inverseC/vwind)+correction(inverseC))
   
   elseif vdeck<vdeckMin then
     -- Boat cannot go slow enought
@@ -2333,20 +2449,20 @@ function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck)
     v=Vmin
     
     -- Calculatge theta.
-    theta = math.asin(v/(vwind*C)) - math.asin(-1/C)
+    theta = direction*(correction(v*inverseC/vwind)+correction(inverseC))
   
-  elseif vdeck*math.sin(alpha)>vwind then
+  elseif math.abs(vdeck*sine)>vwind then
     -- Too little wind
     
     -- Set theta to 90°
-    theta=math.pi/2
+    theta=direction*math.pi/2
     
     -- Set speed.
     v = math.sqrt(vdeck^2 - vwind^2)
   
   else
     -- Normal case
-    theta = math.asin(vdeck * math.sin(alpha) / vwind)
+    theta = correction(vdeck * sine / vwind)
     v = vdeck * math.cos(alpha) - vwind * math.cos(theta)
   end
   
@@ -2355,7 +2471,7 @@ function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck)
   local intowind = (540 + (windto + math.deg(theta) )) % 360
   
   -- Debug info.
-  self:T(self.lid..string.format("Heading into Wind: vship=%.1f, vwind=%.1f, WindTo=%03d°, Theta=%03d°, Heading=%03d", v, vwind, windto, theta, intowind))
+  self:T(self.lid..string.format("Heading into Wind: vship=%.1f, vwind=%.1f, WindTo=%03.0f°, Theta=%03.0f°, Heading=%03.0f", v, vwind, windto, math.deg(theta), intowind))
   
   return intowind, v
 end
@@ -2420,10 +2536,27 @@ end
 -- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint (Optional) Passed pathfinding waypoint; omitted for periodic route checks.
 -- @return #boolean True when the route can continue, false when planning fails.
 function NAVYGROUP:_ContinuePathfinding(Waypoint)
-  if Waypoint and Waypoint.astarReplan then return self:_FindPathToNextWaypoint(true) end
+
+  if Waypoint and Waypoint.astarReplan then
+    return self:_FindPathToNextWaypoint(true)
+  end
+
   local nextWaypoint=self:GetWaypointNext()
-  if nextWaypoint and self:_CheckPathSurface(self:GetVec3(),nextWaypoint.coordinate) then return true end
-  if not self.pathfindingStopped then self.pathfindingStopped=true self:FullStop() end
+  if nextWaypoint then
+    local clear,reason=self:_CheckPathDepth(self:GetVec3(),nextWaypoint.coordinate)
+    if clear then
+      return true
+    end
+
+    self:T(self.lid..string.format("Active leg to waypoint UID=%d blocked: %s",nextWaypoint.uid,tostring(reason)))
+  end
+
+  -- Stop before replanning: the ship must not continue along a connection that has just failed validation.
+  if not self.pathfindingStopped then
+    self.pathfindingStopped=true
+    self:FullStop()
+  end
+
   return self:_FindPathToNextWaypoint(true)
 end
 
@@ -2436,92 +2569,181 @@ end
 -- @param #boolean Force (Optional) Force replanning and bypass the retry interval when a checked segment ends.
 -- @return #boolean True if the active leg is still clear or a route was installed, false on failure or a deferred attempt.
 function NAVYGROUP:_FindPathToNextWaypoint(Force)
+
   local target,pending=self:_GetPathfindingTarget()
-  if not target then return false end
+  if not target then
+    return false
+  end
+
   local position=VECTOR:NewFromVec(self:GetVec3())
+
+  -- Keep an existing safe detour. A heading warning alone must not rebuild the grid on every status update.
   if not Force and not self.pathfindingStopped and self.pathfindingTargetUID==target.uid
     and (self.ispathfinding or #pending>0) then
+
     local nextWaypoint=self:GetWaypointNext()
-    if nextWaypoint and self:_CheckPathSurface(position,nextWaypoint.coordinate) then return true end
+    if nextWaypoint and self:_CheckPathDepth(position,nextWaypoint.coordinate) then
+      return true
+    end
   end
+
   local now=timer.getTime()
-  if not Force and self.pathfindingTargetUID==target.uid and now<(self.pathfindingRetryAt or 0) then return false end
+  if not Force and self.pathfindingTargetUID==target.uid and now<(self.pathfindingRetryAt or 0) then
+    return false
+  end
+
   self.pathfindingTargetUID=target.uid
   self.pathfindingRetryAt=now+(self.pathRetryInterval or 60)
   self:_ClearPathfindingDrawing()
+
   local goal=VECTOR:NewFromVec(target.coordinate)
   local distance=position:GetDistance(goal,true)
   local rolling=target.intowind and distance>UTILS.NMToMeters(20)
+
+  -- Plan long into-wind routes in checked sections. The next section is planned when this endpoint is reached.
   if rolling then
     local fraction=UTILS.NMToMeters(20)/distance
     goal=VECTOR:New(position.x+(goal.x-position.x)*fraction,goal.y,position.z+(goal.z-position.z)*fraction)
-    distance=position:GetDistance(goal,true)
   end
+
+  local minDepth=self.pathMinDepth or 20
+  local corridorWidth=self:_GetPathfindingCorridorWidth()
   local points={position,goal}
   local astar
   local debugPath
-  local clear=self:_CheckPathSurface(position,goal)
-  local report={StopReason="direct_path",Attempts={}}
-  if not clear then
-    astar=ASTAR:New():SetStartCoordinate(position):SetEndCoordinate(goal):SetValidSurfaceTypes(land.SurfaceType.WATER)
-    astar:GetGrid():SetCorridor(GRID.Width.NORMAL,GRID.Margin.SMALL):SetResolution(GRID.Resolution.FINE)
-      :SetMaxCells(self.pathMaxCells or 5000):SetExpansion(self.pathGrowthFactor or 1.5,self.pathMaxAttempts or 5)
-    astar:SetValidNeighbourFunction(function(a,b) return self:_CheckPathSurface(a.vector,b.vector) end)
+  local report={StopReason="direct_path",Attempts={},MinDepth=minDepth,CorridorWidth=corridorWidth}
+
+  self:T(self.lid..string.format("Naval depth check: target UID=%d, distance %.0f m, minimum %.1f m, corridor %.0f m",
+    target.uid,position:GetDistance(goal,true),minDepth,corridorWidth))
+
+  -- A direct route must pass exactly the same depth rule as every connection considered by ASTAR.
+  if not self:_CheckPathDepth(position,goal) then
+    astar=ASTAR:New()
+    astar:SetStartCoordinate(position)
+    astar:SetEndCoordinate(goal)
+    astar:SetValidSurfaceTypes({land.SurfaceType.WATER,land.SurfaceType.SHALLOW_WATER})
+    astar:SetValidNeighbourDepth(minDepth,corridorWidth)
+
+    local grid=astar:GetGrid()
+    grid:SetCorridor(GRID.Width.NORMAL,GRID.Margin.SMALL)
+
+    -- Relative dimensions collapse near a waypoint. Keep enough room for a detour without reducing FINE resolution.
+    -- The safety corridor provides the scale; even a center-line-only check retains a useful minimum search area.
+    local minimumExtent=math.max(corridorWidth,1000)
+    local segmentDistance=position:GetDistance(goal,true)
+    if segmentDistance*0.6<2*minimumExtent then
+      grid:SetCorridor(2*minimumExtent,minimumExtent)
+    end
+
+    grid:SetResolution(GRID.Resolution.FINE)
+    grid:SetMaxCells(self.pathMaxCells or 5000)
+    grid:SetExpansion(self.pathGrowthFactor or 1.5,self.pathMaxAttempts or 5)
+
     local built,reason=astar:CreateGrid()
     local path
-    if built then path,report=astar:GetPathWithExpansion()
-    else report={StopReason=reason,Attempts={}} end
-    report.Spacing=astar:GetGrid():GetResolutionInfo().Spacing
+
+    if built then
+      path,report=astar:GetPathWithExpansion()
+    else
+      report={StopReason=reason,Attempts={}}
+    end
+
+    report.Spacing=grid:GetResolutionInfo().Spacing
+    report.MinDepth=minDepth
+    report.CorridorWidth=corridorWidth
+
     if path then
       debugPath=path
       points={}
-      for _,node in ipairs(path) do points[#points+1]=node.vector end
+
+      for _,node in ipairs(path) do
+        points[#points+1]=node.vector
+      end
     else
       self.LastPathfindingResult=report
       self.ispathfinding=false
-      if not self.pathfindingStopped then self.pathfindingStopped=true self:FullStop() end
+
+      if not self.pathfindingStopped then
+        self.pathfindingStopped=true
+        self:FullStop()
+      end
+
       self:T(self.lid.."Naval pathfinding stopped: "..tostring(report.StopReason))
       return false
     end
   end
-  -- Greedy shortcuts retain a checked connection from the actual position through to the actual segment goal.
+
+  -- Remove unnecessary waypoints only when the complete shortcut passes the depth check.
+  -- Checking endpoint depths alone would allow a shortcut straight across the shoal we just avoided.
   local selected={}
   local index=1
+
   while index<#points do
     local nextIndex=#points
-    while nextIndex>index and not self:_CheckPathSurface(points[index],points[nextIndex]) do nextIndex=nextIndex-1 end
+
+    while nextIndex>index and not self:_CheckPathDepth(points[index],points[nextIndex]) do
+      nextIndex=nextIndex-1
+    end
+
     if nextIndex==index then
-      self.LastPathfindingResult={StopReason="surface_blocked",Attempts=report.Attempts}
+      report.StopReason="depth_blocked"
+      self.LastPathfindingResult=report
       self.ispathfinding=false
-      if not self.pathfindingStopped then self.pathfindingStopped=true self:FullStop() end
+
+      if not self.pathfindingStopped then
+        self.pathfindingStopped=true
+        self:FullStop()
+      end
+
       return false
     end
+
     selected[#selected+1]=points[nextIndex]
     index=nextIndex
   end
+
   -- Normal targets already exist in the route. Rolling goals must be inserted explicitly.
-  if not rolling then table.remove(selected) end
-  for _,uid in ipairs(pending) do self:RemoveWaypointByID(uid) end
+  if not rolling then
+    table.remove(selected)
+  end
+
+  for _,uid in ipairs(pending) do
+    -- The replacement route is installed below. An intermediate completion check would schedule another Cruise/UpdateRoute.
+    self:RemoveWaypointByID(uid, false)
+  end
+
   local current=self:GetWaypointCurrent()
   local uid=current and current.uid
   local speed=UTILS.MpsToKnots(target.speed)
+
   for i,point in ipairs(selected) do
     point=VECTOR:New(point.x,target.coordinate.y,point.z)
-    local wp=self:AddWaypoint(point,speed,uid,nil,false)
-    wp.astar=true
-    wp.astarTargetUID=target.uid
-    wp.astarReplan=rolling and i==#selected or nil
-    uid=wp.uid
+
+    local waypoint=self:AddWaypoint(point,speed,uid,nil,false)
+    waypoint.astar=true
+    waypoint.astarTargetUID=target.uid
+    waypoint.astarReplan=rolling and i==#selected or nil
+    uid=waypoint.uid
   end
+
   self.LastPathfindingResult=report
   self.ispathfinding=#selected>0
+
   local stopped=self.pathfindingStopped
   self.pathfindingStopped=nil
-  if stopped then self:Cruise() else self:__UpdateRoute(-0.01) end
+
+  -- Submit one complete route after all temporary waypoints have been installed.
+  if stopped then
+    self:Cruise()
+  else
+    self:__UpdateRoute(-0.01)
+  end
+
   if debugPath and self.verbose>=10 then
     self.pathfindingDebugSearch=astar
     astar:DrawGridWithPath(debugPath)
   end
+
   return true
 end
 

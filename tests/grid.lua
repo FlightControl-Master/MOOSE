@@ -1350,5 +1350,36 @@ test("attaching a grid cannot replace an unsynchronized built empty grid",functi
   equal(a:GetGrid(),original) equal(a.Nnodes,0)
 end)
 
+test("invalid drawing styles preserve GRID and ASTAR overlays before any scheduled work",function()
+  local g=grid("rectangular")
+  for _,view in ipairs({g,ASTAR:New():SetGrid(g)}) do
+    view:DrawGrid() flushTimers()
+    local previous=view.GridDrawOptions
+    local ids=view.GridDrawIDs
+    local invalid={
+      function() view:DrawGrid(3) end,
+      function() view:DrawGrid(nil,{0,0,2}) end,
+      function() view:DrawGrid(nil,nil,0/0) end,
+      function() view:DrawGrid(nil,nil,nil,nil,-1) end,
+      function() view:DrawGrid(nil,nil,nil,nil,nil,7) end,
+      function() view:DrawGrid(nil,nil,nil,nil,nil,nil,0) end,
+      function() view:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=false}) end,
+      function() view:DrawGrid(nil,nil,nil,nil,nil,nil,nil,false) end,
+      function() view:DrawGridWithPath({},{PathColor={1,-1,0}}) end,
+      function() view:DrawGridWithPath({},{PathFillAlpha=false}) end,
+      function() view:DrawGridWithPath({},false) end,
+    }
+    for _,draw in ipairs(invalid) do
+      assert(not pcall(draw))
+      equal(view.GridDrawOptions,previous) equal(view.GridDrawIDs,ids)
+      equal(view.GridDrawJob,nil)
+    end
+    view:DrawGrid(0,{0,0,0},0,{1,1,1},0,0,false) flushTimers()
+    equal(view.GridDrawOptions.Alpha,0) equal(view.GridDrawOptions.Coalition,0)
+    equal(view.GridDrawOptions.ReadOnly,false)
+    view:UndrawGrid()
+  end
+end)
+
 print(string.format("%d passed, %d failed",passed,failed))
 if failed>0 then os.exit(1) end

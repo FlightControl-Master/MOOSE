@@ -1776,13 +1776,14 @@ end
 -- @return #GRID self; large overlays may still be queued. Inspect LastGridDrawResult for progress.
 function GRID:DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions)
 
-  Color=Color or {0, 0, 1}
-  FillColor=FillColor or Color
+  if Color==nil then Color={0, 0, 1} end
+  if FillColor==nil then FillColor=Color end
   if ReadOnly==nil then
     ReadOnly=true
   end
-  local style={Coalition=Coalition or -1, Color={Color[1], Color[2], Color[3]}, Alpha=Alpha or 1,
-    FillColor={FillColor[1], FillColor[2], FillColor[3]}, FillAlpha=FillAlpha or 0, LineType=LineType or 1, ReadOnly=ReadOnly}
+  local style={Coalition=Coalition==nil and -1 or Coalition, Color={Color[1], Color[2], Color[3]}, Alpha=Alpha==nil and 1 or Alpha,
+    FillColor={FillColor[1], FillColor[2], FillColor[3]}, FillAlpha=FillAlpha==nil and 0 or FillAlpha,
+    LineType=LineType==nil and 1 or LineType, ReadOnly=ReadOnly}
   return self:_StartGridDrawing(style, DrawOptions)
 
 end
@@ -1801,7 +1802,7 @@ function GRID:DrawGridWithPath(Path, Options)
 
   local cells=self:_GetGridCells()
   assert(type(Path)=="table", "GRID: DrawGridWithPath requires a successful path table")
-  Options=Options or {}
+  if Options==nil then Options={} end
   assert(type(Options)=="table", "GRID: path drawing options must be a table")
   local pathCells={}
   for _, entry in ipairs(Path) do
@@ -1814,15 +1815,43 @@ function GRID:DrawGridWithPath(Path, Options)
       pathCells[entry.id]=true
     end
   end
-  local color=Options.GridColor or {0, 0, 1}
-  local pathColor=Options.PathColor or {0, 1, 0}
-  local fillAlpha=Options.PathFillAlpha or 0.35
+  local color=Options.GridColor==nil and {0, 0, 1} or Options.GridColor
+  local pathColor=Options.PathColor==nil and {0, 1, 0} or Options.PathColor
+  local fillAlpha=Options.PathFillAlpha==nil and 0.35 or Options.PathFillAlpha
   assert(type(fillAlpha)=="number" and fillAlpha>=0 and fillAlpha<=1, "GRID: PathFillAlpha must be between zero and one")
-  local style={Coalition=Options.Coalition or -1, Color={color[1], color[2], color[3]}, Alpha=1,
+  local style={Coalition=Options.Coalition==nil and -1 or Options.Coalition, Color={color[1], color[2], color[3]}, Alpha=1,
     FillColor={color[1], color[2], color[3]}, FillAlpha=0, LineType=1, ReadOnly=true,
     Snapshot=true, PathCellIDs=pathCells, PathColor={pathColor[1], pathColor[2], pathColor[3]}, PathFillAlpha=fillAlpha}
   return self:_StartGridDrawing(style, Options)
 
+end
+
+--- Validate polygon style before removing an existing overlay or scheduling DCS drawing calls.
+-- Shared by GRID and ASTAR drawing views. Invalid colors and recipient values must fail in the caller's context.
+-- @param #table Style Resolved drawing style.
+-- @return #nil No return value; raises an error for invalid values.
+function GRID._ValidateDrawStyle(Style)
+
+  local function color(value)
+    assert(type(value)=="table", "GRID: drawing colors must be RGB tables")
+    for i=1,3 do
+      assert(type(value[i])=="number" and value[i]>=0 and value[i]<=1, "GRID: RGB components must be between zero and one")
+    end
+  end
+
+  color(Style.Color)
+  color(Style.FillColor)
+  if Style.PathColor then color(Style.PathColor) end
+
+  for _,name in ipairs({"Alpha", "FillAlpha"}) do
+    assert(type(Style[name])=="number" and Style[name]>=0 and Style[name]<=1, "GRID: "..name.." must be between zero and one")
+  end
+
+  assert(type(Style.Coalition)=="number" and Style.Coalition>=-1 and Style.Coalition<=2 and Style.Coalition==math.floor(Style.Coalition),
+    "GRID: Coalition must be -1, 0, 1 or 2")
+  assert(type(Style.LineType)=="number" and Style.LineType>=0 and Style.LineType<=6 and Style.LineType==math.floor(Style.LineType),
+    "GRID: LineType must be an integer between zero and six")
+  assert(type(Style.ReadOnly)=="boolean", "GRID: ReadOnly must be a boolean")
 end
 
 --- Validate batch settings and replace the overlay before starting a regular drawing or debug snapshot.
@@ -1832,14 +1861,15 @@ end
 -- @return #GRID self
 function GRID:_StartGridDrawing(Style, DrawOptions)
 
-  DrawOptions=DrawOptions or {}
+  if DrawOptions==nil then DrawOptions={} end
   assert(type(DrawOptions)=="table", "GRID: drawing options must be a table")
-  local batchSize=DrawOptions.BatchSize or 25
-  local interval=DrawOptions.Interval or 0.1
-  local maxBatchSeconds=DrawOptions.MaxBatchSeconds or 0.005
+  local batchSize=DrawOptions.BatchSize==nil and 25 or DrawOptions.BatchSize
+  local interval=DrawOptions.Interval==nil and 0.1 or DrawOptions.Interval
+  local maxBatchSeconds=DrawOptions.MaxBatchSeconds==nil and 0.005 or DrawOptions.MaxBatchSeconds
   assert(type(batchSize)=="number" and batchSize>=1 and batchSize<math.huge and batchSize==math.floor(batchSize), "GRID: drawing BatchSize must be a positive integer")
   assert(type(interval)=="number" and interval>0 and interval<math.huge, "GRID: drawing Interval must be finite and positive")
   assert(type(maxBatchSeconds)=="number" and maxBatchSeconds>0 and maxBatchSeconds<math.huge, "GRID: drawing MaxBatchSeconds must be finite and positive")
+  GRID._ValidateDrawStyle(Style)
   self:UndrawGrid()
   Style.BatchSize=batchSize
   Style.Interval=interval
