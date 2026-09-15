@@ -1683,6 +1683,146 @@ function UTILS.VecTranslate(a, distance, angle)
   return {x=TX, y=a.y, z=TY}
 end
 
+--- Build an air route point directly from a 3D position without creating a COORDINATE.
+-- @param DCS#Vec3 Position Position with x, y and z components; also accepts VECTOR and COORDINATE.
+-- @param #string AltType (Optional) DCS altitude reference. Default RADIO (above ground); BARO means above sea level. Position.y uses this reference.
+-- @param #string Type DCS waypoint type.
+-- @param #string Action DCS waypoint action.
+-- @param #number Speed (Optional) Speed in km/h. Default 500.
+-- @param #boolean SpeedLocked (Optional) Lock the waypoint speed. Default true.
+-- @param Wrapper.Airbase#AIRBASE airbase (Optional) Airbase for takeoff or landing.
+-- @param #table DCSTasks (Optional) DCS tasks at the waypoint.
+-- @param #string description (Optional) Waypoint description.
+-- @param #number timeReFuAr (Optional) Minutes for refueling/rearming. Default 10 for LandingReFuAr.
+-- @return #table New DCS air route point. Does not modify Position.
+function UTILS.VecWaypointAir(Position, AltType, Type, Action, Speed, SpeedLocked, airbase, DCSTasks, description, timeReFuAr)
+
+  -- Set alttype or "RADIO" which is AGL.
+  AltType=AltType or "RADIO"
+
+  -- Speedlocked by default
+  if SpeedLocked==nil then
+    SpeedLocked=true
+  end
+
+  -- Speed or default 500 km/h.
+  Speed=Speed or 500
+
+  -- Waypoint array.
+  local RoutePoint = {}
+
+  -- Coordinates.
+  RoutePoint.x = Position.x
+  RoutePoint.y = Position.z
+
+  -- Altitude.
+  RoutePoint.alt = Position.y
+  RoutePoint.alt_type = AltType
+
+  -- Waypoint type.
+  RoutePoint.type = Type or nil
+  RoutePoint.action = Action or nil
+
+  -- Speed.
+  RoutePoint.speed = Speed/3.6
+  RoutePoint.speed_locked = SpeedLocked
+
+  -- ETA.
+  RoutePoint.ETA=0
+  RoutePoint.ETA_locked=false
+
+  -- Waypoint description.
+  RoutePoint.name=description
+
+  -- Airbase parameters for takeoff and landing points.
+  if airbase then
+    local AirbaseID = airbase:GetID()
+    local AirbaseCategory = airbase:GetAirbaseCategory()
+    if AirbaseCategory == Airbase.Category.SHIP or AirbaseCategory == Airbase.Category.HELIPAD then
+      RoutePoint.linkUnit = AirbaseID
+      RoutePoint.helipadId = AirbaseID
+      RoutePoint.airdromeId = airbase:IsAirdrome() and AirbaseID or nil
+    elseif AirbaseCategory == Airbase.Category.AIRDROME then
+      RoutePoint.airdromeId = AirbaseID
+    else
+      env.error("UTILS.VecWaypointAir: unknown airbase category")
+    end
+  end
+
+  -- Time in minutes to stay at the airbase before resuming route.
+  if Type=="LandingReFuAr" then
+    RoutePoint.timeReFuAr=timeReFuAr or 10
+  end
+
+  -- Waypoint tasks.
+  RoutePoint.task = {}
+  RoutePoint.task.id = "ComboTask"
+  RoutePoint.task.params = {}
+  RoutePoint.task.params.tasks = DCSTasks or {}
+
+  -- Return waypoint.
+  return RoutePoint
+end
+
+--- Build a ground route point directly from a 3D position without creating a COORDINATE.
+-- @param DCS#Vec3 Position Position with x, y and z components; also accepts VECTOR and COORDINATE. The input altitude is ignored.
+-- @param #number Speed (Optional) Speed in km/h. Default 20.
+-- @param #string Formation (Optional) DCS formation. Default Off Road.
+-- @param #table DCSTasks (Optional) DCS tasks at the waypoint.
+-- @return #table New DCS ground route point at terrain elevation plus one meter ASL. Does not modify Position.
+function UTILS.VecWaypointGround(Position, Speed, Formation, DCSTasks)
+
+  local RoutePoint = {}
+
+  RoutePoint.x    = Position.x
+  RoutePoint.y    = Position.z
+
+  RoutePoint.alt      = land.getHeight({x=Position.x,y=Position.z})+1
+  RoutePoint.alt_type = "BARO"
+
+  RoutePoint.type = "Turning Point"
+
+  RoutePoint.action = Formation or "Off Road"
+  RoutePoint.formation_template=""
+
+  RoutePoint.ETA=0
+  RoutePoint.ETA_locked=false
+
+  RoutePoint.speed = ( Speed or 20 ) / 3.6
+  RoutePoint.speed_locked = true
+
+  RoutePoint.task = {}
+  RoutePoint.task.id = "ComboTask"
+  RoutePoint.task.params = {}
+  RoutePoint.task.params.tasks = DCSTasks or {}
+
+  return RoutePoint
+end
+
+--- Build a naval route point directly from a 3D position without creating a COORDINATE.
+-- @param DCS#Vec3 Position Position with x, y and z components; also accepts VECTOR and COORDINATE objects.
+-- @param #number Speed (Optional) Speed in km/h. Default is 20 km/h.
+-- @param #number Depth (Optional) Waypoint altitude/depth in meters. Default is Position.y; the sign is preserved.
+-- @param #table DCSTasks (Optional) DCS tasks to execute at the waypoint.
+-- @return #table New DCS naval route point. Does not modify Position.
+function UTILS.VecWaypointNaval(Position, Speed, Depth, DCSTasks)
+
+  return {
+    x=Position.x,
+    y=Position.z,
+    alt=Depth or Position.y,
+    alt_type="BARO",
+    type="Turning Point",
+    action="Turning Point",
+    formation_template="",
+    ETA=0,
+    ETA_locked=false,
+    speed=(Speed or 20)/3.6,
+    speed_locked=true,
+    task={id="ComboTask",params={tasks=DCSTasks or {}}},
+  }
+end
+
 --- Translate 2D vector in the 2D (x,z) plane.
 -- @param DCS#Vec2 a Vector in 2D with x, y components.
 -- @param #number distance The distance to translate.

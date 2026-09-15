@@ -68,6 +68,7 @@
 --
 -- ASTAR finds paths through VECTOR-based nodes. It does not move units; convert selected path nodes with GetNodeCoordinate(node)
 -- when another MOOSE API requires COORDINATE objects. All dimensions and distances below are in meters.
+-- FLIGHTGROUP, ARMYGROUP and NAVYGROUP accept node.vector in AddWaypoint, avoiding a temporary COORDINATE per waypoint.
 --
 --     local astar = ASTAR:New()
 --     astar:SetStartCoordinate(ZONE:FindByName("Astar Start"):GetCoordinate())
@@ -89,7 +90,7 @@
 --       astar:DrawGridWithPath(path)
 --       -- Optional text labels, separate from polygons:
 --       -- astar:MarkGrid({ShowID=true, ShowGridIndex=true, ShowNeighbourCount=true})
---       -- navyGroup:AddWaypoint(astar:GetNodeCoordinate(path[1]), speed)
+--       -- navyGroup:AddWaypoint(path[1].vector, speed)
 --     else
 --       env.info("ASTAR: " .. report.StopReason)
 --     end
@@ -957,7 +958,7 @@ function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode, ...)
 end
 
 --- Search synchronously for a least-cost path between the selected start and goal nodes.
--- Returns nodes in travel order; use GetNodeCoordinate(node) to obtain COORDINATE objects for waypoints.
+-- Returns nodes in travel order; pass node.vector to FLIGHTGROUP/ARMYGROUP/NAVYGROUP:AddWaypoint or use GetNodeCoordinate(node) for APIs requiring COORDINATE.
 -- Does not assign a route to a unit or group.
 -- Endpoint exclusions can produce an empty table for a successful search. Nil indicates failure.
 -- In local grid mode, rejects disconnected candidate components before evaluating any neighbour rule or cost.
@@ -1684,16 +1685,19 @@ end
 
 --- Build search adjacency from shared cell neighbours and search-owned endpoint attachments.
 -- Cell IDs are translated to this search's node IDs. Manual nodes attach only to nearby grid cells.
+-- Read GRID's cached adjacency once; avoid sorted intermediate lists while keeping search-owned link sets.
 -- @param #ASTAR self
 -- @return #ASTAR self.
 function ASTAR:_BuildGridLinks()
   self:_SyncGrid()
+  local cellLinks=self.Grid:_GetGridLinks()
+  local cellNodes=self._CellNodes
   local links={}
   for id in pairs(self.nodes) do links[id]={} end
   for _,cell in ipairs(self.Grid.CellList) do
-    local node=self._CellNodes[cell.id]
-    for _,neighbor in ipairs(self.Grid:GetNeighbours(cell)) do
-      links[node.id][self._CellNodes[neighbor.id].id]=true
+    local neighbors=links[cellNodes[cell.id].id]
+    for neighborID in pairs(cellLinks[cell.id]) do
+      neighbors[cellNodes[neighborID].id]=true
     end
   end
   for id,node in pairs(self.nodes) do

@@ -4271,16 +4271,16 @@ end
 
 --- Add an AIR waypoint to the flight plan.
 -- @param #FLIGHTGROUP self
--- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
+-- @param Core.Point#COORDINATE Coordinate Waypoint position. Also accepts Core.Vector#VECTOR, POSITIONABLE or ZONE_BASE objects. The input is not modified.
 -- @param #number Speed (Optional) Speed in knots. Default is cruise speed.
 -- @param #number AfterWaypointWithID (Optional) Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #number Altitude (Optional) Altitude in feet. Default is y-component of Coordinate. Note that these altitudes are wrt to sea level (barometric altitude).
+-- @param #number Altitude (Optional) Altitude in feet. Default is the position's y component in meters. Uses ASL/BARO for airplanes and AGL/RADIO for helicopters, as does the stored waypoint coordinate's y component.
 -- @param #boolean Updateroute (Optional) If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitude, Updateroute)
 
   -- Create coordinate.
-  local coordinate=self:_CoordinateFromObject(Coordinate)  
+  local position=self:_WaypointPosition(Coordinate)
 
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
@@ -4298,15 +4298,11 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
   end
 
   -- Create air waypoint.
-  local wp=coordinate:WaypointAir(alttype, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(Speed), true, nil, {})
+  local wp=UTILS.VecWaypointAir(position, alttype, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(Speed), true, nil, {})
+  if Altitude~=nil then wp.alt=UTILS.FeetToMeters(Altitude) end
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
-
-  -- Set altitude.
-  if Altitude then
-    waypoint.alt=UTILS.FeetToMeters(Altitude)
-  end
 
   -- Add waypoint to table.
   self:_AddWaypoint(waypoint, wpnumber)
@@ -4322,10 +4318,10 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
   return waypoint
 end
 
---- Add an LANDING waypoint to the flight plan.
+--- Add a landing waypoint to the flight plan.
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Airbase#AIRBASE Airbase The airbase where the group should land.
--- @param #number Speed (Optional) Speed in knots. Default 350 kts.
+-- @param #number Speed (Optional) Speed in knots. Default is cruise speed.
 -- @param #number AfterWaypointWithID (Optional) Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
 -- @param #number Altitude (Optional) Altitude in feet. Default is y-component of Coordinate. Note that these altitudes are wrt to sea level (barometric altitude).
 -- @param #boolean Updateroute (Optional) If true or nil, call UpdateRoute. If false, no call.
@@ -4340,21 +4336,17 @@ function FLIGHTGROUP:AddWaypointLanding(Airbase, Speed, AfterWaypointWithID, Alt
   end
 
   -- Speed in knots.
-  Speed=Speed or self.speedCruise
+  Speed=Speed or self:GetSpeedCruise()
 
   -- Get coordinate of airbase.
   local Coordinate=Airbase:GetCoordinate()
 
   -- Create air waypoint.
-  local wp=Coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, nil, Airbase, {}, "Landing Temp", nil)
+  local wp=UTILS.VecWaypointAir(Coordinate, COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, UTILS.KnotsToKmph(Speed), nil, Airbase, {}, "Landing Temp", nil)
+  if Altitude~=nil then wp.alt=UTILS.FeetToMeters(Altitude) end
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
-
-  -- Set altitude.
-  if Altitude then
-    waypoint.alt=UTILS.FeetToMeters(Altitude)
-  end
 
   -- Add waypoint to table.
   self:_AddWaypoint(waypoint, wpnumber)

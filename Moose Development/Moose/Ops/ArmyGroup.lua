@@ -1980,9 +1980,9 @@ end
 -- Routing
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Add an a waypoint to the route.
+--- Add a ground waypoint to the route, resolving its terrain altitude and nearest road.
 -- @param #ARMYGROUP self
--- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint.
+-- @param Core.Point#COORDINATE Coordinate Waypoint position. Also accepts Core.Vector#VECTOR, POSITIONABLE or ZONE_BASE objects. The input is not modified; its altitude is ignored.
 -- @param #number Speed (Optional) Speed in knots. Default is default cruise speed or 70% of max speed.
 -- @param #number AfterWaypointWithID (Optional) Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
 -- @param #string Formation (Optional) Formation the group will use.
@@ -1994,7 +1994,7 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   self:T(self.lid..string.format("AddWaypoint Formation = %s", tostring(Formation)))
 
   -- Create coordinate.
-  local coordinate=self:_CoordinateFromObject(Coordinate)
+  local position=self:_WaypointPosition(Coordinate)
 
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
@@ -2018,7 +2018,7 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   end
 
   -- Create a Ground waypoint.
-  local wp=coordinate:WaypointGround(UTILS.KnotsToKmph(Speed), Formation)
+  local wp=UTILS.VecWaypointGround(position, UTILS.KnotsToKmph(Speed), Formation)
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
@@ -2027,9 +2027,9 @@ function ARMYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Formation
   self:_AddWaypoint(waypoint, wpnumber)
 
   -- Get closest point to road.
-  waypoint.roadcoord=coordinate:GetClosestPointToRoad(false)
+  waypoint.roadcoord=waypoint.coordinate:GetClosestPointToRoad(false)
   if waypoint.roadcoord then
-    waypoint.roaddist=coordinate:Get2DDistance(waypoint.roadcoord)
+    waypoint.roaddist=waypoint.coordinate:Get2DDistance(waypoint.roadcoord)
   else
     waypoint.roaddist=1000*1000 --1000 km.
   end

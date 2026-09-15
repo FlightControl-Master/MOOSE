@@ -1875,6 +1875,20 @@ end
 -- Neighbour graph helpers
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Get cached candidate adjacency for internal traversal without copying or sorting neighbours.
+-- The returned cell-ID sets are owned by GRID and must not be modified by callers.
+-- Retrieve them again after a grid mutation; attached searches must copy and translate IDs into their own adjacency.
+-- @param #GRID self
+-- @return #table Read-only adjacency indexed by cell ID, with neighbour cell IDs mapped to true.
+function GRID:_GetGridLinks()
+
+  if not self.gridLinks then
+    self:_BuildGridLinks()
+  end
+  return self.gridLinks
+
+end
+
 --- Build candidate adjacency for the current rectangular or hex grid.
 -- Requires existing grid geometry; movement rules and travel costs are not evaluated.
 -- @param #GRID self
@@ -2034,11 +2048,9 @@ end
 function GRID:GetNeighbours(Cell)
 
   assert(Cell and self.cells[Cell.id]==Cell, "GRID: cell must belong to this grid")
-  if not self.gridLinks then
-    self:_BuildGridLinks()
-  end
+  local links=self:_GetGridLinks()
   local neighbors={}
-  for id in pairs(self.gridLinks[Cell.id]) do
+  for id in pairs(links[Cell.id]) do
     neighbors[#neighbors+1]=self.cells[id]
   end
   table.sort(neighbors, function(a, b)

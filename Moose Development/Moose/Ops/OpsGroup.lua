@@ -11587,8 +11587,8 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
 
     local wp=self.waypoints0[i] --DCS#Waypoint
 
-    -- Coordinate of the waypoint.
-    local Coordinate=COORDINATE:NewFromWaypoint(wp)
+    -- Pass the route position directly; only the stored waypoint coordinate is created.
+    local position=VECTOR:New(wp.x, wp.alt, wp.y)
 
     -- Strange!
     wp.speed=wp.speed or 0
@@ -11608,11 +11608,11 @@ function OPSGROUP:_InitWaypoints(WpIndexMin, WpIndexMax)
     -- Add waypoint.
     local Waypoint=nil
     if self:IsFlightgroup() then
-      Waypoint=FLIGHTGROUP.AddWaypoint(self, Coordinate, Speed, nil, Altitude,  false)
+      Waypoint=FLIGHTGROUP.AddWaypoint(self, position, Speed, nil, nil, false)
     elseif self:IsArmygroup() then
-      Waypoint=ARMYGROUP.AddWaypoint(self,   Coordinate, Speed, nil, wp.action, false)
+      Waypoint=ARMYGROUP.AddWaypoint(self, position, Speed, nil, wp.action, false)
     elseif self:IsNavygroup() then
-      Waypoint=NAVYGROUP.AddWaypoint(self,   Coordinate, Speed, nil, Depth,     false)
+      Waypoint=NAVYGROUP.AddWaypoint(self, position, Speed, nil, nil, false)
     end
 
     -- Get DCS waypoint tasks set in the ME. EXPERIMENTAL!
@@ -13763,6 +13763,16 @@ function OPSGROUP:_PassedFinalWaypoint(final, comment)
   self.passedfinalwp=final
 end
 
+
+--- Resolve a waypoint position without converting VECTOR inputs into COORDINATE objects.
+-- Callers must not modify the returned position; it may be owned by the caller or another MOOSE object.
+-- @param #OPSGROUP self
+-- @param #table Object VECTOR, COORDINATE, POSITIONABLE or ZONE_BASE object.
+-- @return #table Position with x, y and z components, or nil if resolution failed.
+function OPSGROUP:_WaypointPosition(Object)
+  if VECTOR._IsVector(Object) then return Object end
+  return self:_CoordinateFromObject(Object)
+end
 
 --- Get coordinate from an object.
 -- @param #OPSGROUP self

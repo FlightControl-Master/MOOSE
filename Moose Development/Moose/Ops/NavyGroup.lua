@@ -1829,18 +1829,20 @@ end
 -- Routing
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Add an a waypoint to the route.
+--- Add a waypoint to the route.
+-- VECTOR positions are read directly; only the coordinate stored on the resulting waypoint is created.
 -- @param #NAVYGROUP self
--- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use `COORDINATE:SetAltitude()` to define the altitude.
+-- @param Core.Point#COORDINATE Coordinate Waypoint position. Also accepts Core.Vector#VECTOR, POSITIONABLE or ZONE_BASE objects.
+-- Without Depth, uses the position's altitude in meters. VECTOR and COORDINATE inputs are not modified.
 -- @param #number Speed (Optional) Speed in knots. Default is default cruise speed or 70% of max speed.
 -- @param #number AfterWaypointWithID (Optional) Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #number Depth (Optional) Depth at waypoint in feet. Only for submarines.
+-- @param #number Depth (Optional) Depth at waypoint in feet. Only for submarines. Converted to meters before storing the waypoint and its coordinate.
 -- @param #boolean Updateroute (Optional) If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Updateroute)
 
-  -- Create coordinate.
-  local coordinate=self:_CoordinateFromObject(Coordinate)  
+  -- Resolve existing object inputs without converting VECTOR positions.
+  local position=self:_WaypointPosition(Coordinate)
   
   -- Set waypoint index.
   local wpnumber=self:GetWaypointIndexAfterID(AfterWaypointWithID)
@@ -1849,15 +1851,11 @@ function NAVYGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Depth, Up
   Speed=Speed or self:GetSpeedCruise()
 
   -- Create a Naval waypoint.
-  local wp=coordinate:WaypointNaval(UTILS.KnotsToKmph(Speed), Depth)
+  local depth=Depth and UTILS.FeetToMeters(Depth)
+  local wp=UTILS.VecWaypointNaval(position, UTILS.KnotsToKmph(Speed), depth)
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
-
-  -- Set altitude.
-  if Depth then
-    waypoint.alt=UTILS.FeetToMeters(Depth)
-  end
 
   -- Add waypoint to table.
   self:_AddWaypoint(waypoint, wpnumber)
@@ -2431,7 +2429,7 @@ function NAVYGROUP:_FindPathToNextWaypoint()
         local node=_node --Core.Astar#ASTAR.Node
           
         -- Add waypoints along detour path to next waypoint.
-        local wp=self:AddWaypoint(astar:GetNodeCoordinate(node), speed, uid)
+        local wp=self:AddWaypoint(node.vector, speed, uid)
         wp.astar=true
         
         -- Update id so the next wp is added after this one.

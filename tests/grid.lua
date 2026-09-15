@@ -342,6 +342,49 @@ test("shared topology updates invalidate components in every attached search",fu
   local path,report=b:GetPathWithExpansion() equal(path,nil) equal(report.StopReason,"cell_limit")
 end)
 
+test("search adjacency translates cell IDs after expansion without sharing mutable links",function()
+  for _,kind in ipairs({"rectangular","hexagonal"}) do
+    for _,diagonals in ipairs({false,true}) do
+      local g=grid(kind,{Width=2000,Margin=1000,Spacing=1000,Diagonals=diagonals})
+      local a,b=search(g),search(g)
+      a:SetStartCoordinate(coord(123,50)):SetEndCoordinate(coord(4123,50))
+      assert(a:GetPath()) assert(b:GetPath())
+      local originalCount=g:GetCellCount()
+      assert(g:ExpandGrid(4000,2000))
+      assert(a:GetPath()) assert(b:GetPath())
+      local differentIDs=false
+      for _,cell in ipairs(g:GetCells()) do
+        local an,bn=a._CellNodes[cell.id],b._CellNodes[cell.id]
+        if cell.id>originalCount and an.id~=bn.id then differentIDs=true end
+        assert(a.gridLinks[an.id]~=b.gridLinks[bn.id] and a.gridLinks[an.id]~=g.gridLinks[cell.id])
+        local expected={}
+        local neighbors=g:GetNeighbours(cell)
+        for i,neighbor in ipairs(neighbors) do
+          if i>1 then assert(neighbors[i-1].id<neighbor.id) end
+          expected[neighbor.id]=true
+          assert(a.gridLinks[an.id][a._CellNodes[neighbor.id].id])
+          assert(b.gridLinks[bn.id][b._CellNodes[neighbor.id].id])
+        end
+        for id in pairs(a.gridLinks[an.id]) do
+          local neighbor=a.nodes[id]
+          if neighbor.cell then assert(expected[neighbor.cell.id]) end
+        end
+        equal(count(b.gridLinks[bn.id]),#neighbors)
+        neighbors[1]=nil
+        equal(g:GetNeighbourCount(cell),count(expected))
+      end
+      assert(differentIDs,"Manual endpoints must shift imported node IDs after expansion")
+      local cell=g:GetCells()[1]
+      local an,bn=a._CellNodes[cell.id],b._CellNodes[cell.id]
+      local neighbor=g:GetNeighbours(cell)[1]
+      assert(neighbor)
+      a.gridLinks[an.id][a._CellNodes[neighbor.id].id]=nil
+      assert(g.gridLinks[cell.id][neighbor.id])
+      assert(b.gridLinks[bn.id][b._CellNodes[neighbor.id].id])
+    end
+  end
+end)
+
 test("automatic expansion on one shared search becomes available to another",function()
   land.surfaceAt=function(c) return c.x==2000 and math.abs(c.z)<500 and land.SurfaceType.LAND or land.SurfaceType.WATER end
   for _,kind in ipairs({"rectangular","hexagonal"}) do

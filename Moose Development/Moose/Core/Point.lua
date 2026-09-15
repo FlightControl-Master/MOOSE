@@ -446,7 +446,7 @@ do -- COORDINATE
 
     -- Adjust height
     if altitude==nil then
-      _coord.y=self:GetLandHeight()
+      _coord.y=_coord:GetLandHeight()
     else
       _coord.y=altitude
     end
@@ -1361,60 +1361,66 @@ do -- COORDINATE
   end
   
   
-  --- Return Return the Lat(itude) coordinate of the COORDINATE (ie: (parent)COORDINATE.x).
+  --- Return the local north-axis component in meters, equivalent to GetX().
+  -- Despite its name, this method does not return geographic latitude. Use coord.LOtoLL(self:GetVec3()) for decimal degrees.
   -- @param #COORDINATE self
-  -- @return #number The x coordinate.
+  -- @return #number Local x coordinate in meters.
   function COORDINATE:GetLat()
     return self.x
   end
 
-  --- Set the Lat(itude) coordinate of the COORDINATE (ie: COORDINATE.x).
+  --- Set the local north-axis component in meters, equivalent to SetX().
+  -- This is not a geographic latitude setter. Use NewFromLLDD() to create a position from geographic coordinates.
   -- @param #COORDINATE self
-  -- @param #number x The x coordinate.
+  -- @param #number x Local x coordinate in meters.
   -- @return #COORDINATE
   function COORDINATE:SetLat( x )
     self.x = x
     return self
   end
 
-  --- Return the Lon(gitude) coordinate of the COORDINATE (ie: (parent)COORDINATE.z).
+  --- Return the local east-axis component in meters, equivalent to GetZ().
+  -- Despite its name, this method does not return geographic longitude. Use coord.LOtoLL(self:GetVec3()) for decimal degrees.
   -- @param #COORDINATE self
-  -- @return #number The y coordinate.
+  -- @return #number Local z coordinate in meters.
   function COORDINATE:GetLon()
     return self.z
   end
 
-  --- Set the Lon(gitude) coordinate of the COORDINATE (ie: COORDINATE.z).
+  --- Set the local east-axis component in meters, equivalent to SetZ().
+  -- This is not a geographic longitude setter. Use NewFromLLDD() to create a position from geographic coordinates.
   -- @param #COORDINATE self
-  -- @param #number y The y coordinate.
+  -- @param #number z Local z coordinate in meters.
   -- @return #COORDINATE
   function COORDINATE:SetLon( z )
     self.z = z
     return self
   end
 
-  --- Return the altitude (height) of the land at the COORDINATE.
+  --- Return the stored altitude above sea level in meters.
+  -- Zero and negative altitudes are returned unchanged. Use GetLandHeight() for terrain elevation.
   -- @param #COORDINATE self
-  -- @return #number The land altitude.
+  -- @return #number Stored altitude in meters ASL.
   function COORDINATE:GetAlt()
-    return self.y ~= 0 or land.getHeight( { x = self.x, y = self.z } )
+    return self.y
   end
 
-  --- Set the altitude of the COORDINATE.
+  --- Set the stored altitude above sea level in meters.
   -- @param #COORDINATE self
-  -- @param #number Altitude The land altitude. If nothing (nil) is given, then the current land altitude is set.
+  -- @param #number Altitude (Optional) Altitude in meters ASL, including zero or negative values. If nil, use the terrain elevation.
   -- @return #COORDINATE
   function COORDINATE:SetAlt( Altitude )
     self.y = Altitude or land.getHeight( { x = self.x, y = self.z } )
     return self
   end
 
-  --- Add to the current land height an altitude.
+  --- Set the altitude to terrain elevation plus an offset in meters.
+  -- The offset is relative to the ground, not to the currently stored altitude.
   -- @param #COORDINATE self
-  -- @param #number Altitude The Altitude to add. If nothing (nil) is given, then the current land altitude is set.
+  -- @param #number Altitude (Optional) Offset above ground in meters. Default zero; negative offsets are allowed.
   -- @return #COORDINATE
   function COORDINATE:AddAlt( Altitude )
-    self.y = land.getHeight( { x = self.x, y = self.z } ) + Altitude or 0
+    self.y = land.getHeight( { x = self.x, y = self.z } ) + (Altitude or 0)
     return self
   end
 
@@ -1705,79 +1711,8 @@ do -- COORDINATE
   -- @return #table The route point.
   function COORDINATE:WaypointAir( AltType, Type, Action, Speed, SpeedLocked, airbase, DCSTasks, description, timeReFuAr )
     self:F2( { AltType, Type, Action, Speed, SpeedLocked } )
-
-    -- Set alttype or "RADIO" which is AGL.
-    AltType=AltType or "RADIO"
-
-    -- Speedlocked by default
-    if SpeedLocked==nil then
-      SpeedLocked=true
-    end
-
-    -- Speed or default 500 km/h.
-    Speed=Speed or 500
-
-    -- Waypoint array.
-    local RoutePoint = {}
-
-    -- Coordinates.
-    RoutePoint.x = self.x
-    RoutePoint.y = self.z
-
-    -- Altitude.
-    RoutePoint.alt = self.y
-    RoutePoint.alt_type = AltType
-
-    -- Waypoint type.
-    RoutePoint.type = Type or nil
-    RoutePoint.action = Action or nil
-
-    -- Speed.
-    RoutePoint.speed = Speed/3.6
-    RoutePoint.speed_locked = SpeedLocked
-
-    -- ETA.
-    RoutePoint.ETA=0
-    RoutePoint.ETA_locked=false
-
-    -- Waypoint description.
-    RoutePoint.name=description
-
-    -- Airbase parameters for takeoff and landing points.
-    if airbase then
-      local AirbaseID = airbase:GetID()
-      local AirbaseCategory = airbase:GetAirbaseCategory()
-      if AirbaseCategory == Airbase.Category.SHIP or AirbaseCategory == Airbase.Category.HELIPAD then
-        RoutePoint.linkUnit = AirbaseID
-        RoutePoint.helipadId = AirbaseID
-        RoutePoint.airdromeId = airbase:IsAirdrome() and AirbaseID or nil
-      elseif AirbaseCategory == Airbase.Category.AIRDROME then
-        RoutePoint.airdromeId = AirbaseID
-      else
-        self:E("ERROR: Unknown airbase category in COORDINATE:WaypointAir()!")
-      end
-    end
-
-    -- Time in minutes to stay at the airbase before resuming route.
-    if Type==COORDINATE.WaypointType.LandingReFuAr then
-      RoutePoint.timeReFuAr=timeReFuAr or 10
-    end
-
-    -- Waypoint tasks.
-    RoutePoint.task = {}
-    RoutePoint.task.id = "ComboTask"
-    RoutePoint.task.params = {}
-    RoutePoint.task.params.tasks = DCSTasks or {}
-
-    --RoutePoint.properties={}
-    --RoutePoint.properties.addopt={}
-
-    --RoutePoint.formation_template=""
-
-    -- Debug.
+    local RoutePoint=UTILS.VecWaypointAir(self, AltType, Type, Action, Speed, SpeedLocked, airbase, DCSTasks, description, timeReFuAr)
     self:T({RoutePoint=RoutePoint})
-
-    -- Return waypoint.
     return RoutePoint
   end
 
@@ -1873,67 +1808,18 @@ do -- COORDINATE
   -- @return #table The route point.
   function COORDINATE:WaypointGround( Speed, Formation, DCSTasks )
     self:F2( { Speed, Formation, DCSTasks } )
-
-    local RoutePoint = {}
-
-    RoutePoint.x    = self.x
-    RoutePoint.y    = self.z
-
-    RoutePoint.alt      = self:GetLandHeight()+1
-    RoutePoint.alt_type = COORDINATE.WaypointAltType.BARO
-
-    RoutePoint.type = "Turning Point"
-
-    RoutePoint.action = Formation or "Off Road"
-    RoutePoint.formation_template=""
-
-    RoutePoint.ETA=0
-    RoutePoint.ETA_locked=false
-
-    RoutePoint.speed = ( Speed or 20 ) / 3.6
-    RoutePoint.speed_locked = true
-
-    RoutePoint.task = {}
-    RoutePoint.task.id = "ComboTask"
-    RoutePoint.task.params = {}
-    RoutePoint.task.params.tasks = DCSTasks or {}
-
-    return RoutePoint
+    return UTILS.VecWaypointGround(self, Speed, Formation, DCSTasks)
   end
 
   --- Build route waypoint point for Naval units.
   -- @param #COORDINATE self
   -- @param #number Speed (Optional) Speed in km/h. The default speed is 20 km/h.
-  -- @param #string Depth (Optional) Dive depth in meters. Only for submarines. Default is COORDINATE.y component.
+  -- @param #number Depth (Optional) Dive depth in meters. Only for submarines. Default is COORDINATE.y component.
   -- @param #table DCSTasks (Optional) A table of DCS tasks that are executed at the waypoints. Mind the curly brackets {}!
   -- @return #table The route point.
   function COORDINATE:WaypointNaval( Speed, Depth, DCSTasks )
     self:F2( { Speed, Depth, DCSTasks } )
-
-    local RoutePoint = {}
-
-    RoutePoint.x    = self.x
-    RoutePoint.y    = self.z
-
-    RoutePoint.alt  = Depth or self.y  -- Depth is for submarines only. Ships should have alt=0.
-    RoutePoint.alt_type = "BARO"
-
-    RoutePoint.type   = "Turning Point"
-    RoutePoint.action = "Turning Point"
-    RoutePoint.formation_template = ""
-
-    RoutePoint.ETA=0
-    RoutePoint.ETA_locked=false
-
-    RoutePoint.speed = ( Speed or 20 ) / 3.6
-    RoutePoint.speed_locked = true
-
-    RoutePoint.task = {}
-    RoutePoint.task.id = "ComboTask"
-    RoutePoint.task.params = {}
-    RoutePoint.task.params.tasks = DCSTasks or {}
-
-    return RoutePoint
+    return UTILS.VecWaypointNaval(self, Speed, Depth, DCSTasks)
   end
 
   --- Gets the nearest airbase with respect to the current coordinates.
@@ -2223,14 +2109,6 @@ do -- COORDINATE
   function COORDINATE:IsSurfaceTypeLand()
     return self:GetSurfaceType()==land.SurfaceType.LAND
   end
-
-  --- Checks if the surface type is land.
-  -- @param #COORDINATE self
-  -- @return #boolean If true, the surface type at the coordinate is land.
-  function COORDINATE:IsSurfaceTypeLand()
-    return self:GetSurfaceType()==land.SurfaceType.LAND
-  end
-
 
   --- Checks if the surface type is road.
   -- @param #COORDINATE self

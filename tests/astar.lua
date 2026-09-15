@@ -1854,20 +1854,21 @@ test("grid creation expansion search and debug overlays require no COORDINATE al
   assert(ok,err)
 end)
 
-test("NAVYGROUP converts ASTAR vectors to coordinates before adding waypoints", function()
+test("NAVYGROUP passes ASTAR vectors directly without temporary coordinates", function()
   local file=assert(io.open("Moose Development/Moose/Ops/NavyGroup.lua","r"))
   local navySource=file:read("*a"):gsub("\r\n","\n") file:close()
   NAVYGROUP={}
   local method=assert(navySource:match("(function NAVYGROUP:_FindPathToNextWaypoint%b().-\nend)"))
   assert((loadstring or load)(method))()
   local ship=setmetatable({lid="test",verbose=10,pathCorridor=100},{__index=NAVYGROUP})
+  local start,goal=coord(0),coord(5000)
   function ship:T3() end
-  function ship:GetCoordinate() return coord(0) end
-  function ship:GetWaypointNext() return {coordinate=coord(5000),speed=10} end
+  function ship:GetCoordinate() return start end
+  function ship:GetWaypointNext() return {coordinate=goal,speed=10} end
   function ship:GetWaypointCurrent() return {uid=100} end
   local added={}
   function ship:AddWaypoint(position,speed,after)
-    equal(position.ClassName,"COORDINATE") assert(not VECTOR._IsVector(position))
+    assert(VECTOR._IsVector(position))
     equal(after,100+#added)
     added[#added+1]=position
     return {uid=100+#added}
@@ -1876,7 +1877,11 @@ test("NAVYGROUP converts ASTAR vectors to coordinates before adding waypoints", 
   land.isVisible=function(a,b) return (a.x-b.x)^2+(a.z-b.z)^2<=800^2 end
   local marks=0
   trigger.action.markToAll=function() marks=marks+1 end
-  equal(ship:_FindPathToNextWaypoint(),true)
+  local original=COORDINATE.New
+  COORDINATE.New=function() error("Path handoff must not create temporary coordinates") end
+  local ok,result=pcall(ship._FindPathToNextWaypoint,ship)
+  COORDINATE.New=original
+  assert(ok,result) equal(result,true)
   assert(#added>0) equal(marks,#added)
 end)
 
