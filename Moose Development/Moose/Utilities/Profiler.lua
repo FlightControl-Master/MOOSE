@@ -1,556 +1,563 @@
---- **Utils** - Lua Profiler.
---
--- Find out how many times functions are called and how much real time it costs.
---
--- ===
+--- **Utils** - Lua function call and CPU-time profiler.
 --
 -- ### Author: **TAW CougarNL**, *funkyfranky*
---
 -- @module Utilities.Profiler
 -- @image Utils_Profiler.jpg
 
---- PROFILER class.
+--- PROFILER class. A global service; invoke Start and Stop with a dot.
 -- @type PROFILER
--- @field #string ClassName Name of the class.
--- @field #table Counters Function counters.
--- @field #table dInfo Info.
--- @field #table fTime Function time.
--- @field #table fTimeTotal Total function time.
--- @field #table eventhandler Event handler to get mission end event.
--- @field #number TstartGame Game start time timer.getTime().
--- @field #number TstartOS OS real start time os.clock.
--- @field #boolean logUnknown Log unknown functions. Default is off.
--- @field #number ThreshCPS Low calls per second threshold. Only write output if function has more calls per second than this value.
--- @field #number ThreshTtot Total time threshold. Only write output if total function CPU time is more than this value.
--- @field #string fileNamePrefix Output file name prefix, e.g. "MooseProfiler".
--- @field #string fileNameSuffix Output file name prefix, e.g. "txt"
+-- @field #string ClassName Class name.
+-- @field #boolean Active Whether a measurement is running.
+-- @field #table Counters Calls indexed by function object.
+-- @field #table dInfo Debug metadata indexed by function object.
+-- @field #table fTimeTotal Inclusive CPU seconds indexed by function object.
+-- @field #table fTimeSelf Exclusive CPU seconds indexed by function object.
+-- @field #table eventHandler Mission-end handler, removed on Stop.
+-- @field #number TstartGame Simulation time at measurement start.
+-- @field #number TstartOS Process CPU time at measurement start.
+-- @field #boolean logUnknown Include functions without a debug name; default false.
+-- @field #number ThreshCPS Minimum calls per simulation second for both formats; default 0.
+-- @field #number ThreshTtot Minimum inclusive CPU seconds for both formats; default 0.005.
+-- @field #string fileNamePrefix Output basename, default MooseProfiler.
+-- @field #string fileNameSuffix Text extension, default txt; must differ from csv.
+-- @field #PROFILER.Report LastReport Completed report, retained after write failures.
 
---- *The emperor counsels simplicity.* *First principles. Of each particular thing, ask: What is it in itself, in its own constitution? What is its causal nature?*
+--- # The PROFILER Concept
 --
--- ===
+-- Records calls and CPU time in the Lua thread where Start executes. Other coroutines are not automatically instrumented.
+-- Hook events inherited by other coroutines are ignored; time spent resuming them remains part of the caller's inclusive CPU time.
+-- Requires os.clock, io.open, lfs.writedir and the debug hook API in the mission environment.
+-- This file does not change DCS sandbox settings. Profiling adds overhead and is intended for dedicated diagnostics.
 --
--- ![Banner Image](..\Presentations\Utilities\PROFILER_Main.jpg)
+--     PROFILER.Start(0, 30) -- Profile for 30 simulation seconds.
 --
--- # The PROFILER Concept
+-- Alternatively use PROFILER.Start() and PROFILER.Stop(). All delays use simulation seconds.
+-- Start while active or already scheduled is rejected. Every measurement starts with fresh counters.
+-- Stop is safe before Start and on repeated calls; it also cancels a pending start.
+-- Delayed Stop requests require an active measurement; use immediate Stop to cancel a pending start.
+-- Old delayed callbacks cannot affect a subsequent measurement. Mission end stops active or pending profiling.
 --
--- Profile your lua code. This tells you, which functions are called very often and which consume most real time.
--- With this information you can optimize the performance of your code.
+-- # Timing
 --
--- # Prerequisites
+-- os.clock measures process CPU time, not wall-clock time. Calls per second use simulation time.
+-- Inclusive time includes subcalls; self time excludes them. Percentages use self time divided by measurement CPU time.
+-- Inclusive totals can exceed measurement time because nested calls overlap, especially during recursion.
+-- The stack handles recursion, Lua 5.1 tail returns and Lua 5.2+ tail calls.
+-- Error-unwound frames close at the next hook event; frames open at Stop are clipped to that moment.
+-- Hook overhead and process activity outside the measured thread affect times; these are not utilization measurements.
+-- Zero-length measurements report zero rates/percentages. Unknown names require logUnknown=true.
+-- Different function objects stay separate even when their names match.
 --
--- The modules **os**, **io** and **lfs** need to be de-sanitized. Comment out the lines
+-- # Hooks and Output
 --
---     --sanitizeModule('os')
---     --sanitizeModule('io')
---     --sanitizeModule('lfs')
---
--- in your *"DCS World OpenBeta/Scripts/MissionScripting.lua"* file.
---
--- But be aware that these changes can make you system vulnerable to attacks.
---
--- # Disclaimer
---
--- **Profiling itself is CPU expensive!** Don't use this when you want to fly or host a mission.
---
---
--- # Start
---
--- The profiler can simply be started with the @{#PROFILER.Start}(*Delay, Duration*) function
---
---     PROFILER.Start()
---
--- The optional parameter *Delay* can be used to delay the start by a certain amount of seconds and the optional parameter *Duration* can be used to
--- stop the profiler after a certain amount of seconds.
---
--- # Stop
---
--- The profiler automatically stops when the mission ends. But it can be stopped any time with the @{#PROFILER.Stop}(*Delay*) function
---
---     PROFILER.Stop()
---
--- The optional parameter *Delay* can be used to specify a delay after which the profiler is stopped.
---
--- When the profiler is stopped, the output is written to a file.
---
--- # Output
---
--- The profiler output is written to a file in your DCS home folder
---
---     X:\User\<Your User Name>\Saved Games\DCS OpenBeta\Logs
---
--- The default file name is "MooseProfiler.txt". If that file exists, the file name is "MooseProfiler-001.txt" etc.
---
--- ## Data
---
--- The data in the output file provides information on the functions that were called in the mission.
---
--- It will tell you how many times a function was called in total, how many times per second, how much time in total and the percentage of time.
---
--- If you only want output for functions that are called more than *X* times per second, you can set
---
---     PROFILER.ThreshCPS=1.5
---
--- With this setting, only functions which are called more than 1.5 times per second are displayed. The default setting is PROFILER.ThreshCPS=0.0 (no threshold).
---
--- Furthermore, you can limit the output for functions that consumed a certain amount of CPU time in total by
---
---     PROFILER.ThreshTtot=0.005
---
--- With this setting, which is also the default, only functions which in total used more than 5 milliseconds CPU time.
+-- A previous Lua hook is temporarily replaced and restored with its original mask/count.
+-- If another tool replaces our hook during profiling, Stop leaves the replacement alone.
+-- A Lua 5.1 main-thread measurement must be stopped on the main thread.
+-- Reports go to lfs.writedir().."Logs/" as paired text/CSV files with a shared unused numbered basename.
+-- Text includes inclusive time, self time, time-per-call and call-count rankings. CSV uses inclusive-time order.
+-- Both formats use the same thresholds; CSV fields are escaped. File errors are logged and returned.
+-- LastReport retains data when writing fails; it resets only when a new measurement actually starts.
 --
 -- @field #PROFILER
 PROFILER = {
-  ClassName      = "PROFILER",
-  Counters       = {},
-  dInfo          = {},
-  fTime          = {},
-  fTimeTotal     = {},
-  eventHandler   = {},
-  logUnknown     = false,
-  ThreshCPS      = 0.0,
-  ThreshTtot     = 0.005,
-  fileNamePrefix = "MooseProfiler",
-  fileNameSuffix = "txt"
+  ClassName="PROFILER", Active=false,
+  Counters={}, dInfo={}, fTimeTotal={}, fTimeSelf={}, eventHandler={},
+  logUnknown=false, ThreshCPS=0, ThreshTtot=0.005,
+  fileNamePrefix="MooseProfiler", fileNameSuffix="txt", _Generation=0
 }
 
---- Waypoint data.
+--- One measured function, clipped to the profiling interval.
 -- @type PROFILER.Data
--- @field #string func The function name.
--- @field #string src The source file.
--- @field #number line The line number
--- @field #number count Number of function calls.
--- @field #number tm Total time in seconds.
+-- @field #string func Debug name or unknown placeholder.
+-- @field #string src Source file or C marker.
+-- @field #number line Definition line, or -1.
+-- @field #number count Observed calls.
+-- @field #number tm Inclusive CPU seconds.
+-- @field #number self Exclusive CPU seconds.
+-- @field #number cps Calls per simulation second.
+-- @field #number percent Self time percentage of measurement CPU time.
+-- @field #number average Inclusive CPU seconds per call.
+
+--- Completed measurement, retained even if output failed.
+-- @type PROFILER.Report
+-- @field #number RuntimeGame Simulation duration.
+-- @field #number RuntimeCPU Process CPU duration.
+-- @field #number Calls Observed calls before filtering.
+-- @field #number SelfCPU Self CPU seconds before filtering.
+-- @field #table Functions Filtered PROFILER.Data rows.
+-- @field #table Errors Output error messages.
+-- @field #string TextFile Successfully written text file, or nil.
+-- @field #string CSVFile Successfully written CSV file, or nil.
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Start/Stop Profiler
+-- Lifecycle
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Start profiler.
--- @param #number Delay (Optional) Delay in seconds before profiler is stated. Default is immediately.
--- @param #number Duration (Optional) Duration in (game) seconds before the profiler is stopped. Default is when mission ends.
-function PROFILER.Start( Delay, Duration )
+--- Validate a duration or threshold.
+-- @param #number Value Value to inspect.
+-- @return #boolean Whether it is finite and non-negative.
+function PROFILER._NonNegative(Value)
 
-  -- Check if os, io and lfs are available.
-  local go = true
-  if not os then
-    env.error( "ERROR: Profiler needs os to be de-sanitized!" )
-    go = false
-  end
-  if not io then
-    env.error("ERROR: Profiler needs io to be desanitized!")
-    go=false
-  end
-  if not lfs then
-    env.error("ERROR: Profiler needs lfs to be desanitized!")
-    go=false
-  end
-  if not go then
-    return
+  return type(Value)=="number" and Value>=0 and Value<math.huge
+
+end
+
+--- Log and return a recoverable failure.
+-- @param #string Message Failure explanation.
+-- @return #boolean false.
+-- @return #string Message.
+function PROFILER._Error(Message)
+
+  env.error("PROFILER: "..tostring(Message))
+  return false,Message
+
+end
+
+--- Cancel and clear a scheduled callback.
+-- @param #string Field Timer handle field.
+-- @return #nil No return value.
+function PROFILER._CancelTimer(Field)
+
+  local id=PROFILER[Field]
+  PROFILER[Field]=nil
+  if id then timer.removeFunction(id) end
+
+end
+
+--- Schedule a callback without discarding an existing timer on scheduler failure.
+-- @param #string Field Timer handle field.
+-- @param #number Delay Simulation seconds until the callback.
+-- @param #function Callback Scheduled function.
+-- @return #boolean Whether scheduling succeeded.
+-- @return #string Failure explanation, or nil.
+function PROFILER._Schedule(Field, Delay, Callback)
+
+  local ok,id=pcall(timer.scheduleFunction,Callback,nil,timer.getTime()+Delay)
+  if not ok or type(id)~="number" then return PROFILER._Error("scheduling failed: "..tostring(id)) end
+  PROFILER._CancelTimer(Field)
+  PROFILER[Field]=id
+  return true
+
+end
+
+--- Read the hook on the measurement thread.
+-- @return #function Hook, nil, or an external native hook marker.
+-- @return #string Event mask.
+-- @return #number Instruction count.
+function PROFILER._GetHook()
+
+  if PROFILER._Thread then return debug.gethook(PROFILER._Thread) end
+  return debug.gethook()
+
+end
+
+--- Set the hook on the measurement thread.
+-- @param #function Hook Hook or nil.
+-- @param #string Mask Event mask.
+-- @param #number Count Instruction count.
+-- @return #nil No return value.
+function PROFILER._SetHook(Hook, Mask, Count)
+
+  if PROFILER._Thread then debug.sethook(PROFILER._Thread,Hook,Mask or "",Count or 0)
+  else debug.sethook(Hook,Mask or "",Count or 0) end
+
+end
+
+--- Remove the mission-end handler when registered.
+-- @return #nil No return value.
+function PROFILER._RemoveHandler()
+
+  if PROFILER._HandlerAdded then
+    PROFILER._HandlerAdded=false
+    world.removeEventHandler(PROFILER.eventHandler)
   end
 
-  if Delay and Delay > 0 then
-    BASE:ScheduleOnce( Delay, PROFILER.Start, 0, Duration )
-  else
+end
 
-    -- Set start time.
+--- Start a fresh measurement or schedule its start.
+-- @param #number Delay Optional finite non-negative simulation seconds; default zero.
+-- @param #number Duration Optional finite non-negative simulation seconds; nil runs until Stop or mission end.
+-- @return #boolean Whether starting or scheduling succeeded.
+-- @return #string Failure explanation, if unsuccessful.
+function PROFILER.Start(Delay, Duration)
+
+  if Delay==nil then Delay=0 end
+  if not PROFILER._NonNegative(Delay) or (Duration~=nil and not PROFILER._NonNegative(Duration)) then
+    return PROFILER._Error("Delay and Duration must be finite non-negative seconds")
+  end
+  if PROFILER.Active or PROFILER._StartTimer then return false,"already_running_or_scheduled" end
+  if not (os and type(os.clock)=="function" and io and type(io.open)=="function"
+    and lfs and type(lfs.writedir)=="function" and debug and type(debug.getinfo)=="function"
+    and type(debug.gethook)=="function" and type(debug.sethook)=="function"
+    and timer and type(timer.getTime)=="function" and type(timer.scheduleFunction)=="function" and type(timer.removeFunction)=="function"
+    and world and type(world.addEventHandler)=="function" and type(world.removeEventHandler)=="function"
+    and UTILS and type(UTILS.FileExists)=="function") then
+    return PROFILER._Error("CPU clock, file, debug, timer, event and UTILS.FileExists APIs must be available")
+  end
+  if not PROFILER._NonNegative(PROFILER.ThreshCPS) or not PROFILER._NonNegative(PROFILER.ThreshTtot) then
+    return PROFILER._Error("thresholds must be finite non-negative numbers")
+  end
+  if type(PROFILER.fileNamePrefix)~="string" or PROFILER.fileNamePrefix==""
+    or type(PROFILER.fileNameSuffix)~="string" or PROFILER.fileNameSuffix=="" or PROFILER.fileNameSuffix:lower()=="csv" then
+    return PROFILER._Error("a basename and a text extension different from csv are required")
+  end
+  PROFILER._Generation=PROFILER._Generation+1
+  local generation=PROFILER._Generation
+  if Delay>0 then
+    local scheduled,reason=PROFILER._Schedule("_StartTimer",Delay,function()
+      if generation==PROFILER._Generation then
+        PROFILER._StartTimer=nil
+        PROFILER._RemoveHandler()
+        PROFILER.Start(0,Duration)
+      end
+    end)
+    if not scheduled then return false,reason end
+    local added,message=pcall(world.addEventHandler,PROFILER.eventHandler)
+    if not added then PROFILER._CancelTimer("_StartTimer") return PROFILER._Error(tostring(message)) end
+    PROFILER._HandlerAdded=true
+    return true
+  end
+  PROFILER._Thread=coroutine.running()
+  local hook,mask,count=PROFILER._GetHook()
+  if hook~=nil and type(hook)~="function" then return PROFILER._Error("cannot preserve an external native debug hook") end
+  PROFILER._PreviousHook={hook=hook,mask=mask,count=count}
+  local fields={"Counters","dInfo","fTimeTotal","fTimeSelf","_Stack","LastReport","TstartGame","TstartOS"}
+  local saved={}
+  for _,field in ipairs(fields) do saved[field]=PROFILER[field] end
+  PROFILER.Counters={}
+  PROFILER.dInfo={}
+  PROFILER.fTimeTotal={}
+  PROFILER.fTimeSelf={}
+  PROFILER._Stack={}
+  PROFILER.LastReport=nil
+  PROFILER._OwnFunctions={}
+  for _,value in pairs(PROFILER) do
+    if type(value)=="function" then PROFILER._OwnFunctions[value]=true end
+  end
+  local started,message=pcall(function()
+    world.addEventHandler(PROFILER.eventHandler)
+    PROFILER._HandlerAdded=true
+    env.info("PROFILER: started; CPU timing with inclusive and self time")
     PROFILER.TstartGame=timer.getTime()
     PROFILER.TstartOS=os.clock()
-
-    -- Add event handler.
-    world.addEventHandler(PROFILER.eventHandler)
-
-    -- Info in log.
-    env.info( '############################   Profiler Started   ############################' )
-    if Duration then
-      env.info( string.format( "- Will be running for %d seconds", Duration ) )
-    else
-      env.info( string.format( "- Will be stopped when mission ends" ) )
+    PROFILER.Active=true
+    PROFILER._SetHook(PROFILER.hook,"cr",0)
+    if Duration~=nil then
+      local scheduled,reason=PROFILER.Stop(Duration)
+      if not scheduled and PROFILER.Active then error(reason) end
     end
-    env.info(string.format("- Calls per second threshold %.3f/sec", PROFILER.ThreshCPS))
-    env.info(string.format("- Total function time threshold %.3f sec", PROFILER.ThreshTtot))
-    env.info(string.format("- Output file \"%s\" in your DCS log file folder", PROFILER.getfilename(PROFILER.fileNameSuffix)))
-    env.info(string.format("- Output file \"%s\" in CSV format", PROFILER.getfilename("csv")))
-    env.info('###############################################################################')
-
-
-    -- Message on screen
-    local duration=Duration or 600
-    trigger.action.outText("### Profiler running ###", duration)
-
-    -- Set hook.
-    debug.sethook(PROFILER.hook, "cr")
-
-    -- Auto stop profiler.
-    if Duration then
-      PROFILER.Stop( Duration )
-    end
-
+  end)
+  if not started then
+    PROFILER.Active=false
+    PROFILER._Generation=PROFILER._Generation+1
+    PROFILER._CancelTimer("_StopTimer")
+    PROFILER._RemoveHandler()
+    if PROFILER._GetHook()==PROFILER.hook then PROFILER._SetHook(hook,mask,count) end
+    for _,field in ipairs(fields) do PROFILER[field]=saved[field] end
+    return PROFILER._Error(tostring(message))
   end
+  return true
 
 end
 
---- Stop profiler.
--- @param #number Delay Delay before stop in seconds.
-function PROFILER.Stop( Delay )
-
-  if Delay and Delay > 0 then
-
-    BASE:ScheduleOnce( Delay, PROFILER.Stop )
-  end
-end
-
+--- Stop, schedule a stop, or cancel a pending start.
+-- Delayed stops belong to this measurement and cannot stop a later one.
+-- @param #number Delay Optional finite non-negative simulation seconds; default zero.
+-- @return #boolean Whether stop/cancellation was accepted and, for immediate stops, output succeeded.
+-- @return #PROFILER.Report Report, or a string explaining an idle/invalid request.
 function PROFILER.Stop(Delay)
 
-  if Delay and Delay>0 then
-
-    BASE:ScheduleOnce(Delay, PROFILER.Stop)
-
-  else
-
-    -- Remove hook.
-    debug.sethook()
-
-
-    -- Run time game.
-    local runTimeGame=timer.getTime()-PROFILER.TstartGame
-
-    -- Run time real OS.
-    local runTimeOS=os.clock()-PROFILER.TstartOS
-
-    -- Show info.
-    PROFILER.showInfo(runTimeGame, runTimeOS)
-
-  end
-
-end
-
---- Event handler.
-function PROFILER.eventHandler:onEvent( event )
-  if event.id == world.event.S_EVENT_MISSION_END then
-    PROFILER.Stop()
-  end
-end
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Hook
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
---- Debug hook.
--- @param #table event Event.
-function PROFILER.hook(event)
-
-  local f=debug.getinfo(2, "f").func
-
-  if event=='call' then
-
-    if PROFILER.Counters[f]==nil then
-
-      PROFILER.Counters[f]=1
-      PROFILER.dInfo[f]=debug.getinfo(2,"Sn")
-
-      if PROFILER.fTimeTotal[f]==nil then
-        PROFILER.fTimeTotal[f]=0
+  if Delay==nil then Delay=0 end
+  if not PROFILER._NonNegative(Delay) then return PROFILER._Error("stop delay must be finite non-negative seconds") end
+  if not PROFILER.Active and not PROFILER._StartTimer then return false,"not_running" end
+  if Delay>0 then
+    if not PROFILER.Active then return false,"not_running" end
+    local generation=PROFILER._Generation
+    return PROFILER._Schedule("_StopTimer",Delay,function()
+      if generation==PROFILER._Generation then
+        PROFILER._StopTimer=nil
+        PROFILER.Stop()
       end
-
-    else
-      PROFILER.Counters[f] = PROFILER.Counters[f] + 1
-    end
-
-    if PROFILER.fTime[f]==nil then
-      PROFILER.fTime[f]=os.clock()
-    end
-
-  elseif (event=='return') then
-
-    if PROFILER.fTime[f]~=nil then
-      PROFILER.fTimeTotal[f]=PROFILER.fTimeTotal[f]+(os.clock()-PROFILER.fTime[f])
-      PROFILER.fTime[f]=nil
-    end
-
+    end)
   end
+  if PROFILER.Active and PROFILER._Thread==nil and coroutine.running()~=nil then
+    return PROFILER._Error("stop a Lua 5.1 main-thread measurement on the main thread")
+  end
+  local active=PROFILER.Active
+  PROFILER.Active=false
+  local now=active and os.clock() or nil
+  local gameNow=active and timer.getTime() or nil
+  PROFILER._Generation=PROFILER._Generation+1
+  PROFILER._CancelTimer("_StartTimer")
+  PROFILER._CancelTimer("_StopTimer")
+  PROFILER._RemoveHandler()
+  if not active then return true end
+  if PROFILER._GetHook()==PROFILER.hook then
+    local previous=PROFILER._PreviousHook
+    PROFILER._SetHook(previous.hook,previous.mask,previous.count)
+  end
+  while #PROFILER._Stack>0 do PROFILER._FinishFrame(now) end
+  return PROFILER.showInfo(math.max(0,gameNow-PROFILER.TstartGame),math.max(0,now-PROFILER.TstartOS))
+
+end
+
+--- Stop or cancel on mission end.
+-- @param #table self Event handler.
+-- @param #table Event DCS event.
+-- @return #nil No return value.
+function PROFILER.eventHandler:onEvent(Event)
+
+  if Event.id==world.event.S_EVENT_MISSION_END then PROFILER.Stop() end
 
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Data
+-- Measurement stack
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Get data.
--- @param #function func Function.
--- @return #string Function name.
--- @return #string Source file name.
--- @return #string Line number.
--- @return #number Function time in seconds.
-function PROFILER.getData( func )
+--- Close the top frame and charge its inclusive time to its parent.
+-- @param #number Now CPU timestamp.
+-- @return #nil No return value.
+function PROFILER._FinishFrame(Now)
 
-  local n=PROFILER.dInfo[func]
-
-  if n.what=="C" then
-    return n.name, "?", "?", PROFILER.fTimeTotal[func]
+  local stack=PROFILER._Stack
+  local frame=stack[#stack]
+  stack[#stack]=nil
+  local elapsed=math.max(0,Now-frame.start)
+  if not frame.ignored then
+    local f=frame.func
+    PROFILER.fTimeTotal[f]=PROFILER.fTimeTotal[f]+elapsed
+    PROFILER.fTimeSelf[f]=PROFILER.fTimeSelf[f]+math.max(0,elapsed-frame.children)
   end
+  local parent=stack[#stack]
+  if parent then parent.children=parent.children+elapsed end
 
-  return n.name, n.short_src, n.linedefined, PROFILER.fTimeTotal[func]
 end
 
---- Write text to log file.
--- @param #function f The file.
--- @param #string txt The text.
-function PROFILER._flog( f, txt )
-  f:write( txt .. "\r\n" )
-end
+--- Handle calls, returns, recursion, tail calls and error unwinding.
+-- Depth includes Lua 5.1 synthetic tail frames; newer tail calls keep logical parents at the same depth.
+-- @param #string Event Debug hook event.
+-- @return #nil No return value.
+function PROFILER.hook(Event)
 
---- Show table.
--- @param #table data Data table.
--- @param #function f The file.
--- @param #number runTimeGame Game run time in seconds.
-function PROFILER.showTable( data, f, runTimeGame )
-
-  -- Loop over data.
-  for i=1, #data do
-    local t=data[i] --#PROFILER.Data
-
-    -- Calls per second.
-    local cps=t.count/runTimeGame
-
-    local threshCPS=cps>=PROFILER.ThreshCPS
-    local threshTot=t.tm>=PROFILER.ThreshTtot
-
-    if threshCPS and threshTot then
-
-      -- Output
-      local text=string.format("%30s: %8d calls %8.1f/sec - Time Total %8.3f sec (%.3f %%) %5.3f sec/call  %s line %s", t.func, t.count, cps, t.tm, t.tm/runTimeGame*100, t.tm/t.count, tostring(t.src), tostring(t.line))
-      PROFILER._flog(f, text)
-
+  if not PROFILER.Active or coroutine.running()~=PROFILER._Thread then return end
+  local now=os.clock()
+  local info=debug.getinfo(2,"f")
+  if not info then return end
+  local depth=1
+  while debug.getinfo(depth+2,"f") do depth=depth+1 end
+  local stack=PROFILER._Stack
+  local returning=Event=="return" or Event=="tail return"
+  if Event=="call" or Event=="tail call" or returning then
+    while #stack>0 and (stack[#stack].depth>depth
+      or (stack[#stack].depth==depth and Event~="tail call")) do
+      PROFILER._FinishFrame(now)
     end
-  end
-
-end
-
---- Print csv file.
--- @param #table data Data table.
--- @param #number runTimeGame Game run time in seconds.
-function PROFILER.printCSV( data, runTimeGame )
-
-  -- Output file.
-  local file = PROFILER.getfilename( "csv" )
-  local g = io.open( file, 'w' )
-
-  -- Header.
-  local text="Function,Total Calls,Calls per Sec,Total Time,Total in %,Sec per Call,Source File;Line Number,"
-  g:write(text.."\r\n")
-
-  -- Loop over data.
-  for i=1, #data do
-    local t=data[i] --#PROFILER.Data
-
-    -- Calls per second.
-    local cps = t.count / runTimeGame
-
-    -- Output
-    local txt=string.format("%s,%d,%.1f,%.3f,%.3f,%.3f,%s,%s,", t.func, t.count, cps, t.tm, t.tm/runTimeGame*100, t.tm/t.count, tostring(t.src), tostring(t.line))
-    g:write(txt.."\r\n")
-
-  end
-
-  -- Close file.
-  g:close()
-end
-
---- Write info to output file.
--- @param #string ext Extension.
--- @return #string File name.
-function PROFILER.getfilename(ext)
-
-  local dir=lfs.writedir()..[[Logs\]]
-
-  ext=ext or PROFILER.fileNameSuffix
-
-  local file=dir..PROFILER.fileNamePrefix.."."..ext
-
-  if not UTILS.FileExists(file) then
-    return file
-  end
-
-  for i = 1, 999 do
-
-    local file = string.format( "%s%s-%03d.%s", dir, PROFILER.fileNamePrefix, i, ext )
-
-    if not UTILS.FileExists( file ) then
-      return file
-    end
-
-  end
-
-end
-
---- Write info to output file.
--- @param #number runTimeGame Game time in seconds.
--- @param #number runTimeOS OS time in seconds.
-function PROFILER.showInfo( runTimeGame, runTimeOS )
-
-  -- Output file.
-  local file=PROFILER.getfilename(PROFILER.fileNameSuffix)
-  local f=io.open(file, 'w')
-
-  -- Gather data.
-  local Ttot=0
-  local Calls=0
-
-  local t={}
-
-  local tcopy=nil --#PROFILER.Data
-  local tserialize=nil --#PROFILER.Data
-  local tforgen=nil --#PROFILER.Data
-  local tpairs=nil --#PROFILER.Data
-
-
-  for func, count in pairs(PROFILER.Counters) do
-
-    local s,src,line,tm=PROFILER.getData(func)
-
-    if PROFILER.logUnknown==true then
-      if s==nil then s="<Unknown>" end
-    end
-
-    if s~=nil then
-
-      -- Profile data.
-      local T=
-      { func=s,
-        src=src,
-        line=line,
-        count=count,
-        tm=tm,
-      } --#PROFILER.Data
-
-      -- Collect special cases. Somehow, e.g. "_copy" appears multiple times so we try to gather all data.
-      if s == "_copy" then
-        if tcopy == nil then
-          tcopy = T
-        else
-          tcopy.count = tcopy.count + T.count
-          tcopy.tm = tcopy.tm + T.tm
+    if not returning and info.func then
+      local f=info.func
+      local ignored=PROFILER._OwnFunctions[f]
+      if not ignored then
+        PROFILER.Counters[f]=(PROFILER.Counters[f] or 0)+1
+        if not PROFILER.dInfo[f] or not PROFILER.dInfo[f].name then
+          PROFILER.dInfo[f]=debug.getinfo(2,"nS")
         end
-      elseif s == "_Serialize" then
-        if tserialize == nil then
-          tserialize = T
-        else
-          tserialize.count=tserialize.count+T.count
-          tserialize.tm=tserialize.tm+T.tm
-        end
-      elseif s=="(for generator)" then
-        if tforgen==nil then
-          tforgen=T
-        else
-          tforgen.count=tforgen.count+T.count
-          tforgen.tm=tforgen.tm+T.tm
-        end
-      elseif s=="pairs" then
-        if tpairs==nil then
-          tpairs=T
-        else
-          tpairs.count=tpairs.count+T.count
-          tpairs.tm=tpairs.tm+T.tm
-        end
-      else
-        table.insert( t, T )
+        PROFILER.fTimeTotal[f]=PROFILER.fTimeTotal[f] or 0
+        PROFILER.fTimeSelf[f]=PROFILER.fTimeSelf[f] or 0
       end
-
-      -- Total function time.
-      Ttot=Ttot+tm
-
-      -- Total number of calls.
-      Calls=Calls+count
-
+      stack[#stack+1]={func=f,depth=depth,start=now,children=0,ignored=ignored}
     end
-
   end
 
-  -- Add special cases.
-  if tcopy then
-    table.insert( t, tcopy )
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Reports
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Read metadata and CPU totals.
+-- @param #function Func Measured function.
+-- @return #string Debug name or nil.
+-- @return #string Source or C marker.
+-- @return #number Definition line or -1.
+-- @return #number Inclusive CPU seconds.
+-- @return #number Self CPU seconds.
+function PROFILER.getData(Func)
+
+  local info=PROFILER.dInfo[Func] or {}
+  return info.name,info.what=="C" and "[C]" or (info.short_src or "?"),info.linedefined or -1,
+    PROFILER.fTimeTotal[Func] or 0,PROFILER.fTimeSelf[Func] or 0
+
+end
+
+--- Build a filtered dataset shared by text and CSV.
+-- @param #number GameSeconds Simulation duration.
+-- @param #number CPUSeconds CPU duration.
+-- @return #PROFILER.Report Measurement snapshot.
+function PROFILER._BuildReport(GameSeconds, CPUSeconds)
+
+  local report={RuntimeGame=GameSeconds,RuntimeCPU=CPUSeconds,Calls=0,SelfCPU=0,Functions={},Errors={}}
+  for func,count in pairs(PROFILER.Counters) do
+    local name,source,line,total,own=PROFILER.getData(func)
+    report.Calls=report.Calls+count
+    report.SelfCPU=report.SelfCPU+own
+    local cps=GameSeconds>0 and count/GameSeconds or 0
+    if (name or PROFILER.logUnknown) and cps>=PROFILER.ThreshCPS and total>=PROFILER.ThreshTtot then
+      report.Functions[#report.Functions+1]={func=name or "<Unknown>",src=source,line=line,count=count,tm=total,self=own,
+        cps=cps,percent=CPUSeconds>0 and own/CPUSeconds*100 or 0,average=count>0 and total/count or 0}
+    end
   end
-  if tserialize then
-    table.insert(t, tserialize)
+  return report
+
+end
+
+--- Find an unused paired text/CSV basename.
+-- @return #string Text path, or nil when all names are occupied.
+-- @return #string CSV path, or failure explanation.
+function PROFILER._ReportPaths()
+
+  if type(PROFILER.fileNameSuffix)~="string" or PROFILER.fileNameSuffix=="" or PROFILER.fileNameSuffix:lower()=="csv" then
+    return nil,"text extension must differ from csv"
   end
-  if tforgen then
-    table.insert( t, tforgen )
+  local directory=lfs.writedir().."Logs/"
+  for index=0,999 do
+    local base=directory..PROFILER.fileNamePrefix..(index==0 and "" or string.format("-%03d",index))
+    local text,csv=base.."."..PROFILER.fileNameSuffix,base..".csv"
+    if not UTILS.FileExists(text) and not UTILS.FileExists(csv) then return text,csv end
   end
-  if tpairs then
-    table.insert(t, tpairs)
+  return nil,"all profiler report names are occupied"
+
+end
+
+--- Accept DCS file operations without return values while preserving explicit error results.
+-- @param ... File operation results: no values means success; explicit nil/false means failure.
+-- @return #nil No return value; raises an error for an explicit failure result.
+function PROFILER._CheckFileResult(...)
+
+  if select("#",...)>0 then
+    local result,message=...
+    if not result then error(message or "file operation failed") end
   end
 
-  env.info('############################   Profiler Stopped   ############################')
-  env.info(string.format("* Runtime Game     : %s = %d sec", UTILS.SecondsToClock(runTimeGame, true), runTimeGame))
-  env.info(string.format("* Runtime Real     : %s = %d sec", UTILS.SecondsToClock(runTimeOS, true), runTimeOS))
-  env.info(string.format("* Function time    : %s = %.1f sec (%.1f percent of runtime game)", UTILS.SecondsToClock(Ttot, true), Ttot, Ttot/runTimeGame*100))
-  env.info(string.format("* Total functions  : %d", #t))
-  env.info(string.format("* Total func calls : %d", Calls))
-  env.info(string.format("* Writing to file  : \"%s\"", file))
-  env.info(string.format("* Writing to file  : \"%s\"", PROFILER.getfilename("csv")))
-  env.info("##############################################################################")
+end
 
-  -- Sort by total time.
-  table.sort(t, function(a,b) return a.tm>b.tm end)
+--- Write a line or propagate a disk error to the protected writer.
+-- @param #table File Open file.
+-- @param #string Text Line without newline.
+-- @return #nil No return value.
+function PROFILER._flog(File, Text)
 
-  -- Write data.
-  PROFILER._flog(f,"")
-  PROFILER._flog(f,"************************************************************************************************************************")
-  PROFILER._flog(f,"************************************************************************************************************************")
-  PROFILER._flog(f,"************************************************************************************************************************")
-  PROFILER._flog(f,"")
-  PROFILER._flog(f,"-------------------------")
-  PROFILER._flog(f,"---- Profiler Report ----")
-  PROFILER._flog(f,"-------------------------")
-  PROFILER._flog(f,"")
-  PROFILER._flog(f,string.format("* Runtime Game     : %s = %.1f sec", UTILS.SecondsToClock(runTimeGame, true), runTimeGame))
-  PROFILER._flog(f,string.format("* Runtime Real     : %s = %.1f sec", UTILS.SecondsToClock(runTimeOS, true), runTimeOS))
-  PROFILER._flog(f,string.format("* Function time    : %s = %.1f sec (%.1f %% of runtime game)", UTILS.SecondsToClock(Ttot, true), Ttot, Ttot/runTimeGame*100))
-  PROFILER._flog(f,"")
-  PROFILER._flog(f,string.format("* Total functions  = %d", #t))
-  PROFILER._flog(f,string.format("* Total func calls = %d", Calls))
-  PROFILER._flog(f,"")
-  PROFILER._flog(f,string.format("* Calls per second threshold = %.3f/sec", PROFILER.ThreshCPS))
-  PROFILER._flog(f,string.format("* Total func time threshold  = %.3f sec", PROFILER.ThreshTtot))
-  PROFILER._flog(f,"")
-  PROFILER._flog(f,"************************************************************************************************************************")
-  PROFILER._flog(f,"")
-  PROFILER.showTable(t, f, runTimeGame)
+  PROFILER._CheckFileResult(File:write(Text.."\r\n"))
 
-  -- Sort by number of calls.
-  table.sort(t, function(a,b) return a.tm/a.count>b.tm/b.count end)
+end
 
-  -- Detailed data.
-  PROFILER._flog(f,"")
-  PROFILER._flog(f,"************************************************************************************************************************")
-  PROFILER._flog(f,"")
-  PROFILER._flog(f,"--------------------------------------")
-  PROFILER._flog(f,"---- Data Sorted by Time per Call ----")
-  PROFILER._flog(f,"--------------------------------------")
-  PROFILER._flog(f,"")
-  PROFILER.showTable(t, f, runTimeGame)
+--- Open, write and close a report, including cleanup after writer errors.
+-- @param #string Path Output path.
+-- @param #function Writer Function accepting the handle.
+-- @return #boolean Whether writing and closing succeeded.
+-- @return #string Failure explanation, or nil.
+function PROFILER._WriteFile(Path, Writer)
 
-  -- Sort by number of calls.
-  table.sort(t, function(a,b) return a.count>b.count end)
+  local opened,file,message=pcall(io.open,Path,"w")
+  if not opened then return false,tostring(file) end
+  if not file then return false,tostring(message) end
+  local ok,err=pcall(Writer,file)
+  local closed,closeError=pcall(function()
+    PROFILER._CheckFileResult(file:close())
+  end)
+  if not ok then return false,tostring(err) end
+  if not closed then return false,tostring(closeError) end
+  return true
 
-  -- Detailed data.
-  PROFILER._flog(f,"")
-  PROFILER._flog(f,"************************************************************************************************************************")
-  PROFILER._flog(f,"")
-  PROFILER._flog(f,"------------------------------------")
-  PROFILER._flog(f,"---- Data Sorted by Total Calls ----")
-  PROFILER._flog(f,"------------------------------------")
-  PROFILER._flog(f,"")
-  PROFILER.showTable(t, f, runTimeGame)
+end
 
-  -- Closing.
-  PROFILER._flog( f, "" )
-  PROFILER._flog( f, "************************************************************************************************************************" )
-  PROFILER._flog( f, "************************************************************************************************************************" )
-  PROFILER._flog( f, "************************************************************************************************************************" )
-  -- Close file.
-  f:close()
+--- Escape a CSV field, including quotes, commas and newlines.
+-- @param #string Value Field value; numbers are converted.
+-- @return #string Quoted field.
+function PROFILER._CSVField(Value)
 
-  -- Print csv file.
-  PROFILER.printCSV( t, runTimeGame )
+  return '"'..tostring(Value):gsub('"','""')..'"'
+
+end
+
+--- Sort rows with a source/name fallback for equal values.
+-- @param #table Data PROFILER.Data rows, sorted in place.
+-- @param #string Key Numeric field, descending.
+-- @return #nil No return value.
+function PROFILER._Sort(Data, Key)
+
+  table.sort(Data,function(a,b)
+    if a[Key]~=b[Key] then return a[Key]>b[Key] end
+    return a.src..":"..tostring(a.line)..":"..a.func<b.src..":"..tostring(b.line)..":"..b.func
+  end)
+
+end
+
+--- Write filtered function statistics.
+-- @param #table Data PROFILER.Data rows.
+-- @param #table File Open text file.
+-- @return #nil No return value.
+function PROFILER.showTable(Data, File)
+
+  for _,row in ipairs(Data) do
+    PROFILER._flog(File,string.format("%30s: %d calls, %.3f/game sec | inclusive %.6f CPU sec | self %.6f CPU sec (%.3f%% CPU) | %.6f inclusive sec/call | %s line %s",
+      row.func,row.count,row.cps,row.tm,row.self,row.percent,row.average,row.src,tostring(row.line)))
+  end
+
+end
+
+--- Write the shared filtered dataset as CSV.
+-- @param #table Data PROFILER.Data rows.
+-- @param #string Path Output path.
+-- @return #boolean Whether writing succeeded.
+-- @return #string Failure explanation, or nil.
+function PROFILER.printCSV(Data, Path)
+
+  return PROFILER._WriteFile(Path,function(file)
+    PROFILER._flog(file,"Function,Total Calls,Calls per Game Sec,Inclusive CPU Seconds,Self CPU Seconds,Self CPU Percent,Inclusive Seconds per Call,Source File,Line Number")
+    for _,row in ipairs(Data) do
+      local fields={row.func,row.count,string.format("%.6f",row.cps),string.format("%.6f",row.tm),
+        string.format("%.6f",row.self),string.format("%.6f",row.percent),string.format("%.6f",row.average),row.src,row.line}
+      for i,value in ipairs(fields) do fields[i]=PROFILER._CSVField(value) end
+      PROFILER._flog(file,table.concat(fields,","))
+    end
+  end)
+
+end
+
+--- Write both reports while retaining data and collecting output errors.
+-- @param #number GameSeconds Simulation duration.
+-- @param #number CPUSeconds CPU duration.
+-- @return #boolean Whether both files were written.
+-- @return #PROFILER.Report Completed report, also saved as LastReport.
+function PROFILER.showInfo(GameSeconds, CPUSeconds)
+
+  local report=PROFILER._BuildReport(GameSeconds,CPUSeconds)
+  PROFILER.LastReport=report
+  local function failure(message)
+    report.Errors[#report.Errors+1]=tostring(message)
+    PROFILER._Error(tostring(message))
+  end
+  local ok,text,csv=pcall(PROFILER._ReportPaths)
+  if not ok then failure(text) return false,report end
+  if not text then failure(csv) return false,report end
+  local data=report.Functions
+  local written,err=PROFILER._WriteFile(text,function(file)
+    PROFILER._flog(file,"---- Profiler Report ----")
+    PROFILER._flog(file,string.format("Runtime: %.6f simulation sec, %.6f process CPU sec",GameSeconds,CPUSeconds))
+    PROFILER._flog(file,string.format("Observed calls: %d; self CPU: %.6f sec; displayed functions: %d",report.Calls,report.SelfCPU,#data))
+    PROFILER._flog(file,"Inclusive times overlap. Self CPU percentages use process CPU duration. Open frames are clipped at stop.")
+    PROFILER._flog(file,string.format("Filters: >= %.6f calls/game sec and >= %.6f inclusive CPU sec",PROFILER.ThreshCPS,PROFILER.ThreshTtot))
+    for _,section in ipairs({{"tm","Inclusive CPU time"},{"self","Self CPU time"},{"average","Inclusive CPU time per call"},{"count","Call count"}}) do
+      PROFILER._Sort(data,section[1])
+      PROFILER._flog(file,"\r\n---- "..section[2].." ----")
+      PROFILER.showTable(data,file)
+    end
+  end)
+  if written then report.TextFile=text else failure(text..": "..tostring(err)) end
+  PROFILER._Sort(data,"tm")
+  written,err=PROFILER.printCSV(data,csv)
+  if written then report.CSVFile=csv else failure(csv..": "..tostring(err)) end
+  env.info(string.format("PROFILER: stopped after %.6f CPU sec / %.6f simulation sec; %d calls, %d displayed functions",CPUSeconds,GameSeconds,report.Calls,#data))
+  return #report.Errors==0,report
+
 end

@@ -2251,7 +2251,7 @@ test("manual rectangular expansion rejects over-budget and shrinking dimensions 
   equal(pcall(function() a:ExpandGrid(1000,0) end),false)
   local b=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(0))
   b:SetGridOptions({Width=300000,Margin=150000,Spacing=100000}):CreateGrid()
-  equal(b:GetGridOptions().Expansion.MaxWidth,300000) equal(b:GetGridOptions().Expansion.MaxMargin,150000)
+  equal(b:GetGridOptions().Expansion.MaxWidth,nil) equal(b:GetGridOptions().Expansion.MaxMargin,nil)
 end)
 
 test("rectangular expansion leaves debug snapshots fixed and explicit redraw highlights the path", function()

@@ -75,7 +75,7 @@
 --     astar:SetValidSurfaceTypes({land.SurfaceType.WATER, land.SurfaceType.SHALLOW_WATER})
 --     astar:SetGridOptions({
 --       Width = 40000, Margin = 10000, Spacing = 2000, MaxCells = 5000,
---       Expansion = {GrowthFactor = 1.5, MaxAttempts = 5, MaxWidth = 200000, MaxMargin = 100000}
+--       Expansion = {GrowthFactor = 1.5, MaxAttempts = 5}
 --     })
 --     local grid, reason = astar:CreateHexGrid()
 --     if not grid then
@@ -97,10 +97,15 @@
 -- # Shared GRID
 --
 -- Grid builders, topology, expansion and rendering are implemented by Core.Grid. The methods below remain forwarding conveniences.
--- Standalone grids use SetOptions(), GetOptions(), CreateRectangle(), CreateHexagon() and the corresponding FromZone builders.
+-- Standalone grids select geometry with GRID:New(Name, GridType), then use SetOptions(), GetOptions(), CreateFromBounds() and CreateFromZone().
+-- Automatic spacing is available through SetGridOptions({Resolution=GRID.Resolution.NORMAL, ...}); omit Spacing and CrossSpacing.
+-- Alternatively call GetGrid():SetResolution(Level) before creation. GetGrid():GetResolutionInfo() reports the calculated spacing.
+-- GetGrid():SetCorridor(GRID.Width.NORMAL, GRID.Margin.NORMAL) selects relative initial corridor dimensions.
+-- The same presets are accepted as Width and Margin in SetGridOptions(); zone builders ignore them.
 -- ASTAR keeps SetGridOptions() and CreateGrid()/CreateHexGrid() as convenience methods that supply the search endpoints.
 -- Use ExpandGrid() for either geometry; SetGridNeighboursOnly() is the single switch for local search candidates.
 -- GetGrid() returns the owned grid, even before construction. SetGrid(grid) attaches a built GRID to an unused ASTAR and enables local neighbours.
+-- Before construction the owned grid defaults to rectangle; a hex convenience builder replaces that empty grid, preserving its configuration.
 -- Set start/end coordinates on each search separately; they do not change the shared grid frame. A node.cell refers to its immutable grid cell.
 -- Expansion/options are shared, but nodes, endpoints, connection/cost caches, component labels and ASTAR overlays are per search object.
 -- Public searches and drawing calls synchronize new cells and invalidate topology when the grid version changes. Existing pair caches are retained.
@@ -179,10 +184,11 @@
 -- Expanding search performs that check internally; do not abort first just because the initial grid is disconnected.
 --
 -- Expansion.GrowthFactor defaults to 1.5; Expansion.MaxAttempts defaults to 5 and includes the initial attempt.
--- Expansion.MaxWidth defaults to max(current width,200000); Expansion.MaxMargin defaults to max(current margin,100000).
+-- Expansion.MaxWidth and Expansion.MaxMargin are optional meter limits; omitted values impose no spatial cap on that dimension.
 -- Explicit dimension caps must be at least the existing dimensions when searching. They and MaxCells are independent: whichever prevents growth stops it.
 -- Width grows by at least two transverse spacings (CrossSpacing for rectangles, Spacing for hex grids); margin grows by at least one Spacing.
 -- Dimension caps apply to both increments. Zero initial dimensions can therefore grow.
+-- Growth beyond finite numeric dimensions stops with size_limit, even when no explicit dimension caps are set.
 -- If the requested step exceeds MaxCells, the search finds a smaller step without terrain sampling, then uses remaining room on either axis.
 -- The discrete lattice may leave some budget unused. No cell is sampled beyond MaxCells. A fitted step consumes one normal search attempt.
 -- Previously accepted and rejected cells are retained without resampling; the first real enlargement of a zone seed fills unsampled holes as well.
@@ -194,7 +200,7 @@
 -- * Attempts: ordered entries with Width, Margin, Nodes, Failure and CPUSeconds.
 -- * StopReason: path_found, attempt_limit, size_limit, cell_limit or missing_coordinates.
 -- * Width, Margin, Nodes, CandidateCells: final dimensions, accepted node count and budgeted candidate-cell count.
--- * MaxCells, MaxWidth, MaxMargin: effective limits for this search.
+-- * MaxCells, MaxWidth, MaxMargin: effective limits for this search; omitted dimension limits remain nil in the report.
 -- * BudgetLimited: true if a smaller growth step was fitted to the cell budget.
 -- * SearchCPUSeconds: total search and enlargement CPU time, if a CPU clock is available.
 -- Manual nodes and exact endpoints do not consume MaxCells, so accepted Nodes can exceed CandidateCells.
@@ -262,8 +268,8 @@ ASTAR.INF=1/0
 -- @type ASTAR.ExpansionOptions
 -- @field #number GrowthFactor Finite multiplier greater than 1, default 1.5.
 -- @field #number MaxAttempts Positive integer search limit including the first attempt, default 5.
--- @field #number MaxWidth Maximum width, default max(current width,200000).
--- @field #number MaxMargin Maximum margin at each end, default max(current margin,100000).
+-- @field #number MaxWidth Optional maximum width in meters; nil means no width limit.
+-- @field #number MaxMargin Optional maximum margin at each end in meters; nil means no margin limit.
 
 --- Node text-marker configuration.
 -- @type ASTAR.MarkGridOptions
@@ -315,7 +321,7 @@ function ASTAR:New()
 
   self.lid="ASTAR | "
   self.nodes={} self.counter=1 self.Nnodes=0
-  self.Grid=GRID:New()
+  self.Grid=GRID:New("ASTAR", GRID.Type.RECTANGLE)
   self._GridRevision=-1 self._CellNodes={} self._CellCursor=0
   self._NodeOwner={}
 
@@ -898,8 +904,8 @@ function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode, ...)
   local maxCells=options.MaxCells
   local maxWidth=options.Expansion.MaxWidth
   local maxMargin=options.Expansion.MaxMargin
-  assert(maxWidth>=grid.boxHY, "ASTAR: MaxWidth must be at least the current width")
-  assert(maxMargin>=grid.spaceX, "ASTAR: MaxMargin must be at least the current margin")
+  assert(maxWidth==nil or maxWidth>=grid.boxHY, "ASTAR: MaxWidth must be at least the current width")
+  assert(maxMargin==nil or maxMargin>=grid.spaceX, "ASTAR: MaxMargin must be at least the current margin")
 
   self.LastPathFailure=nil
   local searchClock=startCPUClock()
@@ -934,8 +940,11 @@ function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode, ...)
     if self.LastPathFailure=="missing_coordinates" then return finish(nil, "missing_coordinates") end
     if attempt==maxAttempts then return finish(nil, "attempt_limit") end
 
-    local width=math.min(maxWidth, math.max(grid.boxHY*factor, grid.boxHY+2*(grid.crossSpacing or grid.spacing)))
-    local margin=math.min(maxMargin, math.max(grid.spaceX*factor, grid.spaceX+grid.spacing))
+    local width=math.max(grid.boxHY*factor, grid.boxHY+2*(grid.crossSpacing or grid.spacing))
+    local margin=math.max(grid.spaceX*factor, grid.spaceX+grid.spacing)
+    if maxWidth then width=math.min(maxWidth,width) end
+    if maxMargin then margin=math.min(maxMargin,margin) end
+    if width==math.huge or margin==math.huge then return finish(nil,"size_limit") end
     if width==grid.boxHY and margin==grid.spaceX then return finish(nil, "size_limit") end
     local expanded, stopReason, limited=self.Grid:ExpandGrid(width,margin,true)
     if not expanded then return finish(nil,stopReason) end
@@ -1399,19 +1408,30 @@ end
 -- @return #string cell_limit on budget rejection; nil on success.
 function ASTAR:_CreateGrid(Kind, Zone)
   assert(not self.Grid.GridBuilt,"ASTAR: a grid already exists; use a new grid")
-  if Kind=="CreateHexGrid" or Kind=="CreateHexGridFromZone" then
+  local hex=Kind=="CreateHexGrid" or Kind=="CreateHexGridFromZone"
+  if hex then
     assert(next(self.nodes)==nil,"ASTAR: create a hex grid on an empty ASTAR object")
   end
-  if self.startVector or self.endVector or not Zone then
-    self.Grid:SetBounds(self.startVector,self.endVector)
+  local grid=self.Grid
+  local gridType=hex and GRID.Type.HEXAGON or GRID.Type.RECTANGLE
+  if grid:GetType()~=gridType then
+    assert(next(self.nodes)==nil,"ASTAR: select grid geometry before adding manual nodes")
+    -- Copy configured options without turning resolved defaults into explicit settings.
+    grid=GRID:New(grid:GetName(),gridType):SetOptions(grid.GridOptions)
+    grid:SetValidSurfaceTypes(self.Grid.ValidSurfaceTypes)
+    if self.Grid.startVector and self.Grid.endVector then
+      grid:SetBounds(self.Grid.startVector,self.Grid.endVector)
+    end
   end
-  local builders={CreateGrid="CreateRectangle",CreateHexGrid="CreateHexagon",
-    CreateGridFromZone="CreateRectangleFromZone",CreateHexGridFromZone="CreateHexagonFromZone"}
-  local method=builders[Kind]
   local built,reason
   if Zone~=nil or Kind=="CreateGridFromZone" or Kind=="CreateHexGridFromZone" then
-    built,reason=self.Grid[method](self.Grid,Zone)
-  else built,reason=self.Grid[method](self.Grid) end
+    if self.startVector or self.endVector then grid:SetBounds(self.startVector,self.endVector) end
+    built,reason=grid:CreateFromZone(Zone)
+  else built,reason=grid:CreateFromBounds(self.startVector,self.endVector) end
+  if built and grid~=self.Grid then
+    self.Grid=grid
+    self._GridRevision=-1
+  end
   self:_SyncGrid()
   if not built then return nil,reason end
   return self

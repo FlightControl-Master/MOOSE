@@ -17,6 +17,7 @@
 -- @type GRID
 -- @field #string ClassName Class name.
 -- @field #string name Grid name.
+-- @field #string GridType Fixed geometry type selected in the constructor; do not modify.
 -- @field #table cells Cells indexed by stable cell ID.
 -- @field #number CellCount Number of accepted geometric cells.
 -- @field #table GridDrawCellIDs Polygon mark IDs indexed by cell ID.
@@ -36,10 +37,10 @@
 --
 -- # Usage
 --
---     local grid = GRID:New("Sea")
+--     local grid = GRID:New("Sea", GRID.Type.RECTANGLE)
 --     grid:SetOptions({Spacing=2000, MaxCells=5000, Diagonals=true})
 --     grid:SetValidSurfaceTypes(land.SurfaceType.WATER)
---     local built, reason = grid:CreateRectangleFromZone(searchZone)
+--     local built, reason = grid:CreateFromZone(searchZone)
 --     if built then
 --       local search = ASTAR:New():SetGrid(grid)
 --       search:SetStartCoordinate(start):SetEndCoordinate(goal):SetValidNeighbourLoS(500)
@@ -49,12 +50,62 @@
 --
 -- # Grid Configuration
 --
--- For a corridor, use SetBounds(start, goal) followed by CreateRectangle() or CreateHexagon().
+-- New(Name, GridType) requires a non-empty name and GRID.Type.RECTANGLE or GRID.Type.HEXAGON.
+-- The geometry type is fixed for the lifetime of the object and GetType() exposes it before construction.
+-- For a corridor, use CreateFromBounds(start, goal); for a zone, use CreateFromZone(zone).
+-- SetBounds(start, goal) optionally defines the frame before a zone build.
 -- Zone builders also work without bounds: their frame is centered on the zone bounding box with heading zero.
 -- Options: Width=40000, Margin=10000, Spacing=2000, CrossSpacing=Spacing (rectangles only),
--- Diagonals=true, MaxCells=5000; Expansion={GrowthFactor=1.5, MaxAttempts=5, MaxWidth=200000, MaxMargin=100000}.
+-- Diagonals=true, MaxCells=5000; Expansion={GrowthFactor=1.5, MaxAttempts=5}.
+-- Expansion.MaxWidth and Expansion.MaxMargin are optional meter limits with no defaults.
 -- SetOptions replaces configuration; GetOptions returns a copy. Geometry and surface filters lock after construction.
 -- Diagonals and limits may change afterwards. A successful mutation increments GetVersion(); ASTAR synchronizes before searching.
+--
+-- # Relative Corridor Dimensions
+--
+-- SetCorridor(GRID.Width.NORMAL, GRID.Margin.NORMAL) sizes the initial corridor from horizontal endpoint distance D.
+-- GRID.Margin.SMALL, NORMAL and LARGE set the margin M at each end to 10, 25 and 50 percent of D.
+-- Total length L is D+2*M. GRID.Width.NARROW, NORMAL and WIDE set the total width to 25, 50 and 100 percent of L.
+-- The corridor follows the endpoint connection line, with half its width on each side.
+-- For D=40000 meters, both NORMAL presets produce M=10000, L=60000 and a width of 30000 meters.
+--
+--     local grid = GRID:New("Sea", GRID.Type.HEXAGON)
+--     grid:SetCorridor(GRID.Width.NORMAL, GRID.Margin.NORMAL)
+--     grid:SetResolution(GRID.Resolution.NORMAL)
+--     local built, reason = grid:CreateFromBounds(start, goal)
+--     if built then local dimensions = grid:GetDimensions() end -- Width/Margin/Spacing in meters.
+--
+-- Width and Margin in SetOptions() also accept these presets. Each setting may instead be an explicit non-negative meter value.
+-- SetCorridor() changes only these two settings. Without presets the defaults remain Width=40000 and Margin=10000 meters.
+-- Presets need distinct endpoints; coincident endpoints require both dimensions in meters.
+-- Resolution is calculated after the initial dimensions. Explicit cell and expansion limits are never raised to fit a requested grid.
+-- Expansion starts from the computed dimensions and retains spacing; it does not recompute the initial preset proportions.
+-- Zone builders ignore corridor Width/Margin settings and derive their initial dimensions from the zone as before.
+-- GetOptions() preserves preset strings; GetDimensions() exposes the current meter dimensions after construction.
+--
+-- # Automatic Resolution
+--
+-- SetResolution(GRID.Resolution.NORMAL) selects automatic spacing and clears explicit Spacing/CrossSpacing.
+-- COARSE uses the shorter positive initial extent / 10, NORMAL / 20 and FINE / 40.
+-- Corridors use start-goal distance plus both margins and the configured width; zones use their projected bounding box.
+-- Both grid types use the same center spacing in meters. Automatic rectangular cells are squares.
+-- A zero-width line uses the remaining length; a point requires manual spacing. Altitude is ignored.
+-- These are relative detail levels, not target cell counts or guarantees that narrow passages are represented.
+-- MaxCells is checked before terrain/zone filtering and is never raised; an oversized build returns nil, "cell_limit".
+-- Expansion retains the calculated spacing. Changing resolution or switching spacing mode requires a new grid after construction.
+--
+--     local grid = GRID:New("Sea", GRID.Type.HEXAGON)
+--     grid:SetOptions({MaxCells=5000})
+--     grid:SetResolution(GRID.Resolution.NORMAL)
+--     grid:SetValidSurfaceTypes(land.SurfaceType.WATER)
+--     local built, reason = grid:CreateFromZone(searchZone)
+--     local info = grid:GetResolutionInfo() -- Spacing, ReferenceLength, Status, MaxCells; CandidateCount after success.
+--
+-- SetOptions({Resolution=GRID.Resolution.FINE, ...}) is also supported; explicit Spacing/CrossSpacing cannot be combined with it.
+-- GetOptions() preserves this configuration with nil Spacing in automatic mode, so its copy can be passed back to SetOptions().
+-- GetResolutionInfo() reports the calculated spacing after a build attempt; GetDimensions() also exposes spacing after success.
+-- SetResolution(nil) restores manual mode with default spacing before construction; SetOptions() can select any explicit spacing.
+-- Without a preset or explicit spacing, the existing 2000-meter default applies.
 --
 -- # Shared Grids and Cell Access
 --
@@ -95,16 +146,44 @@ GRID = {
   ClassName = "GRID"
 }
 
+--- Supported fixed grid geometries.
+-- @type GRID.Type
+-- @field #string RECTANGLE Rectangular cells, including squares.
+-- @field #string HEXAGON Regular hexagonal cells.
+GRID.Type={RECTANGLE="rectangular", HEXAGON="hexagonal"}
+
+--- Relative spacing presets based on the shorter positive initial extent.
+-- @type GRID.Resolution
+-- @field #string COARSE Ten center-to-center intervals across the reference extent.
+-- @field #string NORMAL Twenty center-to-center intervals across the reference extent.
+-- @field #string FINE Forty center-to-center intervals across the reference extent.
+GRID.Resolution={COARSE="coarse", NORMAL="normal", FINE="fine"}
+
+--- Initial corridor width as a fraction of its total length, including both margins.
+-- @type GRID.Width
+-- @field #string NARROW Total width is 25 percent of corridor length.
+-- @field #string NORMAL Total width is 50 percent of corridor length.
+-- @field #string WIDE Total width is 100 percent of corridor length.
+GRID.Width={NARROW="narrow", NORMAL="normal", WIDE="wide"}
+
+--- Initial margin at each end as a fraction of endpoint distance.
+-- @type GRID.Margin
+-- @field #string SMALL Each margin is 10 percent of endpoint distance.
+-- @field #string NORMAL Each margin is 25 percent of endpoint distance.
+-- @field #string LARGE Each margin is 50 percent of endpoint distance.
+GRID.Margin={SMALL="small", NORMAL="normal", LARGE="large"}
+
 --- GRID class version.
 -- @field #string version
 GRID.version="0.1.0"
 
 --- Grid geometry and resource limits. All fields are optional; distances are meters.
 -- @type GRID.GridOptions
--- @field #number Width Total search width, default 40000. Ignored by zone builders.
--- @field #number Margin Margin before start and after goal, default 10000. Ignored by zone builders.
--- @field #number Spacing Center spacing, default 2000.
+-- @field #number Width Total search width in meters or a GRID.Width preset, default 40000. Ignored by zone builders.
+-- @field #number Margin Margin at each end in meters or a GRID.Margin preset, default 10000. Ignored by zone builders.
+-- @field #number Spacing Manual center spacing, default 2000. Omitted in automatic resolution mode.
 -- @field #number CrossSpacing Rectangular transverse spacing; omitted means Spacing. Rejected for hex grids.
+-- @field #string Resolution Optional GRID.Resolution preset; mutually exclusive with Spacing and CrossSpacing.
 -- @field #boolean Diagonals Allow diagonal neighbours in local rectangular mode, default true. Ignored by hex grids. Can change after creation.
 -- @field #number MaxCells Shared candidate-cell limit before filtering, default 5000. Counts candidate centers before surface and zone filtering.
 -- @field #GRID.ExpansionOptions Expansion Expansion configuration.
@@ -113,8 +192,20 @@ GRID.version="0.1.0"
 -- @type GRID.ExpansionOptions
 -- @field #number GrowthFactor Finite multiplier greater than 1, default 1.5.
 -- @field #number MaxAttempts Positive integer search limit including the first attempt, default 5.
--- @field #number MaxWidth Maximum width, default max(current width,200000).
--- @field #number MaxMargin Maximum margin at each end, default max(current margin,100000).
+-- @field #number MaxWidth Optional maximum width in meters; nil means no width limit.
+-- @field #number MaxMargin Optional maximum margin at each end in meters; nil means no margin limit.
+
+--- Snapshot of manual or automatically calculated spacing.
+-- @type GRID.ResolutionInfo
+-- @field #string Mode manual or automatic.
+-- @field #string Resolution Selected GRID.Resolution preset, or nil in manual mode.
+-- @field #string Status configured, pending, resolved, built or cell_limit.
+-- @field #number Spacing Effective center spacing in meters; nil while automatic calculation is pending.
+-- @field #number CrossSpacing Effective rectangular cross spacing; nil for hexagons or while pending.
+-- @field #number ReferenceLength Shorter positive initial extent in meters; nil for manual spacing.
+-- @field #number Intervals Number of spacings across the reference extent: 10, 20 or 40.
+-- @field #number MaxCells Current candidate-cell budget; never increased by automatic resolution.
+-- @field #number CandidateCount Current candidate count after a successful build, including expansion; nil before construction.
 
 --- Cell text-marker configuration.
 -- @type GRID.MarkGridOptions
@@ -142,14 +233,18 @@ GRID.version="0.1.0"
 -- Constructor
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Create an empty independent grid.
+--- Create an empty independent grid with a name and fixed geometry type.
 -- @param #GRID self
--- @param #string Name Optional name.
+-- @param #string Name Required non-empty grid name.
+-- @param #string GridType Required GRID.Type.RECTANGLE or GRID.Type.HEXAGON.
 -- @return #GRID Grid.
-function GRID:New(Name)
+function GRID:New(Name, GridType)
 
+  assert(type(Name)=="string" and Name:find("%S"), "GRID: a non-empty name is required")
+  assert(GridType==GRID.Type.RECTANGLE or GridType==GRID.Type.HEXAGON, "GRID: a valid GRID.Type is required")
   local self=BASE:Inherit(self, BASE:New())
-  self.name=Name or "Grid"
+  self.name=Name
+  self.GridType=GridType
   self.lid="GRID "..self.name.." | "
   self.cells={}
   self._CellOwner={}
@@ -188,6 +283,7 @@ function GRID:SetBounds(Start, Goal)
   local first, last=self:_PositionVector(Start), self:_PositionVector(Goal)
   self.startVector=first
   self.endVector=last
+  self._ResolutionInfo=nil
   self:_Touch()
   return self
 
@@ -269,11 +365,18 @@ function GRID:_CopyGridOptions(options)
         end
         copy.Expansion[name]=setting
       end
+    elseif key=="Resolution" then
+      assert(value==GRID.Resolution.COARSE or value==GRID.Resolution.NORMAL or value==GRID.Resolution.FINE,
+        "GRID: invalid resolution; use GRID.Resolution.COARSE, NORMAL or FINE")
+      copy[key]=value
     elseif key=="Diagonals" then
       assert(type(value)=="boolean", "GRID: Diagonals must be a boolean")
       copy[key]=value
     elseif key=="Width" or key=="Margin" then
-      assert(type(value)=="number" and value>=0 and value<math.huge, "GRID: "..key.." must be finite and non-negative")
+      local preset=key=="Width" and (value==GRID.Width.NARROW or value==GRID.Width.NORMAL or value==GRID.Width.WIDE)
+        or key=="Margin" and (value==GRID.Margin.SMALL or value==GRID.Margin.NORMAL or value==GRID.Margin.LARGE)
+      assert(preset or (type(value)=="number" and value>=0 and value<math.huge),
+        "GRID: "..key.." must be finite and non-negative meters or a valid GRID."..key.." preset")
       copy[key]=value
     elseif key=="Spacing" or key=="CrossSpacing" then
       assert(type(value)=="number" and value>0 and value<math.huge, "GRID: "..key.." must be finite and positive")
@@ -285,6 +388,8 @@ function GRID:_CopyGridOptions(options)
       error("GRID: unknown grid option '"..tostring(key).."'")
     end
   end
+  assert(not copy.Resolution or (copy.Spacing==nil and copy.CrossSpacing==nil),
+    "GRID: Resolution cannot be combined with Spacing or CrossSpacing")
   return copy
 
 end
@@ -292,17 +397,17 @@ end
 --- Resolve grid configuration by validating options and applying defaults.
 -- @param #GRID self
 -- @param #GRID.GridOptions options (Optional) Explicit settings; nil uses defaults.
--- @param #table grid (Optional) Existing geometry; boxHY and spaceX determine minimum default expansion limits.
 -- @return #GRID.GridOptions Independent effective configuration, including expansion defaults.
-function GRID:_ResolveGridOptions(options, grid)
+function GRID:_ResolveGridOptions(options)
 
   local saved=self:_CopyGridOptions(options)
   local expansion=saved.Expansion or {}
   local result={Width=saved.Width or 40000, Margin=saved.Margin or 10000,
     Spacing=saved.Spacing or 2000, CrossSpacing=saved.CrossSpacing, Diagonals=saved.Diagonals~=false, MaxCells=saved.MaxCells or 5000}
+  result.Resolution=saved.Resolution
+  if saved.Resolution then result.Spacing=nil end
   result.Expansion={GrowthFactor=expansion.GrowthFactor or 1.5, MaxAttempts=expansion.MaxAttempts or 5,
-    MaxWidth=expansion.MaxWidth or math.max(grid and grid.boxHY or result.Width, 200000),
-    MaxMargin=expansion.MaxMargin or math.max(grid and grid.spaceX or result.Margin, 100000)}
+    MaxWidth=expansion.MaxWidth, MaxMargin=expansion.MaxMargin}
   return result
 
 end
@@ -555,7 +660,7 @@ end
 
 --- Configure grid geometry, the shared cell budget and optional expansion settings. Does not build or draw anything.
 -- Replaces the complete configuration with a copy; omitted fields use defaults. Nil resets to defaults.
--- After grid creation Width, Margin, Spacing and CrossSpacing are locked; Diagonals and limits may still change.
+-- After grid creation Width, Margin, Spacing, CrossSpacing and Resolution are locked; Diagonals and limits may still change.
 -- Lowering MaxCells below the existing grid size makes an expanding search return cell_limit without searching.
 -- @param #GRID self
 -- @param #GRID.GridOptions Options (Optional) Grid settings, including the nested Expansion table.
@@ -563,10 +668,11 @@ end
 function GRID:SetOptions(Options)
 
   local saved=self:_CopyGridOptions(Options)
-  local proposed=self:_ResolveGridOptions(saved, self.hexGrid or self.rectGrid)
+  assert(self.GridType~=GRID.Type.HEXAGON or saved.CrossSpacing==nil, "GRID: CrossSpacing is only supported by rectangular grids")
+  local proposed=self:_ResolveGridOptions(saved)
   if self.GridBuilt then
     local current=self:GetOptions()
-    for _, key in ipairs({"Width", "Margin", "Spacing", "CrossSpacing"}) do
+    for _, key in ipairs({"Width", "Margin", "Spacing", "CrossSpacing", "Resolution"}) do
       assert(proposed[key]==current[key], "GRID: "..key.." cannot change after grid creation; use a new GRID object")
     end
     assert(not self.hexGrid or saved.CrossSpacing==nil, "GRID: CrossSpacing is only supported by rectangular grids")
@@ -575,6 +681,7 @@ function GRID:SetOptions(Options)
     self.gridLinks=nil
     end
   self.GridOptions=saved
+  if not self.GridBuilt then self._ResolutionInfo=nil end
   self:_Touch()
   return self
 
@@ -582,11 +689,133 @@ end
 
 --- Return an independent copy of effective grid settings, including expansion defaults.
 -- CrossSpacing is nil unless explicitly configured; rectangular builders then use Spacing.
+-- In automatic mode Spacing and CrossSpacing stay nil; GetResolutionInfo() exposes the calculated distances.
+-- Width and Margin retain their configured presets; GetDimensions() exposes current meter values after construction.
 -- @param #GRID self
 -- @return #GRID.GridOptions Configuration copy.
 function GRID:GetOptions()
 
-  return self:_ResolveGridOptions(self.GridOptions, self.hexGrid or self.rectGrid)
+  return self:_ResolveGridOptions(self.GridOptions)
+
+end
+
+--- Configure initial corridor width and the margin at each end, preserving all other options.
+-- Presets are evaluated from endpoint distance during CreateFromBounds(). Zone builds ignore both settings.
+-- With distance D and per-end margin M, total length is D+2*M; width presets apply to that total length.
+-- Explicit meter values and presets may be selected independently. Expansion uses the resulting dimensions without reevaluating presets.
+-- @param #GRID self
+-- @param #string Width Required GRID.Width.NARROW, NORMAL or WIDE; also accepts non-negative meters.
+-- @param #string Margin Required GRID.Margin.SMALL, NORMAL or LARGE; also accepts non-negative meters at each end.
+-- @return #GRID self.
+function GRID:SetCorridor(Width, Margin)
+
+  assert(Width~=nil and Margin~=nil, "GRID: SetCorridor requires both width and margin")
+  local options=self:_CopyGridOptions(self.GridOptions)
+  options.Width=Width
+  options.Margin=Margin
+  return self:SetOptions(options)
+
+end
+
+--- Resolve initial corridor dimensions from meter values or relative presets.
+-- Coincident endpoints require explicit meter values. Resolution and cell budgets do not influence these dimensions.
+-- @param #GRID self
+-- @param #GRID.GridOptions Options Effective grid configuration.
+-- @param #number Distance Horizontal endpoint distance in meters.
+-- @return #number Total width in meters, centered on the endpoint connection line.
+-- @return #number Margin in meters at each end.
+function GRID:_ResolveCorridorDimensions(Options, Distance)
+
+  local width,margin=Options.Width,Options.Margin
+  if type(width)=="string" or type(margin)=="string" then
+    assert(Distance>0 and Distance<math.huge,
+      "GRID: relative corridor dimensions require distinct endpoints with finite distance; configure Width and Margin in meters")
+  end
+  if type(margin)=="string" then
+    local fraction=margin==GRID.Margin.SMALL and 0.1 or (margin==GRID.Margin.NORMAL and 0.25 or 0.5)
+    margin=Distance*fraction
+  end
+  if type(width)=="string" then
+    local fraction=width==GRID.Width.NARROW and 0.25 or (width==GRID.Width.NORMAL and 0.5 or 1)
+    width=(Distance+2*margin)*fraction
+  end
+  self:_CheckGridDimensions(width,margin)
+  return width,margin
+
+end
+
+--- Select automatic relative spacing without changing other grid options.
+-- Clears explicit Spacing and CrossSpacing. Nil selects manual mode with the default spacing of 2000 meters.
+-- Changing resolution after construction is rejected; expansion always retains the original spacing.
+-- @param #GRID self
+-- @param #string Level GRID.Resolution.COARSE, NORMAL or FINE; nil disables automatic resolution.
+-- @return #GRID self.
+function GRID:SetResolution(Level)
+
+  local options=self:_CopyGridOptions(self.GridOptions)
+  options.Resolution=Level
+  options.Spacing=nil
+  options.CrossSpacing=nil
+  return self:SetOptions(options)
+
+end
+
+--- Inspect spacing configuration and the most recent initial build calculation.
+-- No terrain queries or grid mutations are performed. CandidateCount reflects the current built grid, including expansion.
+-- @param #GRID self
+-- @return #GRID.ResolutionInfo Independent snapshot; automatic spacing is nil until an initial build is attempted.
+function GRID:GetResolutionInfo()
+
+  local options=self:GetOptions()
+  local info={}
+  for key, value in pairs(self._ResolutionInfo or {}) do info[key]=value end
+  info.Mode=options.Resolution and "automatic" or "manual"
+  info.Resolution=options.Resolution
+  info.MaxCells=options.MaxCells
+  info.Status=info.Status or (options.Resolution and "pending" or "configured")
+  if not options.Resolution then
+    info.Spacing=options.Spacing
+    info.CrossSpacing=self.GridType==GRID.Type.RECTANGLE and (options.CrossSpacing or options.Spacing) or nil
+  end
+  if self.GridBuilt then
+    local grid=self.hexGrid or self.rectGrid
+    info.Status="built"
+    info.Spacing=grid.spacing
+    info.CrossSpacing=grid.crossSpacing
+    info.CandidateCount=self:GetCandidateCount()
+  end
+  return info
+
+end
+
+--- Resolve initial center spacing from manual options or the shorter positive extent.
+-- A zero-width line uses its length; a point requires explicit spacing. The cell budget never changes this calculation.
+-- @param #GRID self
+-- @param #GRID.GridOptions Options Effective build options.
+-- @param #number Length Longitudinal initial extent in meters.
+-- @param #number Width Transverse initial extent in meters.
+-- @return #number Center spacing in meters.
+-- @return #number Cross spacing for rectangles; nil for hexagons.
+function GRID:_ResolveInitialSpacing(Options, Length, Width)
+
+  local spacing=Options.Spacing
+  local info={Status="resolved"}
+  if Options.Resolution then
+    assert(type(Length)=="number" and Length>=0 and Length<math.huge
+      and type(Width)=="number" and Width>=0 and Width<math.huge, "GRID: resolution requires finite non-negative extents")
+    local reference=Length>0 and (Width>0 and math.min(Length,Width) or Length) or Width
+    assert(reference>0, "GRID: automatic resolution requires a non-zero extent; configure explicit Spacing for a point grid")
+    local intervals=Options.Resolution==GRID.Resolution.COARSE and 10 or (Options.Resolution==GRID.Resolution.FINE and 40 or 20)
+    spacing=reference/intervals
+    assert(spacing>0 and spacing<math.huge, "GRID: calculated spacing is outside the supported numeric range")
+    info.ReferenceLength=reference
+    info.Intervals=intervals
+  end
+  local cross=self.GridType==GRID.Type.RECTANGLE and (Options.CrossSpacing or spacing) or nil
+  info.Spacing=spacing
+  info.CrossSpacing=cross
+  self._ResolutionInfo=info
+  return spacing,cross
 
 end
 
@@ -735,22 +964,59 @@ end
 -- Grid creation
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Build the configured geometry in a corridor between two positions.
+-- Uses SetOptions() and SetValidSurfaceTypes(); creates no drawings or markers.
+-- @param #GRID self
+-- @param Core.Vector#VECTOR Start Corridor start; also accepts COORDINATE, Vec2 or Vec3.
+-- @param Core.Vector#VECTOR Goal Corridor goal; also accepts COORDINATE, Vec2 or Vec3.
+-- @return #GRID self, or nil when the candidate-cell budget would be exceeded.
+-- @return #string cell_limit on budget rejection; nil on success.
+function GRID:CreateFromBounds(Start, Goal)
+
+  self:SetBounds(Start, Goal)
+  local built,reason
+  if self.GridType==GRID.Type.HEXAGON then built,reason=self:_CreateHexagon()
+  else built,reason=self:_CreateRectangle() end
+  if self._ResolutionInfo then self._ResolutionInfo.Status=built and "built" or reason end
+  return built,reason
+
+end
+
+--- Build the configured geometry inside a circle, rectangle or polygon zone.
+-- SetBounds() optionally supplies the frame; otherwise the zone bounds determine it.
+-- Surface filtering applies to cell centers. Later expansion may leave the initial zone.
+-- @param #GRID self
+-- @param Core.Zone#ZONE_BASE Zone Initial zone; Width and Margin are ignored for this build.
+-- @return #GRID self, or nil when the candidate-cell budget would be exceeded.
+-- @return #string cell_limit on budget rejection; nil on success.
+function GRID:CreateFromZone(Zone)
+
+  assert(not self.GridBuilt, "GRID: a grid already exists; use a new GRID object")
+  self._ResolutionInfo=nil
+  local built,reason
+  if self.GridType==GRID.Type.HEXAGON then built,reason=self:_CreateHexagonFromZone(Zone)
+  else built,reason=self:_CreateRectangleFromZone(Zone) end
+  if self._ResolutionInfo then self._ResolutionInfo.Status=built and "built" or reason end
+  return built,reason
+
+end
+
 --- Build a rectangular grid using SetOptions() and SetValidSurfaceTypes().
 -- Requires SetBounds() and no prior grid. Generated centers have altitude zero.
 -- No markers are created; call DrawGrid() or MarkGrid() explicitly.
 -- @param #GRID self
--- @param ... Must be empty; additional arguments are rejected. Configure settings with SetOptions() and SetValidSurfaceTypes().
 -- @return #GRID self, or nil if MaxCells would be exceeded before surface filtering.
 -- @return #string cell_limit on budget rejection; no cells are added on rejection.
-function GRID:CreateRectangle(...)
+function GRID:_CreateRectangle()
 
-  assert(select("#", ...)==0, "GRID: configure SetOptions and SetValidSurfaceTypes before CreateRectangle()")
+  assert(self.GridType==GRID.Type.RECTANGLE, "GRID: builder does not match the configured geometry")
   assert(not self.GridBuilt, "GRID: a grid already exists; use a new GRID object")
   assert(self.startVector and self.endVector, "GRID: start and end coordinates are required for a grid")
   local options=self:GetOptions()
-  local Width, Margin, Spacing, CrossSpacing=options.Width, options.Margin, options.Spacing, options.CrossSpacing or options.Spacing
   local MaxCells=options.MaxCells
   local distance=self.startVector:GetDistance(self.endVector, true)
+  local Width,Margin=self:_ResolveCorridorDimensions(options,distance)
+  local Spacing,CrossSpacing=self:_ResolveInitialSpacing(options,distance+2*Margin,Width)
   -- Match the original numeric-for loop counts even when dimensions are not spacing multiples.
   local nx=math.floor(Width/CrossSpacing+1)
   local nz=math.floor((distance+2*Margin)/Spacing+1)
@@ -773,19 +1039,20 @@ end
 -- Requires SetBounds() and an empty cell set. CrossSpacing is not supported. Centers have altitude zero.
 -- Neighbour queries use six-neighbour topology. No drawing is performed.
 -- @param #GRID self
--- @param ... Must be empty; additional arguments are rejected. Configure settings with SetOptions() and SetValidSurfaceTypes().
 -- @return #GRID self, or nil if MaxCells would be exceeded before surface filtering.
 -- @return #string cell_limit on budget rejection; no cells are added on rejection.
-function GRID:CreateHexagon(...)
+function GRID:_CreateHexagon()
 
-  assert(select("#", ...)==0, "GRID: configure SetOptions and SetValidSurfaceTypes before CreateHexagon()")
+  assert(self.GridType==GRID.Type.HEXAGON, "GRID: builder does not match the configured geometry")
   assert(not self.GridBuilt and next(self.cells)==nil, "GRID: create a hex grid on an empty GRID object")
   assert(self.startVector and self.endVector, "GRID: start and end coordinates are required for a hex grid")
   local options=self:GetOptions()
   assert(options.CrossSpacing==nil, "GRID: CrossSpacing is only supported by rectangular grids")
-  local Width, Margin, Spacing, MaxCells=options.Width, options.Margin, options.Spacing, options.MaxCells
+  local MaxCells=options.MaxCells
 
   local distance=self.startVector:GetDistance(self.endVector, true)
+  local Width,Margin=self:_ResolveCorridorDimensions(options,distance)
+  local Spacing=self:_ResolveInitialSpacing(options,distance+2*Margin,Width)
   local angle=distance>0 and math.rad(self.startVector:GetHeadingTo(self.endVector)) or 0
   local grid={x=self.startVector.x, z=self.startVector.z, cos=math.cos(angle), sin=math.sin(angle), spacing=Spacing,
     rowSpacing=Spacing*math.sqrt(3)/2, distance=distance}
@@ -807,17 +1074,17 @@ end
 -- Checks the zone before terrain sampling. Expansion can subsequently leave the zone. CrossSpacing is rejected.
 -- @param #GRID self
 -- @param Core.Zone#ZONE_BASE Zone Initial zone.
--- @param ... Must be empty; additional arguments are rejected. Configure settings with SetOptions() and SetValidSurfaceTypes().
 -- @return #GRID self, or nil if the projected bounding-box candidates exceed MaxCells before either filter.
 -- @return #string cell_limit on budget rejection.
-function GRID:CreateHexagonFromZone(Zone, ...)
+function GRID:_CreateHexagonFromZone(Zone)
 
-  assert(select("#", ...)==0, "GRID: zone is the only argument; configure SetOptions and SetValidSurfaceTypes first")
+  assert(self.GridType==GRID.Type.HEXAGON, "GRID: builder does not match the configured geometry")
   assert(not self.GridBuilt and next(self.cells)==nil, "GRID: create a hex grid on an empty GRID object")
   local options=self:GetOptions()
   assert(options.CrossSpacing==nil, "GRID: CrossSpacing is only supported by rectangular grids")
-  local Spacing, MaxCells=options.Spacing, options.MaxCells
+  local MaxCells=options.MaxCells
   local grid, area=self:_ZoneGridArea(Zone)
+  local Spacing=self:_ResolveInitialSpacing(options,area.alongMax-area.alongMin,area.acrossMax-area.acrossMin)
   grid.spacing=Spacing
   grid.rowSpacing=Spacing*math.sqrt(3)/2
   local width=2*math.max(math.abs(area.acrossMin), math.abs(area.acrossMax))
@@ -840,16 +1107,16 @@ end
 -- Checks the zone before terrain sampling. Expansion can subsequently leave the zone. No drawing is performed.
 -- @param #GRID self
 -- @param Core.Zone#ZONE_BASE Zone Initial zone.
--- @param ... Must be empty; additional arguments are rejected. Configure settings with SetOptions() and SetValidSurfaceTypes().
 -- @return #GRID self, or nil if the projected bounding-box candidates exceed MaxCells before either filter.
 -- @return #string cell_limit on budget rejection.
-function GRID:CreateRectangleFromZone(Zone, ...)
+function GRID:_CreateRectangleFromZone(Zone)
 
-  assert(select("#", ...)==0, "GRID: zone is the only argument; configure SetOptions and SetValidSurfaceTypes first")
+  assert(self.GridType==GRID.Type.RECTANGLE, "GRID: builder does not match the configured geometry")
   assert(not self.GridBuilt, "GRID: a grid already exists; use a new GRID object")
   local options=self:GetOptions()
-  local Spacing, CrossSpacing, MaxCells=options.Spacing, options.CrossSpacing or options.Spacing, options.MaxCells
+  local MaxCells=options.MaxCells
   local grid, area=self:_ZoneGridArea(Zone)
+  local Spacing,CrossSpacing=self:_ResolveInitialSpacing(options,area.alongMax-area.alongMin,area.acrossMax-area.acrossMin)
   grid.along=Spacing/2
   grid.across=CrossSpacing/2
   grid.spacing=Spacing
@@ -893,7 +1160,8 @@ function GRID:ExpandGrid(Width, Margin, FitBudget)
   self:_CheckGridDimensions(Width, Margin)
   assert(Width>=grid.boxHY and Margin>=grid.spaceX, "GRID: grid width and margin cannot shrink")
   local options=self:GetOptions()
-  if Width>options.Expansion.MaxWidth or Margin>options.Expansion.MaxMargin then
+  if (options.Expansion.MaxWidth and Width>options.Expansion.MaxWidth)
+    or (options.Expansion.MaxMargin and Margin>options.Expansion.MaxMargin) then
     return nil, "size_limit", false
   end
   if grid.candidateCount>options.MaxCells then
@@ -1714,17 +1982,12 @@ function GRID:GetCandidateCount()
 
 end
 
---- Get the geometry type.
+--- Get the fixed geometry type, including before construction or after a rejected build.
 -- @param #GRID self
--- @return #string rectangular, hexagonal, or nil before construction.
+-- @return #string GRID.Type.RECTANGLE or GRID.Type.HEXAGON.
 function GRID:GetType()
 
-  if self.hexGrid then
-    return "hexagonal"
-  end
-  if self.rectGrid then
-    return "rectangular"
-  end
+  return self.GridType
 
 end
 
