@@ -37,11 +37,8 @@
 -- @field #table ValidNeighbourArg Optional arguments passed to the valid neighbour function.
 -- @field #function CostFunc Function to calculate the travel cost from one node to another.
 -- @field #table CostArg Optional arguments passed to the cost function. 
--- @field #table ValidSurfaceTypes Surface filter used by the grid builder and automatically added endpoints; may also be a single numeric surface type.
 -- @field #boolean GridNeighboursOnly Restrict candidates to direct grid edges and local endpoint attachments. Enabled automatically when a grid is built or attached.
--- @field #table hexGrid Hex geometry: origin x/z, heading cos/sin, spacing, rowSpacing, original distance, boxHY, spaceX, candidateCount and temporary initialSamples for zone seeds.
--- @field #table hexIndex Hex nodes indexed by axial q, then r.
--- @field #table rectIndex Rectangular nodes indexed by i, then j.
+-- @field #table hexGrid Hex geometry: origin x/z, heading cos/sin, spacing, rowSpacing, original distance, width, margin, candidateCount and temporary initialSamples for zone seeds.
 -- @field #table gridLinks Cached candidate adjacency, indexed by node id, then neighbour id. Does not cache rule results.
 -- @field #table gridComponents Connected-component labels for grid candidates. Rebuilt when candidate adjacency changes.
 -- @field #table GridDrawIDs F10 polygon ids owned by DrawGrid(), removed by UndrawGrid().
@@ -52,9 +49,6 @@
 -- @field #table LastSearchTiming Last search attempt: CPUSeconds, Failure and Nodes. CPUSeconds is nil when os.clock is unavailable.
 -- @field #string LastPathFailure Reason the last search attempt failed; nil on success or when no attempt was made.
 -- @field #table LastExpansionResult Attempt history and stop reason from GetPathWithExpansion().
--- @field Core.Grid#GRID.GridOptions GridOptions Saved configuration, set with SetGridOptions().
--- @field #boolean GridBuilt Whether an initial grid was successfully created, even if it contains no accepted nodes.
--- @field #number GridCandidateCount Initial or expanded candidate count before filtering.
 -- @field #table GridMarkIDs Text-marker ids owned by MarkGrid().
 -- @field #table GridMarkJob Pending text-marker job.
 -- @field #table LastGridMarkResult Text-marker status, counts and timing.
@@ -108,6 +102,7 @@
 -- GetGrid() returns the owned grid, even before construction. SetGrid(grid) attaches a built GRID to an unused ASTAR and enables local neighbours.
 -- Before construction the owned grid defaults to rectangle; a hex convenience builder replaces that empty grid, preserving its configuration.
 -- Set start/end coordinates on each search separately; they do not change the shared grid frame. A node.cell refers to its immutable grid cell.
+-- Spatial indices and grid settings belong to GRID. Use GetGridOptions() for configuration and GetGrid():GetDimensions()/GetCandidateCount() for current geometry and budget usage.
 -- Expansion/options are shared, but nodes, endpoints, connection/cost caches, component labels and ASTAR overlays are per search object.
 -- Public searches and drawing calls synchronize new cells and invalidate topology when the grid version changes. Existing pair caches are retained.
 -- Never mutate cell/node vectors or indices directly. Configuration setters and expansion are the supported mutation paths.
@@ -136,7 +131,7 @@
 -- Diagonals, limits and Expansion settings can still change through partial SetGridOptions updates or the dedicated GRID setters.
 -- Lowering MaxCells below the existing candidate count does not remove nodes; expanding search returns cell_limit before searching.
 --
--- @{#ASTAR.CreateGrid} and @{#ASTAR.CreateHexGrid} take no arguments. Configure first; passing old positional arguments is an error.
+-- @{#ASTAR.CreateGrid} and @{#ASTAR.CreateHexGrid} take no arguments. Configure the grid before creation.
 -- All builders return self on success or nil, "cell_limit" when the initial budget is exceeded. Rejection occurs before terrain sampling.
 -- A successful build allows no second Create call on the same object. Manual nodes may precede rectangular creation; hex creation requires no nodes.
 --
@@ -383,51 +378,33 @@ function ASTAR:GetNodeCoordinate(Node)
 end
 
 --- Add a node created by this ASTAR instance to the search node set.
--- Does not apply the grid surface filter. Adding the same node again does not increase the node count.
--- Invalidates grid candidate adjacency. Do not modify node ids, grid indices or coordinates after adding a node.
+-- Does not apply the grid surface filter. Adding the same node again leaves the node count and caches unchanged.
+-- Adding a new node invalidates grid candidate adjacency. Do not modify node ids, grid indices or coordinates after adding a node.
 -- @param #ASTAR self
 -- @param #ASTAR.Node Node The node to be added.
 -- @return #ASTAR self
 function ASTAR:AddNode(Node)
 
   assert(type(Node)=="table" and Node._owner==self._NodeOwner and Node.grid==self.Grid, "ASTAR: node must be created by this search for its current grid")
-  assert(not self.nodes[Node.id] or self.nodes[Node.id]==Node, "ASTAR: existing nodes cannot be replaced")
-  if self.hexGrid then
-    -- Keep the spatial index and candidate graph in sync when nodes are added or replaced.
-    if Node.q~=nil and Node.r~=nil then
-      local column=self.hexIndex[Node.q]
-      local existing=column and column[Node.r]
-      assert(not existing or existing.id==Node.id, "ASTAR: hex cell already contains a node")
-    end
-    local previous=self.nodes[Node.id]
-    if previous and previous.q~=nil and previous.r~=nil then
-      self.hexIndex[previous.q][previous.r]=nil
-    end
-    if Node.q~=nil and Node.r~=nil then
-      self.hexIndex[Node.q]=self.hexIndex[Node.q] or {}
-      self.hexIndex[Node.q][Node.r]=Node
-    end
-  elseif self.rectGrid then
-    local function indexed(node) return node and node.rectGrid==self.rectGrid and node.i~=nil and node.j~=nil end
-    if indexed(Node) then
-      local row=self.rectIndex[Node.i]
-      local existing=row and row[Node.j]
-      assert(not existing or existing.id==Node.id, "ASTAR: rectangular cell already contains a node")
-    end
-    local previous=self.nodes[Node.id]
-    if indexed(previous) then self.rectIndex[previous.i][previous.j]=nil end
-    if indexed(Node) then
-      self.rectIndex[Node.i]=self.rectIndex[Node.i] or {}
-      self.rectIndex[Node.i][Node.j]=Node
-    end
+  local existing=self.nodes[Node.id]
+  assert(not existing or existing==Node, "ASTAR: existing nodes cannot be replaced")
+  if existing then return self end
+
+  local cell=Node.cell
+  if cell then
+    assert(self.Grid:GetCell(cell.id)==cell, "ASTAR: node cell must belong to this grid")
+    assert(not self._CellNodes[cell.id], "ASTAR: grid cell already contains a search node")
+    assert(Node.q==cell.q and Node.r==cell.r and Node.i==cell.i and Node.j==cell.j and Node.rectGrid==cell.rectGrid,
+      "ASTAR: node indices must match its grid cell")
+    self._CellNodes[cell.id]=Node
+  else
+    assert(Node.q==nil and Node.r==nil and Node.i==nil and Node.j==nil and Node.rectGrid==nil,
+      "ASTAR: manual nodes cannot have grid cell indices")
   end
   self.gridLinks=nil self.gridComponents=nil
-
-  if not self.nodes[Node.id] then
-    self.Nnodes=self.Nnodes+1
-  end
+  self.Nnodes=self.Nnodes+1
   self.nodes[Node.id]=Node
-    
+
   return self
 end
 
@@ -443,33 +420,6 @@ function ASTAR:AddNodeFromCoordinate(Coordinate)
   self:AddNode(node)
     
   return node
-end
-
---- Check the surface type stored in a node against the allowed surface types.
--- @param #ASTAR self
--- @param #ASTAR.Node Node The node to check.
--- @param #table SurfaceTypes Allowed surface types, for example `{land.SurfaceType.WATER}`; a single numeric type is also accepted. Nil accepts all types.
--- @return #boolean If true, surface type of node is valid.
-function ASTAR:CheckValidSurfaceType(Node, SurfaceTypes)
-
-  if SurfaceTypes then
-  
-    if type(SurfaceTypes)~="table" then
-      SurfaceTypes={SurfaceTypes}
-    end
-    
-    for _,surface in pairs(SurfaceTypes) do
-      if surface==Node.surfacetype then
-        return true
-      end
-    end
-  
-    return false
-    
-  else
-    return true
-  end
-
 end
 
 --- Replace the neighbour rule and clear cached validity results on all existing nodes.
@@ -830,7 +780,7 @@ function ASTAR:_FindEndpoint(Coordinate, Label)
   if node and distance>threshold then
     self:T(self.lid.."Adding "..Label.." node to node grid!")
     node=self:GetNodeFromCoordinate(Coordinate)
-    if not self:CheckValidSurfaceType(node, self.ValidSurfaceTypes) then return nil end
+    if not self.Grid:IsValidSurfaceType(node.surfacetype) then return nil end
     self:AddNode(node)
   end
   return node
@@ -880,11 +830,9 @@ end
 -- @return #table Ordered path nodes, or nil on failure. An empty table is a successful path.
 -- @return #table Report with Attempts, StopReason, Width, Margin, Nodes, CandidateCells, MaxCells, MaxWidth, MaxMargin, BudgetLimited and SearchCPUSeconds.
 -- Attempts contain Width, Margin, Nodes, Failure and CPUSeconds. StopReason is path_found, attempt_limit, size_limit, cell_limit or missing_coordinates.
--- @param ... Must be empty; additional positional arguments are rejected.
-function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode, ...)
+function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode)
   self:_SyncGrid()
-  assert(select("#",...)==0, "ASTAR: GetPathWithExpansion accepts only two endpoint exclusion flags")
-  assert(ExcludeStartNode==nil or type(ExcludeStartNode)=="boolean", "ASTAR: configure Expansion in SetGridOptions; search arguments are endpoint exclusion flags")
+  assert(ExcludeStartNode==nil or type(ExcludeStartNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
   assert(ExcludeEndNode==nil or type(ExcludeEndNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
   assert(self.hexGrid or self.rectGrid, "ASTAR: create a rectangular or hex grid before expanding search")
   assert(not self.hexGrid or self.GridNeighboursOnly, "ASTAR: call SetGridNeighboursOnly(true) before expanding a hex grid")
@@ -895,16 +843,16 @@ function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode, ...)
   local maxCells=options.MaxCells
   local maxWidth=options.Expansion.MaxWidth
   local maxMargin=options.Expansion.MaxMargin
-  assert(maxWidth==nil or maxWidth>=grid.boxHY, "ASTAR: MaxWidth must be at least the current width")
-  assert(maxMargin==nil or maxMargin>=grid.spaceX, "ASTAR: MaxMargin must be at least the current margin")
+  assert(maxWidth==nil or maxWidth>=grid.width, "ASTAR: MaxWidth must be at least the current width")
+  assert(maxMargin==nil or maxMargin>=grid.margin, "ASTAR: MaxMargin must be at least the current margin")
 
   self.LastPathFailure=nil
   local searchClock=startCPUClock()
   local report={Attempts={},BudgetLimited=false}
   local function finish(path, reason)
     report.StopReason=reason
-    report.Width=grid.boxHY
-    report.Margin=grid.spaceX
+    report.Width=grid.width
+    report.Margin=grid.margin
     report.Nodes=self.Nnodes
     report.CandidateCells=grid.candidateCount
     report.MaxCells=maxCells
@@ -913,7 +861,7 @@ function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode, ...)
     report.SearchCPUSeconds=elapsedCPU(searchClock)
     self.LastExpansionResult=report
     self:T(self.lid..string.format("Expanding search finished: %s after %d attempts, width %.0f m, margin %.0f m, %d nodes, search %s",
-      reason, #report.Attempts, grid.boxHY, grid.spaceX, self.Nnodes, cpuTimeText(report.SearchCPUSeconds)))
+      reason, #report.Attempts, grid.width, grid.margin, self.Nnodes, cpuTimeText(report.SearchCPUSeconds)))
     if not path then self:_ReportPathFailure(self.LastPathFailure or reason, reason) end
     return path, report
   end
@@ -921,27 +869,27 @@ function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode, ...)
   if grid.candidateCount>maxCells then return finish(nil, "cell_limit") end
   for attempt=1,maxAttempts do
     self:T(self.lid..string.format("Expanding search attempt %d/%d: width %.0f m, margin %.0f m, %d nodes",
-      attempt, maxAttempts, grid.boxHY, grid.spaceX, self.Nnodes))
+      attempt, maxAttempts, grid.width, grid.margin, self.Nnodes))
     self.LastPathFailure=nil
     local path, failure=self:_SearchPath(ExcludeStartNode, ExcludeEndNode)
     self.LastPathFailure=failure
     if failure then self:T(self.lid.."Search attempt failed: "..failure) end
-    report.Attempts[#report.Attempts+1]={Width=grid.boxHY, Margin=grid.spaceX, Nodes=self.Nnodes, Failure=self.LastPathFailure, CPUSeconds=self.LastSearchTiming.CPUSeconds}
+    report.Attempts[#report.Attempts+1]={Width=grid.width, Margin=grid.margin, Nodes=self.Nnodes, Failure=self.LastPathFailure, CPUSeconds=self.LastSearchTiming.CPUSeconds}
     if path then return finish(path, "path_found") end
     if self.LastPathFailure=="missing_coordinates" then return finish(nil, "missing_coordinates") end
     if attempt==maxAttempts then return finish(nil, "attempt_limit") end
 
-    local width=math.max(grid.boxHY*factor, grid.boxHY+2*(grid.crossSpacing or grid.spacing))
-    local margin=math.max(grid.spaceX*factor, grid.spaceX+grid.spacing)
+    local width=math.max(grid.width*factor, grid.width+2*(grid.crossSpacing or grid.spacing))
+    local margin=math.max(grid.margin*factor, grid.margin+grid.spacing)
     if maxWidth then width=math.min(maxWidth,width) end
     if maxMargin then margin=math.min(maxMargin,margin) end
     if width==math.huge or margin==math.huge then return finish(nil,"size_limit") end
-    if width==grid.boxHY and margin==grid.spaceX then return finish(nil, "size_limit") end
+    if width==grid.width and margin==grid.margin then return finish(nil, "size_limit") end
     local expanded, stopReason, limited=self.Grid:ExpandGrid(width,margin,true)
     if not expanded then return finish(nil,stopReason) end
     self:_SyncGrid()
     if limited then
-      self:T(self.lid..string.format("Fitted expansion to MaxCells=%d: width %.1f m, margin %.1f m, %d candidate cells",maxCells,grid.boxHY,grid.spaceX,grid.candidateCount))
+      self:T(self.lid..string.format("Fitted expansion to MaxCells=%d: width %.1f m, margin %.1f m, %d candidate cells",maxCells,grid.width,grid.margin,grid.candidateCount))
     end
     report.BudgetLimited=report.BudgetLimited or limited
   end
@@ -1045,7 +993,7 @@ function ASTAR:_SearchPath(ExcludeStartNode, ExcludeEndNode)
     -- Loop over neighbours.
     for _,neighbor in pairs(neighbors) do
     
-      if self:_NotIn(closedset, neighbor.id) then
+      if closedset[neighbor.id]==nil then
       
         local tentative_g_score=g_score[current.id]+self:_TravelCost(current, neighbor)
          
@@ -1056,7 +1004,7 @@ function ASTAR:_SearchPath(ExcludeStartNode, ExcludeEndNode)
           g_score[neighbor.id]=tentative_g_score
           f_score[neighbor.id]=g_score[neighbor.id]+self:_HeuristicCost(neighbor, goal)
           
-          if self:_NotIn(openset, neighbor.id) then
+          if openset[neighbor.id]==nil then
             -- Add to open set.
             openset[neighbor.id]=true
             Nopen=Nopen+1
@@ -1277,18 +1225,6 @@ function ASTAR:_NeighbourNodes(theNode, nodes)
   return neighbors
 end
 
--- Build geometry-specific candidate adjacency. Rule and cost caches remain independent of topology.
-
-
---- Function to check if a node is not in a set.
--- @param #ASTAR self
--- @param #table set Set of nodes.
--- @param #number theNode Node id to check.
--- @return #boolean If true, the node is not in the set.
-function ASTAR:_NotIn(set, theNode)
-  return set[theNode]==nil
-end
-
 --- Reconstruct the predecessor chain in linear time, excluding the current node itself.
 -- Prepends the ordered predecessors to flat_path, retaining its existing entries and table identity.
 -- @param #ASTAR self
@@ -1325,7 +1261,7 @@ end
 -- @return #ASTAR self.
 function ASTAR:SetGrid(Grid)
   assert(Grid and Grid.ClassName=="GRID" and Grid.GridBuilt,"ASTAR: SetGrid requires a built GRID")
-  assert(not self.GridBuilt and next(self.nodes)==nil,"ASTAR: attach a grid to an unused ASTAR object")
+  assert(not self.Grid.GridBuilt and next(self.nodes)==nil,"ASTAR: attach a grid to an unused ASTAR object")
   self.Grid=Grid self._GridRevision=-1 self._CellCursor=0 self._CellNodes={}
   self.GridNeighboursOnly=true
   self:_SyncGrid()
@@ -1347,18 +1283,13 @@ function ASTAR:_SyncGrid()
   local grid=self.Grid
   if not grid or self._GridRevision==grid.Version then return end
   self.hexGrid=grid.hexGrid self.rectGrid=grid.rectGrid
-  self.GridOptions=grid.GridOptions self.ValidSurfaceTypes=grid.ValidSurfaceTypes
-  self.GridBuilt=grid.GridBuilt self.GridCandidateCount=grid.GridCandidateCount
   if grid.GridBuilt and self.GridNeighboursOnly==nil then self.GridNeighboursOnly=true end
-  if grid.hexGrid then self.hexIndex=self.hexIndex or {} end
-  if grid.rectGrid then self.rectIndex=self.rectIndex or {} end
   for i=self._CellCursor+1,#grid.CellList do
     local cell=grid.CellList[i]
     local node={id=self.counter,vector=cell.vector,surfacetype=cell.surfacetype,
       q=cell.q,r=cell.r,i=cell.i,j=cell.j,rectGrid=cell.rectGrid,cell=cell,grid=grid,_owner=self._NodeOwner,valid={},cost={}}
     self.counter=self.counter+1
     self:AddNode(node)
-    self._CellNodes[cell.id]=node
   end
   self._CellCursor=#grid.CellList self._GridRevision=grid.Version
   self.gridLinks=nil self.gridComponents=nil
@@ -1439,9 +1370,7 @@ end
 -- @param #ASTAR self
 -- @return #ASTAR self, or nil if MaxCells would be exceeded before surface filtering.
 -- @return #string cell_limit on budget rejection; no nodes are added on rejection.
--- @param ... Must be empty; additional positional arguments are rejected.
-function ASTAR:CreateGrid(...)
-  assert(select("#",...)==0,"ASTAR: configure grid options before creation")
+function ASTAR:CreateGrid()
   return self:_CreateGrid("CreateGrid")
 end
 
@@ -1451,9 +1380,7 @@ end
 -- @param #ASTAR self
 -- @return #ASTAR self, or nil if MaxCells would be exceeded before surface filtering.
 -- @return #string cell_limit on budget rejection; no nodes are added on rejection.
--- @param ... Must be empty; additional positional arguments are rejected.
-function ASTAR:CreateHexGrid(...)
-  assert(select("#",...)==0,"ASTAR: configure grid options before creation")
+function ASTAR:CreateHexGrid()
   return self:_CreateGrid("CreateHexGrid")
 end
 
@@ -1464,9 +1391,7 @@ end
 -- @param Core.Zone#ZONE_BASE Zone Initial zone.
 -- @return #ASTAR self, or nil if the projected bounding-box candidates exceed MaxCells before either filter.
 -- @return #string cell_limit on budget rejection.
--- @param ... Must be empty; additional positional arguments are rejected.
-function ASTAR:CreateGridFromZone(Zone, ...)
-  assert(select("#",...)==0,"ASTAR: configure grid options before creation")
+function ASTAR:CreateGridFromZone(Zone)
   return self:_CreateGrid("CreateGridFromZone",Zone)
 end
 
@@ -1477,9 +1402,7 @@ end
 -- @param Core.Zone#ZONE_BASE Zone Initial zone.
 -- @return #ASTAR self, or nil if the projected bounding-box candidates exceed MaxCells before either filter.
 -- @return #string cell_limit on budget rejection.
--- @param ... Must be empty; additional positional arguments are rejected.
-function ASTAR:CreateHexGridFromZone(Zone, ...)
-  assert(select("#",...)==0,"ASTAR: configure grid options before creation")
+function ASTAR:CreateHexGridFromZone(Zone)
   return self:_CreateGrid("CreateHexGridFromZone",Zone)
 end
 

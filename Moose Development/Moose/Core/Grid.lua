@@ -1085,30 +1085,22 @@ function GRID:_GridElementLabel()
 
 end
 
---- Check the surface type stored in a cell against the allowed surface types.
+--- Check a sampled surface type against this grid's configured surface filter.
+-- Performs no terrain query. An unset filter accepts all surfaces; an empty filter accepts none.
+-- Used for grid cells and automatically added ASTAR endpoints.
 -- @param #GRID self
--- @param #GRID.Cell Cell The cell to check.
--- @param #table SurfaceTypes Allowed surface types, for example `{land.SurfaceType.WATER}`; a single numeric type is also accepted. Nil accepts all types.
--- @return #boolean If true, surface type of cell is valid.
-function GRID:CheckValidSurfaceType(Cell, SurfaceTypes)
+-- @param #number SurfaceType DCS surface type to check.
+-- @return #boolean True when the configured filter accepts the surface type.
+---@param SurfaceType number
+---@return boolean
+function GRID:IsValidSurfaceType(SurfaceType)
 
-  if SurfaceTypes then
-
-    if type(SurfaceTypes)~="table" then
-      SurfaceTypes={SurfaceTypes}
-    end
-
-    for _, surface in pairs(SurfaceTypes) do
-      if surface==Cell.surfacetype then
-        return true
-      end
-    end
-
-    return false
-
-  else
-    return true
+  if not self.ValidSurfaceTypes then return true end
+  if type(self.ValidSurfaceTypes)=="number" then return self.ValidSurfaceTypes==SurfaceType end
+  for _, allowed in ipairs(self.ValidSurfaceTypes) do
+    if allowed==SurfaceType then return true end
   end
+  return false
 
 end
 
@@ -1310,7 +1302,7 @@ function GRID:ExpandGrid(Width, Margin, FitBudget)
   local grid=self.hexGrid or self.rectGrid
   assert(grid, "GRID: create a grid before expanding")
   self:_CheckGridDimensions(Width, Margin)
-  assert(Width>=grid.boxHY and Margin>=grid.spaceX, "GRID: grid width and margin cannot shrink")
+  assert(Width>=grid.width and Margin>=grid.margin, "GRID: grid width and margin cannot shrink")
   local options=self:GetOptions()
   if (options.Expansion.MaxWidth and Width>options.Expansion.MaxWidth)
     or (options.Expansion.MaxMargin and Margin>options.Expansion.MaxMargin) then
@@ -1319,7 +1311,7 @@ function GRID:ExpandGrid(Width, Margin, FitBudget)
   if grid.candidateCount>options.MaxCells then
     return nil, "cell_limit", false
   end
-  if Width==grid.boxHY and Margin==grid.spaceX then
+  if Width==grid.width and Margin==grid.margin then
     return self, nil, false
   end
   local bounds=self:_ExpansionBounds(Width, Margin, options.MaxCells)
@@ -1379,7 +1371,7 @@ function GRID:_PopulateRectGrid(Bounds, Width, Margin, Zone)
             sampled[i][j]=true
           end
           local cell=self:_CreateCell(VECTOR:New(x, 0, z))
-          if self:CheckValidSurfaceType(cell, self.ValidSurfaceTypes) then
+          if self:IsValidSurfaceType(cell.surfacetype) then
             cell.rectGrid=grid
             cell.i=i
             cell.j=j
@@ -1391,8 +1383,8 @@ function GRID:_PopulateRectGrid(Bounds, Width, Margin, Zone)
   end
   grid.initialSamples=sampled
   grid.bounds=Bounds
-  grid.boxHY=Width
-  grid.spaceX=Margin
+  grid.width=Width
+  grid.margin=Margin
   grid.candidateCount=Bounds.count
   self.GridCandidateCount=Bounds.count
   self.GridBuilt=true
@@ -1437,7 +1429,7 @@ function GRID:_FitGridExpansion(Width, Margin, MaxCells)
     end
     return bestWidth, bestMargin, best
   end
-  local width, margin, bounds=fit(grid.boxHY, grid.spaceX, Width, Margin)
+  local width, margin, bounds=fit(grid.width, grid.margin, Width, Margin)
   if not bounds then
     return nil
   end
@@ -1451,11 +1443,11 @@ function GRID:_FitGridExpansion(Width, Margin, MaxCells)
     w2, m2, b2=fit(w2, m2, Width, m2)
   end
   -- Also try each axis from the original bounds: the balanced prefix may have spent too much margin to fit a whole row.
-  local w3, m3, b3=fit(grid.boxHY, grid.spaceX, Width, grid.spaceX)
+  local w3, m3, b3=fit(grid.width, grid.margin, Width, grid.margin)
   if b3 then
     w3, m3, b3=fit(w3, m3, w3, Margin)
   end
-  local w4, m4, b4=fit(grid.boxHY, grid.spaceX, grid.boxHY, Margin)
+  local w4, m4, b4=fit(grid.width, grid.margin, grid.width, Margin)
   if b4 then
     w4, m4, b4=fit(w4, m4, Width, m4)
   end
@@ -1465,7 +1457,7 @@ function GRID:_FitGridExpansion(Width, Margin, MaxCells)
       width, margin, bounds=w, m, b
     end
   end
-  if bounds.count>grid.candidateCount or (grid.initialSamples and (width>grid.boxHY or margin>grid.spaceX)) then
+  if bounds.count>grid.candidateCount or (grid.initialSamples and (width>grid.width or margin>grid.margin)) then
     return width, margin, bounds
   end
 
@@ -1483,14 +1475,14 @@ function GRID:_PopulateHexGrid(Bounds, Width, Margin, Zone)
   local grid=self.hexGrid
   local sampled=Zone and {} or nil
   local oldRmin, oldRmax
-  if grid.boxHY then
-    oldRmin, oldRmax=self:_HexRowBounds(grid, grid.boxHY)
+  if grid.width then
+    oldRmin, oldRmax=self:_HexRowBounds(grid, grid.width)
   end
   for r=Bounds.rmin, Bounds.rmax do
     local row=Bounds[r]
     local oldQmin, oldQmax
-    if grid.spaceX then
-      oldQmin, oldQmax=self:_HexColumnBounds(grid, grid.spaceX, r)
+    if grid.margin then
+      oldQmin, oldQmax=self:_HexColumnBounds(grid, grid.margin, r)
     end
     for q=row.qmin, row.qmax do
       local existingCell=oldRmin and r>=oldRmin and r<=oldRmax and q>=oldQmin and q<=oldQmax
@@ -1507,7 +1499,7 @@ function GRID:_PopulateHexGrid(Bounds, Width, Margin, Zone)
           end
           local vector=VECTOR:New(x, 0, z)
           local cell=self:_CreateCell(vector)
-          if self:CheckValidSurfaceType(cell, self.ValidSurfaceTypes) then
+          if self:IsValidSurfaceType(cell.surfacetype) then
             cell.q=q
             cell.r=r
             self:_AddCell(cell)
@@ -1519,8 +1511,8 @@ function GRID:_PopulateHexGrid(Bounds, Width, Margin, Zone)
   end
   grid.bounds=Bounds
   grid.initialSamples=sampled
-  grid.boxHY=Width
-  grid.spaceX=Margin
+  grid.width=Width
+  grid.margin=Margin
   grid.candidateCount=Bounds.count
   self.GridCandidateCount=Bounds.count
   self.GridBuilt=true
@@ -2242,7 +2234,7 @@ function GRID:GetDimensions()
   if not grid then
     return nil
   end
-  return {Width=grid.boxHY, Margin=grid.spaceX, Spacing=grid.spacing, CrossSpacing=grid.crossSpacing}
+  return {Width=grid.width, Margin=grid.margin, Spacing=grid.spacing, CrossSpacing=grid.crossSpacing}
 
 end
 

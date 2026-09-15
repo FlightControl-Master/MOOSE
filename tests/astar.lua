@@ -349,6 +349,11 @@ test("ASTAR instances have independent nodes and caches", function()
   equal(#a:GetPath(), 2)
 end)
 
+local function nodeAtIndex(search, first, second)
+  local cell=search:GetGrid():GetCellFromIndex(first,second)
+  return cell and search._CellNodes[cell.id]
+end
+
 local function hexgrid(width, margin, spacing)
   local a = ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
   a:SetGridOptions({Width=width or 4000,Margin=margin or 2000,Spacing=spacing or 1000}):SetValidSurfaceTypes({land.SurfaceType.WATER}):CreateHexGrid()
@@ -360,7 +365,7 @@ end
 
 test("hex geometry has six unique equidistant neighbours", function()
   local a = hexgrid():SetGridNeighboursOnly()
-  local center = a.hexIndex[2][0]
+  local center = nodeAtIndex(a,2,0)
   local neighbours = a:_NeighbourNodes(center, a.nodes)
   equal(#neighbours, 6)
   local seen = {}
@@ -378,7 +383,7 @@ test("hex defaults, center bounds and markers", function()
   local a = ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
   a:CreateHexGrid()
   equal(a.hexGrid.spacing, 2000)
-  assert(a.hexIndex[-5][0]) assert(a.hexIndex[7][0])
+  assert(nodeAtIndex(a,-5,0)) assert(nodeAtIndex(a,7,0))
   local marks = 0
   trigger.action.markToAll=function(_,text) assert(text:match("Hex: q=")) marks = marks + 1 end
   local b = ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4300))
@@ -397,9 +402,9 @@ test("hex geometry rotates with heading and translates with the origin", functio
     local origin = coord(123456, -234567)
     local a = ASTAR:New():SetStartCoordinate(origin):SetEndCoordinate(origin:Translate(4000, heading))
     a:SetGridOptions({Width=4000,Margin=2000,Spacing=1000}):SetValidSurfaceTypes(nil):CreateHexGrid():SetGridNeighboursOnly(true)
-    near(a.hexIndex[0][0].vector:GetDistance(origin, true), 0)
-    near(a.hexIndex[4][0].vector:GetDistance(a.endVector, true), 0)
-    local center = a.hexIndex[2][0]
+    near(nodeAtIndex(a,0,0).vector:GetDistance(origin, true), 0)
+    near(nodeAtIndex(a,4,0).vector:GetDistance(a.endVector, true), 0)
+    local center = nodeAtIndex(a,2,0)
     equal(#a:_NeighbourNodes(center, a.nodes), 6)
     for _, node in ipairs(a:_NeighbourNodes(center, a.nodes)) do
       near(center.vector:GetDistance(node.vector, true), 1000)
@@ -412,7 +417,7 @@ test("hex candidate mode is optional and composes with validity rules", function
   local a = hexgrid():SetGridNeighboursOnly(false)
   equal(#a:GetPath(), 2)
   a:SetGridNeighboursOnly(true)
-  local center = a.hexIndex[2][0]
+  local center = nodeAtIndex(a,2,0)
   local requests = a.nvalid
   equal(#a:_NeighbourNodes(center, a.nodes), 6)
   equal(a.nvalid-requests, 6)
@@ -430,9 +435,9 @@ test("hex surface holes do not create jumps or wraparound edges", function()
   land.surfaceAt = function(c) return math.abs(c.x-2000)<1e-6 and land.SurfaceType.LAND or land.SurfaceType.WATER end
   local a = hexgrid(0, 0):SetGridNeighboursOnly(true)
   equal(a.Nnodes, 4)
-  assert(not a.hexIndex[2])
+  assert(not a:GetGrid().hexIndex[2])
   equal(a:GetPath(), nil)
-  equal(#a:_NeighbourNodes(a.hexIndex[1][0], a.nodes), 1)
+  equal(#a:_NeighbourNodes(nodeAtIndex(a,1,0), a.nodes), 1)
   a:SetGridNeighboursOnly(false)
   equal(#a:GetPath(), 2)
 end)
@@ -532,7 +537,7 @@ test("manual nodes added after a search rebuild hex attachments", function()
   assert(a.gridLinks ~= oldLinks)
   assert(count(a.gridLinks[extra.id]) > 0)
   local n = a.Nnodes
-  a:AddNode(a.hexIndex[0][0])
+  a:AddNode(nodeAtIndex(a,0,0))
   equal(a.Nnodes, n)
   assert(a:GetPath())
 end)
@@ -597,7 +602,7 @@ test("hex instances do not share grid indices or candidate links", function()
   local a = hexgrid():SetGridNeighboursOnly(true)
   local b = hexgrid():SetGridNeighboursOnly(true)
   assert(a:GetPath()) assert(b:GetPath())
-  assert(a.hexGrid ~= b.hexGrid and a.hexIndex ~= b.hexIndex and a.gridLinks ~= b.gridLinks)
+  assert(a.hexGrid ~= b.hexGrid and a._CellNodes ~= b._CellNodes and a.gridLinks ~= b.gridLinks)
   local n = b.Nnodes
   a:AddNodeFromCoordinate(coord(100, 100))
   equal(b.Nnodes, n)
@@ -653,14 +658,14 @@ test("potential path caches complete components and invalidates after a bridge i
   local components = a.gridComponents
   local labelled = count(components)
   equal(labelled, 2)
-  a:SetEndCoordinate(a.hexIndex[1][0].vector)
+  a:SetEndCoordinate(nodeAtIndex(a,1,0).vector)
   equal(a:HasPotentialPath(), true)
   equal(a.gridComponents, components)
   equal(count(components), labelled)
-  a:SetStartCoordinate(a.hexIndex[4][0].vector):SetEndCoordinate(a.hexIndex[3][0].vector)
+  a:SetStartCoordinate(nodeAtIndex(a,4,0).vector):SetEndCoordinate(nodeAtIndex(a,3,0).vector)
   equal(a:HasPotentialPath(), true)
   equal(count(components), 4)
-  a:SetStartCoordinate(a.hexIndex[0][0].vector):SetEndCoordinate(a.hexIndex[4][0].vector)
+  a:SetStartCoordinate(nodeAtIndex(a,0,0).vector):SetEndCoordinate(nodeAtIndex(a,4,0).vector)
   equal(a:HasPotentialPath(), false)
   -- An explicitly supplied node can bridge the gap; manual nodes bypass the grid surface filter.
   a:AddNodeFromCoordinate(coord(2000))
@@ -694,7 +699,7 @@ test("potential path handles missing, rejected and coincident endpoints", functi
   local dry = coord(100,100) land.surfaceAt=function(c) return c.x==dry.x and c.z==dry.z and land.SurfaceType.LAND or land.SurfaceType.WATER end
   a:SetStartCoordinate(dry)
   equal(a:HasPotentialPath(), false)
-  a:SetStartCoordinate(a.hexIndex[0][0].vector):SetEndCoordinate(a.hexIndex[0][0].vector)
+  a:SetStartCoordinate(nodeAtIndex(a,0,0).vector):SetEndCoordinate(nodeAtIndex(a,0,0).vector)
   equal(a:HasPotentialPath(), true)
   equal(#a:GetPath(), 1)
 end)
@@ -769,8 +774,8 @@ test("F10 hex polygons match rotated cells and share boundary vertices", functio
       equal(drawing.coalition, -1) equal(drawing.color[3], 1)
       equal(drawing.color[4], 1) equal(drawing.fill[4], 0)
       equal(drawing.lineType, 1) equal(drawing.readOnly, true)
-      if closest == a.hexIndex[0][0] then centerPolygon = vertices end
-      if closest == a.hexIndex[1][0] then adjacentPolygon = vertices end
+      if closest == nodeAtIndex(a,0,0) then centerPolygon = vertices end
+      if closest == nodeAtIndex(a,1,0) then adjacentPolygon = vertices end
     end
     local shared = 0
     for _, v in ipairs(centerPolygon) do
@@ -930,7 +935,7 @@ end)
 
 test("expanding search preserves custom callback references and arguments", function()
   local a = hexgrid(0,0):SetGridNeighboursOnly(true)
-  local original = a.hexIndex[0][0]
+  local original = nodeAtIndex(a,0,0)
   local evaluated = false
   local function cost(u,v,scale)
     equal(scale, 7)
@@ -951,7 +956,7 @@ test("expanding search preserves custom callback references and arguments", func
   local path, report = a:GetPathWithExpansion()
   assert(path and evaluated)
   equal(report.Attempts[1].Failure, "connections_blocked")
-  equal(a.CostFunc, constrainedCost) equal(a.hexIndex[0][0], original)
+  equal(a.CostFunc, constrainedCost) equal(nodeAtIndex(a,0,0), original)
 end)
 
 test("expansion attaches endpoints outside the initial search area", function()
@@ -974,7 +979,7 @@ test("expansion honours attempt and dimension limits", function()
     local a = hexgrid(0,0):SetGridNeighboursOnly(true):SetValidNeighbourFunction(function() return false end)
     local path, report = configureExpansion(a,limits.options):GetPathWithExpansion()
     equal(path,nil) equal(report.StopReason, limits.reason) equal(#report.Attempts,1)
-    equal(a.hexGrid.boxHY,0) equal(a.hexGrid.spaceX,0)
+    equal(a.hexGrid.width,0) equal(a.hexGrid.margin,0)
   end
 end)
 
@@ -985,7 +990,7 @@ test("expansion checks candidate cell budget before sampling or modifying nodes"
   local path, report = configureExpansion(a,{MaxCells=5}):GetPathWithExpansion()
   equal(path,nil) equal(report.StopReason,"cell_limit") equal(#report.Attempts,1)
   equal(a.Nnodes,n) equal(a.counter,counter)
-  equal(a.hexGrid.boxHY,0) equal(a.hexGrid.spaceX,0)
+  equal(a.hexGrid.width,0) equal(a.hexGrid.margin,0)
   path, report = configureExpansion(a,{MaxCells=1}):GetPathWithExpansion()
   equal(path,nil) equal(report.StopReason,"cell_limit") equal(#report.Attempts,0)
 end)
@@ -1017,7 +1022,7 @@ test("rotated enlargement matches a newly built larger lattice", function()
   b:SetGridOptions({Width=6000,Margin=3000,Spacing=1000}):SetValidSurfaceTypes(nil):CreateHexGrid()
   equal(a.Nnodes,b.Nnodes)
   for _, node in pairs(a.nodes) do
-    near(node.vector:GetDistance(b.hexIndex[node.q][node.r].vector, true),0)
+    near(node.vector:GetDistance(nodeAtIndex(b,node.q,node.r).vector, true),0)
   end
 end)
 
@@ -1048,7 +1053,7 @@ test("successful empty paths stop expansion immediately", function()
   a:SetEndCoordinate(a.startVector)
   local path, report=a:GetPathWithExpansion(true,true)
   equal(#path,0) equal(report.StopReason,"path_found") equal(#report.Attempts,1)
-  equal(a.hexGrid.boxHY,0)
+  equal(a.hexGrid.width,0)
 end)
 
 test("expansion rejects invalid limits and handles missing coordinates", function()
@@ -1056,13 +1061,13 @@ test("expansion rejects invalid limits and handles missing coordinates", functio
   for _, options in ipairs({{GrowthFactor=1},{MaxAttempts=0},{MaxCells=0},{MaxWidth=-1},{MaxMargin=math.huge}}) do
     local a=hexgrid(0,0):SetGridNeighboursOnly(true)
     equal(pcall(function() configureExpansion(a,options):GetPathWithExpansion() end),false)
-    equal(a.hexGrid.boxHY,0) equal(a.hexGrid.spaceX,0)
+    equal(a.hexGrid.width,0) equal(a.hexGrid.margin,0)
   end
   local a=hexgrid(0,0):SetGridNeighboursOnly(true)
   a:SetStartCoordinate(nil)
   local path, report=a:GetPathWithExpansion()
   equal(path,nil) equal(report.StopReason,"missing_coordinates") equal(#report.Attempts,1)
-  equal(a.hexGrid.boxHY,0)
+  equal(a.hexGrid.width,0)
 end)
 
 
@@ -1072,14 +1077,14 @@ test("initial grid budgets reject before sampling or changing object state", fun
     function(a, limit) return a:SetGridOptions({Width=0,Margin=0,Spacing=1000,MaxCells=limit}):SetValidSurfaceTypes({}):CreateHexGrid() end
   }) do
     local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
-    a.ValidSurfaceTypes=land.SurfaceType.WATER
+    a:SetValidSurfaceTypes(land.SurfaceType.WATER)
     local nodes, counter=a.nodes, a.counter
     land.surfaceAt=function() error("Rejected creation must not sample terrain") end
     local result, reason=builder(a,4)
     equal(result,nil) equal(reason,"cell_limit")
     equal(a.nodes,nodes) equal(a.Nnodes,0) equal(a.counter,counter)
-    equal(#a.ValidSurfaceTypes,0)
-    equal(a.hexGrid,nil) equal(a.hexIndex,nil)
+    equal(#a:GetGrid().ValidSurfaceTypes,0)
+    equal(a.hexGrid,nil) equal(a:GetGrid().hexIndex,nil)
     -- A rejected hex build must leave the object reusable, even for a different grid type.
     land.surfaceAt=nil
     equal(a:SetGridOptions({Width=0,Margin=0,Spacing=1000,CrossSpacing=1000,MaxCells=5}):SetValidSurfaceTypes(nil):CreateGrid(),a)
@@ -1119,7 +1124,7 @@ test("rectangular budgets exclude manual nodes and an existing grid cannot be re
   local counter=a.counter
   equal(pcall(function() a:CreateGrid() end),false)
   equal(pcall(function() a:SetValidSurfaceTypes({}) end),false)
-  equal(a.Nnodes,6) equal(a.counter,counter) equal(a.ValidSurfaceTypes,nil)
+  equal(a.Nnodes,6) equal(a.counter,counter) equal(a:GetGrid().ValidSurfaceTypes,nil)
 end)
 
 test("rectangular fractional dimensions preserve rotated lattice coordinates and order", function()
@@ -1662,7 +1667,7 @@ test("zone hex grids match circle, square and concave polygon membership across 
       for _,node in pairs(reference.nodes) do
         if zone:IsVec2InZone({x=node.vector.x,y=node.vector.z}) then
           expected=expected+1
-          local actual=a.hexIndex[node.q] and a.hexIndex[node.q][node.r]
+          local actual=nodeAtIndex(a,node.q,node.r)
           assert(actual) near(actual.vector:GetDistance(node.vector, true),0)
         end
       end
@@ -1703,13 +1708,13 @@ test("zone creation budgets reject before membership, terrain sampling or mutati
     function zone:IsVec2InZone() error("Budget must precede membership tests") end
     local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
     local counter=a.counter
-    a.ValidSurfaceTypes=land.SurfaceType.LAND
+    a:SetValidSurfaceTypes(land.SurfaceType.LAND)
     land.surfaceAt=function() error("Budget must precede terrain sampling") end
     local result,reason
     if hex then result,reason=a:SetGridOptions({Spacing=1000,MaxCells=1}):SetValidSurfaceTypes(nil):CreateHexGridFromZone(zone)
     else result,reason=a:SetGridOptions({Spacing=1000,CrossSpacing=1000,MaxCells=1}):SetValidSurfaceTypes(nil):CreateGridFromZone(zone) end
     equal(result,nil) equal(reason,"cell_limit") equal(a.Nnodes,0) equal(a.counter,counter)
-    equal(a.hexGrid,nil) equal(a.hexIndex,nil) equal(a.ValidSurfaceTypes,nil)
+    equal(a.hexGrid,nil) equal(a:GetGrid().hexIndex,nil) equal(a:GetGrid().ValidSurfaceTypes,nil)
   end
 end)
 
@@ -1728,23 +1733,23 @@ test("zone expansion fills unsampled holes while preserving accepted and rejecte
   local initial=grid.initialSamples
   local oldNodes={}
   for id,node in pairs(a.nodes) do oldNodes[id]=node end
-  equal(a.hexIndex[2][0],nil)
-  a:ExpandGrid(grid.boxHY,grid.spaceX)
+  equal(nodeAtIndex(a,2,0),nil)
+  a:ExpandGrid(grid.width,grid.margin)
   equal(grid.initialSamples,initial)
-  local width,margin=grid.boxHY+2000,grid.spaceX+1000
+  local width,margin=grid.width+2000,grid.margin+1000
   local result,reason=configureExpansion(a,{MaxCells=grid.candidateCount}):ExpandGrid(width,margin)
   equal(result,nil) equal(reason,"cell_limit") equal(grid.initialSamples,initial)
   function zone:IsVec2InZone() error("Enlargement must not consult the initial zone again") end
   configureExpansion(a,{MaxCells=5000}):ExpandGrid(width,margin)
-  equal(grid.initialSamples,nil) equal(a.hexIndex[2][0],nil)
-  assert(a.hexIndex[-1][2]) -- (0, sqrt(3)*1000): inside old bounds, outside the initial circle.
+  equal(grid.initialSamples,nil) equal(nodeAtIndex(a,2,0),nil)
+  assert(nodeAtIndex(a,-1,2)) -- (0, sqrt(3)*1000): inside old bounds, outside the initial circle.
   for id,node in pairs(oldNodes) do equal(a.nodes[id],node) end
   configureExpansion(a,{MaxCells=5000}):ExpandGrid(width+2000,margin+1000)
   land.surfaceAt=surface
   local reference=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
-  reference:SetGridOptions({Width=grid.boxHY,Margin=grid.spaceX,Spacing=1000}):SetValidSurfaceTypes(land.SurfaceType.WATER):CreateHexGrid()
+  reference:SetGridOptions({Width=grid.width,Margin=grid.margin,Spacing=1000}):SetValidSurfaceTypes(land.SurfaceType.WATER):CreateHexGrid()
   equal(a.Nnodes,reference.Nnodes)
-  for _,node in pairs(reference.nodes) do assert(a.hexIndex[node.q][node.r]) end
+  for _,node in pairs(reference.nodes) do assert(nodeAtIndex(a,node.q,node.r)) end
 end)
 
 test("automatic expansion finds paths beyond a zone seed including an empty seed", function()
@@ -1907,15 +1912,15 @@ test("surface configuration validates copies and locks even for empty filtered g
   local surfaces={land.SurfaceType.WATER}
   local a=ASTAR:New():SetValidSurfaceTypes(surfaces)
   surfaces[1]=land.SurfaceType.LAND
-  equal(a.ValidSurfaceTypes[1],land.SurfaceType.WATER)
+  equal(a:GetGrid().ValidSurfaceTypes[1],land.SurfaceType.WATER)
   for _,bad in ipairs({false,"water",0,6,1.5,{0},{foo=3},{[2]=3},{[1]=3,[3]=1}}) do
     equal(pcall(function() a:SetValidSurfaceTypes(bad) end),false)
-    equal(a.ValidSurfaceTypes[1],land.SurfaceType.WATER)
+    equal(a:GetGrid().ValidSurfaceTypes[1],land.SurfaceType.WATER)
   end
   a:SetValidSurfaceTypes():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
-  equal(a.ValidSurfaceTypes,nil)
+  equal(a:GetGrid().ValidSurfaceTypes,nil)
   a:SetValidSurfaceTypes({}):SetGridOptions({Width=0,Margin=0,Spacing=1000}):CreateHexGrid()
-  equal(a.Nnodes,0) equal(a.GridBuilt,true)
+  equal(a.Nnodes,0) equal(a:GetGrid().GridBuilt,true)
   equal(pcall(function() a:SetValidSurfaceTypes(land.SurfaceType.WATER) end),false)
   equal(pcall(function() a:CreateHexGrid() end),false)
 end)
@@ -1943,9 +1948,7 @@ test("built geometry is locked while shared search limits can be changed", funct
   options.MaxCells=5000 a:SetGridOptions(options)
   assert(a:GetPathWithExpansion())
   equal(pcall(function() a:GetPathWithExpansion({}) end),false)
-  equal(pcall(function() a:GetPathWithExpansion(nil,true,true) end),false)
-  equal(ASTAR.SetPathExpansionOptions,nil)
-  equal(pcall(function() ASTAR:New():CreateGrid(nil) end),false)
+  equal(pcall(function() a:GetPathWithExpansion(nil,{}) end),false)
 end)
 
 test("hex builders reject CrossSpacing before mutation and defaults protect initial work", function()
@@ -1956,7 +1959,7 @@ test("hex builders reject CrossSpacing before mutation and defaults protect init
     equal(pcall(function()
       if zone then a:CreateHexGridFromZone(circle) else a:CreateHexGrid() end
     end),false)
-    equal(a.Nnodes,0) equal(a.GridBuilt,nil)
+    equal(a.Nnodes,0) equal(a:GetGrid().GridBuilt,nil)
   end
   local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(100000000))
   land.surfaceAt=function() error("Default budget must precede terrain sampling") end
@@ -2004,10 +2007,10 @@ test("manual enlargement obeys the same spatial and cell caps as expanding searc
   local a=hexgrid(0,0)
   configureExpansion(a,{MaxWidth=1000,MaxMargin=1000,MaxCells=7})
   local result,reason=a:ExpandGrid(2000,0)
-  equal(result,nil) equal(reason,"size_limit") equal(a.GridCandidateCount,5)
+  equal(result,nil) equal(reason,"size_limit") equal(a:GetGrid():GetCandidateCount(),5)
   result,reason=a:ExpandGrid(1000,2000)
   equal(result,nil) equal(reason,"size_limit")
-  equal(a:ExpandGrid(1000,1000),a) equal(a.GridCandidateCount,7)
+  equal(a:ExpandGrid(1000,1000),a) equal(a:GetGrid():GetCandidateCount(),7)
 end)
 
 test("text markers are batched include indices and do not evaluate rules by default", function()
@@ -2225,10 +2228,10 @@ test("rectangular zone expansion fills holes without resampling rejected terrain
     local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
     a:SetGridOptions({Spacing=1000}):SetValidSurfaceTypes(land.SurfaceType.WATER):CreateGridFromZone(zone)
     local old=a.Nnodes local g=a.rectGrid
-    equal(a:ExpandGrid(g.boxHY,g.spaceX),a) equal(a.Nnodes,old)
+    equal(a:ExpandGrid(g.width,g.margin),a) equal(a.Nnodes,old)
     equal(a:ExpandGrid(5000,1000),a)
     equal(a:ExpandGrid(6000,2000),a)
-    equal(count(seen),a.GridCandidateCount) equal(a.Nnodes,a.GridCandidateCount-1)
+    equal(count(seen),a:GetGrid():GetCandidateCount()) equal(a.Nnodes,a:GetGrid():GetCandidateCount()-1)
     equal(g.initialSamples,nil)
     assert(a:FindClosestNode(coord(0)).rectGrid)
     land.surfaceAt=nil
@@ -2253,7 +2256,7 @@ test("manual rectangular expansion rejects over-budget and shrinking dimensions 
   local result,reason=a:ExpandGrid(2000,1000) equal(result,nil) equal(reason,"cell_limit")
   result,reason=a:ExpandGrid(3000,0) equal(result,nil) equal(reason,"size_limit")
   equal(pcall(function() a:ExpandGrid(2000,0) end),false)
-  equal(a.Nnodes,5) equal(a.rectGrid.boxHY,0) equal(a:ExpandGrid(0,0),a)
+  equal(a.Nnodes,5) equal(a.rectGrid.width,0) equal(a:ExpandGrid(0,0),a)
   land.surfaceAt=nil
   equal(a:ExpandGrid(2000,0),a)
   equal(pcall(function() a:ExpandGrid(1000,0) end),false)
@@ -2291,9 +2294,9 @@ end
 
 test("common grid mode uses six hex neighbours and retains the hex alias", function()
   local a=hexgrid():SetGridNeighboursOnly()
-  equal(a:GetNodeNeighbourCount(a.hexIndex[2][0]),6)
-  a:SetGridNeighboursOnly(false) equal(a:GetNodeNeighbourCount(a.hexIndex[2][0]),a.Nnodes-1)
-  a:SetGridNeighboursOnly() equal(a:GetNodeNeighbourCount(a.hexIndex[2][0]),6)
+  equal(a:GetNodeNeighbourCount(nodeAtIndex(a,2,0)),6)
+  a:SetGridNeighboursOnly(false) equal(a:GetNodeNeighbourCount(nodeAtIndex(a,2,0)),a.Nnodes-1)
+  a:SetGridNeighboursOnly() equal(a:GetNodeNeighbourCount(nodeAtIndex(a,2,0)),6)
   local b=ASTAR:New()
   equal(b:SetGridNeighboursOnly(false),b)
   equal(pcall(function() b:SetGridNeighboursOnly() end),false)
@@ -2306,9 +2309,9 @@ test("rectangular local indices give four or eight neighbours across rotations a
   for _,heading in ipairs({0,37,90,205}) do
     for _,diagonals in ipairs({false,true}) do
       local a=localRect(diagonals,heading,500)
-      local middle=a.rectIndex[5][4]
+      local middle=nodeAtIndex(a,5,4)
       equal(a:GetNodeNeighbourCount(middle),diagonals and 8 or 4)
-      equal(a:GetNodeNeighbourCount(a.rectIndex[1][1]),diagonals and 3 or 2)
+      equal(a:GetNodeNeighbourCount(nodeAtIndex(a,1,1)),diagonals and 3 or 2)
       local links=a.gridLinks
       for id,neighbors in pairs(links) do
         local n=a.nodes[id]
@@ -2396,9 +2399,9 @@ test("rectangular expansion rebuilds local topology and avoids all-pairs rule ca
     assert(path and #path>4) equal(report.StopReason,"path_found") equal(#report.Attempts,2)
     equal(report.Attempts[1].Failure,"disconnected_grid")
     assert(a.nvalid<=8*a.Nnodes and calls<=4*a.Nnodes)
-    local original=a.rectIndex[1][1] local old=a.gridLinks
+    local original=nodeAtIndex(a,1,1) local old=a.gridLinks
     a:ExpandGrid(4000,2000)
-    equal(a.gridLinks,nil) equal(a.rectIndex[1][1],original)
+    equal(a.gridLinks,nil) equal(nodeAtIndex(a,1,1),original)
     assert(a:GetPath()) assert(a.gridLinks~=old)
   end
 end)

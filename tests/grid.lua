@@ -1287,5 +1287,68 @@ test("ASTAR builders and expanding searches retain explicit GRID configuration",
   end
 end)
 
+test("shared cell imports reject duplicate and foreign bindings without changing search state",function()
+  for _,kind in ipairs({"rectangular","hexagonal"}) do
+    local g=grid(kind)
+    local a,b=search(g),search(g)
+    assert(a:GetPath()) assert(b:GetPath())
+    local cell=g:GetCells()[1]
+    local own=a._CellNodes[cell.id]
+    local nodes,links,components,countBefore=a.nodes,a.gridLinks,a.gridComponents,a.Nnodes
+    local otherLinks=b.gridLinks
+    equal(a:AddNode(own),a)
+    equal(a.gridLinks,links) equal(a.gridComponents,components)
+    local function reject(node)
+      assert(not pcall(function() a:AddNode(node) end))
+      equal(a.nodes,nodes) equal(a.Nnodes,countBefore) equal(a._CellNodes[cell.id],own)
+      equal(a.gridLinks,links) equal(a.gridComponents,components) equal(b.gridLinks,otherLinks)
+    end
+    local duplicate=a:GetNodeFromCoordinate(cell.vector)
+    duplicate.cell=cell duplicate.q=cell.q duplicate.r=cell.r
+    duplicate.i=cell.i duplicate.j=cell.j duplicate.rectGrid=cell.rectGrid
+    reject(duplicate)
+    local replacement={} for key,value in pairs(own) do replacement[key]=value end
+    reject(replacement)
+    local foreign=a:GetNodeFromCoordinate(cell.vector)
+    foreign.cell=grid(kind):GetCells()[1]
+    reject(foreign)
+    local indexed=a:GetNodeFromCoordinate(cell.vector)
+    if kind=="hexagonal" then indexed.q=cell.q indexed.r=cell.r
+    else indexed.i=cell.i indexed.j=cell.j indexed.rectGrid=cell.rectGrid end
+    reject(indexed)
+    -- A manual endpoint may occupy the same position without claiming the geometric cell.
+    local manual=a:AddNodeFromCoordinate(cell.vector)
+    equal(a.Nnodes,countBefore+1) equal(a._CellNodes[cell.id],own) equal(manual.cell,nil)
+    equal(a.gridLinks,nil) equal(b.gridLinks,otherLinks)
+    assert(a:GetPath()) assert(b:GetPath())
+  end
+end)
+
+test("grid surface checks share configured single list empty and unrestricted filters without sampling",function()
+  local g=GRID:New("Filters",GRID.Type.RECTANGLE)
+  local water,landType=land.SurfaceType.WATER,land.SurfaceType.LAND
+  land.surfaceAt=function() error("Checking a sampled surface must not query terrain") end
+  assert(g:IsValidSurfaceType(water)) assert(g:IsValidSurfaceType(landType))
+  g:SetValidSurfaceTypes(water)
+  assert(g:IsValidSurfaceType(water)) equal(g:IsValidSurfaceType(landType),false)
+  local types={water,landType}
+  g:SetValidSurfaceTypes(types) types[1]=nil
+  assert(g:IsValidSurfaceType(water)) assert(g:IsValidSurfaceType(landType))
+  g:SetValidSurfaceTypes({})
+  equal(g:IsValidSurfaceType(water),false) equal(g:IsValidSurfaceType(landType),false)
+  g:SetValidSurfaceTypes()
+  assert(g:IsValidSurfaceType(water)) assert(g:IsValidSurfaceType(landType))
+end)
+
+test("attaching a grid cannot replace an unsynchronized built empty grid",function()
+  local replacement=grid("rectangular")
+  local a=ASTAR:New()
+  local original=a:GetGrid()
+  original:SetValidSurfaceTypes({}):SetCorridor(0,0):SetSpacing(1000):CreateFromBounds(coord(0),coord(4000))
+  equal(a.Nnodes,0) equal(original:GetCellCount(),0)
+  assert(not pcall(function() a:SetGrid(replacement) end))
+  equal(a:GetGrid(),original) equal(a.Nnodes,0)
+end)
+
 print(string.format("%d passed, %d failed",passed,failed))
 if failed>0 then os.exit(1) end
