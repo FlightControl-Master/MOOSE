@@ -334,11 +334,11 @@ test("shared topology updates invalidate components in every attached search",fu
   for _,x in ipairs({a,b}) do x:SetStartCoordinate(coord(0,-1000)):SetEndCoordinate(coord(4000,1000)) end
   equal(#a:GetPath(),5) equal(#b:GetPath(),5)
   local oldA,oldB=a.gridLinks,b.gridLinks local version=g:GetVersion()
-  local options=g:GetOptions() options.Diagonals=false g:SetOptions(options)
+  g:SetDiagonals(false)
   assert(g:GetVersion()>version)
   equal(#a:GetPath(),7) equal(#b:GetPath(),7) assert(a.gridLinks~=oldA and b.gridLinks~=oldB)
   equal(g:GetNeighbourCount(g:GetCellFromIndex(2,3)),4)
-  local limits=a:GetGridOptions() limits.MaxCells=1 a:SetGridOptions(limits)
+  a:GetGrid():SetMaxCells(1)
   local path,report=b:GetPathWithExpansion() equal(path,nil) equal(report.StopReason,"cell_limit")
 end)
 
@@ -1123,7 +1123,7 @@ test("individual dimension caps constrain only their own axis and can be removed
       equal(g:ExpandGrid(width,margin),g)
       local built,reason=g:ExpandGrid(width+50000,margin+50000)
       equal(built,nil) equal(reason,"size_limit")
-      local options=g:GetOptions() options.Expansion[axis]=nil g:SetOptions(options)
+      g:SetExpansion()
       equal(g:GetOptions().Expansion.MaxWidth,nil) equal(g:GetOptions().Expansion.MaxMargin,nil)
       equal(g:ExpandGrid(width+50000,margin+50000),g)
     end
@@ -1167,6 +1167,123 @@ test("uncapped numerical growth overflow ends cleanly without mutating the grid"
     local path,report=a:GetPathWithExpansion()
     equal(path,nil) equal(report.StopReason,"size_limit") equal(#report.Attempts,1)
     equal(a:GetGrid():GetVersion(),version) equal(report.MaxWidth,nil) equal(report.MaxMargin,nil)
+  end
+end)
+
+test("partial options retain configuration, merge expansion and copy caller values",function()
+  local g=GRID:New("Partial",GRID.Type.RECTANGLE):SetCorridor(GRID.Width.WIDE,GRID.Margin.SMALL)
+    :SetResolution(GRID.Resolution.FINE):SetExpansion(2,3,90000,20000)
+  local update={MaxCells=10000,Diagonals=false,Expansion={MaxAttempts=4}}
+  equal(g:SetOptions(update),g)
+  update.Expansion.MaxAttempts=100 update.MaxCells=1
+  local o=g:GetOptions()
+  equal(o.Width,GRID.Width.WIDE) equal(o.Margin,GRID.Margin.SMALL) equal(o.Resolution,GRID.Resolution.FINE)
+  equal(o.Spacing,nil) equal(o.MaxCells,10000) equal(o.Diagonals,false)
+  equal(o.Expansion.GrowthFactor,2) equal(o.Expansion.MaxAttempts,4)
+  equal(o.Expansion.MaxWidth,90000) equal(o.Expansion.MaxMargin,20000)
+  o.Expansion.MaxWidth=nil g:SetOptions(o)
+  equal(g:GetOptions().Expansion.MaxWidth,90000)
+  local version=g:GetVersion()
+  equal(g:SetOptions(),g) equal(g:SetOptions({}),g) equal(g:GetVersion(),version)
+end)
+
+test("explicit spacing and resolution setters select modes and clear transverse overrides",function()
+  local g=GRID:New("Modes",GRID.Type.RECTANGLE):SetMaxCells(7000):SetExpansion(2,3)
+  equal(g:SetSpacing(600,300),g)
+  g:SetOptions({Resolution=GRID.Resolution.NORMAL})
+  local o=g:GetOptions() equal(o.Resolution,GRID.Resolution.NORMAL) equal(o.Spacing,nil) equal(o.CrossSpacing,nil)
+  g:SetOptions({CrossSpacing=400})
+  o=g:GetOptions() equal(o.Resolution,nil) equal(o.Spacing,2000) equal(o.CrossSpacing,400)
+  g:SetSpacing(500)
+  o=g:GetOptions() equal(o.Spacing,500) equal(o.CrossSpacing,nil)
+  g:SetResolution(GRID.Resolution.FINE):SetSpacing()
+  o=g:GetOptions() equal(o.Spacing,2000) equal(o.Resolution,nil) equal(o.MaxCells,7000) equal(o.Expansion.GrowthFactor,2)
+  g:SetSpacing(1000,500):SetOptions({Spacing=750})
+  equal(g:GetOptions().CrossSpacing,500)
+  g:SetResolution(GRID.Resolution.FINE):SetResolution()
+  equal(g:GetOptions().Resolution,nil) equal(g:GetOptions().Spacing,2000)
+end)
+
+test("explicit expansion parameters replace all expansion settings and accept individual zero caps",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local g=GRID:New("Expansion",kind):SetResolution(GRID.Resolution.NORMAL):SetMaxCells(9000)
+    equal(g:SetExpansion(2,3,100000,50000),g)
+    g:SetExpansion(1.5,5)
+    local e=g:GetOptions().Expansion
+    equal(e.GrowthFactor,1.5) equal(e.MaxAttempts,5) equal(e.MaxWidth,nil) equal(e.MaxMargin,nil)
+    g:SetExpansion(nil,nil,0)
+    e=g:GetOptions().Expansion equal(e.MaxWidth,0) equal(e.MaxMargin,nil)
+    g:SetExpansion(nil,nil,nil,0)
+    e=g:GetOptions().Expansion equal(e.MaxWidth,nil) equal(e.MaxMargin,0)
+    g:SetExpansion(2,1):SetExpansion()
+    e=g:GetOptions().Expansion equal(e.GrowthFactor,1.5) equal(e.MaxAttempts,5) equal(e.MaxWidth,nil) equal(e.MaxMargin,nil)
+    equal(g:GetOptions().Resolution,GRID.Resolution.NORMAL) equal(g:GetOptions().MaxCells,9000)
+  end
+end)
+
+test("option and setter validation failures are atomic",function()
+  local g=GRID:New("Atomic",GRID.Type.RECTANGLE):SetSpacing(600,300):SetMaxCells(8000):SetExpansion(2,3,80000,40000)
+  local snapshot,version=g.GridOptions,g:GetVersion()
+  local invalid={
+    function() g:SetOptions({MaxCells=10000,Expansion={MaxAttempts=0}}) end,
+    function() g:SetOptions({Resolution=GRID.Resolution.FINE,Spacing=500}) end,
+    function() g:SetOptions({Expansion={MaxWidth=false}}) end,
+    function() g:SetSpacing(0) end,
+    function() g:SetSpacing(1000,math.huge) end,
+    function() g:SetMaxCells(2.5) end,
+    function() g:SetDiagonals(1) end,
+    function() g:SetExpansion(1) end,
+    function() g:SetExpansion(false) end,
+    function() g:SetExpansion(2,0) end,
+    function() g:SetExpansion(2,2.5) end,
+    function() g:SetExpansion(2,3,-1) end,
+    function() g:SetExpansion(2,3,nil,0/0) end
+  }
+  for _,run in ipairs(invalid) do
+    assert(not pcall(run)) equal(g.GridOptions,snapshot) equal(g:GetVersion(),version)
+  end
+  local hex=GRID:New("Hex",GRID.Type.HEXAGON):SetResolution(GRID.Resolution.FINE)
+  assert(not pcall(function() hex:SetSpacing(1000,500) end))
+  equal(hex:GetOptions().Resolution,GRID.Resolution.FINE)
+end)
+
+test("resetting option defaults preserves bounds filters and respects built geometry locks",function()
+  local g=GRID:New("Reset",GRID.Type.RECTANGLE):SetBounds(coord(0),coord(4000))
+    :SetValidSurfaceTypes(land.SurfaceType.WATER):SetCorridor(4000,1000)
+    :SetSpacing(500,250):SetDiagonals(false):SetMaxCells(10000):SetExpansion(2,2,10000,5000)
+  local first,last,filter=g.startVector,g.endVector,g.ValidSurfaceTypes
+  equal(g:ResetOptions(),g)
+  local o=g:GetOptions()
+  equal(o.Width,40000) equal(o.Margin,10000) equal(o.Spacing,2000) equal(o.CrossSpacing,nil)
+  equal(o.Diagonals,true) equal(o.MaxCells,5000) equal(o.Expansion.MaxWidth,nil) equal(o.Expansion.MaxAttempts,5)
+  equal(g.startVector,first) equal(g.endVector,last) equal(g.ValidSurfaceTypes,filter)
+  g:SetMaxCells(1):SetMaxCells():SetDiagonals(false):SetDiagonals()
+  equal(g:GetOptions().MaxCells,5000) equal(g:GetOptions().Diagonals,true)
+  g:SetCorridor(4000,1000):SetSpacing(1000):CreateFromBounds(coord(0),coord(4000))
+  local count,version,snapshot=g:GetCellCount(),g:GetVersion(),g.GridOptions
+  for _,run in ipairs({function() g:ResetOptions() end,function() g:SetSpacing(500) end,
+    function() g:SetResolution(GRID.Resolution.FINE) end,function() g:SetOptions({Width=5000,MaxCells=9999}) end}) do
+    assert(not pcall(run)) equal(g:GetCellCount(),count) equal(g:GetVersion(),version) equal(g.GridOptions,snapshot)
+  end
+  equal(g:SetMaxCells(9000):SetExpansion(2,3):SetDiagonals(false),g)
+  equal(g:GetCellCount(),count) equal(g:GetOptions().Spacing,1000)
+end)
+
+test("ASTAR builders and expanding searches retain explicit GRID configuration",function()
+  for _,builder in ipairs({"CreateGrid","CreateHexGrid"}) do
+    local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+    a:GetGrid():SetCorridor(4000,1000):SetSpacing(1000):SetMaxCells(2000):SetDiagonals(false):SetExpansion(2,2)
+    a:SetGridOptions({Expansion={GrowthFactor=1.5}})
+    assert(a[builder](a))
+    local o=a:GetGridOptions()
+    equal(o.Width,4000) equal(o.Spacing,1000) equal(o.MaxCells,2000) equal(o.Diagonals,false)
+    equal(o.Expansion.GrowthFactor,1.5) equal(o.Expansion.MaxAttempts,2)
+    a:SetValidNeighbourFunction(function() return false end)
+    local path,report=a:GetPathWithExpansion()
+    equal(path,nil) equal(#report.Attempts,2)
+    a:GetGrid():SetExpansion(2,1)
+    path,report=a:GetPathWithExpansion()
+    equal(path,nil) equal(#report.Attempts,1)
   end
 end)
 

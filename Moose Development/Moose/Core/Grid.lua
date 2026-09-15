@@ -38,7 +38,7 @@
 -- # Usage
 --
 --     local grid = GRID:New("Sea", GRID.Type.RECTANGLE)
---     grid:SetOptions({Spacing=2000, MaxCells=5000, Diagonals=true})
+--     grid:SetSpacing(2000):SetMaxCells(5000):SetDiagonals(true)
 --     grid:SetValidSurfaceTypes(land.SurfaceType.WATER)
 --     local built, reason = grid:CreateFromZone(searchZone)
 --     if built then
@@ -58,7 +58,13 @@
 -- Options: Width=40000, Margin=10000, Spacing=2000, CrossSpacing=Spacing (rectangles only),
 -- Diagonals=true, MaxCells=5000; Expansion={GrowthFactor=1.5, MaxAttempts=5}.
 -- Expansion.MaxWidth and Expansion.MaxMargin are optional meter limits with no defaults.
--- SetOptions replaces configuration; GetOptions returns a copy. Geometry and surface filters lock after construction.
+-- SetOptions updates only supplied fields, including fields within Expansion; nil and empty tables leave settings unchanged.
+-- ResetOptions restores all option defaults. GetOptions returns an independent copy. Geometry and surface filters lock after construction.
+-- SetSpacing(Spacing, CrossSpacing), SetMaxCells(MaxCells) and SetDiagonals(Diagonals) preserve unrelated options.
+-- SetSpacing selects manual mode; SetResolution selects automatic mode. Omitted setter arguments restore their documented defaults.
+-- SetExpansion(GrowthFactor, MaxAttempts, MaxWidth, MaxMargin) replaces the complete expansion configuration.
+-- For example, SetExpansion(1.5, 5) removes previous dimension limits; SetExpansion() restores all expansion defaults.
+-- A nil field in a partial options table cannot clear a value: use these setters or ResetOptions instead.
 -- Diagonals and limits may change afterwards. A successful mutation increments GetVersion(); ASTAR synchronizes before searching.
 --
 -- # Relative Corridor Dimensions
@@ -95,7 +101,7 @@
 -- Expansion retains the calculated spacing. Changing resolution or switching spacing mode requires a new grid after construction.
 --
 --     local grid = GRID:New("Sea", GRID.Type.HEXAGON)
---     grid:SetOptions({MaxCells=5000})
+--     grid:SetMaxCells(5000):SetExpansion(1.5, 5)
 --     grid:SetResolution(GRID.Resolution.NORMAL)
 --     grid:SetValidSurfaceTypes(land.SurfaceType.WATER)
 --     local built, reason = grid:CreateFromZone(searchZone)
@@ -142,6 +148,7 @@
 -- DrawGrid/MarkGrid use bounded timer batches; UndrawGrid/UnmarkGrid remove only their owner's overlays.
 --
 -- @field #GRID
+---@class GRID
 GRID = {
   ClassName = "GRID"
 }
@@ -150,6 +157,7 @@ GRID = {
 -- @type GRID.Type
 -- @field #string RECTANGLE Rectangular cells, including squares.
 -- @field #string HEXAGON Regular hexagonal cells.
+---@enum GRID.Type
 GRID.Type={RECTANGLE="rectangular", HEXAGON="hexagonal"}
 
 --- Relative spacing presets based on the shorter positive initial extent.
@@ -157,6 +165,7 @@ GRID.Type={RECTANGLE="rectangular", HEXAGON="hexagonal"}
 -- @field #string COARSE Ten center-to-center intervals across the reference extent.
 -- @field #string NORMAL Twenty center-to-center intervals across the reference extent.
 -- @field #string FINE Forty center-to-center intervals across the reference extent.
+---@enum GRID.Resolution
 GRID.Resolution={COARSE="coarse", NORMAL="normal", FINE="fine"}
 
 --- Initial corridor width as a fraction of its total length, including both margins.
@@ -164,6 +173,7 @@ GRID.Resolution={COARSE="coarse", NORMAL="normal", FINE="fine"}
 -- @field #string NARROW Total width is 25 percent of corridor length.
 -- @field #string NORMAL Total width is 50 percent of corridor length.
 -- @field #string WIDE Total width is 100 percent of corridor length.
+---@enum GRID.Width
 GRID.Width={NARROW="narrow", NORMAL="normal", WIDE="wide"}
 
 --- Initial margin at each end as a fraction of endpoint distance.
@@ -171,6 +181,7 @@ GRID.Width={NARROW="narrow", NORMAL="normal", WIDE="wide"}
 -- @field #string SMALL Each margin is 10 percent of endpoint distance.
 -- @field #string NORMAL Each margin is 25 percent of endpoint distance.
 -- @field #string LARGE Each margin is 50 percent of endpoint distance.
+---@enum GRID.Margin
 GRID.Margin={SMALL="small", NORMAL="normal", LARGE="large"}
 
 --- GRID class version.
@@ -187,6 +198,15 @@ GRID.version="0.1.0"
 -- @field #boolean Diagonals Allow diagonal neighbours in local rectangular mode, default true. Ignored by hex grids. Can change after creation.
 -- @field #number MaxCells Shared candidate-cell limit before filtering, default 5000. Counts candidate centers before surface and zone filtering.
 -- @field #GRID.ExpansionOptions Expansion Expansion configuration.
+---@class GRID.GridOptions
+---@field Width? number|GRID.Width Total corridor width in meters or a relative preset; default 40000.
+---@field Margin? number|GRID.Margin Margin at each end in meters or a relative preset; default 10000.
+---@field Spacing? number Manual center spacing in meters; default 2000. Mutually exclusive with Resolution.
+---@field CrossSpacing? number Rectangular transverse spacing in meters; defaults to Spacing. Mutually exclusive with Resolution.
+---@field Resolution? GRID.Resolution Automatic relative spacing; mutually exclusive with Spacing and CrossSpacing.
+---@field Diagonals? boolean Eight rectangular neighbours if true, four if false; default true.
+---@field MaxCells? integer Candidate-cell limit before filtering; default 5000.
+---@field Expansion? GRID.ExpansionOptions Iterative search settings.
 
 --- Expansion limits and default settings for iterative searches.
 -- @type GRID.ExpansionOptions
@@ -194,6 +214,11 @@ GRID.version="0.1.0"
 -- @field #number MaxAttempts Positive integer search limit including the first attempt, default 5.
 -- @field #number MaxWidth Optional maximum width in meters; nil means no width limit.
 -- @field #number MaxMargin Optional maximum margin at each end in meters; nil means no margin limit.
+---@class GRID.ExpansionOptions
+---@field GrowthFactor? number Finite multiplier greater than one; default 1.5.
+---@field MaxAttempts? integer Positive search attempt limit including the first search; default 5.
+---@field MaxWidth? number Non-negative maximum width in meters; omitted means no limit.
+---@field MaxMargin? number Non-negative maximum margin per end in meters; omitted means no limit.
 
 --- Snapshot of manual or automatically calculated spacing.
 -- @type GRID.ResolutionInfo
@@ -238,6 +263,9 @@ GRID.version="0.1.0"
 -- @param #string Name Required non-empty grid name.
 -- @param #string GridType Required GRID.Type.RECTANGLE or GRID.Type.HEXAGON.
 -- @return #GRID Grid.
+---@param Name string
+---@param GridType GRID.Type
+---@return GRID
 function GRID:New(Name, GridType)
 
   assert(type(Name)=="string" and Name:find("%S"), "GRID: a non-empty name is required")
@@ -628,6 +656,8 @@ end
 -- @param #GRID self
 -- @param #table SurfaceTypes (Optional) DCS surface types; also accepts a single number.
 -- @return #GRID self
+---@param SurfaceTypes? number|number[]
+---@return GRID
 function GRID:SetValidSurfaceTypes(SurfaceTypes)
 
   assert(not self.GridBuilt, "GRID: surface types cannot change after grid creation; use a new GRID object")
@@ -658,14 +688,16 @@ function GRID:SetValidSurfaceTypes(SurfaceTypes)
 
 end
 
---- Configure grid geometry, the shared cell budget and optional expansion settings. Does not build or draw anything.
--- Replaces the complete configuration with a copy; omitted fields use defaults. Nil resets to defaults.
+--- Validate and replace the complete internal option snapshot atomically. Does not build or draw anything.
+-- Used by partial updates and dedicated setters so removed optional values do not survive a merge.
 -- After grid creation Width, Margin, Spacing, CrossSpacing and Resolution are locked; Diagonals and limits may still change.
 -- Lowering MaxCells below the existing grid size makes an expanding search return cell_limit without searching.
 -- @param #GRID self
 -- @param #GRID.GridOptions Options (Optional) Grid settings, including the nested Expansion table.
 -- @return #GRID self
-function GRID:SetOptions(Options)
+---@param Options? GRID.GridOptions
+---@return GRID
+function GRID:_SetOptions(Options)
 
   local saved=self:_CopyGridOptions(Options)
   assert(self.GridType~=GRID.Type.HEXAGON or saved.CrossSpacing==nil, "GRID: CrossSpacing is only supported by rectangular grids")
@@ -679,11 +711,125 @@ function GRID:SetOptions(Options)
   end
   if self.rectGrid and proposed.Diagonals~=self:GetOptions().Diagonals then
     self.gridLinks=nil
-    end
+  end
   self.GridOptions=saved
   if not self.GridBuilt then self._ResolutionInfo=nil end
   self:_Touch()
   return self
+
+end
+
+--- Update only supplied grid options, preserving omitted fields, including nested Expansion fields.
+-- Resolution selects automatic spacing; Spacing or CrossSpacing selects manual spacing.
+-- A single update cannot contain both modes. Nil or an empty table leaves the configuration unchanged.
+-- Use the dedicated setters to clear optional values, or ResetOptions() to restore all defaults.
+-- Geometry remains locked after construction; validation errors leave the configuration unchanged.
+-- @param #GRID self
+-- @param #GRID.GridOptions Options (Optional) Partial configuration to merge.
+-- @return #GRID self.
+---@param Options? GRID.GridOptions
+---@return GRID
+function GRID:SetOptions(Options)
+
+  local update=self:_CopyGridOptions(Options)
+  if next(update)==nil then return self end
+  local saved=self:_CopyGridOptions(self.GridOptions)
+  if update.Resolution then
+    saved.Spacing=nil
+    saved.CrossSpacing=nil
+  elseif update.Spacing or update.CrossSpacing then
+    saved.Resolution=nil
+  end
+  for key, value in pairs(update) do
+    if key=="Expansion" then
+      saved.Expansion=saved.Expansion or {}
+      for name, setting in pairs(value) do saved.Expansion[name]=setting end
+    else
+      saved[key]=value
+    end
+  end
+  return self:_SetOptions(saved)
+
+end
+
+--- Restore all grid option defaults, leaving bounds and surface filters unchanged.
+-- After construction this is rejected if it would change locked geometry; use a new GRID in that case.
+-- @param #GRID self
+-- @return #GRID self.
+---@return GRID
+function GRID:ResetOptions()
+
+  return self:_SetOptions({})
+
+end
+
+--- Select manual center spacing and disable automatic resolution, preserving other options.
+-- The transverse spacing is supported only by rectangular grids. Changing spacing after creation is rejected.
+-- @param #GRID self
+-- @param #number Spacing (Optional) Positive center spacing in meters; nil restores the 2000-meter default.
+-- @param #number CrossSpacing (Optional) Positive transverse spacing in meters; nil uses Spacing and removes any previous override.
+-- @return #GRID self.
+---@param Spacing? number
+---@param CrossSpacing? number
+---@return GRID
+function GRID:SetSpacing(Spacing, CrossSpacing)
+
+  local options=self:_CopyGridOptions(self.GridOptions)
+  options.Resolution=nil
+  options.Spacing=Spacing
+  options.CrossSpacing=CrossSpacing
+  return self:_SetOptions(options)
+
+end
+
+--- Set the shared candidate-cell budget without changing geometry or resolution.
+-- Counts candidate centers before surface and zone filtering. May change after construction.
+-- @param #GRID self
+-- @param #number MaxCells (Optional) Positive integer candidate limit; nil restores 5000.
+-- @return #GRID self.
+---@param MaxCells? integer
+---@return GRID
+function GRID:SetMaxCells(MaxCells)
+
+  local options=self:_CopyGridOptions(self.GridOptions)
+  options.MaxCells=MaxCells
+  return self:_SetOptions(options)
+
+end
+
+--- Enable or disable direct diagonal neighbours for rectangles, preserving other options.
+-- May change after construction; neighbour links are rebuilt on demand. Ignored by hex grids.
+-- @param #GRID self
+-- @param #boolean Diagonals (Optional) True for eight neighbours, false for four; nil restores true.
+-- @return #GRID self.
+---@param Diagonals? boolean
+---@return GRID
+function GRID:SetDiagonals(Diagonals)
+
+  local options=self:_CopyGridOptions(self.GridOptions)
+  options.Diagonals=Diagonals
+  return self:_SetOptions(options)
+
+end
+
+--- Replace all expansion settings without changing other grid options or starting a search.
+-- Omitted limits remove previous limits. May change after construction; MaxCells remains an independent budget.
+-- @param #GRID self
+-- @param #number GrowthFactor (Optional) Finite multiplier greater than 1; default 1.5.
+-- @param #number MaxAttempts (Optional) Positive integer number of search attempts including the initial search; default 5.
+-- @param #number MaxWidth (Optional) Finite non-negative maximum width in meters; nil means no width limit.
+-- @param #number MaxMargin (Optional) Finite non-negative maximum margin at each end in meters; nil means no margin limit.
+-- @return #GRID self.
+---@param GrowthFactor? number
+---@param MaxAttempts? integer
+---@param MaxWidth? number
+---@param MaxMargin? number
+---@return GRID
+function GRID:SetExpansion(GrowthFactor, MaxAttempts, MaxWidth, MaxMargin)
+
+  local options=self:_CopyGridOptions(self.GridOptions)
+  options.Expansion={GrowthFactor=GrowthFactor, MaxAttempts=MaxAttempts, MaxWidth=MaxWidth, MaxMargin=MaxMargin}
+  return self:_SetOptions(options)
 
 end
 
@@ -693,6 +839,7 @@ end
 -- Width and Margin retain their configured presets; GetDimensions() exposes current meter values after construction.
 -- @param #GRID self
 -- @return #GRID.GridOptions Configuration copy.
+---@return GRID.GridOptions
 function GRID:GetOptions()
 
   return self:_ResolveGridOptions(self.GridOptions)
@@ -704,9 +851,12 @@ end
 -- With distance D and per-end margin M, total length is D+2*M; width presets apply to that total length.
 -- Explicit meter values and presets may be selected independently. Expansion uses the resulting dimensions without reevaluating presets.
 -- @param #GRID self
--- @param #string Width Required GRID.Width.NARROW, NORMAL or WIDE; also accepts non-negative meters.
--- @param #string Margin Required GRID.Margin.SMALL, NORMAL or LARGE; also accepts non-negative meters at each end.
+-- @param #number Width Required non-negative total width in meters, or a GRID.Width.NARROW, NORMAL or WIDE preset.
+-- @param #number Margin Required non-negative margin at each end in meters, or a GRID.Margin.SMALL, NORMAL or LARGE preset.
 -- @return #GRID self.
+---@param Width number|GRID.Width
+---@param Margin number|GRID.Margin
+---@return GRID
 function GRID:SetCorridor(Width, Margin)
 
   assert(Width~=nil and Margin~=nil, "GRID: SetCorridor requires both width and margin")
@@ -750,13 +900,15 @@ end
 -- @param #GRID self
 -- @param #string Level GRID.Resolution.COARSE, NORMAL or FINE; nil disables automatic resolution.
 -- @return #GRID self.
+---@param Level? GRID.Resolution
+---@return GRID
 function GRID:SetResolution(Level)
 
   local options=self:_CopyGridOptions(self.GridOptions)
   options.Resolution=Level
   options.Spacing=nil
   options.CrossSpacing=nil
-  return self:SetOptions(options)
+  return self:_SetOptions(options)
 
 end
 

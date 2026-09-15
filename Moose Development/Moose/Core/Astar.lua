@@ -52,7 +52,7 @@
 -- @field #table LastSearchTiming Last search attempt: CPUSeconds, Failure and Nodes. CPUSeconds is nil when os.clock is unavailable.
 -- @field #string LastPathFailure Reason the last search attempt failed; nil on success or when no attempt was made.
 -- @field #table LastExpansionResult Attempt history and stop reason from GetPathWithExpansion().
--- @field #ASTAR.GridOptions GridOptions Saved configuration, set with SetGridOptions().
+-- @field Core.Grid#GRID.GridOptions GridOptions Saved configuration, set with SetGridOptions().
 -- @field #boolean GridBuilt Whether an initial grid was successfully created, even if it contains no accepted nodes.
 -- @field #number GridCandidateCount Initial or expanded candidate count before filtering.
 -- @field #table GridMarkIDs Text-marker ids owned by MarkGrid().
@@ -117,7 +117,12 @@
 --
 -- @{#ASTAR.SetValidSurfaceTypes} accepts a single DCS surface type or a list. Nil accepts all surfaces; an empty list accepts none.
 -- @{#ASTAR.SetGridOptions} sets geometry, the shared candidate-cell budget and a nested Expansion table. Both setters copy their inputs.
--- SetGridOptions replaces the entire configuration. Omitted fields use defaults; an empty table or nil resets defaults.
+-- SetGridOptions updates only supplied fields, including nested Expansion fields; nil or an empty table preserves the configuration.
+-- GetGrid():ResetOptions() restores all option defaults, subject to the geometry lock after construction.
+-- GetGrid():SetSpacing(Spacing, CrossSpacing), SetResolution(Level), SetMaxCells(MaxCells) and SetDiagonals(Diagonals) offer explicit setters.
+-- GetGrid():SetExpansion(GrowthFactor, MaxAttempts, MaxWidth, MaxMargin) replaces all expansion settings.
+-- For example, astar:GetGrid():SetResolution(GRID.Resolution.NORMAL):SetMaxCells(10000):SetExpansion(1.5, 5).
+-- Omitted expansion limits remove previous limits. SetGridOptions({Expansion={MaxAttempts=3}}) instead preserves other expansion fields.
 -- @{#ASTAR.GetGridOptions} returns an independent configuration copy. Unknown keys and invalid values are rejected before changing settings.
 --
 -- * Width: total width across the start-to-goal axis; default 40000.
@@ -128,7 +133,7 @@
 -- * MaxCells: positive integer budget shared by initial creation and later enlargement; default 5000. There is no unlimited default.
 --
 -- After a successful build the geometry and surface filter are locked, even if every cell was filtered out. Use a new ASTAR for another lattice.
--- Diagonals, limits and Expansion settings can still change: get the current options, edit the desired limits, then call SetGridOptions(options).
+-- Diagonals, limits and Expansion settings can still change through partial SetGridOptions updates or the dedicated GRID setters.
 -- Lowering MaxCells below the existing candidate count does not remove nodes; expanding search returns cell_limit before searching.
 --
 -- @{#ASTAR.CreateGrid} and @{#ASTAR.CreateHexGrid} take no arguments. Configure first; passing old positional arguments is an error.
@@ -166,7 +171,7 @@
 -- Hex grids have six neighbors. Rectangles use four or eight according to Diagonals in SetGridOptions().
 -- A diagonal requires both flanking cells to exist, preventing shortcuts between surface-filtered cells. The edge still undergoes the configured rule.
 -- For example: astar:SetGridOptions({Spacing=2000, Diagonals=false}):CreateGrid():SetGridNeighboursOnly(true).
--- To change Diagonals later, edit the copy from GetGridOptions() and pass it to SetGridOptions(); the candidate graph is rebuilt on demand.
+-- To change Diagonals later, use GetGrid():SetDiagonals(false); the candidate graph is rebuilt on demand.
 -- Local mode is the default once a grid is built or attached. SetGridNeighboursOnly(false) explicitly enables all-pairs candidates.
 -- SetValidNeighbourDistance(maxDistance), SetValidNeighbourLoS(corridorWidth), SetValidNeighbourRoad(maxDistance), or
 -- SetValidNeighbourFunction(function(nodeA,nodeB,...) ... end, ...) select the connection rule. Setting a rule replaces the previous rule.
@@ -223,6 +228,7 @@
 -- UnmarkGrid() cancels queued text work and removes text labels without touching polygons. A new MarkGrid() replaces previous labels.
 --
 -- @field #ASTAR
+---@class ASTAR
 ASTAR = {
   ClassName      = "ASTAR",
   Debug          =   nil,
@@ -254,23 +260,6 @@ ASTAR = {
 --- ASTAR infinity.
 -- @field #number INF
 ASTAR.INF=1/0
-
---- Grid geometry and resource limits. All fields are optional; distances are meters.
--- @type ASTAR.GridOptions
--- @field #number Width Total search width, default 40000. Ignored by zone builders.
--- @field #number Margin Margin before start and after goal, default 10000. Ignored by zone builders.
--- @field #number Spacing Center spacing, default 2000.
--- @field #number CrossSpacing Rectangular transverse spacing; omitted means Spacing. Rejected for hex grids.
--- @field #boolean Diagonals Allow diagonal neighbours in local rectangular mode, default true. Ignored by hex grids. Can change after creation.
--- @field #number MaxCells Shared candidate-cell limit before filtering, default 5000. Excludes manual nodes and endpoints.
--- @field #ASTAR.ExpansionOptions Expansion Expansion configuration.
-
---- Grid search expansion settings.
--- @type ASTAR.ExpansionOptions
--- @field #number GrowthFactor Finite multiplier greater than 1, default 1.5.
--- @field #number MaxAttempts Positive integer search limit including the first attempt, default 5.
--- @field #number MaxWidth Optional maximum width in meters; nil means no width limit.
--- @field #number MaxMargin Optional maximum margin at each end in meters; nil means no margin limit.
 
 --- Node text-marker configuration.
 -- @type ASTAR.MarkGridOptions
@@ -315,6 +304,7 @@ end
 --- Create a new ASTAR object with an empty node set, unrestricted neighbours, and 2D distance costs.
 -- @param #ASTAR self
 -- @return #ASTAR self
+---@return ASTAR
 function ASTAR:New()
 
   -- Inherit from BASE.
@@ -1345,6 +1335,7 @@ end
 --- Get the owned or shared GRID, including before initial construction.
 -- @param #ASTAR self
 -- @return Core.Grid#GRID Grid.
+---@return GRID
 function ASTAR:GetGrid()
   return self.Grid
 end
@@ -1383,10 +1374,13 @@ function ASTAR:SetValidSurfaceTypes(SurfaceTypes)
   return self
 end
 
---- Configure geometry, diagonals and expansion limits on the owned/shared grid.
+--- Update supplied geometry, diagonal and expansion settings on the owned/shared grid.
+-- Omitted fields are preserved, including nested Expansion fields. Use the dedicated GRID setters to clear optional values.
 -- @param #ASTAR self
--- @param Core.Grid#GRID.GridOptions Options Grid configuration.
+-- @param Core.Grid#GRID.GridOptions Options (Optional) Partial grid configuration.
 -- @return #ASTAR self.
+---@param Options? GRID.GridOptions
+---@return ASTAR
 function ASTAR:SetGridOptions(Options)
   self.Grid:SetOptions(Options)
   self:_SyncGrid()
@@ -1395,7 +1389,8 @@ end
 
 --- Return a copy of the current grid configuration.
 -- @param #ASTAR self
--- @return #table Options.
+-- @return Core.Grid#GRID.GridOptions Configuration copy.
+---@return GRID.GridOptions
 function ASTAR:GetGridOptions()
   self:_SyncGrid()
   return self.Grid:GetOptions()

@@ -1092,6 +1092,7 @@ test("initial budgets reject enormous grids without integer overflow or terrain 
   land.surfaceAt=function() error("Oversized grid must be rejected before sampling") end
   local result, reason=a:SetGridOptions({Width=4000000000,Margin=0,Spacing=1,CrossSpacing=1,MaxCells=5}):SetValidSurfaceTypes(nil):CreateGrid()
   equal(result,nil) equal(reason,"cell_limit") equal(a.Nnodes,0)
+  a:GetGrid():SetSpacing(1)
   result, reason=a:SetGridOptions({Width=0,Margin=9e18,Spacing=1,MaxCells=5}):SetValidSurfaceTypes(nil):CreateHexGrid()
   equal(result,nil) equal(reason,"cell_limit") equal(a.hexGrid,nil) equal(a.Nnodes,0)
 end)
@@ -1896,8 +1897,10 @@ test("grid configuration copies nested settings resets and stays independent", f
   equal(a:GetGridOptions().Expansion.GrowthFactor,2)
   equal(b:GetGridOptions().Width,40000) equal(b:GetGridOptions().MaxCells,5000)
   a:SetGridOptions({Spacing=1500})
-  equal(a:GetGridOptions().Width,40000) equal(a:GetGridOptions().Expansion.MaxAttempts,5)
-  a:SetGridOptions() equal(a:GetGridOptions().Spacing,2000)
+  equal(a:GetGridOptions().Width,6000) equal(a:GetGridOptions().Expansion.MaxAttempts,3)
+  a:SetGridOptions() equal(a:GetGridOptions().Spacing,1500)
+  a:GetGrid():ResetOptions()
+  equal(a:GetGridOptions().Width,40000) equal(a:GetGridOptions().Spacing,2000) equal(a:GetGridOptions().Expansion.MaxAttempts,5)
 end)
 
 test("surface configuration validates copies and locks even for empty filtered grids", function()
