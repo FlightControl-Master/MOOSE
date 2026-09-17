@@ -260,7 +260,7 @@
 -- @field #number skipperOffset Holding offset angle in degrees for Case II/III manual recoveries.
 -- @field #number skipperTime Recovery time in min for manual recovery.
 -- @field #boolean intowindold If true, use old into wind calculation.
--- @extends Core.Fsm#FSM
+-- @extends Ops.Navygroup#NAVYGROUP
 
 --- Be the boss!
 --
@@ -1847,8 +1847,18 @@ AIRBOSS.version = "1.5.0"
 -- @return #AIRBOSS self or nil if carrier unit does not exist.
 function AIRBOSS:New( carriername, alias )
 
+  local carrierUnit=UNIT:FindByName( carriername )
+  
+  local carrierGroup=nil
+  if not carrierUnit then
+    BASE:E("ERROR: could not find carrier unit in AIRBOSS constructor!")
+    return nil
+  else
+    carrierGroup=carrierUnit:GetGroup()
+  end
+
   -- Inherit everthing from FSM class.
-  local self = BASE:Inherit( self, FSM:New() ) -- #AIRBOSS
+  local self = BASE:Inherit( self, NAVYGROUP:New(carrierGroup) ) -- #AIRBOSS
 
   -- Debug.
   self:F2( { carriername = carriername, alias = alias } )
@@ -2130,7 +2140,7 @@ function AIRBOSS:New( carriername, alias )
     local function flareme()
 
       -- Carrier pos.
-      self:GetCoordinate():FlareYellow()
+      self:GetCarrierCoordinate():FlareYellow()
 
       -- Stern
       stern:FlareYellow()
@@ -2516,7 +2526,7 @@ end
 function AIRBOSS:_ResolveRecoveryCase( Case )
   Case = Case or self.defaultcase or 0
   if Case == 0 then
-    return UTILS.GetRecoveryCase( self:GetCoordinate() )
+    return UTILS.GetRecoveryCase( self:GetCarrierCoordinate() )
   end
   return Case
 end
@@ -2608,7 +2618,7 @@ function AIRBOSS:AddRecoveryWindow( starttime, stoptime, case, holdingoffset, tu
 
   -- CASE 0 enables automatic selection for the planned recovery window.
   if case == 0 then
-    local coordinate = self:GetCoordinate()
+    local coordinate = self:GetCarrierCoordinate()
 
     case = UTILS.GetRecoveryCase( coordinate, UTILS.SecondsToClock( Tstart ) )
 
@@ -2817,18 +2827,6 @@ end
 -- @return #AIRBOSS self
 function AIRBOSS:SetLSOCallInterval( TimeInterval )
   self.LSOdT = TimeInterval or 4
-  return self
-end
-
---- Set if old into wind calculation is used when carrier turns into the wind for a recovery.
--- @param #AIRBOSS self
--- @param #boolean SwitchOn If `true` or `nil`, use old into wind calculation.
--- @return #AIRBOSS self
-function AIRBOSS:SetIntoWindLegacy( SwitchOn )
-  if SwitchOn==nil then
-    SwitchOn=true
-  end
-  self.intowindold=SwitchOn
   return self
 end
 
@@ -3177,7 +3175,7 @@ function AIRBOSS:EnableSRS(PathToSRS,Port,Culture,Gender,Voice,GoogleCreds,Volum
   local Modulation = self.AirbossRadio.modulation
   self.SRS = MSRS:New(PathToSRS,Frequency,Modulation,AltBackend)
   self.SRS:SetCoalition(self:GetCoalition())
-  self.SRS:SetCoordinate(self:GetCoordinate())
+  self.SRS:SetCoordinate(self:GetCarrierCoordinate())
   self.SRS:SetCulture(Culture or "en-US")
   --self.SRS:SetFrequencies(Frequencies)
   self.SRS:SetGender(Gender or "male")
@@ -3579,19 +3577,6 @@ function AIRBOSS:SetDebugModeON()
   return self
 end
 
---- Carrier patrols ad inifintum. If the last waypoint is reached, it will go to waypoint one and repeat its route.
--- @param #AIRBOSS self
--- @param #boolean switch If true or nil, patrol until the end of time. If false, go along the waypoints once and stop.
--- @return #AIRBOSS self
-function AIRBOSS:SetPatrolAdInfinitum( switch )
-  if switch == false then
-    self.adinfinitum = false
-  else
-    self.adinfinitum = true
-  end
-  return self
-end
-
 --- Set the magnetic declination (or variation). By default this is set to the standard declination of the map.
 -- @param #AIRBOSS self
 -- @param #number declination (Optional) Declination in degrees or nil for default declination of the map.
@@ -3712,7 +3697,7 @@ function AIRBOSS:onafterStart( From, Event, To )
   -- timer.scheduleFunction(AIRBOSS._CheckRadioQueueT, {airboss=self, radioqueue=self.RQMarshal, name="MARSHAL"}, timer.getTime()+1)
 
   -- Initial carrier position and orientation.
-  self.Cposition = self:GetCoordinate()
+  self.Cposition = self:GetCarrierCoordinate()
   self.Corientation = self.carrier:GetOrientationX()
   self.Corientlast = self.Corientation
   self.Tpupdate = timer.getTime()
@@ -3773,7 +3758,7 @@ function AIRBOSS:onafterStatus( From, Event, To )
 
     -- Current heading and position of the carrier.
     local hdg = self:GetHeading()
-    local pos = self:GetCoordinate()
+    local pos = self:GetCarrierCoordinate()
     local speed = self.carrier:GetVelocityKNOTS()
 
     -- Update magnetic variation if we can get it from DCS.
@@ -3799,7 +3784,7 @@ function AIRBOSS:onafterStatus( From, Event, To )
         self.holdtimestamp = timer.getTime()
       else
         if holdtime > 3 * 60 then
-          local coord = self:GetCoordinate():Translate( 500, hdg + 10 )
+          local coord = self:GetCarrierCoordinate():Translate( 500, hdg + 10 )
           -- coord:MarkToAll("Re-route after standstill.")
           self:CarrierResumeRoute( coord )
           self.holdtimestamp = nil
@@ -6179,7 +6164,7 @@ end
 function AIRBOSS:_ScanCarrierZone()
 
   -- Carrier position.
-  local coord = self:GetCoordinate()
+  local coord = self:GetCarrierCoordinate()
 
   -- Scan radius = radius of the CCA.
   local RCCZ = self.zoneCCA:GetRadius()
@@ -6415,7 +6400,7 @@ function AIRBOSS:_WaitAI( flight, respawn )
   local speedTransit = UTILS.KnotsToKmph( 370 )
 
   -- Carrier coordinate
-  local cv = self:GetCoordinate()
+  local cv = self:GetCarrierCoordinate()
 
   -- Coordinate of flight group
   local fc = group:GetCoordinate()
@@ -6524,7 +6509,7 @@ function AIRBOSS:_MarshalAI( flight, nstack, respawn )
   flight.flag = nstack
 
   -- Current carrier position.
-  local Carrier = self:GetCoordinate()
+  local Carrier = self:GetCarrierCoordinate()
 
   -- Carrier heading.
   local hdg = self:GetHeading()
@@ -6705,11 +6690,11 @@ function AIRBOSS:_RefuelAI( flight )
     ------------------------------
 
     -- Closest Airfield of the coalition.
-    local divertfield = self:GetCoordinate():GetClosestAirbase( Airbase.Category.AIRDROME, self:GetCoalition() )
+    local divertfield = self:GetCarrierCoordinate():GetClosestAirbase( Airbase.Category.AIRDROME, self:GetCoalition() )
 
     -- Handle case where there is no divert field of the own coalition and try neutral instead.
     if divertfield == nil then
-      divertfield = self:GetCoordinate():GetClosestAirbase( Airbase.Category.AIRDROME, 0 )
+      divertfield = self:GetCarrierCoordinate():GetClosestAirbase( Airbase.Category.AIRDROME, 0 )
     end
 
     if divertfield then
@@ -6785,7 +6770,7 @@ function AIRBOSS:_LandAI( flight )
   end
 
   -- Carrier position.
-  local Carrier = self:GetCoordinate()
+  local Carrier = self:GetCarrierCoordinate()
 
   -- Carrier heading.
   local hdg = self:GetHeading()
@@ -6805,8 +6790,8 @@ function AIRBOSS:_LandAI( flight )
   wp[#wp + 1] = Carrier:Translate( UTILS.NMToMeters( 4 ), hdg - 160 ):SetAltitude( alt ):WaypointAirLanding( Speed, self.airbase, nil, "Landing" )
   -- wp[#wp+1]=Carrier:Translate(UTILS.NMToMeters(4), hdg-160):SetAltitude(alt):WaypointAirLandingReFu(Speed, self.airbase, nil, "Landing")
 
-  -- wp[#wp+1]=self:GetCoordinate():Translate(UTILS.NMToMeters(3), hdg-160):SetAltitude(alt):WaypointAirTurningPoint(nil,Speed, {}, "Before Initial") ---WaypointAirLanding(Speed, self.airbase, nil, "Landing")
-  -- wp[#wp+1]=self:GetCoordinate():WaypointAirLanding(Speed, self.airbase, nil, "Landing")
+  -- wp[#wp+1]=self:GetCarrierCoordinate():Translate(UTILS.NMToMeters(3), hdg-160):SetAltitude(alt):WaypointAirTurningPoint(nil,Speed, {}, "Before Initial") ---WaypointAirLanding(Speed, self.airbase, nil, "Landing")
+  -- wp[#wp+1]=self:GetCarrierCoordinate():WaypointAirLanding(Speed, self.airbase, nil, "Landing")
 
   -- Reinit waypoints.
   flight.group:WayPointInitialize( wp )
@@ -6833,7 +6818,7 @@ function AIRBOSS:_GetMarshalAltitude( stack, case )
   case = case or self.case
 
   -- Carrier position.
-  local Carrier = self:GetCoordinate()
+  local Carrier = self:GetCarrierCoordinate()
 
   -- Altitude of first stack. Depends on recovery case.
   local angels0
@@ -7016,7 +7001,7 @@ function AIRBOSS:_AddMarshalGroup( flight, stack )
   table.insert( self.Qmarshal, flight )
 
   -- Pressure.
-  local P = UTILS.hPa2inHg( self:GetCoordinate():GetPressure() )
+  local P = UTILS.hPa2inHg( self:GetCarrierCoordinate():GetPressure() )
 
   -- Stack altitude.
   -- local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(stack, flight.case))
@@ -7522,7 +7507,7 @@ function AIRBOSS:_CreateFlightGroup( group )
     flight.groupname = group:GetName()
     flight.nunits = #group:GetUnits()
     flight.time = timer.getAbsTime()
-    flight.dist0 = group:GetCoordinate():Get2DDistance( self:GetCoordinate() )
+    flight.dist0 = group:GetCoordinate():Get2DDistance( self:GetCarrierCoordinate() )
     flight.flag = -100
     flight.ai = not human
     flight.actype = group:GetTypeName()
@@ -8801,7 +8786,7 @@ function AIRBOSS:OnEventRunwayTouch( EventData )
         local coord = EventData.IniUnit:GetCoordinate()
 
         -- Debug mark of player landing coord.
-        local dist = coord:Get2DDistance( self:GetCoordinate() )
+        local dist = coord:Get2DDistance( self:GetCarrierCoordinate() )
 
         -- Get wire
         local wire = self:_GetWire( coord, 0 )
@@ -10617,7 +10602,7 @@ function AIRBOSS:_CheckFoulDeck( playerData )
   self:T( self.lid .. string.format( "Foul deck check: Scanning Carrier Runway Area. Radius=%.1f m.", R ) )
 
   -- Scan units in carrier zone.
-  local _, _, _, unitscan = self:GetCoordinate():ScanObjects( R, true, false, false )
+  local _, _, _, unitscan = self:GetCarrierCoordinate():ScanObjects( R, true, false, false )
 
   -- Loop over all scanned units and check if they are on the runway.
   local fouldeck = false
@@ -10697,8 +10682,8 @@ function AIRBOSS:_GetSternCoord()
   local case=self.case
 
   -- Stern coordinate (sterndist<0). Also translate 10 meters starboard wrt Final bearing.
-  self.sterncoord:UpdateFromCoordinate( self:GetCoordinate() )
-  -- local stern=self:GetCoordinate()
+  self.sterncoord:UpdateFromCoordinate( self:GetCarrierCoordinate() )
+  -- local stern=self:GetCarrierCoordinate()
 
   -- Stern coordinate (sterndist<0). --Pene testing Case III
   if self.carriertype==AIRBOSS.CarrierType.INVINCIBLE or self.carriertype==AIRBOSS.CarrierType.HERMES or self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
@@ -10965,7 +10950,7 @@ function AIRBOSS:_GetZoneInitial( case )
   local radial = self:GetRadial( 2, false, false )
 
   -- Carrier coordinate.
-  local cv = self:GetCoordinate()
+  local cv = self:GetCarrierCoordinate()
 
   -- Vec2 array.
   local vec2 = {}
@@ -11095,7 +11080,7 @@ function AIRBOSS:_GetZoneBullseye( case )
   local radial = self:GetRadial( case, false, false )
 
   -- Get coordinate and vec2.
-  local coord = self:GetCoordinate():Translate( distance, radial )
+  local coord = self:GetCarrierCoordinate():Translate( distance, radial )
   local vec2 = coord:GetVec2()
 
   -- Create zone.
@@ -11121,7 +11106,7 @@ function AIRBOSS:_GetZoneDirtyUp( case )
   local radial = self:GetRadial( case, false, false )
 
   -- Get coordinate and vec2.
-  local coord = self:GetCoordinate():Translate( distance, radial )
+  local coord = self:GetCarrierCoordinate():Translate( distance, radial )
   local vec2 = coord:GetVec2()
 
   -- Create zone.
@@ -11146,7 +11131,7 @@ function AIRBOSS:_GetZoneArcOut( case )
   local radial = self:GetRadial( case, false, false )
 
   -- Get coordinate of carrier and translate.
-  local coord = self:GetCoordinate():Translate( distance, radial )
+  local coord = self:GetCarrierCoordinate():Translate( distance, radial )
 
   -- Create zone.
   local zone = ZONE_RADIUS:New( "Zone Arc Out", coord:GetVec2(), radius )
@@ -11176,7 +11161,7 @@ function AIRBOSS:_GetZoneArcIn( case )
   local distance = UTILS.NMToMeters( x )
 
   -- Get coordinate.
-  local coord = self:GetCoordinate():Translate( distance, radial )
+  local coord = self:GetCarrierCoordinate():Translate( distance, radial )
 
   -- Create zone.
   local zone = ZONE_RADIUS:New( "Zone Arc In", coord:GetVec2(), radius )
@@ -11203,7 +11188,7 @@ function AIRBOSS:_GetZonePlatform( case )
   local distance = UTILS.NMToMeters( 19 ) -- /math.cos(alpha)
 
   -- Get coordinate.
-  local coord = self:GetCoordinate():Translate( distance, radial )
+  local coord = self:GetCarrierCoordinate():Translate( distance, radial )
 
   -- Create zone.
   local zone = ZONE_RADIUS:New( "Zone Platform", coord:GetVec2(), radius )
@@ -11236,7 +11221,7 @@ function AIRBOSS:_GetZoneCorridor( case, l )
   local d = 12
 
   -- Carrier position.
-  local cv = self:GetCoordinate()
+  local cv = self:GetCarrierCoordinate()
 
   -- Polygon points.
   local c = {}
@@ -11467,7 +11452,7 @@ function AIRBOSS:_GetZoneHolding( case, stack )
     local D = UTILS.NMToMeters( 2.5 )
 
     -- Post 2.5 NM port of carrier.
-    local Post = self:GetCoordinate():Translate( D, hdg + 270 )
+    local Post = self:GetCarrierCoordinate():Translate( D, hdg + 270 )
 
     -- TODO: update zone not creating a new one.
 
@@ -11525,7 +11510,7 @@ function AIRBOSS:_GetZoneCommence( case, stack )
     local R = UTILS.NMToMeters( 1 )
 
     -- Three position
-    local Three = self:GetCoordinate():Translate( D, hdg + 275 )
+    local Three = self:GetCarrierCoordinate():Translate( D, hdg + 275 )
 
     if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
       local Dx = UTILS.NMToMeters( 2.25 )
@@ -11534,7 +11519,7 @@ function AIRBOSS:_GetZoneCommence( case, stack )
 
       R = UTILS.NMToMeters( 1 )
 
-      Three = self:GetCoordinate():Translate( Dz, hdg - 90 ):Translate( Dx, hdg - 180 )
+      Three = self:GetCarrierCoordinate():Translate( Dz, hdg - 90 ):Translate( Dx, hdg - 180 )
 
     end
 
@@ -11555,7 +11540,7 @@ function AIRBOSS:_GetZoneCommence( case, stack )
     local offset = self:GetRadial( case, false, true )
 
     -- Carrier position.
-    local cv = self:GetCoordinate()
+    local cv = self:GetCarrierCoordinate()
 
     -- Polygon points.
     local c = {}
@@ -11600,7 +11585,7 @@ function AIRBOSS:_AttitudeMonitor( playerData )
   local pitch = unit:GetPitch()
 
   -- Distance to the boat.
-  local dist = playerData.unit:GetCoordinate():Get2DDistance( self:GetCoordinate() )
+  local dist = playerData.unit:GetCoordinate():Get2DDistance( self:GetCarrierCoordinate() )
   local dx, dz, rho, phi = self:_GetDistances( unit )
 
   -- Wind vector.
@@ -12101,7 +12086,7 @@ end
 function AIRBOSS:GetWind( alt, magnetic, coord )
 
   -- Current position of the carrier or input.
-  local cv = coord or self:GetCoordinate()
+  local cv = coord or self:GetCarrierCoordinate()
 
   -- Wind direction and speed. By default at 18 meters ASL.
   local Wdir, Wspeed = cv:GetWind( alt or 18 )
@@ -12127,7 +12112,7 @@ end
 function AIRBOSS:GetWindOnDeck( alt )
 
   -- Position of carrier.
-  local cv = self:GetCoordinate()
+  local cv = self:GetCarrierCoordinate()
 
   -- Velocity vector of carrier.
   local vc = self.carrier:GetVelocityVec3()
@@ -13945,7 +13930,7 @@ function AIRBOSS:_DistanceCheck( playerData, optdist )
   end
 
   -- Distance to carrier.
-  local distance = playerData.unit:GetCoordinate():Get2DDistance( self:GetCoordinate() )
+  local distance = playerData.unit:GetCoordinate():Get2DDistance( self:GetCarrierCoordinate() )
 
   -- Get relative score.
   local lowscore, badscore = self:_GetGoodBadScore( playerData )
@@ -14139,7 +14124,7 @@ function AIRBOSS:_Debrief( playerData )
         playerData.step = AIRBOSS.PatternStep.INITIAL
 
         -- Create a point 3.0 NM astern for re-entry.
-        local initial = self:GetCoordinate():Translate( UTILS.NMToMeters( 3.5 ), self:GetRadial( 2, false, false, false ) )
+        local initial = self:GetCarrierCoordinate():Translate( UTILS.NMToMeters( 3.5 ), self:GetRadial( 2, false, false, false ) )
 
         -- Get heading and distance to initial zone ~3 NM astern.
         heading = playerData.unit:GetCoordinate():HeadingTo( initial )
@@ -14319,7 +14304,7 @@ function AIRBOSS:_CheckCollisionCoord( coordto, coordfrom )
     d = 0
   else
     d = 250
-    coordfrom = self:GetCoordinate():Translate( d, self:GetHeading() )
+    coordfrom = self:GetCarrierCoordinate():Translate( d, self:GetHeading() )
   end
 
   -- Distance between the two coordinates.
@@ -14371,7 +14356,7 @@ end
 function AIRBOSS:_CheckFreePathToNextWP( fromcoord )
 
   -- Position.
-  fromcoord = fromcoord or self:GetCoordinate():Translate( 250, self:GetHeading() )
+  fromcoord = fromcoord or self:GetCarrierCoordinate():Translate( 250, self:GetHeading() )
 
   -- Next wp = current+1 (or last)
   local Nnextwp = math.min( self.currentwp + 1, #self.waypoints )
@@ -14391,7 +14376,7 @@ function AIRBOSS:_Pathfinder()
 
   -- Heading and current coordiante.
   local hdg = self:GetHeading()
-  local cv = self:GetCoordinate()
+  local cv = self:GetCarrierCoordinate()
 
   -- Possible directions.
   local directions = { -20, 20, -30, 30, -40, 40, -50, 50, -60, 60, -70, 70, -80, 80, -90, 90, -100, 100 }
@@ -14452,7 +14437,7 @@ end
 function AIRBOSS:CarrierDetour( coord, speed, uturn, uspeed, tcoord )
 
   -- Current coordinate of the carrier.
-  local pos0 = self:GetCoordinate()
+  local pos0 = self:GetCarrierCoordinate()
 
   -- Current speed in knots.
   local vel0 = self.carrier:GetVelocityKNOTS()
@@ -14552,7 +14537,7 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
   UTILS.MpsToKnots( vwind ), hdg, hiw, deltaH, speedknots, distNM, speedknots, time ) )
 
   -- Current coordinate.
-  local Cv = self:GetCoordinate()
+  local Cv = self:GetCarrierCoordinate()
 
   local Ctiw = nil -- Core.Point#COORDINATE
   local Csoo = nil -- Core.Point#COORDINATE
@@ -14609,7 +14594,7 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
   end
 
   -- Return to coordinate if collision is detected.
-  self.Creturnto = self:GetCoordinate()
+  self.Creturnto = self:GetCarrierCoordinate()
 
   -- Next waypoint.
   local nextwp = self:_GetNextWaypoint()
@@ -14707,7 +14692,7 @@ function AIRBOSS:_PatrolRoute( n )
   local Waypoints = {}
 
   -- Create a waypoint from the current coordinate.
-  local wp = self:GetCoordinate():WaypointGround( CarrierGroup:GetVelocityKMH() )
+  local wp = self:GetCarrierCoordinate():WaypointGround( CarrierGroup:GetVelocityKMH() )
 
   -- Add current position as first waypoint.
   table.insert( Waypoints, wp )
@@ -14747,7 +14732,7 @@ function AIRBOSS:_GetETAatNextWP()
   local tnow = timer.getAbsTime()
 
   -- Current position.
-  local p = self:GetCoordinate()
+  local p = self:GetCarrierCoordinate()
 
   -- Current velocity [m/s].
   local v = self.carrier:GetVelocityMPS()
@@ -14818,7 +14803,7 @@ function AIRBOSS:_CheckCarrierTurning()
       hdg = self:GetHeadingIntoWind(vdeck, false)
     else
       -- We turn towards the next waypoint.
-      hdg = self:GetCoordinate():HeadingTo( self:_GetNextWaypoint() )
+      hdg = self:GetCarrierCoordinate():HeadingTo( self:_GetNextWaypoint() )
     end
 
     -- Magnetic!
@@ -14893,7 +14878,7 @@ function AIRBOSS:_CheckPatternUpdate()
   ---------------------------
 
   -- Get current position and orientation of carrier.
-  local pos = self:GetCoordinate()
+  local pos = self:GetCarrierCoordinate()
 
   -- Get distance to saved position.
   local dist = pos:Get2DDistance( self.Cposition )
@@ -15556,17 +15541,10 @@ function AIRBOSS:_GetPlayerUnitAndName( _unitName )
   return nil, nil
 end
 
---- Get carrier coalition.
--- @param #AIRBOSS self
--- @return #number Coalition side of carrier.
-function AIRBOSS:GetCoalition()
-  return self.carrier:GetCoalition()
-end
-
 --- Get carrier coordinate.
 -- @param #AIRBOSS self
 -- @return Core.Point#COORDINATE Carrier coordinate.
-function AIRBOSS:GetCoordinate()
+function AIRBOSS:GetCarrierCoordinate()
   return self.carrier:GetCoord()
 end
 
@@ -16606,9 +16584,9 @@ end
 function AIRBOSS:_MarshallInboundCall(unit, modex)
 
   -- Calculate
-  local vectorCarrier = self:GetCoordinate():GetDirectionVec3(unit:GetCoordinate())
+  local vectorCarrier = self:GetCarrierCoordinate():GetDirectionVec3(unit:GetCoordinate())
   local bearing =  UTILS.Round(unit:GetCoordinate():GetAngleDegrees( vectorCarrier ), 0)
-  local distance = UTILS.Round(UTILS.MetersToNM(unit:GetCoordinate():Get2DDistance(self:GetCoordinate())),0)
+  local distance = UTILS.Round(UTILS.MetersToNM(unit:GetCoordinate():Get2DDistance(self:GetCarrierCoordinate())),0)
   local angels = UTILS.Round(UTILS.MetersToFeet(unit:GetHeight()/1000),0)
   local state = UTILS.Round(self:_GetFuelState(unit)/1000,1)
 
@@ -18392,7 +18370,7 @@ function AIRBOSS:_DisplayCarrierInfo( _unitname )
     if playerData then
 
       -- Current coordinates.
-      local coord = self:GetCoordinate()
+      local coord = self:GetCarrierCoordinate()
 
       -- Carrier speed and heading.
       local carrierheading = self.carrier:GetHeading()
@@ -18519,7 +18497,7 @@ function AIRBOSS:_DisplayCarrierWeather( _unitname )
     local text = ""
 
     -- Current coordinates.
-    local coord = self:GetCoordinate()
+    local coord = self:GetCarrierCoordinate()
 
     -- Get atmospheric data at carrier location.
     local T = coord:GetTemperature()
@@ -18821,7 +18799,7 @@ function AIRBOSS:_DisplayPlayerStatus( _unitName )
       if playerData.step == AIRBOSS.PatternStep.INITIAL then
 
         -- Create a point 3.0 NM astern for re-entry.
-        local zoneinitial = self:GetCoordinate():Translate( UTILS.NMToMeters( 3.5 ), self:GetRadial( 2, false, false, false ) )
+        local zoneinitial = self:GetCarrierCoordinate():Translate( UTILS.NMToMeters( 3.5 ), self:GetRadial( 2, false, false, false ) )
 
         -- Heading and distance to initial zone.
         local flyhdg = playerData.unit:GetCoordinate():HeadingTo( zoneinitial )
