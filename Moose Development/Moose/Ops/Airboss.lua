@@ -199,7 +199,6 @@
 -- @field #boolean handleai If true (default), handle AI aircraft.
 -- @field Ops.RecoveryTanker#RECOVERYTANKER tanker Recovery tanker flying overhead of carrier.
 -- @field DCS#Vec3 Corientation Carrier orientation in space.
--- @field DCS#Vec3 Corientlast Last known carrier orientation.
 -- @field Core.Point#COORDINATE Cposition Carrier position.
 -- @field #string defaultskill Default player skill @{#AIRBOSS.Difficulty}.
 -- @field #boolean adinfinitum If true, carrier patrols ad infinitum, i.e. when reaching its last waypoint it starts at waypoint one again.
@@ -260,7 +259,8 @@
 -- @field #number skipperOffset Holding offset angle in degrees for Case II/III manual recoveries.
 -- @field #number skipperTime Recovery time in min for manual recovery.
 -- @field #boolean intowindold If true, use old into wind calculation.
--- @extends Ops.Navygroup#NAVYGROUP
+-- @field Ops.NavyGroup#NAVYGROUP navygroup Naval group controlling the carrier.
+-- @extends Core.Fsm#FSM
 
 --- Be the boss!
 --
@@ -1214,7 +1214,6 @@ AIRBOSS = {
   xtVoiceOversAI = nil,
   tanker         = nil,
   Corientation   = nil,
-  Corientlast    = nil,
   Cposition      = nil,
   defaultskill   = nil,
   adinfinitum    = nil,
@@ -1847,23 +1846,10 @@ AIRBOSS.version = "1.5.0"
 -- @return #AIRBOSS self or nil if carrier unit does not exist.
 function AIRBOSS:New( carriername, alias )
 
-  local carrierUnit=UNIT:FindByName( carriername )
-  
-  local carrierGroup=nil
-  if not carrierUnit then
-    BASE:E("ERROR: could not find carrier unit in AIRBOSS constructor!")
-    return nil
-  else
-    carrierGroup=carrierUnit:GetGroup()
-  end
+  -- Inherit FSM
+  local self = BASE:Inherit(self, FSM:New()) -- #AIRBOSS
 
-  -- Inherit everthing from FSM class.
-  local self = BASE:Inherit( self, NAVYGROUP:New(carrierGroup) ) -- #AIRBOSS
-
-  -- Debug.
-  self:F2( { carriername = carriername, alias = alias } )
-
-  -- Set carrier unit.
+  -- Get carrier unit
   self.carrier = UNIT:FindByName( carriername )
 
   -- Check if carrier unit exists.
@@ -1874,6 +1860,9 @@ function AIRBOSS:New( carriername, alias )
     self:E( text )
     return nil
   end
+
+  -- Create NAVYGROUP
+  self.navygroup = NAVYGROUP:New(self.carrier:GetGroup())
 
   -- Set some string id for output to DCS.log file.
   self.lid = string.format( "AIRBOSS %s | ", carriername )
@@ -1907,7 +1896,7 @@ function AIRBOSS:New( carriername, alias )
   self.currentwp = 1
 
   -- Patrol route.
-  self:_PatrolRoute()
+  --self:_PatrolRoute()
 
   -------------
   --- Defaults:
@@ -2438,6 +2427,9 @@ function AIRBOSS:New( carriername, alias )
   -- @function [parent=#AIRBOSS] __Stop
   -- @param #AIRBOSS self
   -- @param #number delay Delay in seconds.
+
+  -- Reference to airboss in navygroup
+  self.navygroup.airboss = self
 
   return self
 end
@@ -3699,7 +3691,7 @@ function AIRBOSS:onafterStart( From, Event, To )
   -- Initial carrier position and orientation.
   self.Cposition = self:GetCarrierCoordinate()
   self.Corientation = self.carrier:GetOrientationX()
-  self.Corientlast = self.Corientation
+  self.turning = self.navygroup:IsTurning() == true
   self.Tpupdate = timer.getTime()
 
   -- Check if no recovery window is set. DISABLED!
@@ -3754,7 +3746,7 @@ function AIRBOSS:onafterStatus( From, Event, To )
 
     -- Get time.
     local clock = UTILS.SecondsToClock( timer.getAbsTime() )
-    local eta = UTILS.SecondsToClock( self:_GetETAatNextWP() )
+    --local eta = UTILS.SecondsToClock( self:_GetETAatNextWP() )
 
     -- Current heading and position of the carrier.
     local hdg = self:GetHeading()
@@ -3767,37 +3759,13 @@ function AIRBOSS:onafterStatus( From, Event, To )
       --env.info(string.format("FF magvar=%.1f", self.magvar))
     end
 
-    -- Check water is ahead.
-    local collision = false -- self:_CheckCollisionCoord(pos:Translate(self.collisiondist, hdg))
-
-    local holdtime = 0
-    if self.holdtimestamp then
-      holdtime = timer.getTime() - self.holdtimestamp
-    end
-
-    -- Check if carrier is stationary.
-    local NextWP = self:_GetNextWaypoint()
-    local ExpectedSpeed = UTILS.MpsToKnots( NextWP:GetVelocity() )
-    if speed < 0.5 and ExpectedSpeed > 0 and not (self.detour or self.turnintowind) then
-      if not self.holdtimestamp then
-        self:E( self.lid .. string.format( "Carrier came to an unexpected standstill. Trying to re-route in 3 min. Speed=%.1f knots, expected=%.1f knots", speed, ExpectedSpeed ) )
-        self.holdtimestamp = timer.getTime()
-      else
-        if holdtime > 3 * 60 then
-          local coord = self:GetCarrierCoordinate():Translate( 500, hdg + 10 )
-          -- coord:MarkToAll("Re-route after standstill.")
-          self:CarrierResumeRoute( coord )
-          self.holdtimestamp = nil
-        end
-      end
-    end
-
     -- Debug info.
-    local text = string.format( "Time %s - Status %s (case=%d) - Speed=%.1f kts - Heading=%d - WP=%d - ETA=%s - Turning=%s - Collision Warning=%s - Detour=%s - Turn Into Wind=%s - Holdtime=%d sec", clock, self:GetState(), self.case, speed, hdg, self.currentwp, eta, tostring( self.turning ), tostring( collision ), tostring( self.detour ), tostring( self.turnintowind ), holdtime )
-    self:T( self.lid .. text )
+    --local text = string.format( "Time %s - Status %s (case=%d) - Speed=%.1f kts - Heading=%d - WP=%d - ETA=%s - Turning=%s - Collision Warning=%s - Detour=%s - Turn Into Wind=%s - Holdtime=%d sec", clock, self:GetState(), self.case, speed, hdg, self.currentwp, eta, tostring( self.turning ), tostring( collision ), tostring( self.detour ), tostring( self.turnintowind ), holdtime )
+    --self:T( self.lid .. text )
+    self:T(self.lid .. string.format("Time %s - AIRBOSS=%s - NAVYGROUP=%s - Speed=%.1f kts - Heading=%03d - WP=%d",clock,self:GetState(),self.navygroup:GetState(),speed,hdg,self.navygroup:GetWaypointIndexCurrent()))
 
     -- Players online:
-    text = "Players:"
+    local text = "Players:"
     local i = 0
     for _name, _player in pairs( self.players ) do
       i = i + 1
@@ -3808,25 +3776,6 @@ function AIRBOSS:onafterStatus( From, Event, To )
       text = text .. " none"
     end
     self:T( self.lid .. text )
-
-    -- Check for collision.
-    if collision then
-
-      -- We are currently turning into the wind.
-      if self.turnintowind then
-
-        -- Carrier resumes its initial route. This disables turnintowind switch.
-        self:CarrierResumeRoute( self.Creturnto )
-
-        -- Since current window would stay open, we disable the WIND switch.
-        if self:IsRecovering() and self.recoverywindow and self.recoverywindow.WIND then
-          -- Disable turn into the wind for this window so that we do not do this all over again.
-          self.recoverywindow.WIND = false
-        end
-
-      end
-
-    end
 
     -- Check recovery times and start/stop recovery mode if necessary.
     self:_CheckRecoveryTimes()
@@ -3839,9 +3788,6 @@ function AIRBOSS:onafterStatus( From, Event, To )
 
     -- Check marshal and pattern queues.
     self:_CheckQueue()
-
-    -- Check if carrier is currently turning.
-    self:_CheckCarrierTurning()
 
     -- Check if marshal pattern of AI needs an update.
     self:_CheckPatternUpdate()
@@ -4206,7 +4152,7 @@ function AIRBOSS:_CheckRecoveryTimes()
 
         -- Check that wind is blowing from a direction > 5° different from the current heading.
         local hdg = self:GetHeading()
-        local wind = self:GetHeadingIntoWind(nextwindow.SPEED)
+        local wind = self.navygroup:GetHeadingIntoWind(self.carrierparam.rwyangle, nextwindow.SPEED)
         local delta = self:_GetDeltaHeading( hdg, wind )
         local uturn = delta > 5
 
@@ -4394,19 +4340,7 @@ function AIRBOSS:onafterRecoveryStop( From, Event, To )
   self:_MarshalCallRecoveryStopped( self.case )
 
   -- If carrier is currently heading into the wind, we resume the original route.
-  if self.turnintowind then
-
-    -- Coordinate to return to.
-    local coord = self.Creturnto
-
-    -- No U-turn.
-    if self.recoverywindow and self.recoverywindow.UTURN == false then
-      coord = nil
-    end
-
-    -- Carrier resumes route.
-    self:CarrierResumeRoute( coord )
-  end
+  self:_StopNavyIntoWind()
 
   -- Mark the current recovery window closed and cancelled, then remove it from the
   -- queue. We do NOT gate this on Window.OPEN: that flag is only set by
@@ -4513,8 +4447,26 @@ function AIRBOSS:onafterStop( From, Event, To )
   self:UnHandleEvent( EVENTS.Ejection )
   self:UnHandleEvent( EVENTS.PlayerLeaveUnit )
   self:UnHandleEvent( EVENTS.MissionEnd )
+  self:UnHandleEvent( EVENTS.RemoveUnit)
 
   self.CallScheduler:Clear()
+
+  if self.StatusTimer then
+    self.StatusTimer:Stop()
+  end
+
+  if self.radiotimer then
+    self.radiotimer:Clear()
+  end
+
+  if self.Scheduler then
+    self.Scheduler:Clear()
+  end  
+
+  if self.navygroup and not self.navygroup:IsStopped() then
+    self.navygroup:UnHandleEvent(EVENTS.UnitLost)
+    self.navygroup:Stop()
+  end  
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -14287,218 +14239,40 @@ end
 -- CARRIER ROUTING Functions
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Check for possible collisions between two coordinates.
--- @param #AIRBOSS self
--- @param Core.Point#COORDINATE coordto Coordinate to which the collision is check.
--- @param Core.Point#COORDINATE coordfrom Coordinate from which the collision is check.
--- @return #boolean If true, surface type ahead is not deep water.
--- @return #number Max free distance in meters.
-function AIRBOSS:_CheckCollisionCoord( coordto, coordfrom )
-
-  -- Increment in meters.
-  local dx = 100
-
-  -- From coordinate. Default 500 in front of the carrier.
-  local d = 0
-  if coordfrom then
-    d = 0
-  else
-    d = 250
-    coordfrom = self:GetCarrierCoordinate():Translate( d, self:GetHeading() )
-  end
-
-  -- Distance between the two coordinates.
-  local dmax = coordfrom:Get2DDistance( coordto )
-
-  -- Direction.
-  local direction = coordfrom:HeadingTo( coordto )
-
-  -- Scan path between the two coordinates.
-  local clear = true
-  while d <= dmax do
-
-    -- Check point.
-    local cp = coordfrom:Translate( d, direction )
-
-    -- Check if surface type is water.
-    if not cp:IsSurfaceTypeWater() then
-
-      -- Debug mark points.
-      if self.Debug then
-        local st = cp:GetSurfaceType()
-        cp:MarkToAll( string.format( "Collision check surface type %d", st ) )
-      end
-
-      -- Collision WARNING!
-      clear = false
-      break
-    end
-
-    -- Increase distance.
-    d = d + dx
-  end
-
-  local text = ""
-  if clear then
-    text = string.format( "Path into direction %03d° is clear for the next %.1f NM.", direction, UTILS.MetersToNM( d ) )
-  else
-    text = string.format( "Detected obstacle at distance %.1f NM into direction %03d°.", UTILS.MetersToNM( d ), direction )
-  end
-  self:T2( self.lid .. text )
-
-  return not clear, d
-end
-
---- Check Collision.
--- @param #AIRBOSS self
--- @param Core.Point#COORDINATE fromcoord (Optional) Coordinate from which the path to the next WP is calculated. Default current carrier position.
--- @return #boolean If true, surface type ahead is not deep water.
-function AIRBOSS:_CheckFreePathToNextWP( fromcoord )
-
-  -- Position.
-  fromcoord = fromcoord or self:GetCarrierCoordinate():Translate( 250, self:GetHeading() )
-
-  -- Next wp = current+1 (or last)
-  local Nnextwp = math.min( self.currentwp + 1, #self.waypoints )
-
-  -- Next waypoint.
-  local nextwp = self.waypoints[Nnextwp] -- Core.Point#COORDINATE
-
-  -- Check for collision.
-  local collision = self:_CheckCollisionCoord( nextwp, fromcoord )
-
-  return collision
-end
-
---- Find free path to the next waypoint.
--- @param #AIRBOSS self
-function AIRBOSS:_Pathfinder()
-
-  -- Heading and current coordiante.
-  local hdg = self:GetHeading()
-  local cv = self:GetCarrierCoordinate()
-
-  -- Possible directions.
-  local directions = { -20, 20, -30, 30, -40, 40, -50, 50, -60, 60, -70, 70, -80, 80, -90, 90, -100, 100 }
-
-  -- Starboard turns up to 90 degrees.
-  for _, _direction in pairs( directions ) do
-
-    -- New direction.
-    local direction = hdg + _direction
-
-    -- Check for collisions in the next 20 NM of the current direction.
-    local _, dfree = self:_CheckCollisionCoord( cv:Translate( UTILS.NMToMeters( 20 ), direction ), cv )
-
-    -- Loop over distances and find the first one which gives a clear path to the next waypoint.
-    local distance = 500
-    while distance <= dfree do
-
-      -- Coordinate from which we calculate the path.
-      local fromcoord = cv:Translate( distance, direction )
-
-      -- Check for collision between point and next waypoint.
-      local collision = self:_CheckFreePathToNextWP( fromcoord )
-
-      -- Debug info.
-      self:T2( self.lid .. string.format( "Pathfinder d=%.1f m, direction=%03d°, collision=%s", distance, direction, tostring( collision ) ) )
-
-      -- If path is clear, we start a little detour.
-      if not collision then
-        self:CarrierDetour( fromcoord )
-        return
-      end
-
-      distance = distance + 500
-    end
-  end
-end
-
 --- Carrier resumes the route at its next waypoint.
 -- @param #AIRBOSS self
 -- @param Core.Point#COORDINATE gotocoord (Optional) First goto this coordinate before resuming route.
 -- @return #AIRBOSS self
 function AIRBOSS:CarrierResumeRoute( gotocoord )
+  local window = self.navyIntoWind
 
-  -- Make carrier resume its route.
-  AIRBOSS._ResumeRoute( self.carrier:GetGroup(), self, gotocoord )
+  if window then
+    local active =
+      self.navygroup:GetTurnIntoWindCurrent() == window
+
+    window.Uturn = gotocoord ~= nil
+
+    if active and gotocoord then
+      window.Coordinate = COORDINATE:NewFromCoordinate(gotocoord)
+    end
+
+    self:_StopNavyIntoWind()
+
+    -- NAVYGROUP has already arranged the return route.
+    if active then
+      return self
+    end
+  end
+
+  if gotocoord then
+    self.navygroup:Detour(gotocoord, nil, nil, true)
+  else
+    self.navygroup:Cruise()
+  end
 
   return self
 end
 
---- Let the carrier make a detour to a given point. When it reaches the point, it will resume its normal route.
--- @param #AIRBOSS self
--- @param Core.Point#COORDINATE coord Coordinate of the detour.
--- @param #number speed (Optional) Speed in knots. Default is current carrier velocity.
--- @param #boolean uturn (Optional) If true, carrier will go back to where it came from before it resumes its route to the next waypoint.
--- @param #number uspeed (Optional) Speed in knots after U-turn. Default is same as before.
--- @param Core.Point#COORDINATE tcoord Additional coordinate to make turn smoother.
--- @return #AIRBOSS self
-function AIRBOSS:CarrierDetour( coord, speed, uturn, uspeed, tcoord )
-
-  -- Current coordinate of the carrier.
-  local pos0 = self:GetCarrierCoordinate()
-
-  -- Current speed in knots.
-  local vel0 = self.carrier:GetVelocityKNOTS()
-
-  -- Default. If speed is not given we take the current speed but at least 5 knots.
-  speed = speed or math.max( vel0, 5 )
-
-  -- Speed in km/h. At least 2 knots.
-  local speedkmh = math.max( UTILS.KnotsToKmph( speed ), UTILS.KnotsToKmph( 2 ) )
-
-  -- Turn speed in km/h. At least 10 knots.
-  local cspeedkmh = math.max( self.carrier:GetVelocityKMH(), UTILS.KnotsToKmph( 10 ) )
-
-  -- U-turn speed in km/h.
-  local uspeedkmh = UTILS.KnotsToKmph( uspeed or speed )
-
-  -- Waypoint table.
-  local wp = {}
-
-  -- Waypoint at current position.
-  table.insert( wp, pos0:WaypointGround( cspeedkmh ) )
-
-  -- Waypooint to help the turn.
-  if tcoord then
-    table.insert( wp, tcoord:WaypointGround( cspeedkmh ) )
-  end
-
-  -- Detour waypoint.
-  table.insert( wp, coord:WaypointGround( speedkmh ) )
-
-  -- U-turn waypoint. If enabled, go back to where you came from.
-  if uturn then
-    table.insert( wp, pos0:WaypointGround( uspeedkmh ) )
-  end
-
-  -- Get carrier group.
-  local group = self.carrier:GetGroup()
-
-  -- Passing waypoint taskfunction
-  local TaskResumeRoute = group:TaskFunction( "AIRBOSS._ResumeRoute", self )
-
-  -- Set task to restart route at the last point.
-  group:SetTaskWaypoint( wp[#wp], TaskResumeRoute )
-
-  -- Debug mark.
-  if self.Debug then
-    if tcoord then
-      tcoord:MarkToAll( string.format( "Detour Turn Help WP. Speed %.1f knots", UTILS.KmphToKnots( cspeedkmh ) ) )
-    end
-    coord:MarkToAll( string.format( "Detour Waypoint. Speed %.1f knots", UTILS.KmphToKnots( speedkmh ) ) )
-    if uturn then
-      pos0:MarkToAll( string.format( "Detour U-turn WP. Speed %.1f knots", UTILS.KmphToKnots( uspeedkmh ) ) )
-    end
-  end
-
-  -- Detour switch true.
-  self.detour = true
-
-  -- Route carrier into the wind.
-  self.carrier:Route( wp )
-end
 
 --- Let the carrier turn into the wind.
 -- @param #AIRBOSS self
@@ -14507,111 +14281,40 @@ end
 -- @param #boolean uturn Make U-turn and go back to initial after downwind leg.
 -- @return #AIRBOSS self
 function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
-
-  -- Wind speed.
-  local _, vwind = self:GetWind()
-
-  -- Desired wind on deck in knots.
-  local vdeck=UTILS.MpsToKnots(vdeck)
-
-  -- Get heading into the wind accounting for angled runway.
-  local hiw, speedknots = self:GetHeadingIntoWind(vdeck)
-
-  -- Speed of carrier in m/s but at least 4 knots.
-  local vtot = UTILS.KnotsToMps(speedknots)
-
-  -- Distance to travel
-  local dist = vtot * time
-
-  -- Distance in NM.
-  local distNM = UTILS.MetersToNM( dist )
-
-  -- Current heading.
-  local hdg = self:GetHeading()
-
-  -- Heading difference.
-  local deltaH = self:_GetDeltaHeading( hdg, hiw )
-
-  -- Debug output
-  self:I( self.lid .. string.format( "Carrier steaming into the wind (%.1f kts). Heading=%03d-->%03d (Delta=%.1f), Speed=%.1f knots, Distance=%.1f NM, Time=%d sec",
-  UTILS.MpsToKnots( vwind ), hdg, hiw, deltaH, speedknots, distNM, speedknots, time ) )
-
-  -- Current coordinate.
-  local Cv = self:GetCarrierCoordinate()
-
-  local Ctiw = nil -- Core.Point#COORDINATE
-  local Csoo = nil -- Core.Point#COORDINATE
-
-  -- Define path depending on turn angle.
-  if deltaH < 45 then
-    -- Small turn.
-
-    -- Point in the right direction to help turning.
-    Csoo = Cv:Translate( 750, hdg ):Translate( 750, hiw )
-
-    -- Heading into wind from Csoo.
-    local hsw = self:GetHeadingIntoWind(vdeck, false, Csoo )
-
-    -- Into the wind coord.
-    Ctiw = Csoo:Translate( dist, hsw )
-
-  elseif deltaH < 90 then
-    -- Medium turn.
-
-    -- Point in the right direction to help turning.
-    Csoo = Cv:Translate( 900, hdg ):Translate( 900, hiw )
-
-    -- Heading into wind from Csoo.
-    local hsw = self:GetHeadingIntoWind(vdeck, false, Csoo )
-
-    -- Into the wind coord.
-    Ctiw = Csoo:Translate( dist, hsw )
-
-  elseif deltaH < 135 then
-    -- Large turn backwards.
-
-    -- Point in the right direction to help turning.
-    Csoo = Cv:Translate( 1100, hdg - 90 ):Translate( 1000, hiw )
-
-    -- Heading into wind from Csoo.
-    local hsw = self:GetHeadingIntoWind(vdeck, false, Csoo )
-
-    -- Into the wind coord.
-    Ctiw = Csoo:Translate( dist, hsw )
-
-  else
-    -- Huge turn backwards.
-
-    -- Point in the right direction to help turning.
-    Csoo = Cv:Translate( 1200, hdg - 90 ):Translate( 1000, hiw )
-
-    -- Heading into wind from Csoo.
-    local hsw = self:GetHeadingIntoWind(vdeck, false, Csoo )
-
-    -- Into the wind coord.
-    Ctiw = Csoo:Translate( dist, hsw )
-
+  -- Includes queued windows that have not started yet.
+  if self.navyIntoWind then
+    self:E(self.lid .. "Into-wind maneuver already requested.")
+    return self
   end
 
-  -- Return to coordinate if collision is detected.
-  self.Creturnto = self:GetCarrierCoordinate()
+  local window = self.navygroup:AddTurnIntoWind(0, time, UTILS.MpsToKnots(vdeck), uturn == true, self.carrierparam.rwyangle)
 
-  -- Next waypoint.
-  local nextwp = self:_GetNextWaypoint()
-
-  -- For downwind, we take the velocity at the next WP.
-  local vdownwind = UTILS.MpsToKnots( nextwp:GetVelocity() )
-
-  -- Make sure we move at all in case the speed at the waypoint is zero.
-  if vdownwind < 1 then
-    vdownwind = 10
+  if not window then
+    return self
   end
 
-  -- Let the carrier make a detour from its route but return to its current position.
-  self:CarrierDetour( Ctiw, speedknots, uturn, vdownwind, Csoo )
-
-  -- Set switch that we are currently turning into the wind.
+  self.navyIntoWind = window
   self.turnintowind = true
+
+  return self
+end
+
+function AIRBOSS:_OnNavyIntoWindOver(window)
+  if self.navyIntoWind == window then
+    self.navyIntoWind = nil
+    self.turnintowind = false
+  end
+end
+
+function AIRBOSS:_StopNavyIntoWind()
+  local window = self.navyIntoWind
+
+  if window then
+    self.navygroup:RemoveTurnIntoWind(window)
+
+    -- Also handles cancellation before the maneuver starts.
+    self:_OnNavyIntoWindOver(window)
+  end
 
   return self
 end
@@ -14621,23 +14324,14 @@ end
 -- @return Core.Point#COORDINATE Coordinate of the next waypoint.
 -- @return #number Number of waypoint.
 function AIRBOSS:_GetNextWaypoint()
+  local index = self.navygroup:GetWaypointIndexNext()
+  local waypoint = self.navygroup:GetWaypoint(index)
 
-  -- Next waypoint.
-  local Nextwp = nil
-  if self.currentwp == #self.waypoints then
-    Nextwp = 1
-  else
-    Nextwp = self.currentwp + 1
+  if waypoint then
+    return waypoint.coordinate, index
   end
 
-  -- Debug output
-  local text = string.format( "Current WP=%d/%d, next WP=%d", self.currentwp, #self.waypoints, Nextwp )
-  self:T2( self.lid .. text )
-
-  -- Next waypoint.
-  local nextwp = self.waypoints[Nextwp] -- Core.Point#COORDINATE
-
-  return nextwp, Nextwp
+  return nil, nil
 end
 
 --- Initialize Mission Editor waypoints.
@@ -14758,66 +14452,36 @@ function AIRBOSS:_GetETAatNextWP()
   return eta
 end
 
---- Check if carrier is turning. If turning started or stopped, we inform the players via radio message.
--- @param #AIRBOSS self
-function AIRBOSS:_CheckCarrierTurning()
+function AIRBOSS:_OnNavyTurningStarted()
+  self.turning = true
 
-  -- Current orientation of carrier.
-  local vNew = self.carrier:GetOrientationX()
-
-  -- Last orientation from 30 seconds ago.
-  local vLast = self.Corientlast
-
-  -- We only need the X-Z plane.
-  vNew.y = 0;
-  vLast.y = 0
-
-  -- Angle between current heading and last time we checked ~30 seconds ago.
-  local deltaLast = math.deg( math.acos( UTILS.VecDot( vNew, vLast ) / UTILS.VecNorm( vNew ) / UTILS.VecNorm( vLast ) ) )
-
-  -- Last orientation becomes new orientation
-  self.Corientlast = vNew
-
-  -- Carrier is turning when its heading changed by at least one degree since last check.
-  local turning = math.abs( deltaLast ) >= 1
-
-  -- Check if turning stopped. (Carrier was turning but is not any more.)
-  if self.turning and not turning then
-
-    -- Get final bearing.
-    local FB = self:GetFinalBearing( true )
-
-    -- Marshal radio call: "99, new final bearing XYZ degrees."
-    self:_MarshalCallNewFinalBearing( FB )
-
+  if self:is("Stopped") then
+    return
   end
 
-  -- Check if turning started. (Carrier was not turning and is now.)
-  if turning and not self.turning then
+  local intoWind = self.navygroup:GetTurnIntoWindCurrent()
+  local heading = intoWind and intoWind.Heading
 
-    -- Get heading.
-    local hdg
-    if self.turnintowind then
-      -- We are now steaming into the wind.
-      local vdeck=self.recoverywindow and self.recoverywindow.SPEED or 20
-      hdg = self:GetHeadingIntoWind(vdeck, false)
-    else
-      -- We turn towards the next waypoint.
-      hdg = self:GetCarrierCoordinate():HeadingTo( self:_GetNextWaypoint() )
+  if not heading then
+    local waypoint = self.navygroup:GetWaypointNext()
+    if not waypoint then
+      return
     end
 
-    -- Magnetic!
-    hdg = hdg - self.magvar
-    if hdg < 0 then
-      hdg = 360 + hdg
-    end
-
-    -- Radio call: "99, Carrier starting turn to heading XYZ degrees".
-    self:_MarshalCallCarrierTurnTo( hdg )
+    heading = self:GetCarrierCoordinate():HeadingTo(waypoint.coordinate)
   end
 
-  -- Update turning.
-  self.turning = turning
+  self:_MarshalCallCarrierTurnTo((heading - self.magvar) % 360)
+end
+
+function AIRBOSS:_OnNavyTurningStopped()
+  self.turning = false
+
+  if self:is("Stopped") then
+    return
+  end
+
+  self:_MarshalCallNewFinalBearing(self:GetFinalBearing(true))
 end
 
 --- Check if heading or position of carrier have changed significantly.
@@ -15553,6 +15217,29 @@ end
 -- @return Core.Point#COORDINATE Carrier coordinate.
 function AIRBOSS:GetCoord()
   return self.carrier:GetCoord()
+end
+
+--- Get coalition of carrier group.
+-- @param #AIRBOSS self
+-- @return #number Coalition number.
+function AIRBOSS:GetCoalition()
+  return self.navygroup:GetCoalition()
+end
+
+--- Set if carrier will resume route at first waypoint once last waypoint is passed.
+-- @param #AIRBOSS self
+-- @param #boolean enabled Enable/disable patrol ad infinitum.
+-- @return #AIRBOSS self
+function AIRBOSS:SetPatrolAdInfinitum(enabled)
+  self.navygroup:SetPatrolAdInfinitum(enabled)
+  return self
+end
+
+--- Set legacy into wind.
+function AIRBOSS:SetIntoWindLegacy(enabled)
+  self.navygroup:SetIntoWindLegacy(enabled)
+  self.intowindold = self.navygroup.intowindold
+  return self
 end
 
 --- Get static weather of this mission from env.mission.weather.

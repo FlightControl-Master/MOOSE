@@ -50,6 +50,7 @@
 -- @field Core.Astar#ASTAR pathfindingDebugSearch Owner of this group's current pathfinding debug overlay.
 -- @field #NAVYGROUP.Target engage Engage target.
 -- @field #boolean intowindold Use old calculation to determine heading into wind.
+-- @field Ops.Airboss#AIRBOSS airboss Optitonal airboss resonsible for aircraft recovery.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
@@ -1593,6 +1594,11 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
     -- Remove window from queue.
     self:RemoveTurnIntoWind(IntoWindData)
 
+    -- Inform Airboss    
+    if self.airboss then
+      self.airboss:_OnNavyIntoWindOver(IntoWindData)
+    end    
+
   end
 
 end
@@ -1675,6 +1681,11 @@ end
 -- @param #string To To state.
 function NAVYGROUP:onafterTurningStarted(From, Event, To)
   self.turning=true
+  
+  if self.airboss then
+    self.airboss:_OnNavyTurningStarted()
+  end  
+  
 end
 
 --- On after "TurningStarted" event.
@@ -1690,6 +1701,9 @@ function NAVYGROUP:onafterTurningStopped(From, Event, To)
     self:TurnedIntoWind()
   end
   
+  if self.airboss then
+    self.airboss:_OnNavyTurningStopped()
+  end  
 end
 
 --- On after "CollisionWarning" event.
