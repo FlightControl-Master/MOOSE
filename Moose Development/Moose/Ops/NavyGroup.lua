@@ -85,6 +85,8 @@ NAVYGROUP = {
 -- @field Ops.OpsGroup#OPSGROUP.Waypoint waypoint Turn into wind waypoint.
 -- @field Core.Point#COORDINATE Coordinate Coordinate where we left the route.
 -- @field #number Heading Heading the boat will take in degrees.
+-- @field #number InitialHeading Heading before the first leg of a continuous into-wind maneuver.
+-- @field #boolean ReturnRequired A significant departure has occurred during this maneuver.
 -- @field #boolean Open Currently active.
 -- @field #boolean Over This turn is over.
 -- @field #boolean Recovery If `true` this is a recovery window. If `false`, this is a launch window. If `nil` this is just a turn into the wind.
@@ -1506,11 +1508,11 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   local heading, speed=self:GetHeadingIntoWind(IntoWind.Offset, IntoWind.Speed)
 
   -- Apply the same return-route policy to all into-wind maneuvers.
-  if IntoWind.Uturn then
-    local delta=math.abs((heading-self:GetHeading()+180)%360-180)
-    local _, windspeed=self:GetWind()
-    IntoWind.Uturn=delta>5 and windspeed>=0.1
-  end
+  IntoWind.InitialHeading=self:GetHeading()
+  local delta=math.abs((heading-IntoWind.InitialHeading+180)%360-180)
+  local _, windspeed=self:GetWind()
+  IntoWind.ReturnRequired=delta>5 and windspeed>=0.1
+  IntoWind.Uturn=IntoWind.Uturn and IntoWind.ReturnRequired
   
   IntoWind.Heading=heading
   IntoWind.Open=true
@@ -1524,23 +1526,76 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
   -- Debug info.
   self:T(self.lid..string.format("Steaming into wind: Heading=%03d Speed=%.1f, Tstart=%d Tstop=%d", IntoWind.Heading, speed, IntoWind.Tstart, IntoWind.Tstop))
   
-  local distance=UTILS.NMToMeters(1000)
-  
-  local coord=self:GetCoordinate()
-  local Coord=coord:Translate(distance, IntoWind.Heading)
-
-  -- ID of current waypoint.
-  local uid=self:GetWaypointCurrent().uid
-  
-  local wptiw=self:AddWaypoint(Coord, speed, uid)
-  wptiw.intowind=true
-  
-  IntoWind.waypoint=wptiw
+  self:_SetTurnIntoWindRoute(IntoWind, heading, speed)
   
   if IntoWind.Uturn and false then
     IntoWind.Coordinate:MarkToAll("Return coord")
   end
   
+end
+
+-- Replace only this maneuver's route; never resume the normal route in between.
+function NAVYGROUP:_SetTurnIntoWindRoute(IntoWind, Heading, Speed)
+  if IntoWind.waypoint then
+    local uid=IntoWind.waypoint.uid
+    for i=#self.waypoints,1,-1 do
+      local wp=self.waypoints[i]
+      if wp.astar and wp.astarTargetUID==uid then
+        self:RemoveWaypointByID(wp.uid, false)
+      end
+    end
+    self.ispathfinding=false
+    self:_ClearPathfindingDrawing()
+    self:RemoveWaypointByID(uid, false)
+  end
+
+  local coord=self:GetCoordinate():Translate(UTILS.NMToMeters(1000), Heading)
+  local uid=self:GetWaypointCurrent().uid
+  local waypoint=self:AddWaypoint(coord, Speed, uid)
+  waypoint.intowind=true
+  IntoWind.waypoint=waypoint
+end
+
+--- Update a queued or active into-wind maneuver without ending it.
+-- @param #NAVYGROUP self
+-- @param #NAVYGROUP.IntoWind IntoWind Maneuver returned by AddTurnIntoWind.
+-- @param #number Speed Desired wind on deck in knots.
+-- @param #number Offset Deck offset in degrees.
+-- @param #number StopTime Planned end as absolute mission time in seconds.
+-- @param #boolean Uturn Allow returning to the original departure position at the final end.
+-- @return #NAVYGROUP.IntoWind Updated maneuver, or nil if it cannot be updated.
+function NAVYGROUP:UpdateTurnIntoWind(IntoWind, Speed, Offset, StopTime, Uturn)
+  if not IntoWind or IntoWind.Over or StopTime<=timer.getAbsTime()
+    or self:GetTurnIntoWind(IntoWind.Id)~=IntoWind then
+    return nil
+  end
+  if IntoWind.Open and self.intowind~=IntoWind then
+    return nil
+  end
+
+  IntoWind.Speed=Speed
+  IntoWind.Offset=Offset
+  IntoWind.Tstop=StopTime
+  IntoWind.Uturn=Uturn==true
+
+  if self.intowind==IntoWind then
+    local heading, speed=self:GetHeadingIntoWind(Offset, Speed)
+    local reference=IntoWind.InitialHeading or self:GetHeading()
+    local delta=math.abs((heading-reference+180)%360-180)
+    local _, windspeed=self:GetWind()
+    local departure=delta>5 and windspeed>=0.1
+    if departure and not IntoWind.ReturnRequired then
+      -- The first significant departure may occur in a later recovery window.
+      IntoWind.Coordinate=self:GetCoordinate(true)
+    end
+    IntoWind.ReturnRequired=IntoWind.ReturnRequired or departure
+    IntoWind.Uturn=IntoWind.Uturn and IntoWind.ReturnRequired
+    IntoWind.Heading=heading
+    self:_SetTurnIntoWindRoute(IntoWind, heading, speed)
+    self:T(self.lid..string.format("Continuing into wind: Heading=%03d Speed=%.1f, Tstop=%d", heading, speed, StopTime))
+  end
+
+  return IntoWind
 end
 
 --- On before "TurnIntoWindStop" event.
