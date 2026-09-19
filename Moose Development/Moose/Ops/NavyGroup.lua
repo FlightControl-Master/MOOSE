@@ -77,6 +77,7 @@ NAVYGROUP = {
 -- @type NAVYGROUP.IntoWind
 -- @field #number Tstart Time to start.
 -- @field #number Tstop Time to stop.
+-- @field #boolean ExternallyManaged If true, Tstop is informational; the owner must explicitly end or remove this maneuver.
 -- @field #boolean Uturn U-turn.
 -- @field #number Speed Speed in knots.
 -- @field #number Offset Offset angle in degrees.
@@ -667,6 +668,7 @@ function NAVYGROUP:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset
   local recovery={} --#NAVYGROUP.IntoWind
   recovery.Tstart=Tstart
   recovery.Tstop=Tstop
+  recovery.ExternallyManaged=false
   recovery.Open=false
   recovery.Over=false
   recovery.Speed=speed or 20
@@ -1021,7 +1023,15 @@ function NAVYGROUP:Status()
       end
       
       -- Into wind and turning status.
-      local intowind=self:IsSteamingIntoWind() and UTILS.SecondsToClock(self.intowind.Tstop-timer.getAbsTime(), true) or "N/A"
+      local intowind="N/A"
+      if self:IsSteamingIntoWind() then
+        local remaining=self.intowind.Tstop-timer.getAbsTime()
+        if self.intowind.ExternallyManaged then
+          intowind="External (planned "..UTILS.SecondsToClock(math.max(0, remaining), true)..")"
+        else
+          intowind=UTILS.SecondsToClock(remaining, true)
+        end
+      end
       local turning=tostring(self:IsTurning())      
 
       -- Info text.
@@ -2265,8 +2275,8 @@ function NAVYGROUP:_CheckTurnsIntoWind()
 
   if self.intowind then
 
-    -- Check if time is over.
-    if time>=self.intowind.Tstop then    
+    -- Externally managed maneuvers end only when their owner stops/removes them.
+    if not self.intowind.ExternallyManaged and time>=self.intowind.Tstop then
       self:TurnIntoWindOver(self.intowind)
     end
   
@@ -2301,7 +2311,7 @@ function NAVYGROUP:GetTurnIntoWindNext()
     for _,_recovery in ipairs(self.Qintowind) do
       local recovery=_recovery --#NAVYGROUP.IntoWind
   
-      if time>=recovery.Tstart and time<recovery.Tstop and not (recovery.Open or recovery.Over) then
+      if time>=recovery.Tstart and (recovery.ExternallyManaged or time<recovery.Tstop) and not (recovery.Open or recovery.Over) then
         return recovery
       end
       

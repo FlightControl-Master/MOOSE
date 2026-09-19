@@ -2103,6 +2103,7 @@ function AIRBOSS:New( carriername, alias )
   self:AddTransition("*",             "Idle",            "Idle")        -- Carrier is idling.
   self:AddTransition("Idle",          "RecoveryStart",   "Recovering")  -- Start recovering aircraft.
   self:AddTransition("Recovering",    "RecoveryStop",    "Idle")        -- Stop recovering aircraft.
+  self:AddTransition("Paused",        "RecoveryStop",    "Idle")        -- Stop paused recovery.
   self:AddTransition("Recovering",    "RecoveryPause",   "Paused")      -- Pause recovering aircraft.
   self:AddTransition("Paused",        "RecoveryUnpause", "Recovering")  -- Unpause recovering aircraft.
   self:AddTransition("*",             "Status",          "*")           -- Update status of players and queues.
@@ -2588,12 +2589,8 @@ function AIRBOSS:CloseCurrentRecoveryWindow( Delay )
     -- SCHEDULER:New(nil, self.CloseCurrentRecoveryWindow, {self}, delay)
     self:ScheduleOnce( Delay, self.CloseCurrentRecoveryWindow, self )
   else
-    if self:IsRecovering() and self.recoverywindow and self.recoverywindow.OPEN then
-      -- RecoveryStop may select another window (or clear self.recoverywindow).
-      local window = self.recoverywindow
-      self:RecoveryStop()
-      window.OPEN = false
-      window.OVER = true
+    local window = self.activeRecoveryWindow or self.navyRecoveryWindow
+    if window then
       self:DeleteRecoveryWindow( window )
     end
   end
@@ -2610,12 +2607,26 @@ function AIRBOSS:DeleteAllRecoveryWindows( Delay )
   for _, recovery in pairs( self.recoverytimes ) do
     table.insert( windows, recovery )
   end
+  if Delay and Delay > 0 then
+    self:ScheduleOnce( Delay, self._DeleteRecoveryWindows, self, windows )
+  else
+    self:_DeleteRecoveryWindows( windows )
+  end
+
+  return self
+end
+
+-- Delete a snapshot as one batch, without starting another window in between.
+function AIRBOSS:_DeleteRecoveryWindows( windows )
+  local deleting = self._deletingRecoveryWindows
+  self._deletingRecoveryWindows = true
   for i = #windows, 1, -1 do
     local recovery = windows[i]
     self:I( self.lid .. string.format( "Deleting recovery window ID %s", tostring( recovery.ID ) ) )
-    self:DeleteRecoveryWindow( recovery, Delay )
+    self:DeleteRecoveryWindow( recovery )
   end
-
+  self._deletingRecoveryWindows = deleting
+  self:_CheckRecoveryTimes()
   return self
 end
 
@@ -2651,24 +2662,38 @@ function AIRBOSS:DeleteRecoveryWindow( Window, Delay )
       return
     end
 
-    -- If this window is currently open, stop recovery first. Mark it OVER so the
-    -- recovery time check cannot re-open it before/while we remove it.
-    if Window.OPEN then
-      Window.OPEN = false
-      Window.OVER = true
-      if self:IsRecovering() then
-        self:RecoveryStop()
-      end
+    Window = self:GetRecoveryWindowByID( Window.ID ) or Window
+
+    if self.activeRecoveryWindow == Window and (self:IsRecovering() or self:IsPaused()) then
+      -- The successful FSM transition finishes the window. Respect a veto.
+      self:RecoveryStop()
+      return
     end
 
-    -- Remove the window from the queue by its unique ID. Iterate over a numerically
-    -- indexed copy of the keys and remove via ipairs-safe reverse loop so that the
-    -- removal does not corrupt traversal (the window may appear once).
-    for i = #self.recoverytimes, 1, -1 do
-      local recovery = self.recoverytimes[i] -- #AIRBOSS.Recovery
-      if recovery and recovery.ID == Window.ID then
-        table.remove( self.recoverytimes, i )
-      end
+    self:_FinishRecoveryWindow( Window )
+    self:_CheckRecoveryTimes()
+  end
+end
+
+-- Finish only this window and its associated navigation maneuver.
+function AIRBOSS:_FinishRecoveryWindow( Window )
+  Window.OPEN = false
+  Window.OVER = true
+
+  if self.activeRecoveryWindow == Window then
+    self.activeRecoveryWindow = nil
+    self.recoveryPauseToken = nil
+  end
+  if self.recoverywindow == Window then
+    self.recoverywindow = nil
+  end
+  if self.navyRecoveryWindow == Window then
+    self:_StopNavyIntoWind()
+  end
+
+  for i = #self.recoverytimes, 1, -1 do
+    if self.recoverytimes[i] == Window then
+      table.remove( self.recoverytimes, i )
     end
   end
 end
@@ -3903,6 +3928,12 @@ end
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckRecoveryTimes()
 
+  -- Stop/delete callbacks can request another check while this one is running.
+  if self._checkingRecoveryTimes or self._deletingRecoveryWindows then
+    return
+  end
+  self._checkingRecoveryTimes = true
+
   -- Get current abs time.
   local time = timer.getAbsTime()
   local Cnow = UTILS.SecondsToClock( time )
@@ -3923,10 +3954,13 @@ function AIRBOSS:_CheckRecoveryTimes()
 
   -- Next recovery case in the future.
   local nextwindow = nil -- #AIRBOSS.Recovery
-  local currwindow = nil -- #AIRBOSS.Recovery
 
-  -- Loop over all slots.
-  for _, _recovery in pairs( self.recoverytimes ) do
+  -- Callbacks can remove windows. Iterate over a snapshot in start-time order.
+  local windows = {}
+  for _, recovery in ipairs( self.recoverytimes ) do
+    windows[#windows + 1] = recovery
+  end
+  for _, _recovery in ipairs( windows ) do
     local recovery = _recovery -- #AIRBOSS.Recovery
 
     -- Get start/stop clock strings.
@@ -3937,16 +3971,18 @@ function AIRBOSS:_CheckRecoveryTimes()
     local state = ""
 
     -- Check if start time passed.
-    if time >= recovery.START then
+    if recovery.OVER then
+      state = "cancelled"
+    elseif time >= recovery.START then
       -- Start time has passed.
 
       if time < recovery.STOP then
         -- Stop time has NOT passed.
 
-        if self:IsRecovering() then
-          -- Carrier is already recovering.
-          state = "in progress"
-        elseif not recovery.OVER then
+        if self:IsRecovering() or self:IsPaused() then
+          -- Carrier is already recovering or recovery is paused.
+          state = self:IsPaused() and "paused" or "in progress"
+        elseif self:IsIdle() and not recovery.OVER then
           -- Start recovery. Only if the window has not already been closed/cancelled.
           -- The OVER guard prevents a window that was stopped manually (e.g. via the
           -- Skipper "Stop Recovery" menu) from being immediately re-opened on the next
@@ -3954,22 +3990,18 @@ function AIRBOSS:_CheckRecoveryTimes()
           if self:IsIdle() then
             self:_StartRecoveryIntoWind(recovery)
           end
-          self:RecoveryStart( recovery.CASE, recovery.OFFSET )
+          self:RecoveryStart( recovery.CASE, recovery.OFFSET, recovery )
           state = "starting now"
-          recovery.OPEN = true
         else
           -- Window was already closed/cancelled within its active time range.
           state = "cancelled"
         end
 
-        -- Set current recovery window (unless this window has been cancelled).
-        if not recovery.OVER then
-          currwindow = recovery
-        end
-
       else -- Stop time HAS passed.
 
-        if self:IsRecovering() and not recovery.OVER then
+        if (self:IsRecovering() or self:IsPaused())
+          and self.activeRecoveryWindow == recovery
+          and not recovery.OVER then
 
           -- Get number of airborne aircraft units(!) currently in pattern.
           local _, npattern = self:_GetQueueInfo( self.Qpattern )
@@ -3980,6 +4012,11 @@ function AIRBOSS:_CheckRecoveryTimes()
             local extmin = 5 * npattern
             recovery.STOP = recovery.STOP + extmin * 60
 
+            -- Keep NAVYGROUP's planned end time in sync; AIRBOSS decides when to stop.
+            if self.navyRecoveryWindow == recovery and self.navyIntoWind then
+              self.navygroup:ExtendTurnIntoWind(extmin * 60, self.navyIntoWind)
+            end
+
             local text = string.format( "We still got flights in the pattern.\nRecovery time prolonged by %d minutes.\nNow get your act together and no more bolters!", extmin )
             self:MessageToPattern( text, "AIRBOSS", "99", 10, false, nil )
 
@@ -3987,13 +4024,7 @@ function AIRBOSS:_CheckRecoveryTimes()
 
             -- Set carrier to idle.
             self:RecoveryStop()
-            state = "closing now"
-
-            -- Closed.
-            recovery.OPEN = false
-
-            -- Window just closed.
-            recovery.OVER = true
+            state = recovery.OVER and "closing now" or "stop deferred"
 
           end
         else
@@ -4054,14 +4085,15 @@ function AIRBOSS:_CheckRecoveryTimes()
     -- Carrier is recovering: We set the recovery window to the current one or next one.
     -------------------------------------------------------------------------------------
 
-    if currwindow then
-      self.recoverywindow = currwindow
+    if self.activeRecoveryWindow then
+      self.recoverywindow = self.activeRecoveryWindow
     else
       self.recoverywindow = nextwindow
     end
   end
 
   self:T2( { "FF", recoverywindow = self.recoverywindow } )
+  self._checkingRecoveryTimes = nil
 end
 
 --- Get section lead of a flight.
@@ -4165,7 +4197,15 @@ end
 -- @param #string To To state.
 -- @param #number Case The recovery case (1, 2 or 3) to start.
 -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
-function AIRBOSS:onafterRecoveryStart( From, Event, To, Case, Offset )
+function AIRBOSS:onafterRecoveryStart( From, Event, To, Case, Offset, RecoveryWindow )
+
+  self.recoveryPauseToken = nil
+  self.activeRecoveryWindow = RecoveryWindow
+
+  if RecoveryWindow then
+    self.recoverywindow = RecoveryWindow
+    RecoveryWindow.OPEN = true
+  end
 
   -- Input or default value.
   Case = self:_ResolveRecoveryCase( Case )
@@ -4192,23 +4232,13 @@ function AIRBOSS:onafterRecoveryStop( From, Event, To )
   -- Recovery ops stopped message.
   self:_MarshalCallRecoveryStopped( self.case )
 
-  -- If carrier is currently heading into the wind, we resume the original route.
-  self:_StopNavyIntoWind()
-
-  -- Mark the current recovery window closed and cancelled, then remove it from the
-  -- queue. We do NOT gate this on Window.OPEN: that flag is only set by
-  -- _CheckRecoveryTimes (not by RecoveryStart), and the recovery time check nils and
-  -- rebuilds self.recoverywindow every status tick, so OPEN is not a reliable signal
-  -- here. Setting OVER=true is what actually prevents the window from being re-opened
-  -- on the next tick while its [START,STOP) range is still active.
-  --
-  -- The removal is deferred by one tick (Delay>0) so it does not mutate the
-  -- recoverytimes table while _CheckRecoveryTimes may be iterating over it (the natural
-  -- close path calls RecoveryStop() from inside that loop).
-  if self.recoverywindow then
-    self.recoverywindow.OPEN = false
-    self.recoverywindow.OVER = true
-    self:DeleteRecoveryWindow( self.recoverywindow, 1 )
+  self.recoveryPauseToken = nil
+  local window = self.activeRecoveryWindow
+  if window then
+    self:_FinishRecoveryWindow( window )
+  else
+    -- Preserve stopping a manually started recovery without a scheduled window.
+    self:_StopNavyIntoWind()
   end
 
   -- Check recovery windows. This sets self.recoverywindow to the next window.
@@ -4225,12 +4255,21 @@ function AIRBOSS:onafterRecoveryPause( From, Event, To, duration )
   -- Debug output.
   self:T( self.lid .. string.format( "Pausing aircraft recovery." ) )
 
-  -- Message text
+  -- Each pause owns its timer; an earlier timer must not resume a later pause.
+  local token = {}
+  self.recoveryPauseToken = token
 
   if duration then
 
-    -- Auto resume.
-    self:__RecoveryUnpause( duration )
+    self:ScheduleOnce( duration, function( airboss, pauseToken )
+      if airboss.recoveryPauseToken == pauseToken and airboss:IsPaused() then
+        -- Process a window end or extension before resuming recovery.
+        airboss:_CheckRecoveryTimes()
+        if airboss.recoveryPauseToken == pauseToken and airboss:IsPaused() then
+          airboss:RecoveryUnpause()
+        end
+      end
+    end, self, token )
 
     -- Time to resume.
     local clock = UTILS.SecondsToClock( timer.getAbsTime() + duration )
@@ -4254,6 +4293,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterRecoveryUnpause( From, Event, To )
+  self.recoveryPauseToken = nil
   -- Debug output.
   self:T( self.lid .. string.format( "Unpausing aircraft recovery." ) )
 
@@ -13999,7 +14039,7 @@ function AIRBOSS:_StartRecoveryIntoWind(recovery)
   local uturn = recovery.UTURN and delta > 5 and windspeed >= 0.1
 
   self:CarrierTurnIntoWind(
-    math.max(remaining, 86400),
+    remaining,
     UTILS.KnotsToMps(recovery.SPEED),
     uturn
   )
@@ -14008,6 +14048,9 @@ function AIRBOSS:_StartRecoveryIntoWind(recovery)
     return false
   end
 
+  -- This recovery owns the maneuver's lifetime, including pauses/extensions.
+  self.navyIntoWind.ExternallyManaged = true
+  self.navyIntoWind.Tstop = recovery.STOP
   self.navyRecoveryWindow = recovery
   return true
 end
@@ -16417,7 +16460,7 @@ function AIRBOSS:_SkipperStopRecovery( _unitName )
 
       -- Inform player.
       local text = "roger, stopping recovery right away."
-      if not self:IsRecovering() then
+      if not self:IsRecovering() and not self:IsPaused() then
         text = "negative, carrier is currently not recovering."
         self:MessageToPlayer( playerData, text, "AIRBOSS" )
         return
