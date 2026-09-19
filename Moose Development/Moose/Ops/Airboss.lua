@@ -143,7 +143,6 @@
 -- @field Wrapper.Airbase#AIRBASE airbase Carrier airbase object.
 -- @field #table waypoints Waypoint coordinates of carrier.
 -- @field #number currentwp Current waypoint, i.e. the one that has been passed last.
--- @field Core.Beacon#BEACON beacon Carrier beacon for TACAN and ICLS.
 -- @field #boolean TACANon Automatic TACAN is activated.
 -- @field #number TACANchannel TACAN channel.
 -- @field #string TACANmode TACAN mode, i.e. "X" or "Y".
@@ -236,8 +235,6 @@
 -- @field #string soundfolderLSO Folder withing the mission (miz) file where LSO sound files are stored.
 -- @field #string soundfolderMSH Folder withing the mission (miz) file where Marshal sound files are stored.
 -- @field #boolean despawnshutdown Despawn group after engine shutdown.
--- @field #number Tbeacon Last time the beacons were refeshed.
--- @field #number dTbeacon Time interval to refresh the beacons. Default 5 minutes.
 -- @field #AIRBOSS.LSOCalls LSOCall Radio voice overs of the LSO.
 -- @field #AIRBOSS.MarshalCalls MarshalCall Radio voice over of the Marshal/Airboss.
 -- @field #AIRBOSS.PilotCalls PilotCall Radio voice over from AI pilots.
@@ -1788,9 +1785,6 @@ function AIRBOSS:New( carriername, alias )
   -- Set carrier airbase object.
   self.airbase = AIRBASE:FindByName( carriername )
 
-  -- Create carrier beacon.
-  self.beacon = BEACON:New( self.carrier )
-
   -- Set Tower Frequency of carrier.
   self:_GetTowerFrequency()
 
@@ -1822,9 +1816,6 @@ function AIRBOSS:New( carriername, alias )
 
   -- Set TACAN to channel 74X.
   self:SetTACAN()
-
-  -- Becons are reactivated very 5 min.
-  self:SetBeaconRefresh()
 
   -- Set max aircraft in landing pattern. Default 4.
   self:SetMaxLandingPattern()
@@ -3053,15 +3044,6 @@ function AIRBOSS:SetICLS( Channel, MorseCode )
   return self
 end
 
---- Set beacon (TACAN/ICLS) time refresh interfal in case the beacons die.
--- @param #AIRBOSS self
--- @param #number TimeInterval (Optional) Time interval in seconds. Default 1200 sec = 20 min.
--- @return #AIRBOSS self
-function AIRBOSS:SetBeaconRefresh( TimeInterval )
-  self.dTbeacon = TimeInterval or (20 * 60)
-  return self
-end
-
 --- Set up SRS for usage without sound files
 -- @param #AIRBOSS self
 -- @param #string PathToSRS Path to SRS folder, e.g. "C:\\Program Files\\DCS-SimpleRadio\\ExternalAudio".
@@ -3562,17 +3544,15 @@ function AIRBOSS:_ActivateBeacons()
   -- Activate TACAN.
   if self.TACANon then
     self:I( self.lid .. string.format( "Activating TACAN Channel %d%s (%s)", self.TACANchannel, self.TACANmode, self.TACANmorse ) )
-    self.beacon:ActivateTACAN( self.TACANchannel, self.TACANmode, self.TACANmorse, true )
+    self.navygroup:SwitchTACAN( self.TACANchannel, self.TACANmorse, self.carrier:GetName(), self.TACANmode )
   end
 
   -- Activate ICLS.
   if self.ICLSon then
     self:I( self.lid .. string.format( "Activating ICLS Channel %d (%s)", self.ICLSchannel, self.ICLSmorse ) )
-    self.beacon:ActivateICLS( self.ICLSchannel, self.ICLSmorse )
+    self.navygroup:SwitchICLS( self.ICLSchannel, self.ICLSmorse, self.carrier:GetName() )
   end
 
-  -- Set time stamp.
-  self.Tbeacon = timer.getTime()
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -3705,11 +3685,6 @@ function AIRBOSS:onafterStatus( From, Event, To )
 
     -- Time stamp.
     self.Tqueue = time
-  end
-
-  -- (Re-)activate TACAN and ICLS channels.
-  if time - self.Tbeacon > self.dTbeacon then
-    self:_ActivateBeacons()
   end
 
   -- Call status every ~0.5 seconds.

@@ -12510,7 +12510,7 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
       local Frequency=UTILS.TACANToFrequency(Channel, Band)
 
       -- Activate beacon.
-      unit:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Band, true, Morse, true)
+      unit:CommandActivateBeacon(Type, System, Frequency, UnitID, Channel, Band, unit:IsAir(), Morse, true)
 
       -- Update info.
       self.tacan.Channel=Channel
@@ -12631,6 +12631,7 @@ function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
 
     Channel=Channel or self.iclsDefault.Channel
     Morse=Morse or self.iclsDefault.Morse
+    UnitName=UnitName or self.iclsDefault.BeaconName
     local unit=self:GetUnit(1)  --Wrapper.Unit#UNIT
 
     if UnitName then
