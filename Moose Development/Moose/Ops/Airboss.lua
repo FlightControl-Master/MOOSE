@@ -10792,8 +10792,8 @@ function AIRBOSS:_GetZoneInitial( case )
   -- Get radial, i.e. inverse of BRC.
   local radial = self:GetRadial( 2, false, false )
 
-  -- Carrier coordinate.
-  local cv = self:GetCoordinate()
+  -- Carrier position. Keep it unchanged when creating independent zone points.
+  local cv = self.carrier:GetVector()
 
   -- Vec2 array.
   local vec2 = {}
@@ -10801,10 +10801,10 @@ function AIRBOSS:_GetZoneInitial( case )
   if case == 1 then
     -- Case I
 
-    local c1 = cv:Translate( UTILS.NMToMeters( 0.5 ), radial - 90 ) --  0.0  0.5 starboard
-    local c2 = cv:Translate( UTILS.NMToMeters( 1.3 ), radial - 90 ):Translate( UTILS.NMToMeters( 3 ), radial ) -- -3.0  1.3 starboard, astern
-    local c3 = cv:Translate( UTILS.NMToMeters( 0.4 ), radial + 90 ):Translate( UTILS.NMToMeters( 3 ), radial ) -- -3.0 -0.4 port, astern
-    local c4 = cv:Translate( UTILS.NMToMeters( 1.0 ), radial )
+    local c1 = cv:Translate( UTILS.NMToMeters( 0.5 ), radial - 90, true ) --  0.0  0.5 starboard
+    local c2 = cv:Translate( UTILS.NMToMeters( 1.3 ), radial - 90, true ):Translate( UTILS.NMToMeters( 3 ), radial ) -- -3.0  1.3 starboard, astern
+    local c3 = cv:Translate( UTILS.NMToMeters( 0.4 ), radial + 90, true ):Translate( UTILS.NMToMeters( 3 ), radial ) -- -3.0 -0.4 port, astern
+    local c4 = cv:Translate( UTILS.NMToMeters( 1.0 ), radial, true )
     local c5 = cv
 
     -- Vec2 array.
@@ -10814,11 +10814,11 @@ function AIRBOSS:_GetZoneInitial( case )
     -- Case II
 
     -- Funnel.
-    local c1 = cv:Translate( UTILS.NMToMeters( 0.5 ), radial - 90 ) -- 0.0, 0.5
-    local c2 = c1:Translate( UTILS.NMToMeters( 0.5 ), radial ) -- 0.5, 0.5
-    local c3 = cv:Translate( UTILS.NMToMeters( 1.2 ), radial - 90 ):Translate( UTILS.NMToMeters( 3 ), radial ) -- 3.0, 1.2
-    local c4 = cv:Translate( UTILS.NMToMeters( 1.2 ), radial + 90 ):Translate( UTILS.NMToMeters( 3 ), radial ) -- 3.0,-1.2
-    local c5 = cv:Translate( UTILS.NMToMeters( 0.5 ), radial )
+    local c1 = cv:Translate( UTILS.NMToMeters( 0.5 ), radial - 90, true ) -- 0.0, 0.5
+    local c2 = c1:Translate( UTILS.NMToMeters( 0.5 ), radial, true ) -- 0.5, 0.5
+    local c3 = cv:Translate( UTILS.NMToMeters( 1.2 ), radial - 90, true ):Translate( UTILS.NMToMeters( 3 ), radial ) -- 3.0, 1.2
+    local c4 = cv:Translate( UTILS.NMToMeters( 1.2 ), radial + 90, true ):Translate( UTILS.NMToMeters( 3 ), radial ) -- 3.0,-1.2
+    local c5 = cv:Translate( UTILS.NMToMeters( 0.5 ), radial, true )
     local c6 = cv
 
     -- Vec2 array.
@@ -10884,16 +10884,16 @@ function AIRBOSS:_GetZoneGroove( l, w, b )
   -- Get radial, i.e. inverse of BRC.
   local fbi = self:GetRadial( 1, false, false )
 
-  -- Stern coordinate.
-  local st = self:_GetSternCoord()
+  -- Copy the stern position into a vector for the zone geometry.
+  local st = VECTOR:NewFromVec( self:_GetSternCoord() )
 
   -- Zone points.
-  local c1 = st:Translate( self.carrierparam.totwidthstarboard, fbi - 90 )
-  local c2 = st:Translate( UTILS.NMToMeters( 0.10 ), fbi - 90 ):Translate( UTILS.NMToMeters( 0.3 ), fbi )
-  local c3 = st:Translate( UTILS.NMToMeters( 0.25 ), fbi - 90 ):Translate( UTILS.NMToMeters( l ), fbi )
-  local c4 = st:Translate( UTILS.NMToMeters( w / 2 ), fbi + 90 ):Translate( UTILS.NMToMeters( l ), fbi )
-  local c5 = st:Translate( UTILS.NMToMeters( b ), fbi + 90 ):Translate( UTILS.NMToMeters( 0.3 ), fbi )
-  local c6 = st:Translate( self.carrierparam.totwidthport, fbi + 90 )
+  local c1 = st:Translate( self.carrierparam.totwidthstarboard, fbi - 90, true )
+  local c2 = st:Translate( UTILS.NMToMeters( 0.10 ), fbi - 90, true ):Translate( UTILS.NMToMeters( 0.3 ), fbi )
+  local c3 = st:Translate( UTILS.NMToMeters( 0.25 ), fbi - 90, true ):Translate( UTILS.NMToMeters( l ), fbi )
+  local c4 = st:Translate( UTILS.NMToMeters( w / 2 ), fbi + 90, true ):Translate( UTILS.NMToMeters( l ), fbi )
+  local c5 = st:Translate( UTILS.NMToMeters( b ), fbi + 90, true ):Translate( UTILS.NMToMeters( 0.3 ), fbi )
+  local c6 = st:Translate( self.carrierparam.totwidthport, fbi + 90, true )
 
   -- Vec2 array.
   local vec2 = { c1:GetVec2(), c2:GetVec2(), c3:GetVec2(), c4:GetVec2(), c5:GetVec2(), c6:GetVec2() }
