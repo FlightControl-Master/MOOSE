@@ -2998,15 +2998,22 @@ function AIRBOSS:SetStaticWeather( Switch )
   return self
 end
 
---- Disable automatic TACAN activation
+--- Disable TACAN activation at startup and switch the managed beacon off if AIRBOSS is running.
 -- @param #AIRBOSS self
 -- @return #AIRBOSS self
 function AIRBOSS:SetTACANoff()
   self.TACANon = false
+
+  self.navygroup:SetDefaultTACAN( self.TACANchannel, self.TACANmorse, self.carrier:GetName(), self.TACANmode, true )
+
+  if self:IsIdle() or self:IsRecovering() or self:IsPaused() then
+    self.navygroup:TurnOffTACAN()
+  end
+
   return self
 end
 
---- Set TACAN channel of carrier and switches TACAN on.
+--- Configure carrier TACAN for startup, or switch it on immediately if AIRBOSS is running.
 -- @param #AIRBOSS self
 -- @param #number Channel (Optional) TACAN channel. Default 74.
 -- @param #string Mode (Optional) TACAN mode, i.e. "X" or "Y". Default "X".
@@ -3019,18 +3026,30 @@ function AIRBOSS:SetTACAN( Channel, Mode, MorseCode )
   self.TACANmorse = MorseCode or "STN"
   self.TACANon = true
 
+  if self:IsIdle() or self:IsRecovering() or self:IsPaused() then
+    self.navygroup:SetDefaultTACAN( self.TACANchannel, self.TACANmorse, self.carrier:GetName(), self.TACANmode )
+    self.navygroup:SwitchTACAN()
+  end
+
   return self
 end
 
---- Disable automatic ICLS activation.
+--- Disable ICLS activation at startup and switch the managed beacon off if AIRBOSS is running.
 -- @param #AIRBOSS self
 -- @return #AIRBOSS self
 function AIRBOSS:SetICLSoff()
   self.ICLSon = false
+
+  self.navygroup:SetDefaultICLS( self.ICLSchannel, self.ICLSmorse, self.carrier:GetName(), true )
+
+  if self:IsIdle() or self:IsRecovering() or self:IsPaused() then
+    self.navygroup:TurnOffICLS()
+  end
+
   return self
 end
 
---- Set ICLS channel of carrier.
+--- Configure carrier ICLS for startup, or switch it on immediately if AIRBOSS is running.
 -- @param #AIRBOSS self
 -- @param #number Channel (Optional) ICLS channel. Default 1.
 -- @param #string MorseCode (Optional) Morse code identifier. Three letters, e.g. "STN". Default "STN".
@@ -3040,6 +3059,11 @@ function AIRBOSS:SetICLS( Channel, MorseCode )
   self.ICLSchannel = Channel or 1
   self.ICLSmorse = MorseCode or "STN"
   self.ICLSon = true
+
+  if self:IsIdle() or self:IsRecovering() or self:IsPaused() then
+    self.navygroup:SetDefaultICLS( self.ICLSchannel, self.ICLSmorse, self.carrier:GetName() )
+    self.navygroup:SwitchICLS()
+  end
 
   return self
 end
@@ -3541,16 +3565,20 @@ end
 function AIRBOSS:_ActivateBeacons()
   self:T( self.lid .. string.format( "Activating Beacons (TACAN=%s, ICLS=%s)", tostring( self.TACANon ), tostring( self.ICLSon ) ) )
 
+  -- Store defaults for NAVYGROUP spawn and restoration of beacon settings.
+  self.navygroup:SetDefaultTACAN( self.TACANchannel, self.TACANmorse, self.carrier:GetName(), self.TACANmode, not self.TACANon )
+  self.navygroup:SetDefaultICLS( self.ICLSchannel, self.ICLSmorse, self.carrier:GetName(), not self.ICLSon )
+
   -- Activate TACAN.
   if self.TACANon then
     self:I( self.lid .. string.format( "Activating TACAN Channel %d%s (%s)", self.TACANchannel, self.TACANmode, self.TACANmorse ) )
-    self.navygroup:SwitchTACAN( self.TACANchannel, self.TACANmorse, self.carrier:GetName(), self.TACANmode )
+    self.navygroup:SwitchTACAN()
   end
 
   -- Activate ICLS.
   if self.ICLSon then
     self:I( self.lid .. string.format( "Activating ICLS Channel %d (%s)", self.ICLSchannel, self.ICLSmorse ) )
-    self.navygroup:SwitchICLS( self.ICLSchannel, self.ICLSmorse, self.carrier:GetName() )
+    self.navygroup:SwitchICLS()
   end
 
 end

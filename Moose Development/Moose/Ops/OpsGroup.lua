@@ -12466,6 +12466,11 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
 
+  Channel=Channel or self.tacanDefault.Channel
+  Morse=Morse or self.tacanDefault.Morse
+  Band=Band or self.tacanDefault.Band
+  UnitName=UnitName or self.tacanDefault.BeaconName
+
   if self:IsInUtero() then
 
     self:T(self.lid..string.format("Switching TACAN to DEFAULT when group is spawned"))
@@ -12473,10 +12478,6 @@ function OPSGROUP:SwitchTACAN(Channel, Morse, UnitName, Band)
 
   elseif self:IsAlive() then
 
-    Channel=Channel or self.tacanDefault.Channel
-    Morse=Morse or self.tacanDefault.Morse
-    Band=Band or self.tacanDefault.Band
-    UnitName=UnitName or self.tacanDefault.BeaconName
     local unit=self:GetUnit(1)  --Wrapper.Unit#UNIT
 
     if UnitName then
@@ -12621,6 +12622,10 @@ end
 -- @return #OPSGROUP self
 function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
 
+  Channel=Channel or self.iclsDefault.Channel
+  Morse=Morse or self.iclsDefault.Morse
+  UnitName=UnitName or self.iclsDefault.BeaconName
+
   if self:IsInUtero() then
 
     self:SetDefaultICLS(Channel,Morse,UnitName)
@@ -12629,9 +12634,6 @@ function OPSGROUP:SwitchICLS(Channel, Morse, UnitName)
 
   elseif self:IsAlive() then
 
-    Channel=Channel or self.iclsDefault.Channel
-    Morse=Morse or self.iclsDefault.Morse
-    UnitName=UnitName or self.iclsDefault.BeaconName
     local unit=self:GetUnit(1)  --Wrapper.Unit#UNIT
 
     if UnitName then
