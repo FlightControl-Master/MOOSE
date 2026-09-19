@@ -616,7 +616,7 @@ end
 -- @param #string starttime (Optional) Start time, e.g. "8:00" for eight o'clock. Default now.
 -- @param #string stoptime (Optional) Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
 -- @param #number speed (Optional) Speed in knots during turn into wind leg. Defaults to 20.
--- @param #boolean uturn (Optional) If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
+-- @param #boolean uturn (Optional) If true (or nil), allow returning to the maneuver's starting position when the heading change exceeds 5 degrees and wind is at least 0.1 m/s. If false, go directly to the next waypoint.
 -- @param #number offset (Optional) Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
 -- @return #NAVYGROUP.IntoWind Recovery window, or nil when its timing is invalid.
 function NAVYGROUP:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
@@ -679,15 +679,20 @@ function NAVYGROUP:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset
   return recovery
 end
 
+--- Optional behavior for a turn into wind.
+-- @type NAVYGROUP.IntoWindOptions
+-- @field #boolean ExternallyManaged The caller explicitly ends the maneuver. Default false.
+
 --- Add a time window, where the groups steams into the wind.
 -- @param #NAVYGROUP self
 -- @param #string starttime (Optional) Start time, e.g. "8:00" for eight o'clock. Default now.
 -- @param #string stoptime (Optional) Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
 -- @param #number speed (Optional) Wind speed on deck in knots during turn into wind leg. Default 20 knots.
--- @param #boolean uturn (Optional) If `true` (or `nil`), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
+-- @param #boolean uturn (Optional) If true (or nil), allow returning to the maneuver's starting position when the heading change exceeds 5 degrees and wind is at least 0.1 m/s. If false, go directly to the next waypoint.
 -- @param #number offset (Optional) Offset angle clock-wise in degrees, *e.g.* to account for an angled runway. Default 0 deg. Use around -9.1° for US carriers.
+-- @param #NAVYGROUP.IntoWindOptions Options (Optional) Maneuver behavior.
 -- @return #NAVYGROUP.IntoWind Turn into window data table, or nil when its timing is invalid.
-function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
+function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset, Options)
 
   local recovery=self:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
@@ -695,6 +700,9 @@ function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
   if not recovery then
     return nil
   end
+
+  Options=Options or {}
+  recovery.ExternallyManaged=Options.ExternallyManaged==true
   
   --TODO: check if window is overlapping with an other and if extend the window.
   
@@ -1496,6 +1504,13 @@ function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
 
   -- Calculate heading and speed of ship.
   local heading, speed=self:GetHeadingIntoWind(IntoWind.Offset, IntoWind.Speed)
+
+  -- Apply the same return-route policy to all into-wind maneuvers.
+  if IntoWind.Uturn then
+    local delta=math.abs((heading-self:GetHeading()+180)%360-180)
+    local _, windspeed=self:GetWind()
+    IntoWind.Uturn=delta>5 and windspeed>=0.1
+  end
   
   IntoWind.Heading=heading
   IntoWind.Open=true

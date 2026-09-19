@@ -3936,7 +3936,6 @@ function AIRBOSS:_CheckRecoveryTimes()
 
   -- Get current abs time.
   local time = timer.getAbsTime()
-  local Cnow = UTILS.SecondsToClock( time )
 
   -- Debug output:
   local text = string.format( self.lid .. "Recovery time windows:" )
@@ -3967,83 +3966,12 @@ function AIRBOSS:_CheckRecoveryTimes()
     local Cstart = UTILS.SecondsToClock( recovery.START )
     local Cstop = UTILS.SecondsToClock( recovery.STOP )
 
-    -- Status info.
-    local state = ""
+    local state = self:_CheckRecoveryWindow( recovery, time )
 
-    -- Check if start time passed.
-    if recovery.OVER then
-      state = "cancelled"
-    elseif time >= recovery.START then
-      -- Start time has passed.
-
-      if time < recovery.STOP then
-        -- Stop time has NOT passed.
-
-        if self:IsRecovering() or self:IsPaused() then
-          -- Carrier is already recovering or recovery is paused.
-          state = self:IsPaused() and "paused" or "in progress"
-        elseif self:IsIdle() and not recovery.OVER then
-          -- Start recovery. Only if the window has not already been closed/cancelled.
-          -- The OVER guard prevents a window that was stopped manually (e.g. via the
-          -- Skipper "Stop Recovery" menu) from being immediately re-opened on the next
-          -- status tick while its [START,STOP) range is still active.
-          if self:IsIdle() then
-            self:_StartRecoveryIntoWind(recovery)
-          end
-          self:RecoveryStart( recovery.CASE, recovery.OFFSET, recovery )
-          state = "starting now"
-        else
-          -- Window was already closed/cancelled within its active time range.
-          state = "cancelled"
-        end
-
-      else -- Stop time HAS passed.
-
-        if (self:IsRecovering() or self:IsPaused())
-          and self.activeRecoveryWindow == recovery
-          and not recovery.OVER then
-
-          -- Get number of airborne aircraft units(!) currently in pattern.
-          local _, npattern = self:_GetQueueInfo( self.Qpattern )
-
-          if npattern > 0 then
-
-            -- Extend recovery time. 5 min per flight.
-            local extmin = 5 * npattern
-            recovery.STOP = recovery.STOP + extmin * 60
-
-            -- Keep NAVYGROUP's planned end time in sync; AIRBOSS decides when to stop.
-            if self.navyRecoveryWindow == recovery and self.navyIntoWind then
-              self.navygroup:ExtendTurnIntoWind(extmin * 60, self.navyIntoWind)
-            end
-
-            local text = string.format( "We still got flights in the pattern.\nRecovery time prolonged by %d minutes.\nNow get your act together and no more bolters!", extmin )
-            self:MessageToPattern( text, "AIRBOSS", "99", 10, false, nil )
-
-          else
-
-            -- Set carrier to idle.
-            self:RecoveryStop()
-            state = recovery.OVER and "closing now" or "stop deferred"
-
-          end
-        else
-
-          -- Carrier is already idle.
-          state = "closed"
-        end
-
-      end
-
-    else
-      -- This recovery is in the future.
-      state = "in the future"
-
-      -- This is the next to come as we sorted by start time.
-      if nextwindow == nil then
-        nextwindow = recovery
-        state = "next in line"
-      end
+    -- The snapshot is sorted by start time.
+    if state == "in the future" and nextwindow == nil then
+      nextwindow = recovery
+      state = "next in line"
     end
 
     -- Debug text.
@@ -4053,47 +3981,70 @@ function AIRBOSS:_CheckRecoveryTimes()
   -- Debug output.
   self:T( self.lid .. text )
 
-  -- Current recovery window.
-  self.recoverywindow = nil
-
-  if self:IsIdle() then
-    -----------------------------------------------------------------------------------------------------------------
-    -- Carrier is idle: We need to make sure that incoming flights get the correct recovery info of the next window.
-    -----------------------------------------------------------------------------------------------------------------
-
-    -- Check if there is a next windows defined.
-    if nextwindow then
-
-      -- Set case and offset of the next window.
-      self:RecoveryCase( nextwindow.CASE, nextwindow.OFFSET )
-
-      -- Check if time is less than 5 minutes.
-      if nextwindow.START - time < self.dTturn then
-        self:_StartRecoveryIntoWind(nextwindow)
-      end
-
-      -- Set current recovery window.
-      self.recoverywindow = nextwindow
-
-    else
-      -- No next window. Set default values.
-      self:RecoveryCase()
-    end
-
-  else
-    -------------------------------------------------------------------------------------
-    -- Carrier is recovering: We set the recovery window to the current one or next one.
-    -------------------------------------------------------------------------------------
-
-    if self.activeRecoveryWindow then
-      self.recoverywindow = self.activeRecoveryWindow
-    else
-      self.recoverywindow = nextwindow
-    end
-  end
+  self:_PrepareNextRecoveryWindow( nextwindow, time )
 
   self:T2( { "FF", recoverywindow = self.recoverywindow } )
   self._checkingRecoveryTimes = nil
+end
+
+-- Process one window without changing the order of the surrounding time check.
+function AIRBOSS:_CheckRecoveryWindow( recovery, time )
+  if recovery.OVER then
+    return "cancelled"
+  end
+  if time < recovery.START then
+    return "in the future"
+  end
+
+  if time < recovery.STOP then
+    if self:IsRecovering() or self:IsPaused() then
+      return self:IsPaused() and "paused" or "in progress"
+    end
+    if self:IsIdle() then
+      self:_StartRecoveryIntoWind( recovery )
+      self:RecoveryStart( recovery.CASE, recovery.OFFSET, recovery )
+      return "starting now"
+    end
+    return "cancelled"
+  end
+
+  if not (self:IsRecovering() or self:IsPaused()) or self.activeRecoveryWindow ~= recovery then
+    return "closed"
+  end
+
+  local _, npattern = self:_GetQueueInfo( self.Qpattern )
+  if npattern > 0 then
+    -- Extend by five minutes per aircraft still in the pattern.
+    local extmin = 5 * npattern
+    recovery.STOP = recovery.STOP + extmin * 60
+    if self.navyRecoveryWindow == recovery and self.navyIntoWind then
+      self.navygroup:ExtendTurnIntoWind( extmin * 60, self.navyIntoWind )
+    end
+    local text = string.format( "We still got flights in the pattern.\nRecovery time prolonged by %d minutes.\nNow get your act together and no more bolters!", extmin )
+    self:MessageToPattern( text, "AIRBOSS", "99", 10, false, nil )
+    return "extended"
+  end
+
+  self:RecoveryStop()
+  return recovery.OVER and "closing now" or "stop deferred"
+end
+
+-- Publish the next recovery's approach information and request its wind maneuver.
+function AIRBOSS:_PrepareNextRecoveryWindow( nextwindow, time )
+  self.recoverywindow = nil
+  if self:IsIdle() then
+    if nextwindow then
+      self:RecoveryCase( nextwindow.CASE, nextwindow.OFFSET )
+      if nextwindow.START - time < self.dTturn then
+        self:_StartRecoveryIntoWind( nextwindow )
+      end
+      self.recoverywindow = nextwindow
+    else
+      self:RecoveryCase()
+    end
+  else
+    self.recoverywindow = self.activeRecoveryWindow or nextwindow
+  end
 end
 
 --- Get section lead of a flight.
@@ -14028,30 +13979,26 @@ function AIRBOSS:_StartRecoveryIntoWind(recovery)
     return self.navyRecoveryWindow == recovery
   end
 
-  local remaining = recovery.STOP - timer.getAbsTime()
-  if remaining <= 0 then
+  if recovery.STOP <= timer.getAbsTime() then
     return false
   end
 
-  local heading = self:GetHeadingIntoWind(recovery.SPEED)
-  local delta = self:_GetDeltaHeading(self:GetHeading(), heading)
-  local _, windspeed = self:GetWind()
-  local uturn = recovery.UTURN and delta > 5 and windspeed >= 0.1
-
-  self:CarrierTurnIntoWind(
-    remaining,
-    UTILS.KnotsToMps(recovery.SPEED),
-    uturn
+  local window = self.navygroup:AddTurnIntoWind(
+    0,
+    UTILS.SecondsToClock(recovery.STOP),
+    recovery.SPEED,
+    recovery.UTURN,
+    self.carrierparam.rwyangle,
+    { ExternallyManaged = true }
   )
 
-  if not self.navyIntoWind then
+  if not window then
     return false
   end
 
-  -- This recovery owns the maneuver's lifetime, including pauses/extensions.
-  self.navyIntoWind.ExternallyManaged = true
-  self.navyIntoWind.Tstop = recovery.STOP
+  self.navyIntoWind = window
   self.navyRecoveryWindow = recovery
+  self.turnintowind = true
   return true
 end
 
