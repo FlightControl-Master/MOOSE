@@ -736,7 +736,7 @@
 -- Setting the fifth parameter to *true* enables the automatic turning into the wind. The sixth parameter (here 20) specifies the speed in knots the carrier will go so that to total wind above the deck
 -- corresponds to this wind speed. For example, if the is blowing with 5 knots, the carrier will go 15 knots so that the total velocity adds up to the specified 20 knots for the pilot.
 --
--- The carrier will steam into the wind for as long as the recovery window is open. The distance up to which possible collisions are detected can be set by the @{#AIRBOSS.SetCollisionDistance} function.
+-- The carrier will steam into the wind for as long as the recovery window is open.
 --
 -- However, the AIRBOSS scans the type of the surface up to 5 NM in the direction of movement of the carrier. If he detects anything but deep water, he will stop the current course and head back to
 -- the point where he initially turned into the wind.
@@ -1088,8 +1088,8 @@
 --
 -- These events can be used in the user script. When the event is triggered, it is automatically a function OnAfter*Eventname* called. For example
 --
---     --- Carrier just passed waypoint *n*.
---     function AirbossStennis:OnAfterPassingWaypoint(From, Event, To, n)
+--     --- Carrier just passed waypoint.
+--     function AirbossStennis:OnAfterPassingWaypoint(From, Event, To, Waypoint)
 --      -- Launch green flare.
 --      self.carrier:FlareGreen()
 --     end
@@ -1151,33 +1151,7 @@
 AIRBOSS = {
   ClassName      = "AIRBOSS",
   Debug          = false,
-  lid            = nil,
-  theatre        = nil,
-  carrier        = nil,
-  carriertype    = nil,
   carrierparam   =  {},
-  alias          = nil,
-  airbase        = nil,
-  waypoints      =  {},
-  currentwp      = nil,
-  beacon         = nil,
-  TACANon        = nil,
-  TACANchannel   = nil,
-  TACANmode      = nil,
-  TACANmorse     = nil,
-  ICLSon         = nil,
-  ICLSchannel    = nil,
-  ICLSmorse      = nil,
-  LSORadio       = nil,
-  LSOFreq        = nil,
-  LSOModu        = nil,
-  MarshalRadio   = nil,
-  MarshalFreq    = nil,
-  MarshalModu    = nil,
-  TowerFreq      = nil,
-  radiotimer     = nil,
-  zoneCCA        = nil,
-  zoneCCZ        = nil,
   players        =  {},
   menuadded      =  {},
   BreakEntry     =  {},
@@ -1191,10 +1165,6 @@ AIRBOSS = {
   Platform       =  {},
   DirtyUp        =  {},
   Bullseye       =  {},
-  defaultcase    = nil,
-  case           = nil,
-  defaultoffset  = nil,
-  holdingoffset  = nil,
   recoverytimes  =  {},
   flights        =  {},
   Qpattern       =  {},
@@ -1205,70 +1175,9 @@ AIRBOSS = {
   RQLSO          =  {},
   TQMarshal      =   0,
   TQLSO          =   0,
-  Nmaxpattern    = nil,
-  Nmaxmarshal    = nil,
-  NmaxSection    = nil,
-  NmaxStack      = nil,
-  handleai       = nil,
-  xtVoiceOvers   = nil,
-  xtVoiceOversAI = nil,
-  tanker         = nil,
-  Corientation   = nil,
-  Cposition      = nil,
-  defaultskill   = nil,
-  adinfinitum    = nil,
-  magvar         = nil,
-  Tcollapse      = nil,
-  recoverywindow = nil,
-  usersoundradio = nil,
-  Tqueue         = nil,
-  dTqueue        = nil,
-  dTstatus       = nil,
-  menumarkzones  = nil,
-  menusmokezones = nil,
-  playerscores   = nil,
-  autosave       = nil,
-  autosavefile   = nil,
-  autosavepath   = nil,
-  marshalradius  = nil,
-  airbossnice    = nil,
-  staticweather  = nil,
   windowcount    =   0,
-  LSOdT          = nil,
-  senderac       = nil,
-  radiorelayLSO  = nil,
-  radiorelayMSH  = nil,
-  turnintowind   = nil,
-  detour         = nil,
-  squadsetAI     = nil,
-  excludesetAI   = nil,
-  menusingle     = nil,
-  collisiondist  = nil,
-  holdtimestamp  = nil,
-  Tmessage       = nil,
-  soundfolder    = nil,
-  soundfolderLSO = nil,
-  soundfolderMSH = nil,
-  despawnshutdown= nil,
-  dTbeacon       = nil,
-  Tbeacon        = nil,
-  LSOCall        = nil,
-  MarshalCall    = nil,
-  lowfuelAI      = nil,
-  emergency      = nil,
-  respawnAI      = nil,
   gle            =  {},
   lue            =  {},
-  trapsheet      = nil,
-  trappath       = nil,
-  trapprefix     = nil,
-  initialmaxalt  = nil,
-  welcome        = nil,
-  skipperMenu    = nil,
-  skipperSpeed   = nil,
-  skipperTime    = nil,
-  skipperOffset  = nil,
-  skipperUturn   = nil,
 }
 
 --- Aircraft types capable of landing on carrier (human+AI).
@@ -1889,15 +1798,6 @@ function AIRBOSS:New( carriername, alias )
   -- Init player scores table.
   self.playerscores = {}
 
-  -- Initialize ME waypoints.
-  self:_InitWaypoints()
-
-  -- Current waypoint.
-  self.currentwp = 1
-
-  -- Patrol route.
-  --self:_PatrolRoute()
-
   -------------
   --- Defaults:
   -------------
@@ -1998,9 +1898,6 @@ function AIRBOSS:New( carriername, alias )
 
   -- Carrier patrols its waypoints until the end of time.
   self:SetPatrolAdInfinitum( true )
-
-  -- Collision check distance. Default 5 NM.
-  self:SetCollisionDistance()
 
   -- Set update time intervals.
   self:SetQueueUpdateTime()
@@ -2332,7 +2229,7 @@ function AIRBOSS:New( carriername, alias )
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #number waypoint Number of waypoint.
+  -- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint Waypoint data.
 
   --- Triggers the FSM event "Save" that saved the player scores to a file.
   -- @function [parent=#AIRBOSS] Save
@@ -2484,15 +2381,6 @@ function AIRBOSS:SetCarrierControlledZone( Radius )
 
   self.zoneCCZ = ZONE_UNIT:New( "Carrier Controlled Zone", self.carrier, Radius )
 
-  return self
-end
-
---- Set distance up to which water ahead is scanned for collisions.
--- @param #AIRBOSS self
--- @param #number Distance (Optional) Distance in NM. Default 5 NM.
--- @return #AIRBOSS self
-function AIRBOSS:SetCollisionDistance( Distance )
-  self.collisiondist = UTILS.NMToMeters( Distance or 5 )
   return self
 end
 
@@ -3746,7 +3634,6 @@ function AIRBOSS:onafterStatus( From, Event, To )
 
     -- Get time.
     local clock = UTILS.SecondsToClock( timer.getAbsTime() )
-    --local eta = UTILS.SecondsToClock( self:_GetETAatNextWP() )
 
     -- Current heading and position of the carrier.
     local hdg = self:GetHeading()
@@ -4414,10 +4301,10 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number n Number of waypoint that was passed.
-function AIRBOSS:onafterPassingWaypoint( From, Event, To, n )
+-- @param Ops.OpsGroup#OPSGROUP.Waypoint
+function AIRBOSS:onafterPassingWaypoint( From, Event, To, Waypoint )
   -- Debug output.
-  self:I( self.lid .. string.format( "Carrier passed waypoint %d.", n ) )
+  self:I(self.lid .. string.format("Carrier passed waypoint UID=%d", Waypoint.uid))
 end
 
 --- On after "Idle" event. Carrier goes to state "Idle".
@@ -14319,139 +14206,6 @@ function AIRBOSS:_StopNavyIntoWind()
   return self
 end
 
---- Get next waypoint of the carrier.
--- @param #AIRBOSS self
--- @return Core.Point#COORDINATE Coordinate of the next waypoint.
--- @return #number Number of waypoint.
-function AIRBOSS:_GetNextWaypoint()
-  local index = self.navygroup:GetWaypointIndexNext()
-  local waypoint = self.navygroup:GetWaypoint(index)
-
-  if waypoint then
-    return waypoint.coordinate, index
-  end
-
-  return nil, nil
-end
-
---- Initialize Mission Editor waypoints.
--- @param #AIRBOSS self
--- @return #AIRBOSS self
-function AIRBOSS:_InitWaypoints()
-
-  -- Waypoints of group as defined in the ME.
-  local Waypoints = self.carrier:GetGroup():GetTemplateRoutePoints()
-
-  -- Init array.
-  self.waypoints = {}
-
-  -- Set waypoint table.
-  for i, point in ipairs( Waypoints ) do
-
-    -- Coordinate of the waypoint
-    local coord = COORDINATE:New( point.x, point.alt, point.y )
-
-    -- Set velocity of the coordinate.
-    coord:SetVelocity( point.speed )
-
-    -- Add to table.
-    table.insert( self.waypoints, coord )
-
-    -- Debug info.
-    if self.Debug then
-      coord:MarkToAll( string.format( "Carrier Waypoint %d, Speed=%.1f knots", i, UTILS.MpsToKnots( point.speed ) ) )
-    end
-
-  end
-
-  return self
-end
-
---- Patrol carrier.
--- @param #AIRBOSS self
--- @param #number n Next waypoint number.
--- @return #AIRBOSS self
-function AIRBOSS:_PatrolRoute( n )
-
-  -- Get next waypoint coordinate and number.
-  local nextWP, N = self:_GetNextWaypoint()
-
-  -- Default resume is to next waypoint.
-  n = n or N
-
-  -- Get carrier group.
-  local CarrierGroup = self.carrier:GetGroup()
-
-  -- Waypoints table.
-  local Waypoints = {}
-
-  -- Create a waypoint from the current coordinate.
-  local wp = self:GetCarrierCoordinate():WaypointGround( CarrierGroup:GetVelocityKMH() )
-
-  -- Add current position as first waypoint.
-  table.insert( Waypoints, wp )
-
-  -- Loop over waypoints.
-  for i = n, #self.waypoints do
-    local coord = self.waypoints[i] -- Core.Point#COORDINATE
-
-    -- Create a waypoint from the coordinate.
-    local wp = coord:WaypointGround( UTILS.MpsToKmph( coord.Velocity ) )
-
-    -- Passing waypoint taskfunction
-    local TaskPassingWP = CarrierGroup:TaskFunction( "AIRBOSS._PassingWaypoint", self, i, #self.waypoints )
-
-    -- Call task function when carrier arrives at waypoint.
-    CarrierGroup:SetTaskWaypoint( wp, TaskPassingWP )
-
-    -- Add waypoint to table.
-    table.insert( Waypoints, wp )
-  end
-
-  -- Route carrier group.
-  CarrierGroup:Route( Waypoints )
-
-  return self
-end
-
---- Estimated the carrier position at some point in the future given the current waypoints and speeds.
--- @param #AIRBOSS self
--- @return DCS#time ETA abs. time in seconds.
-function AIRBOSS:_GetETAatNextWP()
-
-  -- Current waypoint
-  local cwp = self.currentwp
-
-  -- Current abs. time.
-  local tnow = timer.getAbsTime()
-
-  -- Current position.
-  local p = self:GetCarrierCoordinate()
-
-  -- Current velocity [m/s].
-  local v = self.carrier:GetVelocityMPS()
-
-  -- Next waypoint.
-  local nextWP = self:_GetNextWaypoint()
-
-  -- Distance to next waypoint.
-  local s = p:Get2DDistance( nextWP )
-
-  -- Distance to next waypoint.
-  -- local s=0
-  -- if #self.waypoints>cwp then
-  --  s=p:Get2DDistance(self.waypoints[cwp+1])
-  -- end
-
-  -- v=s/t <==> t=s/v
-  local t = s / v
-
-  -- ETA
-  local eta = t + tnow
-
-  return eta
-end
-
 function AIRBOSS:_OnNavyTurningStarted()
   self.turning = true
 
@@ -14482,6 +14236,14 @@ function AIRBOSS:_OnNavyTurningStopped()
   end
 
   self:_MarshalCallNewFinalBearing(self:GetFinalBearing(true))
+end
+
+function AIRBOSS:_OnNavyPassingWaypoint(Waypoint)
+  if self:is("Stopped") then
+    return
+  end
+
+  self:PassingWaypoint(Waypoint)
 end
 
 --- Check if heading or position of carrier have changed significantly.
@@ -14578,151 +14340,6 @@ function AIRBOSS:_CheckPatternUpdate()
     self.Tpupdate = timer.getTime()
   end
 
-end
-
---- Function called when a group is passing a waypoint.
--- @param Wrapper.Group#GROUP group Group that passed the waypoint
--- @param #AIRBOSS airboss Airboss object.
--- @param #number i Waypoint number that has been reached.
--- @param #number final Final waypoint number.
-function AIRBOSS._PassingWaypoint( group, airboss, i, final )
-
-  -- Debug message.
-  local text = string.format( "Group %s passing waypoint %d of %d.", group:GetName(), i, final )
-
-  -- Debug smoke and marker.
-  if airboss.Debug and false then
-    local pos = group:GetCoordinate()
-    pos:SmokeRed()
-    local MarkerID = pos:MarkToAll( string.format( "Group %s reached waypoint %d", group:GetName(), i ) )
-  end
-
-  -- Debug message.
-  MESSAGE:New( text, 10 ):ToAllIf( airboss.Debug )
-  airboss:T( airboss.lid .. text )
-
-  -- Set current waypoint.
-  airboss.currentwp = i
-
-  -- Passing Waypoint event.
-  airboss:PassingWaypoint( i )
-
-  -- Reactivate beacons.
-  -- airboss:_ActivateBeacons()
-
-  -- If final waypoint reached, do route all over again.
-  if i == final and final > 1 and airboss.adinfinitum then
-    airboss:_PatrolRoute()
-  end
-end
-
---- Carrier Strike Group resumes the route of the waypoints defined in the mission editor.
--- @param Wrapper.Group#GROUP group Carrier Strike Group that passed the waypoint.
--- @param #AIRBOSS airboss Airboss object.
--- @param Core.Point#COORDINATE gotocoord Go to coordinate before route is resumed.
-function AIRBOSS._ResumeRoute( group, airboss, gotocoord )
-
-  -- Get next waypoint
-  local nextwp, Nextwp = airboss:_GetNextWaypoint()
-
-  -- Speed set at waypoint.
-  local speedkmh = nextwp.Velocity * 3.6
-
-  -- If speed at waypoint is zero, we set it to 10 knots.
-  if speedkmh < 1 then
-    speedkmh = UTILS.KnotsToKmph( 10 )
-  end
-
-  -- Waypoints array.
-  local waypoints = {}
-
-  -- Current position.
-  local c0 = group:GetCoordinate()
-
-  -- Current positon as first waypoint.
-  local wp0 = c0:WaypointGround( speedkmh )
-  table.insert( waypoints, wp0 )
-
-  -- First goto this coordinate.
-  if gotocoord then
-
-    -- gotocoord:MarkToAll(string.format("Goto waypoint speed=%.1f km/h", speedkmh))
-
-    local headingto = c0:HeadingTo( gotocoord )
-
-    local hdg1 = airboss:GetHeading()
-    local hdg2 = c0:HeadingTo( gotocoord )
-    local delta = airboss:_GetDeltaHeading( hdg1, hdg2 )
-
-    -- env.info(string.format("FF hdg1=%d, hdg2=%d, delta=%d", hdg1, hdg2, delta))
-
-    -- Add additional turn points
-    if delta > 90 then
-
-      -- Turn radius 3 NM.
-      local turnradius = UTILS.NMToMeters( 3 )
-
-      local gotocoordh = c0:Translate( turnradius, hdg1 + 45 )
-      -- gotocoordh:MarkToAll(string.format("Goto help waypoint 1 speed=%.1f km/h", speedkmh))
-
-      local wp = gotocoordh:WaypointGround( speedkmh )
-      table.insert( waypoints, wp )
-
-      gotocoordh = c0:Translate( turnradius, hdg1 + 90 )
-      -- gotocoordh:MarkToAll(string.format("Goto help waypoint 2 speed=%.1f km/h", speedkmh))
-
-      wp = gotocoordh:WaypointGround( speedkmh )
-      table.insert( waypoints, wp )
-
-    end
-
-    local wp1 = gotocoord:WaypointGround( speedkmh )
-    table.insert( waypoints, wp1 )
-
-  end
-
-  -- Debug message.
-  local text = string.format( "Carrier is resuming route. Next waypoint %d, Speed=%.1f knots.", Nextwp, UTILS.KmphToKnots( speedkmh ) )
-
-  -- Debug message.
-  MESSAGE:New( text, 10 ):ToAllIf( airboss.Debug )
-  airboss:I( airboss.lid .. text )
-
-  -- Loop over all remaining waypoints.
-  for i = Nextwp, #airboss.waypoints do
-
-    -- Coordinate of the next WP.
-    local coord = airboss.waypoints[i] -- Core.Point#COORDINATE
-
-    -- Speed in km/h of that WP. Velocity is in m/s.
-    local speed = coord.Velocity * 3.6
-
-    -- If speed is zero we set it to 10 knots.
-    if speed < 1 then
-      speed = UTILS.KnotsToKmph( 10 )
-    end
-
-    -- coord:MarkToAll(string.format("Resume route WP %d, speed=%.1f km/h", i, speed))
-
-    -- Create waypoint.
-    local wp = coord:WaypointGround( speed )
-
-    -- Passing waypoint task function.
-    local TaskPassingWP = group:TaskFunction( "AIRBOSS._PassingWaypoint", airboss, i, #airboss.waypoints )
-
-    -- Call task function when carrier arrives at waypoint.
-    group:SetTaskWaypoint( wp, TaskPassingWP )
-
-    -- Add waypoints to table.
-    table.insert( waypoints, wp )
-  end
-
-  -- Set turn into wind switch false.
-  airboss.turnintowind = false
-  airboss.detour = false
-
-  -- Route group.
-  group:Route( waypoints )
 end
 
 --- Function called when a group has reached the holding zone.

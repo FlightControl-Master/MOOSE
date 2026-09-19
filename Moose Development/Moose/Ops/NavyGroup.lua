@@ -1421,6 +1421,20 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
 
 end
 
+--- On after "PassingWaypoint" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
+  -- Preserve OPSGROUP task and route handling.
+  OPSGROUP.onafterPassingWaypoint(self, From, Event, To, Waypoint)
+
+  if self.airboss then
+    self.airboss:_OnNavyPassingWaypoint(Waypoint)
+  end
+end
+
 --- On after "Detour" event.
 -- @param #NAVYGROUP self
 -- @param #string From From state.
