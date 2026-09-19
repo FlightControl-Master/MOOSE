@@ -2425,11 +2425,11 @@ function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck)
   local alpha=math.rad(-Offset)
   
   -- Ships min/max speed.
-  local Vmin=4
-  local Vmax=UTILS.KmphToKnots(self.speedMax)
+  local Vmax=math.max(0, UTILS.KmphToKnots(self.speedMax))
+  local Vmin=math.min(4, Vmax)
 
-  -- With no wind its direction is undefined. Keep the current heading and avoid division by zero.
-  if vwind<1e-6 then
+  -- Treat wind below 0.1 m/s as calm and keep the current heading.
+  if vwind<UTILS.MpsToKnots(0.1) then
     return self:GetHeading()%360, math.max(Vmin,math.min(Vmax,vdeck))
   end
 
@@ -2448,52 +2448,26 @@ function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck)
   local inverseC=math.abs(sine)
   
 
-  -- Upper limit of desired speed due to max boat speed.
-  local vdeckMax=vwind + math.cos(alpha) * Vmax
+  -- First calculate the unconstrained ship speed and heading.
+  local v
+  local theta
   
-  -- Lower limit of desired speed due to min boat speed.
-  local vdeckMin=vwind + math.cos(alpha) * Vmin
-  
-  
-  -- Speed of ship so it matches the desired speed.
-  local v=0
-  
-  -- Angle wrt. to wind TO-direction 
-  local theta=0
-
-  if vdeck>vdeckMax then
-    -- Boat cannot go fast enough
-    
-    -- Set max speed.
-    v=Vmax
-    
-    -- Calculate theta.
-    theta = direction*(correction(v*inverseC/vwind)+correction(inverseC))
-  
-  elseif vdeck<vdeckMin then
-    -- Boat cannot go slow enought
-  
-    -- Set min speed.
-    v=Vmin
-    
-    -- Calculatge theta.
-    theta = direction*(correction(v*inverseC/vwind)+correction(inverseC))
-  
-  elseif math.abs(vdeck*sine)>vwind then
-    -- Too little wind
-    
-    -- Set theta to 90°
+  if math.abs(vdeck*sine)>vwind then
+    -- The requested wind magnitude cannot be aligned with the deck.
     theta=direction*math.pi/2
-    
-    -- Set speed.
-    v = math.sqrt(vdeck^2 - vwind^2)
-  
+    v=math.sqrt(math.max(0, vdeck^2-vwind^2))
   else
-    -- Normal case
-    theta = correction(vdeck * sine / vwind)
-    v = vdeck * math.cos(alpha) - vwind * math.cos(theta)
+    theta=correction(vdeck*sine/vwind)
+    v=vdeck*math.cos(alpha)-vwind*math.cos(theta)
   end
   
+  -- If speed is limited, recompute heading for that actual speed.
+  local limited=math.max(Vmin, math.min(Vmax, v))
+  
+  if limited~=v then
+    v=limited
+    theta=direction*(correction(v*inverseC/vwind)+correction(inverseC))
+  end
   
   -- Ship heading so cross wind is min for the given wind.
   local intowind = (540 + (windto + math.deg(theta) )) % 360

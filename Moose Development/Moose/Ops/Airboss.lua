@@ -258,7 +258,6 @@
 -- @field #boolean skipperUturn U-turn on/off via menu.
 -- @field #number skipperOffset Holding offset angle in degrees for Case II/III manual recoveries.
 -- @field #number skipperTime Recovery time in min for manual recovery.
--- @field #boolean intowindold If true, use old into wind calculation.
 -- @field Ops.NavyGroup#NAVYGROUP navygroup Naval group controlling the carrier.
 -- @extends Core.Fsm#FSM
 
@@ -4039,7 +4038,7 @@ function AIRBOSS:_CheckRecoveryTimes()
 
         -- Check that wind is blowing from a direction > 5° different from the current heading.
         local hdg = self:GetHeading()
-        local wind = self.navygroup:GetHeadingIntoWind(self.carrierparam.rwyangle, nextwindow.SPEED)
+        local wind = self:GetHeadingIntoWind(nextwindow.SPEED)
         local delta = self:_GetDeltaHeading( hdg, wind )
         local uturn = delta > 5
 
@@ -11991,187 +11990,13 @@ end
 -- @param #AIRBOSS self
 -- @param #number vdeck Desired wind velocity over deck in knots.
 -- @param #boolean magnetic (Optional) If true, calculate magnetic heading. By default true heading is returned.
--- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
 -- @return #number Carrier heading in degrees.
 -- @return #number Carrier speed in knots to reach desired wind speed on deck.
-function AIRBOSS:GetHeadingIntoWind(vdeck, magnetic, coord )
+function AIRBOSS:GetHeadingIntoWind(vdeck, magnetic)
 
-  if self.intowindold then
-    --env.info("FF use OLD into wind")
-    return self:GetHeadingIntoWind_old(vdeck, magnetic, coord)
-  else
-    --env.info("FF use NEW into wind")
-    return self:GetHeadingIntoWind_new(vdeck, magnetic, coord)
-  end
+  local heading, speed=self.navygroup:GetHeadingIntoWind(self.carrierparam.rwyangle, vdeck)
 
-end
-
-
---- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
--- @param #AIRBOSS self
--- @param #number vdeck Desired wind velocity over deck in knots.
--- @param #boolean magnetic (Optional) If true, calculate magnetic heading. By default true heading is returned.
--- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
--- @return #number Carrier heading in degrees.
-function AIRBOSS:GetHeadingIntoWind_old( vdeck, magnetic, coord )
-
-  local function adjustDegreesForWindSpeed(windSpeed)
-    local degreesAdjustment = 0
-  -- the windspeeds are in m/s
-
-  -- +0 degrees at 15m/s = 37kts
-  -- +0 degrees at 14m/s = 35kts
-  -- +0 degrees at 13m/s = 33kts
-  -- +4 degrees at 12m/s = 31kts
-  -- +4 degrees at 11m/s = 29kts
-  -- +4 degrees at 10m/s = 27kts
-  -- +4 degrees at 9m/s = 27kts
-  -- +4 degrees at 8m/s = 27kts
-  -- +8 degrees at 7m/s = 27kts
-  -- +8 degrees at 6m/s = 27kts
-  -- +8 degrees at 5m/s = 26kts
-  -- +20 degrees at 4m/s = 26kts
-  -- +20 degrees at 3m/s = 26kts
-  -- +30 degrees at 2m/s = 26kts 1s
-
-    if windSpeed > 0 and windSpeed < 3 then
-      degreesAdjustment = 30
-    elseif windSpeed >= 3 and windSpeed < 5 then
-      degreesAdjustment = 20
-    elseif windSpeed >= 5 and windSpeed < 8 then
-      degreesAdjustment = 8
-    elseif windSpeed >= 8 and windSpeed < 13 then
-      degreesAdjustment = 4
-    elseif windSpeed >= 13 then
-      degreesAdjustment = 0
-    end
-
-    return degreesAdjustment
-  end
-
-  -- Get direction the wind is blowing from. This is where we want to go.
-  local windfrom, vwind = self:GetWind( nil, nil, coord )
-
-  -- Actually, we want the runway in the wind.
-  local intowind = windfrom - self.carrierparam.rwyangle + adjustDegreesForWindSpeed(vwind)
-
-  -- If no wind, take current heading.
-  if vwind < 0.1 then
-    intowind = self:GetHeading()
-  end
-
-  -- Magnetic heading.
-  if magnetic then
-    intowind = intowind - self.magvar
-  end
-
-  -- Adjust negative values.
-  if intowind < 0 then
-    intowind = intowind + 360
-  end
-
-  -- Wind speed.
-  --local _, vwind = self:GetWind()
-
-  -- Speed of carrier in m/s but at least 4 knots.
-  local vtot = math.max(vdeck-UTILS.MpsToKnots(vwind), 4)
-
-  return intowind, vtot
-end
-
---- Get true (or magnetic) heading of carrier into the wind. This accounts for the angled runway.
--- Implementation based on [Mags & Bambi](https://magwo.github.io/carrier-cruise/).
--- @param #AIRBOSS self
--- @param #number vdeck Desired wind velocity over deck in knots.
--- @param #boolean magnetic (Optional) If true, calculate magnetic heading. By default true heading is returned.
--- @param Core.Point#COORDINATE coord (Optional) Coordinate from which heading is calculated. Default is current carrier position.
--- @return #number Carrier heading in degrees.
--- @return #number Carrier speed in knots to reach desired wind speed on deck.
-function AIRBOSS:GetHeadingIntoWind_new( vdeck, magnetic, coord )
-
-  -- Default offset angle.
-  local Offset=self.carrierparam.rwyangle or 0
-
-  -- Get direction the wind is blowing from.
-  local windfrom, vwind=self:GetWind(18, nil ,coord)
-
-  -- Ships min/max speed.
-  local Vmin=4
-  local Vmax=UTILS.KmphToKnots(self.carrier:GetSpeedMax())
-
-  -- No wind. will stay on current heading.
-  if vwind<0.1 then
-    local h=self:GetHeading(magnetic)
-    return h, math.min(vdeck, Vmax)
-  end
-
-  -- Convert wind speed to knots.
-  vwind=UTILS.MpsToKnots(vwind)
-
-  -- Wind to in knots.
-  local windto=(windfrom+180)%360
-
-  -- Offset angle in rad. We also define the rotation to be clock-wise, which requires a minus sign.
-  local alpha=math.rad(-Offset)
-
-  -- Constant.
-  local C = math.sqrt(math.cos(alpha)^2 / math.sin(alpha)^2 + 1)
-
-
-  -- Upper limit of desired speed due to max boat speed.
-  local vdeckMax=vwind + math.cos(alpha) * Vmax
-
-  -- Lower limit of desired speed due to min boat speed.
-  local vdeckMin=vwind + math.cos(alpha) * Vmin
-
-
-  -- Speed of ship so it matches the desired speed.
-  local v=0
-
-  -- Angle wrt. to wind TO-direction
-  local theta=0
-
-  if vdeck>vdeckMax then
-    -- Boat cannot go fast enough
-
-    -- Set max speed.
-    v=Vmax
-
-    -- Calculate theta.
-    theta = math.asin(v/(vwind*C)) - math.asin(-1/C)
-
-  elseif vdeck<vdeckMin then
-    -- Boat cannot go slow enought
-
-    -- Set min speed.
-    v=Vmin
-
-    -- Calculatge theta.
-    theta = math.asin(v/(vwind*C)) - math.asin(-1/C)
-
-  elseif vdeck*math.sin(alpha)>vwind then
-    -- Too little wind
-
-    -- Set theta to 90°
-    theta=math.pi/2
-
-    -- Set speed.
-    v = math.sqrt(vdeck^2 - vwind^2)
-
-  else
-    -- Normal case
-    theta = math.asin(vdeck * math.sin(alpha) / vwind)
-    v = vdeck * math.cos(alpha) - vwind * math.cos(theta)
-  end
-
-  -- Magnetic heading.
-  local magvar= magnetic and self.magvar or 0
-
-  -- Ship heading so cross wind is min for the given wind.
-  local intowind = (540 + (windto - magvar + math.deg(theta) )) % 360
-
-
-  return intowind, v
+  return (heading-(magnetic and self.magvar or 0))%360, speed
 end
 
 --- Get base recovery course (BRC) when the carrier would head into the wind.
@@ -14855,7 +14680,6 @@ end
 --- Set legacy into wind.
 function AIRBOSS:SetIntoWindLegacy(enabled)
   self.navygroup:SetIntoWindLegacy(enabled)
-  self.intowindold = self.navygroup.intowindold
   return self
 end
 
