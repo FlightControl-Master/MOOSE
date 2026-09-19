@@ -1046,17 +1046,18 @@ function VECTOR:GetSurfaceHeightAndDepth()
 end
 
 --- Returns a velocity vector of the wind at this vector. Turbolences can be optionally be included.
+-- The query height is at least 0.1 meters above the surface. The original vector is not modified.
 -- @param #VECTOR self
 -- @param #boolean WithTurbulence If `true`, return wind including turbulence.
 -- @return #VECTOR Velocity 3D vector [m/s] the wind is blowing to.
 function VECTOR:GetWindVector(WithTurbulence)
 
   local vec3=self:GetVec3()
+  vec3.y=math.max(vec3.y, self:GetSurfaceHeight()+0.1)
 
   local wind=nil
   if WithTurbulence then
     wind=atmosphere.getWindWithTurbulence(vec3)
-    
   else
     wind=atmosphere.getWind(vec3)
   end

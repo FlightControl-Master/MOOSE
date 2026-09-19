@@ -1103,18 +1103,13 @@ do -- COORDINATE
 
   --- Return the 2D distance in meters between the target COORDINATE and the COORDINATE.
   -- @param #COORDINATE self
-  -- @param #COORDINATE TargetCoordinate The target COORDINATE. Can also be a DCS#Vec3.
+  -- @param #COORDINATE TargetCoordinate The target COORDINATE. Can also be a Core.Vector#VECTOR or DCS#Vec3.
   -- @return DCS#Distance Distance The distance in meters.
   function COORDINATE:Get2DDistance(TargetCoordinate)
     if not TargetCoordinate then return 1000000 end
-    --local a={x=TargetCoordinate.x-self.x, y=0, z=TargetCoordinate.z-self.z}
-    local a = self:GetVec2()
-    if not TargetCoordinate.ClassName then
-      TargetCoordinate=COORDINATE:NewFromVec3(TargetCoordinate)
-    end
-    local b = TargetCoordinate:GetVec2()
-    local norm=UTILS.VecDist2D(a,b)
-    return norm
+    local dx=TargetCoordinate.x-self.x
+    local dz=TargetCoordinate.z-self.z
+    return math.sqrt(dx^2+dz^2)
   end
 
   --- Returns the temperature in Degrees Celsius.
@@ -1494,15 +1489,13 @@ do -- COORDINATE
 
   --- Return the 3D distance in meters between the target COORDINATE and the COORDINATE.
   -- @param #COORDINATE self
-  -- @param #COORDINATE TargetCoordinate The target COORDINATE. Can also be a DCS#Vec3.
+  -- @param #COORDINATE TargetCoordinate The target COORDINATE. Can also be a Core.Vector#VECTOR or DCS#Vec3.
   -- @return DCS#Distance Distance The distance in meters.
   function COORDINATE:Get3DDistance( TargetCoordinate )
-    --local TargetVec3 = TargetCoordinate:GetVec3()
-    local TargetVec3 = {x=TargetCoordinate.x, y=TargetCoordinate.y, z=TargetCoordinate.z}
-    local SourceVec3 = self:GetVec3()
-    --local dist=( ( TargetVec3.x - SourceVec3.x ) ^ 2 + ( TargetVec3.y - SourceVec3.y ) ^ 2 + ( TargetVec3.z - SourceVec3.z ) ^ 2 ) ^ 0.5
-    local dist=UTILS.VecDist3D(TargetVec3, SourceVec3)
-    return dist
+    local dx=TargetCoordinate.x-self.x
+    local dy=TargetCoordinate.y-self.y
+    local dz=TargetCoordinate.z-self.z
+    return math.sqrt(dx^2+dy^2+dz^2)
   end
 
 

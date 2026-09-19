@@ -11420,6 +11420,7 @@ function AIRBOSS:_AttitudeMonitor( playerData )
 
   -- Player unit.
   local unit = playerData.unit
+  local position = unit:GetVector()
 
   -- Aircraft attitude.
   local aoa = unit:GetAoA()
@@ -11428,11 +11429,7 @@ function AIRBOSS:_AttitudeMonitor( playerData )
   local pitch = unit:GetPitch()
 
   -- Distance to the boat.
-  local dist = playerData.unit:GetCoordinate():Get2DDistance( self:GetCoordinate() )
   local dx, dz, rho, phi = self:_GetDistances( unit )
-
-  -- Wind vector.
-  local wind = unit:GetCoordinate():GetWindWithTurbulenceVec3()
 
   -- Aircraft veloecity vector.
   local velo = unit:GetVelocityVec3()
@@ -11465,11 +11462,12 @@ function AIRBOSS:_AttitudeMonitor( playerData )
     -- Velocity vector.
     text = text .. string.format( "\nVx=%.1f Vy=%.1f Vz=%.1f m/s", velo.x, velo.y, velo.z )
     -- Wind vector.
+    local wind = position:GetWindVector(true)
     text = text .. string.format( "\nWind Vx=%.1f Vy=%.1f Vz=%.1f m/s", wind.x, wind.y, wind.z )
   end
   text = text .. string.format( "\nPitch=%.1f° | Roll=%.1f° | Yaw=%.1f°", pitch, roll, yaw )
   text = text .. string.format( "\nClimb Angle=%.1f° | Rate=%d ft/min", unit:GetClimbAngle(), velo.y * 196.85 )
-  local dist = self:_GetOptLandingCoordinate():Get3DDistance( playerData.unit:GetVec3() )
+  local dist = position:GetDistance( self:_GetOptLandingCoordinate() )
   -- Get player velocity in km/h.
   local vplayer = playerData.unit:GetVelocityKMH()
   -- Get carrier velocity in km/h.
