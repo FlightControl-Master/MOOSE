@@ -9833,7 +9833,7 @@ function AIRBOSS:_GetGrooveData( playerData )
   local stern = self:_GetSternCoord()
 
   -- Distance from rundown to player aircraft.
-  local rho = stern:Get2DDistance( playerData.unit:GetCoordinate() )
+  local rho = playerData.unit:GetVector():GetDistance( stern, true )
 
   -- Aircraft is behind the carrier.
   local astern = X < self.carrierparam.sterndist
@@ -10525,7 +10525,7 @@ function AIRBOSS:_GetSternCoord()
   local case=self.case
 
   -- Stern coordinate (sterndist<0). Also translate 10 meters starboard wrt Final bearing.
-  self.sterncoord:UpdateFromCoordinate( self:GetCoordinate() )
+  self.sterncoord:UpdateFromVec3( self.carrier:GetVec3() )
   -- local stern=self:GetCoordinate()
 
   -- Stern coordinate (sterndist<0). --Pene testing Case III
@@ -11555,7 +11555,7 @@ function AIRBOSS:_Glideslope( unit, optangle )
   local landingcoord = self:_GetOptLandingCoordinate()
 
   -- Distance from stern to aircraft.
-  local x = unit:GetCoordinate():Get2DDistance( landingcoord )
+  local x = unit:GetVector():GetDistance( landingcoord, true )
 
   -- Altitude of unit corrected by the deck height of the carrier.
   local h = self:_GetAltCarrier( unit )
@@ -11570,46 +11570,6 @@ function AIRBOSS:_Glideslope( unit, optangle )
 
   -- Glide slope (error) in degrees.
   local gs = math.deg( glideslope ) - optangle
-
-  return gs
-end
-
---- Get glide slope of aircraft unit.
--- @param #AIRBOSS self
--- @param Wrapper.Unit#UNIT unit Aircraft unit.
--- @param #number optangle (Optional) Return glide slope relative to this angle, i.e. the error from the optimal glide slope ~3.5 degrees.
--- @return #number Glide slope angle in degrees measured from the deck of the carrier and third wire.
-function AIRBOSS:_Glideslope2( unit, optangle )
-
-  if optangle == nil then
-    if unit:GetTypeName() == AIRBOSS.AircraftCarrier.AV8B then
-      optangle = 3.0
-    else
-      optangle = 3.5
-    end
-  end
-  -- Landing coordinate
-  local landingcoord = self:_GetOptLandingCoordinate()
-
-  -- Distance from stern to aircraft.
-  local x = unit:GetCoordinate():Get3DDistance( landingcoord )
-
-  -- Altitude of unit corrected by the deck height of the carrier.
-  local h = self:_GetAltCarrier( unit )
-
-  -- Harrier should be 40-50 ft above the deck.
-  if unit:GetTypeName() == AIRBOSS.AircraftCarrier.AV8B then
-    h = unit:GetAltitude() - (UTILS.FeetToMeters( 50 ) + self.carrierparam.deckheight + 2)
-  end
-
-  -- Glide slope.
-  local glideslope = math.asin( h / x )
-
-  -- Glide slope (error) in degrees.
-  local gs = math.deg( glideslope ) - optangle
-
-  -- Debug.
-  self:T3( self.lid .. string.format( "Glide slope error = %.1f, x=%.1f h=%.1f", gs, x, h ) )
 
   return gs
 end
