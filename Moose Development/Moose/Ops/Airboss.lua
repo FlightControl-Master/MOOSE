@@ -10845,15 +10845,15 @@ function AIRBOSS:_GetZoneLineup()
   -- Get radial, i.e. inverse of BRC.
   local fbi = self:GetRadial( 1, false, false )
 
-  -- Stern coordinate.
-  local st = self:_GetOptLandingCoordinate()
+  -- Copy optimal landing position for vector calculations.
+  local st = VECTOR:NewFromVec( self:_GetOptLandingCoordinate() )
 
   -- Zone points.
   local c1 = st
-  local c2 = st:Translate( UTILS.NMToMeters( 0.50 ), fbi + 15 )
-  local c3 = st:Translate( UTILS.NMToMeters( 0.50 ), fbi + self.lue._max - 0.05 )
-  local c4 = st:Translate( UTILS.NMToMeters( 0.77 ), fbi + self.lue._max - 0.05 )
-  local c5 = c4:Translate( UTILS.NMToMeters( 0.25 ), fbi - 90 )
+  local c2 = st:Translate( UTILS.NMToMeters( 0.50 ), fbi + 15, true )
+  local c3 = st:Translate( UTILS.NMToMeters( 0.50 ), fbi + self.lue._max - 0.05, true )
+  local c4 = st:Translate( UTILS.NMToMeters( 0.77 ), fbi + self.lue._max - 0.05, true )
+  local c5 = c4:Translate( UTILS.NMToMeters( 0.25 ), fbi - 90, true )
 
   -- Vec2 array.
   local vec2 = { c1:GetVec2(), c2:GetVec2(), c3:GetVec2(), c4:GetVec2(), c5:GetVec2() }
@@ -11125,26 +11125,26 @@ function AIRBOSS:_GetZoneCarrierBox()
 
   self.zoneCarrierbox = self.zoneCarrierbox or ZONE_POLYGON_BASE:New( "Carrier Box Zone" )
 
-  -- Stern coordinate.
-  local S = self:_GetSternCoord()
+  -- Copy stern position for vector calculations.
+  local S = VECTOR:NewFromVec( self:_GetSternCoord() )
 
   -- Current carrier heading.
   local hdg = self:GetHeading( false )
 
-  -- Coordinate array.
+  -- Vector array.
   local p = {}
 
   -- Starboard stern point.
-  p[1] = S:Translate( self.carrierparam.totwidthstarboard, hdg + 90 )
+  p[1] = S:Translate( self.carrierparam.totwidthstarboard, hdg + 90, true )
 
   -- Starboard bow point.
-  p[2] = p[1]:Translate( self.carrierparam.totlength, hdg )
+  p[2] = p[1]:Translate( self.carrierparam.totlength, hdg, true )
 
   -- Port bow point.
-  p[3] = p[2]:Translate( self.carrierparam.totwidthstarboard + self.carrierparam.totwidthport, hdg - 90 )
+  p[3] = p[2]:Translate( self.carrierparam.totwidthstarboard + self.carrierparam.totwidthport, hdg - 90, true )
 
   -- Port stern point.
-  p[4] = p[3]:Translate( self.carrierparam.totlength, hdg - 180 )
+  p[4] = p[3]:Translate( self.carrierparam.totlength, hdg - 180, true )
 
   -- Convert to vec2.
   local vec2 = {}
@@ -11168,20 +11168,20 @@ function AIRBOSS:_GetZoneRunwayBox()
 
   self.zoneRunwaybox = self.zoneRunwaybox or ZONE_POLYGON_BASE:New( "Landing Runway Zone" )
 
-  -- Stern coordinate.
-  local S = self:_GetSternCoord()
+  -- Copy stern position for vector calculations.
+  local S = VECTOR:NewFromVec( self:_GetSternCoord() )
 
   -- Current carrier heading.
   local FB = self:GetFinalBearing( false )
 
-  -- Coordinate array.
+  -- Vector array.
   local p = {}
 
   -- Points.
-  p[1] = S:Translate( self.carrierparam.rwywidth * 0.5, FB + 90 )
-  p[2] = p[1]:Translate( self.carrierparam.rwylength, FB )
-  p[3] = p[2]:Translate( self.carrierparam.rwywidth, FB - 90 )
-  p[4] = p[3]:Translate( self.carrierparam.rwylength, FB - 180 )
+  p[1] = S:Translate( self.carrierparam.rwywidth * 0.5, FB + 90, true )
+  p[2] = p[1]:Translate( self.carrierparam.rwylength, FB, true )
+  p[3] = p[2]:Translate( self.carrierparam.rwywidth, FB - 90, true )
+  p[4] = p[3]:Translate( self.carrierparam.rwylength, FB - 180, true )
 
   -- Convert to vec2.
   local vec2 = {}
@@ -11205,20 +11205,20 @@ end
 -- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
 function AIRBOSS:_GetZoneAbeamLandingSpot()
 
-  -- Primary landing Spot coordinate.
-  local S = self:_GetOptLandingCoordinate()
+  -- Copy optimal landing position for vector calculations.
+  local S = VECTOR:NewFromVec( self:_GetOptLandingCoordinate() )
 
   -- Current carrier heading.
   local FB = self:GetFinalBearing( false )
 
-  -- Coordinate array. Pene Testing extended Abeam landing spot V/STOL.
+  -- Vector array. Pene Testing extended Abeam landing spot V/STOL.
   local p={}
 
   -- Points.
-  p[1] = S:Translate( 15, FB ):Translate( 15, FB + 90 ) -- Top-Right
-  p[2] = S:Translate( -45, FB ):Translate( 15, FB + 90 ) -- Bottom-Right
-  p[3] = S:Translate( -45, FB ):Translate( 15, FB - 90 ) -- Bottom-Left
-  p[4] = S:Translate( 15, FB ):Translate( 15, FB - 90 ) -- Top-Left
+  p[1] = S:Translate( 15, FB, true ):Translate( 15, FB + 90 ) -- Top-Right
+  p[2] = S:Translate( -45, FB, true ):Translate( 15, FB + 90 ) -- Bottom-Right
+  p[3] = S:Translate( -45, FB, true ):Translate( 15, FB - 90 ) -- Bottom-Left
+  p[4] = S:Translate( 15, FB, true ):Translate( 15, FB - 90 ) -- Top-Left
 
   -- Convert to vec2.
   local vec2 = {}
@@ -11237,20 +11237,20 @@ end
 -- @return Core.Zone#ZONE_POLYGON Zone surrounding landing runway.
 function AIRBOSS:_GetZoneLandingSpot()
 
-  -- Primary landing Spot coordinate.
-  local S = self:_GetLandingSpotCoordinate()
+  -- Copy primary landing spot position for vector calculations.
+  local S = VECTOR:NewFromVec( self:_GetLandingSpotCoordinate() )
 
   -- Current carrier heading.
   local FB = self:GetFinalBearing( false )
 
-  -- Coordinate array.
+  -- Vector array.
   local p = {}
 
   -- Points.
-  p[1] = S:Translate( 10, FB ):Translate( 10, FB + 90 ) -- Top-Right
-  p[2] = S:Translate( -10, FB ):Translate( 10, FB + 90 ) -- Bottom-Right
-  p[3] = S:Translate( -10, FB ):Translate( 10, FB - 90 ) -- Bottom-Left
-  p[4] = S:Translate( 10, FB ):Translate( 10, FB - 90 ) -- Top-left
+  p[1] = S:Translate( 10, FB, true ):Translate( 10, FB + 90 ) -- Top-Right
+  p[2] = S:Translate( -10, FB, true ):Translate( 10, FB + 90 ) -- Bottom-Right
+  p[3] = S:Translate( -10, FB, true ):Translate( 10, FB - 90 ) -- Bottom-Left
+  p[4] = S:Translate( 10, FB, true ):Translate( 10, FB - 90 ) -- Top-left
 
   -- Convert to vec2.
   local vec2 = {}
