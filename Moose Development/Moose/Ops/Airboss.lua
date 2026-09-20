@@ -6242,24 +6242,24 @@ function AIRBOSS:_WaitAI( flight, respawn )
   -- Aircraft speed 400 knots when transiting to holding zone. (Waypoint expects km/h.)
   local speedTransit = UTILS.KnotsToKmph( 370 )
 
-  -- Carrier coordinate
-  local cv = self:GetCoordinate()
+  -- Carrier position.
+  local cv = self.carrier:GetVector()
 
-  -- Coordinate of flight group
-  local fc = group:GetCoordinate()
+  -- Flight group position.
+  local fc = group:GetVector()
 
   -- Carrier heading
   local hdg = self:GetHeading( false )
 
   -- Heading from carrier to flight group
-  local hdgto = cv:HeadingTo( fc )
+  local hdgto = cv:GetHeadingTo( fc )
 
   -- Holding altitude between angels 6 and 10 (random).
   local angels = math.random( 6, 10 )
   local altitude = UTILS.FeetToMeters( angels * 1000 )
 
   -- Point outsize 10 NM zone of the carrier.
-  local p0 = cv:Translate( UTILS.NMToMeters( 11 ), hdgto ):Translate( UTILS.NMToMeters( 5 ), hdg ):SetAltitude( altitude )
+  local p0 = cv:Translate( UTILS.NMToMeters( 11 ), hdgto ):Translate( UTILS.NMToMeters( 5 ), hdg ):GetCoordinate():SetAltitude( altitude )
 
   -- Waypoints array to be filled depending on case etc.
   local wp = {}
