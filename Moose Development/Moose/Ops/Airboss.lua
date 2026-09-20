@@ -10581,7 +10581,7 @@ end
 
 --- Get wire from landing position.
 -- @param #AIRBOSS self
--- @param Core.Point#COORDINATE Lcoord Landing position.
+-- @param Core.Point#COORDINATE Lcoord Landing position. Can also be a Core.Vector#VECTOR.
 -- @param #number dc Distance correction. Shift the landing coord back if dc>0 and forward if dc<0.
 -- @return #number Trapped wire (1-4) or 99 if no wire was trapped.
 function AIRBOSS:_GetWire( Lcoord, dc )
@@ -10593,7 +10593,7 @@ function AIRBOSS:_GetWire( Lcoord, dc )
   local Scoord = self:_GetSternCoord()
 
   -- Distance to landing coord.
-  local Ldist = Lcoord:Get2DDistance( Scoord )
+  local Ldist = Scoord:Get2DDistance( Lcoord )
 
   -- For human (not AI) the lading event is delayed unfortunately. Therefore, we need another correction factor.
   dc = dc or 65
@@ -10644,6 +10644,7 @@ function AIRBOSS:_GetWire( Lcoord, dc )
     Scoord:MarkToAll( "Stern" )
 
     -- Mark at landing position.
+    local Lcoord = COORDINATE:NewFromVec3( Lcoord:GetVec3() )
     Lcoord:MarkToAll( string.format( "Landing Point wire=%s", wire ) )
 
     -- Smoke landing position.
@@ -10674,8 +10675,8 @@ function AIRBOSS:_Trapped( playerData )
     -- Lets see if we can get a good wire.
     local unit = playerData.unit
 
-    -- Coordinate of player aircraft.
-    local coord = unit:GetCoordinate()
+    -- Position of player aircraft.
+    local position = unit:GetVector()
 
     -- Get velocity in km/h. We need to substrackt the carrier velocity.
     local v = unit:GetVelocityKMH() - self.carrier:GetVelocityKMH()
@@ -10684,7 +10685,7 @@ function AIRBOSS:_Trapped( playerData )
     local stern = self:_GetSternCoord()
 
     -- Distance to stern pos.
-    local s = stern:Get2DDistance( coord )
+    local s = position:GetDistance( stern, true )
 
     -- Get current wire (estimate). This now based on the position where the player comes to a standstill which should reflect the trapped wire better.
     local dcorr = 100
@@ -10705,7 +10706,7 @@ function AIRBOSS:_Trapped( playerData )
     end
 
     -- Get wire.
-    local wire = self:_GetWire( coord, dcorr )
+    local wire = self:_GetWire( position, dcorr )
 
     -- Debug.
     local text = string.format( "Player %s _Trapped: v=%.1f km/h, s-dcorr=%.1f m ==> wire=%d (dcorr=%d)", playerData.name, v, s - dcorr, wire, dcorr )
@@ -10733,6 +10734,7 @@ function AIRBOSS:_Trapped( playerData )
 
     -- Put some smoke and a mark.
     if self.Debug then
+      local coord = COORDINATE:NewFromVec3( position:GetVec3() )
       coord:SmokeBlue()
       coord:MarkToAll( text )
       stern:MarkToAll( "Stern" )
