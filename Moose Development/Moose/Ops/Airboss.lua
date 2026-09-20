@@ -8563,18 +8563,19 @@ function AIRBOSS:OnEventRunwayTouch( EventData )
           -- Switch attitude monitor off if on.
           playerData.attitudemonitor = false
 
-          -- Coordinate at landing event.
-          local coord = playerData.unit:GetCoordinate()
+          -- Position at landing event.
+          local position = playerData.unit:GetVector()
 
           -- Get distances relative to
           local X, Z, rho, phi = self:_GetDistances( _unit )
 
           -- Landing distance wrt to stern position.
-          local dist = coord:Get2DDistance( stern )
+          local dist = position:GetDistance( stern, true )
 
           -- Debug mark of player landing coord.
           if self.Debug and false then
             -- Debug mark of player landing coord.
+            local coord = COORDINATE:NewFromVec3( position:GetVec3() )
             local lp = coord:MarkToAll( "Landing coord." )
             coord:SmokeGreen()
           end
@@ -8623,16 +8624,16 @@ function AIRBOSS:OnEventRunwayTouch( EventData )
       -- AI unit landed --
       --------------------
 
-      if self.carriertype ~= AIRBOSS.CarrierType.INVINCIBLE or self.carriertype ~= AIRBOSS.CarrierType.HERMES or self.carriertype ~= AIRBOSS.CarrierType.TARAWA or self.carriertype ~= AIRBOSS.CarrierType.AMERICA or self.carriertype ~= AIRBOSS.CarrierType.JCARLOS or self.carriertype ~= AIRBOSS.CarrierType.CANBERRA then
+      if self.carriertype ~= AIRBOSS.CarrierType.INVINCIBLE and self.carriertype ~= AIRBOSS.CarrierType.HERMES and self.carriertype ~= AIRBOSS.CarrierType.TARAWA and self.carriertype ~= AIRBOSS.CarrierType.AMERICA and self.carriertype ~= AIRBOSS.CarrierType.JCARLOS and self.carriertype ~= AIRBOSS.CarrierType.CANBERRA then
 
-        -- Coordinate at landing event
-        local coord = EventData.IniUnit:GetCoordinate()
+        -- Position at landing event.
+        local position = EventData.IniUnit:GetVector()
 
-        -- Debug mark of player landing coord.
-        local dist = coord:Get2DDistance( self:GetCoordinate() )
+        -- Distance to carrier for debug output.
+        local dist = position:GetDistance( self.carrier:GetVec3(), true )
 
         -- Get wire
-        local wire = self:_GetWire( coord, 0 )
+        local wire = self:_GetWire( position, 0 )
 
         -- Aircraft type.
         local _type = EventData.IniUnit:GetTypeName()
