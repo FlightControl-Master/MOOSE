@@ -11893,10 +11893,19 @@ end
 function AIRBOSS:GetWind( alt, magnetic, coord )
 
   -- Current position of the carrier or input.
-  local cv = coord or self:GetCoordinate()
+  local position = coord and VECTOR:NewFromVec( coord ) or self.carrier:GetVector()
 
-  -- Wind direction and speed. By default at 18 meters ASL.
-  local Wdir, Wspeed = cv:GetWind( alt or 18 )
+  -- Wind without turbulence. By default at 18 meters ASL.
+  local wind = position:GetWindVector( false, alt or 18 )
+
+  -- Convert wind-to direction to wind-from, preserving the existing convention.
+  local Wdir = UTILS.VecHdg( wind )
+  if Wdir > 180 then
+    Wdir = Wdir - 180
+  else
+    Wdir = Wdir + 180
+  end
+  local Wspeed = UTILS.VecNorm( wind )
 
   -- Include magnetic declination.
   if magnetic then
@@ -11912,14 +11921,14 @@ end
 
 --- Get wind speed on carrier deck parallel and perpendicular to runway.
 -- @param #AIRBOSS self
--- @param #number alt (Optional) Altitude in meters. Default 18 m.
+-- @param #number alt (Optional) Altitude ASL in meters. Default 18 m.
 -- @return #number Wind component parallel to runway im m/s.
 -- @return #number Wind component perpendicular to runway in m/s.
 -- @return #number Total wind strength in m/s.
 function AIRBOSS:GetWindOnDeck( alt )
 
   -- Position of carrier.
-  local cv = self:GetCoordinate()
+  local cv = self.carrier:GetVector()
 
   -- Velocity vector of carrier.
   local vc = self.carrier:GetVelocityVec3()
@@ -11934,8 +11943,8 @@ function AIRBOSS:GetWindOnDeck( alt )
   xc = UTILS.Rotate2D( xc, -self.carrierparam.rwyangle )
   zc = UTILS.Rotate2D( zc, -self.carrierparam.rwyangle )
 
-  -- Wind (from) vector
-  local vw = cv:GetWindWithTurbulenceVec3( alt or 18 ) --(change made from 50m to 15m from Discord discussion from Sickdog, next change to 18m due to SC higher deck discord)
+  -- Wind velocity vector, pointing in the direction the wind blows to.
+  local vw = cv:GetWindVector( true, alt or 18 ) --(change made from 50m to 15m from Discord discussion from Sickdog, next change to 18m due to SC higher deck discord)
 
   -- Total wind velocity vector.
   -- Carrier velocity has to be negative. If carrier drives in the direction the wind is blowing from, we have less wind in total.

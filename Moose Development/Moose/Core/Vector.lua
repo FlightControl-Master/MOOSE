@@ -1049,11 +1049,12 @@ end
 -- The query height is at least 0.1 meters above the surface. The original vector is not modified.
 -- @param #VECTOR self
 -- @param #boolean WithTurbulence If `true`, return wind including turbulence.
+-- @param #number Height (Optional) Query height in meters above sea level. Defaults to this vector's y component, subject to the minimum height above the surface.
 -- @return #VECTOR Velocity 3D vector [m/s] the wind is blowing to.
-function VECTOR:GetWindVector(WithTurbulence)
+function VECTOR:GetWindVector(WithTurbulence, Height)
 
   local vec3=self:GetVec3()
-  vec3.y=math.max(vec3.y, self:GetSurfaceHeight()+0.1)
+  vec3.y=math.max(Height or vec3.y, self:GetSurfaceHeight()+0.1)
 
   local wind=nil
   if WithTurbulence then
