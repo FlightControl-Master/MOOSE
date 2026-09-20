@@ -535,6 +535,36 @@ function VECTOR:GetLatitudeLongitude()
 end
 
 
+--- Returns the magnetic declination at this vector.
+-- Requires an available `require` function and the DCS `magvar` module for a position-dependent value.
+-- Uses the constant map value when `require` is unavailable or the module returns no object.
+-- @param #VECTOR self
+-- @param #number Month (Optional) Month for the calculation. Default is the mission month.
+-- @param #number Year (Optional) Year for the calculation. Default is the mission year.
+-- @return #number Magnetic declination in degrees, or nil if the module returns no result.
+function VECTOR:GetMagneticDeclination(Month, Year)
+
+  local decl=UTILS.GetMagneticDeclination()
+
+  if require then
+    local magvar=require('magvar')
+
+    if magvar then
+      local _, year, month=UTILS.GetDCSMissionDate()
+      magvar.init(Month or month, Year or year)
+
+      local lat, lon=self:GetLatitudeLongitude()
+      decl=magvar.get_mag_decl(lat, lon)
+
+      if decl then
+        decl=math.deg(decl)
+      end
+    end
+  end
+
+  return decl
+end
+
 --- Get MGRS information of this vector.
 -- 
 -- `MGRS = {UTMZone = string, MGRSDigraph = string, Easting = number, Northing = number}`
@@ -921,6 +951,70 @@ function VECTOR:IsVisible(Vec)
   local los=land.isVisible(vec1, vec2)
 
   return los
+end
+
+--- Scan objects within a sphere around this vector.
+-- @param #VECTOR self
+-- @param #number Radius (Optional) Radius in meters. Default 100.
+-- @param #boolean ScanUnits (Optional) Scan units. Default true.
+-- @param #boolean ScanStatics (Optional) Scan statics. Default true.
+-- @param #boolean ScanScenery (Optional) Scan scenery. Default false.
+-- @return #table MOOSE UNIT objects. Empty if none were found.
+-- @return #table DCS static objects. Empty if none were found.
+-- @return #table DCS scenery objects. Empty if none were found.
+function VECTOR:ScanObjects(Radius, ScanUnits, ScanStatics, ScanScenery)
+
+  local Units, Statics, Scenery = {}, {}, {}
+  local categories = {}
+
+  if ScanUnits ~= false then
+    table.insert(categories, Object.Category.UNIT)
+  end
+  if ScanStatics ~= false then
+    table.insert(categories, Object.Category.STATIC)
+  end
+  if ScanScenery then
+    table.insert(categories, Object.Category.SCENERY)
+  end
+
+  if #categories == 0 then
+    return Units, Statics, Scenery
+  end
+
+  local volume = {
+    id = world.VolumeType.SPHERE,
+    params = {
+      point = self:GetVec3(),
+      radius = Radius or 100,
+    },
+  }
+
+  local function collect(object)
+    if object then
+      local category = Object.getCategory(object)
+
+      if category == Object.Category.UNIT and object:isExist() then
+        local unit = UNIT:Find(object)
+        if unit then
+          table.insert(Units, unit)
+        end
+      elseif category == Object.Category.STATIC and object:isExist() then
+        table.insert(Statics, object)
+      elseif category == Object.Category.SCENERY then
+        table.insert(Scenery, object)
+      end
+    end
+    return true
+  end
+
+  world.searchObjects(categories, volume, collect)
+
+  -- Preserve registration of discovered static objects.
+  for _, object in ipairs(Statics) do
+    _DATABASE:AddStatic(object:getName())
+  end
+
+  return Units, Statics, Scenery
 end
 
 --- Get a vector on the closest road.

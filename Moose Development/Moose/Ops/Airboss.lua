@@ -3667,14 +3667,13 @@ function AIRBOSS:onafterStatus( From, Event, To )
     -- Get time.
     local clock = UTILS.SecondsToClock( timer.getAbsTime() )
 
-    -- Current heading and position of the carrier.
+    -- Current heading and speed of the carrier.
     local hdg = self:GetHeading()
-    local pos = self:GetCoordinate()
     local speed = self.carrier:GetVelocityKNOTS()
 
     -- Update magnetic variation if we can get it from DCS.
     if require then
-      self.magvar=pos:GetMagneticDeclination()
+      self.magvar=self.carrier:GetVector():GetMagneticDeclination()
       --env.info(string.format("FF magvar=%.1f", self.magvar))
     end
 
@@ -6007,7 +6006,7 @@ end
 function AIRBOSS:_ScanCarrierZone()
 
   -- Carrier position.
-  local coord = self:GetCoordinate()
+  local position = self.carrier:GetVector()
 
   -- Scan radius = radius of the CCA.
   local RCCZ = self.zoneCCA:GetRadius()
@@ -6016,7 +6015,7 @@ function AIRBOSS:_ScanCarrierZone()
   self:T( self.lid .. string.format( "Scanning Carrier Controlled Area. Radius=%.1f NM.", UTILS.MetersToNM( RCCZ ) ) )
 
   -- Scan units in carrier zone.
-  local _, _, _, unitscan = coord:ScanObjects( RCCZ, true, false, false )
+  local unitscan = position:ScanObjects( RCCZ, true, false, false )
 
   -- Make a table with all groups currently in the CCA zone.
   local insideCCA = {}
@@ -10443,7 +10442,7 @@ function AIRBOSS:_CheckFoulDeck( playerData )
   self:T( self.lid .. string.format( "Foul deck check: Scanning Carrier Runway Area. Radius=%.1f m.", R ) )
 
   -- Scan units in carrier zone.
-  local _, _, _, unitscan = self:GetCoordinate():ScanObjects( R, true, false, false )
+  local unitscan = self.carrier:GetVector():ScanObjects( R, true, false, false )
 
   -- Loop over all scanned units and check if they are on the runway.
   local fouldeck = false
