@@ -14064,7 +14064,7 @@ function AIRBOSS:_OnNavyTurningStarted()
       return
     end
 
-    heading = self:GetCoordinate():HeadingTo(waypoint.coordinate)
+    heading = self.carrier:GetVector():GetHeadingTo(waypoint.coordinate)
   end
 
   self:_MarshalCallCarrierTurnTo((heading - self.magvar) % 360)
@@ -17519,9 +17519,6 @@ function AIRBOSS:_DisplayCarrierInfo( _unitname )
     local playerData = self.players[playername] -- #AIRBOSS.PlayerData
 
     if playerData then
-
-      -- Current coordinates.
-      local coord = self:GetCoordinate()
 
       -- Carrier speed and heading.
       local carrierheading = self.carrier:GetHeading()
