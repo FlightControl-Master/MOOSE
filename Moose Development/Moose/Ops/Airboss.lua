@@ -11281,9 +11281,6 @@ function AIRBOSS:_GetZoneHolding( case, stack )
     return nil
   end
 
-  -- Pattern altitude.
-  local patternalt, c1, c2 = self:_GetMarshalAltitude( stack, case )
-
   -- Select case.
   if case == 1 then
     -- CASE I
@@ -11295,7 +11292,7 @@ function AIRBOSS:_GetZoneHolding( case, stack )
     local D = UTILS.NMToMeters( 2.5 )
 
     -- Post 2.5 NM port of carrier.
-    local Post = self:GetCoordinate():Translate( D, hdg + 270 )
+    local Post = self.carrier:GetVector():Translate( D, hdg + 270 )
 
     -- Create holding zone.
     self.zoneHolding = ZONE_RADIUS:New( "CASE I Holding Zone", Post:GetVec2(), self.marshalradius )
@@ -11306,17 +11303,22 @@ function AIRBOSS:_GetZoneHolding( case, stack )
     end
 
   else
-    -- CASE II/II
+    -- CASE II/III
+
+    -- Copy marshal positions for vector calculations.
+    local _, c1, c2 = self:_GetMarshalAltitude( stack, case )
+    c1 = VECTOR:NewFromVec( c1 )
+    c2 = VECTOR:NewFromVec( c2 )
 
     -- Get radial.
     local radial = self:GetRadial( case, false, true )
 
     -- Create an array of a rectangle. Length is 7 NM, width is 8 NM. One NM starboard to line up with the approach corridor.
     local p = {}
-    p[1] = c2:Translate( UTILS.NMToMeters( 1 ), radial - 90 ):GetVec2() -- c2 is at (angels+15) NM directly behind the carrier. We translate it 1 NM starboard.
-    p[2] = c1:Translate( UTILS.NMToMeters( 1 ), radial - 90 ):GetVec2() -- c1 is 7 NM further behind. Also translated 1 NM starboard.
-    p[3] = c1:Translate( UTILS.NMToMeters( 7 ), radial + 90 ):GetVec2() -- p3 7 NM port of carrier.
-    p[4] = c2:Translate( UTILS.NMToMeters( 7 ), radial + 90 ):GetVec2() -- p4 7 NM port of carrier.
+    p[1] = c2:Translate( UTILS.NMToMeters( 1 ), radial - 90, true ):GetVec2() -- c2 is at (angels+15) NM directly behind the carrier. We translate it 1 NM starboard.
+    p[2] = c1:Translate( UTILS.NMToMeters( 1 ), radial - 90, true ):GetVec2() -- c1 is 7 NM further behind. Also translated 1 NM starboard.
+    p[3] = c1:Translate( UTILS.NMToMeters( 7 ), radial + 90, true ):GetVec2() -- p3 7 NM port of carrier.
+    p[4] = c2:Translate( UTILS.NMToMeters( 7 ), radial + 90, true ):GetVec2() -- p4 7 NM port of carrier.
 
     -- Square zone length=7NM width=6 NM behind the carrier starting at angels+15 NM behind the carrier.
     -- So stay 0-5 NM (+1 NM error margin) port of carrier.
@@ -11353,7 +11355,7 @@ function AIRBOSS:_GetZoneCommence( case, stack )
     local R = UTILS.NMToMeters( 1 )
 
     -- Three position
-    local Three = self:GetCoordinate():Translate( D, hdg + 275 )
+    local Three = self.carrier:GetVector():Translate( D, hdg + 275 )
 
     if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
       local Dx = UTILS.NMToMeters( 2.25 )
@@ -11362,7 +11364,7 @@ function AIRBOSS:_GetZoneCommence( case, stack )
 
       R = UTILS.NMToMeters( 1 )
 
-      Three = self:GetCoordinate():Translate( Dz, hdg - 90 ):Translate( Dx, hdg - 180 )
+      Three = self.carrier:GetVector():Translate( Dz, hdg - 90 ):Translate( Dx, hdg - 180 )
 
     end
 
@@ -11385,15 +11387,15 @@ function AIRBOSS:_GetZoneCommence( case, stack )
     local offset = self:GetRadial( case, false, true )
 
     -- Carrier position.
-    local cv = self:GetCoordinate()
+    local cv = self.carrier:GetVector()
 
     -- Polygon points.
     local c = {}
 
-    c[1] = cv:Translate( UTILS.NMToMeters( l ), offset ):Translate( UTILS.NMToMeters( 1 ), offset - 90 )
-    c[2] = cv:Translate( UTILS.NMToMeters( l + 2.5 ), offset ):Translate( UTILS.NMToMeters( 1 ), offset - 90 )
-    c[3] = cv:Translate( UTILS.NMToMeters( l + 2.5 ), offset ):Translate( UTILS.NMToMeters( 1 ), offset + 90 )
-    c[4] = cv:Translate( UTILS.NMToMeters( l ), offset ):Translate( UTILS.NMToMeters( 1 ), offset + 90 )
+    c[1] = cv:Translate( UTILS.NMToMeters( l ), offset, true ):Translate( UTILS.NMToMeters( 1 ), offset - 90 )
+    c[2] = cv:Translate( UTILS.NMToMeters( l + 2.5 ), offset, true ):Translate( UTILS.NMToMeters( 1 ), offset - 90 )
+    c[3] = cv:Translate( UTILS.NMToMeters( l + 2.5 ), offset, true ):Translate( UTILS.NMToMeters( 1 ), offset + 90 )
+    c[4] = cv:Translate( UTILS.NMToMeters( l ), offset, true ):Translate( UTILS.NMToMeters( 1 ), offset + 90 )
 
     -- Create an array of a square!
     local p = {}
