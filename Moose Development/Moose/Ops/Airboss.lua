@@ -6368,8 +6368,8 @@ function AIRBOSS:_MarshalAI( flight, nstack, respawn )
 
   local altitude
   local p0 -- Core.Point#COORDINATE
-  local p1 -- Core.Point#COORDINATE
-  local p2 -- Core.Point#COORDINATE
+  local p1 -- Core.Vector#VECTOR
+  local p2 -- Core.Vector#VECTOR
 
   -- Get altitude and positions.
   altitude, p1, p2 = self:_GetMarshalAltitude( nstack, case )
@@ -6411,7 +6411,7 @@ function AIRBOSS:_MarshalAI( flight, nstack, respawn )
       local radial = self:GetRadial( case, false, true )
 
       -- Point in the middle of the race track and a 5 NM more port perpendicular.
-      p0 = p2:Translate( UTILS.NMToMeters( 5 ), radial + 90, true ):Translate( UTILS.NMToMeters( 5 ), radial, true )
+      p0 = p2:Translate( UTILS.NMToMeters( 5 ), radial + 90, true ):Translate( UTILS.NMToMeters( 5 ), radial ):GetCoordinate()
 
       -- Entering Case II/III marshal pattern waypoint.
       wp[#wp + 1] = p0:WaypointAirTurningPoint( nil, speedTransit, { TaskArrivedHolding }, "Entering Case II/III Marshal Pattern" )
@@ -6444,8 +6444,8 @@ function AIRBOSS:_MarshalAI( flight, nstack, respawn )
   -- Debug markers.
   if self.Debug then
     p0:MarkToAll( "WP P0 " .. groupname )
-    p1:MarkToAll( "RT P1 " .. groupname )
-    p2:MarkToAll( "RT P2 " .. groupname )
+    p1:GetCoordinate():MarkToAll( "RT P1 " .. groupname )
+    p2:GetCoordinate():MarkToAll( "RT P2 " .. groupname )
   end
 
   if respawn then
@@ -6649,8 +6649,8 @@ end
 -- @param #number case (Optional) Recovery case. Default is self.case.
 -- @param #boolean AltitudeOnly (Optional) Return only the altitude without calculating race track coordinates. Default is false.
 -- @return #number Holding altitude in meters.
--- @return Core.Point#COORDINATE First race track coordinate, omitted when AltitudeOnly is true.
--- @return Core.Point#COORDINATE Second race track coordinate, omitted when AltitudeOnly is true.
+-- @return Core.Vector#VECTOR First race track position, omitted when AltitudeOnly is true.
+-- @return Core.Vector#VECTOR Second race track position, omitted when AltitudeOnly is true.
 function AIRBOSS:_GetMarshalAltitude( stack, case, AltitudeOnly )
 
   -- Stack <= 0.
@@ -6671,11 +6671,11 @@ function AIRBOSS:_GetMarshalAltitude( stack, case, AltitudeOnly )
   end
 
   -- Carrier position.
-  local Carrier = self:GetCoordinate()
+  local Carrier = self.carrier:GetVector()
 
   local Dist
-  local p1 = nil -- Core.Point#COORDINATE
-  local p2 = nil -- Core.Point#COORDINATE
+  local p1 = nil -- Core.Vector#VECTOR
+  local p2 = nil -- Core.Vector#VECTOR
 
   if case == 1 then
 
@@ -6690,14 +6690,14 @@ function AIRBOSS:_GetMarshalAltitude( stack, case, AltitudeOnly )
     p1 = Carrier
 
     -- Second point 1.5 NM ahead.
-    p2 = Carrier:Translate( UTILS.NMToMeters( 1.5 ), hdg )
+    p2 = Carrier:Translate( UTILS.NMToMeters( 1.5 ), hdg, true )
 
     -- Tarawa,LHA,LHD Delta patterns.
     if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
 
       -- Pattern is directly overhead the carrier.
-      p1 = Carrier:Translate( UTILS.NMToMeters( 1.0 ), hdg + 90 )
-      p2 = p1:Translate( 2.5, hdg )
+      p1 = Carrier:Translate( UTILS.NMToMeters( 1.0 ), hdg + 90, true )
+      p2 = p1:Translate( 2.5, hdg, true )
 
     end
 
@@ -6717,16 +6717,16 @@ function AIRBOSS:_GetMarshalAltitude( stack, case, AltitudeOnly )
     local l = UTILS.NMToMeters( 10 )
 
     -- First point of race track pattern.
-    p1 = Carrier:Translate( Dist + l, radial )
+    p1 = Carrier:Translate( Dist + l, radial, true )
 
     -- Second point.
-    p2 = Carrier:Translate( Dist, radial )
+    p2 = Carrier:Translate( Dist, radial, true )
 
   end
 
-  -- Set altitude of coordinate.
-  p1:SetAltitude( altitude, true )
-  p2:SetAltitude( altitude, true )
+  -- Set altitude of marshal positions.
+  p1.y = altitude
+  p2.y = altitude
 
   return altitude, p1, p2
 end
@@ -11308,10 +11308,8 @@ function AIRBOSS:_GetZoneHolding( case, stack )
   else
     -- CASE II/III
 
-    -- Copy marshal positions for vector calculations.
+    -- Get marshal positions as vectors.
     local _, c1, c2 = self:_GetMarshalAltitude( stack, case )
-    c1 = VECTOR:NewFromVec( c1 )
-    c2 = VECTOR:NewFromVec( c2 )
 
     -- Get radial.
     local radial = self:GetRadial( case, false, true )
