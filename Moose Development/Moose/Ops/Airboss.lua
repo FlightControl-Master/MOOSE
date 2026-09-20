@@ -2016,7 +2016,7 @@ function AIRBOSS:New( carriername, alias )
     local function flareme()
 
       -- Carrier pos.
-      self.carrier:GetVector():Flare( FLARECOLOR.Yellow )
+      self:GetVector():Flare( FLARECOLOR.Yellow )
 
       -- Stern
       stern:FlareYellow()
@@ -3609,7 +3609,7 @@ function AIRBOSS:onafterStart( From, Event, To )
   -- timer.scheduleFunction(AIRBOSS._CheckRadioQueueT, {airboss=self, radioqueue=self.RQMarshal, name="MARSHAL"}, timer.getTime()+1)
 
   -- Initial carrier position and orientation.
-  self.Cposition = self.carrier:GetVector()
+  self.Cposition = self:GetVector()
   self.Corientation = self.carrier:GetOrientationX()
   self.turning = self.navygroup:IsTurning() == true
   self.Tpupdate = timer.getTime()
@@ -3673,7 +3673,7 @@ function AIRBOSS:onafterStatus( From, Event, To )
 
     -- Update magnetic variation if we can get it from DCS.
     if require then
-      self.magvar=self.carrier:GetVector():GetMagneticDeclination()
+      self.magvar=self:GetVector():GetMagneticDeclination()
       --env.info(string.format("FF magvar=%.1f", self.magvar))
     end
 
@@ -6006,7 +6006,7 @@ end
 function AIRBOSS:_ScanCarrierZone()
 
   -- Carrier position.
-  local position = self.carrier:GetVector()
+  local position = self:GetVector()
 
   -- Scan radius = radius of the CCA.
   local RCCZ = self.zoneCCA:GetRadius()
@@ -6242,7 +6242,7 @@ function AIRBOSS:_WaitAI( flight, respawn )
   local speedTransit = UTILS.KnotsToKmph( 370 )
 
   -- Carrier position.
-  local cv = self.carrier:GetVector()
+  local cv = self:GetVector()
 
   -- Flight group position.
   local fc = group:GetVector()
@@ -6393,7 +6393,7 @@ function AIRBOSS:_MarshalAI( flight, nstack, respawn )
     if case == 1 then
 
       -- Carrier position for the CASE I entry points.
-      local Carrier = self.carrier:GetVector()
+      local Carrier = self:GetVector()
 
       -- Initial point 7 NM and a bit port of carrier.
       local pE = Carrier:Translate( UTILS.NMToMeters( 7 ), hdg - 30, true ):GetCoordinate():SetAltitude( altitude )
@@ -6612,7 +6612,7 @@ function AIRBOSS:_LandAI( flight )
   end
 
   -- Carrier position.
-  local Carrier = self.carrier:GetVector()
+  local Carrier = self:GetVector()
 
   -- Carrier heading.
   local hdg = self:GetHeading()
@@ -6666,7 +6666,7 @@ function AIRBOSS:_GetMarshalAltitude( stack, case, AltitudeOnly )
   end
 
   -- Carrier position.
-  local Carrier = self.carrier:GetVector()
+  local Carrier = self:GetVector()
 
   local Dist
   local p1 = nil -- Core.Vector#VECTOR
@@ -6839,7 +6839,7 @@ function AIRBOSS:_AddMarshalGroup( flight, stack )
   table.insert( self.Qmarshal, flight )
 
   -- Pressure.
-  local _, pressure = self.carrier:GetVector():GetTemperaturAndPressure()
+  local _, pressure = self:GetVector():GetTemperaturAndPressure()
   local P = UTILS.hPa2inHg( pressure / 100 )
 
   -- Stack altitude.
@@ -10442,7 +10442,7 @@ function AIRBOSS:_CheckFoulDeck( playerData )
   self:T( self.lid .. string.format( "Foul deck check: Scanning Carrier Runway Area. Radius=%.1f m.", R ) )
 
   -- Scan units in carrier zone.
-  local unitscan = self.carrier:GetVector():ScanObjects( R, true, false, false )
+  local unitscan = self:GetVector():ScanObjects( R, true, false, false )
 
   -- Loop over all scanned units and check if they are on the runway.
   local fouldeck = false
@@ -10791,7 +10791,7 @@ function AIRBOSS:_GetZoneInitial( case )
   local radial = self:GetRadial( 2, false, false )
 
   -- Carrier position. Keep it unchanged when creating independent zone points.
-  local cv = self.carrier:GetVector()
+  local cv = self:GetVector()
 
   -- Vec2 array.
   local vec2 = {}
@@ -10921,7 +10921,7 @@ function AIRBOSS:_GetZoneBullseye( case )
   local radial = self:GetRadial( case, false, false )
 
   -- Get translated carrier position and vec2.
-  local coord = self.carrier:GetVector():Translate( distance, radial )
+  local coord = self:GetVector():Translate( distance, radial )
   local vec2 = coord:GetVec2()
 
   -- Create zone.
@@ -10947,7 +10947,7 @@ function AIRBOSS:_GetZoneDirtyUp( case )
   local radial = self:GetRadial( case, false, false )
 
   -- Get translated carrier position and vec2.
-  local coord = self.carrier:GetVector():Translate( distance, radial )
+  local coord = self:GetVector():Translate( distance, radial )
   local vec2 = coord:GetVec2()
 
   -- Create zone.
@@ -10972,7 +10972,7 @@ function AIRBOSS:_GetZoneArcOut( case )
   local radial = self:GetRadial( case, false, false )
 
   -- Get carrier position and translate.
-  local coord = self.carrier:GetVector():Translate( distance, radial )
+  local coord = self:GetVector():Translate( distance, radial )
 
   -- Create zone.
   local zone = ZONE_RADIUS:New( "Zone Arc Out", coord:GetVec2(), radius )
@@ -11002,7 +11002,7 @@ function AIRBOSS:_GetZoneArcIn( case )
   local distance = UTILS.NMToMeters( x )
 
   -- Get translated carrier position.
-  local coord = self.carrier:GetVector():Translate( distance, radial )
+  local coord = self:GetVector():Translate( distance, radial )
 
   -- Create zone.
   local zone = ZONE_RADIUS:New( "Zone Arc In", coord:GetVec2(), radius )
@@ -11029,7 +11029,7 @@ function AIRBOSS:_GetZonePlatform( case )
   local distance = UTILS.NMToMeters( 19 ) -- /math.cos(alpha)
 
   -- Get translated carrier position.
-  local coord = self.carrier:GetVector():Translate( distance, radial )
+  local coord = self:GetVector():Translate( distance, radial )
 
   -- Create zone.
   local zone = ZONE_RADIUS:New( "Zone Platform", coord:GetVec2(), radius )
@@ -11062,7 +11062,7 @@ function AIRBOSS:_GetZoneCorridor( case, l )
   local d = 12
 
   -- Carrier position.
-  local cv = self.carrier:GetVector()
+  local cv = self:GetVector()
 
   -- Polygon points.
   local c = {}
@@ -11290,7 +11290,7 @@ function AIRBOSS:_GetZoneHolding( case, stack )
     local D = UTILS.NMToMeters( 2.5 )
 
     -- Post 2.5 NM port of carrier.
-    local Post = self.carrier:GetVector():Translate( D, hdg + 270 )
+    local Post = self:GetVector():Translate( D, hdg + 270 )
 
     -- Create holding zone.
     self.zoneHolding = ZONE_RADIUS:New( "CASE I Holding Zone", Post:GetVec2(), self.marshalradius )
@@ -11351,7 +11351,7 @@ function AIRBOSS:_GetZoneCommence( case, stack )
     local R = UTILS.NMToMeters( 1 )
 
     -- Three position
-    local Three = self.carrier:GetVector():Translate( D, hdg + 275 )
+    local Three = self:GetVector():Translate( D, hdg + 275 )
 
     if self.carriertype == AIRBOSS.CarrierType.INVINCIBLE or self.carriertype == AIRBOSS.CarrierType.HERMES or self.carriertype == AIRBOSS.CarrierType.TARAWA or self.carriertype == AIRBOSS.CarrierType.AMERICA or self.carriertype == AIRBOSS.CarrierType.JCARLOS or self.carriertype == AIRBOSS.CarrierType.CANBERRA then
       local Dx = UTILS.NMToMeters( 2.25 )
@@ -11360,7 +11360,7 @@ function AIRBOSS:_GetZoneCommence( case, stack )
 
       R = UTILS.NMToMeters( 1 )
 
-      Three = self.carrier:GetVector():Translate( Dz, hdg - 90 ):Translate( Dx, hdg - 180 )
+      Three = self:GetVector():Translate( Dz, hdg - 90 ):Translate( Dx, hdg - 180 )
 
     end
 
@@ -11383,7 +11383,7 @@ function AIRBOSS:_GetZoneCommence( case, stack )
     local offset = self:GetRadial( case, false, true )
 
     -- Carrier position.
-    local cv = self.carrier:GetVector()
+    local cv = self:GetVector()
 
     -- Polygon points.
     local c = {}
@@ -11889,7 +11889,7 @@ end
 function AIRBOSS:GetWind( alt, magnetic, coord )
 
   -- Current position of the carrier or input.
-  local position = coord and VECTOR:NewFromVec( coord ) or self.carrier:GetVector()
+  local position = coord and VECTOR:NewFromVec( coord ) or self:GetVector()
 
   -- Wind without turbulence. By default at 18 meters ASL.
   local wind = position:GetWindVector( false, alt or 18 )
@@ -11924,7 +11924,7 @@ end
 function AIRBOSS:GetWindOnDeck( alt )
 
   -- Position of carrier.
-  local cv = self.carrier:GetVector()
+  local cv = self:GetVector()
 
   -- Velocity vector of carrier.
   local vc = self.carrier:GetVelocityVec3()
@@ -13763,7 +13763,7 @@ function AIRBOSS:_Debrief( playerData )
         playerData.step = AIRBOSS.PatternStep.INITIAL
 
         -- Create a point 3.0 NM astern for re-entry.
-        local initial = self.carrier:GetVector():Translate( UTILS.NMToMeters( 3.5 ), self:GetRadial( 2, false, false, false ) )
+        local initial = self:GetVector():Translate( UTILS.NMToMeters( 3.5 ), self:GetRadial( 2, false, false, false ) )
 
         -- Get heading and distance to initial zone ~3 NM astern.
         heading = aircraftPosition:GetHeadingTo( initial )
@@ -14057,7 +14057,7 @@ function AIRBOSS:_OnNavyTurningStarted()
       return
     end
 
-    heading = self.carrier:GetVector():GetHeadingTo(waypoint.coordinate)
+    heading = self:GetVector():GetHeadingTo(waypoint.coordinate)
   end
 
   self:_MarshalCallCarrierTurnTo((heading - self.magvar) % 360)
@@ -14139,7 +14139,7 @@ function AIRBOSS:_CheckPatternUpdate()
   ---------------------------
 
   -- Get current position and orientation of carrier.
-  local pos = self.carrier:GetVector()
+  local pos = self:GetVector()
 
   -- Get distance to saved position.
   local dist = pos:GetDistance( self.Cposition, true )
@@ -14655,6 +14655,13 @@ function AIRBOSS:_GetPlayerUnitAndName( _unitName )
 
   -- Return nil if we could not find a player.
   return nil, nil
+end
+
+--- Get carrier position as a new VECTOR.
+-- @param #AIRBOSS self
+-- @return Core.Vector#VECTOR Carrier position, or nil if unavailable.
+function AIRBOSS:GetVector()
+  return self.carrier:GetVector()
 end
 
 --- Get carrier coordinate.
@@ -15722,7 +15729,7 @@ end
 function AIRBOSS:_MarshallInboundCall(unit, modex)
 
   -- Get positions once for bearing and distance from carrier to aircraft.
-  local carrierPosition = self.carrier:GetVector()
+  local carrierPosition = self:GetVector()
   local aircraftPosition = unit:GetVector()
   -- Preserve the original angle conversion order at bearing rounding boundaries.
   local bearingRadians = math.atan2(aircraftPosition.z-carrierPosition.z, aircraftPosition.x-carrierPosition.x)
@@ -17638,7 +17645,7 @@ function AIRBOSS:_DisplayCarrierWeather( _unitname )
     local text = ""
 
     -- Get atmospheric data at carrier location.
-    local temperature, pressure = self.carrier:GetVector():GetTemperaturAndPressure()
+    local temperature, pressure = self:GetVector():GetTemperaturAndPressure()
     local T = temperature - 273.15 -- Kelvin to degrees Celsius.
     local P = pressure / 100 -- Pascals to hPa.
 
@@ -17940,7 +17947,7 @@ function AIRBOSS:_DisplayPlayerStatus( _unitName )
         local aircraftPosition = playerData.unit:GetVector()
 
         -- Create a point 3.0 NM astern for re-entry.
-        local zoneinitial = self.carrier:GetVector():Translate( UTILS.NMToMeters( 3.5 ), self:GetRadial( 2, false, false, false ) )
+        local zoneinitial = self:GetVector():Translate( UTILS.NMToMeters( 3.5 ), self:GetRadial( 2, false, false, false ) )
 
         -- Heading and distance to initial zone.
         local flyhdg = aircraftPosition:GetHeadingTo( zoneinitial )
