@@ -13563,7 +13563,7 @@ function AIRBOSS:_DistanceCheck( playerData, optdist )
   end
 
   -- Distance to carrier.
-  local distance = playerData.unit:GetCoordinate():Get2DDistance( self:GetCoordinate() )
+  local distance = playerData.unit:GetVector():GetDistance( self.carrier:GetVec3(), true )
 
   -- Get relative score.
   local lowscore, badscore = self:_GetGoodBadScore( playerData )
@@ -15714,10 +15714,16 @@ end
 -- @param #string modex Tail number.
 function AIRBOSS:_MarshallInboundCall(unit, modex)
 
-  -- Calculate
-  local vectorCarrier = self:GetCoordinate():GetDirectionVec3(unit:GetCoordinate())
-  local bearing =  UTILS.Round(unit:GetCoordinate():GetAngleDegrees( vectorCarrier ), 0)
-  local distance = UTILS.Round(UTILS.MetersToNM(unit:GetCoordinate():Get2DDistance(self:GetCoordinate())),0)
+  -- Get positions once for bearing and distance from carrier to aircraft.
+  local carrierPosition = self.carrier:GetVector()
+  local aircraftPosition = unit:GetVector()
+  -- Preserve the original angle conversion order at bearing rounding boundaries.
+  local bearingRadians = math.atan2(aircraftPosition.z-carrierPosition.z, aircraftPosition.x-carrierPosition.x)
+  if bearingRadians < 0 then
+    bearingRadians = bearingRadians + 2 * math.pi
+  end
+  local bearing = UTILS.Round(UTILS.ToDegree(bearingRadians), 0)
+  local distance = UTILS.Round(UTILS.MetersToNM(carrierPosition:GetDistance(aircraftPosition, true)), 0)
   local angels = UTILS.Round(UTILS.MetersToFeet(unit:GetHeight()/1000),0)
   local state = UTILS.Round(self:_GetFuelState(unit)/1000,1)
 
