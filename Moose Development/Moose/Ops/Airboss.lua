@@ -6351,9 +6351,6 @@ function AIRBOSS:_MarshalAI( flight, nstack, respawn )
   -- Set new stack.
   flight.flag = nstack
 
-  -- Current carrier position.
-  local Carrier = self:GetCoordinate()
-
   -- Carrier heading.
   local hdg = self:GetHeading()
 
@@ -6396,11 +6393,14 @@ function AIRBOSS:_MarshalAI( flight, nstack, respawn )
     -- Select case.
     if case == 1 then
 
+      -- Carrier position for the CASE I entry points.
+      local Carrier = self.carrier:GetVector()
+
       -- Initial point 7 NM and a bit port of carrier.
-      local pE = Carrier:Translate( UTILS.NMToMeters( 7 ), hdg - 30 ):SetAltitude( altitude )
+      local pE = Carrier:Translate( UTILS.NMToMeters( 7 ), hdg - 30, true ):GetCoordinate():SetAltitude( altitude )
 
       -- Entry point 5 NM port and slightly astern the boat.
-      p0 = Carrier:Translate( UTILS.NMToMeters( 5 ), hdg - 135 ):SetAltitude( altitude )
+      p0 = Carrier:Translate( UTILS.NMToMeters( 5 ), hdg - 135, true ):GetCoordinate():SetAltitude( altitude )
 
       -- Waypoint ahead of carrier's holding zone.
       wp[#wp + 1] = pE:WaypointAirTurningPoint( nil, speedTransit, { TaskArrivedHolding }, "Entering Case I Marshal Pattern" )
@@ -6613,7 +6613,7 @@ function AIRBOSS:_LandAI( flight )
   end
 
   -- Carrier position.
-  local Carrier = self:GetCoordinate()
+  local Carrier = self.carrier:GetVector()
 
   -- Carrier heading.
   local hdg = self:GetHeading()
@@ -6630,7 +6630,7 @@ function AIRBOSS:_LandAI( flight )
   local alt = UTILS.FeetToMeters( 800 )
 
   -- Landing waypoint 5 NM behind carrier at 2000 ft = 610 meters ASL.
-  wp[#wp + 1] = Carrier:Translate( UTILS.NMToMeters( 4 ), hdg - 160 ):SetAltitude( alt ):WaypointAirLanding( Speed, self.airbase, nil, "Landing" )
+  wp[#wp + 1] = Carrier:Translate( UTILS.NMToMeters( 4 ), hdg - 160 ):GetCoordinate():SetAltitude( alt ):WaypointAirLanding( Speed, self.airbase, nil, "Landing" )
   -- wp[#wp+1]=Carrier:Translate(UTILS.NMToMeters(4), hdg-160):SetAltitude(alt):WaypointAirLandingReFu(Speed, self.airbase, nil, "Landing")
 
   -- wp[#wp+1]=self:GetCoordinate():Translate(UTILS.NMToMeters(3), hdg-160):SetAltitude(alt):WaypointAirTurningPoint(nil,Speed, {}, "Before Initial") ---WaypointAirLanding(Speed, self.airbase, nil, "Landing")
