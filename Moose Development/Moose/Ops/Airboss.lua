@@ -10922,8 +10922,8 @@ function AIRBOSS:_GetZoneBullseye( case )
   -- Zone depends on Case recovery.
   local radial = self:GetRadial( case, false, false )
 
-  -- Get coordinate and vec2.
-  local coord = self:GetCoordinate():Translate( distance, radial )
+  -- Get translated carrier position and vec2.
+  local coord = self.carrier:GetVector():Translate( distance, radial )
   local vec2 = coord:GetVec2()
 
   -- Create zone.
@@ -10948,8 +10948,8 @@ function AIRBOSS:_GetZoneDirtyUp( case )
   -- Zone depends on Case recovery.
   local radial = self:GetRadial( case, false, false )
 
-  -- Get coordinate and vec2.
-  local coord = self:GetCoordinate():Translate( distance, radial )
+  -- Get translated carrier position and vec2.
+  local coord = self.carrier:GetVector():Translate( distance, radial )
   local vec2 = coord:GetVec2()
 
   -- Create zone.
@@ -10973,8 +10973,8 @@ function AIRBOSS:_GetZoneArcOut( case )
   -- Zone depends on Case recovery.
   local radial = self:GetRadial( case, false, false )
 
-  -- Get coordinate of carrier and translate.
-  local coord = self:GetCoordinate():Translate( distance, radial )
+  -- Get carrier position and translate.
+  local coord = self.carrier:GetVector():Translate( distance, radial )
 
   -- Create zone.
   local zone = ZONE_RADIUS:New( "Zone Arc Out", coord:GetVec2(), radius )
@@ -11003,8 +11003,8 @@ function AIRBOSS:_GetZoneArcIn( case )
   -- Distance = 14 NM
   local distance = UTILS.NMToMeters( x )
 
-  -- Get coordinate.
-  local coord = self:GetCoordinate():Translate( distance, radial )
+  -- Get translated carrier position.
+  local coord = self.carrier:GetVector():Translate( distance, radial )
 
   -- Create zone.
   local zone = ZONE_RADIUS:New( "Zone Arc In", coord:GetVec2(), radius )
@@ -11030,8 +11030,8 @@ function AIRBOSS:_GetZonePlatform( case )
   -- Distance = 19 NM
   local distance = UTILS.NMToMeters( 19 ) -- /math.cos(alpha)
 
-  -- Get coordinate.
-  local coord = self:GetCoordinate():Translate( distance, radial )
+  -- Get translated carrier position.
+  local coord = self.carrier:GetVector():Translate( distance, radial )
 
   -- Create zone.
   local zone = ZONE_RADIUS:New( "Zone Platform", coord:GetVec2(), radius )
