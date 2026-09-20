@@ -11297,8 +11297,6 @@ function AIRBOSS:_GetZoneHolding( case, stack )
     -- Post 2.5 NM port of carrier.
     local Post = self:GetCoordinate():Translate( D, hdg + 270 )
 
-    -- TODO: update zone not creating a new one.
-
     -- Create holding zone.
     self.zoneHolding = ZONE_RADIUS:New( "CASE I Holding Zone", Post:GetVec2(), self.marshalradius )
 
@@ -11322,9 +11320,11 @@ function AIRBOSS:_GetZoneHolding( case, stack )
 
     -- Square zone length=7NM width=6 NM behind the carrier starting at angels+15 NM behind the carrier.
     -- So stay 0-5 NM (+1 NM error margin) port of carrier.
-    self.zoneHolding = self.zoneHolding or ZONE_POLYGON_BASE:New( "CASE II/III Holding Zone" )
-
-    self.zoneHolding:UpdateFromVec2( p )
+    if not self.zoneHolding or self.zoneHolding.ClassName ~= "ZONE_POLYGON_BASE" then
+      self.zoneHolding = ZONE_POLYGON_BASE:New( "CASE II/III Holding Zone", p )
+    else
+      self.zoneHolding:UpdateFromVec2( p )
+    end
   end
 
   return self.zoneHolding
@@ -11367,9 +11367,11 @@ function AIRBOSS:_GetZoneCommence( case, stack )
     end
 
     -- Create holding zone.
-    self.zoneCommence = self.zoneCommence or ZONE_RADIUS:New( "CASE I Commence Zone" )
-
-    self.zoneCommence:UpdateFromVec2( Three:GetVec2(), R )
+    if not self.zoneCommence or self.zoneCommence.ClassName ~= "ZONE_RADIUS" then
+      self.zoneCommence = ZONE_RADIUS:New( "CASE I Commence Zone", Three:GetVec2(), R )
+    else
+      self.zoneCommence:UpdateFromVec2( Three:GetVec2(), R )
+    end
 
   else
     -- Case II/III
@@ -11400,9 +11402,11 @@ function AIRBOSS:_GetZoneCommence( case, stack )
     end
 
     -- Zone polygon.
-    self.zoneCommence = self.zoneCommence or ZONE_POLYGON_BASE:New( "CASE II/III Commence Zone" )
-
-    self.zoneCommence:UpdateFromVec2( p )
+    if not self.zoneCommence or self.zoneCommence.ClassName ~= "ZONE_POLYGON_BASE" then
+      self.zoneCommence = ZONE_POLYGON_BASE:New( "CASE II/III Commence Zone", p )
+    else
+      self.zoneCommence:UpdateFromVec2( p )
+    end
 
   end
 
