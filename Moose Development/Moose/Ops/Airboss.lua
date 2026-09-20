@@ -198,7 +198,7 @@
 -- @field #boolean handleai If true (default), handle AI aircraft.
 -- @field Ops.RecoveryTanker#RECOVERYTANKER tanker Recovery tanker flying overhead of carrier.
 -- @field DCS#Vec3 Corientation Carrier orientation in space.
--- @field Core.Point#COORDINATE Cposition Carrier position.
+-- @field Core.Vector#VECTOR Cposition Carrier reference position for marshal pattern updates.
 -- @field #string defaultskill Default player skill @{#AIRBOSS.Difficulty}.
 -- @field #boolean adinfinitum If true, carrier patrols ad infinitum, i.e. when reaching its last waypoint it starts at waypoint one again.
 -- @field #number magvar Magnetic declination in degrees.
@@ -3609,7 +3609,7 @@ function AIRBOSS:onafterStart( From, Event, To )
   -- timer.scheduleFunction(AIRBOSS._CheckRadioQueueT, {airboss=self, radioqueue=self.RQMarshal, name="MARSHAL"}, timer.getTime()+1)
 
   -- Initial carrier position and orientation.
-  self.Cposition = self:GetCoordinate()
+  self.Cposition = self.carrier:GetVector()
   self.Corientation = self.carrier:GetOrientationX()
   self.turning = self.navygroup:IsTurning() == true
   self.Tpupdate = timer.getTime()
@@ -14146,10 +14146,10 @@ function AIRBOSS:_CheckPatternUpdate()
   ---------------------------
 
   -- Get current position and orientation of carrier.
-  local pos = self:GetCoordinate()
+  local pos = self.carrier:GetVector()
 
   -- Get distance to saved position.
-  local dist = pos:Get2DDistance( self.Cposition )
+  local dist = pos:GetDistance( self.Cposition, true )
 
   -- Check if carrier moved more than ~10 km.
   local Dchange = false
