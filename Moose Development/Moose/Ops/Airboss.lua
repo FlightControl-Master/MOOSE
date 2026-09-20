@@ -13750,6 +13750,7 @@ function AIRBOSS:_Debrief( playerData )
 
       -- Heading and distance tip.
       local heading, distance
+      local aircraftPosition = playerData.unit:GetVector()
 
       if playerData.case == 1 or playerData.case == 2 then
 
@@ -13757,11 +13758,11 @@ function AIRBOSS:_Debrief( playerData )
         playerData.step = AIRBOSS.PatternStep.INITIAL
 
         -- Create a point 3.0 NM astern for re-entry.
-        local initial = self:GetCoordinate():Translate( UTILS.NMToMeters( 3.5 ), self:GetRadial( 2, false, false, false ) )
+        local initial = self.carrier:GetVector():Translate( UTILS.NMToMeters( 3.5 ), self:GetRadial( 2, false, false, false ) )
 
         -- Get heading and distance to initial zone ~3 NM astern.
-        heading = playerData.unit:GetCoordinate():HeadingTo( initial )
-        distance = playerData.unit:GetCoordinate():Get2DDistance( initial )
+        heading = aircraftPosition:GetHeadingTo( initial )
+        distance = aircraftPosition:GetDistance( initial, true )
 
       elseif playerData.case == 3 then
 
@@ -13771,9 +13772,10 @@ function AIRBOSS:_Debrief( playerData )
 
         -- Get heading and distance to bullseye zone ~3 NM astern.
         local zone = self:_GetZoneBullseye( playerData.case )
+        local target = zone:GetVec2()
 
-        heading = playerData.unit:GetCoordinate():HeadingTo( zone:GetCoordinate() )
-        distance = playerData.unit:GetCoordinate():Get2DDistance( zone:GetCoordinate() )
+        heading = aircraftPosition:GetHeadingTo( target )
+        distance = aircraftPosition:GetDistance( target, true )
 
       end
 
@@ -17935,12 +17937,14 @@ function AIRBOSS:_DisplayPlayerStatus( _unitName )
 
       if playerData.step == AIRBOSS.PatternStep.INITIAL then
 
+        local aircraftPosition = playerData.unit:GetVector()
+
         -- Create a point 3.0 NM astern for re-entry.
-        local zoneinitial = self:GetCoordinate():Translate( UTILS.NMToMeters( 3.5 ), self:GetRadial( 2, false, false, false ) )
+        local zoneinitial = self.carrier:GetVector():Translate( UTILS.NMToMeters( 3.5 ), self:GetRadial( 2, false, false, false ) )
 
         -- Heading and distance to initial zone.
-        local flyhdg = playerData.unit:GetCoordinate():HeadingTo( zoneinitial )
-        local flydist = UTILS.MetersToNM( playerData.unit:GetCoordinate():Get2DDistance( zoneinitial ) )
+        local flyhdg = aircraftPosition:GetHeadingTo( zoneinitial )
+        local flydist = UTILS.MetersToNM( aircraftPosition:GetDistance( zoneinitial, true ) )
         local brc = self:GetBRC()
 
         -- Help player to find its way to the initial zone.
@@ -17948,12 +17952,14 @@ function AIRBOSS:_DisplayPlayerStatus( _unitName )
 
       elseif playerData.step == AIRBOSS.PatternStep.PLATFORM then
 
-        -- Coordinate of the platform zone.
-        local zoneplatform = self:_GetZonePlatform( playerData.case ):GetCoordinate()
+        local aircraftPosition = playerData.unit:GetVector()
+
+        -- Center of the platform zone.
+        local zoneplatform = self:_GetZonePlatform( playerData.case ):GetVec2()
 
         -- Heading and distance to platform zone.
-        local flyhdg = playerData.unit:GetCoordinate():HeadingTo( zoneplatform )
-        local flydist = UTILS.MetersToNM( playerData.unit:GetCoordinate():Get2DDistance( zoneplatform ) )
+        local flyhdg = aircraftPosition:GetHeadingTo( zoneplatform )
+        local flydist = UTILS.MetersToNM( aircraftPosition:GetDistance( zoneplatform, true ) )
 
         -- Get heading.
         local hdg = self:GetRadial( playerData.case, true, true, true )
