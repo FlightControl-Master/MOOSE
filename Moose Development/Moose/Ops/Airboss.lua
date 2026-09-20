@@ -2307,11 +2307,11 @@ function AIRBOSS:New( carriername, alias )
   -- @param #string To To state.
   -- @param #AIRBOSS.FlightGroup flight The flight group data.
 
-  --- Triggers the FSM event "Stop" that stops the airboss. Event handlers are stopped.
+  --- Stops AIRBOSS and its recovery maneuver. NAVYGROUP and its navigation beacons remain active.
   -- @function [parent=#AIRBOSS] Stop
   -- @param #AIRBOSS self
 
-  --- Triggers the FSM event "Stop" that stops the airboss after a delay. Event handlers are stopped.
+  --- Stops AIRBOSS after a delay. NAVYGROUP and its navigation beacons remain active.
   -- @function [parent=#AIRBOSS] __Stop
   -- @param #AIRBOSS self
   -- @param #number delay Delay in seconds.
@@ -3587,12 +3587,29 @@ end
 -- FSM event functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Reject Start when the carrier is unavailable or another AIRBOSS owns the NAVYGROUP callbacks.
+-- @param #AIRBOSS self
+function AIRBOSS:onbeforeStart( From, Event, To )
+  if not self.carrier:IsAlive() then
+    self:E( self.lid .. "Cannot start AIRBOSS: carrier is unavailable." )
+    return false
+  end
+  if self.navygroup.airboss and self.navygroup.airboss ~= self then
+    self:E( self.lid .. "Cannot start AIRBOSS: NAVYGROUP is linked to another AIRBOSS." )
+    return false
+  end
+  return true
+end
+
 --- On after Start event. Starts the AIRBOSS. Adds event handlers and schedules status updates of requests and queue.
 -- @param #AIRBOSS self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterStart( From, Event, To )
+
+  -- NAVYGROUP keeps running while AIRBOSS is stopped.
+  self.navygroup.airboss = self
 
   -- Events are handled my MOOSE.
   self:I( self.lid .. string.format( "Starting AIRBOSS v%s for carrier unit %s of type %s on map %s", AIRBOSS.version, self.carrier:GetName(), self.carriertype, self.theatre ) )
@@ -3625,9 +3642,6 @@ function AIRBOSS:onafterStart( From, Event, To )
     self:AddRecoveryWindow( UTILS.SecondsToClock( Topen ), UTILS.SecondsToClock( Tclose ) )
   end
 
-  -- Check Recovery time.s
-  self:_CheckRecoveryTimes()
-
   -- Time stamp for checking queues. We substract 60 seconds so the routine is called right after status is called the first time.
   self.Tqueue = timer.getTime() - 60
 
@@ -3642,10 +3656,19 @@ function AIRBOSS:onafterStart( From, Event, To )
   self:HandleEvent( EVENTS.MissionEnd )
   self:HandleEvent( EVENTS.RemoveUnit )
 
+  -- Reconcile flights and players whose events occurred while AIRBOSS was stopped.
+  self:_RefreshFlightsAfterStart()
+
+  -- Evaluate retained recovery windows against the current mission time.
+  self:_CheckRecoveryTimes()
+  -- A recovery callback may stop AIRBOSS during Start.
+  if self:is( "Stopped" ) then return end
+
   -- self.StatusScheduler=SCHEDULER:New(self)
   -- self.StatusScheduler:Schedule(self, self._Status, {}, 1, 0.5)
 
-  self.StatusTimer = TIMER:New( self._Status, self ):Start( 2, 0.5 )
+  self.StatusTimer = self.StatusTimer or TIMER:New( self._Status, self )
+  self.StatusTimer:Start( 2, 0.5 )
 
   -- Start status check in 1 second.
   self:__Status( 1 )
@@ -3657,6 +3680,8 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterStatus( From, Event, To )
+
+  if self:is( "Stopped" ) then return end
 
   -- Get current time.
   local time = timer.getTime()
@@ -3697,12 +3722,14 @@ function AIRBOSS:onafterStatus( From, Event, To )
 
     -- Check recovery times and start/stop recovery mode if necessary.
     self:_CheckRecoveryTimes()
+    if self:is( "Stopped" ) then return end
 
     -- Remove dead/zombie flight groups. Player leaving the server whilst in pattern etc.
     -- self:_RemoveDeadFlightGroups()
 
     -- Scan carrier zone for new aircraft.
     self:_ScanCarrierZone()
+    if self:is( "Stopped" ) then return end
 
     -- Check marshal and pattern queues.
     self:_CheckQueue()
@@ -3715,7 +3742,9 @@ function AIRBOSS:onafterStatus( From, Event, To )
   end
 
   -- Call status every ~0.5 seconds.
-  self:__Status( -30 )
+  if not self:is( "Stopped" ) then
+    self:__Status( -30 )
+  end
 
 end
 
@@ -3723,8 +3752,11 @@ end
 -- @param #AIRBOSS self
 function AIRBOSS:_Status()
 
+  if self:is( "Stopped" ) then return end
+
   -- Check player status.
   self:_CheckPlayerStatus()
+  if self:is( "Stopped" ) then return end
 
   -- Check AI landing pattern status
   self:_CheckAIStatus()
@@ -3929,6 +3961,8 @@ end
 --- Check recovery times and start/stop recovery mode of aircraft.
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckRecoveryTimes()
+
+  if self:is( "Stopped" ) then return end
 
   -- Stop/delete callbacks can request another check while this one is running.
   if self._checkingRecoveryTimes or self._deletingRecoveryWindows then
@@ -4328,6 +4362,26 @@ end
 function AIRBOSS:onafterStop( From, Event, To )
   self:I( self.lid .. string.format( "Stopping airboss script." ) )
 
+  -- Detach only our own callback target; NAVYGROUP and its event handlers stay active.
+  if self.navygroup.airboss == self then
+    self.navygroup.airboss = nil
+  end
+
+  -- Finish the active recovery without starting the next window or broadcasting.
+  local recovery = self.activeRecoveryWindow
+  if recovery then
+    self:_FinishRecoveryWindow( recovery )
+  end
+  -- Also cancel a manually requested maneuver or a future window's preparation.
+  self:_StopNavyIntoWind()
+  self.activeRecoveryWindow = nil
+  self.recoverywindow = nil
+  self.navyRecoveryWindow = nil
+  self.navyIntoWind = nil
+  self.turnintowind = false
+  self.recoveryPauseToken = nil
+  self._recoveryStartAttempted = nil
+
   -- Unhandle events.
   self:UnHandleEvent( EVENTS.Birth )
   self:UnHandleEvent( EVENTS.RunwayTouch )
@@ -4340,6 +4394,8 @@ function AIRBOSS:onafterStop( From, Event, To )
   self:UnHandleEvent( EVENTS.RemoveUnit)
 
   self.CallScheduler:Clear()
+  -- Negative-delay FSM events also retain their schedule IDs outside the scheduler.
+  self._EventSchedules = {}
 
   if self.StatusTimer then
     self.StatusTimer:Stop()
@@ -4348,15 +4404,99 @@ function AIRBOSS:onafterStop( From, Event, To )
   if self.radiotimer then
     self.radiotimer:Clear()
   end
+  self.RQLid = nil
+  self.RQMid = nil
+  self.RQLSO = {}
+  self.RQMarshal = {}
+  self.TQLSO = 0
+  self.TQMarshal = 0
+
+  if self.SRSQ then
+    self.SRSQ:Clear()
+    if self.SRSQ.Scheduler then
+      self.SRSQ.Scheduler:Clear()
+    end
+    self.SRSQ.checking = false
+  end
 
   if self.Scheduler then
     self.Scheduler:Clear()
   end  
 
-  if self.navygroup and not self.navygroup:IsStopped() then
-    self.navygroup:UnHandleEvent(EVENTS.UnitLost)
-    self.navygroup:Stop()
-  end  
+  self:_RemoveF10Commands()
+  for _, player in pairs( self.players ) do
+    player.debriefschedulerID = nil
+    player.attitudemonitor = false
+  end
+end
+
+--- Refresh flight tracking after Start without retaining missed landing or player events.
+-- Existing AI tasks remain in DCS; surviving marshal flights are repositioned on restart.
+-- @param #AIRBOSS self
+function AIRBOSS:_RefreshFlightsAfterStart()
+  local flights = {}
+  for _, flight in ipairs( self.flights ) do
+    flights[#flights + 1] = flight
+  end
+
+  local function removeFlight( flight, completely )
+    -- Do not assign new AI tasks while queues still contain unverified flights.
+    -- Surviving marshal stacks are updated after reconciliation; gaps may be reused.
+    self:_RemoveFlightFromQueue( self.Qmarshal, flight )
+    self:_RemoveFlightFromQueue( self.Qwaiting, flight )
+    self:_RemoveFlight( flight, completely )
+  end
+
+  for _, flight in ipairs( flights ) do
+    if self:is( "Stopped" ) then return end
+    if not flight.group:IsAlive() then
+      removeFlight( flight, true )
+    elseif flight.ai then
+      local inpattern = self:_InQueue( self.Qpattern, flight.group )
+      for i = #flight.elements, 1, -1 do
+        local element = flight.elements[i]
+        if not element.unit:IsAlive() then
+          table.remove( flight.elements, i )
+        elseif inpattern and not element.unit:InAir() then
+          -- This clears a missed landing from the queue without inventing a grade or wire.
+          element.recovered = true
+        end
+      end
+      if #flight.elements == 0 then
+        removeFlight( flight, true )
+      elseif inpattern then
+        self:_CheckSectionRecovered( flight )
+      end
+    else
+      local unit, name = self:_GetPlayerUnitAndName( flight.unitname )
+      if not unit or not unit:IsAlive() or name ~= flight.name then
+        removeFlight( flight, true )
+      else
+        -- A player must request a new approach after an interrupted AIRBOSS session.
+        removeFlight( flight )
+        self:_InitPlayer( flight )
+      end
+    end
+  end
+
+  for _, unitname in pairs( _DATABASE:GetPlayers() ) do
+    if self:is( "Stopped" ) then return end
+    local unit, name = self:_GetPlayerUnitAndName( unitname )
+    if unit and unit:IsAlive() and self:_IsCarrierAircraft( unit )
+      and unit:GetCoalition() == self:GetCoalition() then
+      if not self.players[name] then
+        self:_NewPlayer( unitname )
+      end
+      self:_AddF10Commands( unitname )
+    end
+  end
+
+  for _, flight in ipairs( self.Qmarshal ) do
+    if self:is( "Stopped" ) then return end
+    if flight.ai then
+      self:_MarshalAI( flight, flight.flag, false )
+    end
+  end
 end
 
 ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -7403,6 +7543,8 @@ end
 -- @param #string unitname Name of the player unit.
 -- @return #AIRBOSS.PlayerData Player data.
 function AIRBOSS:_NewPlayer( unitname )
+
+  if self:is( "Stopped" ) then return nil end
 
   -- Get player unit and name.
   local playerunit, playername = self:_GetPlayerUnitAndName( unitname )
@@ -13969,6 +14111,7 @@ end
 -- @param #boolean uturn Make U-turn and go back to initial after downwind leg.
 -- @return #AIRBOSS self
 function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
+  if self:is( "Stopped" ) then return self end
   -- Includes queued windows that have not started yet.
   if self.navyIntoWind then
     self:E(self.lid .. "Into-wind maneuver already requested.")
@@ -13988,6 +14131,7 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
 end
 
 function AIRBOSS:_StartRecoveryIntoWind(recovery)
+  if self:is( "Stopped" ) then return false end
   if not recovery or not recovery.WIND or recovery.OVER then
     return false
   end
@@ -14183,6 +14327,8 @@ end
 -- @param #AIRBOSS.FlightGroup flight Flight group that has reached the holding zone.
 function AIRBOSS._ReachedHoldingZone( group, airboss, flight )
 
+  if airboss:is( "Stopped" ) or airboss:_GetFlightFromGroupInQueue( group, airboss.flights ) ~= flight then return end
+
   -- Debug message.
   local text = string.format( "Flight %s reached holding zone.", group:GetName() )
   MESSAGE:New( text, 10 ):ToAllIf( airboss.Debug )
@@ -14205,6 +14351,8 @@ end
 -- @param #AIRBOSS airboss Airboss object.
 -- @param #AIRBOSS.FlightGroup flight Flight group that has reached the holding zone.
 function AIRBOSS._TaskFunctionMarshalAI( group, airboss, flight )
+
+  if airboss:is( "Stopped" ) or airboss:_GetFlightFromGroupInQueue( group, airboss.flights ) ~= flight then return end
 
   -- Debug message.
   local text = string.format( "Flight %s is send to marshal.", group:GetName() )
@@ -14781,6 +14929,8 @@ end
 -- @param #string name Name of the queue.
 function AIRBOSS:_CheckRadioQueue( radioqueue, name )
 
+  if self:is( "Stopped" ) then return end
+
   -- env.info(string.format("FF %s #radioqueue %d", name, #radioqueue))
 
   -- Check if queue is empty.
@@ -14900,6 +15050,8 @@ end
 -- @param #boolean click If true, play radio click at the end.
 -- @param #boolean pilotcall If true, it's a pilot call.
 function AIRBOSS:RadioTransmission( radio, call, loud, delay, interval, click, pilotcall )
+
+  if self:is( "Stopped" ) then return self end
   self:F2( { radio = radio, call = call, loud = loud, delay = delay, interval = interval, click = click } )
 
   -- Nil check.
@@ -15332,6 +15484,8 @@ end
 -- @param #boolean clear I(Optional) f true, clear screen from previous messages. Defaults to false.
 -- @param #number delay (Optional) Delay in seconds, before the message is displayed.
 function AIRBOSS:MessageToPlayer( playerData, message, sender, receiver, duration, clear, delay )
+
+  if self:is( "Stopped" ) then return end
   self:T({sender,receiver,message})
   if playerData and message and message ~= "" then
 
@@ -16222,10 +16376,24 @@ end
 -- RADIO MENU Functions
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Remove this AIRBOSS instance's F10 entries while preserving shared roots and other carriers.
+-- @param #AIRBOSS self
+function AIRBOSS:_RemoveF10Commands()
+  for gid, paths in pairs( self.menuPaths or {} ) do
+    -- Remove children before an optional carrier submenu.
+    for i = #paths, 1, -1 do
+      missionCommands.removeItemForGroup( gid, paths[i] )
+    end
+  end
+  self.menuPaths = {}
+  self.menuadded = {}
+end
+
 --- Add menu commands for player.
 -- @param #AIRBOSS self
 -- @param #string _unitName Name of player unit.
 function AIRBOSS:_AddF10Commands( _unitName )
+  if self:is( "Stopped" ) then return end
   self:F( _unitName )
 
   -- Get player unit and name.
@@ -16245,6 +16413,15 @@ function AIRBOSS:_AddF10Commands( _unitName )
         -- Enable switch so we don't do this twice.
         self.menuadded[gid] = true
 
+        -- Track only this instance's paths, never the shared Airboss menu root.
+        self.menuPaths = self.menuPaths or {}
+        local paths = {}
+        self.menuPaths[gid] = paths
+        local function owned( path )
+          paths[#paths + 1] = path
+          return path
+        end
+
         -- Set menu root path.
         local _rootPath = nil
         if AIRBOSS.MenuF10Root then
@@ -16257,7 +16434,7 @@ function AIRBOSS:_AddF10Commands( _unitName )
             _rootPath = AIRBOSS.MenuF10Root
           else
             -- F10/Airboss/<Carrier Alias>/...
-            _rootPath = missionCommands.addSubMenuForGroup( gid, self.alias, AIRBOSS.MenuF10Root )
+            _rootPath = owned( missionCommands.addSubMenuForGroup( gid, self.alias, AIRBOSS.MenuF10Root ) )
           end
 
         else
@@ -16275,7 +16452,7 @@ function AIRBOSS:_AddF10Commands( _unitName )
             _rootPath = AIRBOSS.MenuF10[gid]
           else
             -- F10/Airboss/<Carrier Alias>/...
-            _rootPath = missionCommands.addSubMenuForGroup( gid, self.alias, AIRBOSS.MenuF10[gid] )
+            _rootPath = owned( missionCommands.addSubMenuForGroup( gid, self.alias, AIRBOSS.MenuF10[gid] ) )
           end
 
         end
@@ -16283,7 +16460,7 @@ function AIRBOSS:_AddF10Commands( _unitName )
         --------------------------------
         -- F10/Airboss/<Carrier>/F1 Help
         --------------------------------
-        local _helpPath = missionCommands.addSubMenuForGroup( gid, "Help", _rootPath )
+        local _helpPath = owned( missionCommands.addSubMenuForGroup( gid, "Help", _rootPath ) )
         -- F10/Airboss/<Carrier>/F1 Help/F1 Mark Zones
         if self.menumarkzones then
           local _markPath = missionCommands.addSubMenuForGroup( gid, "Mark Zones", _helpPath )
@@ -16315,7 +16492,7 @@ function AIRBOSS:_AddF10Commands( _unitName )
         -------------------------------------
         -- F10/Airboss/<Carrier>/F2 Kneeboard
         -------------------------------------
-        local _kneeboardPath = missionCommands.addSubMenuForGroup( gid, "Kneeboard", _rootPath )
+        local _kneeboardPath = owned( missionCommands.addSubMenuForGroup( gid, "Kneeboard", _rootPath ) )
         -- F10/Airboss/<Carrier>/F2 Kneeboard/F1 Results
         local _resultsPath = missionCommands.addSubMenuForGroup( gid, "Results", _kneeboardPath )
         -- F10/Airboss/<Carrier>/F2 Kneeboard/F1 Results/
@@ -16362,12 +16539,12 @@ function AIRBOSS:_AddF10Commands( _unitName )
         -------------------------
         -- F10/Airboss/<Carrier>/
         -------------------------
-        missionCommands.addCommandForGroup( gid, "Request Marshal", _rootPath, self._RequestMarshal, self, _unitName ) -- F3
-        missionCommands.addCommandForGroup( gid, "Request Commence", _rootPath, self._RequestCommence, self, _unitName ) -- F4
-        missionCommands.addCommandForGroup( gid, "Request Refueling", _rootPath, self._RequestRefueling, self, _unitName ) -- F5
-        missionCommands.addCommandForGroup( gid, "Spinning", _rootPath, self._RequestSpinning, self, _unitName ) -- F6
-        missionCommands.addCommandForGroup( gid, "Emergency Landing", _rootPath, self._RequestEmergency, self, _unitName ) -- F7
-        missionCommands.addCommandForGroup( gid, "[Reset My Status]", _rootPath, self._ResetPlayerStatus, self, _unitName ) -- F8
+        owned( missionCommands.addCommandForGroup( gid, "Request Marshal", _rootPath, self._RequestMarshal, self, _unitName ) ) -- F3
+        owned( missionCommands.addCommandForGroup( gid, "Request Commence", _rootPath, self._RequestCommence, self, _unitName ) ) -- F4
+        owned( missionCommands.addCommandForGroup( gid, "Request Refueling", _rootPath, self._RequestRefueling, self, _unitName ) ) -- F5
+        owned( missionCommands.addCommandForGroup( gid, "Spinning", _rootPath, self._RequestSpinning, self, _unitName ) ) -- F6
+        owned( missionCommands.addCommandForGroup( gid, "Emergency Landing", _rootPath, self._RequestEmergency, self, _unitName ) ) -- F7
+        owned( missionCommands.addCommandForGroup( gid, "[Reset My Status]", _rootPath, self._ResetPlayerStatus, self, _unitName ) ) -- F8
       end
     else
       self:E( self.lid .. string.format( "ERROR: Could not find group or group ID in AddF10Menu() function. Unit name: %s.", _unitName ) )
