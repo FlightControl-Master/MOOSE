@@ -11064,13 +11064,13 @@ function AIRBOSS:_GetZoneCorridor( case, l )
   local d = 12
 
   -- Carrier position.
-  local cv = self:GetCoordinate()
+  local cv = self.carrier:GetVector()
 
   -- Polygon points.
   local c = {}
 
   -- First point. Carrier coordinate translated 5 NM in direction of travel to allow for bolter space.
-  c[1] = cv:Translate( -UTILS.NMToMeters( dx ), radial )
+  c[1] = cv:Translate( -UTILS.NMToMeters( dx ), radial, true )
 
   if math.abs( self.holdingoffset ) >= 5 then
 
@@ -11078,16 +11078,16 @@ function AIRBOSS:_GetZoneCorridor( case, l )
     -- Angled Case --
     -----------------
 
-    c[2] = c[1]:Translate( UTILS.NMToMeters( w2 ), radial - 90 ) -- 1 Right of carrier, dx ahead.
-    c[3] = c[2]:Translate( UTILS.NMToMeters( d + dx + w2 ), radial ) -- 13 "south" @ 1 right
+    c[2] = c[1]:Translate( UTILS.NMToMeters( w2 ), radial - 90, true ) -- 1 Right of carrier, dx ahead.
+    c[3] = c[2]:Translate( UTILS.NMToMeters( d + dx + w2 ), radial, true ) -- 13 "south" @ 1 right
 
-    c[4] = cv:Translate( UTILS.NMToMeters( 15 ), offset ):Translate( UTILS.NMToMeters( 1 ), offset - 90 )
-    c[5] = cv:Translate( UTILS.NMToMeters( l ), offset ):Translate( UTILS.NMToMeters( 1 ), offset - 90 )
-    c[6] = cv:Translate( UTILS.NMToMeters( l ), offset ):Translate( UTILS.NMToMeters( 1 ), offset + 90 )
-    c[7] = cv:Translate( UTILS.NMToMeters( 13 ), offset ):Translate( UTILS.NMToMeters( 1 ), offset + 90 )
-    c[8] = cv:Translate( UTILS.NMToMeters( 11 ), radial ):Translate( UTILS.NMToMeters( 1 ), radial + 90 )
+    c[4] = cv:Translate( UTILS.NMToMeters( 15 ), offset, true ):Translate( UTILS.NMToMeters( 1 ), offset - 90 )
+    c[5] = cv:Translate( UTILS.NMToMeters( l ), offset, true ):Translate( UTILS.NMToMeters( 1 ), offset - 90 )
+    c[6] = cv:Translate( UTILS.NMToMeters( l ), offset, true ):Translate( UTILS.NMToMeters( 1 ), offset + 90 )
+    c[7] = cv:Translate( UTILS.NMToMeters( 13 ), offset, true ):Translate( UTILS.NMToMeters( 1 ), offset + 90 )
+    c[8] = cv:Translate( UTILS.NMToMeters( 11 ), radial, true ):Translate( UTILS.NMToMeters( 1 ), radial + 90 )
 
-    c[9] = c[1]:Translate( UTILS.NMToMeters( w2 ), radial + 90 )
+    c[9] = c[1]:Translate( UTILS.NMToMeters( w2 ), radial + 90, true )
 
   else
 
@@ -11095,10 +11095,10 @@ function AIRBOSS:_GetZoneCorridor( case, l )
     -- Easy case of a long box --
     -----------------------------
 
-    c[2] = c[1]:Translate( UTILS.NMToMeters( w2 ), radial - 90 )
-    c[3] = c[2]:Translate( UTILS.NMToMeters( dx + l ), radial ) -- Stack 1 starts at 21 and is 7 NM.
-    c[4] = c[3]:Translate( UTILS.NMToMeters( w ), radial + 90 )
-    c[5] = c[1]:Translate( UTILS.NMToMeters( w2 ), radial + 90 )
+    c[2] = c[1]:Translate( UTILS.NMToMeters( w2 ), radial - 90, true )
+    c[3] = c[2]:Translate( UTILS.NMToMeters( dx + l ), radial, true ) -- Stack 1 starts at 21 and is 7 NM.
+    c[4] = c[3]:Translate( UTILS.NMToMeters( w ), radial + 90, true )
+    c[5] = c[1]:Translate( UTILS.NMToMeters( w2 ), radial + 90, true )
 
   end
 
