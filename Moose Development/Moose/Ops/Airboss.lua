@@ -6647,10 +6647,11 @@ end
 -- @param #AIRBOSS self
 -- @param #number stack Assigned stack number. Counting starts at one, i.e. stack=1 is the first stack.
 -- @param #number case (Optional) Recovery case. Default is self.case.
+-- @param #boolean AltitudeOnly (Optional) Return only the altitude without calculating race track coordinates. Default is false.
 -- @return #number Holding altitude in meters.
--- @return Core.Point#COORDINATE First race track coordinate.
--- @return Core.Point#COORDINATE Second race track coordinate.
-function AIRBOSS:_GetMarshalAltitude( stack, case )
+-- @return Core.Point#COORDINATE First race track coordinate, omitted when AltitudeOnly is true.
+-- @return Core.Point#COORDINATE Second race track coordinate, omitted when AltitudeOnly is true.
+function AIRBOSS:_GetMarshalAltitude( stack, case, AltitudeOnly )
 
   -- Stack <= 0.
   if stack <= 0 then
@@ -6660,22 +6661,25 @@ function AIRBOSS:_GetMarshalAltitude( stack, case )
   -- Recovery case.
   case = case or self.case
 
+  -- Holding altitude depends only on the stack and recovery case.
+  local angels0 = case == 1 and 2 or 6
+  local nstack = stack - 1
+  local altitude = UTILS.FeetToMeters( (nstack + angels0) * 1000 )
+
+  if AltitudeOnly then
+    return altitude
+  end
+
   -- Carrier position.
   local Carrier = self:GetCoordinate()
 
-  -- Altitude of first stack. Depends on recovery case.
-  local angels0
   local Dist
   local p1 = nil -- Core.Point#COORDINATE
   local p2 = nil -- Core.Point#COORDINATE
 
-  -- Stack number.
-  local nstack = stack - 1
-
   if case == 1 then
 
     -- CASE I: Holding at 2000 ft on a circular pattern port of the carrier. Interval +1000 ft for next stack.
-    angels0 = 2
 
     -- Get true heading of carrier.
     local hdg = self.carrier:GetHeading()
@@ -6700,7 +6704,6 @@ function AIRBOSS:_GetMarshalAltitude( stack, case )
   else
 
     -- CASE II/III: Holding at 6000 ft on a racetrack pattern astern the carrier.
-    angels0 = 6
 
     -- Distance: d=n*angels0+15 NM, so first stack is at 15+6=21 NM
     Dist = UTILS.NMToMeters( nstack + angels0 + 15 )
@@ -6720,9 +6723,6 @@ function AIRBOSS:_GetMarshalAltitude( stack, case )
     p2 = Carrier:Translate( Dist, radial )
 
   end
-
-  -- Pattern altitude.
-  local altitude = UTILS.FeetToMeters( (nstack + angels0) * 1000 )
 
   -- Set altitude of coordinate.
   p1:SetAltitude( altitude, true )
@@ -6848,7 +6848,7 @@ function AIRBOSS:_AddMarshalGroup( flight, stack )
 
   -- Stack altitude.
   -- local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(stack, flight.case))
-  local alt = self:_GetMarshalAltitude( stack, flight.case )
+  local alt = self:_GetMarshalAltitude( stack, flight.case, true )
 
   -- Current BRC.
   local brc = self:GetBRC()
@@ -6941,7 +6941,7 @@ function AIRBOSS:_CollapseMarshalStack( flight, nopattern )
             mflight.flag = newstack
 
             -- Angels of new stack.
-            local angels = self:_GetAngels( self:_GetMarshalAltitude( newstack, case ) )
+            local angels = self:_GetAngels( self:_GetMarshalAltitude( newstack, case, true ) )
 
             -- Inform players.
             if mflight.difficulty ~= AIRBOSS.Difficulty.HARD then
@@ -7310,7 +7310,7 @@ function AIRBOSS:_PrintQueue( queue, name )
       -- Text.
       text = text .. string.format( "\n[%d] %s*%d (%s): lead=%s (%d/%d), onboard=%s, flag=%d, case=%d, time=%s, fuel=%d, ai=%s, holding=%s", i, flight.groupname, nunits, actype, lead, nsec, Nsec, onboard, stack, case, clock, fuel, ai, holding )
       if stack > 0 then
-        local alt = UTILS.MetersToFeet( self:_GetMarshalAltitude( stack, case ) )
+        local alt = UTILS.MetersToFeet( self:_GetMarshalAltitude( stack, case, true ) )
         text = text .. string.format( " stackalt=%d ft", alt )
       end
       for j, _element in pairs( flight.elements ) do
@@ -9072,7 +9072,7 @@ function AIRBOSS:_Holding( playerData )
   ---------------------------
 
   -- Pattern altitude.
-  local patternalt = self:_GetMarshalAltitude( stack, playerData.case )
+  local patternalt = self:_GetMarshalAltitude( stack, playerData.case, true )
 
   -- Player altitude.
   local playeralt = unit:GetAltitude()
@@ -17475,7 +17475,7 @@ function AIRBOSS:_DisplayQueue( _unitname, qname )
             local charlie = self:_GetCharlieTime( flight )
             local Charlie = UTILS.SecondsToClock( charlie )
             local stack = flight.flag
-            local angels = self:_GetAngels( self:_GetMarshalAltitude( stack, flight.case ) )
+            local angels = self:_GetAngels( self:_GetMarshalAltitude( stack, flight.case, true ) )
             local _, nunit, nsec = self:_GetFlightUnits( flight, true )
             local nick = self:_GetACNickname( flight.actype )
             N = N + nunit
@@ -17906,7 +17906,7 @@ function AIRBOSS:_DisplayPlayerStatus( _unitName )
       -- Stack text.
       local stacktext = nil
       if stack > 0 then
-        local stackalt = self:_GetMarshalAltitude( stack )
+        local stackalt = self:_GetMarshalAltitude( stack, nil, true )
         local angels = self:_GetAngels( stackalt )
         stacktext = string.format( "Marshal Stack %d, Angels %d\n", stack, angels )
 
@@ -18018,7 +18018,7 @@ function AIRBOSS:_MarkMarshalZone( _unitName, flare )
         local zoneThree = self:_GetZoneCommence( case, stack )
 
         -- Pattern altitude.
-        local patternalt = self:_GetMarshalAltitude( stack, case )
+        local patternalt = self:_GetMarshalAltitude( stack, case, true )
 
         -- Flare and smoke at the ground.
         patternalt = 5
