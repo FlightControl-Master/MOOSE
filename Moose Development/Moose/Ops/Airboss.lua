@@ -2016,7 +2016,7 @@ function AIRBOSS:New( carriername, alias )
     local function flareme()
 
       -- Carrier pos.
-      self:GetCoordinate():FlareYellow()
+      self.carrier:GetVector():Flare( FLARECOLOR.Yellow )
 
       -- Stern
       stern:FlareYellow()
@@ -6631,10 +6631,6 @@ function AIRBOSS:_LandAI( flight )
 
   -- Landing waypoint 5 NM behind carrier at 2000 ft = 610 meters ASL.
   wp[#wp + 1] = Carrier:Translate( UTILS.NMToMeters( 4 ), hdg - 160 ):GetCoordinate():SetAltitude( alt ):WaypointAirLanding( Speed, self.airbase, nil, "Landing" )
-  -- wp[#wp+1]=Carrier:Translate(UTILS.NMToMeters(4), hdg-160):SetAltitude(alt):WaypointAirLandingReFu(Speed, self.airbase, nil, "Landing")
-
-  -- wp[#wp+1]=self:GetCoordinate():Translate(UTILS.NMToMeters(3), hdg-160):SetAltitude(alt):WaypointAirTurningPoint(nil,Speed, {}, "Before Initial") ---WaypointAirLanding(Speed, self.airbase, nil, "Landing")
-  -- wp[#wp+1]=self:GetCoordinate():WaypointAirLanding(Speed, self.airbase, nil, "Landing")
 
   -- Reinit waypoints.
   flight.group:WayPointInitialize( wp )
@@ -6844,7 +6840,8 @@ function AIRBOSS:_AddMarshalGroup( flight, stack )
   table.insert( self.Qmarshal, flight )
 
   -- Pressure.
-  local P = UTILS.hPa2inHg( self:GetCoordinate():GetPressure() )
+  local _, pressure = self.carrier:GetVector():GetTemperaturAndPressure()
+  local P = UTILS.hPa2inHg( pressure / 100 )
 
   -- Stack altitude.
   -- local alt=UTILS.MetersToFeet(self:_GetMarshalAltitude(stack, flight.case))
@@ -10527,7 +10524,6 @@ function AIRBOSS:_GetSternCoord()
 
   -- Stern coordinate (sterndist<0). Also translate 10 meters starboard wrt Final bearing.
   self.sterncoord:UpdateFromVec3( self.carrier:GetVec3() )
-  -- local stern=self:GetCoordinate()
 
   -- Stern coordinate (sterndist<0). --Pene testing Case III
   if self.carriertype==AIRBOSS.CarrierType.INVINCIBLE or self.carriertype==AIRBOSS.CarrierType.HERMES or self.carriertype==AIRBOSS.CarrierType.TARAWA or self.carriertype==AIRBOSS.CarrierType.AMERICA or self.carriertype==AIRBOSS.CarrierType.JCARLOS or self.carriertype==AIRBOSS.CarrierType.CANBERRA then
@@ -17642,12 +17638,10 @@ function AIRBOSS:_DisplayCarrierWeather( _unitname )
     -- Message text.
     local text = ""
 
-    -- Current coordinates.
-    local coord = self:GetCoordinate()
-
     -- Get atmospheric data at carrier location.
-    local T = coord:GetTemperature()
-    local P = coord:GetPressure()
+    local temperature, pressure = self.carrier:GetVector():GetTemperaturAndPressure()
+    local T = temperature - 273.15 -- Kelvin to degrees Celsius.
+    local P = pressure / 100 -- Pascals to hPa.
 
     -- Get wind direction (magnetic) and strength.
     local Wd, Ws = self:GetWind( nil, true )
