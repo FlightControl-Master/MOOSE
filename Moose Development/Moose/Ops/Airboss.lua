@@ -6779,11 +6779,11 @@ function AIRBOSS:_GetCharlieTime( flightgroup )
       if flight.holding == nil then
         -- Flight is on its way to the marshal stack.
 
-        -- Coordinate of the holding zone.
-        local holdingzone = self:_GetZoneHolding( flight.case, 1 ):GetCoordinate()
+        -- Center of the holding zone.
+        local holdingposition = self:_GetZoneHolding( flight.case, 1 ):GetVec2()
 
         -- Distance to holding zone.
-        local d0 = holdingzone:Get2DDistance( flight.group:GetCoordinate() )
+        local d0 = flight.group:GetVector():GetDistance( holdingposition, true )
 
         -- Current velocity.
         local v0 = flight.group:GetVelocityMPS()
@@ -7350,7 +7350,7 @@ function AIRBOSS:_CreateFlightGroup( group )
     flight.groupname = group:GetName()
     flight.nunits = #group:GetUnits()
     flight.time = timer.getAbsTime()
-    flight.dist0 = group:GetCoordinate():Get2DDistance( self:GetCoordinate() )
+    flight.dist0 = group:GetVector():GetDistance( self.carrier:GetVec3(), true )
     flight.flag = -100
     flight.ai = not human
     flight.actype = group:GetTypeName()
@@ -17091,8 +17091,8 @@ function AIRBOSS:_SetSection( _unitName )
 
     if playerData then
 
-      -- Coordinate of flight lead.
-      local mycoord = _unit:GetCoordinate()
+      -- Position of flight lead.
+      local myposition = _unit:GetVector()
 
       -- Max distance up to which section members are allowed.
       local dmax = self.maxsectiondistance
@@ -17133,7 +17133,7 @@ function AIRBOSS:_SetSection( _unitName )
           if flight.ai == false and flight.groupname ~= playerData.groupname and #flight.section == 0 and flight.seclead == flight.name then
 
             -- Distance (3D) to other flight group.
-            local distance = flight.group:GetCoordinate():Get3DDistance( mycoord )
+            local distance = flight.group:GetVector():GetDistance( myposition )
 
             -- Check distance.
             if distance < dmax then
