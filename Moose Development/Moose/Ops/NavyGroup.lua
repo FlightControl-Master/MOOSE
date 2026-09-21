@@ -35,7 +35,9 @@
 --- NAVYGROUP class.
 -- @type NAVYGROUP
 -- @field #boolean turning If true, group is currently turning.
--- @field #NAVYGROUP.IntoWind intowind Into wind info.
+-- @field #NAVYGROUP.IntoWind intowind Active timed into-wind window, if any.
+-- @field #NAVYGROUP.IntoWindManeuver intoWindManeuver Current navigation maneuver, independent of time windows.
+-- @field #number intoWindRouteRevision Revision of the current into-wind route; guards scheduled updates against superseded navigation orders.
 -- @field #table Qintowind Queue of "into wind" turns.
 -- @field #number intowindcounter Counter of into wind IDs.
 -- @field #number depth Ordered depth in meters.
@@ -67,6 +69,7 @@ NAVYGROUP = {
   turning         = false,
   intowind        = nil,
   intowindcounter = 0,
+  intoWindRouteRevision = 0,
   Qintowind       = {},
   pathCorridor    = nil,
   pathMinDepth    = 20,
@@ -75,11 +78,12 @@ NAVYGROUP = {
 
 --- Turn into wind parameters.
 -- @type NAVYGROUP.IntoWind
+-- @field #NAVYGROUP NavyGroup Group owning this timed window.
 -- @field #number Tstart Time to start.
 -- @field #number Tstop Time to stop.
--- @field #boolean ExternallyManaged If true, Tstop is informational; the owner must explicitly end or remove this maneuver.
+-- @field #NAVYGROUP.IntoWindManeuver Maneuver Navigation maneuver used by this time window.
 -- @field #boolean Uturn U-turn.
--- @field #number Speed Speed in knots.
+-- @field #number Speed Desired wind over deck in knots.
 -- @field #number Offset Offset angle in degrees.
 -- @field #number Id Unique ID of the turn.
 -- @field Ops.OpsGroup#OPSGROUP.Waypoint waypoint Turn into wind waypoint.
@@ -89,7 +93,47 @@ NAVYGROUP = {
 -- @field #boolean ReturnRequired A significant departure has occurred during this maneuver.
 -- @field #boolean Open Currently active.
 -- @field #boolean Over This turn is over.
+-- @field Wrapper.Unit#UNIT ReferenceUnit Optional ship used for wind, heading and speed measurements.
+-- @field #string BlockedReason Reason the last attempt to start this window was rejected, or nil.
+-- @field #string EndReason Completion reason, such as "completed", "aborted", "cancelled" or "expired".
+-- @field #function OnEnded Optional callback OnEnded(Maneuver, Reason); Maneuver is nil if the window never started.
 -- @field #boolean Recovery If `true` this is a recovery window. If `false`, this is a launch window. If `nil` this is just a turn into the wind.
+
+--- An immediate navigation order. It has no start time or deadline; its owner must end or abort it.
+-- @type NAVYGROUP.IntoWindManeuver
+-- @field #NAVYGROUP NavyGroup Group accepting this order.
+-- @field #string State "Active" or "Ended".
+-- @field #boolean Ready True when the submitted route is clear and the reference ship holds the achievable heading and speed.
+-- @field #string BlockedReason Reason readiness is withheld, or nil when ready.
+-- @field #number DeckWind Requested deck wind in knots.
+-- @field #number DeckAngle Runway offset clockwise from the ship's bow in degrees.
+-- @field Wrapper.Unit#UNIT ReferenceUnit Optional ship used for wind, heading and speed measurements.
+-- @field #number Heading Achievable true heading in degrees.
+-- @field #number ShipSpeed Achievable ship speed in knots.
+-- @field #boolean SpeedLimited True if the navigation order had to clamp the calculation's ship speed to group capability.
+-- @field #number InitialHeading True heading before this continuous maneuver began, in degrees.
+-- @field Core.Point#COORDINATE StartCoordinate Group position when the maneuver was accepted.
+-- @field Core.Point#COORDINATE DepartureCoordinate Position where the first significant departure from the original course began.
+-- @field #boolean ReturnRequired A significant course departure has occurred.
+-- @field Ops.OpsGroup#OPSGROUP.Waypoint waypoint Maneuver's route target.
+-- @field #number RouteRevision Revision assigned to this maneuver's latest route.
+-- @field #boolean RouteSubmitted True after the current maneuver's route has been submitted to DCS.
+-- @field #boolean PathValidated True when pathfinding has approved the current route, or pathfinding is disabled.
+-- @field #string EndReason Reason passed to the completion callback after the maneuver ends.
+-- @field #function OnEnded Optional callback called once as OnEnded(Maneuver, Reason), after cleanup.
+
+--- Options for immediate navigation into the wind.
+-- @type NAVYGROUP.IntoWindManeuverOptions
+-- @field #number DeckWind Finite, non-negative desired wind over deck in knots; default 20.
+-- @field #number DeckAngle Finite clockwise runway offset in degrees; default 0.
+-- @field Wrapper.Unit#UNIT ReferenceUnit Optional ship used for wind, heading and speed. Group route geometry still uses the group position.
+-- @field #function OnEnded Optional completion callback OnEnded(Maneuver, Reason), called once after release.
+
+--- Options for ending or aborting an immediate into-wind maneuver.
+-- @type NAVYGROUP.IntoWindEndOptions
+-- @field #boolean Uturn If true, permit return to DepartureCoordinate after a significant departure when navigation is available; default false.
+-- @field Core.Point#COORDINATE ReturnCoordinate Explicit return position, taking precedence over Uturn and ReturnRequired.
+-- @field #string Reason Completion reason; defaults to "completed" for EndIntoWind and "aborted" for AbortIntoWind.
 
 --- Engage Target.
 -- @type NAVYGROUP.Target
@@ -103,7 +147,7 @@ NAVYGROUP = {
 
 --- NavyGroup version.
 -- @field #string version
-NAVYGROUP.version="1.0.4"
+NAVYGROUP.version="1.1.0"
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -192,6 +236,50 @@ function NAVYGROUP:New(group)
   --- Pseudo Functions ---
   ------------------------
 
+  --- Submit the selected route through the FSM, subject to navigation and optional revision checks.
+  -- @function [parent=#NAVYGROUP] UpdateRoute
+  -- @param #NAVYGROUP self
+  -- @param #number n (Optional) First route waypoint index; default next waypoint.
+  -- @param #number N (Optional) Last route waypoint index; default final waypoint.
+  -- @param #number Speed (Optional) Override speed in knots for the submitted waypoints; default each waypoint's speed, with cruise speed replacing values below 0.1 m/s.
+  -- @param #number Depth (Optional) Override depth in meters; default current ordered depth, or each waypoint's depth if none is ordered.
+  -- @param #number IntoWindRevision (Optional) Internal wind-route revision captured by the caller; nil skips revision validation.
+
+  --- Trigger UpdateRoute after a delay, retaining the supplied arguments until execution.
+  -- @function [parent=#NAVYGROUP] __UpdateRoute
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds. A negative value uses its absolute delay and suppresses duplicate pending FSM events.
+  -- @param #number n (Optional) First route waypoint index; default next waypoint at execution.
+  -- @param #number N (Optional) Last route waypoint index; default final waypoint at execution.
+  -- @param #number Speed (Optional) Override speed in knots for the submitted waypoints.
+  -- @param #number Depth (Optional) Override depth in meters.
+  -- @param #number IntoWindRevision (Optional) Internal wind-route revision; rejects the update if the route has since changed.
+
+  --- User callback before the UpdateRoute event. Return false to reject the update.
+  -- @function [parent=#NAVYGROUP] OnBeforeUpdateRoute
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number n (Optional) First requested waypoint index.
+  -- @param #number N (Optional) Last requested waypoint index.
+  -- @param #number Speed (Optional) Requested speed override in knots.
+  -- @param #number Depth (Optional) Requested depth override in meters.
+  -- @param #number IntoWindRevision (Optional) Internal wind-route revision supplied with the event.
+  -- @return #boolean False rejects the update; other return values permit further FSM processing.
+
+  --- User callback after the UpdateRoute event. Internal guards may have skipped route submission.
+  -- @function [parent=#NAVYGROUP] OnAfterUpdateRoute
+  -- @param #NAVYGROUP self
+  -- @param #string From From state.
+  -- @param #string Event Event.
+  -- @param #string To To state.
+  -- @param #number n (Optional) First requested waypoint index.
+  -- @param #number N (Optional) Last requested waypoint index.
+  -- @param #number Speed (Optional) Requested speed override in knots.
+  -- @param #number Depth (Optional) Requested depth override in meters.
+  -- @param #number IntoWindRevision (Optional) Internal wind-route revision supplied with the event.
+
   --- Triggers the FSM event "Cruise".
   -- @function [parent=#NAVYGROUP] Cruise
   -- @param #NAVYGROUP self
@@ -215,13 +303,13 @@ function NAVYGROUP:New(group)
   --- Triggers the FSM event "TurnIntoWind".
   -- @function [parent=#NAVYGROUP] TurnIntoWind
   -- @param #NAVYGROUP self
-  -- @param #NAVYGROUP.IntoWind Into wind parameters.
+  -- @param #NAVYGROUP.IntoWind IntoWind Queued window to start.
 
   --- Triggers the FSM event "TurnIntoWind" after a delay.
   -- @function [parent=#NAVYGROUP] __TurnIntoWind
   -- @param #NAVYGROUP self
   -- @param #number delay Delay in seconds.
-  -- @param #NAVYGROUP.IntoWind Into wind parameters.
+  -- @param #NAVYGROUP.IntoWind IntoWind Queued window to start.
 
   --- On after "TurnIntoWind" event.
   -- @function [parent=#NAVYGROUP] OnAfterTurnIntoWind
@@ -229,7 +317,7 @@ function NAVYGROUP:New(group)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
-  -- @param #NAVYGROUP.IntoWind Into wind parameters.
+  -- @param #NAVYGROUP.IntoWind IntoWind Queued window to start.
 
 
   --- Triggers the FSM event "TurnedIntoWind".
@@ -323,11 +411,13 @@ function NAVYGROUP:New(group)
   --- Triggers the FSM event "CollisionWarning".
   -- @function [parent=#NAVYGROUP] CollisionWarning
   -- @param #NAVYGROUP self
+  -- @param #number Distance Checked clear distance in meters before an obstacle.
 
   --- Triggers the FSM event "CollisionWarning" after a delay.
   -- @function [parent=#NAVYGROUP] __CollisionWarning
   -- @param #NAVYGROUP self
   -- @param #number delay Delay in seconds.
+  -- @param #number Distance Checked clear distance in meters before an obstacle.
 
   --- On after "CollisionWarning" event.
   -- @function [parent=#NAVYGROUP] OnAfterCollisionWarning
@@ -335,6 +425,7 @@ function NAVYGROUP:New(group)
   -- @param #string From From state.
   -- @param #string Event Event.
   -- @param #string To To state.
+  -- @param #number Distance Checked clear distance in meters before an obstacle.
 
 
   --- Triggers the FSM event "ClearAhead".
@@ -359,7 +450,7 @@ function NAVYGROUP:New(group)
   -- @param #NAVYGROUP self
   -- @param Core.Point#COORDINATE Coordinate Detour destination.
   -- @param #number Speed (Optional) Speed in knots. Default cruise speed.
-  -- @param #number Depth (Optional) Depth in meters for submarines. Default 0.
+  -- @param #number Depth (Optional) Depth in feet for submarines, passed to AddWaypoint. Default 0.
   -- @param #boolean ResumeRoute True resumes the route at arrival; false or nil stops at the detour point.
 
   --- Send the group to a detour point after a delay.
@@ -368,7 +459,7 @@ function NAVYGROUP:New(group)
   -- @param #number delay Delay in seconds.
   -- @param Core.Point#COORDINATE Coordinate Detour destination.
   -- @param #number Speed (Optional) Speed in knots. Default cruise speed.
-  -- @param #number Depth (Optional) Depth in meters for submarines. Default 0.
+  -- @param #number Depth (Optional) Depth in feet for submarines, passed to AddWaypoint. Default 0.
   -- @param #boolean ResumeRoute True resumes the route at arrival; false or nil stops at the detour point.
 
   --- Triggers the FSM event "Dive".
@@ -465,8 +556,8 @@ end
 -- SetPathfindingMinDepth() configures depth separately. Profiles assume linear terrain between their points;
 -- three parallel checks do not cover the entire corridor or simulate the ship's turning arc.
 -- @param #NAVYGROUP self
--- @param #boolean Switch If true, enable pathfinding.
--- @param #number CorridorWidth (Optional) Total water corridor width in meters. Default: widest ship plus 10 m on each side; 50 m if dimensions are unavailable. Zero checks only the center line.
+-- @param #boolean Switch Required boolean; true enables pathfinding, false disables it.
+-- @param #number CorridorWidth (Optional) Finite, non-negative total water corridor width in meters. Omission restores automatic width: widest ship plus 10 m on each side, or 50 m if dimensions are unavailable. Zero checks only the center line.
 -- @return #NAVYGROUP self
 function NAVYGROUP:SetPathfinding(Switch, CorridorWidth)
 
@@ -540,10 +631,14 @@ end
 -- @param #number MaxAttempts (Optional) Positive integer attempt limit including the initial search; default 5.
 -- @return #NAVYGROUP self.
 function NAVYGROUP:SetPathfindingGrid(MaxCells, GrowthFactor, MaxAttempts)
+
+  -- Reuse GRID validation and defaults so naval planning follows the same configuration rules.
   local config=GRID:New("Naval configuration",GRID.Type.RECTANGLE):SetMaxCells(MaxCells):SetExpansion(GrowthFactor,MaxAttempts):GetOptions()
+
   self.pathMaxCells=config.MaxCells
   self.pathGrowthFactor=config.Expansion.GrowthFactor
   self.pathMaxAttempts=config.Expansion.MaxAttempts
+
   return self
 end
 
@@ -553,9 +648,15 @@ end
 -- @param #number Interval (Optional) Positive finite seconds; default 60.
 -- @return #NAVYGROUP self.
 function NAVYGROUP:SetPathfindingRetry(Interval)
-  if Interval==nil then Interval=60 end
+
+  if Interval==nil then
+    Interval=60
+  end
+
   assert(type(Interval)=="number" and Interval>0 and Interval<math.huge,"NAVYGROUP: retry interval must be finite and positive")
+
   self.pathRetryInterval=Interval
+
   return self
 end
 
@@ -575,11 +676,11 @@ end
 --- Add a *scheduled* task.
 -- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
--- @param #string Clock Time when to start the attack.
--- @param #number Radius (Optional) Radius in meters. Default 100 m.
--- @param #number Nshots (Optional) Number of shots to fire. Default 3.
+-- @param #string Clock (Optional) Mission clock string or numeric delay in seconds. Default in 5 seconds.
+-- @param #number Radius (Optional) Firing-area radius in meters. Omission leaves the DCS task radius unset.
+-- @param #number Nshots (Optional) Number of shots to fire. Omission leaves the ammunition expenditure unlimited.
 -- @param #number WeaponType (Optional) Type of weapon. Default auto.
--- @param #number Prio Priority of the task.
+-- @param #number Prio (Optional) Priority of the task. Default 50.
 -- @return Ops.OpsGroup#OPSGROUP.Task The task data.
 function NAVYGROUP:AddTaskFireAtPoint(Coordinate, Clock, Radius, Nshots, WeaponType, Prio)
 
@@ -593,13 +694,13 @@ end
 --- Add a *waypoint* task.
 -- @param #NAVYGROUP self
 -- @param Core.Point#COORDINATE Coordinate Coordinate of the target.
--- @param Ops.OpsGroup#OPSGROUP.Waypoint (Optional) Waypoint Where the task is executed. Default is next waypoint.
--- @param #number Radius (Optional) Radius in meters. Default 100 m.
--- @param #number Nshots (Optional) Number of shots to fire. Default 3.
+-- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint (Optional) Where the task is executed. Default is next waypoint.
+-- @param #number Radius (Optional) Firing-area radius in meters. Omission leaves the DCS task radius unset.
+-- @param #number Nshots (Optional) Number of shots to fire. Omission leaves the ammunition expenditure unlimited.
 -- @param #number WeaponType (Optional) Type of weapon. Default auto.
 -- @param #number Prio (Optional) Priority of the task. Defaults to 50.
 -- @param #number Duration (Optional) Duration in seconds after which the task is cancelled. Default *never*.
--- @return Ops.OpsGroup#OPSGROUP.Task The task table.
+-- @return Ops.OpsGroup#OPSGROUP.Task The task table, or nil when no waypoint is available.
 function NAVYGROUP:AddTaskWaypointFireAtPoint(Coordinate, Waypoint, Radius, Nshots, WeaponType, Prio, Duration)
 
   Waypoint=Waypoint or self:GetWaypointNext()
@@ -615,9 +716,9 @@ end
 --- Add a *scheduled* task.
 -- @param #NAVYGROUP self
 -- @param Wrapper.Group#GROUP TargetGroup Target group.
--- @param #number WeaponExpend (Optional) How much weapons does are used.
+-- @param DCS#AI.Task.WeaponExpend WeaponExpend (Optional) Weapon expenditure per attack. Default "Auto".
 -- @param #number WeaponType (Optional) Type of weapon. Default auto.
--- @param #string Clock (Optional) Time when to start the attack.
+-- @param #string Clock (Optional) Mission clock string or numeric delay in seconds. Default in 5 seconds.
 -- @param #number Prio (Optional) Priority of the task. Defaults to 50.
 -- @return Ops.OpsGroup#OPSGROUP.Task The task data.
 function NAVYGROUP:AddTaskAttackGroup(TargetGroup, WeaponExpend, WeaponType, Clock, Prio)
@@ -685,9 +786,9 @@ function NAVYGROUP:_CreateTurnIntoWind(starttime, stoptime, speed, uturn, offset
 
   -- Recovery window.
   local recovery={} --#NAVYGROUP.IntoWind
+  recovery.NavyGroup=self
   recovery.Tstart=Tstart
   recovery.Tstop=Tstop
-  recovery.ExternallyManaged=false
   recovery.Open=false
   recovery.Over=false
   recovery.Speed=speed or 20
@@ -700,7 +801,8 @@ end
 
 --- Optional behavior for a turn into wind.
 -- @type NAVYGROUP.IntoWindOptions
--- @field #boolean ExternallyManaged If true, Tstop does not end the maneuver automatically; the owner must end or remove it explicitly. Default false. AIRBOSS uses this to own recovery deadlines and extensions.
+-- @field Wrapper.Unit#UNIT ReferenceUnit Optional ship used for wind, heading and speed measurements.
+-- @field #function OnEnded Optional callback called once as OnEnded(Maneuver, Reason). Maneuver is nil if the window is removed before starting.
 
 --- Add a time window during which the group steams into the wind.
 -- For AIRBOSS recovery, use AIRBOSS:AddRecoveryWindow so flight management and navigation share the same recovery plan.
@@ -722,7 +824,8 @@ function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset, Op
   end
 
   Options=Options or {}
-  recovery.ExternallyManaged=Options.ExternallyManaged==true
+  recovery.ReferenceUnit=Options.ReferenceUnit
+  recovery.OnEnded=Options.OnEnded
   
   --TODO: check if window is overlapping with an other and if extend the window.
   
@@ -735,7 +838,7 @@ end
 --- Get "Turn Into Wind" data. You can specify a certain ID.
 -- @param #NAVYGROUP self
 -- @param #number TID (Optional) Turn Into wind ID. If not given, the currently open "Turn into Wind" data is return (if there is any).
--- @return #NAVYGROUP.IntoWind Turn into window data table.
+-- @return #NAVYGROUP.IntoWind Window data, or nil if the requested window is absent or no current window is open.
 function NAVYGROUP:GetTurnIntoWind(TID)
 
   if TID then
@@ -763,6 +866,7 @@ end
 -- @param #number Duration (Optional) Duration in seconds. Default 300 sec.
 -- @param #NAVYGROUP.IntoWind TurnIntoWind (Optional) Turn into window data table. If not given, the currently open one is used (if there is any).
 -- @return #NAVYGROUP self
+-- @return #boolean True when the selected window was found and extended; false for an unknown or completed window.
 function NAVYGROUP:ExtendTurnIntoWind(Duration, TurnIntoWind)
 
   Duration=Duration or 300
@@ -773,39 +877,51 @@ function NAVYGROUP:ExtendTurnIntoWind(Duration, TurnIntoWind)
   -- Get turn data.
   local turn=self:GetTurnIntoWind(TID)
   
-  if turn then
+  if turn and (not TurnIntoWind or turn==TurnIntoWind) and not turn.Over then
     turn.Tstop=turn.Tstop+Duration
     self:T(self.lid..string.format("Extending turn into wind by %d seconds. New stop time is %s", Duration, UTILS.SecondsToClock(turn.Tstop)))
   else
     self:E(self.lid.."Could not get turn into wind to extend!")
   end
 
-  return self
+  return self, turn~=nil and (not TurnIntoWind or turn==TurnIntoWind) and not turn.Over
 end
 
 
 --- Remove steam into wind window from queue. If the window is currently active, it is stopped first.
 -- @param #NAVYGROUP self
 -- @param #NAVYGROUP.IntoWind IntoWindData Turn into window data table.
+-- @param #boolean Abort (Optional) Bypass stop-event vetoes and release this window's own navigation order.
 -- @return #NAVYGROUP self
-function NAVYGROUP:RemoveTurnIntoWind(IntoWindData)
+-- @return #boolean True when this exact window was removed or was already completed.
+-- @return #string Optional failure reason.
+function NAVYGROUP:RemoveTurnIntoWind(IntoWindData, Abort)
 
-  -- Check if this is a window currently open.
-  if self.intowind and self.intowind.Id==IntoWindData.Id then
-    self:TurnIntoWindStop()
-    return self
-  end  
-
-  for i,_tiw in pairs(self.Qintowind) do
-    local tiw=_tiw --#NAVYGROUP.IntoWind
-    if tiw.Id==IntoWindData.Id then
-      --env.info("FF removing window "..tiw.Id)
-      table.remove(self.Qintowind, i)
-      break
-    end
+  -- Match the exact queued window so an unrelated or already replaced request cannot be removed.
+  if not IntoWindData or IntoWindData.NavyGroup~=self then
+    return self, false, "invalid_window"
   end
-  
-  return self
+  if IntoWindData.Over then
+    return self, true
+  end
+  if self:GetTurnIntoWind(IntoWindData.Id)~=IntoWindData then
+    return self, false, "invalid_window"
+  end
+
+  if self.intowind==IntoWindData then
+
+    if Abort then
+      local success,reason=self:AbortIntoWind(IntoWindData.Maneuver, {Uturn=IntoWindData.Uturn, Reason="aborted"})
+      return self, success, reason
+    end
+
+    -- Regular removal honors the mission's stop-event callbacks.
+    self:TurnIntoWindStop()
+    return self, IntoWindData.Over==true, not IntoWindData.Over and "stop_rejected" or nil
+  end
+
+  self:_CompleteTurnIntoWindWindow(IntoWindData, "cancelled")
+  return self, true
 end
 
 
@@ -845,15 +961,12 @@ function NAVYGROUP:IsTurning()
   return self.turning
 end
 
---- Check if the group is currently steaming into the wind.
+--- Check whether an immediate into-wind navigation order is active.
+-- Acceptance does not imply readiness; inspect Ready on the maneuver returned by GetIntoWindManeuver for alignment and route clearance.
 -- @param #NAVYGROUP self
--- @return #boolean If true, group is currently steaming into the wind.
+-- @return #boolean True while a maneuver exists, including turns, alignment and blocked navigation.
 function NAVYGROUP:IsSteamingIntoWind()
-  if self.intowind then
-    return true
-  else
-    return false    
-  end
+  return self.intoWindManeuver~=nil
 end
 
 --- Check if the group is currently recovering aircraft.
@@ -947,6 +1060,7 @@ function NAVYGROUP:Status()
     
     -- Check into wind queue.
     self:_CheckTurnsIntoWind()
+    if self.intoWindManeuver then self:_RefreshIntoWindReadiness(self.intoWindManeuver) end
 
     -- Check ammo status.
     self:_CheckAmmoStatus()
@@ -1053,11 +1167,10 @@ function NAVYGROUP:Status()
       -- Into wind and turning status.
       local intowind="N/A"
       if self:IsSteamingIntoWind() then
-        local remaining=self.intowind.Tstop-timer.getAbsTime()
-        if self.intowind.ExternallyManaged then
-          intowind="External (planned "..UTILS.SecondsToClock(math.max(0, remaining), true)..")"
+        if self.intowind then
+          intowind=UTILS.SecondsToClock(self.intowind.Tstop-timer.getAbsTime(), true)
         else
-          intowind=UTILS.SecondsToClock(remaining, true)
+          intowind="Immediate"
         end
       end
       local turning=tostring(self:IsTurning())      
@@ -1277,9 +1390,21 @@ end
 -- @param #string To To state.
 -- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
 -- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
--- @param #number Speed Speed in knots to the next waypoint.
--- @param #number Depth Depth in meters to the next waypoint.
-function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Depth)
+-- @param #number Speed (Optional) Speed override in knots for all submitted waypoints.
+-- @param #number Depth (Optional) Depth override in meters for all submitted waypoints.
+-- @param #number IntoWindRevision (Optional) Captured wind-route revision. Rejects the update if that route has since changed; nil skips this check.
+-- @return #boolean True when the route update is allowed; false when navigation or the revision check blocks it.
+function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Depth, IntoWindRevision)
+
+  -- A delayed command must not apply old speed or waypoint arguments to a newer wind route.
+  if IntoWindRevision and IntoWindRevision~=(self.intoWindRouteRevision or 0) then
+    return false
+  end
+
+  -- Wait until pathfinding has checked the route before sending it to DCS.
+  if self.intoWindManeuver and self.pathfindingOn and not self.intoWindManeuver.PathValidated then
+    return false
+  end
 
   -- Is transition allowed? We assume yes until proven otherwise.
   local allowed=true
@@ -1364,20 +1489,34 @@ end
 -- @param #string To To state.
 -- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
 -- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
--- @param #number Speed Speed in knots to the next waypoint.
--- @param #number Depth Depth in meters to the next waypoint.
-function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
+-- @param #number Speed (Optional) Speed override in knots for all submitted waypoints.
+-- @param #number Depth (Optional) Depth override in meters for all submitted waypoints.
+-- @param #number IntoWindRevision (Optional) Captured wind-route revision. Rechecked after user callbacks; nil skips this check.
+function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth, IntoWindRevision)
+
+  -- User OnBeforeUpdateRoute callbacks may end or replace the order after the first guard ran.
+  if IntoWindRevision and IntoWindRevision~=(self.intoWindRouteRevision or 0) then
+    return
+  end
+
+  if self.intoWindManeuver and self.pathfindingOn and not self.intoWindManeuver.PathValidated then
+    return
+  end
 
   -- Update route from this waypoint number onwards.
   n=n or self:GetWaypointIndexNext()
   
   -- Max index.
-  N=N or #self.waypoints  
+  N=N or #self.waypoints
   N=math.min(N, #self.waypoints)
+
   -- Issue only the checked part of a rolling into-wind route.
   if self.pathfindingOn then
     for i=n,N do
-      if self.waypoints[i].astarReplan then N=i break end
+      if self.waypoints[i].astarReplan then
+        N=i
+        break
+      end
     end
   end
   
@@ -1445,6 +1584,14 @@ function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
 
     -- Route group to all defined waypoints remaining.
     self:Route(waypoints)
+
+    -- Acceptance alone is not readiness: record whether the submitted route actually serves this maneuver.
+    local maneuver=self.intoWindManeuver
+
+    if maneuver and n<=self:GetWaypointIndexNext() then
+      local target=self:_GetPathfindingTarget()
+      maneuver.RouteSubmitted=target==maneuver.waypoint
+    end
     
   else
   
@@ -1464,7 +1611,9 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
+-- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint Passed waypoint, including temporary navigation or pathfinding points.
 function NAVYGROUP:onafterPassingWaypoint(From, Event, To, Waypoint)
+
   -- Preserve OPSGROUP task and route handling.
   OPSGROUP.onafterPassingWaypoint(self, From, Event, To, Waypoint)
 
@@ -1480,7 +1629,7 @@ end
 -- @param #string To To state.
 -- @param Core.Point#COORDINATE Coordinate Coordinate where to go.
 -- @param #number Speed Speed in knots. Default cruise speed.
--- @param #number Depth Depth in meters. Default 0 meters.
+-- @param #number Depth Depth in feet, passed to AddWaypoint. Default 0.
 -- @param #boolean ResumeRoute True resumes the route at arrival; false or nil stops at the detour point and waits for further commands.
 function NAVYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Depth, ResumeRoute)
     
@@ -1514,106 +1663,511 @@ function NAVYGROUP:onafterDetourReached(From, Event, To)
   self:T(self.lid.."Group reached detour coordinate.")
 end
 
---- On after "TurnIntoWind" event.
+--- Check whether a queued window can start its own into-wind maneuver.
 -- @param #NAVYGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #NAVYGROUP.IntoWind Into wind parameters.
+-- @param #NAVYGROUP.IntoWind IntoWind Queued window to start.
+-- @return #boolean True when the window still belongs to this group and navigation is available; false or nil otherwise.
+function NAVYGROUP:onbeforeTurnIntoWind(From, Event, To, IntoWind)
+
+  return IntoWind and IntoWind.NavyGroup==self and not IntoWind.Over
+    and self:GetTurnIntoWind(IntoWind.Id)==IntoWind and not self.intoWindManeuver
+    and not self:IsEngaging() and (self.taskcurrent or 0)==0
+end
+
+--- Start navigation for a queued window after the TurnIntoWind event is accepted.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #NAVYGROUP.IntoWind IntoWind Queued window to start.
 function NAVYGROUP:onafterTurnIntoWind(From, Event, To, IntoWind)
 
-  -- Calculate heading and speed of ship.
-  local heading, speed=self:GetHeadingIntoWind(IntoWind.Offset, IntoWind.Speed)
+  -- OnBeforeTurnIntoWind is allowed to change the queue, so validate its result again.
+  if not IntoWind or IntoWind.Over or self:GetTurnIntoWind(IntoWind.Id)~=IntoWind
+    or IntoWind.NavyGroup~=self or timer.getAbsTime()>=IntoWind.Tstop then
+    return
+  end
 
-  -- Apply the same return-route policy to all into-wind maneuvers.
-  IntoWind.InitialHeading=self:GetHeading()
-  local delta=math.abs((heading-IntoWind.InitialHeading+180)%360-180)
-  local _, windspeed=self:GetWind()
-  IntoWind.ReturnRequired=delta>5 and windspeed>=0.1
-  IntoWind.Uturn=IntoWind.Uturn and IntoWind.ReturnRequired
-  
-  IntoWind.Heading=heading
+  -- The timed window owns the maneuver; its completion callback closes the window after navigation cleanup.
+  local maneuver,reason=self:BeginIntoWind({DeckWind=IntoWind.Speed, DeckAngle=IntoWind.Offset,
+    ReferenceUnit=IntoWind.ReferenceUnit,
+    OnEnded=function(_, Reason) self:_CompleteTurnIntoWindWindow(IntoWind, Reason) end})
+
+  if not maneuver then
+    IntoWind.BlockedReason=reason
+    return
+  end
+
+  if maneuver.State~="Active" then
+    return
+  end
+
+  IntoWind.Maneuver=maneuver
   IntoWind.Open=true
-  
-  -- Get coordinate.
-  IntoWind.Coordinate=self:GetCoordinate(true)
-  
-  -- Set current into wind parameters.
+  IntoWind.BlockedReason=nil
   self.intowind=IntoWind
 
-  -- Debug info.
-  self:T(self.lid..string.format("Steaming into wind: Heading=%03d Speed=%.1f, Tstart=%d Tstop=%d", IntoWind.Heading, speed, IntoWind.Tstart, IntoWind.Tstop))
-  
-  self:_SetTurnIntoWindRoute(IntoWind, heading, speed)
-  
-  if IntoWind.Uturn and false then
-    IntoWind.Coordinate:MarkToAll("Return coord")
-  end
-  
+  self:_SyncTurnIntoWindWindow(IntoWind)
 end
 
--- Replace only this maneuver's route; never resume the normal route in between.
-function NAVYGROUP:_SetTurnIntoWindRoute(IntoWind, Heading, Speed)
-  if IntoWind.waypoint then
-    local uid=IntoWind.waypoint.uid
-    for i=#self.waypoints,1,-1 do
-      local wp=self.waypoints[i]
-      if wp.astar and wp.astarTargetUID==uid then
-        self:RemoveWaypointByID(wp.uid, false)
-      end
+--- Copy maneuver information into the legacy fields of a timed window.
+-- The maneuver remains the source of navigation state; these fields are compatibility snapshots.
+-- @param #NAVYGROUP self
+-- @param #NAVYGROUP.IntoWind Window Window whose maneuver information is copied, if a maneuver exists.
+function NAVYGROUP:_SyncTurnIntoWindWindow(Window)
+
+  local maneuver=Window.Maneuver
+
+  if maneuver then
+    Window.Heading=maneuver.Heading
+    Window.InitialHeading=maneuver.InitialHeading
+    Window.ReturnRequired=maneuver.ReturnRequired
+    Window.Coordinate=maneuver.DepartureCoordinate or maneuver.StartCoordinate
+    Window.waypoint=maneuver.waypoint
+  end
+end
+
+--- Close and dequeue a timed window, then notify its completion callbacks once.
+-- Handles both completed maneuvers and windows cancelled or expired before starting.
+-- @param #NAVYGROUP self
+-- @param #NAVYGROUP.IntoWind Window Window to complete. Already completed windows are left unchanged.
+-- @param #string Reason Completion reason passed to AIRBOSS through Window.EndReason and to Window.OnEnded.
+function NAVYGROUP:_CompleteTurnIntoWindWindow(Window, Reason)
+
+  if Window.Over then
+    return
+  end
+
+  -- Mark and dequeue first so callbacks cannot complete the same window a second time.
+  Window.Over=true
+  Window.Open=false
+  Window.EndReason=Reason
+
+  if self.intowind==Window then
+    self.intowind=nil
+  end
+
+  for i=#self.Qintowind,1,-1 do
+    if self.Qintowind[i]==Window then
+      table.remove(self.Qintowind,i)
+      break
     end
+  end
+
+  -- Keep notification failures isolated from navigation cleanup and from the next callback.
+  if self.airboss then
+    local ok,err=pcall(self.airboss._OnNavyIntoWindOver,self.airboss,Window)
+
+    if not ok then
+      self:E(self.lid.."Into-wind window callback failed: "..tostring(err))
+    end
+  end
+
+  if Window.OnEnded then
+    local ok,err=pcall(Window.OnEnded,Window.Maneuver,Reason)
+
+    if not ok then
+      self:E(self.lid.."Into-wind window completion callback failed: "..tostring(err))
+    end
+  end
+end
+
+--- Begin an immediate into-wind navigation order, without creating a time window.
+-- Only one order can be active. Acceptance does not imply navigational readiness.
+-- @param #NAVYGROUP self
+-- @param #NAVYGROUP.IntoWindManeuverOptions Options (Optional) Desired navigation and completion callback; defaults to 20 knots deck wind and zero deck angle.
+-- @return #NAVYGROUP.IntoWindManeuver Accepted maneuver, or nil.
+-- @return #string Optional rejection reason.
+function NAVYGROUP:BeginIntoWind(Options)
+
+  -- Immediate orders are exclusive and must not take navigation away from an active task.
+  if self.intoWindManeuver then
+    return nil, "busy"
+  end
+
+  if self:IsEngaging() or (self.taskcurrent or 0)>0 then
+    return nil, "busy"
+  end
+
+  if not self:IsAlive() or self:IsStopped() then
+    return nil, "unavailable"
+  end
+
+  Options=Options or {}
+
+  if Options.ReferenceUnit and not Options.ReferenceUnit:IsAlive() then
+    return nil, "reference_unavailable"
+  end
+
+  -- Preserve the original heading so later window updates can detect the first significant departure.
+  local heading
+
+  if Options.ReferenceUnit then
+    heading=Options.ReferenceUnit:GetHeading()
+  else
+    heading=self:GetHeading()
+  end
+
+  if heading==nil then
+    return nil, "reference_unavailable"
+  end
+
+  local maneuver={NavyGroup=self, State="Active", Ready=false, InitialHeading=heading,
+    DeckWind=Options.DeckWind or 20, DeckAngle=Options.DeckAngle or 0,
+    ReferenceUnit=Options.ReferenceUnit, OnEnded=Options.OnEnded, ReturnRequired=false,StartCoordinate=self:GetCoordinate(true)}
+
+  self.intoWindManeuver=maneuver
+
+  -- Use the normal update path for validation and route creation, including the first order.
+  local updated,reason=self:UpdateIntoWind(maneuver, {})
+
+  if not updated then
+
+    if self.intoWindManeuver==maneuver then
+      self.intoWindManeuver=nil
+    end
+
+    maneuver.State="Ended"
+    return nil,reason
+  end
+
+  return maneuver
+end
+
+--- Update an immediate maneuver in place, preserving its first significant route departure.
+-- Omitting a field preserves its previous value. No route change is issued if parameters are unchanged.
+-- @param #NAVYGROUP self
+-- @param #NAVYGROUP.IntoWindManeuver Maneuver Order returned by BeginIntoWind.
+-- @param #NAVYGROUP.IntoWindManeuverOptions Options (Optional) DeckWind, DeckAngle and ReferenceUnit values. Omitted fields and the original completion callback are preserved.
+-- @return #NAVYGROUP.IntoWindManeuver Updated maneuver, or nil.
+-- @return #string Optional rejection reason.
+function NAVYGROUP:UpdateIntoWind(Maneuver, Options)
+
+  if not Maneuver or Maneuver.NavyGroup~=self or self.intoWindManeuver~=Maneuver or Maneuver.State~="Active" then
+    return nil, "invalid_maneuver"
+  end
+
+  Options=Options or {}
+
+  local deckWind=Options.DeckWind or Maneuver.DeckWind
+  local deckAngle=Options.DeckAngle or Maneuver.DeckAngle
+  local reference=Options.ReferenceUnit or Maneuver.ReferenceUnit
+
+  -- Validate before changing the accepted order, leaving its previous route intact on rejection.
+  if type(deckWind)~="number" or deckWind~=deckWind or deckWind<0 or deckWind==math.huge
+    or type(deckAngle)~="number" or deckAngle~=deckAngle or math.abs(deckAngle)==math.huge then
+    return nil, "invalid_options"
+  end
+
+  if reference and not reference:IsAlive() then
+    return nil, "reference_unavailable"
+  end
+
+  -- Repeated settings only refresh readiness; rebuilding the route would interrupt navigation unnecessarily.
+  if Maneuver.waypoint and deckWind==Maneuver.DeckWind and deckAngle==Maneuver.DeckAngle and reference==Maneuver.ReferenceUnit then
+    self:_RefreshIntoWindReadiness(Maneuver)
+    return Maneuver
+  end
+
+  if self:IsEngaging() or (self.taskcurrent or 0)>0 then
+    return nil,"busy"
+  end
+
+  local heading,speed=self:GetHeadingIntoWind(deckAngle,deckWind,reference)
+
+  if not heading or not speed then
+    return nil, "reference_unavailable"
+  end
+
+  -- Readiness uses the speed the group can actually achieve, even if the requested deck wind is out of reach.
+  heading=heading%360
+  local shipSpeed=math.max(0,math.min(speed,UTILS.KmphToKnots(self.speedMax)))
+  local _,windSpeed=self:GetWind(18,reference)
+  local departure=math.abs((heading-Maneuver.InitialHeading+180)%360-180)>5 and windSpeed>=0.1
+
+  -- Keep the first departure position across all updates of this continuous maneuver.
+  if departure and not Maneuver.ReturnRequired then
+    Maneuver.DepartureCoordinate=self:GetCoordinate(true)
+  end
+
+  Maneuver.ReturnRequired=Maneuver.ReturnRequired or departure
+  Maneuver.DeckWind=deckWind
+  Maneuver.DeckAngle=deckAngle
+  Maneuver.ReferenceUnit=reference
+  Maneuver.Heading=heading
+  Maneuver.ShipSpeed=shipSpeed
+  Maneuver.SpeedLimited=shipSpeed~=speed
+  Maneuver.Ready=false
+  Maneuver.BlockedReason="aligning"
+
+  self:_SetIntoWindRoute(Maneuver)
+
+  -- Route event callbacks may have ended the maneuver during submission.
+  if self.intoWindManeuver~=Maneuver or Maneuver.State~="Active" then
+    return nil,"ended"
+  end
+
+  return Maneuver
+end
+
+--- Remove the target and associated pathfinding waypoints belonging to an immediate maneuver.
+-- Other NAVYGROUP route points, tasks and schedulers remain intact.
+-- @param #NAVYGROUP self
+-- @param #NAVYGROUP.IntoWindManeuver Maneuver Order whose navigation waypoints are removed.
+function NAVYGROUP:_RemoveIntoWindRoute(Maneuver)
+
+  local waypoint=Maneuver.waypoint
+
+  if not waypoint then
+    return
+  end
+
+  -- Remove backwards because each removal changes waypoint indices. Submit the replacement route separately.
+  for i=#self.waypoints,1,-1 do
+    local wp=self.waypoints[i]
+
+    if wp==waypoint or (wp.astar and wp.astarTargetUID==waypoint.uid) then
+      self:RemoveWaypointByID(wp.uid,false)
+    end
+  end
+
+  if self.pathfindingTargetUID==waypoint.uid then
+    self.pathfindingTargetUID=nil
+    self.pathfindingRetryAt=nil
     self.ispathfinding=false
     self:_ClearPathfindingDrawing()
-    self:RemoveWaypointByID(uid, false)
   end
-
-  local coord=self:GetCoordinate():Translate(UTILS.NMToMeters(1000), Heading)
-  local uid=self:GetWaypointCurrent().uid
-  local waypoint=self:AddWaypoint(coord, Speed, uid)
-  waypoint.intowind=true
-  IntoWind.waypoint=waypoint
 end
 
---- Update a queued or active into-wind maneuver without ending it.
--- Keeps the first significant route departure point across updates; this can first be reached in a later window.
+--- Replace an immediate maneuver's route target and submit a checked route towards it.
+-- Scheduled updates carry a revision to reject commands belonging to a superseded wind route.
+-- @param #NAVYGROUP self
+-- @param #NAVYGROUP.IntoWindManeuver Maneuver Order with the heading and ship speed to apply.
+function NAVYGROUP:_SetIntoWindRoute(Maneuver)
+
+  self:_RemoveIntoWindRoute(Maneuver)
+
+  -- Invalidate older scheduled updates before creating any replacement waypoints.
+  self.intoWindRouteRevision=(self.intoWindRouteRevision or 0)+1
+  Maneuver.RouteRevision=self.intoWindRouteRevision
+  Maneuver.RouteSubmitted=false
+  Maneuver.PathValidated=not self.pathfindingOn
+
+  -- A distant target maintains the into-wind heading. Pathfinding submits it in shorter checked sections.
+  local coord=self:GetCoordinate(true):Translate(UTILS.NMToMeters(1000),Maneuver.Heading)
+  local current=self:GetWaypointCurrent()
+  local waypoint=self:AddWaypoint(coord,Maneuver.ShipSpeed,current and current.uid,nil,false)
+  waypoint.intowind=true
+  Maneuver.waypoint=waypoint
+
+  if self.pathfindingOn then
+    self:_FindPathToNextWaypoint(true)
+  elseif self:IsHolding() or self:IsWaiting() then
+    self:Cruise()
+  else
+    self:UpdateRoute(nil,nil,nil,nil,self.intoWindRouteRevision)
+  end
+end
+
+--- Get the immediate maneuver and refresh its measured readiness without running a path search.
+-- @param #NAVYGROUP self
+-- @return #NAVYGROUP.IntoWindManeuver Active maneuver, or nil.
+function NAVYGROUP:GetIntoWindManeuver()
+
+  local maneuver=self.intoWindManeuver
+
+  if maneuver then
+    self:_RefreshIntoWindReadiness(maneuver)
+  end
+
+  return maneuver
+end
+
+--- Refresh an immediate maneuver's Ready flag and BlockedReason from current navigation measurements.
+-- Heading and speed tolerances apply to the achievable command, not to potentially unattainable deck wind.
+-- Does not submit routes or run a path search.
+-- @param #NAVYGROUP self
+-- @param #NAVYGROUP.IntoWindManeuver Maneuver Order to check; inactive or superseded orders are left unchanged.
+function NAVYGROUP:_RefreshIntoWindReadiness(Maneuver)
+
+  if self.intoWindManeuver~=Maneuver or Maneuver.State~="Active" then
+    return
+  end
+
+  local reference=Maneuver.ReferenceUnit
+  local reason
+  local nextWaypoint=self:GetWaypointNext()
+
+  -- An obstacle detour is not a usable recovery leg. A checked, straight rolling segment is.
+  local ownLeg=nextWaypoint and (nextWaypoint==Maneuver.waypoint or
+    (nextWaypoint.astarTargetUID==Maneuver.waypoint.uid and nextWaypoint.astarReplan and self.LastPathfindingResult
+      and self.LastPathfindingResult.StopReason=="direct_path"))
+
+  if not self:IsAlive() or (reference and not reference:IsAlive()) then
+    reason="reference_unavailable"
+  elseif self.pathfindingStopped or self.collisionwarning then
+    reason="path_blocked"
+  elseif not ownLeg then
+    reason="route_diversion"
+  elseif (self.taskcurrent or 0)>0 or self:IsEngaging() then
+    reason="task_override"
+  elseif self:IsHolding() or self:IsWaiting() or self:IsStopped() then
+    reason="navigation_stopped"
+  elseif not Maneuver.RouteSubmitted or not Maneuver.PathValidated then
+    reason="route_pending"
+  else
+
+    local heading
+
+    if reference then
+      heading=reference:GetHeading()
+    else
+      heading=self:GetHeading()
+    end
+
+    local speed=reference and reference:GetVelocityKNOTS() or UTILS.MpsToKnots(self:GetVelocity() or 0)
+
+    -- Require a steady course within two degrees and speed within one knot of the achievable command.
+    if not heading or self:IsTurning() or math.abs((heading-Maneuver.Heading+180)%360-180)>2
+      or math.abs(speed-Maneuver.ShipSpeed)>1 then
+      reason="aligning"
+    end
+  end
+
+  Maneuver.Ready=reason==nil
+  Maneuver.BlockedReason=reason
+end
+
+--- End an immediate maneuver and restore navigation. Repeating an already completed order is harmless.
+-- @param #NAVYGROUP self
+-- @param #NAVYGROUP.IntoWindManeuver Maneuver Order returned by BeginIntoWind.
+-- @param #NAVYGROUP.IntoWindEndOptions Options (Optional) Return behavior and completion reason; defaults to no return and "completed".
+-- @return #boolean True when this group's maneuver was ended or was already ended.
+-- @return #string "invalid_maneuver" if the order does not belong to this group or is no longer its active order.
+function NAVYGROUP:EndIntoWind(Maneuver, Options)
+
+  return self:_FinishIntoWind(Maneuver,Options)
+end
+
+--- Unconditionally release this order's navigation resources, without time-window stop-event vetoes.
+-- Does not stop NAVYGROUP or remove unrelated missions and tasks.
+-- @param #NAVYGROUP self
+-- @param #NAVYGROUP.IntoWindManeuver Maneuver Order returned by BeginIntoWind.
+-- @param #NAVYGROUP.IntoWindEndOptions Options (Optional) Same return options as EndIntoWind; defaults to no return and "aborted".
+-- @return #boolean True when this group's maneuver was aborted or was already ended.
+-- @return #string "invalid_maneuver" if the order does not belong to this group or is no longer its active order.
+function NAVYGROUP:AbortIntoWind(Maneuver, Options)
+
+  Options=Options or {}
+
+  return self:_FinishIntoWind(Maneuver,{Uturn=Options.Uturn,ReturnCoordinate=Options.ReturnCoordinate,Reason=Options.Reason or "aborted"})
+end
+
+--- Release an immediate maneuver, restore navigation when available, and notify its owner once.
+-- Shared cleanup path for normal completion and abort; unrelated tasks retain navigation control.
+-- @param #NAVYGROUP self
+-- @param #NAVYGROUP.IntoWindManeuver Maneuver Order to finish. Repeated completion of an owned, ended order succeeds.
+-- @param #NAVYGROUP.IntoWindEndOptions Options (Optional) Return behavior and completion reason; defaults to no return and "completed".
+-- @return #boolean True when the maneuver was ended or was already ended.
+-- @return #string "invalid_maneuver" on ownership or active-order mismatch; nil on success.
+function NAVYGROUP:_FinishIntoWind(Maneuver, Options)
+
+  if not Maneuver or Maneuver.NavyGroup~=self then
+    return false,"invalid_maneuver"
+  end
+
+  if Maneuver.State=="Ended" then
+    return true
+  end
+
+  if self.intoWindManeuver~=Maneuver then
+    return false,"invalid_maneuver"
+  end
+
+  Options=Options or {}
+
+  -- An explicit return position overrides the normal significant-departure/U-turn rule.
+  local returnCoordinate=Options.ReturnCoordinate or (Options.Uturn and Maneuver.ReturnRequired and Maneuver.DepartureCoordinate)
+
+  self:_RemoveIntoWindRoute(Maneuver)
+
+  -- Release ownership before routing or notifying callbacks, which may create another maneuver.
+  self.intoWindRouteRevision=(self.intoWindRouteRevision or 0)+1
+  self.intoWindManeuver=nil
+  Maneuver.State="Ended"
+  Maneuver.Ready=false
+  Maneuver.EndReason=Options.Reason or "completed"
+  Maneuver.BlockedReason=nil
+
+  -- A task that took over the ship keeps control; releasing our order must not replace its DCS task.
+  if self:IsAlive() and not self:IsStopped() and not self:IsEngaging() and (self.taskcurrent or 0)==0 then
+
+    if returnCoordinate then
+      local current=self:GetWaypointCurrent()
+      local wp=self:AddWaypoint(returnCoordinate,self:GetSpeedCruise(),current and current.uid,nil,false)
+      wp.temp=true
+    end
+
+    if self.pathfindingOn then
+      self:_FindPathToNextWaypoint(true)
+    elseif self:IsHolding() or self:IsWaiting() then
+      self.pathfindingStopped=nil
+      self:Cruise()
+    else
+      self:UpdateRoute(nil,nil,nil,nil,self.intoWindRouteRevision)
+    end
+  end
+
+  -- Cleanup is complete even if a user-provided completion callback fails.
+  if Maneuver.OnEnded then
+    local ok,err=pcall(Maneuver.OnEnded,Maneuver,Maneuver.EndReason)
+
+    if not ok then
+      self:E(self.lid.."Into-wind completion callback failed: "..tostring(err))
+    end
+  end
+
+  return true
+end
+
+--- Update a queued or active timed into-wind window without ending its navigation maneuver.
+-- Keeps the first significant route departure point across updates; departure can first occur on a later update.
 -- The latest Uturn setting controls the final return.
 -- @param #NAVYGROUP self
--- @param #NAVYGROUP.IntoWind IntoWind Maneuver returned by AddTurnIntoWind.
+-- @param #NAVYGROUP.IntoWind IntoWind Window returned by AddTurnIntoWind.
 -- @param #number Speed Desired wind on deck in knots.
 -- @param #number Offset Deck offset in degrees.
 -- @param #number StopTime Planned end as absolute mission time in seconds.
--- @param #boolean Uturn Allow returning to the original departure position at the final end.
--- @return #NAVYGROUP.IntoWind Updated maneuver, or nil if it cannot be updated.
+-- @param #boolean Uturn True permits return to the original departure position at the final end; false or nil disables return.
+-- @return #NAVYGROUP.IntoWind Updated window, or nil if it cannot be updated.
 function NAVYGROUP:UpdateTurnIntoWind(IntoWind, Speed, Offset, StopTime, Uturn)
-  if not IntoWind or IntoWind.Over or StopTime<=timer.getAbsTime()
+
+  if not IntoWind or IntoWind.Over or type(StopTime)~="number" or StopTime<=timer.getAbsTime()
     or self:GetTurnIntoWind(IntoWind.Id)~=IntoWind then
     return nil
   end
+
   if IntoWind.Open and self.intowind~=IntoWind then
     return nil
+  end
+
+  -- Update the active navigation order before committing the window settings.
+  if self.intowind==IntoWind then
+
+    if not self:UpdateIntoWind(IntoWind.Maneuver,{DeckWind=Speed,DeckAngle=Offset}) then
+      return nil
+    end
+
+    self:_SyncTurnIntoWindWindow(IntoWind)
   end
 
   IntoWind.Speed=Speed
   IntoWind.Offset=Offset
   IntoWind.Tstop=StopTime
   IntoWind.Uturn=Uturn==true
-
-  if self.intowind==IntoWind then
-    local heading, speed=self:GetHeadingIntoWind(Offset, Speed)
-    local reference=IntoWind.InitialHeading or self:GetHeading()
-    local delta=math.abs((heading-reference+180)%360-180)
-    local _, windspeed=self:GetWind()
-    local departure=delta>5 and windspeed>=0.1
-    if departure and not IntoWind.ReturnRequired then
-      -- The first significant departure may occur in a later recovery window.
-      IntoWind.Coordinate=self:GetCoordinate(true)
-    end
-    IntoWind.ReturnRequired=IntoWind.ReturnRequired or departure
-    IntoWind.Uturn=IntoWind.Uturn and IntoWind.ReturnRequired
-    IntoWind.Heading=heading
-    self:_SetTurnIntoWindRoute(IntoWind, heading, speed)
-    self:T(self.lid..string.format("Continuing into wind: Heading=%03d Speed=%.1f, Tstop=%d", heading, speed, StopTime))
-  end
 
   return IntoWind
 end
@@ -1623,6 +2177,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
+-- @return #boolean True if a timed window is currently active; false otherwise.
 function NAVYGROUP:onbeforeTurnIntoWindStop(From, Event, To)
 
   if self.intowind then
@@ -1649,72 +2204,9 @@ end
 -- @param #string To To state.
 -- @param #NAVYGROUP.IntoWind IntoWindData Data table.
 function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
-
-  if IntoWindData and self.intowind and IntoWindData.Id==self.intowind.Id then
-
-    -- Debug message.
-    self:T2(self.lid.."Turn Into Wind Over!")
-  
-    -- Window over and not open anymore.
-    self.intowind.Over=true
-    self.intowind.Open=false
-    
-    -- Remove outstanding detours for this window before restoring the normal route.
-    for i=#self.waypoints,1,-1 do
-      local wp=self.waypoints[i]
-      if wp.astar and wp.astarTargetUID==self.intowind.waypoint.uid then
-        self:RemoveWaypointByID(wp.uid, false)
-      end
-    end
-    self.ispathfinding=false
-    self:_ClearPathfindingDrawing()
-    -- Remove additional waypoint.
-    self:RemoveWaypointByID(self.intowind.waypoint.uid, false)
-  
-    if self.intowind.Uturn then
-
-      ---
-      -- U-turn ==> Go to coordinate where we left the route.
-      ---
-    
-      -- Detour to where we left the route.
-      self:T(self.lid.."FF Turn Into Wind Over ==> Uturn!")
-
-      -- ID of current waypoint.
-      local uid=self:GetWaypointCurrent().uid
-  
-      -- Add temp waypoint.
-      local wp=self:AddWaypoint(self.intowind.Coordinate, self:GetSpeedCruise(), uid) ; wp.temp=true
-
-    else
-    
-      ---
-      -- Go directly to next waypoint.
-      ---
-    
-      -- Next waypoint index and speed.
-      local indx=self:GetWaypointIndexNext()
-      local speed=self:GetSpeedToWaypoint(indx)
-      
-      -- Update route.
-      self:T(self.lid..string.format("FF Turn Into Wind Over ==> Next WP Index=%d at %.1f knots via update route!", indx, speed))
-      self:__UpdateRoute(-1, indx, nil, speed)
-      
-    end
-    
-    -- Set current window to nil.
-    self.intowind=nil
-    
-    -- Remove window from queue.
-    self:RemoveTurnIntoWind(IntoWindData)
-
-    -- Inform Airboss    
-    if self.airboss then
-      self.airboss:_OnNavyIntoWindOver(IntoWindData)
-    end    
-
+  if IntoWindData and self.intowind==IntoWindData then
+    self:EndIntoWind(IntoWindData.Maneuver,{Uturn=IntoWindData.Uturn,Reason="completed"})
   end
-
 end
 
 --- On after "FullStop" event.
@@ -1751,7 +2243,9 @@ function NAVYGROUP:onafterCruise(From, Event, To, Speed)
   -- No set depth.
   self.depth=nil
 
-  self:__UpdateRoute(-0.1, nil, nil, Speed)
+  -- Positive delays always schedule this revision. Negative-delay deduplication could retain
+  -- an older revision, suppress this request, then leave no route when the old one is rejected.
+  self:__UpdateRoute(0.1, nil, nil, Speed, nil, self.intoWindRouteRevision or 0)
 
 end
 
@@ -1802,7 +2296,7 @@ function NAVYGROUP:onafterTurningStarted(From, Event, To)
   
 end
 
---- On after "TurningStarted" event.
+--- On after "TurningStopped" event.
 -- @param #NAVYGROUP self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -2106,9 +2600,9 @@ end
 
 --- Initialize group parameters. Also initializes waypoints if self.waypoints is nil.
 -- @param #NAVYGROUP self
--- @param #table Template (Optional) Template used to init the group. Default is `self.template`.
+-- @param #table Template (Optional) Template used to initialize the group. Default is the result of self:_GetTemplate().
 -- @param #number Delay (Optional) Delay in seconds before group is initialized. Default `nil`, *i.e.* instantaneous. 
--- @return #NAVYGROUP self
+-- @return #NAVYGROUP self after initialization or scheduling; nil if the group was already initialized.
 function NAVYGROUP:_InitGroup(Template, Delay)
 
   if Delay and Delay>0 then
@@ -2248,6 +2742,7 @@ end
 -- @param Core.Vector#VECTOR Start Start position; also accepts Vec3 or COORDINATE.
 -- @param Core.Vector#VECTOR Goal Goal position; also accepts Vec3 or COORDINATE.
 -- @return #boolean True when the connection satisfies the configured minimum depth.
+-- @return #string Reason the depth check failed, or nil on success.
 function NAVYGROUP:_CheckPathDepth(Start, Goal)
 
   local start=VECTOR._IsVector(Start) and Start or VECTOR:NewFromVec(Start)
@@ -2261,7 +2756,7 @@ end
 -- If the full corridor is blocked, narrow down the last confirmed clear prefix with at most twelve further checks.
 -- Stops refining at 25 meters. The returned distance is a checked prefix, not an exact collision location.
 -- @param #NAVYGROUP self
--- @param #number DistanceMax (Optional) Maximum lookahead in meters; default 5000.
+-- @param #number DistanceMax (Optional) Finite, non-negative maximum lookahead in meters; default 5000.
 -- @return #number Checked clear distance in meters. Turning groups return the requested distance without heading checks.
 function NAVYGROUP:_CheckFreePath(DistanceMax)
 
@@ -2363,14 +2858,27 @@ function NAVYGROUP:_CheckTurnsIntoWind()
   -- Get current abs time.
   local time=timer.getAbsTime()
 
+  -- Queued requests can expire while an immediate order controls the ship. They must never start late.
+  local expired={}
+
+  for _,window in ipairs(self.Qintowind) do
+    if window~=self.intowind and not window.Over and time>=window.Tstop then
+      expired[#expired+1]=window
+    end
+  end
+
+  -- Completing a window changes the queue and may run user callbacks, so finish collecting before removal.
+  for _,window in ipairs(expired) do
+    self:_CompleteTurnIntoWindWindow(window,"expired")
+  end
+
   if self.intowind then
 
-    -- Externally managed maneuvers end only when their owner stops/removes them.
-    if not self.intowind.ExternallyManaged and time>=self.intowind.Tstop then
+    if time>=self.intowind.Tstop then
       self:TurnIntoWindOver(self.intowind)
     end
   
-  else
+  elseif not self.intoWindManeuver then
   
     -- Get next window.
     local IntoWind=self:GetTurnIntoWindNext()
@@ -2384,9 +2892,9 @@ function NAVYGROUP:_CheckTurnsIntoWind()
   
 end
 
---- Get the next turn into wind window, which is not yet running.
+--- Get the earliest queued window eligible to start at the current mission time.
 -- @param #NAVYGROUP self
--- @return #NAVYGROUP.IntoWind Next into wind data. Could be `nil` if there is not next window.
+-- @return #NAVYGROUP.IntoWind Next window whose start time has arrived and stop time has not passed; nil if none is eligible now.
 function NAVYGROUP:GetTurnIntoWindNext()
 
   if #self.Qintowind>0 then
@@ -2395,13 +2903,13 @@ function NAVYGROUP:GetTurnIntoWindNext()
     local time=timer.getAbsTime()
   
     -- Sort windows wrt to start time.
-    table.sort(self.Qintowind, function(a, b) return a.Tstart<b.Tstart end)
+    table.sort(self.Qintowind, function(a, b) return a.Tstart==b.Tstart and a.Id<b.Id or a.Tstart<b.Tstart end)
   
     -- Loop over all slots.
     for _,_recovery in ipairs(self.Qintowind) do
       local recovery=_recovery --#NAVYGROUP.IntoWind
   
-      if time>=recovery.Tstart and (recovery.ExternallyManaged or time<recovery.Tstop) and not (recovery.Open or recovery.Over) then
+      if time>=recovery.Tstart and time<recovery.Tstop and not (recovery.Open or recovery.Over) then
         return recovery
       end
       
@@ -2420,10 +2928,28 @@ end
 
 --- Get wind direction and speed at current position.
 -- @param #NAVYGROUP self
--- @param #number Altitude (Optional) Altitude in meters above main sea level at which the wind is calculated. Default 18 meters.
--- @return #number Direction the wind is blowing **from** in degrees.
--- @return #number Wind speed in m/s.
-function NAVYGROUP:GetWind(Altitude)
+-- @param #number Altitude (Optional) Altitude in meters above mean sea level at which the wind is calculated. Default 18 meters.
+-- @param Wrapper.Unit#UNIT ReferenceUnit (Optional) Measure wind at this ship instead of the first surviving group unit.
+-- @return #number Direction the wind is blowing **from** in true degrees, or nil if the reference ship's position is unavailable.
+-- @return #number Wind speed in m/s, or nil if the reference ship's position is unavailable.
+function NAVYGROUP:GetWind(Altitude, ReferenceUnit)
+
+  if ReferenceUnit then
+
+    local position=ReferenceUnit:GetVector()
+
+    if not position then
+      return nil,nil
+    end
+
+    local wind=position:GetWindVector(false,Altitude or 18)
+    local direction=UTILS.VecHdg(wind)
+
+    -- VECTOR reports the direction the air moves towards; this API returns the direction it comes from.
+    direction=direction>180 and direction-180 or direction+180
+
+    return direction,UTILS.VecNorm(wind)
+  end
 
   -- Current position of the carrier or input.
   local coord=self:GetCoordinate()
@@ -2436,11 +2962,12 @@ end
 
 --- Get heading of group into the wind.
 -- @param #NAVYGROUP self
--- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
+-- @param #number Offset (Optional) Clockwise runway offset in degrees; default 0.
 -- @param #number vdeck Desired wind speed on deck in Knots.
--- @return #number Carrier heading in degrees.
--- @return #number Carrier speed in knots.
-function NAVYGROUP:GetHeadingIntoWind_old(Offset, vdeck)
+-- @param Wrapper.Unit#UNIT ReferenceUnit (Optional) Ship used for wind and calm-wind heading.
+-- @return #number Carrier true heading in degrees, or nil if reference wind data is unavailable.
+-- @return #number Carrier speed in knots, or nil if reference wind data is unavailable.
+function NAVYGROUP:GetHeadingIntoWind_old(Offset, vdeck, ReferenceUnit)
 
   local function adjustDegreesForWindSpeed(windSpeed)
     local degreesAdjustment = 0
@@ -2478,14 +3005,18 @@ function NAVYGROUP:GetHeadingIntoWind_old(Offset, vdeck)
   Offset=Offset or 0
 
   -- Get direction the wind is blowing from. This is where we want to go.
-  local windfrom, vwind=self:GetWind()
+  local windfrom, vwind=self:GetWind(nil,ReferenceUnit)
+
+  if not windfrom then
+    return nil,nil
+  end
 
   -- Actually, we want the runway in the wind.
   local intowind = windfrom - Offset + adjustDegreesForWindSpeed(vwind)
 
   -- If no wind, take current heading.
   if vwind<0.1 then
-    intowind=self:GetHeading()
+    intowind=ReferenceUnit and ReferenceUnit:GetHeading() or self:GetHeading()
   end
   
   -- Adjust negative values.
@@ -2493,7 +3024,7 @@ function NAVYGROUP:GetHeadingIntoWind_old(Offset, vdeck)
     intowind=intowind+360
   end
 
-  -- Speed of carrier in m/s but at least 4 knots.
+  -- Speed of carrier in knots, with a minimum of 4 knots.
   local vtot = math.max(vdeck-UTILS.MpsToKnots(vwind), 4)
   
   return intowind, vtot
@@ -2503,17 +3034,22 @@ end
 --- Get heading of group into the wind. This minimizes the cross wind for an angled runway.
 -- Implementation based on [Mags & Bami](https://magwo.github.io/carrier-cruise/) work.
 -- @param #NAVYGROUP self
--- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
+-- @param #number Offset (Optional) Clockwise runway offset in degrees; default 0.
 -- @param #number vdeck Desired wind speed on deck in Knots.
--- @return #number Carrier heading in degrees.
--- @return #number Carrier speed in knots.
-function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck)
+-- @param Wrapper.Unit#UNIT ReferenceUnit (Optional) Ship used for wind and calm-wind heading.
+-- @return #number Carrier true heading in degrees, or nil if reference wind data is unavailable.
+-- @return #number Carrier speed in knots, or nil if reference wind data is unavailable.
+function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck, ReferenceUnit)
 
   -- Default offset angle.
   Offset=Offset or 0
 
   -- Get direction the wind is blowing from.
-  local windfrom, vwind=self:GetWind(18)
+  local windfrom, vwind=self:GetWind(18,ReferenceUnit)
+
+  if not windfrom then
+    return nil,nil
+  end
   
   -- Convert wind speed to knots.
   vwind=UTILS.MpsToKnots(vwind)
@@ -2530,7 +3066,8 @@ function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck)
 
   -- Treat wind below 0.1 m/s as calm and keep the current heading.
   if vwind<UTILS.MpsToKnots(0.1) then
-    return self:GetHeading()%360, math.max(Vmin,math.min(Vmax,vdeck))
+    local heading=ReferenceUnit and ReferenceUnit:GetHeading() or self:GetHeading()
+    return heading%360, math.max(Vmin,math.min(Vmax,vdeck))
   end
 
   -- An unangled deck requires no crosswind correction; the general formula is singular at zero offset.
@@ -2543,6 +3080,7 @@ function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck)
   local function correction(value)
     return math.asin(math.max(-1,math.min(1,value)))
   end
+
   local sine=math.sin(alpha)
   local direction=sine<0 and -1 or 1
   local inverseC=math.abs(sine)
@@ -2581,18 +3119,19 @@ end
 --- Get heading of group into the wind. This minimizes the cross wind for an angled runway.
 -- Implementation based on [Mags & Bami](https://magwo.github.io/carrier-cruise/) work.
 -- @param #NAVYGROUP self
--- @param #number Offset Offset angle in degrees, e.g. to account for an angled runway.
+-- @param #number Offset (Optional) Clockwise runway offset in degrees; default 0.
 -- @param #number vdeck Desired wind speed on deck in Knots.
--- @return #number Carrier heading in degrees.
--- @return #number Carrier speed in knots.
-function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
+-- @param Wrapper.Unit#UNIT ReferenceUnit (Optional) Ship used for wind and calm-wind heading.
+-- @return #number Carrier true heading in degrees, or nil if reference wind data is unavailable.
+-- @return #number Carrier speed in knots, or nil if reference wind data is unavailable.
+function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck, ReferenceUnit)
 
   if self.intowindold then
     --env.info("FF use OLD into wind")
-    return self:GetHeadingIntoWind_old(Offset, vdeck)
+    return self:GetHeadingIntoWind_old(Offset, vdeck, ReferenceUnit)
   else
     --env.info("FF use NEW into wind")
-    return self:GetHeadingIntoWind_new(Offset, vdeck)
+    return self:GetHeadingIntoWind_new(Offset, vdeck, ReferenceUnit)
   end
 
 end
@@ -2603,19 +3142,39 @@ end
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Original target, or nil.
 -- @return #table IDs of outstanding detour points before that target.
 function NAVYGROUP:_GetPathfindingTarget()
+
   local pending={}
   local index=self:GetWaypointIndexNext()
+
+  -- Skip temporary ASTAR points to recover the route target they were inserted to reach.
   for _=1,#self.waypoints do
-    if not index then break end
-    if index>#self.waypoints then
-      if self.adinfinitum then index=1 else break end
+
+    if not index then
+      break
     end
+
+    if index>#self.waypoints then
+      if self.adinfinitum then
+        index=1
+      else
+        break
+      end
+    end
+
     local waypoint=self.waypoints[index]
-    if not waypoint then break end
-    if not waypoint.astar then return waypoint,pending end
+
+    if not waypoint then
+      break
+    end
+
+    if not waypoint.astar then
+      return waypoint,pending
+    end
+
     pending[#pending+1]=waypoint.uid
     index=index+1
   end
+
   return nil,pending
 end
 
@@ -2624,10 +3183,12 @@ end
 -- @param #NAVYGROUP self
 -- @return #NAVYGROUP self.
 function NAVYGROUP:_ClearPathfindingDrawing()
+
   if self.pathfindingDebugSearch then
     self.pathfindingDebugSearch:UndrawGrid()
     self.pathfindingDebugSearch=nil
   end
+
   return self
 end
 
@@ -2644,8 +3205,10 @@ function NAVYGROUP:_ContinuePathfinding(Waypoint)
   end
 
   local nextWaypoint=self:GetWaypointNext()
+
   if nextWaypoint then
     local clear,reason=self:_CheckPathDepth(self:GetVec3(),nextWaypoint.coordinate)
+
     if clear then
       return true
     end
@@ -2673,6 +3236,7 @@ end
 function NAVYGROUP:_FindPathToNextWaypoint(Force)
 
   local target,pending=self:_GetPathfindingTarget()
+
   if not target then
     return false
   end
@@ -2690,6 +3254,8 @@ function NAVYGROUP:_FindPathToNextWaypoint(Force)
   end
 
   local now=timer.getTime()
+
+  -- Retry failed plans at a bounded rate unless the target changed or a checked segment ended.
   if not Force and self.pathfindingTargetUID==target.uid and now<(self.pathfindingRetryAt or 0) then
     return false
   end
@@ -2697,6 +3263,15 @@ function NAVYGROUP:_FindPathToNextWaypoint(Force)
   self.pathfindingTargetUID=target.uid
   self.pathfindingRetryAt=now+(self.pathRetryInterval or 60)
   self:_ClearPathfindingDrawing()
+
+  -- Navigation readiness remains withheld until the new route is both checked and submitted.
+  local maneuver=self.intoWindManeuver
+
+  if maneuver and target==maneuver.waypoint then
+    maneuver.PathValidated=false
+    maneuver.RouteSubmitted=false
+    maneuver.Ready=false
+  end
 
   local goal=VECTOR:NewFromVec(target.coordinate)
   local distance=position:GetDistance(goal,true)
@@ -2831,14 +3406,20 @@ function NAVYGROUP:_FindPathToNextWaypoint(Force)
   self.LastPathfindingResult=report
   self.ispathfinding=#selected>0
 
+  if maneuver and self.intoWindManeuver==maneuver and target==maneuver.waypoint then
+    maneuver.PathValidated=true
+  end
+
   local stopped=self.pathfindingStopped
   self.pathfindingStopped=nil
 
   -- Submit one complete route after all temporary waypoints have been installed.
-  if stopped then
+  if stopped or self:IsHolding() or self:IsWaiting() then
     self:Cruise()
   else
-    self:__UpdateRoute(-0.01)
+    -- Always schedule the checked revision, even if a superseded wind route is still queued.
+    -- UpdateRoute's revision guards discard that older request when its callback runs.
+    self:__UpdateRoute(0.01,nil,nil,nil,nil,self.intoWindRouteRevision or 0)
   end
 
   if debugPath and self.verbose>=10 then

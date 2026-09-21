@@ -107,6 +107,7 @@ test("visibility passes named Vec3 fields and propagates the DCS result", functi
 end)
 
 test("wind conversion preserves all components and selects the requested API", function()
+  land={getHeight=function(v) equal(v.x,100) equal(v.y,300) return 0 end}
   local a=VECTOR:New(100,200,300)
   local steady,turbulent=0,0
   local wind={x=1.5,y=-2,z=3.5}

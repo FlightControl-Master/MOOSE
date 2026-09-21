@@ -2037,7 +2037,8 @@ local navySource=navyFile:read("*a"):gsub("\r\n","\n") navyFile:close()
 NAVYGROUP={}
 for _,name in ipairs({"_GetPathfindingTarget","_FindPathToNextWaypoint","_ContinuePathfinding","_ClearPathfindingDrawing","_GetPathfindingCorridorWidth","_CheckPathDepth","_CheckFreePath",
   "SetPathfinding","SetPathfindingOn","SetPathfindingOff","SetPathfindingMinDepth","SetPathfindingGrid","SetPathfindingRetry","onafterUpdateRoute","onafterTurnIntoWindOver",
-  "_CreateTurnIntoWind","AddTurnIntoWind","RemoveTurnIntoWind","AddTaskAttackGroup","_CheckTurning",
+  "_CreateTurnIntoWind","AddTurnIntoWind","GetTurnIntoWind","RemoveTurnIntoWind","_CompleteTurnIntoWindWindow",
+  "EndIntoWind","_FinishIntoWind","_RemoveIntoWindRoute","AddTaskAttackGroup","_CheckTurning",
   "GetHeadingIntoWind_new","onafterRTZ","onafterEngageTarget","_UpdateEngageTarget"}) do
   assert((loadstring or load)(assert(navySource:match("(function NAVYGROUP:"..name.."%b().-\nend)"))))()
 end
@@ -2092,6 +2093,10 @@ local function vessel(distance)
   function ship:Cruise() self.cruises=self.cruises+1 self:__UpdateRoute() end
   function ship:__UpdateRoute() self.updates=self.updates+1 end
   function ship:IsTurning() return false end
+  function ship:IsHolding() return false end
+  function ship:IsWaiting() return false end
+  function ship:IsAlive() return true end
+  function ship:IsStopped() return false end
   function ship:GetHeading() return 0 end
   function ship:IsNavygroup() return true end
   function ship:IsEngaging() return false end
@@ -2120,9 +2125,9 @@ test("NAVYGROUP rejects invalid recovery windows without polluting the queue",fu
   local window=ship:AddTurnIntoWind(100,200)
   equal(#ship.Qintowind,1) equal(window.Tstop-window.Tstart,200)
   UTILS.SecondsToClock,UTILS.ClockToSeconds=oldToClock,oldToSeconds
-  ship.intowind=window
-  function ship:TurnIntoWindStop() self.stoppedWindow=true end
-  equal(ship:RemoveTurnIntoWind(window),ship) assert(ship.stoppedWindow)
+  local result,removed=ship:RemoveTurnIntoWind(window)
+  equal(result,ship) equal(removed,true)
+  equal(#ship.Qintowind,0) assert(window.Over and not window.Open)
 end)
 
 test("NAVYGROUP attack task does not read unrelated mission globals",function()
@@ -2213,7 +2218,12 @@ test("NAVYGROUP wind heading remains finite for calm weather and unangled decks"
       assert(left>=0 and left<360 and right>=0 and right<360)
       assert(leftSpeed>=0 and leftSpeed<math.huge)
       near(leftSpeed,rightSpeed)
-      near((left+right)%360,180)
+      if wind<UTILS.MpsToKnots(0.1) then
+        -- The shared calm-wind policy retains the ship's current heading.
+        equal(left,123) equal(right,123)
+      else
+        near((left+right)%360,180)
+      end
     end
   end
   UTILS.KmphToKnots=oldConversion
@@ -2646,14 +2656,19 @@ test("NAVYGROUP closes an into-wind window without retaining its pending detour 
   local ship=vessel(UTILS.NMToMeters(1000))
   local target=ship.waypoints[2] target.intowind=true
   ship.waypoints[3]={uid=99,coordinate=coord(7000),speed=10}
-  ship.intowind={Id=7,waypoint=target,Uturn=false}
+  local window={Id=7,NavyGroup=ship,Open=true,Uturn=false}
+  local maneuver={NavyGroup=ship,State="Active",waypoint=target}
+  window.Maneuver=maneuver
+  maneuver.OnEnded=function(_,reason) ship:_CompleteTurnIntoWindWindow(window,reason) end
+  ship.intowind=window ship.Qintowind={window} ship.intoWindManeuver=maneuver
   function ship:T2() end
   function ship:GetSpeedToWaypoint() return 20 end
-  function ship:RemoveTurnIntoWind() end
   assert(ship:_FindPathToNextWaypoint())
-  ship:onafterTurnIntoWindOver(nil,nil,nil,ship.intowind)
+  ship:onafterTurnIntoWindOver(nil,nil,nil,window)
   equal(#ship.waypoints,2) equal(ship.waypoints[2].uid,99)
   equal(ship.intowind,nil) equal(ship.ispathfinding,false)
+  equal(ship.intoWindManeuver,nil) equal(maneuver.State,"Ended")
+  assert(window.Over and not window.Open) equal(#ship.Qintowind,0)
 end)
 
 test("surface neighbour rules reject land between manually added water nodes and invalidate changed filters",function()

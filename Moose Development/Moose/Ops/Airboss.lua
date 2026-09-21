@@ -251,8 +251,9 @@
 -- @field #number skipperTime Recovery time in min for manual recovery.
 -- @field Ops.NavyGroup#NAVYGROUP navygroup Navigation controller with its own FSM and lifecycle; remains active after AIRBOSS:Stop().
 -- @field #AIRBOSS.Recovery activeRecoveryWindow Currently active recovery window.
--- @field #AIRBOSS.Recovery navyRecoveryWindow Recovery window associated with the owned into-wind maneuver.
--- @field Ops.NavyGroup#NAVYGROUP.IntoWind navyIntoWind Into-wind maneuver requested by this AIRBOSS.
+-- @field #AIRBOSS.Recovery recoveryManeuverWindow Recovery window authorizing the current wind maneuver.
+-- @field Ops.NavyGroup#NAVYGROUP.IntoWindManeuver recoveryManeuver Immediate wind maneuver owned by recovery; has no separate end time.
+-- @field Ops.NavyGroup#NAVYGROUP.IntoWind manualWindWindow Timed navigation window requested through CarrierTurnIntoWind.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -1699,7 +1700,7 @@ AIRBOSS.MenuF10Root = nil
 
 --- Airboss class version.
 -- @field #string version
-AIRBOSS.version = "1.5.0"
+AIRBOSS.version = "2.0.0"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -2147,7 +2148,7 @@ function AIRBOSS:New( carriername, alias )
   -- @param #string Event Event.
   -- @param #string To To state.
 
-  --- Triggers the FSM event "Idle" that puts the carrier into state "Idle" where no recoveries are carried out.
+  --- Triggers the FSM event "Idle" that ends the active recovery and its wind maneuver. Future recovery windows remain scheduled.
   -- @function [parent=#AIRBOSS] Idle
   -- @param #AIRBOSS self
 
@@ -2198,13 +2199,13 @@ function AIRBOSS:New( carriername, alias )
   -- The into-wind course and window clock continue; pausing does not postpone the planned end.
   -- @function [parent=#AIRBOSS] RecoveryPause
   -- @param #AIRBOSS self
-  -- @param #number duration Duration of pause in seconds. After that recovery is automatically resumed.
+  -- @param #number duration Optional pause duration in seconds. Defaults to nil (until further notice). Recovery resumes after this duration only if the current recovery remains paused after its window is checked.
 
   --- Triggers the FSM delayed event "RecoveryPause" that pauses the recovery of aircraft.
   -- @function [parent=#AIRBOSS] __RecoveryPause
   -- @param #AIRBOSS self
   -- @param #number delay Delay in seconds.
-  -- @param #number duration Duration of pause in seconds. After that recovery is automatically resumed.
+  -- @param #number duration Optional pause duration in seconds. Defaults to nil (until further notice). Recovery resumes after this duration only if the current recovery remains paused after its window is checked.
 
   --- Triggers the FSM event "RecoveryUnpause" that resumes the recovery of aircraft if it was paused.
   -- @function [parent=#AIRBOSS] RecoveryUnpause
@@ -2564,6 +2565,7 @@ function AIRBOSS:AddRecoveryWindow( starttime, stoptime, case, holdingoffset, tu
 
   -- Add to table
   table.insert( self.recoverytimes, recovery )
+  self._recoveryTimesDirty = true
 
   return recovery
 end
@@ -2608,7 +2610,7 @@ function AIRBOSS:CloseCurrentRecoveryWindow( Delay )
     -- SCHEDULER:New(nil, self.CloseCurrentRecoveryWindow, {self}, delay)
     self:ScheduleOnce( Delay, self.CloseCurrentRecoveryWindow, self )
   else
-    local window = self.activeRecoveryWindow or self.navyRecoveryWindow
+    local window = self.activeRecoveryWindow or self.recoveryManeuverWindow
     if window then
       self:DeleteRecoveryWindow( window )
     end
@@ -2706,8 +2708,8 @@ function AIRBOSS:_FinishRecoveryWindow( Window )
   if self.recoverywindow == Window then
     self.recoverywindow = nil
   end
-  if self.navyRecoveryWindow == Window then
-    self:_StopNavyIntoWind()
+  if self.recoveryManeuverWindow == Window then
+    self:_StopRecoveryIntoWind()
   end
 
   for i = #self.recoverytimes, 1, -1 do
@@ -3637,6 +3639,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterStart( From, Event, To )
+  self._airbossStopped = nil
 
   -- NAVYGROUP keeps running while AIRBOSS is stopped.
   self.navygroup.airboss = self
@@ -3991,147 +3994,127 @@ end
 --- Check recovery times and start/stop recovery mode of aircraft.
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckRecoveryTimes()
-
-  if self:is( "Stopped" ) then return end
-
-  -- Stop/delete callbacks can request another check while this one is running.
+  if self:is( "Stopped" ) or self._airbossStopped then return end
   if self._checkingRecoveryTimes or self._deletingRecoveryWindows then
+    self._recoveryTimesDirty = true
     return
   end
+
   self._checkingRecoveryTimes = true
-
-  -- Get current abs time.
-  local time = timer.getAbsTime()
-
-  -- Debug output:
-  local text = string.format( self.lid .. "Recovery time windows:" )
-
-  -- Handle case with no recoveries.
-  if #self.recoverytimes == 0 then
-    text = text .. " none!"
+  local attempted = {}
+  -- Callbacks may change the schedule. Reconcile again, but never spin on a veto.
+  for pass = 1, 3 do
+    self._recoveryTimesDirty = nil
+    self:_ReconcileRecoveryTimes( timer.getAbsTime(), attempted )
+    if self:is( "Stopped" ) or not self._recoveryTimesDirty then break end
   end
-
-  -- Sort windows wrt to start time.
-  local _sort = function( a, b )
-    return a.START < b.START
-  end
-  table.sort( self.recoverytimes, _sort )
-
-  -- Next recovery case in the future.
-  local nextwindow = nil -- #AIRBOSS.Recovery
-
-  -- Callbacks can remove windows. Iterate over a snapshot in start-time order.
-  local windows = {}
-  for _, recovery in ipairs( self.recoverytimes ) do
-    windows[#windows + 1] = recovery
-  end
-  for _, _recovery in ipairs( windows ) do
-    local recovery = _recovery -- #AIRBOSS.Recovery
-
-    -- Get start/stop clock strings.
-    local Cstart = UTILS.SecondsToClock( recovery.START )
-    local Cstop = UTILS.SecondsToClock( recovery.STOP )
-
-    local state = self:_CheckRecoveryWindow( recovery, time )
-
-    -- The snapshot is sorted by start time.
-    if state == "in the future" and nextwindow == nil then
-      nextwindow = recovery
-      state = "next in line"
-    end
-
-    -- Debug text.
-    text = text .. string.format( "\n- Start=%s Stop=%s Case=%d Offset=%d Open=%s Closed=%s Status=\"%s\"", Cstart, Cstop, recovery.CASE, recovery.OFFSET, tostring( recovery.OPEN ), tostring( recovery.OVER ), state )
-  end
-
-  -- Debug output.
-  self:T( self.lid .. text )
-
-  self:_PrepareNextRecoveryWindow( nextwindow, time )
-
-  self:T2( { "FF", recoverywindow = self.recoverywindow } )
-  self._recoveryStartAttempted = nil
   self._checkingRecoveryTimes = nil
 end
 
--- Process one window without changing the order of the surrounding time check.
-function AIRBOSS:_CheckRecoveryWindow( recovery, time )
-  if recovery.OVER then
-    return "cancelled"
+-- Decide on one recovery first, then reconcile its navigation request.
+function AIRBOSS:_ReconcileRecoveryTimes( time, attempted )
+  table.sort( self.recoverytimes, function( a, b )
+    if a.START == b.START then return a.ID < b.ID end
+    return a.START < b.START
+  end )
+
+  -- An expired preparation must be removed even if RecoveryStart was vetoed.
+  local expired = {}
+  for _, window in ipairs( self.recoverytimes ) do
+    if window ~= self.activeRecoveryWindow and (window.OVER or window.STOP <= time) then
+      expired[#expired + 1] = window
+    end
   end
-  if time < recovery.START then
-    return "in the future"
+  for _, window in ipairs( expired ) do
+    self:_FinishRecoveryWindow( window )
+    if self:is( "Stopped" ) then return end
   end
 
-  if time < recovery.STOP then
-    if self:IsRecovering() or self:IsPaused() then
-      return self:IsPaused() and "paused" or "in progress"
+  local active = self.activeRecoveryWindow
+  if active and not (self:IsRecovering() or self:IsPaused()) then
+    -- Public Idle() or a callback can leave the FSM outside recovery. Such a
+    -- window no longer authorizes navigation and must not be reopened implicitly.
+    self:_FinishRecoveryWindow( active )
+    active = nil
+    if self:is( "Stopped" ) then return end
+  end
+  if active and active.STOP <= time and (self:IsRecovering() or self:IsPaused()) then
+    local _, npattern = self:_GetQueueInfo( self.Qpattern )
+    if npattern > 0 then
+      local extmin = 5 * npattern
+      active.SCHEDULEDSTOP = active.SCHEDULEDSTOP or active.STOP
+      active.STOP = math.max( active.STOP, time ) + extmin * 60
+      local text = string.format( "We still got flights in the pattern.\nRecovery time prolonged by %d minutes.\nNow get your act together and no more bolters!", extmin )
+      self:MessageToPattern( text, "AIRBOSS", "99", 10, false, nil )
+    elseif not attempted[active] then
+      attempted[active] = true
+      self:RecoveryStop( self:_GetRecoveryHandoffWindow( active, time ) )
     end
-    if self:IsIdle() then
-      if self._recoveryStartAttempted == recovery then
-        return "start deferred"
+    if self:is( "Stopped" ) then return end
+  end
+
+  -- A manually started recovery and a paused recovery also retain priority.
+  active = self.activeRecoveryWindow
+  local selected = active
+  if not selected and self:IsIdle() then
+    for _, window in ipairs( self.recoverytimes ) do
+      if not window.OVER and window.STOP > time then
+        selected = window
+        break
       end
-      self:_StartRecoveryIntoWind( recovery )
-      self:RecoveryStart( recovery.CASE, recovery.OFFSET, recovery )
-      return "starting now"
     end
-    return "cancelled"
   end
+  self.recoverywindow = selected
 
-  if not (self:IsRecovering() or self:IsPaused()) or self.activeRecoveryWindow ~= recovery then
-    return "closed"
+  local wantsWind = selected and selected.WIND and not selected.WINDSUPPRESSED
+    and selected.START - time <= self.dTturn
+  if wantsWind then
+    self:_StartRecoveryIntoWind( selected )
+  elseif self.recoveryManeuver then
+    -- A different next window or a cancelled preparation no longer authorizes wind.
+    self:_StopRecoveryIntoWind()
   end
+  if self:is( "Stopped" ) then return end
 
-  local _, npattern = self:_GetQueueInfo( self.Qpattern )
-  if npattern > 0 then
-    -- Extend by five minutes per aircraft still in the pattern.
-    local extmin = 5 * npattern
-    recovery.SCHEDULEDSTOP = recovery.SCHEDULEDSTOP or recovery.STOP
-    recovery.STOP = recovery.STOP + extmin * 60
-    if self.navyRecoveryWindow == recovery and self.navyIntoWind then
-      self.navygroup:ExtendTurnIntoWind( extmin * 60, self.navyIntoWind )
+  if self:IsIdle() then
+    if selected then
+      self:RecoveryCase( selected.CASE, selected.OFFSET )
+      if self:is( "Stopped" ) then return end
+      -- Opening the window is independent of navigational readiness. Admissions
+      -- use _CanClearForRecovery, including a failed or competing wind request.
+      if selected.START <= time and time < selected.STOP and not attempted[selected]
+        and self:GetRecoveryWindowByID( selected.ID ) == selected and not selected.OVER then
+        attempted[selected] = true
+        self:RecoveryStart( selected.CASE, selected.OFFSET, selected )
+      end
+    else
+      self:RecoveryCase()
     end
-    local text = string.format( "We still got flights in the pattern.\nRecovery time prolonged by %d minutes.\nNow get your act together and no more bolters!", extmin )
-    self:MessageToPattern( text, "AIRBOSS", "99", 10, false, nil )
-    return "extended"
   end
 
-  self:RecoveryStop( self:_GetRecoveryHandoffWindow( recovery, time ) )
-  return recovery.OVER and "closing now" or "stop deferred"
+  local text = "Recovery time windows:"
+  for _, window in ipairs( self.recoverytimes ) do
+    text = text .. string.format( "\n- Start=%s Stop=%s Case=%d Open=%s Closed=%s", UTILS.SecondsToClock( window.START ), UTILS.SecondsToClock( window.STOP ), window.CASE, tostring( window.OPEN ), tostring( window.OVER ) )
+  end
+  self:T( self.lid .. text )
 end
 
--- Select a directly adjacent window, also after a pattern-related extension.
+-- Select the first eligible successor. Only adjacent wind windows share a maneuver.
 function AIRBOSS:_GetRecoveryHandoffWindow( recovery, time )
-  if not recovery.WIND or self.navyRecoveryWindow ~= recovery or not self.navyIntoWind then
+  if not recovery.WIND or recovery.WINDSUPPRESSED
+    or self.recoveryManeuverWindow ~= recovery or not self.recoveryManeuver then
     return nil
   end
   local boundary = recovery.SCHEDULEDSTOP or recovery.STOP
   for _, window in ipairs( self.recoverytimes ) do
-    if window ~= recovery and not window.OVER and not window.OPEN
-      and window.START == boundary and window.START <= time and time < window.STOP then
-      -- Respect the first eligible window even when it does not request wind.
-      return window.WIND and window or nil
+    if window ~= recovery and not window.OVER and not window.OPEN and window.STOP > time then
+      if window.START == boundary and window.START <= time and window.WIND and not window.WINDSUPPRESSED then
+        return window
+      end
+      return nil
     end
   end
   return nil
-end
-
--- Publish the next recovery's approach information and request its wind maneuver.
-function AIRBOSS:_PrepareNextRecoveryWindow( nextwindow, time )
-  self.recoverywindow = nil
-  if self:IsIdle() then
-    if nextwindow then
-      self:RecoveryCase( nextwindow.CASE, nextwindow.OFFSET )
-      if nextwindow.START - time < self.dTturn then
-        self:_StartRecoveryIntoWind( nextwindow )
-      end
-      self.recoverywindow = nextwindow
-    else
-      self:RecoveryCase()
-    end
-  else
-    self.recoverywindow = self.activeRecoveryWindow or nextwindow
-  end
 end
 
 --- Get section lead of a flight.
@@ -4182,6 +4165,10 @@ end
 -- @param #number Case The recovery case (1, 2 or 3) to switch to.
 -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 function AIRBOSS:onafterRecoveryCase( From, Event, To, Case, Offset )
+  if self._airbossStopped and From ~= "Stopped" then
+    self:SetStartState( "Stopped" )
+    return
+  end
 
   -- Input or default value.
   Case = self:_ResolveRecoveryCase( Case )
@@ -4226,6 +4213,7 @@ function AIRBOSS:onafterRecoveryCase( From, Event, To, Case, Offset )
 
     end
   end
+  self:_SynchronizeMarshalCase()
 end
 
 --- On after "RecoveryStart" event. Recovery of aircraft is started and carrier switches to state "Recovering".
@@ -4236,6 +4224,19 @@ end
 -- @param #number Case The recovery case (1, 2 or 3) to start.
 -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
 function AIRBOSS:onafterRecoveryStart( From, Event, To, Case, Offset, RecoveryWindow )
+
+  -- FSM user callbacks execute before assigning the destination state and can
+  -- stop AIRBOSS or delete this window in the meantime. Do not revive either.
+  if self._airbossStopped then
+    self:SetStartState( "Stopped" )
+    return
+  end
+  if RecoveryWindow and (RecoveryWindow.OVER or RecoveryWindow.STOP <= timer.getAbsTime()
+    or self:GetRecoveryWindowByID( RecoveryWindow.ID ) ~= RecoveryWindow) then
+    self:SetStartState( "Idle" )
+    self._recoveryTimesDirty = true
+    return
+  end
 
   self.recoveryPauseToken = nil
   self.activeRecoveryWindow = RecoveryWindow
@@ -4264,55 +4265,47 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterRecoveryStop( From, Event, To, NextWindow )
-  -- Debug output.
-  self:T( self.lid .. string.format( "Stopping aircraft recovery." ) )
-
-  -- Recovery ops stopped message.
-  self:_MarshalCallRecoveryStopped( self.case )
-
-  self.recoveryPauseToken = nil
-  local window = self.activeRecoveryWindow
-  local continued = false
-  if window and NextWindow and self.navyIntoWind and self.navyIntoWind.ExternallyManaged
-    and self:_GetRecoveryHandoffWindow( window, timer.getAbsTime() ) == NextWindow then
-    local maneuver = self.navygroup:UpdateTurnIntoWind(
-      self.navyIntoWind, NextWindow.SPEED, self.carrierparam.rwyangle,
-      NextWindow.STOP, NextWindow.UTURN
-    )
-    if maneuver then
-      -- Move ownership before finishing the old window, so its cleanup keeps the maneuver.
-      self.navyRecoveryWindow = NextWindow
-      continued = true
-    end
+  if self._airbossStopped then
+    self:SetStartState( "Stopped" )
+    return
   end
+  self:T( self.lid .. "Stopping aircraft recovery." )
+  self:_MarshalCallRecoveryStopped( self.case )
+  self.recoveryPauseToken = nil
 
+  local window = self.activeRecoveryWindow
+  if window and NextWindow
+    and self:_GetRecoveryHandoffWindow( window, timer.getAbsTime() ) == NextWindow then
+    -- Transfer the existing maneuver before closing the old recovery, preserving
+    -- the original route departure point and deferring U-turn to the final end.
+    self:_StartRecoveryIntoWind( NextWindow )
+  end
   if window then
     self:_FinishRecoveryWindow( window )
   else
-    -- Preserve stopping a manually started recovery without a scheduled window.
-    self:_StopNavyIntoWind()
+    self:_StopRecoveryIntoWind()
   end
 
-  if continued then
-    self:RecoveryStart( NextWindow.CASE, NextWindow.OFFSET, NextWindow )
-    if self.activeRecoveryWindow ~= NextWindow then
-      -- A user callback can veto the new recovery. Do not leave its maneuver running.
-      self:_StopNavyIntoWind()
-      self._recoveryStartAttempted = self._checkingRecoveryTimes and NextWindow or nil
-    end
-  end
-
-  -- Check recovery windows. This sets self.recoverywindow to the next window.
+  -- The central selection opens the successor. A veto leaves its preparation
+  -- bounded by that recovery's end time, without a second NAVYGROUP clock.
   self:_CheckRecoveryTimes()
 end
 
 --- On after "RecoveryPause" event. Recovery of aircraft is paused. Marshal queue stays intact.
+-- A concrete resume time is announced only before the current window end, including any extension already applied.
+-- The pause timer and recovery window deadline continue independently; manual recovery has no window deadline.
 -- @param #AIRBOSS self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number duration Duration of pause in seconds. After that recovery is resumed automatically.
+-- @param #number duration Optional pause duration in seconds. Defaults to nil (until further notice). Recovery resumes after this duration only if it remains paused after checking for a window end or extension.
+-- @return #nil No return value.
 function AIRBOSS:onafterRecoveryPause( From, Event, To, duration )
+  if self._airbossStopped then
+    self:SetStartState( "Stopped" )
+    return
+  end
+
   -- Debug output.
   self:T( self.lid .. string.format( "Pausing aircraft recovery." ) )
 
@@ -4332,14 +4325,19 @@ function AIRBOSS:onafterRecoveryPause( From, Event, To, duration )
       end
     end, self, token )
 
-    -- Time to resume.
-    local clock = UTILS.SecondsToClock( timer.getAbsTime() + duration )
+  end
 
-    -- Marshal call: "99, aircraft recovery paused and will be resume at XX:YY."
+  local resumeTime = duration and timer.getAbsTime() + duration
+  local window = self.activeRecoveryWindow
+
+  -- Use the current deadline, including applied extensions, without predicting
+  -- future extensions. The end boundary itself is not a valid recovery time.
+  if resumeTime and (not window or resumeTime < window.STOP) then
+    local clock = UTILS.SecondsToClock( resumeTime )
+
+    -- Marshal call: "99, aircraft recovery paused and will be resumed at XX:YY."
     self:_MarshalCallRecoveryPausedResumedAt( clock )
   else
-
-    local text = string.format( "aircraft recovery is paused until further notice." )
 
     -- Marshal call: "99, aircraft recovery paused until further notice."
     self:_MarshalCallRecoveryPausedUntilFurtherNotice()
@@ -4354,6 +4352,10 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterRecoveryUnpause( From, Event, To )
+  if self._airbossStopped then
+    self:SetStartState( "Stopped" )
+    return
+  end
   self.recoveryPauseToken = nil
   -- Debug output.
   self:T( self.lid .. string.format( "Unpausing aircraft recovery." ) )
@@ -4374,12 +4376,20 @@ function AIRBOSS:onafterPassingWaypoint( From, Event, To, Waypoint )
   self:I(self.lid .. string.format("Carrier passed waypoint UID=%d", Waypoint.uid))
 end
 
---- On after "Idle" event. Carrier goes to state "Idle".
+--- On after "Idle" event. End an active recovery while retaining future windows.
 -- @param #AIRBOSS self
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterIdle( From, Event, To )
+  if self._airbossStopped then
+    self:SetStartState( "Stopped" )
+    return
+  end
+  if self.activeRecoveryWindow then
+    self:_FinishRecoveryWindow( self.activeRecoveryWindow )
+    self._recoveryTimesDirty = true
+  end
   -- Debug output.
   self:T( self.lid .. string.format( "Carrier goes to idle." ) )
 end
@@ -4390,6 +4400,7 @@ end
 -- @param #string Event Event.
 -- @param #string To To state.
 function AIRBOSS:onafterStop( From, Event, To )
+  self._airbossStopped = true
   self:I( self.lid .. string.format( "Stopping airboss script." ) )
 
   -- Detach only our own callback target; NAVYGROUP and its event handlers stay active.
@@ -4397,20 +4408,22 @@ function AIRBOSS:onafterStop( From, Event, To )
     self.navygroup.airboss = nil
   end
 
+  -- Release our navigation requests even when a regular end callback vetoes.
+  self:_StopNavyIntoWind( true )
+
   -- Finish the active recovery without starting the next window or broadcasting.
   local recovery = self.activeRecoveryWindow
   if recovery then
     self:_FinishRecoveryWindow( recovery )
   end
-  -- Also cancel a manually requested maneuver or a future window's preparation.
-  self:_StopNavyIntoWind()
   self.activeRecoveryWindow = nil
   self.recoverywindow = nil
-  self.navyRecoveryWindow = nil
-  self.navyIntoWind = nil
+  self.recoveryManeuverWindow = nil
+  self.recoveryManeuver = nil
+  self.manualWindWindow = nil
   self.turnintowind = false
   self.recoveryPauseToken = nil
-  self._recoveryStartAttempted = nil
+  self._recoveryTimesDirty = nil
 
   -- Unhandle events.
   self:UnHandleEvent( EVENTS.Birth )
@@ -5956,9 +5969,83 @@ function AIRBOSS:_GetNextMarshalFight()
   return nil
 end
 
+-- Keep holding flights on the selected recovery case before any new admission.
+-- Flights and section members already in the pattern keep their approach case.
+function AIRBOSS:_SynchronizeMarshalCase()
+  local flights = {}
+  for _, flight in ipairs( self.Qmarshal ) do flights[#flights + 1] = flight end
+  for _, flight in ipairs( flights ) do
+    if self:is( "Stopped" ) then return end
+    if flight.case ~= self.case and not self:_InQueue( self.Qpattern, flight.group ) then
+      if flight.case > 1 and self.case > 1 then
+        -- CASE II and III share their holding geometry; only the approach changes.
+        flight.case = self.case
+        for _, member in pairs( flight.section or {} ) do member.case = self.case end
+      elseif self:_RemoveFlightFromQueue( self.Qmarshal, flight ) then
+        local stack = self:_GetFreeStack( flight.ai )
+        flight.holding = nil
+        if stack then
+          if flight.ai then self:_MarshalAI( flight, stack, false )
+          else self:_MarshalPlayer( flight, stack ) end
+        else
+          -- CASE I has a finite stack count. Overflow stays outside the pattern.
+          flight.case = self.case
+          for _, member in pairs( flight.section or {} ) do member.case = self.case end
+          if flight.ai then self:_WaitAI( flight, false )
+          else self:_WaitPlayer( flight ) end
+        end
+      end
+    end
+  end
+  for _, flight in ipairs( self.Qwaiting ) do
+    flight.case = self.case
+    for _, member in pairs( flight.section or {} ) do member.case = self.case end
+  end
+end
+
+-- A scheduled recovery may be open while the ship is still becoming ready.
+-- A "nice" AIRBOSS may permit idle recovery, but never bypasses pause or navigation.
+function AIRBOSS:_CanClearForRecovery( AllowIdle )
+  if self:is( "Stopped" ) or self._airbossStopped then return false, "AIRBOSS is stopped" end
+  if self:IsPaused() then return false, "aircraft recovery is paused" end
+  if not self:IsRecovering() and not AllowIdle then return false, "carrier is not recovering" end
+  if not self.carrier:IsAlive() or not self.navygroup:IsAlive() then
+    return false, "carrier is unavailable"
+  end
+  if self.navygroup:IsStopped() or self.navygroup:IsHolding() or self.navygroup:IsWaiting() then
+    return false, "carrier navigation is on hold"
+  end
+  if self.navygroup.pathfindingStopped or self.navygroup.collisionwarning then
+    return false, "carrier route is obstructed"
+  end
+
+  local maneuver = self.navygroup:GetIntoWindManeuver()
+  local window = self.activeRecoveryWindow
+  if window and window.WIND and not window.WINDSUPPRESSED then
+    if not self.recoveryManeuver or self.recoveryManeuverWindow ~= window
+      or maneuver ~= self.recoveryManeuver or maneuver.State ~= "Active" then
+      return false, "carrier is waiting for its recovery wind maneuver"
+    end
+  end
+  if maneuver and not maneuver.Ready then
+    local reason = maneuver.BlockedReason
+    if reason == "path_blocked" or reason == "route_diversion" or reason == "task_override" then
+      return false, "carrier cannot hold the recovery course yet"
+    elseif reason == "reference_unavailable" then
+      return false, "carrier is unavailable"
+    end
+    return false, "carrier is establishing its recovery course and speed"
+  end
+  if self.manualWindWindow and not maneuver then return false, "carrier wind maneuver is pending" end
+  if self.navygroup:IsTurning() then return false, "carrier is turning" end
+  return true
+end
+
 --- Check marshal and pattern queues.
 -- @param #AIRBOSS self
 function AIRBOSS:_CheckQueue()
+
+  self:_SynchronizeMarshalCase()
 
   -- Print queues.
   if self.Debug then
@@ -5999,57 +6086,7 @@ function AIRBOSS:_CheckQueue()
     end
   end
 
-  -- Check if carrier is currently in recovery mode.
-  if not self:IsRecovering() then
-
-    -----------------------------
-    -- Switching Recovery Case --
-    -----------------------------
-
-    -- Loop over all flights currently in the marshal queue.
-    for _, _flight in pairs( self.Qmarshal ) do
-      local flight = _flight -- #AIRBOSS.FlightGroup
-
-      -- TODO: In principle this should be done/necessary only if case 1-->2/3 or 2/3-->1, right?
-      -- When recovery switches from 2->3 or 3-->2 nothing changes in the marshal stack.
-
-      -- Check if a change of stack is necessary.
-      if (flight.case == 1 and self.case > 1) or (flight.case > 1 and self.case == 1) then
-
-        -- Remove flight from marshal queue.
-        local removed = self:_RemoveFlightFromQueue( self.Qmarshal, flight )
-
-        if removed then
-
-          -- Get free stack
-          local stack = self:_GetFreeStack( flight.ai )
-
-          -- Debug output.
-          self:T( self.lid .. string.format( "Moving flight %s onboard %s from Marshal Case %d ==> %d Marshal stack %d", flight.groupname, flight.onboard, flight.case, self.case, stack ) )
-
-          -- Send flight to marshal queue.
-          if flight.ai then
-            self:_MarshalAI( flight, stack )
-          else
-            self:_MarshalPlayer( flight, stack )
-          end
-
-          -- Break the loop so that only one flight per 30 seconds is removed. No spam of messages, no conflict with the loop over queue entries.
-          break
-
-        elseif flight.case ~= self.case then
-
-          -- This should handle 2-->3 or 3-->2
-          flight.case = self.case
-
-        end
-
-      end
-    end
-
-    -- Not recovering ==> skip the rest!
-    return
-  end
+  if not self:_CanClearForRecovery() then return end
 
   -- Get number of airborne aircraft units(!) currently in pattern.
   local _, npattern = self:_GetQueueInfo( self.Qpattern )
@@ -6109,6 +6146,8 @@ end
 -- @param #AIRBOSS self
 -- @param #AIRBOSS.FlightGroup flight Flight to go to pattern.
 function AIRBOSS:_ClearForLanding( flight )
+
+  if not self:_CanClearForRecovery() or flight.case ~= self.case then return false end
 
   -- Check if flight is AI or human. If AI, we collapse the stack and commence. If human, we suggest to commence.
   if flight.ai then
@@ -9405,6 +9444,13 @@ end
 -- @param #AIRBOSS.PlayerData playerData Player data.
 -- @param #boolean zonecheck If true, zone is checked before player is released.
 function AIRBOSS:_Commencing( playerData, zonecheck )
+
+  -- Recheck at the actual admission, including automatic commence after an earlier clearance.
+  local lead = playerData.name ~= playerData.seclead and self.players[playerData.seclead] or playerData
+  local inPattern = self:_InQueue( self.Qpattern, (lead or playerData).group )
+  if not inPattern and (not self:_CanClearForRecovery( self.airbossnice ) or playerData.case ~= self.case) then
+    return false
+  end
 
   -- Check for auto commence
   if zonecheck then
@@ -14105,35 +14151,26 @@ end
 -- @param Core.Point#COORDINATE gotocoord (Optional) First goto this coordinate before resuming route.
 -- @return #AIRBOSS self
 function AIRBOSS:CarrierResumeRoute( gotocoord )
-  local window = self.navyIntoWind
-
-  if window then
-    local active =
-      self.navygroup:GetTurnIntoWindCurrent() == window
-
-    window.Uturn = gotocoord ~= nil
-
-    if active and gotocoord then
-      window.Coordinate = COORDINATE:NewFromCoordinate(gotocoord)
-    end
-
-    self:_StopNavyIntoWind()
-
-    -- NAVYGROUP has already arranged the return route.
-    if active then
-      return self
-    end
+  local recovery = self.recoveryManeuverWindow or self.activeRecoveryWindow
+  if recovery then
+    -- This explicit navigation override lasts for this recovery only.
+    recovery.WINDSUPPRESSED = true
   end
 
+  local hadManeuver = self.recoveryManeuver ~= nil
+    or (self.manualWindWindow and self.manualWindWindow.Maneuver ~= nil)
+  local success = self:_StopNavyIntoWind( false, {
+    Uturn = gotocoord ~= nil, ReturnCoordinate = gotocoord, Reason = "route-resumed",
+  } )
+  if not success or hadManeuver then return self end
+
   if gotocoord then
-    self.navygroup:Detour(gotocoord, nil, nil, true)
+    self.navygroup:Detour( gotocoord, nil, nil, true )
   else
     self.navygroup:Cruise()
   end
-
   return self
 end
-
 
 --- Request a timed NAVYGROUP into-wind maneuver. This does not open a recovery window.
 -- Ignored while AIRBOSS is stopped or already owns a queued or active into-wind maneuver.
@@ -14143,78 +14180,118 @@ end
 -- @param #boolean uturn (Optional) Only true allows a return to the original departure point when NAVYGROUP detects a significant departure. Default false.
 -- @return #AIRBOSS self
 function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
-  if self:is( "Stopped" ) then return self end
-  -- Includes queued windows that have not started yet.
-  if self.navyIntoWind then
-    self:E(self.lid .. "Into-wind maneuver already requested.")
+  if self:is( "Stopped" ) or self._airbossStopped then return self end
+  if self.recoveryManeuver or self.manualWindWindow then
+    self:E( self.lid .. "Into-wind maneuver already requested." )
     return self
   end
-
-  local window = self.navygroup:AddTurnIntoWind(0, time, UTILS.MpsToKnots(vdeck), uturn == true, self.carrierparam.rwyangle)
-
-  if not window then
-    return self
+  local window = self.navygroup:AddTurnIntoWind( 0, time, UTILS.MpsToKnots( vdeck ), uturn == true,
+    self.carrierparam.rwyangle, { ReferenceUnit = self.carrier } )
+  if window then
+    self.manualWindWindow = window
+    self.turnintowind = true
   end
-
-  self.navyIntoWind = window
-  self.turnintowind = true
-
   return self
 end
 
-function AIRBOSS:_StartRecoveryIntoWind(recovery)
-  if self:is( "Stopped" ) then return false end
-  if not recovery or not recovery.WIND or recovery.OVER then
+-- Reconcile the desired recovery with one immediate, untimed navigation maneuver.
+function AIRBOSS:_StartRecoveryIntoWind( recovery )
+  if self:is( "Stopped" ) or self._airbossStopped or not recovery or not recovery.WIND or recovery.WINDSUPPRESSED
+    or recovery.OVER or recovery.STOP <= timer.getAbsTime() then
     return false
   end
+  if self.manualWindWindow then return false, "manual-window" end
 
-  -- Do not replace an already requested maneuver.
-  if self.navyIntoWind then
-    return self.navyRecoveryWindow == recovery
+  local maneuver = self.recoveryManeuver
+  local options = {
+    DeckWind = recovery.SPEED, DeckAngle = self.carrierparam.rwyangle, ReferenceUnit = self.carrier,
+  }
+  local reason
+  if maneuver then
+    if self.recoveryManeuverWindow == recovery and maneuver.State == "Active"
+      and maneuver.DeckWind == options.DeckWind and maneuver.DeckAngle == options.DeckAngle
+      and maneuver.ReferenceUnit == options.ReferenceUnit then
+      return true
+    end
+    maneuver, reason = self.navygroup:UpdateIntoWind( maneuver, options )
+  else
+    options.OnEnded = function( ended, why ) self:_OnRecoveryIntoWindEnded( ended, why ) end
+    maneuver, reason = self.navygroup:BeginIntoWind( options )
   end
-
-  if recovery.STOP <= timer.getAbsTime() then
-    return false
+  if not maneuver or maneuver.State ~= "Active" then
+    reason = reason or "maneuver-ended"
+    if recovery.WINDERROR ~= reason then
+      self:T( self.lid .. "Recovery wind maneuver deferred: " .. tostring( reason ) )
+    end
+    recovery.WINDERROR = reason
+    return false, reason
   end
-
-  local window = self.navygroup:AddTurnIntoWind(
-    0,
-    UTILS.SecondsToClock(recovery.STOP),
-    recovery.SPEED,
-    recovery.UTURN,
-    self.carrierparam.rwyangle,
-    { ExternallyManaged = true }
-  )
-
-  if not window then
-    return false
+  -- A user callback can stop AIRBOSS while NAVYGROUP is accepting the request.
+  if self:is( "Stopped" ) or recovery.OVER then
+    self.navygroup:AbortIntoWind( maneuver, { Uturn = recovery.UTURN, Reason = "recovery-cancelled" } )
+    return false, "recovery-cancelled"
   end
-
-  self.navyIntoWind = window
-  self.navyRecoveryWindow = recovery
+  recovery.WINDERROR = nil
+  self.recoveryManeuver = maneuver
+  self.recoveryManeuverWindow = recovery
   self.turnintowind = true
   return true
 end
 
-function AIRBOSS:_OnNavyIntoWindOver(window)
-  if self.navyIntoWind == window then
-    self.navyIntoWind = nil
-    self.navyRecoveryWindow = nil
-    self.turnintowind = false
+function AIRBOSS:_OnRecoveryIntoWindEnded( maneuver, reason )
+  if self.recoveryManeuver == maneuver then
+    self.recoveryManeuver = nil
+    self.recoveryManeuverWindow = nil
+    self.turnintowind = self.manualWindWindow ~= nil
+    -- Reconciliation is deferred to the driver, never re-enter NAVYGROUP here.
+    self._recoveryTimesDirty = true
   end
 end
 
-function AIRBOSS:_StopNavyIntoWind()
-  local window = self.navyIntoWind
-
-  if window then
-    self.navygroup:RemoveTurnIntoWind(window)
-
-    -- Also handles cancellation before the maneuver starts.
-    self:_OnNavyIntoWindOver(window)
+-- Timed NAVYGROUP windows notify AIRBOSS separately from immediate maneuvers.
+function AIRBOSS:_OnNavyIntoWindOver( window )
+  if self.manualWindWindow == window then
+    self.manualWindWindow = nil
+    self.turnintowind = self.recoveryManeuver ~= nil
+    self._recoveryTimesDirty = true
   end
+end
 
-  return self
+function AIRBOSS:_StopRecoveryIntoWind( Abort, Options )
+  local maneuver = self.recoveryManeuver
+  if not maneuver then return true end
+  local recovery = self.recoveryManeuverWindow
+  Options = Options or { Uturn = recovery and recovery.UTURN == true, Reason = "recovery-ended" }
+  local success, reason
+  if Abort then
+    success, reason = self.navygroup:AbortIntoWind( maneuver, Options )
+  else
+    success, reason = self.navygroup:EndIntoWind( maneuver, Options )
+  end
+  if success then
+    self:_OnRecoveryIntoWindEnded( maneuver, reason )
+  end
+  return success, reason
+end
+
+function AIRBOSS:_StopNavyIntoWind( Abort, Options )
+  local success, reason = self:_StopRecoveryIntoWind( Abort, Options )
+  if not success then return false, reason end
+  local window = self.manualWindWindow
+  if window then
+    if Options then
+      window.Uturn = Options.Uturn
+      if window.Maneuver and Options.ReturnCoordinate then
+        -- End with the explicit return point before removing its schedule record.
+        success, reason = self.navygroup:EndIntoWind( window.Maneuver, Options )
+        if not success and not Abort then return false, reason end
+      end
+    end
+    local _
+    _, success, reason = self.navygroup:RemoveTurnIntoWind( window, Abort )
+    if success then self:_OnNavyIntoWindOver( window ) end
+  end
+  return success, reason
 end
 
 function AIRBOSS:_OnNavyTurningStarted()
@@ -14224,7 +14301,7 @@ function AIRBOSS:_OnNavyTurningStarted()
     return
   end
 
-  local intoWind = self.navygroup:GetTurnIntoWindCurrent()
+  local intoWind = self.navygroup:GetIntoWindManeuver()
   local heading = intoWind and intoWind.Heading
 
   if not heading then
@@ -16900,6 +16977,15 @@ function AIRBOSS:_RequestEmergency( _unitName )
 
     if playerData then
 
+      -- An emergency may bypass the queue and schedule, but a new arrival must
+      -- still wait for the carrier to finish aligning. Existing approaches stay intact.
+      local lead = self:_GetFlightLead( playerData )
+      local ready, reason = self:_CanClearForRecovery( true )
+      if not self:_InQueue( self.Qpattern, (lead or playerData).group ) and not ready then
+        self:MessageToPlayer( playerData, "negative, " .. reason .. ". Hold until the carrier is ready.", "AIRBOSS" )
+        return
+      end
+
       local text = ""
       if not self.emergency then
 
@@ -17078,6 +17164,9 @@ function AIRBOSS:_RequestCommence( _unitName )
 
     if playerData then
 
+      self:_SynchronizeMarshalCase()
+      local navigationReady, navigationReason = self:_CanClearForRecovery( self.airbossnice )
+
       -- Voice over of Commencing call (regardless of Airboss will rejected or not)
       if self.xtVoiceOvers then
         self:_CommencingCall(_unit, playerData.onboard)
@@ -17130,6 +17219,10 @@ function AIRBOSS:_RequestCommence( _unitName )
           else
             text = string.format( "negative, carrier is not recovering. No future windows planned." )
           end
+
+        elseif not navigationReady then
+
+          text = "negative, " .. navigationReason .. ". Hold position until cleared."
 
         elseif not self:_InQueue( self.Qmarshal, playerData.group ) and not self.airbossnice then
 
