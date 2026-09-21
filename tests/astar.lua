@@ -1985,6 +1985,74 @@ test("node vectors accept all position inputs and coordinate conversion is expli
   near(a.nodes[1].vector.x,100)
 end)
 
+test("3D endpoint selection distinguishes vertically separated nodes", function()
+  local a=ASTAR:New():SetCostDist3D()
+  local first=a:AddNodeFromCoordinate(coord(0,0,0))
+  local last=a:AddNodeFromCoordinate(coord(0,0,1000))
+  a:SetStartCoordinate(first.vector):SetEndCoordinate(last.vector)
+  a:SetValidNeighbourFunction(function() return false end)
+  equal(a:GetPath(),nil)
+  equal(a.startNode,first) equal(a.endNode,last)
+  equal(a:FindClosestNode(last.vector),last)
+  a:SetValidNeighbourFunction(nil)
+  local path=a:GetPath()
+  equal(#path,2) equal(path[1],first) equal(path[2],last)
+  equal(a:_TravelCost(first,last),1000)
+end)
+
+test("old automatic endpoints cannot bridge later grid searches", function()
+  local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(1000,1000))
+  land.surfaceAt=function(p)
+    if (p.x==0 and p.z==0) or (p.x==1000 and p.z==1000) or (p.x==500 and p.z==500) then
+      return land.SurfaceType.WATER
+    end
+    return land.SurfaceType.LAND
+  end
+  a:SetValidSurfaceTypes(land.SurfaceType.WATER)
+  a:GetGrid():SetCorridor(2000,0):SetSpacing(1000):SetDiagonals(false)
+  -- Build along the x axis to retain the intended two diagonal cells.
+  a:SetEndCoordinate(coord(1000)):CreateGrid()
+  a:SetEndCoordinate(coord(1000,1000))
+  equal(a.Nnodes,2) equal(a:GetPath(),nil)
+  a:SetEndCoordinate(coord(500,500))
+  local path=a:GetPath()
+  assert(path) equal(a.Nnodes,3)
+  local endpoint=a.endNode
+  local unchanged=a:GetPath()
+  equal(a.endNode,endpoint) equal(#unchanged,#path)
+  assert(a.nodes[path[1].id].valid[endpoint.id])
+  a:SetEndCoordinate(coord(1000,1000))
+  equal(a:GetPath(),nil) equal(a.Nnodes,2)
+  for _,node in pairs(a.nodes) do
+    equal(node.valid[endpoint.id],nil) equal(node.cost[endpoint.id],nil)
+  end
+  -- Caller-owned path values remain usable for coordinate conversion and debug snapshots.
+  equal(a:GetNodeCoordinate(endpoint).x,500)
+  a:DrawGridWithPath(path) flushTimers()
+  equal(a.LastGridDrawResult.Status,"complete")
+  -- The same bridging position remains valid when explicitly added by the caller.
+  local manual=a:AddNodeFromCoordinate(coord(500,500))
+  assert(a:GetPath()) equal(a.nodes[manual.id],manual)
+end)
+
+test("invalid ASTAR positions cannot replace endpoints or reach terrain queries", function()
+  local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(1000))
+  local first,last,counter=a.startVector,a.endVector,a.counter
+  land.surfaceAt=function() error("Invalid coordinates reached terrain sampling") end
+  for _,value in ipairs({math.huge,-math.huge,0/0}) do
+    for _,axis in ipairs({"x","y","z"}) do
+      local position=VECTOR:New(0,0,0)
+      position[axis]=value
+      for _,method in ipairs({"SetStartCoordinate","SetEndCoordinate","AddNodeFromCoordinate","FindClosestNode"}) do
+        local ok,reason=pcall(a[method],a,position)
+        assert(not ok and tostring(reason):find("finite"), method.." must reject non-finite positions before terrain access")
+        equal(a.startVector,first) equal(a.endVector,last)
+        equal(a.counter,counter) equal(a.Nnodes,0)
+      end
+    end
+  end
+end)
+
 test("endpoint setters snapshot coordinate and vector inputs and can clear them", function()
   local a=ASTAR:New()
   local start,goal=coord(10,30,20),VECTOR:New(40,50,60)

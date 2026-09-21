@@ -157,7 +157,9 @@
 -- GetNodeCoordinate(node) creates a fresh COORDINATE with the node's exact altitude. It does not cache the result.
 --
 -- In unrestricted mode endpoints snap to the closest node within 1000 m; otherwise a surface-valid node is added at the requested position.
+-- Endpoint distances use 3D when SetCostDist3D() is selected; default and custom cost rules retain 2D endpoint selection.
 -- Local grid mode keeps non-coincident endpoint positions exact and attaches them to nearby grid centers; it never links manual nodes directly.
+-- Obsolete automatically inserted endpoints are removed on endpoint resolution. Explicitly added nodes remain part of the graph.
 -- GetPath and GetPathWithExpansion accept ExcludeStartNode, ExcludeEndNode booleans. An empty table can be a successful path; nil means failure.
 --
 -- # Neighbours and Costs
@@ -200,7 +202,7 @@
 -- The discrete lattice may leave some budget unused. No cell is sampled beyond MaxCells. A fitted step consumes one normal search attempt.
 -- Previously accepted and rejected cells are retained without resampling; the first real enlargement of a zone seed fills unsampled holes as well.
 -- Manual ExpandGrid(width,margin) supports both geometries and uses the same budget and dimension caps, but rejects oversized requests instead of fitting them.
--- ExpandGrid(width,margin) remains available specifically for hex grids. Rectangular enlargement preserves original i/j indices, spacing and orientation.
+-- Rectangular enlargement preserves original i/j indices, spacing and orientation.
 -- Grid builders enable local neighbours by default. Hex expanding searches require this local mode.
 --
 -- GetPathWithExpansion returns path, report and stores the report in LastExpansionResult:
@@ -316,6 +318,7 @@ function ASTAR:New()
   self.Grid=GRID:New("ASTAR", GRID.Type.RECTANGLE)
   self._GridRevision=-1 self._CellNodes={} self._CellCursor=0
   self._NodeOwner={}
+  self._EndpointNodes={}
 
   return self
 end
@@ -326,22 +329,22 @@ end
 
 --- Set the requested start coordinate. Does not create a node or rebuild the grid.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate Start position; also accepts VECTOR, DCS Vec2 or Vec3. Nil clears it.
+-- @param Core.Point#COORDINATE Coordinate Finite start position; also accepts VECTOR, DCS Vec2 or Vec3. Nil clears it.
 -- @return #ASTAR self
 function ASTAR:SetStartCoordinate(Coordinate)
 
-  self.startVector=Coordinate and VECTOR:NewFromVec(Coordinate) or nil
+  self.startVector=Coordinate~=nil and self.Grid:_PositionVector(Coordinate) or nil
   
   return self
 end
 
 --- Set the requested goal coordinate. Does not create a node or rebuild the grid.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate Goal position; also accepts VECTOR, DCS Vec2 or Vec3. Nil clears it.
+-- @param Core.Point#COORDINATE Coordinate Finite goal position; also accepts VECTOR, DCS Vec2 or Vec3. Nil clears it.
 -- @return #ASTAR self
 function ASTAR:SetEndCoordinate(Coordinate)
 
-  self.endVector=Coordinate and VECTOR:NewFromVec(Coordinate) or nil
+  self.endVector=Coordinate~=nil and self.Grid:_PositionVector(Coordinate) or nil
   
   return self
 end
@@ -358,6 +361,13 @@ function ASTAR:GetNodeFromCoordinate(Coordinate)
   local node={} --#ASTAR.Node
   
   node.vector=VECTOR._IsVector(Coordinate) and Coordinate or VECTOR:NewFromVec(Coordinate)
+
+  -- Validate before querying DCS or consuming an ID. Retain supplied VECTOR objects without copying them.
+  for _,axis in ipairs({"x", "y", "z"}) do
+    local value=node.vector[axis]
+    assert(type(value)=="number" and value>-math.huge and value<math.huge, "ASTAR: node coordinates must be finite")
+  end
+
   node.surfacetype=node.vector:GetSurfaceType()
   node.id=self.counter
   node._owner=self._NodeOwner
@@ -930,18 +940,21 @@ end
 --- Find the closest node from a given coordinate.
 -- @param #ASTAR self
 -- @param Core.Point#COORDINATE Coordinate Reference position; also accepts VECTOR, DCS Vec2 or Vec3.
--- @return #ASTAR.Node Closest node by 2D distance, or nil if the node set is empty.
+-- Uses 3D distance with SetCostDist3D(), otherwise 2D distance, including for custom cost functions.
+-- @return #ASTAR.Node Closest node, or nil if the node set is empty.
 -- @return #number Distance to the closest node in meters, or math.huge if the node set is empty.
 function ASTAR:FindClosestNode(Coordinate)
+  local position=self.Grid:_PositionVector(Coordinate)
   self:_SyncGrid()
 
   local distMin=math.huge
   local closeNode=nil
+  local horizontal=self.CostFunc~=ASTAR.Dist3D
   
   for _,_node in pairs(self.nodes) do
     local node=_node --#ASTAR.Node
     
-    local dist=node.vector:GetDistance(Coordinate, true)
+    local dist=node.vector:GetDistance(position, horizontal)
     
     if dist<distMin then
       distMin=dist
@@ -954,7 +967,7 @@ function ASTAR:FindClosestNode(Coordinate)
 end
 
 --- Select the closest start node, or add an exact start node if the closest is more than 1000 meters away.
--- In local grid mode, any 2D displacement greater than 0.000001 meters creates an exact endpoint instead of snapping.
+-- Uses the distance metric of FindClosestNode(). In local grid mode the snapping threshold is 0.000001 meters.
 -- Sets startNode to nil if the node set is empty or an added endpoint fails the surface filter.
 -- @param #ASTAR self
 -- @return #ASTAR self
@@ -964,7 +977,7 @@ function ASTAR:FindStartNode()
 end
 
 --- Select the closest goal node, or add an exact goal node if the closest is more than 1000 meters away.
--- In local grid mode, any 2D displacement greater than 0.000001 meters creates an exact endpoint instead of snapping.
+-- Uses the distance metric of FindClosestNode(). In local grid mode the snapping threshold is 0.000001 meters.
 -- Sets endNode to nil if the node set is empty or an added endpoint fails the surface filter.
 -- @param #ASTAR self
 -- @return #ASTAR self
@@ -973,12 +986,50 @@ function ASTAR:FindEndNode()
   return self
 end
 
+--- Remove automatic endpoints no longer requested by this search.
+-- Keeps caller-added nodes and current endpoints. Previously returned paths retain their node objects for inspection.
+-- @param #ASTAR self
+-- @return #nil No return value; removes obsolete nodes, pair-cache entries and candidate adjacency.
+function ASTAR:_PruneEndpointNodes()
+
+  local removed={}
+  for id,node in pairs(self._EndpointNodes) do
+    local atStart=self.startVector and node.vector:GetDistance(self.startVector)<=1e-6
+    local atGoal=self.endVector and node.vector:GetDistance(self.endVector)<=1e-6
+
+    if not atStart and not atGoal then
+      removed[#removed+1]=id
+      self.nodes[id]=nil
+      self._EndpointNodes[id]=nil
+      self.Nnodes=self.Nnodes-1
+      node.valid={}
+      node.cost={}
+      if self.startNode==node then self.startNode=nil end
+      if self.endNode==node then self.endNode=nil end
+    end
+  end
+
+  if #removed>0 then
+    -- Pair caches are symmetric; remove reverse references so moving endpoints cannot accumulate cache entries.
+    for _,node in pairs(self.nodes) do
+      for _,id in ipairs(removed) do
+        node.valid[id]=nil
+        node.cost[id]=nil
+      end
+    end
+
+    self.gridLinks=nil
+    self.gridComponents=nil
+  end
+end
+
 --- Resolve one endpoint using the current snapping threshold and surface filter.
 -- @param #ASTAR self
 -- @param Core.Vector#VECTOR Coordinate Requested endpoint.
 -- @param #string Label Endpoint name for trace output.
 -- @return #ASTAR.Node Selected or added node, or nil.
 function ASTAR:_FindEndpoint(Coordinate, Label)
+  self:_PruneEndpointNodes()
   if not Coordinate then return nil end
   local node, distance=self:FindClosestNode(Coordinate)
   local threshold=self.GridNeighboursOnly and 1e-6 or 1000
@@ -987,6 +1038,7 @@ function ASTAR:_FindEndpoint(Coordinate, Label)
     node=self:GetNodeFromCoordinate(Coordinate)
     if not self.Grid:IsValidSurfaceType(node.surfacetype) then return nil end
     self:AddNode(node)
+    self._EndpointNodes[node.id]=node
   end
   return node
 end
@@ -998,6 +1050,7 @@ end
 -- @return #string Failure reason, or nil.
 function ASTAR:_ResolveEndpoints()
   self:_SyncGrid()
+  self:_PruneEndpointNodes()
   if not self.startVector or not self.endVector then return nil, nil, "missing_coordinates" end
   self:FindStartNode()
   self:FindEndNode()
@@ -1708,7 +1761,16 @@ end
 -- @return #ASTAR self; inspect LastGridDrawResult for drawing progress.
 function ASTAR:DrawGridWithPath(Path, Options)
   self:_SyncGrid()
-  return GRID.DrawGridWithPath(self, Path, Options)
+  assert(type(Path)=="table", "ASTAR: DrawGridWithPath requires a successful path table")
+  local cells={}
+  for _,node in ipairs(Path) do
+    assert(type(node)=="table" and node._owner==self._NodeOwner and node.grid==self.Grid,
+      "ASTAR: path nodes must belong to this search")
+
+    -- Automatic endpoints may have been removed since this path was returned. They have no polygon to draw.
+    if node.cell then cells[#cells+1]=node end
+  end
+  return GRID.DrawGridWithPath(self, cells, Options)
 end
 
 --- Validate batch settings and replace the overlay before starting a regular drawing or debug snapshot.
