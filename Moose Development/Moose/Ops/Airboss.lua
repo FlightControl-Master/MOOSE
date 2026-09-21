@@ -141,13 +141,11 @@
 -- @field #AIRBOSS.CarrierParameters carrierparam Carrier specific parameters.
 -- @field #string alias Alias of the carrier.
 -- @field Wrapper.Airbase#AIRBASE airbase Carrier airbase object.
--- @field #table waypoints Waypoint coordinates of carrier.
--- @field #number currentwp Current waypoint, i.e. the one that has been passed last.
--- @field #boolean TACANon Automatic TACAN is activated.
+-- @field #boolean TACANon TACAN is configured for activation on Start; no periodic refresh.
 -- @field #number TACANchannel TACAN channel.
 -- @field #string TACANmode TACAN mode, i.e. "X" or "Y".
 -- @field #string TACANmorse TACAN morse code, e.g. "STN".
--- @field #boolean ICLSon Automatic ICLS is activated.
+-- @field #boolean ICLSon ICLS is configured for activation on Start; no periodic refresh.
 -- @field #number ICLSchannel ICLS channel.
 -- @field #string ICLSmorse ICLS morse code, e.g. "STN".
 -- @field #AIRBOSS.Radio PilotRadio Radio for Pilot calls.
@@ -222,14 +220,10 @@
 -- @field #string senderac Name of the aircraft acting as sender for broadcasting radio messages from the carrier. DCS shortcoming workaround.
 -- @field #string radiorelayLSO Name of the aircraft acting as sender for broadcasting LSO radio messages from the carrier. DCS shortcoming workaround.
 -- @field #string radiorelayMSH Name of the aircraft acting as sender for broadcasting Marhsal radio messages from the carrier. DCS shortcoming workaround.
--- @field #boolean turnintowind If true, carrier is currently turning into the wind.
--- @field #boolean detour If true, carrier is currently making a detour from its path along the ME waypoints.
--- @field Core.Point#COORDINATE Creturnto Position to return to after turn into the wind leg is over.
+-- @field #boolean turnintowind AIRBOSS has requested an into-wind maneuver, queued or active. Use navygroup:IsTurning() for an actual heading change.
 -- @field Core.Set#SET_GROUP squadsetAI AI groups in this set will be handled by the airboss.
 -- @field Core.Set#SET_GROUP excludesetAI AI groups in this set will be explicitly excluded from handling by the airboss and not forced into the Marshal pattern.
 -- @field #boolean menusingle If true, menu is optimized for a single carrier.
--- @field #number collisiondist Distance up to which collision checks are done.
--- @field #number holdtimestamp Timestamp when the carrier first came to an unexpected hold.
 -- @field #number Tmessage Default duration in seconds messages are displayed to players.
 -- @field #string soundfolder Folder within the mission (miz) file where airboss sound files are located.
 -- @field #string soundfolderLSO Folder withing the mission (miz) file where LSO sound files are stored.
@@ -255,7 +249,10 @@
 -- @field #boolean skipperUturn U-turn on/off via menu.
 -- @field #number skipperOffset Holding offset angle in degrees for Case II/III manual recoveries.
 -- @field #number skipperTime Recovery time in min for manual recovery.
--- @field Ops.NavyGroup#NAVYGROUP navygroup Naval group controlling the carrier.
+-- @field Ops.NavyGroup#NAVYGROUP navygroup Navigation controller with its own FSM and lifecycle; remains active after AIRBOSS:Stop().
+-- @field #AIRBOSS.Recovery activeRecoveryWindow Currently active recovery window.
+-- @field #AIRBOSS.Recovery navyRecoveryWindow Recovery window associated with the owned into-wind maneuver.
+-- @field Ops.NavyGroup#NAVYGROUP.IntoWind navyIntoWind Into-wind maneuver requested by this AIRBOSS.
 -- @extends Core.Fsm#FSM
 
 --- Be the boss!
@@ -670,7 +667,7 @@
 -- This simple script initializes a lot of parameters with default values:
 --
 --    * TACAN channel is set to 74X, see @{#AIRBOSS.SetTACAN},
---    * ICSL channel is set to 1, see @{#AIRBOSS.SetICLS},
+--    * ICLS channel is set to 1, see @{#AIRBOSS.SetICLS},
 --    * LSO radio is set to 264 MHz FM, see @{#AIRBOSS.SetLSORadio},
 --    * Marshal radio is set to 305 MHz FM, see @{#AIRBOSS.SetMarshalRadio},
 --    * Default recovery case is automatic (0); the active case is resolved to I, II or III, see @{#AIRBOSS.SetRecoveryCase},
@@ -683,15 +680,39 @@
 -- However, good mission planning involves also planning when aircraft are supposed to be launched or recovered. The definition of *case specific* recovery ops within the same mission is described in
 -- the next section.
 --
+-- ## NAVYGROUP Integration and Lifecycle
+--
+-- AIRBOSS remains an FSM for flight operations and uses a separate @{Ops.NavyGroup#NAVYGROUP} in `airboss.navygroup`.
+-- NAVYGROUP controls routing, waypoints, detours, pathfinding and into-wind movement. AIRBOSS controls recovery windows, marshal, the pattern and LSO grading.
+-- `airboss:GetState()` reports the flight-operations state; `airboss.navygroup:GetState()` reports the navigation state.
+-- Configure navigation directly through `airboss.navygroup`. Use one AIRBOSS per naval group and separate groups for multiple managed carriers.
+-- Position getters, deck geometry and beacon activation refer to the selected carrier unit, even if its group contains escorts.
+--
+-- @{#AIRBOSS.Start} starts or resumes flight management. On restart, AIRBOSS reconciles tracked flights with surviving units and rebuilds its F10 menus.
+-- Players must request their approach again; preferences and completed scores are retained. Missed landing events do not generate retrospective grades.
+-- @{#AIRBOSS.Stop} closes the active recovery, cancels this AIRBOSS's wind maneuver and clears its timers, scheduled work, radio queues, event handlers and F10 menus.
+-- NAVYGROUP, its navigation beacons and existing DCS aircraft tasks continue. Future recovery windows remain scheduled and are checked again on Start.
+-- Already playing audio may finish. Start requires a living carrier and rejects a NAVYGROUP linked to another AIRBOSS.
+--
+-- TACAN and ICLS are activated through NAVYGROUP on Start or when their setters are called while AIRBOSS is running. There is no periodic beacon refresh.
+-- To turn off an already active beacon through AIRBOSS, call @{#AIRBOSS.SetTACANoff} or @{#AIRBOSS.SetICLSoff} before Stop.
+-- While AIRBOSS is stopped, use `airboss.navygroup:TurnOffTACAN()` or `airboss.navygroup:TurnOffICLS()` to switch an active beacon off immediately.
+--
 -- ## Recovery Windows
 --
--- Recovery of aircraft is only allowed during defined time slots. You can define these slots via the @{#AIRBOSS.AddRecoveryWindow}(*start*, *stop*, *case*, *holdingoffset*) function.
+-- Recovery of aircraft is only allowed during defined time slots. Define them via @{#AIRBOSS.AddRecoveryWindow}(*start*, *stop*, *case*, *holdingoffset*, *turnintowind*, *speed*, *uturn*).
 -- The parameters are:
 --
---   * *start*: The start time as a string. For example "8:00" for a window opening at 8 am. Or "13:30+1" for half past one on the next day. Default (nil) is ASAP.
---   * *stop*: Time when the window closes as a string. Same format as *start*. Default is 90 minutes after start time.
+--   * *start*: Mission clock string, e.g. "8:00" or "13:30+1" for the next day, or a numeric offset in seconds from now. Default (nil) is ASAP.
+--   * *stop*: Mission clock string or numeric offset in seconds from now (not from *start*). Default is 90 minutes after start time.
 --   * *case*: The recovery case during that window (1, 2 or 3), or 0 for automatic selection. If omitted, the configured default case is used (initially 0, automatic).
 --   * *holdingoffset*: Holding offset angle in degrees. Only for Case II or III recoveries. Default 0 deg. Common +-15 deg or +-30 deg.
+--   * *turnintowind*: If true, NAVYGROUP prepares an into-wind maneuver before opening. Lead time is set by @{#AIRBOSS.SetRecoveryTurnTime}, initially 300 seconds.
+--   * *speed*: Desired wind over deck in knots, default 20. This is not the carrier's speed through the water.
+--   * *uturn*: If true or nil, allow a return to the route departure point when the maneuver caused a significant departure. See below.
+--
+-- AIRBOSS owns the recovery deadline and any pattern-related extension; NAVYGROUP executes the maneuver.
+-- Pausing recovery keeps the into-wind course and does not stop the window clock. The usual extension check still applies at the planned end.
 --
 -- If recovery is closed, AI flights will be send to marshal stacks and orbit there until the next window opens.
 -- Players can request marshal via the F10 menu and will also be given a marshal stack. Currently, human players can request commence via the F10 radio regardless of
@@ -725,21 +746,20 @@
 --
 -- ### Turning into the Wind
 --
--- For each recovery window, you can define if the carrier should automatically turn into the wind. This is done by passing one or two additional arguments to the @{#AIRBOSS.AddRecoveryWindow} function:
+-- For each recovery window, enable automatic turning into the wind with the fifth argument to @{#AIRBOSS.AddRecoveryWindow}:
 --
 --     airbossStennis:AddRecoveryWindow("8:30", "9:30", 1, nil, true, 20)
 --
--- Setting the fifth parameter to *true* enables the automatic turning into the wind. The sixth parameter (here 20) specifies the speed in knots the carrier will go so that to total wind above the deck
--- corresponds to this wind speed. For example, if the is blowing with 5 knots, the carrier will go 15 knots so that the total velocity adds up to the specified 20 knots for the pilot.
+-- The sixth argument specifies desired wind over deck in knots. NAVYGROUP calculates heading and carrier speed using ambient wind and the runway angle,
+-- subject to the ship's speed limits. @{#AIRBOSS.SetIntoWindLegacy} selects the legacy or current calculation.
 --
 -- The carrier will steam into the wind for as long as the recovery window is open.
 --
--- However, the AIRBOSS scans the type of the surface up to 5 NM in the direction of movement of the carrier. If he detects anything but deep water, he will stop the current course and head back to
--- the point where he initially turned into the wind.
+-- NAVYGROUP handles collision checks and route planning. Configure its pathfinding through `airboss.navygroup`; AIRBOSS no longer performs its own collision scan.
 --
--- The same holds true after the recovery window closes. The carrier will head back to the place where he left its assigned route and resume the path to the next waypoint defined in the mission editor.
---
--- Note that the carrier will only head into the wind, if the wind direction is different by more than 5° from the current heading of the carrier (the angled runway, if any, fis taken into account here).
+-- At the end, U-turn is allowed by the seventh argument (default true). NAVYGROUP returns to the departure point only if the required heading change
+-- exceeded 5 degrees with wind of at least 0.1 m/s. Otherwise it continues to the next route waypoint.
+-- Compatible consecutive windows share the original route departure point. The final window's U-turn setting decides whether to return there.
 --
 -- ===
 --
@@ -1074,23 +1094,26 @@
 --
 --    * @{#AIRBOSS.Start}: Starts the AIRBOSS FSM.
 --    * @{#AIRBOSS.Stop}: Stops the AIRBOSS FSM.
---    * @{#AIRBOSS.Idle}: Carrier is set to idle and not recovering.
+--    * @{#AIRBOSS.Idle}: Flight operations are idle; this does not stop the carrier's navigation.
 --    * @{#AIRBOSS.RecoveryStart}: Starts the recovery ops.
 --    * @{#AIRBOSS.RecoveryStop}: Stops the recovery ops.
 --    * @{#AIRBOSS.RecoveryPause}: Pauses the recovery ops.
 --    * @{#AIRBOSS.RecoveryUnpause}: Unpauses the recovery ops.
 --    * @{#AIRBOSS.RecoveryCase}: Sets/switches the recovery case.
---    * @{#AIRBOSS.PassingWaypoint}: Carrier passes a waypoint defined in the mission editor.
+--    * @{#AIRBOSS.PassingWaypoint}: Carrier passes a regular route waypoint, including dynamically added waypoints.
 --
 -- These events can be used in the user script. When the event is triggered, it is automatically a function OnAfter*Eventname* called. For example
 --
 --     --- Carrier just passed waypoint.
 --     function AirbossStennis:OnAfterPassingWaypoint(From, Event, To, Waypoint)
+--      self:I(string.format("Passed route waypoint UID=%d", Waypoint.uid))
 --      -- Launch green flare.
 --      self.carrier:FlareGreen()
 --     end
 --
--- In this example, we only launch a green flare every time the carrier passes a waypoint defined in the mission editor. But, of course, you can also use it to add new
+-- The callback receives an @{Ops.OpsGroup#OPSGROUP.Waypoint} record, not a mission-editor waypoint number. Its `uid` identifies the waypoint;
+-- the route index can change when waypoints are inserted or removed. Internal temporary, pathfinding and detour points are handled by OPSGROUP separately.
+-- In this example, we launch a green flare at each regular route waypoint. You can also use the event to add new
 -- recovery windows each time a carrier passes a waypoint. Therefore, you can create an "infinite" number of windows easily.
 --
 -- ===
@@ -2107,6 +2130,8 @@ function AIRBOSS:New( carriername, alias )
 
 
   --- Triggers the FSM event "Start" that starts the airboss. Initializes parameters and starts event handlers.
+  -- Requires a living carrier and a NAVYGROUP not linked to another AIRBOSS. Reconciles tracked flights, restores owned menus and checks retained recovery windows.
+  -- After Stop, players must request their approach again. This starts flight management on the existing NAVYGROUP.
   -- @function [parent=#AIRBOSS] Start
   -- @param #AIRBOSS self
 
@@ -2170,6 +2195,7 @@ function AIRBOSS:New( carriername, alias )
   -- @param #string To To state.
 
   --- Triggers the FSM event "RecoveryPause" that pauses the recovery of aircraft.
+  -- The into-wind course and window clock continue; pausing does not postpone the planned end.
   -- @function [parent=#AIRBOSS] RecoveryPause
   -- @param #AIRBOSS self
   -- @param #number duration Duration of pause in seconds. After that recovery is automatically resumed.
@@ -2205,14 +2231,13 @@ function AIRBOSS:New( carriername, alias )
   --- Triggers the FSM event "PassingWaypoint". Called when the carrier passes a waypoint.
   -- @function [parent=#AIRBOSS] PassingWaypoint
   -- @param #AIRBOSS self
-  -- @param #number waypoint Number of waypoint.
+  -- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint Route waypoint record, including its uid.
 
   --- Triggers the FSM delayed event "PassingWaypoint". Called when the carrier passes a waypoint.
   -- @function [parent=#AIRBOSS] __PassingWaypoint
   -- @param #AIRBOSS self
   -- @param #number delay Delay in seconds.
-  -- @param #number Case Recovery case (1, 2 or 3) that is started.
-  -- @param #number Offset Holding pattern offset angle in degrees for CASE II/III recoveries.
+  -- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint Route waypoint record, including its uid.
 
   --- On after "PassingWaypoint" user function. Called when the carrier passes a waypoint of its route.
   -- @function [parent=#AIRBOSS] OnAfterPassingWaypoint
@@ -2308,6 +2333,8 @@ function AIRBOSS:New( carriername, alias )
   -- @param #AIRBOSS.FlightGroup flight The flight group data.
 
   --- Stops AIRBOSS and its recovery maneuver. NAVYGROUP and its navigation beacons remain active.
+  -- Clears AIRBOSS event handlers, scheduled work, radio queues and owned F10 menus. Future recovery windows and completed scores are retained.
+  -- Start can resume flight management; players must request their approach again. Existing DCS aircraft tasks continue while AIRBOSS is stopped.
   -- @function [parent=#AIRBOSS] Stop
   -- @param #AIRBOSS self
 
@@ -2443,15 +2470,16 @@ function AIRBOSS:SetMenuRecovery( Duration, WindOnDeck, Uturn, Offset )
 end
 
 --- Add aircraft recovery time window and recovery case.
+-- Returns the recovery record when accepted. For invalid timing, returns self instead; check the result before using recovery fields.
 -- @param #AIRBOSS self
--- @param #string starttime (Optional) Start time, e.g. "8:00" for eight o'clock. Default now.
--- @param #string stoptime (Optional) Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
+-- @param #string starttime (Optional) Mission clock string, e.g. "8:00" or "8:00+1"; also accepts a numeric offset in seconds from now. Default now.
+-- @param #string stoptime (Optional) Mission clock string or numeric offset in seconds from now, not from starttime. Default 90 minutes after start time.
 -- @param #number case (Optional) Recovery case 1, 2 or 3; 0 selects automatically at creation and uses Case III if night is detected within the planned window (one-minute checks including the end). If omitted, uses the configured default case (initially 0, automatic).
 -- @param #number holdingoffset (Optional) Only for CASE II/III: Angle in degrees the holding pattern is offset. Defaults to 0.
--- @param #boolean turnintowind If true, carrier will turn into the wind 5 minutes before the recovery window opens.
--- @param #number speed (Optional) Speed in knots during turn into wind leg. Default is 20.
--- @param #boolean uturn (Optional) If true (or nil), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
--- @return #AIRBOSS.Recovery Recovery window.
+-- @param #boolean turnintowind If true, prepare an into-wind maneuver before opening. Lead time is configured by SetRecoveryTurnTime (initially 300 seconds).
+-- @param #number speed (Optional) Desired wind over deck in knots, not carrier speed. Default 20.
+-- @param #boolean uturn (Optional) If true or nil, allow returning to the original route departure point after a significant heading change (more than 5 degrees, wind at least 0.1 m/s). False continues directly to the next waypoint. For a shared maneuver, the final window's setting applies.
+-- @return #AIRBOSS.Recovery Recovery window when accepted.
 function AIRBOSS:AddRecoveryWindow( starttime, stoptime, case, holdingoffset, turnintowind, speed, uturn )
 
   -- Absolute mission time in seconds.
@@ -2999,6 +3027,7 @@ function AIRBOSS:SetStaticWeather( Switch )
 end
 
 --- Disable TACAN activation at startup and switch the managed beacon off if AIRBOSS is running.
+-- While stopped, an already active beacon is left running; use navygroup:TurnOffTACAN() to switch it off immediately.
 -- @param #AIRBOSS self
 -- @return #AIRBOSS self
 function AIRBOSS:SetTACANoff()
@@ -3035,6 +3064,7 @@ function AIRBOSS:SetTACAN( Channel, Mode, MorseCode )
 end
 
 --- Disable ICLS activation at startup and switch the managed beacon off if AIRBOSS is running.
+-- While stopped, an already active beacon is left running; use navygroup:TurnOffICLS() to switch it off immediately.
 -- @param #AIRBOSS self
 -- @return #AIRBOSS self
 function AIRBOSS:SetICLSoff()
@@ -3546,9 +3576,9 @@ function AIRBOSS:IsRecovering()
   return self:is( "Recovering" )
 end
 
---- Check if carrier is idle, i.e. no operations are carried out.
+--- Check if AIRBOSS flight operations are idle. NAVYGROUP may still be navigating.
 -- @param #AIRBOSS self
--- @return #boolean If true, carrier is in idle state.
+-- @return #boolean True if AIRBOSS is in the Idle state.
 function AIRBOSS:IsIdle()
   return self:is( "Idle" )
 end
@@ -4338,7 +4368,7 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param Ops.OpsGroup#OPSGROUP.Waypoint
+-- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint Passed route waypoint record.
 function AIRBOSS:onafterPassingWaypoint( From, Event, To, Waypoint )
   -- Debug output.
   self:I(self.lid .. string.format("Carrier passed waypoint UID=%d", Waypoint.uid))
@@ -4354,7 +4384,7 @@ function AIRBOSS:onafterIdle( From, Event, To )
   self:T( self.lid .. string.format( "Carrier goes to idle." ) )
 end
 
---- On after Stop event. Unhandle events.
+--- On after Stop event. Clean up AIRBOSS flight management while NAVYGROUP continues.
 -- @param #AIRBOSS self
 -- @param #string From From state.
 -- @param #string Event Event.
@@ -12120,14 +12150,14 @@ end
 -- @param #AIRBOSS self
 -- @param #number vdeck Desired wind velocity over deck in knots.
 -- @return #number BRC into the wind in degrees.
+-- @return #number Carrier speed in knots to reach the desired wind over deck.
 function AIRBOSS:GetBRCintoWind(vdeck)
   -- BRC is the magnetic heading.
   return self:GetHeadingIntoWind(vdeck, true )
 end
 
---- Get final bearing (FB) of carrier.
--- By default, the routine returns the magnetic FB depending on the current map (Caucasus, NTTR, Normandy, Persion Gulf etc).
--- The true bearing can be obtained by setting the *TrueNorth* parameter to true.
+--- Get final bearing (FB) of carrier, including the runway angle.
+-- By default, returns true bearing. Set magnetic to true to include magnetic declination.
 -- @param #AIRBOSS self
 -- @param #boolean magnetic If true, magnetic FB is returned.
 -- @return #number FB in degrees.
@@ -14069,7 +14099,8 @@ end
 -- CARRIER ROUTING Functions
 -----------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Carrier resumes the route at its next waypoint.
+--- Cancel the AIRBOSS-owned into-wind maneuver and resume the route at its next waypoint.
+-- This navigation command does not close a recovery window; use RecoveryStop to end flight recovery.
 -- @param #AIRBOSS self
 -- @param Core.Point#COORDINATE gotocoord (Optional) First goto this coordinate before resuming route.
 -- @return #AIRBOSS self
@@ -14104,11 +14135,12 @@ function AIRBOSS:CarrierResumeRoute( gotocoord )
 end
 
 
---- Let the carrier turn into the wind.
+--- Request a timed NAVYGROUP into-wind maneuver. This does not open a recovery window.
+-- Ignored while AIRBOSS is stopped or already owns a queued or active into-wind maneuver.
 -- @param #AIRBOSS self
--- @param #number time Time in seconds.
--- @param #number vdeck Speed on deck m/s. Carrier will
--- @param #boolean uturn Make U-turn and go back to initial after downwind leg.
+-- @param #number time Maneuver duration in seconds.
+-- @param #number vdeck Desired wind over deck in m/s; unlike AddRecoveryWindow, this wrapper does not take knots.
+-- @param #boolean uturn (Optional) Only true allows a return to the original departure point when NAVYGROUP detects a significant departure. Default false.
 -- @return #AIRBOSS self
 function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
   if self:is( "Stopped" ) then return self end
@@ -14812,16 +14844,17 @@ function AIRBOSS:GetVector()
   return self.carrier:GetVector()
 end
 
---- Get carrier coordinate.
+--- Get carrier position as a new COORDINATE snapshot.
 -- @param #AIRBOSS self
--- @return Core.Point#COORDINATE Carrier coordinate.
+-- @return Core.Point#COORDINATE New carrier coordinate, or nil if unavailable.
 function AIRBOSS:GetCoordinate()
   return self.carrier:GetCoordinate()
 end
 
---- Get carrier coordinate.
+--- Get the carrier's cached COORDINATE, updated by this call.
+-- The returned object is shared and mutable. Use GetCoordinate or GetVector for an independent position snapshot.
 -- @param #AIRBOSS self
--- @return Core.Point#COORDINATE Carrier coordinate.
+-- @return Core.Point#COORDINATE Cached carrier coordinate, or nil if unavailable.
 function AIRBOSS:GetCoord()
   return self.carrier:GetCoord()
 end
@@ -14835,14 +14868,17 @@ end
 
 --- Set if carrier will resume route at first waypoint once last waypoint is passed.
 -- @param #AIRBOSS self
--- @param #boolean enabled Enable/disable patrol ad infinitum.
+-- @param #boolean enabled True or nil enables repeated patrol; false follows the route once.
 -- @return #AIRBOSS self
 function AIRBOSS:SetPatrolAdInfinitum(enabled)
   self.navygroup:SetPatrolAdInfinitum(enabled)
   return self
 end
 
---- Set legacy into wind.
+--- Select the NAVYGROUP into-wind calculation used by this AIRBOSS.
+-- @param #AIRBOSS self
+-- @param #boolean enabled True or nil selects the legacy calculation; false selects the current calculation.
+-- @return #AIRBOSS self
 function AIRBOSS:SetIntoWindLegacy(enabled)
   self.navygroup:SetIntoWindLegacy(enabled)
   return self

@@ -9,6 +9,8 @@ In this section we will add the documentation for all subjects that go beyond
 the beginner topics, but which are interesting for mission builders or power
 users.
 
+- [AIRBOSS / NAVYGROUP migration](airboss-navygroup.md): navigation access, public APIs and lifecycle changes.
+
 {: .note }
 > This documentation is WIP (work in progress) and it will take some time to
 > fill it with usefull and up to date informations. Please be patient and check

@@ -50,7 +50,7 @@
 -- @field Core.Astar#ASTAR pathfindingDebugSearch Owner of this group's current pathfinding debug overlay.
 -- @field #NAVYGROUP.Target engage Engage target.
 -- @field #boolean intowindold Use old calculation to determine heading into wind.
--- @field Ops.Airboss#AIRBOSS airboss Optitonal airboss resonsible for aircraft recovery.
+-- @field Ops.Airboss#AIRBOSS airboss Optional callback target for flight recovery. AIRBOSS binds this reference on construction/Start and detaches it on Stop; NAVYGROUP continues independently.
 -- @extends Ops.OpsGroup#OPSGROUP
 
 --- *Something must be left to chance; nothing is sure in a sea fight above all.* -- Horatio Nelson
@@ -354,6 +354,23 @@ function NAVYGROUP:New(group)
   -- @param #string To To state.
 
 
+  --- Send the group to a detour point, then resume its route or wait there.
+  -- @function [parent=#NAVYGROUP] Detour
+  -- @param #NAVYGROUP self
+  -- @param Core.Point#COORDINATE Coordinate Detour destination.
+  -- @param #number Speed (Optional) Speed in knots. Default cruise speed.
+  -- @param #number Depth (Optional) Depth in meters for submarines. Default 0.
+  -- @param #boolean ResumeRoute True resumes the route at arrival; false or nil stops at the detour point.
+
+  --- Send the group to a detour point after a delay.
+  -- @function [parent=#NAVYGROUP] __Detour
+  -- @param #NAVYGROUP self
+  -- @param #number delay Delay in seconds.
+  -- @param Core.Point#COORDINATE Coordinate Detour destination.
+  -- @param #number Speed (Optional) Speed in knots. Default cruise speed.
+  -- @param #number Depth (Optional) Depth in meters for submarines. Default 0.
+  -- @param #boolean ResumeRoute True resumes the route at arrival; false or nil stops at the detour point.
+
   --- Triggers the FSM event "Dive".
   -- @function [parent=#NAVYGROUP] Dive
   -- @param #NAVYGROUP self
@@ -615,9 +632,9 @@ end
 
 --- Create a turn into wind window. Note that this is not executed as it not added to the queue.
 -- @param #NAVYGROUP self
--- @param #string starttime (Optional) Start time, e.g. "8:00" for eight o'clock. Default now.
--- @param #string stoptime (Optional) Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
--- @param #number speed (Optional) Speed in knots during turn into wind leg. Defaults to 20.
+-- @param #string starttime (Optional) Mission clock string or numeric offset in seconds from now. Default now.
+-- @param #string stoptime (Optional) Mission clock string or numeric duration in seconds from starttime. Default 90 minutes after start time.
+-- @param #number speed (Optional) Desired wind over deck in knots. Defaults to 20.
 -- @param #boolean uturn (Optional) If true (or nil), allow returning to the maneuver's starting position when the heading change exceeds 5 degrees and wind is at least 0.1 m/s. If false, go directly to the next waypoint.
 -- @param #number offset (Optional) Offset angle in degrees, e.g. to account for an angled runway. Default 0 deg.
 -- @return #NAVYGROUP.IntoWind Recovery window, or nil when its timing is invalid.
@@ -683,12 +700,13 @@ end
 
 --- Optional behavior for a turn into wind.
 -- @type NAVYGROUP.IntoWindOptions
--- @field #boolean ExternallyManaged The caller explicitly ends the maneuver. Default false.
+-- @field #boolean ExternallyManaged If true, Tstop does not end the maneuver automatically; the owner must end or remove it explicitly. Default false. AIRBOSS uses this to own recovery deadlines and extensions.
 
---- Add a time window, where the groups steams into the wind.
+--- Add a time window during which the group steams into the wind.
+-- For AIRBOSS recovery, use AIRBOSS:AddRecoveryWindow so flight management and navigation share the same recovery plan.
 -- @param #NAVYGROUP self
--- @param #string starttime (Optional) Start time, e.g. "8:00" for eight o'clock. Default now.
--- @param #string stoptime (Optional) Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
+-- @param #string starttime (Optional) Mission clock string or numeric offset in seconds from now. Default now.
+-- @param #string stoptime (Optional) Mission clock string or numeric duration in seconds from starttime, unlike AIRBOSS:AddRecoveryWindow. Default 90 minutes after start time.
 -- @param #number speed (Optional) Wind speed on deck in knots during turn into wind leg. Default 20 knots.
 -- @param #boolean uturn (Optional) If true (or nil), allow returning to the maneuver's starting position when the heading change exceeds 5 degrees and wind is at least 0.1 m/s. If false, go directly to the next waypoint.
 -- @param #number offset (Optional) Offset angle clock-wise in degrees, *e.g.* to account for an angled runway. Default 0 deg. Use around -9.1° for US carriers.
@@ -1463,7 +1481,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate Coordinate where to go.
 -- @param #number Speed Speed in knots. Default cruise speed.
 -- @param #number Depth Depth in meters. Default 0 meters.
--- @param #number ResumeRoute If true, resume route after detour point was reached. If false, the group will stop at the detour point and wait for futher commands.
+-- @param #boolean ResumeRoute True resumes the route at arrival; false or nil stops at the detour point and waits for further commands.
 function NAVYGROUP:onafterDetour(From, Event, To, Coordinate, Speed, Depth, ResumeRoute)
     
   -- Depth for submarines.
@@ -1557,6 +1575,8 @@ function NAVYGROUP:_SetTurnIntoWindRoute(IntoWind, Heading, Speed)
 end
 
 --- Update a queued or active into-wind maneuver without ending it.
+-- Keeps the first significant route departure point across updates; this can first be reached in a later window.
+-- The latest Uturn setting controls the final return.
 -- @param #NAVYGROUP self
 -- @param #NAVYGROUP.IntoWind IntoWind Maneuver returned by AddTurnIntoWind.
 -- @param #number Speed Desired wind on deck in knots.
