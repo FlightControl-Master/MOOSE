@@ -46,6 +46,9 @@
 -- @field #number pathMinDepth Minimum water depth for planning and collision checks in meters; default 20.
 -- @field #number pathRetryInterval Minimum interval between failed/repeated plans; default 60 seconds.
 -- @field #boolean pathfindingStopped True when navigation stopped the ship after a failed plan.
+-- @field #table navigationHold Private owner of a navigation stop, including the interrupted operational state.
+-- @field Core.Timer#TIMER timerNavigation Independent timer for local route checks.
+-- @field Core.Astar#ASTAR.DepthReport LastNavigationCheck Last local depth check; unavailable data is distinct from an obstacle.
 -- @field #table LastPathfindingResult Last expansion report or direct-path/failure status.
 -- @field Core.Astar#ASTAR pathfindingDebugSearch Owner of this group's current pathfinding debug overlay.
 -- @field #NAVYGROUP.Target engage Engage target.
@@ -59,6 +62,17 @@
 -- # The NAVYGROUP Concept
 -- 
 -- This class enhances naval groups.
+--
+-- Navigation checks the upcoming route independently of the 30-second status update. The check interval adapts
+-- to speed and ship length (2-10 seconds while moving), and also covers the route chord while turning.
+-- CollisionWarning is cleared by ClearAhead only after a successful depth check. Missing terrain data is reported
+-- separately in LastNavigationCheck. These checks use sampled straight corridors, not a ship-motion simulation.
+-- NAVYGROUP tracing reports blocked waypoint transitions with the actual position, waypoint distance and depth cause.
+-- It also rechecks the original waypoint-to-waypoint connection for comparison without changing the route decision.
+--
+-- SetPathfindingOn() enables automatic detours using the same minimum-depth rule. A failed plan owns its safety
+-- hold and may resume only that hold after a checked plan succeeds. FullStop(), Wait() and mission movement orders
+-- remain authoritative. Disabling pathfinding keeps collision warnings active, but does not release a stopped ship.
 -- 
 -- @field #NAVYGROUP
 NAVYGROUP = {
@@ -178,6 +192,15 @@ function NAVYGROUP:New(group)
   
   self:AddTransition("*",             "CollisionWarning", "*")           -- Collision warning.
   self:AddTransition("*",             "ClearAhead",       "*")           -- Clear ahead.
+
+  -- Resume only the state interrupted by navigation. Public Cruise intentionally has different semantics.
+  -- A private ownership token prevents these internal events from releasing a manual/mission hold.
+  for _,state in ipairs({"Cruising", "Engaging", "Returning", "Retreating", "OnDetour"}) do
+    local event="ResumeNavigation"..state
+    self:AddTransition("Holding", event, state)
+    self["onbefore"..event]=self._OnBeforeNavigationResume
+    self["onafter"..event]=self._OnAfterNavigationResume
+  end
   
   self:AddTransition("Cruising",      "Dive",             "Cruising")    -- Command a submarine to dive.
   self:AddTransition("Engaging",      "Dive",             "Engaging")    -- Command a submarine to dive.
@@ -408,6 +431,9 @@ function NAVYGROUP:New(group)
   -- Start the status monitoring.
   self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)
 
+  -- Navigation samples its own position; the status/turning history keeps its original cadence.
+  self.timerNavigation=TIMER:New(self._CheckNavigation, self):Start(2, 5)
+
   -- Start queue update timer.
   self.timerQueueUpdate=TIMER:New(self._QueueUpdate, self):Start(2, 5)
   
@@ -440,6 +466,7 @@ end
 --- Enable/disable pathfinding.
 -- Uses terrain profiles to check minimum water depth along the center and both edges of the corridor.
 -- Failed searches hold the ship until a later plan succeeds.
+-- A manual FullStop or Wait takes ownership of that hold and prevents automatic resumption.
 -- Search grids use GRID.Resolution.FINE with GRID.Width.NORMAL and GRID.Margin.SMALL; no grid dimensions are required.
 -- SetPathfindingMinDepth() configures depth separately. Profiles assume linear terrain between their points;
 -- three parallel checks do not cover the entire corridor or simulate the ship's turning arc.
@@ -461,6 +488,7 @@ function NAVYGROUP:SetPathfinding(Switch, CorridorWidth)
   if not Switch then
     self.pathfindingRetryAt=nil
     self.pathfindingStopped=nil
+    self.navigationHold=nil
     self:_ClearPathfindingDrawing()
   end
 
@@ -490,7 +518,7 @@ function NAVYGROUP:SetPathfindingOff()
 end
 
 --- Set the minimum water depth used by pathfinding, route simplification and collision checks.
--- An active detour is checked against the new depth on the next status update. Changing depth does not resume a stopped ship.
+-- An active detour is checked against the new depth on the next navigation update. Manual holds are preserved.
 -- @param #NAVYGROUP self
 -- @param #number MinDepth (Optional) Positive finite minimum water depth in meters, inclusive; default 20.
 -- @return #NAVYGROUP self.
@@ -870,8 +898,8 @@ function NAVYGROUP:Status()
   -- Is group alive?
   local alive=self:IsAlive()
   
-  -- Free path.
-  local freepath=0
+  -- Report the last actual navigation measurement, or -1 when no measurement is available.
+  local freepath=self.LastNavigationCheck and self.LastNavigationCheck.ClearDistance or -1
   
   -- Check if group is exists and is active.
   if alive then
@@ -885,35 +913,6 @@ function NAVYGROUP:Status()
     -- Check if group started or stopped turning.
     self:_CheckTurning()
   
-    -- Distance to next Waypoint.  
-    local disttoWP=math.min(self:GetDistanceToWaypoint(), UTILS.NMToMeters(10))
-    freepath=disttoWP
-    
-    -- Check the actual detour leg even while turning; use heading-based lookahead otherwise.
-    if self.pathfindingOn and self.pathfindingStopped then
-      self:_FindPathToNextWaypoint()
-    elseif self.pathfindingOn and self.ispathfinding then
-      self:_ContinuePathfinding()
-    elseif not self:IsTurning() then
-
-      -- Check free path ahead.
-      freepath=self:_CheckFreePath(freepath)
-      
-      if disttoWP>1 and freepath<disttoWP then
-      
-        if not self.collisionwarning then
-          -- Issue a collision warning event.
-          self:CollisionWarning(freepath)
-        end
-    
-        if self.pathfindingOn then
-          self:_FindPathToNextWaypoint()
-        end
-        
-      end
-      
-    end
-    
     -- Check into wind queue.
     self:_CheckTurnsIntoWind()
 
@@ -1024,7 +1023,7 @@ function NAVYGROUP:Status()
       local turning=tostring(self:IsTurning())      
 
       -- Info text.
-      local text=string.format("%s [%d/%d]: ROE/AS=%d/%d | T/M=%d/%d | Wp=%d[%d]-->%d[%d]/%d [%s] | Life=%.1f | v=%.1f (%d) | Hdg=%03d | Ammo=%d | Detect=%s | Cargo=%.1f | Turn=%s Collision=%d IntoWind=%s",
+      local text=string.format("%s [%d/%d]: ROE/AS=%d/%d | T/M=%d/%d | Wp=%d[%d]-->%d[%d]/%d [%s] | Life=%.1f | v=%.1f (%d) | Hdg=%03d | Ammo=%d | Detect=%s | Cargo=%.1f | Turn=%s Collision=%.0f IntoWind=%s",
       fsmstate, nelem, Nelem, roe, als, nTaskTot, nMissions, wpidxCurr, wpuidCurr, wpidxNext, wpuidNext, wpN, wpF, life, speed, speedEx, hdg, ammo, ndetected, cargo, turning, freepath, intowind)
       self:I(self.lid..text)
             
@@ -1602,8 +1601,18 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
-function NAVYGROUP:onafterFullStop(From, Event, To)
+-- @param #table NavigationHold (Internal) Private navigation stop owner; omit for manual stops.
+function NAVYGROUP:onafterFullStop(From, Event, To, NavigationHold)
   self:T(self.lid.."Full stop ==> holding")
+
+  -- An ordinary FullStop (also used by Wait) always takes ownership, even if already holding.
+  if NavigationHold and NavigationHold==self.navigationHold then
+    self.pathfindingStopped=true
+  else
+    self.navigationHold=nil
+    self.pathfindingStopped=nil
+    self.pathfindingRetryAt=nil
+  end
 
   -- Get current position.
   local pos=self:GetCoordinate()
@@ -1623,6 +1632,10 @@ end
 -- @param #string To To state.
 -- @param #number Speed Speed in knots until next waypoint is reached. Default is speed set for waypoint.
 function NAVYGROUP:onafterCruise(From, Event, To, Speed)
+
+  self.navigationHold=nil
+  self.pathfindingStopped=nil
+  self.pathfindingRetryAt=nil
 
   -- Not waiting anymore.
   self.Twaiting=nil
@@ -1684,7 +1697,6 @@ end
 -- @param #string To To state.
 function NAVYGROUP:onafterTurningStopped(From, Event, To)
   self.turning=false
-  self.collisionwarning=false
   
   if self:IsSteamingIntoWind() then
     self:TurnedIntoWind()
@@ -1697,10 +1709,19 @@ end
 -- @param #string From From state.
 -- @param #string Event Event.
 -- @param #string To To state.
--- @param #number Distance Distance in meters where obstacle was detected.
+-- @param #number Distance Estimated clear prefix in meters before the detected obstacle.
 function NAVYGROUP:onafterCollisionWarning(From, Event, To, Distance)
-  self:T(self.lid..string.format("Iceberg ahead in %d meters!", Distance or -1))
+  self:T(self.lid..string.format("Navigation obstacle ahead; checked clear distance %.0f meters", Distance or -1))
   self.collisionwarning=true
+end
+
+--- Clear a previous warning after a verified clear navigation check.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterClearAhead(From, Event, To)
+  self.collisionwarning=false
 end
 
 --- On after "EngageTarget" event.
@@ -2082,6 +2103,213 @@ end
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Check whether navigation may manage the current route.
+-- Manual holds, waiting, completed routes and tasks with their own movement remain authoritative.
+-- @param #NAVYGROUP self
+-- @return #boolean True when route checks and automatic planning are allowed.
+function NAVYGROUP:_CanNavigate()
+
+  local state=self:GetState()
+
+  if not self:IsAlive() or state=="Dead" or state=="Stopped" or state=="InUtero" then
+    self.navigationHold=nil
+    self.pathfindingStopped=nil
+    self.pathfindingRetryAt=nil
+    self.LastNavigationCheck=nil
+    self.collisionwarning=false
+    self.ispathfinding=false
+    self.pathfindingContext=nil
+    self.pathfindingTargetUID=nil
+    self:_ClearPathfindingDrawing()
+    return false
+  end
+
+  -- A new operational command supersedes our old stop. Wait takes ownership through FullStop as well.
+  if state~="Holding" or self:IsWaiting() then
+    self.navigationHold=nil
+    self.pathfindingStopped=nil
+  end
+
+  if self:IsWaiting() or not self.isAI or (self.passedfinalwp and not self.adinfinitum and state~="Engaging") then
+    return false
+  end
+
+  if state=="Holding" then
+    if not self.pathfindingOn or not self.navigationHold then
+      return false
+    end
+    state=self.navigationHold.State
+  end
+
+  if state~="Cruising" and state~="Engaging" and state~="Returning" and state~="Retreating" and state~="OnDetour" then
+    return false
+  end
+
+  -- Match UpdateRoute's task ownership rules. An A* result cannot replace an unrelated active DCS task.
+  if state~="Engaging" and (self.taskcurrent or 0)>0 then
+    local task=self:GetTaskByID(self.taskcurrent)
+    local id=task and task.dcstask and task.dcstask.id
+    local special=AUFTRAG.SpecialTask
+
+    if not id or (id~=special.PATROLZONE and id~=special.RECON and id~=special.RELOCATECOHORT and id~=special.REARMING) then
+      return false
+    end
+  end
+
+  return true
+end
+
+--- Identify the route target and all settings that affect an automatic plan.
+-- Excludes intermediate ASTAR points, so passing a detour point does not invalidate a good plan.
+-- @param #NAVYGROUP self
+-- @param Ops.OpsGroup#OPSGROUP.Waypoint Target Original route target.
+-- @return #string Context used to invalidate retry delays when the route or configuration changes.
+function NAVYGROUP:_GetPathfindingContext(Target)
+
+  local point=Target.coordinate
+  return table.concat({tostring(Target), Target.uid, point.x, point.y, point.z, Target.speed,
+    tostring(Target.intowind), tostring(self:GetMissionCurrent()), self.pathMinDepth or 20,
+    self:_GetPathfindingCorridorWidth(), self.pathMaxCells or 5000, self.pathGrowthFactor or 1.5,
+    self.pathMaxAttempts or 5, self.depth or 0}, "|")
+end
+
+--- Stop on navigation's behalf without acquiring ownership of an existing manual hold.
+-- @param #NAVYGROUP self
+-- @return #boolean True when navigation owns the resulting hold.
+function NAVYGROUP:_StopForNavigation()
+
+  if not self:_CanNavigate() then
+    return false
+  end
+
+  if self.navigationHold then
+    return true
+  end
+
+  -- speedWp includes an active Cruise/Dive speed override; self.speed may still be the mission waypoint speed.
+  local speed=self.speedWp or self.speed
+  local hold={State=self:GetState(), Speed=speed and UTILS.MpsToKnots(speed)}
+  self.navigationHold=hold
+  self:FullStop(hold)
+
+  -- User FSM callbacks may cancel the event or replace it with their own FullStop/Wait command.
+  if self.navigationHold==hold and self:GetState()~="Holding" then
+    self.navigationHold=nil
+    self.pathfindingStopped=nil
+  end
+
+  return self.navigationHold==hold
+end
+
+--- Authorize an internal resume event only for the current navigation hold.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To Interrupted operational state.
+-- @param #table Hold Private stop owner.
+-- @return #boolean True when the installed route may resume.
+function NAVYGROUP:_OnBeforeNavigationResume(From, Event, To, Hold)
+  return Hold~=nil and Hold==self.navigationHold and Hold.State==To and self.pathfindingOn and self:_CanNavigate()
+end
+
+--- Resume the interrupted operation after installing a checked route.
+-- Unlike Cruise, this preserves the submarine's commanded depth and the mission state.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To Interrupted operational state.
+-- @param #table Hold Private stop owner.
+function NAVYGROUP:_OnAfterNavigationResume(From, Event, To, Hold)
+
+  if Hold~=self.navigationHold then
+    return
+  end
+
+  self.navigationHold=nil
+  self.pathfindingStopped=nil
+  self:__UpdateRoute(-0.01, nil, nil, Hold.Speed)
+end
+
+--- Publish a local navigation result and maintain collision-warning transitions.
+-- Unknown terrain data neither fabricates an obstacle nor clears a previous warning.
+-- @param #NAVYGROUP self
+-- @param Core.Astar#ASTAR.DepthReport Report Detailed depth-check result.
+function NAVYGROUP:_UpdateNavigationWarning(Report)
+
+  local previous=self.LastNavigationCheck
+  Report.Time=timer.getTime()
+  self.LastNavigationCheck=Report
+
+  if Report.Status=="blocked" and not self.collisionwarning then
+    self:CollisionWarning(Report.ClearDistance)
+  elseif Report.Status=="clear" and self.collisionwarning then
+    self:ClearAhead()
+  elseif Report.Status=="unavailable" and (not previous or previous.Status~="unavailable" or previous.Reason~=Report.Reason) then
+    self:T(self.lid.."Navigation depth data unavailable: "..tostring(Report.Reason))
+  end
+end
+
+--- Monitor the upcoming route independently of the general status timer.
+-- Checks up to two minutes of travel (at least 1000 m or four ship lengths), capped at the next waypoint and 10 NM.
+-- Checks also run while turning; the chord to the waypoint is checked, not a predicted turning arc.
+-- @param #NAVYGROUP self
+function NAVYGROUP:_CheckNavigation()
+
+  local interval=10
+
+  if self:_CanNavigate() then
+    if self.pathfindingOn and self.pathfindingStopped then
+      -- Failed plans retain their retry delay. This cheap check also notices a changed target or configuration.
+      self:_FindPathToNextWaypoint()
+      interval=5
+    else
+      local waypoint=self:GetWaypointNext()
+
+      if waypoint then
+        local position=VECTOR:NewFromVec(self:GetVec3())
+        local goal=VECTOR:NewFromVec(waypoint.coordinate)
+        local distance=position:GetDistance(goal,true)
+        local speed=self:GetVelocity() or 0
+        local length=100
+
+        for _,element in pairs(self.elements or {}) do
+          if type(element.length)=="number" and element.length>0 and element.length<math.huge then
+            length=math.max(length,element.length)
+          end
+        end
+
+        local lookahead=math.min(distance, UTILS.NMToMeters(10), math.max(1000, 4*length, speed*120))
+
+        if distance>0 then
+          local fraction=lookahead/distance
+          goal=VECTOR:New(position.x+(goal.x-position.x)*fraction, goal.y, position.z+(goal.z-position.z)*fraction)
+        end
+
+        local clear,reason,report=self:_CheckPathDepth(position,goal,true)
+        self:_UpdateNavigationWarning(report)
+
+        -- Bound travel between checks to roughly a quarter ship length, with a 2-10 second interval.
+        interval=math.max(2,math.min(10,length/(4*math.max(speed,1))))
+        if not clear then
+          interval=2
+
+          -- A warning callback may issue FullStop or Wait. Recheck ownership before taking further action.
+          if self.pathfindingOn and self:_CanNavigate() then
+            if report.Status=="unavailable" then
+              self:_StopForNavigation()
+            end
+            self:_FindPathToNextWaypoint(self.ispathfinding and not self.pathfindingStopped)
+          end
+        end
+      end
+    end
+  end
+
+  if self.timerNavigation then
+    self.timerNavigation:SetTimeInterval(interval)
+  end
+end
+
 --- Resolve the total width used by all naval depth checks.
 -- Uses cached element dimensions, including the widest ship in a group. Formation offsets are not included.
 -- @param #NAVYGROUP self
@@ -2119,61 +2347,37 @@ end
 -- @param #NAVYGROUP self
 -- @param Core.Vector#VECTOR Start Start position; also accepts Vec3 or COORDINATE.
 -- @param Core.Vector#VECTOR Goal Goal position; also accepts Vec3 or COORDINATE.
+-- @param #boolean Detailed (Optional) Also return a diagnostic report with the first blocked distance.
 -- @return #boolean True when the connection satisfies the configured minimum depth.
-function NAVYGROUP:_CheckPathDepth(Start, Goal)
+-- @return #string Failure reason, or nil when clear.
+-- @return Core.Astar#ASTAR.DepthReport Detailed result when requested.
+function NAVYGROUP:_CheckPathDepth(Start, Goal, Detailed)
 
   local start=VECTOR._IsVector(Start) and Start or VECTOR:NewFromVec(Start)
   local goal=VECTOR._IsVector(Goal) and Goal or VECTOR:NewFromVec(Goal)
 
   -- Call the same rule used by ASTAR so direct routes and shortcuts cannot bypass its depth requirement.
-  return ASTAR.Depth({vector=start}, {vector=goal}, self.pathMinDepth or 20, self:_GetPathfindingCorridorWidth())
+  local check=Detailed and ASTAR.CheckDepth or ASTAR.Depth
+  return check({vector=start}, {vector=goal}, self.pathMinDepth or 20, self:_GetPathfindingCorridorWidth())
 end
 
---- Estimate the navigable distance along the current heading using terrain-profile depth checks.
--- If the full corridor is blocked, narrow down the last confirmed clear prefix with at most twelve further checks.
--- Stops refining at 25 meters. The returned distance is a checked prefix, not an exact collision location.
+--- Estimate the navigable distance along the current heading from a single set of terrain profiles.
+-- Uses linear interpolation of profile support points; the returned distance is not a physical stopping-distance guarantee.
 -- @param #NAVYGROUP self
 -- @param #number DistanceMax (Optional) Maximum lookahead in meters; default 5000.
--- @return #number Checked clear distance in meters. Turning groups return the requested distance without heading checks.
+-- @return #number Estimated clear distance in meters; zero if the required terrain data is unavailable.
+-- @return Core.Astar#ASTAR.DepthReport Detailed result of the heading check.
 function NAVYGROUP:_CheckFreePath(DistanceMax)
 
   local distance=DistanceMax or 5000
   assert(type(distance)=="number" and distance>=0 and distance<math.huge,"NAVYGROUP: lookahead distance must be finite and non-negative")
 
-  -- A straight heading ray does not represent a turn. Status checks the actual next leg of an active detour instead.
-  if self:IsTurning() then
-    return distance
-  end
-
   local position=self:GetVec3()
   local heading=self:GetHeading()
   local goal=UTILS.VecTranslate(position,distance,heading)
 
-  if self:_CheckPathDepth(position,goal) then
-    return distance
-  end
-
-  -- Only advance the lower bound after the entire shorter connection has passed the depth rule.
-  -- This avoids reporting a clear distance based solely on a deep point beyond a submerged obstacle.
-  local clearDistance=0
-  local blockedDistance=distance
-
-  for attempt=1,12 do
-    if blockedDistance-clearDistance<=25 then
-      break
-    end
-
-    local candidateDistance=(clearDistance+blockedDistance)/2
-    local candidate=UTILS.VecTranslate(position,candidateDistance,heading)
-
-    if self:_CheckPathDepth(position,candidate) then
-      clearDistance=candidateDistance
-    else
-      blockedDistance=candidateDistance
-    end
-  end
-
-  return clearDistance
+  local clear,reason,report=self:_CheckPathDepth(position,goal,true)
+  return report.ClearDistance,report
 end
 
 --- Check if group is turning.
@@ -2529,13 +2733,101 @@ function NAVYGROUP:_ClearPathfindingDrawing()
   return self
 end
 
+--- Record a failed plan and hold the ship without discarding its original waypoints.
+-- @param #NAVYGROUP self
+-- @param #table Report Pathfinding result, optionally including DepthCheck diagnostics.
+-- @return #boolean Always false.
+function NAVYGROUP:_FailPathfinding(Report)
+
+  self.LastPathfindingResult=Report
+  self.ispathfinding=false
+
+  -- A failed distant endpoint check has not measured a clear prefix from the ship.
+  if Report.DepthCheck and Report.Endpoint~="goal" then
+    self:_UpdateNavigationWarning(Report.DepthCheck)
+  end
+
+  self:_StopForNavigation()
+  self:T(self.lid.."Naval pathfinding stopped: "..tostring(Report.StopReason))
+
+  return false
+end
+
+--- Trace why a waypoint transition requires a new path from the actual ship position.
+-- With NAVYGROUP tracing enabled, also recheck the planned waypoint-to-waypoint leg for comparison.
+-- This comparison is diagnostic only: it never changes the navigation result or movement order.
+-- @param #NAVYGROUP self
+-- @param DCS#Vec3 Position Ship position used by the rejected connection check.
+-- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint (Optional) Waypoint reported as passed by DCS.
+-- @param Ops.OpsGroup#OPSGROUP.Waypoint NextWaypoint Next waypoint on the installed route.
+-- @param Core.Astar#ASTAR.DepthReport Report Rejected connection from Position to NextWaypoint.
+-- @return #NAVYGROUP self.
+function NAVYGROUP:_TracePathfindingReplan(Position, Waypoint, NextWaypoint, Report)
+
+  if not self:IsTrace() then
+    return self
+  end
+
+  self:T(self.lid..string.format("Naval replan diagnostic: passed UID=%s, next UID=%s, heading=%s deg, speed=%s m/s, corridor=%.1f m",
+    tostring(Waypoint and Waypoint.uid), tostring(NextWaypoint.uid), tostring(self:GetHeading()),
+    tostring(self:GetVelocity()), self:_GetPathfindingCorridorWidth()))
+
+  local goal=NextWaypoint.coordinate
+  self:T(self.lid..string.format("Naval replan positions: ship=(x=%.3f, z=%.3f), next=(x=%.3f, z=%.3f)",
+    Position.x, Position.z, goal.x, goal.z))
+
+  local checks={{Name="actual_position_to_next", Report=Report}}
+
+  if Waypoint and Waypoint.coordinate then
+    local passed=Waypoint.coordinate
+    local dx,dz=Position.x-passed.x,Position.z-passed.z
+    local distance=math.sqrt(dx*dx+dz*dz)
+
+    -- A waypoint callback need not coincide with the exact waypoint position. Record the offset
+    -- before comparing the original planned leg with the connection from the actual ship position.
+    self:T(self.lid..string.format("Naval replan passed waypoint: UID=%s, position=(x=%.3f, z=%.3f), distance_to_passed=%.1f m",
+      tostring(Waypoint.uid), passed.x, passed.z, distance))
+
+    local _,_,plannedReport=self:_CheckPathDepth(passed,goal,true)
+    checks[#checks+1]={Name="passed_waypoint_to_next", Report=plannedReport}
+  end
+
+  local surfaceNames={"LAND", "SHALLOW_WATER", "WATER", "ROAD", "RUNWAY"}
+
+  for _,check in ipairs(checks) do
+    local report=check.Report
+    local offset=report.ProfileOffset
+    local profile=offset and (offset==0 and "center" or (offset>0 and "right" or "left")) or "n/a"
+    local surface=surfaceNames[report.SurfaceType] or "n/a"
+
+    self:T(self.lid..string.format(
+      "Naval replan %s: status=%s, reason=%s, cause=%s, distance=%s m, clear_distance=%s m, "..
+      "depth=%s m, required_depth=%s m, surface=%s (%s), profile=%s, offset=%s m, location=%s",
+      check.Name, tostring(report.Status), tostring(report.Reason), tostring(report.Cause), tostring(report.Distance),
+      tostring(report.ClearDistance), tostring(report.Depth), tostring(report.RequiredDepth), surface,
+      tostring(report.SurfaceType), profile, tostring(offset), tostring(report.Location)))
+
+    if report.Point then
+      -- This is the sampled point that failed, not the interpolated position where minimum depth is reached.
+      self:T(self.lid..string.format("Naval replan %s rejected sample: x=%s, y=%s, z=%s",
+        check.Name, tostring(report.Point.x), tostring(report.Point.y), tostring(report.Point.z)))
+    end
+  end
+
+  return self
+end
+
 --- Continue an installed detour without resetting its route at every intermediate waypoint.
--- Rechecks the next leg from the actual ship position. A blocked leg stops the ship before replanning.
+-- Rechecks the next leg from the actual ship position. A blocked leg is replanned; only a failed plan stops the ship.
 -- Rolling into-wind endpoints always plan the next checked segment.
 -- @param #NAVYGROUP self
 -- @param Ops.OpsGroup#OPSGROUP.Waypoint Waypoint (Optional) Passed pathfinding waypoint; omitted for periodic route checks.
 -- @return #boolean True when the route can continue, false when planning fails.
 function NAVYGROUP:_ContinuePathfinding(Waypoint)
+
+  if not self.pathfindingOn or not self:_CanNavigate() then
+    return false
+  end
 
   if Waypoint and Waypoint.astarReplan then
     return self:_FindPathToNextWaypoint(true)
@@ -2543,20 +2835,25 @@ function NAVYGROUP:_ContinuePathfinding(Waypoint)
 
   local nextWaypoint=self:GetWaypointNext()
   if nextWaypoint then
-    local clear,reason=self:_CheckPathDepth(self:GetVec3(),nextWaypoint.coordinate)
+    local position=self:GetVec3()
+    local clear,reason,report=self:_CheckPathDepth(position,nextWaypoint.coordinate,true)
+    self:_UpdateNavigationWarning(report)
+
+    -- CollisionWarning/ClearAhead callbacks may have changed the user's movement order.
+    if not self:_CanNavigate() then
+      return false
+    end
+
     if clear then
       return true
     end
 
     self:T(self.lid..string.format("Active leg to waypoint UID=%d blocked: %s",nextWaypoint.uid,tostring(reason)))
+    self:_TracePathfindingReplan(position,Waypoint,nextWaypoint,report)
   end
 
-  -- Stop before replanning: the ship must not continue along a connection that has just failed validation.
-  if not self.pathfindingStopped then
-    self.pathfindingStopped=true
-    self:FullStop()
-  end
-
+  -- Planning is synchronous. On success, replace the route without first sending a zero-speed mission
+  -- from inside the DCS waypoint callback. If planning fails, _FailPathfinding stops the ship.
   return self:_FindPathToNextWaypoint(true)
 end
 
@@ -2570,15 +2867,21 @@ end
 -- @return #boolean True if the active leg is still clear or a route was installed, false on failure or a deferred attempt.
 function NAVYGROUP:_FindPathToNextWaypoint(Force)
 
+  if not self.pathfindingOn or not self:_CanNavigate() then
+    return false
+  end
+
   local target,pending=self:_GetPathfindingTarget()
   if not target then
     return false
   end
 
   local position=VECTOR:NewFromVec(self:GetVec3())
+  local context=self:_GetPathfindingContext(target)
+  local sameContext=self.pathfindingContext==context
 
   -- Keep an existing safe detour. A heading warning alone must not rebuild the grid on every status update.
-  if not Force and not self.pathfindingStopped and self.pathfindingTargetUID==target.uid
+  if not Force and not self.pathfindingStopped and sameContext
     and (self.ispathfinding or #pending>0) then
 
     local nextWaypoint=self:GetWaypointNext()
@@ -2588,11 +2891,12 @@ function NAVYGROUP:_FindPathToNextWaypoint(Force)
   end
 
   local now=timer.getTime()
-  if not Force and self.pathfindingTargetUID==target.uid and now<(self.pathfindingRetryAt or 0) then
+  if not Force and sameContext and now<(self.pathfindingRetryAt or 0) then
     return false
   end
 
   self.pathfindingTargetUID=target.uid
+  self.pathfindingContext=context
   self.pathfindingRetryAt=now+(self.pathRetryInterval or 60)
   self:_ClearPathfindingDrawing()
 
@@ -2616,8 +2920,30 @@ function NAVYGROUP:_FindPathToNextWaypoint(Force)
   self:T(self.lid..string.format("Naval depth check: target UID=%d, distance %.0f m, minimum %.1f m, corridor %.0f m",
     target.uid,position:GetDistance(goal,true),minDepth,corridorWidth))
 
+  -- Expanding a grid cannot fix a shallow start/goal or missing terrain APIs. Check the actual centers first.
+  -- Lateral endpoint clearance still belongs to each edge: its direction can change in a detour.
+  for i,point in ipairs({position,goal}) do
+    local clear,reason,depthCheck=self:_CheckPathDepth(point,point,true)
+
+    if not clear then
+      report.StopReason=depthCheck.Status=="unavailable" and reason or (i==1 and "start_blocked" or "goal_blocked")
+      report.DepthCheck=depthCheck
+      report.Endpoint=i==1 and "start" or "goal"
+      return self:_FailPathfinding(report)
+    end
+  end
+
   -- A direct route must pass exactly the same depth rule as every connection considered by ASTAR.
-  if not self:_CheckPathDepth(position,goal) then
+  local direct,reason,depthCheck=self:_CheckPathDepth(position,goal,true)
+  report.DirectCheck=depthCheck
+
+  if not direct and depthCheck.Status=="unavailable" then
+    report.StopReason=reason
+    report.DepthCheck=depthCheck
+    return self:_FailPathfinding(report)
+  end
+
+  if not direct then
     astar=ASTAR:New()
     astar:SetStartCoordinate(position)
     astar:SetEndCoordinate(goal)
@@ -2651,6 +2977,7 @@ function NAVYGROUP:_FindPathToNextWaypoint(Force)
     report.Spacing=grid:GetResolutionInfo().Spacing
     report.MinDepth=minDepth
     report.CorridorWidth=corridorWidth
+    report.DirectCheck=depthCheck
 
     if path then
       debugPath=path
@@ -2660,16 +2987,8 @@ function NAVYGROUP:_FindPathToNextWaypoint(Force)
         points[#points+1]=node.vector
       end
     else
-      self.LastPathfindingResult=report
-      self.ispathfinding=false
-
-      if not self.pathfindingStopped then
-        self.pathfindingStopped=true
-        self:FullStop()
-      end
-
-      self:T(self.lid.."Naval pathfinding stopped: "..tostring(report.StopReason))
-      return false
+      report.DepthCheck=depthCheck
+      return self:_FailPathfinding(report)
     end
   end
 
@@ -2686,16 +3005,10 @@ function NAVYGROUP:_FindPathToNextWaypoint(Force)
     end
 
     if nextIndex==index then
-      report.StopReason="depth_blocked"
-      self.LastPathfindingResult=report
-      self.ispathfinding=false
-
-      if not self.pathfindingStopped then
-        self.pathfindingStopped=true
-        self:FullStop()
-      end
-
-      return false
+      local clear,reason,depthCheck=self:_CheckPathDepth(points[index],points[index+1],true)
+      report.StopReason=reason or "depth_blocked"
+      report.DepthCheck=depthCheck
+      return self:_FailPathfinding(report)
     end
 
     selected[#selected+1]=points[nextIndex]
@@ -2728,13 +3041,12 @@ function NAVYGROUP:_FindPathToNextWaypoint(Force)
 
   self.LastPathfindingResult=report
   self.ispathfinding=#selected>0
-
-  local stopped=self.pathfindingStopped
-  self.pathfindingStopped=nil
+  self.pathfindingRetryAt=nil
 
   -- Submit one complete route after all temporary waypoints have been installed.
-  if stopped then
-    self:Cruise()
+  local hold=self.navigationHold
+  if hold then
+    self["ResumeNavigation"..hold.State](self,hold)
   else
     self:__UpdateRoute(-0.01)
   end

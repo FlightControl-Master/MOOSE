@@ -8205,6 +8205,11 @@ function OPSGROUP:onafterStop(From, Event, To)
   self.timerQueueUpdate:Stop()
   self.timerStatus:Stop()
 
+  -- Naval route monitoring runs independently of the general status timer.
+  if self.timerNavigation then
+    self.timerNavigation:Stop()
+  end
+
   -- Stop FSM scheduler.
   self.CallScheduler:Clear()
   if self.Scheduler then
@@ -11838,8 +11843,13 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
       -- Pathfinding Waypoint
       ---
 
-      if opsgroup:IsNavygroup() and opsgroup.pathfindingOn then
-        opsgroup:_ContinuePathfinding(waypoint)
+      if opsgroup:IsNavygroup() then
+        if opsgroup.pathfindingOn then
+          opsgroup:_ContinuePathfinding(waypoint)
+        elseif waypoint.astarReplan and opsgroup:_CanNavigate() then
+          -- Disabling navigation permits the unchecked remainder of a rolling route, but never releases a hold.
+          opsgroup:__UpdateRoute(-0.01)
+        end
       else
         opsgroup:Cruise()
       end
