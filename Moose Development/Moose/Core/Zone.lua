@@ -262,6 +262,19 @@ function ZONE_BASE:GetVec3( Height )
   return Vec3
 end
 
+--- Returns a @{Core.Vector#VECTOR} of the zone.
+-- @param #ZONE_BASE self
+-- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.
+-- @return Core.Vector#VECTOR The VECTOR of the zone.
+function ZONE_BASE:GetVector( Height )
+
+  local vec3=self:GetVec3(Height)
+  
+  local vector=VECTOR:NewFromVec(vec3)
+
+  return vector
+end
+
 --- Returns a @{Core.Point#COORDINATE} of the zone.
 -- @param #ZONE_BASE self
 -- @param DCS#Distance Height The height to add to the land height where the center of the zone is located.

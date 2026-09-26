@@ -89,6 +89,7 @@ local textMarkID=0
 function UTILS.GetMarkID() textMarkID=textMarkID+1 return textMarkID end
 trigger={action={markToAll=function() end}}
 dofile("Moose Development/Moose/Core/Vector.lua")
+dofile("Moose Development/Moose/Core/Pathline.lua")
 
 dofile("Moose Development/Moose/Core/Grid.lua")
 dofile(source)
@@ -228,7 +229,7 @@ test("depth settings reject invalid numbers atomically",function()
   end
 end)
 
-test("depth rules reject missing or malformed terrain data",function()
+test("depth rules reject malformed terrain results",function()
   local terrain=depthTerrain()
   local a,s,g=pair()
   for _,profile in ipairs({{{x=0,y=-30,z=0},{x=10,z=0}},{{x=0,y=-30,z=0},{x=10,y=0/0,z=0}}}) do
@@ -240,15 +241,15 @@ test("depth rules reject missing or malformed terrain data",function()
   terrain.makeProfile=nil
   land.getSurfaceHeightWithSeabed=function() return 0,nil end
   equal(ASTAR.Depth(s,g),false)
-  land.getSurfaceHeightWithSeabed=nil equal(ASTAR.Depth(s,g),false)
-  depthTerrain() land.profile=nil equal(ASTAR.Depth(s,g),false)
 end)
 
 test("short depth profiles use direct intermediate samples instead of blocking clear connections",function()
   local terrain=depthTerrain()
   local a,s,g=pair()
-  for _,profile in ipairs({{},{{x=5,y=-30,z=0}}}) do
-    terrain.makeProfile=function() return profile end
+  for _,singleton in ipairs({false,true}) do
+    terrain.makeProfile=function(start,goal)
+      return singleton and {{x=(start.x+goal.x)/2,y=-30,z=(start.z+goal.z)/2}} or {}
+    end
     terrain.depthAt=nil
     assert(ASTAR.Depth(s,g,20,1000))
     terrain.depthAt=function(p) return p.x==5 and 5 or 30 end
@@ -1985,6 +1986,74 @@ test("node vectors accept all position inputs and coordinate conversion is expli
   near(a.nodes[1].vector.x,100)
 end)
 
+test("3D endpoint selection distinguishes vertically separated nodes", function()
+  local a=ASTAR:New():SetCostDist3D()
+  local first=a:AddNodeFromCoordinate(coord(0,0,0))
+  local last=a:AddNodeFromCoordinate(coord(0,0,1000))
+  a:SetStartCoordinate(first.vector):SetEndCoordinate(last.vector)
+  a:SetValidNeighbourFunction(function() return false end)
+  equal(a:GetPath(),nil)
+  equal(a.startNode,first) equal(a.endNode,last)
+  equal(a:FindClosestNode(last.vector),last)
+  a:SetValidNeighbourFunction(nil)
+  local path=a:GetPath()
+  equal(#path,2) equal(path[1],first) equal(path[2],last)
+  equal(a:_TravelCost(first,last),1000)
+end)
+
+test("old automatic endpoints cannot bridge later grid searches", function()
+  local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(1000,1000))
+  land.surfaceAt=function(p)
+    if (p.x==0 and p.z==0) or (p.x==1000 and p.z==1000) or (p.x==500 and p.z==500) then
+      return land.SurfaceType.WATER
+    end
+    return land.SurfaceType.LAND
+  end
+  a:SetValidSurfaceTypes(land.SurfaceType.WATER)
+  a:GetGrid():SetCorridor(2000,0):SetSpacing(1000):SetDiagonals(false)
+  -- Build along the x axis to retain the intended two diagonal cells.
+  a:SetEndCoordinate(coord(1000)):CreateGrid()
+  a:SetEndCoordinate(coord(1000,1000))
+  equal(a.Nnodes,2) equal(a:GetPath(),nil)
+  a:SetEndCoordinate(coord(500,500))
+  local path=a:GetPath()
+  assert(path) equal(a.Nnodes,3)
+  local endpoint=a.endNode
+  local unchanged=a:GetPath()
+  equal(a.endNode,endpoint) equal(#unchanged,#path)
+  assert(a.nodes[path[1].id].valid[endpoint.id])
+  a:SetEndCoordinate(coord(1000,1000))
+  equal(a:GetPath(),nil) equal(a.Nnodes,2)
+  for _,node in pairs(a.nodes) do
+    equal(node.valid[endpoint.id],nil) equal(node.cost[endpoint.id],nil)
+  end
+  -- Caller-owned path values remain usable for coordinate conversion and debug snapshots.
+  equal(a:GetNodeCoordinate(endpoint).x,500)
+  a:DrawGridWithPath(path) flushTimers()
+  equal(a.LastGridDrawResult.Status,"complete")
+  -- The same bridging position remains valid when explicitly added by the caller.
+  local manual=a:AddNodeFromCoordinate(coord(500,500))
+  assert(a:GetPath()) equal(a.nodes[manual.id],manual)
+end)
+
+test("invalid ASTAR positions cannot replace endpoints or reach terrain queries", function()
+  local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(1000))
+  local first,last,counter=a.startVector,a.endVector,a.counter
+  land.surfaceAt=function() error("Invalid coordinates reached terrain sampling") end
+  for _,value in ipairs({math.huge,-math.huge,0/0}) do
+    for _,axis in ipairs({"x","y","z"}) do
+      local position=VECTOR:New(0,0,0)
+      position[axis]=value
+      for _,method in ipairs({"SetStartCoordinate","SetEndCoordinate","AddNodeFromCoordinate","FindClosestNode"}) do
+        local ok,reason=pcall(a[method],a,position)
+        assert(not ok and tostring(reason):find("finite"), method.." must reject non-finite positions before terrain access")
+        equal(a.startVector,first) equal(a.endVector,last)
+        equal(a.counter,counter) equal(a.Nnodes,0)
+      end
+    end
+  end
+end)
+
 test("endpoint setters snapshot coordinate and vector inputs and can clear them", function()
   local a=ASTAR:New()
   local start,goal=coord(10,30,20),VECTOR:New(40,50,60)
@@ -2035,10 +2104,11 @@ end)
 local navyFile=assert(io.open("Moose Development/Moose/Ops/NavyGroup.lua","r"))
 local navySource=navyFile:read("*a"):gsub("\r\n","\n") navyFile:close()
 NAVYGROUP={}
-for _,name in ipairs({"_GetPathfindingTarget","_FindPathToNextWaypoint","_ContinuePathfinding","_ClearPathfindingDrawing","_GetPathfindingCorridorWidth","_CheckPathDepth","_CheckFreePath",
-  "SetPathfinding","SetPathfindingOn","SetPathfindingOff","SetPathfindingMinDepth","SetPathfindingGrid","SetPathfindingRetry","onafterUpdateRoute","onafterTurnIntoWindOver",
-  "_CreateTurnIntoWind","AddTurnIntoWind","GetTurnIntoWind","RemoveTurnIntoWind","_CompleteTurnIntoWindWindow",
-  "EndIntoWind","_FinishIntoWind","_RemoveIntoWindRoute","AddTaskAttackGroup","_CheckTurning",
+for _,name in ipairs({"_GetPathfindingTarget","_FindPathToNextWaypoint","_ClearPathfindingDrawing","_GetPathfindingCorridorWidth","_CheckPathDepth",
+  "_CanNavigate","_FailPathfinding","_UpdateNavigationWarning","_CheckNavigation",
+  "onafterFullStop","onafterCruise","onafterCollisionWarning","onafterClearAhead","onafterTurningStopped",
+  "SetPathfinding","SetPathfindingOn","SetPathfindingOff","SetPathfindingMinDepth","SetPathfindingGrid","onafterUpdateRoute","onafterTurnIntoWindOver",
+  "_CreateTurnIntoWind","AddTurnIntoWind","RemoveTurnIntoWind","AddTaskAttackGroup","_CheckTurning",
   "GetHeadingIntoWind_new","onafterRTZ","onafterEngageTarget","_UpdateEngageTarget"}) do
   assert((loadstring or load)(assert(navySource:match("(function NAVYGROUP:"..name.."%b().-\nend)"))))()
 end
@@ -2046,7 +2116,7 @@ local opsFile=assert(io.open("Moose Development/Moose/Ops/OpsGroup.lua","r"))
 local opsSource=opsFile:read("*a"):gsub("\r\n","\n") opsFile:close()
 OPSGROUP={}
 assert((loadstring or load)(assert(opsSource:match("(function OPSGROUP%._PassingWaypoint%b().-\nend)"))))()
-for _,name in ipairs({"RemoveWaypointByID","RemoveWaypoint"}) do
+for _,name in ipairs({"RemoveWaypointByID","RemoveWaypoint","onafterWait","onafterStop"}) do
   assert((loadstring or load)(assert(opsSource:match("(function OPSGROUP:"..name.."%b().-\nend)"))))()
 end
 UTILS.NMToMeters=function(n) return n*1852 end
@@ -2067,11 +2137,20 @@ local function vessel(distance)
     return points
   end
   local ship=setmetatable({lid="test",verbose=0,pathCorridor=100,pathfindingOn=true,currentwp=1,
-    position={x=0,y=0,z=0},nextID=2,updates=0,stops=0,cruises=0,added=0},{__index=NAVYGROUP})
+    state="Cruising",isAI=true,speed=10,velocity=10,alive=true,
+    position={x=0,y=0,z=0},nextID=2,updates=0,stops=0,cruises=0,added=0,warnings=0,clears=0},{__index=NAVYGROUP})
   ship.waypoints={{uid=1,coordinate=coord(0),speed=10,npassed=0},{uid=2,coordinate=coord(distance or 5000),speed=10,npassed=0}}
   ship.depthTerrain=terrain
   function ship:T() end
   function ship:T3() end
+  function ship:E() end
+  function ship:IsTrace() return false end
+  function ship:GetState() return self.state end
+  function ship:IsAlive() return self.alive end
+  function ship:IsWaiting() return self.Twaiting~=nil end
+  function ship:IsHolding() return self.state=="Holding" end
+  function ship:GetVelocity() return self.velocity end
+  function ship:GetMissionCurrent() return self.mission end
   function ship:GetVec3() return self.position end
   function ship:GetWaypointIndexNext() return self.currentwp+1 end
   function ship:GetWaypointNext() return self.waypoints[self.currentwp+1] end
@@ -2083,23 +2162,52 @@ local function vessel(distance)
     if i<=self.currentwp then self.currentwp=math.max(1,self.currentwp-1) end
   end
   function ship:AddWaypoint(position,speed,after,depth,update)
-    assert(VECTOR._IsVector(position)) equal(update,false)
+    assert(VECTOR._IsVector(position)) equal(depth,nil) equal(update,false)
     self.added=self.added+1 self.nextID=self.nextID+1
     local wp={uid=self.nextID,coordinate=position,speed=speed/1.9438444924,npassed=0}
     table.insert(self.waypoints,assert(self:GetWaypointIndex(after))+1,wp)
     return wp
   end
-  function ship:FullStop() self.stops=self.stops+1 end
-  function ship:Cruise() self.cruises=self.cruises+1 self:__UpdateRoute() end
-  function ship:__UpdateRoute() self.updates=self.updates+1 end
-  function ship:IsTurning() return false end
-  function ship:IsHolding() return false end
-  function ship:IsWaiting() return false end
-  function ship:IsAlive() return true end
-  function ship:IsStopped() return false end
-  function ship:GetHeading() return 0 end
+  -- Execute production handlers after the transition, matching the ordering used by the FSM.
+  -- Public callbacks can issue a manual movement command; the timer must respect the resulting state.
+  function ship:FullStop()
+    local from=self.state
+    self.stops=self.stops+1
+    self.state="Holding"
+    self:onafterFullStop(from,"FullStop",self.state)
+    if self.OnAfterFullStop then self:OnAfterFullStop(from,"FullStop",self.state) end
+  end
+  function ship:Cruise(speed)
+    local from=self.state
+    self.cruises=self.cruises+1
+    self.state="Cruising"
+    self:onafterCruise(from,"Cruise",self.state,speed)
+  end
+  function ship:Wait(duration) OPSGROUP.onafterWait(self,self.state,"Wait",self.state,duration) end
+  function ship:CollisionWarning(distance)
+    self.warnings=self.warnings+1
+    self:onafterCollisionWarning(self.state,"CollisionWarning",self.state,distance)
+    if self.OnAfterCollisionWarning then self:OnAfterCollisionWarning(self.state,"CollisionWarning",self.state,distance) end
+  end
+  function ship:ClearAhead()
+    self.clears=self.clears+1
+    self:onafterClearAhead(self.state,"ClearAhead",self.state)
+  end
+  function ship:UpdateRoute(first,last,speed)
+    self.updates=self.updates+1
+    self.updatedSpeed=speed
+  end
+  function ship:__UpdateRoute(delay,first,last,speed)
+    self.updates=self.updates+1
+    self.updatedSpeed=speed
+  end
+  function ship:TurningStarted() self.turning=true self.turnStarts=(self.turnStarts or 0)+1 end
+  function ship:TurningStopped() self.turning=false self.turnStops=(self.turnStops or 0)+1 end
+  function ship:IsTurning() return self.turning==true end
+  function ship:IsSteamingIntoWind() return false end
+  function ship:GetHeading() return self.heading or 0 end
   function ship:IsNavygroup() return true end
-  function ship:IsEngaging() return false end
+  function ship:IsEngaging() return self.state=="Engaging" end
   function ship:_PassedFinalWaypoint(value) self.passedfinalwp=value end
   function ship:GetCoordinate()
     return {WaypointNaval=function() return {x=self.position.x,y=self.position.z,speed=10} end}
@@ -2111,6 +2219,452 @@ local function island(p)
   if p.x>=1800 and p.x<=3200 and math.abs(p.z)<=1200 then return land.SurfaceType.LAND end
   return land.SurfaceType.WATER
 end
+
+test("NAVYGROUP checks the next route leg up to 5000 meters with its configured depth and width",function()
+  local ship=vessel(10000):SetPathfindingOff():SetPathfindingMinDepth(23)
+  ship.pathCorridor=80
+  ship.waypoints[2].coordinate=coord(6000,8000)
+  ship.heading=180
+  local original=PATHLINE.CheckDepth
+  local checks=0
+  PATHLINE.CheckDepth=function(start,goal,minDepth,width)
+    checks=checks+1
+    near(start.x,0) near(start.z,0)
+    near(goal.x,3000) near(goal.z,4000)
+    equal(minDepth,23) equal(width,80)
+    return original(start,goal,minDepth,width)
+  end
+  local ok,err=pcall(ship._CheckNavigation,ship)
+  PATHLINE.CheckDepth=original
+  assert(ok,err)
+  equal(checks,1)
+  near(ship.LastNavigationCheck.Distance,5000)
+  equal(ship.LastNavigationCheck.Status,"clear")
+  equal(ship.updates,0)
+
+  ship.waypoints[2].coordinate=coord(300,400)
+  ship:_CheckNavigation()
+  near(ship.LastNavigationCheck.Distance,500)
+end)
+
+test("NAVYGROUP turns use fresh headings and skip terrain checks until the heading stabilizes",function()
+  local ship=vessel():SetPathfindingOff()
+  ship.heading=359
+  ship.orientX={x=1,y=0.2,z=0}
+  ship.orientXLast={x=0,y=0.3,z=1}
+  ship:_CheckNavigation()
+  local queries=ship.depthTerrain.queries
+
+  ship.heading=5
+  timerNow=10
+  ship:_CheckNavigation()
+  equal(ship:IsTurning(),true)
+  equal(ship.turnStarts,1)
+  equal(ship.depthTerrain.queries,queries)
+  equal(ship.orientX.y,0.2) equal(ship.orientXLast.y,0.3)
+
+  ship.heading=5.5
+  timerNow=20
+  ship:_CheckNavigation()
+  equal(ship:IsTurning(),false)
+  equal(ship.turnStops,1)
+  assert(ship.depthTerrain.queries>queries)
+
+  -- Crossing north by 0.2 degrees is not a 359.8-degree turn.
+  ship.turningHeading=359.9
+  ship.heading=0.1
+  timerNow=30
+  ship:_CheckTurning()
+  equal(ship:IsTurning(),false)
+  equal(ship.turnStarts,1)
+end)
+
+test("NAVYGROUP pathfinding-off still warns about depth and only verified clearance resets the warning",function()
+  local ship=vessel():SetPathfindingOff()
+  ship.depthTerrain.depthAt=function(p) return p.x>=500 and p.x<=600 and 5 or 30 end
+  ship:_CheckNavigation()
+  equal(ship.warnings,1) equal(ship.stops,0) equal(ship.updates,0)
+  assert(ship.collisionwarning)
+  ship:_CheckNavigation()
+  equal(ship.warnings,1)
+
+  local profile=land.profile
+  land.profile=function() return nil end
+  ship:_CheckNavigation()
+  equal(ship.LastNavigationCheck.Status,"unavailable")
+  equal(ship.stops,0) equal(ship.clears,0)
+  assert(ship.collisionwarning)
+
+  land.profile=profile
+  ship.depthTerrain.depthAt=nil
+  ship:_CheckNavigation()
+  equal(ship.LastNavigationCheck.Status,"clear")
+  equal(ship.clears,1) equal(ship.collisionwarning,false)
+end)
+
+test("NAVYGROUP unknown profile data stops enabled navigation without automatic retry",function()
+  local ship=vessel()
+  land.profile=function() return nil end
+  ship:_CheckNavigation()
+  equal(ship.LastNavigationCheck.Status,"unavailable")
+  equal(ship:GetState(),"Holding")
+  equal(ship.stops,1) equal(ship.warnings,0) equal(ship.updates,0)
+  assert(ship.LastPathfindingResult)
+  local report=ship.LastPathfindingResult
+
+  depthTerrain()
+  timerNow=600
+  ship:_CheckNavigation()
+  equal(ship.LastPathfindingResult,report)
+  equal(ship.stops,1) equal(ship.updates,0) equal(ship.cruises,0)
+end)
+
+test("NAVYGROUP navigation checks corridor edges and detects shoals before a deep endpoint",function()
+  local ship=vessel():SetPathfindingOff()
+  ship.pathCorridor=50
+  ship.depthTerrain.depthAt=function(p)
+    if p.x>=750 and p.x<=900 and p.y==25 then return 8 end
+    return 30
+  end
+  ship:_CheckNavigation()
+  equal(ship.LastNavigationCheck.Status,"blocked")
+  assert(ship.LastNavigationCheck.ClearDistance<750)
+  equal(ship.LastNavigationCheck.ProfileOffset,25)
+  equal(ship.warnings,1)
+
+  ship.pathCorridor=0
+  ship:_CheckNavigation()
+  equal(ship.LastNavigationCheck.Status,"clear")
+  equal(ship.clears,1)
+end)
+
+test("NAVYGROUP plans a HEX FINE detour and dispatches every returned point once",function()
+  local ship=vessel()
+  land.surfaceAt=island
+  local original=ASTAR.New
+  local search,pathCount,searches
+  ASTAR.New=function(self,...)
+    search=original(self,...)
+    local getPath=search.GetPathWithExpansion
+    function search:GetPathWithExpansion(excludeStart,excludeEnd)
+      equal(excludeStart,true) equal(excludeEnd,true)
+      searches=(searches or 0)+1
+      local path,report=getPath(self,excludeStart,excludeEnd)
+      pathCount=path and #path
+      return path,report
+    end
+    return search
+  end
+  local ok,result=pcall(ship._FindPathToNextWaypoint,ship)
+  ASTAR.New=original
+  assert(ok,result) assert(result)
+  assert(search.hexGrid)
+  equal(search.ValidNeighbourFunc,ASTAR.Depth)
+  equal(search.ValidNeighbourArg[1],20)
+  equal(search.ValidNeighbourArg[2],100)
+  equal(ship.added,pathCount) equal(searches,1)
+  assert(ship.added>2)
+  equal(ship.updates,1) equal(ship.stops,0)
+  equal(ship.waypoints[#ship.waypoints].uid,2)
+  for i=2,#ship.waypoints-1 do
+    equal(ship.waypoints[i].astar,true)
+    equal(ship.waypoints[i].astarTargetUID,2)
+  end
+
+  local previous=ship.position
+  for i=2,#ship.waypoints do
+    assert(ship:_CheckPathDepth(previous,ship.waypoints[i].coordinate))
+    previous=ship.waypoints[i].coordinate
+  end
+end)
+
+test("NAVYGROUP replaces pending detour points only after a successful search",function()
+  local ship=vessel()
+  land.surfaceAt=island
+  assert(ship:_FindPathToNextWaypoint())
+  local originalTarget=ship.waypoints[#ship.waypoints]
+  local pending={}
+  for i=2,#ship.waypoints-1 do pending[ship.waypoints[i].uid]=true end
+  assert(ship:_FindPathToNextWaypoint())
+  equal(ship.waypoints[#ship.waypoints],originalTarget)
+  equal(ship.updates,2) equal(ship.stops,0)
+  for _,point in ipairs(ship.waypoints) do assert(not pending[point.uid]) end
+
+  local before={}
+  for i,point in ipairs(ship.waypoints) do before[i]=point end
+  ship:SetPathfindingGrid(1)
+  equal(ship:_FindPathToNextWaypoint(),false)
+  equal(ship.LastPathfindingResult.StopReason,"cell_limit")
+  equal(ship:GetState(),"Holding")
+  equal(ship.stops,1) equal(ship.updates,2)
+  equal(#ship.waypoints,#before)
+  for i,point in ipairs(before) do equal(ship.waypoints[i],point) end
+end)
+
+test("NAVYGROUP empty successful paths still remove obsolete detours and update once",function()
+  local ship=vessel()
+  local pending=ship:AddWaypoint(VECTOR:New(1000,0,0),20,1,nil,false)
+  pending.astar=true pending.astarTargetUID=2
+  local original=ASTAR.GetPathWithExpansion
+  local searches=0
+  ASTAR.GetPathWithExpansion=function(self,excludeStart,excludeEnd)
+    equal(excludeStart,true) equal(excludeEnd,true)
+    searches=searches+1
+    return {},{StopReason="path_found",Attempts={}}
+  end
+  local ok,result=pcall(ship._FindPathToNextWaypoint,ship)
+  ASTAR.GetPathWithExpansion=original
+  assert(ok,result) equal(result,true)
+  equal(searches,1)
+  equal(ship:GetWaypointByID(pending.uid),nil)
+  equal(ship:GetWaypointNext().uid,2)
+  equal(ship.updates,1) equal(ship.stops,0)
+end)
+
+test("NAVYGROUP patrol detours include the wrapped original target in the native route",function()
+  local ship=vessel()
+  ship.adinfinitum=true
+  ship.currentwp=2
+  local target=ship.waypoints[1]
+  target.task={id="ComboTask",params={tasks={{id="WrappedAction"}}}}
+  ship.waypoints[3]={uid=3,coordinate=coord(4000,1000),speed=7,npassed=0,astar=true,astarTargetUID=1}
+  ship.waypoints[4]={uid=4,coordinate=coord(1000,1000),speed=7,npassed=0,astar=true,astarTargetUID=1}
+
+  ship:onafterUpdateRoute()
+
+  equal(#ship.dispatched,4)
+  equal(ship.dispatched[2].uid,3)
+  equal(ship.dispatched[3].uid,4)
+  equal(ship.dispatched[4].uid,1)
+  equal(ship.dispatched[4].task.params.tasks[1].id,"WrappedAction")
+  assert(ship.dispatched[4]~=target)
+  equal(ship.waypoints[1],target)
+  equal(#ship.waypoints,4)
+  near(target.speed,10)
+end)
+
+test("NAVYGROUP detour speed reaches its original target without changing subsequent mission legs",function()
+  local ship=vessel()
+  local target=ship.waypoints[2]
+  local first=ship:AddWaypoint(VECTOR:New(1000,0,1000),UTILS.MpsToKnots(7),1,nil,false)
+  first.astar=true first.astarTargetUID=2
+  local second=ship:AddWaypoint(VECTOR:New(4000,0,1000),UTILS.MpsToKnots(7),first.uid,nil,false)
+  second.astar=true second.astarTargetUID=2
+  local later={uid=99,coordinate=coord(10000),speed=15,npassed=0}
+  ship.waypoints[#ship.waypoints+1]=later
+
+  ship:onafterUpdateRoute()
+
+  equal(#ship.dispatched,5)
+  equal(ship.dispatched[4].uid,target.uid)
+  equal(ship.dispatched[5].uid,later.uid)
+  for i=2,4 do near(ship.dispatched[i].speed,7) end
+  near(ship.dispatched[5].speed,15)
+  near(target.speed,10) near(later.speed,15)
+end)
+
+test("NAVYGROUP cell-limit and exhausted-search failures stop without modifying the route",function()
+  for _,failure in ipairs({"initial","search"}) do
+    local ship=vessel()
+    local first,target=ship.waypoints[1],ship.waypoints[2]
+    local original=ASTAR.GetPathWithExpansion
+    if failure=="initial" then
+      ship:SetPathfindingGrid(1)
+      ASTAR.GetPathWithExpansion=function() error("Search must not run after grid creation fails") end
+    else
+      ASTAR.GetPathWithExpansion=function()
+        return nil,{StopReason="connections_blocked",Attempts={}}
+      end
+    end
+    local ok,result=pcall(ship._FindPathToNextWaypoint,ship)
+    ASTAR.GetPathWithExpansion=original
+    assert(ok,result) equal(result,false)
+    equal(ship:GetState(),"Holding")
+    equal(ship.stops,1) equal(ship.updates,0) equal(ship.added,0)
+    equal(ship.waypoints[1],first) equal(ship.waypoints[2],target)
+    equal(ship.LastPathfindingResult.StopReason,failure=="initial" and "cell_limit" or "connections_blocked")
+  end
+end)
+
+test("NAVYGROUP detour callbacks only advance bookkeeping including when held or disabled",function()
+  for _,enabled in ipairs({false,true}) do
+    for _,command in ipairs({"moving","FullStop","Wait"}) do
+      local ship=vessel()
+      local waypoint=ship:AddWaypoint(VECTOR:New(1000,0,0),20,1,nil,false)
+      waypoint.astar=true waypoint.astarTargetUID=2
+      ship.depth=40
+      if not enabled then ship:SetPathfindingOff() end
+      if command~="moving" then ship[command](ship) end
+      local stops=ship.stops
+      function ship:_FindPathToNextWaypoint() error("A waypoint callback must not plan") end
+      ship.position=waypoint.coordinate
+      OPSGROUP._PassingWaypoint(ship,waypoint.uid)
+      equal(ship:GetWaypointByID(waypoint.uid),nil)
+      equal(ship:GetWaypointNext().uid,2)
+      equal(ship:GetState(),command=="moving" and "Cruising" or "Holding")
+      equal(ship:IsWaiting(),command=="Wait")
+      equal(ship.stops,stops) equal(ship.cruises,0) equal(ship.updates,0)
+      equal(ship.depth,40)
+    end
+  end
+end)
+
+test("non-naval detour callbacks still resume cruising",function()
+  local ship=vessel()
+  function ship:IsNavygroup() return false end
+  local waypoint=ship:AddWaypoint(VECTOR:New(1000,0,0),20,1,nil,false)
+  waypoint.astar=true
+  OPSGROUP._PassingWaypoint(ship,waypoint.uid)
+  equal(ship.cruises,1)
+end)
+
+test("NAVYGROUP timer handles two successive islands while waypoint callbacks do not replan",function()
+  local ship=vessel()
+  ship.waypoints[3]={uid=3,coordinate=coord(10000),speed=10,npassed=0}
+  ship.nextID=3
+  function ship:PassingWaypoint() end
+  ship.depthTerrain.depthAt=function(p)
+    if ((p.x>=1800 and p.x<=3200) or (p.x>=6800 and p.x<=8200)) and math.abs(p.y)<=1200 then return 7 end
+    return 30
+  end
+
+  ship:_CheckNavigation()
+  equal(ship.updates,1)
+  local firstReport=ship.LastPathfindingResult
+  while ship:GetWaypointNext().astar do
+    local waypoint=ship:GetWaypointNext()
+    ship.position=waypoint.coordinate
+    OPSGROUP._PassingWaypoint(ship,waypoint.uid)
+    equal(ship.LastPathfindingResult,firstReport)
+    ship:_CheckNavigation()
+    equal(ship.updates,1) equal(ship.stops,0)
+  end
+
+  local waypoint=ship:GetWaypointNext()
+  equal(waypoint.uid,2)
+  ship.position=waypoint.coordinate
+  OPSGROUP._PassingWaypoint(ship,waypoint.uid)
+  equal(ship.updates,1)
+  equal(ship:GetWaypointNext().uid,3)
+  ship:_CheckNavigation()
+  equal(ship.updates,2) equal(ship.stops,0)
+  assert(ship.LastPathfindingResult~=firstReport)
+  equal(ship:GetWaypointNext().astarTargetUID,3)
+end)
+
+test("NAVYGROUP limit configuration remains atomic and depth changes affect the next timer check",function()
+  local ship=vessel():SetPathfindingGrid(8000,2,3):SetPathfindingMinDepth(15):SetPathfindingOff()
+  equal(ship.pathMaxCells,8000) equal(ship.pathGrowthFactor,2) equal(ship.pathMaxAttempts,3)
+  for _,bad in ipairs({false,0,-1,math.huge,0/0}) do
+    assert(not pcall(ship.SetPathfindingMinDepth,ship,bad))
+    equal(ship.pathMinDepth,15)
+  end
+  assert(not pcall(ship.SetPathfindingGrid,ship,0))
+  equal(ship.pathMaxCells,8000)
+  assert(not pcall(ship.SetPathfindingGrid,ship,9000,1))
+  equal(ship.pathMaxCells,8000) equal(ship.pathGrowthFactor,2)
+  ship.depthTerrain.depth=18
+  ship:_CheckNavigation()
+  equal(ship.LastNavigationCheck.Status,"clear")
+  ship:SetPathfindingMinDepth(20)
+  ship:_CheckNavigation()
+  equal(ship.LastNavigationCheck.Status,"blocked")
+  equal(ship.warnings,1) equal(ship.stops,0)
+end)
+
+test("NAVYGROUP warning callbacks can stop navigation before planning changes the route",function()
+  for _,command in ipairs({"FullStop","Wait"}) do
+    local ship=vessel()
+    ship.depthTerrain.depthAt=function(point) return point.x>=500 and point.x<=600 and 5 or 30 end
+    function ship:OnAfterCollisionWarning() self[command](self) end
+    function ship:_FindPathToNextWaypoint() error("A manual warning callback owns the stop") end
+
+    ship:_CheckNavigation()
+    equal(ship.warnings,1)
+    equal(ship:GetState(),"Holding")
+    equal(ship.updates,0)
+  end
+end)
+
+test("NAVYGROUP holds completed routes and user-owned states without querying terrain",function()
+  for _,mode in ipairs({"manual","waiting","completed","dead","player"}) do
+    local ship=vessel()
+    if mode=="manual" then ship:FullStop()
+    elseif mode=="waiting" then ship:Wait()
+    elseif mode=="completed" then ship.passedfinalwp=true
+    elseif mode=="dead" then ship.alive=false
+    else ship.isAI=false end
+
+    local calls=ship.depthTerrain.queries
+    ship:_CheckNavigation()
+    equal(ship.depthTerrain.queries,calls)
+    equal(ship.LastNavigationCheck,nil)
+    equal(ship.updates,0)
+  end
+end)
+
+test("NAVYGROUP respects movement owned by another task and allows route-based mission tasks",function()
+  local ship=vessel():SetPathfindingOff()
+  ship.taskcurrent=1
+  local taskID="AttackGroup"
+  function ship:GetTaskByID(id) equal(id,1) return {dcstask={id=taskID}} end
+  local original=AUFTRAG
+  AUFTRAG={SpecialTask={PATROLZONE="Patrol",RECON="Recon",RELOCATECOHORT="Relocate",REARMING="Rearm"}}
+  local ok,err=pcall(function()
+    ship:_CheckNavigation()
+    equal(ship.LastNavigationCheck,nil) equal(ship.depthTerrain.queries,0)
+    taskID=AUFTRAG.SpecialTask.PATROLZONE
+    ship:_CheckNavigation()
+    equal(ship.LastNavigationCheck.Status,"clear")
+    ship.state="Engaging"
+    taskID="AttackGroup"
+    local queries=ship.depthTerrain.queries
+    ship:_CheckNavigation()
+    assert(ship.depthTerrain.queries>queries)
+  end)
+  AUFTRAG=original
+  assert(ok,err)
+end)
+
+test("NAVYGROUP dead-group cleanup releases drawings and stops its navigation timer",function()
+  local ship=vessel()
+  local removed=false
+  ship.pathfindingDebugSearch={UndrawGrid=function() removed=true end}
+  ship.LastNavigationCheck={Status="blocked"}
+  ship.collisionwarning=true
+  ship.ispathfinding=true
+  ship.turning=true
+  ship.alive=false
+  ship.state="Dead"
+  ship:_CheckNavigation()
+  assert(removed)
+  equal(ship.LastNavigationCheck,nil)
+  equal(ship.collisionwarning,false)
+  equal(ship.ispathfinding,false)
+  equal(ship:IsTurning(),false)
+  equal(ship.updates,0)
+
+  local function stoppable() return {Stop=function(self) self.stopped=true end} end
+  ship.timerNavigation=stoppable()
+  ship.timerStatus=stoppable()
+  ship.timerQueueUpdate=stoppable()
+  ship.timerCheckZone=stoppable()
+  ship.CallScheduler={Clear=function(self) self.cleared=true end}
+  ship.missionqueue={}
+  ship.groupname="test vessel"
+  function ship:UnHandleEvent() end
+  local originalEvents,originalDatabase=EVENTS,_DATABASE
+  EVENTS={Birth=1,Dead=2,RemoveUnit=3}
+  _DATABASE={FLIGHTGROUPS={[ship.groupname]=ship}}
+  local ok,err=pcall(OPSGROUP.onafterStop,ship,"Dead","Stop","Stopped")
+  EVENTS,_DATABASE=originalEvents,originalDatabase
+  assert(ok,err)
+  assert(ship.timerNavigation.stopped)
+  assert(ship.timerStatus.stopped)
+  assert(ship.timerQueueUpdate.stopped)
+  assert(ship.timerCheckZone.stopped)
+  assert(ship.CallScheduler.cleared)
+end)
 
 test("NAVYGROUP rejects invalid recovery windows without polluting the queue",function()
   local ship=vessel()
@@ -2146,20 +2700,6 @@ test("NAVYGROUP attack task does not read unrelated mission globals",function()
   CONTROLLABLE,AttackQty=oldControllable,oldQty
 end)
 
-test("NAVYGROUP turning checks do not alter shared orientation and tolerate missing history",function()
-  local ship=vessel()
-  ship.group={GetUnit=function() return {IsAlive=function() return true end} end}
-  ship.orientX={x=1,y=0.2,z=0} ship.orientXLast={x=0,y=0.3,z=1}
-  function ship:TurningStarted() self.turnStarts=(self.turnStarts or 0)+1 end
-  function ship:TurningStopped() self.turnStops=(self.turnStops or 0)+1 end
-  ship:_CheckTurning()
-  equal(ship.turnStarts,1) equal(ship.orientX.y,0.2) equal(ship.orientXLast.y,0.3)
-  ship.orientXLast=ship.orientX
-  ship:_CheckTurning() equal(ship.turnStops,1)
-  ship.orientXLast=nil ship:_CheckTurning()
-  ship.orientXLast={x=0,y=1,z=0} ship:_CheckTurning()
-end)
-
 test("NAVYGROUP replanning suppresses intermediate completion checks while replacing route points",function()
   local ship=vessel()
   ship.RemoveWaypointByID=OPSGROUP.RemoveWaypointByID
@@ -2170,7 +2710,7 @@ test("NAVYGROUP replanning suppresses intermediate completion checks while repla
   local pending={uid=3,coordinate=coord(1000),speed=10,astar=true}
   table.insert(ship.waypoints,2,pending) ship.nextID=3
   land.surfaceAt=island
-  assert(ship:_FindPathToNextWaypoint(true))
+  assert(ship:_FindPathToNextWaypoint())
   equal(ship.doneChecks,nil) equal(ship.updates,1)
   equal(ship:GetWaypointByID(3),nil)
   equal(ship:RemoveWaypoint(999),ship)
@@ -2267,69 +2807,6 @@ test("NAVYGROUP engagement preserves meter depths through the feet-based waypoin
   ENUMS,UTILS.MetersToFeet,UTILS.DeepCopy,UTILS.VecDist3D=oldEnums,oldFeet,oldCopy,oldDist
 end)
 
-test("NAVYGROUP expands around land and hands smoothed vectors over with one route update",function()
-  local ship=vessel()
-  land.surfaceAt=function(p)
-    if p.x>=1800 and p.x<=3200 and math.abs(p.z)<=1800 then return land.SurfaceType.LAND end
-    return land.SurfaceType.WATER
-  end
-  local original=COORDINATE.New
-  COORDINATE.New=function() error("Path handoff must not create temporary coordinates") end
-  local ok,result=pcall(ship._FindPathToNextWaypoint,ship)
-  COORDINATE.New=original
-  assert(ok,result) equal(result,true)
-  equal(ship.LastPathfindingResult.Spacing,75)
-  assert(#ship.LastPathfindingResult.Attempts>1)
-  assert(ship.added>0 and ship.added<10) equal(ship.updates,1) equal(ship.stops,0)
-  local previous=ship.position
-  for i=2,#ship.waypoints do
-    assert(ship:_CheckPathDepth(previous,ship.waypoints[i].coordinate))
-    previous=ship.waypoints[i].coordinate
-  end
-  equal(ship.waypoints[#ship.waypoints].uid,2)
-end)
-
-test("NAVYGROUP retries bounded failures while stopped and resumes only after a checked plan",function()
-  local ship=vessel():SetPathfindingGrid(1):SetPathfindingRetry(60)
-  land.surfaceAt=island
-  equal(ship:_FindPathToNextWaypoint(),false)
-  equal(ship.LastPathfindingResult.StopReason,"cell_limit") equal(ship.stops,1) equal(ship.updates,0)
-  local report=ship.LastPathfindingResult
-  timerNow=30 equal(ship:_FindPathToNextWaypoint(),false) equal(ship.LastPathfindingResult,report) equal(ship.stops,1)
-  timerNow=61 equal(ship:_FindPathToNextWaypoint(),false) assert(ship.LastPathfindingResult~=report) equal(ship.stops,1)
-  ship:SetPathfindingGrid()
-  timerNow=122 assert(ship:_FindPathToNextWaypoint()) equal(ship.cruises,1) equal(ship.updates,1) equal(ship.pathfindingStopped,nil)
-end)
-
-test("NAVYGROUP replans active detours to the original target without accumulating stale points",function()
-  local ship=vessel()
-  land.surfaceAt=island assert(ship:_FindPathToNextWaypoint())
-  local old={} for i=2,#ship.waypoints-1 do old[ship.waypoints[i].uid]=true end
-  local target=ship.waypoints[#ship.waypoints]
-  -- A newly blocked actual route leg, rather than the old direct line to the final target, requires a new plan.
-  local nextPoint=ship.waypoints[2].coordinate
-  local x,z=nextPoint.x/2,nextPoint.z/2
-  land.surfaceAt=function(p)
-    if (p.x-x)^2+(p.z-z)^2<250^2 then return land.SurfaceType.LAND end
-    return island(p)
-  end
-  equal(ship:_CheckPathDepth(ship.position,nextPoint),false)
-  timerNow=61 assert(ship:_FindPathToNextWaypoint())
-  equal(ship.waypoints[#ship.waypoints],target) equal(ship.updates,2)
-  for _,wp in ipairs(ship.waypoints) do assert(not old[wp.uid]) end
-end)
-
-test("NAVYGROUP checks both sides of the ahead corridor with terrain profiles",function()
-  local ship=vessel():SetPathfindingOn(400)
-  land.surfaceAt=function(p) if p.x>=500 and p.x<=600 and p.z>=150 and p.z<=250 then return land.SurfaceType.LAND end return land.SurfaceType.WATER end
-  local free=ship:_CheckFreePath()
-  assert(free>=0 and free<500)
-  ship:SetPathfindingOn(0) equal(ship:_CheckFreePath(),5000)
-  ship:SetPathfindingOn(400)
-  function ship:IsTurning() return true end
-  equal(ship:_CheckFreePath(1000),1000)
-end)
-
 test("NAVYGROUP resolves beam clearance lazily and preserves explicit corridor overrides",function()
   local ship=vessel():SetPathfindingOn()
   equal(ship.pathCorridor,nil)
@@ -2379,209 +2856,6 @@ test("NAVYGROUP defaults check lateral clearance and actual stationary positions
   equal(ship:_CheckPathDepth(goal,goal),false)
 end)
 
-test("NAVYGROUP default coastal route keeps its clearance through smoothing and waypoint callbacks",function()
-  local ship=vessel():SetPathfindingOn()
-  land.surfaceAt=island
-  assert(ship:_FindPathToNextWaypoint())
-  local report=ship.LastPathfindingResult
-  local updates=ship.updates
-  assert(ship.added>0)
-  while ship:GetWaypointNext().astar do
-    local waypoint=ship:GetWaypointNext()
-    assert(ship:_CheckPathDepth(ship.position,waypoint.coordinate))
-    ship.position=waypoint.coordinate
-    OPSGROUP._PassingWaypoint(ship,waypoint.uid)
-    equal(ship.updates,updates) equal(ship.cruises,0) equal(ship.stops,0)
-    equal(ship.LastPathfindingResult,report)
-  end
-  assert(ship:_CheckPathDepth(ship.position,ship:GetWaypointNext().coordinate))
-end)
-
-test("NAVYGROUP uses the ASTAR depth rule and preserves shoal avoidance through route simplification",function()
-  local ship=vessel():SetPathfindingOn()
-  ship.verbose=10
-  ship.depthTerrain.depthAt=function(p)
-    if p.x>=1800 and p.x<=3200 and math.abs(p.y)<=1200 then return 7 end
-    return 30
-  end
-
-  -- Every point is classified as WATER; only the new depth rule can reject the direct connection.
-  equal(ship:_CheckPathDepth(ship.position,ship.waypoints[2].coordinate),false)
-  assert(ship:_FindPathToNextWaypoint())
-  assert(ship.added>0)
-  equal(ship.pathfindingDebugSearch.ValidNeighbourFunc,ASTAR.Depth)
-  equal(ship.LastPathfindingResult.MinDepth,20)
-  equal(ship.LastPathfindingResult.CorridorWidth,50)
-
-  local previous=ship.position
-  for i=2,#ship.waypoints do
-    assert(ship:_CheckPathDepth(previous,ship.waypoints[i].coordinate))
-    previous=ship.waypoints[i].coordinate
-  end
-  equal(ship.updates,1) equal(ship.stops,0)
-end)
-
-test("NAVYGROUP reaches the original waypoint and plans the second island when short profiles have no support points",function()
-  local ship=vessel():SetPathfindingOn()
-  ship.waypoints[3]={uid=3,coordinate=coord(10000),speed=10,npassed=0}
-  ship.nextID=3
-  function ship:PassingWaypoint() end
-
-  local normalProfile=ship.depthTerrain.makeProfile
-  ship.depthTerrain.makeProfile=function(a,b)
-    if math.sqrt((b.x-a.x)^2+(b.z-a.z)^2)<600 then return {} end
-    return normalProfile(a,b)
-  end
-  ship.depthTerrain.depthAt=function(p)
-    if ((p.x>=1800 and p.x<=3200) or (p.x>=6800 and p.x<=8200)) and math.abs(p.y)<=1200 then return 7 end
-    return 30
-  end
-
-  assert(ship:_FindPathToNextWaypoint())
-  while ship:GetWaypointNext().astar do
-    local waypoint=ship:GetWaypointNext()
-    ship.position=waypoint.coordinate
-    OPSGROUP._PassingWaypoint(ship,waypoint.uid)
-  end
-
-  -- Reproduce the 160 m final approach from the trace. It must not create a tiny replacement grid or stop the ship.
-  local report,updates=ship.LastPathfindingResult,ship.updates
-  ship.position={x=4840,y=0,z=0}
-  assert(ship:_ContinuePathfinding())
-  equal(ship.LastPathfindingResult,report) equal(ship.updates,updates) equal(ship.stops,0)
-
-  local originalWaypoint=ship:GetWaypointNext()
-  equal(originalWaypoint.uid,2)
-  ship.position=originalWaypoint.coordinate
-  OPSGROUP._PassingWaypoint(ship,originalWaypoint.uid)
-  equal(ship:GetWaypointNext().uid,3)
-
-  assert(ship:_CheckFreePath(5000)<5000)
-  assert(ship:_FindPathToNextWaypoint())
-  equal(ship.pathfindingTargetUID,3)
-  assert(ship:GetWaypointNext().astar)
-  local previous=ship.position
-  for i=ship:GetWaypointIndexNext(),#ship.waypoints do
-    assert(ship:_CheckPathDepth(previous,ship.waypoints[i].coordinate))
-    previous=ship.waypoints[i].coordinate
-  end
-  equal(ship.stops,0)
-end)
-
-test("NAVYGROUP retains a useful FINE search area for genuinely blocked short connections",function()
-  local ship=vessel(160):SetPathfindingOn(0)
-  ship.depthTerrain.depthAt=function(p)
-    if p.x>=70 and p.x<=90 and math.abs(p.y)<150 then return 7 end
-    return 30
-  end
-  assert(ship:_FindPathToNextWaypoint())
-  assert(ship.LastPathfindingResult.Width>=2000)
-  equal(ship.LastPathfindingResult.Spacing,50)
-  assert(ship.added>0) equal(ship.stops,0)
-end)
-
-test("NAVYGROUP collision checks find shallow water before a deep lookahead endpoint",function()
-  local ship=vessel():SetPathfindingOn(0)
-  ship.depthTerrain.depthAt=function(p)
-    if p.x>=750 and p.x<=900 then return 8 end
-    return 30
-  end
-  local free=ship:_CheckFreePath(5000)
-  assert(free>=725 and free<750,tostring(free))
-  assert(ship:_CheckPathDepth(ship.position,coord(free)))
-  assert(ship.depthTerrain.profiles<=14)
-  equal(ship:_CheckFreePath(0),0)
-
-  -- The depth setting is shared by collision checks; it remains in effect when automatic detours are disabled.
-  ship:SetPathfindingMinDepth(5)
-  equal(ship:_CheckFreePath(5000),5000)
-  ship:SetPathfindingMinDepth(20):SetPathfindingOff()
-  assert(ship:_CheckFreePath(5000)<750)
-end)
-
-test("NAVYGROUP depth collisions check the corridor edges and reject missing depth data",function()
-  local ship=vessel():SetPathfindingOn()
-  ship.depthTerrain.depthAt=function(p)
-    if p.x>=750 and p.x<=900 and p.y==25 then return 8 end
-    return 30
-  end
-  assert(ship:_CheckFreePath(5000)<750)
-  ship:SetPathfindingOn(0)
-  equal(ship:_CheckFreePath(5000),5000)
-  land.profile=nil
-  equal(ship:_CheckFreePath(5000),0)
-  equal(ship:_FindPathToNextWaypoint(),false)
-  equal(ship.stops,1) equal(ship.updates,0)
-end)
-
-test("NAVYGROUP minimum depth validates atomically and rechecks active detours after a change",function()
-  local ship=vessel():SetPathfindingMinDepth(15):SetPathfindingOn()
-  equal(ship.pathMinDepth,15)
-  ship:SetPathfindingOff():SetPathfindingOn()
-  equal(ship.pathMinDepth,15)
-  for _,bad in ipairs({false,"20",0,-1,math.huge,0/0}) do
-    assert(not pcall(function() ship:SetPathfindingMinDepth(bad) end))
-    equal(ship.pathMinDepth,15)
-  end
-  ship:SetPathfindingMinDepth() equal(ship.pathMinDepth,20)
-  land.surfaceAt=island
-  assert(ship:_FindPathToNextWaypoint())
-
-  ship:SetPathfindingMinDepth(40)
-  equal(ship:_ContinuePathfinding(),false)
-  equal(ship.stops,1) equal(ship.pathfindingStopped,true)
-  equal(ship.LastPathfindingResult.MinDepth,40)
-end)
-
-test("NAVYGROUP stops a blocked actual detour leg while turning without waiting for retry timeout",function()
-  local ship=vessel():SetPathfindingOn()
-  land.surfaceAt=island assert(ship:_FindPathToNextWaypoint())
-  local report=ship.LastPathfindingResult
-  function ship:IsTurning() return true end
-  assert(ship:_ContinuePathfinding()) equal(ship.LastPathfindingResult,report)
-  -- No further safe route exists. The periodic route check must stop immediately, even within cooldown.
-  land.surfaceAt=function() return land.SurfaceType.LAND end
-  equal(ship:_ContinuePathfinding(),false)
-  equal(ship.stops,1) equal(ship.cruises,0) equal(ship.updates,1)
-  equal(ship.pathfindingStopped,true) assert(ship.LastPathfindingResult~=report)
-end)
-
-test("NAVYGROUP waypoint callback stops before continuing along a newly blocked leg",function()
-  local ship=vessel():SetPathfindingOn()
-  land.surfaceAt=island assert(ship:_FindPathToNextWaypoint())
-  local waypoint=ship:GetWaypointNext()
-  ship.position=waypoint.coordinate
-  land.surfaceAt=function() return land.SurfaceType.LAND end
-  OPSGROUP._PassingWaypoint(ship,waypoint.uid)
-  equal(ship.stops,1) equal(ship.cruises,0) equal(ship.updates,1)
-  equal(ship.pathfindingStopped,true)
-end)
-
-test("NAVYGROUP retains a clear detour across retry intervals despite heading-based warnings",function()
-  resetDrawings()
-  local ship=vessel() ship.verbose=10
-  land.surfaceAt=island assert(ship:_FindPathToNextWaypoint())
-  local report,owner=ship.LastPathfindingResult,ship.pathfindingDebugSearch
-  local added,updates=ship.added,ship.updates
-  local nextPoint=ship.waypoints[2].coordinate
-  local ids={} for i,wp in ipairs(ship.waypoints) do ids[i]=wp.uid end
-  local original=ASTAR.New
-  ASTAR.New=function() error("A clear active route must not create another ASTAR/grid") end
-  local ok,err=pcall(function()
-    for i=1,3 do
-      timerNow=i*61
-      ship.position={x=nextPoint.x*i/10,y=0,z=nextPoint.z*i/10}
-      assert(ship:_CheckFreePath(5000)<5000)
-      assert(ship:_FindPathToNextWaypoint())
-      equal(ship.LastPathfindingResult,report) equal(ship.pathfindingDebugSearch,owner)
-      equal(ship.added,added) equal(ship.updates,updates)
-      for j,wp in ipairs(ship.waypoints) do equal(wp.uid,ids[j]) end
-    end
-  end)
-  ASTAR.New=original
-  assert(ok,err)
-end)
-
 test("NAVYGROUP replaces only its own debug overlay and cancels pending old batches",function()
   resetDrawings()
   local a,b=vessel(),vessel() a.verbose=10 b.verbose=10
@@ -2589,14 +2863,14 @@ test("NAVYGROUP replaces only its own debug overlay and cancels pending old batc
   local previous=a.pathfindingDebugSearch
   local options=previous:GetGrid():GetOptions()
   equal(options.Resolution,GRID.Resolution.FINE) equal(options.Spacing,nil)
-  equal(options.Width,GRID.Width.NORMAL) equal(options.Margin,GRID.Margin.SMALL)
+  equal(options.Width,GRID.Width.NORMAL) equal(options.Margin,GRID.Margin.NORMAL)
   equal(options.MaxCells,5000)
   assert(previous:GetGrid():GetCandidateCount()<=options.MaxCells)
   local oldIDs=deepcopy(previous.GridDrawIDs)
   local other=b.pathfindingDebugSearch
   local otherIDs=deepcopy(other.GridDrawIDs)
   local oldJob=assert(previous.GridDrawJob)
-  assert(a:_FindPathToNextWaypoint(true))
+  assert(a:_FindPathToNextWaypoint())
   assert(a.pathfindingDebugSearch~=previous)
   equal(previous.GridDrawJob,nil) equal(scheduled[oldJob.timerID],nil)
   for _,id in ipairs(oldIDs) do equal(drawings[id],nil) end
@@ -2608,67 +2882,15 @@ test("NAVYGROUP replaces only its own debug overlay and cancels pending old batc
   equal(a.pathfindingDebugSearch,nil) equal(count(drawings),#other.GridDrawIDs)
 end)
 
-test("NAVYGROUP removes an old debug overlay when a forced replan fails",function()
+test("NAVYGROUP removes an old debug overlay when a new plan fails",function()
   resetDrawings()
   local ship=vessel() ship.verbose=10
   land.surfaceAt=island assert(ship:_FindPathToNextWaypoint())
   local previous=ship.pathfindingDebugSearch
   ship:SetPathfindingGrid(1)
-  equal(ship:_FindPathToNextWaypoint(true),false)
+  equal(ship:_FindPathToNextWaypoint(),false)
   equal(ship.pathfindingDebugSearch,nil) equal(previous.GridDrawJob,nil)
   flushTimers() equal(count(drawings),0) equal(ship.stops,1)
-end)
-
-test("NAVYGROUP dispatches only a checked into-wind segment and replans through the waypoint callback",function()
-  local ship=vessel(UTILS.NMToMeters(1000))
-  ship.waypoints[2].intowind=true
-  assert(ship:_FindPathToNextWaypoint())
-  equal(ship.added,1) equal(ship.waypoints[3].uid,2)
-  local endpoint=ship.waypoints[2]
-  assert(endpoint.astarReplan) near(endpoint.coordinate.x,UTILS.NMToMeters(20))
-  ship:onafterUpdateRoute()
-  equal(#ship.dispatched,2) equal(ship.dispatched[2].uid,endpoint.uid)
-  ship.position=endpoint.coordinate
-  OPSGROUP._PassingWaypoint(ship,endpoint.uid)
-  equal(ship:GetWaypointByID(endpoint.uid),nil)
-  assert(ship.waypoints[2].astarReplan) near(ship.waypoints[2].coordinate.x,UTILS.NMToMeters(40))
-  equal(ship.waypoints[3].uid,2) equal(ship.updates,2)
-end)
-
-test("NAVYGROUP into-wind continuation failure stops before dispatching the unchecked remainder",function()
-  local ship=vessel(UTILS.NMToMeters(1000)):SetPathfindingGrid(1)
-  ship.waypoints[2].intowind=true assert(ship:_FindPathToNextWaypoint())
-  local endpoint=ship.waypoints[2] ship.position=endpoint.coordinate
-  land.surfaceAt=function(p) if p.x>UTILS.NMToMeters(21) then return land.SurfaceType.LAND end return land.SurfaceType.WATER end
-  OPSGROUP._PassingWaypoint(ship,endpoint.uid)
-  equal(ship.stops,1) equal(ship.updates,1) equal(ship.cruises,0) equal(ship.pathfindingStopped,true)
-end)
-
-test("NAVYGROUP direct routes bypass grid construction and preserve original route data",function()
-  local ship=vessel():SetPathfindingGrid(1)
-  local target=ship.waypoints[2]
-  assert(ship:_FindPathToNextWaypoint())
-  equal(ship.LastPathfindingResult.StopReason,"direct_path") equal(ship.added,0) equal(ship.updates,1)
-  equal(ship.waypoints[2],target)
-end)
-
-test("NAVYGROUP closes an into-wind window without retaining its pending detour points",function()
-  local ship=vessel(UTILS.NMToMeters(1000))
-  local target=ship.waypoints[2] target.intowind=true
-  ship.waypoints[3]={uid=99,coordinate=coord(7000),speed=10}
-  local window={Id=7,NavyGroup=ship,Open=true,Uturn=false}
-  local maneuver={NavyGroup=ship,State="Active",waypoint=target}
-  window.Maneuver=maneuver
-  maneuver.OnEnded=function(_,reason) ship:_CompleteTurnIntoWindWindow(window,reason) end
-  ship.intowind=window ship.Qintowind={window} ship.intoWindManeuver=maneuver
-  function ship:T2() end
-  function ship:GetSpeedToWaypoint() return 20 end
-  assert(ship:_FindPathToNextWaypoint())
-  ship:onafterTurnIntoWindOver(nil,nil,nil,window)
-  equal(#ship.waypoints,2) equal(ship.waypoints[2].uid,99)
-  equal(ship.intowind,nil) equal(ship.ispathfinding,false)
-  equal(ship.intoWindManeuver,nil) equal(maneuver.State,"Ended")
-  assert(window.Over and not window.Open) equal(#ship.Qintowind,0)
 end)
 
 test("surface neighbour rules reject land between manually added water nodes and invalidate changed filters",function()
@@ -2710,18 +2932,6 @@ test("building through GRID after a filter change invalidates earlier manual sur
   equal(a:GetPath(),nil)
 end)
 
-test("NAVYGROUP uses FINE corridor resolution on long legs and validates limits atomically",function()
-  local ship=vessel(50000):SetPathfindingGrid(1):SetPathfindingOn(200)
-  land.surfaceAt=island equal(ship:_FindPathToNextWaypoint(),false)
-  equal(ship.LastPathfindingResult.Spacing,750) equal(ship.LastPathfindingResult.StopReason,"cell_limit")
-  assert(not pcall(function() ship:SetPathfindingGrid(0,5) end)) equal(ship.pathMaxCells,1)
-  assert(not pcall(function() ship:SetPathfindingGrid(5000,1) end)) equal(ship.pathMaxCells,1)
-  ship:SetPathfindingGrid(8000,2,3)
-  equal(ship.pathMaxCells,8000) equal(ship.pathGrowthFactor,2) equal(ship.pathMaxAttempts,3)
-  assert(not pcall(function() ship:SetPathfindingOn(false) end)) equal(ship.pathCorridor,200)
-  assert(not pcall(function() ship:SetPathfindingRetry(false) end))
-end)
-
 test("surface sampling rejects invalid settings and bounds excessive sampling before terrain queries",function()
   local g=GRID:New("Limits",GRID.Type.RECTANGLE):SetValidSurfaceTypes(land.SurfaceType.WATER)
   for _,step in ipairs({false,0,-1,math.huge}) do
@@ -2747,10 +2957,17 @@ test("NAVYGROUP debug drawing uses the existing search result without another se
   equal(ship.updates,1)
 end)
 
-test("NAVYGROUP preserves target depth on generated detour waypoints",function()
-  local ship=vessel() ship.waypoints[2].coordinate.y=-20
-  land.surfaceAt=island assert(ship:_FindPathToNextWaypoint())
-  for i=2,#ship.waypoints do equal(ship.waypoints[i].coordinate.y,-20) end
+test("NAVYGROUP preserves target depth and commanded speed on generated detour waypoints",function()
+  for _,override in ipairs({false,true}) do
+    local ship=vessel()
+    ship.waypoints[2].coordinate.y=-20
+    ship.speedWp=override and 7 or nil
+    land.surfaceAt=island
+    assert(ship:_FindPathToNextWaypoint())
+    for i=2,#ship.waypoints do equal(ship.waypoints[i].coordinate.y,-20) end
+    for i=2,#ship.waypoints-1 do near(ship.waypoints[i].speed,override and 7 or 10) end
+    near(ship.waypoints[#ship.waypoints].speed,10)
+  end
 end)
 
 test("grid configuration copies nested settings resets and stays independent", function()

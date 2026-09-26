@@ -157,7 +157,9 @@
 -- GetNodeCoordinate(node) creates a fresh COORDINATE with the node's exact altitude. It does not cache the result.
 --
 -- In unrestricted mode endpoints snap to the closest node within 1000 m; otherwise a surface-valid node is added at the requested position.
+-- Endpoint distances use 3D when SetCostDist3D() is selected; default and custom cost rules retain 2D endpoint selection.
 -- Local grid mode keeps non-coincident endpoint positions exact and attaches them to nearby grid centers; it never links manual nodes directly.
+-- Obsolete automatically inserted endpoints are removed on endpoint resolution. Explicitly added nodes remain part of the graph.
 -- GetPath and GetPathWithExpansion accept ExcludeStartNode, ExcludeEndNode booleans. An empty table can be a successful path; nil means failure.
 --
 -- # Neighbours and Costs
@@ -200,7 +202,7 @@
 -- The discrete lattice may leave some budget unused. No cell is sampled beyond MaxCells. A fitted step consumes one normal search attempt.
 -- Previously accepted and rejected cells are retained without resampling; the first real enlargement of a zone seed fills unsampled holes as well.
 -- Manual ExpandGrid(width,margin) supports both geometries and uses the same budget and dimension caps, but rejects oversized requests instead of fitting them.
--- ExpandGrid(width,margin) remains available specifically for hex grids. Rectangular enlargement preserves original i/j indices, spacing and orientation.
+-- Rectangular enlargement preserves original i/j indices, spacing and orientation.
 -- Grid builders enable local neighbours by default. Hex expanding searches require this local mode.
 --
 -- GetPathWithExpansion returns path, report and stores the report in LastExpansionResult:
@@ -229,7 +231,6 @@
 -- UnmarkGrid() cancels queued text work and removes text labels without touching polygons. A new MarkGrid() replaces previous labels.
 --
 -- @field #ASTAR
----@class ASTAR
 ASTAR = {
   ClassName      = "ASTAR",
   Debug          =   nil,
@@ -305,17 +306,21 @@ end
 --- Create a new ASTAR object with an empty node set, unrestricted neighbours, and 2D distance costs.
 -- @param #ASTAR self
 -- @return #ASTAR self
----@return ASTAR
 function ASTAR:New()
 
   -- Inherit from BASE.
   local self=BASE:Inherit(self, BASE:New()) --#ASTAR
 
   self.lid="ASTAR | "
-  self.nodes={} self.counter=1 self.Nnodes=0
+  self.nodes={} 
+  self.counter=1 
+  self.Nnodes=0
   self.Grid=GRID:New("ASTAR", GRID.Type.RECTANGLE)
-  self._GridRevision=-1 self._CellNodes={} self._CellCursor=0
+  self._GridRevision=-1 
+  self._CellNodes={} 
+  self._CellCursor=0
   self._NodeOwner={}
+  self._EndpointNodes={}
 
   return self
 end
@@ -326,22 +331,22 @@ end
 
 --- Set the requested start coordinate. Does not create a node or rebuild the grid.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate Start position; also accepts VECTOR, DCS Vec2 or Vec3. Nil clears it.
+-- @param Core.Point#COORDINATE Coordinate Finite start position; also accepts VECTOR, DCS Vec2 or Vec3. Nil clears it.
 -- @return #ASTAR self
 function ASTAR:SetStartCoordinate(Coordinate)
 
-  self.startVector=Coordinate and VECTOR:NewFromVec(Coordinate) or nil
+  self.startVector=Coordinate~=nil and self.Grid:_PositionVector(Coordinate) or nil
   
   return self
 end
 
 --- Set the requested goal coordinate. Does not create a node or rebuild the grid.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate Goal position; also accepts VECTOR, DCS Vec2 or Vec3. Nil clears it.
+-- @param Core.Point#COORDINATE Coordinate Finite goal position; also accepts VECTOR, DCS Vec2 or Vec3. Nil clears it.
 -- @return #ASTAR self
 function ASTAR:SetEndCoordinate(Coordinate)
 
-  self.endVector=Coordinate and VECTOR:NewFromVec(Coordinate) or nil
+  self.endVector=Coordinate~=nil and self.Grid:_PositionVector(Coordinate) or nil
   
   return self
 end
@@ -358,6 +363,13 @@ function ASTAR:GetNodeFromCoordinate(Coordinate)
   local node={} --#ASTAR.Node
   
   node.vector=VECTOR._IsVector(Coordinate) and Coordinate or VECTOR:NewFromVec(Coordinate)
+
+  -- Validate before querying DCS or consuming an ID. Retain supplied VECTOR objects without copying them.
+  for _,axis in ipairs({"x", "y", "z"}) do
+    local value=node.vector[axis]
+    assert(type(value)=="number" and value>-math.huge and value<math.huge, "ASTAR: node coordinates must be finite")
+  end
+
   node.surfacetype=node.vector:GetSurfaceType()
   node.id=self.counter
   node._owner=self._NodeOwner
@@ -497,7 +509,7 @@ function ASTAR:SetValidNeighbourSurface(Step, CorridorWidth)
   if Step==nil then Step=100 end
   if CorridorWidth==nil then CorridorWidth=0 end
   assert(type(Step)=="number" and Step>0 and Step<math.huge,"ASTAR: surface sample step must be finite and positive")
-  assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
+  assert(CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
   return self:SetValidNeighbourFunction(function(a,b)
     return self.Grid:CheckSurfacePath(a.vector,b.vector,Step,CorridorWidth)
   end)
@@ -527,8 +539,8 @@ function ASTAR:SetValidNeighbourDepth(MinDepth, CorridorWidth)
     CorridorWidth=0
   end
 
-  assert(type(MinDepth)=="number" and MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
-  assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
+  assert(MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
+  assert(CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
 
   return self:SetValidNeighbourFunction(ASTAR.Depth,MinDepth,CorridorWidth)
 end
@@ -697,79 +709,85 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
   return los
 end
 
---- Check water depth at an exact position, optionally also applying its terrain-profile height.
--- Missing or non-finite terrain values reject the position. Land is rejected regardless of its altitude.
--- @param DCS#Vec3 Point Position to check; y is used only when UseProfile is true.
--- @param #number MinDepth Required minimum depth in meters.
--- @param #boolean UseProfile Whether Point.y is a terrain-profile height to check as well.
--- @return #boolean True when the position is water and all available depth checks meet the minimum.
-function ASTAR._CheckDepthPoint(Point, MinDepth, UseProfile)
+--- Check the endpoints and terrain profile of one water connection.
+-- A* only needs to know whether every point is deep enough. The first rejection ends this check;
+-- locating an obstruction and interpolating its distance belong to PATHLINE.CheckDepth().
+-- @param DCS#Vec3 Start Start position at the water surface.
+-- @param DCS#Vec3 Goal Goal position at the water surface.
+-- @param #number Distance Horizontal distance between the endpoints, greater than zero.
+-- @param #number MinDepth Minimum water depth in meters, inclusive.
+-- @return #boolean True when the connection is sufficiently deep water.
+-- @return #string Reason for rejection, or nil on success.
+function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth)
 
-  if type(Point)~="table" or type(Point.x)~="number" or not (math.abs(Point.x)<math.huge)
-    or type(Point.z)~="number" or not (math.abs(Point.z)<math.huge) then
-    return false
+  -- DCS may omit the endpoints from its profile. Always check their actual depths as well.
+  for i=1,2 do
+    local point=i==1 and Start or Goal
+    local clear,status,cause=VECTOR._CheckDepthPoint(point,MinDepth,false)
+
+    if not clear then
+      return false,status=="unavailable" and cause or (i==1 and "start_blocked" or "goal_blocked")
+    end
   end
 
-  if UseProfile and (type(Point.y)~="number" or not (math.abs(Point.y)<math.huge)) then
-    return false
+  local profile=land.profile(Start,Goal)
+  if type(profile)~="table" then
+    return false,"profile_unavailable"
   end
 
-  -- Surface classification is still required: terrain below sea level is not necessarily navigable water.
-  local position={x=Point.x,y=Point.z}
-  local surface=land.getSurfaceType(position)
+  -- Under the linear-profile assumption, valid support points also bound the depths between them.
+  for i=1,#profile do
+    local clear,status,cause=VECTOR._CheckDepthPoint(profile[i],MinDepth,true)
 
-  if surface~=land.SurfaceType.WATER and surface~=land.SurfaceType.SHALLOW_WATER then
-    return false
+    if not clear then
+      return false,status=="unavailable" and cause or "profile_blocked"
+    end
   end
 
-  local height,depth=land.getSurfaceHeightWithSeabed(position)
+  -- An empty or single-point profile cannot describe the whole connection.
+  -- Check additional positions at most 100 m apart, with a bound on the amount of work.
+  if #profile<2 then
+    local intervals=math.max(2,math.ceil(Distance/100))
+    if intervals>1000 then
+      return false,"profile_fallback_limit"
+    end
 
-  if type(height)~="number" or not (math.abs(height)<math.huge)
-    or type(depth)~="number" or not (depth>=MinDepth and depth<math.huge) then
-    return false
+    for i=1,intervals-1 do
+      local fraction=i/intervals
+      local point={x=Start.x+(Goal.x-Start.x)*fraction,z=Start.z+(Goal.z-Start.z)*fraction}
+      local clear,status,cause=VECTOR._CheckDepthPoint(point,MinDepth,false)
+
+      if not clear then
+        return false,status=="unavailable" and cause or "profile_fallback_blocked"
+      end
+    end
   end
 
-  -- At coastlines the profile and direct seabed query may differ. Both must allow the requested depth.
-  return not UseProfile or height-Point.y>=MinDepth
+  return true
 end
 
---- Check whether two nodes are connected by sufficiently deep water using land.profile().
--- Actual endpoints are checked separately because a profile may omit them. All returned points must be water and deep enough.
--- Assumes linear terrain between profile points. Uses direct depth as an additional bound when it is shallower than the profile.
--- Profiles with fewer than two points use direct checks with at most 100 m between samples and at least one midpoint.
--- This fallback is limited to 1000 intervals and cannot resolve obstacles between samples.
--- Positive width checks the center and both parallel edges; it does not check the entire area between them or extend the ends.
--- Coincident horizontal positions check only that position because there is no corridor direction.
--- A canonical direction makes the rule symmetric even when DCS returns different profiles for reverse queries.
+--- Check whether two nodes are connected by sufficiently deep water.
+-- Checks actual endpoints and land.profile() support points, using the shallower of profile and direct depth.
+-- Positive CorridorWidth also checks the two parallel edges; this does not cover the entire area between them.
+-- Profiles with fewer than two points receive bounded direct samples at a maximum gap of 100 meters.
+-- Coincident horizontal positions check only that position. Node altitude is ignored.
+-- This neighbour rule returns immediately on rejection and does not build or sort diagnostic samples.
+-- Use PATHLINE.CheckDepth() when the position and distance of the first obstruction are needed.
 -- @param #ASTAR.Node nodeA First node.
--- @param #ASTAR.Node nodeB Other node.
+-- @param #ASTAR.Node nodeB Second node.
 -- @param #number MinDepth (Optional) Positive finite minimum water depth in meters, inclusive; default 20.
 -- @param #number CorridorWidth (Optional) Non-negative finite total corridor width in meters; default 0.
--- @return #boolean True if every check passes; false for blocked or unavailable terrain data.
+-- @return #boolean True when every check passes; false for blocked or unusable terrain data.
 -- @return #string Reason for rejection, or nil on success. Start/goal refer to the canonical query direction.
 function ASTAR.Depth(nodeA, nodeB, MinDepth, CorridorWidth)
 
-  if MinDepth==nil then
-    MinDepth=20
-  end
+  if MinDepth==nil then MinDepth=20 end
+  if CorridorWidth==nil then CorridorWidth=0 end
 
-  if CorridorWidth==nil then
-    CorridorWidth=0
-  end
+  assert(MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
+  assert(CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
 
-  assert(type(MinDepth)=="number" and MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
-  assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
-
-  if type(land.profile)~="function" or type(land.getSurfaceHeightWithSeabed)~="function" then
-    return false,"depth_api_unavailable"
-  end
-
-  -- Query each edge in a stable direction so the symmetric connection cache cannot depend on search direction.
   local a,b=nodeA.vector,nodeB.vector
-  if a.x>b.x or (a.x==b.x and a.z>b.z) then
-    a,b=b,a
-  end
-
   local dx,dz=b.x-a.x,b.z-a.z
   local distance=math.sqrt(dx*dx+dz*dz)
 
@@ -778,60 +796,27 @@ function ASTAR.Depth(nodeA, nodeB, MinDepth, CorridorWidth)
   end
 
   if distance==0 then
-    return ASTAR._CheckDepthPoint(a,MinDepth,false)
+    local clear,status,cause=VECTOR._CheckDepthPoint(a,MinDepth,false)
+    return clear,not clear and (status=="unavailable" and cause or "start_blocked") or nil
+  end
+
+  -- Query DCS in the same direction for A -> B and B -> A, matching A*'s symmetric validity cache.
+  if a.x>b.x or (a.x==b.x and a.z>b.z) then
+    a,b=b,a
+    dx,dz=-dx,-dz
   end
 
   local nx,nz=-dz/distance,dx/distance
   local lines=CorridorWidth>0 and 3 or 1
 
-  -- Check the center first, followed by the two parallel corridor edges.
   for i=1,lines do
-    local offset=0
-    if i==2 then
-      offset=CorridorWidth/2
-    elseif i==3 then
-      offset=-CorridorWidth/2
-    end
-
+    local offset=i==2 and CorridorWidth/2 or (i==3 and -CorridorWidth/2 or 0)
     local start={x=a.x+nx*offset,y=0,z=a.z+nz*offset}
     local goal={x=b.x+nx*offset,y=0,z=b.z+nz*offset}
+    local clear,reason=ASTAR._CheckDepthLine(start,goal,distance,MinDepth)
 
-    -- DCS may return support points that do not include the exact requested endpoints.
-    if not ASTAR._CheckDepthPoint(start,MinDepth,false) then
-      return false,"start_blocked"
-    end
-
-    if not ASTAR._CheckDepthPoint(goal,MinDepth,false) then
-      return false,"goal_blocked"
-    end
-
-    local profile=land.profile(start,goal)
-    if type(profile)~="table" then
-      return false,"profile_unavailable"
-    end
-
-    for j=1,#profile do
-      if not ASTAR._CheckDepthPoint(profile[j],MinDepth,true) then
-        return false,"profile_blocked"
-      end
-    end
-
-    -- Too few support points do not establish that a short connection is blocked.
-    -- Check its actual terrain directly instead; a missing API result above still rejects the connection.
-    if #profile<2 then
-      local intervals=math.max(2,math.ceil(distance/100))
-      if intervals>1000 then
-        return false,"profile_fallback_limit"
-      end
-
-      for j=1,intervals-1 do
-        local fraction=j/intervals
-        local point={x=start.x+(goal.x-start.x)*fraction,z=start.z+(goal.z-start.z)*fraction}
-
-        if not ASTAR._CheckDepthPoint(point,MinDepth,false) then
-          return false,"profile_fallback_blocked"
-        end
-      end
+    if not clear then
+      return false,reason
     end
   end
 
@@ -930,18 +915,21 @@ end
 --- Find the closest node from a given coordinate.
 -- @param #ASTAR self
 -- @param Core.Point#COORDINATE Coordinate Reference position; also accepts VECTOR, DCS Vec2 or Vec3.
--- @return #ASTAR.Node Closest node by 2D distance, or nil if the node set is empty.
+-- Uses 3D distance with SetCostDist3D(), otherwise 2D distance, including for custom cost functions.
+-- @return #ASTAR.Node Closest node, or nil if the node set is empty.
 -- @return #number Distance to the closest node in meters, or math.huge if the node set is empty.
 function ASTAR:FindClosestNode(Coordinate)
+  local position=self.Grid:_PositionVector(Coordinate)
   self:_SyncGrid()
 
   local distMin=math.huge
   local closeNode=nil
+  local horizontal=self.CostFunc~=ASTAR.Dist3D
   
   for _,_node in pairs(self.nodes) do
     local node=_node --#ASTAR.Node
     
-    local dist=node.vector:GetDistance(Coordinate, true)
+    local dist=node.vector:GetDistance(position, horizontal)
     
     if dist<distMin then
       distMin=dist
@@ -954,7 +942,7 @@ function ASTAR:FindClosestNode(Coordinate)
 end
 
 --- Select the closest start node, or add an exact start node if the closest is more than 1000 meters away.
--- In local grid mode, any 2D displacement greater than 0.000001 meters creates an exact endpoint instead of snapping.
+-- Uses the distance metric of FindClosestNode(). In local grid mode the snapping threshold is 0.000001 meters.
 -- Sets startNode to nil if the node set is empty or an added endpoint fails the surface filter.
 -- @param #ASTAR self
 -- @return #ASTAR self
@@ -964,7 +952,7 @@ function ASTAR:FindStartNode()
 end
 
 --- Select the closest goal node, or add an exact goal node if the closest is more than 1000 meters away.
--- In local grid mode, any 2D displacement greater than 0.000001 meters creates an exact endpoint instead of snapping.
+-- Uses the distance metric of FindClosestNode(). In local grid mode the snapping threshold is 0.000001 meters.
 -- Sets endNode to nil if the node set is empty or an added endpoint fails the surface filter.
 -- @param #ASTAR self
 -- @return #ASTAR self
@@ -973,12 +961,50 @@ function ASTAR:FindEndNode()
   return self
 end
 
+--- Remove automatic endpoints no longer requested by this search.
+-- Keeps caller-added nodes and current endpoints. Previously returned paths retain their node objects for inspection.
+-- @param #ASTAR self
+-- @return #nil No return value; removes obsolete nodes, pair-cache entries and candidate adjacency.
+function ASTAR:_PruneEndpointNodes()
+
+  local removed={}
+  for id,node in pairs(self._EndpointNodes) do
+    local atStart=self.startVector and node.vector:GetDistance(self.startVector)<=1e-6
+    local atGoal=self.endVector and node.vector:GetDistance(self.endVector)<=1e-6
+
+    if not atStart and not atGoal then
+      removed[#removed+1]=id
+      self.nodes[id]=nil
+      self._EndpointNodes[id]=nil
+      self.Nnodes=self.Nnodes-1
+      node.valid={}
+      node.cost={}
+      if self.startNode==node then self.startNode=nil end
+      if self.endNode==node then self.endNode=nil end
+    end
+  end
+
+  if #removed>0 then
+    -- Pair caches are symmetric; remove reverse references so moving endpoints cannot accumulate cache entries.
+    for _,node in pairs(self.nodes) do
+      for _,id in ipairs(removed) do
+        node.valid[id]=nil
+        node.cost[id]=nil
+      end
+    end
+
+    self.gridLinks=nil
+    self.gridComponents=nil
+  end
+end
+
 --- Resolve one endpoint using the current snapping threshold and surface filter.
 -- @param #ASTAR self
 -- @param Core.Vector#VECTOR Coordinate Requested endpoint.
 -- @param #string Label Endpoint name for trace output.
 -- @return #ASTAR.Node Selected or added node, or nil.
 function ASTAR:_FindEndpoint(Coordinate, Label)
+  self:_PruneEndpointNodes()
   if not Coordinate then return nil end
   local node, distance=self:FindClosestNode(Coordinate)
   local threshold=self.GridNeighboursOnly and 1e-6 or 1000
@@ -987,6 +1013,7 @@ function ASTAR:_FindEndpoint(Coordinate, Label)
     node=self:GetNodeFromCoordinate(Coordinate)
     if not self.Grid:IsValidSurfaceType(node.surfacetype) then return nil end
     self:AddNode(node)
+    self._EndpointNodes[node.id]=node
   end
   return node
 end
@@ -998,6 +1025,7 @@ end
 -- @return #string Failure reason, or nil.
 function ASTAR:_ResolveEndpoints()
   self:_SyncGrid()
+  self:_PruneEndpointNodes()
   if not self.startVector or not self.endVector then return nil, nil, "missing_coordinates" end
   self:FindStartNode()
   self:FindEndNode()
@@ -1522,8 +1550,6 @@ end
 -- @param #ASTAR self
 -- @param Core.Grid#GRID.GridOptions Options (Optional) Partial grid configuration.
 -- @return #ASTAR self.
----@param Options? GRID.GridOptions
----@return ASTAR
 function ASTAR:SetGridOptions(Options)
   self.Grid:SetOptions(Options)
   self:_SyncGrid()
@@ -1708,7 +1734,16 @@ end
 -- @return #ASTAR self; inspect LastGridDrawResult for drawing progress.
 function ASTAR:DrawGridWithPath(Path, Options)
   self:_SyncGrid()
-  return GRID.DrawGridWithPath(self, Path, Options)
+  assert(type(Path)=="table", "ASTAR: DrawGridWithPath requires a successful path table")
+  local cells={}
+  for _,node in ipairs(Path) do
+    assert(type(node)=="table" and node._owner==self._NodeOwner and node.grid==self.Grid,
+      "ASTAR: path nodes must belong to this search")
+
+    -- Automatic endpoints may have been removed since this path was returned. They have no polygon to draw.
+    if node.cell then cells[#cells+1]=node end
+  end
+  return GRID.DrawGridWithPath(self, cells, Options)
 end
 
 --- Validate batch settings and replace the overlay before starting a regular drawing or debug snapshot.

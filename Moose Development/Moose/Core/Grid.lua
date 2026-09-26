@@ -148,7 +148,6 @@
 -- DrawGrid/MarkGrid use bounded timer batches; UndrawGrid/UnmarkGrid remove only their owner's overlays.
 --
 -- @field #GRID
----@class GRID
 GRID = {
   ClassName = "GRID"
 }
@@ -262,15 +261,14 @@ GRID.version="0.1.0"
 -- @param #GRID self
 -- @param #string Name Required non-empty grid name.
 -- @param #string GridType Required GRID.Type.RECTANGLE or GRID.Type.HEXAGON.
--- @return #GRID Grid.
----@param Name string
----@param GridType GRID.Type
----@return GRID
+-- @return #GRID self
 function GRID:New(Name, GridType)
 
   assert(type(Name)=="string" and Name:find("%S"), "GRID: a non-empty name is required")
   assert(GridType==GRID.Type.RECTANGLE or GridType==GRID.Type.HEXAGON, "GRID: a valid GRID.Type is required")
+  
   local self=BASE:Inherit(self, BASE:New())
+  
   self.name=Name
   self.GridType=GridType
   self.lid="GRID "..self.name.." | "
@@ -280,8 +278,8 @@ function GRID:New(Name, GridType)
   self.counter=1
   self.CellCount=0
   self.Version=0
+  
   return self
-
 end
 
 --- Invalidate geometric caches and increment the grid mutation version.
@@ -313,8 +311,8 @@ function GRID:SetBounds(Start, Goal)
   self.endVector=last
   self._ResolutionInfo=nil
   self:_Touch()
+  
   return self
-
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -331,7 +329,6 @@ local function startCPUClock()
   if os and type(os.clock)=="function" then
     return {read=os.clock, start=os.clock()}
   end
-
 end
 
 --- Read the non-negative elapsed CPU time of a measurement.
@@ -341,7 +338,6 @@ local function elapsedCPU(clock)
   if clock then
     return math.max(0, clock.read()-clock.start)
   end
-
 end
 
 --- Format a CPU duration for diagnostic log messages.
@@ -349,7 +345,6 @@ end
 -- @return #string Formatted duration or an unavailable-clock message.
 local function cpuTimeText(seconds)
   return seconds and string.format("CPU time %.6f sec", seconds) or "CPU time unavailable"
-
 end
 
 --- Validate finite, non-negative grid width and margin values.

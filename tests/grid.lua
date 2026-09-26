@@ -1350,6 +1350,44 @@ test("attaching a grid cannot replace an unsynchronized built empty grid",functi
   equal(a:GetGrid(),original) equal(a.Nnodes,0)
 end)
 
+test("moving search endpoints retain shared grids and pending marker snapshots without accumulating nodes",function()
+  for _,kind in ipairs({"rectangular","hexagonal"}) do
+    local g=grid(kind)
+    local a,b=search(g),search(g)
+    local explicit=a:AddNodeFromCoordinate(coord(50,50))
+    local bpath=b:GetPath()
+    local bnodes,bcount,bcost=b.nodes,b.Nnodes,bpath[1].cost
+    local version,cells=g:GetVersion(),g:GetCellCount()
+    local removed={}
+    for i=1,20 do
+      a:SetStartCoordinate(coord(100+i,100)):SetEndCoordinate(coord(3900-i,100))
+      local path=a:GetPath()
+      assert(path) equal(a.Nnodes,cells+3)
+      equal(a.nodes[explicit.id],explicit)
+      for _,old in ipairs(removed) do
+        equal(a.nodes[old.id],nil)
+        for _,node in pairs(a.nodes) do
+          equal(node.valid[old.id],nil) equal(node.cost[old.id],nil)
+        end
+      end
+      removed[#removed+1]=a.startNode
+      removed[#removed+1]=a.endNode
+      if i==1 then
+        a:MarkGrid({CheckNeighbours=true,BatchSize=1})
+        assert(stepTimer())
+      end
+    end
+    flushTimers()
+    equal(a.LastGridMarkResult.Status,"complete")
+    equal(g:GetVersion(),version) equal(g:GetCellCount(),cells)
+    equal(b.nodes,bnodes) equal(b.Nnodes,bcount) equal(bpath[1].cost,bcost)
+    assert(b:GetPath())
+    a:SetStartCoordinate(nil):SetEndCoordinate(nil)
+    equal(a:GetPath(),nil) equal(a.Nnodes,cells+1)
+    a:UnmarkGrid()
+  end
+end)
+
 test("invalid drawing styles preserve GRID and ASTAR overlays before any scheduled work",function()
   local g=grid("rectangular")
   for _,view in ipairs({g,ASTAR:New():SetGrid(g)}) do

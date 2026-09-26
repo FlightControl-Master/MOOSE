@@ -77,6 +77,20 @@ PATHLINE = {
 -- @field #number markerID Marker ID.
 -- @field #number lineID Line marker ID.
 
+--- Result of a detailed water-depth check between two positions.
+-- @type PATHLINE.DepthReport
+-- @field #string Status "clear", "blocked", or "unavailable". Missing terrain values are not a confirmed obstacle.
+-- @field #string Reason Rejection reason, or nil when clear.
+-- @field #string Cause Underlying cause, such as "insufficient_depth", "non_water", or invalid terrain data.
+-- @field #number Distance Horizontal distance from the original start to the goal, in meters.
+-- @field #number ClearDistance Usable prefix from the original start, in meters, assuming linear depth between samples. Zero when data is unavailable.
+-- @field #number RequiredDepth Requested minimum water depth, in meters.
+-- @field DCS#Vec3 Point First rejected sample on the limiting profile, when known. This is not the interpolated threshold position.
+-- @field #number Depth Water depth at Point, when known; the shallower of direct and profile depth.
+-- @field #number SurfaceType DCS surface type at Point, when known.
+-- @field #number ProfileOffset Signed distance from the route center line, in meters; positive is right of travel in DCS x/z coordinates.
+-- @field #string Location "start", "goal", "profile", or "profile_fallback" relative to the original input direction.
+
 
 --- PATHLINE class version.
 -- @field #string version
@@ -133,6 +147,41 @@ end
 function PATHLINE:NewFromVec3Array(Name, Vec3Array)
 
   local self=PATHLINE:New(Name)
+
+  for i=1,#Vec3Array do
+    self:AddPointFromVec3(Vec3Array[i])
+  end
+
+  return self
+end
+
+
+--- Update PATHLINE object from a given list of 2D points.
+-- @param #PATHLINE self
+-- @param #string Name Name of the pathline.
+-- @param #table Vec2Array List of DCS#Vec2 points.
+-- @return #PATHLINE self
+function PATHLINE:UpdateFromVec2Array(Name, Vec2Array)
+
+  -- Clear points
+  self.points={}
+
+  for i=1,#Vec2Array do
+    self:AddPointFromVec2(Vec2Array[i])
+  end
+
+  return self
+end
+
+--- Update PATHLINE object from a given list of 3D points.
+-- @param #PATHLINE self
+-- @param #string Name Name of the pathline.
+-- @param #table Vec3Array List of DCS#Vec3 points.
+-- @return #PATHLINE self
+function PATHLINE:UpdateFromVec3Array(Name, Vec3Array)
+
+  -- Clear points
+  self.points={}
 
   for i=1,#Vec3Array do
     self:AddPointFromVec3(Vec3Array[i])
@@ -335,6 +384,180 @@ function PATHLINE:GetLength(Project2D)
   return l
 end
 
+--- Inspect navigable water depth and the usable prefix between two positions.
+-- Uses the same point-depth rule as ASTAR.Depth(), but returns a detailed report without creating a PATHLINE instance.
+-- Actual endpoints are checked separately, and profile points are ordered from the original start. The first insufficient
+-- depth is interpolated from the previous valid sample; a non-water sample limits the prefix to the previous valid point.
+-- Profiles with fewer than two points also use direct samples at most 100 meters apart, limited to 1000 intervals.
+-- A positive corridor width checks the center and both parallel edges, not the entire area between them or a turning arc.
+-- ClearDistance is a terrain estimate under the linear-interpolation assumption, not a ship's braking distance.
+-- Missing or malformed terrain values produce Status="unavailable" and ClearDistance=0. DCS API errors propagate normally.
+-- @param DCS#Vec3 Start Original start position. Accepts a VECTOR directly; its altitude is ignored.
+-- @param DCS#Vec3 Goal Original goal position. Accepts a VECTOR directly; its altitude is ignored.
+-- @param #number MinDepth Optional positive finite minimum water depth in meters, inclusive; default 20.
+-- @param #number CorridorWidth Optional non-negative finite total corridor width in meters; default 0.
+-- @return #boolean True when all depth checks pass.
+-- @return #string Rejection reason, or nil on success.
+-- @return #PATHLINE.DepthReport Structured result, including the usable prefix measured from Start.
+function PATHLINE.CheckDepth(Start, Goal, MinDepth, CorridorWidth)
+
+  if MinDepth==nil then
+    MinDepth=20
+  end
+
+  if CorridorWidth==nil then
+    CorridorWidth=0
+  end
+
+  assert(MinDepth>0 and MinDepth<math.huge,"PATHLINE: minimum depth must be finite and positive")
+  assert(CorridorWidth>=0 and CorridorWidth<math.huge,"PATHLINE: corridor width must be finite and non-negative")
+
+  local a,b=Start,Goal
+  local dx,dz=b.x-a.x,b.z-a.z
+  local distance=math.sqrt(dx*dx+dz*dz)
+
+  if not (distance<math.huge) then
+    local reason="invalid_distance"
+    return false,reason,PATHLINE._DepthReport(0,MinDepth,0,reason,"unavailable",reason)
+  end
+
+  -- An endpoint preflight has no corridor direction and needs no native profile.
+  if distance==0 then
+    local clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(a,MinDepth,false)
+    local reason=not clear and (status=="unavailable" and cause or "start_blocked") or nil
+    local report=PATHLINE._DepthReport(0,MinDepth,0,reason,status,cause,
+      {Point=a,Location="start"},depth,surface,0)
+
+    return clear,reason,report
+  end
+
+  -- Query DCS in the same canonical direction as A*. Report distances in the caller's original direction.
+  local reverse=a.x>b.x or (a.x==b.x and a.z>b.z)
+  if reverse then
+    a,b=b,a
+    dx,dz=-dx,-dz
+  end
+
+  local nx,nz=-dz/distance,dx/distance
+  local lines=CorridorWidth>0 and 3 or 1
+  local earliest
+
+  for i=1,lines do
+    local offset=i==2 and CorridorWidth/2 or (i==3 and -CorridorWidth/2 or 0)
+    local start={x=a.x+nx*offset,y=0,z=a.z+nz*offset}
+    local goal={x=b.x+nx*offset,y=0,z=b.z+nz*offset}
+    local clear,reason,report=PATHLINE._CheckDepthLine(start,goal,distance,MinDepth,reverse and -offset or offset,reverse)
+
+    if not clear then
+      if report.Status=="unavailable" then
+        return false,reason,report
+      end
+
+      -- A side profile may become unsafe before the center line does.
+      if not earliest or report.ClearDistance<earliest.ClearDistance then
+        earliest=report
+      end
+    end
+  end
+
+  if earliest then
+    return false,earliest.Reason,earliest
+  end
+
+  return true,nil,{Status="clear",Distance=distance,ClearDistance=distance,RequiredDepth=MinDepth}
+end
+
+
+--- Find the minimum stored water depth at the pathline's support points.
+-- Uses the direct terrain measurements stored when points were created; vec3.y may be a route altitude.
+-- This does not inspect the terrain between support points or check a ship's corridor.
+-- @param #PATHLINE self
+-- @return #number Minimum depth in meters, or nil for an empty path or invalid depth data.
+-- @return #PATHLINE.Point Independent copy of the first point with this depth, or nil.
+-- @return #string "empty_path" or "invalid_depth" when no minimum can be determined, otherwise nil.
+function PATHLINE:GetDepthMin()
+
+  if #self.points==0 then
+    return nil,nil,"empty_path"
+  end
+
+  local minimum=math.huge
+  local minimumPoint=nil
+
+  for _,point in ipairs(self.points) do
+    local depth=point.depth
+
+    -- Missing or non-finite terrain data must not appear to be deep water.
+    if type(depth)~="number" or not (depth>=0 and depth<math.huge) then
+      return nil,nil,"invalid_depth"
+    end
+
+    if depth<minimum then
+      minimum=depth
+      minimumPoint=point
+    end
+  end
+
+  return minimum,UTILS.DeepCopy(minimumPoint)
+end
+
+--- Find the first estimated ground-contact position along the pathline.
+-- Linearly interpolates the stored direct depths between support points. Contact includes depth equal to Draft;
+-- unlike a navigation minimum, Draft describes the hull's actual depth below the water surface.
+-- The returned VECTOR uses the interpolated sampled surface height, not the route altitude or seabed height.
+-- This is a support-point estimate, not a corridor check or a prediction of the ship's turning arc.
+-- @param #PATHLINE self
+-- @param #number Draft Ship's draft in meters, nonnegative.
+-- @return Core.Vector#VECTOR First contact position, or nil when no contact is found or data is unavailable.
+-- @return #string "empty_path", "invalid_depth" or "invalid_surface_height" for unavailable data; nil otherwise.
+function PATHLINE:FindGroundingPoint(Draft)
+
+  assert(Draft>=0 and Draft<math.huge, "PATHLINE: draft must be finite and nonnegative")
+
+  if #self.points==0 then
+    return nil,"empty_path"
+  end
+
+  local previous=nil
+
+  for _,point in ipairs(self.points) do
+    local depth=point.depth
+
+    if type(depth)~="number" or not (depth>=0 and depth<math.huge) then
+      return nil,"invalid_depth"
+    end
+
+    if depth<=Draft then
+      local height=point.landHeight
+      if type(height)~="number" or not (math.abs(height)<math.huge) then
+        return nil,"invalid_surface_height"
+      end
+
+      -- Already in contact at the first point: return the same type as an interpolated result.
+      if not previous then
+        return VECTOR:New(point.vec3.x, height, point.vec3.z)
+      end
+
+      local previousHeight=previous.landHeight
+      if type(previousHeight)~="number" or not (math.abs(previousHeight)<math.huge) then
+        return nil,"invalid_surface_height"
+      end
+
+      -- Previous depth is strictly greater than Draft, so this denominator is positive.
+      local fraction=(previous.depth-Draft)/(previous.depth-depth)
+      local x=previous.vec3.x+fraction*(point.vec3.x-previous.vec3.x)
+      local z=previous.vec3.z+fraction*(point.vec3.z-previous.vec3.z)
+      local y=previousHeight+fraction*(height-previousHeight)
+
+      return VECTOR:New(x, y, z)
+    end
+
+    previous=point
+  end
+
+  return nil
+end
+
 
 --- Mark points on F10 map.
 -- @param #PATHLINE self
@@ -422,6 +645,163 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Private functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Project a terrain-profile point onto its requested segment for distance reporting.
+-- Trust native DCS geometry: offset points are projected, and points beyond an endpoint are clamped to the segment.
+-- Surface and depth queries still use the original returned point.
+-- @param DCS#Vec3 Point Terrain-profile point.
+-- @param DCS#Vec3 Start Canonical segment start.
+-- @param #number UX Unit direction x component.
+-- @param #number UZ Unit direction z component.
+-- @param #number Distance Segment length in meters.
+-- @return #number Clamped distance along the segment, or nil when coordinates or the projection are not finite.
+function PATHLINE._GetDepthProfileDistance(Point, Start, UX, UZ, Distance)
+
+  if type(Point)~="table" or type(Point.x)~="number" or not (math.abs(Point.x)<math.huge)
+    or type(Point.z)~="number" or not (math.abs(Point.z)<math.huge) then
+    return nil
+  end
+
+  local dx,dz=Point.x-Start.x,Point.z-Start.z
+  local along=dx*UX+dz*UZ
+
+  if not (math.abs(along)<math.huge) then
+    return nil
+  end
+
+  return math.max(0,math.min(Distance,along))
+end
+
+--- Create the diagnostic result for a depth sample.
+-- @param #number Distance Segment length in meters.
+-- @param #number MinDepth Required water depth in meters.
+-- @param #number Offset Profile offset relative to the original direction.
+-- @param #string Reason Rejection reason, or nil when clear.
+-- @param #string Status "clear", "blocked", or "unavailable".
+-- @param #string Cause Underlying rejection cause, or nil when clear.
+-- @param #table Sample Optional sample and its original-direction location.
+-- @param #number Depth Optional effective sample depth.
+-- @param #number Surface Optional sample surface type.
+-- @param #number ClearDistance Usable prefix in meters.
+-- @return #PATHLINE.DepthReport Diagnostic result.
+function PATHLINE._DepthReport(Distance, MinDepth, Offset, Reason, Status, Cause, Sample, Depth, Surface, ClearDistance)
+
+  local point=Sample and Sample.Point
+
+  return {
+    Status=Status,Reason=Reason,Cause=Cause,Distance=Distance,ClearDistance=Status=="unavailable" and 0 or ClearDistance,
+    RequiredDepth=MinDepth,ProfileOffset=Offset,Location=Sample and Sample.Location,
+    Point=point and {x=point.x,y=point.y,z=point.z},Depth=Depth,SurfaceType=Surface,
+  }
+end
+
+--- Check one canonical profile and measure its first obstruction from the original start.
+-- Sorts support points and interpolates the minimum-depth threshold; coincident samples keep their shallower bound.
+-- @param DCS#Vec3 Start Canonical start position.
+-- @param DCS#Vec3 Goal Canonical goal position.
+-- @param #number Distance Segment length in meters.
+-- @param #number MinDepth Required water depth in meters.
+-- @param #number Offset Profile offset relative to the original direction.
+-- @param #boolean Reverse Whether the original input direction is reversed.
+-- @return #boolean True when the profile is clear.
+-- @return #string Rejection reason, or nil.
+-- @return #PATHLINE.DepthReport Diagnostic result on rejection.
+function PATHLINE._CheckDepthLine(Start, Goal, Distance, MinDepth, Offset, Reverse)
+
+  local samples={}
+
+  -- DCS profiles may omit their actual endpoints. Cache these direct checks for the ordered scan below.
+  for i=1,2 do
+    local point=i==1 and Start or Goal
+    local location=i==1 and "start" or "goal"
+    local clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(point,MinDepth,false)
+    local sample={Point=point,Along=i==1 and 0 or Distance,Location=location,
+      Checked=true,Clear=clear,Status=status,Cause=cause,Depth=depth,Surface=surface}
+
+    if Reverse then
+      sample.Along=Distance-sample.Along
+      sample.Location=location=="start" and "goal" or "start"
+    end
+
+    local reason=status=="unavailable" and cause or sample.Location.."_blocked"
+    sample.Reason=reason
+    samples[#samples+1]=sample
+
+    -- No prefix can be established when the starting position is blocked or an endpoint query has no valid data.
+    if not clear and (status=="unavailable" or sample.Along==0) then
+      return false,reason,PATHLINE._DepthReport(Distance,MinDepth,Offset,reason,status,cause,sample,depth,surface,0)
+    end
+  end
+
+  local profile=land.profile(Start,Goal)
+  if type(profile)~="table" then
+    local reason="profile_unavailable"
+    return false,reason,PATHLINE._DepthReport(Distance,MinDepth,Offset,reason,"unavailable",reason)
+  end
+
+  local ux,uz=(Goal.x-Start.x)/Distance,(Goal.z-Start.z)/Distance
+  local intervals=#profile<2 and math.max(2,math.ceil(Distance/100)) or 0
+
+  if intervals>1000 then
+    local reason="profile_fallback_limit"
+    return false,reason,PATHLINE._DepthReport(Distance,MinDepth,Offset,reason,"unavailable",reason)
+  end
+
+  -- Short native profiles receive direct samples, including a midpoint even on very short connections.
+  for i=1,#profile+math.max(0,intervals-1) do
+    local useProfile=i<=#profile
+    local point=profile[i]
+    local location=useProfile and "profile" or "profile_fallback"
+
+    if not useProfile then
+      local fraction=(i-#profile)/intervals
+      point={x=Start.x+(Goal.x-Start.x)*fraction,z=Start.z+(Goal.z-Start.z)*fraction}
+    end
+
+    local along=PATHLINE._GetDepthProfileDistance(point,Start,ux,uz,Distance)
+    if not along then
+      local reason="invalid_profile_position"
+      return false,reason,PATHLINE._DepthReport(Distance,MinDepth,Offset,reason,"unavailable",reason)
+    end
+
+    samples[#samples+1]={Point=point,Along=Reverse and Distance-along or along,Location=location,UseProfile=useProfile}
+  end
+
+  table.sort(samples,function(a,b) return a.Along<b.Along end)
+  local previous
+
+  for _,sample in ipairs(samples) do
+    local clear,status,cause,depth,surface=sample.Clear,sample.Status,sample.Cause,sample.Depth,sample.Surface
+    if not sample.Checked then
+      clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(sample.Point,MinDepth,sample.UseProfile)
+    end
+
+    if not clear then
+      local reason=status=="unavailable" and cause or sample.Reason or sample.Location.."_blocked"
+      local clearDistance=previous and previous.Along or 0
+
+      -- Numeric depth samples allow linear interpolation. A non-water sample has no proven coastline
+      -- transition, so the usable prefix ends at the previous valid sample instead.
+      if previous and depth and depth<MinDepth and previous.Depth and previous.Depth>=MinDepth then
+        local fraction=(previous.Depth-MinDepth)/(previous.Depth-depth)
+        clearDistance=previous.Along+(sample.Along-previous.Along)*fraction
+      end
+
+      return false,reason,PATHLINE._DepthReport(Distance,MinDepth,Offset,reason,status,cause,sample,depth,surface,clearDistance)
+    end
+
+    -- Keep the shallower value when a native endpoint duplicates the direct endpoint check.
+    -- Equal-position sorting must never change the interpolated usable prefix.
+    sample.Depth=depth
+    if previous and sample.Along==previous.Along then
+      previous.Depth=math.min(previous.Depth,depth)
+    else
+      previous=sample
+    end
+  end
+
+  return true
+end
 
 --- Create a point with copied position and sampled terrain metadata.
 -- @param #PATHLINE self

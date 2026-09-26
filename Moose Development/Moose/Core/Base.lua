@@ -95,8 +95,9 @@ local _ClassID = 0
 -- The fields are log method, class.function, current/calling source lines, and message.
 -- The caller name is included when available; otherwise only its line is shown.
 -- Unknown stack information is shown as ?. T2/T3 and F2/F3 retain their level in the prefix.
--- Plain messages have no enclosing quotes; strings inside tables remain quoted. Control
--- characters are escaped to keep one log entry per line. DCS supplies the timestamp.
+-- Plain messages have no enclosing quotes and retain line breaks (LF/CR).
+-- Strings inside tables and log metadata remain escaped; other control characters
+-- are escaped in all strings. DCS supplies the timestamp for each log entry.
 -- @{#BASE.SetLogSerializationOptions} controls bounded output and optional object expansion.
 --
 -- ## 2.2 Tracing levels.
@@ -1301,7 +1302,9 @@ local _LogKeywords = {
 -- MaxLength limits the complete MOOSE message in bytes, excluding the prefix added by DCS.
 -- MaxDepth counts table expansion levels (root is level 1); allowed range is 0 to 32.
 -- MaxEntries limits visited table entries across the entire message, including table keys.
--- MaxStringLength limits inspected input bytes per string; control characters are escaped.
+-- MaxStringLength limits inspected input bytes per string, including line breaks.
+-- Direct string messages retain LF/CR; table strings and metadata escape all control characters.
+-- MaxLength applies to the entire message, including all lines, not to each line separately.
 -- MOOSE objects show their class and an available name (no object ID) unless ExpandObjects is true; limits still apply then.
 -- Truncated output is diagnostic text, not a reconstructable Lua table.
 -- @param #BASE self
@@ -1354,7 +1357,13 @@ local function logObjectField(object, key)
   end
 end
 
-local function serializeLogValue(value, maxLength, plainString)
+--- Serialize a diagnostic value with bounded traversal and output.
+-- @param value Value to serialize; accepts any Lua type.
+-- @param #number maxLength Maximum output length in bytes, including all lines.
+-- @param #boolean plainString (Optional) Omit quotes around a root string. Default false.
+-- @param #boolean preserveLineBreaks (Optional) Preserve LF/CR in a plain root string only. Default false.
+-- @return #string Serialized diagnostic text, truncated when a configured limit is reached.
+local function serializeLogValue(value, maxLength, plainString, preserveLineBreaks)
   local options = _LogOptions
   local chunks, length, full = {}, 0, false
   local seen, references, entries = {}, 0, 0
@@ -1371,7 +1380,12 @@ local function serializeLogValue(value, maxLength, plainString)
       length = length + #text
     end
   end
-  local function writeString(text, plain)
+  --- Append a string while respecting the per-string and remaining message budgets.
+  -- @param #string text Input string.
+  -- @param #boolean plain (Optional) Omit enclosing quotes. Default false.
+  -- @param #boolean keepLineBreaks (Optional) Preserve LF/CR instead of escaping them. Default false.
+  -- @return #nil No return value; appends to the local output buffer.
+  local function writeString(text, plain, keepLineBreaks)
     if not plain then append('"') end
     local limit = math.min(#text, options.MaxStringLength)
     for i = 1, limit do
@@ -1379,6 +1393,8 @@ local function serializeLogValue(value, maxLength, plainString)
       local byte = string.byte(text, i)
       if byte == 34 and not plain then append('\\"')
       elseif byte == 92 then append('\\\\')
+      -- Only the message body opts in; metadata and table strings stay single-line.
+      elseif keepLineBreaks and (byte == 10 or byte == 13) then append(string.char(byte))
       elseif byte == 10 then append('\\n')
       elseif byte == 13 then append('\\r')
       elseif byte == 9 then append('\\t')
@@ -1393,7 +1409,8 @@ local function serializeLogValue(value, maxLength, plainString)
     if full then return end
     local kind = type(item)
     if kind == "string" then
-      writeString(item, plainString and depth == 0)
+      local plain = plainString and depth == 0
+      writeString(item, plain, plain and preserveLineBreaks)
     elseif kind == "number" or kind == "boolean" or kind == "nil" then
       append(tostring(item))
     elseif kind ~= "table" then
@@ -1489,7 +1506,8 @@ local function writeLog(level, object, current, caller, arguments)
   if #prefix > prefixLimit then
     prefix = string.sub(prefix, 1, prefixLimit - 11) .. "<truncated>"
   end
-  env.info(prefix .. serializeLogValue(arguments, maxLength - #prefix, true))
+  -- Keep one env.info call and one shared byte budget for the complete multiline message.
+  env.info(prefix .. serializeLogValue(arguments, maxLength - #prefix, true, true))
 end
 
 --- (Internal) Serialize log arguments with bounded work and output, without logging.
