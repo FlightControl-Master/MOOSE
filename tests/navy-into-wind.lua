@@ -37,10 +37,42 @@ function COORDINATE:Get2DDistance(p) return math.sqrt((self.x-p.x)^2+(self.z-p.z
 function COORDINATE:GetDistance(p) return self:Get2DDistance(p) end
 function COORDINATE:IsInstanceOf(name) return name=="COORDINATE" end
 function COORDINATE:WaypointNaval(speed,depth) return {x=self.x,y=self.z,alt=depth or 0,speed=(speed or 0)/3.6} end
-land={getHeight=function() return 0 end}
+land={getHeight=function() return 0 end,SurfaceType={WATER=3,SHALLOW_WATER=2}}
 atmosphere={getWind=function() return {x=0,y=0,z=-UTILS.KnotsToMps(10)} end}
 dofile("Moose Development/Moose/Core/Vector.lua")
 dofile("Moose Development/Moose/Ops/NavyGroup.lua")
+
+-- Keep the NAVYGROUP planning handshake real. Only graph generation and its result are doubled;
+-- the ASTAR suite exercises the actual grid and search against artificial islands separately.
+local planningShip
+GRID={Resolution={FINE="fine"},Width={NORMAL="normal"},Margin={NORMAL="normal"}}
+ASTAR={}
+
+function ASTAR:New()
+  local ship=assert(planningShip)
+  ship.searches=ship.searches+1
+  local search={ship=ship,grid={}}
+
+  for _,name in ipairs({"SetResolution","SetCorridor","SetMaxCells","SetExpansion"}) do
+    search.grid[name]=function(self) return self end
+  end
+
+  function search.grid:GetResolutionInfo() return {Spacing=500} end
+  function search:GetGrid() return self.grid end
+  function search:SetStartCoordinate(point) self.start=point return self end
+  function search:SetEndCoordinate(point) self.goal=point return self end
+  function search:SetValidSurfaceTypes() return self end
+  function search:SetValidNeighbourDepth() return self end
+  function search:CreateHexGrid() return self end
+  function search:GetPathWithExpansion()
+    if self.ship.pathBlocked then return nil,{StopReason="connections_blocked",Attempts={}} end
+    return {{vector=VECTOR:New((self.start.x+self.goal.x)/2,0,(self.start.z+self.goal.z)/2+1000)}},
+      {StopReason="path_found",Attempts={{}}}
+  end
+
+  ship.lastSearch=search
+  return search
+end
 
 local function unit(heading,speed,x)
   local u={heading=heading or 0,speed=speed or 0,alive=true,position=COORDINATE:New(x or 0,0,0)}
@@ -60,7 +92,7 @@ local function navy()
   local n=setmetatable({lid="Test | ",Qintowind={},intowindcounter=0,intoWindCounter=0,
     currentwp=1,waypoints={},speedMax=UTILS.KnotsToKmph(30),state="Cruising",taskcurrent=0,isAI=true,
     position=COORDINATE:New(0,0,0),heading=0,velocity=0,turning=false,pathfindingOn=false,
-    updates=0,checks=0,queued={},logs={},waypointCounter=2,verbose=0,speedCruise=22.224},{__index=NAVYGROUP})
+    updates=0,checks=0,searches=0,stops=0,queued={},logs={},waypointCounter=2,verbose=0,speedCruise=22.224},{__index=NAVYGROUP})
   n.reference=unit(0,0)
   n.group={}
   n.reference.group=n.group
@@ -81,6 +113,7 @@ local function navy()
   function n:GetVelocity() return self.velocity end
   function n:GetSpeedCruise() return 12 end
   function n:GetCoordinate() return COORDINATE:NewFromCoordinate(self.position) end
+  function n:GetVec3() planningShip=self return self.position:GetVec3() end
   function n:T() end
   n.T2=n.T n.T3=n.T
   function n:E(message) self.logs[#self.logs+1]=message end
@@ -95,25 +128,39 @@ local function navy()
     self.waypointCounter=self.waypointCounter+1
     local wp={uid=self.waypointCounter,coordinate=COORDINATE:NewFromCoordinate(p),speed=UTILS.KnotsToMps(speed or 12)}
     local i=after and self:GetWaypointIndex(after) or #self.waypoints
-    table.insert(self.waypoints,(i or #self.waypoints)+1,wp)
+    local index=(i or #self.waypoints)+1
+    table.insert(self.waypoints,index,wp)
+    -- Production _AddWaypoint reopens a completed route when another waypoint is appended.
+    if index>self.currentwp then self.passedfinalwp=false end
     if update~=false then self:__UpdateRoute(-0.01) end
     return wp
   end
   function n:RemoveWaypointByID(id)
     local i=self:GetWaypointIndex(id)
-    if i then table.remove(self.waypoints,i); if i<self.currentwp then self.currentwp=self.currentwp-1 end end
+    if i then table.remove(self.waypoints,i); if i<=self.currentwp then self.currentwp=math.max(1,self.currentwp-1) end end
   end
   function n:_ClearPathfindingDrawing() end
-  function n:_FindPathToNextWaypoint()
+  function n:_CheckPathDepth(start,goal)
     self.checks=self.checks+1
     self.checkedBeforeUpdate=self.updates
-    if self.pathBlocked then self.pathfindingStopped=true; self:FullStop(); return false end
-    self.pathfindingStopped=nil
-    if self.intoWindManeuver then self.intoWindManeuver.PathValidated=true end
-    self:__UpdateRoute(-0.01)
-    return true
+    self.lastCheck={start=UTILS.DeepCopy(start),goal=UTILS.DeepCopy(goal)}
+    local distance=math.sqrt((goal.x-start.x)^2+(goal.z-start.z)^2)
+    if self.depthUnavailable then
+      return false,"invalid_depth",{Status="unavailable",Reason="invalid_depth",ClearDistance=0,Distance=distance}
+    elseif self.pathBlocked or self.depthBlocked then
+      return false,"profile_blocked",{Status="blocked",Reason="profile_blocked",ClearDistance=100,Distance=distance}
+    end
+    return true,nil,{Status="clear",ClearDistance=distance,Distance=distance}
   end
+  function n:CollisionWarning() self.collisionwarning=true end
+  function n:ClearAhead() self.collisionwarning=false end
+  function n:TurningStarted() self.turning=true end
+  function n:TurningStopped() self.turning=false end
   function n:Route(route)
+    if #route==1 and route[1].speed==0 then
+      self.stopRoute=route
+      return
+    end
     self.updates=self.updates+1
     self.lastRoute=route
   end
@@ -124,8 +171,18 @@ local function navy()
     return true
   end
   function n:__UpdateRoute(delay,...) return self:UpdateRoute(...) end
-  function n:Cruise() self.state="Cruising"; self:__UpdateRoute(-0.01) end
-  function n:FullStop() self.state="Holding" end
+  function n:Cruise(speed)
+    local from=self.state
+    self.state="Cruising"
+    self:onafterCruise(from,"Cruise",self.state,speed)
+  end
+  function n:FullStop()
+    local from=self.state
+    self.state="Holding"
+    self.current=self.state
+    self.stops=self.stops+1
+    self:onafterFullStop(from,"FullStop",self.state)
+  end
   function n:ScheduleOnce(delay,fn,...)
     local args={...}; local task={at=now+delay,run=function() fn(unpack(args)) end}
     self.queued[#self.queued+1]=task
@@ -273,12 +330,90 @@ test("waiting timed request expires without stealing a direct maneuver",function
   now=20; n:_CheckTurnsIntoWind(); equal(n:GetIntoWindManeuver(),m); equal(#n.Qintowind,0)
 end)
 
+test("automatic window completion preserves a manual hold or wait",function()
+  for _,state in ipairs({"Holding","Waiting"}) do
+    now=0
+    local n=navy(); n.pathfindingOn=true
+    local window=assert(n:AddTurnIntoWind(0,20,27,true,-9.1))
+    n:_CheckTurnsIntoWind()
+    n:Flush()
+    assert(n:GetIntoWindManeuver())
+
+    if state=="Holding" then
+      n:FullStop()
+    else
+      n.state=state
+      n.Twaiting=now
+    end
+    local updates,checks=n.updates,n.checks
+    now=window.Tstop
+    n:_CheckTurnsIntoWind()
+    n:Flush()
+
+    equal(n:GetIntoWindManeuver(),nil)
+    equal(#n.Qintowind,0)
+    equal(n.state,state)
+    equal(n.updates,updates)
+    equal(n.checks,checks)
+    if state=="Waiting" then assert(n.Twaiting~=nil) end
+  end
+end)
+
+test("completion can release an order without resuming a manual stop",function()
+  for _,method in ipairs({"EndIntoWind","AbortIntoWind"}) do
+    local n=navy(); n.pathfindingOn=true
+    local maneuver=begin(n)
+    n:FullStop()
+    local updates,checks=n.updates,n.checks
+
+    assert(n[method](n,maneuver,{Uturn=false,Resume=false}))
+    n:Flush()
+    equal(n:GetIntoWindManeuver(),nil)
+    equal(#n.waypoints,2)
+    equal(n.state,"Holding")
+    equal(n.updates,updates)
+    equal(n.checks,checks)
+  end
+end)
+
 test("legacy stop veto keeps ownership and forced removal still cleans up",function()
   local n=navy(); local w=n:AddTurnIntoWind(0,20,25)
   n:_CheckTurnsIntoWind(); n:Flush(); local m=n:GetIntoWindManeuver()
   function n:OnBeforeTurnIntoWindStop() return false end
   n:RemoveTurnIntoWind(w); equal(n:GetIntoWindManeuver(),m); equal(n:GetTurnIntoWindCurrent(),w)
   n:RemoveTurnIntoWind(w,true); equal(n:GetIntoWindManeuver(),nil); equal(#n.Qintowind,0)
+end)
+
+test("explicit timed removal preserves the stop veto before an authorized resume",function()
+  local n=navy(); n.pathfindingOn=true
+  local window=assert(n:AddTurnIntoWind(0,20,27,false,-9.1))
+  n:_CheckTurnsIntoWind()
+  n:Flush()
+  local maneuver=n:GetIntoWindManeuver()
+  n:FullStop()
+  local updates,checks=n.updates,n.checks
+  local options={Resume=true,Uturn=false}
+
+  function n:OnBeforeTurnIntoWindStop() return false end
+  n:RemoveTurnIntoWind(window,false,options)
+  n:Flush()
+  equal(n:GetIntoWindManeuver(),maneuver)
+  equal(n:GetTurnIntoWindCurrent(),window)
+  equal(n.state,"Holding")
+  equal(n.updates,updates)
+  equal(n.checks,checks)
+
+  function n:OnBeforeTurnIntoWindStop() return true end
+  n:RemoveTurnIntoWind(window,false,options)
+  n:Flush()
+  equal(n:GetIntoWindManeuver(),nil)
+  equal(#n.Qintowind,0)
+  equal(n.state,"Cruising")
+  assert(n.checks>checks)
+  equal(n.lastRoute[#n.lastRoute].uid,2)
+  equal(options.Resume,true)
+  equal(options.Uturn,false)
+  equal(options.Reason,nil)
 end)
 
 test("removing a future window cannot stop someone else's active maneuver",function()
@@ -314,22 +449,153 @@ test("route rejected before submission is not ready despite aligned telemetry",f
   equal(n:GetIntoWindManeuver().Ready,true)
 end)
 
-test("actual path planner validates and submits a rolling straight wind leg",function()
+test("clear water validates a finite wind target without an A-star search",function()
   local n=navy(); n.pathfindingOn=true
-  n._FindPathToNextWaypoint=NAVYGROUP._FindPathToNextWaypoint
-  function n:GetVec3() return self.position:GetVec3() end
-  function n:_CheckPathDepth() return true end
-  function n:_GetPathfindingCorridorWidth() return 200 end
   local m=begin(n)
   equal(m.PathValidated,true); equal(m.RouteSubmitted,true)
+  equal(n.searches,0)
   local nextWaypoint=n:GetWaypointNext()
-  equal(nextWaypoint.astarReplan,true); equal(nextWaypoint.astarTargetUID,m.waypoint.uid)
+  equal(nextWaypoint,m.waypoint)
+  equal(nextWaypoint.astar,nil)
   near(nextWaypoint.coordinate:Get2DDistance(n.position),UTILS.NMToMeters(20))
+  equal(#n.lastRoute,2)
+  equal(n.lastRoute[2].uid,m.waypoint.uid)
   n.reference.heading=m.Heading; n.reference.speed=m.ShipSpeed
   equal(n:GetIntoWindManeuver().Ready,true)
-  n.LastPathfindingResult.StopReason="detour"
-  equal(n:GetIntoWindManeuver().Ready,false); equal(m.BlockedReason,"route_diversion")
   n:EndIntoWind(m); equal(#n.waypoints,2)
+end)
+
+test("wind obstacle planning retains commanded speed and blocks detour readiness",function()
+  local n=navy(); n.pathfindingOn=true; n.depthBlocked=true
+  n.speedWp=UTILS.KnotsToMps(4)
+  local m=begin(n)
+
+  equal(n.searches,1)
+  equal(m.PathValidated,true)
+  equal(m.RouteSubmitted,true)
+  equal(n:GetWaypointNext().astar,true)
+  equal(n:GetWaypointNext().astarTargetUID,m.waypoint.uid)
+  near(n.lastSearch.goal:GetDistance(n.position,true),UTILS.NMToMeters(20))
+  equal(n.lastRoute[#n.lastRoute].uid,m.waypoint.uid)
+  for _,wp in ipairs(n.lastRoute) do near(wp.speed,UTILS.KnotsToMps(m.ShipSpeed)) end
+
+  n.reference.heading=m.Heading; n.reference.speed=m.ShipSpeed
+  equal(n:GetIntoWindManeuver().Ready,false)
+  n.depthBlocked=false
+  n:RemoveWaypointByID(n:GetWaypointNext().uid)
+  n:_CheckNavigation()
+  equal(n:GetIntoWindManeuver().Ready,true)
+end)
+
+test("timer renews a wind target only near the end of its clear leg",function()
+  local n=navy(); n.pathfindingOn=true
+  local m=begin(n)
+  local first=m.waypoint
+  local distance=first.coordinate:Get2DDistance(n.position)
+  n.position=n.position:Translate(distance-6000,m.Heading)
+  n:_CheckNavigation()
+  equal(m.waypoint,first)
+
+  n.position=n.position:Translate(1500,m.Heading)
+  now=10
+  n:_CheckNavigation()
+  assert(m.waypoint~=first,"Wind target was not renewed")
+  equal(n:GetWaypointIndex(first.uid),nil)
+  near(m.waypoint.coordinate:Get2DDistance(n.position),UTILS.NMToMeters(20))
+  equal(n:GetWaypointNext(),m.waypoint)
+  equal(n.lastRoute[#n.lastRoute].uid,m.waypoint.uid)
+  equal(n.searches,0)
+end)
+
+test("turning and active detours postpone wind-target renewal",function()
+  local n=navy(); n.pathfindingOn=true
+  local m=begin(n)
+  local first=m.waypoint
+  n.position=first.coordinate:Translate(4000,(m.Heading+180)%360)
+  n.turningHeading=0; n.turningTime=0; n.heading=10; now=10
+  n:_CheckNavigation()
+  equal(m.waypoint,first)
+
+  local bypass=n:AddWaypoint(n.position:Translate(500,0),m.ShipSpeed,1,nil,false)
+  bypass.astar=true; bypass.astarTargetUID=first.uid
+  now=20
+  n:_CheckNavigation()
+  equal(n:IsTurning(),false)
+  equal(m.waypoint,first)
+end)
+
+test("wind target renews after its callback even with pathfinding disabled",function()
+  local n=navy()
+  local m=begin(n)
+  local first=m.waypoint
+  n.position=COORDINATE:NewFromCoordinate(first.coordinate)
+  n.currentwp=n:GetWaypointIndex(first.uid)
+  n:_CheckNavigation()
+  assert(m.waypoint~=first)
+  equal(n:GetWaypointNext(),m.waypoint)
+  equal(n.lastRoute[#n.lastRoute].uid,m.waypoint.uid)
+  equal(n.searches,0)
+end)
+
+test("a failed wind plan holds without timer retries until an explicit new order",function()
+  local n=navy(); n.pathfindingOn=true; n.pathBlocked=true
+  local m=begin(n)
+  equal(n.state,"Holding")
+  equal(n.stops,1)
+  equal(n.searches,1)
+  equal(m.PathValidated,false)
+  equal(m.RouteSubmitted,false)
+  equal(m.Ready,false)
+
+  for i=1,3 do now=i*10; n:_CheckNavigation() end
+  equal(n.searches,1)
+  equal(n.updates,0)
+
+  n.pathBlocked=false
+  equal(n:UpdateIntoWind(m,{}),m)
+  n:Flush()
+  equal(n.state,"Cruising")
+  equal(m.PathValidated,true)
+  equal(m.RouteSubmitted,true)
+end)
+
+test("beginning from holding validates before the first moving route",function()
+  local n=navy(); n.pathfindingOn=true; n.state="Holding"
+  local m=begin(n)
+  equal(n.state,"Cruising")
+  equal(n.checkedBeforeUpdate,0)
+  equal(m.PathValidated,true)
+  equal(m.RouteSubmitted,true)
+  equal(n.lastRoute[#n.lastRoute].uid,m.waypoint.uid)
+end)
+
+test("ending a wind maneuver checks and detours the restored route",function()
+  local n=navy(); n.pathfindingOn=true
+  local m=begin(n)
+  local windUID=m.waypoint.uid
+  local checks=n.checks
+  n.depthBlocked=true
+  equal(n:EndIntoWind(m,{Uturn=false}),true)
+  n:Flush()
+  assert(n.checks>checks)
+  equal(n:GetWaypointIndex(windUID),nil)
+  equal(n.searches,1)
+  equal(n:GetWaypointNext().astarTargetUID,2)
+  equal(n.lastRoute[#n.lastRoute].uid,2)
+  for _,wp in ipairs(n.lastRoute) do near(wp.speed,UTILS.KnotsToMps(12)) end
+end)
+
+test("aborting into an unavailable restored route releases ownership and holds",function()
+  local n=navy(); n.pathfindingOn=true
+  local m=begin(n)
+  n.depthUnavailable=true
+  equal(n:AbortIntoWind(m,{Uturn=false}),true)
+  n:Flush()
+  equal(n:GetIntoWindManeuver(),nil)
+  equal(#n.waypoints,2)
+  equal(n.state,"Holding")
+  equal(n.LastPathfindingResult.StopReason,"invalid_depth")
+  equal(n.searches,0)
 end)
 
 test("legacy speed above ship capability is limited and can become ready",function()
@@ -448,16 +714,10 @@ local function scheduledNavy(pathfinding)
     self:onafterCruise(from,"Cruise",self.state,Speed)
   end
 
-  -- Use the actual rolling planner with a clear-water terrain result.
-  n._FindPathToNextWaypoint=NAVYGROUP._FindPathToNextWaypoint
-  function n:GetVec3() return self.position:GetVec3() end
-  function n:_CheckPathDepth() return true end
-  function n:_GetPathfindingCorridorWidth() return 200 end
-
   return n
 end
 
-test("real FSM preserves latest rolling route across rapid wind updates",function()
+test("real FSM preserves latest finite wind route across rapid updates",function()
   local n=scheduledNavy(true)
   local m=assert(n:BeginIntoWind({DeckWind=27,DeckAngle=-9.1,ReferenceUnit=n.reference}))
 
@@ -471,11 +731,144 @@ test("real FSM preserves latest rolling route across rapid wind updates",functio
   equal(n.updates,1)
   equal(m.RouteSubmitted,true)
   near(n.lastRoute[#n.lastRoute].speed,UTILS.KnotsToMps(m.ShipSpeed))
-  equal(n.lastRoute[#n.lastRoute].astarTargetUID,m.waypoint.uid)
+  equal(n.lastRoute[#n.lastRoute].uid,m.waypoint.uid)
 
   n.reference.heading=m.Heading
   n.reference.speed=m.ShipSpeed
   equal(n:GetIntoWindManeuver().Ready,true)
+end)
+
+test("real FSM keeps only the newest obstacle detour across rapid wind updates",function()
+  local n=scheduledNavy(true)
+  n.depthBlocked=true
+  n.speedWp=UTILS.KnotsToMps(4)
+  local m=assert(n:BeginIntoWind({DeckWind=27,DeckAngle=-9.1}))
+  local originalTarget=m.waypoint.uid
+
+  assert(n:UpdateIntoWind(m,{DeckWind=29}))
+  assert(n:UpdateIntoWind(m,{DeckWind=30}))
+  equal(n.searches,3)
+  equal(n.updates,0)
+  equal(n:GetWaypointIndex(originalTarget),nil)
+
+  n:Flush()
+  equal(n.updates,1)
+  equal(m.PathValidated,true)
+  equal(m.RouteSubmitted,true)
+  equal(#n.waypoints,4)
+  equal(#n.lastRoute,3)
+  equal(n.lastRoute[2].astarTargetUID,m.waypoint.uid)
+  equal(n.lastRoute[3].uid,m.waypoint.uid)
+  for _,wp in ipairs(n.lastRoute) do near(wp.speed,UTILS.KnotsToMps(m.ShipSpeed)) end
+end)
+
+test("public cruise rechecks a failed wind route without retrying while held",function()
+  local n=scheduledNavy(true)
+  n.pathBlocked=true
+  local m=assert(n:BeginIntoWind({DeckWind=27,DeckAngle=-9.1}))
+  n:Flush()
+  equal(n.state,"Holding")
+  equal(n.searches,1)
+
+  for i=1,3 do now=i*10; n:_CheckNavigation(); n:Flush() end
+  equal(n.searches,1)
+  equal(n.updates,0)
+
+  n.pathBlocked=false
+  n:Cruise()
+  n:Flush()
+  equal(n.state,"Cruising")
+  equal(n.updates,0)
+  equal(m.PathValidated,false)
+
+  now=40
+  n:_CheckNavigation()
+  n:Flush()
+  equal(m.PathValidated,true)
+  equal(m.RouteSubmitted,true)
+  equal(n.updates,1)
+  equal(n.lastRoute[#n.lastRoute].uid,m.waypoint.uid)
+  equal(n.searches,1)
+end)
+
+test("public cruise restores wind readiness when pathfinding is disabled",function()
+  local n=scheduledNavy(false)
+  local m=assert(n:BeginIntoWind({DeckWind=27,DeckAngle=-9.1,ReferenceUnit=n.reference}))
+  n:Flush()
+  n.reference.heading=m.Heading
+  n.reference.speed=m.ShipSpeed
+  equal(n:GetIntoWindManeuver().Ready,true)
+
+  n:FullStop()
+  equal(n:GetIntoWindManeuver().Ready,false)
+  n:Cruise()
+  n:Flush()
+
+  equal(m.RouteSubmitted,true)
+  equal(m.PathValidated,true)
+  equal(n:GetIntoWindManeuver().Ready,true)
+  equal(n.checks,0)
+end)
+
+test("enabling pathfinding on an active wind order requires fresh validation",function()
+  local n=scheduledNavy(true)
+  local m=assert(n:BeginIntoWind({DeckWind=27,DeckAngle=-9.1,ReferenceUnit=n.reference}))
+  n:Flush()
+  n.reference.heading=m.Heading
+  n.reference.speed=m.ShipSpeed
+  equal(n:GetIntoWindManeuver().Ready,true)
+
+  n:SetPathfindingOff()
+  equal(m.PathValidated,true)
+  equal(n:GetIntoWindManeuver().Ready,true)
+
+  local checks=n.checks
+  n:SetPathfindingOn()
+  equal(m.PathValidated,false)
+  equal(n:GetIntoWindManeuver().Ready,false)
+  equal(m.BlockedReason,"route_pending")
+  n:_CheckNavigation()
+  n:Flush()
+
+  assert(n.checks>checks)
+  equal(m.PathValidated,true)
+  equal(m.RouteSubmitted,true)
+  equal(n:GetIntoWindManeuver().Ready,true)
+end)
+
+test("explicit wind replacement can plan a new detour during a turn",function()
+  local n=scheduledNavy(true)
+  local m=assert(n:BeginIntoWind({DeckWind=27,DeckAngle=-9.1}))
+  n:Flush()
+  n.turning=true
+  n.depthBlocked=true
+
+  assert(n:UpdateIntoWind(m,{DeckWind=29}))
+  n:Flush()
+  equal(n.searches,1)
+  equal(m.PathValidated,true)
+  equal(m.RouteSubmitted,true)
+  equal(n:GetWaypointNext().astar,true)
+  equal(n:GetIntoWindManeuver().Ready,false)
+end)
+
+test("ending an obstacle detour removes only maneuver waypoints and drawing ownership",function()
+  local n=scheduledNavy(true)
+  n.depthBlocked=true
+  local m=assert(n:BeginIntoWind({DeckWind=27,DeckAngle=-9.1}))
+  n:Flush()
+  equal(n.ispathfinding,true)
+  n.depthBlocked=false
+  local cleared=0
+  function n:_ClearPathfindingDrawing() cleared=cleared+1 end
+
+  assert(n:EndIntoWind(m,{Uturn=false}))
+  n:Flush()
+  equal(#n.waypoints,2)
+  equal(n.ispathfinding,false)
+  equal(m.waypoint,nil)
+  assert(cleared>0)
+  equal(n.lastRoute[#n.lastRoute].uid,2)
 end)
 
 test("real FSM preserves latest cruise when wind restarts from holding",function()
@@ -556,6 +949,73 @@ test("scheduled wind route respects holding and scheduler shutdown",function()
   n.CallScheduler:Clear()
   n:Flush()
   equal(n.updates,0)
+end)
+
+test("a held completed finite route can accept a checked wind maneuver",function()
+  local n=scheduledNavy(true)
+  n.currentwp=#n.waypoints
+  n.position=COORDINATE:NewFromCoordinate(n:GetWaypointCurrent().coordinate)
+  n.adinfinitum=false
+  n.passedfinalwp=true
+  n.state="Holding"
+  n.current=n.state
+
+  local m=assert(n:BeginIntoWind({DeckWind=27,DeckAngle=-9.1}))
+  n:Flush()
+
+  equal(n.state,"Cruising")
+  equal(n.passedfinalwp,false)
+  equal(n:GetWaypointNext(),m.waypoint)
+  equal(m.PathValidated,true)
+  equal(m.RouteSubmitted,true)
+  equal(n.lastRoute[#n.lastRoute].uid,m.waypoint.uid)
+  equal(n.checkedBeforeUpdate,0)
+end)
+
+test("passing the final wind target renews it despite the finite-route completion flag",function()
+  local n=scheduledNavy(true)
+  n.currentwp=#n.waypoints
+  n.adinfinitum=false
+  local m=assert(n:BeginIntoWind({DeckWind=27,DeckAngle=-9.1}))
+  n:Flush()
+
+  local oldTarget=m.waypoint
+  n.currentwp=n:GetWaypointIndex(oldTarget.uid)
+  n.position=COORDINATE:NewFromCoordinate(oldTarget.coordinate)
+  n.passedfinalwp=true
+  n:_CheckNavigation()
+  n:Flush()
+
+  assert(m.waypoint~=oldTarget)
+  equal(n:GetWaypointIndex(oldTarget.uid),nil)
+  equal(n:GetWaypointNext(),m.waypoint)
+  equal(n.passedfinalwp,false)
+  equal(n.state,"Cruising")
+  near(m.waypoint.coordinate:Get2DDistance(n.position),UTILS.NMToMeters(20))
+  equal(n.lastRoute[#n.lastRoute].uid,m.waypoint.uid)
+end)
+
+test("ending wind after a completed finite mission sends a stop instead of retaining its route",function()
+  for _,completed in ipairs({false,true}) do
+    local n=scheduledNavy(true)
+    n.currentwp=#n.waypoints
+    n.adinfinitum=false
+    local m=assert(n:BeginIntoWind({DeckWind=27,DeckAngle=-9.1}))
+    n:Flush()
+    local movingRoutes=n.updates
+
+    -- The remaining mission has no next point. Test both the clamped last index and a set completion flag.
+    n.passedfinalwp=completed
+    assert(n:EndIntoWind(m,{Uturn=false}))
+    n:Flush()
+
+    equal(n:GetIntoWindManeuver(),nil)
+    equal(#n.waypoints,2)
+    equal(n.state,"Holding")
+    equal(n.stops,1)
+    equal(n.updates,movingRoutes)
+    equal(n.stopRoute[1].speed,0)
+  end
 end)
 
 print(string.format("%d passed, %d failed",passed,failed))

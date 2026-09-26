@@ -6,7 +6,7 @@ nav_order: 02
 
 # AIRBOSS / NAVYGROUP migration
 
-This guide describes AIRBOSS **2.0.0** and NAVYGROUP **1.1.0** on branch `FF/AirbossNavy`, as of 21 September 2026. These are the versions implemented on this branch; they do not imply these changes are available in every MOOSE release.
+This guide describes AIRBOSS **2.0.0** and NAVYGROUP **1.1.0** on branch `FF/AirbossNavy`, as of 26 September 2026. These are the versions implemented on this branch; they do not imply these changes are available in every MOOSE release.
 
 ## Responsibilities and object access
 
@@ -143,7 +143,7 @@ end
 
 `BeginIntoWind` accepts at most one active wind maneuver per NAVYGROUP. A returned record means that the request was accepted; it does not mean that the ship has already reached its heading and speed. `GetIntoWindManeuver()` returns the active record, whose `Ready` flag reflects the achievable target and navigation conditions. The reference unit supplies wind, heading and speed measurements; the return point belongs to the naval group's route.
 
-Readiness requires a submitted, checked route, no active obstacle or competing task, a heading within 2 degrees and speed within 1 knot of the command, and no ongoing turn. A checked straight pathfinding segment can be ready; an obstacle detour cannot. A competing active task or engagement rejects a new wind request with `busy`. The legacy algorithm's requested ship speed is also capped at the group's maximum for maneuver execution.
+Readiness requires a submitted, checked route, no active obstacle or competing task, a heading within 2 degrees and speed within 1 knot of the command, and no ongoing turn. A checked straight wind leg can be ready; an obstacle detour cannot. A competing active task or engagement rejects a new wind request with `busy`. The legacy algorithm's requested ship speed is also capped at the group's maximum for maneuver execution.
 
 Updates preserve the maneuver identity and the first significant route departure point. `EndIntoWind` and `AbortIntoWind` return success and a reason; an optional `ReturnCoordinate` supplies an explicit intermediate destination. Ending means relinquishing the wind maneuver and arranging continued navigation, not physically arriving back on the original route. `AbortIntoWind` provides unconditional cleanup of that particular owned request, including during AIRBOSS shutdown. Neither method stops NAVYGROUP itself. Repeated completion of the same completed maneuver cannot stop a later maneuver.
 
@@ -155,6 +155,14 @@ The existing scheduled API is an adapter over this same movement implementation:
 - An occupied NAVYGROUP does not silently replace another wind request. Waiting scheduled windows expire if their end time passes before they can start.
 
 Changing wind does not continually reissue a new carrier course. Maneuver updates are explicit; readiness is assessed against the last commanded, achievable course and speed. Pathfinding may temporarily make the ship unavailable for recovery while avoiding an obstacle.
+
+### Collision checks and wind-route continuation
+
+NAVYGROUP checks the upcoming route every 10 seconds, examining at most 5000 meters towards the next waypoint. Checks are skipped during a turn. With pathfinding enabled, a blocked connection triggers A*; a successful search installs a detour to the route target. Temporary pathfinding waypoint callbacks do not restart or replan the route. If planning fails or depth data is unavailable, the ship enters `Holding` through `FullStop()`. The navigation timer does not retry or release that stop automatically; a new movement command is required.
+
+Into-wind navigation uses a finite target 20 NM ahead. The navigation timer renews it when the ship is within 5000 meters and can continue on a clear, straight wind leg. The requested course and speed remain unchanged. A clear wind leg is checked directly and needs no A* search; a blocked leg uses the same detour planner as ordinary navigation. AIRBOSS withholds new approach clearances while the ship is following a detour or has not yet regained the commanded course and speed.
+
+`BeginIntoWind` and an explicit `UpdateIntoWind` are movement commands and may resume a held ship when a usable route has been established. Periodic readiness checks do not resume it. Automatic recovery completion, expiry of a timed wind window and AIRBOSS shutdown also preserve a manual or navigation-failure hold while removing their owned wind maneuver. `CarrierResumeRoute()` is an explicit movement command and may release that hold. A failed search therefore stays visible as a navigation hold instead of being represented by a separate retry flag.
 
 ## TACAN and ICLS
 
@@ -216,7 +224,9 @@ lua54/lua54.exe tests/airboss-recovery.lua
 lua54/lua54.exe tests/navy-into-wind.lua
 ```
 
-The final fixes pass 43 AIRBOSS and 27 NAVYGROUP regression scenarios (70 total). The six new NAVYGROUP scheduling scenarios use the production FSM delay registration and callback dispatcher; four reproduced lost route updates before the correction. The two revision-bearing internal route calls now use positive delays, so an obsolete pending event cannot suppress the newer request. Existing revision guards reject obsolete callbacks, and NAVYGROUP Stop still clears the same call scheduler.
+The 21 September fixes passed 43 AIRBOSS and 27 NAVYGROUP regression scenarios (70 total). The six new NAVYGROUP scheduling scenarios use the production FSM delay registration and callback dispatcher; four reproduced lost route updates before the correction. The two revision-bearing internal route calls now use positive delays, so an obsolete pending event cannot suppress the newer request. Existing revision guards reject obsolete callbacks, and NAVYGROUP Stop still clears the same call scheduler.
+
+The 26 September merge integration changes the navigation contract to the periodic checks and finite wind legs described above. The historical mission results do not validate those changes; wind preparation, obstacle detours, route renewal and return to the regular route need another DCS run.
 
 These suites execute production methods with simulated DCS telemetry and tasks; most scenarios also simulate event dispatch. They do not verify how DCS physically steers or lands aircraft. The agreed minimal DCS test program for the main AI features is complete; the final fixes have not yet been retested in DCS.
 

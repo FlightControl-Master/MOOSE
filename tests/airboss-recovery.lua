@@ -80,8 +80,16 @@ local function setup()
     self.plans[#self.plans+1]=w
     return w
   end
-  function n:RemoveTurnIntoWind(w,abort)
+  function n:RemoveTurnIntoWind(w,abort,options)
     if self.vetoEnd and not abort then return self,false,"veto" end
+    local completion={Uturn=w.Uturn,Resume=false}
+    for name,value in pairs(options or {}) do completion[name]=value end
+    if w.Maneuver then
+      local success,reason
+      if abort then success,reason=self:AbortIntoWind(w.Maneuver,completion)
+      else success,reason=self:EndIntoWind(w.Maneuver,completion) end
+      if not success then return self,false,reason end
+    end
     self.timedRemoves=self.timedRemoves+1
     remove(self.plans,w) w.Over=true w.Open=false
     if self.airboss then self.airboss:_OnNavyIntoWindOver(w) end
@@ -447,6 +455,27 @@ test("a vetoed NAVY end keeps ownership until cleanup can finish",function()
   equal(n.current,nil) equal(a.recoveryManeuver,nil)
 end)
 
+test("automatic recovery completion preserves navigation holds",function()
+  local a,n=setup() window(a,10,20)
+  at(0,a) at(10,a) n.holding=true
+  at(20,a)
+  equal(n.current,nil)
+  equal(n.ended[1].options.Resume,false)
+  equal(n.holding,true)
+end)
+
+test("recovery cleanup does not modify shared completion options",function()
+  local a,n=setup() window(a,10,20)
+  at(0,a)
+  local destination={x=500,y=0,z=100}
+  local options={Uturn=true,ReturnCoordinate=destination,Reason="test-ended"}
+  assert(a:_StopRecoveryIntoWind(false,options))
+  equal(options.Resume,nil)
+  equal(n.ended[1].options.Resume,false)
+  equal(n.ended[1].options.ReturnCoordinate,destination)
+  equal(n.ended[1].options.Reason,"test-ended")
+end)
+
 test("late completion of an old maneuver cannot clear a new one",function()
   local a,n=setup() window(a,10,20)
   at(0,a) local old=n.current at(10,a) at(20,a)
@@ -478,6 +507,7 @@ test("AIRBOSS Stop forces only its own cleanup and preserves future windows",fun
   at(0,a) at(10,a) n.vetoEnd=true
   a.state="Stopped" a:onafterStop("Recovering","Stop","Stopped")
   equal(n.current,nil) assert(n.aborts>0 and n.running)
+  equal(n.ended[1].options.Resume,false)
   assert(active.OVER and not future.OVER) equal(a.recoveryManeuver,nil)
   equal(a.recoveryManeuverWindow,nil) equal(n.airboss,nil)
 end)
@@ -486,6 +516,7 @@ test("CarrierResumeRoute suppresses automatic restart for the same recovery",fun
   local a,n=setup() local w=window(a,10,20)
   at(0,a) at(10,a) a:CarrierResumeRoute()
   equal(n.current,nil) equal(a.activeRecoveryWindow,w)
+  equal(n.ended[1].options.Resume,true)
   at(11,a) equal(n.current,nil) equal(n.begins,1)
   at(20,a) assert(w.OVER)
 end)
@@ -500,12 +531,37 @@ test("manual timed wrapper retains duration, units and independent completion",f
   n:RemoveTurnIntoWind(w) equal(a.manualWindWindow,nil)
 end)
 
+test("explicit route resume forwards options through the timed stop veto",function()
+  local a,n=setup()
+  a:CarrierTurnIntoWind(120,10,true)
+  local w=a.manualWindWindow
+  w.Maneuver=n:BeginIntoWind({DeckWind=20})
+  n.timedCurrent=w
+  n.vetoEnd=true
+  local destination={x=1000,y=0,z=1000}
+
+  a:CarrierResumeRoute(destination)
+  equal(a.manualWindWindow,w)
+  equal(n.current,w.Maneuver)
+  equal(#n.ended,0)
+
+  n.vetoEnd=false
+  a:CarrierResumeRoute(destination)
+  equal(a.manualWindWindow,nil)
+  equal(n.current,nil)
+  equal(n.ended[1].options.Resume,true)
+  equal(n.ended[1].options.ReturnCoordinate,destination)
+end)
+
 test("Stop cancels its own manual timed window but preserves foreign schedules",function()
   local a,n=setup()
   local foreign=n:AddTurnIntoWind(500,100,15,true,0)
   a:CarrierTurnIntoWind(120,10,true) local owned=a.manualWindWindow n.vetoEnd=true
+  owned.Maneuver=n:BeginIntoWind({DeckWind=20})
+  n.timedCurrent=owned
   a.state="Stopped" a:onafterStop("Idle","Stop","Stopped")
   assert(owned.Over) equal(a.manualWindWindow,nil)
+  equal(n.ended[1].options.Resume,false)
   equal(n.plans[1],foreign) equal(#n.plans,1) assert(n.running)
 end)
 
@@ -559,6 +615,7 @@ test("Stop during NAVY acceptance aborts the just-created maneuver",function()
   end
   at(0,a)
   equal(n.current,nil) equal(a.recoveryManeuver,nil) assert(a:is("Stopped"))
+  equal(n.ended[1].options.Resume,false)
 end)
 
 test("Stop inside a recovery-start callback cannot be overwritten by the FSM",function()
@@ -604,7 +661,6 @@ test("windless recovery still rejects stopped, held or blocked navigation",funct
     {name="stopped",set=function(n) n.running=false end},
     {name="holding",set=function(n) n.holding=true end},
     {name="waiting",set=function(n) n.waiting=true end},
-    {name="path blocked",set=function(n) n.pathfindingStopped=true end},
     {name="collision warning",set=function(n) n.collisionwarning=true end},
   }
   for _,case in ipairs(cases) do

@@ -6003,8 +6003,13 @@ function AIRBOSS:_SynchronizeMarshalCase()
   end
 end
 
+--- Check whether navigation and recovery state permit a new approach clearance.
 -- A scheduled recovery may be open while the ship is still becoming ready.
 -- A "nice" AIRBOSS may permit idle recovery, but never bypasses pause or navigation.
+-- @param #AIRBOSS self
+-- @param #boolean AllowIdle If true, recovery may be admitted outside an active recovery window; false or nil requires recovery to be active.
+-- @return #boolean True when a new approach clearance is permitted.
+-- @return #string Reason when clearance is denied; nil when it is permitted.
 function AIRBOSS:_CanClearForRecovery( AllowIdle )
   if self:is( "Stopped" ) or self._airbossStopped then return false, "AIRBOSS is stopped" end
   if self:IsPaused() then return false, "aircraft recovery is paused" end
@@ -6015,7 +6020,8 @@ function AIRBOSS:_CanClearForRecovery( AllowIdle )
   if self.navygroup:IsStopped() or self.navygroup:IsHolding() or self.navygroup:IsWaiting() then
     return false, "carrier navigation is on hold"
   end
-  if self.navygroup.pathfindingStopped or self.navygroup.collisionwarning then
+  -- Failed navigation enters Holding, checked above; an obstacle warning also blocks new clearances.
+  if self.navygroup.collisionwarning then
     return false, "carrier route is obstructed"
   end
 
@@ -14160,7 +14166,7 @@ function AIRBOSS:CarrierResumeRoute( gotocoord )
   local hadManeuver = self.recoveryManeuver ~= nil
     or (self.manualWindWindow and self.manualWindWindow.Maneuver ~= nil)
   local success = self:_StopNavyIntoWind( false, {
-    Uturn = gotocoord ~= nil, ReturnCoordinate = gotocoord, Reason = "route-resumed",
+    Uturn = gotocoord ~= nil, ReturnCoordinate = gotocoord, Reason = "route-resumed", Resume = true,
   } )
   if not success or hadManeuver then return self end
 
@@ -14194,7 +14200,11 @@ function AIRBOSS:CarrierTurnIntoWind( time, vdeck, uturn )
   return self
 end
 
--- Reconcile the desired recovery with one immediate, untimed navigation maneuver.
+--- Reconcile the desired recovery with one immediate, untimed navigation maneuver.
+-- @param #AIRBOSS self
+-- @param #AIRBOSS.Recovery recovery Recovery window whose wind settings should be applied.
+-- @return #boolean True when the requested maneuver is active; false when it is unavailable or no longer needed.
+-- @return #string Optional reason when the maneuver cannot be started or updated.
 function AIRBOSS:_StartRecoveryIntoWind( recovery )
   if self:is( "Stopped" ) or self._airbossStopped or not recovery or not recovery.WIND or recovery.WINDSUPPRESSED
     or recovery.OVER or recovery.STOP <= timer.getAbsTime() then
@@ -14228,7 +14238,7 @@ function AIRBOSS:_StartRecoveryIntoWind( recovery )
   end
   -- A user callback can stop AIRBOSS while NAVYGROUP is accepting the request.
   if self:is( "Stopped" ) or recovery.OVER then
-    self.navygroup:AbortIntoWind( maneuver, { Uturn = recovery.UTURN, Reason = "recovery-cancelled" } )
+    self.navygroup:AbortIntoWind( maneuver, { Uturn = recovery.UTURN, Reason = "recovery-cancelled", Resume = false } )
     return false, "recovery-cancelled"
   end
   recovery.WINDERROR = nil
@@ -14257,40 +14267,66 @@ function AIRBOSS:_OnNavyIntoWindOver( window )
   end
 end
 
+--- Release the immediate wind maneuver owned by recovery.
+-- Automatic cleanup preserves a navigation hold; an explicit route command may opt into resuming it.
+-- @param #AIRBOSS self
+-- @param #boolean Abort If true, abort the owned maneuver; false or nil ends it normally.
+-- @param Ops.NavyGroup#NAVYGROUP.IntoWindEndOptions Options (Optional) Return and completion settings. Defaults to the recovery's Uturn setting, reason "recovery-ended" and Resume=false. The supplied table is not modified.
+-- @return #boolean True when the maneuver was released or none was owned.
+-- @return #string Optional reason returned by NAVYGROUP.
 function AIRBOSS:_StopRecoveryIntoWind( Abort, Options )
+
   local maneuver = self.recoveryManeuver
   if not maneuver then return true end
+
   local recovery = self.recoveryManeuverWindow
-  Options = Options or { Uturn = recovery and recovery.UTURN == true, Reason = "recovery-ended" }
+  local options = { Uturn = recovery and recovery.UTURN == true, Reason = "recovery-ended", Resume = false }
+
+  -- Caller options may also be used for a timed window; keep its table independent of our defaults.
+  for name, value in pairs( Options or {} ) do
+    options[name] = value
+  end
+
   local success, reason
   if Abort then
-    success, reason = self.navygroup:AbortIntoWind( maneuver, Options )
+    success, reason = self.navygroup:AbortIntoWind( maneuver, options )
   else
-    success, reason = self.navygroup:EndIntoWind( maneuver, Options )
+    success, reason = self.navygroup:EndIntoWind( maneuver, options )
   end
+
   if success then
     self:_OnRecoveryIntoWindEnded( maneuver, reason )
   end
+
   return success, reason
 end
 
+--- Release recovery and timed wind requests owned by this AIRBOSS.
+-- Other owners' requests remain intact. Automatic shutdown must not release a manual or navigation-failure hold.
+-- @param #AIRBOSS self
+-- @param #boolean Abort If true, abort owned requests without a timed stop-event veto; false or nil ends them normally.
+-- @param Ops.NavyGroup#NAVYGROUP.IntoWindEndOptions Options (Optional) Explicit return settings for a route command. Resume defaults to false; CarrierResumeRoute supplies true. The supplied table is not modified.
+-- @return #boolean True when owned requests were released or none existed.
+-- @return #string Optional rejection reason returned by NAVYGROUP.
 function AIRBOSS:_StopNavyIntoWind( Abort, Options )
+
   local success, reason = self:_StopRecoveryIntoWind( Abort, Options )
   if not success then return false, reason end
+
   local window = self.manualWindWindow
   if window then
-    if Options then
-      window.Uturn = Options.Uturn
-      if window.Maneuver and Options.ReturnCoordinate then
-        -- End with the explicit return point before removing its schedule record.
-        success, reason = self.navygroup:EndIntoWind( window.Maneuver, Options )
-        if not success and not Abort then return false, reason end
-      end
+
+    local options = { Resume = false }
+    for name, value in pairs( Options or {} ) do
+      options[name] = value
     end
+
+    -- Forward completion options through the timed stop event, preserving its user veto unless aborting.
     local _
-    _, success, reason = self.navygroup:RemoveTurnIntoWind( window, Abort )
+    _, success, reason = self.navygroup:RemoveTurnIntoWind( window, Abort, options )
     if success then self:_OnNavyIntoWindOver( window ) end
   end
+
   return success, reason
 end
 

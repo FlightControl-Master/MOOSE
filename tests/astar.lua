@@ -2108,7 +2108,7 @@ for _,name in ipairs({"_GetPathfindingTarget","_FindPathToNextWaypoint","_ClearP
   "_CanNavigate","_FailPathfinding","_UpdateNavigationWarning","_CheckNavigation",
   "onafterFullStop","onafterCruise","onafterCollisionWarning","onafterClearAhead","onafterTurningStopped",
   "SetPathfinding","SetPathfindingOn","SetPathfindingOff","SetPathfindingMinDepth","SetPathfindingGrid","onafterUpdateRoute","onafterTurnIntoWindOver",
-  "_CreateTurnIntoWind","AddTurnIntoWind","RemoveTurnIntoWind","AddTaskAttackGroup","_CheckTurning",
+  "_CreateTurnIntoWind","GetTurnIntoWind","_CompleteTurnIntoWindWindow","AddTurnIntoWind","RemoveTurnIntoWind","AddTaskAttackGroup","_CheckTurning",
   "GetHeadingIntoWind_new","onafterRTZ","onafterEngageTarget","_UpdateEngageTarget"}) do
   assert((loadstring or load)(assert(navySource:match("(function NAVYGROUP:"..name.."%b().-\nend)"))))()
 end
