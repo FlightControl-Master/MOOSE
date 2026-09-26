@@ -440,7 +440,6 @@ OPSGROUP.TaskType={
 -- @field #boolean intowind If true, this waypoint is a turn into wind route point.
 -- @field #boolean astar If true, this waypint was found by A* pathfinding algorithm.
 -- @field #number astarTargetUID Original naval target associated with a temporary pathfinding waypoint.
--- @field #boolean astarReplan End of a checked naval into-wind segment; plan the next segment when passed.
 -- @field #boolean temp If true, this is a temporary waypoint and will be deleted when passed. Also the passing waypoint FSM event is not triggered.
 -- @field #number npassed Number of times a groups passed this waypoint.
 -- @field Core.Point#COORDINATE coordinate Waypoint coordinate.
@@ -11843,14 +11842,9 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
       -- Pathfinding Waypoint
       ---
 
-      if opsgroup:IsNavygroup() then
-        if opsgroup.pathfindingOn then
-          opsgroup:_ContinuePathfinding(waypoint)
-        elseif waypoint.astarReplan and opsgroup:_CanNavigate() then
-          -- Disabling navigation permits the unchecked remainder of a rolling route, but never releases a hold.
-          opsgroup:__UpdateRoute(-0.01)
-        end
-      else
+      -- DCS may report a naval waypoint before the ship has finished turning.
+      -- Keep the installed route; the periodic navigation check decides when a new path is needed.
+      if not opsgroup:IsNavygroup() then
         opsgroup:Cruise()
       end
 

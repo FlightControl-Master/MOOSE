@@ -977,26 +977,79 @@ function VECTOR:GetPathOnRoad(Vec)
   return path
 end
 
-
---- Get profile of the land between the two passed points.
+--- Get terrain and seabed profile points between this vector and a destination.
+-- Native support-point heights are retained. Missing endpoints are added at terrain/seabed height,
+-- independent of the supplied altitude. An empty or unavailable DCS profile returns nil.
 -- @param #VECTOR self
--- @param #VECTOR Vec3 The 3D destination vector. If a 2D vector is passed, `y` is set to the land height.
--- @return Core.Pathline#PATHLINE Pathline with points of the profile.
-function VECTOR:GetProfile(Vec3)
+-- @param DCS#Vec3 Vector Destination; also accepts VECTOR, COORDINATE or DCS#Vec2. A Vec2 uses terrain height for the query.
+-- @return #list <DCS#Vec3> Independent profile points in the order returned by DCS, or nil.
+-- @return #string Reason when the profile or endpoint terrain data is unavailable, otherwise nil.
+function VECTOR:GetProfile(Vector)
 
-  local vec3=self:GetVec3()
+  local destination=VECTOR:NewFromVec(Vector)
+  local a=self:GetVec3()
+  local b=destination:GetVec3(Vector.z==nil)
+  local samples=land.profile(a, b)
 
-  -- Get profile
-  local vec3s=land.profile(vec3, Vec3)
+  if not samples or #samples==0 then
+    return nil,"profile_unavailable"
+  end
 
-  local profile=nil
-  if vec3s then
-  
-    profile=PATHLINE:NewFromVec3Array("Profile", vec3s)
-  
+  -- Keep the native result unchanged when completing the returned profile.
+  local profile={}
+  for _,point in ipairs(samples) do
+    profile[#profile+1]={x=point.x, y=point.y, z=point.z}
+  end
+
+  local endpoints={a,b}
+  local boundarySamples={samples[1],samples[#samples]}
+
+  for i,point in ipairs(endpoints) do
+    local sample=boundarySamples[i]
+    local dx,dz=point.x-sample.x,point.z-sample.z
+
+    -- Avoid adding an almost identical endpoint (within 10 cm horizontally).
+    if dx*dx+dz*dz>0.01 then
+      local position={x=point.x, y=point.z}
+      local height,depth=land.getSurfaceHeightWithSeabed(position)
+
+      if type(height)~="number" or not (math.abs(height)<math.huge) then
+        return nil,"invalid_surface_height"
+      end
+
+      local surface=land.getSurfaceType(position)
+      point.y=height
+
+      if surface==land.SurfaceType.WATER or surface==land.SurfaceType.SHALLOW_WATER then
+        if type(depth)~="number" or not (depth>=0 and depth<math.huge) then
+          return nil,"invalid_depth"
+        end
+
+        point.y=height-depth
+      end
+
+      table.insert(profile, i==1 and 1 or #profile+1, point)
+    end
   end
 
   return profile
+end
+
+--- Get terrain and seabed profile support points as a PATHLINE.
+-- Position heights come from GetProfile(). PATHLINE separately samples surface height and water depth at each point;
+-- its depth helpers use these stored direct depth measurements, not the profile's y component.
+-- @param #VECTOR self
+-- @param DCS#Vec3 Vector Destination; also accepts VECTOR, COORDINATE or DCS#Vec2.
+-- @return Core.Pathline#PATHLINE Profile pathline, or nil when profile data is unavailable.
+-- @return #string Reason when no profile is returned, otherwise nil.
+function VECTOR:GetProfilePath(Vector)
+
+  local points,reason=self:GetProfile(Vector)
+  if not points then
+    return nil,reason
+  end
+
+  return PATHLINE:NewFromVec3Array("Profile", points)
 end
 
 --- Returns an intercept point at which a ray drawn from the this vector in the passed normalized direction for a specified distance.
@@ -1043,6 +1096,63 @@ function VECTOR:GetSurfaceHeightAndDepth()
   local h,d=land.getSurfaceHeightWithSeabed(vec2)
 
   return h,d
+end
+
+--- Evaluate water depth at a terrain sample without creating a VECTOR or diagnostic object.
+-- Shared by ASTAR neighbour checks and PATHLINE collision reports, so both apply the same depth rule.
+-- DCS routines are assumed to exist. Returned terrain data is checked because unknown depths must not be accepted as water.
+-- @param DCS#Vec3 Point Terrain sample; y is the seabed/profile height when UseProfile is true.
+-- @param #number MinDepth Minimum water depth in meters, inclusive.
+-- @param #boolean UseProfile Include the sample's profile height in the depth check.
+-- @return #boolean True when the point is sufficiently deep water.
+-- @return #string Status: "clear", "blocked", or "unavailable".
+-- @return #string Cause of rejection, or nil.
+-- @return #number Effective water depth, when known.
+-- @return #number Surface type, when known.
+function VECTOR._CheckDepthPoint(Point, MinDepth, UseProfile)
+
+  -- Profile samples come from DCS, not from a validated VECTOR constructor.
+  if type(Point)~="table" or type(Point.x)~="number" or not (math.abs(Point.x)<math.huge)
+    or type(Point.z)~="number" or not (math.abs(Point.z)<math.huge) then
+    return false,"unavailable",UseProfile and "invalid_profile_position" or "invalid_position"
+  end
+
+  if UseProfile and (type(Point.y)~="number" or not (math.abs(Point.y)<math.huge)) then
+    return false,"unavailable","invalid_profile_height"
+  end
+
+  local position={x=Point.x,y=Point.z}
+  local surface=land.getSurfaceType(position)
+
+  if type(surface)~="number" or surface%1~=0 or surface<1 or surface>5 then
+    return false,"unavailable","invalid_surface_type"
+  end
+
+  -- Terrain below sea level is not necessarily water.
+  if surface~=land.SurfaceType.WATER and surface~=land.SurfaceType.SHALLOW_WATER then
+    return false,"blocked","non_water",nil,surface
+  end
+
+  local height,depth=land.getSurfaceHeightWithSeabed(position)
+  if type(height)~="number" or not (math.abs(height)<math.huge)
+    or type(depth)~="number" or not (depth>=0 and depth<math.huge) then
+    return false,"unavailable","invalid_depth",nil,surface
+  end
+
+  -- Coastal queries can disagree. Keep the shallower bound instead of accepting only the deeper source.
+  if UseProfile then
+    local profileDepth=height-Point.y
+    if not (math.abs(profileDepth)<math.huge) then
+      return false,"unavailable","invalid_profile_depth",nil,surface
+    end
+    depth=math.min(depth,profileDepth)
+  end
+
+  if depth<MinDepth then
+    return false,"blocked","insufficient_depth",depth,surface
+  end
+
+  return true,"clear",nil,depth,surface
 end
 
 --- Returns a velocity vector of the wind at this vector. Turbolences can be optionally be included.
@@ -1232,6 +1342,29 @@ function VECTOR:ArrowTo(Vector, Coalition, Color, FillColor, LineType)
   trigger.action.arrowToAll(Coalition , id, vec3Start, vec3End, Color, FillColor , LineType, readOnly, "")
 
   return id
+end
+
+--- Draw line on F10 map to another vector.
+-- @param #VECTOR self
+-- @param #VECTOR Vector The vector defining the endpoint.
+-- @param #number Recipient (Optional) Coalition recipient of the line: -1=All (default).
+-- @param #table Color (optional) Color as RGB table plus alpha value. Default {1, 0, 0, 1.0}.
+-- @param #number LineType (optional) Line type: 1=Solid (default).
+-- @return #VECTOR self
+function VECTOR:DrawLine(Vector, Recipient, Color, LineType)
+  
+  -- Input
+  Recipient= Recipient or -1
+  Color= Color or {1,0,0, 1.0}
+  LineType=LineType or 1
+  
+  local ReadOnly=false
+
+  local lineID = UTILS.GetMarkID()
+
+  trigger.action.lineToAll(Recipient, lineID, self:GetVec3(), Vector:GetVec3(), Color, LineType, ReadOnly, "")
+  
+  return self
 end
 
 

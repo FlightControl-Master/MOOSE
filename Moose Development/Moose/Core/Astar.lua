@@ -306,7 +306,6 @@ end
 --- Create a new ASTAR object with an empty node set, unrestricted neighbours, and 2D distance costs.
 -- @param #ASTAR self
 -- @return #ASTAR self
----@return ASTAR
 function ASTAR:New()
 
   -- Inherit from BASE.
@@ -510,7 +509,7 @@ function ASTAR:SetValidNeighbourSurface(Step, CorridorWidth)
   if Step==nil then Step=100 end
   if CorridorWidth==nil then CorridorWidth=0 end
   assert(type(Step)=="number" and Step>0 and Step<math.huge,"ASTAR: surface sample step must be finite and positive")
-  assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
+  assert(CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
   return self:SetValidNeighbourFunction(function(a,b)
     return self.Grid:CheckSurfacePath(a.vector,b.vector,Step,CorridorWidth)
   end)
@@ -540,8 +539,8 @@ function ASTAR:SetValidNeighbourDepth(MinDepth, CorridorWidth)
     CorridorWidth=0
   end
 
-  assert(type(MinDepth)=="number" and MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
-  assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
+  assert(MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
+  assert(CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
 
   return self:SetValidNeighbourFunction(ASTAR.Depth,MinDepth,CorridorWidth)
 end
@@ -710,255 +709,56 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
   return los
 end
 
---- Result of a detailed water-depth check.
--- @type ASTAR.DepthReport
--- @field #string Status "clear", "blocked", or "unavailable". Missing terrain data is not a confirmed obstacle.
--- @field #string Reason Rejection reason, or nil when clear.
--- @field #string Cause Underlying cause, such as "insufficient_depth", "non_water", or a terrain-data error.
--- @field #number Distance Horizontal distance from the original first node to the second, in meters.
--- @field #number ClearDistance Conservative usable prefix from the original first node, in meters. Zero when data is unavailable.
--- @field #number RequiredDepth Requested minimum water depth, in meters.
--- @field DCS#Vec3 Point First rejected sample on the limiting profile, when known. This is not the interpolated threshold position.
--- @field #number Depth Water depth at Point, when known; the shallower of direct and profile depth.
--- @field #number SurfaceType DCS surface type at Point, when known.
--- @field #number ProfileOffset Signed distance from the route center line, in meters; positive is right of travel in DCS x/z coordinates.
--- @field #string Location "start", "goal", "profile", or "profile_fallback" relative to the original input direction.
+--- Check the endpoints and terrain profile of one water connection.
+-- A* only needs to know whether every point is deep enough. The first rejection ends this check;
+-- locating an obstruction and interpolating its distance belong to PATHLINE.CheckDepth().
+-- @param DCS#Vec3 Start Start position at the water surface.
+-- @param DCS#Vec3 Goal Goal position at the water surface.
+-- @param #number Distance Horizontal distance between the endpoints, greater than zero.
+-- @param #number MinDepth Minimum water depth in meters, inclusive.
+-- @return #boolean True when the connection is sufficiently deep water.
+-- @return #string Reason for rejection, or nil on success.
+function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth)
 
---- Check water depth at one position without allocating a diagnostic report.
--- Missing data and failed DCS queries are distinguished from land or insufficient water depth.
--- @param DCS#Vec3 Point Position to check; y is used only when UseProfile is true.
--- @param #number MinDepth Required minimum depth in meters.
--- @param #boolean UseProfile Whether Point.y is a terrain-profile height to check as well.
--- @return #boolean True when the position meets the depth rule.
--- @return #string Status: "clear", "blocked", or "unavailable".
--- @return #string Cause of rejection, or nil.
--- @return #number Effective water depth, when known.
--- @return #number DCS surface type, when known.
-function ASTAR._CheckDepthPoint(Point, MinDepth, UseProfile)
-
-  if type(Point)~="table" or type(Point.x)~="number" or not (math.abs(Point.x)<math.huge)
-    or type(Point.z)~="number" or not (math.abs(Point.z)<math.huge) then
-    return false,"unavailable","invalid_position"
-  end
-
-  if UseProfile and (type(Point.y)~="number" or not (math.abs(Point.y)<math.huge)) then
-    return false,"unavailable","invalid_profile_height"
-  end
-
-  -- Surface classification is still required: terrain below sea level is not necessarily navigable water.
-  local position={x=Point.x,y=Point.z}
-  local surfaceOK,surface=pcall(land.getSurfaceType,position)
-
-  if not surfaceOK then
-    return false,"unavailable","surface_query_failed"
-  end
-
-  if type(surface)~="number" or surface%1~=0 or surface<1 or surface>5 then
-    return false,"unavailable","invalid_surface_type"
-  end
-
-  if surface~=land.SurfaceType.WATER and surface~=land.SurfaceType.SHALLOW_WATER then
-    return false,"blocked","non_water",nil,surface
-  end
-
-  local depthOK,height,depth=pcall(land.getSurfaceHeightWithSeabed,position)
-
-  if not depthOK then
-    return false,"unavailable","depth_query_failed",nil,surface
-  end
-
-  if type(height)~="number" or not (math.abs(height)<math.huge)
-    or type(depth)~="number" or not (depth>=0 and depth<math.huge) then
-    return false,"unavailable","invalid_depth",nil,surface
-  end
-
-  -- Coastline queries may disagree. A route must satisfy both sources, not only the deeper one.
-  if UseProfile then
-    local profileDepth=height-Point.y
-    if not (math.abs(profileDepth)<math.huge) then
-      return false,"unavailable","invalid_profile_depth",nil,surface
-    end
-    depth=math.min(depth,profileDepth)
-  end
-
-  if depth<MinDepth then
-    return false,"blocked","insufficient_depth",depth,surface
-  end
-
-  return true,"clear",nil,depth,surface
-end
-
---- Project a terrain-profile point onto the requested segment for distance reporting.
--- Trust the geometry returned by DCS. Clamp the reported distance to the segment without rejecting offset points.
--- @param DCS#Vec3 Point Terrain-profile point.
--- @param DCS#Vec3 Start Canonical segment start.
--- @param #number UX Unit direction x component.
--- @param #number UZ Unit direction z component.
--- @param #number Distance Segment length in meters.
--- @return #number Clamped distance along the segment, or nil when coordinates or the projected distance are not finite.
-function ASTAR._GetDepthProfileDistance(Point, Start, UX, UZ, Distance)
-
-  if type(Point)~="table" or type(Point.x)~="number" or not (math.abs(Point.x)<math.huge)
-    or type(Point.z)~="number" or not (math.abs(Point.z)<math.huge) then
-    return nil
-  end
-
-  local dx,dz=Point.x-Start.x,Point.z-Start.z
-  local along=dx*UX+dz*UZ
-
-  if not (math.abs(along)<math.huge) then
-    return nil
-  end
-
-  -- Projection is only used to locate a sample along the route. It must not turn coordinate
-  -- differences in native profiles into missing terrain data and unnecessary navigation stops.
-  -- Surface and depth queries still use the original point returned by DCS.
-  return math.max(0,math.min(Distance,along))
-end
-
---- Create the diagnostic result for a rejected depth sample.
--- @param #number Distance Segment length in meters.
--- @param #number MinDepth Required water depth in meters.
--- @param #number Offset Profile offset relative to the original direction.
--- @param #string Reason Rejection reason.
--- @param #string Status "blocked" or "unavailable".
--- @param #string Cause Underlying rejection cause.
--- @param #table Sample Optional rejected sample and its original-direction location.
--- @param #number Depth Optional effective sample depth.
--- @param #number Surface Optional sample surface type.
--- @param #number ClearDistance Conservative usable prefix in meters.
--- @return #ASTAR.DepthReport Diagnostic result.
-function ASTAR._DepthReport(Distance, MinDepth, Offset, Reason, Status, Cause, Sample, Depth, Surface, ClearDistance)
-
-  local point=Sample and Sample.Point
-
-  return {
-    Status=Status,Reason=Reason,Cause=Cause,Distance=Distance,ClearDistance=Status=="unavailable" and 0 or ClearDistance,
-    RequiredDepth=MinDepth,ProfileOffset=Offset,Location=Sample and Sample.Location,
-    Point=point and {x=point.x,y=point.y,z=point.z},Depth=Depth,SurfaceType=Surface,
-  }
-end
-
---- Check one canonical profile, optionally measuring the first obstruction from the original start.
--- Fast neighbour checks stop on the first rejection. Detailed checks sort support points and interpolate the depth threshold.
--- @param DCS#Vec3 Start Canonical start position.
--- @param DCS#Vec3 Goal Canonical goal position.
--- @param #number Distance Segment length in meters.
--- @param #number MinDepth Required water depth in meters.
--- @param #number Offset Profile offset relative to the original direction.
--- @param #boolean Reverse Whether the original input direction is reversed.
--- @param #boolean Detailed Whether a diagnostic report is requested.
--- @return #boolean True if the profile is clear.
--- @return #string Rejection reason, or nil.
--- @return #ASTAR.DepthReport Diagnostic result on rejection when Detailed is true.
-function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Offset, Reverse, Detailed)
-
-  local samples=Detailed and {} or nil
-
-  -- Check actual endpoints even when DCS omits them from the returned profile.
+  -- DCS may omit the endpoints from its profile. Always check their actual depths as well.
   for i=1,2 do
     local point=i==1 and Start or Goal
-    local location=i==1 and "start" or "goal"
-    local clear,status,cause,depth,surface=ASTAR._CheckDepthPoint(point,MinDepth,false)
-    local reason=status=="unavailable" and cause or location.."_blocked"
+    local clear,status,cause=VECTOR._CheckDepthPoint(point,MinDepth,false)
 
-    if not Detailed and not clear then
-      return false,reason
-    end
-
-    if Detailed then
-      local sample={Point=point,Along=i==1 and 0 or Distance,Location=location,Reason=reason,
-        Checked=true,Clear=clear,Status=status,Cause=cause,Depth=depth,Surface=surface}
-
-      if Reverse then
-        sample.Along=Distance-sample.Along
-        sample.Location=location=="start" and "goal" or "start"
-      end
-
-      reason=status=="unavailable" and cause or sample.Location.."_blocked"
-      sample.Reason=reason
-
-      samples[#samples+1]=sample
-
-      -- No prefix can be proven if the starting position is blocked or an endpoint query failed.
-      if not clear and (status=="unavailable" or sample.Along==0) then
-        return false,reason,ASTAR._DepthReport(Distance,MinDepth,Offset,reason,status,cause,sample,depth,surface,0)
-      end
+    if not clear then
+      return false,status=="unavailable" and cause or (i==1 and "start_blocked" or "goal_blocked")
     end
   end
 
-  local profileOK,profile=pcall(land.profile,Start,Goal)
-  if not profileOK or type(profile)~="table" then
-    local reason=profileOK and "profile_unavailable" or "profile_query_failed"
-    return false,reason,Detailed and ASTAR._DepthReport(Distance,MinDepth,Offset,reason,"unavailable",reason)
+  local profile=land.profile(Start,Goal)
+  if type(profile)~="table" then
+    return false,"profile_unavailable"
   end
 
-  local ux,uz=(Goal.x-Start.x)/Distance,(Goal.z-Start.z)/Distance
-  local intervals=#profile<2 and math.max(2,math.ceil(Distance/100)) or 0
+  -- Under the linear-profile assumption, valid support points also bound the depths between them.
+  for i=1,#profile do
+    local clear,status,cause=VECTOR._CheckDepthPoint(profile[i],MinDepth,true)
 
-  if intervals>1000 then
-    local reason="profile_fallback_limit"
-    return false,reason,Detailed and ASTAR._DepthReport(Distance,MinDepth,Offset,reason,"unavailable",reason)
-  end
-
-  -- Short profiles also receive bounded direct samples. The same sample set is used in both modes.
-  for i=1,#profile+math.max(0,intervals-1) do
-    local useProfile=i<=#profile
-    local point=profile[i]
-    local location=useProfile and "profile" or "profile_fallback"
-
-    if not useProfile then
-      local fraction=(i-#profile)/intervals
-      point={x=Start.x+(Goal.x-Start.x)*fraction,z=Start.z+(Goal.z-Start.z)*fraction}
-    end
-
-    local along=ASTAR._GetDepthProfileDistance(point,Start,ux,uz,Distance)
-    if not along then
-      local reason="invalid_profile_position"
-      return false,reason,Detailed and ASTAR._DepthReport(Distance,MinDepth,Offset,reason,"unavailable",reason)
-    end
-
-    if Detailed then
-      samples[#samples+1]={Point=point,Along=Reverse and Distance-along or along,Location=location,UseProfile=useProfile}
-    else
-      local clear,status,cause=ASTAR._CheckDepthPoint(point,MinDepth,useProfile)
-      if not clear then
-        return false,status=="unavailable" and cause or location.."_blocked"
-      end
+    if not clear then
+      return false,status=="unavailable" and cause or "profile_blocked"
     end
   end
 
-  if Detailed then
-    table.sort(samples,function(a,b) return a.Along<b.Along end)
-    local previous
+  -- An empty or single-point profile cannot describe the whole connection.
+  -- Check additional positions at most 100 m apart, with a bound on the amount of work.
+  if #profile<2 then
+    local intervals=math.max(2,math.ceil(Distance/100))
+    if intervals>1000 then
+      return false,"profile_fallback_limit"
+    end
 
-    for _,sample in ipairs(samples) do
-      local clear,status,cause,depth,surface=sample.Clear,sample.Status,sample.Cause,sample.Depth,sample.Surface
-      if not sample.Checked then
-        clear,status,cause,depth,surface=ASTAR._CheckDepthPoint(sample.Point,MinDepth,sample.UseProfile)
-      end
+    for i=1,intervals-1 do
+      local fraction=i/intervals
+      local point={x=Start.x+(Goal.x-Start.x)*fraction,z=Start.z+(Goal.z-Start.z)*fraction}
+      local clear,status,cause=VECTOR._CheckDepthPoint(point,MinDepth,false)
 
       if not clear then
-        local reason=status=="unavailable" and cause or sample.Reason or sample.Location.."_blocked"
-        local clearDistance=previous and previous.Along or 0
-
-        -- Between numeric depth samples we assume linear change. Land has no proven transition position,
-        -- so its usable prefix ends at the previous valid sample instead of estimating a coastline.
-        if previous and depth and depth<MinDepth and previous.Depth and previous.Depth>=MinDepth then
-          local fraction=(previous.Depth-MinDepth)/(previous.Depth-depth)
-          clearDistance=previous.Along+(sample.Along-previous.Along)*fraction
-        end
-
-        return false,reason,ASTAR._DepthReport(Distance,MinDepth,Offset,reason,status,cause,sample,depth,surface,clearDistance)
-      end
-
-      -- DCS may include endpoints already checked directly. Keep the shallower bound when several
-      -- samples describe the same position; sorting ties must never change the interpolated prefix.
-      sample.Depth=depth
-      if previous and sample.Along==previous.Along then
-        previous.Depth=math.min(previous.Depth,depth)
-      else
-        previous=sample
+        return false,status=="unavailable" and cause or "profile_fallback_blocked"
       end
     end
   end
@@ -966,126 +766,61 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Offset, Reverse,
   return true
 end
 
---- Shared implementation for fast neighbour validity and detailed navigation checks.
+--- Check whether two nodes are connected by sufficiently deep water.
+-- Checks actual endpoints and land.profile() support points, using the shallower of profile and direct depth.
+-- Positive CorridorWidth also checks the two parallel edges; this does not cover the entire area between them.
+-- Profiles with fewer than two points receive bounded direct samples at a maximum gap of 100 meters.
+-- Coincident horizontal positions check only that position. Node altitude is ignored.
+-- This neighbour rule returns immediately on rejection and does not build or sort diagnostic samples.
+-- Use PATHLINE.CheckDepth() when the position and distance of the first obstruction are needed.
 -- @param #ASTAR.Node nodeA First node.
 -- @param #ASTAR.Node nodeB Second node.
--- @param #number MinDepth Optional minimum water depth in meters; default 20.
--- @param #number CorridorWidth Optional total corridor width in meters; default 0.
--- @param #boolean Detailed Whether to report the original-direction usable prefix.
--- @return #boolean True when all depth checks pass.
--- @return #string Rejection reason, or nil.
--- @return #ASTAR.DepthReport Optional detailed result.
-function ASTAR._CheckDepth(nodeA, nodeB, MinDepth, CorridorWidth, Detailed)
+-- @param #number MinDepth (Optional) Positive finite minimum water depth in meters, inclusive; default 20.
+-- @param #number CorridorWidth (Optional) Non-negative finite total corridor width in meters; default 0.
+-- @return #boolean True when every check passes; false for blocked or unusable terrain data.
+-- @return #string Reason for rejection, or nil on success. Start/goal refer to the canonical query direction.
+function ASTAR.Depth(nodeA, nodeB, MinDepth, CorridorWidth)
 
-  if MinDepth==nil then
-    MinDepth=20
-  end
+  if MinDepth==nil then MinDepth=20 end
+  if CorridorWidth==nil then CorridorWidth=0 end
 
-  if CorridorWidth==nil then
-    CorridorWidth=0
-  end
+  assert(MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
+  assert(CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
 
-  assert(type(MinDepth)=="number" and MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
-  assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
-
-  local a=type(nodeA)=="table" and nodeA.vector
-  local b=type(nodeB)=="table" and nodeB.vector
-  if type(a)~="table" or type(b)~="table" or type(a.x)~="number" or type(a.z)~="number"
-    or type(b.x)~="number" or type(b.z)~="number" then
-    local reason="invalid_position"
-    return false,reason,Detailed and ASTAR._DepthReport(0,MinDepth,0,reason,"unavailable",reason)
-  end
-
+  local a,b=nodeA.vector,nodeB.vector
   local dx,dz=b.x-a.x,b.z-a.z
   local distance=math.sqrt(dx*dx+dz*dz)
-  if not (distance<math.huge) then
-    local reason="invalid_distance"
-    return false,reason,Detailed and ASTAR._DepthReport(0,MinDepth,0,reason,"unavailable",reason)
-  end
 
-  if type(land)~="table" or type(land.SurfaceType)~="table" or type(land.SurfaceType.WATER)~="number"
-    or type(land.SurfaceType.SHALLOW_WATER)~="number" or type(land.profile)~="function"
-    or type(land.getSurfaceType)~="function" or type(land.getSurfaceHeightWithSeabed)~="function" then
-    local reason="depth_api_unavailable"
-    return false,reason,Detailed and ASTAR._DepthReport(distance,MinDepth,0,reason,"unavailable",reason)
+  if not (distance<math.huge) then
+    return false,"invalid_distance"
   end
 
   if distance==0 then
-    local clear,status,cause,depth,surface=ASTAR._CheckDepthPoint(a,MinDepth,false)
-    local reason=not clear and (status=="unavailable" and cause or "start_blocked") or nil
-    local report=Detailed and ASTAR._DepthReport(0,MinDepth,0,reason,status,cause,
-      {Point=a,Location="start"},depth,surface,0)
-    return clear,reason,report
+    local clear,status,cause=VECTOR._CheckDepthPoint(a,MinDepth,false)
+    return clear,not clear and (status=="unavailable" and cause or "start_blocked") or nil
   end
 
-  -- Keep native profile queries symmetric for A* caching, but measure diagnostics in the caller's direction.
-  local reverse=a.x>b.x or (a.x==b.x and a.z>b.z)
-  if reverse then
+  -- Query DCS in the same direction for A -> B and B -> A, matching A*'s symmetric validity cache.
+  if a.x>b.x or (a.x==b.x and a.z>b.z) then
     a,b=b,a
     dx,dz=-dx,-dz
   end
 
   local nx,nz=-dz/distance,dx/distance
   local lines=CorridorWidth>0 and 3 or 1
-  local earliest
 
   for i=1,lines do
     local offset=i==2 and CorridorWidth/2 or (i==3 and -CorridorWidth/2 or 0)
     local start={x=a.x+nx*offset,y=0,z=a.z+nz*offset}
     local goal={x=b.x+nx*offset,y=0,z=b.z+nz*offset}
-    local clear,reason,report=ASTAR._CheckDepthLine(start,goal,distance,MinDepth,reverse and -offset or offset,reverse,Detailed)
+    local clear,reason=ASTAR._CheckDepthLine(start,goal,distance,MinDepth)
 
     if not clear then
-      if not Detailed or report.Status=="unavailable" then
-        return false,reason,report
-      end
-
-      -- A side profile may become unsafe before the center line does.
-      if not earliest or report.ClearDistance<earliest.ClearDistance then
-        earliest=report
-      end
+      return false,reason
     end
   end
 
-  if earliest then
-    return false,earliest.Reason,earliest
-  end
-
-  return true,nil,Detailed and {Status="clear",Distance=distance,ClearDistance=distance,RequiredDepth=MinDepth}
-end
-
---- Check whether two nodes are connected by sufficiently deep water using land.profile().
--- Checks actual endpoints and all returned support points, assuming linear terrain between points. Uses the shallower
--- of profile and direct depth. Profiles with fewer than two points also use direct samples at a maximum gap of 100 m,
--- limited to 1000 intervals. Positive width checks the center and both parallel edges, not the entire area between them.
--- Coincident horizontal positions check only that position. Node altitude is ignored. Canonical native queries make
--- validity symmetric. This fast neighbour rule stops on rejection and does not construct detailed diagnostic reports.
--- @param #ASTAR.Node nodeA First node.
--- @param #ASTAR.Node nodeB Other node.
--- @param #number MinDepth Optional positive finite minimum water depth in meters, inclusive; default 20.
--- @param #number CorridorWidth Optional non-negative finite total corridor width in meters; default 0.
--- @return #boolean True if every check passes; false for blocked or unavailable terrain data.
--- @return #string Reason for rejection, or nil on success. Start/goal refer to the canonical query direction.
-function ASTAR.Depth(nodeA, nodeB, MinDepth, CorridorWidth)
-  local clear,reason=ASTAR._CheckDepth(nodeA,nodeB,MinDepth,CorridorWidth,false)
-  return clear,reason
-end
-
---- Inspect navigable depth and the usable prefix between two nodes.
--- Applies exactly the same rule as Depth(), using at most one native profile per checked line. Support points are
--- ordered from the original first node. The first insufficient depth is linearly interpolated from the previous valid
--- sample; a non-water sample instead limits the prefix to the previous valid point. ClearDistance is therefore a terrain
--- estimate under the interpolation assumption, not a ship's braking distance or a complete swept-area guarantee.
--- Missing, malformed, or failing terrain queries return Status="unavailable" and ClearDistance=0.
--- @param #ASTAR.Node nodeA Original start node.
--- @param #ASTAR.Node nodeB Original goal node.
--- @param #number MinDepth Optional positive finite minimum water depth in meters, inclusive; default 20.
--- @param #number CorridorWidth Optional non-negative finite total corridor width in meters; default 0.
--- @return #boolean True if all checks pass.
--- @return #string Reason for rejection, or nil on success.
--- @return #ASTAR.DepthReport Structured result, including the usable prefix measured from nodeA.
-function ASTAR.CheckDepth(nodeA, nodeB, MinDepth, CorridorWidth)
-  return ASTAR._CheckDepth(nodeA,nodeB,MinDepth,CorridorWidth,true)
+  return true
 end
 
 --- Check for a DCS road connection between nodes within the maximum straight-line 2D distance.
@@ -1815,8 +1550,6 @@ end
 -- @param #ASTAR self
 -- @param Core.Grid#GRID.GridOptions Options (Optional) Partial grid configuration.
 -- @return #ASTAR self.
----@param Options? GRID.GridOptions
----@return ASTAR
 function ASTAR:SetGridOptions(Options)
   self.Grid:SetOptions(Options)
   self:_SyncGrid()
