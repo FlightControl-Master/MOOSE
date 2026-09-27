@@ -2105,7 +2105,7 @@ local navyFile=assert(io.open("Moose Development/Moose/Ops/NavyGroup.lua","r"))
 local navySource=navyFile:read("*a"):gsub("\r\n","\n") navyFile:close()
 NAVYGROUP={}
 for _,name in ipairs({"_GetPathfindingTarget","_FindPathToNextWaypoint","_ClearPathfindingDrawing","_GetPathfindingCorridorWidth","_CheckPathDepth",
-  "_CanNavigate","_FailPathfinding","_UpdateNavigationWarning","_CheckNavigation",
+  "_CanNavigate","_FailPathfinding","_UpdateNavigationWarning","_GetNavigationWaypoint","_CheckNavigation",
   "onafterFullStop","onafterCruise","onafterCollisionWarning","onafterClearAhead","onafterTurningStopped",
   "SetPathfinding","SetPathfindingOn","SetPathfindingOff","SetPathfindingMinDepth","SetPathfindingGrid","onafterUpdateRoute","onafterTurnIntoWindOver",
   "_CreateTurnIntoWind","AddTurnIntoWind","RemoveTurnIntoWind","AddTaskAttackGroup","_CheckTurning",

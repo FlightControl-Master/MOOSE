@@ -49,7 +49,8 @@
 -- @field #string pathfindingMode Navigation strategy from NAVYGROUP.PathfindingMode; default WAYPOINT.
 -- @field #NAVYGROUP.LocalNavigation localNavigation Private local route and search window; independent of mission waypoints.
 -- @field #number localNavigationRevision Monotonic identifier used to reject obsolete local waypoint callbacks.
--- @field #number localNavigationTaskUID Completed waypoint whose queued DCS tasks have not started yet.
+-- @field #number localNavigationTaskUID Completed local destination whose waypoint tasks must finish before route submission.
+-- @field #NAVYGROUP.LocalNavigationCommand localNavigationCommand Explicit native destination while waiting for an obstacle in LOCAL mode.
 -- @field Core.Timer#TIMER timerNavigation Independent timer for local route checks.
 -- @field Core.Pathline#PATHLINE.DepthReport LastNavigationCheck Last local depth check; unavailable data is distinct from an obstacle.
 -- @field #table LastPathfindingResult Last expansion report or direct-path/failure status.
@@ -78,7 +79,9 @@
 -- Disabling pathfinding keeps collision warnings active but prevents automatic route changes and stops.
 --
 -- SetPathfindingMode(NAVYGROUP.PathfindingMode.LOCAL) selects experimental rolling local navigation.
--- It searches a small, fine grid ahead and to either side, and submits only validated local waypoints.
+-- Normal route following continues until the collision check finds an obstacle; selecting LOCAL alone does not search.
+-- The active detour searches a small, fine grid ahead and to either side, and submits only validated local waypoints.
+-- It continues to the next original waypoint, then returns to normal route following until another obstacle is found.
 -- The next original waypoint provides a preferred direction; no complete route to it is required.
 -- Local navigation may enter a dead end. Failure stops the group without retries or reverse recovery.
 -- Actual position controls progress; early DCS callbacks cannot advance the local route.
@@ -105,9 +108,15 @@ NAVYGROUP = {
 --- Naval pathfinding strategies. Selecting a mode does not enable pathfinding or release a hold.
 -- @type NAVYGROUP.PathfindingMode
 -- @field #string WAYPOINT Search all the way to the next original waypoint after detecting an obstacle (default).
--- @field #string LOCAL Continuously plan and follow bounded local sections towards the next original waypoint.
+-- @field #string LOCAL After detecting an obstacle, follow bounded local sections to the next original waypoint.
 ---@enum NAVYGROUP.PathfindingMode
 NAVYGROUP.PathfindingMode={WAYPOINT="waypoint",LOCAL="local"}
+
+--- Explicit native destination retained until the current mission waypoint changes.
+-- This command stores no search grid or local plan; it lets collision checks follow GotoWaypoint correctly.
+-- @type NAVYGROUP.LocalNavigationCommand
+-- @field #number TargetUID Explicitly commanded native waypoint UID.
+-- @field #number SourceUID Current waypoint UID when the native route was submitted.
 
 --- Private local-navigation state. Native local points are not inserted into the mission waypoint list.
 -- @type NAVYGROUP.LocalNavigation
@@ -556,7 +565,8 @@ end
 --- Select the naval route-search strategy without starting or resuming movement.
 -- LOCAL uses an approximately 4 by 2 km hex window with FINE resolution (50 m spacing), at most eight
 -- intermediate goals and the configured cell budget. It does not expand to find a global escape route.
--- SetPathfindingOn() enables the selected strategy. Changing it invalidates local plans and drawings;
+-- SetPathfindingOn() enables the selected strategy. Both modes search only after an obstacle is detected.
+-- Changing the strategy invalidates local plans and drawings;
 -- the next permitted route update or navigation tick uses the new strategy. Holding remains authoritative.
 -- @param #NAVYGROUP self
 -- @param #string Mode (Optional) NAVYGROUP.PathfindingMode.WAYPOINT (default) or NAVYGROUP.PathfindingMode.LOCAL.
@@ -571,6 +581,7 @@ function NAVYGROUP:SetPathfindingMode(Mode)
 
   local hadLocalRoute=self.localNavigation~=nil
   self:_ResetLocalNavigation()
+  self.localNavigationCommand=nil
   self.pathfindingMode=Mode
   if hadLocalRoute and self:_CanNavigate() then
     self:__UpdateRoute(0.01)
@@ -1398,10 +1409,29 @@ end
 -- @param #number Depth Depth in meters to the next waypoint.
 function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
 
-  -- Every native route update must obey the local frontier, including Cruise, GotoWaypoint and patrol wrap.
-  if self.pathfindingOn and self.pathfindingMode=="local" then
+  -- A completed local leg may have queued waypoint tasks whose native startup callback is still pending.
+  -- Ordinary route updates must not overwrite those tasks while waiting for them to start or finish.
+  if self.localNavigationTaskUID then
+    if not self:_CanNavigate() or self:CountTasksWaypoint(self.localNavigationTaskUID)>0 then return end
+    self.localNavigationTaskUID=nil
+  end
+
+  -- Only an active avoidance route owns the local frontier. Selecting LOCAL alone leaves the native route intact.
+  if self.pathfindingOn and self.pathfindingMode=="local" and self.localNavigation then
     self:_CheckLocalNavigation(true,Speed,Depth,n)
     return
+  end
+
+  -- GotoWaypoint does not advance currentwp. Retain its explicit destination for later collision checks
+  -- and speed/depth updates until a waypoint callback advances the mission route.
+  if self.pathfindingMode=="local" then
+    if n then
+      local target=self.waypoints[n]
+      self.localNavigationCommand=target and {TargetUID=target.uid,SourceUID=self:GetWaypointCurrentUID()} or nil
+    else
+      local target=self:_GetNavigationWaypoint()
+      n=target and self:GetWaypointIndex(target.uid)
+    end
   end
 
   -- Update route from this waypoint number onwards.
@@ -1694,6 +1724,7 @@ function NAVYGROUP:onafterFullStop(From, Event, To)
   -- This command replaces the native task as well as its route. A cancelled task-start callback
   -- must not keep a later explicit Cruise blocked behind the local startup guard.
   self.localNavigationTaskUID=nil
+  self.localNavigationCommand=nil
   if self.localNavigation then
     self:_ResetLocalNavigation()
   end
@@ -2240,6 +2271,22 @@ function NAVYGROUP:_UpdateNavigationWarning(Report)
   end
 end
 
+--- Resolve the next native destination, including an explicit GotoWaypoint command in LOCAL mode.
+-- The override expires when mission progress changes or its waypoint is removed.
+-- @param #NAVYGROUP self
+-- @return Ops.OpsGroup#OPSGROUP.Waypoint Next native waypoint, or nil.
+function NAVYGROUP:_GetNavigationWaypoint()
+
+  local command=self.localNavigationCommand
+  if command and command.SourceUID==self:GetWaypointCurrentUID() then
+    local waypoint=self:GetWaypointByID(command.TargetUID)
+    if waypoint then return waypoint end
+  end
+
+  self.localNavigationCommand=nil
+  return self:GetWaypointNext()
+end
+
 --- Check the upcoming route every ten seconds while the ship is not turning.
 -- Examines at most 5000 meters towards the next waypoint. A blocked connection triggers one search
 -- when pathfinding is enabled; failed planning stops the ship without automatic retries.
@@ -2249,7 +2296,16 @@ function NAVYGROUP:_CheckNavigation()
   -- Read live headings here; the general status timer only samples every thirty seconds.
   self:_CheckTurning()
 
-  if self.pathfindingOn and self.pathfindingMode=="local" then
+  -- Once a local destination's tasks finish, resume the ordinary route exactly once. Tasks at later
+  -- waypoints can keep OPSGROUP's general completion handler from issuing that route update itself.
+  if self.localNavigationTaskUID then
+    if not self:_CanNavigate() or self:CountTasksWaypoint(self.localNavigationTaskUID)>0 then return end
+    self.localNavigationTaskUID=nil
+    self:__UpdateRoute(0.01)
+    return
+  end
+
+  if self.pathfindingOn and self.pathfindingMode=="local" and self.localNavigation then
     self:_CheckLocalNavigation()
     return
   end
@@ -2258,10 +2314,13 @@ function NAVYGROUP:_CheckNavigation()
     return
   end
 
-  local waypoint=self:GetWaypointNext()
+  local waypoint=self:_GetNavigationWaypoint()
   if not waypoint then
     return
   end
+  local command=self.localNavigationCommand
+  local mode=self.pathfindingMode
+  local targetX,targetZ=waypoint.coordinate.x,waypoint.coordinate.z
 
   local position=VECTOR:NewFromVec(self:GetVec3())
   local goal=VECTOR:NewFromVec(waypoint.coordinate)
@@ -2276,7 +2335,9 @@ function NAVYGROUP:_CheckNavigation()
   self:_UpdateNavigationWarning(report)
 
   -- Warning callbacks may disable pathfinding, stop the ship or change the route.
-  if not self.pathfindingOn or not self:_CanNavigate() or self:GetWaypointNext()~=waypoint then
+  if not self.pathfindingOn or not self:_CanNavigate() or self:_GetNavigationWaypoint()~=waypoint
+    or self.localNavigationCommand~=command or self.pathfindingMode~=mode or self.localNavigation
+    or waypoint.coordinate.x~=targetX or waypoint.coordinate.z~=targetZ then
     return
   end
 
@@ -2284,7 +2345,13 @@ function NAVYGROUP:_CheckNavigation()
     -- Missing terrain data is not an obstacle that a larger grid can resolve.
     self:_FailPathfinding({StopReason=reason,Attempts={},DepthCheck=report})
   elseif not clear then
-    self:_FindPathToNextWaypoint()
+    if self.pathfindingMode=="local" then
+      -- Activation happens only here, after an obstacle was measured on the native route.
+      -- Keep the submitted speed and depth when handing navigation to the local planner.
+      self:_CheckLocalNavigation(true,nil,self.altWp and -self.altWp,command and self:GetWaypointIndex(waypoint.uid))
+    else
+      self:_FindPathToNextWaypoint()
+    end
   end
 end
 
@@ -2645,15 +2712,15 @@ function NAVYGROUP:_CompleteLocalLeg()
 
   local uid=self.localNavigation.TargetUID
   self:_ResetLocalNavigation()
+  self.localNavigationCommand=nil
   self.localNavigationTaskUID=uid
   OPSGROUP._PassingWaypoint(self,uid)
 
-  -- Ordinary waypoint tasks become taskcurrent only when their native startup callback runs.
-  -- Keep the submitted ComboTask intact during that gap, including at intermediate waypoints.
-  if self:CountTasksWaypoint(uid)==0 then
+  -- Ordinary tasks become taskcurrent in a later native callback; mission tasks can start immediately.
+  -- Keep their route intact in both cases. The timer resumes normal navigation once all tasks release it.
+  -- A callback that already updated the route or stopped the ship has cleared this marker itself.
+  if self.localNavigationTaskUID==uid and self:CountTasksWaypoint(uid)==0 and self:_CanNavigate() then
     self.localNavigationTaskUID=nil
-  end
-  if not self.localNavigationTaskUID and self.pathfindingOn and self.pathfindingMode=="local" and self:_CanNavigate() then
     self:__UpdateRoute(0.01)
   end
   return true
@@ -2842,7 +2909,7 @@ function NAVYGROUP:_CheckLocalNavigation(Force, Speed, Depth, First)
   local navigation=self.localNavigation
   local target
   if First then
-    target=self.waypoints[First]
+    target=self:_GetPathfindingTarget(First)
   elseif navigation and navigation.Commanded and self:GetWaypointCurrentUID()==navigation.SourceUID then
     target=self:GetWaypointByID(navigation.TargetUID)
   else
@@ -2853,6 +2920,14 @@ function NAVYGROUP:_CheckLocalNavigation(Force, Speed, Depth, First)
   local position=VECTOR:NewFromVec(self:GetVec3())
   local changed=not navigation or navigation.Target~=target
     or navigation.TargetPosition.x~=target.coordinate.x or navigation.TargetPosition.z~=target.coordinate.z
+
+  if changed and navigation and navigation.Target then
+    -- A new or edited destination is a new native leg. Do not carry avoidance over to it without
+    -- first detecting an obstacle there; subsequent timer ticks will examine the replacement route.
+    self:_ResetLocalNavigation()
+    self:__UpdateRoute(0.01,First,nil,Speed,Depth)
+    return false
+  end
 
   if changed then
     self:_ResetLocalNavigation()
@@ -3375,11 +3450,12 @@ end
 
 --- Find the original route target beyond outstanding ASTAR detour points.
 -- @param #NAVYGROUP self
+-- @param #number First (Optional) First native waypoint index. Defaults to the next mission waypoint.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Original target, or nil.
 -- @return #table IDs of outstanding detour points before that target.
-function NAVYGROUP:_GetPathfindingTarget()
+function NAVYGROUP:_GetPathfindingTarget(First)
   local pending={}
-  local index=self:GetWaypointIndexNext()
+  local index=First or self:GetWaypointIndexNext()
   for _=1,#self.waypoints do
     if not index then break end
     if index>#self.waypoints then
