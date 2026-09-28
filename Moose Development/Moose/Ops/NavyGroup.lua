@@ -46,6 +46,8 @@
 -- @field #number pathCorridor Explicit total width of the checked naval corridor in meters; nil derives it from ship dimensions.
 -- @field #boolean ispathfinding If true, group is following an ASTAR detour.
 -- @field #number pathMinDepth Minimum water depth for planning and collision checks in meters; default 20.
+-- @field #number pathPreferredDepth Optional preferred water depth for A* costs; nil disables the preference.
+-- @field #number pathDepthWeight Strength of the optional shallow-water cost penalty; default 2.
 -- @field #string pathfindingMode Navigation strategy from NAVYGROUP.PathfindingMode; default WAYPOINT.
 -- @field #NAVYGROUP.LocalNavigation localNavigation Private local route and search window; independent of mission waypoints.
 -- @field #number localNavigationTaskUID Completed local destination whose waypoint tasks must finish before route submission.
@@ -67,8 +69,9 @@
 -- This class enhances naval groups.
 --
 -- Navigation checks the next 5000 meters of the route every ten seconds, capped at the next waypoint.
--- Checks are suspended while the group is turning. Terrain profiles use the configured minimum depth
--- along the center and both edges of the ship's clearance corridor; they do not predict a turning arc.
+-- These long route checks pause during turns. With pathfinding enabled, an independent short hull/heading
+-- check runs every two seconds, including turns, and stops on immediate danger or unavailable depth data.
+-- Terrain profiles use the configured minimum depth; neither check predicts the actual DCS turning arc.
 -- CollisionWarning and ClearAhead report changes in the measured route clearance.
 --
 -- With SetPathfindingOn(), an obstacle triggers one bounded A* search to the next original waypoint.
@@ -78,7 +81,8 @@
 -- Disabling pathfinding keeps collision warnings active but prevents automatic route changes and stops.
 --
 -- SetPathfindingMode(NAVYGROUP.PathfindingMode.LOCAL) selects experimental rolling local navigation.
--- Normal route following continues until the collision check finds an obstacle; selecting LOCAL alone does not search.
+-- Normal route following continues until a detected obstacle enters the speed-based local planning horizon.
+-- The 5 km warning remains active before then; selecting LOCAL alone does not search.
 -- The active detour searches a small, fine grid ahead and to either side, and submits only validated local waypoints.
 -- It continues to the next original waypoint, then returns to normal route following until another obstacle is found.
 -- The next original waypoint provides a preferred direction; no complete route to it is required.
@@ -134,6 +138,9 @@ NAVYGROUP.PathfindingMode={WAYPOINT="waypoint",LOCAL="local"}
 -- @field #boolean GoalReached Whether the installed path ends at the original destination.
 -- @field #table Window Cached local GRID and ASTAR, owned by this navigation leg.
 -- @field #table Pending Validated continuation awaiting a stable heading before submission.
+-- @field #table ExtensionFailure Last failed continuation/replacement and whether replanning awaits the end of a turn.
+-- @field #table SteeringFailures Rejected A* candidates from the latest local planning attempt.
+-- @field #table TargetTurnCheck Last check of the turn required to resume ordinary routing.
 -- @field #boolean NeedsSubmit Explicit speed/depth or route update awaiting a stable heading.
 -- @field #table DeviationNotice Last reported segment/turn state while away from the planned line.
 -- @field #table TargetCheckNotices Last logged target-horizon failures, by check stage.
@@ -491,8 +498,9 @@ function NAVYGROUP:New(group)
   -- Start the status monitoring.
   self.timerStatus=TIMER:New(self.Status, self):Start(1, 30)
 
-  -- Sample heading and route clearance independently of the general status update.
-  self.timerNavigation=TIMER:New(self._CheckNavigation, self):Start(2, 10)
+  -- Inspect the moving hull every two seconds, including turns. The same callback keeps
+  -- expensive route checks and planning on their separate ten-second cadence.
+  self.timerNavigation=TIMER:New(self._CheckNavigation, self):Start(2, 2)
 
   -- Start queue update timer.
   self.timerQueueUpdate=TIMER:New(self._QueueUpdate, self):Start(2, 5)
@@ -529,6 +537,7 @@ end
 -- Search grids use GRID.Resolution.FINE with GRID.Width.NORMAL and GRID.Margin.NORMAL; no grid dimensions are required.
 -- SetPathfindingMinDepth() configures depth separately. Profiles assume linear terrain between their points;
 -- three parallel checks do not cover the entire corridor or simulate the ship's turning arc.
+-- SetPathfindingPreferredDepth() optionally makes A* trade extra distance for deeper water in either search mode.
 -- @param #NAVYGROUP self
 -- @param #boolean Switch If true, enable pathfinding.
 -- @param #number CorridorWidth (Optional) Total water corridor width in meters. Default: widest ship plus 10 m on each side; 50 m if dimensions are unavailable. Zero checks only the center line.
@@ -622,6 +631,39 @@ function NAVYGROUP:SetPathfindingMinDepth(MinDepth)
   assert(type(MinDepth)=="number" and MinDepth>0 and MinDepth<math.huge,"NAVYGROUP: minimum depth must be finite and positive")
 
   self.pathMinDepth=MinDepth
+
+  return self
+end
+
+--- Prefer deeper water during path searches, without changing the collision threshold.
+-- At PreferredDepth and deeper, A* uses ordinary distance costs. Towards the minimum depth,
+-- a quadratic penalty increases the cost up to 1 + Weight times the distance. Shallower water
+-- remains blocked by SetPathfindingMinDepth(). A clear target horizon still resumes normal routing
+-- using only the minimum depth. New searches use this setting; the installed route remains active.
+-- @param #NAVYGROUP self
+-- @param #number PreferredDepth (Optional) Positive finite depth in meters; nil disables the preference. At/below the minimum adds no penalty.
+-- @param #number Weight (Optional) Finite non-negative penalty strength; default 2. Zero adds no penalty.
+-- @return #NAVYGROUP self.
+---@param PreferredDepth? number
+---@param Weight? number
+---@return NAVYGROUP
+function NAVYGROUP:SetPathfindingPreferredDepth(PreferredDepth, Weight)
+
+  if Weight==nil then Weight=2 end
+  assert(PreferredDepth==nil or (PreferredDepth>0 and PreferredDepth<math.huge),
+    "NAVYGROUP: preferred depth must be finite and positive")
+  assert(Weight>=0 and Weight<math.huge,"NAVYGROUP: depth weight must be finite and non-negative")
+
+  if self.pathPreferredDepth~=PreferredDepth or self.pathDepthWeight~=Weight then
+    self.pathPreferredDepth=PreferredDepth
+    self.pathDepthWeight=Weight
+
+    -- Do not replace a route while the ship is turning; only discard plans not yet submitted.
+    if self.localNavigation then
+      self.localNavigation.Window=nil
+      self.localNavigation.Pending=nil
+    end
+  end
 
   return self
 end
@@ -791,7 +833,7 @@ end
 -- @param #string stoptime (Optional) Stop time, e.g. "9:00" for nine o'clock. Default 90 minutes after start time.
 -- @param #number speed (Optional) Wind speed on deck in knots during turn into wind leg. Default 20 knots.
 -- @param #boolean uturn (Optional) If `true` (or `nil`), carrier wil perform a U-turn and go back to where it came from before resuming its route to the next waypoint. If false, it will go directly to the next waypoint.
--- @param #number offset (Optional) Offset angle clock-wise in degrees, *e.g.* to account for an angled runway. Default 0 deg. Use around -9.1° for US carriers.
+-- @param #number offset (Optional) Offset angle clock-wise in degrees, *e.g.* to account for an angled runway. Default 0 deg. Use around -9.1ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â° for US carriers.
 -- @return #NAVYGROUP.IntoWind Turn into window data table, or nil when its timing is invalid.
 function NAVYGROUP:AddTurnIntoWind(starttime, stoptime, speed, uturn, offset)
 
@@ -2291,14 +2333,42 @@ function NAVYGROUP:_GetNavigationWaypoint()
   return nextWaypoint
 end
 
---- Check the upcoming route every ten seconds while the ship is not turning.
--- Examines at most 5000 meters towards the next waypoint. A blocked connection triggers one search
--- when pathfinding is enabled; failed planning stops the ship without automatic retries.
+--- Check the moving hull every two seconds and maintain the route every ten seconds.
+-- The short hull/heading check runs during turns too; it never starts a search.
+-- The ordinary route check examines at most 5000 meters towards the next waypoint. In LOCAL mode a distant obstruction only
+-- warns; planning starts when it reaches the speed-based local horizon. WAYPOINT searches start at once.
+-- Failed planning stops the ship without automatic retries.
 -- @param #NAVYGROUP self
 function NAVYGROUP:_CheckNavigation()
 
   -- Read live headings here; the general status timer only samples every thirty seconds.
   self:_CheckTurning()
+
+  -- Immediate clearance follows the actual hull and heading, not a possibly outdated waypoint.
+  -- Do this before target release, local extension or the usual turn-related route-check bypass.
+  if self.pathfindingOn and self:_CanNavigate() then
+    local navigation,command=self.localNavigation,self.navigationCommand
+    local clear,reason,report=self:_CheckNavigationNearfield()
+    self.LastNearfieldCheck=report
+    report.Time=timer.getTime()
+
+    if not clear then
+      self:_UpdateNavigationWarning(report)
+
+      -- A warning callback may hold, disable or replace navigation itself.
+      if self.pathfindingOn and self:_CanNavigate() and self.localNavigation==navigation
+        and self.navigationCommand==command then
+        self:_FailPathfinding({StopReason=report.Status=="blocked" and "nearfield_blocked" or reason,
+          DepthCheck=report,Mode=self.pathfindingMode})
+      end
+      return
+    end
+  end
+
+  -- More frequent safety samples must not multiply grids, A* searches or route submissions.
+  local now=timer.getTime()
+  if self.navigationCheckTime and now>=self.navigationCheckTime and now-self.navigationCheckTime<10 then return end
+  self.navigationCheckTime=now
 
   -- Once a local destination's tasks finish, resume the ordinary route exactly once. Tasks at later
   -- waypoints can keep OPSGROUP's general completion handler from issuing that route update itself.
@@ -2343,13 +2413,46 @@ function NAVYGROUP:_CheckNavigation()
     self:_FailPathfinding({StopReason=reason,Attempts={},DepthCheck=report})
   elseif not clear then
     if self.pathfindingMode=="local" then
-      -- Activation happens only here, after an obstacle was measured on the native route.
+      local searchDistance,ahead=self:_GetLocalNavigationHorizon(self.speedWp or waypoint.speed)
+      report.LocalSearchDistance,report.LocalSearchAhead=searchDistance,ahead
+
+      -- Warn early, but do not plan an empty approach while the obstruction is outside the grid.
+      -- Recheck its current distance each tick, even when CollisionWarning is already active.
+      if report.ClearDistance>searchDistance then return end
+
+      self:T(self.lid..string.format("Local navigation activated: clear distance %.0f m, search trigger %.0f m, window %.0f m ahead",
+        report.ClearDistance,searchDistance,ahead))
+
       -- Keep the submitted speed and depth when handing navigation to the local planner.
       self:_CheckLocalNavigation(true,nil,self.altWp and -self.altWp)
     else
       self:_FindPathToNextWaypoint()
     end
   end
+end
+
+--- Match the local search trigger and forward grid extent to the ship's speed.
+-- Uses the greater of commanded and actual speed so acceleration or deceleration cannot shrink
+-- the allowance prematurely. Add one ten-second check interval to the existing manoeuvring
+-- allowance; this remains a planning margin, not a measured DCS turning radius or stopping distance.
+-- @param #NAVYGROUP self
+-- @param #number Speed (Optional) Commanded speed in m/s; defaults to the current waypoint/cruise speed.
+-- @return #number Obstruction distance at which LOCAL activates, capped at the 5000 m warning horizon.
+-- @return #number Forward grid extent, at least 3000 m and at least 500 m beyond the trigger.
+function NAVYGROUP:_GetLocalNavigationHorizon(Speed)
+
+  local speed=Speed or self.speedWp or 0
+  if speed<=0 then speed=UTILS.KnotsToMps(self:GetSpeedCruise()) end
+  speed=math.max(speed,self:GetVelocity() or 0)
+
+  local reserve=math.max(400,speed*60)
+  local searchDistance=math.min(5000,math.max(2000,reserve+1000)+speed*10)
+
+  -- Grow in 500 m steps, keeping room beyond the first obstruction. Small speed changes should
+  -- not constantly rebuild the grid, and even extreme speeds must keep the local search bounded.
+  local ahead=math.max(3000,math.ceil((searchDistance+500)/500)*500)
+  return searchDistance,ahead
+
 end
 
 --- Check the normal collision horizon towards an original waypoint.
@@ -2401,7 +2504,7 @@ function NAVYGROUP:_LogLocalTargetCheck(Report, Stage)
   Report.NavigationStage=Stage
   Report.TargetUID=navigation.TargetUID
   notices[Stage]={Time=now,Report=Report}
-  self:_LogNavigationDepthCheck(Report,Stage=="target_lookahead" and "continue_local" or "local_extension")
+  self:_LogNavigationDepthCheck(Report,(Stage=="target_lookahead" or Stage=="target_turn") and "continue_local" or "local_extension")
 end
 
 --- Leave local avoidance when the normal collision horizon towards the destination is clear.
@@ -2433,6 +2536,25 @@ function NAVYGROUP:_TryResumeWaypointRoute()
     return false
   end
 
+  if clear and position:GetDistance(checkedGoal,true)>0.1 then
+    -- Releasing the detour creates a new initial turn too. A free straight target profile alone
+    -- must not bypass the corner allowance used when choosing local steering points.
+    local speed=math.max(navigation.Speed,self:GetVelocity() or 0)
+    local turnClear,turnReport=self:_CheckLocalTurn(position,self:GetHeading(),position:GetHeadingTo(checkedGoal),speed)
+    navigation.TargetTurnCheck=turnReport
+    if not turnClear then
+      report=turnReport.DepthCheck
+      report.NavigationStage="target_turn"
+      report.TargetUID=navigation.TargetUID
+      report.CheckStart,report.CheckGoal=position,checkedGoal
+      if report.Status~="unavailable" then
+        self:_LogLocalTargetCheck(report,"target_turn")
+        return false
+      end
+      reason=report.Reason
+    end
+  end
+
   self:_UpdateNavigationWarning(report)
 
   -- ClearAhead callbacks can stop, retarget or disable navigation. Never overwrite their commands.
@@ -2457,15 +2579,18 @@ function NAVYGROUP:_TryResumeWaypointRoute()
 end
 
 --- Get or rebuild the fixed grid used by local naval navigation.
--- The heading-aligned window extends 3 km ahead, 1 km behind and 1 km to either side of its origin.
--- Geometry and edge rules stay unchanged while reused. Progress, heading, target or configuration changes rebuild it.
+-- The heading-aligned window extends at least 3 km ahead, 1 km behind and 1 km to either side of its origin.
+-- Faster ships grow the front to cover the activation horizon plus 500 m, capped at 5.5 km ahead.
+-- Geometry and edge rules stay unchanged while reused. A higher speed can require a larger window;
+-- slowing down keeps an already sufficient window. Progress, heading, target or configuration changes rebuild it.
 -- @param #NAVYGROUP self
 -- @param Core.Vector#VECTOR Start Actual ship position.
 -- @param #number Heading Current heading in degrees.
 -- @param Ops.OpsGroup#OPSGROUP.Waypoint Target Next original mission waypoint.
+-- @param #number Speed (Optional) Commanded speed in m/s; defaults to the current waypoint/target speed.
 -- @return #table Window with Grid, Search, Origin, Heading and fixed navigation settings, or nil.
 -- @return #string Grid construction failure reason, or nil.
-function NAVYGROUP:_GetLocalNavigationWindow(Start, Heading, Target)
+function NAVYGROUP:_GetLocalNavigationWindow(Start, Heading, Target, Speed)
 
   self.localNavigation=self.localNavigation or {}
 
@@ -2474,6 +2599,8 @@ function NAVYGROUP:_GetLocalNavigationWindow(Start, Heading, Target)
   local minDepth=self.pathMinDepth or 20
   local corridorWidth=self:_GetPathfindingCorridorWidth()
   local maxCells=self.pathMaxCells or 5000
+  local preferredDepth,depthWeight=self.pathPreferredDepth,self.pathDepthWeight or 2
+  local _,ahead=self:_GetLocalNavigationHorizon(Speed or self.speedWp or Target.speed)
 
   if window then
     local dx,dz=Start.x-window.Origin.x,Start.z-window.Origin.z
@@ -2483,8 +2610,10 @@ function NAVYGROUP:_GetLocalNavigationWindow(Start, Heading, Target)
     local sameTarget=window.TargetUID==Target.uid and window.Target:GetDistance(target,true)<1
 
     if sameTarget and window.MinDepth==minDepth and window.CorridorWidth==corridorWidth
+      and window.PreferredDepth==preferredDepth and window.DepthWeight==depthWeight
+      and window.Ahead>=ahead
       and window.MaxCells==maxCells and Start:GetDistance(window.Origin,true)<1000 and turn<=30
-      and along>-800 and along<2800 and math.abs(across)<800 then
+      and along>-800 and along<window.Ahead-200 and math.abs(across)<800 then
       return window
     end
   end
@@ -2495,7 +2624,7 @@ function NAVYGROUP:_GetLocalNavigationWindow(Start, Heading, Target)
   grid:SetMaxCells(maxCells)
   grid:SetValidSurfaceTypes({land.SurfaceType.WATER,land.SurfaceType.SHALLOW_WATER})
 
-  local built,reason=grid:CreateFromBounds(Start:Translate(1000,Heading+180,true),Start:Translate(3000,Heading,true))
+  local built,reason=grid:CreateFromBounds(Start:Translate(1000,Heading+180,true),Start:Translate(ahead,Heading,true))
 
   if not built then
     self.localNavigation.Window=nil
@@ -2504,11 +2633,13 @@ function NAVYGROUP:_GetLocalNavigationWindow(Start, Heading, Target)
 
   local search=ASTAR:New():SetGrid(grid)
   search:SetValidNeighbourDepth(minDepth,corridorWidth)
+  search:SetCostDepth(preferredDepth,depthWeight)
 
   window={Grid=grid,Search=search,Origin=Start:Copy(),Heading=Heading,
     Cos=math.cos(math.rad(Heading)),Sin=math.sin(math.rad(Heading)),TargetUID=Target.uid,Target=target,
     MinDepth=minDepth,CorridorWidth=corridorWidth,MaxCells=maxCells,Spacing=grid:GetResolutionInfo().Spacing,
-    Ahead=3000,Behind=1000,Width=2000}
+    PreferredDepth=preferredDepth,DepthWeight=depthWeight,
+    Ahead=ahead,Behind=1000,Width=2000}
   self.localNavigation.Window=window
 
   return window
@@ -2559,7 +2690,10 @@ function NAVYGROUP:_GetLocalNavigationCandidates(Window, Start, Heading, Target)
     end
   end
 
-  local anchors={{3000,-750},{3000,-250},{3000,250},{3000,750},{500,-1000},{1800,-1000},{500,1000},{1800,1000}}
+  -- Exit selection must follow the grown front, not the original 3 km boundary.
+  local ahead=Window.Ahead
+  local anchors={{ahead,-750},{ahead,-250},{ahead,250},{ahead,750},
+    {500,-1000},{ahead*0.6,-1000},{500,1000},{ahead*0.6,1000}}
   local exits,used={},{}
   local cos,sin=math.cos(math.rad(Heading)),math.sin(math.rad(Heading))
 
@@ -2599,57 +2733,330 @@ function NAVYGROUP:_GetLocalNavigationCandidates(Window, Start, Heading, Target)
   return candidates
 end
 
---- Simplify a local grid path into corridor-checked steering points.
--- Every shortcut is checked again, including the actual ship position. Legs are limited to 1 km.
--- The first leg turns at most 75 degrees; later corners turn at most 90 degrees. This is no turning-radius model.
+--- Check a local manoeuvring allowance around a proposed corner.
+-- DCS rounds waypoint turns. Sample the surrounding water, not only the two straight legs.
+-- This is a conservative planning buffer, not a prediction of the ship's turning radius.
 -- @param #NAVYGROUP self
--- @param Core.Vector#VECTOR Start Actual ship position.
--- @param #number Heading Current heading in degrees.
--- @param #table Path Ordered ASTAR nodes excluding start and including the selected endpoint.
--- @param #boolean GoalReached Whether the endpoint is the original mission waypoint.
--- @param #number Speed Requested speed in meters per second.
--- @param #number Altitude Original waypoint altitude or submarine depth.
--- @return #table VECTOR steering points excluding start and including the endpoint, or nil.
--- @return #string Failure reason, or nil.
-function NAVYGROUP:_SimplifyLocalPath(Start, Heading, Path, GoalReached, Speed, Altitude)
+-- @param Core.Vector#VECTOR Position Proposed corner or initial planning position.
+-- @param #number Incoming Incoming heading in degrees.
+-- @param #number Outgoing Outgoing heading in degrees.
+-- @param #number Speed Planning speed in meters per second.
+-- @param #table Cache (Optional) Results owned by this one planning attempt.
+-- @return #boolean True when the sampled corner area meets the minimum depth.
+-- @return #table Turn angle, allowance radius and failed DepthCheck, when applicable.
+function NAVYGROUP:_CheckLocalTurn(Position, Incoming, Outgoing, Speed, Cache)
 
-  if #Path==0 then
-    if GoalReached and self:_CheckPathDepth(Start,Start) then return {} end
-    return nil,"no_progress"
-  end
+  local turn=math.abs((Outgoing-Incoming+180)%360-180)
+  if turn<=5 then return true,{Turn=turn,Radius=0} end
 
-  local points={}
-  local position,index=Start,0
-  local minLeg=math.max(100,math.min((Speed or 0)*10,250))
+  -- Ten seconds of travel gives faster ships more room. Small course corrections need less.
+  -- Round upwards for cache reuse; the straight route corridor itself remains unchanged.
+  local allowance=math.max(50,math.min(Speed*10,150))*math.min(1,turn/30)
+  local radius=math.ceil(allowance/25)*25+self:_GetPathfindingCorridorWidth()/2
+  local key=string.format("%.9f:%.9f:%.3f",Position.x,Position.z,radius)
+  local result=Cache and Cache[key]
 
-  while index<#Path do
-    local selected,selectedHeading
+  if not result then
+    result={Clear=true,Radius=radius}
 
-    for nextIndex=#Path,index+1,-1 do
-      local point=Path[nextIndex].vector
-      local distance=position:GetDistance(point,true)
-      local course=position:GetHeadingTo(point)
-      local turn=math.abs((course-Heading+180)%360-180)
-      local shortGoal=GoalReached and nextIndex==#Path
-      local remaining=point:GetDistance(Path[#Path].vector,true)
+    -- Parallel chords at most 25 m apart also sample the interior of the buffer.
+    -- A few radial spokes or only the circumference could miss a small island between them.
+    local intervals=math.ceil(2*radius/25)
+    for i=0,intervals do
+      local offset=-radius+2*radius*i/intervals
+      local halfLength=math.sqrt(math.max(0,radius*radius-offset*offset))
+      local start={x=Position.x-halfLength,z=Position.z+offset}
+      local goal={x=Position.x+halfLength,z=Position.z+offset}
+      local clear,reason,report=PATHLINE.CheckDepth(start,goal,self.pathMinDepth or 20,0)
 
-      if distance>0.1 and distance<=1000 and (distance>=minLeg or shortGoal)
-        and (nextIndex==#Path or GoalReached or remaining>=minLeg)
-        and turn<=(index==0 and 75 or 90) and self:_CheckPathDepth(position,point) then
-        selected,selectedHeading=nextIndex,course
+      if not clear then
+        result.Clear=false
+        result.DepthCheck=report
         break
       end
     end
 
-    if not selected then return nil,"no_steering_path" end
-
-    local point=Path[selected].vector
-    position=VECTOR:New(point.x,Altitude,point.z)
-    points[#points+1]=position
-    index,Heading=selected,selectedHeading
+    if Cache then Cache[key]=result end
   end
 
-  return points
+  return result.Clear,{Turn=turn,Radius=radius,DepthCheck=result.DepthCheck}
+end
+
+--- Try moving a planned corner outwards before rejecting its steering route.
+-- A grid path often follows the inner bank. Moving its corner along the outward angle bisector
+-- gives DCS room to round the turn, without enlarging every grid edge or changing mission speed.
+-- @param #NAVYGROUP self
+-- @param #table Previous Previous simplifier state with Position, Heading and Index.
+-- @param Core.Vector#VECTOR Corner Proposed corner.
+-- @param Core.Vector#VECTOR Next Following waypoint.
+-- @param #number Speed Planning speed in meters per second.
+-- @param #number MinLeg Minimum steering-leg length in meters.
+-- @param #boolean ShortGoal Whether the outgoing leg may be shorter at the original destination.
+-- @param #boolean Weighted Whether the adjusted connections use the configured depth cost.
+-- @param #table Cache Turn checks owned by this planning attempt.
+-- @return #table Adjusted Position, Heading, FirstCost and LastCost, or nil if no tested adjustment works.
+function NAVYGROUP:_AdjustLocalTurn(Previous, Corner, Next, Speed, MinLeg, ShortGoal, Weighted, Cache)
+
+  local incoming=math.rad(Previous.Position:GetHeadingTo(Corner))
+  local outgoing=math.rad(Corner:GetHeadingTo(Next))
+  local dx,dz=math.cos(incoming)-math.cos(outgoing),math.sin(incoming)-math.sin(outgoing)
+  local length=math.sqrt(dx*dx+dz*dz)
+  if length<0.001 then return nil end
+
+  -- Six nearby alternatives bound the extra terrain work. All installed route points remain
+  -- unchanged until a complete candidate has passed; the actual ship position is never moved.
+  local best
+  for offset=25,150,25 do
+    local point=VECTOR:New(Corner.x+offset*dx/length,Corner.y,Corner.z+offset*dz/length)
+    local first=Previous.Position:GetDistance(point,true)
+    local last=point:GetDistance(Next,true)
+    local heading=Previous.Position:GetHeadingTo(point)
+    local course=point:GetHeadingTo(Next)
+    local previousTurn=math.abs((heading-Previous.Heading+180)%360-180)
+    local turn=math.abs((course-heading+180)%360-180)
+
+    if first>=MinLeg and first<=1000 and last>0.1 and last<=1000 and (last>=MinLeg or ShortGoal)
+      and previousTurn<=(Previous.Index==0 and 75 or 90) and turn<=90 then
+      local clear
+      if Weighted then
+        first=self:_GetPathfindingDepthCost(Previous.Position,point)
+        last=self:_GetPathfindingDepthCost(point,Next)
+        clear=first<math.huge and last<math.huge
+      else
+        clear=self:_CheckPathDepth(Previous.Position,point) and self:_CheckPathDepth(point,Next)
+      end
+
+      -- Moving a corner changes the outgoing course at its predecessor as well.
+      if clear and self:_CheckLocalTurn(Previous.Position,Previous.Heading,heading,Speed,Cache)
+        and self:_CheckLocalTurn(point,heading,course,Speed,Cache) then
+        -- Required manoeuvring room may cost more than the raw grid path. Price the actual
+        -- detour and keep the cheapest safe correction; do not silently discard depth costs.
+        if not best or first+last<best.FirstCost+best.LastCost then
+          best={Position=point,Heading=heading,FirstCost=first,LastCost=last}
+        end
+      end
+    end
+  end
+
+  return best
+end
+
+--- Log why an A* candidate could not become a usable waypoint route.
+-- Split evidence into short lines so DCS does not truncate the failed constraint or depth sample.
+-- Counts describe rejected shortcut attempts, not separate A* searches or obstacles.
+-- @param #NAVYGROUP self
+-- @param #table Report Simplifier diagnostics with Candidate, Reason, States, Backtracks, Rejections and Examples.
+function NAVYGROUP:_LogLocalSteeringFailure(Report)
+
+  self:I(self.lid..string.format("Local steering rejected: candidate=%s, pass=%d, reason=%s, nodes=%d, states=%d, backtracks=%d",
+    tostring(Report.Candidate),Report.Pass or 1,Report.Reason,Report.Nodes,Report.States,Report.Backtracks))
+
+  for _,cause in ipairs({"leg_too_short","leg_too_long","short_remainder","turn_angle","depth","depth_cost","turn_clearance"}) do
+    local count=Report.Rejections[cause]
+    if count then
+      local example=Report.Examples[cause]
+      self:I(self.lid..string.format("Local steering constraint: candidate=%s, cause=%s, count=%d, nodes=%d->%d, "..
+        "from=(%.1f, %.1f), distance=%.1f m, turn=%.1f deg, limit=%s, cost=%s, replaced_cost=%s, radius=%s m",
+        tostring(Report.Candidate),cause,count,example.From,example.To,example.Position.x,example.Position.z,
+        example.Distance,example.Turn,tostring(example.Limit),tostring(example.Cost),
+        tostring(example.ReplacedCost),tostring(example.Radius)))
+
+      local depth=example.DepthCheck
+      if depth then
+        local point=depth.Point or {}
+        self:I(self.lid..string.format("Local steering depth: candidate=%s, cause=%s, status=%s, reason=%s, "..
+          "depth_cause=%s, depth=%s m, required=%s m, surface=%s, offset=%s m, point=(%s, %s)",
+          tostring(Report.Candidate),cause,tostring(depth.Status),tostring(depth.Reason),tostring(depth.Cause),
+          tostring(depth.Depth),tostring(depth.RequiredDepth),tostring(depth.SurfaceType),
+          tostring(depth.ProfileOffset),tostring(point.x),tostring(point.z)))
+      end
+    end
+  end
+end
+
+--- Simplify a local grid path into depth-checked steering points with room at corners.
+-- Try the farthest usable waypoint first, but backtrack if it leaves no safe outgoing turn.
+-- Explore at most 128 steering states per pass; failure is not proof that no navigable route exists.
+-- Legs are limited to 1 km, the initial turn to 75 degrees and later turns to 90 degrees.
+-- First retain depth costs. If cost rejections prevent a usable route, try once more without that
+-- cost ceiling. Depth, geometry and turn checks remain mandatory and actual costs are returned.
+-- @param #NAVYGROUP self
+-- @param Core.Vector#VECTOR Start Actual ship position or future route anchor.
+-- @param #number Heading Incoming heading in degrees.
+-- @param #table Path Ordered ASTAR nodes excluding start and including the selected endpoint.
+-- @param #boolean GoalReached Whether the endpoint is the original mission waypoint.
+-- @param #number Speed Requested speed in meters per second.
+-- @param #number Altitude Original waypoint altitude or submarine depth.
+-- @param Core.Astar#ASTAR Search (Optional) Search owning Path; reuses its original edge costs.
+-- @return #table VECTOR steering points excluding start and including the endpoint, or nil.
+-- @return #string Failure reason, or nil.
+-- @return #number Total cost of the simplified route, on success.
+-- @return #table Constraint counts and representative failed checks, also returned on success.
+function NAVYGROUP:_SimplifyLocalPath(Start, Heading, Path, GoalReached, Speed, Altitude, Search)
+
+  if #Path==0 then
+    if GoalReached and self:_CheckPathDepth(Start,Start) then return {},nil,0 end
+    return nil,"no_progress"
+  end
+
+  local speed=math.max(Speed or 0,self:GetVelocity() or 0)
+  local minLeg=math.max(100,math.min((Speed or 0)*10,250))
+  local weighted=self.pathPreferredDepth and self.pathPreferredDepth>(self.pathMinDepth or 20)
+    and (self.pathDepthWeight or 2)>0
+  local originalCost={[0]=0}
+  local edges,turns={},{}
+
+  -- Prefix costs compare a shortcut with exactly the raw A* section it replaces.
+  if weighted then
+    local previous=Search and Search.startNode or {vector=Start}
+    for i,node in ipairs(Path) do
+      local cost=Search and Search:_TravelCost(previous,node) or self:_GetPathfindingDepthCost(previous.vector,node.vector)
+      originalCost[i]=originalCost[i-1]+cost
+      previous=node
+    end
+  end
+
+  -- Share terrain results across two independent searches. Exhausted steering states must
+  -- be reset: a state rejected by the first pass may become usable with a more expensive leg.
+  local firstPass
+  for pass=1,(weighted and 2 or 1) do
+    local report={Nodes=#Path,States=1,Backtracks=0,Adjustments=0,Rejections={},Examples={},
+      Pass=pass,FirstPass=firstPass,OriginalCost=originalCost[#Path]}
+    local exhausted={}
+
+    -- Include the predecessor's heading in state keys: adjusting a corner must recheck that
+    -- preceding turn too. Edge profiles and corner buffers are cached only for this call.
+    local stack={{Index=0,Position=Start,Heading=Heading,Next=#Path,Cost=0,Key="start"}}
+    while #stack>0 do
+      local state=stack[#stack]
+      local index=state.Index
+
+      -- An outward correction belongs to one outgoing alternative. Restore the original corner
+      -- after backtracking so subsequent attempts cannot accumulate offsets beyond 150 m.
+      if state.Restore then
+        state.Position,state.Heading=state.Restore.Position,state.Restore.Heading
+        state.Cost,state.Key=state.Restore.Cost,state.Restore.Key
+        state.Restore=nil
+      end
+
+      if state.Next<=index then
+        exhausted[state.Key]=true
+        stack[#stack]=nil
+        report.Backtracks=report.Backtracks+1
+      else
+        local nextIndex=state.Next
+        state.Next=nextIndex-1
+        local point=Path[nextIndex].vector
+        local distance=state.Position:GetDistance(point,true)
+        local course=state.Position:GetHeadingTo(point)
+        local turn=math.abs((course-state.Heading+180)%360-180)
+        local remaining=point:GetDistance(Path[#Path].vector,true)
+        local key=string.format("%d:%d:%.9f:%.9f:%.9f",index,nextIndex,state.Position.x,state.Position.z,state.Heading)
+        local cause,limit,edge,corner
+
+        if distance<=0.1 or (distance<minLeg and not (GoalReached and nextIndex==#Path)) then
+          cause,limit="leg_too_short",minLeg
+        elseif distance>1000 then
+          cause,limit="leg_too_long",1000
+        elseif nextIndex~=#Path and not GoalReached and remaining<minLeg then
+          cause,limit="short_remainder",minLeg
+        elseif turn>(index==0 and 75 or 90) then
+          cause,limit="turn_angle",index==0 and 75 or 90
+        elseif not exhausted[key] then
+          edge=edges[key]
+          if not edge then
+            edge={Cost=distance}
+            if weighted then
+              edge.Cost=self:_GetPathfindingDepthCost(state.Position,point)
+              edge.ReplacedCost=originalCost[nextIndex]-originalCost[index]
+              if edge.Cost==math.huge then
+                -- Obtain the concrete failed sample only for an edge rejected by the cost check.
+                local clear,reason,depth=self:_CheckPathDepth(state.Position,point)
+                edge.Cause="depth"
+                edge.DepthCheck=depth
+              elseif edge.Cost>edge.ReplacedCost+1e-6*math.max(1,edge.ReplacedCost) then
+                edge.Cause="depth_cost"
+              end
+            else
+              local clear,reason,depth=self:_CheckPathDepth(state.Position,point)
+              if not clear then edge.Cause,edge.DepthCheck="depth",depth end
+            end
+            edges[key]=edge
+          end
+
+          cause=edge.Cause
+          -- A depth preference is not a navigability constraint. On the second pass only
+          -- this cost ceiling is relaxed; cached blocked/unknown depths still reject the edge.
+          if pass==2 and cause=="depth_cost" then cause=nil end
+          if not cause then
+            local clear
+            clear,corner=self:_CheckLocalTurn(state.Position,state.Heading,course,speed,turns)
+            if not clear then
+              cause="turn_clearance"
+              if #stack>1 then
+                local previous=stack[#stack-1]
+                local adjusted=self:_AdjustLocalTurn(previous,state.Position,point,speed,minLeg,
+                  GoalReached and nextIndex==#Path,weighted,turns)
+                if adjusted then
+                  state.Restore={Position=state.Position,Heading=state.Heading,Cost=state.Cost,Key=state.Key}
+                  state.Position=adjusted.Position
+                  state.Heading=adjusted.Heading
+                  state.Cost=previous.Cost+adjusted.FirstCost
+                  state.Key=state.Key..string.format(":%.9f:%.9f",state.Position.x,state.Position.z)
+                  course=state.Position:GetHeadingTo(point)
+                  key=string.format("%d:%d:%.9f:%.9f:%.9f",index,nextIndex,state.Position.x,state.Position.z,state.Heading)
+                  edge={Cost=adjusted.LastCost}
+                  cause=nil
+                  report.Adjustments=report.Adjustments+1
+                end
+              end
+            end
+          end
+
+          if not cause then
+            local position=VECTOR:New(point.x,Altitude,point.z)
+            if nextIndex==#Path then
+              local points={}
+              report.CornerAdjustments={}
+              for i=2,#stack do
+                points[#points+1]=stack[i].Position
+                local original=Path[stack[i].Index].vector
+                if original:GetDistance(stack[i].Position,true)>0.1 then
+                  report.CornerAdjustments[#report.CornerAdjustments+1]={Original=original,Position=stack[i].Position}
+                end
+              end
+              points[#points+1]=position
+              return points,nil,state.Cost+edge.Cost,report
+            end
+
+            if report.States>=128 then
+              report.Reason="steering_budget_exceeded"
+              break
+            end
+            report.States=report.States+1
+            stack[#stack+1]={Index=nextIndex,Position=position,Heading=course,Next=#Path,
+              Cost=state.Cost+edge.Cost,Key=key}
+          end
+        end
+
+        if cause then
+          report.Rejections[cause]=(report.Rejections[cause] or 0)+1
+          if not report.Examples[cause] then
+            report.Examples[cause]={From=index,To=nextIndex,Position=state.Position,Distance=distance,Turn=turn,
+              Limit=limit,Cost=edge and edge.Cost,ReplacedCost=edge and edge.ReplacedCost,
+              Radius=corner and corner.Radius,DepthCheck=corner and corner.DepthCheck or edge and edge.DepthCheck}
+          end
+        end
+      end
+    end
+
+    report.Reason=report.Reason or "no_steering_path"
+    if pass==1 and weighted and report.Rejections.depth_cost then
+      firstPass=report
+    else
+      return nil,report.Reason,nil,report
+    end
+  end
 end
 
 --- Measure steering demand and the minimum length of a local route.
@@ -2691,20 +3098,23 @@ end
 -- @param #number Heading Current heading in degrees.
 -- @param Ops.OpsGroup#OPSGROUP.Waypoint Target Next original mission waypoint.
 -- @param #number Speed Requested speed in meters per second.
--- @return #table Plan with Points, GoalReached, Window, raw Path and diagnostic fields, or nil.
+-- @return #table Provisional plan with Points, Candidates, GoalReached, Window, raw Path and diagnostics, or nil.
 -- @return #string Failure reason, or nil.
 function NAVYGROUP:_PlanLocalPath(Start, Heading, Target, Speed)
 
   Start=VECTOR:NewFromVec(Start)
 
+  if self.localNavigation then self.localNavigation.SteeringFailures=nil end
+  local steeringFailures={}
   local previous=self.localNavigation and self.localNavigation.Window
-  local window,reason=self:_GetLocalNavigationWindow(Start,Heading,Target)
+  local window,reason=self:_GetLocalNavigationWindow(Start,Heading,Target,Speed)
 
   if not window then return nil,reason end
 
   local candidates=self:_GetLocalNavigationCandidates(window,Start,Heading,Target)
   local search=window.Search
   local best,attempts=nil,0
+  local plans={}
   local cos,sin=math.cos(math.rad(Heading)),math.sin(math.rad(Heading))
 
   search:SetStartCoordinate(Start)
@@ -2716,10 +3126,29 @@ function NAVYGROUP:_PlanLocalPath(Start, Heading, Target, Speed)
     -- Failed candidate attempts are expected. The internal search avoids public final-failure messages.
     local path,failure=search:_SearchPath(true,false)
     reason=failure or reason
+    if not path then
+      self:T(self.lid..string.format("Local candidate rejected: candidate=%d, stage=search, reason=%s",
+        attempts,tostring(failure)))
+    end
 
     if path then
-      local points,steeringFailure=self:_SimplifyLocalPath(Start,Heading,path,candidate.GoalReached,Speed,Target.coordinate.y)
+      local points,steeringFailure,routeCost,steeringReport=self:_SimplifyLocalPath(Start,Heading,path,candidate.GoalReached,Speed,Target.coordinate.y,search)
       reason=steeringFailure or reason
+
+      if steeringReport and steeringReport.Pass==2 then
+        local first=steeringReport.FirstPass
+        self:T(self.lid..string.format("Local steering fallback: candidate=%d, from=(%.1f, %.1f), result=%s, "..
+          "first_reason=%s, cost_rejections=%d, raw_cost=%.1f, cost=%s, states=%d+%d",
+          attempts,Start.x,Start.z,steeringFailure or "path_found",first.Reason,first.Rejections.depth_cost,
+          steeringReport.OriginalCost,tostring(routeCost),first.States,steeringReport.States))
+      end
+
+      if steeringReport and steeringFailure then
+        steeringReport.Candidate=attempts
+        steeringFailures[#steeringFailures+1]=steeringReport
+        self:T(self.lid..string.format("Local candidate rejected: candidate=%d, stage=steering, reason=%s",
+          attempts,steeringFailure))
+      end
 
       if points then
         local metrics=self:_GetLocalRouteMetrics(Start,Heading,points,Speed)
@@ -2727,31 +3156,55 @@ function NAVYGROUP:_PlanLocalPath(Start, Heading, Target, Speed)
         local distance=Start:GetDistance(position,true)
         local forward=(position.x-Start.x)*cos+(position.z-Start.z)*sin
         local shortfall=math.max(0,metrics.RequiredLength-metrics.Length)
-        local score=metrics.Length-distance+0.35*position:GetDistance(window.Target,true)-0.25*forward
+        -- Compare the routes that DCS will actually receive, including any retained depth preference.
+        local score=routeCost-distance+0.35*position:GetDistance(window.Target,true)-0.25*forward
           +2*metrics.Turns+4*metrics.InitialTurn+2*shortfall
 
-        -- Prefer enough navigable route over a short side exit that needs another update in its
-        -- first turn. If every candidate is short, retain the best one for bounded preflight extension.
-        local sufficient=metrics.Length>=metrics.RequiredLength
-        local bestSufficient=best and best.Length>=best.RequiredLength
-        local better=not best or (sufficient and not bestSufficient)
-          or (sufficient==bestSufficient and score<best.Score)
-
-        if candidate.GoalReached or (distance>=500 and forward>=250 and better) then
-          best={Points=points,GoalReached=candidate.GoalReached,Window=window,Path=path,Score=score,
+        -- Keep short alternatives for preparation. An unextended side exit must not lose to a
+        -- much shallower route solely because that route already meets the length allowance.
+        if candidate.GoalReached or (distance>=500 and forward>=250) then
+          local plan={Points=points,GoalReached=candidate.GoalReached,Window=window,Path=path,Score=score,
+            Cost=routeCost,PreferredDepth=window.PreferredDepth,DepthWeight=window.DepthWeight,
+            Candidate=attempts,Steering=steeringReport,
             StopReason="path_found",MinDepth=window.MinDepth,CorridorWidth=window.CorridorWidth,
             Spacing=window.Spacing,CandidateCount=window.Grid:GetCandidateCount(),WindowReused=window==previous,
             Length=metrics.Length,InitialTurn=metrics.InitialTurn,RequiredLength=metrics.RequiredLength}
+          plans[#plans+1]=plan
 
+          self:T(self.lid..string.format("Local candidate available: candidate=%d, from=(%.1f, %.1f), to=(%.1f, %.1f), "..
+            "length=%.0f m, required=%.0f m, cost=%.1f, score=%.1f",
+            attempts,Start.x,Start.z,position.x,position.z,metrics.Length,metrics.RequiredLength,routeCost,score))
+
+          if candidate.GoalReached or not best or score<best.Score then best=plan end
           if candidate.GoalReached then break end
+        else
+          self:T(self.lid..string.format("Local candidate rejected: candidate=%d, stage=progress, distance=%.0f m, forward=%.0f m",
+            attempts,distance,forward))
         end
       end
     end
   end
 
+  if self.localNavigation then self.localNavigation.SteeringFailures=steeringFailures end
+
+  -- A rejected candidate is normal if another works. Explain every rejected candidate when
+  -- no route survives, even without trace, so no_steering_path is no longer a blind stop.
+  if not best then
+    for _,report in ipairs(steeringFailures) do self:_LogLocalSteeringFailure(report) end
+  end
+
   if best then
-    best.Attempts=attempts
-    return best
+    for _,plan in ipairs(plans) do
+      plan.SteeringFailures=steeringFailures
+      plan.Attempts=attempts
+    end
+
+    -- Return the provisional choice and all usable alternatives without a self-referencing table.
+    -- Only preparation chooses the final route, including the cost of any required continuation.
+    local result={}
+    for key,value in pairs(best) do result[key]=value end
+    result.Candidates=plans
+    return result
   end
 
   return nil,reason or (#candidates==0 and "no_local_exit" or "no_local_path")
@@ -2782,6 +3235,9 @@ function NAVYGROUP:_LocalRouteProgress(Position)
   local navigation=self.localNavigation
   local path=navigation.Path
   local segment=navigation.Segment or 1
+  local previousSegment=segment
+  local advanceReason
+  local heading=self:GetHeading()
   local deviation,along=0,0
 
   while segment<#path do
@@ -2796,6 +3252,7 @@ function NAVYGROUP:_LocalRouteProgress(Position)
 
     local crossTrack=length>0 and math.abs((Position.x-a.x)*dz-(Position.z-a.z)*dx)/length or 0
     local advance=fraction>=1 and crossTrack<=math.max(150,self:_GetPathfindingCorridorWidth())
+    local reason=advance and "endpoint_plane" or nil
 
     -- DCS rounds corners before crossing the old leg's endpoint plane. Consider only the immediately
     -- following leg, and only near this corner, so nearby return legs of a hairpin cannot steal progress.
@@ -2807,11 +3264,26 @@ function NAVYGROUP:_LocalRouteProgress(Position)
       if nextFraction>0 and nextFraction<=1 then
         local nextDeviation=math.sqrt((Position.x-b.x-nextFraction*nx)^2+(Position.z-b.z-nextFraction*nz)^2)
         advance=nextDeviation<deviation
+        reason=advance and "rounded_corner" or nil
+
+        -- After rounding a corner DCS may already follow the outgoing course while still closer
+        -- to the old leg. Accept only the adjacent leg, bounded lateral distance and positive
+        -- progress on it. A large bearing change back to the corner alone never skips a waypoint.
+        if not advance then
+          local nextHeading=b:GetHeadingTo(c)
+          local aligned=math.abs((heading-nextHeading+180)%360-180)<=20
+          local cornerBearing=Position:GetHeadingTo(b)
+          local cornerTurn=math.abs((cornerBearing-heading+180)%360-180)
+          local allowance=math.max(150,(navigation.Speed or 0)*20)
+          advance=aligned and cornerTurn>=75 and nextDeviation<=allowance
+          reason=advance and "outgoing_course" or nil
+        end
       end
     end
 
     if segment<#path-1 and advance then
       segment=segment+1
+      advanceReason=reason
     else
       break
     end
@@ -2819,6 +3291,14 @@ function NAVYGROUP:_LocalRouteProgress(Position)
 
   navigation.Segment=segment
   navigation.Progress=math.max(navigation.Progress or 0,along)
+
+  if segment~=previousSegment then
+    local nextPoint=path[segment+1]
+    self:T(self.lid..string.format("Local route segment: route=%s, %d->%d, reason=%s, ship=(%.1f, %.1f), "..
+      "heading=%.1f, next=(%.1f, %.1f), bearing=%.1f, deviation=%.1f m",
+      tostring(navigation.RouteID),previousSegment,segment,tostring(advanceReason),Position.x,Position.z,
+      heading,nextPoint.x,nextPoint.z,Position:GetHeadingTo(nextPoint),deviation))
+  end
   return navigation.Progress,math.max(0,navigation.Length-navigation.Progress),deviation
 end
 
@@ -2893,11 +3373,39 @@ function NAVYGROUP:_CheckLocalRoute(Position)
     clear,reason,report=self:_CheckPathDepth(from,navigation.Path[i])
     report.NavigationStage=(i==navigation.Segment+1 and not turning) and "actual_position_to_next" or "stored_segment"
     report.RouteSegment=i-1
+    report.RouteID=navigation.RouteID
+    report.CheckStart,report.CheckGoal=from,navigation.Path[i]
     if not clear then return clear,reason,report end
     from=navigation.Path[i]
   end
 
   return clear,reason,report
+end
+
+--- Prepare a replacement from the actual ship position without changing the installed route.
+-- Rebuild the window and discard unused continuations; a failed search leaves the existing path intact.
+-- The caller decides whether that old remainder is still usable or requires a stop.
+-- @param #NAVYGROUP self
+-- @param Core.Vector#VECTOR Position Current ship position.
+-- @return #table Prepared VECTOR positions including the start, or nil.
+-- @return #table Planning report, or nil.
+-- @return #string Failure reason, or nil.
+function NAVYGROUP:_PrepareLocalReplacement(Position)
+
+  local navigation=self.localNavigation
+  navigation.Pending=nil
+  navigation.Window=nil
+
+  local plan,reason=self:_PlanLocalPath(Position,self:GetHeading(),navigation.Target,navigation.Speed)
+  if self.localNavigation~=navigation or not self:_CanNavigate() then return nil,nil,"navigation_changed" end
+  if not plan then return nil,nil,reason end
+
+  local points={Position}
+  for _,point in ipairs(plan.Points) do
+    points[#points+1]=VECTOR:New(point.x,navigation.Alt,point.z)
+  end
+
+  return self:_PrepareLocalRoute(points,plan,Position)
 end
 
 --- Replace a blocked local remainder from the current ship position.
@@ -2911,32 +3419,18 @@ function NAVYGROUP:_ReplanLocalRoute(Position, DepthCheck)
   local navigation=self.localNavigation
   self:_LogNavigationDepthCheck(DepthCheck,"replan")
 
-  -- Do not preserve the blocked approach or a prepared continuation. Rebuild the window as well,
-  -- because its cached edge checks may predate the obstruction that triggered this replacement.
-  navigation.Pending=nil
-  navigation.Window=nil
-  local plan,reason=self:_PlanLocalPath(Position,self:GetHeading(),navigation.Target,navigation.Speed)
+  local points,plan,reason=self:_PrepareLocalReplacement(Position)
 
   -- User callbacks retain authority over a manual hold or a changed navigation target.
   if self.localNavigation~=navigation or not self:_CanNavigate() then return false end
-  if not plan then
+  if not points then
     return self:_FailPathfinding({StopReason=reason,DepthCheck=DepthCheck,Mode="local"})
   end
 
-  local points={Position}
-  for _,point in ipairs(plan.Points) do
-    points[#points+1]=VECTOR:New(point.x,navigation.Alt,point.z)
-  end
   plan.ReplanDepthCheck=DepthCheck
 
-  local prepared,preparedPlan,failure=self:_PrepareLocalRoute(points,plan,Position)
-  if self.localNavigation~=navigation or not self:_CanNavigate() then return false end
-  if not prepared then
-    return self:_FailPathfinding({StopReason=failure,DepthCheck=DepthCheck,Mode="local"})
-  end
-
-  -- Submission rechecks the replacement once. A rejected replacement stops; it cannot recurse.
-  return self:_InstallLocalRoute(prepared,preparedPlan,Position)
+  -- The old remainder is blocked. A rejected replacement stops; it cannot recurse.
+  return self:_InstallLocalRoute(points,plan,Position)
 end
 
 --- Append a checked target approach without changing the existing local manoeuvre.
@@ -2946,24 +3440,44 @@ end
 -- @param #table Points Proposed VECTOR positions including the planning start; appended only on success.
 -- @param #table Plan Planning report updated with RejoinPoint, TargetApproachDistance and GoalReached.
 -- @param #number Heading Incoming course at the last point in degrees.
+-- @param #boolean Trial Suppress navigation notices while comparing an unselected candidate.
 -- @return #boolean True when a usable target approach was appended.
-function NAVYGROUP:_AppendLocalTargetApproach(Points, Plan, Heading)
+function NAVYGROUP:_AppendLocalTargetApproach(Points, Plan, Heading, Trial)
 
   local navigation=self.localNavigation
   local endpoint=Points[#Points]
   local target=navigation.Target
   local clear,reason,report,goal=self:_CheckNavigationAhead(endpoint,target)
   report.CheckStart,report.CheckGoal=endpoint,goal
-  self:_LogLocalTargetCheck(report,"route_end_lookahead")
+  if not Trial then self:_LogLocalTargetCheck(report,"route_end_lookahead") end
   if not clear then return false end
 
   local distance=endpoint:GetDistance(goal,true)
   local turn=distance>0.1 and math.abs((endpoint:GetHeadingTo(goal)-Heading+180)%360-180) or 0
   if turn>90 then
     -- A free profile does not make a reversal at this corner a usable continuation.
-    self:T(self.lid..string.format("Local route endpoint: target UID %d clear, but %.1f deg turn requires local continuation",
-      navigation.TargetUID,turn))
+    if not Trial then
+      self:T(self.lid..string.format("Local route endpoint: target UID %d clear, but %.1f deg turn requires local continuation",
+        navigation.TargetUID,turn))
+    end
     return false
+  end
+
+  if distance>0.1 then
+    -- Target approaches bypass A*, but must provide the same room for their new corner.
+    -- Only minimum depth matters here; preferred-depth costs never delay a clear target approach.
+    local speed=math.max(navigation.Speed,self:GetVelocity() or 0)
+    local turnClear,turnReport=self:_CheckLocalTurn(endpoint,Heading,endpoint:GetHeadingTo(goal),speed)
+    if not turnClear then
+      Plan.TargetTurnCheck=turnReport
+      if not Trial then
+        self:_LogLocalTargetCheck(turnReport.DepthCheck,"route_end_turn")
+        self:T(self.lid..string.format("Local route endpoint: target UID %d clear, but %.0f m turn allowance blocked ==> local continuation",
+          navigation.TargetUID,turnReport.Radius))
+      end
+      return false
+    end
+    Plan.TargetTurnCheck=nil
   end
 
   local count=math.ceil(distance/1000)
@@ -2976,9 +3490,11 @@ function NAVYGROUP:_AppendLocalTargetApproach(Points, Plan, Heading)
   Plan.RejoinPoint=endpoint
   Plan.TargetApproachDistance=distance
   Plan.GoalReached=endpoint:GetDistance(navigation.TargetPosition,true)<=5000
-  self:T(self.lid..string.format("Local route target approach: target UID %d, from (%.1f, %.1f), %.0f m clear, "..
-    "%.1f deg turn ==> keep detour and append checked approach",
-    navigation.TargetUID,endpoint.x,endpoint.z,distance,turn))
+  if not Trial then
+    self:T(self.lid..string.format("Local route target approach: target UID %d, from (%.1f, %.1f), %.0f m clear, "..
+      "%.1f deg turn ==> keep detour and append checked approach",
+      navigation.TargetUID,endpoint.x,endpoint.z,distance,turn))
+  end
   return true
 end
 
@@ -3034,6 +3550,109 @@ function NAVYGROUP:_ExtendLocalRoute(Position)
   return self:_PrepareLocalRoute(points,plan,Position)
 end
 
+--- Compare prepared candidates, keeping a common installed approach when extending a route.
+-- Each short candidate may use at most two additional windows. Continuations use the provisional
+-- cost-ranked choice, not another recursive comparison, so the work remains bounded.
+-- @param #NAVYGROUP self
+-- @param #table Points Common approach followed by the provisional plan's VECTOR points.
+-- @param #table Plan Provisional local plan and its alternatives.
+-- @param Core.Vector#VECTOR Position Actual ship position at submission time.
+-- @return #table Prepared positions, or nil on failure.
+-- @return #table Selected planning report, or nil on failure.
+-- @return #string Failure reason, or nil on success.
+function NAVYGROUP:_PrepareLocalRoute(Points, Plan, Position)
+
+  -- A checked target approach or an already selected plan has no alternatives to compare.
+  if not Plan.Candidates then return self:_CompleteLocalRoute(Points,Plan,Position) end
+
+  local navigation=self.localNavigation
+  local originalWindow=navigation.Window
+  local prefixCount=#Points-#Plan.Points
+  local candidates=Plan.GoalReached and {Plan} or Plan.Candidates
+  local bestPoints,bestPlan,reason
+  local heading=self:GetHeading()
+  local cos,sin=math.cos(math.rad(heading)),math.sin(math.rad(heading))
+  local weighted=self.pathPreferredDepth and self.pathPreferredDepth>(self.pathMinDepth or 20)
+    and (self.pathDepthWeight or 2)>0
+
+  for _,candidate in ipairs(candidates) do
+    local points={}
+    for i=1,prefixCount do points[#points+1]=Points[i] end
+    for _,point in ipairs(candidate.Points) do points[#points+1]=point end
+
+    -- Competing trials must not inherit a window left at another candidate's future endpoint.
+    navigation.Window=candidate.Window
+    local prepared,plan,failure=self:_CompleteLocalRoute(points,candidate,Position,true)
+
+    if prepared then
+      local cost,previous,direct=0,Position,false
+      local avoidance={}
+      for _,point in ipairs(prepared) do
+        direct=direct or previous==plan.RejoinPoint
+        local length=previous:GetDistance(point,true)
+
+        -- Price the complete route, including any retained approach and local continuations.
+        -- The agreed direct target approach needs minimum depth only, so it adds plain distance.
+        if length>0 then
+          cost=cost+(weighted and not direct and self:_GetPathfindingDepthCost(previous,point) or length)
+        end
+        if not direct then avoidance[#avoidance+1]=point end
+        previous=point
+      end
+
+      -- A free target approach proves sufficient reserve, but its arbitrary 5 km horizon
+      -- must not buy a better score than another candidate's actual obstacle avoidance.
+      local metrics=self:_GetLocalRouteMetrics(Position,heading,avoidance,navigation.Speed)
+      previous=avoidance[#avoidance] or Position
+      local avoidanceCost=cost-(plan.TargetApproachDistance or 0)
+      local distance=Position:GetDistance(previous,true)
+      local forward=(previous.x-Position.x)*cos+(previous.z-Position.z)*sin
+      plan.Cost=cost
+      plan.Score=avoidanceCost-distance+0.35*previous:GetDistance(navigation.TargetPosition,true)-0.25*forward
+        +2*metrics.Turns+4*metrics.InitialTurn
+      plan.Candidates=nil
+
+      self:T(self.lid..string.format("Local candidate prepared: candidate=%d, length=%.0f m, required=%.0f m, "..
+        "cost=%.1f, penalty=%.1f, score=%.1f, extensions=%d",
+        candidate.Candidate,plan.Length,plan.RequiredLength,cost,cost-plan.Length,plan.Score,plan.PreflightExtensions))
+
+      if cost<math.huge and (not bestPlan or plan.Score<bestPlan.Score) then
+        bestPoints,bestPlan=prepared,plan
+      elseif cost==math.huge then
+        failure="connections_blocked"
+      end
+    end
+
+    if failure then
+      reason=failure
+      self:T(self.lid..string.format("Local candidate rejected: candidate=%d, stage=preparation, reason=%s",
+        candidate.Candidate,failure))
+    end
+  end
+
+  -- Only the winning continuation may seed the next navigation tick. Failed trials never
+  -- replace the installed path, issue movement commands or leave another exit's window active.
+  navigation.Window=bestPlan and bestPlan.Window or originalWindow
+  if not bestPlan then return nil,nil,reason or "no_local_path" end
+
+  self:T(self.lid..string.format("Local candidate selected: candidate=%d, cost=%.1f, score=%.1f, "..
+    "length=%.0f m, required=%.0f m, preferred_depth=%s m, weight=%s",
+    bestPlan.Candidate,bestPlan.Cost,bestPlan.Score,bestPlan.Length,bestPlan.RequiredLength,
+    tostring(self.pathPreferredDepth),tostring(self.pathDepthWeight)))
+
+  if bestPlan.TargetApproachDistance then
+    local endpoint=bestPlan.RejoinPoint
+    self:T(self.lid..string.format("Local route target approach: target UID %d, from (%.1f, %.1f), %.0f m clear ==> selected approach",
+      navigation.TargetUID,endpoint.x,endpoint.z,bestPlan.TargetApproachDistance))
+  end
+
+  if bestPlan.Steering and #bestPlan.Steering.CornerAdjustments>0 then
+    self:T(self.lid..string.format("Local steering adjusted: %d corners moved outward, %d backtracks",
+      #bestPlan.Steering.CornerAdjustments,bestPlan.Steering.Backtracks))
+  end
+  return bestPoints,bestPlan
+end
+
 --- Prepare enough checked route before issuing a local movement command.
 -- Append at most two local windows from the last endpoint and its incoming course. Preserve all
 -- existing steering points so no new shortcut cuts across the manoeuvre that is being prepared.
@@ -3041,10 +3660,11 @@ end
 -- @param #table Points VECTOR positions including the planning start.
 -- @param #table Plan Selected local planner result.
 -- @param Core.Vector#VECTOR Position Actual ship position at submission time.
+-- @param #boolean Trial Whether this route is still competing with other candidates.
 -- @return #table Prepared positions, or nil on failure.
 -- @return #table Combined planning report, or nil on failure.
 -- @return #string Failure reason, or nil on success.
-function NAVYGROUP:_PrepareLocalRoute(Points, Plan, Position)
+function NAVYGROUP:_CompleteLocalRoute(Points, Plan, Position, Trial)
 
   local navigation=self.localNavigation
   local heading=self:GetHeading()
@@ -3058,7 +3678,7 @@ function NAVYGROUP:_PrepareLocalRoute(Points, Plan, Position)
   while not plan.GoalReached and metrics.Length<required do
     -- A short escape route may already end beyond the obstacle. Try the normal target horizon
     -- there before allocating another grid. Submission will recheck every resulting segment.
-    if self:_AppendLocalTargetApproach(points,plan,metrics.EndHeading) then
+    if self:_AppendLocalTargetApproach(points,plan,metrics.EndHeading,Trial) then
       metrics=self:_GetLocalRouteMetrics(Position,heading,points,navigation.Speed)
       if plan.GoalReached or metrics.Length>=required then break end
     end
@@ -3096,8 +3716,10 @@ function NAVYGROUP:_PrepareLocalRoute(Points, Plan, Position)
   plan.Length=metrics.Length
   plan.RequiredLength=required
   plan.InitialTurn=metrics.InitialTurn
+  plan.Turns=metrics.Turns
+  plan.Candidates=nil
   plan.PreflightExtensions=extensions
-  if extensions>0 then
+  if extensions>0 and not Trial then
     self:T(self.lid..string.format("Local route prepared: %d extensions, %.0f m validated, %.0f m required, initial turn %.1f deg",
       extensions,metrics.Length,required,metrics.InitialTurn))
   end
@@ -3121,6 +3743,7 @@ function NAVYGROUP:_InstallLocalRoute(Points, Plan, Position)
   navigation.Progress=0
   navigation.GoalReached=Plan.GoalReached
   navigation.Pending=nil
+  navigation.ExtensionFailure=nil
   navigation.DeviationNotice=nil
 
   for i=2,#Points do
@@ -3154,7 +3777,8 @@ function NAVYGROUP:_SubmitLocalRoute(Position)
   if not navigation or not self:_CanNavigate() then return false end
 
   local remaining=navigation.Length-navigation.Progress
-  local reserve=math.max(400,navigation.Speed*60)+navigation.Speed*10
+  local speed=math.max(navigation.Speed,self:GetVelocity() or 0)
+  local reserve=math.max(400,speed*60)+speed*10
   if not navigation.GoalReached and remaining<=reserve then
     return self:_FailPathfinding({StopReason="local_route_too_short",Remaining=remaining,Mode="local"})
   end
@@ -3197,6 +3821,17 @@ function NAVYGROUP:_SubmitLocalRoute(Position)
   self.speedWp=navigation.Speed
   self.altWp=navigation.Alt
   navigation.NeedsSubmit=nil
+  self.localRouteSequence=(self.localRouteSequence or 0)+1
+  navigation.RouteID=self.localRouteSequence
+
+  -- Log the actual submitted waypoints, not just the raw A* drawing. These coordinates let
+  -- a test compare DCS's rounded trajectory with our current segment without guessing.
+  if self:IsTrace() then
+    for i,point in ipairs(route) do
+      self:T(self.lid..string.format("Local route point: route=%d, point=%d, x=%.1f, z=%.1f, speed=%.2f m/s",
+        navigation.RouteID,i,point.x,point.y,point.speed))
+    end
+  end
   local plan=self.LastPathfindingResult or {}
   self:T(self.lid..string.format("Local navigation: target UID %d, %d route points, %.0f m validated, goal=%s, "..
     "initial turn %.1f deg, required length %.0f m, preflight extensions %d",
@@ -3298,21 +3933,68 @@ function NAVYGROUP:_CheckLocalNavigation(Force, Speed, Depth, First)
     return self:_CompleteLocalLeg()
   end
 
-  -- Reserve is a conservative prototype margin, not a measured DCS stopping-distance model.
-  local reserve=math.max(400,navigation.Speed*60)
-  if not navigation.GoalReached and remaining<=reserve and self:IsTurning() then
-    return self:_FailPathfinding({StopReason="local_route_exhausted_in_turn",Remaining=remaining,Mode="local"})
+  -- Account for actual speed and the next ten-second check. These allowances are not a
+  -- measured DCS braking model; they prevent deferred planning from consuming the whole route.
+  local speed=math.max(navigation.Speed,self:GetVelocity() or 0)
+  local reserve=math.max(400,speed*60)
+  local stopReserve=reserve+speed*10
+  local turning=self:IsTurning()
+
+  if not navigation.GoalReached and remaining<=stopReserve and turning then
+    return self:_FailPathfinding({StopReason="local_route_exhausted_in_turn",Remaining=remaining,
+      Reserve=stopReserve,ExtensionFailure=navigation.ExtensionFailure,Mode="local"})
   end
 
+  local awaitingReplan=navigation.ExtensionFailure and navigation.ExtensionFailure.AwaitingStraight and not turning
   if not navigation.GoalReached and remaining<=math.max(2000,reserve+1000)
-    and (navigation.Pending or progress>=navigation.ExtensionAfter) then
+    and (navigation.Pending or progress>=navigation.ExtensionAfter or awaitingReplan or remaining<=stopReserve) then
+
     if not navigation.Pending then
-      local points,plan,failure=self:_ExtendLocalRoute(position)
+      local points,plan,failure
+
+      -- If the anchor search failed during a turn, try the actual position as soon as it
+      -- straightens out. Do not wait for the normal progress threshold or repeat that anchor.
+      if awaitingReplan then
+        failure=navigation.ExtensionFailure.Reason
+      else
+        points,plan,failure=self:_ExtendLocalRoute(position)
+      end
       if self.localNavigation~=navigation or not self:_CanNavigate() then return false end
-      if not points then return self:_FailPathfinding({StopReason=failure,Mode="local"}) end
-      navigation.Pending={Points=points,Plan=plan}
+
+      if not points then
+        local extensionFailure={Reason=failure,Remaining=remaining,Reserve=stopReserve,AwaitingStraight=turning}
+
+        if not turning then
+          self:I(self.lid..string.format("Local extension failed: %s, %.0f m clear remainder, %.0f m stop reserve ==> replan from ship",
+            tostring(failure),remaining,stopReserve))
+          points,plan,extensionFailure.ReplacementReason=self:_PrepareLocalReplacement(position)
+          if self.localNavigation~=navigation or not self:_CanNavigate() then return false end
+        end
+
+        if points then
+          plan.ExtensionFailure=extensionFailure
+        else
+          navigation.ExtensionFailure=extensionFailure
+
+          if remaining<=stopReserve then
+            self:I(self.lid..string.format("Local extension exhausted: %.0f m remaining, %.0f m stop reserve ==> stop",remaining,stopReserve))
+            return self:_FailPathfinding({StopReason="local_route_exhausted",Remaining=remaining,
+              Reserve=stopReserve,ExtensionFailure=extensionFailure,Mode="local"})
+          end
+
+          -- The current position and entire installed remainder passed the depth check above.
+          -- Keep that native route, but avoid repeating the same searches on every timer tick.
+          navigation.ExtensionAfter=progress+250
+          self.LastPathfindingResult.ExtensionFailure=extensionFailure
+          self:I(self.lid..string.format("Local extension deferred: extension=%s, replacement=%s, %.0f m remaining, %.0f m stop reserve ==> keep route",
+            tostring(failure),turning and "waiting_for_turn" or tostring(extensionFailure.ReplacementReason),remaining,stopReserve))
+        end
+      end
+
+      if points then navigation.Pending={Points=points,Plan=plan} end
     end
-    if not self:IsTurning() then
+
+    if navigation.Pending and not turning then
       return self:_InstallLocalRoute(navigation.Pending.Points,navigation.Pending.Plan,position)
     end
   end
@@ -3349,6 +4031,7 @@ function NAVYGROUP:_FindPathToNextWaypoint()
   astar:SetEndCoordinate(goal)
   astar:SetValidSurfaceTypes({land.SurfaceType.WATER,land.SurfaceType.SHALLOW_WATER})
   astar:SetValidNeighbourDepth(minDepth,corridorWidth)
+  astar:SetCostDepth(self.pathPreferredDepth,self.pathDepthWeight)
 
   local grid=astar:GetGrid()
   grid:SetResolution(GRID.Resolution.FINE)
@@ -3428,6 +4111,86 @@ function NAVYGROUP:_FindPathToNextWaypoint()
   return true
 end
 
+--- Check each live ship's hull and a short distance along its current heading.
+-- Independent of waypoint geometry and active during turns. This is a sampled emergency check,
+-- not a prediction of the next turning arc or a calibrated DCS braking model.
+-- @param #NAVYGROUP self
+-- @return #boolean True when the sampled hull and lookahead meet the minimum depth.
+-- @return #string Failure reason, or nil.
+-- @return Core.Pathline#PATHLINE.DepthReport Failed sample with hull/heading context, or a clear report.
+function NAVYGROUP:_CheckNavigationNearfield()
+
+  local function checkShip(position, heading, speed, element)
+    local box=element and element.descriptors and element.descriptors.box
+    local stern,bow,left,right
+
+    if box then
+      -- The DCS object origin need not be the center of its hull. Retain asymmetric extents.
+      stern,bow,left,right=box.min.x,box.max.x,box.min.z,box.max.z
+    else
+      -- Late activation or missing model dimensions: use cached sizes, then modest fallbacks.
+      local length=element and element.length or 0
+      local width=element and element.width or 0
+      if length<=0 then length=100 end
+      if width<=0 then width=30 end
+      stern,bow,left,right=-length/2,length/2,-width/2,width/2
+    end
+
+    speed=math.max(0,speed)
+    local ahead=math.max(50,speed*10)
+    local angle=math.rad(heading)
+    local ux,uz=math.cos(angle),math.sin(angle)
+    local first,last=stern-10,bow+ahead
+    local low,high=left-10,right+10
+    local intervals=math.max(2,2*math.ceil((high-low)/20))
+    local blocked
+
+    -- Parallel profiles at most 10 m apart cover the interior as well as the hull edges.
+    -- This physical footprint is independent of an explicitly narrower A* corridor.
+    for i=0,intervals do
+      local offset=low+(high-low)*i/intervals
+      local start={x=position.x+ux*first-uz*offset,z=position.z+uz*first+ux*offset}
+      local goal={x=position.x+ux*last-uz*offset,z=position.z+uz*last+ux*offset}
+      local clear,reason,report=PATHLINE.CheckDepth(start,goal,self.pathMinDepth or 20,0)
+
+      if not clear then
+        report.ProfileOffset=offset
+        report.NavigationStage=report.Status=="unavailable" and "nearfield"
+          or (report.ClearDistance+first<=bow and "ship_hull" or "ship_lookahead")
+        report.CheckStart,report.CheckGoal=start,goal
+        report.Nearfield={Unit=element and element.name or self.groupname,Position=position,Heading=heading,
+          Speed=speed,Bow=bow,Stern=stern,Beam=right-left,Lookahead=ahead,
+          ClearFromBow=math.max(0,report.ClearDistance+first-bow)}
+
+        -- Unknown depth cannot establish a safe footprint. Otherwise report the closest threat.
+        if report.Status=="unavailable" then return false,reason,report end
+        if not blocked or report.ClearDistance<blocked.ClearDistance then blocked=report end
+      end
+    end
+
+    if blocked then return false,blocked.Reason,blocked end
+    return true
+  end
+
+  -- Formation members have their own position, heading and dimensions; the leader alone is insufficient.
+  local checked=false
+  for _,element in ipairs(self.elements or {}) do
+    local unit=element.unit
+    if unit and unit:IsAlive() then
+      checked=true
+      local clear,reason,report=checkShip(unit:GetVec3(),unit:GetHeading(),unit:GetVelocityMPS(),element)
+      if not clear then return clear,reason,report end
+    end
+  end
+
+  if not checked then
+    local clear,reason,report=checkShip(self:GetVec3(),self:GetHeading(),self:GetVelocity(),nil)
+    if not clear then return clear,reason,report end
+  end
+
+  return true,nil,{Status="clear",NavigationStage="nearfield",RequiredDepth=self.pathMinDepth or 20}
+end
+
 --- Resolve the total width used by all naval depth checks.
 -- Uses cached element dimensions, including the widest ship in a group. Formation offsets are not included.
 -- @param #NAVYGROUP self
@@ -3471,6 +4234,19 @@ end
 function NAVYGROUP:_CheckPathDepth(Start, Goal)
 
   return PATHLINE.CheckDepth(Start,Goal,self.pathMinDepth or 20,self:_GetPathfindingCorridorWidth())
+end
+
+--- Price a potential local shortcut with the same hard checks and depth penalty used by A*.
+-- Collision monitoring and direct target resumption deliberately continue to use _CheckPathDepth().
+-- @param #NAVYGROUP self
+-- @param Core.Vector#VECTOR Start Connection start.
+-- @param Core.Vector#VECTOR Goal Connection end.
+-- @return #number Horizontal travel cost, or math.huge for a blocked/unavailable connection.
+function NAVYGROUP:_GetPathfindingDepthCost(Start, Goal)
+
+  return ASTAR.CostDepth({vector=Start},{vector=Goal},self.pathMinDepth or 20,self:_GetPathfindingCorridorWidth(),
+    self.pathPreferredDepth,self.pathDepthWeight)
+
 end
 
 
@@ -3742,7 +4518,7 @@ function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck)
   elseif math.abs(vdeck*sine)>vwind then
     -- Too little wind
     
-    -- Set theta to 90°
+    -- Set theta to 90ÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°
     theta=direction*math.pi/2
     
     -- Set speed.
@@ -3759,7 +4535,7 @@ function NAVYGROUP:GetHeadingIntoWind_new(Offset, vdeck)
   local intowind = (540 + (windto + math.deg(theta) )) % 360
   
   -- Debug info.
-  self:T(self.lid..string.format("Heading into Wind: vship=%.1f, vwind=%.1f, WindTo=%03.0f°, Theta=%03.0f°, Heading=%03.0f", v, vwind, windto, math.deg(theta), intowind))
+  self:T(self.lid..string.format("Heading into Wind: vship=%.1f, vwind=%.1f, WindTo=%03.0fÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°, Theta=%03.0fÃƒÆ’Ã¢â‚¬Å¡Ãƒâ€šÃ‚Â°, Heading=%03.0f", v, vwind, windto, math.deg(theta), intowind))
   
   return intowind, v
 end
@@ -3826,6 +4602,7 @@ end
 -- @return #boolean Always false.
 function NAVYGROUP:_FailPathfinding(Report)
 
+  if self.localNavigation then Report.SteeringFailures=self.localNavigation.SteeringFailures end
   self.LastPathfindingResult=Report
   self.ispathfinding=false
   self:_ClearPathfindingDrawing()
@@ -3844,21 +4621,31 @@ end
 function NAVYGROUP:_LogNavigationDepthCheck(Report, Action)
 
   local point=Report.Point or {}
-  local position=self:GetVec3() or {}
-  local connection=""
-  if Report.CheckStart and Report.CheckGoal then
-    connection=string.format(", target_uid=%s, check_from=(%.1f, %.1f), check_to=(%.1f, %.1f)",
-      tostring(Report.TargetUID),Report.CheckStart.x,Report.CheckStart.z,Report.CheckGoal.x,Report.CheckGoal.z)
-  end
+  local position=Report.Nearfield and Report.Nearfield.Position or self:GetVec3() or {}
+
+  -- Keep each line short: DCS truncates long diagnostics, including the coordinates we need most.
   self:I(self.lid..string.format(
     "Naval depth check: action=%s, stage=%s, segment=%s, status=%s, reason=%s, cause=%s, "..
-    "depth=%s m, required_depth=%s m, surface=%s, profile_offset=%s m, location=%s, distance=%s m, "..
-    "point=(%s,%s,%s), ship=(%s,%s,%s), heading=%s, turning=%s, route_deviation=%s m",
+    "depth=%s m, required_depth=%s m, surface=%s, profile_offset=%s m, location=%s, distance=%s m",
     tostring(Action),tostring(Report.NavigationStage),tostring(Report.RouteSegment),tostring(Report.Status),
     tostring(Report.Reason),tostring(Report.Cause),tostring(Report.Depth),tostring(Report.RequiredDepth),
-    tostring(Report.SurfaceType),tostring(Report.ProfileOffset),tostring(Report.Location),tostring(Report.Distance),
+    tostring(Report.SurfaceType),tostring(Report.ProfileOffset),tostring(Report.Location),tostring(Report.Distance)))
+  self:I(self.lid..string.format(
+    "Naval depth position: point=(%s,%s,%s), ship=(%s,%s,%s), heading=%s, turning=%s, route_deviation=%s m",
     tostring(point.x),tostring(point.y),tostring(point.z),tostring(position.x),tostring(position.y),tostring(position.z),
-    tostring(self:GetHeading()),tostring(self:IsTurning()),tostring(Report.RouteDeviation))..connection)
+    tostring(Report.Nearfield and Report.Nearfield.Heading or self:GetHeading()),tostring(self:IsTurning()),tostring(Report.RouteDeviation)))
+
+  if Report.CheckStart and Report.CheckGoal then
+    self:I(self.lid..string.format("Naval depth segment: route=%s, target_uid=%s, check_from=(%.1f, %.1f), check_to=(%.1f, %.1f)",
+      tostring(Report.RouteID),tostring(Report.TargetUID),Report.CheckStart.x,Report.CheckStart.z,Report.CheckGoal.x,Report.CheckGoal.z))
+  end
+
+  local near=Report.Nearfield
+  if near then
+    self:I(self.lid..string.format("Naval nearfield: unit=%s, bow=%.1f m, stern=%.1f m, beam=%.1f m, "..
+      "speed=%.2f m/s, lookahead=%.1f m, clear_from_bow=%.1f m",
+      tostring(near.Unit),near.Bow,near.Stern,near.Beam,near.Speed,near.Lookahead,near.ClearFromBow))
+  end
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

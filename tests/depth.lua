@@ -380,5 +380,75 @@ test("detailed and fast validity agree across deterministic profiles and reverse
   end
 end)
 
+test("depth costs retain the hard threshold and saturate at the preferred depth",function()
+  local data=terrain()
+  local a,b=node(0),node(1000)
+  for _,sample in ipairs({{20,3000},{21,2620},{25,1500},{28,1080},{30,1000},{100,1000}}) do
+    data.depth=sample[1]
+    near(ASTAR.CostDepth(a,b,20,0,30,2),sample[2])
+    near(ASTAR.CostDepth(b,a,20,0,30,2),sample[2])
+  end
+  data.depth=19.99 equal(ASTAR.CostDepth(a,b,20,0,30,2),math.huge)
+  data.depth=20 near(ASTAR.CostDepth(a,b,20,0,30,0),1000)
+  near(ASTAR.CostDepth(a,b,20,0,20,2),1000)
+  near(ASTAR.CostDepth(a,b,20,0,10,2),1000)
+  near(ASTAR.CostDepth(a,a,20,100,30,2),0)
+  data.depth=10 equal(ASTAR.CostDepth(a,a,20,0,30,2),math.huge)
+end)
+
+test("depth cost integration uses distances, clips at preferred depth and is subdivision invariant",function()
+  local data=terrain()
+  data.depthAt=function(p) return 20+p.x/50 end
+  data.profile=function(a,b)
+    local result={}
+    for _,fraction in ipairs({1,0.9,0.07,0.07,0,0.31}) do
+      local x=a.x+(b.x-a.x)*fraction
+      result[#result+1]={x=x,y=-(20+x/50),z=0}
+    end
+    return result
+  end
+  local a,b,c=node(0),node(370),node(1000)
+  local whole=ASTAR.CostDepth(a,c,20,0,30,2)
+  near(whole,1000+2*500/3)
+  near(whole,ASTAR.CostDepth(a,b,20,0,30,2)+ASTAR.CostDepth(b,c,20,0,30,2))
+  near(whole,ASTAR.CostDepth(c,a,20,0,30,2))
+end)
+
+test("crossing side profiles use the shallower side at every distance",function()
+  local data=terrain()
+  data.depthAt=function(p)
+    if p.y==50 then return 20+p.x/100 end
+    if p.y==-50 then return 30-p.x/100 end
+    return 40
+  end
+  data.profile=function(a,b)
+    local points={}
+    for _,f in ipairs({0,1}) do
+      local x=a.x+(b.x-a.x)*f
+      points[#points+1]={x=x,z=a.z,y=-data.depthAt({x=x,y=a.z})}
+    end
+    return points
+  end
+  local a,b,c=node(0),node(250),node(1000)
+  near(ASTAR.CostDepth(a,c,20,0,30,2),1000)
+  local whole=ASTAR.CostDepth(a,c,20,100,30,2)
+  near(whole,1000+2000*7/12)
+  near(whole,ASTAR.CostDepth(a,b,20,100,30,2)+ASTAR.CostDepth(b,c,20,100,30,2))
+end)
+
+test("depth costs retain direct/profile conservatism and sparse-profile fallback",function()
+  local data=terrain()
+  data.depth=40
+  data.profile=function(a,b) return {{x=a.x,y=-25,z=a.z},{x=b.x,y=-25,z=b.z}} end
+  near(ASTAR.CostDepth(node(0),node(1000),20,0,30,2),1500)
+  data.depth=21 near(ASTAR.CostDepth(node(0),node(1000),20,0,30,2),2620)
+  data.profile=function() return {} end
+  near(ASTAR.CostDepth(node(0),node(1000),20,0,30,2),2620)
+  data.depthAt=function(p) return p.x==500 and 10 or 40 end
+  equal(ASTAR.CostDepth(node(0),node(1000),20,0,30,2),math.huge)
+  data.profile=function() return nil end
+  equal(ASTAR.CostDepth(node(0),node(1000),20,0,30,2),math.huge)
+end)
+
 print(string.format("%d passed, %d failed",passed,failed))
 if failed>0 then os.exit(1) end

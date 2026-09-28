@@ -182,6 +182,8 @@
 --
 -- Costs default to 2D distance. SetCostDist3D and SetCostRoad select alternatives. SetCostFunction accepts symmetric, non-negative costs;
 -- math.huge makes a connection impassable. Custom and road costs use a zero heuristic; built-in 2D/3D distances use their matching heuristic.
+-- After SetValidNeighbourDepth(), SetCostDepth(30, 2) optionally prefers 30 meters of water while retaining the 2D heuristic.
+-- Connections below the minimum stay blocked. Permitted shallow sections cost more, with no extra benefit beyond the preferred depth.
 -- Changing cost functions clears cost caches. Costs and rule results are retained between searches, so recreate/reconfigure if their external data changes.
 -- GetNodeNeighbourCount(node) counts candidates; GetNodeNeighbourCount(node,true) evaluates the neighbour rule but does not check travel costs.
 --
@@ -463,6 +465,7 @@ end
 
 --- Replace the neighbour rule and clear cached validity results on all existing nodes.
 -- The function receives nodeA, nodeB, then the optional arguments. It must be symmetric because results are cached in both directions.
+-- Depth costs follow changes to the depth rule. Selecting another rule restores distance costs if depth costs were active.
 -- @param #ASTAR self
 -- @param #function NeighbourFunction Function returning true for an allowed connection, false otherwise. Nil allows all pairs.
 -- @param ... Additional callback arguments, if any.
@@ -480,6 +483,16 @@ function ASTAR:SetValidNeighbourFunction(NeighbourFunction, ...)
 
   for _,node in pairs(self.nodes) do
     node.valid={}
+  end
+
+  -- Depth validity and costs share one profile evaluation and must use the same corridor and threshold.
+  if self.CostFunc==ASTAR.CostDepth then
+    if NeighbourFunction==ASTAR.Depth then
+      self:SetCostFunction(ASTAR.CostDepth, self.ValidNeighbourArg[1] or 20, self.ValidNeighbourArg[2] or 0,
+        self.CostArg[3], self.CostArg[4])
+    else
+      self:SetCostDist2D()
+    end
   end
 
   return self
@@ -560,7 +573,8 @@ end
 -- Assumes linear terrain between profile points. Checks actual endpoints separately and uses the shallower of profile
 -- and directly queried depth at profile points. A corridor adds two parallel edge profiles, not a continuous area check.
 -- A profile with fewer than two support points uses direct intermediate depth checks at a maximum gap of 100 meters.
--- Clears cached connection validity. Reapply after external terrain data changes. Does not change costs or grid resolution.
+-- Clears cached connection validity and any active depth costs. Reapply after external terrain data changes.
+-- An active SetCostDepth() preference follows the new minimum and corridor; other cost rules and grid resolution stay unchanged.
 -- @param #ASTAR self
 -- @param #number MinDepth (Optional) Positive finite minimum water depth in meters, inclusive; default 20.
 -- @param #number CorridorWidth (Optional) Non-negative finite total width in meters; default 0 (center line only).
@@ -658,6 +672,35 @@ function ASTAR:SetCostDist2D()
   self:SetCostFunction(ASTAR.Dist2D)
 
   return self
+
+end
+
+--- Prefer deeper water while retaining the configured minimum depth as a hard limit.
+-- Call SetValidNeighbourDepth() first. Costs integrate a quadratic penalty along the terrain profiles,
+-- using the shallowest of the center/edge profiles at each distance. At PreferredDepth and deeper,
+-- cost equals horizontal distance; at the minimum depth the multiplier is 1 + Weight.
+-- Nil restores ordinary distance costs. A preferred depth at/below the minimum, or zero weight,
+-- adds no penalty. Changing the depth rule updates these costs; another neighbour rule disables them.
+-- @param #ASTAR self
+-- @param #number PreferredDepth (Optional) Positive finite preferred depth in meters; nil disables the preference.
+-- @param #number Weight (Optional) Finite non-negative penalty strength; default 2.
+-- @return #ASTAR self.
+---@param PreferredDepth? number
+---@param Weight? number
+---@return ASTAR
+function ASTAR:SetCostDepth(PreferredDepth, Weight)
+
+  if PreferredDepth==nil then
+    return self:SetCostDist2D()
+  end
+
+  if Weight==nil then Weight=2 end
+  assert(PreferredDepth>0 and PreferredDepth<math.huge,"ASTAR: preferred depth must be finite and positive")
+  assert(Weight>=0 and Weight<math.huge,"ASTAR: depth weight must be finite and non-negative")
+  assert(self.ValidNeighbourFunc==ASTAR.Depth,"ASTAR: configure SetValidNeighbourDepth before depth costs")
+
+  return self:SetCostFunction(ASTAR.CostDepth, self.ValidNeighbourArg[1] or 20, self.ValidNeighbourArg[2] or 0,
+    PreferredDepth, Weight)
 
 end
 
@@ -773,25 +816,27 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
 
 end
 
---- Check the endpoints and terrain profile of one water connection.
--- A* only needs to know whether every point is deep enough. The first rejection ends this check;
--- locating an obstruction and interpolating its distance belong to PATHLINE.CheckDepth().
+--- Check the endpoints and terrain profile of one water connection, optionally retaining depths for costs.
+-- The first rejection ends this check. Locating an obstruction belongs to PATHLINE.CheckDepth().
 -- @param DCS#Vec3 Start Start position at the water surface.
 -- @param DCS#Vec3 Goal Goal position at the water surface.
 -- @param #number Distance Horizontal distance between the endpoints, greater than zero.
 -- @param #number MinDepth Minimum water depth in meters, inclusive.
+-- @param #table Samples (Optional) Receives pairs of projected distance and depth for cost integration.
 -- @return #boolean True when the connection is sufficiently deep water.
 -- @return #string Reason for rejection, or nil on success.
-function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth)
+function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples)
 
   -- DCS may omit the endpoints from its profile. Always check their actual depths as well.
   for i=1,2 do
     local point=i==1 and Start or Goal
-    local clear,status,cause=VECTOR._CheckDepthPoint(point,MinDepth,false)
+    local clear,status,cause,depth=VECTOR._CheckDepthPoint(point,MinDepth,false)
 
     if not clear then
       return false,status=="unavailable" and cause or (i==1 and "start_blocked" or "goal_blocked")
     end
+
+    if Samples then Samples[#Samples+1]={i==1 and 0 or Distance,depth} end
   end
 
   local profile=land.profile(Start,Goal)
@@ -801,10 +846,16 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth)
 
   -- Under the linear-profile assumption, valid support points also bound the depths between them.
   for i=1,#profile do
-    local clear,status,cause=VECTOR._CheckDepthPoint(profile[i],MinDepth,true)
+    local point=profile[i]
+    local clear,status,cause,depth=VECTOR._CheckDepthPoint(point,MinDepth,true)
 
     if not clear then
       return false,status=="unavailable" and cause or "profile_blocked"
+    end
+
+    if Samples then
+      local along=((point.x-Start.x)*(Goal.x-Start.x)+(point.z-Start.z)*(Goal.z-Start.z))/Distance
+      Samples[#Samples+1]={math.max(0,math.min(Distance,along)),depth}
     end
   end
 
@@ -819,15 +870,130 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth)
     for i=1,intervals-1 do
       local fraction=i/intervals
       local point={x=Start.x+(Goal.x-Start.x)*fraction,z=Start.z+(Goal.z-Start.z)*fraction}
-      local clear,status,cause=VECTOR._CheckDepthPoint(point,MinDepth,false)
+      local clear,status,cause,depth=VECTOR._CheckDepthPoint(point,MinDepth,false)
 
       if not clear then
         return false,status=="unavailable" and cause or "profile_fallback_blocked"
       end
+
+      if Samples then Samples[#Samples+1]={fraction*Distance,depth} end
     end
   end
 
   return true
+
+end
+
+--- Integrate the quadratic shallow-water penalty over one linear depth interval.
+-- Split at the preferred depth: deeper water has zero penalty, not a reward for a detour.
+-- @param #number Length Horizontal interval length in meters.
+-- @param #number DepthA Depth at the interval start.
+-- @param #number DepthB Depth at the interval end.
+-- @param #number MinDepth Hard minimum depth.
+-- @param #number PreferredDepth Preferred depth, greater than MinDepth.
+-- @return #number Length-weighted penalty before applying the configured weight.
+function ASTAR._DepthPenaltyInterval(Length, DepthA, DepthB, MinDepth, PreferredDepth)
+
+  if DepthA>=PreferredDepth and DepthB>=PreferredDepth then return 0 end
+
+  if DepthA>PreferredDepth then
+    Length=Length*(PreferredDepth-DepthB)/(DepthA-DepthB)
+    DepthA=PreferredDepth
+  elseif DepthB>PreferredDepth then
+    Length=Length*(PreferredDepth-DepthA)/(DepthB-DepthA)
+    DepthB=PreferredDepth
+  end
+
+  local a=(PreferredDepth-DepthA)/(PreferredDepth-MinDepth)
+  local b=(PreferredDepth-DepthB)/(PreferredDepth-MinDepth)
+  return Length*(a*a+a*b+b*b)/3
+
+end
+
+--- Integrate the shallowest interpolated depth across the checked corridor profiles.
+-- Actual distances make the result independent of profile sample density. Crossings between
+-- side profiles split an interval so a shallow bank is never averaged away by deeper water.
+-- @param #table Profiles Lists of distance/depth pairs, including both endpoints.
+-- @param #number Distance Horizontal connection length in meters.
+-- @param #number MinDepth Hard minimum depth.
+-- @param #number PreferredDepth Preferred depth, greater than MinDepth.
+-- @return #number Length-weighted quadratic penalty.
+function ASTAR._DepthPenalty(Profiles, Distance, MinDepth, PreferredDepth)
+
+  -- Most offshore edges have no penalty. Their support points already prove this without sorting.
+  local deep=true
+  for _,samples in ipairs(Profiles) do
+    for _,sample in ipairs(samples) do
+      if sample[2]<PreferredDepth then deep=false break end
+    end
+    if not deep then break end
+  end
+  if deep then return 0 end
+
+  local indices={}
+  for i,samples in ipairs(Profiles) do
+    table.sort(samples,function(a,b) return a[1]<b[1] end)
+
+    -- Endpoints and DCS support points can coincide. Keep the shallower observation.
+    local count=0
+    for j=1,#samples do
+      local sample=samples[j]
+      if count>0 and sample[1]==samples[count][1] then
+        samples[count][2]=math.min(samples[count][2],sample[2])
+      else
+        count=count+1
+        samples[count]=sample
+      end
+    end
+    for j=#samples,count+1,-1 do samples[j]=nil end
+    indices[i]=1
+  end
+
+  local position,penalty=0,0
+  while position<Distance do
+    local finish=Distance
+    for i,samples in ipairs(Profiles) do
+      finish=math.min(finish,samples[indices[i]+1][1])
+    end
+
+    local depths,cuts={},{0,1}
+    for i,samples in ipairs(Profiles) do
+      local a,b=samples[indices[i]],samples[indices[i]+1]
+      local slope=(b[2]-a[2])/(b[1]-a[1])
+      depths[i]={a[2]+slope*(position-a[1]),a[2]+slope*(finish-a[1])}
+    end
+
+    -- Between support points, the shallowest profile can change only at a line crossing.
+    for i=1,#depths do
+      for j=i+1,#depths do
+        local deltaA=depths[i][1]-depths[j][1]
+        local deltaB=depths[i][2]-depths[j][2]
+        if deltaA*deltaB<0 then cuts[#cuts+1]=deltaA/(deltaA-deltaB) end
+      end
+    end
+    table.sort(cuts)
+
+    for i=2,#cuts do
+      local from,to=cuts[i-1],cuts[i]
+      local middle=(from+to)/2
+      local selected,shallowest=nil,math.huge
+      for _,depth in ipairs(depths) do
+        local value=depth[1]+(depth[2]-depth[1])*middle
+        if value<shallowest then selected,shallowest=depth,value end
+      end
+
+      local slope=selected[2]-selected[1]
+      penalty=penalty+ASTAR._DepthPenaltyInterval((finish-position)*(to-from),
+        selected[1]+slope*from,selected[1]+slope*to,MinDepth,PreferredDepth)
+    end
+
+    position=finish
+    for i,samples in ipairs(Profiles) do
+      if samples[indices[i]+1][1]==position then indices[i]=indices[i]+1 end
+    end
+  end
+
+  return penalty
 
 end
 
@@ -846,6 +1012,39 @@ end
 -- @return #string Reason for rejection, or nil on success. Start/goal refer to the canonical query direction.
 function ASTAR.Depth(nodeA, nodeB, MinDepth, CorridorWidth)
 
+  return ASTAR._DepthConnection(nodeA,nodeB,MinDepth,CorridorWidth)
+
+end
+
+--- Calculate distance plus a length-weighted penalty for shallow but navigable water.
+-- Uses the same hard depth/corridor checks as Depth(). A blocked or unavailable connection costs math.huge.
+-- @param #ASTAR.Node nodeA First node.
+-- @param #ASTAR.Node nodeB Second node.
+-- @param #number MinDepth (Optional) Minimum water depth in meters; default 20.
+-- @param #number CorridorWidth (Optional) Total checked corridor width in meters; default 0.
+-- @param #number PreferredDepth (Optional) Preferred water depth in meters; nil adds no penalty.
+-- @param #number Weight (Optional) Non-negative penalty strength; default 2.
+-- @return #number Symmetric horizontal travel cost, or math.huge when blocked.
+function ASTAR.CostDepth(nodeA, nodeB, MinDepth, CorridorWidth, PreferredDepth, Weight)
+
+  local clear,reason,cost=ASTAR._DepthConnection(nodeA,nodeB,MinDepth,CorridorWidth,PreferredDepth,Weight)
+  return clear and cost or math.huge
+
+end
+
+--- Evaluate depth validity and optional cost together, without querying a profile twice.
+-- Plain validity checks retain the early-exit path and do not allocate or sort cost samples.
+-- @param #ASTAR.Node nodeA First node.
+-- @param #ASTAR.Node nodeB Second node.
+-- @param #number MinDepth (Optional) Minimum depth in meters; default 20.
+-- @param #number CorridorWidth (Optional) Total corridor width in meters; default 0.
+-- @param #number PreferredDepth (Optional) Preferred depth in meters; nil disables the penalty.
+-- @param #number Weight (Optional) Non-negative penalty strength; default 2.
+-- @return #boolean Whether the connection is navigable.
+-- @return #string Rejection reason, or nil.
+-- @return #number Travel cost on success.
+function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, PreferredDepth, Weight)
+
   if MinDepth==nil then
     MinDepth=20
   end
@@ -857,6 +1056,13 @@ function ASTAR.Depth(nodeA, nodeB, MinDepth, CorridorWidth)
   assert(MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
   assert(CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
 
+  if Weight==nil then Weight=2 end
+  if PreferredDepth~=nil then
+    assert(PreferredDepth>0 and PreferredDepth<math.huge,"ASTAR: preferred depth must be finite and positive")
+    assert(Weight>=0 and Weight<math.huge,"ASTAR: depth weight must be finite and non-negative")
+  end
+  local profiles=PreferredDepth and PreferredDepth>MinDepth and Weight>0 and {} or nil
+
   local a,b=nodeA.vector,nodeB.vector
   local dx,dz=b.x-a.x,b.z-a.z
   local distance=math.sqrt(dx*dx+dz*dz)
@@ -867,7 +1073,7 @@ function ASTAR.Depth(nodeA, nodeB, MinDepth, CorridorWidth)
 
   if distance==0 then
     local clear,status,cause=VECTOR._CheckDepthPoint(a,MinDepth,false)
-    return clear,not clear and (status=="unavailable" and cause or "start_blocked") or nil
+    return clear,not clear and (status=="unavailable" and cause or "start_blocked") or nil,clear and 0 or nil
   end
 
   -- Query DCS in the same direction for A -> B and B -> A, matching A*'s symmetric validity cache.
@@ -883,14 +1089,20 @@ function ASTAR.Depth(nodeA, nodeB, MinDepth, CorridorWidth)
     local offset=i==2 and CorridorWidth/2 or (i==3 and -CorridorWidth/2 or 0)
     local start={x=a.x+nx*offset,y=0,z=a.z+nz*offset}
     local goal={x=b.x+nx*offset,y=0,z=b.z+nz*offset}
-    local clear,reason=ASTAR._CheckDepthLine(start,goal,distance,MinDepth)
+    local samples=profiles and {} or nil
+    local clear,reason=ASTAR._CheckDepthLine(start,goal,distance,MinDepth,samples)
 
     if not clear then
       return false,reason
     end
+
+    if profiles then profiles[#profiles+1]=samples end
   end
 
-  return true
+  local cost=distance
+  if profiles then cost=cost+Weight*ASTAR._DepthPenalty(profiles,distance,MinDepth,PreferredDepth) end
+
+  return true,nil,cost
 
 end
 
@@ -1517,7 +1729,7 @@ end
 -- @return #number Estimated remaining cost.
 function ASTAR:_HeuristicCost(nodeA, nodeB)
 
-  if not self.CostFunc or self.CostFunc==ASTAR.Dist2D then
+  if not self.CostFunc or self.CostFunc==ASTAR.Dist2D or self.CostFunc==ASTAR.CostDepth then
     return ASTAR.Dist2D(nodeA, nodeB)
   elseif self.CostFunc==ASTAR.Dist3D then
     return ASTAR.Dist3D(nodeA, nodeB)
@@ -1525,6 +1737,25 @@ function ASTAR:_HeuristicCost(nodeA, nodeB)
 
   -- Custom and road costs have no known distance lower bound; zero avoids overestimating them.
   return 0
+
+end
+
+--- Evaluate and cache both results of a depth-weighted connection.
+-- Used by validity and cost requests, in either order. Node caches belong only to this search.
+-- @param #ASTAR self
+-- @param #ASTAR.Node nodeA First node.
+-- @param #ASTAR.Node nodeB Second node.
+-- @return #boolean Whether the connection is navigable.
+-- @return #number Travel cost, or math.huge when blocked.
+function ASTAR:_EvaluateDepthEdge(nodeA, nodeB)
+
+  local valid,reason,cost=ASTAR._DepthConnection(nodeA,nodeB,unpack(self.CostArg,1,self.CostArg.n))
+  cost=valid and cost or math.huge
+
+  nodeA.valid[nodeB.id],nodeB.valid[nodeA.id]=valid,valid
+  nodeA.cost[nodeB.id],nodeB.cost[nodeA.id]=cost,cost
+
+  return valid,cost
 
 end
 
@@ -1546,7 +1777,11 @@ function ASTAR:_TravelCost(nodeA, nodeB)
   end
 
   local cost=nil
-  if self.CostFunc then
+  if self.CostFunc==ASTAR.CostDepth and self.ValidNeighbourFunc==ASTAR.Depth
+    and self.CostArg[1]==(self.ValidNeighbourArg[1] or 20) and self.CostArg[2]==(self.ValidNeighbourArg[2] or 0) then
+    local valid
+    valid,cost=self:_EvaluateDepthEdge(nodeA,nodeB)
+  elseif self.CostFunc then
     cost=self.CostFunc(nodeA, nodeB, unpack(self.CostArg, 1, self.CostArg.n))
   else
     cost=self:_DistNodes(nodeA, nodeB)
@@ -1579,7 +1814,10 @@ function ASTAR:_IsValidNeighbour(node, neighbor)
   end
 
   local valid=nil
-  if self.ValidNeighbourFunc then
+  if self.CostFunc==ASTAR.CostDepth and self.ValidNeighbourFunc==ASTAR.Depth
+    and self.CostArg[1]==(self.ValidNeighbourArg[1] or 20) and self.CostArg[2]==(self.ValidNeighbourArg[2] or 0) then
+    valid=self:_EvaluateDepthEdge(node,neighbor)
+  elseif self.ValidNeighbourFunc then
     valid=self.ValidNeighbourFunc(node, neighbor, unpack(self.ValidNeighbourArg, 1, self.ValidNeighbourArg.n))
   else
     valid=true

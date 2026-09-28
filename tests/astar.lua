@@ -2162,13 +2162,15 @@ test("grid creation expansion search and debug overlays require no COORDINATE al
 end)
 
 -- Exercise the production naval planner with actual GRID/ASTAR and stubbed route/FSM side effects.
+-- Repeated route observations advance simulation time by ten seconds; faster nearfield-only
+-- ticks are exercised separately in tests/navy-local.lua.
 local navyFile=assert(io.open("Moose Development/Moose/Ops/NavyGroup.lua","r"))
 local navySource=navyFile:read("*a"):gsub("\r\n","\n") navyFile:close()
 NAVYGROUP={}
 for _,name in ipairs({"_GetPathfindingTarget","_FindPathToNextWaypoint","_ClearPathfindingDrawing","_GetPathfindingCorridorWidth","_CheckPathDepth",
-  "_CanNavigate","_FailPathfinding","_UpdateNavigationWarning","_SetNavigationWaypoint","_GetNavigationWaypoint","_CheckNavigation",
+  "_CanNavigate","_FailPathfinding","_UpdateNavigationWarning","_SetNavigationWaypoint","_GetNavigationWaypoint","_CheckNavigation","_CheckNavigationAhead","_CheckNavigationNearfield","_LogNavigationDepthCheck",
   "onafterFullStop","onafterCruise","onafterCollisionWarning","onafterClearAhead","onafterTurningStopped",
-  "SetPathfinding","SetPathfindingOn","SetPathfindingOff","SetPathfindingMinDepth","SetPathfindingGrid","onafterUpdateRoute","onafterTurnIntoWindOver",
+  "SetPathfinding","SetPathfindingOn","SetPathfindingOff","SetPathfindingMinDepth","SetPathfindingPreferredDepth","SetPathfindingGrid","onafterUpdateRoute","onafterTurnIntoWindOver",
   "_CreateTurnIntoWind","AddTurnIntoWind","RemoveTurnIntoWind","AddTaskAttackGroup","_CheckTurning",
   "GetHeadingIntoWind_new","onafterRTZ","onafterEngageTarget","_UpdateEngageTarget"}) do
   assert((loadstring or load)(assert(navySource:match("(function NAVYGROUP:"..name.."%b().-\nend)"))))()
@@ -2204,6 +2206,7 @@ local function vessel(distance)
   ship.depthTerrain=terrain
   function ship:T() end
   function ship:T3() end
+  function ship:I() end
   function ship:E() end
   function ship:IsTrace() return false end
   function ship:GetState() return self.state end
@@ -2305,7 +2308,7 @@ test("NAVYGROUP checks the next route leg up to 5000 meters with its configured 
   equal(ship.updates,0)
 
   ship.waypoints[2].coordinate=coord(300,400)
-  ship:_CheckNavigation()
+  timerNow=timerNow+10 ship:_CheckNavigation()
   near(ship.LastNavigationCheck.Distance,500)
 end)
 
@@ -2344,22 +2347,22 @@ end)
 test("NAVYGROUP pathfinding-off still warns about depth and only verified clearance resets the warning",function()
   local ship=vessel():SetPathfindingOff()
   ship.depthTerrain.depthAt=function(p) return p.x>=500 and p.x<=600 and 5 or 30 end
-  ship:_CheckNavigation()
+  timerNow=timerNow+10 ship:_CheckNavigation()
   equal(ship.warnings,1) equal(ship.stops,0) equal(ship.updates,0)
   assert(ship.collisionwarning)
-  ship:_CheckNavigation()
+  timerNow=timerNow+10 ship:_CheckNavigation()
   equal(ship.warnings,1)
 
   local profile=land.profile
   land.profile=function() return nil end
-  ship:_CheckNavigation()
+  timerNow=timerNow+10 ship:_CheckNavigation()
   equal(ship.LastNavigationCheck.Status,"unavailable")
   equal(ship.stops,0) equal(ship.clears,0)
   assert(ship.collisionwarning)
 
   land.profile=profile
   ship.depthTerrain.depthAt=nil
-  ship:_CheckNavigation()
+  timerNow=timerNow+10 ship:_CheckNavigation()
   equal(ship.LastNavigationCheck.Status,"clear")
   equal(ship.clears,1) equal(ship.collisionwarning,false)
 end)
@@ -2388,14 +2391,14 @@ test("NAVYGROUP navigation checks corridor edges and detects shoals before a dee
     if p.x>=750 and p.x<=900 and p.y==25 then return 8 end
     return 30
   end
-  ship:_CheckNavigation()
+  timerNow=timerNow+10 ship:_CheckNavigation()
   equal(ship.LastNavigationCheck.Status,"blocked")
   assert(ship.LastNavigationCheck.ClearDistance<750)
   equal(ship.LastNavigationCheck.ProfileOffset,25)
   equal(ship.warnings,1)
 
   ship.pathCorridor=0
-  ship:_CheckNavigation()
+  timerNow=timerNow+10 ship:_CheckNavigation()
   equal(ship.LastNavigationCheck.Status,"clear")
   equal(ship.clears,1)
 end)
@@ -2584,13 +2587,22 @@ test("NAVYGROUP timer handles two successive islands while waypoint callbacks do
   local ship=vessel()
   ship.waypoints[3]={uid=3,coordinate=coord(10000),speed=10,npassed=0}
   ship.nextID=3
+  local function tickOnRoute()
+    -- This lifecycle fixture jumps between waypoints; observe an aligned, settled outgoing
+    -- heading instead of leaving the ship aimed east into the island it just went around.
+    ship.heading=VECTOR:NewFromVec(ship.position):GetHeadingTo(ship:GetWaypointNext().coordinate)
+    ship.turningHeading=ship.heading
+    ship.turning=false
+    timerNow=timerNow+10
+    ship:_CheckNavigation()
+  end
   function ship:PassingWaypoint() end
   ship.depthTerrain.depthAt=function(p)
     if ((p.x>=1800 and p.x<=3200) or (p.x>=6800 and p.x<=8200)) and math.abs(p.y)<=1200 then return 7 end
     return 30
   end
 
-  ship:_CheckNavigation()
+  tickOnRoute()
   equal(ship.updates,1)
   local firstReport=ship.LastPathfindingResult
   while ship:GetWaypointNext().astar do
@@ -2598,7 +2610,7 @@ test("NAVYGROUP timer handles two successive islands while waypoint callbacks do
     ship.position=waypoint.coordinate
     OPSGROUP._PassingWaypoint(ship,waypoint.uid)
     equal(ship.LastPathfindingResult,firstReport)
-    ship:_CheckNavigation()
+    tickOnRoute()
     equal(ship.updates,1) equal(ship.stops,0)
   end
 
@@ -2608,7 +2620,7 @@ test("NAVYGROUP timer handles two successive islands while waypoint callbacks do
   OPSGROUP._PassingWaypoint(ship,waypoint.uid)
   equal(ship.updates,1)
   equal(ship:GetWaypointNext().uid,3)
-  ship:_CheckNavigation()
+  tickOnRoute()
   equal(ship.updates,2) equal(ship.stops,0)
   assert(ship.LastPathfindingResult~=firstReport)
   equal(ship:GetWaypointNext().astarTargetUID,3)
@@ -2626,10 +2638,10 @@ test("NAVYGROUP limit configuration remains atomic and depth changes affect the 
   assert(not pcall(ship.SetPathfindingGrid,ship,9000,1))
   equal(ship.pathMaxCells,8000) equal(ship.pathGrowthFactor,2)
   ship.depthTerrain.depth=18
-  ship:_CheckNavigation()
+  timerNow=timerNow+10 ship:_CheckNavigation()
   equal(ship.LastNavigationCheck.Status,"clear")
   ship:SetPathfindingMinDepth(20)
-  ship:_CheckNavigation()
+  timerNow=timerNow+10 ship:_CheckNavigation()
   equal(ship.LastNavigationCheck.Status,"blocked")
   equal(ship.warnings,1) equal(ship.stops,0)
 end)
@@ -2673,15 +2685,15 @@ test("NAVYGROUP respects movement owned by another task and allows route-based m
   local original=AUFTRAG
   AUFTRAG={SpecialTask={PATROLZONE="Patrol",RECON="Recon",RELOCATECOHORT="Relocate",REARMING="Rearm"}}
   local ok,err=pcall(function()
-    ship:_CheckNavigation()
+    timerNow=timerNow+10 ship:_CheckNavigation()
     equal(ship.LastNavigationCheck,nil) equal(ship.depthTerrain.queries,0)
     taskID=AUFTRAG.SpecialTask.PATROLZONE
-    ship:_CheckNavigation()
+    timerNow=timerNow+10 ship:_CheckNavigation()
     equal(ship.LastNavigationCheck.Status,"clear")
     ship.state="Engaging"
     taskID="AttackGroup"
     local queries=ship.depthTerrain.queries
-    ship:_CheckNavigation()
+    timerNow=timerNow+10 ship:_CheckNavigation()
     assert(ship.depthTerrain.queries>queries)
   end)
   AUFTRAG=original
@@ -3565,6 +3577,88 @@ test("local rectangular zone seed can expand from empty and preserves four neigh
     local n,m=path[i-1],path[i]
     if n.i and m.i then equal(math.abs(n.i-m.i)+math.abs(n.j-m.j),1) end
   end
+end)
+
+test("depth-weighted A* prefers a longer deep route and keeps Euclidean lower bounds",function()
+  local terrain=depthTerrain()
+  terrain.depth=40
+  terrain.makeProfile=function(a,b)
+    local depth=a.z==0 and b.z==0 and 21 or 40
+    return {{x=a.x,y=-depth,z=a.z},{x=b.x,y=-depth,z=b.z}}
+  end
+  local a=ASTAR:New():SetValidNeighbourDepth(20):SetCostDepth(30,2)
+  local s=a:AddNodeFromCoordinate(coord(0))
+  local detour=a:AddNodeFromCoordinate(coord(500,300))
+  local g=a:AddNodeFromCoordinate(coord(1000))
+  a:SetStartCoordinate(s.vector):SetEndCoordinate(g.vector)
+  local path=assert(a:GetPath())
+  equal(#path,3) equal(path[2],detour)
+  near(a:_HeuristicCost(s,g),1000)
+  local weighted=a:_TravelCost(s,detour)+a:_TravelCost(detour,g)
+  assert(weighted<a:_TravelCost(s,g))
+  a:SetCostDepth(nil)
+  path=assert(a:GetPath()) equal(#path,2)
+end)
+
+test("depth validity and costs share both directions and invalidate all dependent settings",function()
+  local terrain=depthTerrain() terrain.depth=25
+  local a,s,g=pair()
+  a:SetValidNeighbourDepth(20,100):SetCostDepth(30,2)
+  assert(a:GetPath()) equal(terrain.profiles,3)
+  near(a:_TravelCost(s,g),15) near(a:_TravelCost(g,s),15)
+  assert(a:_IsValidNeighbour(g,s)) equal(terrain.profiles,3)
+
+  a:SetCostDepth(30,4)
+  near(a:_TravelCost(s,g),20) equal(terrain.profiles,6)
+  assert(a:_IsValidNeighbour(g,s)) equal(terrain.profiles,6)
+  a:SetValidNeighbourDepth(25,0)
+  near(a:_TravelCost(s,g),50) equal(terrain.profiles,7)
+  a:SetValidNeighbourDepth(26,0)
+  equal(a:_IsValidNeighbour(s,g),false) equal(a:_TravelCost(s,g),math.huge)
+
+  a:SetValidNeighbourDepth(20,0)
+  assert(a:GetPath())
+  a:SetCostDepth(nil) near(a:_TravelCost(s,g),10)
+  a:SetCostDepth(30,2):SetValidNeighbourDistance(100)
+  equal(a.CostFunc,ASTAR.Dist2D) near(a:_TravelCost(s,g),10)
+end)
+
+test("depth preference allows the only shallow route and does not weaken a separate hard rule",function()
+  local terrain=depthTerrain() terrain.depth=21
+  local a,s,g=pair()
+  a:SetValidNeighbourDepth(20):SetCostDepth(30)
+  assert(a:GetPath()) near(a:_TravelCost(s,g),26.2)
+  terrain.depth=19 a:SetValidNeighbourDepth(20)
+  equal(a:GetPath(),nil)
+  -- Generic callback arguments may differ from the neighbour rule: do not merge those checks.
+  a:SetCostFunction(ASTAR.CostDepth,10,0,30,2)
+  equal(a:_IsValidNeighbour(s,g),false)
+end)
+
+test("invalid depth cost options do not change a configured search",function()
+  local a=ASTAR:New():SetValidNeighbourDepth(20):SetCostDepth(30,2)
+  for _,depth in ipairs({0,-1,math.huge,0/0,false}) do
+    assert(not pcall(a.SetCostDepth,a,depth,2))
+  end
+  for _,weight in ipairs({-1,math.huge,0/0,false}) do
+    assert(not pcall(a.SetCostDepth,a,30,weight))
+  end
+  equal(a.CostFunc,ASTAR.CostDepth) equal(a.CostArg[3],30) equal(a.CostArg[4],2)
+  assert(not pcall(ASTAR.SetCostDepth,ASTAR:New(),30,2))
+end)
+
+test("NAVYGROUP waypoint planner applies optional depth costs",function()
+  local ship=vessel(6000):SetPathfindingPreferredDepth(30,2)
+  ship.depthTerrain.depth=25
+  local original=ASTAR.New
+  local search
+  function ASTAR:New() search=original(self) return search end
+  local ok,result=pcall(ship._FindPathToNextWaypoint,ship)
+  ASTAR.New=original
+  assert(ok,result) assert(result)
+  equal(search.CostFunc,ASTAR.CostDepth)
+  equal(search.CostArg[1],20) equal(search.CostArg[3],30) equal(search.CostArg[4],2)
+  equal(ship.stops,0)
 end)
 
 print(string.format("%d passed, %d failed", passed, failed))
