@@ -23,7 +23,7 @@
 -- @field #table GridDrawCellIDs Polygon mark IDs indexed by cell ID.
 -- @field #table LastGridDrawResult Drawing status, CellsQueued, CellsDrawn and batch timing.
 -- @field #table LastGridMarkResult Marker status, CellsQueued, CellsMarked and batch timing.
--- @field #number Version Monotonically increasing mutation version.
+-- @field #number Version Monotonically increasing geometry/filter version; option-only budget changes do not increment it.
 -- @field #number GridCandidateCount Candidate count before zone and surface filters.
 -- @field #boolean GridBuilt True after successful construction, including an empty filtered grid.
 -- @extends Core.Base#BASE
@@ -65,7 +65,8 @@
 -- SetExpansion(GrowthFactor, MaxAttempts, MaxWidth, MaxMargin) replaces the complete expansion configuration.
 -- For example, SetExpansion(1.5, 5) removes previous dimension limits; SetExpansion() restores all expansion defaults.
 -- A nil field in a partial options table cannot clear a value: use these setters or ResetOptions instead.
--- Diagonals and limits may change afterwards. A successful mutation increments GetVersion(); ASTAR synchronizes before searching.
+-- Diagonals and limits may change afterwards. Geometry/filter changes increment GetVersion(); ASTAR synchronizes before searching.
+-- Unchanged settings and budget/expansion-policy changes retain neighbour and search caches. Rectangular diagonal changes invalidate them.
 --
 -- # Relative Corridor Dimensions
 --
@@ -266,20 +267,23 @@ function GRID:New(Name, GridType)
 
   assert(type(Name)=="string" and Name:find("%S"), "GRID: a non-empty name is required")
   assert(GridType==GRID.Type.RECTANGLE or GridType==GRID.Type.HEXAGON, "GRID: a valid GRID.Type is required")
-  
+
   local self=BASE:Inherit(self, BASE:New())
-  
+
   self.name=Name
   self.GridType=GridType
   self.lid="GRID "..self.name.." | "
+
+  -- Keep ownership separate from numeric IDs so cells from other grids cannot be mixed.
   self.cells={}
   self._CellOwner={}
   self.CellList={}
   self.counter=1
   self.CellCount=0
   self.Version=0
-  
+
   return self
+
 end
 
 --- Invalidate geometric caches and increment the grid mutation version.
@@ -311,8 +315,9 @@ function GRID:SetBounds(Start, Goal)
   self.endVector=last
   self._ResolutionInfo=nil
   self:_Touch()
-  
+
   return self
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -326,25 +331,31 @@ local hexDirections={{1, 0}, {0, 1}, {-1, 1}, {-1, 0}, {0, -1}, {1, -1}}
 -- Does not substitute simulation time when the os library is sanitized.
 -- @return #table Clock state with read and start fields, or nil if unavailable.
 local function startCPUClock()
+
   if os and type(os.clock)=="function" then
     return {read=os.clock, start=os.clock()}
   end
+
 end
 
 --- Read the non-negative elapsed CPU time of a measurement.
 -- @param #table clock (Optional) Clock state returned by startCPUClock().
 -- @return #number Elapsed CPU seconds, or nil when no clock is available.
 local function elapsedCPU(clock)
+
   if clock then
     return math.max(0, clock.read()-clock.start)
   end
+
 end
 
 --- Format a CPU duration for diagnostic log messages.
 -- @param #number seconds (Optional) Measured CPU seconds; nil indicates an unavailable clock.
 -- @return #string Formatted duration or an unavailable-clock message.
 local function cpuTimeText(seconds)
+
   return seconds and string.format("CPU time %.6f sec", seconds) or "CPU time unavailable"
+
 end
 
 --- Validate finite, non-negative grid width and margin values.
@@ -370,8 +381,12 @@ function GRID:_CopyGridOptions(options)
   if options==nil then
     return {}
   end
+
   assert(type(options)=="table", "GRID: grid options must be a table")
+
+  -- Copy nested options as well; caller-owned tables must not change saved settings.
   local copy={}
+
   for key, value in pairs(options) do
     if key=="Expansion" then
       assert(type(value)=="table", "GRID: Expansion must be a table")
@@ -411,8 +426,10 @@ function GRID:_CopyGridOptions(options)
       error("GRID: unknown grid option '"..tostring(key).."'")
     end
   end
+
   assert(not copy.Resolution or (copy.Spacing==nil and copy.CrossSpacing==nil),
     "GRID: Resolution cannot be combined with Spacing or CrossSpacing")
+
   return copy
 
 end
@@ -428,9 +445,12 @@ function GRID:_ResolveGridOptions(options)
   local result={Width=saved.Width or 40000, Margin=saved.Margin or 10000,
     Spacing=saved.Spacing or 2000, CrossSpacing=saved.CrossSpacing, Diagonals=saved.Diagonals~=false, MaxCells=saved.MaxCells or 5000}
   result.Resolution=saved.Resolution
-  if saved.Resolution then result.Spacing=nil end
+  if saved.Resolution then
+    result.Spacing=nil
+  end
   result.Expansion={GrowthFactor=expansion.GrowthFactor or 1.5, MaxAttempts=expansion.MaxAttempts or 5,
     MaxWidth=expansion.MaxWidth, MaxMargin=expansion.MaxMargin}
+
   return result
 
 end
@@ -446,10 +466,10 @@ end
 function GRID:_GridPosition(grid, along, across, origin)
 
   origin=origin or grid
+
   return origin.x+along*grid.cos-across*grid.sin, origin.z+along*grid.sin+across*grid.cos
 
 end
-
 
 --- Calculate inclusive axial row bounds for a centered hex corridor.
 -- Includes boundary centers using a small floating-point tolerance.
@@ -477,6 +497,7 @@ function GRID:_HexColumnBounds(grid, margin, r, area)
 
   local first=area and area.alongMin or -margin
   local last=area and area.alongMax or grid.distance+margin
+
   return math.ceil(first/grid.spacing-r/2-1e-9), math.floor(last/grid.spacing-r/2+1e-9)
 
 end
@@ -499,19 +520,23 @@ function GRID:_HexBounds(grid, width, margin, limit, area)
   else
     rmin, rmax=self:_HexRowBounds(grid, width)
   end
+
   if not self:_ValidIndexRange(rmin, rmax) then
     return nil
   end
+
   local bounds={rmin=rmin, rmax=rmax, count=0}
   local rows=math.max(0, rmax*1.0-rmin+1)
   if rows==0 then
     return bounds
   end
+
   -- Column counts repeat every two rows. Preflight in constant time, including long empty strips.
   local qmin, qmax=self:_HexColumnBounds(grid, margin, rmin, area)
   if not self:_ValidIndexRange(qmin, qmax) then
     return nil
   end
+
   local firstCount=math.max(0, qmax*1.0-qmin+1)
   local secondCount=0
   if rows>1 then
@@ -525,11 +550,15 @@ function GRID:_HexBounds(grid, width, margin, limit, area)
   if limit and bounds.count>limit then
     return nil
   end
+
   if bounds.count==0 then
     bounds.rmax=rmin-1
     return bounds
   end
+
+  -- Materialize row ranges only after the inexpensive candidate-budget check passes.
   bounds.count=0
+
   for r=rmin, rmax do
     qmin, qmax=self:_HexColumnBounds(grid, margin, r, area)
     if not self:_ValidIndexRange(qmin, qmax) then
@@ -541,6 +570,7 @@ function GRID:_HexBounds(grid, width, margin, limit, area)
     end
     bounds[r]={qmin=qmin, qmax=qmax}
   end
+
   return bounds
 
 end
@@ -568,8 +598,11 @@ function GRID:_RectBounds(grid, width, margin, limit, area)
   if not self:_ValidIndexRange(bounds.imin, bounds.imax) or not self:_ValidIndexRange(bounds.jmin, bounds.jmax) then
     return nil
   end
+
   local nx=math.max(0, bounds.imax*1.0-bounds.imin+1)
   local nz=math.max(0, bounds.jmax*1.0-bounds.jmin+1)
+
+  -- Compare before multiplying to reject oversized grids without overflowing the count.
   if limit and nz>0 and nx>limit/nz then
     return nil
   end
@@ -578,6 +611,7 @@ function GRID:_RectBounds(grid, width, margin, limit, area)
     bounds.imax=bounds.imin-1
     bounds.jmax=bounds.jmin-1
   end
+
   return bounds
 
 end
@@ -594,6 +628,7 @@ function GRID:_ExpansionBounds(width, margin, limit)
   if self.hexGrid then
     return self:_HexBounds(self.hexGrid, width, margin, limit)
   end
+
   return self:_RectBounds(self.rectGrid, width, margin, limit)
 
 end
@@ -615,21 +650,27 @@ function GRID:_ZoneGridArea(zone)
       and type(radius)=="number" and radius>=0 and radius<math.huge, "GRID: invalid radius zone geometry")
     box={x1=center.x-radius, y1=center.y-radius, x2=center.x+radius, y2=center.y+radius}
   end
+
   assert(type(box)=="table", "GRID: zone must provide polygon bounds or a center and radius")
+
   for _, key in ipairs({"x1", "y1", "x2", "y2"}) do
     local value=box[key]
     assert(type(value)=="number" and value>-math.huge and value<math.huge, "GRID: invalid zone bounding box")
   end
+
   assert(box.x1<=box.x2 and box.y1<=box.y2, "GRID: invalid zone bounding box order")
   local first, last=self.startVector, self.endVector
   if not first then
     first=VECTOR:New((box.x1+box.x2)/2, 0, (box.y1+box.y2)/2)
     last=first
   end
+
   local distance=first:GetDistance(last, true)
   local angle=distance>0 and math.rad(first:GetHeadingTo(last)) or 0
   local grid={x=first.x, z=first.z, cos=math.cos(angle), sin=math.sin(angle), distance=distance}
   local area={alongMin=math.huge, alongMax=-math.huge, acrossMin=math.huge, acrossMax=-math.huge}
+
+  -- Project all bounding-box corners into the grid frame; zone membership is checked during population.
   for _, point in ipairs({{box.x1, box.y1}, {box.x1, box.y2}, {box.x2, box.y1}, {box.x2, box.y2}}) do
     local dx, dz=point[1]-grid.x, point[2]-grid.z
     local along, across=dx*grid.cos+dz*grid.sin, -dx*grid.sin+dz*grid.cos
@@ -638,6 +679,7 @@ function GRID:_ZoneGridArea(zone)
     area.acrossMin=math.min(area.acrossMin, across)
     area.acrossMax=math.max(area.acrossMax, across)
   end
+
   return grid, area
 
 end
@@ -656,9 +698,11 @@ end
 function GRID:SetValidSurfaceTypes(SurfaceTypes)
 
   assert(not self.GridBuilt, "GRID: surface types cannot change after grid creation; use a new GRID object")
+
   local function check(value)
     assert(type(value)=="number" and value>=1 and value<=5 and value==math.floor(value), "GRID: invalid DCS surface type")
   end
+
   local copy
   if type(SurfaceTypes)=="number" then
     check(SurfaceTypes)
@@ -677,8 +721,10 @@ function GRID:SetValidSurfaceTypes(SurfaceTypes)
       assert(copy[i]~=nil, "GRID: surface types must be a sequential list")
     end
   end
+
   self.ValidSurfaceTypes=copy
   self:_Touch()
+
   return self
 
 end
@@ -687,6 +733,7 @@ end
 -- Used by partial updates and dedicated setters so removed optional values do not survive a merge.
 -- After grid creation Width, Margin, Spacing, CrossSpacing and Resolution are locked; Diagonals and limits may still change.
 -- Lowering MaxCells below the existing grid size makes an expanding search return cell_limit without searching.
+-- Only geometry or rectangular diagonal changes invalidate topology; budgets and expansion policy apply without rebuilding caches.
 -- @param #GRID self
 -- @param #GRID.GridOptions Options (Optional) Grid settings, including the nested Expansion table.
 -- @return #GRID self
@@ -697,19 +744,30 @@ function GRID:_SetOptions(Options)
   local saved=self:_CopyGridOptions(Options)
   assert(self.GridType~=GRID.Type.HEXAGON or saved.CrossSpacing==nil, "GRID: CrossSpacing is only supported by rectangular grids")
   local proposed=self:_ResolveGridOptions(saved)
-  if self.GridBuilt then
-    local current=self:GetOptions()
-    for _, key in ipairs({"Width", "Margin", "Spacing", "CrossSpacing", "Resolution"}) do
-      assert(proposed[key]==current[key], "GRID: "..key.." cannot change after grid creation; use a new GRID object")
+  local current=self:GetOptions()
+  local geometryChanged=false
+
+  -- Validate the complete proposed geometry before committing any configuration change.
+  for _, key in ipairs({"Width", "Margin", "Spacing", "CrossSpacing", "Resolution"}) do
+    if proposed[key]~=current[key] then
+      assert(not self.GridBuilt, "GRID: "..key.." cannot change after grid creation; use a new GRID object")
+      geometryChanged=true
     end
-    assert(not self.hexGrid or saved.CrossSpacing==nil, "GRID: CrossSpacing is only supported by rectangular grids")
   end
-  if self.rectGrid and proposed.Diagonals~=self:GetOptions().Diagonals then
-    self.gridLinks=nil
-  end
+
+  -- A policy change does not alter existing cells or their neighbours. Attached ASTAR
+  -- searches read limits afresh, so they can retain their adjacency and component caches.
+  local diagonalsChanged=self.GridType==GRID.Type.RECTANGLE and proposed.Diagonals~=current.Diagonals
   self.GridOptions=saved
-  if not self.GridBuilt then self._ResolutionInfo=nil end
-  self:_Touch()
+
+  if geometryChanged then
+    self._ResolutionInfo=nil
+  end
+
+  if geometryChanged or diagonalsChanged then
+    self:_Touch()
+  end
+
   return self
 
 end
@@ -727,22 +785,31 @@ end
 function GRID:SetOptions(Options)
 
   local update=self:_CopyGridOptions(Options)
-  if next(update)==nil then return self end
+  if next(update)==nil then
+    return self
+  end
+
   local saved=self:_CopyGridOptions(self.GridOptions)
+
+  -- Manual and automatic spacing are mutually exclusive, including across partial updates.
   if update.Resolution then
     saved.Spacing=nil
     saved.CrossSpacing=nil
   elseif update.Spacing or update.CrossSpacing then
     saved.Resolution=nil
   end
+
   for key, value in pairs(update) do
     if key=="Expansion" then
       saved.Expansion=saved.Expansion or {}
-      for name, setting in pairs(value) do saved.Expansion[name]=setting end
+      for name, setting in pairs(value) do
+        saved.Expansion[name]=setting
+      end
     else
       saved[key]=value
     end
   end
+
   return self:_SetOptions(saved)
 
 end
@@ -773,12 +840,13 @@ function GRID:SetSpacing(Spacing, CrossSpacing)
   options.Resolution=nil
   options.Spacing=Spacing
   options.CrossSpacing=CrossSpacing
+
   return self:_SetOptions(options)
 
 end
 
 --- Set the shared candidate-cell budget without changing geometry or resolution.
--- Counts candidate centers before surface and zone filtering. May change after construction.
+-- Counts candidate centers before surface and zone filtering. May change after construction without invalidating topology caches.
 -- @param #GRID self
 -- @param #number MaxCells (Optional) Positive integer candidate limit; nil restores 5000.
 -- @return #GRID self.
@@ -788,6 +856,7 @@ function GRID:SetMaxCells(MaxCells)
 
   local options=self:_CopyGridOptions(self.GridOptions)
   options.MaxCells=MaxCells
+
   return self:_SetOptions(options)
 
 end
@@ -803,12 +872,13 @@ function GRID:SetDiagonals(Diagonals)
 
   local options=self:_CopyGridOptions(self.GridOptions)
   options.Diagonals=Diagonals
+
   return self:_SetOptions(options)
 
 end
 
 --- Replace all expansion settings without changing other grid options or starting a search.
--- Omitted limits remove previous limits. May change after construction; MaxCells remains an independent budget.
+-- Omitted limits remove previous limits. May change after construction without invalidating topology caches; MaxCells remains an independent budget.
 -- @param #GRID self
 -- @param #number GrowthFactor (Optional) Finite multiplier greater than 1; default 1.5.
 -- @param #number MaxAttempts (Optional) Positive integer number of search attempts including the initial search; default 5.
@@ -824,6 +894,7 @@ function GRID:SetExpansion(GrowthFactor, MaxAttempts, MaxWidth, MaxMargin)
 
   local options=self:_CopyGridOptions(self.GridOptions)
   options.Expansion={GrowthFactor=GrowthFactor, MaxAttempts=MaxAttempts, MaxWidth=MaxWidth, MaxMargin=MaxMargin}
+
   return self:_SetOptions(options)
 
 end
@@ -858,6 +929,7 @@ function GRID:SetCorridor(Width, Margin)
   local options=self:_CopyGridOptions(self.GridOptions)
   options.Width=Width
   options.Margin=Margin
+
   return self:SetOptions(options)
 
 end
@@ -876,15 +948,19 @@ function GRID:_ResolveCorridorDimensions(Options, Distance)
     assert(Distance>0 and Distance<math.huge,
       "GRID: relative corridor dimensions require distinct endpoints with finite distance; configure Width and Margin in meters")
   end
+
+  -- Resolve the margin first because relative width includes the padding at both ends.
   if type(margin)=="string" then
     local fraction=margin==GRID.Margin.SMALL and 0.1 or (margin==GRID.Margin.NORMAL and 0.25 or 0.5)
     margin=Distance*fraction
   end
+
   if type(width)=="string" then
     local fraction=width==GRID.Width.NARROW and 0.25 or (width==GRID.Width.NORMAL and 0.5 or 1)
     width=(Distance+2*margin)*fraction
   end
   self:_CheckGridDimensions(width,margin)
+
   return width,margin
 
 end
@@ -903,6 +979,7 @@ function GRID:SetResolution(Level)
   options.Resolution=Level
   options.Spacing=nil
   options.CrossSpacing=nil
+
   return self:_SetOptions(options)
 
 end
@@ -915,7 +992,10 @@ function GRID:GetResolutionInfo()
 
   local options=self:GetOptions()
   local info={}
-  for key, value in pairs(self._ResolutionInfo or {}) do info[key]=value end
+
+  for key, value in pairs(self._ResolutionInfo or {}) do
+    info[key]=value
+  end
   info.Mode=options.Resolution and "automatic" or "manual"
   info.Resolution=options.Resolution
   info.MaxCells=options.MaxCells
@@ -924,6 +1004,7 @@ function GRID:GetResolutionInfo()
     info.Spacing=options.Spacing
     info.CrossSpacing=self.GridType==GRID.Type.RECTANGLE and (options.CrossSpacing or options.Spacing) or nil
   end
+
   if self.GridBuilt then
     local grid=self.hexGrid or self.rectGrid
     info.Status="built"
@@ -931,6 +1012,7 @@ function GRID:GetResolutionInfo()
     info.CrossSpacing=grid.crossSpacing
     info.CandidateCount=self:GetCandidateCount()
   end
+
   return info
 
 end
@@ -950,6 +1032,8 @@ function GRID:_ResolveInitialSpacing(Options, Length, Width)
   if Options.Resolution then
     assert(type(Length)=="number" and Length>=0 and Length<math.huge
       and type(Width)=="number" and Width>=0 and Width<math.huge, "GRID: resolution requires finite non-negative extents")
+
+    -- A line has only one positive extent; otherwise use the shorter side for consistent detail.
     local reference=Length>0 and (Width>0 and math.min(Length,Width) or Length) or Width
     assert(reference>0, "GRID: automatic resolution requires a non-zero extent; configure explicit Spacing for a point grid")
     local intervals=Options.Resolution==GRID.Resolution.COARSE and 10 or (Options.Resolution==GRID.Resolution.FINE and 40 or 20)
@@ -958,10 +1042,12 @@ function GRID:_ResolveInitialSpacing(Options, Length, Width)
     info.ReferenceLength=reference
     info.Intervals=intervals
   end
+
   local cross=self.GridType==GRID.Type.RECTANGLE and (Options.CrossSpacing or spacing) or nil
   info.Spacing=spacing
   info.CrossSpacing=cross
   self._ResolutionInfo=info
+
   return spacing,cross
 
 end
@@ -1000,6 +1086,7 @@ end
 function GRID:GetCellCoordinate(Cell)
 
   assert(Cell and self.cells[Cell.id]==Cell, "GRID: cell must belong to this grid")
+
   return Cell.vector:GetCoordinate()
 
 end
@@ -1018,6 +1105,8 @@ function GRID:_AddCell(Cell)
   if existing then
     return self
   end
+
+  -- Update the geometry-specific index before publishing the cell in the shared lists.
   if self.hexGrid then
     assert(Cell.q~=nil and Cell.r~=nil, "GRID: hex cells require axial indices")
     local column=self.hexIndex[Cell.q]
@@ -1031,6 +1120,7 @@ function GRID:_AddCell(Cell)
     self.rectIndex[Cell.i]=row or {}
     self.rectIndex[Cell.i][Cell.j]=Cell
   end
+
   self.CellList[#self.CellList+1]=Cell
   self.CellCount=self.CellCount+1
   self.cells[Cell.id]=Cell
@@ -1090,11 +1180,20 @@ end
 ---@return boolean
 function GRID:IsValidSurfaceType(SurfaceType)
 
-  if not self.ValidSurfaceTypes then return true end
-  if type(self.ValidSurfaceTypes)=="number" then return self.ValidSurfaceTypes==SurfaceType end
-  for _, allowed in ipairs(self.ValidSurfaceTypes) do
-    if allowed==SurfaceType then return true end
+  if not self.ValidSurfaceTypes then
+    return true
   end
+
+  if type(self.ValidSurfaceTypes)=="number" then
+    return self.ValidSurfaceTypes==SurfaceType
+  end
+
+  for _, allowed in ipairs(self.ValidSurfaceTypes) do
+    if allowed==SurfaceType then
+      return true
+    end
+  end
+
   return false
 
 end
@@ -1117,30 +1216,54 @@ end
 ---@param Step? number
 ---@param CorridorWidth? number
 function GRID:CheckSurfacePath(Start, Goal, Step, CorridorWidth)
-  if Step==nil then Step=100 end
-  if CorridorWidth==nil then CorridorWidth=0 end
+
+  if Step==nil then
+    Step=100
+  end
+
+  if CorridorWidth==nil then
+    CorridorWidth=0
+  end
+
   assert(type(Step)=="number" and Step>0 and Step<math.huge,"GRID: surface sample step must be finite and positive")
   assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"GRID: corridor width must be finite and non-negative")
   local a,b=self:_PositionVector(Start),self:_PositionVector(Goal)
   local dx,dz=b.x-a.x,b.z-a.z
   local distance=math.sqrt(dx*dx+dz*dz)
   assert(distance<math.huge,"GRID: surface path distance must be finite")
-  if not self.ValidSurfaceTypes then return true,distance end
+  if not self.ValidSurfaceTypes then
+    return true,distance
+  end
+
+  -- Bound both sampling gaps and total work before making terrain calls.
   local rows=math.max(1,math.ceil(distance/Step))
+
   -- An even number of transverse intervals includes the center line as well as both edges.
   local columns=distance>0 and 2*math.ceil(CorridorWidth/(2*Step)) or 0
-  if (rows+1)*(columns+1)>1000000 then return false,0,"sample_limit" end
+  if (rows+1)*(columns+1)>1000000 then
+    return false,0,"sample_limit"
+  end
+
   local nx,nz=0,0
-  if distance>0 then nx=-dz/distance nz=dx/distance end
+  if distance>0 then
+    nx=-dz/distance
+    nz=dx/distance
+  end
+
+  -- Offset each sample row perpendicular to travel to cover the full requested corridor.
   for i=0,rows do
     local fraction=i/rows
     for j=0,columns do
       local offset=columns>0 and CorridorWidth*(j/columns-0.5) or 0
       local surface=land.getSurfaceType({x=a.x+dx*fraction+nx*offset,y=a.z+dz*fraction+nz*offset})
-      if not self:IsValidSurfaceType(surface) then return false,math.max(0,(i-1)*distance/rows) end
+      if not self:IsValidSurfaceType(surface) then
+        return false,math.max(0,(i-1)*distance/rows)
+      end
     end
   end
+
   return true,distance
+
 end
 
 --- Build the configured geometry in a corridor between two positions.
@@ -1154,9 +1277,16 @@ function GRID:CreateFromBounds(Start, Goal)
 
   self:SetBounds(Start, Goal)
   local built,reason
-  if self.GridType==GRID.Type.HEXAGON then built,reason=self:_CreateHexagon()
-  else built,reason=self:_CreateRectangle() end
-  if self._ResolutionInfo then self._ResolutionInfo.Status=built and "built" or reason end
+  if self.GridType==GRID.Type.HEXAGON then
+    built,reason=self:_CreateHexagon()
+  else
+    built,reason=self:_CreateRectangle()
+  end
+
+  if self._ResolutionInfo then
+    self._ResolutionInfo.Status=built and "built" or reason
+  end
+
   return built,reason
 
 end
@@ -1173,9 +1303,16 @@ function GRID:CreateFromZone(Zone)
   assert(not self.GridBuilt, "GRID: a grid already exists; use a new GRID object")
   self._ResolutionInfo=nil
   local built,reason
-  if self.GridType==GRID.Type.HEXAGON then built,reason=self:_CreateHexagonFromZone(Zone)
-  else built,reason=self:_CreateRectangleFromZone(Zone) end
-  if self._ResolutionInfo then self._ResolutionInfo.Status=built and "built" or reason end
+  if self.GridType==GRID.Type.HEXAGON then
+    built,reason=self:_CreateHexagonFromZone(Zone)
+  else
+    built,reason=self:_CreateRectangleFromZone(Zone)
+  end
+
+  if self._ResolutionInfo then
+    self._ResolutionInfo.Status=built and "built" or reason
+  end
+
   return built,reason
 
 end
@@ -1196,7 +1333,9 @@ function GRID:_CreateRectangle()
   local distance=self.startVector:GetDistance(self.endVector, true)
   local Width,Margin=self:_ResolveCorridorDimensions(options,distance)
   local Spacing,CrossSpacing=self:_ResolveInitialSpacing(options,distance+2*Margin,Width)
-  -- Match the original numeric-for loop counts even when dimensions are not spacing multiples.
+
+  -- Count centers even when dimensions are not spacing multiples.
+  -- Reject the full candidate area before allocating cells or querying terrain.
   local nx=math.floor(Width/CrossSpacing+1)
   local nz=math.floor((distance+2*Margin)/Spacing+1)
   if not self:_ValidIndexRange(1, nx) or not self:_ValidIndexRange(1, nz) or nx>MaxCells/nz then
@@ -1210,6 +1349,7 @@ function GRID:_CreateRectangle()
   self.rectIndex={}
   self:_PopulateRectGrid({imin=1, imax=nx, jmin=1, jmax=nz, count=nx*nz}, Width, Margin)
   self:T(self.lid..string.format("Built rectangular grid with %d total cells", self.CellCount))
+
   return self
 
 end
@@ -1235,6 +1375,8 @@ function GRID:_CreateHexagon()
   local angle=distance>0 and math.rad(self.startVector:GetHeadingTo(self.endVector)) or 0
   local grid={x=self.startVector.x, z=self.startVector.z, cos=math.cos(angle), sin=math.sin(angle), spacing=Spacing,
     rowSpacing=Spacing*math.sqrt(3)/2, distance=distance}
+
+  -- Preflight the candidate lattice before publishing geometry or sampling any cells.
   local bounds=self:_HexBounds(grid, Width, Margin, MaxCells)
   if not bounds then
     return nil, "cell_limit"
@@ -1244,6 +1386,7 @@ function GRID:_CreateHexagon()
   self.hexIndex={}
   self:_PopulateHexGrid(bounds, Width, Margin)
   self:T(self.lid..string.format("Built hex grid with %d cells, spacing %.1f m", self.CellCount, Spacing))
+
   return self
 
 end
@@ -1273,10 +1416,12 @@ function GRID:_CreateHexagonFromZone(Zone)
   if not bounds then
     return nil, "cell_limit"
   end
+
   self.hexGrid=grid
   self.hexIndex={}
   self:_PopulateHexGrid(bounds, width, margin, Zone)
   self:T(self.lid..string.format("Built zone hex grid with %d cells, spacing %.1f m", self.CellCount, Spacing))
+
   return self
 
 end
@@ -1309,10 +1454,12 @@ function GRID:_CreateRectangleFromZone(Zone)
   if not bounds then
     return nil, "cell_limit"
   end
+
   self.rectGrid=grid
   self.rectIndex={}
   self:_PopulateRectGrid(bounds, width, margin, Zone)
   self:T(self.lid..string.format("Built zone rectangular grid with %d total cells", self.CellCount))
+
   return self
 
 end
@@ -1343,26 +1490,31 @@ function GRID:ExpandGrid(Width, Margin, FitBudget)
     or (options.Expansion.MaxMargin and Margin>options.Expansion.MaxMargin) then
     return nil, "size_limit", false
   end
+
   if grid.candidateCount>options.MaxCells then
     return nil, "cell_limit", false
   end
+
   if Width==grid.width and Margin==grid.margin then
     return self, nil, false
   end
+
+  -- Determine a feasible enlargement first so a rejected request leaves the grid untouched.
   local bounds=self:_ExpansionBounds(Width, Margin, options.MaxCells)
   local limited=false
   if not bounds and FitBudget then
     Width, Margin, bounds=self:_FitGridExpansion(Width, Margin, options.MaxCells)
     limited=true
   end
+
   if not bounds then
     return nil, "cell_limit", false
   end
   self:_PopulateGrid(bounds, Width, Margin)
+
   return self, nil, limited
 
 end
-
 
 --- Populate preflighted bounds using the current rectangular or hex geometry.
 -- Retains previously sampled cells and updates dimensions, candidate count and mutation version.
@@ -1376,6 +1528,7 @@ function GRID:_PopulateGrid(Bounds, Width, Margin)
   if self.hexGrid then
     return self:_PopulateHexGrid(Bounds, Width, Margin)
   end
+
   return self:_PopulateRectGrid(Bounds, Width, Margin)
 
 end
@@ -1392,9 +1545,12 @@ function GRID:_PopulateRectGrid(Bounds, Width, Margin, Zone)
   local grid=self.rectGrid
   local old=grid.bounds
   local sampled=Zone and {} or nil
+
   for i=Bounds.imin, Bounds.imax do
     for j=Bounds.jmin, Bounds.jmax do
       local existingCell=old and i>=old.imin and i<=old.imax and j>=old.jmin and j<=old.jmax
+
+      -- A zone seed can leave unsampled holes inside its bounding rectangle.
       if grid.initialSamples then
         existingCell=grid.initialSamples[i] and grid.initialSamples[i][j]
       end
@@ -1405,6 +1561,8 @@ function GRID:_PopulateRectGrid(Bounds, Width, Margin, Zone)
             sampled[i]=sampled[i] or {}
             sampled[i][j]=true
           end
+
+          -- Record sampling before filtering so expansion also reuses rejected terrain samples.
           local cell=self:_CreateCell(VECTOR:New(x, 0, z))
           if self:IsValidSurfaceType(cell.surfacetype) then
             cell.rectGrid=grid
@@ -1416,6 +1574,7 @@ function GRID:_PopulateRectGrid(Bounds, Width, Margin, Zone)
       end
     end
   end
+
   grid.initialSamples=sampled
   grid.bounds=Bounds
   grid.width=Width
@@ -1424,6 +1583,7 @@ function GRID:_PopulateRectGrid(Bounds, Width, Margin, Zone)
   self.GridCandidateCount=Bounds.count
   self.GridBuilt=true
   self:_Touch()
+
   return self
 
 end
@@ -1441,11 +1601,14 @@ end
 function GRID:_FitGridExpansion(Width, Margin, MaxCells)
 
   local grid=self.hexGrid or self.rectGrid
+
   local function fit(fromWidth, fromMargin, toWidth, toMargin)
     local full=self:_ExpansionBounds(toWidth, toMargin, MaxCells)
     if full then
       return toWidth, toMargin, full
     end
+
+    -- Binary-search the growth fraction using index counts only, without terrain queries.
     local low, high=0, 1
     local bestWidth, bestMargin, best
     for i=1, 52 do
@@ -1464,34 +1627,42 @@ function GRID:_FitGridExpansion(Width, Margin, MaxCells)
     end
     return bestWidth, bestMargin, best
   end
+
   local width, margin, bounds=fit(grid.width, grid.margin, Width, Margin)
   if not bounds then
     return nil
   end
+
   -- Lattice counts jump at row boundaries. Use remaining room on either axis if balanced growth cannot reach it.
   local w1, m1, b1=fit(width, margin, Width, margin)
   if b1 then
     w1, m1, b1=fit(w1, m1, w1, Margin)
   end
+
   local w2, m2, b2=fit(width, margin, width, Margin)
   if b2 then
     w2, m2, b2=fit(w2, m2, Width, m2)
   end
+
   -- Also try each axis from the original bounds: the balanced prefix may have spent too much margin to fit a whole row.
   local w3, m3, b3=fit(grid.width, grid.margin, Width, grid.margin)
   if b3 then
     w3, m3, b3=fit(w3, m3, w3, Margin)
   end
+
   local w4, m4, b4=fit(grid.width, grid.margin, grid.width, Margin)
   if b4 then
     w4, m4, b4=fit(w4, m4, Width, m4)
   end
+
+  -- Prefer more candidate centers; use covered area to break equal-count ties.
   for _, candidate in ipairs({{w1, m1, b1}, {w2, m2, b2}, {w3, m3, b3}, {w4, m4, b4}}) do
     local w, m, b=candidate[1], candidate[2], candidate[3]
     if b and (b.count>bounds.count or (b.count==bounds.count and w*(grid.distance+2*m)>width*(grid.distance+2*margin))) then
       width, margin, bounds=w, m, b
     end
   end
+
   if bounds.count>grid.candidateCount or (grid.initialSamples and (width>grid.width or margin>grid.margin)) then
     return width, margin, bounds
   end
@@ -1513,6 +1684,7 @@ function GRID:_PopulateHexGrid(Bounds, Width, Margin, Zone)
   if grid.width then
     oldRmin, oldRmax=self:_HexRowBounds(grid, grid.width)
   end
+
   for r=Bounds.rmin, Bounds.rmax do
     local row=Bounds[r]
     local oldQmin, oldQmax
@@ -1521,6 +1693,7 @@ function GRID:_PopulateHexGrid(Bounds, Width, Margin, Zone)
     end
     for q=row.qmin, row.qmax do
       local existingCell=oldRmin and r>=oldRmin and r<=oldRmax and q>=oldQmin and q<=oldQmax
+
       -- A zone seed has unsampled holes inside its bounding rectangle. Fill them on the first real enlargement.
       if grid.initialSamples then
         existingCell=grid.initialSamples[r] and grid.initialSamples[r][q]
@@ -1532,6 +1705,8 @@ function GRID:_PopulateHexGrid(Bounds, Width, Margin, Zone)
             sampled[r]=sampled[r] or {}
             sampled[r][q]=true
           end
+
+          -- Record sampling before filtering so rejected cells are not sampled again on expansion.
           local vector=VECTOR:New(x, 0, z)
           local cell=self:_CreateCell(vector)
           if self:IsValidSurfaceType(cell.surfacetype) then
@@ -1544,6 +1719,7 @@ function GRID:_PopulateHexGrid(Bounds, Width, Margin, Zone)
       end
     end
   end
+
   grid.bounds=Bounds
   grid.initialSamples=sampled
   grid.width=Width
@@ -1552,6 +1728,7 @@ function GRID:_PopulateHexGrid(Bounds, Width, Margin, Zone)
   self.GridCandidateCount=Bounds.count
   self.GridBuilt=true
   self:_Touch()
+
   return self
 
 end
@@ -1571,10 +1748,13 @@ function GRID:GetNeighbourCount(Cell)
   if not self.gridLinks then
     self:_BuildGridLinks()
   end
+
   local count=0
+
   for _ in pairs(self.gridLinks[Cell.id]) do
     count=count+1
   end
+
   return count
 
 end
@@ -1596,8 +1776,10 @@ function GRID:MarkGrid(Options)
   if Options==nil then
     Options={}
   end
+
   assert(type(Options)=="table", "GRID: marker options must be a table")
   local style=self:_GridMarkDefaults()
+
   for key, value in pairs(Options) do
     assert(style[key]~=nil, "GRID: unknown marker option '"..tostring(key).."'")
     if type(style[key])=="boolean" then
@@ -1612,12 +1794,17 @@ function GRID:MarkGrid(Options)
     end
     style[key]=value
   end
+
   assert(style.ShowID or style.ShowGridIndex or style.ShowNeighbourCount, "GRID: select at least one marker field")
+
+  -- Replace the previous marker job only after all new settings have been validated.
   self:UnmarkGrid()
   local cellIDs={}
+
   for id in pairs(cells) do
     cellIDs[#cellIDs+1]=id
   end
+
   table.sort(cellIDs)
   local clock=startCPUClock()
   local job={cells=cellIDs, index=1, style=style, started=timer.getTime(),
@@ -1625,6 +1812,7 @@ function GRID:MarkGrid(Options)
       CPUSeconds=clock and 0 or nil, MaxBatchCPUSeconds=clock and 0 or nil}}
   self.GridMarkJob=job
   self.LastGridMarkResult=job.result
+
   -- Always defer non-empty jobs; this keeps optional neighbour checks out of the caller's frame.
   if #cellIDs==0 then
     self:_FinishGridMarking(job, "complete")
@@ -1638,6 +1826,7 @@ function GRID:MarkGrid(Options)
       end
     end, nil, timer.getTime()+style.Interval)
   end
+
   return self
 
 end
@@ -1654,10 +1843,13 @@ function GRID:UnmarkGrid()
     end
     self:_FinishGridMarking(job, "cancelled")
   end
+
   for _, id in ipairs(self.GridMarkIDs or {}) do
     trigger.action.removeMark(id)
   end
+
   self.GridMarkIDs={}
+
   return self
 
 end
@@ -1672,9 +1864,11 @@ function GRID:_ProcessGridMarkJob(Job)
   if self.GridMarkJob~=Job then
     return false
   end
+
   Job.result.Status="running"
   local clock=startCPUClock()
   local ok, err=pcall(function()
+    -- Without a CPU clock, limit each callback to one marker to keep frame work bounded.
     local last=math.min(#Job.cells, Job.index+(clock and Job.style.BatchSize or 1)-1)
     while Job.index<=last do
       local cell=cells[Job.cells[Job.index]]
@@ -1711,6 +1905,7 @@ function GRID:_ProcessGridMarkJob(Job)
       end
     end
   end)
+
   local duration=elapsedCPU(clock)
   Job.result.Batches=Job.result.Batches+1
   if duration and Job.result.CPUSeconds then
@@ -1720,6 +1915,7 @@ function GRID:_ProcessGridMarkJob(Job)
     Job.result.CPUSeconds=nil
     Job.result.MaxBatchCPUSeconds=nil
   end
+
   if not ok then
     self:_FinishGridMarking(Job, "error", tostring(err))
   elseif Job.index>#Job.cells then
@@ -1727,6 +1923,7 @@ function GRID:_ProcessGridMarkJob(Job)
   else
     return true
   end
+
   return false
 
 end
@@ -1771,14 +1968,22 @@ end
 -- @return #GRID self; large overlays may still be queued. Inspect LastGridDrawResult for progress.
 function GRID:DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions)
 
-  if Color==nil then Color={0, 0, 1} end
-  if FillColor==nil then FillColor=Color end
+  if Color==nil then
+    Color={0, 0, 1}
+  end
+
+  if FillColor==nil then
+    FillColor=Color
+  end
+
   if ReadOnly==nil then
     ReadOnly=true
   end
+
   local style={Coalition=Coalition==nil and -1 or Coalition, Color={Color[1], Color[2], Color[3]}, Alpha=Alpha==nil and 1 or Alpha,
     FillColor={FillColor[1], FillColor[2], FillColor[3]}, FillAlpha=FillAlpha==nil and 0 or FillAlpha,
     LineType=LineType==nil and 1 or LineType, ReadOnly=ReadOnly}
+
   return self:_StartGridDrawing(style, DrawOptions)
 
 end
@@ -1797,9 +2002,15 @@ function GRID:DrawGridWithPath(Path, Options)
 
   local cells=self:_GetGridCells()
   assert(type(Path)=="table", "GRID: DrawGridWithPath requires a successful path table")
-  if Options==nil then Options={} end
+  if Options==nil then
+    Options={}
+  end
+
   assert(type(Options)=="table", "GRID: path drawing options must be a table")
+
+  -- Freeze the selected cell IDs so later path changes cannot alter this debug snapshot.
   local pathCells={}
+
   for _, entry in ipairs(Path) do
     -- Search-only endpoints belong to this grid but have no polygon to highlight.
     if not (type(entry)=="table" and entry.grid==self and not entry.cell) then
@@ -1810,6 +2021,7 @@ function GRID:DrawGridWithPath(Path, Options)
       pathCells[entry.id]=true
     end
   end
+
   local color=Options.GridColor==nil and {0, 0, 1} or Options.GridColor
   local pathColor=Options.PathColor==nil and {0, 1, 0} or Options.PathColor
   local fillAlpha=Options.PathFillAlpha==nil and 0.35 or Options.PathFillAlpha
@@ -1817,6 +2029,7 @@ function GRID:DrawGridWithPath(Path, Options)
   local style={Coalition=Options.Coalition==nil and -1 or Options.Coalition, Color={color[1], color[2], color[3]}, Alpha=1,
     FillColor={color[1], color[2], color[3]}, FillAlpha=0, LineType=1, ReadOnly=true,
     Snapshot=true, PathCellIDs=pathCells, PathColor={pathColor[1], pathColor[2], pathColor[3]}, PathFillAlpha=fillAlpha}
+
   return self:_StartGridDrawing(style, Options)
 
 end
@@ -1836,7 +2049,9 @@ function GRID._ValidateDrawStyle(Style)
 
   color(Style.Color)
   color(Style.FillColor)
-  if Style.PathColor then color(Style.PathColor) end
+  if Style.PathColor then
+    color(Style.PathColor)
+  end
 
   for _,name in ipairs({"Alpha", "FillAlpha"}) do
     assert(type(Style[name])=="number" and Style[name]>=0 and Style[name]<=1, "GRID: "..name.." must be between zero and one")
@@ -1847,6 +2062,7 @@ function GRID._ValidateDrawStyle(Style)
   assert(type(Style.LineType)=="number" and Style.LineType>=0 and Style.LineType<=6 and Style.LineType==math.floor(Style.LineType),
     "GRID: LineType must be an integer between zero and six")
   assert(type(Style.ReadOnly)=="boolean", "GRID: ReadOnly must be a boolean")
+
 end
 
 --- Validate batch settings and replace the overlay before starting a regular drawing or debug snapshot.
@@ -1856,7 +2072,10 @@ end
 -- @return #GRID self
 function GRID:_StartGridDrawing(Style, DrawOptions)
 
-  if DrawOptions==nil then DrawOptions={} end
+  if DrawOptions==nil then
+    DrawOptions={}
+  end
+
   assert(type(DrawOptions)=="table", "GRID: drawing options must be a table")
   local batchSize=DrawOptions.BatchSize==nil and 25 or DrawOptions.BatchSize
   local interval=DrawOptions.Interval==nil and 0.1 or DrawOptions.Interval
@@ -1865,11 +2084,14 @@ function GRID:_StartGridDrawing(Style, DrawOptions)
   assert(type(interval)=="number" and interval>0 and interval<math.huge, "GRID: drawing Interval must be finite and positive")
   assert(type(maxBatchSeconds)=="number" and maxBatchSeconds>0 and maxBatchSeconds<math.huge, "GRID: drawing MaxBatchSeconds must be finite and positive")
   GRID._ValidateDrawStyle(Style)
+
+  -- Keep the old overlay intact until both style and batch settings have passed validation.
   self:UndrawGrid()
   Style.BatchSize=batchSize
   Style.Interval=interval
   Style.MaxBatchSeconds=maxBatchSeconds
   self.GridDrawOptions=Style
+
   return self:UpdateGridDrawing()
 
 end
@@ -1885,9 +2107,11 @@ function GRID:UpdateGridDrawing()
   if not style or (style.Snapshot and style.SnapshotQueued) then
     return self
   end
+
   if style.Snapshot then
     style.SnapshotQueued=true
   end
+
   local job=self.GridDrawJob
   if not job then
     local cpuAvailable=os and type(os.clock)=="function"
@@ -1895,6 +2119,8 @@ function GRID:UpdateGridDrawing()
       result={Status="queued", [self:_GridResultField("Queued")]=0, [self:_GridResultField("Drawn")]=0, Batches=0,
         CPUSeconds=cpuAvailable and 0 or nil, MaxBatchCPUSeconds=cpuAvailable and 0 or nil}}
   end
+
+  -- Queue only missing polygons, including when extending a job that is already running.
   for id, cell in pairs(cells) do
     if (cell.rectGrid or (self.hexGrid and cell.q~=nil and cell.r~=nil))
     and not self.GridDrawCellIDs[id] and not job.queued[id] then
@@ -1903,16 +2129,19 @@ function GRID:UpdateGridDrawing()
     end
   end
   job.result[self:_GridResultField("Queued")]=#job.cells
+
   -- An active job will process appended cells on subsequent ticks.
   if self.GridDrawJob then
     return self
   end
+
   self.GridDrawJob=job
   self.LastGridDrawResult=job.result
   local pending=true
   if #job.cells<=style.BatchSize then
     pending=self:_ProcessGridDrawJob(job)
   end
+
   if pending then
     self:T(self.lid..string.format("Grid drawing queued: %d remaining cells, up to %d per batch, %.3f sec CPU budget (one cell without CPU clock)",
       #job.cells-job.index+1, style.BatchSize, style.MaxBatchSeconds))
@@ -1926,6 +2155,7 @@ function GRID:UpdateGridDrawing()
       end
     end, nil, timer.getTime()+style.Interval)
   end
+
   return self
 
 end
@@ -1940,6 +2170,7 @@ function GRID:_ProcessGridDrawJob(Job)
   if self.GridDrawJob~=Job then
     return false
   end
+
   Job.result.Status="running"
   local clock=startCPUClock()
   local ok, err=pcall(function()
@@ -1965,6 +2196,7 @@ function GRID:_ProcessGridDrawJob(Job)
       end
     end
   end)
+
   local duration=elapsedCPU(clock)
   Job.result.Batches=Job.result.Batches+1
   if duration and Job.result.CPUSeconds then
@@ -1974,6 +2206,7 @@ function GRID:_ProcessGridDrawJob(Job)
     Job.result.CPUSeconds=nil
     Job.result.MaxBatchCPUSeconds=nil
   end
+
   if not ok then
     self:_FinishGridDrawing(Job, "error", tostring(err))
   elseif Job.index>#Job.cells then
@@ -1981,6 +2214,7 @@ function GRID:_ProcessGridDrawJob(Job)
   else
     return true
   end
+
   return false
 
 end
@@ -2018,12 +2252,16 @@ function GRID:_DrawGridCell(Cell, Style)
 
   local corners={}
   local grid=Cell.rectGrid
+
   local function corner(along, across)
     local x, z=self:_GridPosition(grid, along, across, Cell.vector)
     corners[#corners+1]={x=x, y=0, z=z}
   end
+
   if self.hexGrid and Cell.q~=nil and Cell.r~=nil then
     grid=self.hexGrid
+
+    -- Spacing measures adjacent centers; polygon vertices need the center-to-corner radius.
     local radius=grid.spacing/math.sqrt(3)
     for i=0, 5 do
       local angle=math.rad(30+60*i)
@@ -2035,9 +2273,11 @@ function GRID:_DrawGridCell(Cell, Style)
     corner(-grid.along, -grid.across)
     corner(grid.along, -grid.across)
   end
+
   if #corners==0 then
     return nil
   end
+
   -- Match COORDINATE:MarkupToAllFreeForm's DCS call without constructing full MOOSE objects for polygon vertices.
   local markID=UTILS.GetMarkID()
   local onPath=Style.PathCellIDs and Style.PathCellIDs[Cell.id]
@@ -2053,6 +2293,7 @@ function GRID:_DrawGridCell(Cell, Style)
     trigger.action.markupToAll(7, Style.Coalition, markID, corners[1], corners[2], corners[3], corners[4],
       outline, fill, Style.LineType, Style.ReadOnly, "")
   end
+
   return markID
 
 end
@@ -2070,12 +2311,15 @@ function GRID:UndrawGrid()
     end
     self:_FinishGridDrawing(job, "cancelled")
   end
+
   for _, markID in ipairs(self.GridDrawIDs or {}) do
     trigger.action.removeMark(markID)
   end
+
   self.GridDrawIDs={}
   self.GridDrawCellIDs={}
   self.GridDrawOptions=nil
+
   return self
 
 end
@@ -2094,6 +2338,7 @@ function GRID:_GetGridLinks()
   if not self.gridLinks then
     self:_BuildGridLinks()
   end
+
   return self.gridLinks
 
 end
@@ -2107,6 +2352,7 @@ function GRID:_BuildGridLinks()
   if self.hexGrid then
     return self:_BuildHexLinks()
   end
+
   return self:_BuildRectLinks()
 
 end
@@ -2119,12 +2365,15 @@ function GRID:_BuildRectLinks()
 
   local links={}
   local diagonal=self:GetOptions().Diagonals
+
   for id, cell in pairs(self.cells) do
     links[id]={}
     for di=-1, 1 do
       for dj=-1, 1 do
         local cardinal=math.abs(di)+math.abs(dj)==1
         local corner=di~=0 and dj~=0
+
+        -- Require both side cells for a diagonal so filtered gaps cannot be crossed at a corner.
         if cardinal or (corner and diagonal and self:GetCellFromIndex(cell.i+di, cell.j) and self:GetCellFromIndex(cell.i, cell.j+dj)) then
           local neighbor=self:GetCellFromIndex(cell.i+di, cell.j+dj)
           if neighbor then
@@ -2134,7 +2383,9 @@ function GRID:_BuildRectLinks()
       end
     end
   end
+
   self.gridLinks=links
+
   return self
 
 end
@@ -2145,6 +2396,7 @@ end
 function GRID:_BuildHexLinks()
 
   local links={}
+
   for id, cell in pairs(self.cells) do
     links[id]={}
     for _, direction in ipairs(hexDirections) do
@@ -2154,7 +2406,9 @@ function GRID:_BuildHexLinks()
       end
     end
   end
+
   self.gridLinks=links
+
   return self
 
 end
@@ -2162,12 +2416,6 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
-
-
-
-
-
 
 --- Get the name of this grid.
 -- @param #GRID self
@@ -2178,7 +2426,8 @@ function GRID:GetName()
 
 end
 
---- Get the mutation version used by attached searches to invalidate geometric caches.
+--- Get the geometry/filter version used by attached searches to invalidate geometric caches.
+-- Unchanged options, budgets and expansion policy do not increment this version.
 -- @param #GRID self
 -- @return #number Version.
 function GRID:GetVersion()
@@ -2233,6 +2482,7 @@ function GRID:GetCellFromIndex(First, Second)
 
   local index=self.hexIndex or self.rectIndex
   local row=index and index[First]
+
   return row and row[Second]
 
 end
@@ -2243,9 +2493,11 @@ end
 function GRID:GetCells()
 
   local cells={}
+
   for i, cell in ipairs(self.CellList) do
     cells[i]=cell
   end
+
   return cells
 
 end
@@ -2259,16 +2511,18 @@ function GRID:GetNeighbours(Cell)
   assert(Cell and self.cells[Cell.id]==Cell, "GRID: cell must belong to this grid")
   local links=self:_GetGridLinks()
   local neighbors={}
+
   for id in pairs(links[Cell.id]) do
     neighbors[#neighbors+1]=self.cells[id]
   end
+
   table.sort(neighbors, function(a, b)
     return a.id<b.id
   end)
+
   return neighbors
 
 end
-
 
 --- Find the nearest accepted cell in the horizontal plane.
 -- @param #GRID self
@@ -2279,6 +2533,7 @@ function GRID:FindClosestCell(Position)
 
   local vector=self:_PositionVector(Position)
   local nearest, distance=nil, math.huge
+
   for _, cell in ipairs(self.CellList) do
     local d=cell.vector:GetDistance(vector, true)
     if d<distance then
@@ -2286,6 +2541,7 @@ function GRID:FindClosestCell(Position)
       distance=d
     end
   end
+
   return nearest, distance
 
 end
@@ -2299,6 +2555,7 @@ function GRID:GetDimensions()
   if not grid then
     return nil
   end
+
   return {Width=grid.width, Margin=grid.margin, Spacing=grid.spacing, CrossSpacing=grid.crossSpacing}
 
 end
@@ -2317,6 +2574,7 @@ function GRID:GetNearbyCells(Position)
   if not grid then
     return nearby
   end
+
   local dx, dz=vector.x-grid.x, vector.z-grid.z
   local along=(dx*grid.cos+dz*grid.sin)/grid.spacing
   local epsilon=1e-9
@@ -2347,6 +2605,7 @@ function GRID:GetNearbyCells(Position)
       end
     end
   end
+
   return nearby
 
 end
@@ -2358,10 +2617,12 @@ end
 function GRID:_PositionVector(Position)
 
   local vector=VECTOR:NewFromVec(Position)
+
   for _, axis in ipairs({"x", "y", "z"}) do
     local value=vector[axis]
     assert(type(value)=="number" and value>-math.huge and value<math.huge, "GRID: position coordinates must be finite")
   end
+
   return vector
 
 end
@@ -2377,6 +2638,7 @@ function GRID:_QueryPosition(Value)
     assert(self.cells[Value.id]==Value, "GRID: cell must belong to this grid")
     return Value.vector
   end
+
   return self:_PositionVector(Value)
 
 end
@@ -2391,8 +2653,13 @@ end
 function GRID:PositionToIndex(Position)
 
   local vector=self:_QueryPosition(Position)
-  if Position.vector then return Position.q or Position.i, Position.r or Position.j end
+  if Position.vector then
+    return Position.q or Position.i, Position.r or Position.j
+  end
+
   local grid=self.hexGrid or self.rectGrid
+
+  -- Undo translation and rotation before converting world coordinates to lattice indices.
   local dx, dz=vector.x-grid.x, vector.z-grid.z
   local along, across=dx*grid.cos+dz*grid.sin, -dx*grid.sin+dz*grid.cos
   local first, second
@@ -2401,6 +2668,8 @@ function GRID:PositionToIndex(Position)
     first=along/grid.spacing-second/2
     assert(self:_ValidIndexRange(first, second) and self:_ValidIndexRange(-first-second, -first-second),
       "GRID: position exceeds the supported lattice range")
+
+    -- Round all cube axes, then correct the largest error to preserve q+r+s=0.
     local third=-first-second
     local q, r, s=math.floor(first+0.5), math.floor(second+0.5), math.floor(third+0.5)
     local dq, dr, ds=math.abs(q-first), math.abs(r-second), math.abs(s-third)
@@ -2414,6 +2683,7 @@ function GRID:PositionToIndex(Position)
   first=(across-grid.acrossOffset)/grid.crossSpacing
   second=(along-grid.alongOffset)/grid.spacing
   assert(self:_ValidIndexRange(first, second), "GRID: position exceeds the supported lattice range")
+
   return math.floor(first+0.5), math.floor(second+0.5)
 
 end
@@ -2436,7 +2706,9 @@ function GRID:IndexToPosition(First, Second)
   else
     along, across=grid.alongOffset+Second*grid.spacing, grid.acrossOffset+First*grid.crossSpacing
   end
+
   local x, z=self:_GridPosition(grid, along, across)
+
   return self:_PositionVector({x=x, y=0, z=z})
 
 end
@@ -2467,6 +2739,7 @@ function GRID:_IndexDistance(A, B, C, D)
   elseif not self.GridOptions or self.GridOptions.Diagonals~=false then
     return math.max(math.abs(first), math.abs(second))
   end
+
   return math.abs(first)+math.abs(second)
 
 end
@@ -2480,6 +2753,7 @@ function GRID:GetGridDistance(Start, Goal)
 
   local a, b=self:PositionToIndex(Start)
   local c, d=self:PositionToIndex(Goal)
+
   return self:_IndexDistance(a, b, c, d)
 
 end
@@ -2495,13 +2769,17 @@ function GRID:_GetCellsByDistance(Center, Radius, Ring)
   local a, b=self:PositionToIndex(Center)
   assert(type(Radius)=="number" and Radius>=0 and self:_ValidIndexRange(0, Radius)
     and Radius==math.floor(Radius), "GRID: radius must be a non-negative safe integer")
+
+  -- Scan existing cells rather than empty lattice positions; work stays bounded for large radii.
   local result={}
+
   for _, cell in ipairs(self.CellList) do
     local distance=self:_IndexDistance(a, b, cell.q or cell.i, cell.r or cell.j)
     if (Ring and distance==Radius) or (not Ring and distance<=Radius) then
       result[#result+1]=cell
     end
   end
+
   return result
 
 end
@@ -2542,8 +2820,11 @@ function GRID:_LineCellEntry(Cell, Start, Goal)
   local cross=grid.crossSpacing or grid.spacing
   local x, y=(dx*grid.cos+dz*grid.sin)/grid.spacing, (-dx*grid.sin+dz*grid.cos)/cross
   local vx, vy=(ex*grid.cos+ez*grid.sin)/grid.spacing, (-ex*grid.sin+ez*grid.cos)/cross
+
+  -- Clip the segment fraction against each cell half-plane, retaining boundary contacts.
   local enter, leave=0, 1
   local sides=self.hexGrid and 6 or 4
+
   for side=0, sides-1 do
     local angle=side*2*math.pi/sides
     local nx, ny=math.cos(angle), math.sin(angle)
@@ -2555,14 +2836,19 @@ function GRID:_LineCellEntry(Cell, Start, Goal)
     local remaining=0.5+1e-9-nx*x-ny*y
     local rate=nx*vx+ny*vy
     if rate==0 then
-      if remaining<0 then return nil end
+      if remaining<0 then
+        return nil
+      end
     elseif rate>0 then
       leave=math.min(leave, remaining/rate)
     else
       enter=math.max(enter, remaining/rate)
     end
-    if enter>leave then return nil end
+    if enter>leave then
+      return nil
+    end
   end
+
   return enter
 
 end
@@ -2580,16 +2866,28 @@ function GRID:GetLineCells(Start, Goal)
   self:PositionToIndex(first)
   self:PositionToIndex(last)
   local hits={}
+
   for _, cell in ipairs(self.CellList) do
     local entry=self:_LineCellEntry(cell, first, last)
-    if entry then hits[#hits+1]={cell=cell, entry=entry} end
+    if entry then
+      hits[#hits+1]={cell=cell, entry=entry}
+    end
   end
+
+  -- Return cells in travel order, with stable IDs resolving simultaneous edge or vertex contacts.
   table.sort(hits, function(a, b)
-    if a.entry==b.entry then return a.cell.id<b.cell.id end
+    if a.entry==b.entry then
+      return a.cell.id<b.cell.id
+    end
     return a.entry<b.entry
   end)
+
   local result={}
-  for i, hit in ipairs(hits) do result[i]=hit.cell end
+
+  for i, hit in ipairs(hits) do
+    result[i]=hit.cell
+  end
+
   return result
 
 end
@@ -2603,8 +2901,14 @@ function GRID:GetPolygonBoundaryCells(Vertices)
 
   assert(type(Vertices)=="table" and #Vertices>=3, "GRID: polygon boundary requires at least three vertices")
   local positions={}
-  for i, vertex in ipairs(Vertices) do positions[i]=self:_QueryPosition(vertex) end
+
+  for i, vertex in ipairs(Vertices) do
+    positions[i]=self:_QueryPosition(vertex)
+  end
+
+  -- Close the last edge and emit shared corner cells only once, in first-encounter order.
   local result, seen={}, {}
+
   for i, position in ipairs(positions) do
     for _, cell in ipairs(self:GetLineCells(position, positions[i%#positions+1])) do
       if not seen[cell.id] then
@@ -2613,6 +2917,7 @@ function GRID:GetPolygonBoundaryCells(Vertices)
       end
     end
   end
+
   return result
 
 end
@@ -2626,6 +2931,7 @@ end
 function GRID:_ValidIndexRange(First, Last)
 
   local limit=4503599627370495
+
   return First>=-limit and First<=limit and Last>=-limit and Last<=limit
 
 end

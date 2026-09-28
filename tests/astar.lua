@@ -462,11 +462,72 @@ test("distant endpoints are added once and obey neighbour rules", function()
   equal(a:GetPath(), nil)
 end)
 
-test("nearby endpoints retain existing grid snapping", function()
+test("nearby manual endpoints remain exact and are reused without changing caller nodes", function()
   local a, s, g = pair()
   a:SetStartCoordinate(coord(-1000)):SetEndCoordinate(coord(1010))
   local path = a:GetPath()
-  equal(path[1], s) equal(path[#path], g) equal(a.Nnodes, 2)
+  equal(path[1].vector.x,-1000) equal(path[#path].vector.x,1010) equal(a.Nnodes,4)
+  equal(a.nodes[s.id],s) equal(a.nodes[g.id],g)
+
+  local first,last=a.startNode,a.endNode
+  assert(a:GetPath())
+  equal(a.startNode,first) equal(a.endNode,last) equal(a.Nnodes,4)
+end)
+
+test("nearby endpoints cannot collapse onto one manual node and bypass depth checks",function()
+  local terrain=depthTerrain()
+  local a=ASTAR:New():SetValidNeighbourDepth(20)
+  a:AddNodeFromCoordinate(coord(0))
+  a:SetStartCoordinate(coord(100)):SetEndCoordinate(coord(200))
+
+  terrain.depthAt=function(p) return p.x==200 and 10 or 30 end
+  equal(a:GetPath(),nil)
+  equal(a.startNode.vector.x,100) equal(a.endNode.vector.x,200)
+  assert(a.startNode~=a.endNode) equal(a.Nnodes,3)
+
+  terrain.depthAt=nil
+  a:SetValidNeighbourDepth(20)
+  local path=a:GetPath()
+  equal(#path,2) equal(path[1],a.startNode) equal(path[2],a.endNode)
+end)
+
+test("nearby automatic manual endpoints obey the surface filter",function()
+  local a=ASTAR:New():SetValidSurfaceTypes(land.SurfaceType.WATER)
+  a:AddNodeFromCoordinate(coord(0))
+  land.surfaceAt=function(p) return p.x==100 and land.SurfaceType.LAND or land.SurfaceType.WATER end
+
+  a:SetStartCoordinate(coord(100)):SetEndCoordinate(coord(0))
+  equal(a:GetPath(),nil) equal(a.LastPathFailure,"no_start_node") equal(a.Nnodes,1)
+  a:SetStartCoordinate(coord(0)):SetEndCoordinate(coord(100))
+  equal(a:GetPath(),nil) equal(a.LastPathFailure,"no_goal_node") equal(a.Nnodes,1)
+end)
+
+test("manual endpoint reuse and pruning follow the selected 2D or 3D metric",function()
+  local a=ASTAR:New():SetValidNeighbourDepth(20)
+  local terrain=depthTerrain()
+  local manual=a:AddNodeFromCoordinate(coord(0))
+  a:SetStartCoordinate(coord(100,0,50)):SetEndCoordinate(coord(200,0,50))
+  assert(a:GetPath())
+  local first,last=a.startNode,a.endNode
+  local queries=terrain.queries
+
+  -- Height changes do not change a 2D route or invalidate its cached depth checks.
+  a:SetStartCoordinate(coord(100,0,60)):SetEndCoordinate(coord(200,0,60))
+  assert(a:GetPath()) equal(a.startNode,first) equal(a.endNode,last)
+  equal(a.Nnodes,3) equal(terrain.queries,queries)
+
+  -- In 3D the requested heights matter, so obsolete automatic endpoints are removed.
+  a:SetCostDist3D()
+  assert(a:GetPath()) equal(a.Nnodes,3)
+  equal(a.startNode.vector.y,60) equal(a.endNode.vector.y,60)
+  equal(a.nodes[manual.id],manual) equal(a.nodes[first.id],nil) equal(a.nodes[last.id],nil)
+  for _,node in pairs(a.nodes) do
+    equal(node.valid[first.id],nil) equal(node.cost[first.id],nil)
+    equal(node.valid[last.id],nil) equal(node.cost[last.id],nil)
+  end
+
+  first,last=a.startNode,a.endNode
+  assert(a:GetPath()) equal(a.startNode,first) equal(a.endNode,last) equal(a.Nnodes,3)
 end)
 
 test("distant endpoints respect the grid surface filter", function()
@@ -2105,7 +2166,7 @@ local navyFile=assert(io.open("Moose Development/Moose/Ops/NavyGroup.lua","r"))
 local navySource=navyFile:read("*a"):gsub("\r\n","\n") navyFile:close()
 NAVYGROUP={}
 for _,name in ipairs({"_GetPathfindingTarget","_FindPathToNextWaypoint","_ClearPathfindingDrawing","_GetPathfindingCorridorWidth","_CheckPathDepth",
-  "_CanNavigate","_FailPathfinding","_UpdateNavigationWarning","_GetNavigationWaypoint","_CheckNavigation",
+  "_CanNavigate","_FailPathfinding","_UpdateNavigationWarning","_SetNavigationWaypoint","_GetNavigationWaypoint","_CheckNavigation",
   "onafterFullStop","onafterCruise","onafterCollisionWarning","onafterClearAhead","onafterTurningStopped",
   "SetPathfinding","SetPathfindingOn","SetPathfindingOff","SetPathfindingMinDepth","SetPathfindingGrid","onafterUpdateRoute","onafterTurnIntoWindOver",
   "_CreateTurnIntoWind","AddTurnIntoWind","RemoveTurnIntoWind","AddTaskAttackGroup","_CheckTurning",
@@ -2155,6 +2216,7 @@ local function vessel(distance)
   function ship:GetWaypointIndexNext() return self.currentwp+1 end
   function ship:GetWaypointNext() return self.waypoints[self.currentwp+1] end
   function ship:GetWaypointCurrent() return self.waypoints[self.currentwp] end
+  function ship:GetWaypointCurrentUID() local waypoint=self:GetWaypointCurrent() return waypoint and waypoint.uid end
   function ship:GetWaypointIndex(uid) for i,w in ipairs(self.waypoints) do if w.uid==uid then return i end end end
   function ship:GetWaypointByID(uid) local i=self:GetWaypointIndex(uid) return i and self.waypoints[i] end
   function ship:RemoveWaypointByID(uid)

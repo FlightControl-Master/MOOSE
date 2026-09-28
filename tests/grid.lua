@@ -342,6 +342,78 @@ test("shared topology updates invalidate components in every attached search",fu
   local path,report=b:GetPathWithExpansion() equal(path,nil) equal(report.StopReason,"cell_limit")
 end)
 
+test("unchanged options preserve shared grid and search caches",function()
+  for _,kind in ipairs({"rectangular","hexagonal"}) do
+    local g=grid(kind)
+    local a,b=search(g),search(g)
+    assert(a:GetPath()) assert(b:GetPath())
+    local version,links=g:GetVersion(),g.gridLinks
+    local aLinks,bLinks,aComponents,bComponents=a.gridLinks,b.gridLinks,a.gridComponents,b.gridComponents
+
+    -- Reapplying effective defaults must not rebuild either attached search's topology.
+    for _,configure in ipairs({
+      function() g:SetOptions(g:GetOptions()) end,
+      function() g:SetMaxCells(5000) end,
+      function() g:SetMaxCells() end,
+      function() g:SetExpansion(1.5,5) end,
+      function() g:SetDiagonals(true) end,
+      function() g:SetCorridor(4000,1000) end,
+      function() g:SetSpacing(1000) end
+    }) do
+      configure()
+      assert(a:GetPath()) assert(b:GetPath())
+      equal(g:GetVersion(),version) equal(g.gridLinks,links)
+      equal(a.gridLinks,aLinks) equal(b.gridLinks,bLinks)
+      equal(a.gridComponents,aComponents) equal(b.gridComponents,bComponents)
+    end
+  end
+end)
+
+test("budget and expansion policy changes preserve topology but apply immediately",function()
+  for _,kind in ipairs({"rectangular","hexagonal"}) do
+    local g=grid(kind)
+    local a,b=search(g),search(g)
+    assert(a:GetPath()) assert(b:GetPath())
+    local version,links=g:GetVersion(),g.gridLinks
+    local aLinks,bLinks,aComponents,bComponents=a.gridLinks,b.gridLinks,a.gridComponents,b.gridComponents
+
+    g:SetMaxCells(g:GetCandidateCount()-1)
+    local path,report=a:GetPathWithExpansion()
+    equal(path,nil) equal(report.StopReason,"cell_limit")
+    equal(report.MaxCells,g:GetCandidateCount()-1)
+
+    g:SetMaxCells(6000):SetExpansion(2,3,6000,2000)
+    path,report=b:GetPathWithExpansion()
+    assert(path) equal(report.MaxCells,6000) equal(report.MaxWidth,6000) equal(report.MaxMargin,2000)
+    local expanded,reason=g:ExpandGrid(8000,2000)
+    equal(expanded,nil) equal(reason,"size_limit")
+    assert(a:GetPath())
+    equal(g:GetVersion(),version) equal(g.gridLinks,links)
+    equal(a.gridLinks,aLinks) equal(b.gridLinks,bLinks)
+    equal(a.gridComponents,aComponents) equal(b.gridComponents,bComponents)
+
+    -- Removing the cap enables real expansion, which must invalidate both search views.
+    g:SetExpansion(2,3)
+    equal(g:ExpandGrid(8000,2000),g)
+    assert(g:GetVersion()>version)
+    assert(a:GetPath()) assert(b:GetPath())
+    assert(g.gridLinks~=links and a.gridLinks~=aLinks and b.gridLinks~=bLinks)
+    assert(a.gridComponents~=aComponents and b.gridComponents~=bComponents)
+  end
+end)
+
+test("hex diagonal settings do not invalidate six-neighbour topology",function()
+  local g=grid("hexagonal")
+  local a=search(g)
+  assert(a:GetPath())
+  local version,links,searchLinks,components=g:GetVersion(),g.gridLinks,a.gridLinks,a.gridComponents
+  g:SetDiagonals(false)
+  equal(g:GetOptions().Diagonals,false)
+  assert(a:GetPath())
+  equal(g:GetVersion(),version) equal(g.gridLinks,links)
+  equal(a.gridLinks,searchLinks) equal(a.gridComponents,components)
+end)
+
 test("search adjacency translates cell IDs after expansion without sharing mutable links",function()
   for _,kind in ipairs({"rectangular","hexagonal"}) do
     for _,diagonals in ipairs({false,true}) do

@@ -15,7 +15,6 @@
 -- @module Core.Astar
 -- @image CORE_Astar.png
 
-
 --- ASTAR class.
 -- @type ASTAR
 -- @field #string ClassName Name of the class.
@@ -156,9 +155,9 @@
 -- other position types are copied. Do not mutate positions, indices or ids of added nodes: adjacency and costs are cached.
 -- GetNodeCoordinate(node) creates a fresh COORDINATE with the node's exact altitude. It does not cache the result.
 --
--- In unrestricted mode endpoints snap to the closest node within 1000 m; otherwise a surface-valid node is added at the requested position.
--- Endpoint distances use 3D when SetCostDist3D() is selected; default and custom cost rules retain 2D endpoint selection.
--- Local grid mode keeps non-coincident endpoint positions exact and attaches them to nearby grid centers; it never links manual nodes directly.
+-- Endpoints reuse a coincident node within 0.000001 m, or add a surface-valid node at the requested position.
+-- Coincidence uses 3D with SetCostDist3D(); default and custom cost rules use 2D, ignoring altitude.
+-- Local grid mode attaches non-coincident endpoints to nearby grid centers; it never links manual nodes directly.
 -- Obsolete automatically inserted endpoints are removed on endpoint resolution. Explicitly added nodes remain part of the graph.
 -- GetPath and GetPathWithExpansion accept ExcludeStartNode, ExcludeEndNode booleans. An empty table can be a successful path; nil means failure.
 --
@@ -281,17 +280,26 @@ ASTAR.version="2.0.0"
 
 -- DCS may sanitize os. Do not substitute simulation time for sub-second CPU measurements.
 local function startCPUClock()
-  if os and type(os.clock)=="function" then return {read=os.clock, start=os.clock()} end
+
+  if os and type(os.clock)=="function" then
+    return {read=os.clock, start=os.clock()}
+  end
+
 end
 
 local function elapsedCPU(clock)
-  if clock then return math.max(0, clock.read()-clock.start) end
+
+  if clock then
+    return math.max(0, clock.read()-clock.start)
+  end
+
 end
 
 local function cpuTimeText(seconds)
-  return seconds and string.format("CPU time %.6f sec", seconds) or "CPU time unavailable"
-end
 
+  return seconds and string.format("CPU time %.6f sec", seconds) or "CPU time unavailable"
+
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- TODO list
@@ -315,6 +323,8 @@ function ASTAR:New()
   self.nodes={} 
   self.counter=1 
   self.Nnodes=0
+
+  -- Geometry can be shared later; node ownership and search caches remain private to this instance.
   self.Grid=GRID:New("ASTAR", GRID.Type.RECTANGLE)
   self._GridRevision=-1 
   self._CellNodes={} 
@@ -323,6 +333,7 @@ function ASTAR:New()
   self._EndpointNodes={}
 
   return self
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -336,8 +347,9 @@ end
 function ASTAR:SetStartCoordinate(Coordinate)
 
   self.startVector=Coordinate~=nil and self.Grid:_PositionVector(Coordinate) or nil
-  
+
   return self
+
 end
 
 --- Set the requested goal coordinate. Does not create a node or rebuild the grid.
@@ -347,10 +359,10 @@ end
 function ASTAR:SetEndCoordinate(Coordinate)
 
   self.endVector=Coordinate~=nil and self.Grid:_PositionVector(Coordinate) or nil
-  
-  return self
-end
 
+  return self
+
+end
 
 --- Create a node from a coordinate without adding it to the search node set.
 -- Stores a VECTOR and samples its current surface type. A supplied VECTOR is retained by reference;
@@ -361,7 +373,7 @@ end
 function ASTAR:GetNodeFromCoordinate(Coordinate)
 
   local node={} --#ASTAR.Node
-  
+
   node.vector=VECTOR._IsVector(Coordinate) and Coordinate or VECTOR:NewFromVec(Coordinate)
 
   -- Validate before querying DCS or consuming an ID. Retain supplied VECTOR objects without copying them.
@@ -374,15 +386,15 @@ function ASTAR:GetNodeFromCoordinate(Coordinate)
   node.id=self.counter
   node._owner=self._NodeOwner
   node.grid=self.Grid
-  
+
   node.valid={}
   node.cost={}
-  
-  self.counter=self.counter+1
-  
-  return node
-end
 
+  self.counter=self.counter+1
+
+  return node
+
+end
 
 --- Create a COORDINATE from a node's VECTOR position.
 -- Each call returns an independent object with the node's exact x, y and z values, including altitude.
@@ -391,8 +403,11 @@ end
 -- @param #ASTAR.Node Node The node to convert.
 -- @return Core.Point#COORDINATE A new coordinate at the node position.
 function ASTAR:GetNodeCoordinate(Node)
+
   assert(Node and Node._owner==self._NodeOwner, "ASTAR: node must belong to this search")
+
   return Node.vector:GetCoordinate()
+
 end
 
 --- Add a node created by this ASTAR instance to the search node set.
@@ -406,7 +421,9 @@ function ASTAR:AddNode(Node)
   assert(type(Node)=="table" and Node._owner==self._NodeOwner and Node.grid==self.Grid, "ASTAR: node must be created by this search for its current grid")
   local existing=self.nodes[Node.id]
   assert(not existing or existing==Node, "ASTAR: existing nodes cannot be replaced")
-  if existing then return self end
+  if existing then
+    return self
+  end
 
   local cell=Node.cell
   if cell then
@@ -419,11 +436,14 @@ function ASTAR:AddNode(Node)
     assert(Node.q==nil and Node.r==nil and Node.i==nil and Node.j==nil and Node.rectGrid==nil,
       "ASTAR: manual nodes cannot have grid cell indices")
   end
-  self.gridLinks=nil self.gridComponents=nil
+
+  self.gridLinks=nil
+  self.gridComponents=nil
   self.Nnodes=self.Nnodes+1
   self.nodes[Node.id]=Node
 
   return self
+
 end
 
 --- Add a node to the table of grid nodes specifying its coordinate.
@@ -434,10 +454,11 @@ end
 function ASTAR:AddNodeFromCoordinate(Coordinate)
 
   local node=self:GetNodeFromCoordinate(Coordinate)
-  
+
   self:AddNode(node)
-    
+
   return node
+
 end
 
 --- Replace the neighbour rule and clear cached validity results on all existing nodes.
@@ -451,16 +472,19 @@ function ASTAR:SetValidNeighbourFunction(NeighbourFunction, ...)
   assert(NeighbourFunction==nil or type(NeighbourFunction)=="function", "ASTAR: neighbour rule must be a function or nil")
 
   self.ValidNeighbourFunc=NeighbourFunction
-  
+
   self.ValidNeighbourArg={...}
+
+  -- Preserve trailing nil callback arguments when unpacking them during rule evaluation.
   self.ValidNeighbourArg.n=select("#", ...)
+
   for _,node in pairs(self.nodes) do
     node.valid={}
   end
-  
-  return self
-end
 
+  return self
+
+end
 
 --- Limit candidates to direct grid neighbours and local attachments for manual nodes and endpoints.
 -- Call a grid builder first. Hex grids have six neighbours. Rectangles have eight, or four with SetGridOptions({Diagonals=false}).
@@ -471,14 +495,19 @@ end
 -- @param #boolean Enabled (Optional) Default true. False restores all-pairs candidate selection.
 -- @return #ASTAR self
 function ASTAR:SetGridNeighboursOnly(Enabled)
+
   self:_SyncGrid()
-  if Enabled==nil then Enabled=true end
+  if Enabled==nil then
+    Enabled=true
+  end
+
   assert(type(Enabled)=="boolean", "ASTAR: Enabled must be a boolean")
   assert(not Enabled or self.hexGrid or self.rectGrid, "ASTAR: create a grid before enabling grid neighbours")
   self.GridNeighboursOnly=Enabled
-  return self
-end
 
+  return self
+
+end
 
 --- Replace the neighbour rule with a visibility check at 1 meter above sea level.
 -- Intended for water routes. A corridor adds two parallel visibility checks, not a continuous clearance test.
@@ -493,6 +522,7 @@ function ASTAR:SetValidNeighbourLoS(CorridorWidth)
   self:SetValidNeighbourFunction(ASTAR.LoS, CorridorWidth)
 
   return self
+
 end
 
 --- Replace the neighbour rule with a sampled surface corridor check using the grid's configured surface types.
@@ -506,13 +536,22 @@ end
 ---@param CorridorWidth? number
 ---@return ASTAR
 function ASTAR:SetValidNeighbourSurface(Step, CorridorWidth)
-  if Step==nil then Step=100 end
-  if CorridorWidth==nil then CorridorWidth=0 end
+
+  if Step==nil then
+    Step=100
+  end
+
+  if CorridorWidth==nil then
+    CorridorWidth=0
+  end
+
   assert(type(Step)=="number" and Step>0 and Step<math.huge,"ASTAR: surface sample step must be finite and positive")
   assert(CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
+
   return self:SetValidNeighbourFunction(function(a,b)
     return self.Grid:CheckSurfacePath(a.vector,b.vector,Step,CorridorWidth)
   end)
+
 end
 
 --- Replace the neighbour rule with a minimum water depth check using terrain profiles.
@@ -543,6 +582,7 @@ function ASTAR:SetValidNeighbourDepth(MinDepth, CorridorWidth)
   assert(CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
 
   return self:SetValidNeighbourFunction(ASTAR.Depth,MinDepth,CorridorWidth)
+
 end
 
 --- Replace the neighbour rule with a maximum 2D distance check, without checking terrain.
@@ -551,12 +591,16 @@ end
 -- @return #ASTAR self
 function ASTAR:SetValidNeighbourDistance(MaxDistance)
 
-  if MaxDistance==nil then MaxDistance=2000 end
+  if MaxDistance==nil then
+    MaxDistance=2000
+  end
+
   assert(type(MaxDistance)=="number" and MaxDistance>=0 and MaxDistance<math.huge, "ASTAR: maximum distance must be finite and non-negative")
 
   self:SetValidNeighbourFunction(ASTAR.DistMax, MaxDistance)
 
   return self
+
 end
 
 --- Set valid neighbours to have a road connection within a maximum 2D distance.
@@ -566,12 +610,16 @@ end
 -- @return #ASTAR self
 function ASTAR:SetValidNeighbourRoad(MaxDistance)
 
-  if MaxDistance==nil then MaxDistance=2000 end
+  if MaxDistance==nil then
+    MaxDistance=2000
+  end
+
   assert(type(MaxDistance)=="number" and MaxDistance>=0 and MaxDistance<math.huge, "ASTAR: maximum distance must be finite and non-negative")
 
   self:SetValidNeighbourFunction(ASTAR.Road, MaxDistance)
 
   return self
+
 end
 
 --- Set the function which calculates the "cost" to go from one to another node.
@@ -588,14 +636,18 @@ function ASTAR:SetCostFunction(CostFunction, ...)
   assert(CostFunction==nil or type(CostFunction)=="function", "ASTAR: cost rule must be a function or nil")
 
   self.CostFunc=CostFunction
-  
+
   self.CostArg={...}
+
+  -- Preserve the callback argument count, including trailing nil values.
   self.CostArg.n=select("#", ...)
+
   for _,node in pairs(self.nodes) do
     node.cost={}
   end
-  
+
   return self
+
 end
 
 --- Set travel cost and heuristic to the 2D distance between nodes.
@@ -606,6 +658,7 @@ function ASTAR:SetCostDist2D()
   self:SetCostFunction(ASTAR.Dist2D)
 
   return self
+
 end
 
 --- Set travel cost and heuristic to the 3D distance between nodes.
@@ -616,6 +669,7 @@ function ASTAR:SetCostDist3D()
   self:SetCostFunction(ASTAR.Dist3D)
 
   return self
+
 end
 
 --- Set travel cost to the road distance between nodes, using a zero heuristic.
@@ -626,12 +680,12 @@ function ASTAR:SetCostRoad()
   self:SetCostFunction(ASTAR.DistRoad)
 
   return self
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Grid functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Grid drawing
@@ -645,23 +699,32 @@ end
 -- @param #boolean CheckValid (Optional) Apply the current neighbour rule. Default false.
 -- @return #number Neighbour count.
 function ASTAR:GetNodeNeighbourCount(Node, CheckValid)
+
   self:_SyncGrid()
   assert(Node and self.nodes[Node.id]==Node, "ASTAR: node must belong to this object")
   local count=0
   if self.GridNeighboursOnly then
-    if not self.gridLinks then self:_BuildGridLinks() end
-    for id in pairs(self.gridLinks[Node.id] or {}) do
-      if not CheckValid or self:_IsValidNeighbour(Node,self.nodes[id]) then count=count+1 end
+    if not self.gridLinks then
+      self:_BuildGridLinks()
     end
-  elseif not CheckValid then return math.max(0,self.Nnodes-1)
+    for id in pairs(self.gridLinks[Node.id] or {}) do
+      if not CheckValid or self:_IsValidNeighbour(Node,self.nodes[id]) then
+        count=count+1
+      end
+    end
+  elseif not CheckValid then
+    return math.max(0,self.Nnodes-1)
   else
     for id,other in pairs(self.nodes) do
-      if id~=Node.id and self:_IsValidNeighbour(Node,other) then count=count+1 end
+      if id~=Node.id and self:_IsValidNeighbour(Node,other) then
+        count=count+1
+      end
     end
   end
-  return count
-end
 
+  return count
+
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Valid neighbour functions
@@ -676,37 +739,38 @@ end
 function ASTAR.LoS(nodeA, nodeB, corridor)
 
   local offset=1
-  
+
   local dx=corridor and corridor/2 or nil
-  
+
   local cA=nodeA.vector:GetVec3()
   local cB=nodeB.vector:GetVec3()
   cA.y=offset
   cB.y=offset
 
   local los=land.isVisible(cA, cB)
-  
+
   if los and corridor and corridor>0 then
-  
+
     -- Heading from A to B.
     local heading=nodeA.vector:GetHeadingTo(nodeB.vector)
-    
+
     local Ap=UTILS.VecTranslate(cA, dx, heading+90)
     local Bp=UTILS.VecTranslate(cB, dx, heading+90)
 
     los=land.isVisible(Ap, Bp)
-    
+
     if los then
 
       local Am=UTILS.VecTranslate(cA, dx, heading-90)
       local Bm=UTILS.VecTranslate(cB, dx, heading-90)
-    
+
       los=land.isVisible(Am, Bm)
     end
-    
+
   end
 
   return los
+
 end
 
 --- Check the endpoints and terrain profile of one water connection.
@@ -764,6 +828,7 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth)
   end
 
   return true
+
 end
 
 --- Check whether two nodes are connected by sufficiently deep water.
@@ -781,8 +846,13 @@ end
 -- @return #string Reason for rejection, or nil on success. Start/goal refer to the canonical query direction.
 function ASTAR.Depth(nodeA, nodeB, MinDepth, CorridorWidth)
 
-  if MinDepth==nil then MinDepth=20 end
-  if CorridorWidth==nil then CorridorWidth=0 end
+  if MinDepth==nil then
+    MinDepth=20
+  end
+
+  if CorridorWidth==nil then
+    CorridorWidth=0
+  end
 
   assert(MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
   assert(CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
@@ -821,6 +891,7 @@ function ASTAR.Depth(nodeA, nodeB, MinDepth, CorridorWidth)
   end
 
   return true
+
 end
 
 --- Check for a DCS road connection between nodes within the maximum straight-line 2D distance.
@@ -835,7 +906,7 @@ function ASTAR.Road(nodeA, nodeB, distmax)
   end
 
   local path=land.findPathOnRoads("roads", nodeA.vector.x, nodeA.vector.z, nodeB.vector.x, nodeB.vector.z)
-  
+
   if path then
     return true    
   else
@@ -854,8 +925,9 @@ function ASTAR.DistMax(nodeA, nodeB, distmax)
   distmax=distmax or 2000
 
   local dist=nodeA.vector:GetDistance(nodeB.vector, true)
-  
+
   return dist<=distmax
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -867,8 +939,11 @@ end
 -- @param #ASTAR.Node nodeB Other node.
 -- @return #number Distance between the two nodes.
 function ASTAR.Dist2D(nodeA, nodeB)
+
   local dist=nodeA.vector:GetDistance(nodeB.vector, true)
+
   return dist
+
 end
 
 --- Return the straight-line 3D distance between two nodes, including their altitudes.
@@ -876,8 +951,11 @@ end
 -- @param #ASTAR.Node nodeB Other node.
 -- @return #number Distance between the two nodes.
 function ASTAR.Dist3D(nodeA, nodeB)
+
   local dist=nodeA.vector:GetDistance(nodeB.vector)
+
   return dist
+
 end
 
 --- Return the length of the road path from land.findPathOnRoads between two nodes.
@@ -888,24 +966,24 @@ function ASTAR.DistRoad(nodeA, nodeB)
 
   -- Get the path.
   local path=land.findPathOnRoads("roads", nodeA.vector.x, nodeA.vector.z, nodeB.vector.x, nodeB.vector.z)
-  
+
   if path then
-  
+
     local dist=0
-    
+
     for i=2,#path do
       local b=path[i] --DCS#Vec2
       local a=path[i-1] --DCS#Vec2
-      
+
       dist=dist+UTILS.VecDist2D(a,b)
-      
+
     end
 
     return dist
   end
-  
 
   return math.huge
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -919,46 +997,54 @@ end
 -- @return #ASTAR.Node Closest node, or nil if the node set is empty.
 -- @return #number Distance to the closest node in meters, or math.huge if the node set is empty.
 function ASTAR:FindClosestNode(Coordinate)
+
   local position=self.Grid:_PositionVector(Coordinate)
   self:_SyncGrid()
 
   local distMin=math.huge
   local closeNode=nil
   local horizontal=self.CostFunc~=ASTAR.Dist3D
-  
+
   for _,_node in pairs(self.nodes) do
     local node=_node --#ASTAR.Node
-    
+
     local dist=node.vector:GetDistance(position, horizontal)
-    
+
     if dist<distMin then
       distMin=dist
       closeNode=node
     end
-    
+
   end
-    
+
   return closeNode, distMin
+
 end
 
---- Select the closest start node, or add an exact start node if the closest is more than 1000 meters away.
--- Uses the distance metric of FindClosestNode(). In local grid mode the snapping threshold is 0.000001 meters.
+--- Reuse a coincident start node, or add one at the requested start position.
+-- Uses the distance metric of FindClosestNode(), with a 0.000001-meter tolerance for numerical round-off.
 -- Sets startNode to nil if the node set is empty or an added endpoint fails the surface filter.
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:FindStartNode()
+
   self.startNode=self:_FindEndpoint(self.startVector, "start")
+
   return self
+
 end
 
---- Select the closest goal node, or add an exact goal node if the closest is more than 1000 meters away.
--- Uses the distance metric of FindClosestNode(). In local grid mode the snapping threshold is 0.000001 meters.
+--- Reuse a coincident goal node, or add one at the requested goal position.
+-- Uses the distance metric of FindClosestNode(), with a 0.000001-meter tolerance for numerical round-off.
 -- Sets endNode to nil if the node set is empty or an added endpoint fails the surface filter.
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:FindEndNode()
+
   self.endNode=self:_FindEndpoint(self.endVector, "end")
+
   return self
+
 end
 
 --- Remove automatic endpoints no longer requested by this search.
@@ -968,9 +1054,12 @@ end
 function ASTAR:_PruneEndpointNodes()
 
   local removed={}
+  local horizontal=self.CostFunc~=ASTAR.Dist3D
+
+  -- Only automatically inserted endpoints expire; caller-added nodes stay in the graph.
   for id,node in pairs(self._EndpointNodes) do
-    local atStart=self.startVector and node.vector:GetDistance(self.startVector)<=1e-6
-    local atGoal=self.endVector and node.vector:GetDistance(self.endVector)<=1e-6
+    local atStart=self.startVector and node.vector:GetDistance(self.startVector, horizontal)<=1e-6
+    local atGoal=self.endVector and node.vector:GetDistance(self.endVector, horizontal)<=1e-6
 
     if not atStart and not atGoal then
       removed[#removed+1]=id
@@ -979,8 +1068,12 @@ function ASTAR:_PruneEndpointNodes()
       self.Nnodes=self.Nnodes-1
       node.valid={}
       node.cost={}
-      if self.startNode==node then self.startNode=nil end
-      if self.endNode==node then self.endNode=nil end
+      if self.startNode==node then
+        self.startNode=nil
+      end
+      if self.endNode==node then
+        self.endNode=nil
+      end
     end
   end
 
@@ -996,26 +1089,36 @@ function ASTAR:_PruneEndpointNodes()
     self.gridLinks=nil
     self.gridComponents=nil
   end
+
 end
 
---- Resolve one endpoint using the current snapping threshold and surface filter.
+--- Resolve one exact endpoint using the current distance metric and surface filter.
 -- @param #ASTAR self
 -- @param Core.Vector#VECTOR Coordinate Requested endpoint.
 -- @param #string Label Endpoint name for trace output.
 -- @return #ASTAR.Node Selected or added node, or nil.
 function ASTAR:_FindEndpoint(Coordinate, Label)
+
   self:_PruneEndpointNodes()
-  if not Coordinate then return nil end
+  if not Coordinate then
+    return nil
+  end
+
   local node, distance=self:FindClosestNode(Coordinate)
-  local threshold=self.GridNeighboursOnly and 1e-6 or 1000
-  if node and distance>threshold then
+
+  -- Reuse coincident nodes only. Snapping to a nearby node would skip the actual endpoint connection and its validity checks.
+  if node and distance>1e-6 then
     self:T(self.lid.."Adding "..Label.." node to node grid!")
     node=self:GetNodeFromCoordinate(Coordinate)
-    if not self.Grid:IsValidSurfaceType(node.surfacetype) then return nil end
+    if not self.Grid:IsValidSurfaceType(node.surfacetype) then
+      return nil
+    end
     self:AddNode(node)
     self._EndpointNodes[node.id]=node
   end
+
   return node
+
 end
 
 --- Resolve both endpoints for candidate checks and full searches.
@@ -1024,15 +1127,23 @@ end
 -- @return #ASTAR.Node Goal node, or nil.
 -- @return #string Failure reason, or nil.
 function ASTAR:_ResolveEndpoints()
+
   self:_SyncGrid()
   self:_PruneEndpointNodes()
-  if not self.startVector or not self.endVector then return nil, nil, "missing_coordinates" end
+  if not self.startVector or not self.endVector then
+    return nil, nil, "missing_coordinates"
+  end
   self:FindStartNode()
   self:FindEndNode()
   local reason
-  if not self.startNode then reason="no_start_node"
-  elseif not self.endNode then reason="no_goal_node" end
+  if not self.startNode then
+    reason="no_start_node"
+  elseif not self.endNode then
+    reason="no_goal_node"
+  end
+
   return self.startNode, self.endNode, reason
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1049,9 +1160,14 @@ end
 -- @return #boolean Whether a path is possible before applying neighbour rules and travel costs.
 -- @return #string Failure reason: missing_coordinates, no_start_node, no_goal_node, start_unattached, goal_unattached or disconnected_grid; nil on success.
 function ASTAR:HasPotentialPath()
+
   local start, goal, reason=self:_ResolveEndpoints()
-  if reason then return false, reason end
+  if reason then
+    return false, reason
+  end
+
   return self:_HasPotentialPath(start, goal)
+
 end
 
 --- Search a rectangular or hex-only grid and expand it as needed using SetGridOptions().Expansion and the shared MaxCells budget.
@@ -1064,6 +1180,7 @@ end
 -- @return #table Report with Attempts, StopReason, Width, Margin, Nodes, CandidateCells, MaxCells, MaxWidth, MaxMargin, BudgetLimited and SearchCPUSeconds.
 -- Attempts contain Width, Margin, Nodes, Failure and CPUSeconds. StopReason is path_found, attempt_limit, size_limit, cell_limit or missing_coordinates.
 function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode)
+
   self:_SyncGrid()
   assert(ExcludeStartNode==nil or type(ExcludeStartNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
   assert(ExcludeEndNode==nil or type(ExcludeEndNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
@@ -1080,9 +1197,13 @@ function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode)
   assert(maxMargin==nil or maxMargin>=grid.margin, "ASTAR: MaxMargin must be at least the current margin")
 
   self.LastPathFailure=nil
+
+  -- Include both searches and grid enlargement in the overall timing report.
   local searchClock=startCPUClock()
   local report={Attempts={},BudgetLimited=false}
+
   local function finish(path, reason)
+    -- All exit paths publish the same final dimensions, limits and attempt history.
     report.StopReason=reason
     report.Width=grid.width
     report.Margin=grid.margin
@@ -1095,37 +1216,69 @@ function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode)
     self.LastExpansionResult=report
     self:T(self.lid..string.format("Expanding search finished: %s after %d attempts, width %.0f m, margin %.0f m, %d nodes, search %s",
       reason, #report.Attempts, grid.width, grid.margin, self.Nnodes, cpuTimeText(report.SearchCPUSeconds)))
-    if not path then self:_ReportPathFailure(self.LastPathFailure or reason, reason) end
+    if not path then
+      self:_ReportPathFailure(self.LastPathFailure or reason, reason)
+    end
     return path, report
   end
 
-  if grid.candidateCount>maxCells then return finish(nil, "cell_limit") end
+  if grid.candidateCount>maxCells then
+    return finish(nil, "cell_limit")
+  end
+
   for attempt=1,maxAttempts do
     self:T(self.lid..string.format("Expanding search attempt %d/%d: width %.0f m, margin %.0f m, %d nodes",
       attempt, maxAttempts, grid.width, grid.margin, self.Nnodes))
     self.LastPathFailure=nil
     local path, failure=self:_SearchPath(ExcludeStartNode, ExcludeEndNode)
     self.LastPathFailure=failure
-    if failure then self:T(self.lid.."Search attempt failed: "..failure) end
+    if failure then
+      self:T(self.lid.."Search attempt failed: "..failure)
+    end
     report.Attempts[#report.Attempts+1]={Width=grid.width, Margin=grid.margin, Nodes=self.Nnodes, Failure=self.LastPathFailure, CPUSeconds=self.LastSearchTiming.CPUSeconds}
-    if path then return finish(path, "path_found") end
-    if self.LastPathFailure=="missing_coordinates" then return finish(nil, "missing_coordinates") end
-    if attempt==maxAttempts then return finish(nil, "attempt_limit") end
 
+    if path then
+      return finish(path, "path_found")
+    end
+
+    if self.LastPathFailure=="missing_coordinates" then
+      return finish(nil, "missing_coordinates")
+    end
+
+    if attempt==maxAttempts then
+      return finish(nil, "attempt_limit")
+    end
+
+    -- Grow by at least one spacing per side so zero or small initial dimensions can still expand.
     local width=math.max(grid.width*factor, grid.width+2*(grid.crossSpacing or grid.spacing))
     local margin=math.max(grid.margin*factor, grid.margin+grid.spacing)
-    if maxWidth then width=math.min(maxWidth,width) end
-    if maxMargin then margin=math.min(maxMargin,margin) end
-    if width==math.huge or margin==math.huge then return finish(nil,"size_limit") end
-    if width==grid.width and margin==grid.margin then return finish(nil, "size_limit") end
+    if maxWidth then
+      width=math.min(maxWidth,width)
+    end
+    if maxMargin then
+      margin=math.min(maxMargin,margin)
+    end
+
+    if width==math.huge or margin==math.huge then
+      return finish(nil,"size_limit")
+    end
+
+    if width==grid.width and margin==grid.margin then
+      return finish(nil, "size_limit")
+    end
+
+    -- Let GRID fit a smaller step to the cell budget while preserving existing cells and samples.
     local expanded, stopReason, limited=self.Grid:ExpandGrid(width,margin,true)
-    if not expanded then return finish(nil,stopReason) end
+    if not expanded then
+      return finish(nil,stopReason)
+    end
     self:_SyncGrid()
     if limited then
       self:T(self.lid..string.format("Fitted expansion to MaxCells=%d: width %.1f m, margin %.1f m, %d candidate cells",maxCells,grid.width,grid.margin,grid.candidateCount))
     end
     report.BudgetLimited=report.BudgetLimited or limited
   end
+
 end
 
 --- Search synchronously for a least-cost path between the selected start and goal nodes.
@@ -1138,13 +1291,18 @@ end
 -- @param #boolean ExcludeEndNode If *true*, do not include end node in found path. Default is to include it.
 -- @return #table Ordered list of ASTAR.Node entries (possibly empty), or nil for missing coordinates, missing endpoint nodes, or an unreachable goal.
 function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
+
   assert(ExcludeStartNode==nil or type(ExcludeStartNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
   assert(ExcludeEndNode==nil or type(ExcludeEndNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
   self.LastPathFailure=nil
   local path, reason=self:_SearchPath(ExcludeStartNode, ExcludeEndNode)
   self.LastPathFailure=reason
-  if not path then self:_ReportPathFailure(reason) end
+  if not path then
+    self:_ReportPathFailure(reason)
+  end
+
   return path
+
 end
 
 --- Run one search without announcing failure; the caller decides whether to retry.
@@ -1154,7 +1312,9 @@ end
 -- @return #table Path, including an empty successful path, or nil.
 -- @return #string Failure reason, or nil on success.
 function ASTAR:_SearchPath(ExcludeStartNode, ExcludeEndNode)
+
   local clock=startCPUClock()
+
   local function finish(path, reason)
     local seconds=elapsedCPU(clock)
     self.LastSearchTiming={CPUSeconds=seconds, Failure=reason, Nodes=self.Nnodes}
@@ -1165,55 +1325,62 @@ function ASTAR:_SearchPath(ExcludeStartNode, ExcludeEndNode)
     self:T(self.lid..text)
     return path, reason
   end
+
   local start, goal, reason=self:_ResolveEndpoints()
-  if reason then return finish(nil, reason) end
+  if reason then
+    return finish(nil, reason)
+  end
+
+  -- Reject disconnected geometry before spending work on terrain rules and travel costs.
   local potential, failure=self:_HasPotentialPath(start, goal)
-  if not potential then return finish(nil, failure) end
+  if not potential then
+    return finish(nil, failure)
+  end
+
   local nodes=self.nodes
 
-  -- Sets.
+  -- Keep tentative scores and predecessors local to this attempt; pair caches live on the nodes.
   local openset   = {}
   local closedset = {}
   local came_from = {}
   local g_score   = {}
   local f_score   = {}
-  
+
   openset[start.id]=true
   local Nopen=1
-  
-  -- Initial scores.
+
+  -- g_score is the cost already travelled; f_score adds a lower bound on the remaining cost.
   g_score[start.id]=0
   f_score[start.id]=g_score[start.id]+self:_HeuristicCost(start, goal)
-  
+
   -- Debug message.
   local text=string.format("Starting A* pathfinding with %d Nodes", self.Nnodes)
   self:T(self.lid..text)
-  
 
   -- Loop while we still have an open set.
   while Nopen > 0 do
-  
-    -- Get current node.
+
+    -- Expand the open node with the lowest estimated total cost.
     local current=self:_LowestFscore(openset, f_score)
 
     -- No finite score remains: all remaining connections are unreachable.
     if not current then
       break
     end
-    
-    -- Check if we are at the end node.
+
+    -- Reconstruct only after the goal is selected, then apply the requested endpoint exclusions.
     if current.id==goal.id then
-    
+
       local path=self:_UnwindPath({}, came_from, goal)
-      
+
       if not ExcludeEndNode then
         table.insert(path, goal)
       end
-      
+
       if ExcludeStartNode and #path>0 then
         table.remove(path, 1)
       end
-      
+
       return finish(path)
     end
 
@@ -1221,36 +1388,38 @@ function ASTAR:_SearchPath(ExcludeStartNode, ExcludeEndNode)
     openset[current.id]=nil
     Nopen=Nopen-1
     closedset[current.id]=true
-    
-    -- Get neighbour nodes.
+
+    -- Filter geometric candidates through the configured rule before evaluating travel costs.
     local neighbors=self:_NeighbourNodes(current, nodes)
-    
+
     -- Loop over neighbours.
     for _,neighbor in pairs(neighbors) do
-    
+
       if closedset[neighbor.id]==nil then
-      
+
         local tentative_g_score=g_score[current.id]+self:_TravelCost(current, neighbor)
-         
+
+        -- Replace the predecessor only when this route improves the known cost to the neighbour.
         if tentative_g_score < (g_score[neighbor.id] or ASTAR.INF) then
-        
+
           came_from[neighbor]=current
-          
+
           g_score[neighbor.id]=tentative_g_score
           f_score[neighbor.id]=g_score[neighbor.id]+self:_HeuristicCost(neighbor, goal)
-          
+
           if openset[neighbor.id]==nil then
             -- Add to open set.
             openset[neighbor.id]=true
             Nopen=Nopen+1
           end
-          
+
         end
       end
     end
   end
 
   return finish(nil, "connections_blocked")
+
 end
 
 --- Announce a final search failure, optionally with an expansion stop reason.
@@ -1259,6 +1428,7 @@ end
 -- @param #string StopReason Optional expansion stop reason.
 -- @return #nil No return value; updates state or emits diagnostics.
 function ASTAR:_ReportPathFailure(Reason, StopReason)
+
   local explanations={missing_coordinates="start and end coordinates are required",
     no_start_node="could not find a valid start node", no_goal_node="could not find a valid goal node",
     start_unattached="start has no attachment to nearby grid cells",
@@ -1267,9 +1437,12 @@ function ASTAR:_ReportPathFailure(Reason, StopReason)
     connections_blocked="no route satisfies the connection rules and travel costs",
     cell_limit="the grid exceeds the candidate-cell limit"}
   local text="Could NOT find valid path: "..(explanations[Reason] or Reason).." ["..Reason.."]"
-  if StopReason then text=text.." (expansion stopped: "..StopReason..")" end
+  if StopReason then
+    text=text.." (expansion stopped: "..StopReason..")"
+  end
   self:E(self.lid..text)
   MESSAGE:New(text, 60, "ASTAR"):ToAllIf(self.Debug)
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1285,14 +1458,31 @@ end
 -- @return #string Failure reason, or nil when connectivity is possible.
 function ASTAR:_HasPotentialPath(start, goal)
 
-  if not start then return false, "no_start_node" end
-  if not goal then return false, "no_goal_node" end
-  if not self.GridNeighboursOnly or start.id==goal.id then return true end
-  if not self.gridLinks then self:_BuildGridLinks() end
+  if not start then
+    return false, "no_start_node"
+  end
 
-  if not (start.q~=nil or start.rectGrid==self.rectGrid and start.i~=nil) and next(self.gridLinks[start.id] or {})==nil then return false, "start_unattached" end
-  if not (goal.q~=nil or goal.rectGrid==self.rectGrid and goal.i~=nil) and next(self.gridLinks[goal.id] or {})==nil then return false, "goal_unattached" end
+  if not goal then
+    return false, "no_goal_node"
+  end
 
+  if not self.GridNeighboursOnly or start.id==goal.id then
+    return true
+  end
+
+  if not self.gridLinks then
+    self:_BuildGridLinks()
+  end
+
+  if not (start.q~=nil or start.rectGrid==self.rectGrid and start.i~=nil) and next(self.gridLinks[start.id] or {})==nil then
+    return false, "start_unattached"
+  end
+
+  if not (goal.q~=nil or goal.rectGrid==self.rectGrid and goal.i~=nil) and next(self.gridLinks[goal.id] or {})==nil then
+    return false, "goal_unattached"
+  end
+
+  -- Flood the whole candidate component once; later endpoint checks can reuse its label.
   local components=self.gridComponents
   local component=components[start.id]
   if not component then
@@ -1312,8 +1502,12 @@ function ASTAR:_HasPotentialPath(start, goal)
     end
   end
 
-  if components[goal.id]==component then return true end
+  if components[goal.id]==component then
+    return true
+  end
+
   return false, "disconnected_grid"
+
 end
 
 --- Lower bound on the remaining travel cost. Custom and road costs use zero.
@@ -1329,7 +1523,9 @@ function ASTAR:_HeuristicCost(nodeA, nodeB)
     return ASTAR.Dist3D(nodeA, nodeB)
   end
 
+  -- Custom and road costs have no known distance lower bound; zero avoids overestimating them.
   return 0
+
 end
 
 --- Cached travel cost from node A to node B. Defaults to their 2D distance.
@@ -1338,11 +1534,11 @@ end
 -- @param #ASTAR.Node nodeB Node B.
 -- @return #number Travel cost.
 function ASTAR:_TravelCost(nodeA, nodeB)
-  
+
   -- Counter.
   self.ncost=self.ncost+1
 
-  -- Get chached cost if available.
+  -- Reuse previously evaluated costs; zero is a valid cached result.
   local cost=nodeA.cost[nodeB.id]
   if cost~=nil then
     self.ncostcache=self.ncostcache+1
@@ -1355,12 +1551,13 @@ function ASTAR:_TravelCost(nodeA, nodeB)
   else
     cost=self:_DistNodes(nodeA, nodeB)
   end
-  
+
   assert(type(cost)=="number" and cost>=0, "ASTAR: travel cost must be a non-negative number or math.huge")
   nodeA.cost[nodeB.id]=cost
   nodeB.cost[nodeA.id]=cost  -- Symmetric problem. 
-  
+
   return cost
+
 end
 
 --- Check if going from a node to a neighbour is possible.
@@ -1372,7 +1569,8 @@ function ASTAR:_IsValidNeighbour(node, neighbor)
 
   -- Counter.
   self.nvalid=self.nvalid+1
-  
+
+  -- A cached false is meaningful: blocked connections must not trigger repeated terrain checks.
   local valid=node.valid[neighbor.id]
   if valid~=nil then
     --env.info(string.format("Node %d has valid=%s neighbour %d", node.id, tostring(valid), neighbor.id))
@@ -1387,10 +1585,12 @@ function ASTAR:_IsValidNeighbour(node, neighbor)
     valid=true
   end
 
+  -- Rules are required to be symmetric, allowing the reverse edge to reuse the same result.
   node.valid[neighbor.id]=valid
   neighbor.valid[node.id]=valid  -- Symmetric problem. 
 
   return valid
+
 end
 
 --- Calculate 2D distance between two nodes.
@@ -1399,7 +1599,9 @@ end
 -- @param #ASTAR.Node nodeB Node B.
 -- @return #number Distance between nodes in meters.
 function ASTAR:_DistNodes(nodeA, nodeB)
+
   return nodeA.vector:GetDistance(nodeB.vector, true)
+
 end
 
 --- Function that calculates the lowest F score.
@@ -1410,17 +1612,18 @@ end
 function ASTAR:_LowestFscore(set, f_score)
 
   local lowest, bestNode = ASTAR.INF, nil
-  
+
   for nid,node in pairs(set) do
-  
+
     local score=f_score[nid]
-    
+
     if score<lowest then
       lowest, bestNode = score, nid
     end
   end
-  
+
   return self.nodes[bestNode]
+
 end
 
 --- Function to get valid neighbours of a node.
@@ -1433,7 +1636,9 @@ function ASTAR:_NeighbourNodes(theNode, nodes)
   local neighbors = {}
 
   if self.GridNeighboursOnly then
-    if not self.gridLinks then self:_BuildGridLinks() end
+    if not self.gridLinks then
+      self:_BuildGridLinks()
+    end
     for nid in pairs(self.gridLinks[theNode.id] or {}) do
       local node=nodes[nid]
       if node and self:_IsValidNeighbour(theNode, node) then
@@ -1442,22 +1647,23 @@ function ASTAR:_NeighbourNodes(theNode, nodes)
     end
     return neighbors
   end
-  
+
   for _,node in pairs(nodes) do
-  
+
     if theNode.id~=node.id then
-    
+
       local isvalid=self:_IsValidNeighbour(theNode, node)
-    
+
       if isvalid then
         table.insert(neighbors, node)
       end
-      
+
     end
-    
+
   end
-  
+
   return neighbors
+
 end
 
 --- Reconstruct the predecessor chain in linear time, excluding the current node itself.
@@ -1468,17 +1674,27 @@ end
 -- @param #ASTAR.Node current_node The current node.
 -- @return #table Ordered predecessor nodes.
 function ASTAR:_UnwindPath(flat_path, map, current_node)
+
   local reverse={}
   local previous=map[current_node]
   while previous do
     reverse[#reverse+1]=previous
     previous=map[previous]
   end
+
   -- Preserve the existing suffix and table identity without repeatedly inserting at the front.
   local count=#reverse
-  for i=#flat_path,1,-1 do flat_path[i+count]=flat_path[i] end
-  for i=1,count do flat_path[i]=reverse[count-i+1] end
+
+  for i=#flat_path,1,-1 do
+    flat_path[i+count]=flat_path[i]
+  end
+
+  for i=1,count do
+    flat_path[i]=reverse[count-i+1]
+  end
+
   return flat_path
+
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -1495,12 +1711,18 @@ end
 -- @param Core.Grid#GRID Grid Built grid.
 -- @return #ASTAR self.
 function ASTAR:SetGrid(Grid)
+
   assert(Grid and Grid.ClassName=="GRID" and Grid.GridBuilt,"ASTAR: SetGrid requires a built GRID")
   assert(not self.Grid.GridBuilt and next(self.nodes)==nil,"ASTAR: attach a grid to an unused ASTAR object")
-  self.Grid=Grid self._GridRevision=-1 self._CellCursor=0 self._CellNodes={}
+  self.Grid=Grid
+  self._GridRevision=-1
+  self._CellCursor=0
+  self._CellNodes={}
   self.GridNeighboursOnly=true
   self:_SyncGrid()
+
   return self
+
 end
 
 --- Get the owned or shared GRID, including before initial construction.
@@ -1508,22 +1730,36 @@ end
 -- @return Core.Grid#GRID Grid.
 ---@return GRID
 function ASTAR:GetGrid()
+
   return self.Grid
+
 end
 
 --- Import new shared cells without terrain queries or changing existing nodes and caches.
 -- @param #ASTAR self
 -- @return #nil No return value.
 function ASTAR:_SyncGrid()
+
   local grid=self.Grid
-  if not grid or self._GridRevision==grid.Version then return end
+  if not grid or self._GridRevision==grid.Version then
+    return
+  end
+
   -- Track the filter used by validity caches, including changes made through GetGrid() before building.
   if self._ValiditySurfaceFilter~=grid.ValidSurfaceTypes then
-    for _,node in pairs(self.nodes) do node.valid={} end
+    for _,node in pairs(self.nodes) do
+      node.valid={}
+    end
     self._ValiditySurfaceFilter=grid.ValidSurfaceTypes
   end
-  self.hexGrid=grid.hexGrid self.rectGrid=grid.rectGrid
-  if grid.GridBuilt and self.GridNeighboursOnly==nil then self.GridNeighboursOnly=true end
+
+  self.hexGrid=grid.hexGrid
+  self.rectGrid=grid.rectGrid
+  if grid.GridBuilt and self.GridNeighboursOnly==nil then
+    self.GridNeighboursOnly=true
+  end
+
+  -- Import only appended cells. Reuse their geometry, but give every search its own IDs and caches.
   for i=self._CellCursor+1,#grid.CellList do
     local cell=grid.CellList[i]
     local node={id=self.counter,vector=cell.vector,surfacetype=cell.surfacetype,
@@ -1531,8 +1767,13 @@ function ASTAR:_SyncGrid()
     self.counter=self.counter+1
     self:AddNode(node)
   end
-  self._CellCursor=#grid.CellList self._GridRevision=grid.Version
-  self.gridLinks=nil self.gridComponents=nil
+
+  -- Advance only after importing the new cells; topology caches must reflect the new grid revision.
+  self._CellCursor=#grid.CellList
+  self._GridRevision=grid.Version
+  self.gridLinks=nil
+  self.gridComponents=nil
+
 end
 
 --- Configure the grid surface filter before creation. See GRID:SetValidSurfaceTypes().
@@ -1540,9 +1781,12 @@ end
 -- @param #table SurfaceTypes Allowed surface types, a single type, or nil for all.
 -- @return #ASTAR self.
 function ASTAR:SetValidSurfaceTypes(SurfaceTypes)
+
   self.Grid:SetValidSurfaceTypes(SurfaceTypes)
   self:_SyncGrid()
+
   return self
+
 end
 
 --- Update supplied geometry, diagonal and expansion settings on the owned/shared grid.
@@ -1551,9 +1795,12 @@ end
 -- @param Core.Grid#GRID.GridOptions Options (Optional) Partial grid configuration.
 -- @return #ASTAR self.
 function ASTAR:SetGridOptions(Options)
+
   self.Grid:SetOptions(Options)
   self:_SyncGrid()
+
   return self
+
 end
 
 --- Return a copy of the current grid configuration.
@@ -1561,8 +1808,11 @@ end
 -- @return Core.Grid#GRID.GridOptions Configuration copy.
 ---@return GRID.GridOptions
 function ASTAR:GetGridOptions()
+
   self:_SyncGrid()
+
   return self.Grid:GetOptions()
+
 end
 
 --- Build the owned grid using search endpoints or zone-derived bounds.
@@ -1572,11 +1822,13 @@ end
 -- @return #ASTAR self, or nil when the cell budget is exceeded.
 -- @return #string cell_limit on budget rejection; nil on success.
 function ASTAR:_CreateGrid(Kind, Zone)
+
   assert(not self.Grid.GridBuilt,"ASTAR: a grid already exists; use a new grid")
   local hex=Kind=="CreateHexGrid" or Kind=="CreateHexGridFromZone"
   if hex then
     assert(next(self.nodes)==nil,"ASTAR: create a hex grid on an empty ASTAR object")
   end
+
   local grid=self.Grid
   local gridType=hex and GRID.Type.HEXAGON or GRID.Type.RECTANGLE
   if grid:GetType()~=gridType then
@@ -1588,18 +1840,29 @@ function ASTAR:_CreateGrid(Kind, Zone)
       grid:SetBounds(self.Grid.startVector,self.Grid.endVector)
     end
   end
+
   local built,reason
   if Zone~=nil or Kind=="CreateGridFromZone" or Kind=="CreateHexGridFromZone" then
-    if self.startVector or self.endVector then grid:SetBounds(self.startVector,self.endVector) end
+    if self.startVector or self.endVector then
+      grid:SetBounds(self.startVector,self.endVector)
+    end
     built,reason=grid:CreateFromZone(Zone)
-  else built,reason=grid:CreateFromBounds(self.startVector,self.endVector) end
+  else
+    built,reason=grid:CreateFromBounds(self.startVector,self.endVector)
+  end
+
+  -- Commit a changed geometry type only after the replacement grid has been built successfully.
   if built and grid~=self.Grid then
     self.Grid=grid
     self._GridRevision=-1
   end
   self:_SyncGrid()
-  if not built then return nil,reason end
+  if not built then
+    return nil,reason
+  end
+
   return self
+
 end
 
 --- Build a rectangular grid using SetGridOptions() and SetValidSurfaceTypes().
@@ -1609,7 +1872,9 @@ end
 -- @return #ASTAR self, or nil if MaxCells would be exceeded before surface filtering.
 -- @return #string cell_limit on budget rejection; no nodes are added on rejection.
 function ASTAR:CreateGrid()
+
   return self:_CreateGrid("CreateGrid")
+
 end
 
 --- Build an initial hex grid using SetGridOptions() and SetValidSurfaceTypes().
@@ -1619,7 +1884,9 @@ end
 -- @return #ASTAR self, or nil if MaxCells would be exceeded before surface filtering.
 -- @return #string cell_limit on budget rejection; no nodes are added on rejection.
 function ASTAR:CreateHexGrid()
+
   return self:_CreateGrid("CreateHexGrid")
+
 end
 
 --- Build rectangular centers inside a MOOSE circle, rectangle or polygon zone.
@@ -1630,7 +1897,9 @@ end
 -- @return #ASTAR self, or nil if the projected bounding-box candidates exceed MaxCells before either filter.
 -- @return #string cell_limit on budget rejection.
 function ASTAR:CreateGridFromZone(Zone)
+
   return self:_CreateGrid("CreateGridFromZone",Zone)
+
 end
 
 --- Build initial hex centers inside a MOOSE circle, rectangle or polygon zone.
@@ -1641,7 +1910,9 @@ end
 -- @return #ASTAR self, or nil if the projected bounding-box candidates exceed MaxCells before either filter.
 -- @return #string cell_limit on budget rejection.
 function ASTAR:CreateHexGridFromZone(Zone)
+
   return self:_CreateGrid("CreateHexGridFromZone",Zone)
+
 end
 
 --- Enlarge a rectangular or hex grid without replacing nodes, caches, spacing, origin or orientation.
@@ -1655,12 +1926,16 @@ end
 -- @return #string cell_limit or size_limit on rejection.
 -- @return #boolean True if a successful step was reduced to fit MaxCells.
 function ASTAR:ExpandGrid(Width, Margin, FitBudget)
+
   local grid,reason,limited=self.Grid:ExpandGrid(Width,Margin,FitBudget)
   self:_SyncGrid()
-  if not grid then return nil,reason,limited end
-  return self,nil,limited
-end
+  if not grid then
+    return nil,reason,limited
+  end
 
+  return self,nil,limited
+
+end
 
 --- Mark current nodes with separate F10 text labels. Replaces previous text labels only; does not draw polygons.
 -- Snapshot of the current node list. Counts are evaluated when each batch runs; later additions are not marked automatically.
@@ -1670,16 +1945,22 @@ end
 -- @param #ASTAR.MarkGridOptions Options (Optional) Label fields, recipient and batch settings.
 -- @return #ASTAR self. LastGridMarkResult contains Status, NodesQueued, NodesMarked, Batches and timing.
 function ASTAR:MarkGrid(Options)
+
   self:_SyncGrid()
+
   return GRID.MarkGrid(self, Options)
+
 end
 
 --- Cancel pending node labels and remove this object's text markers. Leaves grid polygons intact.
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:UnmarkGrid()
+
   self:_SyncGrid()
+
   return GRID.UnmarkGrid(self)
+
 end
 
 --- Process one batch of node text labels.
@@ -1687,8 +1968,11 @@ end
 -- @param #table Job Marker job.
 -- @return #boolean True when another batch is required; false when finished, failed or cancelled.
 function ASTAR:_ProcessGridMarkJob(Job)
+
   self:_SyncGrid()
+
   return GRID._ProcessGridMarkJob(self, Job)
+
 end
 
 --- Finish, fail or cancel a marker job.
@@ -1698,8 +1982,11 @@ end
 -- @param #string Error Optional error detail.
 -- @return #nil No return value; updates state or emits diagnostics.
 function ASTAR:_FinishGridMarking(Job, Status, Error)
+
   self:_SyncGrid()
+
   return GRID._FinishGridMarking(self, Job, Status, Error)
+
 end
 
 --- Draw accepted grid cells on the F10 map, replacing the previous DrawGrid() overlay.
@@ -1718,8 +2005,11 @@ end
 -- @param #table DrawOptions (Optional) BatchSize=25 cells, Interval=0.1 simulation seconds, MaxBatchSeconds=0.005 CPU seconds. No CPU clock means one cell per batch.
 -- @return #ASTAR self; large overlays may still be queued. Inspect LastGridDrawResult for progress.
 function ASTAR:DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions)
+
   self:_SyncGrid()
+
   return GRID.DrawGrid(self, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions)
+
 end
 
 --- Draw a one-time debug snapshot of the current grid, highlighting the supplied path's grid cells in green.
@@ -1733,17 +2023,23 @@ end
 -- Also accepts BatchSize=25, Interval=0.1 and MaxBatchSeconds=0.005. Colors and the path selection are copied at call time.
 -- @return #ASTAR self; inspect LastGridDrawResult for drawing progress.
 function ASTAR:DrawGridWithPath(Path, Options)
+
   self:_SyncGrid()
   assert(type(Path)=="table", "ASTAR: DrawGridWithPath requires a successful path table")
   local cells={}
+
   for _,node in ipairs(Path) do
     assert(type(node)=="table" and node._owner==self._NodeOwner and node.grid==self.Grid,
       "ASTAR: path nodes must belong to this search")
 
     -- Automatic endpoints may have been removed since this path was returned. They have no polygon to draw.
-    if node.cell then cells[#cells+1]=node end
+    if node.cell then
+      cells[#cells+1]=node
+    end
   end
+
   return GRID.DrawGridWithPath(self, cells, Options)
+
 end
 
 --- Validate batch settings and replace the overlay before starting a regular drawing or debug snapshot.
@@ -1752,8 +2048,11 @@ end
 -- @param #table DrawOptions Optional batch settings.
 -- @return #ASTAR self
 function ASTAR:_StartGridDrawing(Style, DrawOptions)
+
   self:_SyncGrid()
+
   return GRID._StartGridDrawing(self, Style, DrawOptions)
+
 end
 
 --- Add missing cell polygons to the current overlay, retaining its style and existing marks.
@@ -1761,8 +2060,11 @@ end
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:UpdateGridDrawing()
+
   self:_SyncGrid()
+
   return GRID.UpdateGridDrawing(self)
+
 end
 
 --- Draw one batch, bounded by cell count and a CPU budget checked after each cell. Without a CPU clock draw at most one cell.
@@ -1770,8 +2072,11 @@ end
 -- @param #table Job Current drawing job.
 -- @return #boolean Whether the job needs another batch.
 function ASTAR:_ProcessGridDrawJob(Job)
+
   self:_SyncGrid()
+
   return GRID._ProcessGridDrawJob(self, Job)
+
 end
 
 --- Complete or cancel a drawing job, retaining its result for callers.
@@ -1781,8 +2086,11 @@ end
 -- @param #string Error Optional error message.
 -- @return #nil No return value; updates state or emits diagnostics.
 function ASTAR:_FinishGridDrawing(Job, Status, Error)
+
   self:_SyncGrid()
+
   return GRID._FinishGridDrawing(self, Job, Status, Error)
+
 end
 
 --- Draw one generated grid cell using the saved style; manual endpoints have no polygon.
@@ -1791,8 +2099,11 @@ end
 -- @param #table Style Drawing options.
 -- @return #number Mark id, or nil for a node without a cell.
 function ASTAR:_DrawGridCell(Node, Style)
+
   self:_SyncGrid()
+
   return GRID._DrawGridCell(self, Node, Style)
+
 end
 
 --- Cancel pending drawing and remove polygons created by DrawGrid() without changing the grid or deleting other F10 marks.
@@ -1800,10 +2111,12 @@ end
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:UndrawGrid()
-  self:_SyncGrid()
-  return GRID.UndrawGrid(self)
-end
 
+  self:_SyncGrid()
+
+  return GRID.UndrawGrid(self)
+
+end
 
 --- Transform drawing offsets through the associated grid geometry.
 -- @param #ASTAR self
@@ -1814,14 +2127,18 @@ end
 -- @return #number World x coordinate.
 -- @return #number World z coordinate.
 function ASTAR:_GridPosition(grid, along, across, origin)
+
   return self.Grid:_GridPosition(grid, along, across, origin)
+
 end
 
 --- Get the search-node table for shared grid rendering.
 -- @param #ASTAR self
 -- @return #table Search nodes indexed by node ID; internal mutable reference.
 function ASTAR:_GetGridCells()
+
   return self.nodes
+
 end
 
 --- Count search-node neighbours for the shared marker renderer.
@@ -1830,7 +2147,9 @@ end
 -- @param #boolean CheckValid (Optional) Evaluate the neighbour rule; default false.
 -- @return #number Neighbour count.
 function ASTAR:_GetGridNeighbourCount(Node, CheckValid)
+
   return self:GetNodeNeighbourCount(Node, CheckValid)
+
 end
 
 --- Get the search-node result field used by the shared renderer.
@@ -1838,14 +2157,18 @@ end
 -- @param #string Suffix Counter suffix: Queued, Drawn or Marked.
 -- @return #string Node counter field name.
 function ASTAR:_GridResultField(Suffix)
+
   return "Nodes"..Suffix
+
 end
 
 --- Get the label prefix used for search-node text markers.
 -- @param #ASTAR self
 -- @return #string Node label prefix.
 function ASTAR:_GridElementLabel()
+
   return "Node "
+
 end
 
 --- Build search adjacency from shared cell neighbours and search-owned endpoint attachments.
@@ -1854,17 +2177,25 @@ end
 -- @param #ASTAR self
 -- @return #ASTAR self.
 function ASTAR:_BuildGridLinks()
+
   self:_SyncGrid()
   local cellLinks=self.Grid:_GetGridLinks()
   local cellNodes=self._CellNodes
   local links={}
-  for id in pairs(self.nodes) do links[id]={} end
+
+  for id in pairs(self.nodes) do
+    links[id]={}
+  end
+
+  -- Translate shared cell IDs into this search's node IDs without sharing mutable adjacency tables.
   for _,cell in ipairs(self.Grid.CellList) do
     local neighbors=links[cellNodes[cell.id].id]
     for neighborID in pairs(cellLinks[cell.id]) do
       neighbors[cellNodes[neighborID].id]=true
     end
   end
+
+  -- Attach exact endpoints and other manual nodes locally; do not create direct manual-to-manual links.
   for id,node in pairs(self.nodes) do
     if not node.cell then
       for _,cell in ipairs(self.Grid:GetNearbyCells(node.vector)) do
@@ -1874,16 +2205,22 @@ function ASTAR:_BuildGridLinks()
       end
     end
   end
+
   self.gridLinks=links
   self.gridComponents={}
+
   return self
+
 end
 
 --- Add search-rule checks to the common marker defaults.
 -- @param #ASTAR self
 -- @return #table Independent defaults for search-node markers.
 function ASTAR:_GridMarkDefaults()
+
   local options=GRID._GridMarkDefaults(self)
   options.CheckNeighbours=false
+
   return options
+
 end

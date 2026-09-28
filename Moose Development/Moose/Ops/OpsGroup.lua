@@ -11773,6 +11773,13 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
 
   if waypoint then
 
+    -- Completing the selected naval target releases its override even if removing a preceding
+    -- temporary point had already placed currentwp at this same index (notably a Goto to index 1).
+    local command=opsgroup.navigationCommand
+    if opsgroup:IsNavygroup() and command and command.TargetUID==uid then
+      opsgroup:_SetNavigationWaypoint(nil)
+    end
+
     -- Increase passing counter.
     waypoint.npassed=waypoint.npassed+1
 
@@ -11784,13 +11791,24 @@ function OPSGROUP._PassingWaypoint(opsgroup, uid)
 
     local wpistemp=waypoint.temp or waypoint.detour or waypoint.astar
 
+    -- A naval Goto may place its detour before the first mission waypoint. Removing index 1
+    -- keeps currentwp at 1, which would skip the new first point. Retain the native successor
+    -- before removal; at a patrol wrap the last detour connects to its original target.
+    local navalNext
+    if waypoint.astar and opsgroup:IsNavygroup() then
+      navalNext=opsgroup.waypoints[opsgroup.currentwp+1] or opsgroup:GetWaypointByID(waypoint.astarTargetUID)
+    end
+
     -- Remove temp waypoints.
     if wpistemp then
       opsgroup:RemoveWaypointByID(uid)
     end
+    if navalNext then
+      opsgroup:_SetNavigationWaypoint(navalNext)
+    end
 
-    -- Get next waypoint. Tricky part is that if
-    local wpnext=opsgroup:GetWaypointNext()
+    -- Keep speed bookkeeping aligned with the same destination as the native route.
+    local wpnext=navalNext or opsgroup:GetWaypointNext()
 
     if wpnext then --and (opsgroup.currentwp<#opsgroup.waypoints or opsgroup.adinfinitum or wpistemp)
 

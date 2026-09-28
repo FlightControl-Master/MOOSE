@@ -34,7 +34,7 @@ local utils=read("Utilities/Utils.lua")
 method(utils,"UTILS.VecWaypointNaval")
 method(utils,"UTILS.VecWaypointAir")
 method(utils,"UTILS.VecWaypointGround")
-for _,name in ipairs({"FeetToMeters","KnotsToKmph","MpsToKnots"}) do
+for _,name in ipairs({"FeetToMeters","MetersToFeet","KnotsToKmph","MpsToKnots"}) do
   assert((loadstring or load)(assert(utils:match("(UTILS%."..name.." = function%b().-\nend)"))))()
 end
 function UTILS.VecDist2D(a,b) return math.sqrt((a.x-b.x)^2+(a.y-b.y)^2) end
@@ -55,6 +55,7 @@ for _,signature in ipairs({"_CoordinateFromObject","_WaypointPosition","_CreateW
 end
 NAVYGROUP=setmetatable({},{__index=OPSGROUP})
 method(read("Ops/NavyGroup.lua"),"NAVYGROUP:AddWaypoint")
+method(read("Ops/NavyGroup.lua"),"NAVYGROUP:onafterDetour")
 FLIGHTGROUP=setmetatable({},{__index=OPSGROUP})
 ARMYGROUP=setmetatable({},{__index=OPSGROUP})
 method(read("Ops/FlightGroup.lua"),"FLIGHTGROUP:AddWaypoint")
@@ -67,6 +68,7 @@ local function group(class)
   function g:IsArmygroup() return class==ARMYGROUP end
   function g:IsNavygroup() return class==NAVYGROUP end
   function g:GetSpeedCruise() return 12 end
+  function g:GetWaypointCurrent() return self.waypoints[self.currentwp] end
   function g:T() end
   function g:T2() end
   function g:T3() end
@@ -149,6 +151,29 @@ test("waypoint insertion UID and route update flags remain intact",function()
   equal(g.waypoints[1],first) equal(g.waypoints[2],middle) equal(g.waypoints[3],last)
   equal(first.uid,1) equal(last.uid,2) equal(middle.uid,3) equal(first.speed,0)
   equal(g.updates,1)
+end)
+
+test("naval Detour passes meter depths through the feet-based waypoint API without scaling twice",function()
+  for _,depth in ipairs({0,100,-100}) do
+    local g=group()
+    local first=g:AddWaypoint(VECTOR:New(0,0,0),10,nil,nil,false)
+    local goal=COORDINATE:New(1000,0,2000)
+    g:onafterDetour("Cruising","Detour","OnDetour",goal,14,depth,true)
+    local waypoint=g.waypoints[2]
+    near(waypoint.alt,depth) near(waypoint.coordinate.y,depth)
+    near(waypoint.speed,14*1852/3600)
+    equal(waypoint.detour,1) equal(g.waypoints[1],first)
+    equal(g.updates,1) equal(goal.y,0)
+  end
+end)
+
+test("naval Detour defaults to surface cruise and preserves the stop-at-destination flag",function()
+  local g=group()
+  g:AddWaypoint(VECTOR:New(0,0,0),10,nil,nil,false)
+  g:onafterDetour("Cruising","Detour","OnDetour",COORDINATE:New(1000,-75,2000),nil,nil,false)
+  local waypoint=g.waypoints[2]
+  near(waypoint.alt,0) near(waypoint.coordinate.y,0)
+  near(waypoint.speed,12*1852/3600) equal(waypoint.detour,0)
 end)
 
 test("POSITIONABLE and ZONE_BASE inputs keep the existing coordinate resolution",function()
