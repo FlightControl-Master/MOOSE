@@ -7418,6 +7418,7 @@ function CTLD:_LoadSingleCrateSet(Group, Unit, cargoName, details)
   self:_RefreshLoadCratesMenu(Group, Unit)
   self:_RefreshDropCratesMenu(Group, Unit)
   self:_RefreshPackMenus(Group, Unit)
+  self:__CratesPickedUp(1, Group, Unit, loadedData.Cargo)
   self:_RefreshCrateQuantityMenus(Group, Unit, self:_FindCratesCargoObject(cargoName))
 
   if batch and batch.cname == cargoName then
