@@ -524,6 +524,7 @@ do
   -- @param #number ActiveTimer Number of seconds to stay active
   -- @param #number TargetCat (optional) Category, i.e. Object.Category.UNIT or Object.Category.STATIC
   -- @param #boolean ShotAt If true, function is called after a shot
+  -- @param #boolean TargetedShot (Optional) If true, the detected weapon directly targeted a SHORAD group
   -- @return #SHORAD self 
   -- @usage Use this function to integrate with other systems, example   
   -- 
@@ -533,7 +534,7 @@ do
   -- mymantis = MANTIS:New("BlueMantis","Blue SAM","Blue EWR",nil,"blue",false,"Blue Awacs")
   -- mymantis:AddShorad(myshorad,720)
   -- mymantis:Start()
-  function SHORAD:onafterWakeUpShorad(From, Event, To, TargetGroup, Radius, ActiveTimer, TargetCat, ShotAt)
+  function SHORAD:onafterWakeUpShorad(From, Event, To, TargetGroup, Radius, ActiveTimer, TargetCat, ShotAt, TargetedShot)
     self:T(self.lid .. " WakeUpShorad")
     --self:T({TargetGroup, Radius, ActiveTimer, TargetCat})
     
@@ -587,6 +588,29 @@ do
       end
     end   
     
+    local function EvadeShorad(_group)
+      if _group and _group:IsAlive() then
+        local ammo = _group:GetProperty("MANTIS_AMMO") -- #table
+        if TargetedShot and ammo and (not ammo.trUnits or next(ammo.trUnits) == nil or ammo.trLost) then return end
+        local groupname = _group:GetName()
+        if self.UseEmOnOff then
+          _group:EnableEmission(false)
+        end
+        _group:OptionAlarmStateGreen()
+        self.ActiveGroups[groupname] = nil
+        local text = string.format("Shot at SHORAD %s! Evading!", groupname)
+        self:T(text)
+        local m = MESSAGE:New(text,10,"SHORAD"):ToAllIf(self.debug)
+        self:_SmokeUnits(_group)
+        --Shoot and Scoot
+        if self.shootandscoot then
+          self:__ShootAndScoot(1,_group)
+        else
+          _group:RelocateGroundRandomInRadius(30,500,false,true,"Diamond",true)
+        end
+      end
+    end
+
     local targetcat = TargetCat or Object.Category.UNIT
     local targetgroup = TargetGroup
     local targetvec2 = nil
@@ -611,28 +635,30 @@ do
       
       if groupname == TargetGroup and ShotAt==true then
         -- Shot at a SHORAD group
-        local allow = false
-        if self.CallBack and self.UseCallBack == true then
-          allow = self.CallBack:SeadAllowSuppression(_group,groupname)
-        end
-        if allow == true then
-          if self.UseEmOnOff then
-            _group:EnableEmission(false)
-          end
-          _group:OptionAlarmStateGreen()
-          self.ActiveGroups[groupname] = nil
-          local text = string.format("Shot at SHORAD %s! Evading!", _group:GetName())
-          self:T(text)
-          local m = MESSAGE:New(text,10,"SHORAD"):ToAllIf(self.debug)
-          self:_SmokeUnits(_group)
-          --Shoot and Scoot
-          if self.shootandscoot then
-            self:__ShootAndScoot(1,_group)
-          else
-            _group:RelocateGroundRandomInRadius(30,500,false,true,"Diamond",true)
-          end
-        else
+        local ammo = _group:GetProperty("MANTIS_AMMO") -- #table
+        local radarless = TargetedShot and ammo and (not ammo.trUnits or next(ammo.trUnits) == nil or ammo.trLost)
+        if radarless then
           WakeUp(_group,groupname)
+        else
+          local allow = false
+          if self.CallBack and self.UseCallBack == true then
+            allow = self.CallBack:SeadAllowSuppression(_group,groupname)
+          end
+          if allow == true then
+            if TargetedShot and ammo then
+              local targetskill = _group:GetUnit(1):GetSkill()
+              if targetskill == "Random" then
+                local skills = { "Average", "Good", "High", "Excellent" }
+                targetskill = skills[math.random(1,4)]
+              end
+              local delay = math.random(SEAD.TargetSkill[targetskill].DelayOn[1], SEAD.TargetSkill[targetskill].DelayOn[2]) / 10
+              timer.scheduleFunction(EvadeShorad,_group,timer.getTime() + delay)
+            else
+              EvadeShorad(_group)
+            end
+          else
+            WakeUp(_group,groupname)
+          end
         end
       elseif _group:IsAnyInZone(targetzone) or groupname == TargetGroup then
         WakeUp(_group,groupname)
@@ -838,7 +864,7 @@ do
           -- if being shot at, find closest SHORADs to activate
           if shotatsams or shotatus then
             self:T({shotatsams=shotatsams,shotatus=shotatus})
-            self:WakeUpShorad(targetgroupname, self.Radius, self.ActiveTimer, targetcat, true)
+            self:WakeUpShorad(targetgroupname, self.Radius, self.ActiveTimer, targetcat, true, shotatus)
           end
         end  
       end
