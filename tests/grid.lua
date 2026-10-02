@@ -200,6 +200,89 @@ test("constructor requires name and geometry and common builders retain the sele
   equal(hex:GetVersion(),version) equal(hex:GetOptions().CrossSpacing,nil)
 end)
 
+test("explicit ASTAR geometry retains its configured grid across corridor and zone builds",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    for _,fromZone in ipairs({false,true}) do
+      local a=ASTAR:New(kind):SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+      local configured=a:GetGrid()
+      equal(configured:GetType(),kind)
+      configured:SetCorridor(4000,0):SetResolution(GRID.Resolution.NORMAL)
+      configured:SetValidSurfaceTypes(land.SurfaceType.WATER)
+
+      local builder=kind==GRID.Type.HEXAGON and "CreateHexGrid" or "CreateGrid"
+      if fromZone then
+        builder=builder.."FromZone"
+        equal(a[builder](a,circleZone(2000,0,2000)),a)
+      else
+        equal(a[builder](a),a)
+      end
+
+      equal(a:GetGrid(),configured)
+      equal(configured:GetResolutionInfo().Spacing,200)
+      local path=assert(a:GetPath())
+      equal(path[1].grid,configured)
+      equal(path[#path].grid,configured)
+      equal(a:GetGrid(),configured)
+    end
+  end
+end)
+
+test("explicit ASTAR geometry rejects conflicting builders before changing the grid",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local a=ASTAR:New(kind):SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+    local configured=a:GetGrid():SetSpacing(1000)
+    local version=configured:GetVersion()
+    local opposite=kind==GRID.Type.HEXAGON and "CreateGrid" or "CreateHexGrid"
+    land.surfaceAt=function() error("A conflicting builder must not sample terrain") end
+
+    for _,builder in ipairs({opposite,opposite.."FromZone"}) do
+      local ok,err=pcall(a[builder],a,circleZone(2000,0,2000))
+      assert(not ok and tostring(err):find("selected grid type",1,true))
+      equal(a:GetGrid(),configured)
+      equal(configured:GetType(),kind)
+      equal(configured:GetVersion(),version)
+      equal(configured.GridBuilt,nil)
+      equal(a.Nnodes,0)
+    end
+    land.surfaceAt=nil
+  end
+end)
+
+test("explicit ASTAR geometry keeps the same grid when a rejected build is retried",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local a=ASTAR:New(kind):SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+    local configured=a:GetGrid():SetCorridor(4000,0):SetResolution(GRID.Resolution.NORMAL):SetMaxCells(1)
+    local builder=kind==GRID.Type.HEXAGON and "CreateHexGrid" or "CreateGrid"
+    local built,reason=a[builder](a)
+    equal(built,nil)
+    equal(reason,"cell_limit")
+    equal(a:GetGrid(),configured)
+    equal(configured.GridBuilt,nil)
+    equal(a.Nnodes,0)
+
+    -- Updating the saved reference must configure the object used by the retry.
+    configured:SetMaxCells(5000)
+    equal(a[builder](a),a)
+    equal(a:GetGrid(),configured)
+    equal(configured:GetResolutionInfo().Spacing,200)
+    assert(a:GetPath())
+  end
+end)
+
+test("ASTAR validates explicit geometry and still permits deliberate shared-grid attachment",function()
+  for _,invalid in ipairs({false,0,"triangle",{}}) do
+    assert(not pcall(ASTAR.New,ASTAR,invalid))
+  end
+  equal(ASTAR:New():GetGrid():GetType(),GRID.Type.RECTANGLE)
+
+  local a=ASTAR:New(GRID.Type.HEXAGON)
+  local shared=grid("rectangular")
+  equal(a:SetGrid(shared),a)
+  equal(a:GetGrid(),shared)
+  a:SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
+  assert(a:GetPath())
+end)
+
 test("ASTAR hex convenience builder preserves configuration without changing the prior grid type",function()
   local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
   local prior=a:GetGrid()

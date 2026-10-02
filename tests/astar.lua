@@ -2424,6 +2424,10 @@ test("NAVYGROUP plans a HEX FINE detour and dispatches every returned point once
   ASTAR.New=original
   assert(ok,result) assert(result)
   assert(search.hexGrid)
+  -- The planner must report the resolved spacing of the grid actually used by the search.
+  local spacing=search:GetGrid():GetResolutionInfo().Spacing
+  assert(type(spacing)=="number" and spacing>0)
+  equal(ship.LastPathfindingResult.Spacing,spacing)
   equal(search.ValidNeighbourFunc,ASTAR.Depth)
   equal(search.ValidNeighbourArg[1],20)
   equal(search.ValidNeighbourArg[2],100)
@@ -3652,7 +3656,7 @@ test("NAVYGROUP waypoint planner applies optional depth costs",function()
   ship.depthTerrain.depth=25
   local original=ASTAR.New
   local search
-  function ASTAR:New() search=original(self) return search end
+  function ASTAR:New(...) search=original(self,...) return search end
   local ok,result=pcall(ship._FindPathToNextWaypoint,ship)
   ASTAR.New=original
   assert(ok,result) assert(result)

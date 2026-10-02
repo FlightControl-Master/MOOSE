@@ -63,7 +63,7 @@
 -- when another MOOSE API requires COORDINATE objects. All dimensions and distances below are in meters.
 -- FLIGHTGROUP, ARMYGROUP and NAVYGROUP accept node.vector in AddWaypoint, avoiding a temporary COORDINATE per waypoint.
 --
---     local astar = ASTAR:New()
+--     local astar = ASTAR:New(GRID.Type.HEXAGON)
 --     astar:SetStartCoordinate(ZONE:FindByName("Astar Start"):GetCoordinate())
 --     astar:SetEndCoordinate(ZONE:FindByName("Astar Goal"):GetCoordinate())
 --     astar:SetValidSurfaceTypes({land.SurfaceType.WATER, land.SurfaceType.SHALLOW_WATER})
@@ -99,7 +99,11 @@
 -- ASTAR keeps SetGridOptions() and CreateGrid()/CreateHexGrid() as convenience methods that supply the search endpoints.
 -- Use ExpandGrid() for either geometry; SetGridNeighboursOnly() is the single switch for local search candidates.
 -- GetGrid() returns the owned grid, even before construction. SetGrid(grid) attaches a built GRID to an unused ASTAR and enables local neighbours.
--- Before construction the owned grid defaults to rectangle; a hex convenience builder replaces that empty grid, preserving its configuration.
+-- New(GRID.Type.RECTANGLE) or New(GRID.Type.HEXAGON) selects the owned grid type before configuration; use a matching builder.
+-- An explicit type keeps the same GRID through building, failed build retries and expansion. A conflicting builder is rejected before mutation.
+-- New() without a type retains the legacy rectangle default: a hex convenience builder replaces that empty grid, preserving its configuration.
+-- After that legacy replacement, call GetGrid() again instead of using a previously saved grid reference.
+-- SetGrid(grid) is an explicit replacement and may attach either geometry, regardless of the constructor type.
 -- Set start/end coordinates on each search separately; they do not change the shared grid frame. A node.cell refers to its immutable grid cell.
 -- Spatial indices and grid settings belong to GRID. Use GetGridOptions() for configuration and GetGrid():GetDimensions()/GetCandidateCount() for current geometry and budget usage.
 -- Expansion/options are shared, but nodes, endpoints, connection/cost caches, component labels and ASTAR overlays are per search object.
@@ -314,9 +318,15 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Create a new ASTAR object with an empty node set, unrestricted neighbours, and 2D distance costs.
+-- Select a type to configure and retain the same owned GRID before and after building. Builders must match this explicit type.
+-- Without a type, legacy hex builders may replace the initially rectangular GRID; retrieve it again after building.
 -- @param #ASTAR self
+-- @param #string GridType (Optional) GRID.Type.RECTANGLE or GRID.Type.HEXAGON. Nil keeps legacy builder selection.
 -- @return #ASTAR self
-function ASTAR:New()
+function ASTAR:New(GridType)
+
+  assert(GridType==nil or GridType==GRID.Type.RECTANGLE or GridType==GRID.Type.HEXAGON,
+    "ASTAR: GridType must be GRID.Type.RECTANGLE or GRID.Type.HEXAGON")
 
   -- Inherit from BASE.
   local self=BASE:Inherit(self, BASE:New()) --#ASTAR
@@ -327,7 +337,8 @@ function ASTAR:New()
   self.Nnodes=0
 
   -- Geometry can be shared later; node ownership and search caches remain private to this instance.
-  self.Grid=GRID:New("ASTAR", GRID.Type.RECTANGLE)
+  self.Grid=GRID:New("ASTAR", GridType or GRID.Type.RECTANGLE)
+  self._GridTypeExplicit=GridType~=nil
   self._GridRevision=-1 
   self._CellNodes={} 
   self._CellCursor=0
@@ -1945,6 +1956,7 @@ end
 
 --- Attach an existing built grid to an unused search object. Local grid neighbours are enabled.
 -- Sharing a grid shares expansion and options; validity/cost caches, endpoints and ASTAR overlays remain independent.
+-- This explicitly replaces the owned grid and accepts either geometry, even when New() selected a different type.
 -- @param #ASTAR self
 -- @param Core.Grid#GRID Grid Built grid.
 -- @return #ASTAR self.
@@ -1964,6 +1976,8 @@ function ASTAR:SetGrid(Grid)
 end
 
 --- Get the owned or shared GRID, including before initial construction.
+-- New(GridType) retains this reference through matching builders. Legacy New():CreateHexGrid()/CreateHexGridFromZone()
+-- can replace the default rectangle; retrieve the grid again afterwards. SetGrid() explicitly replaces it as well.
 -- @param #ASTAR self
 -- @return Core.Grid#GRID Grid.
 ---@return GRID
@@ -2070,6 +2084,8 @@ function ASTAR:_CreateGrid(Kind, Zone)
   local grid=self.Grid
   local gridType=hex and GRID.Type.HEXAGON or GRID.Type.RECTANGLE
   if grid:GetType()~=gridType then
+    -- Explicit geometry protects references held by callers; only legacy builders may replace the empty grid.
+    assert(not self._GridTypeExplicit,"ASTAR: builder must match the selected grid type")
     assert(next(self.nodes)==nil,"ASTAR: select grid geometry before adding manual nodes")
     -- Copy configured options without turning resolved defaults into explicit settings.
     grid=GRID:New(grid:GetName(),gridType):SetOptions(grid.GridOptions)

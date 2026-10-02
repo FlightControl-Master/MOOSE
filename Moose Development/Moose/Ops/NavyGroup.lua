@@ -4026,7 +4026,8 @@ function NAVYGROUP:_FindPathToNextWaypoint()
 
   self:_ClearPathfindingDrawing()
 
-  local astar=ASTAR:New()
+  -- Select geometry before retaining the grid for configuration and planning diagnostics.
+  local astar=ASTAR:New(GRID.Type.HEXAGON)
   astar:SetStartCoordinate(position)
   astar:SetEndCoordinate(goal)
   astar:SetValidSurfaceTypes({land.SurfaceType.WATER,land.SurfaceType.SHALLOW_WATER})
