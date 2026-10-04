@@ -22,7 +22,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: September 2026
+-- Last Update: January 2026
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -120,10 +120,6 @@
 -- * From IDF mod: STUNNER IDFA, TAMIR IDFA (Note all caps!)
 -- * From HDS (see note on HDS below): SA-2, SA-3, SA-10B, SA-10C, SA-12, SA-17, SA-20A, SA-20B, SA-23, HQ-2, SAMP/T Block 1, SAMP/T Block 1INT,  SAMP/T Block2
 -- * Other Mods: Nike
--- 
--- * From USLANTCOM: HQ-11, Mistral Unimog
--- No extra keyword is needed for these - they are matched by unit type name, so the
--- group name does not have to carry a designation at all.
 -- 
 -- * From SMA: RBS98M, RBS70, RBS90, RBS90M, RBS103A, RBS103B, RBS103AM, RBS103BM, Lvkv9040M 
 -- **NOTE** If you are using the Swedish Military Assets (SMA), please note that the **group name** for RBS-SAM types also needs to contain the keyword "SMA"
@@ -287,7 +283,7 @@
 MANTIS = {
   ClassName             = "MANTIS",
   name                  = "mymantis",
-  version               = "0.9.45",
+  version               = "0.9.44",
   SAM_Templates_Prefix  = "",
   SAM_Group             = nil,
   EWR_Templates_Prefix  = "",
@@ -421,10 +417,6 @@ MANTIS.SamData = {
   ["Tor M2"] = { Range=12, Blindspot=1, Height=10, Type="Point", Radar="TorM2", Point="true", ARMCapacity=4  },
   ["IRIS-T SLM"] = { Range=40, Blindspot=0.5, Height=20, Type="Medium", Radar="CH_IRIST_SLM", ARMCapacity=12  }, -- 4 per starter, usually 3 starters in a battery
   ["SON-9"] = { Range=20, Blindspot=0, Height=14, Type="Point", Radar="SON_9", Point="true" }, -- Fire Can FCR for S-60/KS-19 AAA
-  -- USLANTCOM custom assets. Radar keys are full DCS type names so the
-  -- longest-match unit-type search cannot be shadowed by a shorter key.
-  ["HQ-11"] = { Range=30, Blindspot=2, Height=15, Type="Medium", Radar="HQ11_USLANTCOM", ARMCapacity=4 }, -- FM-3000: missile D_min 2km / Range_max 30km / H_max 15km, 8 rails, 60km search radar
-  ["Mistral Unimog"] = { Range=5, Blindspot=0.6, Height=3, Type="Point", Radar="USLANTCOM_UNIMOG_MISTRAL_CL", Point="true" }, -- IR only, no radar: unaffected by emissions on/off
 }
 
 --- SAM data HDS
@@ -781,23 +773,6 @@ MANTIS.JammerSAMParams = {
   ["THAAD CHM"]            ={peak=10,mu=90,sigma_L=38,tail_dist=140,band="IJ", floor=0},
   ["WieselOzelot CHM"]     ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
   ["USInfantryFIM92K CHM"] ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
-  -- USLANTCOM custom assets
-  -- HQ-11 (export FM-3000, CASIC). Open sources: single rotating ACTIVE phased array
-  -- (AESA) combining search and track, 70km detection, ~100 targets tracked, 8 engaged
-  -- per vehicle (32 per 4-vehicle battery), 4s reaction, INS + datalink command +
-  -- terminal active radar homing, "strong anti-jamming" claimed. Described as an
-  -- analogue of the Russian S-350 Vityaz, which is why band follows the S350 entries.
-  -- Frequency band is NOT published; IJ chosen for a multifunction track/uplink array
-  -- (S is reserved here for the long-range search sets like HQ-22).
-  -- peak 16: below HQ-22 (20) and IRIS-T/SkySabre (18) - AESA plus an active terminal
-  -- seeker means jamming the ground array does not break a shot already handed off.
-  -- mu 23: between the 16nm engagement ring and the 38nm (70km) detection ring,
-  -- weighted toward engagement, same interpolation as SA-11 (19nm/46nm -> 28).
-  -- floor 2: AESA / advanced ECCM per the legend above.
-  ["HQ-11"]                ={peak=16,mu=23,sigma_L=10,tail_dist=50, band="IJ", floor=2},
-  -- Mistral Unimog: passive IR, launcher ECM_K = -1. Listed for completeness with the
-  -- same negligible curve as the other optical/IR launchers; jamming must not affect it.
-  ["Mistral Unimog"]       ={peak=3, mu=3, sigma_L=1, tail_dist=5,  band="OPT",floor=0},
 }
 
 -- Alias entries: point alias keys to the canonical entry's table.
