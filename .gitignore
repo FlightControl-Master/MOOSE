@@ -241,5 +241,3 @@ MooseCodeWS.code-workspace
 .env
 .actrc
 .vars
-.autotools
-.luarc.json
