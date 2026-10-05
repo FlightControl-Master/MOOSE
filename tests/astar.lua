@@ -3665,5 +3665,339 @@ test("NAVYGROUP waypoint planner applies optional depth costs",function()
   equal(ship.stops,0)
 end)
 
+test("combined endpoints copy all supported inputs and reject partial updates", function()
+  local a=ASTAR:New()
+  local inputs={coord(10,30,20), VECTOR:New(40,50,60), {x=70,y=80,z=90}, {x=100,y=110}}
+  for _,input in ipairs(inputs) do
+    equal(a:SetEndpoints(input,input),a)
+    assert(not rawequal(a.startVector,input))
+    assert(not rawequal(a.endVector,input))
+    assert(not rawequal(a.startVector,a.endVector))
+    local expected=VECTOR:NewFromVec(input)
+    near(a.startVector.x,expected.x)
+    near(a.endVector.z,expected.z)
+    near(a.startVector.y,expected.y)
+  end
+
+  local first,last=a.startVector,a.endVector
+  equal(pcall(a.SetEndpoints,a,coord(999),{x=math.huge,y=0,z=0}),false)
+  equal(pcall(a.SetEndpoints,a,{x=0,y=0,z=math.huge},coord(999)),false)
+  equal(a.startVector,first)
+  equal(a.endVector,last)
+  equal(a.Nnodes,0)
+end)
+
+test("combined endpoints clear explicitly without changing the built grid frame", function()
+  local a=ASTAR:New():SetEndpoints(coord(0),coord(1000))
+  a:GetGrid():SetCorridor(0,0):SetResolution(1000)
+  a:BuildGrid()
+  local grid=a:GetGrid()
+  local origin,goal=grid.startVector,grid.endVector
+
+  a:SetEndpoints(nil,coord(2000))
+  equal(a.startVector,nil)
+  equal(a.endVector.x,2000)
+  equal(grid.startVector,origin)
+  equal(grid.endVector,goal)
+  a:SetStartCoordinate(coord(500))
+  equal(a.endVector.x,2000)
+  a:SetEndpoints()
+  equal(a.startVector,nil)
+  equal(a.endVector,nil)
+end)
+
+test("CreateNode preserves ownership and legacy creation without adding a node", function()
+  local a=ASTAR:New()
+  local position=VECTOR:New(12,34,56)
+  local first=a:CreateNode(position)
+  equal(first.vector,position)
+  equal(first.id,1)
+  equal(a.Nnodes,0)
+  equal(a:AddNode(first),a)
+  equal(a.Nnodes,1)
+
+  local legacy=a:GetNodeFromCoordinate(coord(20))
+  equal(legacy.id,2)
+  equal(a.Nnodes,1)
+  equal(a:AddNode(legacy),a)
+  local added=a:AddNodeFromCoordinate(coord(30))
+  equal(a.nodes[added.id],added)
+  equal(a.Nnodes,3)
+  equal(pcall(ASTAR.AddNode,ASTAR:New(),first),false)
+  equal(pcall(a.CreateNode,a,{x=math.huge,y=0,z=0}),false)
+  equal(a.counter,4)
+end)
+
+test("BuildGrid selects the owned geometry for bounds and zones without replacing it", function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    for _,useZone in ipairs({false,true}) do
+      local a=ASTAR:New(kind)
+      local grid=a:GetGrid()
+      grid:SetResolution(1000):SetCorridor(0,0)
+      local zone
+      if useZone then
+        zone=circleZone(0,0,1100)
+      else
+        a:SetEndpoints(coord(0),coord(2000))
+      end
+
+      equal(a:BuildGrid(zone),a)
+      equal(a:GetGrid(),grid)
+      equal(grid:GetType(),kind)
+      equal(a.GridNeighboursOnly,true)
+      assert(a.Nnodes>0)
+      for _,node in pairs(a.nodes) do
+        equal(node.grid,grid)
+        if useZone then
+          assert(zone:IsVec2InZone({x=node.vector.x,y=node.vector.z}))
+        end
+      end
+      equal(pcall(a.BuildGrid,a,zone),false)
+    end
+  end
+end)
+
+test("BuildGrid preserves budget rejection retry and legacy geometry contracts", function()
+  local a=ASTAR:New(GRID.Type.HEXAGON):SetEndpoints(coord(0),coord(2000))
+  local grid=a:GetGrid()
+  grid:SetResolution(1000):SetCorridor(0,0):SetMaxCells(1)
+  local built,reason=a:BuildGrid()
+  equal(built,nil)
+  equal(reason,"cell_limit")
+  equal(a:GetGrid(),grid)
+  equal(a.Nnodes,0)
+  assert(not grid.GridBuilt)
+  grid:SetMaxCells(100)
+  equal(a:BuildGrid(),a)
+  equal(a:GetGrid(),grid)
+
+  local explicit=ASTAR:New(GRID.Type.HEXAGON)
+  equal(pcall(explicit.CreateGrid,explicit),false)
+  local legacy=ASTAR:New():SetEndpoints(coord(0),coord(2000))
+  legacy:GetGrid():SetResolution(1000):SetCorridor(0,0)
+  equal(legacy:CreateHexGrid(),legacy)
+  equal(legacy:GetGrid():GetType(),GRID.Type.HEXAGON)
+  equal(pcall(ASTAR.BuildGrid,ASTAR:New(),false),false)
+end)
+
+test("BuildGrid retains rectangular manual nodes and rejects them for hex grids", function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local a=ASTAR:New(kind):SetEndpoints(coord(0),coord(2000))
+    local manual=a:AddNodeFromCoordinate(coord(500))
+    a:GetGrid():SetResolution(1000):SetCorridor(0,0)
+    if kind==GRID.Type.RECTANGLE then
+      equal(a:BuildGrid(),a)
+      equal(a.nodes[manual.id],manual)
+      assert(a.Nnodes>1)
+    else
+      equal(pcall(a.BuildGrid,a),false)
+      equal(a.Nnodes,1)
+      assert(not a:GetGrid().GridBuilt)
+    end
+  end
+end)
+
+test("cost metrics change the selected route and preserve matching heuristics", function()
+  local a,s,g,high,detour=alternatives()
+  equal(a:SetCostMetric(ASTAR.CostMetric.DISTANCE_3D),a)
+  equal(a:GetPath()[2],detour)
+  near(a:_HeuristicCost(s,high),ASTAR.Dist3D(s,high))
+  equal(a:SetCostMetric(ASTAR.CostMetric.DISTANCE_2D),a)
+  equal(a:GetPath()[2],high)
+  near(a:_HeuristicCost(s,high),ASTAR.Dist2D(s,high))
+  a:SetCostMetric(ASTAR.CostMetric.ROAD)
+  equal(a.CostFunc,ASTAR.DistRoad)
+  equal(a:_HeuristicCost(s,g),0)
+  a:SetCostMetric()
+  equal(a:GetPath()[2],high)
+end)
+
+test("invalid cost metrics preserve callbacks arguments and populated caches", function()
+  local a,s,g=pair()
+  assert(type(a.SetCostMetric)=="function")
+  local custom=function() return 7 end
+  a:SetCostFunction(custom,nil,42,nil)
+  equal(a:_TravelCost(s,g),7)
+  local arguments,cached=a.CostArg,s.cost
+  for _,metric in ipairs({false,1,{},"unknown"}) do
+    equal(pcall(a.SetCostMetric,a,metric),false)
+    equal(a.CostFunc,custom)
+    equal(a.CostArg,arguments)
+    equal(a.CostArg.n,3)
+    equal(s.cost,cached)
+  end
+end)
+
+test("standard metrics replace soft depth costs without weakening the hard depth rule", function()
+  local terrain=depthTerrain()
+  terrain.depth=21
+  local a,s,g=pair()
+  a:SetValidNeighbourDepth(20):SetCostDepth(30,2)
+  assert(a:_TravelCost(s,g)>10)
+  a:SetCostMetric(ASTAR.CostMetric.DISTANCE_2D)
+  near(a:_TravelCost(s,g),10)
+  equal(a.ValidNeighbourFunc,ASTAR.Depth)
+  terrain.depth=19
+  a:SetValidNeighbourDepth(20)
+  equal(a:GetPath(),nil)
+end)
+
+test("FindPath defaults to fixed search and reports success including empty paths", function()
+  local a,s,g=pair()
+  local path,report=a:FindPath()
+  equal(path[1],s)
+  equal(path[2],g)
+  equal(report.Mode,ASTAR.SearchMode.FIXED)
+  equal(report.StopReason,"path_found")
+  equal(report.FailureReason,nil)
+  equal(#report.Attempts,1)
+  equal(report.Attempts[1].Nodes,2)
+  equal(report.Nodes,2)
+  equal(report.Width,nil)
+  equal(report.BudgetLimited,false)
+  equal(a.LastSearchResult,report)
+  equal(a.LastExpansionResult,nil)
+
+  path,report=a:FindPath(nil,true,true)
+  equal(#path,0)
+  equal(report.StopReason,"path_found")
+  path=a:FindPath(nil,true,false)
+  equal(#path,1)
+  equal(path[1],g)
+  path=a:FindPath(nil,false,true)
+  equal(#path,1)
+  equal(path[1],s)
+  equal(select("#",a:GetPath()),1)
+end)
+
+test("FindPath fixed failures announce once and keep reports independent", function()
+  local a=pair():SetValidNeighbourFunction(function() return false end)
+  local path,report,errors,messages=captureSearchReports(a,function() return a:FindPath() end)
+  equal(path,nil)
+  equal(report.StopReason,"search_failed")
+  equal(report.FailureReason,"connections_blocked")
+  equal(report.Attempts[1].Failure,"connections_blocked")
+  equal(#errors,1)
+  equal(#messages,1)
+
+  a:SetValidNeighbourFunction(nil)
+  local success,newReport=a:FindPath()
+  assert(success)
+  equal(newReport.FailureReason,nil)
+  equal(a.LastPathFailure,nil)
+  equal(report.FailureReason,"connections_blocked")
+  equal(report.Attempts[1].Failure,"connections_blocked")
+  assert(not rawequal(report.Attempts,newReport.Attempts))
+
+  a:SetEndpoints()
+  path,report=a:FindPath()
+  equal(path,nil)
+  equal(report.FailureReason,"missing_coordinates")
+  equal(#report.Attempts,1)
+end)
+
+test("FindPath rejects invalid mode and flags before mutating search state", function()
+  local a=pair()
+  local path,report=a:FindPath()
+  local nodes,counter=a.Nnodes,a.counter
+  for _,mode in ipairs({false,true,1,{},"unknown"}) do
+    equal(pcall(a.FindPath,a,mode),false)
+  end
+  equal(pcall(a.FindPath,a,nil,1),false)
+  equal(pcall(a.FindPath,a,nil,false,1),false)
+  equal(pcall(a.FindPath,a,ASTAR.SearchMode.EXPAND),false)
+  equal(a.LastSearchResult,report)
+  equal(a.Nnodes,nodes)
+  equal(a.counter,counter)
+  equal(a.startNode,path[1])
+end)
+
+test("FindPath expands both geometries while fixed mode retains the original bounds", function()
+  land.surfaceAt=function(c)
+    return c.x>=1500 and c.x<=2500 and math.abs(c.z)<1200 and land.SurfaceType.LAND or land.SurfaceType.WATER
+  end
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local a=ASTAR:New(kind):SetEndpoints(coord(0),coord(4000))
+    local grid=a:GetGrid()
+    grid:SetResolution(1000):SetCorridor(0,0):SetValidSurfaceTypes(land.SurfaceType.WATER)
+    a:BuildGrid()
+    local path,fixed=a:FindPath()
+    equal(path,nil)
+    equal(fixed.FailureReason,"disconnected_grid")
+    equal(fixed.Width,0)
+    equal(fixed.Margin,0)
+
+    local expanded,report,errors,messages=captureSearchReports(a,function()
+      return a:FindPath(ASTAR.SearchMode.EXPAND,true,true)
+    end)
+    assert(expanded and #report.Attempts>1)
+    equal(report.Mode,ASTAR.SearchMode.EXPAND)
+    equal(report.StopReason,"path_found")
+    equal(report.FailureReason,nil)
+    equal(report.Attempts[1].Failure,"disconnected_grid")
+    equal(report,a.LastSearchResult)
+    equal(report,a.LastExpansionResult)
+    assert(report.Width>fixed.Width)
+    equal(fixed.Width,0)
+    equal(#errors,0)
+    equal(#messages,0)
+    equal(a:GetGrid(),grid)
+    for _,node in ipairs(expanded) do
+      assert(node~=a.startNode and node~=a.endNode)
+    end
+  end
+end)
+
+test("FindPath separates expansion limits from the last failure and clears stale failures", function()
+  local a=hexgrid(0,0):SetValidNeighbourFunction(function() return false end)
+  a:GetGrid():SetExpansion(1.5,2)
+  local path,report,errors,messages=captureSearchReports(a,function()
+    return a:FindPath(ASTAR.SearchMode.EXPAND)
+  end)
+  equal(path,nil)
+  equal(report.StopReason,"attempt_limit")
+  equal(report.FailureReason,"connections_blocked")
+  equal(#report.Attempts,2)
+  equal(#errors,1)
+  equal(#messages,1)
+
+  a:GetGrid():SetMaxCells(1)
+  path,report=a:FindPath(ASTAR.SearchMode.EXPAND)
+  equal(path,nil)
+  equal(report.StopReason,"cell_limit")
+  equal(report.FailureReason,nil)
+  equal(#report.Attempts,0)
+  equal(a.LastPathFailure,nil)
+end)
+
+test("FindPath supports empty expansion success and preserves legacy return counts", function()
+  local a=hexgrid(0,0)
+  a:SetEndpoints(coord(0),coord(0))
+  local path,report=a:FindPath(ASTAR.SearchMode.EXPAND,true,true)
+  equal(#path,0)
+  equal(report.StopReason,"path_found")
+  equal(report.FailureReason,nil)
+  equal(#report.Attempts,1)
+  equal(select("#",a:GetPathWithExpansion()),2)
+  equal(select("#",a:GetPath()),1)
+  equal(select("#",a:FindPath()),2)
+end)
+
+test("FindPath reports unavailable CPU timing without substituting simulation time", function()
+  local originalClock=os.clock
+  os.clock=nil
+  local ok,err=pcall(function()
+    for _,mode in ipairs({ASTAR.SearchMode.FIXED,ASTAR.SearchMode.EXPAND}) do
+      local a=hexgrid(0,0)
+      local path,report=a:FindPath(mode)
+      assert(path)
+      equal(report.SearchCPUSeconds,nil)
+      equal(report.Attempts[1].CPUSeconds,nil)
+    end
+  end)
+  os.clock=originalClock
+  assert(ok,err)
+end)
+
 print(string.format("%d passed, %d failed", passed, failed))
 if failed > 0 then os.exit(1) end

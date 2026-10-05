@@ -47,7 +47,8 @@
 -- @field #table LastGridDrawResult Last drawing job: Status, NodesQueued, NodesDrawn, Batches, CPUSeconds, MaxBatchCPUSeconds, ElapsedSimulationSeconds and optional Error.
 -- @field #table LastSearchTiming Last search attempt: CPUSeconds, Failure and Nodes. CPUSeconds is nil when os.clock is unavailable.
 -- @field #string LastPathFailure Reason the last search attempt failed; nil on success or when no attempt was made.
--- @field #table LastExpansionResult Attempt history and stop reason from GetPathWithExpansion().
+-- @field #ASTAR.SearchReport LastSearchResult Report from the most recent public search, also returned by FindPath().
+-- @field #ASTAR.SearchReport LastExpansionResult Report from the most recent expanding search; unchanged by fixed searches.
 -- @field #table GridMarkIDs Text-marker ids owned by MarkGrid().
 -- @field #table GridMarkJob Pending text-marker job.
 -- @field #table LastGridMarkResult Text-marker status, counts and timing.
@@ -64,20 +65,19 @@
 -- FLIGHTGROUP, ARMYGROUP and NAVYGROUP accept node.vector in AddWaypoint, avoiding a temporary COORDINATE per waypoint.
 --
 --     local astar = ASTAR:New(GRID.Type.HEXAGON)
---     astar:SetStartCoordinate(ZONE:FindByName("Astar Start"):GetCoordinate())
---     astar:SetEndCoordinate(ZONE:FindByName("Astar Goal"):GetCoordinate())
---     astar:SetValidSurfaceTypes({land.SurfaceType.WATER, land.SurfaceType.SHALLOW_WATER})
+--     astar:SetEndpoints(ZONE:FindByName("Astar Start"):GetCoordinate(), ZONE:FindByName("Astar Goal"):GetCoordinate())
 --     local grid = astar:GetGrid()
+--     grid:SetValidSurfaceTypes({land.SurfaceType.WATER, land.SurfaceType.SHALLOW_WATER})
 --     grid:SetCorridor(40000, 10000):SetResolution(2000)
 --     grid:SetMaxCells(5000):SetExpansion(1.5, 5)
---     local built, reason = astar:CreateHexGrid()
+--     local built, reason = astar:BuildGrid()
 --     if not built then
 --       env.info("ASTAR: initial grid rejected: " .. reason)
 --       return
 --     end
 --     astar:SetGridNeighboursOnly(true)
 --     astar:SetValidNeighbourLoS(500)
---     local path, report = astar:GetPathWithExpansion()
+--     local path, report = astar:FindPath(ASTAR.SearchMode.EXPAND)
 --     if path then
 --       astar:DrawGrid(path)
 --       -- Optional text labels, separate from polygons:
@@ -90,15 +90,16 @@
 -- # Shared GRID
 --
 -- Grid builders, topology, expansion and rendering are implemented by Core.Grid. The methods below remain forwarding conveniences.
--- Standalone grids select geometry with GRID:New(Name, GridType), then use SetOptions(), GetOptions(), CreateFromBounds() and CreateFromZone().
--- Automatic spacing is available through SetGridOptions({Resolution=GRID.Resolution.NORMAL, ...}); omit Spacing and CrossSpacing.
--- Alternatively call GetGrid():SetResolution(Level) before creation. GetGrid():GetResolutionInfo() reports the calculated spacing.
+-- Standalone grids select geometry with GRID:New(Name, GridType), then use dedicated setters, CreateFromBounds() and CreateFromZone().
+-- Configure automatic spacing with GetGrid():SetResolution(GRID.Resolution.NORMAL) before creation; a numeric value selects manual meter spacing.
+-- GetGrid():GetResolutionInfo() reports the calculated spacing.
 -- GetGrid():SetCorridor(GRID.Width.NORMAL, GRID.Margin.NORMAL) selects relative initial corridor dimensions.
 -- The same presets are accepted as Width and Margin in SetGridOptions(); zone builders ignore them.
--- ASTAR keeps SetGridOptions() and CreateGrid()/CreateHexGrid() as convenience methods that supply the search endpoints.
+-- BuildGrid() uses the owned grid type and search endpoints; BuildGrid(zone) uses zone bounds for either geometry.
+-- SetGridOptions() and the four geometry-specific Create methods remain available for compatibility.
 -- Use ExpandGrid() for either geometry; SetGridNeighboursOnly() is the single switch for local search candidates.
 -- GetGrid() returns the owned grid, even before construction. SetGrid(grid) attaches a built GRID to an unused ASTAR and enables local neighbours.
--- New(GRID.Type.RECTANGLE) or New(GRID.Type.HEXAGON) selects the owned grid type before configuration; use a matching builder.
+-- New(GRID.Type.RECTANGLE) or New(GRID.Type.HEXAGON) selects the owned grid type before configuration; BuildGrid() follows this selection.
 -- An explicit type keeps the same GRID through building, failed build retries and expansion. A conflicting builder is rejected before mutation.
 -- New() without a type retains the legacy rectangle default: a hex convenience builder replaces that empty grid, preserving its configuration.
 -- After that legacy replacement, call GetGrid() again instead of using a previously saved grid reference.
@@ -134,7 +135,8 @@
 -- Diagonals, limits and Expansion settings can still change through partial SetGridOptions updates or the dedicated GRID setters.
 -- Lowering MaxCells below the existing candidate count does not remove nodes; expanding search returns cell_limit before searching.
 --
--- @{#ASTAR.CreateGrid} and @{#ASTAR.CreateHexGrid} take no arguments. Configure the grid before creation.
+-- @{#ASTAR.BuildGrid} takes only an optional zone. Configure the grid through GetGrid() before creation.
+-- Legacy CreateGrid() and CreateHexGrid() retain their fixed rectangle/hex meanings, including explicit-type mismatch checks.
 -- All builders return self on success or nil, "cell_limit" when the initial budget is exceeded. Rejection occurs before terrain sampling.
 -- A successful build allows no second Create call on the same object. Manual nodes may precede rectangular creation; hex creation requires no nodes.
 --
@@ -144,33 +146,36 @@
 -- Neighbor centers are one Spacing apart; drawn hexagons have circumradius Spacing/sqrt(3). Rectangular cells use Spacing and CrossSpacing as side lengths.
 -- Grid centers have altitude zero; the surface filter samples their 2D position. Cell outlines are visual aids, not traversability guarantees.
 --
--- @{#ASTAR.CreateGridFromZone}(zone) and @{#ASTAR.CreateHexGridFromZone}(zone) use circular, rectangular or polygonal MOOSE zones.
+-- @{#ASTAR.BuildGrid}(zone) accepts circular, rectangular or polygonal MOOSE zones for either grid type.
 -- The zone determines the initial area; configured Width and Margin are not used to crop it. Spacing and MaxCells still apply.
 -- Center membership is checked with zone:IsVec2InZone() before querying terrain. MaxCells counts candidate centers in the projected bounding rectangle,
 -- including centers rejected by either the zone or surface filter. This bounds preparation work, not only accepted nodes.
 -- A zone constrains initial grid creation only. Exact endpoints and subsequent enlargement of either grid type may lie outside it.
--- For example, replace CreateHexGrid() above with astar:CreateHexGridFromZone(ZONE:FindByName("Search Area")).
+-- For example, replace BuildGrid() above with astar:BuildGrid(ZONE:FindByName("Search Area")).
 --
 -- # Nodes and Endpoints
 --
--- SetStartCoordinate and SetEndCoordinate accept COORDINATE, VECTOR, Vec2 or Vec3; each setter stores an independent VECTOR snapshot.
+-- SetEndpoints(start,goal) accepts COORDINATE, VECTOR, Vec2 or Vec3 and validates both before changing either.
+-- Each endpoint is stored as an independent VECTOR snapshot. Nil clears that endpoint; SetEndpoints() clears both.
+-- SetStartCoordinate and SetEndCoordinate remain available to change just one endpoint.
 -- Nodes contain id, vector, surfacetype and connection caches. Generated nodes also contain q/r or i/j indices. There is no node.coordinate field.
--- GetNodeFromCoordinate creates a node without adding it; AddNodeFromCoordinate creates and adds one. A supplied VECTOR is retained by reference;
+-- CreateNode(position) creates a node without adding it; AddNodeFromCoordinate creates and adds one. A supplied VECTOR is retained by reference;
 -- other position types are copied. Do not mutate positions, indices or ids of added nodes: adjacency and costs are cached.
+-- GetNodeFromCoordinate remains a compatibility alias for CreateNode, with the same return and ownership rules.
 -- GetNodeCoordinate(node) creates a fresh COORDINATE with the node's exact altitude. It does not cache the result.
 --
 -- Endpoints reuse a coincident node within 0.000001 m, or add a surface-valid node at the requested position.
--- Coincidence uses 3D with SetCostDist3D(); default and custom cost rules use 2D, ignoring altitude.
+-- Coincidence uses 3D with SetCostMetric(ASTAR.CostMetric.DISTANCE_3D); default and custom cost rules use 2D, ignoring altitude.
 -- Local grid mode attaches non-coincident endpoints to nearby grid centers; it never links manual nodes directly.
 -- Obsolete automatically inserted endpoints are removed on endpoint resolution. Explicitly added nodes remain part of the graph.
--- GetPath and GetPathWithExpansion accept ExcludeStartNode, ExcludeEndNode booleans. An empty table can be a successful path; nil means failure.
+-- FindPath(Mode, ExcludeStartNode, ExcludeEndNode) includes both endpoints by default. An empty table can be a successful path; nil means failure.
 --
 -- # Neighbours and Costs
 --
 -- SetGridNeighboursOnly(true) restricts regular nodes to indexed neighbors plus locally attached manual/endpoint nodes. Call it after building the grid.
 -- Hex grids have six neighbors. Rectangles use four or eight according to Diagonals in SetGridOptions().
 -- A diagonal requires both flanking cells to exist, preventing shortcuts between surface-filtered cells. The edge still undergoes the configured rule.
--- For example: astar:SetGridOptions({Spacing=2000, Diagonals=false}):CreateGrid():SetGridNeighboursOnly(true).
+-- For example: astar:GetGrid():SetResolution(2000):SetDiagonals(false), followed by astar:BuildGrid().
 -- To change Diagonals later, use GetGrid():SetDiagonals(false); the candidate graph is rebuilt on demand.
 -- Local mode is the default once a grid is built or attached. SetGridNeighboursOnly(false) explicitly enables all-pairs candidates.
 -- SetValidNeighbourDistance(maxDistance), SetValidNeighbourLoS(corridorWidth), SetValidNeighbourRoad(maxDistance), or
@@ -184,7 +189,8 @@
 -- This rule works without built grid cells and replaces the previous rule. It does not configure cell surface filtering.
 -- Three profiles do not cover every point of the corridor or model a ship's turning arc. Missing terrain data blocks an edge.
 --
--- Costs default to 2D distance. SetCostDist3D and SetCostRoad select alternatives. SetCostFunction accepts symmetric, non-negative costs;
+-- Costs default to 2D distance. SetCostMetric(Metric) selects ASTAR.CostMetric.DISTANCE_2D, DISTANCE_3D or ROAD; nil restores DISTANCE_2D.
+-- SetCostDist2D, SetCostDist3D and SetCostRoad remain compatibility aliases. SetCostFunction accepts symmetric, non-negative costs;
 -- math.huge makes a connection impassable. Custom and road costs use a zero heuristic; built-in 2D/3D distances use their matching heuristic.
 -- After SetValidNeighbourDepth(), SetCostDepth(30, 2) optionally prefers 30 meters of water while retaining the 2D heuristic.
 -- Connections below the minimum stay blocked. Permitted shallow sections cost more, with no extra benefit beyond the preferred depth.
@@ -193,7 +199,8 @@
 --
 -- # Expansion and Limits
 --
--- GetPath() searches the existing graph. GetPathWithExpansion() additionally enlarges a rectangular or hex-only grid and retries after failure.
+-- FindPath() defaults to ASTAR.SearchMode.FIXED and searches the existing graph once.
+-- FindPath(ASTAR.SearchMode.EXPAND) additionally enlarges a built rectangular or hex grid and retries after failure.
 -- Both are synchronous. HasPotentialPath() is an optional cheap candidate-connectivity precheck; true does not guarantee a valid route.
 -- Expanding search performs that check internally; do not abort first just because the initial grid is disconnected.
 --
@@ -210,13 +217,19 @@
 -- Rectangular enlargement preserves original i/j indices, spacing and orientation.
 -- Grid builders enable local neighbours by default. Hex expanding searches require this local mode.
 --
--- GetPathWithExpansion returns path, report and stores the report in LastExpansionResult:
+-- FindPath returns path, report and stores the report in LastSearchResult. Expanding searches also store it in LastExpansionResult.
+-- GetPath() retains its single path return; GetPathWithExpansion() retains path, report. Both use the same search implementation.
+-- Reports are new snapshots per call; treat them as read-only because the Last*Result fields refer to the returned table.
+-- The report fields are documented in ASTAR.SearchReport:
+-- * Mode: FIXED or EXPAND, using ASTAR.SearchMode values.
 -- * Attempts: ordered entries with Width, Margin, Nodes, Failure and CPUSeconds.
--- * StopReason: path_found, attempt_limit, size_limit, cell_limit or missing_coordinates.
+-- * StopReason: path_found or search_failed for FIXED; path_found, attempt_limit, size_limit, cell_limit or missing_coordinates for EXPAND.
+-- * FailureReason: concrete error from the last attempt, distinct from a reached expansion limit; nil on success or when no attempt was made.
 -- * Width, Margin, Nodes, CandidateCells: final dimensions, accepted node count and budgeted candidate-cell count.
 -- * MaxCells, MaxWidth, MaxMargin: effective limits for this search; omitted dimension limits remain nil in the report.
 -- * BudgetLimited: true if a smaller growth step was fitted to the cell budget.
 -- * SearchCPUSeconds: total search and enlargement CPU time, if a CPU clock is available.
+-- Fixed searches on manual graphs have no grid dimensions, candidate-cell count or grid limits; those fields are nil.
 -- Manual nodes and exact endpoints do not consume MaxCells, so accepted Nodes can exceed CandidateCells.
 -- LastPathFailure contains missing_coordinates, no_start_node, no_goal_node, start_unattached, goal_unattached, disconnected_grid or connections_blocked.
 -- Intermediate failures are trace-logged; final failure is announced once. Debug=true additionally enables player failure messages.
@@ -251,6 +264,52 @@ ASTAR = {
   nvalid         =     0,
   nvalidcache    =     0,
 }
+
+--- Standard travel-cost metrics. Custom callbacks and depth preferences use their dedicated setters.
+-- @type ASTAR.CostMetric
+-- @field #string DISTANCE_2D Horizontal distance in meters, with a matching 2D heuristic. The default metric.
+-- @field #string DISTANCE_3D Spatial distance in meters, with a matching 3D heuristic.
+-- @field #string ROAD Road-path distance in meters, with a zero heuristic. Does not configure the neighbour rule.
+ASTAR.CostMetric = {
+  DISTANCE_2D = "distance_2d",
+  DISTANCE_3D = "distance_3d",
+  ROAD = "road",
+}
+
+--- Search modes for FindPath(). Both run synchronously and leave drawing to the caller.
+-- @type ASTAR.SearchMode
+-- @field #string FIXED Search the current graph once without enlarging it. The default mode.
+-- @field #string EXPAND Retry with a larger grid after failure, stopping at the first path or a configured limit.
+ASTAR.SearchMode = {
+  FIXED = "fixed",
+  EXPAND = "expand",
+}
+
+--- One search attempt, including exact endpoint resolution and connection checks.
+-- @type ASTAR.SearchAttempt
+-- @field #number Width Grid width in meters at this attempt; nil without a built grid.
+-- @field #number Margin Grid margin in meters at this attempt; nil without a built grid.
+-- @field #number Nodes Search-node count, including manual and exact endpoint nodes.
+-- @field #string Failure Concrete search failure, or nil on success. See ASTAR.SearchReport.FailureReason.
+-- @field #number CPUSeconds Attempt CPU time in seconds; nil when no CPU clock is available.
+
+--- Result details returned by FindPath(). Each call creates a new report and attempt list.
+-- The same report is stored in LastSearchResult (and LastExpansionResult for EXPAND); treat it as read-only.
+-- Grid settings and counts are snapshots, not references to mutable configuration tables.
+-- @type ASTAR.SearchReport
+-- @field #string Mode ASTAR.SearchMode.FIXED or ASTAR.SearchMode.EXPAND.
+-- @field #table Attempts Ordered ASTAR.SearchAttempt entries; empty if expansion was rejected before any search.
+-- @field #string StopReason FIXED: path_found or search_failed. EXPAND: path_found, attempt_limit, size_limit, cell_limit or missing_coordinates.
+-- @field #string FailureReason Last attempt failure: missing_coordinates, no_start_node, no_goal_node, start_unattached, goal_unattached, disconnected_grid or connections_blocked. Nil on success or when no attempt was made.
+-- @field #number Width Final grid width in meters; nil without a built grid.
+-- @field #number Margin Final grid margin in meters; nil without a built grid.
+-- @field #number Nodes Final search-node count, including manual and exact endpoint nodes.
+-- @field #number CandidateCells Budgeted grid-cell count before filtering; nil without a built grid.
+-- @field #number MaxCells Configured grid-cell limit; nil without a built grid. FIXED searches do not enforce expansion limits.
+-- @field #number MaxWidth Optional expansion width limit in meters; nil without a built grid or configured limit.
+-- @field #number MaxMargin Optional expansion margin limit in meters; nil without a built grid or configured limit.
+-- @field #boolean BudgetLimited Whether an expansion step was reduced to fit MaxCells. Always false for FIXED.
+-- @field #number SearchCPUSeconds Total search and enlargement CPU time in seconds; nil when no CPU clock is available.
 
 --- Node data.
 -- @type ASTAR.Node
@@ -356,6 +415,26 @@ end
 -- User functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
+--- Set the requested start and goal together, validating both before changing either.
+-- Stores independent VECTOR snapshots. Does not create nodes or rebuild/reorient an existing grid.
+-- Use SetStartCoordinate() or SetEndCoordinate() to change only one endpoint.
+-- @param #ASTAR self
+-- @param Core.Point#COORDINATE Start Finite start position; also accepts VECTOR, DCS Vec2 or Vec3. Nil clears it.
+-- @param Core.Point#COORDINATE Goal Finite goal position; also accepts VECTOR, DCS Vec2 or Vec3. Nil clears it.
+-- @return #ASTAR self.
+function ASTAR:SetEndpoints(Start, Goal)
+
+  -- Resolve both snapshots first so a rejected goal cannot leave a new start behind.
+  local startVector=Start~=nil and self.Grid:_PositionVector(Start) or nil
+  local endVector=Goal~=nil and self.Grid:_PositionVector(Goal) or nil
+
+  self.startVector=startVector
+  self.endVector=endVector
+
+  return self
+
+end
+
 --- Set the requested start coordinate. Does not create a node or rebuild the grid.
 -- @param #ASTAR self
 -- @param Core.Point#COORDINATE Coordinate Finite start position; also accepts VECTOR, DCS Vec2 or Vec3. Nil clears it.
@@ -380,17 +459,17 @@ function ASTAR:SetEndCoordinate(Coordinate)
 
 end
 
---- Create a node from a coordinate without adding it to the search node set.
+--- Create a node without adding it to the search node set or applying the grid surface filter.
 -- Stores a VECTOR and samples its current surface type. A supplied VECTOR is retained by reference;
 -- other position types are copied into a new VECTOR. Do not mutate a retained VECTOR after adding the node.
 -- @param #ASTAR self
--- @param Core.Point#COORDINATE Coordinate Node position; also accepts VECTOR, DCS Vec2 or Vec3.
+-- @param Core.Point#COORDINATE Position Finite node position; also accepts VECTOR, DCS Vec2 or Vec3.
 -- @return #ASTAR.Node The node.
-function ASTAR:GetNodeFromCoordinate(Coordinate)
+function ASTAR:CreateNode(Position)
 
   local node={} --#ASTAR.Node
 
-  node.vector=VECTOR._IsVector(Coordinate) and Coordinate or VECTOR:NewFromVec(Coordinate)
+  node.vector=VECTOR._IsVector(Position) and Position or VECTOR:NewFromVec(Position)
 
   -- Validate before querying DCS or consuming an ID. Retain supplied VECTOR objects without copying them.
   for _,axis in ipairs({"x", "y", "z"}) do
@@ -409,6 +488,16 @@ function ASTAR:GetNodeFromCoordinate(Coordinate)
   self.counter=self.counter+1
 
   return node
+
+end
+
+--- Compatibility alias for CreateNode(). Creates a new node; does not look up or add an existing one.
+-- @param #ASTAR self
+-- @param Core.Point#COORDINATE Coordinate Finite node position; also accepts VECTOR, DCS Vec2 or Vec3.
+-- @return #ASTAR.Node The node, with the same ownership and position-reference rules as CreateNode().
+function ASTAR:GetNodeFromCoordinate(Coordinate)
+
+  return self:CreateNode(Coordinate)
 
 end
 
@@ -678,14 +767,40 @@ function ASTAR:SetCostFunction(CostFunction, ...)
 
 end
 
---- Set travel cost and heuristic to the 2D distance between nodes.
+--- Select a standard travel-cost metric and its matching heuristic, clearing cached costs.
+-- Does not change the neighbour rule. Replaces any custom cost function or soft depth preference.
+-- Use SetCostFunction() for custom callbacks or SetCostDepth() for depth-weighted horizontal distance.
+-- @param #ASTAR self
+-- @param #string Metric (Optional) ASTAR.CostMetric.DISTANCE_2D, DISTANCE_3D or ROAD. Nil selects DISTANCE_2D.
+-- @return #ASTAR self.
+function ASTAR:SetCostMetric(Metric)
+
+  if Metric==nil then
+    Metric=ASTAR.CostMetric.DISTANCE_2D
+  end
+
+  local costFunction
+  if Metric==ASTAR.CostMetric.DISTANCE_2D then
+    costFunction=ASTAR.Dist2D
+  elseif Metric==ASTAR.CostMetric.DISTANCE_3D then
+    costFunction=ASTAR.Dist3D
+  elseif Metric==ASTAR.CostMetric.ROAD then
+    costFunction=ASTAR.DistRoad
+  else
+    error("ASTAR: Metric must be an ASTAR.CostMetric value")
+  end
+
+  -- The cost function also selects the existing admissible heuristic and endpoint distance metric.
+  return self:SetCostFunction(costFunction)
+
+end
+
+--- Compatibility alias for SetCostMetric(ASTAR.CostMetric.DISTANCE_2D).
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:SetCostDist2D()
 
-  self:SetCostFunction(ASTAR.Dist2D)
-
-  return self
+  return self:SetCostMetric(ASTAR.CostMetric.DISTANCE_2D)
 
 end
 
@@ -718,25 +833,21 @@ function ASTAR:SetCostDepth(PreferredDepth, Weight)
 
 end
 
---- Set travel cost and heuristic to the 3D distance between nodes.
+--- Compatibility alias for SetCostMetric(ASTAR.CostMetric.DISTANCE_3D).
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:SetCostDist3D()
 
-  self:SetCostFunction(ASTAR.Dist3D)
-
-  return self
+  return self:SetCostMetric(ASTAR.CostMetric.DISTANCE_3D)
 
 end
 
---- Set travel cost to the road distance between nodes, using a zero heuristic.
+--- Compatibility alias for SetCostMetric(ASTAR.CostMetric.ROAD), using a zero heuristic.
 -- @param #ASTAR self
 -- @return #ASTAR self
 function ASTAR:SetCostRoad()
 
-  self:SetCostFunction(ASTAR.DistRoad)
-
-  return self
+  return self:SetCostMetric(ASTAR.CostMetric.ROAD)
 
 end
 
@@ -1396,20 +1507,100 @@ function ASTAR:HasPotentialPath()
 
 end
 
---- Search a rectangular or hex-only grid and expand it as needed using SetGridOptions().Expansion and the shared MaxCells budget.
--- Stops at the first actual path or a configured limit. Fits a smaller growth step if the full step exceeds the budget.
--- Runs synchronously and never draws. Call DrawGrid(path) or UpdateGridDrawing() explicitly afterwards.
+--- Search synchronously between the configured endpoints, returning a path and a result report.
+-- FIXED searches the existing graph once. EXPAND enlarges a built rectangular or hex grid after failure,
+-- using GRID expansion settings and limits, and stops at the first path. Hex expansion requires local grid neighbours.
+-- Does not draw or assign routes to units. The selected cost and neighbour rules apply in both modes.
+-- Invalid modes/flags are rejected before searching. A final search failure is announced once; Debug controls player messages.
+-- @param #ASTAR self
+-- @param #string Mode (Optional) ASTAR.SearchMode.FIXED or EXPAND; nil selects FIXED.
+-- @param #boolean ExcludeStartNode (Optional) Exclude the selected start node; default false.
+-- @param #boolean ExcludeEndNode (Optional) Exclude the selected goal node; default false.
+-- @return #table Ordered ASTAR.Node list, or nil on failure. An empty table is a successful path.
+-- @return #ASTAR.SearchReport New report, also stored in LastSearchResult. FailureReason is the last search error; StopReason explains why searching stopped.
+function ASTAR:FindPath(Mode, ExcludeStartNode, ExcludeEndNode)
+
+  if Mode==nil then
+    Mode=ASTAR.SearchMode.FIXED
+  end
+  assert(Mode==ASTAR.SearchMode.FIXED or Mode==ASTAR.SearchMode.EXPAND, "ASTAR: Mode must be an ASTAR.SearchMode value")
+  assert(ExcludeStartNode==nil or type(ExcludeStartNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
+  assert(ExcludeEndNode==nil or type(ExcludeEndNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
+
+  local path,report
+  if Mode==ASTAR.SearchMode.EXPAND then
+    path,report=self:_FindPathWithExpansion(ExcludeStartNode,ExcludeEndNode)
+  else
+    self.LastPathFailure=nil
+    local failure
+    path,failure=self:_SearchPath(ExcludeStartNode,ExcludeEndNode)
+    self.LastPathFailure=failure
+
+    -- Fixed searches also support manual graphs without any grid geometry.
+    local grid=self.hexGrid or self.rectGrid
+    local options=self:GetGridOptions()
+    local width=grid and grid.width
+    local margin=grid and grid.margin
+    local attempt={
+      Width=width,
+      Margin=margin,
+      Nodes=self.Nnodes,
+      Failure=failure,
+      CPUSeconds=self.LastSearchTiming.CPUSeconds,
+    }
+    report={
+      Mode=Mode,
+      StopReason=path and "path_found" or "search_failed",
+      FailureReason=failure,
+      Width=width,
+      Margin=margin,
+      Nodes=self.Nnodes,
+      CandidateCells=grid and grid.candidateCount,
+      MaxCells=grid and options.MaxCells,
+      MaxWidth=grid and options.Expansion.MaxWidth,
+      MaxMargin=grid and options.Expansion.MaxMargin,
+      BudgetLimited=false,
+      SearchCPUSeconds=self.LastSearchTiming.CPUSeconds,
+      Attempts={attempt},
+    }
+  end
+
+  -- Only the public entry point announces failure; intermediate expansion attempts stay quiet.
+  self.LastSearchResult=report
+  if not path then
+    if Mode==ASTAR.SearchMode.EXPAND then
+      self:_ReportPathFailure(report.FailureReason or report.StopReason,report.StopReason)
+    else
+      self:_ReportPathFailure(report.FailureReason)
+    end
+  end
+
+  return path,report
+
+end
+
+--- Compatibility alias for FindPath(ASTAR.SearchMode.EXPAND, ExcludeStartNode, ExcludeEndNode).
+-- Retains the two return values and LastExpansionResult. Stops at the first path or a configured limit.
 -- @param #ASTAR self
 -- @param #boolean ExcludeStartNode (Optional) Exclude the selected start node from the returned path.
 -- @param #boolean ExcludeEndNode (Optional) Exclude the selected goal node from the returned path.
 -- @return #table Ordered path nodes, or nil on failure. An empty table is a successful path.
--- @return #table Report with Attempts, StopReason, Width, Margin, Nodes, CandidateCells, MaxCells, MaxWidth, MaxMargin, BudgetLimited and SearchCPUSeconds.
--- Attempts contain Width, Margin, Nodes, Failure and CPUSeconds. StopReason is path_found, attempt_limit, size_limit, cell_limit or missing_coordinates.
+-- @return #ASTAR.SearchReport Expansion report, also stored in LastExpansionResult and LastSearchResult.
 function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode)
 
+  return self:FindPath(ASTAR.SearchMode.EXPAND,ExcludeStartNode,ExcludeEndNode)
+
+end
+
+--- Search a built grid and expand it as needed without announcing final failure.
+-- @param #ASTAR self
+-- @param #boolean ExcludeStartNode Exclude the selected start node.
+-- @param #boolean ExcludeEndNode Exclude the selected goal node.
+-- @return #table Ordered path nodes, including an empty successful path, or nil.
+-- @return #ASTAR.SearchReport Expansion report.
+function ASTAR:_FindPathWithExpansion(ExcludeStartNode, ExcludeEndNode)
+
   self:_SyncGrid()
-  assert(ExcludeStartNode==nil or type(ExcludeStartNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
-  assert(ExcludeEndNode==nil or type(ExcludeEndNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
   assert(self.hexGrid or self.rectGrid, "ASTAR: create a rectangular or hex grid before expanding search")
   assert(not self.hexGrid or self.GridNeighboursOnly, "ASTAR: call SetGridNeighboursOnly(true) before expanding a hex grid")
   local options=self:GetGridOptions()
@@ -1426,11 +1617,12 @@ function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode)
 
   -- Include both searches and grid enlargement in the overall timing report.
   local searchClock=startCPUClock()
-  local report={Attempts={},BudgetLimited=false}
+  local report={Mode=ASTAR.SearchMode.EXPAND,Attempts={},BudgetLimited=false}
 
   local function finish(path, reason)
     -- All exit paths publish the same final dimensions, limits and attempt history.
     report.StopReason=reason
+    report.FailureReason=self.LastPathFailure
     report.Width=grid.width
     report.Margin=grid.margin
     report.Nodes=self.Nnodes
@@ -1442,9 +1634,6 @@ function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode)
     self.LastExpansionResult=report
     self:T(self.lid..string.format("Expanding search finished: %s after %d attempts, width %.0f m, margin %.0f m, %d nodes, search %s",
       reason, #report.Attempts, grid.width, grid.margin, self.Nnodes, cpuTimeText(report.SearchCPUSeconds)))
-    if not path then
-      self:_ReportPathFailure(self.LastPathFailure or reason, reason)
-    end
     return path, report
   end
 
@@ -1507,25 +1696,19 @@ function ASTAR:GetPathWithExpansion(ExcludeStartNode, ExcludeEndNode)
 
 end
 
---- Search synchronously for a least-cost path between the selected start and goal nodes.
+--- Compatibility wrapper for FindPath(ASTAR.SearchMode.FIXED, ExcludeStartNode, ExcludeEndNode), returning only the path.
 -- Returns nodes in travel order; pass node.vector to FLIGHTGROUP/ARMYGROUP/NAVYGROUP:AddWaypoint or use GetNodeCoordinate(node) for APIs requiring COORDINATE.
 -- Does not assign a route to a unit or group.
 -- Endpoint exclusions can produce an empty table for a successful search. Nil indicates failure.
 -- In local grid mode, rejects disconnected candidate components before evaluating any neighbour rule or cost.
+-- LastSearchResult holds the report; LastPathFailure retains the concrete failure reason.
 -- @param #ASTAR self
 -- @param #boolean ExcludeStartNode If *true*, do not include start node in found path. Default is to include it.
 -- @param #boolean ExcludeEndNode If *true*, do not include end node in found path. Default is to include it.
 -- @return #table Ordered list of ASTAR.Node entries (possibly empty), or nil for missing coordinates, missing endpoint nodes, or an unreachable goal.
 function ASTAR:GetPath(ExcludeStartNode, ExcludeEndNode)
 
-  assert(ExcludeStartNode==nil or type(ExcludeStartNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
-  assert(ExcludeEndNode==nil or type(ExcludeEndNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
-  self.LastPathFailure=nil
-  local path, reason=self:_SearchPath(ExcludeStartNode, ExcludeEndNode)
-  self.LastPathFailure=reason
-  if not path then
-    self:_ReportPathFailure(reason)
-  end
+  local path=self:FindPath(ASTAR.SearchMode.FIXED,ExcludeStartNode,ExcludeEndNode)
 
   return path
 
@@ -2122,7 +2305,31 @@ function ASTAR:_CreateGrid(Kind, Zone)
 
 end
 
---- Build a rectangular grid using SetGridOptions() and SetValidSurfaceTypes().
+--- Build the owned grid using the geometry selected by New(GridType).
+-- Without a zone, both search endpoints are required and GRID corridor settings define the initial area.
+-- With a zone, its bounds and center membership define the initial area; both endpoints may be omitted.
+-- If zone endpoints are supplied, both are required and determine orientation. Width and Margin do not crop the zone.
+-- Retains the existing GRID reference. A successful build enables local neighbours and allows no second build.
+-- Manual nodes may precede rectangular creation; hex creation requires an empty node set. Does not draw.
+-- @param #ASTAR self
+-- @param Core.Zone#ZONE_BASE Zone (Optional) Initial circular, rectangular or polygonal MOOSE zone. Nil builds from endpoints.
+-- @return #ASTAR self on success, or nil when the initial candidate-cell budget is exceeded before terrain sampling.
+-- @return #string cell_limit on budget rejection; nil on success.
+function ASTAR:BuildGrid(Zone)
+
+  local kind="CreateGrid"
+  if self.Grid:GetType()==GRID.Type.HEXAGON then
+    kind="CreateHexGrid"
+  end
+  if Zone~=nil then
+    kind=kind.."FromZone"
+  end
+
+  return self:_CreateGrid(kind,Zone)
+
+end
+
+--- Legacy rectangular builder. For type-selected construction use BuildGrid().
 -- Requires both endpoints and no prior grid. Retains manually added nodes and enables local topology by default. Centers have altitude zero.
 -- No markers are created; call DrawGrid() or MarkGrid() explicitly.
 -- @param #ASTAR self
@@ -2134,7 +2341,7 @@ function ASTAR:CreateGrid()
 
 end
 
---- Build an initial hex grid using SetGridOptions() and SetValidSurfaceTypes().
+--- Legacy hex builder. For type-selected construction use BuildGrid().
 -- Requires both endpoints and an empty node set. CrossSpacing is not supported. Centers have altitude zero.
 -- Enables six-neighbour topology by default. No drawing is performed.
 -- @param #ASTAR self
@@ -2146,7 +2353,7 @@ function ASTAR:CreateHexGrid()
 
 end
 
---- Build rectangular centers inside a MOOSE circle, rectangle or polygon zone.
+--- Legacy rectangular zone builder. For type-selected construction use BuildGrid(Zone).
 -- Requires no prior grid; endpoints optionally supply the orientation. Retains manual nodes. Uses configured spacing, MaxCells and surface types; ignores Width and Margin.
 -- Checks the zone before terrain sampling. Expansion can subsequently leave the zone. No drawing is performed.
 -- @param #ASTAR self
@@ -2159,7 +2366,7 @@ function ASTAR:CreateGridFromZone(Zone)
 
 end
 
---- Build initial hex centers inside a MOOSE circle, rectangle or polygon zone.
+--- Legacy hex zone builder. For type-selected construction use BuildGrid(Zone).
 -- Requires an empty node set; endpoints optionally supply the orientation. Uses configured Spacing, MaxCells and surface types; ignores Width and Margin.
 -- Checks the zone before terrain sampling. Expansion can subsequently leave the zone. CrossSpacing is rejected.
 -- @param #ASTAR self
