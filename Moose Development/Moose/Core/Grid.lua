@@ -27,7 +27,7 @@
 -- @field #number Version Monotonically increasing geometry/filter version; option-only budget changes do not increment it.
 -- @field #number GridCandidateCount Candidate count before zone and surface filters.
 -- @field #boolean GridBuilt True after successful construction, including an empty filtered grid.
--- @field #boolean Sparse True after CreateSparse(); cells may be generated on demand without area bounds.
+-- @field #boolean Sparse True for an on-demand lattice; internal local windows also restrict cell centers to fixed bounds.
 -- @extends Core.Base#BASE
 
 --- # The GRID Concept
@@ -1428,21 +1428,35 @@ function GRID:CreateSparse(Start, Goal)
   local geometry={x=first.x,z=first.z,cos=math.cos(angle),sin=math.sin(angle),
     spacing=spacing,distance=distance,candidateCount=0}
 
+  return self:_InitializeSparse(first,last,geometry,cross)
+
+end
+
+--- Initialize indices and ownership state for a validated empty sparse lattice.
+-- Geometry, endpoints and optional window bounds must belong to this instance.
+-- @param #GRID self
+-- @param Core.Vector#VECTOR Start Copied start position.
+-- @param Core.Vector#VECTOR Goal Copied end position.
+-- @param #table Geometry Owned lattice frame, spacing and dimensions.
+-- @param #number CrossSpacing Transverse spacing for rectangles; nil for hexagons.
+-- @return #GRID self.
+function GRID:_InitializeSparse(Start, Goal, Geometry, CrossSpacing)
+
   if self.GridType==GRID.Type.HEXAGON then
-    geometry.rowSpacing=spacing*math.sqrt(3)/2
-    self.hexGrid=geometry
+    Geometry.rowSpacing=Geometry.spacing*math.sqrt(3)/2
+    self.hexGrid=Geometry
     self.hexIndex={}
   else
-    geometry.crossSpacing=cross
-    geometry.along=spacing/2
-    geometry.across=cross/2
-    geometry.alongOffset=0
-    geometry.acrossOffset=0
-    self.rectGrid=geometry
+    Geometry.crossSpacing=CrossSpacing
+    Geometry.along=Geometry.spacing/2
+    Geometry.across=CrossSpacing/2
+    Geometry.alongOffset=0
+    Geometry.acrossOffset=0
+    self.rectGrid=Geometry
     self.rectIndex={}
   end
 
-  self.startVector,self.endVector=first,last
+  self.startVector,self.endVector=Start,Goal
   self.Sparse=true
   self._SparseSamples={}
   self.GridCandidateCount=0
@@ -1453,23 +1467,123 @@ function GRID:CreateSparse(Start, Goal)
 
 end
 
+--- Create an independent sparse window from this grid's configuration, without sampling terrain.
+-- This internal factory leaves the source grid unchanged, whether built or unbuilt. It copies the geometry type,
+-- options (including nested limits) and surface filter, but no cells, samples, drawings or search state.
+-- Each window has its own fixed frame and cell ownership. Replace the window instead of moving or pruning it.
+-- Only cell centers are bounded; cell outlines may extend beyond the window. This is not a movement/depth check.
+-- Automatic resolution uses the shorter of Ahead+Behind and Width. Manual spacing is copied unchanged.
+-- Corridor dimensions and expansion policy do not affect the window. MaxCells limits samples, not its geometric size.
+-- @param #GRID self Configuration source; may itself be an older window.
+-- @param #table Origin Copied anchor position; VECTOR, COORDINATE, Vec2 or Vec3. Height does not affect membership.
+-- @param #number Heading Finite heading in degrees, clockwise from DCS +x towards +z; normalized to [0,360).
+-- @param #number Ahead Positive forward extent in meters from Origin.
+-- @param #number Width Positive total transverse width in meters, half on each side.
+-- @param #number Behind Non-negative rear extent in meters from Origin; zero permits no rear centers.
+-- @return #GRID New owned window; invalid inputs raise an error without changing the source.
+function GRID:_NewSparseWindow(Origin, Heading, Ahead, Width, Behind)
+
+  assert(type(Heading)=="number" and Heading>-math.huge and Heading<math.huge, "GRID: window heading must be finite")
+  assert(type(Ahead)=="number" and Ahead>0 and Ahead<math.huge, "GRID: window Ahead must be finite and positive")
+  assert(type(Width)=="number" and Width>0 and Width<math.huge, "GRID: window Width must be finite and positive")
+  assert(type(Behind)=="number" and Behind>=0 and Behind<math.huge, "GRID: window Behind must be finite and non-negative")
+  assert(Ahead+Behind<math.huge, "GRID: window length must be finite")
+
+  local origin=self:_PositionVector(Origin)
+  local heading=Heading%360
+  local angle=math.rad(heading)
+  local window=GRID:New(self.name,self.GridType)
+  window:_SetOptions(self:GetOptions())
+  window:SetValidSurfaceTypes(self.ValidSurfaceTypes)
+
+  local spacing,crossSpacing=window:_ResolveInitialSpacing(window:GetOptions(),Ahead+Behind,Width)
+  local geometry={
+    x=origin.x, z=origin.z, cos=math.cos(angle), sin=math.sin(angle),
+    spacing=spacing, distance=Ahead, width=Width, candidateCount=0
+  }
+  local endX,endZ=window:_GridPosition(geometry,Ahead,0)
+  local front=window:_PositionVector({x=endX,y=0,z=endZ})
+  window._SparseWindow={
+    Ahead=Ahead, Width=Width, Behind=Behind, Heading=heading,
+    Tolerance=1e-9*math.min(Ahead,Width,spacing,crossSpacing or spacing)
+  }
+  window:_InitializeSparse(origin,front,geometry,crossSpacing)
+
+  -- Reject unrepresentable windows before returning them to a caller. No cells are allocated here.
+  for _,along in ipairs({-Behind,Ahead}) do
+    for _,across in ipairs({-Width/2,Width/2}) do
+      local x,z=window:_GridPosition(geometry,along,across)
+      window:PositionToIndex({x=x,y=0,z=z})
+    end
+  end
+
+  return window
+
+end
+
+--- Test local meter offsets against inclusive window bounds without terrain queries.
+-- Tolerance absorbs rotation roundoff at edges and corners. It is 1e-9 times the smallest positive
+-- forward/width/spacing scale, so a long or coarse window does not substantially widen its narrow axis.
+-- @param #GRID self
+-- @param #number Along Forward offset in meters.
+-- @param #number Across Transverse offset in meters.
+-- @return #boolean Inside the fixed window.
+function GRID:_ContainsWindowOffset(Along, Across)
+
+  local window=self._SparseWindow
+  local tolerance=window.Tolerance
+
+  return Along>=-window.Behind-tolerance and Along<=window.Ahead+tolerance
+    and math.abs(Across)<=window.Width/2+tolerance
+
+end
+
+--- Test a position against the fixed window, independently of existing or filtered cells.
+-- Height is ignored. Cell-center membership does not validate the full cell footprint or a connection.
+-- @param #GRID self
+-- @param #table Position Owned cell, VECTOR, COORDINATE, Vec2 or Vec3.
+-- @return #boolean Inside the window, including its boundary.
+function GRID:_IsInsideWindow(Position)
+
+  assert(self._SparseWindow, "GRID: window membership requires a sparse window")
+  local vector=self:_QueryPosition(Position)
+  local geometry=self.hexGrid or self.rectGrid
+  local dx,dz=vector.x-geometry.x,vector.z-geometry.z
+  local along=dx*geometry.cos+dz*geometry.sin
+  local across=-dx*geometry.sin+dz*geometry.cos
+
+  return self:_ContainsWindowOffset(along,across)
+
+end
+
 --- Get or sample one sparse lattice position, without creating its neighbours.
 -- A cached rejection returns nil, "filtered" without another terrain query. An unknown position at
 -- the budget limit returns nil, "cell_limit" and remains unknown; raising MaxCells permits a retry.
 -- Existing cells remain available even after lowering the budget. Returned cells are read-only.
+-- Internal bounded windows return nil, "outside_window" before sampling or budget checks for centers outside their bounds.
+-- Such positions are not cached and consume no cell IDs, candidate budget or geometry revisions.
 -- @param #GRID self
 -- @param #number First Integer rectangular i or hex q.
 -- @param #number Second Integer rectangular j or hex r.
 -- @return #GRID.Cell Existing or newly created cell, or nil.
--- @return #string filtered or cell_limit; nil on success.
+-- @return #string filtered, cell_limit or outside_window; nil on success.
 function GRID:GetOrCreateCell(First, Second)
 
-  assert(self.Sparse, "GRID: GetOrCreateCell requires CreateSparse")
+  assert(self.Sparse, "GRID: GetOrCreateCell requires a sparse grid")
   assert(type(First)=="number" and type(Second)=="number" and self:_ValidIndexRange(First,Second)
     and First==math.floor(First) and Second==math.floor(Second), "GRID: indices must be safe integers")
   if self.hexGrid then
     assert(self:_ValidIndexRange(-First-Second,-First-Second), "GRID: cube index exceeds the supported lattice range")
   end
+
+  -- Check lattice offsets directly so remote indices need no world-position conversion or terrain query.
+  if self._SparseWindow then
+    local along,across=self:_IndexOffsets(First,Second)
+    if not self:_ContainsWindowOffset(along,across) then
+      return nil,"outside_window"
+    end
+  end
+
   local row=self._SparseSamples[First]
   if row and row[Second]~=nil then
     local cell=row[Second]
@@ -3145,6 +3259,24 @@ function GRID:PositionToIndex(Position)
 
 end
 
+--- Convert validated lattice indices to local meter offsets in the current frame.
+-- Shared by position conversion and sparse window bounds; does not create a vector or sample terrain.
+-- @param #GRID self
+-- @param #number First Rectangular i or hex q.
+-- @param #number Second Rectangular j or hex r.
+-- @return #number Forward offset in meters.
+-- @return #number Transverse offset in meters.
+function GRID:_IndexOffsets(First, Second)
+
+  local grid=self.hexGrid or self.rectGrid
+  if self.hexGrid then
+    return grid.spacing*(First+Second/2),grid.rowSpacing*Second
+  end
+
+  return grid.alongOffset+Second*grid.spacing,grid.acrossOffset+First*grid.crossSpacing
+
+end
+
 --- Convert lattice indices to a center without creating a cell or sampling terrain.
 -- @param #GRID self
 -- @param #number First Integer rectangular i or hex q, including outside the built area.
@@ -3156,14 +3288,11 @@ function GRID:IndexToPosition(First, Second)
   assert(type(First)=="number" and type(Second)=="number" and self:_ValidIndexRange(First, Second)
     and First==math.floor(First) and Second==math.floor(Second), "GRID: indices must be safe integers")
   local grid=self.hexGrid or self.rectGrid
-  local along, across
   if self.hexGrid then
     assert(self:_ValidIndexRange(-First-Second, -First-Second), "GRID: cube index exceeds the supported lattice range")
-    along, across=grid.spacing*(First+Second/2), grid.rowSpacing*Second
-  else
-    along, across=grid.alongOffset+Second*grid.spacing, grid.acrossOffset+First*grid.crossSpacing
   end
 
+  local along,across=self:_IndexOffsets(First,Second)
   local x, z=self:_GridPosition(grid, along, across)
 
   return self:_PositionVector({x=x, y=0, z=z})

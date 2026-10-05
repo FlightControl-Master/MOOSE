@@ -1872,6 +1872,278 @@ test("sparse automatic resolution uses endpoint distance and validates requests 
   assert(not pcall(function() g:CreateSparse(coord(0),coord(100)) end))
 end)
 
+local function windowPosition(origin,heading,along,across)
+  local angle=math.rad(heading)
+  local cosine,sine=math.cos(angle),math.sin(angle)
+  return coord(origin.x+along*cosine-across*sine,origin.z+along*sine+across*cosine,250)
+end
+
+test("sparse windows include rotated front rear side and corner boundaries without sampling",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    for _,heading in ipairs({0,37,90,180,315,405,-45}) do
+      local queries=0
+      land.surfaceAt=function()
+        queries=queries+1
+        return land.SurfaceType.WATER
+      end
+      local origin={x=1000000,y=700,z=-2000000}
+      local source=GRID:New("Window",kind):SetResolution(100)
+      local window=source:_NewSparseWindow(origin,heading,300,400,100)
+      equal(window._SparseWindow.Heading,heading%360)
+      near(window:GetDimensions().Width,400)
+      equal(window:GetDimensions().Margin,nil)
+
+      for _,along in ipairs({-100,0,300}) do
+        for _,across in ipairs({-200,0,200}) do
+          assert(window:_IsInsideWindow(windowPosition(origin,heading,along,across)))
+        end
+      end
+      for _,offset in ipairs({{-100.001,0},{300.001,0},{0,-200.001},{0,200.001}}) do
+        assert(not window:_IsInsideWindow(windowPosition(origin,heading,offset[1],offset[2])))
+      end
+
+      equal(queries,0)
+      equal(window:GetCandidateCount(),0)
+      equal(window:GetCellCount(),0)
+      equal(source.GridBuilt,nil)
+    end
+  end
+end)
+
+test("long narrow windows do not inflate side and rear tolerance with forward extent",function()
+  local source=GRID:New("Window",GRID.Type.RECTANGLE):SetResolution(100)
+  local window=source:_NewSparseWindow(coord(0),0,1e9,200,0)
+  assert(window:_IsInsideWindow(coord(1e9,100)))
+  assert(not window:_IsInsideWindow(coord(0,100.001)))
+  assert(not window:_IsInsideWindow(coord(-0.001,0)))
+end)
+
+test("sparse window sampling clips cell centers on both lattices independently of rotation",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    for _,heading in ipairs({0,37,90}) do
+      local source=GRID:New("Window",kind):SetResolution(100)
+      local width=200*math.sqrt(3)
+      local expected=23
+      if kind==GRID.Type.RECTANGLE then
+        source:SetResolution(100,200)
+        width=400
+        expected=15
+      end
+
+      local queries=0
+      land.surfaceAt=function()
+        queries=queries+1
+        return land.SurfaceType.WATER
+      end
+      local window=source:_NewSparseWindow(coord(10000,-20000),heading,300,width,100)
+      for first=-8,8 do
+        for second=-8,8 do
+          local position=window:IndexToPosition(first,second)
+          local inside=window:_IsInsideWindow(position)
+          local revision=window:GetVersion()
+          local counter=window.counter
+          local cell,reason=window:GetOrCreateCell(first,second)
+          if inside then
+            assert(cell)
+            equal(reason,nil)
+            equal(window:GetCellAtPosition(position),cell)
+            equal(cell.vector.y,0)
+          else
+            equal(cell,nil)
+            equal(reason,"outside_window")
+            equal(window:GetVersion(),revision)
+            equal(window.counter,counter)
+            equal(window:GetCellFromIndex(first,second),nil)
+          end
+        end
+      end
+      equal(window:GetCellCount(),expected)
+      equal(window:GetCandidateCount(),expected)
+      equal(queries,expected)
+    end
+  end
+end)
+
+test("sparse window outside requests consume no cache budget IDs or terrain calls even at the limit",function()
+  local queries=0
+  land.surfaceAt=function(position)
+    queries=queries+1
+    if position.x==0 then
+      return land.SurfaceType.LAND
+    end
+    return land.SurfaceType.WATER
+  end
+  local source=GRID:New("Window",GRID.Type.RECTANGLE):SetResolution(100):SetMaxCells(1)
+  source:SetValidSurfaceTypes(land.SurfaceType.WATER)
+  local window=source:_NewSparseWindow(coord(0),0,200,200,0)
+  local cell,reason=window:GetOrCreateCell(0,0)
+  equal(cell,nil)
+  equal(reason,"filtered")
+  equal(queries,1)
+  equal(window:GetCandidateCount(),1)
+
+  local revision=window:GetVersion()
+  for attempt=1,3 do
+    cell,reason=window:GetOrCreateCell(100,100)
+    equal(cell,nil)
+    equal(reason,"outside_window")
+  end
+  equal(count(window._SparseSamples),1)
+  equal(count(window._SparseSamples[0]),1)
+  equal(window._SparseSamples[100],nil)
+  equal(window:GetVersion(),revision)
+  equal(window.counter,2)
+  equal(queries,1)
+
+  cell,reason=window:GetOrCreateCell(0,0)
+  equal(reason,"filtered")
+  cell,reason=window:GetOrCreateCell(0,1)
+  equal(reason,"cell_limit")
+  equal(window._SparseSamples[0][1],nil)
+  equal(queries,1)
+
+  window:SetMaxCells(2)
+  cell=assert(window:GetOrCreateCell(0,1))
+  equal(cell.id,2)
+  equal(window:GetCandidateCount(),2)
+  window:SetMaxCells(1)
+  equal(window:GetOrCreateCell(0,1),cell)
+  equal(queries,2)
+  equal(source:GetCandidateCount(),0)
+end)
+
+test("sparse window generations copy configuration and own positions cells and samples",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local source=GRID:New("Template",kind):SetResolution(100):SetMaxCells(25)
+    source:SetCorridor(GRID.Width.WIDE,GRID.Margin.LARGE):SetExpansion(2,3,4000,500)
+    source:SetDiagonals(false):SetValidSurfaceTypes({land.SurfaceType.WATER})
+    source:CreateSparse(coord(0),coord(1000))
+    local sourceCell=source:GetOrCreateCell(0,0)
+    local revision=source:GetVersion()
+    local origin={x=1000,y=0,z=2000}
+    local first=source:_NewSparseWindow(origin,30,400,300,100)
+    local firstCell=first:GetOrCreateCell(0,0)
+    local second=first:_NewSparseWindow(coord(5000,6000),120,400,300,100)
+    local secondCell=second:GetOrCreateCell(0,0)
+
+    origin.x=9000
+    equal(first.startVector.x,1000)
+    equal(firstCell.vector.x,1000)
+    equal(secondCell.vector.x,5000)
+    equal(source:GetVersion(),revision)
+    equal(source:GetCellCount(),1)
+    equal(first:GetCellCount(),1)
+    equal(second:GetCellCount(),1)
+    equal(source:GetCellFromIndex(0,0),sourceCell)
+    assert(firstCell~=secondCell and firstCell~=sourceCell)
+    assert(first._CellOwner~=source._CellOwner and first._CellOwner~=second._CellOwner)
+    assert(first.GridOptions~=source.GridOptions)
+    assert(first.GridOptions.Expansion~=source.GridOptions.Expansion)
+    assert(first.ValidSurfaceTypes~=source.ValidSurfaceTypes)
+    equal(second:GetOptions().Expansion.MaxWidth,4000)
+    equal(second:GetOptions().Expansion.MaxMargin,500)
+    equal(second:GetOptions().Diagonals,false)
+    equal(second:GetOptions().Width,GRID.Width.WIDE)
+
+    source:SetMaxCells(50):SetDiagonals(true):SetExpansion(1.5,2)
+    first:SetMaxCells(10)
+    equal(second:GetOptions().MaxCells,25)
+    equal(second:GetOptions().Diagonals,false)
+    equal(first:GetOptions().Expansion.MaxAttempts,3)
+    assert(not pcall(function()
+      second:GetCellCoordinate(firstCell)
+    end))
+    assert(not pcall(function()
+      first:SetValidSurfaceTypes(nil)
+    end))
+    assert(not pcall(function()
+      first:SetResolution(50)
+    end))
+    assert(not pcall(function()
+      first:ExpandGrid(1000,100)
+    end))
+  end
+end)
+
+test("sparse windows resolve automatic spacing from their own extents and preserve manual spacing",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local source=GRID:New("Template",kind):SetResolution(GRID.Resolution.NORMAL)
+    source:CreateSparse(coord(0),coord(10000))
+    local first=source:_NewSparseWindow(coord(0),0,1000,400,200)
+    local second=first:_NewSparseWindow(coord(0),90,600,2000,200)
+    near(source:GetResolutionInfo().Spacing,500)
+    near(first:GetResolutionInfo().Spacing,20)
+    near(second:GetResolutionInfo().Spacing,40)
+    equal(first:GetResolutionInfo().ReferenceLength,400)
+    equal(second:GetResolutionInfo().ReferenceLength,800)
+    equal(first:GetOptions().Resolution,GRID.Resolution.NORMAL)
+    equal(first:GetOptions().Spacing,nil)
+
+    local manual=GRID:New("Manual",kind):SetResolution(75)
+    local window=manual:_NewSparseWindow(coord(0),0,10,10,0)
+    near(window:GetResolutionInfo().Spacing,75)
+    equal(window:GetResolutionInfo().Status,"built")
+    assert(window:GetOrCreateCell(0,0))
+  end
+end)
+
+test("sparse window validation leaves the configuration source untouched and performs no terrain queries",function()
+  local queries=0
+  land.surfaceAt=function()
+    queries=queries+1
+    return land.SurfaceType.WATER
+  end
+  local source=GRID:New("Template",GRID.Type.HEXAGON):SetResolution(100)
+  local revision=source:GetVersion()
+  local cases={
+    {coord(0),false,100,100,0}, {coord(0),math.huge,100,100,0}, {coord(0),0/0,100,100,0},
+    {coord(0),0,0,100,0}, {coord(0),0,-1,100,0}, {coord(0),0,math.huge,100,0},
+    {coord(0),0,100,0,0}, {coord(0),0,100,0/0,0}, {coord(0),0,100,100,-1},
+    {coord(0),0,100,100,math.huge}, {coord(0),0,100,100}, {coord(0),0,1e308,100,1e308},
+    {{x=0/0,y=0,z=0},0,100,100,0}, {{x=math.huge,y=0,z=0},0,100,100,0},
+    {coord(0),0,1e20,100,0}
+  }
+  for _,arguments in ipairs(cases) do
+    assert(not pcall(function()
+      source:_NewSparseWindow(unpack(arguments))
+    end))
+    equal(source:GetVersion(),revision)
+    equal(source.GridBuilt,nil)
+    equal(source._SparseWindow,nil)
+    equal(source:GetCandidateCount(),0)
+  end
+  equal(queries,0)
+end)
+
+test("sparse windows preserve nil and empty surface filters as distinct configurations",function()
+  local source=GRID:New("Template",GRID.Type.HEXAGON):SetResolution(100)
+  local all=source:_NewSparseWindow(coord(0),0,100,100,0)
+  source:SetValidSurfaceTypes({})
+  local none=source:_NewSparseWindow(coord(0),0,100,100,0)
+  assert(all:GetOrCreateCell(0,0))
+  local cell,reason=none:GetOrCreateCell(0,0)
+  equal(cell,nil)
+  equal(reason,"filtered")
+  equal(none:GetCandidateCount(),1)
+  equal(none:GetCellCount(),0)
+  assert(none.ValidSurfaceTypes~=source.ValidSurfaceTypes)
+end)
+
+test("ordinary sparse creation remains unbounded after producing a separate window",function()
+  local source=GRID:New("Unbounded",GRID.Type.RECTANGLE):SetResolution(100)
+  local window=source:_NewSparseWindow(coord(0),0,100,100,0)
+  source:CreateSparse(coord(0),coord(1000))
+  assert(source:GetOrCreateCell(-100,-100))
+  local cell,reason=window:GetOrCreateCell(-100,-100)
+  equal(cell,nil)
+  equal(reason,"outside_window")
+  equal(source._SparseWindow,nil)
+  equal(window:GetCellCount(),0)
+  assert(not pcall(function()
+    source:_IsInsideWindow(coord(0))
+  end))
+end)
+
 local function colorNear(actual,expected)
   for index=1,3 do
     near(actual[index],expected[index])
