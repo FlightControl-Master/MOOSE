@@ -107,7 +107,7 @@ local function count(t) local n=0 for _ in pairs(t) do n=n+1 end return n end
 local function coord(x,z,y) return COORDINATE:New(x,y or 0,z or 0) end
 trigger.action.markupToAll=function(shape,side,id,...)
   local args={...} local n=select("#",...)
-  drawings[id]={fill=args[n-3],outline=args[n-4],side=side,vertices=n-5}
+  drawings[id]={fill=args[n-3],outline=args[n-4],side=side,vertices=n-5,lineType=args[n-2],readOnly=args[n-1]}
 end
 trigger.action.removeMark=function(id) drawings[id]=nil labels[id]=nil removed[id]=true end
 trigger.action.markToAll=function(id,text) labels[id]=text end
@@ -1041,7 +1041,7 @@ test("resolution mode selection validates conflicts atomically and preserves unr
   local version=g:GetVersion()
   for _,run in ipairs({
     function() g:SetResolution("invalid") end,
-    function() g:SetResolution(20) end,
+    function() g:SetResolution(0) end,
     function() g:SetOptions({Resolution=GRID.Resolution.NORMAL,Spacing=2000}) end,
     function() g:SetOptions({Resolution=GRID.Resolution.NORMAL,CrossSpacing=2000}) end
   }) do assert(not pcall(run)) equal(g:GetVersion(),version) end
@@ -1572,6 +1572,209 @@ test("invalid drawing styles preserve GRID and ASTAR overlays before any schedul
     equal(view.GridDrawOptions.ReadOnly,false)
     view:UndrawGrid()
   end
+end)
+
+test("unified resolution switches manual and automatic spacing with atomic validation",function()
+  local g=GRID:New("Resolution",GRID.Type.RECTANGLE):SetMaxCells(8000)
+  equal(g:SetResolution(100,150),g)
+  equal(g:GetOptions().Spacing,100)
+  equal(g:GetOptions().CrossSpacing,150)
+  g:SetResolution(GRID.Resolution.FINE)
+  equal(g:GetOptions().Spacing,nil)
+  equal(g:GetOptions().CrossSpacing,nil)
+  g:SetResolution(200)
+  equal(g:GetOptions().Resolution,nil)
+  equal(g:GetOptions().Spacing,200)
+  equal(g:GetOptions().CrossSpacing,nil)
+  local version=g:GetVersion()
+  for _,run in ipairs({
+    function() g:SetResolution(GRID.Resolution.NORMAL,150) end,
+    function() g:SetResolution(0) end,
+    function() g:SetResolution(false) end
+  }) do
+    assert(not pcall(run))
+    equal(g:GetVersion(),version)
+    equal(g:GetOptions().Spacing,200)
+  end
+  g:SetResolution(nil,300)
+  equal(g:GetOptions().Spacing,2000)
+  equal(g:GetOptions().CrossSpacing,300)
+  g:SetResolution()
+  equal(g:GetOptions().CrossSpacing,nil)
+  equal(g:GetOptions().MaxCells,8000)
+  g:SetCorridor(1000,0):SetSpacing(100,150):CreateFromBounds(coord(0),coord(1000))
+  assert(not pcall(function() g:SetResolution(200) end))
+  equal(g:GetDimensions().Spacing,100)
+  local hex=GRID:New("Hex",GRID.Type.HEXAGON)
+  assert(not pcall(function() hex:SetResolution(100,150) end))
+  equal(hex:GetOptions().Spacing,2000)
+end)
+
+test("range queries include both radii and preserve ring order",function()
+  for _,kind in ipairs({"rectangular","hexagonal"}) do
+    for _,diagonal in ipairs({false,true}) do
+      local g=grid(kind,{Width=12000,Margin=6000,Spacing=1000,Diagonals=diagonal})
+      local band=g:GetCellsInRange(coord(0),3,2)
+      equal(#band,kind=="hexagonal" and 30 or (diagonal and 40 or 20))
+      for i=2,#band do assert(band[i-1].id<band[i].id) end
+      local ring=g:GetRing(coord(0),3)
+      local range=g:GetCellsInRange(coord(0),3,3)
+      equal(#range,#ring)
+      for i,cell in ipairs(ring) do equal(range[i],cell) end
+      equal(#g:GetCellsInRange(coord(0),0,0),1)
+      equal(#g:GetCellsInRange(coord(0),1000000000,999999999),0)
+      for _,minimum in ipairs({-1,0.5,4,math.huge,false}) do
+        assert(not pcall(function() g:GetCellsInRange(coord(0),3,minimum) end))
+      end
+    end
+  end
+end)
+
+test("polylines distinguish open and closed boundaries and deduplicate retraced cells",function()
+  local g=grid(nil,{Width=12000,Margin=6000,Spacing=1000})
+  local vertices={g:IndexToPosition(3,3),g:IndexToPosition(3,7),g:IndexToPosition(7,7),g:IndexToPosition(7,3)}
+  local open=g:GetPolylineCells(vertices)
+  local closed=g:GetPolylineCells(vertices,true)
+  equal(#open,13)
+  equal(#closed,16)
+  local polygon=g:GetPolygonBoundaryCells(vertices)
+  for i,cell in ipairs(closed) do equal(cell,polygon[i]) end
+  local seen={}
+  for _,cell in ipairs(open) do assert(not seen[cell.id]) seen[cell.id]=true end
+  equal(seen[g:GetCellFromIndex(5,3).id],nil)
+  equal(#g:GetPolylineCells({vertices[1],vertices[2],vertices[1]}),5)
+  equal(#g:GetPolylineCells({vertices[1],vertices[1]}),1)
+  local line=g:GetLineCells(vertices[1],vertices[2])
+  local polyline=g:GetPolylineCells({vertices[1],vertices[2]})
+  for i,cell in ipairs(line) do equal(cell,polyline[i]) end
+  for _,run in ipairs({
+    function() g:GetPolylineCells({vertices[1]}) end,
+    function() g:GetPolylineCells({vertices[1],vertices[2]},true) end,
+    function() g:GetPolylineCells(vertices,1) end,
+    function() g:GetPolylineCells({[1]=vertices[1],[3]=vertices[2]}) end,
+    function() g:GetPolylineCells({vertices[1],grid():GetCells()[1]}) end
+  }) do assert(not pcall(run)) end
+  equal(#vertices,4)
+end)
+
+test("unified drawing copies path styles and preserves zero and false settings",function()
+  local g=grid("hexagonal")
+  local a=search(g):SetStartCoordinate(coord(123,50)):SetEndCoordinate(coord(4123,50))
+  local path=a:GetPath()
+  for _,view in ipairs({g,a}) do
+    local options={Coalition=0,Color={0.2,0.3,0.4},Alpha=0,FillColor={0.4,0.3,0.2},FillAlpha=0.2,
+      LineType=0,ReadOnly=false,PathColor={1,0,0},PathFillAlpha=0.75,BatchSize=1}
+    equal(view:DrawGrid(path,options),view)
+    options.Color[1]=1
+    options.PathColor[1]=0
+    options.BatchSize=1000
+    flushTimers()
+    local highlighted=0
+    for _,id in ipairs(view.GridDrawIDs) do
+      local d=drawings[id]
+      equal(d.side,0)
+      equal(d.outline[4],0)
+      equal(d.lineType,0)
+      equal(d.readOnly,false)
+      if d.fill[4]==0.75 then
+        highlighted=highlighted+1
+        equal(d.fill[1],1)
+      else
+        equal(d.outline[1],0.2)
+        equal(d.fill[4],0.2)
+      end
+    end
+    local expected={}
+    for _,node in ipairs(path) do if node.cell then expected[node.cell.id]=true end end
+    equal(highlighted,count(expected))
+    equal(view:ClearDrawing(),view)
+  end
+end)
+
+test("nil path drawings extend while empty and supplied paths remain snapshots",function()
+  for _,snapshot in ipairs({false,true}) do
+    local g=grid("rectangular")
+    local original=g:GetCellCount()
+    g:DrawGrid(snapshot and {} or nil,{BatchSize=1})
+    g:ExpandGrid(6000,2000)
+    g:UpdateGridDrawing()
+    flushTimers()
+    equal(count(drawings),snapshot and original or g:GetCellCount())
+    g:ClearDrawing()
+  end
+  local g=grid("rectangular")
+  local path={g:GetCells()[1]}
+  g:DrawGrid(path,{BatchSize=1})
+  path[1]=g:GetCells()[2]
+  flushTimers()
+  local first=drawings[g.GridDrawCellIDs[g:GetCells()[1].id]]
+  equal(first.fill[2],1)
+  equal(first.fill[4],0.35)
+end)
+
+test("new drawing validation leaves existing jobs untouched and rejects foreign paths",function()
+  local g=grid("rectangular")
+  local a,b=search(g),search(g)
+  local foreign=b:GetPath()
+  for _,view in ipairs({g,a}) do
+    view:DrawGrid(nil,{BatchSize=1})
+    local job,style=view.GridDrawJob,view.GridDrawOptions
+    local badPaths={grid():GetCells(),{[2]=g:GetCells()[1]}}
+    if view==a then badPaths[#badPaths+1]=foreign end
+    for _,path in ipairs(badPaths) do
+      assert(not pcall(function() view:DrawGrid(path) end))
+      equal(view.GridDrawJob,job)
+    end
+    for _,options in ipairs({{Color={0,2,0}},{PathFillAlpha=false},{ReadOnly=0},{BatchSize=0},{Typo=true}}) do
+      assert(not pcall(function() view:DrawGrid({},options) end))
+      equal(view.GridDrawJob,job)
+      equal(view.GridDrawOptions,style)
+    end
+    view:ClearDrawing()
+  end
+end)
+
+test("legacy drawing calls retain their colors and path aliases",function()
+  local g=grid("rectangular")
+  for _,view in ipairs({g,search(g)}) do
+    view:DrawGrid(nil,{0.2,0.3,0.4})
+    flushTimers()
+    equal(view.GridDrawOptions.Color[1],0.2)
+    view:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=1})
+    equal(view.GridDrawOptions.BatchSize,1)
+    view:DrawGridWithPath({},{GridColor={0.4,0.5,0.6},PathFillAlpha=0})
+    flushTimers()
+    equal(view.GridDrawOptions.Color[1],0.4)
+    equal(view.GridDrawOptions.PathFillAlpha,0)
+    view:ClearDrawing()
+  end
+end)
+
+test("selective cleanup cancels owned jobs and stale callbacks without touching other views",function()
+  local g=grid("rectangular")
+  local a=search(g)
+  g:DrawGrid(nil,{BatchSize=1}):MarkGrid({BatchSize=1})
+  a:DrawGrid(nil,{BatchSize=1}):MarkGrid({BatchSize=1})
+  local polygons,labelsJob=g.GridDrawJob,g.GridMarkJob
+  local callback=scheduled[polygons.timerID].fn
+  assert(not pcall(function() g:ClearDrawing("invalid") end))
+  equal(g.GridDrawJob,polygons)
+  equal(g.GridMarkJob,labelsJob)
+  g:ClearDrawing(GRID.Drawing.POLYGONS)
+  equal(polygons.result.Status,"cancelled")
+  equal(g.GridMarkJob,labelsJob)
+  equal(callback(nil,timerNow),nil)
+  g:ClearDrawing(GRID.Drawing.LABELS)
+  equal(labelsJob.result.Status,"cancelled")
+  assert(a.GridDrawJob and a.GridMarkJob)
+  flushTimers()
+  equal(count(drawings),g:GetCellCount())
+  equal(count(labels),a.Nnodes)
+  a:ClearDrawing(GRID.Drawing.ALL)
+  equal(count(drawings),0)
+  equal(count(labels),0)
+  equal(count(scheduled),0)
+  g:ClearDrawing():UndrawGrid():UnmarkGrid()
 end)
 
 print(string.format("%d passed, %d failed",passed,failed))

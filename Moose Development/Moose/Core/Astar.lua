@@ -67,12 +67,11 @@
 --     astar:SetStartCoordinate(ZONE:FindByName("Astar Start"):GetCoordinate())
 --     astar:SetEndCoordinate(ZONE:FindByName("Astar Goal"):GetCoordinate())
 --     astar:SetValidSurfaceTypes({land.SurfaceType.WATER, land.SurfaceType.SHALLOW_WATER})
---     astar:SetGridOptions({
---       Width = 40000, Margin = 10000, Spacing = 2000, MaxCells = 5000,
---       Expansion = {GrowthFactor = 1.5, MaxAttempts = 5}
---     })
---     local grid, reason = astar:CreateHexGrid()
---     if not grid then
+--     local grid = astar:GetGrid()
+--     grid:SetCorridor(40000, 10000):SetResolution(2000)
+--     grid:SetMaxCells(5000):SetExpansion(1.5, 5)
+--     local built, reason = astar:CreateHexGrid()
+--     if not built then
 --       env.info("ASTAR: initial grid rejected: " .. reason)
 --       return
 --     end
@@ -80,7 +79,7 @@
 --     astar:SetValidNeighbourLoS(500)
 --     local path, report = astar:GetPathWithExpansion()
 --     if path then
---       astar:DrawGridWithPath(path)
+--       astar:DrawGrid(path)
 --       -- Optional text labels, separate from polygons:
 --       -- astar:MarkGrid({ShowID=true, ShowGridIndex=true, ShowNeighbourCount=true})
 --       -- navyGroup:AddWaypoint(path[1].vector, speed)
@@ -109,7 +108,7 @@
 -- Expansion/options are shared, but nodes, endpoints, connection/cost caches, component labels and ASTAR overlays are per search object.
 -- Public searches and drawing calls synchronize new cells and invalidate topology when the grid version changes. Existing pair caches are retained.
 -- Never mutate cell/node vectors or indices directly. Configuration setters and expansion are the supported mutation paths.
--- Calling grid:DrawGridWithPath(path) draws a grid-owned overlay; astar:DrawGridWithPath(path) owns a separate search overlay.
+-- Calling grid:DrawGrid(path) draws a grid-owned overlay; astar:DrawGrid(path) owns a separate search overlay.
 --
 -- # Grid Configuration
 --
@@ -117,7 +116,8 @@
 -- @{#ASTAR.SetGridOptions} sets geometry, the shared candidate-cell budget and a nested Expansion table. Both setters copy their inputs.
 -- SetGridOptions updates only supplied fields, including nested Expansion fields; nil or an empty table preserves the configuration.
 -- GetGrid():ResetOptions() restores all option defaults, subject to the geometry lock after construction.
--- GetGrid():SetSpacing(Spacing, CrossSpacing), SetResolution(Level), SetMaxCells(MaxCells) and SetDiagonals(Diagonals) offer explicit setters.
+-- GetGrid():SetResolution(Resolution, CrossSpacing), SetMaxCells(MaxCells) and SetDiagonals(Diagonals) offer explicit setters.
+-- Resolution accepts a meter spacing or GRID.Resolution preset; SetSpacing remains a manual-only alias.
 -- GetGrid():SetExpansion(GrowthFactor, MaxAttempts, MaxWidth, MaxMargin) replaces all expansion settings.
 -- For example, astar:GetGrid():SetResolution(GRID.Resolution.NORMAL):SetMaxCells(10000):SetExpansion(1.5, 5).
 -- Omitted expansion limits remove previous limits. SetGridOptions({Expansion={MaxAttempts=3}}) instead preserves other expansion fields.
@@ -225,7 +225,10 @@
 --
 -- Building, searching and expanding never draw or update an overlay automatically.
 -- DrawGrid() draws cell outlines; UpdateGridDrawing() explicitly appends missing cells after enlargement.
--- DrawGridWithPath(path) creates a one-time snapshot with green path cells; later searches and updates do not change it.
+-- DrawGrid(path, options) creates a one-time snapshot with green path cells; later searches and updates do not change it.
+-- DrawGrid(nil, options) styles a regular overlay. GRID.DrawOptions lists all named style and batch settings.
+-- ClearDrawing(Kind) cancels work and removes owned polygons, labels or both, using GRID.Drawing constants; default ALL.
+-- DrawGridWithPath(), UndrawGrid(), UnmarkGrid() and positional drawing arguments remain compatible.
 -- Both polygon functions support timed batches and a CPU budget. One DCS call cannot be interrupted, so the budget is a soft limit.
 -- UndrawGrid() cancels queued polygon work and removes only this object's polygons.
 --
@@ -1395,7 +1398,7 @@ end
 
 --- Search a rectangular or hex-only grid and expand it as needed using SetGridOptions().Expansion and the shared MaxCells budget.
 -- Stops at the first actual path or a configured limit. Fits a smaller growth step if the full step exceeds the budget.
--- Runs synchronously and never draws. Call DrawGridWithPath(path) or UpdateGridDrawing() explicitly afterwards.
+-- Runs synchronously and never draws. Call DrawGrid(path) or UpdateGridDrawing() explicitly afterwards.
 -- @param #ASTAR self
 -- @param #boolean ExcludeStartNode (Optional) Exclude the selected start node from the returned path.
 -- @param #boolean ExcludeEndNode (Optional) Exclude the selected goal node from the returned path.
@@ -2243,56 +2246,57 @@ function ASTAR:_FinishGridMarking(Job, Status, Error)
 
 end
 
---- Draw accepted grid cells on the F10 map, replacing the previous DrawGrid() overlay.
--- Draws one polygon per generated node, with the original grid orientation. Manual nodes and extra endpoints are skipped.
--- Hex vertex radius is Spacing / sqrt(3); rectangular half-sizes are Spacing/2 and CrossSpacing/2.
--- Cells may extend beyond the search area or cover terrain rejected at other node positions. The overlay does not show connectivity.
--- Does not change pathfinding. Large jobs are scheduled in batches; existing polygon removal and each batch run synchronously.
+--- Draw this search's grid, optionally highlighting a previously returned path.
+-- Nil Path creates an extendable regular overlay; a supplied path (including {}) creates a fixed snapshot.
+-- Manual nodes and exact endpoints have no polygon. The path must belong to this search, even when the GRID is shared.
+-- Colors and path selection are copied. No search or route assignment is performed; polygons do not guarantee navigability.
+-- The legacy positional form DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions) remains accepted.
 -- @param #ASTAR self
--- @param #number Coalition (Optional) All=-1, Neutral=0, Red=1, Blue=2. Default -1.
--- @param #table Color (Optional) Outline RGB values in [0,1], default {0,0,1} (blue).
--- @param #number Alpha (Optional) Outline opacity in [0,1], default 1.
--- @param #table FillColor (Optional) Fill RGB values, default the outline color.
--- @param #number FillAlpha (Optional) Fill opacity in [0,1], default 0 (transparent).
--- @param #number LineType (Optional) 0=none, 1=solid, 2=dashed, 3=dotted, 4=dot dash, 5=long dash, 6=two dash. Default 1.
--- @param #boolean ReadOnly (Optional) Prevent users from removing polygons manually. Default true.
--- @param #table DrawOptions (Optional) BatchSize=25 cells, Interval=0.1 simulation seconds, MaxBatchSeconds=0.005 CPU seconds. No CPU clock means one cell per batch.
--- @return #ASTAR self; large overlays may still be queued. Inspect LastGridDrawResult for progress.
-function ASTAR:DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions)
+-- @param #table Path (Optional) Ordered ASTAR.Node entries from this search; nil draws without highlighting.
+-- @param Core.Grid#GRID.DrawOptions Options (Optional) Named style and batch settings; see GRID.DrawOptions for all fields and defaults.
+-- @return #ASTAR self; inspect LastGridDrawResult for asynchronous drawing progress.
+function ASTAR:DrawGrid(Path, Options, ...)
 
   self:_SyncGrid()
 
-  return GRID.DrawGrid(self, Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions)
+  return GRID.DrawGrid(self, Path, Options, ...)
 
 end
 
---- Draw a one-time debug snapshot of the current grid, highlighting the supplied path's grid cells in green.
--- Uses a previously returned path; does not run a search or enable automatic drawing. Replaces this object's previous overlay.
--- Manual nodes and exact endpoints without grid cells are skipped. An empty successful path draws the grid without highlights.
--- Later searches, grid additions and UpdateGridDrawing() do not update this snapshot. Call this method again to replace it.
--- Drawing is batched; UndrawGrid() cancels pending batches and removes the snapshot.
+--- Draw a fixed path snapshot. Compatibility alias for DrawGrid(Path, Options).
+-- Nil Path is rejected; an empty successful path is accepted. Options.GridColor remains an alias for Color.
 -- @param #ASTAR self
--- @param #table Path Ordered node list from a successful search on this ASTAR object. Nil or foreign nodes are rejected before replacing an overlay.
--- @param #table Options (Optional) Coalition=-1, GridColor={0,0,1}, PathColor={0,1,0}, PathFillAlpha=0.35.
--- Also accepts BatchSize=25, Interval=0.1 and MaxBatchSeconds=0.005. Colors and the path selection are copied at call time.
--- @return #ASTAR self; inspect LastGridDrawResult for drawing progress.
+-- @param #table Path Ordered node list from a successful search on this ASTAR object.
+-- @param Core.Grid#GRID.DrawOptions Options (Optional) Drawing style and batch settings.
+-- @return #ASTAR self; inspect LastGridDrawResult for progress.
 function ASTAR:DrawGridWithPath(Path, Options)
 
-  self:_SyncGrid()
-  assert(type(Path)=="table", "ASTAR: DrawGridWithPath requires a successful path table")
-  local cells={}
+  return GRID.DrawGridWithPath(self, Path, Options)
 
-  for _,node in ipairs(Path) do
+end
+
+--- Collect search-node IDs for a fixed overlay; shared GRID cell IDs are not search-node IDs.
+-- @param #ASTAR self
+-- @param #table Path Sequential path nodes belonging to this search.
+-- @return #table Selected node IDs mapped to true.
+function ASTAR:_GetPathCellIDs(Path)
+
+  local count=GRID._PathEntryCount(Path)
+  local selected={}
+
+  for i=1,count do
+    local node=Path[i]
     assert(type(node)=="table" and node._owner==self._NodeOwner and node.grid==self.Grid,
       "ASTAR: path nodes must belong to this search")
 
-    -- Automatic endpoints may have been removed since this path was returned. They have no polygon to draw.
+    -- Old exact endpoints may have been removed after a later search; they have no polygon.
     if node.cell then
-      cells[#cells+1]=node
+      assert(self.nodes[node.id]==node, "ASTAR: path grid nodes must belong to this search")
+      selected[node.id]=true
     end
   end
 
-  return GRID.DrawGridWithPath(self, cells, Options)
+  return selected
 
 end
 
@@ -2369,6 +2373,18 @@ function ASTAR:UndrawGrid()
   self:_SyncGrid()
 
   return GRID.UndrawGrid(self)
+
+end
+
+--- Cancel pending work and remove this search's selected overlays, leaving other views untouched.
+-- @param #ASTAR self
+-- @param #string Kind (Optional) GRID.Drawing.POLYGONS, GRID.Drawing.LABELS or GRID.Drawing.ALL; default ALL.
+-- @return #ASTAR self
+function ASTAR:ClearDrawing(Kind)
+
+  self:_SyncGrid()
+
+  return GRID.ClearDrawing(self, Kind)
 
 end
 

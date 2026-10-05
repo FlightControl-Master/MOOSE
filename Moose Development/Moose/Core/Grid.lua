@@ -38,14 +38,14 @@
 -- # Usage
 --
 --     local grid = GRID:New("Sea", GRID.Type.RECTANGLE)
---     grid:SetSpacing(2000):SetMaxCells(5000):SetDiagonals(true)
+--     grid:SetResolution(2000):SetMaxCells(5000):SetDiagonals(true)
 --     grid:SetValidSurfaceTypes(land.SurfaceType.WATER)
 --     local built, reason = grid:CreateFromZone(searchZone)
 --     if built then
 --       local search = ASTAR:New():SetGrid(grid)
 --       search:SetStartCoordinate(start):SetEndCoordinate(goal):SetValidNeighbourLoS(500)
 --       local path, report = search:GetPathWithExpansion()
---       if path then grid:DrawGridWithPath(path) end
+--       if path then grid:DrawGrid(path) end
 --     end
 --
 -- # Grid Configuration
@@ -60,8 +60,9 @@
 -- Expansion.MaxWidth and Expansion.MaxMargin are optional meter limits with no defaults.
 -- SetOptions updates only supplied fields, including fields within Expansion; nil and empty tables leave settings unchanged.
 -- ResetOptions restores all option defaults. GetOptions returns an independent copy. Geometry and surface filters lock after construction.
--- SetSpacing(Spacing, CrossSpacing), SetMaxCells(MaxCells) and SetDiagonals(Diagonals) preserve unrelated options.
--- SetSpacing selects manual mode; SetResolution selects automatic mode. Omitted setter arguments restore their documented defaults.
+-- SetResolution(Resolution, CrossSpacing), SetMaxCells(MaxCells) and SetDiagonals(Diagonals) preserve unrelated options.
+-- SetResolution accepts a meter spacing or a preset. SetSpacing remains a manual-only compatibility alias.
+-- Omitted setter arguments restore their documented defaults.
 -- SetExpansion(GrowthFactor, MaxAttempts, MaxWidth, MaxMargin) replaces the complete expansion configuration.
 -- For example, SetExpansion(1.5, 5) removes previous dimension limits; SetExpansion() restores all expansion defaults.
 -- A nil field in a partial options table cannot clear a value: use these setters or ResetOptions instead.
@@ -111,7 +112,9 @@
 -- SetOptions({Resolution=GRID.Resolution.FINE, ...}) is also supported; explicit Spacing/CrossSpacing cannot be combined with it.
 -- GetOptions() preserves this configuration with nil Spacing in automatic mode, so its copy can be passed back to SetOptions().
 -- GetResolutionInfo() reports the calculated spacing after a build attempt; GetDimensions() also exposes spacing after success.
--- SetResolution(nil) restores manual mode with default spacing before construction; SetOptions() can select any explicit spacing.
+-- SetResolution(100) selects manual 100-meter spacing; SetResolution(100, 150) selects rectangular 100-by-150-meter spacing.
+-- CrossSpacing cannot be combined with a preset or a hex grid. SetResolution(nil) restores manual default spacing before construction.
+-- Explicit setters keep their parameters visible; SetOptions() is available for partial configuration tables.
 -- Without a preset or explicit spacing, the existing 2000-meter default applies.
 --
 -- # Shared Grids and Cell Access
@@ -126,27 +129,39 @@
 -- GetCellAtPosition(position) returns only that indexed cell; a filtered or unbuilt position returns nil.
 -- Use FindClosestCell(position) when the nearest accepted cell is wanted instead.
 --
--- GetGridDistance(a, b), GetRing(center, radius) and GetCellsInRange(center, radius) use cell steps, not meters.
+-- GetGridDistance(a, b) and GetCellsInRange(center, maxRadius, minRadius) use cell steps, not meters.
 -- They accept owned cells or positions. Positions snap to the lattice, including outside the built area.
 -- Rectangle distances use Manhattan distance with Diagonals=false, otherwise Chebyshev distance; hexagons use cube distance.
 -- These are geometric distances on the complete lattice: missing cells and blocked connections do not increase them.
+-- Both radius limits are inclusive. MinRadius defaults to zero; equal limits select a ring.
 -- Rings and ranges return existing cells in insertion order, not in angular order, and scan only existing cells.
 --
--- GetLineCells(start, goal) returns all existing cells touched by the actual horizontal segment (a supercover).
+-- GetPolylineCells(vertices, closed) returns all existing cells touched by the actual horizontal segments (a supercover).
 -- Edge and vertex contacts are included, with a tolerance of 1e-9 cell spacings.
--- Results follow segment entry order, with cell ID breaking ties; holes remain holes, and no connection is implied.
--- GetPolygonBoundaryCells(vertices) closes the last edge and removes duplicates in first-encounter order.
--- Neither method fills a polygon or validates a navigable route. Queries never sample terrain or create cells.
+-- Results follow first-encounter order along segments, with cell ID breaking simultaneous entry ties.
+-- Closed=true adds the final edge back to the first vertex; default false leaves the polyline open.
+-- Holes remain holes; these queries do not fill polygons or validate navigable routes, sample terrain or create cells.
+-- GetRing(), GetLineCells() and GetPolygonBoundaryCells() remain compatible forwarding methods.
 -- Index, distance, ring, range, line and polygon queries require a built grid, including a successfully built empty grid.
 --
 --     local cell = grid:GetCellAtPosition(position)
 --     local nearby = grid:GetCellsInRange(position, 3)
---     local ring = grid:GetRing(position, 2)
---     local crossed = grid:GetLineCells(start, goal)
+--     local ring = grid:GetCellsInRange(position, 2, 2)
+--     local crossed = grid:GetPolylineCells({start, goal})
+--     local boundary = grid:GetPolylineCells(vertices, true)
 --
 -- # F10 Map Drawing
 --
--- DrawGrid/MarkGrid use bounded timer batches; UndrawGrid/UnmarkGrid remove only their owner's overlays.
+-- DrawGrid(Path, Options) and MarkGrid(Options) use bounded timer batches. GRID.DrawOptions documents every polygon option.
+-- Nil Path draws a regular grid which UpdateGridDrawing() can extend; a supplied path freezes a snapshot, even when empty.
+-- Drawing options use a table because styling and batching require many independent settings; other setters use explicit parameters.
+-- ClearDrawing(Kind) removes only this object's overlays and cancels pending work. Kind defaults to GRID.Drawing.ALL.
+-- GRID.Drawing.POLYGONS and GRID.Drawing.LABELS select just one overlay. Invalid selections leave existing jobs untouched.
+-- DrawGridWithPath(), UndrawGrid(), UnmarkGrid() and the old positional DrawGrid() arguments remain supported.
+--
+--     grid:DrawGrid(nil, {Color={0,0,1}, Alpha=0.8, BatchSize=25})
+--     grid:DrawGrid(path, {PathColor={0,1,0}, PathFillAlpha=0.35})
+--     grid:ClearDrawing(GRID.Drawing.POLYGONS)
 --
 -- @field #GRID
 GRID = {
@@ -159,6 +174,14 @@ GRID = {
 -- @field #string HEXAGON Regular hexagonal cells.
 ---@enum GRID.Type
 GRID.Type={RECTANGLE="rectangular", HEXAGON="hexagonal"}
+
+--- Owned F10 overlays selected by ClearDrawing().
+-- @type GRID.Drawing
+-- @field #string POLYGONS Cell polygons only, including highlighted paths.
+-- @field #string LABELS Text labels only.
+-- @field #string ALL Both polygons and labels.
+---@enum GRID.Drawing
+GRID.Drawing={POLYGONS="polygons", LABELS="labels", ALL="all"}
 
 --- Relative spacing presets based on the shorter positive initial extent.
 -- @type GRID.Resolution
@@ -231,6 +254,23 @@ GRID.version="0.1.0"
 -- @field #number Intervals Number of spacings across the reference extent: 10, 20 or 40.
 -- @field #number MaxCells Current candidate-cell budget; never increased by automatic resolution.
 -- @field #number CandidateCount Current candidate count after a successful build, including expansion; nil before construction.
+
+--- Named F10 polygon settings for DrawGrid(Path, Options). All fields are optional.
+-- Colors are RGB lists with three components in [0,1]; they are copied before drawing.
+-- @type GRID.DrawOptions
+-- @field #number Coalition All=-1, neutral=0, red=1, blue=2; default -1.
+-- @field #table Color Outline RGB color; default {0,0,1} (blue).
+-- @field #number Alpha Outline opacity in [0,1]; default 1.
+-- @field #table FillColor Fill RGB color; default Color.
+-- @field #number FillAlpha Fill opacity in [0,1]; default 0.
+-- @field #number LineType 0=none, 1=solid, 2=dashed, 3=dotted, 4=dot dash, 5=long dash, 6=two dash; default 1.
+-- @field #boolean ReadOnly Prevent manual removal; default true.
+-- @field #table PathColor Highlighted cell outline and fill RGB color; default {0,1,0} (green).
+-- @field #number PathFillAlpha Highlighted cell fill opacity in [0,1]; default 0.35.
+-- @field #number BatchSize Positive integer maximum cells per batch; default 25.
+-- @field #number Interval Positive finite simulation seconds between batches; default 0.1.
+-- @field #number MaxBatchSeconds Positive finite soft CPU budget per batch in seconds; default 0.005. Without a CPU clock only one cell is drawn per batch.
+-- @field #table GridColor Compatibility alias for Color; Color takes precedence when both are supplied.
 
 --- Cell text-marker configuration.
 -- @type GRID.MarkGridOptions
@@ -827,6 +867,7 @@ end
 
 --- Select manual center spacing and disable automatic resolution, preserving other options.
 -- The transverse spacing is supported only by rectangular grids. Changing spacing after creation is rejected.
+-- Compatibility alias for SetResolution(Spacing, CrossSpacing).
 -- @param #GRID self
 -- @param #number Spacing (Optional) Positive center spacing in meters; nil restores the 2000-meter default.
 -- @param #number CrossSpacing (Optional) Positive transverse spacing in meters; nil uses Spacing and removes any previous override.
@@ -836,12 +877,9 @@ end
 ---@return GRID
 function GRID:SetSpacing(Spacing, CrossSpacing)
 
-  local options=self:_CopyGridOptions(self.GridOptions)
-  options.Resolution=nil
-  options.Spacing=Spacing
-  options.CrossSpacing=CrossSpacing
+  assert(Spacing==nil or type(Spacing)=="number", "GRID: spacing must be a number or nil")
 
-  return self:_SetOptions(options)
+  return self:SetResolution(Spacing, CrossSpacing)
 
 end
 
@@ -965,20 +1003,32 @@ function GRID:_ResolveCorridorDimensions(Options, Distance)
 
 end
 
---- Select automatic relative spacing without changing other grid options.
--- Clears explicit Spacing and CrossSpacing. Nil selects manual mode with the default spacing of 2000 meters.
+--- Select manual center spacing or automatic relative spacing without changing other grid options.
+-- A number selects manual spacing in meters; a preset selects automatic spacing and clears manual overrides.
+-- Nil selects manual mode with the default spacing of 2000 meters. Omitted CrossSpacing clears any previous override.
 -- Changing resolution after construction is rejected; expansion always retains the original spacing.
 -- @param #GRID self
--- @param #string Level GRID.Resolution.COARSE, NORMAL or FINE; nil disables automatic resolution.
+-- @param #number Resolution (Optional) Positive finite center spacing in meters, or GRID.Resolution.COARSE, NORMAL or FINE. Nil uses 2000 meters.
+-- @param #number CrossSpacing (Optional) Positive finite transverse spacing in meters; default is the manual center spacing. Only for manual rectangular grids.
 -- @return #GRID self.
----@param Level? GRID.Resolution
+---@param Resolution? number|GRID.Resolution
+---@param CrossSpacing? number
 ---@return GRID
-function GRID:SetResolution(Level)
+function GRID:SetResolution(Resolution, CrossSpacing)
 
   local options=self:_CopyGridOptions(self.GridOptions)
-  options.Resolution=Level
-  options.Spacing=nil
-  options.CrossSpacing=nil
+
+  -- Switching modes also clears settings which no longer apply to the new resolution.
+  if Resolution==nil or type(Resolution)=="number" then
+    options.Resolution=nil
+    options.Spacing=Resolution
+    options.CrossSpacing=CrossSpacing
+  else
+    assert(CrossSpacing==nil, "GRID: automatic resolution cannot specify CrossSpacing")
+    options.Resolution=Resolution
+    options.Spacing=nil
+    options.CrossSpacing=nil
+  end
 
   return self:_SetOptions(options)
 
@@ -1832,9 +1882,19 @@ function GRID:MarkGrid(Options)
 end
 
 --- Cancel pending cell labels and remove this object's text markers. Leaves grid polygons intact.
+-- Compatibility alias for ClearDrawing(GRID.Drawing.LABELS).
 -- @param #GRID self
 -- @return #GRID self
 function GRID:UnmarkGrid()
+
+  return self:ClearDrawing(GRID.Drawing.LABELS)
+
+end
+
+--- Cancel and remove owned text labels without touching polygons.
+-- @param #GRID self
+-- @return #GRID self
+function GRID:_ClearGridLabels()
 
   local job=self.GridMarkJob
   if job then
@@ -1951,86 +2011,165 @@ end
 -- Grid drawing
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
---- Draw accepted grid cells on the F10 map, replacing the previous DrawGrid() overlay.
--- Draws one polygon per generated cell, with the original grid orientation. ASTAR manual nodes and extra endpoints are skipped.
--- Hex vertex radius is Spacing / sqrt(3); rectangular half-sizes are Spacing/2 and CrossSpacing/2.
--- Cells may extend beyond the search area or cover terrain rejected at other cell positions. The overlay does not show connectivity.
--- Does not change pathfinding. Large jobs are scheduled in batches; existing polygon removal and each batch run synchronously.
+local gridDrawOptionNames={
+  Coalition=true, Color=true, Alpha=true, FillColor=true, FillAlpha=true, LineType=true, ReadOnly=true,
+  PathColor=true, PathFillAlpha=true, BatchSize=true, Interval=true, MaxBatchSeconds=true, GridColor=true
+}
+
+--- Draw accepted grid cells, optionally highlighting a previously returned path.
+-- Nil Path creates a regular overlay which UpdateGridDrawing() can extend. A supplied path, including {}, creates a fixed snapshot.
+-- Colors and path selection are copied; later searches and grid expansions do not change a snapshot.
+-- Cells may overlap rejected terrain; polygons do not guarantee connectivity or navigability. No search is performed.
+-- For compatibility, the positional form DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions) remains accepted.
 -- @param #GRID self
--- @param #number Coalition (Optional) All=-1, Neutral=0, Red=1, Blue=2. Default -1.
--- @param #table Color (Optional) Outline RGB values in [0,1], default {0,0,1} (blue).
--- @param #number Alpha (Optional) Outline opacity in [0,1], default 1.
--- @param #table FillColor (Optional) Fill RGB values, default the outline color.
--- @param #number FillAlpha (Optional) Fill opacity in [0,1], default 0 (transparent).
--- @param #number LineType (Optional) 0=none, 1=solid, 2=dashed, 3=dotted, 4=dot dash, 5=long dash, 6=two dash. Default 1.
--- @param #boolean ReadOnly (Optional) Prevent users from removing polygons manually. Default true.
--- @param #table DrawOptions (Optional) BatchSize=25 cells, Interval=0.1 simulation seconds, MaxBatchSeconds=0.005 CPU seconds. No CPU clock means one cell per batch.
+-- @param #table Path (Optional) Ordered own cells or ASTAR path nodes associated with this grid. Nil draws without a path; exact endpoints have no polygon.
+-- @param #GRID.DrawOptions Options (Optional) Named colors, opacity, recipients and batch settings. See GRID.DrawOptions for every field and default.
 -- @return #GRID self; large overlays may still be queued. Inspect LastGridDrawResult for progress.
-function GRID:DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions)
+function GRID:DrawGrid(Path, Options, ...)
 
-  if Color==nil then
-    Color={0, 0, 1}
+  -- Old calls start with a coalition or contain positional arguments beyond the first two.
+  -- With an omitted coalition, an RGB list is distinguishable from named drawing options.
+  local legacyColor=Path==nil and type(Options)=="table"
+    and (Options[1]~=nil or Options[2]~=nil or Options[3]~=nil)
+  if select("#", ...)>0 or (Path~=nil and type(Path)~="table") or legacyColor then
+    return GRID._DrawGridLegacy(self, Path, Options, ...)
   end
 
-  if FillColor==nil then
-    FillColor=Color
-  end
-
-  if ReadOnly==nil then
-    ReadOnly=true
-  end
-
-  local style={Coalition=Coalition==nil and -1 or Coalition, Color={Color[1], Color[2], Color[3]}, Alpha=Alpha==nil and 1 or Alpha,
-    FillColor={FillColor[1], FillColor[2], FillColor[3]}, FillAlpha=FillAlpha==nil and 0 or FillAlpha,
-    LineType=LineType==nil and 1 or LineType, ReadOnly=ReadOnly}
-
-  return self:_StartGridDrawing(style, DrawOptions)
+  return GRID._DrawGrid(self, Path, Options)
 
 end
 
---- Draw a one-time debug snapshot of the current grid, highlighting the supplied path's grid cells in green.
--- Uses a previously returned path; does not run a search or enable automatic drawing. Replaces this object's previous overlay.
--- ASTAR manual nodes and exact endpoints without grid cells are skipped. An empty successful path draws the grid without highlights.
--- Later searches, grid additions and UpdateGridDrawing() do not update this snapshot. Call this method again to replace it.
--- Drawing is batched; UndrawGrid() cancels pending batches and removes the snapshot.
+--- Translate the legacy positional drawing arguments into named settings.
 -- @param #GRID self
--- @param #table Path Ordered cells, or ASTAR path nodes whose cell references belong to this grid. Nil or foreign cells are rejected.
--- @param #table Options (Optional) Coalition=-1, GridColor={0,0,1}, PathColor={0,1,0}, PathFillAlpha=0.35.
--- Also accepts BatchSize=25, Interval=0.1 and MaxBatchSeconds=0.005. Colors and the path selection are copied at call time.
--- @return #GRID self; inspect LastGridDrawResult for drawing progress.
-function GRID:DrawGridWithPath(Path, Options)
+-- @param #number Coalition Recipient coalition.
+-- @param #table Color Outline RGB color.
+-- @param #number Alpha Outline opacity.
+-- @param #table FillColor Fill RGB color.
+-- @param #number FillAlpha Fill opacity.
+-- @param #number LineType DCS line style.
+-- @param #boolean ReadOnly Prevent manual removal.
+-- @param #table DrawOptions Optional batch settings.
+-- @return #GRID self.
+function GRID:_DrawGridLegacy(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions)
 
-  local cells=self:_GetGridCells()
-  assert(type(Path)=="table", "GRID: DrawGridWithPath requires a successful path table")
+  if DrawOptions==nil then
+    DrawOptions={}
+  end
+  assert(type(DrawOptions)=="table", "GRID: drawing options must be a table")
+
+  local options={Coalition=Coalition, Color=Color, Alpha=Alpha, FillColor=FillColor, FillAlpha=FillAlpha,
+    LineType=LineType, ReadOnly=ReadOnly, BatchSize=DrawOptions.BatchSize,
+    Interval=DrawOptions.Interval, MaxBatchSeconds=DrawOptions.MaxBatchSeconds}
+
+  return GRID._DrawGrid(self, nil, options)
+
+end
+
+--- Resolve drawing style and freeze the selected cells before replacing an overlay.
+-- @param #GRID self
+-- @param #table Path Optional ordered cells or associated ASTAR nodes.
+-- @param #GRID.DrawOptions Options Optional named drawing settings.
+-- @return #GRID self.
+function GRID:_DrawGrid(Path, Options)
+
   if Options==nil then
     Options={}
   end
+  assert(type(Options)=="table", "GRID: drawing options must be a table")
+  for name in pairs(Options) do
+    assert(gridDrawOptionNames[name], "GRID: unknown drawing option '"..tostring(name).."'")
+  end
 
-  assert(type(Options)=="table", "GRID: path drawing options must be a table")
+  local pathCells
+  if Path~=nil then
+    pathCells=self:_GetPathCellIDs(Path)
+  end
 
-  -- Freeze the selected cell IDs so later path changes cannot alter this debug snapshot.
-  local pathCells={}
+  -- GridColor is retained as the old DrawGridWithPath option name; Color takes precedence.
+  local color=Options.Color
+  if color==nil then
+    color=Options.GridColor
+  end
+  if color==nil then
+    color={0, 0, 1}
+  end
+  local fillColor=Options.FillColor==nil and color or Options.FillColor
+  local pathColor=Options.PathColor==nil and {0, 1, 0} or Options.PathColor
+  local style={Coalition=Options.Coalition==nil and -1 or Options.Coalition, Color=color,
+    Alpha=Options.Alpha==nil and 1 or Options.Alpha, FillColor=fillColor,
+    FillAlpha=Options.FillAlpha==nil and 0 or Options.FillAlpha, LineType=Options.LineType==nil and 1 or Options.LineType,
+    ReadOnly=Options.ReadOnly==nil or Options.ReadOnly, PathCellIDs=pathCells,
+    PathColor=pathColor, PathFillAlpha=Options.PathFillAlpha==nil and 0.35 or Options.PathFillAlpha}
+  if pathCells then
+    style.Snapshot=true
+  end
+  GRID._ValidateDrawStyle(style)
 
-  for _, entry in ipairs(Path) do
-    -- Search-only endpoints belong to this grid but have no polygon to highlight.
+  -- Pending batches must not retain mutable caller-owned color tables.
+  style.Color={color[1], color[2], color[3]}
+  style.FillColor={fillColor[1], fillColor[2], fillColor[3]}
+  style.PathColor={pathColor[1], pathColor[2], pathColor[3]}
+
+  return self:_StartGridDrawing(style, Options)
+
+end
+
+--- Collect IDs for a fixed path overlay, excluding search-only endpoints.
+-- @param #GRID self
+-- @param #table Path Sequential own cells or associated ASTAR path nodes.
+-- @return #table Selected cell IDs mapped to true.
+function GRID:_GetPathCellIDs(Path)
+
+  local cells=self:_GetGridCells()
+  local count=GRID._PathEntryCount(Path)
+  local selected={}
+
+  for i=1,count do
+    local entry=Path[i]
+    -- Exact search endpoints belong to this grid but have no polygon to highlight.
     if not (type(entry)=="table" and entry.grid==self and not entry.cell) then
       if type(entry)=="table" and entry.cell and cells[entry.cell.id]==entry.cell then
         entry=entry.cell
       end
-      assert(type(entry)=="table" and cells[entry.id]==entry, "GRID: path cells must belong to this grid or drawing view")
-      pathCells[entry.id]=true
+      assert(type(entry)=="table" and cells[entry.id]==entry, "GRID: path cells must belong to this grid")
+      selected[entry.id]=true
     end
   end
 
-  local color=Options.GridColor==nil and {0, 0, 1} or Options.GridColor
-  local pathColor=Options.PathColor==nil and {0, 1, 0} or Options.PathColor
-  local fillAlpha=Options.PathFillAlpha==nil and 0.35 or Options.PathFillAlpha
-  assert(type(fillAlpha)=="number" and fillAlpha>=0 and fillAlpha<=1, "GRID: PathFillAlpha must be between zero and one")
-  local style={Coalition=Options.Coalition==nil and -1 or Options.Coalition, Color={color[1], color[2], color[3]}, Alpha=1,
-    FillColor={color[1], color[2], color[3]}, FillAlpha=0, LineType=1, ReadOnly=true,
-    Snapshot=true, PathCellIDs=pathCells, PathColor={pathColor[1], pathColor[2], pathColor[3]}, PathFillAlpha=fillAlpha}
+  return selected
 
-  return self:_StartGridDrawing(style, Options)
+end
+
+--- Validate a sequential path, preserving an empty successful path.
+-- @param #table Path Ordered cells or search nodes.
+-- @return #number Entry count.
+function GRID._PathEntryCount(Path)
+
+  assert(type(Path)=="table", "GRID: path must be a successful path table")
+  local count=0
+  for index in pairs(Path) do
+    assert(type(index)=="number" and index>=1 and index==math.floor(index), "GRID: invalid path index")
+    count=count+1
+  end
+  for i=1,count do
+    assert(Path[i]~=nil, "GRID: path must not contain gaps")
+  end
+
+  return count
+
+end
+
+--- Draw a fixed path snapshot. Compatibility alias for DrawGrid(Path, Options).
+-- GridColor remains accepted as an alias for Options.Color. Nil Path is rejected; {} is a valid empty path.
+-- @param #GRID self
+-- @param #table Path Ordered own cells or ASTAR path nodes associated with this grid.
+-- @param #GRID.DrawOptions Options (Optional) Drawing style and batch settings.
+-- @return #GRID self; inspect LastGridDrawResult for progress.
+function GRID:DrawGridWithPath(Path, Options)
+
+  assert(type(Path)=="table", "GRID: DrawGridWithPath requires a successful path table")
+
+  return self:DrawGrid(Path, Options)
 
 end
 
@@ -2051,6 +2190,10 @@ function GRID._ValidateDrawStyle(Style)
   color(Style.FillColor)
   if Style.PathColor then
     color(Style.PathColor)
+  end
+  if Style.PathFillAlpha~=nil then
+    assert(type(Style.PathFillAlpha)=="number" and Style.PathFillAlpha>=0 and Style.PathFillAlpha<=1,
+      "GRID: PathFillAlpha must be between zero and one")
   end
 
   for _,name in ipairs({"Alpha", "FillAlpha"}) do
@@ -2300,9 +2443,43 @@ end
 
 --- Cancel pending drawing and remove polygons created by DrawGrid() without changing the grid or deleting other F10 marks.
 -- Removal is synchronous. Safe to call repeatedly or before drawing. Does not remove MarkGrid text markers.
+-- Compatibility alias for ClearDrawing(GRID.Drawing.POLYGONS).
 -- @param #GRID self
 -- @return #GRID self
 function GRID:UndrawGrid()
+
+  return self:ClearDrawing(GRID.Drawing.POLYGONS)
+
+end
+
+--- Cancel pending work and remove the selected overlays owned by this object.
+-- Other GRID/ASTAR views and unrelated F10 marks are untouched. Safe before drawing and on repeated calls.
+-- @param #GRID self
+-- @param #string Kind (Optional) GRID.Drawing.POLYGONS, GRID.Drawing.LABELS or GRID.Drawing.ALL; default ALL.
+-- @return #GRID self
+function GRID:ClearDrawing(Kind)
+
+  if Kind==nil then
+    Kind=GRID.Drawing.ALL
+  end
+  assert(Kind==GRID.Drawing.POLYGONS or Kind==GRID.Drawing.LABELS or Kind==GRID.Drawing.ALL,
+    "GRID: Kind must be GRID.Drawing.POLYGONS, LABELS or ALL")
+
+  if Kind==GRID.Drawing.POLYGONS or Kind==GRID.Drawing.ALL then
+    GRID._ClearGridPolygons(self)
+  end
+  if Kind==GRID.Drawing.LABELS or Kind==GRID.Drawing.ALL then
+    GRID._ClearGridLabels(self)
+  end
+
+  return self
+
+end
+
+--- Cancel and remove owned cell polygons without touching text labels.
+-- @param #GRID self
+-- @return #GRID self
+function GRID:_ClearGridPolygons()
 
   local job=self.GridDrawJob
   if job then
@@ -2758,51 +2935,49 @@ function GRID:GetGridDistance(Start, Goal)
 
 end
 
---- Select existing cells by complete-lattice distance, with work bounded by the existing cell count.
--- @param #GRID self
--- @param #table Center Owned cell or position; positions snap to lattice centers.
--- @param #number Radius Non-negative integer distance in cell steps.
--- @param #boolean Ring True selects exactly Radius, false selects distances up to Radius.
--- @return #table Independent list of read-only cells in insertion order.
-function GRID:_GetCellsByDistance(Center, Radius, Ring)
-
-  local a, b=self:PositionToIndex(Center)
-  assert(type(Radius)=="number" and Radius>=0 and self:_ValidIndexRange(0, Radius)
-    and Radius==math.floor(Radius), "GRID: radius must be a non-negative safe integer")
-
-  -- Scan existing cells rather than empty lattice positions; work stays bounded for large radii.
-  local result={}
-
-  for _, cell in ipairs(self.CellList) do
-    local distance=self:_IndexDistance(a, b, cell.q or cell.i, cell.r or cell.j)
-    if (Ring and distance==Radius) or (not Ring and distance<=Radius) then
-      result[#result+1]=cell
-    end
-  end
-
-  return result
-
-end
-
 --- Get existing cells exactly Radius lattice steps from a center, ignoring obstacles and gaps.
+-- Compatibility alias for GetCellsInRange(Center, Radius, Radius).
 -- @param #GRID self
 -- @param #table Center Owned cell or position (VECTOR, COORDINATE, Vec2 or Vec3).
 -- @param #number Radius Non-negative integer distance in cell steps; zero selects the center cell if present.
 -- @return #table Independent list of read-only cells in insertion order, not angular order.
 function GRID:GetRing(Center, Radius)
 
-  return self:_GetCellsByDistance(Center, Radius, true)
+  return self:GetCellsInRange(Center, Radius, Radius)
 
 end
 
---- Get existing cells within Radius lattice steps, including the center if present.
+--- Get existing cells within an inclusive range of lattice distances, ignoring obstacles and gaps.
+-- Omit MinRadius for a filled range; use equal radii for a ring. Work is bounded by the existing cell count.
 -- @param #GRID self
 -- @param #table Center Owned cell or position (VECTOR, COORDINATE, Vec2 or Vec3).
--- @param #number Radius Non-negative integer distance in cell steps, not meters.
+-- @param #number MaxRadius Non-negative safe integer maximum distance in cell steps, not meters.
+-- @param #number MinRadius (Optional) Non-negative safe integer minimum distance, at most MaxRadius; default 0.
 -- @return #table Independent list of read-only cells in insertion order; obstacles do not affect distance.
-function GRID:GetCellsInRange(Center, Radius)
+function GRID:GetCellsInRange(Center, MaxRadius, MinRadius)
 
-  return self:_GetCellsByDistance(Center, Radius, false)
+  local a, b=self:PositionToIndex(Center)
+  if MinRadius==nil then
+    MinRadius=0
+  end
+
+  assert(type(MaxRadius)=="number" and MaxRadius>=0 and self:_ValidIndexRange(0, MaxRadius)
+    and MaxRadius==math.floor(MaxRadius), "GRID: MaxRadius must be a non-negative safe integer")
+  assert(type(MinRadius)=="number" and MinRadius>=0 and self:_ValidIndexRange(0, MinRadius)
+    and MinRadius==math.floor(MinRadius), "GRID: MinRadius must be a non-negative safe integer")
+  assert(MinRadius<=MaxRadius, "GRID: MinRadius must not exceed MaxRadius")
+
+  -- Scan existing cells rather than empty lattice positions, even for very large radii.
+  local result={}
+
+  for _, cell in ipairs(self.CellList) do
+    local distance=self:_IndexDistance(a, b, cell.q or cell.i, cell.r or cell.j)
+    if distance>=MinRadius and distance<=MaxRadius then
+      result[#result+1]=cell
+    end
+  end
+
+  return result
 
 end
 
@@ -2854,13 +3029,25 @@ function GRID:_LineCellEntry(Cell, Start, Goal)
 end
 
 --- Get all existing cells touched by an open horizontal segment, including edge and vertex contacts.
+-- Compatibility alias for GetPolylineCells({Start, Goal}).
+-- @param #GRID self
+-- @param #table Start Owned cell or position (VECTOR, COORDINATE, Vec2 or Vec3).
+-- @param #table Goal Owned cell or position; coincident endpoints select all cells touching that point.
+-- @return #table Read-only cells in segment entry order, ties by ID; gaps are omitted and connectivity is not guaranteed.
+function GRID:GetLineCells(Start, Goal)
+
+  return self:GetPolylineCells({Start, Goal})
+
+end
+
+--- Intersect one horizontal segment with existing cells.
 -- Uses a supercover with 1e-9 spacing tolerance, not a center-to-center digital line.
 -- Work is bounded by existing cells, even when endpoints are far outside the built area.
 -- @param #GRID self
 -- @param #table Start Owned cell or position (VECTOR, COORDINATE, Vec2 or Vec3).
 -- @param #table Goal Owned cell or position; coincident endpoints select all cells touching that point.
 -- @return #table Read-only cells in segment entry order, ties by ID; gaps are omitted and connectivity is not guaranteed.
-function GRID:GetLineCells(Start, Goal)
+function GRID:_GetLineCells(Start, Goal)
 
   local first, last=self:_QueryPosition(Start), self:_QueryPosition(Goal)
   self:PositionToIndex(first)
@@ -2893,24 +3080,50 @@ function GRID:GetLineCells(Start, Goal)
 end
 
 --- Get cells touched by a closed polygon boundary; the interior is not filled.
--- Each edge uses GetLineCells(). Repeated vertices and an explicitly repeated closing vertex are allowed.
+-- Compatibility alias for GetPolylineCells(Vertices, true).
 -- @param #GRID self
 -- @param #table Vertices Ordered list of at least three owned cells or positions (VECTOR, COORDINATE, Vec2 or Vec3).
 -- @return #table Independent list of read-only cells, deduplicated in first-encounter order around the boundary.
 function GRID:GetPolygonBoundaryCells(Vertices)
 
-  assert(type(Vertices)=="table" and #Vertices>=3, "GRID: polygon boundary requires at least three vertices")
+  return self:GetPolylineCells(Vertices, true)
+
+end
+
+--- Get existing cells touched by an open polyline or closed polygon boundary, without filling the interior.
+-- Uses actual horizontal segments, including edge and vertex contacts with 1e-9 spacing tolerance.
+-- Repeated vertices and an explicitly repeated closing vertex are allowed. Gaps remain gaps; no connection is implied.
+-- Requires a built grid and performs no terrain queries. Work per segment is bounded by the existing cell count.
+-- @param #GRID self
+-- @param #table Vertices Sequential list of at least two owned cells or positions (VECTOR, COORDINATE, Vec2 or Vec3); at least three for a closed boundary. Inputs are not changed.
+-- @param #boolean Closed (Optional) Also connect the last vertex to the first; default false.
+-- @return #table Independent list of read-only cells, deduplicated in first-encounter order along the segments; simultaneous contacts are ordered by cell ID.
+function GRID:GetPolylineCells(Vertices, Closed)
+
+  assert(type(Vertices)=="table", "GRID: polyline vertices must be a sequential list")
+  assert(Closed==nil or type(Closed)=="boolean", "GRID: Closed must be a boolean")
+
+  -- Validate the complete list before traversal; sparse lists must not silently omit edges.
+  local vertexCount=0
+  for index in pairs(Vertices) do
+    assert(type(index)=="number" and index>=1 and index==math.floor(index), "GRID: invalid vertex index")
+    vertexCount=vertexCount+1
+  end
+  assert(vertexCount>=(Closed and 3 or 2), "GRID: a polyline needs two vertices; a closed boundary needs three")
   local positions={}
 
-  for i, vertex in ipairs(Vertices) do
-    positions[i]=self:_QueryPosition(vertex)
+  for i=1,vertexCount do
+    assert(Vertices[i]~=nil, "GRID: polyline vertices must not contain gaps")
+    positions[i]=self:_QueryPosition(Vertices[i])
   end
 
-  -- Close the last edge and emit shared corner cells only once, in first-encounter order.
+  -- Close only when requested and emit shared corner cells on their first encounter.
   local result, seen={}, {}
+  local segmentCount=Closed and vertexCount or vertexCount-1
 
-  for i, position in ipairs(positions) do
-    for _, cell in ipairs(self:GetLineCells(position, positions[i%#positions+1])) do
+  for i=1,segmentCount do
+    local following=i%vertexCount+1
+    for _, cell in ipairs(self:_GetLineCells(positions[i], positions[following])) do
       if not seen[cell.id] then
         seen[cell.id]=true
         result[#result+1]=cell
