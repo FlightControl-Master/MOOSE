@@ -3999,5 +3999,431 @@ test("FindPath reports unavailable CPU timing without substituting simulation ti
   assert(ok,err)
 end)
 
+local function lazySearch(kind,goal)
+  local a=ASTAR:New(kind or GRID.Type.HEXAGON)
+  a:SetEndpoints(coord(0),goal or coord(2000))
+  a:GetGrid():SetResolution(100):SetMaxCells(2000)
+  return a
+end
+
+local function finishLazy(a)
+  local path,report
+  local steps=0
+  repeat
+    path,report=a:StepSearch(3,1)
+    steps=steps+1
+    assert(steps<10000,"Lazy search failed to terminate")
+  until report.Status~="running"
+  return path,report
+end
+
+local function pathCost(a,path)
+  local cost=0
+  for index=2,#path do
+    cost=cost+a:_TravelCost(path[index-1],path[index])
+  end
+  return cost
+end
+
+test("LAZY creates a narrow search footprint without an enclosing grid or connectivity flood",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local a=lazySearch(kind)
+    a._BuildGridLinks=function() error("Unexpected full graph build") end
+    a._HasPotentialPath=function() error("Unexpected connectivity flood") end
+    local path,report=a:FindPath(ASTAR.SearchMode.LAZY)
+    assert(path)
+    near(path[1].vector.x,0) near(path[#path].vector.x,2000)
+    equal(report.Mode,ASTAR.SearchMode.LAZY)
+    equal(report.Status,"complete") equal(report.StopReason,"path_found")
+    equal(report.FailureReason,nil) equal(report.Width,nil)
+    equal(report.Spacing,100)
+    assert(report.CandidateCells<100,"Open water should not require a rectangular area")
+    equal(report.CandidateCells,a:GetGrid():GetCandidateCount())
+    equal(report.ExpandedNodes,20)
+    near(pathCost(a,path),2000)
+  end
+end)
+
+test("LAZY goes around terrain barriers and matches fixed-grid path costs",function()
+  land.surfaceAt=function(p)
+    if p.x>=400 and p.x<=600 and math.abs(p.z)<300 then
+      return land.SurfaceType.LAND
+    end
+    return land.SurfaceType.WATER
+  end
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local a=lazySearch(kind,coord(1000))
+    a:GetGrid():SetValidSurfaceTypes(land.SurfaceType.WATER)
+    a:SetValidNeighbourSurface(25)
+    local path=assert(a:FindPath(ASTAR.SearchMode.LAZY))
+    local fixed=lazySearch(kind,coord(1000))
+    fixed:GetGrid():SetCorridor(1600,400):SetValidSurfaceTypes(land.SurfaceType.WATER)
+    fixed:SetValidNeighbourSurface(25)
+    assert(fixed:BuildGrid())
+    local expected=assert(fixed:FindPath())
+    near(pathCost(a,path),pathCost(fixed,expected))
+    for index=2,#path do
+      assert(a:GetGrid():CheckSurfacePath(path[index-1].vector,path[index].vector,25))
+    end
+  end
+end)
+
+test("LAZY keeps alternatives when reaching the goal requires first moving away",function()
+  land.surfaceAt=function(p)
+    local wall=p.x>=200 and p.x<=400 and math.abs(p.z)<=500
+    local sides=p.x>=-200 and p.x<=400 and math.abs(p.z)>=400 and math.abs(p.z)<=600
+    return (wall or sides) and land.SurfaceType.LAND or land.SurfaceType.WATER
+  end
+  local a=lazySearch(GRID.Type.RECTANGLE,coord(1000))
+  a:GetGrid():SetValidSurfaceTypes(land.SurfaceType.WATER)
+  a:SetValidNeighbourSurface(25)
+  local path=assert(a:FindPath(ASTAR.SearchMode.LAZY))
+  local wentBack=false
+  for _,node in ipairs(path) do
+    wentBack=wentBack or node.vector.x < -200
+  end
+  assert(wentBack,"The only exit from the U-shaped enclosure is behind the start")
+end)
+
+test("LAZY preserves exact endpoints, endpoint exclusions and empty successes",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local a=lazySearch(kind,coord(1037))
+    local path=assert(a:FindPath(ASTAR.SearchMode.LAZY))
+    near(path[#path].vector.x,1037)
+    a:SetEndpoints(coord(37,21),coord(844,-36))
+    path=assert(a:FindPath(ASTAR.SearchMode.LAZY))
+    near(path[1].vector.x,37) near(path[1].vector.z,21)
+    near(path[#path].vector.x,844) near(path[#path].vector.z,-36)
+    local fullCount=#path
+    path=assert(a:FindPath(ASTAR.SearchMode.LAZY,true,true))
+    equal(#path,fullCount-2)
+    a:SetEndpoints(coord(37,21),coord(37,21))
+    local report
+    path,report=a:FindPath(ASTAR.SearchMode.LAZY,true,true)
+    equal(#path,0) equal(report.StopReason,"path_found")
+  end
+end)
+
+test("LAZY uses 3D endpoint attachment costs and does not invent direct manual-node links",function()
+  local a=lazySearch(GRID.Type.RECTANGLE,coord(100,0,80))
+  a:SetEndpoints(coord(0,0,50),coord(100,0,80)):SetCostMetric(ASTAR.CostMetric.DISTANCE_3D)
+  local path=assert(a:FindPath(ASTAR.SearchMode.LAZY))
+  near(path[1].vector.y,50) near(path[#path].vector.y,80)
+  assert(#path>=3)
+  for index=2,#path do
+    assert(path[index-1].cell or path[index].cell)
+  end
+end)
+
+test("LAZY reports resource exhaustion separately from a blocked reachable component",function()
+  local search=ASTAR:New():SetEndpoints(coord(0),coord(2000))
+  search:GetGrid():SetResolution(100):SetMaxCells(2)
+  local path,report=search:FindPath(ASTAR.SearchMode.LAZY)
+  equal(path,nil) equal(report.StopReason,"cell_limit") equal(report.FailureReason,nil)
+  equal(report.CandidateCells,2) equal(report.BudgetLimited,true)
+  equal(search.LastPathFailure,nil)
+  search:GetGrid():SetMaxCells(2000)
+  assert(search:FindPath(ASTAR.SearchMode.LAZY))
+
+  land.surfaceAt=function(p)
+    return (p.x==0 and p.z==0 or p.x==2000 and p.z==0) and land.SurfaceType.WATER or land.SurfaceType.LAND
+  end
+  search=lazySearch():SetValidSurfaceTypes(land.SurfaceType.WATER)
+  path,report=search:FindPath(ASTAR.SearchMode.LAZY)
+  equal(path,nil) equal(report.StopReason,"search_failed") equal(report.FailureReason,"connections_blocked")
+  equal(report.BudgetLimited,false)
+end)
+
+test("LAZY handles missing and surface-rejected endpoints without fabricating paths",function()
+  local a=ASTAR:New()
+  local path,report=a:FindPath(ASTAR.SearchMode.LAZY)
+  equal(path,nil) equal(report.FailureReason,"missing_coordinates")
+  equal(a:GetGrid().GridBuilt,nil)
+  for _,which in ipairs({"start","goal"}) do
+    land.surfaceAt=function(p)
+      local blocked=which=="start" and p.x==0 or which=="goal" and p.x==2000
+      return blocked and land.SurfaceType.LAND or land.SurfaceType.WATER
+    end
+    a=lazySearch():SetValidSurfaceTypes(land.SurfaceType.WATER)
+    path,report=a:FindPath(ASTAR.SearchMode.LAZY)
+    equal(path,nil) equal(report.FailureReason,which=="start" and "no_start_node" or "no_goal_node")
+  end
+end)
+
+test("LAZY depth costs prefer a deeper detour without weakening the minimum",function()
+  local terrain=depthTerrain()
+  terrain.depthAt=function(p)
+    return p.x>=200 and p.x<=800 and math.abs(p.y)<200 and 5 or 20
+  end
+  terrain.makeProfile=function(first,last)
+    local points={}
+    for index=0,8 do
+      local fraction=index/8
+      local x=first.x+(last.x-first.x)*fraction
+      local z=first.z+(last.z-first.z)*fraction
+      points[#points+1]={x=x,y=-terrain.depthAt({x=x,y=z}),z=z}
+    end
+    return points
+  end
+  local a=lazySearch(GRID.Type.HEXAGON,coord(1000))
+  a:SetValidNeighbourDepth(3.5,50):SetCostDepth(15,0)
+  local direct=assert(a:FindPath(ASTAR.SearchMode.LAZY))
+  local directDistance=pathCost(a,direct)
+  a:SetCostDepth(15,10)
+  local directWeighted=pathCost(a,direct)
+  local detour=assert(a:FindPath(ASTAR.SearchMode.LAZY))
+  assert(pathCost(a,detour)<directWeighted)
+  local detourDistance=0
+  for index=2,#detour do
+    assert(ASTAR.Depth(detour[index-1],detour[index],3.5,50))
+    detourDistance=detourDistance+ASTAR.Dist2D(detour[index-1],detour[index])
+  end
+  assert(detourDistance>directDistance)
+end)
+
+test("LAZY supports symmetric custom costs and infinite blocked edges",function()
+  local a=lazySearch(GRID.Type.RECTANGLE,coord(600))
+  a:SetCostFunction(function(first,last)
+    if first.vector.z==0 and last.vector.z==0 then
+      return math.huge
+    end
+    return ASTAR.Dist2D(first,last)
+  end)
+  local path=assert(a:FindPath(ASTAR.SearchMode.LAZY))
+  assert(#path>2)
+  assert(pathCost(a,path)>600)
+end)
+
+test("resumable LAZY search keeps work bounded and completed reports stable",function()
+  local a=lazySearch():StartSearch()
+  equal(a:GetGrid():GetCandidateCount(),2)
+  local path,report=a:StepSearch(1,1)
+  equal(path,nil) equal(report.Status,"running") equal(report.ExpandedNodes,1)
+  local sameReport=report
+  path,report=finishLazy(a)
+  assert(path) equal(report,sameReport)
+  local elapsed=report.SearchCPUSeconds
+  local samples=report.CandidateCells
+  local repeated,repeatedReport=a:StepSearch()
+  equal(repeated,path) equal(repeatedReport,report)
+  equal(report.SearchCPUSeconds,elapsed) equal(report.CandidateCells,samples)
+  equal(report.Attempts[1].CPUSeconds,elapsed)
+  equal(a.LastSearchTiming.CPUSeconds,elapsed)
+  equal(a.LastSearchTiming.Nodes,report.Nodes)
+end)
+
+test("resumable LAZY search checks CPU budgets between edges and excludes idle time",function()
+  local originalClock=os.clock
+  local now=0
+  os.clock=function() return now end
+  local ok,err=pcall(function()
+    local a=lazySearch(GRID.Type.HEXAGON,coord(500))
+    local calls=0
+    a:SetValidNeighbourFunction(function()
+      calls=calls+1
+      now=now+0.001
+      return true
+    end):StartSearch()
+    local path,report=a:StepSearch(100,0.0015)
+    equal(path,nil) equal(report.Status,"running")
+    equal(calls,2) near(report.SearchCPUSeconds,0.002)
+    now=now+1000
+    path,report=finishLazy(a)
+    assert(path)
+    near(report.SearchCPUSeconds,calls*0.001)
+  end)
+  os.clock=originalClock
+  assert(ok,err)
+end)
+
+test("resumable LAZY search works without a CPU clock",function()
+  local originalClock=os.clock
+  os.clock=nil
+  local ok,err=pcall(function()
+    local a=lazySearch():StartSearch()
+    local path,report=a:StepSearch(1)
+    equal(report.ExpandedNodes,1) equal(report.SearchCPUSeconds,nil)
+    path,report=finishLazy(a)
+    assert(path) equal(report.SearchCPUSeconds,nil)
+  end)
+  os.clock=originalClock
+  assert(ok,err)
+end)
+
+test("cancellation and replacement searches retain separate result lifetimes",function()
+  local a=lazySearch():StartSearch()
+  local previous=a.LastSearchResult
+  a:StepSearch(1)
+  a:CancelSearch()
+  equal(previous.Status,"cancelled") equal(previous.StopReason,"cancelled")
+  local elapsed=previous.SearchCPUSeconds
+  local path,report=a:StepSearch()
+  equal(path,nil) equal(report,previous) equal(report.SearchCPUSeconds,elapsed)
+  a:StartSearch()
+  local replaced=a.LastSearchResult
+  assert(replaced~=previous)
+  a:StartSearch()
+  equal(replaced.StopReason,"cancelled")
+  path,report=finishLazy(a)
+  assert(path) equal(report.StopReason,"path_found")
+  equal(previous.StopReason,"cancelled") equal(replaced.StopReason,"cancelled")
+end)
+
+test("configuration changes cancel a pending LAZY search before further exploration",function()
+  local changes={
+    function(a) a:SetEndpoints(coord(0),coord(800)) end,
+    function(a) a:SetCostMetric(ASTAR.CostMetric.DISTANCE_3D) end,
+    function(a) a:SetValidNeighbourDistance(100) end,
+    function(a) a:GetGrid():SetDiagonals(false) end,
+    function(a) a:GetGrid():SetMaxCells(1000) end,
+    function(a) a:GetGrid():GetOrCreateCell(20,20) end,
+  }
+  for _,change in ipairs(changes) do
+    local a=lazySearch(GRID.Type.RECTANGLE):StartSearch()
+    a:StepSearch(1)
+    change(a)
+    local path,report=a:StepSearch()
+    equal(path,nil) equal(report.Status,"cancelled") equal(report.StopReason,"search_changed")
+    equal(report.FailureReason,nil)
+    assert(a:FindPath(ASTAR.SearchMode.LAZY))
+  end
+end)
+
+test("LAZY callbacks can cancel or replace a search without resuming stale state",function()
+  for _,replace in ipairs({false,true}) do
+    local a=lazySearch()
+    local invoked=false
+    a:SetValidNeighbourFunction(function()
+      if not invoked then
+        invoked=true
+        if replace then
+          a:StartSearch()
+        else
+          a:CancelSearch()
+        end
+      end
+      return true
+    end):StartSearch()
+    local original=a.LastSearchResult
+    local path,report=a:StepSearch()
+    equal(path,nil) equal(report,original) equal(report.Status,"cancelled")
+    if replace then
+      assert(a.LastSearchResult~=original)
+      assert(finishLazy(a))
+    end
+  end
+end)
+
+test("LAZY validates its API and preserves programming errors",function()
+  local a=lazySearch():StartSearch()
+  assert(not pcall(function() a:FindPath(ASTAR.SearchMode.EXPAND) end))
+  equal(a.LastSearchResult.Status,"running")
+  for _,bad in ipairs({false,0,-1,math.huge,0/0,"1"}) do
+    assert(not pcall(function() a:StepSearch(bad) end))
+    assert(not pcall(function() a:StepSearch(1,bad) end))
+    equal(a.LastSearchResult.Status,"running")
+  end
+  assert(not pcall(function() a:StartSearch("bad") end))
+  a:CancelSearch()
+  a:SetValidNeighbourFunction(function() error("test callback failure") end):StartSearch()
+  local ok,err=pcall(function() a:StepSearch() end)
+  assert(not ok and tostring(err):find("test callback failure",1,true))
+  a=lazySearch()
+  a:AddNodeFromCoordinate(coord(300))
+  assert(not pcall(function() a:FindPath(ASTAR.SearchMode.LAZY) end))
+  a=lazySearch()
+  a:GetGrid():SetCorridor(1000,200)
+  assert(a:BuildGrid())
+  assert(not pcall(function() a:FindPath(ASTAR.SearchMode.LAZY) end))
+end)
+
+test("LAZY drawings and fixed searches reuse only the already materialized graph",function()
+  local a=lazySearch()
+  local path=assert(a:FindPath(ASTAR.SearchMode.LAZY))
+  local samples=a:GetGrid():GetCandidateCount()
+  a:DrawGrid(path)
+  flushTimers()
+  equal(a.LastGridDrawResult.Status,"complete")
+  assert(a:HasPotentialPath())
+  assert(a:FindPath())
+  equal(a:GetGrid():GetCandidateCount(),samples)
+  assert(not pcall(function() a:FindPath(ASTAR.SearchMode.EXPAND) end))
+end)
+
+test("LAZY samples are reused while separate searches keep independent nodes",function()
+  local first=lazySearch()
+  assert(first:FindPath(ASTAR.SearchMode.LAZY))
+  local samples=first:GetGrid():GetCandidateCount()
+  local second=ASTAR:New():SetGrid(first:GetGrid()):SetEndpoints(coord(0),coord(2000))
+  assert(second:FindPath(ASTAR.SearchMode.LAZY))
+  equal(first:GetGrid():GetCandidateCount(),samples)
+  local cell=first:GetGrid():GetCells()[1]
+  assert(first._CellNodes[cell.id]~=second._CellNodes[cell.id])
+  first:StartSearch()
+  second:SetEndpoints(coord(0),coord(2000,1000)):StartSearch()
+  local path,report=first:StepSearch()
+  equal(path,nil) equal(report.StopReason,"search_changed")
+  assert(finishLazy(second))
+end)
+
+test("LAZY sparse nodes retain manual endpoint validity even when nearby cells were filtered",function()
+  local grid=GRID:New("Sparse",GRID.Type.RECTANGLE):SetResolution(100)
+  land.surfaceAt=function(p)
+    return p.x==37 and p.z==21 and land.SurfaceType.WATER or land.SurfaceType.LAND
+  end
+  grid:SetValidSurfaceTypes(land.SurfaceType.WATER):CreateSparse(coord(0),coord(1000))
+  local a=ASTAR:New():SetGrid(grid):SetEndpoints(coord(37,21),coord(37,21))
+  local path=assert(a:FindPath(ASTAR.SearchMode.LAZY))
+  equal(#path,1) near(path[1].vector.x,37) near(path[1].vector.z,21)
+  equal(grid:GetCellCount(),0)
+end)
+
+test("LAZY detects configuration changes inside callbacks and does not cache stale rule results",function()
+  local a=lazySearch()
+  local updated=false
+  a:SetCostFunction(function(first,last)
+    if not updated then
+      updated=true
+      a:SetCostFunction(function(u,v) return 2*ASTAR.Dist2D(u,v) end)
+    end
+    return 0
+  end):StartSearch()
+  local path,report=a:StepSearch()
+  equal(path,nil) equal(report.StopReason,"search_changed")
+  path=assert(a:FindPath(ASTAR.SearchMode.LAZY))
+  near(pathCost(a,path),4000)
+
+  a=lazySearch(GRID.Type.RECTANGLE,coord(100))
+  a:SetValidNeighbourFunction(function()
+    a:SetValidNeighbourFunction(function() return false end)
+    return true
+  end):StartSearch()
+  path,report=a:StepSearch()
+  equal(report.StopReason,"search_changed")
+  path,report=a:FindPath(ASTAR.SearchMode.LAZY)
+  equal(path,nil) equal(report.FailureReason,"connections_blocked")
+end)
+
+test("LAZY preserves four-neighbour topology and exact attachments on anisotropic rectangular grids",function()
+  local a=ASTAR:New(GRID.Type.RECTANGLE):SetEndpoints(coord(0),coord(1000))
+  a:GetGrid():SetResolution(100,250):SetDiagonals(false)
+  assert(a:FindPath(ASTAR.SearchMode.LAZY))
+  a:SetEndpoints(coord(37,21),coord(844,-36))
+  local path=assert(a:FindPath(ASTAR.SearchMode.LAZY))
+
+  local fixed=ASTAR:New(GRID.Type.RECTANGLE):SetEndpoints(coord(0),coord(1000))
+  fixed:GetGrid():SetResolution(100,250):SetDiagonals(false):SetCorridor(2000,500)
+  assert(fixed:BuildGrid())
+  fixed:SetEndpoints(coord(37,21),coord(844,-36))
+  near(pathCost(a,path),pathCost(fixed,assert(fixed:FindPath())))
+
+  for index=2,#path do
+    local first,last=path[index-1],path[index]
+    if first.cell and last.cell then
+      equal(math.abs(first.i-last.i)+math.abs(first.j-last.j),1)
+    end
+  end
+end)
+
 print(string.format("%d passed, %d failed", passed, failed))
 if failed > 0 then os.exit(1) end

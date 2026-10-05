@@ -5,6 +5,7 @@
 --    * Rectangular and hexagonal cell geometry.
 --    * Grid creation from corridor bounds or MOOSE zones.
 --    * Indexed neighbours and bounded grid expansion.
+--    * Sparse lattices with cached, on-demand surface sampling.
 --    * Position lookup, grid distances, rings, ranges and intersected cell boundaries.
 --    * Shared grids with independent ASTAR searches.
 --    * Batched grid drawings and point markers on the F10 map.
@@ -26,6 +27,7 @@
 -- @field #number Version Monotonically increasing geometry/filter version; option-only budget changes do not increment it.
 -- @field #number GridCandidateCount Candidate count before zone and surface filters.
 -- @field #boolean GridBuilt True after successful construction, including an empty filtered grid.
+-- @field #boolean Sparse True after CreateSparse(); cells may be generated on demand without area bounds.
 -- @extends Core.Base#BASE
 
 --- # The GRID Concept
@@ -122,6 +124,29 @@
 -- Sharing a grid shares its extensions and options. Separate ASTAR objects own separate search nodes, endpoints, caches and overlays.
 -- Cell objects returned by getters are read-only references: do not modify their vectors, IDs, indices or metadata.
 --
+-- # Sparse Grids
+--
+-- CreateSparse(start, goal) fixes an initially empty lattice without allocating a surrounding rectangle or sampling terrain.
+-- Both geometries are supported. Start fixes the origin; the start-goal direction fixes the orientation for the grid's lifetime.
+-- Configure resolution, surface types and MaxCells before creation. Width, Margin and expansion settings are unused.
+-- Automatic resolution uses horizontal endpoint distance; coincident endpoints need manual spacing. The default is still 2000 meters.
+--
+--     local grid = GRID:New("Sparse Sea", GRID.Type.HEXAGON)
+--     grid:SetResolution(200):SetMaxCells(5000)
+--     grid:SetValidSurfaceTypes({land.SurfaceType.WATER, land.SurfaceType.SHALLOW_WATER})
+--     grid:CreateSparse(start, goal)
+--     local cell, reason = grid:GetOrCreateCell(0, 0)
+--
+-- GetOrCreateCell(first, second) uses rectangular i/j or hex q/r indices. Each unknown position is sampled at most once.
+-- Accepted cells return the same read-only object on later calls; filtered positions return nil, "filtered" without resampling.
+-- Both accepted and filtered samples consume MaxCells. A new position beyond that limit returns nil, "cell_limit" and remains unknown.
+-- Raising MaxCells permits further samples; lowering it never removes existing samples. Unexamined positions are not known obstacles.
+-- GetCandidateCount() includes filtered samples, while GetCellCount() counts accepted cells only.
+-- Ordinary lookup, neighbourhood and drawing methods inspect existing cells without creating missing cells or probing unknown terrain.
+-- GetDimensions() has Spacing (and rectangular CrossSpacing) but nil Width/Margin. ExpandGrid() is unsupported; request individual cells instead.
+-- Geometry/filter settings lock after creation. A new GRID is needed to resample terrain or change the lattice.
+-- ASTAR's LAZY mode drives sparse generation automatically; standalone callers need not implement their own exploration loop.
+--
 -- # Geometry Queries
 --
 -- PositionToIndex(position) returns i,j for rectangles or q,r for hexagons, even outside the built area.
@@ -162,6 +187,19 @@
 --     grid:DrawGrid(nil, {Color={0,0,1}, Alpha=0.8, BatchSize=25})
 --     grid:DrawGrid(path, {PathColor={0,1,0}, PathFillAlpha=0.35})
 --     grid:ClearDrawing(GRID.Drawing.POLYGONS)
+--
+-- Set ColorByDepth=true to color cell outlines and fills from a fresh water-depth query at each cell center.
+-- DepthMin and DepthMax set the display range in meters, default 0 and 20. They do not change any search rule or cost.
+-- Water below DepthMin is red; from DepthMin to DepthMax the scale runs orange through cyan to blue. Greater depths remain blue.
+-- Land is brown; missing/invalid terrain data is gray. Cells rejected during grid creation have no polygon to color.
+-- Path cells retain PathColor outlines while their fills show depth. FillAlpha defaults to 0.35 in this mode, otherwise 0.
+-- PathFillAlpha still controls highlighted fill opacity. Explicit zero opacity remains supported.
+--
+--     grid:DrawGrid(path, {ColorByDepth=true, DepthMin=3.5, DepthMax=15})
+--
+-- The same options work on ASTAR:DrawGrid(). Queries run inside the existing drawing batches and only when enabled.
+-- Redrawing refreshes depth; UpdateGridDrawing() samples new cells only. Drawing never caches depth in cells or search nodes.
+-- Center depth is not the minimum over the polygon and does not validate connections, ship clearance or turning space.
 --
 -- @field #GRID
 GRID = {
@@ -259,13 +297,16 @@ GRID.version="0.1.0"
 -- Colors are RGB lists with three components in [0,1]; they are copied before drawing.
 -- @type GRID.DrawOptions
 -- @field #number Coalition All=-1, neutral=0, red=1, blue=2; default -1.
--- @field #table Color Outline RGB color; default {0,0,1} (blue).
+-- @field #table Color Outline RGB color; default {0,0,1} (blue). Overridden by ColorByDepth for non-path cells.
 -- @field #number Alpha Outline opacity in [0,1]; default 1.
--- @field #table FillColor Fill RGB color; default Color.
--- @field #number FillAlpha Fill opacity in [0,1]; default 0.
+-- @field #table FillColor Fill RGB color; default Color. Overridden by ColorByDepth.
+-- @field #number FillAlpha Fill opacity in [0,1]; default 0, or 0.35 when ColorByDepth=true.
+-- @field #boolean ColorByDepth Color by water depth at the cell center; default false. Orange/cyan/blue within the display range, red below it, brown on land, gray for unavailable data.
+-- @field #number DepthMin Non-negative finite lower display depth in meters; default 0. Display only, independent of ASTAR's minimum depth.
+-- @field #number DepthMax Finite upper display depth in meters, greater than DepthMin; default 20. Depths at or above this value use blue.
 -- @field #number LineType 0=none, 1=solid, 2=dashed, 3=dotted, 4=dot dash, 5=long dash, 6=two dash; default 1.
 -- @field #boolean ReadOnly Prevent manual removal; default true.
--- @field #table PathColor Highlighted cell outline and fill RGB color; default {0,1,0} (green).
+-- @field #table PathColor Highlighted cell outline and fill RGB color; default {0,1,0} (green). ColorByDepth preserves only the path outline color.
 -- @field #number PathFillAlpha Highlighted cell fill opacity in [0,1]; default 0.35.
 -- @field #number BatchSize Positive integer maximum cells per batch; default 25.
 -- @field #number Interval Positive finite simulation seconds between batches; default 0.1.
@@ -1367,6 +1408,168 @@ function GRID:CreateFromZone(Zone)
 
 end
 
+--- Initialize a sparse lattice without building an enclosing corridor or sampling terrain.
+-- Cells are created only by GetOrCreateCell(). Accepted and filtered positions both consume MaxCells.
+-- Start fixes the origin and Start/Goal fix the orientation; neither is changed by later searches.
+-- Width, Margin and expansion settings are unused. Automatic resolution uses horizontal endpoint distance.
+-- Coincident endpoints require manual resolution. Geometry and surface filters lock as for other builders.
+-- @param #GRID self
+-- @param #table Start Start position; VECTOR, COORDINATE, Vec2 or Vec3.
+-- @param #table Goal Goal position; VECTOR, COORDINATE, Vec2 or Vec3.
+-- @return #GRID self.
+function GRID:CreateSparse(Start, Goal)
+
+  assert(not self.GridBuilt and next(self.cells)==nil, "GRID: sparse creation requires an empty grid")
+  local first,last=self:_PositionVector(Start),self:_PositionVector(Goal)
+  local distance=first:GetDistance(last,true)
+  assert(distance<math.huge, "GRID: endpoint distance must be finite")
+  local spacing,cross=self:_ResolveInitialSpacing(self:GetOptions(),distance,0)
+  local angle=distance>0 and math.rad(first:GetHeadingTo(last)) or 0
+  local geometry={x=first.x,z=first.z,cos=math.cos(angle),sin=math.sin(angle),
+    spacing=spacing,distance=distance,candidateCount=0}
+
+  if self.GridType==GRID.Type.HEXAGON then
+    geometry.rowSpacing=spacing*math.sqrt(3)/2
+    self.hexGrid=geometry
+    self.hexIndex={}
+  else
+    geometry.crossSpacing=cross
+    geometry.along=spacing/2
+    geometry.across=cross/2
+    geometry.alongOffset=0
+    geometry.acrossOffset=0
+    self.rectGrid=geometry
+    self.rectIndex={}
+  end
+
+  self.startVector,self.endVector=first,last
+  self.Sparse=true
+  self._SparseSamples={}
+  self.GridCandidateCount=0
+  self.GridBuilt=true
+  self:_Touch()
+
+  return self
+
+end
+
+--- Get or sample one sparse lattice position, without creating its neighbours.
+-- A cached rejection returns nil, "filtered" without another terrain query. An unknown position at
+-- the budget limit returns nil, "cell_limit" and remains unknown; raising MaxCells permits a retry.
+-- Existing cells remain available even after lowering the budget. Returned cells are read-only.
+-- @param #GRID self
+-- @param #number First Integer rectangular i or hex q.
+-- @param #number Second Integer rectangular j or hex r.
+-- @return #GRID.Cell Existing or newly created cell, or nil.
+-- @return #string filtered or cell_limit; nil on success.
+function GRID:GetOrCreateCell(First, Second)
+
+  assert(self.Sparse, "GRID: GetOrCreateCell requires CreateSparse")
+  assert(type(First)=="number" and type(Second)=="number" and self:_ValidIndexRange(First,Second)
+    and First==math.floor(First) and Second==math.floor(Second), "GRID: indices must be safe integers")
+  if self.hexGrid then
+    assert(self:_ValidIndexRange(-First-Second,-First-Second), "GRID: cube index exceeds the supported lattice range")
+  end
+  local row=self._SparseSamples[First]
+  if row and row[Second]~=nil then
+    local cell=row[Second]
+    if cell then
+      return cell
+    end
+    return nil,"filtered"
+  end
+
+  if self.GridCandidateCount>=self:GetOptions().MaxCells then
+    return nil,"cell_limit"
+  end
+
+  local cell=self:_CreateCell(self:IndexToPosition(First,Second))
+  local accepted=self:IsValidSurfaceType(cell.surfacetype)
+  local geometry=self.hexGrid or self.rectGrid
+  self._SparseSamples[First]=row or {}
+  self._SparseSamples[First][Second]=accepted and cell or false
+  self.GridCandidateCount=self.GridCandidateCount+1
+  geometry.candidateCount=self.GridCandidateCount
+
+  if accepted then
+    if self.hexGrid then
+      cell.q,cell.r=First,Second
+    else
+      cell.i,cell.j,cell.rectGrid=First,Second,geometry
+    end
+    self:_AddCell(cell)
+    return cell
+  end
+
+  -- Rejected samples change the known area too, although no drawable cell was added.
+  self:_Touch()
+  return nil,"filtered"
+
+end
+
+--- Enumerate geometric neighbour indices without sampling terrain.
+-- Cardinals precede diagonals so all flank cells are available before candidate adjacency is read.
+-- @param #GRID self
+-- @param #GRID.Cell Cell Owned cell.
+-- @return #table Index pairs in deterministic order.
+function GRID:_SparseNeighbourIndices(Cell)
+
+  local indices={}
+  if self.hexGrid then
+    for _,direction in ipairs(hexDirections) do
+      indices[#indices+1]={Cell.q+direction[1],Cell.r+direction[2]}
+    end
+  else
+    for _,direction in ipairs({{-1,0},{0,-1},{0,1},{1,0}}) do
+      indices[#indices+1]={Cell.i+direction[1],Cell.j+direction[2]}
+    end
+    if self:GetOptions().Diagonals then
+      for _,direction in ipairs({{-1,-1},{-1,1},{1,-1},{1,1}}) do
+        indices[#indices+1]={Cell.i+direction[1],Cell.j+direction[2]}
+      end
+    end
+  end
+  return indices
+
+end
+
+--- Enumerate the finite endpoint attachment region on an otherwise unbounded lattice.
+-- This is purely geometric: unknown positions remain candidates and consume no terrain queries.
+-- @param #GRID self
+-- @param #table Position Finite position.
+-- @return #table Index pairs in deterministic order.
+function GRID:_SparseNearbyIndices(Position)
+
+  local vector=self:_PositionVector(Position)
+  local first,second=self:PositionToIndex(vector)
+  assert(self:_ValidIndexRange(first-2,first+2) and self:_ValidIndexRange(second-2,second+2),
+    "GRID: attachment region exceeds the supported lattice range")
+  local geometry=self.hexGrid or self.rectGrid
+  local dx,dz=vector.x-geometry.x,vector.z-geometry.z
+  local along=(dx*geometry.cos+dz*geometry.sin)/geometry.spacing
+  local across=(-dx*geometry.sin+dz*geometry.cos)/(geometry.crossSpacing or geometry.spacing)
+  local diagonal=self:GetOptions().Diagonals
+  local indices={}
+
+  for a=first-2,first+2 do
+    for b=second-2,second+2 do
+      local near
+      if self.hexGrid then
+        local dl,dt=a+b/2-along,b*math.sqrt(3)/2-across
+        near=dl*dl+dt*dt<=1+1e-9
+      else
+        local dl,dt=math.abs(b-along),math.abs(a-across)
+        near=diagonal and math.max(dl,dt)<=1+1e-9 or not diagonal and dl+dt<=1+1e-9
+      end
+      if near then
+        indices[#indices+1]={a,b}
+      end
+    end
+  end
+  return indices
+
+end
+
 --- Build a rectangular grid using SetOptions() and SetValidSurfaceTypes().
 -- Requires SetBounds() and no prior grid. Generated centers have altitude zero.
 -- No markers are created; call DrawGrid() or MarkGrid() explicitly.
@@ -1530,6 +1733,7 @@ end
 -- @return #boolean True if a successful step was reduced to fit MaxCells; false otherwise.
 function GRID:ExpandGrid(Width, Margin, FitBudget)
 
+  assert(not self.Sparse, "GRID: sparse grids grow through GetOrCreateCell, not ExpandGrid")
   assert(FitBudget==nil or type(FitBudget)=="boolean", "GRID: FitBudget must be a boolean")
   local grid=self.hexGrid or self.rectGrid
   assert(grid, "GRID: create a grid before expanding")
@@ -2013,13 +2217,15 @@ end
 
 local gridDrawOptionNames={
   Coalition=true, Color=true, Alpha=true, FillColor=true, FillAlpha=true, LineType=true, ReadOnly=true,
-  PathColor=true, PathFillAlpha=true, BatchSize=true, Interval=true, MaxBatchSeconds=true, GridColor=true
+  PathColor=true, PathFillAlpha=true, BatchSize=true, Interval=true, MaxBatchSeconds=true, GridColor=true,
+  ColorByDepth=true, DepthMin=true, DepthMax=true
 }
 
 --- Draw accepted grid cells, optionally highlighting a previously returned path.
 -- Nil Path creates a regular overlay which UpdateGridDrawing() can extend. A supplied path, including {}, creates a fixed snapshot.
 -- Colors and path selection are copied; later searches and grid expansions do not change a snapshot.
 -- Cells may overlap rejected terrain; polygons do not guarantee connectivity or navigability. No search is performed.
+-- ColorByDepth samples only cell-center depths inside drawing batches; path outlines retain PathColor.
 -- For compatibility, the positional form DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions) remains accepted.
 -- @param #GRID self
 -- @param #table Path (Optional) Ordered own cells or ASTAR path nodes associated with this grid. Nil draws without a path; exact endpoints have no polygon.
@@ -2059,7 +2265,8 @@ function GRID:_DrawGridLegacy(Coalition, Color, Alpha, FillColor, FillAlpha, Lin
 
   local options={Coalition=Coalition, Color=Color, Alpha=Alpha, FillColor=FillColor, FillAlpha=FillAlpha,
     LineType=LineType, ReadOnly=ReadOnly, BatchSize=DrawOptions.BatchSize,
-    Interval=DrawOptions.Interval, MaxBatchSeconds=DrawOptions.MaxBatchSeconds}
+    Interval=DrawOptions.Interval, MaxBatchSeconds=DrawOptions.MaxBatchSeconds,
+    ColorByDepth=DrawOptions.ColorByDepth, DepthMin=DrawOptions.DepthMin, DepthMax=DrawOptions.DepthMax}
 
   return GRID._DrawGrid(self, nil, options)
 
@@ -2095,11 +2302,15 @@ function GRID:_DrawGrid(Path, Options)
   end
   local fillColor=Options.FillColor==nil and color or Options.FillColor
   local pathColor=Options.PathColor==nil and {0, 1, 0} or Options.PathColor
+  local defaultFillAlpha=Options.ColorByDepth==true and 0.35 or 0
   local style={Coalition=Options.Coalition==nil and -1 or Options.Coalition, Color=color,
     Alpha=Options.Alpha==nil and 1 or Options.Alpha, FillColor=fillColor,
-    FillAlpha=Options.FillAlpha==nil and 0 or Options.FillAlpha, LineType=Options.LineType==nil and 1 or Options.LineType,
+    FillAlpha=Options.FillAlpha==nil and defaultFillAlpha or Options.FillAlpha, LineType=Options.LineType==nil and 1 or Options.LineType,
     ReadOnly=Options.ReadOnly==nil or Options.ReadOnly, PathCellIDs=pathCells,
-    PathColor=pathColor, PathFillAlpha=Options.PathFillAlpha==nil and 0.35 or Options.PathFillAlpha}
+    PathColor=pathColor, PathFillAlpha=Options.PathFillAlpha==nil and 0.35 or Options.PathFillAlpha,
+    ColorByDepth=Options.ColorByDepth,
+    DepthMin=Options.DepthMin==nil and 0 or Options.DepthMin,
+    DepthMax=Options.DepthMax==nil and 20 or Options.DepthMax}
   if pathCells then
     style.Snapshot=true
   end
@@ -2195,6 +2406,12 @@ function GRID._ValidateDrawStyle(Style)
     assert(type(Style.PathFillAlpha)=="number" and Style.PathFillAlpha>=0 and Style.PathFillAlpha<=1,
       "GRID: PathFillAlpha must be between zero and one")
   end
+
+  assert(Style.ColorByDepth==nil or type(Style.ColorByDepth)=="boolean", "GRID: ColorByDepth must be a boolean")
+  assert(type(Style.DepthMin)=="number" and Style.DepthMin>=0 and Style.DepthMin<math.huge,
+    "GRID: DepthMin must be finite and non-negative")
+  assert(type(Style.DepthMax)=="number" and Style.DepthMax>Style.DepthMin and Style.DepthMax<math.huge,
+    "GRID: DepthMax must be finite and greater than DepthMin")
 
   for _,name in ipairs({"Alpha", "FillAlpha"}) do
     assert(type(Style[name])=="number" and Style[name]>=0 and Style[name]<=1, "GRID: "..name.." must be between zero and one")
@@ -2386,6 +2603,38 @@ function GRID:_FinishGridDrawing(Job, Status, Error)
 
 end
 
+--- Map a fresh center-depth sample to a display color without changing cells or search caches.
+-- Reuses VECTOR's terrain validation. Missing APIs/data are gray; unexpected API exceptions reach the drawing-job error handler.
+-- @param #GRID.Cell Cell Grid cell or ASTAR grid node.
+-- @param #table Style Validated drawing style with DepthMin and DepthMax in meters.
+-- @return #table New RGB color table.
+function GRID._DepthDrawColor(Cell, Style)
+
+  if not land or type(land.getSurfaceType)~="function" or type(land.getSurfaceHeightWithSeabed)~="function" then
+    return {0.5, 0.5, 0.5}
+  end
+
+  local clear,status,cause,depth=VECTOR._CheckDepthPoint(Cell.vector,0,false)
+  if cause=="non_water" then
+    return {0.55, 0.35, 0.15}
+  elseif status=="unavailable" or not clear then
+    return {0.5, 0.5, 0.5}
+  elseif depth<Style.DepthMin then
+    return {1, 0.1, 0.1}
+  end
+
+  -- Clamp deep water and interpolate orange -> cyan -> blue across the display range.
+  local fraction=math.min(1,(depth-Style.DepthMin)/(Style.DepthMax-Style.DepthMin))
+  if fraction<=0.5 then
+    local blend=fraction*2
+    return {1-blend, 0.65+0.1*blend, blend}
+  end
+
+  local blend=(fraction-0.5)*2
+  return {0, 0.75-0.6*blend, 1-0.2*blend}
+
+end
+
 --- Draw one generated grid cell using the saved style; manual endpoints have no polygon.
 -- @param #GRID self
 -- @param #GRID.Cell Cell Grid cell.
@@ -2421,12 +2670,20 @@ function GRID:_DrawGridCell(Cell, Style)
     return nil
   end
 
-  -- Match COORDINATE:MarkupToAllFreeForm's DCS call without constructing full MOOSE objects for polygon vertices.
-  local markID=UTILS.GetMarkID()
   local onPath=Style.PathCellIDs and Style.PathCellIDs[Cell.id]
   local color=onPath and Style.PathColor or Style.Color
   local fillColor=onPath and Style.PathColor or Style.FillColor
   local fillAlpha=onPath and Style.PathFillAlpha or Style.FillAlpha
+  if Style.ColorByDepth then
+    fillColor=GRID._DepthDrawColor(Cell,Style)
+    -- Keep the route visible without hiding its depth information beneath a solid path color.
+    if not onPath then
+      color=fillColor
+    end
+  end
+
+  -- Match COORDINATE:MarkupToAllFreeForm's DCS call without constructing full MOOSE objects for polygon vertices.
+  local markID=UTILS.GetMarkID()
   local outline={color[1], color[2], color[3], Style.Alpha}
   local fill={fillColor[1], fillColor[2], fillColor[3], fillAlpha}
   if #corners==6 then
@@ -2686,6 +2943,19 @@ end
 function GRID:GetNeighbours(Cell)
 
   assert(Cell and self.cells[Cell.id]==Cell, "GRID: cell must belong to this grid")
+  if self.Sparse then
+    local neighbors={}
+    for _,index in ipairs(self:_SparseNeighbourIndices(Cell)) do
+      local neighbor=self:GetCellFromIndex(index[1],index[2])
+      local diagonal=self.rectGrid and index[1]~=Cell.i and index[2]~=Cell.j
+      local flanks=not diagonal or (self:GetCellFromIndex(Cell.i,index[2]) and self:GetCellFromIndex(index[1],Cell.j))
+      if neighbor and flanks then
+        neighbors[#neighbors+1]=neighbor
+      end
+    end
+    table.sort(neighbors,function(a,b) return a.id<b.id end)
+    return neighbors
+  end
   local links=self:_GetGridLinks()
   local neighbors={}
 
@@ -2725,7 +2995,7 @@ end
 
 --- Get a snapshot of current dimensions, including expansions. Configuration Width/Margin describe the initial corridor.
 -- @param #GRID self
--- @return #table Width, Margin, Spacing and CrossSpacing (rectangles), or nil before construction.
+-- @return #table Width, Margin, Spacing and CrossSpacing (rectangles), or nil before construction. Sparse grids have nil Width/Margin.
 function GRID:GetDimensions()
 
   local grid=self.hexGrid or self.rectGrid
@@ -2745,6 +3015,16 @@ end
 -- @return #table Nearby cells, or an empty list before construction or outside the grid.
 function GRID:GetNearbyCells(Position)
 
+  if self.Sparse then
+    local nearby={}
+    for _,index in ipairs(self:_SparseNearbyIndices(Position)) do
+      local cell=self:GetCellFromIndex(index[1],index[2])
+      if cell then
+        nearby[#nearby+1]=cell
+      end
+    end
+    return nearby
+  end
   local vector=self:_PositionVector(Position)
   local grid=self.hexGrid or self.rectGrid
   local nearby={}

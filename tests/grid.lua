@@ -44,7 +44,7 @@ local function flushTimers()
   end
 end
 MESSAGE = {New = function() return {ToAllIf = function() end} end}
-land = {SurfaceType = {LAND = 1, WATER = 3}}
+land = {SurfaceType = {LAND = 1, SHALLOW_WATER = 2, WATER = 3}}
 
 COORDINATE = {ClassName = "COORDINATE"}
 function COORDINATE:New(x, y, z)
@@ -94,9 +94,12 @@ dofile(source)
 
 local passed,failed=0,0
 local drawings,labels,removed={},{},{}
+local originalSurfaceQuery=land.getSurfaceType
 local function test(name,run)
   local ok,err=pcall(run)
   land.surfaceAt=nil scheduled={} timerNow=0
+  land.getSurfaceType=originalSurfaceQuery
+  land.getSurfaceHeightWithSeabed=nil
   drawings={} labels={} removed={}
   if ok then passed=passed+1 print("PASS "..name)
   else failed=failed+1 print("FAIL "..name..": "..tostring(err)) end
@@ -1775,6 +1778,318 @@ test("selective cleanup cancels owned jobs and stale callbacks without touching 
   equal(count(labels),0)
   equal(count(scheduled),0)
   g:ClearDrawing():UndrawGrid():UnmarkGrid()
+end)
+
+test("sparse geometry creates no terrain samples and preserves its lattice frame",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local queries=0
+    land.surfaceAt=function() queries=queries+1 return land.SurfaceType.WATER end
+    local g=GRID:New("Sparse",kind):SetResolution(100)
+    g:SetCorridor(GRID.Width.WIDE,GRID.Margin.LARGE)
+    g:CreateSparse(coord(100,200),coord(1100,1200))
+    equal(queries,0)
+    equal(g:GetCandidateCount(),0)
+    equal(g:GetCellCount(),0)
+    equal(g:GetDimensions().Width,nil)
+    for _,index in ipairs({{0,0},{-2,3},{4,-5}}) do
+      local cell=assert(g:GetOrCreateCell(index[1],index[2]))
+      local first,second=g:PositionToIndex(cell.vector)
+      equal(first,index[1]) equal(second,index[2])
+      equal(g:GetCellAtPosition(cell.vector),cell)
+    end
+    equal(queries,3)
+    assert(not pcall(function() g:SetResolution(50) end))
+    assert(not pcall(function() g:ExpandGrid(1000,100) end))
+  end
+end)
+
+test("sparse samples distinguish rejected cells from unknown budget-limited positions",function()
+  local queries=0
+  land.surfaceAt=function(p)
+    queries=queries+1
+    return p.x==0 and land.SurfaceType.LAND or land.SurfaceType.WATER
+  end
+  local g=GRID:New("Sparse",GRID.Type.RECTANGLE):SetResolution(100):SetMaxCells(1)
+  g:SetValidSurfaceTypes(land.SurfaceType.WATER):CreateSparse(coord(0),coord(1000))
+  local cell,reason=g:GetOrCreateCell(0,0)
+  equal(cell,nil) equal(reason,"filtered") equal(queries,1)
+  local revision=g:GetVersion()
+  cell,reason=g:GetOrCreateCell(0,0)
+  equal(reason,"filtered") equal(g:GetVersion(),revision) equal(queries,1)
+  cell,reason=g:GetOrCreateCell(0,1)
+  equal(reason,"cell_limit") equal(queries,1) equal(g:GetCandidateCount(),1)
+  g:SetMaxCells(2)
+  cell=assert(g:GetOrCreateCell(0,1))
+  equal(queries,2) equal(g:GetCandidateCount(),2) equal(g:GetCellCount(),1)
+  g:SetMaxCells(1)
+  equal(g:GetOrCreateCell(0,1),cell)
+  equal(queries,2)
+end)
+
+test("sparse queries do not create cells and rectangular diagonals need both flanks",function()
+  local g=GRID:New("Sparse",GRID.Type.RECTANGLE):SetResolution(100)
+  g:CreateSparse(coord(0),coord(1000))
+  local center=g:GetOrCreateCell(0,0)
+  local diagonal=g:GetOrCreateCell(1,1)
+  equal(#g:GetNeighbours(center),0)
+  equal(#g:GetNearbyCells(coord(0)),2)
+  equal(g:GetCandidateCount(),2)
+  g:GetOrCreateCell(1,0)
+  equal(#g:GetNeighbours(center),1)
+  g:GetOrCreateCell(0,1)
+  equal(#g:GetNeighbours(center),3)
+  g:SetDiagonals(false)
+  equal(#g:GetNeighbours(center),2)
+  equal(#g:GetNearbyCells(coord(0)),3)
+  equal(g:GetCellFromIndex(1,1),diagonal)
+end)
+
+test("sparse hex neighbours and drawings work with holes and distant cells",function()
+  local g=GRID:New("Sparse",GRID.Type.HEXAGON):SetResolution(100)
+  g:CreateSparse(coord(0),coord(1000))
+  local center=g:GetOrCreateCell(0,0)
+  for _,index in ipairs({{1,0},{0,1},{-1,1},{-1,0},{0,-1},{1,-1}}) do
+    g:GetOrCreateCell(index[1],index[2])
+  end
+  g:GetOrCreateCell(100,100)
+  equal(#g:GetNeighbours(center),6)
+  equal(#g:GetNearbyCells(coord(0)),7)
+  equal(#g:GetCellsInRange(center,1),7)
+  g:DrawGrid({center})
+  flushTimers()
+  equal(g.LastGridDrawResult.Status,"complete")
+  equal(g.LastGridDrawResult.CellsDrawn,8)
+end)
+
+test("sparse automatic resolution uses endpoint distance and validates requests before sampling",function()
+  local g=GRID:New("Sparse",GRID.Type.HEXAGON):SetResolution(GRID.Resolution.NORMAL)
+  g:CreateSparse(coord(0),coord(1000))
+  near(g:GetResolutionInfo().Spacing,50)
+  for _,bad in ipairs({false,0/0,math.huge,1.5}) do
+    assert(not pcall(function() g:GetOrCreateCell(bad,0) end))
+    equal(g:GetCandidateCount(),0)
+  end
+  assert(not pcall(function() g:CreateSparse(coord(0),coord(100)) end))
+end)
+
+local function colorNear(actual,expected)
+  for index=1,3 do
+    near(actual[index],expected[index])
+  end
+end
+
+local function depthDrawingGrid(kind,cellCount)
+  local g=GRID:New("Depth colors",kind or GRID.Type.HEXAGON):SetResolution(100)
+  g:CreateSparse(coord(0),coord(1000))
+  for index=0,cellCount-1 do
+    g:GetOrCreateCell(0,index)
+  end
+  return g
+end
+
+test("depth coloring uses center samples on both geometries and keeps path outlines in GRID and ASTAR",function()
+  local depths={0,3.5,9.25,15,40}
+  local colors={{1,0.1,0.1},{1,0.65,0},{0,0.75,1},{0,0.15,0.8},{0,0.15,0.8}}
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local g=depthDrawingGrid(kind,#depths)
+    local a=ASTAR:New():SetGrid(g)
+    local revision=g:GetVersion()
+    local queries=0
+    land.getSurfaceHeightWithSeabed=function(position)
+      queries=queries+1
+      local cell=assert(g:GetCellAtPosition(position),"Depth query must use a cell center")
+      near(position.x,cell.vector.x)
+      near(position.y,cell.vector.z)
+      return 0,depths[cell.id]
+    end
+
+    for _,view in ipairs({g,a}) do
+      local cells=g:GetCells()
+      local pathCell=view==g and cells[3] or a._CellNodes[cells[3].id]
+      local options={ColorByDepth=true,DepthMin=3.5,DepthMax=15,BatchSize=1}
+      local before=queries
+      view:DrawGrid({pathCell},options)
+      equal(queries,before)
+
+      -- A queued drawing owns its settings; subsequent caller changes cannot recolor it.
+      options.ColorByDepth=false
+      options.DepthMin=100
+      options.DepthMax=200
+      flushTimers()
+      equal(queries-before,#depths)
+      equal(view.LastGridDrawResult.Status,"complete")
+      for index,cell in ipairs(cells) do
+        local id=view==g and cell.id or a._CellNodes[cell.id].id
+        local drawing=drawings[view.GridDrawCellIDs[id]]
+        colorNear(drawing.fill,colors[index])
+        colorNear(drawing.outline,index==3 and {0,1,0} or colors[index])
+        near(drawing.fill[4],0.35)
+      end
+      equal(g:GetVersion(),revision)
+      equal(g:GetCandidateCount(),#depths)
+      equal(a.nvalid,0)
+      equal(a.ncost,0)
+      view:ClearDrawing()
+    end
+  end
+end)
+
+test("depth drawing distinguishes land and unavailable data without inventing deep water",function()
+  local g=depthDrawingGrid(GRID.Type.HEXAGON,1)
+  local a=ASTAR:New():SetGrid(g)
+  local gray={0.5,0.5,0.5}
+  local cases={
+    {surface=land.SurfaceType.LAND,height=0,depth=20,color={0.55,0.35,0.15}},
+    {surface=land.SurfaceType.SHALLOW_WATER,height=0,depth=10,color={0,0.75,1}},
+    {surface=0/0,height=0,depth=20,color=gray},
+    {height=0,depth=-1,color=gray},
+    {height=0,depth=math.huge,color=gray},
+    {height=0,depth=0/0,color=gray},
+    {height=0,color=gray},
+    {height=math.huge,depth=20,color=gray},
+    {depth=20,color=gray},
+  }
+  for _,view in ipairs({g,a}) do
+    for _,case in ipairs(cases) do
+      land.surfaceAt=function() return case.surface or land.SurfaceType.WATER end
+      land.getSurfaceHeightWithSeabed=function() return case.height,case.depth end
+      view:DrawGrid(nil,{ColorByDepth=true})
+      equal(view.LastGridDrawResult.Status,"complete")
+      colorNear(drawings[view.GridDrawIDs[1]].fill,case.color)
+    end
+
+    land.getSurfaceHeightWithSeabed=nil
+    view:DrawGrid(nil,{ColorByDepth=true})
+    equal(view.LastGridDrawResult.Status,"complete")
+    colorNear(drawings[view.GridDrawIDs[1]].fill,gray)
+    view:ClearDrawing()
+  end
+  land.getSurfaceType=nil
+  g:DrawGrid(nil,{ColorByDepth=true})
+  colorNear(drawings[g.GridDrawIDs[1]].fill,gray)
+end)
+
+test("disabled depth colors make no terrain queries and retain the existing default drawing",function()
+  local g=depthDrawingGrid(GRID.Type.RECTANGLE,2)
+  local a=ASTAR:New():SetGrid(g)
+  land.surfaceAt=function() error("Unexpected surface query") end
+  land.getSurfaceHeightWithSeabed=function() error("Unexpected depth query") end
+  for _,view in ipairs({g,a}) do
+    for _,options in ipairs({{}, {ColorByDepth=false}}) do
+      view:DrawGrid(nil,options)
+      flushTimers()
+      equal(view.LastGridDrawResult.Status,"complete")
+      for _,id in ipairs(view.GridDrawIDs) do
+        colorNear(drawings[id].outline,{0,0,1})
+        near(drawings[id].fill[4],0)
+      end
+    end
+    view:ClearDrawing()
+  end
+end)
+
+test("invalid depth drawing options preserve running jobs and perform no depth queries",function()
+  local g=depthDrawingGrid(GRID.Type.HEXAGON,3)
+  local a=ASTAR:New():SetGrid(g)
+  land.getSurfaceHeightWithSeabed=function() error("Unexpected depth query") end
+  local invalid={
+    {ColorByDepth=1}, {ColorByDepth="true"}, {DepthMin=-1}, {DepthMin=false},
+    {DepthMin=math.huge}, {DepthMin=0/0}, {DepthMin=20},
+    {DepthMax=0}, {DepthMin=5,DepthMax=5}, {DepthMax=math.huge}, {DepthMax=0/0}, {DepthMax="20"},
+  }
+  for _,view in ipairs({g,a}) do
+    view:DrawGrid(nil,{BatchSize=1})
+    local job,style=view.GridDrawJob,view.GridDrawOptions
+    for _,options in ipairs(invalid) do
+      assert(not pcall(function() view:DrawGrid(nil,options) end))
+      equal(view.GridDrawJob,job)
+      equal(view.GridDrawOptions,style)
+    end
+    view:ClearDrawing()
+  end
+end)
+
+test("depth drawing honors path styles, zero opacity and the legacy options position",function()
+  local g=depthDrawingGrid(GRID.Type.RECTANGLE,1)
+  local a=ASTAR:New():SetGrid(g)
+  land.getSurfaceHeightWithSeabed=function() return 0,20 end
+  for _,view in ipairs({g,a}) do
+    local cell=g:GetCells()[1]
+    local pathCell=view==g and cell or a._CellNodes[cell.id]
+    view:DrawGridWithPath({pathCell},{ColorByDepth=true,PathColor={1,0,1},FillAlpha=0,PathFillAlpha=0,Alpha=0})
+    local drawing=drawings[view.GridDrawIDs[1]]
+    colorNear(drawing.outline,{1,0,1})
+    colorNear(drawing.fill,{0,0.15,0.8})
+    near(drawing.outline[4],0)
+    near(drawing.fill[4],0)
+
+    view:DrawGrid(nil,nil,nil,nil,0,nil,nil,{ColorByDepth=true,DepthMin=10,DepthMax=30})
+    drawing=drawings[view.GridDrawIDs[1]]
+    colorNear(drawing.fill,{0,0.75,1})
+    near(drawing.fill[4],0)
+    view:ClearDrawing()
+  end
+end)
+
+test("depth queries follow drawing batches and only refresh on redraw or new cells",function()
+  local g=depthDrawingGrid(GRID.Type.HEXAGON,3)
+  local queries=0
+  land.getSurfaceHeightWithSeabed=function()
+    queries=queries+1
+    return 0,20
+  end
+  g:DrawGrid(nil,{ColorByDepth=true,BatchSize=1})
+  equal(queries,0)
+  local job=g.GridDrawJob
+  local staleCallback=scheduled[job.timerID].fn
+  stepTimer()
+  equal(queries,1)
+  g:ClearDrawing()
+  equal(job.result.Status,"cancelled")
+  equal(staleCallback(nil,timerNow),nil)
+  equal(queries,1)
+
+  g:DrawGrid(nil,{ColorByDepth=true,BatchSize=1})
+  flushTimers()
+  equal(queries,4)
+  g:UpdateGridDrawing()
+  flushTimers()
+  equal(queries,4)
+  g:GetOrCreateCell(0,3)
+  g:UpdateGridDrawing()
+  flushTimers()
+  equal(queries,5)
+  g:DrawGrid(nil,{ColorByDepth=true})
+  flushTimers()
+  equal(queries,9)
+end)
+
+test("depth query time is included in the drawing CPU budget and API errors remain visible",function()
+  local originalClock=os.clock
+  local now,queries=0,0
+  os.clock=function() return now end
+  local ok,err=pcall(function()
+    local g=depthDrawingGrid(GRID.Type.HEXAGON,3)
+    land.getSurfaceHeightWithSeabed=function()
+      queries=queries+1
+      now=now+0.01
+      return 0,20
+    end
+    g:DrawGrid(nil,{ColorByDepth=true,BatchSize=25,MaxBatchSeconds=0.005})
+    equal(queries,1)
+    assert(g.GridDrawJob)
+    flushTimers()
+    equal(queries,3)
+    near(g.LastGridDrawResult.CPUSeconds,0.03)
+
+    land.getSurfaceHeightWithSeabed=function() error("Depth API failure") end
+    g:DrawGrid(nil,{ColorByDepth=true})
+    equal(g.LastGridDrawResult.Status,"error")
+    assert(g.LastGridDrawResult.Error:find("Depth API failure",1,true))
+    equal(g.GridDrawJob,nil)
+  end)
+  os.clock=originalClock
+  assert(ok,err)
 end)
 
 print(string.format("%d passed, %d failed",passed,failed))

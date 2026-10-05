@@ -6,6 +6,7 @@
 --    * Pre-defined as well as custom valid neighbour functions.
 --    * Pre-defined as well as custom cost functions.
 --    * Rectangular or hexagonal grids, with optional local four/eight- or six-neighbour search.
+--    * Sparse search that generates cells on demand, synchronously or in bounded work slices.
 --
 -- ===
 --
@@ -47,7 +48,7 @@
 -- @field #table LastGridDrawResult Last drawing job: Status, NodesQueued, NodesDrawn, Batches, CPUSeconds, MaxBatchCPUSeconds, ElapsedSimulationSeconds and optional Error.
 -- @field #table LastSearchTiming Last search attempt: CPUSeconds, Failure and Nodes. CPUSeconds is nil when os.clock is unavailable.
 -- @field #string LastPathFailure Reason the last search attempt failed; nil on success or when no attempt was made.
--- @field #ASTAR.SearchReport LastSearchResult Report from the most recent public search, also returned by FindPath().
+-- @field #ASTAR.SearchReport LastSearchResult Report from the most recent public search, also returned by FindPath() or StepSearch(). Live while a LAZY search runs; read-only for callers.
 -- @field #ASTAR.SearchReport LastExpansionResult Report from the most recent expanding search; unchanged by fixed searches.
 -- @field #table GridMarkIDs Text-marker ids owned by MarkGrid().
 -- @field #table GridMarkJob Pending text-marker job.
@@ -234,12 +235,69 @@
 -- LastPathFailure contains missing_coordinates, no_start_node, no_goal_node, start_unattached, goal_unattached, disconnected_grid or connections_blocked.
 -- Intermediate failures are trace-logged; final failure is announced once. Debug=true additionally enables player failure messages.
 --
+-- # Search Without a Prebuilt Area
+--
+-- FindPath(ASTAR.SearchMode.LAZY) starts from the endpoints and creates neighbouring cells only as the search needs them.
+-- Do not call BuildGrid() first. Configure resolution, surface filtering and MaxCells through GetGrid() as usual.
+-- The first search fixes the lattice origin at the start and its orientation towards the goal. Both grid types are supported.
+-- Width, Margin and expansion settings are unused. Default spacing remains 2000 meters; automatic resolution uses endpoint distance.
+--
+--     local search = ASTAR:New(GRID.Type.HEXAGON)
+--     search:SetEndpoints(start, goal)
+--     search:GetGrid():SetResolution(200):SetMaxCells(5000)
+--     search:SetValidNeighbourDepth(3.5, 50)
+--     search:SetCostDepth(15, 10)
+--     local path, report = search:FindPath(ASTAR.SearchMode.LAZY)
+--     if path then search:DrawGrid(path) end
+--
+-- GRID caches accepted and surface-filtered positions separately from unknown positions. Unknown terrain is never treated as blocked.
+-- ASTAR retains alternative branches, including detours initially leading away from the goal; it returns only a complete path.
+-- This is a search strategy, not unit steering or NAVYGROUP's moving local planning window. Narrow passages still depend on resolution.
+-- The selected symmetric neighbour and cost rules apply unchanged, including depth constraints and depth preference.
+-- LAZY requires local grid neighbours and an unbuilt or sparse GRID; caller-added manual nodes and prebuilt area grids are unsupported.
+-- Exact endpoints attach through local grid cells and the configured edge rules, as with other local searches.
+--
+-- MaxCells limits all sampled lattice positions, including filtered positions and samples retained from earlier searches.
+-- StopReason="cell_limit" means the budget prevented further exploration, not that the goal is unreachable. FailureReason remains nil.
+-- Increase GetGrid():SetMaxCells(...) and start again to reuse the samples. No automatic spacing change or budget increase occurs.
+-- Changing endpoints preserves the existing lattice and samples. Create a new ASTAR for another frame, resolution or surface filter.
+-- FIXED can search the materialized subset; EXPAND is unsupported on sparse grids. DrawGrid() displays materialized cells only.
+--
+-- # Resumable Search
+--
+-- StartSearch() initializes a LAZY search and at most two endpoint cells without starting a scheduler.
+-- Call StepSearch(MaxNodes, MaxSeconds) from the caller's existing update/scheduler until report.Status is no longer "running":
+--
+--     search:StartSearch()
+--     -- In each caller-owned update:
+--     local path, report = search:StepSearch(100, 0.005)
+--     if report.Status ~= "running" then
+--       -- Stop scheduling this search; consume path or inspect report.StopReason.
+--     end
+--
+-- Defaults are 100 newly expanded nodes and 0.005 CPU seconds per call. The frontier and an unfinished node survive between calls.
+-- Time limits are cooperative: a terrain query, callback or small neighbour-generation batch cannot be interrupted.
+-- Without os.clock, only the node limit applies. SearchCPUSeconds excludes time between calls.
+-- StepSearch returns nil while pending; this alone is not a failure. A completed successful path may be an empty table after exclusions.
+-- Its report is a live, read-only object, also available as LastSearchResult. Completion freezes it; a new search gets a new report.
+-- Status is "complete" on success, search failure or cell limit, and "cancelled" after cancellation or detected reconfiguration.
+-- StopReason additionally distinguishes running, path_found, search_failed, cell_limit, cancelled and search_changed.
+-- NewCandidateCells counts this search's samples; ExpandedNodes counts expansions. Width/Margin are nil for sparse grids.
+--
+-- CancelSearch() releases pending exploration state while retaining sampled cells. StartSearch() cancels a previous pending search.
+-- Changes to endpoints, rules, grid options or externally shared grid geometry cause search_changed when resuming.
+-- Restart after such a change. External data hidden inside callbacks cannot be tracked: explicitly cancel/reconfigure when it changes.
+-- Callback programming errors propagate. As with synchronous searches, cached rules/costs assume unchanged external data.
+-- ASTAR owns no timer; the caller must stop its own scheduling. StartSearch/StepSearch report failures without player announcements.
+--
 -- # Visual Debug
 --
 -- Building, searching and expanding never draw or update an overlay automatically.
 -- DrawGrid() draws cell outlines; UpdateGridDrawing() explicitly appends missing cells after enlargement.
 -- DrawGrid(path, options) creates a one-time snapshot with green path cells; later searches and updates do not change it.
 -- DrawGrid(nil, options) styles a regular overlay. GRID.DrawOptions lists all named style and batch settings.
+-- DrawGrid(path, {ColorByDepth=true, DepthMin=3.5, DepthMax=15}) colors cells by center depth and keeps green path outlines.
+-- The display range is independent of search-depth rules/costs. Depth is sampled during drawing; it does not describe the whole cell.
 -- ClearDrawing(Kind) cancels work and removes owned polygons, labels or both, using GRID.Drawing constants; default ALL.
 -- DrawGridWithPath(), UndrawGrid(), UnmarkGrid() and positional drawing arguments remain compatible.
 -- Both polygon functions support timed batches and a CPU budget. One DCS call cannot be interrupted, so the budget is a soft limit.
@@ -276,11 +334,13 @@ ASTAR.CostMetric = {
   ROAD = "road",
 }
 
---- Search modes for FindPath(). Both run synchronously and leave drawing to the caller.
+--- Search modes for FindPath(). All run synchronously and leave drawing to the caller; StartSearch/StepSearch offer resumable LAZY work.
 -- @type ASTAR.SearchMode
 -- @field #string FIXED Search the current graph once without enlarging it. The default mode.
 -- @field #string EXPAND Retry with a larger grid after failure, stopping at the first path or a configured limit.
+-- @field #string LAZY Generate cells on demand on an unbuilt or sparse grid, bounded by MaxCells.
 ASTAR.SearchMode = {
+  LAZY = "lazy",
   FIXED = "fixed",
   EXPAND = "expand",
 }
@@ -293,22 +353,26 @@ ASTAR.SearchMode = {
 -- @field #string Failure Concrete search failure, or nil on success. See ASTAR.SearchReport.FailureReason.
 -- @field #number CPUSeconds Attempt CPU time in seconds; nil when no CPU clock is available.
 
---- Result details returned by FindPath(). Each call creates a new report and attempt list.
+--- Result details returned by FindPath() or StepSearch(). Each new search creates a new report and attempt list.
 -- The same report is stored in LastSearchResult (and LastExpansionResult for EXPAND); treat it as read-only.
--- Grid settings and counts are snapshots, not references to mutable configuration tables.
+-- LAZY reports update in place while running, then remain stable. Settings/counts never reference mutable configuration tables.
 -- @type ASTAR.SearchReport
--- @field #string Mode ASTAR.SearchMode.FIXED or ASTAR.SearchMode.EXPAND.
--- @field #table Attempts Ordered ASTAR.SearchAttempt entries; empty if expansion was rejected before any search.
--- @field #string StopReason FIXED: path_found or search_failed. EXPAND: path_found, attempt_limit, size_limit, cell_limit or missing_coordinates.
+-- @field #string Mode ASTAR.SearchMode.FIXED, EXPAND or LAZY.
+-- @field #string Status LAZY only: running, complete or cancelled. A complete search may have failed or reached its cell limit.
+-- @field #table Attempts Ordered ASTAR.SearchAttempt entries; empty while LAZY is running or if expansion was rejected before any search.
+-- @field #string StopReason FIXED: path_found or search_failed. EXPAND adds attempt_limit, size_limit, cell_limit or missing_coordinates. LAZY: running, path_found, search_failed, cell_limit, cancelled or search_changed.
 -- @field #string FailureReason Last attempt failure: missing_coordinates, no_start_node, no_goal_node, start_unattached, goal_unattached, disconnected_grid or connections_blocked. Nil on success or when no attempt was made.
--- @field #number Width Final grid width in meters; nil without a built grid.
--- @field #number Margin Final grid margin in meters; nil without a built grid.
+-- @field #number Width Final grid width in meters; nil without an area grid (including LAZY).
+-- @field #number Margin Final grid margin in meters; nil without an area grid (including LAZY).
+-- @field #number Spacing LAZY lattice spacing in meters; nil before construction.
 -- @field #number Nodes Final search-node count, including manual and exact endpoint nodes.
 -- @field #number CandidateCells Budgeted grid-cell count before filtering; nil without a built grid.
+-- @field #number NewCandidateCells LAZY only: positions sampled during this search, excluding earlier cached samples.
+-- @field #number ExpandedNodes LAZY only: node expansions processed so far.
 -- @field #number MaxCells Configured grid-cell limit; nil without a built grid. FIXED searches do not enforce expansion limits.
 -- @field #number MaxWidth Optional expansion width limit in meters; nil without a built grid or configured limit.
 -- @field #number MaxMargin Optional expansion margin limit in meters; nil without a built grid or configured limit.
--- @field #boolean BudgetLimited Whether an expansion step was reduced to fit MaxCells. Always false for FIXED.
+-- @field #boolean BudgetLimited EXPAND: a step was reduced to fit MaxCells. LAZY: stopped at cell_limit. Always false for FIXED.
 -- @field #number SearchCPUSeconds Total search and enlargement CPU time in seconds; nil when no CPU clock is available.
 
 --- Node data.
@@ -1444,7 +1508,7 @@ function ASTAR:_FindEndpoint(Coordinate, Label)
   local node, distance=self:FindClosestNode(Coordinate)
 
   -- Reuse coincident nodes only. Snapping to a nearby node would skip the actual endpoint connection and its validity checks.
-  if node and distance>1e-6 then
+  if (node and distance>1e-6) or (not node and self.Grid.Sparse) then
     self:T(self.lid.."Adding "..Label.." node to node grid!")
     node=self:GetNodeFromCoordinate(Coordinate)
     if not self.Grid:IsValidSurfaceType(node.surfacetype) then
@@ -1493,6 +1557,7 @@ end
 -- False rules out a path in the current graph. True is only a necessary condition: LoS, road rules or infinite costs may still block the route.
 -- Outside local grid mode, all node pairs are candidates, so valid endpoint nodes return true without a graph traversal.
 -- Does not call neighbour/cost callbacks or DCS visibility/road queries; newly added endpoints still sample their surface types.
+-- Sparse grids only resolve endpoints: unknown cells may still connect them, so this is not a connectivity proof.
 -- @param #ASTAR self
 -- @return #boolean Whether a path is possible before applying neighbour rules and travel costs.
 -- @return #string Failure reason: missing_coordinates, no_start_node, no_goal_node, start_unattached, goal_unattached or disconnected_grid; nil on success.
@@ -1510,10 +1575,11 @@ end
 --- Search synchronously between the configured endpoints, returning a path and a result report.
 -- FIXED searches the existing graph once. EXPAND enlarges a built rectangular or hex grid after failure,
 -- using GRID expansion settings and limits, and stops at the first path. Hex expansion requires local grid neighbours.
--- Does not draw or assign routes to units. The selected cost and neighbour rules apply in both modes.
+-- LAZY creates cells on demand on an unbuilt or sparse grid, without BuildGrid() or an enclosing area.
+-- Does not draw or assign routes to units. The selected cost and neighbour rules apply in all modes.
 -- Invalid modes/flags are rejected before searching. A final search failure is announced once; Debug controls player messages.
 -- @param #ASTAR self
--- @param #string Mode (Optional) ASTAR.SearchMode.FIXED or EXPAND; nil selects FIXED.
+-- @param #string Mode (Optional) ASTAR.SearchMode.FIXED, EXPAND or LAZY; nil selects FIXED.
 -- @param #boolean ExcludeStartNode (Optional) Exclude the selected start node; default false.
 -- @param #boolean ExcludeEndNode (Optional) Exclude the selected goal node; default false.
 -- @return #table Ordered ASTAR.Node list, or nil on failure. An empty table is a successful path.
@@ -1523,10 +1589,25 @@ function ASTAR:FindPath(Mode, ExcludeStartNode, ExcludeEndNode)
   if Mode==nil then
     Mode=ASTAR.SearchMode.FIXED
   end
-  assert(Mode==ASTAR.SearchMode.FIXED or Mode==ASTAR.SearchMode.EXPAND, "ASTAR: Mode must be an ASTAR.SearchMode value")
+  assert(Mode==ASTAR.SearchMode.FIXED or Mode==ASTAR.SearchMode.EXPAND or Mode==ASTAR.SearchMode.LAZY,
+    "ASTAR: Mode must be an ASTAR.SearchMode value")
   assert(ExcludeStartNode==nil or type(ExcludeStartNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
   assert(ExcludeEndNode==nil or type(ExcludeEndNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
+  assert(Mode~=ASTAR.SearchMode.EXPAND or not self.Grid.Sparse, "ASTAR: use LAZY to grow a sparse grid")
 
+  if Mode==ASTAR.SearchMode.LAZY then
+    self:StartSearch(ExcludeStartNode,ExcludeEndNode)
+    local path,report=self:StepSearch(1000,1)
+    while report.Status=="running" do
+      path,report=self:StepSearch(1000,1)
+    end
+    if not path then
+      self:_ReportPathFailure(report.FailureReason or report.StopReason)
+    end
+    return path,report
+  end
+
+  self:CancelSearch()
   local path,report
   if Mode==ASTAR.SearchMode.EXPAND then
     path,report=self:_FindPathWithExpansion(ExcludeStartNode,ExcludeEndNode)
@@ -1579,6 +1660,408 @@ function ASTAR:FindPath(Mode, ExcludeStartNode, ExcludeEndNode)
 
 end
 
+-- Lazy searches keep one heap entry per open node. Stable ties make results independent of pairs() order.
+local function lazyEarlier(a,b)
+  if a.Score~=b.Score then
+    return a.Score<b.Score
+  end
+  if a.Estimate~=b.Estimate then
+    return a.Estimate<b.Estimate
+  end
+  return a.Node.id<b.Node.id
+end
+
+local function lazyPush(state,node,score,estimate)
+  local heap,positions=state.Open,state.OpenPositions
+  local index=positions[node.id] or (#heap+1)
+  local entry=heap[index] or {Node=node}
+  entry.Score,entry.Estimate=score,estimate
+  while index>1 do
+    local parent=math.floor(index/2)
+    if not lazyEarlier(entry,heap[parent]) then
+      break
+    end
+    heap[index]=heap[parent]
+    positions[heap[index].Node.id]=index
+    index=parent
+  end
+  heap[index]=entry
+  positions[node.id]=index
+end
+
+local function lazyPop(state)
+  local heap,positions=state.Open,state.OpenPositions
+  local first=heap[1]
+  if not first then
+    return nil
+  end
+  local last=table.remove(heap)
+  positions[first.Node.id]=nil
+  if #heap>0 then
+    local index=1
+    while index*2<=#heap do
+      local child=index*2
+      if child<#heap and lazyEarlier(heap[child+1],heap[child]) then
+        child=child+1
+      end
+      if not lazyEarlier(heap[child],last) then
+        break
+      end
+      heap[index]=heap[child]
+      positions[heap[index].Node.id]=index
+      index=child
+    end
+    heap[index]=last
+    positions[last.Node.id]=index
+  end
+  return first.Node
+end
+
+--- Start a resumable LAZY search without building an enclosing grid or starting a timer.
+-- Requires an unbuilt grid or a sparse grid; arbitrary caller-added nodes and all-pairs mode are unsupported.
+-- Initializes the frame and at most two endpoint cells. Subsequent work is performed by StepSearch().
+-- A new search cancels the previous pending search. Geometry/samples are retained between searches;
+-- changing endpoints does not reorient an existing sparse lattice. Use a new ASTAR for new geometry.
+-- @param #ASTAR self
+-- @param #boolean ExcludeStartNode (Optional) Exclude the start from the completed path; default false.
+-- @param #boolean ExcludeEndNode (Optional) Exclude the goal from the completed path; default false.
+-- @return #ASTAR self. LastSearchResult describes running, complete or cancelled state.
+function ASTAR:StartSearch(ExcludeStartNode, ExcludeEndNode)
+
+  assert(ExcludeStartNode==nil or type(ExcludeStartNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
+  assert(ExcludeEndNode==nil or type(ExcludeEndNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
+  assert(not self.Grid.GridBuilt or self.Grid.Sparse, "ASTAR: LAZY requires an unbuilt or sparse grid")
+  assert(self.GridNeighboursOnly~=false, "ASTAR: LAZY requires local grid neighbours")
+  for id,node in pairs(self.nodes) do
+    assert(node.cell or self._EndpointNodes[id]==node, "ASTAR: LAZY does not accept caller-added manual nodes")
+  end
+
+  self:CancelSearch()
+  local clock=startCPUClock()
+  local state={
+    Running=true,
+    Grid=self.Grid,
+    Open={},
+    OpenPositions={},
+    Scores={},
+    Previous={},
+    ExcludeStart=ExcludeStartNode,
+    ExcludeEnd=ExcludeEndNode,
+    Expanded=0,
+    InitialCandidates=self.Grid:GetCandidateCount(),
+    Report={
+      Mode=ASTAR.SearchMode.LAZY,
+      Status="running",
+      StopReason="running",
+      Attempts={},
+      BudgetLimited=false,
+      SearchCPUSeconds=clock and 0 or nil,
+    },
+  }
+  self._LazySearch=state
+  self.LastSearchResult=state.Report
+  self.LastPathFailure=nil
+
+  if not self.startVector or not self.endVector then
+    self:_FinishLazySearch(state,nil,"search_failed","missing_coordinates")
+  else
+    if not self.Grid.GridBuilt then
+      self.Grid:CreateSparse(self.startVector,self.endVector)
+    end
+
+    -- Seed the nearest endpoint cells only. Exact off-lattice endpoints keep their own validated nodes.
+    for _,position in ipairs({self.startVector,self.endVector}) do
+      local first,second=self.Grid:PositionToIndex(position)
+      local cell,reason=self.Grid:GetOrCreateCell(first,second)
+      if reason=="cell_limit" then
+        self:_FinishLazySearch(state,nil,"cell_limit")
+        break
+      end
+    end
+    self:_SyncGrid()
+
+    if state.Running then
+      local start,goal,reason=self:_ResolveEndpoints()
+      if reason then
+        self:_FinishLazySearch(state,nil,"search_failed",reason)
+      else
+        state.Start,state.Goal=start,goal
+        state.Scores[start.id]=0
+        local estimate=self:_HeuristicCost(start,goal)
+        lazyPush(state,start,estimate,estimate)
+
+        -- A sparse graph is intentionally incomplete. Do not flood it or reject unknown goal connections.
+        state.EndpointIndices={}
+        for _,node in ipairs({start,goal}) do
+          if not node.cell then
+            local indices={}
+            for _,index in ipairs(self.Grid:_SparseNearbyIndices(node.vector)) do
+              indices[index[1]]=indices[index[1]] or {}
+              indices[index[1]][index[2]]=true
+            end
+            state.EndpointIndices[node.id]=indices
+          end
+        end
+      end
+    end
+  end
+
+  state.StartVector,state.EndVector=self.startVector,self.endVector
+  state.CostFunction,state.CostArguments=self.CostFunc,self.CostArg
+  state.NeighbourFunction,state.NeighbourArguments=self.ValidNeighbourFunc,self.ValidNeighbourArg
+  state.Options,state.GridVersion=self.Grid.GridOptions,self.Grid.Version
+  state.NodeCount=self.Nnodes
+  self:_UpdateLazyReport(state,clock)
+  return self
+
+end
+
+--- Check that a paused search still describes the configured graph.
+-- External mutations, including another search growing a shared grid, require a fresh StartSearch().
+-- @param #ASTAR self
+-- @param #table State Private search state.
+-- @return #boolean True when resumption is safe.
+function ASTAR:_IsLazySearchCurrent(State)
+
+  return self._LazySearch==State and self.Grid==State.Grid and self.Grid.Version==State.GridVersion
+    and self.Grid.GridOptions==State.Options and self.Nnodes==State.NodeCount and self.GridNeighboursOnly~=false
+    and self.startVector==State.StartVector and self.endVector==State.EndVector
+    and self.CostFunc==State.CostFunction and self.CostArg==State.CostArguments
+    and self.ValidNeighbourFunc==State.NeighbourFunction and self.ValidNeighbourArg==State.NeighbourArguments
+
+end
+
+--- Generate only one node's finite geometric neighbourhood, retaining filtered samples in GRID.
+-- Every returned edge still passes the normal ASTAR neighbour and cost callbacks.
+-- @param #ASTAR self
+-- @param #table State Private search state.
+-- @param #ASTAR.Node Node Current node.
+-- @return #table Neighbour nodes, or nil on a cell-budget limit.
+-- @return #string cell_limit on budget rejection.
+function ASTAR:_LazyNeighbours(State, Node)
+
+  local grid=self.Grid
+  local indices=Node.cell and grid:_SparseNeighbourIndices(Node.cell) or grid:_SparseNearbyIndices(Node.vector)
+  local failure
+  for _,index in ipairs(indices) do
+    local cell,reason=grid:GetOrCreateCell(index[1],index[2])
+    if reason=="cell_limit" then
+      failure=reason
+      break
+    end
+  end
+  self:_SyncGrid()
+  State.GridVersion,State.NodeCount=grid.Version,self.Nnodes
+  if failure then
+    return nil,failure
+  end
+
+  local cells=Node.cell and grid:GetNeighbours(Node.cell) or grid:GetNearbyCells(Node.vector)
+  local neighbors={}
+  for _,cell in ipairs(cells) do
+    neighbors[#neighbors+1]=self._CellNodes[cell.id]
+  end
+
+  -- Exact endpoints attach locally; an unknown region is never replaced by a long direct shortcut.
+  if Node.cell then
+    local first,second=Node.q or Node.i,Node.r or Node.j
+    for _,endpoint in ipairs({State.Start,State.Goal}) do
+      local attachments=State.EndpointIndices[endpoint.id]
+      if attachments and attachments[first] and attachments[first][second] then
+        neighbors[#neighbors+1]=endpoint
+      end
+    end
+  end
+  return neighbors
+
+end
+
+--- Perform bounded work on the current LAZY search, retaining its open set and predecessor chain.
+-- No scheduler is installed. Call again while report.Status is "running"; nil path alone does not mean failure.
+-- At most MaxNodes new nodes are expanded per call. An unfinished node resumes first. CPU time is checked
+-- between edges/nodes; one terrain/callback operation and one small neighbour batch cannot be interrupted.
+-- Without os.clock the node limit still applies and SearchCPUSeconds is nil. Idle time is never counted.
+-- Reconfiguration cancels with search_changed. Programmer errors in callbacks propagate to the caller.
+-- @param #ASTAR self
+-- @param #number MaxNodes (Optional) Positive integer expansion limit per call; default 100.
+-- @param #number MaxSeconds (Optional) Positive finite CPU budget in seconds; default 0.005.
+-- @return #table Completed path, including an empty successful path, or nil while pending/unsuccessful.
+-- @return #ASTAR.SearchReport Live report for this search; also stored in LastSearchResult.
+function ASTAR:StepSearch(MaxNodes, MaxSeconds)
+
+  if MaxNodes==nil then
+    MaxNodes=100
+  end
+  if MaxSeconds==nil then
+    MaxSeconds=0.005
+  end
+  assert(type(MaxNodes)=="number" and MaxNodes>=1 and MaxNodes<math.huge and MaxNodes==math.floor(MaxNodes),
+    "ASTAR: MaxNodes must be a positive integer")
+  assert(type(MaxSeconds)=="number" and MaxSeconds>0 and MaxSeconds<math.huge, "ASTAR: MaxSeconds must be finite and positive")
+  local state=assert(self._LazySearch,"ASTAR: call StartSearch before StepSearch")
+  if not state.Running then
+    return state.Path,state.Report
+  end
+  local clock=startCPUClock()
+  if not clock then
+    state.Report.SearchCPUSeconds=nil
+  end
+  local expanded,worked=0,false
+
+  while state.Running do
+    if not self:_IsLazySearchCurrent(state) then
+      self:_FinishLazySearch(state,nil,"search_changed")
+      break
+    end
+    if worked and clock and elapsedCPU(clock)>=MaxSeconds then
+      break
+    end
+
+    if not state.Current then
+      if expanded>=MaxNodes then
+        break
+      end
+      local current=lazyPop(state)
+      if not current then
+        self:_FinishLazySearch(state,nil,"search_failed","connections_blocked")
+        break
+      end
+      if current==state.Goal then
+        local path=self:_UnwindPath({},state.Previous,current)
+        if not state.ExcludeEnd then
+          path[#path+1]=current
+        end
+        if state.ExcludeStart and #path>0 then
+          table.remove(path,1)
+        end
+        self:_FinishLazySearch(state,path,"path_found")
+        break
+      end
+
+      state.Expanded=state.Expanded+1
+      expanded=expanded+1
+      worked=true
+      local neighbors,reason=self:_LazyNeighbours(state,current)
+      if not neighbors then
+        self:_FinishLazySearch(state,nil,reason)
+        break
+      end
+      state.Current,state.Neighbours,state.NextNeighbour=current,neighbors,1
+    else
+      local neighbor=state.Neighbours[state.NextNeighbour]
+      if not neighbor then
+        state.Current,state.Neighbours=nil,nil
+      else
+        local current=state.Current
+        local valid=self:_IsValidNeighbour(current,neighbor)
+        if not state.Running then
+          break
+        end
+        if not self:_IsLazySearchCurrent(state) then
+          self:_FinishLazySearch(state,nil,"search_changed")
+          break
+        end
+        if valid then
+          local edgeCost=self:_TravelCost(current,neighbor)
+          if not state.Running then
+            break
+          end
+          if not self:_IsLazySearchCurrent(state) then
+            self:_FinishLazySearch(state,nil,"search_changed")
+            break
+          end
+          local cost=state.Scores[current.id]+edgeCost
+          if cost<(state.Scores[neighbor.id] or math.huge) then
+            state.Scores[neighbor.id]=cost
+            state.Previous[neighbor]=current
+            local estimate=self:_HeuristicCost(neighbor,state.Goal)
+            lazyPush(state,neighbor,cost+estimate,estimate)
+          end
+        end
+        state.NextNeighbour=state.NextNeighbour+1
+        worked=true
+      end
+    end
+  end
+
+  self:_UpdateLazyReport(state,clock)
+  return state.Path,state.Report
+
+end
+
+--- Cancel a pending resumable search, retaining its sampled grid and previous result objects.
+-- No timer is owned by ASTAR. A caller-owned scheduler must stop calling StepSearch() on cancellation.
+-- @param #ASTAR self
+-- @return #ASTAR self.
+function ASTAR:CancelSearch()
+
+  local state=self._LazySearch
+  if state and state.Running then
+    self:_FinishLazySearch(state,nil,"cancelled")
+    self:_UpdateLazyReport(state)
+  end
+  return self
+
+end
+
+--- Complete one lazy search without claiming that a resource limit proves unreachability.
+-- @param #ASTAR self
+-- @param #table State Private search state.
+-- @param #table Path Complete path or nil.
+-- @param #string Reason Termination reason.
+-- @param #string Failure (Optional) Proven search/endpoint failure, absent on limits and cancellation.
+function ASTAR:_FinishLazySearch(State, Path, Reason, Failure)
+
+  if not State.Running then
+    return
+  end
+  State.Running=false
+  State.Path=Path
+  local report=State.Report
+  report.Status=(Reason=="cancelled" or Reason=="search_changed") and "cancelled" or "complete"
+  report.StopReason,report.FailureReason=Reason,Failure
+  report.BudgetLimited=Reason=="cell_limit"
+  if self._LazySearch==State then
+    self.LastPathFailure=Failure
+  end
+
+  -- Release the exploration frontier; path nodes and per-edge caches remain available for inspection/reuse.
+  State.Open,State.OpenPositions,State.Scores,State.Previous=nil,nil,nil,nil
+  State.Current,State.Neighbours,State.EndpointIndices=nil,nil,nil
+  self:T(self.lid..string.format("Lazy search finished: %s, %d expanded nodes, %d sampled cells",
+    Reason,State.Expanded,State.Grid:GetCandidateCount()))
+
+end
+
+--- Refresh counts and accumulate active CPU time only; the report remains stable after completion.
+-- @param #ASTAR self
+-- @param #table State Private search state.
+-- @param #table Clock (Optional) Measurement for this work slice.
+function ASTAR:_UpdateLazyReport(State, Clock)
+
+  local report=State.Report
+  if Clock then
+    if report.SearchCPUSeconds~=nil then
+      report.SearchCPUSeconds=report.SearchCPUSeconds+elapsedCPU(Clock)
+    end
+  elseif State.Running then
+    report.SearchCPUSeconds=nil
+  end
+  report.Nodes=State.NodeCount or self.Nnodes
+  report.CandidateCells=State.Grid:GetCandidateCount()
+  report.NewCandidateCells=report.CandidateCells-State.InitialCandidates
+  report.MaxCells=State.Grid:GetOptions().MaxCells
+  report.Spacing=State.Grid:GetResolutionInfo().Spacing
+  report.ExpandedNodes=State.Expanded
+  if not State.Running then
+    report.Attempts[1]={Nodes=report.Nodes,Failure=report.FailureReason,CPUSeconds=report.SearchCPUSeconds}
+    if self._LazySearch==State then
+      self.LastSearchTiming={Nodes=report.Nodes,Failure=report.FailureReason,CPUSeconds=report.SearchCPUSeconds}
+    end
+  end
+
+end
+
 --- Compatibility alias for FindPath(ASTAR.SearchMode.EXPAND, ExcludeStartNode, ExcludeEndNode).
 -- Retains the two return values and LastExpansionResult. Stops at the first path or a configured limit.
 -- @param #ASTAR self
@@ -1600,6 +2083,7 @@ end
 -- @return #ASTAR.SearchReport Expansion report.
 function ASTAR:_FindPathWithExpansion(ExcludeStartNode, ExcludeEndNode)
 
+  assert(not self.Grid.Sparse, "ASTAR: use LAZY to grow a sparse grid")
   self:_SyncGrid()
   assert(self.hexGrid or self.rectGrid, "ASTAR: create a rectangular or hex grid before expanding search")
   assert(not self.hexGrid or self.GridNeighboursOnly, "ASTAR: call SetGridNeighboursOnly(true) before expanding a hex grid")
@@ -1875,7 +2359,7 @@ function ASTAR:_HasPotentialPath(start, goal)
     return false, "no_goal_node"
   end
 
-  if not self.GridNeighboursOnly or start.id==goal.id then
+  if self.Grid.Sparse or not self.GridNeighboursOnly or start.id==goal.id then
     return true
   end
 
@@ -1973,6 +2457,8 @@ function ASTAR:_TravelCost(nodeA, nodeB)
     return cost
   end
 
+  local costFunction,costArguments=self.CostFunc,self.CostArg
+  local neighbourFunction,neighbourArguments=self.ValidNeighbourFunc,self.ValidNeighbourArg
   local cost=nil
   if self.CostFunc==ASTAR.CostDepth and self.ValidNeighbourFunc==ASTAR.Depth
     and self.CostArg[1]==(self.ValidNeighbourArg[1] or 20) and self.CostArg[2]==(self.ValidNeighbourArg[2] or 0) then
@@ -1985,8 +2471,12 @@ function ASTAR:_TravelCost(nodeA, nodeB)
   end
 
   assert(type(cost)=="number" and cost>=0, "ASTAR: travel cost must be a non-negative number or math.huge")
-  nodeA.cost[nodeB.id]=cost
-  nodeB.cost[nodeA.id]=cost  -- Symmetric problem. 
+  -- A callback may reconfigure/cancel a resumable search. Do not repopulate its newly cleared cache.
+  if self.CostFunc==costFunction and self.CostArg==costArguments
+    and self.ValidNeighbourFunc==neighbourFunction and self.ValidNeighbourArg==neighbourArguments then
+    nodeA.cost[nodeB.id]=cost
+    nodeB.cost[nodeA.id]=cost
+  end
 
   return cost
 
@@ -2010,6 +2500,8 @@ function ASTAR:_IsValidNeighbour(node, neighbor)
     return valid
   end
 
+  local neighbourFunction,neighbourArguments=self.ValidNeighbourFunc,self.ValidNeighbourArg
+  local costFunction,costArguments=self.CostFunc,self.CostArg
   local valid=nil
   if self.CostFunc==ASTAR.CostDepth and self.ValidNeighbourFunc==ASTAR.Depth
     and self.CostArg[1]==(self.ValidNeighbourArg[1] or 20) and self.CostArg[2]==(self.ValidNeighbourArg[2] or 0) then
@@ -2021,8 +2513,11 @@ function ASTAR:_IsValidNeighbour(node, neighbor)
   end
 
   -- Rules are required to be symmetric, allowing the reverse edge to reuse the same result.
-  node.valid[neighbor.id]=valid
-  neighbor.valid[node.id]=valid  -- Symmetric problem. 
+  if self.ValidNeighbourFunc==neighbourFunction and self.ValidNeighbourArg==neighbourArguments
+    and self.CostFunc==costFunction and self.CostArg==costArguments then
+    node.valid[neighbor.id]=valid
+    neighbor.valid[node.id]=valid
+  end
 
   return valid
 
@@ -2457,6 +2952,7 @@ end
 -- Nil Path creates an extendable regular overlay; a supplied path (including {}) creates a fixed snapshot.
 -- Manual nodes and exact endpoints have no polygon. The path must belong to this search, even when the GRID is shared.
 -- Colors and path selection are copied. No search or route assignment is performed; polygons do not guarantee navigability.
+-- ColorByDepth uses GRID's center-depth palette and preserves path outlines. DepthMin/DepthMax are display settings only.
 -- The legacy positional form DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions) remains accepted.
 -- @param #ASTAR self
 -- @param #table Path (Optional) Ordered ASTAR.Node entries from this search; nil draws without highlighting.
