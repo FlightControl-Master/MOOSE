@@ -2144,6 +2144,49 @@ test("ordinary sparse creation remains unbounded after producing a separate wind
   end))
 end)
 
+test("window exit sectors follow geometric boundaries rather than filtered terrain",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    land.surfaceAt=nil
+    local source=GRID:New("Exits",kind):SetResolution(100)
+    local width=400
+    if kind==GRID.Type.HEXAGON then
+      width=200*math.sqrt(3)
+    end
+    source:SetValidSurfaceTypes(land.SurfaceType.WATER)
+    local window=source:_NewSparseWindow(coord(0),37,300,width,300)
+    local function alongCell(index)
+      if kind==GRID.Type.HEXAGON then
+        return window:GetOrCreateCell(index,0)
+      end
+      return window:GetOrCreateCell(0,index)
+    end
+    local anchor=alongCell(0)
+    local interior=alongCell(1)
+    local front=alongCell(3)
+    local rear=alongCell(-3)
+    local side
+    if kind==GRID.Type.HEXAGON then
+      side=window:GetOrCreateCell(-1,2)
+    else
+      side=window:GetOrCreateCell(2,0)
+    end
+    land.surfaceAt=function()
+      return land.SurfaceType.LAND
+    end
+    equal(alongCell(2),nil)
+    local count=window:GetCandidateCount()
+    land.surfaceAt=function()
+      error("Exit classification must not query terrain")
+    end
+    equal(window:_WindowExitSector(anchor),nil)
+    equal(window:_WindowExitSector(interior),nil)
+    equal(window:_WindowExitSector(front),1)
+    equal(window:_WindowExitSector(rear),5)
+    equal(window:_WindowExitSector(side),3)
+    equal(window:GetCandidateCount(),count)
+  end
+end)
+
 local function colorNear(actual,expected)
   for index=1,3 do
     near(actual[index],expected[index])

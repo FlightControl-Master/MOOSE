@@ -48,7 +48,7 @@
 -- @field #table LastGridDrawResult Last drawing job: Status, NodesQueued, NodesDrawn, Batches, CPUSeconds, MaxBatchCPUSeconds, ElapsedSimulationSeconds and optional Error.
 -- @field #table LastSearchTiming Last search attempt: CPUSeconds, Failure and Nodes. CPUSeconds is nil when os.clock is unavailable.
 -- @field #string LastPathFailure Reason the last search attempt failed; nil on success or when no attempt was made.
--- @field #ASTAR.SearchReport LastSearchResult Report from the most recent public search, also returned by FindPath() or StepSearch(). Live while a LAZY search runs; read-only for callers.
+-- @field #ASTAR.SearchReport LastSearchResult Report from the most recent public search, also returned by FindPath() or StepSearch(). Live while a LAZY/LOCAL search runs; read-only for callers.
 -- @field #ASTAR.SearchReport LastExpansionResult Report from the most recent expanding search; unchanged by fixed searches.
 -- @field #table GridMarkIDs Text-marker ids owned by MarkGrid().
 -- @field #table GridMarkJob Pending text-marker job.
@@ -290,6 +290,42 @@
 -- Callback programming errors propagate. As with synchronous searches, cached rules/costs assume unchanged external data.
 -- ASTAR owns no timer; the caller must stop its own scheduling. StartSearch/StepSearch report failures without player announcements.
 --
+-- # Local Paths Towards a Distant Goal
+--
+-- SetLocalWindow(Ahead, Width, Behind) configures a finite heading-aligned window in meters. Width is the full width.
+-- StartLocalSearch(start, goal, heading) starts one request; omit heading to orient the window towards the goal.
+-- Configure an unbuilt owned GRID first. Each request creates a fresh private window, with copied settings and no terrain queries yet.
+-- Reacquire GetGrid() after starting. Prebuilt/shared grids, manual nodes and all-pairs neighbours are unsupported.
+--
+--     local search = ASTAR:New(GRID.Type.HEXAGON)
+--     search:GetGrid():SetResolution(100):SetMaxCells(2000)
+--     search:SetValidSurfaceTypes(land.SurfaceType.WATER)
+--     search:SetValidNeighbourDepth(3.5, 50):SetCostDepth(15, 10)
+--     search:SetLocalWindow(3000, 2000, 1000)
+--     search:StartLocalSearch(start, goal)
+--     -- In each caller-owned update, until the report stops running:
+--     local path, report = search:StepSearch(100, 0.005)
+--
+-- LOCAL uses the shared resumable search with zero exploration heuristic to settle reachable costs once for all exits.
+-- A checked exact in-window goal takes priority. Otherwise, up to eight geometric frontier sectors retain one candidate each.
+-- Filtering terrain does not turn an interior obstacle into a window exit. Boundary centers may lie one lattice step inside it.
+-- Candidate scores use checked cost plus the compatible lower-bound estimate towards the goal. Custom/road costs add zero:
+-- they are ranked by their own cost units, then node ID, without an implicit preference measured in meters.
+-- Partial paths are local choices, with no global optimality or dead-end escape guarantee. Exit paths can lead away from the goal.
+--
+-- report.Outcome is "goal_path" or "partial_path" on success, and nil otherwise. report.Candidates holds independent path lists
+-- and copied Vec3 Positions; nodes remain read-only within their owning window. Candidate 1 supplies the returned path.
+-- A goal_path is a plan, never confirmation of arrival. No actual-motion observations or loop history are maintained yet.
+-- StopReason="no_local_exit" means this window produced no checked continuation; it does not prove global unreachability.
+-- A cell_limit publishes no provisional candidates, even if some exits were already reached. Boolean rules cannot diagnose missing data.
+-- Rejected in-window goals may still permit partial exits. Goals outside the window are not sampled or attached.
+-- LOCAL applies MaxNodes also to initialization, edges and result reconstruction, preserving bounded work without os.clock.
+-- Individual callbacks and finite neighbour batches remain non-interruptible. No core timer or controller is installed.
+--
+-- Request another section by calling StartLocalSearch with its planning anchor and the overall goal. This cancels pending work,
+-- clears the old owned drawings, and replaces its window; copied route positions and old reports remain usable.
+-- Window reuse, actual-progress history and naval integration are separate follow-up work. Use a separate ASTAR for full LAZY searches.
+--
 -- # Visual Debug
 --
 -- Building, searching and expanding never draw or update an overlay automatically.
@@ -334,12 +370,14 @@ ASTAR.CostMetric = {
   ROAD = "road",
 }
 
---- Search modes for FindPath(). All run synchronously and leave drawing to the caller; StartSearch/StepSearch offer resumable LAZY work.
+--- Search modes. FindPath accepts FIXED, EXPAND and LAZY; LOCAL is started through StartLocalSearch only.
 -- @type ASTAR.SearchMode
 -- @field #string FIXED Search the current graph once without enlarging it. The default mode.
 -- @field #string EXPAND Retry with a larger grid after failure, stopping at the first path or a configured limit.
 -- @field #string LAZY Generate cells on demand on an unbuilt or sparse grid, bounded by MaxCells.
+-- @field #string LOCAL Explore an owned finite window through StartLocalSearch/StepSearch, returning a partial or exact-goal path.
 ASTAR.SearchMode = {
+  LOCAL = "local",
   LAZY = "lazy",
   FIXED = "fixed",
   EXPAND = "expand",
@@ -355,25 +393,49 @@ ASTAR.SearchMode = {
 
 --- Result details returned by FindPath() or StepSearch(). Each new search creates a new report and attempt list.
 -- The same report is stored in LastSearchResult (and LastExpansionResult for EXPAND); treat it as read-only.
--- LAZY reports update in place while running, then remain stable. Settings/counts never reference mutable configuration tables.
+-- LAZY/LOCAL reports update in place while running, then remain stable. Settings/counts never reference mutable configuration tables.
 -- @type ASTAR.SearchReport
--- @field #string Mode ASTAR.SearchMode.FIXED, EXPAND or LAZY.
--- @field #string Status LAZY only: running, complete or cancelled. A complete search may have failed or reached its cell limit.
--- @field #table Attempts Ordered ASTAR.SearchAttempt entries; empty while LAZY is running or if expansion was rejected before any search.
--- @field #string StopReason FIXED: path_found or search_failed. EXPAND adds attempt_limit, size_limit, cell_limit or missing_coordinates. LAZY: running, path_found, search_failed, cell_limit, cancelled or search_changed.
--- @field #string FailureReason Last attempt failure: missing_coordinates, no_start_node, no_goal_node, start_unattached, goal_unattached, disconnected_grid or connections_blocked. Nil on success or when no attempt was made.
+-- @field #string Mode ASTAR.SearchMode.FIXED, EXPAND, LAZY or LOCAL.
+-- @field #string Status LAZY/LOCAL: running, complete or cancelled. A complete search may have failed or reached its cell limit.
+-- @field #table Attempts Ordered ASTAR.SearchAttempt entries; empty while LAZY/LOCAL is running or if expansion was rejected before any search.
+-- @field #string StopReason FIXED: path_found or search_failed. EXPAND adds attempt_limit, size_limit, cell_limit or missing_coordinates. LAZY/LOCAL: running, path_found, search_failed, cell_limit, cancelled or search_changed. LOCAL also has no_local_exit.
+-- @field #string FailureReason Last attempt failure: missing_coordinates, no_start_node, no_goal_node, start_unattached, goal_unattached, disconnected_grid or connections_blocked. LOCAL also has no_local_exit. Nil on success or when no attempt was made.
 -- @field #number Width Final grid width in meters; nil without an area grid (including LAZY).
 -- @field #number Margin Final grid margin in meters; nil without an area grid (including LAZY).
--- @field #number Spacing LAZY lattice spacing in meters; nil before construction.
+-- @field #number Spacing LAZY/LOCAL lattice spacing in meters; nil before construction.
 -- @field #number Nodes Final search-node count, including manual and exact endpoint nodes.
 -- @field #number CandidateCells Budgeted grid-cell count before filtering; nil without a built grid.
--- @field #number NewCandidateCells LAZY only: positions sampled during this search, excluding earlier cached samples.
--- @field #number ExpandedNodes LAZY only: node expansions processed so far.
+-- @field #number NewCandidateCells LAZY/LOCAL: positions sampled during this search, excluding earlier cached samples.
+-- @field #number ExpandedNodes LAZY/LOCAL: node expansions processed so far.
 -- @field #number MaxCells Configured grid-cell limit; nil without a built grid. FIXED searches do not enforce expansion limits.
 -- @field #number MaxWidth Optional expansion width limit in meters; nil without a built grid or configured limit.
 -- @field #number MaxMargin Optional expansion margin limit in meters; nil without a built grid or configured limit.
--- @field #boolean BudgetLimited EXPAND: a step was reduced to fit MaxCells. LAZY: stopped at cell_limit. Always false for FIXED.
+-- @field #boolean BudgetLimited EXPAND: a step was reduced to fit MaxCells. LAZY/LOCAL: stopped at cell_limit. Always false for FIXED.
 -- @field #number SearchCPUSeconds Total search and enlargement CPU time in seconds; nil when no CPU clock is available.
+-- @field #string Outcome LOCAL success only: partial_path or goal_path. Neither means the moving object has arrived.
+-- @field #number RequestID LOCAL request number within this ASTAR instance.
+-- @field #number WindowID LOCAL window generation; initially one fresh window per request.
+-- @field #table Window LOCAL copied Origin (Vec3), Heading (degrees), Ahead, Width and Behind (meters).
+-- @field #boolean GoalInside LOCAL: whether the requested destination is geometrically inside this window.
+-- @field #string GoalFailure LOCAL: no_goal_node when the in-window goal fails its surface filter; partial exits may still succeed.
+-- @field #table Candidates LOCAL: up to eight ASTAR.LocalCandidate records, best first; empty until successful completion.
+-- @field #number CandidateCount LOCAL: number of published candidates.
+-- @field #number WorkItems LOCAL: bounded work items performed, including endpoint preparation and result construction.
+-- @field #number RetainedCells LOCAL: accepted cells retained in the current window; CandidateCells also counts filtered samples.
+-- @field #number ValidityCacheHits LOCAL: validity cache hits during this request.
+-- @field #number CostCacheHits LOCAL: travel-cost cache hits during this request.
+
+--- One completed local alternative. Treat this record, its path and copied positions as read-only.
+-- Separate candidates own their path/position lists; path nodes are shared within the owning window.
+-- @type ASTAR.LocalCandidate
+-- @field #table Path Ordered ASTAR nodes, including the planning start and checked endpoint.
+-- @field #table Positions Independent Vec3 copies for consumers retaining a route beyond this window's lifetime.
+-- @field #number Cost Checked travel cost in the configured cost units.
+-- @field #number Score Cost plus the compatible goal heuristic; custom/road costs add zero, never meters.
+-- @field #number Length Horizontal polyline length in meters, independent of the cost metric.
+-- @field #number RemainingDistance Horizontal straight-line distance from the endpoint to the overall goal, in meters.
+-- @field #boolean ReachesGoal True only when the exact requested goal was reached under the current endpoint metric.
+-- @field #number Sector Partial exits only: 1 forward, 2 forward-right, 3 right, 4 rear-right, 5 rear, 6 rear-left, 7 left, 8 forward-left.
 
 --- Node data.
 -- @type ASTAR.Node
@@ -1590,7 +1652,7 @@ function ASTAR:FindPath(Mode, ExcludeStartNode, ExcludeEndNode)
     Mode=ASTAR.SearchMode.FIXED
   end
   assert(Mode==ASTAR.SearchMode.FIXED or Mode==ASTAR.SearchMode.EXPAND or Mode==ASTAR.SearchMode.LAZY,
-    "ASTAR: Mode must be an ASTAR.SearchMode value")
+    "ASTAR: FindPath accepts FIXED, EXPAND or LAZY; use StartLocalSearch for LOCAL")
   assert(ExcludeStartNode==nil or type(ExcludeStartNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
   assert(ExcludeEndNode==nil or type(ExcludeEndNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
   assert(Mode~=ASTAR.SearchMode.EXPAND or not self.Grid.Sparse, "ASTAR: use LAZY to grow a sparse grid")
@@ -1717,6 +1779,290 @@ local function lazyPop(state)
   return first.Node
 end
 
+--- Configure the fixed extent of each local planning window. No default window is assumed.
+-- A new configuration cancels pending local work with search_changed on the next StepSearch().
+-- Does not change an already returned path or rebuild a window immediately.
+-- @param #ASTAR self
+-- @param #number Ahead Positive forward extent in meters from the requested planning start.
+-- @param #number Width Positive total width in meters, half on each side of the heading.
+-- @param #number Behind Non-negative rear extent in meters; zero allows no rear cell centers.
+-- @return #ASTAR self.
+function ASTAR:SetLocalWindow(Ahead, Width, Behind)
+
+  assert(type(Ahead)=="number" and Ahead>0 and Ahead<math.huge, "ASTAR: Ahead must be finite and positive")
+  assert(type(Width)=="number" and Width>0 and Width<math.huge, "ASTAR: Width must be finite and positive")
+  assert(type(Behind)=="number" and Behind>=0 and Behind<math.huge, "ASTAR: Behind must be finite and non-negative")
+  assert(Ahead+Behind<math.huge, "ASTAR: local window length must be finite")
+  self._LocalWindow={Ahead=Ahead,Width=Width,Behind=Behind}
+
+  return self
+
+end
+
+--- Start one local request, replacing the previous owned window without starting a timer or sampling terrain.
+-- Requires SetLocalWindow() and an unbuilt owned GRID or the previous local window. Attached/built non-local grids
+-- and manual nodes are rejected. Configure resolution, surface types and MaxCells through GetGrid() beforehand.
+-- Every request copies GRID settings into a fresh window. Old cells/results remain owned by their old window;
+-- reacquire GetGrid() for drawing the new result. Old owned drawings are cleared when replacing the window.
+-- Start/Goal are copied. Heading defaults towards Goal, or zero for coincident horizontal positions.
+-- The distant goal supplies direction only: it is sampled/attached only when inside the window.
+-- Use StepSearch()/CancelSearch() as for LAZY. No actual movement, arrival or rolling history is inferred.
+-- @param #ASTAR self
+-- @param #table Start Planning anchor; VECTOR, COORDINATE, Vec2 or Vec3. May be a future route endpoint.
+-- @param #table Goal Overall destination, in the same position formats.
+-- @param #number Heading (Optional) Finite degrees clockwise from DCS +x towards +z.
+-- @return #ASTAR self. LastSearchResult is the new running report.
+function ASTAR:StartLocalSearch(Start, Goal, Heading)
+
+  local options=assert(self._LocalWindow,"ASTAR: call SetLocalWindow before StartLocalSearch")
+  assert(not self.Grid.GridBuilt or self.Grid==self._LocalGrid, "ASTAR: local searches require an owned unbuilt grid or previous local window")
+  assert(self.GridNeighboursOnly~=false, "ASTAR: local searches require grid neighbours")
+  for id,node in pairs(self.nodes) do
+    assert(node.cell or self._EndpointNodes[id]==node, "ASTAR: local searches do not accept caller-added manual nodes")
+  end
+
+  local clock=startCPUClock()
+  local startVector=self.Grid:_PositionVector(Start)
+  local endVector=self.Grid:_PositionVector(Goal)
+  local distance=startVector:GetDistance(endVector,true)
+  assert(distance<math.huge, "ASTAR: endpoint distance must be finite")
+  local heading=Heading
+  if heading==nil then
+    heading=0
+    if distance>0 then
+      heading=startVector:GetHeadingTo(endVector)
+    end
+  end
+  local window=self.Grid:_NewSparseWindow(startVector,heading,options.Ahead,options.Width,options.Behind)
+
+  -- Validate all new inputs before cancelling useful work or replacing its drawings and ownership.
+  self:CancelSearch()
+  self:ClearDrawing()
+  if self._LocalGrid then
+    self._LocalGrid:ClearDrawing()
+  end
+  self.Grid=window
+  self._LocalGrid=window
+  self.nodes={}
+  self.counter,self.Nnodes=1,0
+  self._CellNodes,self._EndpointNodes={},{}
+  self._NodeOwner={}
+  self._CellCursor,self._GridRevision=0,-1
+  self.startNode,self.endNode=nil,nil
+  self.startVector,self.endVector=startVector,endVector
+  self:_SyncGrid()
+
+  self._LocalRequestID=(self._LocalRequestID or 0)+1
+  local state={
+    Local=true, Running=true, Phase="start", Grid=window, WindowOptions=options,
+    Open={}, OpenPositions={}, Scores={}, Previous={}, EndpointIndices={}, Exits={},
+    Expanded=0, WorkItems=0, InitialCandidates=0,
+    Target={vector=endVector}, GoalInside=window:_IsInsideWindow(endVector),
+    InitialValidHits=self.nvalidcache, InitialCostHits=self.ncostcache,
+    Report={
+      Mode=ASTAR.SearchMode.LOCAL, Status="running", StopReason="running", Attempts={},
+      BudgetLimited=false, SearchCPUSeconds=clock and 0 or nil,
+      RequestID=self._LocalRequestID, WindowID=self._LocalRequestID,
+      Candidates={}, CandidateCount=0,
+      Window={Origin=startVector:GetVec3(),Heading=window._SparseWindow.Heading,
+        Ahead=options.Ahead,Width=options.Width,Behind=options.Behind},
+    },
+  }
+  self._LazySearch=state
+  self.LastSearchResult=state.Report
+  self.LastPathFailure=nil
+  state.StartVector,state.EndVector=self.startVector,self.endVector
+  state.CostFunction,state.CostArguments=self.CostFunc,self.CostArg
+  state.NeighbourFunction,state.NeighbourArguments=self.ValidNeighbourFunc,self.ValidNeighbourArg
+  state.Options,state.GridVersion=window.GridOptions,window.Version
+  state.NodeCount=self.Nnodes
+  self:_UpdateLazyReport(state,clock)
+
+  return self
+
+end
+
+--- Materialize one local endpoint and its geometric attachment indices, within a bounded work slice.
+-- Only an in-window goal reaches this helper; exact positions still pass surface and edge rules.
+-- @param #ASTAR self
+-- @param #table State Private local search state.
+-- @param Core.Vector#VECTOR Position Endpoint position.
+-- @return #ASTAR.Node Endpoint or nil.
+-- @return #string cell_limit on budget exhaustion, otherwise nil.
+function ASTAR:_SeedLocalEndpoint(State, Position)
+
+  local first,second=self.Grid:PositionToIndex(Position)
+  local cell,reason=self.Grid:GetOrCreateCell(first,second)
+  self:_SyncGrid()
+  if reason=="cell_limit" then
+    State.GridVersion,State.NodeCount=self.Grid.Version,self.Nnodes
+    return nil,reason
+  end
+
+  local node=self:_FindEndpoint(Position,"local endpoint")
+  if node and not node.cell then
+    local indices={}
+    for _,index in ipairs(self.Grid:_SparseNearbyIndices(node.vector)) do
+      indices[index[1]]=indices[index[1]] or {}
+      indices[index[1]][index[2]]=true
+    end
+    State.EndpointIndices[node.id]=indices
+  end
+  State.GridVersion,State.NodeCount=self.Grid.Version,self.Nnodes
+  return node
+
+end
+
+-- Cost comparisons remain in the configured cost units, with stable node-ID ties.
+local function localCandidateEarlier(first,second)
+  if first.Score~=second.Score then
+    return first.Score<second.Score
+  end
+  return first.Node.id<second.Node.id
+end
+
+--- Keep the cheapest settled exit in each geometric sector. No terrain-shaped frontier is invented.
+-- @param #ASTAR self
+-- @param #table State Private local search state.
+-- @param #ASTAR.Node Node Settled reachable node.
+function ASTAR:_RecordLocalExit(State, Node)
+
+  if not Node.cell or Node==State.Start then
+    return
+  end
+  local sector=State.Grid:_WindowExitSector(Node.cell)
+  if not sector then
+    return
+  end
+
+  local cost=State.Scores[Node.id]
+  local candidate={Node=Node,Sector=sector,Cost=cost,Score=cost+self:_HeuristicCost(Node,State.Target)}
+  local current=State.Exits[sector]
+  if not current or localCandidateEarlier(candidate,current) then
+    State.Exits[sector]=candidate
+  end
+
+end
+
+--- Advance initialization or result construction by one bounded work item.
+-- Reconstruction follows one predecessor or copies one position at a time, so long result paths also yield.
+-- @param #ASTAR self
+-- @param #table State Private local search state.
+function ASTAR:_StepLocalPhase(State)
+
+  if State.Phase=="start" or State.Phase=="goal" then
+    -- Resolve the exact anchors first. An invalid goal may still allow a useful local exit.
+    local isStart=State.Phase=="start"
+    local position=isStart and self.startVector or self.endVector
+    local node,reason=self:_SeedLocalEndpoint(State,position)
+    if reason then
+      self:_FinishLazySearch(State,nil,reason)
+      return
+    end
+
+    if isStart then
+      if not node then
+        self:_FinishLazySearch(State,nil,"search_failed","no_start_node")
+        return
+      end
+      State.Start,self.startNode=node,node
+      State.Scores[node.id]=0
+      lazyPush(State,node,0,0)
+      State.Phase=State.GoalInside and "goal" or "explore"
+    else
+      State.Goal,self.endNode=node,node
+      if not node then
+        State.Report.GoalFailure="no_goal_node"
+      end
+      State.Phase="explore"
+      if node==State.Start then
+        State.Phase="coincident"
+      end
+    end
+
+  elseif State.Phase=="coincident" then
+    local valid=self:_IsValidNeighbour(State.Start,State.Start)
+    if not State.Running then
+      return
+    end
+    if not self:_IsLazySearchCurrent(State) then
+      self:_FinishLazySearch(State,nil,"search_changed")
+    elseif valid then
+      State.Phase="select"
+      State.ReachedGoal=true
+    else
+      self:_FinishLazySearch(State,nil,"no_local_exit","no_local_exit")
+    end
+
+  elseif State.Phase=="select" then
+    -- Selection is bounded to eight sectors; keep results private until every chosen path is copied.
+    local selected={}
+    if State.ReachedGoal then
+      local cost=State.Scores[State.Goal.id]
+      selected[1]={Node=State.Goal,Cost=cost,Score=cost,ReachesGoal=true}
+    else
+      for sector=1,8 do
+        if State.Exits[sector] then
+          selected[#selected+1]=State.Exits[sector]
+        end
+      end
+      table.sort(selected,localCandidateEarlier)
+    end
+    if #selected==0 then
+      self:_FinishLazySearch(State,nil,"no_local_exit","no_local_exit")
+      return
+    end
+    State.Selected,State.Results=selected,{}
+    State.CandidateIndex=1
+    State.Reverse={}
+    State.TraceNode=selected[1].Node
+    State.Phase="unwind"
+
+  elseif State.Phase=="unwind" then
+    local node=State.TraceNode
+    if node then
+      State.Reverse[#State.Reverse+1]=node
+      State.TraceNode=State.Previous[node]
+    else
+      local selected=State.Selected[State.CandidateIndex]
+      State.Result={Path={},Positions={},Cost=selected.Cost,Score=selected.Score,Length=0,
+        RemainingDistance=selected.Node.vector:GetDistance(State.Target.vector,true),
+        ReachesGoal=selected.ReachesGoal or false,Sector=selected.Sector}
+      State.CopyIndex=#State.Reverse
+      State.Phase="copy"
+    end
+
+  elseif State.Phase=="copy" then
+    local node=State.Reverse[State.CopyIndex]
+    local result=State.Result
+    if node then
+      local previous=result.Path[#result.Path]
+      if previous then
+        result.Length=result.Length+previous.vector:GetDistance(node.vector,true)
+      end
+      result.Path[#result.Path+1]=node
+      result.Positions[#result.Positions+1]=node.vector:GetVec3()
+      State.CopyIndex=State.CopyIndex-1
+    else
+      State.Results[#State.Results+1]=result
+      State.CandidateIndex=State.CandidateIndex+1
+      local nextCandidate=State.Selected[State.CandidateIndex]
+      if nextCandidate then
+        State.Reverse={}
+        State.TraceNode=nextCandidate.Node
+        State.Phase="unwind"
+      else
+        local report=State.Report
+        report.Candidates=State.Results
+        report.CandidateCount=#State.Results
+        report.Outcome=State.ReachedGoal and "goal_path" or "partial_path"
+        self:_FinishLazySearch(State,State.Results[1].Path,"path_found")
+      end
+    end
+  end
+
+end
+
 --- Start a resumable LAZY search without building an enclosing grid or starting a timer.
 -- Requires an unbuilt grid or a sparse grid; arbitrary caller-added nodes and all-pairs mode are unsupported.
 -- Initializes the frame and at most two endpoint cells. Subsequent work is performed by StepSearch().
@@ -1731,6 +2077,7 @@ function ASTAR:StartSearch(ExcludeStartNode, ExcludeEndNode)
   assert(ExcludeStartNode==nil or type(ExcludeStartNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
   assert(ExcludeEndNode==nil or type(ExcludeEndNode)=="boolean", "ASTAR: endpoint exclusion flags must be booleans")
   assert(not self.Grid.GridBuilt or self.Grid.Sparse, "ASTAR: LAZY requires an unbuilt or sparse grid")
+  assert(not self.Grid._SparseWindow, "ASTAR: use StartLocalSearch for local windows; use a separate ASTAR for unbounded LAZY")
   assert(self.GridNeighboursOnly~=false, "ASTAR: LAZY requires local grid neighbours")
   for id,node in pairs(self.nodes) do
     assert(node.cell or self._EndpointNodes[id]==node, "ASTAR: LAZY does not accept caller-added manual nodes")
@@ -1828,6 +2175,7 @@ function ASTAR:_IsLazySearchCurrent(State)
     and self.startVector==State.StartVector and self.endVector==State.EndVector
     and self.CostFunc==State.CostFunction and self.CostArg==State.CostArguments
     and self.ValidNeighbourFunc==State.NeighbourFunction and self.ValidNeighbourArg==State.NeighbourArguments
+    and (not State.Local or self._LocalWindow==State.WindowOptions)
 
 end
 
@@ -1876,12 +2224,14 @@ function ASTAR:_LazyNeighbours(State, Node)
 
 end
 
---- Perform bounded work on the current LAZY search, retaining its open set and predecessor chain.
+--- Perform bounded work on the current LAZY or LOCAL search, retaining its frontier and predecessor chain.
 -- No scheduler is installed. Call again while report.Status is "running"; nil path alone does not mean failure.
 -- At most MaxNodes new nodes are expanded per call. An unfinished node resumes first. CPU time is checked
 -- between edges/nodes; one terrain/callback operation and one small neighbour batch cannot be interrupted.
 -- Without os.clock the node limit still applies and SearchCPUSeconds is nil. Idle time is never counted.
 -- Reconfiguration cancels with search_changed. Programmer errors in callbacks propagate to the caller.
+-- LOCAL also limits work items to MaxNodes: an endpoint seed, finite neighbour batch, edge check, candidate
+-- selection (at most eight), or one reconstruction/copy step. Provisional candidates are never returned as success.
 -- @param #ASTAR self
 -- @param #number MaxNodes (Optional) Positive integer expansion limit per call; default 100.
 -- @param #number MaxSeconds (Optional) Positive finite CPU budget in seconds; default 0.005.
@@ -1898,7 +2248,7 @@ function ASTAR:StepSearch(MaxNodes, MaxSeconds)
   assert(type(MaxNodes)=="number" and MaxNodes>=1 and MaxNodes<math.huge and MaxNodes==math.floor(MaxNodes),
     "ASTAR: MaxNodes must be a positive integer")
   assert(type(MaxSeconds)=="number" and MaxSeconds>0 and MaxSeconds<math.huge, "ASTAR: MaxSeconds must be finite and positive")
-  local state=assert(self._LazySearch,"ASTAR: call StartSearch before StepSearch")
+  local state=assert(self._LazySearch,"ASTAR: call StartSearch or StartLocalSearch before StepSearch")
   if not state.Running then
     return state.Path,state.Report
   end
@@ -1907,6 +2257,7 @@ function ASTAR:StepSearch(MaxNodes, MaxSeconds)
     state.Report.SearchCPUSeconds=nil
   end
   local expanded,worked=0,false
+  local localWork=0
 
   while state.Running do
     if not self:_IsLazySearchCurrent(state) then
@@ -1916,17 +2267,35 @@ function ASTAR:StepSearch(MaxNodes, MaxSeconds)
     if worked and clock and elapsedCPU(clock)>=MaxSeconds then
       break
     end
+    if state.Local then
+      if localWork>=MaxNodes then
+        break
+      end
+      localWork=localWork+1
+      state.WorkItems=state.WorkItems+1
+    end
 
-    if not state.Current then
+    if state.Local and state.Phase~="explore" then
+      self:_StepLocalPhase(state)
+      worked=true
+    elseif not state.Current then
       if expanded>=MaxNodes then
         break
       end
       local current=lazyPop(state)
       if not current then
-        self:_FinishLazySearch(state,nil,"search_failed","connections_blocked")
-        break
-      end
-      if current==state.Goal then
+        if state.Local then
+          state.Phase="select"
+          worked=true
+        else
+          self:_FinishLazySearch(state,nil,"search_failed","connections_blocked")
+          break
+        end
+      elseif current==state.Goal and state.Local then
+        state.ReachedGoal=true
+        state.Phase="select"
+        worked=true
+      elseif current==state.Goal then
         local path=self:_UnwindPath({},state.Previous,current)
         if not state.ExcludeEnd then
           path[#path+1]=current
@@ -1936,17 +2305,20 @@ function ASTAR:StepSearch(MaxNodes, MaxSeconds)
         end
         self:_FinishLazySearch(state,path,"path_found")
         break
+      else
+        if state.Local then
+          self:_RecordLocalExit(state,current)
+        end
+        state.Expanded=state.Expanded+1
+        expanded=expanded+1
+        worked=true
+        local neighbors,reason=self:_LazyNeighbours(state,current)
+        if not neighbors then
+          self:_FinishLazySearch(state,nil,reason)
+          break
+        end
+        state.Current,state.Neighbours,state.NextNeighbour=current,neighbors,1
       end
-
-      state.Expanded=state.Expanded+1
-      expanded=expanded+1
-      worked=true
-      local neighbors,reason=self:_LazyNeighbours(state,current)
-      if not neighbors then
-        self:_FinishLazySearch(state,nil,reason)
-        break
-      end
-      state.Current,state.Neighbours,state.NextNeighbour=current,neighbors,1
     else
       local neighbor=state.Neighbours[state.NextNeighbour]
       if not neighbor then
@@ -1974,7 +2346,11 @@ function ASTAR:StepSearch(MaxNodes, MaxSeconds)
           if cost<(state.Scores[neighbor.id] or math.huge) then
             state.Scores[neighbor.id]=cost
             state.Previous[neighbor]=current
-            local estimate=self:_HeuristicCost(neighbor,state.Goal)
+            -- Local candidates share one Dijkstra exploration; their goal-directed scores are ranked separately.
+            local estimate=0
+            if not state.Local then
+              estimate=self:_HeuristicCost(neighbor,state.Goal)
+            end
             lazyPush(state,neighbor,cost+estimate,estimate)
           end
         end
@@ -2004,10 +2380,10 @@ function ASTAR:CancelSearch()
 
 end
 
---- Complete one lazy search without claiming that a resource limit proves unreachability.
+--- Complete one resumable search without claiming that a resource limit proves unreachability.
 -- @param #ASTAR self
 -- @param #table State Private search state.
--- @param #table Path Complete path or nil.
+-- @param #table Path Successful path (possibly a LOCAL partial path) or nil.
 -- @param #string Reason Termination reason.
 -- @param #string Failure (Optional) Proven search/endpoint failure, absent on limits and cancellation.
 function ASTAR:_FinishLazySearch(State, Path, Reason, Failure)
@@ -2028,7 +2404,9 @@ function ASTAR:_FinishLazySearch(State, Path, Reason, Failure)
   -- Release the exploration frontier; path nodes and per-edge caches remain available for inspection/reuse.
   State.Open,State.OpenPositions,State.Scores,State.Previous=nil,nil,nil,nil
   State.Current,State.Neighbours,State.EndpointIndices=nil,nil,nil
-  self:T(self.lid..string.format("Lazy search finished: %s, %d expanded nodes, %d sampled cells",
+  State.Exits,State.Selected,State.Results,State.Reverse=nil,nil,nil,nil
+  State.Result,State.TraceNode=nil,nil
+  self:T(self.lid..string.format("Resumable search finished: %s, %d expanded nodes, %d sampled cells",
     Reason,State.Expanded,State.Grid:GetCandidateCount()))
 
 end
@@ -2053,6 +2431,13 @@ function ASTAR:_UpdateLazyReport(State, Clock)
   report.MaxCells=State.Grid:GetOptions().MaxCells
   report.Spacing=State.Grid:GetResolutionInfo().Spacing
   report.ExpandedNodes=State.Expanded
+  if State.Local then
+    report.WorkItems=State.WorkItems
+    report.GoalInside=State.GoalInside
+    report.RetainedCells=State.Grid:GetCellCount()
+    report.ValidityCacheHits=self.nvalidcache-State.InitialValidHits
+    report.CostCacheHits=self.ncostcache-State.InitialCostHits
+  end
   if not State.Running then
     report.Attempts[1]={Nodes=report.Nodes,Failure=report.FailureReason,CPUSeconds=report.SearchCPUSeconds}
     if self._LazySearch==State then
@@ -2659,6 +3044,7 @@ end
 --- Get the owned or shared GRID, including before initial construction.
 -- New(GridType) retains this reference through matching builders. Legacy New():CreateHexGrid()/CreateHexGridFromZone()
 -- can replace the default rectangle; retrieve the grid again afterwards. SetGrid() explicitly replaces it as well.
+-- StartLocalSearch() also replaces it with a new owned bounded window for every local request.
 -- @param #ASTAR self
 -- @return Core.Grid#GRID Grid.
 ---@return GRID

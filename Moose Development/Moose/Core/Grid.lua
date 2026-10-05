@@ -1556,6 +1556,31 @@ function GRID:_IsInsideWindow(Position)
 
 end
 
+--- Classify a window frontier cell into one of eight sectors, without sampling its neighbours.
+-- A frontier center has a geometric neighbour outside the window; filtered terrain does not create new frontiers.
+-- Sectors start at forward (1), then advance clockwise in 45-degree steps. The anchor is never an exit.
+-- @param #GRID self
+-- @param #GRID.Cell Cell Owned cell.
+-- @return #number Sector 1..8, or nil for interior/anchor cells.
+function GRID:_WindowExitSector(Cell)
+
+  assert(self._SparseWindow and self.cells[Cell.id]==Cell, "GRID: exit classification requires an owned window cell")
+  local along,across=self:_IndexOffsets(Cell.q or Cell.i,Cell.r or Cell.j)
+  local tolerance=self._SparseWindow.Tolerance
+  if math.abs(along)<=tolerance and math.abs(across)<=tolerance then
+    return nil
+  end
+
+  for _,index in ipairs(self:_SparseNeighbourIndices(Cell)) do
+    local neighborAlong,neighborAcross=self:_IndexOffsets(index[1],index[2])
+    if not self:_ContainsWindowOffset(neighborAlong,neighborAcross) then
+      local angle=math.deg(math.atan2(across,along))%360
+      return math.floor((angle+22.5)/45)%8+1
+    end
+  end
+
+end
+
 --- Get or sample one sparse lattice position, without creating its neighbours.
 -- A cached rejection returns nil, "filtered" without another terrain query. An unknown position at
 -- the budget limit returns nil, "cell_limit" and remains unknown; raising MaxCells permits a retry.
@@ -3109,7 +3134,7 @@ end
 
 --- Get a snapshot of current dimensions, including expansions. Configuration Width/Margin describe the initial corridor.
 -- @param #GRID self
--- @return #table Width, Margin, Spacing and CrossSpacing (rectangles), or nil before construction. Sparse grids have nil Width/Margin.
+-- @return #table Width, Margin, Spacing and CrossSpacing (rectangles), or nil before construction. Unbounded sparse grids have nil Width/Margin; internal windows have Width only.
 function GRID:GetDimensions()
 
   local grid=self.hexGrid or self.rectGrid

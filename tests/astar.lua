@@ -4425,5 +4425,468 @@ test("LAZY preserves four-neighbour topology and exact attachments on anisotropi
   end
 end)
 
+local function localPlanner(kind)
+  local search=ASTAR:New(kind or GRID.Type.RECTANGLE):SetLocalWindow(400,400,100)
+  search:GetGrid():SetResolution(100):SetMaxCells(500)
+  return search
+end
+
+test("LOCAL returns bounded checked alternatives without querying a distant goal",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local search=localPlanner(kind)
+    local queries=0
+    land.surfaceAt=function(position)
+      queries=queries+1
+      assert(search:GetGrid():_IsInsideWindow(position),"Sample escaped the window")
+      return land.SurfaceType.WATER
+    end
+    local start=coord(123,567)
+    local goal=start:Translate(5000,37)
+    equal(search:StartLocalSearch(start,goal),search)
+    equal(queries,0)
+    local path,report=finishLazy(search)
+    assert(path)
+    equal(report.Mode,ASTAR.SearchMode.LOCAL)
+    equal(report.Status,"complete")
+    equal(report.Outcome,"partial_path")
+    equal(report.StopReason,"path_found")
+    equal(report.GoalInside,false)
+    assert(report.CandidateCount>1 and report.CandidateCount<=8)
+    equal(path,report.Candidates[1].Path)
+    near(path[1].vector.x,start.x)
+    near(report.Window.Heading,37)
+    local sectors={}
+    for _,candidate in ipairs(report.Candidates) do
+      assert(not sectors[candidate.Sector])
+      sectors[candidate.Sector]=true
+      assert(#candidate.Path>=2)
+      equal(candidate.ReachesGoal,false)
+      assert(candidate.RemainingDistance>0)
+      near(candidate.Cost,pathCost(search,candidate.Path))
+      near(candidate.Score,candidate.Cost+candidate.RemainingDistance)
+      for index,node in ipairs(candidate.Path) do
+        assert(search:GetGrid():_IsInsideWindow(node.vector))
+        assert(candidate.Positions[index]~=node.vector)
+        if index>1 then
+          assert(search:_IsValidNeighbour(candidate.Path[index-1],node))
+        end
+      end
+    end
+    equal(next(scheduled),nil)
+  end
+end)
+
+test("LOCAL prefers an exact in-window goal and matches a fixed search on its graph",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local search=localPlanner(kind):StartLocalSearch(coord(0),coord(237,33),0)
+    local path,report=finishLazy(search)
+    assert(path)
+    equal(report.Outcome,"goal_path")
+    equal(report.GoalInside,true)
+    equal(report.CandidateCount,1)
+    near(path[#path].vector.x,237)
+    near(path[#path].vector.z,33)
+    near(report.Candidates[1].RemainingDistance,0)
+    local fixed=ASTAR:New():SetGrid(search:GetGrid()):SetEndpoints(coord(0),coord(237,33))
+    local reference=assert(fixed:FindPath())
+    near(report.Candidates[1].Cost,pathCost(fixed,reference))
+  end
+end)
+
+test("LOCAL preserves 3D exact endpoints and checks coincident endpoint validity",function()
+  local search=localPlanner():SetCostDist3D():StartLocalSearch(coord(0,0,20),coord(150,30,40),0)
+  local path,report=finishLazy(search)
+  equal(report.Outcome,"goal_path")
+  near(path[1].vector.y,20)
+  near(path[#path].vector.y,40)
+  near(report.Candidates[1].Cost,pathCost(search,path))
+  search:StartLocalSearch(coord(0,0,20),coord(0,0,20))
+  path,report=finishLazy(search)
+  equal(#path,1)
+  equal(report.Outcome,"goal_path")
+  equal(report.Candidates[1].Cost,0)
+  search:SetValidNeighbourFunction(function()
+    return false
+  end):StartLocalSearch(coord(0),coord(0))
+  path,report=finishLazy(search)
+  equal(path,nil)
+  equal(report.StopReason,"no_local_exit")
+end)
+
+test("LOCAL can leave a window when an in-window goal is surface-rejected or unattached",function()
+  for _,rejectSurface in ipairs({true,false}) do
+    local search=localPlanner():SetValidSurfaceTypes(land.SurfaceType.WATER)
+    land.surfaceAt=function(position)
+      if rejectSurface and position.x==237 and position.z==33 then
+        return land.SurfaceType.LAND
+      end
+      return land.SurfaceType.WATER
+    end
+    search:SetValidNeighbourFunction(function(first,second)
+      return first.vector.x~=237 and second.vector.x~=237
+    end):StartLocalSearch(coord(0),coord(237,33),0)
+    local path,report=finishLazy(search)
+    assert(path)
+    equal(report.Outcome,"partial_path")
+    equal(report.GoalInside,true)
+    if rejectSurface then
+      equal(report.GoalFailure,"no_goal_node")
+    end
+  end
+end)
+
+test("LOCAL reports a rejected start and an enclosed component without claiming global unreachability",function()
+  local search=localPlanner():SetValidSurfaceTypes(land.SurfaceType.WATER)
+  land.surfaceAt=function()
+    return land.SurfaceType.LAND
+  end
+  search:StartLocalSearch(coord(0),coord(10000))
+  local path,report=finishLazy(search)
+  equal(path,nil)
+  equal(report.FailureReason,"no_start_node")
+
+  land.surfaceAt=function(position)
+    if math.abs(position.x)<50 and math.abs(position.z)<50 then
+      return land.SurfaceType.WATER
+    end
+    return land.SurfaceType.LAND
+  end
+  search:StartLocalSearch(coord(0),coord(10000))
+  path,report=finishLazy(search)
+  equal(path,nil)
+  equal(report.StopReason,"no_local_exit")
+  equal(report.BudgetLimited,false)
+  equal(report.Outcome,nil)
+end)
+
+test("LOCAL discards provisional exits on a cell limit and keeps limits distinct from terrain failures",function()
+  local search=localPlanner():SetLocalWindow(400,200,0)
+  search:GetGrid():SetMaxCells(8)
+  search:StartLocalSearch(coord(0),coord(10000))
+  local path,report
+  local hadExit=false
+  repeat
+    path,report=search:StepSearch(1,1)
+    if search._LazySearch.Exits and next(search._LazySearch.Exits) then
+      hadExit=true
+    end
+  until report.Status~="running"
+  assert(hadExit)
+  equal(path,nil)
+  equal(report.StopReason,"cell_limit")
+  equal(report.BudgetLimited,true)
+  equal(report.FailureReason,nil)
+  equal(report.CandidateCount,0)
+  equal(#report.Candidates,0)
+  equal(report.Outcome,nil)
+  search:GetGrid():SetMaxCells(500)
+  search:StartLocalSearch(coord(0),coord(10000))
+  assert(finishLazy(search))
+end)
+
+test("LOCAL compares custom costs in their own units and returns independently optimal exits",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local search=localPlanner(kind)
+    local function cost(first,second)
+      if first.vector.x>100 and second.vector.x>100 then
+        return 0
+      end
+      return 0.001
+    end
+    local function valid(first,second)
+      return not (first.vector.x==100 and second.vector.x==200 and first.vector.z==0 and second.vector.z==0)
+        and not (second.vector.x==100 and first.vector.x==200 and first.vector.z==0 and second.vector.z==0)
+    end
+    search:SetCostFunction(cost):SetValidNeighbourFunction(valid)
+    search:StartLocalSearch(coord(0),coord(5000),0)
+    local path,report=finishLazy(search)
+    assert(path)
+    for _,candidate in ipairs(report.Candidates) do
+      near(candidate.Score,candidate.Cost)
+      near(candidate.Cost,pathCost(search,candidate.Path))
+      local fixed=ASTAR:New():SetGrid(search:GetGrid())
+      fixed:SetCostFunction(cost):SetValidNeighbourFunction(valid)
+      fixed:SetEndpoints(coord(0),candidate.Path[#candidate.Path].vector)
+      local reference=assert(fixed:FindPath())
+      near(candidate.Cost,pathCost(fixed,reference))
+    end
+  end
+end)
+
+test("LOCAL checks depth on every returned connection and rejects infinite or invalid costs",function()
+  local terrain=depthTerrain()
+  local search=localPlanner():SetValidNeighbourDepth(3.5):SetCostDepth(15,10)
+  search:StartLocalSearch(coord(0),coord(10000))
+  local path,report=finishLazy(search)
+  assert(path)
+  near(report.Candidates[1].Cost,pathCost(search,path))
+  terrain.depth=1
+  search:StartLocalSearch(coord(0),coord(10000))
+  path,report=finishLazy(search)
+  equal(path,nil)
+  equal(report.StopReason,"no_local_exit")
+
+  search:SetValidNeighbourFunction(nil):SetCostFunction(function()
+    return math.huge
+  end):StartLocalSearch(coord(0),coord(10000))
+  path,report=finishLazy(search)
+  equal(path,nil)
+  equal(report.StopReason,"no_local_exit")
+  search:SetCostFunction(function()
+    return -1
+  end):StartLocalSearch(coord(0),coord(10000))
+  local ok,err=pcall(finishLazy,search)
+  assert(not ok and tostring(err):find("travel cost"))
+end)
+
+test("LOCAL bounds initialization exploration and result construction without a CPU clock",function()
+  local savedClock=os.clock
+  os.clock=nil
+  local ok,err=pcall(function()
+    local search=localPlanner():SetLocalWindow(3000,200,0)
+    search:StartLocalSearch(coord(0),coord(2850),0)
+    local path,report
+    local previousWork=0
+    local reconstructionSteps=0
+    local steps=0
+    repeat
+      path,report=search:StepSearch(1)
+      equal(report.WorkItems-previousWork,1)
+      previousWork=report.WorkItems
+      if search._LazySearch.Phase=="unwind" or search._LazySearch.Phase=="copy" then
+        reconstructionSteps=reconstructionSteps+1
+      end
+      if report.Status=="running" then
+        equal(path,nil)
+        equal(#report.Candidates,0)
+      end
+      steps=steps+1
+      assert(steps<5000)
+    until report.Status~="running"
+    assert(path)
+    assert(reconstructionSteps>#path)
+    equal(report.SearchCPUSeconds,nil)
+    equal(next(scheduled),nil)
+  end)
+  os.clock=savedClock
+  assert(ok,err)
+end)
+
+test("LOCAL CPU slices yield between edge callbacks and exclude idle time",function()
+  local savedClock=os.clock
+  local time,calls=0,0
+  os.clock=function()
+    return time
+  end
+  local ok,err=pcall(function()
+    local search=localPlanner():SetCostFunction(function()
+      time=time+0.01
+      calls=calls+1
+      return 1
+    end):StartLocalSearch(coord(0),coord(10000))
+    local path,report=search:StepSearch(100,0.005)
+    equal(path,nil)
+    equal(calls,1)
+    near(report.SearchCPUSeconds,0.01)
+    time=time+1000
+    search:StepSearch(100,0.005)
+    equal(calls,2)
+    near(report.SearchCPUSeconds,0.02)
+  end)
+  os.clock=savedClock
+  assert(ok,err)
+end)
+
+test("LOCAL configuration changes cancel pending work before further exploration",function()
+  local changes={
+    function(search) search:SetLocalWindow(500,400,100) end,
+    function(search) search:SetEndpoints(coord(10),coord(10000)) end,
+    function(search) search:SetCostDist3D() end,
+    function(search) search:SetValidNeighbourDistance(120) end,
+    function(search) search:GetGrid():SetMaxCells(50) end,
+    function(search) search:GetGrid():SetDiagonals(false) end,
+  }
+  for _,change in ipairs(changes) do
+    local search=localPlanner():StartLocalSearch(coord(0),coord(10000))
+    search:StepSearch(1)
+    local count=search:GetGrid():GetCandidateCount()
+    change(search)
+    local path,report=search:StepSearch()
+    equal(path,nil)
+    equal(report.StopReason,"search_changed")
+    equal(report.Status,"cancelled")
+    equal(search:GetGrid():GetCandidateCount(),count)
+  end
+end)
+
+test("LOCAL callbacks may cancel replace or reconfigure without publishing stale paths",function()
+  for _,action in ipairs({"cancel","replace","change"}) do
+    local search=localPlanner()
+    local called=false
+    search:SetValidNeighbourFunction(function()
+      if not called then
+        called=true
+        if action=="cancel" then
+          search:CancelSearch()
+        elseif action=="replace" then
+          search:StartLocalSearch(coord(1000),coord(2000))
+        else
+          search:SetLocalWindow(500,400,100)
+        end
+      end
+      return true
+    end):StartLocalSearch(coord(0),coord(10000))
+    local oldReport=search.LastSearchResult
+    local path,report=search:StepSearch(100,1)
+    equal(path,nil)
+    equal(report,oldReport)
+    equal(report.Status,"cancelled")
+    equal(report.CandidateCount,0)
+    if action=="replace" then
+      assert(search.LastSearchResult~=oldReport)
+      equal(search.LastSearchResult.Status,"running")
+      assert(finishLazy(search))
+    end
+  end
+end)
+
+test("LOCAL results and position copies survive the next owned window",function()
+  local search=localPlanner():StartLocalSearch(coord(0),coord(10000))
+  local path,report=finishLazy(search)
+  local window=search:GetGrid()
+  local endpoint=path[#path]
+  local positions=report.Candidates[1].Positions
+  local lastX=positions[#positions].x
+  local samples=window:GetCandidateCount()
+  local work=report.WorkItems
+  local hits=report.CostCacheHits
+  local again,sameReport=search:StepSearch()
+  equal(again,path)
+  equal(sameReport,report)
+  search:StartLocalSearch(endpoint.vector,coord(10000))
+  assert(finishLazy(search))
+  assert(search:GetGrid()~=window)
+  equal(window:GetCandidateCount(),samples)
+  equal(report.WorkItems,work)
+  equal(report.CostCacheHits,hits)
+  equal(positions[#positions].x,lastX)
+  equal(endpoint.vector.x,lastX)
+  equal(search.LastSearchResult.RequestID,report.RequestID+1)
+  assert(positions[1]~=report.Candidates[2].Positions[1])
+end)
+
+test("LOCAL API validation is atomic and refuses attached grids manual nodes and unbounded mode mixing",function()
+  local search=localPlanner():StartLocalSearch(coord(0),coord(10000))
+  local report=search.LastSearchResult
+  local window=search:GetGrid()
+  local invalid={
+    function() search:SetLocalWindow(0,100,0) end,
+    function() search:SetLocalWindow(100,math.huge,0) end,
+    function() search:SetLocalWindow(100,100,-1) end,
+    function() search:StartLocalSearch(coord(0),coord(0/0)) end,
+    function() search:StartLocalSearch(coord(0),coord(100),false) end,
+    function() search:StartSearch() end,
+    function() search:FindPath(ASTAR.SearchMode.LOCAL) end,
+  }
+  for _,attempt in ipairs(invalid) do
+    assert(not pcall(attempt))
+    equal(search.LastSearchResult,report)
+    equal(report.Status,"running")
+    equal(search:GetGrid(),window)
+  end
+  local attached=ASTAR:New():SetGrid(window):SetLocalWindow(100,100,0)
+  assert(not pcall(function()
+    attached:StartLocalSearch(coord(0),coord(1000))
+  end))
+  local manual=localPlanner()
+  manual:AddNodeFromCoordinate(coord(0))
+  assert(not pcall(function()
+    manual:StartLocalSearch(coord(0),coord(1000))
+  end))
+end)
+
+test("LOCAL exit selection is deterministic across slice sizes and permits rear detours",function()
+  local paths={}
+  for _,budget in ipairs({1,7,1000}) do
+    local search=localPlanner():SetLocalWindow(400,400,300)
+    search:SetValidNeighbourFunction(function(first,second)
+      return first.vector.x<=0 and second.vector.x<=0
+    end):StartLocalSearch(coord(0),coord(5000),0)
+    local path,report
+    repeat
+      path,report=search:StepSearch(budget,1)
+    until report.Status~="running"
+    assert(path)
+    equal(report.Outcome,"partial_path")
+    assert(report.Candidates[1].RemainingDistance>5000)
+    local signature={}
+    for _,candidate in ipairs(report.Candidates) do
+      signature[#signature+1]=candidate.Sector..":"..candidate.Cost
+      for _,node in ipairs(candidate.Path) do
+        signature[#signature+1]=node.vector.x..","..node.vector.z
+      end
+    end
+    paths[#paths+1]=table.concat(signature,";")
+  end
+  equal(paths[1],paths[2])
+  equal(paths[2],paths[3])
+end)
+
+test("LOCAL cost callbacks cannot publish a stale result and callback errors remain visible",function()
+  local search=localPlanner()
+  search:SetCostFunction(function()
+    search:SetCostDist2D()
+    return 1
+  end):StartLocalSearch(coord(0),coord(10000))
+  local path,report=finishLazy(search)
+  equal(path,nil)
+  equal(report.StopReason,"search_changed")
+  equal(report.CandidateCount,0)
+
+  search:SetValidNeighbourFunction(function()
+    error("local test callback error")
+  end):StartLocalSearch(coord(0),coord(10000))
+  local ok,err=pcall(finishLazy,search)
+  assert(not ok and tostring(err):find("local test callback error"))
+end)
+
+test("LOCAL keeps four-neighbour anisotropic topology and honours an explicitly rearward goal",function()
+  local search=localPlanner():SetLocalWindow(500,800,500)
+  search:GetGrid():SetResolution(100,200):SetDiagonals(false)
+  search:StartLocalSearch(coord(0),coord(-350,25),0)
+  local path,report=finishLazy(search)
+  assert(path)
+  equal(report.Outcome,"goal_path")
+  near(report.Window.Heading,0)
+  near(path[#path].vector.x,-350)
+  for index=2,#path do
+    local first,last=path[index-1],path[index]
+    if first.cell and last.cell then
+      equal(math.abs(first.i-last.i)+math.abs(first.j-last.j),1)
+    end
+  end
+end)
+
+test("LOCAL replacement cancels old drawing jobs while retaining completed results",function()
+  local search=localPlanner():StartLocalSearch(coord(0),coord(10000))
+  local path,report=finishLazy(search)
+  local oldGrid=search:GetGrid()
+  search:DrawGrid(path,{BatchSize=1})
+  oldGrid:DrawGrid(path,{BatchSize=1})
+  assert(next(scheduled))
+  local start={x=1000,y=0,z=0}
+  local goal={x=5000,y=0,z=0}
+  search:StartLocalSearch(start,goal)
+  equal(next(scheduled),nil)
+  equal(oldGrid.GridDrawJob,nil)
+  equal(search.GridDrawJob,nil)
+  start.x=3000
+  goal.x=3000
+  near(search.startVector.x,1000)
+  near(search.endVector.x,5000)
+  equal(report.Outcome,"partial_path")
+  assert(finishLazy(search))
+end)
+
 print(string.format("%d passed, %d failed", passed, failed))
 if failed > 0 then os.exit(1) end

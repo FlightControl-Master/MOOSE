@@ -11,12 +11,12 @@ then plan another section as the caller moves. First establish this capability
 in ASTAR and GRID independently of ships. Then simplify and optimize both naval
 planning modes using the shared infrastructure.
 
-Status as of 2026-10-05: M1 design and the approved M2.1 GRID foundation are
-complete. Bounded sparse windows and focused regressions are implemented;
-the ASTAR local lifecycle and naval migration remain pending. Public names and
-defaults below are proposals, not implemented API. Existing LAZY searches
-already generate cells on demand but return only complete paths to their
-requested goal.
+Status as of 2026-10-05: M1 design and the approved M2.1/M2.2 implementation are
+complete. GRID windows and resumable local ASTAR requests now return checked
+partial or exact-goal paths. M2.3 progress/history, reuse and extended lifetime
+validation, M2.4 DCS trials, and naval migration remain pending. The API status
+below distinguishes implemented methods from remaining proposals. Existing LAZY
+searches retain their full-goal contract.
 
 ## Existing implementation
 
@@ -89,14 +89,17 @@ dead end. A failure confined to one window does not prove global unreachability.
 There is no automatic global fallback or automatic reversal in the first version.
 Those are caller policies to discuss separately if needed.
 
-## Proposed public interface
+## Public interface and remaining proposals
 
 Keep positional inputs short and reuse the existing rule/cost setters. Input
 positions accept the established VECTOR/COORDINATE/Vec2/Vec3 forms; units and
 copying behavior must be documented. Returned reports may contain named records
 because they carry many distinct results.
 
-| Proposed call | Parameters and purpose |
+The first four calls below are implemented in M2.2. UpdateLocalProgress and
+EvaluateConnection remain proposals for later milestones.
+
+| Call | Parameters and purpose |
 | --- | --- |
 | `ASTAR:SetLocalWindow(Ahead, Width, Behind)` | Three distances in meters. Ahead and total Width are positive; Behind is non-negative. Configure the local extent explicitly for the first release. |
 | `ASTAR:StartLocalSearch(Start, Goal, Heading)` | Start one local planning job. Heading is optional degrees; default towards Goal. Coincident endpoints are handled before choosing an orientation. Copy positions. Starting a job cancels a pending one. |
@@ -260,7 +263,7 @@ must decide when its usable reserve requires stopping.
   preserving existing modes. Test rotated rectangles, hexagons, front/side/rear
   boundaries, outside-window samples and budget accounting. Specify window
   ownership and configuration copying before adding a rolling lifecycle.
-- [ ] M2.2 Add StartLocalSearch and shared StepSearch dispatch, candidate exploration,
+- [x] M2.2 Add StartLocalSearch and shared StepSearch dispatch, candidate exploration,
   exact-goal and partial-path results. Cover endpoint validity, independent paths,
   deterministic ordering, custom costs, cancellation and configuration changes.
 - [ ] M2.3 Bound generations and result lifetime, add actual-progress observations,
@@ -324,6 +327,45 @@ A long/narrow-window tolerance case failed before its correction and passed
 afterwards. Existing suites cover FIXED, EXPAND and LAZY behavior. These are
 controlled dependency tests; no new DCS mission validation has been performed.
 
+## M2.2 implementation and validation
+
+`SetLocalWindow(Ahead, Width, Behind)` and `StartLocalSearch(Start, Goal, Heading)`
+are implemented. `StepSearch` and `CancelSearch` handle both LOCAL and LAZY jobs.
+LOCAL reuses the existing heap, sparse neighbour generation, validity/cost caches
+and relaxation loop. A zero exploration heuristic settles costs once per request.
+Geometric frontier cells are classified by GRID into eight heading-relative
+sectors. Each sector retains the best candidate by checked cost plus the existing
+compatible goal heuristic, with node-ID ties. Custom and road costs add zero;
+there is no implicit conversion between meters and custom cost units.
+
+Reaching an exact in-window goal takes priority and returns one `goal_path`
+candidate. Otherwise the request completes with up to eight `partial_path`
+candidates, or `no_local_exit`. Surface-rejected or unattached in-window goals
+can still produce a partial exit. Distant goals are never sampled as endpoints.
+Cell limits return no provisional path or candidate list, with no claim of global
+unreachability. Each published candidate has Path, copied Vec3 Positions, Cost,
+Score, horizontal Length/RemainingDistance, ReachesGoal and an optional Sector.
+
+LOCAL counts initialization, neighbour batches, edge processing, selection and
+incremental path reconstruction/copying against StepSearch's work limit as well
+as its cooperative CPU budget. Reports include request/window IDs, window geometry,
+sample/retention counts, expanded nodes, work items and cache-hit counts. No timer
+or DCS controller is owned by the planner. Each request currently builds a fresh
+owned window and clears old owned drawings; supplied shared/prebuilt non-local
+grids and manual nodes are rejected before replacing pending work. Full-goal LAZY
+uses a separate ASTAR instance. Progress observation and compatible-window reuse
+remain M2.3 work; diagnostic preservation for missing depth data remains pending.
+
+Validation on 2026-10-05: Lua 5.1 compilation and separate-process suites passed:
+GRID 104, ASTAR 243, navy-local 134 (481 total). The 18 new ASTAR cases and one GRID
+case cover both lattices, rotated geometry, sector boundaries versus filtered
+terrain, exact/3D/coincident endpoints, custom/zero/infinite costs, fixed-search
+cost comparisons, depth rules, hard budgets, CPU slices, no-clock execution,
+cancellation/reentrant callbacks, configuration changes, result ownership,
+drawing cleanup and deterministic ordering across slice sizes. Existing
+FIXED/EXPAND/LAZY and naval regressions remain green. No DCS mission or performance
+benchmark has been run for M2.2; stubbed terrain tests do not validate ship motion.
+
 ## Validation and next implementation approval
 
 Use Lua 5.1 syntax checks and separate processes for the affected suites. The
@@ -332,7 +374,8 @@ also run `navy-local` and relevant depth/pathline/waypoint suites when their
 dependencies change. Keep measured performance and DCS run snapshots outside the
 source tree. Do not rerun unrelated tests for a documentation-only plan.
 
-The next proposed code change is **M2.2**: the ASTAR local request lifecycle,
-shared bounded exploration and honest partial/exact-goal results. Review that
-scope before starting it. M2.1 alone does not provide rolling pathfinding or
-migrate NAVYGROUP. Update this checklist after each stage.
+The next proposed code change is **M2.3**: compatible-window reuse, actual-progress
+observations and bounded history, explicit missing-data diagnostics, and extended
+multi-window/lifetime tests. Review that scope before starting it. M2.2 supports
+individual local requests but does not yet diagnose repeated planning without
+movement or migrate NAVYGROUP. Update this checklist after each stage.
