@@ -11,10 +11,14 @@ then plan another section as the caller moves. First establish this capability
 in ASTAR and GRID independently of ships. Then simplify and optimize both naval
 planning modes using the shared infrastructure.
 
-Status as of 2026-10-05: M1 design and the approved M2.1/M2.2 implementation are
+Status as of 2026-10-08: M1 design and the approved M2.1/M2.2/M2.3 implementation are
 complete. GRID windows and resumable local ASTAR requests now return checked
-partial or exact-goal paths. M2.3 progress/history, reuse and extended lifetime
-validation, M2.4 DCS trials, and naval migration remain pending. The API status
+partial or exact-goal paths, reuse compatible windows, and report bounded actual
+movement history and missing depth data. M2.4 standalone validation is complete:
+T1, T2 at depth weight 1 and all eight T3 checks passed in DCS on the current
+stable-cell implementation. The weight-10 T2 trial reached its request budget;
+global completion and physical ship safety are not established. Naval migration
+remains pending. The API status
 below distinguishes implemented methods from remaining proposals. Existing LAZY
 searches retain their full-goal contract.
 
@@ -96,8 +100,8 @@ positions accept the established VECTOR/COORDINATE/Vec2/Vec3 forms; units and
 copying behavior must be documented. Returned reports may contain named records
 because they carry many distinct results.
 
-The first four calls below are implemented in M2.2. UpdateLocalProgress and
-EvaluateConnection remain proposals for later milestones.
+The request lifecycle was implemented in M2.2; observation and invalidation
+methods were added in M2.3. EvaluateConnection remains a proposal for M3.
 
 | Call | Parameters and purpose |
 | --- | --- |
@@ -106,6 +110,9 @@ EvaluateConnection remain proposals for later milestones.
 | `ASTAR:StepSearch(MaxNodes, MaxSeconds)` | Reuse the existing two work limits for full LAZY and local jobs. Return `path, report`; a pending nil path is not a failure. Do not change existing full-search results. |
 | `ASTAR:CancelSearch()` | Cancel pending work without touching the caller's installed route. Reuse existing behavior. |
 | `ASTAR:UpdateLocalProgress(Position)` | Record actual movement independently of the planning start. Needed for rolling-history checks; unnecessary for an isolated local request. No searching, scheduling or route commands. |
+| `ASTAR:SetLocalProgress(MinDistance, HistorySize, RepeatLimit)` | Configure observation thresholds with three optional scalars (defaults 10 m, 32 positions, 3 repetitions); resets observations. HistorySize is 4..256, RepeatLimit is 2..HistorySize-1. |
+| `ASTAR:ResetLocalProgress()` | Clear actual-position history and diagnostics without changing current search/results. |
+| `ASTAR:InvalidateLocalCache()` | Clear learned continuation costs and mark external terrain/callback input changes. Pending work cancels on its next step; the next request uses a fresh window. Completed results stay intact. |
 | `ASTAR:EvaluateConnection(Start, Goal)` | Proposed shared rule/cost evaluation for arbitrary positions, returning validity, cost and available diagnostics. It checks the connection rule, not membership of a complete graph path or turning feasibility. Required before removing naval private-method calls. |
 
 Normal usage repeats StartLocalSearch only when a new section is needed, then
@@ -171,9 +178,10 @@ Prefer a checked exact-goal path when one exists within the window. Compare
 boundary exits when the goal cannot be connected locally; a blocked in-window
 goal does not by itself rule out an exit and a later approach from another side.
 
-For built-in distance/depth costs, compare validated travel cost plus the existing
-compatible lower-bound estimate towards the overall goal. This is a local choice,
-not a proof of cheapest total-route cost. Keep length and cost separate. Do not
+For built-in distance/depth costs, BaseScore compares validated travel cost plus
+the compatible lower-bound estimate towards the overall goal. Score adds a learned
+continuation increase from nearby earlier planning anchors (M2.4 correction below).
+This approximate local ranking is not a global lower bound or proof of cheapest total-route cost. Keep length and cost separate. Do not
 reuse NAVYGROUP's numeric turn/forward penalties as universal weights.
 
 Custom cost functions have no implied conversion to meters. Their default
@@ -266,10 +274,10 @@ must decide when its usable reserve requires stopping.
 - [x] M2.2 Add StartLocalSearch and shared StepSearch dispatch, candidate exploration,
   exact-goal and partial-path results. Cover endpoint validity, independent paths,
   deterministic ordering, custom costs, cancellation and configuration changes.
-- [ ] M2.3 Bound generations and result lifetime, add actual-progress observations,
+- [x] M2.3 Bound generations and result lifetime, add actual-progress observations,
   and test several window transitions, long journeys, detours away from the goal,
   loop detection, missing data and memory limits. Confirm inactive results remain stable.
-- [ ] M2.4 Provide small DCS scripts for standalone local planning. First move a
+- [x] M2.4 Provide small DCS scripts for standalone local planning. First move a
   simulated planning position along validated points; then check real terrain
   without changing ship behavior. Log each request and transition directly.
 
@@ -350,11 +358,11 @@ LOCAL counts initialization, neighbour batches, edge processing, selection and
 incremental path reconstruction/copying against StepSearch's work limit as well
 as its cooperative CPU budget. Reports include request/window IDs, window geometry,
 sample/retention counts, expanded nodes, work items and cache-hit counts. No timer
-or DCS controller is owned by the planner. Each request currently builds a fresh
+or DCS controller is owned by the planner. At the M2.2 milestone, each request built a fresh
 owned window and clears old owned drawings; supplied shared/prebuilt non-local
 grids and manual nodes are rejected before replacing pending work. Full-goal LAZY
 uses a separate ASTAR instance. Progress observation and compatible-window reuse
-remain M2.3 work; diagnostic preservation for missing depth data remains pending.
+were deferred to M2.3, together with diagnostic preservation for missing depth data.
 
 Validation on 2026-10-05: Lua 5.1 compilation and separate-process suites passed:
 GRID 104, ASTAR 243, navy-local 134 (481 total). The 18 new ASTAR cases and one GRID
@@ -366,7 +374,87 @@ drawing cleanup and deterministic ordering across slice sizes. Existing
 FIXED/EXPAND/LAZY and naval regressions remain green. No DCS mission or performance
 benchmark has been run for M2.2; stubbed terrain tests do not validate ship motion.
 
+## M2.3 implementation and validation
+
+Compatible requests now retain the fixed GRID frame, sampled cells and rejected
+surface samples. Reuse requires unchanged configuration/rules, a heading within
+10 degrees of the original window, and an anchor in the conservative inner core:
+along `[-Behind/4, Ahead/4]`, across `[-Width/8, Width/8]`. WindowID changes only
+on replacement; PlanningStart and Window.Origin are reported separately. The
+full geometric membership rule is unchanged. No shared grid is moved or pruned.
+
+Each request owns a new node/cache view. Known built-in validity/cost pairs copy
+cell-to-cell results; exact endpoint results and custom callback results are
+rechecked. Custom callbacks may depend on node identity, which changes between
+requests. Reapply setters when changing rule/cost arguments, and call
+InvalidateLocalCache for changes in external terrain or hidden callback state.
+Its revision also prevents resuming outdated pending work.
+
+Restoration proceeds one node or cache entry at a time under StepSearch budgets.
+Public synchronous drawing/query calls between steps may import the remaining
+nodes directly; they advance the restoration state without duplicate nodes or
+spurious cancellation. ClearDrawing performs no unnecessary node import.
+Internally at most one window and the current plus temporary previous node view
+are retained. Endpoint nodes do not accumulate. Completing/cancelling restoration
+releases its source. Caller-held results deliberately keep their own nodes/window
+alive; dropping these references permits collection. Reports and copied route
+positions remain stable. MaxCells bounds samples including filtered cells.
+
+UpdateLocalProgress copies actual horizontal positions and ignores displacement
+below MinDistance relative to the last accepted point. At most HistorySize
+positions are retained. Accepted movement resets repeated-planning counts, even
+when moving away from the goal. Repeated directed transitions within MinDistance/2
+of prior endpoints diagnose a possible loop. Longer loops need sufficient history;
+this is a heuristic, not a completeness or dead-end escape guarantee. A changed
+overall goal resets goal-specific diagnostics and retains only the latest actual
+position. Future planning anchors never add observations or travelled distance.
+
+Repeated-planning counts apply only to completed partial requests near the last
+actual observation, without accepted movement during the request. Cancelled jobs,
+future anchors and goal paths do not increase the count. Diagnostics appear as
+Progress.Status (`unobserved`, `observed`, `repeated_planning`, `loop_detected`).
+The default chosen for M2.3 is advisory; it does not block subsequent requests or
+infer a physical standstill from elapsed time. Actual arrival remains a caller decision.
+
+Built-in depth evaluation now preserves `clear`, `blocked` and `unavailable`.
+Unavailable edges are never cached as permanent obstructions or infinite costs.
+Reports count distinct undirected unavailable edges by cause and copy the first
+affected connection. With no checked exit, this yields `data_unavailable` with no
+proven FailureReason. Checked alternatives may still produce a valid path with
+DataIncomplete=true. Limits/cancellation keep their own termination reason;
+generic boolean callbacks cannot supply missing-depth evidence.
+
+Validation on 2026-10-06: Lua 5.1.5 compilation and separate-process suites passed:
+GRID 105, ASTAR 260, navy-local 134, depth 27 (526 total). Coverage includes
+warm/cold windows, off-lattice endpoint cache remapping, custom node-dependent
+callbacks, cancellation during restoration, external invalidation, missing-data
+recovery, repeated planning, actual loops, away-from-goal motion, goal changes,
+35 window replacements per geometry, weak-reference collection of inactive
+windows, and consecutive selected paths to an exact distant goal. A focused
+missing-data regression fails against the pre-M2.3 source and passes after the fix.
+
+A small comparable stub benchmark used three identical hex-window depth requests:
+before reuse, each request made 113 new cell samples and 296 profile queries;
+afterward only the first did, with zero new samples/profile queries on requests
+two and three. Observed coarse CPU times were about 6 ms each before, and 7/3/3 ms
+after. These timings include synthetic terrain and do not establish simulator
+performance or FPS. Benchmark/probe files remain in the task-specific temporary
+directory outside the patch. No M2.3 DCS validation has been performed.
+
 ## Validation and next implementation approval
+
+M2.4 preparation on 2026-10-08: three pasteable mission examples are ready outside
+the source patch. T1 follows local rectangular paths with a virtual position and
+no terrain rules. T2 follows depth-checked hex paths, with center-depth coloring.
+T3 checks eight deterministic lifecycle/cache/progress cases without terrain rules.
+All three compile under Lua 5.1.5 and finish in a controlled timer/terrain harness;
+T2 also completes with a synthetic shoal forcing a detour. Map rendering and real
+DCS behavior are not validated by that harness. Subsequent DCS runs passed T1
+and reproduced a T2 request-limit stop twice, the second with candidate diagnostics.
+Checkpoints, source hashes and byte-preserving logs remain outside the repository.
+The recurring monitor was deleted; inspection now starts on the user's signal.
+Keep M2.4 open for the corrected T2 rerun and T3. Preparation itself did not change
+production classes; the approved T2 correction is described below.
 
 Use Lua 5.1 syntax checks and separate processes for the affected suites. The
 initial implementation touches GRID/ASTAR and their focused tests. Naval stages
@@ -374,8 +462,230 @@ also run `navy-local` and relevant depth/pathline/waypoint suites when their
 dependencies change. Keep measured performance and DCS run snapshots outside the
 source tree. Do not rerun unrelated tests for a documentation-only plan.
 
-The next proposed code change is **M2.3**: compatible-window reuse, actual-progress
-observations and bounded history, explicit missing-data diagnostics, and extended
-multi-window/lifetime tests. Review that scope before starting it. M2.2 supports
-individual local requests but does not yet diagnose repeated planning without
-movement or migrate NAVYGROUP. Update this checklist after each stage.
+M2.4 standalone validation is complete for T1, T2 at weight 1 and T3 on the
+current sources. The weight-10 request-budget result remains a documented
+limitation. The next proposed stage is **M3.1**, shared connection evaluation
+and a naval baseline; agree on its scope before implementation. No naval
+production code was changed in M2.3/M2.4.
+
+## M2.4 rolling-selection correction (2026-10-08)
+
+User approved a deterministic reproduction of the drifting T2 cycle and a
+general ASTAR selection correction. T1 passed in DCS; both T2 runs stopped at
+80 requests without reaching the goal; T3 remains pending. The diagnostic T2
+run had a valid forward candidate in every window, but depth-weighted local
+cost plus straight-line remainder repeatedly preferred rear/side exits. One
+three-request cycle travelled 5200 m and returned within 38 m of its start,
+36 m farther from the goal. Raw evidence is retained outside the source tree.
+
+Approach: retain bounded local continuation-cost estimates across compatible
+requests. Match nearby positions at the lattice scale to tolerate window drift.
+Keep physical edge/path costs, hard validity rules, and exact-goal preference
+unchanged. Learned scores remain a local policy, not a global optimality claim;
+rear detours must remain available. Reset estimates on goal, rule, geometry or
+external-data changes. Cancelled, limited or incomplete-data requests must not
+commit estimates. Keep observation diagnostics separate from planning history.
+
+- [x] Reproduce the depth-weighted rolling failure against the saved pre-fix source.
+- [x] Implement bounded continuation learning with explicit score diagnostics.
+- [x] Verify drift, necessary retreat, units, invalidation, budgets and ownership.
+- [x] Run Lua 5.1 compilation and affected suites; review the incremental diff.
+- [ ] Repeat T2 in DCS after the user starts the updated mission; then run T3.
+
+The heartbeat monitor was deleted at the user's request. Inspect the log only
+after a mission-start notification or a direct request; do not recreate automation.
+
+Initial implementation (superseded by stable-cell learning below): retain at most
+128 copied planning-anchor positions and cost
+estimates. An exit uses the maximum compatible base estimate and nearby learned
+estimates within half the smaller grid spacing (3D matching for Dist3D, horizontal
+otherwise). A successful, complete-data partial request backs up its best Score to
+its planning anchor, taking the maximum of the existing estimate and the new one.
+Nearby anchors merge; least recently updated entries are evicted when full. No
+node, path or old window is retained. The search's Dijkstra costs remain physical
+connection costs. Reports expose BaseScore/LearnedPenalty and learning count,
+matching radius and update status. Movement observations are independent.
+
+The analytic canal regression uses 400 m hex spacing, a 6000/4000/1500 m window,
+3.5 m minimum/15 m preferred depth and weight 10. A navigable 11 m shoal creates
+cheaper rear/side choices. The saved source fails to reach the exact goal within
+80 requests; the correction reaches it in 20. This is a synthetic reproduction
+of the decision failure, not a replay of DCS bathymetry. A stronger 8 m synthetic
+barrier still did not complete within 80 requests during exploration; bounded
+local learning does not guarantee global escape or completion within that limit.
+
+Validation: Lua 5.1.5 compiles the changed source, test suite and mission driver.
+Separate-process suites pass: ASTAR 266, GRID 105, navy-local 134, depth 27
+(532 total). The six new tests fail against the saved pre-fix source, including
+the 80-request cycle regression; all 260 earlier ASTAR tests still pass there.
+Coverage includes a shifted penalized rear exit with work slices 1/7/1000,
+custom cost units, actual-observation separation, goal/rule/configuration/cache
+reset, cancellation during path copying, cell limits, incomplete depth data,
+immutable old reports and 132 requests retaining at most 128 estimates without
+retaining old grids. T2 diagnostics now include the score decomposition and
+learning state under marker `diagnostics=candidates-v2`; normal/shoal T2 and all
+eight T3 checks pass in the controlled example harness. `git diff --check` passes
+for the MOOSE checkout. Subsequent DCS evidence and the approved replacement are recorded below.
+
+
+## M2.4 stable-cell continuation learning (2026-10-08)
+
+The point-anchor implementation was tested in DCS with identical production
+sources. Weight 10 stopped at 200 requests (396.8 km virtual path, 56.8 km
+remaining, 14.773 s reported search CPU); weight 1 reached the exact goal in
+35 requests (119.1 km virtual path, 1.583 s reported search CPU). All 200 weight-10
+planning anchors were more than the 200 m matching radius apart. This supports
+replacing spatial point matching; it does not establish simulator safety or a
+universal failure threshold for depth weights. Raw evidence stays in temporary
+run archives. T3 and current-source T1 remain pending.
+
+Approved scope: decouple the moving/rotating window mask from a fixed session
+lattice in GRID, then propagate continuation costs across the explored local
+graph in ASTAR. Retain compact per-cell scalar estimates only. Use every reachable
+geometric frontier cell as a seed and checked directed connections for reverse
+Dijkstra propagation. This is a bounded local-learning policy inspired by local
+search-space heuristic learning, not a global completeness/optimality guarantee.
+Keep hard depth/corridor validity and physical path cost unchanged. No NAVYGROUP
+controller integration or simulator control is included.
+
+- [x] Preserve fixed lattice indices/world centers across compatible window moves.
+- [x] Implement cooperative clone/seed/propagation/storage phases and atomic commit.
+- [x] Add a separate cell-memory bound: SetLocalLearningLimit, default 4096,
+      zero disables learning, FIFO eviction on capacity; reset on changed inputs.
+- [x] Validate shallow valid passage at weights 1/10, directed edges, real dead end,
+      cancellation in every learning phase, memory limits and old-result ownership.
+- [x] Update T2 diagnostics and remove the hardcoded weight from its BEGIN marker.
+- [x] Run Lua 5.1 compilation, affected suites and final diff review.
+- [x] Test the new sources in DCS at weight 10 and compare weight 1.
+- [x] Run all eight T3 checks in DCS on the current sources.
+- [x] Repeat T1 in DCS on the current sources.
+
+Cancelled, limited and incomplete-data requests cannot commit memory. Each clone,
+seed, relaxation and stored cell counts against StepSearch work and CPU budgets.
+The final swap publishes memory together with copied results. Memory stores no old
+cell, node or window references. Learned cells remain tied to the stable lattice;
+goal, cost, rule, grid configuration or explicit cache invalidation resets them.
+
+
+Validation completed with Lua 5.1.5: ASTAR 270, GRID 106, navy-local 134,
+depth 27 and pathline 11 (548 passing checks, separate processes). Changed
+sources/tests and the mission driver compile. The controlled T1, T2 (weights 1
+and 10), T2 with an impassable shoal and T3 example harnesses pass. These harnesses
+use stubs and do not validate DCS terrain or controllers.
+
+The stronger analytic 8 m shoal completes in 4 requests at weight 1 and 64 at
+weight 10. The saved point-learning ASTAR source does not finish within 80 requests
+at weight 10. The new directed-corridor test checks numerical estimates for every
+explored cell; the dead-end regression requires retreat through a side passage.
+Cancellation after partial clone/seed/propagation/storage and before publication
+preserves the preceding memory, including with no CPU clock and one work item per
+slice. FIFO memory/index bounds and old-window collection also pass. The saved
+GRID source fails the new moved/rotated-window geometry regression.
+
+T2 is prepared with depthWeight=10, learning limit 4096 and the existing 200-request
+budget. BEGIN now logs the actual parameter, with diagnostics=candidates-v3;
+learning count, update count, work and slices are logged for comparison. Source
+hashes and pre-change backups are recorded in the temporary checkpoint. The subsequent DCS result is recorded below. Further log inspection follows the
+user's mission-start notification or direct request; no recurring monitor is installed.
+
+
+DCS validation of the stable-cell implementation: T2 at depth weight 10 stopped
+at the existing 200-request limit, with no exact-goal marker. Dynamic loader
+messages, the verified source junction, prepared SHA256 values and pre-load file
+modification times identify the new sources. All 200 results were partial paths;
+376.0 km of virtual route ended 90.426 km from the goal. The best selected endpoint
+was 55.126 km away at request 19, followed by repeated retreats. The previous
+point-learning weight-10 run ended 56.757 km away at the same request budget.
+
+The stable lattice is consistent across all 1455 logged candidate endpoints
+within log rounding precision. Learning is active: 978 candidates carry a positive
+learned penalty; it changes the winner among published alternatives in 174
+requests, 94 of them selecting a backward endpoint. The 3247/4096 memory usage
+excludes eviction as the cause. No missing-depth edges, Lua errors, cell-limit or
+slice-limit stop was logged (45..219 sampled cells, at most 77 slices/request).
+Reported search CPU totals 16.031 s, maximum 0.196 s/request; this includes sliced
+learning and is not a single-frame duration. Simulation acceleration is not
+quantified by these logs.
+
+Outcome: the implementation passes controlled regressions but has not solved
+the DCS weight-10 case. Investigate the local continuation policy and the retreat
+sequence before another implementation change. No additional code change was
+made during observation. New-source T1/T3 and the weight-1 comparison are still
+pending. Raw logs, mission/script/source snapshots and detailed analysis remain
+in the task-specific temporary checkpoint.
+
+
+Assessment refined after the user's visual observation: the user saw exploration
+of distinct alternatives at the shallow passage, without the former pointless
+back-and-forth motion. Logged planning endpoints support this distinction:
+191 distinct cells among 201 anchors/endpoints, 10 revisits, only two repeated
+directed endpoint transitions, and no immediate A-B-A endpoint reversal. The
+interior points of each selected route are not logged, so this is not proof that
+all physical/virtual path segments were unique.
+
+The exact-goal criterion still was not met within 200 requests; that budget result
+alone is not an algorithm-defect diagnosis. With minimum depth 3.5 m, preferred
+15 m and weight 10, a uniformly 8 m deep checked corridor costs about 4.705 times
+its distance, reaching factor 11 at the minimum depth. Unseen alternatives can
+therefore remain attractive to a local planner. The 94 backward winner changes
+reflect learned total continuation costs, not isolated proof of a depth-cost bug.
+Recommend a weight-1 comparison using the same stable-cell sources and otherwise
+identical settings before further algorithm changes. This recommendation has not
+changed the mission script or production code.
+
+
+DCS weight-1 comparison on the same stable-cell sources completed successfully:
+`PASS: virtual position reached the exact goal` after 32 requests (31 partial,
+one goal path), 119.811 km virtual route and 0 m remaining. Reported search CPU
+was 1.692 s in total, maximum 0.109 s/request. There were no missing-depth edges,
+Lua errors or cell/slice/request-limit stops. Sampled cells were 119..219 per
+request, at most 70 slices; retained learning memory reached 3379/4096 cells.
+
+Source hashes match the preceding weight-10 run. A byte comparison of the mission
+script confirms that only `local depthWeight = 10` changed to `1`; the edited file
+predates loading and BEGIN correctly reports weight 1. The same scenario at
+weight 10 reached its 200-request budget with 376 km travelled and 90.426 km left.
+This comparison supports the cost-preference/local-exploration interpretation.
+It validates T2 virtual point following for this source/configuration, not physical
+ship motion or safety. T1 on the current sources and T3 remain pending. Current
+mission end has not been observed; the previous weight-10 mission was explicitly
+ended and its raw log has been archived through the end marker.
+
+
+DCS T3 on the same stable-cell sources passed all eight cases: cold, reuse,
+repeated_planning, cancel, retarget, invalidate, cell_limit and loop. The final
+`PASS: all 8 checks` marker confirms completion. Cancellation, the deliberate
+cell limit, repeated planning and synthetic loop detection produced their
+expected results. Each case also checked that the earlier report stayed intact.
+No Lua error was logged. T3 does not report per-case CPU or slice counts.
+
+Dynamic-load messages, resolved source paths, matching prepared hashes and
+pre-load modification times identify the current ASTAR/GRID version. The mission
+references the external driver with testcase=3; its T3 body matches the reference
+script apart from line endings. Raw logs and mission/script/source snapshots are
+saved outside the repository. The preceding weight-1 T2 mission explicitly ended
+and was archived through its end marker; no T3 mission end has been observed.
+T2 at weight 1 and T3 are now validated on this version; current-source T1 remains
+the next simulator check. No production code or mission settings were changed.
+
+
+DCS T1 on the same stable-cell sources reached the exact virtual goal after
+32 requests (31 partial paths and one goal path), confirmed by
+`PASS: virtual position reached the exact goal`. Each request used a new window;
+sampled cells ranged from 122 to 144. Reported search CPU totals 0.631 s, with a
+maximum of 0.050 s/request over its slices, not a single-frame measurement.
+No Lua errors or cell/slice/request-limit stops were logged. T1 exercises rectangle
+geometry and virtual point following without terrain or depth rules.
+
+The loaded source paths, hashes and pre-load timestamps match the successful T2
+weight-1 and T3 runs. The mission selected testcase=1 with unchanged T1 parameters;
+its only reference-script adaptation uses the same pre-resolved start/goal zones.
+Both the preceding T3 mission and this T1 mission explicitly ended. Their raw logs
+are archived through the end markers; source/script/mission evidence and the
+checkpoint remain outside the repository.
+
+All three standalone tests now have their required success markers on the current
+version. M2.4 is complete for this tested scope, with T2 weight 1 as the successful
+terrain configuration and the weight-10 request-limit outcome retained. This does
+not establish global route completeness or DCS vessel motion/safety. M3 remains
+separate work requiring an agreed scope; no recurring monitor is active.

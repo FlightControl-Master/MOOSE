@@ -1480,8 +1480,9 @@ end
 -- @param #number Ahead Positive forward extent in meters from Origin.
 -- @param #number Width Positive total transverse width in meters, half on each side.
 -- @param #number Behind Non-negative rear extent in meters from Origin; zero permits no rear centers.
+-- @param #table Lattice (Optional) Compatible sparse geometry whose fixed lattice frame is copied.
 -- @return #GRID New owned window; invalid inputs raise an error without changing the source.
-function GRID:_NewSparseWindow(Origin, Heading, Ahead, Width, Behind)
+function GRID:_NewSparseWindow(Origin, Heading, Ahead, Width, Behind, Lattice)
 
   assert(type(Heading)=="number" and Heading>-math.huge and Heading<math.huge, "GRID: window heading must be finite")
   assert(type(Ahead)=="number" and Ahead>0 and Ahead<math.huge, "GRID: window Ahead must be finite and positive")
@@ -1501,18 +1502,25 @@ function GRID:_NewSparseWindow(Origin, Heading, Ahead, Width, Behind)
     x=origin.x, z=origin.z, cos=math.cos(angle), sin=math.sin(angle),
     spacing=spacing, distance=Ahead, width=Width, candidateCount=0
   }
-  local endX,endZ=window:_GridPosition(geometry,Ahead,0)
+  -- Window membership follows the requested heading; cell centers retain the session lattice.
+  local mask={x=origin.x,z=origin.z,cos=geometry.cos,sin=geometry.sin,
+    Ahead=Ahead,Width=Width,Behind=Behind,Heading=heading,
+    Tolerance=1e-9*math.min(Ahead,Width,spacing,crossSpacing or spacing)}
+  if Lattice then
+    assert(Lattice.spacing==spacing and (not crossSpacing or Lattice.crossSpacing==crossSpacing),
+      "GRID: window lattice resolution must match")
+    geometry.x,geometry.z=Lattice.x,Lattice.z
+    geometry.cos,geometry.sin=Lattice.cos,Lattice.sin
+  end
+  local endX,endZ=window:_GridPosition(mask,Ahead,0)
   local front=window:_PositionVector({x=endX,y=0,z=endZ})
-  window._SparseWindow={
-    Ahead=Ahead, Width=Width, Behind=Behind, Heading=heading,
-    Tolerance=1e-9*math.min(Ahead,Width,spacing,crossSpacing or spacing)
-  }
+  window._SparseWindow=mask
   window:_InitializeSparse(origin,front,geometry,crossSpacing)
 
   -- Reject unrepresentable windows before returning them to a caller. No cells are allocated here.
   for _,along in ipairs({-Behind,Ahead}) do
     for _,across in ipairs({-Width/2,Width/2}) do
-      local x,z=window:_GridPosition(geometry,along,across)
+      local x,z=window:_GridPosition(mask,along,across)
       window:PositionToIndex({x=x,y=0,z=z})
     end
   end
@@ -1538,6 +1546,33 @@ function GRID:_ContainsWindowOffset(Along, Across)
 
 end
 
+--- Check whether a new planning anchor can reuse this fixed frame with sufficient remaining clearance.
+-- The caller must also verify unchanged configuration and terrain/connection rules. No cells move.
+-- @param #GRID self
+-- @param Core.Vector#VECTOR Origin Validated new planning anchor.
+-- @param #number Heading Validated heading in degrees.
+-- @param #table Extent Validated Ahead, Width and Behind dimensions in meters.
+-- @return #boolean True inside the central quarter of each extent, with at most 10 degrees of rotation.
+function GRID:_CanReuseSparseWindow(Origin, Heading, Extent)
+
+  local window=self._SparseWindow
+  if not window or window.Ahead~=Extent.Ahead or window.Width~=Extent.Width or window.Behind~=Extent.Behind then
+    return false
+  end
+  local turn=math.abs((Heading-window.Heading+180)%360-180)
+  if turn>10 then
+    return false
+  end
+
+  local dx,dz=Origin.x-window.x,Origin.z-window.z
+  local along=dx*window.cos+dz*window.sin
+  local across=-dx*window.sin+dz*window.cos
+  local tolerance=window.Tolerance
+  return along>=-window.Behind/4-tolerance and along<=window.Ahead/4+tolerance
+    and math.abs(across)<=window.Width/8+tolerance
+
+end
+
 --- Test a position against the fixed window, independently of existing or filtered cells.
 -- Height is ignored. Cell-center membership does not validate the full cell footprint or a connection.
 -- @param #GRID self
@@ -1547,12 +1582,31 @@ function GRID:_IsInsideWindow(Position)
 
   assert(self._SparseWindow, "GRID: window membership requires a sparse window")
   local vector=self:_QueryPosition(Position)
-  local geometry=self.hexGrid or self.rectGrid
-  local dx,dz=vector.x-geometry.x,vector.z-geometry.z
-  local along=dx*geometry.cos+dz*geometry.sin
-  local across=-dx*geometry.sin+dz*geometry.cos
+  local window=self._SparseWindow
+  local dx,dz=vector.x-window.x,vector.z-window.z
+  local along=dx*window.cos+dz*window.sin
+  local across=-dx*window.sin+dz*window.cos
 
   return self:_ContainsWindowOffset(along,across)
+
+end
+
+--- Convert fixed lattice indices to offsets in the movable window without sampling terrain.
+-- @param #GRID self
+-- @param #number First Rectangular i or hex q.
+-- @param #number Second Rectangular j or hex r.
+-- @return #number Forward window offset in meters.
+-- @return #number Transverse window offset in meters.
+function GRID:_WindowIndexOffsets(First, Second)
+
+  local geometry=self.hexGrid or self.rectGrid
+  local window=self._SparseWindow
+  local along,across=self:_IndexOffsets(First,Second)
+  local dx,dz=geometry.x-window.x,geometry.z-window.z
+  local cosine=geometry.cos*window.cos+geometry.sin*window.sin
+  local sine=geometry.sin*window.cos-geometry.cos*window.sin
+  return dx*window.cos+dz*window.sin+along*cosine-across*sine,
+    -dx*window.sin+dz*window.cos+along*sine+across*cosine
 
 end
 
@@ -1565,14 +1619,14 @@ end
 function GRID:_WindowExitSector(Cell)
 
   assert(self._SparseWindow and self.cells[Cell.id]==Cell, "GRID: exit classification requires an owned window cell")
-  local along,across=self:_IndexOffsets(Cell.q or Cell.i,Cell.r or Cell.j)
+  local along,across=self:_WindowIndexOffsets(Cell.q or Cell.i,Cell.r or Cell.j)
   local tolerance=self._SparseWindow.Tolerance
   if math.abs(along)<=tolerance and math.abs(across)<=tolerance then
     return nil
   end
 
   for _,index in ipairs(self:_SparseNeighbourIndices(Cell)) do
-    local neighborAlong,neighborAcross=self:_IndexOffsets(index[1],index[2])
+    local neighborAlong,neighborAcross=self:_WindowIndexOffsets(index[1],index[2])
     if not self:_ContainsWindowOffset(neighborAlong,neighborAcross) then
       local angle=math.deg(math.atan2(across,along))%360
       return math.floor((angle+22.5)/45)%8+1
@@ -1601,9 +1655,9 @@ function GRID:GetOrCreateCell(First, Second)
     assert(self:_ValidIndexRange(-First-Second,-First-Second), "GRID: cube index exceeds the supported lattice range")
   end
 
-  -- Check lattice offsets directly so remote indices need no world-position conversion or terrain query.
+  -- Check window offsets before sampling, including when its mask has moved or rotated.
   if self._SparseWindow then
-    local along,across=self:_IndexOffsets(First,Second)
+    local along,across=self:_WindowIndexOffsets(First,Second)
     if not self:_ContainsWindowOffset(along,across) then
       return nil,"outside_window"
     end

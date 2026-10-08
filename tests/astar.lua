@@ -4621,6 +4621,7 @@ test("LOCAL checks depth on every returned connection and rejects infinite or in
   assert(path)
   near(report.Candidates[1].Cost,pathCost(search,path))
   terrain.depth=1
+  search:InvalidateLocalCache()
   search:StartLocalSearch(coord(0),coord(10000))
   path,report=finishLazy(search)
   equal(path,nil)
@@ -4886,6 +4887,725 @@ test("LOCAL replacement cancels old drawing jobs while retaining completed resul
   near(search.endVector.x,5000)
   equal(report.Outcome,"partial_path")
   assert(finishLazy(search))
+end)
+
+test("unavailable depth edges are retryable in both directions with and without weighted costs",function()
+  for _,weighted in ipairs({false,true}) do
+    local terrain=depthTerrain()
+    local search,first,last=pair()
+    search:SetValidNeighbourDepth(3.5)
+    if weighted then
+      search:SetCostDepth(15,10)
+    end
+    terrain.makeProfile=function() return nil end
+    local valid,reason,status=search:_IsValidNeighbour(first,last)
+    equal(valid,false)
+    equal(reason,"profile_unavailable")
+    equal(status,"unavailable")
+    equal(first.valid[last.id],nil)
+    equal(last.valid[first.id],nil)
+    equal(first.cost[last.id],nil)
+    terrain.makeProfile=nil
+    assert(search:_IsValidNeighbour(last,first))
+    assert(search:_TravelCost(first,last)<math.huge)
+  end
+end)
+
+test("LOCAL reuses compatible samples and edge results without mutating old nodes",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local terrain=depthTerrain()
+    local search=localPlanner(kind):SetValidNeighbourDepth(3.5):SetCostDepth(15,10)
+    search:StartLocalSearch(coord(0),coord(5000),0)
+    local oldPath,oldReport=finishLazy(search)
+    local grid=search:GetGrid()
+    local profiles=terrain.profiles
+    local oldCache=oldPath[1].valid
+    search:StartLocalSearch(coord(0),coord(5000),0)
+    local path,report=finishLazy(search)
+    assert(path and path[1]~=oldPath[1])
+    equal(search:GetGrid(),grid)
+    equal(report.WindowReused,true)
+    equal(report.WindowID,oldReport.WindowID)
+    equal(report.RequestID,oldReport.RequestID+1)
+    equal(report.NewCandidateCells,0)
+    equal(terrain.profiles,profiles)
+    assert(report.RestoredCacheEntries>0)
+    near(report.Candidates[1].Cost,oldReport.Candidates[1].Cost)
+    search:SetValidNeighbourDepth(40)
+    equal(oldPath[1].valid,oldCache)
+    assert(next(oldCache))
+    equal(oldReport.Outcome,"partial_path")
+  end
+end)
+
+test("LOCAL cache restoration yields and replacement releases earlier source generations",function()
+  local search=localPlanner():StartLocalSearch(coord(0),coord(5000))
+  assert(finishLazy(search))
+  search:StartLocalSearch(coord(0),coord(5000))
+  local previousWork=0
+  local phases={}
+  repeat
+    phases[search._LazySearch.Phase]=true
+    local path,report=search:StepSearch(1,1)
+    equal(report.WorkItems-previousWork,1)
+    previousWork=report.WorkItems
+    if report.Status~="running" then
+      assert(path)
+      break
+    end
+  until false
+  assert(phases.restore_nodes and phases.restore_edges)
+  equal(search._LazySearch.Restore,nil)
+  search:StartLocalSearch(coord(0),coord(5000))
+  search:StepSearch(1,1)
+  local abandoned=search._LazySearch
+  search:StartLocalSearch(coord(0),coord(5000))
+  equal(abandoned.Restore,nil)
+  equal(abandoned.Report.Status,"cancelled")
+  assert(finishLazy(search))
+end)
+
+test("LOCAL replaces windows after movement turns rules budgets or explicit invalidation",function()
+  local mutations={
+    function(s) s:SetValidNeighbourDistance(300) end,
+    function(s) s:SetCostDist3D() end,
+    function(s) s:GetGrid():SetMaxCells(600) end,
+    function(s) s:SetLocalWindow(500,400,100) end,
+    function(s) s:InvalidateLocalCache() end,
+  }
+  for _,mutate in ipairs(mutations) do
+    local search=localPlanner():StartLocalSearch(coord(0),coord(5000))
+    local _,old=finishLazy(search)
+    mutate(search)
+    search:StartLocalSearch(coord(0),coord(5000))
+    local path,report=finishLazy(search)
+    assert(path)
+    equal(report.WindowReused,false)
+    equal(report.WindowID,old.WindowID+1)
+  end
+  local search=localPlanner():StartLocalSearch(coord(0),coord(5000),0)
+  finishLazy(search)
+  search:StartLocalSearch(coord(50),coord(5000),10)
+  local _,report=finishLazy(search)
+  equal(report.WindowReused,true)
+  equal(report.Window.Origin.x,0)
+  equal(report.PlanningStart.x,50)
+  search:StartLocalSearch(coord(50),coord(5000),11)
+  _,report=finishLazy(search)
+  equal(report.WindowReused,false)
+  search:StartLocalSearch(coord(500),coord(5000),11)
+  _,report=finishLazy(search)
+  equal(report.WindowReused,false)
+end)
+
+test("LOCAL missing depth reports uncertainty and recovers in the same window",function()
+  local terrain=depthTerrain()
+  terrain.makeProfile=function() return nil end
+  local search=localPlanner():SetValidNeighbourDepth(3.5):SetCostDepth(15,10)
+  search:StartLocalSearch(coord(0),coord(5000))
+  local path,report=finishLazy(search)
+  equal(path,nil)
+  equal(report.StopReason,"data_unavailable")
+  equal(report.FailureReason,nil)
+  equal(report.DataIncomplete,true)
+  assert(report.UnavailableEdges>0)
+  equal(report.UnavailableReasons.profile_unavailable,report.UnavailableEdges)
+  equal(report.FirstUnavailableEdge.Reason,"profile_unavailable")
+  local before=terrain.profiles
+  terrain.makeProfile=nil
+  search:StartLocalSearch(coord(0),coord(5000))
+  local recovered,newReport=finishLazy(search)
+  assert(recovered and terrain.profiles>before)
+  equal(newReport.WindowReused,true)
+  equal(newReport.DataIncomplete,false)
+  equal(newReport.UnavailableEdges,0)
+  equal(report.StopReason,"data_unavailable")
+end)
+
+test("LOCAL preserves valid alternatives alongside unavailable data and distinguishes shallow water",function()
+  local terrain=depthTerrain()
+  terrain.makeProfile=function(a,b)
+    if a.z>0 or b.z>0 then
+      return nil
+    end
+    return {{x=a.x,y=-30,z=a.z},{x=b.x,y=-30,z=b.z}}
+  end
+  local search=localPlanner():SetValidNeighbourDepth(3.5)
+  search:StartLocalSearch(coord(0),coord(5000))
+  local path,report=finishLazy(search)
+  assert(path and report.DataIncomplete)
+  equal(report.StopReason,"path_found")
+  for _,candidate in ipairs(report.Candidates) do
+    for _,node in ipairs(candidate.Path) do
+      assert(node.vector.z<=0)
+    end
+  end
+  terrain.makeProfile=nil
+  terrain.depth=1
+  search:InvalidateLocalCache():StartLocalSearch(coord(0),coord(5000))
+  path,report=finishLazy(search)
+  equal(path,nil)
+  equal(report.StopReason,"no_local_exit")
+  equal(report.DataIncomplete,false)
+end)
+
+test("LOCAL missing point and cost-only depth data stay retryable including coincident goals",function()
+  depthTerrain()
+  land.getSurfaceHeightWithSeabed=function() return nil end
+  local search=localPlanner():SetValidNeighbourDepth(3.5)
+  search:StartLocalSearch(coord(0),coord(0))
+  local path,report=finishLazy(search)
+  equal(path,nil)
+  equal(report.StopReason,"data_unavailable")
+  equal(report.UnavailableEdges,1)
+  depthTerrain()
+  search:StartLocalSearch(coord(0),coord(0))
+  assert(finishLazy(search))
+
+  search=localPlanner():SetCostFunction(ASTAR.CostDepth,3.5,0,15,10)
+  land.profile=function() return nil end
+  search:StartLocalSearch(coord(0),coord(5000))
+  path,report=finishLazy(search)
+  equal(path,nil)
+  equal(report.StopReason,"data_unavailable")
+  depthTerrain()
+  search:StartLocalSearch(coord(0),coord(5000))
+  assert(finishLazy(search))
+end)
+
+test("LOCAL invalidation cancels pending restoration without altering a completed report",function()
+  local search=localPlanner():StartLocalSearch(coord(0),coord(5000))
+  local oldPath,oldReport=finishLazy(search)
+  search:StartLocalSearch(coord(0),coord(5000))
+  search:StepSearch(1,1)
+  search:InvalidateLocalCache()
+  local path,report=finishLazy(search)
+  equal(path,nil)
+  equal(report.StopReason,"search_changed")
+  equal(search._LazySearch.Restore,nil)
+  equal(oldReport.StopReason,"path_found")
+  assert(oldPath[1].vector)
+end)
+
+test("LOCAL actual observations are distinct from future anchors and completed snapshots",function()
+  local search=localPlanner():SetLocalProgress(10,8,3)
+  local actual={x=0,y=50,z=0}
+  equal(search:UpdateLocalProgress(actual),search)
+  actual.x=999
+  local reports={}
+  for request=1,4 do
+    search:StartLocalSearch(coord(request*400),coord(5000),0)
+    local path,report=finishLazy(search)
+    assert(path)
+    equal(report.Progress.Status,"observed")
+    equal(report.Progress.RepeatedPlans,0)
+    equal(report.Progress.Position.x,0)
+    equal(report.Progress.Distance,0)
+    reports[#reports+1]=report
+  end
+  for request=1,3 do
+    search:StartLocalSearch(coord(0),coord(5000),0)
+    assert(finishLazy(search))
+  end
+  equal(search.LastSearchResult.Progress.Status,"repeated_planning")
+  local old=search.LastSearchResult
+  search:UpdateLocalProgress(coord(5)):UpdateLocalProgress(coord(20))
+  search:StartLocalSearch(coord(20),coord(5000),0)
+  local _,report=finishLazy(search)
+  equal(report.Progress.Status,"observed")
+  equal(report.Progress.HistoryCount,2)
+  near(report.Progress.Distance,20)
+  equal(old.Progress.Status,"repeated_planning")
+  equal(reports[1].Progress.Distance,0)
+end)
+
+test("LOCAL detects repeated directed transitions but permits detours and changed goals",function()
+  local search=localPlanner():SetLocalProgress(10,8,3):UpdateLocalProgress(coord(0))
+  search:StartLocalSearch(coord(0),coord(5000),0)
+  finishLazy(search)
+  for cycle=1,3 do
+    search:UpdateLocalProgress(coord(-100)):UpdateLocalProgress(coord(0))
+  end
+  search:StartLocalSearch(coord(0),coord(5000),0)
+  local path,report=finishLazy(search)
+  assert(path)
+  equal(report.Progress.Status,"loop_detected")
+  search:UpdateLocalProgress(coord(-200))
+  search:StartLocalSearch(coord(-200),coord(5000),0)
+  _,report=finishLazy(search)
+  equal(report.Progress.Status,"observed")
+  near(report.Progress.Distance,800)
+  search:StartLocalSearch(coord(-200),coord(-5000),180)
+  _,report=finishLazy(search)
+  equal(report.Progress.HistoryCount,1)
+  equal(report.Progress.Status,"observed")
+  search:ResetLocalProgress():StartLocalSearch(coord(-200),coord(-5000),180)
+  _,report=finishLazy(search)
+  equal(report.Progress.Status,"unobserved")
+end)
+
+test("LOCAL movement during a request and cancelled requests do not count as repeated planning",function()
+  local search=localPlanner():UpdateLocalProgress(coord(0))
+  search:StartLocalSearch(coord(0),coord(5000))
+  search:StepSearch(1,1)
+  search:UpdateLocalProgress(coord(100))
+  local _,report=finishLazy(search)
+  equal(report.Progress.RepeatedPlans,0)
+  search:StartLocalSearch(coord(100),coord(5000)):CancelSearch()
+  equal(search.LastSearchResult.Progress.RepeatedPlans,0)
+  search:StartLocalSearch(coord(100),coord(200),0)
+  _,report=finishLazy(search)
+  equal(report.Outcome,"goal_path")
+  equal(report.Progress.RepeatedPlans,0)
+end)
+
+test("LOCAL long journeys bound retained generations endpoints and actual position history",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local search=localPlanner(kind):SetLocalProgress(10,8,3)
+    local windows=setmetatable({},{__mode="v"})
+    local preservedPath,preservedReport
+    for request=1,35 do
+      local start=coord((request-1)*600)
+      search:UpdateLocalProgress(start):StartLocalSearch(start,coord(30000),0)
+      local path,report=finishLazy(search)
+      assert(path)
+      equal(report.WindowReused,false)
+      assert(report.CandidateCells<=500)
+      assert(report.Nodes<=report.RetainedCells+2)
+      assert(report.Progress.HistoryCount<=8)
+      equal(report.Progress.Status,"observed")
+      windows[request]=search:GetGrid()
+      if request==1 then
+        preservedPath,preservedReport=path,report
+      end
+    end
+    collectgarbage("collect")
+    for index=2,34 do
+      equal(windows[index],nil)
+    end
+    assert(windows[1] and windows[35])
+    equal(preservedPath[1].vector.x,0)
+    equal(preservedReport.WindowID,1)
+    equal(preservedReport.Progress.HistoryCount,1)
+  end
+end)
+
+test("LOCAL movement configuration rejects invalid input without losing observations",function()
+  local search=localPlanner():UpdateLocalProgress(coord(0))
+  local old=search._LocalProgress
+  for _,args in ipairs({{0,8,3},{false,8,3},{10,3,2},{10,257,3},{10,8,1},{10,8,8}}) do
+    assert(not pcall(search.SetLocalProgress,search,unpack(args)))
+    equal(search._LocalProgress,old)
+  end
+  assert(not pcall(search.UpdateLocalProgress,search,{x=0/0,y=0,z=0}))
+  equal(search._LocalProgress,old)
+end)
+
+test("LOCAL custom callbacks observe new node identity even when geometry is reused",function()
+  local originalOwner
+  local search=localPlanner():SetCostFunction(function(first,last)
+    if first._owner~=originalOwner or last._owner~=originalOwner then
+      return math.huge
+    end
+    return ASTAR.Dist2D(first,last)
+  end)
+  search:StartLocalSearch(coord(0),coord(5000))
+  originalOwner=search._NodeOwner
+  local oldPath=assert(finishLazy(search))
+  search:StartLocalSearch(coord(0),coord(5000))
+  local path,report=finishLazy(search)
+  equal(path,nil)
+  equal(report.StopReason,"no_local_exit")
+  assert(oldPath[1]._owner==originalOwner)
+  equal(report.WindowReused,true)
+  equal(report.RestoredCacheEntries,0)
+end)
+
+test("LOCAL clearing overlays does not import cells during a partial restoration",function()
+  local search=localPlanner():StartLocalSearch(coord(0),coord(5000))
+  finishLazy(search)
+  search:StartLocalSearch(coord(0),coord(5000))
+  search:StepSearch(1,1)
+  equal(search.Nnodes,1)
+  search:ClearDrawing()
+  equal(search.Nnodes,1)
+  assert(finishLazy(search))
+
+  search:StartLocalSearch(coord(0),coord(5000))
+  search:StepSearch(1,1)
+  search:GetGridOptions() -- Public synchronization may finish importing geometry, but cannot duplicate it.
+  local path,report=finishLazy(search)
+  assert(path)
+  equal(report.StopReason,"path_found")
+end)
+
+test("LOCAL remaps cached edge IDs after off-lattice endpoints without retaining old endpoints",function()
+  local terrain=depthTerrain()
+  local search=localPlanner():SetValidNeighbourDepth(3.5):SetCostDepth(15,10)
+  search:StartLocalSearch(coord(0),coord(237,33),0)
+  local oldPath,oldReport=finishLazy(search)
+  local endpoint=oldPath[#oldPath]
+  assert(not endpoint.cell)
+  local initial=terrain.profiles
+  search:StartLocalSearch(coord(25,13),coord(237,33),0)
+  local path,report=finishLazy(search)
+  assert(path and path[#path]~=endpoint)
+  equal(report.WindowReused,true)
+  assert(terrain.profiles>initial) -- New exact attachments are checked even though lattice edges are reused.
+  assert(report.RestoredCacheEntries>0)
+  near(report.Candidates[1].Cost,pathCost(search,path))
+  near(oldReport.Candidates[1].Positions[#oldPath].x,237)
+  assert(search.Nnodes<=search:GetGrid():GetCellCount()+2)
+end)
+
+test("LOCAL consecutive chosen paths reach a distant exact goal with bounded windows",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local search=localPlanner(kind)
+    local start,goal=coord(0),coord(5000,150)
+    local windows=0
+    repeat
+      search:UpdateLocalProgress(start):StartLocalSearch(start,goal)
+      local path,report=finishLazy(search)
+      assert(path)
+      windows=windows+1
+      assert(windows<30)
+      assert(report.CandidateCells<=500)
+      for index=2,#path do
+        search:UpdateLocalProgress(path[index].vector)
+      end
+      start=path[#path].vector
+      if report.Outcome=="goal_path" then
+        near(start.x,goal.x)
+        near(start.z,goal.z)
+        break
+      end
+    until false
+    assert(windows>5)
+  end
+end)
+
+-- The cheaper deep-water exits cause a drifting cycle before a navigable shoal.
+-- Terrain is analytic: this reproduces the rolling decision, not DCS bathymetry.
+test("LOCAL learns out of a drifting depth-weighted cycle and reaches the exact goal",function()
+  local terrain=depthTerrain()
+  local function depthAt(x)
+    return x>6000 and x<11000 and 8 or 30
+  end
+  terrain.depthAt=function(position)
+    return depthAt(position.x)
+  end
+  terrain.makeProfile=function(first,last)
+    local profile={}
+    for index=0,10 do
+      local fraction=index/10
+      local x=first.x+(last.x-first.x)*fraction
+      local z=first.z+(last.z-first.z)*fraction
+      profile[#profile+1]={x=x,y=-depthAt(x),z=z}
+    end
+    return profile
+  end
+  land.surfaceAt=function(position)
+    return position.x>=-1000 and math.abs(position.z)<=2500
+      and land.SurfaceType.WATER or land.SurfaceType.LAND
+  end
+  for _,weight in ipairs({1,10}) do
+    local search=ASTAR:New(GRID.Type.HEXAGON):SetLocalWindow(6000,4000,1500)
+    search:GetGrid():SetResolution(400):SetMaxCells(3000):SetValidSurfaceTypes({land.SurfaceType.WATER})
+    search:SetValidNeighbourDepth(3.5,50):SetCostDepth(15,weight)
+    local position,goal=coord(0),coord(20000,150)
+    local learned=false
+    for request=1,80 do
+      search:UpdateLocalProgress(position):StartLocalSearch(position,goal)
+      local path,report=finishLazy(search)
+      assert(path,report.StopReason)
+      local candidate=report.Candidates[1]
+      equal(report.UnavailableEdges,0)
+      assert(report.CandidateCells<=3000)
+      if report.LearningEntries and report.LearningEntries>1 and report.LearningUpdated then
+        learned=true
+      end
+      for _,alternative in ipairs(report.Candidates) do
+        -- Physical costs still come only from checked connections, not planning history.
+        near(alternative.Cost,pathCost(search,alternative.Path))
+        for index=2,#alternative.Path do
+          assert(search:_IsValidNeighbour(alternative.Path[index-1],alternative.Path[index]))
+        end
+      end
+      for index=2,#path do
+        search:UpdateLocalProgress(path[index].vector)
+      end
+      position=COORDINATE:NewFromVec3(candidate.Positions[#candidate.Positions])
+      if candidate.ReachesGoal then
+        near(position:Get2DDistance(goal),0)
+        assert(learned,"Expected continuation learning to affect candidate selection")
+        print(string.format("INFO shoal weight=%d requests=%d",weight,request))
+        break
+      end
+    end
+    assert(position:Get2DDistance(goal)<1e-6,
+      "Valid 8 m shoal did not reach the exact goal within 80 requests at weight "..weight)
+  end
+end)
+
+test("LOCAL learned scores permit a shifted rear escape independently of slice size",function()
+  local signatures={}
+  for _,budget in ipairs({1,7,1000}) do
+    local search=localPlanner():SetLocalWindow(400,400,300)
+    search:SetValidNeighbourFunction(function(first,last)
+      return first.vector.x<=0 and last.vector.x<=0
+        and math.abs(first.vector.z)<30 and math.abs(last.vector.z)<30
+    end)
+    search:StartLocalSearch(coord(-300),coord(5000),0)
+    local oldPath,oldReport=finishLazy(search)
+    local oldScore=oldReport.Candidates[1].Score
+    assert(oldReport.LearningUpdated)
+    search:StartLocalSearch(coord(0,20),coord(5000),0)
+    local path,report
+    repeat
+      path,report=search:StepSearch(budget,1)
+    until report.Status~="running"
+    assert(path)
+    equal(report.CandidateCount,1)
+    local candidate=report.Candidates[1]
+    equal(candidate.Sector,5)
+    near(candidate.Positions[#candidate.Positions].z,0)
+    assert(candidate.LearnedPenalty>0)
+    near(candidate.Score,candidate.BaseScore+candidate.LearnedPenalty)
+    near(candidate.Cost,pathCost(search,path))
+    equal(oldReport.Candidates[1].Score,oldScore)
+    assert(oldPath[1].vector)
+    signatures[#signatures+1]=candidate.Score..":"..candidate.LearnedPenalty
+  end
+  equal(signatures[1],signatures[2])
+  equal(signatures[2],signatures[3])
+end)
+
+test("LOCAL continuation learning uses cost units and does not manufacture observations",function()
+  local search=localPlanner():SetLocalWindow(400,400,300)
+  search:SetCostFunction(function(first,last) return ASTAR.Dist2D(first,last)/1000 end)
+  search:SetValidNeighbourFunction(function(first,last)
+    return first.vector.x<=0 and last.vector.x<=0
+      and math.abs(first.vector.z)<1 and math.abs(last.vector.z)<1
+  end)
+  search:StartLocalSearch(coord(-300),coord(5000),0)
+  local _,first=finishLazy(search)
+  equal(first.Progress.Status,"unobserved")
+  search:StartLocalSearch(coord(0),coord(5000),0)
+  local _,report=finishLazy(search)
+  local learned=false
+  for _,candidate in ipairs(report.Candidates) do
+    near(candidate.BaseScore,candidate.Cost)
+    near(candidate.Score,candidate.BaseScore+candidate.LearnedPenalty)
+    assert(candidate.Score<10,"Meters were added to custom cost units")
+    if candidate.LearnedPenalty>0 then learned=true end
+  end
+  assert(learned)
+  equal(report.Progress.Status,"unobserved")
+  equal(report.Progress.HistoryCount,0)
+  search:StartLocalSearch(coord(0),coord(-200),0)
+  local _,exact=finishLazy(search)
+  equal(exact.Outcome,"goal_path")
+  equal(exact.Candidates[1].LearnedPenalty,0)
+  near(exact.Candidates[1].Score,exact.Candidates[1].Cost)
+end)
+
+test("LOCAL continuation learning resets with the goal rules geometry and external data",function()
+  local changes={
+    function(search) search:SetCostDist3D() end,
+    function(search) search:SetValidNeighbourFunction(function() return true end) end,
+    function(search) search:SetLocalWindow(500,400,100) end,
+    function(search) search:GetGrid():SetMaxCells(600) end,
+    function(search) search:InvalidateLocalCache() end,
+  }
+  for _,change in ipairs(changes) do
+    local search=localPlanner():StartLocalSearch(coord(0),coord(5000),0)
+    local _,first=finishLazy(search)
+    local entries=first.LearningEntries
+    assert(entries>1)
+    change(search)
+    search:StartLocalSearch(coord(0),coord(5000),0)
+    equal(search.LastSearchResult.LearningEntries,0)
+    finishLazy(search)
+    equal(first.LearningEntries,entries)
+    search:StartLocalSearch(coord(0),coord(6000),0)
+    equal(search.LastSearchResult.LearningEntries,0)
+  end
+end)
+
+test("LOCAL cancelled limited and incomplete requests never commit continuation learning",function()
+  local search=localPlanner():StartLocalSearch(coord(0),coord(5000),0)
+  local _,first=finishLazy(search)
+  search:StartLocalSearch(coord(0),coord(5000),0)
+  repeat
+    search:StepSearch(1,1)
+  until search._LazySearch.Phase=="copy"
+  search:CancelSearch()
+  equal(search.LastSearchResult.LearningEntries,first.LearningEntries)
+  equal(search.LastSearchResult.LearningUpdated,false)
+  equal(first.LearningUpdated,true)
+
+  search=localPlanner()
+  search:GetGrid():SetMaxCells(1)
+  search:StartLocalSearch(coord(0),coord(5000),0)
+  local _,limited=finishLazy(search)
+  equal(limited.StopReason,"cell_limit")
+  equal(limited.LearningUpdated,false)
+  equal(limited.LearningEntries,0)
+
+  local terrain=depthTerrain()
+  terrain.makeProfile=function(first,last)
+    if first.z>0 or last.z>0 then return nil end
+    return {{x=first.x,y=-30,z=first.z},{x=last.x,y=-30,z=last.z}}
+  end
+  search=localPlanner():SetValidNeighbourDepth(3.5):StartLocalSearch(coord(0),coord(5000),0)
+  local path,report=finishLazy(search)
+  assert(path and report.DataIncomplete)
+  equal(report.LearningUpdated,false)
+  equal(report.LearningEntries,0)
+end)
+
+test("LOCAL continuation history stays bounded and never retains old grids",function()
+  local search=localPlanner():SetLocalWindow(100,100,0):SetLocalLearningLimit(64)
+  local windows=setmetatable({},{__mode="v"})
+  for request=1,132 do
+    search:StartLocalSearch(coord(request*400),coord(200000),0)
+    local _,report=finishLazy(search)
+    equal(report.LearningEntries,math.min(request*2,64))
+    equal(report.LearningLimit,64)
+    equal(#search._LocalLearning.Entries,report.LearningEntries)
+    local count=0
+    for key,index in pairs(search._LocalLearning.Index) do
+      count=count+1
+      equal(search._LocalLearning.Entries[index].Key,key)
+    end
+    equal(count,report.LearningEntries)
+    windows[request]=search:GetGrid()
+  end
+  collectgarbage("collect")
+  for index=1,131 do equal(windows[index],nil) end
+  assert(windows[132])
+end)
+
+test("LOCAL learns every explored cell through checked directed edges in cost units",function()
+  local search=localPlanner():SetLocalWindow(600,200,200)
+  search:GetGrid():SetDiagonals(false)
+  search:SetValidNeighbourFunction(function(first,last)
+    return math.abs(first.vector.z)<1 and math.abs(last.vector.z)<1 and last.vector.x>first.vector.x
+  end)
+  search:SetCostFunction(function() return 10 end)
+  search:StartLocalSearch(coord(0),coord(5000),0)
+  local _,report=finishLazy(search)
+  equal(report.Outcome,"partial_path")
+  equal(report.LearningEntries,7)
+  -- With one-way eastbound edges, no cheap west boundary may lower an eastern cell's estimate.
+  for x=0,600,100 do
+    local first,second=search:GetGrid():PositionToIndex(coord(x))
+    local key=string.format("%.0f:%.0f",first,second)
+    local memory=search._LocalLearning
+    local entry=memory.Entries[assert(memory.Index[key])]
+    near(entry.Estimate,(600-x)/10)
+  end
+  equal(report.Progress.HistoryCount,0)
+  assert(report.LearningWorkItems>report.ExpandedNodes)
+end)
+
+test("LOCAL learns cooperatively and cancellation never publishes partial memory",function()
+  for _,phase in ipairs({"learn_clone","learn_seed","learn_spread","learn_store","publish"}) do
+    local search=localPlanner():StartLocalSearch(coord(0),coord(5000),0)
+    local _,first=finishLazy(search)
+    local memory=search._LocalLearning
+    local values={}
+    for index,entry in ipairs(memory.Entries) do values[index]=entry.Estimate end
+    search:StartLocalSearch(coord(100),coord(5000),30)
+    local clock=os.clock
+    os.clock=nil
+    local ok,err=pcall(function()
+      local slices=0
+      repeat
+        local before=search.LastSearchResult.WorkItems
+        local path,report=search:StepSearch(1,1)
+        equal(path,nil)
+        equal(report.Status,"running")
+        equal(report.WorkItems-before,1)
+        equal(report.SearchCPUSeconds,nil)
+        equal(report.CandidateCount,0)
+        equal(search._LocalLearning,memory)
+        slices=slices+1
+        assert(slices<10000)
+      until search._LazySearch.Phase==phase
+      if phase~="publish" then
+        for step=1,3 do
+          local before=search.LastSearchResult.WorkItems
+          search:StepSearch(1,1)
+          equal(search.LastSearchResult.WorkItems-before,1)
+          equal(search._LazySearch.Phase,phase)
+          equal(search._LocalLearning,memory)
+        end
+      end
+      search:CancelSearch()
+    end)
+    os.clock=clock
+    assert(ok,err)
+    equal(search._LocalLearning,memory)
+    equal(search.LastSearchResult.LearningUpdated,false)
+    equal(search.LastSearchResult.LearningEntries,first.LearningEntries)
+    for index,entry in ipairs(memory.Entries) do near(entry.Estimate,values[index]) end
+    equal(search._LazySearch.PendingLearning,nil)
+    equal(search._LazySearch.ReverseEdges,nil)
+  end
+end)
+
+test("LOCAL cell learning limits validate atomically disable and invalidate pending work",function()
+  local search=localPlanner():StartLocalSearch(coord(0),coord(5000))
+  local _,first=finishLazy(search)
+  local memory=search._LocalLearning
+  for _,value in ipairs({-1,0.5,math.huge,0/0,false,"10"}) do
+    assert(not pcall(function() search:SetLocalLearningLimit(value) end))
+    equal(search._LocalLearning,memory)
+  end
+  search:StartLocalSearch(coord(0),coord(5000))
+  equal(search:SetLocalLearningLimit(3),search)
+  local path,changed=search:StepSearch(1,1)
+  equal(path,nil) equal(changed.StopReason,"search_changed")
+  search:StartLocalSearch(coord(0),coord(5000))
+  local _,bounded=finishLazy(search)
+  equal(bounded.LearningLimit,3) equal(bounded.LearningEntries,3)
+  assert(first.LearningEntries>3)
+  search:SetLocalLearningLimit(0):StartLocalSearch(coord(0),coord(5000))
+  local _,disabled=finishLazy(search)
+  equal(disabled.LearningEntries,0) equal(disabled.LearningUpdated,false)
+  equal(disabled.LearningWorkItems,0)
+  equal(disabled.Outcome,"partial_path")
+end)
+
+test("LOCAL escapes a real dead end by retreating to a side passage",function()
+  local function water(p)
+    return (p.x>=-300 and p.x<=600 and math.abs(p.z)<1)
+      or (math.abs(p.x+300)<1 and p.z>=0 and p.z<=600)
+      or (p.x>=-300 and p.x<=2000 and math.abs(p.z-600)<1)
+      or (math.abs(p.x-2000)<1 and p.z>=0 and p.z<=600)
+  end
+  land.surfaceAt=function(p) return water(p) and land.SurfaceType.WATER or land.SurfaceType.LAND end
+  local search=localPlanner():SetLocalWindow(800,600,400)
+  search:GetGrid():SetDiagonals(false):SetValidSurfaceTypes({land.SurfaceType.WATER})
+  search:SetValidNeighbourFunction(function(first,last) return water(first.vector) and water(last.vector) end)
+  local position,goal=coord(400),coord(2000)
+  local retreated,passedBranch=false,false
+  for request=1,50 do
+    search:StartLocalSearch(position,goal)
+    local path,report=finishLazy(search)
+    assert(path,report.StopReason)
+    for _,node in ipairs(path) do
+      assert(water(node.vector))
+      if node.vector.x<400 then retreated=true end
+      if node.vector.z>=600 then passedBranch=true end
+    end
+    local candidate=report.Candidates[1]
+    position=COORDINATE:NewFromVec3(candidate.Positions[#candidate.Positions])
+    if candidate.ReachesGoal then break end
+  end
+  near(position:Get2DDistance(goal),0)
+  assert(retreated and passedBranch)
 end)
 
 print(string.format("%d passed, %d failed", passed, failed))

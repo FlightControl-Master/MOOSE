@@ -309,22 +309,33 @@
 -- LOCAL uses the shared resumable search with zero exploration heuristic to settle reachable costs once for all exits.
 -- A checked exact in-window goal takes priority. Otherwise, up to eight geometric frontier sectors retain one candidate each.
 -- Filtering terrain does not turn an interior obstacle into a window exit. Boundary centers may lie one lattice step inside it.
--- Candidate scores use checked cost plus the compatible lower-bound estimate towards the goal. Custom/road costs add zero:
--- they are ranked by their own cost units, then node ID, without an implicit preference measured in meters.
+-- BaseScore is checked cost plus the compatible goal estimate; custom/road costs use zero instead of Euclidean meters.
+-- Compatible requests keep a fixed lattice while moving/rotating the window mask. Score adds LearnedPenalty for the same cell.
+-- A completed partial search propagates all frontier estimates backwards through checked directed edges to the explored cells.
+-- SetLocalLearningLimit() bounds retained scalar estimates independently of GRID MaxCells (default 4096, zero disables learning).
+-- Oldest inserted cells are evicted. No old node/window graphs are retained; eviction can remove useful progress information.
+-- This soft local ranking does not forbid revisits or retreats and remains in the configured cost units, with node-ID ties.
+-- Goal/rule/grid changes and InvalidateLocalCache() clear learning. Failed, limited or incomplete-data jobs do not update it.
 -- Partial paths are local choices, with no global optimality or dead-end escape guarantee. Exit paths can lead away from the goal.
 --
 -- report.Outcome is "goal_path" or "partial_path" on success, and nil otherwise. report.Candidates holds independent path lists
--- and copied Vec3 Positions; nodes remain read-only within their owning window. Candidate 1 supplies the returned path.
--- A goal_path is a plan, never confirmation of arrival. No actual-motion observations or loop history are maintained yet.
+-- and copied Vec3 Positions; nodes remain read-only within their owning request. Candidate 1 supplies the returned path.
+-- A goal_path is a plan, never confirmation of arrival. UpdateLocalProgress(actualPosition) separately records actual movement.
 -- StopReason="no_local_exit" means this window produced no checked continuation; it does not prove global unreachability.
 -- A cell_limit publishes no provisional candidates, even if some exits were already reached. Boolean rules cannot diagnose missing data.
 -- Rejected in-window goals may still permit partial exits. Goals outside the window are not sampled or attached.
--- LOCAL applies MaxNodes also to initialization, edges and result reconstruction, preserving bounded work without os.clock.
+-- Built-in depth checks report DataIncomplete and UnavailableEdges; no usable exit then yields data_unavailable.
+-- Missing depth results are retryable. Valid alternatives may still succeed with DataIncomplete=true.
+-- LOCAL applies MaxNodes also to initialization, edges, reconstruction and learning, preserving bounded work without os.clock.
 -- Individual callbacks and finite neighbour batches remain non-interruptible. No core timer or controller is installed.
 --
 -- Request another section by calling StartLocalSearch with its planning anchor and the overall goal. This cancels pending work,
--- clears the old owned drawings, and replaces its window; copied route positions and old reports remain usable.
--- Window reuse, actual-progress history and naval integration are separate follow-up work. Use a separate ASTAR for full LAZY searches.
+-- clears owned drawings, and reuses a compatible fixed window or replaces it. Old paths and reports remain usable.
+-- SetLocalProgress(MinDistance,HistorySize,RepeatLimit) configures bounded advisory history (defaults 10 m, 32, 3).
+-- report.Progress distinguishes unobserved, observed, repeated_planning and loop_detected. Future anchors are not movement.
+-- ResetLocalProgress() clears movement diagnostics only. InvalidateLocalCache() clears learned costs and forces fresh samples.
+-- Reapply rule/cost setters after changing arguments; custom callbacks are evaluated again for each new request.
+-- Naval integration remains separate follow-up work. Use a separate ASTAR for full LAZY searches.
 --
 -- # Visual Debug
 --
@@ -398,7 +409,7 @@ ASTAR.SearchMode = {
 -- @field #string Mode ASTAR.SearchMode.FIXED, EXPAND, LAZY or LOCAL.
 -- @field #string Status LAZY/LOCAL: running, complete or cancelled. A complete search may have failed or reached its cell limit.
 -- @field #table Attempts Ordered ASTAR.SearchAttempt entries; empty while LAZY/LOCAL is running or if expansion was rejected before any search.
--- @field #string StopReason FIXED: path_found or search_failed. EXPAND adds attempt_limit, size_limit, cell_limit or missing_coordinates. LAZY/LOCAL: running, path_found, search_failed, cell_limit, cancelled or search_changed. LOCAL also has no_local_exit.
+-- @field #string StopReason FIXED: path_found or search_failed. EXPAND adds attempt_limit, size_limit, cell_limit or missing_coordinates. LAZY/LOCAL: running, path_found, search_failed, cell_limit, cancelled or search_changed. LOCAL adds no_local_exit and data_unavailable (no usable exit with missing depth data, not proven unreachability).
 -- @field #string FailureReason Last attempt failure: missing_coordinates, no_start_node, no_goal_node, start_unattached, goal_unattached, disconnected_grid or connections_blocked. LOCAL also has no_local_exit. Nil on success or when no attempt was made.
 -- @field #number Width Final grid width in meters; nil without an area grid (including LAZY).
 -- @field #number Margin Final grid margin in meters; nil without an area grid (including LAZY).
@@ -414,24 +425,50 @@ ASTAR.SearchMode = {
 -- @field #number SearchCPUSeconds Total search and enlargement CPU time in seconds; nil when no CPU clock is available.
 -- @field #string Outcome LOCAL success only: partial_path or goal_path. Neither means the moving object has arrived.
 -- @field #number RequestID LOCAL request number within this ASTAR instance.
--- @field #number WindowID LOCAL window generation; initially one fresh window per request.
+-- @field #number WindowID LOCAL fixed-frame generation; increases only when the window is replaced.
+-- @field #boolean WindowReused LOCAL: retained the compatible previous fixed window.
+-- @field DCS#Vec3 PlanningStart LOCAL: copied requested anchor, which may differ from Window.Origin.
 -- @field #table Window LOCAL copied Origin (Vec3), Heading (degrees), Ahead, Width and Behind (meters).
 -- @field #boolean GoalInside LOCAL: whether the requested destination is geometrically inside this window.
 -- @field #string GoalFailure LOCAL: no_goal_node when the in-window goal fails its surface filter; partial exits may still succeed.
 -- @field #table Candidates LOCAL: up to eight ASTAR.LocalCandidate records, best first; empty until successful completion.
 -- @field #number CandidateCount LOCAL: number of published candidates.
--- @field #number WorkItems LOCAL: bounded work items performed, including endpoint preparation and result construction.
+-- @field #number LearningEntries LOCAL: retained cell estimates, at most LearningLimit.
+-- @field #number LearningLimit LOCAL: independent cell-memory limit, default 4096.
+-- @field #number LearningUpdatedCells LOCAL: cell updates in the committed request, including entries evicted at capacity.
+-- @field #number LearningWorkItems LOCAL: cooperative clone/seed/propagation/storage work items.
+-- @field #boolean LearningUpdated LOCAL: this completed partial request committed changed estimates.
+-- @field #number WorkItems LOCAL: bounded work items, including preparation, result construction and cell learning.
 -- @field #number RetainedCells LOCAL: accepted cells retained in the current window; CandidateCells also counts filtered samples.
 -- @field #number ValidityCacheHits LOCAL: validity cache hits during this request.
 -- @field #number CostCacheHits LOCAL: travel-cost cache hits during this request.
+-- @field #number RestoredCacheEntries LOCAL: copied cell-to-cell validity and cost entries, counting directions separately.
+-- @field #boolean DataIncomplete LOCAL: at least one depth edge check lacked usable data. Returned paths still contain only validated edges; alternatives may be unknown.
+-- @field #number UnavailableEdges LOCAL: distinct undirected edges with unavailable depth data during this request.
+-- @field #table UnavailableReasons LOCAL: counts by depth failure cause, counting each edge once at its first failure.
+-- @field #table FirstUnavailableEdge LOCAL: first missing-data Reason, From and To (copied Vec3 positions), or nil.
+-- @field #ASTAR.LocalProgress Progress LOCAL: independent observation snapshot; live until completion, then stable.
+
+--- Advisory diagnostics from explicitly observed positions, not from planning anchors or elapsed time.
+-- Repeated planning counts completed partial requests near the latest observed position without intervening movement.
+-- Loop detection counts repeated directed transitions in the bounded history; it does not prove a navigation failure.
+-- @type ASTAR.LocalProgress
+-- @field #string Status unobserved, observed, repeated_planning or loop_detected. Does not block searching or claim arrival.
+-- @field DCS#Vec3 Position Last accepted actual position, copied; nil before the first observation.
+-- @field #number HistoryCount Retained accepted positions, bounded by HistorySize.
+-- @field #number Distance Accumulated horizontal observed displacement in meters since reset/goal change.
+-- @field #number RepeatedPlans Completed partial requests near the actual position since the last accepted movement.
+-- @field #number LoopCount Occurrences of the latest directed transition, including itself, in the retained history.
 
 --- One completed local alternative. Treat this record, its path and copied positions as read-only.
--- Separate candidates own their path/position lists; path nodes are shared within the owning window.
+-- Separate candidates own their path/position lists; path nodes are shared within the owning request.
 -- @type ASTAR.LocalCandidate
 -- @field #table Path Ordered ASTAR nodes, including the planning start and checked endpoint.
 -- @field #table Positions Independent Vec3 copies for consumers retaining a route beyond this window's lifetime.
 -- @field #number Cost Checked travel cost in the configured cost units.
--- @field #number Score Cost plus the compatible goal heuristic; custom/road costs add zero, never meters.
+-- @field #number BaseScore Cost plus the compatible goal heuristic; custom/road costs add zero, never meters.
+-- @field #number LearnedPenalty Non-negative continuation-cost increase for the same stable lattice cell; zero for an exact goal.
+-- @field #number Score BaseScore plus LearnedPenalty, used for local candidate ranking. Not a global lower bound.
 -- @field #number Length Horizontal polyline length in meters, independent of the cost metric.
 -- @field #number RemainingDistance Horizontal straight-line distance from the endpoint to the overall goal, in meters.
 -- @field #boolean ReachesGoal True only when the exact requested goal was reached under the current endpoint metric.
@@ -1076,6 +1113,7 @@ end
 -- @param #table Samples (Optional) Receives pairs of projected distance and depth for cost integration.
 -- @return #boolean True when the connection is sufficiently deep water.
 -- @return #string Reason for rejection, or nil on success.
+-- @return #string clear, blocked or unavailable.
 function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples)
 
   -- DCS may omit the endpoints from its profile. Always check their actual depths as well.
@@ -1084,7 +1122,7 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples)
     local clear,status,cause,depth=VECTOR._CheckDepthPoint(point,MinDepth,false)
 
     if not clear then
-      return false,status=="unavailable" and cause or (i==1 and "start_blocked" or "goal_blocked")
+      return false,status=="unavailable" and cause or (i==1 and "start_blocked" or "goal_blocked"),status
     end
 
     if Samples then Samples[#Samples+1]={i==1 and 0 or Distance,depth} end
@@ -1092,7 +1130,7 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples)
 
   local profile=land.profile(Start,Goal)
   if type(profile)~="table" then
-    return false,"profile_unavailable"
+    return false,"profile_unavailable","unavailable"
   end
 
   -- Under the linear-profile assumption, valid support points also bound the depths between them.
@@ -1101,7 +1139,7 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples)
     local clear,status,cause,depth=VECTOR._CheckDepthPoint(point,MinDepth,true)
 
     if not clear then
-      return false,status=="unavailable" and cause or "profile_blocked"
+      return false,status=="unavailable" and cause or "profile_blocked",status
     end
 
     if Samples then
@@ -1115,7 +1153,7 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples)
   if #profile<2 then
     local intervals=math.max(2,math.ceil(Distance/100))
     if intervals>1000 then
-      return false,"profile_fallback_limit"
+      return false,"profile_fallback_limit","unavailable"
     end
 
     for i=1,intervals-1 do
@@ -1124,14 +1162,14 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples)
       local clear,status,cause,depth=VECTOR._CheckDepthPoint(point,MinDepth,false)
 
       if not clear then
-        return false,status=="unavailable" and cause or "profile_fallback_blocked"
+        return false,status=="unavailable" and cause or "profile_fallback_blocked",status
       end
 
       if Samples then Samples[#Samples+1]={fraction*Distance,depth} end
     end
   end
 
-  return true
+  return true,nil,"clear"
 
 end
 
@@ -1261,6 +1299,8 @@ end
 -- @param #number CorridorWidth (Optional) Non-negative finite total corridor width in meters; default 0.
 -- @return #boolean True when every check passes; false for blocked or unusable terrain data.
 -- @return #string Reason for rejection, or nil on success. Start/goal refer to the canonical query direction.
+-- @return #number Horizontal distance on success, or nil.
+-- @return #string clear, blocked or unavailable. Missing data must not be cached as a measured obstruction.
 function ASTAR.Depth(nodeA, nodeB, MinDepth, CorridorWidth)
 
   return ASTAR._DepthConnection(nodeA,nodeB,MinDepth,CorridorWidth)
@@ -1276,10 +1316,12 @@ end
 -- @param #number PreferredDepth (Optional) Preferred water depth in meters; nil adds no penalty.
 -- @param #number Weight (Optional) Non-negative penalty strength; default 2.
 -- @return #number Symmetric horizontal travel cost, or math.huge when blocked.
+-- @return #string Depth rejection reason, or nil.
+-- @return #string clear, blocked or unavailable.
 function ASTAR.CostDepth(nodeA, nodeB, MinDepth, CorridorWidth, PreferredDepth, Weight)
 
-  local clear,reason,cost=ASTAR._DepthConnection(nodeA,nodeB,MinDepth,CorridorWidth,PreferredDepth,Weight)
-  return clear and cost or math.huge
+  local clear,reason,cost,status=ASTAR._DepthConnection(nodeA,nodeB,MinDepth,CorridorWidth,PreferredDepth,Weight)
+  return clear and cost or math.huge,reason,status
 
 end
 
@@ -1294,6 +1336,7 @@ end
 -- @return #boolean Whether the connection is navigable.
 -- @return #string Rejection reason, or nil.
 -- @return #number Travel cost on success.
+-- @return #string clear, blocked or unavailable.
 function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, PreferredDepth, Weight)
 
   if MinDepth==nil then
@@ -1319,12 +1362,12 @@ function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, Preferred
   local distance=math.sqrt(dx*dx+dz*dz)
 
   if not (distance<math.huge) then
-    return false,"invalid_distance"
+    return false,"invalid_distance",nil,"unavailable"
   end
 
   if distance==0 then
     local clear,status,cause=VECTOR._CheckDepthPoint(a,MinDepth,false)
-    return clear,not clear and (status=="unavailable" and cause or "start_blocked") or nil,clear and 0 or nil
+    return clear,not clear and (status=="unavailable" and cause or "start_blocked") or nil,clear and 0 or nil,status
   end
 
   -- Query DCS in the same direction for A -> B and B -> A, matching A*'s symmetric validity cache.
@@ -1341,10 +1384,10 @@ function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, Preferred
     local start={x=a.x+nx*offset,y=0,z=a.z+nz*offset}
     local goal={x=b.x+nx*offset,y=0,z=b.z+nz*offset}
     local samples=profiles and {} or nil
-    local clear,reason=ASTAR._CheckDepthLine(start,goal,distance,MinDepth,samples)
+    local clear,reason,status=ASTAR._CheckDepthLine(start,goal,distance,MinDepth,samples)
 
     if not clear then
-      return false,reason
+      return false,reason,nil,status
     end
 
     if profiles then profiles[#profiles+1]=samples end
@@ -1353,7 +1396,7 @@ function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, Preferred
   local cost=distance
   if profiles then cost=cost+Weight*ASTAR._DepthPenalty(profiles,distance,MinDepth,PreferredDepth) end
 
-  return true,nil,cost
+  return true,nil,cost,"clear"
 
 end
 
@@ -1799,14 +1842,22 @@ function ASTAR:SetLocalWindow(Ahead, Width, Behind)
 
 end
 
---- Start one local request, replacing the previous owned window without starting a timer or sampling terrain.
+--- Start one local request without starting a timer or sampling terrain.
 -- Requires SetLocalWindow() and an unbuilt owned GRID or the previous local window. Attached/built non-local grids
 -- and manual nodes are rejected. Configure resolution, surface types and MaxCells through GetGrid() beforehand.
--- Every request copies GRID settings into a fresh window. Old cells/results remain owned by their old window;
--- reacquire GetGrid() for drawing the new result. Old owned drawings are cleared when replacing the window.
+-- Reuses a fixed window only with unchanged configuration/rules, a heading change at most 10 degrees, and
+-- an anchor within [-Behind/4,Ahead/4] along and +/-Width/8 across its original frame. Otherwise creates a new window.
+-- Each request owns new nodes/caches. Known built-in rule/cost pairs reuse copied cell-edge results; custom callbacks
+-- are evaluated again because they may depend on node identity. Exact endpoint caches are never carried forward.
+-- Compatible requests retain lattice indices/world centers across new window origins and headings.
+-- Completed partial requests learn continuation costs throughout the explored area; SetLocalLearningLimit() bounds memory.
+-- Exit scores use these estimates to discourage returning to locally costly regions; no exit is forbidden by history.
+-- Goal/configuration changes clear learning. Exact-goal preference and physical path costs remain unchanged.
+-- External terrain or callback-state changes require InvalidateLocalCache(). Reacquire GetGrid() for drawing;
+-- old owned drawings are cleared at every request. Caller-held older paths/results remain usable and consume caller memory.
 -- Start/Goal are copied. Heading defaults towards Goal, or zero for coincident horizontal positions.
 -- The distant goal supplies direction only: it is sampled/attached only when inside the window.
--- Use StepSearch()/CancelSearch() as for LAZY. No actual movement, arrival or rolling history is inferred.
+-- Use StepSearch()/CancelSearch() as for LAZY. Supply actual movement separately through UpdateLocalProgress().
 -- @param #ASTAR self
 -- @param #table Start Planning anchor; VECTOR, COORDINATE, Vec2 or Vec3. May be a future route endpoint.
 -- @param #table Goal Overall destination, in the same position formats.
@@ -1833,7 +1884,19 @@ function ASTAR:StartLocalSearch(Start, Goal, Heading)
       heading=startVector:GetHeadingTo(endVector)
     end
   end
-  local window=self.Grid:_NewSparseWindow(startVector,heading,options.Ahead,options.Width,options.Behind)
+  local previous=self._LazySearch
+  local compatible=previous and previous.Local and self:_IsLazySearchCurrent(previous)
+  local lattice=compatible and (self.Grid.hexGrid or self.Grid.rectGrid) or nil
+  local window=self.Grid:_NewSparseWindow(startVector,heading,options.Ahead,options.Width,options.Behind,lattice)
+  local reuse=compatible and self.Grid:_CanReuseSparseWindow(startVector,heading,options)
+  local restore
+  if reuse then
+    window=self.Grid
+    local rule,cost=self.ValidNeighbourFunc,self.CostFunc
+    local standardRule=rule==nil or rule==ASTAR.Depth or rule==ASTAR.LoS or rule==ASTAR.DistMax or rule==ASTAR.Road
+    local standardCost=cost==nil or cost==ASTAR.Dist2D or cost==ASTAR.Dist3D or cost==ASTAR.DistRoad or cost==ASTAR.CostDepth
+    restore={Nodes=self.nodes,CellNodes=self._CellNodes,Index=1,Cache="valid",Edges=standardRule and standardCost}
+  end
 
   -- Validate all new inputs before cancelling useful work or replacing its drawings and ownership.
   self:CancelSearch()
@@ -1850,21 +1913,32 @@ function ASTAR:StartLocalSearch(Start, Goal, Heading)
   self._CellCursor,self._GridRevision=0,-1
   self.startNode,self.endNode=nil,nil
   self.startVector,self.endVector=startVector,endVector
-  self:_SyncGrid()
+  self.hexGrid,self.rectGrid=window.hexGrid,window.rectGrid
+  self.GridNeighboursOnly=true
+  self._ValiditySurfaceFilter=window.ValidSurfaceTypes
+  self.gridLinks,self.gridComponents=nil,nil
+  if not reuse then
+    self:_SyncGrid()
+    self._LocalWindowID=(self._LocalWindowID or 0)+1
+  end
 
   self._LocalRequestID=(self._LocalRequestID or 0)+1
   local state={
-    Local=true, Running=true, Phase="start", Grid=window, WindowOptions=options,
+    Local=true, Running=true, Phase=reuse and "restore_nodes" or "start", Grid=window, WindowOptions=options,
+    Restore=restore,
     Open={}, OpenPositions={}, Scores={}, Previous={}, EndpointIndices={}, Exits={},
-    Expanded=0, WorkItems=0, InitialCandidates=0,
+    Expanded=0, WorkItems=0, InitialCandidates=window:GetCandidateCount(),
     Target={vector=endVector}, GoalInside=window:_IsInsideWindow(endVector),
     InitialValidHits=self.nvalidcache, InitialCostHits=self.ncostcache,
     Report={
       Mode=ASTAR.SearchMode.LOCAL, Status="running", StopReason="running", Attempts={},
       BudgetLimited=false, SearchCPUSeconds=clock and 0 or nil,
-      RequestID=self._LocalRequestID, WindowID=self._LocalRequestID,
+      RequestID=self._LocalRequestID, WindowID=self._LocalWindowID,
+      WindowReused=reuse and true or false, RestoredCacheEntries=0,
+      UnavailableEdges=0, UnavailableReasons={}, DataIncomplete=false,
+      PlanningStart=startVector:GetVec3(),
       Candidates={}, CandidateCount=0,
-      Window={Origin=startVector:GetVec3(),Heading=window._SparseWindow.Heading,
+      Window={Origin=window.startVector:GetVec3(),Heading=window._SparseWindow.Heading,
         Ahead=options.Ahead,Width=options.Width,Behind=options.Behind},
     },
   }
@@ -1876,9 +1950,351 @@ function ASTAR:StartLocalSearch(Start, Goal, Heading)
   state.NeighbourFunction,state.NeighbourArguments=self.ValidNeighbourFunc,self.ValidNeighbourArg
   state.Options,state.GridVersion=window.GridOptions,window.Version
   state.NodeCount=self.Nnodes
+  self:_BeginLocalProgress(state)
+  self:_BeginLocalLearning(state,compatible)
   self:_UpdateLazyReport(state,clock)
 
   return self
+
+end
+
+--- Invalidate local terrain samples, connection caches and learned continuation costs after external inputs change.
+-- Use after changing hidden callback state or terrain data; rule/cost setters already invalidate reuse.
+-- Pending work ends with search_changed. The next request creates a fresh window. Completed results remain unchanged.
+-- @param #ASTAR self
+-- @return #ASTAR self.
+function ASTAR:InvalidateLocalCache()
+
+  self._LocalCacheRevision=(self._LocalCacheRevision or 0)+1
+  self._LocalLearning=nil
+  return self
+
+end
+
+--- Configure actual-movement diagnostics, resetting previous observations.
+-- Diagnostics are advisory: neither repeated planning nor a loop prevents another local request.
+-- @param #ASTAR self
+-- @param #number MinDistance (Optional) Minimum accepted horizontal displacement in meters; default 10, finite and positive.
+-- @param #number HistorySize (Optional) Maximum retained positions; integer 4..256, default 32.
+-- @param #number RepeatLimit (Optional) Repeated plans or directed transitions needed for a warning; integer 2..HistorySize-1, default 3.
+-- @return #ASTAR self.
+function ASTAR:SetLocalProgress(MinDistance, HistorySize, RepeatLimit)
+
+  if MinDistance==nil then
+    MinDistance=10
+  end
+  if HistorySize==nil then
+    HistorySize=32
+  end
+  if RepeatLimit==nil then
+    RepeatLimit=3
+  end
+  assert(type(MinDistance)=="number" and MinDistance>0 and MinDistance<math.huge,
+    "ASTAR: progress distance must be finite and positive")
+  assert(type(HistorySize)=="number" and HistorySize>=4 and HistorySize<=256 and HistorySize==math.floor(HistorySize),
+    "ASTAR: progress history must contain 4..256 positions")
+  assert(type(RepeatLimit)=="number" and RepeatLimit>=2 and RepeatLimit<HistorySize and RepeatLimit==math.floor(RepeatLimit),
+    "ASTAR: progress repeat limit must be an integer in 2..HistorySize-1")
+  self._LocalProgressOptions={MinDistance=MinDistance,HistorySize=HistorySize,RepeatLimit=RepeatLimit}
+  return self:ResetLocalProgress()
+
+end
+
+--- Forget movement observations and repeated-planning diagnostics without changing a search or its results.
+-- @param #ASTAR self
+-- @return #ASTAR self.
+function ASTAR:ResetLocalProgress()
+
+  self._LocalProgress={Positions={},Revision=0,Distance=0,RepeatedPlans=0,LoopCount=0}
+  return self
+
+end
+
+--- Observe an actual position; future planning anchors never count as movement.
+-- Copies the position. Displacements smaller than MinDistance are ignored relative to the last accepted point.
+-- History contains only positions, never windows or results. Repeated directed transitions within MinDistance/2
+-- of earlier endpoints indicate a possible loop. Detours away from the goal still count as movement.
+-- @param #ASTAR self
+-- @param #table Position Actual VECTOR, COORDINATE, Vec2 or Vec3 position.
+-- @return #ASTAR self.
+function ASTAR:UpdateLocalProgress(Position)
+
+  local position=self.Grid:_PositionVector(Position)
+  if not self._LocalProgressOptions then
+    self:SetLocalProgress()
+  elseif not self._LocalProgress then
+    self:ResetLocalProgress()
+  end
+  local progress,options=self._LocalProgress,self._LocalProgressOptions
+  local history=progress.Positions
+  local previous=history[#history]
+  local displacement=previous and position:GetDistance(previous,true) or 0
+  if previous and displacement<options.MinDistance then
+    return self
+  end
+
+  local repetitions=1
+  if previous then
+    for index=2,#history do
+      if previous:GetDistance(history[index-1],true)<=options.MinDistance/2
+        and position:GetDistance(history[index],true)<=options.MinDistance/2 then
+        repetitions=repetitions+1
+      end
+    end
+  end
+  history[#history+1]=position
+  if #history>options.HistorySize then
+    table.remove(history,1)
+  end
+  progress.Revision=progress.Revision+1
+  progress.Distance=progress.Distance+displacement
+  progress.RepeatedPlans=0
+  progress.LoopCount=previous and repetitions or 0
+  return self
+
+end
+
+--- Associate observations with an overall goal, independently of future planning anchors.
+-- A changed goal starts new diagnostics while retaining only the latest actual position.
+-- @param #ASTAR self
+-- @param #table State New local request.
+function ASTAR:_BeginLocalProgress(State)
+
+  local progress=self._LocalProgress
+  if progress then
+    local goal=progress.Goal
+    if goal and goal:GetDistance(State.EndVector,false)>0 then
+      local last=progress.Positions[#progress.Positions]
+      self:ResetLocalProgress()
+      progress=self._LocalProgress
+      if last then
+        progress.Positions[1]=last
+      end
+    end
+    progress.Goal=State.EndVector
+    State.Progress,State.ProgressRevision=progress,progress.Revision
+  end
+  State.CacheRevision=self._LocalCacheRevision
+
+end
+
+--- Copy movement diagnostics into this request's report; completed snapshots are never updated later.
+-- @param #ASTAR self
+-- @param #table State Current local request.
+-- @param #boolean Complete Whether a result is being finalized.
+function ASTAR:_ReportLocalProgress(State, Complete)
+
+  local progress=self._LocalProgress
+  local snapshot={Status="unobserved",HistoryCount=0,Distance=0,RepeatedPlans=0,LoopCount=0}
+  if progress and #progress.Positions>0 then
+    local options=self._LocalProgressOptions
+    local last=progress.Positions[#progress.Positions]
+    if Complete and State.Report.Outcome=="partial_path" and progress==State.Progress
+      and progress.Revision==State.ProgressRevision and last:GetDistance(State.StartVector,true)<options.MinDistance then
+      progress.RepeatedPlans=progress.RepeatedPlans+1
+    end
+    snapshot.Status="observed"
+    if progress.RepeatedPlans>=options.RepeatLimit then
+      snapshot.Status="repeated_planning"
+    end
+    if progress.LoopCount>=options.RepeatLimit then
+      snapshot.Status="loop_detected"
+    end
+    snapshot.Position=last:GetVec3()
+    snapshot.HistoryCount=#progress.Positions
+    snapshot.Distance=progress.Distance
+    snapshot.RepeatedPlans=progress.RepeatedPlans
+    snapshot.LoopCount=progress.LoopCount
+  end
+  State.Report.Progress=snapshot
+
+end
+
+--- Set the independent bound on retained LOCAL cell estimates.
+-- Defaults to 4096 cells; zero disables learning. Oldest inserted cells are evicted when full.
+-- Changing the bound clears learning and invalidates pending local work. It does not change GRID MaxCells.
+-- @param #ASTAR self
+-- @param #number MaxCells Non-negative finite integer.
+-- @return #ASTAR self.
+function ASTAR:SetLocalLearningLimit(MaxCells)
+
+  assert(type(MaxCells)=="number" and MaxCells>=0 and MaxCells<math.huge and MaxCells==math.floor(MaxCells),
+    "ASTAR: learning limit must be a non-negative finite integer")
+  if self.LocalLearningLimit~=MaxCells then
+    self.LocalLearningLimit=MaxCells
+    self:InvalidateLocalCache()
+  end
+  return self
+
+end
+
+-- Exact integer keys belong to a compatible fixed lattice, never to request-local node IDs.
+local function localLearningKey(cell)
+  local first,second=cell.q or cell.i,cell.r or cell.j
+  -- Canonicalize signed zero while preserving integer precision beyond tostring's default format.
+  if first==0 then
+    first=0
+  end
+  if second==0 then
+    second=0
+  end
+  return string.format("%.0f:%.0f",first,second)
+end
+
+--- Retain compact cell estimates across compatible local requests, resetting on changed inputs.
+-- @param #ASTAR self
+-- @param #table State New local request.
+-- @param #boolean Compatible Whether the previous request still matches the current configuration.
+function ASTAR:_BeginLocalLearning(State, Compatible)
+
+  local learning=self._LocalLearning
+  if not Compatible or not learning or learning.Goal:GetDistance(State.EndVector,false)>0 then
+    local limit=self.LocalLearningLimit
+    if limit==nil then
+      limit=4096
+    end
+    learning={Goal=State.EndVector,Limit=limit,Entries={},Index={},Next=1}
+    self._LocalLearning=learning
+  end
+  State.Learning=learning
+  State.Boundary,State.ReverseEdges,State.Explored={},{},{}
+  State.Report.LearningEntries=#learning.Entries
+  State.Report.LearningLimit=learning.Limit
+  State.Report.LearningUpdated=false
+  State.Report.LearningUpdatedCells=0
+  State.Report.LearningWorkItems=0
+
+end
+
+--- Estimate continuation from the same stable lattice cell in previous compatible windows.
+-- Values remain in configured cost units; custom/road costs start with a zero base heuristic.
+-- @param #ASTAR self
+-- @param #table State Current local request.
+-- @param #ASTAR.Node Node Checked exit.
+-- @return #number Base remaining-cost estimate.
+-- @return #number Non-negative learned increase.
+function ASTAR:_LocalExitEstimate(State, Node)
+
+  local base=self:_HeuristicCost(Node,State.Target)
+  local learning=State.Learning
+  local index=Node.cell and learning.Index[localLearningKey(Node.cell)]
+  local entry=index and learning.Entries[index]
+  local estimate=entry and math.max(base,entry.Estimate) or base
+  return base,estimate-base
+
+end
+
+--- Advance transactional cell learning by one bounded work item.
+-- Reverse Dijkstra propagates frontier estimates through checked directed edges to all explored cells.
+-- No terrain/callback is queried again and no estimate crosses a blocked or unknown connection.
+-- Clone, seed, edge relaxation and storage each yield through StepSearch, including without a CPU clock.
+-- @param #ASTAR self
+-- @param #table State Private local request.
+function ASTAR:_StepLocalLearning(State)
+
+  local learning=State.Learning
+  local pending=State.PendingLearning
+  local work=State.LearningSearch
+  State.Report.LearningWorkItems=State.Report.LearningWorkItems+1
+
+  if State.Phase=="learn_clone" then
+    local index=State.LearningIndex
+    local entry=learning.Entries[index]
+    if entry then
+      -- Entries are immutable scalar records; replacing an estimate never edits the previous snapshot.
+      pending.Entries[index]=entry
+      pending.Index[entry.Key]=index
+      State.LearningIndex=index+1
+    else
+      State.LearningIndex=1
+      State.Phase="learn_seed"
+    end
+
+  elseif State.Phase=="learn_seed" then
+    local boundary=State.Boundary[State.LearningIndex]
+    if boundary then
+      work.Scores[boundary.Node.id]=boundary.Estimate
+      lazyPush(work,boundary.Node,boundary.Estimate,0)
+      State.LearningIndex=State.LearningIndex+1
+    else
+      State.Phase="learn_spread"
+    end
+
+  elseif State.Phase=="learn_spread" then
+    if not work.Current then
+      work.Current=lazyPop(work)
+      work.EdgeIndex=1
+      if not work.Current then
+        State.LearningIndex=1
+        State.Phase="learn_store"
+      end
+    else
+      local edges=State.ReverseEdges[work.Current.id]
+      local edge=edges and edges[work.EdgeIndex]
+      if edge then
+        local estimate=work.Scores[work.Current.id]+edge.Cost
+        if estimate<(work.Scores[edge.Node.id] or math.huge) then
+          work.Scores[edge.Node.id]=estimate
+          lazyPush(work,edge.Node,estimate,0)
+        end
+        work.EdgeIndex=work.EdgeIndex+1
+      else
+        work.Current=nil
+      end
+    end
+
+  elseif State.Phase=="learn_store" then
+    local node=State.Explored[State.LearningIndex]
+    if node then
+      local estimate=work.Scores[node.id]
+      if node.cell and estimate and estimate<math.huge then
+        local key=localLearningKey(node.cell)
+        local index=pending.Index[key]
+        local previous=index and pending.Entries[index]
+        local retainedIndex=learning.Index[key]
+        local retained=retainedIndex and learning.Entries[retainedIndex]
+        local base=self:_HeuristicCost(node,State.Target)
+        -- An entry evicted earlier in this staging pass still supplies its known lower floor.
+        estimate=math.max(base,estimate,retained and retained.Estimate or 0)
+        if not previous or estimate>previous.Estimate then
+          if not index then
+            index=#pending.Entries+1
+            if index>pending.Limit then
+              index=pending.Next
+              pending.Index[pending.Entries[index].Key]=nil
+              pending.Next=index%pending.Limit+1
+            end
+          end
+          pending.Entries[index]={Key=key,Estimate=estimate}
+          pending.Index[key]=index
+          State.LearningChanged=State.LearningChanged+1
+        end
+      end
+      State.LearningIndex=State.LearningIndex+1
+    else
+      State.Phase="publish"
+    end
+  end
+
+end
+
+--- Publish copied results and atomically commit completed, complete-data cell learning.
+-- Cancellation at any earlier phase leaves the previous memory and report intact.
+-- @param #ASTAR self
+-- @param #table State Private local request.
+function ASTAR:_PublishLocalResult(State)
+
+  local report=State.Report
+  if State.PendingLearning and State.Learning==self._LocalLearning then
+    self._LocalLearning=State.PendingLearning
+    report.LearningEntries=#State.PendingLearning.Entries
+    report.LearningUpdated=State.LearningChanged>0
+    report.LearningUpdatedCells=State.LearningChanged
+  end
+  report.Candidates=State.Results
+  report.CandidateCount=#State.Results
+  report.Outcome=State.ReachedGoal and "goal_path" or "partial_path"
+  self:_FinishLazySearch(State,State.Results[1].Path,"path_found")
 
 end
 
@@ -1927,7 +2343,7 @@ end
 -- @param #ASTAR.Node Node Settled reachable node.
 function ASTAR:_RecordLocalExit(State, Node)
 
-  if not Node.cell or Node==State.Start then
+  if not Node.cell then
     return
   end
   local sector=State.Grid:_WindowExitSector(Node.cell)
@@ -1936,7 +2352,14 @@ function ASTAR:_RecordLocalExit(State, Node)
   end
 
   local cost=State.Scores[Node.id]
-  local candidate={Node=Node,Sector=sector,Cost=cost,Score=cost+self:_HeuristicCost(Node,State.Target)}
+  local remaining,penalty=self:_LocalExitEstimate(State,Node)
+  -- Every geometric frontier cell seeds learning, including those not retained as sector winners.
+  State.Boundary[#State.Boundary+1]={Node=Node,Estimate=remaining+penalty}
+  if Node==State.Start then
+    return
+  end
+  local baseScore=cost+remaining
+  local candidate={Node=Node,Sector=sector,Cost=cost,BaseScore=baseScore,LearnedPenalty=penalty,Score=baseScore+penalty}
   local current=State.Exits[sector]
   if not current or localCandidateEarlier(candidate,current) then
     State.Exits[sector]=candidate
@@ -1950,7 +2373,16 @@ end
 -- @param #table State Private local search state.
 function ASTAR:_StepLocalPhase(State)
 
-  if State.Phase=="start" or State.Phase=="goal" then
+  if string.sub(State.Phase,1,6)=="learn_" then
+    self:_StepLocalLearning(State)
+
+  elseif State.Phase=="publish" then
+    self:_PublishLocalResult(State)
+
+  elseif State.Phase=="restore_nodes" or State.Phase=="restore_edges" then
+    self:_RestoreLocalCache(State)
+
+  elseif State.Phase=="start" or State.Phase=="goal" then
     -- Resolve the exact anchors first. An invalid goal may still allow a useful local exit.
     local isStart=State.Phase=="start"
     local position=isStart and self.startVector or self.endVector
@@ -1981,10 +2413,11 @@ function ASTAR:_StepLocalPhase(State)
     end
 
   elseif State.Phase=="coincident" then
-    local valid=self:_IsValidNeighbour(State.Start,State.Start)
+    local valid,reason,status=self:_IsValidNeighbour(State.Start,State.Start)
     if not State.Running then
       return
     end
+    self:_RecordUnavailableEdge(State,State.Start,State.Start,reason,status)
     if not self:_IsLazySearchCurrent(State) then
       self:_FinishLazySearch(State,nil,"search_changed")
     elseif valid then
@@ -1999,7 +2432,7 @@ function ASTAR:_StepLocalPhase(State)
     local selected={}
     if State.ReachedGoal then
       local cost=State.Scores[State.Goal.id]
-      selected[1]={Node=State.Goal,Cost=cost,Score=cost,ReachesGoal=true}
+      selected[1]={Node=State.Goal,Cost=cost,BaseScore=cost,LearnedPenalty=0,Score=cost,ReachesGoal=true}
     else
       for sector=1,8 do
         if State.Exits[sector] then
@@ -2025,7 +2458,8 @@ function ASTAR:_StepLocalPhase(State)
       State.TraceNode=State.Previous[node]
     else
       local selected=State.Selected[State.CandidateIndex]
-      State.Result={Path={},Positions={},Cost=selected.Cost,Score=selected.Score,Length=0,
+      State.Result={Path={},Positions={},Cost=selected.Cost,Score=selected.Score,
+        BaseScore=selected.BaseScore,LearnedPenalty=selected.LearnedPenalty,Length=0,
         RemainingDistance=selected.Node.vector:GetDistance(State.Target.vector,true),
         ReachesGoal=selected.ReachesGoal or false,Sector=selected.Sector}
       State.CopyIndex=#State.Reverse
@@ -2052,11 +2486,15 @@ function ASTAR:_StepLocalPhase(State)
         State.TraceNode=nextCandidate.Node
         State.Phase="unwind"
       else
-        local report=State.Report
-        report.Candidates=State.Results
-        report.CandidateCount=#State.Results
-        report.Outcome=State.ReachedGoal and "goal_path" or "partial_path"
-        self:_FinishLazySearch(State,State.Results[1].Path,"path_found")
+        local learning=State.Learning
+        if not State.ReachedGoal and not State.Report.DataIncomplete and learning.Limit>0 then
+          State.PendingLearning={Goal=learning.Goal,Limit=learning.Limit,Next=learning.Next,Entries={},Index={}}
+          State.LearningSearch={Open={},OpenPositions={},Scores={}}
+          State.LearningIndex,State.LearningChanged=1,0
+          State.Phase="learn_clone"
+        else
+          State.Phase="publish"
+        end
       end
     end
   end
@@ -2175,7 +2613,7 @@ function ASTAR:_IsLazySearchCurrent(State)
     and self.startVector==State.StartVector and self.endVector==State.EndVector
     and self.CostFunc==State.CostFunction and self.CostArg==State.CostArguments
     and self.ValidNeighbourFunc==State.NeighbourFunction and self.ValidNeighbourArg==State.NeighbourArguments
-    and (not State.Local or self._LocalWindow==State.WindowOptions)
+    and (not State.Local or (self._LocalWindow==State.WindowOptions and self._LocalCacheRevision==State.CacheRevision))
 
 end
 
@@ -2231,7 +2669,8 @@ end
 -- Without os.clock the node limit still applies and SearchCPUSeconds is nil. Idle time is never counted.
 -- Reconfiguration cancels with search_changed. Programmer errors in callbacks propagate to the caller.
 -- LOCAL also limits work items to MaxNodes: an endpoint seed, finite neighbour batch, edge check, candidate
--- selection (at most eight), or one reconstruction/copy step. Provisional candidates are never returned as success.
+-- selection (at most eight), or one cache-restoration/reconstruction/copy/learning step.
+-- Provisional candidates are never returned as success.
 -- @param #ASTAR self
 -- @param #number MaxNodes (Optional) Positive integer expansion limit per call; default 100.
 -- @param #number MaxSeconds (Optional) Positive finite CPU budget in seconds; default 0.005.
@@ -2307,6 +2746,7 @@ function ASTAR:StepSearch(MaxNodes, MaxSeconds)
         break
       else
         if state.Local then
+          state.Explored[#state.Explored+1]=current
           self:_RecordLocalExit(state,current)
         end
         state.Expanded=state.Expanded+1
@@ -2325,7 +2765,7 @@ function ASTAR:StepSearch(MaxNodes, MaxSeconds)
         state.Current,state.Neighbours=nil,nil
       else
         local current=state.Current
-        local valid=self:_IsValidNeighbour(current,neighbor)
+        local valid,reason,status=self:_IsValidNeighbour(current,neighbor)
         if not state.Running then
           break
         end
@@ -2333,14 +2773,21 @@ function ASTAR:StepSearch(MaxNodes, MaxSeconds)
           self:_FinishLazySearch(state,nil,"search_changed")
           break
         end
+        self:_RecordUnavailableEdge(state,current,neighbor,reason,status)
         if valid then
-          local edgeCost=self:_TravelCost(current,neighbor)
+          local edgeCost,costReason,costStatus=self:_TravelCost(current,neighbor)
           if not state.Running then
             break
           end
           if not self:_IsLazySearchCurrent(state) then
             self:_FinishLazySearch(state,nil,"search_changed")
             break
+          end
+          self:_RecordUnavailableEdge(state,current,neighbor,costReason,costStatus)
+          if state.Local and state.Learning.Limit>0 and edgeCost>=0 and edgeCost<math.huge then
+            local edges=state.ReverseEdges[neighbor.id] or {}
+            state.ReverseEdges[neighbor.id]=edges
+            edges[#edges+1]={Node=current,Cost=edgeCost}
           end
           local cost=state.Scores[current.id]+edgeCost
           if cost<(state.Scores[neighbor.id] or math.huge) then
@@ -2394,9 +2841,16 @@ function ASTAR:_FinishLazySearch(State, Path, Reason, Failure)
   State.Running=false
   State.Path=Path
   local report=State.Report
+  if State.Local and Reason=="no_local_exit" and report.DataIncomplete then
+    Reason,Failure="data_unavailable",nil
+  end
   report.Status=(Reason=="cancelled" or Reason=="search_changed") and "cancelled" or "complete"
   report.StopReason,report.FailureReason=Reason,Failure
   report.BudgetLimited=Reason=="cell_limit"
+  if State.Local then
+    self:_ReportLocalProgress(State,true)
+    State.Progress,State.Learning=nil,nil
+  end
   if self._LazySearch==State then
     self.LastPathFailure=Failure
   end
@@ -2406,6 +2860,9 @@ function ASTAR:_FinishLazySearch(State, Path, Reason, Failure)
   State.Current,State.Neighbours,State.EndpointIndices=nil,nil,nil
   State.Exits,State.Selected,State.Results,State.Reverse=nil,nil,nil,nil
   State.Result,State.TraceNode=nil,nil
+  State.Restore,State.Unavailable=nil,nil
+  State.Boundary,State.ReverseEdges,State.Explored=nil,nil,nil
+  State.PendingLearning,State.LearningSearch=nil,nil
   self:T(self.lid..string.format("Resumable search finished: %s, %d expanded nodes, %d sampled cells",
     Reason,State.Expanded,State.Grid:GetCandidateCount()))
 
@@ -2432,6 +2889,9 @@ function ASTAR:_UpdateLazyReport(State, Clock)
   report.Spacing=State.Grid:GetResolutionInfo().Spacing
   report.ExpandedNodes=State.Expanded
   if State.Local then
+    if State.Running then
+      self:_ReportLocalProgress(State,false)
+    end
     report.WorkItems=State.WorkItems
     report.GoalInside=State.GoalInside
     report.RetainedCells=State.Grid:GetCellCount()
@@ -2815,13 +3275,16 @@ end
 -- @return #number Travel cost, or math.huge when blocked.
 function ASTAR:_EvaluateDepthEdge(nodeA, nodeB)
 
-  local valid,reason,cost=ASTAR._DepthConnection(nodeA,nodeB,unpack(self.CostArg,1,self.CostArg.n))
+  local valid,reason,cost,status=ASTAR._DepthConnection(nodeA,nodeB,unpack(self.CostArg,1,self.CostArg.n))
   cost=valid and cost or math.huge
 
-  nodeA.valid[nodeB.id],nodeB.valid[nodeA.id]=valid,valid
-  nodeA.cost[nodeB.id],nodeB.cost[nodeA.id]=cost,cost
+  -- Missing data is retryable, whereas a measured obstruction is a reusable result.
+  if status~="unavailable" then
+    nodeA.valid[nodeB.id],nodeB.valid[nodeA.id]=valid,valid
+    nodeA.cost[nodeB.id],nodeB.cost[nodeA.id]=cost,cost
+  end
 
-  return valid,cost
+  return valid,cost,reason,status
 
 end
 
@@ -2844,11 +3307,13 @@ function ASTAR:_TravelCost(nodeA, nodeB)
 
   local costFunction,costArguments=self.CostFunc,self.CostArg
   local neighbourFunction,neighbourArguments=self.ValidNeighbourFunc,self.ValidNeighbourArg
-  local cost=nil
+  local cost,reason,status
   if self.CostFunc==ASTAR.CostDepth and self.ValidNeighbourFunc==ASTAR.Depth
     and self.CostArg[1]==(self.ValidNeighbourArg[1] or 20) and self.CostArg[2]==(self.ValidNeighbourArg[2] or 0) then
     local valid
-    valid,cost=self:_EvaluateDepthEdge(nodeA,nodeB)
+    valid,cost,reason,status=self:_EvaluateDepthEdge(nodeA,nodeB)
+  elseif self.CostFunc==ASTAR.CostDepth then
+    cost,reason,status=self.CostFunc(nodeA, nodeB, unpack(self.CostArg, 1, self.CostArg.n))
   elseif self.CostFunc then
     cost=self.CostFunc(nodeA, nodeB, unpack(self.CostArg, 1, self.CostArg.n))
   else
@@ -2857,13 +3322,13 @@ function ASTAR:_TravelCost(nodeA, nodeB)
 
   assert(type(cost)=="number" and cost>=0, "ASTAR: travel cost must be a non-negative number or math.huge")
   -- A callback may reconfigure/cancel a resumable search. Do not repopulate its newly cleared cache.
-  if self.CostFunc==costFunction and self.CostArg==costArguments
+  if status~="unavailable" and self.CostFunc==costFunction and self.CostArg==costArguments
     and self.ValidNeighbourFunc==neighbourFunction and self.ValidNeighbourArg==neighbourArguments then
     nodeA.cost[nodeB.id]=cost
     nodeB.cost[nodeA.id]=cost
   end
 
-  return cost
+  return cost,reason,status
 
 end
 
@@ -2887,10 +3352,14 @@ function ASTAR:_IsValidNeighbour(node, neighbor)
 
   local neighbourFunction,neighbourArguments=self.ValidNeighbourFunc,self.ValidNeighbourArg
   local costFunction,costArguments=self.CostFunc,self.CostArg
-  local valid=nil
+  local valid,reason,status
   if self.CostFunc==ASTAR.CostDepth and self.ValidNeighbourFunc==ASTAR.Depth
     and self.CostArg[1]==(self.ValidNeighbourArg[1] or 20) and self.CostArg[2]==(self.ValidNeighbourArg[2] or 0) then
-    valid=self:_EvaluateDepthEdge(node,neighbor)
+    local cost
+    valid,cost,reason,status=self:_EvaluateDepthEdge(node,neighbor)
+  elseif self.ValidNeighbourFunc==ASTAR.Depth then
+    local cost
+    valid,reason,cost,status=ASTAR.Depth(node,neighbor,unpack(self.ValidNeighbourArg,1,self.ValidNeighbourArg.n))
   elseif self.ValidNeighbourFunc then
     valid=self.ValidNeighbourFunc(node, neighbor, unpack(self.ValidNeighbourArg, 1, self.ValidNeighbourArg.n))
   else
@@ -2898,13 +3367,13 @@ function ASTAR:_IsValidNeighbour(node, neighbor)
   end
 
   -- Rules are required to be symmetric, allowing the reverse edge to reuse the same result.
-  if self.ValidNeighbourFunc==neighbourFunction and self.ValidNeighbourArg==neighbourArguments
+  if status~="unavailable" and self.ValidNeighbourFunc==neighbourFunction and self.ValidNeighbourArg==neighbourArguments
     and self.CostFunc==costFunction and self.CostArg==costArguments then
     node.valid[neighbor.id]=valid
     neighbor.valid[node.id]=valid
   end
 
-  return valid
+  return valid,reason,status
 
 end
 
@@ -3063,6 +3532,11 @@ function ASTAR:_SyncGrid()
   if not grid or self._GridRevision==grid.Version then
     return
   end
+  -- A public drawing/query call may synchronize all cells between work slices. Advance the owned
+  -- restoration cursor as well, so that this harmless import neither duplicates nodes nor cancels the job.
+  local state=self._LazySearch
+  local restoring=state and state.Running and state.Local and state.Phase=="restore_nodes"
+    and self:_IsLazySearchCurrent(state)
 
   -- Track the filter used by validity caches, including changes made through GetGrid() before building.
   if self._ValiditySurfaceFilter~=grid.ValidSurfaceTypes then
@@ -3081,10 +3555,7 @@ function ASTAR:_SyncGrid()
   -- Import only appended cells. Reuse their geometry, but give every search its own IDs and caches.
   for i=self._CellCursor+1,#grid.CellList do
     local cell=grid.CellList[i]
-    local node={id=self.counter,vector=cell.vector,surfacetype=cell.surfacetype,
-      q=cell.q,r=cell.r,i=cell.i,j=cell.j,rectGrid=cell.rectGrid,cell=cell,grid=grid,_owner=self._NodeOwner,valid={},cost={}}
-    self.counter=self.counter+1
-    self:AddNode(node)
+    self:_ImportGridCell(cell)
   end
 
   -- Advance only after importing the new cells; topology caches must reflect the new grid revision.
@@ -3092,6 +3563,115 @@ function ASTAR:_SyncGrid()
   self._GridRevision=grid.Version
   self.gridLinks=nil
   self.gridComponents=nil
+  if restoring then
+    self:_FinishLocalNodeRestore(state)
+  end
+
+end
+
+--- Import one cell into this search's independent node and edge-cache view.
+-- @param #ASTAR self
+-- @param Core.Grid#GRID.Cell Cell Cell belonging to the current grid.
+function ASTAR:_ImportGridCell(Cell)
+
+  local node={id=self.counter,vector=Cell.vector,surfacetype=Cell.surfacetype,
+    q=Cell.q,r=Cell.r,i=Cell.i,j=Cell.j,rectGrid=Cell.rectGrid,cell=Cell,grid=self.Grid,
+    _owner=self._NodeOwner,valid={},cost={}}
+  self.counter=self.counter+1
+  self:AddNode(node)
+
+end
+
+--- Restore one cell or cached edge per work item; never retain endpoint nodes from previous requests.
+-- Old node caches remain untouched, including when an older path is still held by the caller.
+-- @param #ASTAR self
+-- @param #table State Current local request.
+function ASTAR:_RestoreLocalCache(State)
+
+  local restore=State.Restore
+  local cell=State.Grid.CellList[restore.Index]
+  if State.Phase=="restore_nodes" then
+    if cell then
+      self:_ImportGridCell(cell)
+      self._CellCursor=restore.Index
+      restore.Index=restore.Index+1
+      State.NodeCount=self.Nnodes
+    else
+      self:_FinishLocalNodeRestore(State)
+    end
+    return
+  end
+
+  if not cell then
+    State.Restore=nil
+    State.Phase="start"
+    return
+  end
+  local source=restore.CellNodes[cell.id]
+  local key,value
+  if source then
+    key,value=next(source[restore.Cache],restore.Key)
+  end
+  restore.Key=key
+  if key then
+    local other=restore.Nodes[key]
+    if other and other.cell then
+      local target=self._CellNodes[other.cell.id]
+      self._CellNodes[cell.id][restore.Cache][target.id]=value
+      State.Report.RestoredCacheEntries=State.Report.RestoredCacheEntries+1
+    end
+  elseif restore.Cache=="valid" then
+    restore.Cache="cost"
+  else
+    restore.Cache="valid"
+    restore.Index=restore.Index+1
+  end
+
+end
+
+--- Finish restoring nodes, including imports requested by public drawing/query methods between slices.
+-- @param #ASTAR self
+-- @param #table State Current local request.
+function ASTAR:_FinishLocalNodeRestore(State)
+
+  self._CellCursor=#State.Grid.CellList
+  self._GridRevision=State.Grid.Version
+  State.NodeCount=self.Nnodes
+  State.Restore.Index=1
+  if State.Restore.Edges then
+    State.Phase="restore_edges"
+  else
+    State.Restore=nil
+    State.Phase="start"
+  end
+
+end
+
+--- Preserve retryable depth failures separately from measured obstructions, once per undirected edge.
+-- @param #ASTAR self
+-- @param #table State Current resumable request.
+-- @param #ASTAR.Node First First endpoint.
+-- @param #ASTAR.Node Last Other endpoint.
+-- @param #string Reason Depth failure cause.
+-- @param #string Status Explicit depth status; only unavailable is recorded.
+function ASTAR:_RecordUnavailableEdge(State, First, Last, Reason, Status)
+
+  if not State.Local or Status~="unavailable" then
+    return
+  end
+  local key=math.min(First.id,Last.id)..":"..math.max(First.id,Last.id)
+  State.Unavailable=State.Unavailable or {}
+  if State.Unavailable[key] then
+    return
+  end
+  State.Unavailable[key]=true
+  local report=State.Report
+  report.DataIncomplete=true
+  report.UnavailableEdges=report.UnavailableEdges+1
+  report.UnavailableReasons[Reason]=(report.UnavailableReasons[Reason] or 0)+1
+  if not report.FirstUnavailableEdge then
+    report.FirstUnavailableEdge={Reason=Reason,From=First.vector:GetVec3(),To=Last.vector:GetVec3()}
+  end
 
 end
 
@@ -3470,8 +4050,6 @@ end
 -- @param #string Kind (Optional) GRID.Drawing.POLYGONS, GRID.Drawing.LABELS or GRID.Drawing.ALL; default ALL.
 -- @return #ASTAR self
 function ASTAR:ClearDrawing(Kind)
-
-  self:_SyncGrid()
 
   return GRID.ClearDrawing(self, Kind)
 

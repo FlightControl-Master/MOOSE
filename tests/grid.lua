@@ -2407,5 +2407,86 @@ test("depth query time is included in the drawing CPU budget and API errors rema
   assert(ok,err)
 end)
 
+test("window reuse requires an interior anchor compatible extent and a small heading change",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local extent={Ahead=800,Width=400,Behind=200}
+    local grid=GRID:New("reuse",kind):SetResolution(100)
+    local window=grid:_NewSparseWindow({x=1000,y=0,z=2000},350,800,400,200)
+    local geometry=window.hexGrid or window.rectGrid
+    local function position(along,across)
+      local x,z=window:_GridPosition(geometry,along,across)
+      return VECTOR:New(x,0,z)
+    end
+    assert(window:_CanReuseSparseWindow(position(200,50),0,extent))
+    assert(window:_CanReuseSparseWindow(position(-50,-50),340,extent))
+    equal(window:_CanReuseSparseWindow(position(201,0),350,extent),false)
+    equal(window:_CanReuseSparseWindow(position(0,51),350,extent),false)
+    equal(window:_CanReuseSparseWindow(position(-51,0),350,extent),false)
+    equal(window:_CanReuseSparseWindow(position(0,0),1,extent),false)
+    equal(window:_CanReuseSparseWindow(position(0,0),350,{Ahead=900,Width=400,Behind=200}),false)
+    equal(window:GetCandidateCount(),0)
+    equal(window.startVector.x,1000)
+    equal(window.startVector.z,2000)
+  end
+end)
+
+test("moving and rotating window masks preserve independent fixed lattice centers",function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local queries=0
+    land.surfaceAt=function() queries=queries+1 return land.SurfaceType.WATER end
+    local grid=GRID:New("stable",kind):SetResolution(100)
+    if kind==GRID.Type.RECTANGLE then grid:SetResolution(100,150) end
+    local first=grid:_NewSparseWindow(coord(1000,2000),37,800,600,200)
+    local frame=first.hexGrid or first.rectGrid
+    local nextWindow=first:_NewSparseWindow(coord(1217,2031),123,800,600,200,frame)
+    local nextFrame=nextWindow.hexGrid or nextWindow.rectGrid
+    assert(nextFrame~=frame)
+    equal(queries,0)
+    local inside,outside,frontiers=0,0,0
+    for i=-15,15 do
+      for j=-15,15 do
+        local original=first:IndexToPosition(i,j)
+        local position=nextWindow:IndexToPosition(i,j)
+        near(position.x,original.x) near(position.z,original.z)
+        local fi,se=nextWindow:PositionToIndex(position)
+        equal(fi,i) equal(se,j)
+        local angle=math.rad(123)
+        local dx,dz=position.x-1217,position.z-2031
+        local along=dx*math.cos(angle)+dz*math.sin(angle)
+        local across=-dx*math.sin(angle)+dz*math.cos(angle)
+        local expected=along>=-200 and along<=800 and math.abs(across)<=300
+        equal(nextWindow:_IsInsideWindow(position),expected)
+        local before=queries
+        local cell,reason=nextWindow:GetOrCreateCell(i,j)
+        if expected then
+          inside=inside+1
+          assert(cell)
+          local sector=nextWindow:_WindowExitSector(cell)
+          local boundary=false
+          for _,index in ipairs(nextWindow:_SparseNeighbourIndices(cell)) do
+            if not nextWindow:_IsInsideWindow(nextWindow:IndexToPosition(index[1],index[2])) then boundary=true end
+          end
+          equal(sector~=nil,boundary)
+          if sector then
+            frontiers=frontiers+1
+            equal(sector,math.floor((math.deg(math.atan2(across,along))%360+22.5)/45)%8+1)
+          end
+        else
+          outside=outside+1
+          equal(cell,nil) equal(reason,"outside_window") equal(queries,before)
+        end
+      end
+    end
+    assert(inside>10 and outside>10 and frontiers>5)
+    equal(nextWindow:GetCandidateCount(),inside)
+    local extent={Ahead=800,Width=600,Behind=200}
+    assert(nextWindow:_CanReuseSparseWindow(VECTOR:New(1217,0,2031),123,extent))
+    equal(nextWindow:_CanReuseSparseWindow(VECTOR:New(1000,0,2000),123,extent),false)
+    equal(first:GetCandidateCount(),0)
+    nextFrame.x=0
+    equal(frame.x,1000)
+  end
+end)
+
 print(string.format("%d passed, %d failed",passed,failed))
 if failed>0 then os.exit(1) end
