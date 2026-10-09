@@ -499,321 +499,6 @@ function NAVYGROUP:SetPatrolAdInfinitum(switch)
   return self
 end
 
---- Snapshot of an explicitly enabled naval measurement interval.
--- @type NAVYGROUP.PathfindingDiagnostics
--- @field #boolean Enabled Whether the interval is recording; false retains its frozen values.
--- @field #number SearchAttempts Completed waypoint expansion attempts, including normal no-path results.
--- @field #number ValidityRequests ASTAR validity lookups during recorded searches.
--- @field #number ValidityCacheHits Validity lookups served from cache.
--- @field #number CostRequests ASTAR cost lookups during recorded searches.
--- @field #number CostCacheHits Cost lookups served from cache. Combined depth evaluation may populate these during validity checks.
--- @field #number ProfileQueries Native ASTAR/PATHLINE depth-profile calls within measured scopes, including unavailable results/errors.
--- @field #number RouteSubmissions Issued route commands, including explicit full stops while recording.
--- @field #number PeakRetainedCells Maximum sampled sum of distinct retained/measured grids' accepted cells.
--- @field #number Scopes Completed outer measurement scopes, including exceptions.
--- @field #number Errors Outer scopes which raised an exception; normal navigation failures are not exceptions.
--- @field #number CPUSeconds Aggregate CPU seconds; nil when the interval or an outer scope had no usable clock.
--- @field #number MaxScopeCPUSeconds Largest outer-scope CPU duration, or nil when aggregate timing is unavailable.
--- @field #table Operations Per-operation Calls, Errors, inclusive CPUSeconds and MaxCPUSeconds. Do not sum nested timings.
-
---- Create an independent measurement interval. No ship/search objects are retained.
-function NAVYGROUP._NewPathfindingDiagnostics(Enabled)
-
-  local timed=os and type(os.clock)=="function"
-  return {Enabled=Enabled,SearchAttempts=0,ValidityRequests=0,ValidityCacheHits=0,
-    CostRequests=0,CostCacheHits=0,ProfileQueries=0,RouteSubmissions=0,
-    PeakRetainedCells=0,Scopes=0,Errors=0,ScopeDepth=0,Operations={},
-    CPUSeconds=timed and 0 or nil,MaxScopeCPUSeconds=timed and 0 or nil}
-
-end
-
---- Enable coarse naval planning measurements; disabled by default.
--- Enabling a stopped interval starts fresh. Repeated true retains the current interval; false freezes it.
--- Measures navigation updates, waypoint planning and route updates. Nested work contributes
--- once to aggregate CPU/profile counts; per-operation timings are inclusive and must not be summed.
--- User callbacks executed in these scopes are included. These are CPU seconds, never FPS or simulation time.
--- ProfileQueries counts actual ASTAR/PATHLINE depth-profile calls, including failures, without terrain hooks.
--- PeakRetainedCells is the maximum observed sum of distinct grids owned by active planners/debug views plus
--- the search being measured, sampled after searches/scopes; it is not a heap or exact instantaneous peak.
--- RouteSubmissions counts issued Route calls, not observed controller acceptance or ship movement.
--- @param #NAVYGROUP self
--- @param #boolean Enabled (Optional) Default true.
--- @return #NAVYGROUP self
-function NAVYGROUP:SetPathfindingDiagnostics(Enabled)
-
-  if Enabled==nil then Enabled=true end
-  assert(type(Enabled)=="boolean","NAVYGROUP: diagnostics switch must be a boolean")
-  local diagnostics=self.pathfindingDiagnostics
-  assert(not diagnostics or diagnostics.ScopeDepth==0,"NAVYGROUP: change diagnostics between updates")
-  if Enabled and (not diagnostics or not diagnostics.Enabled) then
-    self.pathfindingDiagnostics=NAVYGROUP._NewPathfindingDiagnostics(true)
-  elseif not Enabled and diagnostics then
-    diagnostics.Enabled=false
-  end
-  return self
-
-end
-
---- Get a caller-owned snapshot of the current/frozen measurement interval.
--- Untimed scopes have nil CPU fields; aggregate timing also requires a clock when enabling the interval.
--- Interval metrics are logged only by LogPathfindingDiagnostics().
--- @param #NAVYGROUP self
--- @return #NAVYGROUP.PathfindingDiagnostics Independent counts and timings.
-function NAVYGROUP:GetPathfindingDiagnostics()
-
-  local diagnostics=self.pathfindingDiagnostics or NAVYGROUP._NewPathfindingDiagnostics(false)
-  local result={Operations={}}
-  for key,value in pairs(diagnostics) do
-    if key~="Operations" and key~="ScopeDepth" then result[key]=value end
-  end
-  for name,operation in pairs(diagnostics.Operations) do
-    local copy={}
-    for key,value in pairs(operation) do copy[key]=value end
-    result.Operations[name]=copy
-  end
-  return result
-
-end
-
---- Log one compact snapshot on explicit request, independent of trace settings.
--- @param #NAVYGROUP self
--- @return #NAVYGROUP self
-function NAVYGROUP:LogPathfindingDiagnostics()
-
-  local d=self:GetPathfindingDiagnostics()
-  self:I(self.lid..string.format("Pathfinding metrics: searches=%d, depth_profiles=%d, routes=%d, peak_observed_cells=%d",
-    d.SearchAttempts,d.ProfileQueries,d.RouteSubmissions,d.PeakRetainedCells))
-  self:I(self.lid..string.format("Pathfinding cache: validity=%d/%d hits, cost=%d/%d hits",
-    d.ValidityCacheHits,d.ValidityRequests,d.CostCacheHits,d.CostRequests))
-  self:I(self.lid..string.format("Pathfinding CPU: scopes=%d, total_s=%s, max_scope_s=%s, errors=%d",
-    d.Scopes,tostring(d.CPUSeconds),tostring(d.MaxScopeCPUSeconds),d.Errors))
-  return self
-
-end
-
---- Sample distinct retained grids without keeping measurement references alive.
-function NAVYGROUP:_ObservePathfindingCells(Search)
-
-  local diagnostics=self.pathfindingDiagnostics
-  if not diagnostics or not diagnostics.Enabled then return end
-  local grids={}
-  local function add(search)
-    if search then grids[search:GetGrid()]=true end
-  end
-  add(Search)
-  add(self.pathfindingDebugSearch)
-  local count=0
-  for grid in pairs(grids) do count=count+grid:GetCellCount() end
-  diagnostics.PeakRetainedCells=math.max(diagnostics.PeakRetainedCells,count)
-
-end
-
---- Capture existing search counters before a waypoint search attempt.
-function NAVYGROUP:_PathfindingSearchSnapshot(Search)
-
-  local diagnostics=self.pathfindingDiagnostics
-  if diagnostics and diagnostics.Enabled then
-    return {Diagnostics=diagnostics,Valid=Search.nvalid,ValidHits=Search.nvalidcache,
-      Cost=Search.ncost,CostHits=Search.ncostcache}
-  end
-
-end
-
---- Aggregate deltas without resetting an ASTAR's caches/counters or retaining it.
-function NAVYGROUP:_RecordPathfindingSearch(Search, Before, Attempts)
-
-  if not Before or Before.Diagnostics~=self.pathfindingDiagnostics then return end
-  local d=Before.Diagnostics
-  d.SearchAttempts=d.SearchAttempts+Attempts
-  d.ValidityRequests=d.ValidityRequests+Search.nvalid-Before.Valid
-  d.ValidityCacheHits=d.ValidityCacheHits+Search.nvalidcache-Before.ValidHits
-  d.CostRequests=d.CostRequests+Search.ncost-Before.Cost
-  d.CostCacheHits=d.CostCacheHits+Search.ncostcache-Before.CostHits
-  self:_ObservePathfindingCells(Search)
-
-end
-
---- Measure an existing operation while preserving all returns and propagating errors after cleanup.
-function NAVYGROUP:_MeasurePathfinding(Name, Callback, ...)
-
-  local d=self.pathfindingDiagnostics
-  if not d or not d.Enabled then return Callback(self,...) end
-  local clock=os and type(os.clock)=="function" and os.clock or nil
-  local started=clock and clock() or nil
-  local outer=d.ScopeDepth==0
-  local profiles=outer and PATHLINE._GetDepthProfileCount() or nil
-  local operation=d.Operations[Name]
-  if not operation then
-    operation={Calls=0,Errors=0,CPUSeconds=clock and 0 or nil,MaxCPUSeconds=clock and 0 or nil}
-    d.Operations[Name]=operation
-  end
-  operation.Calls=operation.Calls+1
-  d.ScopeDepth=d.ScopeDepth+1
-  local function pack(...) return {n=select("#",...),...} end
-  local values=pack(pcall(Callback,self,...))
-  d.ScopeDepth=d.ScopeDepth-1
-  local seconds=clock and math.max(0,clock()-started) or nil
-  if seconds and operation.CPUSeconds then
-    operation.CPUSeconds=operation.CPUSeconds+seconds
-    operation.MaxCPUSeconds=math.max(operation.MaxCPUSeconds,seconds)
-  else
-    operation.CPUSeconds,operation.MaxCPUSeconds=nil,nil
-  end
-  if not values[1] then operation.Errors=operation.Errors+1 end
-  if outer then
-    d.Scopes=d.Scopes+1
-    d.ProfileQueries=d.ProfileQueries+PATHLINE._GetDepthProfileCount()-profiles
-    if seconds and d.CPUSeconds then
-      d.CPUSeconds=d.CPUSeconds+seconds
-      d.MaxScopeCPUSeconds=math.max(d.MaxScopeCPUSeconds,seconds)
-    else
-      d.CPUSeconds,d.MaxScopeCPUSeconds=nil,nil
-    end
-    if not values[1] then d.Errors=d.Errors+1 end
-  end
-  self:_ObservePathfindingCells()
-  if not values[1] then error(values[2],0) end
-  return unpack(values,2,values.n)
-
-end
-
---- Enable/disable pathfinding.
--- Uses terrain profiles to check minimum water depth along the center and both edges of the corridor.
--- Failed searches stop the ship until a new movement command is issued; there is no automatic retry.
--- Search grids use GRID.Resolution.FINE with GRID.Width.NORMAL and GRID.Margin.NORMAL; no grid dimensions are required.
--- SetPathfindingMinDepth() configures depth separately. Profiles assume linear terrain between their points;
--- three parallel checks do not cover the entire corridor or simulate the ship's turning arc.
--- SetPathfindingPreferredDepth() optionally makes A* trade extra distance for deeper water during waypoint searches.
--- @param #NAVYGROUP self
--- @param #boolean Switch If true, enable pathfinding.
--- @param #number CorridorWidth (Optional) Total water corridor width in meters. Default: widest ship plus 10 m on each side; 50 m if dimensions are unavailable. Zero checks only the center line.
--- @return #NAVYGROUP self
-function NAVYGROUP:SetPathfinding(Switch, CorridorWidth)
-
-  assert(type(Switch)=="boolean", "NAVYGROUP: pathfinding switch must be a boolean")
-
-  if CorridorWidth~=nil then
-    assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"NAVYGROUP: corridor width must be finite and non-negative")
-  end
-
-  self.pathfindingOn=Switch
-  self.pathCorridor=CorridorWidth
-
-  if not Switch then
-    self:_ClearPathfindingDrawing()
-  end
-
-  return self
-end
-
---- Select the naval route-search strategy without starting or resuming movement.
--- Only WAYPOINT is available. LOCAL raises an error before changing any navigation state;
--- the experimental local implementation was removed for a staged rebuild.
--- @param #NAVYGROUP self
--- @param #string Mode (Optional) NAVYGROUP.PathfindingMode.WAYPOINT (default).
--- NAVYGROUP.PathfindingMode.LOCAL remains a recognized value but always raises a removal error.
--- @return #NAVYGROUP self.
-function NAVYGROUP:SetPathfindingMode(Mode)
-
-  if Mode==nil then
-    Mode=NAVYGROUP.PathfindingMode.WAYPOINT
-  end
-
-  if Mode==NAVYGROUP.PathfindingMode.LOCAL then
-    error("NAVYGROUP: LOCAL pathfinding mode has been removed; local navigation is unavailable pending a rebuild",2)
-  end
-  assert(Mode==NAVYGROUP.PathfindingMode.WAYPOINT,"NAVYGROUP: unknown pathfinding mode")
-
-  self.pathfindingMode=Mode
-  return self
-end
-
---- Enable pathfinding.
--- Uses the configured minimum depth, or 20 meters by default.
--- @param #NAVYGROUP self
--- @param #number CorridorWidth (Optional) Total water corridor width in meters. Default: widest ship plus 10 m on each side; 50 m if dimensions are unavailable. Zero checks only the center line.
--- @return #NAVYGROUP self
-function NAVYGROUP:SetPathfindingOn(CorridorWidth)
-
-  self:SetPathfinding(true, CorridorWidth)
-
-  return self
-end
-
---- Disable pathfinding.
--- @param #NAVYGROUP self
--- @return #NAVYGROUP self
-function NAVYGROUP:SetPathfindingOff()
-
-  self:SetPathfinding(false, self.pathCorridor)
-
-  return self
-end
-
---- Set the minimum water depth used by pathfinding and collision checks.
--- New searches and safety checks use the new depth, including during turns; stopped ships remain stopped.
--- @param #NAVYGROUP self
--- @param #number MinDepth (Optional) Positive finite minimum water depth in meters, inclusive; default 20.
--- @return #NAVYGROUP self.
-function NAVYGROUP:SetPathfindingMinDepth(MinDepth)
-
-  if MinDepth==nil then
-    MinDepth=20
-  end
-
-  assert(type(MinDepth)=="number" and MinDepth>0 and MinDepth<math.huge,"NAVYGROUP: minimum depth must be finite and positive")
-
-  self.pathMinDepth=MinDepth
-
-  return self
-end
-
---- Prefer deeper water during path searches, without changing the collision threshold.
--- At PreferredDepth and deeper, A* uses ordinary distance costs. Towards the minimum depth,
--- a quadratic penalty increases the cost up to 1 + Weight times the distance. Shallower water
--- remains blocked by SetPathfindingMinDepth(). Collision checks use only the minimum depth.
--- New searches use this setting; the installed route remains active.
--- @param #NAVYGROUP self
--- @param #number PreferredDepth (Optional) Positive finite depth in meters; nil disables the preference. At/below the minimum adds no penalty.
--- @param #number Weight (Optional) Finite non-negative penalty strength; default 2. Zero adds no penalty.
--- @return #NAVYGROUP self.
----@param PreferredDepth? number
----@param Weight? number
----@return NAVYGROUP
-function NAVYGROUP:SetPathfindingPreferredDepth(PreferredDepth, Weight)
-
-  if Weight==nil then Weight=2 end
-  assert(PreferredDepth==nil or (PreferredDepth>0 and PreferredDepth<math.huge),
-    "NAVYGROUP: preferred depth must be finite and positive")
-  assert(Weight>=0 and Weight<math.huge,"NAVYGROUP: depth weight must be finite and non-negative")
-
-  self.pathPreferredDepth=PreferredDepth
-  self.pathDepthWeight=Weight
-
-  return self
-end
-
---- Configure the bounded grid used for automatic naval detours.
--- Uses GRID.Resolution.FINE with GRID.Width.NORMAL and GRID.Margin.NORMAL automatically.
--- Short connections retain a minimum search width of twice the safety corridor (at least 2000 meters)
--- and a margin of one safety corridor (at least 1000 meters), so approaching a waypoint does not collapse the grid.
--- Spacing follows the initial corridor dimensions and remains unchanged during expansion.
--- Calling this method is optional; only resource and expansion limits need explicit configuration.
--- @param #NAVYGROUP self
--- @param #number MaxCells (Optional) Positive integer candidate-cell budget; default 5000.
--- @param #number GrowthFactor (Optional) Expansion multiplier greater than 1; default 1.5.
--- @param #number MaxAttempts (Optional) Positive integer attempt limit including the initial search; default 5.
--- @return #NAVYGROUP self.
-function NAVYGROUP:SetPathfindingGrid(MaxCells, GrowthFactor, MaxAttempts)
-  local config=GRID:New("Naval configuration",GRID.Type.HEXAGON):SetMaxCells(MaxCells):SetExpansion(GrowthFactor,MaxAttempts):GetOptions()
-  self.pathMaxCells=config.MaxCells
-  self.pathGrowthFactor=config.Expansion.GrowthFactor
-  self.pathMaxAttempts=config.Expansion.MaxAttempts
-  return self
-end
-
-
-
 --- Set if old into wind calculation is used when carrier turns into the wind for a recovery.
 -- @param #NAVYGROUP self
 -- @param #boolean SwitchOn If `true` or `nil`, use old into wind calculation.
@@ -1475,219 +1160,6 @@ function NAVYGROUP:onafterSpawned(From, Event, To)
   
 end
 
---- On before "UpdateRoute" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
--- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
--- @param #number Speed Speed in knots to the next waypoint.
--- @param #number Depth Depth in meters to the next waypoint.
-function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Depth)
-
-  -- Is transition allowed? We assume yes until proven otherwise.
-  local allowed=true
-  local trepeat=nil
-
-  if self:IsWaiting() then
-    self:T(self.lid.."Update route denied. Group is WAITING!")
-    return false
-  elseif self:IsInUtero() then
-    self:T(self.lid.."Update route denied. Group is INUTERO!")
-    return false
-  elseif self:IsDead() then
-    self:T(self.lid.."Update route denied. Group is DEAD!")
-    return false
-  elseif self:IsStopped() then
-    self:T(self.lid.."Update route denied. Group is STOPPED!")
-    return false
-  elseif self:IsHolding() then
-    self:T(self.lid.."Update route denied. Group is holding position!")
-    return false
-  elseif self:IsEngaging() then
-    self:T(self.lid.."Update route allowed. Group is engaging!")
-    return true      
-  end
-  
-  -- Check for a current task.
-  if self.taskcurrent>0 then
-
-    -- Get the current task. Must not be executing already.
-    local task=self:GetTaskByID(self.taskcurrent)
-
-    if task then
-      if task.dcstask.id==AUFTRAG.SpecialTask.PATROLZONE then
-        -- For patrol zone, we need to allow the update as we insert new waypoints.
-        self:T2(self.lid.."Allowing update route for Task: PatrolZone")
-      elseif task.dcstask.id==AUFTRAG.SpecialTask.RECON then
-        -- For recon missions, we need to allow the update as we insert new waypoints.
-        self:T2(self.lid.."Allowing update route for Task: ReconMission")
-      elseif task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
-        -- For relocate
-        self:T2(self.lid.."Allowing update route for Task: Relocate Cohort")
-      elseif task.dcstask.id==AUFTRAG.SpecialTask.REARMING then
-        -- For rearming
-        self:T2(self.lid.."Allowing update route for Task: Rearming")                
-      else
-        local taskname=task and task.description or "No description"
-        self:T(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
-        allowed=false
-      end
-    else
-      -- Now this can happen, if we directly use TaskExecute as the task is not in the task queue and cannot be removed. Therefore, also directly executed tasks should be added to the queue!
-      self:T(self.lid..string.format("WARNING: before update route taskcurrent=%d (>0!) but no task?!", self.taskcurrent))
-      -- Anyhow, a task is running so we do not allow to update the route!
-      allowed=false
-    end
-  end
-
-  -- Not good, because mission will never start. Better only check if there is a current task!
-  --if self.currentmission then
-  --end
-
-  -- Only AI flights.
-  if not self.isAI then
-    allowed=false
-  end
-
-  -- Debug info.
-  self:T2(self.lid..string.format("Onbefore Updateroute in state %s: allowed=%s (repeat in %s)", self:GetState(), tostring(allowed), tostring(trepeat)))
-
-  -- Try again?
-  if trepeat then
-    self:__UpdateRoute(trepeat, n, N, Speed, Depth)
-  end  
-  
-  return allowed
-end
-
---- On after "UpdateRoute" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
--- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
--- @param #number Speed Speed in knots to the next waypoint.
--- @param #number Depth Depth in meters to the next waypoint.
-function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
-
-  return self:_MeasurePathfinding("route_update",self._RunNavigationRouteUpdate,From, Event, To, n, N, Speed, Depth)
-
-end
-
---- Execute the existing navigation operation; measurements are owned by the public entry above.
-function NAVYGROUP:_RunNavigationRouteUpdate(From, Event, To, n, N, Speed, Depth)
-
-  -- Resolve the same destination for native routing, collision checks and waypoint search.
-  -- A newer inserted waypoint invalidates a previous Goto, whereas speed/depth changes retain it.
-  if n then self:_SetNavigationWaypoint(self.waypoints[n]) end
-  local target=self:_GetNavigationWaypoint()
-  n=target and self:GetWaypointIndex(target.uid) or self:GetWaypointIndexNext()
-
-  -- Max index.
-  N=N or #self.waypoints  
-  N=math.min(N, #self.waypoints)
-
-  -- A patrol detour after the last waypoint leads back to an earlier original waypoint.
-  -- Include that target in this same DCS route; temporary waypoint callbacks do not restart navigation.
-  local last=self.waypoints[N]
-  local targetIndex=last and last.astarTargetUID and self:GetWaypointIndex(last.astarTargetUID)
-  if self.adinfinitum and N==#self.waypoints and targetIndex and targetIndex<n then
-    N=N+targetIndex
-  end
-
-  -- Waypoints.
-  local waypoints={}
-  local detourTarget,detourSpeed
-  
-  for i=n, N do
-  
-    -- Waypoint.
-    local index=(i-1)%#self.waypoints+1
-    local wp=UTILS.DeepCopy(self.waypoints[index])  --Ops.OpsGroup#OPSGROUP.Waypoint
-    
-    --env.info(string.format("FF i=%d UID=%d   n=%d, N=%d", i, wp.uid, n, N))
-      
-    -- Speed.
-    if Speed then
-      -- Take speed specified.
-      wp.speed=UTILS.KnotsToMps(Speed)
-    else
-      -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
-      if wp.speed<0.1 then --self.adinfinitum and 
-        wp.speed=UTILS.KmphToMps(self.speedCruise)
-      end
-    end
-
-    -- Preserve the detour's commanded speed through its original target without changing stored waypoint data.
-    if wp.astar then
-      detourTarget,detourSpeed=wp.astarTargetUID,wp.speed
-    elseif wp.uid==detourTarget then
-      wp.speed=detourSpeed
-      detourTarget,detourSpeed=nil,nil
-    end
-    
-    -- Depth.
-    if Depth then
-      wp.alt=-Depth
-    elseif self.depth then
-      wp.alt=-self.depth
-    else
-      -- Take default waypoint alt.
-      wp.alt=wp.alt or 0
-    end
-    
-    -- Current set speed in m/s.
-    if i==n then
-      self.speedWp=wp.speed
-      self.altWp=wp.alt
-    end
-  
-    -- Add waypoint.
-    table.insert(waypoints, wp)
-  
-  end
-  
-  -- Current waypoint.
-  local current=self:GetCoordinate():WaypointNaval(UTILS.MpsToKmph(self.speedWp), self.altWp)
-  table.insert(waypoints, 1, current)  
-
-  
-  if self:IsEngaging() or not self.passedfinalwp then
-  
-    if self.verbose>=10 then
-      for i=1,#waypoints do
-        local wp=waypoints[i] --Ops.OpsGroup#OPSGROUP.Waypoint
-        local text=string.format("%s Waypoint [%d] UID=%d speed=%d m/s", self.groupname, i-1, wp.uid or -1, wp.speed)
-        self:I(self.lid..text)
-        COORDINATE:NewFromWaypoint(wp):MarkToAll(text)            
-      end
-    end
-
-    -- Debug info.
-    self:T(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Depth=%d m", self.currentwp, n, #waypoints, #self.waypoints, UTILS.MpsToKnots(self.speedWp), self.altWp))
-
-    -- Route group to all defined waypoints remaining.
-    if self.pathfindingDiagnostics and self.pathfindingDiagnostics.Enabled then
-      self.pathfindingDiagnostics.RouteSubmissions=self.pathfindingDiagnostics.RouteSubmissions+1
-    end
-    self:Route(waypoints)
-    
-  else
-  
-    ---
-    -- Passed final WP ==> Full Stop
-    ---
-  
-    self:E(self.lid..string.format("WARNING: Passed final WP ==> Full Stop!"))
-    self:FullStop()
-    
-  end
-
-end
-
 --- On after "Detour" event.
 -- @param #NAVYGROUP self
 -- @param #string From From state.
@@ -1865,15 +1337,6 @@ function NAVYGROUP:onafterTurnIntoWindOver(From, Event, To, IntoWindData)
 
 end
 
---- Remove owned pathfinding drawings before the base class stops timers and event subscriptions.
-function NAVYGROUP:onafterStop(From, Event, To)
-
-  self:_ClearPathfindingDrawing()
-  return OPSGROUP.onafterStop(self,From,Event,To)
-
-end
-
-
 --- On after "FullStop" event.
 -- @param #NAVYGROUP self
 -- @param #string From From state.
@@ -1949,49 +1412,6 @@ function NAVYGROUP:onafterSurface(From, Event, To, Speed)
 
   self:__UpdateRoute(-1, nil, nil, Speed)
 
-end
-
---- On after "TurningStarted" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function NAVYGROUP:onafterTurningStarted(From, Event, To)
-  self.turning=true
-end
-
---- On after "TurningStarted" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function NAVYGROUP:onafterTurningStopped(From, Event, To)
-  self.turning=false
-  
-  if self:IsSteamingIntoWind() then
-    self:TurnedIntoWind()
-  end
-  
-end
-
---- On after "CollisionWarning" event.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
--- @param #number Distance Estimated clear prefix in meters before the detected obstacle.
-function NAVYGROUP:onafterCollisionWarning(From, Event, To, Distance)
-  self:T(self.lid..string.format("Navigation obstacle ahead; checked clear distance %.0f meters", Distance or -1))
-  self.collisionwarning=true
-end
-
---- Clear a previous warning after a verified clear navigation check.
--- @param #NAVYGROUP self
--- @param #string From From state.
--- @param #string Event Event.
--- @param #string To To state.
-function NAVYGROUP:onafterClearAhead(From, Event, To)
-  self.collisionwarning=false
 end
 
 --- On after "EngageTarget" event.
@@ -2372,6 +1792,534 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Enable/disable pathfinding.
+-- Uses terrain profiles to check minimum water depth along the center and both edges of the corridor.
+-- Failed searches stop the ship until a new movement command is issued; there is no automatic retry.
+-- Search grids use GRID.Resolution.FINE with GRID.Width.NORMAL and GRID.Margin.NORMAL; no grid dimensions are required.
+-- SetPathfindingMinDepth() configures depth separately. Profiles assume linear terrain between their points;
+-- three parallel checks do not cover the entire corridor or simulate the ship's turning arc.
+-- SetPathfindingPreferredDepth() optionally makes A* trade extra distance for deeper water during waypoint searches.
+-- @param #NAVYGROUP self
+-- @param #boolean Switch If true, enable pathfinding.
+-- @param #number CorridorWidth (Optional) Total water corridor width in meters. Default: widest ship plus 10 m on each side; 50 m if dimensions are unavailable. Zero checks only the center line.
+-- @return #NAVYGROUP self
+function NAVYGROUP:SetPathfinding(Switch, CorridorWidth)
+
+  assert(type(Switch)=="boolean", "NAVYGROUP: pathfinding switch must be a boolean")
+
+  if CorridorWidth~=nil then
+    assert(type(CorridorWidth)=="number" and CorridorWidth>=0 and CorridorWidth<math.huge,"NAVYGROUP: corridor width must be finite and non-negative")
+  end
+
+  self.pathfindingOn=Switch
+  self.pathCorridor=CorridorWidth
+
+  if not Switch then
+    self:_ClearPathfindingDrawing()
+  end
+
+  return self
+end
+
+--- Select the naval route-search strategy without starting or resuming movement.
+-- Only WAYPOINT is available. LOCAL raises an error before changing any navigation state;
+-- the experimental local implementation was removed for a staged rebuild.
+-- @param #NAVYGROUP self
+-- @param #string Mode (Optional) NAVYGROUP.PathfindingMode.WAYPOINT (default).
+-- NAVYGROUP.PathfindingMode.LOCAL remains a recognized value but always raises a removal error.
+-- @return #NAVYGROUP self.
+function NAVYGROUP:SetPathfindingMode(Mode)
+
+  if Mode==nil then
+    Mode=NAVYGROUP.PathfindingMode.WAYPOINT
+  end
+
+  if Mode==NAVYGROUP.PathfindingMode.LOCAL then
+    error("NAVYGROUP: LOCAL pathfinding mode has been removed; local navigation is unavailable pending a rebuild",2)
+  end
+  assert(Mode==NAVYGROUP.PathfindingMode.WAYPOINT,"NAVYGROUP: unknown pathfinding mode")
+
+  self.pathfindingMode=Mode
+  return self
+end
+
+--- Enable pathfinding.
+-- Uses the configured minimum depth, or 20 meters by default.
+-- @param #NAVYGROUP self
+-- @param #number CorridorWidth (Optional) Total water corridor width in meters. Default: widest ship plus 10 m on each side; 50 m if dimensions are unavailable. Zero checks only the center line.
+-- @return #NAVYGROUP self
+function NAVYGROUP:SetPathfindingOn(CorridorWidth)
+
+  self:SetPathfinding(true, CorridorWidth)
+
+  return self
+end
+
+--- Disable pathfinding.
+-- @param #NAVYGROUP self
+-- @return #NAVYGROUP self
+function NAVYGROUP:SetPathfindingOff()
+
+  self:SetPathfinding(false, self.pathCorridor)
+
+  return self
+end
+
+--- Set the minimum water depth used by pathfinding and collision checks.
+-- New searches and safety checks use the new depth, including during turns; stopped ships remain stopped.
+-- @param #NAVYGROUP self
+-- @param #number MinDepth (Optional) Positive finite minimum water depth in meters, inclusive; default 20.
+-- @return #NAVYGROUP self.
+function NAVYGROUP:SetPathfindingMinDepth(MinDepth)
+
+  if MinDepth==nil then
+    MinDepth=20
+  end
+
+  assert(type(MinDepth)=="number" and MinDepth>0 and MinDepth<math.huge,"NAVYGROUP: minimum depth must be finite and positive")
+
+  self.pathMinDepth=MinDepth
+
+  return self
+end
+
+--- Prefer deeper water during path searches, without changing the collision threshold.
+-- At PreferredDepth and deeper, A* uses ordinary distance costs. Towards the minimum depth,
+-- a quadratic penalty increases the cost up to 1 + Weight times the distance. Shallower water
+-- remains blocked by SetPathfindingMinDepth(). Collision checks use only the minimum depth.
+-- New searches use this setting; the installed route remains active.
+-- @param #NAVYGROUP self
+-- @param #number PreferredDepth (Optional) Positive finite depth in meters; nil disables the preference. At/below the minimum adds no penalty.
+-- @param #number Weight (Optional) Finite non-negative penalty strength; default 2. Zero adds no penalty.
+-- @return #NAVYGROUP self.
+---@param PreferredDepth? number
+---@param Weight? number
+---@return NAVYGROUP
+function NAVYGROUP:SetPathfindingPreferredDepth(PreferredDepth, Weight)
+
+  if Weight==nil then Weight=2 end
+  assert(PreferredDepth==nil or (PreferredDepth>0 and PreferredDepth<math.huge),
+    "NAVYGROUP: preferred depth must be finite and positive")
+  assert(Weight>=0 and Weight<math.huge,"NAVYGROUP: depth weight must be finite and non-negative")
+
+  self.pathPreferredDepth=PreferredDepth
+  self.pathDepthWeight=Weight
+
+  return self
+end
+
+--- Configure the bounded grid used for automatic naval detours.
+-- Uses GRID.Resolution.FINE with GRID.Width.NORMAL and GRID.Margin.NORMAL automatically.
+-- Short connections retain a minimum search width of twice the safety corridor (at least 2000 meters)
+-- and a margin of one safety corridor (at least 1000 meters), so approaching a waypoint does not collapse the grid.
+-- Spacing follows the initial corridor dimensions and remains unchanged during expansion.
+-- Calling this method is optional; only resource and expansion limits need explicit configuration.
+-- @param #NAVYGROUP self
+-- @param #number MaxCells (Optional) Positive integer candidate-cell budget; default 5000.
+-- @param #number GrowthFactor (Optional) Expansion multiplier greater than 1; default 1.5.
+-- @param #number MaxAttempts (Optional) Positive integer attempt limit including the initial search; default 5.
+-- @return #NAVYGROUP self.
+function NAVYGROUP:SetPathfindingGrid(MaxCells, GrowthFactor, MaxAttempts)
+  local config=GRID:New("Naval configuration",GRID.Type.HEXAGON):SetMaxCells(MaxCells):SetExpansion(GrowthFactor,MaxAttempts):GetOptions()
+  self.pathMaxCells=config.MaxCells
+  self.pathGrowthFactor=config.Expansion.GrowthFactor
+  self.pathMaxAttempts=config.Expansion.MaxAttempts
+  return self
+end
+
+
+
+--- Snapshot of an explicitly enabled naval measurement interval.
+-- @type NAVYGROUP.PathfindingDiagnostics
+-- @field #boolean Enabled Whether the interval is recording; false retains its frozen values.
+-- @field #number SearchAttempts Completed waypoint expansion attempts, including normal no-path results.
+-- @field #number ValidityRequests ASTAR validity lookups during recorded searches.
+-- @field #number ValidityCacheHits Validity lookups served from cache.
+-- @field #number CostRequests ASTAR cost lookups during recorded searches.
+-- @field #number CostCacheHits Cost lookups served from cache. Combined depth evaluation may populate these during validity checks.
+-- @field #number ProfileQueries Native ASTAR/PATHLINE depth-profile calls within measured scopes, including unavailable results/errors.
+-- @field #number RouteSubmissions Issued route commands, including explicit full stops while recording.
+-- @field #number PeakRetainedCells Maximum sampled sum of distinct retained/measured grids' accepted cells.
+-- @field #number Scopes Completed outer measurement scopes, including exceptions.
+-- @field #number Errors Outer scopes which raised an exception; normal navigation failures are not exceptions.
+-- @field #number CPUSeconds Aggregate CPU seconds; nil when the interval or an outer scope had no usable clock.
+-- @field #number MaxScopeCPUSeconds Largest outer-scope CPU duration, or nil when aggregate timing is unavailable.
+-- @field #table Operations Per-operation Calls, Errors, inclusive CPUSeconds and MaxCPUSeconds. Do not sum nested timings.
+
+--- Create an independent measurement interval. No ship/search objects are retained.
+function NAVYGROUP._NewPathfindingDiagnostics(Enabled)
+
+  local timed=os and type(os.clock)=="function"
+  return {Enabled=Enabled,SearchAttempts=0,ValidityRequests=0,ValidityCacheHits=0,
+    CostRequests=0,CostCacheHits=0,ProfileQueries=0,RouteSubmissions=0,
+    PeakRetainedCells=0,Scopes=0,Errors=0,ScopeDepth=0,Operations={},
+    CPUSeconds=timed and 0 or nil,MaxScopeCPUSeconds=timed and 0 or nil}
+
+end
+
+--- Enable coarse naval planning measurements; disabled by default.
+-- Enabling a stopped interval starts fresh. Repeated true retains the current interval; false freezes it.
+-- Measures navigation updates, waypoint planning and route updates. Nested work contributes
+-- once to aggregate CPU/profile counts; per-operation timings are inclusive and must not be summed.
+-- User callbacks executed in these scopes are included. These are CPU seconds, never FPS or simulation time.
+-- ProfileQueries counts actual ASTAR/PATHLINE depth-profile calls, including failures, without terrain hooks.
+-- PeakRetainedCells is the maximum observed sum of distinct grids owned by active planners/debug views plus
+-- the search being measured, sampled after searches/scopes; it is not a heap or exact instantaneous peak.
+-- RouteSubmissions counts issued Route calls, not observed controller acceptance or ship movement.
+-- @param #NAVYGROUP self
+-- @param #boolean Enabled (Optional) Default true.
+-- @return #NAVYGROUP self
+function NAVYGROUP:SetPathfindingDiagnostics(Enabled)
+
+  if Enabled==nil then Enabled=true end
+  assert(type(Enabled)=="boolean","NAVYGROUP: diagnostics switch must be a boolean")
+  local diagnostics=self.pathfindingDiagnostics
+  assert(not diagnostics or diagnostics.ScopeDepth==0,"NAVYGROUP: change diagnostics between updates")
+  if Enabled and (not diagnostics or not diagnostics.Enabled) then
+    self.pathfindingDiagnostics=NAVYGROUP._NewPathfindingDiagnostics(true)
+  elseif not Enabled and diagnostics then
+    diagnostics.Enabled=false
+  end
+  return self
+
+end
+
+--- Get a caller-owned snapshot of the current/frozen measurement interval.
+-- Untimed scopes have nil CPU fields; aggregate timing also requires a clock when enabling the interval.
+-- Interval metrics are logged only by LogPathfindingDiagnostics().
+-- @param #NAVYGROUP self
+-- @return #NAVYGROUP.PathfindingDiagnostics Independent counts and timings.
+function NAVYGROUP:GetPathfindingDiagnostics()
+
+  local diagnostics=self.pathfindingDiagnostics or NAVYGROUP._NewPathfindingDiagnostics(false)
+  local result={Operations={}}
+  for key,value in pairs(diagnostics) do
+    if key~="Operations" and key~="ScopeDepth" then result[key]=value end
+  end
+  for name,operation in pairs(diagnostics.Operations) do
+    local copy={}
+    for key,value in pairs(operation) do copy[key]=value end
+    result.Operations[name]=copy
+  end
+  return result
+
+end
+
+--- Log one compact snapshot on explicit request, independent of trace settings.
+-- @param #NAVYGROUP self
+-- @return #NAVYGROUP self
+function NAVYGROUP:LogPathfindingDiagnostics()
+
+  local d=self:GetPathfindingDiagnostics()
+  self:I(self.lid..string.format("Pathfinding metrics: searches=%d, depth_profiles=%d, routes=%d, peak_observed_cells=%d",
+    d.SearchAttempts,d.ProfileQueries,d.RouteSubmissions,d.PeakRetainedCells))
+  self:I(self.lid..string.format("Pathfinding cache: validity=%d/%d hits, cost=%d/%d hits",
+    d.ValidityCacheHits,d.ValidityRequests,d.CostCacheHits,d.CostRequests))
+  self:I(self.lid..string.format("Pathfinding CPU: scopes=%d, total_s=%s, max_scope_s=%s, errors=%d",
+    d.Scopes,tostring(d.CPUSeconds),tostring(d.MaxScopeCPUSeconds),d.Errors))
+  return self
+
+end
+
+--- Sample distinct retained grids without keeping measurement references alive.
+function NAVYGROUP:_ObservePathfindingCells(Search)
+
+  local diagnostics=self.pathfindingDiagnostics
+  if not diagnostics or not diagnostics.Enabled then return end
+  local grids={}
+  local function add(search)
+    if search then grids[search:GetGrid()]=true end
+  end
+  add(Search)
+  add(self.pathfindingDebugSearch)
+  local count=0
+  for grid in pairs(grids) do count=count+grid:GetCellCount() end
+  diagnostics.PeakRetainedCells=math.max(diagnostics.PeakRetainedCells,count)
+
+end
+
+--- Capture existing search counters before a waypoint search attempt.
+function NAVYGROUP:_PathfindingSearchSnapshot(Search)
+
+  local diagnostics=self.pathfindingDiagnostics
+  if diagnostics and diagnostics.Enabled then
+    return {Diagnostics=diagnostics,Valid=Search.nvalid,ValidHits=Search.nvalidcache,
+      Cost=Search.ncost,CostHits=Search.ncostcache}
+  end
+
+end
+
+--- Aggregate deltas without resetting an ASTAR's caches/counters or retaining it.
+function NAVYGROUP:_RecordPathfindingSearch(Search, Before, Attempts)
+
+  if not Before or Before.Diagnostics~=self.pathfindingDiagnostics then return end
+  local d=Before.Diagnostics
+  d.SearchAttempts=d.SearchAttempts+Attempts
+  d.ValidityRequests=d.ValidityRequests+Search.nvalid-Before.Valid
+  d.ValidityCacheHits=d.ValidityCacheHits+Search.nvalidcache-Before.ValidHits
+  d.CostRequests=d.CostRequests+Search.ncost-Before.Cost
+  d.CostCacheHits=d.CostCacheHits+Search.ncostcache-Before.CostHits
+  self:_ObservePathfindingCells(Search)
+
+end
+
+--- Measure an existing operation while preserving all returns and propagating errors after cleanup.
+function NAVYGROUP:_MeasurePathfinding(Name, Callback, ...)
+
+  local d=self.pathfindingDiagnostics
+  if not d or not d.Enabled then return Callback(self,...) end
+  local clock=os and type(os.clock)=="function" and os.clock or nil
+  local started=clock and clock() or nil
+  local outer=d.ScopeDepth==0
+  local profiles=outer and PATHLINE._GetDepthProfileCount() or nil
+  local operation=d.Operations[Name]
+  if not operation then
+    operation={Calls=0,Errors=0,CPUSeconds=clock and 0 or nil,MaxCPUSeconds=clock and 0 or nil}
+    d.Operations[Name]=operation
+  end
+  operation.Calls=operation.Calls+1
+  d.ScopeDepth=d.ScopeDepth+1
+  local function pack(...) return {n=select("#",...),...} end
+  local values=pack(pcall(Callback,self,...))
+  d.ScopeDepth=d.ScopeDepth-1
+  local seconds=clock and math.max(0,clock()-started) or nil
+  if seconds and operation.CPUSeconds then
+    operation.CPUSeconds=operation.CPUSeconds+seconds
+    operation.MaxCPUSeconds=math.max(operation.MaxCPUSeconds,seconds)
+  else
+    operation.CPUSeconds,operation.MaxCPUSeconds=nil,nil
+  end
+  if not values[1] then operation.Errors=operation.Errors+1 end
+  if outer then
+    d.Scopes=d.Scopes+1
+    d.ProfileQueries=d.ProfileQueries+PATHLINE._GetDepthProfileCount()-profiles
+    if seconds and d.CPUSeconds then
+      d.CPUSeconds=d.CPUSeconds+seconds
+      d.MaxScopeCPUSeconds=math.max(d.MaxScopeCPUSeconds,seconds)
+    else
+      d.CPUSeconds,d.MaxScopeCPUSeconds=nil,nil
+    end
+    if not values[1] then d.Errors=d.Errors+1 end
+  end
+  self:_ObservePathfindingCells()
+  if not values[1] then error(values[2],0) end
+  return unpack(values,2,values.n)
+
+end
+
+--- On before "UpdateRoute" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
+-- @param #number Speed Speed in knots to the next waypoint.
+-- @param #number Depth Depth in meters to the next waypoint.
+function NAVYGROUP:onbeforeUpdateRoute(From, Event, To, n, N, Speed, Depth)
+
+  -- Is transition allowed? We assume yes until proven otherwise.
+  local allowed=true
+  local trepeat=nil
+
+  if self:IsWaiting() then
+    self:T(self.lid.."Update route denied. Group is WAITING!")
+    return false
+  elseif self:IsInUtero() then
+    self:T(self.lid.."Update route denied. Group is INUTERO!")
+    return false
+  elseif self:IsDead() then
+    self:T(self.lid.."Update route denied. Group is DEAD!")
+    return false
+  elseif self:IsStopped() then
+    self:T(self.lid.."Update route denied. Group is STOPPED!")
+    return false
+  elseif self:IsHolding() then
+    self:T(self.lid.."Update route denied. Group is holding position!")
+    return false
+  elseif self:IsEngaging() then
+    self:T(self.lid.."Update route allowed. Group is engaging!")
+    return true      
+  end
+  
+  -- Check for a current task.
+  if self.taskcurrent>0 then
+
+    -- Get the current task. Must not be executing already.
+    local task=self:GetTaskByID(self.taskcurrent)
+
+    if task then
+      if task.dcstask.id==AUFTRAG.SpecialTask.PATROLZONE then
+        -- For patrol zone, we need to allow the update as we insert new waypoints.
+        self:T2(self.lid.."Allowing update route for Task: PatrolZone")
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.RECON then
+        -- For recon missions, we need to allow the update as we insert new waypoints.
+        self:T2(self.lid.."Allowing update route for Task: ReconMission")
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.RELOCATECOHORT then
+        -- For relocate
+        self:T2(self.lid.."Allowing update route for Task: Relocate Cohort")
+      elseif task.dcstask.id==AUFTRAG.SpecialTask.REARMING then
+        -- For rearming
+        self:T2(self.lid.."Allowing update route for Task: Rearming")                
+      else
+        local taskname=task and task.description or "No description"
+        self:T(self.lid..string.format("WARNING: Update route denied because taskcurrent=%d>0! Task description = %s", self.taskcurrent, tostring(taskname)))
+        allowed=false
+      end
+    else
+      -- Now this can happen, if we directly use TaskExecute as the task is not in the task queue and cannot be removed. Therefore, also directly executed tasks should be added to the queue!
+      self:T(self.lid..string.format("WARNING: before update route taskcurrent=%d (>0!) but no task?!", self.taskcurrent))
+      -- Anyhow, a task is running so we do not allow to update the route!
+      allowed=false
+    end
+  end
+
+  -- Not good, because mission will never start. Better only check if there is a current task!
+  --if self.currentmission then
+  --end
+
+  -- Only AI flights.
+  if not self.isAI then
+    allowed=false
+  end
+
+  -- Debug info.
+  self:T2(self.lid..string.format("Onbefore Updateroute in state %s: allowed=%s (repeat in %s)", self:GetState(), tostring(allowed), tostring(trepeat)))
+
+  -- Try again?
+  if trepeat then
+    self:__UpdateRoute(trepeat, n, N, Speed, Depth)
+  end  
+  
+  return allowed
+end
+
+--- On after "UpdateRoute" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number n Next waypoint index. Default is the one coming after that one that has been passed last.
+-- @param #number N Waypoint  Max waypoint index to be included in the route. Default is the final waypoint.
+-- @param #number Speed Speed in knots to the next waypoint.
+-- @param #number Depth Depth in meters to the next waypoint.
+function NAVYGROUP:onafterUpdateRoute(From, Event, To, n, N, Speed, Depth)
+
+  return self:_MeasurePathfinding("route_update",self._RunNavigationRouteUpdate,From, Event, To, n, N, Speed, Depth)
+
+end
+
+--- Execute the existing navigation operation; measurements are owned by the public entry above.
+function NAVYGROUP:_RunNavigationRouteUpdate(From, Event, To, n, N, Speed, Depth)
+
+  -- Resolve the same destination for native routing, collision checks and waypoint search.
+  -- A newer inserted waypoint invalidates a previous Goto, whereas speed/depth changes retain it.
+  if n then self:_SetNavigationWaypoint(self.waypoints[n]) end
+  local target=self:_GetNavigationWaypoint()
+  n=target and self:GetWaypointIndex(target.uid) or self:GetWaypointIndexNext()
+
+  -- Max index.
+  N=N or #self.waypoints  
+  N=math.min(N, #self.waypoints)
+
+  -- A patrol detour after the last waypoint leads back to an earlier original waypoint.
+  -- Include that target in this same DCS route; temporary waypoint callbacks do not restart navigation.
+  local last=self.waypoints[N]
+  local targetIndex=last and last.astarTargetUID and self:GetWaypointIndex(last.astarTargetUID)
+  if self.adinfinitum and N==#self.waypoints and targetIndex and targetIndex<n then
+    N=N+targetIndex
+  end
+
+  -- Waypoints.
+  local waypoints={}
+  local detourTarget,detourSpeed
+  
+  for i=n, N do
+  
+    -- Waypoint.
+    local index=(i-1)%#self.waypoints+1
+    local wp=UTILS.DeepCopy(self.waypoints[index])  --Ops.OpsGroup#OPSGROUP.Waypoint
+    
+    --env.info(string.format("FF i=%d UID=%d   n=%d, N=%d", i, wp.uid, n, N))
+      
+    -- Speed.
+    if Speed then
+      -- Take speed specified.
+      wp.speed=UTILS.KnotsToMps(Speed)
+    else
+      -- Take default waypoint speed. But make sure speed>0 if patrol ad infinitum.
+      if wp.speed<0.1 then --self.adinfinitum and 
+        wp.speed=UTILS.KmphToMps(self.speedCruise)
+      end
+    end
+
+    -- Preserve the detour's commanded speed through its original target without changing stored waypoint data.
+    if wp.astar then
+      detourTarget,detourSpeed=wp.astarTargetUID,wp.speed
+    elseif wp.uid==detourTarget then
+      wp.speed=detourSpeed
+      detourTarget,detourSpeed=nil,nil
+    end
+    
+    -- Depth.
+    if Depth then
+      wp.alt=-Depth
+    elseif self.depth then
+      wp.alt=-self.depth
+    else
+      -- Take default waypoint alt.
+      wp.alt=wp.alt or 0
+    end
+    
+    -- Current set speed in m/s.
+    if i==n then
+      self.speedWp=wp.speed
+      self.altWp=wp.alt
+    end
+  
+    -- Add waypoint.
+    table.insert(waypoints, wp)
+  
+  end
+  
+  -- Current waypoint.
+  local current=self:GetCoordinate():WaypointNaval(UTILS.MpsToKmph(self.speedWp), self.altWp)
+  table.insert(waypoints, 1, current)  
+
+  
+  if self:IsEngaging() or not self.passedfinalwp then
+  
+    if self.verbose>=10 then
+      for i=1,#waypoints do
+        local wp=waypoints[i] --Ops.OpsGroup#OPSGROUP.Waypoint
+        local text=string.format("%s Waypoint [%d] UID=%d speed=%d m/s", self.groupname, i-1, wp.uid or -1, wp.speed)
+        self:I(self.lid..text)
+        COORDINATE:NewFromWaypoint(wp):MarkToAll(text)            
+      end
+    end
+
+    -- Debug info.
+    self:T(self.lid..string.format("Updateing route: WP %d-->%d (%d/%d), Speed=%.1f knots, Depth=%d m", self.currentwp, n, #waypoints, #self.waypoints, UTILS.MpsToKnots(self.speedWp), self.altWp))
+
+    -- Route group to all defined waypoints remaining.
+    if self.pathfindingDiagnostics and self.pathfindingDiagnostics.Enabled then
+      self.pathfindingDiagnostics.RouteSubmissions=self.pathfindingDiagnostics.RouteSubmissions+1
+    end
+    self:Route(waypoints)
+    
+  else
+  
+    ---
+    -- Passed final WP ==> Full Stop
+    ---
+  
+    self:E(self.lid..string.format("WARNING: Passed final WP ==> Full Stop!"))
+    self:FullStop()
+    
+  end
+
+end
 
 --- Check whether navigation may inspect and manage the current route.
 -- Manual stops, waiting, completed routes and tasks with their own movement remain authoritative.
@@ -2845,6 +2793,145 @@ function NAVYGROUP:_CheckTurning()
   self.turning=turning
 end
 
+--- On after "TurningStarted" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterTurningStarted(From, Event, To)
+  self.turning=true
+end
+
+--- On after "TurningStarted" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterTurningStopped(From, Event, To)
+  self.turning=false
+  
+  if self:IsSteamingIntoWind() then
+    self:TurnedIntoWind()
+  end
+  
+end
+
+--- On after "CollisionWarning" event.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+-- @param #number Distance Estimated clear prefix in meters before the detected obstacle.
+function NAVYGROUP:onafterCollisionWarning(From, Event, To, Distance)
+  self:T(self.lid..string.format("Navigation obstacle ahead; checked clear distance %.0f meters", Distance or -1))
+  self.collisionwarning=true
+end
+
+--- Clear a previous warning after a verified clear navigation check.
+-- @param #NAVYGROUP self
+-- @param #string From From state.
+-- @param #string Event Event.
+-- @param #string To To state.
+function NAVYGROUP:onafterClearAhead(From, Event, To)
+  self.collisionwarning=false
+end
+
+--- Remove owned pathfinding drawings before the base class stops timers and event subscriptions.
+function NAVYGROUP:onafterStop(From, Event, To)
+
+  self:_ClearPathfindingDrawing()
+  return OPSGROUP.onafterStop(self,From,Event,To)
+
+end
+
+
+--- Find the original route target beyond outstanding ASTAR detour points.
+-- @param #NAVYGROUP self
+-- @param #number First (Optional) First native waypoint index. Defaults to the currently commanded native destination.
+-- @return Ops.OpsGroup#OPSGROUP.Waypoint Original target, or nil.
+-- @return #table IDs of outstanding detour points before that target.
+function NAVYGROUP:_GetPathfindingTarget(First)
+  local pending={}
+  local waypoint=not First and self:_GetNavigationWaypoint() or nil
+  local index=First or (waypoint and self:GetWaypointIndex(waypoint.uid))
+  for _=1,#self.waypoints do
+    if not index then break end
+    if index>#self.waypoints then
+      if self.adinfinitum then index=1 else break end
+    end
+    local waypoint=self.waypoints[index]
+    if not waypoint then break end
+    if not waypoint.astar then return waypoint,pending end
+    pending[#pending+1]=waypoint.uid
+    index=index+1
+  end
+  return nil,pending
+end
+
+--- Remove this group's previous pathfinding overlays and cancel pending drawing batches.
+-- Leaves other groups' drawings and unrelated map marks untouched.
+-- @param #NAVYGROUP self
+-- @return #NAVYGROUP self.
+function NAVYGROUP:_ClearPathfindingDrawing()
+  if self.pathfindingDebugSearch then
+    self.pathfindingDebugSearch:UndrawGrid()
+    self.pathfindingDebugSearch=nil
+  end
+  return self
+end
+
+--- Record a failed plan and stop without discarding the original route.
+-- Uses an ordinary FullStop. Only a new movement command can resume the ship.
+-- @param #NAVYGROUP self
+-- @param #table Report Failed pathfinding result or unavailable depth measurement.
+-- @return #boolean Always false.
+function NAVYGROUP:_FailPathfinding(Report)
+
+  self.LastPathfindingResult=Report
+  self.ispathfinding=false
+  self:_ClearPathfindingDrawing()
+  if Report.DepthCheck then self:_LogNavigationDepthCheck(Report.DepthCheck,"stop") end
+  self:E(self.lid.."Naval pathfinding failed: "..tostring(Report.StopReason).." ==> FullStop")
+  self:FullStop()
+
+  return false
+end
+
+--- Log the existing depth-check evidence without additional terrain queries.
+-- NavigationStage identifies hull and heading checks when supplied.
+-- @param #NAVYGROUP self
+-- @param Core.Pathline#PATHLINE.DepthReport Report Failed depth check, optionally with navigation context.
+-- @param #string Action Navigation response, such as stop.
+function NAVYGROUP:_LogNavigationDepthCheck(Report, Action)
+
+  local point=Report.Point or {}
+  local position=Report.Nearfield and Report.Nearfield.Position or self:GetVec3() or {}
+
+  -- Keep each line short: DCS truncates long diagnostics, including the coordinates we need most.
+  self:I(self.lid..string.format(
+    "Naval depth check: action=%s, stage=%s, status=%s, reason=%s, cause=%s, "..
+    "depth=%s m, required_depth=%s m, surface=%s, profile_offset=%s m, location=%s, distance=%s m",
+    tostring(Action),tostring(Report.NavigationStage),tostring(Report.Status),
+    tostring(Report.Reason),tostring(Report.Cause),tostring(Report.Depth),tostring(Report.RequiredDepth),
+    tostring(Report.SurfaceType),tostring(Report.ProfileOffset),tostring(Report.Location),tostring(Report.Distance)))
+  self:I(self.lid..string.format(
+    "Naval depth position: point=(%s,%s,%s), ship=(%s,%s,%s), heading=%s, turning=%s",
+    tostring(point.x),tostring(point.y),tostring(point.z),tostring(position.x),tostring(position.y),tostring(position.z),
+    tostring(Report.Nearfield and Report.Nearfield.Heading or self:GetHeading()),tostring(self:IsTurning())))
+
+  if Report.CheckStart and Report.CheckGoal then
+    self:I(self.lid..string.format("Naval depth segment: check_from=(%.1f, %.1f), check_to=(%.1f, %.1f)",
+      Report.CheckStart.x,Report.CheckStart.z,Report.CheckGoal.x,Report.CheckGoal.z))
+  end
+
+  local near=Report.Nearfield
+  if near then
+    self:I(self.lid..string.format("Naval nearfield: unit=%s, bow=%.1f m, stern=%.1f m, beam=%.1f m, "..
+      "speed=%.2f m/s, lookahead=%.1f m, clear_from_bow=%.1f m",
+      tostring(near.Unit),near.Bow,near.Stern,near.Beam,near.Speed,near.Lookahead,near.ClearFromBow))
+  end
+end
+
 --- Check queued turns into wind.
 -- @param #NAVYGROUP self
 function NAVYGROUP:_CheckTurnsIntoWind()
@@ -3112,93 +3199,6 @@ function NAVYGROUP:GetHeadingIntoWind(Offset, vdeck)
 
 end
 
-
---- Find the original route target beyond outstanding ASTAR detour points.
--- @param #NAVYGROUP self
--- @param #number First (Optional) First native waypoint index. Defaults to the currently commanded native destination.
--- @return Ops.OpsGroup#OPSGROUP.Waypoint Original target, or nil.
--- @return #table IDs of outstanding detour points before that target.
-function NAVYGROUP:_GetPathfindingTarget(First)
-  local pending={}
-  local waypoint=not First and self:_GetNavigationWaypoint() or nil
-  local index=First or (waypoint and self:GetWaypointIndex(waypoint.uid))
-  for _=1,#self.waypoints do
-    if not index then break end
-    if index>#self.waypoints then
-      if self.adinfinitum then index=1 else break end
-    end
-    local waypoint=self.waypoints[index]
-    if not waypoint then break end
-    if not waypoint.astar then return waypoint,pending end
-    pending[#pending+1]=waypoint.uid
-    index=index+1
-  end
-  return nil,pending
-end
-
---- Remove this group's previous pathfinding overlays and cancel pending drawing batches.
--- Leaves other groups' drawings and unrelated map marks untouched.
--- @param #NAVYGROUP self
--- @return #NAVYGROUP self.
-function NAVYGROUP:_ClearPathfindingDrawing()
-  if self.pathfindingDebugSearch then
-    self.pathfindingDebugSearch:UndrawGrid()
-    self.pathfindingDebugSearch=nil
-  end
-  return self
-end
-
---- Record a failed plan and stop without discarding the original route.
--- Uses an ordinary FullStop. Only a new movement command can resume the ship.
--- @param #NAVYGROUP self
--- @param #table Report Failed pathfinding result or unavailable depth measurement.
--- @return #boolean Always false.
-function NAVYGROUP:_FailPathfinding(Report)
-
-  self.LastPathfindingResult=Report
-  self.ispathfinding=false
-  self:_ClearPathfindingDrawing()
-  if Report.DepthCheck then self:_LogNavigationDepthCheck(Report.DepthCheck,"stop") end
-  self:E(self.lid.."Naval pathfinding failed: "..tostring(Report.StopReason).." ==> FullStop")
-  self:FullStop()
-
-  return false
-end
-
---- Log the existing depth-check evidence without additional terrain queries.
--- NavigationStage identifies hull and heading checks when supplied.
--- @param #NAVYGROUP self
--- @param Core.Pathline#PATHLINE.DepthReport Report Failed depth check, optionally with navigation context.
--- @param #string Action Navigation response, such as stop.
-function NAVYGROUP:_LogNavigationDepthCheck(Report, Action)
-
-  local point=Report.Point or {}
-  local position=Report.Nearfield and Report.Nearfield.Position or self:GetVec3() or {}
-
-  -- Keep each line short: DCS truncates long diagnostics, including the coordinates we need most.
-  self:I(self.lid..string.format(
-    "Naval depth check: action=%s, stage=%s, status=%s, reason=%s, cause=%s, "..
-    "depth=%s m, required_depth=%s m, surface=%s, profile_offset=%s m, location=%s, distance=%s m",
-    tostring(Action),tostring(Report.NavigationStage),tostring(Report.Status),
-    tostring(Report.Reason),tostring(Report.Cause),tostring(Report.Depth),tostring(Report.RequiredDepth),
-    tostring(Report.SurfaceType),tostring(Report.ProfileOffset),tostring(Report.Location),tostring(Report.Distance)))
-  self:I(self.lid..string.format(
-    "Naval depth position: point=(%s,%s,%s), ship=(%s,%s,%s), heading=%s, turning=%s",
-    tostring(point.x),tostring(point.y),tostring(point.z),tostring(position.x),tostring(position.y),tostring(position.z),
-    tostring(Report.Nearfield and Report.Nearfield.Heading or self:GetHeading()),tostring(self:IsTurning())))
-
-  if Report.CheckStart and Report.CheckGoal then
-    self:I(self.lid..string.format("Naval depth segment: check_from=(%.1f, %.1f), check_to=(%.1f, %.1f)",
-      Report.CheckStart.x,Report.CheckStart.z,Report.CheckGoal.x,Report.CheckGoal.z))
-  end
-
-  local near=Report.Nearfield
-  if near then
-    self:I(self.lid..string.format("Naval nearfield: unit=%s, bow=%.1f m, stern=%.1f m, beam=%.1f m, "..
-      "speed=%.2f m/s, lookahead=%.1f m, clear_from_bow=%.1f m",
-      tostring(near.Unit),near.Bow,near.Stern,near.Beam,near.Speed,near.Lookahead,near.ClearFromBow))
-  end
-end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
