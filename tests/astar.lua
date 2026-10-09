@@ -2167,12 +2167,12 @@ end)
 
 -- Exercise the production naval planner with actual GRID/ASTAR and stubbed route/FSM side effects.
 -- Repeated route observations advance simulation time by ten seconds; faster nearfield-only
--- ticks are exercised separately in tests/navy-local.lua.
+-- ticks are exercised separately in tests/navy-pathfinding.lua.
 local navyFile=assert(io.open("Moose Development/Moose/Ops/NavyGroup.lua","r"))
 local navySource=navyFile:read("*a"):gsub("\r\n","\n") navyFile:close()
 NAVYGROUP={}
 for _,name in ipairs({"_GetPathfindingTarget","_FindPathToNextWaypoint","_ClearPathfindingDrawing","_GetPathfindingCorridorWidth","_CheckPathDepth",
-  "_MeasurePathfinding","_RunNavigationCheck","_RunWaypointPathPlanning","_RunNavigationRouteUpdate","_CancelLocalPlanning",
+  "_MeasurePathfinding","_RunNavigationCheck","_RunWaypointPathPlanning","_RunNavigationRouteUpdate",
   "_PathfindingSearchSnapshot","_RecordPathfindingSearch","_CanNavigate","_FailPathfinding","_UpdateNavigationWarning","_SetNavigationWaypoint","_GetNavigationWaypoint","_CheckNavigation","_CheckNavigationAhead","_CheckNavigationNearfield","_LogNavigationDepthCheck",
   "onafterFullStop","onafterCruise","onafterCollisionWarning","onafterClearAhead","onafterTurningStopped",
   "SetPathfinding","SetPathfindingOn","SetPathfindingOff","SetPathfindingMinDepth","SetPathfindingPreferredDepth","SetPathfindingGrid","onafterUpdateRoute","onafterTurnIntoWindOver",
