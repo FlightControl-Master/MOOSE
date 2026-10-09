@@ -335,7 +335,7 @@
 -- report.Progress distinguishes unobserved, observed, repeated_planning and loop_detected. Future anchors are not movement.
 -- ResetLocalProgress() clears movement diagnostics only. InvalidateLocalCache() clears learned costs and forces fresh samples.
 -- Reapply rule/cost setters after changing arguments; custom callbacks are evaluated again for each new request.
--- Naval integration remains separate follow-up work. Use a separate ASTAR for full LAZY searches.
+-- NAVYGROUP consumes these local requests and owns ship safety, steering and scheduling. Use a separate ASTAR for full LAZY searches.
 --
 -- # Visual Debug
 --
@@ -996,6 +996,119 @@ function ASTAR:SetCostDepth(PreferredDepth, Weight)
 
 end
 
+--- Result of an independent connection evaluation.
+-- @type ASTAR.ConnectionReport
+-- @field #boolean Valid True only when the rule accepts and the cost is finite.
+-- @field #number Cost Configured travel cost, or math.huge on rejection. Custom costs retain their own units.
+-- @field #string Status clear, blocked or unavailable. Only built-in depth checks identify missing terrain data.
+-- @field #string Reason Rejection cause, or nil on success.
+-- @field #string Stage rule, cost or configuration on rejection.
+-- @field DCS#Vec3 Start Copy of the original start.
+-- @field DCS#Vec3 Goal Copy of the original goal.
+-- @field #table Depth Optional built-in depth evidence: RequiredDepth, CorridorWidth, Point, Depth, SurfaceType,
+-- Cause, Location and ProfileOffset. Location/offset refer to the original input direction; positive offset is right.
+-- Point contains usable numeric coordinates only; unknown height is omitted.
+-- Evidence identifies the first rejected sample, not the first obstruction distance or a safe prefix.
+
+--- Evaluate one fresh connection using the configured neighbour rule and travel cost.
+-- Accepts arbitrary positions, including outside the current grid/window. Does not apply graph adjacency or
+-- the cell surface filter; SetValidNeighbourSurface applies its configured surface rule as usual.
+-- Returns independent data without changing endpoints, nodes, caches, counters, reports or a pending search.
+-- Compatible built-in depth validity/cost use one evaluation, preserving failure evidence without a second query.
+-- Custom callbacks receive temporary nodes (id 1/2, vector, surfacetype, empty valid/cost tables), without cell
+-- membership. Their extra arguments, including trailing nil, are preserved; exceptions propagate.
+-- Callbacks should not reconfigure the search; detected rule/cost replacement returns configuration_changed.
+-- This checks a connection, not ship turning clearance. Depth uses center/edge profiles and linear samples.
+-- @param #ASTAR self
+-- @param Core.Vector#VECTOR Start Finite position; also COORDINATE, DCS Vec2 or Vec3.
+-- @param Core.Vector#VECTOR Goal Finite position; also COORDINATE, DCS Vec2 or Vec3.
+-- @return #boolean Whether the connection passes its rule and has a finite cost.
+-- @return #number Travel cost or math.huge.
+-- @return #ASTAR.ConnectionReport Caller-owned result.
+function ASTAR:EvaluateConnection(Start, Goal)
+
+  local first={id=1,vector=self.Grid:_PositionVector(Start),valid={},cost={}}
+  local last={id=2,vector=self.Grid:_PositionVector(Goal),valid={},cost={}}
+  local rule,ruleArgs=self.ValidNeighbourFunc,self.ValidNeighbourArg
+  local costFunction,costArgs=self.CostFunc,self.CostArg
+  local report={Start=first.vector:GetVec3(),Goal=last.vector:GetVec3()}
+
+  local function current()
+    return self.ValidNeighbourFunc==rule and self.ValidNeighbourArg==ruleArgs
+      and self.CostFunc==costFunction and self.CostArg==costArgs
+  end
+
+  local function finish(valid,cost,status,reason,stage)
+    if valid and cost==math.huge then
+      valid,status,reason,stage=false,"blocked","cost_blocked","cost"
+    end
+    if not current() then
+      valid,cost,status,reason,stage=false,math.huge,"unavailable","configuration_changed","configuration"
+    end
+    report.Valid,report.Cost,report.Status=valid,cost,status
+    report.Reason,report.Stage=reason,stage
+    return valid,cost,report
+  end
+
+  local function depth(arguments,includeCost)
+    local evidence={}
+    report.Depth=evidence
+    local preferred,weight
+    if includeCost then
+      preferred,weight=arguments[3],arguments[4]
+    end
+    return ASTAR._DepthConnection(first,last,arguments[1],arguments[2],preferred,weight,evidence)
+  end
+
+  local combined=rule==ASTAR.Depth and costFunction==ASTAR.CostDepth
+    and costArgs[1]==(ruleArgs[1] or 20) and costArgs[2]==(ruleArgs[2] or 0)
+  if combined then
+    local valid,reason,cost,status=depth(costArgs,true)
+    return finish(valid,valid and cost or math.huge,status,reason,not valid and "rule" or nil)
+  end
+
+  -- Custom node callbacks retain the surface metadata normally supplied by CreateNode.
+  local customRule=rule and rule~=ASTAR.Depth and rule~=ASTAR.LoS and rule~=ASTAR.DistMax and rule~=ASTAR.Road
+  local customCost=costFunction and costFunction~=ASTAR.CostDepth and costFunction~=ASTAR.Dist2D
+    and costFunction~=ASTAR.Dist3D and costFunction~=ASTAR.DistRoad
+  if customRule or customCost then
+    first.surfacetype=first.vector:GetSurfaceType()
+    last.surfacetype=last.vector:GetSurfaceType()
+  end
+
+  local valid,reason,status=true,nil,"clear"
+  if rule==ASTAR.Depth then
+    local ignoredCost
+    valid,reason,ignoredCost,status=depth(ruleArgs)
+  elseif rule then
+    valid=not not rule(first,last,unpack(ruleArgs,1,ruleArgs.n))
+    status=valid and "clear" or "blocked"
+    reason=not valid and "rule_rejected" or nil
+  end
+  if not valid or not current() then
+    return finish(false,math.huge,status,reason,"rule")
+  end
+
+  local cost
+  if costFunction==ASTAR.CostDepth then
+    valid,reason,cost,status=depth(costArgs,true)
+    if not valid then
+      return finish(false,math.huge,status,reason,"cost")
+    end
+  elseif costFunction then
+    cost=costFunction(first,last,unpack(costArgs,1,costArgs.n))
+  else
+    cost=ASTAR.Dist2D(first,last)
+  end
+  assert(type(cost)=="number" and cost>=0,"ASTAR: travel cost must be a non-negative number or math.huge")
+  if cost==math.huge then
+    return finish(false,cost,"blocked","cost_blocked","cost")
+  end
+
+  return finish(true,cost,"clear")
+
+end
+
 --- Compatibility alias for SetCostMetric(ASTAR.CostMetric.DISTANCE_3D).
 -- @param #ASTAR self
 -- @return #ASTAR self
@@ -1104,6 +1217,23 @@ function ASTAR.LoS(nodeA, nodeB, corridor)
 
 end
 
+--- Retain rejection evidence only when requested by independent connection evaluation.
+-- The point copy prevents native profile data from escaping into caller-owned reports.
+function ASTAR._SetDepthEvidence(Evidence, Point, Location, Cause, Depth, Surface)
+
+  if Evidence then
+    Evidence.Location, Evidence.Cause=Location,Cause
+    Evidence.Depth, Evidence.SurfaceType=Depth,Surface
+    if type(Point)=="table" and type(Point.x)=="number" and math.abs(Point.x)<math.huge
+      and type(Point.z)=="number" and math.abs(Point.z)<math.huge then
+      -- Invalid native values may be tables; retain only usable numeric coordinates.
+      local height=type(Point.y)=="number" and math.abs(Point.y)<math.huge and Point.y or nil
+      Evidence.Point={x=Point.x,y=height,z=Point.z}
+    end
+  end
+
+end
+
 --- Check the endpoints and terrain profile of one water connection, optionally retaining depths for costs.
 -- The first rejection ends this check. Locating an obstruction belongs to PATHLINE.CheckDepth().
 -- @param DCS#Vec3 Start Start position at the water surface.
@@ -1111,34 +1241,38 @@ end
 -- @param #number Distance Horizontal distance between the endpoints, greater than zero.
 -- @param #number MinDepth Minimum water depth in meters, inclusive.
 -- @param #table Samples (Optional) Receives pairs of projected distance and depth for cost integration.
+-- @param #table Evidence (Optional) Receives the first rejection sample and cause.
 -- @return #boolean True when the connection is sufficiently deep water.
 -- @return #string Reason for rejection, or nil on success.
 -- @return #string clear, blocked or unavailable.
-function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples)
+function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples, Evidence)
 
   -- DCS may omit the endpoints from its profile. Always check their actual depths as well.
   for i=1,2 do
     local point=i==1 and Start or Goal
-    local clear,status,cause,depth=VECTOR._CheckDepthPoint(point,MinDepth,false)
+    local clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(point,MinDepth,false)
 
     if not clear then
+      ASTAR._SetDepthEvidence(Evidence,point,i==1 and "start" or "goal",cause,depth,surface)
       return false,status=="unavailable" and cause or (i==1 and "start_blocked" or "goal_blocked"),status
     end
 
     if Samples then Samples[#Samples+1]={i==1 and 0 or Distance,depth} end
   end
 
-  local profile=land.profile(Start,Goal)
+  local profile=PATHLINE._QueryDepthProfile(Start,Goal)
   if type(profile)~="table" then
+    ASTAR._SetDepthEvidence(Evidence,nil,"profile","profile_unavailable")
     return false,"profile_unavailable","unavailable"
   end
 
   -- Under the linear-profile assumption, valid support points also bound the depths between them.
   for i=1,#profile do
     local point=profile[i]
-    local clear,status,cause,depth=VECTOR._CheckDepthPoint(point,MinDepth,true)
+    local clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(point,MinDepth,true)
 
     if not clear then
+      ASTAR._SetDepthEvidence(Evidence,point,"profile",cause,depth,surface)
       return false,status=="unavailable" and cause or "profile_blocked",status
     end
 
@@ -1153,15 +1287,17 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples)
   if #profile<2 then
     local intervals=math.max(2,math.ceil(Distance/100))
     if intervals>1000 then
+      ASTAR._SetDepthEvidence(Evidence,nil,"profile_fallback","profile_fallback_limit")
       return false,"profile_fallback_limit","unavailable"
     end
 
     for i=1,intervals-1 do
       local fraction=i/intervals
       local point={x=Start.x+(Goal.x-Start.x)*fraction,z=Start.z+(Goal.z-Start.z)*fraction}
-      local clear,status,cause,depth=VECTOR._CheckDepthPoint(point,MinDepth,false)
+      local clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(point,MinDepth,false)
 
       if not clear then
+        ASTAR._SetDepthEvidence(Evidence,point,"profile_fallback",cause,depth,surface)
         return false,status=="unavailable" and cause or "profile_fallback_blocked",status
       end
 
@@ -1333,11 +1469,12 @@ end
 -- @param #number CorridorWidth (Optional) Total corridor width in meters; default 0.
 -- @param #number PreferredDepth (Optional) Preferred depth in meters; nil disables the penalty.
 -- @param #number Weight (Optional) Non-negative penalty strength; default 2.
+-- @param #table Evidence (Optional) Receives rejection details relative to the original input direction.
 -- @return #boolean Whether the connection is navigable.
 -- @return #string Rejection reason, or nil.
 -- @return #number Travel cost on success.
 -- @return #string clear, blocked or unavailable.
-function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, PreferredDepth, Weight)
+function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, PreferredDepth, Weight, Evidence)
 
   if MinDepth==nil then
     MinDepth=20
@@ -1355,6 +1492,9 @@ function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, Preferred
     assert(PreferredDepth>0 and PreferredDepth<math.huge,"ASTAR: preferred depth must be finite and positive")
     assert(Weight>=0 and Weight<math.huge,"ASTAR: depth weight must be finite and non-negative")
   end
+  if Evidence then
+    Evidence.RequiredDepth, Evidence.CorridorWidth=MinDepth,CorridorWidth
+  end
   local profiles=PreferredDepth and PreferredDepth>MinDepth and Weight>0 and {} or nil
 
   local a,b=nodeA.vector,nodeB.vector
@@ -1362,16 +1502,22 @@ function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, Preferred
   local distance=math.sqrt(dx*dx+dz*dz)
 
   if not (distance<math.huge) then
+    ASTAR._SetDepthEvidence(Evidence,nil,nil,"invalid_distance")
     return false,"invalid_distance",nil,"unavailable"
   end
 
   if distance==0 then
-    local clear,status,cause=VECTOR._CheckDepthPoint(a,MinDepth,false)
+    local clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(a,MinDepth,false)
+    if not clear then
+      ASTAR._SetDepthEvidence(Evidence,a,"start",cause,depth,surface)
+      if Evidence then Evidence.ProfileOffset=0 end
+    end
     return clear,not clear and (status=="unavailable" and cause or "start_blocked") or nil,clear and 0 or nil,status
   end
 
   -- Query DCS in the same direction for A -> B and B -> A, matching A*'s symmetric validity cache.
-  if a.x>b.x or (a.x==b.x and a.z>b.z) then
+  local reverse=a.x>b.x or (a.x==b.x and a.z>b.z)
+  if reverse then
     a,b=b,a
     dx,dz=-dx,-dz
   end
@@ -1384,9 +1530,16 @@ function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, Preferred
     local start={x=a.x+nx*offset,y=0,z=a.z+nz*offset}
     local goal={x=b.x+nx*offset,y=0,z=b.z+nz*offset}
     local samples=profiles and {} or nil
-    local clear,reason,status=ASTAR._CheckDepthLine(start,goal,distance,MinDepth,samples)
+    local clear,reason,status=ASTAR._CheckDepthLine(start,goal,distance,MinDepth,samples,Evidence)
 
     if not clear then
+      if Evidence then
+        Evidence.ProfileOffset=reverse and -offset or offset
+        if reverse and (Evidence.Location=="start" or Evidence.Location=="goal") then
+          Evidence.Location=Evidence.Location=="start" and "goal" or "start"
+          if status=="blocked" then reason=Evidence.Location.."_blocked" end
+        end
+      end
       return false,reason,nil,status
     end
 

@@ -2214,6 +2214,7 @@ end
 -- Snapshot of the current cell list. Counts are evaluated when each batch runs; later additions are not marked automatically.
 -- Counts use geometric adjacency only. Movement-rule checks are available through ASTAR:MarkGrid().
 -- Work is batched; without a CPU clock only one marker is processed per batch.
+-- Cancellation invalidates the job immediately; an already queued callback wakes once without work and does not repeat.
 -- @param #GRID self
 -- @param #GRID.MarkGridOptions Options (Optional) Label fields, recipient and batch settings.
 -- @return #GRID self. LastGridMarkResult contains Status, CellsQueued, CellsMarked, Batches and timing.
@@ -2264,7 +2265,7 @@ function GRID:MarkGrid(Options)
   if #cellIDs==0 then
     self:_FinishGridMarking(job, "complete")
   else
-    job.timerID=timer.scheduleFunction(function()
+    timer.scheduleFunction(function()
       if self.GridMarkJob~=job then
         return nil
       end
@@ -2295,9 +2296,8 @@ function GRID:_ClearGridLabels()
 
   local job=self.GridMarkJob
   if job then
-    if job.timerID then
-      timer.removeFunction(job.timerID)
-    end
+    -- Invalidate ownership synchronously. A queued callback sees the mismatch and returns nil.
+    -- No native timer handle is needed, including when cancellation comes from another coroutine.
     self:_FinishGridMarking(job, "cancelled")
   end
 
@@ -2397,7 +2397,6 @@ function GRID:_FinishGridMarking(Job, Status, Error)
   Job.result.Error=Error
   Job.result.ElapsedSimulationSeconds=math.max(0, timer.getTime()-Job.started)
   self.GridMarkJob=nil
-  Job.timerID=nil
   if Error then
     self:E(self.lid.."Grid marking failed: "..Error)
   end
@@ -2698,7 +2697,7 @@ function GRID:UpdateGridDrawing()
   if pending then
     self:T(self.lid..string.format("Grid drawing queued: %d remaining cells, up to %d per batch, %.3f sec CPU budget (one cell without CPU clock)",
       #job.cells-job.index+1, style.BatchSize, style.MaxBatchSeconds))
-    job.timerID=timer.scheduleFunction(function(_, time)
+    timer.scheduleFunction(function(_, time)
       -- Identity check also protects against an already-dispatched callback after cancellation or replacement.
       if self.GridDrawJob~=job then
         return nil
@@ -2784,7 +2783,6 @@ function GRID:_FinishGridDrawing(Job, Status, Error)
   Job.result.Error=Error
   Job.result.ElapsedSimulationSeconds=math.max(0, timer.getTime()-Job.started)
   self.GridDrawJob=nil
-  Job.timerID=nil
   local text=string.format("Grid drawing %s: %d/%d new cells, %d batches, %s, max batch %s, simulation elapsed %.3f sec",
     Status, Job.result[self:_GridResultField("Drawn")], Job.result[self:_GridResultField("Queued")], Job.result.Batches, cpuTimeText(Job.result.CPUSeconds),
     cpuTimeText(Job.result.MaxBatchCPUSeconds), Job.result.ElapsedSimulationSeconds)
@@ -2904,6 +2902,8 @@ end
 
 --- Cancel pending work and remove the selected overlays owned by this object.
 -- Other GRID/ASTAR views and unrelated F10 marks are untouched. Safe before drawing and on repeated calls.
+-- Cancels work by job identity, without removing a native timer ID. A queued callback returns nil on its next dispatch;
+-- it performs no drawing/query work and cannot affect a replacement job. Existing marks are removed synchronously.
 -- @param #GRID self
 -- @param #string Kind (Optional) GRID.Drawing.POLYGONS, GRID.Drawing.LABELS or GRID.Drawing.ALL; default ALL.
 -- @return #GRID self
@@ -2933,9 +2933,8 @@ function GRID:_ClearGridPolygons()
 
   local job=self.GridDrawJob
   if job then
-    if job.timerID then
-      timer.removeFunction(job.timerID)
-    end
+    -- Invalidate ownership synchronously. A queued callback sees the mismatch and returns nil.
+    -- No native timer handle is needed, including when cancellation comes from another coroutine.
     self:_FinishGridDrawing(job, "cancelled")
   end
 

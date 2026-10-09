@@ -92,6 +92,26 @@ PATHLINE = {
 -- @field #string Location "start", "goal", "profile", or "profile_fallback" relative to the original input direction.
 
 
+-- Count actual profile calls shared by the two depth evaluators. No terrain hooks are installed.
+local depthProfileQueries=0
+
+--- Query one native depth profile and count the call, including unavailable results.
+-- Internal measurement boundary used by PATHLINE and ASTAR; API errors still propagate.
+function PATHLINE._QueryDepthProfile(Start, Goal)
+
+  depthProfileQueries=depthProfileQueries+1
+  return land.profile(Start,Goal)
+
+end
+
+--- Read the monotonic depth-profile counter for synchronous measurement scopes.
+-- Does not include unrelated terrain/road/profile APIs or reset another caller's baseline.
+function PATHLINE._GetDepthProfileCount()
+
+  return depthProfileQueries
+
+end
+
 --- PATHLINE class version.
 -- @field #string version
 PATHLINE.version="0.2.1"
@@ -733,7 +753,7 @@ function PATHLINE._CheckDepthLine(Start, Goal, Distance, MinDepth, Offset, Rever
     end
   end
 
-  local profile=land.profile(Start,Goal)
+  local profile=PATHLINE._QueryDepthProfile(Start,Goal)
   if type(profile)~="table" then
     local reason="profile_unavailable"
     return false,reason,PATHLINE._DepthReport(Distance,MinDepth,Offset,reason,"unavailable",reason)

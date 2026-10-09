@@ -1498,13 +1498,15 @@ test("undrawing cancels pending callbacks without resurrecting removed polygons"
   resetDrawings()
   local a=hexgrid():DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=2})
   local job=a.GridDrawJob
-  local callback=scheduled[job.timerID]
+  local callback=scheduled[nextTimerID]
   stepTimer()
   equal(count(drawings),2)
   a:UndrawGrid()
-  equal(job.result.Status,"cancelled") equal(count(drawings),0) equal(next(scheduled),nil)
+  equal(job.result.Status,"cancelled") equal(count(drawings),0)
   equal(a.GridDrawOptions,nil) equal(a.GridDrawJob,nil)
   equal(callback.fn(callback.args,timerNow),nil)
+  flushTimers()
+  equal(next(scheduled),nil) equal(count(drawings),0)
   a:UpdateGridDrawing():UndrawGrid()
   equal(count(drawings),0) equal(#removals,2)
 end)
@@ -1512,10 +1514,10 @@ end)
 test("redrawing mid-job cancels the old style and isolates other instances", function()
   resetDrawings()
   local a=hexgrid():DrawGrid(1,nil,nil,nil,nil,nil,nil,{BatchSize=2})
+  local callback=scheduled[nextTimerID]
   local b=hexgrid(0,0):DrawGrid(2)
   local bIDs=deepcopy(b.GridDrawIDs)
   local old=a.GridDrawJob
-  local callback=scheduled[old.timerID]
   stepTimer()
   a:DrawGrid(0,{0.1,0.2,0.3},0.7,nil,0.2,2,false,{BatchSize=3})
   equal(old.result.Status,"cancelled")
@@ -1678,7 +1680,7 @@ test("a small job that exceeds the time budget schedules its remaining cells", f
     local original=a._DrawGridCell
     function a:_DrawGridCell(node,style) cpu=cpu+0.012 return original(self,node,style) end
     a:DrawGrid()
-    equal(count(drawings),1) assert(a.GridDrawJob and a.GridDrawJob.timerID)
+    equal(count(drawings),1) assert(a.GridDrawJob and next(scheduled))
     flushTimers()
     equal(count(drawings),a.Nnodes) equal(a.LastGridDrawResult.Status,"complete")
     equal(a.LastGridDrawResult.Batches,a.Nnodes)
@@ -1826,7 +1828,7 @@ test("debug redraw and undraw cancel pending snapshots without duplicating polyg
   local path=a:GetPath()
   a:DrawGridWithPath(path,{BatchSize=1})
   local old=a.GridDrawJob
-  local callback=scheduled[old.timerID]
+  local callback=scheduled[nextTimerID]
   stepTimer()
   a:DrawGridWithPath({},{BatchSize=2})
   equal(old.result.Status,"cancelled") equal(callback.fn(callback.args,timerNow),nil)
@@ -1836,7 +1838,9 @@ test("debug redraw and undraw cancel pending snapshots without duplicating polyg
   a:DrawGridWithPath(path,{BatchSize=1})
   local pending=a.GridDrawJob
   a:UndrawGrid()
-  equal(pending.result.Status,"cancelled") equal(count(drawings),0) equal(next(scheduled),nil)
+  equal(pending.result.Status,"cancelled") equal(count(drawings),0)
+  flushTimers()
+  equal(count(drawings),0) equal(next(scheduled),nil)
 end)
 
 test("invalid debug paths and options leave the existing overlay intact", function()
@@ -2168,7 +2172,8 @@ local navyFile=assert(io.open("Moose Development/Moose/Ops/NavyGroup.lua","r"))
 local navySource=navyFile:read("*a"):gsub("\r\n","\n") navyFile:close()
 NAVYGROUP={}
 for _,name in ipairs({"_GetPathfindingTarget","_FindPathToNextWaypoint","_ClearPathfindingDrawing","_GetPathfindingCorridorWidth","_CheckPathDepth",
-  "_CanNavigate","_FailPathfinding","_UpdateNavigationWarning","_SetNavigationWaypoint","_GetNavigationWaypoint","_CheckNavigation","_CheckNavigationAhead","_CheckNavigationNearfield","_LogNavigationDepthCheck",
+  "_MeasurePathfinding","_RunNavigationCheck","_RunWaypointPathPlanning","_RunNavigationRouteUpdate","_CancelLocalPlanning",
+  "_PathfindingSearchSnapshot","_RecordPathfindingSearch","_CanNavigate","_FailPathfinding","_UpdateNavigationWarning","_SetNavigationWaypoint","_GetNavigationWaypoint","_CheckNavigation","_CheckNavigationAhead","_CheckNavigationNearfield","_LogNavigationDepthCheck",
   "onafterFullStop","onafterCruise","onafterCollisionWarning","onafterClearAhead","onafterTurningStopped",
   "SetPathfinding","SetPathfindingOn","SetPathfindingOff","SetPathfindingMinDepth","SetPathfindingPreferredDepth","SetPathfindingGrid","onafterUpdateRoute","onafterTurnIntoWindOver",
   "_CreateTurnIntoWind","AddTurnIntoWind","RemoveTurnIntoWind","AddTaskAttackGroup","_CheckTurning",
@@ -2945,7 +2950,7 @@ test("NAVYGROUP replaces only its own debug overlay and cancels pending old batc
   local oldJob=assert(previous.GridDrawJob)
   assert(a:_FindPathToNextWaypoint())
   assert(a.pathfindingDebugSearch~=previous)
-  equal(previous.GridDrawJob,nil) equal(scheduled[oldJob.timerID],nil)
+  equal(previous.GridDrawJob,nil) equal(oldJob.result.Status,"cancelled")
   for _,id in ipairs(oldIDs) do equal(drawings[id],nil) end
   for _,id in ipairs(otherIDs) do assert(drawings[id]) end
   flushTimers()
@@ -3210,7 +3215,7 @@ test("marker replacement cancellation and errors retain independent ownership", 
   local a,b=hexgrid(),hexgrid()
   a:MarkGrid({BatchSize=1}) stepTimer()
   local old=a.GridMarkJob local ids=deepcopy(a.GridMarkIDs)
-  local stale=scheduled[old.timerID].fn
+  local stale=scheduled[nextTimerID].fn
   b:MarkGrid()
   a:MarkGrid({BatchSize=1})
   equal(old.result.Status,"cancelled")
@@ -4869,6 +4874,7 @@ test("LOCAL keeps four-neighbour anisotropic topology and honours an explicitly 
 end)
 
 test("LOCAL replacement cancels old drawing jobs while retaining completed results",function()
+  local unrelatedDrawingCount=count(drawings)
   local search=localPlanner():StartLocalSearch(coord(0),coord(10000))
   local path,report=finishLazy(search)
   local oldGrid=search:GetGrid()
@@ -4878,7 +4884,8 @@ test("LOCAL replacement cancels old drawing jobs while retaining completed resul
   local start={x=1000,y=0,z=0}
   local goal={x=5000,y=0,z=0}
   search:StartLocalSearch(start,goal)
-  equal(next(scheduled),nil)
+  flushTimers()
+  equal(next(scheduled),nil) equal(count(drawings),unrelatedDrawingCount)
   equal(oldGrid.GridDrawJob,nil)
   equal(search.GridDrawJob,nil)
   start.x=3000
@@ -5606,6 +5613,168 @@ test("LOCAL escapes a real dead end by retreating to a side passage",function()
   end
   near(position:Get2DDistance(goal),0)
   assert(retreated and passedBranch)
+end)
+
+
+test("connection evaluation preserves search nodes caches endpoints and reports",function()
+  local a,s,g=pair()
+  assert(a:GetPath())
+  local before={}
+  for _,key in ipairs({"counter","nodes","startNode","endNode","startVector","endVector","LastSearchReport",
+    "nvalid","nvalidcache","ncost","ncostcache"}) do before[key]=a[key] end
+  local cachedValid,cachedCost=s.valid[g.id],s.cost[g.id]
+  local start,goal={x=100,y=200},{x=103,y=204}
+  local valid,cost,report=a:EvaluateConnection(start,goal)
+  assert(valid) near(cost,5) equal(report.Status,"clear") equal(report.Reason,nil)
+  equal(report.Start.z,200) equal(report.Start.y,0)
+  for key,value in pairs(before) do equal(a[key],value) end
+  equal(s.valid[g.id],cachedValid) equal(s.cost[g.id],cachedCost)
+  start.x=999 report.Goal.z=999
+  local _,_,fresh=a:EvaluateConnection({x=100,y=200},goal)
+  equal(fresh.Start.x,100) equal(fresh.Goal.z,204) equal(goal.y,204)
+  a:SetCostDist3D()
+  valid,cost=a:EvaluateConnection({x=0,y=0,z=0},{x=0,y=12,z=5})
+  assert(valid) near(cost,13)
+end)
+
+test("connection checks between LOCAL slices do not alter the pending search",function()
+  local search=localPlanner():StartLocalSearch(coord(0),coord(5000))
+  local _,running=search:StepSearch(1,1)
+  equal(running.Status,"running")
+  local counter,cells,requests=search.counter,search:GetGrid():GetCellCount(),search.nvalid
+  for i=1,3 do
+    local valid,cost=search:EvaluateConnection(coord(20000),coord(20300))
+    assert(valid) near(cost,300)
+  end
+  equal(search.counter,counter) equal(search:GetGrid():GetCellCount(),cells) equal(search.nvalid,requests)
+  local path,report=finishLazy(search)
+  assert(path) equal(report.Outcome,"partial_path") equal(report.PlanningStart.x,0)
+end)
+
+test("connection evaluation checks rules outside cell filters without applying adjacency",function()
+  local search=ASTAR:New():SetValidSurfaceTypes({land.SurfaceType.LAND})
+  assert(search:EvaluateConnection(coord(0),coord(50000)))
+  search:SetValidNeighbourDistance(100)
+  local valid,cost,report=search:EvaluateConnection(coord(0),coord(101))
+  equal(valid,false) equal(cost,math.huge) equal(report.Reason,"rule_rejected") equal(report.Stage,"rule")
+  search:SetValidNeighbourSurface(100)
+  equal(search:EvaluateConnection(coord(0),coord(100)),false)
+end)
+
+test("connection depth validity and weighted cost share one fresh corridor evaluation",function()
+  local terrain=depthTerrain()
+  terrain.depth=10
+  local a=ASTAR:New():SetValidNeighbourDepth(5,50):SetCostDepth(15,10)
+  local baseline=PATHLINE._GetDepthProfileCount()
+  local valid,cost,report=a:EvaluateConnection(coord(0),coord(100))
+  assert(valid) near(cost,350) equal(report.Status,"clear") equal(report.Depth.RequiredDepth,5)
+  equal(terrain.profiles,3) equal(PATHLINE._GetDepthProfileCount()-baseline,3)
+  terrain.depth=30
+  valid,cost=a:EvaluateConnection(coord(0),coord(100))
+  assert(valid) near(cost,100) equal(terrain.profiles,6)
+  equal(a.nvalid,0) equal(a.ncost,0)
+end)
+
+test("connection depth reports distinguish shallow samples from unavailable profiles",function()
+  local terrain=depthTerrain()
+  local point={x=50,y=-2,z=0}
+  terrain.makeProfile=function() return {{x=0,y=-30,z=0},point,{x=100,y=-30,z=0}} end
+  local a=ASTAR:New():SetValidNeighbourDepth(3.5):SetCostDepth(15,10)
+  local valid,cost,blocked=a:EvaluateConnection(coord(0),coord(100))
+  equal(valid,false) equal(cost,math.huge) equal(blocked.Status,"blocked")
+  equal(blocked.Reason,"profile_blocked") equal(blocked.Depth.Cause,"insufficient_depth")
+  equal(blocked.Depth.Depth,2) equal(blocked.Depth.Location,"profile") equal(blocked.Depth.Point.x,50)
+  point.x=70 equal(blocked.Depth.Point.x,50)
+  terrain.makeProfile=function() return nil end
+  local _,_,missing=a:EvaluateConnection(coord(0),coord(100))
+  equal(missing.Status,"unavailable") equal(missing.Reason,"profile_unavailable") equal(missing.Depth.Point,nil)
+  terrain.makeProfile=function() return {{x={},y=-30,z=0}} end
+  local _,_,malformed=a:EvaluateConnection(coord(0),coord(100))
+  equal(malformed.Status,"unavailable") equal(malformed.Reason,"invalid_profile_position")
+  equal(malformed.Depth.Point,nil)
+  terrain.makeProfile=nil
+  assert(a:EvaluateConnection(coord(0),coord(100)))
+  equal(blocked.Status,"blocked") equal(missing.Status,"unavailable")
+end)
+
+test("connection endpoint and corridor evidence uses the original travel direction",function()
+  local terrain=depthTerrain()
+  terrain.depthAt=function(p) return p.x==0 and 2 or 30 end
+  local a=ASTAR:New():SetValidNeighbourDepth(3.5)
+  local _,_,report=a:EvaluateConnection(coord(100),coord(0))
+  equal(report.Reason,"goal_blocked") equal(report.Depth.Location,"goal") equal(report.Depth.Point.x,0)
+  terrain.depthAt=function(p) return p.y>20 and 2 or 30 end
+  a:SetValidNeighbourDepth(3.5,50)
+  _,_,report=a:EvaluateConnection(coord(100),coord(0))
+  equal(report.Status,"blocked") equal(report.Depth.ProfileOffset,-25)
+  equal(report.Depth.Point.z,25) equal(report.Depth.Location,"goal")
+  terrain.depthAt=nil terrain.depth=2
+  _,_,report=a:EvaluateConnection(coord(0),coord(0))
+  equal(report.Depth.ProfileOffset,0) equal(report.Depth.Location,"start")
+end)
+
+test("connection custom callbacks retain trailing nil and reject before cost",function()
+  local a=ASTAR:New()
+  local costs=0
+  a:SetValidNeighbourFunction(function(first,last,...)
+    equal(select("#",...),3) equal(select(1,...),7) equal(select(3,...),nil)
+    equal(first.surfacetype,land.SurfaceType.WATER) equal(next(first.valid),nil)
+    equal(first.cell,nil) equal(last.cell,nil)
+    return first.vector.x<last.vector.x
+  end,7,false,nil)
+  a:SetCostFunction(function(first,last,...)
+    equal(select("#",...),2) equal(select(1,...),false) equal(select(2,...),nil)
+    costs=costs+1 return 0
+  end,false,nil)
+  local valid,cost=a:EvaluateConnection(coord(0),coord(1))
+  assert(valid) equal(cost,0) equal(costs,1)
+  equal(a:EvaluateConnection(coord(1),coord(0)),false) equal(costs,1)
+  local ok=pcall(function() a:EvaluateConnection({x=math.huge,y=0},coord(0)) end)
+  equal(ok,false) equal(costs,1)
+end)
+
+test("connection invalid costs and callback errors propagate without publishing success",function()
+  local a=ASTAR:New()
+  for _,value in ipairs({-1,0/0,"invalid"}) do
+    a:SetCostFunction(function() return value end)
+    equal(pcall(function() a:EvaluateConnection(coord(0),coord(1)) end),false)
+  end
+  a:SetCostFunction(function() return math.huge end)
+  local valid,cost,report=a:EvaluateConnection(coord(0),coord(1))
+  equal(valid,false) equal(cost,math.huge) equal(report.Reason,"cost_blocked") equal(report.Stage,"cost")
+  a:SetCostFunction(function() error("connection callback sentinel") end)
+  local ok,err=pcall(function() a:EvaluateConnection(coord(0),coord(1)) end)
+  assert(not ok and tostring(err):find("connection callback sentinel",1,true))
+end)
+
+test("connection depth cost rejection has its own stage and rejects overflow",function()
+  local terrain=depthTerrain()
+  terrain.depth=5
+  local a=ASTAR:New():SetValidNeighbourDepth(5):SetCostDepth(15,1e308)
+  local valid,cost,report=a:EvaluateConnection(coord(0),coord(100))
+  equal(valid,false) equal(cost,math.huge) equal(report.Stage,"cost") equal(report.Reason,"cost_blocked")
+  a:SetValidNeighbourFunction(ASTAR.Depth,5,0,"ignored extra argument"):SetCostDist2D()
+  assert(a:EvaluateConnection(coord(0),coord(100)))
+  a:SetCostFunction(ASTAR.CostDepth,6,0,15,1)
+  valid,cost,report=a:EvaluateConnection(coord(0),coord(100))
+  equal(valid,false) equal(cost,math.huge) equal(report.Stage,"cost") equal(report.Status,"blocked")
+  equal(report.Depth.RequiredDepth,6)
+  for _,arguments in ipairs({{5,0,false,1},{5,0,15,false}}) do
+    a:SetCostFunction(ASTAR.CostDepth,unpack(arguments))
+    equal(pcall(function() a:EvaluateConnection(coord(0),coord(100)) end),false)
+  end
+end)
+
+test("connection reconfiguration cannot combine an old rule with new costs",function()
+  local a=ASTAR:New()
+  a:SetCostFunction(function() error("stale cost must not run") end)
+  a:SetValidNeighbourFunction(function()
+    a:SetCostDist2D()
+    return true
+  end)
+  local valid,cost,report=a:EvaluateConnection(coord(0),coord(1))
+  equal(valid,false) equal(cost,math.huge) equal(report.Status,"unavailable")
+  equal(report.Reason,"configuration_changed") equal(report.Stage,"configuration")
 end)
 
 print(string.format("%d passed, %d failed", passed, failed))

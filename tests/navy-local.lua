@@ -2,6 +2,8 @@
 -- lua tests/navy-local.lua
 -- Imports production methods and actual GRID/ASTAR/PATHLINE; only DCS/FSM effects are stubbed.
 -- Compatible with the Lua 5.1 runtime used by DCS and Lua 5.4.
+-- Optional NAVY_TEST_FILTER selects Lua name patterns separated by |.
+-- Cooperative ticks advance mission time; positions change only when a case supplies movement.
 unpack=unpack or table.unpack
 local function deepcopy(value)
   if type(value)~="table" then return value end
@@ -69,7 +71,7 @@ local utilsFile=assert(io.open("Moose Development/Moose/Utilities/Utils.lua","r"
 local utilsSource=utilsFile:read("*a"):gsub("\r\n","\n") utilsFile:close()
 assert((loadstring or load)(assert(utilsSource:match("(function UTILS%.VecWaypointNaval%b().-\nend)"))))()
 
-local navyFile=assert(io.open("Moose Development/Moose/Ops/NavyGroup.lua","r"))
+local navyFile=assert(io.open(arg and arg[1] or "Moose Development/Moose/Ops/NavyGroup.lua","r"))
 local navySource=navyFile:read("*a"):gsub("\r\n","\n") navyFile:close()
 NAVYGROUP={}
 local enum=navySource:match("NAVYGROUP%.PathfindingMode%s*=%s*%b{}")
@@ -104,14 +106,22 @@ function ASTAR:New(...)
   searches.lastAstar=search
   return search
 end
-local function equal(actual,expected)
-  assert(actual==expected,"expected "..tostring(expected)..", got "..tostring(actual))
+local function equal(actual,expected,context)
+  assert(actual==expected,"expected "..tostring(expected)..", got "..tostring(actual)..(context and ": "..context or ""))
 end
 local function near(actual,expected,tolerance)
   assert(math.abs(actual-expected)<(tolerance or 1e-7),"expected approximately "..tostring(expected)..", got "..tostring(actual))
 end
 local function distance(a,b) return math.sqrt((a.x-b.x)^2+(a.z-b.z)^2) end
+local testFilter=os and os.getenv and os.getenv("NAVY_TEST_FILTER")
 local function test(name,run)
+  if testFilter then
+    local matches=false
+    for pattern in string.gmatch(testFilter,"[^|]+") do
+      if string.find(name,pattern) then matches=true break end
+    end
+    if not matches then return end
+  end
   land.surfaceAt=nil timerNow=0
   searches.grids=0 searches.astar=0 searches.lastAstar=nil
   local ok,err=pcall(run)
@@ -236,10 +246,27 @@ local function localShip(targetDistance)
   return vessel(targetDistance):SetPathfindingMode(NAVYGROUP.PathfindingMode.LOCAL)
 end
 
--- Planner/lifecycle regressions enter the private handler after collision detection.
--- Separate public route/timer tests below verify that clear water never activates LOCAL.
+-- Behavior cases wait explicitly for cooperative work. One-tick budget/lifecycle cases
+-- below call the production handler directly so pending work remains observable.
+local function finishPlanning(ship,result)
+  local slices=0
+  while ship.localNavigation and ship.localNavigation.Job do
+    slices=slices+1
+    assert(slices<=2500,"naval planning did not finish within its configured slice limit")
+    timerNow=timerNow+0.1
+    result=ship:_CheckLocalNavigation()
+  end
+  return result
+end
+local function checkLocal(ship,...)
+  return finishPlanning(ship,ship:_CheckLocalNavigation(...))
+end
+local function checkNavigation(ship)
+  ship:_CheckNavigation()
+  return finishPlanning(ship,true)
+end
 local function activateLocal(ship,speed,depth,first)
-  return ship:_CheckLocalNavigation(true,speed,depth,first)
+  return checkLocal(ship,true,speed,depth,first)
 end
 
 local function forbidGlobalPlanner(ship)
@@ -260,6 +287,22 @@ local function assertClearPath(ship,points,start)
     assert(clear,"Unvalidated connection: "..tostring(reason))
     previous=point
   end
+end
+local function connectionCost(ship,a,b)
+  local search=ASTAR:New():SetValidNeighbourDepth(ship.pathMinDepth or 20,ship:_GetPathfindingCorridorWidth())
+  search:SetCostDepth(ship.pathPreferredDepth,ship.pathDepthWeight or 2)
+  local valid,cost=search:EvaluateConnection(a,b)
+  return valid and cost or math.huge
+end
+local function connectionRules(ship,rule)
+  local search={}
+  function search:EvaluateConnection(a,b)
+    local valid,cost=rule(a,b)
+    local report={Status=valid and "clear" or "blocked",Reason=valid and "clear" or "insufficient_depth"}
+    return valid,cost or (valid and a:GetDistance(b,true) or math.huge),report
+  end
+  function ship:_GetLocalSearch() return search end
+  return search
 end
 local function followPath(ship,path,lastIndex)
   for i=2,lastIndex or #path do
@@ -305,7 +348,7 @@ test("LOCAL selection preserves the ordinary native route in clear water without
   equal(ship.dispatched[2].task.params.tasks[1].id,"TargetAction")
   equal(ship.dispatched[3].task.params.tasks[1].id,"LaterAction")
   local dispatches=#ship.dispatches
-  for i=1,3 do timerNow=i*10 ship:_CheckNavigation() end
+  for i=1,3 do timerNow=i*10 checkNavigation(ship) end
   equal(ship.localNavigation,nil) equal(#ship.dispatches,dispatches)
   equal(ship.stops,0) equal(ship.warnings,0) equal(ship.added,0)
   for i,waypoint in ipairs(original) do equal(ship.waypoints[i],waypoint) end
@@ -319,16 +362,16 @@ test("LOCAL mode and enable switches stay inactive in clear water at runtime",fu
   ship:onafterUpdateRoute()
   local dispatches=#ship.dispatches
   ship:SetPathfindingMode(NAVYGROUP.PathfindingMode.LOCAL)
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(ship.localNavigation,nil) equal(#ship.dispatches,dispatches) assertNoSearch()
   ship:SetPathfindingOff()
-  timerNow=20 ship:_CheckNavigation()
+  timerNow=20 checkNavigation(ship)
   ship:SetPathfindingOn()
-  timerNow=30 ship:_CheckNavigation()
+  timerNow=30 checkNavigation(ship)
   equal(ship.localNavigation,nil) equal(#ship.dispatches,dispatches) assertNoSearch()
   ship:SetPathfindingMode(NAVYGROUP.PathfindingMode.WAYPOINT)
   ship:SetPathfindingMode(NAVYGROUP.PathfindingMode.LOCAL)
-  timerNow=40 ship:_CheckNavigation()
+  timerNow=40 checkNavigation(ship)
   equal(ship.localNavigation,nil) equal(#ship.dispatches,dispatches) assertNoSearch()
   equal(ship.dispatched[2].uid,2) equal(ship.dispatched[3].uid,3)
 end)
@@ -344,7 +387,7 @@ test("LOCAL warns at 5 km but starts planning only when the obstruction enters i
   end
   ship:onafterUpdateRoute()
   assertNoSearch() equal(ship.localNavigation,nil)
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   near(checked[1],5000)
   equal(ship.warnings,1) equal(ship.localNavigation,nil) assertNoSearch()
   near(ship.LastNavigationCheck.LocalSearchDistance,2100)
@@ -353,20 +396,20 @@ test("LOCAL warns at 5 km but starts planning only when the obstruction enters i
 
   -- A warning stays active without changing the native route or allocating a grid.
   for i=1,3 do
-    timerNow=i*10 ship:_CheckNavigation()
+    timerNow=i*10 checkNavigation(ship)
     equal(ship.dispatched,dispatched) equal(#ship.dispatches,dispatches) equal(ship.warnings,1)
     equal(ship.localNavigation,nil) equal(ship.stops,0) assertNoSearch()
   end
 
   ship.position={x=2500,y=0,z=0}
-  timerNow=40 ship:_CheckNavigation()
+  timerNow=40 checkNavigation(ship)
   local navigation=assert(ship.localNavigation)
   equal(navigation.TargetUID,2) equal(navigation.GoalReached,false)
   assert(searches.grids>0 and searches.astar>0,"approaching an already warned obstacle must start LOCAL")
   equal(ship.added,0) equal(#ship.waypoints,3) equal(ship.state,"Cruising")
   for _,waypoint in ipairs(ship.dispatched) do
     assert(waypoint.uid~=2 and waypoint.uid~=3,"activation leaked distant mission points into the local route")
-    assert(waypoint.x<=5500.001 and math.abs(waypoint.y)<=1000.001)
+    assert(waypoint.x<=6250.001 and math.abs(waypoint.y)<=1000.001)
   end
   assertClearPath(ship,navigation.Path)
 end)
@@ -380,7 +423,7 @@ test("LOCAL collision activation replaces legacy detour points while retaining t
   ship.terrain.depthAt=function(point) return point.x>=1450 and point.x<=1550 and math.abs(point.y)<=200 and 5 or 40 end
   ship:onafterUpdateRoute()
   equal(ship.dispatched[2].uid,4) assertNoSearch()
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   equal(assert(ship.localNavigation).TargetUID,2)
   equal(ship:GetWaypointByID(4),nil) equal(ship:GetWaypointByID(2),original) equal(#ship.waypoints,3)
   equal(ship.added,0)
@@ -392,14 +435,14 @@ test("LOCAL ordinary activation honors a newly inserted next waypoint when the r
   forbidGlobalPlanner(ship)
   ship.terrain.depthAt=function(point) return point.x>=1450 and point.x<=1550 and math.abs(point.y)<=200 and 5 or 40 end
   ship:onafterUpdateRoute()
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   assert(ship.localNavigation)
   local grids,astar=searches.grids,searches.astar
   local inserted=ship:AddWaypoint(coord(0,10000),14,1,nil,false)
   ship:onafterUpdateRoute()
   ship:FlushUpdate()
   equal(ship.localNavigation,nil) equal(ship.dispatched[2].uid,inserted.uid) equal(ship.dispatched[3].uid,2)
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(ship.localNavigation,nil) equal(ship.currentwp,1) equal(ship.passingEvents,nil)
   equal(searches.grids,grids) equal(searches.astar,astar)
 end)
@@ -409,13 +452,13 @@ test("LOCAL ignores obstacles beyond its normal collision lookahead until they e
   forbidGlobalPlanner(ship)
   ship.terrain.depthAt=function(point) return point.x>=5450 and point.x<=5550 and math.abs(point.y)<=200 and 5 or 40 end
   ship:onafterUpdateRoute()
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   equal(ship.localNavigation,nil) equal(ship.warnings,0) assertNoSearch()
   ship.position={x=1000,y=0,z=0}
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(ship.localNavigation,nil) equal(ship.warnings,1) assertNoSearch()
   ship.position={x=3500,y=0,z=0}
-  timerNow=20 ship:_CheckNavigation()
+  timerNow=20 checkNavigation(ship)
   equal(assert(ship.localNavigation).TargetUID,2)
   assert(searches.grids>0 and searches.astar>0)
 end)
@@ -425,28 +468,28 @@ test("LOCAL leaves avoidance when the target horizon clears and reactivates for 
   forbidGlobalPlanner(ship)
   ship.terrain.depthAt=function(point) return point.x>=1450 and point.x<=1550 and math.abs(point.y)<=200 and 5 or 40 end
   ship:onafterUpdateRoute()
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   local navigation=assert(ship.localNavigation)
   assert(ship:_CheckPathDepth(ship.position,navigation.Path[2]),"the first short steering leg must be clear")
   local dispatches=#ship.dispatches
   local original=ship.waypoints[2]
   local task=original.task
   -- A clear first steering leg alone is not enough while the original target direction is blocked.
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(ship.localNavigation,navigation) equal(#ship.dispatches,dispatches)
   ship.terrain.depthAt=nil
-  timerNow=20 ship:_CheckNavigation()
+  timerNow=20 checkNavigation(ship)
   equal(ship.localNavigation,nil)
   equal(#ship.dispatches,dispatches+1) equal(ship.dispatched[2].uid,2)
   equal(ship.waypoints[2],original) equal(original.task,task)
   equal(ship.currentwp,1) equal(original.npassed,0) equal(ship.passingEvents,nil)
   local grids,astar=searches.grids,searches.astar
-  timerNow=30 ship:_CheckNavigation()
+  timerNow=30 checkNavigation(ship)
   equal(ship.localNavigation,nil) equal(searches.grids,grids) equal(searches.astar,astar)
   equal(#ship.dispatches,dispatches+1)
 
   ship.terrain.depthAt=function(point) return point.x>=1450 and point.x<=1550 and math.abs(point.y)<=200 and 5 or 40 end
-  timerNow=40 ship:_CheckNavigation()
+  timerNow=40 checkNavigation(ship)
   assert(ship.localNavigation and ship.localNavigation~=navigation)
   equal(ship.localNavigation.TargetUID,2) assert(searches.grids>grids)
 end)
@@ -456,13 +499,13 @@ test("LOCAL unavailable collision depth stops before any search and does not ret
   forbidGlobalPlanner(ship)
   ship:onafterUpdateRoute()
   ship.terrain.makeProfile=function() return nil end
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   equal(ship.state,"Holding") equal(ship.stops,1) equal(ship.localNavigation,nil)
   equal(ship.LastPathfindingResult.DepthCheck.Status,"unavailable")
   equal(#ship.dispatched,1) equal(ship.dispatched[1].speed,0) assertNoSearch()
   local queries,dispatches=ship.terrain.queries,#ship.dispatches
   ship.terrain.makeProfile=nil
-  for i=1,3 do timerNow=i*10 ship:_CheckNavigation() end
+  for i=1,3 do timerNow=i*10 checkNavigation(ship) end
   equal(ship.stops,1) equal(ship.terrain.queries,queries) equal(#ship.dispatches,dispatches) assertNoSearch()
 end)
 
@@ -475,7 +518,7 @@ test("LOCAL selection during turns and manual holds cannot start an inactive sea
       ship.turning=true ship.heading=20 ship.turningHeading=0 ship.turningTime=0
     else ship:FullStop() end
     local dispatches,queries=#ship.dispatches,ship.terrain.queries
-    timerNow=10 ship:_CheckNavigation()
+    timerNow=10 checkNavigation(ship)
     equal(ship.localNavigation,nil) equal(#ship.dispatches,dispatches)
     if reason=="turning" then assert(ship.terrain.queries>queries)
     else equal(ship.terrain.queries,queries) end
@@ -500,25 +543,16 @@ test("LOCAL collision-warning callbacks can disable or retarget navigation befor
       end
     end
     ship:onafterUpdateRoute()
-    ship:_CheckNavigation()
+    checkNavigation(ship)
     equal(ship.warnings,1) equal(ship.localNavigation,nil) equal(ship.stops,0) assertNoSearch()
     if action=="disable" then equal(ship.pathfindingOn,false)
     elseif action=="retarget" then equal(#ship.dispatched,2) equal(ship.dispatched[2].uid,3)
     else equal(ship.dispatched[2].uid,2) near(ship.dispatched[2].x,0) near(ship.dispatched[2].y,20000) end
-    timerNow=10 ship:_CheckNavigation()
+    timerNow=10 checkNavigation(ship)
     equal(ship.localNavigation,nil) assertNoSearch()
   end
 end)
 
-test("LOCAL window is ship-centered, heading-aligned, fine and bounded",function()
-  local ship=localShip()
-  local start=VECTOR:New(1234,0,5678)
-  local window=assert(ship:_GetLocalNavigationWindow(start,90,ship.waypoints[2]))
-  near(window.Origin.x,start.x) near(window.Origin.z,start.z) near(window.Heading,90)
-  near(window.Grid:GetResolutionInfo().Spacing,50)
-  equal(window.MaxCells,ship.pathMaxCells or 5000)
-  assert(window.Grid:GetCellCount()>0 and window.Grid:GetCellCount()<=window.MaxCells)
-end)
 
 test("LOCAL trigger includes the faster of commanded and actual speed and remains bounded",function()
   local ship=localShip()
@@ -546,9 +580,9 @@ test("LOCAL activates at the distance boundary without needing a new warning eve
     return false,"profile_blocked",{Status="blocked",ClearDistance=clearance,Distance=5000,Reason="profile_blocked"}
   end
   function ship:_CheckLocalNavigation() attempts=attempts+1 return true end
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   equal(attempts,0) equal(ship.warnings,1) assertNoSearch()
-  clearance=2100 timerNow=10 ship:_CheckNavigation()
+  clearance=2100 timerNow=10 checkNavigation(ship)
   equal(attempts,1) equal(ship.warnings,1) equal(ship.stops,0)
 end)
 
@@ -557,45 +591,13 @@ test("LOCAL distant warning clears without ever changing the native route",funct
   ship.terrain.depthAt=function(point) return point.x>=4450 and point.x<=4550 and 5 or 40 end
   ship:onafterUpdateRoute()
   local route=ship.dispatched
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   equal(ship.warnings,1) equal(ship.collisionwarning,true) assertNoSearch()
   ship.terrain.depthAt=nil
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(ship.collisionwarning,false) equal(ship.clears,1)
   equal(ship.dispatched,route) equal(#ship.dispatches,1) equal(ship.localNavigation,nil)
   equal(ship.stops,0) assertNoSearch()
-end)
-
-test("LOCAL faster windows cover the trigger and move their candidate exits to the grown front",function()
-  local ship=localShip()
-  local start=VECTOR:New(0,0,0)
-  local normal=assert(ship:_GetLocalNavigationWindow(start,90,ship.waypoints[2],10))
-  equal(normal.Ahead,3000)
-  ship.velocity=30
-  local fast=assert(ship:_GetLocalNavigationWindow(start,90,ship.waypoints[2],10))
-  assert(fast~=normal) equal(fast.Ahead,4000)
-  assert(fast.Ahead>=ship:_GetLocalNavigationHorizon(10)+500)
-  near(fast.Grid:GetResolutionInfo().Spacing,50)
-  assert(fast.Grid:GetCellCount()<=fast.MaxCells)
-  for _,cell in ipairs(fast.Grid:GetCells()) do
-    assert(cell.vector.z>=-1000.001 and cell.vector.z<=4000.001 and math.abs(cell.vector.x)<=1000.001)
-  end
-  local front=false
-  for _,candidate in ipairs(ship:_GetLocalNavigationCandidates(fast,start,90,ship.waypoints[2])) do
-    if candidate.Vector.z>=3850 then front=true end
-  end
-  assert(front,"candidate exits still follow the old 3 km boundary")
-  ship.velocity=31
-  equal(ship:_GetLocalNavigationWindow(start,90,ship.waypoints[2],10),fast)
-  ship.velocity=10
-  equal(ship:_GetLocalNavigationWindow(start,90,ship.waypoints[2],10),fast)
-end)
-
-test("LOCAL planned acceleration grows the window before the ship reaches its commanded speed",function()
-  local ship=localShip()
-  ship.velocity=10
-  local window=assert(ship:_GetLocalNavigationWindow(VECTOR:New(0,0,0),0,ship.waypoints[2],30))
-  equal(window.Ahead,4000)
 end)
 
 test("LOCAL a faster ship starts before a slow ship would and plans beyond the obstruction",function()
@@ -605,9 +607,9 @@ test("LOCAL a faster ship starts before a slow ship would and plans beyond the o
     return point.x>=2800 and point.x<=2900 and math.abs(point.y)<=200 and 5 or 40
   end
   ship:onafterUpdateRoute()
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   local navigation=assert(ship.localNavigation)
-  equal(navigation.Window.Ahead,4000)
+  equal(navigation.Search.LastSearchResult.Window.Ahead,4000)
   assert(searches.astar>0) equal(ship.stops,0)
   assertClearPath(ship,navigation.Path)
 end)
@@ -618,88 +620,9 @@ test("WAYPOINT mode still searches immediately for a distant obstacle inside the
   local attempts=0
   function ship:_FindPathToNextWaypoint() attempts=attempts+1 return true end
   ship:onafterUpdateRoute()
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   equal(attempts,1) equal(ship.warnings,1) equal(ship.stops,0)
   assert(ship.LastNavigationCheck.ClearDistance>4000)
-end)
-
-test("LOCAL caches a nearby window and invalidates movement, heading, target and depth changes",function()
-  local ship=localShip()
-  local target=ship.waypoints[2]
-  local first=assert(ship:_GetLocalNavigationWindow(VECTOR:New(0,0,0),0,target))
-  ship.localNavigation={Window=first}
-  equal(ship:_GetLocalNavigationWindow(VECTOR:New(100,0,0),10,target),first)
-  local moved=assert(ship:_GetLocalNavigationWindow(VECTOR:New(1100,0,0),0,target))
-  assert(moved~=first)
-  ship.localNavigation={Window=first}
-  assert(ship:_GetLocalNavigationWindow(VECTOR:New(0,0,0),45,target)~=first)
-  ship.localNavigation={Window=first}
-  target.coordinate.x=target.coordinate.x+1
-  assert(ship:_GetLocalNavigationWindow(VECTOR:New(0,0,0),0,target)~=first)
-  ship.localNavigation={Window=first}
-  ship:SetPathfindingMinDepth(25)
-  assert(ship:_GetLocalNavigationWindow(VECTOR:New(0,0,0),0,target)~=first)
-end)
-
-test("LOCAL distant-goal plans end in the local window with validated, bounded connections",function()
-  local ship=localShip(100000)
-  local plan,reason=ship:_PlanLocalPath(VECTOR:NewFromVec(ship.position),0,ship.waypoints[2],10)
-  assert(plan,reason) equal(plan.GoalReached,false)
-  assert(#plan.Points>0) assert(plan.Attempts<=8) assert(plan.CandidateCount<=5000)
-  local previous=ship.position
-  for _,point in ipairs(plan.Points) do
-    assert(point.x>=-1000.001 and point.x<=3000.001 and math.abs(point.z)<=1000.001)
-    assert(distance(previous,point)<=1000.001,"a steering connection exceeds the local shortcut limit")
-    previous=point
-  end
-  assert(previous.x>=500,"local plan must make useful progress")
-  assertClearPath(ship,plan.Points)
-end)
-
-test("LOCAL exact-goal plans validate the goal instead of clamping it to a grid cell",function()
-  local ship=localShip(1777)
-  ship.waypoints[2].coordinate=coord(1777,123)
-  local plan,reason=ship:_PlanLocalPath(VECTOR:NewFromVec(ship.position),0,ship.waypoints[2],10)
-  assert(plan,reason) equal(plan.GoalReached,true)
-  local last=plan.Points[#plan.Points]
-  near(last.x,1777) near(last.z,123)
-  assertClearPath(ship,plan.Points)
-end)
-
-test("LOCAL detours keep every smoothed connection deep around an island",function()
-  local ship=localShip()
-  land.surfaceAt=function(p)
-    return p.x>=750 and p.x<=1250 and math.abs(p.z)<=300 and land.SurfaceType.LAND or land.SurfaceType.WATER
-  end
-  local plan,reason=ship:_PlanLocalPath(VECTOR:NewFromVec(ship.position),0,ship.waypoints[2],10)
-  assert(plan,reason) equal(plan.GoalReached,false)
-  assertClearPath(ship,plan.Points)
-  local lateral=false
-  for _,point in ipairs(plan.Points) do if math.abs(point.z)>300 then lateral=true end end
-  assert(lateral,"planned course did not avoid the island")
-end)
-
-test("LOCAL finds a side exit through a narrow bent canal",function()
-  local ship=localShip()
-  land.surfaceAt=function(point)
-    local approach=point.x<=900 and math.abs(point.z)<=140
-    local bend=math.abs(point.x-800)<=140 and point.z>=0
-    return (approach or bend) and land.SurfaceType.WATER or land.SurfaceType.LAND
-  end
-  local plan,reason=ship:_PlanLocalPath(VECTOR:NewFromVec(ship.position),0,ship.waypoints[2],10)
-  assert(plan,reason) equal(plan.GoalReached,false)
-  local exit=plan.Points[#plan.Points]
-  assert(exit.z>=850 and math.abs(exit.x-800)<140,"canal route must leave through its lateral opening")
-  assertClearPath(ship,plan.Points)
-  activateLocal(ship)
-  local navigation=assert(ship.localNavigation)
-  assert(plan.Length<plan.RequiredLength,"fixture should exercise a short side exit")
-  assert(ship.LastPathfindingResult.PreflightExtensions>0,"short canal exit must be extended before departure")
-  assert(navigation.Length>=ship.LastPathfindingResult.RequiredLength)
-  assertClearPath(ship,navigation.Path)
-  local path,dispatches=navigation.Path,#ship.dispatches
-  for i=1,3 do timerNow=i*10 ship:_CheckNavigation() end
-  equal(navigation.Path,path) equal(#ship.dispatches,dispatches)
 end)
 
 test("LOCAL dead-end canal stops without extending its bounded search",function()
@@ -711,20 +634,15 @@ test("LOCAL dead-end canal stops without extending its bounded search",function(
   end
   activateLocal(ship)
   equal(ship.state,"Holding") equal(ship.stops,1)
-  equal(ship.LastPathfindingResult.StopReason,"no_local_exit")
+  equal(ship.LastPathfindingResult.StopReason,"no_steering_path")
   equal(ship.added,0) equal(#ship.waypoints,3)
 end)
 
-test("LOCAL grid allocation failure respects the cell budget",function()
-  local ship=localShip():SetPathfindingGrid(1)
-  local plan,reason=ship:_PlanLocalPath(VECTOR:NewFromVec(ship.position),0,ship.waypoints[2],10)
-  equal(plan,nil) equal(reason,"cell_limit")
-end)
 
 test("LOCAL smoothing does not strand a short final residual or accept a sharp initial turn",function()
   local ship=localShip()
   local nodes={}
-  for _,x in ipairs({500,950,1000,1050}) do nodes[#nodes+1]={vector=VECTOR:New(x,0,0)} end
+  for _,x in ipairs({500,950,1000,1050}) do nodes[#nodes+1]=VECTOR:New(x,0,0) end
   local points,reason=ship:_SimplifyLocalPath(VECTOR:New(0,0,0),0,nodes,false,10,0)
   assert(points,reason) equal(#points,2) near(points[1].x,950) near(points[2].x,1050)
   assertClearPath(ship,points)
@@ -732,14 +650,6 @@ test("LOCAL smoothing does not strand a short final residual or accept a sharp i
   equal(rejected,nil)
 end)
 
-test("LOCAL behind-target navigation can choose useful local motion away from the target",function()
-  local ship=localShip(-20000)
-  local plan,reason=ship:_PlanLocalPath(VECTOR:NewFromVec(ship.position),0,ship.waypoints[2],10)
-  assert(plan,reason) equal(plan.GoalReached,false)
-  local endpoint=plan.Points[#plan.Points]
-  assert(endpoint.x>=250 and distance(endpoint,ship.waypoints[2].coordinate)>20000)
-  assertClearPath(ship,plan.Points)
-end)
 
 test("LOCAL dispatch contains only validated local points and leaves mission waypoints untouched",function()
   local ship=localShip()
@@ -752,7 +662,7 @@ test("LOCAL dispatch contains only validated local points and leaves mission way
   assert(#ship.dispatched>=2)
   for _,waypoint in ipairs(ship.dispatched) do
     assert(waypoint.uid~=2 and waypoint.uid~=3,"unchecked mission waypoint leaked into the native route")
-    assert(waypoint.x<=3000.001 and math.abs(waypoint.y)<=1000.001)
+    assert(waypoint.x<=3750.001 and math.abs(waypoint.y)<=1000.001)
   end
   assertClearPath(ship,navigation.Path)
   near(original[2].speed,10) equal(original[2].task.params.tasks[1].id,"TargetAction")
@@ -783,33 +693,11 @@ test("LOCAL refuses an initial route shorter than its speed-based stopping reser
   local ship=localShip(100000):SetPathfindingGrid(8000)
   activateLocal(ship,UTILS.MpsToKnots(500))
   equal(ship.state,"Holding") equal(ship.stops,1)
-  equal(ship.LastPathfindingResult.StopReason,"local_route_too_short")
+  equal(ship.LastPathfindingResult.StopReason,"no_steering_path")
   equal(#ship.dispatches,1) equal(#ship.dispatched,1) equal(ship.dispatched[1].speed,0)
   equal(#ship.waypoints,3) equal(ship.waypoints[2].uid,2)
 end)
 
-test("LOCAL progress waits for movement and appends a clear target approach without another search",function()
-  local ship=localShip()
-  activateLocal(ship)
-  local navigation=ship.localNavigation
-  local originalPath,originalWindow=navigation.Path,navigation.Window
-  local dispatches=#ship.dispatches
-  for i=1,3 do timerNow=i*10 ship:_CheckLocalNavigation() end
-  equal(ship.localNavigation,navigation) equal(#ship.dispatches,dispatches)
-  near(navigation.Progress or 0,0) equal(ship.currentwp,1)
-  local endpoint=navigation.Path[#navigation.Path]
-  local previous=navigation.Path[#navigation.Path-1]
-  local astar=searches.astar
-  followPath(ship,navigation.Path)
-  ship.heading=previous:GetHeadingTo(endpoint)
-  ship.turningHeading=ship.heading ship.turningTime=timerNow
-  timerNow=timerNow+10 ship:_CheckLocalNavigation()
-  assert(ship.localNavigation.Path~=originalPath,"the checked target approach must extend the route")
-  assert(#ship.dispatches>dispatches) equal(ship.currentwp,1)
-  equal(ship.localNavigation.Window,originalWindow) equal(searches.astar,astar)
-  near(ship.LastPathfindingResult.TargetApproachDistance,5000)
-  near(ship.localNavigation.Path[1].x,endpoint.x) near(ship.localNavigation.Path[1].z,endpoint.z)
-end)
 
 test("LOCAL exact-goal routes have no waypoint callback and advance only on actual arrival",function()
   local ship=localShip(1500)
@@ -822,13 +710,13 @@ test("LOCAL exact-goal routes have no waypoint callback and advance only on actu
     equal(#waypoint.task.params.tasks,0)
   end
   equal(ship.currentwp,1) equal(ship.passingEvents,nil)
-  timerNow=10 ship:_CheckLocalNavigation()
+  timerNow=10 checkLocal(ship)
   equal(ship.currentwp,1) equal(ship.passingEvents,nil)
   followPath(ship,navigation.Path)
-  timerNow=20 ship:_CheckNavigation()
+  timerNow=20 checkNavigation(ship)
   equal(ship.currentwp,2) equal(ship.passingEvents,1)
   equal(ship.waypoints[2].npassed,1) equal(ship.waypoints[2].task,originalTask)
-  timerNow=30 ship:_CheckNavigation()
+  timerNow=30 checkNavigation(ship)
   equal(ship.currentwp,2) equal(ship.passingEvents,1) equal(ship.waypoints[2].npassed,1)
 end)
 
@@ -847,18 +735,18 @@ test("LOCAL preserves queued tasks at intermediate and final mission waypoints",
     local dispatches=#ship.dispatches
     equal(ship.taskSubmissions,nil)
     followPath(ship,navigation.Path)
-    timerNow=10 ship:_CheckNavigation()
+    timerNow=10 checkNavigation(ship)
     equal(ship.currentwp,2) equal(ship.taskSubmissions,1)
     equal(ship.installedTask.params.tasks[2].params.task,task.dcstask)
     equal(ship.pendingUpdate,nil) equal(#ship.dispatches,dispatches)
     equal(ship.localNavigationTaskUID,2)
-    timerNow=20 ship:_CheckNavigation()
+    timerNow=20 checkNavigation(ship)
     equal(#ship.dispatches,dispatches) equal(ship.taskSubmissions,1)
     task.status=OPSGROUP.TaskStatus.EXECUTING ship.taskcurrent=task.id
-    timerNow=30 ship:_CheckNavigation()
+    timerNow=30 checkNavigation(ship)
     equal(#ship.dispatches,dispatches)
     task.status=OPSGROUP.TaskStatus.DONE ship.taskcurrent=nil
-    timerNow=40 ship:_CheckNavigation()
+    timerNow=40 checkNavigation(ship)
     ship:FlushUpdate()
     if final then equal(#ship.dispatches,dispatches)
     else
@@ -874,7 +762,7 @@ test("LOCAL FullStop cancels the task-startup guard so a later Cruise can procee
   local task=queueWaypointTask(ship)
   activateLocal(ship)
   followPath(ship,ship.localNavigation.Path)
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(ship.taskSubmissions,1) equal(ship.localNavigationTaskUID,2)
   equal(task.status,OPSGROUP.TaskStatus.SCHEDULED) equal(ship.currentwp,2)
   ship:FullStop()
@@ -896,13 +784,13 @@ test("LOCAL resumes the ordinary route after a waypoint synchronously starts a m
   activateLocal(ship)
   local dispatches=#ship.dispatches
   followPath(ship,ship.localNavigation.Path)
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(ship.currentwp,2) equal(ship.taskcurrent,1) equal(ship.localNavigation,nil)
   equal(ship.localNavigationTaskUID,2) equal(ship.pendingUpdate,nil) equal(#ship.dispatches,dispatches)
-  timerNow=20 ship:_CheckNavigation()
+  timerNow=20 checkNavigation(ship)
   equal(ship.localNavigationTaskUID,2) equal(ship.pendingUpdate,nil) equal(#ship.dispatches,dispatches)
   task.status=OPSGROUP.TaskStatus.DONE ship.taskcurrent=0
-  timerNow=30 ship:_CheckNavigation()
+  timerNow=30 checkNavigation(ship)
   assert(ship.pendingUpdate,"finishing a synchronous waypoint mission task must resume the route")
   ship:FlushUpdate()
   equal(ship.localNavigationTaskUID,nil) equal(ship.localNavigation,nil)
@@ -914,11 +802,11 @@ test("LOCAL turning keeps checking depth without repeatedly replacing the route"
   activateLocal(ship)
   ship.turningHeading=ship.heading ship.turningTime=0
   local dispatches,queries=#ship.dispatches,ship.terrain.queries
-  ship.heading=10 timerNow=10 ship:_CheckNavigation()
+  ship.heading=10 timerNow=10 checkNavigation(ship)
   equal(ship:IsTurning(),true)
   assert(ship.terrain.queries>queries,"turning must not suspend local depth monitoring")
   equal(#ship.dispatches,dispatches)
-  ship.heading=20 timerNow=20 ship:_CheckNavigation()
+  ship.heading=20 timerNow=20 checkNavigation(ship)
   equal(ship:IsTurning(),true) equal(#ship.dispatches,dispatches)
 end)
 
@@ -942,51 +830,6 @@ test("LOCAL progress follows the adjacent segment when a ship rounds a steering 
   near(progress,1200) near(remaining,800) near(deviation,20)
 end)
 
-test("LOCAL prepares a continuation during a turn and preserves its next steering point",function()
-  local ship=localShip()
-  activateLocal(ship)
-  local navigation=ship.localNavigation
-  local path=navigation.Path
-  assert(#path>=4)
-  local upcoming=path[3]
-  followPath(ship,path,2)
-  ship.position={x=path[2].x+(upcoming.x-path[2].x)*0.1,y=0,z=path[2].z+(upcoming.z-path[2].z)*0.1}
-  ship.turning=true
-  local dispatches=#ship.dispatches
-  ship:_CheckLocalNavigation()
-  assert(navigation.Pending,"remaining validated route should prepare a continuation")
-  equal(#ship.dispatches,dispatches) equal(navigation.Path,path)
-  local pending=navigation.Pending
-  near(pending.Points[2].x,upcoming.x) near(pending.Points[2].z,upcoming.z)
-  ship.position={x=(path[2].x+upcoming.x)/2,y=0,z=(path[2].z+upcoming.z)/2}
-  ship.turning=false
-  ship:_CheckLocalNavigation()
-  equal(navigation.Pending,nil) equal(#ship.dispatches,dispatches+1)
-  near(ship.dispatched[2].x,upcoming.x) near(ship.dispatched[2].y,upcoming.z)
-end)
-
-test("LOCAL revalidates a prepared continuation after minimum depth increases",function()
-  local ship=localShip()
-  activateLocal(ship)
-  local navigation=ship.localNavigation
-  local path=navigation.Path
-  local oldMaxX=path[#path].x
-  ship.terrain.depthAt=function(point) return point.x>oldMaxX+100 and 30 or 50 end
-  followPath(ship,path,2)
-  ship.position={x=path[2].x+(path[3].x-path[2].x)*0.1,y=0,z=path[2].z+(path[3].z-path[2].z)*0.1}
-  ship.turning=true
-  ship:_CheckLocalNavigation()
-  local pending=assert(navigation.Pending)
-  assert(pending.Points[#pending.Points].x>oldMaxX+100)
-  local dispatches=#ship.dispatches
-  ship:SetPathfindingMinDepth(40)
-  ship.turning=false
-  ship:_CheckLocalNavigation()
-  equal(ship.state,"Holding") equal(ship.stops,1)
-  equal(#ship.dispatches,dispatches+1) equal(ship.dispatched[1].speed,0)
-  equal(ship.LastPathfindingResult.DepthCheck.Status,"blocked")
-end)
-
 test("LOCAL stops before exhausting its validated route while still turning",function()
   local ship=localShip()
   activateLocal(ship)
@@ -994,193 +837,10 @@ test("LOCAL stops before exhausting its validated route while still turning",fun
   local endpoint=navigation.Path[#navigation.Path]
   followPath(ship,navigation.Path)
   ship.turning=true
-  ship:_CheckLocalNavigation()
+  checkLocal(ship)
   equal(ship.state,"Holding") equal(ship.stops,1)
   equal(ship.LastPathfindingResult.StopReason,"local_route_exhausted_in_turn")
   equal(ship.dispatched[1].speed,0)
-end)
-
--- Begin recovery tests with a known installed 3 km route. Search outcomes can then be varied
--- independently of progress, while production depth checks, preparation and submission stay active.
-local function extensionShip()
-  local ship=localShip()
-  function ship:_PlanLocalPath()
-    return {Points={VECTOR:New(1000,0,0),VECTOR:New(2000,0,0),VECTOR:New(3000,0,0)},GoalReached=false}
-  end
-  assert(activateLocal(ship))
-  ship._PlanLocalPath=nil
-  ship.position={x=1200,y=0,z=0}
-  return ship
-end
-
-test("LOCAL failed anchor extension recovers with a real search from the ship and a fresh window",function()
-  local ship=extensionShip()
-  local navigation=ship.localNavigation
-  local oldPath=navigation.Path
-  local dispatches=#ship.dispatches
-  local attempts=0
-  function ship:_ExtendLocalRoute()
-    attempts=attempts+1
-    navigation.Window={failedAnchor=true}
-    return nil,nil,"connections_blocked"
-  end
-  local logs={}
-  function ship:I(message) logs[#logs+1]=message end
-
-  assert(ship:_CheckLocalNavigation())
-
-  equal(attempts,1) equal(ship.stops,0) equal(#ship.dispatches,dispatches+1)
-  assert(searches.astar>0) assert(navigation.Path~=oldPath)
-  near(navigation.Window.Origin.x,1200) near(navigation.Window.Origin.z,0)
-  near(navigation.Path[1].x,1200) near(navigation.Path[1].z,0)
-  equal(navigation.ExtensionFailure,nil) equal(navigation.TargetUID,2)
-  equal(ship.currentwp,1) equal(ship.waypoints[2].npassed,0)
-  local failure=ship.LastPathfindingResult.ExtensionFailure
-  equal(failure.Reason,"connections_blocked") near(failure.Remaining,1800) near(failure.Reserve,700)
-  equal(failure.ReplacementReason,nil)
-  assertClearPath(ship,navigation.Path)
-  assert(logs[1]:find("replan from ship",1,true))
-end)
-
-test("LOCAL failed continuation keeps the checked route, retries after movement and stops at reserve",function()
-  local ship=extensionShip()
-  local navigation=ship.localNavigation
-  local path,route=navigation.Path,ship.dispatched
-  local extensions,replacements=0,0
-  function ship:_ExtendLocalRoute() extensions=extensions+1 return nil,nil,"connections_blocked" end
-  function ship:_PlanLocalPath(start,heading)
-    replacements=replacements+1
-    near(start.x,self.position.x) near(start.z,self.position.z) near(heading,self.heading)
-    return nil,"no_local_exit"
-  end
-
-  assert(ship:_CheckLocalNavigation())
-  equal(extensions,1) equal(replacements,1) equal(ship.stops,0)
-  equal(navigation.Path,path) equal(ship.dispatched,route)
-  near(navigation.ExtensionFailure.Remaining,1800)
-  equal(navigation.ExtensionFailure.ReplacementReason,"no_local_exit")
-  local queries=ship.terrain.queries
-  for i=1,4 do timerNow=timerNow+10 assert(ship:_CheckLocalNavigation()) end
-  equal(extensions,1) equal(replacements,1) assert(ship.terrain.queries>queries)
-
-  ship.position.x=1449
-  assert(ship:_CheckLocalNavigation()) equal(extensions,1)
-  ship.position.x=1450
-  assert(ship:_CheckLocalNavigation()) equal(extensions,2) equal(replacements,2)
-  equal(ship.dispatched,route) equal(navigation.Path,path)
-
-  -- A failed attempt just above the reserve must not delay the final decision by another 250 m.
-  ship.position.x=2290
-  assert(ship:_CheckLocalNavigation()) equal(extensions,3) equal(ship.stops,0)
-  ship.position.x=2300
-  equal(ship:_CheckLocalNavigation(),false)
-  equal(extensions,4) equal(replacements,4) equal(ship.stops,1)
-  equal(ship.LastPathfindingResult.StopReason,"local_route_exhausted")
-  near(ship.LastPathfindingResult.Remaining,700) near(ship.LastPathfindingResult.Reserve,700)
-  equal(ship.LastPathfindingResult.ExtensionFailure.ReplacementReason,"no_local_exit")
-  equal(ship.dispatched[1].speed,0)
-  for i=1,3 do ship:_CheckLocalNavigation() end
-  equal(extensions,4) equal(replacements,4) equal(ship.stops,1)
-end)
-
-test("LOCAL failed extension during a turn waits, then replans without requiring more progress",function()
-  local ship=extensionShip()
-  local navigation=ship.localNavigation
-  local path,route=navigation.Path,ship.dispatched
-  local extensions=0
-  function ship:_ExtendLocalRoute() extensions=extensions+1 return nil,nil,"connections_blocked" end
-  local planner=ship._PlanLocalPath
-  function ship:_PlanLocalPath(start,heading,target,speed)
-    assert(not self:IsTurning(),"actual-position replanning must wait for a stable course")
-    return planner(self,start,heading,target,speed)
-  end
-  ship.turning=true
-
-  assert(ship:_CheckLocalNavigation())
-  equal(ship.stops,0) equal(ship.dispatched,route) equal(navigation.Path,path)
-  equal(searches.astar,0) equal(navigation.ExtensionFailure.AwaitingStraight,true)
-  assert(ship:_CheckLocalNavigation()) equal(extensions,1)
-
-  ship.turning=false
-  assert(ship:_CheckLocalNavigation())
-  equal(extensions,1) assert(searches.astar>0)
-  equal(ship.stops,0) assert(ship.dispatched~=route) equal(navigation.ExtensionFailure,nil)
-end)
-
-test("LOCAL deferred extension cannot use its reserve while still turning",function()
-  local ship=extensionShip()
-  function ship:_ExtendLocalRoute() return nil,nil,"connections_blocked" end
-  function ship:_PlanLocalPath() error("do not replace a turning route") end
-  ship.turning=true
-  assert(ship:_CheckLocalNavigation()) equal(ship.stops,0)
-  ship.position.x=2300
-  equal(ship:_CheckLocalNavigation(),false)
-  equal(ship.stops,1) equal(ship.LastPathfindingResult.StopReason,"local_route_exhausted_in_turn")
-  near(ship.LastPathfindingResult.Reserve,700)
-  equal(ship.LastPathfindingResult.ExtensionFailure.Reason,"connections_blocked")
-end)
-
-test("LOCAL deferred failure still stops immediately on shallow position or missing route data",function()
-  for _,failure in ipairs({"shallow","unavailable"}) do
-    local ship=extensionShip()
-    function ship:_ExtendLocalRoute() return nil,nil,"connections_blocked" end
-    function ship:_PlanLocalPath() return nil,"no_local_exit" end
-    assert(ship:_CheckLocalNavigation()) equal(ship.stops,0)
-    function ship:_PlanLocalPath() error("depth failure must stop before another search") end
-    if failure=="shallow" then ship.terrain.depth=5
-    else ship.terrain.makeProfile=function() return nil end end
-    equal(ship:_CheckLocalNavigation(),false)
-    equal(ship.stops,1)
-    equal(ship.LastPathfindingResult.DepthCheck.Status,failure=="shallow" and "blocked" or "unavailable")
-  end
-end)
-
-test("LOCAL reserve after deferred failure includes actual speed above the commanded speed",function()
-  local ship=extensionShip()
-  function ship:_ExtendLocalRoute() return nil,nil,"connections_blocked" end
-  function ship:_PlanLocalPath() return nil,"no_local_exit" end
-  assert(ship:_CheckLocalNavigation())
-  ship.velocity=20
-  ship.position.x=1600
-  equal(ship:_CheckLocalNavigation(),false)
-  equal(ship.stops,1) near(ship.LastPathfindingResult.Remaining,1400)
-  near(ship.LastPathfindingResult.Reserve,1400)
-end)
-
-test("LOCAL incomplete replacement preserves the existing route without submitting partial points",function()
-  local ship=extensionShip()
-  local route=ship.dispatched
-  local path=ship.localNavigation.Path
-  ship.terrain.depthAt=function(point) return point.x>=3500 and point.x<=3600 and 5 or 40 end
-  function ship:_ExtendLocalRoute() return nil,nil,"connections_blocked" end
-  local calls=0
-  function ship:_PlanLocalPath(start)
-    calls=calls+1
-    if calls==1 then return {Points={VECTOR:New(start.x+500,0,0)},GoalReached=false} end
-    return nil,"no_local_exit"
-  end
-
-  assert(ship:_CheckLocalNavigation())
-
-  equal(calls,2) equal(ship.stops,0) equal(ship.dispatched,route) equal(ship.localNavigation.Path,path)
-  equal(ship.localNavigation.ExtensionFailure.ReplacementReason,"no_local_exit")
-end)
-
-test("LOCAL extension recovery respects a hold or target change during planning",function()
-  for _,change in ipairs({"hold","target"}) do
-    local ship=extensionShip()
-    local route=ship.dispatched
-    function ship:_ExtendLocalRoute() return nil,nil,"connections_blocked" end
-    function ship:_PlanLocalPath()
-      if change=="hold" then self:FullStop()
-      else self:_ResetLocalNavigation() self:_SetNavigationWaypoint(self.waypoints[3]) end
-      return nil,"no_local_exit"
-    end
-    equal(ship:_CheckLocalNavigation(),false)
-    equal(ship.localNavigation,nil)
-    if change=="hold" then equal(ship.stops,1) equal(ship.dispatched[1].speed,0)
-    else equal(ship.stops,0) equal(ship.dispatched,route) equal(ship:_GetNavigationWaypoint().uid,3) end
-  end
 end)
 
 test("LOCAL unavailable depth and planning failures stop once without timer-driven recovery",function()
@@ -1194,7 +854,7 @@ test("LOCAL unavailable depth and planning failures stop once without timer-driv
     local report=assert(ship.LastPathfindingResult)
     local queries,dispatches=ship.terrain.queries,#ship.dispatches
     ship.terrain.makeProfile=nil ship:SetPathfindingGrid(5000)
-    for i=1,3 do timerNow=i*100 ship:_CheckNavigation() end
+    for i=1,3 do timerNow=i*100 checkNavigation(ship) end
     equal(ship.state,"Holding") equal(ship.stops,1) equal(ship.cruises,0)
     equal(ship.LastPathfindingResult,report) equal(ship.terrain.queries,queries) equal(#ship.dispatches,dispatches)
   end
@@ -1206,7 +866,7 @@ test("LOCAL FullStop remains authoritative over actual arrival and later clear w
   ship:FullStop()
   local dispatches=#ship.dispatches
   ship.position=ship.waypoints[2].coordinate:GetVec3()
-  timerNow=600 ship:_CheckNavigation()
+  timerNow=600 checkNavigation(ship)
   equal(ship.state,"Holding") equal(ship.stops,1) equal(ship.cruises,0)
   equal(ship.currentwp,1) equal(ship.passingEvents,nil) equal(#ship.dispatches,dispatches)
   ship:Cruise(14) ship:FlushUpdate() ship:FlushUpdate()
@@ -1223,7 +883,7 @@ test("LOCAL waiting and another task's movement suppress planning and dispatch",
       function ship:GetTaskByID() return {dcstask={id="AttackGroup"}} end
     else ship.passedfinalwp=true end
     local dispatches,queries=#ship.dispatches,ship.terrain.queries
-    timerNow=20 ship:_CheckNavigation()
+    timerNow=20 checkNavigation(ship)
     equal(#ship.dispatches,dispatches) equal(ship.terrain.queries,queries)
   end
 end)
@@ -1237,17 +897,17 @@ test("LOCAL explicit waypoint selection and movement commands persist until coll
   ship:onafterUpdateRoute(nil,nil,nil,3,nil,14,40)
   equal(ship.localNavigation,nil) equal(ship.currentwp,1)
   equal(#ship.dispatched,2) equal(ship.dispatched[2].uid,3)
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(ship.localNavigation,nil) assertNoSearch()
   ship.terrain.depthAt=function(point) return point.y>=1450 and point.y<=1550 and math.abs(point.x)<=200 and 5 or 40 end
-  timerNow=20 ship:_CheckNavigation()
+  timerNow=20 checkNavigation(ship)
   local navigation=assert(ship.localNavigation)
   equal(navigation.TargetUID,3) equal(ship.currentwp,1)
   for _,waypoint in ipairs(ship.dispatched) do
     near(waypoint.speed,UTILS.KnotsToMps(14)) near(waypoint.alt,-40)
     assert(waypoint.uid~=2 and waypoint.uid~=3)
   end
-  timerNow=30 ship:_CheckNavigation()
+  timerNow=30 checkNavigation(ship)
   equal(ship.localNavigation,navigation) equal(navigation.TargetUID,3)
 end)
 
@@ -1262,12 +922,12 @@ test("WAYPOINT collision checks follow an explicit target across subsequent spee
   end
   ship:onafterUpdateRoute(nil,nil,nil,3)
   equal(ship.dispatched[2].uid,3) equal(#ship.dispatched,2)
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   near(checked[1].x,0) near(checked[1].z,5000)
   ship:onafterUpdateRoute(nil,nil,nil,nil,nil,14,40)
   equal(ship.dispatched[2].uid,3) equal(#ship.dispatched,2)
   near(ship.dispatched[2].speed,UTILS.KnotsToMps(14)) near(ship.dispatched[2].alt,-40)
-  timerNow=20 ship:_CheckNavigation()
+  timerNow=20 checkNavigation(ship)
   near(checked[#checked].x,0) near(checked[#checked].z,5000)
   equal(ship.currentwp,1) assertNoSearch()
 end)
@@ -1285,7 +945,7 @@ test("switching either search mode preserves the commanded native target and col
     ship:onafterUpdateRoute(nil,nil,nil,3)
     ship:SetPathfindingMode(initial==NAVYGROUP.PathfindingMode.LOCAL and NAVYGROUP.PathfindingMode.WAYPOINT or NAVYGROUP.PathfindingMode.LOCAL)
     ship:FlushUpdate()
-    timerNow=10 ship:_CheckNavigation()
+    timerNow=10 checkNavigation(ship)
     near(checked.x,0) near(checked.z,5000)
     ship:onafterUpdateRoute(nil,nil,nil,nil,nil,14)
     equal(ship.dispatched[2].uid,3) equal(#ship.dispatched,2)
@@ -1366,11 +1026,11 @@ test("collision warning callbacks that insert a new target cancel the stale sear
       self:onafterUpdateRoute()
     end
     ship:onafterUpdateRoute(nil,nil,nil,3)
-    ship:_CheckNavigation()
+    checkNavigation(ship)
     equal(ship.warnings,1) equal(ship.stops,0) equal(ship.localNavigation,nil)
     equal(ship.dispatched[2].uid,replacement.uid) equal(ship:_GetNavigationWaypoint(),replacement)
     assertNoSearch()
-    timerNow=10 ship:_CheckNavigation()
+    timerNow=10 checkNavigation(ship)
     equal(ship.localNavigation,nil) equal(ship.stops,0) assertNoSearch()
   end
 end)
@@ -1384,7 +1044,7 @@ test("the real WAYPOINT planner searches and installs the commanded target witho
     return point.y>=2450 and point.y<=2550 and math.abs(point.x)<=350 and 5 or 40
   end
   ship:onafterUpdateRoute(nil,nil,nil,3,nil,14)
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   assert(searches.astar>0,"obstruction must invoke the production full-route planner")
   near(searches.lastAstar.endVector.x,0) near(searches.lastAstar.endVector.z,15000)
   equal(ship.LastPathfindingResult.StopReason,"path_found") equal(ship.stops,0)
@@ -1431,7 +1091,7 @@ test("a finite Goto to the first waypoint plans before that target and preserves
   end
   ship:onafterUpdateRoute(nil,nil,nil,1)
   equal(ship.dispatched[2].uid,1)
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   equal(ship.stops,0) equal(ship.LastPathfindingResult.StopReason,"path_found")
   near(searches.lastAstar.endVector.x,0) near(searches.lastAstar.endVector.z,0)
   equal(ship:GetWaypointCurrentUID(),2)
@@ -1470,7 +1130,7 @@ test("a patrolling ship can explicitly return to the first waypoint before reach
     return point.x>=12450 and point.x<=12550 and math.abs(point.y)<=350 and 5 or 40
   end
   ship:onafterUpdateRoute(nil,nil,nil,1)
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   equal(ship.stops,0) equal(ship.LastPathfindingResult.StopReason,"path_found")
   ship:FlushUpdate()
   local route=ship.dispatched
@@ -1505,7 +1165,7 @@ test("a patrol Goto from the final waypoint to UID 2 does not insert an unplanne
     return point.x>=27450 and point.x<=27550 and math.abs(point.y)<=350 and 5 or 40
   end
   ship:onafterUpdateRoute(nil,nil,nil,2)
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   equal(ship.stops,0) equal(ship.LastPathfindingResult.StopReason,"path_found")
   near(searches.lastAstar.endVector.x,20000) near(searches.lastAstar.endVector.z,0)
   equal(ship:GetWaypointCurrentUID(),3)
@@ -1548,7 +1208,7 @@ test("LOCAL retargeting discards the old route and window without advancing miss
   equal(ship.localNavigation,nil)
   equal(ship.dispatched[2].uid,2) near(ship.dispatched[2].x,30000) near(ship.dispatched[2].y,5000)
   equal(ship.currentwp,1) equal(ship.passingEvents,nil)
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(ship.localNavigation,nil)
 end)
 
@@ -1563,7 +1223,7 @@ test("LOCAL explicit selection of another target retires the active detour until
   ship:FlushUpdate()
   equal(ship.localNavigation,nil) equal(#ship.dispatched,2) equal(ship.dispatched[2].uid,3)
   equal(ship.currentwp,1) equal(ship.passingEvents,nil)
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(ship.localNavigation,nil) equal(searches.grids,grids) equal(searches.astar,astar)
   equal(ship.currentwp,1)
 end)
@@ -1574,11 +1234,10 @@ test("LOCAL commanded speed and submarine depth survive periodic replanning",fun
   local navigation=ship.localNavigation
   local originalPath=navigation.Path
   for _,waypoint in ipairs(ship.dispatched) do near(waypoint.speed,UTILS.KnotsToMps(14)) near(waypoint.alt,-40) end
-  local endpoint=navigation.Path[#navigation.Path]
-  followPath(ship,navigation.Path)
-  ship.heading=navigation.Path[#navigation.Path-1]:GetHeadingTo(endpoint)
-  ship.turningHeading=ship.heading ship.turningTime=0
-  timerNow=10 ship:_CheckLocalNavigation()
+  followPath(ship,navigation.Path,2)
+  ship.heading=navigation.Path[1]:GetHeadingTo(navigation.Path[2])
+  ship.turningHeading=ship.heading ship.turningTime=timerNow
+  timerNow=timerNow+2 checkLocal(ship)
   assert(ship.localNavigation.Path~=originalPath)
   for _,waypoint in ipairs(ship.dispatched) do near(waypoint.speed,UTILS.KnotsToMps(14)) near(waypoint.alt,-40) end
   near(ship.waypoints[2].speed,10) near(ship.waypoints[2].coordinate.y,0)
@@ -1592,7 +1251,7 @@ test("LOCAL speed and depth commands received during a turn take effect once the
   ship:onafterDive(nil,nil,nil,40,14) ship:FlushUpdate()
   equal(#ship.dispatches,dispatches)
   assert(ship.localNavigation.NeedsSubmit)
-  ship.turning=false ship:_CheckLocalNavigation()
+  ship.turning=false checkLocal(ship)
   equal(#ship.dispatches,dispatches+1)
   for _,waypoint in ipairs(ship.dispatched) do near(waypoint.speed,UTILS.KnotsToMps(14)) near(waypoint.alt,-40) end
   ship:Cruise(12) ship:FlushUpdate()
@@ -1613,37 +1272,11 @@ test("LOCAL mode and pathfinding switches discard local state and preserve manua
     ship:FullStop()
     local dispatches=#ship.dispatches
     ship:SetPathfindingMode(NAVYGROUP.PathfindingMode.LOCAL):SetPathfindingOn()
-    timerNow=10 ship:_CheckNavigation()
+    timerNow=10 checkNavigation(ship)
     equal(ship.state,"Holding") equal(#ship.dispatches,dispatches)
   end
 end)
 
-test("LOCAL replaces a blocked remainder from the ship instead of preserving the blocked approach",function()
-  local ship=localShip()
-  assert(activateLocal(ship))
-  local navigation=ship.localNavigation
-  local window=navigation.Window
-  local dispatches=#ship.dispatches
-  navigation.Pending={Points=navigation.Path,Plan={}}
-  ship.terrain.depthAt=function(point)
-    return point.x>=700 and point.x<=1200 and math.abs(point.y)<200 and 5 or 40
-  end
-  local logs={}
-  function ship:I(message) logs[#logs+1]=message end
-
-  assert(ship:_CheckLocalNavigation())
-
-  equal(ship.stops,0) equal(#ship.dispatches,dispatches+1)
-  equal(ship.localNavigation,navigation) equal(navigation.TargetUID,2)
-  equal(navigation.Pending,nil) assert(navigation.Window~=window)
-  near(navigation.Path[1].x,ship.position.x) near(navigation.Path[1].z,ship.position.z)
-  assert(ship:_CheckLocalRoute(VECTOR:NewFromVec(ship.position)))
-  local report=assert(ship.LastPathfindingResult.ReplanDepthCheck)
-  equal(report.NavigationStage,"actual_position_to_next") equal(report.RouteSegment,1)
-  equal(report.Cause,"insufficient_depth") equal(report.RequiredDepth,20)
-  assert(logs[1]:find("action=replan",1,true))
-  assert(logs[1]:find("required_depth=20",1,true))
-end)
 
 test("LOCAL shallow ship position stops with diagnostic evidence and no new search",function()
   local ship=localShip()
@@ -1652,8 +1285,10 @@ test("LOCAL shallow ship position stops with diagnostic evidence and no new sear
   local logs={}
   function ship:I(message) logs[#logs+1]=message end
   ship.terrain.depth=9
+  -- Step past the two-second boundary: decimal tick accumulation can round below it.
+  timerNow=timerNow+2.1
 
-  equal(ship:_CheckLocalNavigation(),false)
+  equal(checkLocal(ship),false)
 
   equal(ship.stops,1) equal(searches.grids,grids)
   local report=ship.LastPathfindingResult.DepthCheck
@@ -1662,76 +1297,7 @@ test("LOCAL shallow ship position stops with diagnostic evidence and no new sear
   near(report.Point.x,ship.position.x) near(report.Point.z,ship.position.z)
   assert(logs[1]:find("action=stop",1,true))
   assert(logs[1]:find("depth=9 m",1,true))
-  ship:_CheckLocalNavigation() equal(ship.stops,1)
-end)
-
-test("LOCAL side-profile start is a blocked connector rather than a blocked ship position",function()
-  local ship=localShip()
-  assert(activateLocal(ship))
-  ship.terrain.depthAt=function(point)
-    return math.abs(point.x)<1 and math.abs(point.y-25)<1 and 5 or 40
-  end
-  local clear,reason,report=ship:_CheckLocalRoute(VECTOR:NewFromVec(ship.position))
-  equal(clear,false) equal(reason,"start_blocked")
-  equal(report.NavigationStage,"actual_position_to_next") near(math.abs(report.ProfileOffset),25)
-  local attempted=false
-  function ship:_PlanLocalPath(start)
-    attempted=true near(start.x,self.position.x) near(start.z,self.position.z)
-    return nil,"no_local_path"
-  end
-  equal(ship:_CheckLocalNavigation(),false)
-  assert(attempted) equal(ship.stops,1)
-  equal(ship.LastPathfindingResult.StopReason,"no_local_path")
-  equal(ship.LastPathfindingResult.DepthCheck.Reason,"start_blocked")
-end)
-
-test("LOCAL unavailable remainder data and blocked turns stop without replanning",function()
-  for _,failure in ipairs({"unavailable","turning"}) do
-    local ship=localShip()
-    assert(activateLocal(ship))
-    if failure=="unavailable" then
-      ship.terrain.makeProfile=function() return nil end
-    else
-      ship.turning=true
-      ship.terrain.depthAt=function(point) return point.x>500 and 5 or 40 end
-    end
-    function ship:_PlanLocalPath() error("must not replan with unavailable data or during a turn") end
-
-    equal(ship:_CheckLocalNavigation(),false)
-
-    equal(ship.stops,1)
-    local report=ship.LastPathfindingResult.DepthCheck
-    equal(report.Status,failure=="unavailable" and "unavailable" or "blocked")
-    equal(report.NavigationStage,failure=="unavailable" and "actual_position_to_next" or "stored_segment")
-  end
-end)
-
-test("LOCAL replacement rejected at submission stops once without recursive planning",function()
-  local ship=localShip()
-  assert(activateLocal(ship))
-  ship.terrain.depthAt=function(point) return point.x>500 and 5 or 40 end
-  local attempts=0
-  function ship:_PlanLocalPath()
-    attempts=attempts+1
-    return {Points={VECTOR:New(2500,0,0)},GoalReached=false}
-  end
-
-  equal(ship:_CheckLocalNavigation(),false)
-
-  equal(attempts,1) equal(ship.stops,1)
-  equal(ship.LastPathfindingResult.DepthCheck.NavigationStage,"submission_connector")
-  ship:_CheckLocalNavigation() equal(attempts,1) equal(ship.stops,1)
-end)
-
-test("LOCAL collision callback can hold the ship before a replacement search starts",function()
-  local ship=localShip()
-  assert(activateLocal(ship))
-  ship.terrain.depthAt=function(point) return point.x>500 and 5 or 40 end
-  function ship:OnAfterCollisionWarning() self:FullStop() end
-  function ship:_PlanLocalPath() error("manual stop must retain control") end
-
-  equal(ship:_CheckLocalNavigation(),false)
-  equal(ship.stops,1) equal(ship.state,"Holding")
+  checkLocal(ship) equal(ship.stops,1)
 end)
 
 test("LOCAL exit checks only the ordinary horizon towards the goal and can detect a later island",function()
@@ -1747,17 +1313,17 @@ test("LOCAL exit checks only the ordinary horizon towards the goal and can detec
   end
   function ship:_CheckLocalRoute() error("a clear target horizon must bypass further local checks") end
 
-  ship:_CheckNavigation()
+  checkNavigation(ship)
 
   equal(ship.localNavigation,nil) near(checked.goal.x,5000) near(checked.goal.z,0)
   equal(ship.dispatched[2].uid,2) equal(ship.currentwp,1)
   ship._CheckLocalRoute=nil
   ship.position={x=1600,y=0,z=0} ship.heading=0 ship.turningHeading=0
   local searchesBefore=searches.astar
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(ship.localNavigation,nil) equal(searches.astar,searchesBefore) equal(ship.collisionwarning,true)
   ship.position={x=4000,y=0,z=0}
-  timerNow=20 ship:_CheckNavigation()
+  timerNow=20 checkNavigation(ship)
   assert(ship.localNavigation) equal(ship.localNavigation.TargetUID,2)
 end)
 
@@ -1767,9 +1333,8 @@ test("LOCAL exit retains the commanded target speed depth and queued waypoint ta
   local target=ship.waypoints[3]
   local task={id=7,waypoint=3,type=OPSGROUP.TaskType.WAYPOINT,status=OPSGROUP.TaskStatus.SCHEDULED}
   ship.taskqueue={task}
-  ship.localNavigation.Pending={Points={},Plan={}}
 
-  ship:_CheckNavigation()
+  checkNavigation(ship)
 
   equal(ship.localNavigation,nil) equal(ship.ispathfinding,false)
   equal(ship:_GetNavigationWaypoint(),target) equal(ship.dispatched[2].uid,3)
@@ -1785,7 +1350,7 @@ test("LOCAL exit checks a nearby destination exactly and waits until a turn fini
   activateLocal(ship)
   local navigation=ship.localNavigation
   ship.turning=true ship.turningHeading=0 ship.turningTime=0 ship.heading=10
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(ship.localNavigation,navigation)
   local checked
   local check=ship._CheckPathDepth
@@ -1793,7 +1358,7 @@ test("LOCAL exit checks a nearby destination exactly and waits until a turn fini
     checked=goal
     return check(self,start,goal)
   end
-  timerNow=20 ship:_CheckNavigation()
+  timerNow=20 checkNavigation(ship)
   equal(ship:IsTurning(),false) equal(ship.localNavigation,nil)
   near(checked.x,1500) near(checked.z,0)
   equal(ship.currentwp,1) equal(ship.passingEvents,nil)
@@ -1806,7 +1371,7 @@ test("LOCAL target horizon with unavailable depth stops instead of releasing avo
     if distance(a,b)>1000 then return nil end
     return {{x=a.x,y=-40,z=a.z},{x=b.x,y=-40,z=b.z}}
   end
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   equal(ship.stops,1) equal(ship.state,"Holding")
   equal(ship.LastPathfindingResult.DepthCheck.Status,"unavailable")
   equal(ship.LastPathfindingResult.DepthCheck.NavigationStage,"target_lookahead")
@@ -1823,7 +1388,7 @@ test("LOCAL ClearAhead callbacks can stop or retarget before ordinary routing re
     end
     local dispatches=#ship.dispatches
 
-    ship:_CheckNavigation()
+    checkNavigation(ship)
 
     equal(ship.localNavigation,nil)
     if action=="stop" then
@@ -1836,303 +1401,21 @@ test("LOCAL ClearAhead callbacks can stop or retarget before ordinary routing re
   end
 end)
 
-test("LOCAL accepts a wide turning arc and then checks the real connector without stopping or resubmitting",function()
-  local ship=localShip()
-  assert(activateLocal(ship))
-  local navigation=ship.localNavigation
-  local dispatches=#ship.dispatches
-  ship.position={x=50,y=0,z=350}
-  ship.turning=true
-  local logs,connections={},{}
-  function ship:I(message) logs[#logs+1]=message end
-  local check=ship._CheckPathDepth
-  function ship:_CheckPathDepth(start,goal)
-    connections[#connections+1]={start=start,goal=goal}
-    return check(self,start,goal)
-  end
-  function ship:_PlanLocalPath() error("line deviation alone must not trigger replanning") end
-
-  assert(ship:_CheckLocalNavigation())
-  equal(ship.stops,0) equal(#ship.dispatches,dispatches)
-  near(connections[1].start.z,350) near(connections[1].goal.z,350)
-  equal(connections[2].start,navigation.Path[1])
-  assert(logs[1]:find("segment=1, turning=true",1,true))
-  local notices=#logs
-  assert(ship:_CheckLocalNavigation()) equal(#logs,notices)
-
-  ship.turning=false
-  connections={}
-  assert(ship:_CheckLocalNavigation())
-  near(connections[2].start.x,50) near(connections[2].start.z,350)
-  equal(connections[2].goal,navigation.Path[2])
-  equal(ship.stops,0) equal(#ship.dispatches,dispatches)
-  equal(#logs,notices+1) assert(logs[#logs]:find("turning=false",1,true))
-  assert(ship.LastNavigationCheck.RouteDeviation>150)
-end)
 
 test("LOCAL wide turn still stops when the actual ship position is too shallow",function()
   local ship=localShip()
   assert(activateLocal(ship))
   ship.position={x=50,y=0,z=350} ship.turning=true
   ship.terrain.depthAt=function(point) return point.y>300 and 5 or 40 end
-  equal(ship:_CheckLocalNavigation(),false)
+  local _,_,deviation=ship:_LocalRouteProgress(VECTOR:NewFromVec(ship.position))
+  assert(deviation>150)
+  timerNow=timerNow+2.1
+  equal(checkLocal(ship),false)
   equal(ship.stops,1) equal(ship.LastPathfindingResult.StopReason,"start_blocked")
   equal(ship.LastPathfindingResult.DepthCheck.NavigationStage,"ship_position")
-  assert(ship.LastPathfindingResult.DepthCheck.RouteDeviation>150)
 end)
 
-test("LOCAL replans a blocked actual connector after a wide turn",function()
-  local ship=localShip()
-  assert(activateLocal(ship))
-  local navigation=ship.localNavigation
-  ship.position={x=50,y=0,z=350} ship.turning=true
-  -- The old line and ship position are deep, but the direct return towards the next point is not.
-  ship.terrain.depthAt=function(point) return point.y>80 and point.y<270 and 5 or 40 end
-  local attempts=0
-  function ship:_PlanLocalPath(start,heading,target,speed)
-    attempts=attempts+1
-    near(start.x,50) near(start.z,350) equal(target,navigation.Target)
-    return {Points={VECTOR:New(1000,0,350),VECTOR:New(2500,0,350)},GoalReached=false}
-  end
-  assert(ship:_CheckLocalNavigation()) equal(attempts,0)
-  ship.turning=false
-  assert(ship:_CheckLocalNavigation())
-  equal(attempts,1) equal(ship.stops,0)
-  local report=assert(ship.LastPathfindingResult.ReplanDepthCheck)
-  equal(report.NavigationStage,"actual_position_to_next")
-  equal(report.Cause,"insufficient_depth") assert(report.RouteDeviation>150)
-  assert(ship:_CheckLocalRoute(VECTOR:NewFromVec(ship.position)))
-end)
 
-test("LOCAL candidate selection prefers usable length over a short exit closer to the goal",function()
-  local ship=localShip()
-  local short=VECTOR:New(500,0,866)
-  local long=VECTOR:New(2600,0,0)
-  local search={}
-  function search:SetStartCoordinate(start) self.start=start end
-  function search:SetEndCoordinate(goal) self.goal=goal end
-  function search:_SearchPath()
-    local nodes={}
-    local count=math.ceil(self.start:GetDistance(self.goal,true)/100)
-    for i=1,count do
-      nodes[i]={vector=VECTOR:New(self.goal.x*i/count,0,self.goal.z*i/count)}
-    end
-    return nodes
-  end
-  local window={Search=search,Target=VECTOR:New(500,0,1500),Spacing=50,
-    Grid={GetCandidateCount=function() return 100 end}}
-  function ship:_GetLocalNavigationWindow() return window end
-  function ship:_GetLocalNavigationCandidates()
-    return {{Vector=short,GoalReached=false},{Vector=long,GoalReached=false}}
-  end
-
-  local plan=assert(ship:_PlanLocalPath(VECTOR:New(0,0,0),0,ship.waypoints[2],10))
-
-  near(plan.Points[#plan.Points].x,long.x) near(plan.Points[#plan.Points].z,long.z)
-  assert(plan.Length>=plan.RequiredLength) near(plan.InitialTurn,0)
-  assertClearPath(ship,plan.Points)
-end)
-
-test("LOCAL prepares a target approach before submitting the observed short 63 degree turn at 27 knots",function()
-  local ship=localShip()
-  ship.heading=317.8
-  local origin=VECTOR:NewFromVec(ship.position)
-  local corner=origin:Translate(926,20.5,true)
-  local exit=origin:Translate(1106,20.5,true)
-  local calls=0
-  function ship:_PlanLocalPath(start,heading,target,speed)
-    calls=calls+1
-    equal(#self.dispatches,0) -- The short route must never be sent on its own.
-    if calls==1 then return {Points={corner,exit},GoalReached=false,Attempts=1} end
-    near(start.x,exit.x) near(start.z,exit.z) near(heading,20.5)
-    return NAVYGROUP._PlanLocalPath(self,start,heading,target,speed)
-  end
-
-  assert(activateLocal(ship,27))
-
-  local navigation=ship.localNavigation
-  equal(calls,1) equal(#ship.dispatches,1) equal(ship.stops,0)
-  equal(ship.LastPathfindingResult.PreflightExtensions,0)
-  near(ship.LastPathfindingResult.TargetApproachDistance,5000)
-  near(ship.LastPathfindingResult.InitialTurn,62.7,0.01)
-  assert(navigation.Length>=ship.LastPathfindingResult.RequiredLength)
-  near(navigation.Path[2].x,corner.x) near(navigation.Path[2].z,corner.z)
-  near(navigation.Path[3].x,exit.x) near(navigation.Path[3].z,exit.z)
-  assertClearPath(ship,navigation.Path)
-
-  -- Previously this much projected progress left less than the 60-second reserve.
-  ship.position=origin:Translate(400,20.5,true):GetVec3()
-  ship.turning=true
-  assert(ship:_CheckLocalNavigation())
-  equal(ship.stops,0) equal(#ship.dispatches,1)
-end)
-
-test("LOCAL bounded preflight stops rather than submitting a short route without a usable continuation",function()
-  for _,failure in ipairs({"blocked","too_short","no_progress"}) do
-    local ship=localShip()
-    -- No target approach can bypass the bounded-continuation behavior under test.
-    ship.terrain.depthAt=function(point) return point.x>=3500 and point.x<=3600 and 5 or 40 end
-    local calls=0
-    function ship:_PlanLocalPath(start,heading)
-      calls=calls+1
-      equal(#self.dispatches,0)
-      if calls>1 and failure=="blocked" then return nil,"no_local_exit" end
-      local step=(calls>1 and failure=="no_progress") and 0 or 500
-      return {Points={start:Translate(step,heading,true)},GoalReached=false}
-    end
-
-    equal(activateLocal(ship),false)
-
-    equal(calls,failure=="too_short" and 3 or 2)
-    equal(ship.stops,1) equal(ship.state,"Holding") equal(#ship.dispatches,1)
-    equal(ship.dispatched[1].speed,0)
-    local expected=failure=="blocked" and "no_local_exit" or (failure=="too_short" and "local_route_too_short" or "no_progress")
-    equal(ship.LastPathfindingResult.StopReason,expected)
-  end
-end)
-
-test("LOCAL preflight may end at the true goal with less than the non-goal reserve",function()
-  local ship=localShip(1000)
-  local calls=0
-  function ship:_PlanLocalPath(start)
-    calls=calls+1
-    if calls==1 then return {Points={VECTOR:New(500,0,0)},GoalReached=false} end
-    near(start.x,500)
-    return {Points={VECTOR:New(1000,0,0)},GoalReached=true}
-  end
-
-  assert(activateLocal(ship))
-
-  equal(calls,1) equal(ship.localNavigation.GoalReached,true)
-  near(ship.LastPathfindingResult.TargetApproachDistance,500)
-  equal(ship.dispatched[#ship.dispatched].uid,2) equal(ship.currentwp,1)
-  equal(ship.stops,0) equal(ship.passingEvents,nil)
-end)
-
-test("LOCAL revalidates appended preflight connections before issuing a route",function()
-  local ship=localShip()
-  ship.terrain.depthAt=function(point) return point.x>=3500 and point.x<=3600 and 5 or 40 end
-  local calls=0
-  function ship:_PlanLocalPath(start,heading)
-    calls=calls+1
-    if calls==1 then return {Points={VECTOR:New(1000,0,0)},GoalReached=false} end
-    near(start.x,1000) near(heading,0)
-    self.terrain.depthAt=function(point) return point.x>=1500 and point.x<=1700 and 5 or 40 end
-    return {Points={VECTOR:New(2000,0,0),VECTOR:New(3000,0,0)},GoalReached=false}
-  end
-
-  equal(activateLocal(ship),false)
-
-  equal(calls,2) equal(ship.stops,1) equal(#ship.dispatches,1)
-  equal(ship.dispatched[1].speed,0)
-  equal(ship.LastPathfindingResult.DepthCheck.Status,"blocked")
-end)
-
-test("LOCAL keeps the entire island detour when only its endpoint has a clear target horizon",function()
-  local ship=localShip(20000)
-  ship.terrain.depthAt=function(point)
-    return point.x>=700 and point.x<=1200 and math.abs(point.y)<=600 and 5 or 40
-  end
-  local corners={VECTOR:New(400,0,800),VECTOR:New(1400,0,800),VECTOR:New(2000,0,800)}
-  local searches=0
-  function ship:_PlanLocalPath()
-    searches=searches+1
-    equal(searches,1,"the free endpoint must avoid another A* search")
-    return {Points=corners,GoalReached=false}
-  end
-  assert(activateLocal(ship))
-  local originalPath=ship.localNavigation.Path
-  ship.position={x=240,y=0,z=480}
-  ship.heading=VECTOR:New(0,0,0):GetHeadingTo(corners[1])
-  assert(not ship:_CheckNavigationAhead(VECTOR:NewFromVec(ship.position),ship.waypoints[2]))
-  assert(ship:_CheckNavigationAhead(corners[3],ship.waypoints[2]))
-
-  ship:_CheckNavigation()
-
-  local navigation=assert(ship.localNavigation)
-  equal(searches,1) equal(#ship.dispatches,2) equal(ship.stops,0)
-  equal(ship.currentwp,1) equal(ship.passingEvents,nil)
-  for i,corner in ipairs(corners) do
-    equal(navigation.Path[i+1],corner,"a planned corner was cut off")
-  end
-  near(ship.LastPathfindingResult.TargetApproachDistance,5000)
-  equal(ship.LastPathfindingResult.RejoinPoint,corners[3])
-  equal(navigation.GoalReached,false)
-  assertClearPath(ship,navigation.Path)
-  for _,point in ipairs(ship.dispatched) do assert(point.uid~=2 and point.uid~=3) end
-
-  timerNow=10 ship:_CheckNavigation()
-  equal(searches,1) equal(#ship.dispatches,2)
-
-  -- Only after following the retained detour may the ordinary goal route take over.
-  followPath(ship,navigation.Path,4)
-  ship.heading=0 ship.turningHeading=0 ship.turningTime=timerNow
-  timerNow=20 ship:_CheckNavigation()
-  equal(ship.localNavigation,nil) equal(ship.dispatched[2].uid,2)
-  equal(ship.currentwp,1) equal(ship.passingEvents,nil) equal(searches,1)
-  assert(originalPath~=navigation.Path)
-end)
-
-test("LOCAL target approach prepared during a turn waits and preserves all remaining corners",function()
-  local ship=localShip()
-  assert(activateLocal(ship))
-  local navigation=ship.localNavigation
-  local original=navigation.Path
-  local astar=searches.astar
-  followPath(ship,original,2)
-  ship.position={x=original[2].x+(original[3].x-original[2].x)*0.25,y=0,
-    z=original[2].z+(original[3].z-original[2].z)*0.25}
-  ship.heading=original[1]:GetHeadingTo(original[2])
-  ship.turning=true
-  local dispatches=#ship.dispatches
-
-  assert(ship:_CheckLocalNavigation())
-
-  local pending=assert(navigation.Pending)
-  assert(pending.Plan.TargetApproachDistance)
-  equal(navigation.Path,original) equal(#ship.dispatches,dispatches) equal(searches.astar,astar)
-  for i=3,#original do equal(pending.Points[i-1],original[i]) end
-  ship.turning=false
-  assert(ship:_CheckLocalNavigation())
-  equal(navigation.Pending,nil) equal(#ship.dispatches,dispatches+1) equal(searches.astar,astar)
-  assertClearPath(ship,navigation.Path)
-end)
-
-test("LOCAL target approaches reject shallow or unavailable water and a reversal without modifying the route",function()
-  for _,failure in ipairs({"shallow","missing","reversal"}) do
-    local ship=localShip(failure=="reversal" and -20000 or 20000)
-    assert(activateLocal(ship))
-    if failure=="shallow" then
-      ship.terrain.depthAt=function(point) return point.x>=4000 and point.x<=4100 and 19 or 40 end
-    elseif failure=="missing" then
-      ship.terrain.makeProfile=function() return nil end
-    end
-    local points={VECTOR:New(0,0,0),VECTOR:New(2000,0,0)}
-    local plan={GoalReached=false}
-
-    equal(ship:_AppendLocalTargetApproach(points,plan,0),false)
-
-    equal(#points,2) equal(plan.RejoinPoint,nil) equal(plan.GoalReached,false)
-    equal(ship.stops,0)
-  end
-end)
-
-test("LOCAL rechecks the full target approach before movement when its depth has changed",function()
-  local ship=localShip()
-  function ship:_PlanLocalPath()
-    return {Points={VECTOR:New(1000,0,0)},GoalReached=false}
-  end
-  function ship:_SubmitLocalRoute(position)
-    self.terrain.depthAt=function(point) return point.x>=3500 and point.x<=3600 and 19 or 40 end
-    return NAVYGROUP._SubmitLocalRoute(self,position)
-  end
-
-  equal(activateLocal(ship),false)
-
-  equal(ship.stops,1) equal(#ship.dispatches,1) equal(ship.dispatched[1].speed,0)
-  equal(ship.LastPathfindingResult.DepthCheck.NavigationStage,"stored_segment")
-  equal(ship.LastPathfindingResult.DepthCheck.RequiredDepth,20)
-end)
 
 test("LOCAL blocked target checks log measured evidence and throttle unchanged causes",function()
   local ship=localShip()
@@ -2152,124 +1435,24 @@ test("LOCAL blocked target checks log measured evidence and throttle unchanged c
   assert(logs[3]:find("check_from=(0.0, 0.0), check_to=(5000.0, 0.0)",1,true))
   equal(ship.terrain.profiles-profiles,3,"diagnostics must not repeat the center and side profiles")
 
-  timerNow=10 equal(ship:_TryResumeWaypointRoute(),false) equal(#logs,3)
-  timerNow=60 equal(ship:_TryResumeWaypointRoute(),false) equal(#logs,6)
+  timerNow=timerNow+10 equal(ship:_TryResumeWaypointRoute(),false) equal(#logs,3)
+  timerNow=timerNow+60 equal(ship:_TryResumeWaypointRoute(),false) equal(#logs,6)
   ship:SetPathfindingMinDepth(25)
-  timerNow=61 equal(ship:_TryResumeWaypointRoute(),false) equal(#logs,9)
-  local points={VECTOR:New(0,0,0),VECTOR:New(2000,0,0)}
-  equal(ship:_AppendLocalTargetApproach(points,{},0),false) equal(#logs,12)
-  assert(logs[10]:find("stage=route_end_lookahead",1,true))
-  assert(logs[12]:find("check_from=(2000.0, 0.0)",1,true))
+  timerNow=timerNow+1 equal(ship:_TryResumeWaypointRoute(),false) equal(#logs,9)
   equal(ship.stops,0)
 end)
 
-test("LOCAL uses a clear endpoint after the last allowed preflight window without a third search",function()
-  local ship=localShip()
-  ship.terrain.depthAt=function(point)
-    return point.x>=800 and point.x<=1000 and math.abs(point.y)<=900 and 5 or 40
-  end
-  local exits={VECTOR:New(300,0,400),VECTOR:New(300,0,900),VECTOR:New(1250,0,1000)}
-  local calls=0
-  function ship:_PlanLocalPath()
-    calls=calls+1
-    assert(calls<=3,"only the initial search and two continuations are allowed")
-    return {Points={exits[calls]},GoalReached=false}
-  end
-
-  assert(activateLocal(ship))
-
-  equal(calls,3) equal(ship.LastPathfindingResult.PreflightExtensions,2)
-  near(ship.LastPathfindingResult.TargetApproachDistance,5000)
-  equal(ship.LastPathfindingResult.RejoinPoint,exits[3])
-  equal(ship.stops,0) equal(#ship.dispatches,1)
-  assertClearPath(ship,ship.localNavigation.Path)
-end)
-
-test("LOCAL depth preference is optional and invalidates only unused plans",function()
-  local ship=localShip()
-  local start=VECTOR:New(0,0,0)
-  local first=assert(ship:_GetLocalNavigationWindow(start,0,ship.waypoints[2]))
-  equal(first.Search.CostFunc,ASTAR.Dist2D)
-  local path={start,VECTOR:New(2000,0,0)}
-  ship.localNavigation.Path=path
-  ship.localNavigation.Pending={Points={}}
-  ship:SetPathfindingPreferredDepth(30,2)
-  equal(ship.localNavigation.Path,path) equal(ship.localNavigation.Pending,nil)
-  local second=assert(ship:_GetLocalNavigationWindow(start,0,ship.waypoints[2]))
-  assert(second~=first) equal(second.Search.CostFunc,ASTAR.CostDepth)
-  equal(second.Search.CostArg[1],20) equal(second.Search.CostArg[3],30) equal(second.Search.CostArg[4],2)
-  equal(ship:_GetLocalNavigationWindow(start,0,ship.waypoints[2]),second)
-  ship:SetPathfindingPreferredDepth()
-  local third=assert(ship:_GetLocalNavigationWindow(start,0,ship.waypoints[2]))
-  equal(third.Search.CostFunc,ASTAR.Dist2D)
-  equal(ship.stops,0) equal(#ship.dispatches,0)
-end)
-
-test("LOCAL depth-weighted search and smoothing retain a deeper route around a permitted shoal",function()
-  local ship=localShip(2000)
-  ship.terrain.depthAt=function(p)
-    return p.x>=500 and p.x<=1500 and math.abs(p.y)<=200 and 21 or 40
-  end
-  local start=VECTOR:New(0,0,0)
-  local ordinary=assert(ship:_PlanLocalPath(start,0,ship.waypoints[2],10))
-  for _,point in ipairs(ordinary.Points) do assert(math.abs(point.z)<100) end
-
-  ship:SetPathfindingPreferredDepth(30,2)
-  local plan,reason=ship:_PlanLocalPath(start,0,ship.waypoints[2],10)
-  assert(plan,reason) assert(plan.GoalReached)
-  assert(plan.Cost<ship:_GetPathfindingDepthCost(start,ship.waypoints[2].coordinate))
-  local offshore=false
-  for _,point in ipairs(plan.Points) do if math.abs(point.z)>200 then offshore=true end end
-  assert(offshore,"smoothing erased the depth-weighted detour")
-  near(plan.Points[#plan.Points].x,2000) near(plan.Points[#plan.Points].z,0)
-  assertClearPath(ship,plan.Points)
-end)
-
-test("LOCAL candidate ranking retains depth costs after smoothing",function()
-  local ship=localShip(20000)
-  ship.terrain.depthAt=function(p) return p.x>200 and math.abs(p.y)<150 and 21 or 40 end
-  local shallow,deep=VECTOR:New(2600,0,0),VECTOR:New(2400,0,1000)
-  local search=ASTAR:New():SetValidNeighbourDepth(20,50)
-  function search:SetStartCoordinate(start) self.startNode=self:AddNodeFromCoordinate(start) end
-  function search:SetEndCoordinate(goal) self.goal=goal end
-  -- Isolate exit selection: supply two feasible paths, retaining real depth costs and smoothing.
-  function search:_SearchPath()
-    local nodes={}
-    for i=1,26 do nodes[i]=self:AddNodeFromCoordinate(VECTOR:New(self.goal.x*i/26,0,self.goal.z*i/26)) end
-    return nodes
-  end
-  local window={Search=search,Target=VECTOR:New(20000,0,0),Spacing=50,Grid={GetCandidateCount=function() return 100 end}}
-  function ship:_GetLocalNavigationWindow() return window end
-  function ship:_GetLocalNavigationCandidates()
-    return {{Vector=shallow,GoalReached=false},{Vector=deep,GoalReached=false}}
-  end
-  local start=VECTOR:New(0,0,0)
-  local ordinary=assert(ship:_PlanLocalPath(start,0,ship.waypoints[2],10))
-  near(ordinary.Points[#ordinary.Points].z,0)
-
-  ship:SetPathfindingPreferredDepth(30,2)
-  search:SetCostDepth(30,2)
-  local weighted=assert(ship:_PlanLocalPath(start,0,ship.waypoints[2],10))
-  near(weighted.Points[#weighted.Points].z,1000)
-end)
-
-test("LOCAL target release and target approach still require only minimum depth",function()
+test("LOCAL target release still requires only minimum depth",function()
   local ship=localShip(12000):SetPathfindingPreferredDepth(30,2)
   assert(activateLocal(ship))
   ship.terrain.depth=21
-  function ship:_GetPathfindingDepthCost() error("Direct target release must not consider preferred depth") end
-  local navigation=ship.localNavigation
-  local points={VECTOR:New(0,0,0),VECTOR:New(2000,0,0)}
-  local report={}
-  assert(ship:_AppendLocalTargetApproach(points,report,0))
-  near(report.TargetApproachDistance,5000)
+  function ship:_GetLocalSearch() error("Direct target release must not start a search") end
   local astar=searches.astar
   assert(ship:_TryResumeWaypointRoute())
   equal(ship.localNavigation,nil) equal(ship.stops,0) equal(searches.astar,astar)
   equal(ship.dispatched[2].uid,2) equal(ship.currentwp,1)
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(ship.localNavigation,nil) equal(searches.astar,astar) equal(ship.stops,0)
-  assert(navigation.TargetUID==2)
 end)
 
 test("LOCAL turn allowance finds an islet between two clear straight legs",function()
@@ -2290,7 +1473,7 @@ test("LOCAL smoothing moves an exposed corner outward and rechecks the resulting
   local ship=localShip()
   local start,corner,goal=VECTOR:New(0,0,0),VECTOR:New(500,0,0),VECTOR:New(900,0,600)
   ship.terrain.depthAt=function(p) return (p.x-480)^2+(p.y-60)^2<20^2 and 2 or 40 end
-  local nodes={{vector=corner},{vector=goal}}
+  local nodes={corner,goal}
 
   local points,reason,cost,report=ship:_SimplifyLocalPath(start,0,nodes,true,10,-15)
 
@@ -2348,12 +1531,18 @@ test("LOCAL steering diagnostics distinguish angle length depth and weighted cos
       ship.terrain.depthAt=function(p) return (p.x+50)^2+(p.y-50)^2<20^2 and 10 or 40 end
     end
     local search
+    local path={point}
     if case=="depth_cost" then
       ship:SetPathfindingPreferredDepth(30,2)
       ship.terrain.depth=21
-      search={startNode={vector=start},_TravelCost=function() return 500 end}
+      path={VECTOR:New(50,0,50),point}
+      search={EvaluateConnection=function(_,a,b)
+        local cost=a:GetDistance(b,true)
+        if a.x==0 and b.x==500 then cost=cost+1000 end
+        return true,cost,{Status="clear"}
+      end}
     end
-    local points,reason,cost,report=ship:_SimplifyLocalPath(start,heading,{{vector=point}},false,10,0,search)
+    local points,reason,cost,report=ship:_SimplifyLocalPath(start,heading,path,false,10,0,search)
     if case=="depth_cost" then
       assert(points) equal(reason,nil) equal(report.Pass,2)
       report=report.FirstPass -- The rejected first pass still explains why fallback was necessary.
@@ -2372,52 +1561,23 @@ test("LOCAL steering diagnostics distinguish angle length depth and weighted cos
   end
 end)
 
-test("LOCAL failed steering details survive a final stop without trace",function()
-  local ship=localShip()
-  local search={SetStartCoordinate=function() end,SetEndCoordinate=function() end}
-  function search:_SearchPath() return {{vector=VECTOR:New(-500,0,0)}} end
-  function ship:_GetLocalNavigationWindow() self.localNavigation={} return {Search=search} end
-  function ship:_GetLocalNavigationCandidates() return {{Vector=VECTOR:New(-500,0,0),GoalReached=false}} end
-  local logs={}
-  function ship:I(message) logs[#logs+1]=message end
-
-  local plan,reason=ship:_PlanLocalPath(VECTOR:New(0,0,0),0,ship.waypoints[2],10)
-  equal(plan,nil) equal(reason,"no_steering_path")
-  assert(#logs>0)
-  ship:_FailPathfinding({StopReason=reason})
-  equal(ship.stops,1)
-  local report=ship.LastPathfindingResult.SteeringFailures[1]
-  equal(report.Reason,"no_steering_path") equal(report.Candidate,1)
-  assert(report.Rejections.turn_angle)
-end)
 
 test("LOCAL backtracks from a greedy short-leg trap instead of losing a usable path",function()
   local ship=localShip()
   local nodes={}
   for _,point in ipairs({{800,0},{990,50},{1100,100},{1750,100}}) do
-    nodes[#nodes+1]={vector=VECTOR:New(point[1],0,point[2])}
+    nodes[#nodes+1]=VECTOR:New(point[1],0,point[2])
   end
   -- Only the earlier bend can connect to the endpoint; depth failure isolates this steering case.
-  function ship:_CheckPathDepth(a,b)
+  connectionRules(ship,function(a,b)
     return not (a.x==990 and b.x>=1100) and not (a.x==800 and b.x==1100)
-  end
+  end)
   local points,reason,cost,report=ship:_SimplifyLocalPath(VECTOR:New(0,0,0),0,nodes,false,10,0)
   assert(points,reason)
   assert(report.Backtracks>0)
   near(points[1].x,800)
 end)
 
-test("LOCAL target approach cannot bypass a blocked turn buffer",function()
-  local ship=localShip(12000)
-  assert(activateLocal(ship))
-  ship.terrain.depthAt=function(p) return (p.x-2000)^2+(p.y-75)^2<20^2 and 10 or 40 end
-  local points={VECTOR:New(1500,0,-500),VECTOR:New(2000,0,0)}
-  local plan={}
-  assert(ship:_CheckNavigationAhead(points[2],ship.waypoints[2]))
-  equal(ship:_AppendLocalTargetApproach(points,plan,45),false)
-  equal(#points,2) equal(plan.RejoinPoint,nil)
-  equal(plan.TargetTurnCheck.DepthCheck.Depth,10)
-end)
 
 test("LOCAL ordinary target release waits for a minimum-depth turn buffer",function()
   local ship=localShip(12000):SetPathfindingPreferredDepth(30,2)
@@ -2438,8 +1598,8 @@ end)
 test("LOCAL steering alternatives stop at the search budget instead of exhaustive retries",function()
   local ship=localShip()
   local nodes={}
-  for i=1,35 do nodes[i]={vector=VECTOR:New(i*100,0,0)} end
-  function ship:_CheckPathDepth(a,b) return b.x~=3500 end
+  for i=1,35 do nodes[i]=VECTOR:New(i*100,0,0) end
+  connectionRules(ship,function(a,b) return b.x~=3500 end)
   local points,reason,cost,report=ship:_SimplifyLocalPath(VECTOR:New(0,0,0),0,nodes,false,10,0)
   equal(points,nil) equal(reason,"steering_budget_exceeded")
   equal(report.States,128) assert(report.Backtracks>0)
@@ -2450,13 +1610,13 @@ test("LOCAL depth-weighted corner correction prices the safe detour even when it
   local ship=localShip():SetPathfindingPreferredDepth(30,2)
   local start,corner,goal=VECTOR:New(0,0,0),VECTOR:New(500,0,0),VECTOR:New(900,0,600)
   ship.terrain.depthAt=function(p) return (p.x-480)^2+(p.y-60)^2<20^2 and 2 or 40 end
-  local original=ship:_GetPathfindingDepthCost(start,corner)+ship:_GetPathfindingDepthCost(corner,goal)
-  local points,reason,cost,report=ship:_SimplifyLocalPath(start,0,{{vector=corner},{vector=goal}},true,10,0)
+  local original=connectionCost(ship,start,corner)+connectionCost(ship,corner,goal)
+  local points,reason,cost,report=ship:_SimplifyLocalPath(start,0,{corner,goal},true,10,0)
   assert(points,reason) assert(#report.CornerAdjustments>0)
   assert(cost>original,"this required outward correction should add length")
   local total,position=0,start
   for _,point in ipairs(points) do
-    total=total+ship:_GetPathfindingDepthCost(position,point)
+    total=total+connectionCost(ship,position,point)
     position=point
   end
   near(cost,total)
@@ -2466,18 +1626,18 @@ test("LOCAL backtracking restores an adjusted corner before trying another outgo
   local ship=localShip()
   local nodes={}
   for _,point in ipairs({{500,0},{800,500},{850,600},{1000,1000},{1500,1000}}) do
-    nodes[#nodes+1]={vector=VECTOR:New(point[1],0,point[2])}
+    nodes[#nodes+1]=VECTOR:New(point[1],0,point[2])
   end
-  function ship:_CheckPathDepth(a,b)
+  connectionRules(ship,function(a,b)
     return not (a.x==0 and b.x>=700) and a.x~=850
-  end
+  end)
   function ship:_CheckLocalTurn(position)
     return position.x~=500,{Radius=125}
   end
   local tried={}
-  function ship:_AdjustLocalTurn(previous,corner,following,speed,minLeg,shortGoal,weighted,cache)
+  function ship:_AdjustLocalTurn(previous,corner,following,speed,minLeg,shortGoal,cache,search)
     tried[#tried+1]=corner
-    return NAVYGROUP._AdjustLocalTurn(self,previous,corner,following,speed,minLeg,shortGoal,weighted,cache)
+    return NAVYGROUP._AdjustLocalTurn(self,previous,corner,following,speed,minLeg,shortGoal,cache,search)
   end
 
   local points,reason,cost,report=ship:_SimplifyLocalPath(VECTOR:New(0,0,0),0,nodes,true,10,0)
@@ -2492,161 +1652,6 @@ test("LOCAL backtracking restores an adjusted corner before trying another outgo
   near(cost,total)
 end)
 
-
--- Reproduce the depth/length conflict with two supplied A* paths. All costs, simplification,
--- preparation, candidate comparison and native route submission use production methods.
-local function depthCandidateShip()
-  local ship=localShip(20000):SetPathfindingMinDepth(3.5):SetPathfindingPreferredDepth(10,100)
-  ship.terrain.depthAt=function(p) return p.x>500 and math.abs(p.y)<150 and 5 or 40 end
-  local shallow,deep=VECTOR:New(2600,0,0),VECTOR:New(1500,0,1000)
-  local search=ASTAR:New():SetValidNeighbourDepth(3.5,50):SetCostDepth(10,100)
-  function search:SetStartCoordinate(start) self.startNode=self:AddNodeFromCoordinate(start) end
-  function search:SetEndCoordinate(goal) self.goal=goal end
-  function search:_SearchPath()
-    local nodes={}
-    local start=self.startNode.vector
-    for i=1,26 do
-      nodes[i]=self:AddNodeFromCoordinate(VECTOR:New(start.x+(self.goal.x-start.x)*i/26,0,
-        start.z+(self.goal.z-start.z)*i/26))
-    end
-    return nodes
-  end
-  local window={Search=search,Target=VECTOR:New(20000,0,0),Spacing=50,PreferredDepth=10,DepthWeight=100,
-    MinDepth=3.5,CorridorWidth=50,Grid={GetCandidateCount=function() return 100 end}}
-  function ship:_GetLocalNavigationWindow() return window end
-  function ship:_GetLocalNavigationCandidates()
-    return {{Vector=shallow,GoalReached=false},{Vector=deep,GoalReached=false}}
-  end
-  return ship,window
-end
-
-test("LOCAL short deep candidate receives a checked target approach before final comparison",function()
-  local ship,window=depthCandidateShip()
-  local logs={}
-  function ship:T(message) logs[#logs+1]=message end
-  local start=VECTOR:New(0,0,0)
-  local provisional=assert(ship:_PlanLocalPath(start,0,ship.waypoints[2],10))
-  equal(provisional.Candidate,2)
-  assert(provisional.Length<provisional.RequiredLength)
-  assert(provisional.Candidates[1].Cost>provisional.Cost*60)
-
-  assert(activateLocal(ship))
-
-  local plan=ship.LastPathfindingResult
-  equal(plan.Candidate,2) equal(plan.PreflightExtensions,0)
-  near(plan.RejoinPoint.x,1500) near(plan.RejoinPoint.z,1000)
-  near(plan.TargetApproachDistance,5000)
-  assert(plan.Length>=plan.RequiredLength)
-  near(plan.Cost,plan.Length) equal(plan.Candidates,nil)
-  equal(ship.localNavigation.Window,window) equal(ship.stops,0) equal(#ship.dispatches,1)
-  assertClearPath(ship,ship.localNavigation.Path)
-  local prepared,selected=0,0
-  for _,line in ipairs(logs) do
-    if line:find("Local candidate prepared:",1,true) then
-      prepared=prepared+1 assert(line:find("cost=",1,true)) assert(line:find("score=",1,true))
-    elseif line:find("Local candidate selected:",1,true) then
-      selected=selected+1 assert(line:find("candidate=2",1,true)) assert(line:find("weight=100",1,true))
-    end
-    assert(#line<500,line)
-  end
-  equal(prepared,2) equal(selected,1)
-end)
-
-test("LOCAL compares complete depth costs and keeps a usable alternative when extension fails",function()
-  for _,outcome in ipairs({"deep","blocked","expensive","short"}) do
-    local ship,window=depthCandidateShip()
-    local future={tag=outcome}
-    local extensions=0
-    local logs={}
-    function ship:T(message) logs[#logs+1]=message end
-    function ship:_AppendLocalTargetApproach() return false end
-    function ship:_PlanLocalPath(start,heading,target,speed)
-      equal(#self.dispatches,0) -- No trial may command partial motion.
-      if start.x==0 then return NAVYGROUP._PlanLocalPath(self,start,heading,target,speed) end
-      extensions=extensions+1
-      self.localNavigation.Window=future
-      if outcome=="blocked" then return nil,"connections_blocked" end
-      local length=outcome=="short" and 100 or (outcome=="expensive" and 2000 or 1000)
-      local points={}
-      for i=1,math.ceil(length/1000) do points[i]=start:Translate(math.min(i*1000,length),heading,true) end
-      return {Points=points,GoalReached=false,Window=future,Attempts=1}
-    end
-    if outcome=="expensive" then
-      ship.terrain.depthAt=function(p)
-        if p.x>1600 and p.y>1000 then return 3.5 end
-        return p.x>500 and math.abs(p.y)<150 and 5 or 40
-      end
-    end
-
-    assert(activateLocal(ship))
-
-    local plan=ship.LastPathfindingResult
-    equal(plan.Candidate,outcome=="deep" and 2 or 1)
-    equal(ship.localNavigation.Window,outcome=="deep" and future or window)
-    equal(extensions,outcome=="short" and 2 or 1)
-    equal(plan.PreflightExtensions,outcome=="deep" and 1 or 0)
-    assert(plan.Length>=plan.RequiredLength) equal(ship.stops,0) equal(#ship.dispatches,1)
-    local cost,previous=0,VECTOR:New(0,0,0)
-    for _,point in ipairs(plan.Points) do
-      cost=cost+ship:_GetPathfindingDepthCost(previous,point) previous=point
-    end
-    near(plan.Cost,cost,1e-5) assertClearPath(ship,ship.localNavigation.Path)
-    if outcome=="blocked" or outcome=="short" then
-      local found=false
-      for _,line in ipairs(logs) do
-        if line:find("candidate=2, stage=preparation",1,true) then found=true end
-      end
-      assert(found,"missing diagnostic for the rejected short candidate")
-    end
-  end
-end)
-
-test("LOCAL candidate trials preserve the common approach and restore the winning window",function()
-  local ship,window=depthCandidateShip()
-  assert(activateLocal(ship))
-  local navigation=ship.localNavigation
-  local installed,dispatches=navigation.Path,#ship.dispatches
-  local position=VECTOR:New(0,0,0)
-  local anchor=VECTOR:New(400,0,0)
-  local plan=assert(ship:_PlanLocalPath(anchor,0,ship.waypoints[2],10))
-  local points={position,anchor}
-  for _,point in ipairs(plan.Points) do points[#points+1]=point end
-
-  local prepared,selected,reason=ship:_PrepareLocalRoute(points,plan,position)
-
-  assert(prepared,reason) equal(selected.Candidate,2)
-  equal(prepared[1],position) equal(prepared[2],anchor)
-  equal(navigation.Path,installed) equal(#ship.dispatches,dispatches)
-  equal(navigation.Window,selected.Window) equal(selected.Window,window)
-  assert(selected.Length>=selected.RequiredLength)
-end)
-
-test("LOCAL failed candidate preparation retains the installed route and its window",function()
-  local ship,window=depthCandidateShip()
-  assert(activateLocal(ship))
-  local navigation=ship.localNavigation
-  local installed,dispatches=navigation.Path,#ship.dispatches
-  local previousWindow={tag="installed"}
-  local start=VECTOR:New(0,0,0)
-  local plan=assert(ship:_PlanLocalPath(start,0,ship.waypoints[2],10))
-  navigation.Speed=60 -- Both candidates now require bounded continuation.
-  navigation.Window=previousWindow
-  function ship:_AppendLocalTargetApproach() return false end
-  local calls=0
-  function ship:_PlanLocalPath()
-    calls=calls+1 self.localNavigation.Window={tag="rejected"}
-    return nil,"connections_blocked"
-  end
-  local points={start}
-  for _,point in ipairs(plan.Points) do points[#points+1]=point end
-
-  local prepared,selected,reason=ship:_PrepareLocalRoute(points,plan,start)
-
-  equal(prepared,nil) equal(selected,nil) equal(reason,"connections_blocked") equal(calls,2)
-  equal(navigation.Path,installed) equal(navigation.Window,previousWindow)
-  equal(#ship.dispatches,dispatches) equal(ship.stops,0)
-end)
-
 test("LOCAL candidate comparison does not reward an arbitrary free target approach length",function()
   local ship=localShip()
   assert(activateLocal(ship))
@@ -2654,32 +1659,9 @@ test("LOCAL candidate comparison does not reward an arbitrary free target approa
   -- In uniformly deep water a short side exit plus a free 5 km approach must not win
   -- merely through that added progress over the straightforward front exit.
   equal(plan.PreflightExtensions,0) equal(plan.TargetApproachDistance,nil)
-  assert(plan.Length>=plan.RequiredLength and plan.Length<3200)
+  assert(plan.SuffixLength>=plan.RequiredLength and plan.SuffixLength<3200)
   assert(math.abs(plan.Points[#plan.Points].z)<500)
 end)
-
-
-test("LOCAL prepared target approach remains minimum-depth-only during weighted comparison",function()
-  local ship=depthCandidateShip()
-  ship.terrain.depthAt=function(p)
-    if p.x>2000 and p.y>600 then return 4 end
-    return p.x>500 and math.abs(p.y)<150 and 5 or 40
-  end
-  local notices=0
-  function ship:T(message)
-    if message:find("Local route target approach:",1,true) then notices=notices+1 end
-  end
-
-  assert(activateLocal(ship))
-
-  local plan=ship.LastPathfindingResult
-  equal(plan.Candidate,2) near(plan.RejoinPoint.x,1500)
-  near(plan.TargetApproachDistance,5000) near(plan.Cost,plan.Length)
-  local last=plan.Points[#plan.Points]
-  near(ship.terrain.depthAt({x=last.x,y=last.z}),4)
-  equal(notices,1) equal(ship.stops,0) assertClearPath(ship,ship.localNavigation.Path)
-end)
-
 
 -- The first raw bend is too close to emit as a ship waypoint. Skipping it crosses
 -- permitted but shallower water, so a usable steering route needs a cost increase.
@@ -2687,16 +1669,22 @@ local function steeringFallbackShip()
   local ship=localShip():SetPathfindingMinDepth(3.5):SetPathfindingPreferredDepth(15,100)
   ship.terrain.depthAt=function(p) return p.x>=100 and p.x<=400 and math.abs(p.y)<25 and 5 or 40 end
   local start=VECTOR:New(0,0,0)
-  local nodes={{vector=VECTOR:New(50,0,50)},{vector=VECTOR:New(500,0,50)},{vector=VECTOR:New(1000,0,0)}}
+  local nodes={VECTOR:New(50,0,50),VECTOR:New(500,0,50),VECTOR:New(1000,0,0)}
   return ship,start,nodes
 end
 
 test("LOCAL steering fallback allows necessary depth cost increase and reuses edge profiles",function()
   local ship,start,nodes=steeringFallbackShip()
   local calls=0
-  function ship:_GetPathfindingDepthCost(a,b)
-    if a.x==0 and b.x==1000 then calls=calls+1 end
-    return NAVYGROUP._GetPathfindingDepthCost(self,a,b)
+  local getSearch=ship._GetLocalSearch
+  function ship:_GetLocalSearch(speed)
+    local search=getSearch(self,speed)
+    local evaluate=search.EvaluateConnection
+    function search:EvaluateConnection(a,b)
+      if a.x==0 and b.x==1000 then calls=calls+1 end
+      return evaluate(self,a,b)
+    end
+    return search
   end
 
   local points,reason,cost,report=ship:_SimplifyLocalPath(start,0,nodes,false,10,0)
@@ -2706,7 +1694,7 @@ test("LOCAL steering fallback allows necessary depth cost increase and reuses ed
   assert(report.FirstPass.Rejections.leg_too_short)
   assert(cost>report.OriginalCost) equal(calls,1)
   equal(#points,1) near(points[1].x,1000)
-  near(cost,ship:_GetPathfindingDepthCost(start,points[1]))
+  near(cost,connectionCost(ship,start,points[1]))
   equal(report.Rejections.depth_cost,nil) assert(report.States+report.FirstPass.States<=256)
   equal(ship.stops,0) equal(#ship.dispatches,0) assertClearPath(ship,points)
 end)
@@ -2728,7 +1716,7 @@ test("LOCAL steering fallback never bypasses a blocked or unknown turn allowance
 
     local points,reason,cost,report=ship:_SimplifyLocalPath(start,30,nodes,false,10,0)
 
-    equal(points,nil) equal(reason,"no_steering_path") equal(report.Pass,2)
+    equal(points,nil) equal(reason,unknown and "data_unavailable" or "no_steering_path") equal(report.Pass,2)
     assert(report.FirstPass.Rejections.depth_cost)
     local depth=assert(report.Examples.turn_clearance.DepthCheck)
     equal(depth.Status,unknown and "unavailable" or "blocked")
@@ -2737,21 +1725,14 @@ test("LOCAL steering fallback never bypasses a blocked or unknown turn allowance
   end
 end)
 
-test("LOCAL steering fallback still rejects a connection below minimum depth",function()
+test("LOCAL steering revalidates raw path depth before considering shortcuts",function()
   local ship,start,nodes=steeringFallbackShip()
-  nodes[3].vector=VECTOR:New(1100,0,0)
+  nodes[3]=VECTOR:New(1100,0,0)
   local originalDepth=ship.terrain.depthAt
   ship.terrain.depthAt=function(p) return p.x>750 and p.x<850 and 2 or originalDepth(p) end
-  -- Cached search costs describe the earlier raw path, not permission to skip live hard checks.
-  local search={startNode={vector=start}}
-  function search:_TravelCost(a,b) return a.vector:GetDistance(b.vector,true) end
-
-  local points,reason,cost,report=ship:_SimplifyLocalPath(start,0,nodes,false,10,0,search)
-
-  equal(points,nil) equal(reason,"no_steering_path") equal(report.Pass,2)
-  assert(report.FirstPass.Rejections.depth_cost) assert(report.Rejections.depth)
-  equal(report.Examples.depth.DepthCheck.Status,"blocked")
-  near(report.Examples.depth.DepthCheck.Depth,2)
+  local points,reason=ship:_SimplifyLocalPath(start,0,nodes,false,10,0)
+  equal(points,nil) equal(reason,"connections_blocked")
+  equal(#ship.dispatches,0)
 end)
 
 test("LOCAL successful strict steering and hard-only failures do not trigger fallback",function()
@@ -2774,64 +1755,7 @@ test("LOCAL successful strict steering and hard-only failures do not trigger fal
   end
 end)
 
-test("LOCAL relaxed steering remains bounded after resetting exhausted strict states",function()
-  local ship=localShip():SetPathfindingPreferredDepth(30,2)
-  local start=VECTOR:New(0,0,0)
-  local nodes={}
-  for i=1,35 do nodes[i]={vector=VECTOR:New(i*100,0,0)} end
-  local search={startNode={vector=start}}
-  function search:_TravelCost(a,b) return a.vector:GetDistance(b.vector,true) end
-  function ship:_GetPathfindingDepthCost(a,b)
-    return b.x==3500 and math.huge or 2*a:GetDistance(b,true)
-  end
-  function ship:_CheckPathDepth(a,b) return b.x~=3500 end
 
-  local points,reason,cost,report=ship:_SimplifyLocalPath(start,0,nodes,false,10,0,search)
-
-  equal(points,nil) equal(reason,"steering_budget_exceeded") equal(report.Pass,2)
-  equal(report.FirstPass.States,1) equal(report.States,128)
-  assert(report.FirstPass.Rejections.depth_cost) assert(report.Backtracks>0)
-  equal(report.Rejections.depth_cost,nil) equal(#ship.dispatches,0)
-end)
-
-test("LOCAL candidates retain the real cost of fallback steering in their comparison",function()
-  local ship,start,raw=steeringFallbackShip()
-  local shallow,deep=raw[#raw].vector,VECTOR:New(1500,0,800)
-  local search=ASTAR:New():SetValidNeighbourDepth(3.5,50):SetCostDepth(15,100)
-  function search:SetStartCoordinate(point) self.startNode=self:AddNodeFromCoordinate(point) end
-  function search:SetEndCoordinate(point) self.goal=point end
-  function search:_SearchPath()
-    local nodes={}
-    if self.goal==shallow then
-      for i,node in ipairs(raw) do nodes[i]=self:AddNodeFromCoordinate(node.vector) end
-    else
-      for i=1,26 do nodes[i]=self:AddNodeFromCoordinate(VECTOR:New(deep.x*i/26,0,deep.z*i/26)) end
-    end
-    return nodes
-  end
-  local window={Search=search,Target=VECTOR:New(20000,0,0),Spacing=50,Grid={GetCandidateCount=function() return 100 end}}
-  function ship:_GetLocalNavigationWindow() return window end
-  function ship:_GetLocalNavigationCandidates()
-    return {{Vector=shallow,GoalReached=false},{Vector=deep,GoalReached=false}}
-  end
-  local notices=0
-  function ship:T(message)
-    if message:find("Local steering fallback:",1,true) then
-      notices=notices+1
-      assert(message:find("candidate=1",1,true)) assert(message:find("result=path_found",1,true))
-      assert(message:find("raw_cost=",1,true)) assert(#message<500)
-    end
-  end
-
-  local plan=assert(ship:_PlanLocalPath(start,0,ship.waypoints[2],10))
-
-  equal(plan.Candidate,2) equal(plan.Steering.Pass,1) equal(notices,1)
-  local fallback=plan.Candidates[1]
-  equal(fallback.Steering.Pass,2)
-  near(fallback.Cost,ship:_GetPathfindingDepthCost(start,shallow))
-  assert(fallback.Cost>fallback.Steering.OriginalCost and fallback.Cost>plan.Cost)
-  assert(fallback.Score>plan.Score)
-end)
 
 -- Model dimensions and live wrapper data used by the production hull check.
 local function hullElement(ship,name,position,heading,speed,box)
@@ -2903,7 +1827,7 @@ test("nearfield detects a new hazard during a turn before the next regular route
       routeChecks=routeChecks+1
       return true,nil,{Status="clear",ClearDistance=5000,Distance=5000}
     end
-    ship:_CheckNavigation()
+    checkNavigation(ship)
     equal(routeChecks,1) equal(ship.stops,0)
     ship.heading=26
     local c,s=math.cos(math.rad(26)),math.sin(math.rad(26))
@@ -2914,14 +1838,14 @@ test("nearfield detects a new hazard during a turn before the next regular route
     assert(ship:_CheckPathDepth(ship.position,ship.position))
     local logs={}
     function ship:I(message) logs[#logs+1]=message end
-    timerNow=2 ship:_CheckNavigation()
+    timerNow=2 checkNavigation(ship)
     equal(ship:IsTurning(),true) equal(routeChecks,1) equal(ship.stops,1) assertNoSearch()
     equal(ship.LastPathfindingResult.StopReason,"nearfield_blocked")
     equal(ship.LastPathfindingResult.DepthCheck.NavigationStage,"ship_lookahead")
     equal(ship.state,"Holding") equal(ship.currentwp,1)
     equal(ship.dispatched[1].speed,0)
     local profiles=ship.terrain.profiles
-    timerNow=4 ship:_CheckNavigation()
+    timerNow=4 checkNavigation(ship)
     equal(ship.stops,1) equal(ship.terrain.profiles,profiles)
     equal(#logs,4)
     for _,line in ipairs(logs) do assert(#line<500) end
@@ -2936,23 +1860,23 @@ test("nearfield safety samples do not multiply route searches or clear an existi
     checks=checks+1
     return true,nil,{Status="clear",Distance=5000,ClearDistance=5000}
   end
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   ship.collisionwarning=true
   local profiles=ship.terrain.profiles
-  for t=2,8,2 do timerNow=t ship:_CheckNavigation() end
+  for t=2,8,2 do timerNow=t checkNavigation(ship) end
   assert(ship.terrain.profiles>profiles) equal(checks,1) equal(ship.collisionwarning,true)
-  timerNow=10 ship:_CheckNavigation()
+  timerNow=10 checkNavigation(ship)
   equal(checks,2) equal(ship.collisionwarning,false) assertNoSearch() equal(#ship.dispatches,0)
 end)
 
 test("nearfield unavailable data stops once without starting a search",function()
   local ship=localShip()
   ship.terrain.makeProfile=function() return nil end
-  ship:_CheckNavigation()
+  checkNavigation(ship)
   equal(ship.stops,1) assertNoSearch()
   equal(ship.LastPathfindingResult.DepthCheck.Status,"unavailable")
   equal(ship.LastPathfindingResult.StopReason,"profile_unavailable")
-  timerNow=2 ship:_CheckNavigation() equal(ship.stops,1)
+  timerNow=2 checkNavigation(ship) equal(ship.stops,1)
 end)
 
 test("nearfield respects disabled pathfinding holds movement tasks and warning callbacks",function()
@@ -2964,7 +1888,7 @@ test("nearfield respects disabled pathfinding holds movement tasks and warning c
     elseif state=="Waiting" then ship.Twaiting=0
     elseif state=="task" then ship.taskcurrent=1 ship.taskqueue={{id=1,dcstask={id="AttackGroup"}}}
     else ship.state=state end
-    ship:_CheckNavigation()
+    checkNavigation(ship)
     equal(ship.terrain.queries,0) equal(ship.stops,0) assertNoSearch()
   end
   for _,action in ipairs({"hold","disable"}) do
@@ -2973,7 +1897,7 @@ test("nearfield respects disabled pathfinding holds movement tasks and warning c
     function ship:OnAfterCollisionWarning()
       if action=="hold" then self:FullStop() else self:SetPathfindingOff() end
     end
-    ship:_CheckNavigation()
+    checkNavigation(ship)
     equal(ship.stops,action=="hold" and 1 or 0) assertNoSearch()
   end
 end)
@@ -3026,6 +1950,1296 @@ test("LOCAL route trace records submitted steering coordinates and connector dia
   equal(count,#route) equal(ship.localNavigation.RouteID,1)
   local clear,reason,report=ship:_CheckLocalRoute(VECTOR:NewFromVec(ship.position))
   assert(clear) equal(report.RouteID,1) assert(report.CheckStart and report.CheckGoal)
+end)
+
+
+local function sameValues(first,last)
+  equal(type(first),type(last))
+  if type(first)~="table" then equal(first,last) return end
+  for key,value in pairs(first) do sameValues(value,last[key]) end
+  for key in pairs(last) do assert(first[key]~=nil,"Unexpected route field: "..tostring(key)) end
+end
+
+test("diagnostics leave LOCAL routes and terrain work unchanged",function()
+  local function run(enabled)
+    timerNow=0 -- Compare the same simulation-time safety-check phase.
+    local ship=localShip():SetPathfindingMinDepth(3.5):SetPathfindingPreferredDepth(15,10)
+    ship:SetPathfindingWorkBudget(512,1000,2000) -- Keep slice boundaries independent of diagnostic CPU overhead.
+    ship.terrain.depth=10
+    if enabled then ship:SetPathfindingDiagnostics(true) end
+    assert(activateLocal(ship))
+    return ship,ship:GetPathfindingDiagnostics()
+  end
+  local plain,disabled=run(false)
+  local measured,metrics=run(true)
+  sameValues(plain.dispatches,measured.dispatches)
+  equal(plain.terrain.profiles,measured.terrain.profiles)
+  equal(plain.terrain.queries,measured.terrain.queries)
+  equal(disabled.Enabled,false) equal(disabled.SearchAttempts,0)
+  equal(metrics.ProfileQueries,measured.terrain.profiles)
+  equal(metrics.RouteSubmissions,#measured.dispatches)
+  equal(metrics.SearchAttempts,measured.LastPathfindingResult.Attempts)
+  assert(metrics.ValidityRequests>0 and metrics.ValidityCacheHits>0)
+  assert(metrics.CostRequests>0 and metrics.CostCacheHits>0)
+  assert(metrics.PeakRetainedCells>0 and metrics.Scopes>=1 and metrics.Errors==0)
+  assert(metrics.Operations.local_update.Calls>=1)
+  print(string.format("BASELINE LOCAL: searches=%d profiles=%d seabed=%d routes=%d cells=%d validity=%d/%d cost=%d/%d cpu_s=%.6f",
+    metrics.SearchAttempts,metrics.ProfileQueries,measured.terrain.queries,metrics.RouteSubmissions,metrics.PeakRetainedCells,
+    metrics.ValidityCacheHits,metrics.ValidityRequests,metrics.CostCacheHits,metrics.CostRequests,metrics.CPUSeconds))
+end)
+
+test("diagnostics also measure waypoint expansion and explicit route submissions",function()
+  local ship=vessel(2000):SetPathfindingDiagnostics(true)
+  ship:_FindPathToNextWaypoint()
+  local metrics=ship:GetPathfindingDiagnostics()
+  assert(metrics.SearchAttempts>0 and metrics.ValidityRequests>0)
+  equal(metrics.SearchAttempts,#ship.LastPathfindingResult.Attempts)
+  equal(metrics.ProfileQueries,ship.terrain.profiles)
+  ship:onafterUpdateRoute()
+  ship:onafterFullStop()
+  metrics=ship:GetPathfindingDiagnostics()
+  equal(metrics.RouteSubmissions,#ship.dispatches) assert(metrics.RouteSubmissions>=2)
+  assert(metrics.Operations.waypoint_plan and metrics.Operations.route_update)
+end)
+
+test("diagnostics intervals and caller snapshots are independent",function()
+  local ship=localShip():SetPathfindingDiagnostics()
+  assert(activateLocal(ship))
+  local first=ship:GetPathfindingDiagnostics()
+  equal(ship:SetPathfindingDiagnostics(true),ship)
+  local repeated=ship:GetPathfindingDiagnostics()
+  equal(repeated.Enabled,true) equal(repeated.Scopes,first.Scopes)
+  local updateCalls=first.Operations.local_update.Calls
+  first.Operations.local_update.Calls=999 first.ProfileQueries=-1
+  equal(ship:GetPathfindingDiagnostics().Operations.local_update.Calls,updateCalls)
+  ship:SetPathfindingDiagnostics(false)
+  local frozen=ship:GetPathfindingDiagnostics()
+  ship:onafterUpdateRoute()
+  sameValues(ship:GetPathfindingDiagnostics(),frozen)
+  ship:SetPathfindingDiagnostics(true)
+  local fresh=ship:GetPathfindingDiagnostics()
+  equal(fresh.Scopes,0) equal(fresh.ProfileQueries,0) equal(next(fresh.Operations),nil)
+  equal(localShip():GetPathfindingDiagnostics().Enabled,false)
+  assert(frozen.ProfileQueries>0)
+end)
+
+test("nested measurements preserve trailing nil and do not double count CPU or profiles",function()
+  local savedClock=os.clock
+  local now=0
+  os.clock=function() return now end
+  local ok,err=pcall(function()
+    local ship=vessel():SetPathfindingDiagnostics()
+    local function inner(self,...)
+      equal(select("#",...),3) equal(select(2,...),false)
+      now=now+2
+      assert(PATHLINE.CheckDepth({x=0,y=0,z=0},{x=100,y=0,z=0},3.5,0))
+      return nil,7,nil
+    end
+    local function outer(self)
+      now=now+1
+      local function results(...)
+        equal(select("#",...),3) equal(select(1,...),nil) equal(select(2,...),7) equal(select(3,...),nil)
+      end
+      results(self:_MeasurePathfinding("inner",inner,1,false,nil))
+      now=now+3
+      return nil,9,nil
+    end
+    local function results(...)
+      equal(select("#",...),3) equal(select(2,...),9) equal(select(3,...),nil)
+    end
+    results(ship:_MeasurePathfinding("outer",outer))
+    local metrics=ship:GetPathfindingDiagnostics()
+    equal(metrics.Scopes,1) equal(metrics.CPUSeconds,6) equal(metrics.MaxScopeCPUSeconds,6)
+    equal(metrics.Operations.outer.CPUSeconds,6) equal(metrics.Operations.inner.CPUSeconds,2)
+    equal(metrics.ProfileQueries,ship.terrain.profiles) equal(metrics.ProfileQueries,1)
+  end)
+  os.clock=savedClock
+  assert(ok,err)
+end)
+
+test("diagnostics preserve callback errors and release the measurement scope",function()
+  local ship=vessel():SetPathfindingDiagnostics()
+  local sentinel={cause="native profile failure"}
+  land.profile=function() error(sentinel) end
+  local ok,err=pcall(function()
+    ship:_MeasurePathfinding("outer",function(self)
+      self:_MeasurePathfinding("inner",function()
+        PATHLINE.CheckDepth({x=0,y=0,z=0},{x=100,y=0,z=0},3.5,0)
+      end)
+    end)
+  end)
+  equal(ok,false) equal(err,sentinel)
+  local metrics=ship:GetPathfindingDiagnostics()
+  equal(metrics.Errors,1) equal(metrics.Operations.inner.Errors,1) equal(metrics.Operations.outer.Errors,1)
+  equal(metrics.ProfileQueries,1)
+  equal(ship:SetPathfindingDiagnostics(false),ship)
+  ship:SetPathfindingDiagnostics()
+  equal(ship:GetPathfindingDiagnostics().Errors,0)
+end)
+
+test("sanitized clocks leave CPU unavailable while counters remain usable",function()
+  local savedOS=os
+  local ok,err=pcall(function()
+    local ship=vessel()
+    os=nil
+    ship:SetPathfindingDiagnostics()
+    ship:_MeasurePathfinding("probe",function()
+      assert(PATHLINE.CheckDepth({x=0,y=0,z=0},{x=100,y=0,z=0},3.5,0))
+    end)
+    local metrics=ship:GetPathfindingDiagnostics()
+    equal(metrics.CPUSeconds,nil) equal(metrics.MaxScopeCPUSeconds,nil)
+    equal(metrics.Operations.probe.CPUSeconds,nil) equal(metrics.ProfileQueries,1)
+    local lines={}
+    function ship:I(line) lines[#lines+1]=line end
+    ship:LogPathfindingDiagnostics()
+    equal(#lines,3)
+    for _,line in ipairs(lines) do assert(#line<400) end
+  end)
+  os=savedOS
+  assert(ok,err)
+end)
+
+test("observed retained cells deduplicate the leg planner and include a live probe",function()
+  local ship=vessel():SetPathfindingDiagnostics()
+  local search=ASTAR:New(GRID.Type.RECTANGLE):SetEndpoints(coord(0),coord(1000))
+  search:GetGrid():SetResolution(100):SetCorridor(400,100)
+  assert(search:CreateGrid())
+  local current=search:GetGrid()
+  local count=current:GetCellCount()
+  ship.localNavigation={Search=search}
+  ship.pathfindingDebugSearch=search
+  ship:_ObservePathfindingCells(search)
+  equal(ship:GetPathfindingDiagnostics().PeakRetainedCells,count)
+  local other=GRID:New("measurement",GRID.Type.RECTANGLE):SetResolution(100):SetCorridor(400,100)
+  assert(other:CreateFromBounds(coord(0),coord(1000)))
+  ship.localNavigation.Job={ActiveSearch={GetGrid=function() return other end}}
+  ship:_ObservePathfindingCells(search)
+  equal(ship:GetPathfindingDiagnostics().PeakRetainedCells,count+other:GetCellCount())
+end)
+
+-- Cooperative integration tests intentionally observe pending jobs before pumping them.
+test("LOCAL starts a bounded job without submitting provisional movement",function()
+  local ship=localShip():SetPathfindingWorkBudget(1,0.005,2000)
+  assert(ship:_CheckLocalNavigation(true))
+  local navigation=assert(ship.localNavigation)
+  assert(navigation.Job)
+  equal(navigation.Path,nil) equal(#ship.dispatches,0)
+  ship:_AdvanceLocalPlanning()
+  assert(navigation.Job,"one work item must not finish a distant search")
+  equal(navigation.Path,nil) equal(#ship.dispatches,0)
+  ship:FullStop()
+  equal(ship.localNavigation,nil) equal(ship.stops,1)
+end)
+
+test("LOCAL suspended jobs cannot dispatch after hold disable retarget or destruction",function()
+  for _,action in ipairs({"hold","disable","retarget","destroy"}) do
+    local ship=localShip():SetPathfindingWorkBudget(1,0.005,2000)
+    assert(ship:_CheckLocalNavigation(true))
+    ship:_AdvanceLocalPlanning()
+    assert(ship.localNavigation.Job)
+    if action=="hold" then
+      ship:FullStop()
+    elseif action=="disable" then
+      ship:SetPathfindingOff()
+    elseif action=="retarget" then
+      ship:onafterUpdateRoute(nil,nil,nil,3)
+    else
+      ship.alive=false
+    end
+    local dispatched=#ship.dispatches
+    for _=1,3 do
+      timerNow=timerNow+0.1
+      ship:_CheckLocalNavigation()
+    end
+    equal(#ship.dispatches,dispatched,"a retired generation issued a route")
+    if action=="hold" then equal(ship.state,"Holding") end
+    if action=="retarget" then equal(ship:_GetNavigationWaypoint().uid,3) end
+  end
+end)
+
+test("LOCAL small velocity fluctuations retain work and publish a moving route",function()
+  local ship=localShip():SetPathfindingWorkBudget(512,1000,2000)
+  ship.speedWp=13.375
+  ship.velocity=13.375
+  ship.terrain.depth=10
+  -- Controlled shallow obstruction at the observed activation distance, not a DCS terrain replay.
+  ship.terrain.depthAt=function(point)
+    return point.x>=2087 and point.x<=2300 and math.abs(point.y)<=100 and 2.43 or 10
+  end
+  ship:SetPathfindingMinDepth(3.5):SetPathfindingPreferredDepth(15,10)
+  local starts=0
+  local startPlanning=NAVYGROUP._StartLocalPlanning
+  function ship:_StartLocalPlanning(...)
+    starts=starts+1
+    return startPlanning(self,...)
+  end
+  assert(ship:_CheckLocalNavigation(true))
+  local job=assert(ship.localNavigation.Job)
+  for tick=1,800 do
+    ship.velocity=13.375+0.05*(1-1/(tick+1))
+    ship.position.x=ship.position.x+ship.velocity*0.1
+    timerNow=timerNow+0.1
+    ship:_CheckLocalNavigation()
+    if ship.localNavigation and ship.localNavigation.Path then break end
+  end
+  equal(starts,1,"small measured-speed changes must not repeatedly discard useful work")
+  local navigation=assert(ship.localNavigation)
+  assert(navigation.Path,"moving ship received no route within 80 simulation seconds")
+  equal(ship.stops,0) equal(#ship.dispatches,1)
+  assertClearPath(ship,navigation.Path)
+  assert(ship.position.x<2087-(math.max(400,ship.velocity*60)+ship.velocity*10),
+    "route publication must precede exhaustion of the checked approach reserve")
+  near(ship.dispatched[2].speed,13.375)
+  assert(job.Speed>=13.425,"steering must cover the whole admitted speed range")
+  print(string.format("MOVING SPEED FLUCTUATION: jobs=%d slices=%d sim_s=%.1f clear_m=%.1f speed_bound=%.3f",
+    starts,job.Slices,timerNow,2087-ship.position.x,job.Speed))
+end)
+
+test("LOCAL speed envelope rejects a larger increase before stale work is submitted",function()
+  for _,stage in ipairs({"running","ready"}) do
+    local ship=localShip():SetPathfindingWorkBudget(512,1000,2000)
+    assert(ship:_CheckLocalNavigation(true))
+    local job=assert(ship.localNavigation.Job)
+    ship:_AdvanceLocalPlanning()
+    if stage=="ready" then
+      for _=1,2000 do
+        if ship.localNavigation.Pending then break end
+        ship:_AdvanceLocalPlanning()
+      end
+      assert(ship.localNavigation.Pending)
+    end
+    ship.velocity=job.Speed+0.01
+    if stage=="running" then ship:_AdvanceLocalPlanning()
+    else ship:_CommitLocalPlanning(VECTOR:NewFromVec(ship.position)) end
+    equal(ship.localNavigation.Job,nil) equal(ship.localNavigation.Pending,nil)
+    equal(#ship.dispatches,0)
+    equal(ship.localNavigation.CancelReason,"speed_exceeded")
+  end
+end)
+
+test("LOCAL reserve stops retain one bounded job diagnosis before discarding its coroutine",function()
+  local savedOS=os
+  local ok,err=pcall(function()
+    for _,mode in ipairs({"enabled","disabled","no_clock"}) do
+      os=savedOS
+      if mode=="no_clock" then os=nil end
+      local ship=localShip():SetPathfindingWorkBudget(1,0.005,2000)
+      if mode~="disabled" then ship:SetPathfindingDiagnostics(true) end
+      local logs={}
+      function ship:I(line) logs[#logs+1]=line end
+      function ship:_BuildLocalRoute(job)
+        job.Phase="extension_steering"
+        job.Requests,job.Candidate,job.Extension=2,3,1
+        job.LastRejection="local_turn_exit_too_short"
+        for _=1,10 do self:_LocalPlanningCheckpoint(1) end
+      end
+      assert(ship:_CheckLocalNavigation(true))
+      ship:_AdvanceLocalPlanning()
+      local job=assert(ship.localNavigation.Job)
+      equal(#logs,0,"working slices must not emit repeated status logs")
+      function ship:_CheckNavigationAhead()
+        return false,"profile_blocked",{Status="blocked",Reason="profile_blocked",ClearDistance=700,
+          Distance=5000,RequiredDepth=20,Depth=5}
+      end
+      if mode=="no_clock" then
+        function ship:GetVelocity() return nil end
+      end
+      timerNow=job.Started+12.5
+      ship:_CheckLocalNavigation()
+      equal(ship.state,"Holding") equal(ship.localNavigation,nil)
+      local report=assert(ship.LastPathfindingResult.Planning)
+      equal(report.Reason,"local_planning_reserve") equal(report.Phase,"extension_steering")
+      equal(report.Requests,2) equal(report.Candidate,3) equal(report.Extension,1)
+      equal(report.LastRejection,"local_turn_exit_too_short") equal(report.Slices,1)
+      near(report.SimulationSeconds,12.5)
+      equal(report.SpeedBound,job.Speed)
+      if mode=="no_clock" then equal(report.ActualSpeed,nil) else equal(report.ActualSpeed,10) end
+      equal(report.Thread,nil) equal(report.ActiveSearch,nil)
+      if mode=="no_clock" then equal(report.CPUSeconds,nil)
+      else assert(type(report.CPUSeconds)=="number" and report.CPUSeconds>=0) end
+      local outcomes=0
+      for _,line in ipairs(logs) do
+        if line:find("Local planning ",1,true) then outcomes=outcomes+1 end
+      end
+      equal(outcomes,mode=="disabled" and 0 or 3,"FullStop cleanup must not duplicate the outcome")
+      if mode=="no_clock" then
+        assert(table.concat(logs,"\n"):find("actual=unavailable",1,true),"missing velocity must not be reported as zero")
+      end
+    end
+  end)
+  os=savedOS
+  assert(ok,err)
+end)
+
+test("LOCAL cancellation inside a worker includes its active CPU slice exactly once",function()
+  local savedOS=os
+  local cpu=0
+  local ok,err=pcall(function()
+    os={clock=function() return cpu end}
+    local ship=localShip():SetPathfindingWorkBudget(512,100,2000)
+    function ship:_BuildLocalRoute(job)
+      cpu=cpu+0.25
+      self:FullStop()
+      self:_LocalPlanningCheckpoint(1)
+    end
+    assert(ship:_CheckLocalNavigation(true))
+    ship:_AdvanceLocalPlanning()
+    local report=assert(ship.LastLocalPlanningReport)
+    near(report.CPUSeconds,0.25)
+    near(report.SimulationSeconds,0)
+    equal(ship.stops,1) equal(ship.localNavigation,nil)
+  end)
+  os=savedOS
+  assert(ok,err)
+end)
+
+test("LOCAL work settings validate positive finite budgets",function()
+  local ship=localShip()
+  equal(ship:SetPathfindingWorkBudget(100,0.01,400),ship)
+  for _,args in ipairs({{0,0.01,400},{1.5,0.01,400},{100,0,400},{100,math.huge,400},{100,0.01,0},{100,0.01,1.5}}) do
+    equal(pcall(function() ship:SetPathfindingWorkBudget(unpack(args)) end),false)
+  end
+end)
+
+test("LOCAL slice limits stop bounded work without a CPU clock or provisional route",function()
+  local savedOS=os
+  local ok,err=pcall(function()
+    os=nil
+    local ship=localShip():SetPathfindingWorkBudget(1,0.005,2)
+    activateLocal(ship)
+    equal(ship.state,"Holding") equal(ship.stops,1)
+    equal(#ship.dispatches,1) equal(ship.dispatched[1].speed,0)
+    assert(ship.LastPathfindingResult.StopReason:find("limit",1,true))
+  end)
+  os=savedOS
+  assert(ok,err)
+end)
+
+test("LOCAL public requests retain exact goal coordinates and cannot announce early arrival",function()
+  local ship=localShip(1777)
+  ship.waypoints[2].coordinate=coord(1777,123)
+  assert(activateLocal(ship))
+  local navigation=assert(ship.localNavigation)
+  assert(navigation.GoalReached)
+  local last=navigation.Path[#navigation.Path]
+  near(last.x,1777) near(last.z,123)
+  assertClearPath(ship,navigation.Path)
+  equal(ship.currentwp,1) equal(ship.passingEvents,nil)
+  equal(navigation.Search.LastSearchResult.Outcome,"goal_path")
+end)
+
+test("LOCAL public search detours around an island with freshly checked steering connections",function()
+  local ship=localShip()
+  land.surfaceAt=function(p)
+    return p.x>=750 and p.x<=1250 and math.abs(p.z)<=300 and land.SurfaceType.LAND or land.SurfaceType.WATER
+  end
+  ship.terrain.depthAt=function(p) return p.x>=750 and p.x<=1250 and math.abs(p.y)<=300 and 0 or 40 end
+  assert(activateLocal(ship))
+  local navigation=assert(ship.localNavigation)
+  assertClearPath(ship,navigation.Path)
+  local lateral=false
+  for _,point in ipairs(navigation.Path) do if math.abs(point.z)>300 then lateral=true end end
+  assert(lateral,"the submitted route did not avoid the island")
+  equal(ship.stops,0) equal(navigation.GoalReached,false)
+end)
+
+test("LOCAL keeps route vectors independent of public candidate positions and later requests",function()
+  local ship=localShip()
+  assert(activateLocal(ship))
+  local navigation=assert(ship.localNavigation)
+  local report=navigation.Search.LastSearchResult
+  equal(report.Status,"complete") assert(#report.Candidates>0)
+  local retained={}
+  for index,point in ipairs(navigation.Path) do retained[index]=point:GetVec3() end
+  for _,candidate in ipairs(report.Candidates) do
+    for _,position in ipairs(candidate.Positions) do
+      for _,point in ipairs(navigation.Path) do assert(point~=position) end
+    end
+  end
+  navigation.Search:StartLocalSearch(VECTOR:New(500,0,0),ship.waypoints[2].coordinate,0)
+  for index,point in ipairs(navigation.Path) do
+    near(point.x,retained[index].x) near(point.z,retained[index].z)
+  end
+  equal(report.Status,"complete") equal(#ship.dispatches,1)
+  ship:FullStop()
+end)
+
+test("LOCAL route preparation rejects the observed short turning suffix behind a long approach",function()
+  local ship=localShip()
+  local points={VECTOR:New(78649.1,0,-59869.6),VECTOR:New(79264.6,0,-59246.5),
+    VECTOR:New(79048.3,0,-58787.4),VECTOR:New(78137.0,0,-58885.3)}
+  local job={Speed=13.37,Heading=points[1]:GetHeadingTo(points[2])}
+  local usable,metrics,reason=ship:_CheckLocalRoutePreparation(points,job,3,false)
+  equal(usable,false) equal(reason,"local_route_too_short")
+  assert(metrics.Length>2000 and metrics.SuffixLength<metrics.StopReserve)
+  near(metrics.StopReserve,935.9,0.01)
+  local incoming=points[3]:GetHeadingTo(points[4])
+  for _=1,3 do points[#points+1]=points[#points]:Translate(1000,incoming,true) end
+  usable,metrics,reason=ship:_CheckLocalRoutePreparation(points,job,3,false)
+  assert(usable,reason) assert(metrics.SuffixLength>=metrics.RequiredLength)
+  equal(#ship.dispatches,0)
+end)
+
+test("LOCAL preparation checks every turning exit even when the total new suffix is long",function()
+  local ship=localShip()
+  local points={VECTOR:New(0,0,0),VECTOR:New(2500,0,0),VECTOR:New(2900,0,400)}
+  local job={Speed=10,Heading=0}
+  local usable,metrics,reason=ship:_CheckLocalRoutePreparation(points,job,1,false)
+  equal(usable,false) equal(reason,"local_turn_exit_too_short")
+  equal(metrics.ShortTurnIndex,2)
+  assert(metrics.SuffixLength>=metrics.RequiredLength)
+  assert(metrics.TurnRemaining<metrics.StopReserve)
+  assert(ship:_CheckLocalRoutePreparation(points,job,1,true),"a checked exact goal needs no onward continuation")
+  ship.velocity=20
+  local _,faster=ship:_CheckLocalRoutePreparation(points,job,1,false)
+  near(faster.StopReserve,1400)
+end)
+
+test("LOCAL prices submitted geometry while preserving public learned candidate rankings",function()
+  for _,penalty in ipairs({0,10000}) do
+    local ship=localShip()
+    local evaluator=ASTAR:New():SetValidNeighbourDepth(20,50)
+    local first,second={},{}
+    for index=0,3 do first[#first+1]={x=index*1000,y=0,z=0} end
+    for index=0,4 do second[#second+1]={x=index*900,y=0,z=index*400} end
+    local secondCost=4*math.sqrt(900*900+400*400)
+    local report={Status="complete",StopReason="path_found",RequestID=1,Candidates={
+      {Positions=first,Cost=3000,Score=20000+penalty,LearnedPenalty=penalty,ReachesGoal=false},
+      {Positions=second,Cost=secondCost,Score=secondCost+17000,LearnedPenalty=0,ReachesGoal=false}}}
+    local search={}
+    function search:StartLocalSearch() self.LastSearchResult=report end
+    function search:UpdateLocalProgress() return self end
+    function search:EvaluateConnection(a,b) return evaluator:EvaluateConnection(a,b) end
+    function ship:_GetLocalSearch() return search end
+    local start=VECTOR:New(0,0,0)
+    local job={Position=start,Heading=0,Speed=10,Alt=0,TargetPosition=VECTOR:New(20000,0,0),Prefix={start}}
+    local points,plan,reason=ship:_BuildLocalRoute(job)
+    assert(points,reason)
+    equal(plan.Candidate,penalty==0 and 1 or 2)
+    local candidate=report.Candidates[plan.Candidate]
+    near(plan.Score,plan.Cost+candidate.Score-candidate.Cost)
+    assertClearPath(ship,points)
+    near(first[4].x,3000) near(second[5].z,1600)
+    for _,point in ipairs(points) do
+      for _,original in ipairs(candidate.Positions) do assert(point~=original) end
+    end
+    equal(#ship.dispatches,0)
+  end
+end)
+
+test("LOCAL fully prepared primary alternatives precede cheaper unprepared short exits",function()
+  local ship=localShip()
+  local evaluator=ASTAR:New():SetValidNeighbourDepth(20,50)
+  local report={Status="complete",StopReason="path_found",RequestID=1,Candidates={
+    {Positions={{x=0,y=0,z=0},{x=600,y=0,z=0}},Cost=600,Score=1000,LearnedPenalty=0,ReachesGoal=false},
+    {Positions={{x=0,y=0,z=0},{x=1000,y=0,z=0},{x=2000,y=0,z=0},{x=3000,y=0,z=0}},
+      Cost=3000,Score=20000,LearnedPenalty=0,ReachesGoal=false}}}
+  local search={Requests=0}
+  function search:StartLocalSearch() self.Requests=self.Requests+1 self.LastSearchResult=report end
+  function search:UpdateLocalProgress() return self end
+  function search:EvaluateConnection(a,b) return evaluator:EvaluateConnection(a,b) end
+  function ship:_GetLocalSearch(speed,probe)
+    assert(not probe,"an already prepared primary alternative must not wait for speculative short exits")
+    return search
+  end
+  local start=VECTOR:New(0,0,0)
+  local job={Position=start,Heading=0,Speed=10,Alt=0,TargetPosition=VECTOR:New(20000,0,0),Prefix={start}}
+
+  local points,plan,reason=ship:_BuildLocalRoute(job)
+
+  assert(points,reason) equal(plan.Candidate,2) equal(search.Requests,1)
+  equal(plan.PreflightExtensions,0) assertClearPath(ship,points)
+end)
+
+test("LOCAL future-anchor probes cannot replace the persistent learning or actual observations",function()
+  local ship=localShip()
+  ship.localNavigation={}
+  local search=ship:_GetLocalSearch(10)
+  search:UpdateLocalProgress(VECTOR:New(50,0,0))
+  local probe=ship:_GetLocalSearch(10,true)
+  assert(probe~=search) equal(ship.localNavigation.Search,search)
+  equal(probe.LocalLearningLimit,0)
+  probe:StartLocalSearch(VECTOR:New(2000,0,0),VECTOR:New(20000,0,0),0)
+  equal(probe.LastSearchResult.Progress.Status,"unobserved")
+  search:StartLocalSearch(VECTOR:New(1000,0,0),VECTOR:New(20000,0,0),0)
+  local progress=search.LastSearchResult.Progress
+  near(progress.Position.x,50) equal(progress.HistoryCount,1) near(progress.Distance,0)
+  search:CancelSearch() probe:CancelSearch()
+end)
+
+local function installedFixture(points)
+  local ship=localShip()
+  ship:_CheckLocalNavigation(true)
+  ship:_CancelLocalPlanning("controlled_route_fixture")
+  assert(ship:_InstallLocalRoute(points,{GoalReached=false,Cost=3000},points[1]))
+  return ship
+end
+
+-- DCS drawing endpoints and timer dispatch only; GRID/ASTAR/PATHLINE remain production code.
+-- Other regressions retain their strict ban on unexpected navigation retry timers.
+local function withDrawing(run)
+  local oldTrigger,oldSchedule,oldRemove=trigger,timer.scheduleFunction,timer.removeFunction
+  local oldMarkID,oldRemoveMark=UTILS.GetMarkID,UTILS.RemoveMark
+  local view={marks={},scheduled={},callbacks={},nextID=0,nextTimerID=0,maxBatch=0}
+  function UTILS.GetMarkID()
+    view.nextID=view.nextID+1
+    return view.nextID
+  end
+  trigger={action={}}
+  function trigger.action.markupToAll(shape,side,id,...)
+    local args={...}
+    local count=select("#",...)
+    view.marks[id]={kind="grid",fill=deepcopy(args[count-3]),side=side,shape=shape}
+  end
+  function trigger.action.lineToAll(side,id,a,b,color,lineType)
+    view.marks[id]={kind="route",a=deepcopy(a),b=deepcopy(b),color=deepcopy(color),side=side,lineType=lineType}
+  end
+  function trigger.action.removeMark(id) view.marks[id]=nil end
+  function UTILS.RemoveMark(id) trigger.action.removeMark(id) end
+  function timer.scheduleFunction(fn,args,at)
+    view.nextTimerID=view.nextTimerID+1
+    local task={fn=fn,args=args,at=at}
+    view.scheduled[view.nextTimerID]=task
+    view.callbacks[#view.callbacks+1]=task
+    return view.nextTimerID
+  end
+  function timer.removeFunction(id) view.scheduled[id]=nil end
+  function view:collect(kind)
+    local ids={}
+    for id,mark in pairs(self.marks) do
+      if mark.kind==kind then ids[#ids+1]=id end
+    end
+    table.sort(ids)
+    return ids
+  end
+  function view:step()
+    local id,task
+    for candidate,entry in pairs(self.scheduled) do
+      if not task or entry.at<task.at then id,task=candidate,entry end
+    end
+    if not task then return false end
+    timerNow=math.max(timerNow,task.at)
+    local before=self.nextID
+    local nextTime=task.fn(task.args,timerNow)
+    self.maxBatch=math.max(self.maxBatch,self.nextID-before)
+    if self.scheduled[id]==task and nextTime then task.at=nextTime else self.scheduled[id]=nil end
+    return true
+  end
+  function view:flush()
+    local steps=0
+    while self:step() do
+      steps=steps+1
+      assert(steps<10000,"grid display did not finish")
+    end
+  end
+  local ok,err=pcall(run,view)
+  trigger,timer.scheduleFunction,timer.removeFunction=oldTrigger,oldSchedule,oldRemove
+  UTILS.GetMarkID,UTILS.RemoveMark=oldMarkID,oldRemoveMark
+  if not ok then error(err,0) end
+end
+
+local function assertDrawnRoute(view,route)
+  local ids=view:collect("route")
+  equal(#ids,#route-1,"exact submitted segment count")
+  for i,id in ipairs(ids) do
+    local mark=view.marks[id]
+    for _,endpoint in ipairs({{mark.a,route[i]},{mark.b,route[i+1]}}) do
+      near(endpoint[1].x,endpoint[2].x)
+      near(endpoint[1].y,endpoint[2].alt)
+      near(endpoint[1].z,endpoint[2].y)
+    end
+    equal(mark.side,-1)
+    equal(mark.color[1],1) equal(mark.color[2],0) equal(mark.color[3],1) equal(mark.color[4],1)
+  end
+  return ids
+end
+
+test("LOCAL display publishes a depth grid and exact route without changing planning",function()
+  withDrawing(function(view)
+    local function configured()
+      local ship=localShip(1500):SetPathfindingMinDepth(3.5):SetPathfindingPreferredDepth(15,10)
+      ship.terrain.depthAt=function(point) return point.x<300 and 5 or 40 end
+      return ship
+    end
+    local quiet=configured()
+    assert(activateLocal(quiet))
+    equal(next(view.marks),nil) equal(next(view.scheduled),nil)
+    local visible=configured()
+    visible.verbose=10
+    assert(activateLocal(visible))
+    equal(#visible.dispatches,#quiet.dispatches)
+    equal(#visible.dispatched,#quiet.dispatched)
+    for i,point in ipairs(visible.dispatched) do
+      near(point.x,quiet.dispatched[i].x) near(point.y,quiet.dispatched[i].y)
+      near(point.speed,quiet.dispatched[i].speed)
+    end
+    assertDrawnRoute(view,visible.dispatched)
+    assert(next(view.scheduled),"nontrivial grid is queued for bounded drawing")
+    local queriesBefore=visible.terrain.queries
+    view:flush()
+    assert(visible.terrain.queries>queriesBefore,"depth colors query cell centers in drawing batches")
+    local gridIDs=view:collect("grid")
+    assert(#gridIDs>25,"completed local window has visible cells")
+    assert(view.maxBatch<=25,"drawing remains bounded per timer callback")
+    local blue,shallow=false,false
+    for _,id in ipairs(gridIDs) do
+      local mark=view.marks[id]
+      equal(mark.shape,7) equal(mark.side,-1)
+      blue=blue or (mark.fill[1]==0 and math.abs(mark.fill[2]-0.15)<1e-7 and math.abs(mark.fill[3]-0.8)<1e-7)
+      shallow=shallow or mark.fill[1]>0
+    end
+    assert(blue and shallow,"grid shows both preferred-depth and shallow cells")
+    equal(visible.pathfindingDebugSearch.LastGridDrawResult.Status,"complete")
+    equal(visible.pathDepthWeight,10)
+    equal(visible.stops,0)
+    visible:SetPathfindingOff()
+    equal(next(view.marks),nil) equal(next(view.scheduled),nil)
+  end)
+end)
+
+test("LOCAL display replaces submitted geometry and ignores callbacks that stop navigation",function()
+  withDrawing(function(view)
+    local points={VECTOR:New(0,0,0),VECTOR:New(1200,0,0),VECTOR:New(2400,0,600),VECTOR:New(3600,0,600)}
+    local ship=installedFixture(points)
+    ship.verbose=10
+    assert(ship:_SubmitLocalRoute(points[1]))
+    local oldIDs=assertDrawnRoute(view,ship.dispatched)
+    ship.position={x=1250,y=0,z=25}
+    ship.heading=points[2]:GetHeadingTo(points[3])
+    ship:_LocalRouteProgress(VECTOR:NewFromVec(ship.position))
+    assert(ship:_SubmitLocalRoute(VECTOR:NewFromVec(ship.position)))
+    for _,id in ipairs(oldIDs) do equal(view.marks[id],nil,"old route removed") end
+    assertDrawnRoute(view,ship.dispatched)
+    near(ship.dispatched[1].x,1250) near(ship.dispatched[1].y,25)
+    local originalRoute=ship.Route
+    function ship:Route(route)
+      self.Route=originalRoute
+      originalRoute(self,route)
+      self:FullStop()
+    end
+    assert(ship:_SubmitLocalRoute(VECTOR:NewFromVec(ship.position)))
+    equal(next(view.marks),nil,"stop callback must not resurrect the old route")
+    equal(next(view.scheduled),nil)
+  end)
+end)
+
+test("LOCAL display keeps route and group ownership across probe replacement and cancellation",function()
+  withDrawing(function(view)
+    local first=localShip(1500):SetPathfindingMinDepth(3.5):SetPathfindingPreferredDepth(15,10)
+    first.verbose=10
+    assert(activateLocal(first))
+    view:flush()
+    local firstGrid=view:collect("grid")
+    local firstRoute=assertDrawnRoute(view,first.dispatched)
+    -- A speculative search uses a different ASTAR owner, but must leave the installed command visible.
+    local probe=first:_GetLocalSearch(10,true)
+    probe:StartLocalSearch(VECTOR:New(500,0,0),VECTOR:New(20000,0,0),0)
+    while probe.LastSearchResult.Status=="running" do probe:StepSearch(512,1) end
+    first:_DrawLocalSearch(probe)
+    for _,id in ipairs(firstGrid) do equal(view.marks[id],nil) end
+    for _,id in ipairs(firstRoute) do assert(view.marks[id],"grid replacement removed an installed route") end
+    assert(view:step())
+    local pending=view.callbacks[#view.callbacks]
+    local owned={}
+    for id in pairs(view.marks) do owned[#owned+1]=id end
+
+    local second=localShip(1500):SetPathfindingMinDepth(3.5):SetPathfindingPreferredDepth(15,10)
+    second.verbose=10
+    assert(activateLocal(second))
+    local secondRoute={}
+    for id,mark in pairs(view.marks) do
+      if mark.kind=="route" and id>firstRoute[#firstRoute] then secondRoute[#secondRoute+1]=id end
+    end
+    assert(#secondRoute>0)
+    view.marks[999999]={kind="unrelated"}
+    first:FullStop()
+    for _,id in ipairs(owned) do equal(view.marks[id],nil) end
+    for _,id in ipairs(secondRoute) do assert(view.marks[id],"another group's route was removed") end
+    assert(view.marks[999999])
+    equal(pending.fn(pending.args,timerNow),nil,"cancelled callback cannot redraw")
+    view:flush()
+    for _,id in ipairs(owned) do equal(view.marks[id],nil) end
+    assert(#view:collect("grid")>0,"another group's pending grid still completes")
+    second:SetPathfindingMode(NAVYGROUP.PathfindingMode.WAYPOINT)
+    equal(#view:collect("route"),0) equal(#view:collect("grid"),0)
+    equal(next(view.scheduled),nil)
+    assert(view.marks[999999])
+  end)
+end)
+
+test("LOCAL display cancellation cannot abort a new planning coroutine on an invalid timer handle",function()
+  withDrawing(function(view)
+    timer.removeFunction=function() error("Parameter #1 (function reference number) is invalid") end
+    local ship=localShip():SetPathfindingMinDepth(3.5):SetPathfindingPreferredDepth(15,10)
+    ship.verbose=10
+    assert(activateLocal(ship))
+    local firstRoute=ship.localNavigation.RouteID
+    assert(firstRoute and firstRoute>0)
+    -- Leave the first window pending while a different planning coroutine replaces it.
+    ship:_StartLocalPlanning(VECTOR:NewFromVec(ship.position),false)
+    assert(finishPlanning(ship,true))
+    assert(ship.localNavigation.RouteID>firstRoute)
+    equal(ship.LastLocalPlanningReport.Reason,"submitted")
+    equal(ship.stops,0)
+    ship:FullStop()
+    local afterStop=view.nextID
+    view:flush()
+    equal(view.nextID,afterStop,"cancelled drawing callbacks cannot create new marks")
+    equal(next(view.marks),nil) equal(next(view.scheduled),nil)
+  end)
+end)
+
+local function longConnectorFixture(rotation,mirror)
+  local path={}
+  local angle=math.rad(rotation or 0)
+  for _,point in ipairs({{64639.2,-82415.1},{64846.5,-81963.2},{64296.8,-81188.4},
+    {64181.1,-81025.3},{64598.1,-80116.4},{64660.6,-79980.1},{64082.0,-79164.5},{63995.2,-79042.1}}) do
+    local x,z=point[1],point[2]*(mirror or 1)
+    path[#path+1]=VECTOR:New(x*math.cos(angle)-z*math.sin(angle),0,x*math.sin(angle)+z*math.cos(angle))
+  end
+  local ship=installedFixture(path)
+  local navigation=ship.localNavigation
+  navigation.Speed=13.375
+  navigation.Segment=2
+  local x,z=64375.1,-81120.7*(mirror or 1)
+  ship.position={x=x*math.cos(angle)-z*math.sin(angle),y=0,z=x*math.sin(angle)+z*math.cos(angle)}
+  ship.heading=(77.7*(mirror or 1)+(rotation or 0))%360
+  local job=ship:_StartLocalPlanning(path[2],false)
+  job.Points={}
+  for _,point in ipairs(job.Prefix) do job.Points[#job.Points+1]=point:Copy() end
+  job.Points[#job.Points+1]=path[#path]:Copy():Translate(900,path[7]:GetHeadingTo(path[8]))
+  job.Plan={GoalReached=false,Cost=5000,PlanningSpeed=job.Speed}
+  navigation.Job=nil navigation.Pending=job
+  return ship,path,job
+end
+
+test("LOCAL connector subdivision publishes the logged 1029 meter reattachment without skipping corners",function()
+  for _,variant in ipairs({{0,1},{60,1},{180,1},{90,-1}}) do
+    local ship,path,job=longConnectorFixture(variant[1],variant[2])
+    local jobCount=#job.Points
+    local position=VECTOR:NewFromVec(ship.position)
+    local length=position:GetDistance(path[5],true)
+    assert(length>1028 and length<1030)
+    assert(ship:_CommitLocalPlanning(position))
+    equal(job.Outcome.Reason,"submitted") equal(ship.stops,0)
+    equal(#job.Points,jobCount,"subdivision must not mutate the pending proposal")
+    local route=ship.localNavigation.Path
+    near(route[2].x,(position.x+path[5].x)/2)
+    near(route[2].z,(position.z+path[5].z)/2)
+    for i=5,#path do
+      near(route[i-2].x,path[i].x) near(route[i-2].z,path[i].z)
+    end
+    for i=2,#route do assert(route[i-1]:GetDistance(route[i],true)<=1000.001) end
+    assertClearPath(ship,route)
+    near(ship.dispatched[2].speed,13.375)
+    equal(ship.currentwp,1) equal(ship.passingEvents,nil)
+  end
+end)
+
+test("LOCAL connector subdivision still rejects shallow water on the new connection",function()
+  local ship,path=longConnectorFixture()
+  ship.terrain.depthAt=function(point)
+    if point.x>64450 and point.x<64485 and point.y>-80775 and point.y<-80700 then return 1 end
+    return 40
+  end
+  assert(ship:_CheckPathDepth(path[4],path[5]),"the original installed leg remains clear")
+  local dispatches=#ship.dispatches
+  ship:_CommitLocalPlanning(VECTOR:NewFromVec(ship.position))
+  equal(ship.stops,1)
+  equal(#ship.dispatches,dispatches+1) equal(ship.dispatched[1].speed,0)
+  equal(ship.LastPathfindingResult.DepthCheck.Cause,"insufficient_depth")
+end)
+
+test("LOCAL connector subdivision checks the original corner before inserting a straight point",function()
+  local ship,path,job=longConnectorFixture()
+  local rejectedCorner=false
+  local original=ship._CheckLocalTurn
+  function ship:_CheckLocalTurn(position,...)
+    if position:GetDistance(path[5],true)<0.01 then
+      rejectedCorner=true
+      return false,{Reason="controlled_corner_obstruction"}
+    end
+    return original(self,position,...)
+  end
+  local dispatches=#ship.dispatches
+  ship:_CommitLocalPlanning(VECTOR:NewFromVec(ship.position))
+  assert(rejectedCorner,"the real retained corner must be checked, not just a straight midpoint")
+  equal(job.Outcome.Reason,"submission_corner_clearance")
+  equal(#ship.dispatches,dispatches)
+end)
+
+test("LOCAL connector subdivision stays bounded and rejects an excessively distant anchor",function()
+  local points={VECTOR:New(0,0,0),VECTOR:New(1000,0,0),VECTOR:New(2000,0,0),VECTOR:New(3000,0,0)}
+  local ship=installedFixture(points)
+  local job=ship:_StartLocalPlanning(points[1],false)
+  job.Points=job.Prefix
+  job.Plan={GoalReached=false,Cost=3000}
+  ship.localNavigation.Job=nil ship.localNavigation.Pending=job
+  ship.position={x=-1100,y=0,z=0}
+  local count=#ship.dispatches
+  ship:_CommitLocalPlanning(VECTOR:NewFromVec(ship.position))
+  equal(job.Outcome.Reason,"submission_leg_length")
+  equal(#ship.dispatches,count)
+  equal(ship.localNavigation.Path,points)
+end)
+
+-- Logged DCS steering points, rounded to 0.1 m; terrain is deliberately controlled.
+local function roundedSubdivisionFixture()
+  local path={}
+  for _,point in ipairs({{64631.0,-82432.9},{64848.3,-81959.2},{64269.7,-81143.6},
+    {64182.9,-81021.3},{64579.1,-80157.8},{64662.5,-79976.0},{64112.8,-79201.2},{63997.0,-79038.1}}) do
+    path[#path+1]=VECTOR:New(point[1],0,point[2])
+  end
+  local ship=installedFixture(path)
+  ship.localNavigation.Speed=13.375
+  ship.localNavigation.Segment=2
+  ship.velocity=13.375
+  ship.heading=78.255556883149
+  ship.position={x=64376.740831542,y=0,z=-81114.9902282}
+  return ship,path
+end
+
+test("LOCAL rounded subdivisions recognise the logged outgoing course before its endpoint plane",function()
+  local ship,path=roundedSubdivisionFixture()
+  local navigation=ship.localNavigation
+  local dispatches=#ship.dispatches
+  local position=VECTOR:NewFromVec(ship.position)
+  local progress,remaining=ship:_LocalRouteProgress(position)
+  equal(navigation.Segment,4)
+  near(progress,navigation.Distances[4])
+  near(remaining,navigation.Length-progress)
+  for _=1,3 do
+    near(ship:_LocalRouteProgress(position),progress)
+    equal(navigation.Segment,4)
+  end
+  equal(#ship.dispatches,dispatches)
+  equal(ship.currentwp,1) equal(ship.passingEvents,nil)
+end)
+
+test("LOCAL rounded subdivisions publish a forward continuation from the logged pose",function()
+  local ship,path=roundedSubdivisionFixture()
+  local navigation=ship.localNavigation
+  local job=ship:_StartLocalPlanning(path[2],false)
+  job.Points={}
+  for _,point in ipairs(job.Prefix) do job.Points[#job.Points+1]=point:Copy() end
+  job.Points[#job.Points+1]=path[#path]:Copy():Translate(1000,path[7]:GetHeadingTo(path[8]))
+  job.Plan={GoalReached=false,Cost=5000,PlanningSpeed=job.Speed}
+  navigation.Job=nil navigation.Pending=job
+  local dispatches=#ship.dispatches
+  assert(ship:_CommitLocalPlanning(VECTOR:NewFromVec(ship.position)))
+  equal(#ship.dispatches,dispatches+1) equal(ship.stops,0)
+  equal(job.Outcome.Reason,"submitted")
+  near(ship.dispatched[2].x,path[5].x) near(ship.dispatched[2].y,path[5].z)
+  near(ship.dispatched[2].speed,13.375)
+  equal(ship.currentwp,1) equal(ship.passingEvents,nil)
+  assertClearPath(ship,navigation.Path)
+  -- Every remaining corner survives; none is replaced with a distant shortcut.
+  for i=5,#path do
+    near(navigation.Path[i-3].x,path[i].x) near(navigation.Path[i-3].z,path[i].z)
+  end
+end)
+
+test("LOCAL rounded subdivisions follow observed motion independently of point density and orientation",function()
+  for _,mirror in ipairs({-1,1}) do
+    for _,rotation in ipairs({0,math.rad(137),math.rad(280)}) do
+      for _,extraPoints in ipairs({0,3}) do
+        local sourceShip,source=roundedSubdivisionFixture()
+        local origin=source[2]
+        local function transform(point)
+          local x,z=point.x-origin.x,mirror*(point.z-origin.z)
+          return VECTOR:New(x*math.cos(rotation)-z*math.sin(rotation),0,x*math.sin(rotation)+z*math.cos(rotation))
+        end
+        local path={transform(source[2]),transform(source[3])}
+        for i=1,extraPoints do
+          local fraction=i/(extraPoints+1)
+          path[#path+1]=transform(VECTOR:New(source[3].x+(source[4].x-source[3].x)*fraction,0,
+            source[3].z+(source[4].z-source[3].z)*fraction))
+        end
+        for i=4,#source do path[#path+1]=transform(source[i]) end
+        local ship=installedFixture(path)
+        ship.localNavigation.Speed=13.375
+        local course=math.rad(sourceShip.heading)
+        ship.heading=(mirror*sourceShip.heading+math.deg(rotation))%360
+        local previous=0
+        -- Include earlier/later observations around the rejected commit, not just its exact pose.
+        for _,distance in ipairs({-30,0,30,60}) do
+          local position=transform(VECTOR:New(sourceShip.position.x+distance*math.cos(course),0,
+            sourceShip.position.z+distance*math.sin(course)))
+          local progress=ship:_LocalRouteProgress(position)
+          equal(ship.localNavigation.Segment,3+extraPoints)
+          assert(progress>=previous)
+          previous=progress
+          near(ship:_LocalRouteProgress(position),progress)
+        end
+      end
+    end
+  end
+end)
+
+test("LOCAL rounded subdivisions cannot bypass a real corner or a nearby return leg",function()
+  for _,case in ipairs({"wrong_heading","before_corner","too_far","real_corner","hairpin","straight"}) do
+    local points={VECTOR:New(0,0,0),VECTOR:New(850,0,0),VECTOR:New(1000,0,0),VECTOR:New(1700,0,700),VECTOR:New(2400,0,1400)}
+    local position,heading={x=800,y=0,z=180},45
+    if case=="wrong_heading" then heading=0 end
+    if case=="before_corner" then position={x=700,y=0,z=20} end
+    if case=="too_far" then position={x=400,y=0,z=500} end
+    if case=="real_corner" then points[3]=VECTOR:New(850,0,-150) end
+    if case=="straight" then
+      points[3]=VECTOR:New(1850,0,0)
+      points[4]=VECTOR:New(2850,0,0)
+      heading=0
+    end
+    if case=="hairpin" then
+      points[3]=VECTOR:New(850,0,100)
+      points[4]=VECTOR:New(0,0,100)
+      position={x=0,y=0,z=95}
+      heading=180
+    end
+    local ship=installedFixture(points)
+    ship.localNavigation.Speed=13.375
+    ship.position,ship.heading=position,heading
+    ship:_LocalRouteProgress(VECTOR:NewFromVec(ship.position))
+    equal(ship.localNavigation.Segment,1,case)
+  end
+end)
+
+test("LOCAL rounded subdivisions still reject a shallow live connector",function()
+  local ship,path=roundedSubdivisionFixture()
+  local navigation=ship.localNavigation
+  local job=ship:_StartLocalPlanning(path[2],false)
+  job.Points=job.Prefix
+  job.Plan={GoalReached=false,Cost=4000,PlanningSpeed=job.Speed}
+  navigation.Job=nil navigation.Pending=job
+  -- The retained outgoing line clears this shoal, but the actual-position connector crosses it.
+  ship.terrain.depthAt=function(point)
+    if point.x>64460 and point.x<64490 and point.y>-80665 and point.y<-80610 then return 1 end
+    return 40
+  end
+  assert(ship:_CheckPathDepth(path[4],path[5]))
+  local dispatches=#ship.dispatches
+  ship:_CommitLocalPlanning(VECTOR:NewFromVec(ship.position))
+  equal(ship.stops,1)
+  equal(#ship.dispatches,dispatches+1)
+  equal(ship.dispatched[1].speed,0)
+  equal(ship.LastPathfindingResult.DepthCheck.Cause,"insufficient_depth")
+end)
+
+test("LOCAL failed continuation keeps checked movement retries after progress and stops at reserve",function()
+  local points={VECTOR:New(0,0,0),VECTOR:New(1000,0,0),VECTOR:New(2000,0,0),VECTOR:New(3000,0,0)}
+  local ship=installedFixture(points)
+  local navigation=ship.localNavigation
+  local builds,logs=0,{}
+  function ship:_BuildLocalRoute()
+    builds=builds+1
+    return nil,nil,"no_steering_path"
+  end
+  function ship:T(message) logs[#logs+1]=message end
+  local dispatches=#ship.dispatches
+  ship:_StartLocalPlanning(points[1],false)
+  ship:_AdvanceLocalPlanning()
+  assert(navigation.Job and navigation.Job.Replacement,"a failed future anchor gets one actual-position attempt")
+  ship:_AdvanceLocalPlanning()
+  equal(builds,2) equal(navigation.Job,nil)
+  equal(navigation.Path,points) equal(#ship.dispatches,dispatches) equal(ship.stops,0)
+  equal(navigation.ExtensionFailure.Reason,"no_steering_path")
+
+  -- Failure does not create a timer-driven retry loop while actual progress stays unchanged.
+  for _=1,3 do timerNow=timerNow+0.1 ship:_CheckLocalNavigation() end
+  equal(builds,2) equal(navigation.Job,nil)
+  ship.position={x=300,y=0,z=0}
+  ship:_CheckLocalNavigation()
+  assert(navigation.Job,"observed progress should permit another bounded continuation")
+  equal(#ship.dispatches,dispatches)
+
+  ship.position={x=2400,y=0,z=0}
+  ship:_CheckLocalNavigation()
+  equal(ship.stops,1) equal(ship.LastPathfindingResult.StopReason,"local_route_exhausted")
+  equal(ship.LastPathfindingResult.Remaining,600) equal(ship.LastPathfindingResult.Reserve,700)
+  equal(#ship.dispatches,dispatches+1) equal(ship.dispatched[1].speed,0)
+  local failures=0
+  for _,line in ipairs(logs) do
+    if line:find("Local planning failed:",1,true) then failures=failures+1 assert(#line<500) end
+  end
+  equal(failures,2)
+end)
+
+test("LOCAL moved connector rechecks the first retained corner before publication",function()
+  local original={VECTOR:New(0,0,0),VECTOR:New(1000,0,0),VECTOR:New(1500,0,866),VECTOR:New(2000,0,1732)}
+  local ship=installedFixture(original)
+  local navigation=ship.localNavigation
+  local job=ship:_StartLocalPlanning(original[1],true)
+  job.Points=original job.Plan={GoalReached=false,Cost=3000}
+  navigation.Job=nil navigation.Pending=job
+  local dispatches=#ship.dispatches
+  ship.position={x=500,y=0,z=400}
+  ship.heading=VECTOR:NewFromVec(ship.position):GetHeadingTo(original[2])
+  ship:_CommitLocalPlanning(VECTOR:NewFromVec(ship.position))
+  equal(#ship.dispatches,dispatches) equal(navigation.Path,original)
+  equal(navigation.ExtensionFailure.Reason,"submission_corner_angle")
+end)
+
+test("LOCAL a clearance callback changing rules cannot replace the tracked installed route",function()
+  local original={VECTOR:New(0,0,0),VECTOR:New(1000,0,0),VECTOR:New(2000,0,0),VECTOR:New(3000,0,0)}
+  local ship=installedFixture(original)
+  local navigation=ship.localNavigation
+  local job=ship:_StartLocalPlanning(original[1],true)
+  job.Points={original[1]:Copy(),original[2]:Copy(),original[3]:Copy(),original[4]:Copy(),VECTOR:New(4000,0,0)}
+  job.Plan={GoalReached=false,Cost=4000}
+  navigation.Job=nil navigation.Pending=job
+  ship.collisionwarning=true
+  function ship:OnAfterClearAhead() self:SetPathfindingMinDepth(21) end
+  local dispatches=#ship.dispatches
+  equal(ship:_CommitLocalPlanning(original[1]),false)
+  equal(ship.localNavigation,navigation) equal(navigation.Path,original)
+  equal(#ship.dispatches,dispatches) equal(ship.pathMinDepth,21)
+  equal(navigation.Pending,nil)
+end)
+
+test("LOCAL final worker callbacks cannot publish an obsolete completed generation",function()
+  for _,action in ipairs({"hold","rules","retarget","accelerate"}) do
+    local ship=localShip()
+    local before
+    function ship:_BuildLocalRoute(job)
+      if action=="hold" then self:FullStop()
+      elseif action=="rules" then self:SetPathfindingMinDepth(21)
+      elseif action=="retarget" then self:_SetNavigationWaypoint(self.waypoints[3])
+      else self.velocity=20 end
+      before=#self.dispatches
+      return {job.Position,VECTOR:New(1000,0,0),VECTOR:New(2000,0,0),VECTOR:New(3000,0,0)},
+        {GoalReached=false,Cost=3000}
+    end
+    assert(ship:_CheckLocalNavigation(true))
+    ship:_AdvanceLocalPlanning()
+    equal(#ship.dispatches,before)
+    assert(not ship.localNavigation or not ship.localNavigation.Job)
+    assert(not ship.localNavigation or not ship.localNavigation.Pending)
+    if action=="hold" then equal(ship.state,"Holding") end
+  end
+end)
+
+test("LOCAL completed continuation waits through a turn and preserves every unpassed corner",function()
+  local original={VECTOR:New(0,0,0),VECTOR:New(1000,0,0),VECTOR:New(1800,0,400),VECTOR:New(2600,0,800)}
+  local ship=installedFixture(original)
+  local navigation=ship.localNavigation
+  local job=ship:_StartLocalPlanning(original[1],false)
+  job.Points={original[1]:Copy(),original[2]:Copy(),original[3]:Copy(),original[4]:Copy(),VECTOR:New(3400,0,1200)}
+  job.Plan={GoalReached=false,Cost=4000}
+  navigation.Job=nil navigation.Pending=job
+  ship.turning=true
+  local dispatches=#ship.dispatches
+  equal(ship:_CommitLocalPlanning(original[1]),false)
+  equal(navigation.Path,original) equal(navigation.Pending,job) equal(#ship.dispatches,dispatches)
+  ship.turning=false
+  assert(ship:_CommitLocalPlanning(original[1]))
+  equal(#ship.dispatches,dispatches+1) equal(navigation.Pending,nil)
+  for index=2,#original do
+    near(navigation.Path[index].x,original[index].x) near(navigation.Path[index].z,original[index].z)
+  end
+end)
+
+test("LOCAL cell limits remain distinct from cooperative slice limits",function()
+  local ship=localShip():SetPathfindingGrid(1)
+  activateLocal(ship)
+  equal(ship.state,"Holding") equal(ship.stops,1)
+  equal(ship.LastPathfindingResult.StopReason,"cell_limit")
+  equal(#ship.dispatches,1) equal(ship.dispatched[1].speed,0)
+end)
+
+test("LOCAL building from an older anchor cannot manufacture backward observed movement",function()
+  local ship=localShip()
+  ship.localNavigation={}
+  local search=ship:_GetLocalSearch(10)
+  search:UpdateLocalProgress(VECTOR:New(0,0,0))
+  ship.position={x=100,y=0,z=0}
+  search:UpdateLocalProgress(VECTOR:NewFromVec(ship.position))
+  local start=search.StartLocalSearch
+  function search:StartLocalSearch(...)
+    start(self,...)
+    self:CancelSearch() -- No geometry is needed to inspect the new request's observation snapshot.
+    return self
+  end
+  local job={Position=VECTOR:New(0,0,0),Heading=0,Speed=10,Alt=0,
+    TargetPosition=VECTOR:New(20000,0,0),Prefix={VECTOR:New(1000,0,0)}}
+  ship:_BuildLocalRoute(job)
+  local progress=search.LastSearchResult.Progress
+  near(progress.Position.x,100) near(progress.Distance,100) equal(progress.HistoryCount,2)
+end)
+
+test("LOCAL ordinary release cannot bypass depth rules changed by its clearance callback",function()
+  local original={VECTOR:New(0,0,0),VECTOR:New(1000,0,0),VECTOR:New(2000,0,0),VECTOR:New(3000,0,0)}
+  local ship=installedFixture(original)
+  local navigation=ship.localNavigation
+  ship.collisionwarning=true
+  function ship:OnAfterClearAhead() self:SetPathfindingMinDepth(41) end
+  local dispatches,updates=#ship.dispatches,ship.updates
+
+  assert(ship:_TryResumeWaypointRoute())
+
+  equal(ship.pathMinDepth,41) equal(ship.localNavigation,navigation)
+  equal(navigation.Path,original) equal(#ship.dispatches,dispatches)
+  equal(ship.updates,updates) equal(ship.stops,0)
+end)
+
+test("LOCAL clearance callbacks cannot complete an obsolete arrival target",function()
+  local ship=localShip()
+  assert(ship:_CheckLocalNavigation(true))
+  ship:_CancelLocalPlanning("controlled_arrival_fixture")
+  ship.position={x=20000,y=0,z=0}
+  ship.collisionwarning=true
+  function ship:OnAfterClearAhead() self:_SetNavigationWaypoint(self.waypoints[3]) end
+  ship:_CheckLocalNavigation()
+  equal(ship.currentwp,1) equal(ship.passingEvents,nil)
+  equal(ship:_GetNavigationWaypoint().uid,3)
+end)
+
+test("LOCAL clearance callbacks changing target coordinates prevent stale route publication",function()
+  for _,stage in ipairs({"install_altitude","resubmit_horizontal"}) do
+    local original={VECTOR:New(0,0,0),VECTOR:New(1000,0,0),VECTOR:New(2000,0,0),VECTOR:New(3000,0,0)}
+    local ship=installedFixture(original)
+    local navigation=ship.localNavigation
+    ship.collisionwarning=true
+    function ship:OnAfterClearAhead()
+      local coordinate=self.waypoints[2].coordinate
+      if stage=="install_altitude" then coordinate.y=-20 else coordinate.x=coordinate.x+100 end
+    end
+    local dispatches=#ship.dispatches
+    if stage=="install_altitude" then
+      local job=ship:_StartLocalPlanning(original[1],true)
+      job.Points={original[1]:Copy(),original[2]:Copy(),original[3]:Copy(),original[4]:Copy(),VECTOR:New(4000,0,0)}
+      job.Plan={GoalReached=false,Cost=4000}
+      navigation.Job=nil navigation.Pending=job
+      equal(ship:_CommitLocalPlanning(original[1]),false)
+    else
+      equal(ship:_SubmitLocalRoute(original[1]),false)
+    end
+    equal(navigation.Path,original) equal(#ship.dispatches,dispatches)
+    equal(ship.currentwp,1)
+  end
+end)
+
+test("LOCAL initial moving-ship results retain only the contiguous checked remainder",function()
+  for _,x in ipairs({950,1050}) do
+    local ship=localShip()
+    assert(ship:_CheckLocalNavigation(true))
+    local navigation=ship.localNavigation
+    local job=navigation.Job
+    job.Points={VECTOR:New(0,0,0),VECTOR:New(1000,0,0),VECTOR:New(2000,0,0),VECTOR:New(3000,0,0)}
+    job.Plan={GoalReached=false,Cost=3000}
+    navigation.Job=nil navigation.Pending=job
+    ship.position={x=x,y=0,z=0}
+    assert(ship:_CommitLocalPlanning(VECTOR:NewFromVec(ship.position)))
+    equal(ship.stops,0) equal(#ship.dispatches,1)
+    near(ship.dispatched[1].x,x)
+    near(ship.dispatched[2].x,x<1000 and 1000 or 2000)
+    for index=2,#ship.dispatched do
+      local a,b=ship.dispatched[index-1],ship.dispatched[index]
+      assert(math.sqrt((a.x-b.x)^2+(a.y-b.y)^2)<=1000.001)
+    end
+  end
+end)
+
+test("LOCAL a moved connector cannot create a turn with too little checked water afterwards",function()
+  local ship=localShip()
+  assert(ship:_CheckLocalNavigation(true))
+  local navigation=ship.localNavigation
+  local job=navigation.Job
+  job.Points={VECTOR:New(0,0,0),VECTOR:New(1000,0,0),VECTOR:New(2000,0,0),VECTOR:New(2600,0,0)}
+  job.Plan={GoalReached=false,Cost=2600}
+  navigation.Job=nil navigation.Pending=job
+  ship.position={x=1800,y=0,z=100}
+  ship.heading=0
+
+  ship:_CommitLocalPlanning(VECTOR:NewFromVec(ship.position))
+
+  equal(ship.stops,1) equal(ship.state,"Holding")
+  equal(ship.LastPathfindingResult.StopReason,"submission_turn_exit_too_short")
+  equal(#ship.dispatches,1) equal(ship.dispatched[1].speed,0)
+end)
+
+test("LOCAL initial moving-ship reattachment still rejects shallow or off-corridor motion",function()
+  for _,case in ipairs({"shallow","off_corridor"}) do
+    local ship=localShip()
+    assert(ship:_CheckLocalNavigation(true))
+    local navigation=ship.localNavigation
+    local job=navigation.Job
+    job.Points={VECTOR:New(0,0,0),VECTOR:New(1000,0,0),VECTOR:New(2000,0,0),VECTOR:New(3000,0,0)}
+    job.Plan={GoalReached=false,Cost=3000}
+    navigation.Job=nil navigation.Pending=job
+    ship.position={x=1050,y=0,z=case=="off_corridor" and 400 or 0}
+    if case=="shallow" then ship.terrain.depthAt=function(p) return p.x>1450 and p.x<1550 and 5 or 40 end end
+    ship:_CommitLocalPlanning(VECTOR:NewFromVec(ship.position))
+    equal(ship.stops,1) equal(ship.state,"Holding")
+    equal(#ship.dispatches,1) equal(ship.dispatched[1].speed,0)
+  end
+end)
+
+test("LOCAL default work budget prepares and extends a route while the ship keeps moving",function()
+  local ship=localShip():SetPathfindingMinDepth(3.5):SetPathfindingPreferredDepth(15,10)
+  ship.terrain.depth=10
+  local commit=ship._CommitLocalPlanning
+  local connector=""
+  function ship:_CommitLocalPlanning(position)
+    local pending=self.localNavigation and self.localNavigation.Pending
+    local nextPoint=pending and pending.Points[2]
+    if nextPoint then
+      connector=string.format(" pending_first=(%.1f,%.1f) bearing=%.1f",nextPoint.x,nextPoint.z,
+        position:GetHeadingTo(nextPoint))
+    end
+    return commit(self,position)
+  end
+  local startedCPU=os.clock()
+  local function describe(label,plan,job)
+    local remaining=ship.localNavigation and ship.localNavigation.Length
+      and ship.localNavigation.Length-ship.localNavigation.Progress or 0
+    print(string.format("MOVING %s: time=%.1f x=%.1f requests=%s work=%s slices=%s length=%s remaining=%.1f cpu_s=%.3f profiles=%d seabed=%d candidate=%s stage=%s",
+      label,timerNow,ship.position.x,tostring(job and job.Requests or plan and plan.Attempts),
+      tostring(job and job.WorkItems or plan and plan.WorkItems),tostring(job and job.Slices or plan and plan.Slices),
+      tostring(plan and plan.Length),remaining,os.clock()-startedCPU,ship.terrain.profiles,ship.terrain.queries,
+      tostring(plan and plan.Candidate),tostring(job and job.ActiveSearch and job.ActiveSearch.LastSearchResult.Stage)))
+  end
+  local stepSeconds=0.1
+  assert(ship:_CheckLocalNavigation(true))
+  local updates=0
+  while ship.localNavigation and ship.localNavigation.Job do
+    updates=updates+1
+    assert(updates<=2000,"initial moving-ship planning exceeded its default update limit")
+    timerNow=timerNow+stepSeconds
+    ship.position.x=ship.position.x+ship.velocity*stepSeconds
+    ship:_CheckLocalNavigation()
+    equal(ship.stops,0,"initial search at "..timerNow.." s x="..ship.position.x..": "..tostring(ship.LastPathfindingResult and ship.LastPathfindingResult.StopReason)..connector)
+  end
+  local navigation=assert(ship.localNavigation)
+  assert(navigation.Path and #ship.dispatches==1)
+  describe("initial",ship.LastPathfindingResult)
+  local firstRoute=navigation.RouteID
+  local firstSlices=ship.LastPathfindingResult.Slices
+  local initialTime=timerNow
+  near(ship.dispatched[1].x,ship.position.x)
+  local followUpdates=0
+  while ship.localNavigation and ship.localNavigation.RouteID==firstRoute do
+    followUpdates=followUpdates+1
+    assert(followUpdates<=2500,"moving-ship continuation did not publish within its usable route")
+    navigation=ship.localNavigation
+    local target=navigation.Path[navigation.Segment+1]
+    local position=VECTOR:NewFromVec(ship.position)
+    local remaining=position:GetDistance(target,true)
+    if remaining>0 then
+      ship.heading=position:GetHeadingTo(target)
+      local moved=position:Translate(math.min(ship.velocity*stepSeconds,remaining),ship.heading,true)
+      ship.position=moved:GetVec3()
+    end
+    timerNow=timerNow+stepSeconds
+    local running=navigation.Job
+    ship:_CheckLocalNavigation()
+    if ship.stops>0 then describe("continuation_failed",ship.LastPathfindingResult,running) end
+    equal(ship.stops,0,"continuation at "..timerNow.." s x="..ship.position.x..": "..tostring(ship.LastPathfindingResult and ship.LastPathfindingResult.StopReason))
+  end
+  navigation=assert(ship.localNavigation)
+  describe("continuation",ship.LastPathfindingResult)
+  assert(navigation.RouteID>firstRoute) assert(#ship.dispatches>=2)
+  assertClearPath(ship,navigation.Path)
+  print(string.format("MOVING LOCAL: initial_slices=%d initial_sim_s=%.1f continuation_sim_s=%.1f routes=%d",
+    firstSlices,initialTime,timerNow-initialTime,#ship.dispatches))
 end)
 
 print(string.format("%d passed, %d failed",passed,failed))

@@ -11,16 +11,35 @@ then plan another section as the caller moves. First establish this capability
 in ASTAR and GRID independently of ships. Then simplify and optimize both naval
 planning modes using the shared infrastructure.
 
-Status as of 2026-10-08: M1 design and the approved M2.1/M2.2/M2.3 implementation are
+Status as of 2026-10-09: M1 design and the approved M2.1/M2.2/M2.3 implementation are
 complete. GRID windows and resumable local ASTAR requests now return checked
 partial or exact-goal paths, reuse compatible windows, and report bounded actual
 movement history and missing depth data. M2.4 standalone validation is complete:
 T1, T2 at depth weight 1 and all eight T3 checks passed in DCS on the current
 stable-cell implementation. The weight-10 T2 trial reached its request budget;
-global completion and physical ship safety are not established. Naval migration
-remains pending. The API status
-below distinguishes implemented methods from remaining proposals. Existing LAZY
+global completion and physical ship safety are not established. M3.1 shared
+evaluation and naval baseline capture are complete; the DCS baseline ended its
+navigation attempt with a protective stop. M3.2 local naval integration is now
+implemented and validated with controlled Lua 5.1 regressions. A fresh DCS naval
+run remains required; complete-route integration remains M3.4. The API status
+below includes the historical design and milestone decisions. Existing LAZY
 searches retain their full-goal contract.
+
+## NAVYGROUP development status (2026-10-09)
+
+The user confirms that both local and global NAVYGROUP pathfinding are still
+in development. Neither mode needs compatibility with old mission scripts.
+Their public methods, options and internal structure may be redesigned around
+the agreed responsibilities, with affected callers, examples, documentation and
+tests updated together.
+
+Remove superseded methods, duplicate search logic and obsolete state as each
+mode is replaced. Do not retain compatibility aliases, adapter layers or a
+legacy planner fallback solely to support earlier development versions.
+Reuse existing helpers only where they fit the new design. Depth and hull
+safety, steering feasibility and mission/FSM lifecycle remain requirements to
+validate; their current implementation is not a design constraint. This decision
+does not change the release status of unrelated shared MOOSE APIs.
 
 ## Existing implementation
 
@@ -36,7 +55,7 @@ Baseline inspected: `ed0b0b225` with no tracked working-tree changes.
 | `NAVYGROUP:_SimplifyLocalPath` | Checks depth, weighted shortcut costs, leg lengths, turns and adjusted corners; uses private `_TravelCost`. | Preserve the naval constraints. Expose an appropriate connection-evaluation API instead of copying its internals. |
 | `NAVYGROUP:_PrepareLocalRoute`, `_CompleteLocalRoute` | Compares prepared alternatives and can add up to two continuation windows per candidate. | This multiplies search work; measure it separately from route submissions. |
 | `NAVYGROUP:_LocalRouteProgress`, `_CheckLocalNavigation` | Tracks adjacent route segments and actual movement; extends or replaces a checked route while respecting holds and tasks. | This is navigation/execution behavior, not a GRID responsibility. |
-| `NAVYGROUP:_FindPathToNextWaypoint` | Builds a finite grid, then uses expansion to obtain a complete route. | Keep this behavior during local migration; evaluate full-route optimizations separately. |
+| `NAVYGROUP:_FindPathToNextWaypoint` | Builds a finite grid, then uses expansion to obtain a complete route. | Rework full-route planning in its own stage; the existing method is not a compatibility requirement. |
 | `PATHLINE.CheckDepth`, ASTAR depth helpers | Already provide shared depth/profile checks and costs. | Extend these abstractions where useful rather than adding another naval depth implementation. |
 
 In current local naval planning, the window starts at least 3 km ahead, 1 km
@@ -101,7 +120,7 @@ copying behavior must be documented. Returned reports may contain named records
 because they carry many distinct results.
 
 The request lifecycle was implemented in M2.2; observation and invalidation
-methods were added in M2.3. EvaluateConnection remains a proposal for M3.
+methods were added in M2.3. EvaluateConnection was added in M3.1.
 
 | Call | Parameters and purpose |
 | --- | --- |
@@ -113,7 +132,7 @@ methods were added in M2.3. EvaluateConnection remains a proposal for M3.
 | `ASTAR:SetLocalProgress(MinDistance, HistorySize, RepeatLimit)` | Configure observation thresholds with three optional scalars (defaults 10 m, 32 positions, 3 repetitions); resets observations. HistorySize is 4..256, RepeatLimit is 2..HistorySize-1. |
 | `ASTAR:ResetLocalProgress()` | Clear actual-position history and diagnostics without changing current search/results. |
 | `ASTAR:InvalidateLocalCache()` | Clear learned continuation costs and mark external terrain/callback input changes. Pending work cancels on its next step; the next request uses a fresh window. Completed results stay intact. |
-| `ASTAR:EvaluateConnection(Start, Goal)` | Proposed shared rule/cost evaluation for arbitrary positions, returning validity, cost and available diagnostics. It checks the connection rule, not membership of a complete graph path or turning feasibility. Required before removing naval private-method calls. |
+| `ASTAR:EvaluateConnection(Start, Goal)` | Fresh shared rule/cost evaluation for arbitrary positions, returning validity, cost and caller-owned diagnostics. Leaves search state and caches unchanged; distinguishes blocked from unavailable depth data. Checks connection rules, not cell adjacency or turning feasibility. |
 
 Normal usage repeats StartLocalSearch only when a new section is needed, then
 calls StepSearch until that job completes. Calling StartLocalSearch on every
@@ -239,7 +258,8 @@ must decide when its usable reserve requires stopping.
 
 1. Configure ASTAR with the current naval depth/corridor rules and speed-based
    window extent. Replace candidate generation/search through the new public API.
-2. Feed candidate paths into existing steering and route-preparation checks.
+2. Feed candidate paths into naval steering and route-preparation checks,
+   revising their structure where needed rather than retaining obsolete methods.
    A raw ASTAR path may be rejected; keep other alternatives available. Reprice
    changed geometry and revalidate the route from the actual ship before submission.
 3. Preserve the common installed prefix, pending continuation and original target.
@@ -288,22 +308,25 @@ test is not validation of DCS ship physics.
 
 ### M3 Naval integration and optimization
 
-- [ ] M3.1 Expose shared connection evaluation with preserved failure evidence.
+- [x] M3.1 Expose shared connection evaluation with preserved failure evidence.
   Establish a naval baseline of searches, profile calls, cache hits, submitted
   routes, peak retained cells and total/worst-update CPU time.
-- [ ] M3.2 Integrate local planning behind the existing navigation mode, preserve
-  steering/safety/task behavior, and remove superseded private-method calls.
+- [x] M3.2 Integrate shared local planning with a coherent NAVYGROUP interface
+  and lifecycle. Validate steering/safety/task requirements; remove superseded
+  methods, state and private-method calls without compatibility scaffolding.
 - [ ] M3.3 Test continuation, replacement and asynchronous ownership under turns,
   speed changes, retargeting, holds, patrol returns and failed candidate preparation.
-- [ ] M3.4 Benchmark and improve complete-route planning separately. Consider
-  overlap caching or shared polyline helpers only where measurements justify them.
+- [ ] M3.4 Benchmark and rework complete-route planning separately, removing
+  superseded global-search code. Consider overlap caching or shared polyline
+  helpers only where measurements justify them.
 - [ ] M3.5 Run DCS sea/canal/turn/dead-end trials, including return journeys;
   compare planned points with actual course and movement. Update user documentation.
 
 Acceptance: no loss of the existing safety and mission lifecycle checks; fewer
 repeated operations or lower measured work on comparable cases; no claim that
-profiler percentages equal FPS gains. Public compatibility changes to released
-APIs require an individual decision; intermediate unreleased APIs may be revised.
+profiler percentages equal FPS gains. Both NAVYGROUP search modes are unreleased
+and may be redesigned without old-script compatibility. Changes to unrelated
+released APIs still require an individual decision.
 
 ## M2.1 implementation and validation
 
@@ -464,9 +487,10 @@ source tree. Do not rerun unrelated tests for a documentation-only plan.
 
 M2.4 standalone validation is complete for T1, T2 at weight 1 and T3 on the
 current sources. The weight-10 request-budget result remains a documented
-limitation. The next proposed stage is **M3.1**, shared connection evaluation
-and a naval baseline; agree on its scope before implementation. No naval
-production code was changed in M2.3/M2.4.
+limitation. **M3.1** was approved and its connection API and opt-in measurement
+implementation are complete, and the DCS naval baseline has been captured before
+M3.2 integration. Its protective stop is a reproduction case for route management,
+not a successful voyage. No naval production code was changed in M2.3/M2.4.
 
 ## M2.4 rolling-selection correction (2026-10-08)
 
@@ -689,3 +713,383 @@ version. M2.4 is complete for this tested scope, with T2 weight 1 as the success
 terrain configuration and the weight-10 request-limit outcome retained. This does
 not establish global route completeness or DCS vessel motion/safety. M3 remains
 separate work requiring an agreed scope; no recurring monitor is active.
+
+
+## M3.1 shared evaluation and naval baseline (2026-10-09)
+
+Approved scope: add ASTAR:EvaluateConnection(Start, Goal) and opt-in NAVYGROUP
+measurement without changing candidate selection, steering, safety or task behavior.
+The connection API returns validity, cost and an independent report. It evaluates
+fresh position snapshots without touching search nodes, caches or pending jobs.
+Depth checks retain blocked versus unavailable status and first-rejection evidence;
+custom rules/costs preserve callback arguments and errors.
+
+Naval diagnostics measure synchronous navigation/planning/route-update scopes.
+Collect actual depth-profile calls through a shared PATHLINE query counter, search
+attempts, validity/cost cache requests and hits, route submissions and observed
+retained grid cells. Timing is coarse CPU, unavailable without os.clock; nested
+scopes must not double-count the aggregate. Retained-cell counts are sampled
+ownership counts, not heap measurements. Diagnostics are disabled by default.
+
+- [x] Implement and test fresh connection evaluation and depth evidence.
+- [x] Add opt-in naval counters, isolated snapshots and coarse scoped timing.
+- [x] Run controlled naval baseline with diagnostics on/off and unchanged routes.
+- [x] Compile with Lua 5.1.5, run affected regressions and review the final diff.
+- [x] Capture a DCS naval baseline after the user's mission-start signal.
+
+At baseline capture M3.2 was not yet integrated. Source identity, raw bytes,
+mission configuration and measurements are saved outside the repository; no
+simulator control or recurring monitor was added.
+
+Offline comparison uses a controlled 20 km LOCAL target, uniform 10 m water,
+minimum depth 3.5 m, corridor 50 m, preferred depth 15 m and weight 10, ship
+speed 10 m/s. The original three production files from commit 985012356 and
+new diagnostics off/on produce identical submitted route tables and terrain
+work: 8 candidate attempts, 35,047 profiles, 196,268 direct seabed queries,
+and one route command. Diagnostics observe 3,783 accepted cells, 109,930 of
+120,918 validity requests served from cache, and 61,397 of 61,397 cost requests
+served from cache. Combined validity/cost evaluation explains the latter;
+it is not evidence of zero depth-cost computation. One isolated comparison
+measured 0.613 / 0.606 / 0.656 CPU seconds (original / off / on); this single
+sample is not a performance improvement claim or a DCS frame-time result.
+
+The deterministic additions cover independent connection reports, searches
+between slices, shared depth queries, unavailable/malformed samples, original
+travel-direction evidence, custom callback arguments/errors, invalid/overflow
+costs and callback reconfiguration. Naval coverage compares route and query
+identity, waypoint and local counters, frozen/caller-owned intervals, nested
+CPU accounting, unavailable clocks, exception cleanup and retained-grid
+identity. The original ASTAR passes its 270 older cases and fails all 10 new
+API cases; the original NAVYGROUP fails all 7 new diagnostics cases.
+Final Lua 5.1.5 results: ASTAR 280, GRID 106, depth 27, PATHLINE 11 and
+navy-local 141 passed (565 total, zero failures). Changed production/test Lua
+files compile; git diff --check is clean.
+
+Temporary source snapshots, hashes, raw baseline output and harnesses stay
+outside the source tree. The DCS baseline loaded the changed sources and enabled
+SetPathfindingDiagnostics(true); its explicit diagnostic snapshot was captured.
+No ship behavior or full-route planning optimization is inferred from the
+controlled terrain comparison above.
+
+## M3.2 preparation: continuation and route ownership (2026-10-09)
+
+The DCS baseline reached a protective stop after continuation searches failed
+steering constraints. A Lua 5.1.5 policy replay using the logged final route,
+rounded-corner position and heading reproduces the stop with production route
+preparation, progress and failure methods. The failed continuation is supplied
+as an observed input; terrain and DCS motion are not reproduced. Both controlled
+depth-weight variants pass the replay assertions. This does not explain the
+original path choice or prove that depth weighting was irrelevant to it.
+
+The replay exposes a preparation gap to address during integration: total route
+length includes a retained approach, so it does not establish a usable continuation
+beyond a later turn. Do not simply relax steering limits or remove the stop reserve.
+
+- Replace naval window/candidate search with the public ASTAR local request API;
+  keep generic exploration and learning in ASTAR and window geometry in GRID.
+- Separate actual ship progress, the installed route, future planning anchors and
+  pending results. Validate manoeuvrability and useful continuation beyond retained
+  segments before committing a replacement, with bounded work and explicit failure.
+- Give planning jobs an owner/generation and work budget. Retargeting, holds,
+  destruction and configuration changes must prevent stale results from submitting
+  routes; live hull/depth checks and safe stopping continue during planning.
+- Replace naval private ASTAR calls with EvaluateConnection, price the submitted
+  geometry, remove superseded local methods/state, and update callers and tests.
+- Add deterministic coverage for retained approaches followed by a short turning
+  exit, alongside successful continuations and mission/task lifecycle cases.
+
+Complete-route planning remains M3.4. Both naval modes may be redesigned without
+compatibility with earlier scripts; the sequencing is for bounded implementation
+and validation, not a requirement to retain the old architecture.
+
+
+## M3.2 local integration and validation (2026-10-09)
+
+NAVYGROUP LOCAL now owns a persistent public ASTAR local planner and a cooperative
+job with copied route geometry. Superseded naval window/candidate/search/preflight
+methods and private ASTAR calls are removed. The complete-route mode remains a
+separate M3.4 step; no legacy local implementation is retained as a fallback.
+
+The caller advances work every 0.1 simulation seconds. Default per-update limits
+are 512 work items and 0.005 CPU seconds, with 2000 updates per job. These are
+cooperative limits, not an atomic-query or whole-frame time guarantee. Fresh hull
+and local-route safety checks retain their two-second cadence; ordinary route
+checks retain ten seconds. Only complete proposals can issue route commands.
+
+All primary exits are steered, repriced and checked for useful suffix length and
+reserve after future turns. Already usable primary routes have priority; within
+that group the actual steering cost and ASTAR learned ranking select the route.
+Only when none survives fresh final validation are short exits extended in rank
+order, with at most two isolated, learning-disabled probes per exit and 17 total
+requests. The first fully usable preparation is accepted; this does not promise
+the cheapest route among every possible extended alternative. Final submitted
+geometry is checked and repriced from the actual position.
+
+Initial planning may retain a straight native approach to a future anchor, so
+movement during calculation does not immediately invalidate a short side exit.
+Its entire geometry is checked before graph exploration. A known blocked optional
+approach is discarded and the same public local pipeline starts at the job's
+actual start snapshot; missing data remains an explicit failure. The retained
+approach never contributes to the required new suffix. Contiguous passed initial
+points can be trimmed; new connectors, corners and turn-exit reserves are checked
+again. These allowances are not a DCS braking or turning model.
+
+Generation/command/route/configuration/destination snapshots prevent publication
+or arrival callbacks after holds, task changes, retargeting, in-place waypoint
+edits or cancellation. Speculative future anchors never count as actual progress.
+A failed continuation retains a freshly checked installed route, permits a bounded
+actual-position replacement and waits for progress before another attempt. An
+exhausted reserve or unavailable/blocked installed route still causes FullStop.
+
+Validation:
+
+- Lua 5.1.5: ASTAR 280, GRID 106, depth 27, PATHLINE 11 and waypoints 16 passed.
+- NAVYGROUP: 117 distinct cases passed: one full 116-case run followed by the
+  newly added continuation-failure case and three existing failure cases after
+  final diagnostic wiring. Obsolete private-planner fixtures were replaced by
+  public-planner, geometry and lifecycle checks.
+- New regressions include the logged short turning suffix, a new short turn exit
+  caused by live reattachment, stale callbacks/results, unchanged manual/task
+  authority, bounded limits, actual versus speculative movement, isolated result
+  geometry, safe failed-continuation handling and moving initial/continuation jobs.
+- All changed Lua production/test files compile; git diff --check is clean.
+
+The fixed-work, uniform-10-m comparison uses the same 20-km goal, 10 m/s ship,
+3.5-m minimum, 50-m corridor, preferred 15 m and weight 10 as M3.1. It now uses
+one local request, 34,136 profiles and 186,978 direct seabed queries, versus eight
+old candidate attempts, 35,047 profiles and 196,268 queries. These request counters
+have different meanings; profile/sample counts measure the comparable terrain
+work. Diagnostics enabled/disabled produce identical routes and query counts.
+One final sample measured 0.604 CPU seconds; this is not an FPS claim.
+
+With the default work and CPU budgets and a continuously moved test position,
+the initial route was published after 175 slices / 17.5 simulation seconds, with
+3575 m still available. A continuation needed 211 slices and was published at
+96.1 simulated seconds overall, with 5789 m available. Both used one request;
+no protective stop occurred. Separate runs vary with CPU scheduling. Earlier
+integration drafts that explored every speculative continuation or ranked short
+unusable exits before usable primary routes were substantially slower; they are
+not the implementation being submitted for DCS testing.
+
+Controlled tests do not validate DCS physics, bathymetry or controller acceptance.
+M3.3 broader stress coverage and M3.5 simulator trials remain separate. The next
+simulator check is the same Qeshm testcase 55, loading the new sources in a fresh
+mission with unchanged baseline depth settings. Inspect its log only after the
+user announces mission start. Source snapshots, hashes, detailed output and run
+history remain in the task-specific temporary directory; no recurring monitor
+or simulator control was added.
+
+
+## M3.2 follow-up: planning continuity (2026-10-09)
+
+The first integrated Qeshm testcase 55 run loaded the prepared sources and used
+minimum depth 3.5 m, preferred depth 15 m, weight 10 and 26 knots. Three local
+routes were submitted, then a second activation stopped with
+`local_planning_reserve`. Seven completed ASTAR requests did not produce another
+submitted naval route. No Lua error was logged. The exact aborted job phase and
+restart reasons were not recorded; CPU metrics were not requested in that run.
+Raw mission and source evidence remain outside the repository.
+
+The user approved improving this regression. A strict comparison against the
+job's instantaneous initial velocity can discard work on every small speed rise.
+This is a reproducible code defect, but its contribution to this DCS failure
+remains a hypothesis until lifecycle diagnostics are available.
+
+- [x] Reproduce velocity fluctuation starvation with production planning methods.
+- [x] Plan against one conservative speed bound; retain jobs within that bound,
+      invalidate larger speed increases, and keep final safety checks.
+- [x] Record bounded job outcomes, phases, rejection reasons and distinct
+      simulation/CPU timings before cancellation or protective stopping.
+- [x] Assess activation lead time without weakening depth or stopping reserves.
+- [x] Validate focused Lua 5.1 regressions and update the simulator test guidance.
+
+No automatic speed reduction, simulator control or recurring log monitor is
+part of this change. The next DCS run must load the changed sources anew.
+
+Implemented a fixed job speed bound of `max(commanded, actual) + max(0.5 m/s,
+5%)`. Preparation and final steering/turn checks use this bound; actual-speed
+safety checks and the requested route speed remain intact. Acceleration beyond
+the bound invalidates running and ready work with `speed_exceeded`. A completed
+plan carries its `PlanningSpeed` through final preparation.
+
+Opt-in LOCAL diagnostics now emit one outcome (three short lines) when a job is
+submitted, cancelled or fails. The scalar report retains its ID, phase,
+request/candidate/extension counts, work/slices, last rejection and planned/actual
+speeds. Elapsed simulation time includes waiting; CPU time counts worker resumes
+through the outcome, including an interrupted active resume and excluding final
+synchronous submission checks. Missing clock or velocity remains unavailable.
+Protective stops retain the job report before FullStop disposes of the coroutine.
+
+The deterministic regression uses a moving ship at 13.375 m/s, a sub-0.05 m/s
+settling velocity increase, 3.5 m minimum/15 m preferred depth with weight 10,
+and a synthetic 2.43 m shallow obstruction at 2087 m. The previous implementation
+starts 801 jobs in 80 simulation seconds without publishing a route. The fixed
+implementation uses one job, publishes after 371 fixed-work slices / 37.1
+simulation seconds, and retains about 1589 m clear approach before the unchanged
+stopping reserve. Commanded speed, fresh depth checks and larger-acceleration
+invalidation are verified. This synthetic bathymetry is not a replay of DCS.
+
+Keep the existing activation horizon and grid dimensions for the next comparison:
+the controlled failure is corrected without enlarging the search, which could
+itself add work. There is still no guarantee that every terrain problem completes
+before reserve exhaustion; the new phase/outcome evidence will distinguish further
+preflight cost, rejected geometry and legitimate input changes in DCS.
+
+Validation: Lua 5.1.5 NAVYGROUP 121 cases and waypoints 16 cases passed. The new
+regressions fail against the saved pre-change NAVYGROUP. The four focused regressions pass again after final diagnostic refinements.
+Production/test Lua compilation and `git diff --check` pass.
+DCS validation remains pending: restart testcase 55 with unchanged 3.5/15/10
+depth settings, automatic corridor, 26 knots and diagnostics enabled. Capture
+new load identity and inspect only after the user's mission-start notification.
+
+
+## M3.2 follow-up: rounded-corner progress (2026-10-09)
+
+The next Qeshm run submitted one route and rejected two prepared successors
+with `submission_turn_angle`, then stopped at the installed route reserve.
+No `speed_exceeded` outcome or Lua error was observed. The first rejection is
+reproducible with production methods and logged coordinates: a short collinear
+subdivision before the corner leaves progress on the incoming leg after DCS
+adopts the outgoing course. The requested reconnect then turns back about
+117 degrees. The second rejected proposal's geometry was not logged.
+
+The user approved correcting progress and route reattachment.
+
+- [x] Reproduce the logged outgoing-course case and continuation publication.
+- [x] Recognise contiguous straight subdivisions at one rounded corner; retain
+      all later real corners and fresh connector/turn/depth/reserve checks.
+- [x] Cover unentered corners, opposite headings, distant/hairpin routes and
+      an unsafe actual-position connector.
+- [x] Validate Lua 5.1, review the scoped diff and prepare a fresh DCS baseline.
+
+Raw logs, source identities and replay details remain in the task temporary
+directory. This step changes no DCS controls, speed or recurring monitoring.
+
+The installed-route tracker now looks through consecutive forward collinear
+subdivisions only within the existing corner neighborhood. Collinearity is
+measured against the original incoming line (one-meter tolerance), so a chain
+of small bends cannot accumulate into a skipped real corner. It identifies the
+first outgoing leg. Course-based rounding requires both the observed heading
+and the bearing to that leg's next point to align, with the first retained
+point already off the forward course and bounded lateral distance. This also
+covers adoption of the outgoing course just before its endpoint plane. Plain
+straight legs still require their normal endpoint-plane progress.
+
+Submission refreshes actual progress on the installed route before mapping the
+unpassed approach into the ready continuation. No angle limit, depth rule,
+stop reserve, requested speed or proposal ownership check was weakened. The
+recognition does not claim movement along an uninstalled replacement proposal.
+
+Five new regression groups cover the recorded ship pose and successful forward
+publication, earlier/later observations, additional straight subdivisions,
+rotated/mirrored geometry, unentered/real corners, distant return legs, ordinary
+straight progress, and a shallow new connector beside a clear retained line.
+The previous source fails four of these groups. The replay uses production
+methods and controlled terrain; it does not reproduce DCS bathymetry or physics.
+
+Full validation: Lua 5.1.5 NAVYGROUP 126 cases and waypoints 16 cases pass;
+changed Lua files compile and `git diff --check` passes. The first full run
+exposed a pre-existing test timing boundary: decimal time subtraction can
+produce slightly less than two seconds. Reproduced against the saved old
+source; the test now advances one extra navigation tick before asserting the
+same depth-triggered stop. No production timer semantics changed.
+
+Next simulator check: restart Qeshm testcase 55 at the unchanged 26 knots,
+minimum depth 3.5 m, preferred depth 15 m and weight 10. Verify the new loaded
+source identity and continuation submissions after rounded corners. The second
+rejected proposal from the preceding DCS run remains geometrically unconfirmed;
+a full successful voyage is not established by these controlled regressions.
+
+## M3.2 follow-up: LOCAL search and steering display (2026-10-09)
+
+The user approved restoring the missing LOCAL grid display and distinguishing
+submitted steering geometry from speculative search results. Keep testcase 55,
+weight 10, speed and clearance settings unchanged for the first comparison.
+
+- [x] Reuse ASTAR/GRID depth-colored, batched snapshots for the latest completed
+      local request; preserve only one primary/probe window at a time.
+- [x] Reuse PATHLINE for a magenta copy of the exact submitted DCS waypoints,
+      independent of grid replacement; clean up both overlays on reset/stop.
+- [x] Verify output geometry, depth colors, batching, cancellation and group
+      ownership with production methods and controlled DCS drawing endpoints.
+- [x] Run Lua 5.1 checks, review the scoped diff and refresh the prepared sources.
+- [ ] Validate visually in a fresh mission after the user's start notification.
+
+Verbosity >=10 enables the overlays. Drawing a search window does not select a
+candidate or change navigation settings. The window may be an exploratory
+extension; the magenta line is a command, not the observed vessel trajectory.
+Cell-center colors do not establish corridor or hull clearance. No recurring
+monitor, simulator control or mission driver edit is part of this step.
+
+Validation: Lua 5.1.5 compilation and 246 cases pass (NAVYGROUP 129, GRID 106,
+PATHLINE 11), each suite in a separate process. All three new display regression
+groups fail against the saved previous NAVYGROUP source due to missing route
+marks and pass with this change. They cover the real completed-request hook,
+unchanged planned coordinates/speed with verbosity disabled/enabled, fresh
+cell-center depth coloring in batches of at most 25, exact submitted waypoint
+geometry, replacement, a stop callback during submission, separate primary/probe
+ownership, two groups, stale drawing callbacks and unrelated marks.
+
+The initial focused run found two fixture errors (the palette's deep-blue RGB
+value and a recursively reentered simulated stop callback); both fixtures were
+corrected before the successful focused and full runs. Production GRID and
+PATHLINE were reused without edits in this step. Testcase 55 already enables
+verbosity 11, so no driver modification was needed. Fresh source snapshots and
+hashes are saved in the temporary test record; loaded-source verification and
+visual DCS validation remain pending the user's next mission-start notification.
+
+## M3.2 follow-up: drawing cancellation and bounded reattachment (2026-10-09)
+
+The user approved correcting the two failures observed in the latest Qeshm
+case 55 run. Source hashes/mtimes, dynamic include markers and the junction
+agreed with the prepared display revision. The run and screenshot are archived
+as raw bytes outside the source tree.
+
+Evidence: the rounded-corner tracker advanced segment 2 to 4 correctly. At
+publication, the logged actual position to retained point 5 was about 1,029 m,
+exceeding the old 1,000 m connector limit. The continuation was rejected with
+`submission_leg_length`. The next worker threw at GRID's
+`timer.removeFunction(job.timerID)` with an invalid-reference error, which
+propagated out of the navigation timer. No later navigation diagnostics were
+logged although regular ship status continued. The cause of DCS considering
+that timer ID invalid is not yet independently established.
+
+- [x] Reproduce the native removal failure boundary in controlled GRID/ASTAR
+      and NAVYGROUP drawing tests, including different planning coroutines.
+- [x] Cancel GRID polygons and labels by job identity. Remove owned marks
+      immediately; queued stale callbacks exit once without drawing, querying
+      depth, rescheduling or affecting replacement/other-group jobs. Native
+      timer IDs are no longer stored or removed; errors are not swallowed.
+- [x] Replay the 1,029 m connector, including rotations and mirroring. Permit
+      one midpoint for connectors up to 2 km, retaining at most 1 km per
+      submitted leg and rejecting more distant anchors.
+- [x] Check initial turn, original retained corner and onward reserve before
+      subdivision, then freshly validate and price both segments through the
+      existing installation boundary. Preserve every retained corner, speed,
+      task ownership and the pending proposal.
+- [x] Complete Lua 5.1 validation, review the scoped diff and refresh the source
+      snapshot for testcase 55 with unchanged weight 10 and debug verbosity 11.
+- [ ] Validate continued navigation, drawing replacement and the corrected
+      reattachment in a fresh user-started DCS mission.
+
+The new invalid-handle tests inject the exact native failure at the external
+API boundary, rather than inventing DCS's internal registry behavior. Before
+changes, GRID's new test and four of five new NAVYGROUP groups fail; the
+excessively distant-anchor rejection already passes. Existing ASTAR drawing
+fixtures now assert cancellation/no resurrection after draining a queued
+callback instead of requiring immediate native-timer deletion. This changes
+no navigation timer cadence, search budget, depth preference or safety margin.
+
+Validation completed: Lua 5.1.5 compilation and 537 cases pass (NAVYGROUP 134,
+GRID 107, ASTAR 280, waypoints 16), each suite in its own process. The GRID
+invalid-handle case and five NAVYGROUP groups now pass, including the prior
+negative bound check. The full NAVYGROUP run covers navigation authority,
+protective stops, continuation, progress and drawing lifecycle together. One
+ASTAR fixture additionally needed to preserve unrelated existing drawing counts
+rather than assume an empty map. `git diff --check` passes. No production
+API exception is caught or converted into a fabricated successful result.
+
+Prepared fresh source hashes and snapshots include both GRID and NAVYGROUP.
+The mission driver, weight 10, requested 26 knots, clearance settings and debug
+verbosity 11 are unchanged. The current simulator run cannot validate edited
+files retrospectively; a fresh user-started testcase 55 remains required.

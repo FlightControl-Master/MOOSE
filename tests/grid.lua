@@ -1756,10 +1756,11 @@ end)
 test("selective cleanup cancels owned jobs and stale callbacks without touching other views",function()
   local g=grid("rectangular")
   local a=search(g)
-  g:DrawGrid(nil,{BatchSize=1}):MarkGrid({BatchSize=1})
+  g:DrawGrid(nil,{BatchSize=1})
+  local callback=scheduled[nextTimerID].fn
+  g:MarkGrid({BatchSize=1})
   a:DrawGrid(nil,{BatchSize=1}):MarkGrid({BatchSize=1})
   local polygons,labelsJob=g.GridDrawJob,g.GridMarkJob
-  local callback=scheduled[polygons.timerID].fn
   assert(not pcall(function() g:ClearDrawing("invalid") end))
   equal(g.GridDrawJob,polygons)
   equal(g.GridMarkJob,labelsJob)
@@ -2356,7 +2357,7 @@ test("depth queries follow drawing batches and only refresh on redraw or new cel
   g:DrawGrid(nil,{ColorByDepth=true,BatchSize=1})
   equal(queries,0)
   local job=g.GridDrawJob
-  local staleCallback=scheduled[job.timerID].fn
+  local staleCallback=scheduled[nextTimerID].fn
   stepTimer()
   equal(queries,1)
   g:ClearDrawing()
@@ -2377,6 +2378,60 @@ test("depth queries follow drawing batches and only refresh on redraw or new cel
   g:DrawGrid(nil,{ColorByDepth=true})
   flushTimers()
   equal(queries,9)
+end)
+
+test("drawing cancellation is independent of native timer handles across coroutine owners",function()
+  local originalRemove=timer.removeFunction
+  local removals=0
+  -- Reproduce the native failure boundary observed in DCS, without assuming why its ID expired.
+  timer.removeFunction=function()
+    removals=removals+1
+    error("Parameter #1 (function reference number) is invalid")
+  end
+  local ok,err=pcall(function()
+    for _,astarView in ipairs({false,true}) do
+      local g=depthDrawingGrid(GRID.Type.HEXAGON,8)
+      local view=astarView and ASTAR:New():SetGrid(g) or g
+      local other=ASTAR:New():SetGrid(g)
+      local queries=0
+      land.getSurfaceHeightWithSeabed=function() queries=queries+1 return 0,20 end
+      local callbacks={}
+      local worker=coroutine.create(function()
+        view:DrawGrid({}, {ColorByDepth=true,BatchSize=1})
+        callbacks[1]=scheduled[nextTimerID]
+        view:MarkGrid({BatchSize=1})
+        callbacks[2]=scheduled[nextTimerID]
+      end)
+      assert(coroutine.resume(worker))
+      stepTimer() stepTimer()
+      assert(count(drawings)>0 and count(labels)>0)
+      local drawn,marked=view.GridDrawJob.result,view.GridMarkJob.result
+      other:DrawGrid({}, {BatchSize=1})
+      local beforeQueries=queries
+      local nextWorker=coroutine.create(function()
+        view:ClearDrawing()
+        view:ClearDrawing()
+        view:DrawGrid({}, {ColorByDepth=true,BatchSize=1})
+        view:MarkGrid({BatchSize=1})
+      end)
+      local resumed,cause=coroutine.resume(nextWorker)
+      assert(resumed,cause)
+      equal(drawn.Status,"cancelled") equal(marked.Status,"cancelled")
+      for _,callback in ipairs(callbacks) do equal(callback.fn(callback.args,timerNow),nil) end
+      equal(queries,beforeQueries,"cancelled callbacks perform no depth queries")
+      flushTimers()
+      equal(count(drawings),16) equal(count(labels),8)
+      equal(view.LastGridDrawResult.Status,"complete")
+      equal(view.LastGridMarkResult.Status,"complete")
+      view:ClearDrawing()
+      equal(count(drawings),8) equal(count(labels),0)
+      other:ClearDrawing()
+      equal(count(drawings),0) equal(count(scheduled),0)
+    end
+    equal(removals,0)
+  end)
+  timer.removeFunction=originalRemove
+  assert(ok,err)
 end)
 
 test("depth query time is included in the drawing CPU budget and API errors remain visible",function()
