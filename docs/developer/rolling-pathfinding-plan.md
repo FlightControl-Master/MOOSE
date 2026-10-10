@@ -238,17 +238,86 @@ for this cleanup. The LOCAL reconstruction remains a separate implementation ste
 
 ### PATHLINE: small, reusable additions are justified
 
+PATHLINE review completed on 2026-10-10 against AGENTS.md. No production code
+or regression-suite changes were made during this review. Lua 5.1.5 syntax
+compilation and the existing PATHLINE (11), profile (15), and depth (27)
+regressions pass. Additional disposable probes exercised production methods
+with controlled terrain/drawing dependencies and confirmed these gaps:
+
+| Finding | Evidence and consequence | Proposed correction before R1a |
+| --- | --- | --- |
+| P1: Equal profile distances can overstate `ClearDistance` | At 500 m, two native samples with depths 40 m and 10 m produce 333.33 m or 500 m of clearance when their input order is swapped (minimum depth 20 m, previous depth 40 m at 0 m). Two blocked samples at the same distance likewise yield 333.33 m or 400 m. `_CheckDepthLine` returns before reducing the complete equal-distance group. NAVYGROUP consumes this distance for collision warnings and hull/lookahead diagnostics. | Evaluate coincident samples together before interpolation, retaining the conservative bound and deterministic evidence; test both query directions, reversed input order, endpoints and unavailable data. |
+| P2: Route updates lose drawing ownership and can leave partial geometry | Both `UpdateFromVec2Array` and `UpdateFromVec3Array` replace `self.points` without removing old IDs. A three-point route leaves all five original drawings after update and explicit cleanup. An injected terrain error on the second new point leaves a one-point replacement instead of the original route. | Build the replacement first, then release the old route's drawings and install the complete points; test both update methods, failure and delayed removals. |
+| P2: Missing terrain values break point marking | `MarkPoints` formats surface, height and depth directly as numbers. A missing value in any of these fields raises a formatting error although point creation preserves missing terrain and depth helpers explicitly support unavailable data. | Show unavailable metadata explicitly without fabricated numeric values; keep marker ownership correct and test missing/non-finite values. |
+| P2: Point creation accepts malformed positions | `_CreatePoint` selects dimensions by truthiness of `Vec.z`. `{x=7,y=9,z=false}` becomes `{x=7,y=16,z=9}` in the fixture; missing x and NaN x are stored by the Vec3 adder. | Validate raw position components before dimension selection, terrain access or mutation; preserve valid zero coordinates, input-copy ownership and documented nil handling. |
+
+These probes establish deterministic code behavior, not a claim that the
+observed naval DCS failures had these causes. No mission log was inspected
+and no simulator validation was performed for this review.
+
+PATHLINE follow-up approved and completed on 2026-10-10:
+
+- [x] Reduce complete equal-distance sample groups before prefix interpolation.
+- [x] Build replacement points before releasing old geometry/drawings.
+- [x] Display unavailable terrain metadata without numeric-format failures.
+- [x] Validate raw positions before terrain queries or path mutation.
+- [x] Clean up affected comments/control flow and validate under Lua 5.1.5.
+
+The first 15 new regressions all failed against the unchanged implementation
+(10 PATHLINE, 5 depth). The completed suites add 16 cases, including a further
+check for stable tied evidence and independent report copies. Profile-order
+permutations are exercised in both query directions. Unavailable data at a
+distance takes precedence over non-water, followed by the shallowest depth;
+equivalent evidence is selected by cause, location and coordinates. The
+existing endpoint preflight and the synchronous three-profile corridor
+contract remain intact. Report positions omit unavailable sample heights.
+
+Both update methods now prepare the full replacement before removing old
+point/line IDs; malformed input or construction-time terrain errors retain
+the previous route and drawings. Previously scheduled line removal still owns
+only the captured old IDs. Inputs are copied, nil point additions remain
+no-ops, and valid zero components/measurements are retained. Vec2 conversion
+requires a finite sampled altitude rather than inventing one. Point labels
+show invalid or unavailable metadata explicitly. The drawing fixture now uses
+positive water depth, matching the terrain API contract.
+
+Lua 5.1.5 syntax compilation and PATHLINE (21), profile (15), depth (33),
+ASTAR (295), and NAVYGROUP (25) regressions pass: 389 cases in total.
+The final diff was reviewed and passes `git diff --check`. These controlled
+fixtures do not validate DCS terrain, physics, drawing or controller behavior;
+no mission/include was loaded or observed during this implementation step.
+
+The update methods still accept `Name` without renaming the object or its
+DATABASE registration; this existing behavior is now documented and tested.
+There are no repository callers of either update method. Resolve rename
+versus point-replacement-only semantics and registration implications before
+changing this public parameter. The vague TODO was removed and the affected
+lifecycle/missing-data documentation and nested control flow were cleaned up.
+
+Existing independent point copies, ordered exports, isolated constructor
+state and delayed drawing-ID capture remain covered by regressions.
+The concrete [R1a geometry API proposal](pathline-geometry-api.md) was prepared
+on 2026-10-10. It specifies static PATHLINE functions for copied snapshots,
+position export, cumulative-distance lookup, constrained projection and signed
+turn geometry, including ownership, failure results and regression cases.
+This is a design deliverable; these methods are not implemented or tested yet.
+Next proposed subtask: implement this pure geometry API and its deterministic
+regressions after user approval. Resumable/dense validation remains a separate
+part of R1a, with its own API design and approval; it is not an implicit change
+to `CheckDepth` or part of the proposed geometry implementation step.
+
 The current public methods do not provide a route-position projection with
 segment continuity, positions at cumulative distance, or resumable validation
 of a complete proposed polyline. Add the minimum required support here rather
 than copying route geometry into NAVYGROUP again.
 
-Proposed capabilities; names/signatures are intentionally not frozen yet:
+Proposed capabilities; geometry signatures and edge cases are specified in the
+linked proposal. Validation interfaces remain to be designed separately:
 
 | Capability | Contract | Needed |
 | --- | --- | --- |
 | Geometry snapshot from Vec3 positions | Copy points; compute segment lengths, cumulative distance and headings in the horizontal plane; no terrain queries or controller objects | R1 |
-| Projection / position at distance | Return segment, fraction, along-route distance, lateral distance and interpolated position; accept an explicit segment range; handle zero-length segments | R1 preparation and R3 progress |
+| Projection / position at distance / turn geometry | Return original segment, fraction, along-route distance, lateral distance and interpolated position; accept segment and distance bounds; expose tied projection ambiguity, duplicate handling and signed corner angles | R1 preparation and R3 progress |
 | Bounded route validation | Walk connections with a supplied evaluator, return segment-specific evidence and cost; expose a cursor/work limit and cancellation ownership | R1 |
 | Sampled corridor/area validation | Check requested interior profiles, not just center/edges; distinguish blocked and unavailable data; expose sample spacing and work counts | R1/R2 maneuver envelope validation |
 
@@ -531,6 +600,13 @@ All unchecked work below is proposed and unimplemented.
 | R3b: rolling DCS passage | Full known route with explicit initial and continuation planning | Repeated successful weight-1 passages, explained weight-10 outcomes, accurate arrival and bounded memory/work, debug on/off parity. |
 | R4: wider supported scope | More vessels/speeds, multiple original waypoints, mission tasks, formations only with explicit clearance design | Expand documented support only for cases actually validated; consider reuse by global search in a separate change. |
 
+R1a is split into two approval steps: first the pure geometry API specified in
+[PATHLINE R1a geometry API proposal](pathline-geometry-api.md), then the design
+and implementation of bounded connection/depth validation. Completing geometry
+alone does not complete the R1a milestone or enable LOCAL navigation. Missing
+terrain data and cancellation belong to the second step; geometry itself has
+neither terrain queries nor asynchronous work.
+
 P0 must distinguish measured data from reconstructed positions. The last case55
 log lacks detailed candidate-rejection evidence; do not claim an exact replay
 of the unknown rejection chain. Use its observed pose/parameters as a scenario
@@ -543,7 +619,7 @@ at the earlier requested cruise speed.
 
 Suggested implementation commits, after approval:
 1. P0 test configuration/report contracts.
-2. R1a geometry and route-validation primitives with tests.
+2. R1a pure geometry with tests, followed by separately approved route-validation primitives and tests.
 3. R1b preparation with stationary/virtual tests.
 4. R2 diagnostics/driver and resulting measured maneuver policy.
 5. R3a/R3b LOCAL orchestration and simulator validation.
@@ -599,8 +675,9 @@ another cross-cutting guard.
 
 ### Immediate next step
 
-Recommend implementing P0 and R1a first, then presenting the fixed-pose
-preparation results before any new autonomous ship trial. Stop/resume policy is
-already decided: a missing continuation stops the ship until a new command.
-The proposed persistent LOCAL ownership, initial single-vessel scope and
-PATHLINE additions are part of this concept for review before implementation.
+Next approval request: implement the specified pure PATHLINE geometry API
+and its deterministic Lua 5.1 regressions. The API design is documented;
+implementation has not started. P0 replay/report contracts and the remaining
+R1a validation interfaces still precede fixed-pose naval preparation and new
+autonomous ship trials. Stop/resume policy is already decided: a missing
+continuation stops the ship until a new command.

@@ -450,5 +450,145 @@ test("depth costs retain direct/profile conservatism and sparse-profile fallback
   equal(ASTAR.CostDepth(node(0),node(1000),20,0,30,2),math.huge)
 end)
 
+-- Reduce every sample at a projected distance before using it for interpolation.
+local function eachProfileOrder(points,check)
+  local function visit(index)
+    if index>#points then
+      check(points)
+      return
+    end
+    for i=index,#points do
+      points[index],points[i]=points[i],points[index]
+      visit(index+1)
+      points[index],points[i]=points[i],points[index]
+    end
+  end
+  visit(1)
+end
+
+test("coincident clear and blocked profile samples cannot extend the safe prefix",function()
+  local data=terrain()
+  local points={{x=0,y=-40,z=0},{x=500,y=-40,z=0},{x=500,y=-10,z=0},{x=1000,y=-40,z=0}}
+  eachProfileOrder(points,function(profile)
+    data.profile=function() return profile end
+    for _,reverse in ipairs({false,true}) do
+      local start,goal=node(0).vector,node(1000).vector
+      if reverse then
+        start,goal=goal,start
+      end
+      local clear,reason,report=PATHLINE.CheckDepth(start,goal,20)
+      equal(clear,false)
+      equal(reason,"profile_blocked")
+      near(report.ClearDistance,1000/3)
+      equal(report.Point.x,500)
+      equal(report.Depth,10)
+      equal(report.Cause,"insufficient_depth")
+    end
+  end)
+end)
+
+test("coincident blocked samples select the shallowest evidence in either direction",function()
+  local data=terrain()
+  local points={{x=0,y=-40,z=0},{x=500,y=-15,z=0},{x=500,y=-10,z=0},{x=1000,y=-40,z=0}}
+  eachProfileOrder(points,function(profile)
+    data.profile=function() return profile end
+    for _,reverse in ipairs({false,true}) do
+      local start,goal=node(0).vector,node(1000).vector
+      if reverse then
+        start,goal=goal,start
+      end
+      local _,_,report=PATHLINE.CheckDepth(start,goal,20)
+      near(report.ClearDistance,1000/3)
+      equal(report.Depth,10)
+      equal(report.Point.y,-10)
+    end
+  end)
+end)
+
+test("coincident native goal samples are reduced before endpoint interpolation",function()
+  local data=terrain()
+  for _,reverse in ipairs({false,true}) do
+    local start,goal=node(0).vector,node(1000).vector
+    if reverse then
+      start,goal=goal,start
+    end
+    local points={{x=start.x,y=-40,z=0},{x=goal.x,y=-40,z=0},{x=goal.x,y=-10,z=0}}
+    eachProfileOrder(points,function(profile)
+      data.profile=function() return profile end
+      local _,_,report=PATHLINE.CheckDepth(start,goal,20)
+      near(report.ClearDistance,2000/3)
+      equal(report.Point.x,goal.x)
+      equal(report.Depth,10)
+    end)
+  end
+end)
+
+test("unavailable evidence at the same distance takes precedence over a blocked sample",function()
+  local data=terrain()
+  local points={{x=0,y=-40,z=0},{x=500,y=-10,z=0},{x=500,z=0},{x=1000,y=-40,z=0}}
+  eachProfileOrder(points,function(profile)
+    data.profile=function() return profile end
+    for _,reverse in ipairs({false,true}) do
+      local start,goal=node(0).vector,node(1000).vector
+      if reverse then
+        start,goal=goal,start
+      end
+      local clear,reason,report=PATHLINE.CheckDepth(start,goal,20)
+      equal(clear,false)
+      equal(reason,"invalid_profile_height")
+      equal(report.Status,"unavailable")
+      near(report.ClearDistance,0)
+    end
+  end)
+end)
+
+test("coincident projected land and water samples retain the conservative land boundary",function()
+  local data=terrain()
+  data.surface=function(p)
+    if p.x==500 and p.y==1 then
+      return 1
+    end
+    return 3
+  end
+  local points={{x=0,y=-40,z=0},{x=500,y=-40,z=0},{x=500,y=1,z=1},{x=1000,y=-40,z=0}}
+  eachProfileOrder(points,function(profile)
+    data.profile=function() return profile end
+    for _,reverse in ipairs({false,true}) do
+      local start,goal=node(0).vector,node(1000).vector
+      if reverse then
+        start,goal=goal,start
+      end
+      local _,_,report=PATHLINE.CheckDepth(start,goal,20)
+      equal(report.Cause,"non_water")
+      near(report.ClearDistance,0)
+      equal(report.Point.z,1)
+    end
+  end)
+end)
+
+test("equivalent depth evidence has stable coordinates and reports independent copies",function()
+  local data=terrain()
+  local points={{x=0,y=-40,z=0},{x=500,y=-10,z=1},{x=500,y=-10,z=-1},{x=1000,y=-40,z=0}}
+  eachProfileOrder(points,function(profile)
+    data.profile=function() return profile end
+    for _,reverse in ipairs({false,true}) do
+      local start,goal=node(0).vector,node(1000).vector
+      if reverse then
+        start,goal=goal,start
+      end
+      local _,_,report=PATHLINE.CheckDepth(start,goal,20)
+      near(report.ClearDistance,1000/3)
+      equal(report.Point.z,-1)
+      equal(report.Point.y,-10)
+      report.Point.z=999
+      for _,point in ipairs(profile) do
+        assert(point.z~=999)
+        equal(point.Along,nil)
+        equal(point.Priority,nil)
+      end
+    end
+  end)
+end)
+
 print(string.format("%d passed, %d failed",passed,failed))
 if failed>0 then os.exit(1) end

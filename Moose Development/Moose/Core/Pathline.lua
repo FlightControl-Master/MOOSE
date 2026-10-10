@@ -54,6 +54,9 @@
 -- 
 -- To remove the marks, use @{#PATHLINE.MarkPoints}(`false`).
 -- DrawLine() replaces the existing line segments; UnDrawLine() removes them independently of point markers.
+-- Successful UpdateFromVec2Array()/UpdateFromVec3Array() calls remove the previous points and lines without redrawing.
+-- Invalid input or terrain-query errors during replacement leave the original route and drawings intact.
+-- Point labels show unavailable terrain metadata explicitly.
 --
 -- # Point Access
 --
@@ -71,9 +74,9 @@ PATHLINE = {
 -- @type PATHLINE.Point
 -- @field DCS#Vec3 vec3 3D position.
 -- @field DCS#Vec2 vec2 2D position.
--- @field #number surfaceType Surface type.
--- @field #number landHeight Land height in meters.
--- @field #number depth Water depth in meters.
+-- @field #number surfaceType Sampled surface type; may be unavailable.
+-- @field #number landHeight Sampled surface height in meters; may be unavailable.
+-- @field #number depth Sampled water depth in meters; may be unavailable.
 -- @field #number markerID Marker ID.
 -- @field #number lineID Line marker ID.
 
@@ -85,12 +88,17 @@ PATHLINE = {
 -- @field #number Distance Horizontal distance from the original start to the goal, in meters.
 -- @field #number ClearDistance Usable prefix from the original start, in meters, assuming linear depth between samples. Zero when data is unavailable.
 -- @field #number RequiredDepth Requested minimum water depth, in meters.
--- @field DCS#Vec3 Point First rejected sample on the limiting profile, when known. This is not the interpolated threshold position.
+-- @field DCS#Vec3 Point Limiting rejected sample, when known; y is omitted when unavailable. This is not the interpolated threshold position.
 -- @field #number Depth Water depth at Point, when known; the shallower of direct and profile depth.
 -- @field #number SurfaceType DCS surface type at Point, when known.
 -- @field #number ProfileOffset Signed distance from the route center line, in meters; positive is right of travel in DCS x/z coordinates.
 -- @field #string Location "start", "goal", "profile", or "profile_fallback" relative to the original input direction.
 
+
+-- Validate raw inputs before terrain queries or formatting can turn bad data into a usable position/label.
+local function isFiniteNumber(Value)
+  return type(Value)=="number" and math.abs(Value)<math.huge
+end
 
 -- Count actual profile calls shared by the two depth evaluators. No terrain hooks are installed.
 local depthProfileQueries=0
@@ -115,12 +123,6 @@ end
 --- PATHLINE class version.
 -- @field #string version
 PATHLINE.version="0.2.1"
-
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- TODO list
--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-
--- TODO: A lot...
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor
@@ -176,38 +178,28 @@ function PATHLINE:NewFromVec3Array(Name, Vec3Array)
 end
 
 
---- Update PATHLINE object from a given list of 2D points.
+--- Replace the path with copied 2D points, removing its previous point and line drawings.
+-- The replacement is built before the current route is changed. Invalid positions and terrain-query errors
+-- propagate without replacing the old points or removing their drawings. Call drawing methods again as needed.
 -- @param #PATHLINE self
--- @param #string Name Name of the pathline.
+-- @param #string Name Unused; this operation retains the current name and database registration.
 -- @param #table Vec2Array List of DCS#Vec2 points.
 -- @return #PATHLINE self
 function PATHLINE:UpdateFromVec2Array(Name, Vec2Array)
 
-  -- Clear points
-  self.points={}
-
-  for i=1,#Vec2Array do
-    self:AddPointFromVec2(Vec2Array[i])
-  end
-
-  return self
+  return self:_UpdatePoints(Vec2Array)
 end
 
---- Update PATHLINE object from a given list of 3D points.
+--- Replace the path with copied 3D points, removing its previous point and line drawings.
+-- The replacement is built before the current route is changed. Invalid positions and terrain-query errors
+-- propagate without replacing the old points or removing their drawings. Call drawing methods again as needed.
 -- @param #PATHLINE self
--- @param #string Name Name of the pathline.
+-- @param #string Name Unused; this operation retains the current name and database registration.
 -- @param #table Vec3Array List of DCS#Vec3 points.
 -- @return #PATHLINE self
 function PATHLINE:UpdateFromVec3Array(Name, Vec3Array)
 
-  -- Clear points
-  self.points={}
-
-  for i=1,#Vec3Array do
-    self:AddPointFromVec3(Vec3Array[i])
-  end
-
-  return self
+  return self:_UpdatePoints(Vec3Array)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -226,12 +218,14 @@ end
 
 
 --- Add a point to the path from a given 2D position. The third dimension is determined from the land height.
+-- The input is copied. Nil adds nothing; malformed components raise an error before terrain queries or mutation.
+-- A Vec2 also requires a finite terrain height. Missing surface/depth metadata remains unavailable.
 -- @param #PATHLINE self
 -- @param DCS#Vec2 Vec2 The 2D vector (x,y) to add.
 -- @return #PATHLINE self
 function PATHLINE:AddPointFromVec2(Vec2)
 
-  if Vec2 then
+  if Vec2~=nil then
   
     local point=self:_CreatePoint(Vec2)
 
@@ -243,12 +237,14 @@ function PATHLINE:AddPointFromVec2(Vec2)
 end
 
 --- Add a point to the path from a given 3D position.
+-- The input is copied. Nil adds nothing; malformed components raise an error before terrain queries or mutation.
+-- A Vec2 also requires a finite terrain height. Missing surface/depth metadata remains unavailable.
 -- @param #PATHLINE self
 -- @param DCS#Vec3 Vec3 The 3D vector (x,y,z) to add.
 -- @return #PATHLINE self
 function PATHLINE:AddPointFromVec3(Vec3)
 
-  if Vec3 then
+  if Vec3~=nil then
   
     local point=self:_CreatePoint(Vec3)
 
@@ -337,7 +333,9 @@ function PATHLINE:GetPointFromIndex(n)
 
   local N=self:GetNumberOfPoints()
   
-  if n==nil then n=1 end
+  if n==nil then
+    n=1
+  end
 
   local point=nil --#PATHLINE.Point
   
@@ -406,8 +404,11 @@ end
 
 --- Inspect navigable water depth and the usable prefix between two positions.
 -- Uses the same point-depth rule as ASTAR.Depth(), but returns a detailed report without creating a PATHLINE instance.
--- Actual endpoints are checked separately, and profile points are ordered from the original start. The first insufficient
--- depth is interpolated from the previous valid sample; a non-water sample limits the prefix to the previous valid point.
+-- Actual endpoints are checked separately; a blocked start or unavailable endpoint ends the check before querying a profile.
+-- Otherwise, profile points are ordered from the original start. The first insufficient
+-- depth is interpolated from the previous valid distance; a non-water sample limits the prefix to that distance.
+-- Samples at the same projected distance are evaluated together: unavailable data takes precedence, then non-water,
+-- then the shallowest depth. Tied evidence is selected by cause, location and coordinates, not native profile order.
 -- Profiles with fewer than two points also use direct samples at most 100 meters apart, limited to 1000 intervals.
 -- A positive corridor width checks the center and both parallel edges, not the entire area between them or a turning arc.
 -- ClearDistance is a terrain estimate under the linear-interpolation assumption, not a ship's braking distance.
@@ -444,7 +445,12 @@ function PATHLINE.CheckDepth(Start, Goal, MinDepth, CorridorWidth)
   -- An endpoint preflight has no corridor direction and needs no native profile.
   if distance==0 then
     local clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(a,MinDepth,false)
-    local reason=not clear and (status=="unavailable" and cause or "start_blocked") or nil
+    local reason
+    if status=="unavailable" then
+      reason=cause
+    elseif not clear then
+      reason="start_blocked"
+    end
     local report=PATHLINE._DepthReport(0,MinDepth,0,reason,status,cause,
       {Point=a,Location="start"},depth,surface,0)
 
@@ -463,10 +469,19 @@ function PATHLINE.CheckDepth(Start, Goal, MinDepth, CorridorWidth)
   local earliest
 
   for i=1,lines do
-    local offset=i==2 and CorridorWidth/2 or (i==3 and -CorridorWidth/2 or 0)
+    local offset=0
+    if i==2 then
+      offset=CorridorWidth/2
+    elseif i==3 then
+      offset=-CorridorWidth/2
+    end
     local start={x=a.x+nx*offset,y=0,z=a.z+nz*offset}
     local goal={x=b.x+nx*offset,y=0,z=b.z+nz*offset}
-    local clear,reason,report=PATHLINE._CheckDepthLine(start,goal,distance,MinDepth,reverse and -offset or offset,reverse)
+    local reportOffset=offset
+    if reverse then
+      reportOffset=-offset
+    end
+    local clear,reason,report=PATHLINE._CheckDepthLine(start,goal,distance,MinDepth,reportOffset,reverse)
 
     if not clear then
       if report.Status=="unavailable" then
@@ -579,35 +594,48 @@ function PATHLINE:FindGroundingPoint(Draft)
 end
 
 
---- Mark points on F10 map.
+--- Mark points on F10 map, replacing previous point labels.
+-- Missing, malformed or non-finite terrain metadata is shown as "unavailable" without inventing a numeric value.
+-- Line drawings remain independent.
 -- @param #PATHLINE self
 -- @param #boolean Switch If `true` or nil, set marks. If `false`, remove marks.
 -- @return #PATHLINE self
 function PATHLINE:MarkPoints(Switch)
-  for i,_point in ipairs(self.points) do
-    local point=_point --#PATHLINE.Point
-    if Switch==false then
-      
-      if point.markerID then
-        UTILS.RemoveMark(point.markerID)
-        point.markerID=nil
+
+  for i,point in ipairs(self.points) do
+    local text
+    if Switch~=false then
+      local surfaceText="unavailable"
+      local heightText="unavailable"
+      local depthText="unavailable"
+      local surface=point.surfaceType
+
+      if isFiniteNumber(surface) and surface%1==0 and surface>=1 and surface<=5 then
+        surfaceText=string.format("%d",surface)
       end
-      
-    else
-    
-      if point.markerID then
-        UTILS.RemoveMark(point.markerID)
-        point.markerID=nil
+      if isFiniteNumber(point.landHeight) then
+        heightText=string.format("%.1f m",point.landHeight)
       end
-    
-      point.markerID=UTILS.GetMarkID()
-      
-      local text=string.format("Pathline %s: Point #%d\nSurface Type=%d\nHeight=%.1f m\nDepth=%.1f m", self.name, i, point.surfaceType, point.landHeight, point.depth)
-      
-      trigger.action.markToAll(point.markerID, text, point.vec3, false)
-    
+      if isFiniteNumber(point.depth) and point.depth>=0 then
+        depthText=string.format("%.1f m",point.depth)
+      end
+
+      text=string.format("Pathline %s: Point #%d\nSurface Type=%s\nHeight=%s\nDepth=%s",
+        self.name,i,surfaceText,heightText,depthText)
+    end
+
+    -- Retain ownership of the existing label until the replacement text is ready.
+    if point.markerID then
+      UTILS.RemoveMark(point.markerID)
+      point.markerID=nil
+    end
+    if text then
+      local markerID=UTILS.GetMarkID()
+      trigger.action.markToAll(markerID,text,point.vec3,false)
+      point.markerID=markerID
     end
   end
+
   return self
 end
 
@@ -707,12 +735,63 @@ end
 function PATHLINE._DepthReport(Distance, MinDepth, Offset, Reason, Status, Cause, Sample, Depth, Surface, ClearDistance)
 
   local point=Sample and Sample.Point
+  local reportPoint
+  if point then
+    reportPoint={x=point.x,z=point.z}
+    if isFiniteNumber(point.y) then
+      reportPoint.y=point.y
+    end
+  end
+  if Status=="unavailable" then
+    ClearDistance=0
+  end
 
   return {
-    Status=Status,Reason=Reason,Cause=Cause,Distance=Distance,ClearDistance=Status=="unavailable" and 0 or ClearDistance,
-    RequiredDepth=MinDepth,ProfileOffset=Offset,Location=Sample and Sample.Location,
-    Point=point and {x=point.x,y=point.y,z=point.z},Depth=Depth,SurfaceType=Surface,
+    Status=Status,
+    Reason=Reason,
+    Cause=Cause,
+    Distance=Distance,
+    ClearDistance=ClearDistance,
+    RequiredDepth=MinDepth,
+    ProfileOffset=Offset,
+    Location=Sample and Sample.Location,
+    Point=reportPoint,
+    Depth=Depth,
+    SurfaceType=Surface,
   }
+end
+
+-- Select the conservative sample at one projected distance. Resolve equivalent evidence without depending
+-- on table.sort stability or the order of native profile points. Unknown sample heights are omitted in reports.
+local function depthSamplePrecedes(First, Second)
+
+  if First.Priority~=Second.Priority then
+    return First.Priority<Second.Priority
+  end
+  if First.Priority==3 and First.Depth~=Second.Depth then
+    return First.Depth<Second.Depth
+  end
+  if First.Cause~=Second.Cause then
+    return (First.Cause or "")<(Second.Cause or "")
+  end
+  if First.Location~=Second.Location then
+    return First.Location<Second.Location
+  end
+  if First.Point.x~=Second.Point.x then
+    return First.Point.x<Second.Point.x
+  end
+  if First.Point.z~=Second.Point.z then
+    return First.Point.z<Second.Point.z
+  end
+
+  local firstHeight,secondHeight=-math.huge,-math.huge
+  if isFiniteNumber(First.Point.y) then
+    firstHeight=First.Point.y
+  end
+  if isFiniteNumber(Second.Point.y) then
+    secondHeight=Second.Point.y
+  end
+  return firstHeight<secondHeight
 end
 
 --- Check one canonical profile and measure its first obstruction from the original start.
@@ -735,15 +814,29 @@ function PATHLINE._CheckDepthLine(Start, Goal, Distance, MinDepth, Offset, Rever
     local point=i==1 and Start or Goal
     local location=i==1 and "start" or "goal"
     local clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(point,MinDepth,false)
-    local sample={Point=point,Along=i==1 and 0 or Distance,Location=location,
-      Checked=true,Clear=clear,Status=status,Cause=cause,Depth=depth,Surface=surface}
+    local sample={
+      Point=point,
+      Along=i==1 and 0 or Distance,
+      Location=location,
+      Checked=true,
+      Clear=clear,
+      Status=status,
+      Cause=cause,
+      Depth=depth,
+      Surface=surface,
+    }
 
     if Reverse then
       sample.Along=Distance-sample.Along
       sample.Location=location=="start" and "goal" or "start"
     end
 
-    local reason=status=="unavailable" and cause or sample.Location.."_blocked"
+    local reason
+    if status=="unavailable" then
+      reason=cause
+    elseif not clear then
+      reason=sample.Location.."_blocked"
+    end
     sample.Reason=reason
     samples[#samples+1]=sample
 
@@ -784,61 +877,117 @@ function PATHLINE._CheckDepthLine(Start, Goal, Distance, MinDepth, Offset, Rever
       return false,reason,PATHLINE._DepthReport(Distance,MinDepth,Offset,reason,"unavailable",reason)
     end
 
-    samples[#samples+1]={Point=point,Along=Reverse and Distance-along or along,Location=location,UseProfile=useProfile}
+    if Reverse then
+      along=Distance-along
+    end
+    samples[#samples+1]={Point=point,Along=along,Location=location,UseProfile=useProfile}
   end
 
-  table.sort(samples,function(a,b) return a.Along<b.Along end)
+  table.sort(samples,function(a,b)
+    return a.Along<b.Along
+  end)
+
   local previous
+  local index=1
+  while index<=#samples do
+    local along=samples[index].Along
+    local limiting
 
-  for _,sample in ipairs(samples) do
-    local clear,status,cause,depth,surface=sample.Clear,sample.Status,sample.Cause,sample.Depth,sample.Surface
-    if not sample.Checked then
-      clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(sample.Point,MinDepth,sample.UseProfile)
-    end
-
-    if not clear then
-      local reason=status=="unavailable" and cause or sample.Reason or sample.Location.."_blocked"
-      local clearDistance=previous and previous.Along or 0
-
-      -- Numeric depth samples allow linear interpolation. A non-water sample has no proven coastline
-      -- transition, so the usable prefix ends at the previous valid sample instead.
-      if previous and depth and depth<MinDepth and previous.Depth and previous.Depth>=MinDepth then
-        local fraction=(previous.Depth-MinDepth)/(previous.Depth-depth)
-        clearDistance=previous.Along+(sample.Along-previous.Along)*fraction
+    -- Finish the entire distance group before advancing the interpolation baseline. A deeper sample
+    -- at the same position cannot extend the usable prefix or hide blocked/unavailable evidence.
+    repeat
+      local sample=samples[index]
+      if not sample.Checked then
+        sample.Clear,sample.Status,sample.Cause,sample.Depth,sample.Surface=
+          VECTOR._CheckDepthPoint(sample.Point,MinDepth,sample.UseProfile)
       end
 
-      return false,reason,PATHLINE._DepthReport(Distance,MinDepth,Offset,reason,status,cause,sample,depth,surface,clearDistance)
+      sample.Priority=3
+      if sample.Status=="unavailable" then
+        sample.Priority=1
+      elseif sample.Cause=="non_water" then
+        sample.Priority=2
+      end
+      if not limiting or depthSamplePrecedes(sample,limiting) then
+        limiting=sample
+      end
+      index=index+1
+    until index>#samples or samples[index].Along~=along
+
+    if not limiting.Clear then
+      local reason=limiting.Reason
+      if limiting.Status=="unavailable" then
+        reason=limiting.Cause
+      elseif not reason then
+        reason=limiting.Location.."_blocked"
+      end
+      local clearDistance=0
+      if previous then
+        clearDistance=previous.Along
+      end
+
+      -- Non-water has no proven coastline transition; numeric depths permit threshold interpolation.
+      local depth=limiting.Depth
+      if previous and depth and depth<MinDepth then
+        local fraction=(previous.Depth-MinDepth)/(previous.Depth-depth)
+        clearDistance=previous.Along+(along-previous.Along)*fraction
+      end
+
+      return false,reason,PATHLINE._DepthReport(Distance,MinDepth,Offset,reason,
+        limiting.Status,limiting.Cause,limiting,depth,limiting.Surface,clearDistance)
     end
 
-    -- Keep the shallower value when a native endpoint duplicates the direct endpoint check.
-    -- Equal-position sorting must never change the interpolated usable prefix.
-    sample.Depth=depth
-    if previous and sample.Along==previous.Along then
-      previous.Depth=math.min(previous.Depth,depth)
-    else
-      previous=sample
-    end
+    previous=limiting
   end
 
   return true
 end
 
+--- Build replacement points before releasing any geometry or drawings owned by this pathline.
+-- Terrain errors propagate normally; construction does not mutate the current route.
+-- @param #PATHLINE self
+-- @param #table Positions Dense list of Vec2 or Vec3 positions.
+-- @return #PATHLINE self.
+function PATHLINE:_UpdatePoints(Positions)
+
+  assert(type(Positions)=="table","PATHLINE: positions must be a list")
+  local points={}
+  for i=1,#Positions do
+    if Positions[i]~=nil then
+      points[#points+1]=self:_CreatePoint(Positions[i])
+    end
+  end
+
+  self:UnDrawLine()
+  self:MarkPoints(false)
+  self.points=points
+  return self
+end
+
 --- Create a point with copied position and sampled terrain metadata.
+-- Reject malformed input before querying terrain. Vec2 altitude must also be finite; surface/depth data
+-- remains unmodified so its unavailability can be reported by depth helpers and point labels.
 -- @param #PATHLINE self
 -- @param DCS#Vec3 Vec Position vector. Can also be a DCS#Vec2 in which case the altitude at landheight is taken.
 -- @return #PATHLINE.Point
 function PATHLINE:_CreatePoint(Vec)
 
+  assert(type(Vec)=="table","PATHLINE: position must be a Vec2 or Vec3 table")
+  assert(isFiniteNumber(Vec.x) and isFiniteNumber(Vec.y),"PATHLINE: x and y must be finite numbers")
+  assert(Vec.z==nil or isFiniteNumber(Vec.z),"PATHLINE: z must be a finite number when supplied")
+
   local point={} --#PATHLINE.Point
 
-  if Vec.z then
+  if Vec.z~=nil then
     -- Given vec is 3D
     point.vec3=UTILS.DeepCopy(Vec)
     point.vec2={x=Vec.x, y=Vec.z}
   else
     -- Given vec is 2D  
+    local height=land.getHeight(Vec)
+    assert(isFiniteNumber(height),"PATHLINE: Vec2 terrain height must be finite")
     point.vec2=UTILS.DeepCopy(Vec)
-    point.vec3={x=Vec.x, y=land.getHeight(Vec), z=Vec.y}
+    point.vec3={x=Vec.x,y=height,z=Vec.y}
   end
 
   -- Get surface type.
