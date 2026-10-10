@@ -277,7 +277,9 @@
 --
 -- Defaults are 100 newly expanded nodes and 0.005 CPU seconds per call. The frontier and an unfinished node survive between calls.
 -- Time limits are cooperative: a terrain query, callback or small neighbour-generation batch cannot be interrupted.
--- Without os.clock, only the node limit applies. SearchCPUSeconds excludes time between calls.
+-- LAZY shares the node budget with coincident-endpoint validation and result construction. Each predecessor and output entry
+-- is processed separately, so even long paths yield before publication. These work limits also apply without os.clock.
+-- SearchCPUSeconds excludes time between calls.
 -- StepSearch returns nil while pending; this alone is not a failure. A completed successful path may be an empty table after exclusions.
 -- Its report is a live, read-only object, also available as LastSearchResult. Completion freezes it; a new search gets a new report.
 -- Status is "complete" on success, search failure or cell limit, and "cancelled" after cancellation or detected reconfiguration.
@@ -335,7 +337,8 @@
 -- report.Progress distinguishes unobserved, observed, repeated_planning and loop_detected. Future anchors are not movement.
 -- ResetLocalProgress() clears movement diagnostics only. InvalidateLocalCache() clears learned costs and forces fresh samples.
 -- Reapply rule/cost setters after changing arguments; custom callbacks are evaluated again for each new request.
--- NAVYGROUP consumes these local requests and owns ship safety, steering and scheduling. Use a separate ASTAR for full LAZY searches.
+-- Consumers own ship safety, steering and scheduling. NAVYGROUP's LOCAL integration is currently removed and awaits a new design.
+-- Use a separate ASTAR for full LAZY searches.
 --
 -- # Visual Debug
 --
@@ -569,6 +572,7 @@ function ASTAR:New(GridType)
   self._CellCursor=0
   self._NodeOwner={}
   self._EndpointNodes={}
+  self._ManualNodes={}
 
   return self
 
@@ -625,6 +629,7 @@ end
 --- Create a node without adding it to the search node set or applying the grid surface filter.
 -- Stores a VECTOR and samples its current surface type. A supplied VECTOR is retained by reference;
 -- other position types are copied into a new VECTOR. Do not mutate a retained VECTOR after adding the node.
+-- Missing, false and non-finite coordinate components are rejected before sampling terrain or consuming a node ID.
 -- @param #ASTAR self
 -- @param Core.Point#COORDINATE Position Finite node position; also accepts VECTOR, DCS Vec2 or Vec3.
 -- @return #ASTAR.Node The node.
@@ -632,7 +637,11 @@ function ASTAR:CreateNode(Position)
 
   local node={} --#ASTAR.Node
 
-  node.vector=VECTOR._IsVector(Position) and Position or VECTOR:NewFromVec(Position)
+  if VECTOR._IsVector(Position) then
+    node.vector=Position
+  else
+    node.vector=self.Grid:_PositionVector(Position)
+  end
 
   -- Validate before querying DCS or consuming an ID. Retain supplied VECTOR objects without copying them.
   for _,axis in ipairs({"x", "y", "z"}) do
@@ -703,6 +712,7 @@ function ASTAR:AddNode(Node)
   else
     assert(Node.q==nil and Node.r==nil and Node.i==nil and Node.j==nil and Node.rectGrid==nil,
       "ASTAR: manual nodes cannot have grid cell indices")
+    self._ManualNodes[Node.id]=Node
   end
 
   self.gridLinks=nil
@@ -986,7 +996,9 @@ function ASTAR:SetCostDepth(PreferredDepth, Weight)
     return self:SetCostDist2D()
   end
 
-  if Weight==nil then Weight=2 end
+  if Weight==nil then
+    Weight=2
+  end
   assert(PreferredDepth>0 and PreferredDepth<math.huge,"ASTAR: preferred depth must be finite and positive")
   assert(Weight>=0 and Weight<math.huge,"ASTAR: depth weight must be finite and non-negative")
   assert(self.ValidNeighbourFunc==ASTAR.Depth,"ASTAR: configure SetValidNeighbourDepth before depth costs")
@@ -1138,6 +1150,8 @@ end
 --- Count neighbours under the current graph mode.
 -- Candidate counts do not evaluate user rules. Valid counts evaluate the neighbour rule, including its caches;
 -- they do not check travel costs. In unrestricted mode all other nodes are candidates, including on rectangular grids.
+-- Grid counts inspect the immediate lattice neighbourhood and manual-node attachments, never the full cell graph.
+-- Counting a cell's manual attachments costs work proportional to the number of manual nodes/endpoints.
 -- @param #ASTAR self
 -- @param #ASTAR.Node Node Node owned by this object.
 -- @param #boolean CheckValid (Optional) Apply the current neighbour rule. Default false.
@@ -1148,11 +1162,31 @@ function ASTAR:GetNodeNeighbourCount(Node, CheckValid)
   assert(Node and self.nodes[Node.id]==Node, "ASTAR: node must belong to this object")
   local count=0
   if self.GridNeighboursOnly then
-    if not self.gridLinks then
-      self:_BuildGridLinks()
+    local candidates={}
+    if Node.cell then
+      for _,cell in ipairs(self.Grid:GetNeighbours(Node.cell)) do
+        candidates[#candidates+1]=self._CellNodes[cell.id]
+      end
+
+      -- Manual nodes can attach to cells, but never directly to other manual nodes.
+      -- Keep them separately so one label does not scan every materialized grid cell.
+      for _,manual in pairs(self._ManualNodes) do
+        for _,cell in ipairs(self.Grid:GetNearbyCells(manual.vector)) do
+          if cell==Node.cell then
+            candidates[#candidates+1]=manual
+            break
+          end
+        end
+      end
+    else
+      for _,cell in ipairs(self.Grid:GetNearbyCells(Node.vector)) do
+        candidates[#candidates+1]=self._CellNodes[cell.id]
+      end
     end
-    for id in pairs(self.gridLinks[Node.id] or {}) do
-      if not CheckValid or self:_IsValidNeighbour(Node,self.nodes[id]) then
+
+    table.sort(candidates,function(first,second) return first.id<second.id end)
+    for _,neighbor in ipairs(candidates) do
+      if not CheckValid or self:_IsValidNeighbour(Node,neighbor) then
         count=count+1
       end
     end
@@ -1250,14 +1284,21 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples, Evidenc
   -- DCS may omit the endpoints from its profile. Always check their actual depths as well.
   for i=1,2 do
     local point=i==1 and Start or Goal
+    local location=i==1 and "start" or "goal"
     local clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(point,MinDepth,false)
 
     if not clear then
-      ASTAR._SetDepthEvidence(Evidence,point,i==1 and "start" or "goal",cause,depth,surface)
-      return false,status=="unavailable" and cause or (i==1 and "start_blocked" or "goal_blocked"),status
+      ASTAR._SetDepthEvidence(Evidence,point,location,cause,depth,surface)
+      local reason=location.."_blocked"
+      if status=="unavailable" then
+        reason=cause
+      end
+      return false,reason,status
     end
 
-    if Samples then Samples[#Samples+1]={i==1 and 0 or Distance,depth} end
+    if Samples then
+      Samples[#Samples+1]={i==1 and 0 or Distance,depth}
+    end
   end
 
   local profile=PATHLINE._QueryDepthProfile(Start,Goal)
@@ -1301,7 +1342,9 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples, Evidenc
         return false,status=="unavailable" and cause or "profile_fallback_blocked",status
       end
 
-      if Samples then Samples[#Samples+1]={fraction*Distance,depth} end
+      if Samples then
+        Samples[#Samples+1]={fraction*Distance,depth}
+      end
     end
   end
 
@@ -1319,7 +1362,9 @@ end
 -- @return #number Length-weighted penalty before applying the configured weight.
 function ASTAR._DepthPenaltyInterval(Length, DepthA, DepthB, MinDepth, PreferredDepth)
 
-  if DepthA>=PreferredDepth and DepthB>=PreferredDepth then return 0 end
+  if DepthA>=PreferredDepth and DepthB>=PreferredDepth then
+    return 0
+  end
 
   if DepthA>PreferredDepth then
     Length=Length*(PreferredDepth-DepthB)/(DepthA-DepthB)
@@ -1349,11 +1394,18 @@ function ASTAR._DepthPenalty(Profiles, Distance, MinDepth, PreferredDepth)
   local deep=true
   for _,samples in ipairs(Profiles) do
     for _,sample in ipairs(samples) do
-      if sample[2]<PreferredDepth then deep=false break end
+      if sample[2]<PreferredDepth then
+        deep=false
+        break
+      end
     end
-    if not deep then break end
+    if not deep then
+      break
+    end
   end
-  if deep then return 0 end
+  if deep then
+    return 0
+  end
 
   local indices={}
   for i,samples in ipairs(Profiles) do
@@ -1370,7 +1422,9 @@ function ASTAR._DepthPenalty(Profiles, Distance, MinDepth, PreferredDepth)
         samples[count]=sample
       end
     end
-    for j=#samples,count+1,-1 do samples[j]=nil end
+    for j=#samples,count+1,-1 do
+      samples[j]=nil
+    end
     indices[i]=1
   end
 
@@ -1393,7 +1447,9 @@ function ASTAR._DepthPenalty(Profiles, Distance, MinDepth, PreferredDepth)
       for j=i+1,#depths do
         local deltaA=depths[i][1]-depths[j][1]
         local deltaB=depths[i][2]-depths[j][2]
-        if deltaA*deltaB<0 then cuts[#cuts+1]=deltaA/(deltaA-deltaB) end
+        if deltaA*deltaB<0 then
+          cuts[#cuts+1]=deltaA/(deltaA-deltaB)
+        end
       end
     end
     table.sort(cuts)
@@ -1404,7 +1460,9 @@ function ASTAR._DepthPenalty(Profiles, Distance, MinDepth, PreferredDepth)
       local selected,shallowest=nil,math.huge
       for _,depth in ipairs(depths) do
         local value=depth[1]+(depth[2]-depth[1])*middle
-        if value<shallowest then selected,shallowest=depth,value end
+        if value<shallowest then
+          selected,shallowest=depth,value
+        end
       end
 
       local slope=selected[2]-selected[1]
@@ -1414,7 +1472,9 @@ function ASTAR._DepthPenalty(Profiles, Distance, MinDepth, PreferredDepth)
 
     position=finish
     for i,samples in ipairs(Profiles) do
-      if samples[indices[i]+1][1]==position then indices[i]=indices[i]+1 end
+      if samples[indices[i]+1][1]==position then
+        indices[i]=indices[i]+1
+      end
     end
   end
 
@@ -1487,7 +1547,9 @@ function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, Preferred
   assert(MinDepth>0 and MinDepth<math.huge,"ASTAR: minimum depth must be finite and positive")
   assert(CorridorWidth>=0 and CorridorWidth<math.huge,"ASTAR: corridor width must be finite and non-negative")
 
-  if Weight==nil then Weight=2 end
+  if Weight==nil then
+    Weight=2
+  end
   if PreferredDepth~=nil then
     assert(PreferredDepth>0 and PreferredDepth<math.huge,"ASTAR: preferred depth must be finite and positive")
     assert(Weight>=0 and Weight<math.huge,"ASTAR: depth weight must be finite and non-negative")
@@ -1508,11 +1570,20 @@ function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, Preferred
 
   if distance==0 then
     local clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(a,MinDepth,false)
+    local reason,cost
     if not clear then
       ASTAR._SetDepthEvidence(Evidence,a,"start",cause,depth,surface)
-      if Evidence then Evidence.ProfileOffset=0 end
+      if Evidence then
+        Evidence.ProfileOffset=0
+      end
+      reason="start_blocked"
+      if status=="unavailable" then
+        reason=cause
+      end
+    else
+      cost=0
     end
-    return clear,not clear and (status=="unavailable" and cause or "start_blocked") or nil,clear and 0 or nil,status
+    return clear,reason,cost,status
   end
 
   -- Query DCS in the same direction for A -> B and B -> A, matching A*'s symmetric validity cache.
@@ -1526,7 +1597,12 @@ function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, Preferred
   local lines=CorridorWidth>0 and 3 or 1
 
   for i=1,lines do
-    local offset=i==2 and CorridorWidth/2 or (i==3 and -CorridorWidth/2 or 0)
+    local offset=0
+    if i==2 then
+      offset=CorridorWidth/2
+    elseif i==3 then
+      offset=-CorridorWidth/2
+    end
     local start={x=a.x+nx*offset,y=0,z=a.z+nz*offset}
     local goal={x=b.x+nx*offset,y=0,z=b.z+nz*offset}
     local samples=profiles and {} or nil
@@ -1537,17 +1613,23 @@ function ASTAR._DepthConnection(nodeA, nodeB, MinDepth, CorridorWidth, Preferred
         Evidence.ProfileOffset=reverse and -offset or offset
         if reverse and (Evidence.Location=="start" or Evidence.Location=="goal") then
           Evidence.Location=Evidence.Location=="start" and "goal" or "start"
-          if status=="blocked" then reason=Evidence.Location.."_blocked" end
+          if status=="blocked" then
+            reason=Evidence.Location.."_blocked"
+          end
         end
       end
       return false,reason,nil,status
     end
 
-    if profiles then profiles[#profiles+1]=samples end
+    if profiles then
+      profiles[#profiles+1]=samples
+    end
   end
 
   local cost=distance
-  if profiles then cost=cost+Weight*ASTAR._DepthPenalty(profiles,distance,MinDepth,PreferredDepth) end
+  if profiles then
+    cost=cost+Weight*ASTAR._DepthPenalty(profiles,distance,MinDepth,PreferredDepth)
+  end
 
   return true,nil,cost,"clear"
 
@@ -1724,6 +1806,7 @@ function ASTAR:_PruneEndpointNodes()
       removed[#removed+1]=id
       self.nodes[id]=nil
       self._EndpointNodes[id]=nil
+      self._ManualNodes[id]=nil
       self.Nnodes=self.Nnodes-1
       node.valid={}
       node.cost={}
@@ -1835,6 +1918,8 @@ end
 -- using GRID expansion settings and limits, and stops at the first path. Hex expansion requires local grid neighbours.
 -- LAZY creates cells on demand on an unbuilt or sparse grid, without BuildGrid() or an enclosing area.
 -- Does not draw or assign routes to units. The selected cost and neighbour rules apply in all modes.
+-- Coincident resolved endpoints must pass the neighbour rule before a zero-length path succeeds.
+-- Such a path traverses no edge and has zero travel cost; endpoint exclusions still apply.
 -- Invalid modes/flags are rejected before searching. A final search failure is announced once; Debug controls player messages.
 -- @param #ASTAR self
 -- @param #string Mode (Optional) ASTAR.SearchMode.FIXED, EXPAND or LAZY; nil selects FIXED.
@@ -2061,7 +2146,7 @@ function ASTAR:StartLocalSearch(Start, Goal, Heading)
   self._LocalGrid=window
   self.nodes={}
   self.counter,self.Nnodes=1,0
-  self._CellNodes,self._EndpointNodes={},{}
+  self._CellNodes,self._EndpointNodes,self._ManualNodes={},{},{}
   self._NodeOwner={}
   self._CellCursor,self._GridRevision=0,-1
   self.startNode,self.endNode=nil,nil
@@ -2565,21 +2650,6 @@ function ASTAR:_StepLocalPhase(State)
       end
     end
 
-  elseif State.Phase=="coincident" then
-    local valid,reason,status=self:_IsValidNeighbour(State.Start,State.Start)
-    if not State.Running then
-      return
-    end
-    self:_RecordUnavailableEdge(State,State.Start,State.Start,reason,status)
-    if not self:_IsLazySearchCurrent(State) then
-      self:_FinishLazySearch(State,nil,"search_changed")
-    elseif valid then
-      State.Phase="select"
-      State.ReachedGoal=true
-    else
-      self:_FinishLazySearch(State,nil,"no_local_exit","no_local_exit")
-    end
-
   elseif State.Phase=="select" then
     -- Selection is bounded to eight sectors; keep results private until every chosen path is copied.
     local selected={}
@@ -2678,6 +2748,7 @@ function ASTAR:StartSearch(ExcludeStartNode, ExcludeEndNode)
   local clock=startCPUClock()
   local state={
     Running=true,
+    Phase="explore",
     Grid=self.Grid,
     Open={},
     OpenPositions={},
@@ -2727,6 +2798,9 @@ function ASTAR:StartSearch(ExcludeStartNode, ExcludeEndNode)
         state.Scores[start.id]=0
         local estimate=self:_HeuristicCost(start,goal)
         lazyPush(state,start,estimate,estimate)
+        if start==goal then
+          state.Phase="coincident"
+        end
 
         -- A sparse graph is intentionally incomplete. Do not flood it or reject unknown goal connections.
         state.EndpointIndices={}
@@ -2815,17 +2889,83 @@ function ASTAR:_LazyNeighbours(State, Node)
 
 end
 
+--- Validate a coincident start/goal in a resumable search before reporting a zero-length path.
+-- No edge is traversed. The neighbour rule still checks the position, including its minimum depth.
+-- Callback cancellation/replacement/configuration changes take precedence over its returned validity.
+-- @param #ASTAR self
+-- @param #table State Current LAZY or LOCAL search.
+function ASTAR:_StepCoincidentSearch(State)
+
+  local valid,reason,status=self:_IsValidNeighbour(State.Start,State.Start)
+  if not State.Running then
+    return
+  end
+  if not self:_IsLazySearchCurrent(State) then
+    self:_FinishLazySearch(State,nil,"search_changed")
+    return
+  end
+
+  self:_RecordUnavailableEdge(State,State.Start,State.Start,reason,status)
+  if not valid then
+    if State.Local then
+      self:_FinishLazySearch(State,nil,"no_local_exit","no_local_exit")
+    else
+      self:_FinishLazySearch(State,nil,"search_failed","connections_blocked")
+    end
+  elseif State.Local then
+    State.ReachedGoal=true
+    State.Phase="select"
+  else
+    State.Phase="explore"
+  end
+
+end
+
+--- Reconstruct a LAZY result using one predecessor or output entry per work item.
+-- Keep the partial list private until completion; exclusion flags are applied while copying,
+-- avoiding a linear shift of the completed list. Cancellation releases both staging tables.
+-- @param #ASTAR self
+-- @param #table State Current LAZY search, after the exact goal has been settled.
+function ASTAR:_StepLazyResult(State)
+
+  if State.Phase=="unwind" then
+    local node=State.TraceNode
+    if node then
+      State.Reverse[#State.Reverse+1]=node
+      State.TraceNode=State.Previous[node]
+    else
+      State.CopyIndex=#State.Reverse
+      State.Phase="copy"
+    end
+  elseif State.Phase=="copy" then
+    local node=State.Reverse[State.CopyIndex]
+    if node then
+      local excludeStart=State.ExcludeStart and node==State.Start
+      local excludeEnd=State.ExcludeEnd and node==State.Goal
+      if not excludeStart and not excludeEnd then
+        State.Result[#State.Result+1]=node
+      end
+      State.CopyIndex=State.CopyIndex-1
+    else
+      self:_FinishLazySearch(State,State.Result,"path_found")
+    end
+  end
+
+end
+
 --- Perform bounded work on the current LAZY or LOCAL search, retaining its frontier and predecessor chain.
 -- No scheduler is installed. Call again while report.Status is "running"; nil path alone does not mean failure.
 -- At most MaxNodes new nodes are expanded per call. An unfinished node resumes first. CPU time is checked
 -- between edges/nodes; one terrain/callback operation and one small neighbour batch cannot be interrupted.
 -- Without os.clock the node limit still applies and SearchCPUSeconds is nil. Idle time is never counted.
 -- Reconfiguration cancels with search_changed. Programmer errors in callbacks propagate to the caller.
+-- LAZY shares MaxNodes between new expansions and coincident/reconstruction/copy work items.
+-- Each predecessor or output entry is processed separately, with a CPU check between items.
 -- LOCAL also limits work items to MaxNodes: an endpoint seed, finite neighbour batch, edge check, candidate
 -- selection (at most eight), or one cache-restoration/reconstruction/copy/learning step.
 -- Provisional candidates are never returned as success.
 -- @param #ASTAR self
--- @param #number MaxNodes (Optional) Positive integer expansion limit per call; default 100.
+-- @param #number MaxNodes (Optional) Positive integer expansion/work limit per call as described above; default 100.
 -- @param #number MaxSeconds (Optional) Positive finite CPU budget in seconds; default 0.005.
 -- @return #table Completed path, including an empty successful path, or nil while pending/unsuccessful.
 -- @return #ASTAR.SearchReport Live report for this search; also stored in LastSearchResult.
@@ -2849,7 +2989,7 @@ function ASTAR:StepSearch(MaxNodes, MaxSeconds)
     state.Report.SearchCPUSeconds=nil
   end
   local expanded,worked=0,false
-  local localWork=0
+  local localWork,lazyResultWork=0,0
 
   while state.Running do
     if not self:_IsLazySearchCurrent(state) then
@@ -2865,13 +3005,24 @@ function ASTAR:StepSearch(MaxNodes, MaxSeconds)
       end
       localWork=localWork+1
       state.WorkItems=state.WorkItems+1
+    elseif state.Phase~="explore" then
+      if expanded+lazyResultWork>=MaxNodes then
+        break
+      end
+      lazyResultWork=lazyResultWork+1
     end
 
-    if state.Local and state.Phase~="explore" then
+    if state.Phase=="coincident" then
+      self:_StepCoincidentSearch(state)
+      worked=true
+    elseif state.Local and state.Phase~="explore" then
       self:_StepLocalPhase(state)
       worked=true
+    elseif not state.Local and state.Phase~="explore" then
+      self:_StepLazyResult(state)
+      worked=true
     elseif not state.Current then
-      if expanded>=MaxNodes then
+      if expanded+lazyResultWork>=MaxNodes then
         break
       end
       local current=lazyPop(state)
@@ -2888,15 +3039,10 @@ function ASTAR:StepSearch(MaxNodes, MaxSeconds)
         state.Phase="select"
         worked=true
       elseif current==state.Goal then
-        local path=self:_UnwindPath({},state.Previous,current)
-        if not state.ExcludeEnd then
-          path[#path+1]=current
-        end
-        if state.ExcludeStart and #path>0 then
-          table.remove(path,1)
-        end
-        self:_FinishLazySearch(state,path,"path_found")
-        break
+        state.Reverse,state.Result={},{}
+        state.TraceNode=current
+        state.Phase="unwind"
+        worked=true
       else
         if state.Local then
           state.Explored[#state.Explored+1]=current
@@ -3222,6 +3368,12 @@ function ASTAR:_SearchPath(ExcludeStartNode, ExcludeEndNode)
     return finish(nil, reason)
   end
 
+  -- Even a zero-length plan must satisfy the configured position/connection rule.
+  -- No edge is traversed, so its travel cost remains zero, as in LOCAL search.
+  if start==goal and not self:_IsValidNeighbour(start,goal) then
+    return finish(nil, "connections_blocked")
+  end
+
   -- Reject disconnected geometry before spending work on terrain rules and travel costs.
   local potential, failure=self:_HasPotentialPath(start, goal)
   if not potential then
@@ -3541,7 +3693,7 @@ function ASTAR:_DistNodes(nodeA, nodeB)
 
 end
 
---- Function that calculates the lowest F score.
+--- Select the lowest finite F score, resolving equal scores by ascending node ID.
 -- @param #ASTAR self
 -- @param #table set The set of nodes IDs.
 -- @param #table f_score Scores indexed by node id.
@@ -3550,11 +3702,13 @@ function ASTAR:_LowestFscore(set, f_score)
 
   local lowest, bestNode = ASTAR.INF, nil
 
-  for nid,node in pairs(set) do
+  for nid in pairs(set) do
 
     local score=f_score[nid]
 
-    if score<lowest then
+    local better=score<lowest
+    local tied=bestNode~=nil and score==lowest and nid<bestNode
+    if better or tied then
       lowest, bestNode = score, nid
     end
   end
@@ -3666,7 +3820,7 @@ end
 --- Get the owned or shared GRID, including before initial construction.
 -- New(GridType) retains this reference through matching builders. Legacy New():CreateHexGrid()/CreateHexGridFromZone()
 -- can replace the default rectangle; retrieve the grid again afterwards. SetGrid() explicitly replaces it as well.
--- StartLocalSearch() also replaces it with a new owned bounded window for every local request.
+-- StartLocalSearch() reuses a compatible owned window or replaces it. Reacquire the GRID after each request.
 -- @param #ASTAR self
 -- @return Core.Grid#GRID Grid.
 ---@return GRID
@@ -4017,7 +4171,8 @@ end
 
 --- Mark current nodes with separate F10 text labels. Replaces previous text labels only; does not draw polygons.
 -- Snapshot of the current node list. Counts are evaluated when each batch runs; later additions are not marked automatically.
--- Candidate counts are cheap. CheckNeighbours evaluates the neighbour rule and can be expensive, especially without local grid mode.
+-- Grid candidate counts inspect adjacent cells plus manual-node attachments; no complete adjacency graph is built.
+-- CheckNeighbours evaluates the neighbour rule and can be expensive, especially without local grid mode.
 -- Work is batched; one node's connection checks cannot be interrupted. Without a CPU clock only one marker is processed per batch.
 -- @param #ASTAR self
 -- @param #ASTAR.MarkGridOptions Options (Optional) Label fields, recipient and batch settings.

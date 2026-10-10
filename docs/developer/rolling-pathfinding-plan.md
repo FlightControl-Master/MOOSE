@@ -160,9 +160,39 @@ not mutable nodes or old GRID graphs. Reacquire `GetGrid()` after each request.
 Use one persistent local search per destination/session so compatible learning
 survives. Keep any global search instance separate.
 
-No new ASTAR public API is required for R1. The class-level comment that says
-NAVYGROUP currently consumes local requests is stale after removal; update
-that documentation when implementing the first step.
+No new ASTAR public API is required for R1. NAVYGROUP currently has no LOCAL
+consumer; its replacement remains a separate implementation step.
+
+ASTAR review follow-up approved on 2026-10-10:
+
+- [x] Reject malformed node positions before conversion or terrain sampling.
+- [x] Apply coincident-endpoint validity consistently in all search modes.
+- [x] Count immediate grid neighbours without building full marker adjacency.
+- [x] Resolve equal fixed-search scores deterministically.
+- [x] Reconstruct LAZY paths cooperatively, including cancellation and limits.
+- [x] Clean up affected control flow/documentation and run Lua 5.1 regressions.
+
+Each behavioral regression must expose its original failure. Preserve public
+signatures and node ownership; keep search geometry, costs and LOCAL learning
+unchanged. Re-run ASTAR, GRID and NAVYGROUP suites after the fixes. This work
+does not implement the replacement naval controller or validate DCS behavior.
+
+Completed on 2026-10-10. Initial regressions exposed all five findings: 12
+failures with the unchanged ASTAR implementation. The final suite adds 15
+cases, including preservation of LOCAL behavior and output-copy cancellation.
+Lua 5.1.5 compilation and ASTAR (295), GRID (109), NAVYGROUP (25) regressions
+pass. The former first-label graph build required 77,564 index lookups for
+4,900 rectangular cells; the regression now permits at most 24 per first
+label, for both grid types and with or without a CPU clock. Manual attachment
+counts remain proportional to the number of manual nodes, as documented.
+
+LAZY reconstruction and output copying share the expansion budget and check
+CPU time between work items. Coincident plans validate the neighbour rule in
+every mode, while retaining zero travel cost and existing endpoint exclusions.
+Fixed-score ties now select the lowest node ID. These changes do not establish
+ship safety; DCS terrain/controller validation remains outstanding. The next
+proposed subtask is a PATHLINE review against AGENTS.md before R1a changes,
+subject to the user's approval.
 
 A geometric search does not include arrival heading in its state. If R1/R2
 prove that the sole retained path to a cell consistently has an unusable turn

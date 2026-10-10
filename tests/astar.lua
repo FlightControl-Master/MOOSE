@@ -3471,6 +3471,8 @@ test("rectangular local indices give four or eight neighbours across rotations a
       local middle=nodeAtIndex(a,5,4)
       equal(a:GetNodeNeighbourCount(middle),diagonals and 8 or 4)
       equal(a:GetNodeNeighbourCount(nodeAtIndex(a,1,1)),diagonals and 3 or 2)
+      -- Full adjacency is a separate operation; counting a node must not build it.
+      a:_BuildGridLinks()
       local links=a.gridLinks
       for id,neighbors in pairs(links) do
         local n=a.nodes[id]
@@ -5777,6 +5779,377 @@ test("connection reconfiguration cannot combine an old rule with new costs",func
   local valid,cost,report=a:EvaluateConnection(coord(0),coord(1))
   equal(valid,false) equal(cost,math.huge) equal(report.Status,"unavailable")
   equal(report.Reason,"configuration_changed") equal(report.Stage,"configuration")
+end)
+
+test("node creation rejects malformed raw positions before sampling or consuming IDs", function()
+  local search=ASTAR:New()
+  local samples=0
+  land.surfaceAt=function()
+    samples=samples+1
+    return land.SurfaceType.WATER
+  end
+  local invalid={{}, {x=5}, {x=false,y=100,z=false}, {x=0,y=false,z=0},
+    {x=0,y=0,z=math.huge}, {x=0,y=0/0}, false, "position"}
+  for _,position in ipairs(invalid) do
+    equal(pcall(search.CreateNode,search,position),false)
+    equal(pcall(search.AddNodeFromCoordinate,search,position),false)
+    equal(samples,0)
+    equal(search.counter,1)
+    equal(search.Nnodes,0)
+  end
+  equal(pcall(search.CreateNode,search,nil),false)
+
+  local vec2={x=0,y=12}
+  local node=search:CreateNode(vec2)
+  near(node.vector.x,0)
+  near(node.vector.y,0)
+  near(node.vector.z,12)
+  vec2.y=99
+  near(node.vector.z,12)
+  local vector=VECTOR:New(0,0,0)
+  equal(search:CreateNode(vector).vector,vector)
+  equal(samples,2)
+end)
+
+local function coincidentSearch(mode)
+  local search=ASTAR:New(GRID.Type.RECTANGLE):SetEndpoints(coord(0),coord(200))
+  search:GetGrid():SetResolution(100):SetCorridor(200,100):SetMaxCells(100)
+  if mode==ASTAR.SearchMode.FIXED or mode==ASTAR.SearchMode.EXPAND then
+    assert(search:BuildGrid())
+  end
+  search:SetEndpoints(coord(0),coord(0)):SetLocalWindow(200,200,100)
+  return search
+end
+
+local function runCoincident(search,mode,excludeStart,excludeEnd)
+  if mode==ASTAR.SearchMode.LOCAL then
+    search:StartLocalSearch(coord(0),coord(0))
+    return finishLazy(search)
+  end
+  return search:FindPath(mode,excludeStart,excludeEnd)
+end
+
+for _,mode in ipairs({ASTAR.SearchMode.FIXED,ASTAR.SearchMode.EXPAND,ASTAR.SearchMode.LAZY,ASTAR.SearchMode.LOCAL}) do
+  test(mode.." validates coincident endpoint depth and retries unavailable data", function()
+    local terrain=depthTerrain()
+    local search=coincidentSearch(mode):SetValidNeighbourDepth(3.5)
+    terrain.depth=1
+    local path=runCoincident(search,mode)
+    equal(path,nil)
+    assert(terrain.queries>0)
+
+    -- A measured obstruction may be cached; the setter explicitly invalidates it.
+    search:SetValidNeighbourDepth(3.5)
+    terrain.depth=nil
+    path=runCoincident(search,mode)
+    equal(path,nil)
+    terrain.depth=30
+    path=assert(runCoincident(search,mode))
+    equal(#path,1)
+    near(path[1].vector.x,0)
+    equal(terrain.profiles,0)
+  end)
+end
+
+test("coincident validity preserves successful endpoint exclusions and custom rejection", function()
+  for _,mode in ipairs({ASTAR.SearchMode.FIXED,ASTAR.SearchMode.EXPAND,ASTAR.SearchMode.LAZY}) do
+    for _,excludeStart in ipairs({false,true}) do
+      for _,excludeEnd in ipairs({false,true}) do
+        local search=coincidentSearch(mode)
+        local calls=0
+        search:SetValidNeighbourFunction(function(first,last)
+          equal(first,last)
+          calls=calls+1
+          return true
+        end)
+        local path=assert(runCoincident(search,mode,excludeStart,excludeEnd))
+        equal(#path,(excludeStart or excludeEnd) and 0 or 1)
+        equal(calls,1)
+        search:SetValidNeighbourFunction(function() return false end)
+        equal(runCoincident(search,mode,excludeStart,excludeEnd),nil)
+      end
+    end
+  end
+end)
+
+test("LAZY coincident callbacks cannot publish after cancellation replacement or reconfiguration", function()
+  for _,action in ipairs({"cancel","replace","change"}) do
+    local search=coincidentSearch(ASTAR.SearchMode.LAZY)
+    local called=false
+    search:SetValidNeighbourFunction(function()
+      if not called then
+        called=true
+        if action=="cancel" then
+          search:CancelSearch()
+        elseif action=="replace" then
+          search:StartSearch()
+        else
+          search:SetValidNeighbourDistance(100)
+        end
+      end
+      return true
+    end):StartSearch()
+    local oldReport=search.LastSearchResult
+    local path,report=search:StepSearch(100,1)
+    equal(path,nil)
+    equal(report,oldReport)
+    equal(report.Status,"cancelled")
+    assert(called)
+    if action=="replace" then
+      assert(search.LastSearchResult~=oldReport)
+      assert(finishLazy(search))
+    end
+  end
+end)
+
+test("first ASTAR marker counts only immediate cells even without a CPU clock", function()
+  local savedClock=os.clock
+  local ok,err=pcall(function()
+    for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+      local search=ASTAR:New(kind):SetEndpoints(coord(0),coord(6900))
+      search:GetGrid():SetResolution(100):SetCorridor(6900,0):SetMaxCells(10000)
+      assert(search:BuildGrid())
+      local grid=search:GetGrid()
+      assert(grid:GetCellCount()>4000)
+      local original=grid.GetCellFromIndex
+      local queries=0
+      grid.GetCellFromIndex=function(self,...)
+        queries=queries+1
+        return original(self,...)
+      end
+      for _,withClock in ipairs({true,false}) do
+        os.clock=withClock and savedClock or nil
+        queries=0
+        search:MarkGrid({BatchSize=1})
+        stepTimer()
+        equal(search.LastGridMarkResult.NodesMarked,1)
+        assert(queries<=24,"one label queried the full grid: "..queries)
+        equal(search.gridLinks,nil)
+        equal(grid.gridLinks,nil)
+        search:ClearDrawing(GRID.Drawing.LABELS)
+        flushTimers()
+      end
+    end
+  end)
+  os.clock=savedClock
+  assert(ok,err)
+end)
+
+test("direct ASTAR counts retain manual attachments topology changes and endpoint pruning", function()
+  for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+    local search=ASTAR:New(kind):SetEndpoints(coord(0),coord(500))
+    search:GetGrid():SetResolution(100):SetCorridor(400,100)
+    assert(search:BuildGrid())
+    search:AddNodeFromCoordinate(coord(37,21))
+    search:AddNodeFromCoordinate(coord(45,30))
+    search:SetValidNeighbourDistance(110)
+    for _,diagonals in ipairs({true,false}) do
+      search:GetGrid():SetDiagonals(diagonals)
+      search:SetEndpoints(coord(22,17),coord(477,-21))
+      search:HasPotentialPath()
+      search:SetEndpoints(coord(33,19),coord(466,-23))
+      search:HasPotentialPath()
+      local reference=search.gridLinks
+      search.gridLinks=nil
+      for id,node in pairs(search.nodes) do
+        local candidates,valid=0,0
+        for neighborID in pairs(reference[id]) do
+          candidates=candidates+1
+          if search:_IsValidNeighbour(node,search.nodes[neighborID]) then
+            valid=valid+1
+          end
+        end
+        equal(search:GetNodeNeighbourCount(node),candidates)
+        equal(search:GetNodeNeighbourCount(node,true),valid)
+      end
+      equal(search.gridLinks,nil)
+    end
+  end
+end)
+
+test("fixed search score ties select the lowest node ID independent of table insertion", function()
+  local search=ASTAR:New()
+  for id=1,6 do
+    search:AddNodeFromCoordinate(coord(id*100))
+  end
+  local scores={[2]=10,[4]=10,[6]=10}
+  for _,order in ipairs({{2,4,6},{6,4,2}}) do
+    local open={}
+    for _,id in ipairs(order) do
+      open[id]=true
+    end
+    equal(search:_LowestFscore(open,scores).id,2)
+    equal(search:_LowestFscore(open,{[2]=math.huge,[4]=math.huge,[6]=math.huge}),nil)
+  end
+end)
+
+test("fixed equal-cost routes retain the same predecessor across sparse insertion orders", function()
+  for _,order in ipairs({{2,4,6},{6,4,2}}) do
+    local search=ASTAR:New()
+    local nodes={}
+    for id=1,6 do
+      nodes[id]=search:AddNodeFromCoordinate(coord(id*100))
+    end
+    search:SetEndpoints(nodes[1].vector,nodes[3].vector)
+    search:SetCostFunction(function() return 1 end)
+    search:SetValidNeighbourFunction(function(first,last)
+      local a,b=first.id,last.id
+      local aEndpoint=a==1 or a==3
+      local bEndpoint=b==1 or b==3
+      return (aEndpoint and b%2==0) or (bEndpoint and a%2==0)
+    end)
+    -- Equivalent graph storage with different insertion histories must not select different routes.
+    local graph={[1]=nodes[1],[3]=nodes[3],[5]=nodes[5]}
+    for _,id in ipairs(order) do
+      graph[id]=nodes[id]
+    end
+    search.nodes=graph
+    local path=assert(search:FindPath())
+    equal(#path,3)
+    equal(path[1],nodes[1])
+    equal(path[2],nodes[2])
+    equal(path[3],nodes[3])
+    near(pathCost(search,path),2)
+  end
+end)
+
+-- Observe predecessor work without replacing any production search/reconstruction method.
+local function watchPredecessors(search,onRead)
+  local predecessors=search._LazySearch.Previous
+  local reads=0
+  search._LazySearch.Previous=setmetatable({}, {
+    __index=function(_,node)
+      reads=reads+1
+      if onRead then
+        onRead()
+      end
+      return predecessors[node]
+    end,
+    __newindex=function(_,node,previous)
+      predecessors[node]=previous
+    end,
+  })
+  return function() return reads end
+end
+
+test("LAZY reconstructs long paths within the node budget without a CPU clock", function()
+  local savedClock=os.clock
+  local ok,err=pcall(function()
+    os.clock=nil
+    local search=lazySearch(GRID.Type.RECTANGLE,coord(20000)):StartSearch()
+    local reads=watchPredecessors(search)
+    local path,report
+    local slices=0
+    repeat
+      local before=reads()
+      path,report=search:StepSearch(1)
+      assert(reads()-before<=1,"reconstruction exceeded the slice limit")
+      slices=slices+1
+      assert(slices<20000,"search did not terminate")
+    until report.Status~="running"
+    assert(path and #path>100)
+    for index=2,#path do
+      assert(path[index].vector.x>path[index-1].vector.x)
+    end
+    near(path[1].vector.x,0)
+    near(path[#path].vector.x,20000)
+    equal(report.SearchCPUSeconds,nil)
+  end)
+  os.clock=savedClock
+  assert(ok,err)
+end)
+
+test("LAZY reconstruction checks CPU budgets and excludes idle time", function()
+  local savedClock=os.clock
+  local cpu=0
+  local ok,err=pcall(function()
+    os.clock=function() return cpu end
+    local search=lazySearch(GRID.Type.RECTANGLE,coord(20000)):StartSearch()
+    local reads=watchPredecessors(search,function() cpu=cpu+0.001 end)
+    local path,report
+    repeat
+      local before=reads()
+      path,report=search:StepSearch(1000,0.0015)
+      assert(reads()-before<=2,"CPU budget did not interrupt reconstruction")
+      cpu=cpu+100
+    until report.Status~="running"
+    assert(path)
+    near(report.SearchCPUSeconds,reads()*0.001)
+    local seconds=report.SearchCPUSeconds
+    equal(select(2,search:StepSearch()),report)
+    equal(report.SearchCPUSeconds,seconds)
+  end)
+  os.clock=savedClock
+  assert(ok,err)
+end)
+
+test("LAZY cancellation and reconfiguration discard an unfinished reconstructed path", function()
+  for _,change in ipairs({false,true}) do
+    local search=lazySearch(GRID.Type.RECTANGLE,coord(20000)):StartSearch()
+    local reads=watchPredecessors(search)
+    local path,report
+    repeat
+      path,report=search:StepSearch(1,1)
+    until reads()>0 or report.Status~="running"
+    equal(path,nil)
+    equal(report.Status,"running")
+    if change then
+      search:SetEndCoordinate(coord(300))
+    else
+      search:CancelSearch()
+    end
+    path,report=search:StepSearch(1,1)
+    equal(path,nil)
+    equal(report.Status,"cancelled")
+    equal(report.StopReason,change and "search_changed" or "cancelled")
+    equal(search._LazySearch.Previous,nil)
+    equal(search._LazySearch.Reverse,nil)
+    equal(search._LazySearch.Result,nil)
+  end
+end)
+
+test("LAZY result copying yields to both budgets and replacement discards partial output", function()
+  local savedClock=os.clock
+  local ok,err=pcall(function()
+    for _,withClock in ipairs({false,true}) do
+      local cpu=0
+      if withClock then
+        os.clock=function() return cpu end
+      else
+        os.clock=nil
+      end
+      local search=lazySearch(GRID.Type.RECTANGLE,coord(2000)):StartSearch(true,true)
+      local path,report
+      repeat
+        path,report=search:StepSearch(1,1)
+      until report.Status~="running" or search._LazySearch.Phase=="copy"
+      equal(path,nil)
+      equal(report.Status,"running")
+      local writes=0
+      setmetatable(search._LazySearch.Result,{
+        __newindex=function(result,key,value)
+          writes=writes+1
+          cpu=cpu+0.001
+          rawset(result,key,value)
+        end,
+      })
+      repeat
+        local before=writes
+        path,report=search:StepSearch(withClock and 1000 or 1,0.0015)
+        assert(writes-before<=(withClock and 2 or 1),"copy exceeded its slice budget")
+      until writes>0
+      equal(path,nil)
+      local cancelled=report
+      search:StartSearch(true,true)
+      equal(cancelled.Status,"cancelled")
+      path,report=finishLazy(search)
+      assert(path)
+      assert(path[1].vector.x>0 and path[#path].vector.x<2000)
+      equal(cancelled.Status,"cancelled")
+    end
+  end)
+  os.clock=savedClock
+  assert(ok,err)
 end)
 
 print(string.format("%d passed, %d failed", passed, failed))
