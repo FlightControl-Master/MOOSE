@@ -1,19 +1,19 @@
 ---
-title: PATHLINE R1a geometry API proposal
+title: PATHLINE R1a geometry API
 parent: Developer
 nav_exclude: true
 ---
 
-# PATHLINE R1a geometry API proposal
+# PATHLINE R1a geometry API
 
-Status: specification prepared on 2026-10-10; methods are **not implemented**.
-The next implementation step requires approval. This specifies the pure
-geometry part of [R1a](rolling-pathfinding-plan.md), not its later bounded
-connection/depth validation work or the NAVYGROUP LOCAL integration.
+Status: approved and implemented on 2026-10-10, with LuaDoc and deterministic
+Lua 5.1.5 regressions. This specifies the completed pure geometry part of
+[R1a](rolling-pathfinding-plan.md). Bounded connection/depth validation and
+the NAVYGROUP LOCAL integration remain separate, unimplemented steps.
 
 ## Responsibility and ownership
 
-Add static functions to PATHLINE, called with `PATHLINE.Function(...)`.
+The static functions are called with `PATHLINE.Function(...)`.
 Use an explicit geometry snapshot, not a new class or a terrain-aware PATHLINE
 constructor. Create it once for each candidate/prepared/installed route whose
 points differ. Reuse it while that exact route remains current.
@@ -65,7 +65,7 @@ components directly; do not invoke point methods or metatable conversions.
 Vec2 input requires an explicit caller conversion with a chosen altitude.
 
 `Options` is optional. Its only field is `MaxPoints`, a positive integer with
-proposed default **4096**. This is a configurable resource bound, not a
+default **4096**. This is a configurable resource bound, not a
 measured frame-time guarantee or a GRID cell limit. Never truncate input.
 
 | Condition | Result |
@@ -233,7 +233,7 @@ locally without changing those existing APIs.
 
 ## Integration boundary and bounded work
 
-Typical future use, shown only to illustrate the proposed API:
+Integration sketch; movement-policy bounds remain caller-owned:
 
 ```lua
 local geometry, reason, detail = PATHLINE.CreateGeometry(candidate.Positions)
@@ -299,8 +299,19 @@ and approval after the geometry step; `CheckDepth` is not repurposed.
 | Mutation of inputs, exported points or query results | Snapshot and other results remain unchanged |
 | Terrain/coordinate constructors stubbed to raise | All new functions still work without invoking them |
 
-Implement tests against production functions under Lua 5.1.5, then run the
-PATHLINE, profile, depth, ASTAR and NAVYGROUP regression suites in separate
-processes. Compile affected Lua sources and review `git diff --check`.
+Implementation validation on 2026-10-10:
+
+- 26 new PATHLINE regression cases exercise the production functions with
+  controlled external dependencies. All 26 initially failed against the source
+  without the new API; the existing 21 cases continued to pass.
+- Lua 5.1.5 syntax compilation succeeds for production PATHLINE and its suite.
+- Separate Lua 5.1.5 processes pass PATHLINE (47), profile (15), depth (33),
+  ASTAR (295), and NAVYGROUP (25): 415 cases in total.
+- Source, tests and documentation were reviewed; `git diff --check` passes.
+
+The fixture supplies an atan2 equivalent only for newer Lua versions that
+lack the Lua 5.1 function; validation above used the native Lua 5.1.5 function.
 These checks establish geometry/ownership behavior only; ship motion, DCS
 terrain and controller execution remain later simulator validation gates.
+No simulator or mission log was accessed. The next proposed subtask is the
+bounded connection/depth-validation API design, subject to user approval.

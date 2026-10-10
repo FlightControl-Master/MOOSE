@@ -1,5 +1,11 @@
 -- Standalone PATHLINE regressions; run from the repository root with Lua 5.1 or 5.4.
 -- lua tests/pathline.lua
+-- Production uses Lua 5.1 atan2; newer Lua versions expose its two-argument form as atan.
+if not math.atan2 then
+  math.atan2=function(y, x)
+    return math.atan(y, x)
+  end
+end
 local function copy(value)
   if type(value)~="table" then return value end
   local result={}
@@ -356,6 +362,445 @@ test("invalid terrain altitude cannot create a fabricated Vec2 route position",f
     equal(count(live),5)
     path:MarkPoints(false):UnDrawLine()
   end
+end)
+
+-- Pure geometry uses production functions without terrain or controller dependencies.
+local function near(actual, expected, tolerance)
+  assert(type(actual)=="number" and math.abs(actual-expected)<=(tolerance or 1e-9),
+    "expected approximately "..tostring(expected)..", got "..tostring(actual))
+end
+
+local function vec(x, z, y)
+  return {x=x, y=y or 0, z=z}
+end
+
+local function samePosition(actual, expected)
+  equal(actual.x, expected.x)
+  equal(actual.y, expected.y)
+  equal(actual.z, expected.z)
+end
+
+local function argumentError(fn, fragment)
+  local ok, message=pcall(fn)
+  equal(ok, false)
+  assert(tostring(message):find(fragment, 1, true), tostring(message))
+end
+
+local function geometry(points, options)
+  local result, reason=PATHLINE.CreateGeometry(points, options)
+  assert(result, reason)
+  return result
+end
+
+test("geometry retains horizontal lengths and interpolates supplied altitude", function()
+  local g=geometry({vec(0,0,2), vec(3,4,8), vec(3,10,20)})
+  equal(g.PointCount, 3)
+  equal(g.SegmentCount, 2)
+  equal(g.TotalLength, 11)
+  equal(g.Distances[2], 5)
+  equal(g.Segments[2].Index, 2)
+  equal(g.Segments[2].StartDistance, 5)
+  equal(g.Segments[2].EndDistance, 11)
+  local location=PATHLINE.GetPositionAtDistance(g, 2.5)
+  samePosition(location.Position, vec(1.5,2,5))
+  equal(location.DistanceFromStart, 2.5)
+  equal(location.Fraction, 0.5)
+  equal(location.SegmentIndex, 1)
+  near(location.Heading, 53.130102354156)
+  equal(location.PointIndex, nil)
+end)
+
+test("geometry headings cover cardinal and rotated directions", function()
+  for _,case in ipairs({{1,0,0}, {0,1,90}, {-1,0,180}, {0,-1,270}, {1,1,45}, {-1,-1,225}}) do
+    local g=geometry({vec(0,0), vec(case[1],case[2])})
+    near(g.Segments[1].Heading, case[3])
+    near(g.TotalLength, math.sqrt(case[1]^2+case[2]^2))
+  end
+end)
+
+test("geometry duplicates retain indices and incoming courses at corners", function()
+  local g=geometry({vec(0,0), vec(0,0), vec(10,0), vec(10,0), vec(10,0), vec(10,20), vec(10,20)})
+  equal(g.SegmentCount, 6)
+  equal(g.Segments[1].Length, 0)
+  equal(g.Segments[1].Heading, nil)
+  equal(g.Segments[4].Length, 0)
+  local start=PATHLINE.GetPositionAtDistance(g, 0)
+  equal(start.SegmentIndex, 2)
+  equal(start.Fraction, 0)
+  local corner=PATHLINE.GetPositionAtDistance(g, 10)
+  equal(corner.SegmentIndex, 2)
+  equal(corner.Fraction, 1)
+  equal(corner.Heading, 0)
+  local last=PATHLINE.GetPositionAtDistance(g, 30)
+  equal(last.SegmentIndex, 5)
+  equal(last.Fraction, 1)
+  samePosition(last.Position, g.Positions[7])
+  for index=3,5 do
+    local turn=PATHLINE.GetTurnAtPoint(g, index)
+    equal(turn.PointIndex, index)
+    equal(turn.IncomingSegment, 2)
+    equal(turn.OutgoingSegment, 5)
+    equal(turn.SignedAngle, 90)
+  end
+end)
+
+test("geometry empty and point-only routes have explicit outcomes", function()
+  local result, reason, detail=PATHLINE.CreateGeometry({})
+  equal(result, nil)
+  equal(reason, "empty_path")
+  equal(detail.PointCount, 0)
+  for _,points in ipairs({{vec(7,9,3)}, {vec(7,9,3),vec(7,9,3),vec(7,9,3)}}) do
+    local g=geometry(points)
+    equal(g.TotalLength, 0)
+    local location=PATHLINE.GetPositionAtDistance(g, 0)
+    equal(location.PointIndex, 1)
+    equal(location.SegmentIndex, nil)
+    equal(location.Heading, nil)
+    equal(location.Fraction, nil)
+    local projected=PATHLINE.ProjectPosition(g, vec(10,13,900))
+    samePosition(projected.Position, vec(7,9,3))
+    equal(projected.DistanceToPath, 5)
+    equal(projected.SignedLateralDistance, nil)
+    equal(projected.Ambiguous, false)
+    local turn, turnReason, missing=PATHLINE.GetTurnAtPoint(g, 1)
+    equal(turn, nil)
+    equal(turnReason, "no_turn")
+    equal(missing.MissingIncoming, true)
+    equal(missing.MissingOutgoing, true)
+  end
+end)
+
+test("geometry rejects altitude-only legs with the original index", function()
+  local result, reason, detail=PATHLINE.CreateGeometry({vec(0,0),vec(0,0),vec(0,0,1)})
+  equal(result, nil)
+  equal(reason, "vertical_segment")
+  equal(detail.SegmentIndex, 2)
+end)
+
+test("geometry keeps tiny distinct legs without squared-length underflow", function()
+  local g=geometry({vec(0,0),vec(1e-200,0)})
+  equal(g.TotalLength, 1e-200)
+  equal(g.Segments[1].Heading, 0)
+  equal(PATHLINE.GetPositionAtDistance(g, 5e-201).Fraction, 0.5)
+  equal(PATHLINE.ProjectPosition(g, vec(5e-201,0)).Fraction, 0.5)
+end)
+
+test("geometry rejects overflow and lost cumulative increments", function()
+  for _,points in ipairs({
+    {vec(-1e308,0),vec(1e308,0)},
+    {vec(0,0),vec(1.3e308,1.3e308)},
+    {vec(0,0),vec(1e308,0),vec(0,0)},
+    {vec(0,0),vec(1e16,0),vec(1e16,1)},
+  }) do
+    local result, reason, detail=PATHLINE.CreateGeometry(points)
+    equal(result, nil)
+    equal(reason, "numeric_range")
+    assert(detail.SegmentIndex)
+  end
+end)
+
+test("geometry interpolates extreme finite altitudes without subtracting them", function()
+  local g=geometry({vec(0,0,-1e308), vec(10,0,1e308)})
+  equal(PATHLINE.GetPositionAtDistance(g, 5).Position.y, 0)
+  samePosition(PATHLINE.GetPositionAtDistance(g, 0).Position, g.Positions[1])
+  samePosition(PATHLINE.GetPositionAtDistance(g, 10).Position, g.Positions[2])
+end)
+
+test("geometry distance bounds fail explicitly without clamping", function()
+  local g=geometry({vec(0,0),vec(10,0)})
+  for _,distance in ipairs({-1, 11}) do
+    local result, reason, detail=PATHLINE.GetPositionAtDistance(g, distance)
+    equal(result, nil)
+    equal(reason, "distance_out_of_range")
+    equal(detail.Distance, distance)
+    equal(detail.TotalLength, 10)
+  end
+  samePosition(PATHLINE.GetPositionAtDistance(g, 0).Position, g.Positions[1])
+  samePosition(PATHLINE.GetPositionAtDistance(g, 10).Position, g.Positions[2])
+end)
+
+test("projection distinguishes lateral distance from endpoint distance", function()
+  local g=geometry({vec(0,0,2),vec(10,0,6)})
+  for _,side in ipairs({-3,3}) do
+    local p=PATHLINE.ProjectPosition(g, vec(5,side,999))
+    equal(p.DistanceFromStart, 5)
+    equal(p.DistanceToPath, 3)
+    equal(p.SignedLateralDistance, side)
+    samePosition(p.Position, vec(5,0,4))
+  end
+  local p=PATHLINE.ProjectPosition(g, vec(15,0))
+  equal(p.Fraction, 1)
+  equal(p.DistanceToPath, 5)
+  equal(p.SignedLateralDistance, 0)
+  p=PATHLINE.ProjectPosition(g, vec(-4,3))
+  equal(p.Fraction, 0)
+  equal(p.DistanceToPath, 5)
+  equal(p.SignedLateralDistance, 3)
+end)
+
+test("projection clips each segment to the supplied distance interval", function()
+  local g=geometry({vec(0,0),vec(100,0)})
+  local p=PATHLINE.ProjectPosition(g, vec(80,3), {MinDistanceFromStart=20,MaxDistanceFromStart=40})
+  equal(p.DistanceFromStart, 40)
+  near(p.DistanceToPath, math.sqrt(1609))
+  equal(p.SignedLateralDistance, 3)
+  p=PATHLINE.ProjectPosition(g, vec(0,0), {MinDistanceFromStart=20})
+  equal(p.DistanceFromStart, 20)
+  p=PATHLINE.ProjectPosition(g, vec(100,0), {MaxDistanceFromStart=40})
+  equal(p.DistanceFromStart, 40)
+  p=PATHLINE.ProjectPosition(g, vec(80,0), {MinDistanceFromStart=30,MaxDistanceFromStart=30})
+  equal(p.DistanceFromStart, 30)
+end)
+
+test("projection segment and distance windows intersect before searching", function()
+  local g=geometry({vec(0,0),vec(10,0),vec(10,10),vec(20,10)})
+  local p=PATHLINE.ProjectPosition(g, vec(0,0), {FirstSegment=2})
+  equal(p.SegmentIndex, 2)
+  equal(p.DistanceFromStart, 10)
+  p=PATHLINE.ProjectPosition(g, vec(20,10), {LastSegment=1})
+  equal(p.SegmentIndex, 1)
+  equal(p.DistanceFromStart, 10)
+  local result, reason, detail=PATHLINE.ProjectPosition(g, vec(0,0), {
+    FirstSegment=3,LastSegment=3,MinDistanceFromStart=0,MaxDistanceFromStart=5,
+  })
+  equal(result, nil)
+  equal(reason, "empty_search_range")
+  equal(detail.FirstSegment, 3)
+  equal(detail.MaxDistanceFromStart, 5)
+end)
+
+test("projection of duplicate-only ranges retains their station", function()
+  local g=geometry({vec(0,0),vec(10,0),vec(10,0),vec(10,0),vec(20,0)})
+  local p=PATHLINE.ProjectPosition(g, vec(10,4), {FirstSegment=2,LastSegment=3})
+  equal(p.PointIndex, 2)
+  equal(p.SegmentIndex, nil)
+  equal(p.Heading, nil)
+  equal(p.DistanceFromStart, 10)
+  equal(p.DistanceToPath, 4)
+  equal(p.Ambiguous, false)
+  p=PATHLINE.ProjectPosition(g, vec(10,4))
+  equal(p.SegmentIndex, 1)
+  equal(p.PointIndex, nil)
+end)
+
+test("hairpin projection cannot skip a restricted earlier leg", function()
+  local g=geometry({vec(0,0),vec(100,0),vec(100,10),vec(0,10)})
+  local query=vec(20,9)
+  equal(PATHLINE.ProjectPosition(g, query).SegmentIndex, 3)
+  local p=PATHLINE.ProjectPosition(g, query, {FirstSegment=1,LastSegment=1,MaxDistanceFromStart=50})
+  equal(p.SegmentIndex, 1)
+  equal(p.DistanceFromStart, 20)
+  equal(p.DistanceToPath, 9)
+  equal(p.Ambiguous, false)
+end)
+
+test("self-crossing projection returns independent tied route locations", function()
+  local g=geometry({vec(-10,-10),vec(10,10),vec(-10,10),vec(10,-10)})
+  local p=PATHLINE.ProjectPosition(g, vec(0,0))
+  equal(p.SegmentIndex, 1)
+  equal(p.Ambiguous, true)
+  equal(p.Alternative.SegmentIndex, 3)
+  assert(p.Alternative.DistanceFromStart>p.DistanceFromStart)
+  p.Alternative.Position.x=999
+  near(p.Position.x, 0)
+  near(PATHLINE.ProjectPosition(g, vec(0,0)).Alternative.Position.x, 0)
+  p=PATHLINE.ProjectPosition(g, vec(0,0), {FirstSegment=3})
+  equal(p.SegmentIndex, 3)
+  equal(p.Ambiguous, false)
+end)
+
+test("overlap and closed-route endpoints expose ambiguity", function()
+  local g=geometry({vec(0,0),vec(10,0),vec(0,0)})
+  local p=PATHLINE.ProjectPosition(g, vec(5,0))
+  equal(p.DistanceFromStart, 5)
+  equal(p.Alternative.DistanceFromStart, 15)
+  equal(p.Ambiguous, true)
+  p=PATHLINE.ProjectPosition(g, vec(0,0))
+  equal(p.DistanceFromStart, 0)
+  equal(p.Alternative.DistanceFromStart, 20)
+  equal(p.Ambiguous, true)
+  p=PATHLINE.ProjectPosition(g, vec(10,0))
+  equal(p.Ambiguous, false)
+  equal(p.Alternative, nil)
+end)
+
+test("shared vertices prefer allowed incoming legs without false ambiguity", function()
+  local g=geometry({vec(0,0),vec(3,4),vec(3,10)})
+  local p=PATHLINE.ProjectPosition(g, vec(3,4))
+  equal(p.SegmentIndex, 1)
+  equal(p.Fraction, 1)
+  equal(p.Ambiguous, false)
+  p=PATHLINE.ProjectPosition(g, vec(3,4), {FirstSegment=2})
+  equal(p.SegmentIndex, 2)
+  equal(p.Fraction, 0)
+  equal(p.Ambiguous, false)
+end)
+
+test("projection ties use the true minimum rather than chained tolerances", function()
+  -- Three horizontal legs approach the query in steps smaller than the tie tolerance.
+  local g=geometry({vec(0,1.0000015),vec(10,1.0000015),vec(10,1.00000075),
+    vec(0,1.00000075),vec(0,1),vec(10,1)})
+  local p=PATHLINE.ProjectPosition(g, vec(5,0))
+  equal(p.SegmentIndex, 3)
+  equal(p.Alternative.SegmentIndex, 5)
+  equal(p.Ambiguous, true)
+  -- Reverse geometry reverses the order in which distances are encountered.
+  local reverse={}
+  for i=g.PointCount,1,-1 do
+    reverse[#reverse+1]=g.Positions[i]
+  end
+  p=PATHLINE.ProjectPosition(geometry(reverse), vec(5,0))
+  equal(p.SegmentIndex, 1)
+  equal(p.Alternative.SegmentIndex, 3)
+  equal(p.Ambiguous, true)
+end)
+
+test("turn geometry wraps signed courses and represents reversals deterministically", function()
+  for _,case in ipairs({{350,10,20},{10,350,-20},{45,45,0},{0,180,180},{180,0,180}}) do
+    local a,b=math.rad(case[1]),math.rad(case[2])
+    local g=geometry({vec(-10*math.cos(a),-10*math.sin(a)),vec(0,0),
+      vec(10*math.cos(b),10*math.sin(b))})
+    local turn=PATHLINE.GetTurnAtPoint(g, 2)
+    near(turn.IncomingHeading, case[1])
+    near(turn.OutgoingHeading, case[2])
+    near(turn.SignedAngle, case[3])
+    equal(turn.IncomingSegment, 1)
+    equal(turn.OutgoingSegment, 2)
+  end
+end)
+
+test("turn endpoints report missing directions and never skip real corners", function()
+  local g=geometry({vec(0,0),vec(10,0),vec(10,10),vec(20,10)})
+  equal(PATHLINE.GetTurnAtPoint(g, 2).SignedAngle, 90)
+  equal(PATHLINE.GetTurnAtPoint(g, 3).SignedAngle, -90)
+  for _,index in ipairs({1,4}) do
+    local result, reason, detail=PATHLINE.GetTurnAtPoint(g, index)
+    equal(result, nil)
+    equal(reason, "no_turn")
+    equal(detail.MissingIncoming, index==1)
+    equal(detail.MissingOutgoing, index==4)
+  end
+end)
+
+test("geometry inputs and exported results have independent ownership", function()
+  local points={vec(0,0),vec(10,0),vec(10,10)}
+  points[1].metadata={value=1}
+  local g=geometry(points)
+  points[1].x=99
+  points[2]=vec(99,99)
+  equal(g.Positions[1].metadata, nil)
+  local exported=PATHLINE.GetGeometryPositions(g)
+  exported[1].x=88
+  exported[2]=vec(88,88)
+  local location=PATHLINE.GetPositionAtDistance(g, 10)
+  location.Position.x=77
+  local turn=PATHLINE.GetTurnAtPoint(g, 2)
+  turn.Position.x=66
+  local projection=PATHLINE.ProjectPosition(g, vec(5,0))
+  projection.Position.x=55
+  samePosition(g.Positions[1], vec(0,0))
+  samePosition(g.Positions[2], vec(10,0))
+  equal(PATHLINE.GetPositionAtDistance(g, 10).Position.x, 10)
+  equal(PATHLINE.GetTurnAtPoint(g, 2).Position.x, 10)
+  equal(PATHLINE.ProjectPosition(g, vec(5,0)).Position.x, 5)
+end)
+
+test("geometry rejects malformed arrays and raw components without conversions", function()
+  local origin=vec(0,0)
+  for _,input in ipairs({false,7,"positions",{[2]=origin},{[1]=origin,[3]=origin},
+    {[1]=origin,label="route"},{[0]=origin},{[1.5]=origin}}) do
+    argumentError(function() PATHLINE.CreateGeometry(input) end, "Positions")
+  end
+  for _,point in ipairs({false,{}, {x=1,y=2}, {x=1,y=2,z=false}, {x=1,y="2",z=3},
+    {x=0/0,y=0,z=0}, {x=1,y=math.huge,z=0}}) do
+    argumentError(function() PATHLINE.CreateGeometry({point}) end, "Positions[1]")
+  end
+  local calls=0
+  local point=setmetatable({}, {__index=function() calls=calls+1 return 0 end})
+  argumentError(function() PATHLINE.CreateGeometry({point}) end, "Positions[1]")
+  equal(calls, 0)
+  argumentError(function() PATHLINE.CreateGeometry(nil) end, "Positions")
+end)
+
+test("geometry point budget is configurable and never truncates input", function()
+  local points={vec(0,0),vec(10,0)}
+  local result, reason, detail=PATHLINE.CreateGeometry(points, {MaxPoints=1})
+  equal(result, nil)
+  equal(reason, "point_limit")
+  equal(detail.MaxPoints, 1)
+  equal(geometry(points, {MaxPoints=2}).PointCount, 2)
+  local many={}
+  for i=1,4097 do
+    many[i]=vec(i,0)
+  end
+  result, reason=PATHLINE.CreateGeometry(many)
+  equal(result, nil)
+  equal(reason, "point_limit")
+  equal(geometry(many, {MaxPoints=4097}).PointCount, 4097)
+  for _,limit in ipairs({false,0,-1,1.5,math.huge,0/0,"2"}) do
+    argumentError(function() PATHLINE.CreateGeometry(points, {MaxPoints=limit}) end, "MaxPoints")
+  end
+  argumentError(function() PATHLINE.CreateGeometry(points, {Unknown=1}) end, "Unknown")
+  argumentError(function() PATHLINE.CreateGeometry(points, false) end, "Options")
+end)
+
+test("geometry query arguments reject invalid indices ranges and options", function()
+  local g=geometry({vec(0,0),vec(10,0),vec(10,10)})
+  for _,value in ipairs({false,"1",0/0,math.huge}) do
+    argumentError(function() PATHLINE.GetPositionAtDistance(g,value) end, "Distance")
+  end
+  for _,index in ipairs({false,"1",0,4,1.5,0/0,math.huge}) do
+    argumentError(function() PATHLINE.GetTurnAtPoint(g,index) end, "PointIndex")
+  end
+  for _,options in ipairs({{FirstSegment=0},{LastSegment=3},{FirstSegment=2,LastSegment=1},
+    {FirstSegment=false},{LastSegment=1.5},{MinDistanceFromStart=-1},{MaxDistanceFromStart=21},
+    {MinDistanceFromStart=10,MaxDistanceFromStart=5},{MaxDistanceFromStart=false},
+    {MinDistanceFromStart=0/0},{Unknown=1}}) do
+    argumentError(function() PATHLINE.ProjectPosition(g,vec(0,0),options) end, "Options")
+  end
+  argumentError(function() PATHLINE.ProjectPosition(g,{},nil) end, "Position")
+  argumentError(function() PATHLINE.ProjectPosition(g,vec(0,0),false) end, "Options")
+  local point=geometry({vec(0,0)})
+  argumentError(function() PATHLINE.ProjectPosition(point,vec(0,0),{FirstSegment=1}) end, "FirstSegment")
+  for _,query in ipairs({
+    function() PATHLINE.GetGeometryPositions({}) end,
+    function() PATHLINE.GetPositionAtDistance({},0) end,
+    function() PATHLINE.ProjectPosition({},vec(0,0)) end,
+    function() PATHLINE.GetTurnAtPoint({},1) end,
+  }) do
+    argumentError(query, "Geometry")
+  end
+end)
+
+test("projection reports numeric failure instead of non-finite successful fields", function()
+  local point=geometry({vec(-1e308,0)})
+  local result, reason, detail=PATHLINE.ProjectPosition(point,vec(1e308,0))
+  equal(result, nil)
+  equal(reason, "numeric_range")
+  equal(detail.PointIndex, 1)
+  local g=geometry({vec(0,0),vec(1,1)})
+  result, reason, detail=PATHLINE.ProjectPosition(g,vec(1.3e308,1.3e308))
+  equal(result, nil)
+  equal(reason, "numeric_range")
+  equal(detail.SegmentIndex, 1)
+end)
+
+test("all geometry operations avoid terrain wrappers and mission side effects", function()
+  local saved={land=land,COORDINATE=COORDINATE,BASE=BASE,TIMER=TIMER,trigger=trigger,UTILS=UTILS}
+  local function forbidden()
+    error("pure geometry accessed an external dependency")
+  end
+  local blocker=setmetatable({}, {__index=forbidden,__newindex=forbidden})
+  land,COORDINATE,BASE,TIMER,trigger,UTILS=blocker,blocker,blocker,blocker,blocker,blocker
+  local ok, message=pcall(function()
+    local g=geometry({vec(0,0),vec(10,0),vec(10,10)})
+    equal(PATHLINE.GetGeometryPositions(g)[2].x,10)
+    equal(PATHLINE.GetPositionAtDistance(g,5).Position.x,5)
+    equal(PATHLINE.ProjectPosition(g,vec(5,2)).DistanceToPath,2)
+    equal(PATHLINE.GetTurnAtPoint(g,2).SignedAngle,90)
+  end)
+  land,COORDINATE,BASE,TIMER,trigger,UTILS=saved.land,saved.COORDINATE,saved.BASE,saved.TIMER,saved.trigger,saved.UTILS
+  assert(ok, message)
 end)
 
 print(string.format("%d passed, %d failed",passed,failed))

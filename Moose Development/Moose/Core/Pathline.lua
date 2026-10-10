@@ -58,6 +58,13 @@
 -- Invalid input or terrain-query errors during replacement leave the original route and drawings intact.
 -- Point labels show unavailable terrain metadata explicitly.
 --
+-- # Pure Horizontal Geometry
+--
+-- Static CreateGeometry(), GetGeometryPositions(), GetPositionAtDistance(), ProjectPosition() and GetTurnAtPoint()
+-- operate on copied Vec3 snapshots without terrain queries. Distances use x/z in meters; y is retained/interpolated.
+-- Snapshots are read-only by contract. Query/export results are independent copies. Rebuild a snapshot when points change.
+-- Projection bounds and ambiguity reports support consumers tracking route progress; they do not certify ship movement or safety.
+--
 -- # Point Access
 --
 -- GetPoints(), GetPoints2D(), GetPoints3D() and the indexed getters return independent copies in path order.
@@ -123,6 +130,493 @@ end
 --- PATHLINE class version.
 -- @field #string version
 PATHLINE.version="0.2.1"
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Pure horizontal geometry
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Options for a pure geometry snapshot.
+-- @type PATHLINE.GeometryOptions
+-- @field #number MaxPoints Maximum input point count, a positive integer. Default 4096; excess points are rejected, never truncated.
+
+--- Copied horizontal route geometry. All fields and nested tables are read-only by contract.
+-- Create a new snapshot after changing positions. No terrain, drawing, registration or controller access occurs.
+-- @type PATHLINE.Geometry
+-- @field #list<DCS#Vec3> Positions Independent copies of the original points, including duplicates.
+-- @field #number PointCount Number of original points, at least one.
+-- @field #number SegmentCount Number of original connections, including zero-length segments.
+-- @field #list<#number> Distances Horizontal distance from the start at each point, in meters.
+-- @field #number TotalLength Total horizontal length in meters, not a pathfinding cost.
+-- @field #list<PATHLINE.GeometrySegment> Segments Original connections in route order.
+
+--- One original connection in a geometry snapshot.
+-- @type PATHLINE.GeometrySegment
+-- @field #number Index Connects Positions[Index] and Positions[Index+1].
+-- @field #number Length Horizontal length in meters, including valid zero.
+-- @field #number StartDistance Cumulative horizontal start distance in meters.
+-- @field #number EndDistance Cumulative horizontal end distance in meters.
+-- @field #number Heading Course in degrees [0,360), or nil for zero length. Positive x is 0, positive z is 90.
+
+--- Independent location on a horizontal route.
+-- @type PATHLINE.PathLocation
+-- @field DCS#Vec3 Position Copied/interpolated position; y comes from route endpoints, not terrain.
+-- @field #number DistanceFromStart Cumulative horizontal distance in meters.
+-- @field #number SegmentIndex Original positive-length segment index, or nil for a point-only result.
+-- @field #number Fraction Fraction in [0,1] on SegmentIndex, or nil without a segment.
+-- @field #number Heading Segment course in degrees [0,360), or nil without a direction.
+-- @field #number PointIndex Original point index for a point-only result; otherwise nil.
+
+--- Inclusive bounds for a projection. Indices refer to original segments, including duplicates.
+-- @type PATHLINE.ProjectionOptions
+-- @field #number FirstSegment First permitted segment; default 1. Explicit indices must exist.
+-- @field #number LastSegment Last permitted segment; default SegmentCount. Omit both indices for a single-point snapshot.
+-- @field #number MinDistanceFromStart Lower permitted route distance in meters; default 0.
+-- @field #number MaxDistanceFromStart Upper permitted route distance in meters; default TotalLength.
+
+--- Independent match for one projected route location.
+-- @type PATHLINE.ProjectionMatch
+-- @extends #PATHLINE.PathLocation
+-- @field #number DistanceToPath Horizontal distance to the clamped route position in meters, including endpoint overrun.
+-- @field #number SignedLateralDistance Perpendicular distance to the supporting line in meters; positive right, nil without direction.
+
+--- A projection result. This is geometry, not accepted movement progress or an arrival decision.
+-- @type PATHLINE.Projection
+-- @extends #PATHLINE.ProjectionMatch
+-- @field #boolean Ambiguous True if a numerically tied match exists at a distinct route distance.
+-- @field #PATHLINE.ProjectionMatch Alternative Independent earliest distinct tied match, or nil. No recursive ambiguity fields.
+
+--- Independent geometric corner information; not a ship turning-radius or speed constraint.
+-- @type PATHLINE.Turn
+-- @field DCS#Vec3 Position Copied original corner position.
+-- @field #number PointIndex Original requested point index.
+-- @field #number DistanceFromStart Cumulative horizontal distance in meters.
+-- @field #number IncomingSegment Nearest positive-length segment before the point, across consecutive duplicates only.
+-- @field #number OutgoingSegment Nearest positive-length segment after the point, across consecutive duplicates only.
+-- @field #number IncomingHeading Incoming course in degrees [0,360).
+-- @field #number OutgoingHeading Outgoing course in degrees [0,360).
+-- @field #number SignedAngle Course change in degrees (-180,180]; positive right. Exact reversal is +180 without prescribing a turn side.
+
+local geometryTag={}
+local geometryOptionNames={MaxPoints=true}
+local projectionOptionNames={FirstSegment=true, LastSegment=true, MinDistanceFromStart=true, MaxDistanceFromStart=true}
+local projectionTieTolerance=0.000001
+
+local function checkGeometry(Geometry)
+  assert(type(Geometry)=="table" and rawget(Geometry, "_GeometryTag")==geometryTag,
+    "Geometry must be a snapshot returned by PATHLINE.CreateGeometry")
+end
+
+local function checkGeometryPosition(Position, Name)
+  assert(type(Position)=="table", Name.." must be a Vec3 table")
+  assert(isFiniteNumber(rawget(Position, "x")), Name..".x must be finite")
+  assert(isFiniteNumber(rawget(Position, "y")), Name..".y must be finite")
+  assert(isFiniteNumber(rawget(Position, "z")), Name..".z must be finite")
+end
+
+local function copyGeometryPosition(Position)
+  return {x=Position.x, y=Position.y, z=Position.z}
+end
+
+local function checkGeometryOptions(Options, AllowedNames)
+  if Options==nil then
+    return {}
+  end
+  assert(type(Options)=="table", "Options must be a table")
+  for name in next,Options do
+    assert(AllowedNames[name], "Unknown Options field: "..tostring(name))
+  end
+  return Options
+end
+
+local function geometryOption(Options, Name, Default)
+  local value=rawget(Options, Name)
+  if value==nil then
+    return Default
+  end
+  return value
+end
+
+local function checkGeometryIndex(Index, Maximum, Name)
+  assert(isFiniteNumber(Index) and Index%1==0 and Index>=1 and Index<=Maximum,
+    Name.." must be an integer within the geometry")
+end
+
+-- Scaling avoids squared-length overflow/underflow for finite coordinate differences.
+local function horizontalLength(X, Z)
+  if not isFiniteNumber(X) or not isFiniteNumber(Z) then
+    return nil
+  end
+  local scale=math.max(math.abs(X), math.abs(Z))
+  if scale==0 then
+    return 0
+  end
+  local length=scale*math.sqrt((X/scale)^2+(Z/scale)^2)
+  if isFiniteNumber(length) then
+    return length
+  end
+  return nil
+end
+
+local function geometryPointLocation(Geometry, PointIndex)
+  return {
+    Position=copyGeometryPosition(Geometry.Positions[PointIndex]),
+    DistanceFromStart=Geometry.Distances[PointIndex],
+    PointIndex=PointIndex,
+  }
+end
+
+local function geometrySegmentLocation(Geometry, SegmentIndex, Distance)
+  local segment=Geometry.Segments[SegmentIndex]
+  local start=Geometry.Positions[SegmentIndex]
+  local goal=Geometry.Positions[SegmentIndex+1]
+  local fraction,position
+
+  -- Exact vertices share a canonical distance and retain the original endpoint components.
+  if Distance==segment.StartDistance then
+    fraction=0
+    position=copyGeometryPosition(start)
+  elseif Distance==segment.EndDistance then
+    fraction=1
+    position=copyGeometryPosition(goal)
+  else
+    fraction=math.max(0, math.min(1, (Distance-segment.StartDistance)/segment.Length))
+    local complement=1-fraction
+    position={
+      x=complement*start.x+fraction*goal.x,
+      y=complement*start.y+fraction*goal.y,
+      z=complement*start.z+fraction*goal.z,
+    }
+    if not isFiniteNumber(position.x) or not isFiniteNumber(position.y) or not isFiniteNumber(position.z) then
+      return nil, "numeric_range", {SegmentIndex=SegmentIndex}
+    end
+  end
+
+  return {
+    Position=position,
+    DistanceFromStart=Distance,
+    SegmentIndex=SegmentIndex,
+    Fraction=fraction,
+    Heading=segment.Heading,
+  }
+end
+
+--- Create a pure horizontal geometry snapshot from a dense, one-based Vec3 array.
+-- Copies only raw finite x/y/z components and preserves original indices, including duplicate points.
+-- Distances/courses use x/z; y is retained for interpolation. No terrain, wrappers or mission side effects.
+-- All snapshot tables are read-only by contract; use GetGeometryPositions() for editable copies.
+-- Empty input returns "empty_path"; excess points "point_limit"; altitude-only legs "vertical_segment";
+-- unrepresentable lengths/cumulative distances "numeric_range". No partial snapshot is returned.
+-- Malformed/sparse input, non-finite components and invalid/unknown options raise argument errors.
+-- @param #list<DCS#Vec3> Positions Ordered input points. One point or exact duplicates are valid.
+-- @param #PATHLINE.GeometryOptions Options (Optional) Resource limit; MaxPoints defaults to 4096.
+-- @return #PATHLINE.Geometry Snapshot on success, otherwise nil.
+-- @return #string Failure reason on an ordinary unsuccessful result; nil on success.
+-- @return #table Failure evidence: PointCount for empty input, MaxPoints for the limit, SegmentIndex for a failed leg.
+function PATHLINE.CreateGeometry(Positions, Options)
+  assert(type(Positions)=="table", "Positions must be a dense Vec3 array")
+  Options=checkGeometryOptions(Options, geometryOptionNames)
+  local maxPoints=geometryOption(Options, "MaxPoints", 4096)
+  assert(isFiniteNumber(maxPoints) and maxPoints>=1 and maxPoints%1==0,
+    "Options.MaxPoints must be a positive integer")
+
+  -- Count actual keys, not an undefined sparse-array length. Stop at the resource limit.
+  local pointCount,maxIndex=0,0
+  for index in next,Positions do
+    assert(isFiniteNumber(index) and index>=1 and index%1==0,
+      "Positions must contain only positive integer indices")
+    pointCount=pointCount+1
+    maxIndex=math.max(maxIndex, index)
+    if pointCount>maxPoints then
+      return nil, "point_limit", {MaxPoints=maxPoints}
+    end
+  end
+  assert(maxIndex==pointCount, "Positions must be dense without missing indices")
+  if pointCount==0 then
+    return nil, "empty_path", {PointCount=0}
+  end
+
+  local geometry={
+    Positions={}, PointCount=pointCount, SegmentCount=pointCount-1,
+    Distances={0}, TotalLength=0, Segments={},
+    _GeometryTag=geometryTag, _PositiveSegments={}, _IncomingSegments={}, _OutgoingSegments={},
+  }
+  for index=1,pointCount do
+    local position=rawget(Positions, index)
+    checkGeometryPosition(position, "Positions["..index.."]")
+    geometry.Positions[index]=copyGeometryPosition(position)
+  end
+
+  local incoming
+  for index=1,geometry.SegmentCount do
+    geometry._IncomingSegments[index]=incoming
+    local start=geometry.Positions[index]
+    local goal=geometry.Positions[index+1]
+    local dx,dz=goal.x-start.x,goal.z-start.z
+    local length=horizontalLength(dx, dz)
+    if not length then
+      return nil, "numeric_range", {SegmentIndex=index}
+    end
+    if length==0 and start.y~=goal.y then
+      return nil, "vertical_segment", {SegmentIndex=index}
+    end
+    local endDistance=geometry.TotalLength+length
+    if not isFiniteNumber(endDistance) or (length>0 and endDistance<=geometry.TotalLength) then
+      return nil, "numeric_range", {SegmentIndex=index}
+    end
+
+    local segment={Index=index, Length=length, StartDistance=geometry.TotalLength, EndDistance=endDistance}
+    if length>0 then
+      segment.Heading=math.deg(math.atan2(dz, dx))%360
+      segment._UX=dx/length
+      segment._UZ=dz/length
+      geometry._PositiveSegments[#geometry._PositiveSegments+1]=index
+      incoming=index
+    end
+    geometry.Segments[index]=segment
+    geometry.Distances[index+1]=endDistance
+    geometry.TotalLength=endDistance
+  end
+  geometry._IncomingSegments[pointCount]=incoming
+
+  -- Each point caches the first outgoing direction across its duplicate run only.
+  local outgoing
+  for index=geometry.SegmentCount,1,-1 do
+    if geometry.Segments[index].Length>0 then
+      outgoing=index
+    end
+    geometry._OutgoingSegments[index]=outgoing
+  end
+  return geometry
+end
+
+--- Export independent Vec3 copies in original route order, including duplicate points.
+-- Editing the result does not change the snapshot. No terrain or wrapper construction occurs.
+-- @param #PATHLINE.Geometry Geometry Read-only snapshot returned by CreateGeometry().
+-- @return #list<DCS#Vec3> New ordered array and new point tables.
+function PATHLINE.GetGeometryPositions(Geometry)
+  checkGeometry(Geometry)
+  local positions={}
+  for index=1,Geometry.PointCount do
+    positions[index]=copyGeometryPosition(Geometry.Positions[index])
+  end
+  return positions
+end
+
+--- Locate a cumulative horizontal distance on a geometry snapshot.
+-- At interior vertices use the incoming positive segment, across duplicates; the start uses the first outgoing segment.
+-- A zero-length route returns point 1 with no heading, fraction or segment. y is interpolated from supplied points.
+-- Does not clamp/extrapolate. Malformed arguments raise errors; result tables never alias the snapshot.
+-- @param #PATHLINE.Geometry Geometry Read-only snapshot returned by CreateGeometry().
+-- @param #number Distance Finite horizontal distance from the start in meters.
+-- @return #PATHLINE.PathLocation Independent location, or nil on failure.
+-- @return #string "distance_out_of_range" or "numeric_range" on failure.
+-- @return #table Distance/TotalLength for a range failure; SegmentIndex for a numeric failure.
+function PATHLINE.GetPositionAtDistance(Geometry, Distance)
+  checkGeometry(Geometry)
+  assert(isFiniteNumber(Distance), "Distance must be finite")
+  if Distance<0 or Distance>Geometry.TotalLength then
+    return nil, "distance_out_of_range", {Distance=Distance, TotalLength=Geometry.TotalLength}
+  end
+  if Geometry.TotalLength==0 then
+    return geometryPointLocation(Geometry, 1)
+  end
+
+  -- Lower bound on positive-segment ends preserves the incoming leg at a vertex.
+  local positive=Geometry._PositiveSegments
+  local first,last=1,#positive
+  while first<last do
+    local middle=math.floor((first+last)/2)
+    if Geometry.Segments[positive[middle]].EndDistance<Distance then
+      first=middle+1
+    else
+      last=middle
+    end
+  end
+  return geometrySegmentLocation(Geometry, positive[first], Distance)
+end
+
+local function finishGeometryProjection(Location, Position, LateralDistance)
+  local distance=horizontalLength(Position.x-Location.Position.x, Position.z-Location.Position.z)
+  if not distance or (LateralDistance~=nil and not isFiniteNumber(LateralDistance)) then
+    return nil, "numeric_range", {SegmentIndex=Location.SegmentIndex, PointIndex=Location.PointIndex}
+  end
+  Location.DistanceToPath=distance
+  Location.SignedLateralDistance=LateralDistance
+  return Location
+end
+
+local function projectGeometrySegment(Geometry, Position, Index, Minimum, Maximum)
+  local segment=Geometry.Segments[Index]
+  local lower=math.max(segment.StartDistance, Minimum)
+  local upper=math.min(segment.EndDistance, Maximum)
+  if lower>upper then
+    return nil
+  end
+  if segment.Length==0 then
+    return finishGeometryProjection(geometryPointLocation(Geometry, Index), Position)
+  end
+
+  local start=Geometry.Positions[Index]
+  local goal=Geometry.Positions[Index+1]
+  local qx,qz=Position.x-start.x,Position.z-start.z
+  local along=qx*segment._UX+qz*segment._UZ
+  local lateral=segment._UX*qz-segment._UZ*qx
+  if not isFiniteNumber(along) or not isFiniteNumber(lateral) then
+    return nil, "numeric_range", {SegmentIndex=Index}
+  end
+
+  local distance
+  if (Position.x==start.x and Position.z==start.z) or along<=0 then
+    distance=segment.StartDistance
+  elseif (Position.x==goal.x and Position.z==goal.z) or along>=segment.Length then
+    distance=segment.EndDistance
+  else
+    distance=segment.StartDistance+along
+  end
+  -- Apply both bounds before comparing candidates; a full-segment foot is not a permitted result.
+  distance=math.max(lower, math.min(upper, distance))
+  local location,reason,detail=geometrySegmentLocation(Geometry, Index, distance)
+  if not location then
+    return nil, reason, detail
+  end
+  return finishGeometryProjection(location, Position, lateral)
+end
+
+local function geometryMatchPrecedes(First, Second)
+  if First.DistanceFromStart~=Second.DistanceFromStart then
+    return First.DistanceFromStart<Second.DistanceFromStart
+  end
+  local firstHasSegment=First.SegmentIndex~=nil
+  local secondHasSegment=Second.SegmentIndex~=nil
+  if firstHasSegment~=secondHasSegment then
+    return firstHasSegment
+  end
+  return (First.SegmentIndex or First.PointIndex)<(Second.SegmentIndex or Second.PointIndex)
+end
+
+--- Project a position onto the intersection of segment and cumulative-distance bounds.
+-- Each permitted segment is clipped before its nearest point is considered. Defaults search the whole route.
+-- Navigation progress must supply a contiguous segment range and plausible distance interval; this function has no progress authority.
+-- Query y is validated but ignored by the horizontal projection. Returned y is interpolated from the route.
+-- Among matches within 0.000001 m of the true minimum distance, choose the earliest route distance, then a positive
+-- segment before a point-only match, then the lowest original index. Distinct tied route distances set Ambiguous=true.
+-- A shared vertex/duplicate run at one distance is not ambiguous. Excluded incoming segments are never selected.
+-- All result tables, including Alternative, are independent copies. A zero-length range has no direction.
+-- Malformed positions/options, invalid indices and out-of-snapshot or reversed bounds raise argument errors.
+-- @param #PATHLINE.Geometry Geometry Read-only snapshot returned by CreateGeometry().
+-- @param DCS#Vec3 Position Finite query position. No terrain or COORDINATE queries occur.
+-- @param #PATHLINE.ProjectionOptions Options (Optional) Inclusive segment and distance bounds.
+-- @return #PATHLINE.Projection Independent projection, or nil on failure.
+-- @return #string "empty_search_range" for disjoint bounds, or "numeric_range" for unrepresentable computed values.
+-- @return #table Effective bounds for an empty intersection; SegmentIndex or PointIndex for a numeric failure.
+function PATHLINE.ProjectPosition(Geometry, Position, Options)
+  checkGeometry(Geometry)
+  checkGeometryPosition(Position, "Position")
+  Options=checkGeometryOptions(Options, projectionOptionNames)
+  local first=geometryOption(Options, "FirstSegment", 1)
+  local last=geometryOption(Options, "LastSegment", Geometry.SegmentCount)
+  if Geometry.SegmentCount>0 then
+    checkGeometryIndex(first, Geometry.SegmentCount, "Options.FirstSegment")
+    checkGeometryIndex(last, Geometry.SegmentCount, "Options.LastSegment")
+    assert(first<=last, "Options.FirstSegment must not exceed Options.LastSegment")
+  else
+    assert(rawget(Options, "FirstSegment")==nil, "Options.FirstSegment cannot select a segment of a single-point geometry")
+    assert(rawget(Options, "LastSegment")==nil, "Options.LastSegment cannot select a segment of a single-point geometry")
+  end
+  local minimum=geometryOption(Options, "MinDistanceFromStart", 0)
+  local maximum=geometryOption(Options, "MaxDistanceFromStart", Geometry.TotalLength)
+  assert(isFiniteNumber(minimum) and minimum>=0 and minimum<=Geometry.TotalLength,
+    "Options.MinDistanceFromStart must lie within the geometry")
+  assert(isFiniteNumber(maximum) and maximum>=0 and maximum<=Geometry.TotalLength,
+    "Options.MaxDistanceFromStart must lie within the geometry")
+  assert(minimum<=maximum, "Options.MinDistanceFromStart must not exceed Options.MaxDistanceFromStart")
+
+  if Geometry.SegmentCount==0 then
+    local match,reason,detail=finishGeometryProjection(geometryPointLocation(Geometry, 1), Position)
+    if not match then
+      return nil, reason, detail
+    end
+    match.Ambiguous=false
+    return match
+  end
+
+  -- First establish the true minimum. Comparing successive ties would accumulate the tolerance.
+  local nearest
+  for index=first,last do
+    local match,reason,detail=projectGeometrySegment(Geometry, Position, index, minimum, maximum)
+    if reason then
+      return nil, reason, detail
+    end
+    if match and (nearest==nil or match.DistanceToPath<nearest) then
+      nearest=match.DistanceToPath
+    end
+  end
+  if nearest==nil then
+    return nil, "empty_search_range", {
+      FirstSegment=first, LastSegment=last, MinDistanceFromStart=minimum, MaxDistanceFromStart=maximum,
+    }
+  end
+
+  -- Retain only the earliest two distinct tied stations, not an unbounded candidate list.
+  local selected,alternative
+  for index=first,last do
+    local match,reason,detail=projectGeometrySegment(Geometry, Position, index, minimum, maximum)
+    if reason then
+      return nil, reason, detail
+    end
+    if match and match.DistanceToPath-nearest<=projectionTieTolerance then
+      if selected==nil or geometryMatchPrecedes(match, selected) then
+        if selected and match.DistanceFromStart~=selected.DistanceFromStart then
+          alternative=selected
+        end
+        selected=match
+      elseif match.DistanceFromStart~=selected.DistanceFromStart then
+        if alternative==nil or geometryMatchPrecedes(match, alternative) then
+          alternative=match
+        end
+      end
+    end
+  end
+  selected.Ambiguous=alternative~=nil
+  selected.Alternative=alternative
+  return selected
+end
+
+--- Get signed turn geometry at an original point, skipping only consecutive duplicate legs.
+-- Returns courses and their shortest signed change in (-180,180] degrees; positive right, negative left.
+-- Exactly reversing direction is represented as +180 without prescribing a physical turn side.
+-- No ship speed, turn radius, terrain or corridor policy is applied. Result tables are independent copies.
+-- @param #PATHLINE.Geometry Geometry Read-only snapshot returned by CreateGeometry().
+-- @param #number PointIndex Original point index, an integer in [1,PointCount]. Invalid arguments raise errors.
+-- @return #PATHLINE.Turn Independent corner result, or nil when one or both directions are absent.
+-- @return #string "no_turn" when there is no pair of directions, including endpoints and point-only routes.
+-- @return #table On failure: PointIndex, MissingIncoming and MissingOutgoing booleans.
+function PATHLINE.GetTurnAtPoint(Geometry, PointIndex)
+  checkGeometry(Geometry)
+  checkGeometryIndex(PointIndex, Geometry.PointCount, "PointIndex")
+  local incoming=Geometry._IncomingSegments[PointIndex]
+  local outgoing=Geometry._OutgoingSegments[PointIndex]
+  if incoming==nil or outgoing==nil then
+    return nil, "no_turn", {PointIndex=PointIndex, MissingIncoming=incoming==nil, MissingOutgoing=outgoing==nil}
+  end
+
+  local incomingHeading=Geometry.Segments[incoming].Heading
+  local outgoingHeading=Geometry.Segments[outgoing].Heading
+  local angle=(outgoingHeading-incomingHeading+180)%360-180
+  if angle==-180 then
+    angle=180
+  end
+  return {
+    Position=copyGeometryPosition(Geometry.Positions[PointIndex]),
+    PointIndex=PointIndex,
+    DistanceFromStart=Geometry.Distances[PointIndex],
+    IncomingSegment=incoming,
+    OutgoingSegment=outgoing,
+    IncomingHeading=incomingHeading,
+    OutgoingHeading=outgoingHeading,
+    SignedAngle=angle,
+  }
+end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Constructor

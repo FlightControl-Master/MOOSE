@@ -296,35 +296,38 @@ lifecycle/missing-data documentation and nested control flow were cleaned up.
 
 Existing independent point copies, ordered exports, isolated constructor
 state and delayed drawing-ID capture remain covered by regressions.
-The concrete [R1a geometry API proposal](pathline-geometry-api.md) was prepared
-on 2026-10-10. It specifies static PATHLINE functions for copied snapshots,
-position export, cumulative-distance lookup, constrained projection and signed
-turn geometry, including ownership, failure results and regression cases.
-This is a design deliverable; these methods are not implemented or tested yet.
-Next proposed subtask: implement this pure geometry API and its deterministic
-regressions after user approval. Resumable/dense validation remains a separate
-part of R1a, with its own API design and approval; it is not an implicit change
-to `CheckDepth` or part of the proposed geometry implementation step.
+The concrete [R1a geometry API](pathline-geometry-api.md) was approved and
+implemented on 2026-10-10. Its five static functions create copied snapshots,
+export positions, locate cumulative distances, project within segment/distance
+bounds, and report signed turn geometry. LuaDoc defines ownership, units,
+failures and edge cases. Geometry has no terrain or controller dependencies.
 
-The current public methods do not provide a route-position projection with
-segment continuity, positions at cumulative distance, or resumable validation
-of a complete proposed polyline. Add the minimum required support here rather
-than copying route geometry into NAVYGROUP again.
+The 26 new deterministic regression cases initially failed against the missing
+API while the existing 21 PATHLINE cases passed. Lua 5.1.5 syntax checks and
+PATHLINE (47), profile (15), depth (33), ASTAR (295), and NAVYGROUP (25)
+regressions now pass: 415 cases. The final diff passes `git diff --check`.
+No DCS validation or log observation occurred. ASTAR, GRID, NAVYGROUP and the
+existing PATHLINE terrain/drawing methods required no production changes.
 
-Proposed capabilities; geometry signatures and edge cases are specified in the
-linked proposal. Validation interfaces remain to be designed separately:
+Next proposed subtask: design the bounded connection/depth-validation API,
+including evaluator evidence, work budgets, cursor/cancellation ownership and
+unavailable terrain data. Await user approval before starting that subtask.
+Resumable/dense validation remains part of R1a; the completed pure geometry
+step does not change `CheckDepth` or enable NAVYGROUP LOCAL navigation.
 
-| Capability | Contract | Needed |
+Capability status; the geometry contract is specified in the linked document.
+Validation interfaces remain to be designed separately:
+
+| Capability | Contract | Status / needed |
 | --- | --- | --- |
-| Geometry snapshot from Vec3 positions | Copy points; compute segment lengths, cumulative distance and headings in the horizontal plane; no terrain queries or controller objects | R1 |
-| Projection / position at distance / turn geometry | Return original segment, fraction, along-route distance, lateral distance and interpolated position; accept segment and distance bounds; expose tied projection ambiguity, duplicate handling and signed corner angles | R1 preparation and R3 progress |
-| Bounded route validation | Walk connections with a supplied evaluator, return segment-specific evidence and cost; expose a cursor/work limit and cancellation ownership | R1 |
-| Sampled corridor/area validation | Check requested interior profiles, not just center/edges; distinguish blocked and unavailable data; expose sample spacing and work counts | R1/R2 maneuver envelope validation |
+| Geometry snapshot from Vec3 positions | Copy points; compute segment lengths, cumulative distance and headings in the horizontal plane; no terrain queries or controller objects | Implemented; R1 |
+| Projection / position at distance / turn geometry | Return original segment, fraction, along-route distance, lateral distance and interpolated position; accept segment and distance bounds; expose tied projection ambiguity, duplicate handling and signed corner angles | Implemented; R1 preparation and R3 progress |
+| Bounded route validation | Walk connections with a supplied evaluator, return segment-specific evidence and cost; expose a cursor/work limit and cancellation ownership | Pending; R1 |
+| Sampled corridor/area validation | Check requested interior profiles, not just center/edges; distinguish blocked and unavailable data; expose sample spacing and work counts | Pending; R1/R2 maneuver envelope validation |
 
 Current PATHLINE constructors sample terrain when adding points. Pure geometry
-helpers must not acquire terrain as a hidden side effect. Prefer static helpers
-over copied position arrays or an explicit geometry snapshot, leaving existing
-constructors and their contracts intact.
+helpers use explicit copied snapshots without hidden terrain queries. Existing
+constructors and their contracts remain intact.
 
 Keep `CheckDepth` defaults unchanged: its three profiles do not cover the
 interior of a corridor. A new explicit dense-validation operation can reuse
@@ -587,12 +590,13 @@ same with drawings enabled or disabled.
 ## Implementation plan and gates
 
 Proceed in small steps. R1 and R2 precede moving local continuation.
-All unchecked work below is proposed and unimplemented.
+Except for the completed R1a pure geometry substep, the milestones below
+remain proposed and unimplemented.
 
 | Step | Deliverable | Exit criterion |
 | --- | --- | --- |
 | P0: common inputs and replay | One explicit fixture/driver configuration for virtual and naval preparation, source identity, fixed-pose snapshots and structured result records | Identical search input produces identical raw candidates regardless of consumer; old failure evidence is reproducible where sufficient data exists. |
-| R1a: PATHLINE geometry | Pure geometry/projection helpers and bounded validation over copied positions | Deterministic tests for vertical/rotated paths, duplicates, hairpins, self-crossings, missing data and cancellation; no hidden terrain access in geometry. |
+| R1a: PATHLINE geometry and validation | Pure geometry/projection helpers implemented; bounded validation over copied positions remains pending | Deterministic tests for vertical/rotated paths, duplicates, hairpins, self-crossings, missing data and cancellation; no hidden terrain access in geometry. |
 | R1b: fixed-pose naval preparation | Bounded candidate preparation using existing ASTAR and new shared helpers; no moving vessel or route submission | Every raw candidate is accepted or rejected with evidence. Known island/shoal cases retain hard depth/corridor rules; feasible reference passages survive preparation. |
 | R2a: movement measurements | Small DCS experiments with one precomputed straight route, turn and stop; use the Harbor Tug at explicitly chosen test speeds | Measured actual tracks, turning deviation and stopping distance; documented uncertainty and supported speed range. No rolling search yet. |
 | R2b: one prepared passage | Submit one prepared passage, then extend to the known shallow/insular section; compare actual track to assumptions and legacy lookahead | No grounding, unexplained stop or route replacement; preserve original waypoint actions. Only a validated replacement may alter the LOCAL forward safety policy. |
@@ -600,12 +604,11 @@ All unchecked work below is proposed and unimplemented.
 | R3b: rolling DCS passage | Full known route with explicit initial and continuation planning | Repeated successful weight-1 passages, explained weight-10 outcomes, accurate arrival and bounded memory/work, debug on/off parity. |
 | R4: wider supported scope | More vessels/speeds, multiple original waypoints, mission tasks, formations only with explicit clearance design | Expand documented support only for cases actually validated; consider reuse by global search in a separate change. |
 
-R1a is split into two approval steps: first the pure geometry API specified in
-[PATHLINE R1a geometry API proposal](pathline-geometry-api.md), then the design
-and implementation of bounded connection/depth validation. Completing geometry
-alone does not complete the R1a milestone or enable LOCAL navigation. Missing
-terrain data and cancellation belong to the second step; geometry itself has
-neither terrain queries nor asynchronous work.
+R1a has two parts: the [pure geometry API](pathline-geometry-api.md) is complete;
+bounded connection/depth validation still needs its design and implementation
+approvals. Geometry alone does not complete R1a or enable LOCAL navigation.
+Missing terrain data and cancellation belong to the second part; geometry
+itself has neither terrain queries nor asynchronous work.
 
 P0 must distinguish measured data from reconstructed positions. The last case55
 log lacks detailed candidate-rejection evidence; do not claim an exact replay
@@ -619,7 +622,7 @@ at the earlier requested cruise speed.
 
 Suggested implementation commits, after approval:
 1. P0 test configuration/report contracts.
-2. R1a pure geometry with tests, followed by separately approved route-validation primitives and tests.
+2. R1a pure geometry with tests (completed), followed by separately approved route-validation primitives and tests.
 3. R1b preparation with stationary/virtual tests.
 4. R2 diagnostics/driver and resulting measured maneuver policy.
 5. R3a/R3b LOCAL orchestration and simulator validation.
@@ -675,9 +678,9 @@ another cross-cutting guard.
 
 ### Immediate next step
 
-Next approval request: implement the specified pure PATHLINE geometry API
-and its deterministic Lua 5.1 regressions. The API design is documented;
-implementation has not started. P0 replay/report contracts and the remaining
-R1a validation interfaces still precede fixed-pose naval preparation and new
-autonomous ship trials. Stop/resume policy is already decided: a missing
-continuation stops the ship until a new command.
+Next approval request: design the bounded connection/depth-validation API,
+including evaluator results, per-call work limits, continuation cursors,
+cancellation and unavailable data. The pure PATHLINE geometry API and Lua 5.1
+regressions are complete. P0 replay/report contracts and the remaining R1a
+validation still precede fixed-pose naval preparation and new autonomous ship
+trials. A missing continuation stops the ship until a new movement command.
