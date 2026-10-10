@@ -1350,6 +1350,7 @@ local function prepareDepthProfile(State)
   end
   depth.Records={}
   depth.RecordCount,depth.NativeCount,depth.MaxNativeIndex,depth.DirectIndex=0,0,0,0
+  depth.NativeIndexBase=1
   cursor.Phase="query"
 end
 
@@ -1376,7 +1377,10 @@ local function collectDepthProfile(State)
   local depth=State.Depth
   local key,point=next(depth.Raw, depth.RawKey)
   if key==nil then
-    if depth.NativeCount~=depth.MaxNativeIndex then
+    -- Native profiles can start at 0 or 1. Count every entry before accepting
+    -- the dense index range; neither Lua's length operator nor ipairs covers both.
+    local expectedCount=depth.MaxNativeIndex-depth.NativeIndexBase+1
+    if depth.NativeCount~=expectedCount then
       failDepthValidation(State, "invalid_profile")
       return
     end
@@ -1388,7 +1392,7 @@ local function collectDepthProfile(State)
     return
   end
   depth.RawKey=key
-  if not isFiniteNumber(key) or key<1 or key%1~=0 or key>largestExactValidationInteger then
+  if not isFiniteNumber(key) or key<0 or key%1~=0 or key>largestExactValidationInteger then
     failDepthValidation(State, "invalid_profile")
     return
   end
@@ -1415,6 +1419,9 @@ local function collectDepthProfile(State)
   end
   along=math.max(0, math.min(depth.ProfileLength, along))
   depth.NativeCount=count
+  if key==0 then
+    depth.NativeIndexBase=0
+  end
   depth.MaxNativeIndex=math.max(depth.MaxNativeIndex, key)
   depth.RecordCount=count
   depth.Records[count]={Position=position, Along=along, Native=true, Index=key}
@@ -1658,6 +1665,7 @@ end
 -- Depth jobs separately admit a profile query, one raw record copy, one generated point, one merge output,
 -- one point predicate or a bounded phase/group/section advance. Sorting and tied groups resume across steps.
 -- Direct samples include endpoints and at least a midpoint. All section offsets must pass before its prefix commits.
+-- Native profiles accept dense arrays indexed from 0 or 1, preserving every support point.
 -- Missing/malformed profile or depth data ends unavailable; valid empty/single-point profiles use direct fallback.
 -- Equal-distance groups select unavailable, then non-water, then the shallowest insufficient depth.
 -- Point-only/all-duplicate geometry is checked once at width zero; positive width is corridor_direction_unavailable.
@@ -2403,7 +2411,8 @@ local function depthSamplePrecedes(First, Second)
 end
 
 --- Check one canonical profile and measure its first obstruction from the original start.
--- Sorts support points and interpolates the minimum-depth threshold; coincident samples keep their shallower bound.
+-- Accepts dense native arrays starting at 0 or 1. Sorts all support points and interpolates
+-- the minimum-depth threshold; coincident samples keep their shallower bound.
 -- @param DCS#Vec3 Start Canonical start position.
 -- @param DCS#Vec3 Goal Canonical goal position.
 -- @param #number Distance Segment length in meters.
@@ -2455,13 +2464,13 @@ function PATHLINE._CheckDepthLine(Start, Goal, Distance, MinDepth, Offset, Rever
   end
 
   local profile=PATHLINE._QueryDepthProfile(Start,Goal)
-  if type(profile)~="table" then
-    local reason="profile_unavailable"
+  local firstIndex,profileCount,reason=VECTOR._GetProfileIndexRange(profile)
+  if not firstIndex then
     return false,reason,PATHLINE._DepthReport(Distance,MinDepth,Offset,reason,"unavailable",reason)
   end
 
   local ux,uz=(Goal.x-Start.x)/Distance,(Goal.z-Start.z)/Distance
-  local intervals=#profile<2 and math.max(2,math.ceil(Distance/100)) or 0
+  local intervals=profileCount<2 and math.max(2,math.ceil(Distance/100)) or 0
 
   if intervals>1000 then
     local reason="profile_fallback_limit"
@@ -2469,13 +2478,13 @@ function PATHLINE._CheckDepthLine(Start, Goal, Distance, MinDepth, Offset, Rever
   end
 
   -- Short native profiles receive direct samples, including a midpoint even on very short connections.
-  for i=1,#profile+math.max(0,intervals-1) do
-    local useProfile=i<=#profile
-    local point=profile[i]
+  for i=1,profileCount+math.max(0,intervals-1) do
+    local useProfile=i<=profileCount
+    local point=rawget(profile, firstIndex+i-1)
     local location=useProfile and "profile" or "profile_fallback"
 
     if not useProfile then
-      local fraction=(i-#profile)/intervals
+      local fraction=(i-profileCount)/intervals
       point={x=Start.x+(Goal.x-Start.x)*fraction,z=Start.z+(Goal.z-Start.z)*fraction}
     end
 

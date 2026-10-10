@@ -977,13 +977,52 @@ function VECTOR:GetPathOnRoad(Vec)
   return path
 end
 
+local function isFiniteProfileNumber(Value)
+  return type(Value)=="number" and math.abs(Value)<math.huge
+end
+
+--- Inspect the raw index range of a native profile without copying or modifying records.
+-- Internal synchronous helper: dense arrays may start at 0 or 1. Empty tables return 1, 0;
+-- callers decide whether to reject an empty profile or sample a bounded fallback.
+-- Visits actual keys instead of sparse numeric ranges. Point validation remains with the caller.
+-- @param #table Samples Native profile.
+-- @return #number First index, or nil for an unavailable or malformed profile.
+-- @return #number Number of records, or nil on failure.
+-- @return #string profile_unavailable or invalid_profile on failure; otherwise nil.
+function VECTOR._GetProfileIndexRange(Samples)
+
+  if type(Samples)~="table" then
+    return nil,nil,"profile_unavailable"
+  end
+
+  local count,firstIndex,lastIndex=0,1,0
+  for index in next,Samples do
+    if not isFiniteProfileNumber(index) or index<0 or index%1~=0 or index>9007199254740991 then
+      return nil,nil,"invalid_profile"
+    end
+    count=count+1
+    if index==0 then
+      firstIndex=0
+    end
+    lastIndex=math.max(lastIndex, index)
+  end
+  if count~=lastIndex-firstIndex+1 then
+    return nil,nil,"invalid_profile"
+  end
+
+  return firstIndex,count
+end
+
 --- Get terrain and seabed profile points between this vector and a destination.
+-- Dense native arrays indexed from 0 or 1 are returned as independent 1-based arrays in native index order.
 -- Native support-point heights are retained. Missing endpoints are added at terrain/seabed height,
--- independent of the supplied altitude. An empty or unavailable DCS profile returns nil.
+-- independent of the supplied altitude. Native tables and input vectors are not modified.
+-- An empty or non-table profile returns nil, "profile_unavailable". Invalid keys, gaps or non-finite
+-- x/y/z records return nil, "invalid_profile"; no partial profile is returned.
 -- @param #VECTOR self
 -- @param DCS#Vec3 Vector Destination; also accepts VECTOR, COORDINATE or DCS#Vec2. A Vec2 uses terrain height for the query.
--- @return #list <DCS#Vec3> Independent profile points in the order returned by DCS, or nil.
--- @return #string Reason when the profile or endpoint terrain data is unavailable, otherwise nil.
+-- @return #list <DCS#Vec3> Independent 1-based profile points in native index order, with missing endpoints added, or nil.
+-- @return #string profile_unavailable, invalid_profile or the endpoint terrain failure reason; otherwise nil.
 function VECTOR:GetProfile(Vector)
 
   local destination=VECTOR:NewFromVec(Vector)
@@ -991,18 +1030,29 @@ function VECTOR:GetProfile(Vector)
   local b=destination:GetVec3(Vector.z==nil)
   local samples=land.profile(a, b)
 
-  if not samples or #samples==0 then
+  local firstIndex,sampleCount,reason=VECTOR._GetProfileIndexRange(samples)
+  if not firstIndex then
+    return nil,reason
+  elseif sampleCount==0 then
     return nil,"profile_unavailable"
   end
 
-  -- Keep the native result unchanged when completing the returned profile.
+  -- Return the usual 1-based sequence without changing native records or heights.
   local profile={}
-  for _,point in ipairs(samples) do
-    profile[#profile+1]={x=point.x, y=point.y, z=point.z}
+  for index=firstIndex,firstIndex+sampleCount-1 do
+    local point=rawget(samples, index)
+    if type(point)~="table" then
+      return nil,"invalid_profile"
+    end
+    local x,y,z=rawget(point, "x"),rawget(point, "y"),rawget(point, "z")
+    if not isFiniteProfileNumber(x) or not isFiniteProfileNumber(y) or not isFiniteProfileNumber(z) then
+      return nil,"invalid_profile"
+    end
+    profile[#profile+1]={x=x, y=y, z=z}
   end
 
   local endpoints={a,b}
-  local boundarySamples={samples[1],samples[#samples]}
+  local boundarySamples={profile[1],profile[#profile]}
 
   for i,point in ipairs(endpoints) do
     local sample=boundarySamples[i]

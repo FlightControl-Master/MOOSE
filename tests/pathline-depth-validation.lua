@@ -143,6 +143,125 @@ test("one-unit slices match large slices without repeat queries or hidden sortin
   equal(#queries,2)
 end)
 
+test("zero and one based profiles retain every sample across work budgets",function()
+  local baseline
+  for _,base in ipairs({0,1}) do
+    local native={}
+    local positions={80,20,30,20}
+    for i=#positions,1,-1 do
+      native[base+i-1]=vec(positions[i],0,-30)
+    end
+    terrain.profile=function()
+      return native
+    end
+    for _,budget in ipairs({{MaxWorkUnits=1,MaxPointChecks=1,MaxProfileQueries=1},
+      {MaxWorkUnits=32,MaxPointChecks=4,MaxProfileQueries=1},
+      {MaxWorkUnits=256,MaxPointChecks=32,MaxProfileQueries=4}}) do
+      local beforePoints,beforeQueries=#checks,#queries
+      local report=finish(job(),budget)
+      equal(report.Status,"clear")
+      equal(report.CheckedPrefixDistance,100)
+      equal(report.Counters.PointChecks,9)
+      equal(report.Counters.ProfileQueries,1)
+      equal(report.Counters.FallbackProfiles,0)
+      equal(#queries-beforeQueries,1)
+      local seen={}
+      for i=beforePoints+1,#checks do
+        seen[checks[i].x]=(seen[checks[i].x] or 0)+1
+      end
+      equal(seen[80],1)
+      equal(seen[20],2)
+      equal(seen[30],1)
+      if baseline then
+        equal(report.Counters.WorkUnits,baseline.Counters.WorkUnits)
+        equal(report.CompletedSegments,baseline.CompletedSegments)
+      else
+        baseline=report
+      end
+      equal(native[base].x,80)
+      equal(native[base].y,-30)
+      equal(native[base+4],nil)
+    end
+  end
+end)
+
+test("native sample zero can block a later section with identical failure evidence",function()
+  terrain.profile=function(a,b)
+    if a.x==0 then
+      return {[0]=vec(a.x,a.z,-30),[1]=vec(b.x,b.z,-30)}
+    end
+    return {[0]=vec(70,0,-1),[1]=vec(b.x,b.z,-30)}
+  end
+  local baseline
+  for _,budget in ipairs({{MaxWorkUnits=1,MaxPointChecks=1,MaxProfileQueries=1},large}) do
+    local report=finish(job({MaxSectionLength=50}),budget)
+    equal(report.Status,"blocked")
+    equal(report.Reason,"insufficient_depth")
+    equal(report.CheckedPrefixDistance,50)
+    equal(report.CompletedSegments,0)
+    equal(report.Failure.SectionIndex,2)
+    equal(report.Failure.ProfileOffset,0)
+    equal(report.Failure.Source,"profile")
+    equal(report.Failure.RouteDistance,70)
+    equal(report.Failure.Position.x,70)
+    equal(report.Failure.Depth,1)
+    equal(report.Failure.ProfileY,-1)
+    equal(report.Counters.ProfileQueries,2)
+    if baseline then
+      equal(report.Counters.WorkUnits,baseline.Counters.WorkUnits)
+      equal(report.Counters.PointChecks,baseline.Counters.PointChecks)
+    else
+      baseline=report
+    end
+  end
+end)
+
+test("a native singleton at index zero remains part of the direct fallback",function()
+  local native={[0]=vec(10,0,-30)}
+  terrain.profile=function()
+    return native
+  end
+  local report=finish(job({MaxProfilePoints=1}),{MaxWorkUnits=1})
+  equal(report.Status,"clear")
+  equal(report.Counters.PointChecks,6)
+  equal(report.Counters.FallbackProfiles,1)
+  native[0].y=-1
+  report=finish(job({MaxProfilePoints=1}))
+  equal(report.Status,"blocked")
+  equal(report.Failure.Source,"profile")
+  equal(report.Failure.Position.x,10)
+end)
+
+test("zero based profile caps count entries rather than the largest index",function()
+  terrain.profile=function()
+    return {[0]=vec(0,0,-30),[1]=vec(50,0,-30),[2]=vec(100,0,-30)}
+  end
+  for _,budget in ipairs({{MaxWorkUnits=1},large}) do
+    local report=finish(job({MaxProfilePoints=2}),budget)
+    equal(report.Status,"limited")
+    equal(report.Reason,"profile_point_limit")
+    equal(report.Failure.Limit,2)
+    equal(report.Failure.Required,3)
+    equal(report.Counters.PointChecks,0)
+    report=finish(job({MaxProfilePoints=3}),budget)
+    equal(report.Status,"clear")
+    equal(report.Counters.PointChecks,8)
+  end
+end)
+
+test("native index base resets between sections and corridor profiles",function()
+  terrain.profile=function(a,b)
+    local base=#queries%2
+    return {[base]=vec(a.x,a.z,-30),[base+1]=vec(b.x,b.z,-30)}
+  end
+  local report=finish(job({MaxSectionLength=50,CorridorWidth=20,LateralSpacing=10}),
+    {MaxWorkUnits=3,MaxPointChecks=1,MaxProfileQueries=1})
+  equal(report.Status,"clear")
+  equal(report.CheckedPrefixDistance,100)
+  equal(report.Counters.ProfileQueries,6)
+  equal(report.Counters.PointChecks,30)
+end)
+
 test("interior corridor lanes find an obstacle missed by center and outer edges",function()
   terrain.heights=function(p)
     return 0,p.y==10 and 2 or 30
@@ -260,7 +379,9 @@ end)
 
 test("malformed sparse and non-finite native data is never a fallback",function()
   local profiles={{[2]=vec(0)}, {[1]=vec(0),[3]=vec(50)}, {foo=vec(0)}, {false},
-    {{x=0,y=0}}, {{x=0,y=0/0,z=0}}, {[0]=vec(0)}, {[1.5]=vec(0)}}
+    {{x=0,y=0}}, {{x=0,y=0/0,z=0}}, {[-1]=vec(0)}, {[1.5]=vec(0)},
+    {[0]=vec(0),[2]=vec(50)}, {[0]=vec(0),[1]=vec(25),[3]=vec(50)},
+    {[0]=false}, {[0]={x=0,y=0}}, {[0]=vec(0,0,math.huge)}, {[0]=vec(0),n=1}}
   for _,profile in ipairs(profiles) do
     terrain.profile=function()
       return profile

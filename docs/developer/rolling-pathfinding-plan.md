@@ -328,6 +328,15 @@ and final diff checks are complete. No other production class changed.
 The R1a helper implementation is complete; DCS validation remains pending.
 `CheckDepth` is unchanged and NAVYGROUP LOCAL navigation remains disabled.
 
+Native DCS validation subsequently exposed zero-based `land.profile()` arrays.
+The approved correction preserves sample 0 in incremental/synchronous PATHLINE,
+VECTOR profile output and ASTAR depth checks/costs. Shared synchronous index-range
+validation accepts dense 0/1-based arrays; incremental work remains bounded.
+Temporary diagnostics are removed. Seventeen new regressions reproduce the
+original errors and now pass; eight affected suites total 520 passing cases under
+Lua 5.1.5. The corrected sources require a new DCS run before native validation
+can be accepted. NAVYGROUP LOCAL navigation remains disabled.
+
 Capability status; geometry and validation contracts are specified in the linked
 documents. Connection/job and incremental depth validation are implemented:
 
@@ -719,13 +728,21 @@ another cross-cutting guard.
 
 ### Immediate next step
 
-Next approval request: **P0-I1 shared standalone fixtures and comparison driver**
-from the [P0 contract](local-pathfinding-test-contract.md). Implement resolved
-parameter validation, analytic terrain cases, scripted search histories, copied
-candidate reports, an identity consumer and strict comparison/serialization tests
-under Lua 5.1. Actual maneuver preparation and NAVYGROUP control remain later work.
+Repeat the native **R1a-V2 `testcase=1`** after loading the corrected PATHLINE,
+VECTOR and ASTAR sources in a new mission. The three comparisons cover deep water,
+the known shallow passage and a coast crossing under two work budgets. Require
+`PASS: 3/3 native depth budget comparisons`, deep=`clear`, coast=`blocked`, and a
+resolved, budget-independent shallow result. Wait for the user's mission-start
+notification before direct log inspection. Corrected simulator validation is
+still pending; source identities and raw run evidence stay in task-specific
+temporary storage.
 
-The R1a APIs and their regressions are complete; P0 design is documented for
-review. P0-I2 bounded terrain transcript capture/replay follows the first driver.
-No DCS validation is claimed. Wait for approval or comments before P0-I1.
-A missing continuation stops the ship until a new movement command.
+After that validation, the next proposed implementation is **P0-I1 shared
+standalone fixtures and comparison driver** from the
+[P0 contract](local-pathfinding-test-contract.md): resolved parameter validation,
+analytic terrain cases, scripted search histories, copied candidate reports, an
+identity consumer and strict comparison/serialization tests under Lua 5.1.
+P0-I2 bounded terrain transcript capture/replay follows that driver. Actual
+maneuver preparation and NAVYGROUP control remain later work. Wait for approval
+or comments before starting P0-I1. A missing continuation stops the ship until a
+new movement command.

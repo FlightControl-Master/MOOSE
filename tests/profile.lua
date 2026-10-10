@@ -98,6 +98,92 @@ test("native endpoint heights are retained without duplicate endpoints",function
   equal(profileResult[1].x,0)
 end)
 
+test("zero based native endpoints keep their heights without terrain reconstruction",function()
+  profileResult={[0]={x=0,y=-27,z=0},[1]={x=100,y=-19,z=0}}
+  terrain=function()
+    error("native endpoints must not be replaced with direct terrain samples")
+  end
+  local profile=VECTOR:New(0,800,0):GetProfile(VECTOR:New(100,900,0))
+  equal(#profile,2)
+  equal(profile[0],nil)
+  position(profile[1],0,-27,0)
+  position(profile[2],100,-19,0)
+  profile[1].y=999
+  equal(profileResult[0].y,-27)
+  equal(profileResult[2],nil)
+end)
+
+test("zero and one based profiles preserve numeric order and add only missing endpoints",function()
+  for _,base in ipairs({0,1}) do
+    profileResult={}
+    profileResult[base+1]={x=80,y=-17,z=0}
+    profileResult[base]={x=20,y=-4,z=0}
+    local profile=VECTOR:New(0,800,0):GetProfile(VECTOR:New(100,900,0))
+    equal(#profile,4)
+    position(profile[1],0,-30,0)
+    position(profile[2],20,-4,0)
+    position(profile[3],80,-17,0)
+    position(profile[4],100,-30,0)
+    profile[2].x=999
+    equal(profileResult[base].x,20)
+    equal(profileResult[base+2],nil)
+  end
+end)
+
+test("single native points at either index base receive independent endpoints",function()
+  for _,base in ipairs({0,1}) do
+    profileResult={[base]={x=50,y=-7,z=0}}
+    local profile=VECTOR:New(0,800,0):GetProfile(VECTOR:New(100,900,0))
+    equal(#profile,3)
+    position(profile[1],0,-30,0)
+    position(profile[2],50,-7,0)
+    position(profile[3],100,-30,0)
+    equal(profileResult[base].y,-7)
+    equal(profileResult[base+1],nil)
+  end
+end)
+
+test("GetProfilePath retains the zero indexed native support point",function()
+  profileResult={[0]={x=0,y=-7,z=0},[1]={x=50,y=-11,z=0},[2]={x=100,y=-19,z=0}}
+  local path=VECTOR:New(0,800,0):GetProfilePath(VECTOR:New(100,900,0))
+  equal(path:GetNumberOfPoints(),3)
+  position(path:GetPoint3DFromIndex(1),0,-7,0)
+  position(path:GetPoint3DFromIndex(2),50,-11,0)
+  position(path:GetPoint3DFromIndex(3),100,-19,0)
+end)
+
+test("malformed native profile keys and points never produce a partial profile",function()
+  local point={x=0,y=-30,z=0}
+  local invalid={
+    {[2]=point}, {[0]=point,[2]=point}, {[1]=point,[3]=point},
+    {[0]=point,[1]=point,[3]=point}, {[-1]=point}, {[0.5]=point},
+    {[math.huge]=point}, {[9007199254740992]=point}, {[0]=point,n=1},
+    {[0]=false}, {[1]=false}, {[0]={x=0,y=-30}},
+    {[0]={x=0,y=0/0,z=0}}, {[0]={x=0,y=-30,z=math.huge}},
+    {[1]={x="0",y=-30,z=0}}
+  }
+  local start,goal=VECTOR:New(0,800,0),VECTOR:New(100,900,0)
+  for _,native in ipairs(invalid) do
+    profileResult=native
+    local profile,reason=start:GetProfile(goal)
+    equal(profile,nil)
+    equal(reason,"invalid_profile")
+    local path,pathReason=start:GetProfilePath(goal)
+    equal(path,nil)
+    equal(pathReason,"invalid_profile")
+  end
+end)
+
+test("non-table native profiles are unavailable",function()
+  local start,goal=VECTOR:New(0,800,0),VECTOR:New(100,900,0)
+  for _,native in ipairs({false,true,123,"profile"}) do
+    profileResult=native
+    local profile,reason=start:GetProfile(goal)
+    equal(profile,nil)
+    equal(reason,"profile_unavailable")
+  end
+end)
+
 test("profile helpers accept raw Vec3 and Vec2 destinations",function()
   local start=VECTOR:New(0,800,0)
   profileResult={{x=0,y=-30,z=0},{x=100,y=-20,z=40}}

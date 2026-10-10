@@ -282,11 +282,15 @@ Within each section/profile:
    empty or one-point array uses the explicit direct-sampling fallback. Record
    this in `FallbackProfiles`. Direct samples are required even for longer native
    profiles; native point density alone does not meet the requested spacing.
-3. Inspect and copy native records incrementally. Validate a dense 1-based sequence
-   of finite x/y/z records, without trusting `#table` for sparse data. Incremental
-   raw traversal can track entry count and greatest valid index; require equality
-   before accepting the sequence. Invalid records/keys/gaps are `invalid_profile`.
-   Stop on the record cap without retaining an unbounded copy.
+3. Inspect and copy native records incrementally. Accept dense native sequences
+   starting at index 0 or 1, with finite x/y/z records. DCS has been observed to
+   return zero-based profiles; retain sample 0 and its native height. Do not use
+   `#table` or `ipairs` to infer this input range. Incremental raw traversal tracks
+   the actual entry count, index base and greatest valid index; require
+   `count == greatestIndex - indexBase + 1` before accepting the sequence. Reset
+   the base for every section/offset profile. Invalid records, negative/fractional
+   keys, metadata keys and index gaps remain `invalid_profile`. The record cap
+   counts entries, including sample 0, without retaining an unbounded copy.
 4. Project support points onto the query line, clamp their along-line position to
    its ends, and order them in the original route direction. Query native support
    points at their supplied x/z coordinates, not moved projected coordinates.
@@ -509,3 +513,31 @@ shared inputs, source identity and stage reports for virtual search and fixed-po
 preparation. Its design is documented; the next proposed subtask is **P0-I1**:
 shared standalone fixtures and comparison driver with Lua 5.1 regressions.
 Wait for user approval/comments before implementation.
+
+
+### Native profile index correction, 2026-10-10
+
+The first native DCS checks exposed a data-format assumption: `land.profile()`
+returned dense arrays beginning at index 0. Incremental validation rejected that
+index; synchronous PATHLINE, VECTOR and ASTAR readers omitted its support point.
+All three classes now accept dense native arrays starting at 0 or 1 and preserve
+every point. VECTOR returns independent 1-based output. Synchronous readers share
+index-range validation; incremental PATHLINE retains its per-record work limits.
+Invalid keys, gaps and point data remain failures, and the existing empty/short
+profile policies remain specific to each API. Temporary profile-shape logging was
+removed after confirming the input format.
+
+Seventeen added regression cases failed before their respective fixes and pass
+now. Lua 5.1.5 compiles all six changed Lua files. Separate processes pass VECTOR
+(15), profile (21), PATHLINE (47), connection validation (36), depth validation
+(42), depth (39), ASTAR (295), and NAVYGROUP (25): **520 cases total**.
+Coverage includes sample 0 as the only obstruction or depth-cost contributor,
+singletons, malformed ranges/data, both query directions, corridor/section base
+changes, exact record caps, and equivalent results across small/large budgets.
+
+The correction still requires a new mission/include load. Repeat the native
+`testcase=1` comparison for deep water, the shallow passage and a coast crossing:
+expect deep=`clear`, coast=`blocked`, and identical resolved shallow results for
+both work budgets. The completion marker is `PASS: 3/3 native depth budget
+comparisons`. Native timing and corrected simulator results remain unvalidated;
+wait for the user's mission-start notification before inspecting the next run.

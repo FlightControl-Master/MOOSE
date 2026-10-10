@@ -590,5 +590,114 @@ test("equivalent depth evidence has stable coordinates and reports independent c
   end)
 end)
 
+test("native index zero participates in detailed and fast obstruction checks",function()
+  for base=0,1 do
+    local data=terrain()
+    local native={
+      [base]={x=500,y=-10,z=0},
+      [base+1]={x=1000,y=-40,z=0},
+    }
+    data.profile=function() return native end
+    equal(ASTAR.Depth(node(0),node(1000),20),false)
+    for _,reverse in ipairs({false,true}) do
+      local start,goal=node(0).vector,node(1000).vector
+      if reverse then
+        start,goal=goal,start
+      end
+      local clear,reason,report=PATHLINE.CheckDepth(start,goal,20)
+      equal(clear,false)
+      equal(reason,"profile_blocked")
+      near(report.ClearDistance,1000/3)
+      equal(report.Point.x,500)
+      equal(report.Depth,10)
+    end
+    equal(native[base].x,500)
+    equal(native[base].Along,nil)
+    equal(native[base+2],nil)
+  end
+end)
+
+test("a singleton at native index zero remains an obstruction before fallback",function()
+  local data=terrain()
+  data.profile=function() return {[0]={x=25,y=-10,z=0}} end
+  equal(ASTAR.Depth(node(0),node(100),20),false)
+  local clear,reason,report=PATHLINE.CheckDepth(node(0).vector,node(100).vector,20)
+  equal(clear,false)
+  equal(reason,"profile_blocked")
+  near(report.ClearDistance,50/3)
+  equal(report.Point.x,25)
+end)
+
+test("two native points starting at zero do not invoke short-profile fallback",function()
+  local data=terrain()
+  data.profile=function(a,b)
+    return {[0]={x=a.x,y=-40,z=a.z},[1]={x=b.x,y=-40,z=b.z}}
+  end
+  equal(ASTAR.Depth(node(0),node(100001),20),true)
+  equal(PATHLINE.CheckDepth(node(0).vector,node(100001).vector,20),true)
+  near(ASTAR.CostDepth(node(0),node(100001),20,0,30,2),100001)
+end)
+
+test("synchronous readers reject malformed native index ranges",function()
+  local data=terrain()
+  local point={x=500,y=-40,z=0}
+  local cases={
+    {[-1]=point,[0]=point,[1]=point},
+    {[0]=point,[2]=point},
+    {[1]=point,[3]=point},
+    {[0]=point,[0.5]=point,[1]=point},
+    {[0]=point,[1]=point,n=2},
+    {[math.huge]=point},
+    {[9007199254740992]=point},
+  }
+  for _,native in ipairs(cases) do
+    data.profile=function() return native end
+    equal(ASTAR.Depth(node(0),node(1000),20),false)
+    equal(ASTAR.CostDepth(node(0),node(1000),20,0,30,2),math.huge)
+    local clear,reason,report=PATHLINE.CheckDepth(node(0).vector,node(1000).vector,20)
+    equal(clear,false)
+    equal(reason,"invalid_profile")
+    equal(report.Status,"unavailable")
+    equal(report.ClearDistance,0)
+  end
+end)
+
+test("invalid native point zero retains position and height diagnostics",function()
+  local data=terrain()
+  for _,case in ipairs({
+    {false,"invalid_profile_position"},
+    {{x=500,y=-40},"invalid_profile_position"},
+    {{x=500,y=0/0,z=0},"invalid_profile_height"},
+    {{x=500,z=0},"invalid_profile_height"},
+  }) do
+    data.profile=function()
+      return {[0]=case[1],[1]={x=1000,y=-40,z=0}}
+    end
+    equal(ASTAR.Depth(node(0),node(1000),20),false)
+    equal(ASTAR.CostDepth(node(0),node(1000),20,0,30,2),math.huge)
+    local clear,reason,report=PATHLINE.CheckDepth(node(0).vector,node(1000).vector,20)
+    equal(clear,false)
+    equal(reason,case[2])
+    equal(report.Status,"unavailable")
+    equal(report.ClearDistance,0)
+  end
+end)
+
+test("depth cost integration includes the native zero support point",function()
+  for base=0,1 do
+    local data=terrain()
+    data.profile=function()
+      return {[base]={x=500,y=-20,z=0},[base+1]={x=1000,y=-40,z=0}}
+    end
+    local a,b=node(0),node(1000)
+    near(ASTAR.CostDepth(a,b,20,0,30,2),1000+1000/3)
+    near(ASTAR.CostDepth(b,a,20,0,30,2),1000+1000/3)
+    data.profile=function()
+      return {[base]={x=500,y=-10,z=0},[base+1]={x=1000,y=-40,z=0}}
+    end
+    equal(ASTAR.CostDepth(a,b,20,0,30,2),math.huge)
+  end
+end)
+
 print(string.format("%d passed, %d failed",passed,failed))
 if failed>0 then os.exit(1) end

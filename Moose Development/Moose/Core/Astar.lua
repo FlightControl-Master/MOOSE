@@ -1269,6 +1269,7 @@ function ASTAR._SetDepthEvidence(Evidence, Point, Location, Cause, Depth, Surfac
 end
 
 --- Check the endpoints and terrain profile of one water connection, optionally retaining depths for costs.
+-- Dense native profiles may start at 0 or 1; malformed index ranges are unavailable.
 -- The first rejection ends this check. Locating an obstruction belongs to PATHLINE.CheckDepth().
 -- @param DCS#Vec3 Start Start position at the water surface.
 -- @param DCS#Vec3 Goal Goal position at the water surface.
@@ -1302,14 +1303,15 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples, Evidenc
   end
 
   local profile=PATHLINE._QueryDepthProfile(Start,Goal)
-  if type(profile)~="table" then
-    ASTAR._SetDepthEvidence(Evidence,nil,"profile","profile_unavailable")
-    return false,"profile_unavailable","unavailable"
+  local firstIndex,profileCount,reason=VECTOR._GetProfileIndexRange(profile)
+  if not firstIndex then
+    ASTAR._SetDepthEvidence(Evidence,nil,"profile",reason)
+    return false,reason,"unavailable"
   end
 
-  -- Under the linear-profile assumption, valid support points also bound the depths between them.
-  for i=1,#profile do
-    local point=profile[i]
+  -- Both native index bases retain every support point for the linear depth bound and cost integration.
+  for i=firstIndex,firstIndex+profileCount-1 do
+    local point=rawget(profile, i)
     local clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(point,MinDepth,true)
 
     if not clear then
@@ -1325,7 +1327,7 @@ function ASTAR._CheckDepthLine(Start, Goal, Distance, MinDepth, Samples, Evidenc
 
   -- An empty or single-point profile cannot describe the whole connection.
   -- Check additional positions at most 100 m apart, with a bound on the amount of work.
-  if #profile<2 then
+  if profileCount<2 then
     local intervals=math.max(2,math.ceil(Distance/100))
     if intervals>1000 then
       ASTAR._SetDepthEvidence(Evidence,nil,"profile_fallback","profile_fallback_limit")
