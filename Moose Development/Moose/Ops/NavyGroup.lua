@@ -2621,7 +2621,7 @@ function NAVYGROUP:_RunWaypointPathPlanning()
 
   if self.verbose>=10 then
     self.pathfindingDebugSearch=astar
-    astar:DrawGridWithPath(path)
+    astar:DrawGrid(path)
   end
 
   return true
@@ -2874,7 +2874,7 @@ end
 -- @return #NAVYGROUP self.
 function NAVYGROUP:_ClearPathfindingDrawing()
   if self.pathfindingDebugSearch then
-    self.pathfindingDebugSearch:UndrawGrid()
+    self.pathfindingDebugSearch:ClearDrawing(GRID.Drawing.POLYGONS)
     self.pathfindingDebugSearch=nil
   end
   return self

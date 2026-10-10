@@ -169,7 +169,7 @@ test("standalone builders and overlays require no ASTAR or COORDINATE constructi
       equal(count(drawings),g:GetCellCount()) equal(count(labels),g:GetCellCount())
       g:ExpandGrid(6000,2000):UpdateGridDrawing() flushTimers()
       equal(count(drawings),g:GetCellCount())
-      g:UndrawGrid():UnmarkGrid() equal(count(drawings),0) equal(count(labels),0)
+      g:ClearDrawing(GRID.Drawing.POLYGONS):ClearDrawing(GRID.Drawing.LABELS) equal(count(drawings),0) equal(count(labels),0)
     end
   end)
   ASTAR=savedASTAR COORDINATE.New=savedNew assert(ok,err)
@@ -233,7 +233,7 @@ end)
 test("explicit ASTAR geometry rejects conflicting builders before changing the grid",function()
   for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
     local a=ASTAR:New(kind):SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
-    local configured=a:GetGrid():SetSpacing(1000)
+    local configured=a:GetGrid():SetResolution(1000)
     local version=configured:GetVersion()
     local opposite=kind==GRID.Type.HEXAGON and "CreateGrid" or "CreateHexGrid"
     land.surfaceAt=function() error("A conflicting builder must not sample terrain") end
@@ -312,6 +312,72 @@ test("options and bounds are copied and independent across grid instances",funct
   g:CreateFromBounds(g.startVector,g.endVector) equal(g.rectGrid.x,0) equal(g.rectGrid.distance,4000)
   equal(pcall(function() g:SetBounds(coord(0),coord(10)) end),false)
   equal(GRID:New("Test",GRID.Type.RECTANGLE):GetCellCount(),0)
+end)
+
+test("raw positions reject missing false and non-finite components before changing bounds",function()
+  local g=GRID:New("Validated positions",GRID.Type.RECTANGLE):SetBounds(coord(10),coord(1000))
+  local first,last,version=g.startVector,g.endVector,g:GetVersion()
+  local invalid={{},{x=0},{y=0},{x=false,y=0},{x=0,y=false},{x=0,y=0,z=false},
+    {x=0,z=0},{x=0,y=false,z=0},{x="0",y=0},{x=math.huge,y=0},{x=0,y=0/0},
+    {x=0,y=0,z=-math.huge},false,123,"position"}
+  for _,position in ipairs(invalid) do
+    for _,bounds in ipairs({{position,coord(1000)},{coord(10),position}}) do
+      local ok,err=pcall(function() g:SetBounds(bounds[1],bounds[2]) end)
+      assert(not ok,"Malformed raw position was accepted")
+      assert(tostring(err):find("GRID:",1,true))
+      equal(g.startVector,first)
+      equal(g.endVector,last)
+      equal(g:GetVersion(),version)
+    end
+  end
+
+  -- Vec2 uses y as east; Vec3 retains altitude. All explicit zeros are valid.
+  local vec2,vec3={x=0,y=200},{x=100,y=0,z=0}
+  g:SetBounds(vec2,vec3)
+  equal(g.startVector.y,0)
+  equal(g.startVector.z,200)
+  equal(g.endVector.y,0)
+  equal(g.endVector.z,0)
+  vec2.y=999
+  equal(g.startVector.z,200)
+  g:SetBounds(VECTOR:New(0,0,0),coord(1000,0,15))
+  equal(g.endVector.y,15)
+
+  local built=grid()
+  for _,position in ipairs(invalid) do
+    assert(not pcall(function() built:PositionToIndex(position) end))
+    assert(not pcall(function() built:FindClosestCell(position) end))
+    assert(not pcall(function() built:CheckSurfacePath(position,coord(1000)) end))
+  end
+end)
+
+test("one marker examines only its immediate neighbours even without a CPU clock",function()
+  local originalClock=os.clock
+  local ok,err=pcall(function()
+    for _,kind in ipairs({GRID.Type.RECTANGLE,GRID.Type.HEXAGON}) do
+      for _,withClock in ipairs({false,true}) do
+        local g=GRID:New("Bounded markers",kind):SetCorridor(4900,0):SetResolution(100):SetMaxCells(6000)
+        assert(g:CreateFromBounds(coord(0),coord(9900)))
+        assert(g:GetCellCount()>4000)
+        local lookups=0
+        local getCell=g.GetCellFromIndex
+        function g:GetCellFromIndex(...)
+          lookups=lookups+1
+          return getCell(self,...)
+        end
+        os.clock=withClock and originalClock or nil
+        g:MarkGrid({BatchSize=1})
+        assert(stepTimer())
+        equal(g.LastGridMarkResult.CellsMarked,1)
+        equal(g.LastGridMarkResult.Batches,1)
+        assert(lookups<=24,"A single marker traversed more than its immediate neighbours: "..lookups)
+        g:ClearDrawing()
+        flushTimers()
+      end
+    end
+  end)
+  os.clock=originalClock
+  assert(ok,err)
 end)
 
 test("cell getters expose stable geometry with independent result containers",function()
@@ -444,7 +510,7 @@ test("unchanged options preserve shared grid and search caches",function()
       function() g:SetExpansion(1.5,5) end,
       function() g:SetDiagonals(true) end,
       function() g:SetCorridor(4000,1000) end,
-      function() g:SetSpacing(1000) end
+      function() g:SetResolution(1000) end
     }) do
       configure()
       assert(a:GetPath()) assert(b:GetPath())
@@ -559,7 +625,7 @@ end)
 test("grid and search overlays own independent polygons and accept shared path cells",function()
   local g=grid("rectangular",{Width=2000,Margin=0,Spacing=1000})
   local a,b=search(g),search(g) local path=a:GetPath()
-  g:DrawGridWithPath(path) a:DrawGridWithPath(path) b:DrawGrid() flushTimers()
+  g:DrawGrid(path) a:DrawGrid(path) b:DrawGrid() flushTimers()
   equal(count(drawings),3*g:GetCellCount())
   equal(g.LastGridDrawResult.CellsQueued,g:GetCellCount())
   equal(g.LastGridDrawResult.CellsDrawn,g:GetCellCount()) equal(g.LastGridDrawResult.NodesDrawn,nil)
@@ -567,23 +633,23 @@ test("grid and search overlays own independent polygons and accept shared path c
   equal(a.LastGridDrawResult.NodesDrawn,g:GetCellCount()) equal(a.LastGridDrawResult.CellsDrawn,nil)
   local green=0 for _,d in pairs(drawings) do if d.fill[2]==1 and d.fill[1]==0 then green=green+1 end end
   equal(green,2*#path)
-  a:UndrawGrid() equal(count(drawings),2*g:GetCellCount())
-  g:UndrawGrid() equal(count(drawings),g:GetCellCount())
-  b:UndrawGrid() equal(count(drawings),0)
+  a:ClearDrawing(GRID.Drawing.POLYGONS) equal(count(drawings),2*g:GetCellCount())
+  g:ClearDrawing(GRID.Drawing.POLYGONS) equal(count(drawings),g:GetCellCount())
+  b:ClearDrawing(GRID.Drawing.POLYGONS) equal(count(drawings),0)
   local foreign=search(grid("rectangular")):GetPath()
-  equal(pcall(function() g:DrawGridWithPath(foreign) end),false)
+  equal(pcall(function() g:DrawGrid(foreign) end),false)
 end)
 
 test("shared drawing snapshots stay fixed and pending jobs cancel independently",function()
   local g=grid("rectangular") local a=search(g)
-  g:DrawGridWithPath(a:GetPath(),{BatchSize=1}) a:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=1})
+  g:DrawGrid(a:GetPath(),{BatchSize=1}) a:DrawGrid(nil,{BatchSize=1})
   local original=g:GetCellCount() local job=g.GridDrawJob
   g:ExpandGrid(6000,2000)
-  a:UndrawGrid() flushTimers()
+  a:ClearDrawing(GRID.Drawing.POLYGONS) flushTimers()
   equal(job.result.Status,"complete") equal(count(drawings),original)
   g:UpdateGridDrawing() flushTimers() equal(count(drawings),original)
   g:DrawGrid() flushTimers() equal(count(drawings),g:GetCellCount())
-  g:UndrawGrid() equal(count(drawings),0)
+  g:ClearDrawing(GRID.Drawing.POLYGONS) equal(count(drawings),0)
 end)
 
 test("standalone markers count geometric neighbours and validate checked counts before replacement",function()
@@ -599,7 +665,7 @@ test("standalone markers count geometric neighbours and validate checked counts 
   a:MarkGrid({CheckNeighbours=true}) flushTimers() equal(count(labels),2*g:GetCellCount())
   equal(a.LastGridMarkResult.NodesMarked,a.Nnodes) equal(a.LastGridMarkResult.CellsMarked,nil)
   for _,id in ipairs(a.GridMarkIDs) do assert(labels[id]:match("^Node %d+")) end
-  g:UnmarkGrid() equal(count(labels),a.Nnodes) a:UnmarkGrid() equal(count(labels),0)
+  g:ClearDrawing(GRID.Drawing.LABELS) equal(count(labels),a.Nnodes) a:ClearDrawing(GRID.Drawing.LABELS) equal(count(labels),0)
 end)
 
 test("ASTAR convenience methods keep manual nodes separate from the owned grid",function()
@@ -627,13 +693,13 @@ test("grid-owned path snapshots accept exact endpoints without inventing cells",
   local a=search(g):SetStartCoordinate(coord(123,50)):SetEndCoordinate(coord(4123,50))
   local path=a:GetPath() assert(path)
   equal(path[1].cell,nil) equal(path[#path].cell,nil)
-  equal(g:DrawGridWithPath(path),g) flushTimers()
+  equal(g:DrawGrid(path),g) flushTimers()
   equal(count(drawings),g:GetCellCount())
   local expected={} for _,node in ipairs(path) do if node.cell then expected[node.cell.id]=true end end
   local green=0 for _,d in pairs(drawings) do if d.fill[2]==1 and d.fill[1]==0 then green=green+1 end end
   equal(green,count(expected))
   local foreign=search(grid("hexagonal")):SetStartCoordinate(coord(123,50)):GetPath()
-  equal(pcall(function() g:DrawGridWithPath(foreign) end),false)
+  equal(pcall(function() g:DrawGrid(foreign) end),false)
 end)
 
 test("cell and node ownership reject foreign objects without replacing existing state",function()
@@ -767,7 +833,7 @@ test("containing cell lookup preserves filtered holes instead of snapping to acc
     g:SetOptions({Width=4000,Margin=1000,Spacing=1000}) assert(build(g,kind))
     equal(g:GetCellAtPosition(coord(0)),nil)
     assert(g:FindClosestCell(coord(0)))
-    equal(#g:GetRing(coord(0),0),0)
+    equal(#g:GetCellsInRange(coord(0),0,0),0)
     equal(#g:GetCellsInRange(coord(0),0),0)
     land.surfaceAt=nil
   end
@@ -798,21 +864,21 @@ test("rings and ranges use lattice metrics with bounded work and no mutation",fu
       local options=g:GetOptions()
       local version,candidates,cells=g:GetVersion(),g:GetCandidateCount(),g:GetCellCount()
       local isHex=kind=="hexagonal"
-      equal(#g:GetRing(center,0),1)
-      equal(#g:GetRing(center,2),isHex and 12 or (diagonal and 16 or 8))
+      equal(#g:GetCellsInRange(center,0,0),1)
+      equal(#g:GetCellsInRange(center,2,2),isHex and 12 or (diagonal and 16 or 8))
       equal(#g:GetCellsInRange(center,2),isHex and 19 or (diagonal and 25 or 13))
-      local ring=g:GetRing(center,2)
+      local ring=g:GetCellsInRange(center,2,2)
       for i,c in ipairs(ring) do
         equal(g:GetGridDistance(center,c),2)
         equal(g:GetGridDistance(c,center),2)
         if i>1 then assert(ring[i-1].id<c.id) end
       end
       equal(#g:GetCellsInRange(center,1000000000),cells)
-      equal(#g:GetRing(center,1000000000),0)
+      equal(#g:GetCellsInRange(center,1000000000,1000000000),0)
       equal(g:GetVersion(),version) equal(g:GetCandidateCount(),candidates) equal(g:GetCellCount(),cells)
       equal(g.gridLinks,nil)
       equal(g:GetOptions().Diagonals,options.Diagonals)
-      ring[1]=nil equal(#g:GetRing(center,2),isHex and 12 or (diagonal and 16 or 8))
+      ring[1]=nil equal(#g:GetCellsInRange(center,2,2),isHex and 12 or (diagonal and 16 or 8))
       if not isHex then
         local destination=g:IndexToPosition(center.i+2,center.j+2)
         equal(g:GetGridDistance(center,destination),diagonal and 2 or 4)
@@ -826,20 +892,20 @@ end)
 test("line supercover includes rectangle corner contacts and follows open segment order",function()
   local g=grid(nil,{Width=10000,Margin=4000,Spacing=1000})
   local a,b=g:IndexToPosition(3,3),g:IndexToPosition(5,5)
-  local line=g:GetLineCells(a,b)
+  local line=g:GetPolylineCells({a,b})
   equal(#line,7) equal(line[1],g:GetCellFromIndex(3,3)) equal(line[#line],g:GetCellFromIndex(5,5))
   local seen={}
   for _,c in ipairs(line) do assert(not seen[c.id]) seen[c.id]=true end
   for _,pair in ipairs({{3,4},{4,3},{4,4},{4,5},{5,4}}) do assert(seen[g:GetCellFromIndex(pair[1],pair[2]).id]) end
-  local reverse=g:GetLineCells(b,a)
+  local reverse=g:GetPolylineCells({b,a})
   equal(#reverse,7) equal(reverse[1],line[#line])
   for _,c in ipairs(reverse) do assert(seen[c.id]) end
-  equal(#g:GetLineCells(a,a),1)
+  equal(#g:GetPolylineCells({a,a}),1)
   local edge=coord(a.x+500,a.z)
-  equal(#g:GetLineCells(edge,edge),2)
+  equal(#g:GetPolylineCells({edge,edge}),2)
   local corner=coord(a.x+500,a.z+500)
-  equal(#g:GetLineCells(corner,corner),4)
-  local horizontal=g:GetLineCells(g:IndexToPosition(3,2),g:IndexToPosition(3,5))
+  equal(#g:GetPolylineCells({corner,corner}),4)
+  local horizontal=g:GetPolylineCells({g:IndexToPosition(3,2),g:IndexToPosition(3,5)})
   equal(#horizontal,4)
   for i,c in ipairs(horizontal) do equal(c.i,3) equal(c.j,i+1) end
 end)
@@ -854,27 +920,27 @@ test("hex and rotated rectangular line intersections match their cell geometry",
     local first=g:GetCellAtPosition(origin)
     local a,b=first.q or first.i,first.r or first.j
     local last=g:IndexToPosition(hex and a+3 or a,hex and b or b+3)
-    local line=g:GetLineCells(first,last)
+    local line=g:GetPolylineCells({first,last})
     equal(#line,4) equal(line[1],first)
     local adjacent=g:IndexToPosition(hex and a+1 or a,hex and b or b+1)
     local midpoint=coord((first.vector.x+adjacent.x)/2,(first.vector.z+adjacent.z)/2)
-    equal(#g:GetLineCells(midpoint,midpoint),2)
-    equal(#g:GetLineCells(g:IndexToPosition(-1000000,0),g:IndexToPosition(-999999,0)),0)
+    equal(#g:GetPolylineCells({midpoint,midpoint}),2)
+    equal(#g:GetPolylineCells({g:IndexToPosition(-1000000,0),g:IndexToPosition(-999999,0)}),0)
   end
 end)
 
 test("polygon boundaries close the last edge and deduplicate without filling",function()
   local g=grid(nil,{Width=12000,Margin=6000,Spacing=1000})
   local vertices={g:IndexToPosition(3,3),g:IndexToPosition(3,7),g:IndexToPosition(7,7),g:IndexToPosition(7,3)}
-  local boundary=g:GetPolygonBoundaryCells(vertices)
+  local boundary=g:GetPolylineCells(vertices,true)
   equal(#boundary,16)
   local seen={}
   for _,c in ipairs(boundary) do assert(not seen[c.id]) seen[c.id]=true end
   assert(seen[g:GetCellFromIndex(5,3).id]) equal(seen[g:GetCellFromIndex(5,5).id],nil)
   vertices[#vertices+1]=vertices[1]
-  local closed=g:GetPolygonBoundaryCells(vertices)
+  local closed=g:GetPolylineCells(vertices,true)
   equal(#closed,#boundary) for i,c in ipairs(closed) do equal(c,boundary[i]) end
-  equal(#g:GetPolygonBoundaryCells({vertices[1],vertices[1],vertices[1]}),1)
+  equal(#g:GetPolylineCells({vertices[1],vertices[1],vertices[1]},true),1)
 end)
 
 test("hex vertex contacts, clipped lines and filtered gaps remain geometric",function()
@@ -884,19 +950,19 @@ test("hex vertex contacts, clipped lines and filtered gaps remain geometric",fun
   g:CreateFromBounds(g.startVector,g.endVector)
   equal(g:GetCellFromIndex(1,0),nil)
   local version=g:GetVersion()
-  local line=g:GetLineCells(coord(0),coord(3000))
+  local line=g:GetPolylineCells({coord(0),coord(3000)})
   equal(#line,3) equal(line[1].q,0) equal(line[2].q,2) equal(line[3].q,3)
   equal(g:GetGridDistance(line[1],line[2]),2)
-  equal(#g:GetRing(coord(0),1),5)
-  local clipped=g:GetLineCells(coord(-1e9),coord(1e9))
+  equal(#g:GetCellsInRange(coord(0),1,1),5)
+  local clipped=g:GetPolylineCells({coord(-1e9),coord(1e9)})
   local expected=0 for _,c in ipairs(g:GetCells()) do if c.r==0 then expected=expected+1 end end
   equal(#clipped,expected)
   local vertex=coord(-500,1000/(2*math.sqrt(3)))
-  equal(#g:GetLineCells(vertex,vertex),3)
+  equal(#g:GetPolylineCells({vertex,vertex}),3)
   local vertices={g:IndexToPosition(0,0),g:IndexToPosition(3,0),g:IndexToPosition(0,3)}
-  local boundary=g:GetPolygonBoundaryCells(vertices)
+  local boundary=g:GetPolylineCells(vertices,true)
   local union={}
-  for i=1,3 do for _,c in ipairs(g:GetLineCells(vertices[i],vertices[i%3+1])) do union[c.id]=true end end
+  for i=1,3 do for _,c in ipairs(g:GetPolylineCells({vertices[i],vertices[i%3+1]})) do union[c.id]=true end end
   equal(#boundary,count(union)) for _,c in ipairs(boundary) do assert(union[c.id]) end
   equal(g:GetVersion(),version) equal(g.gridLinks,nil)
 end)
@@ -907,13 +973,13 @@ test("query validation rejects foreign cells and malformed input while empty gri
   for _,run in ipairs({
     function() g:PositionToIndex(foreign) end,
     function() g:GetGridDistance(foreign,coord(0)) end,
-    function() g:GetRing(coord(0),-1) end,
+    function() g:GetCellsInRange(coord(0),-1,-1) end,
     function() g:GetCellsInRange(coord(0),0.5) end,
-    function() g:GetRing(coord(0),math.huge) end,
+    function() g:GetCellsInRange(coord(0),math.huge,math.huge) end,
     function() g:IndexToPosition(0.5,1) end,
     function() g:PositionToIndex(coord(math.huge)) end,
     function() g:PositionToIndex(coord(1e100)) end,
-    function() g:GetPolygonBoundaryCells({coord(0),coord(1)}) end,
+    function() g:GetPolylineCells({coord(0),coord(1)},true) end,
     function() GRID:New("Test",GRID.Type.HEXAGON):PositionToIndex(coord(0)) end
   }) do assert(not pcall(run)) end
   local empty=GRID:New("Test",GRID.Type.HEXAGON):SetBounds(coord(0),coord(4000)):SetValidSurfaceTypes({})
@@ -921,9 +987,9 @@ test("query validation rejects foreign cells and malformed input while empty gri
   land.getSurfaceType=function() error("Geometry queries must not sample terrain") end
   local ok,err=pcall(function()
     equal(empty:GetCellAtPosition(coord(0)),nil)
-    equal(#empty:GetRing(coord(0),1),0) equal(#empty:GetCellsInRange(coord(0),100),0)
-    equal(#empty:GetLineCells(coord(0),coord(4000)),0)
-    equal(#empty:GetPolygonBoundaryCells({coord(0),coord(4000),coord(0,4000)}),0)
+    equal(#empty:GetCellsInRange(coord(0),1,1),0) equal(#empty:GetCellsInRange(coord(0),100),0)
+    equal(#empty:GetPolylineCells({coord(0),coord(4000)}),0)
+    equal(#empty:GetPolylineCells({coord(0),coord(4000),coord(0,4000)},true),0)
     local a,b=empty:PositionToIndex(coord(0)) equal(a,0) equal(b,0)
     equal(empty:GetGridDistance(coord(0),empty:IndexToPosition(2,-1)),2)
   end)
@@ -1347,16 +1413,16 @@ end)
 
 test("explicit spacing and resolution setters select modes and clear transverse overrides",function()
   local g=GRID:New("Modes",GRID.Type.RECTANGLE):SetMaxCells(7000):SetExpansion(2,3)
-  equal(g:SetSpacing(600,300),g)
+  equal(g:SetResolution(600,300),g)
   g:SetOptions({Resolution=GRID.Resolution.NORMAL})
   local o=g:GetOptions() equal(o.Resolution,GRID.Resolution.NORMAL) equal(o.Spacing,nil) equal(o.CrossSpacing,nil)
   g:SetOptions({CrossSpacing=400})
   o=g:GetOptions() equal(o.Resolution,nil) equal(o.Spacing,2000) equal(o.CrossSpacing,400)
-  g:SetSpacing(500)
+  g:SetResolution(500)
   o=g:GetOptions() equal(o.Spacing,500) equal(o.CrossSpacing,nil)
-  g:SetResolution(GRID.Resolution.FINE):SetSpacing()
+  g:SetResolution(GRID.Resolution.FINE):SetResolution()
   o=g:GetOptions() equal(o.Spacing,2000) equal(o.Resolution,nil) equal(o.MaxCells,7000) equal(o.Expansion.GrowthFactor,2)
-  g:SetSpacing(1000,500):SetOptions({Spacing=750})
+  g:SetResolution(1000,500):SetOptions({Spacing=750})
   equal(g:GetOptions().CrossSpacing,500)
   g:SetResolution(GRID.Resolution.FINE):SetResolution()
   equal(g:GetOptions().Resolution,nil) equal(g:GetOptions().Spacing,2000)
@@ -1380,14 +1446,14 @@ test("explicit expansion parameters replace all expansion settings and accept in
 end)
 
 test("option and setter validation failures are atomic",function()
-  local g=GRID:New("Atomic",GRID.Type.RECTANGLE):SetSpacing(600,300):SetMaxCells(8000):SetExpansion(2,3,80000,40000)
+  local g=GRID:New("Atomic",GRID.Type.RECTANGLE):SetResolution(600,300):SetMaxCells(8000):SetExpansion(2,3,80000,40000)
   local snapshot,version=g.GridOptions,g:GetVersion()
   local invalid={
     function() g:SetOptions({MaxCells=10000,Expansion={MaxAttempts=0}}) end,
     function() g:SetOptions({Resolution=GRID.Resolution.FINE,Spacing=500}) end,
     function() g:SetOptions({Expansion={MaxWidth=false}}) end,
-    function() g:SetSpacing(0) end,
-    function() g:SetSpacing(1000,math.huge) end,
+    function() g:SetResolution(0) end,
+    function() g:SetResolution(1000,math.huge) end,
     function() g:SetMaxCells(2.5) end,
     function() g:SetDiagonals(1) end,
     function() g:SetExpansion(1) end,
@@ -1401,14 +1467,14 @@ test("option and setter validation failures are atomic",function()
     assert(not pcall(run)) equal(g.GridOptions,snapshot) equal(g:GetVersion(),version)
   end
   local hex=GRID:New("Hex",GRID.Type.HEXAGON):SetResolution(GRID.Resolution.FINE)
-  assert(not pcall(function() hex:SetSpacing(1000,500) end))
+  assert(not pcall(function() hex:SetResolution(1000,500) end))
   equal(hex:GetOptions().Resolution,GRID.Resolution.FINE)
 end)
 
 test("resetting option defaults preserves bounds filters and respects built geometry locks",function()
   local g=GRID:New("Reset",GRID.Type.RECTANGLE):SetBounds(coord(0),coord(4000))
     :SetValidSurfaceTypes(land.SurfaceType.WATER):SetCorridor(4000,1000)
-    :SetSpacing(500,250):SetDiagonals(false):SetMaxCells(10000):SetExpansion(2,2,10000,5000)
+    :SetResolution(500,250):SetDiagonals(false):SetMaxCells(10000):SetExpansion(2,2,10000,5000)
   local first,last,filter=g.startVector,g.endVector,g.ValidSurfaceTypes
   equal(g:ResetOptions(),g)
   local o=g:GetOptions()
@@ -1417,9 +1483,9 @@ test("resetting option defaults preserves bounds filters and respects built geom
   equal(g.startVector,first) equal(g.endVector,last) equal(g.ValidSurfaceTypes,filter)
   g:SetMaxCells(1):SetMaxCells():SetDiagonals(false):SetDiagonals()
   equal(g:GetOptions().MaxCells,5000) equal(g:GetOptions().Diagonals,true)
-  g:SetCorridor(4000,1000):SetSpacing(1000):CreateFromBounds(coord(0),coord(4000))
+  g:SetCorridor(4000,1000):SetResolution(1000):CreateFromBounds(coord(0),coord(4000))
   local count,version,snapshot=g:GetCellCount(),g:GetVersion(),g.GridOptions
-  for _,run in ipairs({function() g:ResetOptions() end,function() g:SetSpacing(500) end,
+  for _,run in ipairs({function() g:ResetOptions() end,function() g:SetResolution(500) end,
     function() g:SetResolution(GRID.Resolution.FINE) end,function() g:SetOptions({Width=5000,MaxCells=9999}) end}) do
     assert(not pcall(run)) equal(g:GetCellCount(),count) equal(g:GetVersion(),version) equal(g.GridOptions,snapshot)
   end
@@ -1430,7 +1496,7 @@ end)
 test("ASTAR builders and expanding searches retain explicit GRID configuration",function()
   for _,builder in ipairs({"CreateGrid","CreateHexGrid"}) do
     local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
-    a:GetGrid():SetCorridor(4000,1000):SetSpacing(1000):SetMaxCells(2000):SetDiagonals(false):SetExpansion(2,2)
+    a:GetGrid():SetCorridor(4000,1000):SetResolution(1000):SetMaxCells(2000):SetDiagonals(false):SetExpansion(2,2)
     a:SetGridOptions({Expansion={GrowthFactor=1.5}})
     assert(a[builder](a))
     local o=a:GetGridOptions()
@@ -1502,7 +1568,7 @@ test("attaching a grid cannot replace an unsynchronized built empty grid",functi
   local replacement=grid("rectangular")
   local a=ASTAR:New()
   local original=a:GetGrid()
-  original:SetValidSurfaceTypes({}):SetCorridor(0,0):SetSpacing(1000):CreateFromBounds(coord(0),coord(4000))
+  original:SetValidSurfaceTypes({}):SetCorridor(0,0):SetResolution(1000):CreateFromBounds(coord(0),coord(4000))
   equal(a.Nnodes,0) equal(original:GetCellCount(),0)
   assert(not pcall(function() a:SetGrid(replacement) end))
   equal(a:GetGrid(),original) equal(a.Nnodes,0)
@@ -1542,7 +1608,7 @@ test("moving search endpoints retain shared grids and pending marker snapshots w
     assert(b:GetPath())
     a:SetStartCoordinate(nil):SetEndCoordinate(nil)
     equal(a:GetPath(),nil) equal(a.Nnodes,cells+1)
-    a:UnmarkGrid()
+    a:ClearDrawing(GRID.Drawing.LABELS)
   end
 end)
 
@@ -1553,27 +1619,27 @@ test("invalid drawing styles preserve GRID and ASTAR overlays before any schedul
     local previous=view.GridDrawOptions
     local ids=view.GridDrawIDs
     local invalid={
-      function() view:DrawGrid(3) end,
-      function() view:DrawGrid(nil,{0,0,2}) end,
-      function() view:DrawGrid(nil,nil,0/0) end,
-      function() view:DrawGrid(nil,nil,nil,nil,-1) end,
-      function() view:DrawGrid(nil,nil,nil,nil,nil,7) end,
-      function() view:DrawGrid(nil,nil,nil,nil,nil,nil,0) end,
-      function() view:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=false}) end,
-      function() view:DrawGrid(nil,nil,nil,nil,nil,nil,nil,false) end,
-      function() view:DrawGridWithPath({},{PathColor={1,-1,0}}) end,
-      function() view:DrawGridWithPath({},{PathFillAlpha=false}) end,
-      function() view:DrawGridWithPath({},false) end,
+      function() view:DrawGrid(nil,{Coalition=3}) end,
+      function() view:DrawGrid(nil,{Color={0,0,2}}) end,
+      function() view:DrawGrid(nil,{Alpha=0/0}) end,
+      function() view:DrawGrid(nil,{FillAlpha=-1}) end,
+      function() view:DrawGrid(nil,{LineType=7}) end,
+      function() view:DrawGrid(nil,{ReadOnly=0}) end,
+      function() view:DrawGrid(nil,{BatchSize=false}) end,
+      function() view:DrawGrid(nil,false) end,
+      function() view:DrawGrid({},{PathColor={1,-1,0}}) end,
+      function() view:DrawGrid({},{PathFillAlpha=false}) end,
+      function() view:DrawGrid({},false) end,
     }
     for _,draw in ipairs(invalid) do
       assert(not pcall(draw))
       equal(view.GridDrawOptions,previous) equal(view.GridDrawIDs,ids)
       equal(view.GridDrawJob,nil)
     end
-    view:DrawGrid(0,{0,0,0},0,{1,1,1},0,0,false) flushTimers()
+    view:DrawGrid(nil,{Coalition=0,Color={0,0,0},Alpha=0,FillColor={1,1,1},FillAlpha=0,LineType=0,ReadOnly=false}) flushTimers()
     equal(view.GridDrawOptions.Alpha,0) equal(view.GridDrawOptions.Coalition,0)
     equal(view.GridDrawOptions.ReadOnly,false)
-    view:UndrawGrid()
+    view:ClearDrawing(GRID.Drawing.POLYGONS)
   end
 end)
 
@@ -1605,7 +1671,7 @@ test("unified resolution switches manual and automatic spacing with atomic valid
   g:SetResolution()
   equal(g:GetOptions().CrossSpacing,nil)
   equal(g:GetOptions().MaxCells,8000)
-  g:SetCorridor(1000,0):SetSpacing(100,150):CreateFromBounds(coord(0),coord(1000))
+  g:SetCorridor(1000,0):SetResolution(100,150):CreateFromBounds(coord(0),coord(1000))
   assert(not pcall(function() g:SetResolution(200) end))
   equal(g:GetDimensions().Spacing,100)
   local hex=GRID:New("Hex",GRID.Type.HEXAGON)
@@ -1620,10 +1686,9 @@ test("range queries include both radii and preserve ring order",function()
       local band=g:GetCellsInRange(coord(0),3,2)
       equal(#band,kind=="hexagonal" and 30 or (diagonal and 40 or 20))
       for i=2,#band do assert(band[i-1].id<band[i].id) end
-      local ring=g:GetRing(coord(0),3)
-      local range=g:GetCellsInRange(coord(0),3,3)
-      equal(#range,#ring)
-      for i,cell in ipairs(ring) do equal(range[i],cell) end
+      local ring=g:GetCellsInRange(coord(0),3,3)
+      equal(#ring,kind=="hexagonal" and 18 or (diagonal and 24 or 12))
+      for i=2,#ring do assert(ring[i-1].id<ring[i].id) end
       equal(#g:GetCellsInRange(coord(0),0,0),1)
       equal(#g:GetCellsInRange(coord(0),1000000000,999999999),0)
       for _,minimum in ipairs({-1,0.5,4,math.huge,false}) do
@@ -1640,16 +1705,11 @@ test("polylines distinguish open and closed boundaries and deduplicate retraced 
   local closed=g:GetPolylineCells(vertices,true)
   equal(#open,13)
   equal(#closed,16)
-  local polygon=g:GetPolygonBoundaryCells(vertices)
-  for i,cell in ipairs(closed) do equal(cell,polygon[i]) end
   local seen={}
   for _,cell in ipairs(open) do assert(not seen[cell.id]) seen[cell.id]=true end
   equal(seen[g:GetCellFromIndex(5,3).id],nil)
   equal(#g:GetPolylineCells({vertices[1],vertices[2],vertices[1]}),5)
   equal(#g:GetPolylineCells({vertices[1],vertices[1]}),1)
-  local line=g:GetLineCells(vertices[1],vertices[2])
-  local polyline=g:GetPolylineCells({vertices[1],vertices[2]})
-  for i,cell in ipairs(line) do equal(cell,polyline[i]) end
   for _,run in ipairs({
     function() g:GetPolylineCells({vertices[1]}) end,
     function() g:GetPolylineCells({vertices[1],vertices[2]},true) end,
@@ -1737,18 +1797,21 @@ test("new drawing validation leaves existing jobs untouched and rejects foreign 
   end
 end)
 
-test("legacy drawing calls retain their colors and path aliases",function()
+test("drawing rejects obsolete arguments without replacing pending overlays",function()
   local g=grid("rectangular")
   for _,view in ipairs({g,search(g)}) do
-    view:DrawGrid(nil,{0.2,0.3,0.4})
-    flushTimers()
-    equal(view.GridDrawOptions.Color[1],0.2)
-    view:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=1})
-    equal(view.GridDrawOptions.BatchSize,1)
-    view:DrawGridWithPath({},{GridColor={0.4,0.5,0.6},PathFillAlpha=0})
-    flushTimers()
-    equal(view.GridDrawOptions.Color[1],0.4)
-    equal(view.GridDrawOptions.PathFillAlpha,0)
+    view:DrawGrid(nil,{BatchSize=1})
+    local job,style=view.GridDrawJob,view.GridDrawOptions
+    for _,run in ipairs({
+      function() view:DrawGrid(0) end,
+      function() view:DrawGrid(nil,{0.2,0.3,0.4}) end,
+      function() view:DrawGrid(nil,nil,nil) end,
+      function() view:DrawGrid(nil,{GridColor={0.4,0.5,0.6}}) end
+    }) do
+      assert(not pcall(run))
+      equal(view.GridDrawJob,job)
+      equal(view.GridDrawOptions,style)
+    end
     view:ClearDrawing()
   end
 end)
@@ -1778,7 +1841,7 @@ test("selective cleanup cancels owned jobs and stale callbacks without touching 
   equal(count(drawings),0)
   equal(count(labels),0)
   equal(count(scheduled),0)
-  g:ClearDrawing():UndrawGrid():UnmarkGrid()
+  g:ClearDrawing():ClearDrawing(GRID.Drawing.POLYGONS):ClearDrawing(GRID.Drawing.LABELS)
 end)
 
 test("sparse geometry creates no terrain samples and preserves its lattice frame",function()
@@ -2332,14 +2395,14 @@ test("depth drawing honors path styles, zero opacity and the legacy options posi
   for _,view in ipairs({g,a}) do
     local cell=g:GetCells()[1]
     local pathCell=view==g and cell or a._CellNodes[cell.id]
-    view:DrawGridWithPath({pathCell},{ColorByDepth=true,PathColor={1,0,1},FillAlpha=0,PathFillAlpha=0,Alpha=0})
+    view:DrawGrid({pathCell},{ColorByDepth=true,PathColor={1,0,1},FillAlpha=0,PathFillAlpha=0,Alpha=0})
     local drawing=drawings[view.GridDrawIDs[1]]
     colorNear(drawing.outline,{1,0,1})
     colorNear(drawing.fill,{0,0.15,0.8})
     near(drawing.outline[4],0)
     near(drawing.fill[4],0)
 
-    view:DrawGrid(nil,nil,nil,nil,0,nil,nil,{ColorByDepth=true,DepthMin=10,DepthMax=30})
+    view:DrawGrid(nil,{FillAlpha=0,ColorByDepth=true,DepthMin=10,DepthMax=30})
     drawing=drawings[view.GridDrawIDs[1]]
     colorNear(drawing.fill,{0,0.75,1})
     near(drawing.fill[4],0)
@@ -2397,7 +2460,7 @@ test("drawing cancellation is independent of native timer handles across corouti
       land.getSurfaceHeightWithSeabed=function() queries=queries+1 return 0,20 end
       local callbacks={}
       local worker=coroutine.create(function()
-        view:DrawGrid({}, {ColorByDepth=true,BatchSize=1})
+        view:DrawGrid({},{ColorByDepth=true,BatchSize=1})
         callbacks[1]=scheduled[nextTimerID]
         view:MarkGrid({BatchSize=1})
         callbacks[2]=scheduled[nextTimerID]
@@ -2406,12 +2469,12 @@ test("drawing cancellation is independent of native timer handles across corouti
       stepTimer() stepTimer()
       assert(count(drawings)>0 and count(labels)>0)
       local drawn,marked=view.GridDrawJob.result,view.GridMarkJob.result
-      other:DrawGrid({}, {BatchSize=1})
+      other:DrawGrid({},{BatchSize=1})
       local beforeQueries=queries
       local nextWorker=coroutine.create(function()
         view:ClearDrawing()
         view:ClearDrawing()
-        view:DrawGrid({}, {ColorByDepth=true,BatchSize=1})
+        view:DrawGrid({},{ColorByDepth=true,BatchSize=1})
         view:MarkGrid({BatchSize=1})
       end)
       local resumed,cause=coroutine.resume(nextWorker)
@@ -2518,7 +2581,7 @@ test("moving and rotating window masks preserve independent fixed lattice center
           assert(cell)
           local sector=nextWindow:_WindowExitSector(cell)
           local boundary=false
-          for _,index in ipairs(nextWindow:_SparseNeighbourIndices(cell)) do
+          for _,index in ipairs(nextWindow:_NeighbourIndices(cell)) do
             if not nextWindow:_IsInsideWindow(nextWindow:IndexToPosition(index[1],index[2])) then boundary=true end
           end
           equal(sector~=nil,boundary)

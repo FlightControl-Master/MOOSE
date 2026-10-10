@@ -285,7 +285,10 @@ test("LOCAL selection reports removal without changing the active route or movem
     local command=ship.navigationCommand
     local updates=ship.updates
     local cleared=0
-    ship.pathfindingDebugSearch={UndrawGrid=function() cleared=cleared+1 end}
+    ship.pathfindingDebugSearch={ClearDrawing=function(_,kind)
+      equal(kind,GRID.Drawing.POLYGONS)
+      cleared=cleared+1
+    end}
 
     local ok,message=pcall(ship.SetPathfindingMode,ship,NAVYGROUP.PathfindingMode.LOCAL)
 

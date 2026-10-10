@@ -1067,11 +1067,11 @@ test("F10 redraw replaces only owned polygons and preserves other marks", functi
   local after = a:GetPath()
   equal(#after, #path)
   for i, node in ipairs(path) do equal(after[i], node) end
-  equal(a:UndrawGrid(), a)
+  equal(a:ClearDrawing(GRID.Drawing.POLYGONS), a)
   equal(count(drawings), 1) equal(drawings[42].text, "unrelated mark")
   equal(#a.GridDrawIDs, 0)
   equal(#removals, 2*n)
-  a:UndrawGrid()
+  a:ClearDrawing(GRID.Drawing.POLYGONS)
   equal(#removals, 2*n)
 end)
 
@@ -1079,7 +1079,7 @@ test("F10 styles preserve caller colors and accept zero opacity and neutral coal
   resetDrawings()
   local a = hexgrid(0, 0)
   local outline, fill = {1,0.5,0}, {0.2,0.3,0.4}
-  a:DrawGrid(0, outline, 0, fill, 0, 0, false)
+  a:DrawGrid(nil,{Coalition=0,Color=outline,Alpha=0,FillColor=fill,FillAlpha=0,LineType=0,ReadOnly=false})
   flushTimers()
   equal(outline[4], nil) equal(fill[4], nil)
   for _, d in pairs(drawings) do
@@ -1087,7 +1087,7 @@ test("F10 styles preserve caller colors and accept zero opacity and neutral coal
     equal(d.lineType, 0) equal(d.readOnly, false)
     equal(d.color[1], 1) equal(d.fill[2], 0.3)
   end
-  a:DrawGrid(2, outline, 0.8, nil, 0.1, 2)
+  a:DrawGrid(nil,{Coalition=2,Color=outline,Alpha=0.8,FillAlpha=0.1,LineType=2})
   flushTimers()
   for _, d in pairs(drawings) do
     equal(d.coalition, 2) equal(d.color[4], 0.8) equal(d.fill[4], 0.1)
@@ -1099,7 +1099,7 @@ end)
 test("F10 draws only accepted grid nodes, including no cells for a manual-only graph", function()
   resetDrawings()
   local manual = pair()
-  manual:UndrawGrid():DrawGrid()
+  manual:ClearDrawing(GRID.Drawing.POLYGONS):DrawGrid()
   flushTimers()
   equal(count(drawings), 0)
   land.surfaceAt = function(c) return c.x==2000 and land.SurfaceType.LAND or land.SurfaceType.WATER end
@@ -1123,7 +1123,7 @@ test("F10 overlays from different ASTAR instances are independent", function()
   a:DrawGrid() b:DrawGrid()
   flushTimers()
   local ids = deepcopy(b.GridDrawIDs)
-  a:UndrawGrid()
+  a:ClearDrawing(GRID.Drawing.POLYGONS)
   equal(count(drawings), #ids)
   for _, id in ipairs(ids) do assert(drawings[id]) end
 end)
@@ -1262,7 +1262,7 @@ end)
 test("expansion adds missing F10 cells without replacing existing marks or style", function()
   resetDrawings()
   local a=hexgrid(0,0):SetGridNeighboursOnly(true):SetValidNeighbourFunction(function() return false end)
-  a:DrawGrid(2,{0,0.5,1},0.8,nil,0.1,2,false)
+  a:DrawGrid(nil,{Coalition=2,Color={0,0.5,1},Alpha=0.8,FillAlpha=0.1,LineType=2,ReadOnly=false})
   flushTimers()
   local oldIDs=deepcopy(a.GridDrawIDs)
   local path, report=configureExpansion(a,{MaxAttempts=3}):GetPathWithExpansion()
@@ -1330,7 +1330,7 @@ test("initial budgets reject enormous grids without integer overflow or terrain 
   land.surfaceAt=function() error("Oversized grid must be rejected before sampling") end
   local result, reason=a:SetGridOptions({Width=4000000000,Margin=0,Spacing=1,CrossSpacing=1,MaxCells=5}):SetValidSurfaceTypes(nil):CreateGrid()
   equal(result,nil) equal(reason,"cell_limit") equal(a.Nnodes,0)
-  a:GetGrid():SetSpacing(1)
+  a:GetGrid():SetResolution(1)
   result, reason=a:SetGridOptions({Width=0,Margin=9e18,Spacing=1,MaxCells=5}):SetValidSurfaceTypes(nil):CreateHexGrid()
   equal(result,nil) equal(reason,"cell_limit") equal(a.hexGrid,nil) equal(a.Nnodes,0)
 end)
@@ -1463,7 +1463,7 @@ end)
 test("large overlays return before drawing and respect batch sizes and intervals", function()
   resetDrawings()
   local a=hexgrid()
-  equal(a:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=3,Interval=0.2}),a)
+  equal(a:DrawGrid(nil,{BatchSize=3,Interval=0.2}),a)
   equal(count(drawings),0) equal(a.LastGridDrawResult.Status,"queued")
   equal(a.LastGridDrawResult.NodesQueued,a.Nnodes)
   local n=0
@@ -1479,7 +1479,7 @@ end)
 
 test("updates extend pending drawings exactly once and preserve already drawn polygons", function()
   resetDrawings()
-  local a=hexgrid():DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=2})
+  local a=hexgrid():DrawGrid(nil,{BatchSize=2})
   stepTimer()
   local original=deepcopy(a.GridDrawIDs)
   local result=a.LastGridDrawResult
@@ -1496,30 +1496,30 @@ end)
 
 test("undrawing cancels pending callbacks without resurrecting removed polygons", function()
   resetDrawings()
-  local a=hexgrid():DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=2})
+  local a=hexgrid():DrawGrid(nil,{BatchSize=2})
   local job=a.GridDrawJob
   local callback=scheduled[nextTimerID]
   stepTimer()
   equal(count(drawings),2)
-  a:UndrawGrid()
+  a:ClearDrawing(GRID.Drawing.POLYGONS)
   equal(job.result.Status,"cancelled") equal(count(drawings),0)
   equal(a.GridDrawOptions,nil) equal(a.GridDrawJob,nil)
   equal(callback.fn(callback.args,timerNow),nil)
   flushTimers()
   equal(next(scheduled),nil) equal(count(drawings),0)
-  a:UpdateGridDrawing():UndrawGrid()
+  a:UpdateGridDrawing():ClearDrawing(GRID.Drawing.POLYGONS)
   equal(count(drawings),0) equal(#removals,2)
 end)
 
 test("redrawing mid-job cancels the old style and isolates other instances", function()
   resetDrawings()
-  local a=hexgrid():DrawGrid(1,nil,nil,nil,nil,nil,nil,{BatchSize=2})
+  local a=hexgrid():DrawGrid(nil,{Coalition=1,BatchSize=2})
   local callback=scheduled[nextTimerID]
-  local b=hexgrid(0,0):DrawGrid(2)
+  local b=hexgrid(0,0):DrawGrid(nil,{Coalition=2})
   local bIDs=deepcopy(b.GridDrawIDs)
   local old=a.GridDrawJob
   stepTimer()
-  a:DrawGrid(0,{0.1,0.2,0.3},0.7,nil,0.2,2,false,{BatchSize=3})
+  a:DrawGrid(nil,{Coalition=0,Color={0.1,0.2,0.3},Alpha=0.7,FillAlpha=0.2,LineType=2,ReadOnly=false,BatchSize=3})
   equal(old.result.Status,"cancelled")
   equal(callback.fn(callback.args,timerNow),nil)
   flushTimers()
@@ -1537,7 +1537,7 @@ test("expansion returns its path while an initial overlay is still queued", func
     return c.x>=1500 and c.x<=2500 and math.abs(c.z)<1200 and land.SurfaceType.LAND or land.SurfaceType.WATER
   end
   local a=hexgrid(0,0):SetGridNeighboursOnly(true)
-  a:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=1})
+  a:DrawGrid(nil,{BatchSize=1})
   equal(#a.GridDrawIDs,0)
   local path, report=a:GetPathWithExpansion()
   assert(path and #report.Attempts>1)
@@ -1553,7 +1553,7 @@ test("expanding search leaves a pending initial overlay at its original size", f
   resetDrawings()
   local a=hexgrid(0,0):SetGridNeighboursOnly(true):SetValidNeighbourFunction(function() return false end)
   local original=a.Nnodes
-  a:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=1})
+  a:DrawGrid(nil,{BatchSize=1})
   local _, report=configureExpansion(a,{MaxAttempts=2}):GetPathWithExpansion()
   equal(report.Drawing,nil)
   flushTimers()
@@ -1562,7 +1562,7 @@ end)
 
 test("drawing errors terminate the job and allow missing cells to be retried", function()
   resetDrawings()
-  local a=hexgrid():DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=3})
+  local a=hexgrid():DrawGrid(nil,{BatchSize=3})
   local original=a._DrawGridCell
   local calls=0
   function a:_DrawGridCell(node,style)
@@ -1585,7 +1585,7 @@ test("drawing options are validated before cancelling an existing overlay", func
   local a=hexgrid():DrawGrid()
   local job=a.GridDrawJob
   for _,options in ipairs({{BatchSize=0},{BatchSize=1.5},{Interval=0},{Interval=math.huge},{MaxBatchSeconds=0},{MaxBatchSeconds=math.huge},"invalid"}) do
-    equal(pcall(function() a:DrawGrid(nil,nil,nil,nil,nil,nil,nil,options) end),false)
+    equal(pcall(function() a:DrawGrid(nil,options) end),false)
     equal(a.GridDrawJob,job) equal(job.result.Status,"queued")
   end
   flushTimers()
@@ -1603,7 +1603,7 @@ test("search and drawing CPU timings are separate from simulation waits", functi
     a:SetValidNeighbourFunction(function() cpu=cpu+0.002 return true end)
     local original=a._DrawGridCell
     function a:_DrawGridCell(node,style) cpu=cpu+0.01 return original(self,node,style) end
-    a:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=2,Interval=0.1})
+    a:DrawGrid(nil,{BatchSize=2,Interval=0.1})
     local path, report=a:GetPathWithExpansion()
     assert(path and #report.Attempts>1)
     local search=cpu-100
@@ -1654,7 +1654,7 @@ test("CPU budget limits batches before the configured cell count is reached", fu
   local ok, err=pcall(function()
     local original=a._DrawGridCell
     function a:_DrawGridCell(node,style) cpu=cpu+0.003 return original(self,node,style) end
-    a:DrawGrid(nil,nil,nil,nil,nil,nil,nil,{BatchSize=25,MaxBatchSeconds=0.005})
+    a:DrawGrid(nil,{BatchSize=25,MaxBatchSeconds=0.005})
     local countBefore=0
     while stepTimer() do
       local n=count(drawings)
@@ -1761,7 +1761,7 @@ test("debug snapshot highlights actual hex and rectangular path cells without se
     local expected={}
     for _,node in ipairs(path) do expected[node.id]=true end
     local valid, costs, nodes=a.nvalid,a.ncost,a.Nnodes
-    equal(a:DrawGridWithPath(path,{BatchSize=2}),a)
+    equal(a:DrawGrid(path,{BatchSize=2}),a)
     flushTimers()
     equal(a.nvalid,valid) equal(a.ncost,costs) equal(a.Nnodes,nodes)
     local green, cells=0,0
@@ -1788,7 +1788,7 @@ test("debug snapshots do not grow during pending or subsequent grid expansions",
   local a=hexgrid(0,0):SetGridNeighboursOnly(true)
   local path=a:GetPath()
   local original=a.Nnodes
-  a:DrawGridWithPath(path,{BatchSize=1})
+  a:DrawGrid(path,{BatchSize=1})
   a:ExpandGrid(4000,2000):UpdateGridDrawing()
   equal(a.LastGridDrawResult.NodesQueued,original)
   flushTimers()
@@ -1810,10 +1810,10 @@ test("debug snapshots copy path selection and options before deferred drawing", 
   local path=a:GetPath()
   local expected={}
   for _,node in ipairs(path) do expected[node.id]=true end
-  local options={Coalition=0,GridColor={0.1,0.2,0.3},PathColor={0.4,0.5,0.6},PathFillAlpha=0,BatchSize=1}
-  a:DrawGridWithPath(path,options)
+  local options={Coalition=0,Color={0.1,0.2,0.3},PathColor={0.4,0.5,0.6},PathFillAlpha=0,BatchSize=1}
+  a:DrawGrid(path,options)
   for i=#path,1,-1 do path[i]=nil end
-  options.PathColor[1]=1 options.GridColor[1]=1 options.PathFillAlpha=1 options.Coalition=2
+  options.PathColor[1]=1 options.Color[1]=1 options.PathFillAlpha=1 options.Coalition=2
   flushTimers()
   for id,markID in pairs(a.GridDrawCellIDs) do
     local drawing=drawings[markID]
@@ -1826,18 +1826,18 @@ test("debug redraw and undraw cancel pending snapshots without duplicating polyg
   resetDrawings()
   local a=hexgrid():SetGridNeighboursOnly(true)
   local path=a:GetPath()
-  a:DrawGridWithPath(path,{BatchSize=1})
+  a:DrawGrid(path,{BatchSize=1})
   local old=a.GridDrawJob
   local callback=scheduled[nextTimerID]
   stepTimer()
-  a:DrawGridWithPath({},{BatchSize=2})
+  a:DrawGrid({},{BatchSize=2})
   equal(old.result.Status,"cancelled") equal(callback.fn(callback.args,timerNow),nil)
   flushTimers()
   equal(count(drawings),a.Nnodes)
   for _,drawing in pairs(drawings) do equal(drawing.color[2],0) equal(drawing.fill[4],0) end
-  a:DrawGridWithPath(path,{BatchSize=1})
+  a:DrawGrid(path,{BatchSize=1})
   local pending=a.GridDrawJob
-  a:UndrawGrid()
+  a:ClearDrawing(GRID.Drawing.POLYGONS)
   equal(pending.result.Status,"cancelled") equal(count(drawings),0)
   flushTimers()
   equal(count(drawings),0) equal(next(scheduled),nil)
@@ -1851,10 +1851,9 @@ test("invalid debug paths and options leave the existing overlay intact", functi
   local old=a.GridDrawJob
   local foreign=hexgrid()
   local _,foreignNode=next(foreign.nodes)
-  equal(pcall(function() a:DrawGridWithPath(nil) end),false)
-  equal(pcall(function() a:DrawGridWithPath({foreignNode}) end),false)
+  equal(pcall(function() a:DrawGrid({foreignNode}) end),false)
   for _,options in ipairs({{PathFillAlpha=-1},{PathFillAlpha=2},{BatchSize=0},{MaxBatchSeconds=0},"invalid"}) do
-    equal(pcall(function() a:DrawGridWithPath(path,options) end),false)
+    equal(pcall(function() a:DrawGrid(path,options) end),false)
   end
   equal(a.GridDrawJob,old) equal(old.result.Status,"queued")
   flushTimers()
@@ -2075,7 +2074,7 @@ test("old automatic endpoints cannot bridge later grid searches", function()
     return land.SurfaceType.LAND
   end
   a:SetValidSurfaceTypes(land.SurfaceType.WATER)
-  a:GetGrid():SetCorridor(2000,0):SetSpacing(1000):SetDiagonals(false)
+  a:GetGrid():SetCorridor(2000,0):SetResolution(1000):SetDiagonals(false)
   -- Build along the x axis to retain the intended two diagonal cells.
   a:SetEndCoordinate(coord(1000)):CreateGrid()
   a:SetEndCoordinate(coord(1000,1000))
@@ -2094,7 +2093,7 @@ test("old automatic endpoints cannot bridge later grid searches", function()
   end
   -- Caller-owned path values remain usable for coordinate conversion and debug snapshots.
   equal(a:GetNodeCoordinate(endpoint).x,500)
-  a:DrawGridWithPath(path) flushTimers()
+  a:DrawGrid(path) flushTimers()
   equal(a.LastGridDrawResult.Status,"complete")
   -- The same bridging position remains valid when explicitly added by the caller.
   local manual=a:AddNodeFromCoordinate(coord(500,500))
@@ -2141,15 +2140,15 @@ test("grid creation expansion search and debug overlays require no COORDINATE al
     a:SetGridOptions({Width=2000,Margin=1000,Spacing=1000}):SetValidSurfaceTypes(nil):CreateHexGrid():SetGridNeighboursOnly(true):SetValidNeighbourLoS(100)
     a:ExpandGrid(4000,2000)
     local path=assert(a:GetPath())
-    a:DrawGridWithPath(path,{BatchSize=100})
+    a:DrawGrid(path,{BatchSize=100})
     flushTimers()
-    a:UndrawGrid()
+    a:ClearDrawing(GRID.Drawing.POLYGONS)
     local b=ASTAR:New():SetStartCoordinate({x=0,y=0}):SetEndCoordinate({x=2000,y=0})
     b:SetGridOptions({Width=1000,Margin=0,Spacing=1000,CrossSpacing=1000}):SetValidSurfaceTypes(nil):CreateGrid()
     assert(b:GetPath())
-    b:DrawGridWithPath(b:GetPath(),{BatchSize=100})
+    b:DrawGrid(b:GetPath(),{BatchSize=100})
     flushTimers()
-    b:UndrawGrid()
+    b:ClearDrawing(GRID.Drawing.POLYGONS)
     local zone=circleZone(0,0,1500)
     for _,hex in ipairs({false,true}) do
       local c=ASTAR:New():SetStartCoordinate({x=0,y=0}):SetEndCoordinate({x=1000,y=0})
@@ -2712,7 +2711,10 @@ end)
 test("NAVYGROUP dead-group cleanup releases drawings and stops its navigation timer",function()
   local ship=vessel()
   local removed=false
-  ship.pathfindingDebugSearch={UndrawGrid=function() removed=true end}
+  ship.pathfindingDebugSearch={ClearDrawing=function(_,kind)
+    equal(kind,GRID.Drawing.POLYGONS)
+    removed=true
+  end}
   ship.LastNavigationCheck={Status="blocked"}
   ship.collisionwarning=true
   ship.ispathfinding=true
@@ -3187,8 +3189,8 @@ test("text markers are batched include indices and do not evaluate rules by defa
     assert(label.text:match("Node %d+") and label.text:match("Hex: q=") and label.text:match("Candidates: %d+"))
     assert(not label.text:match("Valid connections:"))
   end
-  a:UnmarkGrid() equal(#a.GridMarkIDs,0) equal(count(drawings),polygons)
-  a:UndrawGrid() equal(count(drawings),0)
+  a:ClearDrawing(GRID.Drawing.LABELS) equal(#a.GridMarkIDs,0) equal(count(drawings),polygons)
+  a:ClearDrawing(GRID.Drawing.POLYGONS) equal(count(drawings),0)
 end)
 
 test("text markers count checked neighbours and include rectangular indices and manual endpoints", function()
@@ -3227,7 +3229,7 @@ test("marker replacement cancellation and errors retain independent ownership", 
   end
   local pending=a.GridMarkJob
   equal(pcall(function() a:MarkGrid({BatchSize=0}) end),false) equal(a.GridMarkJob,pending)
-  a:UnmarkGrid() equal(pending.result.Status,"cancelled")
+  a:ClearDrawing(GRID.Drawing.LABELS) equal(pending.result.Status,"cancelled")
   flushTimers()
   for _,id in ipairs(b.GridMarkIDs) do
     assert(emitted[id])
@@ -3427,11 +3429,11 @@ test("rectangular expansion leaves debug snapshots fixed and explicit redraw hig
   local a=ASTAR:New():SetStartCoordinate(coord(0)):SetEndCoordinate(coord(4000))
   a:SetGridOptions({Width=0,Margin=0,Spacing=1000}):CreateGrid():SetValidNeighbourDistance(1100)
   local path=a:GetPathWithExpansion()
-  a:DrawGridWithPath(path) flushTimers()
+  a:DrawGrid(path) flushTimers()
   local old=count(drawings) equal(old,5)
   a:ExpandGrid(2000,1000) flushTimers() equal(count(drawings),old)
   path=a:GetPathWithExpansion()
-  a:DrawGridWithPath(path) flushTimers()
+  a:DrawGrid(path) flushTimers()
   equal(count(drawings),a.Nnodes)
   local green=0
   for _,drawing in pairs(drawings) do

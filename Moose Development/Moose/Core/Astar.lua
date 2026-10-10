@@ -41,7 +41,7 @@
 -- @field #table hexGrid Hex geometry: origin x/z, heading cos/sin, spacing, rowSpacing, original distance, width, margin, candidateCount and temporary initialSamples for zone seeds.
 -- @field #table gridLinks Cached candidate adjacency, indexed by node id, then neighbour id. Does not cache rule results.
 -- @field #table gridComponents Connected-component labels for grid candidates. Rebuilt when candidate adjacency changes.
--- @field #table GridDrawIDs F10 polygon ids owned by DrawGrid(), removed by UndrawGrid().
+-- @field #table GridDrawIDs F10 polygon ids owned by DrawGrid(), removed by ClearDrawing(GRID.Drawing.POLYGONS).
 -- @field #table GridDrawOptions Last DrawGrid() style and batch settings, retained for incremental updates.
 -- @field #table GridDrawCellIDs Drawn polygon ids indexed by grid node id.
 -- @field #table GridDrawJob Pending drawing queue, or nil once completed or cancelled.
@@ -119,7 +119,7 @@
 -- SetGridOptions updates only supplied fields, including nested Expansion fields; nil or an empty table preserves the configuration.
 -- GetGrid():ResetOptions() restores all option defaults, subject to the geometry lock after construction.
 -- GetGrid():SetResolution(Resolution, CrossSpacing), SetMaxCells(MaxCells) and SetDiagonals(Diagonals) offer explicit setters.
--- Resolution accepts a meter spacing or GRID.Resolution preset; SetSpacing remains a manual-only alias.
+-- Resolution accepts a meter spacing or GRID.Resolution preset.
 -- GetGrid():SetExpansion(GrowthFactor, MaxAttempts, MaxWidth, MaxMargin) replaces all expansion settings.
 -- For example, astar:GetGrid():SetResolution(GRID.Resolution.NORMAL):SetMaxCells(10000):SetExpansion(1.5, 5).
 -- Omitted expansion limits remove previous limits. SetGridOptions({Expansion={MaxAttempts=3}}) instead preserves other expansion fields.
@@ -346,15 +346,15 @@
 -- DrawGrid(path, {ColorByDepth=true, DepthMin=3.5, DepthMax=15}) colors cells by center depth and keeps green path outlines.
 -- The display range is independent of search-depth rules/costs. Depth is sampled during drawing; it does not describe the whole cell.
 -- ClearDrawing(Kind) cancels work and removes owned polygons, labels or both, using GRID.Drawing constants; default ALL.
--- DrawGridWithPath(), UndrawGrid(), UnmarkGrid() and positional drawing arguments remain compatible.
--- Both polygon functions support timed batches and a CPU budget. One DCS call cannot be interrupted, so the budget is a soft limit.
--- UndrawGrid() cancels queued polygon work and removes only this object's polygons.
+-- Use DrawGrid(Path, Options) and ClearDrawing(Kind). GRID documents migration from the removed development aliases.
+-- Grid and path overlays support timed batches and a CPU budget. One DCS call cannot be interrupted, so the budget is a soft limit.
+-- ClearDrawing(GRID.Drawing.POLYGONS) cancels queued polygon work and removes only this object's polygons.
 --
 -- MarkGrid() creates separate text labels with ids, grid indices and candidate-neighbor counts. CheckNeighbours=true additionally evaluates valid connections.
 -- Counts are evaluated when a batch runs. Keep the graph and rule unchanged while marking for a consistent snapshot.
 -- Labels include manual endpoints, and use the same batching defaults as drawing: BatchSize=25, Interval=0.1, MaxBatchSeconds=0.005.
 -- Without a CPU clock, both drawing and marking process one node per batch. LastGridDrawResult and LastGridMarkResult report progress and errors.
--- UnmarkGrid() cancels queued text work and removes text labels without touching polygons. A new MarkGrid() replaces previous labels.
+-- ClearDrawing(GRID.Drawing.LABELS) cancels queued text work and removes text labels without touching polygons. A new MarkGrid() replaces previous labels.
 --
 -- @field #ASTAR
 ASTAR = {
@@ -2780,7 +2780,7 @@ end
 function ASTAR:_LazyNeighbours(State, Node)
 
   local grid=self.Grid
-  local indices=Node.cell and grid:_SparseNeighbourIndices(Node.cell) or grid:_SparseNearbyIndices(Node.vector)
+  local indices=Node.cell and grid:_NeighbourIndices(Node.cell) or grid:_SparseNearbyIndices(Node.vector)
   local failure
   for _,index in ipairs(indices) do
     local cell,reason=grid:GetOrCreateCell(index[1],index[2])
@@ -4030,17 +4030,6 @@ function ASTAR:MarkGrid(Options)
 
 end
 
---- Cancel pending node labels and remove this object's text markers. Leaves grid polygons intact.
--- @param #ASTAR self
--- @return #ASTAR self
-function ASTAR:UnmarkGrid()
-
-  self:_SyncGrid()
-
-  return GRID.UnmarkGrid(self)
-
-end
-
 --- Process one batch of node text labels.
 -- @param #ASTAR self
 -- @param #table Job Marker job.
@@ -4072,7 +4061,7 @@ end
 -- Manual nodes and exact endpoints have no polygon. The path must belong to this search, even when the GRID is shared.
 -- Colors and path selection are copied. No search or route assignment is performed; polygons do not guarantee navigability.
 -- ColorByDepth uses GRID's center-depth palette and preserves path outlines. DepthMin/DepthMax are display settings only.
--- The legacy positional form DrawGrid(Coalition, Color, Alpha, FillColor, FillAlpha, LineType, ReadOnly, DrawOptions) remains accepted.
+-- Extra positional drawing arguments are rejected; all styling belongs in Options.
 -- @param #ASTAR self
 -- @param #table Path (Optional) Ordered ASTAR.Node entries from this search; nil draws without highlighting.
 -- @param Core.Grid#GRID.DrawOptions Options (Optional) Named style and batch settings; see GRID.DrawOptions for all fields and defaults.
@@ -4082,18 +4071,6 @@ function ASTAR:DrawGrid(Path, Options, ...)
   self:_SyncGrid()
 
   return GRID.DrawGrid(self, Path, Options, ...)
-
-end
-
---- Draw a fixed path snapshot. Compatibility alias for DrawGrid(Path, Options).
--- Nil Path is rejected; an empty successful path is accepted. Options.GridColor remains an alias for Color.
--- @param #ASTAR self
--- @param #table Path Ordered node list from a successful search on this ASTAR object.
--- @param Core.Grid#GRID.DrawOptions Options (Optional) Drawing style and batch settings.
--- @return #ASTAR self; inspect LastGridDrawResult for progress.
-function ASTAR:DrawGridWithPath(Path, Options)
-
-  return GRID.DrawGridWithPath(self, Path, Options)
 
 end
 
@@ -4183,18 +4160,6 @@ function ASTAR:_DrawGridCell(Node, Style)
   self:_SyncGrid()
 
   return GRID._DrawGridCell(self, Node, Style)
-
-end
-
---- Cancel pending drawing and remove polygons created by DrawGrid() without changing the grid or deleting other F10 marks.
--- Removal is synchronous. Safe to call repeatedly or before drawing. Does not remove MarkGrid text markers.
--- @param #ASTAR self
--- @return #ASTAR self
-function ASTAR:UndrawGrid()
-
-  self:_SyncGrid()
-
-  return GRID.UndrawGrid(self)
 
 end
 
