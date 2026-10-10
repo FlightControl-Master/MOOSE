@@ -319,19 +319,24 @@ cleanup. Thirty-six new regressions and the existing five affected suites pass
 under Lua 5.1.5 (451 cases total). Syntax and final diff checks pass. No simulator
 test was performed, and no other production class required changes.
 
-R1a-V2 remains proposed: the incremental depth evaluator and its terrain/sampling
-limits. Await approval before that implementation. V1 does not complete R1a,
-change `CheckDepth` or enable NAVYGROUP LOCAL navigation.
+R1a-V2 was then approved and implemented: incremental depth/corridor sampling,
+raw profile collection, stable merge/group processing, point/profile/work budgets
+and conservative missing-data results. Thirty-seven new cases and all six
+previous affected suites pass under Lua 5.1.5: 488 total. A new regression exposed
+a rounded-away lateral offset, now rejected as `numeric_range`. LuaDoc, syntax
+and final diff checks are complete. No other production class changed.
+The R1a helper implementation is complete; DCS validation remains pending.
+`CheckDepth` is unchanged and NAVYGROUP LOCAL navigation remains disabled.
 
 Capability status; geometry and validation contracts are specified in the linked
-documents. Connection/job validation is implemented; incremental depth is pending:
+documents. Connection/job and incremental depth validation are implemented:
 
 | Capability | Contract | Status / needed |
 | --- | --- | --- |
 | Geometry snapshot from Vec3 positions | Copy points; compute segment lengths, cumulative distance and headings in the horizontal plane; no terrain queries or controller objects | Implemented; R1 |
 | Projection / position at distance / turn geometry | Return original segment, fraction, along-route distance, lateral distance and interpolated position; accept segment and distance bounds; expose tied projection ambiguity, duplicate handling and signed corner angles | Implemented; R1 preparation and R3 progress |
 | Bounded route validation | Walk original connections with an atomic evaluator; report evidence/cost, work limits and owned continuation/context; opaque callbacks have no internal native-work guarantee | R1a-V1 implemented and regression-tested |
-| Sampled corridor/area validation | Incrementally check interior profiles, not just center/edges; distinguish blocked/unavailable/limited; report spacing and work counts. Straight strips do not certify a turning hull. | API proposed for straight corridors; R1a-V2 implementation and R2 maneuver envelope validation pending |
+| Sampled corridor/area validation | Incrementally check interior profiles, not just center/edges; distinguish blocked/unavailable/limited; report spacing and work counts. Straight strips do not certify a turning hull. | R1a-V2 straight-corridor validation implemented and regression-tested; R2 maneuver envelope validation pending |
 
 Current PATHLINE constructors sample terrain when adding points. Pure geometry
 helpers use explicit copied snapshots without hidden terrain queries. Existing
@@ -598,13 +603,13 @@ same with drawings enabled or disabled.
 ## Implementation plan and gates
 
 Proceed in small steps. R1 and R2 precede moving local continuation.
-Except for the completed R1a pure geometry and V1 connection/job substeps, the milestones below
+Except for the completed R1a geometry, connection/job and incremental depth helpers, the milestones below
 remain proposed and unimplemented.
 
 | Step | Deliverable | Exit criterion |
 | --- | --- | --- |
 | P0: common inputs and replay | One explicit fixture/driver configuration for virtual and naval preparation, source identity, fixed-pose snapshots and structured result records | Identical search input produces identical raw candidates regardless of consumer; old failure evidence is reproducible where sufficient data exists. |
-| R1a: PATHLINE geometry and validation | Pure geometry/projection and V1 connection/job validation implemented; V2 incremental depth proposed and pending | Deterministic tests for vertical/rotated paths, duplicates, hairpins, self-crossings, missing data and cancellation; no hidden terrain access in geometry. |
+| R1a: PATHLINE geometry and validation | Pure geometry/projection, V1 connection/job and V2 incremental depth validation implemented with Lua 5.1 regressions; simulator validation pending | Deterministic tests for vertical/rotated paths, duplicates, hairpins, self-crossings, missing data and cancellation; no hidden terrain access in geometry. |
 | R1b: fixed-pose naval preparation | Bounded candidate preparation using existing ASTAR and new shared helpers; no moving vessel or route submission | Every raw candidate is accepted or rejected with evidence. Known island/shoal cases retain hard depth/corridor rules; feasible reference passages survive preparation. |
 | R2a: movement measurements | Small DCS experiments with one precomputed straight route, turn and stop; use the Harbor Tug at explicitly chosen test speeds | Measured actual tracks, turning deviation and stopping distance; documented uncertainty and supported speed range. No rolling search yet. |
 | R2b: one prepared passage | Submit one prepared passage, then extend to the known shallow/insular section; compare actual track to assumptions and legacy lookahead | No grounding, unexplained stop or route replacement; preserve original waypoint actions. Only a validated replacement may alter the LOCAL forward safety policy. |
@@ -612,13 +617,12 @@ remain proposed and unimplemented.
 | R3b: rolling DCS passage | Full known route with explicit initial and continuation planning | Repeated successful weight-1 passages, explained weight-10 outcomes, accurate arrival and bounded memory/work, debug on/off parity. |
 | R4: wider supported scope | More vessels/speeds, multiple original waypoints, mission tasks, formations only with explicit clearance design | Expand documented support only for cases actually validated; consider reuse by global search in a separate change. |
 
-R1a has two parts: the [pure geometry API](pathline-geometry-api.md) is complete;
-the [connection/depth-validation API](pathline-validation-api.md) has its V1
-job/connection layer implemented. V2 depth sampling still requires approval and
-implementation. These helper steps do not yet complete R1a or enable LOCAL.
-The V1 layer preserves an evaluator's unavailable result and owns cancellation;
-V2 adds resumable native terrain checks. Geometry itself has no terrain queries
-or asynchronous work.
+R1a helper implementation is complete: the [pure geometry API](pathline-geometry-api.md)
+and both stages of the [connection/depth-validation API](pathline-validation-api.md)
+are implemented and regression-tested. V1 preserves an evaluator's unavailable
+result and owns cancellation; V2 adds resumable native terrain checks. Geometry
+itself has no terrain queries or asynchronous work. These helpers do not enable
+LOCAL or establish simulator/controller safety.
 
 P0 must distinguish measured data from reconstructed positions. The last case55
 log lacks detailed candidate-rejection evidence; do not claim an exact replay
@@ -632,7 +636,7 @@ at the earlier requested cruise speed.
 
 Suggested implementation commits, after approval:
 1. P0 test configuration/report contracts.
-2. R1a pure geometry and V1 job/connection validation with tests (completed), followed by separately approved V2 incremental depth validation with tests.
+2. R1a pure geometry, V1 job/connection validation and V2 incremental depth validation with tests (completed).
 3. R1b preparation with stationary/virtual tests.
 4. R2 diagnostics/driver and resulting measured maneuver policy.
 5. R3a/R3b LOCAL orchestration and simulator validation.
@@ -675,6 +679,7 @@ lua tests/astar.lua
 lua tests/grid.lua
 lua tests/pathline.lua
 lua tests/pathline-validation.lua
+lua tests/pathline-depth-validation.lua
 ```
 
 Include depth/vector/timer or other downstream suites when their behavior is
@@ -689,14 +694,14 @@ another cross-cutting guard.
 
 ### Immediate next step
 
-Next approval request: implement R1a-V2 from the
-[validation API](pathline-validation-api.md): depth evaluator, incremental native
-profile processing and dense longitudinal/lateral samples, point/profile/data
-caps, conservative unavailable-data results, LuaDoc and Lua 5.1 regressions.
-Keep the existing synchronous depth APIs unchanged.
+Next approval request: **P0 common test inputs, replay and result contracts**
+for virtual search and fixed-pose naval preparation. Specify shared search and
+validation settings, source identity, fixed-pose snapshots and structured candidate/
+rejection evidence. Distinguish recorded measurements from reconstructed inputs.
+Use this contract to prepare R1b; do not integrate moving-vessel control yet.
 
-The pure geometry and V1 connection/job APIs and their Lua 5.1 regressions are
-complete. No DCS validation is claimed. P0 replay/report contracts and the
-remaining R1a depth validation still precede fixed-pose naval preparation and
-new autonomous ship trials.
+The R1a geometry, connection/job and incremental depth APIs and their Lua 5.1
+regressions are complete. No DCS validation is claimed. P0 still precedes
+fixed-pose naval preparation and new autonomous ship trials. Wait for approval
+or comments before beginning the next subtask.
 A missing continuation stops the ship until a new movement command.

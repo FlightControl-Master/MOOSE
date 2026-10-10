@@ -6,11 +6,11 @@ nav_exclude: true
 
 # PATHLINE R1a validation API
 
-Status: R1a-V1 approved and implemented on 2026-10-10 with LuaDoc and Lua 5.1.5
-regressions: connection evaluator, job lifecycle, limits and reports. R1a-V2
-(incremental depth evaluator) remains a proposal requiring separate approval.
-The [rolling pathfinding plan](rolling-pathfinding-plan.md) tracks the remaining
-R1a work. The [pure geometry API](pathline-geometry-api.md) is already implemented.
+Status: R1a-V1 and R1a-V2 approved and implemented on 2026-10-10 with LuaDoc
+and Lua 5.1.5 regressions: job lifecycle, connection evaluator, incremental
+depth/corridor evaluation, limits and reports. The
+[rolling pathfinding plan](rolling-pathfinding-plan.md) tracks the next approval
+gates. The [pure geometry API](pathline-geometry-api.md) is also implemented.
 
 ## Scope and existing constraints
 
@@ -24,7 +24,7 @@ Two evaluators have deliberately different work guarantees:
 - A connection evaluator invokes a supplied rule once for each original
   connection. This supports `ASTAR:EvaluateConnection()`, including its cost.
   The callback is atomic and its internal work is opaque.
-- The proposed depth evaluator samples straight connections and parallel corridor profiles.
+- The depth evaluator samples straight connections and parallel corridor profiles.
   It can yield between native profile queries, point checks and profile processing
   operations. It checks clearance only; it introduces no competing depth cost.
 
@@ -40,8 +40,7 @@ data; it cannot bound the duration or engine-side allocation of a native call.
 ## Public functions
 
 All functions use static `PATHLINE.Function(...)` syntax.
-Only `CreateDepthEvaluator` and depth-specific job behavior remain unimplemented;
-the five connection/job functions below are available.
+All six functions and both evaluator kinds below are implemented.
 
 | Function | Return and purpose |
 | --- | --- |
@@ -101,7 +100,7 @@ pass ASTAR nodes or the full ASTAR report to the job. ASTAR's in-call configurat
 check is useful but does not freeze configuration between job steps. The owner
 must invalidate the context when evaluator rules, costs or captured settings change.
 
-### Depth evaluator options (R1a-V2 proposal)
+### Depth evaluator options (R1a-V2)
 
 Distances, widths and depths use meters. Values are finite; required spacings and
 `MinDepth` are strictly positive. No vessel-specific defaults are implied.
@@ -117,7 +116,7 @@ Distances, widths and depths use meters. Values are finite; required spacings an
 | `MaxProfilePoints` | Positive cap on native records in one returned profile, default `4096` |
 | `MaxDirectPoints` | Positive cap on generated points for one section/profile, default `4097` |
 
-These defaults are proposed resource policies, not measured performance guarantees.
+These defaults are resource policies, not measured performance guarantees.
 There is no `Weight`, `PreferredDepth`, implicit ship draft or permissive missing-data
 switch. Soft depth preferences remain ASTAR's responsibility. The T2 settings are
 test inputs, not defaults for this API.
@@ -128,7 +127,11 @@ right of the directed connection. Zero width uses only offset zero.
 For width 50 and lateral spacing 10, this produces seven profiles with a gap of
 about 8.33 m. Check `1 + 2*m` against `MaxOffsets` before allocating the layout.
 Factory failure is `offset_limit` or `numeric_range`, with required count/limit
-where representable. Never coarsen the caller's requested spacing to fit a cap.
+where representable. No offset array is allocated: each offset is calculated as
+its profile is prepared. Never coarsen the caller's requested spacing to fit a cap.
+Unrepresentable derived counts or collapsed section/direct/offset coordinates
+end a job with `limited`, `numeric_range`; repeated coincident lines cannot certify
+a corridor whose lateral displacement disappeared through floating-point rounding.
 
 ## Job state, continuation and ownership
 
@@ -249,7 +252,7 @@ failed callbacks. `CPUOverrunSeconds` is the largest excess over the requested
 slice and total caps, zero if neither was exceeded, absent without a usable
 measurement/cap. CPU accounting is not a frame-time guarantee.
 
-Suggested yield reasons are `slice_work_limit`, `slice_cpu_limit`,
+Yield reasons are `slice_work_limit`, `slice_cpu_limit`,
 `slice_evaluator_limit`, `slice_point_limit`, and `slice_profile_query_limit`.
 Total failure reasons use `work_limit`, `cpu_limit`, `evaluator_limit`,
 `point_limit` and `profile_query_limit`. Structural failures use `profile_point_limit`
@@ -261,7 +264,7 @@ callback may invoke arbitrarily many native operations. Reports leave those coun
 If full ASTAR connection/cost calls prove too expensive, a separately designed
 resumable ASTAR evaluator is needed; splitting or undercounting calls is not a fix.
 
-## Incremental depth algorithm (R1a-V2 proposal)
+## Incremental depth algorithm (R1a-V2)
 
 For each positive-length original segment, divide its horizontal length `L` into
 `ceil(L / MaxSectionLength)` equal sections, keeping the original endpoints exact.
@@ -300,6 +303,19 @@ Within each section/profile:
    claimed checked. This is not necessarily the earliest obstruction in space.
 7. Release each finished profile buffer. Commit a section to the checked prefix
    only after every required offset in it passes. Then advance to the next section.
+
+The diagnostic phase sequence is `segment`, `section`, `profile_setup`, `query`,
+`collect`, `generate`, `sort`, `check`/`group`, `next_profile`, `commit_section`.
+An isolated position uses `point_setup` and `point`; all-duplicate routes then
+account for their original zero-length segments individually. Each phase advance
+is bounded and charged, including merge-range setup, single-record merge output
+and merge-pass advancement. Specific point/profile budgets apply only to their
+native operations. No complete-array sort or unbudgeted sampling loop is used.
+
+The native table must remain stable during incremental collection; after collection
+its records have been copied and the native table is released. Endpoint arguments
+passed to the native query are copies. Checked native records retain their original
+x/z, with projected/clamped distances used only for ordering and route evidence.
 
 Every traversal, copy, merge, group reduction and state advance must have bounded
 progress per admitted work unit. Scratch storage is bounded by the offset cap and
@@ -353,7 +369,7 @@ Reports contain bounded scalar fields and independent small tables:
 | `Cursor` | Diagnostic `Phase`, `SegmentIndex`/`PointIndex`, `SectionIndex`, `OffsetIndex`, `SampleIndex`; absent after termination |
 | `Counters` | Admitted `WorkUnits`, applicable `EvaluatorCalls`, `PointChecks`, `ProfileQueries`, `FallbackProfiles`, `SkippedDegenerateSegments`, and active `CPUSeconds` when measurable |
 | `LastSlice` | Work/native/callback counter deltas and CPU seconds for the last actual step; optional yield reason and non-negative `CPUOverrunSeconds` |
-| `Coverage` | Evaluator kind and effective depth layout settings/caps, or callback cost units; no implied hull or continuous-area certification |
+| `Coverage` | Evaluator kind and copied depth options/caps plus `OffsetCount` and `ActualLateralSpacing` (zero at width zero), or callback cost units; no implied hull or continuous-area certification |
 
 Failure position is a copied x/z pair; optional `ProfileY` is separately identified
 as native profile height. Do not invent an altitude to return a Vec3. Omit unknown
@@ -394,7 +410,7 @@ change is required for the first implementation steps. Reuse VECTOR's point pred
 
 Run production methods with controlled dependencies in separate Lua 5.1 processes.
 The connection/job cases are covered by the V1 suite. Native incremental sampling,
-merge/group continuation and dense-corridor cases remain planned V2 tests.
+merge/group continuation and dense-corridor cases are covered by the V2 suite.
 
 | Case | Required result |
 | --- | --- |
@@ -428,9 +444,9 @@ merge/group continuation and dense-corridor cases remain planned V2 tests.
    start/step/report/cancel functions, state and report contracts, context handling,
    work/callback/CPU budgets and deterministic regressions with LuaDoc. An ASTAR
    adapter in tests verifies the integration without changing production ASTAR.
-2. **R1a-V2: incremental depth evaluator.** Implement its factory, bounded sampling
-   and profile processing, specific budgets/caps and missing-data evidence. Add the
-   depth/corridor cases above; retain existing synchronous APIs unchanged.
+2. **R1a-V2: incremental depth evaluator (completed).** Factory, bounded sampling
+   and profile processing, specific budgets/caps and missing-data evidence are
+   implemented with depth/corridor regressions; existing synchronous APIs are unchanged.
 3. **P0/R1b: fixed-pose preparation.** Integrate separately after shared test input
    and report contracts. R2/R3 simulator gates still precede working LOCAL navigation.
 
@@ -463,6 +479,32 @@ Run the focused suite from the repository root:
 lua tests/pathline-validation.lua
 ```
 
-Next proposed subtask is R1a-V2: incremental depth sampling, profile processing,
-specific work/data limits and missing-data regressions. Wait for approval/comments
-before starting it. V1 does not re-enable LOCAL mode or change existing navigation.
+### V2 implementation validation, 2026-10-10
+
+- The initial 29 regression cases failed at the absent depth factory before
+  implementation. Eight review cases were added. One exposed rounded-away lateral
+  offsets in the first implementation; it passes after explicit numeric rejection.
+- Lua 5.1.5 compiles production PATHLINE and the new depth-validation suite.
+- Separate processes pass depth validation (37), connection validation (36),
+  PATHLINE (47), profile (15), depth (33), ASTAR (295) and NAVYGROUP (25):
+  **488 cases total**.
+- Coverage includes independent count limits, resumable raw collection and stable
+  merging, tied-sample priority, missing/invalid terrain data, intermediate corridor
+  lanes, original-direction evidence, exact seams, duplicate/point-only geometry,
+  native cancellation/exceptions, CPU overruns, buffer release and a 1000-point
+  native profile processed in small slices without requerying.
+- Only production PATHLINE changed. Existing synchronous depth methods and the
+  ASTAR adapter retain their contracts. No DCS test, log observation, navigation
+  change or LOCAL reactivation occurred. Simulator behavior and timing remain
+  unvalidated. Final source/documentation review and `git diff --check` pass.
+
+Run the additional focused suite from the repository root:
+
+```text
+lua tests/pathline-depth-validation.lua
+```
+
+Next proposed subtask is **P0: common test inputs, replay and result contracts**
+for virtual search and fixed-pose naval preparation. Define source identity,
+explicit search/depth settings and candidate/validation evidence before R1b
+implementation. Wait for user approval/comments before starting it.

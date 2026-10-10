@@ -626,7 +626,7 @@ function PATHLINE.GetTurnAtPoint(Geometry, PointIndex)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
--- Caller-stepped connection validation
+-- Caller-stepped connection and depth validation
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 --- Opaque, read-only connection evaluator. Jobs share configuration, not mutable work state.
@@ -636,6 +636,31 @@ end
 --- Options for an atomic connection evaluator.
 -- @type PATHLINE.ConnectionEvaluatorOptions
 -- @field #string CostUnits Optional non-empty cost-unit name, at most 128 bytes. Omit for validation without cost.
+
+--- Opaque, read-only depth evaluator. Jobs own independent sampling/processing state.
+-- @type PATHLINE.DepthEvaluator
+
+--- Depth evaluator configuration; distances and depths are in meters.
+-- All numeric values must be finite. Structural count caps must be positive integers.
+-- No Weight, PreferredDepth or missing-data override is accepted.
+-- @type PATHLINE.DepthEvaluatorOptions
+-- @field #number MinDepth Required positive hard minimum. Equality passes.
+-- @field #number LongitudinalSpacing Required positive maximum generated sample spacing.
+-- @field #number CorridorWidth Full horizontal width, default 0; non-negative.
+-- @field #number LateralSpacing Positive maximum profile spacing; required for positive width, optional otherwise.
+-- @field #number MaxSectionLength Positive maximum longitudinal section length, default 1000.
+-- @field #number MaxOffsets Maximum profiles per section including center/interior/edges, default 65.
+-- @field #number MaxProfilePoints Maximum accepted native records per profile, default 4096; cannot bound engine-side allocation.
+-- @field #number MaxDirectPoints Maximum generated direct records per profile, default 4097; at least three are needed per positive section.
+
+--- Bounded depth coverage summary, extending the effective options with the actual lateral layout.
+-- Checks discrete samples along straight strips, not every point in an area, turning hull or stopping envelope.
+-- Native profile points supplement generated points; route altitude never supplies seabed evidence.
+-- @type PATHLINE.DepthCoverage
+-- @extends #PATHLINE.DepthEvaluatorOptions
+-- @field #string EvaluatorKind "depth".
+-- @field #number OffsetCount Number of parallel profiles per section, including the center; 1 at zero width.
+-- @field #number ActualLateralSpacing Equal lateral gap in meters, at most LateralSpacing; 0 at zero width.
 
 --- Independent context passed to a connection callback with copied Vec3 endpoints.
 -- @type PATHLINE.ConnectionContext
@@ -652,6 +677,7 @@ end
 -- @type PATHLINE.ValidationFailure
 -- @field #number SegmentIndex Original failed/pending segment index, or nil for a single point.
 -- @field #number PointIndex Single-point index, when applicable.
+-- @field #number SectionIndex Depth section index within the original segment, when applicable.
 -- @field #table Position Copied horizontal {x,z} coordinates; not a DCS Vec2 or Vec3.
 -- @field #number ProfileY Native profile height in meters, when supplied; not route altitude or water depth.
 -- @field #number ProfileOffset Signed lateral distance in meters; positive right of travel.
@@ -675,14 +701,18 @@ end
 -- @type PATHLINE.ValidationOptions
 -- @field #string ContextId Optional non-empty string or finite integer. Every step must supply the same value.
 -- @field #number MaxWorkUnits Non-negative integer total cap, default 200000. Zero admits no work.
--- @field #number MaxEvaluatorCalls Non-negative integer total callback cap, default 4096.
+-- @field #number MaxEvaluatorCalls Connection-only non-negative integer total callback cap, default 4096.
+-- @field #number MaxPointChecks Depth-only non-negative integer total point-check cap, default 50000.
+-- @field #number MaxProfileQueries Depth-only non-negative integer total native-profile cap, default 4096.
 -- @field #number MaxCPUSeconds Optional finite non-negative total active CPU seconds; no implicit default.
 
 --- Per-step limits. Count fields are non-negative integers; zero is preserved.
 -- Unknown fields and depth-specific budgets are rejected for connection evaluators.
 -- @type PATHLINE.ValidationBudget
--- @field #number MaxWorkUnits Default 64. A callback and the later successful commit each consume one unit.
--- @field #number MaxEvaluatorCalls Default 1. A pending commit needs no new callback allowance.
+-- @field #number MaxWorkUnits Default 64. Bounds native operations, individual processing and state advances; callback and commit are separate units.
+-- @field #number MaxEvaluatorCalls Connection-only default 1. A pending commit needs no new callback allowance.
+-- @field #number MaxPointChecks Depth-only default 8. One point check makes at most two native queries.
+-- @field #number MaxProfileQueries Depth-only default 1. Processing a returned profile needs no new query allowance.
 -- @field #number MaxCPUSeconds Optional finite non-negative active CPU seconds; cooperative, never preemptive.
 
 --- Opaque validation job. Pass the handle to step/report/cancel; do not edit it.
@@ -691,33 +721,37 @@ end
 
 --- Work accounting. Native point/profile counts are absent for opaque connection callbacks.
 -- @type PATHLINE.ValidationCounters
--- @field #number WorkUnits Admitted callback and commit operations, including operations that fail or cancel.
+-- @field #number WorkUnits Admitted callbacks, native queries/checks, individual processing and bounded state advances, including failures/cancellation.
 -- @field #number EvaluatorCalls Admitted whole-connection callbacks; internal work is not counted separately.
+-- @field #number PointChecks Depth-only admitted VECTOR._CheckDepthPoint calls, including generated/native samples.
+-- @field #number ProfileQueries Depth-only admitted native profile calls; no repeated query when resuming processing.
+-- @field #number FallbackProfiles Depth-only valid empty/single-point native arrays using direct sampling. Longer arrays also require direct samples.
+-- @field #number SkippedDegenerateSegments Depth-only original duplicate legs; common endpoints are checked through incident legs or once for an all-duplicate route.
 -- @field #number CPUSeconds Measured active CPU seconds, or nil if any observation is unavailable. Excludes time between steps.
 
 --- Last actual step; independent copy. Querying or revisiting a terminal job does not reset it.
 -- @type PATHLINE.ValidationSlice
 -- @extends #PATHLINE.ValidationCounters
--- @field #string YieldReason slice_work_limit, slice_evaluator_limit or slice_cpu_limit while running; otherwise nil.
+-- @field #string YieldReason slice_work_limit, slice_evaluator_limit, slice_point_limit, slice_profile_query_limit or slice_cpu_limit while running; otherwise nil.
 -- @field #number CPUOverrunSeconds Largest measured excess over a requested slice/total CPU cap, or nil without a usable measurement/cap.
 
---- Independent summary of connection validation. All nested tables are independent of the job.
+--- Independent summary of validation. All nested tables are independent of the job.
 -- Only "clear" completes validation; the owner must still check ContextId before consuming a result.
 -- @type PATHLINE.ValidationReport
 -- @field #string Status running, clear, blocked, unavailable, limited, cancelled or error. Only running is resumable.
 -- @field #string Reason Failure reason; nil for running/clear. Exceptions become evaluation_error and are also rethrown unchanged.
 -- @field #string ContextId Original context; alternatively an integer or nil.
--- @field #string EvaluatorKind "connection" for this API.
+-- @field #string EvaluatorKind "connection" or "depth".
 -- @field #number CompletedSegments Original successfully committed segments; zero for single-point geometry even when clear.
--- @field #number CheckedPrefixDistance Horizontal meters through committed segments; not stopping clearance or an interpolated obstacle distance.
+-- @field #number CheckedPrefixDistance Horizontal meters through committed connections or depth sections with every offset checked; not stopping clearance.
 -- @field #number CompletedCost Committed cost, starting at zero; nil without CostUnits.
 -- @field #number TotalCost Final cost only when clear and CostUnits was configured.
 -- @field #string CostUnits Configured cost units, or nil.
 -- @field #PATHLINE.ValidationFailure Failure Independent limiting evidence, when applicable.
--- @field #table Cursor Diagnostic Phase (evaluate/commit), SegmentIndex or PointIndex; absent when terminal. Never a resumable external cursor.
+-- @field #table Cursor Diagnostic Phase, SegmentIndex/PointIndex and applicable SectionIndex, OffsetIndex, SampleIndex; absent when terminal. Never an external continuation token.
 -- @field #PATHLINE.ValidationCounters Counters Cumulative work accounting.
 -- @field #PATHLINE.ValidationSlice LastSlice Last step accounting; absent before the first step.
--- @field #table Coverage EvaluatorKind and optional CostUnits; no native sampling or hull-coverage claim.
+-- @field #table Coverage EvaluatorKind and optional CostUnits for callbacks; DepthCoverage for depth jobs. No implied hull/continuous-area coverage.
 
 -- Keep state in each handle's closure. The weak identity set contains no state/callback
 -- references: unlike weak-key state maps, this also collects callback/handle cycles in Lua 5.1.
@@ -726,6 +760,11 @@ local validationHandleKinds=setmetatable({}, {__mode="k"})
 local connectionEvaluatorOptions={CostUnits=true}
 local validationOptions={ContextId=true, MaxWorkUnits=true, MaxEvaluatorCalls=true, MaxCPUSeconds=true}
 local validationBudgetOptions={MaxWorkUnits=true, MaxEvaluatorCalls=true, MaxCPUSeconds=true}
+local depthEvaluatorOptions={MinDepth=true, LongitudinalSpacing=true, CorridorWidth=true, LateralSpacing=true,
+  MaxSectionLength=true, MaxOffsets=true, MaxProfilePoints=true, MaxDirectPoints=true}
+local depthValidationOptions={ContextId=true, MaxWorkUnits=true, MaxPointChecks=true, MaxProfileQueries=true, MaxCPUSeconds=true}
+local depthValidationBudgetOptions={MaxWorkUnits=true, MaxPointChecks=true, MaxProfileQueries=true, MaxCPUSeconds=true}
+local largestExactValidationInteger=9007199254740991
 local connectionResultFields={Status=true, Reason=true, Cost=true, Evidence=true}
 local validationEvidenceFields={Position=true, ProfileY=true, ProfileOffset=true, RouteDistance=true,
   Depth=true, SurfaceType=true, Source=true, Cause=true}
@@ -770,17 +809,28 @@ local function checkValidationContext(Value)
     "ContextId must be a non-empty string or finite integer")
 end
 
-local function validationLimits(Options, Total)
+local function validationLimits(Options, Total, Kind)
   if Options==nil then
     Options={}
   end
-  checkValidationFields(Options, Total and validationOptions or validationBudgetOptions, "Options")
+  local fields=Total and validationOptions or validationBudgetOptions
+  if Kind=="depth" then
+    fields=Total and depthValidationOptions or depthValidationBudgetOptions
+  end
+  checkValidationFields(Options, fields, "Options")
   local limits={
     MaxWorkUnits=geometryOption(Options, "MaxWorkUnits", Total and 200000 or 64),
-    MaxEvaluatorCalls=geometryOption(Options, "MaxEvaluatorCalls", Total and 4096 or 1),
     MaxCPUSeconds=rawget(Options, "MaxCPUSeconds"),
   }
-  for _,name in ipairs({"MaxWorkUnits", "MaxEvaluatorCalls"}) do
+  local countNames={"MaxWorkUnits", "MaxEvaluatorCalls"}
+  if Kind=="depth" then
+    limits.MaxPointChecks=geometryOption(Options, "MaxPointChecks", Total and 50000 or 8)
+    limits.MaxProfileQueries=geometryOption(Options, "MaxProfileQueries", Total and 4096 or 1)
+    countNames={"MaxWorkUnits", "MaxPointChecks", "MaxProfileQueries"}
+  else
+    limits.MaxEvaluatorCalls=geometryOption(Options, "MaxEvaluatorCalls", Total and 4096 or 1)
+  end
+  for _,name in ipairs(countNames) do
     local value=limits[name]
     assert(isFiniteNumber(value) and value>=0 and value%1==0, name.." must be a non-negative integer")
   end
@@ -791,6 +841,19 @@ local function validationLimits(Options, Total)
     checkValidationContext(limits.ContextId)
   end
   return limits
+end
+
+local function newValidationCounters(Kind)
+  if Kind=="depth" then
+    return {WorkUnits=0, PointChecks=0, ProfileQueries=0, FallbackProfiles=0, SkippedDegenerateSegments=0}
+  end
+  return {WorkUnits=0, EvaluatorCalls=0}
+end
+
+local function countValidationWork(State, Name)
+  local report=State.Report
+  report.Counters[Name]=report.Counters[Name]+1
+  report.LastSlice[Name]=report.LastSlice[Name]+1
 end
 
 -- Only internal fixed-schema records reach this copier, never arbitrary callback graphs.
@@ -858,6 +921,10 @@ local function validationFailure(State, Evidence)
   if cursor then
     failure.SegmentIndex=cursor.SegmentIndex
     failure.PointIndex=cursor.PointIndex
+    failure.SectionIndex=cursor.SectionIndex
+  end
+  if State.Depth then
+    failure.ProfileOffset=State.Depth.Offset
   end
   return failure
 end
@@ -877,6 +944,7 @@ local function finishValidation(State, Status, Reason, Failure)
   end
   -- Retaining a final handle must not retain the route, callback captures or a pending result.
   State.Geometry,State.Callback,State.Pending=nil,nil,nil
+  State.Depth,State.DepthOptions=nil,nil
 end
 
 --- Create a reusable atomic connection evaluator without invoking it.
@@ -895,23 +963,79 @@ function PATHLINE.CreateConnectionEvaluator(Callback, Options)
   if costUnits~=nil then
     checkValidationString(costUnits, "CostUnits")
   end
-  return newValidationHandle({Callback=Callback, CostUnits=costUnits}, "Evaluator")
+  return newValidationHandle({Kind="connection", Callback=Callback, CostUnits=costUnits}, "Evaluator")
 end
 
---- Start an independent connection-validation job without executing the evaluator.
+--- Create a reusable evaluator for sampled water depth along a horizontal corridor.
+-- Configuration is copied; creation performs no terrain work and allocates no offset array.
+-- Checks use a hard MinDepth threshold, without preference weights or cost. Each section checks
+-- the center, alternating right/left interior profiles, and both exact corridor edges.
+-- Positive width requires LateralSpacing. Actual spacing never exceeds that maximum.
+-- Invalid options raise argument errors. Unrepresentable layouts return nil, "numeric_range";
+-- excessive offset counts return nil, "offset_limit", {Required=..., Limit=...} without coarsening.
+-- Terrain rules/data must remain stable for a job, or its owner must cancel/change context.
+-- @param #PATHLINE.DepthEvaluatorOptions Options Required sampling settings; see their units and defaults.
+-- @return #PATHLINE.DepthEvaluator Opaque read-only descriptor on success.
+-- @return #string Failure reason on layout failure, otherwise nil.
+-- @return #table Optional independent layout-limit details.
+function PATHLINE.CreateDepthEvaluator(Options)
+  Options=checkGeometryOptions(Options, depthEvaluatorOptions)
+  local config={
+    MinDepth=rawget(Options, "MinDepth"),
+    LongitudinalSpacing=rawget(Options, "LongitudinalSpacing"),
+    CorridorWidth=geometryOption(Options, "CorridorWidth", 0),
+    LateralSpacing=rawget(Options, "LateralSpacing"),
+    MaxSectionLength=geometryOption(Options, "MaxSectionLength", 1000),
+    MaxOffsets=geometryOption(Options, "MaxOffsets", 65),
+    MaxProfilePoints=geometryOption(Options, "MaxProfilePoints", 4096),
+    MaxDirectPoints=geometryOption(Options, "MaxDirectPoints", 4097),
+  }
+  for _,name in ipairs({"MinDepth", "LongitudinalSpacing", "MaxSectionLength"}) do
+    assert(isFiniteNumber(config[name]) and config[name]>0, name.." must be finite and positive")
+  end
+  assert(isFiniteNumber(config.CorridorWidth) and config.CorridorWidth>=0, "CorridorWidth must be finite and non-negative")
+  if config.CorridorWidth>0 or config.LateralSpacing~=nil then
+    assert(isFiniteNumber(config.LateralSpacing) and config.LateralSpacing>0, "LateralSpacing must be finite and positive")
+  end
+  for _,name in ipairs({"MaxOffsets", "MaxProfilePoints", "MaxDirectPoints"}) do
+    assert(isFiniteNumber(config[name]) and config[name]>0 and config[name]%1==0, name.." must be a positive integer")
+  end
+
+  config.HalfWidth=config.CorridorWidth/2
+  config.SideCount=0
+  config.ActualLateralSpacing=0
+  if config.CorridorWidth>0 then
+    config.SideCount=math.ceil(config.HalfWidth/config.LateralSpacing)
+    if config.HalfWidth==0 or config.SideCount<1 or not isFiniteNumber(config.SideCount)
+      or config.SideCount>(largestExactValidationInteger-1)/2 then
+      return nil,"numeric_range"
+    end
+    config.ActualLateralSpacing=config.HalfWidth/config.SideCount
+    if config.ActualLateralSpacing==0 then
+      return nil,"numeric_range"
+    end
+  end
+  config.OffsetCount=1+2*config.SideCount
+  if config.OffsetCount>config.MaxOffsets then
+    return nil,"offset_limit",{Required=config.OffsetCount, Limit=config.MaxOffsets}
+  end
+  return newValidationHandle({Kind="depth", Options=config}, "Evaluator")
+end
+
+--- Start an independent validation job without executing the evaluator.
 -- Retains the geometry read-only; copies options. Rebuild geometry after changing points.
 -- Slice limits yield running; total limits end limited when another operation needs the exhausted resource.
 -- No timers, automatic retries, movement commands or resumptions are installed.
 -- Invalid geometry/evaluator/options raise argument errors.
 -- @param #PATHLINE.Geometry Geometry Snapshot returned by CreateGeometry().
--- @param #PATHLINE.ConnectionEvaluator Evaluator Descriptor returned by CreateConnectionEvaluator().
+-- @param #table Evaluator Opaque ConnectionEvaluator or DepthEvaluator descriptor returned by its factory.
 -- @param #PATHLINE.ValidationOptions Options (Optional) Total limits and context identity.
 -- @return #PATHLINE.ValidationJob Opaque job; always initially running, even for single-point geometry.
 -- @return #PATHLINE.ValidationReport Independent initial summary; changing it cannot change the job.
 function PATHLINE.StartValidation(Geometry, Evaluator, Options)
   checkGeometry(Geometry)
   local evaluator=validationState(Evaluator, "Evaluator")
-  local limits=validationLimits(Options, true)
+  local limits=validationLimits(Options, true, evaluator.Kind)
   local cursor={Phase="evaluate"}
   if Geometry.SegmentCount==0 then
     cursor.PointIndex=1
@@ -919,15 +1043,27 @@ function PATHLINE.StartValidation(Geometry, Evaluator, Options)
     cursor.SegmentIndex=1
   end
   local report={
-    Status="running", ContextId=limits.ContextId, EvaluatorKind="connection",
+    Status="running", ContextId=limits.ContextId, EvaluatorKind=evaluator.Kind,
     CompletedSegments=0, CheckedPrefixDistance=0, CostUnits=evaluator.CostUnits,
-    Cursor=cursor, Counters={WorkUnits=0, EvaluatorCalls=0},
+    Cursor=cursor, Counters=newValidationCounters(evaluator.Kind),
     Coverage={EvaluatorKind="connection", CostUnits=evaluator.CostUnits},
   }
   if evaluator.CostUnits then
     report.CompletedCost=0
   end
   local state={Geometry=Geometry, Callback=evaluator.Callback, Limits=limits, Report=report, CPUComplete=true}
+  if evaluator.Kind=="depth" then
+    state.DepthOptions=evaluator.Options
+    state.Depth={}
+    report.Coverage=copyValidationRecord(evaluator.Options)
+    report.Coverage.HalfWidth,report.Coverage.SideCount=nil,nil
+    report.Coverage.EvaluatorKind="depth"
+    if Geometry.TotalLength==0 then
+      report.Cursor={Phase="point_setup", PointIndex=1}
+    else
+      cursor.Phase="segment"
+    end
+  end
   return newValidationHandle(state, "Job"),copyValidationRecord(report)
 end
 
@@ -999,32 +1135,38 @@ local function limitValidation(State, Reason, Limit, Required)
   finishValidation(State, "limited", Reason, failure)
 end
 
--- Admission is ordered: total limits before slice limits. A commit needs work/CPU,
--- but no callback allowance. Count an operation before entering caller-owned code.
+-- Admission is ordered: total limits before slice limits. Processing/commits need
+-- only work/CPU; reserve native/callback counters immediately before those operations.
 local function admitValidationWork(State, Budget)
   local report=State.Report
   local total,slice,limits=report.Counters,report.LastSlice,State.Limits
-  local evaluate=report.Cursor.Phase=="evaluate"
+  local phase=report.Cursor.Phase
+  local counter,cap,reason
+  if phase=="evaluate" then
+    counter,cap,reason="EvaluatorCalls","MaxEvaluatorCalls","evaluator_limit"
+  elseif phase=="query" then
+    counter,cap,reason="ProfileQueries","MaxProfileQueries","profile_query_limit"
+  elseif phase=="check" or phase=="point" then
+    counter,cap,reason="PointChecks","MaxPointChecks","point_limit"
+  end
   if (limits.MaxCPUSeconds~=nil or Budget.MaxCPUSeconds~=nil) and slice.CPUSeconds==nil then
     limitValidation(State, "cpu_clock_unavailable")
   elseif total.WorkUnits>=limits.MaxWorkUnits then
     limitValidation(State, "work_limit", limits.MaxWorkUnits, total.WorkUnits+1)
   elseif limits.MaxCPUSeconds~=nil and total.CPUSeconds>=limits.MaxCPUSeconds then
     limitValidation(State, "cpu_limit", limits.MaxCPUSeconds)
-  elseif evaluate and total.EvaluatorCalls>=limits.MaxEvaluatorCalls then
-    limitValidation(State, "evaluator_limit", limits.MaxEvaluatorCalls, total.EvaluatorCalls+1)
+  elseif counter and total[counter]>=limits[cap] then
+    limitValidation(State, reason, limits[cap], total[counter]+1)
   elseif slice.WorkUnits>=Budget.MaxWorkUnits then
     slice.YieldReason="slice_work_limit"
   elseif Budget.MaxCPUSeconds~=nil and slice.CPUSeconds>=Budget.MaxCPUSeconds then
     slice.YieldReason="slice_cpu_limit"
-  elseif evaluate and slice.EvaluatorCalls>=Budget.MaxEvaluatorCalls then
-    slice.YieldReason="slice_evaluator_limit"
+  elseif counter and slice[counter]>=Budget[cap] then
+    slice.YieldReason="slice_"..reason
   else
-    total.WorkUnits=total.WorkUnits+1
-    slice.WorkUnits=slice.WorkUnits+1
-    if evaluate then
-      total.EvaluatorCalls=total.EvaluatorCalls+1
-      slice.EvaluatorCalls=slice.EvaluatorCalls+1
+    countValidationWork(State, "WorkUnits")
+    if counter then
+      countValidationWork(State, counter)
     end
     return true
   end
@@ -1080,6 +1222,418 @@ local function commitValidationConnection(State)
   end
 end
 
+-- Every depth phase performs bounded bookkeeping or one explicitly admitted native
+-- operation. No phase scans a complete native array or sorts a complete profile.
+local function failDepthValidation(State, Reason)
+  finishValidation(State, "unavailable", Reason, validationFailure(State))
+end
+
+local function depthValidationPosition(Start, Goal, Fraction)
+  if Fraction==0 then
+    return {x=Start.x, y=0, z=Start.z}
+  elseif Fraction==1 then
+    return {x=Goal.x, y=0, z=Goal.z}
+  end
+  return {x=(1-Fraction)*Start.x+Fraction*Goal.x, y=0, z=(1-Fraction)*Start.z+Fraction*Goal.z}
+end
+
+local function finiteDepthPosition(Position)
+  return isFiniteNumber(Position.x) and isFiniteNumber(Position.z)
+end
+
+local function sameDepthPosition(First, Second)
+  return First.x==Second.x and First.z==Second.z
+end
+
+local function prepareDepthSegment(State)
+  local geometry,report=State.Geometry,State.Report
+  local index=report.Cursor.SegmentIndex
+  local segment=geometry.Segments[index]
+  if segment.Length==0 then
+    -- Incident positive segments check the shared endpoint. An entirely duplicate
+    -- route is checked once before entering this bounded skip sequence.
+    countValidationWork(State, "SkippedDegenerateSegments")
+    report.CompletedSegments=index
+    if index==geometry.SegmentCount then
+      finishValidation(State, "clear")
+    else
+      report.Cursor={Phase="segment", SegmentIndex=index+1}
+    end
+    return
+  end
+
+  local sectionCount=math.ceil(segment.Length/State.DepthOptions.MaxSectionLength)
+  if not isFiniteNumber(sectionCount) or sectionCount<1 or sectionCount>largestExactValidationInteger then
+    limitValidation(State, "numeric_range")
+    return
+  end
+  State.Depth={SectionCount=sectionCount}
+  report.Cursor={Phase="section", SegmentIndex=index, SectionIndex=1}
+end
+
+local function prepareDepthSection(State)
+  local geometry,cursor,depth=State.Geometry,State.Report.Cursor,State.Depth
+  local segment=geometry.Segments[cursor.SegmentIndex]
+  local firstFraction=(cursor.SectionIndex-1)/depth.SectionCount
+  local lastFraction=cursor.SectionIndex/depth.SectionCount
+  local start,goal=geometry.Positions[cursor.SegmentIndex],geometry.Positions[cursor.SegmentIndex+1]
+  depth.Start=depthValidationPosition(start, goal, firstFraction)
+  depth.Goal=depthValidationPosition(start, goal, lastFraction)
+  depth.UX,depth.UZ=segment._UX,segment._UZ
+  depth.StartDistance=segment.StartDistance+firstFraction*segment.Length
+  depth.EndDistance=segment.StartDistance+lastFraction*segment.Length
+  if cursor.SectionIndex==depth.SectionCount then
+    depth.EndDistance=segment.EndDistance
+  end
+  depth.Length=horizontalLength(depth.Goal.x-depth.Start.x, depth.Goal.z-depth.Start.z)
+  if not finiteDepthPosition(depth.Start) or not finiteDepthPosition(depth.Goal)
+    or not depth.Length or depth.Length<=0 or not isFiniteNumber(depth.EndDistance)
+    or depth.EndDistance<=depth.StartDistance then
+    limitValidation(State, "numeric_range")
+    return
+  end
+  depth.RightProfile,depth.LeftProfile=nil,nil
+  cursor.OffsetIndex=1
+  cursor.Phase="profile_setup"
+end
+
+local function prepareDepthProfile(State)
+  local depth,options,cursor=State.Depth,State.DepthOptions,State.Report.Cursor
+  local offset=0
+  if cursor.OffsetIndex>1 then
+    local sideIndex=math.floor(cursor.OffsetIndex/2)
+    offset=options.HalfWidth*(sideIndex/options.SideCount)
+    if cursor.OffsetIndex%2==1 then
+      offset=-offset
+    end
+  end
+  depth.Offset=offset
+  local offsetX,offsetZ=-depth.UZ*offset,depth.UX*offset
+  depth.ProfileStart={x=depth.Start.x+offsetX, y=0, z=depth.Start.z+offsetZ}
+  depth.ProfileGoal={x=depth.Goal.x+offsetX, y=0, z=depth.Goal.z+offsetZ}
+  local length=horizontalLength(depth.ProfileGoal.x-depth.ProfileStart.x, depth.ProfileGoal.z-depth.ProfileStart.z)
+  if not finiteDepthPosition(depth.ProfileStart) or not finiteDepthPosition(depth.ProfileGoal)
+    or not length or length<=0 then
+    limitValidation(State, "numeric_range")
+    return
+  end
+  if offset~=0 then
+    local previous=depth.LeftProfile
+    if offset>0 then
+      previous=depth.RightProfile
+    end
+    if sameDepthPosition(depth.ProfileStart, depth.Start) or sameDepthPosition(depth.ProfileGoal, depth.Goal)
+      or (previous and (sameDepthPosition(depth.ProfileStart, previous.Start) or sameDepthPosition(depth.ProfileGoal, previous.Goal))) then
+      -- A finite offset can still disappear when added to large coordinates.
+      -- Rechecking the same line must not certify an unrepresented corridor.
+      limitValidation(State, "numeric_range")
+      return
+    end
+    local profile={Start=depth.ProfileStart, Goal=depth.ProfileGoal}
+    if offset>0 then
+      depth.RightProfile=profile
+    else
+      depth.LeftProfile=profile
+    end
+  end
+  depth.ProfileLength=length
+  depth.ProfileUX=(depth.ProfileGoal.x-depth.ProfileStart.x)/length
+  depth.ProfileUZ=(depth.ProfileGoal.z-depth.ProfileStart.z)/length
+  depth.Intervals=math.max(2, math.ceil(length/options.LongitudinalSpacing))
+  local directCount=depth.Intervals+1
+  if not isFiniteNumber(directCount) or directCount>largestExactValidationInteger then
+    limitValidation(State, "numeric_range")
+    return
+  elseif directCount>options.MaxDirectPoints then
+    limitValidation(State, "direct_point_limit", options.MaxDirectPoints, directCount)
+    return
+  end
+  depth.Records={}
+  depth.RecordCount,depth.NativeCount,depth.MaxNativeIndex,depth.DirectIndex=0,0,0,0
+  cursor.Phase="query"
+end
+
+local function queryDepthProfile(State)
+  local depth=State.Depth
+  local start,goal=depth.ProfileStart,depth.ProfileGoal
+  -- Terrain profile order is canonical; sorting/evidence below use original travel.
+  if start.x>goal.x or (start.x==goal.x and start.z>goal.z) then
+    start,goal=goal,start
+  end
+  local profile=PATHLINE._QueryDepthProfile(copyGeometryPosition(start), copyGeometryPosition(goal))
+  if State.Report.Status~="running" then
+    return
+  end
+  if type(profile)~="table" then
+    failDepthValidation(State, "profile_unavailable")
+    return
+  end
+  depth.Raw=profile
+  State.Report.Cursor.Phase="collect"
+end
+
+local function collectDepthProfile(State)
+  local depth=State.Depth
+  local key,point=next(depth.Raw, depth.RawKey)
+  if key==nil then
+    if depth.NativeCount~=depth.MaxNativeIndex then
+      failDepthValidation(State, "invalid_profile")
+      return
+    end
+    if depth.NativeCount<2 then
+      countValidationWork(State, "FallbackProfiles")
+    end
+    depth.Raw,depth.RawKey=nil,nil
+    State.Report.Cursor.Phase="generate"
+    return
+  end
+  depth.RawKey=key
+  if not isFiniteNumber(key) or key<1 or key%1~=0 or key>largestExactValidationInteger then
+    failDepthValidation(State, "invalid_profile")
+    return
+  end
+  local count=depth.NativeCount+1
+  if count>State.DepthOptions.MaxProfilePoints then
+    limitValidation(State, "profile_point_limit", State.DepthOptions.MaxProfilePoints, count)
+    return
+  end
+  if type(point)~="table" or not isFiniteNumber(rawget(point, "x"))
+    or not isFiniteNumber(rawget(point, "y")) or not isFiniteNumber(rawget(point, "z")) then
+    failDepthValidation(State, "invalid_profile")
+    return
+  end
+  local position={x=rawget(point, "x"), y=rawget(point, "y"), z=rawget(point, "z")}
+  local along=(position.x-depth.ProfileStart.x)*depth.ProfileUX+(position.z-depth.ProfileStart.z)*depth.ProfileUZ
+  if sameDepthPosition(position, depth.ProfileStart) then
+    along=0
+  elseif sameDepthPosition(position, depth.ProfileGoal) then
+    along=depth.ProfileLength
+  end
+  if not isFiniteNumber(along) then
+    limitValidation(State, "numeric_range")
+    return
+  end
+  along=math.max(0, math.min(depth.ProfileLength, along))
+  depth.NativeCount=count
+  depth.MaxNativeIndex=math.max(depth.MaxNativeIndex, key)
+  depth.RecordCount=count
+  depth.Records[count]={Position=position, Along=along, Native=true, Index=key}
+end
+
+local function generateDepthPoint(State)
+  local depth=State.Depth
+  local fraction=depth.DirectIndex/depth.Intervals
+  local position=depthValidationPosition(depth.ProfileStart, depth.ProfileGoal, fraction)
+  local previous=depth.PreviousDirect
+  if not finiteDepthPosition(position) or (previous and previous.x==position.x and previous.z==position.z) then
+    limitValidation(State, "numeric_range")
+    return
+  end
+  depth.RecordCount=depth.RecordCount+1
+  depth.Records[depth.RecordCount]={Position=position, Along=fraction*depth.ProfileLength, Native=false, Index=depth.DirectIndex+1}
+  depth.PreviousDirect=position
+  depth.DirectIndex=depth.DirectIndex+1
+  if depth.DirectIndex>depth.Intervals then
+    depth.PreviousDirect=nil
+    depth.Sort={Width=1, Left=1, Output={}}
+    State.Report.Cursor.Phase="sort"
+  end
+end
+
+local function depthRecordBefore(First, Second)
+  if First.Along~=Second.Along then
+    return First.Along<Second.Along
+  elseif First.Native~=Second.Native then
+    return First.Native
+  end
+  return First.Index<Second.Index
+end
+
+local function sortDepthRecords(State)
+  local depth=State.Depth
+  local sort=depth.Sort
+  -- Merge adjacent half-open ranges. Initialize/advance a range in its own unit;
+  -- each subsequent unit compares at most two heads and writes one output record.
+  if sort.LeftCursor==nil then
+    sort.LeftCursor=sort.Left
+    sort.Middle=math.min(sort.Left+sort.Width, depth.RecordCount+1)
+    sort.RightCursor=sort.Middle
+    sort.Right=math.min(sort.Middle+sort.Width, depth.RecordCount+1)
+    sort.OutputIndex=sort.Left
+    return
+  end
+  if sort.LeftCursor<sort.Middle or sort.RightCursor<sort.Right then
+    local takeLeft=sort.LeftCursor<sort.Middle and (sort.RightCursor>=sort.Right
+      or depthRecordBefore(depth.Records[sort.LeftCursor], depth.Records[sort.RightCursor]))
+    if takeLeft then
+      sort.Output[sort.OutputIndex]=depth.Records[sort.LeftCursor]
+      sort.LeftCursor=sort.LeftCursor+1
+    else
+      sort.Output[sort.OutputIndex]=depth.Records[sort.RightCursor]
+      sort.RightCursor=sort.RightCursor+1
+    end
+    sort.OutputIndex=sort.OutputIndex+1
+    return
+  end
+
+  sort.Left=sort.Right
+  sort.LeftCursor=nil
+  if sort.Left>depth.RecordCount then
+    depth.Records=sort.Output
+    sort.Width=sort.Width*2
+    if sort.Width>=depth.RecordCount then
+      depth.Sort=nil
+      State.Report.Cursor.SampleIndex=1
+      State.Report.Cursor.Phase="check"
+    else
+      sort.Left=1
+      sort.Output={}
+    end
+  end
+end
+
+local function depthPointFailure(State, Record, Status, Cause, Depth, Surface)
+  local work=State.Depth
+  local routeDistance=0
+  if work.StartDistance then
+    local fraction=Record.Along/work.ProfileLength
+    routeDistance=work.StartDistance+fraction*(work.EndDistance-work.StartDistance)
+  end
+  local evidence={Position={x=Record.Position.x, z=Record.Position.z}, RouteDistance=routeDistance,
+    Depth=Depth, SurfaceType=Surface, Source=Record.Native and "profile" or "direct", Cause=Cause}
+  if Record.Native then
+    evidence.ProfileY=Record.Position.y
+  end
+  return {Status=Status, Reason=Cause, Evidence=evidence}
+end
+
+local function checkDepthRecord(State)
+  local depth,cursor=State.Depth,State.Report.Cursor
+  local record=depth.Records[cursor.SampleIndex]
+  local clear,status,cause,value,surface=VECTOR._CheckDepthPoint(record.Position, State.DepthOptions.MinDepth, record.Native)
+  if State.Report.Status~="running" then
+    return
+  end
+  if not clear then
+    -- Finish all equal-distance observations before deciding. Unknown data outranks
+    -- land, which outranks shallow water; never invent a depth for unknown/land.
+    local rank=1
+    if status=="unavailable" then
+      rank=3
+    elseif cause=="non_water" then
+      rank=2
+    end
+    local selected=depth.GroupFailure
+    if not selected or rank>selected.Rank
+      or (rank==1 and selected.Rank==1 and value<selected.Evidence.Depth) then
+      selected=depthPointFailure(State, record, status, cause, value, surface)
+      selected.Rank=rank
+      depth.GroupFailure=selected
+    end
+  end
+  cursor.SampleIndex=cursor.SampleIndex+1
+  local following=depth.Records[cursor.SampleIndex]
+  if not following or following.Along~=record.Along then
+    cursor.Phase="group"
+  end
+end
+
+local function finishDepthGroup(State)
+  local depth,cursor=State.Depth,State.Report.Cursor
+  local failure=depth.GroupFailure
+  if failure then
+    finishValidation(State, failure.Status, failure.Reason, validationFailure(State, failure.Evidence))
+  elseif cursor.SampleIndex<=depth.RecordCount then
+    cursor.Phase="check"
+  else
+    cursor.Phase="next_profile"
+  end
+end
+
+local function advanceDepthProfile(State)
+  local depth,cursor=State.Depth,State.Report.Cursor
+  depth.Records,depth.Sort,depth.GroupFailure=nil,nil,nil
+  cursor.SampleIndex=nil
+  if cursor.OffsetIndex<State.DepthOptions.OffsetCount then
+    cursor.OffsetIndex=cursor.OffsetIndex+1
+    cursor.Phase="profile_setup"
+  else
+    cursor.Phase="commit_section"
+  end
+end
+
+local function commitDepthSection(State)
+  local report,depth=State.Report,State.Depth
+  local cursor=report.Cursor
+  report.CheckedPrefixDistance=depth.EndDistance
+  depth.Offset=nil
+  cursor.OffsetIndex=nil
+  if cursor.SectionIndex<depth.SectionCount then
+    cursor.SectionIndex=cursor.SectionIndex+1
+    cursor.Phase="section"
+  else
+    report.CompletedSegments=cursor.SegmentIndex
+    if cursor.SegmentIndex==State.Geometry.SegmentCount then
+      finishValidation(State, "clear")
+    else
+      State.Depth={}
+      report.Cursor={Phase="segment", SegmentIndex=cursor.SegmentIndex+1}
+    end
+  end
+end
+
+local function checkIsolatedDepthPoint(State)
+  local position=copyGeometryPosition(State.Geometry.Positions[1])
+  position.y=0
+  local clear,status,cause,depth,surface=VECTOR._CheckDepthPoint(position, State.DepthOptions.MinDepth, false)
+  if State.Report.Status~="running" then
+    return
+  end
+  if not clear then
+    local failure=depthPointFailure(State, {Position=position, Native=false}, status, cause, depth, surface)
+    finishValidation(State, status, cause, validationFailure(State, failure.Evidence))
+  elseif State.Geometry.SegmentCount==0 then
+    finishValidation(State, "clear")
+  else
+    State.Report.Cursor={Phase="segment", SegmentIndex=1}
+  end
+end
+
+local function stepDepthValidation(State)
+  local phase=State.Report.Cursor.Phase
+  if phase=="point_setup" then
+    if State.DepthOptions.CorridorWidth>0 then
+      failDepthValidation(State, "corridor_direction_unavailable")
+    else
+      State.Report.Cursor.Phase="point"
+    end
+  elseif phase=="point" then
+    checkIsolatedDepthPoint(State)
+  elseif phase=="segment" then
+    prepareDepthSegment(State)
+  elseif phase=="section" then
+    prepareDepthSection(State)
+  elseif phase=="profile_setup" then
+    prepareDepthProfile(State)
+  elseif phase=="query" then
+    queryDepthProfile(State)
+  elseif phase=="collect" then
+    collectDepthProfile(State)
+  elseif phase=="generate" then
+    generateDepthPoint(State)
+  elseif phase=="sort" then
+    sortDepthRecords(State)
+  elseif phase=="check" then
+    checkDepthRecord(State)
+  elseif phase=="group" then
+    finishDepthGroup(State)
+  elseif phase=="next_profile" then
+    advanceDepthProfile(State)
+  elseif phase=="commit_section" then
+    commitDepthSection(State)
+  end
+end
+
 local function runValidationSlice(State, Budget, Timing)
   if type(os)=="table" and type(os.clock)=="function" then
     Timing.Read=os.clock
@@ -1088,7 +1642,9 @@ local function runValidationSlice(State, Budget, Timing)
     validationCPUUnavailable(State, Timing)
   end
   while State.Report.Status=="running" and admitValidationWork(State, Budget) do
-    if State.Report.Cursor.Phase=="evaluate" then
+    if State.Report.EvaluatorKind=="depth" then
+      stepDepthValidation(State)
+    elseif State.Report.Cursor.Phase=="evaluate" then
       evaluateValidationConnection(State)
     else
       commitValidationConnection(State)
@@ -1097,10 +1653,16 @@ local function runValidationSlice(State, Budget, Timing)
   end
 end
 
---- Advance connection validation within independent slice and total limits.
+--- Advance validation within independent slice and total limits.
 -- Evaluating a whole original connection and committing its successful result are separate work units.
+-- Depth jobs separately admit a profile query, one raw record copy, one generated point, one merge output,
+-- one point predicate or a bounded phase/group/section advance. Sorting and tied groups resume across steps.
+-- Direct samples include endpoints and at least a midpoint. All section offsets must pass before its prefix commits.
+-- Missing/malformed profile or depth data ends unavailable; valid empty/single-point profiles use direct fallback.
+-- Equal-distance groups select unavailable, then non-water, then the shallowest insufficient depth.
+-- Point-only/all-duplicate geometry is checked once at width zero; positive width is corridor_direction_unavailable.
 -- Exhausted slice budgets return running with LastSlice.YieldReason; total caps end limited. Zero is preserved.
--- A pending commit can advance with MaxEvaluatorCalls=0. Failure/cancellation never commits its connection.
+-- A pending connection commit can advance with MaxEvaluatorCalls=0. Failure/cancellation never commits pending work.
 -- CPU time uses os.clock only, excludes idle time and may overrun during an atomic callback. Requested CPU caps
 -- without a usable clock end cpu_clock_unavailable before further work. A completing unit retains its result.
 -- Missing/wrong current context cancels before work. Recheck the returned ContextId before publishing a result:
@@ -1118,11 +1680,11 @@ function PATHLINE.StepValidation(Job, Budget, CurrentContextId)
   if report.Status~="running" then
     return copyValidationRecord(report)
   end
-  Budget=validationLimits(Budget, false)
+  Budget=validationLimits(Budget, false, report.EvaluatorKind)
   checkValidationContext(CurrentContextId)
   assert(report.ContextId~=nil or CurrentContextId==nil, "CurrentContextId requires a configured ContextId")
 
-  report.LastSlice={WorkUnits=0, EvaluatorCalls=0}
+  report.LastSlice=newValidationCounters(report.EvaluatorKind)
   if report.ContextId~=CurrentContextId then
     finishValidation(state, "cancelled", "context_changed")
     return copyValidationRecord(report)

@@ -270,9 +270,8 @@ NAVYGROUP production change is identified. `ASTAR.LocalCandidate.Positions`
 already supplies independent positions. Existing `Length`/`Cost` fields keep
 their meanings. Bounded connection validation, dense depth/corridor sampling,
 their evaluator interfaces and cancellation lifecycles are specified in the
-[R1a validation API](pathline-validation-api.md). Its V1 job/connection layer is
-implemented; incremental depth validation remains pending as a separately
-approved V2 step. `CheckDepth` is not repurposed.
+[R1a validation API](pathline-validation-api.md). Its V1 job/connection layer and
+V2 incremental depth validation are implemented with LuaDoc and Lua 5.1 regressions. `CheckDepth` is not repurposed.
 
 ## Deterministic acceptance cases
 
@@ -318,5 +317,8 @@ terrain and controller execution remain later simulator validation gates.
 No simulator or mission log was accessed. The subsequent
 [bounded validation API](pathline-validation-api.md) was documented and its V1
 job lifecycle, connection evaluator and work budgets implemented on 2026-10-10,
-with Lua 5.1 regressions. The next proposed subtask is incremental depth sampling
-and validation as R1a-V2, subject to user approval.
+with Lua 5.1 regressions. R1a-V2 depth/corridor validation is now implemented
+with incremental profile processing and explicit sampling/work caps; the seven
+affected suites pass 488 cases under Lua 5.1.5. The next proposed subtask is P0:
+common test-input, replay and result contracts before fixed-pose preparation.
+Wait for user approval/comments before starting it.
