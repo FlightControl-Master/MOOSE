@@ -577,12 +577,16 @@ end
 --- Set to accept accoustic detection.
 -- @param #INTEL self
 -- @param #number Radius (Optional) Radius in which we can "hear" units. Defaults to 1000 meters.
--- @param #table UnitCategories(Optional)  Set what Unit Categories we can "hear". Defaults to `{Unit.Category.GROUND_UNIT,Unit.Category.HELICOPTER}`
+-- @param #table UnitCategories(Optional)  Set what Unit Categories we can "hear". Defaults to `{Unit.Category.HELICOPTER}`
+-- @param #boolean PlayersOnly (Optional) Detect only players in the allowed unit categories. Defaults to false.
+-- @param #function PlayerSnapshotProvider (Optional) Function receiving the opposing coalition and returning `{rows={{unit=nativeUnit,category=unitCategory,point=vec3},...}}` for its players. Without a provider, use coalition.getPlayers.
 -- @return #INTEL self
-function INTEL:SetAccousticDetectionOn(Radius,UnitCategories)
+function INTEL:SetAccousticDetectionOn(Radius,UnitCategories,PlayersOnly,PlayerSnapshotProvider)
   self.DetectAccoustic = true
   self.DetectAccousticRadius = Radius or 1000
   self.DetectAccousticUnitTypes =  UnitCategories or {Unit.Category.HELICOPTER}
+  self.DetectAccousticPlayersOnly = PlayersOnly or false
+  self.AccousticPlayerSnapshotProvider = PlayerSnapshotProvider
   return self
 end
 
@@ -1122,6 +1126,10 @@ function INTEL:UpdateIntel()
 
   -- Set of which units was detected by which recce
   local RecceDetecting = sweep and sweep.recce or {}
+  local AccousticPlayers
+  if self.DetectAccoustic and self.DetectAccousticPlayersOnly then
+    AccousticPlayers = self:_GetAccousticPlayers()
+  end
 
   -- Loop over all units providing intel.
   local scanned=0
@@ -1132,9 +1140,10 @@ function INTEL:UpdateIntel()
       group=self.detectionset.Set[_group]
     end
 
-    if group and group:IsAlive() then
+    local DCSGroup = group and group:GetDCSObject() -- DCS#Group
+    if DCSGroup and group:IsAlive(DCSGroup) then
 
-      local units = group:GetUnits()
+      local units = group:GetUnits(DCSGroup)
       for _,_recce in pairs(units) do
         local recce=_recce --Wrapper.Unit#UNIT
 
@@ -1146,15 +1155,15 @@ function INTEL:UpdateIntel()
         end
       end
       
-      if self.DetectAccoustic then
-        local recce = group:GetFirstUnitAlive(units) --Wrapper.Unit#UNIT
+      if self.DetectAccoustic and (not AccousticPlayers or #AccousticPlayers > 0) then
+        local recce = group:GetFirstUnitAlive(units,DCSGroup) --Wrapper.Unit#UNIT
         local detectionzone = group:GetProperty("INTEL_DETECT_ACCZONE")
         if not detectionzone then
           detectionzone = ZONE_GROUP:New(group.IdentifiableName.."INTEL_DETECT_ACCZONE",group,self.DetectAccousticRadius or 2000)
           group:SetProperty("INTEL_DETECT_ACCZONE",detectionzone)
         end
         if recce and recce:IsGround() then
-          self:GetDetectedUnitsAccoustic(recce,DetectedUnits,RecceDetecting,detectionzone,DetectedObjects)
+          self:GetDetectedUnitsAccoustic(recce,DetectedUnits,RecceDetecting,detectionzone,DetectedObjects,AccousticPlayers)
         end
       end
 
@@ -1324,6 +1333,39 @@ function INTEL:UpdateIntel()
 
   if sweep then self:_ReportIntelStatus() end
   return self
+end
+
+--- (Internal) Prepare eligible player facts once for the current accoustic detection batch.
+-- Positions must be refreshed for each batch. Do not retain these rows across timers or respawns.
+-- @param #INTEL self
+-- @return #table Rows containing the MOOSE unit, unit name, native object ID and Vec3 position.
+function INTEL:_GetAccousticPlayers()
+  self:T("_GetAccousticPlayers")
+  local OtherCoalition = self.coalition == coalition.side.BLUE and coalition.side.RED or coalition.side.BLUE
+  local Rows = self.AccousticPlayerSnapshotProvider and self.AccousticPlayerSnapshotProvider(OtherCoalition).rows
+  local Players = Rows or coalition.getPlayers(OtherCoalition) or {}
+  local Categories = self.DetectAccousticUnitTypes or {Unit.Category.HELICOPTER}
+  local AccousticPlayers = {}
+  for _,Entry in ipairs(Players) do
+    local PlayerUnit = Rows and Entry.unit or Entry
+    local Category
+    if Rows then Category = Entry.category else Category = PlayerUnit:getDesc().category end
+    for _,Allowed in pairs(Categories) do
+      if Category == Allowed then
+        if PlayerUnit:isExist() and PlayerUnit:isActive() and PlayerUnit:getPlayerName() then
+          local Name = PlayerUnit:getName()
+          local DetectedUnit = UNIT:FindByName(Name)
+          if DetectedUnit then
+            local Point
+            if Rows then Point = Entry.point else Point = PlayerUnit:getPoint() end
+            AccousticPlayers[#AccousticPlayers+1] = {unit=DetectedUnit,name=Name,id=PlayerUnit.id_,point=Point}
+          end
+        end
+        break
+      end
+    end
+  end
+  return AccousticPlayers
 end
 
 --- Update an #INTEL.Contact item.
@@ -1607,14 +1649,34 @@ end
 -- @param #table RecceDetecting Table of recce per unit to be filled.
 -- @param Core.Zone#ZONE_GROUP detectionzone The zone where to look.
 -- @param #table DetectedObjects (Optional) Table of native object IDs for the current sweep.
-function INTEL:GetDetectedUnitsAccoustic(Recce,DetectedUnits,RecceDetecting,detectionzone,DetectedObjects)
+-- @param #table AccousticPlayers (Optional) Eligible player facts prepared for this batch; omitted direct calls collect fresh facts.
+function INTEL:GetDetectedUnitsAccoustic(Recce,DetectedUnits,RecceDetecting,detectionzone,DetectedObjects,AccousticPlayers)
+  if self.DetectAccousticPlayersOnly then
+    if not detectionzone then return end
+    AccousticPlayers = AccousticPlayers or self:_GetAccousticPlayers()
+    if #AccousticPlayers == 0 then return end
+    local Center = detectionzone:GetCoordinate():SetAlt():GetVec3()
+    local Radius = detectionzone:GetRadius()
+    local RadiusSquared = Radius * Radius
+    local RecceName = Recce:GetName()
+    for _,Row in ipairs(AccousticPlayers) do
+      local Point = Row.point
+      local DX, DY, DZ = Point.x - Center.x, Point.y - Center.y, Point.z - Center.z
+      if DX * DX + DY * DY + DZ * DZ <= RadiusSquared then
+        DetectedUnits[Row.name] = Row.unit
+        if DetectedObjects then DetectedObjects[Row.name] = Row.id end
+        RecceDetecting[Row.name] = RecceName
+      end
+    end
+    return
+  end
   local othercoalition = self.coalition == coalition.side.BLUE and coalition.side.RED or coalition.side.BLUE
   self:T("Other coalition = "..othercoalition)
   if detectionzone then
     -- Get detected units
     local reccename = Recce:GetName()
     local DetectAccousticUnitTypes = self.DetectAccousticUnitTypes or {Unit.Category.HELICOPTER}
-    detectionzone:Scan({Object.Category.UNIT},DetectAccousticUnitTypes)
+    detectionzone:Scan({Object.Category.UNIT},DetectAccousticUnitTypes,true)
     local unitset = detectionzone:GetScannedSetUnit(othercoalition) -- Core.Set#SET_UNIT
     self:T("Accoustic detection found #Units "..unitset:CountAlive())
     for _,_unit in pairs(unitset.Set or {}) do
