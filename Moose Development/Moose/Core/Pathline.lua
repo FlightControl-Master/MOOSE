@@ -65,6 +65,13 @@
 -- Snapshots are read-only by contract. Query/export results are independent copies. Rebuild a snapshot when points change.
 -- Projection bounds and ambiguity reports support consumers tracking route progress; they do not certify ship movement or safety.
 --
+-- # Caller-Stepped Connection Validation
+--
+-- CreateConnectionEvaluator(), StartValidation(), StepValidation(), GetValidationReport() and CancelValidation()
+-- validate original geometry connections with explicit work/callback/CPU budgets and independent reports.
+-- The caller owns scheduling and movement authority. Callbacks are atomic; CPU caps cannot interrupt them.
+-- Only a current "clear" result completes validation. Partial prefixes and late results never authorize movement.
+--
 -- # Point Access
 --
 -- GetPoints(), GetPoints2D(), GetPoints3D() and the indexed getters return independent copies in path order.
@@ -616,6 +623,551 @@ function PATHLINE.GetTurnAtPoint(Geometry, PointIndex)
     OutgoingHeading=outgoingHeading,
     SignedAngle=angle,
   }
+end
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Caller-stepped connection validation
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Opaque, read-only connection evaluator. Jobs share configuration, not mutable work state.
+-- The retained callback must have stable external rules/costs while its jobs run.
+-- @type PATHLINE.ConnectionEvaluator
+
+--- Options for an atomic connection evaluator.
+-- @type PATHLINE.ConnectionEvaluatorOptions
+-- @field #string CostUnits Optional non-empty cost-unit name, at most 128 bytes. Omit for validation without cost.
+
+--- Independent context passed to a connection callback with copied Vec3 endpoints.
+-- @type PATHLINE.ConnectionContext
+-- @field #string ContextId Original job context; alternatively a finite integer, including zero, or nil.
+-- @field #number SegmentIndex Original segment index, including duplicate endpoints; nil for single-point geometry.
+-- @field #number PointIndex 1 for single-point geometry; otherwise nil.
+-- @field #number StartDistance Horizontal distance from the route start in meters.
+-- @field #number EndDistance Horizontal distance from the route start in meters.
+-- @field #number Length Horizontal connection length in meters, including zero.
+
+--- Bounded independent failure evidence. Omit unknown fields; never invent missing depth or altitude.
+-- Callback evidence accepts Position, ProfileY, ProfileOffset, RouteDistance, Depth, SurfaceType, Source and Cause only.
+-- Original indices and limit details are assigned by the job, not the callback.
+-- @type PATHLINE.ValidationFailure
+-- @field #number SegmentIndex Original failed/pending segment index, or nil for a single point.
+-- @field #number PointIndex Single-point index, when applicable.
+-- @field #table Position Copied horizontal {x,z} coordinates; not a DCS Vec2 or Vec3.
+-- @field #number ProfileY Native profile height in meters, when supplied; not route altitude or water depth.
+-- @field #number ProfileOffset Signed lateral distance in meters; positive right of travel.
+-- @field #number RouteDistance Non-negative distance from route start in meters, when known.
+-- @field #number Depth Finite effective depth in meters; may be negative when a native profile rises above the water surface.
+-- @field #number SurfaceType Finite DCS surface type, when known.
+-- @field #string Source Evidence source, at most 128 bytes.
+-- @field #string Cause Underlying cause, at most 128 bytes.
+-- @field #number Limit Resource cap that prevented further work, when known.
+-- @field #number Required Count required for the next operation, when known and representable.
+
+--- Result returned by an atomic callback(Start, Goal, Context).
+-- The job checks/copies this record; callers may retain or modify their original result afterward.
+-- @type PATHLINE.ConnectionResult
+-- @field #string Status "clear", "blocked" or "unavailable".
+-- @field #string Reason Required non-empty failure reason, at most 128 bytes; absent when clear.
+-- @field #number Cost Finite non-negative cost, required only for clear results when CostUnits was configured. Zero is valid.
+-- @field #PATHLINE.ValidationFailure Evidence Optional bounded callback evidence; see its accepted fields.
+
+--- Immutable job limits and identity, copied at start.
+-- @type PATHLINE.ValidationOptions
+-- @field #string ContextId Optional non-empty string or finite integer. Every step must supply the same value.
+-- @field #number MaxWorkUnits Non-negative integer total cap, default 200000. Zero admits no work.
+-- @field #number MaxEvaluatorCalls Non-negative integer total callback cap, default 4096.
+-- @field #number MaxCPUSeconds Optional finite non-negative total active CPU seconds; no implicit default.
+
+--- Per-step limits. Count fields are non-negative integers; zero is preserved.
+-- Unknown fields and depth-specific budgets are rejected for connection evaluators.
+-- @type PATHLINE.ValidationBudget
+-- @field #number MaxWorkUnits Default 64. A callback and the later successful commit each consume one unit.
+-- @field #number MaxEvaluatorCalls Default 1. A pending commit needs no new callback allowance.
+-- @field #number MaxCPUSeconds Optional finite non-negative active CPU seconds; cooperative, never preemptive.
+
+--- Opaque validation job. Pass the handle to step/report/cancel; do not edit it.
+-- No owned timer, scheduler, controller or global job registry. Abandoned handles are collectible.
+-- @type PATHLINE.ValidationJob
+
+--- Work accounting. Native point/profile counts are absent for opaque connection callbacks.
+-- @type PATHLINE.ValidationCounters
+-- @field #number WorkUnits Admitted callback and commit operations, including operations that fail or cancel.
+-- @field #number EvaluatorCalls Admitted whole-connection callbacks; internal work is not counted separately.
+-- @field #number CPUSeconds Measured active CPU seconds, or nil if any observation is unavailable. Excludes time between steps.
+
+--- Last actual step; independent copy. Querying or revisiting a terminal job does not reset it.
+-- @type PATHLINE.ValidationSlice
+-- @extends #PATHLINE.ValidationCounters
+-- @field #string YieldReason slice_work_limit, slice_evaluator_limit or slice_cpu_limit while running; otherwise nil.
+-- @field #number CPUOverrunSeconds Largest measured excess over a requested slice/total CPU cap, or nil without a usable measurement/cap.
+
+--- Independent summary of connection validation. All nested tables are independent of the job.
+-- Only "clear" completes validation; the owner must still check ContextId before consuming a result.
+-- @type PATHLINE.ValidationReport
+-- @field #string Status running, clear, blocked, unavailable, limited, cancelled or error. Only running is resumable.
+-- @field #string Reason Failure reason; nil for running/clear. Exceptions become evaluation_error and are also rethrown unchanged.
+-- @field #string ContextId Original context; alternatively an integer or nil.
+-- @field #string EvaluatorKind "connection" for this API.
+-- @field #number CompletedSegments Original successfully committed segments; zero for single-point geometry even when clear.
+-- @field #number CheckedPrefixDistance Horizontal meters through committed segments; not stopping clearance or an interpolated obstacle distance.
+-- @field #number CompletedCost Committed cost, starting at zero; nil without CostUnits.
+-- @field #number TotalCost Final cost only when clear and CostUnits was configured.
+-- @field #string CostUnits Configured cost units, or nil.
+-- @field #PATHLINE.ValidationFailure Failure Independent limiting evidence, when applicable.
+-- @field #table Cursor Diagnostic Phase (evaluate/commit), SegmentIndex or PointIndex; absent when terminal. Never a resumable external cursor.
+-- @field #PATHLINE.ValidationCounters Counters Cumulative work accounting.
+-- @field #PATHLINE.ValidationSlice LastSlice Last step accounting; absent before the first step.
+-- @field #table Coverage EvaluatorKind and optional CostUnits; no native sampling or hull-coverage claim.
+
+-- Keep state in each handle's closure. The weak identity set contains no state/callback
+-- references: unlike weak-key state maps, this also collects callback/handle cycles in Lua 5.1.
+local validationStateKey={}
+local validationHandleKinds=setmetatable({}, {__mode="k"})
+local connectionEvaluatorOptions={CostUnits=true}
+local validationOptions={ContextId=true, MaxWorkUnits=true, MaxEvaluatorCalls=true, MaxCPUSeconds=true}
+local validationBudgetOptions={MaxWorkUnits=true, MaxEvaluatorCalls=true, MaxCPUSeconds=true}
+local connectionResultFields={Status=true, Reason=true, Cost=true, Evidence=true}
+local validationEvidenceFields={Position=true, ProfileY=true, ProfileOffset=true, RouteDistance=true,
+  Depth=true, SurfaceType=true, Source=true, Cause=true}
+
+local function newValidationHandle(State, Kind)
+  local handle=setmetatable({}, {
+    __index=function(_, Key)
+      if Key==validationStateKey then
+        return State
+      end
+    end,
+    __newindex=function()
+      error(Kind.." is read-only", 2)
+    end,
+    __metatable="PATHLINE."..Kind,
+  })
+  validationHandleKinds[handle]=Kind
+  return handle
+end
+
+local function validationState(Handle, Kind)
+  assert(type(Handle)=="table" and validationHandleKinds[Handle]==Kind,
+    Kind.." must be a handle created by PATHLINE")
+  return Handle[validationStateKey]
+end
+
+local function checkValidationFields(Value, Fields, Name)
+  assert(type(Value)=="table", Name.." must be a table")
+  for field in next,Value do
+    assert(Fields[field], "Unknown "..Name.." field: "..tostring(field))
+  end
+end
+
+local function checkValidationString(Value, Name)
+  assert(type(Value)=="string" and #Value>0 and #Value<=128,
+    Name.." must be a non-empty string of at most 128 bytes")
+end
+
+local function checkValidationContext(Value)
+  assert(Value==nil or (type(Value)=="string" and #Value>0)
+    or (isFiniteNumber(Value) and Value%1==0),
+    "ContextId must be a non-empty string or finite integer")
+end
+
+local function validationLimits(Options, Total)
+  if Options==nil then
+    Options={}
+  end
+  checkValidationFields(Options, Total and validationOptions or validationBudgetOptions, "Options")
+  local limits={
+    MaxWorkUnits=geometryOption(Options, "MaxWorkUnits", Total and 200000 or 64),
+    MaxEvaluatorCalls=geometryOption(Options, "MaxEvaluatorCalls", Total and 4096 or 1),
+    MaxCPUSeconds=rawget(Options, "MaxCPUSeconds"),
+  }
+  for _,name in ipairs({"MaxWorkUnits", "MaxEvaluatorCalls"}) do
+    local value=limits[name]
+    assert(isFiniteNumber(value) and value>=0 and value%1==0, name.." must be a non-negative integer")
+  end
+  assert(limits.MaxCPUSeconds==nil or (isFiniteNumber(limits.MaxCPUSeconds) and limits.MaxCPUSeconds>=0),
+    "MaxCPUSeconds must be finite and non-negative")
+  if Total then
+    limits.ContextId=rawget(Options, "ContextId")
+    checkValidationContext(limits.ContextId)
+  end
+  return limits
+end
+
+-- Only internal fixed-schema records reach this copier, never arbitrary callback graphs.
+local function copyValidationRecord(Value)
+  if type(Value)~="table" then
+    return Value
+  end
+  local result={}
+  for key,value in next,Value do
+    result[key]=copyValidationRecord(value)
+  end
+  return result
+end
+
+local function copyValidationEvidence(Evidence)
+  if Evidence==nil then
+    return nil
+  end
+  checkValidationFields(Evidence, validationEvidenceFields, "Evidence")
+  local result={}
+  for field in next,validationEvidenceFields do
+    local value=rawget(Evidence, field)
+    if value~=nil then
+      if field=="Position" then
+        checkValidationFields(value, {x=true,z=true}, "Evidence.Position")
+        assert(isFiniteNumber(rawget(value, "x")) and isFiniteNumber(rawget(value, "z")),
+          "Evidence.Position must contain finite x/z coordinates")
+        result.Position={x=rawget(value, "x"), z=rawget(value, "z")}
+      elseif field=="Source" or field=="Cause" then
+        checkValidationString(value, "Evidence."..field)
+        result[field]=value
+      else
+        assert(isFiniteNumber(value), "Evidence."..field.." must be finite")
+        if field=="RouteDistance" then
+          assert(value>=0, "Evidence."..field.." must be non-negative")
+        end
+        result[field]=value
+      end
+    end
+  end
+  return result
+end
+
+local function copyConnectionResult(Result, CostUnits)
+  checkValidationFields(Result, connectionResultFields, "Result")
+  local status,reason,cost=rawget(Result, "Status"),rawget(Result, "Reason"),rawget(Result, "Cost")
+  assert(status=="clear" or status=="blocked" or status=="unavailable", "Invalid connection Status")
+  if status=="clear" then
+    assert(reason==nil, "Clear connection Reason must be nil")
+    if CostUnits then
+      assert(isFiniteNumber(cost) and cost>=0, "Clear connection Cost must be finite and non-negative")
+    else
+      assert(cost==nil, "Connection Cost requires configured CostUnits")
+    end
+  else
+    checkValidationString(reason, "Connection Reason")
+    assert(cost==nil, "Failed connection Cost must be nil")
+  end
+  return {Status=status, Reason=reason, Cost=cost, Evidence=copyValidationEvidence(rawget(Result, "Evidence"))}
+end
+
+local function validationFailure(State, Evidence)
+  local failure=Evidence or {}
+  local cursor=State.Report.Cursor
+  if cursor then
+    failure.SegmentIndex=cursor.SegmentIndex
+    failure.PointIndex=cursor.PointIndex
+  end
+  return failure
+end
+
+local function finishValidation(State, Status, Reason, Failure)
+  local report=State.Report
+  if report.Status~="running" then
+    return
+  end
+  report.Status,report.Reason,report.Failure=Status,Reason,Failure
+  report.Cursor=nil
+  if report.LastSlice then
+    report.LastSlice.YieldReason=nil
+  end
+  if Status=="clear" then
+    report.TotalCost=report.CompletedCost
+  end
+  -- Retaining a final handle must not retain the route, callback captures or a pending result.
+  State.Geometry,State.Callback,State.Pending=nil,nil,nil
+end
+
+--- Create a reusable atomic connection evaluator without invoking it.
+-- Callback(Start, Goal, Context) receives independent endpoint/context copies and returns a ConnectionResult.
+-- Every original connection is passed whole, including duplicates; custom costs are never silently split.
+-- Single-point geometry is checked once with equal endpoint values. Callback exceptions propagate during stepping.
+-- External callback configuration must stay stable, or the owner must cancel/invalidate its jobs.
+-- Invalid callback/options raise argument errors; no terrain or scheduler access occurs here.
+-- @param #function Callback Connection rule and optional cost evaluator.
+-- @param #PATHLINE.ConnectionEvaluatorOptions Options (Optional) Copied configuration.
+-- @return #PATHLINE.ConnectionEvaluator Opaque read-only descriptor; may be shared by independent jobs.
+function PATHLINE.CreateConnectionEvaluator(Callback, Options)
+  assert(type(Callback)=="function", "Callback must be a function")
+  Options=checkGeometryOptions(Options, connectionEvaluatorOptions)
+  local costUnits=rawget(Options, "CostUnits")
+  if costUnits~=nil then
+    checkValidationString(costUnits, "CostUnits")
+  end
+  return newValidationHandle({Callback=Callback, CostUnits=costUnits}, "Evaluator")
+end
+
+--- Start an independent connection-validation job without executing the evaluator.
+-- Retains the geometry read-only; copies options. Rebuild geometry after changing points.
+-- Slice limits yield running; total limits end limited when another operation needs the exhausted resource.
+-- No timers, automatic retries, movement commands or resumptions are installed.
+-- Invalid geometry/evaluator/options raise argument errors.
+-- @param #PATHLINE.Geometry Geometry Snapshot returned by CreateGeometry().
+-- @param #PATHLINE.ConnectionEvaluator Evaluator Descriptor returned by CreateConnectionEvaluator().
+-- @param #PATHLINE.ValidationOptions Options (Optional) Total limits and context identity.
+-- @return #PATHLINE.ValidationJob Opaque job; always initially running, even for single-point geometry.
+-- @return #PATHLINE.ValidationReport Independent initial summary; changing it cannot change the job.
+function PATHLINE.StartValidation(Geometry, Evaluator, Options)
+  checkGeometry(Geometry)
+  local evaluator=validationState(Evaluator, "Evaluator")
+  local limits=validationLimits(Options, true)
+  local cursor={Phase="evaluate"}
+  if Geometry.SegmentCount==0 then
+    cursor.PointIndex=1
+  else
+    cursor.SegmentIndex=1
+  end
+  local report={
+    Status="running", ContextId=limits.ContextId, EvaluatorKind="connection",
+    CompletedSegments=0, CheckedPrefixDistance=0, CostUnits=evaluator.CostUnits,
+    Cursor=cursor, Counters={WorkUnits=0, EvaluatorCalls=0},
+    Coverage={EvaluatorKind="connection", CostUnits=evaluator.CostUnits},
+  }
+  if evaluator.CostUnits then
+    report.CompletedCost=0
+  end
+  local state={Geometry=Geometry, Callback=evaluator.Callback, Limits=limits, Report=report, CPUComplete=true}
+  return newValidationHandle(state, "Job"),copyValidationRecord(report)
+end
+
+--- Read an independent bounded report without advancing or measuring the job.
+-- Raw route/sample arrays and callback-owned tables are never exposed. CPUSeconds is nil before the first step.
+-- @param #PATHLINE.ValidationJob Job Valid job handle, running or terminal.
+-- @return #PATHLINE.ValidationReport Independently owned summary and nested records.
+function PATHLINE.GetValidationReport(Job)
+  return copyValidationRecord(validationState(Job, "Job").Report)
+end
+
+--- Cancel a running validation job and release its retained work.
+-- Terminal jobs retain their first result. A callback may cancel its own job; its uncommitted result is discarded.
+-- In-flight atomic work cannot be interrupted; its CPU/count accounting finishes when that call returns.
+-- This function does not stop/resume a vessel. The owner retains movement authority and checks result context.
+-- @param #PATHLINE.ValidationJob Job Valid job handle.
+-- @param #string Reason (Optional) Non-empty reason, at most 128 bytes; default "cancelled".
+-- @return #PATHLINE.ValidationReport Independent report; repeated cancellation is idempotent.
+function PATHLINE.CancelValidation(Job, Reason)
+  local state=validationState(Job, "Job")
+  if state.Report.Status=="running" then
+    if Reason==nil then
+      Reason="cancelled"
+    end
+    checkValidationString(Reason, "Reason")
+    finishValidation(state, "cancelled", Reason)
+  end
+  return copyValidationRecord(state.Report)
+end
+
+local function validationCPUUnavailable(State, Timing)
+  Timing.Read=nil
+  State.CPUComplete=false
+  State.Report.Counters.CPUSeconds=nil
+  State.Report.LastSlice.CPUSeconds=nil
+end
+
+local function updateValidationCPU(State, Timing)
+  if not Timing.Read then
+    return
+  end
+  local now=Timing.Read()
+  if not isFiniteNumber(now) or now<0 or (Timing.Previous and now<Timing.Previous) then
+    validationCPUUnavailable(State, Timing)
+    return
+  end
+  Timing.Previous=now
+  if Timing.Start==nil then
+    Timing.Start=now
+  end
+  local elapsed=now-Timing.Start
+  local total=Timing.BaseCPU+elapsed
+  if not isFiniteNumber(elapsed) or not isFiniteNumber(total) then
+    validationCPUUnavailable(State, Timing)
+    return
+  end
+  State.Report.LastSlice.CPUSeconds=elapsed
+  if State.CPUComplete then
+    State.Report.Counters.CPUSeconds=total
+  end
+end
+
+local function limitValidation(State, Reason, Limit, Required)
+  local failure=validationFailure(State)
+  failure.Limit=Limit
+  if isFiniteNumber(Required) then
+    failure.Required=Required
+  end
+  finishValidation(State, "limited", Reason, failure)
+end
+
+-- Admission is ordered: total limits before slice limits. A commit needs work/CPU,
+-- but no callback allowance. Count an operation before entering caller-owned code.
+local function admitValidationWork(State, Budget)
+  local report=State.Report
+  local total,slice,limits=report.Counters,report.LastSlice,State.Limits
+  local evaluate=report.Cursor.Phase=="evaluate"
+  if (limits.MaxCPUSeconds~=nil or Budget.MaxCPUSeconds~=nil) and slice.CPUSeconds==nil then
+    limitValidation(State, "cpu_clock_unavailable")
+  elseif total.WorkUnits>=limits.MaxWorkUnits then
+    limitValidation(State, "work_limit", limits.MaxWorkUnits, total.WorkUnits+1)
+  elseif limits.MaxCPUSeconds~=nil and total.CPUSeconds>=limits.MaxCPUSeconds then
+    limitValidation(State, "cpu_limit", limits.MaxCPUSeconds)
+  elseif evaluate and total.EvaluatorCalls>=limits.MaxEvaluatorCalls then
+    limitValidation(State, "evaluator_limit", limits.MaxEvaluatorCalls, total.EvaluatorCalls+1)
+  elseif slice.WorkUnits>=Budget.MaxWorkUnits then
+    slice.YieldReason="slice_work_limit"
+  elseif Budget.MaxCPUSeconds~=nil and slice.CPUSeconds>=Budget.MaxCPUSeconds then
+    slice.YieldReason="slice_cpu_limit"
+  elseif evaluate and slice.EvaluatorCalls>=Budget.MaxEvaluatorCalls then
+    slice.YieldReason="slice_evaluator_limit"
+  else
+    total.WorkUnits=total.WorkUnits+1
+    slice.WorkUnits=slice.WorkUnits+1
+    if evaluate then
+      total.EvaluatorCalls=total.EvaluatorCalls+1
+      slice.EvaluatorCalls=slice.EvaluatorCalls+1
+    end
+    return true
+  end
+  return false
+end
+
+local function evaluateValidationConnection(State)
+  local geometry,report=State.Geometry,State.Report
+  local index=report.Cursor.SegmentIndex
+  local start,goal,context
+  if index then
+    local segment=geometry.Segments[index]
+    start,goal=geometry.Positions[index],geometry.Positions[index+1]
+    context={SegmentIndex=index, Length=segment.Length, StartDistance=segment.StartDistance, EndDistance=segment.EndDistance}
+  else
+    start,goal=geometry.Positions[1],geometry.Positions[1]
+    context={PointIndex=1, Length=0, StartDistance=0, EndDistance=0}
+  end
+  context.ContextId=report.ContextId
+  local result=State.Callback(copyGeometryPosition(start), copyGeometryPosition(goal), copyValidationRecord(context))
+  if report.Status~="running" then
+    return
+  end
+  result=copyConnectionResult(result, report.CostUnits)
+  if result.Status~="clear" then
+    finishValidation(State, result.Status, result.Reason, validationFailure(State, result.Evidence))
+    return
+  end
+  State.Pending={Cost=result.Cost, Context=context}
+  report.Cursor.Phase="commit"
+end
+
+local function commitValidationConnection(State)
+  local report,pending=State.Report,State.Pending
+  if report.CostUnits then
+    local cost=report.CompletedCost+pending.Cost
+    if not isFiniteNumber(cost) then
+      limitValidation(State, "numeric_range")
+      return
+    end
+    report.CompletedCost=cost
+  end
+  local index=pending.Context.SegmentIndex
+  if index then
+    report.CompletedSegments=index
+  end
+  report.CheckedPrefixDistance=pending.Context.EndDistance
+  if not index or index==State.Geometry.SegmentCount then
+    finishValidation(State, "clear")
+  else
+    State.Pending=nil
+    report.Cursor={Phase="evaluate", SegmentIndex=index+1}
+  end
+end
+
+local function runValidationSlice(State, Budget, Timing)
+  if type(os)=="table" and type(os.clock)=="function" then
+    Timing.Read=os.clock
+    updateValidationCPU(State, Timing)
+  else
+    validationCPUUnavailable(State, Timing)
+  end
+  while State.Report.Status=="running" and admitValidationWork(State, Budget) do
+    if State.Report.Cursor.Phase=="evaluate" then
+      evaluateValidationConnection(State)
+    else
+      commitValidationConnection(State)
+    end
+    updateValidationCPU(State, Timing)
+  end
+end
+
+--- Advance connection validation within independent slice and total limits.
+-- Evaluating a whole original connection and committing its successful result are separate work units.
+-- Exhausted slice budgets return running with LastSlice.YieldReason; total caps end limited. Zero is preserved.
+-- A pending commit can advance with MaxEvaluatorCalls=0. Failure/cancellation never commits its connection.
+-- CPU time uses os.clock only, excludes idle time and may overrun during an atomic callback. Requested CPU caps
+-- without a usable clock end cpu_clock_unavailable before further work. A completing unit retains its result.
+-- Missing/wrong current context cancels before work. Recheck the returned ContextId before publishing a result:
+-- terminal jobs return their original report even after the owner's context changes, and never auto-resume anything.
+-- Invalid arguments leave a running job unchanged. Reentrant stepping raises an error. Callback/native errors
+-- end a still-running job as error, release work, then rethrow the original error; they are never terrain failures.
+-- @param #PATHLINE.ValidationJob Job Running or terminal job handle.
+-- @param #PATHLINE.ValidationBudget Budget (Optional) Copied per-step limits; may differ on the next step.
+-- @param #string CurrentContextId (Optional) Original string/integer context. Required to match if configured at start; otherwise omit.
+-- @return #PATHLINE.ValidationReport Independent bounded summary; terminal results are stable and cannot be restarted.
+function PATHLINE.StepValidation(Job, Budget, CurrentContextId)
+  local state=validationState(Job, "Job")
+  assert(not state.Busy, "Job is already being stepped")
+  local report=state.Report
+  if report.Status~="running" then
+    return copyValidationRecord(report)
+  end
+  Budget=validationLimits(Budget, false)
+  checkValidationContext(CurrentContextId)
+  assert(report.ContextId~=nil or CurrentContextId==nil, "CurrentContextId requires a configured ContextId")
+
+  report.LastSlice={WorkUnits=0, EvaluatorCalls=0}
+  if report.ContextId~=CurrentContextId then
+    finishValidation(state, "cancelled", "context_changed")
+    return copyValidationRecord(report)
+  end
+
+  state.Busy=true
+  local timing={BaseCPU=report.Counters.CPUSeconds or 0}
+  -- Protect only the evaluation boundary so failures release work and still reach the caller.
+  local ok,err=pcall(runValidationSlice, state, Budget, timing)
+  local timed,timingError=pcall(updateValidationCPU, state, timing)
+  state.Busy=false
+  if not timed then
+    validationCPUUnavailable(state, timing)
+  end
+
+  local slice=report.LastSlice
+  local sliceCap,totalCap=Budget.MaxCPUSeconds,state.Limits.MaxCPUSeconds
+  if slice.CPUSeconds~=nil and (sliceCap~=nil or totalCap~=nil) then
+    local overrun=0
+    if sliceCap~=nil then
+      overrun=math.max(overrun, slice.CPUSeconds-sliceCap)
+    end
+    if totalCap~=nil and report.Counters.CPUSeconds~=nil then
+      overrun=math.max(overrun, report.Counters.CPUSeconds-totalCap)
+    end
+    slice.CPUOverrunSeconds=overrun
+  end
+  if not ok or not timed then
+    finishValidation(state, "error", "evaluation_error", validationFailure(state))
+    if not ok then
+      error(err, 0)
+    end
+    error(timingError, 0)
+  end
+  if report.Status=="running" and (sliceCap~=nil or totalCap~=nil) then
+    if slice.CPUSeconds==nil then
+      limitValidation(state, "cpu_clock_unavailable")
+    elseif totalCap~=nil and report.Counters.CPUSeconds>=totalCap then
+      limitValidation(state, "cpu_limit", totalCap)
+    end
+  end
+  if report.Status~="running" then
+    slice.YieldReason=nil
+  end
+  return copyValidationRecord(report)
 end
 
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

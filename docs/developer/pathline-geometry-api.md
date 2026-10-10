@@ -269,8 +269,10 @@ fixtures. No necessary ASTAR, GRID, VECTOR, UTILS, PROFILE, module-order or
 NAVYGROUP production change is identified. `ASTAR.LocalCandidate.Positions`
 already supplies independent positions. Existing `Length`/`Cost` fields keep
 their meanings. Bounded connection validation, dense depth/corridor sampling,
-their evaluator interfaces and cancellation lifecycles need their own design
-and approval after the geometry step; `CheckDepth` is not repurposed.
+their evaluator interfaces and cancellation lifecycles are specified in the
+[R1a validation API](pathline-validation-api.md). Its V1 job/connection layer is
+implemented; incremental depth validation remains pending as a separately
+approved V2 step. `CheckDepth` is not repurposed.
 
 ## Deterministic acceptance cases
 
@@ -313,5 +315,8 @@ The fixture supplies an atan2 equivalent only for newer Lua versions that
 lack the Lua 5.1 function; validation above used the native Lua 5.1.5 function.
 These checks establish geometry/ownership behavior only; ship motion, DCS
 terrain and controller execution remain later simulator validation gates.
-No simulator or mission log was accessed. The next proposed subtask is the
-bounded connection/depth-validation API design, subject to user approval.
+No simulator or mission log was accessed. The subsequent
+[bounded validation API](pathline-validation-api.md) was documented and its V1
+job lifecycle, connection evaluator and work budgets implemented on 2026-10-10,
+with Lua 5.1 regressions. The next proposed subtask is incremental depth sampling
+and validation as R1a-V2, subject to user approval.
