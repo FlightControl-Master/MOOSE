@@ -600,15 +600,40 @@ track with a documented legend. Distinguish the search window and center-depth
 colors from the area validated for execution. Navigation outcomes must be the
 same with drawings enabled or disabled.
 
+## P0 test and replay contract (2026-10-10)
+
+The developer requested the concrete P0 design after R1a-V2. The
+[P0 test and replay contract](local-pathfinding-test-contract.md) now defines
+shared resolved test parameters, source/terrain provenance, frozen poses,
+cold and scripted warm inputs, copied raw candidates, stage reports and
+comparison criteria. It distinguishes request parity, virtual following and
+fixed-pose preparation. An unchanged search must not be influenced by a
+consumer's pose-heading/speed checks. Different evolving routes cease to be
+identical-input comparisons.
+
+The weight-1 T2 search settings remain the baseline; weight 10 changes only
+that named parameter. Additional dense sampling uses proposed explicit
+25-m longitudinal and 10-m lateral spacings, with no new production default
+or implied turning clearance. Native-repeat, analytic and exact-transcript
+replay have distinct evidence requirements. Incomplete historical captures
+cannot be described as exact reproductions.
+
+P0 design is complete for review; executable fixtures, comparison tooling
+and transcript capture/replay are not implemented. The next proposed step
+is P0-I1, the standalone fixture/comparison driver; P0-I2 adds bounded terrain
+transcripts before R1b preparation integration. This documentation step
+changes no production code or simulator behavior.
+
 ## Implementation plan and gates
 
 Proceed in small steps. R1 and R2 precede moving local continuation.
-Except for the completed R1a geometry, connection/job and incremental depth helpers, the milestones below
+R1a geometry, connection/job and incremental depth helpers are implemented.
+P0 contracts are documented; their test tooling and the other milestones below
 remain proposed and unimplemented.
 
 | Step | Deliverable | Exit criterion |
 | --- | --- | --- |
-| P0: common inputs and replay | One explicit fixture/driver configuration for virtual and naval preparation, source identity, fixed-pose snapshots and structured result records | Identical search input produces identical raw candidates regardless of consumer; old failure evidence is reproducible where sufficient data exists. |
+| P0: common inputs and replay | [Contract documented](local-pathfinding-test-contract.md); shared resolved inputs, source/terrain identity, frozen poses and stage reports. P0-I1 fixture/comparison driver and P0-I2 transcripts pending | Identical search input produces identical raw candidates regardless of consumer; old failure evidence is reproducible where sufficient data exists. |
 | R1a: PATHLINE geometry and validation | Pure geometry/projection, V1 connection/job and V2 incremental depth validation implemented with Lua 5.1 regressions; simulator validation pending | Deterministic tests for vertical/rotated paths, duplicates, hairpins, self-crossings, missing data and cancellation; no hidden terrain access in geometry. |
 | R1b: fixed-pose naval preparation | Bounded candidate preparation using existing ASTAR and new shared helpers; no moving vessel or route submission | Every raw candidate is accepted or rejected with evidence. Known island/shoal cases retain hard depth/corridor rules; feasible reference passages survive preparation. |
 | R2a: movement measurements | Small DCS experiments with one precomputed straight route, turn and stop; use the Harbor Tug at explicitly chosen test speeds | Measured actual tracks, turning deviation and stopping distance; documented uncertainty and supported speed range. No rolling search yet. |
@@ -635,7 +660,7 @@ preceding speed/geometry. A low-speed success does not certify the same route
 at the earlier requested cruise speed.
 
 Suggested implementation commits, after approval:
-1. P0 test configuration/report contracts.
+1. P0 test configuration/report contracts (documented), then separately approved P0-I1 fixture/comparison driver and P0-I2 terrain transcripts.
 2. R1a pure geometry, V1 job/connection validation and V2 incremental depth validation with tests (completed).
 3. R1b preparation with stationary/virtual tests.
 4. R2 diagnostics/driver and resulting measured maneuver policy.
@@ -694,14 +719,13 @@ another cross-cutting guard.
 
 ### Immediate next step
 
-Next approval request: **P0 common test inputs, replay and result contracts**
-for virtual search and fixed-pose naval preparation. Specify shared search and
-validation settings, source identity, fixed-pose snapshots and structured candidate/
-rejection evidence. Distinguish recorded measurements from reconstructed inputs.
-Use this contract to prepare R1b; do not integrate moving-vessel control yet.
+Next approval request: **P0-I1 shared standalone fixtures and comparison driver**
+from the [P0 contract](local-pathfinding-test-contract.md). Implement resolved
+parameter validation, analytic terrain cases, scripted search histories, copied
+candidate reports, an identity consumer and strict comparison/serialization tests
+under Lua 5.1. Actual maneuver preparation and NAVYGROUP control remain later work.
 
-The R1a geometry, connection/job and incremental depth APIs and their Lua 5.1
-regressions are complete. No DCS validation is claimed. P0 still precedes
-fixed-pose naval preparation and new autonomous ship trials. Wait for approval
-or comments before beginning the next subtask.
+The R1a APIs and their regressions are complete; P0 design is documented for
+review. P0-I2 bounded terrain transcript capture/replay follows the first driver.
+No DCS validation is claimed. Wait for approval or comments before P0-I1.
 A missing continuation stops the ship until a new movement command.

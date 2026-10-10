@@ -319,6 +319,7 @@ No simulator or mission log was accessed. The subsequent
 job lifecycle, connection evaluator and work budgets implemented on 2026-10-10,
 with Lua 5.1 regressions. R1a-V2 depth/corridor validation is now implemented
 with incremental profile processing and explicit sampling/work caps; the seven
-affected suites pass 488 cases under Lua 5.1.5. The next proposed subtask is P0:
-common test-input, replay and result contracts before fixed-pose preparation.
-Wait for user approval/comments before starting it.
+affected suites pass 488 cases under Lua 5.1.5. The subsequent
+[P0 test and replay contract](local-pathfinding-test-contract.md) is documented.
+Its fixture/comparison driver (P0-I1) is the next proposed implementation subtask;
+wait for user approval/comments before starting it.

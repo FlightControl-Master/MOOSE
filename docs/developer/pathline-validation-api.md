@@ -504,7 +504,8 @@ Run the additional focused suite from the repository root:
 lua tests/pathline-depth-validation.lua
 ```
 
-Next proposed subtask is **P0: common test inputs, replay and result contracts**
-for virtual search and fixed-pose naval preparation. Define source identity,
-explicit search/depth settings and candidate/validation evidence before R1b
-implementation. Wait for user approval/comments before starting it.
+The [P0 test and replay contract](local-pathfinding-test-contract.md) now defines
+shared inputs, source identity and stage reports for virtual search and fixed-pose
+preparation. Its design is documented; the next proposed subtask is **P0-I1**:
+shared standalone fixtures and comparison driver with Lua 5.1 regressions.
+Wait for user approval/comments before implementation.
