@@ -35,6 +35,7 @@ function trigger.action.lineToAll(recipient,id,a,b,color,lineType,readOnly,text)
   local record={kind="line",id=id,recipient=recipient,a=copy(a),b=copy(b),color=copy(color),lineType=lineType}
   calls[#calls+1]=record live[id]=record
 end
+local defaultLineToAll=trigger.action.lineToAll
 function trigger.action.markToAll(id,text,vec,readOnly)
   assert(type(readOnly)=="boolean","DCS marker ReadOnly must be boolean")
   local record={kind="point",id=id,text=text,vec=copy(vec)}
@@ -54,6 +55,7 @@ local function count(t) local n=0 for _ in pairs(t) do n=n+1 end return n end
 local function test(name,fn)
   calls,live,removals,pending={},{},{},{}
   land=copy(defaultLand)
+  trigger.action.lineToAll=defaultLineToAll
   local ok,err=pcall(fn)
   if ok then passed=passed+1 print("PASS "..name)
   else failed=failed+1 print("FAIL "..name..": "..tostring(err)) end
@@ -89,6 +91,44 @@ test("input positions are copied and DCS 2D and 3D axes are preserved",function(
   equal(a:GetPoint3DFromIndex(3).y,99) equal(a:GetPoint2DFromIndex(3).y,0)
   equal(a:AddPointFromVec2(nil),a) equal(a:AddPointFromVec3(nil),a) equal(a:GetNumberOfPoints(),3)
 end)
+
+local constructorCases={
+  {method="NewFromVec2Array",point={x=10,y=20}},
+  {method="NewFromVec3Array",point={x=10,y=20,z=30}},
+}
+
+local function malformedArrays(point)
+  return {
+    {[2]=point},
+    {[1]=point,[3]=point},
+    {[0]=point,[1]=point},
+    {[-1]=point,[1]=point},
+    {[1]=point,[1.5]=point},
+    {[math.huge]=point},
+    {point=point},
+    {[1]=point,n=1},
+  }
+end
+
+for _,case in ipairs(constructorCases) do
+  test(case.method.." accepts an empty array and rejects malformed arrays before terrain queries",function()
+    local empty=PATHLINE[case.method](PATHLINE,"Empty",{})
+    equal(empty:GetNumberOfPoints(),0)
+    local queries=0
+    land.getHeight=function() queries=queries+1 return 0 end
+    land.getSurfaceType=function() queries=queries+1 return 3 end
+    land.getSurfaceHeightWithSeabed=function() queries=queries+1 return 0,25 end
+
+    for _,input in ipairs(malformedArrays(case.point)) do
+      local ok,err=pcall(PATHLINE[case.method],PATHLINE,"Invalid",input)
+      equal(ok,false)
+      assert(tostring(err):find("PATHLINE",1,true))
+      equal(queries,0)
+      equal(count(live),0)
+      equal(#removals,0)
+    end
+  end)
+end
 
 test("all point getters return independent nested data",function()
   local a=route()
@@ -149,6 +189,95 @@ test("redrawing replaces only the route's old segments and updates styles",funct
   a:UnDrawLine() equal(count(live),2)
   equal(a.points[1].lineID,nil) equal(a.points[2].lineID,nil)
   local removed=#removals a:UnDrawLine() equal(#removals,removed)
+end)
+
+test("invalid drawing arguments preserve existing lines and point markers",function()
+  local path=route():DrawLine():MarkPoints()
+  local oldLines={path.points[1].lineID,path.points[2].lineID}
+  local cases={
+    {recipient=false},{recipient="all"},{recipient=-2},{recipient=3},
+    {recipient=0.5},{recipient=math.huge},{recipient=0/0},
+    {color=false},{color="red"},{color={1,0,0}},
+    {color={[1]=1,[2]=0,[4]=1}},
+    {color={1,0,0,1,0}},{color={1,0,0,1,label="red"}},
+    {color={1,0,0,-0.1}},{color={1,0,1.1,1}},
+    {color={1,false,0,1}},{color={1,0/0,0,1}},
+    {lineType=false},{lineType="solid"},{lineType=-1},
+    {lineType=7},{lineType=1.5},{lineType=math.huge},
+  }
+  local callCount=#calls
+  local lastID=counter
+  for _,case in ipairs(cases) do
+    equal(pcall(path.DrawLine,path,case.recipient,case.color,case.lineType),false)
+    equal(path.points[1].lineID,oldLines[1])
+    equal(path.points[2].lineID,oldLines[2])
+    equal(count(live),5)
+    equal(#calls,callCount)
+    equal(#removals,0)
+    equal(counter,lastID)
+  end
+end)
+
+for failureAttempt=1,2 do
+  for _,createBeforeFailure in ipairs({false,true}) do
+    local name=string.format("drawing failure at segment %d rolls back replacements after native allocation=%s",
+      failureAttempt,tostring(createBeforeFailure))
+    test(name,function()
+      local path=route():DrawLine():MarkPoints()
+      local other=route():DrawLine():MarkPoints()
+      local oldLines={path.points[1].lineID,path.points[2].lineID}
+      local newLines={}
+      local originalPoints=path.points
+      local failure={message="controlled drawing failure"}
+      trigger.action.lineToAll=function(recipient,id,a,b,color,lineType,readOnly,text)
+        newLines[#newLines+1]=id
+        -- Old segments must remain visible even while a replacement is being created.
+        for _,oldID in ipairs(oldLines) do
+          assert(live[oldID])
+        end
+        if #newLines==failureAttempt then
+          if createBeforeFailure then
+            defaultLineToAll(recipient,id,a,b,color,lineType,readOnly,text)
+          end
+          error(failure,0)
+        end
+        defaultLineToAll(recipient,id,a,b,color,lineType,readOnly,text)
+      end
+
+      local ok,err=pcall(path.DrawLine,path)
+      equal(ok,false)
+      equal(err,failure)
+      equal(path.points,originalPoints)
+      equal(path.points[1].lineID,oldLines[1])
+      equal(path.points[2].lineID,oldLines[2])
+      equal(count(live),10)
+      equal(#removals,failureAttempt)
+      for _,id in ipairs(newLines) do
+        equal(live[id],nil)
+      end
+      for _,point in ipairs(other.points) do
+        assert(live[point.markerID])
+      end
+    end)
+  end
+end
+
+test("drawing preserves zero style values and copies the caller's RGBA color",function()
+  local path=route()
+  local input={0,0,0,0}
+  trigger.action.lineToAll=function(recipient,id,a,b,color,lineType,readOnly,text)
+    assert(color~=input)
+    equal(recipient,0)
+    equal(lineType,0)
+    equal(readOnly,false)
+    defaultLineToAll(recipient,id,a,b,color,lineType,readOnly,text)
+  end
+  equal(path:DrawLine(0,input,0),path)
+  equal(count(live),2)
+  equal(#input,4)
+  for index=1,4 do
+    equal(input[index],0)
+  end
 end)
 
 test("redrawing after appending a point leaves one segment per adjacent pair",function()
@@ -260,6 +389,34 @@ for _,case in ipairs(updateCases) do
     equal(path.points,original)
     equal(count(live),5)
     equal(#removals,0)
+  end)
+
+  test(case.method.." rejects sparse and non-sequence arrays without route or drawing changes",function()
+    local path=route():DrawLine():MarkPoints()
+    local other=route():DrawLine():MarkPoints()
+    local original=path.points
+    local originalData=copy(original)
+    local queries=0
+    land.getHeight=function() queries=queries+1 return 0 end
+    land.getSurfaceType=function() queries=queries+1 return 3 end
+    land.getSurfaceHeightWithSeabed=function() queries=queries+1 return 0,25 end
+
+    for _,input in ipairs(malformedArrays(case.points[1])) do
+      equal(pcall(path[case.method],path,nil,input),false)
+      equal(path.points,original)
+      equal(path:GetNumberOfPoints(),3)
+      equal(queries,0)
+      equal(count(live),10)
+      equal(#removals,0)
+      for index,point in ipairs(path.points) do
+        equal(point.lineID,originalData[index].lineID)
+        equal(point.markerID,originalData[index].markerID)
+        equal(point.vec3.x,originalData[index].vec3.x)
+      end
+      for _,point in ipairs(other.points) do
+        assert(live[point.markerID])
+      end
+    end
   end)
 end
 

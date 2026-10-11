@@ -53,8 +53,10 @@
 -- water depth.
 -- 
 -- To remove the marks, use @{#PATHLINE.MarkPoints}(`false`).
--- DrawLine() replaces the existing line segments; UnDrawLine() removes them independently of point markers.
+-- DrawLine() builds replacement segments before removing existing ones; failed creation cleans up the attempted IDs.
+-- UnDrawLine() removes line segments independently of point markers.
 -- Successful UpdateFromVec2Array()/UpdateFromVec3Array() calls remove the previous points and lines without redrawing.
+-- Constructors and updates require dense, one-based arrays. Empty arrays are valid; sparse or named indices raise errors.
 -- Invalid input or terrain-query errors during replacement leave the original route and drawings intact.
 -- Point labels show unavailable terrain metadata explicitly.
 --
@@ -112,6 +114,22 @@ PATHLINE = {
 -- Validate raw inputs before terrain queries or formatting can turn bad data into a usable position/label.
 local function isFiniteNumber(Value)
   return type(Value)=="number" and math.abs(Value)<math.huge
+end
+
+-- Validate the complete index set before iteration: Lua 5.1 does not define the length of sparse arrays.
+local function checkDenseArray(Values, Name)
+  assert(type(Values)=="table", "PATHLINE: "..Name.." must be a dense one-based array")
+
+  local count,maximumIndex=0,0
+  for index in next,Values do
+    assert(isFiniteNumber(index) and index>=1 and index%1==0,
+      "PATHLINE: "..Name.." must contain only positive integer indices")
+    count=count+1
+    maximumIndex=math.max(maximumIndex,index)
+  end
+  assert(maximumIndex==count, "PATHLINE: "..Name.." must be dense without missing indices")
+
+  return count
 end
 
 -- Count actual profile calls shared by the two depth evaluators. No terrain hooks are installed.
@@ -1762,32 +1780,40 @@ function PATHLINE:New(Name)
 end
 
 --- Create a new PATHLINE object from a given list of 2D points.
+-- Copies positions in numeric order and samples terrain metadata; the caller's array remains unchanged.
+-- An empty array creates an empty path. Sparse arrays, named/non-integer indices and malformed positions raise errors.
+-- The entire index set is validated before any terrain query. Terrain-query errors propagate normally.
 -- @param #PATHLINE self
 -- @param #string Name Name of the pathline.
--- @param #table Vec2Array List of DCS#Vec2 points.
+-- @param #list<DCS#Vec2> Vec2Array Dense, one-based array of points; x/y are horizontal meters.
 -- @return #PATHLINE self
 function PATHLINE:NewFromVec2Array(Name, Vec2Array)
 
+  local pointCount=checkDenseArray(Vec2Array,"Vec2Array")
   local self=PATHLINE:New(Name)
 
-  for i=1,#Vec2Array do
-    self:AddPointFromVec2(Vec2Array[i])
+  for i=1,pointCount do
+    self:AddPointFromVec2(rawget(Vec2Array,i))
   end
 
   return self
 end
 
 --- Create a new PATHLINE object from a given list of 3D points.
+-- Copies positions in numeric order and samples terrain metadata; the caller's array remains unchanged.
+-- An empty array creates an empty path. Sparse arrays, named/non-integer indices and malformed positions raise errors.
+-- The entire index set is validated before any terrain query. Terrain-query errors propagate normally.
 -- @param #PATHLINE self
 -- @param #string Name Name of the pathline.
--- @param #table Vec3Array List of DCS#Vec3 points.
+-- @param #list<DCS#Vec3> Vec3Array Dense, one-based array; x/z are horizontal meters and y is altitude in meters.
 -- @return #PATHLINE self
 function PATHLINE:NewFromVec3Array(Name, Vec3Array)
 
+  local pointCount=checkDenseArray(Vec3Array,"Vec3Array")
   local self=PATHLINE:New(Name)
 
-  for i=1,#Vec3Array do
-    self:AddPointFromVec3(Vec3Array[i])
+  for i=1,pointCount do
+    self:AddPointFromVec3(rawget(Vec3Array,i))
   end
 
   return self
@@ -1797,9 +1823,11 @@ end
 --- Replace the path with copied 2D points, removing its previous point and line drawings.
 -- The replacement is built before the current route is changed. Invalid positions and terrain-query errors
 -- propagate without replacing the old points or removing their drawings. Call drawing methods again as needed.
+-- An empty array clears the route. Sparse or named/non-integer indices raise errors before terrain queries.
+-- Copies input positions without modifying the caller's array.
 -- @param #PATHLINE self
 -- @param #string Name Unused; this operation retains the current name and database registration.
--- @param #table Vec2Array List of DCS#Vec2 points.
+-- @param #list<DCS#Vec2> Vec2Array Dense, one-based array of points; x/y are horizontal meters.
 -- @return #PATHLINE self
 function PATHLINE:UpdateFromVec2Array(Name, Vec2Array)
 
@@ -1809,9 +1837,11 @@ end
 --- Replace the path with copied 3D points, removing its previous point and line drawings.
 -- The replacement is built before the current route is changed. Invalid positions and terrain-query errors
 -- propagate without replacing the old points or removing their drawings. Call drawing methods again as needed.
+-- An empty array clears the route. Sparse or named/non-integer indices raise errors before terrain queries.
+-- Copies input positions without modifying the caller's array.
 -- @param #PATHLINE self
 -- @param #string Name Unused; this operation retains the current name and database registration.
--- @param #table Vec3Array List of DCS#Vec3 points.
+-- @param #list<DCS#Vec3> Vec3Array Dense, one-based array; x/z are horizontal meters and y is altitude in meters.
 -- @return #PATHLINE self
 function PATHLINE:UpdateFromVec3Array(Name, Vec3Array)
 
@@ -2029,6 +2059,8 @@ end
 -- A positive corridor width checks the center and both parallel edges, not the entire area between them or a turning arc.
 -- ClearDistance is a terrain estimate under the linear-interpolation assumption, not a ship's braking distance.
 -- Missing or malformed terrain values produce Status="unavailable" and ClearDistance=0. DCS API errors propagate normally.
+-- Horizontal length uses scaled components so tiny distinct endpoints are not treated as a zero-length preflight.
+-- Unrepresentable coordinate differences or lengths return "invalid_distance", Status="unavailable" and ClearDistance=0.
 -- @param DCS#Vec3 Start Original start position. Accepts a VECTOR directly; its altitude is ignored.
 -- @param DCS#Vec3 Goal Original goal position. Accepts a VECTOR directly; its altitude is ignored.
 -- @param #number MinDepth Optional positive finite minimum water depth in meters, inclusive; default 20.
@@ -2051,9 +2083,9 @@ function PATHLINE.CheckDepth(Start, Goal, MinDepth, CorridorWidth)
 
   local a,b=Start,Goal
   local dx,dz=b.x-a.x,b.z-a.z
-  local distance=math.sqrt(dx*dx+dz*dz)
+  local distance=horizontalLength(dx,dz)
 
-  if not (distance<math.huge) then
+  if distance==nil then
     local reason="invalid_distance"
     return false,reason,PATHLINE._DepthReport(0,MinDepth,0,reason,"unavailable",reason)
   end
@@ -2156,11 +2188,12 @@ end
 -- Linearly interpolates the stored direct depths between support points. Contact includes depth equal to Draft;
 -- unlike a navigation minimum, Draft describes the hull's actual depth below the water surface.
 -- The returned VECTOR uses the interpolated sampled surface height, not the route altitude or seabed height.
+-- Weighted endpoint interpolation avoids overflowing coordinate/height differences; non-finite results are unavailable.
 -- This is a support-point estimate, not a corridor check or a prediction of the ship's turning arc.
 -- @param #PATHLINE self
 -- @param #number Draft Ship's draft in meters, nonnegative.
 -- @return Core.Vector#VECTOR First contact position, or nil when no contact is found or data is unavailable.
--- @return #string "empty_path", "invalid_depth" or "invalid_surface_height" for unavailable data; nil otherwise.
+-- @return #string "empty_path", "invalid_depth", "invalid_surface_height" or "numeric_range" for unavailable data/results; nil otherwise.
 function PATHLINE:FindGroundingPoint(Draft)
 
   assert(Draft>=0 and Draft<math.huge, "PATHLINE: draft must be finite and nonnegative")
@@ -2196,9 +2229,14 @@ function PATHLINE:FindGroundingPoint(Draft)
 
       -- Previous depth is strictly greater than Draft, so this denominator is positive.
       local fraction=(previous.depth-Draft)/(previous.depth-depth)
-      local x=previous.vec3.x+fraction*(point.vec3.x-previous.vec3.x)
-      local z=previous.vec3.z+fraction*(point.vec3.z-previous.vec3.z)
-      local y=previousHeight+fraction*(height-previousHeight)
+      local complement=1-fraction
+      local x=complement*previous.vec3.x+fraction*point.vec3.x
+      local z=complement*previous.vec3.z+fraction*point.vec3.z
+      local y=complement*previousHeight+fraction*height
+
+      if not isFiniteNumber(x) or not isFiniteNumber(y) or not isFiniteNumber(z) then
+        return nil,"numeric_range"
+      end
 
       return VECTOR:New(x, y, z)
     end
@@ -2256,32 +2294,63 @@ function PATHLINE:MarkPoints(Switch)
 end
 
 --- Draw line on F10 map, replacing this pathline's existing line segments.
--- Point markers are independent and are retained.
+-- Validates all arguments before drawing or removal. Point markers are independent and are retained.
+-- Creates replacement segments before removing old segments. If creation raises an error, removes every attempted
+-- replacement ID, including the failing call's ID, and rethrows the original error; existing segment IDs stay unchanged.
+-- Copies Color before passing it to DCS. Empty and single-point paths create no segments.
 -- @param #PATHLINE self
--- @param #number Recipient (Optional) Coalition recipient of the line: -1=All (default).
--- @param #table Color (optional) Color as RGB table plus alpha value. Default {1, 0, 0, 1.0}.
--- @param #number LineType (optional) Line type: 1=Solid (default).
+-- @param #number Recipient (Optional) Integer coalition recipient: -1=All (default), 0=Neutral, 1=Red, 2=Blue.
+-- @param #list<#number> Color (Optional) Dense four-component RGBA array in [0,1]. Default {1,0,0,1}.
+-- @param #number LineType (Optional) Integer: 0=No line, 1=Solid (default), 2=Dashed, 3=Dotted, 4=Dot dash, 5=Long dash, 6=Two dash.
 -- @return #PATHLINE self
 function PATHLINE:DrawLine(Recipient, Color, LineType)
-  
-  -- Input
-  Recipient= Recipient or -1
-  Color= Color or {1,0,0, 1.0}
-  LineType=LineType or 1
-  local ReadOnly=false
+
+  if Recipient==nil then
+    Recipient=-1
+  end
+  if Color==nil then
+    Color={1,0,0,1}
+  end
+  if LineType==nil then
+    LineType=1
+  end
+
+  assert(isFiniteNumber(Recipient) and Recipient%1==0 and Recipient>=-1 and Recipient<=2,
+    "PATHLINE: Recipient must be -1, 0, 1 or 2")
+  assert(isFiniteNumber(LineType) and LineType%1==0 and LineType>=0 and LineType<=6,
+    "PATHLINE: LineType must be an integer between zero and six")
+  assert(checkDenseArray(Color,"Color")==4, "PATHLINE: Color must contain four RGBA components")
+
+  local drawColor={}
+  for index=1,4 do
+    local component=rawget(Color,index)
+    assert(isFiniteNumber(component) and component>=0 and component<=1,
+      "PATHLINE: RGBA components must be between zero and one")
+    drawColor[index]=component
+  end
+
+  -- Own attempted IDs separately so a native failure cannot replace or orphan the current drawing.
+  local replacementIDs={}
+  local ok,drawError=pcall(function()
+    for index=1,#self.points-1 do
+      local startPoint=self.points[index]
+      local goalPoint=self.points[index+1]
+      local lineID=UTILS.GetMarkID()
+      replacementIDs[index]=lineID
+      trigger.action.lineToAll(Recipient,lineID,startPoint.vec3,goalPoint.vec3,drawColor,LineType,false,"")
+    end
+  end)
+
+  if not ok then
+    for _,lineID in ipairs(replacementIDs) do
+      UTILS.RemoveMark(lineID)
+    end
+    error(drawError,0)
+  end
+
   self:UnDrawLine()
-  
-
-  local np=#self.points
-
-  for i=1,np-1 do
-    local p1=self.points[i]   --#PATHLINE.Point
-    local p2=self.points[i+1] --#PATHLINE.Point
-    
-    p1.lineID = UTILS.GetMarkID()
-    
-    trigger.action.lineToAll(Recipient, p1.lineID, p1.vec3, p2.vec3, Color, LineType, ReadOnly, "")
-    
+  for index,lineID in ipairs(replacementIDs) do
+    self.points[index].lineID=lineID
   end
 
   return self
@@ -2563,16 +2632,14 @@ end
 --- Build replacement points before releasing any geometry or drawings owned by this pathline.
 -- Terrain errors propagate normally; construction does not mutate the current route.
 -- @param #PATHLINE self
--- @param #table Positions Dense list of Vec2 or Vec3 positions.
+-- @param #table Positions Dense, one-based list of Vec2 or Vec3 positions; an empty list clears the route.
 -- @return #PATHLINE self.
 function PATHLINE:_UpdatePoints(Positions)
 
-  assert(type(Positions)=="table","PATHLINE: positions must be a list")
+  local pointCount=checkDenseArray(Positions,"Positions")
   local points={}
-  for i=1,#Positions do
-    if Positions[i]~=nil then
-      points[#points+1]=self:_CreatePoint(Positions[i])
-    end
+  for index=1,pointCount do
+    points[index]=self:_CreatePoint(rawget(Positions,index))
   end
 
   self:UnDrawLine()

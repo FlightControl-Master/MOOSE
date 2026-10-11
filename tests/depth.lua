@@ -148,12 +148,60 @@ end)
 
 test("non-finite connection lengths cannot enter native terrain queries",function()
   local data=terrain()
-  local a,b=node(-1e200),node(1e200)
+  local a,b=node(-1e308),node(1e308)
   local fast,fastReason=ASTAR.Depth(a,b,20)
   local clear,reason,report=PATHLINE.CheckDepth(a.vector,b.vector,20)
 
   equal(fast,false) equal(fastReason,"invalid_distance") equal(clear,false) equal(reason,fastReason)
   equal(report.Status,"unavailable") near(report.ClearDistance,0) equal(#data.calls,0)
+end)
+
+test("tiny distinct endpoints cannot skip an obstruction at the goal",function()
+  for _,goal in ipairs({node(1e-200),node(0,1e-200)}) do
+    local data=terrain()
+    local start=node(0)
+    data.surface=function(point)
+      if point.x==goal.vector.x and point.y==goal.vector.z then
+        return land.SurfaceType.LAND
+      end
+      return land.SurfaceType.WATER
+    end
+    local clear,reason,report=PATHLINE.CheckDepth(start.vector,goal.vector,20)
+    equal(clear,false)
+    equal(reason,"goal_blocked")
+    equal(report.Cause,"non_water")
+    equal(report.Status,"blocked")
+    equal(report.Distance,1e-200)
+    equal(report.ClearDistance,0)
+    equal(report.Point.x,goal.vector.x)
+    equal(report.Point.z,goal.vector.z)
+  end
+end)
+
+test("scaled synchronous lengths retain tiny and large finite clear connections",function()
+  local cases={
+    {start=node(0),goal=node(1e-200),distance=1e-200},
+    {start=node(0),goal=node(0,1e-200),distance=1e-200},
+    {start=node(-1e200),goal=node(1e200),distance=2e200},
+    {start=node(0),goal=node(3e200,4e200),distance=5e200},
+  }
+  for _,case in ipairs(cases) do
+    local data=terrain()
+    for _,reverse in ipairs({false,true}) do
+      local start,goal=case.start,case.goal
+      if reverse then
+        start,goal=goal,start
+      end
+      local clear,reason,report=PATHLINE.CheckDepth(start.vector,goal.vector,20)
+      equal(clear,true)
+      equal(reason,nil)
+      equal(report.Status,"clear")
+      assert(report.Distance>0 and report.Distance<math.huge)
+      near(report.Distance/case.distance,1)
+      equal(report.ClearDistance,report.Distance)
+    end
+    equal(#data.calls,2)
+  end
 end)
 
 test("native profile results without a table are unavailable",function()
