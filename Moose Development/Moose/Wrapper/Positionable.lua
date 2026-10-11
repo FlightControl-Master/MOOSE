@@ -390,16 +390,18 @@ end
 -- This should only be used when performance is critical and there is sufficient awareness of the possible pitfalls. However, in most instances, GetCoordinate() is
 -- preferred as it will return a fresh new COORDINATE and thus avoid potentially unexpected issues.
 -- @param #POSITIONABLE self
+-- @param DCS#Object DCSPositionable (Optional) Native object resolved for this wrapper during the current synchronous operation.
+-- @param #table DCSUnits (Optional) Current native DCS units from this group, not MOOSE unit wrappers.
 -- @return Core.Point#COORDINATE A reference to the COORDINATE object of the POSITIONABLE.
-function POSITIONABLE:GetCoord()
+function POSITIONABLE:GetCoord( DCSPositionable, DCSUnits )
 
   -- Get DCS object.
-  local DCSPositionable = self:GetDCSObject()
+  DCSPositionable = DCSPositionable or self:GetDCSObject()
 
   if DCSPositionable then
 
     -- Get the current position.
-    local PositionableVec3 = self:GetVec3()
+    local PositionableVec3 = self:GetVec3( DCSPositionable, DCSUnits )
 
     if PositionableVec3 then
         if self.coordinate then
@@ -415,7 +417,7 @@ function POSITIONABLE:GetCoord()
   end
 
   -- Error message.
-  BASE:E( { "Cannot GetCoordinate", Positionable = self, Alive = self:IsAlive() } )
+  BASE:E( { "Cannot GetCoordinate", Positionable = self, Alive = self:IsAlive(DCSPositionable) } )
 
   return nil
 end
