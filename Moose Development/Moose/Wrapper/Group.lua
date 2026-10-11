@@ -414,11 +414,12 @@ end
 -- If the first @{Wrapper.Unit} of the group is inactive, it will return false.
 --
 -- @param #GROUP self
+-- @param DCS#Group DCSGroup (Optional) Native group resolved for this wrapper during the current synchronous operation.
 -- @return #boolean `true` if the group is alive *and* active, `false` if the group is alive but inactive or `#nil` if the group does not exist anymore.
-function GROUP:IsAlive()
+function GROUP:IsAlive( DCSGroup )
   --self:F2( self.GroupName )
 
-  local DCSGroup = self:GetDCSObject() -- DCS#Group
+  DCSGroup = DCSGroup or self:GetDCSObject() -- DCS#Group
 
   if DCSGroup then
     if DCSGroup:isExist() then
@@ -705,20 +706,24 @@ function GROUP:GetRange()
 end
 
 --- Returns a list of @{Wrapper.Unit} objects of the @{Wrapper.Group}.
+-- Supplied native groups and unit lists must belong to this wrapper and remain valid for the current operation.
+-- Resolve again after timers, callbacks that replace the group, respawns or changes to unit composition.
 -- @param #GROUP self
+-- @param DCS#Group DCSGroup (Optional) Native group resolved for this wrapper during the current synchronous operation.
+-- @param #table DCSUnits (Optional) Current native DCS units from this group, not MOOSE unit wrappers.
 -- @return #table of Wrapper.Unit#UNIT objects, indexed by number.
-function GROUP:GetUnits()
+function GROUP:GetUnits( DCSGroup, DCSUnits )
   --self:F2( { self.GroupName } )
-  local DCSGroup = self:GetDCSObject()
+  DCSGroup = DCSGroup or self:GetDCSObject()
 
   if DCSGroup then
-    local DCSUnits = DCSGroup:getUnits() or {}
+    local DCSUnits = DCSUnits or DCSGroup:getUnits() or {}
     local Units = {}
     for Index, UnitData in pairs( DCSUnits ) do
 
       local unit=UNIT:Find( UnitData )
       if unit then
-        Units[#Units+1] = UNIT:Find( UnitData )
+        Units[#Units+1] = unit
       else
         local UnitName=UnitData:getName()
         unit=_DATABASE:AddUnit(UnitName)
@@ -770,14 +775,16 @@ end
 -- If no underlying DCS Units exist, the method will return nil.
 -- @param #GROUP self
 -- @param #number UnitNumber The number of the UNIT wrapper class to be returned.
+-- @param DCS#Group DCSGroup (Optional) Native group resolved for this wrapper during the current synchronous operation.
+-- @param #table DCSUnits (Optional) Current native DCS units from this group, not MOOSE unit wrappers.
 -- @return Wrapper.Unit#UNIT The UNIT object or nil
-function GROUP:GetUnit( UnitNumber )
-  local DCSGroup = self:GetDCSObject()
+function GROUP:GetUnit( UnitNumber, DCSGroup, DCSUnits )
+  DCSGroup = DCSGroup or self:GetDCSObject()
   if DCSGroup then
     local UnitFound = nil
     -- 2.7.1 dead event bug, return the first alive unit instead
     -- Maybe fixed with 2.8?
-    local units = DCSGroup:getUnits() or {}
+    local units = DCSUnits or DCSGroup:getUnits() or {}
     if units[UnitNumber] then
       local UnitFound = UNIT:Find(units[UnitNumber])
       if UnitFound then
@@ -828,10 +835,11 @@ end
 --- Returns current size of the DCS Group.
 -- If some of the DCS Units of the DCS Group are destroyed the size of the DCS Group is changed.
 -- @param #GROUP self
+-- @param DCS#Group DCSGroup (Optional) Native group resolved for this wrapper during the current synchronous operation.
 -- @return #number The DCS Group size.
-function GROUP:GetSize()
+function GROUP:GetSize( DCSGroup )
 
-  local DCSGroup = self:GetDCSObject()
+  DCSGroup = DCSGroup or self:GetDCSObject()
 
   if DCSGroup then
 
@@ -872,13 +880,14 @@ end
 --- Get the first unit of the group which is alive.
 -- @param #GROUP self
 -- @param #table Units (Optional) Existing list of Wrapper.Unit#UNIT objects from this group.
+-- @param DCS#Group DCSGroup (Optional) Native group resolved for this wrapper during the current synchronous operation.
 -- @return Wrapper.Unit#UNIT First unit alive.
-function GROUP:GetFirstUnitAlive(Units)
+function GROUP:GetFirstUnitAlive(Units,DCSGroup)
   --self:F3({self.GroupName})
-  local DCSGroup = self:GetDCSObject()
+  DCSGroup = DCSGroup or self:GetDCSObject()
 
   if DCSGroup then
-    local units=Units or self:GetUnits()
+    local units=Units or self:GetUnits(DCSGroup)
     for _,_unit in pairs(units) do
       local unit=_unit --Wrapper.Unit#UNIT
       if unit and unit:IsAlive() then
@@ -1150,11 +1159,13 @@ end
 
 --- Returns the current Vec3 vector of the first Unit in the GROUP.
 -- @param #GROUP self
+-- @param DCS#Group DCSGroup (Optional) Native group resolved for this wrapper during the current synchronous operation.
+-- @param #table DCSUnits (Optional) Current native DCS units from this group, not MOOSE unit wrappers.
 -- @return DCS#Vec3 Current Vec3 of the first Unit of the GROUP or nil if cannot be found.
-function GROUP:GetVec3()
+function GROUP:GetVec3( DCSGroup, DCSUnits )
 
   -- Get first unit.
-  local unit=self:GetUnit(1)
+  local unit=self:GetUnit(1,DCSGroup,DCSUnits)
 
   if unit then
     local vec3=unit:GetVec3()
@@ -1339,16 +1350,18 @@ end
 
 --- Returns the mean heading of every UNIT in the GROUP in degrees
 -- @param #GROUP self
+-- @param DCS#Group DCSGroup (Optional) Native group resolved for this wrapper during the current synchronous operation.
+-- @param #table Units (Optional) Current Wrapper.Unit#UNIT objects from this group, not native DCS units.
 -- @return #number Mean heading of the GROUP in degrees or #nil The first UNIT is not existing or alive.
-function GROUP:GetHeading()
+function GROUP:GetHeading( DCSGroup, Units )
   --self:F2(self.GroupName)
 
   --self:F2(self.GroupName)
 
-  local GroupSize = self:GetSize()
+  local GroupSize = self:GetSize(DCSGroup)
   local HeadingAccumulator = 0
   local n=0
-  local Units = self:GetUnits()
+  local Units = Units or self:GetUnits(DCSGroup)
 
   if GroupSize then
     for _,unit in pairs(Units) do
@@ -1436,16 +1449,18 @@ end
 
 --- Get the number of shells, rockets, bombs and missiles the whole group currently has.
 -- @param #GROUP self
+-- @param DCS#Group DCSControllable (Optional) Native group resolved for this wrapper during the current synchronous operation.
+-- @param #table Units (Optional) Current Wrapper.Unit#UNIT objects from this group, not native DCS units.
 -- @return #number Total amount of ammo the group has left. This is the sum of shells, rockets, bombs and missiles of all units.
 -- @return #number Number of shells left.
 -- @return #number Number of rockets left.
 -- @return #number Number of bombs left.
 -- @return #number Number of missiles left.
 -- @return #number Number of artillery shells left (with explosive mass, included in shells; shells can also be machine gun ammo)
-function GROUP:GetAmmunition()
+function GROUP:GetAmmunition( DCSControllable, Units )
   --self:F( self.ControllableName )
 
-  local DCSControllable = self:GetDCSObject()
+  DCSControllable = DCSControllable or self:GetDCSObject()
 
   local Ntot=0
   local Nshells=0
@@ -1457,7 +1472,7 @@ function GROUP:GetAmmunition()
   if DCSControllable then
 
     -- Loop over units.
-    for UnitID, UnitData in pairs( self:GetUnits() ) do
+    for UnitID, UnitData in pairs( Units or self:GetUnits(DCSControllable) ) do
       local Unit = UnitData -- Wrapper.Unit#UNIT
 
       -- Get ammo of the unit
@@ -1692,11 +1707,12 @@ end
 
 --- Returns if the DCS Group contains Ships.
 -- @param #GROUP self
+-- @param DCS#Group DCSGroup (Optional) Native group resolved for this wrapper during the current synchronous operation.
 -- @return #boolean true if DCS Group contains Ships.
-function GROUP:IsShip()
+function GROUP:IsShip( DCSGroup )
   --self:F2()
 
-  local DCSGroup = self:GetDCSObject()
+  DCSGroup = DCSGroup or self:GetDCSObject()
 
   if DCSGroup then
     local GroupCategory = DCSGroup:getCategory()
@@ -2932,12 +2948,13 @@ end
 --- GROUND - Switch on/off radar emissions for the group.
 -- @param #GROUP self
 -- @param #boolean switch If true, emission is enabled. If false, emission is disabled.
+-- @param DCS#Group DCSGroup (Optional) Native group resolved for this wrapper during the current synchronous operation.
 -- @return #GROUP self
-function GROUP:EnableEmission(switch)
+function GROUP:EnableEmission(switch,DCSGroup)
   --self:F2( self.GroupName )
   local switch = switch or false
 
-  local DCSUnit = self:GetDCSObject()
+  local DCSUnit = DCSGroup or self:GetDCSObject()
 
   if DCSUnit then
 
@@ -3215,10 +3232,11 @@ end
 
 --- [GROUND] Determine if a GROUP is a SAM unit, i.e. has radar or optical tracker and is no mobile AAA.
 -- @param #GROUP self
+-- @param #table Units (Optional) Current Wrapper.Unit#UNIT objects from this group, not native DCS units.
 -- @return #boolean IsSAM True if SAM, else false
-function GROUP:IsSAM()
+function GROUP:IsSAM(Units)
   local issam = false
-  local units = self:GetUnits()
+  local units = Units or self:GetUnits()
   for _,_unit in pairs(units or {}) do
     local unit = _unit -- Wrapper.Unit#UNIT
     if unit:IsSAM() then
@@ -3231,10 +3249,11 @@ end
 
 --- [GROUND] Determine if a GROUP has a AAA unit, i.e. has no radar or optical tracker but the AAA = true or the "Mobile AAA" = true attribute.
 -- @param #GROUP self
+-- @param #table Units (Optional) Current Wrapper.Unit#UNIT objects from this group, not native DCS units.
 -- @return #boolean IsAAA True if AAA, else false
-function GROUP:IsAAA()
+function GROUP:IsAAA(Units)
   local isAAA = false
-  local units = self:GetUnits()
+  local units = Units or self:GetUnits()
   for _,_unit in pairs(units or {}) do
     local unit = _unit -- Wrapper.Unit#UNIT
     if unit:IsAAA() then
