@@ -1341,11 +1341,15 @@ do
   -- @param #MANTIS self
   -- @param #number Radius (Optional) Radius in which we can "hear" units. Defaults to 2000 meters.
   -- @param #table UnitCategories (Optional) Set what Unit Categories we can "hear". Defaults to `{Unit.Category.HELICOPTER}`
+  -- @param #boolean PlayersOnly (Optional) Detect only players in the allowed unit categories. Defaults to false.
+  -- @param #function PlayerSnapshotProvider (Optional) Function receiving the opposing coalition and returning `{rows={{unit=nativeUnit,category=unitCategory,point=vec3},...}}` for its players. Without a provider, use coalition.getPlayers.
   -- @return #MANTIS self
-  function MANTIS:SetAccousticDetectionOn(Radius,UnitCategories)
+  function MANTIS:SetAccousticDetectionOn(Radius,UnitCategories,PlayersOnly,PlayerSnapshotProvider)
     self.DetectAccoustic = true
     self.DetectAccousticRadius = Radius or 2000
     self.DetectAccousticCategories = UnitCategories or {Unit.Category.HELICOPTER}
+    self.DetectAccousticPlayersOnly = PlayersOnly or false
+    self.AccousticPlayerSnapshotProvider = PlayerSnapshotProvider
     return self
   end
   
@@ -2268,6 +2272,8 @@ do
     IntelOne.DetectAccoustic = self.DetectAccoustic
     IntelOne.DetectAccousticRadius = self.DetectAccousticRadius or 2000
     IntelOne.DetectAccousticUnitTypes = self.DetectAccousticCategories or {Unit.Category.HELICOPTER}
+    IntelOne.DetectAccousticPlayersOnly = self.DetectAccousticPlayersOnly
+    IntelOne.AccousticPlayerSnapshotProvider = self.AccousticPlayerSnapshotProvider
     --IntelOne:SetClusterAnalysis(true,true,true)
     if self.usecorridors == true then
       IntelOne:SetCorridorZones(self.corridorzones)
@@ -2283,6 +2289,8 @@ do
     IntelTwo.DetectAccoustic = self.DetectAccoustic
     IntelTwo.DetectAccousticRadius = self.DetectAccousticRadius or 2000
     IntelTwo.DetectAccousticUnitTypes = self.DetectAccousticCategories or {Unit.Category.HELICOPTER}
+    IntelTwo.DetectAccousticPlayersOnly = self.DetectAccousticPlayersOnly
+    IntelTwo.AccousticPlayerSnapshotProvider = self.AccousticPlayerSnapshotProvider
     --IntelTwo:SetClusterAnalysis(true,true,true)
     if self.usecorridors == true then
       IntelTwo:SetCorridorZones(self.corridorzones)
@@ -2335,11 +2343,13 @@ do
   -- @param #boolean sma SMA mod flag
   -- @param #boolean chm CH mod flag
   -- @param Wrapper.Group#GROUP group (Optional) Already resolved group.
+  -- @param DCS#Group DCSGroup (Optional) Native group resolved for this wrapper during the current synchronous operation.
+  -- @param #table Units (Optional) Current Wrapper.Unit#UNIT objects from this group, not native DCS units.
   -- @return #number range Max firing range
   -- @return #number height Max firing height
   -- @return #string type Long, medium or short range
   -- @return #number blind "blind" spot
-  function MANTIS:_GetSAMDataFromUnits(grpname,mod,sma,chm,group)
+  function MANTIS:_GetSAMDataFromUnits(grpname,mod,sma,chm,group,DCSGroup,Units)
     self:T(self.lid.."_GetSAMDataFromUnits")
     local found = false
     local range = self.checkradius
@@ -2348,7 +2358,7 @@ do
     local radiusscale = self.radiusscale[type]
     local blind = 0
     group = group or GROUP:FindByName(grpname) -- Wrapper.Group#GROUP
-    local units = group:GetUnits()
+    local units = Units or group:GetUnits(DCSGroup)
     local ARMCapacity
     -- Ordered multi-table search: the mod-tagged table (if any) first, then all
     -- others. This lets groups classify by radar TYPE NAME alone, so ground SAM
@@ -2413,7 +2423,7 @@ do
     --- AAA or Point Defense
     if not found then
       local grp = group -- Wrapper.Group#GROUP
-      if (grp and grp:IsAlive() and grp:IsAAA()) or string.find(grpname,"AAA",1,true) then
+      if (grp and grp:IsAlive(DCSGroup) and grp:IsAAA(units)) or string.find(grpname,"AAA",1,true) then
         range = 2000
         height = 2000
         blind = 50
@@ -2434,12 +2444,13 @@ do
   -- @param #MANTIS self
   -- @param #string grpname Name of the ship group
   -- @param Wrapper.Group#GROUP group (Optional) Already resolved ship group.
+  -- @param #table Units (Optional) Current Wrapper.Unit#UNIT objects from this group, not native DCS units.
   -- @return #number range Max firing range (m)
   -- @return #number height Max firing height (m)
   -- @return #string type #MANTIS.SamType
   -- @return #number blind Blind spot
   -- @return #number ARMCapacity
-  function MANTIS:_GetNavalSAMData(grpname,group)
+  function MANTIS:_GetNavalSAMData(grpname,group,Units)
     self:T(self.lid.."_GetNavalSAMData for "..tostring(grpname))
     self._navalSAMs = self._navalSAMs or {}
     self._navalSAMs[grpname] = true
@@ -2454,7 +2465,7 @@ do
       self._samJammerParams[grpname] = nil
       return range, height, type, blind, ARMCapacity
     end
-    local units = group:GetUnits() or {}
+    local units = Units or group:GetUnits() or {}
     for _,_unit in pairs(units) do
       local typename = string.lower(_unit:GetTypeName())
       for _,entry in pairs(self.SamDataNaval) do
@@ -2480,14 +2491,15 @@ do
   --- [Internal] Classify a naval group PER UNIT. Each hull matching #MANTIS.SamDataNaval
   -- becomes its own SAM-table record keyed by UNIT name, record[8] = parent group name.
   -- @param #MANTIS self
+  -- @param #table Units (Optional) Current Wrapper.Unit#UNIT objects from this group, not native DCS units.
   -- @return #boolean handled True if at least one unit was classified.
-  function MANTIS:_BuildNavalUnitEntries(group, grpname, SAM_Tbl, SAM_Tbl_lg, SAM_Tbl_md, SAM_Tbl_sh, SAM_Tbl_pt, SEAD_Grps)
+  function MANTIS:_BuildNavalUnitEntries(group, grpname, SAM_Tbl, SAM_Tbl_lg, SAM_Tbl_md, SAM_Tbl_sh, SAM_Tbl_pt, SEAD_Grps, Units)
     self:T(self.lid.."_BuildNavalUnitEntries for "..tostring(grpname))
     self._navalSAMs = self._navalSAMs or {}
     self._samJammerParams = self._samJammerParams or {}
     local entries = 0
     local seadadded = false
-    local units = group:GetUnits() or {}
+    local units = Units or group:GetUnits() or {}
     for _,_unit in pairs(units) do
       if _unit and _unit:IsAlive() then
         local typename = string.lower(_unit:GetTypeName())
@@ -2615,17 +2627,19 @@ do
   -- @param #string grpname Name of the group
   -- @param Wrapper.Group#GROUP group (Optional) Already resolved group.
   -- @param #boolean isship (Optional) Already resolved ship classification.
+  -- @param DCS#Group DCSGroup (Optional) Native group resolved for this wrapper during the current synchronous operation.
+  -- @param #table Units (Optional) Current Wrapper.Unit#UNIT objects from this group, not native DCS units.
   -- @return #number range Max firing range
   -- @return #number height Max firing height
   -- @return #string type Long, medium or short range
   -- @return #number blind "blind" spot
-  function MANTIS:_GetSAMRange(grpname,group,isship)
+  function MANTIS:_GetSAMRange(grpname,group,isship,DCSGroup,Units)
     self:T(self.lid.."_GetSAMRange for "..tostring(grpname))
     -- Naval hulls: match by exact unit type name against SamDataNaval and stash the
     -- jammer curve; bypass the ground name-matching below.
     group = group or GROUP:FindByName(grpname) -- Wrapper.Group#GROUP
-    if group and (isship == true or isship == nil and group:IsShip()) then
-      return self:_GetNavalSAMData(grpname,group)
+    if group and (isship == true or isship == nil and group:IsShip(DCSGroup)) then
+      return self:_GetNavalSAMData(grpname,group,Units)
     end
     local range = self.checkradius
     local height = 3000
@@ -2664,7 +2678,7 @@ do
     --- Secondary - AAA or Point Defense
     if not found then
       local grp = group -- Wrapper.Group#GROUP
-      if (grp and grp:IsAlive() and grp:IsAAA()) or string.find(grpname,"AAA",1,true) then
+      if (grp and grp:IsAlive(DCSGroup) and grp:IsAAA(Units)) or string.find(grpname,"AAA",1,true) then
         range = 2000
         height = 2000
         blind = 50
@@ -2674,7 +2688,7 @@ do
     end
     --- Tertiary filter if not found
     if (not found) or HDSmod or SMAMod or CHMod then
-      range, height, type, blind, ARMCapacity = self:_GetSAMDataFromUnits(grpname,HDSmod,SMAMod,CHMod,group)
+      range, height, type, blind, ARMCapacity = self:_GetSAMDataFromUnits(grpname,HDSmod,SMAMod,CHMod,group,DCSGroup,Units)
     elseif not found then
       self:E(self.lid .. string.format("*****Could not match radar data for %s! Will default to midrange values!",grpname))
     end
@@ -2690,7 +2704,8 @@ do
   -- @param #string grpname The group name.
   -- @param #table ammo The group's cached ammunition and tracking state.
   -- @param #string lostUnitName (Optional) Unit reported lost by the current event.
-  function MANTIS:_RefreshSAMTracking(group,grpname,ammo,lostUnitName)
+  -- @param #table Units (Optional) Current Wrapper.Unit#UNIT objects from this group, not native DCS units.
+  function MANTIS:_RefreshSAMTracking(group,grpname,ammo,lostUnitName,Units)
     if not ammo.trUnits then
       ammo.trUnits = {}
       ammo.trLost = nil
@@ -2711,7 +2726,7 @@ do
         end
       else
         -- Raw DCS spawns may have no registered MOOSE template.
-        for _,unit in pairs(group:GetUnits()) do
+        for _,unit in pairs(Units or group:GetUnits()) do
           local name = unit:GetName()
           local DCSUnit = unit:GetDCSObject() -- DCS#Unit
           if ammo.units then ammo.units[name] = DCSUnit end
@@ -2756,9 +2771,11 @@ do
   -- @param #string grpname The group name.
   -- @param #boolean reset Recreate the cache for startup.
   -- @param #string samType The classified #MANTIS.SamType.
+  -- @param DCS#Group DCSGroup (Optional) Native group resolved for this wrapper during the current synchronous operation.
+  -- @param #table Units (Optional) Current Wrapper.Unit#UNIT objects from this group, not native DCS units.
   -- @return #MANTIS self
-  function MANTIS:_RefreshSAMAmmo(group,grpname,reset,samType)
-    local DCSGroup = group:GetDCSObject() -- DCS#Group
+  function MANTIS:_RefreshSAMAmmo(group,grpname,reset,samType,DCSGroup,Units)
+    DCSGroup = DCSGroup or group:GetDCSObject() -- DCS#Group
     local ammo = group:GetProperty("MANTIS_AMMO") -- #table
     local replaced = false
     if not self.dynamic and not reset and ammo and ammo.trUnits and ammo.object == DCSGroup and ammo.units then
@@ -2771,13 +2788,13 @@ do
       local advancedSleeping = ammo and ammo.advancedSleeping
       ammo = {
         object = DCSGroup,
-        isSAM = group:IsSAM(),
+        isSAM = group:IsSAM(Units),
         advancedSleeping = advancedSleeping,
       }
       group:SetProperty("MANTIS_AMMO",ammo)
     end
-    self:_RefreshSAMTracking(group,grpname,ammo)
-    local missiles = select(5,group:GetAmmunition())
+    self:_RefreshSAMTracking(group,grpname,ammo,nil,Units)
+    local missiles = select(5,group:GetAmmunition(DCSGroup,Units))
     -- Cache every ground group's missiles; only non-POINT radar SAMs use the sleep veto.
     ammo.canSleep = ammo.isSAM and samType ~= MANTIS.SamType.POINT
     -- Two scheduled zero samples leave one refresh cycle for the last salvo.
@@ -2910,17 +2927,21 @@ do
      for _i,_group in pairs (SAM_Grps) do
         local group = _group -- Wrapper.Group#GROUP
         group:OptionEngageRange(engagerange)  --engagement will be 95% of firing range
-        local isground = group:IsGround()
-        if (isground or group:IsShip()) and group:IsAlive() then
+        local DCSGroup = group:GetDCSObject() -- DCS#Group
+        local category = DCSGroup and DCSGroup:getCategory()
+        local isground = category == Group.Category.GROUND
+        if DCSGroup and (isground or category == Group.Category.SHIP) and group:IsAlive(DCSGroup) then
+          local DCSUnits = DCSGroup:getUnits() or {}
           local grpname = group:GetName()
-          local grpcoord = group:GetCoord()
-          if grpcoord then grpcoord.Heading = group:GetHeading() or 0 end
+          local grpcoord = group:GetCoord(DCSGroup,DCSUnits)
+          local units = group:GetUnits(DCSGroup,DCSUnits)
+          if grpcoord then grpcoord.Heading = group:GetHeading(DCSGroup,units) or 0 end
           if (not isground) and self.NavalPerUnit
-            and self:_BuildNavalUnitEntries(group, grpname, SAM_Tbl, SAM_Tbl_lg, SAM_Tbl_md, SAM_Tbl_sh, SAM_Tbl_pt, SEAD_Grps) then
+            and self:_BuildNavalUnitEntries(group, grpname, SAM_Tbl, SAM_Tbl_lg, SAM_Tbl_md, SAM_Tbl_sh, SAM_Tbl_pt, SEAD_Grps, units) then
             self:T(grpname.." handled as per-unit naval group")
           else
-          local grprange, grpheight,type,blind, ARMCapacity  = self:_GetSAMRange(grpname,group,not isground)
-          if isground then self:_RefreshSAMAmmo(group,grpname,false,type) end
+          local grprange, grpheight,type,blind, ARMCapacity  = self:_GetSAMRange(grpname,group,not isground,DCSGroup,units)
+          if isground then self:_RefreshSAMAmmo(group,grpname,false,type,DCSGroup,units) end
           -- TODO the below might stop working at some point after some hours, needs testing
           --local radaralive = group:IsSAM()
           if ARMCapacity and ARMCapacity>0 then _group:SetProperty("ARMCapacity",ARMCapacity) end
@@ -3160,8 +3181,12 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
         samgroup = GROUP:FindByName(name)
       end
       local samalive = false
+      local DCSGroup = nil -- DCS#Group
       if navalparent then samalive = (samunit ~= nil) and samunit:IsAlive() or false
-      elseif samgroup then samalive = samgroup:IsAlive() or false end
+      elseif samgroup then
+        DCSGroup = samgroup:GetDCSObject()
+        samalive = DCSGroup and samgroup:IsAlive(DCSGroup) or false
+      end
       local ammo = samalive and samgroup:GetProperty("MANTIS_AMMO") -- #table
       local IsInZone, Distance, CloseThreat = false, 0, false
       if samalive and not (ammo and (ammo.trLost or ammo.canSleep and ammo.empty)) then
@@ -3196,7 +3221,7 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
             switch = true
           elseif self.UseEmOnOff and canSwitch then
             -- DONE: add emissions on/off
-            samgroup:EnableEmission(true)
+            samgroup:EnableEmission(true,DCSGroup)
             switchedon = switchedon + 1
             switch = true
           elseif (not self.UseEmOnOff) and canSwitch then
@@ -3235,7 +3260,7 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
           if navalparent then
             -- per-unit naval: tracker-only; group alarm state applied by the arbiter
           elseif self.UseEmOnOff  then
-            samgroup:EnableEmission(false)
+            samgroup:EnableEmission(false,DCSGroup)
           else
             samgroup:OptionAlarmStateGreen()
           end
@@ -4376,13 +4401,17 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
             samgroup = GROUP:FindByName(name)
           end
           local samalive = false
+          local DCSGroup = nil -- DCS#Group
           if navalparent then samalive = (samunit ~= nil) and samunit:IsAlive() or false
-          elseif samgroup then samalive = samgroup:IsAlive() or false end
+          elseif samgroup then
+            DCSGroup = samgroup:GetDCSObject()
+            samalive = DCSGroup and samgroup:IsAlive(DCSGroup) or false
+          end
           if samalive then
             if navalparent then
               -- per-unit naval: tracker set GREEN below; arbiter darkens the group if no unit remains RED
             elseif self.UseEmOnOff then
-              samgroup:EnableEmission(false)
+              samgroup:EnableEmission(false,DCSGroup)
             else
               samgroup:OptionAlarmStateGreen()
             end
