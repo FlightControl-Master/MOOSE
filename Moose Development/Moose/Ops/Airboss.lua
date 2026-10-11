@@ -1312,7 +1312,8 @@ AIRBOSS.AircraftCarrier={
   RHINOF="FA-18F",
   GROWLER="EA-18G",
   CORSAIR="F4U-1D",
-  CORSAIR_CW="F4U-1D CW",  
+  CORSAIR_CW="F4U-1D CW",
+  RAFALE="Rafale-M",  
 }
 
 --- Carrier types.
@@ -2156,7 +2157,7 @@ function AIRBOSS:New( carriername, alias )
       -- cL:FlareYellow()
 
       -- Carrier specific.
-      if self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.INVINCIBLE or self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.HERMES or self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.TARAWA or self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.AMERICA or self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.JCARLOS or self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.CANBERRA then
+      if self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.INVINCIBLE and self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.HERMES and self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.TARAWA and self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.AMERICA and self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.JCARLOS and self.carrier:GetTypeName() ~= AIRBOSS.CarrierType.CANBERRA then
 
         -- Flare wires.
         local w1 = stern:Translate( self.carrierparam.wire1, FB, true )
@@ -8795,7 +8796,7 @@ function AIRBOSS:OnEventRunwayTouch( EventData )
       -- AI unit landed --
       --------------------
 
-      if self.carriertype ~= AIRBOSS.CarrierType.INVINCIBLE or self.carriertype ~= AIRBOSS.CarrierType.HERMES or self.carriertype ~= AIRBOSS.CarrierType.TARAWA or self.carriertype ~= AIRBOSS.CarrierType.AMERICA or self.carriertype ~= AIRBOSS.CarrierType.JCARLOS or self.carriertype ~= AIRBOSS.CarrierType.CANBERRA then
+      if self.carriertype ~= AIRBOSS.CarrierType.INVINCIBLE and self.carriertype ~= AIRBOSS.CarrierType.HERMES and self.carriertype ~= AIRBOSS.CarrierType.TARAWA and self.carriertype ~= AIRBOSS.CarrierType.AMERICA and self.carriertype ~= AIRBOSS.CarrierType.JCARLOS and self.carriertype ~= AIRBOSS.CarrierType.CANBERRA then
 
         -- Coordinate at landing event
         local coord = EventData.IniUnit:GetCoordinate()
