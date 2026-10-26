@@ -3082,8 +3082,10 @@ function CONTROLLABLE:GetDetectedTargets( DetectVisual, DetectOptical, DetectRad
     end
 
     self:T2( { DetectionVisual, DetectionOptical, DetectionRadar, DetectionIRST, DetectionRWR, DetectionDLINK } )
-
-    return self:_GetController():getDetectedTargets( Params[1], Params[2], Params[3], Params[4], Params[5], Params[6] )
+    local contrlr = self:_GetController()
+    if contrlr ~= nil then
+      return contrlr:getDetectedTargets( Params[1], Params[2], Params[3], Params[4], Params[5], Params[6] )
+    end
   end
 
   return nil
