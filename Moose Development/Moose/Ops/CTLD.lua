@@ -4225,8 +4225,7 @@ function CTLD:_GetCrates(Group, Unit, Cargo, number, drop, pack, quiet, suppress
     if not drop and not pack then
       table.insert(obtainedcargo, realcargo)
     end
-    local CCat4, CType4, CShape4 = cargotype:GetStaticTypeAndShape()
-    realcargo:SetStaticTypeAndShape(CCat4, CType4, CShape4)
+    realcargo:SetStaticTypeAndShape(CCat, basetype, CShape)
     if c130DcAutoSetId and realcargo then
       self:_C130DcAutoRegisterDynamicCargo(realcargo:GetPositionable())
       self:_C130DcAutoRegisterEntry(c130DcAutoSetId, realcargo)
