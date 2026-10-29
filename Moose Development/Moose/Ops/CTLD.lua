@@ -3479,14 +3479,19 @@ end
 -- @param Wrapper.Unit#UNIT Unit
 -- @param Core.Menu#MENU_GROUP parentMenu
 -- @param #CTLD_CARGO cargoObj
+-- @param #table menuCapacity Optional capacity values shared within one unit's menu refresh.
 -- @return #CTLD self
-function CTLD:_AddTroopQuantityMenus(Group, Unit, parentMenu, cargoObj)
+function CTLD:_AddTroopQuantityMenus(Group, Unit, parentMenu, cargoObj, menuCapacity)
   local stock = cargoObj:GetStock()
   local maxQuantity = self.maxCrateMenuQuantity or 1
   if type(stock) == "number" and stock >= 0 and stock < maxQuantity then maxQuantity = stock end
   maxQuantity = math.floor(maxQuantity)
   if maxQuantity < 1 then maxQuantity = 1 end
-  local caps = self:_GetUnitCapabilities(Unit)
+  local caps = menuCapacity and menuCapacity.capabilities
+  if caps == nil then
+    caps = self:_GetUnitCapabilities(Unit)
+    if menuCapacity then menuCapacity.capabilities = caps end
+  end
   local trooplimit = caps and caps.trooplimit or 0
   local troopsize = cargoObj:GetCratesNeeded() or 1
   if troopsize < 1 then troopsize = 1 end
@@ -3537,8 +3542,9 @@ end
 -- @param Core.Menu#MENU_GROUP parentMenu
 -- @param #CTLD_CARGO cargoObj
 -- @param #table stockSummary Optional pooled stock summary.
+-- @param #table menuCapacity Optional capacity values shared within one unit's menu refresh.
 -- @return #CTLD self
-function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSummary)
+function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSummary, menuCapacity)
   self:T("_AddCrateQuantityMenus "..cargoObj.Name)
   local needed = cargoObj:GetCratesNeeded() or 1
   local stockEntry = self:_GetCrateStockEntry(cargoObj, stockSummary)
@@ -3570,7 +3576,11 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
   local capacityCrates = nil
   local capabilities
   if Unit then
-    capabilities = self:_GetUnitCapabilities(Unit)
+    capabilities = menuCapacity and menuCapacity.capabilities
+    if capabilities == nil then
+      capabilities = self:_GetUnitCapabilities(Unit)
+      if menuCapacity then menuCapacity.capabilities = capabilities end
+    end
     local capacity = capabilities and capabilities.cratelimit or 0
     if capacity > 0 then
       local loadedData = nil
@@ -3605,7 +3615,11 @@ function CTLD:_AddCrateQuantityMenus(Group, Unit, parentMenu, cargoObj, stockSum
   local maxMassSets = nil
   local maxMassCrates = nil
   if Unit then
-    local maxload = self:_GetMaxLoadableMass(Unit, nil, capabilities)
+    local maxload = menuCapacity and menuCapacity.maxLoadableMass
+    if maxload == nil then
+      maxload = self:_GetMaxLoadableMass(Unit, nil, capabilities)
+      if menuCapacity then menuCapacity.maxLoadableMass = maxload end
+    end
     local perCrateMass = (cargoObj.GetMass and cargoObj:GetMass()) or cargoObj.PerCrateMass or 0
     local setMass = perCrateMass * (needed > 0 and needed or 1)
     if type(maxload) == "number" and maxload > 0 and setMass > 0 then
@@ -5096,17 +5110,18 @@ function CTLD:_GetUnitPositions(Coordinate,Radius,Heading,Template)
   --UTILS.PrintTableToLog(template)
   local numbertroops = #template.units
   local slightshift = math.abs(math.random(1,500)/100)
-  local newcenter = Coordinate:Translate(Radius+slightshift,((Heading+270+math.random(1,10))%360))
+  -- Only horizontal positions are consumed; translated terrain heights are unused here.
+  local angle = math.rad((Heading+270+math.random(1,10))%360)
+  local centerX = (Radius+slightshift)*math.cos(angle)+Coordinate.x
+  local centerZ = (Radius+slightshift)*math.sin(angle)+Coordinate.z
   for i=1,360,math.floor(360/numbertroops) do
     local phead = ((Heading+270+i)%360)
-    local post = newcenter:Translate(Radius,phead)
-    local pos1 = post:GetVec2()
-    local p1t = {
-    x = pos1.x,
-    y = pos1.y,
+    local alpha = math.rad(phead)
+    Positions[#Positions+1] = {
+    x = Radius*math.cos(alpha)+centerX,
+    y = Radius*math.sin(alpha)+centerZ,
     heading = phead,
     }
-    table.insert(Positions,p1t)
   end
   --UTILS.PrintTableToLog(Positions)
   return Positions
@@ -6533,6 +6548,7 @@ end
 -- @param #CTLD_CARGO CargoObj Optional; if given and stock < maxCrateMenuQuantity, do global rebuild.
 -- @return #CTLD self
 function CTLD:_RefreshCrateQuantityMenus(Group, Unit, CargoObj)
+  local menuCapacity
   if not Group and Unit then Group = Unit:GetGroup() end
   if Group and Unit then
     local uname = Unit:GetName() or "none"
@@ -6550,13 +6566,17 @@ function CTLD:_RefreshCrateQuantityMenus(Group, Unit, CargoObj)
       for item, menu in pairs(Group.CTLD_CrateMenus) do
         menu:RemoveSubMenus()
         local obj = self:_FindCratesCargoObject(item)
-        if obj then self:_AddCrateQuantityMenus(Group, Unit, menu, obj, stockSummary) end
+        if obj then
+          menuCapacity = menuCapacity or {}
+          self:_AddCrateQuantityMenus(Group, Unit, menu, obj, stockSummary, menuCapacity)
+        end
       end
     end
   end
   if CargoObj and Group and Unit then
     local uname = Unit:GetName() or "none"
-    local cap = (self:_GetUnitCapabilities(Unit).cratelimit or 0)
+    local capabilities = menuCapacity and menuCapacity.capabilities or self:_GetUnitCapabilities(Unit)
+    local cap = (capabilities.cratelimit or 0)
     local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Cratesloaded) or 0
     local avail = math.max(0, cap - loaded)
     local per = CargoObj:GetCratesNeeded() or 1
@@ -6584,6 +6604,7 @@ end
 -- @param #CTLD_CARGO CargoObj Optional; if given and stock < maxCrateMenuQuantity, do global rebuild.
 -- @return #CTLD self
 function CTLD:_RefreshTroopQuantityMenus(Group, Unit, CargoObj)
+  local menuCapacity
   if not Group and Unit then Group = Unit:GetGroup() end
   if Group and Unit then
     local uname = Unit:GetName() or "none"
@@ -6600,13 +6621,17 @@ function CTLD:_RefreshTroopQuantityMenus(Group, Unit, CargoObj)
       for item, menu in pairs(Group.CTLD_TroopMenus) do
         menu:RemoveSubMenus()
         local obj = self:_FindTroopsCargoObject(item)
-        if obj then self:_AddTroopQuantityMenus(Group, Unit, menu, obj) end
+        if obj then
+          menuCapacity = menuCapacity or {}
+          self:_AddTroopQuantityMenus(Group, Unit, menu, obj, menuCapacity)
+        end
       end
     end
   end
   if CargoObj and Group and Unit then
     local uname = Unit:GetName() or "none"
-    local cap = (self:_GetUnitCapabilities(Unit).trooplimit or 0)
+    local capabilities = menuCapacity and menuCapacity.capabilities or self:_GetUnitCapabilities(Unit)
+    local cap = (capabilities.trooplimit or 0)
     local loaded = (self.Loaded_Cargo[uname] and self.Loaded_Cargo[uname].Troopsloaded) or 0
     local avail = math.max(0, cap - loaded)
     local per = CargoObj:GetCratesNeeded() or 1
@@ -6634,13 +6659,17 @@ end
 -- @return #CTLD self
 function CTLD:_RefreshQuantityMenusForGroup(_group, _unit)
   if _group and _unit then
+    local menuCapacity
     local stockSummary = self.showstockinmenuitems and self:_CountStockPlusInHeloPlusAliveGroups(false) or nil
     if _group.CTLD_CrateMenus then
       for item, menu in pairs(_group.CTLD_CrateMenus) do
         if menu and menu.RemoveSubMenus then
           menu:RemoveSubMenus()
           local obj = self:_FindCratesCargoObject(item)
-          if obj then self:_AddCrateQuantityMenus(_group, _unit, menu, obj, stockSummary) end
+          if obj then
+            menuCapacity = menuCapacity or {}
+            self:_AddCrateQuantityMenus(_group, _unit, menu, obj, stockSummary, menuCapacity)
+          end
         end
       end
     end
@@ -6649,7 +6678,10 @@ function CTLD:_RefreshQuantityMenusForGroup(_group, _unit)
         if menu and menu.RemoveSubMenus then
           menu:RemoveSubMenus()
           local obj = self:_FindTroopsCargoObject(item)
-          if obj then self:_AddTroopQuantityMenus(_group, _unit, menu, obj) end
+          if obj then
+            menuCapacity = menuCapacity or {}
+            self:_AddTroopQuantityMenus(_group, _unit, menu, obj, menuCapacity)
+          end
         end
       end
     end
@@ -6703,13 +6735,17 @@ function CTLD:_RefreshQuantityMenusForGroup(_group, _unit)
         end
 
         if needCrate or needTroop then
+          local menuCapacity
           local stockSummary = self.showstockinmenuitems and self:_CountStockPlusInHeloPlusAliveGroups(false) or nil
           if needCrate and g.CTLD_CrateMenus then
             for item,menu in pairs(g.CTLD_CrateMenus) do
               if menu and menu.RemoveSubMenus then
                 menu:RemoveSubMenus()
                 local obj = self:_FindCratesCargoObject(item)
-                if obj then self:_AddCrateQuantityMenus(g, u, menu, obj, stockSummary) end
+                if obj then
+                  menuCapacity = menuCapacity or {capabilities = caps}
+                  self:_AddCrateQuantityMenus(g, u, menu, obj, stockSummary, menuCapacity)
+                end
               end
             end
           end
@@ -6718,7 +6754,10 @@ function CTLD:_RefreshQuantityMenusForGroup(_group, _unit)
               if menu and menu.RemoveSubMenus then
                 menu:RemoveSubMenus()
                 local obj = self:_FindTroopsCargoObject(item)
-                if obj then self:_AddTroopQuantityMenus(g, u, menu, obj) end
+                if obj then
+                  menuCapacity = menuCapacity or {capabilities = caps}
+                  self:_AddTroopQuantityMenus(g, u, menu, obj, menuCapacity)
+                end
               end
             end
           end
