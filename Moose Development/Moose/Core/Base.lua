@@ -1027,9 +1027,7 @@ do -- Scheduling
     -- NOTE: MasterObject (first parameter) needs to be nil or it will be the first argument passed to the SchedulerFunction!
     local ScheduleID = self.Scheduler:Schedule(nil, SchedulerFunction, {...}, Start)
     
-    self._.Schedules[#self._.Schedules+1] = ScheduleID
-  
-    return self._.Schedules[#self._.Schedules]
+    return ScheduleID
   end
 
   --- Schedule a new time event. Note that the schedule will only take place if the scheduler is *started*. Even for a single schedule event, the scheduler needs to be started also.
@@ -1066,9 +1064,7 @@ do -- Scheduling
       4
     )
     
-    self._.Schedules[#self._.Schedules+1] = ScheduleID
-  
-    return self._.Schedules[#self._.Schedules]
+    return ScheduleID
   end
 
   --- Stops the Schedule.

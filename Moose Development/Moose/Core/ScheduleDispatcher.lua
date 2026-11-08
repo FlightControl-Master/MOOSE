@@ -111,6 +111,8 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
   if Scheduler.MasterObject then
     --env.info("FF Object Scheduler")
     self.ObjectSchedulers[CallID] = Scheduler
+    self.KeepAlive = self.KeepAlive or {}
+    self.KeepAlive[Scheduler] = true
     self:F3( { CallID = CallID, ObjectScheduler = tostring( self.ObjectSchedulers[CallID] ), MasterObject = tostring( Scheduler.MasterObject ) } )
   else
     --env.info("FF Persistent Scheduler")
@@ -190,12 +192,13 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
 
     -- self:T3( { Scheduler = Scheduler } )
 
-    if Scheduler then
+    -- Schedule object.
+    local Schedules = Scheduler and self.Schedule and self.Schedule[Scheduler]
+    local Schedule = Schedules and Schedules[CallID] -- #SCHEDULEDISPATCHER.ScheduleData
+
+    if Scheduler and Schedule then
 
       local MasterObject = tostring( Scheduler.MasterObject )
-
-      -- Schedule object.
-      local Schedule = self.Schedule[Scheduler][CallID] -- #SCHEDULEDISPATCHER.ScheduleData
 
       -- self:T3( { Schedule = Schedule } )
 
@@ -245,10 +248,14 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
           local ScheduleTime = CurrentTime + Repeat + math.random( -(Randomize * Repeat / 2), (Randomize * Repeat / 2) ) + 0.0001 -- Accuracy
           -- self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
           return ScheduleTime -- returns the next time the function needs to be called.
+        elseif Repeat == 0 then
+          self:_Reclaim( Scheduler, CallID )
         else
           self:Stop( Scheduler, CallID )
         end
 
+      elseif Repeat == 0 then
+        self:_Reclaim( Scheduler, CallID )
       else
         self:Stop( Scheduler, CallID )
       end
@@ -272,8 +279,7 @@ function SCHEDULEDISPATCHER:RemoveSchedule( Scheduler, CallID )
   self:F2( { Remove = CallID, Scheduler = Scheduler } )
 
   if CallID then
-    self:Stop( Scheduler, CallID )
-    self.Schedule[Scheduler][CallID] = nil
+    self:_Reclaim( Scheduler, CallID )
   end
 end
 
@@ -285,13 +291,15 @@ end
 function SCHEDULEDISPATCHER:Start( Scheduler, CallID, Info )
   self:F2( { Start = CallID, Scheduler = Scheduler } )
 
+  local Schedules = self.Schedule and self.Schedule[Scheduler]
+
   if CallID then
 
-    local Schedule = self.Schedule[Scheduler][CallID] -- #SCHEDULEDISPATCHER.ScheduleData
+    local Schedule = Schedules and Schedules[CallID] -- #SCHEDULEDISPATCHER.ScheduleData
 
     -- Only start when there is no ScheduleID defined!
     -- This prevents to "Start" the scheduler twice with the same CallID...
-    if not Schedule.ScheduleID then
+    if Schedule and not Schedule.ScheduleID then
 
       -- Current time in seconds.
       local Tnow = timer.getTime()
@@ -307,7 +315,7 @@ function SCHEDULEDISPATCHER:Start( Scheduler, CallID, Info )
   else
 
     -- Recursive.
-    for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
+    for CallID, Schedule in pairs( Schedules or {} ) do
       self:Start( Scheduler, CallID, Info ) -- Recursive
     end
 
@@ -321,9 +329,11 @@ end
 function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
   self:F2( { Stop = CallID, Scheduler = Scheduler } )
 
+  local Schedules = self.Schedule and self.Schedule[Scheduler]
+
   if CallID then
 
-    local Schedule = self.Schedule[Scheduler][CallID] -- #SCHEDULEDISPATCHER.ScheduleData
+    local Schedule = Schedules and Schedules[CallID] -- #SCHEDULEDISPATCHER.ScheduleData
 
     -- Only stop when there is a ScheduleID defined for the CallID. So, when the scheduler was stopped before, do nothing.
     if Schedule and Schedule.ScheduleID then
@@ -341,7 +351,7 @@ function SCHEDULEDISPATCHER:Stop( Scheduler, CallID )
 
   else
 
-    for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
+    for CallID, Schedule in pairs( Schedules or {} ) do
       self:Stop( Scheduler, CallID ) -- Recursive
     end
 
@@ -354,8 +364,14 @@ end
 function SCHEDULEDISPATCHER:Clear( Scheduler )
   self:F2( { Scheduler = Scheduler } )
 
-  for CallID, Schedule in pairs( self.Schedule[Scheduler] or {} ) do
-    self:Stop( Scheduler, CallID ) -- Recursive
+  local Schedules = self.Schedule and self.Schedule[Scheduler]
+  if Schedules then
+    for CallID, Schedule in pairs( Schedules ) do
+      self:_Reclaim( Scheduler, CallID )
+    end
+  end
+  if self.KeepAlive then
+    self.KeepAlive[Scheduler] = nil
   end
 end
 
@@ -381,7 +397,24 @@ end
 -- @param #string CallID (Optional) Scheduler Call ID.
 function SCHEDULEDISPATCHER:_Reclaim( Scheduler, CallID )
   self:Stop( Scheduler, CallID )                          -- remove DCS timer, nil ScheduleID
-  if self.Schedule[Scheduler] then self.Schedule[Scheduler][CallID] = nil end
-  self.ObjectSchedulers[CallID]     = nil
-  self.PersistentSchedulers[CallID] = nil
+  local Schedules = self.Schedule and self.Schedule[Scheduler]
+  if Schedules then
+    Schedules[CallID] = nil
+    if next( Schedules ) == nil then
+      self.Schedule[Scheduler] = nil
+      local master = self.KeepAlive and self.KeepAlive[Scheduler] and Scheduler.MasterObject
+      if master and type( master.Is ) == "function" then
+        local ok, stopped = pcall( master.Is, master, "Stopped" )
+        if ok and stopped then
+          self.KeepAlive[Scheduler] = nil
+        end
+      end
+    end
+  end
+  if self.ObjectSchedulers then
+    self.ObjectSchedulers[CallID] = nil
+  end
+  if self.PersistentSchedulers then
+    self.PersistentSchedulers[CallID] = nil
+  end
 end

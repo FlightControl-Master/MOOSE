@@ -107,7 +107,7 @@ dofile([[C:\MyScripts\hello-world.lua]])
 
 So all lines above do the same. In [Lua] you need to specify the path with
 slashes, escape backslashes or use double square brackets around the string.
-Double square brackets are usefull, because you can copy paste the path
+Double square brackets are useful, because you can copy paste the path
 without any modification.
 
 If you upload a mission with this code, you need to create the folder
@@ -162,7 +162,7 @@ With the code below you can have the advantages of both approaches.
 - [De-Sanitize] your `MissionScripting.lua`.
 
 Now the mission will use the script on your hard drive instead of the script
-embedded in th MIZ file, as long as it is available. So you can chnge the
+embedded in th MIZ file, as long as it is available. So you can change the
 script, save it and restart the mission, without the need to readd it after each
 change.
 

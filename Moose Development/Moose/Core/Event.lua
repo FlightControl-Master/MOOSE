@@ -1,4 +1,4 @@
---- **Core** - Models DCS event dispatching using a publish-subscribe model.
+-- **Core** - Models DCS event dispatching using a publish-subscribe model.
 --
 -- ===
 --
@@ -1453,8 +1453,8 @@ function EVENT:onEvent( Event )
       -- Weapon.
       if Event.weapon and type(Event.weapon) == "table" and Event.weapon.isExist and Event.weapon:isExist() then
         Event.Weapon = Event.weapon
-        if Event.weapon_name == "ZELL Booster" then 
-          Event.WeaponName = "ZELL Booster"
+        if Event.weapon_name == "ZELL Booster" or Event.weapon_name == "SPRD-99" then
+          Event.WeaponName = Event.weapon_name
         else
           Event.WeaponName = Event.weapon:isExist() and Event.weapon.getTypeName and Event.weapon:getTypeName() or "Unknown Weapon"
         end

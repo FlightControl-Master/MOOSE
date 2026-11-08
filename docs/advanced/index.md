@@ -11,7 +11,7 @@ users.
 
 {: .note }
 > This documentation is WIP (work in progress) and it will take some time to
-> fill it with usefull and up to date informations. Please be patient and check
+> fill it with useful and up to date information. Please be patient and check
 > back here from time to time to see if there is anything new for you.
 
 If you cannot find the information you are looking for here in the new

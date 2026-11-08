@@ -1,4 +1,4 @@
---- **Ops** - Office of Military Intelligence.
+-- **Ops** - Office of Military Intelligence.
 --
 -- **Main Features:**
 --
@@ -1561,6 +1561,7 @@ function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisua
 
   -- Get detected DCS units.
   local reccename = Unit:GetName()
+  local reccecoord
 
   local detectedtargets=Unit:GetDetectedTargets(DetectVisual, DetectOptical, DetectRadar, DetectIRST, DetectRWR, DetectDLINK)
 
@@ -1583,26 +1584,30 @@ function INTEL:GetDetectedUnits(Unit, DetectedUnits, RecceDetecting, DetectVisua
  
         if unit and unit:IsAlive() then
           local DetectionAccepted = true
+          local coord, dist
           
           if self.RadarAcceptRange then
-            local reccecoord = Unit:GetCoord()
-            local coord = unit:GetCoord()
-            local dist = math.floor(coord:Get2DDistance(reccecoord)/1000) -- km
+            reccecoord = reccecoord or Unit:GetCoord()
+            coord = unit:GetCoord()
+            dist = math.floor(coord:Get2DDistance(reccecoord)/1000) -- km
             if dist > self.RadarAcceptRangeKilometers then DetectionAccepted = false end
           end
           
           if self.RadarBlur then
-            local reccecoord = Unit:GetCoord()
-            local coord = unit:GetCoord()
-            local dist = math.floor(coord:Get2DDistance(reccecoord)/1000) -- km
-            local AGL = unit:GetAltitude(true)
+            reccecoord = reccecoord or Unit:GetCoord()
+            coord = coord or unit:GetCoord()
+            if not dist then
+              local dx, dz = coord.x - reccecoord.x, coord.z - reccecoord.z
+              dist = math.floor(math.sqrt(dx*dx + dz*dz)/1000) -- km
+            end
+            local AGL = coord.y - coord:GetLandHeight()
             local minheight = self.RadarBlurMinHeight or 250 -- meters
             local thresheight = self.RadarBlurThresHeight or 90 -- 10% chance to find a low flying group
             local thresblur = self.RadarBlurThresBlur or 85 -- 25% chance to escape the radar overall
             --local dist = math.floor(Distance)
             if dist <= self.RadarBlurClosing  then
               thresheight = (((dist*dist)/self.RadarBlurClosingSquare)*thresheight)
-              thresblur = (((dist*dist)/self.RadarBlurClosingSquare)*thresblur)
+              thresblur = 100 - (((dist*dist)/self.RadarBlurClosingSquare)*(100 - thresblur))
             end
             local fheight = math.floor(math.random(1,10000)/100)
             local fblur = math.floor(math.random(1,10000)/100)

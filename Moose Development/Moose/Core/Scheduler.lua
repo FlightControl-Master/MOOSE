@@ -260,8 +260,6 @@ function SCHEDULER:Schedule( MasterObject, SchedulerFunction, SchedulerArguments
                                                       Fsm
                                                     )
 
-  self.Schedules[#self.Schedules + 1] = ScheduleID
-
   return ScheduleID
 end
 

@@ -3855,8 +3855,8 @@ function FLIGHTCONTROL:_PlayerCancelParking(groupname)
     -- If player already has a spot.
     if player.parking then
       self:SetParkingFree(player.parking)
-      player.parking=nil
       self:TextMessageToFlight(string.format("%s, your parking spot reservation at terminal ID %d was cancelled.", callsign, player.parking.TerminalID), flight)
+      player.parking=nil
     else
       self:TextMessageToFlight("You did not have a valid parking spot reservation.", flight)
     end
