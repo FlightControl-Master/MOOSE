@@ -8,6 +8,7 @@
 --  * Controls a network of SAM sites. Uses detection to switch on the AA site closest to the enemy.   
 --  * Automatic mode (default since 0.8) can set-up your SAM site network automatically for you.   
 --  * Leverage evasiveness from SEAD, leverage attack range setting.   
+--  * Naval air defense: ships and Ops.NavyGroup#NAVYGROUP as managed shooters or radiating pickets, with sensor-gated missile defense.   
 --
 -- ===
 --
@@ -22,7 +23,7 @@
 -- @module Functional.Mantis
 -- @image Functional.Mantis.jpg
 --
--- Last Update: September 2026
+-- Last Update: November 2026
 
 -------------------------------------------------------------------------
 --- **MANTIS** class, extends Core.Base#BASE
@@ -283,11 +284,102 @@
 --          -- your code here - SAM site is back online
 --        end
 --  
+-- # 6. Naval air defense (ships and NAVYGROUP)
+--
+-- Ships can be MANTIS shooters (SAM role) or always-radiating pickets (EWR role). Ship groups whose names match the SAM/EWR
+-- prefixes are picked up automatically; an Ops.NavyGroup#NAVYGROUP of any name is added explicitly:
+--
+--        local cvn = NAVYGROUP:New("CVN Group")
+--        mymantis:AddNavyGroup(cvn, "SAM")             -- managed shooter (or: cvn:SetMANTIS(mymantis, "SAM"))
+--        mymantis:AddNavyGroup(pickets, "EWR")         -- radiating picket, a sensor for the fleet
+--
+-- Call AddNavyGroup **after** the NAVYGROUP is alive (late-activated groups: after activation). "BOTH" is deprecated and
+-- treated as SAM - a managed ship is dark while GREEN and cannot double as a sensor; use a separate EWR-role group.
+--
+-- ## 6.1 How ships are switched
+--
+-- Every hull matching @{#MANTIS.SamDataNaval} is its own SAM entry (per-unit, see @{#MANTIS.SetNavalPerUnit}), but DCS only
+-- honors the alarm state per GROUP, so a ship group goes **RED** when any of its managed units wants to be active and **GREEN**
+-- otherwise. Ships always use the alarm state, also with `UseEmOnOff`. A ship group is RED when:
+--
+--  * a detected aircraft is inside one of its units' engagement envelopes,
+--  * an enemy surface combatant closes within range - @{#MANTIS.SetNavalSurfaceWakeup},
+--  * an inbound enemy missile threatens it - @{#MANTIS.SetNavalMissileDefense} (6.3),
+--  * it is hit or loses a unit,
+--  * it is held: own missile in flight, or the minimum RED dwell after the last trigger - @{#MANTIS.SetNavalRedHold} (6.4),
+--  * it is outside EWR coverage and searches autonomously - @{#MANTIS.SetNavalAutonomy},
+--  * its NAVYGROUP is executing EngageTarget, or MANTIS is in advanced state 2.
+--
+-- Jamming overrides all of these and holds the ship GREEN. Ships are not SEAD-evasive by default (@{#MANTIS.SetNavalSEAD}).
+--
+-- ## 6.2 NAVYGROUP: what MANTIS takes over
+--
+-- Once added, MANTIS owns the NAVYGROUP's **alarm state**, **emissions** and **ROE**. It switches them through the NAVYGROUP
+-- (SwitchAlarmstate, SwitchEmission, SwitchROE), so respawns, mission end and the EngageTarget restore come back to MANTIS's values.
+--
+--  * AUFTRAG options `optionAlarm` / `optionEmission` are overridden at the next MANTIS check (detection cycle, or within ~1 s
+--    while missiles are tracked). A RED ship always radiates.
+--  * ROE: NAVYGROUP defaults to Return Fire, which would leave a RED ship radiating but not shooting. MANTIS makes **Open Fire**
+--    the NAVYGROUP's default ROE and re-asserts it while RED. An explicit **Weapon Hold** is never overridden. Change or
+--    disable with @{#MANTIS.SetNavalROE}. For ships only OpenFire, ReturnFire and WeaponHold are valid - `ENUMS.ROE.WeaponFree`
+--    is an air-only value. Open Fire also lets ships with anti-ship missiles engage enemy ships they detect.
+--  * During EngageTarget MANTIS holds the ship RED.
+--  * Groups that fall out of the SAM/EWR sets (e.g. respawn with `dynamic=true`) are re-attached automatically.
+--  * MANTIS registers its own handler for `EVENTS.Shot`. Do not call `mymantis:HandleEvent(EVENTS.Shot, ...)` in your mission -
+--    it would replace MANTIS's handler. Use a separate object for your own shot handling.
+--
+-- ## 6.3 Missile defense
+--
+-- Aircraft-based wake-up only fires when the launcher is inside a ship's envelope, so a stand-off missile would arrive at a
+-- dark ship. MANTIS therefore tracks enemy missiles from launch and wakes the ships they threaten by **time to impact**:
+--
+--        mymantis:SetNavalMissileDefense(true, 60, 60)     -- on, wake 60 s before impact, hold 60 s after the last alert
+--
+--  * Missiles with target data wake the targeted ship plus every managed ship whose envelope covers it (escorts).
+--  * Missiles without target data wake each managed ship they fly at (within ~25 degrees).
+--  * Ignored: friendly missiles, missiles aimed at aircraft or other non-ship targets, anti-radiation missiles, bombs,
+--    rockets and torpedoes.
+--
+-- DCS detection reports units, not weapons, so the launch event is the only source of a missile track. By default MANTIS only
+-- acts on it once a plausible sensor could hold the missile (**SENSOR** mode, @{#MANTIS.SetNavalMissileSensorMode}):
+--
+--  * the threatened ship itself, out to its radar horizon against the missile's altitude (4/3 earth; 25 m antenna vs. a 10 m
+--    sea-skimmer is about 34 km), or
+--  * an unmanaged emitter - land EWR, AWACS, EWR-role ship - within its range (`acceptrange` for surface sensors, `awacsrange`
+--    for airborne ones), radar horizon and terrain line of sight. A network track is shared with every ship.
+--
+-- Fast sea-skimmers with no picket or AWACS nearby will therefore arrive with little warning - deploy pickets. **CUED** mode
+-- skips the sensor check and wakes purely on time to impact:
+--
+--        mymantis:SetNavalMissileSensorMode("CUED")
+--        mymantis:SetNavalMissileSensorMode("SENSOR", 30, 20)   -- ship antenna 30 m, land EWR antenna 20 m above ground
+--
+-- ## 6.4 When ships go back GREEN
+--
+-- A ship goes GREEN at the first detection cycle in which no trigger from 6.1 holds it. After the last real trigger (contact
+-- in range, surface contact, hit) it stays RED for at least `NavalRedHold` seconds (default 60). A ship that fired a missile
+-- stays RED while the missile flies and `NavalRedHold` seconds after, so semi-active and command-guided shots keep guidance.
+-- Note that with INTEL/DLINK detection an air contact counts for `DLinkCacheTime` (default 120 s) after it was last seen.
+--
+--        mymantis:SetNavalRedHold(90)    -- 0 disables the dwell and the own-shot hold
+--
+-- ## 6.5 Naval defaults
+--
+--  * NavalPerUnit = true - @{#MANTIS.SetNavalPerUnit}
+--  * NavalAutonomy = true, 150 km coverage radius - @{#MANTIS.SetNavalAutonomy}
+--  * NavalSurfaceWakeup = true, radius = each ship's envelope - @{#MANTIS.SetNavalSurfaceWakeup}
+--  * SEADNaval = false - @{#MANTIS.SetNavalSEAD}
+--  * NavalMissileDefense = true, lead 60 s, hold 60 s - @{#MANTIS.SetNavalMissileDefense}
+--  * NavalMissileMode = "SENSOR", ship antenna 25 m, land EWR antenna 15 m - @{#MANTIS.SetNavalMissileSensorMode}
+--  * NavalRedHold = 60 s - @{#MANTIS.SetNavalRedHold}
+--  * NavalROE = ENUMS.ROE.OpenFire (NAVYGROUP only) - @{#MANTIS.SetNavalROE}
+--  * NavalMissileStep = 1 s missile tracking interval (read at Start)
+--  
 -- @field #MANTIS
 MANTIS = {
   ClassName             = "MANTIS",
   name                  = "mymantis",
-  version               = "0.9.45",
+  version               = "0.9.46",
   SAM_Templates_Prefix  = "",
   SAM_Group             = nil,
   EWR_Templates_Prefix  = "",
@@ -1048,6 +1140,18 @@ do
     self.NavalPerUnit = true -- classify & switch every ship unit individually (see SetNavalPerUnit)
     self.NavalAutonomy = true -- ship groups outside EWR radar coverage go alarm RED and search autonomously (see SetNavalAutonomy)
     self.NavalAutonomyRadius = 150000 -- meters; a ship group within this distance of an alive EWR group counts as covered
+    self.NavalMissileDefense = true -- ships wake up for inbound enemy missiles even if the launcher was never inside their radius (see SetNavalMissileDefense)
+    self.NavalMissileLead = 60 -- seconds; wake a ship when a tracked missile is predicted to reach it within this time
+    self.NavalMissileHold = 60 -- seconds; a ship stays active this long after the last missile alert
+    self.NavalMissileStep = 1 -- seconds; missile tracking interval
+    self.NavalMissileMode = "SENSOR" -- "SENSOR" = wake only once a plausible sensor could see the missile; "CUED" = launch cueing, no sensor check (see SetNavalMissileSensorMode)
+    self.NavalAntennaHeight = 25 -- meters; ship search-radar height used for the radar-horizon calculation
+    self.EWRAntennaHeight = 15 -- meters above ground; land EWR antenna height used for the radar-horizon calculation
+    self._navalMissiles = {} -- inbound missiles currently being tracked
+    self._navalAlertUntil = {} -- [unit or group name] = mission time until which a hold (missile alert, own shot, hit, dwell) keeps the ship active
+    self._navalOwnShots = {} -- missiles in flight fired BY managed ships (held RED until they are gone)
+    self.NavalRedHold = 60 -- seconds; minimum time a ship stays active after its last trigger (contact, surface, hit, own missile) -- see SetNavalRedHold
+    self.NavalROE = 2 -- ENUMS.ROE.OpenFire; ROE MANTIS gives managed NAVYGROUPs (false = do not touch ROE) -- see SetNavalROE
     self.engagerange = 95
     self.autorelocate = false
     self.autorelocateunits = { HQ = false, EWR = false}
@@ -1365,6 +1469,8 @@ do
    self:T(self.lid .. "_EventHandler")
    
    local function IsOneOfOurs(name)
+      -- NAVYGROUPs added via AddNavyGroup need not match any prefix
+      if self._navyGroups and self._navyGroups[name] then return true end
       for _,_name in pairs(self.ewr_templates) do
         if string.find(name,_name,1,true) then
           return true
@@ -1387,11 +1493,16 @@ do
             and not (self._jammerEnabled and self._jammedSAMs and self._jammedSAMs[uname]) then
             self.SamStateTracker[uname] = "RED"
           end
+          -- hold RED after a hit, so the ship does not go dark again at the next detection cycle
+          if self._navalSAMs[uname] then self:_NavalHold(uname, self.NavalRedHold) end
         end
         self:_ApplyNavalAlarmState() -- apply group alarm state immediately on hit
         self:__RedState(1,Group)
       end
       return
+    end
+    if self._navalSAMs and self._navalSAMs[Name] then
+      self:_NavalHold(Name, self.NavalRedHold) -- legacy group-level ship: hold RED after a hit
     end
     local suppressed = self.SuppressedGroups[Name] or false
     local jammed = self._jammerEnabled and self._jammedSAMs and self._jammedSAMs[Name] or false
@@ -1401,12 +1512,7 @@ do
     end
     if not suppressed and not jammed and not (ammo and (ammo.trLost or ammo.canSleep and ammo.empty)) and self.SamStateTracker[Name] == "GREEN" then
       self.SamStateTracker[Name] = "RED"
-      if self.UseEmOnOff then
-        -- DONE: add emissions on/off
-        Group:EnableEmission(true)
-      elseif (not self.UseEmOnOff) then
-        Group:OptionAlarmStateRed()          
-      end
+      self:_SwitchSAMGroup(Group, true)
       self:__RedState(1,Group)
       if self.SmokeDecoy == true then
         self:_SmokeUnits(Group)
@@ -2525,6 +2631,39 @@ do
     return entries > 0
   end
 
+  --- [Internal] Switch a SAM group on or off. Single entry point for every switch that can hit a ship.
+  -- Ground groups / plain ships: EnableEmission (UseEmOnOff) or alarm state RED/GREEN, as before.
+  -- Registered NAVYGROUPs are switched THROUGH the NAVYGROUP (SwitchAlarmstate/SwitchEmission) so its
+  -- option bookkeeping stays in sync: respawn, mission end and EngageTarget restore the value MANTIS
+  -- set, and drift can be detected via GetAlarmstate().
+  -- @param #MANTIS self
+  -- @param Wrapper.Group#GROUP group The group.
+  -- @param #boolean on True = active (RED / emitting), false = quiet (GREEN / dark).
+  -- @param #boolean alarmonly (Optional) Always use alarm state, ignoring UseEmOnOff (per-unit naval control).
+  -- @return #MANTIS self
+  function MANTIS:_SwitchSAMGroup(group, on, alarmonly)
+    if not group then return self end
+    local navy = self._navyGroups and self._navyGroups[group:GetName()]
+    if navy and navy:IsAlive() then
+      if self.UseEmOnOff and not alarmonly then
+        navy:SwitchEmission(on and true or false)
+      else
+        navy:SwitchAlarmstate(on and ENUMS.AlarmState.Red or ENUMS.AlarmState.Green)
+        -- A mission/EMCON option may have darkened the radars; RED must actually radiate.
+        if on and navy:GetEmission() == false then navy:SwitchEmission(true) end
+      end
+      return self
+    end
+    if self.UseEmOnOff and not alarmonly then
+      group:EnableEmission(on and true or false)
+    elseif on then
+      group:OptionAlarmStateRed()
+    else
+      group:OptionAlarmStateGreen()
+    end
+    return self
+  end
+
   --- [Internal] Group ALARM-STATE arbiter for per-unit naval control.
   -- DCS reliably honors only GROUP-level alarm state on ships, so per-unit
   -- tracking decides intent and this function applies ONE alarm state per ship
@@ -2534,9 +2673,14 @@ do
   --         search, see SetNavalAutonomy) with at least one unjammed unit;
   --   GREEN otherwise -- including full jamming suppression, which overrides
   --         autonomy (a fully jammed group cannot search).
+  -- Re-assertion: NAVYGROUP missions (optionAlarm), mission end and respawns change the alarm state
+  -- behind MANTIS's back. Registered NAVYGROUPs are checked for drift via GetAlarmstate() on every
+  -- call; plain ship groups are re-asserted when Force is set (once per detection cycle).
+  -- A NAVYGROUP that is executing EngageTarget is held RED so MANTIS does not blind its attack.
   -- @param #MANTIS self
+  -- @param #boolean Force (Optional) Re-apply the state to plain (non-NAVYGROUP) ship groups even if unchanged.
   -- @return #MANTIS self
-  function MANTIS:_ApplyNavalAlarmState()
+  function MANTIS:_ApplyNavalAlarmState(Force)
     if not (self.NavalPerUnit and self._navalUnitParent) then return self end
     local wants, seen, unjammed = {}, {}, {}
     for uname, grpname in pairs(self._navalUnitParent) do
@@ -2574,6 +2718,10 @@ do
       local grp = GROUP:FindByName(grpname)
       if grp and grp:IsAlive() then
         local red = wants[grpname] or false
+        local navy = self._navyGroups and self._navyGroups[grpname]
+        if navy and (not red) and navy.IsEngaging and navy:IsEngaging() then
+          red = true -- NAVYGROUP EngageTarget in progress: do not force it dark
+        end
         local autonomous = false
         if self.NavalAutonomy and unjammed[grpname] and not red then
           local covered = false
@@ -2594,14 +2742,33 @@ do
         end
         self._navalAutonomous[grpname] = autonomous or nil
         local newstate = red and "RED" or "GREEN"
-        if self._navalGroupState[grpname] ~= newstate then
+        local changed = self._navalGroupState[grpname] ~= newstate
+        local apply = changed
+        if navy then
+          -- drift: something else (mission option, mission end, EngageTarget restore) changed it
+          local want = red and ENUMS.AlarmState.Red or ENUMS.AlarmState.Green
+          if navy:GetAlarmstate() ~= want or (red and navy:GetEmission() == false) then apply = true end
+          -- ROE drift (mission option, mission end): a RED ship must be able to shoot.
+          -- An explicit Weapon Hold is respected.
+          if red and self.NavalROE then
+            local roe = navy:GetROE()
+            if roe ~= self.NavalROE and roe ~= ENUMS.ROE.WeaponHold then
+              navy:SwitchROE(self.NavalROE)
+              self:T(self.lid..grpname.." naval ROE re-asserted")
+            end
+          end
+        elseif Force then
+          apply = true -- plain ships: re-assert once per cycle (respawns, external scripts)
+        end
+        if apply then
           self._navalGroupState[grpname] = newstate
-          if red then
-            grp:OptionAlarmStateRed()
-            self:T(self.lid..grpname.." naval group -> alarm RED"..(autonomous and " (autonomous: no EWR coverage)" or ""))
-          else
-            grp:OptionAlarmStateGreen()
-            self:T(self.lid..grpname.." naval group -> alarm GREEN")
+          self:_SwitchSAMGroup(grp, red, true)
+          if changed then
+            if red then
+              self:T(self.lid..grpname.." naval group -> alarm RED"..(autonomous and " (autonomous: no EWR coverage)" or ""))
+            else
+              self:T(self.lid..grpname.." naval group -> alarm GREEN")
+            end
           end
         end
       end
@@ -2816,8 +2983,8 @@ do
           -- Per-unit naval control: ships are switched by GROUP ALARM STATE only,
           -- the one mechanism DCS reliably honors on naval groups. Baseline is
           -- GREEN; the alarm arbiter (_ApplyNavalAlarmState) raises the group RED
-          -- on threat, hit, surface contact, or loss of EWR coverage.
-          group:OptionAlarmStateGreen()
+          -- on threat, hit, surface contact, missile alert, or loss of EWR coverage.
+          self:_SwitchSAMGroup(group, false, true)
         elseif self.UseEmOnOff then
           group:OptionAlarmStateRed()
           group:EnableEmission(false)
@@ -2897,6 +3064,7 @@ do
     self:T(self.lid.."RefreshSAMTable")
     -- Requires SEAD 0.2.2 or better
      -- get SAM Group
+     self:_ReattachNavyGroups()
      local SAM_SET = self.SAM_Group
      local SAM_Grps = SAM_SET.Set --table of objects
      local SAM_Tbl = {} -- table of SAM defense zones
@@ -3177,12 +3345,25 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
           Distance = wakeradius -- keep distance-based proximity behaviors (smoke, SHORAD link) inert
         end
       end
+      -- Real trigger this cycle (air contact or surface wake-up)? Only real triggers refresh the
+      -- naval RED dwell below, so a hold can never keep renewing itself.
+      local triggered = IsInZone
+      -- Naval hold: an inbound enemy missile (see _NavalMissileTick), the ship's own missile in
+      -- flight, a recent hit, or the minimum RED dwell (NavalRedHold) keeps the ship active even
+      -- though no aircraft is inside its radius. Jamming still wins, like the surface wake-up above.
+      if samalive and (not IsInZone) and self._navalAlertUntil and self._navalSAMs and self._navalSAMs[name]
+        and not (self._jammerEnabled and self._jammedSAMs and self._jammedSAMs[name])
+        and self:_NavalAlertActive(name) then
+        IsInZone = true
+        Distance = radius -- keep distance-based proximity behaviors inert
+        CloseThreat = true -- an inbound weapon is not subject to the active-SAM limit
+      end
       local suppressed = self.SuppressedGroups[name] or (navalparent and self.SuppressedGroups[navalparent]) or false
       local activeshorad = false
       if self.Shorad and self.Shorad.ActiveGroups and self.Shorad.ActiveGroups[name] then
        activeshorad = true
       end
-      if samgroup:GetProperty("SHORAD_ACTIVE") == true and activeshorad == false then activeshorad = true end
+      if samgroup and samgroup:GetProperty("SHORAD_ACTIVE") == true and activeshorad == false then activeshorad = true end
       -- Close long-range threats may exceed the active limit.
       local canSwitch = switchedon < limit or CloseThreat
       if IsInZone and (shortsam or canSwitch) and (not suppressed) and (not activeshorad) then --check any target in zone and not currently managed by SEAD
@@ -3194,19 +3375,18 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
             -- (_ApplyNavalAlarmState) applies the group switch at cycle end
             switchedon = switchedon + 1
             switch = true
-          elseif self.UseEmOnOff and canSwitch then
-            -- DONE: add emissions on/off
-            samgroup:EnableEmission(true)
+          elseif canSwitch then
+            self:_SwitchSAMGroup(samgroup, true) -- EnableEmission or alarm RED; NAVYGROUP-aware
             switchedon = switchedon + 1
             switch = true
-          elseif (not self.UseEmOnOff) and canSwitch then
-            samgroup:OptionAlarmStateRed()
-            switchedon = switchedon + 1
-            switch = true           
           end
           if self.SamStateTracker[name] ~= "RED" and switch then
             self.SamStateTracker[name] = "RED"
             self:__RedState(1,samgroup)
+          end
+          -- naval minimum RED dwell: stay up NavalRedHold seconds after the last real trigger
+          if triggered and self._navalSAMs and self._navalSAMs[name] and self.SamStateTracker[name] == "RED" then
+            self:_NavalHold(name, self.NavalRedHold)
           end
           -- DONE Restrict on Distance
           if shortsam == true and (not navalparent) and self.SmokeDecoy == true and Distance < self.DetectAccousticRadius*1.5 then 
@@ -3232,12 +3412,9 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
       else
         if samalive and not suppressed and not activeshorad then
           -- switch off SAM
-          if navalparent then
-            -- per-unit naval: tracker-only; group alarm state applied by the arbiter
-          elseif self.UseEmOnOff  then
-            samgroup:EnableEmission(false)
-          else
-            samgroup:OptionAlarmStateGreen()
+          if not navalparent then
+            -- (per-unit naval: tracker-only; group alarm state applied by the arbiter)
+            self:_SwitchSAMGroup(samgroup, false)
           end
           if self.SamStateTracker[name] ~= "GREEN" then
             self.SamStateTracker[name] = "GREEN"
@@ -3311,17 +3488,20 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
     local activeshorads = 0
     -- switch SAMs on/off if (n)one of the detected groups is inside their reach
     if self.automode then
-      local samset = self.SAM_Table_Long -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
-      local instatusredl, instatusgreenl, activeshoradsl = self:_CheckLoop(samset,detset,dlink,self.maxlongrange,contactSnapshot,zoneResults)
-      local samset = self.SAM_Table_Medium -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
-      local instatusredm, instatusgreenm, activeshoradsm = self:_CheckLoop(samset,detset,dlink,self.maxmidrange,contactSnapshot,zoneResults)
-      local samset = self.SAM_Table_Short -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
-      local instatusreds, instatusgreens, activeshoradss = self:_CheckLoop(samset,detset,dlink,self.maxshortrange,contactSnapshot,zoneResults)
-      local samset = self.SAM_Table_PointDef -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
-      local instatusred, instatusgreen, activeshorads = self:_CheckLoop(samset,detset,dlink,self.maxpointdefrange,contactSnapshot,zoneResults)
+      -- tables of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
+      local loops = {
+        {self.SAM_Table_Long,     self.maxlongrange},
+        {self.SAM_Table_Medium,   self.maxmidrange},
+        {self.SAM_Table_Short,    self.maxshortrange},
+        {self.SAM_Table_PointDef, self.maxpointdefrange},
+      }
+      for _,l in ipairs(loops) do
+        local r, g, s = self:_CheckLoop(l[1],detset,dlink,l[2],contactSnapshot,zoneResults)
+        instatusred, instatusgreen, activeshorads = instatusred + (r or 0), instatusgreen + (g or 0), activeshorads + (s or 0)
+      end
     else
       local samset = self:_GetSAMTable() -- table of i.1=names, i.2=coordinates, i.3=firing range, i.4=firing height
-      local instatusred, instatusgreen, activeshorads = self:_CheckLoop(samset,detset,dlink,self.maxclassic,contactSnapshot,zoneResults)
+      instatusred, instatusgreen, activeshorads = self:_CheckLoop(samset,detset,dlink,self.maxclassic,contactSnapshot,zoneResults)
     end
     
     local function GetReport()
@@ -3352,8 +3532,8 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
       return statusreport
     end
     
-    -- apply naval group alarm states as the final word of this cycle
-    self:_ApplyNavalAlarmState()
+    -- apply naval group alarm states as the final word of this cycle (Force: re-assert plain ships)
+    self:_ApplyNavalAlarmState(true)
 
     if self.debug or self.verbose then
       local statusreport = GetReport()
@@ -3412,13 +3592,9 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
                 if not (ammo and ammo.advancedSleeping and (self.SuppressedGroups[name]
                   or (self._jammerEnabled and self._jammedSAMs and self._jammedSAMs[name]))) then
                   if navalparent then
-                    self.SamStateTracker[name] = "RED" -- arbiter raises the group
-                  elseif self.UseEmOnOff then
-                    -- DONE: add emissions on/off
-                    --samgroup:SetAIOn()
-                    samgroup:EnableEmission(true)
+                    self.SamStateTracker[name] = "RED" -- arbiter raises the group (applied after the loop)
                   else
-                    samgroup:OptionAlarmStateRed()
+                    self:_SwitchSAMGroup(samgroup, true)
                   end
                   if ammo and ammo.advancedSleeping then
                     ammo.advancedSleeping = nil
@@ -3439,6 +3615,8 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
             end
           end -- end alive
         end -- end for loop
+        -- _Check (which normally runs the arbiter) is skipped in state 2: apply ship states here
+        self:_ApplyNavalAlarmState(true)
       elseif newstate <= 1 then
         -- change MantisTimer to slow down or speed up
         self.detectinterval = interval
@@ -3492,7 +3670,10 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
     
     self:HandleEvent(EVENTS.Hit,self._EventHandler)
     self:HandleEvent(EVENTS.UnitLost,self._EventHandler)
-    
+    -- Naval missile defense: watch enemy missile launches and wake ships by time-to-impact
+    self:HandleEvent(EVENTS.Shot,self._NavalMissileShot)
+    self._navalMissileSched = SCHEDULER:New(self,self._NavalMissileTick,{},2,self.NavalMissileStep or 1)
+
     self:__Status(-math.random(1,10))
     return self
   end
@@ -3521,7 +3702,7 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
       local selected = nil -- Wrapper.Group#GROUP
       local eligible = 0
       for _,randomsam in pairs(self.SAM_Group:GetSet()) do
-        if randomsam and randomsam:IsAlive() then
+        if randomsam and randomsam:IsAlive() and not randomsam:IsShip() then
           local ammo = randomsam:GetProperty("MANTIS_AMMO") -- #table
           if not (ammo and (ammo.trLost or ammo.canSleep and ammo.empty)) and (ammo and ammo.isSAM or not ammo and randomsam:IsSAM()) then
             eligible = eligible + 1
@@ -3536,11 +3717,7 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
     if not EWRAlive then
       local randomsam = FindSAMSRTR() -- Wrapper.Group#GROUP
       if randomsam and randomsam:IsAlive() then
-        if self.UseEmOnOff then
-          randomsam:EnableEmission(true)
-        else
-          randomsam:OptionAlarmStateRed()
-        end
+        self:_SwitchSAMGroup(randomsam, true)
         local name = randomsam:GetName()
         if self.SamStateTracker[name] ~= "RED" then
           self:__RedState(1,randomsam)
@@ -3610,6 +3787,15 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
         _intel:Stop()
       end
     end
+    if self._navalMissileSched then
+      self._navalMissileSched:Stop()
+      self._navalMissileSched = nil
+    end
+    self._navalMissiles = {}
+    self._navalOwnShots = {}
+    self:UnHandleEvent(EVENTS.Hit)
+    self:UnHandleEvent(EVENTS.UnitLost)
+    self:UnHandleEvent(EVENTS.Shot)
     return self
   end
 
@@ -4379,12 +4565,9 @@ function MANTIS:SeadAllowSuppression(targetGroup, targetName, attackerGroup, wea
           if navalparent then samalive = (samunit ~= nil) and samunit:IsAlive() or false
           elseif samgroup then samalive = samgroup:IsAlive() or false end
           if samalive then
-            if navalparent then
-              -- per-unit naval: tracker set GREEN below; arbiter darkens the group if no unit remains RED
-            elseif self.UseEmOnOff then
-              samgroup:EnableEmission(false)
-            else
-              samgroup:OptionAlarmStateGreen()
+            if not navalparent then
+              -- (per-unit naval: tracker set GREEN below; arbiter darkens the group if no unit remains RED)
+              self:_SwitchSAMGroup(samgroup, false)
             end
             self.SamStateTracker[name] = "GREEN"
             self:__JammerSuppression(1, samgroup, name, self._jammedSAMs[name])
@@ -4543,10 +4726,397 @@ do
     return self
   end
 
+  --- Configure naval MISSILE defense. Default: ENABLED, lead 60s, hold 60s.
+  -- Aircraft-based wake-up only fires when a detected aircraft is inside a ship's radius, so a
+  -- missile launched from OUTSIDE that radius would reach a GREEN (radars dark) ship unopposed.
+  -- With this enabled MANTIS also tracks every inbound enemy missile (DCS shot event) and wakes
+  -- the ships it threatens when the missile is predicted to arrive within the lead time -- the
+  -- ships stay EMCON-quiet while the missile is still far away. If the missile has target data
+  -- (e.g. a locked Harpoon) the threatened ship and every managed ship whose radius covers it
+  -- wake up; without target data (coordinate-targeted/INS shots) every managed ship the missile
+  -- is flying towards wakes up. Anti-radiation missiles are ignored (they home on emitters).
+  -- By default the wake-up is also SENSOR-GATED (see #MANTIS.SetNavalMissileSensorMode): the
+  -- launch event only starts the track, a ship wakes only once the missile is inside its own
+  -- radar horizon or inside the coverage of an unmanaged emitter (EWR, AWACS, picket ship).
+  -- @param #MANTIS self
+  -- @param #boolean onoff Enable (true) or disable (false).
+  -- @param #number leadseconds (Optional) Wake a ship when a missile is predicted to reach it within this many seconds (default 60).
+  -- @param #number holdseconds (Optional) Keep the ship active for this many seconds after the last alert (default 60).
+  -- @return #MANTIS self
+  function MANTIS:SetNavalMissileDefense(onoff, leadseconds, holdseconds)
+    self.NavalMissileDefense = onoff and true or false
+    if leadseconds then self.NavalMissileLead = leadseconds end
+    if holdseconds then self.NavalMissileHold = holdseconds end
+    return self
+  end
+
+  --- Choose how much the naval missile defense may "know". Default: SENSOR.
+  -- DCS detection reports units, not weapons, so the launch event is the only way to learn of
+  -- a missile. In SENSOR mode that knowledge is only acted on once a plausible sensor could hold
+  -- the missile:
+  --   * the threatened ship itself, limited by its radar horizon to the missile (models ESM,
+  --     lookouts and EMCON sweeps -- a sea-skimmer is seen late, a high diver early), or
+  --   * any UNMANAGED emitter of this MANTIS (land EWR, AWACS, EWR-role picket ships), limited
+  --     by its detection range (#MANTIS.acceptrange for surface sensors, #MANTIS.awacsrange for
+  --     airborne ones), its radar horizon, and terrain line of sight. A track held by the
+  --     network is shared with every ship (datalink).
+  -- CUED mode skips the sensor check and wakes purely on time-to-impact.
+  -- @param #MANTIS self
+  -- @param #string mode "SENSOR" (default) or "CUED".
+  -- @param #number shipantenna (Optional) Ship search-radar height in meters for the horizon (default 25).
+  -- @param #number ewrantenna (Optional) Land EWR antenna height above ground in meters (default 15).
+  -- @return #MANTIS self
+  function MANTIS:SetNavalMissileSensorMode(mode, shipantenna, ewrantenna)
+    mode = string.upper(mode or "SENSOR")
+    if mode ~= "SENSOR" and mode ~= "CUED" then
+      self:E(self.lid.."SetNavalMissileSensorMode: unknown mode "..tostring(mode).." - use SENSOR or CUED.")
+      return self
+    end
+    self.NavalMissileMode = mode
+    if shipantenna then self.NavalAntennaHeight = shipantenna end
+    if ewrantenna then self.EWRAntennaHeight = ewrantenna end
+    return self
+  end
+
+  --- [Internal, static] Radar horizon (4/3 earth) between two heights above sea level.
+  -- @param #number h1 Height of the sensor in meters ASL.
+  -- @param #number h2 Height of the target in meters ASL.
+  -- @return #number distance Horizon distance in meters.
+  function MANTIS._RadarHorizon(h1, h2)
+    return 4120 * (math.sqrt(math.max(h1 or 0, 0)) + math.sqrt(math.max(h2 or 0, 0)))
+  end
+
+  --- [Internal, static] Could a sensor plausibly hold a missile?
+  -- @param #table s Sensor position (DCS Vec3).
+  -- @param #number ha Sensor antenna height in meters ASL.
+  -- @param #number range (Optional) Maximum detection range in meters; nil = horizon-limited only.
+  -- @param #table p Missile position (DCS Vec3).
+  -- @return #boolean seen
+  function MANTIS._SensorSees(s, ha, range, p)
+    local dx, dz = p.x - s.x, p.z - s.z
+    local d = math.sqrt(dx*dx + dz*dz)
+    if range and d > range then return false end
+    if d > MANTIS._RadarHorizon(ha, p.y) then return false end
+    -- terrain masking (islands, coastline, land EWR behind hills); only after the cheap checks
+    if land and land.isVisible then
+      return land.isVisible({x=s.x, y=ha, z=s.z}, {x=p.x, y=p.y, z=p.z}) and true or false
+    end
+    return true
+  end
+
+  --- [Internal] Unmanaged emitters that can share a missile track: EWR set members that are not
+  -- managed naval SAMs (land EWR, EWR-role ships, AWACS in the set) plus the separate AWACS.
+  -- Managed ships are excluded -- their radars are dark while GREEN.
+  -- @param #MANTIS self
+  -- @return #table sources { {vec=, h=, range=}, ... }
+  function MANTIS:_NavalSensorSources()
+    local out, done, managed = {}, {}, {}
+    for _,gname in pairs(self._navalUnitParent or {}) do managed[gname] = true end
+    for name,_ in pairs(self._navalSAMs or {}) do managed[name] = true end
+    local function add(grp)
+      local gname = grp:GetName()
+      if managed[gname] or done[gname] then return end
+      done[gname] = true
+      local v = grp:GetVec3()
+      if not v then return end
+      if grp:IsAir() then
+        table.insert(out, {vec=v, h=v.y, range=self.awacsrange})
+      elseif grp:IsShip() then
+        table.insert(out, {vec=v, h=v.y + self.NavalAntennaHeight, range=self.acceptrange})
+      else
+        table.insert(out, {vec=v, h=v.y + self.EWRAntennaHeight, range=self.acceptrange})
+      end
+    end
+    if self.EWR_Group then self.EWR_Group:ForEachGroupAlive(add) end
+    if self.AWACS_Prefix and self.AWACS_Prefix ~= "" then
+      local awacs = GROUP:FindByName(self.AWACS_Prefix)
+      if awacs and awacs:IsAlive() then add(awacs) end
+    end
+    return out
+  end
+
+  --- [Internal, static] Approach geometry of a missile relative to a point.
+  -- @param #table p Missile position (DCS Vec3).
+  -- @param #table v Missile velocity (DCS Vec3, m/s).
+  -- @param #table q Point of interest (DCS Vec3).
+  -- @return #number distance 3D distance in meters.
+  -- @return #number closing Closing speed in m/s along the line of sight (positive = approaching).
+  -- @return #number cosine Cosine of the angle between the missile velocity and the line of sight (1 = flying straight at q).
+  function MANTIS._NavalApproach(p, v, q)
+    local rx, ry, rz = q.x - p.x, q.y - p.y, q.z - p.z
+    local d = math.sqrt(rx*rx + ry*ry + rz*rz)
+    local s = math.sqrt(v.x*v.x + v.y*v.y + v.z*v.z)
+    if d < 1 or s < 1 then return d, 0, 0 end
+    local closing = (rx*v.x + ry*v.y + rz*v.z) / d
+    return d, closing, closing / s
+  end
+
+  --- [Internal] Is a missile alert currently holding this entry active? Expired alerts are dropped.
+  -- @param #MANTIS self
+  -- @param #string name Unit name (per-unit naval) or group name (legacy naval).
+  -- @return #boolean active
+  function MANTIS:_NavalAlertActive(name)
+    local untiltime = self._navalAlertUntil and self._navalAlertUntil[name]
+    if not untiltime then return false end
+    if untiltime > timer.getTime() then return true end
+    self._navalAlertUntil[name] = nil
+    return false
+  end
+
+  --- [Internal] Extend a naval hold: keep this entry active until at least now + seconds.
+  -- Never shortens an existing hold. Seconds <= 0 does nothing.
+  -- @param #MANTIS self
+  -- @param #string name Unit name (per-unit naval) or group name (legacy naval).
+  -- @param #number seconds Hold duration in seconds.
+  -- @return #MANTIS self
+  function MANTIS:_NavalHold(name, seconds)
+    if not (name and seconds and seconds > 0) then return self end
+    self._navalAlertUntil = self._navalAlertUntil or {}
+    local untiltime = timer.getTime() + seconds
+    if (self._navalAlertUntil[name] or 0) < untiltime then self._navalAlertUntil[name] = untiltime end
+    return self
+  end
+
+  --- [Internal] Live list of managed naval SAM entries with CURRENT positions
+  -- (SAM_Table coordinates are only refreshed every third detection cycle).
+  -- @param #MANTIS self
+  -- @return #table entries { {name=, group=, vec=, radius=}, ... }
+  function MANTIS:_NavalEntries()
+    local out = {}
+    if not (self._navalSAMs and self.SAM_Table) then return out end
+    for _,rec in ipairs(self.SAM_Table) do
+      local name = rec[1]
+      if self._navalSAMs[name] then
+        local vec, grpname
+        if rec[8] then -- per-unit entry: name is a UNIT, record[8] the parent group
+          local u = UNIT:FindByName(name)
+          if u and u:IsAlive() then vec = u:GetVec3() grpname = rec[8] end
+        else -- legacy group entry
+          local g = GROUP:FindByName(name)
+          if g and g:IsAlive() then vec = g:GetVec3() grpname = name end
+        end
+        if vec then table.insert(out,{name=name, group=grpname, vec=vec, radius=rec[3]}) end
+      end
+    end
+    return out
+  end
+
+  --- [Internal] Hold a naval entry active because of an inbound missile, and switch it RED right now
+  -- (do not wait for the next detection cycle, the missile may arrive before it).
+  -- @param #MANTIS self
+  -- @param #table entry Entry from #MANTIS._NavalEntries.
+  -- @param #number hold Seconds to hold the entry active.
+  -- @return #boolean switched True if the state changed to RED just now.
+  function MANTIS:_NavalAlert(entry, hold)
+    local name = entry.name
+    self:_NavalHold(name, hold)
+    if self.SamStateTracker[name] == "RED" then return false end
+    if self._jammerEnabled and self._jammedSAMs and self._jammedSAMs[name] then return false end
+    if self.SuppressedGroups[name] or self.SuppressedGroups[entry.group] then return false end
+    local group = GROUP:FindByName(entry.group)
+    if not (group and group:IsAlive()) then return false end
+    if entry.group == name then
+      -- legacy group-level entry: switch it directly, like the normal check loop
+      self:_SwitchSAMGroup(group, true)
+    end
+    -- per-unit entry: tracker only, _ApplyNavalAlarmState applies the group state
+    self.SamStateTracker[name] = "RED"
+    self:__RedState(1,group)
+    self:T(self.lid..string.format("Naval missile alert: %s -> RED",name))
+    return true
+  end
+
+  --- [Internal] DCS shot event: pick out enemy missiles that can threaten managed ships.
+  -- @param #MANTIS self
+  -- @param Core.Event#EVENTDATA EventData
+  -- @return #MANTIS self
+  function MANTIS:_NavalMissileShot(EventData)
+    if not (self._navalSAMs and next(self._navalSAMs)) then return self end
+    local weapon = EventData.Weapon -- DCS Weapon
+    if not weapon then return self end
+    local wcoal = EventData.IniCoalition
+    if wcoal == nil and weapon.getCoalition then wcoal = weapon:getCoalition() end
+    if wcoal == nil then return self end
+    if wcoal == self.coalition then
+      -- Own shot: if a managed ship fired a missile, hold it RED until the missile is gone, so
+      -- semi-active / command-guided shots (SM-1, Sea Dart, SA-N-6 ...) keep their guidance.
+      local holdname = nil
+      if self._navalSAMs[EventData.IniUnitName or ""] then
+        holdname = EventData.IniUnitName -- per-unit naval entry
+      elseif self._navalSAMs[EventData.IniGroupName or ""] then
+        holdname = EventData.IniGroupName -- legacy group-level naval entry
+      end
+      if holdname and (self.NavalRedHold or 0) > 0 then
+        local odesc = weapon:getDesc()
+        if odesc and odesc.category == Weapon.Category.MISSILE then
+          table.insert(self._navalOwnShots,{weapon=weapon, name=holdname, t0=timer.getTime()})
+          self:_NavalHold(holdname, self.NavalRedHold)
+          self:T(self.lid..string.format("Naval own shot: %s fired %s, holding RED",holdname,tostring(EventData.WeaponName)))
+        end
+      end
+      return self
+    end
+    if not self.NavalMissileDefense then return self end
+    local desc = weapon:getDesc()
+    if not (desc and desc.category == Weapon.Category.MISSILE) then return self end
+    -- Anti-radiation missiles home on emitters: lighting up a ship for them is counterproductive.
+    if desc.guidance == Weapon.GuidanceType.RADAR_PASSIVE then return self end
+    -- Target data, if the missile has any (locked AShM). Aimed at an aircraft or anything that is
+    -- not one of our ships -> not our problem.
+    local targetname = nil
+    local target = weapon:getTarget()
+    if target then
+      if Object.getCategory(target) ~= Object.Category.UNIT then return self end
+      local tu = UNIT:Find(target)
+      if not (tu and tu:IsShip() and tu:GetCoalition() == self.coalition) then return self end
+      targetname = tu:GetName()
+    end
+    table.insert(self._navalMissiles,{weapon=weapon, target=targetname, name=EventData.WeaponName, t0=timer.getTime()})
+    self:T(self.lid..string.format("Naval missile defense: tracking %s (target %s)",tostring(EventData.WeaponName),tostring(targetname)))
+    return self
+  end
+
+  --- [Internal] Track inbound missiles; wake the ships they threaten when time-to-impact is short.
+  -- Time-to-impact (not distance) is used so a slow cruise missile and a Mach 3 AShM both give
+  -- the ship the same warning, and the ship stays EMCON-quiet while the missile is still far out.
+  -- @param #MANTIS self
+  -- @return #MANTIS self
+  function MANTIS:_NavalMissileTick()
+    -- Own missiles in flight: keep the firing ship held while each one still exists; the hold
+    -- then runs out NavalRedHold seconds after the last missile is gone.
+    local own = self._navalOwnShots
+    if own and #own > 0 then
+      local tnow = timer.getTime()
+      for i = #own, 1, -1 do
+        local o = own[i]
+        if (not o.weapon) or (not o.weapon:isExist()) or (tnow - o.t0 > 600) then
+          table.remove(own,i)
+        else
+          self:_NavalHold(o.name, self.NavalRedHold)
+        end
+      end
+    end
+    local missiles = self._navalMissiles
+    if not missiles or #missiles == 0 then return self end
+    local entries = self:_NavalEntries()
+    local now = timer.getTime()
+    local lead = self.NavalMissileLead or 60
+    local hold = self.NavalMissileHold or 60
+    local gated = (self.NavalMissileMode ~= "CUED")
+    local shipantenna = self.NavalAntennaHeight or 25
+    local sources = nil -- unmanaged emitters, built lazily at most once per tick
+    local woke = false
+    -- SENSOR mode: could anything plausibly hold this missile? Own-ship horizon first (cheap),
+    -- then the network (once per missile per tick, cached in cache.net).
+    local function seen(p, shipvec, cache)
+      if not gated then return true end
+      if MANTIS._SensorSees(shipvec, shipvec.y + shipantenna, nil, p) then return true end
+      if cache.net == nil then
+        cache.net = false
+        sources = sources or self:_NavalSensorSources()
+        for _,s in ipairs(sources) do
+          if MANTIS._SensorSees(s.vec, s.h, s.range, p) then cache.net = true break end
+        end
+      end
+      return cache.net
+    end
+    for i = #missiles, 1, -1 do
+      local m = missiles[i]
+      local w = m.weapon
+      if (not w) or (not w:isExist()) or (now - m.t0 > 1200) then
+        table.remove(missiles,i)
+      elseif #entries > 0 then
+        local p, v = w:getPoint(), w:getVelocity()
+        local cache = {} -- per missile, per tick
+        local targetvec, tunit = nil, nil
+        if m.target then
+          tunit = UNIT:FindByName(m.target)
+          if tunit and tunit:IsAlive() then targetvec = tunit:GetVec3() else m.target = nil end -- target gone: treat as untargeted
+        end
+        if targetvec then
+          -- Known target: alert on time-to-impact at the TARGET; the target's own group plus every
+          -- managed ship whose radius covers the target (escorts) wake with it.
+          local d, closing = MANTIS._NavalApproach(p, v, targetvec)
+          if closing > 20 and d / closing <= lead and seen(p, targetvec, cache) then
+            if not m.tgroupname then
+              local tgroup = tunit:GetGroup()
+              m.tgroupname = tgroup and tgroup:GetName() or ""
+            end
+            local tgroupname = m.tgroupname
+            for _,e in ipairs(entries) do
+              local covers = (e.group == tgroupname)
+              if not covers then
+                local ex, ez = e.vec.x - targetvec.x, e.vec.z - targetvec.z
+                covers = math.sqrt(ex*ex + ez*ez) <= e.radius
+              end
+              if covers and self:_NavalAlert(e,hold) then woke = true end
+            end
+          end
+        else
+          -- No target data: every managed ship the missile is flying at (within ~25 degrees)
+          -- and will reach inside the lead time.
+          for _,e in ipairs(entries) do
+            local d, closing, cosine = MANTIS._NavalApproach(p, v, e.vec)
+            if closing > 20 and cosine >= 0.9 and d / closing <= lead and seen(p, e.vec, cache) then
+              if self:_NavalAlert(e,hold) then woke = true end
+            end
+          end
+        end
+      end
+    end
+    -- Apply the group alarm state now, not at the end of the next 30s detection cycle.
+    if woke and self.NavalPerUnit then self:_ApplyNavalAlarmState() end
+    return self
+  end
+
+  --- Set the ROE MANTIS gives managed NAVYGROUPs. Default: ENUMS.ROE.OpenFire.
+  -- NAVYGROUP (OPSGROUP) defaults to Return Fire, so a ship MANTIS switches RED would radiate but
+  -- not engage -- not even an inbound missile. MANTIS therefore makes the ROE the NAVYGROUP's
+  -- DEFAULT ROE at registration (so respawn, mission end and the EngageTarget restore all come
+  -- back to it) and re-asserts it whenever the ship is RED and something else changed it.
+  -- An explicit ENUMS.ROE.WeaponHold set by the mission is never overridden (cease-fire phases).
+  -- Note: for ships only OpenFire (2), ReturnFire (3) and WeaponHold (4) are valid; OpenFire is
+  -- the ship "engage what you detect" setting -- WeaponFree (0/1) is an AIR-only value.
+  -- Open Fire is not air-only: ships with anti-ship missiles will also engage detected enemy ships.
+  -- Plain (non-NAVYGROUP) ships keep their Mission Editor ROE.
+  -- @param #MANTIS self
+  -- @param #number roe ENUMS.ROE.OpenFire (default), ENUMS.ROE.ReturnFire or ENUMS.ROE.WeaponHold; false = MANTIS does not touch ROE.
+  -- @return #MANTIS self
+  function MANTIS:SetNavalROE(roe)
+    if roe == false then
+      self.NavalROE = false
+      return self
+    end
+    roe = roe or ENUMS.ROE.OpenFire
+    if roe ~= ENUMS.ROE.OpenFire and roe ~= ENUMS.ROE.ReturnFire and roe ~= ENUMS.ROE.WeaponHold then
+      self:E(self.lid.."SetNavalROE: "..tostring(roe).." is not a valid ship ROE (use OpenFire, ReturnFire or WeaponHold) - using OpenFire.")
+      roe = ENUMS.ROE.OpenFire
+    end
+    self.NavalROE = roe
+    -- groups registered before this call get the new default too
+    for _,navy in pairs(self._navyGroups or {}) do
+      if navy.SetDefaultROE then navy:SetDefaultROE(roe) end
+    end
+    return self
+  end
+
+  --- Set the minimum time a ship stays active after its last trigger. Default: 60 seconds.
+  -- Applies to air contacts in range, surface wake-up, hits / unit losses and the ship's OWN
+  -- missiles: a ship that fired is held RED while its missile is in flight and for this long after
+  -- it is gone, so semi-active and command-guided shots keep their guidance. Without it a ship
+  -- could go dark at the next detection cycle with its own missile still flying.
+  -- Jamming still overrides the hold. 0 disables the dwell and the own-shot hold.
+  -- @param #MANTIS self
+  -- @param #number seconds Hold time in seconds (default 60).
+  -- @return #MANTIS self
+  function MANTIS:SetNavalRedHold(seconds)
+    self.NavalRedHold = math.max(0, seconds or 60)
+    return self
+  end
+
   --- Add a NAVYGROUP to this MANTIS as SAM shooter and/or EWR picket.
-  -- IMPORTANT: MANTIS does not change ROE. NAVYGROUP defaults to Return Fire --
-  -- set NavyGroup:SwitchROE(ENUMS.ROE.WeaponFree) in your mission if the ship
-  -- should engage detected targets rather than only return fire.
+  -- MANTIS takes over the NAVYGROUP's alarm state, emissions and (see #MANTIS.SetNavalROE) ROE:
+  -- by default the ship is given Open Fire so it engages what its radars find when RED.
   -- @param #MANTIS self
   -- @param Ops.NavyGroup#NAVYGROUP NavyGroup The navy group to add.
   -- @param #string Role "SAM" (default) = managed shooter, or "EWR" = unmanaged, always-radiating sensor/picket (coverage source). "BOTH" is deprecated and treated as SAM.
@@ -4576,12 +5146,20 @@ do
     -- set defaults to Emission ON / Alarmstate AUTO so the reset is neutral.
     if NavyGroup.SetDefaultEmission   then NavyGroup:SetDefaultEmission(true) end
     if NavyGroup.SetDefaultAlarmstate then NavyGroup:SetDefaultAlarmstate(0)  end -- 0 = Auto
-    -- NOTE: MANTIS deliberately does NOT touch ROE -- that is the mission
-    -- designer's call. Be aware OPSGROUP's default ROE is Return Fire: a
-    -- MANTIS-managed NAVYGROUP will radiate when RED but hold its weapons
-    -- unless the mission sets e.g. NavyGroup:SwitchROE(ENUMS.ROE.WeaponFree).
+    -- ROE: OPSGROUP's default is Return Fire -- a RED ship would radiate but not
+    -- engage. Make the MANTIS naval ROE the DEFAULT (respawn / mission end /
+    -- EngageTarget restore return to it) and apply it now, unless the mission
+    -- has explicitly set Weapon Hold. See SetNavalROE.
+    if self.NavalROE and NavyGroup.SetDefaultROE then
+      NavyGroup:SetDefaultROE(self.NavalROE)
+      if NavyGroup:GetROE() ~= ENUMS.ROE.WeaponHold then
+        NavyGroup:SwitchROE(self.NavalROE)
+      end
+    end
     self._navyGroups = self._navyGroups or {}
     self._navyGroups[grp:GetName()] = NavyGroup
+    self._navyRoles = self._navyRoles or {}
+    self._navyRoles[grp:GetName()] = role
     if role == "SAM" then
       self.SAM_Group:AddGroup(grp)
       -- If MANTIS is already up, classify the new ship immediately; otherwise
@@ -4598,6 +5176,30 @@ do
       self:E(self.lid.."AddNavyGroup: unknown Role "..tostring(Role).." - use SAM or EWR.")
     end
     self:I(self.lid..string.format("Added NAVYGROUP %s as %s",grp:GetName(),role))
+    return self
+  end
+
+  --- [Internal] Re-add registered NAVYGROUPs that dropped out of the SAM/EWR sets.
+  -- A dynamic (FilterStart) SET_GROUP removes a group on RemoveUnit/Dead and only re-adds it on
+  -- Birth if it matches the prefix filter -- a respawned NAVYGROUP added via AddNavyGroup whose
+  -- name does not match would otherwise be lost to MANTIS for the rest of the mission.
+  -- @param #MANTIS self
+  -- @return #MANTIS self
+  function MANTIS:_ReattachNavyGroups()
+    if not self._navyGroups then return self end
+    for gname, navy in pairs(self._navyGroups) do
+      local role = self._navyRoles and self._navyRoles[gname] or "SAM"
+      local grp = navy:GetGroup()
+      if grp and grp:IsAlive() then
+        if role == "SAM" and not self.SAM_Group.Set[gname] then
+          self.SAM_Group:AddGroup(grp)
+          self:T(self.lid.."Re-attached NAVYGROUP "..gname.." to SAM set")
+        elseif role == "EWR" then
+          if not self.EWR_Group.Set[gname] then self.EWR_Group:AddGroup(grp) end
+          if self.Adv_EWR_Group and not self.Adv_EWR_Group.Set[gname] then self.Adv_EWR_Group:AddGroup(grp) end
+        end
+      end
+    end
     return self
   end
 
