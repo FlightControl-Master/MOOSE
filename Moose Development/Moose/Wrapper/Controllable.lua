@@ -1662,6 +1662,54 @@ function CONTROLLABLE:TaskFollow( FollowControllable, Vec3, LastWaypointIndex )
   return DCSTask
 end
 
+
+--- (GROUND) Attach a trailer to a tractor vehicle
+-- @param #CONTROLLABLE self
+-- @param Wrapper.Unit#UNIT TractorUnit The Tractor UNIT.
+-- @param Wrapper.Unit#UNIT TrailerUnit The Trailer UNIT.
+-- @param #boolean OnStartMission If true, attach on mission start. Default - false.
+-- @return DCS#Task The DCS task structure.
+function CONTROLLABLE:TaskAttachTrailer(TractorUnit,TrailerUnit,OnStartMission)
+  
+  local task = {
+        ["enabled"] = true,
+        ["auto"] = false,
+        ["id"] = "AttachTrailer",
+        ["params"] = 
+        {
+          ["unitIdTrailer"] = TrailerUnit:GetID(),
+          ["unitIdTractor"] = TractorUnit:GetID(),
+          ["onStartMission"] = OnStartMission or false,
+        }
+    }
+  
+  return task
+  
+end
+
+--- (GROUND) Detach a trailer to a tractor vehicle
+-- @param #CONTROLLABLE self
+-- @param Wrapper.Unit#UNIT TractorUnit The Tractor UNIT.
+-- @param DCS#Vec2 PositionVec2 where to put the trailer - same as Waypoint position.
+-- @return DCS#Task The DCS task structure.
+function CONTROLLABLE:TaskDetachTrailer(TractorUnit,PositionVec2)
+  
+  local task = {
+        ["enabled"] = true,
+        ["auto"] = false,
+        ["id"] = "DetachTrailer",
+        ["params"] = 
+        {
+          ["y"] = PositionVec2.y or 0,
+          ["unitIdTractor"] = TractorUnit:GetID(),
+          ["x"] = PositionVec2.x or 0,
+        }
+    }
+  
+  return task
+  
+end
+
 --- (AIR/HELO) Escort a ground controllable.
 -- The unit / controllable will follow lead unit of the other controllable, additional units of both controllables will continue following their leaders.
 -- The unit / controllable will also protect that controllable from threats of specified types.
@@ -3082,8 +3130,10 @@ function CONTROLLABLE:GetDetectedTargets( DetectVisual, DetectOptical, DetectRad
     end
 
     self:T2( { DetectionVisual, DetectionOptical, DetectionRadar, DetectionIRST, DetectionRWR, DetectionDLINK } )
-
-    return self:_GetController():getDetectedTargets( Params[1], Params[2], Params[3], Params[4], Params[5], Params[6] )
+    local contrlr = self:_GetController()
+    if contrlr ~= nil then
+      return contrlr:getDetectedTargets( Params[1], Params[2], Params[3], Params[4], Params[5], Params[6] )
+    end
   end
 
   return nil

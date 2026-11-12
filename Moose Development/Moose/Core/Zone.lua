@@ -1136,7 +1136,7 @@ function ZONE_RADIUS:GetVec3( Height )
   Height = Height or 0
   local Vec2 = self:GetVec2()
 
-  local Vec3 = { x = Vec2.x, y = land.getHeight( self:GetVec2() ) + Height, z = Vec2.y }
+  local Vec3 = { x = Vec2.x, y = land.getHeight( Vec2 ) + Height, z = Vec2.y }
 
   --self:T2( { Vec3 } )
 
@@ -1154,10 +1154,11 @@ end
 -- @param #ZONE_RADIUS self
 -- @param ObjectCategories An array of categories of the objects to find in the zone. E.g. `{Object.Category.UNIT}`
 -- @param UnitCategories An array of unit categories of the objects to find in the zone. E.g. `{Unit.Category.GROUND_UNIT,Unit.Category.SHIP}`
+-- @param #boolean UseZoneCenterSnapshot (Optional) Use one circular centre/radius snapshot for this synchronous scan. Omit for subclass geometry.
 -- @usage
 --    myzone:Scan({Object.Category.UNIT},{Unit.Category.GROUND_UNIT})
 --    local IsAttacked = myzone:IsSomeInZoneOfCoalition( self.Coalition )
-function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
+function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories, UseZoneCenterSnapshot )
   
   self.ScanData = {}
   self.ScanData.Coalitions = {}
@@ -1167,6 +1168,8 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
 
   local ZoneCoord = self:GetCoordinate():SetAlt()
   local ZoneRadius = self:GetRadius()
+  local ZoneVec2 = UseZoneCenterSnapshot and ZoneCoord:GetVec2()
+  local ZoneRadiusSquared = UseZoneCenterSnapshot and ZoneRadius * ZoneRadius
 
   --self:I({x = ZoneCoord.x, y=ZoneCoord.y, z=ZoneCoord.z, ZoneRadius = ZoneRadius})
 
@@ -1181,7 +1184,18 @@ function ZONE_RADIUS:Scan( ObjectCategories, UnitCategories )
   local function EvaluateZone( ZoneObject )
     --if ZoneObject:isExist() then --FF: isExist always returns false for SCENERY objects since DCS 2.2 and still in DCS 2.5
 
-    if ZoneObject and self:IsVec3InZone(ZoneObject:getPoint()) then
+    local InZone = false
+    if ZoneObject then
+      local Point = ZoneObject:getPoint()
+      if UseZoneCenterSnapshot then
+        local dx, dz = Point.x - ZoneVec2.x, Point.z - ZoneVec2.y
+        InZone = dx * dx + dz * dz <= ZoneRadiusSquared
+      else
+        InZone = self:IsVec3InZone(Point)
+      end
+    end
+
+    if InZone then
 
       -- Get object category.
       local ObjectCategory = Object.getCategory(ZoneObject)

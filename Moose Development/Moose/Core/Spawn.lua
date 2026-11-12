@@ -781,7 +781,7 @@ end
 
 --- Sets skill of the group.
 -- @param #SPAWN self
--- @param #string Skill Skill, possible values "Average", "Good", "High", "Excellent" or "Random".
+-- @param #string Skill Skill, possible values "Cadet, "Average", "Good", "High", "Excellent" or "Random".
 -- @return #SPAWN self
 function SPAWN:InitSkill( Skill )
   --self:F( { skill = Skill } )
@@ -793,6 +793,8 @@ function SPAWN:InitSkill( Skill )
     self.SpawnInitSkill = "Excellent"
   elseif Skill:lower() == "random" then
     self.SpawnInitSkill = "Random"
+  elseif Skill:lower() == "cadet" then
+    self.SpawnInitSkill = "Cadet"
   else
     self.SpawnInitSkill = "High"
   end
