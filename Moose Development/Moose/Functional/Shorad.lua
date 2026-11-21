@@ -820,23 +820,18 @@ do
           targetunit = UNIT:Find(targetdata)
         elseif targetcat == Object.Category.STATIC then  -- STATIC
           local tgtcoord = COORDINATE:NewFromVec3(targetdata:getPoint())
-         local tgtgrp1 = self.Samset:FindNearestGroupFromPointVec2(tgtcoord)
-          local tgtcoord1 = tgtgrp1:GetCoordinate()
-          local tgtgrp2 = self.Groupset:FindNearestGroupFromPointVec2(tgtcoord)
-          if tgtgrp2 then
-            local tgtcoord2 = tgtgrp2:GetCoordinate()
-            local dist1 = tgtcoord:Get2DDistance(tgtcoord1)
-            local dist2 = tgtcoord:Get2DDistance(tgtcoord2)
+          local sam = self.Samset:FindNearestGroupFromPointVec2(tgtcoord)
+          local shorad = self.Groupset:FindNearestGroupFromPointVec2(tgtcoord)
 
-            if dist1 < dist2 then
-              targetunit = tgtgrp1
-              targetcat = Object.Category.UNIT
-            else
-              targetunit = tgtgrp2
-              targetcat = Object.Category.UNIT
+          targetunit = shorad or sam
+          if sam and shorad then
+            local samDistance = tgtcoord:Get2DDistance(sam:GetCoordinate())
+            local shoradDistance = tgtcoord:Get2DDistance(shorad:GetCoordinate())
+            if samDistance < shoradDistance then
+              targetunit = sam
             end
-          else
-            targetunit = tgtgrp1
+          end
+          if targetunit then
             targetcat = Object.Category.UNIT
           end
         end   
