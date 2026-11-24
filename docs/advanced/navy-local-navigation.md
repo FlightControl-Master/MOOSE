@@ -10,8 +10,7 @@ nav_order: 7
 
 The experimental local pathfinding integration was removed from NAVYGROUP on
 2026-10-09 for a staged rebuild. Shared local-search functionality in ASTAR and
-GRID remains available. The [development plan](../developer/rolling-pathfinding-plan.md)
-records the reasons, retained components and validation gates for the rebuild.
+GRID remains available.
 
 The constant `NAVYGROUP.PathfindingMode.LOCAL` remains recognized, but this call
 now raises a Lua error before changing the mode, route, movement state or drawings:
@@ -229,10 +228,9 @@ There is no separate LOCAL steering overlay.
 
 ## Validation
 
-Run `tests/navy-pathfinding.lua` and the affected WAYPOINTS, ASTAR and GRID
-suites in separate Lua 5.1 processes. The naval suite covers the removal error,
-normal waypoint planning, target ownership, common safety and diagnostics.
-Standalone ASTAR local-search regressions remain in `tests/astar.lua`.
+Local Lua 5.1 regressions cover the removed-mode error, waypoint planning,
+target ownership, common safety checks and diagnostics. The regression suites
+are maintained in a separate development workspace.
 
 Stubbed regressions do not validate DCS controllers, terrain or ship physics.
 Use a fresh mission with the updated source/include for simulator validation.
