@@ -208,9 +208,7 @@ BASE = {
 BASE.__ = {}
 
 -- @field #BASE._
-BASE._ = {
-  Schedules = {}, --- Contains the Schedulers Active
-}
+BASE._ = {}
 
 --- BASE constructor.
 --
@@ -992,94 +990,66 @@ end
 
 do -- Scheduling
 
-  --- Schedule a new time event. Note that the schedule will only take place if the scheduler is *started*. Even for a single schedule event, the scheduler needs to be started also.
-  -- @param #BASE self
-  -- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
-  -- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
-  -- @param ... Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
-  -- @return #string The Schedule ID of the planned schedule.
-  function BASE:ScheduleOnce( Start, SchedulerFunction, ... )
-  
-    -- Object name.
-    local ObjectName = "-"
-    ObjectName = self.ClassName .. self.ClassID
-    
-    -- Debug info.
-    self:F3( { "ScheduleOnce: ", ObjectName,  Start } )
-    
-    if not self.Scheduler then
-      self.Scheduler = SCHEDULER:New( self )
+  --- Find or create the scheduler owned by this receiver.
+  -- @param #BASE Object The scheduling receiver.
+  -- @return Core.Scheduler#SCHEDULER The receiver's scheduler.
+  local function GetOrCreateScheduler( Object )
+    -- A parent or prototype can have an active scheduler of its own.
+    local Scheduler = rawget( Object, "Scheduler" )
+    if not Scheduler then
+      Scheduler = SCHEDULER:New( Object )
+      Object.Scheduler = Scheduler
     end
-  
-    -- FF this was wrong!
-    --[[
-    local ScheduleID = _SCHEDULEDISPATCHER:AddSchedule( 
-      self, 
-      SchedulerFunction,
-      { ... },
-      Start,
-      nil,
-      nil,
-      nil
-    )
-    ]]
-    
-    -- NOTE: MasterObject (first parameter) needs to be nil or it will be the first argument passed to the SchedulerFunction!
-    local ScheduleID = self.Scheduler:Schedule(nil, SchedulerFunction, {...}, Start)
-    
-    self._.Schedules[#self._.Schedules+1] = ScheduleID
-  
-    return self._.Schedules[#self._.Schedules]
+    return Scheduler
   end
 
-  --- Schedule a new time event. Note that the schedule will only take place if the scheduler is *started*. Even for a single schedule event, the scheduler needs to be started also.
+  --- Schedule a single callback. Its schedule is released after execution.
   -- @param #BASE self
-  -- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
-  -- @param #number Repeat Specifies the interval in seconds when the scheduler will call the event function.
-  -- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
-  -- @param #number Stop Specifies the amount of seconds when the scheduler will be stopped.
-  -- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
-  -- @param #table ... Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
-  -- @return #string The Schedule ID of the planned schedule.
+  -- @param #number Start Delay before execution in seconds.
+  -- @param #function SchedulerFunction Callback to execute.
+  -- @param ... (Optional) Positional arguments passed to the callback. Defaults to no arguments.
+  -- @return #string The pending Schedule ID, which can be passed to ScheduleStop before execution.
+  function BASE:ScheduleOnce( Start, SchedulerFunction, ... )
+    local ObjectName = self.ClassName .. self.ClassID
+    self:F3( { "ScheduleOnce: ", ObjectName, Start } )
+
+    local Scheduler = GetOrCreateScheduler( self )
+    -- BASE callbacks receive the supplied arguments without an injected receiver.
+    local ScheduleID = Scheduler:_ScheduleOnce( nil, SchedulerFunction, { ... }, Start )
+    return ScheduleID
+  end
+
+  --- Schedule and start a restartable call, optionally with a repeat interval.
+  -- @param #BASE self
+  -- @param #number Start Delay before the first execution in seconds.
+  -- @param #number Repeat (Optional) Interval between executions in seconds. Defaults to 0 for a single execution per start.
+  -- @param #number RandomizeFactor (Optional) Randomization factor for Repeat, between 0 and 1. Defaults to 0.
+  -- @param #number Stop (Optional) Run duration in seconds. Defaults to no duration limit.
+  -- @param #function SchedulerFunction Callback to execute.
+  -- @param ... (Optional) Positional arguments passed to the callback. Defaults to no arguments.
+  -- @return #string The Schedule ID.
   function BASE:ScheduleRepeat( Start, Repeat, RandomizeFactor, Stop, SchedulerFunction, ... )
     self:F2( { Start } )
     self:T3( { ... } )
 
-    local ObjectName = "-"
-    ObjectName = self.ClassName .. self.ClassID
-
+    local ObjectName = self.ClassName .. self.ClassID
     self:F3( { "ScheduleRepeat: ", ObjectName, Start, Repeat, RandomizeFactor, Stop } )
 
-    if not self.Scheduler then
-      self.Scheduler = SCHEDULER:New( self )
-    end
-    
-    -- NOTE: MasterObject (first parameter) should(!) be nil as it will be the first argument passed to the SchedulerFunction!
-    local ScheduleID = self.Scheduler:Schedule(
-      nil, 
-      SchedulerFunction,
-      { ... },
-      Start,
-      Repeat,
-      RandomizeFactor,
-      Stop,
-      4
-    )
-    
-    self._.Schedules[#self._.Schedules+1] = ScheduleID
-  
-    return self._.Schedules[#self._.Schedules]
+    local Scheduler = GetOrCreateScheduler( self )
+    local ScheduleID = Scheduler:Schedule( nil, SchedulerFunction, { ... }, Start, Repeat, RandomizeFactor, Stop, 4 )
+    return ScheduleID
   end
 
-  --- Stops the Schedule.
+  --- Stop one or all pending calls owned by this receiver.
   -- @param #BASE self
-  -- @param #string SchedulerID (Optional) Scheduler ID to be stopped. If nil, all pending schedules are stopped.
-  function BASE:ScheduleStop( SchedulerID )  
+  -- @param #string SchedulerID (Optional) The Schedule ID to stop. Defaults to all pending calls.
+  -- @return #nil No return value.
+  function BASE:ScheduleStop( SchedulerID )
     self:F3( { "ScheduleStop:" } )
 
-    if self.Scheduler then
-      --_SCHEDULEDISPATCHER:Stop( self.Scheduler, self._.Schedules[SchedulerFunction] )
-      _SCHEDULEDISPATCHER:Stop(self.Scheduler, SchedulerID)
+    local Scheduler = rawget( self, "Scheduler" )
+    if Scheduler then
+      _SCHEDULEDISPATCHER:Stop( Scheduler, SchedulerID )
     end
   end
 

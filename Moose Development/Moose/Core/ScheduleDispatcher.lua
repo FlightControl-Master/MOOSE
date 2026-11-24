@@ -65,7 +65,8 @@ SCHEDULEDISPATCHER = {
 -- @field #number ScheduleID Schedule ID.
 -- @field #function CallHandler Function to be passed to the DCS timer.scheduleFunction().
 -- @field #boolean ShowTrace If true, show tracing info.
--- @field #boolean Fsm Automatically reclaim a completed FSM call.
+-- @field #boolean Fsm Apply FSM event guard handling.
+-- @field #boolean RemoveAfterRun Release the call when its run finishes.
 -- @field #number Generation Identifies a timer run across Stop/Start cycles.
 
 --- Create a new schedule dispatcher object.
@@ -89,15 +90,16 @@ end
 -- @param #SCHEDULEDISPATCHER self
 -- @param Core.Scheduler#SCHEDULER Scheduler Scheduler object.
 -- @param #function ScheduleFunction Scheduler function.
--- @param #table ScheduleArguments Table of arguments passed to the ScheduleFunction.
--- @param #number Start Start time in seconds.
--- @param #number Repeat Repeat interval in seconds.
--- @param #number Randomize Randomization factor [0,1].
--- @param #number Stop Stop time in seconds.
--- @param #number TraceLevel Trace level [0,3].
--- @param #boolean Fsm Whether this call is a disposable FSM event.
--- @return #string Call ID or nil.
-function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel, Fsm )
+-- @param #table ScheduleArguments (Optional) Positional callback arguments. Defaults to no arguments.
+-- @param #number Start Delay before the first execution in seconds.
+-- @param #number Repeat (Optional) Repeat interval in seconds. Defaults to 0 for a single execution per start.
+-- @param #number Randomize (Optional) Randomization factor for Repeat, between 0 and 1. Defaults to 0.
+-- @param #number Stop (Optional) Run duration in seconds. Defaults to no duration limit.
+-- @param #number TraceLevel (Optional) Stack level for the scheduling site. Defaults to 2.
+-- @param #boolean Fsm (Optional) Apply FSM event guard handling and automatically remove the call. Defaults to false.
+-- @param #boolean RemoveAfterRun (Optional) Release the call when its run finishes. Defaults to false.
+-- @return #string Call ID.
+function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel, Fsm, RemoveAfterRun )
   self:F2( { Scheduler, ScheduleFunction, ScheduleArguments, Start, Repeat, Randomize, Stop, TraceLevel, Fsm } )
 
   -- Increase counter.
@@ -124,17 +126,29 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
     self:F3( { CallID = CallID, PersistentScheduler = self.PersistentSchedulers[CallID] } )
   end
 
-  Scheduler._ScheduleData = Scheduler._ScheduleData or {}
-  self.Schedule[Scheduler] = Scheduler._ScheduleData
-  self.Schedule[Scheduler][CallID] = {} -- #SCHEDULEDISPATCHER.ScheduleData
-  self.Schedule[Scheduler][CallID].Function = ScheduleFunction
-  self.Schedule[Scheduler][CallID].Arguments = ScheduleArguments
-  self.Schedule[Scheduler][CallID].StartTime = timer.getTime() + ( Start or 0 )
-  self.Schedule[Scheduler][CallID].Start = Start + 0.001
-  self.Schedule[Scheduler][CallID].Repeat = Repeat or 0
-  self.Schedule[Scheduler][CallID].Randomize = Randomize or 0
-  self.Schedule[Scheduler][CallID].Stop = Stop
-  self.Schedule[Scheduler][CallID].Fsm = Fsm and true or false
+  -- Only the dispatcher can identify this scheduler's registered calls. A
+  -- BASE copy can carry another scheduler's data and native timer IDs.
+  local Schedules = self.Schedule[Scheduler]
+  if not Schedules then
+    Schedules = {}
+    -- The scheduler owns the data so the dispatcher can index it weakly.
+    Scheduler._ScheduleData = Schedules
+    Scheduler.Schedules = {}
+    self.Schedule[Scheduler] = Schedules
+  end
+
+  local Schedule = {
+    Function = ScheduleFunction,
+    Arguments = ScheduleArguments,
+    StartTime = timer.getTime() + ( Start or 0 ),
+    Start = Start + 0.001,
+    Repeat = Repeat or 0,
+    Randomize = Randomize or 0,
+    Stop = Stop,
+    Fsm = Fsm and true or false,
+    RemoveAfterRun = ( Fsm or RemoveAfterRun ) and true or false,
+  }
+  Schedules[CallID] = Schedule
 
   -- This section handles the tracing of the scheduled calls.
   -- Because these calls will be executed with a delay, we inspect the place where these scheduled calls are initiated.
@@ -170,10 +184,12 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
     end
   end
 
-  self:T3( self.Schedule[Scheduler][CallID] )
+  self:T3( Schedule )
 
   --- Function passed to the DCS timer.scheduleFunction()
-  self.Schedule[Scheduler][CallID].CallHandler = function( Params )
+  -- Resolve the scheduler and record at execution time so the native callback
+  -- does not keep the scheduler or its owner alive.
+  Schedule.CallHandler = function( Params )
 
     local CallID = Params.CallID
     local Info = Params.Info or {}
@@ -259,7 +275,7 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
         return nil
       end
       if Schedule.ScheduleID ~= ScheduleID then
-        if Schedule.Fsm and not Schedule.ScheduleID then
+        if Schedule.RemoveAfterRun and not Schedule.ScheduleID then
           self:_Reclaim( Scheduler, CallID )
         end
         return nil
@@ -271,26 +287,16 @@ function SCHEDULEDISPATCHER:AddSchedule( Scheduler, ScheduleFunction, ScheduleAr
       -- Debug info.
       self:F3( { CallID = CallID, ScheduleID = ScheduleID, Master = MasterObject, CurrentTime = CurrentTime, StartTime = StartTime, Start = Start, Repeat = Repeat, Randomize = Randomize, Stop = Stop } )
 
-      if Status and ((Result == nil) or (Result and Result ~= false)) then
+      if Status and Result ~= false and Repeat ~= 0 and (Stop == 0 or CurrentTime <= StartTime + Stop) then
+        local ScheduleTime = CurrentTime + Repeat + math.random( -(Randomize * Repeat / 2), (Randomize * Repeat / 2) ) + 0.0001 -- Accuracy
+        return ScheduleTime
+      end
 
-        if Repeat ~= 0 and ((Stop == 0) or (Stop ~= 0 and CurrentTime <= StartTime + Stop)) then
-          local ScheduleTime = CurrentTime + Repeat + math.random( -(Randomize * Repeat / 2), (Randomize * Repeat / 2) ) + 0.0001 -- Accuracy
-          -- self:T3( { Repeat = CallID, CurrentTime, ScheduleTime, ScheduleArguments } )
-          return ScheduleTime -- returns the next time the function needs to be called.
-        else
-          if Schedule.Fsm then
-            self:_Reclaim( Scheduler, CallID )
-          else
-            self:Stop( Scheduler, CallID )
-          end
-        end
-
+      -- Regular calls keep their records so that Start can run them again.
+      if Schedule.RemoveAfterRun then
+        self:_Reclaim( Scheduler, CallID )
       else
-        if Schedule.Fsm then
-          self:_Reclaim( Scheduler, CallID )
-        else
-          self:Stop( Scheduler, CallID )
-        end
+        self:Stop( Scheduler, CallID )
       end
     else
       self:I( "<<<>" .. Name .. ":" .. Line .. " (" .. Source .. ")" )

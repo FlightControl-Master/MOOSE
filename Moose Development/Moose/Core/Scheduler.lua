@@ -214,9 +214,8 @@ function SCHEDULER:New( MasterObject, SchedulerFunction, SchedulerArguments, Sta
 
   self.MasterObject = MasterObject
   self.ShowTrace = false
-  -- Own the call data. The dispatcher only indexes it weakly, so callback/argument
-  -- references back to this scheduler do not prevent collection in Lua 5.1.
-  self._ScheduleData = {}
+  -- The dispatcher attaches fresh call data when this instance registers a call.
+  self._ScheduleData = nil
   self.Schedules = {}
 
   if SchedulerFunction then
@@ -226,19 +225,20 @@ function SCHEDULER:New( MasterObject, SchedulerFunction, SchedulerArguments, Sta
   return self, ScheduleID
 end
 
---- Schedule a new time event. Note that the schedule will only take place if the scheduler is *started*. Even for a single schedule event, the scheduler needs to be started also.
+--- Schedule and start a call. Regular calls remain restartable after they finish.
 -- @param #SCHEDULER self
 -- @param #table MasterObject Specified for which Moose object the timer is setup. If a value of nil is provided, a scheduler will be setup without an object reference.
 -- @param #function SchedulerFunction The event function to be called when a timer event occurs. The event function needs to accept the parameters specified in SchedulerArguments.
--- @param #table SchedulerArguments Optional arguments that can be given as part of scheduler. The arguments need to be given as a table { param1, param 2, ... }.
--- @param #number Start Specifies the amount of seconds that will be waited before the scheduling is started, and the event function is called.
--- @param #number Repeat Specifies the time interval in seconds when the scheduler will call the event function.
--- @param #number RandomizeFactor Specifies a randomization factor between 0 and 1 to randomize the Repeat.
--- @param #number Stop Time interval in seconds after which the scheduler will be stopped.
--- @param #number TraceLevel (Optional) Trace level [0,3]. Default 3.
--- @param #boolean Fsm Whether this call is a disposable FSM event. Completed FSM calls cannot be restarted.
+-- @param #table SchedulerArguments (Optional) Positional callback arguments. Defaults to no arguments.
+-- @param #number Start Delay before the first execution in seconds.
+-- @param #number Repeat (Optional) Interval between executions in seconds. Defaults to 0 for a single execution per start.
+-- @param #number RandomizeFactor (Optional) Randomization factor for Repeat, between 0 and 1. Defaults to 0.
+-- @param #number Stop (Optional) Run duration in seconds. Defaults to no duration limit.
+-- @param #number TraceLevel (Optional) Stack level for the scheduling site. Defaults to 3.
+-- @param #boolean Fsm (Optional) Mark an FSM event for event guard handling and automatic removal. Defaults to false.
+-- @param #boolean RemoveAfterRun (Optional, internal) Release the call when its run finishes. Defaults to false.
 -- @return #string The Schedule ID of the planned schedule.
-function SCHEDULER:Schedule( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, TraceLevel, Fsm )
+function SCHEDULER:Schedule( MasterObject, SchedulerFunction, SchedulerArguments, Start, Repeat, RandomizeFactor, Stop, TraceLevel, Fsm, RemoveAfterRun )
   self:F2( { Start, Repeat, RandomizeFactor, Stop } )
   self:T3( { SchedulerArguments } )
 
@@ -261,11 +261,24 @@ function SCHEDULER:Schedule( MasterObject, SchedulerFunction, SchedulerArguments
                                                       RandomizeFactor,
                                                       Stop,
                                                       TraceLevel or 3,
-                                                      Fsm
+                                                      Fsm,
+                                                      RemoveAfterRun
                                                     )
 
   self.Schedules[#self.Schedules + 1] = ScheduleID
 
+  return ScheduleID
+end
+
+--- (Internal) Start a call whose record is released after its run finishes.
+-- @param #SCHEDULER self
+-- @param #table MasterObject (Optional) Object passed as the first callback argument. Defaults to nil for a persistent call without that argument.
+-- @param #function SchedulerFunction Callback to execute.
+-- @param #table SchedulerArguments (Optional) Positional callback arguments. Defaults to no arguments.
+-- @param #number Start Delay before execution in seconds.
+-- @return #string The Schedule ID of the pending call.
+function SCHEDULER:_ScheduleOnce( MasterObject, SchedulerFunction, SchedulerArguments, Start )
+  local ScheduleID = self:Schedule( MasterObject, SchedulerFunction, SchedulerArguments, Start, nil, nil, nil, 4, nil, true )
   return ScheduleID
 end
 
@@ -296,7 +309,7 @@ function SCHEDULER:Remove( ScheduleID )
   _SCHEDULEDISPATCHER:RemoveSchedule( self, ScheduleID )
 end
 
---- Clears all pending schedules.
+--- Stops all pending schedules and keeps their records for a later Start.
 -- @param #SCHEDULER self
 function SCHEDULER:Clear()
   self:F3()

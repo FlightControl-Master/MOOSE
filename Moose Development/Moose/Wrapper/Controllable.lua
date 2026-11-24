@@ -386,11 +386,12 @@ function CONTROLLABLE:PushTask( DCSTask, WaitTime )
   return nil
 end
 
---- Clearing the Task Queue and Setting the Task on the queue from the controllable.
+--- Replace the controllable's task queue with a task.
 -- @param #CONTROLLABLE self
--- @param DCS#Task DCSTask DCS Task array.
--- @param #number WaitTime Time in seconds, before the task is set.
--- @return #CONTROLLABLE self
+-- @param DCS#Task DCSTask DCS task to assign.
+-- @param #number WaitTime (Optional) Delay in seconds. Defaults to 0 for immediate execution.
+-- @return #CONTROLLABLE self if the native object exists.
+-- @return #nil If the native object is unavailable when called.
 function CONTROLLABLE:SetTask( DCSTask, WaitTime )
   self:F( { "SetTask", WaitTime, DCSTask = DCSTask } )
 
@@ -423,7 +424,9 @@ function CONTROLLABLE:SetTask( DCSTask, WaitTime )
       -- See above.
       self:T( { ControllableName = self:GetName(), DCSTask = DCSTask } )
     else
-      self.TaskScheduler:Schedule( self, SetTask, { DCSTask }, WaitTime )
+      -- The controllable's scheduler keeps the delayed assignment alive and
+      -- releases the call once the assignment has been attempted.
+      self.TaskScheduler:_ScheduleOnce( self, SetTask, { DCSTask }, WaitTime )
     end
 
     return self

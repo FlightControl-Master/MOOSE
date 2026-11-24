@@ -1003,7 +1003,10 @@ function ESCORT:_ROT( EscortROTFunction, EscortROTMessage )
   EscortGroup:MessageToClient( EscortROTMessage, 10, EscortClient )
 end
 
--- @param #MENUPARAM MenuParam
+--- Resume the escort's original route at the selected waypoint after one second.
+-- @param #ESCORT self
+-- @param #number WayPoint Number of leading route entries to discard before resuming.
+-- @return #nil No return value.
 function ESCORT:_ResumeMission( WayPoint )
 
   local EscortGroup = self.EscortGroup
@@ -1018,7 +1021,9 @@ function ESCORT:_ResumeMission( WayPoint )
     table.remove( WayPoints, 1 )
   end
 
-  SCHEDULER:New( EscortGroup, EscortGroup.SetTask, { EscortGroup:TaskRoute( WayPoints ) }, 1 )
+  -- Keep the delayed task on the group so it survives garbage collection.
+  local Task = EscortGroup:TaskRoute( WayPoints )
+  EscortGroup:SetTask( Task, 1 )
 
   EscortGroup:MessageToClient( "Resuming mission from waypoint " .. WayPoint .. ".", 10, EscortClient )
 end
