@@ -325,7 +325,7 @@ and conservative missing-data results. Thirty-seven new cases and all six
 previous affected suites pass under Lua 5.1.5: 488 total. A new regression exposed
 a rounded-away lateral offset, now rejected as `numeric_range`. LuaDoc, syntax
 and final diff checks are complete. No other production class changed.
-The R1a helper implementation is complete; DCS validation remains pending.
+The R1a helper implementation is complete; native DCS smoke results are recorded below.
 `CheckDepth` is unchanged and NAVYGROUP LOCAL navigation remains disabled.
 
 Native DCS validation subsequently exposed zero-based `land.profile()` arrays.
@@ -334,8 +334,8 @@ VECTOR profile output and ASTAR depth checks/costs. Shared synchronous index-ran
 validation accepts dense 0/1-based arrays; incremental work remains bounded.
 Temporary diagnostics are removed. Seventeen new regressions reproduce the
 original errors and now pass; eight affected suites total 520 passing cases under
-Lua 5.1.5. The corrected sources require a new DCS run before native validation
-can be accepted. NAVYGROUP LOCAL navigation remains disabled.
+Lua 5.1.5. The corrected-source native DCS run passed on 2026-10-10 as recorded below.
+NAVYGROUP LOCAL navigation remains disabled.
 
 Capability status; geometry and validation contracts are specified in the linked
 documents. Connection/job and incremental depth validation are implemented:
@@ -627,24 +627,39 @@ or implied turning clearance. Native-repeat, analytic and exact-transcript
 replay have distinct evidence requirements. Incomplete historical captures
 cannot be described as exact reproductions.
 
-P0 design is complete for review; executable fixtures, comparison tooling
-and transcript capture/replay are not implemented. The next proposed step
-is P0-I1, the standalone fixture/comparison driver; P0-I2 adds bounded terrain
-transcripts before R1b preparation integration. This documentation step
-changes no production code or simulator behavior.
+P0-I1 was approved and implemented on 2026-10-11: standalone analytic fixtures,
+resolved-case validation, public search histories, copied reports, an identity
+route-check consumer and strict comparison/serialization. Fifty-two new cases
+and five existing affected suites pass under Lua 5.1.5 (591 total).
+P0-I2 was subsequently approved and implemented on the same date: bounded
+ordered terrain tapes, exact argument/return arity, stage/consumer separation
+and first-gap/mismatch diagnostics. Forty-five new P0-I2 and 52 existing P0-I1
+cases pass under Lua 5.1.5 (97 cases in this step). Both implementations remain
+standalone test tooling; production code and simulator behavior are unchanged.
+The [isolated native capture/loaded-source test contract](local-pathfinding-native-capture-test.md)
+was subsequently elaborated on 2026-10-11. It requires an isolated mission
+entry, archived actual compiled buffers, independent host source verification,
+scoped terrain binding and three short capture/replay cases. P0-I3 was then
+approved and implemented: snapshot/byte-preserving loader, native adapter,
+bounded writer, host verifier and archived Core replay. 140 Lua 5.1.5 cases
+and 22 host cases pass. The native mission run remains pending.
 
 ## Implementation plan and gates
 
 Proceed in small steps. R1 and R2 precede moving local continuation.
 R1a geometry, connection/job and incremental depth helpers are implemented.
-P0 contracts are documented; their test tooling and the other milestones below
-remain proposed and unimplemented.
+P0 contracts, P0-I1 analytic fixture/comparison tooling and P0-I2 exact terrain
+tapes and P0-I3 native capture/verification tooling are implemented. R1b's
+production fixed-pose preparation is now implemented in NAVYGROUP with an
+explicit maneuver adapter; measured vessel policy and native acceptance are
+still pending. The developer approved continuing with this production step
+before the pending P0-I3 native smoke; that smoke remains a separate gate.
 
 | Step | Deliverable | Exit criterion |
 | --- | --- | --- |
-| P0: common inputs and replay | [Contract documented](local-pathfinding-test-contract.md); shared resolved inputs, source/terrain identity, frozen poses and stage reports. P0-I1 fixture/comparison driver and P0-I2 transcripts pending | Identical search input produces identical raw candidates regardless of consumer; old failure evidence is reproducible where sufficient data exists. |
-| R1a: PATHLINE geometry and validation | Pure geometry/projection, V1 connection/job and V2 incremental depth validation implemented with Lua 5.1 regressions; simulator validation pending | Deterministic tests for vertical/rotated paths, duplicates, hairpins, self-crossings, missing data and cancellation; no hidden terrain access in geometry. |
-| R1b: fixed-pose naval preparation | Bounded candidate preparation using existing ASTAR and new shared helpers; no moving vessel or route submission | Every raw candidate is accepted or rejected with evidence. Known island/shoal cases retain hard depth/corridor rules; feasible reference passages survive preparation. |
+| P0: common inputs and replay | [P0-I1/I2/I3 tooling implemented](local-pathfinding-test-contract.md); shared inputs, analytic/native adapters, frozen poses, copied reports, exact stage tapes and archived-source replay. [Isolated native test ready](local-pathfinding-native-capture-test.md); DCS acceptance pending | Identical search input produces identical raw candidates regardless of consumer; old failure evidence is reproducible where sufficient data exists. |
+| R1a: PATHLINE geometry and validation | Pure geometry/projection, V1 connection/job and V2 incremental depth validation implemented with Lua 5.1 regressions; native depth smoke passed on 2026-10-10; F10 drawing/replacement smoke confirmed on 2026-10-11. Movement gates remain later work | Deterministic tests for vertical/rotated paths, duplicates, hairpins, self-crossings, missing data and cancellation; no hidden terrain access in geometry. |
+| R1b: fixed-pose naval preparation | [Implemented production API](navy-route-preparation-api.md): copied input, caller-stepped shared limits, fresh connection/depth checks, conservative shortcuts, explicit entry/turn/terminal footprint adapter and stable selection. 48 new Lua 5.1.5 regressions; stationary native acceptance pending | Every candidate has ready/rejected/unavailable/limited/unverified evidence. Island/only-shallow fixtures preserve hard depth rules and raw fallbacks. A supplied model's sampled coverage does not certify DCS execution. |
 | R2a: movement measurements | Small DCS experiments with one precomputed straight route, turn and stop; use the Harbor Tug at explicitly chosen test speeds | Measured actual tracks, turning deviation and stopping distance; documented uncertainty and supported speed range. No rolling search yet. |
 | R2b: one prepared passage | Submit one prepared passage, then extend to the known shallow/insular section; compare actual track to assumptions and legacy lookahead | No grounding, unexplained stop or route replacement; preserve original waypoint actions. Only a validated replacement may alter the LOCAL forward safety policy. |
 | R3a: integration contracts | Generation/authority lifecycle, actual progress, task/arrival boundary, one continuation and native-route handover | Deterministic moving-ship replay covers late results, turns, retargeting, callback races and missing continuation. Stops never auto-resume. |
@@ -669,9 +684,9 @@ preceding speed/geometry. A low-speed success does not certify the same route
 at the earlier requested cruise speed.
 
 Suggested implementation commits, after approval:
-1. P0 test configuration/report contracts (documented), then separately approved P0-I1 fixture/comparison driver and P0-I2 terrain transcripts.
+1. P0 contracts and P0-I1/I2/I3 fixture, capture, verification and replay tooling (completed); isolated native DCS acceptance pending approval.
 2. R1a pure geometry, V1 job/connection validation and V2 incremental depth validation with tests (completed).
-3. R1b preparation with stationary/virtual tests.
+3. R1b preparation with stationary/virtual tests (production and analytic tests completed; stationary native acceptance pending).
 4. R2 diagnostics/driver and resulting measured maneuver policy.
 5. R3a/R3b LOCAL orchestration and simulator validation.
 
@@ -714,6 +729,10 @@ lua tests/grid.lua
 lua tests/pathline.lua
 lua tests/pathline-validation.lua
 lua tests/pathline-depth-validation.lua
+lua tests/local-pathfinding.lua
+lua tests/local-pathfinding-transcript.lua
+lua tests/local-pathfinding-loader.lua
+lua tests/local-pathfinding-native.lua
 ```
 
 Include depth/vector/timer or other downstream suites when their behavior is
@@ -726,23 +745,97 @@ or `path_found`. Completion requires the original goal's observed arrival.
 When an assumption fails, return to its responsible stage rather than adding
 another cross-cutting guard.
 
+### Native DCS smoke validation (2026-10-10 and 2026-10-11)
+
+The corrected-profile `testcase=1` run completed on 2026-10-10 with
+`PASS: 3/3 native depth budget comparisons; shallow=clear`. Deep water and the
+selected shallow passage returned `clear`; the coast crossing returned `blocked`
+with `insufficient_depth`. Small and large work budgets produced the same
+resolved outcomes and obstruction evidence. No Lua errors were reported.
+This exercised PATHLINE's incremental native depth/corridor evaluator. The
+VECTOR profile and ASTAR depth-cost corrections remain covered by offline
+regressions; this testcase did not exercise those APIs directly.
+
+The `testcase=2` F10 smoke run on 2026-10-11 completed all eight drawing and
+route-replacement API phases, with final PASS at 143 simulation seconds and
+no Lua errors. The developer subsequently confirmed the expected F10 behavior:
+redraw and Vec2/Vec3 replacement removed obsolete drawings, yellow replacement
+lines survived delayed removal of old IDs, the independent cyan reference
+remained until its own cleanup, and all test drawings disappeared at the end.
+The current PATHLINE source hash matched the prepared drawing test; its dynamic
+include was recorded through the verified production-source junction.
+These historical source checks correlate include paths and disk hashes; they
+do not supply the archived compiled-buffer proof required by the new P0 native
+capture gate. The observed helper results remain native smoke evidence.
+
+Run identities are the native-depth BEGIN at 2026-10-10 19:25:25.867 UTC
+(`r1a-v2-dcs-1`) and the F10 BEGIN at 2026-10-11 12:06:59.633 UTC
+(`pathline-f10-1`). Raw byte snapshots, source manifests, event counts and
+reported findings remain in task-specific temporary storage. These results
+validate the exercised helper behavior; vessel motion, turning clearance and
+controller execution remain R2/R3 gates.
+
 ### Immediate next step
 
-Repeat the native **R1a-V2 `testcase=1`** after loading the corrected PATHLINE,
-VECTOR and ASTAR sources in a new mission. The three comparisons cover deep water,
-the known shallow passage and a coast crossing under two work budgets. Require
-`PASS: 3/3 native depth budget comparisons`, deep=`clear`, coast=`blocked`, and a
-resolved, budget-independent shallow result. Wait for the user's mission-start
-notification before direct log inspection. Corrected simulator validation is
-still pending; source identities and raw run evidence stay in task-specific
-temporary storage.
+P0-I1 and P0-I2 are complete: **standalone analytic fixtures, comparison driver
+and bounded exact terrain tapes**, including the fixed-pose identity consumer.
+Search, fresh connection checks and dense depth checks have separate tapes;
+replay has no live/nearest-sample fallback and stops at the first discrepancy.
+Query parity, source proof, maneuver preparation and vessel execution retain
+separate statuses. No DCS mission was needed for these offline steps.
 
-After that validation, the next proposed implementation is **P0-I1 shared
-standalone fixtures and comparison driver** from the
-[P0 contract](local-pathfinding-test-contract.md): resolved parameter validation,
-analytic terrain cases, scripted search histories, copied candidate reports, an
-identity consumer and strict comparison/serialization tests under Lua 5.1.
-P0-I2 bounded terrain transcript capture/replay follows that driver. Actual
-maneuver preparation and NAVYGROUP control remain later work. Wait for approval
-or comments before starting P0-I1. A missing continuation stops the ship until a
-new movement command.
+The [isolated DCS capture/verification contract](local-pathfinding-native-capture-test.md)
+is now documented: one dedicated mission entry, actual compiled-buffer archives
+with independent host SHA-256 verification, per-operation terrain/clock binding,
+bounded external artifacts and three small native cases. Replay loads archived
+tested Core buffers; declared external fixtures remain substitutions.
+
+P0-I3 is implemented and regression-tested. Production classes, normal include
+templates and the existing mission test scripts are unchanged. A dedicated
+frozen entry is generated separately; it requires an isolated mission copy.
+
+Next proposed subtask: **run the isolated three-case DCS smoke test** after
+approval. Once the user announces the mission, inspect its log directly,
+preserve raw run bytes, verify the loaded buffers and replay the frozen
+cases/actions/queries offline. Only complete source/query/semantic/assertion
+evidence passes this gate. Do not start a recurring monitor.
+R1b geometry/validation, bounded simplification, explicit maneuver adapter and
+candidate selection were subsequently approved and implemented in NAVYGROUP
+on 2026-10-11. NAVYGROUP control remains later work. No calibrated ship turn or
+braking model is inferred: the adapter requires explicit model/pose/hull data
+before publishing `ready_under_model`, and ExecutionValidated remains false.
+
+## R1b implementation checkpoint (2026-10-11)
+
+The [API and limits](navy-route-preparation-api.md) document the production
+static functions and maneuver callback. Existing ASTAR and PATHLINE APIs suffice;
+no GRID, VECTOR, PATHLINE, ASTAR, module-list, FSM or controller changes were
+needed. LOCAL selection still raises the removal error.
+
+Every original candidate retains raw geometry as a diagnostic/fallback. Optional
+three-point shortcuts must pass fresh full-route connection/repricing and dense
+checks and may not increase the configured soft cost. Entry, distinct turns and
+terminal/stopping strips are independently sampled under explicit model
+assumptions. The initial implementation deliberately rechecks complete trial
+polylines; measure the native cost before introducing per-connection reuse.
+Shared caps can end a job as limited, without a partially evaluated winner or
+a claim that no route exists. No preparation owns a timer or grants movement
+authority; stale context/cancellation cannot trigger a later restart.
+
+Validation: 48 new R1b cases plus naval (25), ASTAR (295), PATHLINE geometry (57),
+connection (36) and depth validation (42) suites pass under Lua 5.1.5, 503 total.
+Actual local ASTAR output feeds the preparer without mutation; weight-10 shallow
+passages remain eligible, island-cutting shortcuts fail, missing data remains
+unavailable, and a failed simplified maneuver preserves the raw alternative.
+The altitude-only footprint regression reproduced an initial classification
+error and now reports unavailable, not a resource limit. Syntax/final diff checks
+pass. Stubbed assumed footprints do not validate ship physics or native terrain.
+
+Next proposed subtask: create a stationary DCS preparation test that draws raw
+and prepared geometry and reports its stage evidence with explicit test-model
+parameters, without route submission. Use a fresh source snapshot/include for
+the new NAVYGROUP version; the earlier P0-I3 frozen package cannot establish
+that this later production code was loaded. Wait for approval/comments before
+that subtask or R2 movement measurements.
+Wait for approval or comments. A missing continuation stops the ship until
+a new movement command.

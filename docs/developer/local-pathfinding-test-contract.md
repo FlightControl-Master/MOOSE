@@ -6,11 +6,13 @@ nav_exclude: true
 
 # Local pathfinding P0 test and replay contract
 
-Status: P0 design elaborated on 2026-10-10 at the developer's request.
-This document specifies the proposed fixture, driver and report contracts;
-their implementation is a separate approval step. The R1a geometry and
-validation APIs already exist. No production behavior, test runner, mission
-or NAVYGROUP LOCAL availability changes in this documentation step.
+Status: P0 design elaborated on 2026-10-10; P0-I1, P0-I2 and P0-I3 approved and
+implemented on 2026-10-11. Sections 9 and 10 describe the standalone analytic
+driver and bounded exact terrain tapes. The isolated DCS capture/loaded-source
+test contract is elaborated in the [native test specification](local-pathfinding-native-capture-test.md);
+its test-only adapter/loader and host replay are implemented. The native DCS
+run remains pending. Production classes and NAVYGROUP LOCAL availability are
+unchanged by this tooling.
 
 See the [rebuild plan](rolling-pathfinding-plan.md),
 [geometry API](pathline-geometry-api.md) and
@@ -150,7 +152,7 @@ test values, not new production defaults or a maneuver-safety prescription.
 | Spacing | 400 m | `search:GetGrid():SetResolution(400)`; no automatic resolution or CrossSpacing |
 | Candidate-cell cap | 3000 | `GetGrid():SetMaxCells(3000)`; counts candidates before filtering |
 | Cell filter | WATER and SHALLOW_WATER; no zone restriction | `GetGrid():SetValidSurfaceTypes(...)`; record resolved enum values |
-| Graph adjacency | Enabled | `SetGridNeighboursOnly(true)`; no manual nodes |
+| Graph adjacency | Enabled | `StartLocalSearch` enables grid neighbours when creating its window; no manual nodes. The setter requires an already built grid and is not used on the cold unbuilt instance |
 | Window | Ahead 6000 m, full Width 4000 m, Behind 1500 m | `SetLocalWindow(6000, 4000, 1500)` |
 | Heading policy | `towards_goal` | Resolve once per request; pass the numeric heading to `StartLocalSearch`; coincident horizontal points use 0 |
 | Hard depth | 3.5 m, full corridor 50 m | `SetValidNeighbourDepth(3.5, 50)` |
@@ -446,17 +448,19 @@ drawing CPU and additional native calls are outside the search transcript.
 | Debug on/off | Same search semantics; graphics queries/timing do not contaminate core evidence |
 | Historical case55 without full evidence | Explicit reconstructed scenario only; no invented exact rejection chain |
 
-The next proposed implementation subtask is **P0-I1: shared standalone fixtures
-and comparison driver**. Add a test-only helper, analytic water/shoal/island/
+The completed **P0-I1: shared standalone fixtures and comparison driver**
+adds a test-only helper, analytic water/shoal/island/
 missing-data fixtures, resolved-case validation, count-driven search sequences,
 copied raw-candidate reports and strict comparison/serialization regressions
 under Lua 5.1. Use an identity preparation consumer to verify the handoff;
 label maneuver preparation not implemented. Do not implement NAVYGROUP control.
 
-Then **P0-I2: bounded terrain transcript capture/replay** can add the exact
-response codec, size limits and mismatch reporting, plus an isolated mission
-adapter only after its environment/source capture has been specified. R1b's
-actual geometry/maneuver preparation follows with a separately approved API.
+The separately approved **P0-I2: bounded terrain transcript capture/replay**
+implements exact responses, size limits and first-gap/mismatch reporting in
+standalone fixtures (section 10). The agreed native adapter follows in section 11.
+R1b's subsequently approved production geometry/maneuver preparation is now
+implemented and documented in the [NAVYGROUP API](navy-route-preparation-api.md).
+The P0 identity consumer retains its separate unchanged diagnostic contract.
 
 Existing ASTAR, GRID, PATHLINE and VECTOR APIs suffice for the proposed P0
 fixtures. No required production extension has been identified. Reuse the
@@ -464,10 +468,292 @@ existing Lua 5.1 test conventions and separate processes; do not add a loader
 entry or a public compatibility API for test helpers. Any implementation gap
 found later must be tied to a failing acceptance case before extending Core.
 
-Design validation: cross-checked against current ASTAR local request/report,
+Design validation on 2026-10-10: cross-checked against current ASTAR local request/report,
 progress, cache invalidation and StepSearch contracts; PATHLINE R1a geometry,
 connection/depth validation and the recorded T2 weight-1 script. The repository
 was clean at the beginning of this task. This change is documentation only;
 no behavior tests or DCS runs are claimed. Relative links, code fences, CRLF
 and the final documentation diff were checked; `git diff --check` passes.
-Wait for approval/comments before P0-I1.
+That design-only step preceded the separately approved P0-I1 implementation below.
+
+## 9. Implemented P0-I1 standalone tooling (2026-10-11)
+
+Run from the repository root in an isolated Lua 5.1 process:
+
+```text
+lua tests/local-pathfinding.lua
+```
+
+The suite uses production VECTOR, PATHLINE, GRID and ASTAR methods. The fixtures
+replace external BASE/coordinate dependencies, terrain, CPU clocks, graphics
+and forbidden timer/controller access for that process only. They are not
+included in Modules.lua or an ordinary mission. There is no production extension.
+
+| Test-only file / function | Implemented behavior |
+| --- | --- |
+| `tests/support/local-pathfinding-fixtures.lua` | Explicit T2 baseline, analytic open water/shoal/island/missing-data providers, ordered rectangular regions, native zero-based profiles with boundaries and interior samples |
+| `P0.ResolveCase` / `DecodeCase` in `tests/support/local-pathfinding.lua` | Independent plain-data case; reject unknown fields, sparse arrays, invalid enums/nonfinite numbers and conflicting hard-depth settings before search/terrain access |
+| `P0.Run` | Cold instance, public observation/request/step/cancel/retarget/invalidation history, copied ordered candidates, separate native/driver reasons, per-request terrain counts and deterministic event envelope |
+| `P0.FanoutRequest` / `PrepareIdentity` | Independent consumer snapshots; geometry/endpoint, fresh ASTAR connection/repricing and incremental dense PATHLINE checks with fixed pose and explicit context |
+| `P0.CompareRuns` | Exact semantic input/report comparison; map native window identities through request order, exclude CPU/slices/output identities, report the first differing field and separate diagnostic difference |
+| `tests/support/local-pathfinding-codec.lua` | Bounded canonical JSON encode/decode/copy/compare; binary64 numbers, UTF-8, explicit special-value/sparse-table tags and packed return arity; no executable captured Lua |
+
+`Fixtures.Case(kind, experiment)` supplies the baseline; the tests also use a
+separately named compact rectangular window to exercise histories and limits.
+The baseline soft weight is 1. The weight-10 case changes that named setting;
+it is not required to follow the weight-1 route. Analytic regions are ordered,
+with later fields overriding overlapping earlier fields. Water surface height
+is zero, seabed height is negative depth, and land depth is zero.
+
+`request_parity` and `fixed_pose_prepare` replay every explicit action.
+`virtual_follow` accepts exactly one initial observation with `virtual`
+provenance, then uses the documented policy: candidate index 1, every raw point
+from index 2, a new request from the copied endpoint, heading towards the goal.
+Unsupported additional scripted actions are rejected rather than ignored.
+Planning anchors never become observations in fixed-pose preparation.
+Full Vec3 inputs/raw coordinates remain copied and compared without rounding;
+naval geometry anchor checks use exact horizontal x/z coordinates, consistent
+with ASTAR's horizontal metric. No route altitude is used as depth evidence.
+
+Finished requests retain native request/window IDs separately from their
+driver identities. Nested native reports are unchanged snapshots; their
+containing request/stage provides the run/context envelope. Events carry the
+explicit schema/run/case/revision/variant and increasing EventSequence.
+Final count-driven `step` actions have slice-independent semantic identities;
+the complete resolved input still records all budgets. Partial step actions
+retain their exact schedule. Pose and validation identities are distinct from
+search identity, and their differences remain visible in diagnostic comparison.
+
+The identity consumer performs no transformation or candidate selection.
+It reports every candidate in order, with explicit `not_run` entries after a
+shared cancellation/limit. Route checks can be `clear` while the candidate
+remains `unverified` with `maneuver_not_implemented`; `Selected` and
+`ExecutionValidated` are always false. Fresh connection evidence retains the
+first native failure beside the PATHLINE report, including Stage/Location.
+Dense validation retains actual PATHLINE coverage, failure and work counters.
+Optional test controls are copied `ContextId`, `CurrentContextId`,
+`CancelAfterSlices` and, since P0-I2, `ConsumerId` (default `identity`);
+context mismatch takes priority over cancellation/limits.
+They own no timers or asynchronous continuation.
+
+Search work/slice/request caps may be zero, admitting no corresponding
+operation; positive search slice budgets remain mandatory. PATHLINE zero
+budgets retain their existing meaning. `MaxValidationSlices` is a shared
+preparation cap across candidates and stages. Driver caps cancel the native job
+and keep its report separately. Completion on the final admitted operation
+remains completion. Capture caps stop further requests/stages where detectable;
+an oversized returned candidate/report is detected after return. Incomplete
+captures retain bounded headers/references, have `capture_limit`, and cannot
+pass strict replay/parity. A byte cap too small even for the mandatory header
+is an invalid fixture configuration. Completed analytic artifacts are retained
+in memory within the configured limits; P0-I1 does not install file streaming
+or a terrain transcript registry.
+
+Both synthetic and unavailable clock policies are covered. Synthetic zero CPU
+is labelled synthetic, not measured cost; no wall or simulation timing is
+available. Source manifests can hold externally computed hashes, but this
+fixture has no trusted loaded-byte verification adapter. Consequently every
+artifact says `source_unverified`; asking for source-verified parity returns
+`inconclusive` even when analytic semantics match.
+
+Validation: 52 new P0-I1 regressions pass under Lua 5.1.5, including cold/warm
+parity, learning/progress/loops, one-unit slices without repeated terrain calls,
+retarget/invalidation/cancellation, ownership, missing depth, interior shoals,
+hard versus soft depth, stage/driver/capture limits, debug parity and strict
+serialization. The locale regression injects comma formatting to verify
+rejection; it does not claim an installed German numeric locale was exercised.
+The existing ASTAR (295), GRID (109), PATHLINE geometry/drawing (57), connection
+validation (36) and depth validation (42) suites pass in separate Lua 5.1
+processes: 591 cases including P0-I1. Syntax and final diff checks are complete.
+No new DCS test or ship movement is claimed.
+
+P0-I2 was subsequently approved and implemented as described below.
+
+## 10. Implemented P0-I2 exact terrain tapes (2026-10-11)
+
+Run the focused suite as a separate Lua 5.1 process at the repository root:
+
+```text
+lua tests/local-pathfinding-transcript.lua
+```
+
+`tests/support/local-pathfinding-transcript.lua` adds test-only capture and
+replay sessions. `tests/local-pathfinding-transcript.lua` exercises these
+sessions both directly and through actual ASTAR/GRID/VECTOR/PATHLINE methods.
+There is no module-loader entry, production API, native DCS hook or NAVYGROUP
+change. The driver binds its proxy only to the explicitly owned standalone
+`Fixtures.Install()` environment, restoring `land`, the clock and the previous
+terrain provider on completion, setup failure and evaluation error.
+
+| Test API | Result / ownership |
+| --- | --- |
+| `P0.RecordRun(case, environment, runId)` | Search result and independent captured transcript; normal public action history starts cold |
+| `P0.ReplayRun(case, environment, captured, runId)` | Search result and replay evidence; no live terrain function is called |
+| `P0.RecordPreparation(case, request, environment, control)` | Identity preparation result and separate connection/depth tapes for each ordered candidate |
+| `P0.ReplayPreparation(case, request, environment, captured, control)` | Preparation result and replay evidence; preparation can replay an exported request without replaying search |
+| `P0.Transcript.Encode(data)` / `Decode(bytes, limits)` | Bounded canonical JSON with transcript schema checks; Decode returns `nil, issue` for malformed, truncated or oversized documents |
+| `Transcript.NewCapture(manifest, limits)` / `NewReplay(manifest, captured, limits)` | Standalone session with explicit input/source identity and admission limits |
+| `session:Begin(stage, consumer, requestIndex, candidateIndex)` / `Close()` | Ordered scope boundary, including empty scopes; no shared cursor between stages/consumers |
+| `session:Call(functionName, liveFixture, ...)` | Capture forwards original arguments and returns; replay ignores the live function and returns independent copied values |
+| `session:Finish(completed)` / `Report()` / `Export()` | Idempotent completion, detached bounded reports/data; export requires Finish; owned abort signals are identified by `IsAbort` |
+
+The artifact has `SchemaVersion`, `Manifest`, resolved `Limits`, ordered
+`Tapes`, `Complete` and an optional first `Issue`. The manifest contains the
+canonical full resolved case, including the exact slice schedule, in
+`InputIdentity`, Lua version and an explicitly unverified source manifest.
+Preparation also identifies the ordered raw snapshot and resolved control.
+Per-run output IDs are excluded from input identity. A control's omitted
+defaults and their explicit equivalent resolve identically.
+
+Each tape has `Index`, `Scope`, `Calls` and `Closed`. Scope contains Stage
+(`search`, `connection`, `depth`), Consumer, RequestIndex and CandidateIndex
+(zero for search). A call contains its sequence, full function name,
+`Arguments` with `Arity`/`Values` and either `Outcome="return"` with packed
+`Returns` or `Outcome="error"` with the original string exception.
+Supported functions are `land.getSurfaceType`,
+`land.getSurfaceHeightWithSeabed` and `land.profile`. Any other terrain access
+is an explicit gap before it is dispatched.
+
+Argument snapshots are taken before evaluation and response snapshots before
+the caller can mutate them. No coordinate rounding, profile normalization or
+surface/depth substitution occurs. The codec preserves trailing nil, false,
+zero, signed zero, zero-based and sparse keys, malformed records, duplicate
+points and tagged NaN/infinity values. It reproduces data values, not engine
+objects, table-reference aliasing or NaN payload bits. Nonstring error objects
+remain original exceptions in the controlled fixture and make the tape
+non-replayable. Serializable exceptions are replayed as exceptions, never
+converted to terrain results.
+
+`Execution.Transcript` is copied and resolved before work:
+
+| Limit | Default / maximum | Enforcement |
+| --- | --- | --- |
+| `MaxCallsPerStage` | 100000 | Total across that stage's requests/candidates; checked before the next live operation |
+| `MaxProfileRecordsPerStage` | 1000000 | Count every present key in the native profile's first returned table, including zero/sparse/malformed entries, before copying it |
+| `MaxBytes` | 64 MiB | Whole canonical transcript, including manifest, scope headers and a 4096-byte first-issue reserve |
+
+Omitted fields use these defaults; false, negative, fractional or excessive
+values are invalid. Zero call/profile limits are valid. The byte cap must fit
+the mandatory manifest plus issue reserve. Additional fixed structural guards
+are 4096 tapes and codec item/depth limits. Transcript limits are independent
+of `Execution.MaxArtifactBytes` for search/preparation result documents.
+Counts and encoded record sizes are accumulated incrementally; capture does
+not re-encode all preceding calls for every new sample.
+
+Known argument bytes are checked before admission. Returned profile size,
+serialization and remaining bytes can only be checked after the atomic native/
+fixture call. A limit marks capture incomplete and stops the controlled
+search/validation; native cancellation or PATHLINE evaluation-error reports
+remain distinct from the driver's `capture_limit`. Later candidates stay
+`not_run`. Native exceptions propagate unchanged even if their error record
+cannot fit. These limits cannot bound native allocation or frame duration.
+Artifacts remain in bounded memory and are returned as data/JSON for host
+tooling to save outside patches; a native streaming/file adapter is not added.
+
+Replay checks schema, completeness, input/environment identity and size
+admission before queries. Each exact scope/function/argument mismatch stops
+at its first occurrence. Unused recorded calls/tapes fail at scope/end;
+missing calls/tapes, unsupported calls and incomplete capture are gaps with
+`inconclusive` verdict. There is no nearest-sample or live fallback.
+The first issue identifies tape/scope/sequence/function and, for a value
+comparison, the first exact field path and both typed values. Large strings
+and paths have bounded UTF-8 excerpts with explicit truncation flags; whole
+profiles are not copied into a mismatch diagnostic. Cleanup never replaces
+the first issue.
+
+Search/preparation results contain `TerrainTranscript` with query verdict,
+stage counts, native-call counts and first issue. A comparable mismatch gives
+driver `error`/`terrain_replay_mismatch` and verdict `failed`; a gap gives
+`error`/`terrain_replay_gap` and `inconclusive`. Capture-size limits keep
+`limited`/`capture_limit`. Ordinary result-capture limits retain their existing
+status and make the terrain tape incomplete. Neither case can pass a negative
+expectation simply because incomplete native work stopped.
+
+Example, run only from a standalone Lua process at the repository root:
+
+```lua
+local P0 = dofile("tests/support/local-pathfinding.lua")
+local environment = P0.Fixtures.Install()
+local case = P0.Fixtures.Case("open_water")
+case.VariantId = "compact-exact-example"
+case.Search.Grid.Type, case.Search.Grid.Spacing = "rectangular", 100
+case.Search.Grid.MaxCells = 500
+case.Search.Window = {Ahead = 400, Width = 400, Behind = 100}
+case.Route.Goal.x = 200
+case.Actions[2].Goal = P0.Codec.Copy(case.Route.Goal)
+
+local original, captured = P0.RecordRun(case, environment, "original")
+local decoded, issue = P0.Transcript.Decode(P0.Transcript.Encode(captured))
+assert(decoded, issue and issue.Kind)
+local replayed = P0.ReplayRun(case, environment, decoded, "replay")
+assert(replayed.TerrainTranscript.Verdict == "passed")
+assert(P0.CompareRuns(original, replayed).Verdict == "passed")
+
+local request = original.Requests[1]
+local prepared, validationTape = P0.RecordPreparation(case, request, environment)
+local checked = P0.ReplayPreparation(case, request, environment, validationTape)
+assert(checked.TerrainTranscript.Verdict == "passed")
+assert(checked.ExecutionValidated == false)
+```
+
+The query-level comparison kind is `exact_query_sequence`. It can pass for
+the recorded analytic fixture sequence while `SourceVerified=false` and
+`SourceVerification="unverified"` remain explicit. `ReplayCapability` is
+`recorded_exact` for a replay attempt; completeness and query/source verdicts
+govern the allowed claim. `P0.CompareRuns(..., true)` still reports
+`inconclusive` without trusted loaded-byte evidence. No native DCS terrain
+capture, source-verified simulator replay or movement validation is claimed.
+
+Validation: 45 new P0-I2 cases and the existing 52 P0-I1 cases pass in separate
+Lua 5.1.5 processes (97 cases). They cover exact packed data, ownership,
+signed zero, malformed/sparse profiles, first mismatch/gap, UTF-8 diagnostics,
+schema/truncation, call/profile/byte caps, error cleanup, cold/warm public
+histories, retarget/invalidation, virtual following, separate connection/dense
+stages, cancellation and unverified source status. Changed Lua files compile;
+the final diff and whitespace checks pass.
+
+The separately requested **isolated DCS capture/verification test contract**
+is now elaborated in the [native test specification](local-pathfinding-native-capture-test.md).
+It defines an isolated mission entry, exact compiled-buffer archives and host
+source verification, scoped terrain binding, three native smoke cases, bounded
+external artifacts and offline replay of the archived tested Core sources.
+P0-I3 was subsequently approved and implemented as described below.
+
+## 11. Implemented P0-I3 native capture tooling (2026-10-11)
+
+The [native test specification](local-pathfinding-native-capture-test.md)
+documents the ready loader/adapter/writer, host preparation and verification,
+archived Core replay, commands and required isolated mission copy.
+The shared driver now accepts an explicitly supplied native environment:
+each atomic public action restores terrain/clock ownership before yielding.
+Default analytic behavior and both existing P0 suites remain unchanged.
+Capture is count-driven; saved native clocks measure inclusive runner CPU
+separately from elapsed simulation time.
+
+Source identity is an independent host proof, not a supplied verified flag in
+case JSON or a modification of terrain-tape manifests. DCS archives the exact
+buffers compiled/executed; the host checks their SHA-256, load order, successful
+returns, run identity and runtime binding/cleanup evidence. It correlates the
+capture with original mission log bytes and freezes verified buffers into a
+private offline replay directory. BASE/coordinate/utility substitutions are
+declared; full native MOOSE behavior and vessel execution are not reproduced.
+
+The smoke batch contains one compact 500-m open request with virtual following
+and fixed-pose identity checks, plus independent connection/dense probes for
+the frozen shallow and coast segments. No drawings, NAVYGROUP/controller
+commands, maneuver selection or new production defaults are introduced.
+Capture/query/assertion/source verdicts remain distinct. A failure, cap or
+ownership change stops work; late callbacks cannot resume it.
+
+Validation: 140 cases in four separate Lua 5.1.5 processes (52 P0-I1, 45 P0-I2,
+15 loader, 28 native-shaped), plus 22 Python host regressions, including archived
+Core capture/serialization/replay. These use controlled external dependencies;
+the real DCS smoke run/source proof remain pending.
+
+Next proposed subtask: the isolated DCS smoke test, followed by direct log
+inspection after the user's mission-start notification and host verification/
+replay. R1b production preparation was subsequently approved and implemented
+with [its own API and regressions](navy-route-preparation-api.md); this does not
+turn the P0 identity consumer into a maneuver selector. Native acceptance and
+NAVYGROUP control remain pending. The old frozen capture package predates the
+R1b production code; refresh sources before claiming that later code was tested.

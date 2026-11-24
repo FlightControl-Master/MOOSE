@@ -81,7 +81,8 @@
 --
 -- Only full-waypoint pathfinding is currently available. Selecting PathfindingMode.LOCAL raises
 -- an error because the experimental local integration has been removed for a staged rebuild.
--- Standalone local searches in ASTAR and GRID remain available.
+-- Standalone local searches in ASTAR and GRID remain available. Caller-stepped StartRoutePreparation()
+-- prepares copied candidates from a fixed pose and explicit maneuver model without movement authority.
 --
 --     navy:SetPathfindingMinDepth(20)
 --     navy:SetPathfindingMode(NAVYGROUP.PathfindingMode.WAYPOINT)
@@ -1792,6 +1793,1173 @@ end
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 -- Misc Functions
 -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+-- Caller-stepped fixed-pose route preparation. This does not enable LOCAL or command a vessel.
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+--- Frozen naval preparation input. Positions are copied finite DCS Vec3 values; x/z are horizontal meters.
+-- ASTAR Path/node fields are ignored. No live group is read; altitude does not supply depth evidence.
+-- @type NAVYGROUP.RoutePreparationInput
+-- @field DCS#Vec3 Start Exact planning start, equal to Pose.Position.
+-- @field DCS#Vec3 Goal Original exact target, retained even for partial candidates.
+-- @field #NAVYGROUP.PreparationPose Pose Copied position, heading, speeds and optional hull assumptions.
+-- @field #table Candidates Dense ordered ASTAR candidate array: Positions, Cost, Score, ReachesGoal; optional diagnostic scalars.
+
+--- Explicit pose and hull data; no ship dimensions, cruise speed, radius or braking distance is inferred.
+-- @type NAVYGROUP.PreparationPose
+-- @field DCS#Vec3 Position Frozen reference position in meters.
+-- @field #number HeadingDeg Optional finite clockwise heading from +x towards +z; normalized to [0,360).
+-- @field #number ActualSpeedMps Optional finite non-negative observed/configured speed in meters per second; zero is preserved.
+-- @field #number RequestedSpeedMps Optional finite non-negative requested speed in meters per second.
+-- @field #table Hull Optional non-negative Forward, Aft, Left, Right extents in meters from the same reference point.
+
+--- Injected stable preparation rules. Changing external configuration requires a new context or cancellation.
+-- @type NAVYGROUP.RoutePreparationEvaluators
+-- @field Core.Pathline#PATHLINE.ConnectionEvaluator Connection Required descriptor with CostUnits, usually CreateRouteConnectionEvaluator().
+-- @field #function Maneuver Optional atomic callback(Event, Pose, Model); input copies may be mutated/retained by the callback.
+-- @field #table Model Required with Maneuver: Id, Revision, Calibration (assumed/measured), flat Parameters and optional Evidence, all copied.
+
+--- One entry, distinct corner, or terminal/stopping maneuver at the frozen pose/commanded polyline.
+-- Courses and signed angles are degrees, horizontal lengths/distances meters. Positive angle is right, wrapped to (-180,180].
+-- Point-only geometry has no invented travel direction. Incident indices refer to the prepared variant; PointMap links it to raw.
+-- @type NAVYGROUP.PreparationManeuverEvent
+-- @field #string Kind entry, turn or terminal.
+-- @field #number CandidateIndex Original candidate order.
+-- @field #number VariantIndex 1 for raw, 2 for simplified.
+-- @field #number PointIndex Point in this variant, including the terminal endpoint.
+-- @field #table Position Independent Vec3 event anchor.
+-- @field #number IncomingHeading Incoming course, or pose heading at entry when supplied.
+-- @field #number OutgoingHeading Outgoing course, absent at terminal/point-only entry.
+-- @field #number SignedAngle Wrapped change between courses where both exist.
+-- @field #number IncomingSegment Incoming positive segment index, where present.
+-- @field #number OutgoingSegment Outgoing positive segment index, where present.
+-- @field #table IncomingStart Copied incoming segment start, where present.
+-- @field #table OutgoingGoal Copied outgoing segment end, where present.
+-- @field #number IncomingLength Incoming horizontal segment length, where present.
+-- @field #number OutgoingLength Outgoing horizontal segment length, where present.
+-- @field #number DistanceFromStart Horizontal route distance at the event.
+-- @field #boolean ReachesGoal Whether this candidate reaches the exact original target.
+-- @field #string ContextId Optional job context; alternatively a finite integer.
+
+--- Maneuver result. The model must cover the complete event's swept hull under its stated assumptions.
+-- NAVYGROUP checks supplied sampled strips, not whether those assumptions reproduce DCS motion.
+-- @type NAVYGROUP.PreparationManeuverResult
+-- @field #string Status modeled, rejected, unavailable or unverified.
+-- @field #string Reason Required short failure reason; absent for modeled.
+-- @field #table Strips Required non-empty dense array for modeled: {Positions=dense Vec3 array, CorridorWidth=non-negative meters}.
+-- Each strip uses at least the configured route width and the same hard minimum depth; missing data cannot pass.
+
+--- Immutable limits/settings. Structural caps are positive integers; work/call/attempt caps preserve zero.
+-- Atomic geometry construction, input/report copies, callbacks and native calls are not preemptible.
+-- @type NAVYGROUP.RoutePreparationOptions
+-- @field #string ContextId Optional non-empty string or finite integer; every step must match it.
+-- @field Core.Pathline#PATHLINE.DepthEvaluatorOptions Depth Required explicit dense-depth settings, copied/resolved through PATHLINE.
+-- @field #boolean Simplify Optional, default true. A shortcut must be clear and no more expensive than the checked fallback.
+-- @field #number MaxCandidates Default 8; never truncates the candidate set.
+-- @field #number MaxPoints Default 4096, per route/strip geometry.
+-- @field #number MaxShortcutAttempts Default 32 per candidate; reaching this optional optimization cap preserves the checked route.
+-- @field #number MaxFootprintPaths Default 8 per event.
+-- @field #number MaxFootprintPoints Default 4096 total supplied strip points per event.
+-- @field #number MaxManeuverEvents Default 4096 per variant.
+-- @field #number MaxWorkUnits Default 400000 across preparation and subordinate PATHLINE work.
+-- @field #number MaxEvaluatorCalls Default 4096 whole-connection callbacks across all stages; internal callback work is opaque.
+-- @field #number MaxManeuverCalls Default 8192 atomic model callbacks across all variants.
+-- @field #number MaxPointChecks Default 50000 dense point checks across route/footprint stages.
+-- @field #number MaxProfileQueries Default 4096 dense native profile calls across all stages.
+-- @field #number MaxCPUSeconds Optional total active inclusive os.clock seconds; never simulation time or a hard deadline.
+
+--- Per-step cooperative work limits; non-negative counts preserve zero and may change between steps.
+-- @type NAVYGROUP.RoutePreparationBudget
+-- @field #number MaxWorkUnits Default 64, includes subordinate work and bounded preparation advances.
+-- @field #number MaxEvaluatorCalls Default 1; a pending commit needs no new callback.
+-- @field #number MaxManeuverCalls Default 1.
+-- @field #number MaxPointChecks Default 8.
+-- @field #number MaxProfileQueries Default 1; processing a returned profile needs no new query.
+-- @field #number MaxCPUSeconds Optional active inclusive slice seconds; atomic work may overrun.
+
+--- Opaque read-only job; no timer, scheduler, controller or mutable global job registry.
+-- @type NAVYGROUP.RoutePreparationJob
+
+--- Detached bounded preparation report. Every candidate retains its raw data and individual variant results.
+-- Geometry, connection, dense and maneuver reports stay distinct. No sampled result certifies vessel execution.
+-- @type NAVYGROUP.RoutePreparationReport
+-- @field #string Status running, ready_under_model, rejected, unavailable, limited, cancelled, error or unverified.
+-- @field #string Reason Failure/limitation reason; absent when ready_under_model.
+-- @field #string ContextId Original optional context; alternatively an integer.
+-- @field #table Pose Frozen copied pose and hull.
+-- @field #table Model Copied explicit model identity, calibration and parameters, if supplied.
+-- @field #string CostUnits Configured connection cost units; not necessarily physical meters.
+-- @field #table Limits Effective copied job limits and simplification settings, including explicit zero values.
+-- @field #table DepthCoverage Effective baseline sampling configuration/layout; maneuver strips report their own width.
+-- @field #table Candidates Ordered raw/variant results, costs, mappings, maneuver events/strips and first failures.
+-- @field #table Proposal Only when ready_under_model: selected copied geometry, costs, pose/model and candidate/variant check references.
+-- @field #boolean ExecutionValidated Always false; no simulator/controller validation occurs here.
+-- @field #table Counters Shared WorkUnits, EvaluatorCalls, ManeuverCalls, PointChecks, ProfileQueries, and optional inclusive CPUSeconds.
+-- @field #table LastSlice Same slice counters, optional YieldReason and measured CPUOverrunSeconds.
+-- @field #table Cursor Diagnostic candidate/variant/phase, absent when terminal; never a continuation token.
+
+local preparationStateKey={}
+local preparationHandles=setmetatable({}, {__mode="k"})
+local preparationCountNames={"WorkUnits", "EvaluatorCalls", "ManeuverCalls", "PointChecks", "ProfileQueries"}
+local preparationDefaultTotals={MaxWorkUnits=400000, MaxEvaluatorCalls=4096, MaxManeuverCalls=8192,
+  MaxPointChecks=50000, MaxProfileQueries=4096}
+local preparationDefaultSlice={MaxWorkUnits=64, MaxEvaluatorCalls=1, MaxManeuverCalls=1,
+  MaxPointChecks=8, MaxProfileQueries=1}
+local preparationStructuralDefaults={MaxCandidates=8, MaxPoints=4096, MaxFootprintPaths=8,
+  MaxFootprintPoints=4096, MaxManeuverEvents=4096}
+
+local function preparationFinite(Value)
+  return type(Value)=="number" and Value==Value and Value>-math.huge and Value<math.huge
+end
+
+local function preparationFields(Value, Names, Name)
+  assert(type(Value)=="table", "NAVYGROUP: "..Name.." must be a table")
+  local allowed={}
+  for field in Names:gmatch("%S+") do
+    allowed[field]=true
+  end
+  for field in next,Value do
+    assert(allowed[field], "NAVYGROUP: unknown "..Name.." field: "..tostring(field))
+  end
+end
+
+local function preparationText(Value, Name)
+  assert(type(Value)=="string" and #Value>0 and #Value<=128,
+    "NAVYGROUP: "..Name.." must be a non-empty string of at most 128 bytes")
+  return Value
+end
+
+local function preparationCount(Value, Name, Positive)
+  assert(preparationFinite(Value) and Value%1==0 and Value>=(Positive and 1 or 0) and Value<=9007199254740991,
+    "NAVYGROUP: "..Name.." must be a "..(Positive and "positive" or "non-negative").." exact integer")
+  return Value
+end
+
+local function preparationArray(Value, Name)
+  assert(type(Value)=="table", "NAVYGROUP: "..Name.." must be a dense array")
+  local count,maximum=0,0
+  for key in next,Value do
+    preparationCount(key, Name.." index", true)
+    count=count+1
+    maximum=math.max(maximum,key)
+  end
+  assert(count==maximum, "NAVYGROUP: "..Name.." must be a dense array")
+  return count
+end
+
+local function preparationPosition(Value, Name)
+  assert(type(Value)=="table", "NAVYGROUP: "..Name.." must be a Vec3 table")
+  local point={x=rawget(Value,"x"), y=rawget(Value,"y"), z=rawget(Value,"z")}
+  assert(preparationFinite(point.x) and preparationFinite(point.y) and preparationFinite(point.z),
+    "NAVYGROUP: "..Name.." must contain finite x/y/z")
+  return point
+end
+
+local function preparationCopy(Value)
+  if type(Value)~="table" then
+    return Value
+  end
+  -- Only owned fixed-schema records reach this copier, never arbitrary callback graphs or ASTAR nodes.
+  local result={}
+  for key,value in next,Value do
+    result[key]=preparationCopy(value)
+  end
+  return result
+end
+
+local function preparationContext(Value)
+  assert(Value==nil or (type(Value)=="string" and #Value>0 and #Value<=128)
+    or (preparationFinite(Value) and Value%1==0),
+    "NAVYGROUP: ContextId must be a short non-empty string or finite integer")
+end
+
+local function preparationSettings(Options, Total)
+  if Options==nil then
+    Options={}
+  end
+  local names="MaxWorkUnits MaxEvaluatorCalls MaxManeuverCalls MaxPointChecks MaxProfileQueries MaxCPUSeconds"
+  if Total then
+    names=names.." ContextId Depth Simplify MaxCandidates MaxPoints MaxShortcutAttempts MaxFootprintPaths MaxFootprintPoints MaxManeuverEvents"
+  end
+  preparationFields(Options, names, Total and "Options" or "Budget")
+  local settings={}
+  local defaults=Total and preparationDefaultTotals or preparationDefaultSlice
+  for _,name in ipairs(preparationCountNames) do
+    local field="Max"..name
+    local value=rawget(Options,field)
+    if value==nil then
+      value=defaults[field]
+    end
+    settings[field]=preparationCount(value,field)
+  end
+  settings.MaxCPUSeconds=rawget(Options,"MaxCPUSeconds")
+  assert(settings.MaxCPUSeconds==nil or (preparationFinite(settings.MaxCPUSeconds) and settings.MaxCPUSeconds>=0),
+    "NAVYGROUP: MaxCPUSeconds must be finite and non-negative")
+  if Total then
+    settings.ContextId=rawget(Options,"ContextId")
+    preparationContext(settings.ContextId)
+    for field,default in next,preparationStructuralDefaults do
+      local value=rawget(Options,field)
+      if value==nil then
+        value=default
+      end
+      settings[field]=preparationCount(value,field,true)
+    end
+    settings.MaxShortcutAttempts=rawget(Options,"MaxShortcutAttempts")
+    if settings.MaxShortcutAttempts==nil then
+      settings.MaxShortcutAttempts=32
+    end
+    preparationCount(settings.MaxShortcutAttempts,"MaxShortcutAttempts")
+    settings.Simplify=rawget(Options,"Simplify")
+    if settings.Simplify==nil then
+      settings.Simplify=true
+    end
+    assert(type(settings.Simplify)=="boolean", "NAVYGROUP: Simplify must be a boolean")
+  end
+  return settings
+end
+
+local function preparationPose(Pose)
+  preparationFields(Pose,"Position HeadingDeg ActualSpeedMps RequestedSpeedMps Hull","Pose")
+  local result={Position=preparationPosition(rawget(Pose,"Position"),"Pose.Position")}
+  for _,name in ipairs({"HeadingDeg", "ActualSpeedMps", "RequestedSpeedMps"}) do
+    local value=rawget(Pose,name)
+    if value~=nil then
+      assert(preparationFinite(value) and (name=="HeadingDeg" or value>=0),
+        "NAVYGROUP: invalid Pose."..name)
+      result[name]=name=="HeadingDeg" and value%360 or value
+    end
+  end
+  local hull=rawget(Pose,"Hull")
+  if hull~=nil then
+    preparationFields(hull,"Forward Aft Left Right","Pose.Hull")
+    result.Hull={}
+    for _,name in ipairs({"Forward", "Aft", "Left", "Right"}) do
+      local value=rawget(hull,name)
+      assert(preparationFinite(value) and value>=0, "NAVYGROUP: invalid Pose.Hull."..name)
+      result.Hull[name]=value
+    end
+  end
+  return result
+end
+
+local function preparationModel(Model)
+  preparationFields(Model,"Id Revision Calibration Parameters Evidence","Model")
+  local result={Id=preparationText(rawget(Model,"Id"),"Model.Id"),
+    Revision=preparationText(rawget(Model,"Revision"),"Model.Revision"), Calibration=rawget(Model,"Calibration"), Parameters={}}
+  assert(result.Calibration=="assumed" or result.Calibration=="measured", "NAVYGROUP: invalid Model.Calibration")
+  local parameters=rawget(Model,"Parameters")
+  assert(type(parameters)=="table", "NAVYGROUP: Model.Parameters must be a flat table")
+  local count=0
+  for key,value in next,parameters do
+    preparationText(key,"Model parameter name")
+    assert(type(value)=="boolean" or preparationFinite(value) or (type(value)=="string" and #value<=128),
+      "NAVYGROUP: invalid Model parameter: "..key)
+    count=count+1
+    assert(count<=32, "NAVYGROUP: Model.Parameters exceeds 32 fields")
+    result.Parameters[key]=value
+  end
+  if rawget(Model,"Evidence")~=nil then
+    result.Evidence=preparationText(rawget(Model,"Evidence"),"Model.Evidence")
+  end
+  return result
+end
+
+local function preparationPoints(Positions, Name, Maximum)
+  local count=preparationArray(Positions,Name)
+  if count>Maximum then
+    return nil,"point_limit",{Required=count,Limit=Maximum}
+  end
+  local points={}
+  for index=1,count do
+    points[index]=preparationPosition(Positions[index],Name.."["..index.."]")
+  end
+  return points
+end
+
+local function preparationCandidate(Candidate, Index, Maximum)
+  assert(type(Candidate)=="table", "NAVYGROUP: invalid candidate "..Index)
+  local result={}
+  for _,name in ipairs({"Cost", "Score"}) do
+    local value=rawget(Candidate,name)
+    assert(preparationFinite(value) and value>=0, "NAVYGROUP: invalid candidate "..name)
+    result[name]=value
+  end
+  assert(result.Score>=result.Cost, "NAVYGROUP: candidate Score must include Cost")
+  result.ReachesGoal=rawget(Candidate,"ReachesGoal")
+  assert(type(result.ReachesGoal)=="boolean", "NAVYGROUP: candidate ReachesGoal must be a boolean")
+  for _,name in ipairs({"BaseScore", "LearnedPenalty", "Length", "RemainingDistance", "Sector"}) do
+    local value=rawget(Candidate,name)
+    if value~=nil then
+      assert(preparationFinite(value) and value>=0, "NAVYGROUP: invalid candidate "..name)
+      result[name]=value
+    end
+  end
+  for _,name in ipairs({"CandidateId", "GeometryId"}) do
+    local value=rawget(Candidate,name)
+    if value~=nil then
+      result[name]=preparationText(value,"candidate "..name)
+    end
+  end
+  local reason,detail
+  result.Positions,reason,detail=preparationPoints(rawget(Candidate,"Positions"),"Candidate.Positions",Maximum)
+  return result,reason,detail
+end
+
+local function preparationState(Job)
+  assert(type(Job)=="table" and preparationHandles[Job], "NAVYGROUP: invalid route preparation job")
+  return Job[preparationStateKey]
+end
+
+local function preparationHandle(State)
+  local handle=setmetatable({}, {
+    __index=function(_,Key)
+      if Key==preparationStateKey then
+        return State
+      end
+    end,
+    __newindex=function()
+      error("NAVYGROUP route preparation job is read-only",2)
+    end,
+    __metatable="NAVYGROUP.RoutePreparationJob",
+  })
+  preparationHandles[handle]=true
+  return handle
+end
+
+local function preparationCounters()
+  return {WorkUnits=0, EvaluatorCalls=0, ManeuverCalls=0, PointChecks=0, ProfileQueries=0}
+end
+
+local function preparationFinish(State, Status, Reason)
+  local report=State.Report
+  if report.Status~="running" then
+    return
+  end
+  report.Status,report.Reason,report.Cursor=Status,Reason,nil
+  if report.LastSlice then
+    report.LastSlice.YieldReason=nil
+  end
+  if State.Active then
+    local active=State.Active
+    active.Record.Native=PATHLINE.CancelValidation(active.Job,Reason or "preparation_ended")
+    active.Record.Status,active.Record.Reason=active.Record.Native.Status,active.Record.Native.Reason
+  end
+  local candidate=report.Candidates[State.CandidateIndex]
+  if candidate and candidate.Status=="running" then
+    candidate.Status,candidate.Reason=Status,Reason
+    for _,variant in ipairs(candidate.Variants) do
+      if variant.Status=="running" then
+        variant.Status,variant.Reason=Status,Reason
+        if variant.Maneuver.Status=="running" then
+          variant.Maneuver.Status,variant.Maneuver.Reason=Status,Reason
+        end
+      end
+    end
+  end
+  for _,pending in ipairs(report.Candidates) do
+    if pending.Status=="not_run" then
+      pending.Reason=Reason or "preparation_ended"
+    end
+  end
+  -- A terminal handle keeps bounded evidence, not callback captures or active sampling buffers.
+  State.Active,State.Connection,State.Maneuver,State.DepthEvaluator=nil,nil,nil,nil
+  State.Geometries,State.CheckedGeometry,State.TrialGeometry,State.Trial=nil,nil,nil,nil
+  if State.Event and State.Event.Status=="running" then
+    State.Event.Status,State.Event.Reason=Status,Reason
+  end
+  State.Event,State.Footprints,State.Variant=nil,nil,nil
+end
+
+local function preparationCountWork(State, Name, Count)
+  State.Report.Counters[Name]=State.Report.Counters[Name]+Count
+  State.Report.LastSlice[Name]=State.Report.LastSlice[Name]+Count
+end
+
+local function preparationMeasure(State, Timing)
+  if not Timing.Read then
+    return
+  end
+  local value=Timing.Read()
+  if not preparationFinite(value) or (Timing.Last and value<Timing.Last) then
+    Timing.Read=nil
+    State.CPUComplete=false
+    State.Report.Counters.CPUSeconds=nil
+    State.Report.LastSlice.CPUSeconds=nil
+    return
+  end
+  Timing.First=Timing.First or value
+  Timing.Last=value
+  local elapsed=value-Timing.First
+  if not preparationFinite(elapsed) or not preparationFinite(Timing.Base+elapsed) then
+    Timing.Read=nil
+    State.CPUComplete=false
+    State.Report.Counters.CPUSeconds=nil
+    State.Report.LastSlice.CPUSeconds=nil
+    return
+  end
+  State.Report.LastSlice.CPUSeconds=elapsed
+  if State.CPUComplete then
+    State.Report.Counters.CPUSeconds=Timing.Base+elapsed
+  end
+end
+
+local function preparationCPUAdmission(State, Budget)
+  local report=State.Report
+  local totalCPU,sliceCPU=report.Counters.CPUSeconds,report.LastSlice.CPUSeconds
+  if (State.Limits.MaxCPUSeconds~=nil and totalCPU==nil) or (Budget.MaxCPUSeconds~=nil and sliceCPU==nil) then
+    preparationFinish(State,"limited","cpu_clock_unavailable")
+    return false
+  end
+  if State.Limits.MaxCPUSeconds~=nil and totalCPU>=State.Limits.MaxCPUSeconds then
+    preparationFinish(State,"limited","cpu_limit")
+    return false
+  end
+  if Budget.MaxCPUSeconds~=nil and sliceCPU>=Budget.MaxCPUSeconds then
+    report.LastSlice.YieldReason="slice_cpu_limit"
+    return false
+  end
+  return true
+end
+
+local function preparationAdmission(State, Budget, Specific)
+  local report=State.Report
+  if not preparationCPUAdmission(State,Budget) then
+    return false
+  end
+  local names={"WorkUnits"}
+  if Specific then
+    names[2]=Specific
+  end
+  for _,name in ipairs(names) do
+    if report.Counters[name]>=State.Limits["Max"..name] then
+      preparationFinish(State,"limited",name=="WorkUnits" and "work_limit" or "maneuver_limit")
+      return false
+    end
+  end
+  for _,name in ipairs(names) do
+    if report.LastSlice[name]>=Budget["Max"..name] then
+      report.LastSlice.YieldReason=name=="WorkUnits" and "slice_work_limit" or "slice_maneuver_limit"
+      return false
+    end
+  end
+  preparationCountWork(State,"WorkUnits",1)
+  if Specific then
+    preparationCountWork(State,Specific,1)
+  end
+  return true
+end
+
+local function preparationStartValidation(State, Geometry, Evaluator, Record, After)
+  local options={ContextId=State.Report.ContextId,
+    MaxWorkUnits=State.Limits.MaxWorkUnits-State.Report.Counters.WorkUnits}
+  local kind=Record.Kind
+  if kind=="connection" then
+    options.MaxEvaluatorCalls=State.Limits.MaxEvaluatorCalls-State.Report.Counters.EvaluatorCalls
+  else
+    options.MaxPointChecks=State.Limits.MaxPointChecks-State.Report.Counters.PointChecks
+    options.MaxProfileQueries=State.Limits.MaxProfileQueries-State.Report.Counters.ProfileQueries
+  end
+  local job,report=PATHLINE.StartValidation(Geometry,Evaluator,options)
+  Record.Status,Record.Native="running",report
+  State.Active={Job=job, Kind=kind, Record=Record, After=After, Counters=report.Counters}
+end
+
+local function preparationValidationStep(State, Budget)
+  local active=State.Active
+  local counters,slice=State.Report.Counters,State.Report.LastSlice
+  local admitted={MaxWorkUnits=math.min(Budget.MaxWorkUnits-slice.WorkUnits,State.Limits.MaxWorkUnits-counters.WorkUnits)}
+  if active.Kind=="connection" then
+    admitted.MaxEvaluatorCalls=math.min(Budget.MaxEvaluatorCalls-slice.EvaluatorCalls,
+      State.Limits.MaxEvaluatorCalls-counters.EvaluatorCalls)
+  else
+    admitted.MaxPointChecks=math.min(Budget.MaxPointChecks-slice.PointChecks,
+      State.Limits.MaxPointChecks-counters.PointChecks)
+    admitted.MaxProfileQueries=math.min(Budget.MaxProfileQueries-slice.ProfileQueries,
+      State.Limits.MaxProfileQueries-counters.ProfileQueries)
+  end
+  if Budget.MaxCPUSeconds~=nil then
+    admitted.MaxCPUSeconds=math.max(0,Budget.MaxCPUSeconds-slice.CPUSeconds)
+  end
+  if State.Limits.MaxCPUSeconds~=nil then
+    local remaining=math.max(0,State.Limits.MaxCPUSeconds-counters.CPUSeconds)
+    admitted.MaxCPUSeconds=admitted.MaxCPUSeconds and math.min(admitted.MaxCPUSeconds,remaining) or remaining
+  end
+  -- Account native work even when a callback cancels this job or raises an original exception.
+  local ok,result=pcall(PATHLINE.StepValidation,active.Job,admitted,State.Report.ContextId)
+  local report=ok and result or PATHLINE.GetValidationReport(active.Job)
+  for _,name in ipairs(preparationCountNames) do
+    local count=report.Counters[name] or 0
+    local before=active.Counters[name] or 0
+    preparationCountWork(State,name,count-before)
+  end
+  active.Counters=report.Counters
+  active.Record.Native=report
+  active.Record.Status,active.Record.Reason=report.Status,report.Reason
+  if not ok then
+    error(result,0)
+  end
+  if State.Report.Status~="running" then
+    return false
+  end
+  if report.Status=="running" then
+    State.Report.LastSlice.YieldReason=report.LastSlice and report.LastSlice.YieldReason
+    return false
+  end
+  State.Active=nil
+  -- These are the shared admission caps, not evidence that a route is blocked.
+  if report.Status=="limited" and (report.Reason=="work_limit" or report.Reason=="evaluator_limit"
+    or report.Reason=="point_limit" or report.Reason=="profile_query_limit") then
+    preparationFinish(State,"limited",report.Reason)
+    return false
+  end
+  active.After(report)
+  return true
+end
+
+local function preparationSamePosition(First, Last)
+  return First.x==Last.x and First.y==Last.y and First.z==Last.z
+end
+
+local function preparationVariant(Positions, PointMap, Kind)
+  return {Kind=Kind, Positions=preparationCopy(Positions), PointMap=preparationCopy(PointMap),
+    Status="running", Selected=false, ExecutionValidated=false,
+    Geometry={Status="not_run"}, Connection={Kind="connection",Status="not_run"},
+    Depth={Kind="depth",Status="not_run"}, Maneuver={Status="not_run",Events={},CompletedEvents=0,CheckedStrips=0}}
+end
+
+local function preparationScore(State, Variant, Cost)
+  local raw=State.Report.Candidates[State.CandidateIndex].Raw
+  local adjustment=Cost-raw.Cost
+  -- Preserve small prepared costs when the original cost and score are much larger.
+  local residual=raw.Score-raw.Cost
+  local score=Cost+residual
+  if not preparationFinite(adjustment) or not preparationFinite(residual) or not preparationFinite(score) then
+    Variant.Status,Variant.Reason="limited","numeric_range"
+    return false
+  end
+  Variant.Cost,Variant.Score=Cost,score
+  Variant.ScoreTerms={RawScore=raw.Score,RawCost=raw.Cost,PreparedCost=Cost,Adjustment=adjustment,Residual=residual}
+  return true
+end
+
+local function preparationReject(Variant, Report)
+  local status=Report.Status=="blocked" and "rejected" or Report.Status
+  Variant.Status,Variant.Reason=status,Report.Reason
+end
+
+local function preparationBefore(First, Second)
+  if not Second then
+    return true
+  end
+  if First.ReachesGoal~=Second.ReachesGoal then
+    return First.ReachesGoal
+  end
+  if First.Score~=Second.Score then
+    return First.Score<Second.Score
+  end
+  if First.CandidateIndex~=Second.CandidateIndex then
+    return First.CandidateIndex<Second.CandidateIndex
+  end
+  return First.VariantIndex<Second.VariantIndex
+end
+
+local function preparationFailureStatus(Results)
+  for _,status in ipairs({"limited", "unavailable", "unverified", "rejected"}) do
+    for _,result in ipairs(Results) do
+      if result.Status==status then
+        return status,result.Reason
+      end
+    end
+  end
+  return "rejected","no_candidates"
+end
+
+local function preparationCompleteCandidate(State)
+  local candidate=State.Report.Candidates[State.CandidateIndex]
+  local best
+  for index,variant in ipairs(candidate.Variants) do
+    if variant.Status=="ready_under_model" then
+      local choice={CandidateIndex=State.CandidateIndex,VariantIndex=index,
+        Score=variant.Score,ReachesGoal=candidate.Raw.ReachesGoal}
+      if preparationBefore(choice,best) then
+        best=choice
+      end
+    end
+  end
+  if best then
+    candidate.Status,candidate.ReadyVariant="ready_under_model",best.VariantIndex
+    if preparationBefore(best,State.Best) then
+      State.Best=best
+    end
+  else
+    candidate.Status,candidate.Reason=preparationFailureStatus(candidate.Variants)
+  end
+  State.CandidateIndex=State.CandidateIndex+1
+  State.Geometries,State.CheckedGeometry,State.TrialGeometry,State.Trial=nil,nil,nil,nil
+  State.Event,State.Footprints,State.Variant=nil,nil,nil
+  State.VariantIndex,State.ScanIndex,State.PreviousSegment=nil,nil,nil
+  State.Phase="candidate"
+end
+
+local function preparationPublish(State)
+  local report=State.Report
+  if State.Best then
+    local choice=State.Best
+    local candidate=report.Candidates[choice.CandidateIndex]
+    local variant=candidate.Variants[choice.VariantIndex]
+    candidate.Selected,variant.Selected=true,true
+    report.Proposal={Status="ready_under_model", ContextId=report.ContextId,
+      CandidateIndex=choice.CandidateIndex,VariantIndex=choice.VariantIndex,
+      Positions=preparationCopy(variant.Positions),PointMap=preparationCopy(variant.PointMap),
+      Cost=variant.Cost,Score=variant.Score,ScoreTerms=preparationCopy(variant.ScoreTerms),CostUnits=report.CostUnits,
+      Length=variant.Geometry.Length,ReachesGoal=candidate.Raw.ReachesGoal,
+      RemainingDistance=candidate.Raw.RemainingDistance,
+      Pose=preparationCopy(report.Pose),Model=preparationCopy(report.Model),ExecutionValidated=false,
+      Checks={CandidateIndex=choice.CandidateIndex,VariantIndex=choice.VariantIndex}}
+    preparationFinish(State,"ready_under_model")
+  else
+    local status,reason=preparationFailureStatus(report.Candidates)
+    preparationFinish(State,status,reason or "no_ready_candidate")
+  end
+end
+
+local function preparationShortcutFailure(State, Status, Reason, Native)
+  local summary=State.Report.Candidates[State.CandidateIndex].Simplification
+  summary.Failures=summary.Failures+1
+  summary.Reasons[Reason]=(summary.Reasons[Reason] or 0)+1
+  if not summary.FirstFailure then
+    summary.FirstFailure={Status=Status,Reason=Reason,RemovedRawPoint=State.Trial.PointMapRemoved,
+      Connection=preparationCopy(State.Trial.Connection),Depth=preparationCopy(State.Trial.Depth),
+      Detail=preparationCopy(Native)}
+  end
+  State.ShortcutIndex=State.ShortcutIndex+1
+  State.Trial,State.TrialGeometry=nil,nil
+  State.Phase="shortcut"
+end
+
+local function preparationBeginManeuvers(State)
+  State.VariantIndex=1
+  State.Variant=State.Report.Candidates[State.CandidateIndex].Variants[1]
+  State.ScanIndex,State.PreviousSegment=1,nil
+  State.Phase="entry_scan"
+  State.Variant.Maneuver.Status="running"
+end
+
+local function preparationFinishVariant(State, Status, Reason)
+  local variant=State.Variant
+  variant.Maneuver.Status,variant.Maneuver.Reason=Status,Reason
+  variant.Status,variant.Reason=Status,Reason
+  State.VariantIndex=State.VariantIndex+1
+  State.Variant=State.Report.Candidates[State.CandidateIndex].Variants[State.VariantIndex]
+  State.Event,State.Footprints=nil,nil
+  if State.Variant then
+    State.ScanIndex,State.PreviousSegment=1,nil
+    State.Variant.Maneuver.Status="running"
+    State.Phase="entry_scan"
+  else
+    preparationCompleteCandidate(State)
+  end
+end
+
+local function preparationManeuverFailure(State, Status, Reason, StripIndex, Native)
+  local event=State.Event
+  event.Status,event.Reason=Status,Reason
+  State.Variant.Maneuver.FirstFailure={EventIndex=#State.Variant.Maneuver.Events,Kind=event.Kind,
+    PointIndex=event.PointIndex,Status=Status,Reason=Reason,StripIndex=StripIndex,Native=preparationCopy(Native)}
+  preparationFinishVariant(State,Status,Reason)
+end
+
+local function preparationEvent(State, Kind, PointIndex, Incoming, Outgoing)
+  local variant=State.Variant
+  if #variant.Maneuver.Events>=State.Limits.MaxManeuverEvents then
+    preparationFinishVariant(State,"limited","maneuver_event_limit")
+    return
+  end
+  local geometry=State.Geometries[State.VariantIndex]
+  local event={Kind=Kind, CandidateIndex=State.CandidateIndex, VariantIndex=State.VariantIndex,
+    PointIndex=PointIndex,Position=preparationCopy(geometry.Positions[PointIndex]),
+    DistanceFromStart=geometry.Distances[PointIndex],ContextId=State.Report.ContextId,
+    ReachesGoal=State.Report.Candidates[State.CandidateIndex].Raw.ReachesGoal,Status="running",Strips={}}
+  if Incoming then
+    event.IncomingSegment,event.IncomingHeading,event.IncomingLength=Incoming.Index,Incoming.Heading,Incoming.Length
+    event.IncomingStart=preparationCopy(geometry.Positions[Incoming.Index])
+  elseif Kind=="entry" then
+    event.IncomingHeading=State.Report.Pose.HeadingDeg
+  end
+  if Outgoing then
+    event.OutgoingSegment,event.OutgoingHeading,event.OutgoingLength=Outgoing.Index,Outgoing.Heading,Outgoing.Length
+    event.OutgoingGoal=preparationCopy(geometry.Positions[Outgoing.Index+1])
+  end
+  if event.IncomingHeading~=nil and event.OutgoingHeading~=nil then
+    local angle=(event.OutgoingHeading-event.IncomingHeading)%360
+    event.SignedAngle=angle>180 and angle-360 or angle
+  end
+  variant.Maneuver.Events[#variant.Maneuver.Events+1]=event
+  State.Event=event
+  State.Phase="model"
+end
+
+local function preparationEventComplete(State)
+  local event=State.Event
+  local variant=State.Variant
+  variant.Maneuver.CompletedEvents=variant.Maneuver.CompletedEvents+1
+  State.Event,State.Footprints=nil,nil
+  if event.Kind=="terminal" then
+    if State.UnverifiedReason then
+      preparationFinishVariant(State,"unverified",State.UnverifiedReason)
+    else
+      preparationFinishVariant(State,"ready_under_model")
+    end
+  else
+    State.Phase="turn_scan"
+  end
+end
+
+local function preparationModelResult(State, Result)
+  preparationFields(Result,"Status Reason Strips","Maneuver result")
+  local status,reason=rawget(Result,"Status"),rawget(Result,"Reason")
+  assert(status=="modeled" or status=="rejected" or status=="unavailable" or status=="unverified",
+    "NAVYGROUP: invalid maneuver Status")
+  if status~="modeled" then
+    preparationText(reason,"Maneuver Reason")
+    assert(rawget(Result,"Strips")==nil, "NAVYGROUP: failed maneuver Strips must be nil")
+    preparationManeuverFailure(State,status,reason)
+    return
+  end
+  assert(reason==nil, "NAVYGROUP: modeled maneuver Reason must be nil")
+  local strips=rawget(Result,"Strips")
+  local count=preparationArray(strips,"Maneuver.Strips")
+  assert(count>0, "NAVYGROUP: modeled maneuver requires non-empty Strips")
+  if count>State.Limits.MaxFootprintPaths then
+    preparationManeuverFailure(State,"limited","footprint_path_limit")
+    return
+  end
+  local total=0
+  for index=1,count do
+    local strip=strips[index]
+    preparationFields(strip,"Positions CorridorWidth","Maneuver strip")
+    local width=rawget(strip,"CorridorWidth")
+    assert(preparationFinite(width) and width>=0, "NAVYGROUP: strip CorridorWidth must be finite and non-negative")
+    local points=preparationArray(rawget(strip,"Positions"),"Strip.Positions")
+    assert(points>0, "NAVYGROUP: strip Positions must not be empty")
+    total=total+points
+    if points>State.Limits.MaxPoints or total>State.Limits.MaxFootprintPoints then
+      preparationManeuverFailure(State,"limited","footprint_point_limit")
+      return
+    end
+  end
+  local footprints={}
+  for index=1,count do
+    local strip=strips[index]
+    footprints[index]={Positions=preparationPoints(strip.Positions,"Strip.Positions",State.Limits.MaxPoints),
+      CorridorWidth=math.max(strip.CorridorWidth,State.DepthOptions.CorridorWidth),
+      Geometry={Status="not_run"},Depth={Kind="depth",Status="not_run"}}
+  end
+  State.Event.Strips=footprints
+  State.Footprints,State.FootprintIndex=footprints,1
+  State.Phase="footprint"
+end
+
+local function preparationAdvance(State)
+  local report=State.Report
+  local candidate=report.Candidates[State.CandidateIndex]
+  if State.Phase=="candidate" then
+    if not candidate then
+      preparationPublish(State)
+      return
+    end
+    candidate.Status="running"
+    local raw=candidate.Raw
+    local geometry,reason,detail=PATHLINE.CreateGeometry(raw.Positions,{MaxPoints=State.Limits.MaxPoints})
+    local pointMap={}
+    for index=1,#raw.Positions do
+      pointMap[index]=index
+    end
+    local variant=preparationVariant(raw.Positions,pointMap,"raw")
+    candidate.Variants[1]=variant
+    if not geometry then
+      local status=(reason=="numeric_range" or reason=="point_limit") and "limited" or "rejected"
+      variant.Geometry={Status=status,Reason=reason,Detail=detail}
+      variant.Status,variant.Reason=status,reason
+      preparationCompleteCandidate(State)
+      return
+    end
+    if not preparationSamePosition(geometry.Positions[1],report.Start)
+      or (raw.ReachesGoal and not preparationSamePosition(geometry.Positions[geometry.PointCount],report.Goal)) then
+      variant.Geometry={Status="rejected",Reason="endpoint_mismatch"}
+      variant.Status,variant.Reason="rejected","endpoint_mismatch"
+      preparationCompleteCandidate(State)
+      return
+    end
+    variant.Geometry={Status="clear",Length=geometry.TotalLength,PointCount=geometry.PointCount}
+    State.Geometries={geometry}
+    State.CheckedGeometry=geometry
+    preparationStartValidation(State,geometry,State.Connection,variant.Connection,function(connection)
+      if connection.Status~="clear" then
+        preparationReject(variant,connection)
+        preparationCompleteCandidate(State)
+      elseif preparationScore(State,variant,connection.TotalCost) then
+        State.Phase="raw_depth"
+      else
+        preparationCompleteCandidate(State)
+      end
+    end)
+  elseif State.Phase=="raw_depth" then
+    local variant=candidate.Variants[1]
+    preparationStartValidation(State,State.CheckedGeometry,State.DepthEvaluator,variant.Depth,function(depth)
+      if depth.Status~="clear" then
+        preparationReject(variant,depth)
+        preparationCompleteCandidate(State)
+      else
+        State.ShortcutIndex=2
+        State.Phase="shortcut"
+      end
+    end)
+  elseif State.Phase=="shortcut" then
+    local summary=candidate.Simplification
+    local current=candidate.Variants[2] or candidate.Variants[1]
+    if not State.Limits.Simplify or State.ShortcutIndex>=#current.Positions then
+      summary.StopReason=State.Limits.Simplify and "complete" or "disabled"
+      preparationBeginManeuvers(State)
+    elseif summary.Attempts>=State.Limits.MaxShortcutAttempts then
+      summary.StopReason="shortcut_attempt_limit"
+      preparationBeginManeuvers(State)
+    else
+      summary.Attempts=summary.Attempts+1
+      local points,mapping={},{}
+      for index=1,#current.Positions do
+        if index~=State.ShortcutIndex then
+          points[#points+1]=current.Positions[index]
+          mapping[#mapping+1]=current.PointMap[index]
+        end
+      end
+      local trial=preparationVariant(points,mapping,"simplified")
+      trial.PointMapRemoved=current.PointMap[State.ShortcutIndex]
+      local geometry,reason,detail=PATHLINE.CreateGeometry(trial.Positions,{MaxPoints=State.Limits.MaxPoints})
+      State.Trial,State.TrialGeometry=trial,geometry
+      if not geometry then
+        preparationShortcutFailure(State,"limited",reason,detail)
+        return
+      end
+      trial.Geometry={Status="clear",Length=geometry.TotalLength,PointCount=geometry.PointCount}
+      preparationStartValidation(State,geometry,State.Connection,trial.Connection,function(connection)
+        if connection.Status~="clear" then
+          preparationShortcutFailure(State,connection.Status,connection.Reason)
+        elseif connection.TotalCost>current.Cost then
+          preparationShortcutFailure(State,"not_preferred","cost_increase",{PreviousCost=current.Cost,Cost=connection.TotalCost})
+        elseif preparationScore(State,trial,connection.TotalCost) then
+          State.Phase="trial_depth"
+        else
+          preparationShortcutFailure(State,"limited",trial.Reason)
+        end
+      end)
+    end
+  elseif State.Phase=="trial_depth" then
+    local trial=State.Trial
+    preparationStartValidation(State,State.TrialGeometry,State.DepthEvaluator,trial.Depth,function(depth)
+      if depth.Status~="clear" then
+        preparationShortcutFailure(State,depth.Status,depth.Reason)
+      else
+        candidate.Simplification.Accepted=candidate.Simplification.Accepted+1
+        trial.PointMapRemoved=nil
+        candidate.Variants[2]=trial
+        State.CheckedGeometry=State.TrialGeometry
+        State.Geometries[2]=State.CheckedGeometry
+        State.Trial,State.TrialGeometry=nil,nil
+        State.Phase="shortcut"
+      end
+    end)
+  elseif State.Phase=="entry_scan" then
+    local geometry=State.Geometries[State.VariantIndex]
+    local segment=geometry.Segments[State.ScanIndex]
+    State.ScanIndex=State.ScanIndex+1
+    if not segment then
+      preparationEvent(State,"entry",1)
+    elseif segment.Length>0 then
+      State.PreviousSegment=segment
+      preparationEvent(State,"entry",1,nil,segment)
+    end
+  elseif State.Phase=="turn_scan" then
+    local geometry=State.Geometries[State.VariantIndex]
+    local segment=geometry.Segments[State.ScanIndex]
+    State.ScanIndex=State.ScanIndex+1
+    if not segment then
+      preparationEvent(State,"terminal",geometry.PointCount,State.PreviousSegment)
+    elseif segment.Length>0 then
+      local previous=State.PreviousSegment
+      State.PreviousSegment=segment
+      -- Collinear junctions need no separate turn hypothesis; duplicate legs were skipped above.
+      if previous.Heading~=segment.Heading then
+        preparationEvent(State,"turn",segment.Index,previous,segment)
+      end
+    end
+  elseif State.Phase=="model" then
+    if State.UnverifiedReason then
+      State.Event.Status,State.Event.Reason="unverified",State.UnverifiedReason
+      preparationEventComplete(State)
+    else
+      local event=preparationCopy(State.Event)
+      event.Status,event.Reason,event.Strips=nil,nil,nil
+      local callback=State.Maneuver
+      local result=callback(event,preparationCopy(report.Pose),preparationCopy(report.Model))
+      if report.Status=="running" then
+        preparationModelResult(State,result)
+      end
+    end
+  elseif State.Phase=="footprint" then
+    local footprint=State.Footprints[State.FootprintIndex]
+    if not footprint then
+      State.Event.Status="clear_under_model"
+      preparationEventComplete(State)
+      return
+    end
+    local geometry,reason,detail=PATHLINE.CreateGeometry(footprint.Positions,{MaxPoints=State.Limits.MaxPoints})
+    if not geometry then
+      -- Unsupported geometry is missing model evidence, not an exhausted work allowance.
+      local status=(reason=="point_limit" or reason=="numeric_range") and "limited" or "unavailable"
+      footprint.Geometry={Status=status,Reason=reason,Detail=detail}
+      preparationManeuverFailure(State,status,reason,State.FootprintIndex)
+      return
+    end
+    footprint.Geometry={Status="clear",Length=geometry.TotalLength,PointCount=geometry.PointCount}
+    local options=preparationCopy(State.DepthOptions)
+    options.CorridorWidth=footprint.CorridorWidth
+    local evaluator
+    evaluator,reason,detail=PATHLINE.CreateDepthEvaluator(options)
+    if not evaluator then
+      footprint.Depth.Status,footprint.Depth.Reason,footprint.Depth.Detail="limited",reason,detail
+      preparationManeuverFailure(State,"limited",reason,State.FootprintIndex)
+      return
+    end
+    preparationStartValidation(State,geometry,evaluator,footprint.Depth,function(depth)
+      if depth.Status~="clear" then
+        preparationManeuverFailure(State,depth.Status=="blocked" and "rejected" or depth.Status,
+          depth.Reason,State.FootprintIndex,depth)
+      else
+        State.Variant.Maneuver.CheckedStrips=State.Variant.Maneuver.CheckedStrips+1
+        State.FootprintIndex=State.FootprintIndex+1
+        State.Phase="footprint"
+      end
+    end)
+  else
+    error("NAVYGROUP: invalid route preparation phase")
+  end
+end
+
+--- Adapt fresh ASTAR rule/cost checks to PATHLINE validation without changing a search or its pending request.
+-- CostUnits is explicit. Failed math.huge costs are omitted; bounded depth evidence is mapped to PATHLINE.
+-- The owner must cancel/change preparation context after rule/cost/terrain changes between calls.
+-- @param Core.Astar#ASTAR Search Stable configured search; no nodes or live NAVYGROUP object are retained by reports.
+-- @param #string CostUnits Non-empty cost-unit name, e.g. depth_weighted_meters; not a claim of physical route length.
+-- @return Core.Pathline#PATHLINE.ConnectionEvaluator Opaque descriptor, no terrain queries on creation.
+function NAVYGROUP.CreateRouteConnectionEvaluator(Search, CostUnits)
+  assert(type(Search)=="table" and type(Search.EvaluateConnection)=="function", "NAVYGROUP: Search must provide EvaluateConnection")
+  preparationText(CostUnits,"CostUnits")
+  return PATHLINE.CreateConnectionEvaluator(function(Start,Goal)
+    local valid,cost,report=Search:EvaluateConnection(Start,Goal)
+    local result={Status=report.Status,Reason=report.Reason,Cost=valid and cost or nil}
+    if report.Depth then
+      local depth=report.Depth
+      result.Evidence={Depth=depth.Depth,SurfaceType=depth.SurfaceType,Cause=depth.Cause,Source="ASTAR.EvaluateConnection",
+        ProfileOffset=depth.ProfileOffset}
+      local point=depth.Point
+      if point and preparationFinite(point.x) and preparationFinite(point.z) then
+        result.Evidence.Position={x=point.x,z=point.z}
+      end
+    end
+    return result
+  end,{CostUnits=CostUnits})
+end
+
+--- Start fixed-pose naval route preparation without work, registration or movement authority.
+-- Copies finite input/settings and retains only stable evaluator callbacks. All output tables are detached copies.
+-- Every candidate keeps its original order and raw reference; oversized inputs finish limited without truncation.
+-- Invalid arguments raise before terrain access. Missing model/pose data prevents selection, not geometry/depth diagnostics.
+-- LOCAL remains unavailable; this API never modifies mission waypoints, timers, FSM or controllers.
+-- @param #NAVYGROUP.RoutePreparationInput Input Frozen start/goal/pose and dense ordered ASTAR candidates.
+-- @param #NAVYGROUP.RoutePreparationEvaluators Evaluators Stable injected connection and optional explicit maneuver model.
+-- @param #NAVYGROUP.RoutePreparationOptions Options Required Depth configuration and optional copied limits/context.
+-- @return #NAVYGROUP.RoutePreparationJob Opaque caller-stepped job.
+-- @return #NAVYGROUP.RoutePreparationReport Independent initial report.
+function NAVYGROUP.StartRoutePreparation(Input, Evaluators, Options)
+  preparationFields(Input,"Start Goal Pose Candidates","Input")
+  preparationFields(Evaluators,"Connection Maneuver Model","Evaluators")
+  local limits=preparationSettings(Options,true)
+  local report={Status="running",ContextId=limits.ContextId,Start=preparationPosition(rawget(Input,"Start"),"Start"),
+    Goal=preparationPosition(rawget(Input,"Goal"),"Goal"),Pose=preparationPose(rawget(Input,"Pose")),
+    Candidates={},ExecutionValidated=false,Counters=preparationCounters(),Limits=preparationCopy(limits)}
+  local count=preparationArray(rawget(Input,"Candidates"),"Candidates")
+  local maneuver=rawget(Evaluators,"Maneuver")
+  assert(maneuver==nil or type(maneuver)=="function", "NAVYGROUP: Maneuver must be a function")
+  assert(maneuver~=nil or rawget(Evaluators,"Model")==nil, "NAVYGROUP: Model requires a Maneuver callback")
+  if maneuver then
+    report.Model=preparationModel(rawget(Evaluators,"Model"))
+  end
+  local connection=rawget(Evaluators,"Connection")
+  local probe=assert(PATHLINE.CreateGeometry({report.Start}))
+  local inspection,connectionReport=PATHLINE.StartValidation(probe,connection)
+  PATHLINE.CancelValidation(inspection,"descriptor_inspection")
+  assert(connectionReport.EvaluatorKind=="connection" and connectionReport.CostUnits~=nil,
+    "NAVYGROUP: Connection must be a connection evaluator with CostUnits")
+  report.CostUnits=connectionReport.CostUnits
+  local depthOptions=type(Options)=="table" and rawget(Options,"Depth") or nil
+  local depthEvaluator,depthReason,depthDetail=PATHLINE.CreateDepthEvaluator(depthOptions)
+  if depthEvaluator then
+    local depthInspection,depthReport=PATHLINE.StartValidation(probe,depthEvaluator)
+    PATHLINE.CancelValidation(depthInspection,"descriptor_inspection")
+    report.DepthCoverage=preparationCopy(depthReport.Coverage)
+    depthOptions=preparationCopy(depthReport.Coverage)
+    depthOptions.EvaluatorKind,depthOptions.OffsetCount,depthOptions.ActualLateralSpacing=nil,nil,nil
+  end
+  local state={Report=report,Limits=limits,Connection=connection,Maneuver=maneuver,DepthEvaluator=depthEvaluator,
+    DepthOptions=depthOptions,CPUComplete=true,CandidateIndex=1,Phase="candidate"}
+  local handle=preparationHandle(state)
+  if count>limits.MaxCandidates then
+    report.InputFailure={Required=count,Limit=limits.MaxCandidates}
+    preparationFinish(state,"limited","candidate_limit")
+    return handle,preparationCopy(report)
+  end
+  local oversized
+  for index=1,count do
+    local raw,reason,detail=preparationCandidate(Input.Candidates[index],index,limits.MaxPoints)
+    report.Candidates[index]={CandidateIndex=index,Raw=raw,Status="not_run",Variants={},Selected=false,
+      ExecutionValidated=false,Simplification={Attempts=0,Accepted=0,Failures=0,Reasons={}}}
+    if reason and not oversized then
+      oversized={CandidateIndex=index,Reason=reason,Detail=detail}
+    end
+  end
+  if oversized then
+    report.InputFailure=oversized
+    preparationFinish(state,"limited",oversized.Reason)
+  elseif not preparationSamePosition(report.Start,report.Pose.Position) then
+    preparationFinish(state,"rejected","input_mismatch")
+  elseif not depthEvaluator then
+    report.InputFailure=depthDetail
+    preparationFinish(state,"limited",depthReason)
+  end
+  if not maneuver then
+    state.UnverifiedReason="maneuver_model_missing"
+  elseif report.Pose.HeadingDeg==nil or report.Pose.ActualSpeedMps==nil
+    or report.Pose.RequestedSpeedMps==nil or report.Pose.Hull==nil then
+    state.UnverifiedReason="maneuver_pose_incomplete"
+  end
+  return handle,preparationCopy(report)
+end
+
+--- Query a detached report without work or clock/terrain access.
+-- @param #NAVYGROUP.RoutePreparationJob Job Valid running or terminal handle.
+-- @return #NAVYGROUP.RoutePreparationReport Independent report including nested candidate/variant evidence.
+function NAVYGROUP.GetRoutePreparationReport(Job)
+  return preparationCopy(preparationState(Job).Report)
+end
+
+--- Cancel pending preparation and subordinate validation. Terminal results retain their first outcome.
+-- May be called from a callback: already admitted work is counted, but its result cannot publish a proposal.
+-- No movement command, stop, automatic retry or continuation is issued.
+-- @param #NAVYGROUP.RoutePreparationJob Job Valid handle.
+-- @param #string Reason Optional non-empty short reason, default cancelled.
+-- @return #NAVYGROUP.RoutePreparationReport Independent terminal report.
+function NAVYGROUP.CancelRoutePreparation(Job, Reason)
+  local state=preparationState(Job)
+  if state.Report.Status=="running" then
+    if Reason==nil then
+      Reason="cancelled"
+    end
+    preparationText(Reason,"Reason")
+    preparationFinish(state,"cancelled",Reason)
+  end
+  return preparationCopy(state.Report)
+end
+
+local function preparationRunSlice(State, Budget, Timing)
+  if type(os)=="table" and type(os.clock)=="function" then
+    Timing.Read=os.clock
+    preparationMeasure(State,Timing)
+  else
+    State.CPUComplete=false
+    State.Report.Counters.CPUSeconds=nil
+  end
+  while State.Report.Status=="running" do
+    State.Report.Cursor={CandidateIndex=State.CandidateIndex,VariantIndex=State.VariantIndex,Phase=State.Phase}
+    if not preparationCPUAdmission(State,Budget) then
+      return
+    end
+    if State.Active then
+      if not preparationValidationStep(State,Budget) then
+        return
+      end
+    else
+      local specific=State.Phase=="model" and not State.UnverifiedReason and "ManeuverCalls" or nil
+      if not preparationAdmission(State,Budget,specific) then
+        return
+      end
+      preparationAdvance(State)
+    end
+    preparationMeasure(State,Timing)
+  end
+end
+
+--- Advance preparation within shared slice/job limits; no scheduler or controller access.
+-- Raw geometry survives failed optional shortcuts and maneuver trials. Exact-goal priority precedes repriced score,
+-- with stable original-candidate/raw-variant tie keys. Only ready_under_model variants can publish a proposal;
+-- every result retains explicit model/calibration and ExecutionValidated=false. Missing depth remains unavailable.
+-- Context mismatch cancels before work; recheck identity before using a terminal proposal. Jobs never restart.
+-- CPU is inclusive active os.clock time, excluding idle time; nested validation CPU must not be added to it.
+-- Count/CPU caps bound cooperative admission, not atomic callbacks/native call duration or simulator physics.
+-- Invalid arguments leave running state unchanged. Reentrant stepping is an error. Evaluation errors release work
+-- and propagate the original exception unchanged, including when a callback cancels then raises.
+-- @param #NAVYGROUP.RoutePreparationJob Job Running or terminal handle.
+-- @param #NAVYGROUP.RoutePreparationBudget Budget Optional copied per-step settings, zero preserved.
+-- @param #string CurrentContextId Optional original context, or integer; required to match if configured at start.
+-- @return #NAVYGROUP.RoutePreparationReport Independent report; only running is resumable.
+function NAVYGROUP.StepRoutePreparation(Job, Budget, CurrentContextId)
+  local state=preparationState(Job)
+  assert(not state.Busy, "NAVYGROUP: route preparation job is already being stepped")
+  local report=state.Report
+  if report.Status~="running" then
+    return preparationCopy(report)
+  end
+  local limits=preparationSettings(Budget,false)
+  preparationContext(CurrentContextId)
+  assert(report.ContextId~=nil or CurrentContextId==nil, "NAVYGROUP: CurrentContextId requires a configured ContextId")
+  report.LastSlice=preparationCounters()
+  if report.ContextId~=CurrentContextId then
+    preparationFinish(state,"cancelled","context_changed")
+    return preparationCopy(report)
+  end
+  state.Busy=true
+  local timing={Base=report.Counters.CPUSeconds or 0}
+  -- Protect only active evaluation/measurement so cleanup never conceals a native or programming error.
+  local ok,err=pcall(preparationRunSlice,state,limits,timing)
+  local measured,measurementError=pcall(preparationMeasure,state,timing)
+  state.Busy=false
+  if not measured then
+    state.CPUComplete=false
+    report.Counters.CPUSeconds,report.LastSlice.CPUSeconds=nil,nil
+  end
+  local slice=report.LastSlice
+  if slice.CPUSeconds~=nil and (limits.MaxCPUSeconds~=nil or state.Limits.MaxCPUSeconds~=nil) then
+    local overrun=0
+    if limits.MaxCPUSeconds~=nil then
+      overrun=math.max(overrun,slice.CPUSeconds-limits.MaxCPUSeconds)
+    end
+    if state.Limits.MaxCPUSeconds~=nil and report.Counters.CPUSeconds~=nil then
+      overrun=math.max(overrun,report.Counters.CPUSeconds-state.Limits.MaxCPUSeconds)
+    end
+    slice.CPUOverrunSeconds=overrun
+  end
+  if not ok or not measured then
+    preparationFinish(state,"error","evaluation_error")
+    if not ok then
+      error(err,0)
+    end
+    error(measurementError,0)
+  end
+  return preparationCopy(report)
+end
+
 
 --- Enable/disable pathfinding.
 -- Uses terrain profiles to check minimum water depth along the center and both edges of the corridor.
