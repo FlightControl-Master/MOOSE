@@ -357,50 +357,64 @@ function PATHLINE:MarkPoints(Switch)
   return self
 end
 
---- Draw line on F10 map.
+--- Draw lines on the F10 map, replacing the previous segments of this path.
+-- Point markers are independent. If drawing fails, discard the attempted replacement and preserve the previous lines.
+-- If removing an old segment fails, that segment's ID is kept for a later cleanup attempt.
 -- @param #PATHLINE self
--- @param #number Recipient Recipent of the line: -1=All.
--- @param #table Color (optional) Color as RGB table plus alpha value. Default {1, 0, 0, 1.0}.
--- @param #number LineType (optional) Line type: 1=Solid (default).
+-- @param #number Recipient (Optional) Coalition recipient. Default -1 (all).
+-- @param #table Color (Optional) RGB color plus alpha. Default {1, 0, 0, 1.0}.
+-- @param #number LineType (Optional) Line style. Default 1 (solid).
 -- @return #PATHLINE self
 function PATHLINE:DrawLine(Recipient, Color, LineType)
-  
-  -- Input
-  Recipient= Recipient or -1
-  Color= Color or {1,0,0, 1.0}
+
+  Recipient=Recipient or -1
+  Color=Color or {1, 0, 0, 1.0}
   LineType=LineType or 1
-  local ReadOnly=false
-  
 
-  local np=#self.points
+  -- Keep the old IDs until every replacement segment has been drawn.
+  local replacementIDs={}
+  local ok, failure=pcall(function()
+    for i=1,#self.points-1 do
+      local first=self.points[i]
+      local last=self.points[i+1]
+      local lineID=UTILS.GetMarkID()
 
-  for i=1,np-1 do
-    local p1=self.points[i]   --#PATHLINE.Point
-    local p2=self.points[i+1] --#PATHLINE.Point
-    
-    p1.lineID = UTILS.GetMarkID()
-    
-    trigger.action.lineToAll(Recipient, p1.lineID, p1.vec3, p2.vec3, Color, LineType, ReadOnly, "")
-    
+      -- A native draw can fail after it has allocated the drawing.
+      replacementIDs[i]=lineID
+      trigger.action.lineToAll(Recipient, lineID, first.vec3, last.vec3, Color, LineType, false, "")
+    end
+    self:UnDrawLine()
+  end)
+
+  if not ok then
+    for _,lineID in ipairs(replacementIDs) do
+      local removed, removeError=pcall(UTILS.RemoveMark, lineID)
+      if not removed then
+        self:E(string.format("PATHLINE: Could not clean up line %d: %s", lineID, tostring(removeError)))
+      end
+    end
+    error(failure, 0)
+  end
+
+  for i,lineID in ipairs(replacementIDs) do
+    self.points[i].lineID=lineID
   end
 
   return self
 end
 
---- Remove line on F10 map.
+--- Remove this path's line segments from the F10 map and release their IDs.
+-- Delayed removal applies to those IDs. Point markers and later redraws are independent.
 -- @param #PATHLINE self
--- @param #number Delay Delay in seconds before line is removed.
+-- @param #number Delay (Optional) Delay in seconds before the lines are removed.
 -- @return #PATHLINE self
 function PATHLINE:UnDrawLine(Delay)
-  
 
-  local np=#self.points
-
-  for _,_point in pairs(self.points) do
-    local p=_point   --#PATHLINE.Point
-    if p.lineID then
-      UTILS.RemoveMark(p.lineID, Delay)
-    end    
+  for _,point in pairs(self.points) do
+    if point.lineID then
+      UTILS.RemoveMark(point.lineID, Delay)
+      point.lineID=nil
+    end
   end
 
   return self
