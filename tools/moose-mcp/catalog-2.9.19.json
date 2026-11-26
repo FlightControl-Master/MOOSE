@@ -1,0 +1,168 @@
+{
+  "version": "2.9.19",
+  "commit": "ba6091d028a7b9589e051bc59df0ced5739378b4",
+  "api": {
+    "MENU_MISSION:New": {
+      "signature": "MENU_MISSION:New(MenuText, ParentMenu)",
+      "summary": "Create a mission-wide F10 Other submenu.",
+      "parameters": {
+        "MenuText": "Label displayed in the F10 menu.",
+        "ParentMenu": "Optional MENU_MISSION submenu. Omit it for the top level of F10 Other."
+      },
+      "returns": "MENU_MISSION object.",
+      "path": "Core/Menu.lua",
+      "line": 383,
+      "keywords": "f10 radio menu submenu mission menü untermenü alle spieler"
+    },
+    "MENU_MISSION_COMMAND:New": {
+      "signature": "MENU_MISSION_COMMAND:New(MenuText, ParentMenu, CommandMenuFunction, ...)",
+      "summary": "Add an F10 Other command available to all players in the mission.",
+      "parameters": {
+        "MenuText": "Label displayed for the command.",
+        "ParentMenu": "MENU_MISSION submenu, or nil for the top level of F10 Other.",
+        "CommandMenuFunction": "Lua function invoked when a player selects the command.",
+        "...": "Arguments passed to the callback."
+      },
+      "returns": "MENU_MISSION_COMMAND object.",
+      "path": "Core/Menu.lua",
+      "line": 476,
+      "keywords": "f10 radio menu callback button menü menüpunkt befehl alle spieler"
+    },
+    "MENU_GROUP:New": {
+      "signature": "MENU_GROUP:New(Group, MenuText, ParentMenu)",
+      "summary": "Create an F10 Other submenu for a particular DCS group.",
+      "parameters": {
+        "Group": "MOOSE GROUP wrapper for the group that owns the menu. The group must have a DCS group ID when the menu is registered.",
+        "MenuText": "Label displayed in the F10 menu.",
+        "ParentMenu": "Optional MENU_GROUP submenu for the same group. Omit it for the top level of F10 Other."
+      },
+      "returns": "MENU_GROUP object.",
+      "path": "Core/Menu.lua",
+      "line": 824,
+      "keywords": "f10 radio menu submenu group menü gruppenmenü untermenü gruppe"
+    },
+    "MENU_GROUP_COMMAND:New": {
+      "signature": "MENU_GROUP_COMMAND:New(Group, MenuText, ParentMenu, CommandMenuFunction, ...)",
+      "summary": "Add an F10 Other command visible to the owning group.",
+      "parameters": {
+        "Group": "MOOSE GROUP wrapper for the group that owns the menu. The group must have a DCS group ID when the command is registered.",
+        "MenuText": "Label displayed for the command.",
+        "ParentMenu": "MENU_GROUP submenu for the same group, or nil for the top level of F10 Other.",
+        "CommandMenuFunction": "Lua function invoked when a player selects the command.",
+        "...": "Arguments passed to the callback."
+      },
+      "returns": "MENU_GROUP_COMMAND object.",
+      "path": "Core/Menu.lua",
+      "line": 959,
+      "keywords": "f10 radio menu callback group menü menüpunkt befehl gruppenmenü gruppe"
+    },
+    "ZONE:New": {
+      "signature": "ZONE:New(ZoneName)",
+      "summary": "Resolve a named mission-editor trigger zone. Look in the MOOSE database first, then in DCS.",
+      "parameters": {
+        "ZoneName": "Exact trigger-zone name from the Mission Editor."
+      },
+      "returns": "Zone object, or nil with a DCS log error if neither lookup finds the zone.",
+      "path": "Core/Zone.lua",
+      "line": 1865,
+      "keywords": "trigger zone circle radius lookup missing triggerzone kreiszone zonenname nil"
+    },
+    "ZONE:FindByName": {
+      "signature": "ZONE:FindByName(ZoneName)",
+      "summary": "Look up a zone in the MOOSE database by name.",
+      "parameters": {
+        "ZoneName": "Exact name of a registered zone."
+      },
+      "returns": "Registered zone object, or nil when the name is absent from the database.",
+      "path": "Core/Zone.lua",
+      "line": 1901,
+      "keywords": "trigger zone lookup triggerzone suchen zonenname nil"
+    },
+    "GROUP:FindByName": {
+      "signature": "GROUP:FindByName(GroupName)",
+      "summary": "Find a MOOSE GROUP wrapper by its DCS group name.",
+      "parameters": {
+        "GroupName": "Exact group name from the Mission Editor."
+      },
+      "returns": "GROUP wrapper, or nil if it is absent from the MOOSE database. The wrapper can also represent a group that currently has no active DCS units.",
+      "path": "Wrapper/Group.lua",
+      "line": 303,
+      "keywords": "group lookup name gruppe gruppenname suchen nil"
+    },
+    "GROUP:IsInZone": {
+      "signature": "GROUP:IsInZone(Zone)",
+      "summary": "Check whether at least one unit of an active group is inside the supplied zone in 2D.",
+      "parameters": {
+        "Zone": "MOOSE ZONE_BASE object, such as a named circular trigger zone."
+      },
+      "returns": "true if any unit is inside, false if the active group has no unit inside, or nil if the group is not alive.",
+      "path": "Wrapper/Group.lua",
+      "line": 1502,
+      "keywords": "group trigger zone inside outside status check gruppe triggerzone kreiszone innerhalb außerhalb prüfen"
+    },
+    "MESSAGE:New": {
+      "signature": "MESSAGE:New(Text, Duration, Category, ClearScreen)",
+      "summary": "Create a screen message. Send it using a delivery method such as ToAll or ToGroup.",
+      "parameters": {
+        "Text": "Message text.",
+        "Duration": "Optional display duration in seconds. The default is 5 seconds.",
+        "Category": "Optional category label.",
+        "ClearScreen": "Optional flag to clear previous messages when the new message is shown."
+      },
+      "returns": "MESSAGE object.",
+      "path": "Core/Message.lua",
+      "line": 95,
+      "keywords": "message text display output meldung nachricht ausgabe anzeigen"
+    },
+    "MESSAGE:ToAll": {
+      "signature": "MESSAGE:ToAll(Settings, Delay)",
+      "summary": "Show a message to all players in the mission.",
+      "parameters": {
+        "Settings": "Optional MOOSE SETTINGS object.",
+        "Delay": "Optional delay in seconds before displaying the message."
+      },
+      "returns": "MESSAGE object.",
+      "path": "Core/Message.lua",
+      "line": 426,
+      "keywords": "message output broadcast text meldung nachricht alle spieler"
+    },
+    "MESSAGE:ToGroup": {
+      "signature": "MESSAGE:ToGroup(Group, Settings)",
+      "summary": "Show a message to a particular DCS group.",
+      "parameters": {
+        "Group": "Recipient MOOSE GROUP wrapper.",
+        "Settings": "Optional MOOSE SETTINGS object."
+      },
+      "returns": "MESSAGE object.",
+      "path": "Core/Message.lua",
+      "line": 237,
+      "keywords": "group message output text gruppe gruppenmeldung meldung nachricht"
+    }
+  },
+  "example": {
+    "id": "f10-trigger-zone",
+    "title": "Check a training group's trigger-zone status from the F10 menu",
+    "keywords": "f10 trigger zone menu mission group status circle training check radio gruppenstatus gruppe triggerzone kreiszone zone prüfen menü menüpunkt befehl beispiel trainingsgruppe",
+    "file": "f10-trigger-zone.lua",
+    "setup": [
+      "Create a circular trigger zone named LZ Alpha in the DCS Mission Editor.",
+      "Create a group named Training Flight. Place it or route it so that a unit can cross the zone boundary while the mission is running.",
+      "Load the MOOSE 2.9.19 Moose.lua first and f10-trigger-zone.lua second, using Do Script File actions at mission start.",
+      "Enter a player slot and select F10 Other > Training > Check LZ Alpha."
+    ],
+    "expected": [
+      "All players see whether at least one unit in Training Flight is inside LZ Alpha at the time the command is selected.",
+      "Repeat the command with the group completely outside the zone to see the outside message.",
+      "With a missing or inactive group, the command reports that the group is unavailable. With a missing zone, the script leaves the menu unregistered and MOOSE logs the lookup error."
+    ],
+    "api_symbols": [
+      "ZONE:New",
+      "MENU_MISSION:New",
+      "MENU_MISSION_COMMAND:New",
+      "GROUP:FindByName",
+      "GROUP:IsInZone",
+      "MESSAGE:New",
+      "MESSAGE:ToAll"
+    ]
+  }
+}
