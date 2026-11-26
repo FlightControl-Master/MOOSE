@@ -1041,10 +1041,10 @@ function VECTOR:GetSurfaceHeightAndDepth()
   return h,d
 end
 
---- Returns a velocity vector of the wind at this vector. Turbolences can be optionally be included.
+--- Return the wind velocity at this position.
 -- @param #VECTOR self
--- @param #boolean WithTurbulence If `true`, return wind including turbulence.
--- @return #VECTOR Velocity 3D vector [m/s] the wind is blowing to.
+-- @param #boolean WithTurbulence (Optional) Include turbulence if true. Defaults to false.
+-- @return #VECTOR Independent 3D wind velocity vector in meters per second.
 function VECTOR:GetWindVector(WithTurbulence)
 
   local vec3=self:GetVec3()
@@ -1057,7 +1057,7 @@ function VECTOR:GetWindVector(WithTurbulence)
     wind=atmosphere.getWind(vec3)
   end
   
-  local vector=VECTOR:New(wind)
+  local vector=VECTOR:NewFromVec(wind)
 
   return vector
 end
