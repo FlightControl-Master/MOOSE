@@ -446,7 +446,7 @@ do -- COORDINATE
 
     -- Adjust height
     if altitude==nil then
-      _coord.y=self:GetLandHeight()
+      _coord.y=_coord:GetLandHeight()
     else
       _coord.y=altitude
     end
@@ -1393,11 +1393,12 @@ do -- COORDINATE
     return self
   end
 
-  --- Return the altitude (height) of the land at the COORDINATE.
+  --- Return the stored altitude above sea level in meters.
+  -- Use GetLandHeight() for terrain elevation.
   -- @param #COORDINATE self
-  -- @return #number The land altitude.
+  -- @return #number Stored altitude, including zero or negative values.
   function COORDINATE:GetAlt()
-    return self.y ~= 0 or land.getHeight( { x = self.x, y = self.z } )
+    return self.y
   end
 
   --- Set the altitude of the COORDINATE.
@@ -1409,12 +1410,12 @@ do -- COORDINATE
     return self
   end
 
-  --- Add to the current land height an altitude.
+  --- Set the altitude to terrain elevation plus an offset in meters.
   -- @param #COORDINATE self
-  -- @param #number Altitude The Altitude to add. If nothing (nil) is given, then the current land altitude is set.
+  -- @param #number Altitude (Optional) Offset above ground in meters. Defaults to zero.
   -- @return #COORDINATE
   function COORDINATE:AddAlt( Altitude )
-    self.y = land.getHeight( { x = self.x, y = self.z } ) + Altitude or 0
+    self.y = land.getHeight( { x = self.x, y = self.z } ) + (Altitude or 0)
     return self
   end
 

@@ -898,7 +898,7 @@ function VECTOR:GetSurfaceTypeName()
   
   local s=land.getSurfaceType(vec2)
   
-  for name,id in land.SurfaceType() do
+  for name,id in pairs(land.SurfaceType) do
     if id==s then
       return name
     end
@@ -907,19 +907,16 @@ function VECTOR:GetSurfaceTypeName()
   return "unknown"
 end
 
---- Check if a given vector has line of sight with this vector.
+--- Check line of sight between this vector and another position.
 -- @param #VECTOR self
--- @param #VECTOR Vec The other vector.
--- @return #number Surface Type
+-- @param DCS#Vec3 Vec The other position. Also accepts a VECTOR.
+-- @return #boolean True if the positions have line of sight.
 function VECTOR:IsVisible(Vec)
 
-  local vec1=self:GetVec3()
-  
-  local vec2={x=Vec.x, Vec.y, Vec.z}
-  
-  local los=land.isVisible(vec1, vec2)
+  local start=self:GetVec3()
+  local target={x=Vec.x, y=Vec.y, z=Vec.z}
 
-  return los
+  return land.isVisible(start, target)
 end
 
 --- Get a vector on the closest road.

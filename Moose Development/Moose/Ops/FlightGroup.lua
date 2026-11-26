@@ -4274,7 +4274,7 @@ end
 -- @param Core.Point#COORDINATE Coordinate The coordinate of the waypoint. Use COORDINATE:SetAltitude(altitude) to define the altitude.
 -- @param #number Speed (Optional) Speed in knots. Default is cruise speed.
 -- @param #number AfterWaypointWithID (Optional) Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #number Altitude (Optional) Altitude in feet. Default is y-component of Coordinate. Note that these altitudes are wrt to sea level (barometric altitude).
+-- @param #number Altitude (Optional) Altitude in feet. Defaults to the coordinate's y component in meters. Uses barometric altitude for airplanes and radar (AGL) altitude for helicopters.
 -- @param #boolean Updateroute (Optional) If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitude, Updateroute)
@@ -4300,13 +4300,13 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
   -- Create air waypoint.
   local wp=coordinate:WaypointAir(alttype, COORDINATE.WaypointType.TurningPoint, COORDINATE.WaypointAction.TurningPoint, UTILS.KnotsToKmph(Speed), true, nil, {})
 
+  -- Apply the altitude before creating the waypoint's stored coordinate.
+  if Altitude then
+    wp.alt=UTILS.FeetToMeters(Altitude)
+  end
+
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
-
-  -- Set altitude.
-  if Altitude then
-    waypoint.alt=UTILS.FeetToMeters(Altitude)
-  end
 
   -- Add waypoint to table.
   self:_AddWaypoint(waypoint, wpnumber)
@@ -4322,12 +4322,12 @@ function FLIGHTGROUP:AddWaypoint(Coordinate, Speed, AfterWaypointWithID, Altitud
   return waypoint
 end
 
---- Add an LANDING waypoint to the flight plan.
+--- Add a landing waypoint to the flight plan.
 -- @param #FLIGHTGROUP self
 -- @param Wrapper.Airbase#AIRBASE Airbase The airbase where the group should land.
--- @param #number Speed (Optional) Speed in knots. Default 350 kts.
+-- @param #number Speed (Optional) Speed in knots. Defaults to cruise speed.
 -- @param #number AfterWaypointWithID (Optional) Insert waypoint after waypoint given ID. Default is to insert as last waypoint.
--- @param #number Altitude (Optional) Altitude in feet. Default is y-component of Coordinate. Note that these altitudes are wrt to sea level (barometric altitude).
+-- @param #number Altitude (Optional) Barometric altitude in feet. Defaults to the airbase coordinate's y component in meters.
 -- @param #boolean Updateroute (Optional) If true or nil, call UpdateRoute. If false, no call.
 -- @return Ops.OpsGroup#OPSGROUP.Waypoint Waypoint table.
 function FLIGHTGROUP:AddWaypointLanding(Airbase, Speed, AfterWaypointWithID, Altitude, Updateroute)
@@ -4340,21 +4340,21 @@ function FLIGHTGROUP:AddWaypointLanding(Airbase, Speed, AfterWaypointWithID, Alt
   end
 
   -- Speed in knots.
-  Speed=Speed or self.speedCruise
+  Speed=Speed or self:GetSpeedCruise()
 
   -- Get coordinate of airbase.
   local Coordinate=Airbase:GetCoordinate()
 
   -- Create air waypoint.
-  local wp=Coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, Speed, nil, Airbase, {}, "Landing Temp", nil)
+  local wp=Coordinate:WaypointAir(COORDINATE.WaypointAltType.BARO, COORDINATE.WaypointType.Land, COORDINATE.WaypointAction.Landing, UTILS.KnotsToKmph(Speed), nil, Airbase, {}, "Landing Temp", nil)
+
+  -- Apply the altitude before creating the waypoint's stored coordinate.
+  if Altitude then
+    wp.alt=UTILS.FeetToMeters(Altitude)
+  end
 
   -- Create waypoint data table.
   local waypoint=self:_CreateWaypoint(wp)
-
-  -- Set altitude.
-  if Altitude then
-    waypoint.alt=UTILS.FeetToMeters(Altitude)
-  end
 
   -- Add waypoint to table.
   self:_AddWaypoint(waypoint, wpnumber)
