@@ -88,6 +88,15 @@ local _ClassID = 0
 --   * @{#BASE.T}: Used to trace further logic within a function giving optional variables or parameters. A T is indicated at column 44 in the DCS.log file.
 --   * @{#BASE.E}: Used to always trace information giving optional variables or parameters. An E is indicated at column 44 in the DCS.log file.
 --
+-- ## Log messages
+--
+-- The existing log prefixes identify the method, class and object. Plain text retains its
+-- original characters and line breaks. Tables are formatted as compact diagnostic text.
+-- One MOOSE message, including its prefix and all lines, contains at most 4096 bytes.
+-- Longer output includes a <truncated> marker. A table expands at most 3 levels and 100 entries
+-- across all levels. Individual table strings are limited to 512 input bytes, with
+-- control characters escaped. These table limits do not apply to plain text messages.
+--
 -- ## 2.2 Tracing levels.
 --
 -- There are 3 tracing levels within MOOSE.
@@ -1277,27 +1286,153 @@ function BASE:TraceClassMethod( Class, Method )
   self:I( "Tracing method " .. Method .. " of class " .. Class )
 end
 
---- (Internal) Serialize arguments
--- @param #BASE self
--- @param #table Arguments
--- @return #string Text
-function BASE:_Serialize(Arguments)
-  local text = UTILS.PrintTableToLog({Arguments}, 0, true)
-  text = string.gsub(text,"(\n+)","")
-  text = string.gsub(text,"%(%(","%(")
-  text = string.gsub(text,"%)%)","%)")
-  text = string.gsub(text,"(%s+)"," ")
-  return text
+local LOG_BYTES = 4096
+local LOG_DEPTH = 3
+local LOG_ENTRIES = 100
+local LOG_TABLE_STRING_BYTES = 512
+local LOG_TRUNCATED = "<truncated>"
+local LOG_ESCAPES = {
+  ['"'] = '\\"',
+  ["\\"] = "\\\\",
+  ["\n"] = "\\n",
+  ["\r"] = "\\r",
+  ["\t"] = "\\t",
+}
+
+-- When cutting UTF-8, discard the partial character at the boundary.
+local function logPrefix(Text, Bytes)
+  while Bytes > 0 do
+    local Next = string.byte(Text, Bytes + 1)
+    if not Next or Next < 128 or Next >= 192 then
+      break
+    end
+    Bytes = Bytes - 1
+  end
+  return string.sub(Text, 1, Bytes)
 end
 
------ (Internal) Serialize arguments
----- @param #BASE self
----- @param #table Arguments
----- @return #string Text
---function BASE:_Serialize(Arguments)
---  local text=UTILS.BasicSerialize(Arguments)
---  return text
---end
+local function limitLogText(Text, Bytes, Marker)
+  if #Text <= Bytes then
+    return Text
+  end
+  return logPrefix(Text, Bytes - #Marker) .. Marker
+end
+
+local function escapeLogCharacter(Character)
+  return LOG_ESCAPES[Character] or string.format("\\%03d", string.byte(Character))
+end
+
+local function quoteLogString(Text)
+  local Short = limitLogText(Text, LOG_TABLE_STRING_BYTES, "<string truncated>")
+  return '"' .. string.gsub(Short, '[%z\1-\31\127"\\]', escapeLogCharacter) .. '"'
+end
+
+local function logScalar(Value)
+  local Kind = type(Value)
+  if Kind == "number" or Kind == "boolean" or Kind == "nil" then
+    return tostring(Value)
+  end
+  return "<" .. Kind .. ">"
+end
+
+local function serializeLogTable(Value, Bytes)
+  local Parts, Active = {}, {}
+  local Length, Entries = 0, 0
+  local Full = false
+
+  local function append(Text)
+    if not Full then
+      local Remaining = Bytes - Length
+      Full = #Text > Remaining
+      if Full then
+        Text = string.sub(Text, 1, Remaining)
+      end
+      Parts[#Parts + 1] = Text
+      Length = Length + #Text
+    end
+  end
+
+  local function write(Item, Depth)
+    local Kind = type(Item)
+    if Kind == "string" then
+      append(quoteLogString(Item))
+    elseif Kind ~= "table" then
+      append(logScalar(Item))
+    elseif Active[Item] then
+      append("<cycle>")
+    elseif Depth > LOG_DEPTH then
+      append("<max depth>")
+    else
+      Active[Item] = true
+      append("{")
+      local Key, Child = next(Item)
+      local First = true
+      while Key ~= nil and not Full do
+        if not First then
+          append(", ")
+        end
+        if Entries == LOG_ENTRIES then
+          append("<max entries>")
+          break
+        end
+        Entries = Entries + 1
+
+        if type(Key) == "string" and #Key <= LOG_TABLE_STRING_BYTES and Key:match("^[A-Za-z_][A-Za-z0-9_]*$") then
+          append(Key .. "=")
+        else
+          local Label = type(Key) == "string" and quoteLogString(Key) or logScalar(Key)
+          append("[" .. Label .. "]=")
+        end
+        if not Full then
+          write(Child, Depth + 1)
+        end
+        First = false
+        Key, Child = next(Item, Key)
+      end
+      append("}")
+      Active[Item] = nil
+    end
+  end
+
+  write(Value, 1)
+  local Text = table.concat(Parts)
+  if Full then
+    return logPrefix(Text, Bytes - #LOG_TRUNCATED) .. LOG_TRUNCATED
+  end
+  return Text
+end
+
+local function logText(Arguments, Bytes)
+  local Kind = type(Arguments)
+  if Kind == "string" then
+    return limitLogText(Arguments, Bytes, LOG_TRUNCATED)
+  elseif Kind == "table" then
+    return serializeLogTable(Arguments, Bytes)
+  elseif Arguments == nil then
+    return ""
+  end
+  return limitLogText(logScalar(Arguments), Bytes, LOG_TRUNCATED)
+end
+
+-- Preserve the existing header and delimiters, and budget the whole log entry.
+local function writeLog(Prefix, Arguments, Suffix)
+  local Bytes = LOG_BYTES - #Prefix - #Suffix
+  if type(Arguments) == "string" and #Arguments <= Bytes then
+    env.info(Prefix .. Arguments .. Suffix)
+  elseif Bytes < #LOG_TRUNCATED then
+    env.info(logPrefix(Prefix, LOG_BYTES - #Suffix - #LOG_TRUNCATED) .. LOG_TRUNCATED .. Suffix)
+  else
+    env.info(Prefix .. logText(Arguments, Bytes) .. Suffix)
+  end
+end
+
+--- Format diagnostic arguments as plain text or a bounded table representation.
+-- @param #BASE self
+-- @param Arguments Value to format.
+-- @return #string Diagnostic text, limited to 4096 bytes.
+function BASE:_Serialize(Arguments)
+  return logText(Arguments, LOG_BYTES)
+end
 
 --- Trace a function call. This function is private.
 -- @param #BASE self
@@ -1323,7 +1458,8 @@ function BASE:_F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
       if DebugInfoFrom then
         LineFrom = DebugInfoFrom.currentline
       end
-      env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function, BASE:_Serialize(Arguments) ) )
+      local Prefix = string.format( "%6d(%6d)/%1s:%30s%05d.%s(", LineCurrent, LineFrom, "F", self.ClassName, self.ClassID, Function )
+      writeLog(Prefix, Arguments, ")")
     end
   end
 end
@@ -1388,7 +1524,8 @@ function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
       if DebugInfoFrom then
         LineFrom = DebugInfoFrom.currentline
       end
-      env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s", LineCurrent, LineFrom, "T", self.ClassName, self.ClassID, BASE:_Serialize(Arguments) ) )
+      local Prefix = string.format( "%6d(%6d)/%1s:%30s%05d.", LineCurrent, LineFrom, "T", self.ClassName, self.ClassID )
+      writeLog(Prefix, Arguments, "")
     end
   end
 end
@@ -1449,9 +1586,11 @@ function BASE:E( Arguments )
       LineFrom = DebugInfoFrom.currentline
     end
 
-    env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function, UTILS.BasicSerialize( Arguments ) ) )
+    local Prefix = string.format( "%6d(%6d)/%1s:%30s%05d.%s(", LineCurrent, LineFrom, "E", self.ClassName, self.ClassID, Function )
+    writeLog(Prefix, Arguments, ")")
   else
-    env.info( string.format( "%1s:%30s%05d(%s)", "E", self.ClassName, self.ClassID, UTILS.BasicSerialize(Arguments) ) )
+    local Prefix = string.format( "%1s:%30s%05d(", "E", self.ClassName, self.ClassID )
+    writeLog(Prefix, Arguments, ")")
   end
 
 end
@@ -1476,9 +1615,11 @@ function BASE:I( Arguments )
       LineFrom = DebugInfoFrom.currentline
     end
 
-    env.info( string.format( "%6d(%6d)/%1s:%30s%05d.%s(%s)", LineCurrent, LineFrom, "I", self.ClassName, self.ClassID, Function, UTILS.BasicSerialize( Arguments ) ) )
+    local Prefix = string.format( "%6d(%6d)/%1s:%30s%05d.%s(", LineCurrent, LineFrom, "I", self.ClassName, self.ClassID, Function )
+    writeLog(Prefix, Arguments, ")")
   else
-    env.info( string.format( "%1s:%30s%05d(%s)", "I", self.ClassName, self.ClassID, UTILS.BasicSerialize(Arguments)) )
+    local Prefix = string.format( "%1s:%30s%05d(", "I", self.ClassName, self.ClassID )
+    writeLog(Prefix, Arguments, ")")
   end
 
 end
