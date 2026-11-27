@@ -3452,7 +3452,7 @@ function OPSGROUP:RemoveWaypointByID(uid)
   return self
 end
 
---- Remove a waypoint.
+--- Remove a waypoint. A missing or sole waypoint leaves the route unchanged.
 -- @param #OPSGROUP self
 -- @param #number wpindex Waypoint number.
 -- @return #OPSGROUP self
@@ -3460,8 +3460,11 @@ function OPSGROUP:RemoveWaypoint(wpindex)
 
   if self.waypoints then
 
-    -- The waypoitn to be removed.
     local wp=self:GetWaypoint(wpindex)
+    if not wp then
+      self:T(self.lid.."Cannot remove missing waypoint index="..tostring(wpindex))
+      return self
+    end
 
     -- Is this a temporary waypoint.
     local istemp=wp.temp or wp.detour or wp.astar or wp.missionUID
@@ -3482,7 +3485,7 @@ function OPSGROUP:RemoveWaypoint(wpindex)
     end
 
     -- Remove waypoint marker.
-    if wp and wp.marker then
+    if wp.marker then
       wp.marker:Remove()
     end
 

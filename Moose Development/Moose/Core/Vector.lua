@@ -191,55 +191,37 @@ function VECTOR:NewFromVec(Vec)
   return vector
 end
 
---- Create a new VECTOR class instance from polar coordinates (r, phi).
+--- Create a horizontal VECTOR from polar coordinates.
 -- @param #VECTOR self
--- @param #number r Distance.
--- @param #number phi Angle in Degrees. Note that 0° corresponds to North, 90° East etc.
--- @return #VECTOR self
+-- @param #number r Distance from the origin in meters.
+-- @param #number phi Heading in degrees. North is 0 (+x), East is 90 (+z).
+-- @return #VECTOR New vector with zero altitude.
 function VECTOR:NewFromPolar(r, phi)
 
-  -- Convert deg to rad.
-  local Phi=math.rad(phi)
+  local heading=math.rad(phi)
+  local x=r*math.cos(heading)
+  local z=r*math.sin(heading)
 
-  -- Polar coordinates. What we want in DCS is:
-  -- North: Phi=0   ==> x= 1, y= 0
-  -- East : Phi=90  ==> x= 0, y= 1
-  -- South: Phi=180 ==> x=-1, y= 0
-  -- West : Phi=270 ==> x= 0, y=-1
-  
-  -- sin(0)=0 sin(90)=1, sin(180)=0, sin(270)=-1 ==> y
-  -- cos(0)=1 cos(90)=0, cos(180)=-1, cos(270)=0 ==> x
-  
-  local x=r*math.cos(phi)
-  local y=r*math.sin(phi)
-  
-  -- Create new vector. As z is nil, the 2D character is taken care of.
-  local v=VECTOR:New(x, y)
-   
-  return self
+  return VECTOR:New(x, 0, z)
 end
 
---- Create a new VECTOR class instance from spherical coordinates (r, theta, phi).
+--- Create a VECTOR from spherical coordinates in the DCS frame.
 -- @param #VECTOR self
--- @param #number r Distance in meters with r>=0.
--- @param #number theta Polar angle in Degrees measured from a fixed polar axis or zenith direction. This angle is in [0°, 180°].
--- @param #number phi Azimuthal angle in Degrees. This angle is in [0°, 360°).
--- @return #VECTOR self
+-- @param #number r Distance from the origin in meters.
+-- @param #number theta Angle in degrees from the upward y-axis. 0 is up, 90 is horizontal, 180 is down.
+-- @param #number phi Heading in degrees. North is 0 (+x), East is 90 (+z).
+-- @return #VECTOR New vector at the requested position.
 function VECTOR:NewFromSpherical(r, theta, phi)
 
-  local sinPhi=math.sin(math.rad(phi))
-  local cosPhi=math.cos(math.rad(phi))
-  local sinTheta=math.sin(math.rad(theta))
-  local cosTheta=math.cos(math.rad(theta))
+  local polarAngle=math.rad(theta)
+  local heading=math.rad(phi)
+  local horizontalDistance=r*math.sin(polarAngle)
 
-  --TODO: Check x,y,z convention for DCS.
-  local x=r*sinTheta*cosPhi
-  local y=r*sinTheta*sinPhi
-  local z=r*cosTheta
-  
-  local v=VECTOR:New(x, y, z)
-   
-  return self
+  local x=horizontalDistance*math.cos(heading)
+  local y=r*math.cos(polarAngle)
+  local z=horizontalDistance*math.sin(heading)
+
+  return VECTOR:New(x, y, z)
 end
 
 --- Get the directional vector that points from a given vector `a` to another given vector `b`.
@@ -713,22 +695,23 @@ function VECTOR:Dot(Vec)
   return dot
 end
 
---- Calculate the rotation or cross product of this VECTOR with another vector. This function works for DCS#Vec2, DCS#Vec3, VECTOR, COORDINATE objects.
+--- Calculate the cross product of this vector with another position.
+-- A DCS Vec2 lies in the x-z plane at zero altitude.
 -- @param #VECTOR self
--- @param DCS#Vec3 Vec The other vector. Can also be a DCS#Vec2, DCS#Vec3, COORDINATE or VECTOR object.
--- @return #VECTOR The cross product vector.
+-- @param DCS#Vec3 Vec The right-hand operand. Also accepts DCS Vec2, COORDINATE, or VECTOR.
+-- @return #VECTOR Cross product as a new vector. Both operands are unchanged.
 function VECTOR:Rot(Vec)
 
-  -- TODO:
-  local dot=self.x*Vec.x
-  if Vec.z then
-    dot=dot+self.y*Vec.y+self.z*Vec.z
-  else
-    -- Vec is 2D ==> we take its y-component for z.
-    dot=dot+self.z*Vec.y
+  local vx, vy, vz=Vec.x, Vec.y, Vec.z
+  if vz==nil then
+    vy, vz=0, vy
   end
-   
-  return dot
+
+  local x=self.y*vz-self.z*vy
+  local y=self.z*vx-self.x*vz
+  local z=self.x*vy-self.y*vx
+
+  return VECTOR:New(x, y, z)
 end
 
 
