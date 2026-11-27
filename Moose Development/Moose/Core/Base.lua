@@ -424,6 +424,7 @@ do -- Event Handling
   -- @return #BASE self
   function BASE:SetEventPriority( EventPriority )
     self._.EventPriority = EventPriority
+    return self
   end
 
   --- Remove all subscribed events
@@ -1201,16 +1202,35 @@ function BASE:TraceOnOff( TraceOnOff )
   end
 end
 
---- Enquires if tracing is on (for the class).
+-- Check the global switch, level and class before inspecting the stack.
+local function traceEnabled(Object, Level)
+  if _TraceOnOff and BASE.Debug and _TraceLevel >= Level then
+    local Class = Object.ClassName
+    return _TraceAll or _TraceClass[Class] or _TraceClassMethod[Class] ~= nil
+  end
+  return false
+end
+
+local function traceMethodEnabled(Class, Method)
+  local Methods = _TraceClassMethod[Class]
+  return _TraceAll or _TraceClass[Class] or (Methods and Methods[Method])
+end
+
+local function traceCurrent(Object, Level)
+  if traceEnabled(Object, Level) then
+    -- The traced method is the caller of the public F or T method.
+    local DebugInfo = BASE.Debug.getinfo( 3, "nl" )
+    if DebugInfo and traceMethodEnabled(Object.ClassName, DebugInfo.name or "function") then
+      return DebugInfo
+    end
+  end
+end
+
+--- Check whether tracing is enabled for this class or one of its methods.
 -- @param #BASE self
 -- @return #boolean
 function BASE:IsTrace()
-
-  if BASE.Debug and (_TraceAll == true) or (_TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName]) then
-    return true
-  else
-    return false
-  end
+  return traceEnabled(self, 1)
 end
 
 --- Set trace level
@@ -1244,7 +1264,6 @@ end
 -- @param #string Class Class name.
 function BASE:TraceClass( Class )
   _TraceClass[Class] = true
-  _TraceClassMethod[Class] = {}
   self:I( "Tracing class " .. Class )
 end
 
@@ -1253,11 +1272,8 @@ end
 -- @param #string Class Class name.
 -- @param #string Method Method.
 function BASE:TraceClassMethod( Class, Method )
-  if not _TraceClassMethod[Class] then
-    _TraceClassMethod[Class] = {}
-    _TraceClassMethod[Class].Method = {}
-  end
-  _TraceClassMethod[Class].Method[Method] = true
+  _TraceClassMethod[Class] = _TraceClassMethod[Class] or {}
+  _TraceClassMethod[Class][Method] = true
   self:I( "Tracing method " .. Method .. " of class " .. Class )
 end
 
@@ -1288,17 +1304,17 @@ end
 -- @param Arguments A #table or any field.
 function BASE:_F( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
-  if BASE.Debug and (_TraceAll == true) or (_TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName]) then
+  if traceEnabled(self, 1) then
 
-    local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or BASE.Debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or BASE.Debug.getinfo( 3, "l" )
+    local DebugInfoCurrent = DebugInfoCurrentParam or BASE.Debug.getinfo( 2, "nl" )
 
     local Function = "function"
     if DebugInfoCurrent.name then
       Function = DebugInfoCurrent.name
     end
 
-    if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
+    if traceMethodEnabled(self.ClassName, Function) then
+      local DebugInfoFrom = DebugInfoFromParam or BASE.Debug.getinfo( 3, "l" )
       local LineCurrent = 0
       if DebugInfoCurrent.currentline then
         LineCurrent = DebugInfoCurrent.currentline
@@ -1317,13 +1333,10 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F( Arguments )
 
-  if BASE.Debug and _TraceOnOff == true then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
+  local DebugInfoCurrent = traceCurrent(self, 1)
+  if DebugInfoCurrent then
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
-
-    if _TraceLevel >= 1 then
-      self:_F( Arguments, DebugInfoCurrent, DebugInfoFrom )
-    end
+    self:_F( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
 end
 
@@ -1332,13 +1345,10 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F2( Arguments )
 
-  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 2 then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
+  local DebugInfoCurrent = traceCurrent(self, 2)
+  if DebugInfoCurrent then
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
-
-    if _TraceLevel >= 2 then
-      self:_F( Arguments, DebugInfoCurrent, DebugInfoFrom )
-    end
+    self:_F( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
 end
 
@@ -1347,13 +1357,10 @@ end
 -- @param Arguments A #table or any field.
 function BASE:F3( Arguments )
 
-  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 3 then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
+  local DebugInfoCurrent = traceCurrent(self, 3)
+  if DebugInfoCurrent then
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
-
-    if _TraceLevel >= 3 then
-      self:_F( Arguments, DebugInfoCurrent, DebugInfoFrom )
-    end
+    self:_F( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
 end
 
@@ -1362,17 +1369,17 @@ end
 -- @param Arguments A #table or any field.
 function BASE:_T( Arguments, DebugInfoCurrentParam, DebugInfoFromParam )
 
-  if BASE.Debug and (_TraceAll == true) or (_TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName]) then
+  if traceEnabled(self, 1) then
 
-    local DebugInfoCurrent = DebugInfoCurrentParam and DebugInfoCurrentParam or BASE.Debug.getinfo( 2, "nl" )
-    local DebugInfoFrom = DebugInfoFromParam and DebugInfoFromParam or BASE.Debug.getinfo( 3, "l" )
+    local DebugInfoCurrent = DebugInfoCurrentParam or BASE.Debug.getinfo( 2, "nl" )
 
     local Function = "function"
     if DebugInfoCurrent.name then
       Function = DebugInfoCurrent.name
     end
 
-    if _TraceAll == true or _TraceClass[self.ClassName] or _TraceClassMethod[self.ClassName].Method[Function] then
+    if traceMethodEnabled(self.ClassName, Function) then
+      local DebugInfoFrom = DebugInfoFromParam or BASE.Debug.getinfo( 3, "l" )
       local LineCurrent = 0
       if DebugInfoCurrent.currentline then
         LineCurrent = DebugInfoCurrent.currentline
@@ -1391,13 +1398,10 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T( Arguments )
 
-  if BASE.Debug and _TraceOnOff == true then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
+  local DebugInfoCurrent = traceCurrent(self, 1)
+  if DebugInfoCurrent then
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
-
-    if _TraceLevel >= 1 then
-      self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom )
-    end
+    self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
 end
 
@@ -1406,13 +1410,10 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T2( Arguments )
 
-  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 2 then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
+  local DebugInfoCurrent = traceCurrent(self, 2)
+  if DebugInfoCurrent then
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
-
-    if _TraceLevel >= 2 then
-      self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom )
-    end
+    self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
 end
 
@@ -1421,13 +1422,10 @@ end
 -- @param Arguments A #table or any field.
 function BASE:T3( Arguments )
 
-  if BASE.Debug and _TraceOnOff == true and _TraceLevel >= 3 then
-    local DebugInfoCurrent = BASE.Debug.getinfo( 2, "nl" )
+  local DebugInfoCurrent = traceCurrent(self, 3)
+  if DebugInfoCurrent then
     local DebugInfoFrom = BASE.Debug.getinfo( 3, "l" )
-
-    if _TraceLevel >= 3 then
-      self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom )
-    end
+    self:_T( Arguments, DebugInfoCurrent, DebugInfoFrom )
   end
 end
 
