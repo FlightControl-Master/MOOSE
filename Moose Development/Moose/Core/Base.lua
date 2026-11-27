@@ -1402,36 +1402,28 @@ local function serializeLogTable(Value, Bytes)
   return Text
 end
 
-local function logText(Arguments, Bytes)
-  local Kind = type(Arguments)
-  if Kind == "string" then
-    return limitLogText(Arguments, Bytes, LOG_TRUNCATED)
-  elseif Kind == "table" then
-    return serializeLogTable(Arguments, Bytes)
-  elseif Arguments == nil then
-    return ""
-  end
-  return limitLogText(logScalar(Arguments), Bytes, LOG_TRUNCATED)
-end
-
 -- Preserve the existing header and delimiters, and budget the whole log entry.
 local function writeLog(Prefix, Arguments, Suffix)
   local Bytes = LOG_BYTES - #Prefix - #Suffix
-  if type(Arguments) == "string" and #Arguments <= Bytes then
-    env.info(Prefix .. Arguments .. Suffix)
-  elseif Bytes < #LOG_TRUNCATED then
-    env.info(logPrefix(Prefix, LOG_BYTES - #Suffix - #LOG_TRUNCATED) .. LOG_TRUNCATED .. Suffix)
-  else
-    env.info(Prefix .. logText(Arguments, Bytes) .. Suffix)
-  end
-end
+  local Kind = type(Arguments)
+  local Message
 
---- Format diagnostic arguments as plain text or a bounded table representation.
--- @param #BASE self
--- @param Arguments Value to format.
--- @return #string Diagnostic text, limited to 4096 bytes.
-function BASE:_Serialize(Arguments)
-  return logText(Arguments, LOG_BYTES)
+  if Kind == "string" and #Arguments <= Bytes then
+    Message = Arguments
+  elseif Bytes < #LOG_TRUNCATED then
+    Prefix = logPrefix(Prefix, LOG_BYTES - #Suffix - #LOG_TRUNCATED)
+    Message = LOG_TRUNCATED
+  elseif Kind == "string" then
+    Message = limitLogText(Arguments, Bytes, LOG_TRUNCATED)
+  elseif Kind == "table" then
+    Message = serializeLogTable(Arguments, Bytes)
+  elseif Arguments == nil then
+    Message = ""
+  else
+    Message = limitLogText(logScalar(Arguments), Bytes, LOG_TRUNCATED)
+  end
+
+  env.info(Prefix .. Message .. Suffix)
 end
 
 --- Trace a function call. This function is private.
