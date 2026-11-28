@@ -19,7 +19,7 @@
 --
 -- ### Authors: **applevangelist**, **FlightControl**
 --
--- Last Update: January 2026
+-- Last Update: November 2026
 --
 -- ===
 --
@@ -38,6 +38,13 @@
 -- @field #boolean UseCallBack Switch for callback function to be used.
 -- @field #boolean debug Debug switch.
 -- @field #boolen WeaponTrack Track switch, if true track weapon speed for 30 secs.
+-- @field #table SuppressionState Table of active/planned suppressions, indexed by group name.
+-- @field #table WeaponTracks Table of tracked weapons (WEAPON object => groups waiting for its impact).
+-- @field #number TrackInterval Weapon tracking time step in seconds.
+-- @field #number StayActive Shots from afar: stay active until the weapon is this many seconds out.
+-- @field #number FarShot Shots with an estimated flight time above this many seconds count as "from afar".
+-- @field #number GlideRatio Glide weapons (AGM-154) without target data: assumed range = release height x this ratio.
+-- @field #number StaticTargetRadius Shots at a static: only SEAD groups within this radius (meters) count as attacked.
 -- @extends Core.Base#BASE
 
 --- Make SAM sites execute evasive and defensive behaviour when being fired upon.
@@ -57,14 +64,25 @@
 -- @field #SEAD
 SEAD = {
   ClassName = "SEAD",
+  -- Evade: chance in percent that the crew does NOT react at all.
+  -- DelayOn: reaction time window in seconds until the radar goes off.
+  -- Margin: the crew switches off at the latest when the tracked weapon is this many seconds out.
+  --         A small margin means a slow crew can be too late - the pilot's chance.
   TargetSkill = {
-    Average   = { Evade = 30, DelayOn = { 40, 60 } } ,
-    Good      = { Evade = 20, DelayOn = { 30, 50 } } ,
-    High      = { Evade = 15, DelayOn = { 20, 40 } } ,
-    Excellent = { Evade = 10, DelayOn = { 10, 30 } }
+    Average   = { Evade = 30, DelayOn = { 40, 60 }, Margin = 3  } ,
+    Good      = { Evade = 20, DelayOn = { 30, 50 }, Margin = 6  } ,
+    High      = { Evade = 15, DelayOn = { 20, 40 }, Margin = 10 } ,
+    Excellent = { Evade = 10, DelayOn = { 10, 30 }, Margin = 15 }
   },
   SEADGroupPrefixes = {},
   SuppressedGroups = {},
+  SuppressionState = {},
+  WeaponTracks = {},
+  TrackInterval = 0.5,
+  StayActive = 90,
+  FarShot = 600,
+  GlideRatio = 10,
+  StaticTargetRadius = 3000,
   EngagementRange = 75, --  default 75% engagement range Feature Request #1355
   Padding = 15,
   CallBack = nil,
@@ -157,7 +175,7 @@ function SEAD:New( SEADGroupPrefixes, Padding )
   self:AddTransition("*",             "ManageEvasion",                "*")
   self:AddTransition("*",             "CalculateHitZone",             "*")
   
-  self:I("*** SEAD - Started Version 0.4.11")
+  self:I("*** SEAD - Started Version 0.5.0")
   return self
 end
 
@@ -302,30 +320,41 @@ function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADG
     
     -- velocity
     local wpndata = SEAD.HarmData["AGM_88"]
-    if string.find(SEADWeaponName,"154",1) then
+    local isglide = false
+    if string.find(SEADWeaponName,"154",1,true) then
       wpndata = SEAD.HarmData["AGM_154"]
+      isglide = true
+    end
+    if string.find(SEADWeaponName,"45",1,true) then
+      wpndata = SEAD.HarmData["AGM_45"]
     end
     local mveloc = math.floor(wpndata[2] * 340.29)
-    local c1 = (2*mheight*9.81)/(mveloc^2)
-    local c2 = (mveloc^2) / 9.81
-    local Ropt = c2 * math.sqrt(c1+1) 
-    if height <= 5000 then
-      Ropt = Ropt * 0.72
-    elseif height <= 7500 then
-      Ropt = Ropt * 0.82  
-    elseif height <= 10000 then
-      Ropt = Ropt * 0.87
-    elseif height <= 12500 then
-      Ropt = Ropt * 0.98
+    local Ropt
+    if isglide then
+      -- Glide weapon (JSOW): no ballistic flight path, range roughly proportional to release height, capped by max range.
+      Ropt = math.min(mheight * self.GlideRatio, wpndata[1] * 1000)
+    else
+      local c1 = (2*mheight*9.81)/(mveloc^2)
+      local c2 = (mveloc^2) / 9.81
+      Ropt = c2 * math.sqrt(c1+1)
+      if height <= 5000 then
+        Ropt = Ropt * 0.72
+      elseif height <= 7500 then
+        Ropt = Ropt * 0.82
+      elseif height <= 10000 then
+        Ropt = Ropt * 0.87
+      elseif height <= 12500 then
+        Ropt = Ropt * 0.98
+      end
     end
     local WeaponWrapper = WEAPON:New(SEADWeapon)
-    -- look at a couple of zones across the trajectory
+    -- look at a couple of zones across the trajectory - only ahead of the launch point
     for n=1,3 do
       local dist = Ropt - ((n-1)*20000)
-      local predpos= pos0:Translate(dist,wph)
+      local predpos = (dist > 0) and pos0:Translate(dist,wph) or nil
       if predpos then
-  
-        local targetzone = ZONE_RADIUS:New("Target Zone",predpos:GetVec2(),20000)
+
+        local targetzone = ZONE_RADIUS:New("Target Zone",predpos:GetVec2(),20000,true)
         
         if self.debug then
           predpos:MarkToAll(string.format("height=%dm | heading=%d | velocity=%ddeg | Ropt=%dm",mheight,wph,mveloc,Ropt),false)
@@ -342,13 +371,161 @@ function SEAD:onafterCalculateHitZone(From,Event,To,SEADWeapon,pos0,height,SEADG
             _targetgroupname = tgtgrp:GetName() -- group name
             _targetskill = tgtgrp:GetUnit(1):GetSkill()
             self:T("*** Found Target = ".. _targetgroupname)
-            self:ManageEvasion(_targetskill,_targetgroup,pos0,"AGM_88",SEADGroup, 20, WeaponWrapper)
+            self:ManageEvasion(_targetskill,_targetgroup,pos0,SEADWeaponName,SEADGroup, 20, WeaponWrapper)
           end
         --end
       end
     end     
   end
   return self
+end
+
+--- (Internal) Switch a suppressed group off: radar off and relocate.
+-- @param #SEAD self
+-- @param #table Rec Suppression record.
+function SEAD:_SuppressionStart(Rec)
+  if Rec.started or Rec.stopped then return end
+  Rec.started = true
+  local grp = Rec.group -- Wrapper.Group#GROUP
+  self:T(string.format("*** SEAD - %s Radar Off & Relocating", Rec.name))
+  if grp and grp:IsAlive() then
+    if self.UseEmissionsOnOff then
+      grp:EnableEmission(false)
+    end
+    grp:OptionAlarmStateGreen() -- needed else we cannot move around
+    grp:RelocateGroundRandomInRadius(20,300,false,false,"Diamond",true)
+  end
+  if self.UseCallBack then
+    self.CallBack:SeadSuppressionStart(grp, Rec.name, Rec.attacker)
+  end
+end
+
+--- (Internal) End a suppression. The radar is only switched back on if it was switched off by us.
+-- @param #SEAD self
+-- @param #table Rec Suppression record.
+function SEAD:_SuppressionStop(Rec)
+  if Rec.stopped then return end
+  Rec.stopped = true
+  local grp = Rec.group -- Wrapper.Group#GROUP
+  local name = Rec.name
+  if Rec.started and grp and grp:IsAlive() then
+    self:T(string.format("*** SEAD - %s Radar On", name))
+    local ammo = grp:GetProperty("MANTIS_AMMO") -- #table
+    if not (ammo and ammo.trLost) then
+      if self.UseEmissionsOnOff then
+        grp:EnableEmission(true)
+      end
+      grp:OptionAlarmStateRed()
+    end
+    grp:OptionEngageRange(self.EngagementRange)
+  elseif not Rec.started then
+    self:T(string.format("*** SEAD - %s Weapon(s) down before the crew reacted", name))
+  end
+  for _weapon,_ in pairs(Rec.weapons) do
+    local track = self.WeaponTracks[_weapon]
+    if track then track.groups[name] = nil end
+  end
+  self.SuppressionState[name] = nil
+  self.SuppressedGroups[name] = false
+  if self.UseCallBack then
+    self.CallBack:SeadSuppressionEnd(grp, name)
+  end
+end
+
+--- (Internal) Fallback timer: switch-off for untracked weapons and a safety switch-on
+-- in case no impact is reported. Reschedules itself until the record is finished.
+-- @param #SEAD self
+-- @param #table Rec Suppression record.
+function SEAD:_Watchdog(Rec)
+  if self.SuppressionState[Rec.name] ~= Rec then return end
+  local now = timer.getTime()
+  if Rec.startAt and not Rec.started and now >= Rec.startAt then
+    self:_SuppressionStart(Rec)
+  end
+  if now >= Rec.endAt then
+    self:T(string.format("*** SEAD - %s Watchdog ends suppression", Rec.name))
+    self:_SuppressionStop(Rec)
+    return
+  end
+  local nextcheck = Rec.endAt
+  if Rec.startAt and not Rec.started then nextcheck = math.min(nextcheck, Rec.startAt) end
+  timer.scheduleFunction(function() self:_Watchdog(Rec) end, nil, math.max(nextcheck, now + 1))
+end
+
+--- (Internal) Attach a weapon to a suppression and start tracking it (once per weapon).
+-- @param #SEAD self
+-- @param #table Rec Suppression record.
+-- @param Wrapper.Weapon#WEAPON Weapon The weapon.
+-- @param #table Info Per-weapon timing data.
+function SEAD:_AddWeapon(Rec, Weapon, Info)
+  Rec.weapons[Weapon] = Info
+  local track = self.WeaponTracks[Weapon]
+  if not track then
+    track = { groups = {} }
+    self.WeaponTracks[Weapon] = track
+    Weapon:SetTimeStepTrack(self.TrackInterval)
+    Weapon:SetFuncTrack(function(wpn) self:_OnWeaponTrack(wpn) end)
+    Weapon:SetFuncImpact(function(wpn) self:_OnWeaponImpact(wpn) end)
+    Weapon:StartTrack()
+  end
+  track.groups[Rec.name] = true
+end
+
+--- (Internal) Weapon tracking step. Re-estimates the time-to-go with the current weapon speed
+-- (boost, burn-out and drag are covered by sampling) and switches groups off when due.
+-- @param #SEAD self
+-- @param Wrapper.Weapon#WEAPON Weapon The weapon.
+function SEAD:_OnWeaponTrack(Weapon)
+  local track = self.WeaponTracks[Weapon]
+  if not track then return end
+  local now = timer.getTime()
+  local wpos = Weapon:GetVec3()
+  local speed = Weapon:GetSpeed() or 0
+  for name,_ in pairs(track.groups) do
+    local rec = self.SuppressionState[name]
+    local info = rec and rec.weapons[Weapon]
+    if info and not rec.started then
+      local tgo = math.huge
+      local gpos = rec.group:GetVec3()
+      if wpos and gpos then
+        -- During the boost phase the weapon is still slow; do not trust speeds far below nominal.
+        tgo = UTILS.VecDist3D(wpos, gpos) / math.max(speed, info.minspeed)
+      end
+      -- Crew reaction: after the reaction time - shots from afar only shortly before impact.
+      local reacted = (now - info.t0 >= info.delay) and ((not info.far) or tgo <= self.StayActive)
+      -- Last moment: weapon is close. A small margin may be too late (pilot's chance).
+      if reacted or tgo <= info.margin then
+        self:T(string.format("*** SEAD - %s switch-off, weapon %.0fs out (%s)", name, tgo, reacted and "reaction" or "last moment"))
+        self:_SuppressionStart(rec)
+      end
+    end
+  end
+end
+
+--- (Internal) Weapon impact (weapon no longer exists). When the last weapon for a group is down,
+-- the radar comes back on after the padding time.
+-- @param #SEAD self
+-- @param Wrapper.Weapon#WEAPON Weapon The weapon.
+function SEAD:_OnWeaponImpact(Weapon)
+  local track = self.WeaponTracks[Weapon]
+  self.WeaponTracks[Weapon] = nil
+  if not track then return end
+  for name,_ in pairs(track.groups) do
+    local rec = self.SuppressionState[name]
+    if rec then
+      rec.weapons[Weapon] = nil
+      if next(rec.weapons) == nil then
+        self:T(string.format("*** SEAD - %s last weapon down, radar on in %ds", name, self.Padding))
+        timer.scheduleFunction(
+          function()
+            -- Only if no new weapon has been added in the meantime.
+            if self.SuppressionState[name] == rec and next(rec.weapons) == nil then
+              self:_SuppressionStop(rec)
+            end
+          end, nil, timer.getTime() + self.Padding)
+      end
+    end
+  end
 end
 
 --- (Internal) Handle Evasion
@@ -360,116 +537,123 @@ end
 -- @param Wrapper.Group#GROUP SEADGroup Attacker Group
 -- @param #number timeoffset Offset for tti calc
 -- @param Wrapper.Weapon#WEAPON Weapon
--- @return #SEAD self 
+-- @return #SEAD self
 function SEAD:onafterManageEvasion(From,Event,To,_targetskill,_targetgroup,SEADPlanePos,SEADWeaponName,SEADGroup,timeoffset,Weapon)
   local timeoffset = timeoffset  or 0
+  if not (_targetgroup and _targetgroup:IsAlive()) then return self end
   if _targetskill == "Random" then -- when skill is random, choose a skill
     local Skills = { "Average", "Good", "High", "Excellent" }
     _targetskill = Skills[ math.random(1,4) ]
   end
-  --self:T( _targetskill )
-  if self.TargetSkill[_targetskill] then
-    local _evade = math.random (1,100) -- random number for chance of evading action
-    if (_evade > self.TargetSkill[_targetskill].Evade) then
-      self:T("*** SEAD - Evading")
-      -- calculate distance of attacker
-      local _targetpos = _targetgroup:GetCoordinate()
-      local _distance = self:_GetDistance(SEADPlanePos, _targetpos)
-      -- weapon speed
-      local hit, data = self:_CheckHarms(SEADWeaponName)
-      local wpnspeed = 666 -- ;)
-      local reach = 10
-      if hit then
-        local wpndata = SEAD.HarmData[data]
-        reach = wpndata[1] * 1.1
-        local mach = wpndata[2]
-        wpnspeed = math.floor(mach * 340.29)
-        if Weapon and Weapon:GetSpeed() > 0 then
-          wpnspeed = Weapon:GetSpeed()
-          self:T(string.format("*** SEAD - Weapon Speed from WEAPON: %f m/s",wpnspeed))
-        end
-      end
-      -- time to impact
-      local _tti = math.floor(_distance / wpnspeed) - timeoffset -- estimated impact time
-      if _distance > 0 then
-        _distance = math.floor(_distance / 1000) -- km
-      else
-        _distance = 0
-      end
-  
-      self:T( string.format("*** SEAD - target skill %s, distance %dkm, reach %dkm, tti %dsec", _targetskill, _distance,reach,_tti ))
-  
-      if reach >= _distance then
-        self:T("*** SEAD - Shot in Reach")
-  
-        local function SuppressionStart(args)
-          self:T(string.format("*** SEAD - %s Radar Off & Relocating",args[2]))
-          local grp = args[1] -- Wrapper.Group#GROUP
-          local name = args[2] -- #string Group Name
-          local attacker = args[3] -- Wrapper.Group#GROUP
-          if self.UseEmissionsOnOff then
-            grp:EnableEmission(false)
-          end
-          grp:OptionAlarmStateGreen() -- needed else we cannot move around
-          grp:RelocateGroundRandomInRadius(20,300,false,false,"Diamond",true)
-          if self.UseCallBack then
-            local object = self.CallBack
-            object:SeadSuppressionStart(grp,name,attacker)
-          end
-        end
-  
-        local function SuppressionStop(args)
-          self:T(string.format("*** SEAD - %s Radar On",args[2]))
-          local grp = args[1]  -- Wrapper.Group#GROUP
-          local name = args[2] -- #string Group Name
-          local ammo = grp:GetProperty("MANTIS_AMMO") -- #table
-          if not (ammo and ammo.trLost) then
-            if self.UseEmissionsOnOff then
-              grp:EnableEmission(true)
-            end
-            grp:OptionAlarmStateRed()
-          end
-          grp:OptionEngageRange(self.EngagementRange)
-          self.SuppressedGroups[name] = false
-          if self.UseCallBack then
-            local object = self.CallBack
-            object:SeadSuppressionEnd(grp,name)
-          end
-        end
-  
-        -- randomize switch-on time
-        local delay = math.random(self.TargetSkill[_targetskill].DelayOn[1], self.TargetSkill[_targetskill].DelayOn[2])
-        if delay > _tti then delay = delay / 2 end -- speed up
-        if _tti > 600 then delay =  _tti - 90 end -- shot from afar, 600 is default shorad ontime
-  
-        local SuppressionStartTime = timer.getTime() + delay
-        local SuppressionEndTime = timer.getTime() + delay + _tti + self.Padding + delay
-        local _targetgroupname = _targetgroup:GetName()
-        local shoradactive = _targetgroup:GetProperty("SHORAD_ACTIVE")
-        if not self.SuppressedGroups[_targetgroupname] and shoradactive ~= true then
-          -- TODO: ask callback if suppression is allowed BEFORE scheduling timers
-          local allow = true
-          if self.UseCallBack and self.CallBack and self.CallBack.SeadAllowSuppression then
-            allow = self.CallBack:SeadAllowSuppression(_targetgroup,_targetgroupname,SEADGroup,SEADWeaponName,Weapon,_tti,delay)
-          end
-          if not allow then
-            self:T(string.format("*** SEAD - %s | Suppression vetoed by callback", _targetgroupname))
-            -- Important: do NOT schedule SuppressionStart/Stop and do NOT flip SuppressedGroups true.
-            return self
-          end
-          self:T(string.format("*** SEAD - %s | Parameters TTI %ds | Switch-Off in %ds",_targetgroupname,_tti,delay))
-          timer.scheduleFunction(SuppressionStart,{_targetgroup,_targetgroupname, SEADGroup},SuppressionStartTime)
-          timer.scheduleFunction(SuppressionStop,{_targetgroup,_targetgroupname},SuppressionEndTime)
-          self.SuppressedGroups[_targetgroupname] = true
-          if self.UseCallBack then
-            local object = self.CallBack
-            object:SeadSuppressionPlanned(_targetgroup,_targetgroupname,SuppressionStartTime,SuppressionEndTime, SEADGroup)
-          end
-        end
-  
-      end
+  local skill = self.TargetSkill[_targetskill]
+  if not skill then return self end
+
+  local _evade = math.random (1,100) -- random number for chance of evading action
+  if _evade <= skill.Evade then
+    self:T("*** SEAD - No evasion (skill roll)")
+    return self
+  end
+  self:T("*** SEAD - Evading")
+
+  -- calculate distance of attacker
+  local _targetpos = _targetgroup:GetCoordinate()
+  local _distance = self:_GetDistance(SEADPlanePos, _targetpos)
+  if _distance < 0 then return self end
+
+  -- nominal weapon data
+  local hit, data = self:_CheckHarms(SEADWeaponName)
+  local wpnspeed = 666 -- ;)
+  local reach = 10
+  if hit then
+    local wpndata = SEAD.HarmData[data]
+    reach = wpndata[1] * 1.1
+    wpnspeed = math.floor(wpndata[2] * 340.29)
+  end
+
+  -- At the shot event the weapon still flies at launcher speed. Only trust a measurement
+  -- on delayed calls, when the weapon is up to speed.
+  local tracked = (Weapon ~= nil) and (Weapon:IsExist() == true)
+  if tracked and timeoffset > 0 then
+    local vnow = Weapon:GetSpeed() or 0
+    if vnow > 0.5 * wpnspeed then
+      wpnspeed = vnow
+      self:T(string.format("*** SEAD - Weapon Speed from WEAPON: %f m/s",wpnspeed))
     end
   end
+
+  -- estimated time to impact (only used for planning and fallback when tracked)
+  local _tti = math.max(math.floor(_distance / wpnspeed) - timeoffset, 0)
+  local distkm = math.floor(_distance / 1000)
+
+  self:T( string.format("*** SEAD - target skill %s, distance %dkm, reach %dkm, tti %dsec, tracked %s", _targetskill, distkm, reach, _tti, tostring(tracked)))
+
+  if reach < distkm then return self end
+  self:T("*** SEAD - Shot in Reach")
+
+  local _targetgroupname = _targetgroup:GetName()
+  if _targetgroup:GetProperty("SHORAD_ACTIVE") == true then return self end
+
+  local now = timer.getTime()
+  local delay = math.random(skill.DelayOn[1], skill.DelayOn[2]) -- crew reaction time
+  local farshot = _tti > self.FarShot
+  local info = { t0 = now, delay = delay, far = farshot, margin = skill.Margin or 0, minspeed = 0.5 * wpnspeed }
+
+  -- Fallback end: tracked => impact normally ends it much earlier; untracked => legacy formula.
+  local endAt = tracked and (now + 2*_tti + delay + self.Padding) or (now + 2*delay + _tti + self.Padding)
+
+  -- Already suppressed or planned: keep the radar off until this weapon is down, too.
+  local rec = self.SuppressionState[_targetgroupname]
+  if rec then
+    if tracked then self:_AddWeapon(rec, Weapon, info) end
+    rec.endAt = math.max(rec.endAt, endAt)
+    self:T(string.format("*** SEAD - %s | additional weapon, suppression extended", _targetgroupname))
+    return self
+  end
+
+  -- ask callback if suppression is allowed BEFORE scheduling anything
+  local allow = true
+  if self.UseCallBack and self.CallBack and self.CallBack.SeadAllowSuppression then
+    allow = self.CallBack:SeadAllowSuppression(_targetgroup,_targetgroupname,SEADGroup,SEADWeaponName,Weapon,_tti,delay)
+  end
+  if not allow then
+    self:T(string.format("*** SEAD - %s | Suppression vetoed by callback", _targetgroupname))
+    return self
+  end
+
+  -- Switch-off time for the watchdog.
+  -- tracked: normal shots after the reaction time (same rule as the tracker), shots from afar by the tracker only.
+  -- untracked: legacy estimate.
+  local startAt
+  if farshot then
+    startAt = (not tracked) and (now + _tti - self.StayActive) or nil
+  elseif tracked then
+    startAt = now + delay
+  else
+    startAt = now + math.min(delay, math.floor(_tti / 2))
+  end
+
+  rec = {
+    group = _targetgroup,
+    name = _targetgroupname,
+    attacker = SEADGroup,
+    started = false,
+    stopped = false,
+    weapons = {},
+    startAt = startAt,
+    endAt = endAt,
+  }
+  self.SuppressionState[_targetgroupname] = rec
+  self.SuppressedGroups[_targetgroupname] = true
+  if tracked then self:_AddWeapon(rec, Weapon, info) end
+  self:_Watchdog(rec)
+
+  local SuppressionStartTime = startAt or (now + _tti - self.StayActive)
+  local SuppressionEndTime = now + _tti + self.Padding
+  self:T(string.format("*** SEAD - %s | Parameters TTI %ds | Reaction %ds | far %s | tracked %s",_targetgroupname,_tti,delay,tostring(farshot),tostring(tracked)))
+  if self.UseCallBack then
+    self.CallBack:SeadSuppressionPlanned(_targetgroup,_targetgroupname,SuppressionStartTime,SuppressionEndTime, SEADGroup)
+  end
+
   return self
 end
 
@@ -500,17 +684,19 @@ function SEAD:HandleEventShot( EventData )
 
     self:T( '*** SEAD - Weapon Match' )
     if self.WeaponTrack == true then
-      WeaponWrapper:SetFuncTrack(function(weapon) env.info(string.format("*** Weapon Speed: %d m/s",weapon:GetSpeed() or -1)) end)
-      WeaponWrapper:StartTrack(0.1)
-      WeaponWrapper:StopTrack(30)
+      -- Separate wrapper: the evasion tracker on WeaponWrapper must not be stopped after 30 secs.
+      local DebugWrapper = WEAPON:New(EventData.Weapon) -- Wrapper.Weapon#WEAPON
+      DebugWrapper:SetFuncTrack(function(weapon) env.info(string.format("*** Weapon Speed: %d m/s",weapon:GetSpeed() or -1)) end)
+      DebugWrapper:StartTrack(0.1)
+      DebugWrapper:StopTrack(30)
     end
     local _targetskill = "Random"
     local _targetgroupname = "none"
     local _target = EventData.Weapon:getTarget() -- Identify target
-    if not _target or self.debug  then -- AGM-88 or 154 w/o target data
+    if not _target or self.debug  then -- AGM-88, 45 or 154 w/o target data
       self:E("***** SEAD - No target data for " .. (SEADWeaponName or "None"))
-      if string.find(SEADWeaponName,"AGM_88",1,true) or string.find(SEADWeaponName,"AGM_154",1,true) then
-        self:T("**** Tracking AGM-88/154 with no target data.")
+      if string.find(SEADWeaponName,"AGM_88",1,true) or string.find(SEADWeaponName,"AGM_154",1,true) or string.find(SEADWeaponName,"AGM_45",1,true) then
+        self:T("**** Tracking AGM-45/88/154 with no target data.")
         local pos0 = SEADPlane:GetCoordinate()
         local fheight = SEADPlane:GetHeight()
         self:__CalculateHitZone(20,SEADWeapon,pos0,fheight,SEADGroup,SEADWeaponName)
@@ -533,9 +719,11 @@ function SEAD:HandleEventShot( EventData )
       end
     elseif targetcat == Object.Category.STATIC then
       self:T("*** Target Category STATIC")
-      local seadset = SET_GROUP:New():FilterPrefixes(self.SEADGroupPrefixes):FilterOnce()
       local targetpoint = _target:getPoint() or {x=0,y=0,z=0}
       local tgtcoord = COORDINATE:NewFromVec3(targetpoint)
+      -- Only SEAD groups close to the static count (e.g. static radar or command post of a SAM site).
+      local tgtzone = ZONE_RADIUS:New("SEAD Static Target",tgtcoord:GetVec2(),self.StaticTargetRadius,true)
+      local seadset = SET_GROUP:New():FilterPrefixes(self.SEADGroupPrefixes):FilterZones({tgtzone}):FilterOnce()
       local tgtgrp = seadset:FindNearestGroupFromPointVec2(tgtcoord)
       if tgtgrp and tgtgrp:IsAlive() then
         _targetgroup = tgtgrp
